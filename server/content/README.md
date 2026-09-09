@@ -3,9 +3,9 @@
 Each directory under `server/content` is a server-owned, validated gameplay
 content pack. The default `base` pack is loaded by the standalone server and is
 included in its content manifest and combined ruleset identity.
-It declares its identity and `devilution.diablo@1.451.0` schema in
+It declares its identity and `devilution.diablo@1.452.0` schema in
 `base/content-pack.json`; the Diablo module also accepts the immediately
-previous additive `1.450.0` schema so existing manifest-based packs remain
+previous additive `1.451.0` schema so existing manifest-based packs remain
 loadable. A composed manifest must still use one exact schema identity across
 all declared packs; use the previous schema only for a complete compatible
 manifest rather than mixing it with the current pack. The standalone host falls
@@ -37,9 +37,11 @@ The base pack also carries template-only behavior rows for the native Halls of
 the Blind book, Gateway of Blood book, and Warlord steel tome. These rows own
 their stable object and native presentation identities, the initial
 quest-variable transition, and the authored Halls optic-amulet and Gateway
-Blood Stone rewards. Native-DUN placement and map replacement remain deferred
-until generated geometry and licensed assets are available; no server path
-infers those values from a native object ID.
+Blood Stone rewards. The Warlord room is now an availability-gated native-DUN
+fragment with an explicit validated Hell anchor for the native level-13
+encounter, including its steel-tome
+placement; native random-chamber selection and licensed collision replacement
+remain deferred, and no server path infers those values from a native object ID.
 
 The staged unique-monster dialogue catalog also owns combat admission while a
 matching conversation stage is pending. Older packs without a staged route
@@ -1821,7 +1823,9 @@ Schema 1.440 adds the optional `dialogue_message_id` column to `objects.tsv`.
 When a quest object activates, the server records the authored message on the
 linked quest and emits a dialogue event; this externalizes the native Halls of
 the Blind, Gateway of Blood, and Warlord steel-tome activation speech while
-their native-DUN placement and map mutations remain deferred.
+their native-DUN placement and map mutations were initially deferred. The
+active 1.452 contract now externalizes the Warlord room and steel-tome
+placement; Halls and Gateway map replacement remain deferred.
 
 Schema 1.441 allows a quest-transition object to apply an authored
 `quest_sequence_follow_up_kind` or `quest_sequence_follow_up_world_mutation_id`
@@ -3105,7 +3109,7 @@ clients.
 | `procedural_quest_piece_origins.tsv` | `origin_id`/`origin_symbol`, `level_id` | Optional deterministic origins for generated quest geometry on ordinary levels. Rows select aligned walkable rectangles from authoritative geometry using a content seed; unavailable target levels defer publication. These origin identities are independent of fixed native set-level IDs. |
 | `native_dun_objects.tsv` | `native_object_id`, one level target | Optional explicit mapping from native DUN object-layer values to authoritative object identities for either a set-level variant (`set_level_id`/`set_level_symbol` plus `active_map`) or an ordinary runtime level (`level_id`/`level_symbol`). Optional `object_symbol` cross-checks the authored object identity. Duplicate mappings, ambiguous targets, unknown identities, missing native layers, mismatched templates, and levels exceeding DevilutionX's native `MAXOBJECTS` capacity of 127 active objects reject activation; unmapped values remain inert. |
 | `native_dun_levels.tsv` | `level_id`, `asset_path` | Optional ordinary-level native `.dun` object-layer assets. Stable `level_symbol` values cross-check the active level catalog; missing assets, unknown levels, invalid paths, malformed DUN data, and dimension mismatches reject activation. Optional `tile_asset_path` and `sol_asset_path` form a required pair of relative `.til`/`.sol` assets; when present, their effective d-piece layer and validated collision properties replace the level's prior movement/missile geometry and remain available for later d-piece mutation recomputation. When the pair is omitted, the optional shared native geometry tables may provide the same validated expansion. |
-| `native_dun_fragments.tsv` | `fragment_id` | Optional native `.dun` set-piece fragments targeting an ordinary level and either a validated `anchor_entity_id`, `anchor_unique_identity`, exclusive `anchor_position_x`/`anchor_position_y` coordinate anchor, `anchor_set_level_id`/`anchor_set_level_symbol` generated-origin anchor, or `anchor_procedural_origin_id`/`anchor_procedural_origin_symbol` ordinary-level quest-origin anchor. `anchor_offset_x`/`anchor_offset_y` are d-piece offsets and must produce an even in-bounds origin. Fixed-object and coordinate anchors compose during activation; unique, set-level-origin, and procedural quest-origin anchors defer until their runtime anchor exists, including on later level entry. Fragment mega-tile, transparency, and object-layer values are composed into authoritative level state. When optional `.til`/`.sol` assets are supplied, their effective d-piece layer and validated collision properties are also composed into authoritative blocked and missile-blocked geometry and remain available for later d-piece mutation recomputation; omitted pairs may use the shared native geometry tables. |
+| `native_dun_fragments.tsv` | `fragment_id` | Optional native `.dun` set-piece fragments targeting an ordinary level and either a validated `anchor_entity_id`, `anchor_unique_identity`, exclusive `anchor_position_x`/`anchor_position_y` coordinate anchor, `anchor_set_level_id`/`anchor_set_level_symbol` generated-origin anchor, or `anchor_procedural_origin_id`/`anchor_procedural_origin_symbol` ordinary-level quest-origin anchor. `anchor_offset_x`/`anchor_offset_y` are d-piece offsets and must produce an even in-bounds origin. Optional `required_quest_id`/`required_quest_symbol` gates the fragment on native quest availability after pool selection; unavailable quests suppress the fragment and its inherited object placements. Fixed-object and coordinate anchors compose during activation; unique, set-level-origin, and procedural quest-origin anchors defer until their runtime anchor exists, including on later level entry. Fragment mega-tile, transparency, and object-layer values are composed into authoritative level state. When optional `.til`/`.sol` assets are supplied, their effective d-piece layer and validated collision properties are also composed into authoritative blocked and missile-blocked geometry and remain available for later d-piece mutation recomputation; omitted pairs may use the shared native geometry tables. |
 | `native_dun_fragment_objects.tsv` | `placement_id`, `fragment_id`, `entity_id` | Optional anchor-relative placement for existing authored objects or behavior-only templates. `offset_x`/`offset_y` are validated relative to the referenced fragment's entity, unique encounter, explicit `anchor_set_level_id`/`anchor_set_level_symbol`, explicit `anchor_procedural_origin_id`/`anchor_procedural_origin_symbol`, or an inherited coordinate/set-level/procedural-origin anchor; unique, set-level, and procedural-origin anchors resolve after their runtime anchors materialize. Optional `template_entity_id` clones a `template_only=1` object when the target entity is absent. Each object may be targeted once, resulting positions must remain in bounds, and template clones that exceed DevilutionX's native `MAXOBJECTS` capacity of 127 active objects per level reject materialization. |
 | `quest_sequence_variants.tsv` | `variant_id`, `slot_index` | Optional complete permutations for ordered quest-object layouts. Each variant uses the same quest and object slots, and activation selects one variant per quest with the native-compatible deterministic RNG before simulation creation. |
 | `set_level_maps.tsv` | `set_level_id`, `pre_map_asset`, `active_map_asset` | Validated native set-level map asset paths, optional shared `til_asset`/`sol_asset` geometry inputs, optional `transparency_asset`, dungeon type, and entry spawn positions. Stable `set_level_symbol` values cross-check `set_level_names.tsv`; map and transparency paths are relative `.dun` assets, geometry paths are relative `.til`/`.sol` assets, and traversal is rejected. Rows without binary geometry may use the shared native geometry tables. |
@@ -3158,7 +3162,7 @@ and no implicit table replacements. For example:
   "dependencies": ["devilution.base"],
   "schema": {
     "id": "devilution.diablo",
-      "version": "1.451.0"
+      "version": "1.452.0"
   },
   "dependencyConstraints": [
     {
@@ -3192,7 +3196,7 @@ three-component semantic-version constraints for declared dependencies. All
 declared schemas in one ordered manifest must match, every constraint must name
 a declared dependency, and the loaded dependency version must satisfy its
 range. The first-party server rejects a declared schema other than
-`devilution.diablo@1.451.0`. Manifests without compatibility metadata retain their
+`devilution.diablo@1.452.0`. Manifests without compatibility metadata retain their
 legacy identity and remain loadable during migration.
 
 Useful overlay keys are `class_id` for `classes.tsv`, `class_animations.tsv`,

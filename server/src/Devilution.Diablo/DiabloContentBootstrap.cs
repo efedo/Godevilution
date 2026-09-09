@@ -1171,6 +1171,18 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
                 questPools,
                 randomSeed);
         }
+        if (nativeDunFragments is not null
+            && nativeDunFragments.Definitions.Any(definition => definition.RequiredQuestId is not null)) {
+            if (quests is null)
+                throw new InvalidDataException(
+                    "Quest-gated native DUN fragments require an active quest catalog.");
+            nativeDunFragments = nativeDunFragments.FilterByQuestAvailability(quests);
+            var activeFragmentIds = nativeDunFragments.Definitions
+                .Select(definition => definition.FragmentId)
+                .ToHashSet();
+            nativeDunFragmentObjects = nativeDunFragmentObjects?.Filter(
+                placement => activeFragmentIds.Contains(placement.FragmentId));
+        }
         if (uniqueMonsterPlacements is not null) {
             foreach (var placement in uniqueMonsterPlacements.Definitions
                          .Where(definition => definition.RequiredQuestId != 0)) {

@@ -17,7 +17,8 @@ public sealed record AuthoritativeNativeDunFragmentDefinition(
     int? AnchorPositionX = null,
     int? AnchorPositionY = null,
     int? AnchorSetLevelId = null,
-    uint? AnchorProceduralQuestPieceOriginId = null)
+    uint? AnchorProceduralQuestPieceOriginId = null,
+    uint? RequiredQuestId = null)
 {
     /** Stable level symbol retained for composed-pack diagnostics. */
     public string LevelSymbol { get; init; } = string.Empty;
@@ -28,11 +29,15 @@ public sealed record AuthoritativeNativeDunFragmentDefinition(
     /** Optional ordinary-level quest-piece identity whose generated origin anchors this fragment. */
     public string AnchorProceduralQuestPieceOriginSymbol { get; init; } = string.Empty;
 
+    /** Optional quest identity that must remain available for this fragment. */
+    public string RequiredQuestSymbol { get; init; } = string.Empty;
+
     public AuthoritativeNativeDunFragmentDefinition Validate()
     {
         var uniqueIdentity = AnchorUniqueIdentity.Trim();
         var setLevelSymbol = AnchorSetLevelSymbol.Trim();
         var proceduralOriginSymbol = AnchorProceduralQuestPieceOriginSymbol.Trim();
+        var requiredQuestSymbol = RequiredQuestSymbol.Trim();
         var hasUniqueAnchor = uniqueIdentity.Length != 0;
         var hasCoordinateX = AnchorPositionX is not null;
         var hasCoordinateY = AnchorPositionY is not null;
@@ -48,11 +53,13 @@ public sealed record AuthoritativeNativeDunFragmentDefinition(
                     + (hasProceduralOriginAnchor ? 1 : 0) != 1
             || AnchorSetLevelId is < 0 or > 8
             || AnchorProceduralQuestPieceOriginId is 0
+            || RequiredQuestId is 0
             || AnchorPositionX is < 0 or > 512
             || AnchorPositionY is < 0 or > 512
             || !NativeTextLimits.IsIdentityWithinLimit(uniqueIdentity)
             || !NativeTextLimits.IsIdentityWithinLimit(setLevelSymbol)
             || !NativeTextLimits.IsIdentityWithinLimit(proceduralOriginSymbol)
+            || !NativeTextLimits.IsIdentityWithinLimit(requiredQuestSymbol)
             || !IsRelativeDunAssetPath(AssetPath)) {
             throw new InvalidDataException(
                 $"Native DUN fragment {FragmentId} contains invalid identity or asset metadata.");
@@ -68,11 +75,13 @@ public sealed record AuthoritativeNativeDunFragmentDefinition(
         return uniqueIdentity == AnchorUniqueIdentity
             && setLevelSymbol == AnchorSetLevelSymbol
             && proceduralOriginSymbol == AnchorProceduralQuestPieceOriginSymbol
+            && requiredQuestSymbol == RequiredQuestSymbol
             ? this
             : this with {
                 AnchorUniqueIdentity = uniqueIdentity,
                 AnchorSetLevelSymbol = setLevelSymbol,
                 AnchorProceduralQuestPieceOriginSymbol = proceduralOriginSymbol,
+                RequiredQuestSymbol = requiredQuestSymbol,
             };
     }
 
@@ -164,6 +173,22 @@ public sealed class AuthoritativeNativeDunFragmentCatalog
     {
         ArgumentNullException.ThrowIfNull(predicate);
         return new AuthoritativeNativeDunFragmentCatalog(definitions.Where(predicate));
+    }
+
+    /** Returns only fragments whose optional quest gate is currently available. */
+    public AuthoritativeNativeDunFragmentCatalog FilterByQuestAvailability(
+        IEnumerable<AuthoritativeQuestState> quests)
+    {
+        ArgumentNullException.ThrowIfNull(quests);
+        var questsById = quests.ToDictionary(quest => quest.QuestId);
+        foreach (var definition in definitions.Where(definition => definition.RequiredQuestId is not null)) {
+            if (!questsById.ContainsKey(definition.RequiredQuestId!.Value))
+                throw new InvalidDataException(
+                    $"Native DUN fragment {definition.FragmentId} references unknown required quest "
+                    + $"{definition.RequiredQuestId}.");
+        }
+        return Filter(definition => definition.RequiredQuestId is not { } questId
+            || !questsById[questId].Unavailable);
     }
 
     /** Validates that every deferred fragment asset is present before activation. */
@@ -423,7 +448,8 @@ public sealed class AuthoritativeNativeDunFragmentCatalog
                 OptionalCoordinate(row, "anchor_position_x"),
                 OptionalCoordinate(row, "anchor_position_y"),
                 OptionalSetLevelId(row, stableIds),
-                OptionalProceduralQuestPieceOriginId(row, stableIds)) {
+                OptionalProceduralQuestPieceOriginId(row, stableIds),
+                OptionalQuestId(row, stableIds)) {
                 LevelSymbol = AuthoritativeLevelIdentity.ReadSymbol(row),
                 AnchorSetLevelSymbol = row.TryGet("anchor_set_level_symbol", out var symbol)
                     ? symbol
@@ -432,6 +458,9 @@ public sealed class AuthoritativeNativeDunFragmentCatalog
                         "anchor_procedural_origin_symbol",
                         out var originSymbol)
                     ? originSymbol
+                    : string.Empty,
+                RequiredQuestSymbol = row.TryGet("required_quest_symbol", out var questSymbol)
+                    ? questSymbol
                     : string.Empty,
             }));
     }
@@ -558,6 +587,32 @@ public sealed class AuthoritativeNativeDunFragmentCatalog
             throw new InvalidDataException(
                 $"Native DUN fragment row {row.LineNumber} contains an invalid procedural origin identity.");
         return resolvedId;
+    }
+
+    private static uint? OptionalQuestId(
+        TsvRow row,
+        StableContentIdCatalog? stableIds)
+    {
+        var numericPresent = row.TryGet("required_quest_id", out var numericText)
+            && !string.IsNullOrWhiteSpace(numericText);
+        var symbolPresent = row.TryGet("required_quest_symbol", out var symbol)
+            && !string.IsNullOrWhiteSpace(symbol)
+            && !string.Equals(symbol, "none", StringComparison.OrdinalIgnoreCase);
+        if (!numericPresent && !symbolPresent)
+            return null;
+        if (!symbolPresent) {
+            var numericId = row.OptionalUInt32("required_quest_id");
+            return numericId == 0 ? null : numericId;
+        }
+        var questId = AuthoritativeQuestIdentity.ResolveOptional(
+            row,
+            stableIds,
+            "required_quest_id",
+            "required_quest_symbol");
+        if (questId == 0)
+            throw new InvalidDataException(
+                $"Native DUN fragment row {row.LineNumber} contains an invalid required quest identity.");
+        return questId;
     }
 
     private static void RequireAsset(

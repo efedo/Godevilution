@@ -18,7 +18,7 @@ public sealed class ShippedContentTests
         Assert.Equal("devilution.base", pack.Id);
         Assert.Equal("0.1.0", pack.Version);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.451.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.452.0"),
             pack.Schema);
         Assert.Empty(pack.Overlays);
         var nativeDunMonsterTable = pack.Tables.Single(
@@ -762,10 +762,11 @@ public sealed class ShippedContentTests
         var contentRoot = Path.Combine(FindRepositoryRoot(), "server", "content", "base");
         var pack = ContentPackLoader.LoadManifestDirectory(contentRoot);
         var table = pack.Tables.Single(table => table.SourcePath == "native_dun_fragments.tsv");
-        var fragment = Assert.Single(
-            AuthoritativeNativeDunFragmentCatalog.LoadTsv(
-                table.SourcePath,
-                table.ToCanonicalTsv()).Definitions);
+        var fragments = AuthoritativeNativeDunFragmentCatalog.LoadTsv(
+            table.SourcePath,
+            table.ToCanonicalTsv()).Definitions;
+        Assert.Equal(2, fragments.Count);
+        var fragment = fragments.Single(definition => definition.FragmentId == 1);
 
         Assert.Equal((1U, 4U, "hell", "levels/l1data/banner1.dun", "Snotspill", -11, -9), (
             fragment.FragmentId,
@@ -778,6 +779,84 @@ public sealed class ShippedContentTests
         Assert.Equal(
             2180,
             pack.Assets.Single(asset => asset.SourcePath == fragment.AssetPath).Contents.Length);
+
+        var warlord = fragments.Single(definition => definition.FragmentId == 2);
+        Assert.Equal((4U, "hell", 12, 12, 3012U, "warlord_of_blood"), (
+            warlord.LevelId,
+            warlord.LevelSymbol,
+            warlord.AnchorPositionX,
+            warlord.AnchorPositionY,
+            warlord.RequiredQuestId,
+            warlord.RequiredQuestSymbol));
+        Assert.Equal(
+            1908,
+            pack.Assets.Single(asset => asset.SourcePath == warlord.AssetPath).Contents.Length);
+    }
+
+    [Fact]
+    public void AvailableWarlordActivationMaterializesTheRoomAndSteelTome()
+    {
+        var contentRoot = Path.Combine(FindRepositoryRoot(), "server", "content", "base");
+        var pack = ContentPackLoader.LoadManifestDirectory(contentRoot);
+
+        var activation = DiabloModule.Instance.ContentBootstrap.Activate(
+            ComposedContent.Compose(new ContentManifest("available-warlord", "1", [pack])),
+            gameMode: DiabloGameMode.Multiplayer);
+
+        var steelTome = Assert.Single(
+            activation.Simulation.WorldState.Objects.Values,
+            @object => @object.EntityId == 2022);
+        Assert.Equal((4U, 12, 12, 3012U), (
+            steelTome.LevelId,
+            steelTome.PositionX,
+            steelTome.PositionY,
+            steelTome.QuestId));
+        var level = activation.Simulation.WorldState.World!.Levels
+            .Single(candidate => candidate.LevelId == 4);
+        Assert.Equal(7, level.NativeMonsterLayer.Count(value => value == 98));
+    }
+
+    [Fact]
+    public void QuestUnavailableStateSuppressesGatedWarlordRoomAndTome()
+    {
+        var contentRoot = Path.Combine(FindRepositoryRoot(), "server", "content", "base");
+        var basePack = ContentPackLoader.LoadManifestDirectory(contentRoot);
+        var questStates = basePack.Tables.Single(table => table.SourcePath == "quest_states.tsv");
+        var unavailableStates = string.Join(
+            '\n',
+            questStates.ToCanonicalTsv()
+                .Split('\n')
+                .Select(line => {
+                    if (!line.StartsWith("3012\t", StringComparison.Ordinal))
+                        return line;
+                    var columns = line.Split('\t');
+                    columns[7] = "true";
+                    return string.Join('\t', columns);
+                }));
+        var modifiedPack = new ContentPack(
+            basePack.Id,
+            basePack.Version,
+            basePack.Tables
+                .Select(table => table.SourcePath == questStates.SourcePath
+                    ? TsvTable.Parse(questStates.SourcePath, unavailableStates)
+                    : table)
+                .ToArray(),
+            [],
+            [],
+            basePack.Schema,
+            basePack.DependencyConstraints,
+            basePack.Assets);
+
+        var activation = DiabloModule.Instance.ContentBootstrap.Activate(
+            ComposedContent.Compose(new ContentManifest("unavailable-warlord", "1", [modifiedPack])),
+            gameMode: DiabloGameMode.Multiplayer);
+
+        Assert.DoesNotContain(
+            activation.Simulation.WorldState.Objects.Values,
+            @object => @object.EntityId == 2022);
+        var level = activation.Simulation.WorldState.World!.Levels
+            .Single(candidate => candidate.LevelId == 4);
+        Assert.DoesNotContain((ushort)98, level.NativeMonsterLayer);
     }
 
     [Fact]
@@ -909,7 +988,7 @@ public sealed class ShippedContentTests
             currentPack.Tables,
             currentPack.Dependencies,
             currentPack.Overlays,
-            new ContentSchemaIdentity("devilution.diablo", "1.450.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.451.0"),
             currentPack.DependencyConstraints,
             currentPack.Assets);
         var content = ComposedContent.Compose(new ContentManifest(
@@ -3390,7 +3469,7 @@ public sealed class ShippedContentTests
 
         Assert.Equal("devilution.hellfire", hellfirePack.Id);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.451.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.452.0"),
             hellfirePack.Schema);
         Assert.Equal(DiabloGameVariant.Hellfire, combat.GameVariant);
         Assert.Equal(2, combat.UniqueExperienceMultiplier);

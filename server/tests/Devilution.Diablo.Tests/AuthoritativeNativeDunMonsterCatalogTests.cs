@@ -335,15 +335,50 @@ public sealed class AuthoritativeNativeDunMonsterCatalogTests
             target.MonsterId));
     }
 
+    [Fact]
+    public void SimulationUsesNativeDunMonsterOutsideRuntimeLevelRange()
+    {
+        var world = new AuthoritativeWorld();
+        world.AddLevel(new AuthoritativeLevel(
+            4,
+            1,
+            1,
+            nativeMonsterLayer: [1]));
+        var types = new AuthoritativeMonsterTypeCatalog([
+            CreateType(1, 0, minimumDungeonLevel: 13, maximumDungeonLevel: 16),
+        ]);
+        var planner = new AuthoritativeMonsterSpawnPlanner(
+            world,
+            types,
+            new AuthoritativeLevelGenerationCatalog([
+                new AuthoritativeLevelGenerationRule(4, 4, 1, 100, 0),
+            ]));
+        var catalog = new AuthoritativeNativeDunMonsterCatalog([
+            new AuthoritativeNativeDunMonsterDefinition(1, 0, 1),
+        ]);
+
+        var simulation = DiabloSimulationFactory.Instance.Create(
+            new DiabloSimulationOptions(new StoreCatalog(), DiabloModule.Instance.Rules) {
+                World = world,
+                MonsterTypes = types,
+                MonsterSpawnPlanner = planner,
+                NativeDunMonsters = catalog,
+            });
+
+        Assert.Single(simulation.WorldState.CombatTargets.Values);
+    }
+
     private static AuthoritativeMonsterTypeDefinition CreateType(
         uint monsterId,
-        uint nativeMonsterId)
+        uint nativeMonsterId,
+        int minimumDungeonLevel = 0,
+        int maximumDungeonLevel = 16)
         => new(
             monsterId,
             nativeMonsterId,
             "Monster",
-            1,
-            16,
+            minimumDungeonLevel,
+            maximumDungeonLevel,
             1,
             1,
             1,

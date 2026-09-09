@@ -161,6 +161,12 @@ public sealed class AuthoritativeNativeDunMonsterCatalog
                     positionY,
                     entityId,
                     multiplayer,
+                    // Native DUN layers already carry the authored encounter
+                    // selection. Runtime level IDs are presentation/route
+                    // identities and may not equal the native dungeon depth
+                    // used by the monster range table (for example Hell's
+                    // level-13 Warlord room runs on runtime level 4).
+                    ignoreDungeonLevelRange: true,
                     stableMonsterId: mapping.MonsterId);
                 if (target is null)
                     throw new InvalidDataException(

@@ -2,13 +2,14 @@
 
 Status date: 2026-09-09
 
-The active Diablo content schema is now `1.451.0` (with `1.450.0` retained as
+The active content schema is now `1.452.0` (with `1.451.0` retained as
 the previous additive contract). Optional `procedural_quest_piece_origins.tsv`
 rows publish deterministic ordinary-level quest geometry origins. Their
 identities are intentionally separate from the fixed native set-level origin
 namespace, and published locations now survive authoritative snapshots,
-saves, and protocol projection. No shipped quest geometry is enabled by this
-table yet; licensed native assets and authored placement rows remain deferred.
+saves, and protocol projection. The Warlord room is the first shipped quest
+geometry fragment to use the separate native-DUN path; other licensed native
+assets and authored quest placement rows remain deferred.
 
 Native DUN geometry definitions can now be supplied as a validated external
 TSV pair (`native_dun_piece_definitions.tsv` and
@@ -17,6 +18,14 @@ set-level maps may use that shared expansion when licensed `.til`/`.sol` bytes
 are unavailable; declared binary pairs remain authoritative. This advances
 the content boundary without claiming that any missing licensed tile data has
 been recreated.
+
+The Hellfire Warlord room is now published as an availability-gated native DUN
+fragment at an explicit validated anchor on runtime Hell (the native level-13
+encounter). Its raw monster layer and
+template-only steel tome are activated only while the Warlord quest is not
+unavailable, matching the native `IsAvailable` gate without inferring placement
+from legacy object IDs. Native random chamber selection and licensed collision
+replacement remain deferred.
 
 The shared geometry catalog is retained by the simulation for deferred
 set-piece publication and snapshot restore, so anchored fragments use the same

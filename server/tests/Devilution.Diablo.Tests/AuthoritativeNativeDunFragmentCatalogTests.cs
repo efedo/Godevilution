@@ -138,6 +138,33 @@ public sealed class AuthoritativeNativeDunFragmentCatalogTests
     }
 
     [Fact]
+    public void ResolvesAndFiltersAvailabilityGatedFragment()
+    {
+        var stableIds = new StableContentIdCatalog([
+            new StableContentId("quest", "warlord_of_blood", 3012),
+        ]);
+        var catalog = AuthoritativeNativeDunFragmentCatalog.LoadTsv(
+            "native_dun_fragments.tsv",
+            "fragment_id\tlevel_id\tasset_path\tanchor_entity_id\tanchor_offset_x\tanchor_offset_y\tanchor_position_x\tanchor_position_y\trequired_quest_id\trequired_quest_symbol\n"
+                + "1\t13\tfragment.dun\t\t0\t0\t12\t12\t3012\twarlord_of_blood\n",
+            stableIds);
+
+        var definition = Assert.Single(catalog.Definitions);
+        Assert.Equal(3012U, definition.RequiredQuestId);
+        Assert.Equal("warlord_of_blood", definition.RequiredQuestSymbol);
+
+        var available = catalog.FilterByQuestAvailability([
+            new AuthoritativeQuestState(3012, 13, 1),
+        ]);
+        var unavailable = catalog.FilterByQuestAvailability([
+            new AuthoritativeQuestState(3012, 13, 1, unavailable: true),
+        ]);
+
+        Assert.Single(available.Definitions);
+        Assert.Empty(unavailable.Definitions);
+    }
+
+    [Fact]
     public void ComposesValidatedNativeCollisionWhenTileDefinitionsAreSupplied()
     {
         var catalog = AuthoritativeNativeDunFragmentCatalog.LoadTsv(

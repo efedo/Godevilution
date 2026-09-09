@@ -4,6 +4,14 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Externalized the Hellfire Warlord room as a validated native-DUN fragment
+  with an explicit Hell anchor for the native level-13 encounter and an
+  availability gate. This advances the active content schema to `1.452.0`.
+  Its raw knight layer
+  and steel-tome object placement now flow through the server-owned content
+  boundary; native random-chamber selection and licensed collision replacement
+  remain deferred.
+
 - Snapshot restore rollback now captures the live player's action tick when an
   older incoming snapshot is rejected, preserving the original validation
   error instead of masking it with a rollback `AggregateException`.
