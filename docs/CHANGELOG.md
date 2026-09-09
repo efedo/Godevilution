@@ -4,6 +4,11 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Native monster AI timer, short-counter, retreat, and death-animation bounds
+  now have one shared compatibility source consumed by Diablo state/catalog
+  validation, replay fixture validation, the protocol contract, and native
+  envelope assertions.
+
 - Native progression bounds now have one shared `Devilution.Shared` source for
   stable/native spell IDs, spell levels, memorized slots, character levels,
   Diablo victory ranks, and Reflect charges; protocol and Diablo validation

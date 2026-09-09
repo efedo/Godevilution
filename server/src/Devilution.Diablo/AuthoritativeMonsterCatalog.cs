@@ -1,4 +1,5 @@
 using Devilution.Data;
+using Devilution.Shared;
 
 namespace Devilution.Diablo;
 
@@ -134,7 +135,7 @@ public sealed class AuthoritativeMonsterCatalog
             var intelligence = row.TryGet("intelligence", out _)
                 ? row.OptionalInt32("intelligence")
                 : monsterType?.Intelligence ?? 0;
-            if (deathAnimationTicks is < 0 or > 1024) {
+            if (deathAnimationTicks is < 0 or > NativeCompatibilityLimits.MaximumNativeMonsterDeathAnimationTicks) {
                 throw new InvalidDataException(
                     $"Monster row {row.LineNumber} has an invalid death-animation duration.");
             }

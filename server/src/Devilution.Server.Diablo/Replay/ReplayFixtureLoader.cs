@@ -19,6 +19,9 @@ public static class ReplayFixtureLoader
     private const int MaximumNativeMonsterFallenStandAnimationFrame = ProtocolLimits.MaximumNativeMonsterFallenStandAnimationFrame;
     private const int MaximumNativeMonsterFallenStandAnimationTick = ProtocolLimits.MaximumNativeMonsterFallenStandAnimationTick;
     private const int MaximumNativeMonsterFallenRallyTicks = ProtocolLimits.MaximumNativeMonsterFallenRallyTicks;
+    private const int MaximumNativeMonsterAiTimerTicks = ProtocolLimits.MaximumNativeMonsterAiTimerTicks;
+    private const int MaximumNativeMonsterShortTimerTicks = ProtocolLimits.MaximumNativeMonsterShortTimerTicks;
+    private const int MaximumNativeMonsterRetreatTicks = ProtocolLimits.MaximumNativeMonsterRetreatTicks;
     private const int MinimumNativeMonsterResistance = ProtocolLimits.MinimumNativeMonsterResistance;
     private const int MaximumNativeMonsterResistance = ProtocolLimits.MaximumNativeMonsterResistance;
     private const uint MaximumNativeCharacterLevel = ProtocolLimits.MaximumNativeCharacterLevel;
@@ -200,21 +203,21 @@ public static class ReplayFixtureLoader
             || initialTarget.CombatTargetFallenStandAnimationTick is < 0 or > MaximumNativeMonsterFallenStandAnimationTick
             || initialTarget.CombatTargetFallenRallyTicks is < 0 or > MaximumNativeMonsterFallenRallyTicks
             || initialTarget.CombatTargetActiveForTicks is < 0 or > MaximumNativeMonsterActiveTicks
-            || initialTarget.CombatTargetHorkDemonDelayTicks is < 0 or > 1024
-            || initialTarget.CombatTargetSkeletonKingDelayTicks is < 0 or > 1024
-            || initialTarget.CombatTargetSkeletonMeleeDelayTicks is < 0 or > 1024
-            || initialTarget.CombatTargetSnakeDelayTicks is < 0 or > 1024
-            || initialTarget.CombatTargetCounselorDelayTicks is < 0 or > 1024
-            || initialTarget.CombatTargetCounselorRetreatTicks is < 0 or > 64
-            || initialTarget.CombatTargetRangedDelayTicks is < 0 or > 1024
-            || initialTarget.CombatTargetMegaDelayTicks is < 0 or > 1024
-            || initialTarget.CombatTargetSkeletonRangedMovementIdleTicks is < -1 or > 1024
+            || initialTarget.CombatTargetHorkDemonDelayTicks is < 0 or > MaximumNativeMonsterAiTimerTicks
+            || initialTarget.CombatTargetSkeletonKingDelayTicks is < 0 or > MaximumNativeMonsterAiTimerTicks
+            || initialTarget.CombatTargetSkeletonMeleeDelayTicks is < 0 or > MaximumNativeMonsterAiTimerTicks
+            || initialTarget.CombatTargetSnakeDelayTicks is < 0 or > MaximumNativeMonsterAiTimerTicks
+            || initialTarget.CombatTargetCounselorDelayTicks is < 0 or > MaximumNativeMonsterAiTimerTicks
+            || initialTarget.CombatTargetCounselorRetreatTicks is < 0 or > MaximumNativeMonsterRetreatTicks
+            || initialTarget.CombatTargetRangedDelayTicks is < 0 or > MaximumNativeMonsterAiTimerTicks
+            || initialTarget.CombatTargetMegaDelayTicks is < 0 or > MaximumNativeMonsterAiTimerTicks
+            || initialTarget.CombatTargetSkeletonRangedMovementIdleTicks is < -1 or > MaximumNativeMonsterAiTimerTicks
             || initialTarget.CombatTargetSkeletonRangedMovementMode is < -1 or > 3
-            || initialTarget.CombatTargetSneakRetreatTicks is < 0 or > 1024
-            || initialTarget.CombatTargetBatRetreatTicks is < 0 or > 1024
+            || initialTarget.CombatTargetSneakRetreatTicks is < 0 or > MaximumNativeMonsterShortTimerTicks
+            || initialTarget.CombatTargetBatRetreatTicks is < 0 or > MaximumNativeMonsterRetreatTicks
             || initialTarget.CombatTargetBatRetreatDirection is < 0 or > MaximumNativeMonsterDirection
-            || initialTarget.CombatTargetScavengerHealingTicks is < 0 or > 1024
-            || initialTarget.CombatTargetFatMovementIdleTicks is < -1 or > 1024
+            || initialTarget.CombatTargetScavengerHealingTicks is < 0 or > MaximumNativeMonsterShortTimerTicks
+            || initialTarget.CombatTargetFatMovementIdleTicks is < -1 or > MaximumNativeMonsterAiTimerTicks
             || initialTarget.CombatTargetFatMovementMode is < 0 or > 3
             || (!string.IsNullOrEmpty(initialTarget.CombatTargetNativeAi)
                 && !AuthoritativeMonsterTypeCatalog.IsValidNativeAi(

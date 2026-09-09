@@ -8,6 +8,11 @@ levels, Diablo victory ranks, and Reflect charges. The protocol and Diablo
 validation paths consume the same source; native spell identity remains the
 shared `0..51` limit used by replay and boundary tests.
 
+Native monster AI timer, short-counter, retreat, and death-animation bounds now
+also consume one shared compatibility source across Diablo state/catalog
+validation, replay fixture loading, the protocol contract, and native envelope
+assertions.
+
 Replay parity maintenance now keeps base-content fixture manifests current
 and aligns the managed replay executor with native multiplayer Snake, Fallen,
 and Mega Inferno checkpoint hashes, including deterministic RNG consumption and

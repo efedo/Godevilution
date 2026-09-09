@@ -1,5 +1,6 @@
 using Devilution.Data;
 using Devilution.Diablo;
+using Devilution.Shared;
 using Xunit;
 
 namespace Devilution.Diablo.Tests;
@@ -104,7 +105,27 @@ public sealed class AuthoritativeMonsterCatalogTests
     public void RejectsOutOfRangeDeathAnimationTicks()
     {
         Assert.Throws<InvalidDataException>(() => new AuthoritativeMonsterTypeCatalog([
-            CreateType(1, 1, 1) with { DeathAnimationTicks = 1025 },
+            CreateType(1, 1, 1) with {
+                DeathAnimationTicks = NativeCompatibilityLimits.MaximumNativeMonsterDeathAnimationTicks + 1,
+            },
+        ]));
+    }
+
+    [Fact]
+    public void SharesNativeMonsterAiTimerBoundsAcrossCatalogValidation()
+    {
+        Assert.Equal(1024, NativeCompatibilityLimits.MaximumNativeMonsterAiTimerTicks);
+        Assert.Equal(64, NativeCompatibilityLimits.MaximumNativeMonsterShortTimerTicks);
+        Assert.Equal(64, NativeCompatibilityLimits.MaximumNativeMonsterRetreatTicks);
+        Assert.Throws<InvalidDataException>(() => new AuthoritativeMonsterTypeCatalog([
+            CreateType(1, 1, 1) with {
+                SneakRetreatTicks = NativeCompatibilityLimits.MaximumNativeMonsterShortTimerTicks + 1,
+            },
+        ]));
+        Assert.Throws<InvalidDataException>(() => new AuthoritativeMonsterTypeCatalog([
+            CreateType(1, 1, 1) with {
+                AvoidanceDelayBase = NativeCompatibilityLimits.MaximumNativeMonsterAiTimerTicks + 1,
+            },
         ]));
     }
 

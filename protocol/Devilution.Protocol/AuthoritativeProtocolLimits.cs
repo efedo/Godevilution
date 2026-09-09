@@ -40,7 +40,6 @@ public static class AuthoritativeProtocolLimits
     public const uint NativeMaximumObjectId = 108;
     public const uint NativeMaximumQuestId = 23;
     public const int MaximumNativeVisitedLevelCount = 256;
-    public const int MaximumNativeMonsterDeathAnimationTicks = 1024;
     public const uint MaximumNativeMonsterExperienceReward = 1_000_000;
     public const int MaximumNativeMonsterToHit = 255;
     public const int MaximumNativeMonsterIntelligence = 255;
@@ -67,6 +66,10 @@ public static class AuthoritativeProtocolLimits
     public const uint MaximumNativeCharacterLevel = NativeCompatibilityLimits.MaximumNativeCharacterLevel;
     public const uint MaximumNativeDiabloKillLevel = NativeCompatibilityLimits.MaximumNativeDiabloKillLevel;
     public const uint MaximumNativeReflectCharges = NativeCompatibilityLimits.MaximumNativeReflectCharges;
+    public const int MaximumNativeMonsterAiTimerTicks = NativeCompatibilityLimits.MaximumNativeMonsterAiTimerTicks;
+    public const int MaximumNativeMonsterDeathAnimationTicks = NativeCompatibilityLimits.MaximumNativeMonsterDeathAnimationTicks;
+    public const int MaximumNativeMonsterShortTimerTicks = NativeCompatibilityLimits.MaximumNativeMonsterShortTimerTicks;
+    public const int MaximumNativeMonsterRetreatTicks = NativeCompatibilityLimits.MaximumNativeMonsterRetreatTicks;
     public const int MinimumNativeLightRadius = 2;
     public const int MaximumNativeLightRadius = 15;
     public const int MaximumQuestTownerInteractionCount = 1024;

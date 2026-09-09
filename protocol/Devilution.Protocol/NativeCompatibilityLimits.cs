@@ -23,4 +23,16 @@ public static class NativeCompatibilityLimits
 
     /** Highest Reflect charge count retained by native player state. */
     public const uint MaximumNativeReflectCharges = ushort.MaxValue;
+
+    /** Maximum native monster AI timer retained by authoritative snapshots. */
+    public const int MaximumNativeMonsterAiTimerTicks = 1024;
+
+    /** Maximum native monster death-animation duration retained by snapshots. */
+    public const int MaximumNativeMonsterDeathAnimationTicks = MaximumNativeMonsterAiTimerTicks;
+
+    /** Maximum native monster short AI counter retained by authoritative snapshots. */
+    public const int MaximumNativeMonsterShortTimerTicks = 64;
+
+    /** Maximum native monster retreat counter retained by authoritative snapshots. */
+    public const int MaximumNativeMonsterRetreatTicks = MaximumNativeMonsterShortTimerTicks;
 }

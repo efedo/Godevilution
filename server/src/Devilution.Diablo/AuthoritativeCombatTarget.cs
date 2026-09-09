@@ -1,6 +1,7 @@
 
 using Devilution.Domain.Protocol;
 using Devilution.Engine;
+using Devilution.Shared;
 
 namespace Devilution.Diablo;
 
@@ -153,15 +154,15 @@ public sealed class AuthoritativeCombatTarget
             throw new ArgumentException(
                 "Unique monsters cannot be members of another monster pack.",
                 nameof(leaderRelation));
-        if (sneakRetreatTicks < 0)
+        if (sneakRetreatTicks is < 0 or > NativeCompatibilityLimits.MaximumNativeMonsterShortTimerTicks)
             throw new ArgumentOutOfRangeException(nameof(sneakRetreatTicks));
-        if (scavengerHealingTicks < 0)
+        if (scavengerHealingTicks is < 0 or > NativeCompatibilityLimits.MaximumNativeMonsterShortTimerTicks)
             throw new ArgumentOutOfRangeException(nameof(scavengerHealingTicks));
-        if (batRetreatTicks is < 0 or > 64)
+        if (batRetreatTicks is < 0 or > NativeCompatibilityLimits.MaximumNativeMonsterRetreatTicks)
             throw new ArgumentOutOfRangeException(nameof(batRetreatTicks));
         if (batRetreatDirection is < 0 or >= 8)
             throw new ArgumentOutOfRangeException(nameof(batRetreatDirection));
-        if (batMovementIdleTicks is < -1 or > 1024)
+        if (batMovementIdleTicks is < -1 or > NativeCompatibilityLimits.MaximumNativeMonsterAiTimerTicks)
             throw new ArgumentOutOfRangeException(nameof(batMovementIdleTicks));
         if (batMovementMode is < -1 or > 3)
             throw new ArgumentOutOfRangeException(nameof(batMovementMode));
@@ -169,7 +170,7 @@ public sealed class AuthoritativeCombatTarget
             throw new ArgumentOutOfRangeException(nameof(rangedAvoidanceMoveTicks));
         if (rangedAvoidanceTurn is < 0 or > 1)
             throw new ArgumentOutOfRangeException(nameof(rangedAvoidanceTurn));
-        if (rangedAvoidanceMovementIdleTicks is < -1 or > 1024)
+        if (rangedAvoidanceMovementIdleTicks is < -1 or > NativeCompatibilityLimits.MaximumNativeMonsterAiTimerTicks)
             throw new ArgumentOutOfRangeException(nameof(rangedAvoidanceMovementIdleTicks));
         if (rangedAvoidanceMovementMode is < -1 or > 3)
             throw new ArgumentOutOfRangeException(nameof(rangedAvoidanceMovementMode));
@@ -181,41 +182,41 @@ public sealed class AuthoritativeCombatTarget
             throw new ArgumentOutOfRangeException(nameof(avoidanceMovementTicks));
         if (avoidanceMovementTurn is < 0 or > 1)
             throw new ArgumentOutOfRangeException(nameof(avoidanceMovementTurn));
-        if (avoidanceMovementIdleTicks is < -1 or > 1024)
+        if (avoidanceMovementIdleTicks is < -1 or > NativeCompatibilityLimits.MaximumNativeMonsterAiTimerTicks)
             throw new ArgumentOutOfRangeException(nameof(avoidanceMovementIdleTicks));
         if (avoidanceMovementMode is < -1 or > 3)
             throw new ArgumentOutOfRangeException(nameof(avoidanceMovementMode));
-        if (skeletonMeleeDelayTicks is < 0 or > 1024)
+        if (skeletonMeleeDelayTicks is < 0 or > NativeCompatibilityLimits.MaximumNativeMonsterAiTimerTicks)
             throw new ArgumentOutOfRangeException(nameof(skeletonMeleeDelayTicks));
-        if (skeletonRangedMovementIdleTicks is < -1 or > 1024)
+        if (skeletonRangedMovementIdleTicks is < -1 or > NativeCompatibilityLimits.MaximumNativeMonsterAiTimerTicks)
             throw new ArgumentOutOfRangeException(nameof(skeletonRangedMovementIdleTicks));
         if (skeletonRangedMovementMode is < -1 or > 3)
             throw new ArgumentOutOfRangeException(nameof(skeletonRangedMovementMode));
-        if (fatMovementIdleTicks is < -1 or > 1024)
+        if (fatMovementIdleTicks is < -1 or > NativeCompatibilityLimits.MaximumNativeMonsterAiTimerTicks)
             throw new ArgumentOutOfRangeException(nameof(fatMovementIdleTicks));
         if (fatMovementMode is < -1 or > 3)
             throw new ArgumentOutOfRangeException(nameof(fatMovementMode));
-        if (rhinoMovementIdleTicks is < -1 or > 1024)
+        if (rhinoMovementIdleTicks is < -1 or > NativeCompatibilityLimits.MaximumNativeMonsterAiTimerTicks)
             throw new ArgumentOutOfRangeException(nameof(rhinoMovementIdleTicks));
         if (rhinoMovementMode is < -1 or > 3)
             throw new ArgumentOutOfRangeException(nameof(rhinoMovementMode));
-        if (rhinoDelayTicks is < 0 or > 1024)
+        if (rhinoDelayTicks is < 0 or > NativeCompatibilityLimits.MaximumNativeMonsterAiTimerTicks)
             throw new ArgumentOutOfRangeException(nameof(rhinoDelayTicks));
-        if (skeletonKingDelayTicks is < 0 or > 1024)
+        if (skeletonKingDelayTicks is < 0 or > NativeCompatibilityLimits.MaximumNativeMonsterAiTimerTicks)
             throw new ArgumentOutOfRangeException(nameof(skeletonKingDelayTicks));
-        if (horkDemonDelayTicks is < 0 or > 1024)
+        if (horkDemonDelayTicks is < 0 or > NativeCompatibilityLimits.MaximumNativeMonsterAiTimerTicks)
             throw new ArgumentOutOfRangeException(nameof(horkDemonDelayTicks));
-        if (rangedAvoidanceDelayTicks is < 0 or > 1024)
+        if (rangedAvoidanceDelayTicks is < 0 or > NativeCompatibilityLimits.MaximumNativeMonsterAiTimerTicks)
             throw new ArgumentOutOfRangeException(nameof(rangedAvoidanceDelayTicks));
-        if (snakeDelayTicks is < 0 or > 1024)
+        if (snakeDelayTicks is < 0 or > NativeCompatibilityLimits.MaximumNativeMonsterAiTimerTicks)
             throw new ArgumentOutOfRangeException(nameof(snakeDelayTicks));
-        if (counselorDelayTicks is < 0 or > 1024)
+        if (counselorDelayTicks is < 0 or > NativeCompatibilityLimits.MaximumNativeMonsterAiTimerTicks)
             throw new ArgumentOutOfRangeException(nameof(counselorDelayTicks));
-        if (avoidanceDelayTicks is < 0 or > 1024)
+        if (avoidanceDelayTicks is < 0 or > NativeCompatibilityLimits.MaximumNativeMonsterAiTimerTicks)
             throw new ArgumentOutOfRangeException(nameof(avoidanceDelayTicks));
-        if (rangedDelayTicks is < 0 or > 1024)
+        if (rangedDelayTicks is < 0 or > NativeCompatibilityLimits.MaximumNativeMonsterAiTimerTicks)
             throw new ArgumentOutOfRangeException(nameof(rangedDelayTicks));
-        if (megaDelayTicks is < 0 or > 1024)
+        if (megaDelayTicks is < 0 or > NativeCompatibilityLimits.MaximumNativeMonsterAiTimerTicks)
             throw new ArgumentOutOfRangeException(nameof(megaDelayTicks));
         if (direction is < 0 or >= 8)
             throw new ArgumentOutOfRangeException(nameof(direction));
@@ -231,7 +232,7 @@ public sealed class AuthoritativeCombatTarget
             throw new ArgumentException(
                 "A dialogue identity requires a unique encounter.",
                 nameof(dialogueMessageId));
-        if (counselorRetreatTicks is < 0 or > 64)
+        if (counselorRetreatTicks is < 0 or > NativeCompatibilityLimits.MaximumNativeMonsterRetreatTicks)
             throw new ArgumentOutOfRangeException(nameof(counselorRetreatTicks));
         if (!NativeTextLimits.IsIdentityWithinLimit(uniqueIdentity))
             throw new ArgumentOutOfRangeException(nameof(uniqueIdentity));
@@ -773,7 +774,7 @@ public sealed class AuthoritativeCombatTarget
 
     internal void StartSneakRetreat(int ticks)
     {
-        if (ticks < 0)
+        if (ticks is < 0 or > NativeCompatibilityLimits.MaximumNativeMonsterShortTimerTicks)
             throw new ArgumentOutOfRangeException(nameof(ticks));
         SneakHidden = false;
         SneakRetreatTicks = ticks;
@@ -781,7 +782,7 @@ public sealed class AuthoritativeCombatTarget
 
     internal void RestoreSneakState(bool hidden, int retreatTicks)
     {
-        if (retreatTicks < 0)
+        if (retreatTicks is < 0 or > NativeCompatibilityLimits.MaximumNativeMonsterShortTimerTicks)
             throw new ArgumentOutOfRangeException(nameof(retreatTicks));
         SneakHidden = hidden;
         SneakRetreatTicks = retreatTicks;
@@ -797,7 +798,7 @@ public sealed class AuthoritativeCombatTarget
 
     internal void StartScavengerHealing(int ticks)
     {
-        if (ticks < 0)
+        if (ticks is < 0 or > NativeCompatibilityLimits.MaximumNativeMonsterShortTimerTicks)
             throw new ArgumentOutOfRangeException(nameof(ticks));
         ScavengerHealingTicks = ticks;
         ScavengerCorpseEntityId = 0;
@@ -824,7 +825,7 @@ public sealed class AuthoritativeCombatTarget
 
     internal void RestoreScavengerHealing(int ticks, uint corpseEntityId)
     {
-        if (ticks < 0)
+        if (ticks is < 0 or > NativeCompatibilityLimits.MaximumNativeMonsterShortTimerTicks)
             throw new ArgumentOutOfRangeException(nameof(ticks));
         ScavengerHealingTicks = ticks;
         ScavengerCorpseEntityId = corpseEntityId;
@@ -834,7 +835,7 @@ public sealed class AuthoritativeCombatTarget
     {
         if (direction is < 0 or >= 8)
             throw new ArgumentOutOfRangeException(nameof(direction));
-        if (retreatTicks is < 1 or > 64)
+        if (retreatTicks is < 1 or > NativeCompatibilityLimits.MaximumNativeMonsterRetreatTicks)
             throw new ArgumentOutOfRangeException(nameof(retreatTicks));
         BatRetreatTicks = retreatTicks;
         BatRetreatDirection = direction;
@@ -842,7 +843,7 @@ public sealed class AuthoritativeCombatTarget
 
     internal void RestoreBatRetreat(int ticks, int direction)
     {
-        if (ticks is < 0 or > 64 || direction is < 0 or >= 8)
+        if (ticks is < 0 or > NativeCompatibilityLimits.MaximumNativeMonsterRetreatTicks || direction is < 0 or >= 8)
             throw new ArgumentOutOfRangeException(nameof(ticks));
         BatRetreatTicks = ticks;
         BatRetreatDirection = direction;
@@ -871,13 +872,13 @@ public sealed class AuthoritativeCombatTarget
 
     internal void AdvanceBatMovementIdle()
     {
-        if (BatMovementIdleTicks < 1024)
+        if (BatMovementIdleTicks < NativeCompatibilityLimits.MaximumNativeMonsterAiTimerTicks)
             BatMovementIdleTicks++;
     }
 
     internal void RestoreBatMovementState(int idleTicks, int movementMode)
     {
-        if (idleTicks is < -1 or > 1024)
+        if (idleTicks is < -1 or > NativeCompatibilityLimits.MaximumNativeMonsterAiTimerTicks)
             throw new ArgumentOutOfRangeException(nameof(idleTicks));
         if (movementMode is < -1 or > 3)
             throw new ArgumentOutOfRangeException(nameof(movementMode));
@@ -947,13 +948,13 @@ public sealed class AuthoritativeCombatTarget
 
     internal void AdvanceRangedAvoidanceMovementIdle()
     {
-        if (RangedAvoidanceMovementIdleTicks < 1024)
+        if (RangedAvoidanceMovementIdleTicks < NativeCompatibilityLimits.MaximumNativeMonsterAiTimerTicks)
             RangedAvoidanceMovementIdleTicks++;
     }
 
     internal void RestoreRangedAvoidanceMovementState(int idleTicks, int movementMode)
     {
-        if (idleTicks is < -1 or > 1024)
+        if (idleTicks is < -1 or > NativeCompatibilityLimits.MaximumNativeMonsterAiTimerTicks)
             throw new ArgumentOutOfRangeException(nameof(idleTicks));
         if (movementMode is < -1 or > 3)
             throw new ArgumentOutOfRangeException(nameof(movementMode));
@@ -1076,13 +1077,13 @@ public sealed class AuthoritativeCombatTarget
 
     internal void AdvanceAvoidanceMovementIdle()
     {
-        if (AvoidanceMovementIdleTicks < 1024)
+        if (AvoidanceMovementIdleTicks < NativeCompatibilityLimits.MaximumNativeMonsterAiTimerTicks)
             AvoidanceMovementIdleTicks++;
     }
 
     internal void RestoreAvoidanceMovementState(int idleTicks, int movementMode)
     {
-        if (idleTicks is < -1 or > 1024)
+        if (idleTicks is < -1 or > NativeCompatibilityLimits.MaximumNativeMonsterAiTimerTicks)
             throw new ArgumentOutOfRangeException(nameof(idleTicks));
         if (movementMode is < -1 or > 3)
             throw new ArgumentOutOfRangeException(nameof(movementMode));
@@ -1092,7 +1093,7 @@ public sealed class AuthoritativeCombatTarget
 
     internal void StartSkeletonMeleeDelay(int ticks)
     {
-        if (ticks is < 0 or > 1024)
+        if (ticks is < 0 or > NativeCompatibilityLimits.MaximumNativeMonsterAiTimerTicks)
             throw new ArgumentOutOfRangeException(nameof(ticks));
         SkeletonMeleeDelayTicks = ticks;
     }
@@ -1107,7 +1108,7 @@ public sealed class AuthoritativeCombatTarget
 
     internal void RestoreSkeletonMeleeDelay(int ticks)
     {
-        if (ticks is < 0 or > 1024)
+        if (ticks is < 0 or > NativeCompatibilityLimits.MaximumNativeMonsterAiTimerTicks)
             throw new ArgumentOutOfRangeException(nameof(ticks));
         SkeletonMeleeDelayTicks = ticks;
     }
@@ -1125,13 +1126,13 @@ public sealed class AuthoritativeCombatTarget
 
     internal void AdvanceSkeletonRangedMovementIdle()
     {
-        if (SkeletonRangedMovementIdleTicks < 1024)
+        if (SkeletonRangedMovementIdleTicks < NativeCompatibilityLimits.MaximumNativeMonsterAiTimerTicks)
             SkeletonRangedMovementIdleTicks++;
     }
 
     internal void RestoreSkeletonRangedMovementState(int idleTicks, int movementMode)
     {
-        if (idleTicks is < -1 or > 1024)
+        if (idleTicks is < -1 or > NativeCompatibilityLimits.MaximumNativeMonsterAiTimerTicks)
             throw new ArgumentOutOfRangeException(nameof(idleTicks));
         if (movementMode is < -1 or > 3)
             throw new ArgumentOutOfRangeException(nameof(movementMode));
@@ -1152,13 +1153,13 @@ public sealed class AuthoritativeCombatTarget
 
     internal void AdvanceFatMovementIdle()
     {
-        if (FatMovementIdleTicks < 1024)
+        if (FatMovementIdleTicks < NativeCompatibilityLimits.MaximumNativeMonsterAiTimerTicks)
             FatMovementIdleTicks++;
     }
 
     internal void RestoreFatMovementState(int idleTicks, int movementMode)
     {
-        if (idleTicks is < -1 or > 1024)
+        if (idleTicks is < -1 or > NativeCompatibilityLimits.MaximumNativeMonsterAiTimerTicks)
             throw new ArgumentOutOfRangeException(nameof(idleTicks));
         if (movementMode is < -1 or > 3)
             throw new ArgumentOutOfRangeException(nameof(movementMode));
@@ -1179,13 +1180,13 @@ public sealed class AuthoritativeCombatTarget
 
     internal void AdvanceRhinoMovementIdle()
     {
-        if (RhinoMovementIdleTicks < 1024)
+        if (RhinoMovementIdleTicks < NativeCompatibilityLimits.MaximumNativeMonsterAiTimerTicks)
             RhinoMovementIdleTicks++;
     }
 
     internal void RestoreRhinoMovementState(int idleTicks, int movementMode)
     {
-        if (idleTicks is < -1 or > 1024)
+        if (idleTicks is < -1 or > NativeCompatibilityLimits.MaximumNativeMonsterAiTimerTicks)
             throw new ArgumentOutOfRangeException(nameof(idleTicks));
         if (movementMode is < -1 or > 3)
             throw new ArgumentOutOfRangeException(nameof(movementMode));
@@ -1195,7 +1196,7 @@ public sealed class AuthoritativeCombatTarget
 
     internal void StartRhinoDelay(int ticks)
     {
-        if (ticks is < 0 or > 1024)
+        if (ticks is < 0 or > NativeCompatibilityLimits.MaximumNativeMonsterAiTimerTicks)
             throw new ArgumentOutOfRangeException(nameof(ticks));
         RhinoDelayTicks = ticks;
     }
@@ -1210,14 +1211,14 @@ public sealed class AuthoritativeCombatTarget
 
     internal void RestoreRhinoDelay(int ticks)
     {
-        if (ticks is < 0 or > 1024)
+        if (ticks is < 0 or > NativeCompatibilityLimits.MaximumNativeMonsterAiTimerTicks)
             throw new ArgumentOutOfRangeException(nameof(ticks));
         RhinoDelayTicks = ticks;
     }
 
     internal void StartSkeletonKingDelay(int ticks)
     {
-        if (ticks is < 0 or > 1024)
+        if (ticks is < 0 or > NativeCompatibilityLimits.MaximumNativeMonsterAiTimerTicks)
             throw new ArgumentOutOfRangeException(nameof(ticks));
         SkeletonKingDelayTicks = ticks;
     }
@@ -1232,14 +1233,14 @@ public sealed class AuthoritativeCombatTarget
 
     internal void RestoreSkeletonKingDelay(int ticks)
     {
-        if (ticks is < 0 or > 1024)
+        if (ticks is < 0 or > NativeCompatibilityLimits.MaximumNativeMonsterAiTimerTicks)
             throw new ArgumentOutOfRangeException(nameof(ticks));
         SkeletonKingDelayTicks = ticks;
     }
 
     internal void StartHorkDemonDelay(int ticks)
     {
-        if (ticks is < 0 or > 1024)
+        if (ticks is < 0 or > NativeCompatibilityLimits.MaximumNativeMonsterAiTimerTicks)
             throw new ArgumentOutOfRangeException(nameof(ticks));
         HorkDemonDelayTicks = ticks;
     }
@@ -1254,14 +1255,14 @@ public sealed class AuthoritativeCombatTarget
 
     internal void RestoreHorkDemonDelay(int ticks)
     {
-        if (ticks is < 0 or > 1024)
+        if (ticks is < 0 or > NativeCompatibilityLimits.MaximumNativeMonsterAiTimerTicks)
             throw new ArgumentOutOfRangeException(nameof(ticks));
         HorkDemonDelayTicks = ticks;
     }
 
     internal void StartRangedAvoidanceDelay(int ticks)
     {
-        if (ticks is < 0 or > 1024)
+        if (ticks is < 0 or > NativeCompatibilityLimits.MaximumNativeMonsterAiTimerTicks)
             throw new ArgumentOutOfRangeException(nameof(ticks));
         RangedAvoidanceDelayTicks = ticks;
     }
@@ -1276,14 +1277,14 @@ public sealed class AuthoritativeCombatTarget
 
     internal void RestoreRangedAvoidanceDelay(int ticks)
     {
-        if (ticks is < 0 or > 1024)
+        if (ticks is < 0 or > NativeCompatibilityLimits.MaximumNativeMonsterAiTimerTicks)
             throw new ArgumentOutOfRangeException(nameof(ticks));
         RangedAvoidanceDelayTicks = ticks;
     }
 
     internal void StartSnakeDelay(int ticks)
     {
-        if (ticks is < 0 or > 1024)
+        if (ticks is < 0 or > NativeCompatibilityLimits.MaximumNativeMonsterAiTimerTicks)
             throw new ArgumentOutOfRangeException(nameof(ticks));
         SnakeDelayTicks = ticks;
     }
@@ -1298,14 +1299,14 @@ public sealed class AuthoritativeCombatTarget
 
     internal void RestoreSnakeDelay(int ticks)
     {
-        if (ticks is < 0 or > 1024)
+        if (ticks is < 0 or > NativeCompatibilityLimits.MaximumNativeMonsterAiTimerTicks)
             throw new ArgumentOutOfRangeException(nameof(ticks));
         SnakeDelayTicks = ticks;
     }
 
     internal void StartCounselorDelay(int ticks)
     {
-        if (ticks is < 0 or > 1024)
+        if (ticks is < 0 or > NativeCompatibilityLimits.MaximumNativeMonsterAiTimerTicks)
             throw new ArgumentOutOfRangeException(nameof(ticks));
         CounselorDelayTicks = ticks;
     }
@@ -1320,14 +1321,14 @@ public sealed class AuthoritativeCombatTarget
 
     internal void RestoreCounselorDelay(int ticks)
     {
-        if (ticks is < 0 or > 1024)
+        if (ticks is < 0 or > NativeCompatibilityLimits.MaximumNativeMonsterAiTimerTicks)
             throw new ArgumentOutOfRangeException(nameof(ticks));
         CounselorDelayTicks = ticks;
     }
 
     internal void StartAvoidanceDelay(int ticks)
     {
-        if (ticks is < 0 or > 1024)
+        if (ticks is < 0 or > NativeCompatibilityLimits.MaximumNativeMonsterAiTimerTicks)
             throw new ArgumentOutOfRangeException(nameof(ticks));
         AvoidanceDelayTicks = ticks;
     }
@@ -1342,14 +1343,14 @@ public sealed class AuthoritativeCombatTarget
 
     internal void RestoreAvoidanceDelay(int ticks)
     {
-        if (ticks is < 0 or > 1024)
+        if (ticks is < 0 or > NativeCompatibilityLimits.MaximumNativeMonsterAiTimerTicks)
             throw new ArgumentOutOfRangeException(nameof(ticks));
         AvoidanceDelayTicks = ticks;
     }
 
     internal void StartRangedDelay(int ticks)
     {
-        if (ticks is < 0 or > 1024)
+        if (ticks is < 0 or > NativeCompatibilityLimits.MaximumNativeMonsterAiTimerTicks)
             throw new ArgumentOutOfRangeException(nameof(ticks));
         RangedDelayTicks = ticks;
     }
@@ -1364,14 +1365,14 @@ public sealed class AuthoritativeCombatTarget
 
     internal void RestoreRangedDelay(int ticks)
     {
-        if (ticks is < 0 or > 1024)
+        if (ticks is < 0 or > NativeCompatibilityLimits.MaximumNativeMonsterAiTimerTicks)
             throw new ArgumentOutOfRangeException(nameof(ticks));
         RangedDelayTicks = ticks;
     }
 
     internal void StartMegaDelay(int ticks)
     {
-        if (ticks is < 0 or > 1024)
+        if (ticks is < 0 or > NativeCompatibilityLimits.MaximumNativeMonsterAiTimerTicks)
             throw new ArgumentOutOfRangeException(nameof(ticks));
         MegaDelayTicks = ticks;
     }
@@ -1386,21 +1387,21 @@ public sealed class AuthoritativeCombatTarget
 
     internal void RestoreMegaDelay(int ticks)
     {
-        if (ticks is < 0 or > 1024)
+        if (ticks is < 0 or > NativeCompatibilityLimits.MaximumNativeMonsterAiTimerTicks)
             throw new ArgumentOutOfRangeException(nameof(ticks));
         MegaDelayTicks = ticks;
     }
 
     internal void StartCounselorRetreat(int ticks)
     {
-        if (ticks is < 1 or > 64)
+        if (ticks is < 1 or > NativeCompatibilityLimits.MaximumNativeMonsterRetreatTicks)
             throw new ArgumentOutOfRangeException(nameof(ticks));
         CounselorRetreatTicks = ticks;
     }
 
     internal void RestoreCounselorRetreat(int ticks)
     {
-        if (ticks is < 0 or > 64)
+        if (ticks is < 0 or > NativeCompatibilityLimits.MaximumNativeMonsterRetreatTicks)
             throw new ArgumentOutOfRangeException(nameof(ticks));
         CounselorRetreatTicks = ticks;
     }

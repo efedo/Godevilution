@@ -1103,7 +1103,7 @@ public sealed partial class DiabloSimulation
                 || monster.MaxDamageSpecial < monster.MinDamageSpecial
                 || monster.AggroRange < 0
                 || monster.MonsterLevel < 0
-                || monster.DeathAnimationTicks is < 0 or > 1024
+                || monster.DeathAnimationTicks is < 0 or > NativeCompatibilityLimits.MaximumNativeMonsterDeathAnimationTicks
                 || monster.ExperienceReward > 1_000_000
                 || monster.ToHit is < 0 or > 255
                 || monster.ToHitSpecial is < 0 or > 255
@@ -1124,46 +1124,46 @@ public sealed partial class DiabloSimulation
                 || monster.ActiveForTicks is < 0 or > 255
                 || (!string.IsNullOrEmpty(monster.NativeAi)
                     && !AuthoritativeMonsterTypeCatalog.IsValidNativeAi(monster.NativeAi))
-                || monster.FallenFearTicks is < 0 or > 1024
+                || monster.FallenFearTicks is < 0 or > NativeCompatibilityLimits.MaximumNativeMonsterAiTimerTicks
                 || monster.FallenFearDirection is < 0 or >= 8
                 || monster.FallenStandAnimationFrame is < 0 or > 127
                 || monster.FallenStandAnimationTick is < 0 or > 127
                 || monster.FallenRallyTicks is < 0 or > 4096
                 || monster.Direction is < 0 or >= 8
                 || monster.DialogueMessageId is < 0 or > short.MaxValue
-                || monster.SneakRetreatTicks is < 0 or > 64
-                || monster.ScavengerHealingTicks is < 0 or > 64
-                || monster.BatRetreatTicks is < 0 or > 64
+                || monster.SneakRetreatTicks is < 0 or > NativeCompatibilityLimits.MaximumNativeMonsterShortTimerTicks
+                || monster.ScavengerHealingTicks is < 0 or > NativeCompatibilityLimits.MaximumNativeMonsterShortTimerTicks
+                || monster.BatRetreatTicks is < 0 or > NativeCompatibilityLimits.MaximumNativeMonsterRetreatTicks
                 || monster.BatRetreatDirection is < 0 or >= 8
-                || monster.BatMovementIdleTicks is < -1 or > 1024
+                || monster.BatMovementIdleTicks is < -1 or > NativeCompatibilityLimits.MaximumNativeMonsterAiTimerTicks
                 || monster.BatMovementMode is < -1 or > 3
                 || monster.RangedAvoidanceMoveTicks is < -1 or > 255
                 || monster.RangedAvoidanceTurn is < 0 or > 1
-                || monster.RangedAvoidanceMovementIdleTicks is < -1 or > 1024
+                || monster.RangedAvoidanceMovementIdleTicks is < -1 or > NativeCompatibilityLimits.MaximumNativeMonsterAiTimerTicks
                 || monster.RangedAvoidanceMovementMode is < -1 or > 3
                 || monster.RhinoMovementTicks is < -1 or > 255
                 || monster.RhinoMovementTurn is < 0 or > 1
                 || monster.AvoidanceMovementTicks is < -1 or > 255
                 || monster.AvoidanceMovementTurn is < 0 or > 1
-                || monster.AvoidanceMovementIdleTicks is < -1 or > 1024
+                || monster.AvoidanceMovementIdleTicks is < -1 or > NativeCompatibilityLimits.MaximumNativeMonsterAiTimerTicks
                 || monster.AvoidanceMovementMode is < -1 or > 3
-                || monster.SkeletonMeleeDelayTicks is < 0 or > 1024
-                || monster.SkeletonRangedMovementIdleTicks is < -1 or > 1024
+                || monster.SkeletonMeleeDelayTicks is < 0 or > NativeCompatibilityLimits.MaximumNativeMonsterAiTimerTicks
+                || monster.SkeletonRangedMovementIdleTicks is < -1 or > NativeCompatibilityLimits.MaximumNativeMonsterAiTimerTicks
                 || monster.SkeletonRangedMovementMode is < -1 or > 3
-                || monster.FatMovementIdleTicks is < -1 or > 1024
+                || monster.FatMovementIdleTicks is < -1 or > NativeCompatibilityLimits.MaximumNativeMonsterAiTimerTicks
                 || monster.FatMovementMode is < -1 or > 3
-                || monster.RhinoMovementIdleTicks is < -1 or > 1024
+                || monster.RhinoMovementIdleTicks is < -1 or > NativeCompatibilityLimits.MaximumNativeMonsterAiTimerTicks
                 || monster.RhinoMovementMode is < -1 or > 3
-                || monster.RhinoDelayTicks is < 0 or > 1024
-                || monster.SkeletonKingDelayTicks is < 0 or > 1024
-                || monster.HorkDemonDelayTicks is < 0 or > 1024
-                || monster.RangedAvoidanceDelayTicks is < 0 or > 1024
-                || monster.SnakeDelayTicks is < 0 or > 1024
-                || monster.CounselorDelayTicks is < 0 or > 1024
-                || monster.AvoidanceDelayTicks is < 0 or > 1024
-                || monster.RangedDelayTicks is < 0 or > 1024
-                || monster.MegaDelayTicks is < 0 or > 1024
-                || monster.CounselorRetreatTicks is < 0 or > 64
+                || monster.RhinoDelayTicks is < 0 or > NativeCompatibilityLimits.MaximumNativeMonsterAiTimerTicks
+                || monster.SkeletonKingDelayTicks is < 0 or > NativeCompatibilityLimits.MaximumNativeMonsterAiTimerTicks
+                || monster.HorkDemonDelayTicks is < 0 or > NativeCompatibilityLimits.MaximumNativeMonsterAiTimerTicks
+                || monster.RangedAvoidanceDelayTicks is < 0 or > NativeCompatibilityLimits.MaximumNativeMonsterAiTimerTicks
+                || monster.SnakeDelayTicks is < 0 or > NativeCompatibilityLimits.MaximumNativeMonsterAiTimerTicks
+                || monster.CounselorDelayTicks is < 0 or > NativeCompatibilityLimits.MaximumNativeMonsterAiTimerTicks
+                || monster.AvoidanceDelayTicks is < 0 or > NativeCompatibilityLimits.MaximumNativeMonsterAiTimerTicks
+                || monster.RangedDelayTicks is < 0 or > NativeCompatibilityLimits.MaximumNativeMonsterAiTimerTicks
+                || monster.MegaDelayTicks is < 0 or > NativeCompatibilityLimits.MaximumNativeMonsterAiTimerTicks
+                || monster.CounselorRetreatTicks is < 0 or > NativeCompatibilityLimits.MaximumNativeMonsterRetreatTicks
                 || monster.DeathTicksRemaining is < 0
                 || monster.DeathTicksRemaining > monster.DeathAnimationTicks
                 || (monster.HitPointsQ6 > 0 && monster.DeathTicksRemaining != 0)

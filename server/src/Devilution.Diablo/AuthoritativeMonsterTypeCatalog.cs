@@ -1,4 +1,5 @@
 using Devilution.Data;
+using Devilution.Shared;
 
 namespace Devilution.Diablo;
 
@@ -539,7 +540,7 @@ public sealed class AuthoritativeMonsterTypeCatalog
                 || definition.MagicResistanceHell is < -100 or > 100
                 || definition.AcidResistanceHell is < -100 or > 100
                 || definition.AggroRange is < 0 or > 64
-                || definition.DeathAnimationTicks is < 0 or > 1024
+                || definition.DeathAnimationTicks is < 0 or > NativeCompatibilityLimits.MaximumNativeMonsterDeathAnimationTicks
                 || definition.StandAnimationFrames is < 0 or > 127
                 || definition.StandAnimationTicksPerFrame is < 0 or > 127
                 || definition.ExperienceReward > 1_000_000
@@ -559,7 +560,7 @@ public sealed class AuthoritativeMonsterTypeCatalog
                 || definition.SneakDistanceBase is < 0 or > 64
                 || definition.SneakDistanceIntelligenceScale is < 0 or > 64
                 || definition.SneakRetreatReleaseDistance is < 0 or > 64
-                || definition.SneakRetreatTicks is < 0 or > 64
+                || definition.SneakRetreatTicks is < 0 or > NativeCompatibilityLimits.MaximumNativeMonsterShortTimerTicks
                 || ((definition.SneakDistanceBase != 0
                         || definition.SneakDistanceIntelligenceScale != 0
                         || definition.SneakRetreatReleaseDistance != 0
@@ -587,7 +588,7 @@ public sealed class AuthoritativeMonsterTypeCatalog
                     && (definition.BatMovementChanceBase != 0
                         || definition.BatMovementChanceIntelligenceScale != 0
                         || definition.BatMovementFreshChanceBonus != 0))
-                || definition.BatRetreatDurationTicks is < 0 or > 64
+                || definition.BatRetreatDurationTicks is < 0 or > NativeCompatibilityLimits.MaximumNativeMonsterRetreatTicks
                 || definition.SkeletonMeleeDelayChanceBase is < 0 or > 100
                 || definition.SkeletonMeleeDelayChanceIntelligenceScale is < 0 or > 100
                 || ((definition.SkeletonMeleeDelayChanceBase != 0
@@ -610,24 +611,24 @@ public sealed class AuthoritativeMonsterTypeCatalog
                     || definition.SkeletonMeleeAttackDelayRandomRange != 0)
                     && (definition.NativeAi is not ("SkeletonMelee" or "Fallen" or "Snotspill" or "Warlord")
                         || definition.SkeletonMeleeAttackDelayRandomRange <= 0)
-                || definition.AvoidanceDelayBase is < 0 or > 1024
-                || definition.AvoidanceDelayRandomRange is < 0 or > 1024
+                || definition.AvoidanceDelayBase is < 0 or > NativeCompatibilityLimits.MaximumNativeMonsterAiTimerTicks
+                || definition.AvoidanceDelayRandomRange is < 0 or > NativeCompatibilityLimits.MaximumNativeMonsterAiTimerTicks
                 || (definition.AvoidanceDelayBase != 0
                     || definition.AvoidanceDelayRandomRange != 0)
                     && (definition.NativeAi is not ("GoatMelee" or "Gargoyle" or "Gharbad")
                         || definition.AvoidanceDelayBase <= 0
                         || definition.AvoidanceDelayRandomRange <= 0)
-                || definition.CounselorDelayBase is < 0 or > 1024
-                || definition.CounselorDelayIntelligenceScale is < 0 or > 1024
-                || definition.CounselorDelayRandomRange is < 0 or > 1024
+                || definition.CounselorDelayBase is < 0 or > NativeCompatibilityLimits.MaximumNativeMonsterAiTimerTicks
+                || definition.CounselorDelayIntelligenceScale is < 0 or > NativeCompatibilityLimits.MaximumNativeMonsterAiTimerTicks
+                || definition.CounselorDelayRandomRange is < 0 or > NativeCompatibilityLimits.MaximumNativeMonsterAiTimerTicks
                 || (definition.CounselorDelayBase != 0
                     || definition.CounselorDelayIntelligenceScale != 0
                     || definition.CounselorDelayRandomRange != 0)
                     && (definition.NativeAi is not ("Counselor" or "Zhar" or "Lazarus")
                         || definition.CounselorDelayBase <= 0
                         || definition.CounselorDelayRandomRange <= 0)
-                || definition.CounselorAttackDelayBase is < 0 or > 1024
-                || definition.CounselorAttackDelayRandomRange is < 0 or > 1024
+                || definition.CounselorAttackDelayBase is < 0 or > NativeCompatibilityLimits.MaximumNativeMonsterAiTimerTicks
+                || definition.CounselorAttackDelayRandomRange is < 0 or > NativeCompatibilityLimits.MaximumNativeMonsterAiTimerTicks
                 || (definition.CounselorAttackDelayBase != 0
                     || definition.CounselorAttackDelayRandomRange != 0)
                     && (definition.NativeAi is not ("Counselor" or "Zhar" or "Lazarus")
@@ -829,7 +830,7 @@ public sealed class AuthoritativeMonsterTypeCatalog
                         || definition.GargoyleHealDivisorRandomOffset != 0)
                     && (definition.GargoyleHealDivisorMultiplier <= 0
                         || definition.GargoyleHealDivisorRandomRange <= 0))
-                || definition.ScavengerHealingDurationTicks is < 0 or > 64
+                || definition.ScavengerHealingDurationTicks is < 0 or > NativeCompatibilityLimits.MaximumNativeMonsterShortTimerTicks
                 || definition.ScavengerCorpseSearchRadius is < 0 or > 64
                 || definition.ScavengerHellfireHealingDivisor is < 0 or > 256
                 || definition.ScavengerBaseHealingAmount is < 0 or > 256
