@@ -1033,6 +1033,41 @@ TEST(ReplayFixture, ExecutesRangedElementalArrowAttackAgainstCSharpCheckpoint)
 	EXPECT_EQ(rangedClassCriticalDemonState.projectiles[0].damageQ6, 2688);
 	EXPECT_EQ(rangedClassCriticalDemonState.randomState, 2071244549U);
 	EXPECT_EQ(rangedClassCriticalDemonResult.transitions[0].stateSha256, rangedClassCriticalDemonFixture.checkpoints.back().stateSha256);
+
+	std::ifstream rangedClassMultipleArrowsFile("test/fixtures/replay/gameplay-ranged-class-multiple-arrows-hit-seeds.json");
+	ASSERT_TRUE(rangedClassMultipleArrowsFile.good());
+	const std::string rangedClassMultipleArrowsJson((std::istreambuf_iterator<char>(rangedClassMultipleArrowsFile)), std::istreambuf_iterator<char>());
+	ReplayFixture rangedClassMultipleArrowsFixture;
+	ASSERT_TRUE(ParseReplayFixture(rangedClassMultipleArrowsJson, rangedClassMultipleArrowsFixture, error)) << error;
+	ReplayFixtureExecutionState rangedClassMultipleArrowsState;
+	rangedClassMultipleArrowsState.characterClassId = static_cast<uint32_t>(rangedClassMultipleArrowsFixture.initialState.characterClass);
+	rangedClassMultipleArrowsState.attributes[0] = rangedClassMultipleArrowsFixture.initialState.strength;
+	rangedClassMultipleArrowsState.attributes[1] = rangedClassMultipleArrowsFixture.initialState.strength;
+	rangedClassMultipleArrowsState.attributes[2] = rangedClassMultipleArrowsFixture.initialState.magic;
+	rangedClassMultipleArrowsState.attributes[3] = rangedClassMultipleArrowsFixture.initialState.magic;
+	rangedClassMultipleArrowsState.attributes[4] = rangedClassMultipleArrowsFixture.initialState.dexterity;
+	rangedClassMultipleArrowsState.attributes[5] = rangedClassMultipleArrowsFixture.initialState.dexterity;
+	rangedClassMultipleArrowsState.attributes[6] = rangedClassMultipleArrowsFixture.initialState.vitality;
+	rangedClassMultipleArrowsState.attributes[7] = rangedClassMultipleArrowsFixture.initialState.vitality;
+	rangedClassMultipleArrowsState.characterLevel = rangedClassMultipleArrowsFixture.initialState.characterLevel;
+	rangedClassMultipleArrowsState.life = rangedClassMultipleArrowsFixture.initialState.life;
+	rangedClassMultipleArrowsState.lifeMaximum = rangedClassMultipleArrowsFixture.initialState.life;
+	rangedClassMultipleArrowsState.mana = rangedClassMultipleArrowsFixture.initialState.mana;
+	rangedClassMultipleArrowsState.manaMaximum = rangedClassMultipleArrowsFixture.initialState.manaMaximum;
+	rangedClassMultipleArrowsState.positionX = rangedClassMultipleArrowsFixture.initialState.positionX;
+	rangedClassMultipleArrowsState.positionY = rangedClassMultipleArrowsFixture.initialState.positionY;
+	ReplayFixtureExecutionResult rangedClassMultipleArrowsResult;
+	ASSERT_TRUE(ExecuteReplayFixture(rangedClassMultipleArrowsFixture, rangedClassMultipleArrowsState, rangedClassMultipleArrowsResult, error)) << error;
+	ASSERT_EQ(rangedClassMultipleArrowsState.projectiles.size(), 3U);
+	EXPECT_FALSE(rangedClassMultipleArrowsState.projectiles[0].attackHit);
+	EXPECT_EQ(rangedClassMultipleArrowsState.projectiles[0].damageQ6, 0);
+	EXPECT_TRUE(rangedClassMultipleArrowsState.projectiles[1].attackHit);
+	EXPECT_EQ(rangedClassMultipleArrowsState.projectiles[1].damage, 1);
+	EXPECT_EQ(rangedClassMultipleArrowsState.projectiles[1].damageQ6, 64);
+	EXPECT_FALSE(rangedClassMultipleArrowsState.projectiles[2].attackHit);
+	EXPECT_EQ(rangedClassMultipleArrowsState.projectiles[2].damageQ6, 0);
+	EXPECT_EQ(rangedClassMultipleArrowsState.randomState, 2867233980U);
+	EXPECT_EQ(rangedClassMultipleArrowsResult.transitions[0].stateSha256, rangedClassMultipleArrowsFixture.checkpoints.back().stateSha256);
 }
 
 TEST(ReplayFixture, ExecutesBaseContentPurchaseAndSaleAgainstCSharpCheckpoints)

@@ -3686,7 +3686,8 @@ void CreateReplayWeaponArrow(
 		    95);
 		const uint32_t hitSeed = static_cast<uint32_t>(tick)
 		    ^ targetEntityId
-		    ^ state.entityId;
+		    ^ (state.entityId == 0 ? 1U : state.entityId)
+		    ^ arrowIndex;
 		attackHit = (hitSeed * 1664525U + 1013904223U) % 100U < static_cast<uint32_t>(hitChance);
 		if (!attackHit)
 			damage = 0;
