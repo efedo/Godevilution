@@ -40,9 +40,11 @@ quest-variable transition, and the authored Halls optic-amulet and Gateway
 Blood Stone rewards. The Halls of the Blind, Gateway of Blood, and Warlord
 rooms are now availability-gated native-DUN fragments with explicit validated
 Cathedral, Catacombs, and Hell anchors; their book templates inherit those
-fragment anchors. Native random-chamber selection, post-activation map
-replacement, and licensed collision replacement remain deferred, and no server
-path infers those values from a native object ID.
+fragment anchors. Gateway's initial fragment is the native pre-pedestal
+blood1.dun; its validated blood2.dun post-pedestal asset remains staged until
+the server-owned pedestal transition is authored. Native random-chamber
+selection, post-activation map replacement, and licensed collision replacement
+remain deferred, and no server path infers those values from a native object ID.
 
 The staged unique-monster dialogue catalog also owns combat admission while a
 matching conversation stage is pending. Older packs without a staged route

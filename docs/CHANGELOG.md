@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Corrected the Gateway fragment to use the native pre-pedestal blood1.dun
+  layer while retaining the validated blood2.dun post-pedestal asset for the
+  next server-owned activation seam.
+
 - Externalized the Halls of the Blind and Gateway of Blood rooms as
   availability-gated native-DUN fragments with explicit Cathedral/Catacombs
   anchors and server-owned book-template placements. This advances the active

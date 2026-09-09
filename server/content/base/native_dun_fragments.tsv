@@ -2,4 +2,4 @@ fragment_id	level_id	level_symbol	asset_path	anchor_entity_id	anchor_unique_iden
 1	4	hell	levels/l1data/banner1.dun	0	Snotspill	-11	-9	none	none			0	none
 2	4	hell	levels/l4data/warlord.dun	0		0	0	none	none	12	12	3012	warlord_of_blood
 3	1	cathedral	levels/l2data/blind1.dun	0		0	0	none	none	8	8	3009	halls_of_the_blind
-4	2	catacombs	levels/l2data/blood2.dun	0		0	0	none	none	10	4	3010	valor
+4	2	catacombs	levels/l2data/blood1.dun	0		0	0	none	none	10	4	3010	valor

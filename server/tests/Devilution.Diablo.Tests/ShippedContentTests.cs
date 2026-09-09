@@ -805,6 +805,7 @@ public sealed class ShippedContentTests
             pack.Assets.Single(asset => asset.SourcePath == halls.AssetPath).Contents.Length);
 
         var gateway = fragments.Single(definition => definition.FragmentId == 4);
+        Assert.Equal("levels/l2data/blood1.dun", gateway.AssetPath);
         Assert.Equal((2U, "catacombs", 10, 4, 3010U, "valor"), (
             gateway.LevelId,
             gateway.LevelSymbol,
@@ -815,6 +816,14 @@ public sealed class ShippedContentTests
         Assert.Equal(
             5444,
             pack.Assets.Single(asset => asset.SourcePath == gateway.AssetPath).Contents.Length);
+        var initialGateway = AuthoritativeDunMapAsset.Load(
+            gateway.AssetPath,
+            pack.Assets.Single(asset => asset.SourcePath == gateway.AssetPath).Contents);
+        Assert.DoesNotContain(initialGateway.MonsterLayer, value => value != 0);
+        var activatedGateway = AuthoritativeDunMapAsset.Load(
+            "levels/l2data/blood2.dun",
+            pack.Assets.Single(asset => asset.SourcePath == "levels/l2data/blood2.dun").Contents);
+        Assert.Equal(22, activatedGateway.MonsterLayer.Count(value => value != 0));
     }
 
     [Fact]
@@ -884,6 +893,53 @@ public sealed class ShippedContentTests
     }
 
     [Fact]
+    public void QuestUnavailableStateSuppressesGatedCatacombsRooms()
+    {
+        var contentRoot = Path.Combine(FindRepositoryRoot(), "server", "content", "base");
+        var basePack = ContentPackLoader.LoadManifestDirectory(contentRoot);
+        var questStates = basePack.Tables.Single(table => table.SourcePath == "quests.tsv");
+        var unavailableStates = string.Join(
+            '\n',
+            questStates.ToCanonicalTsv()
+                .Split('\n')
+                .Select(line => {
+                    if (!line.StartsWith("3009\t", StringComparison.Ordinal)
+                        && !line.StartsWith("3010\t", StringComparison.Ordinal)) {
+                        return line;
+                    }
+                    var columns = line.Split('\t');
+                    columns[7] = "true";
+                    return string.Join('\t', columns);
+                }));
+        var modifiedPack = new ContentPack(
+            basePack.Id,
+            basePack.Version,
+            basePack.Tables
+                .Select(table => table.SourcePath == questStates.SourcePath
+                    ? TsvTable.Parse(questStates.SourcePath, unavailableStates)
+                    : table)
+                .ToArray(),
+            [],
+            [],
+            basePack.Schema,
+            basePack.DependencyConstraints,
+            basePack.Assets);
+
+        var activation = DiabloModule.Instance.ContentBootstrap.Activate(
+            ComposedContent.Compose(new ContentManifest("unavailable-catacombs", "1", [modifiedPack])),
+            gameMode: DiabloGameMode.Multiplayer);
+
+        Assert.DoesNotContain(
+            activation.Simulation.WorldState.Objects.Values,
+            @object => @object.EntityId is 2020 or 2021);
+        foreach (var levelId in new uint[] { 1, 2 }) {
+            var level = activation.Simulation.WorldState.World!.Levels
+                .Single(candidate => candidate.LevelId == levelId);
+            Assert.DoesNotContain(level.NativeMonsterLayer, value => value is 12 or 28);
+        }
+    }
+
+    [Fact]
     public void AvailableCatacombsQuestActivationMaterializesTheBlindAndBloodRooms()
     {
         var contentRoot = Path.Combine(FindRepositoryRoot(), "server", "content", "base");
@@ -911,7 +967,7 @@ public sealed class ShippedContentTests
             gatewayBook.QuestId));
         var catacombs = activation.Simulation.WorldState.World!.Levels
             .Single(candidate => candidate.LevelId == 2);
-        Assert.Equal(22, catacombs.NativeMonsterLayer.Count(value => value is 12 or 28));
+        Assert.DoesNotContain(catacombs.NativeMonsterLayer, value => value is 12 or 28);
     }
 
     [Fact]
@@ -4192,7 +4248,7 @@ public sealed class ShippedContentTests
         Assert.Equal("Zombie", hellfireMonster.NativeAi);
         Assert.Equal(0, hellfireMonster.Intelligence);
         Assert.Equal(11, hellfireMonster.MaxHitPoints);
-        Assert.Equal(31, activation.Simulation.WorldState.CombatTargets.Count);
+        Assert.Equal(9, activation.Simulation.WorldState.CombatTargets.Count);
         Assert.Contains(
             activation.Simulation.WorldState.CombatTargets.Values,
             target => target.LevelId == 4 && target.IsUnique && target.MonsterId == 140);
