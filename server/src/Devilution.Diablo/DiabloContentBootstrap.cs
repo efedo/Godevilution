@@ -42,7 +42,6 @@ public sealed record DiabloContentActivation
         AuthoritativeSetLevelMapCatalog? setLevelMaps = null,
         AuthoritativeNativeDunObjectCatalog? nativeDunObjects = null,
         AuthoritativeNativeDunFragmentCatalog? nativeDunFragments = null,
-        AuthoritativeNativeDunGeometryCatalog? nativeDunGeometry = null,
         AuthoritativeNativeDunFragmentObjectCatalog? nativeDunFragmentObjects = null,
         AuthoritativeQuestSequenceVariantCatalog? questSequenceVariants = null,
         AuthoritativeUniqueMonsterPlacementCatalog? uniqueMonsterPlacements = null,
@@ -53,7 +52,8 @@ public sealed record DiabloContentActivation
         AuthoritativeNativeMissileCatalog? nativeMissiles = null,
         AuthoritativeNativeMissileSpriteCatalog? nativeMissileSprites = null,
         AuthoritativeMonsterSpawnPolicyCatalog? monsterSpawnPolicies = null,
-        AuthoritativeTownerGreetingCatalog? townerGreetings = null)
+        AuthoritativeTownerGreetingCatalog? townerGreetings = null,
+        AuthoritativeNativeDunGeometryCatalog? nativeDunGeometry = null)
     {
         Simulation = simulation ?? throw new ArgumentNullException(nameof(simulation));
         StoreRules = storeRules ?? throw new ArgumentNullException(nameof(storeRules));
@@ -1373,7 +1373,6 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
             setLevelMaps,
             nativeDunObjects,
             nativeDunFragments,
-            nativeDunGeometry,
             nativeDunFragmentObjects,
             questSequenceVariants,
             uniqueMonsterPlacements,
@@ -1384,7 +1383,8 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
             nativeMissiles,
             nativeMissileSprites,
             monsterSpawnPolicies,
-            townerGreetings);
+            townerGreetings,
+            nativeDunGeometry: nativeDunGeometry);
     }
 
     private static IReadOnlySet<(int X, int Y)> GetReservedPositions(

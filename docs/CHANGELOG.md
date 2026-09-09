@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Kept the new shared native-geometry catalog additive at the end of the
+  `DiabloContentActivation` constructor so existing positional callers remain
+  source-compatible while activation exposes the validated catalog.
+
 - Added the optional validated `native_dun_piece_definitions.tsv` and
   `native_dun_tile_properties.tsv` tables. Ordinary native DUN levels, deferred
   fragments, and set-level maps can now materialize shared d-piece collision
