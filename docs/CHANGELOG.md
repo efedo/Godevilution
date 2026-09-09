@@ -4,6 +4,9 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Corrected the first two Acid puddle replay checkpoints, which had been stored
+  as malformed 65-character hashes; the managed and compact native runners now
+  validate the same canonical tick-1 and tick-2 state hashes.
 - Added primary MonsterMagic impact coverage for usable equipment GetHit and
   Mana Shield absorption across the managed and compact native runners.
 - Added primary MonsterMagic resistance coverage proving usable magic

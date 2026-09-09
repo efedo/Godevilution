@@ -2,6 +2,10 @@
 
 Status date: 2026-09-09
 
+The primary Acid puddle fixture now carries valid 64-character tick-1 and
+tick-2 checkpoint hashes. Both replay runners validate those intermediate
+states instead of silently treating the malformed values as non-hash labels.
+
 The class-aware Monk replay lanes now preserve authored level IDs, Hellfire
 combat rules, and native base/current attribute semantics in the managed Bone
 Spirit and Hork Spawn harnesses. The two remaining secondary-Monk fixtures now
