@@ -420,6 +420,45 @@ public sealed class DiabloSimulationTests
     }
 
     [Fact]
+    public void SnapshotRoundTripRestoresProceduralQuestOriginAnchoredMutation()
+    {
+        var mutationCatalog = new AuthoritativeWorldMutationCatalog([
+            new AuthoritativeWorldMutation(
+                7,
+                1,
+                geometryRectanglesAdd: [new AuthoritativeWorldMutationRectangle(0, 0, 1, 1)],
+                anchorProceduralQuestPieceOriginId: 2201),
+        ]);
+        var world = new AuthoritativeWorld();
+        world.AddLevel(new AuthoritativeLevel(0, 16, 16));
+        world.AddLevel(new AuthoritativeLevel(1, 16, 16));
+        var origins = new Dictionary<uint, AuthoritativeProceduralQuestPieceOrigin> {
+            [2201] = new(1, 4, 5),
+        };
+        var source = DiabloSimulationFactory.Instance.Create(
+            new DiabloSimulationOptions(new StoreCatalog(), DiabloModule.Instance.Rules) {
+                World = world,
+                WorldMutations = mutationCatalog,
+            });
+        source.PublishProceduralQuestPieceOrigin(2201, origins[2201]);
+        Assert.True(source.WorldState.ApplyWorldMutation(7));
+        var snapshot = source.CaptureSnapshot(CreatePlayer(), 3);
+
+        var restoredWorld = new AuthoritativeWorld();
+        restoredWorld.AddLevel(new AuthoritativeLevel(0, 16, 16));
+        restoredWorld.AddLevel(new AuthoritativeLevel(1, 16, 16));
+        var replacement = DiabloSimulationFactory.Instance.Create(
+            new DiabloSimulationOptions(new StoreCatalog(), DiabloModule.Instance.Rules) {
+                World = restoredWorld,
+                WorldMutations = mutationCatalog,
+            });
+        replacement.RestoreSnapshot(CreatePlayer(), snapshot);
+
+        Assert.Contains(7U, replacement.WorldState.ActiveWorldMutationIds);
+        Assert.False(replacement.WorldState.IsWalkable(1, 4, 5));
+    }
+
+    [Fact]
     public void FailedSnapshotRestoreRetainsSetLevelMutationProjection()
     {
         var mutationCatalog = new AuthoritativeWorldMutationCatalog([

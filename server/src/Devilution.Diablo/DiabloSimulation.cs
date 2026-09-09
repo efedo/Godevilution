@@ -353,6 +353,8 @@ public sealed class DiabloSimulationFactory : IDiabloSimulationFactory
             townerGreetings: options.TownerGreetings,
             nativeDunGeometry: options.NativeDunGeometry);
         worldState.SetSetLevelOriginResolver(simulation.ResolveSetLevelObjectOrigin);
+        worldState.SetProceduralQuestPieceOriginResolver(
+            simulation.ResolveProceduralQuestPieceOrigin);
         worldCommands.SetSetLevelOriginResolver(simulation.ResolveSetLevelObjectOrigin);
         return simulation;
     }

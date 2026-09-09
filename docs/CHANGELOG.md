@@ -21,6 +21,10 @@ All notable changes to this fork are documented below.
   It publishes deterministic ordinary-level quest-piece origins independently
   of fixed native set-level IDs and persists them through saves and snapshots.
 
+- Extended `world_mutations.tsv` with mutually exclusive procedural quest-origin
+  anchors, allowing ordinary-level geometry overlays to consume published
+  quest-piece origins without reusing fixed native set-level identities.
+
 - Kept the new shared native-geometry catalog additive at the end of the
   `DiabloContentActivation` constructor so existing positional callers remain
   source-compatible while activation exposes the validated catalog.

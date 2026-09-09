@@ -174,7 +174,8 @@ public sealed class AuthoritativeWorldMutation
         uint megaTileCopySourceLevelId = 0,
         IEnumerable<AuthoritativeWorldMutationRectangle>? megaTileCopyRectangles = null,
         IEnumerable<AuthoritativeWorldMutationPieceProperty>? piecePropertyOverrides = null,
-        int anchorSetLevelId = -1)
+        int anchorSetLevelId = -1,
+        uint anchorProceduralQuestPieceOriginId = 0)
     {
         if (mutationId == 0)
             throw new ArgumentOutOfRangeException(nameof(mutationId));
@@ -186,15 +187,17 @@ public sealed class AuthoritativeWorldMutation
             throw new ArgumentOutOfRangeException(nameof(anchorSetLevelId));
         if ((AnchorEntityId != 0 ? 1 : 0)
             + (AnchorUniqueIdentity.Length != 0 ? 1 : 0)
-            + (anchorSetLevelId >= 0 ? 1 : 0) > 1)
+            + (anchorSetLevelId >= 0 ? 1 : 0)
+            + (anchorProceduralQuestPieceOriginId != 0 ? 1 : 0) > 1)
             throw new InvalidDataException(
                 "A world mutation cannot use more than one anchor kind.");
         if (!NativeTextLimits.IsIdentityWithinLimit(AnchorUniqueIdentity))
             throw new ArgumentOutOfRangeException(nameof(anchorUniqueIdentity));
         if (AnchorEntityId == 0 && AnchorUniqueIdentity.Length == 0 && anchorSetLevelId < 0
+            && anchorProceduralQuestPieceOriginId == 0
             && (anchorMegaOffsetX != 0 || anchorMegaOffsetY != 0)) {
             throw new InvalidDataException(
-                "Mega-tile anchor offsets require an object, unique-identity, or set-level anchor.");
+                "Mega-tile anchor offsets require an object, unique-identity, set-level, or procedural quest-piece anchor.");
         }
         if (anchorMegaOffsetX is < -255 or > 255)
             throw new ArgumentOutOfRangeException(nameof(anchorMegaOffsetX));
@@ -203,6 +206,7 @@ public sealed class AuthoritativeWorldMutation
         AnchorMegaOffsetX = anchorMegaOffsetX;
         AnchorMegaOffsetY = anchorMegaOffsetY;
         AnchorSetLevelId = anchorSetLevelId;
+        AnchorProceduralQuestPieceOriginId = anchorProceduralQuestPieceOriginId;
         CreateTransparencyLayer = createTransparencyLayer;
         GeometryRectanglesAdd = NormalizeRectangles(geometryRectanglesAdd);
         GeometryRectanglesRemove = NormalizeRectangles(geometryRectanglesRemove);
@@ -246,6 +250,9 @@ public sealed class AuthoritativeWorldMutation
 
     /** Optional published set-level origin used as the mutation coordinate origin. */
     public int AnchorSetLevelId { get; }
+
+    /** Optional published ordinary-level quest-piece origin used as the mutation coordinate origin. */
+    public uint AnchorProceduralQuestPieceOriginId { get; }
 
     /** World-cell offsets used to resolve an anchored mega-tile origin. */
     public int AnchorMegaOffsetX { get; }
@@ -390,7 +397,8 @@ public sealed class AuthoritativeWorldMutation
         var originY = 0;
         if (AnchorEntityId != 0
             || AnchorUniqueIdentity.Length != 0
-            || AnchorSetLevelId >= 0) {
+            || AnchorSetLevelId >= 0
+            || AnchorProceduralQuestPieceOriginId != 0) {
             var translatedX = checked(anchorX + AnchorMegaOffsetX);
             var translatedY = checked(anchorY + AnchorMegaOffsetY);
             if ((translatedX & 1) != 0 || (translatedY & 1) != 0)
@@ -609,7 +617,9 @@ public sealed class AuthoritativeWorldMutationCatalog
                 }
             }
             var anchor = ResolveAnchor(mutation, objects, combatTargets, level);
-            if ((mutation.AnchorUniqueIdentity.Length != 0 || mutation.AnchorSetLevelId >= 0)
+            if ((mutation.AnchorUniqueIdentity.Length != 0
+                    || mutation.AnchorSetLevelId >= 0
+                    || mutation.AnchorProceduralQuestPieceOriginId != 0)
                 && anchor is null)
                 // Dynamic anchors may be materialized after content activation;
                 // the simulation validates the resolved position.
@@ -745,7 +755,8 @@ public sealed class AuthoritativeWorldMutationCatalog
                 row.OptionalUInt32("mega_tile_copy_source_level_id"),
                 ParseRectangles(row, "mega_tile_copy_rects"),
                 ParsePiecePropertyOverrides(row),
-                ParseAnchorSetLevelId(row, stableIds))));
+                ParseAnchorSetLevelId(row, stableIds),
+                ParseAnchorProceduralQuestPieceOriginId(row, stableIds))));
     }
 
     private static uint ResolveTargetLevelId(
@@ -795,6 +806,40 @@ public sealed class AuthoritativeWorldMutationCatalog
             "anchor_set_level_symbol");
     }
 
+    private static uint ParseAnchorProceduralQuestPieceOriginId(
+        TsvRow row,
+        StableContentIdCatalog? stableIds)
+    {
+        var numericPresent = HasValue(row, "anchor_procedural_origin_id");
+        var numericId = row.OptionalUInt32("anchor_procedural_origin_id");
+        var symbol = row.TryGet("anchor_procedural_origin_symbol", out var value)
+            && !string.IsNullOrWhiteSpace(value)
+            ? value
+            : string.Empty;
+        if (symbol.Length == 0)
+            return numericId;
+        if (stableIds is null) {
+            if (!numericPresent || numericId == 0)
+                throw new InvalidDataException(
+                    $"World mutation row {row.LineNumber} requires stable IDs to resolve procedural origin '{symbol}'.");
+            return numericId;
+        }
+
+        uint resolvedId;
+        try {
+            resolvedId = stableIds.Resolve("procedural_origin", symbol);
+        } catch (KeyNotFoundException exception) {
+            throw new InvalidDataException(
+                $"World mutation row {row.LineNumber} references unknown procedural origin symbol '{symbol}'.",
+                exception);
+        }
+        if (resolvedId == 0
+            || numericPresent && numericId != resolvedId)
+            throw new InvalidDataException(
+                $"World mutation row {row.LineNumber} contains an invalid procedural origin identity.");
+        return resolvedId;
+    }
+
     private static uint ResolveSetLevelId(
         TsvRow row,
         StableContentIdCatalog? stableIds)
@@ -840,7 +885,8 @@ public sealed class AuthoritativeWorldMutationCatalog
     {
         if (mutation.AnchorEntityId == 0
             && mutation.AnchorUniqueIdentity.Length == 0
-            && mutation.AnchorSetLevelId < 0)
+            && mutation.AnchorSetLevelId < 0
+            && mutation.AnchorProceduralQuestPieceOriginId == 0)
             return null;
         if (mutation.AnchorEntityId != 0) {
             var anchor = objects?.SingleOrDefault(@object =>
@@ -854,7 +900,8 @@ public sealed class AuthoritativeWorldMutationCatalog
             return (anchor.PositionX, anchor.PositionY);
         }
 
-        if (mutation.AnchorSetLevelId >= 0)
+        if (mutation.AnchorSetLevelId >= 0
+            || mutation.AnchorProceduralQuestPieceOriginId != 0)
             return null;
 
         if (combatTargets is null)

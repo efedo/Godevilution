@@ -16,6 +16,7 @@ public sealed class DiabloWorldState
     private readonly IReadOnlyList<AuthoritativeWorldObject> nativeObjectTemplates;
     private readonly bool allowMissingNativeDunLayers;
     private Func<int, AuthoritativeSetLevelObjectOrigin?>? setLevelOriginResolver;
+    private Func<uint, AuthoritativeProceduralQuestPieceOrigin?>? proceduralQuestPieceOriginResolver;
     private readonly Dictionary<uint, AuthoritativeLevel> projectedLevels = [];
     private readonly HashSet<uint> activeWorldMutationIds = [];
     private ulong? lastPortalTick;
@@ -182,6 +183,9 @@ public sealed class DiabloWorldState
             || mutation.AnchorSetLevelId >= 0
                 && (setLevelOriginResolver is null
                     || setLevelOriginResolver(mutation.AnchorSetLevelId) is null)
+            || mutation.AnchorProceduralQuestPieceOriginId != 0
+                && (proceduralQuestPieceOriginResolver is null
+                    || proceduralQuestPieceOriginResolver(mutation.AnchorProceduralQuestPieceOriginId) is null)
             || !activeWorldMutationIds.Add(mutationId)) {
             return WorldMutations?.TryGet(mutationId, out _) == true
                 && activeWorldMutationIds.Contains(mutationId);
@@ -212,6 +216,14 @@ public sealed class DiabloWorldState
     {
         ArgumentNullException.ThrowIfNull(resolver);
         setLevelOriginResolver = resolver;
+        RebuildProjectedGeometry();
+    }
+
+    internal void SetProceduralQuestPieceOriginResolver(
+        Func<uint, AuthoritativeProceduralQuestPieceOrigin?> resolver)
+    {
+        ArgumentNullException.ThrowIfNull(resolver);
+        proceduralQuestPieceOriginResolver = resolver;
         RebuildProjectedGeometry();
     }
 
@@ -607,6 +619,19 @@ public sealed class DiabloWorldState
                 throw new InvalidDataException(
                     $"World mutation {mutation.MutationId} set-level anchor {mutation.AnchorSetLevelId} "
                     + $"is on level {origin.LevelId}, expected {mutation.LevelId}.");
+            return (origin.PositionX, origin.PositionY);
+        }
+
+        if (mutation.AnchorProceduralQuestPieceOriginId != 0) {
+            if (proceduralQuestPieceOriginResolver is null
+                || proceduralQuestPieceOriginResolver(mutation.AnchorProceduralQuestPieceOriginId)
+                    is not { } origin)
+                return null;
+            if (origin.LevelId != mutation.LevelId)
+                throw new InvalidDataException(
+                    $"World mutation {mutation.MutationId} procedural quest-piece origin "
+                    + $"{mutation.AnchorProceduralQuestPieceOriginId} is on level {origin.LevelId}, "
+                    + $"expected {mutation.LevelId}.");
             return (origin.PositionX, origin.PositionY);
         }
 

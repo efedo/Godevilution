@@ -25,6 +25,12 @@ after their runtime origin becomes available.
 The validated catalog is also retained on the content-activation result for
 server hosts that inspect or coordinate deferred geometry publication.
 
+World mutations can now anchor their authored rectangles, transparency, d-piece,
+and mega-tile assignments to a published ordinary-level quest-piece origin via
+`anchor_procedural_origin_id` or its stable symbol. This keeps fixed native
+set-level anchors separate while allowing the same server-owned overlay path to
+drive future quest geometry transitions.
+
 The Godot client now uses a shared authoritative viewport transform for world
 rendering and mouse hit-testing. Small levels are centered, large levels clamp
 to their edges while following the local player, and the transform uses the

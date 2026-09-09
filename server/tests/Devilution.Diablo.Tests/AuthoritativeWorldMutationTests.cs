@@ -637,6 +637,44 @@ public sealed class AuthoritativeWorldMutationTests
     }
 
     [Fact]
+    public void ProceduralQuestOriginAnchoredMutationDefersUntilOriginIsPublished()
+    {
+        var catalog = AuthoritativeWorldMutationCatalog.LoadTsv(
+            "world_mutations.tsv",
+            "mutation_id\tlevel_id\tanchor_procedural_origin_id\tgeometry_rect_add\n"
+                + "7\t1\t2201\t0,0,1,1\n");
+        var mutation = Assert.Single(catalog.Definitions);
+        Assert.Equal(2201U, mutation.AnchorProceduralQuestPieceOriginId);
+
+        var geometry = AuthoritativeWorld.LoadTsv(
+            "levels.tsv",
+            "level_id\twidth\theight\tblocked_cells\n1\t4\t4\tnone\n");
+        var world = new DiabloWorldState(geometry, worldMutations: catalog);
+        world.SetProceduralQuestPieceOriginResolver(_ => null);
+        world.RestoreWorldMutations([7]);
+        Assert.True(world.IsWalkable(1, 0, 0));
+
+        world.SetProceduralQuestPieceOriginResolver(
+            _ => new AuthoritativeProceduralQuestPieceOrigin(1, 2, 2));
+        Assert.False(world.IsWalkable(1, 2, 2));
+    }
+
+    [Fact]
+    public void ProceduralQuestOriginAnchorResolvesStableSymbol()
+    {
+        var stableIds = new StableContentIdCatalog([
+            new StableContentId("procedural_origin", "halls_book", 2201),
+        ]);
+        var catalog = AuthoritativeWorldMutationCatalog.LoadTsv(
+            "world_mutations.tsv",
+            "mutation_id\tlevel_id\tanchor_procedural_origin_symbol\tgeometry_rect_add\n"
+                + "7\t1\thalls_book\t0,0,1,1\n",
+            stableIds);
+
+        Assert.Equal(2201U, Assert.Single(catalog.Definitions).AnchorProceduralQuestPieceOriginId);
+    }
+
+    [Fact]
     public void SetLevelAnchorResolvesStableSymbol()
     {
         var stableIds = new StableContentIdCatalog([
@@ -669,6 +707,11 @@ public sealed class AuthoritativeWorldMutationTests
             1,
             anchorEntityId: 20,
             anchorSetLevelId: 6));
+        Assert.Throws<InvalidDataException>(() => new AuthoritativeWorldMutation(
+            7,
+            1,
+            anchorSetLevelId: 6,
+            anchorProceduralQuestPieceOriginId: 2201));
     }
 
     [Fact]
