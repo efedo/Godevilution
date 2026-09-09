@@ -42,6 +42,7 @@ public sealed record DiabloContentActivation
         AuthoritativeSetLevelMapCatalog? setLevelMaps = null,
         AuthoritativeNativeDunObjectCatalog? nativeDunObjects = null,
         AuthoritativeNativeDunFragmentCatalog? nativeDunFragments = null,
+        AuthoritativeNativeDunGeometryCatalog? nativeDunGeometry = null,
         AuthoritativeNativeDunFragmentObjectCatalog? nativeDunFragmentObjects = null,
         AuthoritativeQuestSequenceVariantCatalog? questSequenceVariants = null,
         AuthoritativeUniqueMonsterPlacementCatalog? uniqueMonsterPlacements = null,
@@ -82,6 +83,7 @@ public sealed record DiabloContentActivation
         SetLevelMaps = setLevelMaps;
         NativeDunObjects = nativeDunObjects;
         NativeDunFragments = nativeDunFragments;
+        NativeDunGeometry = nativeDunGeometry;
         NativeDunFragmentObjects = nativeDunFragmentObjects;
         NativeDunMonsters = nativeDunMonsters;
         QuestSequenceVariants = questSequenceVariants;
@@ -163,6 +165,9 @@ public sealed record DiabloContentActivation
 
     /** Validated native DUN fragments composed into ordinary runtime levels. */
     public AuthoritativeNativeDunFragmentCatalog? NativeDunFragments { get; }
+
+    /** Shared validated native geometry definitions retained by activation. */
+    public AuthoritativeNativeDunGeometryCatalog? NativeDunGeometry { get; }
 
     /** Validated anchor-relative authored objects for native DUN fragments. */
     public AuthoritativeNativeDunFragmentObjectCatalog? NativeDunFragmentObjects { get; }
@@ -1368,6 +1373,7 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
             setLevelMaps,
             nativeDunObjects,
             nativeDunFragments,
+            nativeDunGeometry,
             nativeDunFragmentObjects,
             questSequenceVariants,
             uniqueMonsterPlacements,

@@ -14,6 +14,10 @@ All notable changes to this fork are documented below.
   through simulation construction, later set-level-origin publication, and
   snapshot restore instead of falling back to raw layers after bootstrap.
 
+- Diablo content activation now retains the validated shared native geometry
+  catalog alongside the other content-owned catalogs, keeping the external
+  collision contract visible to server hosts after bootstrap.
+
 - Godot now preserves authoritative native DUN object-layer values in its level
   layout and renders deterministic provenance outlines. These outlines are
   presentation-only; object commands continue to require server-owned entity
