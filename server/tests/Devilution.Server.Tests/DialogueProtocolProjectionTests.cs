@@ -1916,10 +1916,20 @@ public sealed class DialogueProtocolProjectionTests
         AssertRejected(value => value with { QuestTransitionRequiredVariable1 = -2 });
         AssertRejected(value => value with { RewardKind = (AuthoritativeObjectRewardKind)99 });
         AssertRejected(value => value with { RewardItemLevel = 256 });
-        AssertRejected(value => value with { RewardOffsetX = 17 });
+        AssertRejected(value => value with { RewardOffsetX = 33 });
         AssertRejected(value => value with {
             RewardKind = AuthoritativeObjectRewardKind.NormalItem,
         });
+        var nativeBookReward = DiabloProtocolMapper.ToProtocolSnapshot(source with {
+            Objects = [@object with {
+                RewardKind = AuthoritativeObjectRewardKind.NormalItem,
+                RewardId = 2143,
+                RewardItemLevel = 0,
+                RewardOffsetX = 9,
+                RewardOffsetY = 17,
+            }],
+        });
+        Assert.Equal(17, nativeBookReward.Objects.Single().RewardOffsetY);
         AssertRejected(value => value with { ProjectileTargetOffsetX = 33 });
         AssertRejected(value => value with { ProjectileTargetOffsetY = 1 });
         AssertRejected(value => value with {

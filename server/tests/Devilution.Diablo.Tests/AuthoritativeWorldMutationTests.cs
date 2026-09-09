@@ -842,6 +842,23 @@ public sealed class AuthoritativeWorldMutationTests
     }
 
     [Fact]
+    public void ObjectRewardsAcceptTheNativeGatewayBookOffsetEnvelope()
+    {
+        Assert.True(AuthoritativeWorldObject.IsValidReward(
+            AuthoritativeObjectRewardKind.NormalItem,
+            2143,
+            0,
+            9,
+            17));
+        Assert.False(AuthoritativeWorldObject.IsValidReward(
+            AuthoritativeObjectRewardKind.NormalItem,
+            2143,
+            0,
+            33,
+            0));
+    }
+
+    [Fact]
     public void ObjectTableLoadsQuestTransitionRequirements()
     {
         var @object = Assert.Single(AuthoritativeWorldObjectCatalog.LoadTsv(

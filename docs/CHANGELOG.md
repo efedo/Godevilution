@@ -4,6 +4,15 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Externalized the native Halls of the Blind optic-amulet and Gateway of Blood
+  Blood Stone book rewards through validated object templates. Blood Stone is
+  now present in the base item catalog; placement and map replacement remain
+  gated on authored native-DUN geometry.
+
+- Expanded the validated object-reward offset envelope to +/-32 so native
+  Gateway-of-Blood placement at (9,17) remains valid through domain and
+  protocol projection.
+
 - Kept the new shared native-geometry catalog additive at the end of the
   `DiabloContentActivation` constructor so existing positional callers remain
   source-compatible while activation exposes the validated catalog.

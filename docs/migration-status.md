@@ -1371,9 +1371,10 @@ contract unchanged.
 
 The base content pack now includes template-only authoritative behavior rows
 for the Halls of the Blind book, Gateway of Blood book, and Warlord steel tome.
-Their native identities and initial quest-variable transitions are validated by
-the module-owned shipped-content test; native-DUN placement, rewards, and map
-replacement remain deferred pending generated geometry and licensed assets.
+Their native identities, initial quest-variable transitions, and Halls
+optic-amulet/Gateway Blood Stone rewards are validated by the module-owned
+shipped-content test; native-DUN placement and map replacement remain deferred
+pending generated geometry and licensed assets.
 
 Native DUN fragments and fragment-object placements now accept validated
 set-level-origin anchors. The server defers those rows until the corresponding

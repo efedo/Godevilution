@@ -432,8 +432,8 @@ public sealed class AuthoritativeWorldObject
         if (!Enum.IsDefined(kind)
             || !Enum.IsDefined(originKind)
             || rewardItemLevel is < 0 or > byte.MaxValue
-            || rewardOffsetX is < -16 or > 16
-            || rewardOffsetY is < -16 or > 16
+            || rewardOffsetX is < -32 or > 32
+            || rewardOffsetY is < -32 or > 32
             || originKind == AuthoritativeObjectRewardOriginKind.Object && setLevelId != -1
             || originKind == AuthoritativeObjectRewardOriginKind.SetLevelOrigin
                 && setLevelId is < 0 or > 8) {

@@ -59,6 +59,7 @@ item_id	item_symbol	item_type	value	identified_value	min_damage	max_damage	armor
 2132	scroll_of_apocalypse	0	2000	2000	0	0	0	0	0	1	1	0	Misc,Scroll	7	3	21	25	apocalypse	0	0	0	0	113	0	0	ConsumableItem	Scroll of Apocalypse	Scroll of Apocalypse	SCROLL_OF	22	1	true			0	0	None	1	-1	false	0
 2133	scroll_of_identify_fixed	0	200	200	0	0	0	0	0	1	1	0	Misc,Scroll	7	3	21	0		0	0	0	0	26	0	0	None	Scroll of Identify	Scroll of Identify	SCROLL_OF	1	0	true			0	0	Identify	1	-1	false	0
 2134	scroll_of_identify	0	100	100	0	0	0	0	0	1	1	0	Misc,Scroll	7	3	21	0		0	0	0	0	94	0	0	None	Scroll of Identify	Scroll of Identify	SCROLL_OF	1	1	true			0	0	Identify	1	-1	false	0
+2143	blood_stone	0	0	0	0	0	0	0	0	1	1	1	Misc,Quest	7	5	0	0		0	0	0	0	21	0	0	None	Blood Stone	Blood Stone	BLOOD_STONE	0	0	false			0	0	None	1	-1	false	0
 127	dagger	1	60	60	1	4	0	16	16	1	1	1	Weapon,Sword,OneHanded	1	1	0	0		0	0	0	0	118	0	0	None	Dagger	Dagger	DAGGER	1	1	false			0	0	None	1	-1	false	0
 2160	short_sword_standard	1	120	120	2	6	0	24	24	1	1	1	Weapon,Sword,OneHanded	1	1	0	0		0	18	0	0	119	0	0	None	Short Sword	Sword	SHORT_SWORD	1	1	false			0	0	None	1	-1	false	0
 129	falchion	1	250	250	4	8	0	20	20	1	1	1	Weapon,Sword,OneHanded	1	1	0	0		0	30	0	0	120	0	0	None	Falchion	Sword	FALCHION	2	1	false			0	0	None	1	-1	false	0

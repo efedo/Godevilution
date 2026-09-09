@@ -6,6 +6,6 @@ entity_id	object_id	object_symbol	level_id	level_symbol	position_x	position_y	ac
 2012	1		0		0	0	0	3015	chamber_of_bone	GrantSpellLevelAndSpawnProjectile	7		0	0	0	0	1	None	0		0	0	0	guardian	-2	-4	ActivatingPlayer	None	0			false	0	25	None	0	0	0	0	0
 2013	2		0		0	0	0	3015	chamber_of_bone	GrantSpellLevelAndSpawnProjectile	7		0	0	0	0	1	None	0		0	0	0	guardian	-2	-4	ActivatingPlayer	None	0			false	0	25	None	0	0	0	0	0
 2014	3		0		0	0	0	3016	lazarus	WorldMutation	9304		0	0	0	0	1	SpawnSpellProjectile	10		0	10	0		0	0	ActivatingPlayer	ActivateAndSetVariable1	4			true	2	85	None	0	0	0	0	0
-2020	71	halls_of_blind_book	0		0	0	0	3009	halls_of_the_blind	None	0		0	0	0	0	1	None	0		0	0	0		0	0	Object	ActivateAndSetVariable1	1	0		false	0	71	None	0	0	0	0	255
-2021	72	gateway_of_blood_book	0		0	0	0	3010	valor	None	0		0	0	0	0	1	None	0		0	0	0		0	0	Object	ActivateAndSetVariable1	1	0		false	0	72	None	0	0	0	0	254
+2020	71	halls_of_blind_book	0		0	0	0	3009	halls_of_the_blind	None	0		0	0	0	0	1	None	0		0	0	0		0	0	Object	ActivateAndSetVariable1	1	0		false	0	71	UniqueItem	1005	1	5	5	255
+2021	72	gateway_of_blood_book	0		0	0	0	3010	valor	None	0		0	0	0	0	1	None	0		0	0	0		0	0	Object	ActivateAndSetVariable1	1	0		false	0	72	NormalItem	2143	0	9	17	254
 2022	88	warlord_steel_tome	0		0	0	0	3012	warlord_of_blood	None	0		0	0	0	0	1	None	0		0	0	0		0	0	Object	ActivateAndSetVariable1	1	0		false	0	88	None	0	0	0	0	256

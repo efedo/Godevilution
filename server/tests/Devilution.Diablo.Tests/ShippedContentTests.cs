@@ -2222,6 +2222,43 @@ public sealed class ShippedContentTests
     }
 
     [Fact]
+    public void BaseBookTemplatesDeclareAuthoritativeQuestRewards()
+    {
+        var repositoryRoot = FindRepositoryRoot();
+        var basePack = ContentPackLoader.LoadManifestDirectory(
+            Path.Combine(repositoryRoot, "server", "content", "base"));
+        var stableIds = StableContentIdCatalog.LoadTsv(
+            "content_ids.tsv",
+            basePack.Tables.Single(table => table.SourcePath == "content_ids.tsv").ToCanonicalTsv());
+        var items = AuthoritativeItemCatalog.LoadTsv(
+            "items.tsv",
+            basePack.Tables.Single(table => table.SourcePath == "items.tsv").ToCanonicalTsv(),
+            stableIds: stableIds);
+        var objectsTable = basePack.Tables.Single(table => table.SourcePath == "objects.tsv");
+        var templates = AuthoritativeWorldObjectCatalog.LoadTemplates(
+            objectsTable.SourcePath,
+            objectsTable.ToCanonicalTsv(),
+            stableIds);
+
+        var halls = Assert.Single(templates, @object => @object.ObjectId == 71);
+        Assert.Equal(AuthoritativeObjectRewardKind.UniqueItem, halls.RewardKind);
+        Assert.Equal(1005U, halls.RewardId);
+        Assert.Equal((1, 5, 5), (
+            halls.RewardItemLevel,
+            halls.RewardOffsetX,
+            halls.RewardOffsetY));
+
+        var gateway = Assert.Single(templates, @object => @object.ObjectId == 72);
+        Assert.Equal(AuthoritativeObjectRewardKind.NormalItem, gateway.RewardKind);
+        Assert.Equal(stableIds.Resolve("item", "blood_stone"), gateway.RewardId);
+        Assert.Equal((0, 9, 17), (
+            gateway.RewardItemLevel,
+            gateway.RewardOffsetX,
+            gateway.RewardOffsetY));
+        Assert.Equal("Blood Stone", items.GetRequired(gateway.RewardId).Name);
+    }
+
+    [Fact]
     public void ShippedWorldObjectsUseStableObjectSymbols()
     {
         var repositoryRoot = FindRepositoryRoot();

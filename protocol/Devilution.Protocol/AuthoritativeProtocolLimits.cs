@@ -61,8 +61,9 @@ public static class AuthoritativeProtocolLimits
     public const int MaximumNativeMonsterResistance = NativeCompatibilityLimits.MaximumNativeMonsterResistance;
     public const int MaximumNativeQuestByte = byte.MaxValue;
     public const int MinimumNativeOptionalQuestByte = -1;
-    public const int MinimumNativeRewardOffset = -16;
-    public const int MaximumNativeRewardOffset = 16;
+    /** Native quest-book rewards include the Gateway of Blood's +9,+17 spawn. */
+    public const int MinimumNativeRewardOffset = -32;
+    public const int MaximumNativeRewardOffset = 32;
     public const int MinimumNativeObjectOffset = -32;
     public const int MaximumNativeObjectOffset = 32;
     public const int MinimumNativeDirection = -1;

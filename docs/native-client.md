@@ -395,9 +395,10 @@ explicit migration seams, not server-authority claims:
   author their native object identities and initial quest-variable transition;
   presentation metadata also keeps each activated book visible and selects its
   native open-book frame;
-  native-DUN placement, book-specific rewards, and map resynchronization remain
-  deferred until the corresponding generated geometry and licensed assets are
-  available.
+  native-DUN placement and map resynchronization remain deferred until the
+  corresponding generated geometry and licensed assets are available. The
+  Halls optic-amulet and Gateway Blood Stone rewards are server-authored
+  object metadata rather than native-ID client logic.
   The Godot client now consumes that frame metadata and renders an additive
   open-book cue without introducing native object-ID logic into the client.
   It also preserves server-authored missile-only collision cells in the

@@ -73,8 +73,8 @@ public sealed class ProjectilePresentationStyleTests
         Assert.Equal(2, AuthoritativeProtocolLimits.MaximumMonsterLeaderRelation);
         Assert.Equal(255, AuthoritativeProtocolLimits.MaximumNativeQuestByte);
         Assert.Equal(-1, AuthoritativeProtocolLimits.MinimumNativeOptionalQuestByte);
-        Assert.Equal(-16, AuthoritativeProtocolLimits.MinimumNativeRewardOffset);
-        Assert.Equal(16, AuthoritativeProtocolLimits.MaximumNativeRewardOffset);
+        Assert.Equal(-32, AuthoritativeProtocolLimits.MinimumNativeRewardOffset);
+        Assert.Equal(32, AuthoritativeProtocolLimits.MaximumNativeRewardOffset);
         Assert.Equal(-32, AuthoritativeProtocolLimits.MinimumNativeObjectOffset);
         Assert.Equal(32, AuthoritativeProtocolLimits.MaximumNativeObjectOffset);
         Assert.Equal(-1, AuthoritativeProtocolLimits.MinimumNativeDirection);

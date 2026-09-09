@@ -35,10 +35,11 @@ dialogue stages, including the authored Veil of Steel reward and target defeat.
 
 The base pack also carries template-only behavior rows for the native Halls of
 the Blind book, Gateway of Blood book, and Warlord steel tome. These rows own
-their stable object and native presentation identities plus the initial
-quest-variable transition. Native-DUN placement, book-specific rewards, and
-map replacement remain deferred until generated geometry and licensed assets
-are available; no server path infers those values from a native object ID.
+their stable object and native presentation identities, the initial
+quest-variable transition, and the authored Halls optic-amulet and Gateway
+Blood Stone rewards. Native-DUN placement and map replacement remain deferred
+until generated geometry and licensed assets are available; no server path
+infers those values from a native object ID.
 
 The staged unique-monster dialogue catalog also owns combat admission while a
 matching conversation stage is pending. Older packs without a staged route
