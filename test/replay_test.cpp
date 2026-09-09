@@ -85,7 +85,9 @@ void ExecuteClassPhysicalDamageFixture(
 	int32_t expectedVitality,
 	int32_t expectedHitPoints,
 	int32_t expectedMinimumDamage = 4,
-	int32_t expectedMaximumDamage = 4)
+	int32_t expectedMaximumDamage = 4,
+	int32_t expectedTargetPositionX = 1,
+	int32_t expectedTargetPositionY = 0)
 {
 	std::ifstream file(fixturePath);
 	ASSERT_TRUE(file.good());
@@ -124,6 +126,8 @@ void ExecuteClassPhysicalDamageFixture(
 	ASSERT_EQ(result.transitions.size(), 1U);
 	EXPECT_TRUE(result.transitions[0].accepted);
 	EXPECT_EQ(state.combatTargetHitPoints, expectedHitPoints);
+	EXPECT_EQ(state.combatTargetPositionX, expectedTargetPositionX);
+	EXPECT_EQ(state.combatTargetPositionY, expectedTargetPositionY);
 	EXPECT_EQ(result.transitions[0].stateSha256, fixture.checkpoints.back().stateSha256);
 }
 
@@ -571,6 +575,12 @@ TEST(ReplayFixture, ExecutesMonkPhysicalDamageAgainstCSharpCheckpoint)
 {
 	ExecuteClassPhysicalDamageFixture(
 	    "test/fixtures/replay/gameplay-class-physical-damage-monk.json", 3, 25, 25, 20, 93);
+}
+
+TEST(ReplayFixture, ExecutesEquipmentKnockbackAgainstCSharpCheckpoint)
+{
+	ExecuteClassPhysicalDamageFixture(
+	    "test/fixtures/replay/gameplay-class-physical-damage-knockback.json", 1, 20, 30, 20, 94, 4, 4, 2, 0);
 }
 
 TEST(ReplayFixture, ExecutesMonkUnknownHandPhysicalDamageAgainstCSharpCheckpoint)

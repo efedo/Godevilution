@@ -2,6 +2,11 @@
 
 Status date: 2026-09-09
 
+Initialized physical replay now applies usable equipment Knockback in both
+runners. A surviving, non-petrified target moves one valid unoccupied cell
+away from the attacker, with bounds, secondary-player, and object occupancy
+guards reflected in the shared checkpoint.
+
 Ranged physical replay now applies validated usable-equipment StealLife and
 StealMana restoration at the impact boundary in both runners. The new fixture
 covers life/mana caps and a shared post-impact checkpoint, including the

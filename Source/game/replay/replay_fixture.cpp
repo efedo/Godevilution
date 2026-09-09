@@ -41,6 +41,7 @@ constexpr uint32_t FireArrowsFlag = 1U << 3;
 constexpr uint32_t LightningArrowsFlag = 1U << 25;
 constexpr uint32_t RandomArrowVelocityFlag = 1U << 2;
 constexpr uint32_t MultipleArrowsFlag = 1U << 9;
+constexpr uint32_t KnockbackFlag = 1U << 11;
 constexpr uint32_t StealMana3Flag = 1U << 13;
 constexpr uint32_t StealMana5Flag = 1U << 14;
 constexpr uint32_t StealLife3Flag = 1U << 15;
@@ -3543,6 +3544,48 @@ void ApplyReplayEquipmentAttackEffects(
 	state.mana = std::min(state.manaMaximum, state.mana + manaGainQ6);
 }
 
+void ApplyReplayEquipmentKnockback(
+    ReplayFixtureExecutionState &state,
+    int32_t damageQ6)
+{
+	if (damageQ6 <= 0
+	    || state.combatTargetHitPointsQ6 <= 0
+	    || state.combatTargetPetrified
+	    || !HasReplayEquipmentFlag(state, KnockbackFlag))
+		return;
+
+	const int32_t directionX = (state.combatTargetPositionX > state.positionX)
+	    - (state.combatTargetPositionX < state.positionX);
+	const int32_t directionY = (state.combatTargetPositionY > state.positionY)
+	    - (state.combatTargetPositionY < state.positionY);
+	if (directionX == 0 && directionY == 0)
+		return;
+
+	const int32_t destinationX = state.combatTargetPositionX + directionX;
+	const int32_t destinationY = state.combatTargetPositionY + directionY;
+	if (destinationX < 0 || destinationX >= 40 || destinationY < 0 || destinationY >= 40
+	    || (destinationX == state.positionX && destinationY == state.positionY)
+	    || (state.secondaryPlayerEntityId != 0
+	        && state.secondaryPlayerLife > 0
+	        && state.secondaryPlayerLevelId == state.combatTargetLevelId
+	        && destinationX == state.secondaryPlayerPositionX
+	        && destinationY == state.secondaryPlayerPositionY)
+	    || (state.objectEntityId != 0
+	        && !state.objectActivated
+	        && !state.objectDestroyed
+	        && !state.objectMissilePassable
+	        && state.objectLevelId == state.combatTargetLevelId
+	        && destinationX == state.objectPositionX
+	        && destinationY == state.objectPositionY))
+		return;
+
+	state.combatTargetPositionX = destinationX;
+	state.combatTargetPositionY = destinationY;
+	state.combatTargetFuturePositionX = destinationX;
+	state.combatTargetFuturePositionY = destinationY;
+	state.combatTargetMoving = false;
+}
+
 bool HasReplayHellfireEquipmentFlag(
     const ReplayFixtureExecutionState &state,
     int32_t flag)
@@ -3899,6 +3942,7 @@ void ApplyReplayWeaponArrowImpact(
 			state.combatTargetHitPoints = ToWholeCeilingQ6(state.combatTargetHitPointsQ6);
 		}
 	}
+	ApplyReplayEquipmentKnockback(state, damageQ6);
 	ApplyReplayEquipmentAttackEffects(state, damageQ6);
 	if (state.combatTargetHitPointsQ6 <= 0)
 		DefeatReplayCombatTarget(state);
@@ -5797,8 +5841,10 @@ bool ApplyReplayAttack(
 		    state.combatTargetHitPointsQ6 - lightningDamage * 64);
 		state.combatTargetHitPoints = ToWholeCeilingQ6(state.combatTargetHitPointsQ6);
 	}
-	if (damageQ6 > 0)
+	if (damageQ6 > 0) {
+		ApplyReplayEquipmentKnockback(state, damageQ6);
 		ApplyReplayEquipmentAttackEffects(state, damageQ6);
+	}
 	if (state.combatTargetHitPointsQ6 <= 0)
 		DefeatReplayCombatTarget(state);
 	if (attackHit)

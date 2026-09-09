@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Added initialized physical replay coverage for usable equipment Knockback,
+  including non-lethal target relocation and shared canonical checkpoints.
+- Compact native replay now applies validated equipment Knockback after melee
+  and ranged physical hits, respecting petrification, bounds, and occupancy.
 - Added a ranged-impact replay fixture for native StealLife and StealMana
   restoration, including life/mana caps and shared post-impact checkpoints.
 - Compact native replay now applies validated usable-equipment resource effects

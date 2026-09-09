@@ -12,6 +12,7 @@ public sealed class BaseContentReplayTests
 {
     [Theory]
     [InlineData("gameplay-class-physical-damage.json", 1, 94)]
+    [InlineData("gameplay-class-physical-damage-knockback.json", 1, 94)]
     [InlineData("gameplay-class-physical-damage-monk.json", 3, 93)]
     [InlineData("gameplay-class-physical-damage-bard.json", 4, 93)]
     [InlineData("gameplay-class-physical-damage-barbarian.json", 5, 89)]
@@ -107,6 +108,11 @@ public sealed class BaseContentReplayTests
 
         Assert.Equal(CommandStatus.Accepted, Assert.Single(result.Results).Status);
         Assert.Equal(expectedHitPoints, Assert.Single(result.FinalSnapshot.Monsters).HitPoints);
+        if (fixtureName == "gameplay-class-physical-damage-knockback.json") {
+            var monster = Assert.Single(result.FinalSnapshot.Monsters);
+            Assert.Equal(2, monster.PositionX);
+            Assert.Equal(0, monster.PositionY);
+        }
         Assert.Equal(
             fixture.Checkpoints.Select(checkpoint => checkpoint.StateSha256),
             result.Checkpoints.Select(checkpoint => checkpoint.ActualStateSha256));
