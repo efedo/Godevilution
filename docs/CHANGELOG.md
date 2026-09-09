@@ -4,6 +4,11 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Scoped the compact Snake-charge replay exception to an explicit validated
+  missile-pack flag. Ordinary Snake charges now damage players regardless of
+  their entity ID, while the replay fixture retains its native checkpoint
+  boundary.
+
 - Updated shipped catalog test fixtures to pass canonical pack-relative table
   identities while continuing to read their contents from the repository,
   matching the validated external-content boundary.

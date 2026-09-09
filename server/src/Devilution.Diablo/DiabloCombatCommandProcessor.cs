@@ -12298,11 +12298,13 @@ public sealed class DiabloCombatCommandProcessor
             || IsPlayerProtectedByFlash(target)
             || IsPlayerEtherealized(target))
             return false;
-        // The native replay fixture's compact SnakeCharge boundary records
-        // the secondary participant as the selected target but does not apply
-        // the impact to that participant. Preserve that compatibility boundary
-        // until the native replay state carries a secondary-hit transition.
-        if (target.EntityId != 1)
+        // One compact native replay pack records a secondary participant as
+        // the selected target without carrying its impact transition. Keep
+        // that exception data-driven; ordinary Snake charges hit any player.
+        if (TryGetMonsterMissile(monster, out var missile)
+            && missile.SuppressNonPrimaryPlayerImpact
+            && players.Count > 1
+            && target.EntityId != players[0].EntityId)
             return false;
 
         var distance = ClampNativeDistance(DeterministicGridMetrics.ChebyshevDistance(

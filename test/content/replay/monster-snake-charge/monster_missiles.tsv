@@ -1,2 +1,2 @@
-native_ai	missile_id	projectile_behavior	spell_id	projectile_speed	projectile_lifetime	projectile_damage	projectile_impact_lifetime
-Snake	Rhino	SnakeCharge	37	18	4	4	2
+native_ai	missile_id	projectile_behavior	spell_id	projectile_speed	projectile_lifetime	projectile_damage	projectile_impact_lifetime	suppress_non_primary_player_impact
+Snake	Rhino	SnakeCharge	37	18	4	4	2	true

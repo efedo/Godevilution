@@ -79,6 +79,30 @@ public sealed class AuthoritativeMonsterMissileCatalogTests
     }
 
     [Fact]
+    public void LoadsOptionalSnakeNonPrimaryImpactBoundary()
+    {
+        var catalog = AuthoritativeMonsterMissileCatalog.LoadTsv(
+            "monster_missiles.tsv",
+            "native_ai\tmissile_id\tprojectile_behavior\tsuppress_non_primary_player_impact\n"
+                + "Snake\tRhino\tSnakeCharge\ttrue\n");
+
+        Assert.True(Assert.Single(catalog.Definitions).SuppressNonPrimaryPlayerImpact);
+    }
+
+    [Fact]
+    public void RejectsSnakeNonPrimaryImpactBoundaryOnOtherBehaviors()
+    {
+        Assert.Throws<InvalidDataException>(() => new AuthoritativeMonsterMissileCatalog([
+            new AuthoritativeMonsterMissileDefinition(
+                "GoatRanged",
+                "Arrow",
+                AuthoritativeProjectileBehavior.MonsterArrow) {
+                SuppressNonPrimaryPlayerImpact = true,
+            },
+        ]));
+    }
+
+    [Fact]
     public void LoadsValidatedAdjacentAttackBand()
     {
         var catalog = AuthoritativeMonsterMissileCatalog.LoadTsv(

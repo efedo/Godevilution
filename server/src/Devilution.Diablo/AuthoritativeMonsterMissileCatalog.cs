@@ -121,6 +121,12 @@ public sealed record AuthoritativeMonsterMissileDefinition(
 
     /** Optional number of projectiles emitted by one native missile admission. */
     public int ProjectileCount { get; init; }
+
+    /**
+     * Optional replay-compatibility boundary that suppresses impact on
+     * non-primary participants for this Snake charge mapping.
+     */
+    public bool SuppressNonPrimaryPlayerImpact { get; init; }
 }
 
 /** Externalized native monster missile identities used by server-owned AI. */
@@ -157,6 +163,8 @@ public sealed class AuthoritativeMonsterMissileCatalog
                     && (definition.MonsterId == 0
                         || definition.ProjectileBehavior
                             != AuthoritativeProjectileBehavior.MonsterMagic)
+                || definition.SuppressNonPrimaryPlayerImpact
+                    && definition.ProjectileBehavior != AuthoritativeProjectileBehavior.SnakeCharge
                 || definition.SnakeDriftPattern is not null
                     && definition.SnakeDriftPattern.Any(rotation => rotation is < -4 or > 4)
                 || definition.ProjectileBehavior == AuthoritativeProjectileBehavior.SnakeCharge
@@ -557,6 +565,8 @@ public sealed class AuthoritativeMonsterMissileCatalog
                 IsPostMeleeMissile = row.OptionalBoolean("post_melee_missile"),
                 InitialTravelQuanta = row.OptionalInt32("initial_travel_quanta"),
                 ProjectileCount = row.OptionalInt32("projectile_count"),
+                SuppressNonPrimaryPlayerImpact = row.OptionalBoolean(
+                    "suppress_non_primary_player_impact"),
             };
         }));
     }
