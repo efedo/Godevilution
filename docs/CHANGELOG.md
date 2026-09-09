@@ -2,6 +2,12 @@
 
 All notable changes to this fork are documented below.
 
+- Aligned compact native replay with managed monster activation visibility:
+  replay now refreshes tracked visible targets and decrements their activation window when
+  players die or leave range. The restart-town fixture now declares its active
+  window, uses the canonical primary entity identity, and shares refreshed
+  checkpoints across both runners.
+
 - Aligned the compact native replay harness with the managed native melee RNG
   draw, refreshed the Hellfire fixtures to the composed manifest hash, and
   updated the death and Mana Shield checkpoints to the resulting stream.

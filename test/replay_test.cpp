@@ -1815,6 +1815,7 @@ TEST(ReplayFixture, ExecutesPlayerRestartTownAgainstCSharpCheckpoints)
 
 	auto CreateState = [&fixture]() {
 		ReplayFixtureExecutionState state;
+		state.entityId = 1;
 		state.life = fixture.initialState.life;
 		state.lifeMaximum = fixture.initialState.lifeMaximum;
 		state.mana = fixture.initialState.mana;

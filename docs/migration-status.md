@@ -15,6 +15,13 @@ The checked-in base replay fixtures now use the canonical content-pack
 manifest hash produced by the normalized source identities, keeping replay
 admission aligned with the active validated pack.
 
+The compact native replay runner now mirrors the managed monster activation
+window for fixtures that carry an active target: visible targets wake for the
+native 255-tick window, while targets outside live-player vision count down
+deterministically. The restart-town fixture records that window explicitly and
+now passes shared checkpoints in both runners through death, recovery, and town
+transition.
+
 Godot combat, Telekinesis, and unique-monster dialogue target selection now
 uses the same projected native vision boundary as monster rendering. Hidden,
 dead, sneak-hidden, and out-of-radius monsters therefore cannot be selected

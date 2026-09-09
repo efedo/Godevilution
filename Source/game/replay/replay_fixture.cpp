@@ -10898,6 +10898,40 @@ void AdvanceReplayStateToTick(
 {
 	for (uint64_t simulationTick = state.lastAppliedTick + 1; simulationTick <= tick; ++simulationTick) {
 		AdvanceReplayPlayerAction(state, simulationTick);
+		// A non-zero active window marks world-backed monster state in compact fixtures.
+		if (state.combatTargetEntityId != 0
+		    && state.combatTargetActiveForTicks > 0
+		    && state.combatTargetHitPointsQ6 > 0) {
+			const auto isVisible = [](int32_t playerLife, uint32_t playerLevelId, int32_t playerX, int32_t playerY,
+			    uint32_t targetLevelId, int32_t targetX, int32_t targetY) {
+				if (playerLife <= 0 || playerLevelId != targetLevelId)
+					return false;
+				const int64_t deltaX = static_cast<int64_t>(targetX) - playerX;
+				const int64_t deltaY = static_cast<int64_t>(targetY) - playerY;
+				return deltaX * deltaX + deltaY * deltaY <= 100;
+			};
+			const bool visibleToPrimary = isVisible(
+				state.life,
+				state.levelId,
+				state.positionX,
+				state.positionY,
+				state.combatTargetLevelId,
+				state.combatTargetPositionX,
+				state.combatTargetPositionY);
+			const bool visibleToSecondary = state.secondaryPlayerEntityId != 0
+				&& isVisible(
+					state.secondaryPlayerLife,
+					state.secondaryPlayerLevelId,
+					state.secondaryPlayerPositionX,
+					state.secondaryPlayerPositionY,
+					state.combatTargetLevelId,
+					state.combatTargetPositionX,
+					state.combatTargetPositionY);
+			if (visibleToPrimary || visibleToSecondary)
+				state.combatTargetActiveForTicks = 255;
+			else if (state.combatTargetActiveForTicks > 0)
+				--state.combatTargetActiveForTicks;
+		}
 		if (state.multiplayer && state.combatTargetMonsterAiSeed != 0) {
 			state.randomState = state.combatTargetMonsterAiSeed;
 			state.combatTargetMonsterAiSeed = AdvanceRandomItemSeed(state);
