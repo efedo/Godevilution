@@ -18,7 +18,8 @@ public sealed record AuthoritativeNativeDunFragmentDefinition(
     int? AnchorPositionY = null,
     int? AnchorSetLevelId = null,
     uint? AnchorProceduralQuestPieceOriginId = null,
-    uint? RequiredQuestId = null)
+    uint? RequiredQuestId = null,
+    bool ReplaceCollisionGeometry = false)
 {
     /** Stable level symbol retained for composed-pack diagnostics. */
     public string LevelSymbol { get; init; } = string.Empty;
@@ -227,6 +228,9 @@ public sealed class AuthoritativeNativeDunFragmentCatalog
                     map,
                     externalGeometry.Pieces,
                     externalGeometry.TileProperties);
+            } else if (definition.ReplaceCollisionGeometry) {
+                throw new InvalidDataException(
+                    $"Native DUN fragment {definition.FragmentId} requests collision replacement without a .til/.sol bundle.");
             }
         }
     }
@@ -352,6 +356,23 @@ public sealed class AuthoritativeNativeDunFragmentCatalog
                 pair => pair.Value);
             var hasBinaryGeometry = !string.IsNullOrWhiteSpace(definition.TileAssetPath)
                 && !string.IsNullOrWhiteSpace(definition.SolAssetPath);
+            if (definition.ReplaceCollisionGeometry
+                && !hasBinaryGeometry
+                && externalGeometry is null) {
+                throw new InvalidDataException(
+                    $"Native DUN fragment {definition.FragmentId} requests collision replacement without a .til/.sol bundle.");
+            }
+            if (definition.ReplaceCollisionGeometry) {
+                for (var y = 0; y < map.TileHeight; y++) {
+                    for (var x = 0; x < map.TileWidth; x++) {
+                        var worldCell = (originY + y) * level.Width + originX + x;
+                        nativePieceCollisionCells.Remove(worldCell);
+                        nativePieceMissileBlockedCells.Remove(worldCell);
+                        blockedCells.Remove(worldCell);
+                        missileBlockedCells.Remove(worldCell);
+                    }
+                }
+            }
             if (hasBinaryGeometry || externalGeometry is not null) {
                 var pieces = hasBinaryGeometry
                     ? AuthoritativeDunPieceCatalog.LoadTil(
@@ -449,7 +470,8 @@ public sealed class AuthoritativeNativeDunFragmentCatalog
                 OptionalCoordinate(row, "anchor_position_y"),
                 OptionalSetLevelId(row, stableIds),
                 OptionalProceduralQuestPieceOriginId(row, stableIds),
-                OptionalQuestId(row, stableIds)) {
+                OptionalQuestId(row, stableIds),
+                row.OptionalBoolean("replace_collision_geometry")) {
                 LevelSymbol = AuthoritativeLevelIdentity.ReadSymbol(row),
                 AnchorSetLevelSymbol = row.TryGet("anchor_set_level_symbol", out var symbol)
                     ? symbol

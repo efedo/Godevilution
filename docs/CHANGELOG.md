@@ -4,6 +4,12 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Added `replace_collision_geometry` to `native_dun_fragments.tsv`. Validated
+  fragment collision bundles can now replace, rather than merely add to, the
+  base movement/missile geometry within their footprint. This advances the
+  active content schema to `1.460.0` while retaining `1.459.0` as the previous
+  additive contract.
+
 - Added `native_layer_asset_path` to `world_mutations.tsv`. Mutations can now
   project a validated DUN mega-tile, transparency, object, and monster layer
   atomically, with optional `.til`/`.sol` collision assets completing the same

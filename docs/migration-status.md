@@ -2,7 +2,7 @@
 
 Status date: 2026-09-09
 
-The active content schema is now `1.459.0` (with `1.458.0` retained as
+The active content schema is now `1.460.0` (with `1.459.0` retained as
 the previous additive contract). Optional `procedural_quest_piece_origins.tsv`
 rows publish deterministic ordinary-level quest geometry origins. Their
 identities are intentionally separate from the fixed native set-level origin
@@ -41,6 +41,11 @@ Schema 1.459 adds `native_layer_asset_path`, allowing a mutation to project
 the validated DUN mega-tile, transparency, object, and monster layers as one
 atomic authored overlay. It can be paired with the collision bundle so the
 server owns the complete map replacement without hand-authored layer rows.
+
+Schema 1.460 adds `replace_collision_geometry` to native DUN fragments. A
+fragment with a validated `.til`/`.sol` bundle can now clear its authored
+footprint before applying native collision provenance, matching the replacement
+semantics used by world mutations.
 
 Native DUN geometry definitions can now be supplied as a validated external
 TSV pair (`native_dun_piece_definitions.tsv` and

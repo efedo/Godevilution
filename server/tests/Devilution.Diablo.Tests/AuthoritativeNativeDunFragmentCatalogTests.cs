@@ -193,6 +193,38 @@ public sealed class AuthoritativeNativeDunFragmentCatalogTests
     }
 
     [Fact]
+    public void ReplacesCollisionWithinTheFragmentFootprintWhenRequested()
+    {
+        var catalog = AuthoritativeNativeDunFragmentCatalog.LoadTsv(
+            "native_dun_fragments.tsv",
+            "fragment_id\tlevel_id\tlevel_symbol\tasset_path\tanchor_entity_id\tanchor_offset_x\tanchor_offset_y\ttile_asset_path\tsol_asset_path\treplace_collision_geometry\n"
+                + "1\t24\thellfire_level_24\tfragment.dun\t9\t-2\t-2\tfragment.til\tfragment.sol\ttrue\n");
+        var world = new AuthoritativeWorld();
+        world.AddLevel(new AuthoritativeLevel(
+            24,
+            8,
+            8,
+            blockedCells: [0, 18, 26, 27],
+            missileBlockedCells: [19, 20, 26, 27]));
+        var anchor = new AuthoritativeWorldObject(9, 6003, 24, 4, 4);
+        var content = ComposedContent.Compose(new ContentManifest("rules", "1", [
+            new ContentPack("base", "1", [], assets: [
+                new ContentAsset("fragment.dun", CreateDun(42)),
+                new ContentAsset("fragment.til", CreateTil()),
+                new ContentAsset("fragment.sol", CreateSol()),
+            ]),
+        ]));
+
+        catalog.Apply(content, world, [anchor]);
+
+        var level = Assert.Single(world.Levels);
+        Assert.Equal([0, 18, 26], level.BlockedCells);
+        Assert.Equal([19, 20, 26], level.MissileBlockedCells);
+        Assert.Equal([18, 26], level.NativePieceCollisionCells);
+        Assert.Equal([19, 26], level.NativePieceMissileBlockedCells);
+    }
+
+    [Fact]
     public void ComposesNativeDPieceLayerFromFragmentData()
     {
         var catalog = AuthoritativeNativeDunFragmentCatalog.LoadTsv(

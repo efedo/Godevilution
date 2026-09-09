@@ -1,3 +1,3 @@
-fragment_id	level_id	level_symbol	asset_path	anchor_entity_id	anchor_unique_identity	anchor_offset_x	anchor_offset_y	tile_asset_path	sol_asset_path	anchor_position_x	anchor_position_y	required_quest_id	required_quest_symbol
-1	24	hellfire_level_24	nlevels/l5data/uberroom.dun	2403		-6	-8	none	none			0	none
-2	21	hellfire_level_21	nlevels/l5data/cornerstone.dun	0		0	0	none	none	14	14	0	none
+fragment_id	level_id	level_symbol	asset_path	anchor_entity_id	anchor_unique_identity	anchor_offset_x	anchor_offset_y	tile_asset_path	sol_asset_path	anchor_position_x	anchor_position_y	required_quest_id	required_quest_symbol	replace_collision_geometry
+1	24	hellfire_level_24	nlevels/l5data/uberroom.dun	2403		-6	-8	none	none			0	none	false
+2	21	hellfire_level_21	nlevels/l5data/cornerstone.dun	0		0	0	none	none	14	14	0	none	false
