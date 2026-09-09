@@ -920,6 +920,36 @@ TEST(ReplayFixture, ExecutesRangedElementalArrowAttackAgainstCSharpCheckpoint)
 	EXPECT_EQ(rangedClassArmorState.projectiles[0].damageQ6, 256);
 	EXPECT_EQ(rangedClassArmorState.randomState, 22695478U);
 	EXPECT_EQ(rangedClassArmorResult.transitions[0].stateSha256, rangedClassArmorFixture.checkpoints.back().stateSha256);
+
+	std::ifstream rangedClassHellfireArmorFile("test/fixtures/replay/gameplay-ranged-class-hellfire-armor-piercing.json");
+	ASSERT_TRUE(rangedClassHellfireArmorFile.good());
+	const std::string rangedClassHellfireArmorJson((std::istreambuf_iterator<char>(rangedClassHellfireArmorFile)), std::istreambuf_iterator<char>());
+	ReplayFixture rangedClassHellfireArmorFixture;
+	ASSERT_TRUE(ParseReplayFixture(rangedClassHellfireArmorJson, rangedClassHellfireArmorFixture, error)) << error;
+	ReplayFixtureExecutionState rangedClassHellfireArmorState;
+	rangedClassHellfireArmorState.characterClassId = static_cast<uint32_t>(rangedClassHellfireArmorFixture.initialState.characterClass);
+	rangedClassHellfireArmorState.attributes[0] = rangedClassHellfireArmorFixture.initialState.strength;
+	rangedClassHellfireArmorState.attributes[1] = rangedClassHellfireArmorFixture.initialState.strength;
+	rangedClassHellfireArmorState.attributes[2] = rangedClassHellfireArmorFixture.initialState.magic;
+	rangedClassHellfireArmorState.attributes[3] = rangedClassHellfireArmorFixture.initialState.magic;
+	rangedClassHellfireArmorState.attributes[4] = rangedClassHellfireArmorFixture.initialState.dexterity;
+	rangedClassHellfireArmorState.attributes[5] = rangedClassHellfireArmorFixture.initialState.dexterity;
+	rangedClassHellfireArmorState.attributes[6] = rangedClassHellfireArmorFixture.initialState.vitality;
+	rangedClassHellfireArmorState.attributes[7] = rangedClassHellfireArmorFixture.initialState.vitality;
+	rangedClassHellfireArmorState.characterLevel = rangedClassHellfireArmorFixture.initialState.characterLevel;
+	rangedClassHellfireArmorState.life = rangedClassHellfireArmorFixture.initialState.life;
+	rangedClassHellfireArmorState.lifeMaximum = rangedClassHellfireArmorFixture.initialState.life;
+	rangedClassHellfireArmorState.mana = rangedClassHellfireArmorFixture.initialState.mana;
+	rangedClassHellfireArmorState.manaMaximum = rangedClassHellfireArmorFixture.initialState.manaMaximum;
+	rangedClassHellfireArmorState.positionX = rangedClassHellfireArmorFixture.initialState.positionX;
+	rangedClassHellfireArmorState.positionY = rangedClassHellfireArmorFixture.initialState.positionY;
+	ReplayFixtureExecutionResult rangedClassHellfireArmorResult;
+	ASSERT_TRUE(ExecuteReplayFixture(rangedClassHellfireArmorFixture, rangedClassHellfireArmorState, rangedClassHellfireArmorResult, error)) << error;
+	ASSERT_EQ(rangedClassHellfireArmorState.projectiles.size(), 1U);
+	EXPECT_EQ(rangedClassHellfireArmorState.projectiles[0].damage, 2);
+	EXPECT_EQ(rangedClassHellfireArmorState.projectiles[0].damageQ6, 128);
+	EXPECT_EQ(rangedClassHellfireArmorState.randomState, 22695478U);
+	EXPECT_EQ(rangedClassHellfireArmorResult.transitions[0].stateSha256, rangedClassHellfireArmorFixture.checkpoints.back().stateSha256);
 }
 
 TEST(ReplayFixture, ExecutesBaseContentPurchaseAndSaleAgainstCSharpCheckpoints)

@@ -1,6 +1,11 @@
 # Godevilution Migration Status
 
-Status date: 2026-09-08
+Status date: 2026-09-09
+
+The replay parity boundary now covers initialized Rogue ranged attacks under
+Hellfire armor piercing: hit admission applies the shifted armor rule while
+projectile damage still applies the original target armor, with matching C# and
+native checkpoints.
 
 Native progression compatibility now uses one shared `Devilution.Shared`
 contract for stable/native spell IDs, spell levels, memorized slots, character

@@ -1,0 +1,60 @@
+{
+  "format_version": 1,
+  "fixture_id": "gameplay/ranged-class-hellfire-armor-piercing",
+  "protocol_schema_version": "0.1.0",
+  "content_manifest": {
+    "id": "hellfire",
+    "version": "1",
+    "sha256": "0962c023daa61e5e5b78a4671483f0b632be1f26c06cac98c8e0f2caee1d0f82"
+  },
+  "game_variant": "Hellfire",
+  "tick_rate_hz": 20,
+  "rng_seed": 1,
+  "initial_state": {
+    "player": "A",
+    "gold": 0,
+    "experience": 0,
+    "life": 40,
+    "mana": 10,
+    "mana_maximum": 10,
+    "magic": 15,
+    "strength": 20,
+    "dexterity": 30,
+    "vitality": 20,
+    "character_class": 1,
+    "character_level": 10,
+    "position_x": 0,
+    "position_y": 0,
+    "combat_target_entity_id": 9,
+    "combat_target_position_x": 2,
+    "combat_target_position_y": 0,
+    "combat_target_hit_points": 100,
+    "combat_target_max_hit_points": 100,
+    "combat_target_armor_class": 4,
+    "equipment": [
+      {
+        "slot": 4,
+        "item_seed": 100,
+        "item_type": 3,
+        "item_class": 1,
+        "flags": 0,
+        "stat_flag": true,
+        "min_damage": 4,
+        "max_damage": 4,
+        "plus_enemy_armor_class": 2
+      }
+    ]
+  },
+  "commands": [
+    {
+      "client_sequence": 1,
+      "target_tick": 1,
+      "server_receipt_sequence": 1,
+      "kind": "Attack",
+      "payload": { "target_entity_id": 9 }
+    }
+  ],
+  "checkpoints": [
+    { "tick": 1, "state_sha256": "618943f88570815dee9496783076722775f378c88283f1d0750a4570ac3f63e0" }
+  ]
+}

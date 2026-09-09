@@ -3664,13 +3664,23 @@ void CreateReplayWeaponArrow(
 		    : state.characterClassId == 4
 		        ? 60
 		    : 50;
+		const int32_t targetArmorClass = std::max(0, state.combatTargetArmorClass);
+		int32_t hitArmorClass = targetArmorClass;
+		int32_t hitArmorPiercing = armorPiercingBonus;
+		if (state.hellfire && armorPiercingBonus > 0) {
+			const int32_t armorPiercingShift = armorPiercingBonus - 1;
+			hitArmorClass = armorPiercingShift > 0
+			    ? hitArmorClass >> armorPiercingShift
+			    : hitArmorClass - hitArmorClass / 4;
+			hitArmorPiercing = 0;
+		}
 		const int32_t hitChance = std::clamp(
 		    static_cast<int32_t>(state.characterLevel)
 		        + state.attributes[5]
 		        + baseRangedToHit
 		        + hitBonus
-		        + armorPiercingBonus
-		        - std::max(0, state.combatTargetArmorClass),
+		        + hitArmorPiercing
+		        - std::max(0, hitArmorClass),
 		    5,
 		    95);
 		const uint32_t hitSeed = static_cast<uint32_t>(tick)
@@ -3681,7 +3691,7 @@ void CreateReplayWeaponArrow(
 		else
 			damage = std::max(
 			    1,
-			    damage - std::max(0, state.combatTargetArmorClass));
+			    damage - targetArmorClass);
 	} else if (consumeRandom) {
 		static_cast<void>(GenerateRnd(state, 1));
 	}
