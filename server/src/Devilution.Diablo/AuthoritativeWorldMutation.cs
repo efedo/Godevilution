@@ -388,7 +388,9 @@ public sealed class AuthoritativeWorldMutation
         var megaHeight = checked((levelHeight + 1) / 2);
         var originX = 0;
         var originY = 0;
-        if (AnchorEntityId != 0 || AnchorUniqueIdentity.Length != 0) {
+        if (AnchorEntityId != 0
+            || AnchorUniqueIdentity.Length != 0
+            || AnchorSetLevelId >= 0) {
             var translatedX = checked(anchorX + AnchorMegaOffsetX);
             var translatedY = checked(anchorY + AnchorMegaOffsetY);
             if ((translatedX & 1) != 0 || (translatedY & 1) != 0)

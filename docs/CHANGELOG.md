@@ -13,6 +13,10 @@ All notable changes to this fork are documented below.
   Gateway-of-Blood placement at (9,17) remains valid through domain and
   protocol projection.
 
+- Corrected set-level-anchored mega-tile mutations to translate authored
+  assignments from the published origin, preserving the future set-piece map
+  replacement contract.
+
 - Kept the new shared native-geometry catalog additive at the end of the
   `DiabloContentActivation` constructor so existing positional callers remain
   source-compatible while activation exposes the validated catalog.

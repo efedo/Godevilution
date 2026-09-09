@@ -377,6 +377,30 @@ public sealed class AuthoritativeWorldMutationTests
     }
 
     [Fact]
+    public void SetLevelAnchoredMegaTileAssignmentsUseThePublishedOrigin()
+    {
+        var catalog = AuthoritativeWorldMutationCatalog.LoadTsv(
+            "world_mutations.tsv",
+            "mutation_id\tlevel_id\tanchor_set_level_id\tanchor_mega_offset_x\tanchor_mega_offset_y\tmega_tile_assignments\n"
+                + "7\t1\t6\t2\t2\t0,0,136\n");
+        var geometry = new AuthoritativeWorld();
+        geometry.AddLevel(new AuthoritativeLevel(
+            1,
+            8,
+            8,
+            nativeMegaTileLayer: Enumerable.Repeat<ushort>(0, 16)));
+        var world = new DiabloWorldState(
+            geometry,
+            worldMutations: catalog);
+        world.SetSetLevelOriginResolver(
+            _ => new AuthoritativeSetLevelObjectOrigin(1, 2, 2));
+
+        Assert.True(world.ApplyWorldMutation(7));
+        var level = Assert.Single(world.LevelGeometry);
+        Assert.Equal((ushort)136, level.NativeMegaTileLayer[2 * 4 + 2]);
+    }
+
+    [Fact]
     public void RejectsDuplicateOrUnalignedMegaTileAssignments()
     {
         var geometry = new AuthoritativeWorld();
