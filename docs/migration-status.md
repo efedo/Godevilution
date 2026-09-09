@@ -6,6 +6,12 @@ Managed and compact native replay parsers now reject checkpoint labels longer
 than the 64-character SHA-256 boundary while continuing to support shorter
 symbolic labels used by compatibility fixtures.
 
+Compact native replay now routes player-owned Firebolt projectiles exclusively
+ through the shared magic-projectile resolver. This prevents the autonomous
+ monster-magic lane from consuming player missiles, preserving Firebolt
+ resolution, PvP, Hellfire block, Guardian admission, impact timing, and RNG
+ parity with the managed authoritative runner.
+
 The primary Acid puddle fixture now carries valid 64-character tick-1 and
 tick-2 checkpoint hashes. Both replay runners validate those intermediate
 states instead of silently treating the malformed values as non-hash labels.

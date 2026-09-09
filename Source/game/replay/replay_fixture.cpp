@@ -9594,6 +9594,13 @@ void AdvanceReplayAutonomousMonsterMagicOneTick(
 			++iterator;
 			continue;
 		}
+		// Player-owned Firebolt projectiles are resolved by the shared magic
+		// lane below; this lane is reserved for monster-owned missiles.
+		if (projectile.behavior == FireboltBehavior
+		    && projectile.sourceEntityId != state.combatTargetEntityId) {
+			++iterator;
+			continue;
+		}
 		if (projectile.phase == 1) {
 			if (projectile.remainingTicks > 0)
 				--projectile.remainingTicks;

@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Corrected compact native replay routing so player-owned Firebolt missiles stay
+  in the shared magic-projectile resolver instead of entering the autonomous
+  monster-magic lane; Firebolt resolution, PvP, Hellfire block, and Guardian
+  admission now match the managed checkpoints and RNG stream.
 - Replay fixture loaders now reject checkpoint labels longer than 64
   characters in both managed and compact native runners, preventing malformed
   hashes from being silently treated as symbolic checkpoints.
