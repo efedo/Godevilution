@@ -4,6 +4,13 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Added validated `tile_asset_path`/`sol_asset_path` pairs to
+  `world_mutations.tsv`. Together with `mega_tile_asset_path`, a mutation now
+  materializes native `.til`/`.sol` d-piece geometry and replaces movement and
+  missile collision across the authored map footprint. This advances the
+  active content schema to `1.458.0` while retaining `1.457.0` as the previous
+  additive contract.
+
 - Added `mega_tile_asset_path` to `world_mutations.tsv`. Mutations can now
   expand a complete validated native `.dun` mega-tile layer at load time,
   keeping post-activation map presentation in external licensed assets. The

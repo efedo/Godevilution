@@ -2,7 +2,7 @@
 
 Status date: 2026-09-09
 
-The active content schema is now `1.457.0` (with `1.456.0` retained as
+The active content schema is now `1.458.0` (with `1.457.0` retained as
 the previous additive contract). Optional `procedural_quest_piece_origins.tsv`
 rows publish deterministic ordinary-level quest geometry origins. Their
 identities are intentionally separate from the fixed native set-level origin
@@ -31,6 +31,11 @@ from a validated external `.dun` asset. The Gateway transition now anchors
 `blood2.dun` at the final pedestal position, so post-activation presentation
 uses the licensed native tile layer while the existing monster-layer mapping
 remains authoritative.
+
+Schema 1.458 extends those mutation assets with validated `.til` and `.sol`
+inputs. A mutation can now materialize the native d-piece layer and replace
+movement/missile collision across its `.dun` footprint, while preserving the
+server-owned projection and rejecting mixed inline collision overlays.
 
 Native DUN geometry definitions can now be supplied as a validated external
 TSV pair (`native_dun_piece_definitions.tsv` and

@@ -44,6 +44,71 @@ public sealed class AuthoritativeWorldMutationTests
     }
 
     [Fact]
+    public void MaterializesNativeCollisionGeometryFromDunTilAndSolAssets()
+    {
+        var content = CreateNativeGeometryContent();
+        var catalog = AuthoritativeWorldMutationCatalog.LoadTsv(
+            "world_mutations.tsv",
+            "mutation_id\tlevel_id\tmega_tile_asset_path\ttile_asset_path\tsol_asset_path\n"
+                + "7\t1\tfixture/map.dun\tfixture/tiles.til\tfixture/tiles.sol\n",
+            content: content);
+
+        var mutation = Assert.Single(catalog.Definitions);
+        Assert.Equal([(0, 0, 2, 2)], mutation.GeometryRectanglesRemove
+            .Select(rectangle => (rectangle.X, rectangle.Y, rectangle.Width, rectangle.Height)));
+        Assert.Equal(
+            [(0, 0, 1, 1, (ushort)20), (0, 1, 1, 1, (ushort)22),
+             (1, 0, 1, 1, (ushort)21), (1, 1, 1, 1, (ushort)23)],
+            mutation.PieceLayerRectangles.Select(rectangle => (
+                rectangle.X,
+                rectangle.Y,
+                rectangle.Width,
+                rectangle.Height,
+                rectangle.PieceId)));
+        Assert.Equal([(ushort)20, (ushort)21, (ushort)22, (ushort)23],
+            mutation.PiecePropertyOverrides.Select(property => property.PieceId));
+        Assert.Equal(AuthoritativeDunTileFlags.Solid, mutation.PiecePropertyOverrides[0].Flags);
+    }
+
+    [Fact]
+    public void AppliesMaterializedNativeCollisionGeometryAsAReplacement()
+    {
+        var mutations = AuthoritativeWorldMutationCatalog.LoadTsv(
+            "world_mutations.tsv",
+            "mutation_id\tlevel_id\tmega_tile_asset_path\ttile_asset_path\tsol_asset_path\n"
+                + "7\t1\tfixture/map.dun\tfixture/tiles.til\tfixture/tiles.sol\n",
+            content: CreateNativeGeometryContent());
+        var geometry = new AuthoritativeWorld();
+        geometry.AddLevel(new AuthoritativeLevel(
+            1,
+            2,
+            2,
+            blockedCells: [0, 1, 2, 3],
+            missileBlockedCells: [0, 1, 2, 3]));
+        var world = new DiabloWorldState(geometry, worldMutations: mutations);
+
+        Assert.True(world.ApplyWorldMutation(7));
+        var level = Assert.Single(world.LevelGeometry);
+        Assert.Equal(AuthoritativeDunTileFlags.Solid, level.NativePieceProperties[20]);
+        Assert.Equal([0], level.NativePieceCollisionCells);
+        Assert.Equal([0], level.BlockedCells);
+        Assert.Equal([], level.MissileBlockedCells);
+        Assert.Equal([(ushort)20, (ushort)21, (ushort)22, (ushort)23], level.NativePieceLayer);
+    }
+
+    [Fact]
+    public void RejectsIncompleteNativeCollisionAssetPair()
+    {
+        var exception = Assert.Throws<InvalidDataException>(() =>
+            AuthoritativeWorldMutationCatalog.LoadTsv(
+                "world_mutations.tsv",
+                "mutation_id\tlevel_id\ttile_asset_path\n"
+                    + "7\t1\tfixture/tiles.til\n"));
+
+        Assert.Contains("both tile_asset_path and sol_asset_path", exception.Message);
+    }
+
+    [Fact]
     public void LoadsAndExpandsMonsterLayerRectanglesDeterministically()
     {
         var catalog = AuthoritativeWorldMutationCatalog.LoadTsv(
@@ -1915,6 +1980,53 @@ public sealed class AuthoritativeWorldMutationTests
             7,
             1,
             anchorUniqueIdentity: new string('é', 65)));
+    }
+
+    private static ComposedContent CreateNativeGeometryContent()
+    {
+        var pack = new ContentPack(
+            "mutation-geometry-test",
+            "1.0.0",
+            [],
+            assets: [
+                new ContentAsset("fixture/map.dun", CreateDun(0)),
+                new ContentAsset("fixture/tiles.til", CreateTil(20, 21, 22, 23)),
+                new ContentAsset("fixture/tiles.sol", CreateSol(20)),
+            ]);
+        return ComposedContent.Compose(
+            new ContentManifest("mutation-geometry-test", "1", [pack]));
+    }
+
+    private static byte[] CreateDun(ushort megaTileId)
+    {
+        var words = new ushort[19];
+        words[0] = 1;
+        words[1] = 1;
+        words[2] = megaTileId;
+        var bytes = new byte[words.Length * sizeof(ushort)];
+        for (var index = 0; index < words.Length; index++)
+            BinaryPrimitives.WriteUInt16LittleEndian(
+                bytes.AsSpan(index * sizeof(ushort), sizeof(ushort)),
+                words[index]);
+        return bytes;
+    }
+
+    private static byte[] CreateTil(params ushort[] pieces)
+    {
+        var bytes = new byte[pieces.Length * sizeof(ushort)];
+        for (var index = 0; index < pieces.Length; index++)
+            BinaryPrimitives.WriteUInt16LittleEndian(
+                bytes.AsSpan(index * sizeof(ushort), sizeof(ushort)),
+                pieces[index]);
+        return bytes;
+    }
+
+    private static byte[] CreateSol(params ushort[] solidPieces)
+    {
+        var bytes = new byte[AuthoritativeDunTilePropertyCatalog.NativeTileCount];
+        foreach (var pieceId in solidPieces)
+            bytes[pieceId] = (byte)AuthoritativeDunTileFlags.Solid;
+        return bytes;
     }
 
     private static AuthoritativePlayerState CreatePlayer()

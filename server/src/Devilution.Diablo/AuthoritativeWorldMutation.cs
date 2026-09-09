@@ -822,8 +822,9 @@ public sealed class AuthoritativeWorldMutationCatalog
         ComposedContent? content = null)
     {
         var table = TsvTable.Parse(sourcePath, contents);
-        return new AuthoritativeWorldMutationCatalog(table.Rows.Select(row =>
-            new AuthoritativeWorldMutation(
+        return new AuthoritativeWorldMutationCatalog(table.Rows.Select(row => {
+            var nativeGeometry = ParseNativeCollisionGeometry(row, content);
+            return new AuthoritativeWorldMutation(
                 row.RequiredUInt32("mutation_id"),
                 ResolveTargetLevelId(row, stableIds),
                 ParseCells(row, "blocked_cells_add"),
@@ -831,25 +832,27 @@ public sealed class AuthoritativeWorldMutationCatalog
                 ParseCells(row, "missile_blocked_cells_add"),
                 ParseCells(row, "missile_blocked_cells_remove"),
                 ParseRectangles(row, "geometry_rect_add"),
-                ParseRectangles(row, "geometry_rect_remove"),
+                ParseRectangles(row, "geometry_rect_remove")
+                    .Concat(nativeGeometry.GeometryRectanglesRemove),
                 ParseTransparencyRectangles(row),
                 ParseObjectLayerRectangles(row),
                 row.OptionalUInt32("anchor_entity_id"),
                 row.TryGet("anchor_unique_identity", out var anchorUniqueIdentity)
                     ? anchorUniqueIdentity
                     : string.Empty,
-                ParsePieceLayerRectangles(row),
+                ParsePieceLayerRectangles(row).Concat(nativeGeometry.PieceLayerRectangles),
                 ParseMegaTileAssignments(row, content),
                 row.OptionalInt32("anchor_mega_offset_x"),
                 row.OptionalInt32("anchor_mega_offset_y"),
                 row.OptionalBoolean("create_transparency_layer"),
                 row.OptionalUInt32("mega_tile_copy_source_level_id"),
                 ParseRectangles(row, "mega_tile_copy_rects"),
-                ParsePiecePropertyOverrides(row),
+                ParsePiecePropertyOverrides(row).Concat(nativeGeometry.PiecePropertyOverrides),
                 ParseAnchorSetLevelId(row, stableIds),
                 ParseAnchorProceduralQuestPieceOriginId(row, stableIds),
                 ParseMonsterLayerRectangles(row),
-                ParseMegaTileAssetPath(row))));
+                ParseMegaTileAssetPath(row));
+        }));
     }
 
     private static uint ResolveTargetLevelId(
@@ -969,6 +972,11 @@ public sealed class AuthoritativeWorldMutationCatalog
 
     private static bool HasValue(TsvRow row, string column)
         => row.TryGet(column, out var value) && !string.IsNullOrWhiteSpace(value);
+
+    private static bool HasEffectiveValue(TsvRow row, string column)
+        => row.TryGet(column, out var value)
+            && !string.IsNullOrWhiteSpace(value)
+            && !string.Equals(value, "none", StringComparison.OrdinalIgnoreCase);
 
     private static (int X, int Y)? ResolveAnchor(
         AuthoritativeWorldMutation mutation,
@@ -1304,6 +1312,130 @@ public sealed class AuthoritativeWorldMutationCatalog
             && path.Replace('\\', '/').Split('/', StringSplitOptions.RemoveEmptyEntries)
                 .All(segment => segment is not "." and not "..")
             && !path.Contains(':', StringComparison.Ordinal);
+    }
+
+    private static bool IsSafeNativeGeometryAssetPath(string path, string extension)
+    {
+        return !Path.IsPathRooted(path)
+            && path.EndsWith(extension, StringComparison.OrdinalIgnoreCase)
+            && path.Replace('\\', '/').Split('/', StringSplitOptions.RemoveEmptyEntries)
+                .All(segment => segment is not "." and not "..")
+            && !path.Contains(':', StringComparison.Ordinal);
+    }
+
+    private static NativeCollisionGeometry ParseNativeCollisionGeometry(
+        TsvRow row,
+        ComposedContent? content)
+    {
+        var tilePath = ParseOptionalNativeGeometryAssetPath(row, "tile_asset_path", ".til");
+        var solPath = ParseOptionalNativeGeometryAssetPath(row, "sol_asset_path", ".sol");
+        if (tilePath.Length == 0 && solPath.Length == 0)
+            return NativeCollisionGeometry.Empty;
+        if (tilePath.Length == 0 || solPath.Length == 0)
+            throw new InvalidDataException(
+                $"World mutation row {row.LineNumber} must specify both tile_asset_path and sol_asset_path.");
+        var dunPath = ParseMegaTileAssetPath(row);
+        if (dunPath.Length == 0)
+            throw new InvalidDataException(
+                $"World mutation row {row.LineNumber} requires mega_tile_asset_path for native collision geometry.");
+        if (!IsSafeDunAssetPath(dunPath))
+            throw new InvalidDataException(
+                $"World mutation row {row.LineNumber} contains an unsafe mega_tile_asset_path '{dunPath}'.");
+        if (content is null)
+            throw new InvalidDataException(
+                $"World mutation row {row.LineNumber} requires composed content to load native collision geometry.");
+        if (HasEffectiveValue(row, "blocked_cells_add")
+            || HasEffectiveValue(row, "blocked_cells_remove")
+            || HasEffectiveValue(row, "missile_blocked_cells_add")
+            || HasEffectiveValue(row, "missile_blocked_cells_remove")
+            || HasEffectiveValue(row, "geometry_rect_add")
+            || HasEffectiveValue(row, "geometry_rect_remove")
+            || HasEffectiveValue(row, "piece_layer_rects")
+            || HasEffectiveValue(row, "piece_property_overrides")) {
+            throw new InvalidDataException(
+                $"World mutation row {row.LineNumber} cannot combine native collision assets with inline collision overlays.");
+        }
+
+        var map = AuthoritativeDunMapAsset.Load(
+            dunPath,
+            content.GetRequiredAsset(dunPath).Contents);
+        var pieces = AuthoritativeDunPieceCatalog.LoadTil(
+            tilePath,
+            content.GetRequiredAsset(tilePath).Contents);
+        var properties = AuthoritativeDunTilePropertyCatalog.LoadSol(
+            solPath,
+            content.GetRequiredAsset(solPath).Contents);
+        var materialized = AuthoritativeDunGeometryMaterializer.Materialize(
+            0,
+            map,
+            pieces,
+            properties);
+        var pieceRectangles = BuildPieceRectangles(
+            map.TileWidth,
+            map.TileHeight,
+            materialized.NativePieceLayer);
+        var propertyOverrides = materialized.NativePieceLayer
+            .Distinct()
+            .Where(pieceId => properties.TryGet(pieceId, out _))
+            .Select(pieceId => new AuthoritativeWorldMutationPieceProperty(
+                pieceId,
+                properties.Definitions.Single(property => property.PieceId == pieceId).Flags))
+            .ToArray();
+        return new NativeCollisionGeometry(
+            [new AuthoritativeWorldMutationRectangle(0, 0, map.TileWidth, map.TileHeight)],
+            pieceRectangles,
+            propertyOverrides);
+    }
+
+    private static string ParseOptionalNativeGeometryAssetPath(
+        TsvRow row,
+        string column,
+        string extension)
+    {
+        if (!row.TryGet(column, out var value)
+            || string.IsNullOrWhiteSpace(value)
+            || string.Equals(value, "none", StringComparison.OrdinalIgnoreCase))
+            return string.Empty;
+        var path = value.Trim();
+        if (!IsSafeNativeGeometryAssetPath(path, extension))
+            throw new InvalidDataException(
+                $"World mutation row {row.LineNumber} contains an unsafe {column} path '{path}'.");
+        return path;
+    }
+
+    private static IReadOnlyList<AuthoritativeWorldMutationPieceRectangle> BuildPieceRectangles(
+        int width,
+        int height,
+        IReadOnlyList<ushort> pieces)
+    {
+        var rectangles = new List<AuthoritativeWorldMutationPieceRectangle>();
+        for (var y = 0; y < height; y++) {
+            var runStart = 0;
+            var runPiece = pieces[y * width];
+            for (var x = 1; x <= width; x++) {
+                if (x < width && pieces[y * width + x] == runPiece)
+                    continue;
+                rectangles.Add(new AuthoritativeWorldMutationPieceRectangle(
+                    runStart,
+                    y,
+                    x - runStart,
+                    1,
+                    runPiece));
+                if (x < width) {
+                    runStart = x;
+                    runPiece = pieces[y * width + x];
+                }
+            }
+        }
+        return rectangles;
+    }
+
+    private sealed record NativeCollisionGeometry(
+        IReadOnlyList<AuthoritativeWorldMutationRectangle> GeometryRectanglesRemove,
+        IReadOnlyList<AuthoritativeWorldMutationPieceRectangle> PieceLayerRectangles,
+        IReadOnlyList<AuthoritativeWorldMutationPieceProperty> PiecePropertyOverrides)
+    {
+        public static NativeCollisionGeometry Empty { get; } = new([], [], []);
     }
 
     private static string ParseMegaTileAssetPath(TsvRow row)
