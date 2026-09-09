@@ -9,9 +9,14 @@ All notable changes to this fork are documented below.
   monster layer, and Arkaine's Valor is emitted as an authoritative reward.
   Added `object_item_gates.tsv` and `monster_layer_rects` to schema `1.454.0`.
 
+- Added validated set-level destinations to `warps.tsv`. Native pre-map and
+  active-map variants now resolve through the same authoritative level
+  transition path once their geometry is materialized; ordinary warp rows remain
+  compatible. This advances the active content schema to `1.455.0`.
+
 - Corrected the Gateway fragment to use the native pre-pedestal blood1.dun
   layer while retaining the validated blood2.dun post-pedestal asset for the
-  next server-owned activation seam.
+  server-owned final-stage monster-layer activation.
 
 - Externalized the Halls of the Blind and Gateway of Blood rooms as
   availability-gated native-DUN fragments with explicit Cathedral/Catacombs

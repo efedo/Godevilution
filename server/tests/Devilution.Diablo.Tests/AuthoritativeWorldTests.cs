@@ -109,6 +109,65 @@ public sealed class AuthoritativeWorldTests
     }
 
     [Fact]
+    public void LoadsSetLevelWarpDestinationsAfterTheirGeometryIsPublished()
+    {
+        var world = new AuthoritativeWorld();
+        world.AddLevel(new AuthoritativeLevel(1, 4, 4));
+        var setLevelMaps = new AuthoritativeSetLevelMapCatalog([
+            new AuthoritativeSetLevelMapDefinition(
+                2,
+                "pre.dun",
+                "active.dun",
+                "Catacombs",
+                1,
+                1) {
+                SetLevelSymbol = "SL_TEST",
+            },
+        ]);
+        var activeLevelId = AuthoritativeSetLevelMapCatalog.GetRuntimeLevelId(2, activeMap: true);
+        var preLevelId = AuthoritativeSetLevelMapCatalog.GetRuntimeLevelId(2, activeMap: false);
+        world.AddLevel(new AuthoritativeLevel(activeLevelId, 4, 4));
+        world.AddLevel(new AuthoritativeLevel(preLevelId, 4, 4));
+        var stableIds = new StableContentIdCatalog([
+            new StableContentId("set_level", "SL_TEST", 2),
+        ]);
+
+        var targets = AuthoritativeWarpCatalog.LoadTsv(
+            "warps.tsv",
+            "warp_id\tsource_level_id\ttrigger_x\ttrigger_y\ttarget_set_level_symbol\ttarget_set_level_active_map\ttarget_x\ttarget_y\n"
+                + "7\t1\t1\t1\tSL_TEST\ttrue\t2\t2\n"
+                + "8\t1\t2\t2\tSL_TEST\tfalse\t3\t3\n",
+            world,
+            stableIds,
+            setLevelMaps);
+
+        Assert.Equal(activeLevelId, targets[0].TargetLevelId);
+        Assert.Equal(preLevelId, targets[1].TargetLevelId);
+        Assert.All(targets, target => Assert.Equal(2, target.TargetSetLevelId));
+        Assert.All(targets, target => Assert.Equal("SL_TEST", target.TargetSetLevelSymbol));
+        Assert.True(targets[0].TargetSetLevelActiveMap);
+        Assert.False(targets[1].TargetSetLevelActiveMap);
+        world.AddWarpTarget(targets[0]);
+        world.AddWarpTarget(targets[1]);
+        Assert.Equal(activeLevelId, world.WarpTargets[0].TargetLevelId);
+        Assert.Equal(preLevelId, world.WarpTargets[1].TargetLevelId);
+
+        Assert.Throws<InvalidDataException>(() => AuthoritativeWarpCatalog.LoadTsv(
+            "invalid-warps.tsv",
+            "warp_id\tsource_level_id\ttrigger_x\ttrigger_y\ttarget_level_id\ttarget_set_level_symbol\ttarget_x\ttarget_y\n"
+                + "9\t1\t1\t1\t1\tSL_TEST\t2\t2\n",
+            world,
+            stableIds,
+            setLevelMaps));
+        Assert.Throws<InvalidDataException>(() => AuthoritativeWarpCatalog.LoadTsv(
+            "missing-set-level-warps.tsv",
+            "warp_id\tsource_level_id\ttrigger_x\ttrigger_y\ttarget_set_level_symbol\ttarget_x\ttarget_y\n"
+                + "10\t1\t1\t1\tSL_TEST\t2\t2\n",
+            world,
+            stableIds));
+    }
+
+    [Fact]
     public void AuthoredMonsterObjectAndQuestLevelLinksResolveStableSymbols()
     {
         var stableIds = new StableContentIdCatalog([

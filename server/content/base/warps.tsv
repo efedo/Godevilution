@@ -1,17 +1,17 @@
-warp_id	warp_symbol	source_level_id	source_level_symbol	trigger_x	trigger_y	target_level_id	target_level_symbol	target_x	target_y	required_quest_id	required_quest_symbol	required_quest_completed
-1001	town_to_cathedral	0	town	57	40	1	cathedral	1	1	0		0
-1002	cathedral_to_catacombs	1	cathedral	36	36	2	catacombs	1	1	0		0
-1003	catacombs_to_caves	2	catacombs	36	36	3	caves	1	1	0		0
-1004	caves_to_hell	3	caves	36	36	4	hell	1	1	0		0
-1005	hell_to_cathedral_5	4	hell	36	36	5	cathedral_depth_5	1	1	0		0
-1006	cathedral_5_to_catacombs_6	5	cathedral_depth_5	36	36	6	catacombs_depth_6	1	1	0		0
-1007	catacombs_6_to_caves_7	6	catacombs_depth_6	36	36	7	caves_depth_7	1	1	0		0
-1008	caves_7_to_hell_8	7	caves_depth_7	36	36	8	hell_depth_8	1	1	0		0
-1009	hell_8_to_level_9	8	hell_depth_8	36	36	9	hellfire_level_9	1	1	0		0
-1010	level_9_to_catacombs_10	9	hellfire_level_9	36	36	10	catacombs_depth_10	1	1	0		0
-1011	catacombs_10_to_caves_11	10	catacombs_depth_10	36	36	11	caves_depth_11	1	1	0		0
-1012	caves_11_to_hell_12	11	caves_depth_11	36	36	12	hell_depth_12	1	1	0		0
-1013	hell_12_to_cathedral_13	12	hell_depth_12	36	36	13	cathedral_depth_13	1	1	0		0
-1014	cathedral_13_to_catacombs_14	13	cathedral_depth_13	36	36	14	catacombs_depth_14	1	1	0		0
-1015	catacombs_14_to_caves_15	14	catacombs_depth_14	36	36	15	caves_depth_15	1	1	0		0
-1016	caves_15_to_hell_16	15	caves_depth_15	36	36	16	hell_depth_16	1	1	0		0
+warp_id	warp_symbol	source_level_id	source_level_symbol	trigger_x	trigger_y	target_level_id	target_level_symbol	target_x	target_y	required_quest_id	required_quest_symbol	required_quest_completed	target_set_level_id	target_set_level_symbol	target_set_level_active_map
+1001	town_to_cathedral	0	town	57	40	1	cathedral	1	1	0		0	none		false
+1002	cathedral_to_catacombs	1	cathedral	36	36	2	catacombs	1	1	0		0	none		false
+1003	catacombs_to_caves	2	catacombs	36	36	3	caves	1	1	0		0	none		false
+1004	caves_to_hell	3	caves	36	36	4	hell	1	1	0		0	none		false
+1005	hell_to_cathedral_5	4	hell	36	36	5	cathedral_depth_5	1	1	0		0	none		false
+1006	cathedral_5_to_catacombs_6	5	cathedral_depth_5	36	36	6	catacombs_depth_6	1	1	0		0	none		false
+1007	catacombs_6_to_caves_7	6	catacombs_depth_6	36	36	7	caves_depth_7	1	1	0		0	none		false
+1008	caves_7_to_hell_8	7	caves_depth_7	36	36	8	hell_depth_8	1	1	0		0	none		false
+1009	hell_8_to_level_9	8	hell_depth_8	36	36	9	hellfire_level_9	1	1	0		0	none		false
+1010	level_9_to_catacombs_10	9	hellfire_level_9	36	36	10	catacombs_depth_10	1	1	0		0	none		false
+1011	catacombs_10_to_caves_11	10	catacombs_depth_10	36	36	11	caves_depth_11	1	1	0		0	none		false
+1012	caves_11_to_hell_12	11	caves_depth_11	36	36	12	hell_depth_12	1	1	0		0	none		false
+1013	hell_12_to_cathedral_13	12	hell_depth_12	36	36	13	cathedral_depth_13	1	1	0		0	none		false
+1014	cathedral_13_to_catacombs_14	13	cathedral_depth_13	36	36	14	catacombs_depth_14	1	1	0		0	none		false
+1015	catacombs_14_to_caves_15	14	catacombs_depth_14	36	36	15	caves_depth_15	1	1	0		0	none		false
+1016	caves_15_to_hell_16	15	caves_depth_15	36	36	16	hell_depth_16	1	1	0		0	none		false

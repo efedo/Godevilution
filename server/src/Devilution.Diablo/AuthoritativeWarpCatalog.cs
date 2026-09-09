@@ -14,7 +14,9 @@ public sealed class AuthoritativeWarpTarget
         int targetX,
         int targetY,
         uint requiredQuestId = 0,
-        bool requiredQuestCompleted = false)
+        bool requiredQuestCompleted = false,
+        int targetSetLevelId = -1,
+        bool targetSetLevelActiveMap = true)
     {
         if (warpId == 0)
             throw new ArgumentOutOfRangeException(nameof(warpId));
@@ -31,6 +33,10 @@ public sealed class AuthoritativeWarpTarget
                 nameof(requiredQuestCompleted));
         RequiredQuestId = requiredQuestId;
         RequiredQuestCompleted = requiredQuestCompleted;
+        if (targetSetLevelId is < -1 or > 8)
+            throw new ArgumentOutOfRangeException(nameof(targetSetLevelId));
+        TargetSetLevelId = targetSetLevelId;
+        TargetSetLevelActiveMap = targetSetLevelActiveMap;
     }
 
     public uint WarpId { get; }
@@ -52,6 +58,15 @@ public sealed class AuthoritativeWarpTarget
 
     /** Whether the required quest must be completed rather than active. */
     public bool RequiredQuestCompleted { get; }
+
+    /** Optional native set-level identity represented by TargetLevelId. */
+    public int TargetSetLevelId { get; }
+
+    /** Selects the active or pre-map variant for a set-level destination. */
+    public bool TargetSetLevelActiveMap { get; }
+
+    /** Stable set-level symbol retained alongside the numeric destination. */
+    public string TargetSetLevelSymbol { get; init; } = string.Empty;
 
     /** Stable content symbol retained alongside the numeric warp identity. */
     public string StableSymbol { get; init; } = string.Empty;
@@ -79,12 +94,49 @@ public static class AuthoritativeWarpCatalog
         string sourcePath,
         string contents,
         AuthoritativeWorld world,
-        StableContentIdCatalog? stableIds = null)
+        StableContentIdCatalog? stableIds = null,
+        AuthoritativeSetLevelMapCatalog? setLevelMaps = null)
     {
         ArgumentNullException.ThrowIfNull(world);
         var table = TsvTable.Parse(sourcePath, contents);
         var targets = new List<AuthoritativeWarpTarget>();
         foreach (var row in table.Rows) {
+            var hasTargetSetLevel = row.TryGet("target_set_level_id", out var targetSetLevelText)
+                && !string.IsNullOrWhiteSpace(targetSetLevelText)
+                && !string.Equals(targetSetLevelText.Trim(), "none", StringComparison.OrdinalIgnoreCase)
+                || row.TryGet("target_set_level_symbol", out var targetSetLevelSymbolText)
+                && !string.IsNullOrWhiteSpace(targetSetLevelSymbolText);
+            var targetSetLevelId = hasTargetSetLevel
+                ? AuthoritativeSetLevelIdentity.ResolveOptional(
+                    row,
+                    stableIds,
+                    "target_set_level_id",
+                    "target_set_level_symbol")
+                : -1;
+            var targetSetLevelActiveMap = row.OptionalBoolean(
+                "target_set_level_active_map",
+                defaultValue: true);
+            var hasOrdinaryTargetLevel = row.TryGet("target_level_id", out var targetLevelText)
+                && !string.IsNullOrWhiteSpace(targetLevelText)
+                || row.TryGet("target_level_symbol", out var targetLevelSymbolText)
+                && !string.IsNullOrWhiteSpace(targetLevelSymbolText);
+            if (hasTargetSetLevel == hasOrdinaryTargetLevel)
+                throw new InvalidDataException(
+                    $"Warp row {row.LineNumber} must target exactly one ordinary level or set-level variant.");
+            if (hasTargetSetLevel
+                && (setLevelMaps is null || !setLevelMaps.TryGet(targetSetLevelId, out _))) {
+                throw new InvalidDataException(
+                    $"Warp row {row.LineNumber} references unavailable set level {targetSetLevelId}.");
+            }
+            var targetLevelId = hasTargetSetLevel
+                ? AuthoritativeSetLevelMapCatalog.GetRuntimeLevelId(
+                    targetSetLevelId,
+                    targetSetLevelActiveMap)
+                : AuthoritativeLevelIdentity.ResolveOptional(
+                    row,
+                    stableIds,
+                    "target_level_id",
+                    "target_level_symbol");
             var target = new AuthoritativeWarpTarget(
                 AuthoritativeWarpIdentity.Resolve(row, stableIds),
                 AuthoritativeLevelIdentity.ResolveOptional(
@@ -94,11 +146,7 @@ public static class AuthoritativeWarpCatalog
                     "source_level_symbol"),
                 row.RequiredInt32("trigger_x"),
                 row.RequiredInt32("trigger_y"),
-                AuthoritativeLevelIdentity.ResolveOptional(
-                    row,
-                    stableIds,
-                    "target_level_id",
-                    "target_level_symbol"),
+                targetLevelId,
                 row.RequiredInt32("target_x"),
                 row.RequiredInt32("target_y"),
                 AuthoritativeQuestIdentity.ResolveOptional(
@@ -106,8 +154,13 @@ public static class AuthoritativeWarpCatalog
                     stableIds,
                     "required_quest_id",
                     "required_quest_symbol"),
-                row.OptionalBoolean("required_quest_completed")) {
+                row.OptionalBoolean("required_quest_completed"),
+                targetSetLevelId,
+                targetSetLevelActiveMap) {
                 StableSymbol = AuthoritativeWarpIdentity.ReadSymbol(row),
+                TargetSetLevelSymbol = row.TryGet("target_set_level_symbol", out var setLevelSymbol)
+                    ? setLevelSymbol.Trim()
+                    : string.Empty,
             };
             if (!world.ContainsLevel(target.SourceLevelId)
                 || !world.ContainsLevel(target.TargetLevelId)) {

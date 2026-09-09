@@ -18,7 +18,7 @@ public sealed class ShippedContentTests
         Assert.Equal("devilution.base", pack.Id);
         Assert.Equal("0.1.0", pack.Version);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.454.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.455.0"),
             pack.Schema);
         Assert.Empty(pack.Overlays);
         var nativeDunMonsterTable = pack.Tables.Single(
@@ -1186,7 +1186,7 @@ public sealed class ShippedContentTests
             currentPack.Tables,
             currentPack.Dependencies,
             currentPack.Overlays,
-            new ContentSchemaIdentity("devilution.diablo", "1.453.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.454.0"),
             currentPack.DependencyConstraints,
             currentPack.Assets);
         var content = ComposedContent.Compose(new ContentManifest(
@@ -1968,16 +1968,21 @@ public sealed class ShippedContentTests
             "world_mutations.tsv",
             $"mutation_id\tlevel_id\tanchor_entity_id\tanchor_unique_identity\tblocked_cells_add\tblocked_cells_remove\tmissile_blocked_cells_add\tmissile_blocked_cells_remove\tgeometry_rect_add\tgeometry_rect_remove\ttransparency_rects\tobject_layer_rects\tpiece_layer_rects\tanchor_mega_offset_x\tanchor_mega_offset_y\tmega_tile_assignments\tcreate_transparency_layer\tmega_tile_copy_source_level_id\tmega_tile_copy_rects\tpiece_property_overrides\tmonster_layer_rects\n"
                 + $"9100\t{AuthoritativeSetLevelMapCatalog.GetRuntimeLevelId(1, activeMap: true)}\t\t\t4\t\t\t\t\t\t\t\t\t0\t0\tnone\tfalse\t0\tnone\tnone\t\n");
+        var warpTable = TsvTable.Parse(
+            "warps.tsv",
+            "warp_id\twarp_symbol\tsource_level_id\tsource_level_symbol\ttrigger_x\ttrigger_y\ttarget_level_id\ttarget_level_symbol\ttarget_x\ttarget_y\trequired_quest_id\trequired_quest_symbol\trequired_quest_completed\ttarget_set_level_id\ttarget_set_level_symbol\ttarget_set_level_active_map\n"
+                + "9901\t\t0\t\t1\t1\t\t\t4\t5\t0\t\t0\t\tSL_SKELKING\ttrue\n");
         var overlayPack = new ContentPack(
             "geometry-fixture",
             "1.0.0",
-            [mapTable, objectTable, placementTable, mutationTable],
+            [mapTable, objectTable, placementTable, mutationTable, warpTable],
             dependencies: [basePack.Id],
             overlays: [
                 new ContentTableOverlay("set_level_maps.tsv", ["set_level_id"]),
                 new ContentTableOverlay("objects.tsv", ["entity_id"]),
                 new ContentTableOverlay("set_level_objects.tsv", ["placement_id"]),
                 new ContentTableOverlay("world_mutations.tsv", ["mutation_id"]),
+                new ContentTableOverlay("warps.tsv", ["warp_id"]),
             ],
             assets: [
                 new ContentAsset("fixture/pre.dun", CreateSyntheticDun()),
@@ -2005,6 +2010,13 @@ public sealed class ShippedContentTests
         Assert.Equal("SL_SKELKING", active.StableSymbol);
         Assert.Equal(80, pre.Width);
         Assert.Equal(80, active.Height);
+        var setLevelWarp = Assert.Single(
+            activation.Simulation.WorldState.World.WarpTargets,
+            warp => warp.WarpId == 9901);
+        Assert.Equal(active.LevelId, setLevelWarp.TargetLevelId);
+        Assert.Equal(1, setLevelWarp.TargetSetLevelId);
+        Assert.Equal("SL_SKELKING", setLevelWarp.TargetSetLevelSymbol);
+        Assert.True(setLevelWarp.TargetSetLevelActiveMap);
         var gate = Assert.Single(
             activation.Simulation.WorldState.Objects.Values,
             @object => @object.EntityId
@@ -2786,7 +2798,7 @@ public sealed class ShippedContentTests
         var gatedWarps = TsvTable.Parse(
             warps.SourcePath,
             warps.ToCanonicalTsv()
-                + "2\t\t0\t\t0\t0\t0\t\t0\t0\t3017\t\t1\n");
+                + "2\t\t0\t\t0\t0\t0\t\t0\t0\t3017\t\t1\t\t\t\n");
         var incompletePack = new ContentPack(
             basePack.Id,
             basePack.Version,
@@ -3667,7 +3679,7 @@ public sealed class ShippedContentTests
 
         Assert.Equal("devilution.hellfire", hellfirePack.Id);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.454.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.455.0"),
             hellfirePack.Schema);
         Assert.Equal(DiabloGameVariant.Hellfire, combat.GameVariant);
         Assert.Equal(2, combat.UniqueExperienceMultiplier);

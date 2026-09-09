@@ -1,3 +1,3 @@
-warp_id	warp_symbol	source_level_id	source_level_symbol	trigger_x	trigger_y	target_level_id	target_level_symbol	target_x	target_y	required_quest_id	required_quest_symbol	required_quest_completed
-2	grave_matters_dungeon	0	town	36	22	17	hellfire_level_17	36	24	3017	grave_matters	1
-3	farmers_orchard_dungeon	0	town	80	62	17	hellfire_level_17	20	20	3018	farmers_orchard	1
+warp_id	warp_symbol	source_level_id	source_level_symbol	trigger_x	trigger_y	target_level_id	target_level_symbol	target_x	target_y	required_quest_id	required_quest_symbol	required_quest_completed	target_set_level_id	target_set_level_symbol	target_set_level_active_map
+2	grave_matters_dungeon	0	town	36	22	17	hellfire_level_17	36	24	3017	grave_matters	1	none		false
+3	farmers_orchard_dungeon	0	town	80	62	17	hellfire_level_17	20	20	3018	farmers_orchard	1	none		false

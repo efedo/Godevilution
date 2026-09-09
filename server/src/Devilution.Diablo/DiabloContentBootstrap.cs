@@ -612,21 +612,6 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
                 levelGenerationTable.SourcePath,
                 levelGenerationTable.ToCanonicalTsv())
             : null;
-        if (world is not null && content.TryGetTable("warps.tsv", out var warpsTable)) {
-            foreach (var warp in AuthoritativeWarpCatalog.LoadTsv(
-                         warpsTable.SourcePath,
-                         warpsTable.ToCanonicalTsv(),
-                         world,
-                         stableIds)) {
-                world.AddWarpTarget(warp);
-            }
-        }
-        if (stableIds is not null && world is not null)
-            stableIds.ValidateReferences(
-                "warp",
-                warpId => world.WarpTargets.Any(warp => warp.WarpId == warpId));
-        if (world is not null && levelGeneration is not null)
-            levelGeneration.ValidateWorld(world);
         playerLoadouts.ValidateCastSources(spells);
         if (spells is not null && stableIds is not null)
             spells.ValidateStableReferences(
@@ -956,6 +941,10 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
             nativeDunObjects.ValidateTemplates(objectDefinitions);
         }
         setLevelObjects?.ValidateTemplates(objectDefinitions);
+        // Generation metadata covers ordinary/procedural levels; native
+        // set-level variants are validated by their own map catalog below.
+        if (world is not null && levelGeneration is not null)
+            levelGeneration.ValidateWorld(world);
         var setLevelMaps = content.TryGetTable(
             "set_level_maps.tsv",
             out var setLevelMapsTable)
@@ -975,6 +964,22 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
                     world.AddLevel(level);
             }
         }
+        // Set-level geometry is published before warps so authored destinations
+        // can target a materialized pre-map or active-map variant.
+        if (world is not null && content.TryGetTable("warps.tsv", out var warpsTable)) {
+            foreach (var warp in AuthoritativeWarpCatalog.LoadTsv(
+                         warpsTable.SourcePath,
+                         warpsTable.ToCanonicalTsv(),
+                         world,
+                         stableIds,
+                         setLevelMaps)) {
+                world.AddWarpTarget(warp);
+            }
+        }
+        if (stableIds is not null && world is not null)
+            stableIds.ValidateReferences(
+                "warp",
+                warpId => world.WarpTargets.Any(warp => warp.WarpId == warpId));
         if (world is not null && (setLevelObjects is not null || nativeDunObjects is not null)) {
             var generatedObjects = new List<AuthoritativeWorldObject>();
             if (setLevelObjects is not null) {
