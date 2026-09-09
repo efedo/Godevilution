@@ -47,7 +47,7 @@ spell knowledge in the same tagged canonical-hash extension used by snapshots.
 An optional `equipment` array carries protocol-shaped slot, item seed, native
 item index, type/class, value, identified value, flags, and usability state.
 Elemental replay cases may also carry `identified`, `magical`,
-`fire_min_damage`, `fire_max_damage`, `lightning_min_damage`, and
+`min_damage`, `max_damage`, `fire_min_damage`, `fire_max_damage`, `lightning_min_damage`, and
 `lightning_max_damage`; these fields are optional and default to the native
 zero/false values. Melee attacks select `FireDamage`/`LightningDamage`, while
 ranged attacks select `FireArrows`/`LightningArrows`, so arrow-only effects can
@@ -58,10 +58,10 @@ separate fixture outcomes.
 
 `gameplay-class-physical-damage.json` extends the initial-state contract with
 optional `strength` and `vitality` fields. Together with `dexterity` and
-`character_class`, these fields exercise a native class-specific unarmed
-physical-damage modifier at a shared checkpoint. Omitting the new fields keeps
-legacy compact fixtures on their compatibility fallback; class-damage fixtures
-must author all three physical attributes explicitly.
+`character_class`, these fields exercise native class-specific physical damage
+against an authored weapon range at a shared checkpoint. Omitting the new
+fields keeps legacy compact fixtures on their compatibility fallback;
+class-damage fixtures must author all three physical attributes explicitly.
 
 Fallen parity fixtures may declare `combat_target_fallen_stand_animation_frame`,
 `combat_target_fallen_stand_animation_tick`, and

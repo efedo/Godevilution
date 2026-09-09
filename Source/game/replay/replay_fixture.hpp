@@ -86,6 +86,8 @@ struct ReplayFixtureEquippedItem {
 	int32_t identifiedValue = 0;
 	bool identified = false;
 	int32_t magical = 0;
+	int32_t minDamage = 0;
+	int32_t maxDamage = 0;
 	int32_t fireMinDamage = 0;
 	int32_t fireMaxDamage = 0;
 	int32_t lightningMinDamage = 0;

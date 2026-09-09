@@ -36,6 +36,9 @@ public sealed class BaseContentReplayTests
             initial.Experience,
             initial.Life,
             initial.Mana,
+            startingEquipment: initial.Equipment
+                .Select(item => item.ToEquippedStoreItem())
+                .ToArray(),
             startingAttributes: attributes,
             startingManaMaximum: initial.ManaMaximum,
             startingPositionX: initial.PositionX,
@@ -51,7 +54,15 @@ public sealed class BaseContentReplayTests
                 armorClass: initial.CombatTargetArmorClass,
                 maxHitPoints: initial.CombatTargetMaxHitPoints)],
             startingPlayerClasses: classes,
+            startingPlayerClass: classDefinition,
             startingRandomSeed: checked((uint)fixture.RngSeed));
+
+        var beforeAttack = Assert.Single(
+            executor.CreateSnapshot(initial.Player, 1, 0).Players);
+        Assert.Equal(1U, beforeAttack.CharacterClassId);
+        Assert.Equal(30, beforeAttack.Attributes.Dexterity.Current);
+        Assert.Equal(4, Assert.Single(beforeAttack.Equipment).State.MinDamage);
+        Assert.Equal(4, Assert.Single(beforeAttack.Equipment).State.MaxDamage);
 
         var result = ReplayFixtureExecutor.Execute(
             fixture,
@@ -59,7 +70,7 @@ public sealed class BaseContentReplayTests
             new AuthoritativeCommandServer(executor));
 
         Assert.Equal(CommandStatus.Accepted, Assert.Single(result.Results).Status);
-        Assert.Equal(97, Assert.Single(result.FinalSnapshot.Monsters).HitPoints);
+        Assert.Equal(94, Assert.Single(result.FinalSnapshot.Monsters).HitPoints);
         Assert.Equal(
             fixture.Checkpoints.Select(checkpoint => checkpoint.StateSha256),
             result.Checkpoints.Select(checkpoint => checkpoint.ActualStateSha256));

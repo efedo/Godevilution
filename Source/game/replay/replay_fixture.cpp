@@ -5309,21 +5309,78 @@ bool ApplyReplayAttack(
 		const int32_t strength = state.attributes[1];
 		const int32_t dexterity = state.attributes[5];
 		const int32_t vitality = state.attributes[7];
+		int32_t minimumDamage = 0;
+		int32_t maximumDamage = 0;
+		bool hasShield = false;
+		bool hasStaff = false;
+		bool hasBow = false;
+		bool hasSword = false;
+		bool hasAxe = false;
+		bool hasMace = false;
+		for (const auto &equippedItem : state.equipment) {
+			if (!IsReplayEquipmentUsable(equippedItem.state))
+				continue;
+			minimumDamage += std::max(0, equippedItem.state.minDamage);
+			maximumDamage += std::max(0, equippedItem.state.maxDamage);
+			if (equippedItem.slot != 4 && equippedItem.slot != 5)
+				continue;
+			switch (equippedItem.state.itemType) {
+			case 1:
+				hasSword = true;
+				break;
+			case 2:
+				hasAxe = true;
+				break;
+			case 3:
+				hasBow = true;
+				break;
+			case 4:
+				hasMace = true;
+				break;
+			case 5:
+				hasShield = true;
+				break;
+			case 10:
+				hasStaff = true;
+				break;
+			default:
+				break;
+			}
+		}
+		if (minimumDamage == 0 && maximumDamage == 0) {
+			minimumDamage = 1;
+			maximumDamage = hasShield ? 3 : 1;
+			if (state.characterClassId == 3) {
+				minimumDamage = std::max(1, level / 5);
+				maximumDamage = std::max(1, level / 2);
+			}
+		}
 		const int32_t strengthModifier = level * strength;
 		const int32_t strengthDexterityModifier = level * (strength + dexterity);
 		const int32_t damageModifier = state.characterClassId == 1
 		        ? strengthDexterityModifier / 200
 		    : state.characterClassId == 3
-		        ? strengthDexterityModifier / 150
+		        ? (hasStaff || (!hasSword && !hasAxe && !hasMace && !hasBow && !hasShield)
+		                ? strengthDexterityModifier / 150
+		                : strengthDexterityModifier / 300)
 		    : state.characterClassId == 4
-		        ? strengthModifier / 100
+		        ? (hasSword
+		                ? strengthDexterityModifier / 150
+		                : hasBow
+		                    ? strengthDexterityModifier / 250
+		                    : strengthModifier / 100)
 		    : state.characterClassId == 5
-		        ? strengthModifier / 100 + level * vitality / 100
+		        ? (hasAxe || hasMace
+		                ? strengthModifier / 75
+		                : hasBow
+		                    ? strengthModifier / 300
+		                    : strengthModifier / 100)
+		            + (!hasShield && !hasStaff && !hasBow
+		                ? level * vitality / 100
+		                : 0)
 		        : strengthModifier / 100;
-		const int32_t unarmedMaximum = state.characterClassId == 3
-		    ? std::max(1, level / 2)
-		    : 1;
-		const int32_t rolledBaseDamage = 1 + GenerateRnd(state, unarmedMaximum);
+		const int32_t rolledBaseDamage = minimumDamage
+		    + GenerateRnd(state, maximumDamage - minimumDamage + 1);
 		damage = std::max(1, rolledBaseDamage + damageModifier - std::max(0, state.combatTargetArmorClass));
 	} else {
 		damage = ranged ? 1 : std::max(1, 10 - state.combatTargetArmorClass);
@@ -10814,6 +10871,10 @@ private:
 					    return ParseBool(item.identified);
 				    if (key == "magical")
 					    return ParseSigned(item.magical);
+				    if (key == "min_damage")
+					    return ParseSigned(item.minDamage);
+				    if (key == "max_damage")
+					    return ParseSigned(item.maxDamage);
 				    if (key == "fire_min_damage")
 					    return ParseSigned(item.fireMinDamage);
 				    if (key == "fire_max_damage")
@@ -10833,6 +10894,8 @@ private:
 			    || item.itemType > std::numeric_limits<uint8_t>::max()
 			    || item.itemClass < 0
 			    || item.itemClass > 3
+			    || item.minDamage < 0
+			    || item.maxDamage < item.minDamage
 			    || item.fireMinDamage < 0
 			    || item.fireMaxDamage < item.fireMinDamage
 			    || item.lightningMinDamage < 0
@@ -12005,6 +12068,8 @@ bool ExecuteReplayFixture(
 			item.identifiedValue = source.identifiedValue;
 			item.identified = source.identified;
 			item.magical = source.magical;
+			item.minDamage = source.minDamage;
+			item.maxDamage = source.maxDamage;
 			item.fireMinDamage = source.fireMinDamage;
 			item.fireMaxDamage = source.fireMaxDamage;
 			item.lightningMinDamage = source.lightningMinDamage;
@@ -12099,6 +12164,8 @@ bool ExecuteReplayFixture(
 			itemState.identifiedValue = source.identifiedValue;
 			itemState.identified = source.identified;
 			itemState.magical = source.magical;
+			itemState.minDamage = source.minDamage;
+			itemState.maxDamage = source.maxDamage;
 			itemState.fireMinDamage = source.fireMinDamage;
 			itemState.fireMaxDamage = source.fireMaxDamage;
 			itemState.lightningMinDamage = source.lightningMinDamage;

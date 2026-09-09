@@ -522,6 +522,9 @@ TEST(ReplayFixture, ExecutesClassPhysicalDamageAgainstCSharpCheckpoint)
 	ASSERT_EQ(fixture.initialState.characterClass, 1);
 	ASSERT_EQ(fixture.initialState.strength, 20);
 	ASSERT_EQ(fixture.initialState.dexterity, 30);
+	ASSERT_EQ(fixture.initialState.equipment.size(), 1U);
+	EXPECT_EQ(fixture.initialState.equipment[0].minDamage, 4);
+	EXPECT_EQ(fixture.initialState.equipment[0].maxDamage, 4);
 
 	ReplayFixtureExecutionState state;
 	state.characterClassId = static_cast<uint32_t>(fixture.initialState.characterClass);
@@ -545,7 +548,7 @@ TEST(ReplayFixture, ExecutesClassPhysicalDamageAgainstCSharpCheckpoint)
 	ASSERT_TRUE(ExecuteReplayFixture(fixture, state, result, error)) << error;
 	ASSERT_EQ(result.transitions.size(), 1U);
 	EXPECT_TRUE(result.transitions[0].accepted);
-	EXPECT_EQ(state.combatTargetHitPoints, 97);
+	EXPECT_EQ(state.combatTargetHitPoints, 94);
 	EXPECT_EQ(result.transitions[0].stateSha256, fixture.checkpoints.back().stateSha256);
 }
 

@@ -29,7 +29,19 @@
     "combat_target_position_y": 0,
     "combat_target_hit_points": 100,
     "combat_target_max_hit_points": 100,
-    "combat_target_armor_class": 0
+    "combat_target_armor_class": 0,
+    "equipment": [
+      {
+        "slot": 4,
+        "item_seed": 100,
+        "item_type": 1,
+        "item_class": 1,
+        "flags": 0,
+        "stat_flag": true,
+        "min_damage": 4,
+        "max_damage": 4
+      }
+    ]
   },
   "commands": [
     {
@@ -41,6 +53,6 @@
     }
   ],
   "checkpoints": [
-    { "tick": 1, "state_sha256": "9f90806c8db0c4a5fea96e80225bdfba511fa92af4d218692b88a7f36f6b19a1" }
+    { "tick": 1, "state_sha256": "d7e21a6d17b95b6736ab5285c3664f0dfd93be3f0d05885a0738356a2da5450d" }
   ]
 }

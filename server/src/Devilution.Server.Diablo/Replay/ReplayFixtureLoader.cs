@@ -876,6 +876,8 @@ public static class ReplayFixtureLoader
                 IdentifiedValue = GetOptionalInt(item, "identified_value"),
                 Identified = GetOptionalBool(item, "identified"),
                 Magical = GetOptionalInt(item, "magical"),
+                MinDamage = GetOptionalInt(item, "min_damage"),
+                MaxDamage = GetOptionalInt(item, "max_damage"),
                 FireMinDamage = GetOptionalInt(item, "fire_min_damage"),
                 FireMaxDamage = GetOptionalInt(item, "fire_max_damage"),
                 LightningMinDamage = GetOptionalInt(item, "lightning_min_damage"),
@@ -887,6 +889,8 @@ public static class ReplayFixtureLoader
                 || item.ItemSeed == 0
                 || item.ItemType is < 0 or > byte.MaxValue
                 || item.ItemClass is < 0 or > 3
+                || item.MinDamage < 0
+                || item.MaxDamage < item.MinDamage
                 || item.FireMinDamage < 0
                 || item.FireMaxDamage < item.FireMinDamage
                 || item.LightningMinDamage < 0
