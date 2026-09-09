@@ -12,6 +12,9 @@ All notable changes to this fork are documented below.
   Barbarian class contribution is applied before Mana Shield in both runners.
 - Added primary MonsterMagic block coverage proving usable shields consume the
   block boundary before damage in both runners.
+- Added Hellfire Monk MonsterMagic block coverage proving FlexibleBlock admits
+  unarmed primary-player blocking and applies the class base block chance in
+  both runners.
 - Added primary Acid impact coverage proving usable GetHit and acid resistance
   are applied before Mana Shield absorption in both runners.
 - Added persistent Acid puddle impact coverage proving active-tick player

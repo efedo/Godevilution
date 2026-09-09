@@ -3611,6 +3611,49 @@ int32_t ResolveReplayEquipmentResistance(
 	return std::clamp(resistance, 0, 75);
 }
 
+bool IsReplayPrimaryPlayerBlockCapable(const ReplayFixtureExecutionState &state)
+{
+	if (std::any_of(
+		    state.equipment.begin(),
+		    state.equipment.end(),
+		    [](const ReplayFixtureSlottedItem &item) {
+			    return IsReplayEquipmentUsable(item.state)
+			        && (item.slot == 4 || item.slot == 5)
+			        && item.state.itemType == 5;
+		    }))
+		return true;
+
+	// Hellfire Monk's FlexibleBlock permits unarmed and staff blocking.  The
+	// compact fixture schema does not yet carry the native two-handed item
+	// classification, so only the unarmed and explicit staff cases are
+	// admitted here; managed CanBlock applies the full content classification.
+	if (!state.hellfire || state.characterClassId != 3)
+		return false;
+	const auto usableHands = std::count_if(
+		state.equipment.begin(),
+		state.equipment.end(),
+		[](const ReplayFixtureSlottedItem &item) {
+			return IsReplayEquipmentUsable(item.state)
+			    && (item.slot == 4 || item.slot == 5);
+		});
+	return usableHands == 0
+	    || std::any_of(
+		   state.equipment.begin(),
+		   state.equipment.end(),
+		   [](const ReplayFixtureSlottedItem &item) {
+			   return IsReplayEquipmentUsable(item.state)
+			       && (item.slot == 4 || item.slot == 5)
+			       && item.state.itemType == 10;
+		   });
+}
+
+int32_t GetReplayBaseBlockChance(uint32_t characterClassId)
+{
+	// The Diablo classes retain their existing zero-base compact behavior;
+	// Hellfire Monk is the first class-specific block lane covered here.
+	return characterClassId == 3 ? 25 : 0;
+}
+
 int32_t ApplyReplayManaShield(
 	ReplayFixtureExecutionState &state,
 	int32_t damageQ6)
@@ -9561,13 +9604,7 @@ void AdvanceReplayAutonomousMonsterMagicOneTick(
 			    projectile.damageType);
 			const bool primaryPlayerBlockCapable = primaryPlayerAtTile
 			    && (state.combatMode == 0 || state.combatMode == 4)
-			    && std::any_of(
-			        state.equipment.begin(),
-			        state.equipment.end(),
-			        [](const ReplayFixtureSlottedItem &item) {
-				        return IsReplayEquipmentUsable(item.state)
-				            && item.state.itemType == 5;
-			        });
+			    && IsReplayPrimaryPlayerBlockCapable(state);
 			const bool canBlock = (secondaryPlayerAtTile
 			        && state.secondaryPlayerBlockCapable
 			        && (state.secondaryPlayerCombatMode == 0
@@ -9576,6 +9613,7 @@ void AdvanceReplayAutonomousMonsterMagicOneTick(
 			    && (resistance == 0 || state.hellfire);
 			const int32_t blockChance = std::clamp(
 				(secondaryPlayerAtTile ? state.secondaryPlayerDexterity : state.attributes[5])
+				    + (primaryPlayerAtTile ? GetReplayBaseBlockChance(state.characterClassId) : 0)
 				    + 2 * targetLevel
 				    - 2 * state.combatTargetMonsterLevel,
 				0,

@@ -1170,6 +1170,9 @@ Notable shared fixtures include:
   MonsterMagic checkpoints;
 - `gameplay-monster-magic-primary-block.json` for primary-player MonsterMagic
   shield-block admission, preserved resources, and shared impact checkpoints;
+- `gameplay-monster-magic-primary-monk-block.json` for Hellfire Monk
+  FlexibleBlock admission without equipment, class base block chance, and
+  shared primary-player impact checkpoints;
 - `gameplay-acid-primary-equipment.json` for primary Acid impact GetHit and
   resistance before Mana Shield absorption, with puddle lifecycle checkpoints;
 - `gameplay-acid-puddle-primary-equipment.json` for active Acid puddle player

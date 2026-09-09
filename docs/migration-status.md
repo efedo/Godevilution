@@ -8177,6 +8177,10 @@ MonsterMagic player impacts now include the validated Barbarian natural-
 resistance class contribution before Mana Shield in the compact native replay,
 matching the external class catalog used by the managed server.
 
+Hellfire Monk MonsterMagic impacts now use the validated FlexibleBlock and base
+block chance rules for unarmed primary-player targets in compact native replay,
+matching the managed class catalog and preserving the shared replay checkpoints.
+
 ## Near-term priorities
 
 1. Close the remaining native-parity combat and AI edge cases, including class
