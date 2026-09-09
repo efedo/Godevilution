@@ -11,4 +11,23 @@ public static class AuthoritativeCorpsePresentationVisibility
         ArgumentNullException.ThrowIfNull(corpse);
         return AuthoritativeLevelVisibility.IsVisible(corpse.LevelId, currentLevelId);
     }
+
+    /** Applies the projected native vision boundary to a corpse tile. */
+    public static bool IsVisible(
+        CorpseSnapshot corpse,
+        uint currentLevelId,
+        LevelGeometrySnapshot? geometry,
+        int viewerX,
+        int viewerY,
+        int viewerLightRadius)
+        => IsVisible(corpse, currentLevelId)
+            && AuthoritativeNativeVisionVisibility.IsVisible(
+                corpse.LevelId,
+                corpse.PositionX,
+                corpse.PositionY,
+                currentLevelId,
+                geometry,
+                viewerX,
+                viewerY,
+                viewerLightRadius);
 }

@@ -151,7 +151,14 @@ public partial class WorldPresentation : Node2D
             UpdatePosition(@object.EntityId, ToScreen(@object.PositionX, @object.PositionY), delta, @object.LevelId);
         }
         foreach (var corpse in snapshot.Corpses.Where(corpse =>
-                     AuthoritativeCorpsePresentationVisibility.IsVisible(corpse, localPlayer?.LevelId ?? 0))) {
+                     localPlayer is not null
+                     && AuthoritativeCorpsePresentationVisibility.IsVisible(
+                         corpse,
+                         localPlayer.LevelId,
+                         localGeometry,
+                         localPlayer.PositionX,
+                         localPlayer.PositionY,
+                         localLightRadius))) {
             activeEntityIds.Add(corpse.EntityId);
             UpdatePosition(corpse.EntityId, ToScreen(corpse.PositionX, corpse.PositionY), delta, corpse.LevelId);
         }
@@ -234,10 +241,19 @@ public partial class WorldPresentation : Node2D
 
     public uint? WorldItemEntityIdAt(Vector2I target)
     {
-        var currentLevelId = snapshot?.Players.FirstOrDefault()?.LevelId;
-        return snapshot?.WorldItems
-            .Where(item => currentLevelId.HasValue
-                && AuthoritativeLevelVisibility.IsVisible(item.LevelId, currentLevelId.Value)
+        var localPlayer = snapshot?.Players.FirstOrDefault();
+        if (snapshot is null || localPlayer is null)
+            return null;
+        var geometry = snapshot.LevelGeometry.FirstOrDefault(level => level.LevelId == localPlayer.LevelId);
+        var lightRadius = localPlayer.LightRadius is >= 2 and <= 15 ? localPlayer.LightRadius : 10;
+        return snapshot.WorldItems
+            .Where(item => AuthoritativeWorldItemPresentationVisibility.IsVisible(
+                    item,
+                    localPlayer.LevelId,
+                    geometry,
+                    localPlayer.PositionX,
+                    localPlayer.PositionY,
+                    lightRadius)
                 && item.PositionX == target.X
                 && item.PositionY == target.Y)
             .OrderBy(item => item.EntityId)
@@ -332,7 +348,13 @@ public partial class WorldPresentation : Node2D
                          localLightRadius)))
             DrawObject(@object);
         foreach (var corpse in snapshot.Corpses.Where(corpse =>
-                     AuthoritativeCorpsePresentationVisibility.IsVisible(corpse, currentLevel)))
+                     AuthoritativeCorpsePresentationVisibility.IsVisible(
+                         corpse,
+                         currentLevel,
+                         localGeometry,
+                         localPlayer.PositionX,
+                         localPlayer.PositionY,
+                         localLightRadius)))
             DrawCorpse(corpse);
         foreach (var portal in snapshot.Portals)
             DrawPortal(portal, currentLevel);
