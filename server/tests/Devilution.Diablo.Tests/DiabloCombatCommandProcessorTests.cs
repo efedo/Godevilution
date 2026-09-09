@@ -9943,6 +9943,50 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void GeometryBackedSkeletonRangedAiDefersWhenNativeBlockLightBlocksArrowLane()
+    {
+        var pieces = new ushort[8];
+        pieces[4] = 7;
+        var geometry = new AuthoritativeWorld();
+        geometry.AddLevel(new AuthoritativeLevel(
+            0,
+            8,
+            1,
+            nativePieceLayer: pieces,
+            nativePieceProperties: new Dictionary<ushort, AuthoritativeDunTileFlags> {
+                [7] = AuthoritativeDunTileFlags.BlockLight,
+            }));
+        var monster = new AuthoritativeCombatTarget(
+            9,
+            1,
+            0,
+            20,
+            attackDamage: 2,
+            aggroRange: 8,
+            minDamage: 2,
+            maxDamage: 9,
+            toHit: 35,
+            nativeAi: "SkeletonRanged");
+        var world = new DiabloWorldState(geometry, combatTargets: [monster]);
+        var processor = CreateProcessor(
+            world,
+            monsterMissiles: CreateArrowMissileCatalog("SkeletonRanged"));
+        var player = CreatePlayer(
+            entityId: 7,
+            positionX: 7,
+            positionY: 0,
+            life: 100,
+            lifeMaximum: 100);
+
+        var deliveries = processor.AdvanceTick(14, [player]);
+
+        Assert.Empty(deliveries);
+        Assert.Empty(world.Projectiles);
+        Assert.Equal(100, player.Life);
+        Assert.False(monster.IsMoving);
+    }
+
+    [Fact]
     public void SkeletonRangedAiRetreatsInsideItsNativeFourTileBoundary()
     {
         var monster = new AuthoritativeCombatTarget(

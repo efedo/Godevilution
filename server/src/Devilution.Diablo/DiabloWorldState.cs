@@ -404,6 +404,29 @@ public sealed class DiabloWorldState
         return HasLineOfSight(levelId, startX, startY, endX, endY);
     }
 
+    /** Applies the native vision ray table to monster AI when projected geometry is present. */
+    public bool HasAiLineOfSight(
+        uint levelId,
+        int startX,
+        int startY,
+        int endX,
+        int endY)
+    {
+        if (!ContainsPosition(levelId, startX, startY)
+            || !ContainsPosition(levelId, endX, endY)) {
+            return false;
+        }
+
+        if (World is not null
+            && projectedLevels.TryGetValue(levelId, out var level)
+            && (level.NativeTransparency.Count != 0
+                || level.NativeVisionBlockedCells.Count != 0)) {
+            return level.HasNativeVisionLineOfSight(startX, startY, endX, endY);
+        }
+
+        return HasLineOfSight(levelId, startX, startY, endX, endY);
+    }
+
     private void RebuildProjectedGeometry()
     {
         projectedLevels.Clear();

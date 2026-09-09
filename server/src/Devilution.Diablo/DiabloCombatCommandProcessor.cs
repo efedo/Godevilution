@@ -4998,7 +4998,7 @@ public sealed class DiabloCombatCommandProcessor
             AuthoritativeMonsterGroupUnity.Apply(
                 target,
                 world.CombatTargets,
-                world.HasLineOfSight);
+                world.HasAiLineOfSight);
             AdvanceNativeMonsterAiSeed(target);
             if (target.IsPlayerMinion) {
                 AdvancePlayerMinion(target, tick, players, events);
@@ -6507,7 +6507,7 @@ public sealed class DiabloCombatCommandProcessor
                 target.PositionX,
                 target.PositionY)
                 > scavengerTuning.Value.CorpseSearchRadius
-            || !world.HasLineOfSight(
+            || !world.HasAiLineOfSight(
                 target.LevelId,
                 target.PositionX,
                 target.PositionY,
@@ -6593,7 +6593,7 @@ public sealed class DiabloCombatCommandProcessor
                     && candidate.PositionX == candidateX
                     && candidate.PositionY == candidateY);
                 if (corpse is not null
-                    && world.HasLineOfSight(
+                    && world.HasAiLineOfSight(
                         scavenger.LevelId,
                         scavenger.PositionX,
                         scavenger.PositionY,
@@ -7475,7 +7475,7 @@ public sealed class DiabloCombatCommandProcessor
                     && candidate.PositionX == candidateX
                     && candidate.PositionY == candidateY);
                 if (corpse is not null
-                    && world.HasLineOfSight(
+                    && world.HasAiLineOfSight(
                         scavenger.LevelId,
                         scavenger.PositionX,
                         scavenger.PositionY,
@@ -8150,7 +8150,7 @@ public sealed class DiabloCombatCommandProcessor
             monster.StartAvoidanceMovement((int)((seed / 100U) % 2U));
         if (!monster.AdvanceAvoidanceMovement(
                 distance,
-                world.HasLineOfSight(
+                world.HasAiLineOfSight(
                     monster.LevelId,
                     monster.PositionX,
                     monster.PositionY,
@@ -8212,7 +8212,7 @@ public sealed class DiabloCombatCommandProcessor
             monster.StartAvoidanceMovement(random.RandomIntLessThan(2));
         if (!monster.AdvanceAvoidanceMovement(
                 distance,
-                world.HasLineOfSight(
+                world.HasAiLineOfSight(
                     monster.LevelId,
                     monster.PositionX,
                     monster.PositionY,
@@ -8538,7 +8538,7 @@ public sealed class DiabloCombatCommandProcessor
             chargeTuning.ChanceBase
                 + (chargeTuning.IntelligenceScale * monster.Intelligence));
         if (actionRoll >= chargeChance
-            || !world.HasLineOfSight(
+            || !world.HasAiLineOfSight(
                 monster.LevelId,
                 monster.PositionX,
                 monster.PositionY,
@@ -10197,7 +10197,7 @@ public sealed class DiabloCombatCommandProcessor
         var attackRoll = usesNativeAiStream
             ? random.RandomIntLessThan(100)
             : (int)(attackSeed % 100U);
-        if (!world.HasLineOfSight(
+        if (!world.HasAiLineOfSight(
                 monster.LevelId,
                 monster.PositionX,
                 monster.PositionY,
@@ -10338,7 +10338,7 @@ public sealed class DiabloCombatCommandProcessor
                         : (int)((attackSeed / 100U) % 2U));
             if (monster.AdvanceRhinoMovement(
                     distance,
-                    world.HasLineOfSight(
+                    world.HasAiLineOfSight(
                         monster.LevelId,
                         monster.PositionX,
                         monster.PositionY,
@@ -10391,7 +10391,7 @@ public sealed class DiabloCombatCommandProcessor
             rhinoTuning.Value.ChanceBase
                 + (rhinoTuning.Value.IntelligenceScale * monster.Intelligence));
         if (actionRoll >= chargeChance
-            || !world.HasLineOfSight(
+            || !world.HasAiLineOfSight(
                 monster.LevelId,
                 monster.PositionX,
                 monster.PositionY,
@@ -10665,7 +10665,7 @@ public sealed class DiabloCombatCommandProcessor
                     candidate.Y,
                     players,
                     monster.EntityId)
-                && world.HasLineOfSight(
+                && world.HasAiLineOfSight(
                     monster.LevelId,
                     monster.PositionX,
                     monster.PositionY,

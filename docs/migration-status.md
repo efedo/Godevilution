@@ -49,6 +49,11 @@ Typed trap, quest/towner, and greeting interaction candidates now also fail
 closed outside projected native vision, so HUD actions match world rendering
 and server-side interaction admission.
 
+Monster AI line-of-sight consumers now use the projected native vision ray
+table whenever geometry is available, preventing ranged and avoidance paths
+from reasoning through BlockLight-only tiles while preserving legacy fallback
+behavior for geometry-free worlds.
+
 Schema 1.454 adds server-owned object item gates and native monster-layer
 mutation assignments. The Gateway pedestal now consumes one Blood Stone per
 stage, applies the validated blood2.dun encounter layer after the final stage,
