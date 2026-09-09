@@ -209,6 +209,7 @@
     <None Include="../../../test/fixtures/replay/gameplay-skeleton-melee-equipment-effects.json" Link="Fixtures/gameplay-skeleton-melee-equipment-effects.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-rhino-charge-get-hit.json" Link="Fixtures/gameplay-rhino-charge-get-hit.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-rhino-charge-thorns-boundary.json" Link="Fixtures/gameplay-rhino-charge-thorns-boundary.json" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="../../../test/fixtures/replay/gameplay-skeleton-melee-primary-shields.json" Link="Fixtures/gameplay-skeleton-melee-primary-shields.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-multiplayer-autonomous-tick.json" Link="Fixtures/gameplay-multiplayer-autonomous-tick.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-multiplayer-secondary-attack.json" Link="Fixtures/gameplay-multiplayer-secondary-attack.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-multiplayer-secondary-item-drop.json" Link="Fixtures/gameplay-multiplayer-secondary-item-drop.json" CopyToOutputDirectory="PreserveNewest" />

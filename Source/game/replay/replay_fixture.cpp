@@ -9063,9 +9063,71 @@ void AdvanceReplayMonsterAttack(
 				    state,
 				    damage,
 				    victim.secondary);
-				if (state.combatTargetNativeAi == "SkeletonMelee"
+				const bool usesSkeletonFamilyEffects = state.combatTargetNativeAi == "SkeletonMelee"
 				    || state.combatTargetNativeAi == "Snotspill"
-				    || state.combatTargetNativeAi == "Warlord") {
+				    || state.combatTargetNativeAi == "Warlord";
+				int32_t lifeDamage = adjustedDamage;
+				if (!victim.secondary && usesSkeletonFamilyEffects
+				    && adjustedDamage > 0 && state.reflectCharges > 0) {
+					--state.reflectCharges;
+					const int32_t reflectedDamage = adjustedDamage
+					    * (GenerateRnd(state, 11) + 20) / 100;
+					if (reflectedDamage > 0) {
+						state.combatTargetHitPointsQ6 = std::max(
+						    0,
+						    state.combatTargetHitPointsQ6 - reflectedDamage * 64);
+						state.combatTargetHitPoints = ToWholeCeilingQ6(
+						    state.combatTargetHitPointsQ6);
+						if (state.combatTargetHitPointsQ6 == 0)
+							DefeatReplayCombatTarget(state);
+					}
+					if (!state.multiplayer)
+						AdvanceRandom(state);
+					lifeDamage = std::max(0, adjustedDamage - reflectedDamage);
+				}
+				if (!victim.secondary && usesSkeletonFamilyEffects
+				    && adjustedDamage > 0
+				    && state.manaShieldActive) {
+					const bool hasNoManaItem = std::any_of(
+					    state.equipment.begin(),
+					    state.equipment.end(),
+					    [](const ReplayFixtureSlottedItem &item) {
+						    constexpr uint32_t NoManaItemFlag = 0x08000000U;
+						    return item.state.statFlag
+						        && (item.state.magical == 0 || item.state.identified)
+						        && (item.state.flags & NoManaItemFlag) != 0;
+					    });
+					if (!hasNoManaItem) {
+						const auto spell = std::find_if(
+						    state.memorizedSpells.begin(),
+						    state.memorizedSpells.end(),
+						    [](const ReplayFixtureMemorizedSpell &candidate) {
+							    return candidate.spellId == 11;
+						    });
+						const int32_t level = spell == state.memorizedSpells.end()
+						    ? 0
+						    : static_cast<int32_t>(spell->level);
+						int32_t divisor = 24;
+						int32_t manaDamage = lifeDamage;
+						if (level > 0) {
+							divisor -= std::min(level, 7) * 3;
+							manaDamage += manaDamage / -divisor;
+						}
+						if (state.mana >= manaDamage) {
+							state.mana -= manaDamage;
+							lifeDamage = 0;
+							if (state.mana == 0)
+								state.manaShieldActive = false;
+						} else {
+							lifeDamage = manaDamage - state.mana;
+							if (level > 0)
+								lifeDamage += lifeDamage / (divisor - 1);
+							state.mana = 0;
+							state.manaShieldActive = false;
+						}
+					}
+				}
+				if (usesSkeletonFamilyEffects) {
 					ApplyReplayThorns(
 					    state,
 					    victim.secondary ? state.secondaryEquipment : state.equipment,
@@ -9074,9 +9136,9 @@ void AdvanceReplayMonsterAttack(
 				if (victim.secondary)
 					state.secondaryPlayerLife = std::max(
 					    0,
-					    state.secondaryPlayerLife - std::max(0, adjustedDamage));
+					state.secondaryPlayerLife - std::max(0, lifeDamage));
 				else
-					state.life = std::max(0, state.life - std::max(0, adjustedDamage));
+					state.life = std::max(0, state.life - std::max(0, lifeDamage));
 				if (adjustedDamage > 0
 				    && (victim.secondary
 				        ? state.secondaryPlayerLife > 0
@@ -9214,7 +9276,8 @@ void AdvanceReplayMonsterAttack(
 		}
 		// Keep the replay stream aligned with the authoritative monster-hit
 		// boundary, which advances once after resolving the Reflect percentage.
-		AdvanceRandom(state);
+		if (!state.multiplayer)
+			AdvanceRandom(state);
 		lifeDamage = std::max(0, adjustedDamage - reflectedDamage);
 	}
 	const bool hasNoManaItem = std::any_of(
@@ -9237,7 +9300,7 @@ void AdvanceReplayMonsterAttack(
 		    ? 0
 		    : static_cast<int32_t>(spell->level);
 		int32_t divisor = 24;
-		int32_t manaDamage = adjustedDamage;
+		int32_t manaDamage = lifeDamage;
 		if (level > 0) {
 			divisor -= std::min(level, 7) * 3;
 			manaDamage += manaDamage / -divisor;

@@ -4,6 +4,10 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Added primary SkeletonMelee replay coverage for reflection and Mana Shield
+  ordering, with shared C# and native checkpoints.
+- Compact native replay now applies reflection and Mana Shield to the
+  post-GetHit damage boundary and preserves multiplayer RNG consumption.
 - Added Rhino charge boundary coverage proving the dedicated impact path does
   not apply generic Thorns retaliation while preserving damage and movement.
 - Restricted compact native Thorns application to Skeleton-family special melee

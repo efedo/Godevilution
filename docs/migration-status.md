@@ -2,6 +2,11 @@
 
 Status date: 2026-09-09
 
+Primary SkeletonMelee replay now shares the managed reflection and Mana Shield
+ordering in compact native replay. The cross-runner fixture covers the
+post-GetHit damage, charge consumption, target HP, mana, and multiplayer RNG
+checkpoint.
+
 The Rhino special-charge path now remains distinct from generic Thorns
 retaliation: both runners preserve the authored charge damage and movement but
 do not consume a Thorns roll for a Rhino victim carrying that equipment.
