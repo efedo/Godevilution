@@ -26,6 +26,10 @@ pool seed and stable `pool_id`/`quest_ids` entries. Both runners sort pools,
 select the same unavailable quest identities without consuming gameplay RNG,
 and reject subsequent advancement of an unavailable quest.
 
+An optional top-level `difficulty` selects the validated Normal, Nightmare, or
+Hell ruleset. Difficulty fixtures apply the native target armor and initial
+health modifiers in both runners; omitted values retain Normal compatibility.
+
 An optional top-level `initial_projectiles` array seeds server-owned projectiles
 before the first simulation tick. It carries the stable entity/source/target
 identities, level and travel coordinates, damage channel, behavior, speed,
@@ -71,6 +75,8 @@ damage without changing the compact fallback. The armor-piercing companion
 adds the optional `plus_enemy_armor_class` equipment field and proves that an
 authored native armor-piercing bonus crosses the same hit-resolution boundary;
 omitting the field retains its zero-value compatibility behavior.
+`gameplay-class-physical-damage-hell.json` adds the Hell difficulty target
+modifiers, including the native 4x health plus 200 bonus and +80 armor.
 
 Fallen parity fixtures may declare `combat_target_fallen_stand_animation_frame`,
 `combat_target_fallen_stand_animation_tick`, and

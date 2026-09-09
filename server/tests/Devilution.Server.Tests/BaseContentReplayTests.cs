@@ -20,6 +20,7 @@ public sealed class BaseContentReplayTests
     [InlineData("gameplay-class-physical-damage-armor.json", 0, 99)]
     [InlineData("gameplay-class-physical-damage-miss.json", 2, 100)]
     [InlineData("gameplay-class-physical-damage-armor-piercing.json", 0, 99)]
+    [InlineData("gameplay-class-physical-damage-hell.json", 0, 600)]
     public void ClassPhysicalDamageUsesExplicitAttributesAtSharedCheckpoint(
         string fixtureName,
         int expectedClassId,
@@ -67,6 +68,7 @@ public sealed class BaseContentReplayTests
                 maxHitPoints: initial.CombatTargetMaxHitPoints)],
             startingPlayerClasses: classes,
             startingPlayerClass: classDefinition,
+            difficulty: fixture.Difficulty,
             startingRandomSeed: checked((uint)fixture.RngSeed));
 
         var beforeAttack = Assert.Single(

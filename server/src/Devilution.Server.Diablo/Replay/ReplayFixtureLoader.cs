@@ -49,6 +49,7 @@ public static class ReplayFixtureLoader
             FinalStateSha256 = OptionalString(root, "final_state_sha256"),
             GameVariant = ParseGameVariant(root),
             GameMode = ParseGameMode(root),
+            Difficulty = ParseDifficulty(root),
             PlayerActionTiming = ParsePlayerActionTiming(root),
         };
 
@@ -678,6 +679,23 @@ public static class ReplayFixtureLoader
                 "Replay fixture game_mode must be SinglePlayer or Multiplayer.");
         }
         return mode;
+    }
+
+    private static DiabloDifficulty ParseDifficulty(JsonElement root)
+    {
+        if (!root.TryGetProperty("difficulty", out var value))
+            return DiabloDifficulty.Normal;
+        if (value.ValueKind != JsonValueKind.String
+            || !Enum.TryParse<DiabloDifficulty>(
+                value.GetString(),
+                ignoreCase: false,
+                out var difficulty)
+            || !Enum.IsDefined(difficulty)
+            || Enum.GetName(difficulty) != value.GetString()) {
+            throw new InvalidDataException(
+                "Replay fixture difficulty must be Normal, Nightmare, or Hell.");
+        }
+        return difficulty;
     }
 
     private static ReplaySecondaryPlayer? ParseSecondaryPlayer(JsonElement value)

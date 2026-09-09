@@ -340,6 +340,7 @@ struct ReplayFixture {
 	uint64_t rngSeed = 0;
 	std::string gameVariant = "Diablo";
 	std::string gameMode = "SinglePlayer";
+	std::string difficulty = "Normal";
 	ReplayFixtureContentManifest contentManifest;
 	ReplayFixtureQuestSelection questSelection;
 	ReplayFixtureInitialState initialState;
@@ -606,6 +607,7 @@ struct ReplayFixtureExecutionState {
 	bool secondaryHeldItemDefined = false;
 	ReplayFixtureInventoryItem secondaryHeldItem;
 	bool hellfire = false;
+	int32_t difficulty = 1;
 	uint32_t combatTargetEntityId = 0;
 	uint32_t combatTargetLevelId = 0;
 	int32_t combatTargetPositionX = 0;

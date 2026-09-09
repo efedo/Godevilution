@@ -587,6 +587,9 @@ public sealed record ReplayFixture(
     /** Explicit session mode used by mode-sensitive native rules. */
     public DiabloGameMode GameMode { get; init; } = DiabloGameMode.SinglePlayer;
 
+    /** Native difficulty used by difficulty-scaled target resolution. */
+    public DiabloDifficulty Difficulty { get; init; } = DiabloDifficulty.Normal;
+
     /** Present only when fixture commands use deferred player-action timing. */
     public ReplayPlayerActionTiming? PlayerActionTiming { get; init; }
 

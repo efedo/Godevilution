@@ -46,6 +46,8 @@ All notable changes to this fork are documented below.
   seeds, armor reduction, minimum damage, and an authored miss against C#.
 - Replay equipment now carries validated `plus_enemy_armor_class`; native and
   managed initialized attacks agree on armor-piercing admission and checkpoint.
+- Replay fixtures now carry validated Normal/Nightmare/Hell difficulty; native
+  and managed Hell target armor and initial-health modifiers share a checkpoint.
 
 - Monster item and AI runtime seeds now travel as an all-or-nothing pair,
   preserving deterministic native initialization at mapper, host, Godot, and

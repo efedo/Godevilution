@@ -354,6 +354,10 @@ void DefeatReplayCombatTarget(ReplayFixtureExecutionState &state)
 void AppendCanonicalState(ReplayStateHasher &hasher, const ReplayFixtureExecutionState &state)
 {
 	const bool hasSecondaryPlayer = state.secondaryPlayerEntityId != 0;
+	if (state.difficulty != 1) {
+		hasher.AppendString("godevilution-game-difficulty-v1");
+		hasher.AppendInt32(state.difficulty);
+	}
 	hasher.AppendUint64(hasSecondaryPlayer ? 2 : 1);
 	if (hasSecondaryPlayer && state.secondaryPlayerEntityId < state.entityId)
 		AppendSecondaryPlayerState(hasher, state);
@@ -5383,9 +5387,11 @@ bool ApplyReplayAttack(
 		const int32_t rolledBaseDamage = minimumDamage
 		    + GenerateRnd(state, maximumDamage - minimumDamage + 1);
 		const int32_t baseMeleeToHit = state.characterClassId == 0 ? 70 : 50;
+		const int32_t difficultyArmorBonus = state.difficulty == 2 ? 50 : state.difficulty == 3 ? 80 : 0;
+		const int32_t effectiveArmorClass = state.combatTargetArmorClass + difficultyArmorBonus;
 		const int32_t hitChance = std::clamp(
 		    level + dexterity / 2 + baseMeleeToHit + armorPiercingBonus
-		        - std::max(0, state.combatTargetArmorClass),
+		        - std::max(0, effectiveArmorClass),
 		    5,
 		    95);
 		const uint32_t hitSeed = static_cast<uint32_t>(tick)
@@ -5400,7 +5406,7 @@ bool ApplyReplayAttack(
 		    && GenerateRnd(state, 100) < std::min(100, level))
 			damageBeforeArmor *= 2;
 		damage = attackHit
-		    ? std::max(1, damageBeforeArmor - std::max(0, state.combatTargetArmorClass))
+		    ? std::max(1, damageBeforeArmor - std::max(0, effectiveArmorClass))
 		    : 0;
 	} else {
 		damage = ranged ? 1 : std::max(1, 10 - state.combatTargetArmorClass);
@@ -10148,6 +10154,8 @@ private:
 			return ParseString(fixture_.gameVariant);
 		if (key == "game_mode")
 			return ParseString(fixture_.gameMode);
+		if (key == "difficulty")
+			return ParseString(fixture_.difficulty);
 		if (key == "content_manifest")
 			return ParseContentManifest();
 		if (key == "quest_selection")
@@ -11596,6 +11604,12 @@ bool ParseReplayFixture(std::string_view json, ReplayFixture &fixture, std::stri
 		error = "Replay fixture game_mode must be SinglePlayer or Multiplayer.";
 		return false;
 	}
+	if (fixture.difficulty != "Normal"
+	    && fixture.difficulty != "Nightmare"
+	    && fixture.difficulty != "Hell") {
+		error = "Replay fixture difficulty must be Normal, Nightmare, or Hell.";
+		return false;
+	}
 	if (secondaryPlayer.defined && secondaryPlayer.lifeMaximum == 0)
 		secondaryPlayer.lifeMaximum = secondaryPlayer.life;
 	if (secondaryPlayer.defined
@@ -12064,6 +12078,7 @@ bool ExecuteReplayFixture(
 	if (state.visitedLevelIds.empty())
 		state.visitedLevelIds.push_back(state.levelId);
 	state.hellfire = fixture.gameVariant == "Hellfire";
+	state.difficulty = fixture.difficulty == "Nightmare" ? 2 : fixture.difficulty == "Hell" ? 3 : 1;
 	state.multiplayer = fixture.gameMode == "Multiplayer";
 	state.suppressMultiplayerDeathDrops = fixture.initialState.suppressMultiplayerDeathDrops;
 	state.facingDirection = fixture.initialState.facingDirection;
@@ -12363,13 +12378,21 @@ bool ExecuteReplayFixture(
 		const int64_t maxHitPointsQ6 = state.combatTargetMaxHitPointsQ6 == 0 && state.combatTargetMaxHitPoints != 0
 		    ? static_cast<int64_t>(state.combatTargetMaxHitPoints) * 64
 		    : state.combatTargetMaxHitPointsQ6;
-		if (hitPointsQ6 < 0 || hitPointsQ6 > std::numeric_limits<int32_t>::max()
-		    || maxHitPointsQ6 < hitPointsQ6 || maxHitPointsQ6 > std::numeric_limits<int32_t>::max()) {
+		const int64_t difficultyMultiplier = state.difficulty == 2 ? 3 : state.difficulty == 3 ? 4 : 1;
+		const int64_t difficultyHealthBonus = state.difficulty == 2 ? 100 : state.difficulty == 3 ? 200 : 0;
+		const int64_t effectiveMaxHitPointsQ6 = maxHitPointsQ6 * difficultyMultiplier
+		    + difficultyHealthBonus * 64;
+		const int64_t effectiveHitPointsQ6 = maxHitPointsQ6 == 0
+		    ? 0
+		    : hitPointsQ6 * effectiveMaxHitPointsQ6 / maxHitPointsQ6;
+		if (effectiveHitPointsQ6 < 0 || effectiveHitPointsQ6 > std::numeric_limits<int32_t>::max()
+		    || effectiveMaxHitPointsQ6 < effectiveHitPointsQ6
+		    || effectiveMaxHitPointsQ6 > std::numeric_limits<int32_t>::max()) {
 			error = "Replay fixture combat target has invalid fixed-point hit points.";
 			return false;
 		}
-		state.combatTargetHitPointsQ6 = static_cast<int32_t>(hitPointsQ6);
-		state.combatTargetMaxHitPointsQ6 = static_cast<int32_t>(maxHitPointsQ6);
+		state.combatTargetHitPointsQ6 = static_cast<int32_t>(effectiveHitPointsQ6);
+		state.combatTargetMaxHitPointsQ6 = static_cast<int32_t>(effectiveMaxHitPointsQ6);
 		state.combatTargetHitPoints = ToWholeCeilingQ6(state.combatTargetHitPointsQ6);
 		state.combatTargetMaxHitPoints = ToWholeCeilingQ6(state.combatTargetMaxHitPointsQ6);
 	}
