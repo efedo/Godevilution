@@ -3567,9 +3567,95 @@ void CreateReplayWeaponArrow(
 	const int32_t targetDistance = std::max(
 	    std::abs(state.combatTargetPositionX - state.positionX),
 	    std::abs(state.combatTargetPositionY - state.positionY));
-	if (consumeRandom)
+	int32_t damage = 1;
+	if (state.attributes[1] > 0 && state.attributes[5] > 0) {
+		int32_t minimumDamage = 0;
+		int32_t maximumDamage = 0;
+		int32_t damagePercent = 0;
+		int32_t damageFlat = 0;
+		bool hasShield = false;
+		bool hasStaff = false;
+		bool hasBow = false;
+		bool hasSword = false;
+		bool hasAxe = false;
+		bool hasMace = false;
+		for (const auto &equippedItem : state.equipment) {
+			if (!IsReplayEquipmentUsable(equippedItem.state))
+				continue;
+			minimumDamage += std::max(0, equippedItem.state.minDamage);
+			maximumDamage += std::max(0, equippedItem.state.maxDamage);
+			damagePercent += equippedItem.state.plusDamage;
+			damageFlat += equippedItem.state.plusDamageModifier;
+			if (equippedItem.slot != 4 && equippedItem.slot != 5)
+				continue;
+			switch (equippedItem.state.itemType) {
+			case 1:
+				hasSword = true;
+				break;
+			case 2:
+				hasAxe = true;
+				break;
+			case 3:
+				hasBow = true;
+				break;
+			case 4:
+				hasMace = true;
+				break;
+			case 5:
+				hasShield = true;
+				break;
+			case 10:
+				hasStaff = true;
+				break;
+			default:
+				break;
+			}
+		}
+		if (minimumDamage == 0 && maximumDamage == 0) {
+			minimumDamage = 1;
+			maximumDamage = hasShield ? 3 : 1;
+			if (state.characterClassId == 3) {
+				minimumDamage = std::max(1, static_cast<int32_t>(state.characterLevel) / 5);
+				maximumDamage = std::max(1, static_cast<int32_t>(state.characterLevel) / 2);
+			}
+		}
+		const int32_t level = static_cast<int32_t>(state.characterLevel);
+		const int32_t strength = state.attributes[1];
+		const int32_t dexterity = state.attributes[5];
+		const int32_t vitality = state.attributes[7];
+		const int32_t strengthModifier = level * strength;
+		const int32_t strengthDexterityModifier = level * (strength + dexterity);
+		const int32_t damageModifier = state.characterClassId == 1
+		        ? strengthDexterityModifier / 200
+		    : state.characterClassId == 3
+		        ? (hasStaff || (!hasSword && !hasAxe && !hasMace && !hasBow && !hasShield)
+		                ? strengthDexterityModifier / 150
+		                : strengthDexterityModifier / 300)
+		    : state.characterClassId == 4
+		        ? (hasSword
+		                ? strengthDexterityModifier / 150
+		                : hasBow
+		                    ? strengthDexterityModifier / 250
+		                    : strengthModifier / 100)
+		    : state.characterClassId == 5
+		        ? (hasAxe || hasMace
+		                ? strengthModifier / 75
+		                : hasBow
+		                    ? strengthModifier / 300
+		                    : strengthModifier / 100)
+		            + (!hasShield && !hasStaff && !hasBow
+		                ? level * vitality / 100
+		                : 0)
+		        : strengthModifier / 100;
+		const int32_t rolledBaseDamage = minimumDamage
+		    + GenerateRnd(state, maximumDamage - minimumDamage + 1);
+		const int32_t damageBeforeFlat = rolledBaseDamage
+		    + rolledBaseDamage * damagePercent / 100;
+		damage = damageBeforeFlat + damageFlat + damageModifier;
+	} else if (consumeRandom) {
 		static_cast<void>(GenerateRnd(state, 1));
-	int32_t damageQ6 = 64;
+	}
+	int32_t damageQ6 = damage * 64;
 	int32_t perilSelfDamageQ6 = 0;
 	if (state.hellfire
 	    && HasReplayHellfireEquipmentFlag(state, HellfirePerilFlag))

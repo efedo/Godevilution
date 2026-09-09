@@ -6794,6 +6794,8 @@ atural_resistance_per_level_percent` and
   native arrow-item flags remain incremental.
 - The shared replay gate now checks the three-arrow `MultipleArrows` volley,
   including spread positions and activation delays in both runners.
+- Initialized ranged replay now applies the authored Rogue bow damage profile,
+  including class attribute scaling and deterministic range selection.
 - Native `Snake` now consumes a validated `Rhino` mapping; the server owns its
   clear two-tile charge controller, monster movement, special physical damage,
   blocking, and Q6 event resolution.

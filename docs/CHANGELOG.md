@@ -82,6 +82,8 @@ All notable changes to this fork are documented below.
   flag into projectile snapshots in both runners.
 - The ranged replay gate now covers the three-arrow `MultipleArrows` volley,
   including native spread positions and activation delays.
+- Initialized ranged replay now covers the authored Rogue bow damage profile
+  and shared damage-range RNG draw.
 
 - Monster item and AI runtime seeds now travel as an all-or-nothing pair,
   preserving deterministic native initialization at mapper, host, Godot, and
