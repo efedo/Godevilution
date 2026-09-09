@@ -116,10 +116,31 @@ public sealed class AuthoritativeClientModel
     /** Exclusive sequence number immediately after the retained event history. */
     public ulong RecentEventsEndSequence => recentEventsEndSequence;
 
-    /** Server-owned armed traps available to presentation code for typed interaction. */
-    public IReadOnlyList<ObjectSnapshot> ArmedTrapObjects => Snapshot?.Objects
-        .Where(@object => @object.TrapArmed)
-        .ToArray() ?? [];
+    /** Server-owned armed traps visible to presentation code for typed interaction. */
+    public IReadOnlyList<ObjectSnapshot> ArmedTrapObjects
+    {
+        get {
+            var snapshot = Snapshot;
+            var player = snapshot?.Players.FirstOrDefault();
+            if (snapshot is null || player is null)
+                return [];
+            var geometry = snapshot.LevelGeometry.FirstOrDefault(
+                level => level.LevelId == player.LevelId);
+            var lightRadius = player.LightRadius is >= 2 and <= 15
+                ? player.LightRadius
+                : 10;
+            return snapshot.Objects
+                .Where(@object => @object.TrapArmed
+                    && AuthoritativeObjectPresentationVisibility.IsVisible(
+                        @object,
+                        player.LevelId,
+                        geometry,
+                        player.PositionX,
+                        player.PositionY,
+                        lightRadius))
+                .ToArray();
+        }
+    }
 
     /** Presentation-only level triggers for the local player's active level. */
     public IReadOnlyList<WarpTriggerSnapshot> VisibleWarpTriggers

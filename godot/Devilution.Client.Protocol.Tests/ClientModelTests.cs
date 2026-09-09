@@ -2662,6 +2662,32 @@ public sealed class ClientModelTests
     }
 
     [Fact]
+    public void HidesArmedTrapOutsideProjectedNativeVision()
+    {
+        var model = new AuthoritativeClientModel();
+        var snapshot = new Snapshot {
+            Players = { new PlayerSnapshot { EntityId = 7, LevelId = 2 } },
+            Objects = {
+                new ObjectSnapshot {
+                    EntityId = 20,
+                    ObjectId = 4,
+                    LevelId = 2,
+                    PositionX = 4,
+                    TrapArmed = true,
+                },
+            },
+            LevelGeometry = {
+                new LevelGeometrySnapshot { LevelId = 2, Width = 5, Height = 1 },
+            },
+        };
+        snapshot.LevelGeometry[0].NativeVisionBlockedCells.Add(1);
+
+        model.Apply(new AuthoritativeClientMessage(Snapshot: snapshot));
+
+        Assert.Empty(model.ArmedTrapObjects);
+    }
+
+    [Fact]
     public void RetainsCharacterNamesAndNativeDynamicEarPresentation()
     {
         var model = new AuthoritativeClientModel();

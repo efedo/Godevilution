@@ -45,6 +45,10 @@ Remote-player world rendering, player-target selection, and action indicators
 now use the same projected native vision boundary while retaining party-panel
 and other out-of-world authoritative information.
 
+Typed trap, quest/towner, and greeting interaction candidates now also fail
+closed outside projected native vision, so HUD actions match world rendering
+and server-side interaction admission.
+
 Schema 1.454 adds server-owned object item gates and native monster-layer
 mutation assignments. The Gateway pedestal now consumes one Blood Stone per
 stage, applies the validated blood2.dun encounter layer after the final stage,

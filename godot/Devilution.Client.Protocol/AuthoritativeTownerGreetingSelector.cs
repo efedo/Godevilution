@@ -11,11 +11,22 @@ public static class AuthoritativeTownerGreetingSelector
         if (player is null || player.HeldItem is not null)
             return null;
 
-        return snapshot!.TownerGreetings
+        var geometry = snapshot!.LevelGeometry.FirstOrDefault(level => level.LevelId == player.LevelId);
+        var lightRadius = player.LightRadius is >= 2 and <= 15 ? player.LightRadius : 10;
+        return snapshot.TownerGreetings
             .Where(greeting => greeting.TownerId is >= 0 and <= byte.MaxValue
                 && greeting.LevelId == player.LevelId
                 && greeting.PositionX == x
-                && greeting.PositionY == y)
+                && greeting.PositionY == y
+                && AuthoritativeNativeVisionVisibility.IsVisible(
+                    greeting.LevelId,
+                    greeting.PositionX,
+                    greeting.PositionY,
+                    player.LevelId,
+                    geometry,
+                    player.PositionX,
+                    player.PositionY,
+                    lightRadius))
             .OrderBy(greeting => greeting.TownerId)
             .FirstOrDefault();
     }

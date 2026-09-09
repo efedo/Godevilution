@@ -14,7 +14,9 @@ public static class AuthoritativeQuestTownerInteractionSelector
             return null;
 
         var quests = snapshot!.Quests.ToDictionary(quest => quest.QuestId);
-        return Available(snapshot, player, quests)
+        var geometry = snapshot.LevelGeometry.FirstOrDefault(level => level.LevelId == player.LevelId);
+        var lightRadius = player.LightRadius is >= 2 and <= 15 ? player.LightRadius : 10;
+        return Available(snapshot, player, quests, geometry, lightRadius)
             .OrderBy(interaction => interaction.InteractionId)
             .FirstOrDefault();
     }
@@ -30,7 +32,9 @@ public static class AuthoritativeQuestTownerInteractionSelector
             return null;
 
         var quests = snapshot!.Quests.ToDictionary(quest => quest.QuestId);
-        return Available(snapshot, player, quests)
+        var geometry = snapshot.LevelGeometry.FirstOrDefault(level => level.LevelId == player.LevelId);
+        var lightRadius = player.LightRadius is >= 2 and <= 15 ? player.LightRadius : 10;
+        return Available(snapshot, player, quests, geometry, lightRadius)
             .Where(interaction => interaction.PositionX == x && interaction.PositionY == y)
             .OrderBy(interaction => interaction.InteractionId)
             .FirstOrDefault();
@@ -39,16 +43,25 @@ public static class AuthoritativeQuestTownerInteractionSelector
     private static IEnumerable<QuestTownerInteractionSnapshot> Available(
         Snapshot snapshot,
         PlayerSnapshot player,
-        IReadOnlyDictionary<uint, QuestSnapshot> quests)
+        IReadOnlyDictionary<uint, QuestSnapshot> quests,
+        LevelGeometrySnapshot? geometry,
+        int lightRadius)
     {
         return snapshot.QuestTownerInteractions
-            .Where(interaction => IsAvailable(interaction, player, quests));
+            .Where(interaction => IsAvailable(
+                interaction,
+                player,
+                quests,
+                geometry,
+                lightRadius));
     }
 
     private static bool IsAvailable(
         QuestTownerInteractionSnapshot interaction,
         PlayerSnapshot player,
-        IReadOnlyDictionary<uint, QuestSnapshot> quests)
+        IReadOnlyDictionary<uint, QuestSnapshot> quests,
+        LevelGeometrySnapshot? geometry,
+        int lightRadius)
     {
         if (interaction.InteractionId == 0
             || interaction.QuestId == 0
@@ -57,6 +70,15 @@ public static class AuthoritativeQuestTownerInteractionSelector
             || Math.Max(
                 Math.Abs((long)interaction.PositionX - player.PositionX),
                 Math.Abs((long)interaction.PositionY - player.PositionY)) > 1
+            || !AuthoritativeNativeVisionVisibility.IsVisible(
+                interaction.LevelId,
+                interaction.PositionX,
+                interaction.PositionY,
+                player.LevelId,
+                geometry,
+                player.PositionX,
+                player.PositionY,
+                lightRadius)
             || !quests.TryGetValue(interaction.QuestId, out var quest)
             || quest.Unavailable) {
             return false;
