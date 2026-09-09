@@ -11,6 +11,10 @@ saves, and protocol projection. The Warlord room and the Halls/Gateway
 Catacombs quest rooms now use the separate native-DUN path; remaining licensed
 native assets and authored quest placement rows remain deferred.
 
+The checked-in base replay fixtures now use the canonical content-pack
+manifest hash produced by the normalized source identities, keeping replay
+admission aligned with the active validated pack.
+
 Godot combat, Telekinesis, and unique-monster dialogue target selection now
 uses the same projected native vision boundary as monster rendering. Hidden,
 dead, sneak-hidden, and out-of-radius monsters therefore cannot be selected

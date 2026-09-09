@@ -4,6 +4,9 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Refreshed all checked-in base replay fixtures to the canonical content-pack
+  manifest hash produced by the normalized source identities.
+
 - Added an explicit native-vision blocker override so synthetic and imported
   geometry can keep movement collision separate from line-of-sight data while
   preserving the legacy movement-blocker fallback when omitted.
