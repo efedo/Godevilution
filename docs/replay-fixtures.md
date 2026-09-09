@@ -90,6 +90,8 @@ The matching animal-sword and animal-mace companions cover the inverse native
 target-class adjustments against an authored animal target.
 The demon-triple companion carries the native `TripleDemonDamage` flag and
 proves its validated 3x post-armor multiplier against an authored demon target.
+The Hellfire-devastation companion carries the authored Hellfire damage-armor
+flag and proves the post-hit 3x `Devastation` proc with native RNG ordering.
 
 Fallen parity fixtures may declare `combat_target_fallen_stand_animation_frame`,
 `combat_target_fallen_stand_animation_tick`, and

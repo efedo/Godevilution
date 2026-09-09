@@ -29,6 +29,7 @@ public sealed class BaseContentReplayTests
     [InlineData("gameplay-class-physical-damage-animal-sword.json", 0, 90)]
     [InlineData("gameplay-class-physical-damage-animal-mace.json", 0, 96)]
     [InlineData("gameplay-class-physical-damage-demon-triple.json", 0, 79)]
+    [InlineData("gameplay-class-physical-damage-hellfire-devastation.json", 0, 58)]
     public void ClassPhysicalDamageUsesExplicitAttributesAtSharedCheckpoint(
         string fixtureName,
         int expectedClassId,
@@ -80,6 +81,11 @@ public sealed class BaseContentReplayTests
             startingPlayerClasses: classes,
             startingPlayerClass: classDefinition,
             difficulty: fixture.Difficulty,
+            startingCombatRules: new AuthoritativeCombatRules(
+                10,
+                1,
+                100,
+                gameVariant: fixture.GameVariant),
             startingRandomSeed: checked((uint)fixture.RngSeed));
 
         var beforeAttack = Assert.Single(

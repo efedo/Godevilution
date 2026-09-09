@@ -165,7 +165,8 @@ initialized undead sword and mace paths now include the native target-class
 modifier, as do the corresponding animal paths. The initialized demon path now
 also includes the validated post-armor `TripleDemonDamage` multiplier. The
 Barbarian path now covers the native melee armor-reduction divisor when
-armor-piercing equipment is present.
+armor-piercing equipment is present. Hellfire physical replay now carries
+authored damage-armor flags and the deterministic post-hit `Devastation` proc.
 
 All server-owned save envelopes, combined session checkpoints, command
 receipts, and world-seed files now use strict UTF-8 persistence I/O. Malformed

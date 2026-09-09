@@ -96,6 +96,7 @@ struct ReplayFixtureEquippedItem {
 	int32_t fireMaxDamage = 0;
 	int32_t lightningMinDamage = 0;
 	int32_t lightningMaxDamage = 0;
+	int32_t hellfireDamageArmorFlags = 0;
 };
 
 struct ReplayFixtureSecondaryPlayer {

@@ -910,6 +910,7 @@ public static class ReplayFixtureLoader
                 FireMaxDamage = GetOptionalInt(item, "fire_max_damage"),
                 LightningMinDamage = GetOptionalInt(item, "lightning_min_damage"),
                 LightningMaxDamage = GetOptionalInt(item, "lightning_max_damage"),
+                HellfireDamageArmorFlags = GetOptionalInt(item, "hellfire_damage_armor_flags"),
                 StableItemId = GetOptionalUInt(item, "stable_item_id"),
             })
             .ToArray();
@@ -926,7 +927,8 @@ public static class ReplayFixtureLoader
                 || item.FireMinDamage < 0
                 || item.FireMaxDamage < item.FireMinDamage
                 || item.LightningMinDamage < 0
-                || item.LightningMaxDamage < item.LightningMinDamage)
+                || item.LightningMaxDamage < item.LightningMinDamage
+                || item.HellfireDamageArmorFlags is < 0 or > 0x7F)
             || result.Select(item => item.Slot).Distinct().Count() != result.Length) {
             throw new InvalidDataException(
                 "Replay fixture equipment contains invalid or duplicate item state.");

@@ -58,6 +58,8 @@ All notable changes to this fork are documented below.
   post-armor `TripleDemonDamage` multiplier through both runners.
 - Barbarian physical replay now covers native melee armor reduction for
   armor-piercing hit admission while preserving post-hit damage armor.
+- Hellfire physical replay now carries authored damage-armor flags and covers
+  the deterministic post-hit `Devastation` multiplier in both runners.
 
 - Monster item and AI runtime seeds now travel as an all-or-nothing pair,
   preserving deterministic native initialization at mapper, host, Godot, and

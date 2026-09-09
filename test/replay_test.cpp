@@ -667,6 +667,12 @@ TEST(ReplayFixture, ExecutesPhysicalDemonTripleDamageAgainstCSharpCheckpoint)
 	    "test/fixtures/replay/gameplay-class-physical-damage-demon-triple.json", 0, 30, 20, 25, 79);
 }
 
+TEST(ReplayFixture, ExecutesPhysicalHellfireDevastationAgainstCSharpCheckpoint)
+{
+	ExecuteClassPhysicalDamageFixture(
+	    "test/fixtures/replay/gameplay-class-physical-damage-hellfire-devastation.json", 0, 30, 20, 25, 58);
+}
+
 TEST(ReplayFixture, ExecutesRangedElementalArrowAttackAgainstCSharpCheckpoint)
 {
 	std::ifstream file("test/fixtures/replay/gameplay-elemental-arrows.json");

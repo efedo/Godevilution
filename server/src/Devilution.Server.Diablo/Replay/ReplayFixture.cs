@@ -51,6 +51,8 @@ public sealed record ReplayEquippedItem(
 
     public int LightningMaxDamage { get; init; }
 
+    public int HellfireDamageArmorFlags { get; init; }
+
     public EquippedStoreItem ToEquippedStoreItem()
     {
         return new EquippedStoreItem(
@@ -75,6 +77,7 @@ public sealed record ReplayEquippedItem(
                 FireMaxDamage = FireMaxDamage,
                 LightningMinDamage = LightningMinDamage,
                 LightningMaxDamage = LightningMaxDamage,
+                HellfireDamageArmorFlags = HellfireDamageArmorFlags,
                 StableItemId = StableItemId,
                 StatFlag = StatFlag,
             });

@@ -42,6 +42,7 @@ constexpr uint32_t LightningArrowsFlag = 1U << 25;
 constexpr uint32_t RandomArrowVelocityFlag = 1U << 2;
 constexpr uint32_t MultipleArrowsFlag = 1U << 9;
 constexpr uint32_t TripleDemonDamageFlag = 1U << 30;
+constexpr int32_t HellfireDevastationFlag = 1 << 0;
 constexpr int32_t WeaponArrowBehavior = 58;
 constexpr int32_t MonsterArrowBehavior = 59;
 constexpr int32_t FireboltBehavior = 2;
@@ -3492,6 +3493,19 @@ bool HasReplayEquipmentFlag(
 	    });
 }
 
+bool HasReplayHellfireEquipmentFlag(
+    const ReplayFixtureExecutionState &state,
+    int32_t flag)
+{
+	return std::any_of(
+	    state.equipment.begin(),
+	    state.equipment.end(),
+	    [flag](const ReplayFixtureSlottedItem &item) {
+		    return IsReplayEquipmentUsable(item.state)
+		        && (item.state.hellfireDamageArmorFlags & flag) != 0;
+	    });
+}
+
 int32_t ResolveReplayWeaponArrowSpeed(ReplayFixtureExecutionState &state)
 {
 	int32_t speed = HasReplayEquipmentFlag(state, RandomArrowVelocityFlag)
@@ -5441,6 +5455,12 @@ bool ApplyReplayAttack(
 		if (attackHit
 		    && state.combatTargetDemon
 		    && HasReplayEquipmentFlag(state, TripleDemonDamageFlag))
+			damage *= 3;
+		if (state.hellfire
+		    && attackHit
+		    && damage > 0
+		    && HasReplayHellfireEquipmentFlag(state, HellfireDevastationFlag)
+		    && GenerateRnd(state, 100) < 5)
 			damage *= 3;
 	} else {
 		damage = ranged ? 1 : std::max(1, 10 - state.combatTargetArmorClass);
@@ -10957,6 +10977,8 @@ private:
 					    return ParseSigned(item.lightningMinDamage);
 				    if (key == "lightning_max_damage")
 					    return ParseSigned(item.lightningMaxDamage);
+				    if (key == "hellfire_damage_armor_flags")
+					    return ParseSigned(item.hellfireDamageArmorFlags);
 				    return SkipValue();
 			    })) {
 				return false;
@@ -10982,6 +11004,8 @@ private:
 			    || item.fireMaxDamage < item.fireMinDamage
 			    || item.lightningMinDamage < 0
 			    || item.lightningMaxDamage < item.lightningMinDamage
+			    || item.hellfireDamageArmorFlags < 0
+			    || item.hellfireDamageArmorFlags > 0x7F
 			    || std::any_of(target.begin(), target.end(), [&](const auto &candidate) {
 				    return candidate.slot == item.slot;
 				})) {
@@ -12170,6 +12194,7 @@ bool ExecuteReplayFixture(
 			item.fireMaxDamage = source.fireMaxDamage;
 			item.lightningMinDamage = source.lightningMinDamage;
 			item.lightningMaxDamage = source.lightningMaxDamage;
+			item.hellfireDamageArmorFlags = source.hellfireDamageArmorFlags;
 			item.flags = source.flags;
 			item.statFlag = source.statFlag;
 			state.equipment.push_back({ source.slot, source.itemSeed, item });
