@@ -14,6 +14,11 @@ All notable changes to this fork are documented below.
   through simulation construction, later set-level-origin publication, and
   snapshot restore instead of falling back to raw layers after bootstrap.
 
+- Godot now preserves authoritative native DUN object-layer values in its level
+  layout and renders deterministic provenance outlines. These outlines are
+  presentation-only; object commands continue to require server-owned entity
+  projections.
+
 - Godot now renders a deterministic diagnostic overlay for complete
   authoritative native d-piece and transparency layers, while retaining the
   server-owned collision projection and floor fallback until licensed native

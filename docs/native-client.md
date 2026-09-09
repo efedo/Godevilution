@@ -434,6 +434,8 @@ explicit migration seams, not server-authority claims:
   d-piece and transparency layers as a deterministic diagnostic tint,
   distinguishing ordinary geometry, walk blockers, missile-only blockers,
   and transparency regions without moving gameplay rules into the client. The
+  client also preserves native DUN object-layer values and draws deterministic
+  provenance outlines while keeping object interaction entity-based. The
   existing floor presentation remains the fallback until licensed native tile
   art is supplied through the Godot asset pipeline.
 - Quest-specific set-piece mutation and resynchronization remains native for

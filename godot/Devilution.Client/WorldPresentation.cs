@@ -326,6 +326,7 @@ public partial class WorldPresentation : Node2D
                         DrawTextureRect(floor, new Rect2(OriginX + x * TileSize, OriginY + y * TileSize, TileSize, TileSize), false);
         }
         DrawNativeGeometryOverlay();
+        DrawNativeObjectLayerOverlay();
         for (var x = 0; x <= currentLevel.Width; x++)
             DrawLine(new Vector2(OriginX + x * TileSize, OriginY), new Vector2(OriginX + x * TileSize, OriginY + currentLevel.Height * TileSize), new Color("17172b"));
         for (var y = 0; y <= currentLevel.Height; y++)
@@ -391,6 +392,35 @@ public partial class WorldPresentation : Node2D
                     style.Blue / 255f,
                     style.Alpha / 255f),
                 true);
+        }
+    }
+
+    /** Shows native object-layer provenance without making IDs interactive. */
+    private void DrawNativeObjectLayerOverlay()
+    {
+        var cellCount = checked(currentLevel.Width * currentLevel.Height);
+        if (currentLevel.NativeObjectLayer.Count != cellCount)
+            return;
+
+        for (var cell = 0; cell < cellCount; cell++) {
+            var style = AuthoritativeNativeObjectLayerStyle.Resolve(
+                currentLevel.NativeObjectLayer[cell]);
+            if (!style.IsVisible)
+                continue;
+
+            var x = cell % currentLevel.Width;
+            var y = cell / currentLevel.Width;
+            var rectangle = new Rect2(
+                OriginX + x * TileSize + 4,
+                OriginY + y * TileSize + 4,
+                TileSize - 8,
+                TileSize - 8);
+            var color = new Color(
+                style.Red / 255f,
+                style.Green / 255f,
+                style.Blue / 255f,
+                style.Alpha / 255f);
+            DrawRect(rectangle, color, false, 2);
         }
     }
 

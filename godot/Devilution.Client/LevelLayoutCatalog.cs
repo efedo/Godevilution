@@ -50,6 +50,7 @@ public sealed class LevelLayoutCatalog
                 cells,
                 missileBlocked,
                 definition.NativeTransparency.ToArray()) {
+                NativeObjectLayer = definition.NativeObjectLayer.ToArray(),
                 NativePieceLayer = definition.NativePieceLayer.ToArray(),
             };
             warpTriggers[definition.LevelId] = definition.WarpTriggers.ToArray();
@@ -116,6 +117,9 @@ public sealed record LevelLayout(
 {
     /** Raw server-authored d-piece IDs used by the diagnostic geometry overlay. */
     public IReadOnlyList<uint> NativePieceLayer { get; init; } = [];
+
+    /** Raw server-authored native object IDs used by the diagnostic overlay. */
+    public IReadOnlyList<uint> NativeObjectLayer { get; init; } = [];
 
     public static LevelLayout Empty { get; } = new(0, "Fallback", 32, 20, new HashSet<int>(), new HashSet<int>(), []);
 
