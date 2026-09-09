@@ -66,6 +66,8 @@ All notable changes to this fork are documented below.
   mutation while preserving the attack's pre-decay damage.
 - Hellfire ranged replay now applies `Decay` once per emitted arrow before
   projectile resolution and refreshes the ranged fixture's content identity.
+- Hellfire physical replay now covers the native post-armor `Jesters` roll and
+  upper-half expansion in both runners.
 
 - Monster item and AI runtime seeds now travel as an all-or-nothing pair,
   preserving deterministic native initialization at mapper, host, Godot, and

@@ -44,6 +44,7 @@ constexpr uint32_t MultipleArrowsFlag = 1U << 9;
 constexpr uint32_t TripleDemonDamageFlag = 1U << 30;
 constexpr int32_t HellfireDevastationFlag = 1 << 0;
 constexpr int32_t HellfireDecayFlag = 1 << 1;
+constexpr int32_t HellfireJestersFlag = 1 << 3;
 constexpr int32_t HellfireDecayDamageReduction = 5;
 constexpr int32_t HellfireDecayRemovalThreshold = 100;
 constexpr int32_t WeaponArrowBehavior = 58;
@@ -5502,7 +5503,15 @@ bool ApplyReplayAttack(
 	} else {
 		damage = ranged ? 1 : std::max(1, 10 - state.combatTargetArmorClass);
 	}
-	const int32_t damageQ6 = damage * 64;
+	int32_t damageQ6 = damage * 64;
+	if (state.hellfire
+	    && damageQ6 > 0
+	    && HasReplayHellfireEquipmentFlag(state, HellfireJestersFlag)) {
+		int32_t roll = GenerateRnd(state, 201);
+		if (roll >= 100)
+			roll = 100 + (roll - 100) * 5;
+		damageQ6 = damageQ6 * roll / 100;
+	}
 	state.combatTargetHitPointsQ6 = std::max(0, state.combatTargetHitPointsQ6 - damageQ6);
 	state.combatTargetHitPoints = ToWholeCeilingQ6(state.combatTargetHitPointsQ6);
 	// Resolve both channels before applying either one, matching the C# rule's

@@ -174,6 +174,8 @@ authored weapons.
 Ranged Hellfire replay now applies the same mutation once per emitted arrow,
 before projectile resolution, with the refreshed Hellfire manifest identity
 checked by both runners.
+Hellfire physical replay now also applies the native post-armor `Jesters`
+roll and upper-half expansion at the shared checkpoint.
 
 All server-owned save envelopes, combined session checkpoints, command
 receipts, and world-seed files now use strict UTF-8 persistence I/O. Malformed

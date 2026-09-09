@@ -97,6 +97,8 @@ admission semantics while preserving the unshifted post-hit damage armor.
 The Hellfire-decay companion proves slot-ordered post-attack `Decay`
 mutation: the attack uses the authored damage before the weapon's `PlusDamage`
 is reduced.
+The Hellfire-Jesters companion proves the post-armor 0..200 damage roll and
+upper-half expansion before the final Q6 damage is hashed.
 
 Fallen parity fixtures may declare `combat_target_fallen_stand_animation_frame`,
 `combat_target_fallen_stand_animation_tick`, and
@@ -441,7 +443,7 @@ The compact native replay projection now carries the same server-owned corpse
 tile representation and per-tick monster regeneration as the C# checkpoints.
 Ordinary-death and Firebolt, Fireball, Lightning, and Flash
  spell/projectile-timeline checkpoints pass in both runners. As of 2026-09-08,
-the native replay gate contains 212 checked-in JSON fixtures and 237 registered
+the native replay gate contains 213 checked-in JSON fixtures and 237 registered
 tests; the test count also includes parser and validation cases that do not
 introduce another fixture file. Coverage includes seeded and autonomous MonsterArrow
 source coverage, Hellfire HorkDemon Hork Spawn admission, player impact, and
