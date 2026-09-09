@@ -126,6 +126,28 @@ public sealed class AuthoritativeObjectSelectorTests
         Assert.Equal(21U, AuthoritativeObjectSelector.SelectAt(snapshot, 3, 4)?.EntityId);
     }
 
+    [Fact]
+    public void DoesNotSelectAnObjectOutsideProjectedNativeVision()
+    {
+        var snapshot = new Snapshot {
+            Players = { new PlayerSnapshot { EntityId = 1, LevelId = 9 } },
+            Objects = {
+                new ObjectSnapshot {
+                    EntityId = 21,
+                    LevelId = 9,
+                    PositionX = 4,
+                    EffectKind = 1,
+                },
+            },
+            LevelGeometry = {
+                new LevelGeometrySnapshot { LevelId = 9, Width = 5, Height = 1 },
+            },
+        };
+        snapshot.LevelGeometry[0].NativeVisionBlockedCells.Add(1);
+
+        Assert.Null(AuthoritativeObjectSelector.SelectAt(snapshot, 4, 0));
+    }
+
     private static Snapshot SnapshotWithObject(ObjectSnapshot @object)
     {
         @object.LevelId = 9;

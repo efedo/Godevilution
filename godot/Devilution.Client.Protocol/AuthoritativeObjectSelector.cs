@@ -12,8 +12,10 @@ public static class AuthoritativeObjectSelector
         if (player is null)
             return null;
 
+        var geometry = snapshot!.LevelGeometry.FirstOrDefault(level => level.LevelId == player.LevelId);
+        var lightRadius = player.LightRadius is >= 2 and <= 15 ? player.LightRadius : 10;
         return snapshot!.Objects
-            .Where(@object => IsSelectable(@object, player.LevelId))
+            .Where(@object => IsSelectable(@object, player, geometry, lightRadius))
             .OrderBy(@object => @object.EntityId)
             .FirstOrDefault();
     }
@@ -25,17 +27,29 @@ public static class AuthoritativeObjectSelector
         if (player is null)
             return null;
 
+        var geometry = snapshot!.LevelGeometry.FirstOrDefault(level => level.LevelId == player.LevelId);
+        var lightRadius = player.LightRadius is >= 2 and <= 15 ? player.LightRadius : 10;
         return snapshot!.Objects
-            .Where(@object => IsSelectable(@object, player.LevelId)
+            .Where(@object => IsSelectable(@object, player, geometry, lightRadius)
                 && @object.PositionX == x
                 && @object.PositionY == y)
             .OrderBy(@object => @object.EntityId)
             .FirstOrDefault();
     }
 
-    private static bool IsSelectable(ObjectSnapshot @object, uint currentLevelId)
+    private static bool IsSelectable(
+        ObjectSnapshot @object,
+        PlayerSnapshot player,
+        LevelGeometrySnapshot? geometry,
+        int lightRadius)
         => @object.EntityId != 0
-            && AuthoritativeLevelVisibility.IsVisible(@object.LevelId, currentLevelId)
+            && AuthoritativeObjectPresentationVisibility.IsVisible(
+                @object,
+                player.LevelId,
+                geometry,
+                player.PositionX,
+                player.PositionY,
+                lightRadius)
             && !@object.Activated
             && !@object.Destroyed
             && HasAuthoritativeInteraction(@object);

@@ -73,7 +73,13 @@ public static class AuthoritativeTargetSelector
 
         var worldObject = snapshot.Objects
             .Where(candidate => candidate.EntityId != 0
-                && AuthoritativeLevelVisibility.IsVisible(candidate.LevelId, localPlayer.LevelId)
+                && AuthoritativeObjectPresentationVisibility.IsVisible(
+                    candidate,
+                    localPlayer.LevelId,
+                    geometry,
+                    localPlayer.PositionX,
+                    localPlayer.PositionY,
+                    lightRadius)
                 && !candidate.Activated
                 && !candidate.Destroyed
                 && AuthoritativeObjectSelector.HasAuthoritativeInteraction(candidate)
@@ -86,7 +92,13 @@ public static class AuthoritativeTargetSelector
 
         var item = snapshot.WorldItems
             .Where(candidate => candidate.EntityId != 0
-                && AuthoritativeLevelVisibility.IsVisible(candidate.LevelId, localPlayer.LevelId)
+                && AuthoritativeWorldItemPresentationVisibility.IsVisible(
+                    candidate,
+                    localPlayer.LevelId,
+                    geometry,
+                    localPlayer.PositionX,
+                    localPlayer.PositionY,
+                    lightRadius)
                 && candidate.PositionX == targetX
                 && candidate.PositionY == targetY)
             .OrderBy(candidate => candidate.EntityId)

@@ -127,14 +127,26 @@ public partial class WorldPresentation : Node2D
             displayedMonsterSnapshots[monster.EntityId] = monster.Clone();
         }
         foreach (var item in snapshot.WorldItems.Where(item =>
-                     AuthoritativeEntityPositionProjection.IsVisibleOnActiveLevel(
-                         item.LevelId,
-                         localPlayer?.LevelId ?? 0))) {
+                     localPlayer is not null
+                     && AuthoritativeWorldItemPresentationVisibility.IsVisible(
+                         item,
+                         localPlayer.LevelId,
+                         localGeometry,
+                         localPlayer.PositionX,
+                         localPlayer.PositionY,
+                         localLightRadius))) {
             activeEntityIds.Add(item.EntityId);
             UpdatePosition(item.EntityId, ToScreen(item.PositionX, item.PositionY), delta, item.LevelId);
         }
         foreach (var @object in snapshot.Objects.Where(@object =>
-                     AuthoritativeObjectPresentationVisibility.IsVisible(@object, localPlayer?.LevelId ?? 0))) {
+                     localPlayer is not null
+                     && AuthoritativeObjectPresentationVisibility.IsVisible(
+                         @object,
+                         localPlayer.LevelId,
+                         localGeometry,
+                         localPlayer.PositionX,
+                         localPlayer.PositionY,
+                         localLightRadius))) {
             activeEntityIds.Add(@object.EntityId);
             UpdatePosition(@object.EntityId, ToScreen(@object.PositionX, @object.PositionY), delta, @object.LevelId);
         }
@@ -301,10 +313,23 @@ public partial class WorldPresentation : Node2D
                          localPlayer.PositionY,
                          localLightRadius)))
             DrawMonster(monster);
-        foreach (var item in snapshot.WorldItems.Where(item => AuthoritativeLevelVisibility.IsVisible(item.LevelId, currentLevel)))
+        foreach (var item in snapshot.WorldItems.Where(item =>
+                     AuthoritativeWorldItemPresentationVisibility.IsVisible(
+                         item,
+                         currentLevel,
+                         localGeometry,
+                         localPlayer.PositionX,
+                         localPlayer.PositionY,
+                         localLightRadius)))
             DrawItem(item, searchActive);
         foreach (var @object in snapshot.Objects.Where(@object =>
-                     AuthoritativeObjectPresentationVisibility.IsVisible(@object, currentLevel)))
+                     AuthoritativeObjectPresentationVisibility.IsVisible(
+                         @object,
+                         currentLevel,
+                         localGeometry,
+                         localPlayer.PositionX,
+                         localPlayer.PositionY,
+                         localLightRadius)))
             DrawObject(@object);
         foreach (var corpse in snapshot.Corpses.Where(corpse =>
                      AuthoritativeCorpsePresentationVisibility.IsVisible(corpse, currentLevel)))

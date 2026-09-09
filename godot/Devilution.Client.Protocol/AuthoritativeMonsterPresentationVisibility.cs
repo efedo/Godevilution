@@ -32,43 +32,15 @@ public static class AuthoritativeMonsterPresentationVisibility
         int viewerX,
         int viewerY,
         int viewerLightRadius)
-    {
-        if (!IsVisible(monster, currentLevelId)
-            || geometry is null
-            || geometry.NativeTransparency.Count == 0
-                && geometry.NativeVisionBlockedCells.Count == 0)
-            return IsVisible(monster, currentLevelId);
+        => IsVisible(monster, currentLevelId)
+            && AuthoritativeNativeVisionVisibility.IsVisible(
+                monster.LevelId,
+                monster.PositionX,
+                monster.PositionY,
+                currentLevelId,
+                geometry,
+                viewerX,
+                viewerY,
+                viewerLightRadius);
 
-        var nativeVisionRadius = viewerLightRadius is >= 2 and <= 15
-            ? viewerLightRadius
-            : 10;
-        var deltaX = (long)monster.PositionX - viewerX;
-        var deltaY = (long)monster.PositionY - viewerY;
-        if (Math.Abs(deltaX) > nativeVisionRadius
-            || Math.Abs(deltaY) > nativeVisionRadius
-            || deltaX * deltaX + deltaY * deltaY
-                > (long)nativeVisionRadius * nativeVisionRadius)
-            return false;
-        if (!Contains(geometry, viewerX, viewerY)
-            || !Contains(geometry, monster.PositionX, monster.PositionY))
-            return false;
-
-        return NativeVision.IsVisible(
-            viewerX,
-            viewerY,
-            monster.PositionX,
-            monster.PositionY,
-            nativeVisionRadius,
-            (x, y) => !IsBlocked(geometry, x, y),
-            (x, y) => Contains(geometry, x, y));
-    }
-
-    private static bool Contains(LevelGeometrySnapshot geometry, int x, int y)
-        => x >= 0 && y >= 0 && x < geometry.Width && y < geometry.Height;
-
-    private static bool IsBlocked(LevelGeometrySnapshot geometry, int x, int y)
-        => !Contains(geometry, x, y)
-            || (geometry.NativeVisionBlockedCells.Count != 0
-                ? geometry.NativeVisionBlockedCells.Contains(y * geometry.Width + x)
-                : geometry.BlockedCells.Contains(y * geometry.Width + x));
 }

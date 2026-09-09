@@ -136,6 +136,33 @@ public sealed class AuthoritativeTargetSelectorTests
     }
 
     [Fact]
+    public void DoesNotSelectWorldItemsOrObjectsOutsideProjectedNativeVision()
+    {
+        var snapshot = new Snapshot {
+            Players = {
+                new PlayerSnapshot { EntityId = 7, LevelId = 2, PositionX = 0, PositionY = 0 },
+            },
+            WorldItems = {
+                new WorldItemSnapshot { EntityId = 30, LevelId = 2, PositionX = 4 },
+            },
+            Objects = {
+                new ObjectSnapshot {
+                    EntityId = 31,
+                    LevelId = 2,
+                    PositionX = 4,
+                    EffectKind = 1,
+                },
+            },
+            LevelGeometry = {
+                new LevelGeometrySnapshot { LevelId = 2, Width = 5, Height = 1 },
+            },
+        };
+        snapshot.LevelGeometry[0].NativeVisionBlockedCells.Add(1);
+
+        Assert.Null(AuthoritativeTargetSelector.SelectWorldEntityTarget(snapshot, 7, 4, 0));
+    }
+
+    [Fact]
     public void SelectsAnAuthoredUniqueMonsterDialogueTarget()
     {
         var snapshot = new Snapshot {
