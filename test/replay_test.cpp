@@ -890,6 +890,36 @@ TEST(ReplayFixture, ExecutesRangedElementalArrowAttackAgainstCSharpCheckpoint)
 	EXPECT_EQ(rangedClassState.projectiles[0].damageQ6, 384);
 	EXPECT_EQ(rangedClassState.randomState, 22695478U);
 	EXPECT_EQ(rangedClassResult.transitions[0].stateSha256, rangedClassFixture.checkpoints.back().stateSha256);
+
+	std::ifstream rangedClassArmorFile("test/fixtures/replay/gameplay-ranged-class-armor.json");
+	ASSERT_TRUE(rangedClassArmorFile.good());
+	const std::string rangedClassArmorJson((std::istreambuf_iterator<char>(rangedClassArmorFile)), std::istreambuf_iterator<char>());
+	ReplayFixture rangedClassArmorFixture;
+	ASSERT_TRUE(ParseReplayFixture(rangedClassArmorJson, rangedClassArmorFixture, error)) << error;
+	ReplayFixtureExecutionState rangedClassArmorState;
+	rangedClassArmorState.characterClassId = static_cast<uint32_t>(rangedClassArmorFixture.initialState.characterClass);
+	rangedClassArmorState.attributes[0] = rangedClassArmorFixture.initialState.strength;
+	rangedClassArmorState.attributes[1] = rangedClassArmorFixture.initialState.strength;
+	rangedClassArmorState.attributes[2] = rangedClassArmorFixture.initialState.magic;
+	rangedClassArmorState.attributes[3] = rangedClassArmorFixture.initialState.magic;
+	rangedClassArmorState.attributes[4] = rangedClassArmorFixture.initialState.dexterity;
+	rangedClassArmorState.attributes[5] = rangedClassArmorFixture.initialState.dexterity;
+	rangedClassArmorState.attributes[6] = rangedClassArmorFixture.initialState.vitality;
+	rangedClassArmorState.attributes[7] = rangedClassArmorFixture.initialState.vitality;
+	rangedClassArmorState.characterLevel = rangedClassArmorFixture.initialState.characterLevel;
+	rangedClassArmorState.life = rangedClassArmorFixture.initialState.life;
+	rangedClassArmorState.lifeMaximum = rangedClassArmorFixture.initialState.life;
+	rangedClassArmorState.mana = rangedClassArmorFixture.initialState.mana;
+	rangedClassArmorState.manaMaximum = rangedClassArmorFixture.initialState.manaMaximum;
+	rangedClassArmorState.positionX = rangedClassArmorFixture.initialState.positionX;
+	rangedClassArmorState.positionY = rangedClassArmorFixture.initialState.positionY;
+	ReplayFixtureExecutionResult rangedClassArmorResult;
+	ASSERT_TRUE(ExecuteReplayFixture(rangedClassArmorFixture, rangedClassArmorState, rangedClassArmorResult, error)) << error;
+	ASSERT_EQ(rangedClassArmorState.projectiles.size(), 1U);
+	EXPECT_EQ(rangedClassArmorState.projectiles[0].damage, 4);
+	EXPECT_EQ(rangedClassArmorState.projectiles[0].damageQ6, 256);
+	EXPECT_EQ(rangedClassArmorState.randomState, 22695478U);
+	EXPECT_EQ(rangedClassArmorResult.transitions[0].stateSha256, rangedClassArmorFixture.checkpoints.back().stateSha256);
 }
 
 TEST(ReplayFixture, ExecutesBaseContentPurchaseAndSaleAgainstCSharpCheckpoints)

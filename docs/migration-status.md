@@ -6796,6 +6796,8 @@ atural_resistance_per_level_percent` and
   including spread positions and activation delays in both runners.
 - Initialized ranged replay now applies the authored Rogue bow damage profile,
   including class attribute scaling and deterministic range selection.
+- Initialized ranged replay now applies class hit admission and target armor
+  reduction at the shared native/C# checkpoint.
 - Native `Snake` now consumes a validated `Rhino` mapping; the server owns its
   clear two-tile charge controller, monster movement, special physical damage,
   blocking, and Q6 event resolution.

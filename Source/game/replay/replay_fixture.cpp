@@ -3562,6 +3562,7 @@ void CreateReplayWeaponArrow(
     uint32_t targetEntityId,
     uint32_t arrowIndex,
     uint32_t arrowCount,
+    uint64_t tick,
     bool consumeRandom)
 {
 	const int32_t targetDistance = std::max(
@@ -3573,6 +3574,8 @@ void CreateReplayWeaponArrow(
 		int32_t maximumDamage = 0;
 		int32_t damagePercent = 0;
 		int32_t damageFlat = 0;
+		int32_t hitBonus = 0;
+		int32_t armorPiercingBonus = 0;
 		bool hasShield = false;
 		bool hasStaff = false;
 		bool hasBow = false;
@@ -3586,6 +3589,8 @@ void CreateReplayWeaponArrow(
 			maximumDamage += std::max(0, equippedItem.state.maxDamage);
 			damagePercent += equippedItem.state.plusDamage;
 			damageFlat += equippedItem.state.plusDamageModifier;
+			hitBonus += equippedItem.state.plusToHit;
+			armorPiercingBonus += equippedItem.state.plusEnemyArmorClass;
 			if (equippedItem.slot != 4 && equippedItem.slot != 5)
 				continue;
 			switch (equippedItem.state.itemType) {
@@ -3652,6 +3657,31 @@ void CreateReplayWeaponArrow(
 		const int32_t damageBeforeFlat = rolledBaseDamage
 		    + rolledBaseDamage * damagePercent / 100;
 		damage = damageBeforeFlat + damageFlat + damageModifier;
+		const int32_t baseRangedToHit = state.characterClassId == 0
+		        ? 60
+		    : state.characterClassId == 1
+		        ? 70
+		    : state.characterClassId == 4
+		        ? 60
+		    : 50;
+		const int32_t hitChance = std::clamp(
+		    static_cast<int32_t>(state.characterLevel)
+		        + state.attributes[5]
+		        + baseRangedToHit
+		        + hitBonus
+		        + armorPiercingBonus
+		        - std::max(0, state.combatTargetArmorClass),
+		    5,
+		    95);
+		const uint32_t hitSeed = static_cast<uint32_t>(tick)
+		    ^ targetEntityId
+		    ^ state.entityId;
+		if ((hitSeed * 1664525U + 1013904223U) % 100U >= static_cast<uint32_t>(hitChance))
+			damage = 0;
+		else
+			damage = std::max(
+			    1,
+			    damage - std::max(0, state.combatTargetArmorClass));
 	} else if (consumeRandom) {
 		static_cast<void>(GenerateRnd(state, 1));
 	}
@@ -5468,7 +5498,7 @@ bool ApplyReplayAttack(
 	if (ranged) {
 		const uint32_t arrowCount = HasReplayEquipmentFlag(state, MultipleArrowsFlag) ? 3U : 1U;
 		for (uint32_t arrowIndex = 0; arrowIndex < arrowCount; ++arrowIndex) {
-			CreateReplayWeaponArrow(state, targetEntityId, arrowIndex, arrowCount, consumeRandom);
+			CreateReplayWeaponArrow(state, targetEntityId, arrowIndex, arrowCount, tick, consumeRandom);
 			ApplyReplayHellfireWeaponDecay(state);
 		}
 		return true;

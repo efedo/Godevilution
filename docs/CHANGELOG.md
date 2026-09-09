@@ -84,6 +84,8 @@ All notable changes to this fork are documented below.
   including native spread positions and activation delays.
 - Initialized ranged replay now covers the authored Rogue bow damage profile
   and shared damage-range RNG draw.
+- Initialized ranged replay now covers class hit admission and target armor
+  reduction for authored Rogue bow damage.
 
 - Monster item and AI runtime seeds now travel as an all-or-nothing pair,
   preserving deterministic native initialization at mapper, host, Godot, and
