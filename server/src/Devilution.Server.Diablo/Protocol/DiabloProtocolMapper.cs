@@ -1717,12 +1717,13 @@ internal static class DiabloProtocolMapper
         if (action is null)
             return;
         if (!Enum.IsDefined(action.Kind)
-            || action.StartedAtTick > snapshotTick
-            || snapshotTick > action.EndTick
-            || action.EffectApplied != (snapshotTick >= action.EffectTick)
-            || action.EffectTick < action.StartedAtTick
-            || action.ReadyTick < action.EffectTick
-            || action.ReadyTick > action.EndTick
+            || !AuthoritativePlayerActionTimingRules.IsValidAtSnapshot(
+                snapshotTick,
+                action.StartedAtTick,
+                action.EffectTick,
+                action.ReadyTick,
+                action.EndTick,
+                action.EffectApplied)
             || action.EndTick != state.CombatModeEndTick) {
             throw new InvalidDataException(
                 "Authoritative player action timing is invalid.");

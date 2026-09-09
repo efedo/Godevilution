@@ -8,6 +8,11 @@ levels, Diablo victory ranks, and Reflect charges. The protocol and Diablo
 validation paths consume the same source; native spell identity remains the
 shared `0..51` limit used by replay and boundary tests.
 
+Timed player-action ordering is now one shared domain contract consumed by the
+Diablo simulation, mapper, host snapshot validator, and Godot protocol client.
+The client links the pure rule source directly, preserving the dependency
+boundary between presentation transport and the server domain assembly.
+
 Native monster AI timer, short-counter, retreat, and death-animation bounds now
 also consume one shared compatibility source across Diablo state/catalog
 validation, replay fixture loading, the protocol contract, and native envelope

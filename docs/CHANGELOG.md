@@ -22,6 +22,10 @@ All notable changes to this fork are documented below.
 - Timed action snapshots now bind action progress to the snapshot tick: actions
   must have started, must not have expired, and `EffectApplied` must agree with
   whether the effect tick has been reached across managed and native boundaries.
+- Timed action ordering and snapshot-boundary checks now use one shared domain
+  contract across Diablo simulation, mapper, host validation, and Godot protocol
+  projection; the client links only that pure rule source and does not depend on
+  the server domain assembly.
 
 - Monster item and AI runtime seeds now travel as an all-or-nothing pair,
   preserving deterministic native initialization at mapper, host, Godot, and

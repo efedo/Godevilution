@@ -1233,7 +1233,9 @@ The snapshot tick is part of that contract: `started_at_tick` must not be in the
 future, `end_tick` must not be behind the snapshot, and `effect_applied` is false
 before `effect_tick` and true at or after it. This is enforced at managed,
 Godot, and native validation boundaries so presentation and save restore cannot
-admit an impossible action timeline.
+admit an impossible action timeline. The managed simulation, mapper, host, and
+Godot protocol client consume the same domain timing-rule source, while the
+native client keeps the equivalent boundary check for compatibility.
 Movement reserves the adjacent destination until its end tick, and presentation
 clients expose that reservation as the future or predicted position. Deferred
 casts preserve their spell, source kind, source item, and target so save

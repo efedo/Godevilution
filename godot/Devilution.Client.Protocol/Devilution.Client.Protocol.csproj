@@ -8,4 +8,8 @@
   <ItemGroup>
     <ProjectReference Include="../../protocol/Devilution.Protocol/Devilution.Protocol.csproj" />
   </ItemGroup>
+  <ItemGroup>
+    <Compile Include="../../server/src/Devilution.Domain/Protocol/AuthoritativePlayerActionTimingRules.cs"
+             Link="Protocol/AuthoritativePlayerActionTimingRules.cs" />
+  </ItemGroup>
 </Project>

@@ -2745,12 +2745,13 @@ public sealed partial class DiabloSimulation
         if (action is null)
             return true;
         if (!Enum.IsDefined(action.Kind)
-            || action.StartedAtTick > snapshotTick
-            || snapshotTick > action.EndTick
-            || action.EffectApplied != (snapshotTick >= action.EffectTick)
-            || action.EffectTick < action.StartedAtTick
-            || action.ReadyTick < action.EffectTick
-            || action.ReadyTick > action.EndTick
+            || !AuthoritativePlayerActionTimingRules.IsValidAtSnapshot(
+                snapshotTick,
+                action.StartedAtTick,
+                action.EffectTick,
+                action.ReadyTick,
+                action.EndTick,
+                action.EffectApplied)
             || action.EndTick != source.CombatModeEndTick) {
             return false;
         }

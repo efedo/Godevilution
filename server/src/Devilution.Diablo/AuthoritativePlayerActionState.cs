@@ -1,3 +1,5 @@
+using Devilution.Domain.Protocol;
+
 namespace Devilution.Diablo;
 
 /** Server-owned player actions whose gameplay effect resolves on an animation tick. */
@@ -69,10 +71,11 @@ internal static class DiabloPlayerActionLifecycle
     {
         ArgumentNullException.ThrowIfNull(player);
         ArgumentNullException.ThrowIfNull(action);
-        if (action.EffectTick < action.StartedAtTick
-            || action.ReadyTick < action.EffectTick
-            || action.ReadyTick > action.EndTick
-            || action.EndTick < action.EffectTick) {
+        if (!AuthoritativePlayerActionTimingRules.IsOrdered(
+                action.StartedAtTick,
+                action.EffectTick,
+                action.ReadyTick,
+                action.EndTick)) {
             throw new ArgumentException(
                 "Player action ticks must form a valid ordered lifecycle.",
                 nameof(action));
