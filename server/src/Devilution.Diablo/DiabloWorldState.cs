@@ -460,6 +460,19 @@ public sealed class DiabloWorldState
                             $"World mutation {mutation.MutationId} requires a native object layer.");
                     objectLayer[cell] = objectId;
                 }
+                var monsterLayerCells = mutation.GetMonsterLayerCells(
+                    baseLevel.Width,
+                    baseLevel.Height,
+                    originX,
+                    originY);
+                if (monsterLayerCells.Count > 0 && monsterLayer.Length == 0)
+                    monsterLayer = new ushort[checked(baseLevel.Width * baseLevel.Height)];
+                foreach (var (cell, monsterId) in monsterLayerCells) {
+                    if (monsterLayer.Length == 0)
+                        throw new InvalidDataException(
+                            $"World mutation {mutation.MutationId} requires a native monster layer.");
+                    monsterLayer[cell] = monsterId;
+                }
                 var pieceLayerCells = mutation.GetPieceLayerCells(
                     baseLevel.Width,
                     baseLevel.Height,

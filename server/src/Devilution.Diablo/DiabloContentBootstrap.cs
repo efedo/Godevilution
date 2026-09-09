@@ -780,6 +780,14 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
                 objectsTable.ToCanonicalTsv(),
                 stableIds)
             : null;
+        var objectItemGates = content.TryGetTable(
+                "object_item_gates.tsv",
+                out var objectItemGatesTable)
+            ? AuthoritativeObjectItemGateCatalog.LoadTsv(
+                objectItemGatesTable.SourcePath,
+                objectItemGatesTable.ToCanonicalTsv(),
+                stableIds)
+            : null;
         var objectPresentations = content.TryGetTable(
             "object_presentations.tsv",
             out var objectPresentationsTable)
@@ -826,6 +834,10 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
         }
         if (objectDefinitions.Length > 0)
             AuthoritativeWorldObjectCatalog.ValidateItemRequirements(objectDefinitions, itemCatalog!);
+        if (objectItemGates is not null) {
+            objectItemGates.ValidateItems(itemCatalog!);
+            objectItemGates.ValidateObjects((objects ?? []).Concat(objectTemplates ?? []));
+        }
         if (objectDefinitions.Length > 0)
             AuthoritativeWorldObjectCatalog.ValidateRewardRequirements(objectDefinitions, itemCatalog!);
         if (objectDefinitions.Length > 0 && spells is not null)
@@ -984,6 +996,8 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
         }
         if (world is not null && worldMutations is not null)
             worldMutations.ValidateWorld(world, objects);
+        if (worldMutations is not null && nativeDunMonsters is not null)
+            worldMutations.ValidateMonsterMappings(nativeDunMonsters);
         var questTypes = content.TryGetTable("quest_types.tsv", out var questTypesTable)
             ? AuthoritativeQuestTypeCatalog.LoadTsv(
                 questTypesTable.SourcePath,
@@ -1380,6 +1394,7 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
             SpellBooks = spellBooks,
             CombatRules = combatRules,
             Items = itemCatalog,
+            ObjectItemGates = objectItemGates,
             ItemCombinations = itemCombinations,
             ItemQuestEffects = itemQuestEffects,
             IdentifyAbilitySpellId = identifyAbilitySpellId,

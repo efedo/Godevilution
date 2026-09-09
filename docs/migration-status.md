@@ -2,7 +2,7 @@
 
 Status date: 2026-09-09
 
-The active content schema is now `1.453.0` (with `1.452.0` retained as
+The active content schema is now `1.454.0` (with `1.453.0` retained as
 the previous additive contract). Optional `procedural_quest_piece_origins.tsv`
 rows publish deterministic ordinary-level quest geometry origins. Their
 identities are intentionally separate from the fixed native set-level origin
@@ -10,6 +10,11 @@ namespace, and published locations now survive authoritative snapshots,
 saves, and protocol projection. The Warlord room and the Halls/Gateway
 Catacombs quest rooms now use the separate native-DUN path; remaining licensed
 native assets and authored quest placement rows remain deferred.
+
+Schema 1.454 adds server-owned object item gates and native monster-layer
+mutation assignments. The Gateway pedestal now consumes one Blood Stone per
+stage, applies the validated blood2.dun encounter layer after the final stage,
+and awards Arkaine's Valor through the authoritative object interaction path.
 
 Native DUN geometry definitions can now be supplied as a validated external
 TSV pair (`native_dun_piece_definitions.tsv` and

@@ -179,6 +179,7 @@ portal	cathedral_entrance	1
 object	l1_left_door	1
 object	halls_of_blind_book	71
 object	gateway_of_blood_book	72
+object	gateway_of_blood_pedestal	73
 object	warlord_steel_tome	88
 warp	town_to_cathedral	1001
 warp	cathedral_to_catacombs	1002

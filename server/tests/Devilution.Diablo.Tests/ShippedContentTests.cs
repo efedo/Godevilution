@@ -18,7 +18,7 @@ public sealed class ShippedContentTests
         Assert.Equal("devilution.base", pack.Id);
         Assert.Equal("0.1.0", pack.Version);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.453.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.454.0"),
             pack.Schema);
         Assert.Empty(pack.Overlays);
         var nativeDunMonsterTable = pack.Tables.Single(
@@ -284,13 +284,28 @@ public sealed class ShippedContentTests
             presentationTable.SourcePath,
             presentationTable.ToCanonicalTsv());
         Assert.Equal(
-            [2020U, 2021U, 2022U],
+            [2020U, 2021U, 2022U, 2023U, 2024U, 2025U],
             presentations.Definitions.Select(definition => definition.EntityId).ToArray());
-        Assert.All(presentations.Definitions, definition => {
+        Assert.All(presentations.Definitions.Where(definition => definition.EntityId <= 2022), definition => {
             Assert.False(definition.HideWhenActivated);
             Assert.Equal(0, definition.AnimationFrame);
             Assert.Equal(1, definition.ActivatedAnimationFrame);
         });
+        Assert.All(
+            presentations.Definitions.Where(definition => definition.EntityId is 2023 or 2024),
+            definition => Assert.True(definition.HideWhenActivated));
+        Assert.False(presentations.Definitions.Single(definition => definition.EntityId == 2025).HideWhenActivated);
+        var itemGateTable = pack.Tables.Single(table => table.SourcePath == "object_item_gates.tsv");
+        var itemGates = AuthoritativeObjectItemGateCatalog.LoadTsv(
+            itemGateTable.SourcePath,
+            itemGateTable.ToCanonicalTsv());
+        Assert.Equal([2023U, 2024U, 2025U], itemGates.Definitions.Select(definition => definition.EntityId));
+        var gatewayMutation = AuthoritativeWorldMutationCatalog.LoadTsv(
+                "world_mutations.tsv",
+                pack.Tables.Single(table => table.SourcePath == "world_mutations.tsv").ToCanonicalTsv())
+            .Definitions.Single(definition => definition.MutationId == 9310);
+        Assert.Equal(2025U, gatewayMutation.AnchorEntityId);
+        Assert.Equal(22, gatewayMutation.MonsterLayerRectangles.Count);
 
         var dialogueMessages = AuthoritativeDialogueMessageCatalog.LoadTsv(
             "dialogue_messages.tsv",
@@ -1099,7 +1114,7 @@ public sealed class ShippedContentTests
             currentPack.Tables,
             currentPack.Dependencies,
             currentPack.Overlays,
-            new ContentSchemaIdentity("devilution.diablo", "1.452.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.453.0"),
             currentPack.DependencyConstraints,
             currentPack.Assets);
         var content = ComposedContent.Compose(new ContentManifest(
@@ -1879,8 +1894,8 @@ public sealed class ShippedContentTests
                 + "9002\t1\tSL_SKELKING\t41\t6\t5\t0\t0\t1\t1\t9002\n");
         var mutationTable = TsvTable.Parse(
             "world_mutations.tsv",
-            $"mutation_id\tlevel_id\tanchor_entity_id\tanchor_unique_identity\tblocked_cells_add\tblocked_cells_remove\tmissile_blocked_cells_add\tmissile_blocked_cells_remove\tgeometry_rect_add\tgeometry_rect_remove\ttransparency_rects\tobject_layer_rects\tpiece_layer_rects\tanchor_mega_offset_x\tanchor_mega_offset_y\tmega_tile_assignments\tcreate_transparency_layer\tmega_tile_copy_source_level_id\tmega_tile_copy_rects\tpiece_property_overrides\n"
-                + $"9100\t{AuthoritativeSetLevelMapCatalog.GetRuntimeLevelId(1, activeMap: true)}\t\t\t4\t\t\t\t\t\t\t\t\t0\t0\tnone\tfalse\t0\tnone\tnone\n");
+            $"mutation_id\tlevel_id\tanchor_entity_id\tanchor_unique_identity\tblocked_cells_add\tblocked_cells_remove\tmissile_blocked_cells_add\tmissile_blocked_cells_remove\tgeometry_rect_add\tgeometry_rect_remove\ttransparency_rects\tobject_layer_rects\tpiece_layer_rects\tanchor_mega_offset_x\tanchor_mega_offset_y\tmega_tile_assignments\tcreate_transparency_layer\tmega_tile_copy_source_level_id\tmega_tile_copy_rects\tpiece_property_overrides\tmonster_layer_rects\n"
+                + $"9100\t{AuthoritativeSetLevelMapCatalog.GetRuntimeLevelId(1, activeMap: true)}\t\t\t4\t\t\t\t\t\t\t\t\t0\t0\tnone\tfalse\t0\tnone\tnone\t\n");
         var overlayPack = new ContentPack(
             "geometry-fixture",
             "1.0.0",
@@ -3580,7 +3595,7 @@ public sealed class ShippedContentTests
 
         Assert.Equal("devilution.hellfire", hellfirePack.Id);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.453.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.454.0"),
             hellfirePack.Schema);
         Assert.Equal(DiabloGameVariant.Hellfire, combat.GameVariant);
         Assert.Equal(2, combat.UniqueExperienceMultiplier);
@@ -4048,7 +4063,9 @@ public sealed class ShippedContentTests
                 + 7 + cornerstoneMap.MegaWidth - 1]);
         Assert.Equal(
             [(1U, 1U, 2401U, 2403U, -4, 0), (2U, 1U, 2402U, 2403U, -2, 0),
-             (3U, 1U, 2409U, 2403U, 3, -1), (4U, 4U, 2021U, 0U, 0, 0)],
+             (3U, 1U, 2409U, 2403U, 3, -1), (4U, 4U, 2021U, 0U, 0, 0),
+             (5U, 4U, 2023U, 0U, 9, 16), (6U, 4U, 2024U, 0U, 10, 16),
+             (7U, 4U, 2025U, 0U, 11, 16)],
             activation.NativeDunFragmentObjects!.Placements.Select(placement => (
                 placement.PlacementId,
                 placement.FragmentId,

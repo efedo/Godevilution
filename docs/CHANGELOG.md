@@ -4,6 +4,11 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Added the server-owned Gateway pedestal progression: each staged interaction
+  consumes a Blood Stone, the final stage activates the validated blood2.dun
+  monster layer, and Arkaine's Valor is emitted as an authoritative reward.
+  Added `object_item_gates.tsv` and `monster_layer_rects` to schema `1.454.0`.
+
 - Corrected the Gateway fragment to use the native pre-pedestal blood1.dun
   layer while retaining the validated blood2.dun post-pedestal asset for the
   next server-owned activation seam.

@@ -16,6 +16,7 @@ public sealed class DiabloWorldCommandProcessor
     private readonly AuthoritativeQuestTypeCatalog? questTypes;
     private readonly DiabloGameMode gameMode;
     private readonly AuthoritativeItemCatalog? items;
+    private readonly AuthoritativeObjectItemGateCatalog? objectItemGates;
     private readonly AuthoritativeSpellCatalog? spells;
     private readonly AuthoritativeItemCombinationCatalog? itemCombinations;
     private readonly AuthoritativeItemQuestEffectCatalog? itemQuestEffects;
@@ -56,7 +57,8 @@ public sealed class DiabloWorldCommandProcessor
         DiabloGameVariant gameVariant = DiabloGameVariant.Diablo,
         AuthoritativeMonsterTypeCatalog? monsterTypes = null,
         AuthoritativeExperienceCatalog? experience = null,
-        AuthoritativeTownerGreetingCatalog? townerGreetings = null)
+        AuthoritativeTownerGreetingCatalog? townerGreetings = null,
+        AuthoritativeObjectItemGateCatalog? objectItemGates = null)
     {
         this.world = world ?? throw new ArgumentNullException(nameof(world));
         this.playerAnimations = playerAnimations;
@@ -68,6 +70,7 @@ public sealed class DiabloWorldCommandProcessor
         this.questTypes = questTypes;
         this.gameMode = gameMode;
         this.items = items;
+        this.objectItemGates = objectItemGates;
         this.spells = spells;
         this.itemCombinations = itemCombinations;
         this.itemQuestEffects = itemQuestEffects;
@@ -1321,10 +1324,19 @@ public sealed class DiabloWorldCommandProcessor
         }
         if (!CanApplyObjectReward(@object, player, participants))
             return DiabloWorldIntentResult.Rejected(DiabloRuleFailure.InvalidTarget);
+        if (!TryFindObjectItemGateIndex(@object, player, out var gateIndex))
+            return DiabloWorldIntentResult.Rejected(DiabloRuleFailure.InvalidTarget);
         if (!CanApplyObjectSpellEffect(@object, player, participants))
             return DiabloWorldIntentResult.Rejected(DiabloRuleFailure.InvalidTarget);
         if (!applyEffects)
             return DiabloWorldIntentResult.Accepted;
+
+        if (gateIndex >= 0
+            && objectItemGates!.TryGet(@object.EntityId, out var itemGate)
+            && itemGate.ConsumeItem) {
+            InventoryGridLayout.RemoveAndCompact(player.InventoryGrid, gateIndex);
+            player.Inventory.RemoveAt(gateIndex);
+        }
 
         if (@object.EffectKind == AuthoritativeObjectEffectKind.QuestSequence)
             return ApplyQuestSequence(player, @object, participants);
@@ -1423,6 +1435,25 @@ public sealed class DiabloWorldCommandProcessor
         default:
             return CreateObjectDialogueResult(@object, player);
         }
+    }
+
+    private bool TryFindObjectItemGateIndex(
+        AuthoritativeWorldObject @object,
+        AuthoritativePlayerState player,
+        out int inventoryIndex)
+    {
+        inventoryIndex = -1;
+        if (objectItemGates is null || !objectItemGates.TryGet(@object.EntityId, out var gate))
+            return true;
+        if (items is null || !items.TryGet(gate.ItemId, out var itemDefinition))
+            return false;
+        for (var index = 0; index < player.Inventory.Count; index++) {
+            if (!items.IsStateForDefinition(player.Inventory[index].State, itemDefinition))
+                continue;
+            inventoryIndex = index;
+            return true;
+        }
+        return false;
     }
 
     private static DiabloWorldIntentResult CreateObjectDialogueResult(

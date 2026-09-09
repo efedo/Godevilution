@@ -6,6 +6,56 @@ namespace Devilution.Diablo.Tests;
 public sealed class DiabloWorldCommandProcessorTests
 {
     [Fact]
+    public void ObjectItemGateRejectsWithoutItemAndConsumesOnSuccess()
+    {
+        var itemCatalog = new AuthoritativeItemCatalog([
+            new AuthoritativeItemDefinition(2143, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, true),
+        ]);
+        var gates = new AuthoritativeObjectItemGateCatalog([
+            new AuthoritativeObjectItemGateDefinition(2023, 2143),
+        ]);
+        var @object = new AuthoritativeWorldObject(
+            2023,
+            73,
+            0,
+            1,
+            1,
+            effectKind: AuthoritativeObjectEffectKind.Heal,
+            effectAmount: 1);
+        var world = new DiabloWorldState(objects: [@object]);
+        var processor = new DiabloWorldCommandProcessor(
+            world,
+            items: itemCatalog,
+            objectItemGates: gates);
+        var emptyPlayer = CreatePlayer(positionX: 1, positionY: 0, entityId: 7);
+
+        AssertRejected(
+            processor.Execute(
+                emptyPlayer,
+                new DiabloOperateObjectIntent(@object.EntityId),
+                1,
+                [emptyPlayer]),
+            DiabloRuleFailure.InvalidTarget);
+
+        var item = itemCatalog.GetRequired(2143).Generate(42);
+        var player = CreatePlayer(
+            positionX: 1,
+            positionY: 0,
+            entityId: 8,
+            inventory: [new OwnedStoreItem(0, 0, 42, 0, 0, item)]);
+        player.InventoryGrid[0] = 0;
+        var result = processor.Execute(
+            player,
+            new DiabloOperateObjectIntent(@object.EntityId),
+            2,
+            [player]);
+
+        Assert.True(result.Succeeded);
+        Assert.Empty(player.Inventory);
+        Assert.True(@object.Activated);
+    }
+
+    [Fact]
     public void TownerGreetingEmitsNativeDialogueEventWhenAdjacent()
     {
         var player = CreatePlayer(levelId: 0, positionX: 62, positionY: 64, entityId: 7);

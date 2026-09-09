@@ -1,6 +1,7 @@
-mutation_id	level_id	anchor_entity_id	anchor_unique_identity	blocked_cells_add	blocked_cells_remove	missile_blocked_cells_add	missile_blocked_cells_remove	geometry_rect_add	geometry_rect_remove	transparency_rects	object_layer_rects	piece_layer_rects	anchor_mega_offset_x	anchor_mega_offset_y	mega_tile_assignments	create_transparency_layer	mega_tile_copy_source_level_id	mega_tile_copy_rects	piece_property_overrides
-9301	4	0	Snotspill	none	none	none	none	none	none	-11,-9,16,8,9	none	none	0	0	none	true	0	none	none
-9300	4	0	Snotspill	none	none	none	none	none	none	-11,-9,16,8,9	none	none	-11	-9	3,4,136;3,5,135;4,5,137;5,5,135;6,5,135;3,6,134	true	0	none	none
-9302	2147483659	0		none	none	none	none	none	none	none	none	none	0	0	none	false	2147483658	1,1,9,10	none
-9303	2147483659	0		none	none	none	none	none	none	none	none	none	0	0	none	false	2147483658	11,1,10,10	none
-9304	2147483659	0		none	none	none	none	none	none	none	none	none	0	0	none	false	2147483658	7,11,6,7	none
+mutation_id	level_id	anchor_entity_id	anchor_unique_identity	blocked_cells_add	blocked_cells_remove	missile_blocked_cells_add	missile_blocked_cells_remove	geometry_rect_add	geometry_rect_remove	transparency_rects	object_layer_rects	piece_layer_rects	anchor_mega_offset_x	anchor_mega_offset_y	mega_tile_assignments	create_transparency_layer	mega_tile_copy_source_level_id	mega_tile_copy_rects	piece_property_overrides	monster_layer_rects
+9301	4	0	Snotspill	none	none	none	none	none	none	-11,-9,16,8,9	none	none	0	0	none	true	0	none	none	none
+9300	4	0	Snotspill	none	none	none	none	none	none	-11,-9,16,8,9	none	none	-11	-9	3,4,136;3,5,135;4,5,137;5,5,135;6,5,135;3,6,134	true	0	none	none	none
+9302	2147483659	0		none	none	none	none	none	none	none	none	none	0	0	none	false	2147483658	1,1,9,10	none	none
+9303	2147483659	0		none	none	none	none	none	none	none	none	none	0	0	none	false	2147483658	11,1,10,10	none	none
+9304	2147483659	0		none	none	none	none	none	none	none	none	none	0	0	none	false	2147483658	7,11,6,7	none	none
+9310	2	2025		none	none	none	none	none	none	none	none	none	0	0	none	false	0	none	none	-4,-7,1,1,28;-3,-7,1,1,28;0,-7,1,1,28;-4,-6,1,1,28;-3,-6,1,1,12;-1,-6,1,1,12;-1,-5,1,1,28;-4,-4,1,1,28;-3,-4,1,1,12;-1,-4,1,1,12;-9,0,1,1,12;-7,0,1,1,28;3,0,1,1,12;5,2,1,1,28;-9,3,1,1,12;-7,3,1,1,12;3,3,1,1,12;5,3,1,1,12;-7,5,1,1,28;3,5,1,1,12;5,5,1,1,28;-9,6,1,1,12

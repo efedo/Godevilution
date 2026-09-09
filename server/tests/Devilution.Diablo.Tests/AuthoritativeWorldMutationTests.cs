@@ -7,6 +7,45 @@ namespace Devilution.Diablo.Tests;
 public sealed class AuthoritativeWorldMutationTests
 {
     [Fact]
+    public void LoadsAndExpandsMonsterLayerRectanglesDeterministically()
+    {
+        var catalog = AuthoritativeWorldMutationCatalog.LoadTsv(
+            "world_mutations.tsv",
+            "mutation_id\tlevel_id\tanchor_entity_id\tmonster_layer_rects\n"
+                + "9310\t1\t77\t0,0,2,1,12;2,1,1,1,28\n");
+
+        var mutation = Assert.Single(catalog.Definitions);
+        Assert.Equal(77U, mutation.AnchorEntityId);
+        Assert.Equal(2, mutation.MonsterLayerRectangles.Count);
+        Assert.Equal(
+            [(0, 0, (ushort)12), (1, 0, (ushort)12), (2, 1, (ushort)28)],
+            mutation.GetMonsterLayerCells(8, 8, 0, 0)
+                .Select(entry => (entry.Cell % 8, entry.Cell / 8, entry.MonsterId))
+                .ToArray());
+    }
+
+    [Fact]
+    public void ProjectsMonsterLayerMutationIntoEffectiveLevelGeometry()
+    {
+        var geometry = new AuthoritativeWorld();
+        geometry.AddLevel(new AuthoritativeLevel(1, 4, 4));
+        var mutations = new AuthoritativeWorldMutationCatalog([
+            new AuthoritativeWorldMutation(
+                9310,
+                1,
+                monsterLayerRectangles: [
+                    new AuthoritativeWorldMutationMonsterRectangle(1, 2, 1, 1, 28),
+                ]),
+        ]);
+        var world = new DiabloWorldState(geometry, worldMutations: mutations);
+
+        Assert.True(world.ApplyWorldMutation(9310));
+        var level = Assert.Single(world.LevelGeometry);
+        Assert.Equal(16, level.NativeMonsterLayer.Count);
+        Assert.Equal((ushort)28, level.NativeMonsterLayer[9]);
+    }
+
+    [Fact]
     public void LoadsAndNormalizesCellOverlayDefinitions()
     {
         var catalog = AuthoritativeWorldMutationCatalog.LoadTsv(

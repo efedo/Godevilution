@@ -142,6 +142,9 @@ public sealed class DiabloSimulationOptions
 
     public AuthoritativeItemCatalog? Items { get; init; }
 
+    /** Validated inventory requirements applied to authored object interactions. */
+    public AuthoritativeObjectItemGateCatalog? ObjectItemGates { get; init; }
+
     /** Validated server-owned item combinations applied during pickup. */
     public AuthoritativeItemCombinationCatalog? ItemCombinations { get; init; }
 
@@ -271,7 +274,8 @@ public sealed class DiabloSimulationFactory : IDiabloSimulationFactory
             combatRules.GameVariant,
             options.MonsterTypes,
             options.Experience,
-            options.TownerGreetings);
+            options.TownerGreetings,
+            options.ObjectItemGates);
         var simulation = new DiabloSimulation(
             options.StoreCatalog,
             worldState,
@@ -835,6 +839,8 @@ public sealed partial class DiabloSimulation
         }
         if (result.Succeeded)
             EnsureProceduralMonsterSpawns(player.LevelId, participants);
+        if (result.Succeeded)
+            MaterializeNativeDunMonsters();
         if (result.Succeeded)
             RefreshAuthoredDialogueTargets();
         return result;

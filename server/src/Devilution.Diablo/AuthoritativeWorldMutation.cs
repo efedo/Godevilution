@@ -87,6 +87,26 @@ public sealed class AuthoritativeWorldMutationObjectRectangle
     public ushort ObjectId { get; }
 }
 
+/** A native monster-layer value applied to every cell in an authored rectangle. */
+public sealed class AuthoritativeWorldMutationMonsterRectangle
+    : AuthoritativeWorldMutationRectangle
+{
+    public AuthoritativeWorldMutationMonsterRectangle(
+        int x,
+        int y,
+        int width,
+        int height,
+        ushort monsterId)
+        : base(x, y, width, height)
+    {
+        if (monsterId > AuthoritativeLevel.NativeMaximumDunMonsterLayerId)
+            throw new ArgumentOutOfRangeException(nameof(monsterId));
+        MonsterId = monsterId;
+    }
+
+    public ushort MonsterId { get; }
+}
+
 /** A native d-piece value applied to every cell in an authored rectangle. */
 public sealed class AuthoritativeWorldMutationPieceRectangle
     : AuthoritativeWorldMutationRectangle
@@ -175,7 +195,8 @@ public sealed class AuthoritativeWorldMutation
         IEnumerable<AuthoritativeWorldMutationRectangle>? megaTileCopyRectangles = null,
         IEnumerable<AuthoritativeWorldMutationPieceProperty>? piecePropertyOverrides = null,
         int anchorSetLevelId = -1,
-        uint anchorProceduralQuestPieceOriginId = 0)
+        uint anchorProceduralQuestPieceOriginId = 0,
+        IEnumerable<AuthoritativeWorldMutationMonsterRectangle>? monsterLayerRectangles = null)
     {
         if (mutationId == 0)
             throw new ArgumentOutOfRangeException(nameof(mutationId));
@@ -212,6 +233,7 @@ public sealed class AuthoritativeWorldMutation
         GeometryRectanglesRemove = NormalizeRectangles(geometryRectanglesRemove);
         TransparencyRectangles = NormalizeTransparencyRectangles(transparencyRectangles);
         ObjectLayerRectangles = NormalizeObjectLayerRectangles(objectLayerRectangles);
+        MonsterLayerRectangles = NormalizeMonsterLayerRectangles(monsterLayerRectangles);
         PieceLayerRectangles = NormalizePieceLayerRectangles(pieceLayerRectangles);
         MegaTileAssignments = NormalizeMegaTileAssignments(megaTileAssignments);
         MegaTileCopySourceLevelId = megaTileCopySourceLevelId;
@@ -281,6 +303,9 @@ public sealed class AuthoritativeWorldMutation
 
     /** Native object-layer assignments retained for explicit object mapping. */
     public IReadOnlyList<AuthoritativeWorldMutationObjectRectangle> ObjectLayerRectangles { get; }
+
+    /** Native monster-layer assignments retained for deferred DUN encounters. */
+    public IReadOnlyList<AuthoritativeWorldMutationMonsterRectangle> MonsterLayerRectangles { get; }
 
     /** Native d-piece assignments retained for exact set-piece mutations. */
     public IReadOnlyList<AuthoritativeWorldMutationPieceRectangle> PieceLayerRectangles { get; }
@@ -369,6 +394,17 @@ public sealed class AuthoritativeWorldMutation
             .SelectMany(rectangle => rectangle
                 .EnumerateCells(levelWidth, levelHeight, originX, originY)
                 .Select(cell => (cell, rectangle.ObjectId)))
+            .ToArray();
+
+    public IReadOnlyList<(int Cell, ushort MonsterId)> GetMonsterLayerCells(
+        int levelWidth,
+        int levelHeight,
+        int originX = 0,
+        int originY = 0)
+        => MonsterLayerRectangles
+            .SelectMany(rectangle => rectangle
+                .EnumerateCells(levelWidth, levelHeight, originX, originY)
+                .Select(cell => (cell, rectangle.MonsterId)))
             .ToArray();
 
     public IReadOnlyList<(int Cell, ushort PieceId)> GetPieceLayerCells(
@@ -501,6 +537,18 @@ public sealed class AuthoritativeWorldMutation
             .ThenBy(rectangle => rectangle.ObjectId)
             .ToArray();
 
+    private static IReadOnlyList<AuthoritativeWorldMutationMonsterRectangle>
+        NormalizeMonsterLayerRectangles(
+            IEnumerable<AuthoritativeWorldMutationMonsterRectangle>? rectangles)
+        => (rectangles ?? [])
+            .Where(rectangle => rectangle is not null)
+            .OrderBy(rectangle => rectangle.X)
+            .ThenBy(rectangle => rectangle.Y)
+            .ThenBy(rectangle => rectangle.Width)
+            .ThenBy(rectangle => rectangle.Height)
+            .ThenBy(rectangle => rectangle.MonsterId)
+            .ToArray();
+
     private static IReadOnlyList<AuthoritativeWorldMutationPieceRectangle>
         NormalizePieceLayerRectangles(
             IEnumerable<AuthoritativeWorldMutationPieceRectangle>? rectangles)
@@ -578,6 +626,21 @@ public sealed class AuthoritativeWorldMutationCatalog
     public bool TryGet(uint mutationId, out AuthoritativeWorldMutation mutation)
         => definitions.TryGetValue(mutationId, out mutation!);
 
+    /** Validates native monster-layer values against the active DUN mapping. */
+    public void ValidateMonsterMappings(AuthoritativeNativeDunMonsterCatalog monsters)
+    {
+        ArgumentNullException.ThrowIfNull(monsters);
+        foreach (var monsterId in definitions.Values
+                     .SelectMany(definition => definition.MonsterLayerRectangles)
+                     .Select(rectangle => rectangle.MonsterId)
+                     .Where(monsterId => monsterId != 0)
+                     .Distinct()) {
+            if (!monsters.TryGet(monsterId, out _))
+                throw new InvalidDataException(
+                    $"World mutation monster-layer value {monsterId} has no native DUN mapping.");
+        }
+    }
+
     public void ValidateWorld(
         AuthoritativeWorld world,
         IEnumerable<AuthoritativeWorldObject>? objects = null,
@@ -617,7 +680,8 @@ public sealed class AuthoritativeWorldMutationCatalog
                 }
             }
             var anchor = ResolveAnchor(mutation, objects, combatTargets, level);
-            if ((mutation.AnchorUniqueIdentity.Length != 0
+            if ((mutation.AnchorEntityId != 0
+                    || mutation.AnchorUniqueIdentity.Length != 0
                     || mutation.AnchorSetLevelId >= 0
                     || mutation.AnchorProceduralQuestPieceOriginId != 0)
                 && anchor is null)
@@ -630,6 +694,7 @@ public sealed class AuthoritativeWorldMutationCatalog
             IReadOnlyList<int> missileBlockedRemove;
             IReadOnlyList<(int Cell, ushort Value)> transparencyCells;
             IReadOnlyList<(int Cell, ushort ObjectId)> objectLayerCells;
+            IReadOnlyList<(int Cell, ushort MonsterId)> monsterLayerCells;
             IReadOnlyList<(int Cell, ushort PieceId)> pieceLayerCells;
             IReadOnlyList<(int Cell, ushort TileId)> megaTileCells;
             IReadOnlyList<(int TargetCell, int SourceCell)> megaTileCopyCells;
@@ -660,6 +725,11 @@ public sealed class AuthoritativeWorldMutationCatalog
                     anchor?.X ?? 0,
                     anchor?.Y ?? 0);
                 objectLayerCells = mutation.GetObjectLayerCells(
+                    level.Width,
+                    level.Height,
+                    anchor?.X ?? 0,
+                    anchor?.Y ?? 0);
+                monsterLayerCells = mutation.GetMonsterLayerCells(
                     level.Width,
                     level.Height,
                     anchor?.X ?? 0,
@@ -701,6 +771,9 @@ public sealed class AuthoritativeWorldMutationCatalog
             if (objectLayerCells.GroupBy(entry => entry.Cell).Any(group => group.Count() > 1))
                 throw new InvalidDataException(
                     $"World mutation {mutation.MutationId} assigns an object layer value more than once to a cell.");
+            if (monsterLayerCells.GroupBy(entry => entry.Cell).Any(group => group.Count() > 1))
+                throw new InvalidDataException(
+                    $"World mutation {mutation.MutationId} assigns a monster layer value more than once to a cell.");
             if (pieceLayerCells.GroupBy(entry => entry.Cell).Any(group => group.Count() > 1))
                 throw new InvalidDataException(
                     $"World mutation {mutation.MutationId} assigns a d-piece value more than once to a cell.");
@@ -756,7 +829,8 @@ public sealed class AuthoritativeWorldMutationCatalog
                 ParseRectangles(row, "mega_tile_copy_rects"),
                 ParsePiecePropertyOverrides(row),
                 ParseAnchorSetLevelId(row, stableIds),
-                ParseAnchorProceduralQuestPieceOriginId(row, stableIds))));
+                ParseAnchorProceduralQuestPieceOriginId(row, stableIds),
+                ParseMonsterLayerRectangles(row))));
     }
 
     private static uint ResolveTargetLevelId(
@@ -892,8 +966,7 @@ public sealed class AuthoritativeWorldMutationCatalog
             var anchor = objects?.SingleOrDefault(@object =>
                 @object.EntityId == mutation.AnchorEntityId);
             if (anchor is null)
-                throw new InvalidDataException(
-                    $"World mutation {mutation.MutationId} references missing anchor entity {mutation.AnchorEntityId}.");
+                return null;
             if (anchor.LevelId != level.LevelId)
                 throw new InvalidDataException(
                     $"World mutation {mutation.MutationId} anchor entity {mutation.AnchorEntityId} is on level {anchor.LevelId}, expected {level.LevelId}.");
@@ -1055,6 +1128,47 @@ public sealed class AuthoritativeWorldMutationCatalog
                         width,
                         height,
                         objectId);
+                } catch (ArgumentOutOfRangeException exception) {
+                    throw new InvalidDataException(
+                        $"World mutation row {row.LineNumber} contains an invalid {column} rectangle '{rectangle}'.",
+                        exception);
+                }
+            })
+            .ToArray();
+    }
+
+    private static IReadOnlyList<AuthoritativeWorldMutationMonsterRectangle>
+        ParseMonsterLayerRectangles(TsvRow row)
+    {
+        const string column = "monster_layer_rects";
+        if (!row.TryGet(column, out var value)
+            || string.IsNullOrWhiteSpace(value)
+            || string.Equals(value, "none", StringComparison.OrdinalIgnoreCase)) {
+            return [];
+        }
+        return value.Split(
+                ';',
+                StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            .Select(rectangle => {
+                var fields = rectangle.Split(
+                    ',',
+                    StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+                if (fields.Length != 5
+                    || !int.TryParse(fields[0], NumberStyles.Integer, CultureInfo.InvariantCulture, out var x)
+                    || !int.TryParse(fields[1], NumberStyles.Integer, CultureInfo.InvariantCulture, out var y)
+                    || !int.TryParse(fields[2], NumberStyles.Integer, CultureInfo.InvariantCulture, out var width)
+                    || !int.TryParse(fields[3], NumberStyles.Integer, CultureInfo.InvariantCulture, out var height)
+                    || !ushort.TryParse(fields[4], NumberStyles.Integer, CultureInfo.InvariantCulture, out var monsterId)) {
+                    throw new InvalidDataException(
+                        $"World mutation row {row.LineNumber} contains an invalid {column} rectangle '{rectangle}'.");
+                }
+                try {
+                    return new AuthoritativeWorldMutationMonsterRectangle(
+                        x,
+                        y,
+                        width,
+                        height,
+                        monsterId);
                 } catch (ArgumentOutOfRangeException exception) {
                     throw new InvalidDataException(
                         $"World mutation row {row.LineNumber} contains an invalid {column} rectangle '{rectangle}'.",
