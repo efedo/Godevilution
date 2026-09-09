@@ -1398,6 +1398,7 @@ tl::expected<void, std::string> ValidatePlayerActionSnapshots(const protocol::Sn
 		    && action.effect_tick() == action.started_at_tick()
 		    && action.ready_tick() == action.end_tick()
 	    && action.direction_x() == 0 && action.direction_y() == 0
+	    && action.target_entity_id() != 0
 	    && action.target_x() == 0 && action.target_y() == 0
 	    && !action.target_cell()
 		    && !action.has_cast();

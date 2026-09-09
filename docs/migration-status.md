@@ -68,6 +68,8 @@ active actions must have started but not ended, and `EffectApplied` must be fals
 before `EffectTick` and true at or after it. This keeps presentation and save
 restore from accepting a timeline that the authoritative tick loop could not
 have produced.
+Death actions also require the nonzero source entity recorded by the server;
+managed and native snapshot validators reject an unreferenced death timeline.
 
 The remaining native monster scalar bounds for experience, accuracy,
 intelligence, directions, pack/activity state, Fallen animation/rally state,

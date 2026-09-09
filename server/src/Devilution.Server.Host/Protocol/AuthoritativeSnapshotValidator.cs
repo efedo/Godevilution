@@ -1038,6 +1038,7 @@ public static class AuthoritativeSnapshotValidator
                     && action.ReadyTick == action.EndTick
                     && action.DirectionX == 0
                     && action.DirectionY == 0
+                    && action.TargetEntityId != 0
                     && action.TargetX == 0
                     && action.TargetY == 0
                     && !action.TargetCell

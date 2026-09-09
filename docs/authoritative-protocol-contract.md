@@ -1242,7 +1242,7 @@ casts preserve their spell, source kind, source item, and target so save
 restoration cannot silently substitute a different resource source.
 
 Death action kind 4 is already applied at its start tick, requires zero life
-and Death combat mode, records the killing source as its target, and uses two
+and Death combat mode, records a nonzero killing source as its target, and uses two
 server ticks per activated class death frame. On the current ordinary combat
 death path, the server first cancels movement, applies the activated Gold
 divisor, and creates deterministic entries in the existing repeated

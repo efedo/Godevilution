@@ -3913,6 +3913,11 @@ public sealed class ClientModelTests
         invalid.Players[0].CurrentAction.EffectApplied = false;
         Assert.Throws<InvalidDataException>(() =>
             model.Apply(new AuthoritativeClientMessage(Snapshot: invalid)));
+
+        var invalidSource = snapshot.Clone();
+        invalidSource.Players[0].CurrentAction.TargetEntityId = 0;
+        Assert.Throws<InvalidDataException>(() =>
+            model.Apply(new AuthoritativeClientMessage(Snapshot: invalidSource)));
     }
 
     [Fact]

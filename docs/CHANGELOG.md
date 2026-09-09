@@ -26,6 +26,8 @@ All notable changes to this fork are documented below.
   contract across Diablo simulation, mapper, host validation, and Godot protocol
   projection; the client links only that pure rule source and does not depend on
   the server domain assembly.
+- Death actions now require a nonzero killing/source entity reference at managed
+  and native snapshot boundaries, matching the authoritative death lifecycle.
 
 - Monster item and AI runtime seeds now travel as an all-or-nothing pair,
   preserving deterministic native initialization at mapper, host, Godot, and

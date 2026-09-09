@@ -546,6 +546,24 @@ public sealed class AuthoritativeSnapshotValidatorTests
                 },
             },
         };
+        var invalidDeathSource = new Snapshot {
+            Players = {
+                new PlayerSnapshot {
+                    EntityId = 1,
+                    Life = 0,
+                    CombatMode = PlayerCombatMode.Death,
+                    CombatModeEndTick = 3,
+                    CurrentAction = new PlayerActionSnapshot {
+                        Kind = PlayerActionKind.Death,
+                        StartedAtTick = 1,
+                        EffectTick = 1,
+                        ReadyTick = 3,
+                        EndTick = 3,
+                        EffectApplied = true,
+                    },
+                },
+            },
+        };
 
         foreach (var snapshot in new[] {
             invalidTiming,
@@ -554,6 +572,7 @@ public sealed class AuthoritativeSnapshotValidatorTests
             invalidCastSource,
             invalidCastSourceReference,
             invalidEntityAttackCoordinates,
+            invalidDeathSource,
         })
             Assert.Throws<InvalidDataException>(() =>
                 AuthoritativeSnapshotValidator.Validate(snapshot));

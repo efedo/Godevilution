@@ -4275,6 +4275,16 @@ public sealed class DiabloSimulationTests
         Assert.Equal(deathSource.CurrentAction, restoredDeath.CurrentAction);
         Assert.NotSame(deathSource.CurrentAction, restoredDeath.CurrentAction);
 
+        var invalidDeathSnapshot = deathSnapshot with {
+            Player = deathSnapshot.Player with {
+                CurrentAction = deathSnapshot.Player.CurrentAction! with {
+                    TargetEntityId = 0,
+                },
+            },
+        };
+        Assert.Throws<InvalidDataException>(() =>
+            simulation.RestoreSnapshot(CreatePlayer(), invalidDeathSnapshot));
+
         var transitionSource = CreatePlayer();
         transitionSource.LevelId = 2;
         transitionSource.PositionX = 3;

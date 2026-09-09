@@ -1911,6 +1911,19 @@ TEST(ServerBackedPlayerSnapshot, RejectsMalformedPlayerActions)
 	action->set_target_entity_id(9);
 	action->set_target_x(1);
 	EXPECT_FALSE(ValidatePlayerActionSnapshots(invalidEntityAttackCoordinates).has_value());
+	protocol::Snapshot invalidDeathSource;
+	player = invalidDeathSource.add_players();
+	player->set_life(0);
+	player->set_combat_mode(protocol::PLAYER_COMBAT_MODE_DEATH);
+	player->set_combat_mode_end_tick(4);
+	action = player->mutable_current_action();
+	action->set_kind(protocol::PLAYER_ACTION_KIND_DEATH);
+	action->set_started_at_tick(1);
+	action->set_effect_tick(1);
+	action->set_ready_tick(4);
+	action->set_end_tick(4);
+	action->set_effect_applied(true);
+	EXPECT_FALSE(ValidatePlayerActionSnapshots(invalidDeathSource).has_value());
 }
 
 TEST(ServerBackedPlayerSnapshot, RejectsMalformedMonsterCombatMetadata)
