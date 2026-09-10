@@ -1239,6 +1239,12 @@ public sealed class ShippedContentTests
     [InlineData("experience.tsv")]
     [InlineData("spells.tsv")]
     [InlineData("native_spells.tsv")]
+    [InlineData("native_item_misc.tsv")]
+    [InlineData("native_item_topology.tsv")]
+    [InlineData("native_item_tags.tsv")]
+    [InlineData("native_item_effects.tsv")]
+    [InlineData("native_item_hellfire_effects.tsv")]
+    [InlineData("item_cursor_graphics.tsv")]
     [InlineData("world_rules.tsv")]
     [InlineData("combat.tsv")]
     public void ContentBootstrapRejectsMissingCoreExternalTable(string missingTable)

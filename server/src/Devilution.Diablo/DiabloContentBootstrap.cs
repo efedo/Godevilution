@@ -308,41 +308,28 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
         nativeMissileSprites?.ValidateRequiredNativeNamespace();
         if (nativeMissiles is not null && nativeMissileSprites is not null)
             nativeMissiles.ValidateGraphicReferences(nativeMissileSprites);
-        var nativeMisc = content.TryGetTable(
-            "native_item_misc.tsv",
-            out var nativeMiscTable)
-            ? AuthoritativeNativeMiscCatalog.LoadTsv(
-                nativeMiscTable.SourcePath,
-                nativeMiscTable.ToCanonicalTsv())
-            : null;
-        var nativeTopology = content.TryGetTable(
-            "native_item_topology.tsv",
-            out var nativeTopologyTable)
-            ? AuthoritativeNativeItemTopologyCatalog.LoadTsv(
-                nativeTopologyTable.SourcePath,
-                nativeTopologyTable.ToCanonicalTsv())
-            : null;
-        var nativeItemTags = content.TryGetTable(
-            "native_item_tags.tsv",
-            out var nativeItemTagsTable)
-            ? AuthoritativeNativeItemTagCatalog.LoadTsv(
-                nativeItemTagsTable.SourcePath,
-                nativeItemTagsTable.ToCanonicalTsv())
-            : null;
-        var nativeItemEffects = content.TryGetTable(
-            "native_item_effects.tsv",
-            out var nativeItemEffectsTable)
-            ? AuthoritativeNativeItemEffectCatalog.LoadTsv(
-                nativeItemEffectsTable.SourcePath,
-                nativeItemEffectsTable.ToCanonicalTsv())
-            : null;
-        var nativeItemHellfireEffects = content.TryGetTable(
-            "native_item_hellfire_effects.tsv",
-            out var nativeItemHellfireEffectsTable)
-            ? AuthoritativeNativeItemHellfireEffectCatalog.LoadTsv(
-                nativeItemHellfireEffectsTable.SourcePath,
-                nativeItemHellfireEffectsTable.ToCanonicalTsv())
-            : null;
+        var nativeMiscTable = GetRequiredExternalTable(content, "native_item_misc.tsv");
+        var nativeMisc = AuthoritativeNativeMiscCatalog.LoadTsv(
+            nativeMiscTable.SourcePath,
+            nativeMiscTable.ToCanonicalTsv());
+        var nativeTopologyTable = GetRequiredExternalTable(content, "native_item_topology.tsv");
+        var nativeTopology = AuthoritativeNativeItemTopologyCatalog.LoadTsv(
+            nativeTopologyTable.SourcePath,
+            nativeTopologyTable.ToCanonicalTsv());
+        var nativeItemTagsTable = GetRequiredExternalTable(content, "native_item_tags.tsv");
+        var nativeItemTags = AuthoritativeNativeItemTagCatalog.LoadTsv(
+            nativeItemTagsTable.SourcePath,
+            nativeItemTagsTable.ToCanonicalTsv());
+        var nativeItemEffectsTable = GetRequiredExternalTable(content, "native_item_effects.tsv");
+        var nativeItemEffects = AuthoritativeNativeItemEffectCatalog.LoadTsv(
+            nativeItemEffectsTable.SourcePath,
+            nativeItemEffectsTable.ToCanonicalTsv());
+        var nativeItemHellfireEffectsTable = GetRequiredExternalTable(
+            content,
+            "native_item_hellfire_effects.tsv");
+        var nativeItemHellfireEffects = AuthoritativeNativeItemHellfireEffectCatalog.LoadTsv(
+            nativeItemHellfireEffectsTable.SourcePath,
+            nativeItemHellfireEffectsTable.ToCanonicalTsv());
         var hasLegacyPrefixes = content.TryGetTable(
             "item_prefixes.tsv",
             out var legacyPrefixTable);
@@ -367,13 +354,10 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
                     nativeItemHellfireEffectCatalog: nativeItemHellfireEffects)
                 : null;
         affixes?.ValidatePowers();
-        var cursorCatalog = content.TryGetTable(
-            "item_cursor_graphics.tsv",
-            out var cursorTable)
-            ? AuthoritativeItemCursorCatalog.LoadTsv(
-                cursorTable.SourcePath,
-                cursorTable.ToCanonicalTsv())
-            : null;
+        var cursorTable = GetRequiredExternalTable(content, "item_cursor_graphics.tsv");
+        var cursorCatalog = AuthoritativeItemCursorCatalog.LoadTsv(
+            cursorTable.SourcePath,
+            cursorTable.ToCanonicalTsv());
 
         var itemCatalog = content.TryGetTable("items.tsv", out var itemTable)
             ? AuthoritativeItemCatalog.LoadTsv(
