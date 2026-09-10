@@ -11,6 +11,8 @@ public enum ObjectPresentationKind
     Quest,
     Breakable,
     Trap,
+    NativeArmorStand,
+    NativeWeaponRack,
 }
 
 /** Native-compatible lifecycle frame selected for an authored object. */
@@ -23,6 +25,12 @@ public enum ObjectPresentationFrame
 /** Maps additive object presentation metadata with compatibility fallbacks. */
 public static class ObjectPresentationStyle
 {
+    // These are native presentation identities carried by authored object
+    // templates. They are intentionally resolved client-side from the
+    // additive snapshot field; raw DUN layer IDs never cross the protocol.
+    private const uint NativeArmorStandObjectId = 89;
+    private const uint NativeWeaponRackObjectId = 90;
+
     public static ObjectPresentationKind Resolve(ObjectSnapshot state)
     {
         ArgumentNullException.ThrowIfNull(state);
@@ -31,7 +39,7 @@ public static class ObjectPresentationStyle
             ProtocolObjectPresentationKind.Quest => ObjectPresentationKind.Quest,
             ProtocolObjectPresentationKind.Breakable => ObjectPresentationKind.Breakable,
             ProtocolObjectPresentationKind.Trap => ObjectPresentationKind.Trap,
-            _ => ResolveLegacy(state),
+            _ => ResolveNativeOrLegacy(state),
         };
     }
 
@@ -61,5 +69,14 @@ public static class ObjectPresentationStyle
         if (state.QuestId != 0)
             return ObjectPresentationKind.Quest;
         return ObjectPresentationKind.Generic;
+    }
+
+    private static ObjectPresentationKind ResolveNativeOrLegacy(ObjectSnapshot state)
+    {
+        return state.NativeObjectId switch {
+            NativeArmorStandObjectId => ObjectPresentationKind.NativeArmorStand,
+            NativeWeaponRackObjectId => ObjectPresentationKind.NativeWeaponRack,
+            _ => ResolveLegacy(state),
+        };
     }
 }

@@ -722,10 +722,21 @@ public partial class WorldPresentation : Node2D
             ObjectPresentationKind.Quest => new Color("e5bd52"),
             ObjectPresentationKind.Breakable => new Color("c69a6b"),
             ObjectPresentationKind.Trap => new Color("f05d5e"),
+            ObjectPresentationKind.NativeArmorStand => new Color("c9a77d"),
+            ObjectPresentationKind.NativeWeaponRack => new Color("9d6b4f"),
             _ => @object.Activated ? new Color("4b4b62") : new Color("a68bca"),
         };
         var center = PositionFor(@object.EntityId, @object.PositionX, @object.PositionY);
-        DrawTextureOrRect("object", center, new Vector2(22, 22), color, true);
+        var size = kind switch {
+            ObjectPresentationKind.NativeArmorStand => new Vector2(18, 24),
+            ObjectPresentationKind.NativeWeaponRack => new Vector2(24, 18),
+            _ => new Vector2(22, 22),
+        };
+        DrawTextureOrRect("object", center, size, color, true);
+        if (kind == ObjectPresentationKind.NativeArmorStand)
+            DrawArmorStandSilhouette(center, color);
+        else if (kind == ObjectPresentationKind.NativeWeaponRack)
+            DrawWeaponRackSilhouette(center, color);
         if (frame == ObjectPresentationFrame.Activated)
             DrawActivatedObjectFrame(center, color);
         if (@object.TrapArmed) {
@@ -734,6 +745,23 @@ public partial class WorldPresentation : Node2D
             DrawLine(center + new Vector2(-6, -6), center + new Vector2(6, 6), trapColor, 2);
             DrawLine(center + new Vector2(6, -6), center + new Vector2(-6, 6), trapColor, 2);
         }
+    }
+
+    /** Adds a compact stand cue until production sprite assets are available. */
+    private void DrawArmorStandSilhouette(Vector2 center, Color color)
+    {
+        DrawCircle(center + new Vector2(0, -7), 3, new Color("f4dfb4"));
+        DrawLine(center + new Vector2(0, -4), center + new Vector2(0, 6), color, 2);
+        DrawLine(center + new Vector2(-6, 9), center + new Vector2(6, 9), color, 2);
+    }
+
+    /** Adds a compact rack cue until production sprite assets are available. */
+    private void DrawWeaponRackSilhouette(Vector2 center, Color color)
+    {
+        DrawLine(center + new Vector2(-8, -6), center + new Vector2(-8, 7), color, 2);
+        DrawLine(center + new Vector2(8, -6), center + new Vector2(8, 7), color, 2);
+        DrawLine(center + new Vector2(-8, 7), center + new Vector2(8, 7), color, 2);
+        DrawLine(center + new Vector2(-5, -8), center + new Vector2(5, -8), new Color("e7c27d"), 2);
     }
 
     /** Draws a presentation-only open-book cue for an authored activated frame. */

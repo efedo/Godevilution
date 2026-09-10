@@ -2,6 +2,11 @@
 
 All notable changes to this fork are documented below.
 
+- Extended the Godot object presentation layer with authored native armor-stand
+  and weapon-rack families. Warlord identities `89` and `90` now receive
+  distinct placeholder silhouettes while unknown or older object metadata keeps
+  the generic fallback.
+
 - Hardened current-schema native-DUN object activation by running the same
   target, Boolean, identity, and raw-layer validation used by direct catalog
   loading before world composition. Added a protocol regression proving the

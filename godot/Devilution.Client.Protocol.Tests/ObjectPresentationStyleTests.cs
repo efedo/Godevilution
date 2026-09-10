@@ -38,6 +38,30 @@ public sealed class ObjectPresentationStyleTests
     }
 
     [Theory]
+    [InlineData(89u, ObjectPresentationKind.NativeArmorStand)]
+    [InlineData(90u, ObjectPresentationKind.NativeWeaponRack)]
+    public void ResolvesAuthoredNativeObjectPresentationIdentities(
+        uint nativeObjectId,
+        ObjectPresentationKind expected)
+    {
+        var state = new ObjectSnapshot {
+            NativeObjectId = nativeObjectId,
+        };
+
+        Assert.Equal(expected, ObjectPresentationStyle.Resolve(state));
+    }
+
+    [Fact]
+    public void UnknownNativeObjectIdentityRetainsGenericFallback()
+    {
+        var state = new ObjectSnapshot {
+            NativeObjectId = 109,
+        };
+
+        Assert.Equal(ObjectPresentationKind.Generic, ObjectPresentationStyle.Resolve(state));
+    }
+
+    [Theory]
     [InlineData(false, true, 1u, 1u, ObjectPresentationFrame.Default)]
     [InlineData(true, false, 1u, 1u, ObjectPresentationFrame.Default)]
     [InlineData(true, true, 0u, 0u, ObjectPresentationFrame.Default)]
