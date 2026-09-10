@@ -94,6 +94,30 @@ public sealed class AuthoritativeGameHostAdapterPackageLoaderTests
     }
 
     [Fact]
+    public void RejectsRollbackCandidateWithChangedPrivateClosureAndKeepsPreviousPackageLoadable()
+    {
+        var previous = CreateProductionDiabloPackage();
+        var candidate = CreateProductionDiabloPackage();
+        try {
+            var loader = new AuthoritativeGameHostAdapterPackageLoader();
+            var loadedPrevious = loader.LoadDirectory(previous);
+            RewritePrivateClosure(candidate);
+
+            var exception = Assert.Throws<InvalidDataException>(() =>
+                loader.LoadDirectory(candidate));
+
+            Assert.Contains("unsupported private assembly", exception.Message, StringComparison.Ordinal);
+            var reloadedPrevious = loader.LoadDirectory(previous);
+            Assert.Equal(loadedPrevious.PackageId, reloadedPrevious.PackageId);
+            Assert.Equal(loadedPrevious.PackageVersion, reloadedPrevious.PackageVersion);
+            Assert.Equal(loadedPrevious.AssemblySha256, reloadedPrevious.AssemblySha256);
+        } finally {
+            Directory.Delete(previous, recursive: true);
+            Directory.Delete(candidate, recursive: true);
+        }
+    }
+
+    [Fact]
     public void RejectsAnUnlistedPrivateDependency()
     {
         var root = CreatePackage(includeDependency: false);
@@ -207,6 +231,42 @@ public sealed class AuthoritativeGameHostAdapterPackageLoaderTests
             Path.Combine(root, AuthoritativeGameHostAdapterPackageLoader.ManifestFileName),
             JsonSerializer.Serialize(manifest));
         return root;
+    }
+
+    private static void RewritePrivateClosure(string root)
+    {
+        var replacement = typeof(PackagedTestAdapterFactory).Assembly.Location;
+        File.Copy(replacement, Path.Combine(root, "server-diablo.dll"), overwrite: true);
+
+        using var document = JsonDocument.Parse(File.ReadAllText(
+            Path.Combine(root, AuthoritativeGameHostAdapterPackageLoader.ManifestFileName)));
+        using var stream = new MemoryStream();
+        using (var writer = new Utf8JsonWriter(stream, new JsonWriterOptions { Indented = true })) {
+            writer.WriteStartObject();
+            foreach (var property in document.RootElement.EnumerateObject()) {
+                if (property.NameEquals("version"))
+                    writer.WriteString("version", "0.2.0");
+                else if (property.NameEquals("dependencies")) {
+                    writer.WriteStartArray("dependencies");
+                    foreach (var dependency in property.Value.EnumerateArray()) {
+                        writer.WriteStartObject();
+                        writer.WriteString("assembly", dependency.GetProperty("assembly").GetString());
+                        var hash = dependency.GetProperty("assembly").GetString() == "server-diablo.dll"
+                            ? GetSha256(Path.Combine(root, "server-diablo.dll"))
+                            : dependency.GetProperty("assemblySha256").GetString();
+                        writer.WriteString("assemblySha256", hash);
+                        writer.WriteEndObject();
+                    }
+                    writer.WriteEndArray();
+                } else {
+                    property.WriteTo(writer);
+                }
+            }
+            writer.WriteEndObject();
+        }
+        File.WriteAllBytes(
+            Path.Combine(root, AuthoritativeGameHostAdapterPackageLoader.ManifestFileName),
+            stream.ToArray());
     }
 
     private static string GetSha256(string path)

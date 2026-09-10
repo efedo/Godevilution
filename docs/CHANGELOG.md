@@ -38,6 +38,11 @@ All notable changes to this fork are documented below.
   version 0.1.0 to 0.2.0 across a server restart while retaining its durable
   session state.
 
+- Added the staged-package release gate and rollback coverage. The verifier
+  checks canonical paths and every declared entry/private/shared-contract hash;
+  the loader suite now proves that a candidate with a changed private closure
+  fails closed while the previous package remains loadable.
+
 - Advanced combined authoritative session checkpoints to format 3 with
   canonical SHA-256 hashes of serialized server state and the command ledger.
   Version-1 and version-2 checkpoints remain readable for migration and are
