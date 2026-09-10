@@ -1101,6 +1101,52 @@ TEST(ServerBackedPlayerSnapshot, ExplicitNativeObjectPresentationRetainsNativeId
 	InitializeItemPool();
 }
 
+TEST(ServerBackedPlayerSnapshot, AuthoredSemanticObjectFamiliesIgnoreLegacyNativeIdentity)
+{
+	for (const auto presentationKind : {
+		ObjectPresentationKind::Generic,
+		ObjectPresentationKind::Shrine,
+		ObjectPresentationKind::Quest,
+		ObjectPresentationKind::Breakable,
+		ObjectPresentationKind::Trap,
+	}) {
+		EXPECT_TRUE(UsesAuthoredObjectPresentationIdentity(presentationKind));
+		InitializeItemPool();
+		ObjectPoolAdapter::ResetLegacyObjectPools();
+		const int objectSlot = ObjectPoolAdapter::ReserveObjectSlot();
+		ASSERT_GE(objectSlot, 0);
+		Objects[objectSlot] = {};
+		Objects[objectSlot]._otype = OBJ_BARREL;
+		Objects[objectSlot].position = { 14, 14 };
+		tileAt({ 14, 14 }).setObject(objectSlot + 1);
+		ObjectPoolAdapter::CommitReservedObjectSlot();
+
+		protocol::Snapshot snapshot;
+		auto *object = snapshot.add_objects();
+		object->set_entity_id(9);
+		object->set_object_id(OBJ_BARREL);
+		object->set_native_object_id(OBJ_ARMORSTAND);
+		object->set_level_id(1);
+		object->set_position_x(14);
+		object->set_position_y(14);
+		object->set_presentation_kind(
+			static_cast<protocol::ObjectPresentationKind>(presentationKind));
+
+		auto projected = ProjectObjectSnapshots(snapshot);
+		ASSERT_TRUE(projected.has_value());
+		ServerBackedWorldProjection worldProjection;
+		ASSERT_TRUE(worldProjection.Apply({}, {}, *projected, 1).has_value());
+		ServerBackedWorldPresentation presentation;
+		ASSERT_TRUE(presentation.Apply(worldProjection, 1).has_value());
+		ASSERT_EQ(ObjectPoolAdapter::ActiveObjectCountValue(), 1);
+		EXPECT_EQ(Objects[objectSlot]._otype, OBJ_BARREL);
+
+		presentation.Clear();
+		ObjectPoolAdapter::ResetLegacyObjectPools();
+		InitializeItemPool();
+	}
+}
+
 TEST(ServerBackedPlayerSnapshot, RemovesUnclaimedCompatibilityWorldEntitySlots)
 {
 	InitializeItemPool();

@@ -199,6 +199,16 @@ enum class ObjectPresentationKind : int {
 	NativeWeaponRack = 7,
 };
 
+/** Returns whether the authored semantic family owns the compatibility template identity. */
+inline constexpr bool UsesAuthoredObjectPresentationIdentity(ObjectPresentationKind value) noexcept
+{
+	return value == ObjectPresentationKind::Generic
+	    || value == ObjectPresentationKind::Shrine
+	    || value == ObjectPresentationKind::Quest
+	    || value == ObjectPresentationKind::Breakable
+	    || value == ObjectPresentationKind::Trap;
+}
+
 inline constexpr std::size_t MaximumEnvelopeBytes = 1024 * 1024;
 inline constexpr std::size_t MaximumCommandBatchCount = 256;
 inline constexpr std::size_t MaximumCommandAcknowledgementResultCount = 256;

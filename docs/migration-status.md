@@ -2,6 +2,13 @@
 
 Status date: 2026-09-10
 
+The native compatibility bridge now uses one shared presentation-family rule
+for explicit semantic object snapshots. Generic, shrine, quest, breakable, and
+trap families select the authored object identity; only explicit native armory
+families and legacy unspecified snapshots consult `native_object_id`. Focused
+coverage exercises every semantic family through projection and native slot
+rebinding.
+
 Production schema `1.502.0` activation now requires the complete external
 player-class tuning, symbolic loadout, and symbolic animation schemas,
 symbolic store stock, supplied explicit and procedural level metadata, world-rule identities,

@@ -2,6 +2,11 @@
 
 All notable changes to this fork are documented below.
 
+- Centralized the native compatibility rule for authored semantic object
+  presentation families. Generic, shrine, quest, breakable, and trap snapshots
+  now share one native classifier and regression coverage proves that none can
+  be overridden by legacy `native_object_id` metadata.
+
 - Native compatibility projection now carries authored object presentation
   families through its protocol-free snapshot and no longer lets legacy
   native IDs override an explicit generic, shrine, quest, breakable, or trap
