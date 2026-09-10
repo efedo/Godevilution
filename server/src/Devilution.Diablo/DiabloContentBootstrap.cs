@@ -248,6 +248,8 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
             pricingTable.ToCanonicalTsv(),
             stableIds);
         var generationTable = GetRequiredExternalTable(content, "item_generation.tsv");
+        if (content.Manifest.Schema == DiabloContentSchema.Current)
+            AuthoritativeItemGenerationRules.ValidateExternalizedProduction(generationTable);
         var generationRules = AuthoritativeItemGenerationRules.LoadTsv(
             generationTable.SourcePath,
             generationTable.ToCanonicalTsv());

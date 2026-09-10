@@ -7,6 +7,34 @@ namespace Devilution.Diablo.Tests;
 public sealed class AuthoritativeItemCatalogTests
 {
     [Fact]
+    public void ShippedItemGenerationUsesTheProductionSchema()
+    {
+        var path = Path.Combine(
+            FindRepositoryRoot(),
+            "server",
+            "content",
+            "base",
+            "item_generation.tsv");
+        var table = TsvTable.Parse("item_generation.tsv", File.ReadAllText(path));
+
+        AuthoritativeItemGenerationRules.ValidateExternalizedProduction(table);
+    }
+
+    [Fact]
+    public void ProductionItemGenerationValidationRejectsPartialRows()
+    {
+        var table = TsvTable.Parse(
+            "item_generation.tsv",
+            "magicChanceBase\tmagicChancePerLevel\tuniqueChanceNormal\tuniqueChanceUnique\tbonusLevelsUnique\tprefixPercent\tsuffixPercent\tonlygoodChance\tnoDropPercent\tgoldPercent\n"
+                + "10\t1\t1\t15\t4\t25\t66\t66\t59\t74\n");
+
+        var exception = Assert.Throws<InvalidDataException>(() =>
+            AuthoritativeItemGenerationRules.ValidateExternalizedProduction(table));
+
+        Assert.Contains("complete ordered schema", exception.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void ShippedItemsUseTheProductionSchema()
     {
         var path = Path.Combine(

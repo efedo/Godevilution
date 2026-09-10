@@ -3,9 +3,9 @@
 Each directory under `server/content` is a server-owned, validated gameplay
 content pack. The default `base` pack is loaded by the standalone server and is
 included in its content manifest and combined ruleset identity.
-It declares its identity and `devilution.diablo@1.483.0` schema in
+It declares its identity and `devilution.diablo@1.484.0` schema in
 `base/content-pack.json`; the Diablo module also accepts the immediately
-previous additive `1.482.0` schema so existing manifest-based packs remain
+previous additive `1.483.0` schema so existing manifest-based packs remain
 loadable. A composed manifest must still use one exact schema identity across
 all declared packs; use the previous schema only for a complete compatible
 manifest rather than mixing it with the current pack. The standalone host falls
@@ -3279,7 +3279,7 @@ and no implicit table replacements. For example:
   "dependencies": ["devilution.base"],
   "schema": {
     "id": "devilution.diablo",
-    "version": "1.483.0"
+    "version": "1.484.0"
   },
   "dependencyConstraints": [
     {
@@ -3313,8 +3313,8 @@ three-component semantic-version constraints for declared dependencies. All
 declared schemas in one ordered manifest must match, every constraint must name
 a declared dependency, and the loaded dependency version must satisfy its
 range. The first-party server rejects a declared schema other than
-`devilution.diablo@1.483.0` or its immediately previous additive
-`1.482.0`. Current-schema packs must provide the complete production table
+`devilution.diablo@1.484.0` or its immediately previous additive
+`1.483.0`. Current-schema packs must provide the complete production table
 contract; this includes ordered symbolic spell identity columns, required
 native spell/projectile metadata in `spells.tsv`. Previous-schema packs retain
 their documented compatibility fallbacks; `spell_books.tsv` must additionally
@@ -3324,7 +3324,9 @@ schema, including symbolic item identity and explicit item-action fields.
 `unique_items.tsv` must additionally use its complete ordered normalized
 unique-item schema, including stable unique and base-item symbols.
 `item_affixes.tsv` must additionally use its complete ordered normalized-affix
-schema with explicit generation metadata.
+schema with explicit generation metadata. `item_generation.tsv` must use its
+complete ordered eleven-column schema, including the explicit always-magic misc
+list.
 Manifests without compatibility metadata retain their legacy identity and
 remain loadable during migration.
 

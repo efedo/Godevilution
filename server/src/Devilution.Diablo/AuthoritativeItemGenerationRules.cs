@@ -15,6 +15,35 @@ public sealed record AuthoritativeItemGenerationRules(
     int NoDropPercent,
     int GoldPercent)
 {
+    private static readonly IReadOnlyList<string> ProductionColumns = [
+        "magicChanceBase",
+        "magicChancePerLevel",
+        "alwaysMagicMisc",
+        "uniqueChanceNormal",
+        "uniqueChanceUnique",
+        "bonusLevelsUnique",
+        "prefixPercent",
+        "suffixPercent",
+        "onlygoodChance",
+        "noDropPercent",
+        "goldPercent",
+    ];
+
+    /** Rejects partial item-generation metadata at the current production boundary. */
+    public static void ValidateExternalizedProduction(TsvTable table)
+    {
+        ArgumentNullException.ThrowIfNull(table);
+        if (!table.Columns.SequenceEqual(ProductionColumns, StringComparer.Ordinal))
+            throw new InvalidDataException(
+                $"Production item-generation table '{table.SourcePath}' must use the complete ordered schema.");
+        var row = table.Rows.Count == 1
+            ? table.Rows[0]
+            : throw new InvalidDataException(
+                $"Production item-generation table '{table.SourcePath}' must contain exactly one row.");
+        foreach (var column in ProductionColumns)
+            _ = row.Required(column);
+    }
+
     public static AuthoritativeItemGenerationRules Default { get; } = new(10, 1, 1, 15, 4, 25, 66, 66, 59, 74);
 
     /** Legacy misc categories that bypass the normal magic-quality roll. */
