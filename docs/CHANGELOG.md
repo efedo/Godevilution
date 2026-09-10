@@ -35,6 +35,10 @@ All notable changes to this fork are documented below.
   suppresses damage and equipment effects but still participates in the shared
   successful-hit durability boundary.
 
+- Preserved native Gargoyle wake-up timing for bow attacks: the special flag is
+  consumed at arrow impact rather than launch, suppressing physical, elemental,
+  Peril, knockback, and other attack effects on the waking arrow.
+
 - Completed the native `DamageWeapon` parity slice: successful melee attacks
   now use the 1-in-30 durability roll, each emitted ranged arrow uses the
   1-in-40 roll, hand/shield fallback ordering matches native behavior,

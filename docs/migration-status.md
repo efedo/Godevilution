@@ -50,6 +50,10 @@ Gargoyle wake-up attacks now preserve the native admitted-hit durability
 boundary while still suppressing physical, elemental, knockback, and resource
 effects on the waking hit.
 
+Monster-target arrows now defer the Gargoyle wake-up check until their native
+impact boundary, so launch-time projectile state does not consume or bypass the
+server-owned special lock.
+
 The compact native replay runner now mirrors the managed monster activation
 window for fixtures that carry an active target: visible targets wake for the
 native 255-tick window, while targets outside live-player vision count down

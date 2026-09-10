@@ -753,6 +753,7 @@ public sealed class DiabloCombatCommandProcessor
             target,
             monsterTarget: true,
             ranged: false,
+            deferGargoyleWake: false,
             targetDistance: targetDistance,
             adjacentDamage: adjacentDamage,
             seed: seed,
@@ -1065,6 +1066,7 @@ public sealed class DiabloCombatCommandProcessor
                 targetProxy,
                 monsterTarget: false,
                 ranged: true,
+                deferGargoyleWake: false,
                 targetDistance: targetDistance,
                 adjacentDamage: false,
                 seed: unchecked((uint)appliedTick ^ target.EntityId ^ player.EntityId ^ (uint)arrowIndex),
@@ -1169,6 +1171,7 @@ public sealed class DiabloCombatCommandProcessor
             targetProxy,
             monsterTarget: false,
             ranged: false,
+            deferGargoyleWake: false,
             targetDistance: 1,
             adjacentDamage: false,
             seed: unchecked((uint)appliedTick ^ target.EntityId ^ player.EntityId),
@@ -1283,6 +1286,7 @@ public sealed class DiabloCombatCommandProcessor
                 target,
                 monsterTarget: true,
                 ranged: true,
+                deferGargoyleWake: true,
                 targetDistance: targetDistance,
                 adjacentDamage: false,
                 seed: unchecked((uint)appliedTick ^ target.EntityId ^ player.EntityId ^ (uint)arrowIndex),
@@ -1858,6 +1862,7 @@ public sealed class DiabloCombatCommandProcessor
         AuthoritativeCombatTarget target,
         bool monsterTarget,
         bool ranged,
+        bool deferGargoyleWake,
         int targetDistance,
         bool adjacentDamage,
         uint seed,
@@ -1871,6 +1876,7 @@ public sealed class DiabloCombatCommandProcessor
         doppelgangerProc = false;
         attackHit = false;
         if (monsterTarget
+            && !deferGargoyleWake
             && string.Equals(target.NativeAi, "Gargoyle", StringComparison.Ordinal)
             && target.GargoyleSpecialActive) {
             // Native PlrHitMonst/MonsterMHit calls tryLiftGargoyle before
@@ -12071,6 +12077,13 @@ public sealed class DiabloCombatCommandProcessor
             return;
 
         var gameplayEvents = new List<DiabloGameplayEvent>();
+        if (string.Equals(target.NativeAi, "Gargoyle", StringComparison.Ordinal)
+            && target.GargoyleSpecialActive) {
+            // Native MonsterMHit consumes the Gargoyle wake-up flag at arrow
+            // impact, before damage or any Hellfire equipment effect.
+            target.GargoyleSpecialActive = false;
+            return;
+        }
         if (projectile.DoppelgangerProc)
             SpawnDoppelganger(target, players);
         if (projectile.PerilSelfDamageQ6 > 0) {

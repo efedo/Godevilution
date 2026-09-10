@@ -2179,6 +2179,60 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void GargoyleWakeUpForBowAttackOccursAtArrowImpact()
+    {
+        var target = new AuthoritativeCombatTarget(
+            9,
+            8,
+            5,
+            5000,
+            nativeAi: "Gargoyle",
+            gargoyleSpecialActive: true);
+        var world = new DiabloWorldState(combatTargets: [target]);
+        var bow = AuthoritativeItemState.Empty with {
+            ItemType = 3,
+            ItemClass = 1,
+            MinDamage = 10,
+            MaxDamage = 10,
+            Flags = AuthoritativeEquipmentElementalDamageRules.FireArrowsFlag
+                | AuthoritativeEquipmentElementalDamageRules.LightningArrowsFlag,
+            FireMinDamage = 10,
+            FireMaxDamage = 10,
+            LightningMinDamage = 10,
+            LightningMaxDamage = 10,
+            Durability = 4,
+            MaxDurability = 4,
+            StatFlag = true,
+        };
+        var player = CreatePlayer(
+            positionX: 5,
+            positionY: 5,
+            entityId: 7,
+            equipment: [new EquippedStoreItem(4, 100, bow)]);
+        var processor = CreateProcessor(world);
+
+        var result = processor.Execute(
+            player,
+            new DiabloAttackIntent(target.EntityId),
+            1);
+
+        Assert.True(result.Succeeded, result.Failure?.ToString());
+        Assert.True(target.GargoyleSpecialActive);
+        Assert.Equal(5000, target.HitPoints);
+        Assert.Equal(4, Assert.Single(player.Equipment).State.Durability);
+
+        processor.AdvanceTick(1, [player]);
+        processor.AdvanceTick(2, [player]);
+        var deliveries = processor.AdvanceTick(3, [player]);
+
+        Assert.Empty(world.Projectiles);
+        Assert.False(target.GargoyleSpecialActive);
+        Assert.Equal(5000, target.HitPoints);
+        Assert.Empty(deliveries);
+        Assert.Equal(4, Assert.Single(player.Equipment).State.Durability);
+    }
+
+    [Fact]
     public void PlayerArrowResolvesTheFirstCombatantOnItsTravelPath()
     {
         var endpoint = new AuthoritativeCombatTarget(9, 8, 5, 5000);
