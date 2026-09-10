@@ -289,6 +289,7 @@
     <None Include="../../../test/fixtures/replay/gameplay-monster-magic-psychorb.json" Link="Fixtures/gameplay-monster-magic-psychorb.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-monster-magic-secondary-impact.json" Link="Fixtures/gameplay-monster-magic-secondary-impact.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-monster-magic-secondary-get-hit.json" Link="Fixtures/gameplay-monster-magic-secondary-get-hit.json" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="../../../test/fixtures/replay/gameplay-monster-magic-secondary-resistance.json" Link="Fixtures/gameplay-monster-magic-secondary-resistance.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-monster-magic-multiplayer-target.json" Link="Fixtures/gameplay-monster-magic-multiplayer-target.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-monster-magic-bone-demon-multiplayer-target.json" Link="Fixtures/gameplay-monster-magic-bone-demon-multiplayer-target.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-monster-magic-arch-lich-multiplayer-target.json" Link="Fixtures/gameplay-monster-magic-arch-lich-multiplayer-target.json" CopyToOutputDirectory="PreserveNewest" />

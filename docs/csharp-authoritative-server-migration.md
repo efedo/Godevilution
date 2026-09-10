@@ -242,6 +242,8 @@ impact-time range resolution, preserving native `PlayerMHit` ordering.
 The Lich MonsterMagic secondary-impact fixture now carries the same equipped
 secondary-player `_pIGetHit` ordering through spell impact and Q6 life
 projection, with matching native and managed checkpoints.
+Its companion secondary-resistance fixture also preserves the validated magic
+resistance reduction at the same impact boundary.
 The SnakeCharge path now also has a shared lifecycle fixture covering
 server-owned admission, travel, player collision, and impact timing.
 

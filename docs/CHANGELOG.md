@@ -46,6 +46,10 @@ All notable changes to this fork are documented below.
   secondary-player `_pIGetHit` through impact-time damage, Q6 life, and native
   and managed canonical checkpoints.
 
+- Added the companion Lich MonsterMagic secondary-resistance fixture, proving
+  secondary-player magic resistance is applied at impact with matching Q6 life
+  and native/managed canonical checkpoints.
+
 - Ruleset replacement now publishes migrated session checkpoints during
   candidate preparation, before activation or handshake identity publication;
   failed exports or checkpoint writes keep the previous generation active.

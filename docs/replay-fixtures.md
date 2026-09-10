@@ -325,6 +325,8 @@ admission/travel/impact state, including secondary-player
 block resolution, and Lich-family MonsterMagic admission, hit, miss,
 nearest-participant selection, and secondary-participant impact resolution,
 including equipped secondary-player `_pIGetHit` ordering;
+the companion secondary-resistance lane also proves the validated magic
+resistance reduction at impact;
 the Mega InfernoController moving fire-stream controller, segment lifetime,
 recovery-delay lifecycle, and nearest-participant selection, including seeded
 multiplayer AI-stream advancement. Mega fixtures load their spell and
@@ -333,7 +335,7 @@ the hash-checked `test/content/replay/mega-inferno` content pack.
 The eight Blood Star fixtures likewise load the Succubus and Lazarus Succubus
 `BloodStar` mappings from the hash-checked `test/content/replay/blood-star`
 content pack.
-The eighteen Monster Magic fixtures likewise load their `OrangeFlare` mappings
+The nineteen Monster Magic fixtures likewise load their `OrangeFlare` mappings
 from the hash-checked `test/content/replay/monster-magic` content pack.
 The eleven Monster Arrow fixtures load their GoatRanged and SkeletonRanged
 `Arrow` mappings from the hash-checked `monster-arrow` and
@@ -1249,6 +1251,8 @@ Notable shared fixtures include:
 - `gameplay-monster-magic-secondary-get-hit.json` for equipped
   secondary-player `_pIGetHit` at MonsterMagic impact, Q6 life projection,
   and native/managed checkpoint parity;
+- `gameplay-monster-magic-secondary-resistance.json` for secondary-player
+  magic resistance at MonsterMagic impact and native/managed Q6 parity;
 - `gameplay-monster-magic-bone-demon-multiplayer-target.json`,
   `gameplay-monster-magic-arch-lich-multiplayer-target.json`,
   `gameplay-monster-magic-psychorb-multiplayer-target.json`, and

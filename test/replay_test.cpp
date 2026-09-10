@@ -11184,6 +11184,13 @@ TEST(ReplayFixture, ExecutesLichMonsterMagicSecondaryGetHitAgainstCSharpCheckpoi
 	    6016);
 }
 
+TEST(ReplayFixture, ExecutesLichMonsterMagicSecondaryResistanceAgainstCSharpCheckpoints)
+{
+	ExecuteMonsterMagicSecondaryImpactFixture(
+	    "test/fixtures/replay/gameplay-monster-magic-secondary-resistance.json",
+	    6272);
+}
+
 TEST(ReplayFixture, ExecutesLichMonsterMagicSecondaryBlockAgainstCSharpCheckpoints)
 {
 	std::ifstream file("test/fixtures/replay/gameplay-monster-magic-secondary-block.json");

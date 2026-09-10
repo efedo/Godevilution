@@ -36,6 +36,8 @@ armor-adjusted damage and equipment-piercing rules.
 The Lich MonsterMagic secondary-impact fixture now preserves equipped
 secondary-player `_pIGetHit` ordering through impact-time Q6 damage, and the
 native and managed replay runners agree at both launch and impact checkpoints.
+The companion secondary-resistance lane now agrees at those checkpoints after
+applying the validated magic-resistance reduction.
 
 Player-versus-monster physical attacks now use the same native armor boundary:
 target armor affects hit admission, while successful melee and weapon-arrow
@@ -1141,7 +1143,7 @@ The eight Blood Star replay fixtures now share the validated
 Lazarus Succubus `BloodStar` missile mappings. The managed runner validates the
 pack hash before loading the native-AI projectile catalog.
 
-The eighteen Monster Magic replay fixtures now share the validated
+The nineteen Monster Magic replay fixtures now share the validated
 `test/content/replay/monster-magic` pack, which externalizes the `OrangeFlare`
 mapping for Lich-family and orb native AIs. The managed runner validates the
 pack hash before loading the native-AI projectile catalog.
