@@ -2,6 +2,9 @@
 
 All notable changes to this fork are documented below.
 
+- Advanced the active content schema to `1.461.0`, retaining `1.460.0` as
+  the previous additive contract for compatible packs.
+
 - Hardened procedural dungeon entry points: authored start cells are passed
   into deterministic generation as required-walkable inputs, clearing both
   movement and missile blockers while preserving seeded layout determinism.
