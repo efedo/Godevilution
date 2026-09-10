@@ -2234,7 +2234,9 @@ public sealed class DiabloCombatCommandProcessor
         if (!world.CombatTargets.TryGetValue(targetEntityId, out target!)
             || target.HitPoints <= 0
             || target.SneakHidden
+            || target.DialogueState == AuthoritativeMonsterDialogueState.Inquiring
             || IsQuestDialogueTarget(target)
+            || IsNativeRetreatTarget(target)
             || (target.LevelId != 0 && target.LevelId != player.LevelId)) {
             return false;
         }
@@ -2251,6 +2253,22 @@ public sealed class DiabloCombatCommandProcessor
                 target.PositionX,
                 target.PositionY)
             : distance <= 1;
+    }
+
+    /**
+     * Mirrors the native Monster::isPossibleToHit goal gates that are
+     * represented by authoritative compatibility timers.  The timers are
+     * server-owned state, so this admission applies equally to immediate,
+     * delayed, and effect-time revalidated player attacks.
+     */
+    private bool IsNativeRetreatTarget(AuthoritativeCombatTarget target)
+    {
+        if (UsesNativeCounselorAi(target) && target.CounselorRetreatTicks != 0)
+            return true;
+
+        // Illusion Weaver uses the native Sneak controller; its retreat
+        // countdown is the authoritative representation of MonsterGoal::Retreat.
+        return UsesNativeAi(target, "Sneak") && target.SneakRetreatTicks != 0;
     }
 
     /**

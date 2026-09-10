@@ -48,6 +48,85 @@ public sealed class DiabloCombatCommandProcessorTests
         Assert.Equal(42U, Assert.Single(player.Inventory).ItemSeed);
     }
 
+    [Theory]
+    [InlineData("Counselor", 0, 1, false)]
+    [InlineData("Sneak", 1, 0, false)]
+    [InlineData("Sneak", 0, 0, true)]
+    public void NativeMonsterRetreatAndDialogueStatesGateAllPlayerAttackAdmission(
+        string nativeAi,
+        int sneakRetreatTicks,
+        int counselorRetreatTicks,
+        bool inquiringDialogue)
+    {
+        var target = new AuthoritativeCombatTarget(
+            9,
+            1,
+            0,
+            20,
+            unique: inquiringDialogue,
+            nativeAi: nativeAi,
+            sneakRetreatTicks: sneakRetreatTicks,
+            counselorRetreatTicks: counselorRetreatTicks,
+            dialogueState: inquiringDialogue
+                ? AuthoritativeMonsterDialogueState.Inquiring
+                : AuthoritativeMonsterDialogueState.Unspecified);
+        var world = new DiabloWorldState(combatTargets: [target]);
+        var processor = CreateProcessor(world);
+        var player = CreatePlayer(
+            entityId: 7,
+            positionX: 0,
+            positionY: 0,
+            life: 100,
+            lifeMaximum: 100);
+
+        var result = processor.Execute(player, new DiabloAttackIntent(target.EntityId), 1);
+
+        AssertRejected(result, DiabloRuleFailure.InvalidTarget);
+        Assert.Equal(20, target.HitPoints);
+        Assert.Empty(result.Events);
+    }
+
+    [Theory]
+    [InlineData("Counselor", 0, 1, false)]
+    [InlineData("Sneak", 1, 0, false)]
+    [InlineData("Sneak", 0, 0, true)]
+    public void NativeMonsterRetreatAndDialogueStatesGateTimedTargetAdmission(
+        string nativeAi,
+        int sneakRetreatTicks,
+        int counselorRetreatTicks,
+        bool inquiringDialogue)
+    {
+        var target = new AuthoritativeCombatTarget(
+            9,
+            1,
+            0,
+            20,
+            unique: inquiringDialogue,
+            nativeAi: nativeAi,
+            sneakRetreatTicks: sneakRetreatTicks,
+            counselorRetreatTicks: counselorRetreatTicks,
+            dialogueState: inquiringDialogue
+                ? AuthoritativeMonsterDialogueState.Inquiring
+                : AuthoritativeMonsterDialogueState.Unspecified);
+        var world = new DiabloWorldState(combatTargets: [target]);
+        var processor = CreateProcessor(
+            world,
+            playerClasses: LoadShippedPlayerClasses(),
+            useNativePlayerActionTiming: true);
+        var player = CreatePlayer(
+            entityId: 7,
+            positionX: 0,
+            positionY: 0,
+            life: 100,
+            lifeMaximum: 100);
+
+        var result = processor.Execute(player, new DiabloAttackIntent(target.EntityId), 1);
+
+        AssertRejected(result, DiabloRuleFailure.InvalidTarget);
+        Assert.Equal(20, target.HitPoints);
+        Assert.Empty(result.Events);
+    }
+
     [Fact]
     public void TelekinesisRejectsCursorReplacementBeforeSpendingManaWhenTheDropTileIsBlocked()
     {

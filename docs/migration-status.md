@@ -2,6 +2,14 @@
 
 Status date: 2026-09-10
 
+Authoritative player attack admission now mirrors the native
+`Monster::isPossibleToHit()` retreat/dialogue gates represented by the server:
+Illusion Weaver and Counselor-family retreat timers, plus authored unique
+encounters in their inquiring dialogue state, are rejected consistently for
+melee, ranged, delayed, and effect-time attacks. This closes one of the
+remaining native hit-resolution edge cases without changing compatibility
+behavior for unspecified legacy targets.
+
 The native compatibility bridge now uses one shared presentation-family rule
 for explicit semantic object snapshots. Generic, shrine, quest, breakable, and
 trap families select the authored object identity; only explicit native armory

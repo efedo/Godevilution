@@ -2,6 +2,12 @@
 
 All notable changes to this fork are documented below.
 
+- Closed a native combat-admission parity gap. Authoritative player attacks
+  now reject authored unique encounters in an inquiring dialogue state and
+  native Illusion Weaver/Counselor retreat states, consistently across melee,
+  ranged, delayed, and effect-time target validation. Added focused coverage
+  for each gate.
+
 - Centralized the native compatibility rule for authored semantic object
   presentation families. Generic, shrine, quest, breakable, and trap snapshots
   now share one native classifier and regression coverage proves that none can
