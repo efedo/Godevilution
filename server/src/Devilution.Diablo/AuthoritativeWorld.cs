@@ -343,6 +343,10 @@ public sealed class AuthoritativeLevel
         if (resolvedNativeVisionBlockedCells.Any(cell => cell < 0 || cell >= width * height))
             throw new InvalidDataException(
                 $"Level {levelId} contains an out-of-range native vision-blocked cell.");
+        // Movement blockers remain vision blockers even when an explicit
+        // native layer is supplied; mutations and imported layers must not
+        // create a protocol-inconsistent geometry projection.
+        resolvedNativeVisionBlockedCells.UnionWith(this.blockedCells);
         for (var cell = 0; cell < pieces.Length; cell++) {
             if (pieces[cell] != 0
                 && pieceProperties.TryGetValue(pieces[cell], out var flags)

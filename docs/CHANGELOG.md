@@ -15,6 +15,9 @@ All notable changes to this fork are documented below.
   vision layer are rejected unless every movement-blocked cell is also a
   vision blocker, keeping server and Godot validation aligned.
 
+- Preserved that movement/vision invariant when authoritative world mutations
+  add collision cells to levels that already carry an explicit vision layer.
+
 - Completed the remaining compact native replay checkpoint alignment slice:
   store fixtures now include validated cursor graphics, zero-seed Rhino charges
   use their deterministic compatibility damage stream, Reflect retaliation no

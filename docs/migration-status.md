@@ -40,6 +40,8 @@ older rows retain the previous movement-derived vision behavior.
 Server and Godot snapshot validation now reject explicit vision layers that
 omit movement-blocked cells, preserving the same movement-is-vision invariant
 at both ends of the protocol.
+The authoritative level projection also reapplies that invariant after
+server-owned world mutations add or replace collision geometry.
 
 Godot combat, Telekinesis, and unique-monster dialogue target selection now
 uses the same projected native vision boundary as monster rendering. Hidden,

@@ -272,6 +272,31 @@ public sealed class AuthoritativeWorldMutationTests
     }
 
     [Fact]
+    public void GeometryMutationsKeepAddedMovementBlockersInExplicitVision()
+    {
+        var geometry = new AuthoritativeWorld();
+        geometry.AddLevel(new AuthoritativeLevel(
+            1,
+            4,
+            4,
+            blockedCells: [6],
+            nativeVisionBlockedCells: [6]));
+        var mutations = new AuthoritativeWorldMutationCatalog([
+            new AuthoritativeWorldMutation(
+                7,
+                1,
+                geometryRectanglesAdd: [new AuthoritativeWorldMutationRectangle(1, 1, 1, 1)]),
+        ]);
+        var world = new DiabloWorldState(geometry, worldMutations: mutations);
+
+        Assert.True(world.ApplyWorldMutation(7));
+        var level = Assert.Single(world.LevelGeometry);
+        Assert.Contains(5, level.BlockedCells);
+        Assert.Contains(5, level.NativeVisionBlockedCells);
+        Assert.True(level.HasExplicitNativeVisionBlockedCells);
+    }
+
+    [Fact]
     public void RestoreWorldMutationsLeavesExistingStateWhenRequestedIdIsInvalid()
     {
         var geometry = AuthoritativeWorld.LoadTsv(

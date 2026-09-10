@@ -8,7 +8,7 @@ namespace Devilution.Diablo.Tests;
 public sealed class AuthoritativeWorldTests
 {
     [Fact]
-    public void ExplicitNativeVisionGeometryCanExcludeMovementBlockers()
+    public void ExplicitNativeVisionGeometryIncludesMovementBlockers()
     {
         var level = new AuthoritativeLevel(
             1,
@@ -18,7 +18,7 @@ public sealed class AuthoritativeWorldTests
             nativeVisionBlockedCells: []);
 
         Assert.Equal([6], level.BlockedCells);
-        Assert.Empty(level.NativeVisionBlockedCells);
+        Assert.Equal([6], level.NativeVisionBlockedCells);
     }
 
     [Fact]
