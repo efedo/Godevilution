@@ -35,6 +35,12 @@ public sealed class AuthoritativeNativeDunMonsterCatalog
 {
     /** Reserved entity range for monsters discovered in native DUN layers. */
     public const uint RuntimeMonsterEntityIdBase = 0x5000_0000;
+    private static readonly IReadOnlyList<string> ProductionColumns = [
+        "native_dun_monster_id",
+        "native_monster_id",
+        "monster_id",
+        "monster_symbol",
+    ];
 
     private readonly IReadOnlyDictionary<ushort, AuthoritativeNativeDunMonsterDefinition>
         definitions;
@@ -219,6 +225,20 @@ public sealed class AuthoritativeNativeDunMonsterCatalog
                     $"Native DUN monster mapping {definition.NativeDunMonsterId} references "
                     + $"incompatible monster {definition.MonsterId} for native monster "
                     + $"{definition.NativeMonsterId} or stable symbol '{definition.MonsterSymbol}'.");
+        }
+    }
+
+    /** Rejects partial native DUN monster mappings at the current production boundary. */
+    public static void ValidateExternalizedProduction(TsvTable table)
+    {
+        ArgumentNullException.ThrowIfNull(table);
+        if (!table.Columns.SequenceEqual(ProductionColumns, StringComparer.Ordinal))
+            throw new InvalidDataException(
+                $"Production native-DUN monster table '{table.SourcePath}' must use the complete ordered schema.");
+        foreach (var row in table.Rows) {
+            _ = row.Required("native_dun_monster_id");
+            _ = row.Required("native_monster_id");
+            _ = row.Required("monster_id");
         }
     }
 

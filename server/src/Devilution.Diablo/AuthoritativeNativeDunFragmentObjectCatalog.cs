@@ -74,6 +74,17 @@ public sealed record AuthoritativeNativeDunFragmentObjectPlacement(
 /** Validated anchor-relative placement for authored native set-piece objects. */
 public sealed class AuthoritativeNativeDunFragmentObjectCatalog
 {
+    private static readonly IReadOnlyList<string> ProductionColumns = [
+        "placement_id",
+        "fragment_id",
+        "entity_id",
+        "anchor_entity_id",
+        "offset_x",
+        "offset_y",
+        "anchor_unique_identity",
+        "template_entity_id",
+    ];
+
     private readonly IReadOnlyList<AuthoritativeNativeDunFragmentObjectPlacement> placements;
 
     public AuthoritativeNativeDunFragmentObjectCatalog(
@@ -310,6 +321,23 @@ public sealed class AuthoritativeNativeDunFragmentObjectCatalog
             objectsById[planned.Key].PositionY = planned.Value.Y;
         }
         return generatedObjects;
+    }
+
+    /** Rejects partial native DUN fragment-object metadata at the current production boundary. */
+    public static void ValidateExternalizedProduction(TsvTable table)
+    {
+        ArgumentNullException.ThrowIfNull(table);
+        if (!table.Columns.SequenceEqual(ProductionColumns, StringComparer.Ordinal))
+            throw new InvalidDataException(
+                $"Production native-DUN fragment-object table '{table.SourcePath}' must use the complete ordered schema.");
+        foreach (var row in table.Rows) {
+            _ = row.Required("placement_id");
+            _ = row.Required("fragment_id");
+            _ = row.Required("entity_id");
+            _ = row.Required("anchor_entity_id");
+            _ = row.Required("offset_x");
+            _ = row.Required("offset_y");
+        }
     }
 
     public static AuthoritativeNativeDunFragmentObjectCatalog LoadTsv(

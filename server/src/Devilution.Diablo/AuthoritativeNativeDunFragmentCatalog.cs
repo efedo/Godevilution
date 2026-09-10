@@ -110,6 +110,24 @@ public sealed record AuthoritativeNativeDunFragmentDefinition(
 /** Validated native DUN fragments composed into ordinary runtime levels. */
 public sealed class AuthoritativeNativeDunFragmentCatalog
 {
+    private static readonly IReadOnlyList<string> ProductionColumns = [
+        "fragment_id",
+        "level_id",
+        "level_symbol",
+        "asset_path",
+        "anchor_entity_id",
+        "anchor_unique_identity",
+        "anchor_offset_x",
+        "anchor_offset_y",
+        "tile_asset_path",
+        "sol_asset_path",
+        "anchor_position_x",
+        "anchor_position_y",
+        "required_quest_id",
+        "required_quest_symbol",
+        "replace_collision_geometry",
+    ];
+
     private readonly IReadOnlyList<AuthoritativeNativeDunFragmentDefinition> definitions;
 
     public AuthoritativeNativeDunFragmentCatalog(
@@ -445,6 +463,21 @@ public sealed class AuthoritativeNativeDunFragmentCatalog
         }
         foreach (var level in stagedLevels.Values.OrderBy(level => level.LevelId))
             world.ReplaceLevel(level);
+    }
+
+    /** Rejects partial native DUN fragment metadata at the current production boundary. */
+    public static void ValidateExternalizedProduction(TsvTable table)
+    {
+        ArgumentNullException.ThrowIfNull(table);
+        if (!table.Columns.SequenceEqual(ProductionColumns, StringComparer.Ordinal))
+            throw new InvalidDataException(
+                $"Production native-DUN fragment table '{table.SourcePath}' must use the complete ordered schema.");
+        foreach (var row in table.Rows) {
+            _ = row.Required("fragment_id");
+            _ = row.Required("level_id");
+            _ = row.Required("level_symbol");
+            _ = row.Required("asset_path");
+        }
     }
 
     public static AuthoritativeNativeDunFragmentCatalog LoadTsv(

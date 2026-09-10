@@ -2,7 +2,7 @@
 
 All notable changes to this fork are documented below.
 
-- Advanced the active content schema to `1.490.0`, retaining `1.489.0` as
+- Advanced the active content schema to `1.491.0`, retaining `1.490.0` as
   the previous additive contract. Current-schema production activation now
   requires `world_rules.tsv` to carry the complete external town/service
   identities and Town Portal destination geometry, and `combat.tsv` to carry
@@ -39,7 +39,8 @@ All notable changes to this fork are documented below.
   metadata schemas. The native item-effect, Hellfire-effect, and item-cursor
   tables must also use their complete ordered schemas. The monster type,
   monster missile, and authored monster tables must likewise use their complete
-  ordered schemas. Older
+  ordered schemas, and supplied native-DUN fragment, fragment-object, and
+  monster mapping tables must use their complete ordered schemas. Older
   schema packs and direct compatibility callers retain support
   for partial rows, but new packs cannot reintroduce embedded defaults at the
   server boundary.

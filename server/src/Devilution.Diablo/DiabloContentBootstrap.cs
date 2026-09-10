@@ -492,18 +492,12 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
         var nativeDunFragments = content.TryGetTable(
                 "native_dun_fragments.tsv",
                 out var nativeDunFragmentsTable)
-            ? AuthoritativeNativeDunFragmentCatalog.LoadTsv(
-                nativeDunFragmentsTable.SourcePath,
-                nativeDunFragmentsTable.ToCanonicalTsv(),
-                stableIds)
+            ? LoadNativeDunFragments(content, nativeDunFragmentsTable, stableIds)
             : null;
         var nativeDunFragmentObjects = content.TryGetTable(
                 "native_dun_fragment_objects.tsv",
                 out var nativeDunFragmentObjectsTable)
-            ? AuthoritativeNativeDunFragmentObjectCatalog.LoadTsv(
-                nativeDunFragmentObjectsTable.SourcePath,
-                nativeDunFragmentObjectsTable.ToCanonicalTsv(),
-                stableIds)
+            ? LoadNativeDunFragmentObjects(content, nativeDunFragmentObjectsTable, stableIds)
             : null;
         var questSequenceVariants = content.TryGetTable(
                 "quest_sequence_variants.tsv",
@@ -550,10 +544,7 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
         var nativeDunMonsters = content.TryGetTable(
             "native_dun_monsters.tsv",
             out var nativeDunMonstersTable)
-            ? AuthoritativeNativeDunMonsterCatalog.LoadTsv(
-                nativeDunMonstersTable.SourcePath,
-                nativeDunMonstersTable.ToCanonicalTsv(),
-                stableIds)
+            ? LoadNativeDunMonsters(content, nativeDunMonstersTable, stableIds)
             : null;
         if (nativeDunMonsters is not null) {
             if (monsterTypes is null)
@@ -1371,6 +1362,45 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
             }
         }
         return reserved;
+    }
+
+    private static AuthoritativeNativeDunFragmentCatalog LoadNativeDunFragments(
+        ComposedContent content,
+        TsvTable table,
+        StableContentIdCatalog stableIds)
+    {
+        if (content.Manifest.Schema == DiabloContentSchema.Current)
+            AuthoritativeNativeDunFragmentCatalog.ValidateExternalizedProduction(table);
+        return AuthoritativeNativeDunFragmentCatalog.LoadTsv(
+            table.SourcePath,
+            table.ToCanonicalTsv(),
+            stableIds);
+    }
+
+    private static AuthoritativeNativeDunFragmentObjectCatalog LoadNativeDunFragmentObjects(
+        ComposedContent content,
+        TsvTable table,
+        StableContentIdCatalog stableIds)
+    {
+        if (content.Manifest.Schema == DiabloContentSchema.Current)
+            AuthoritativeNativeDunFragmentObjectCatalog.ValidateExternalizedProduction(table);
+        return AuthoritativeNativeDunFragmentObjectCatalog.LoadTsv(
+            table.SourcePath,
+            table.ToCanonicalTsv(),
+            stableIds);
+    }
+
+    private static AuthoritativeNativeDunMonsterCatalog LoadNativeDunMonsters(
+        ComposedContent content,
+        TsvTable table,
+        StableContentIdCatalog stableIds)
+    {
+        if (content.Manifest.Schema == DiabloContentSchema.Current)
+            AuthoritativeNativeDunMonsterCatalog.ValidateExternalizedProduction(table);
+        return AuthoritativeNativeDunMonsterCatalog.LoadTsv(
+            table.SourcePath,
+            table.ToCanonicalTsv(),
+            stableIds);
     }
 
     private static AuthoritativeWorld LoadWorldLevels(

@@ -2,7 +2,7 @@
 
 Status date: 2026-09-10
 
-Production schema `1.490.0` activation now requires the complete external
+Production schema `1.491.0` activation now requires the complete external
 player-class tuning, symbolic loadout, and symbolic animation schemas,
 symbolic store stock, supplied explicit and procedural level metadata, world-rule identities,
 combat tuning, complete level-generation capacity metadata, complete symbolic
@@ -11,8 +11,10 @@ level-generation metadata, symbolic item-combination identities when supplied,
 authored object and quest schemas when supplied, symbolic spell identities and
 required native spell metadata, complete spell-book metadata, complete normalized item, unique-item, affix, item-generation, native-item-effect, native-Hellfire-item-effect, native-missile, and native-missile-sprite metadata, plus item cursor graphics, and all store-service pricing keys in addition to the external
 town/service identities and complete Town Portal destination geometry, plus
-complete monster-type, monster-missile, and authored monster schemas. Direct
-compatibility loaders still accept older partial rows, and schema `1.489.0`
+complete monster-type, monster-missile, and authored monster schemas, plus
+complete ordered native-DUN fragment, fragment-object, and monster mapping
+schemas when those optional tables are supplied. Direct
+compatibility loaders still accept older partial rows, and schema `1.490.0`
 packs retain that migration fallback; current-schema packs reject omitted class,
 loadout, animation, store, level, procedural-level, level-generation,
 monster-spawn policy, combat, world-rule, or
@@ -82,7 +84,11 @@ identity, compatibility-alias, and sprite namespaces plus monster type,
 monster-missile, and monster definition catalogs, keeping authoritative combat
 identity data out of the bootstrap fallback path.
 
-The active content schema is now `1.490.0` (with `1.489.0` retained as
+Current-schema native-DUN fragment, fragment-object, and monster mapping tables
+also fail closed on incomplete or reordered headers; previous-schema packs
+retain the compatibility loaders for those tables.
+
+The active content schema is now `1.491.0` (with `1.490.0` retained as
 the previous additive contract). Optional `procedural_quest_piece_origins.tsv`
 rows publish deterministic ordinary-level quest geometry origins. Their
 identities are intentionally separate from the fixed native set-level origin
