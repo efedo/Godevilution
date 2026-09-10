@@ -684,7 +684,12 @@ public sealed class DiabloCombatCommandProcessor
             target,
             monsterTarget: true,
             ranged: ranged,
-            unchecked((uint)appliedTick ^ target.EntityId ^ player.EntityId),
+            targetDistance: checked((int)DeterministicGridMetrics.ChebyshevDistance(
+                target.PositionX,
+                target.PositionY,
+                player.PositionX,
+                player.PositionY)),
+            seed: unchecked((uint)appliedTick ^ target.EntityId ^ player.EntityId),
             out var perilSelfDamageQ6,
             out var perilActive,
             out var doppelgangerProc,
@@ -814,11 +819,11 @@ public sealed class DiabloCombatCommandProcessor
         AuthoritativePlayerState target,
         ulong appliedTick)
     {
-        var targetDistance = DeterministicGridMetrics.ChebyshevDistance(
+        var targetDistance = checked((int)DeterministicGridMetrics.ChebyshevDistance(
             target.PositionX,
             target.PositionY,
             player.PositionX,
-            player.PositionY);
+            player.PositionY));
         var direction = (DiabloPlayerDirection)DeterministicGridDirections.Toward(
             player.PositionX,
             player.PositionY,
@@ -839,7 +844,8 @@ public sealed class DiabloCombatCommandProcessor
                 targetProxy,
                 monsterTarget: false,
                 ranged: true,
-                unchecked((uint)appliedTick ^ target.EntityId ^ player.EntityId ^ (uint)arrowIndex),
+                targetDistance: targetDistance,
+                seed: unchecked((uint)appliedTick ^ target.EntityId ^ player.EntityId ^ (uint)arrowIndex),
                 out var perilSelfDamageQ6,
                 out var perilActive,
                 out var doppelgangerProc,
@@ -940,7 +946,8 @@ public sealed class DiabloCombatCommandProcessor
             targetProxy,
             monsterTarget: false,
             ranged: false,
-            unchecked((uint)appliedTick ^ target.EntityId ^ player.EntityId),
+            targetDistance: 1,
+            seed: unchecked((uint)appliedTick ^ target.EntityId ^ player.EntityId),
             out var perilSelfDamageQ6,
             out var perilActive,
             out _,
@@ -1025,11 +1032,11 @@ public sealed class DiabloCombatCommandProcessor
     {
         if (arrowCount is < 1 or > 3)
             throw new ArgumentOutOfRangeException(nameof(arrowCount));
-        var targetDistance = DeterministicGridMetrics.ChebyshevDistance(
+        var targetDistance = checked((int)DeterministicGridMetrics.ChebyshevDistance(
             target.PositionX,
             target.PositionY,
             player.PositionX,
-            player.PositionY);
+            player.PositionY));
         var direction = (DiabloPlayerDirection)DeterministicGridDirections.Toward(
             player.PositionX,
             player.PositionY,
@@ -1044,7 +1051,8 @@ public sealed class DiabloCombatCommandProcessor
                 target,
                 monsterTarget: true,
                 ranged: true,
-                unchecked((uint)appliedTick ^ target.EntityId ^ player.EntityId ^ (uint)arrowIndex),
+                targetDistance: targetDistance,
+                seed: unchecked((uint)appliedTick ^ target.EntityId ^ player.EntityId ^ (uint)arrowIndex),
                 out var perilSelfDamageQ6,
                 out var perilActive,
                 out var doppelgangerProc,
@@ -1442,12 +1450,18 @@ public sealed class DiabloCombatCommandProcessor
         }
     }
 
-    /** Applies native usable equipment damage and hit bonuses, returning Q6 damage. */
+    /**
+     * Applies native usable equipment damage and hit bonuses, returning Q6
+     * damage. PvP deliberately keeps its native armor boundary separate from
+     * monster combat: armor piercing only affects monster admission, player
+     * armor only affects PvP admission, and neither reduces player damage.
+     */
     private int ResolvePlayerAttackDamageQ6(
         AuthoritativePlayerState player,
         AuthoritativeCombatTarget target,
         bool monsterTarget,
         bool ranged,
+        int targetDistance,
         uint seed,
         out int perilSelfDamageQ6,
         out bool perilActive,
@@ -1535,15 +1549,33 @@ public sealed class DiabloCombatCommandProcessor
             ? GetEffectiveMonsterArmorClass(target)
             : target.ArmorClass;
         var effectiveHitChance = usesNativeClassToHit
-            ? rules.ResolvePhysicalHitChance(
-                checked(classHitChance + hitBonus),
-                targetArmorClass,
-                armorPiercingBonus,
-                meleeArmorReductionDivisor: !ranged
-                    ? playerClass!.MeleeArmorReductionDivisor
-                    : 0)
+            ? monsterTarget
+                ? rules.ResolvePhysicalHitChance(
+                    checked(classHitChance + hitBonus),
+                    targetArmorClass,
+                    armorPiercingBonus,
+                    meleeArmorReductionDivisor: !ranged
+                        ? playerClass!.MeleeArmorReductionDivisor
+                        : 0)
+                : Math.Clamp(
+                    checked(
+                        classHitChance
+                        + hitBonus
+                        - (ranged
+                            ? targetDistance * targetDistance / 2
+                            : 0)
+                        - targetArmorClass),
+                    5,
+                    95)
             : Math.Clamp(
-                checked(classHitChance + hitBonus + armorPiercingBonus),
+                checked(
+                    classHitChance
+                    + hitBonus
+                    + (monsterTarget ? armorPiercingBonus : 0)
+                    - (!monsterTarget && ranged
+                        ? targetDistance * targetDistance / 2
+                        : 0)
+                    - (!monsterTarget ? targetArmorClass : 0)),
                 0,
                 100);
         attackHit = rules.ResolveAttackHit(effectiveHitChance, seed);
@@ -1566,7 +1598,7 @@ public sealed class DiabloCombatCommandProcessor
             items);
         var resolvedDamage = rules.ResolveAttackDamage(
             criticalDamage,
-            targetArmorClass,
+            monsterTarget ? targetArmorClass : 0,
             effectiveHitChance,
             seed);
         if (target.IsDemon

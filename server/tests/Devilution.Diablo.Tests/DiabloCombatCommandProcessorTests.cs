@@ -942,6 +942,50 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void PlayerMeleeAttackIgnoresArmorPiercingAndTargetArmorForNativePvpDamage()
+    {
+        var classes = LoadShippedPlayerClasses();
+        var processor = CreateProcessor(
+            new DiabloWorldState(),
+            rules: new AuthoritativeCombatRules(10, 1, 100, friendlyFire: true),
+            playerClasses: classes,
+            gameMode: DiabloGameMode.Multiplayer);
+        var attacker = CreatePlayer(
+            entityId: 7,
+            characterClassId: 0,
+            attributes: classes.GetRequired(0).CreateStartingAttributes(),
+            equipment: [new EquippedStoreItem(
+                4,
+                42,
+                AuthoritativeItemState.Empty with {
+                    ItemType = 1,
+                    ItemClass = 1,
+                    MinDamage = 10,
+                    MaxDamage = 10,
+                    PlusEnemyArmorClass = 100,
+                    StatFlag = true,
+                })]);
+        var target = CreatePlayer(
+            positionX: 1,
+            entityId: 8,
+            armorClass: 2,
+            life: 6400,
+            lifeMaximum: 6400);
+
+        var result = processor.Execute(
+            attacker,
+            new DiabloAttackIntent(target.EntityId),
+            2,
+            [attacker, target]);
+
+        Assert.True(result.Succeeded, result.Failure?.ToString());
+        Assert.Equal(2, target.ArmorClass);
+        Assert.NotEmpty(result.Events);
+        Assert.Equal(10, result.Events[0].Amount);
+        Assert.Equal(5760, target.Life);
+    }
+
+    [Fact]
     public void NativeTimedMeleeAttackUsesConfiguredFastestAttackTierSkip()
     {
         var weapon = AuthoritativeItemState.Empty with {
@@ -26706,6 +26750,7 @@ public sealed class DiabloCombatCommandProcessorTests
         int lifeMaximum = 50,
         int mana = 0,
         int manaMaximum = 0,
+        int armorClass = 0,
         uint entityId = 0,
         uint abilitySpellId = 0,
         IReadOnlyList<MemorizedSpellState>? memorizedSpells = null,
@@ -26735,7 +26780,7 @@ public sealed class DiabloCombatCommandProcessorTests
             lifeMaximum,
             characterLevel,
             levelId,
-            0,
+            armorClass,
             characterClassId,
             inventory: inventory,
             abilitySpellId: abilitySpellId,
