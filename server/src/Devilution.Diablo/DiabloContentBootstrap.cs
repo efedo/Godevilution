@@ -477,10 +477,7 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
         var nativeDunLevels = content.TryGetTable(
             "native_dun_levels.tsv",
             out var nativeDunLevelsTable)
-            ? AuthoritativeNativeDunLevelCatalog.LoadTsv(
-                nativeDunLevelsTable.SourcePath,
-                nativeDunLevelsTable.ToCanonicalTsv(),
-                stableIds)
+            ? LoadNativeDunLevels(content, nativeDunLevelsTable, stableIds)
             : null;
         if (nativeDunLevels is not null) {
             if (world is null)
@@ -1574,6 +1571,19 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
         if (content.Manifest.Schema == DiabloContentSchema.Current)
             AuthoritativeNativeDunObjectCatalog.ValidateExternalizedProduction(table);
         return AuthoritativeNativeDunObjectCatalog.LoadTsv(
+            table.SourcePath,
+            table.ToCanonicalTsv(),
+            stableIds);
+    }
+
+    private static AuthoritativeNativeDunLevelCatalog LoadNativeDunLevels(
+        ComposedContent content,
+        TsvTable table,
+        StableContentIdCatalog stableIds)
+    {
+        if (content.Manifest.Schema == DiabloContentSchema.Current)
+            AuthoritativeNativeDunLevelCatalog.ValidateExternalizedProduction(table);
+        return AuthoritativeNativeDunLevelCatalog.LoadTsv(
             table.SourcePath,
             table.ToCanonicalTsv(),
             stableIds);

@@ -52,6 +52,26 @@ public sealed record AuthoritativeNativeDunLevelDefinition(
 /** Validated native DUN layers for ordinary runtime levels. */
 public sealed class AuthoritativeNativeDunLevelCatalog
 {
+    private static readonly IReadOnlyList<string> ProductionColumns = [
+        "level_id",
+        "level_symbol",
+        "asset_path",
+        "tile_asset_path",
+        "sol_asset_path",
+    ];
+
+    public static void ValidateExternalizedProduction(TsvTable table)
+    {
+        ArgumentNullException.ThrowIfNull(table);
+        if (!table.Columns.SequenceEqual(ProductionColumns, StringComparer.Ordinal))
+            throw new InvalidDataException(
+                $"Production native-DUN level table '{table.SourcePath}' must use the complete ordered schema.");
+        foreach (var row in table.Rows) {
+            _ = row.RequiredUInt32("level_id");
+            _ = row.Required("asset_path");
+        }
+    }
+
     private readonly IReadOnlyList<AuthoritativeNativeDunLevelDefinition> definitions;
 
     public AuthoritativeNativeDunLevelCatalog(
