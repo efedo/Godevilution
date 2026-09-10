@@ -46,6 +46,10 @@ decision.
 Hellfire Peril self-damage now includes the native post-percentage flat weapon
 modifier while remaining before class damage and the final target multiplier.
 
+Gargoyle wake-up attacks now preserve the native admitted-hit durability
+boundary while still suppressing physical, elemental, knockback, and resource
+effects on the waking hit.
+
 The compact native replay runner now mirrors the managed monster activation
 window for fixtures that carry an active target: visible targets wake for the
 native 255-tick window, while targets outside live-player vision count down

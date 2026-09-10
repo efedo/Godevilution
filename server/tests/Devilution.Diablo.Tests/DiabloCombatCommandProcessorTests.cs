@@ -6196,6 +6196,14 @@ public sealed class DiabloCombatCommandProcessorTests
                     ItemClass = 1,
                     MinDamage = 10,
                     MaxDamage = 10,
+                    Flags = AuthoritativeEquipmentElementalDamageRules.FireDamageFlag
+                        | AuthoritativeEquipmentElementalDamageRules.LightningDamageFlag,
+                    FireMinDamage = 10,
+                    FireMaxDamage = 10,
+                    LightningMinDamage = 10,
+                    LightningMaxDamage = 10,
+                    Durability = 4,
+                    MaxDurability = 4,
                     StatFlag = true,
                 })]);
 
@@ -6205,6 +6213,7 @@ public sealed class DiabloCombatCommandProcessorTests
         Assert.Equal(100, target.HitPoints);
         Assert.False(target.GargoyleSpecialActive);
         Assert.Empty(result.Events);
+        Assert.Equal(3, Assert.Single(player.Equipment).State.Durability);
     }
 
     [Fact]

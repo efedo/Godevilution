@@ -31,6 +31,10 @@ All notable changes to this fork are documented below.
   native post-percentage flat weapon modifier while remaining before the class
   damage modifier and final target-damage multiplier.
 
+- Aligned Gargoyle wake-up admission with native melee timing: the waking hit
+  suppresses damage and equipment effects but still participates in the shared
+  successful-hit durability boundary.
+
 - Completed the native `DamageWeapon` parity slice: successful melee attacks
   now use the 1-in-30 durability roll, each emitted ranged arrow uses the
   1-in-40 roll, hand/shield fallback ordering matches native behavior,

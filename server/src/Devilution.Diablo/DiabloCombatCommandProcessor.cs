@@ -743,6 +743,11 @@ public sealed class DiabloCombatCommandProcessor
             target.PositionY,
             player.PositionX,
             player.PositionY));
+        var gargoyleWake = string.Equals(
+                target.NativeAi,
+                "Gargoyle",
+                StringComparison.Ordinal)
+            && target.GargoyleSpecialActive;
         var damageQ6 = ResolvePlayerAttackDamageQ6(
             player,
             target,
@@ -755,6 +760,8 @@ public sealed class DiabloCombatCommandProcessor
             out var perilActive,
             out var doppelgangerProc,
             out var attackHit);
+        if (gargoyleWake)
+            attackHit = true;
         if (doppelgangerProc)
             SpawnDoppelganger(target, players);
         if (perilActive) {
@@ -779,7 +786,10 @@ public sealed class DiabloCombatCommandProcessor
             }
         }
         ApplyResolvedDamageQ6(player, target, damageQ6, events);
-        if (applyElemental && attackHit && target.HitPointsQ6 > 0)
+        if (applyElemental
+            && attackHit
+            && !gargoyleWake
+            && target.HitPointsQ6 > 0)
             ApplyEquipmentElementalDamage(player, target, events, ranged: false);
         ApplyEquipmentKnockback(player, target, damageQ6, players);
         if (damageQ6 > 0)
