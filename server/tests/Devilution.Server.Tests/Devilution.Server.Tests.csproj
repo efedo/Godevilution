@@ -19,6 +19,7 @@
     <ProjectReference Include="../../src/Devilution.Server/Devilution.Server.csproj" />
     <ProjectReference Include="../Devilution.ModuleDependencyFixture/Devilution.ModuleDependencyFixture.csproj" />
     <ProjectReference Include="../Devilution.AdapterFixture/Devilution.AdapterFixture.csproj" />
+    <ProjectReference Include="../Devilution.AdapterDependency/Devilution.AdapterDependency.csproj" />
     <ProjectReference Include="../Devilution.ModuleFixture/Devilution.ModuleFixture.csproj" />
     <ProjectReference Include="../Devilution.ModuleWithDependencyFixture/Devilution.ModuleWithDependencyFixture.csproj" />
   </ItemGroup>

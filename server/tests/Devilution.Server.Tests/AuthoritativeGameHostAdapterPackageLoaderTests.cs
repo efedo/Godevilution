@@ -17,7 +17,7 @@ public sealed class AuthoritativeGameHostAdapterPackageLoaderTests
 
             Assert.Equal("fixture-package", package.PackageId);
             Assert.Equal("1.2.3", package.PackageVersion);
-            Assert.Equal("fixture.adapter", package.Factory.Id);
+            Assert.Equal("fixture.adapter.with-dependency", package.Factory.Id);
             Assert.Equal(
                 typeof(PackagedTestAdapterFactory).FullName,
                 package.Factory.GetType().FullName);
@@ -62,10 +62,40 @@ public sealed class AuthoritativeGameHostAdapterPackageLoaderTests
         }
     }
 
+    [Fact]
+    public void RejectsAnUnlistedPrivateDependency()
+    {
+        var root = CreatePackage(includeDependency: false);
+        try {
+            var exception = Assert.Throws<InvalidDataException>(() =>
+                new AuthoritativeGameHostAdapterPackageLoader().LoadDirectory(root));
+
+            Assert.Contains("list every private dependency", exception.Message, StringComparison.Ordinal);
+        } finally {
+            Directory.Delete(root, recursive: true);
+        }
+    }
+
+    [Fact]
+    public void RejectsAPrivateDependencyHashMismatch()
+    {
+        var root = CreatePackage(dependencySha256: new string('0', 64));
+        try {
+            var exception = Assert.Throws<InvalidDataException>(() =>
+                new AuthoritativeGameHostAdapterPackageLoader().LoadDirectory(root));
+
+            Assert.Contains("SHA-256", exception.Message, StringComparison.Ordinal);
+        } finally {
+            Directory.Delete(root, recursive: true);
+        }
+    }
+
     private static string CreatePackage(
         string assembly = "adapter.dll",
         string? assemblySha256 = null,
-        string factoryType = "Devilution.AdapterFixture.PackagedTestAdapterFactory")
+        string factoryType = "Devilution.AdapterFixture.PackagedTestAdapterFactory",
+        bool includeDependency = true,
+        string? dependencySha256 = null)
     {
         var root = Path.Combine(
             Path.GetTempPath(),
@@ -77,6 +107,19 @@ public sealed class AuthoritativeGameHostAdapterPackageLoaderTests
         assemblySha256 ??= Convert.ToHexString(
             SHA256.HashData(File.ReadAllBytes(Path.Combine(root, "adapter.dll"))))
             .ToLowerInvariant();
+        var dependencyPath = Path.Combine(root, "dependency.dll");
+        var dependencyManifests = new List<object>();
+        if (includeDependency) {
+            var sourceDependency = typeof(Devilution.AdapterDependency.PackageDependencyIdentity).Assembly.Location;
+            File.Copy(sourceDependency, dependencyPath);
+            dependencySha256 ??= Convert.ToHexString(
+                SHA256.HashData(File.ReadAllBytes(dependencyPath)))
+                .ToLowerInvariant();
+            dependencyManifests.Add(new {
+                assembly = "dependency.dll",
+                assemblySha256 = dependencySha256,
+            });
+        }
         var manifest = new {
             formatVersion = 1,
             id = "fixture-package",
@@ -84,6 +127,7 @@ public sealed class AuthoritativeGameHostAdapterPackageLoaderTests
             assembly,
             assemblySha256,
             factoryType,
+            dependencies = dependencyManifests,
         };
         File.WriteAllText(
             Path.Combine(root, AuthoritativeGameHostAdapterPackageLoader.ManifestFileName),

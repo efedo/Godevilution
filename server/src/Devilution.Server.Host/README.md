@@ -7,9 +7,11 @@ filesystem persistence, adapter selection, per-operation ruleset-generation
 leases, live ruleset replacement, complete session-state migration through the
 save contract,
 handshake identity publication, explicit verified module packages, and
-hash-verified `game-host-adapter.json` package discovery. Adapter packages are
-restricted to one assembly, canonical relative paths, shared Godevilution
-contracts, and public parameterless factory types before they enter the
+hash-verified `game-host-adapter.json` package discovery. Adapter packages use
+canonical relative paths and hash-verified entry assemblies plus optional
+private dependency assemblies; every private reference must resolve inside the
+declared package closure, while Godevilution contracts remain shared with the
+host. Public parameterless factory types are validated before they enter the
 deterministic adapter catalog. The
 module-package loader rejects malformed UTF-8 manifests, reparse-point
 entries, and noncanonical assembly paths before hashing or loading an assembly.

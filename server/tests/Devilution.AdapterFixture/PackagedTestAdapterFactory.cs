@@ -1,4 +1,5 @@
 using Devilution.Data;
+using Devilution.AdapterDependency;
 using Devilution.Engine;
 using Devilution.Protocol.V1;
 using Devilution.Server.Commands;
@@ -9,7 +10,7 @@ namespace Devilution.AdapterFixture;
 
 public sealed class PackagedTestAdapterFactory : IAuthoritativeGameHostAdapterFactory
 {
-    public string Id => "fixture.adapter";
+    public string Id => PackageDependencyIdentity.AdapterId;
 
     public IReadOnlyList<IGameplayModule> CreateBuiltInModules() => [];
 

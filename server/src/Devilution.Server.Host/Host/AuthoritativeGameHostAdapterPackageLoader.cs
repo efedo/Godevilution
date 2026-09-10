@@ -22,7 +22,8 @@ public sealed record LoadedAuthoritativeGameHostAdapterPackage(
  * Loads an explicitly selected adapter package without letting filesystem or
  * reflection concerns cross into Engine. Package assemblies may reference only
  * platform libraries and the shared Godevilution host, protocol, data, and
- * engine contracts.
+ * engine contracts. Private dependencies may be carried beside the entry
+ * assembly when each dependency is listed and hash-verified by the manifest.
  */
 public sealed class AuthoritativeGameHostAdapterPackageLoader
 {
@@ -94,20 +95,20 @@ public sealed class AuthoritativeGameHostAdapterPackageLoader
 
         var assemblyPath = ResolvePackageAssembly(root, document.Assembly, manifestPath);
         var expectedHash = NormalizeSha256(document.AssemblySha256, manifestPath);
-        var assemblyLength = new FileInfo(assemblyPath).Length;
-        if (assemblyLength == 0 || assemblyLength > MaximumAssemblyBytes)
-            throw PackageError(
-                manifestPath,
-                $"assembly size must be between 1 and {MaximumAssemblyBytes} bytes");
-        string actualHash;
-        using (var stream = File.OpenRead(assemblyPath))
-            actualHash = Convert.ToHexString(SHA256.HashData(stream)).ToLowerInvariant();
-        if (!string.Equals(expectedHash, actualHash, StringComparison.Ordinal))
-            throw PackageError(
-                manifestPath,
-                $"expected assembly SHA-256 {expectedHash}, but '{assemblyPath}' hashes to {actualHash}");
+        var actualHash = VerifyAssemblyHash(assemblyPath, expectedHash, manifestPath);
+        var dependencies = LoadDependencies(
+            root,
+            assemblyPath,
+            document.Dependencies,
+            manifestPath);
 
-        var loadContext = new AdapterAssemblyLoadContext(assemblyPath, sharedAssemblies);
+        var loadContext = new AdapterAssemblyLoadContext(
+            assemblyPath,
+            sharedAssemblies,
+            dependencies.ToDictionary(
+                dependency => dependency.Name,
+                dependency => dependency.Path,
+                StringComparer.OrdinalIgnoreCase));
         Assembly assembly;
         try {
             using var stream = File.OpenRead(assemblyPath);
@@ -121,16 +122,7 @@ public sealed class AuthoritativeGameHostAdapterPackageLoader
                 $"could not load assembly '{assemblyPath}'",
                 exception);
         }
-        var unsupportedReferences = assembly.GetReferencedAssemblies()
-            .Where(reference => !loadContext.IsAllowedReference(reference))
-            .Select(reference => reference.Name)
-            .Order(StringComparer.Ordinal)
-            .ToArray();
-        if (unsupportedReferences.Length != 0)
-            throw PackageError(
-                manifestPath,
-                "references unsupported private assemblies: "
-                + $"{string.Join(", ", unsupportedReferences)}; formatVersion 1 packages must be one managed assembly and may reference only platform libraries and shared Godevilution contracts");
+        ValidateReferenceClosure(assembly, loadContext, manifestPath);
 
         var factoryType = assembly.GetType(document.FactoryType, throwOnError: false, ignoreCase: false);
         if (factoryType is null)
@@ -186,6 +178,97 @@ public sealed class AuthoritativeGameHostAdapterPackageLoader
                 $"Game-host adapter package assembly '{assemblyPath}' does not exist.",
                 assemblyPath);
         return assemblyPath;
+    }
+
+    private static string VerifyAssemblyHash(
+        string assemblyPath,
+        string expectedHash,
+        string manifestPath)
+    {
+        var assemblyLength = new FileInfo(assemblyPath).Length;
+        if (assemblyLength == 0 || assemblyLength > MaximumAssemblyBytes)
+            throw PackageError(
+                manifestPath,
+                $"assembly size must be between 1 and {MaximumAssemblyBytes} bytes");
+        string actualHash;
+        using (var stream = File.OpenRead(assemblyPath))
+            actualHash = Convert.ToHexString(SHA256.HashData(stream)).ToLowerInvariant();
+        if (!string.Equals(expectedHash, actualHash, StringComparison.Ordinal))
+            throw PackageError(
+                manifestPath,
+                $"expected assembly SHA-256 {expectedHash}, but '{assemblyPath}' hashes to {actualHash}");
+        return actualHash;
+    }
+
+    private IReadOnlyList<PackageDependency> LoadDependencies(
+        string root,
+        string entryAssemblyPath,
+        IReadOnlyList<AdapterPackageDependencyDocument>? documents,
+        string manifestPath)
+    {
+        var values = documents ?? [];
+        if (values.Count > 32)
+            throw PackageError(manifestPath, "dependencies cannot contain more than 32 assemblies");
+        var entryCanonicalPath = Path.GetFullPath(entryAssemblyPath);
+        var dependencies = new List<PackageDependency>(values.Count);
+        var paths = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        var names = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        foreach (var document in values) {
+            if (document is null
+                || string.IsNullOrWhiteSpace(document.Assembly)
+                || string.IsNullOrWhiteSpace(document.AssemblySha256))
+                throw PackageError(manifestPath, "each dependency requires assembly and assemblySha256");
+            var path = ResolvePackageAssembly(root, document.Assembly, manifestPath);
+            if (string.Equals(path, entryCanonicalPath, StringComparison.OrdinalIgnoreCase)
+                || !paths.Add(path))
+                throw PackageError(manifestPath, "dependencies must use unique paths distinct from the entry assembly");
+            var expectedHash = NormalizeSha256(document.AssemblySha256, manifestPath);
+            VerifyAssemblyHash(path, expectedHash, manifestPath);
+            AssemblyName dependencyName;
+            try {
+                dependencyName = AssemblyName.GetAssemblyName(path);
+            } catch (Exception exception) when (
+                exception is BadImageFormatException or FileLoadException or FileNotFoundException) {
+                throw PackageError(manifestPath, $"dependency '{path}' is not a readable managed assembly", exception);
+            }
+            if (string.IsNullOrWhiteSpace(dependencyName.Name)
+                || !names.Add(dependencyName.Name)
+                || sharedAssemblies.ContainsKey(dependencyName.Name)
+                || AdapterAssemblyLoadContext.IsPlatformAssembly(dependencyName.Name))
+                throw PackageError(
+                    manifestPath,
+                    $"dependency '{path}' has an invalid, duplicate, or reserved assembly name");
+            dependencies.Add(new PackageDependency(dependencyName.Name, path));
+        }
+        return dependencies;
+    }
+
+    private static void ValidateReferenceClosure(
+        Assembly entryAssembly,
+        AdapterAssemblyLoadContext loadContext,
+        string manifestPath)
+    {
+        var pending = new Queue<Assembly>([entryAssembly]);
+        var visited = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        while (pending.Count != 0) {
+            var assembly = pending.Dequeue();
+            var assemblyName = assembly.GetName().Name;
+            if (assemblyName is null || !visited.Add(assemblyName))
+                continue;
+            foreach (var reference in assembly.GetReferencedAssemblies()) {
+                if (loadContext.IsAllowedReference(reference))
+                    continue;
+                if (!loadContext.TryLoadPackageAssembly(reference, out var dependency))
+                    throw PackageError(
+                        manifestPath,
+                        $"references unsupported private assembly '{reference.Name}'; list every private dependency in dependencies");
+                if (!AssemblyName.ReferenceMatchesDefinition(reference, dependency.GetName()))
+                    throw PackageError(
+                        manifestPath,
+                        $"references private assembly '{reference.Name}' with an incompatible version");
+                pending.Enqueue(dependency);
+            }
+        }
     }
 
     private static string NormalizePackageRelativePath(string path, string manifestPath)
@@ -253,11 +336,20 @@ public sealed class AuthoritativeGameHostAdapterPackageLoader
         string? Version,
         string? Assembly,
         string? AssemblySha256,
-        string? FactoryType);
+        string? FactoryType,
+        IReadOnlyList<AdapterPackageDependencyDocument>? Dependencies);
+
+    private sealed record AdapterPackageDependencyDocument(
+        string? Assembly,
+        string? AssemblySha256);
+
+    private sealed record PackageDependency(string Name, string Path);
 
     private sealed class AdapterAssemblyLoadContext : AssemblyLoadContext
     {
         private readonly IReadOnlyDictionary<string, Assembly> sharedAssemblies;
+        private readonly IReadOnlyDictionary<string, string> packageAssemblies;
+        private readonly Dictionary<string, Assembly> loadedPackageAssemblies = new(StringComparer.OrdinalIgnoreCase);
         private static readonly string RuntimeAssemblyRoot
             = Path.GetFullPath(RuntimeEnvironment.GetRuntimeDirectory())
                 .TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar)
@@ -273,10 +365,12 @@ public sealed class AuthoritativeGameHostAdapterPackageLoader
 
         public AdapterAssemblyLoadContext(
             string assemblyPath,
-            IReadOnlyDictionary<string, Assembly> sharedAssemblies)
+            IReadOnlyDictionary<string, Assembly> sharedAssemblies,
+            IReadOnlyDictionary<string, string> packageAssemblies)
             : base($"Godevilution adapter: {Path.GetFileNameWithoutExtension(assemblyPath)}")
         {
             this.sharedAssemblies = sharedAssemblies;
+            this.packageAssemblies = packageAssemblies;
         }
 
         public bool IsAllowedReference(AssemblyName assemblyName)
@@ -286,12 +380,34 @@ public sealed class AuthoritativeGameHostAdapterPackageLoader
                     || PlatformAssemblyNames.Contains(assemblyName.Name));
         }
 
+        public bool TryLoadPackageAssembly(AssemblyName assemblyName, out Assembly assembly)
+        {
+            if (assemblyName.Name is null
+                || !packageAssemblies.ContainsKey(assemblyName.Name)) {
+                assembly = null!;
+                return false;
+            }
+            assembly = Load(assemblyName)!;
+            return assembly is not null;
+        }
+
+        public static bool IsPlatformAssembly(string name)
+            => PlatformAssemblyNames.Contains(name);
+
         protected override Assembly? Load(AssemblyName assemblyName)
         {
-            return assemblyName.Name is not null
-                && sharedAssemblies.TryGetValue(assemblyName.Name, out var shared)
-                ? shared
-                : null;
+            if (assemblyName.Name is null)
+                return null;
+            if (sharedAssemblies.TryGetValue(assemblyName.Name, out var shared))
+                return shared;
+            if (!packageAssemblies.TryGetValue(assemblyName.Name, out var path))
+                return null;
+            if (loadedPackageAssemblies.TryGetValue(assemblyName.Name, out var loaded))
+                return loaded;
+            using var stream = File.OpenRead(path);
+            var assembly = LoadFromStream(stream);
+            loadedPackageAssemblies[assemblyName.Name] = assembly;
+            return assembly;
         }
     }
 }

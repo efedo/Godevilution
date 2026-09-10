@@ -6,6 +6,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <ProjectReference Include="../Devilution.AdapterDependency/Devilution.AdapterDependency.csproj" />
     <ProjectReference Include="../../src/Devilution.Server.Host/Devilution.Server.Host.csproj" />
   </ItemGroup>
 </Project>

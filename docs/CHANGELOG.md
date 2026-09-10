@@ -4,9 +4,12 @@ All notable changes to this fork are documented below.
 
 - Added the generic host-adapter package boundary. Repeatable
   `--game-adapter-package` roots now load hash-verified `game-host-adapter.json`
-  packages, reject traversal/reparse-point paths and private assembly
+  packages, reject traversal/reparse-point paths and undeclared private
   references, validate public factory types, and merge them with the built-in
-  catalog under strict duplicate-ID and compatibility selection rules.
+  catalog under strict duplicate-ID and compatibility selection rules. Package
+  manifests may now carry a bounded, hash-verified private dependency closure,
+  allowing production adapters to ship game-specific assemblies without
+  duplicating shared host contracts.
 
 - Advanced combined authoritative session checkpoints to format 3 with
   canonical SHA-256 hashes of serialized server state and the command ledger.

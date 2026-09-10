@@ -82,9 +82,10 @@ content-bootstrap capability; Server startup supplies only generic composed
 content and player-start settings. Separating generic host lifecycle from the
 Diablo-specific protocol adapter now occurs through a combined server-side
 adapter contract and deterministic factory catalog. The host can also load
-explicit hash-verified `game-host-adapter.json` packages whose assemblies are
-restricted to platform and shared Godevilution contracts; configured factory
-IDs select one compatible adapter after module preflight. The executable
+explicit hash-verified `game-host-adapter.json` packages whose entry assemblies
+may carry a bounded, hash-verified private dependency closure while shared
+Godevilution contracts remain identity-stable; configured factory IDs select
+one compatible adapter after module preflight. The executable
 composition root names no Diablo types. Exact assembly-reference tests enforce the separate
 Protocol, Host, Diablo adapter, and executable dependency graph, while a schema
 ownership test prevents duplicate managed Protobuf generation.
