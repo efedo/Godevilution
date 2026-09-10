@@ -278,6 +278,9 @@ their presentation tick filters. During a Godot reconnect epoch boundary,
 event batches are ignored until the next validated snapshot is accepted, so
 events from the prior transport stream cannot populate the new presentation
 history.
+Snapshots are validated before stale-tick filtering as well; an older snapshot
+is discarded without replacing state, but malformed data cannot be hidden by
+the presentation boundary.
 
 Godot and the native compatibility client accept an omitted snapshot hash for
 legacy peers, but reject any non-empty hash that is not exactly 64 hexadecimal

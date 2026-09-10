@@ -9,6 +9,26 @@ namespace Devilution.Client.Protocol.Tests;
 public sealed class ClientModelTests
 {
     [Fact]
+    public void ValidatesMalformedStaleSnapshotsBeforeDiscardingThem()
+    {
+        var model = new AuthoritativeClientModel();
+        model.Apply(new AuthoritativeClientMessage(Snapshot: new Snapshot {
+            Tick = 5,
+            Players = { new PlayerSnapshot { EntityId = 7 } },
+        }));
+
+        var stale = new Snapshot {
+            Tick = 4,
+            StateSha256 = "not-a-canonical-hash",
+            Players = { new PlayerSnapshot { EntityId = 7 } },
+        };
+
+        Assert.Throws<InvalidDataException>(() =>
+            model.Apply(new AuthoritativeClientMessage(Snapshot: stale)));
+        Assert.Equal(5UL, model.CurrentTick);
+    }
+
+    [Fact]
     public void SelectsAdjacentServerOwnedTownerGreeting()
     {
         var model = new AuthoritativeClientModel();

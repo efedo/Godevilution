@@ -189,11 +189,10 @@ public sealed class AuthoritativeClientModel
 
     public void Apply(AuthoritativeClientMessage message)
     {
-        if (message.Snapshot is { } incomingSnapshot
+        var discardSnapshot = message.Snapshot is { } incomingSnapshot
             && Snapshot is { } currentSnapshot
             && incomingSnapshot.Tick < currentSnapshot.Tick
-            && !acceptNextSnapshotAsNewEpoch)
-            message = message with { Snapshot = null };
+            && !acceptNextSnapshotAsNewEpoch;
         if (message.Snapshot is not null) {
             if (message.Snapshot.Players.Count == 0)
                 throw new InvalidDataException("The authoritative snapshot has no local player.");
@@ -306,20 +305,22 @@ public sealed class AuthoritativeClientModel
                         "The authoritative snapshot contains an invalid portal.");
                 }
             }
-            var previousPlayer = Snapshot?.Players.FirstOrDefault();
-            var nextPlayer = message.Snapshot.Players[0];
-            if (previousPlayer is null
-                || previousPlayer.EntityId != nextPlayer.EntityId
-                || AuthoritativeEntityPositionProjection.RequiresLevelReset(
-                    previousPlayer.LevelId,
-                    nextPlayer.LevelId))
-                predictedMoves.Clear();
-            // Keep an owned copy so callers cannot mutate validated state
-            // through a reused transport buffer after admission.
-            Snapshot = message.Snapshot.Clone();
-            acceptNextSnapshotAsNewEpoch = false;
-            LastError = null;
-            RebuildPredictedPosition();
+            if (!discardSnapshot) {
+                var previousPlayer = Snapshot?.Players.FirstOrDefault();
+                var nextPlayer = message.Snapshot.Players[0];
+                if (previousPlayer is null
+                    || previousPlayer.EntityId != nextPlayer.EntityId
+                    || AuthoritativeEntityPositionProjection.RequiresLevelReset(
+                        previousPlayer.LevelId,
+                        nextPlayer.LevelId))
+                    predictedMoves.Clear();
+                // Keep an owned copy so callers cannot mutate validated state
+                // through a reused transport buffer after admission.
+                Snapshot = message.Snapshot.Clone();
+                acceptNextSnapshotAsNewEpoch = false;
+                LastError = null;
+                RebuildPredictedPosition();
+            }
         }
 
         if (message.Events is { } events) {

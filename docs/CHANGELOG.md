@@ -19,6 +19,10 @@ All notable changes to this fork are documented below.
   uniqueness preflight before writing any session files, so persistence cannot
   create a checkpoint set that recovery would reject.
 
+- Godot snapshot handling now validates stale snapshots before discarding them,
+  matching the existing fail-closed behavior for stale event batches without
+  changing reconnect or tick filtering semantics.
+
 - Godot and the native compatibility client now validate every authoritative
   event batch before applying stale-tick or reconnect-epoch filters, so
   malformed discarded events fail closed instead of being silently ignored.
