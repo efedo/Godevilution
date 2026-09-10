@@ -711,24 +711,12 @@ public sealed class DiabloCombatCommandProcessor
             seed: unchecked((uint)appliedTick ^ target.EntityId ^ player.EntityId),
             applyElemental: true,
             events);
-        if (!ranged && CanPlayerCleave(player)) {
-            var sideIndex = 0U;
-            foreach (var sideTarget in FindCleaveTargets(player, players, target.EntityId)) {
-                attackHit |= ResolveMonsterPlayerAttack(
-                    player,
-                    sideTarget,
-                    appliedTick,
-                    players,
-                    adjacentDamage: true,
-                    seed: unchecked(
-                        (uint)appliedTick
-                        ^ sideTarget.EntityId
-                        ^ player.EntityId
-                        ^ ++sideIndex),
-                    applyElemental: true,
-                    events);
-            }
-        }
+        attackHit |= ResolveCleaveSideTargets(
+            player,
+            players,
+            appliedTick,
+            target.EntityId,
+            events);
         if (ranged || attackHit) {
             var hellfireRemoved = ApplyHellfireWeaponDecay(player);
             if (!hellfireRemoved)
@@ -895,23 +883,13 @@ public sealed class DiabloCombatCommandProcessor
                 breakableObject.Destroyed = true;
                 attackHit = true;
             }
-            if (!ranged && CanPlayerCleave(player)) {
-                var sideIndex = 0U;
-                foreach (var sideTarget in FindCleaveTargets(player, players)) {
-                    attackHit |= ResolveMonsterPlayerAttack(
-                        player,
-                        sideTarget,
-                        appliedTick,
-                        players,
-                        adjacentDamage: true,
-                        seed: unchecked(
-                            (uint)appliedTick
-                            ^ sideTarget.EntityId
-                            ^ player.EntityId
-                            ^ ++sideIndex),
-                        applyElemental: true,
-                        events);
-                }
+            if (!ranged) {
+                attackHit |= ResolveCleaveSideTargets(
+                    player,
+                    players,
+                    appliedTick,
+                    primaryTargetEntityId: 0,
+                    events);
             }
             if (attackHit) {
                 var hellfireRemoved = ApplyHellfireWeaponDecay(player);
@@ -929,6 +907,40 @@ public sealed class DiabloCombatCommandProcessor
             ranged,
             players,
             effectTick);
+    }
+
+    /** Resolves both native Cleave side lanes after any melee primary target. */
+    private bool ResolveCleaveSideTargets(
+        AuthoritativePlayerState player,
+        IReadOnlyList<AuthoritativePlayerState> players,
+        ulong appliedTick,
+        uint primaryTargetEntityId,
+        ICollection<DiabloGameplayEvent> events)
+    {
+        if (!CanPlayerCleave(player))
+            return false;
+
+        var attackHit = false;
+        var sideIndex = 0U;
+        foreach (var sideTarget in FindCleaveTargets(
+                     player,
+                     players,
+                     primaryTargetEntityId)) {
+            attackHit |= ResolveMonsterPlayerAttack(
+                player,
+                sideTarget,
+                appliedTick,
+                players,
+                adjacentDamage: true,
+                seed: unchecked(
+                    (uint)appliedTick
+                    ^ sideTarget.EntityId
+                    ^ player.EntityId
+                    ^ ++sideIndex),
+                applyElemental: true,
+                events);
+        }
+        return attackHit;
     }
 
     private uint FindCellAttackTarget(
@@ -1177,45 +1189,47 @@ public sealed class DiabloCombatCommandProcessor
             }
         }
 
-        if (attackHit && TryResolvePlayerBlock(player, target, effectTick)) {
-            var hellfireRemoved = ApplyHellfireWeaponDecay(player);
-            if (!hellfireRemoved)
-                ApplyNativeWeaponDurabilityLoss(player, 30);
-            return events.Count == 0
-                ? DiabloCombatIntentResult.Accepted
-                : new DiabloCombatIntentResult(true, null, events);
+        var primaryBlocked = attackHit
+            && TryResolvePlayerBlock(player, target, effectTick);
+        if (!primaryBlocked) {
+            var damageResult = playerDamage.Apply(target, Math.Max(0, damageQ6));
+            if (damageResult.IncomingDamageQ6 > 0) {
+                events.Add(new DiabloGameplayEvent(
+                    DiabloGameplayEventKind.Damage,
+                    player.EntityId,
+                    target.EntityId,
+                    DeterministicFixedPointQ6.ToWholeTruncated(
+                        damageResult.IncomingDamageQ6)) {
+                    AmountQ6 = damageResult.IncomingDamageQ6,
+                });
+            }
+            if (target.Life == 0) {
+                StartPlayerDeath(
+                    target,
+                    player.EntityId,
+                    appliedTick,
+                    players,
+                    PlayerDeathReason.Player);
+            }
+            if (attackHit && target.Life > 0)
+                ApplyPlayerElementalDamage(
+                    player,
+                    target,
+                    targetProxy,
+                    appliedTick,
+                    players,
+                    events);
+            ApplyPlayerKnockback(player, target, damageQ6, players);
+            if (damageQ6 > 0)
+                ApplyEquipmentAttackEffects(player, damageQ6, events);
         }
 
-        var damageResult = playerDamage.Apply(target, Math.Max(0, damageQ6));
-        if (damageResult.IncomingDamageQ6 > 0) {
-            events.Add(new DiabloGameplayEvent(
-                DiabloGameplayEventKind.Damage,
-                player.EntityId,
-                target.EntityId,
-                DeterministicFixedPointQ6.ToWholeTruncated(
-                    damageResult.IncomingDamageQ6)) {
-                AmountQ6 = damageResult.IncomingDamageQ6,
-            });
-        }
-        if (target.Life == 0) {
-            StartPlayerDeath(
-                target,
-                player.EntityId,
-                appliedTick,
-                players,
-                PlayerDeathReason.Player);
-        }
-        if (attackHit && target.Life > 0)
-            ApplyPlayerElementalDamage(
-                player,
-                target,
-                targetProxy,
-                appliedTick,
-                players,
-                events);
-        ApplyPlayerKnockback(player, target, damageQ6, players);
-        if (damageQ6 > 0)
-            ApplyEquipmentAttackEffects(player, damageQ6, events);
+        attackHit |= ResolveCleaveSideTargets(
+            player,
+            players,
+            appliedTick,
+            target.EntityId,
+            events);
         if (attackHit) {
             var hellfireRemoved = ApplyHellfireWeaponDecay(player);
             if (!hellfireRemoved)

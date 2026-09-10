@@ -23,6 +23,10 @@ All notable changes to this fork are documented below.
   to each admitted side target, including empty-cell and breakable-object cell
   attacks, with native damage ordering and resistance handling.
 
+- Completed native PvP Cleave ordering: a melee attack whose primary target is
+  another player still evaluates both monster side lanes, including when the
+  primary player blocks, and consumes one shared durability boundary.
+
 - Completed the native `DamageWeapon` parity slice: successful melee attacks
   now use the 1-in-30 durability roll, each emitted ranged arrow uses the
   1-in-40 roll, hand/shield fallback ordering matches native behavior,

@@ -39,6 +39,10 @@ Cleave side targets now retain the native Hellfire elemental-channel admission
 and fire-then-lightning damage ordering for both entity- and cell-targeted
 attacks.
 
+PvP melee now also evaluates those side lanes after a player primary target,
+including the native blocked-primary path, through the same shared durability
+decision.
+
 The compact native replay runner now mirrors the managed monster activation
 window for fixtures that carry an active target: visible targets wake for the
 native 255-tick window, while targets outside live-player vision count down

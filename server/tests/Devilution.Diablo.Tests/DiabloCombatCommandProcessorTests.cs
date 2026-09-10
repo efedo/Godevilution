@@ -1161,6 +1161,52 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void BarbarianMeleeCleaveAlsoHitsASideMonsterAfterAPlayerPrimaryTarget()
+    {
+        var side = new AuthoritativeCombatTarget(9, 1, 1, 100);
+        var world = new DiabloWorldState(combatTargets: [side]);
+        var processor = CreateProcessor(
+            world,
+            rules: new AuthoritativeCombatRules(
+                10,
+                1,
+                100,
+                hitChancePercent: 100,
+                friendlyFire: true),
+            random: new DiabloRandom(0),
+            playerClasses: LoadShippedPlayerClasses());
+        var axe = AuthoritativeItemState.Empty with {
+            ItemType = 2,
+            ItemClass = 1,
+            MinDamage = 1,
+            MaxDamage = 1,
+            StatFlag = true,
+        };
+        var attacker = CreatePlayer(
+            entityId: 7,
+            characterClassId: 5,
+            equipment: [new EquippedStoreItem(4, 42, axe)]);
+        var victim = CreatePlayer(
+            positionX: 1,
+            entityId: 8,
+            life: 6400,
+            lifeMaximum: 6400);
+
+        var result = processor.Execute(
+            attacker,
+            new DiabloAttackIntent(victim.EntityId),
+            1,
+            [attacker, victim]);
+
+        Assert.True(result.Succeeded, result.Failure?.ToString());
+        Assert.Contains(
+            result.Events,
+            gameplayEvent => gameplayEvent.TargetEntityId == side.EntityId
+                && gameplayEvent.AmountQ6 > 0);
+        Assert.True(side.HitPointsQ6 < side.MaxHitPointsQ6);
+    }
+
+    [Fact]
     public void ShieldedPlayerTargetBlocksAnAdjacentMeleeAttack()
     {
         var world = new DiabloWorldState();
@@ -1197,6 +1243,63 @@ public sealed class DiabloCombatCommandProcessorTests
         Assert.Equal(1280, victim.Life);
         Assert.Equal(DiabloPlayerCombatMode.Block, victim.CombatMode);
         Assert.Equal(5UL, victim.CombatModeEndTick);
+    }
+
+    [Fact]
+    public void BarbarianCleaveStillHitsASideMonsterWhenThePlayerPrimaryTargetBlocks()
+    {
+        var side = new AuthoritativeCombatTarget(9, 1, 1, 100);
+        var world = new DiabloWorldState(combatTargets: [side]);
+        var processor = CreateProcessor(
+            world,
+            rules: new AuthoritativeCombatRules(
+                10,
+                1,
+                100,
+                hitChancePercent: 100,
+                friendlyFire: true),
+            random: new DiabloRandom(0),
+            playerClasses: LoadShippedPlayerClasses());
+        var axe = AuthoritativeItemState.Empty with {
+            ItemType = 2,
+            ItemClass = 1,
+            MinDamage = 1,
+            MaxDamage = 1,
+            StatFlag = true,
+        };
+        var attacker = CreatePlayer(
+            entityId: 7,
+            characterClassId: 5,
+            equipment: [new EquippedStoreItem(4, 42, axe)]);
+        var victim = CreatePlayer(
+            positionX: 1,
+            entityId: 8,
+            life: 6400,
+            lifeMaximum: 6400,
+            attributes: PlayerAttributesState.Zero with {
+                Dexterity = new PlayerAttributeState(100, 100),
+            },
+            equipment: [new EquippedStoreItem(
+                5,
+                99,
+                AuthoritativeItemState.Empty with {
+                    ItemType = 5,
+                    StatFlag = true,
+                })]);
+
+        var result = processor.Execute(
+            attacker,
+            new DiabloAttackIntent(victim.EntityId),
+            1,
+            [attacker, victim]);
+
+        Assert.True(result.Succeeded, result.Failure?.ToString());
+        Assert.Equal(DiabloPlayerCombatMode.Block, victim.CombatMode);
+        Assert.Contains(
+            result.Events,
+            gameplayEvent => gameplayEvent.TargetEntityId == side.EntityId
+                && gameplayEvent.AmountQ6 > 0);
+        Assert.True(side.HitPointsQ6 < side.MaxHitPointsQ6);
     }
 
     [Fact]
