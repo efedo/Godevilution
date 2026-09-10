@@ -53,7 +53,11 @@ public sealed record DiabloContentActivation
         AuthoritativeNativeMissileSpriteCatalog? nativeMissileSprites = null,
         AuthoritativeMonsterSpawnPolicyCatalog? monsterSpawnPolicies = null,
         AuthoritativeTownerGreetingCatalog? townerGreetings = null,
-        AuthoritativeNativeDunGeometryCatalog? nativeDunGeometry = null)
+        AuthoritativeNativeDunGeometryCatalog? nativeDunGeometry = null,
+        AuthoritativeNativeSpellCatalog? nativeSpells = null,
+        AuthoritativeNativeMiscCatalog? nativeItemMisc = null,
+        AuthoritativeNativeItemTopologyCatalog? nativeItemTopology = null,
+        AuthoritativeNativeItemTagCatalog? nativeItemTags = null)
     {
         Simulation = simulation ?? throw new ArgumentNullException(nameof(simulation));
         StoreRules = storeRules ?? throw new ArgumentNullException(nameof(storeRules));
@@ -93,6 +97,10 @@ public sealed record DiabloContentActivation
         NativeMissiles = nativeMissiles;
         NativeMissileSprites = nativeMissileSprites;
         TownerGreetings = townerGreetings;
+        NativeSpells = nativeSpells;
+        NativeItemMisc = nativeItemMisc;
+        NativeItemTopology = nativeItemTopology;
+        NativeItemTags = nativeItemTags;
     }
 
     public DiabloSimulation Simulation { get; }
@@ -132,6 +140,18 @@ public sealed record DiabloContentActivation
     public AuthoritativeNativeMissileSpriteCatalog? NativeMissileSprites { get; }
 
     public AuthoritativeTownerGreetingCatalog? TownerGreetings { get; }
+
+    /** Validated native spell namespace retained for legacy item compatibility. */
+    public AuthoritativeNativeSpellCatalog? NativeSpells { get; }
+
+    /** Validated native miscellaneous-item namespace retained for legacy compatibility. */
+    public AuthoritativeNativeMiscCatalog? NativeItemMisc { get; }
+
+    /** Validated native item topology namespace retained for legacy compatibility. */
+    public AuthoritativeNativeItemTopologyCatalog? NativeItemTopology { get; }
+
+    /** Validated native item-generation tags retained for legacy compatibility. */
+    public AuthoritativeNativeItemTagCatalog? NativeItemTags { get; }
 
     /** Service-only store identity supplied by the active world rules. */
     public uint AdriaStoreId { get; }
@@ -235,8 +255,7 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
                 $"Content schema '{content.Manifest.Schema}' is incompatible with "
                 + $"the Diablo module schema '{Schema}'.");
         }
-        if (content.Manifest.Schema == DiabloContentSchema.Current)
-            ValidateLegacyCompatibilityCatalogs(content);
+        var legacyCompatibility = LoadLegacyCompatibilityCatalogs(content);
 
         var stableIdsTable = GetRequiredExternalTable(content, "content_ids.tsv");
         if (content.Manifest.Schema == DiabloContentSchema.Current)
@@ -1270,7 +1289,11 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
             nativeMissileSprites,
             monsterSpawnPolicies,
             townerGreetings,
-            nativeDunGeometry: nativeDunGeometry);
+            nativeDunGeometry: nativeDunGeometry,
+            nativeSpells: legacyCompatibility.NativeSpells,
+            nativeItemMisc: legacyCompatibility.NativeItemMisc,
+            nativeItemTopology: legacyCompatibility.NativeItemTopology,
+            nativeItemTags: legacyCompatibility.NativeItemTags);
     }
 
     private static IReadOnlySet<(int X, int Y)> GetReservedPositions(
@@ -1609,36 +1632,62 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
         return AuthoritativeNativeDunGeometryCatalog.LoadOptional(content);
     }
 
-    private static void ValidateLegacyCompatibilityCatalogs(ComposedContent content)
+    private static LegacyCompatibilityCatalogs LoadLegacyCompatibilityCatalogs(
+        ComposedContent content)
     {
-        ValidateRequiredCompatibilityTable(
-            content,
-            "native_spells.tsv",
-            AuthoritativeNativeSpellCatalog.ValidateExternalizedProduction);
-        ValidateRequiredCompatibilityTable(
-            content,
-            "native_item_misc.tsv",
-            AuthoritativeNativeMiscCatalog.ValidateExternalizedProduction);
-        ValidateRequiredCompatibilityTable(
-            content,
-            "native_item_topology.tsv",
-            AuthoritativeNativeItemTopologyCatalog.ValidateExternalizedProduction);
-        ValidateRequiredCompatibilityTable(
-            content,
-            "native_item_tags.tsv",
-            AuthoritativeNativeItemTagCatalog.ValidateExternalizedProduction);
+        return new LegacyCompatibilityCatalogs(
+            LoadCompatibilityCatalog(
+                content,
+                "native_spells.tsv",
+                AuthoritativeNativeSpellCatalog.ValidateExternalizedProduction,
+                static table => AuthoritativeNativeSpellCatalog.LoadTsv(
+                    table.SourcePath,
+                    table.ToCanonicalTsv())),
+            LoadCompatibilityCatalog(
+                content,
+                "native_item_misc.tsv",
+                AuthoritativeNativeMiscCatalog.ValidateExternalizedProduction,
+                static table => AuthoritativeNativeMiscCatalog.LoadTsv(
+                    table.SourcePath,
+                    table.ToCanonicalTsv())),
+            LoadCompatibilityCatalog(
+                content,
+                "native_item_topology.tsv",
+                AuthoritativeNativeItemTopologyCatalog.ValidateExternalizedProduction,
+                static table => AuthoritativeNativeItemTopologyCatalog.LoadTsv(
+                    table.SourcePath,
+                    table.ToCanonicalTsv())),
+            LoadCompatibilityCatalog(
+                content,
+                "native_item_tags.tsv",
+                AuthoritativeNativeItemTagCatalog.ValidateExternalizedProduction,
+                static table => AuthoritativeNativeItemTagCatalog.LoadTsv(
+                    table.SourcePath,
+                    table.ToCanonicalTsv())));
     }
 
-    private static void ValidateRequiredCompatibilityTable(
+    private static TCatalog? LoadCompatibilityCatalog<TCatalog>(
         ComposedContent content,
         string sourcePath,
-        Action<TsvTable> validator)
+        Action<TsvTable> validator,
+        Func<TsvTable, TCatalog> loader)
+        where TCatalog : class
     {
-        if (!content.TryGetTable(sourcePath, out var table))
-            throw new InvalidDataException(
-                $"Current-schema Diablo activation requires '{sourcePath}' compatibility content.");
-        validator(table);
+        TsvTable table;
+        if (content.Manifest.Schema == DiabloContentSchema.Current) {
+            table = GetRequiredExternalTable(content, sourcePath);
+            validator(table);
+        } else if (!content.TryGetTable(sourcePath, out table!)) {
+            return null;
+        }
+        return loader(table);
     }
+
+    private sealed record LegacyCompatibilityCatalogs(
+        AuthoritativeNativeSpellCatalog? NativeSpells,
+        AuthoritativeNativeMiscCatalog? NativeItemMisc,
+        AuthoritativeNativeItemTopologyCatalog? NativeItemTopology,
+        AuthoritativeNativeItemTagCatalog? NativeItemTags);
 
     private static AuthoritativeSetLevelObjectCatalog LoadSetLevelObjects(
         ComposedContent content,

@@ -52,6 +52,28 @@ public sealed class NativeCompatibilityContentActivationBoundaryTests
     }
 
     [Fact]
+    public void CurrentSchemaRetainsValidatedLegacyCompatibilityCatalogs()
+    {
+        var activation = DiabloModule.Instance.ContentBootstrap.Activate(
+            ComposedContent.Compose(new ContentManifest(
+                "retained-native-compatibility-catalogs",
+                "1",
+                [LoadBasePack()])));
+
+        Assert.NotNull(activation.NativeSpells);
+        Assert.Equal(52, activation.NativeSpells!.Definitions.Count);
+        Assert.NotNull(activation.NativeItemMisc);
+        Assert.NotNull(activation.NativeItemTopology);
+        Assert.NotNull(activation.NativeItemTags);
+        Assert.True(activation.NativeItemTopology!.TryGetId(
+            AuthoritativeNativeItemTopologyKind.ItemType,
+            "weapon",
+            out _));
+        Assert.True(activation.NativeItemTags!.TryGetTags("weapon", out var tags));
+        Assert.Contains("Weapon", tags, StringComparer.OrdinalIgnoreCase);
+    }
+
+    [Fact]
     public void PreviousSchemaRetainsLegacyOrderedCompatibilityLoading()
     {
         var basePack = LoadBasePack();
@@ -81,6 +103,10 @@ public sealed class NativeCompatibilityContentActivationBoundaryTests
                 [previous])));
 
         Assert.NotNull(activation);
+        Assert.Null(activation.NativeSpells);
+        Assert.Null(activation.NativeItemMisc);
+        Assert.Null(activation.NativeItemTopology);
+        Assert.Null(activation.NativeItemTags);
     }
 
     [Fact]
