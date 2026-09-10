@@ -1005,6 +1005,27 @@ public sealed class DiabloCombatCommandProcessorTests
         Assert.Equal(0, Assert.Single(player.Equipment).State.MaxDurability);
     }
 
+    [Theory]
+    [InlineData(DiabloPlayerCombatMode.Block)]
+    [InlineData(DiabloPlayerCombatMode.GotHit)]
+    public void RecoveryWithoutDurabilityTargetsDoesNotConsumeItsRngBoundary(
+        DiabloPlayerCombatMode combatMode)
+    {
+        var random = new DiabloRandom(1);
+        var processor = CreateProcessor(
+            new DiabloWorldState(),
+            random: random);
+        var player = CreatePlayer(entityId: 7);
+        player.CombatMode = combatMode;
+        player.CombatModeEndTick = 1;
+
+        processor.AdvanceTick(1, [player]);
+
+        Assert.Equal(1U, random.State);
+        Assert.Equal(DiabloPlayerCombatMode.Stand, player.CombatMode);
+        Assert.Equal(0UL, player.CombatModeEndTick);
+    }
+
     [Fact]
     public void MissedMeleeAttackDoesNotConsumeNativeWeaponDurability()
     {
@@ -2300,9 +2321,9 @@ public sealed class DiabloCombatCommandProcessorTests
         var deliveries = processor.AdvanceTick(3, [player]);
 
         Assert.Empty(world.Projectiles);
-        Assert.Equal(4990, target.HitPoints);
+        Assert.Equal(4999, target.HitPoints);
         Assert.True(target.IsPetrified);
-        Assert.Equal(10, Assert.Single(deliveries).Event.Amount);
+        Assert.Equal(1, Assert.Single(deliveries).Event.Amount);
     }
 
     [Fact]
@@ -6372,7 +6393,7 @@ public sealed class DiabloCombatCommandProcessorTests
         var result = processor.Execute(player, new DiabloAttackIntent(target.EntityId), 1);
 
         Assert.True(result.Succeeded, result.Failure?.ToString());
-        Assert.Equal(90, target.HitPoints);
+        Assert.Equal(99, target.HitPoints);
         Assert.True(target.IsPetrified);
         Assert.Contains(
             result.Events,

@@ -1,6 +1,6 @@
 # Godevilution Migration Status
 
-Status date: 2026-09-09
+Status date: 2026-09-10
 
 The active content schema is now `1.461.0` (with `1.460.0` retained as
 the previous additive contract). Optional `procedural_quest_piece_origins.tsv`

@@ -2,6 +2,10 @@
 
 All notable changes to this fork are documented below.
 
+- Added combat regression coverage for compatibility-template fallback armor
+  damage and block/hit recovery RNG boundaries, including empty-equipment
+  recovery paths.
+
 - Aligned compatibility-template combat and replay RNG boundaries with the
   native runner: metadata-free monster armor keeps its legacy damage reduction,
   petrified Bone Spirit targets skip hit rolls, and block/hit recovery skips
