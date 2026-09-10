@@ -15,7 +15,9 @@ All notable changes to this fork are documented below.
 
 - Added native class-driven Cleave resolution for Monk staffs, Bard dual
   swords, and Barbarian axe/two-handed melee, including adjacent hit penalty
-  and quarter damage.
+  and quarter damage. Cell-targeted melee attacks now resolve both native
+  Cleave lanes even when the primary cell is empty or contains a breakable
+  object, preserving one shared hit/durability boundary.
 
 - Completed the native `DamageWeapon` parity slice: successful melee attacks
   now use the 1-in-30 durability roll, each emitted ranged arrow uses the

@@ -713,7 +713,7 @@ public sealed class DiabloCombatCommandProcessor
             events);
         if (!ranged && CanPlayerCleave(player)) {
             var sideIndex = 0U;
-            foreach (var sideTarget in FindCleaveTargets(player, target, players)) {
+            foreach (var sideTarget in FindCleaveTargets(player, players, target.EntityId)) {
                 attackHit |= ResolveMonsterPlayerAttack(
                     player,
                     sideTarget,
@@ -802,8 +802,8 @@ public sealed class DiabloCombatCommandProcessor
     /** Returns the native side monsters affected by a class Cleave attack. */
     private IReadOnlyList<AuthoritativeCombatTarget> FindCleaveTargets(
         AuthoritativePlayerState player,
-        AuthoritativeCombatTarget primaryTarget,
-        IReadOnlyList<AuthoritativePlayerState> players)
+        IReadOnlyList<AuthoritativePlayerState> players,
+        uint primaryTargetEntityId = 0)
     {
         var targets = new List<AuthoritativeCombatTarget>(2);
         var facing = (int)player.FacingDirection;
@@ -813,7 +813,7 @@ public sealed class DiabloCombatCommandProcessor
             var positionX = checked(player.PositionX + displacement.X);
             var positionY = checked(player.PositionY + displacement.Y);
             var sideTarget = world.CombatTargets.Values
-                .Where(candidate => candidate.EntityId != primaryTarget.EntityId
+                .Where(candidate => candidate.EntityId != primaryTargetEntityId
                     && candidate.PositionX == positionX
                     && candidate.PositionY == positionY)
                 .OrderBy(candidate => candidate.EntityId)
@@ -880,8 +880,11 @@ public sealed class DiabloCombatCommandProcessor
             ranged,
             players);
         // Native cell attacks still perform their animation when the lane is
-        // empty; breakable objects are the one melee-only side effect.
+        // empty. A melee object hit and the two native Cleave lanes still
+        // resolve at the same action boundary as a monster hit.
         if (targetEntityId == 0) {
+            var events = new List<DiabloGameplayEvent>();
+            var attackHit = false;
             if (!ranged
                 && TryGetMeleeBreakableObject(
                     player,
@@ -890,11 +893,34 @@ public sealed class DiabloCombatCommandProcessor
                     out var breakableObject)
                 && breakableObject is not null) {
                 breakableObject.Destroyed = true;
+                attackHit = true;
+            }
+            if (!ranged && CanPlayerCleave(player)) {
+                var sideIndex = 0U;
+                foreach (var sideTarget in FindCleaveTargets(player, players)) {
+                    attackHit |= ResolveMonsterPlayerAttack(
+                        player,
+                        sideTarget,
+                        appliedTick,
+                        players,
+                        adjacentDamage: true,
+                        seed: unchecked(
+                            (uint)appliedTick
+                            ^ sideTarget.EntityId
+                            ^ player.EntityId
+                            ^ ++sideIndex),
+                        applyElemental: false,
+                        events);
+                }
+            }
+            if (attackHit) {
                 var hellfireRemoved = ApplyHellfireWeaponDecay(player);
                 if (!hellfireRemoved)
                     ApplyNativeWeaponDurabilityLoss(player, 30);
             }
-            return DiabloCombatIntentResult.Accepted;
+            return events.Count == 0
+                ? DiabloCombatIntentResult.Accepted
+                : new DiabloCombatIntentResult(true, null, events);
         }
         return ResolveAttack(
             player,

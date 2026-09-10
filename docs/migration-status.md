@@ -30,7 +30,10 @@ physical player damage until Stone Curse ends.
 
 Class-driven Cleave now resolves the native adjacent side targets for Monk
 staffs, Bard dual swords, and Barbarian axe/two-handed melee, applying the
-native adjacent hit penalty and quarter-damage boundary.
+native adjacent hit penalty and quarter-damage boundary. Cell-targeted melee
+attacks now run those same two side lanes when their primary cell is empty or
+contains a breakable object, and apply one shared native hit/Decay/durability
+decision across the object and side-target results.
 
 The compact native replay runner now mirrors the managed monster activation
 window for fixtures that carry an active target: visible targets wake for the

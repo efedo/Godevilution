@@ -745,6 +745,108 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void BarbarianCellAttackCleaveHitsASideMonsterWhenPrimaryCellIsEmpty()
+    {
+        var side = new AuthoritativeCombatTarget(10, 1, 1, 6400);
+        var classes = LoadShippedPlayerClasses();
+        var configuredClasses = new AuthoritativePlayerClassCatalog(
+            classes.Definitions.Select(definition => definition.ClassId == 5
+                ? definition with { CriticalStrikeChancePerLevelPercent = 0 }
+                : definition));
+        var world = new DiabloWorldState(combatTargets: [side]);
+        var processor = CreateProcessor(
+            world,
+            random: new DiabloRandom(0),
+            playerClasses: configuredClasses);
+        var player = CreatePlayer(
+            entityId: 7,
+            characterClassId: 5,
+            characterLevel: 30,
+            attributes: configuredClasses.GetRequired(5).CreateStartingAttributes(),
+            equipment: [new EquippedStoreItem(
+                4,
+                42,
+                AuthoritativeItemState.Empty with {
+                    ItemType = 2,
+                    ItemClass = 1,
+                    EquipLocation = 2,
+                    MinDamage = 10,
+                    MaxDamage = 10,
+                    Durability = 4,
+                    MaxDurability = 4,
+                    StatFlag = true,
+                })]);
+
+        var result = processor.Execute(
+            player,
+            new DiabloAttackAtIntent(1, 0),
+            1,
+            [player]);
+
+        Assert.True(result.Succeeded, result.Failure?.ToString());
+        Assert.Equal(6392, side.HitPoints);
+        var damage = Assert.Single(result.Events);
+        Assert.Equal(DiabloGameplayEventKind.Damage, damage.Kind);
+        Assert.Equal(7U, damage.SourceEntityId);
+        Assert.Equal(side.EntityId, damage.TargetEntityId);
+        Assert.Equal(8, damage.Amount);
+    }
+
+    [Fact]
+    public void BarbarianCellAttackCleaveHitsASideMonsterAfterBreakingThePrimaryObject()
+    {
+        var breakable = new AuthoritativeWorldObject(
+            20,
+            4,
+            0,
+            1,
+            0,
+            breakable: true);
+        var side = new AuthoritativeCombatTarget(10, 1, 1, 6400);
+        var classes = LoadShippedPlayerClasses();
+        var configuredClasses = new AuthoritativePlayerClassCatalog(
+            classes.Definitions.Select(definition => definition.ClassId == 5
+                ? definition with { CriticalStrikeChancePerLevelPercent = 0 }
+                : definition));
+        var world = new DiabloWorldState(
+            objects: [breakable],
+            combatTargets: [side]);
+        var processor = CreateProcessor(
+            world,
+            random: new DiabloRandom(0),
+            playerClasses: configuredClasses);
+        var player = CreatePlayer(
+            entityId: 7,
+            characterClassId: 5,
+            characterLevel: 30,
+            attributes: configuredClasses.GetRequired(5).CreateStartingAttributes(),
+            equipment: [new EquippedStoreItem(
+                4,
+                42,
+                AuthoritativeItemState.Empty with {
+                    ItemType = 2,
+                    ItemClass = 1,
+                    EquipLocation = 2,
+                    MinDamage = 10,
+                    MaxDamage = 10,
+                    Durability = 4,
+                    MaxDurability = 4,
+                    StatFlag = true,
+                })]);
+
+        var result = processor.Execute(
+            player,
+            new DiabloAttackAtIntent(1, 0),
+            1,
+            [player]);
+
+        Assert.True(result.Succeeded, result.Failure?.ToString());
+        Assert.True(breakable.Destroyed);
+        Assert.Equal(6392, side.HitPoints);
+        Assert.Equal(side.EntityId, Assert.Single(result.Events).TargetEntityId);
+    }
+
+    [Fact]
     public void TimedCellAttackUpdatesFacingBeforeAnimationAdmission()
     {
         var player = CreatePlayer(entityId: 7);
