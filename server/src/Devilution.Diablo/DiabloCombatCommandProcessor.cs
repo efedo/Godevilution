@@ -1246,7 +1246,7 @@ public sealed class DiabloCombatCommandProcessor
                     events);
             ApplyPlayerKnockback(player, target, damageQ6, players);
             if (damageQ6 > 0)
-                ApplyEquipmentAttackEffects(player, damageQ6, events);
+                ApplyPlayerAttackEffects(player, damageQ6, events);
         }
 
         attackHit |= ResolveCleaveSideTargets(
@@ -1858,6 +1858,32 @@ public sealed class DiabloCombatCommandProcessor
             player.Equipment[rightIndex] = player.Equipment[rightIndex] with {
                 State = rightState with { Durability = checked(rightState.Durability - 1) },
             };
+        }
+    }
+
+    /** Applies native player-versus-player resource restoration after a hit. */
+    private void ApplyPlayerAttackEffects(
+        AuthoritativePlayerState player,
+        int damageQ6,
+        ICollection<DiabloGameplayEvent> events)
+    {
+        var gain = AuthoritativeEquipmentAttackEffectRules.ResolvePlayerTarget(
+            damageQ6,
+            GetUsableEquipmentFlags(player),
+            random.GenerateRnd,
+            rules.RandomStealLifeDivisor);
+        var lifeGain = Math.Min(
+            Math.Max(0, player.LifeMaximum - player.Life),
+            gain.LifeQ6);
+        player.Life = checked(player.Life + lifeGain);
+        if (lifeGain > 0) {
+            events.Add(new DiabloGameplayEvent(
+                DiabloGameplayEventKind.Healing,
+                player.EntityId,
+                player.EntityId,
+                DeterministicFixedPointQ6.ToWholeTruncated(lifeGain)) {
+                AmountQ6 = lifeGain,
+            });
         }
     }
 
@@ -12192,7 +12218,7 @@ public sealed class DiabloCombatCommandProcessor
         }
         ApplyPlayerKnockback(owner, target, projectile.DamageQ6, players);
         if (projectile.DamageQ6 > 0)
-            ApplyEquipmentAttackEffects(owner, projectile.DamageQ6, gameplayEvents);
+            ApplyPlayerAttackEffects(owner, projectile.DamageQ6, gameplayEvents);
         foreach (var gameplayEvent in gameplayEvents)
             events.Add(new DiabloDirectedGameplayEvent(owner, gameplayEvent));
         return true;

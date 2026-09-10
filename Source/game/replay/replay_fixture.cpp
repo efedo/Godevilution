@@ -3816,9 +3816,9 @@ void ApplyReplayEquipmentAttackEffects(
 		lifeGainQ6 = GenerateRnd(state, damageQ6 / 8);
 	if ((flags & (StealLife3Flag | StealLife5Flag)) != 0) {
 		if ((flags & StealLife5Flag) != 0)
-			lifeGainQ6 += 5 * damageQ6 / 100;
+			lifeGainQ6 = 5 * damageQ6 / 100;
 		else if ((flags & StealLife3Flag) != 0)
-			lifeGainQ6 += 3 * damageQ6 / 100;
+			lifeGainQ6 = 3 * damageQ6 / 100;
 	}
 
 	int32_t manaGainQ6 = 0;

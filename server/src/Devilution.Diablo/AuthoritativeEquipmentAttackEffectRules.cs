@@ -88,4 +88,29 @@ public static class AuthoritativeEquipmentAttackEffectRules
 
         return new ResourceGain(lifeQ6, manaQ6);
     }
+
+    /**
+     * Resolves native PlrHitPlr post-hit restoration. Player-versus-player
+     * attacks only honor RandomStealLife; fixed life/mana-steal effects are
+     * applied by PlrHitMonst and are intentionally excluded here.
+     */
+    public static ResourceGain ResolvePlayerTarget(
+        int damageQ6,
+        uint usableEquipmentFlags,
+        Func<int, int> generateRnd,
+        int randomStealLifeDivisor = 8)
+    {
+        if (damageQ6 < 0)
+            throw new ArgumentOutOfRangeException(nameof(damageQ6));
+        ArgumentNullException.ThrowIfNull(generateRnd);
+        if (randomStealLifeDivisor <= 0)
+            throw new ArgumentOutOfRangeException(nameof(randomStealLifeDivisor));
+        if (damageQ6 == 0
+            || (usableEquipmentFlags & RandomStealLifeFlag) == 0)
+            return new ResourceGain(0, 0);
+
+        return new ResourceGain(
+            generateRnd(damageQ6 / randomStealLifeDivisor),
+            0);
+    }
 }

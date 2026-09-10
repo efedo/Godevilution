@@ -2,6 +2,11 @@
 
 All notable changes to this fork are documented below.
 
+- Matched native player-versus-player resource restoration. Melee and bow
+  attacks now honor only `RandomStealLife`; fixed life-steal and mana-steal
+  effects remain restricted to monster-target attacks, with focused coverage
+  for both immediate and projectile impact paths.
+
 - Corrected native post-hit life-steal ordering. When usable equipment carries
   both `RandomStealLife` and a fixed `StealLife3/5` flag, the fixed rate now
   replaces the earlier random amount, matching the native temporary-value

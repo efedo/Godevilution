@@ -2,6 +2,11 @@
 
 Status date: 2026-09-10
 
+Native player-versus-player resource restoration now follows `PlrHitPlr`:
+only usable `RandomStealLife` can restore the attacker after a physical player
+hit. Fixed `StealLife3/5` and `StealMana3/5` remain monster-target effects for
+both immediate melee and delayed bow impacts.
+
 Authoritative post-hit resource restoration now matches native temporary-value
 ordering: a usable fixed `StealLife3/5` effect replaces an earlier
 `RandomStealLife` amount, while `StealMana3/5` continues to use the later

@@ -1955,6 +1955,95 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void PlayerMeleeTargetsOnlyRestoreRandomLifeFromAttackEquipment()
+    {
+        var world = new DiabloWorldState();
+        var processor = CreateProcessor(world, random: new DiabloRandom(0));
+        var attacker = CreatePlayer(
+            entityId: 7,
+            life: 3000,
+            lifeMaximum: 6400,
+            mana: 1000,
+            manaMaximum: 6400,
+            equipment: [new EquippedStoreItem(
+                4,
+                42,
+                AuthoritativeItemState.Empty with {
+                    StatFlag = true,
+                    Flags = AuthoritativeEquipmentAttackEffectRules.RandomStealLifeFlag
+                        | AuthoritativeEquipmentAttackEffectRules.StealLife5Flag
+                        | AuthoritativeEquipmentAttackEffectRules.StealMana5Flag,
+                })]);
+        var victim = CreatePlayer(
+            positionX: 1,
+            entityId: 8,
+            life: 6400,
+            lifeMaximum: 6400);
+
+        var result = processor.Execute(
+            attacker,
+            new DiabloAttackIntent(victim.EntityId),
+            1,
+            [attacker, victim]);
+
+        Assert.True(result.Succeeded, result.Failure?.ToString());
+        Assert.Equal(5760, victim.Life);
+        Assert.Equal(3000, attacker.Life);
+        Assert.Equal(1000, attacker.Mana);
+        Assert.DoesNotContain(
+            result.Events,
+            gameplayEvent => gameplayEvent.Kind == DiabloGameplayEventKind.Healing);
+    }
+
+    [Fact]
+    public void PlayerBowTargetsDoNotRestoreFixedLifeOrManaSteal()
+    {
+        var bow = AuthoritativeItemState.Empty with {
+            ItemType = 3,
+            ItemClass = 1,
+            MinDamage = 10,
+            MaxDamage = 10,
+            Flags = AuthoritativeEquipmentAttackEffectRules.StealLife5Flag
+                | AuthoritativeEquipmentAttackEffectRules.StealMana5Flag,
+            StatFlag = true,
+        };
+        var world = new DiabloWorldState();
+        var processor = CreateProcessor(
+            world,
+            rules: new AuthoritativeCombatRules(10, 1, 100, friendlyFire: true));
+        var attacker = CreatePlayer(
+            entityId: 7,
+            life: 3000,
+            lifeMaximum: 6400,
+            mana: 1000,
+            manaMaximum: 6400,
+            equipment: [new EquippedStoreItem(4, 42, bow)]);
+        var victim = CreatePlayer(
+            positionX: 3,
+            entityId: 8,
+            life: 6400,
+            lifeMaximum: 6400);
+
+        var result = processor.Execute(
+            attacker,
+            new DiabloAttackIntent(victim.EntityId),
+            1,
+            [attacker, victim]);
+
+        Assert.True(result.Succeeded, result.Failure?.ToString());
+        var deliveries = processor.AdvanceTick(1, [attacker, victim]).ToList();
+        deliveries.AddRange(processor.AdvanceTick(2, [attacker, victim]));
+        deliveries.AddRange(processor.AdvanceTick(3, [attacker, victim]));
+
+        Assert.Equal(5760, victim.Life);
+        Assert.Equal(3000, attacker.Life);
+        Assert.Equal(1000, attacker.Mana);
+        Assert.DoesNotContain(
+            deliveries,
+            delivery => delivery.Event.Kind == DiabloGameplayEventKind.Healing);
+    }
+
+    [Fact]
     public void ElementalEquipmentDamagesPlayerTargetsThroughTheirResistances()
     {
         var world = new DiabloWorldState();

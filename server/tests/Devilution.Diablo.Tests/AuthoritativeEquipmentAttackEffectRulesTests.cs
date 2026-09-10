@@ -87,4 +87,32 @@ public sealed class AuthoritativeEquipmentAttackEffectRulesTests
                 _ => 0,
                 stealMana5Percent: 101));
     }
+
+    [Fact]
+    public void PlayerTargetRestorationOnlyUsesRandomLifeSteal()
+    {
+        var gain = AuthoritativeEquipmentAttackEffectRules.ResolvePlayerTarget(
+            damageQ6: 6400,
+            usableEquipmentFlags:
+                AuthoritativeEquipmentAttackEffectRules.RandomStealLifeFlag
+                | AuthoritativeEquipmentAttackEffectRules.StealLife5Flag
+                | AuthoritativeEquipmentAttackEffectRules.StealMana5Flag,
+            generateRnd: limit => {
+                Assert.Equal(800, limit);
+                return 17;
+            });
+
+        Assert.Equal(new AuthoritativeEquipmentAttackEffectRules.ResourceGain(17, 0), gain);
+    }
+
+    [Fact]
+    public void PlayerTargetRestorationRejectsInvalidRandomDivisor()
+    {
+        Assert.Throws<ArgumentOutOfRangeException>(() =>
+            AuthoritativeEquipmentAttackEffectRules.ResolvePlayerTarget(
+                100,
+                AuthoritativeEquipmentAttackEffectRules.RandomStealLifeFlag,
+                _ => 0,
+                randomStealLifeDivisor: 0));
+    }
 }
