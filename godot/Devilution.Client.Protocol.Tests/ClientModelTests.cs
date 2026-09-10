@@ -3469,7 +3469,7 @@ public sealed class ClientModelTests
     }
 
     [Fact]
-    public void RejectsMovementIntoProjectedBlockedCell()
+    public void AcceptsPendingMovementIntoProjectedBlockedCellButRejectsOutOfBounds()
     {
         var model = new AuthoritativeClientModel();
         var snapshot = new Snapshot {
@@ -3502,8 +3502,8 @@ public sealed class ClientModelTests
             },
         };
 
-        Assert.Throws<InvalidDataException>(() =>
-            model.Apply(new AuthoritativeClientMessage(Snapshot: snapshot)));
+        model.Apply(new AuthoritativeClientMessage(Snapshot: snapshot));
+        Assert.Equal(PlayerActionKind.Move, model.Snapshot!.Players[0].CurrentAction.Kind);
 
         snapshot.LevelGeometry[0].BlockedCells.Clear();
         snapshot.Players[0].PositionX = 3;

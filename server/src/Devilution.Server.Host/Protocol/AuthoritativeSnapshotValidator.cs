@@ -1011,7 +1011,7 @@ public static class AuthoritativeSnapshotValidator
                     && action.TargetY == 0
                     && !action.TargetCell
                     && action.Cast is null
-                    && IsProjectedMoveWalkable(snapshot, player, action),
+                    && IsProjectedMoveDestinationInBounds(snapshot, player, action),
                 PlayerActionKind.Attack =>
                     player.CombatMode is PlayerCombatMode.Attack
                     or PlayerCombatMode.RangedAttack
@@ -1086,7 +1086,7 @@ public static class AuthoritativeSnapshotValidator
         }
     }
 
-    private static bool IsProjectedMoveWalkable(
+    private static bool IsProjectedMoveDestinationInBounds(
         Snapshot snapshot,
         PlayerSnapshot player,
         PlayerActionSnapshot action)
@@ -1105,8 +1105,7 @@ public static class AuthoritativeSnapshotValidator
             return false;
 
         var targetCell = targetY * level.Width + targetX;
-        return targetCell <= int.MaxValue
-            && !level.BlockedCells.Contains((int)targetCell);
+        return targetCell <= int.MaxValue;
     }
 
     private static void ValidateProceduralQuestPieceOrigins(Snapshot snapshot)

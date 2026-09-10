@@ -57,6 +57,10 @@ overlap or enter newly blocked geometry.
 Snapshot capture and restore now preserve that in-flight boundary: a future move
 cell is not treated as occupied state, and a saved action may resume against
 changed geometry before the same effect-time revalidation cancels it.
+Protocol snapshot validators now preserve that boundary as well: pending moves
+must remain within the published level bounds, but a destination that is
+currently blocked is accepted for effect-time server revalidation rather than
+being rejected during transport or client-model validation.
 
 Player hits now also honor the native Gargoyle wake-up boundary: an active
 Gargoyle special flag is consumed by the first physical hit without applying

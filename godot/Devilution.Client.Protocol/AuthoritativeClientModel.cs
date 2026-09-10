@@ -503,7 +503,7 @@ public sealed class AuthoritativeClientModel
                 && action.TargetY == 0
                 && !action.TargetCell
                 && action.Cast is null
-                && IsProjectedMoveWalkable(snapshot, player, action),
+                && IsProjectedMoveDestinationInBounds(snapshot, player, action),
             PlayerActionKind.Attack =>
                 player.CombatMode is PlayerCombatMode.Attack
                 or PlayerCombatMode.RangedAttack
@@ -578,7 +578,7 @@ public sealed class AuthoritativeClientModel
         }
     }
 
-    private static bool IsProjectedMoveWalkable(
+    private static bool IsProjectedMoveDestinationInBounds(
         Snapshot snapshot,
         PlayerSnapshot player,
         PlayerActionSnapshot action)
@@ -598,8 +598,7 @@ public sealed class AuthoritativeClientModel
         }
 
         var targetCell = targetY * level.Width + targetX;
-        return targetCell <= int.MaxValue
-            && !level.BlockedCells.Contains((int)targetCell);
+        return targetCell <= int.MaxValue;
     }
 
     private static bool IsProjectedActionTarget(

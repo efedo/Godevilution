@@ -11,6 +11,9 @@ All notable changes to this fork are documented below.
   from entering a cell claimed by another participant or a world mutation.
   Snapshot restore now preserves in-flight moves whose destination changed while
   the action was pending, allowing the effect-time guard to cancel them safely.
+  Protocol and Godot client-model validation now retain those pending actions
+  when their destination is in bounds but currently blocked, leaving the final
+  geometry decision to the authoritative effect tick.
 
 - Aligned compatibility-template combat and replay RNG boundaries with the
   native runner: metadata-free monster armor keeps its legacy damage reduction,

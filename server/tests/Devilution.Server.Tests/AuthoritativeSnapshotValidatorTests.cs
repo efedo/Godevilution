@@ -353,6 +353,40 @@ public sealed class AuthoritativeSnapshotValidatorTests
     }
 
     [Fact]
+    public void AcceptsPendingMoveIntoCurrentlyBlockedDestination()
+    {
+        AuthoritativeSnapshotValidator.Validate(new Snapshot {
+            Tick = 1,
+            LevelGeometry = {
+                new LevelGeometrySnapshot {
+                    LevelId = 1,
+                    Width = 10,
+                    Height = 10,
+                    BlockedCells = { 12 },
+                },
+            },
+            Players = {
+                new PlayerSnapshot {
+                    EntityId = 1,
+                    LevelId = 1,
+                    PositionX = 1,
+                    PositionY = 1,
+                    CombatMode = PlayerCombatMode.WalkNorthwards,
+                    CombatModeEndTick = 3,
+                    CurrentAction = new PlayerActionSnapshot {
+                        Kind = PlayerActionKind.Move,
+                        StartedAtTick = 1,
+                        EffectTick = 2,
+                        ReadyTick = 3,
+                        EndTick = 3,
+                        DirectionX = 1,
+                    },
+                },
+            },
+        });
+    }
+
+    [Fact]
     public void AcceptsCellTargetedAttackAndRejectsItsInvalidDestination()
     {
         var valid = new Snapshot {
@@ -449,20 +483,19 @@ public sealed class AuthoritativeSnapshotValidatorTests
                 },
             },
         };
-        var blockedMovement = new Snapshot {
+        var outOfBoundsMovement = new Snapshot {
             LevelGeometry = {
                 new LevelGeometrySnapshot {
                     LevelId = 1,
                     Width = 10,
                     Height = 10,
-                    BlockedCells = { 12 },
                 },
             },
             Players = {
                 new PlayerSnapshot {
                     EntityId = 1,
                     LevelId = 1,
-                    PositionX = 1,
+                    PositionX = 9,
                     PositionY = 1,
                     CombatMode = PlayerCombatMode.WalkNorthwards,
                     CombatModeEndTick = 3,
@@ -579,7 +612,7 @@ public sealed class AuthoritativeSnapshotValidatorTests
 
         foreach (var snapshot in new[] {
             invalidTiming,
-            blockedMovement,
+            outOfBoundsMovement,
             invalidProgress,
             invalidCastSource,
             invalidCastSourceReference,
