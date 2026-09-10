@@ -18,7 +18,7 @@ public sealed class ShippedContentTests
         Assert.Equal("devilution.base", pack.Id);
         Assert.Equal("0.1.0", pack.Version);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.470.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.471.0"),
             pack.Schema);
         Assert.Empty(pack.Overlays);
         var nativeDunMonsterTable = pack.Tables.Single(
@@ -1204,7 +1204,7 @@ public sealed class ShippedContentTests
             currentPack.Tables,
             currentPack.Dependencies,
             currentPack.Overlays,
-            new ContentSchemaIdentity("devilution.diablo", "1.469.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.470.0"),
             currentPack.DependencyConstraints,
             currentPack.Assets);
         var content = ComposedContent.Compose(new ContentManifest(
@@ -1336,7 +1336,7 @@ public sealed class ShippedContentTests
                 .ToArray(),
             basePack.Dependencies,
             basePack.Overlays,
-            new ContentSchemaIdentity("devilution.diablo", "1.469.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.470.0"),
             basePack.DependencyConstraints,
             basePack.Assets);
 
@@ -1401,7 +1401,7 @@ public sealed class ShippedContentTests
                 .ToArray(),
             basePack.Dependencies,
             basePack.Overlays,
-            new ContentSchemaIdentity("devilution.diablo", "1.469.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.470.0"),
             basePack.DependencyConstraints,
             basePack.Assets);
 
@@ -1469,7 +1469,7 @@ public sealed class ShippedContentTests
                 .ToArray(),
             basePack.Dependencies,
             basePack.Overlays,
-            new ContentSchemaIdentity("devilution.diablo", "1.469.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.470.0"),
             basePack.DependencyConstraints,
             basePack.Assets);
 
@@ -1533,7 +1533,7 @@ public sealed class ShippedContentTests
                 .ToArray(),
             basePack.Dependencies,
             basePack.Overlays,
-            new ContentSchemaIdentity("devilution.diablo", "1.469.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.470.0"),
             basePack.DependencyConstraints,
             basePack.Assets);
 
@@ -1595,7 +1595,7 @@ public sealed class ShippedContentTests
                 .ToArray(),
             basePack.Dependencies,
             basePack.Overlays,
-            new ContentSchemaIdentity("devilution.diablo", "1.469.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.470.0"),
             basePack.DependencyConstraints,
             basePack.Assets);
 
@@ -1657,7 +1657,7 @@ public sealed class ShippedContentTests
                 .ToArray(),
             basePack.Dependencies,
             basePack.Overlays,
-            new ContentSchemaIdentity("devilution.diablo", "1.469.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.470.0"),
             basePack.DependencyConstraints,
             basePack.Assets);
 
@@ -2385,6 +2385,73 @@ public sealed class ShippedContentTests
         Assert.Equal("generated_test", generated.StableSymbol);
         Assert.True(generated.BlockedCells.Count > 0);
         Assert.True(generated.MissileBlockedCells.Count >= generated.BlockedCells.Count);
+        Assert.True(generated.IsWalkable(1, 1));
+    }
+
+    [Fact]
+    public void ContentBootstrapRejectsLegacyProceduralLevelSchemaInCurrentSchema()
+    {
+        var contentRoot = Path.Combine(FindRepositoryRoot(), "server", "content", "base");
+        var basePack = ContentPackLoader.LoadManifestDirectory(contentRoot);
+        var proceduralLevels = basePack.Tables.Single(
+            table => table.SourcePath == "procedural_levels.tsv");
+        var legacyProceduralLevels = CreateLegacyProceduralLevelTable(proceduralLevels);
+        var incompletePack = new ContentPack(
+            basePack.Id,
+            basePack.Version,
+            basePack.Tables
+                .Select(table => table.SourcePath == proceduralLevels.SourcePath
+                    ? legacyProceduralLevels
+                    : table)
+                .ToArray(),
+            basePack.Dependencies,
+            basePack.Overlays,
+            basePack.Schema,
+            basePack.DependencyConstraints,
+            basePack.Assets);
+
+        var exception = Assert.Throws<InvalidDataException>(() =>
+            DiabloModule.Instance.ContentBootstrap.Activate(
+                ComposedContent.Compose(new ContentManifest(
+                    "missing-procedural-level-symbols",
+                    "1",
+                    [incompletePack]))));
+
+        Assert.Contains("Production procedural-level table", exception.Message, StringComparison.Ordinal);
+        Assert.Contains("complete ordered symbolic schema", exception.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void PreviousSchemaRetainsLegacyProceduralLevelCompatibility()
+    {
+        var contentRoot = Path.Combine(FindRepositoryRoot(), "server", "content", "base");
+        var basePack = ContentPackLoader.LoadManifestDirectory(contentRoot);
+        var proceduralLevels = basePack.Tables.Single(
+            table => table.SourcePath == "procedural_levels.tsv");
+        var previousPack = new ContentPack(
+            basePack.Id,
+            basePack.Version,
+            basePack.Tables
+                .Select(table => table.SourcePath == proceduralLevels.SourcePath
+                    ? CreateLegacyProceduralLevelTable(proceduralLevels)
+                    : table)
+                .ToArray(),
+            basePack.Dependencies,
+            basePack.Overlays,
+            new ContentSchemaIdentity("devilution.diablo", "1.470.0"),
+            basePack.DependencyConstraints,
+            basePack.Assets);
+
+        var activation = DiabloModule.Instance.ContentBootstrap.Activate(
+            ComposedContent.Compose(new ContentManifest(
+                "previous-procedural-level-contract",
+                "1",
+                [previousPack])));
+
+        var generated = Assert.Single(
+            activation.Simulation.WorldState.World!.Levels,
+            level => level.LevelId == 3);
+        Assert.Equal("", generated.StableSymbol);
         Assert.True(generated.IsWalkable(1, 1));
     }
 
@@ -3811,7 +3878,7 @@ public sealed class ShippedContentTests
                 .ToArray(),
             basePack.Dependencies,
             basePack.Overlays,
-            new ContentSchemaIdentity("devilution.diablo", "1.469.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.470.0"),
             basePack.DependencyConstraints,
             basePack.Assets);
 
@@ -3988,7 +4055,7 @@ public sealed class ShippedContentTests
                 .ToArray(),
             basePack.Dependencies,
             basePack.Overlays,
-            new ContentSchemaIdentity("devilution.diablo", "1.469.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.470.0"),
             basePack.DependencyConstraints,
             basePack.Assets);
 
@@ -4377,7 +4444,7 @@ public sealed class ShippedContentTests
 
         Assert.Equal("devilution.hellfire", hellfirePack.Id);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.470.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.471.0"),
             hellfirePack.Schema);
         Assert.Equal(DiabloGameVariant.Hellfire, combat.GameVariant);
         Assert.Equal(2, combat.UniqueExperienceMultiplier);
@@ -8004,6 +8071,17 @@ public sealed class ShippedContentTests
             .Select(line => {
                 var fields = line.Split('\t');
                 return string.Join('\t', [fields[0], fields[2], fields[3], fields[4]]);
+            });
+        return TsvTable.Parse(levels.SourcePath, string.Join('\n', lines) + "\n");
+    }
+
+    private static TsvTable CreateLegacyProceduralLevelTable(TsvTable levels)
+    {
+        var lines = levels.ToCanonicalTsv()
+            .Split('\n', StringSplitOptions.RemoveEmptyEntries)
+            .Select(line => {
+                var fields = line.Split('\t');
+                return string.Join('\t', [fields[0], fields[2], fields[3], fields[4], fields[5]]);
             });
         return TsvTable.Parse(levels.SourcePath, string.Join('\n', lines) + "\n");
     }

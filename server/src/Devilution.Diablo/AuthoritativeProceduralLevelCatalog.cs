@@ -97,6 +97,19 @@ public sealed record AuthoritativeProceduralLevelDefinition(
 /** Loads and materializes optional procedural level definitions from content. */
 public sealed class AuthoritativeProceduralLevelCatalog
 {
+    private static readonly IReadOnlyList<string> SymbolicProductionColumns = [
+        "level_id",
+        "level_symbol",
+        "width",
+        "height",
+        "generation_seed",
+        "blocked_percent",
+        "missile_blocked_percent",
+        "default_start",
+        "suppress_multiplayer_death_drops",
+        "required_walkable_cells",
+    ];
+
     private readonly IReadOnlyList<AuthoritativeProceduralLevelDefinition> definitions;
 
     public AuthoritativeProceduralLevelCatalog(
@@ -117,6 +130,26 @@ public sealed class AuthoritativeProceduralLevelCatalog
     }
 
     public IReadOnlyList<AuthoritativeProceduralLevelDefinition> Definitions => definitions;
+
+    /** Rejects partial procedural-level metadata at the current production boundary. */
+    public static void ValidateExternalizedProduction(TsvTable table)
+    {
+        ArgumentNullException.ThrowIfNull(table);
+        if (!table.Columns.SequenceEqual(SymbolicProductionColumns, StringComparer.Ordinal))
+            throw new InvalidDataException(
+                $"Production procedural-level table '{table.SourcePath}' must use the complete ordered symbolic schema.");
+        foreach (var row in table.Rows) {
+            foreach (var column in SymbolicProductionColumns) {
+                if (column == "required_walkable_cells") {
+                    if (!row.TryGet(column, out _))
+                        throw new InvalidDataException(
+                            $"Column '{column}' is not present on TSV row {row.LineNumber}.");
+                } else {
+                    _ = row.Required(column);
+                }
+            }
+        }
+    }
 
     public AuthoritativeWorld GenerateWorld(uint worldSeed = 0)
     {

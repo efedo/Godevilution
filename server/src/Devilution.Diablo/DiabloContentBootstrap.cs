@@ -422,6 +422,9 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
         if (content.TryGetTable(
                 "procedural_levels.tsv",
                 out var proceduralLevelsTable)) {
+            if (content.Manifest.Schema == DiabloContentSchema.Current)
+                AuthoritativeProceduralLevelCatalog.ValidateExternalizedProduction(
+                    proceduralLevelsTable);
             var proceduralLevels = AuthoritativeProceduralLevelCatalog.LoadTsv(
                 proceduralLevelsTable.SourcePath,
                 proceduralLevelsTable.ToCanonicalTsv());
