@@ -2,6 +2,11 @@
 
 All notable changes to this fork are documented below.
 
+- Corrected native post-hit life-steal ordering. When usable equipment carries
+  both `RandomStealLife` and a fixed `StealLife3/5` flag, the fixed rate now
+  replaces the earlier random amount, matching the native temporary-value
+  reuse while preserving the shared RNG consumption.
+
 - Closed a native physical-hit ordering gap: missed initialized attacks now
   restore the pre-damage RNG boundary and suppress Hellfire Peril self-damage,
   matching `PlrHitMonst`'s hit-before-damage behavior. Added a class-initialized

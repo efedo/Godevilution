@@ -5,7 +5,7 @@ namespace Devilution.Diablo.Tests;
 public sealed class AuthoritativeEquipmentAttackEffectRulesTests
 {
     [Fact]
-    public void AppliesRandomAndHighestFixedLifeAndManaRates()
+    public void AppliesNativeRandomAndHighestFixedLifeAndManaRates()
     {
         var gain = AuthoritativeEquipmentAttackEffectRules.Resolve(
             damageQ6: 6400,
@@ -20,7 +20,7 @@ public sealed class AuthoritativeEquipmentAttackEffectRulesTests
                 return 17;
             });
 
-        Assert.Equal(337, gain.LifeQ6);
+        Assert.Equal(320, gain.LifeQ6);
         Assert.Equal(320, gain.ManaQ6);
     }
 
@@ -67,7 +67,7 @@ public sealed class AuthoritativeEquipmentAttackEffectRulesTests
             stealLife3Percent: 7,
             stealMana5Percent: 9);
 
-        Assert.Equal(725, gain.LifeQ6);
+        Assert.Equal(700, gain.LifeQ6);
         Assert.Equal(900, gain.ManaQ6);
     }
 

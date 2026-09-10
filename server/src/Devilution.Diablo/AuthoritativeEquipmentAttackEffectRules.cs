@@ -69,10 +69,13 @@ public static class AuthoritativeEquipmentAttackEffectRules
             lifeQ6 = generateRnd(damageQ6 / randomStealLifeDivisor);
 
         if ((usableEquipmentFlags & (StealLife3Flag | StealLife5Flag)) != 0) {
+            // Native PlrHitMonst reuses the same temporary amount for each
+            // fixed-rate branch. A fixed life-steal flag therefore replaces,
+            // rather than adds to, an earlier RandomStealLife roll.
             if ((usableEquipmentFlags & StealLife5Flag) != 0)
-                lifeQ6 = checked(lifeQ6 + stealLife5Percent * damageQ6 / 100);
+                lifeQ6 = checked(stealLife5Percent * damageQ6 / 100);
             else if ((usableEquipmentFlags & StealLife3Flag) != 0)
-                lifeQ6 = checked(lifeQ6 + stealLife3Percent * damageQ6 / 100);
+                lifeQ6 = checked(stealLife3Percent * damageQ6 / 100);
         }
 
         var manaQ6 = 0;

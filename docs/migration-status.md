@@ -2,6 +2,11 @@
 
 Status date: 2026-09-10
 
+Authoritative post-hit resource restoration now matches native temporary-value
+ordering: a usable fixed `StealLife3/5` effect replaces an earlier
+`RandomStealLife` amount, while `StealMana3/5` continues to use the later
+highest-rate assignment and the random roll remains consumed when authored.
+
 Native physical-hit ordering now preserves the `PlrHitMonst` miss boundary:
 initialized misses do not consume the weapon-damage RNG stream and do not
 apply Hellfire Peril self-damage or other hit-only effects. The boundary is
