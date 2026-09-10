@@ -2,6 +2,13 @@
 
 All notable changes to this fork are documented below.
 
+- Aligned compatibility-template combat and replay RNG boundaries with the
+  native runner: metadata-free monster armor keeps its legacy damage reduction,
+  petrified Bone Spirit targets skip hit rolls, and block/hit recovery skips
+  durability rolls when no eligible equipment exists. Movement, Bone Spirit,
+  and Fireball replay checkpoints now pass in both runners without fixture
+  hash changes.
+
 - Aligned managed PvP physical attacks with native `PlrHitPlr` and
   `Plr2PlrMHit`: player targets no longer inherit monster armor-piercing or
   post-armor damage rules, ranged PvP admission applies the native distance

@@ -389,9 +389,11 @@ public sealed class DiabloCombatCommandProcessor
         }
 
         if (player.CombatMode == DiabloPlayerCombatMode.Block) {
-            if (random.FlipCoin(10))
+            if (HasNativeParryDurabilityTarget(player)
+                && random.FlipCoin(10))
                 ApplyNativeParryDurabilityLoss(player);
         } else if (player.CombatMode == DiabloPlayerCombatMode.GotHit
+            && HasNativeArmorDurabilityTarget(player)
             && !random.FlipCoin(4)) {
             ApplyNativeArmorDurabilityLoss(player);
         }
@@ -1879,6 +1881,22 @@ public sealed class DiabloCombatCommandProcessor
         }
     }
 
+    private bool HasNativeArmorDurabilityTarget(AuthoritativePlayerState player)
+    {
+        return player.Equipment.Any(item =>
+            (item.Slot is 0 or 6)
+            && item.State.MaxDurability > 0);
+    }
+
+    private bool HasNativeParryDurabilityTarget(AuthoritativePlayerState player)
+    {
+        return player.Equipment.Any(item =>
+            (item.Slot is 4 or 5)
+            && item.State.MaxDurability > 0
+            && (AuthoritativeItemClassification.IsShield(item.State, items)
+                || AuthoritativeItemClassification.IsStaff(item.State, items)));
+    }
+
     /**
      * Applies native usable equipment damage and hit bonuses, returning Q6
      * damage. PvP deliberately keeps its native armor boundary separate from
@@ -2072,10 +2090,10 @@ public sealed class DiabloCombatCommandProcessor
             items);
         var resolvedDamage = rules.ResolveAttackDamage(
             criticalDamage,
-            // Native PlrHitMonst/MonsterMHit use armor only for admission;
-            // successful player damage is applied without a second armor
-            // reduction. PvP keeps its separate armor-aware admission path.
-            0,
+            // Fully initialized class profiles use native admission-only
+            // monster armor. Legacy compatibility templates have no class
+            // damage profile and retain the historical armor reduction.
+            !usesNativeClassProfile && monsterTarget ? targetArmorClass : 0,
             effectiveHitChance,
             seed);
         if (target.IsDemon
@@ -15673,8 +15691,8 @@ public sealed class DiabloCombatCommandProcessor
                 - GetEffectiveMonsterLevel(target) * hitMonsterLevelScale,
             minimumHitChance,
             maximumHitChance);
-        var hitRoll = random.RandomIntLessThan(100);
-        if (!target.IsPetrified && hitRoll >= hitChance)
+        if (!target.IsPetrified
+            && random.RandomIntLessThan(100) >= hitChance)
             return false;
 
         var damageQ6 = target.HitPointsQ6 / damageHitPointsDivisor / DeterministicFixedPointQ6.Scale

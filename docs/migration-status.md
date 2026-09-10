@@ -43,6 +43,12 @@ The remaining ranged-class replay profiles now agree across both runners for
 Hell difficulty, target armor admission, shifted Hellfire armor, and
 Multiple Arrows hit-seed payloads.
 
+Compatibility-template combat now preserves the native fallback armor damage
+boundary. Petrified Bone Spirit impacts do not consume a hit roll, and block or
+hit recovery does not consume durability RNG when no eligible equipment is
+hydrated. The movement, Bone Spirit, and Fireball replay fixture families now
+agree at every checked-in checkpoint in the managed and native runners.
+
 Player hits now also honor the native Gargoyle wake-up boundary: an active
 Gargoyle special flag is consumed by the first physical hit without applying
 that hit's damage or equipment effects. Other petrified monsters use the
