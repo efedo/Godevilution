@@ -44,6 +44,10 @@ All notable changes to this fork are documented below.
   and cursor-graphics catalogs, keeping item identity and presentation data
   outside the server's production fallback path.
 
+- Production Diablo activation now requires the native missile/sprite and
+  monster identity catalogs, making the authoritative combat namespace fully
+  external and validated at the pack boundary.
+
 - Godot and the native compatibility client now validate every authoritative
   event batch before applying stale-tick or reconnect-epoch filters, so
   malformed discarded events fail closed instead of being silently ignored.

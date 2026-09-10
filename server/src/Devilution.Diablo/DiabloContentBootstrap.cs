@@ -286,28 +286,20 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
                 nativeMissileAliasesTable.SourcePath,
                 nativeMissileAliasesTable.ToCanonicalTsv())
             : null;
-        var nativeMissiles = content.TryGetTable(
-            "native_missiles.tsv",
-            out var nativeMissilesTable)
-            ? AuthoritativeNativeMissileCatalog.LoadTsv(
-                nativeMissilesTable.SourcePath,
-                nativeMissilesTable.ToCanonicalTsv(),
-                nativeMissileAliases)
-            : null;
-        var nativeMissileSprites = content.TryGetTable(
-            "native_missile_sprites.tsv",
-            out var nativeMissileSpritesTable)
-            ? AuthoritativeNativeMissileSpriteCatalog.LoadTsv(
-                nativeMissileSpritesTable.SourcePath,
-                nativeMissileSpritesTable.ToCanonicalTsv())
-            : null;
-        if (nativeMissiles is not null && nativeMissileSprites is null)
-            throw new InvalidDataException(
-                "native_missiles.tsv requires native_missile_sprites.tsv during production activation.");
-        nativeMissiles?.ValidateCompleteNativeNamespace();
-        nativeMissileSprites?.ValidateRequiredNativeNamespace();
-        if (nativeMissiles is not null && nativeMissileSprites is not null)
-            nativeMissiles.ValidateGraphicReferences(nativeMissileSprites);
+        var nativeMissilesTable = GetRequiredExternalTable(content, "native_missiles.tsv");
+        var nativeMissiles = AuthoritativeNativeMissileCatalog.LoadTsv(
+            nativeMissilesTable.SourcePath,
+            nativeMissilesTable.ToCanonicalTsv(),
+            nativeMissileAliases);
+        var nativeMissileSpritesTable = GetRequiredExternalTable(
+            content,
+            "native_missile_sprites.tsv");
+        var nativeMissileSprites = AuthoritativeNativeMissileSpriteCatalog.LoadTsv(
+            nativeMissileSpritesTable.SourcePath,
+            nativeMissileSpritesTable.ToCanonicalTsv());
+        nativeMissiles.ValidateCompleteNativeNamespace();
+        nativeMissileSprites.ValidateRequiredNativeNamespace();
+        nativeMissiles.ValidateGraphicReferences(nativeMissileSprites);
         var nativeMiscTable = GetRequiredExternalTable(content, "native_item_misc.tsv");
         var nativeMisc = AuthoritativeNativeMiscCatalog.LoadTsv(
             nativeMiscTable.SourcePath,
@@ -588,12 +580,13 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
             worldRules.ValidateWorld(world);
         if (world is not null)
             combatRules.ValidateWorld(world);
-        var monsterTypes = content.TryGetTable("monster_types.tsv", out var monsterTypesTable)
-            ? AuthoritativeMonsterTypeCatalog.LoadTsv(
-                monsterTypesTable.SourcePath,
-                monsterTypesTable.ToCanonicalTsv(),
-                stableIds)
-            : null;
+        var monsterTypesTable = GetRequiredExternalTable(content, "monster_types.tsv");
+        var monsterTypes = AuthoritativeMonsterTypeCatalog.LoadTsv(
+            monsterTypesTable.SourcePath,
+            monsterTypesTable.ToCanonicalTsv(),
+            stableIds);
+        ArgumentNullException.ThrowIfNull(spells);
+        ArgumentNullException.ThrowIfNull(monsterTypes);
         var monsterSpawnPolicies = content.TryGetTable(
                 "monster_spawn_policies.tsv",
                 out var monsterSpawnPoliciesTable)
@@ -627,38 +620,26 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
         }
         if (stableIds is not null && monsterTypes is not null)
             stableIds.ValidateReferences("monster", monsterId => monsterTypes.TryGet(monsterId, out _));
-        if (spells is not null && monsterTypes is not null)
-            spells.ValidateMonsterReferences(monsterTypes);
-        var monsterMissiles = content.TryGetTable(
-            "monster_missiles.tsv",
-            out var monsterMissilesTable)
-            ? AuthoritativeMonsterMissileCatalog.LoadTsv(
-                monsterMissilesTable.SourcePath,
-                monsterMissilesTable.ToCanonicalTsv(),
-                stableIds)
-            : null;
-        if (monsterMissiles is not null && spells is not null)
-            monsterMissiles.ValidateSpellReferences(spells);
-        if (monsterMissiles is not null && monsterTypes is not null) {
-            monsterMissiles.ValidateMonsterSelectorReferences(monsterTypes);
-            monsterMissiles.ValidateSpawnMonsterReferences(monsterTypes);
-        }
-        if (monsterMissiles is not null && nativeMissiles is null)
-            throw new InvalidDataException(
-                "monster_missiles.tsv requires native_missiles.tsv during production activation.");
-        if (monsterMissiles is not null && nativeMissiles is not null)
-            monsterMissiles.ValidateMissileReferences(nativeMissiles);
-        var monsters = content.TryGetTable("monsters.tsv", out var monstersTable)
-            ? AuthoritativeMonsterCatalog.LoadTsv(
-                monstersTable.SourcePath,
-                monstersTable.ToCanonicalTsv(),
-                itemCatalog,
-                uniqueItems,
-                monsterTypes,
-                stableIds,
-                spellBooks,
-                gameMode)
-            : null;
+        spells.ValidateMonsterReferences(monsterTypes!);
+        var monsterMissilesTable = GetRequiredExternalTable(content, "monster_missiles.tsv");
+        var monsterMissiles = AuthoritativeMonsterMissileCatalog.LoadTsv(
+            monsterMissilesTable.SourcePath,
+            monsterMissilesTable.ToCanonicalTsv(),
+            stableIds);
+        monsterMissiles.ValidateSpellReferences(spells);
+        monsterMissiles.ValidateMonsterSelectorReferences(monsterTypes!);
+        monsterMissiles.ValidateSpawnMonsterReferences(monsterTypes!);
+        monsterMissiles.ValidateMissileReferences(nativeMissiles);
+        var monstersTable = GetRequiredExternalTable(content, "monsters.tsv");
+        var monsters = AuthoritativeMonsterCatalog.LoadTsv(
+            monstersTable.SourcePath,
+            monstersTable.ToCanonicalTsv(),
+            itemCatalog,
+            uniqueItems,
+            monsterTypes,
+            stableIds,
+            spellBooks,
+            gameMode);
         if (world is not null && monsters is not null)
             AuthoritativeMonsterCatalog.ValidateWorld(monsters.Targets, world);
         var uniqueMonsters = content.TryGetTable(

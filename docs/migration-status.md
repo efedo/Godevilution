@@ -40,6 +40,10 @@ Production activation also requires the native item-misc, item-topology,
 item-tag, item-effect, Hellfire-effect, and cursor-graphics catalogs, so item
 identity and presentation no longer fall back to embedded native mappings at
 the server boundary.
+Production activation now also requires the complete external native missile
+identity/sprite namespaces and monster type, monster-missile, and monster
+definition catalogs, keeping authoritative combat identity data out of the
+bootstrap fallback path.
 
 The active content schema is now `1.462.0` (with `1.461.0` retained as
 the previous additive contract). Optional `procedural_quest_piece_origins.tsv`

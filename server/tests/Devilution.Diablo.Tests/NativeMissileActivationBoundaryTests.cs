@@ -15,7 +15,10 @@ public sealed class NativeMissileActivationBoundaryTests
             DiabloModule.Instance.ContentBootstrap.Activate(
                 ComposedContent.Compose(new ContentManifest("missing-native-missiles", "1", [pack]))));
 
-        Assert.Contains("monster_missiles.tsv requires native_missiles.tsv", exception.Message, StringComparison.Ordinal);
+        Assert.Contains(
+            "requires external 'native_missiles.tsv' content",
+            exception.Message,
+            StringComparison.Ordinal);
     }
 
     [Fact]
@@ -27,7 +30,10 @@ public sealed class NativeMissileActivationBoundaryTests
             DiabloModule.Instance.ContentBootstrap.Activate(
                 ComposedContent.Compose(new ContentManifest("missing-native-sprites", "1", [pack]))));
 
-        Assert.Contains("native_missiles.tsv requires native_missile_sprites.tsv", exception.Message, StringComparison.Ordinal);
+        Assert.Contains(
+            "requires external 'native_missile_sprites.tsv' content",
+            exception.Message,
+            StringComparison.Ordinal);
     }
 
     [Fact]
