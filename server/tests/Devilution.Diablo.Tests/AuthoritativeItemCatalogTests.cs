@@ -7,6 +7,34 @@ namespace Devilution.Diablo.Tests;
 public sealed class AuthoritativeItemCatalogTests
 {
     [Fact]
+    public void ShippedItemsUseTheProductionSchema()
+    {
+        var path = Path.Combine(
+            FindRepositoryRoot(),
+            "server",
+            "content",
+            "base",
+            "items.tsv");
+        var table = TsvTable.Parse("items.tsv", File.ReadAllText(path));
+
+        AuthoritativeItemCatalog.ValidateExternalizedProduction(table);
+    }
+
+    [Fact]
+    public void ProductionItemValidationRejectsNumericOnlyIdentityHeaders()
+    {
+        var table = TsvTable.Parse(
+            "items.tsv",
+            "item_id\titem_type\tvalue\tidentified_value\tnative_item_index\tspell_source_kind\tname\tidentified_name\tcursor_graphic\titem_action_kind\titem_action_amount\n"
+                + "1\t1\t75\t75\t1\tNone\tShort Sword\tShort Sword\tSHORT_SWORD\tNone\t1\n");
+
+        var exception = Assert.Throws<InvalidDataException>(() =>
+            AuthoritativeItemCatalog.ValidateExternalizedProduction(table));
+
+        Assert.Contains("complete ordered schema", exception.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void ResolvesNormalizedItemIdsThroughStableContentIds()
     {
         var stableIds = new StableContentIdCatalog([

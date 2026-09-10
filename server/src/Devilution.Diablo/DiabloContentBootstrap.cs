@@ -326,6 +326,8 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
             cursorTable.ToCanonicalTsv());
 
         var itemTable = GetRequiredExternalTable(content, "items.tsv");
+        if (content.Manifest.Schema == DiabloContentSchema.Current)
+            AuthoritativeItemCatalog.ValidateExternalizedProduction(itemTable);
         var itemCatalog = AuthoritativeItemCatalog.LoadTsv(
             itemTable.SourcePath,
             itemTable.ToCanonicalTsv(),

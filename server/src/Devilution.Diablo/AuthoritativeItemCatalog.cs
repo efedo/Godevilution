@@ -150,6 +150,66 @@ public sealed record AuthoritativeItemDefinition(
 /** Validated external item definitions keyed by stable numeric content ID. */
 public sealed class AuthoritativeItemCatalog
 {
+    private static readonly IReadOnlyList<string> ProductionColumns = [
+        "item_id",
+        "item_symbol",
+        "item_type",
+        "value",
+        "identified_value",
+        "min_damage",
+        "max_damage",
+        "armor_class",
+        "durability",
+        "max_durability",
+        "inventory_width",
+        "inventory_height",
+        "identified",
+        "item_tags",
+        "equip_location",
+        "item_class",
+        "misc_id",
+        "spell_id",
+        "spell_symbol",
+        "flags",
+        "min_strength",
+        "min_magic",
+        "min_dexterity",
+        "native_item_index",
+        "charges",
+        "max_charges",
+        "spell_source_kind",
+        "name",
+        "identified_name",
+        "cursor_graphic",
+        "min_monster_level",
+        "drop_rate",
+        "usable",
+        "special_effects",
+        "hellfire_effects",
+        "min_armor_class",
+        "max_armor_class",
+        "item_action_kind",
+        "item_action_amount",
+        "book_template_minimum_item_level",
+        "arena_only",
+        "item_action_message_id",
+    ];
+
+    private static readonly IReadOnlyList<string> ProductionRequiredColumns = [
+        "item_id",
+        "item_symbol",
+        "item_type",
+        "value",
+        "identified_value",
+        "native_item_index",
+        "spell_source_kind",
+        "name",
+        "identified_name",
+        "cursor_graphic",
+        "item_action_kind",
+        "item_action_amount",
+    ];
+
     private readonly Dictionary<uint, AuthoritativeItemDefinition> definitions;
     private readonly AuthoritativeItemAffixCatalog? affixes;
     private AuthoritativeUniqueItemCatalog? uniqueItems;
@@ -205,6 +265,18 @@ public sealed class AuthoritativeItemCatalog
     }
 
     public IReadOnlyList<AuthoritativeItemDefinition> Definitions => definitions.Values.OrderBy(definition => definition.ItemId).ToArray();
+
+    /** Rejects partial normalized item rows at the current production boundary. */
+    public static void ValidateExternalizedProduction(TsvTable table)
+    {
+        ArgumentNullException.ThrowIfNull(table);
+        if (!table.Columns.SequenceEqual(ProductionColumns, StringComparer.Ordinal))
+            throw new InvalidDataException(
+                $"Production item table '{table.SourcePath}' must use the complete ordered schema.");
+        foreach (var row in table.Rows)
+            foreach (var column in ProductionRequiredColumns)
+                _ = row.Required(column);
+    }
 
     public bool TryGet(uint itemId, out AuthoritativeItemDefinition definition) => definitions.TryGetValue(itemId, out definition!);
 

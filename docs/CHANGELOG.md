@@ -2,7 +2,7 @@
 
 All notable changes to this fork are documented below.
 
-- Advanced the active content schema to `1.480.0`, retaining `1.479.0` as
+- Advanced the active content schema to `1.481.0`, retaining `1.480.0` as
   the previous additive contract. Current-schema production activation now
   requires `world_rules.tsv` to carry the complete external town/service
   identities and Town Portal destination geometry, and `combat.tsv` to carry
@@ -25,7 +25,9 @@ All notable changes to this fork are documented below.
   tables must begin with the ordered symbolic spell identity columns and carry
   required native spell and projectile behavior metadata. Supplied
   `spell_books.tsv` tables must use the complete ordered spell-book schema,
-  including stable spell symbols and cursor metadata. Older
+  including stable spell symbols and cursor metadata. Supplied `items.tsv`
+  tables must use the complete ordered normalized-item schema and provide
+  symbolic item identities plus explicit item-action semantics. Older
   schema packs and direct compatibility callers retain support
   for partial rows, but new packs cannot reintroduce embedded defaults at the
   server boundary.
