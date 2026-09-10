@@ -13,6 +13,127 @@ public enum DiabloGameVariant
 /** Externalized constants for the initial authoritative combat boundary. */
 public sealed class AuthoritativeCombatRules
 {
+    private static readonly string[] ExternalizedProductionColumns = [
+        "base_attack_damage",
+        "minimum_damage",
+        "defeat_experience",
+        "hit_chance_percent",
+        "critical_chance_percent",
+        "critical_multiplier",
+        "friendly_fire",
+        "game_variant",
+        "restart_level_id",
+        "restart_level_symbol",
+        "restart_position_x",
+        "restart_position_y",
+        "restart_life",
+        "restart_life_scale",
+        "restart_transition_ticks",
+        "death_gold_divisor",
+        "death_gold_maximum_stack",
+        "death_gold_item_type",
+        "death_gold_item_index",
+        "death_drop_search_radius",
+        "pvp_ear_item_id",
+        "pvp_ear_item_symbol",
+        "monster_melee_minimum_hit_chance",
+        "monster_ranged_minimum_hit_chance",
+        "monster_minimum_hit_chance_level_14",
+        "monster_minimum_hit_chance_level_15",
+        "monster_minimum_hit_chance_level_16",
+        "monster_to_hit_level_scale",
+        "monster_to_hit_base_bonus",
+        "monster_ranged_distance_penalty",
+        "monster_magic_minimum_hit_chance",
+        "monster_magic_to_hit_monster_level_scale",
+        "monster_magic_to_hit_player_level_scale",
+        "monster_magic_to_hit_base_bonus",
+        "monster_magic_distance_penalty",
+        "monster_charge_base_to_hit",
+        "monster_acid_puddle_minimum_hit_chance",
+        "monster_acid_puddle_base_hit_chance",
+        "maximum_resistance",
+        "random_steal_life_divisor",
+        "steal_life_3_percent",
+        "steal_life_5_percent",
+        "steal_mana_3_percent",
+        "steal_mana_5_percent",
+        "hellfire_armor_bonus_against_demons",
+        "hellfire_armor_bonus_against_undead",
+        "pvp_ear_native_item_index",
+        "pvp_ear_misc_id",
+        "maximum_attribute",
+        "barbarian_weapon_strength_damage_divisor",
+        "rogue_strength_dexterity_damage_divisor",
+        "monk_staff_unarmed_damage_divisor",
+        "monk_weapon_damage_divisor",
+        "bard_sword_strength_dexterity_damage_divisor",
+        "bard_bow_strength_dexterity_damage_divisor",
+        "bard_default_strength_damage_divisor",
+        "standard_strength_damage_divisor",
+        "barbarian_bow_strength_damage_divisor",
+        "barbarian_default_strength_damage_divisor",
+        "barbarian_vitality_damage_divisor",
+        "thorns_damage_minimum",
+        "thorns_damage_maximum",
+        "hellfire_decay_damage_reduction",
+        "hellfire_decay_removal_threshold",
+        "hellfire_devastation_chance_percent",
+        "hellfire_devastation_damage_multiplier",
+        "hellfire_jesters_roll_maximum",
+        "hellfire_jesters_expansion_threshold",
+        "hellfire_jesters_expansion_multiplier",
+        "hellfire_peril_damage_multiplier",
+        "hellfire_doppelganger_chance_percent",
+        "triple_demon_damage_multiplier",
+        "pvp_block_level_scale",
+        "equipment_fast_block_frame_skip",
+        "fast_hit_recovery_frame_skip",
+        "faster_hit_recovery_frame_skip",
+        "fastest_hit_recovery_frame_skip",
+        "quick_attack_frame_skip_with_first_frame",
+        "quick_attack_frame_skip_without_first_frame",
+        "fast_attack_frame_skip_with_first_frame",
+        "fast_attack_frame_skip_without_first_frame",
+        "faster_attack_frame_skip_with_first_frame",
+        "faster_attack_frame_skip_without_first_frame",
+        "fastest_attack_frame_skip_with_first_frame",
+        "fastest_attack_frame_skip_without_first_frame",
+        "player_magic_hit_character_level_scale",
+        "player_magic_minimum_hit_chance",
+        "player_magic_maximum_hit_chance",
+        "monster_regeneration_level_divisor",
+        "monster_player_block_level_scale",
+        "difficulty_nightmare_level_offset",
+        "difficulty_hell_level_offset",
+        "difficulty_nightmare_to_hit_bonus",
+        "difficulty_hell_to_hit_bonus",
+        "difficulty_nightmare_armor_bonus",
+        "difficulty_hell_armor_bonus",
+        "difficulty_nightmare_damage_multiplier",
+        "difficulty_nightmare_damage_bonus",
+        "difficulty_hell_damage_multiplier",
+        "difficulty_hell_damage_bonus",
+        "difficulty_nightmare_experience_multiplier",
+        "difficulty_hell_experience_multiplier",
+        "difficulty_experience_bonus",
+        "difficulty_nightmare_health_multiplier",
+        "difficulty_hell_health_multiplier",
+        "difficulty_nightmare_diablo_health_bonus",
+        "difficulty_nightmare_hellfire_single_player_health_bonus",
+        "difficulty_nightmare_hellfire_multiplayer_health_bonus",
+        "difficulty_hell_diablo_health_bonus",
+        "difficulty_hell_hellfire_single_player_health_bonus",
+        "difficulty_hell_hellfire_multiplayer_health_bonus",
+        "ranged_attack_frame_skip_with_first_frame",
+        "ranged_attack_frame_skip_without_first_frame",
+        "ranged_fast_attack_frame_skip_bonus",
+        "unique_experience_multiplier",
+        "multiple_arrows_count",
+        "multiple_arrows_delay_ticks",
+        "multiple_arrows_spread_distance",
+    ];
+
     public AuthoritativeCombatRules(
         int baseAttackDamage,
         int minimumDamage,
@@ -950,6 +1071,30 @@ public sealed class AuthoritativeCombatRules
             _ => 0,
         };
         return Math.Max(0, postArmor * (100 - Math.Clamp(resistance, -100, 100)) / 100);
+    }
+
+    /**
+     * Rejects omitted combat tuning at the current production content
+     * boundary. Direct callers may continue to load partial compatibility rows.
+     */
+    public static void ValidateExternalizedProduction(TsvTable table)
+    {
+        ArgumentNullException.ThrowIfNull(table);
+        if (table.Rows.Count != 1)
+            throw new InvalidDataException(
+                $"Production combat table '{table.SourcePath}' must contain exactly one row.");
+
+        var missingColumns = ExternalizedProductionColumns
+            .Where(column => !table.Columns.Contains(column, StringComparer.Ordinal))
+            .ToArray();
+        if (missingColumns.Length != 0)
+            throw new InvalidDataException(
+                $"Production combat table '{table.SourcePath}' is missing required columns: "
+                + string.Join(", ", missingColumns));
+
+        var row = table.Rows[0];
+        foreach (var column in ExternalizedProductionColumns)
+            _ = row.Required(column);
     }
 
     public static AuthoritativeCombatRules LoadTsv(

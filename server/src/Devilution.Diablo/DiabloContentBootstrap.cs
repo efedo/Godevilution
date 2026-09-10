@@ -351,6 +351,8 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
             worldRulesTable.ToCanonicalTsv(),
             stableIds);
         var combatTable = GetRequiredExternalTable(content, "combat.tsv");
+        if (content.Manifest.Schema == DiabloContentSchema.Current)
+            AuthoritativeCombatRules.ValidateExternalizedProduction(combatTable);
         var combatRules = AuthoritativeCombatRules.LoadTsv(
             combatTable.SourcePath,
             combatTable.ToCanonicalTsv(),

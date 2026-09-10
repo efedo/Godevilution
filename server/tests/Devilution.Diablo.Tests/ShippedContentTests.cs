@@ -18,7 +18,7 @@ public sealed class ShippedContentTests
         Assert.Equal("devilution.base", pack.Id);
         Assert.Equal("0.1.0", pack.Version);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.463.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.464.0"),
             pack.Schema);
         Assert.Empty(pack.Overlays);
         var nativeDunMonsterTable = pack.Tables.Single(
@@ -1204,7 +1204,7 @@ public sealed class ShippedContentTests
             currentPack.Tables,
             currentPack.Dependencies,
             currentPack.Overlays,
-            new ContentSchemaIdentity("devilution.diablo", "1.462.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.463.0"),
             currentPack.DependencyConstraints,
             currentPack.Assets);
         var content = ComposedContent.Compose(new ContentManifest(
@@ -1336,7 +1336,7 @@ public sealed class ShippedContentTests
                 .ToArray(),
             basePack.Dependencies,
             basePack.Overlays,
-            new ContentSchemaIdentity("devilution.diablo", "1.462.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.463.0"),
             basePack.DependencyConstraints,
             basePack.Assets);
 
@@ -3519,8 +3519,10 @@ public sealed class ShippedContentTests
         var combat = basePack.Tables.Single(table => table.SourcePath == "combat.tsv");
         var invalidCombat = TsvTable.Parse(
             combat.SourcePath,
-            "base_attack_damage\tminimum_damage\tdefeat_experience\tpvp_ear_item_id\n"
-                + "10\t1\t100\t9999\n");
+            combat.ToCanonicalTsv().Replace(
+                "24\tear\t15\t10",
+                "9999\tear\t15\t10",
+                StringComparison.Ordinal));
         var incompletePack = new ContentPack(
             basePack.Id,
             basePack.Version,
@@ -3539,7 +3541,74 @@ public sealed class ShippedContentTests
             DiabloModule.Instance.ContentBootstrap.Activate(
                 ComposedContent.Compose(new ContentManifest("base", "1", [incompletePack]))));
 
-        Assert.Contains("references unknown item 9999", exception.Message, StringComparison.Ordinal);
+        Assert.Contains("maps item 9999 to symbol 'ear'", exception.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void ContentBootstrapRejectsPartialCombatRulesInCurrentSchema()
+    {
+        var contentRoot = Path.Combine(FindRepositoryRoot(), "server", "content", "base");
+        var basePack = ContentPackLoader.LoadManifestDirectory(contentRoot);
+        var combat = basePack.Tables.Single(table => table.SourcePath == "combat.tsv");
+        var partialCombat = TsvTable.Parse(
+            combat.SourcePath,
+            "base_attack_damage\tminimum_damage\tdefeat_experience\tgame_variant\n"
+                + "10\t1\t100\tDiablo\n");
+        var incompletePack = new ContentPack(
+            basePack.Id,
+            basePack.Version,
+            basePack.Tables
+                .Select(table => table.SourcePath == combat.SourcePath
+                    ? partialCombat
+                    : table)
+                .ToArray(),
+            basePack.Dependencies,
+            basePack.Overlays,
+            basePack.Schema,
+            basePack.DependencyConstraints,
+            basePack.Assets);
+
+        var exception = Assert.Throws<InvalidDataException>(() =>
+            DiabloModule.Instance.ContentBootstrap.Activate(
+                ComposedContent.Compose(new ContentManifest(
+                    "missing-combat-tuning",
+                    "1",
+                    [incompletePack]))));
+
+        Assert.Contains("Production combat table", exception.Message, StringComparison.Ordinal);
+        Assert.Contains("critical_chance_percent", exception.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void PreviousSchemaRetainsPartialCombatCompatibility()
+    {
+        var contentRoot = Path.Combine(FindRepositoryRoot(), "server", "content", "base");
+        var basePack = ContentPackLoader.LoadManifestDirectory(contentRoot);
+        var combat = basePack.Tables.Single(table => table.SourcePath == "combat.tsv");
+        var partialCombat = TsvTable.Parse(
+            combat.SourcePath,
+            "base_attack_damage\tminimum_damage\tdefeat_experience\n10\t1\t100\n");
+        var previousPack = new ContentPack(
+            basePack.Id,
+            basePack.Version,
+            basePack.Tables
+                .Select(table => table.SourcePath == combat.SourcePath
+                    ? partialCombat
+                    : table)
+                .ToArray(),
+            basePack.Dependencies,
+            basePack.Overlays,
+            new ContentSchemaIdentity("devilution.diablo", "1.463.0"),
+            basePack.DependencyConstraints,
+            basePack.Assets);
+
+        var activation = DiabloModule.Instance.ContentBootstrap.Activate(
+            ComposedContent.Compose(new ContentManifest(
+                "previous-combat-contract",
+                "1",
+                [previousPack])));
+
+        Assert.Equal(10, activation.Simulation.CombatRules.BaseAttackDamage);
     }
 
     [Fact]
@@ -3918,7 +3987,7 @@ public sealed class ShippedContentTests
 
         Assert.Equal("devilution.hellfire", hellfirePack.Id);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.463.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.464.0"),
             hellfirePack.Schema);
         Assert.Equal(DiabloGameVariant.Hellfire, combat.GameVariant);
         Assert.Equal(2, combat.UniqueExperienceMultiplier);

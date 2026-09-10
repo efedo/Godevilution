@@ -121,6 +121,21 @@ public sealed class AuthoritativeCombatRulesTests
     }
 
     [Fact]
+    public void ProductionValidationRejectsOmittedCombatTuning()
+    {
+        var table = TsvTable.Parse(
+            "combat.tsv",
+            "base_attack_damage\tminimum_damage\tdefeat_experience\tgame_variant\n"
+                + "10\t1\t100\tDiablo\n");
+
+        var exception = Assert.Throws<InvalidDataException>(() =>
+            AuthoritativeCombatRules.ValidateExternalizedProduction(table));
+
+        Assert.Contains("missing required columns", exception.Message, StringComparison.Ordinal);
+        Assert.Contains("critical_chance_percent", exception.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void LoadsConfiguredMonsterHitChanceFloors()
     {
         var rules = AuthoritativeCombatRules.LoadTsv(
