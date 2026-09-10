@@ -349,53 +349,16 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
             cursorTable.SourcePath,
             cursorTable.ToCanonicalTsv());
 
-        var itemCatalog = content.TryGetTable("items.tsv", out var itemTable)
-            ? AuthoritativeItemCatalog.LoadTsv(
-                itemTable.SourcePath,
-                itemTable.ToCanonicalTsv(),
-                affixes,
-                null,
-                cursorCatalog,
-                stableIds,
-                nativeItemEffects,
-                nativeItemHellfireEffects)
-            : null;
-        // Normalized IDs take precedence. The legacy table remains a fallback
-        // and intentionally derives compatibility IDs from its own row order.
-        if (itemCatalog is null
-            && content.TryGetTable("itemdat.tsv", out var legacyItemTable)) {
-            if (nativeSpells is null)
-                throw new InvalidDataException(
-                    "Legacy itemdat.tsv content requires a validated native_spells.tsv catalog.");
-            if (nativeMisc is null)
-                throw new InvalidDataException(
-                    "Legacy itemdat.tsv content requires a validated native_item_misc.tsv catalog.");
-            if (nativeTopology is null)
-                throw new InvalidDataException(
-                    "Legacy itemdat.tsv content requires a validated native_item_topology.tsv catalog.");
-            if (nativeItemTags is null)
-                throw new InvalidDataException(
-                    "Legacy itemdat.tsv content requires a validated native_item_tags.tsv catalog.");
-            if (nativeItemEffects is null)
-                throw new InvalidDataException(
-                    "Legacy itemdat.tsv content requires a validated native_item_effects.tsv catalog.");
-            itemCatalog = AuthoritativeItemCatalog.LoadLegacyTsv(
-                legacyItemTable.SourcePath,
-                legacyItemTable.ToCanonicalTsv(),
-                affixes,
-                null,
-                spells,
-                cursorCatalog,
-                nativeSpells,
-                nativeMisc,
-                nativeTopology,
-                nativeItemEffects,
-                nativeItemTags);
-        }
-        if (itemCatalog is null) {
-            throw new InvalidDataException(
-                "Active Diablo content must provide items.tsv or itemdat.tsv.");
-        }
+        var itemTable = GetRequiredExternalTable(content, "items.tsv");
+        var itemCatalog = AuthoritativeItemCatalog.LoadTsv(
+            itemTable.SourcePath,
+            itemTable.ToCanonicalTsv(),
+            affixes,
+            null,
+            cursorCatalog,
+            stableIds,
+            nativeItemEffects,
+            nativeItemHellfireEffects);
         stableIds.ValidateReferences("item", itemId => itemCatalog.TryGet(itemId, out _));
         var spellBooks = content.TryGetTable("spell_books.tsv", out var spellBooksTable)
             ? AuthoritativeSpellBookCatalog.LoadTsv(
@@ -444,33 +407,20 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
             playerLoadoutItemTable.ToCanonicalTsv(),
             stableIds);
 
-        var uniqueItems = content.TryGetTable("unique_items.tsv", out var uniqueTable)
-            ? AuthoritativeUniqueItemCatalog.LoadTsv(
-                uniqueTable.SourcePath,
-                uniqueTable.ToCanonicalTsv(),
-                cursorCatalog,
-                stableIds,
-                nativeItemHellfireEffects,
-                nativeItemEffects)
-            : itemCatalog is not null
-                && content.TryGetTable("unique_itemdat.tsv", out var legacyUniqueTable)
-                ? AuthoritativeUniqueItemCatalog.LoadLegacyTsv(
-                    legacyUniqueTable.SourcePath,
-                    legacyUniqueTable.ToCanonicalTsv(),
-                    itemCatalog,
-                    cursorCatalog,
-                    nativeItemHellfireEffects,
-                    nativeItemEffects)
-                : null;
-        uniqueItems?.ValidatePowers();
-        if (itemCatalog is not null && uniqueItems is not null)
-            itemCatalog.AttachUniqueCatalog(uniqueItems);
-        if (uniqueItems is not null)
-            uniqueItems.ValidateBaseItems(itemCatalog!);
-        if (uniqueItems is not null)
-            stableIds.ValidateReferences(
-                "unique",
-                uniqueId => uniqueItems.TryGet(uniqueId, out _));
+        var uniqueTable = GetRequiredExternalTable(content, "unique_items.tsv");
+        var uniqueItems = AuthoritativeUniqueItemCatalog.LoadTsv(
+            uniqueTable.SourcePath,
+            uniqueTable.ToCanonicalTsv(),
+            cursorCatalog,
+            stableIds,
+            nativeItemHellfireEffects,
+            nativeItemEffects);
+        uniqueItems.ValidatePowers();
+        itemCatalog.AttachUniqueCatalog(uniqueItems);
+        uniqueItems.ValidateBaseItems(itemCatalog);
+        stableIds.ValidateReferences(
+            "unique",
+            uniqueId => uniqueItems.TryGet(uniqueId, out _));
 
         var storeTable = content.GetRequiredTable("stores.tsv");
         var stores = StoreCatalog.LoadTsv(
@@ -569,7 +519,7 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
         var rechargeAbilitySpellId = ResolveAbilityId(stableIds, "recharge");
         var trapDisarmAbilitySpellId = ResolveAbilityId(stableIds, "trap_disarm");
         var monsterFlashSpellId = ResolveSpellId(stableIds, "flash");
-        itemCatalog!.ValidateSpellReferences(spells);
+        itemCatalog.ValidateSpellReferences(spells);
         if (world is not null)
             worldRules.ValidateWorld(world);
         if (world is not null)
@@ -742,13 +692,13 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
                 AuthoritativeWorldObjectCatalog.ValidateWorld(objects, world);
         }
         if (objectDefinitions.Length > 0)
-            AuthoritativeWorldObjectCatalog.ValidateItemRequirements(objectDefinitions, itemCatalog!);
+            AuthoritativeWorldObjectCatalog.ValidateItemRequirements(objectDefinitions, itemCatalog);
         if (objectItemGates is not null) {
-            objectItemGates.ValidateItems(itemCatalog!);
+            objectItemGates.ValidateItems(itemCatalog);
             objectItemGates.ValidateObjects((objects ?? []).Concat(objectTemplates ?? []));
         }
         if (objectDefinitions.Length > 0)
-            AuthoritativeWorldObjectCatalog.ValidateRewardRequirements(objectDefinitions, itemCatalog!);
+            AuthoritativeWorldObjectCatalog.ValidateRewardRequirements(objectDefinitions, itemCatalog);
         if (objectDefinitions.Length > 0 && spells is not null)
             AuthoritativeWorldObjectCatalog.ValidateSpellRequirements(objectDefinitions, spells);
         if (objectDefinitions.Length > 0 && monsterTypes is not null)

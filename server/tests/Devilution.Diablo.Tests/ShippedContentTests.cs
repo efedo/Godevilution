@@ -1238,6 +1238,8 @@ public sealed class ShippedContentTests
     [InlineData("item_generation.tsv")]
     [InlineData("experience.tsv")]
     [InlineData("content_ids.tsv")]
+    [InlineData("items.tsv")]
+    [InlineData("unique_items.tsv")]
     [InlineData("spells.tsv")]
     [InlineData("native_spells.tsv")]
     [InlineData("native_item_misc.tsv")]

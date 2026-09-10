@@ -121,10 +121,10 @@ other numeric values are rejected during content activation.
 
 The normalized TSV files define stable IDs and authoritative rules for player
 classes, animation timing, initial loadouts, levels, world rules, items, affixes, stores and
-services, spells, combat, monsters, portals, objects, and quests. Legacy `itemdat.tsv` and
-`unique_itemdat.tsv` are compatibility fallbacks; normalized `items.tsv` and
-`unique_items.tsv` take precedence so stable IDs are not replaced by source-row
-positions.
+services, spells, combat, monsters, portals, objects, and quests. Production
+activation requires normalized `items.tsv` and `unique_items.tsv`; legacy
+`itemdat.tsv` and `unique_itemdat.tsv` remain available to direct compatibility
+loaders, but cannot replace stable IDs at the server boundary.
 
 `native_spells.tsv` defines the complete native spell-name namespace, including
 unused legacy ordinals, so `itemdat.tsv` compatibility names are data-driven
@@ -3206,8 +3206,8 @@ clients.
 | `unique_items.tsv` | `unique_id` | Normalized unique-item definitions with optional stable `unique_symbol`, base-item references and optional `base_item_symbol` validated against the active item catalog (both symbols required by shipped base and Hellfire rows), authoritative presentation names, optional cursor symbols, and fixed effects; production activation rejects unsupported power symbols, while ordinary and Hellfire effect powers resolve through their validated native effect catalogs. |
 | `stores.tsv` | `store_id`, `store_slot` | Deterministic vendor inventory and item-generation references, with optional `store_role` (`Generic`, `Smith`, `Witch`, `Wirt`, `Healer`, or `Adria`) and stable `store_symbol`, `item_symbol`, `unique_item_symbol`, and `spell_symbol` cross-checks validated against active store, item, unique-item, and spell catalogs. Omitted roles infer only known native vendor symbols and retain `Generic` for custom stores. Book-template rows use `spell_books.tsv` to generate a deterministic random book unless an explicit `spell_id`/`spell_symbol` is supplied. |
 | `store_services.tsv` | `key`, `spell_id`, `spell_symbol` | Service pricing and spell-staff costs, with optional stable `spell_symbol` cross-checks and non-zero spell identities validated against active `spells.tsv`; omitted keys use module defaults. |
-| `itemdat.tsv`, `item_prefixes.tsv`, `item_suffixes.tsv` | source-row compatibility | Legacy fallback tables used only when normalized tables are absent. |
-| `unique_itemdat.tsv` | source-row compatibility | Legacy unique-item fallback used only when `unique_items.tsv` is absent. |
+| `itemdat.tsv`, `item_prefixes.tsv`, `item_suffixes.tsv` | source-row compatibility | Legacy tables retained for direct compatibility loaders; production activation requires normalized item data. |
+| `unique_itemdat.tsv` | source-row compatibility | Legacy unique-item table retained for direct compatibility loaders; production activation requires `unique_items.tsv`. |
 
 The Data runtime owns parsing, ordered composition, overlay keys, and manifest
 identity. The Diablo module owns the meaning and cross-table validation of these

@@ -39,6 +39,10 @@ catalog construction remains permissive for compatibility tooling.
 The production bootstrap also requires the external `content_ids.tsv` stable
 identity catalog, so symbolic classes, spells, items, levels, quests, objects,
 and stores cannot silently fall back to native numeric inference.
+Production activation now also requires the normalized `items.tsv` and
+`unique_items.tsv` catalogs. The legacy `itemdat.tsv` and `unique_itemdat.tsv`
+loaders remain available to direct compatibility callers, but a server content
+pack cannot silently select source-row identities for authoritative item state.
 Production activation also requires the native item-misc, item-topology,
 item-tag, item-effect, Hellfire-effect, and cursor-graphics catalogs, so item
 identity and presentation no longer fall back to embedded native mappings at

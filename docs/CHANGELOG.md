@@ -43,6 +43,10 @@ All notable changes to this fork are documented below.
 - Production Diablo activation now requires the external stable-ID catalog,
   keeping symbolic content identities authoritative at the pack boundary.
 
+- Production Diablo activation now requires normalized item and unique-item
+  catalogs; legacy item-table loaders remain available only to direct
+  compatibility callers.
+
 - Production Diablo activation now requires the external native item-metadata
   and cursor-graphics catalogs, keeping item identity and presentation data
   outside the server's production fallback path.
