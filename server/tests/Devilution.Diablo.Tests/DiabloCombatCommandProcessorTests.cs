@@ -5737,6 +5737,47 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void BarbarianCleaveHitsAnAdjacentMonsterForQuarterDamage()
+    {
+        var primary = new AuthoritativeCombatTarget(9, 1, 0, 6400);
+        var side = new AuthoritativeCombatTarget(10, 1, 1, 6400);
+        var classes = LoadShippedPlayerClasses();
+        var configuredClasses = new AuthoritativePlayerClassCatalog(
+            classes.Definitions.Select(definition => definition.ClassId == 5
+                ? definition with { CriticalStrikeChancePerLevelPercent = 0 }
+                : definition));
+        var world = new DiabloWorldState(combatTargets: [primary, side]);
+        var processor = CreateProcessor(
+            world,
+            playerClasses: configuredClasses);
+        var player = CreatePlayer(
+            entityId: 7,
+            characterClassId: 5,
+            characterLevel: 30,
+            attributes: configuredClasses.GetRequired(5).CreateStartingAttributes(),
+            equipment: [new EquippedStoreItem(
+                4,
+                42,
+                AuthoritativeItemState.Empty with {
+                    ItemType = 2,
+                    ItemClass = 1,
+                    EquipLocation = 2,
+                    MinDamage = 10,
+                    MaxDamage = 10,
+                    StatFlag = true,
+                })]);
+
+        var result = processor.Execute(player, new DiabloAttackIntent(primary.EntityId), 1);
+
+        Assert.True(result.Succeeded, result.Failure?.ToString());
+        Assert.Equal(6400, primary.HitPoints);
+        Assert.Equal(6392, side.HitPoints);
+        var eventItem = Assert.Single(result.Events);
+        Assert.Equal(8, eventItem.Amount);
+        Assert.Equal(side.EntityId, eventItem.TargetEntityId);
+    }
+
+    [Fact]
     public void WarriorCriticalStrikeDoublesPhysicalDamageBeforeArmorAndConsumesItsNativeRoll()
     {
         var criticalTarget = new AuthoritativeCombatTarget(

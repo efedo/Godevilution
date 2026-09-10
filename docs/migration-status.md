@@ -28,6 +28,10 @@ Gargoyle special flag is consumed by the first physical hit without applying
 that hit's damage or equipment effects; other petrified monsters reject
 physical player damage until Stone Curse ends.
 
+Class-driven Cleave now resolves the native adjacent side targets for Monk
+staffs, Bard dual swords, and Barbarian axe/two-handed melee, applying the
+native adjacent hit penalty and quarter-damage boundary.
+
 The compact native replay runner now mirrors the managed monster activation
 window for fixtures that carry an active target: visible targets wake for the
 native 255-tick window, while targets outside live-player vision count down

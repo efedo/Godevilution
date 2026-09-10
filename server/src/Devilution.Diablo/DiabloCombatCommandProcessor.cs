@@ -679,24 +679,71 @@ public sealed class DiabloCombatCommandProcessor
                 appliedTick,
                 arrowCount);
         }
+        var events = new List<DiabloGameplayEvent>();
+        var attackHit = ResolveMonsterPlayerAttack(
+            player,
+            target,
+            appliedTick,
+            players,
+            adjacentDamage: false,
+            seed: unchecked((uint)appliedTick ^ target.EntityId ^ player.EntityId),
+            applyElemental: true,
+            events);
+        if (!ranged && CanPlayerCleave(player)) {
+            var sideIndex = 0U;
+            foreach (var sideTarget in FindCleaveTargets(player, target, players)) {
+                attackHit |= ResolveMonsterPlayerAttack(
+                    player,
+                    sideTarget,
+                    appliedTick,
+                    players,
+                    adjacentDamage: true,
+                    seed: unchecked(
+                        (uint)appliedTick
+                        ^ sideTarget.EntityId
+                        ^ player.EntityId
+                        ^ ++sideIndex),
+                    applyElemental: false,
+                    events);
+            }
+        }
+        if (ranged || attackHit)
+            ApplyHellfireWeaponDecay(player);
+        return events.Count == 0
+            ? DiabloCombatIntentResult.Accepted
+            : new DiabloCombatIntentResult(true, null, events);
+    }
+
+    /** Resolves one native monster-target physical hit, including shared effects. */
+    private bool ResolveMonsterPlayerAttack(
+        AuthoritativePlayerState player,
+        AuthoritativeCombatTarget target,
+        ulong appliedTick,
+        IReadOnlyList<AuthoritativePlayerState> players,
+        bool adjacentDamage,
+        uint seed,
+        bool applyElemental,
+        ICollection<DiabloGameplayEvent> events)
+    {
+        var targetDistance = checked((int)DeterministicGridMetrics.ChebyshevDistance(
+            target.PositionX,
+            target.PositionY,
+            player.PositionX,
+            player.PositionY));
         var damageQ6 = ResolvePlayerAttackDamageQ6(
             player,
             target,
             monsterTarget: true,
-            ranged: ranged,
-            targetDistance: checked((int)DeterministicGridMetrics.ChebyshevDistance(
-                target.PositionX,
-                target.PositionY,
-                player.PositionX,
-                player.PositionY)),
-            seed: unchecked((uint)appliedTick ^ target.EntityId ^ player.EntityId),
+            ranged: false,
+            targetDistance: targetDistance,
+            adjacentDamage: adjacentDamage,
+            seed: seed,
             out var perilSelfDamageQ6,
             out var perilActive,
             out var doppelgangerProc,
             out var attackHit);
         if (doppelgangerProc)
             SpawnDoppelganger(target, players);
-        var events = new List<DiabloGameplayEvent>();
         if (perilActive) {
             var damageResult = playerDamage.Apply(player, perilSelfDamageQ6);
             if (damageResult.IncomingDamageQ6 > 0) {
@@ -719,16 +766,76 @@ public sealed class DiabloCombatCommandProcessor
             }
         }
         ApplyResolvedDamageQ6(player, target, damageQ6, events);
-        if (attackHit && target.HitPointsQ6 > 0)
-            ApplyEquipmentElementalDamage(player, target, events, ranged);
+        if (applyElemental && attackHit && target.HitPointsQ6 > 0)
+            ApplyEquipmentElementalDamage(player, target, events, ranged: false);
         ApplyEquipmentKnockback(player, target, damageQ6, players);
         if (damageQ6 > 0)
             ApplyEquipmentAttackEffects(player, damageQ6, events);
-        if (ranged || attackHit)
-            ApplyHellfireWeaponDecay(player);
-        return events.Count == 0
-            ? DiabloCombatIntentResult.Accepted
-            : new DiabloCombatIntentResult(true, null, events);
+        return attackHit;
+    }
+
+    /** Returns the native side monsters affected by a class Cleave attack. */
+    private IReadOnlyList<AuthoritativeCombatTarget> FindCleaveTargets(
+        AuthoritativePlayerState player,
+        AuthoritativeCombatTarget primaryTarget,
+        IReadOnlyList<AuthoritativePlayerState> players)
+    {
+        var targets = new List<AuthoritativeCombatTarget>(2);
+        var facing = (int)player.FacingDirection;
+        foreach (var offset in new[] { 1, -1 }) {
+            var direction = DeterministicGridDirections.Rotate(facing, offset);
+            var displacement = DirectionDisplacements[direction];
+            var positionX = checked(player.PositionX + displacement.X);
+            var positionY = checked(player.PositionY + displacement.Y);
+            var sideTarget = world.CombatTargets.Values
+                .Where(candidate => candidate.EntityId != primaryTarget.EntityId
+                    && candidate.PositionX == positionX
+                    && candidate.PositionY == positionY)
+                .OrderBy(candidate => candidate.EntityId)
+                .FirstOrDefault(candidate =>
+                    TryGetAttackTarget(player, candidate.EntityId, ranged: false, out _));
+            if (sideTarget is not null)
+                targets.Add(sideTarget);
+        }
+        return targets;
+    }
+
+    /** Mirrors Player::CanCleave using validated class and equipment identities. */
+    private bool CanPlayerCleave(AuthoritativePlayerState player)
+    {
+        var playerClass = GetPlayerClass(player);
+        if (playerClass is null)
+            return false;
+        var left = player.Equipment.FirstOrDefault(item => item.Slot == 4);
+        var right = player.Equipment.FirstOrDefault(item => item.Slot == 5);
+        var hasStaff = left is not null && IsUsable(left.State)
+            && AuthoritativeItemClassification.IsStaff(left.State, items)
+            || right is not null && IsUsable(right.State)
+            && AuthoritativeItemClassification.IsStaff(right.State, items);
+        var hasShield = left is not null && IsUsable(left.State)
+            && AuthoritativeItemClassification.IsShield(left.State, items)
+            || right is not null && IsUsable(right.State)
+            && AuthoritativeItemClassification.IsShield(right.State, items);
+        var hasSwordLeft = left is not null && IsUsable(left.State)
+            && AuthoritativeItemClassification.IsSword(left.State, items);
+        var hasSwordRight = right is not null && IsUsable(right.State)
+            && AuthoritativeItemClassification.IsSword(right.State, items);
+        var hasAxe = left is not null && IsUsable(left.State)
+            && AuthoritativeItemClassification.IsAxe(left.State, items)
+            || right is not null && IsUsable(right.State)
+            && AuthoritativeItemClassification.IsAxe(right.State, items);
+        var hasTwoHandedMaceOrSword = left is not null
+            && IsUsable(left.State)
+            && AuthoritativeItemClassification.IsTwoHanded(left.State, items)
+            && (AuthoritativeItemClassification.IsMace(left.State, items)
+                || AuthoritativeItemClassification.IsSword(left.State, items));
+        return playerClass.PhysicalDamageFormula switch {
+            AuthoritativePhysicalDamageFormula.Monk => hasStaff,
+            AuthoritativePhysicalDamageFormula.Bard => hasSwordLeft && hasSwordRight,
+            AuthoritativePhysicalDamageFormula.Barbarian => hasAxe
+                || (!hasShield && hasTwoHandedMaceOrSword),
+            _ => false,
+        };
     }
 
     /** Resolves a cell action against the first authoritative occupant on its native attack path. */
@@ -845,6 +952,7 @@ public sealed class DiabloCombatCommandProcessor
                 monsterTarget: false,
                 ranged: true,
                 targetDistance: targetDistance,
+                adjacentDamage: false,
                 seed: unchecked((uint)appliedTick ^ target.EntityId ^ player.EntityId ^ (uint)arrowIndex),
                 out var perilSelfDamageQ6,
                 out var perilActive,
@@ -947,6 +1055,7 @@ public sealed class DiabloCombatCommandProcessor
             monsterTarget: false,
             ranged: false,
             targetDistance: 1,
+            adjacentDamage: false,
             seed: unchecked((uint)appliedTick ^ target.EntityId ^ player.EntityId),
             out var perilSelfDamageQ6,
             out var perilActive,
@@ -1052,6 +1161,7 @@ public sealed class DiabloCombatCommandProcessor
                 monsterTarget: true,
                 ranged: true,
                 targetDistance: targetDistance,
+                adjacentDamage: false,
                 seed: unchecked((uint)appliedTick ^ target.EntityId ^ player.EntityId ^ (uint)arrowIndex),
                 out var perilSelfDamageQ6,
                 out var perilActive,
@@ -1462,6 +1572,7 @@ public sealed class DiabloCombatCommandProcessor
         bool monsterTarget,
         bool ranged,
         int targetDistance,
+        bool adjacentDamage,
         uint seed,
         out int perilSelfDamageQ6,
         out bool perilActive,
@@ -1580,6 +1691,11 @@ public sealed class DiabloCombatCommandProcessor
                     checked(
                         classHitChance
                         + hitBonus
+                        - (adjacentDamage
+                            ? player.CharacterLevel > 20
+                                ? 30
+                                : checked((35 - (int)player.CharacterLevel) * 2)
+                            : 0)
                         - (ranged
                             ? targetDistance * targetDistance / 2
                             : 0)),
@@ -1592,6 +1708,11 @@ public sealed class DiabloCombatCommandProcessor
                     checked(
                         classHitChance
                         + hitBonus
+                        - (adjacentDamage
+                            ? player.CharacterLevel > 20
+                                ? 30
+                                : checked((35 - (int)player.CharacterLevel) * 2)
+                            : 0)
                         - (ranged
                             ? targetDistance * targetDistance / 2
                             : 0)
@@ -1671,6 +1792,8 @@ public sealed class DiabloCombatCommandProcessor
             }
             resolvedDamageQ6 = checked(resolvedDamageQ6 * roll / 100);
         }
+        if (adjacentDamage)
+            resolvedDamageQ6 >>= 2;
         if (perilActive)
             resolvedDamageQ6 = checked(resolvedDamageQ6 * rules.HellfirePerilDamageMultiplier);
         return resolvedDamageQ6;

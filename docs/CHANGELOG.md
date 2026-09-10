@@ -13,6 +13,10 @@ All notable changes to this fork are documented below.
   effects are applied, and other petrified monsters reject physical player
   damage until Stone Curse ends.
 
+- Added native class-driven Cleave resolution for Monk staffs, Bard dual
+  swords, and Barbarian axe/two-handed melee, including adjacent hit penalty
+  and quarter damage.
+
 - Advanced the active content schema to `1.461.0`, retaining `1.460.0` as
   the previous additive contract for compatible packs.
 
