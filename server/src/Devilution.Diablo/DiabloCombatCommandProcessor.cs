@@ -1983,6 +1983,11 @@ public sealed class DiabloCombatCommandProcessor
                 rules.BaseAttackDamage,
                 rules.BaseAttackDamage,
                 0);
+        // Native PlrHitMonst resolves hit admission before consuming the
+        // weapon-damage stream. Keep the pre-damage state so a miss can
+        // restore that boundary even though the shared damage calculation is
+        // used by both monster and player targets.
+        var randomStateBeforeDamage = random.State;
         var rolledBaseDamage = usesNativeClassProfile
             ? random.RandomIntBetween(
                 damageProfile.MinimumDamage,
@@ -2081,9 +2086,14 @@ public sealed class DiabloCombatCommandProcessor
         if (monsterTarget && target.IsPetrified)
             effectiveHitChance = 100;
         attackHit = rules.ResolveAttackHit(effectiveHitChance, seed);
+        if (!attackHit) {
+            random.Restore(randomStateBeforeDamage);
+            perilActive = false;
+            perilSelfDamageQ6 = 0;
+            return 0;
+        }
         var criticalDamage = damage;
-        if (attackHit
-            && playerClass?.Flags.HasFlag(DiabloPlayerClassFlags.CriticalStrike) == true
+        if (playerClass?.Flags.HasFlag(DiabloPlayerClassFlags.CriticalStrike) == true
             && random.RandomIntLessThan(100) < Math.Min(
                 100,
                 checked(

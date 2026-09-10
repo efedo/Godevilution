@@ -6930,6 +6930,49 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void MissedInitializedHellfireAttackDoesNotConsumeDamageRngOrPeril()
+    {
+        var classes = LoadShippedPlayerClasses();
+        var target = new AuthoritativeCombatTarget(9, 1, 0, 100);
+        var world = new DiabloWorldState(combatTargets: [target]);
+        var random = new DiabloRandom(0x12345678);
+        var processor = CreateProcessor(
+            world,
+            rules: new AuthoritativeCombatRules(
+                10,
+                1,
+                100,
+                hitChancePercent: 0,
+                gameVariant: DiabloGameVariant.Hellfire),
+            random: random,
+            playerClasses: classes);
+        var player = CreatePlayer(
+            entityId: 7,
+            life: 6400,
+            lifeMaximum: 6400,
+            attributes: classes.GetRequired(0).CreateStartingAttributes(),
+            equipment: [new EquippedStoreItem(
+                4,
+                42,
+                AuthoritativeItemState.Empty with {
+                    StatFlag = true,
+                    MinDamage = 7,
+                    MaxDamage = 13,
+                    HellfireDamageArmorFlags =
+                        AuthoritativeEquipmentIncomingDamageRules.PerilFlag,
+                })]);
+        var initialRandomState = random.State;
+
+        var result = processor.Execute(player, new DiabloAttackIntent(target.EntityId), 1);
+
+        Assert.True(result.Succeeded);
+        Assert.Equal(100, target.HitPoints);
+        Assert.Equal(6400, player.Life);
+        Assert.Equal(initialRandomState, random.State);
+        Assert.Empty(result.Events);
+    }
+
+    [Fact]
     public void AttackAppliesUsableIdentifiedEquipmentResourceGains()
     {
         var target = new AuthoritativeCombatTarget(

@@ -2,6 +2,11 @@
 
 Status date: 2026-09-10
 
+Native physical-hit ordering now preserves the `PlrHitMonst` miss boundary:
+initialized misses do not consume the weapon-damage RNG stream and do not
+apply Hellfire Peril self-damage or other hit-only effects. The boundary is
+covered with an initialized-class Hellfire attack fixture.
+
 The external-content compatibility boundary is now explicit in both behavior
 and diagnostics: current-schema packs fail closed with the required external
 namespace and compatibility-content context, while `1.501.0` packs continue

@@ -2,6 +2,12 @@
 
 All notable changes to this fork are documented below.
 
+- Closed a native physical-hit ordering gap: missed initialized attacks now
+  restore the pre-damage RNG boundary and suppress Hellfire Peril self-damage,
+  matching `PlrHitMonst`'s hit-before-damage behavior. Added a class-initialized
+  Hellfire regression covering target life, attacker life, event emission, and
+  deterministic RNG state.
+
 - Restored the external-content migration boundary for legacy compatibility
   namespaces. Current-schema omissions now retain both the external-content
   and compatibility-specific diagnostics, while previous-schema activation
