@@ -1541,6 +1541,100 @@ public sealed class AuthoritativeTcpServerTests
     }
 
     [Fact]
+    public async Task TcpRulesetReloadPreparesAllSessionCheckpointsBeforeWriting()
+    {
+        var saveRoot = Path.Combine(
+            Path.GetTempPath(),
+            "Godevilution-Ruleset-Reload-Batch-" + Guid.NewGuid().ToString("N"));
+        var initial = new ReloadableHostAdapter("initial");
+        var replacement = new ReloadableHostAdapter("replacement");
+        var candidates = new Queue<ReloadableHostAdapter>([initial, replacement]);
+        var runtime = new GameplayRulesetRuntime<IAuthoritativeGameHostAdapter>(
+            CreateReloadManifest("1", "initial"),
+            [new ReloadableModule("rules", "1.0.0")],
+            new DelegateAuthoritativeClock(() => 10),
+            (_, _) => candidates.Dequeue());
+        var initialIdentity = runtime.Active.Identity.CombinedSha256;
+
+        try {
+            using var leasedAdapter = new LeasedAuthoritativeGameHostAdapter(runtime);
+            var handshake = new ProtocolHandshake(new ProtocolServerIdentity(
+                "server-build",
+                "0.1.0",
+                "content-hash",
+                20) {
+                RulesetIdentityHash = initialIdentity,
+            });
+            await using var server = new AuthoritativeTcpServer(
+                new AuthoritativeCommandServer(leasedAdapter),
+                handshake,
+                new DelegateAuthoritativeClock(() => 10),
+                gameAdapter: leasedAdapter,
+                saveStore: new AuthoritativeSaveStore(saveRoot));
+            server.Start();
+            var cancellationToken = TestContext.Current.CancellationToken;
+            using var firstClient = new TcpClient();
+            await firstClient.ConnectAsync(IPAddress.Loopback, server.Port, cancellationToken);
+            await using var firstStream = firstClient.GetStream();
+            await SendHelloAsync(
+                firstStream,
+                cancellationToken,
+                requestedCharacterName: "Batch-First");
+            var firstHello = (await EnvelopeCodec.ReadAsync(
+                firstStream,
+                cancellationToken))!.ServerHello;
+            _ = (await EnvelopeCodec.ReadAsync(firstStream, cancellationToken))!.Snapshot;
+
+            using var secondClient = new TcpClient();
+            await secondClient.ConnectAsync(IPAddress.Loopback, server.Port, cancellationToken);
+            await using var secondStream = secondClient.GetStream();
+            await SendHelloAsync(
+                secondStream,
+                cancellationToken,
+                requestedCharacterName: "Batch-Second");
+            var secondHello = (await EnvelopeCodec.ReadAsync(
+                secondStream,
+                cancellationToken))!.ServerHello;
+            _ = (await EnvelopeCodec.ReadAsync(secondStream, cancellationToken))!.Snapshot;
+
+            var failingSessionId = server.ActiveSessionIds
+                .OrderBy(sessionId => sessionId, StringComparer.Ordinal)
+                .Last();
+            replacement.ThrowOnExportSessionId = failingSessionId;
+            var reload = server.TryReloadRuleset(
+                CreateReloadManifest("2", "replacement"),
+                [new ReloadableModule("rules", "2.0.0")]);
+
+            Assert.False(reload.Succeeded);
+            Assert.Equal(
+                "ruleset-target-preparation-failed",
+                Assert.Single(reload.Diagnostics).Code);
+            Assert.Same(initial, runtime.Active.Target);
+            Assert.Equal(initialIdentity, server.ActiveRulesetIdentityHash);
+            Assert.False(initial.Disposed);
+            Assert.True(replacement.Disposed);
+            Assert.Equal(0, server.RetiredRulesetCount);
+
+            var store = new AuthoritativeSessionStore(saveRoot);
+            var firstPersisted = store.Load(
+                SessionIdForToken(firstHello.SessionToken),
+                initialIdentity);
+            var secondPersisted = store.Load(
+                SessionIdForToken(secondHello.SessionToken),
+                initialIdentity);
+            Assert.NotNull(firstPersisted);
+            Assert.NotNull(secondPersisted);
+            Assert.Equal("Batch-First", firstPersisted.SerializedState);
+            Assert.Equal("Batch-Second", secondPersisted.SerializedState);
+            Assert.Equal(initialIdentity, firstPersisted.RulesetIdentityHash);
+            Assert.Equal(initialIdentity, secondPersisted.RulesetIdentityHash);
+        } finally {
+            if (Directory.Exists(saveRoot))
+                Directory.Delete(saveRoot, recursive: true);
+        }
+    }
+
+    [Fact]
     public async Task TcpRulesetReloadSoakMigratesTwoConnectedSessionsAcrossGenerations()
     {
         const int replacementGenerations = 8;
@@ -2490,6 +2584,8 @@ public sealed class AuthoritativeTcpServerTests
 
         public bool ThrowOnExport { get; init; }
 
+        public string? ThrowOnExportSessionId { get; set; }
+
         public int ExecuteCount => Volatile.Read(ref executeCount);
 
         public List<string> InitializedNames { get; } = [];
@@ -2534,7 +2630,10 @@ public sealed class AuthoritativeTcpServerTests
 
         public string ExportSessionState(string sessionId)
         {
-            if (ThrowOnExport)
+            if (ThrowOnExport || string.Equals(
+                    ThrowOnExportSessionId,
+                    sessionId,
+                    StringComparison.Ordinal))
                 throw new InvalidDataException("candidate session export rejected");
             lock (initializationSynchronization) {
                 return sessionStates.TryGetValue(sessionId, out var state)

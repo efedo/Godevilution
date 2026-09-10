@@ -24,9 +24,10 @@ checkpoint written for a different ruleset before importing gameplay state.
 Version-1 through version-3 checkpoints remain readable and are upgraded on
 their next write. The leased adapter wrapper uses a read/write operation barrier:
 replacement waits
-for in-flight operations, migrates initialized sessions and publishes their
-new-identity checkpoints during candidate preparation before activation or
-handshake publication. A failed candidate export/checkpoint leaves the prior
+for in-flight operations, migrates initialized sessions and prepares every
+session export before publishing their new-identity checkpoints during
+candidate preparation. This all-session export phase runs before activation or
+handshake publication, so a failed candidate export leaves the prior
 generation active; successful replacement then disposes drained game targets
 through an injected host policy.
 It exposes the active combined ruleset identity and the number of retired

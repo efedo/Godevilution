@@ -186,10 +186,14 @@ public sealed class AuthoritativeTcpServer : IAsyncDisposable
             throw new InvalidOperationException(
                 "Live ruleset replacement requires the leased host adapter.");
 
+        var activeSessions = sessionsByToken.Values
+            .Where(session => session.ParticipantInitialized)
+            .OrderBy(session => session.Id, StringComparer.Ordinal)
+            .ToArray();
         var result = leasedAdapter.TryReload(
             candidateManifest,
             candidateModules,
-            ActiveSessionIds,
+            activeSessions.Select(session => session.Id).ToArray(),
             candidate => {
                 var replacementIdentity = ProtocolServerIdentity.FromRuleset(
                     handshake.Identity.BuildId,
@@ -197,13 +201,10 @@ public sealed class AuthoritativeTcpServer : IAsyncDisposable
                     handshake.Identity.TickRateHz,
                     candidate.Identity,
                     handshake.Identity.GameMode);
-                foreach (var session in sessionsByToken.Values
-                             .Where(session => session.ParticipantInitialized)
-                             .OrderBy(session => session.Id, StringComparer.Ordinal))
-                    SaveSession(
-                        session,
-                        candidate.Target,
-                        replacementIdentity.RulesetIdentityHash);
+                SaveSessions(
+                    activeSessions,
+                    candidate.Target,
+                    replacementIdentity.RulesetIdentityHash);
             });
         if (result.Succeeded) {
             var replacementIdentity = ProtocolServerIdentity.FromRuleset(
@@ -455,6 +456,33 @@ public sealed class AuthoritativeTcpServer : IAsyncDisposable
         });
     }
 
+    private void SaveSessions(
+        IEnumerable<SessionState> sessions,
+        IAuthoritativeSaveProvider stateProvider,
+        string rulesetIdentityHash)
+    {
+        ArgumentNullException.ThrowIfNull(sessions);
+        ArgumentNullException.ThrowIfNull(stateProvider);
+        ArgumentException.ThrowIfNullOrWhiteSpace(rulesetIdentityHash);
+
+        var prepared = sessions
+            .Where(session => session.ParticipantInitialized)
+            .OrderBy(session => session.Id, StringComparer.Ordinal)
+            .Select(session => commandServer.WithSynchronizedSession(
+                session.Id,
+                () => new PreparedSessionSave(
+                    session.Id,
+                    stateProvider.ExportSessionState(session.Id),
+                    commandServer.ExportCompletedCommands(session.Id))))
+            .ToArray();
+        foreach (var save in prepared)
+            sessionPersistence.Save(
+                save.SessionId,
+                save.SerializedState,
+                save.CommandResults,
+                rulesetIdentityHash);
+    }
+
     private void EnsureCommandReceiptsLoaded(SessionState session)
     {
         if (commandReceiptStore is null && sessionStore is null)
@@ -506,6 +534,11 @@ public sealed class AuthoritativeTcpServer : IAsyncDisposable
             set => Volatile.Write(ref participantInitialized, value ? 1 : 0);
         }
     }
+
+    private sealed record PreparedSessionSave(
+        string SessionId,
+        string SerializedState,
+        IReadOnlyDictionary<ulong, CommandResult> CommandResults);
 
     private async ValueTask SendSnapshotIfAvailableAsync(
         Stream stream,
