@@ -18,7 +18,7 @@ public sealed class ShippedContentTests
         Assert.Equal("devilution.base", pack.Id);
         Assert.Equal("0.1.0", pack.Version);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.464.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.465.0"),
             pack.Schema);
         Assert.Empty(pack.Overlays);
         var nativeDunMonsterTable = pack.Tables.Single(
@@ -1204,7 +1204,7 @@ public sealed class ShippedContentTests
             currentPack.Tables,
             currentPack.Dependencies,
             currentPack.Overlays,
-            new ContentSchemaIdentity("devilution.diablo", "1.463.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.464.0"),
             currentPack.DependencyConstraints,
             currentPack.Assets);
         var content = ComposedContent.Compose(new ContentManifest(
@@ -1336,7 +1336,7 @@ public sealed class ShippedContentTests
                 .ToArray(),
             basePack.Dependencies,
             basePack.Overlays,
-            new ContentSchemaIdentity("devilution.diablo", "1.463.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.464.0"),
             basePack.DependencyConstraints,
             basePack.Assets);
 
@@ -3436,6 +3436,73 @@ public sealed class ShippedContentTests
     }
 
     [Fact]
+    public void ContentBootstrapRejectsPartialStoreServicePricingInCurrentSchema()
+    {
+        var contentRoot = Path.Combine(FindRepositoryRoot(), "server", "content", "base");
+        var basePack = ContentPackLoader.LoadManifestDirectory(contentRoot);
+        var pricing = basePack.Tables.Single(table => table.SourcePath == "store_services.tsv");
+        var partialPricing = TsvTable.Parse(
+            pricing.SourcePath,
+            "key\tspell_id\tvalue\nsale_divisor\t\t4\nspell_staff_cost\t0\t0\n");
+        var incompletePack = new ContentPack(
+            basePack.Id,
+            basePack.Version,
+            basePack.Tables
+                .Select(table => table.SourcePath == pricing.SourcePath
+                    ? partialPricing
+                    : table)
+                .ToArray(),
+            basePack.Dependencies,
+            basePack.Overlays,
+            basePack.Schema,
+            basePack.DependencyConstraints,
+            basePack.Assets);
+
+        var exception = Assert.Throws<InvalidDataException>(() =>
+            DiabloModule.Instance.ContentBootstrap.Activate(
+                ComposedContent.Compose(new ContentManifest(
+                    "missing-store-service-pricing",
+                    "1",
+                    [incompletePack]))));
+
+        Assert.Contains("Production store pricing table", exception.Message, StringComparison.Ordinal);
+        Assert.Contains("normal_repair_divisor", exception.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void PreviousSchemaRetainsPartialStoreServicePricingCompatibility()
+    {
+        var contentRoot = Path.Combine(FindRepositoryRoot(), "server", "content", "base");
+        var basePack = ContentPackLoader.LoadManifestDirectory(contentRoot);
+        var pricing = basePack.Tables.Single(table => table.SourcePath == "store_services.tsv");
+        var partialPricing = TsvTable.Parse(
+            pricing.SourcePath,
+            "key\tspell_id\tvalue\nsale_divisor\t\t4\n");
+        var previousPack = new ContentPack(
+            basePack.Id,
+            basePack.Version,
+            basePack.Tables
+                .Select(table => table.SourcePath == pricing.SourcePath
+                    ? partialPricing
+                    : table)
+                .ToArray(),
+            basePack.Dependencies,
+            basePack.Overlays,
+            new ContentSchemaIdentity("devilution.diablo", "1.464.0"),
+            basePack.DependencyConstraints,
+            basePack.Assets);
+
+        var activation = DiabloModule.Instance.ContentBootstrap.Activate(
+            ComposedContent.Compose(new ContentManifest(
+                "previous-store-service-contract",
+                "1",
+                [previousPack])));
+
+        var storeRules = Assert.IsType<DiabloStoreRules>(activation.StoreRules);
+        Assert.Equal(4, storeRules.Pricing.SaleDivisor);
+    }
+
+    [Fact]
     public void ContentBootstrapRejectsUnknownMonsterMissileSpawn()
     {
         var contentRoot = Path.Combine(FindRepositoryRoot(), "server", "content", "base");
@@ -3598,7 +3665,7 @@ public sealed class ShippedContentTests
                 .ToArray(),
             basePack.Dependencies,
             basePack.Overlays,
-            new ContentSchemaIdentity("devilution.diablo", "1.463.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.464.0"),
             basePack.DependencyConstraints,
             basePack.Assets);
 
@@ -3987,7 +4054,7 @@ public sealed class ShippedContentTests
 
         Assert.Equal("devilution.hellfire", hellfirePack.Id);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.464.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.465.0"),
             hellfirePack.Schema);
         Assert.Equal(DiabloGameVariant.Hellfire, combat.GameVariant);
         Assert.Equal(2, combat.UniqueExperienceMultiplier);

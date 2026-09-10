@@ -241,6 +241,8 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
             stableIdsTable.SourcePath,
             stableIdsTable.ToCanonicalTsv());
         var pricingTable = GetRequiredExternalTable(content, "store_services.tsv");
+        if (content.Manifest.Schema == DiabloContentSchema.Current)
+            StoreServicePricing.ValidateExternalizedProduction(pricingTable);
         var pricing = StoreServicePricing.LoadTsv(
             pricingTable.SourcePath,
             pricingTable.ToCanonicalTsv(),

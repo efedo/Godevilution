@@ -149,6 +149,40 @@ public sealed class StoreCatalogTests
     }
 
     [Fact]
+    public void ProductionValidationRequiresEveryServicePricingKey()
+    {
+        var table = TsvTable.Parse(
+            "store_services.tsv",
+            "key\tspell_id\tvalue\n"
+                + "sale_divisor\t\t4\n"
+                + "spell_staff_cost\t0\t0\n");
+
+        var exception = Assert.Throws<InvalidDataException>(() =>
+            StoreServicePricing.ValidateExternalizedProduction(table));
+
+        Assert.Contains("missing required keys", exception.Message, StringComparison.Ordinal);
+        Assert.Contains("normal_repair_divisor", exception.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void ProductionValidationAcceptsExplicitSpellStaffPricingRow()
+    {
+        var table = TsvTable.Parse(
+            "store_services.tsv",
+            "key\tspell_id\tvalue\n"
+                + "sale_divisor\t\t4\n"
+                + "normal_repair_divisor\t\t2\n"
+                + "magical_repair_percent\t\t30\n"
+                + "magical_repair_divisor\t\t200\n"
+                + "identification_price\t\t100\n"
+                + "recharge_divisor\t\t2\n"
+                + "mana_chunk\t\t64\n"
+                + "spell_staff_cost\t0\t0\n");
+
+        StoreServicePricing.ValidateExternalizedProduction(table);
+    }
+
+    [Fact]
     public void SpellStaffPricingResolvesStableSymbolsAndRejectsMismatches()
     {
         var stableIds = new StableContentIdCatalog([

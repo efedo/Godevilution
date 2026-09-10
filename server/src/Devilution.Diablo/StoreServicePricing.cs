@@ -5,6 +5,16 @@ namespace Devilution.Diablo;
 /** Externalized constants used by authoritative store services. */
 public sealed class StoreServicePricing
 {
+    private static readonly string[] RequiredProductionKeys = [
+        "sale_divisor",
+        "normal_repair_divisor",
+        "magical_repair_percent",
+        "magical_repair_divisor",
+        "identification_price",
+        "recharge_divisor",
+        "mana_chunk",
+    ];
+
     private readonly Dictionary<int, uint> spellStaffCosts;
 
     public StoreServicePricing(
@@ -59,6 +69,42 @@ public sealed class StoreServicePricing
             if (spellId < 0 || !spells.TryGet(checked((uint)spellId), out _))
                 throw new InvalidDataException(
                     $"Store service pricing references unknown spell {spellId}.");
+        }
+    }
+
+    /**
+     * Rejects omitted service pricing at the current production content
+     * boundary. Direct callers may continue to load partial compatibility rows.
+     */
+    public static void ValidateExternalizedProduction(TsvTable table)
+    {
+        ArgumentNullException.ThrowIfNull(table);
+        if (!table.Columns.Contains("key", StringComparer.Ordinal)
+            || !table.Columns.Contains("value", StringComparer.Ordinal)) {
+            throw new InvalidDataException(
+                $"Production store pricing table '{table.SourcePath}' must declare key and value columns.");
+        }
+
+        var rowsByKey = table.Rows.GroupBy(
+            row => row.Required("key"),
+            StringComparer.Ordinal)
+            .ToDictionary(group => group.Key, group => group.ToArray(), StringComparer.Ordinal);
+        var missingKeys = RequiredProductionKeys
+            .Where(key => !rowsByKey.ContainsKey(key))
+            .ToArray();
+        if (missingKeys.Length != 0)
+            throw new InvalidDataException(
+                $"Production store pricing table '{table.SourcePath}' is missing required keys: "
+                + string.Join(", ", missingKeys));
+
+        if (!rowsByKey.ContainsKey("spell_staff_cost"))
+            throw new InvalidDataException(
+                $"Production store pricing table '{table.SourcePath}' requires an explicit spell_staff_cost row.");
+
+        foreach (var row in table.Rows) {
+            _ = row.Required("value");
+            if (row.Required("key").Equals("spell_staff_cost", StringComparison.Ordinal))
+                _ = row.Required("spell_id");
         }
     }
 
