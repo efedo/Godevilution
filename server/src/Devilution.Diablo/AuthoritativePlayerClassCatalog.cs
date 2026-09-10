@@ -385,6 +385,22 @@ public sealed class AuthoritativePlayerClassCatalog
             : throw new KeyNotFoundException($"Player class '{symbol}' is not defined.");
     }
 
+    /**
+     * Rejects inferred class tuning at the current production content
+     * boundary. Direct callers may continue to load older compatibility shapes.
+     */
+    public static void ValidateExternalizedProduction(TsvTable table)
+    {
+        ArgumentNullException.ThrowIfNull(table);
+        if (!table.Columns.SequenceEqual(ClassProjectileTuningColumns, StringComparer.Ordinal))
+            throw new InvalidDataException(
+                $"Production player-class table '{table.SourcePath}' must use the complete ordered class tuning schema.");
+        foreach (var row in table.Rows)
+            foreach (var column in ClassProjectileTuningColumns)
+                if (!column.Equals("class_flags", StringComparison.Ordinal))
+                    _ = row.Required(column);
+    }
+
     public static AuthoritativePlayerClassCatalog LoadTsv(
         string sourcePath,
         string contents,

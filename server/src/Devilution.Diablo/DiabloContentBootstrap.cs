@@ -256,6 +256,8 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
             experienceTable.SourcePath,
             experienceTable.ToCanonicalTsv());
         var playerClassTable = content.GetRequiredTable("classes.tsv");
+        if (content.Manifest.Schema == DiabloContentSchema.Current)
+            AuthoritativePlayerClassCatalog.ValidateExternalizedProduction(playerClassTable);
         var playerClasses = AuthoritativePlayerClassCatalog.LoadTsv(
             playerClassTable.SourcePath,
             playerClassTable.ToCanonicalTsv(),

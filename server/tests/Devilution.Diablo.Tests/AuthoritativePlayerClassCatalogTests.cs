@@ -46,6 +46,29 @@ public sealed class AuthoritativePlayerClassCatalogTests
 
         Assert.Contains("maps class 1 to symbol 'warrior', which resolves to 0", exception.Message);
     }
+
+    [Fact]
+    public void ProductionValidationRejectsLegacyClassSchema()
+    {
+        var legacyTable = TsvTable.Parse(
+            "classes.tsv",
+            "class_id\tsymbol\tdisplay_name\tavailability\tis_default\tclass_flags\n"
+                + "0\twarrior\tWarrior\tBaseGame\ttrue\tCriticalStrike\n");
+
+        var exception = Assert.Throws<InvalidDataException>(() =>
+            AuthoritativePlayerClassCatalog.ValidateExternalizedProduction(legacyTable));
+
+        Assert.Contains("complete ordered class tuning schema", exception.Message);
+    }
+
+    [Fact]
+    public void ProductionValidationAcceptsShippedClassSchema()
+    {
+        var table = TsvTable.Parse("classes.tsv", ReadShippedTable());
+
+        AuthoritativePlayerClassCatalog.ValidateExternalizedProduction(table);
+    }
+
     [Fact]
     public void ShippedCatalogPreservesBaseAndHellfireClassMetadata()
     {

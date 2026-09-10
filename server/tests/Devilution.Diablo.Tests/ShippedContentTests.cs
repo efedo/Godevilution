@@ -18,7 +18,7 @@ public sealed class ShippedContentTests
         Assert.Equal("devilution.base", pack.Id);
         Assert.Equal("0.1.0", pack.Version);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.465.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.466.0"),
             pack.Schema);
         Assert.Empty(pack.Overlays);
         var nativeDunMonsterTable = pack.Tables.Single(
@@ -1204,7 +1204,7 @@ public sealed class ShippedContentTests
             currentPack.Tables,
             currentPack.Dependencies,
             currentPack.Overlays,
-            new ContentSchemaIdentity("devilution.diablo", "1.464.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.465.0"),
             currentPack.DependencyConstraints,
             currentPack.Assets);
         var content = ComposedContent.Compose(new ContentManifest(
@@ -1336,7 +1336,7 @@ public sealed class ShippedContentTests
                 .ToArray(),
             basePack.Dependencies,
             basePack.Overlays,
-            new ContentSchemaIdentity("devilution.diablo", "1.464.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.465.0"),
             basePack.DependencyConstraints,
             basePack.Assets);
 
@@ -1347,6 +1347,72 @@ public sealed class ShippedContentTests
                 [previousPack])));
 
         Assert.False(activation.WorldRules.HasTownPortalDestinationGeometry);
+    }
+
+    [Fact]
+    public void ContentBootstrapRejectsLegacyClassTuningInCurrentSchema()
+    {
+        var contentRoot = Path.Combine(FindRepositoryRoot(), "server", "content", "base");
+        var basePack = ContentPackLoader.LoadManifestDirectory(contentRoot);
+        var classes = basePack.Tables.Single(table => table.SourcePath == "classes.tsv");
+        var partialClasses = TsvTable.Parse(
+            classes.SourcePath,
+            "class_id\tsymbol\tdisplay_name\tavailability\tis_default\tclass_flags\n"
+                + "0\twarrior\tWarrior\tBaseGame\ttrue\tCriticalStrike\n");
+        var incompletePack = new ContentPack(
+            basePack.Id,
+            basePack.Version,
+            basePack.Tables
+                .Select(table => table.SourcePath == classes.SourcePath
+                    ? partialClasses
+                    : table)
+                .ToArray(),
+            basePack.Dependencies,
+            basePack.Overlays,
+            basePack.Schema,
+            basePack.DependencyConstraints,
+            basePack.Assets);
+
+        var exception = Assert.Throws<InvalidDataException>(() =>
+            DiabloModule.Instance.ContentBootstrap.Activate(
+                ComposedContent.Compose(new ContentManifest(
+                    "missing-player-class-tuning",
+                    "1",
+                    [incompletePack]))));
+
+        Assert.Contains("Production player-class table", exception.Message, StringComparison.Ordinal);
+        Assert.Contains("complete ordered class tuning schema", exception.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void PreviousSchemaRetainsPartialPlayerClassTuningCompatibility()
+    {
+        var contentRoot = Path.Combine(FindRepositoryRoot(), "server", "content", "base");
+        var basePack = ContentPackLoader.LoadManifestDirectory(contentRoot);
+        var classes = basePack.Tables.Single(table => table.SourcePath == "classes.tsv");
+        var partialClasses = CreateLegacyClassTable(classes);
+        var previousPack = new ContentPack(
+            basePack.Id,
+            basePack.Version,
+            basePack.Tables
+                .Select(table => table.SourcePath == classes.SourcePath
+                    ? partialClasses
+                    : table)
+                .ToArray(),
+            basePack.Dependencies,
+            basePack.Overlays,
+            new ContentSchemaIdentity("devilution.diablo", "1.465.0"),
+            basePack.DependencyConstraints,
+            basePack.Assets);
+
+        var activation = DiabloModule.Instance.ContentBootstrap.Activate(
+            ComposedContent.Compose(new ContentManifest(
+                "previous-player-class-contract",
+                "1",
+                [previousPack])));
+
+        Assert.Equal(6, activation.PlayerClasses.Definitions.Count);
+        Assert.Equal(100, activation.PlayerClasses.Resolve("sorcerer").ManaSpellPercent);
     }
 
     [Theory]
@@ -3488,7 +3554,7 @@ public sealed class ShippedContentTests
                 .ToArray(),
             basePack.Dependencies,
             basePack.Overlays,
-            new ContentSchemaIdentity("devilution.diablo", "1.464.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.465.0"),
             basePack.DependencyConstraints,
             basePack.Assets);
 
@@ -3665,7 +3731,7 @@ public sealed class ShippedContentTests
                 .ToArray(),
             basePack.Dependencies,
             basePack.Overlays,
-            new ContentSchemaIdentity("devilution.diablo", "1.464.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.465.0"),
             basePack.DependencyConstraints,
             basePack.Assets);
 
@@ -4054,7 +4120,7 @@ public sealed class ShippedContentTests
 
         Assert.Equal("devilution.hellfire", hellfirePack.Id);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.465.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.466.0"),
             hellfirePack.Schema);
         Assert.Equal(DiabloGameVariant.Hellfire, combat.GameVariant);
         Assert.Equal(2, combat.UniqueExperienceMultiplier);
@@ -7620,6 +7686,14 @@ public sealed class ShippedContentTests
         Assert.Equal(
             2,
             catalog.Definitions.Count(definition => definition.NativeMonsterId == 0));
+    }
+
+    private static TsvTable CreateLegacyClassTable(TsvTable classes)
+    {
+        var lines = classes.ToCanonicalTsv()
+            .Split('\n', StringSplitOptions.RemoveEmptyEntries)
+            .Select(line => string.Join('\t', line.Split('\t').Take(36)));
+        return TsvTable.Parse(classes.SourcePath, string.Join('\n', lines) + "\n");
     }
 
     private static string FindRepositoryRoot()

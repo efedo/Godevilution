@@ -2,14 +2,15 @@
 
 All notable changes to this fork are documented below.
 
-- Advanced the active content schema to `1.465.0`, retaining `1.464.0` as
+- Advanced the active content schema to `1.466.0`, retaining `1.465.0` as
   the previous additive contract. Current-schema production activation now
   requires `world_rules.tsv` to carry the complete external town/service
   identities and Town Portal destination geometry, and `combat.tsv` to carry
   the complete tuning row, while `store_services.tsv` must carry every service
-  pricing key and an explicit spell-staff pricing row. Older schema packs and
-  direct compatibility callers retain support for partial rows, but new packs
-  cannot reintroduce embedded defaults at the server boundary.
+  pricing key and an explicit spell-staff pricing row. `classes.tsv` must also
+  use the complete class-projectile tuning schema. Older schema packs and direct
+  compatibility callers retain support for partial rows, but new packs cannot
+  reintroduce embedded defaults at the server boundary.
 
 - Clarified the production content contract: normalized identity, economy,
   player, item, spell, world, and combat catalogs are required at activation,
