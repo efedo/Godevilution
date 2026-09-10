@@ -51,6 +51,20 @@ public sealed record AuthoritativeUniqueItemDefinition(
 /** Deterministic unique item generation backed by the authoritative base catalog. */
 public sealed class AuthoritativeUniqueItemCatalog
 {
+    private static readonly IReadOnlyList<string> ProductionColumns = [
+        "unique_id",
+        "unique_symbol",
+        "name",
+        "base_item_id",
+        "base_item_symbol",
+        "min_level",
+        "value",
+        "power",
+        "value1",
+        "value2",
+        "cursor_graphic",
+    ];
+
     private static readonly IReadOnlySet<string> SupportedPowerNames =
         new HashSet<string>(StringComparer.Ordinal) {
             "DAM", "DAMP", "DAMMOD", "TOHIT_DAMP", "TOHIT_DAMP_CURSE", "SETDAM",
@@ -98,6 +112,18 @@ public sealed class AuthoritativeUniqueItemCatalog
     }
 
     public IReadOnlyList<AuthoritativeUniqueItemDefinition> Definitions => definitions.Values.OrderBy(definition => definition.UniqueId).ToArray();
+
+    /** Rejects partial normalized unique-item rows at the current production boundary. */
+    public static void ValidateExternalizedProduction(TsvTable table)
+    {
+        ArgumentNullException.ThrowIfNull(table);
+        if (!table.Columns.SequenceEqual(ProductionColumns, StringComparer.Ordinal))
+            throw new InvalidDataException(
+                $"Production unique-item table '{table.SourcePath}' must use the complete ordered schema.");
+        foreach (var row in table.Rows)
+            foreach (var column in ProductionColumns)
+                _ = row.Required(column);
+    }
 
     /** Rejects unique powers that have no authoritative C# application handler. */
     public void ValidatePowers()

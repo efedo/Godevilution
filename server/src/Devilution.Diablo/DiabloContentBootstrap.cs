@@ -387,6 +387,8 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
             stableIds);
 
         var uniqueTable = GetRequiredExternalTable(content, "unique_items.tsv");
+        if (content.Manifest.Schema == DiabloContentSchema.Current)
+            AuthoritativeUniqueItemCatalog.ValidateExternalizedProduction(uniqueTable);
         var uniqueItems = AuthoritativeUniqueItemCatalog.LoadTsv(
             uniqueTable.SourcePath,
             uniqueTable.ToCanonicalTsv(),

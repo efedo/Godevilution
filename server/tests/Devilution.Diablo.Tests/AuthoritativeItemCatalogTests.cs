@@ -954,6 +954,34 @@ public sealed class AuthoritativeItemCatalogTests
     }
 
     [Fact]
+    public void ShippedUniqueItemsUseTheProductionSchema()
+    {
+        var path = Path.Combine(
+            FindRepositoryRoot(),
+            "server",
+            "content",
+            "base",
+            "unique_items.tsv");
+        var table = TsvTable.Parse("unique_items.tsv", File.ReadAllText(path));
+
+        AuthoritativeUniqueItemCatalog.ValidateExternalizedProduction(table);
+    }
+
+    [Fact]
+    public void ProductionUniqueItemValidationRejectsNumericOnlyIdentityHeaders()
+    {
+        var table = TsvTable.Parse(
+            "unique_items.tsv",
+            "unique_id\tname\tbase_item_id\tmin_level\tvalue\tpower\tvalue1\tvalue2\tcursor_graphic\n"
+                + "1001\tEmber Blade\t7\t1\t3650\tTOHIT\t10\t10\t-\n");
+
+        var exception = Assert.Throws<InvalidDataException>(() =>
+            AuthoritativeUniqueItemCatalog.ValidateExternalizedProduction(table));
+
+        Assert.Contains("complete ordered schema", exception.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void UniqueItemsResolveStableUniqueSymbols()
     {
         var stableIds = new StableContentIdCatalog([
