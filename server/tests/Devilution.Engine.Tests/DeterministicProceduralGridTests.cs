@@ -6,7 +6,7 @@ namespace Devilution.Engine.Tests;
 public sealed class DeterministicProceduralGridTests
 {
     [Fact]
-    public void GenerationIsStableAndMissileLayerContainsBlockedCells()
+    public void GenerationIsStableAndNativeLayersContainMovementWalls()
     {
         var first = DeterministicProceduralGrid.Generate(25, 21, 1234, 65, 70);
         var second = DeterministicProceduralGrid.Generate(25, 21, 1234, 65, 70);
@@ -15,8 +15,12 @@ public sealed class DeterministicProceduralGridTests
         Assert.Equal(21, first.Height);
         Assert.Equal(first.BlockedCells, second.BlockedCells);
         Assert.Equal(first.MissileBlockedCells, second.MissileBlockedCells);
+        Assert.Equal(first.NativeVisionBlockedCells, second.NativeVisionBlockedCells);
         Assert.Subset(
             second.MissileBlockedCells.ToHashSet(),
+            second.BlockedCells.ToHashSet());
+        Assert.Subset(
+            second.NativeVisionBlockedCells.ToHashSet(),
             second.BlockedCells.ToHashSet());
     }
 
@@ -35,7 +39,7 @@ public sealed class DeterministicProceduralGridTests
     }
 
     [Fact]
-    public void RequiredWalkableCellsOverrideBothGeneratedCollisionLayers()
+    public void RequiredWalkableCellsOverrideEveryGeneratedLayer()
     {
         var layout = DeterministicProceduralGrid.Generate(
             40,
@@ -49,6 +53,26 @@ public sealed class DeterministicProceduralGridTests
         Assert.DoesNotContain(2 * 40 + 2, layout.MissileBlockedCells);
         Assert.DoesNotContain(6 * 40 + 6, layout.BlockedCells);
         Assert.DoesNotContain(6 * 40 + 6, layout.MissileBlockedCells);
+        Assert.DoesNotContain(2 * 40 + 2, layout.NativeVisionBlockedCells);
+        Assert.DoesNotContain(6 * 40 + 6, layout.NativeVisionBlockedCells);
+    }
+
+    [Fact]
+    public void VisionDensityAddsIndependentNativeBlockersAndKeepsMovementWalls()
+    {
+        var layout = DeterministicProceduralGrid.Generate(
+            40,
+            40,
+            0xA5A5A5A5,
+            0,
+            0,
+            visionBlockedPercent: 80);
+
+        Assert.Empty(layout.BlockedCells);
+        Assert.Empty(layout.MissileBlockedCells);
+        Assert.NotEmpty(layout.NativeVisionBlockedCells);
+        Assert.All(layout.NativeVisionBlockedCells, cell =>
+            Assert.DoesNotContain(cell, layout.BlockedCells));
     }
 
     [Theory]
@@ -83,5 +107,12 @@ public sealed class DeterministicProceduralGridTests
                 10,
                 10,
                 [100]));
+    }
+
+    [Fact]
+    public void RejectsUnsupportedVisionDensity()
+    {
+        Assert.Throws<ArgumentOutOfRangeException>(() =>
+            DeterministicProceduralGrid.Generate(10, 10, 0, 10, 10, visionBlockedPercent: 81));
     }
 }

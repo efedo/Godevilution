@@ -18,6 +18,8 @@ public sealed class AuthoritativeProceduralLevelCatalogTests
 
         Assert.Equal(first.BlockedCells, second.BlockedCells);
         Assert.Equal(first.MissileBlockedCells, second.MissileBlockedCells);
+        Assert.Equal(first.NativeVisionBlockedCells, second.NativeVisionBlockedCells);
+        Assert.False(first.HasExplicitNativeVisionBlockedCells);
         Assert.Equal("generated_test", first.StableSymbol);
         Assert.True(first.IsDefaultStart);
         AssertConnected(first);
@@ -88,6 +90,24 @@ public sealed class AuthoritativeProceduralLevelCatalogTests
     }
 
     [Fact]
+    public void OptionalVisionDensityAddsIndependentNativeBlockers()
+    {
+        var catalog = AuthoritativeProceduralLevelCatalog.LoadTsv(
+            "procedural_levels.tsv",
+            "level_id\twidth\theight\tgeneration_seed\tblocked_percent\tmissile_blocked_percent\tvision_blocked_percent\n"
+                + "7\t25\t21\t1234\t0\t0\t70\n");
+
+        var level = catalog.GenerateWorld().Levels.Single();
+
+        Assert.Empty(level.BlockedCells);
+        Assert.Empty(level.MissileBlockedCells);
+        Assert.NotEmpty(level.NativeVisionBlockedCells);
+        Assert.True(level.HasExplicitNativeVisionBlockedCells);
+        Assert.All(level.NativeVisionBlockedCells, cell =>
+            Assert.DoesNotContain(cell, level.BlockedCells));
+    }
+
+    [Fact]
     public void WorldSeedChangesGeneratedLayoutWithoutChangingTheContract()
     {
         var catalog = new AuthoritativeProceduralLevelCatalog([
@@ -135,6 +155,14 @@ public sealed class AuthoritativeProceduralLevelCatalogTests
                 0,
                 10,
                 MissileBlockedPercent: 81).Validate());
+        Assert.Throws<InvalidDataException>(() =>
+            new AuthoritativeProceduralLevelDefinition(
+                1,
+                10,
+                10,
+                0,
+                10,
+                VisionBlockedPercent: 81).Validate());
         Assert.Throws<InvalidDataException>(() =>
             new AuthoritativeProceduralLevelCatalog([
                 new AuthoritativeProceduralLevelDefinition(1, 10, 10, 0, 10),

@@ -6,6 +6,11 @@ All notable changes to this fork are documented below.
   into deterministic generation as required-walkable inputs, clearing both
   movement and missile blockers while preserving seeded layout determinism.
 
+- Added schema 1.461 support for an optional procedural native-vision density.
+  Generated movement walls remain vision blockers, while separately seeded
+  BlockLight-style cells can now be projected to server and Godot clients
+  without changing movement.
+
 - Completed the remaining compact native replay checkpoint alignment slice:
   store fixtures now include validated cursor graphics, zero-seed Rhino charges
   use their deterministic compatibility damage stream, Reflect retaliation no

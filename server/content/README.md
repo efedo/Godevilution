@@ -3,9 +3,9 @@
 Each directory under `server/content` is a server-owned, validated gameplay
 content pack. The default `base` pack is loaded by the standalone server and is
 included in its content manifest and combined ruleset identity.
-It declares its identity and `devilution.diablo@1.460.0` schema in
+It declares its identity and `devilution.diablo@1.461.0` schema in
 `base/content-pack.json`; the Diablo module also accepts the immediately
-previous additive `1.459.0` schema so existing manifest-based packs remain
+previous additive `1.460.0` schema so existing manifest-based packs remain
 loadable. A composed manifest must still use one exact schema identity across
 all declared packs; use the previous schema only for a complete compatible
 manifest rather than mixing it with the current pack. The standalone host falls
@@ -1609,6 +1609,11 @@ Procedural entry coordinates supplied through `start_x`/`start_y` are reserved
 as required-walkable cells during generation. The server clears both movement
 and missile blockers at those cells, so an authored spawn point cannot be
 stranded by the deterministic density sample.
+
+Schema 1.461 adds the optional `vision_blocked_percent` column to
+`procedural_levels.tsv`. It adds a separately seeded native vision layer for
+procedural geometry. Movement blockers are always included in that layer;
+omitted values retain the legacy movement-density behavior.
 
 Schema 1.325 adds the optional `required_variable1` column to
 `item_quest_effects.tsv`. SetVariable1 transitions may require an exact
@@ -3215,7 +3220,7 @@ and no implicit table replacements. For example:
   "dependencies": ["devilution.base"],
   "schema": {
     "id": "devilution.diablo",
-    "version": "1.460.0"
+    "version": "1.461.0"
   },
   "dependencyConstraints": [
     {
@@ -3249,7 +3254,7 @@ three-component semantic-version constraints for declared dependencies. All
 declared schemas in one ordered manifest must match, every constraint must name
 a declared dependency, and the loaded dependency version must satisfy its
 range. The first-party server rejects a declared schema other than
-`devilution.diablo@1.460.0`. Manifests without compatibility metadata retain their
+`devilution.diablo@1.461.0`. Manifests without compatibility metadata retain their
 legacy identity and remain loadable during migration.
 
 Useful overlay keys are `class_id` for `classes.tsv`, `class_animations.tsv`,

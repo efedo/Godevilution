@@ -14,7 +14,8 @@ public sealed record AuthoritativeProceduralLevelDefinition(
     bool SuppressMultiplayerDeathDrops = false,
     int? MissileBlockedPercent = null,
     int StartPositionX = 0,
-    int StartPositionY = 0)
+    int StartPositionY = 0,
+    int? VisionBlockedPercent = null)
 {
     /** Stable level symbol retained for composed-pack identity diagnostics. */
     public string StableSymbol { get; init; } = string.Empty;
@@ -34,6 +35,9 @@ public sealed record AuthoritativeProceduralLevelDefinition(
         if (MissileBlockedPercent is < 0 or > 80)
             throw new InvalidDataException(
                 $"Procedural level {LevelId} missile-blocked percent must be between 0 and 80.");
+        if (VisionBlockedPercent is < 0 or > 80)
+            throw new InvalidDataException(
+                $"Procedural level {LevelId} vision-blocked percent must be between 0 and 80.");
         if (StartPositionX < 0 || StartPositionX >= Width
             || StartPositionY < 0 || StartPositionY >= Height) {
             throw new InvalidDataException(
@@ -52,7 +56,8 @@ public sealed record AuthoritativeProceduralLevelDefinition(
             GenerationSeed ^ worldSeed,
             BlockedPercent,
             MissileBlockedPercent ?? BlockedPercent,
-            [StartPositionY * Width + StartPositionX]);
+            [StartPositionY * Width + StartPositionX],
+            VisionBlockedPercent ?? BlockedPercent);
         var level = new AuthoritativeLevel(
             LevelId,
             Width,
@@ -62,7 +67,10 @@ public sealed record AuthoritativeProceduralLevelDefinition(
             IsDefaultStart,
             SuppressMultiplayerDeathDrops,
             startPositionX: StartPositionX,
-            startPositionY: StartPositionY) {
+            startPositionY: StartPositionY,
+            nativeVisionBlockedCells: VisionBlockedPercent.HasValue
+                ? layout.NativeVisionBlockedCells
+                : null) {
             StableSymbol = StableSymbol,
         };
         level.ValidateStartPosition();
@@ -124,7 +132,10 @@ public sealed class AuthoritativeProceduralLevelCatalog
                     : 0,
                 row.TryGet("start_y", out _)
                     ? row.RequiredInt32("start_y")
-                    : 0) {
+                    : 0,
+                row.TryGet("vision_blocked_percent", out _)
+                    ? row.OptionalInt32("vision_blocked_percent")
+                    : null) {
                 StableSymbol = row.TryGet("level_symbol", out var symbol)
                     ? symbol
                     : string.Empty,
