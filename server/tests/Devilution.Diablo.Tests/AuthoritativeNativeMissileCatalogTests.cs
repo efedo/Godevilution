@@ -6,6 +6,33 @@ namespace Devilution.Diablo.Tests;
 public sealed class AuthoritativeNativeMissileCatalogTests
 {
     [Fact]
+    public void ShippedNativeMissilesUseTheProductionSchema()
+    {
+        var path = Path.Combine(
+            FindRepositoryRoot(),
+            "server",
+            "content",
+            "base",
+            "native_missiles.tsv");
+        var table = TsvTable.Parse("native_missiles.tsv", File.ReadAllText(path));
+
+        AuthoritativeNativeMissileCatalog.ValidateExternalizedProduction(table);
+    }
+
+    [Fact]
+    public void ProductionNativeMissileValidationRejectsPartialHeaders()
+    {
+        var table = TsvTable.Parse(
+            "native_missiles.tsv",
+            "missile_id\tflags\nFirebolt\tFire\n");
+
+        var exception = Assert.Throws<InvalidDataException>(() =>
+            AuthoritativeNativeMissileCatalog.ValidateExternalizedProduction(table));
+
+        Assert.Contains("complete ordered schema", exception.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void LoadsNativeIdentityAndPresentationMetadata()
     {
         var catalog = AuthoritativeNativeMissileCatalog.LoadTsv(
@@ -97,5 +124,22 @@ public sealed class AuthoritativeNativeMissileCatalogTests
             missileCatalog.ValidateGraphicReferences(spriteCatalog));
         Assert.Contains("Firebolt", exception.Message, StringComparison.Ordinal);
         Assert.Contains("Fireball", exception.Message, StringComparison.Ordinal);
+    }
+
+    private static string FindRepositoryRoot()
+    {
+        var configuredRoot = Environment.GetEnvironmentVariable("GODEVILUTION_REPOSITORY_ROOT");
+        var searchRoots = string.IsNullOrWhiteSpace(configuredRoot)
+            ? new[] { Directory.GetCurrentDirectory(), AppContext.BaseDirectory }
+            : new[] { configuredRoot!, Directory.GetCurrentDirectory(), AppContext.BaseDirectory };
+        foreach (var start in searchRoots) {
+            for (var directory = new DirectoryInfo(start);
+                 directory is not null;
+                 directory = directory.Parent) {
+                if (File.Exists(Path.Combine(directory.FullName, "AGENTS.md")))
+                    return directory.FullName;
+            }
+        }
+        throw new DirectoryNotFoundException("Could not locate the repository root.");
     }
 }

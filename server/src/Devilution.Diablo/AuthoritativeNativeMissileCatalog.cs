@@ -21,6 +21,18 @@ public sealed record AuthoritativeNativeMissileDefinition(
 /** Validated native misdat.tsv identities used by server and presentation bridges. */
 public sealed class AuthoritativeNativeMissileCatalog
 {
+    private static readonly IReadOnlyList<string> ProductionColumns = [
+        "missile_id",
+        "add_function",
+        "process_function",
+        "cast_sound",
+        "hit_sound",
+        "graphic",
+        "flags",
+        "movement_distribution",
+        "on_expiry_missile",
+    ];
+
     private static readonly IReadOnlySet<string> CompleteNativeMissileIds = new HashSet<string>(
         [
             "Acid",
@@ -171,6 +183,19 @@ public sealed class AuthoritativeNativeMissileCatalog
     }
 
     public IReadOnlyList<AuthoritativeNativeMissileDefinition> Definitions => definitions;
+
+    /** Rejects partial native missile metadata at the current production boundary. */
+    public static void ValidateExternalizedProduction(TsvTable table)
+    {
+        ArgumentNullException.ThrowIfNull(table);
+        if (!table.Columns.SequenceEqual(ProductionColumns, StringComparer.Ordinal))
+            throw new InvalidDataException(
+                $"Production native-missile table '{table.SourcePath}' must use the complete ordered schema.");
+        foreach (var row in table.Rows) {
+            _ = row.Required("missile_id");
+            _ = row.Required("flags");
+        }
+    }
 
     /**
      * Requires the complete native `misdat.tsv` identity namespace. Direct

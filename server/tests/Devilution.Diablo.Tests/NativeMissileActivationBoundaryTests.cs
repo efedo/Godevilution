@@ -61,6 +61,57 @@ public sealed class NativeMissileActivationBoundaryTests
     }
 
     [Fact]
+    public void RejectsLegacyNativeMissileMetadataSchemaInCurrentSchema()
+    {
+        var basePack = LoadBasePack();
+        var nativeMissiles = basePack.Tables.Single(
+            table => table.SourcePath == "native_missiles.tsv");
+        var pack = ReplaceBaseTable(
+            basePack,
+            nativeMissiles.SourcePath,
+            CreateLegacyNativeMissileTable(nativeMissiles));
+
+        var exception = Assert.Throws<InvalidDataException>(() =>
+            DiabloModule.Instance.ContentBootstrap.Activate(
+                ComposedContent.Compose(new ContentManifest(
+                    "legacy-native-missile-schema",
+                    "1",
+                    [pack]))));
+
+        Assert.Contains("Production native-missile table", exception.Message, StringComparison.Ordinal);
+        Assert.Contains("complete ordered schema", exception.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void PreviousSchemaRetainsLegacyNativeMissileMetadataCompatibility()
+    {
+        var basePack = LoadBasePack();
+        var nativeMissiles = basePack.Tables.Single(
+            table => table.SourcePath == "native_missiles.tsv");
+        var current = ReplaceBaseTable(
+            basePack,
+            nativeMissiles.SourcePath,
+            CreateLegacyNativeMissileTable(nativeMissiles));
+        var previous = new ContentPack(
+            current.Id,
+            current.Version,
+            current.Tables,
+            current.Dependencies,
+            current.Overlays,
+            new ContentSchemaIdentity("devilution.diablo", "1.484.0"),
+            current.DependencyConstraints,
+            current.Assets);
+
+        var activation = DiabloModule.Instance.ContentBootstrap.Activate(
+            ComposedContent.Compose(new ContentManifest(
+                "previous-native-missile-contract",
+                "1",
+                [previous])));
+
+        Assert.NotNull(activation);
+    }
+
+    [Fact]
     public void RejectsPartialNativeMissileSpriteNamespaceDuringProductionActivation()
     {
         var basePack = LoadBasePack();
@@ -97,6 +148,18 @@ public sealed class NativeMissileActivationBoundaryTests
             catalog.ValidateCompleteNativeNamespace);
 
         Assert.Contains("Acid", exception.Message, StringComparison.Ordinal);
+    }
+
+    private static TsvTable CreateLegacyNativeMissileTable(TsvTable nativeMissiles)
+    {
+        var lines = nativeMissiles.ToCanonicalTsv()
+            .Split('\n', StringSplitOptions.RemoveEmptyEntries)
+            .Select(line => {
+                var fields = line.Split('\t');
+                return string.Join('\t', fields.Where((_, index) =>
+                    !string.Equals(nativeMissiles.Columns[index], "movement_distribution", StringComparison.Ordinal)));
+            });
+        return TsvTable.Parse(nativeMissiles.SourcePath, string.Join('\n', lines) + "\n");
     }
 
     private static ContentPack LoadBasePackWithout(string sourcePath)
