@@ -2,6 +2,10 @@
 
 All notable changes to this fork are documented below.
 
+- The Diablo adapter staging script can now emit a distributable ZIP archive;
+  the archive verifier extracts it in isolation and applies the same manifest,
+  path, and assembly-hash release gate.
+
 - Ruleset replacement now publishes migrated session checkpoints during
   candidate preparation, before activation or handshake identity publication;
   failed exports or checkpoint writes keep the previous generation active.

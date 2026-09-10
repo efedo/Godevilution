@@ -99,9 +99,10 @@ package entry assembly is loaded. The live restart fixture also rolls the same
 adapter ID from package version 0.1.0 to 0.2.0 while retaining the save root.
 The repository now includes a reproducible
 PowerShell staging and static verification scripts for the production adapter
-artifact. The release gate checks canonical paths and all declared assembly
-hashes before distribution, and rollback coverage rejects a changed private
-closure while preserving the previous package. The executable
+artifact. Staging can also emit a distributable ZIP, and the archive verifier
+extracts it into an isolated temporary directory before applying the same
+canonical-path and declared-assembly-hash gate. Rollback coverage rejects a
+changed private closure while preserving the previous package. The executable
 composition root names no Diablo types. Exact assembly-reference tests enforce the separate
 Protocol, Host, Diablo adapter, and executable dependency graph, while a schema
 ownership test prevents duplicate managed Protobuf generation.

@@ -17,6 +17,7 @@ param(
     [string]$Configuration = 'Release',
     [ValidatePattern('^\d+\.\d+\.\d+$')]
     [string]$PackageVersion = '0.1.0',
+    [string]$ArchivePath,
     [switch]$NoBuild
 )
 
@@ -121,3 +122,22 @@ Write-Host "Staged Diablo adapter package: $packageRoot"
 Write-Host "Package ID: $($manifest.id)"
 Write-Host "Package version: $($manifest.version)"
 Write-Host "Manifest: $manifestPath"
+
+if ($ArchivePath) {
+    $archive = [IO.Path]::GetFullPath($ArchivePath)
+    if ([IO.Path]::GetExtension($archive) -ine '.zip')
+        { throw "Release archive '$archive' must use the .zip extension." }
+    $packagePrefix = $packageRoot.TrimEnd(
+        [IO.Path]::DirectorySeparatorChar,
+        [IO.Path]::AltDirectorySeparatorChar) + [IO.Path]::DirectorySeparatorChar
+    if ($archive.StartsWith($packagePrefix, [StringComparison]::OrdinalIgnoreCase))
+        { throw "Archive path '$archive' must be outside the staged package directory." }
+    if (Test-Path -LiteralPath $archive)
+        { throw "Refusing to overwrite existing release archive '$archive'." }
+    $archiveParent = Split-Path -Parent $archive
+    if ($archiveParent)
+        { New-Item -ItemType Directory -Path $archiveParent -Force | Out-Null }
+    Compress-Archive -Path (Join-Path $packageRoot '*') `
+        -DestinationPath $archive -CompressionLevel Optimal
+    Write-Host "Archive: $archive"
+}

@@ -47,6 +47,7 @@ public sealed class ProjectDocumentationConsistencyTests
         var changelog = Read(root, "docs", "CHANGELOG.md");
         Assert.Contains($"schema to `{currentVersion}`", changelog, StringComparison.Ordinal);
         Assert.Contains("documentation/content identity regression guard", changelog, StringComparison.Ordinal);
+        Assert.Contains("distributable ZIP archive", changelog, StringComparison.Ordinal);
 
         var contentReadme = Read(root, "server", "content", "README.md");
         Assert.Contains(currentSchema, contentReadme, StringComparison.Ordinal);
