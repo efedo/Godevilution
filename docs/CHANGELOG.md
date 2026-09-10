@@ -34,6 +34,10 @@ All notable changes to this fork are documented below.
   Diablo adapter entry assembly, private dependency closure, and verified
   manifest without overwriting a non-empty output directory.
 
+- Extended packaged-adapter recovery coverage to roll the same adapter ID from
+  version 0.1.0 to 0.2.0 across a server restart while retaining its durable
+  session state.
+
 - Advanced combined authoritative session checkpoints to format 3 with
   canonical SHA-256 hashes of serialized server state and the command ledger.
   Version-1 and version-2 checkpoints remain readable for migration and are

@@ -93,7 +93,9 @@ and verifies resume-token and entity continuity. A second live fixture restarts
 the server with the same package and save root and verifies persisted entity
 and class identity. Release-oriented manifests can pin the SHA-256 identities
 of shared contracts, so an incompatible host upgrade is rejected before the
-package entry assembly is loaded. The repository now includes a reproducible
+package entry assembly is loaded. The live restart fixture also rolls the same
+adapter ID from package version 0.1.0 to 0.2.0 while retaining the save root.
+The repository now includes a reproducible
 PowerShell staging script for the production adapter artifact. The executable
 composition root names no Diablo types. Exact assembly-reference tests enforce the separate
 Protocol, Host, Diablo adapter, and executable dependency graph, while a schema

@@ -7,8 +7,9 @@ namespace Devilution.Client.Protocol.Tests;
 /** Creates a disposable production adapter package for live protocol tests. */
 internal sealed class PackagedDiabloAdapterPackage : IDisposable
 {
-    public PackagedDiabloAdapterPackage()
+    public PackagedDiabloAdapterPackage(string version = "0.1.0")
     {
+        Version = version;
         Root = Path.Combine(
             Path.GetTempPath(),
             "godevilution-live-diablo-package",
@@ -26,7 +27,7 @@ internal sealed class PackagedDiabloAdapterPackage : IDisposable
         var manifest = new {
             formatVersion = 1,
             id = "godevilution-diablo-package",
-            version = "0.1.0",
+            version,
             assembly = "adapter.dll",
             assemblySha256 = Hash(Path.Combine(Root, "adapter.dll")),
             factoryType = "Godevilution.Server.Diablo.Package.PackagedDiabloAuthoritativeGameHostAdapterFactory",
@@ -49,6 +50,8 @@ internal sealed class PackagedDiabloAdapterPackage : IDisposable
     }
 
     public string Root { get; }
+
+    public string Version { get; }
 
     public void Dispose()
     {

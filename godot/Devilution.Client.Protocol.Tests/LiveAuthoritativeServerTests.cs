@@ -66,7 +66,9 @@ public sealed class LiveAuthoritativeServerTests
     [Fact]
     public async Task PackagedDiabloAdapterRestoresAuthoritativeStateAfterProcessRestart()
     {
-        using var package = new PackagedDiabloAdapterPackage();
+        using var package = new PackagedDiabloAdapterPackage("0.1.0");
+        using var upgradedPackage = new PackagedDiabloAdapterPackage("0.2.0");
+        Assert.NotEqual(package.Version, upgradedPackage.Version);
         var saveRoot = Path.Combine(
             Path.GetTempPath(),
             "Godevilution-Godot-Packaged-Diablo-Restart-Test-"
@@ -101,7 +103,7 @@ public sealed class LiveAuthoritativeServerTests
             using var restartedServer = await StartedServer.StartAsync(
                 TestContext.Current.CancellationToken,
                 saveRootOverride: saveRoot,
-                gameAdapterPackageRoot: package.Root,
+                gameAdapterPackageRoot: upgradedPackage.Root,
                 gameAdapterId: "godevilution.diablo.package",
                 gameMode: "single-player");
             await using var resumedClient = new AuthoritativeClient(
