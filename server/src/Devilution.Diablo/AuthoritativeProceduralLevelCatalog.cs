@@ -51,7 +51,8 @@ public sealed record AuthoritativeProceduralLevelDefinition(
             Height,
             GenerationSeed ^ worldSeed,
             BlockedPercent,
-            MissileBlockedPercent ?? BlockedPercent);
+            MissileBlockedPercent ?? BlockedPercent,
+            [StartPositionY * Width + StartPositionX]);
         var level = new AuthoritativeLevel(
             LevelId,
             Width,

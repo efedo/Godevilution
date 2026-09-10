@@ -34,6 +34,23 @@ public sealed class DeterministicProceduralGridTests
         });
     }
 
+    [Fact]
+    public void RequiredWalkableCellsOverrideBothGeneratedCollisionLayers()
+    {
+        var layout = DeterministicProceduralGrid.Generate(
+            40,
+            40,
+            0xA5A5A5A5,
+            80,
+            80,
+            [2 * 40 + 2, 6 * 40 + 6]);
+
+        Assert.DoesNotContain(2 * 40 + 2, layout.BlockedCells);
+        Assert.DoesNotContain(2 * 40 + 2, layout.MissileBlockedCells);
+        Assert.DoesNotContain(6 * 40 + 6, layout.BlockedCells);
+        Assert.DoesNotContain(6 * 40 + 6, layout.MissileBlockedCells);
+    }
+
     [Theory]
     [InlineData(2, 10, 0, 0, 0)]
     [InlineData(10, 2, 0, 0, 0)]
@@ -53,5 +70,18 @@ public sealed class DeterministicProceduralGridTests
                 unchecked((uint)seed),
                 blockedPercent,
                 missileBlockedPercent));
+    }
+
+    [Fact]
+    public void RejectsRequiredWalkableCellsOutsideTheGeneratedGrid()
+    {
+        Assert.Throws<ArgumentOutOfRangeException>(() =>
+            DeterministicProceduralGrid.Generate(
+                10,
+                10,
+                0,
+                10,
+                10,
+                [100]));
     }
 }

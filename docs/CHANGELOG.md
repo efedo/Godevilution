@@ -2,6 +2,10 @@
 
 All notable changes to this fork are documented below.
 
+- Hardened procedural dungeon entry points: authored start cells are passed
+  into deterministic generation as required-walkable inputs, clearing both
+  movement and missile blockers while preserving seeded layout determinism.
+
 - Completed the remaining compact native replay checkpoint alignment slice:
   store fixtures now include validated cursor graphics, zero-seed Rhino charges
   use their deterministic compatibility damage stream, Reflect retaliation no

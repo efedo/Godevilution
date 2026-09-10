@@ -14,13 +14,17 @@ public static class DeterministicProceduralGrid
      * Generates a connected layout from a caller-owned seed and density
      * percentages. Pocket cells are sampled from a four-cell lattice so the
      * generated walkable corridors remain connected at every supported density.
+     * Required walkable cells are cleared from both collision layers after
+     * sampling so authored entry points remain usable without changing the
+     * seed stream.
      */
     public static DeterministicProceduralGridLayout Generate(
         int width,
         int height,
         uint seed,
         int blockedPercent,
-        int missileBlockedPercent)
+        int missileBlockedPercent,
+        IReadOnlyCollection<int>? requiredWalkableCells = null)
     {
         if (width < 3 || height < 3 || width > 512 || height > 512)
             throw new ArgumentOutOfRangeException(nameof(width));
@@ -28,6 +32,12 @@ public static class DeterministicProceduralGrid
             throw new ArgumentOutOfRangeException(nameof(blockedPercent));
         if (missileBlockedPercent is < 0 or > 80)
             throw new ArgumentOutOfRangeException(nameof(missileBlockedPercent));
+
+        if (requiredWalkableCells is not null
+            && requiredWalkableCells.Any(cell => cell < 0 || cell >= width * height))
+            throw new ArgumentOutOfRangeException(
+                nameof(requiredWalkableCells),
+                "Required walkable cells must be within the generated grid.");
 
         var blocked = new HashSet<int>();
         var missileBlocked = new HashSet<int>();
@@ -50,6 +60,10 @@ public static class DeterministicProceduralGrid
             }
         }
         missileBlocked.UnionWith(blocked);
+        if (requiredWalkableCells is not null) {
+            blocked.ExceptWith(requiredWalkableCells);
+            missileBlocked.ExceptWith(requiredWalkableCells);
+        }
         return new DeterministicProceduralGridLayout(
             width,
             height,

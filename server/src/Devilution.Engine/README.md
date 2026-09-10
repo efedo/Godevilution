@@ -48,7 +48,8 @@ The engine currently owns:
 - native-compatible rotated-grid projectile velocity construction with the
   legacy fixed-point scaling contract;
 - deterministic procedural grid generation with connected corridor topology,
-  independently seeded missile occlusion, and stable cell ordering;
+  independently seeded missile occlusion, stable cell ordering, and explicit
+  required-walkable entry cells for authored spawn points;
 - native-compatible radial projectile fan-out ordering with deterministic
   mirrored quarter-ring truncation;
 - stable 32-bit mixing and aligned walkable-footprint selection for authored

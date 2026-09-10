@@ -1605,6 +1605,11 @@ always includes movement-blocked cells, and falls back to `blocked_percent`
 when the column is omitted. This preserves older procedural rows while
 allowing native-compatible missile occlusion to diverge from movement walls.
 
+Procedural entry coordinates supplied through `start_x`/`start_y` are reserved
+as required-walkable cells during generation. The server clears both movement
+and missile blockers at those cells, so an authored spawn point cannot be
+stranded by the deterministic density sample.
+
 Schema 1.325 adds the optional `required_variable1` column to
 `item_quest_effects.tsv`. SetVariable1 transitions may require an exact
 native quest variable before applying, preserving conditional quest-item

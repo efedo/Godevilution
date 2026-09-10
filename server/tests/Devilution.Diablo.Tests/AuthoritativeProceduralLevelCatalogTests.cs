@@ -44,6 +44,29 @@ public sealed class AuthoritativeProceduralLevelCatalogTests
     }
 
     [Fact]
+    public void ClearsConfiguredStartPositionFromMovementAndMissileBlockers()
+    {
+        var catalog = new AuthoritativeProceduralLevelCatalog([
+            new AuthoritativeProceduralLevelDefinition(
+                7,
+                40,
+                40,
+                0xA5A5A5A5,
+                80,
+                MissileBlockedPercent: 80,
+                StartPositionX: 2,
+                StartPositionY: 2),
+        ]);
+
+        var level = catalog.GenerateWorld().Levels.Single();
+        var startCell = level.StartPositionY * level.Width + level.StartPositionX;
+
+        Assert.DoesNotContain(startCell, level.BlockedCells);
+        Assert.DoesNotContain(startCell, level.MissileBlockedCells);
+        Assert.True(level.IsWalkable(level.StartPositionX, level.StartPositionY));
+    }
+
+    [Fact]
     public void OptionalMissileDensityAddsIndependentOcclusion()
     {
         var catalog = new AuthoritativeProceduralLevelCatalog([

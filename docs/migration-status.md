@@ -27,6 +27,11 @@ zero-seed Rhino charge damage, Reflect retaliation draw consumption, and
 equipped-death drop checkpoints. These paths now produce the same canonical
 state in the native and managed runners.
 
+Procedural level generation now accepts authored entry cells as deterministic
+required-walkable inputs. The generator clears both movement and missile
+collision at those cells, and engine/Diablo regression coverage rejects
+out-of-grid requirements while proving seeded start positions remain usable.
+
 Godot combat, Telekinesis, and unique-monster dialogue target selection now
 uses the same projected native vision boundary as monster rendering. Hidden,
 dead, sneak-hidden, and out-of-radius monsters therefore cannot be selected
