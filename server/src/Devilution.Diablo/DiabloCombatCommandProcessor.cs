@@ -1562,7 +1562,12 @@ public sealed class DiabloCombatCommandProcessor
         var effectiveHitChance = usesNativeClassToHit
             ? monsterTarget
                 ? rules.ResolvePhysicalHitChance(
-                    checked(classHitChance + hitBonus),
+                    checked(
+                        classHitChance
+                        + hitBonus
+                        - (ranged
+                            ? targetDistance * targetDistance / 2
+                            : 0)),
                     targetArmorClass,
                     armorPiercingBonus,
                     meleeArmorReductionDivisor: !ranged

@@ -5,7 +5,8 @@ All notable changes to this fork are documented below.
 - Aligned managed PvP physical attacks with native `PlrHitPlr` and
   `Plr2PlrMHit`: player targets no longer inherit monster armor-piercing or
   post-armor damage rules, ranged PvP admission applies the native distance
-  penalty, and non-Rogue class damage modifiers are halved for arrows.
+  penalty, non-Rogue class damage modifiers are halved for arrows, and
+  initialized monster-target arrows apply the native distance penalty.
 
 - Advanced the active content schema to `1.461.0`, retaining `1.460.0` as
   the previous additive contract for compatible packs.

@@ -1437,6 +1437,46 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void InitializedMonsterBowAttackUsesNativeDistanceHitPenalty()
+    {
+        var bow = AuthoritativeItemState.Empty with {
+            ItemType = 3,
+            ItemClass = 1,
+            MinDamage = 10,
+            MaxDamage = 10,
+            StatFlag = true,
+        };
+        var classes = LoadShippedPlayerClasses();
+        var target = new AuthoritativeCombatTarget(
+            9,
+            10,
+            0,
+            100,
+            armorClass: 20);
+        var world = new DiabloWorldState(combatTargets: [target]);
+        var processor = CreateProcessor(
+            world,
+            rules: new AuthoritativeCombatRules(10, 1, 100),
+            playerClasses: classes);
+        var attacker = CreatePlayer(
+            entityId: 7,
+            characterClassId: 2,
+            characterLevel: 1,
+            attributes: classes.GetRequired(2).CreateStartingAttributes(),
+            equipment: [new EquippedStoreItem(4, 42, bow)]);
+
+        var result = processor.Execute(
+            attacker,
+            new DiabloAttackIntent(target.EntityId),
+            4);
+
+        Assert.True(result.Succeeded, result.Failure?.ToString());
+        var projectile = Assert.Single(world.Projectiles.Values);
+        Assert.False(projectile.AttackHit);
+        Assert.Equal(100, target.HitPoints);
+    }
+
+    [Fact]
     public void MultipleArrowsUsesConfiguredContentCountAgainstAPlayer()
     {
         var bow = AuthoritativeItemState.Empty with {
