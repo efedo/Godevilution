@@ -4320,6 +4320,44 @@ public sealed class DiabloSimulationTests
     }
 
     [Fact]
+    public void SnapshotRestoreAllowsInFlightMoveToBeCancelledByNewGeometry()
+    {
+        var world = new AuthoritativeWorld();
+        world.AddLevel(new AuthoritativeLevel(1, 4, 4));
+        var simulation = DiabloSimulationFactory.Instance.Create(
+            new DiabloSimulationOptions(new StoreCatalog(), DiabloModule.Instance.Rules) {
+                World = world,
+            });
+        var source = CreatePlayer();
+        source.LevelId = 1;
+        source.CombatMode = DiabloPlayerCombatMode.WalkSouthwards;
+        source.CombatModeEndTick = 4;
+        source.CurrentAction = new AuthoritativePlayerActionState(
+            DiabloPlayerActionKind.Move,
+            1,
+            2,
+            3,
+            4) {
+            DirectionX = 1,
+        };
+
+        var snapshot = simulation.CaptureSnapshot(source, 1);
+        world.ReplaceLevel(new AuthoritativeLevel(
+            1,
+            4,
+            4,
+            blockedCells: [1]));
+        var destination = CreatePlayer();
+        destination.LevelId = 1;
+
+        simulation.RestoreSnapshot(destination, snapshot);
+        simulation.AdvanceTick(2, [destination]);
+
+        Assert.Equal((0, 0), (destination.PositionX, destination.PositionY));
+        Assert.True(destination.CurrentAction!.EffectApplied);
+    }
+
+    [Fact]
     public void SnapshotRestoreRejectsTileTargetedCastOutsideWorldGeometry()
     {
         var world = new AuthoritativeWorld();

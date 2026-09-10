@@ -1884,26 +1884,21 @@ public sealed partial class DiabloSimulation
         }).ToArray();
         var restoredStore = ValidateSavedStore(source, snapshot.ActiveStore);
 
+        // A timed move still occupies only its current cell. Its future cell
+        // is revalidated at the effect tick and may be claimed by geometry or
+        // another participant while the action is in flight.
         DiabloWorldState.ValidateOccupancy(
             source.LevelId,
             source.PositionX,
             source.PositionY,
-            (source.CurrentAction?.Kind == DiabloPlayerActionKind.Move
-                ? new[] {
-                    (
-                        source.LevelId,
-                        checked(source.PositionX + source.CurrentAction.DirectionX),
-                        checked(source.PositionY + source.CurrentAction.DirectionY)),
-                }
-                : [])
-                .Concat(restoredMonsters
+            restoredMonsters
                 .Where(monster => monster.HitPoints > 0)
                 .SelectMany(monster => monster.Moving
                     ? new[] {
                         (monster.LevelId, monster.PositionX, monster.PositionY),
                         (monster.LevelId, monster.FuturePositionX, monster.FuturePositionY),
                     }
-                    : [(monster.LevelId, monster.PositionX, monster.PositionY)])),
+                    : [(monster.LevelId, monster.PositionX, monster.PositionY)]),
             restoredWorldItems.Select(item => (item.LevelId, item.PositionX, item.PositionY)),
             restoredObjects
                 .Where(@object => !@object.Activated
@@ -2840,7 +2835,9 @@ public sealed partial class DiabloSimulation
                 && action.TargetY == 0
                 && !action.TargetCell
                 && action.CastIntent is null
-                && WorldState.IsWalkable(
+                // Walkability and occupancy are effect-time decisions; only
+                // the destination's bounds must survive save/restore.
+                && WorldState.ContainsPosition(
                     source.LevelId,
                     checked(source.PositionX + action.DirectionX),
                     checked(source.PositionY + action.DirectionY)),

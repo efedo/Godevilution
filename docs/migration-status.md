@@ -54,6 +54,9 @@ walkability and participant occupancy when its animation reaches the movement
 effect tick. A participant or world mutation that claims the destination during
 the animation therefore cancels the step instead of allowing the server state to
 overlap or enter newly blocked geometry.
+Snapshot capture and restore now preserve that in-flight boundary: a future move
+cell is not treated as occupied state, and a saved action may resume against
+changed geometry before the same effect-time revalidation cancels it.
 
 Player hits now also honor the native Gargoyle wake-up boundary: an active
 Gargoyle special flag is consumed by the first physical hit without applying
