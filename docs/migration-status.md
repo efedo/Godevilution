@@ -120,6 +120,8 @@ native assets and authored quest placement rows remain deferred.
 The checked-in base and Hellfire replay fixtures now use the canonical
 content-pack manifest hashes produced by the normalized source identities and
 active schema, keeping replay admission aligned with the validated packs.
+Object-interaction checkpoints also include the authored presentation-family
+metadata now carried by the canonical snapshot hash.
 
 Authoritative TCP command responses now advance the host and snapshot provider
 to the maximum applied command tick before publishing acknowledgements,

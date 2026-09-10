@@ -2,6 +2,11 @@
 
 All notable changes to this fork are documented below.
 
+- Refreshed the checked-in replay fixture identities after authored native
+  object presentation families became part of the canonical snapshot hash.
+  Base-pack manifest hashes and object-interaction checkpoints now bind to the
+  current external content contract; the managed replay class remains green.
+
 - Corrected shipped-content regression coverage for the `1.502.0` contract:
   current-schema activation now has explicit rejection tests for omitted native
   spell, item-miscellany, item-topology, and item-generation-tag namespaces,
