@@ -10,8 +10,15 @@ public static class AuthoritativeEventBatchValidator
     public const int MaximumDialogueTextBytes = AuthoritativeProtocolLimits.MaximumDialogueTextBytes;
 
     public static void Validate(EventBatch events)
+        => Validate(events, expectedTick: null);
+
+    /** Validates events and, when supplied, their authoritative publication tick. */
+    public static void Validate(EventBatch events, ulong? expectedTick)
     {
         ArgumentNullException.ThrowIfNull(events);
+        if (expectedTick.HasValue && events.Tick != expectedTick.Value)
+            throw new InvalidDataException(
+                $"The authoritative event batch tick {events.Tick} does not match the applied tick {expectedTick.Value}.");
         if (events.Events.Count > MaximumEventBatchCount)
             throw new InvalidDataException("The authoritative event batch is too large.");
 

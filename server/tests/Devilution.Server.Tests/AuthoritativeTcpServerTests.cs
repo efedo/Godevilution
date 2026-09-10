@@ -287,6 +287,55 @@ public sealed class AuthoritativeTcpServerTests
     }
 
     [Fact]
+    public async Task StaleEventBatchTickIsRejectedBeforeWireSerialization()
+    {
+        var executor = new RecordingExecutor();
+        var commandServer = new AuthoritativeCommandServer(executor);
+        var handshake = new ProtocolHandshake(new ProtocolServerIdentity("server-build", "0.1.0", "content-hash", 20));
+        await using var server = new AuthoritativeTcpServer(
+            commandServer,
+            handshake,
+            () => 10,
+            snapshotProvider: executor,
+            eventProvider: new StaleEventProvider());
+        server.Start();
+
+        using var client = new TcpClient();
+        var cancellationToken = TestContext.Current.CancellationToken;
+        await client.ConnectAsync(IPAddress.Loopback, server.Port, cancellationToken);
+        await using var stream = client.GetStream();
+        await SendHelloAsync(stream, cancellationToken);
+
+        Assert.Equal(
+            Envelope.PayloadOneofCase.ServerHello,
+            (await EnvelopeCodec.ReadAsync(stream, cancellationToken))!.PayloadCase);
+        Assert.Equal(
+            Envelope.PayloadOneofCase.Snapshot,
+            (await EnvelopeCodec.ReadAsync(stream, cancellationToken))!.PayloadCase);
+
+        await EnvelopeCodec.WriteAsync(stream, new Envelope {
+            CommandBatch = new CommandBatch {
+                Commands = {
+                    new Command {
+                        ClientSequence = 1,
+                        RequestedTick = 10,
+                        AttackRequested = new AttackRequested { TargetEntityId = 1 },
+                    },
+                },
+            },
+        }, cancellationToken);
+
+        Assert.Equal(
+            Envelope.PayloadOneofCase.CommandAck,
+            (await EnvelopeCodec.ReadAsync(stream, cancellationToken))!.PayloadCase);
+        var error = await EnvelopeCodec.ReadAsync(stream, cancellationToken);
+        Assert.NotNull(error);
+        Assert.Equal(Envelope.PayloadOneofCase.Error, error!.PayloadCase);
+        Assert.Equal(ProtocolErrorCode.InvalidMessage, error.Error.Code);
+        Assert.Contains("does not match the applied tick", error.Error.Detail, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
     public async Task MalformedSnapshotsFromAdapterAreRejectedBeforeWireSerialization()
     {
         var executor = new RecordingExecutor();
@@ -2685,6 +2734,17 @@ public sealed class AuthoritativeTcpServerTests
             return new EventBatch {
                 Tick = tick,
                 Events = { new GameEvent() },
+            };
+        }
+    }
+
+    private sealed class StaleEventProvider : IAuthoritativeEventProvider
+    {
+        public EventBatch? DrainEvents(string sessionId, uint entityId, ulong tick)
+        {
+            return new EventBatch {
+                Tick = tick == 0 ? 0 : tick - 1,
+                Events = { new GameEvent { Experience = new ExperienceEvent() } },
             };
         }
     }

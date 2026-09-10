@@ -22,6 +22,20 @@ public sealed class AuthoritativeEventBatchValidatorTests
     }
 
     [Fact]
+    public void RejectsAnEventBatchPublishedAtAStaleTick()
+    {
+        var exception = Assert.Throws<InvalidDataException>(() =>
+            AuthoritativeEventBatchValidator.Validate(
+                new EventBatch {
+                    Tick = 9,
+                    Events = { new GameEvent { Experience = new ExperienceEvent() } },
+                },
+                expectedTick: 10));
+
+        Assert.Contains("does not match the applied tick", exception.Message, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
     public void RejectsMalformedOrOversizedBatches()
     {
         foreach (var invalidEvent in new[] {

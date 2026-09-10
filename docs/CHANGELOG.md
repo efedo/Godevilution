@@ -2,6 +2,11 @@
 
 All notable changes to this fork are documented below.
 
+- Authoritative TCP now rejects adapter event batches whose publication tick
+  differs from the shared applied tick used for the command acknowledgement
+  and snapshot. This prevents stale event effects from crossing a newer
+  snapshot boundary, with focused validator and live TCP coverage.
+
 - Fixed the authoritative tick boundary across connected sessions: a future
   command applied by one participant now advances the shared command server
   boundary, so another participant's later snapshot poll cannot regress to the
