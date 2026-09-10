@@ -403,6 +403,9 @@ The multiplayer AI seed advances from the monster-owned stream at each
 authoritative tick; generic melee then uses that stream for hit and block rolls.
 The secondary-player native-AI-seed fixture verifies seed advancement, block
 mode timing, and the canonical hash in both runners.
+`gameplay-goat-melee-secondary-q6-range.json` extends that seeded secondary
+melee lane with a three-to-seven damage range, Q6 life, and incoming
+`_pIGetHit` equipment so fractional damage remains identical in both runners.
 SkeletonMelee fixtures may carry
 `combat_target_skeleton_melee_delay_ticks` to replay an admitted native delay
 or preserve a failed adjacent-attack countdown across checkpoint ticks.
@@ -1061,6 +1064,8 @@ Notable shared fixtures include:
 - `gameplay-multiplayer-secondary-monster-melee.json` for nearest-participant
   generic monster melee selection, secondary damage, and primary-state
   preservation across the native and managed runners;
+- `gameplay-goat-melee-secondary-q6-range.json` for seeded secondary-player
+  Q6 damage-range, incoming `_pIGetHit`, and canonical life parity;
 - `gameplay-multiplayer-secondary-monster-pathing.json` for bounded fallback
   movement around a dead primary participant and alternate first-step parity;
 - `gameplay-multiplayer-secondary-monster-object-pathing.json` for preserving

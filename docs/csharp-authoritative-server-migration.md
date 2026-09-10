@@ -233,6 +233,8 @@ admission, nearest adjacent landing, special damage, monster relocation,
 player knockback, and the unchanged single-player RNG boundary.
 The range-valued compatibility fixture also covers Q6 special damage before
 the player's incoming `_pIGetHit` bonus and canonical checkpoint parity.
+The seeded secondary-player GoatMelee fixture carries that same Q6 boundary
+through incoming `_pIGetHit` equipment and Q6 life before projection.
 The SnakeCharge path now also has a shared lifecycle fixture covering
 server-owned admission, travel, player collision, and impact timing.
 

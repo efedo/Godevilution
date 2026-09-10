@@ -25,6 +25,10 @@ All notable changes to this fork are documented below.
   compatibility stream, including incoming `_pIGetHit` equipment adjustment;
   added a shared range-valued C++/C# checkpoint.
 
+- Aligned seeded secondary-player MonsterMelee damage with the native Q6 range
+  and incoming `_pIGetHit` boundary, preserving Q6 life and AI-stream state;
+  added a shared GoatMelee checkpoint.
+
 - Ruleset replacement now publishes migrated session checkpoints during
   candidate preparation, before activation or handshake identity publication;
   failed exports or checkpoint writes keep the previous generation active.

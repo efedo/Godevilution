@@ -8591,6 +8591,9 @@ The primary native MonsterMelee stream now also rolls an unblocked min/max
 damage range in Q6 before applying the validated `_pIGetHit` bonus boundary.
 The single-player range fixture keeps fractional damage, truncation, and the
 canonical checkpoint identical in the compact C++ and managed runners.
+The seeded secondary-player GoatMelee lane now applies the same Q6 range and
+incoming `_pIGetHit` boundary to Q6 life, preserving the canonical checkpoint
+and native AI-stream advancement in both runners.
 
 ## Near-term priorities
 

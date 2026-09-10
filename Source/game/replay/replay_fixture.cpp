@@ -9478,28 +9478,40 @@ void AdvanceReplayMonsterAttack(
 		}
 	}
 	if (victim.secondary) {
-		int32_t damage = state.combatTargetAttackDamage == 0
-		    ? 0
-		    : std::max(1, state.combatTargetAttackDamage);
+		int32_t damageQ6 = 0;
 		if (usesNativeCombatStream && state.combatTargetToHit > 0) {
 			const int32_t minimumDamage = state.combatTargetMinDamage == 0
 			        && state.combatTargetMaxDamage == 0
-			    ? damage
+			    ? std::max(1, state.combatTargetAttackDamage)
 			    : state.combatTargetMinDamage;
 			const int32_t maximumDamage = state.combatTargetMinDamage == 0
 			        && state.combatTargetMaxDamage == 0
-			    ? damage
+			    ? std::max(1, state.combatTargetAttackDamage)
 			    : state.combatTargetMaxDamage;
 			const int32_t minimumDamageQ6 = minimumDamage * 64;
 			const int32_t maximumDamageQ6 = maximumDamage * 64;
-			const int32_t damageQ6 = minimumDamageQ6 + std::max(
+			damageQ6 = minimumDamageQ6 + std::max(
 			    GenerateRnd(state, maximumDamageQ6 - minimumDamageQ6 + 1),
 			    0);
-			damage = damageQ6 / 64;
+			const auto &equipment = victim.secondary
+			    ? state.secondaryEquipment
+			    : state.equipment;
+			damageQ6 = ApplyReplayGetHitBonusQ6(equipment, damageQ6);
+		} else {
+			const int32_t damage = state.combatTargetAttackDamage == 0
+			    ? 0
+			    : std::max(1, state.combatTargetAttackDamage);
+			damageQ6 = ApplyReplayGetHitBonus(
+				state,
+				damage,
+				true)
+			    * 64;
 		}
-		damage = ApplyReplayGetHitBonus(state, damage, true);
+		const int32_t damage = damageQ6 / 64;
 		ApplyReplayThorns(state, state.secondaryEquipment, damage);
-		state.secondaryPlayerLife = std::max(0, state.secondaryPlayerLife - damage);
+		const bool usesLegacyWholeLife = state.secondaryPlayerLifeMaximum % 64 != 0;
+		const int32_t appliedDamageQ6 = usesLegacyWholeLife ? damage : damageQ6;
+		state.secondaryPlayerLife = std::max(0, state.secondaryPlayerLife - appliedDamageQ6);
 		if (state.secondaryPlayerLife == 0)
 			StartReplaySecondaryPlayerDeath(state, true);
 		return;
