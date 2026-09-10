@@ -1,5 +1,8 @@
 using Devilution.Server.Stores;
 using Devilution.Protocol.V1;
+using System.Security.Cryptography;
+using System.Text;
+using System.Text.Json;
 using Xunit;
 
 namespace Devilution.Server.Tests;
@@ -169,6 +172,84 @@ public sealed class AuthoritativeSaveStoreTests
                 });
             Assert.Throws<ArgumentException>(() => store.Load("../session-a"));
             Assert.Empty(Directory.GetFiles(root, "*.tmp"));
+        } finally {
+            if (Directory.Exists(root))
+                Directory.Delete(root, recursive: true);
+        }
+    }
+
+    [Fact]
+    public void SessionStoreWritesStateIntegrityHashAndRejectsTampering()
+    {
+        var root = Path.Combine(
+            Path.GetTempPath(),
+            "godevilution-session-integrity-tests",
+            Guid.NewGuid().ToString("N"));
+        try {
+            var store = new AuthoritativeSessionStore(root);
+            store.Save("session-a", "authoritative-state", new Dictionary<ulong, CommandResult>());
+
+            var path = Path.Combine(root, "session-a.session.json");
+            using var document = JsonDocument.Parse(File.ReadAllText(path));
+            var stateHash = document.RootElement.GetProperty("StateSha256").GetString();
+            Assert.Equal(
+                Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes("authoritative-state"))),
+                stateHash);
+
+            File.WriteAllText(
+                path,
+                "{\"FormatVersion\":2,\"SerializedState\":\"tampered-state\",\"CommandReceipts\":[],"
+                + "\"StateSha256\":\"" + stateHash + "\"}");
+
+            var exception = Assert.Throws<InvalidDataException>(() => store.Load("session-a"));
+            Assert.Contains("integrity hash", exception.Message, StringComparison.Ordinal);
+        } finally {
+            if (Directory.Exists(root))
+                Directory.Delete(root, recursive: true);
+        }
+    }
+
+    [Fact]
+    public void SessionStoreAcceptsVersionOneCheckpointsForMigration()
+    {
+        var root = Path.Combine(
+            Path.GetTempPath(),
+            "godevilution-session-migration-tests",
+            Guid.NewGuid().ToString("N"));
+        try {
+            Directory.CreateDirectory(root);
+            File.WriteAllText(
+                Path.Combine(root, "session-a.session.json"),
+                "{\"FormatVersion\":1,\"SerializedState\":\"legacy-state\",\"CommandReceipts\":[]}");
+
+            var document = new AuthoritativeSessionStore(root).Load("session-a");
+
+            Assert.NotNull(document);
+            Assert.Equal(1, document.FormatVersion);
+            Assert.Equal("legacy-state", document.SerializedState);
+            Assert.Empty(document.CommandReceipts);
+        } finally {
+            if (Directory.Exists(root))
+                Directory.Delete(root, recursive: true);
+        }
+    }
+
+    [Fact]
+    public void SessionStoreRejectsMissingVersionTwoIntegrityHash()
+    {
+        var root = Path.Combine(
+            Path.GetTempPath(),
+            "godevilution-session-integrity-missing-tests",
+            Guid.NewGuid().ToString("N"));
+        try {
+            Directory.CreateDirectory(root);
+            File.WriteAllText(
+                Path.Combine(root, "session-a.session.json"),
+                "{\"FormatVersion\":2,\"SerializedState\":\"state\",\"CommandReceipts\":[]}");
+
+            var exception = Assert.Throws<InvalidDataException>(() =>
+                new AuthoritativeSessionStore(root).Load("session-a"));
+            Assert.Contains("integrity hash", exception.Message, StringComparison.Ordinal);
         } finally {
             if (Directory.Exists(root))
                 Directory.Delete(root, recursive: true);
