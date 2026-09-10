@@ -51,6 +51,9 @@ All notable changes to this fork are documented below.
   catalog, with explicit native random-stream and value-range metadata so
   generation no longer selects legacy prefix/suffix tables.
 
+- Production Diablo activation now requires the normalized spell-book catalog,
+  keeping dynamic book generation and admission data server-owned.
+
 - Legacy-only native spell, miscellaneous-item, topology, and item-tag tables
   are no longer required by normalized production activation; direct
   compatibility loaders continue to validate and consume them when supplied.

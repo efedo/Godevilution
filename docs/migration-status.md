@@ -47,6 +47,9 @@ Production activation now also requires the complete normalized
 `item_affixes.tsv` catalog. Its shipped rows carry explicit native random-stream
 and value-range metadata, so affix generation no longer selects legacy prefix
 and suffix tables at the server boundary.
+Production activation now also requires the normalized `spell_books.tsv`
+catalog, keeping dynamic book eligibility, presentation, and single-player
+admission data server-owned instead of silently disabling that path.
 Production activation still requires the native item-effect, Hellfire-effect,
 and cursor-graphics catalogs used by normalized item validation and projection.
 The native misc, topology, and tag catalogs remain available to direct legacy

@@ -1241,6 +1241,7 @@ public sealed class ShippedContentTests
     [InlineData("item_affixes.tsv")]
     [InlineData("items.tsv")]
     [InlineData("unique_items.tsv")]
+    [InlineData("spell_books.tsv")]
     [InlineData("spells.tsv")]
     [InlineData("native_item_effects.tsv")]
     [InlineData("native_item_hellfire_effects.tsv")]

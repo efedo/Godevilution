@@ -327,19 +327,13 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
             nativeItemEffects,
             nativeItemHellfireEffects);
         stableIds.ValidateReferences("item", itemId => itemCatalog.TryGet(itemId, out _));
-        var spellBooks = content.TryGetTable("spell_books.tsv", out var spellBooksTable)
-            ? AuthoritativeSpellBookCatalog.LoadTsv(
-                spellBooksTable.SourcePath,
-                spellBooksTable.ToCanonicalTsv(),
-                stableIds,
-                cursorCatalog)
-            : null;
-        if (spellBooks is not null) {
-            if (spells is null)
-                throw new InvalidDataException(
-                    "Spell-book metadata requires an active spell catalog.");
-            spellBooks.Validate(spells, itemCatalog);
-        }
+        var spellBooksTable = GetRequiredExternalTable(content, "spell_books.tsv");
+        var spellBooks = AuthoritativeSpellBookCatalog.LoadTsv(
+            spellBooksTable.SourcePath,
+            spellBooksTable.ToCanonicalTsv(),
+            stableIds,
+            cursorCatalog);
+        spellBooks.Validate(spells, itemCatalog);
         var itemCombinations = content.TryGetTable(
             "item_combinations.tsv",
             out var itemCombinationsTable)
