@@ -44,6 +44,8 @@ public sealed class AuthoritativeNativeItemTagCatalogTests
         ]);
         var topology = new AuthoritativeNativeItemTopologyCatalog([
             new(AuthoritativeNativeItemTopologyKind.ItemType, "CustomType", 0),
+            new(AuthoritativeNativeItemTopologyKind.ItemClass, "Misc", 3),
+            new(AuthoritativeNativeItemTopologyKind.EquipLocation, "Unequippable", 7),
         ]);
         var items = AuthoritativeItemCatalog.LoadLegacyTsv(
             "itemdat.tsv",

@@ -21,7 +21,10 @@ public sealed class NativeDunLevelContentActivationBoundaryTests
 
         Assert.Contains(
             activation.Simulation.WorldState.World!.Levels,
-            level => level.LevelId == 2 && level.NativeObjectLayer.Count == 4);
+            level => level.LevelId == 2
+                && level.NativeObjectLayer.Count == 1600
+                && level.NativeObjectLayer[1] == 17
+                && level.NativeObjectLayer[3] == 19);
     }
 
     [Fact]
@@ -60,7 +63,10 @@ public sealed class NativeDunLevelContentActivationBoundaryTests
         Assert.NotNull(activation);
         Assert.Contains(
             activation.Simulation.WorldState.World!.Levels,
-            level => level.LevelId == 2 && level.NativeObjectLayer.Count == 4);
+            level => level.LevelId == 2
+                && level.NativeObjectLayer.Count == 1600
+                && level.NativeObjectLayer[1] == 17
+                && level.NativeObjectLayer[3] == 19);
     }
 
     private static ContentPack LoadBasePack()
@@ -107,14 +113,19 @@ public sealed class NativeDunLevelContentActivationBoundaryTests
 
     private static byte[] CreateDun(ushort[] objectLayer)
     {
-        var megaWidth = 1;
-        var megaHeight = 1;
+        var megaWidth = 20;
+        var megaHeight = 20;
         var megaCount = megaWidth * megaHeight;
         var dPieceCount = megaCount * 4;
         var words = new ushort[2 + megaCount + dPieceCount * 4];
         words[0] = (ushort)megaWidth;
         words[1] = (ushort)megaHeight;
-        Array.Copy(objectLayer, 0, words, 2 + megaCount + dPieceCount * 2, objectLayer.Length);
+        Array.Copy(
+            objectLayer,
+            0,
+            words,
+            2 + megaCount + dPieceCount * 2,
+            objectLayer.Length);
         var bytes = new byte[words.Length * sizeof(ushort)];
         for (var index = 0; index < words.Length; index++)
             BinaryPrimitives.WriteUInt16LittleEndian(

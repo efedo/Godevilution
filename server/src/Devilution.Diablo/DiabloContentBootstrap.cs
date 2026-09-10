@@ -1635,6 +1635,13 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
     private static LegacyCompatibilityCatalogs LoadLegacyCompatibilityCatalogs(
         ComposedContent content)
     {
+        // These catalogs are additive outputs of the current production
+        // contract. Previous-schema packs keep their direct legacy loaders,
+        // but activation must not publish partially validated compatibility
+        // catalogs to the current module surface.
+        if (content.Manifest.Schema != DiabloContentSchema.Current)
+            return new LegacyCompatibilityCatalogs(null, null, null, null);
+
         return new LegacyCompatibilityCatalogs(
             LoadCompatibilityCatalog(
                 content,
@@ -1675,7 +1682,10 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
     {
         TsvTable table;
         if (content.Manifest.Schema == DiabloContentSchema.Current) {
-            table = GetRequiredExternalTable(content, sourcePath);
+            if (!content.TryGetTable(sourcePath, out table!))
+                throw new InvalidDataException(
+                    $"Production Diablo activation requires external '{sourcePath}' content "
+                    + $"(requires '{sourcePath}' compatibility content).");
             validator(table);
         } else if (!content.TryGetTable(sourcePath, out table!)) {
             return null;

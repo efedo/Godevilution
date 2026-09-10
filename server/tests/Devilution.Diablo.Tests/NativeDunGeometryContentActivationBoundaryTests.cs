@@ -94,7 +94,12 @@ public sealed class NativeDunGeometryContentActivationBoundaryTests
         }
         var tables = basePack.Tables
             .Where(table => table.SourcePath is not
-                ("native_dun_piece_definitions.tsv" or "native_dun_tile_properties.tsv"))
+                ("native_dun_piece_definitions.tsv"
+                or "native_dun_tile_properties.tsv"
+                or "native_dun_fragments.tsv"
+                or "native_dun_fragment_objects.tsv"
+                or "native_dun_monsters.tsv"
+                or "native_dun_objects.tsv"))
             .Concat(geometryTables)
             .ToArray();
         return new ContentPack(
@@ -136,7 +141,10 @@ public sealed class NativeDunGeometryContentActivationBoundaryTests
             "native_dun_tile_properties.tsv" => TsvTable.Parse(
                 sourcePath,
                 "piece_id\tsolid\tblock_light\tblock_missile\ttransparent\ttransparent_left\ttransparent_right\ttrap\n"
-                    + "1\tfalse\tfalse\tfalse\tfalse\tfalse\tfalse\tfalse\n"),
+                    + "1\tfalse\tfalse\tfalse\tfalse\tfalse\tfalse\tfalse\n"
+                    + "2\tfalse\tfalse\tfalse\tfalse\tfalse\tfalse\tfalse\n"
+                    + "3\tfalse\tfalse\tfalse\tfalse\tfalse\tfalse\tfalse\n"
+                    + "4\tfalse\tfalse\tfalse\tfalse\tfalse\tfalse\tfalse\n"),
             _ => throw new ArgumentOutOfRangeException(nameof(sourcePath)),
         };
 

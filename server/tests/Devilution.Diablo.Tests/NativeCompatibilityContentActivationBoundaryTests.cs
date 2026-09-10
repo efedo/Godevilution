@@ -69,7 +69,7 @@ public sealed class NativeCompatibilityContentActivationBoundaryTests
             AuthoritativeNativeItemTopologyKind.ItemType,
             "weapon",
             out _));
-        Assert.True(activation.NativeItemTags!.TryGetTags("weapon", out var tags));
+        Assert.True(activation.NativeItemTags!.TryGetTags("sword", out var tags));
         Assert.Contains("Weapon", tags, StringComparer.OrdinalIgnoreCase);
     }
 

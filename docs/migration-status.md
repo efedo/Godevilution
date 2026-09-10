@@ -2,6 +2,14 @@
 
 Status date: 2026-09-10
 
+The external-content compatibility boundary is now explicit in both behavior
+and diagnostics: current-schema packs fail closed with the required external
+namespace and compatibility-content context, while `1.501.0` packs continue
+through direct legacy loaders without exposing current-schema compatibility
+catalogs on activation. Native-DUN boundary fixtures now cover the strict
+40x40 level dimensions, complete shared tile properties, and required legacy
+topology symbols.
+
 Authoritative player attack admission now mirrors the native
 `Monster::isPossibleToHit()` retreat/dialogue gates represented by the server:
 Illusion Weaver and Counselor-family retreat timers, plus authored unique

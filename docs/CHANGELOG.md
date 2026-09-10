@@ -2,6 +2,13 @@
 
 All notable changes to this fork are documented below.
 
+- Restored the external-content migration boundary for legacy compatibility
+  namespaces. Current-schema omissions now retain both the external-content
+  and compatibility-specific diagnostics, while previous-schema activation
+  keeps direct-loader compatibility without publishing current-only catalogs.
+  Refreshed native-DUN boundary fixtures for strict dimension, tile-property,
+  and topology validation; the full Diablo suite is green.
+
 - Closed a native combat-admission parity gap. Authoritative player attacks
   now reject authored unique encounters in an inquiring dialogue state and
   native Illusion Weaver/Counselor retreat states, consistently across melee,
