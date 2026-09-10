@@ -237,6 +237,8 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
         }
 
         var stableIdsTable = GetRequiredExternalTable(content, "content_ids.tsv");
+        if (content.Manifest.Schema == DiabloContentSchema.Current)
+            StableContentIdCatalog.ValidateExternalizedProduction(stableIdsTable);
         var stableIds = StableContentIdCatalog.LoadTsv(
             stableIdsTable.SourcePath,
             stableIdsTable.ToCanonicalTsv());
@@ -254,6 +256,8 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
             generationTable.SourcePath,
             generationTable.ToCanonicalTsv());
         var experienceTable = GetRequiredExternalTable(content, "experience.tsv");
+        if (content.Manifest.Schema == DiabloContentSchema.Current)
+            AuthoritativeExperienceCatalog.ValidateExternalizedProduction(experienceTable);
         var experience = AuthoritativeExperienceCatalog.LoadTsv(
             experienceTable.SourcePath,
             experienceTable.ToCanonicalTsv());

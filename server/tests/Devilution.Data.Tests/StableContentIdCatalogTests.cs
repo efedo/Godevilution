@@ -6,6 +6,29 @@ namespace Devilution.Data.Tests;
 public sealed class StableContentIdCatalogTests
 {
     [Fact]
+    public void AcceptsCompleteProductionSchema()
+    {
+        var table = TsvTable.Parse(
+            "content_ids.tsv",
+            "kind\tsymbol\tnumeric_id\nmonster\tzombie\t1\n");
+
+        StableContentIdCatalog.ValidateExternalizedProduction(table);
+    }
+
+    [Fact]
+    public void RejectsPartialProductionSchema()
+    {
+        var table = TsvTable.Parse(
+            "content_ids.tsv",
+            "numeric_id\tsymbol\n1\tzombie\n");
+
+        var exception = Assert.Throws<InvalidDataException>(() =>
+            StableContentIdCatalog.ValidateExternalizedProduction(table));
+
+        Assert.Contains("complete ordered schema", exception.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void ResolvesSymbolsAndReverseIdsDeterministically()
     {
         var catalog = new StableContentIdCatalog([

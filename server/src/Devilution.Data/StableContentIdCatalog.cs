@@ -3,6 +3,12 @@ namespace Devilution.Data;
 /** A validated, explicit symbolic-to-numeric ID catalog for protocol content. */
 public sealed class StableContentIdCatalog
 {
+    private static readonly IReadOnlyList<string> ProductionColumns = [
+        "kind",
+        "symbol",
+        "numeric_id",
+    ];
+
     private readonly Dictionary<(string Kind, string Symbol), uint> bySymbol;
     private readonly Dictionary<(string Kind, uint Id), string> byId;
 
@@ -69,6 +75,20 @@ public sealed class StableContentIdCatalog
             if (!containsId(entry.NumericId))
                 throw new InvalidDataException(
                     $"Stable content {kind} symbol '{entry.Symbol}' references unknown ID {entry.NumericId}.");
+        }
+    }
+
+    /** Rejects partial stable identity metadata at the current production boundary. */
+    public static void ValidateExternalizedProduction(TsvTable table)
+    {
+        ArgumentNullException.ThrowIfNull(table);
+        if (!table.Columns.SequenceEqual(ProductionColumns, StringComparer.Ordinal))
+            throw new InvalidDataException(
+                $"Production stable-ID table '{table.SourcePath}' must use the complete ordered schema.");
+        foreach (var row in table.Rows) {
+            _ = row.Required("kind");
+            _ = row.Required("symbol");
+            _ = row.RequiredUInt32("numeric_id");
         }
     }
 

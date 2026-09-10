@@ -1,9 +1,33 @@
+using Devilution.Data;
 using Xunit;
 
 namespace Devilution.Diablo.Tests;
 
 public sealed class AuthoritativeExperienceCatalogTests
 {
+    [Fact]
+    public void AcceptsCompleteProductionSchema()
+    {
+        var table = TsvTable.Parse(
+            "experience.tsv",
+            "level\texperience\n1\t2000\n");
+
+        AuthoritativeExperienceCatalog.ValidateExternalizedProduction(table);
+    }
+
+    [Fact]
+    public void RejectsPartialProductionSchema()
+    {
+        var table = TsvTable.Parse(
+            "experience.tsv",
+            "experience\tlevel\n2000\t1\n");
+
+        var exception = Assert.Throws<InvalidDataException>(() =>
+            AuthoritativeExperienceCatalog.ValidateExternalizedProduction(table));
+
+        Assert.Contains("complete ordered schema", exception.Message, StringComparison.Ordinal);
+    }
+
     [Fact]
     public void LoadsContiguousExperienceThresholds()
     {

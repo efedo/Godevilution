@@ -11,6 +11,10 @@ public sealed record AuthoritativeExperienceLevel(
 public sealed class AuthoritativeExperienceCatalog
 {
     public const uint MaximumSupportedLevel = 50;
+    private static readonly IReadOnlyList<string> ProductionColumns = [
+        "level",
+        "experience",
+    ];
 
     private readonly IReadOnlyList<AuthoritativeExperienceLevel> definitions;
 
@@ -56,6 +60,19 @@ public sealed class AuthoritativeExperienceCatalog
         }
         requiredExperience = definitions[checked((int)level - 1)].RequiredExperience;
         return true;
+    }
+
+    /** Rejects partial experience metadata at the current production boundary. */
+    public static void ValidateExternalizedProduction(TsvTable table)
+    {
+        ArgumentNullException.ThrowIfNull(table);
+        if (!table.Columns.SequenceEqual(ProductionColumns, StringComparer.Ordinal))
+            throw new InvalidDataException(
+                $"Production experience table '{table.SourcePath}' must use the complete ordered schema.");
+        foreach (var row in table.Rows) {
+            _ = row.Required("level");
+            _ = row.Required("experience");
+        }
     }
 
     public static AuthoritativeExperienceCatalog LoadTsv(
