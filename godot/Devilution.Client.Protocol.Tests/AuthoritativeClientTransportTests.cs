@@ -364,6 +364,7 @@ public sealed class AuthoritativeClientTransportTests
                 Players = { new PlayerSnapshot { EntityId = 7 } },
             },
         });
+        await Task.Delay(100, TestContext.Current.CancellationToken);
         listener.Stop();
     }
 

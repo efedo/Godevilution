@@ -92,6 +92,78 @@ public sealed class AuthoritativeTcpServerTests
     }
 
     [Fact]
+    public async Task ResumedSessionCanReconnectAfterLiveIdentityReplacement()
+    {
+        var executor = new RecordingExecutor();
+        var commandServer = new AuthoritativeCommandServer(executor);
+        var handshake = new ProtocolHandshake(new ProtocolServerIdentity(
+            "server-build",
+            ProtocolServerIdentity.IndependentIdentityProtocolSchemaVersion,
+            "initial-content",
+            20) {
+            RulesetIdentityHash = "initial-ruleset",
+        });
+        await using var server = new AuthoritativeTcpServer(commandServer, handshake, () => 10);
+        server.Start();
+        var cancellationToken = TestContext.Current.CancellationToken;
+        string resumeToken;
+
+        using (var firstClient = new TcpClient()) {
+            await firstClient.ConnectAsync(IPAddress.Loopback, server.Port, cancellationToken);
+            await using var firstStream = firstClient.GetStream();
+            await EnvelopeCodec.WriteAsync(firstStream, new Envelope {
+                ClientHello = new ClientHello {
+                    ProtocolSchemaVersion = ProtocolServerIdentity.IndependentIdentityProtocolSchemaVersion,
+                    ContentManifestHash = "initial-content",
+                    RulesetIdentityHash = "initial-ruleset",
+                },
+            }, cancellationToken);
+            var firstHello = (await EnvelopeCodec.ReadAsync(firstStream, cancellationToken))!.ServerHello;
+            resumeToken = firstHello.SessionToken;
+            Assert.Equal("initial-ruleset", firstHello.RulesetIdentityHash);
+        }
+
+        handshake.UpdateIdentity(new ProtocolServerIdentity(
+            "server-build",
+            ProtocolServerIdentity.IndependentIdentityProtocolSchemaVersion,
+            "replacement-content",
+            20) {
+            RulesetIdentityHash = "replacement-ruleset",
+        });
+
+        using var resumedClient = new TcpClient();
+        await resumedClient.ConnectAsync(IPAddress.Loopback, server.Port, cancellationToken);
+        await using var resumedStream = resumedClient.GetStream();
+        await EnvelopeCodec.WriteAsync(resumedStream, new Envelope {
+            ClientHello = new ClientHello {
+                ProtocolSchemaVersion = ProtocolServerIdentity.IndependentIdentityProtocolSchemaVersion,
+                ContentManifestHash = "initial-content",
+                RulesetIdentityHash = "initial-ruleset",
+                ResumeToken = resumeToken,
+            },
+        }, cancellationToken);
+        var resumedHello = (await EnvelopeCodec.ReadAsync(resumedStream, cancellationToken))!.ServerHello;
+        Assert.Equal(resumeToken, resumedHello.SessionToken);
+        Assert.Equal("replacement-content", resumedHello.ContentManifestHash);
+        Assert.Equal("replacement-ruleset", resumedHello.RulesetIdentityHash);
+
+        using var unknownClient = new TcpClient();
+        await unknownClient.ConnectAsync(IPAddress.Loopback, server.Port, cancellationToken);
+        await using var unknownStream = unknownClient.GetStream();
+        await EnvelopeCodec.WriteAsync(unknownStream, new Envelope {
+            ClientHello = new ClientHello {
+                ProtocolSchemaVersion = ProtocolServerIdentity.IndependentIdentityProtocolSchemaVersion,
+                ContentManifestHash = "initial-content",
+                RulesetIdentityHash = "initial-ruleset",
+                ResumeToken = "unknown-session",
+            },
+        }, cancellationToken);
+        var unknownResponse = await EnvelopeCodec.ReadAsync(unknownStream, cancellationToken);
+        Assert.Equal(Envelope.PayloadOneofCase.Error, unknownResponse!.PayloadCase);
+        Assert.Equal(ProtocolErrorCode.ContentMismatch, unknownResponse.Error.Code);
+    }
+
+    [Fact]
     public async Task FutureAppliedTickIsRetainedAcrossCommandAndSnapshotPoll()
     {
         var executor = new RecordingExecutor();

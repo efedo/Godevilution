@@ -172,6 +172,9 @@ presence at strict activation, so a production caller cannot bypass that
 boundary by constructing options without the bootstrap. It also requires the
 external world-rules catalog at that boundary; only non-strict compatibility
 callers retain the native-default world rules.
+An initialized in-memory session may now reconnect after a live ruleset
+replacement with its previous identity; the server returns the replacement
+identity and the client refreshes it only when the resume token is echoed.
 
 Current-schema native-DUN fragment, fragment-object, and monster mapping tables
 also fail closed on incomplete or reordered headers; previous-schema packs

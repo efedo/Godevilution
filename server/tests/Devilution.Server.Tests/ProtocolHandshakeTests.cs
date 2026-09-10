@@ -166,6 +166,29 @@ public sealed class ProtocolHandshakeTests
         Assert.Equal("replacement-ruleset", handshake.Identity.RulesetIdentityHash);
     }
 
+    [Fact]
+    public void ExistingResumedSessionsCanRefreshAfterAnIdentityChange()
+    {
+        var handshake = new ProtocolHandshake(new ProtocolServerIdentity(
+            "server-build",
+            ProtocolServerIdentity.IndependentIdentityProtocolSchemaVersion,
+            "replacement-content",
+            20) {
+            RulesetIdentityHash = "replacement-ruleset",
+        });
+
+        var result = handshake.Validate(new ClientHello {
+            ProtocolSchemaVersion = ProtocolServerIdentity.IndependentIdentityProtocolSchemaVersion,
+            ContentManifestHash = "previous-content",
+            RulesetIdentityHash = "previous-ruleset",
+            ResumeToken = "existing-session",
+        }, allowResumedIdentityRefresh: true);
+
+        Assert.True(result.Accepted);
+        Assert.Equal("replacement-content", result.ServerHello!.ContentManifestHash);
+        Assert.Equal("replacement-ruleset", result.ServerHello.RulesetIdentityHash);
+    }
+
     private static ProtocolHandshake CreateHandshake()
     {
         return new ProtocolHandshake(new ProtocolServerIdentity("server-build", "0.1.0", "content-hash", 20));

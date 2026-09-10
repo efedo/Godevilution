@@ -19,6 +19,10 @@ All notable changes to this fork are documented below.
   identity changes and legacy snapshots that omit both additive fields remain
   compatible.
 
+- Allowed an already-initialized resumed session to reconnect across a live
+  content/ruleset identity replacement; unknown resume tokens and new sessions
+  still require an exact handshake identity match.
+
 - Matched native delayed PvP arrow admission. Friendly-fire mode and
   Etherealize are rechecked when a bow projectile reaches its target, so a
   target that changes state during flight is protected without changing the

@@ -91,12 +91,15 @@ public sealed class AuthoritativeClient : IAsyncDisposable
             tcpClient = new TcpClient();
             await tcpClient.ConnectAsync(options.Host, options.Port, cancellationToken);
             stream = tcpClient.GetStream();
+            var requestedResumeToken = string.IsNullOrWhiteSpace(SessionToken)
+                ? options.ResumeToken
+                : SessionToken;
             var clientHello = new ClientHello {
                 ClientBuildId = options.ClientBuildId,
                 ProtocolSchemaVersion = options.ProtocolSchemaVersion,
                 ContentManifestHash = effectiveContentManifestHash,
                 RulesetIdentityHash = effectiveRulesetIdentityHash,
-                ResumeToken = string.IsNullOrWhiteSpace(SessionToken) ? options.ResumeToken : SessionToken,
+                ResumeToken = requestedResumeToken,
             };
             if (options.RequestedCharacterClassId.HasValue) {
                 clientHello.RequestedCharacterClassId
@@ -112,9 +115,13 @@ public sealed class AuthoritativeClient : IAsyncDisposable
                 throw new InvalidDataException(hello.Error.Detail);
             if (hello.PayloadCase != Envelope.PayloadOneofCase.ServerHello)
                 throw new InvalidDataException("The first server response must be ServerHello.");
+            var identityRefreshForResumedSession = !string.IsNullOrWhiteSpace(requestedResumeToken)
+                && hello.ServerHello.SessionToken == requestedResumeToken;
             if (hello.ServerHello.ProtocolSchemaVersion != options.ProtocolSchemaVersion
-                || hello.ServerHello.ContentManifestHash != effectiveContentManifestHash
-                || (!string.IsNullOrWhiteSpace(effectiveRulesetIdentityHash)
+                || (!identityRefreshForResumedSession
+                    && hello.ServerHello.ContentManifestHash != effectiveContentManifestHash)
+                || (!identityRefreshForResumedSession
+                    && !string.IsNullOrWhiteSpace(effectiveRulesetIdentityHash)
                     && hello.ServerHello.RulesetIdentityHash != effectiveRulesetIdentityHash)
                 || hello.ServerHello.GameMode is not (GameMode.SinglePlayer or GameMode.Multiplayer))
                 throw new InvalidDataException("The server returned an incompatible protocol, content, or ruleset identity.");

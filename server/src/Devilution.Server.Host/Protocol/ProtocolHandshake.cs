@@ -86,7 +86,9 @@ public sealed class ProtocolHandshake
             identity = replacement;
     }
 
-    public HandshakeResult Validate(ClientHello? clientHello)
+    public HandshakeResult Validate(
+        ClientHello? clientHello,
+        bool allowResumedIdentityRefresh = false)
     {
         var currentIdentity = Identity;
         if (clientHello is null
@@ -102,7 +104,8 @@ public sealed class ProtocolHandshake
         if (!string.Equals(clientHello.ProtocolSchemaVersion, currentIdentity.ProtocolSchemaVersion, StringComparison.Ordinal))
             return HandshakeResult.Failure(Error(ProtocolErrorCode.UnsupportedSchema, "The client protocol schema version is not supported."));
 
-        if (!string.Equals(clientHello.ContentManifestHash, currentIdentity.ContentManifestHash, StringComparison.Ordinal))
+        if (!allowResumedIdentityRefresh
+            && !string.Equals(clientHello.ContentManifestHash, currentIdentity.ContentManifestHash, StringComparison.Ordinal))
             return HandshakeResult.Failure(Error(ProtocolErrorCode.ContentMismatch, "The client content manifest does not match the server."));
 
         if (string.Equals(
@@ -114,7 +117,8 @@ public sealed class ProtocolHandshake
                 ProtocolErrorCode.ContentMismatch,
                 "The client gameplay ruleset identity is required by this protocol version."));
 
-        if (!string.IsNullOrWhiteSpace(clientHello.RulesetIdentityHash)
+        if (!allowResumedIdentityRefresh
+            && !string.IsNullOrWhiteSpace(clientHello.RulesetIdentityHash)
             && !string.Equals(clientHello.RulesetIdentityHash, currentIdentity.RulesetIdentityHash, StringComparison.Ordinal))
             return HandshakeResult.Failure(Error(ProtocolErrorCode.ContentMismatch, "The client gameplay ruleset does not match the server."));
 

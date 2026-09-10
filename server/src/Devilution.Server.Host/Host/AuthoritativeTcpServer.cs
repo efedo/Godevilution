@@ -316,13 +316,17 @@ public sealed class AuthoritativeTcpServer : IAsyncDisposable
                 return;
             }
 
-            var handshakeResult = handshake.Validate(helloEnvelope.ClientHello);
+            var existingSession = FindExistingSession(helloEnvelope.ClientHello.ResumeToken);
+            var handshakeResult = handshake.Validate(
+                helloEnvelope.ClientHello,
+                allowResumedIdentityRefresh: existingSession is not null);
             if (!handshakeResult.Accepted) {
                 await EnvelopeCodec.WriteAsync(stream, new Envelope { Error = handshakeResult.Error! }, cancellationToken);
                 return;
             }
 
-            var session = GetOrCreateSession(helloEnvelope.ClientHello.ResumeToken);
+            var session = existingSession
+                ?? GetOrCreateSession(helloEnvelope.ClientHello.ResumeToken);
             EnsureCommandReceiptsLoaded(session);
             var restored = RestoreSessionIfAvailable(session);
             if (!restored)
@@ -466,6 +470,18 @@ public sealed class AuthoritativeTcpServer : IAsyncDisposable
                 completedCommands,
                 rulesetIdentityHash ?? handshake.Identity.RulesetIdentityHash);
         });
+    }
+
+    private SessionState? FindExistingSession(string resumeToken)
+    {
+        if (string.IsNullOrWhiteSpace(resumeToken))
+            return null;
+        lock (sessionCreationSynchronization) {
+            return sessionsByToken.TryGetValue(resumeToken, out var session)
+                && session.ParticipantInitialized
+                ? session
+                : null;
+        }
     }
 
     private void SaveSessions(

@@ -2,6 +2,7 @@ using System.Buffers.Binary;
 using System.Net;
 using System.Net.Sockets;
 using Devilution.Client.Protocol;
+using Devilution.Protocol;
 using Devilution.Protocol.V1;
 using Google.Protobuf;
 using Xunit;
@@ -93,6 +94,32 @@ public sealed class RetryReconnectTests
         Assert.Equal(9UL, snapshot!.Tick);
         var acknowledgement = await WaitForAcknowledgementAsync(client, sequence);
         Assert.Equal(CommandStatus.Accepted, acknowledgement.Status);
+        await serverTask;
+    }
+
+    [Fact]
+    public async Task SameClientInstanceRefreshesIdentityAfterResumedServerReload()
+    {
+        var listener = new TcpListener(IPAddress.Loopback, 0);
+        listener.Start();
+        var serverTask = RunResumedIdentityRefreshServerAsync(listener);
+        await using var client = new AuthoritativeClient(new ClientConnectionOptions(
+            "127.0.0.1",
+            ((IPEndPoint)listener.LocalEndpoint).Port,
+            "godot-test",
+            ProtocolSchemaVersions.IndependentContentAndRulesetIdentity,
+            "initial-content",
+            "initial-ruleset"));
+
+        await client.ConnectAsync(TestContext.Current.CancellationToken);
+        _ = client.DrainMessages();
+        for (var attempt = 0; attempt < 50 && client.IsConnected; attempt++)
+            await Task.Delay(10, TestContext.Current.CancellationToken);
+        Assert.False(client.IsConnected);
+
+        await client.ReconnectAsync(TestContext.Current.CancellationToken);
+        Assert.Equal("replacement-content", client.ServerIdentity!.ContentManifestHash);
+        Assert.Equal("replacement-ruleset", client.ServerIdentity.RulesetIdentityHash);
         await serverTask;
     }
 
@@ -218,6 +245,62 @@ public sealed class RetryReconnectTests
                         ClientSequence = command.ClientSequence,
                         Status = CommandStatus.Accepted,
                     } },
+                },
+            });
+        }
+        listener.Stop();
+    }
+
+    private static async Task RunResumedIdentityRefreshServerAsync(TcpListener listener)
+    {
+        const string sessionToken = "identity-refresh-token";
+        using (var firstClient = await listener.AcceptTcpClientAsync(TestContext.Current.CancellationToken)) {
+            await using var stream = firstClient.GetStream();
+            _ = await ReadEnvelopeAsync(stream);
+            await WriteEnvelopeAsync(stream, new Envelope {
+                ServerHello = new ServerHello {
+                    ServerBuildId = "test-server",
+                    ProtocolSchemaVersion = ProtocolSchemaVersions.IndependentContentAndRulesetIdentity,
+                    ContentManifestHash = "initial-content",
+                    RulesetIdentityHash = "initial-ruleset",
+                    TickRateHz = 20,
+                    SessionToken = sessionToken,
+                    GameMode = GameMode.SinglePlayer,
+                },
+            });
+            await WriteEnvelopeAsync(stream, new Envelope {
+                Snapshot = new Snapshot {
+                    Tick = 1,
+                    ContentManifestHash = "initial-content",
+                    RulesetIdentityHash = "initial-ruleset",
+                    Players = { new PlayerSnapshot { EntityId = 7 } },
+                },
+            });
+        }
+
+        using (var resumedClient = await listener.AcceptTcpClientAsync(TestContext.Current.CancellationToken)) {
+            await using var stream = resumedClient.GetStream();
+            var hello = await ReadEnvelopeAsync(stream);
+            Assert.Equal(sessionToken, hello.ClientHello.ResumeToken);
+            Assert.Equal("initial-content", hello.ClientHello.ContentManifestHash);
+            Assert.Equal("initial-ruleset", hello.ClientHello.RulesetIdentityHash);
+            await WriteEnvelopeAsync(stream, new Envelope {
+                ServerHello = new ServerHello {
+                    ServerBuildId = "test-server",
+                    ProtocolSchemaVersion = ProtocolSchemaVersions.IndependentContentAndRulesetIdentity,
+                    ContentManifestHash = "replacement-content",
+                    RulesetIdentityHash = "replacement-ruleset",
+                    TickRateHz = 20,
+                    SessionToken = sessionToken,
+                    GameMode = GameMode.SinglePlayer,
+                },
+            });
+            await WriteEnvelopeAsync(stream, new Envelope {
+                Snapshot = new Snapshot {
+                    Tick = 2,
+                    ContentManifestHash = "replacement-content",
+                    RulesetIdentityHash = "replacement-ruleset",
+                    Players = { new PlayerSnapshot { EntityId = 7 } },
                 },
             });
         }
