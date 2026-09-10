@@ -42,6 +42,33 @@ public sealed record AuthoritativeProceduralQuestPieceOrigin(
 /** Validated deterministic origins for generated quest geometry on ordinary levels. */
 public sealed class AuthoritativeProceduralQuestPieceOriginCatalog
 {
+    private static readonly IReadOnlyList<string> ProductionColumns = [
+        "origin_id",
+        "origin_symbol",
+        "level_id",
+        "level_symbol",
+        "footprint_width",
+        "footprint_height",
+        "selection_seed",
+        "alignment",
+    ];
+
+    public static void ValidateExternalizedProduction(TsvTable table)
+    {
+        ArgumentNullException.ThrowIfNull(table);
+        if (!table.Columns.SequenceEqual(ProductionColumns, StringComparer.Ordinal))
+            throw new InvalidDataException(
+                $"Production procedural quest-piece origin table '{table.SourcePath}' must use the complete ordered schema.");
+        foreach (var row in table.Rows) {
+            _ = row.RequiredUInt32("origin_id");
+            _ = row.RequiredUInt32("level_id");
+            _ = row.RequiredInt32("footprint_width");
+            _ = row.RequiredInt32("footprint_height");
+            _ = row.RequiredUInt32("selection_seed");
+            _ = row.RequiredInt32("alignment");
+        }
+    }
+
     private readonly IReadOnlyList<AuthoritativeProceduralQuestPieceOriginDefinition> definitions;
 
     public AuthoritativeProceduralQuestPieceOriginCatalog(

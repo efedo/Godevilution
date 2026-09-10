@@ -36,6 +36,33 @@ public sealed record AuthoritativeProceduralSetPieceOriginDefinition(
 /** Validated deterministic origin rules for generated set pieces. */
 public sealed class AuthoritativeProceduralSetPieceOriginCatalog
 {
+    private static readonly IReadOnlyList<string> ProductionColumns = [
+        "set_level_id",
+        "set_level_symbol",
+        "level_id",
+        "level_symbol",
+        "footprint_width",
+        "footprint_height",
+        "selection_seed",
+        "alignment",
+    ];
+
+    public static void ValidateExternalizedProduction(TsvTable table)
+    {
+        ArgumentNullException.ThrowIfNull(table);
+        if (!table.Columns.SequenceEqual(ProductionColumns, StringComparer.Ordinal))
+            throw new InvalidDataException(
+                $"Production procedural set-piece origin table '{table.SourcePath}' must use the complete ordered schema.");
+        foreach (var row in table.Rows) {
+            _ = row.RequiredInt32("set_level_id");
+            _ = row.RequiredUInt32("level_id");
+            _ = row.RequiredInt32("footprint_width");
+            _ = row.RequiredInt32("footprint_height");
+            _ = row.RequiredUInt32("selection_seed");
+            _ = row.RequiredInt32("alignment");
+        }
+    }
+
     private readonly IReadOnlyList<AuthoritativeProceduralSetPieceOriginDefinition> definitions;
 
     public AuthoritativeProceduralSetPieceOriginCatalog(

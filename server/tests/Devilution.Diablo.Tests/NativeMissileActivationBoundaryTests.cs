@@ -120,7 +120,7 @@ public sealed class NativeMissileActivationBoundaryTests
             current.Tables,
             current.Dependencies,
             current.Overlays,
-            new ContentSchemaIdentity("devilution.diablo", "1.497.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.498.0"),
             current.DependencyConstraints,
             current.Assets);
 
@@ -149,7 +149,7 @@ public sealed class NativeMissileActivationBoundaryTests
             current.Tables,
             current.Dependencies,
             current.Overlays,
-            new ContentSchemaIdentity("devilution.diablo", "1.497.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.498.0"),
             current.DependencyConstraints,
             current.Assets);
 
@@ -200,7 +200,7 @@ public sealed class NativeMissileActivationBoundaryTests
             current.Tables,
             current.Dependencies,
             current.Overlays,
-            new ContentSchemaIdentity("devilution.diablo", "1.497.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.498.0"),
             current.DependencyConstraints,
             current.Assets);
 

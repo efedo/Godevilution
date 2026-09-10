@@ -714,9 +714,9 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
         var proceduralSetPieceOrigins = content.TryGetTable(
                 "procedural_set_piece_origins.tsv",
                 out var proceduralSetPieceOriginsTable)
-            ? AuthoritativeProceduralSetPieceOriginCatalog.LoadTsv(
-                proceduralSetPieceOriginsTable.SourcePath,
-                proceduralSetPieceOriginsTable.ToCanonicalTsv(),
+            ? LoadProceduralSetPieceOrigins(
+                content,
+                proceduralSetPieceOriginsTable,
                 stableIds)
             : null;
         if (proceduralSetPieceOrigins is not null) {
@@ -729,9 +729,9 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
         var proceduralQuestPieceOrigins = content.TryGetTable(
                 "procedural_quest_piece_origins.tsv",
                 out var proceduralQuestPieceOriginsTable)
-            ? AuthoritativeProceduralQuestPieceOriginCatalog.LoadTsv(
-                proceduralQuestPieceOriginsTable.SourcePath,
-                proceduralQuestPieceOriginsTable.ToCanonicalTsv(),
+            ? LoadProceduralQuestPieceOrigins(
+                content,
+                proceduralQuestPieceOriginsTable,
                 stableIds)
             : null;
         if (proceduralQuestPieceOrigins is not null && world is null)
@@ -750,10 +750,7 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
         var nativeDunObjects = content.TryGetTable(
             "native_dun_objects.tsv",
             out var nativeDunObjectsTable)
-            ? AuthoritativeNativeDunObjectCatalog.LoadTsv(
-                nativeDunObjectsTable.SourcePath,
-                nativeDunObjectsTable.ToCanonicalTsv(),
-                stableIds)
+            ? LoadNativeDunObjects(content, nativeDunObjectsTable, stableIds)
             : null;
         if (setLevelObjects is not null) {
             if (setLevelNames is null)
@@ -1541,6 +1538,45 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
             table.ToCanonicalTsv(),
             stableIds,
             content);
+    }
+
+    private static AuthoritativeProceduralSetPieceOriginCatalog LoadProceduralSetPieceOrigins(
+        ComposedContent content,
+        TsvTable table,
+        StableContentIdCatalog stableIds)
+    {
+        if (content.Manifest.Schema == DiabloContentSchema.Current)
+            AuthoritativeProceduralSetPieceOriginCatalog.ValidateExternalizedProduction(table);
+        return AuthoritativeProceduralSetPieceOriginCatalog.LoadTsv(
+            table.SourcePath,
+            table.ToCanonicalTsv(),
+            stableIds);
+    }
+
+    private static AuthoritativeProceduralQuestPieceOriginCatalog LoadProceduralQuestPieceOrigins(
+        ComposedContent content,
+        TsvTable table,
+        StableContentIdCatalog stableIds)
+    {
+        if (content.Manifest.Schema == DiabloContentSchema.Current)
+            AuthoritativeProceduralQuestPieceOriginCatalog.ValidateExternalizedProduction(table);
+        return AuthoritativeProceduralQuestPieceOriginCatalog.LoadTsv(
+            table.SourcePath,
+            table.ToCanonicalTsv(),
+            stableIds);
+    }
+
+    private static AuthoritativeNativeDunObjectCatalog LoadNativeDunObjects(
+        ComposedContent content,
+        TsvTable table,
+        StableContentIdCatalog stableIds)
+    {
+        if (content.Manifest.Schema == DiabloContentSchema.Current)
+            AuthoritativeNativeDunObjectCatalog.ValidateExternalizedProduction(table);
+        return AuthoritativeNativeDunObjectCatalog.LoadTsv(
+            table.SourcePath,
+            table.ToCanonicalTsv(),
+            stableIds);
     }
 
     private static AuthoritativeSetLevelObjectCatalog LoadSetLevelObjects(

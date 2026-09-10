@@ -62,6 +62,30 @@ public sealed record AuthoritativeNativeDunObjectDefinition(
 /** Validated mappings that materialize native DUN object layers authoritatively. */
 public sealed class AuthoritativeNativeDunObjectCatalog
 {
+    private static readonly IReadOnlyList<string> ProductionColumns = [
+        "set_level_id",
+        "set_level_symbol",
+        "level_id",
+        "level_symbol",
+        "active_map",
+        "native_object_id",
+        "object_id",
+        "object_symbol",
+        "template_entity_id",
+    ];
+
+    public static void ValidateExternalizedProduction(TsvTable table)
+    {
+        ArgumentNullException.ThrowIfNull(table);
+        if (!table.Columns.SequenceEqual(ProductionColumns, StringComparer.Ordinal))
+            throw new InvalidDataException(
+                $"Production native-DUN object table '{table.SourcePath}' must use the complete ordered schema.");
+        foreach (var row in table.Rows) {
+            _ = row.RequiredUInt32("native_object_id");
+            _ = row.RequiredUInt32("object_id");
+        }
+    }
+
     /** Reserved entity-ID range for objects discovered in native DUN layers. */
     public const uint RuntimeObjectEntityIdBase = 0x6800_0000;
 
