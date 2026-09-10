@@ -195,6 +195,8 @@ enum class ObjectPresentationKind : int {
 	Quest = 3,
 	Breakable = 4,
 	Trap = 5,
+	NativeArmorStand = 6,
+	NativeWeaponRack = 7,
 };
 
 inline constexpr std::size_t MaximumEnvelopeBytes = 1024 * 1024;
@@ -288,7 +290,7 @@ inline constexpr int MaximumItemPresentationKind = static_cast<int>(ItemPresenta
 inline constexpr int MaximumItemSpellSourceKind = static_cast<int>(ItemSpellSourceKind::ConsumableItem);
 inline constexpr int MaximumItemActionKind = static_cast<int>(ItemActionKind::ReadQuestNote);
 inline constexpr int MaximumSpellTargetingKind = static_cast<int>(SpellTargetingKind::WorldEntity);
-inline constexpr int MaximumObjectPresentationKind = static_cast<int>(ObjectPresentationKind::Trap);
+inline constexpr int MaximumObjectPresentationKind = static_cast<int>(ObjectPresentationKind::NativeWeaponRack);
 inline constexpr int MaximumObjectEffectKind = 9;
 inline constexpr int MaximumObjectQuestTransitionKind = 8;
 inline constexpr int MaximumObjectRewardKind = 2;

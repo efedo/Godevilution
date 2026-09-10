@@ -2975,7 +2975,14 @@ internal static class DiabloProtocolMapper
             return ObjectPresentationKind.Breakable;
         if (revealTraps && state.TrapArmed)
             return ObjectPresentationKind.Trap;
-        return ObjectPresentationKind.Unspecified;
+        // Keep native presentation selection on the authoritative side. The
+        // native_object_id remains in the snapshot for compatibility bridges,
+        // while protocol-aware clients can render without their own ID table.
+        return state.NativeObjectId switch {
+            89 => ObjectPresentationKind.NativeArmorStand,
+            90 => ObjectPresentationKind.NativeWeaponRack,
+            _ => ObjectPresentationKind.Unspecified,
+        };
     }
 
     private static string ResolveSpellDisplayName(

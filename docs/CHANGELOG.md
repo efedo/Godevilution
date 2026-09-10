@@ -2,6 +2,10 @@
 
 All notable changes to this fork are documented below.
 
+- Promoted native armory visuals to additive server-owned protocol presentation
+  families (`NATIVE_ARMOR_STAND` and `NATIVE_WEAPON_RACK`). Godot uses those
+  families directly and retains numeric-ID fallback only for older snapshots.
+
 - Extended the Godot object presentation layer with authored native armor-stand
   and weapon-rack families. Warlord identities `89` and `90` now receive
   distinct placeholder silhouettes while unknown or older object metadata keeps

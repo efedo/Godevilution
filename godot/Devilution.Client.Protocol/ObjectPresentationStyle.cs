@@ -39,6 +39,8 @@ public static class ObjectPresentationStyle
             ProtocolObjectPresentationKind.Quest => ObjectPresentationKind.Quest,
             ProtocolObjectPresentationKind.Breakable => ObjectPresentationKind.Breakable,
             ProtocolObjectPresentationKind.Trap => ObjectPresentationKind.Trap,
+            ProtocolObjectPresentationKind.NativeArmorStand => ObjectPresentationKind.NativeArmorStand,
+            ProtocolObjectPresentationKind.NativeWeaponRack => ObjectPresentationKind.NativeWeaponRack,
             _ => ResolveNativeOrLegacy(state),
         };
     }

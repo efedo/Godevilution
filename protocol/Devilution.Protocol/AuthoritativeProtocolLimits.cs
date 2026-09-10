@@ -111,7 +111,7 @@ public static class AuthoritativeProtocolLimits
     public const int MaximumSpellTargetingKind =
         (int)SpellTargetingKind.WorldEntity;
     public const int MaximumObjectPresentationKind =
-        (int)ObjectPresentationKind.Trap;
+        (int)ObjectPresentationKind.NativeWeaponRack;
     public const int MaximumObjectEffectKind = 9;
     public const int MaximumObjectQuestTransitionKind = 8;
     public const int MaximumObjectRewardKind = 2;

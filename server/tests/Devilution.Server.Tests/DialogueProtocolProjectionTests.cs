@@ -47,10 +47,16 @@ public sealed class DialogueProtocolProjectionTests
         var projected = DiabloProtocolMapper.ToProtocolSnapshot(source);
 
         Assert.Equal(
-            [(1761633895U, 90U), (1761633898U, 89U)],
+            [
+                (1761633895U, 90U, ObjectPresentationKind.NativeWeaponRack),
+                (1761633898U, 89U, ObjectPresentationKind.NativeArmorStand),
+            ],
             projected.Objects
                 .OrderBy(@object => @object.EntityId)
-                .Select(@object => (@object.EntityId, @object.NativeObjectId))
+                .Select(@object => (
+                    @object.EntityId,
+                    @object.NativeObjectId,
+                    @object.PresentationKind))
                 .ToArray());
         Assert.DoesNotContain(projected.Objects, @object => @object.NativeObjectId is 108 or 109);
     }

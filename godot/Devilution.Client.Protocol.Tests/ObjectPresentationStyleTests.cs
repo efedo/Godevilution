@@ -14,6 +14,8 @@ public sealed class ObjectPresentationStyleTests
     [InlineData(ProtocolObjectPresentationKind.Quest, false, false, false, 0, ObjectPresentationKind.Quest)]
     [InlineData(ProtocolObjectPresentationKind.Breakable, false, false, false, 0, ObjectPresentationKind.Breakable)]
     [InlineData(ProtocolObjectPresentationKind.Trap, false, false, false, 0, ObjectPresentationKind.Trap)]
+    [InlineData(ProtocolObjectPresentationKind.NativeArmorStand, false, false, false, 0, ObjectPresentationKind.NativeArmorStand)]
+    [InlineData(ProtocolObjectPresentationKind.NativeWeaponRack, false, false, false, 0, ObjectPresentationKind.NativeWeaponRack)]
     [InlineData(ProtocolObjectPresentationKind.Unspecified, true, false, false, 0, ObjectPresentationKind.Shrine)]
     [InlineData(ProtocolObjectPresentationKind.Unspecified, false, true, false, 0, ObjectPresentationKind.Trap)]
     [InlineData(ProtocolObjectPresentationKind.Unspecified, false, false, true, 0, ObjectPresentationKind.Breakable)]

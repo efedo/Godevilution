@@ -172,6 +172,8 @@ Windows toolchain command.
 - `ObjectSnapshot.presentation_kind` is additive server-owned object
   presentation metadata. `SHRINE`, `QUEST`, and `BREAKABLE` identify safe
   visual families; `TRAP` is emitted only when trap state is already revealed.
+  `NATIVE_ARMOR_STAND` and `NATIVE_WEAPON_RACK` identify authored native
+  presentation families without requiring clients to maintain native-ID tables.
   Zero or unknown values retain the generic object presentation.
 - `ObjectSnapshot.native_object_id` uses the native object identity range
   (`0` through `OBJ_LAST`, currently `108`) when supplied; larger values are

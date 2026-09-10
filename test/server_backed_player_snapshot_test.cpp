@@ -3882,6 +3882,19 @@ TEST(ServerBackedPlayerSnapshot, RejectsMalformedAuthoritativeObjects)
 	invalidFlags->set_presentation_kind(static_cast<protocol::ObjectPresentationKind>(99));
 	EXPECT_FALSE(ProjectObjectSnapshots(invalidPresentation).has_value());
 
+	for (const auto kind : {
+		 protocol::OBJECT_PRESENTATION_KIND_NATIVE_ARMOR_STAND,
+		 protocol::OBJECT_PRESENTATION_KIND_NATIVE_WEAPON_RACK,
+	}) {
+		protocol::Snapshot nativePresentation;
+		auto *nativeObject = nativePresentation.add_objects();
+		nativeObject->set_entity_id(7);
+		nativeObject->set_object_id(89);
+		nativeObject->set_native_object_id(89);
+		nativeObject->set_presentation_kind(kind);
+		EXPECT_TRUE(ProjectObjectSnapshots(nativePresentation).has_value());
+	}
+
 	protocol::Snapshot invalidReward;
 	invalidFlags = invalidReward.add_objects();
 	invalidFlags->set_entity_id(7);

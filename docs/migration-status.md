@@ -3695,6 +3695,10 @@ separate conversion namespace, and omitted identities remain valid for custom
 presentation-only objects. Current-schema activation now runs the same mapping
 parser used by direct catalog callers before composing geometry, rejecting
 ambiguous targets and invalid `active_map` values at the content boundary.
+The protocol now carries additive server-owned `NATIVE_ARMOR_STAND` and
+`NATIVE_WEAPON_RACK` presentation families, so Godot does not need a native
+object-ID table for current snapshots and older snapshots retain compatibility
+fallbacks.
 
 Authoritative server startup now accepts an optional `--starting-level` override
 for newly created participants. This is a development and fixture control only;

@@ -950,6 +950,10 @@ enum ObjectPresentationKind {
 	OBJECT_PRESENTATION_KIND_QUEST = 3;
 	OBJECT_PRESENTATION_KIND_BREAKABLE = 4;
 	OBJECT_PRESENTATION_KIND_TRAP = 5;
+	// Authored native presentation families. These are additive; older peers
+	// retain the native_object_id or generic fallback when they do not know them.
+	OBJECT_PRESENTATION_KIND_NATIVE_ARMOR_STAND = 6;
+	OBJECT_PRESENTATION_KIND_NATIVE_WEAPON_RACK = 7;
 }
 
 message QuestSnapshot {

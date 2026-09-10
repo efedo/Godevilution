@@ -138,9 +138,10 @@ revealed-trap presentation families; older or unknown metadata uses the generic
 object visual.
 Authored native presentation identities are also rendered when available: the
 Warlord armor stand and weapon rack use distinct stand/rack silhouettes from
-their server-projected identities (`89` and `90`). Unknown identities, older
-snapshots, and raw DUN layer values retain the generic fallback; the client
-never interprets raw layer conversion IDs.
+their server-projected presentation families (`NATIVE_ARMOR_STAND` and
+`NATIVE_WEAPON_RACK`). Older snapshots may fall back through identities `89`
+and `90`; unknown identities and raw DUN layer values retain the generic
+fallback, and the client never interprets raw layer conversion IDs.
 Persistent defeated non-minion corpse tiles are also server-owned snapshot
 entities. Godot retains and renders corpses only when their projected level is
 visible, including the native level-zero compatibility wildcard; it never
