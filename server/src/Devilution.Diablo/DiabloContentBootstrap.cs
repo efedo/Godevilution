@@ -522,6 +522,8 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
         if (world is not null)
             combatRules.ValidateWorld(world);
         var monsterTypesTable = GetRequiredExternalTable(content, "monster_types.tsv");
+        if (content.Manifest.Schema == DiabloContentSchema.Current)
+            AuthoritativeMonsterTypeCatalog.ValidateExternalizedProduction(monsterTypesTable);
         var monsterTypes = AuthoritativeMonsterTypeCatalog.LoadTsv(
             monsterTypesTable.SourcePath,
             monsterTypesTable.ToCanonicalTsv(),
@@ -556,6 +558,8 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
             stableIds.ValidateReferences("monster", monsterId => monsterTypes.TryGet(monsterId, out _));
         spells.ValidateMonsterReferences(monsterTypes!);
         var monsterMissilesTable = GetRequiredExternalTable(content, "monster_missiles.tsv");
+        if (content.Manifest.Schema == DiabloContentSchema.Current)
+            AuthoritativeMonsterMissileCatalog.ValidateExternalizedProduction(monsterMissilesTable);
         var monsterMissiles = AuthoritativeMonsterMissileCatalog.LoadTsv(
             monsterMissilesTable.SourcePath,
             monsterMissilesTable.ToCanonicalTsv(),
@@ -565,6 +569,8 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
         monsterMissiles.ValidateSpawnMonsterReferences(monsterTypes!);
         monsterMissiles.ValidateMissileReferences(nativeMissiles);
         var monstersTable = GetRequiredExternalTable(content, "monsters.tsv");
+        if (content.Manifest.Schema == DiabloContentSchema.Current)
+            AuthoritativeMonsterCatalog.ValidateExternalizedProduction(monstersTable);
         var monsters = AuthoritativeMonsterCatalog.LoadTsv(
             monstersTable.SourcePath,
             monstersTable.ToCanonicalTsv(),

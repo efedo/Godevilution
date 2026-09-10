@@ -494,6 +494,159 @@ public sealed record AuthoritativeMonsterTypeDefinition(
 /** Validated monster type metadata used to admit external encounter rows. */
 public sealed class AuthoritativeMonsterTypeCatalog
 {
+    private static readonly IReadOnlyList<string> ProductionColumns = [
+        "monster_id",
+        "monster_symbol",
+        "native_monster_id",
+        "name",
+        "minimum_dungeon_level",
+        "maximum_dungeon_level",
+        "monster_level",
+        "minimum_hit_points",
+        "maximum_hit_points",
+        "armor_class",
+        "minimum_damage",
+        "maximum_damage",
+        "minimum_special_damage",
+        "maximum_special_damage",
+        "stone_curse_immune",
+        "undead",
+        "berserk_immune",
+        "fire_resistance",
+        "lightning_resistance",
+        "magic_resistance",
+        "acid_resistance",
+        "demon",
+        "animal",
+        "knockback",
+        "aggro_range",
+        "death_animation_ticks",
+        "experience_reward",
+        "to_hit",
+        "to_hit_special",
+        "native_ai",
+        "intelligence",
+        "fallen_fear_radius",
+        "fallen_fear_level_offset",
+        "fallen_fear_minimum_ticks",
+        "sneak_distance_base",
+        "sneak_distance_intelligence_scale",
+        "sneak_retreat_release_distance",
+        "sneak_retreat_ticks",
+        "bat_attack_chance_base",
+        "bat_attack_chance_intelligence_scale",
+        "skeleton_melee_delay_chance_base",
+        "skeleton_melee_delay_chance_intelligence_scale",
+        "goat_melee_movement_chance_base",
+        "goat_melee_movement_chance_intelligence_scale",
+        "fat_movement_chance_base",
+        "fat_movement_chance_intelligence_scale",
+        "zombie_action_chance_base",
+        "zombie_action_chance_intelligence_scale",
+        "zombie_movement_distance_minimum",
+        "zombie_movement_distance_base",
+        "zombie_movement_distance_intelligence_scale",
+        "skeleton_king_summon_minimum_distance",
+        "skeleton_king_summon_chance_base",
+        "skeleton_king_summon_chance_intelligence_scale",
+        "hork_demon_attack_chance_base",
+        "hork_demon_attack_chance_intelligence_scale",
+        "hork_demon_spawn_minimum_distance",
+        "hork_demon_spawn_chance_base",
+        "hork_demon_spawn_chance_intelligence_scale",
+        "hork_demon_movement_chance_base",
+        "hork_demon_movement_chance_intelligence_scale",
+        "gargoyle_safe_distance_base",
+        "gargoyle_safe_distance_intelligence_scale",
+        "skeleton_ranged_retreat_minimum_distance",
+        "skeleton_ranged_retreat_chance_base",
+        "skeleton_ranged_retreat_chance_intelligence_scale",
+        "skeleton_ranged_attack_chance_base",
+        "skeleton_ranged_attack_chance_intelligence_scale",
+        "rhino_charge_minimum_distance",
+        "rhino_charge_chance_base",
+        "rhino_charge_chance_intelligence_scale",
+        "skeleton_melee_attack_chance_base",
+        "skeleton_melee_attack_chance_intelligence_scale",
+        "goat_melee_attack_chance_base",
+        "goat_melee_attack_chance_intelligence_scale",
+        "fat_attack_chance_base",
+        "fat_attack_chance_intelligence_scale",
+        "fat_special_chance_base",
+        "fat_special_chance_intelligence_scale",
+        "zombie_random_direction_chance_base",
+        "zombie_random_direction_chance_intelligence_scale",
+        "gargoyle_heal_divisor_multiplier",
+        "gargoyle_heal_divisor_random_range",
+        "gargoyle_heal_divisor_random_offset",
+        "scavenger_healing_duration_ticks",
+        "scavenger_corpse_search_radius",
+        "scavenger_hellfire_healing_divisor",
+        "scavenger_base_healing_amount",
+        "scavenger_base_healing_target_percent",
+        "bat_retreat_duration_ticks",
+        "goat_melee_special_health_threshold_percent",
+        "goat_melee_special_chance_group_period",
+        "scavenger_healing_health_threshold_percent",
+        "gargoyle_healing_health_threshold_percent",
+        "diablo",
+        "fire_resistance_hell",
+        "lightning_resistance_hell",
+        "magic_resistance_hell",
+        "acid_resistance_hell",
+        "gargoyle_attack_chance_base",
+        "gargoyle_attack_chance_intelligence_scale",
+        "gargoyle_movement_chance_base",
+        "gargoyle_movement_chance_intelligence_scale",
+        "skeleton_king_delay_base",
+        "skeleton_king_delay_random_range",
+        "rhino_delay_base",
+        "rhino_delay_random_range",
+        "skeleton_melee_movement_delay_base",
+        "skeleton_melee_movement_delay_intelligence_scale",
+        "skeleton_melee_movement_delay_random_range",
+        "skeleton_melee_attack_delay_base",
+        "skeleton_melee_attack_delay_intelligence_scale",
+        "skeleton_melee_attack_delay_random_range",
+        "avoidance_delay_base",
+        "avoidance_delay_random_range",
+        "counselor_delay_base",
+        "counselor_delay_intelligence_scale",
+        "counselor_delay_random_range",
+        "counselor_attack_delay_base",
+        "counselor_attack_delay_random_range",
+        "skeleton_king_movement_chance_base",
+        "skeleton_king_movement_chance_intelligence_scale",
+        "counselor_move_chance_percent",
+        "mega_delay_chance_base",
+        "mega_delay_chance_intelligence_scale",
+        "mega_intermediate_movement_chance_base",
+        "mega_intermediate_movement_chance_intelligence_scale",
+        "skeleton_king_round_walk_chance_modulo",
+        "hork_demon_round_walk_chance_modulo",
+        "ai_avoidance_movement_minimum_distance",
+        "ai_avoidance_movement_chance_modulo",
+        "rhino_movement_goal_minimum_distance",
+        "rhino_movement_goal_chance_modulo",
+        "skeleton_ranged_movement_fresh_chance_bonus",
+        "bat_movement_chance_base",
+        "bat_movement_chance_intelligence_scale",
+        "bat_movement_fresh_chance_bonus",
+        "counselor_attack_chance_base",
+        "counselor_attack_chance_intelligence_scale",
+        "ai_avoidance_movement_fresh_chance_bonus",
+        "ai_avoidance_round_walk_chance_base",
+        "ai_avoidance_round_walk_chance_intelligence_scale",
+        "fat_movement_fresh_chance_bonus",
+        "rhino_movement_chance_base",
+        "rhino_movement_chance_intelligence_scale",
+        "rhino_movement_fresh_chance_bonus",
+        "counselor_adjacent_attack_chance_base",
+        "counselor_adjacent_attack_chance_intelligence_scale",
+        "skeleton_summon_candidate",
+        "stand_animation_frames",
+        "stand_animation_ticks_per_frame",
+    ];
     private static readonly HashSet<string> ValidNativeAis = new(StringComparer.Ordinal) {
         "Acid", "AcidUnique", "ArchLich", "Bat", "BoneDemon", "Butcher", "Counselor", "Diablo",
         "Fallen", "Fat", "FireBat", "FireMan", "Gargoyle", "Gharbad", "GoatMelee", "GoatRanged",
@@ -974,6 +1127,30 @@ public sealed class AuthoritativeMonsterTypeCatalog
             return false;
         }
         return definitionsByNativeAi.TryGetValue(nativeAi, out definition!);
+    }
+
+    /** Rejects partial monster-type metadata at the current production boundary. */
+    public static void ValidateExternalizedProduction(TsvTable table)
+    {
+        ArgumentNullException.ThrowIfNull(table);
+        if (!table.Columns.SequenceEqual(ProductionColumns, StringComparer.Ordinal))
+            throw new InvalidDataException(
+                $"Production monster-type table '{table.SourcePath}' must use the complete ordered schema.");
+        foreach (var row in table.Rows) {
+            _ = row.Required("monster_id");
+            _ = row.Required("monster_symbol");
+            _ = row.Required("native_monster_id");
+            _ = row.Required("name");
+            _ = row.Required("minimum_dungeon_level");
+            _ = row.Required("maximum_dungeon_level");
+            _ = row.Required("monster_level");
+            _ = row.Required("minimum_hit_points");
+            _ = row.Required("maximum_hit_points");
+            _ = row.Required("armor_class");
+            _ = row.Required("minimum_damage");
+            _ = row.Required("maximum_damage");
+            _ = row.Required("native_ai");
+        }
     }
 
     public static AuthoritativeMonsterTypeCatalog LoadTsv(

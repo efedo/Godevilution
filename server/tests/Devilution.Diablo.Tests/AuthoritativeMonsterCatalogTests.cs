@@ -8,6 +8,34 @@ namespace Devilution.Diablo.Tests;
 public sealed class AuthoritativeMonsterCatalogTests
 {
     [Fact]
+    public void RejectsPartialMonsterTypeProductionSchema()
+    {
+        var table = TsvTable.Parse(
+            "monster_types.tsv",
+            "monster_id\tmonster_symbol\tnative_monster_id\tname\n"
+                + "1\tzombie\t1\tZombie\n");
+
+        var exception = Assert.Throws<InvalidDataException>(() =>
+            AuthoritativeMonsterTypeCatalog.ValidateExternalizedProduction(table));
+
+        Assert.Contains("complete ordered schema", exception.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void RejectsPartialMonsterProductionSchema()
+    {
+        var table = TsvTable.Parse(
+            "monsters.tsv",
+            "entity_id\tmonster_id\tmonster_symbol\tlevel_id\tlevel_symbol\tposition_x\tposition_y\thit_points\tmax_hit_points\tarmor_class\n"
+                + "9\t1\tzombie\t1\tcathedral\t1\t1\t10\t10\t2\n");
+
+        var exception = Assert.Throws<InvalidDataException>(() =>
+            AuthoritativeMonsterCatalog.ValidateExternalizedProduction(table));
+
+        Assert.Contains("complete ordered schema", exception.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void ReturnsTypesAvailableAtTheRequestedDungeonLevelInStableIdOrder()
     {
         var catalog = new AuthoritativeMonsterTypeCatalog([

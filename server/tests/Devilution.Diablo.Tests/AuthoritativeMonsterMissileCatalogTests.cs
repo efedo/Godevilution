@@ -7,6 +7,20 @@ namespace Devilution.Diablo.Tests;
 public sealed class AuthoritativeMonsterMissileCatalogTests
 {
     [Fact]
+    public void RejectsPartialMonsterMissileProductionSchema()
+    {
+        var table = TsvTable.Parse(
+            "monster_missiles.tsv",
+            "native_ai\tmissile_id\tprojectile_behavior\n"
+                + "GoatRanged\tArrow\tMonsterArrow\n");
+
+        var exception = Assert.Throws<InvalidDataException>(() =>
+            AuthoritativeMonsterMissileCatalog.ValidateExternalizedProduction(table));
+
+        Assert.Contains("complete ordered schema", exception.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void LoadsNativeMissileMappingsInStableIdentityOrder()
     {
         var catalog = AuthoritativeMonsterMissileCatalog.LoadTsv(

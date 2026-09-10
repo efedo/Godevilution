@@ -19,6 +19,40 @@ public sealed record AuthoritativeMonsterDropDefinition(
 /** External encounter definitions for server-owned combat entities. */
 public sealed class AuthoritativeMonsterCatalog
 {
+    private static readonly IReadOnlyList<string> ProductionColumns = [
+        "entity_id",
+        "monster_id",
+        "monster_symbol",
+        "level_id",
+        "level_symbol",
+        "position_x",
+        "position_y",
+        "hit_points",
+        "max_hit_points",
+        "armor_class",
+        "drop_item_entity_id",
+        "drop_item_seed",
+        "drop_item_price",
+        "drop_item_id",
+        "drop_item_symbol",
+        "drop_item_level",
+        "attack_damage",
+        "aggro_range",
+        "monster_level",
+        "stone_curse_immune",
+        "undead",
+        "player_minion",
+        "min_damage",
+        "max_damage",
+        "min_damage_special",
+        "max_damage_special",
+        "unique",
+        "diablo",
+        "berserk_immune",
+        "leader_entity_id",
+        "leader_relation",
+        "pack_size",
+    ];
     public AuthoritativeMonsterCatalog(
         IEnumerable<AuthoritativeCombatTarget> targets,
         IEnumerable<AuthoritativeMonsterDropDefinition>? dropDefinitions = null)
@@ -79,6 +113,27 @@ public sealed class AuthoritativeMonsterCatalog
         definition = DropDefinitions.SingleOrDefault(
             candidate => candidate.MonsterId == monsterId)!;
         return definition is not null;
+    }
+
+    /** Rejects partial authored monster metadata at the current production boundary. */
+    public static void ValidateExternalizedProduction(TsvTable table)
+    {
+        ArgumentNullException.ThrowIfNull(table);
+        if (!table.Columns.SequenceEqual(ProductionColumns, StringComparer.Ordinal))
+            throw new InvalidDataException(
+                $"Production monster table '{table.SourcePath}' must use the complete ordered schema.");
+        foreach (var row in table.Rows) {
+            _ = row.Required("entity_id");
+            _ = row.Required("monster_id");
+            _ = row.Required("monster_symbol");
+            _ = row.Required("level_id");
+            _ = row.Required("level_symbol");
+            _ = row.Required("position_x");
+            _ = row.Required("position_y");
+            _ = row.Required("hit_points");
+            _ = row.Required("max_hit_points");
+            _ = row.Required("armor_class");
+        }
     }
 
     public static AuthoritativeMonsterCatalog LoadTsv(

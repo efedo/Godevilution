@@ -2,7 +2,7 @@
 
 All notable changes to this fork are documented below.
 
-- Advanced the active content schema to `1.487.0`, retaining `1.486.0` as
+- Advanced the active content schema to `1.488.0`, retaining `1.487.0` as
   the previous additive contract. Current-schema production activation now
   requires `world_rules.tsv` to carry the complete external town/service
   identities and Town Portal destination geometry, and `combat.tsv` to carry
@@ -36,7 +36,9 @@ All notable changes to this fork are documented below.
   including the explicit always-magic misc list. Supplied `native_missiles.tsv`
   tables must use the complete ordered native-missile and native-missile-sprite
   metadata schemas. The native item-effect, Hellfire-effect, and item-cursor
-  tables must also use their complete ordered schemas. Older
+  tables must also use their complete ordered schemas. The monster type,
+  monster missile, and authored monster tables must likewise use their complete
+  ordered schemas. Older
   schema packs and direct compatibility callers retain support
   for partial rows, but new packs cannot reintroduce embedded defaults at the
   server boundary.
