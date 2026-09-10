@@ -126,6 +126,29 @@ activation requires normalized `items.tsv` and `unique_items.tsv`; legacy
 `itemdat.tsv` and `unique_itemdat.tsv` remain available to direct compatibility
 loaders, but cannot replace stable IDs at the server boundary.
 
+## Current production activation contract
+
+The server bootstrap is fail-closed for authoritative rules and identity data.
+The composed pack must provide these external tables before activation can
+publish a Diablo ruleset:
+
+| Contract area | Required tables |
+| --- | --- |
+| Stable identity and economy | `content_ids.tsv`, `store_services.tsv`, `item_generation.tsv`, `experience.tsv`, `stores.tsv` |
+| Player and spell sources | `classes.tsv`, `class_animations.tsv`, `class_loadouts.tsv`, `class_loadout_items.tsv`, `spells.tsv`, `spell_books.tsv` |
+| Item rules and presentation | `items.tsv`, `unique_items.tsv`, `item_affixes.tsv`, `item_cursor_graphics.tsv`, `native_item_effects.tsv`, `native_item_hellfire_effects.tsv` |
+| World and combat rules | `world_rules.tsv`, `combat.tsv` |
+| Combat identities and projections | `native_missiles.tsv`, `native_missile_aliases.tsv`, `native_missile_sprites.tsv`, `monster_types.tsv`, `monster_missiles.tsv`, `monsters.tsv` |
+
+The pack may omit optional catalogs such as `item_combinations.tsv`, authored
+world/quest/object extensions, and native-DUN layers when that feature is not
+present. Optional data is still validated whenever supplied, and dependent
+rows fail activation if their referenced catalog is absent. The legacy
+`native_spells.tsv`, `native_item_misc.tsv`, `native_item_topology.tsv`,
+`native_item_tags.tsv`, `itemdat.tsv`, `item_prefixes.tsv`, `item_suffixes.tsv`,
+and `unique_itemdat.tsv` tables are compatibility inputs only; they are not
+production substitutes for the normalized contract above.
+
 `native_spells.tsv` defines the complete native spell-name namespace, including
 unused legacy ordinals, so `itemdat.tsv` compatibility names are data-driven
 and validated before they can resolve into the active stable spell catalog.
@@ -2639,8 +2662,9 @@ Inferno `21`/`20`, Chain Lightning `16`/`14`, Elemental `31`/`29`, Blood Star
 
 Schema `1.407.0` adds `native_spells.tsv`, the validated 52-entry native
 spell-name namespace used by legacy `itemdat.tsv` compatibility loading.
-Production activation requires this table whenever normalized `items.tsv` is
-absent; older direct loader callers retain the legacy fallback during migration.
+This schema note records the compatibility namespace introduced for direct
+legacy loading; current production activation requires normalized `items.tsv`
+and does not select this fallback.
 
 Schema `1.408.0` adds `native_item_misc.tsv`, the validated native
 miscellaneous-item symbol mapping used by the same legacy fallback.
@@ -2650,8 +2674,8 @@ type, class, and equipment-location mapping used by the same legacy fallback.
 
 Schema `1.410.0` adds `native_item_effects.tsv`, the validated native item
 special-effect symbol and bit-flag mapping used by normalized and legacy item
-loading. Production activation requires this table whenever legacy
-`itemdat.tsv` is active; older direct loader callers retain the legacy fallback.
+loading. Current production activation requires the effect catalog as part of
+normalized item validation; direct legacy callers may still use its fallback.
 The same catalog also supplies the remaining level-dependent ordinary
 unique-item effect flags; adding symbols does not change the table contract or
 schema version.
@@ -2667,8 +2691,9 @@ when no effect catalog is supplied.
 
 Schema `1.412.0` adds `native_item_tags.tsv`, the validated native item-type
 generation-tag mapping used by legacy `itemdat.tsv` loading. Production
-activation requires this table whenever the legacy item table is active; older
-direct loader callers retain the legacy fallback.
+activation does not require this compatibility-only table; normalized item
+rows carry their own generation tags. Direct legacy loader callers retain the
+fallback when the table is supplied.
 
 Schema `1.413.0` adds the optional `cursor_symbol` column to `spell_books.tsv`.
 Production activation resolves it through `item_cursor_graphics.tsv`; older

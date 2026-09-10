@@ -1316,6 +1316,45 @@ public sealed class ShippedContentTests
     }
 
     [Fact]
+    public void ContentBootstrapUsesNormalizedContractWithoutLegacyItemTables()
+    {
+        var contentRoot = Path.Combine(FindRepositoryRoot(), "server", "content", "base");
+        var basePack = ContentPackLoader.LoadManifestDirectory(contentRoot);
+        var legacyTables = new HashSet<string>(StringComparer.OrdinalIgnoreCase) {
+            "native_spells.tsv",
+            "native_item_misc.tsv",
+            "native_item_topology.tsv",
+            "native_item_tags.tsv",
+            "itemdat.tsv",
+            "item_prefixes.tsv",
+            "item_suffixes.tsv",
+            "unique_itemdat.tsv",
+        };
+        var normalizedPack = new ContentPack(
+            basePack.Id,
+            basePack.Version,
+            basePack.Tables
+                .Where(table => !legacyTables.Contains(table.SourcePath))
+                .ToArray(),
+            basePack.Dependencies,
+            basePack.Overlays,
+            basePack.Schema,
+            basePack.DependencyConstraints,
+            basePack.Assets);
+
+        var activation = DiabloModule.Instance.ContentBootstrap.Activate(
+            ComposedContent.Compose(new ContentManifest(
+                "without-all-legacy-item-tables",
+                "1",
+                [normalizedPack])));
+
+        var items = Assert.IsType<AuthoritativeItemCatalog>(activation!.Simulation!.Items);
+        var spells = Assert.IsType<AuthoritativeSpellCatalog>(activation.Simulation.Spells);
+        Assert.NotEmpty(items.Definitions);
+        Assert.NotEmpty(spells.Definitions);
+    }
+
+    [Fact]
     public void HellfireMonsterTypesDeclareSkeletonSummonCandidates()
     {
         var repositoryRoot = FindRepositoryRoot();

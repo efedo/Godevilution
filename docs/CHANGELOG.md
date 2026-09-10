@@ -2,6 +2,12 @@
 
 All notable changes to this fork are documented below.
 
+- Clarified the production content contract: normalized identity, economy,
+  player, item, spell, world, and combat catalogs are required at activation,
+  while native item-table namespaces and legacy prefix/suffix sources remain
+  compatibility inputs only. Added a regression fixture proving activation
+  succeeds without every legacy item table at once.
+
 - Session restore now rehydrates the host’s monotonic command boundary from
   the persisted authoritative state tick, preventing a fresh process whose
   wall clock starts earlier from publishing a regressed snapshot or admitting

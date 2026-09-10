@@ -2,6 +2,13 @@
 
 Status date: 2026-09-10
 
+The content guide now documents the production activation contract separately
+from historical compatibility schemas. Normalized identity, economy, player,
+item, spell, world, and combat catalogs are fail-closed requirements; legacy
+item-table namespaces remain direct-loader compatibility inputs only. A
+regression fixture removes all legacy item tables together and verifies that
+the normalized server ruleset still activates.
+
 Authoritative session checkpoints now bind current-format state to the active
 ruleset identity in addition to their state and command-ledger hashes. A
 restart therefore fails closed before importing a checkpoint produced by a
