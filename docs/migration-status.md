@@ -36,6 +36,9 @@ bootstrap can no longer silently substitute them for missing pack data.
 The production bootstrap now also requires and validates the complete external
 `native_spells.tsv` identity namespace (IDs 0 through 51); direct native spell
 catalog construction remains permissive for compatibility tooling.
+The production bootstrap also requires the external `content_ids.tsv` stable
+identity catalog, so symbolic classes, spells, items, levels, quests, objects,
+and stores cannot silently fall back to native numeric inference.
 Production activation also requires the native item-misc, item-topology,
 item-tag, item-effect, Hellfire-effect, and cursor-graphics catalogs, so item
 identity and presentation no longer fall back to embedded native mappings at

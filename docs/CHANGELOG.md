@@ -40,6 +40,9 @@ All notable changes to this fork are documented below.
   identity namespace, while direct native spell catalogs remain permissive for
   compatibility tooling.
 
+- Production Diablo activation now requires the external stable-ID catalog,
+  keeping symbolic content identities authoritative at the pack boundary.
+
 - Production Diablo activation now requires the external native item-metadata
   and cursor-graphics catalogs, keeping item identity and presentation data
   outside the server's production fallback path.

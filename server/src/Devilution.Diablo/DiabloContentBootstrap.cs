@@ -236,11 +236,10 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
                 + $"the Diablo module schema '{Schema}'.");
         }
 
-        var stableIds = content.TryGetTable("content_ids.tsv", out var stableIdsTable)
-            ? StableContentIdCatalog.LoadTsv(
-                stableIdsTable.SourcePath,
-                stableIdsTable.ToCanonicalTsv())
-            : null;
+        var stableIdsTable = GetRequiredExternalTable(content, "content_ids.tsv");
+        var stableIds = StableContentIdCatalog.LoadTsv(
+            stableIdsTable.SourcePath,
+            stableIdsTable.ToCanonicalTsv());
         var pricingTable = GetRequiredExternalTable(content, "store_services.tsv");
         var pricing = StoreServicePricing.LoadTsv(
             pricingTable.SourcePath,
@@ -259,8 +258,7 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
             playerClassTable.SourcePath,
             playerClassTable.ToCanonicalTsv(),
             stableIds);
-        if (stableIds is not null)
-            stableIds.ValidateReferences("class", classId => playerClasses.TryGet(classId, out _));
+        stableIds.ValidateReferences("class", classId => playerClasses.TryGet(classId, out _));
         var playerAnimationTable = content.GetRequiredTable("class_animations.tsv");
         var playerAnimations = AuthoritativePlayerAnimationCatalog.LoadTsv(
             playerAnimationTable.SourcePath,
@@ -398,7 +396,7 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
             throw new InvalidDataException(
                 "Active Diablo content must provide items.tsv or itemdat.tsv.");
         }
-        stableIds?.ValidateReferences("item", itemId => itemCatalog.TryGet(itemId, out _));
+        stableIds.ValidateReferences("item", itemId => itemCatalog.TryGet(itemId, out _));
         var spellBooks = content.TryGetTable("spell_books.tsv", out var spellBooksTable)
             ? AuthoritativeSpellBookCatalog.LoadTsv(
                 spellBooksTable.SourcePath,
@@ -469,7 +467,7 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
             itemCatalog.AttachUniqueCatalog(uniqueItems);
         if (uniqueItems is not null)
             uniqueItems.ValidateBaseItems(itemCatalog!);
-        if (stableIds is not null && uniqueItems is not null)
+        if (uniqueItems is not null)
             stableIds.ValidateReferences(
                 "unique",
                 uniqueId => uniqueItems.TryGet(uniqueId, out _));
@@ -483,15 +481,13 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
             stableIds,
             spellBooks,
             gameMode);
-        if (stableIds is not null)
-            stableIds.ValidateReferences(
-                "store",
-                storeId => stores.ContainsStore(storeId)
-                    || storeId == worldRules.AdriaStoreId
-                    || storeId == worldRules.StorytellerStoreId);
+        stableIds.ValidateReferences(
+            "store",
+            storeId => stores.ContainsStore(storeId)
+                || storeId == worldRules.AdriaStoreId
+                || storeId == worldRules.StorytellerStoreId);
         worldRules.ValidateStores(stores);
-        if (spells is not null)
-            stores.ValidateSpellReferences(spells);
+        stores.ValidateSpellReferences(spells);
         var world = content.TryGetTable("levels.tsv", out var levelsTable)
             ? AuthoritativeWorld.LoadTsv(
                 levelsTable.SourcePath,
@@ -565,17 +561,15 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
                 levelGenerationTable.ToCanonicalTsv())
             : null;
         playerLoadouts.ValidateCastSources(spells);
-        if (spells is not null && stableIds is not null)
-            spells.ValidateStableReferences(
-                stableIds,
-                playerLoadouts.Definitions.Select(definition => definition.AbilitySpellId));
+        spells.ValidateStableReferences(
+            stableIds,
+            playerLoadouts.Definitions.Select(definition => definition.AbilitySpellId));
         var identifyAbilitySpellId = ResolveAbilityId(stableIds, "identify");
         var repairAbilitySpellId = ResolveAbilityId(stableIds, "repair");
         var rechargeAbilitySpellId = ResolveAbilityId(stableIds, "recharge");
         var trapDisarmAbilitySpellId = ResolveAbilityId(stableIds, "trap_disarm");
         var monsterFlashSpellId = ResolveSpellId(stableIds, "flash");
-        if (spells is not null)
-            itemCatalog!.ValidateSpellReferences(spells);
+        itemCatalog!.ValidateSpellReferences(spells);
         if (world is not null)
             worldRules.ValidateWorld(world);
         if (world is not null)
@@ -618,7 +612,7 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
                     "Native DUN monster mappings require monster_types.tsv.");
             nativeDunMonsters.ValidateMonsterTypes(monsterTypes);
         }
-        if (stableIds is not null && monsterTypes is not null)
+        if (monsterTypes is not null)
             stableIds.ValidateReferences("monster", monsterId => monsterTypes.TryGet(monsterId, out _));
         spells.ValidateMonsterReferences(monsterTypes!);
         var monsterMissilesTable = GetRequiredExternalTable(content, "monster_missiles.tsv");
@@ -680,7 +674,7 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
                     "Unique monster packs require unique placements and monster types.");
             uniqueMonsterPacks.Validate(uniqueMonsterPlacements, monsterTypes);
         }
-        if (stableIds is not null && world is not null)
+        if (world is not null)
             stableIds.ValidateReferences("level", world.ContainsLevel);
         var objects = content.TryGetTable("objects.tsv", out var objectsTable)
             ? AuthoritativeWorldObjectCatalog.LoadTsv(
@@ -723,7 +717,7 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
                 stableIds,
                 content)
             : null;
-        if (stableIds is not null && objectDefinitions.Length > 0)
+        if (objectDefinitions.Length > 0)
             stableIds.ValidateReferences(
                 "object",
                 objectId => objectDefinitions.Any(@object => @object.ObjectId == objectId));
@@ -795,7 +789,7 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
                 setLevelNamesTable.ToCanonicalTsv(),
                 stableIds)
             : null;
-        if (stableIds is not null && setLevelNames is not null)
+        if (setLevelNames is not null)
             stableIds.ValidateReferences(
                 "set_level",
                 setLevelId => setLevelId <= int.MaxValue
@@ -826,7 +820,7 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
         if (proceduralQuestPieceOrigins is not null && world is null)
             throw new InvalidDataException(
                 "Procedural quest-piece origins require levels.tsv or procedural_levels.tsv.");
-        if (stableIds is not null && proceduralQuestPieceOrigins is not null)
+        if (proceduralQuestPieceOrigins is not null)
             stableIds.ValidateReferences(
                 "procedural_origin",
                 originId => proceduralQuestPieceOrigins.Definitions
@@ -906,7 +900,7 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
                 world.AddWarpTarget(warp);
             }
         }
-        if (stableIds is not null && world is not null)
+        if (world is not null)
             stableIds.ValidateReferences(
                 "warp",
                 warpId => world.WarpTargets.Any(warp => warp.WarpId == warpId));
@@ -917,7 +911,7 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
                 stableIds,
                 setLevelMaps)
             : null;
-        if (stableIds is not null && portals is not null)
+        if (portals is not null)
             stableIds.ValidateReferences(
                 "portal",
                 portalId => portals.Any(portal => portal.PortalId == portalId));
@@ -953,7 +947,7 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
                 setLevelNames,
                 stableIds)
             : null;
-        if (stableIds is not null && questTypes is not null)
+        if (questTypes is not null)
             stableIds.ValidateReferences("quest", questId => questTypes.TryGet(questId, out _));
         var questPools = content.TryGetTable("quest_pools.tsv", out var questPoolsTable)
             ? AuthoritativeQuestPoolCatalog.LoadTsv(
@@ -1177,8 +1171,7 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
 
         var defaultStartingLevelId = world?.DefaultStartingLevelId
             ?? world?.Levels.FirstOrDefault()?.LevelId
-            ?? stableIds?.Resolve("level", "town")
-            ?? 0;
+            ?? stableIds.Resolve("level", "town");
         var monsterSpawnPlanner = world is not null
             && monsterTypes is not null
             && levelGeneration is not null
@@ -1444,19 +1437,15 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
             $"Production Diablo activation requires external '{sourcePath}' content.");
     }
 
-    private static uint ResolveAbilityId(StableContentIdCatalog? stableIds, string symbol)
+    private static uint ResolveAbilityId(StableContentIdCatalog stableIds, string symbol)
     {
-        if (stableIds is null)
-            return 0;
         return stableIds.TryResolve("ability", symbol, out var abilityId)
             ? abilityId
             : stableIds.Resolve("spell", symbol);
     }
 
-    private static uint ResolveSpellId(StableContentIdCatalog? stableIds, string symbol)
+    private static uint ResolveSpellId(StableContentIdCatalog stableIds, string symbol)
     {
-        if (stableIds is null)
-            return DiabloSimulationOptions.LegacyMonsterFlashSpellId;
         return stableIds.Resolve("spell", symbol);
     }
 }
