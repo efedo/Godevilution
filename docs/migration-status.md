@@ -526,6 +526,8 @@ adjacent authored breakable object is destroyed through the authoritative
 world state, and the same Hellfire-decay/ordinary weapon-durability ordering
 is applied as a successful melee hit. Ranged cell attacks retain projectile
 collision handling for breakable blockers.
+Both immediate and timed cell attacks now update the server-owned facing before
+resolving the native attack path.
 Ranged Hellfire replay now carries the validated `Peril` self-damage payload
 and post-armor multiplier into the projectile snapshot.
 The ranged `Peril` impact replay now applies that deferred self-damage at the

@@ -740,7 +740,28 @@ public sealed class DiabloCombatCommandProcessorTests
 
         Assert.True(result.Succeeded, result.Failure?.ToString());
         Assert.True(breakable.Destroyed);
+        Assert.Equal(DiabloPlayerDirection.SouthEast, player.FacingDirection);
         Assert.Equal(3, Assert.Single(player.Equipment).State.Durability);
+    }
+
+    [Fact]
+    public void TimedCellAttackUpdatesFacingBeforeAnimationAdmission()
+    {
+        var player = CreatePlayer(entityId: 7);
+        var processor = CreateProcessor(
+            new DiabloWorldState(),
+            playerClasses: LoadShippedPlayerClasses(),
+            useNativePlayerActionTiming: true);
+
+        var result = processor.Execute(
+            player,
+            new DiabloAttackAtIntent(1, 0),
+            1,
+            [player]);
+
+        Assert.True(result.Succeeded, result.Failure?.ToString());
+        Assert.Equal(DiabloPlayerDirection.SouthEast, player.FacingDirection);
+        Assert.True(player.CurrentAction?.TargetCell);
     }
 
     [Fact]

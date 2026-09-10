@@ -33,6 +33,9 @@ All notable changes to this fork are documented below.
   breakable objects are destroyed authoritatively, and successful object hits
   consume the same native weapon-durability boundary as monster hits.
 
+- Cell-targeted attacks now update authoritative player facing before either
+  immediate resolution or timed animation admission.
+
 - Advanced the active content schema to `1.461.0`, retaining `1.460.0` as
   the previous additive contract for compatible packs.
 

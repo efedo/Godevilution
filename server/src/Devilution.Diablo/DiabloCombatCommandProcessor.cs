@@ -612,6 +612,7 @@ public sealed class DiabloCombatCommandProcessor
     {
         if (!world.ContainsPosition(player.LevelId, targetX, targetY))
             return DiabloCombatIntentResult.Rejected(DiabloRuleFailure.InvalidTarget);
+        UpdateFacingToward(player, targetX, targetY);
         if (!useNativePlayerActionTiming)
             return ResolveAttackAt(
                 player,
@@ -627,7 +628,6 @@ public sealed class DiabloCombatCommandProcessor
         var profile = GetAttackAnimationProfile(player);
         var timing = animation.GetAttack(profile);
         var ranged = profile == DiabloPlayerAttackAnimationProfile.Bow;
-        UpdateFacingToward(player, targetX, targetY);
         var includesFirstFrame = player.CurrentAction is not null
             && player.CurrentAction.EffectApplied
             && player.CombatMode is DiabloPlayerCombatMode.Attack
