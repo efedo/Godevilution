@@ -295,6 +295,17 @@ public sealed class AuthoritativeNativeMissileCatalog
             .Select(row => row.Required("missile_id"))
             .ToArray();
 
+    /** Rejects partial native missile alias metadata at the current production boundary. */
+    public static void ValidateCompatibilityAliasesProduction(TsvTable table)
+    {
+        ArgumentNullException.ThrowIfNull(table);
+        if (!table.Columns.SequenceEqual(["missile_id"], StringComparer.Ordinal))
+            throw new InvalidDataException(
+                $"Production native-missile-alias table '{table.SourcePath}' must use the complete ordered schema.");
+        foreach (var row in table.Rows)
+            _ = row.Required("missile_id");
+    }
+
     private static IReadOnlyList<string> ParseFlags(string flags)
         => string.IsNullOrWhiteSpace(flags)
             ? []

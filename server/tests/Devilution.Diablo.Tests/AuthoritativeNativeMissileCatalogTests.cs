@@ -6,6 +6,29 @@ namespace Devilution.Diablo.Tests;
 public sealed class AuthoritativeNativeMissileCatalogTests
 {
     [Fact]
+    public void AcceptsCompleteCompatibilityAliasSchema()
+    {
+        var table = TsvTable.Parse(
+            "native_missile_aliases.tsv",
+            "missile_id\nOrangeFlare\n");
+
+        AuthoritativeNativeMissileCatalog.ValidateCompatibilityAliasesProduction(table);
+    }
+
+    [Fact]
+    public void RejectsLegacyCompatibilityAliasSchema()
+    {
+        var table = TsvTable.Parse(
+            "native_missile_aliases.tsv",
+            "missile_id\tlegacy_name\nOrangeFlare\tflare\n");
+
+        var exception = Assert.Throws<InvalidDataException>(() =>
+            AuthoritativeNativeMissileCatalog.ValidateCompatibilityAliasesProduction(table));
+
+        Assert.Contains("complete ordered schema", exception.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void ShippedNativeMissilesUseTheProductionSchema()
     {
         var path = Path.Combine(

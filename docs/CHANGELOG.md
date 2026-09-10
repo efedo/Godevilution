@@ -2,7 +2,7 @@
 
 All notable changes to this fork are documented below.
 
-- Advanced the active content schema to `1.489.0`, retaining `1.488.0` as
+- Advanced the active content schema to `1.490.0`, retaining `1.489.0` as
   the previous additive contract. Current-schema production activation now
   requires `world_rules.tsv` to carry the complete external town/service
   identities and Town Portal destination geometry, and `combat.tsv` to carry
@@ -34,7 +34,8 @@ All notable changes to this fork are documented below.
   schema and explicit generation metadata. Supplied `item_generation.tsv`
   tables must use the complete ordered eleven-column generation schema,
   including the explicit always-magic misc list. Supplied `native_missiles.tsv`
-  tables must use the complete ordered native-missile and native-missile-sprite
+  tables must use the complete ordered native-missile, native-missile-alias, and
+  native-missile-sprite
   metadata schemas. The native item-effect, Hellfire-effect, and item-cursor
   tables must also use their complete ordered schemas. The monster type,
   monster missile, and authored monster tables must likewise use their complete

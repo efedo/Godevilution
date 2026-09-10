@@ -47,7 +47,7 @@ public sealed class MonsterContentActivationBoundaryTests
             tables,
             basePack.Dependencies,
             basePack.Overlays,
-            new ContentSchemaIdentity("devilution.diablo", "1.488.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.489.0"),
             basePack.DependencyConstraints,
             basePack.Assets);
 

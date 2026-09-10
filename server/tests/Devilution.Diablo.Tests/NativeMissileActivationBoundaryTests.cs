@@ -83,6 +83,28 @@ public sealed class NativeMissileActivationBoundaryTests
     }
 
     [Fact]
+    public void RejectsLegacyNativeMissileAliasSchemaInCurrentSchema()
+    {
+        var basePack = LoadBasePack();
+        var aliases = basePack.Tables.Single(
+            table => table.SourcePath == "native_missile_aliases.tsv");
+        var pack = ReplaceBaseTable(
+            basePack,
+            aliases.SourcePath,
+            CreateLegacyNativeMissileAliasTable(aliases));
+
+        var exception = Assert.Throws<InvalidDataException>(() =>
+            DiabloModule.Instance.ContentBootstrap.Activate(
+                ComposedContent.Compose(new ContentManifest(
+                    "legacy-native-missile-alias-schema",
+                    "1",
+                    [pack]))));
+
+        Assert.Contains("Production native-missile-alias table", exception.Message, StringComparison.Ordinal);
+        Assert.Contains("complete ordered schema", exception.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void PreviousSchemaRetainsLegacyNativeMissileMetadataCompatibility()
     {
         var basePack = LoadBasePack();
@@ -98,13 +120,42 @@ public sealed class NativeMissileActivationBoundaryTests
             current.Tables,
             current.Dependencies,
             current.Overlays,
-            new ContentSchemaIdentity("devilution.diablo", "1.488.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.489.0"),
             current.DependencyConstraints,
             current.Assets);
 
         var activation = DiabloModule.Instance.ContentBootstrap.Activate(
             ComposedContent.Compose(new ContentManifest(
                 "previous-native-missile-contract",
+                "1",
+                [previous])));
+
+        Assert.NotNull(activation);
+    }
+
+    [Fact]
+    public void PreviousSchemaRetainsLegacyNativeMissileAliasCompatibility()
+    {
+        var basePack = LoadBasePack();
+        var aliases = basePack.Tables.Single(
+            table => table.SourcePath == "native_missile_aliases.tsv");
+        var current = ReplaceBaseTable(
+            basePack,
+            aliases.SourcePath,
+            CreateLegacyNativeMissileAliasTable(aliases));
+        var previous = new ContentPack(
+            current.Id,
+            current.Version,
+            current.Tables,
+            current.Dependencies,
+            current.Overlays,
+            new ContentSchemaIdentity("devilution.diablo", "1.489.0"),
+            current.DependencyConstraints,
+            current.Assets);
+
+        var activation = DiabloModule.Instance.ContentBootstrap.Activate(
+            ComposedContent.Compose(new ContentManifest(
+                "previous-native-missile-alias-contract",
                 "1",
                 [previous])));
 
@@ -149,7 +200,7 @@ public sealed class NativeMissileActivationBoundaryTests
             current.Tables,
             current.Dependencies,
             current.Overlays,
-            new ContentSchemaIdentity("devilution.diablo", "1.488.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.489.0"),
             current.DependencyConstraints,
             current.Assets);
 
@@ -211,6 +262,16 @@ public sealed class NativeMissileActivationBoundaryTests
                     !string.Equals(nativeMissiles.Columns[index], "movement_distribution", StringComparison.Ordinal)));
             });
         return TsvTable.Parse(nativeMissiles.SourcePath, string.Join('\n', lines) + "\n");
+    }
+
+    private static TsvTable CreateLegacyNativeMissileAliasTable(TsvTable aliases)
+    {
+        var lines = aliases.ToCanonicalTsv()
+            .Split('\n', StringSplitOptions.RemoveEmptyEntries)
+            .Select(line => line + "\tlegacy_name");
+        return TsvTable.Parse(
+            aliases.SourcePath,
+            string.Join('\n', lines) + "\n");
     }
 
     private static TsvTable CreateLegacyNativeMissileSpriteTable(TsvTable nativeSprites)
