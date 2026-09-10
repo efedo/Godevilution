@@ -40,6 +40,20 @@ public sealed class AuthoritativeQuestTypeCatalog
 {
     /** Highest native quest ordinal accepted by the compatibility protocol. */
     public const uint MaximumNativeQuestId = 23;
+    private static readonly IReadOnlyList<string> ProductionColumns = [
+        "quest_id",
+        "quest_symbol",
+        "native_quest_id",
+        "name",
+        "single_player_level",
+        "multiplayer_level",
+        "level_type",
+        "set_level",
+        "set_level_symbol",
+        "single_player_only",
+        "world_item_anchor_position_x",
+        "world_item_anchor_position_y",
+    ];
 
     private readonly Dictionary<uint, AuthoritativeQuestTypeDefinition> definitions;
 
@@ -96,6 +110,22 @@ public sealed class AuthoritativeQuestTypeCatalog
                     $"Quest type {quest.QuestId} world-item anchor ({positionX},{positionY}) "
                     + $"duplicates another quest anchor on level {quest.LevelId}.");
             }
+        }
+    }
+
+    /** Rejects partial quest-type metadata at the current production boundary. */
+    public static void ValidateExternalizedProduction(TsvTable table)
+    {
+        ArgumentNullException.ThrowIfNull(table);
+        if (!table.Columns.SequenceEqual(ProductionColumns, StringComparer.Ordinal))
+            throw new InvalidDataException(
+                $"Production quest-type table '{table.SourcePath}' must use the complete ordered schema.");
+        foreach (var row in table.Rows) {
+            _ = row.Required("quest_id");
+            _ = row.Required("native_quest_id");
+            _ = row.Required("name");
+            _ = row.Required("single_player_level");
+            _ = row.Required("multiplayer_level");
         }
     }
 

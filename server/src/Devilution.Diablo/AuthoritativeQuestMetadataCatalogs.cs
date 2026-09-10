@@ -12,6 +12,12 @@ public sealed record AuthoritativeSetLevelName(
 /** Validated native set-level names used by quest routing and presentation. */
 public sealed class AuthoritativeSetLevelNameCatalog
 {
+    private static readonly IReadOnlyList<string> ProductionColumns = [
+        "set_level_id",
+        "symbol",
+        "display_name",
+    ];
+
     private readonly Dictionary<int, AuthoritativeSetLevelName> definitions;
 
     public AuthoritativeSetLevelNameCatalog(
@@ -45,6 +51,19 @@ public sealed class AuthoritativeSetLevelNameCatalog
             ? definition.DisplayName
             : throw new InvalidDataException($"Unknown native set-level identity {setLevelId}.");
 
+    /** Rejects partial set-level identity metadata at the current production boundary. */
+    public static void ValidateExternalizedProduction(TsvTable table)
+    {
+        ArgumentNullException.ThrowIfNull(table);
+        if (!table.Columns.SequenceEqual(ProductionColumns, StringComparer.Ordinal))
+            throw new InvalidDataException(
+                $"Production set-level name table '{table.SourcePath}' must use the complete ordered schema.");
+        foreach (var row in table.Rows) {
+            _ = row.Required("set_level_id");
+            _ = row.Required("symbol");
+        }
+    }
+
     public static AuthoritativeSetLevelNameCatalog LoadTsv(
         string sourcePath,
         string contents,
@@ -76,6 +95,12 @@ public sealed record AuthoritativeQuestPoolEntry(
 /** Validated quest pools that preserve native stable quest identities. */
 public sealed class AuthoritativeQuestPoolCatalog
 {
+    private static readonly IReadOnlyList<string> ProductionColumns = [
+        "pool_id",
+        "quest_id",
+        "quest_symbol",
+    ];
+
     private readonly IReadOnlyList<AuthoritativeQuestPoolEntry> definitions;
 
     public AuthoritativeQuestPoolCatalog(
@@ -119,6 +144,19 @@ public sealed class AuthoritativeQuestPoolCatalog
             unavailable.Add(entries[random.RandomIntLessThan(entries.Length)].QuestId);
         }
         return unavailable;
+    }
+
+    /** Rejects partial quest-pool metadata at the current production boundary. */
+    public static void ValidateExternalizedProduction(TsvTable table)
+    {
+        ArgumentNullException.ThrowIfNull(table);
+        if (!table.Columns.SequenceEqual(ProductionColumns, StringComparer.Ordinal))
+            throw new InvalidDataException(
+                $"Production quest-pool table '{table.SourcePath}' must use the complete ordered schema.");
+        foreach (var row in table.Rows) {
+            _ = row.Required("pool_id");
+            _ = row.Required("quest_id");
+        }
     }
 
     public static AuthoritativeQuestPoolCatalog LoadTsv(

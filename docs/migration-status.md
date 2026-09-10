@@ -2,7 +2,7 @@
 
 Status date: 2026-09-10
 
-Production schema `1.494.0` activation now requires the complete external
+Production schema `1.495.0` activation now requires the complete external
 player-class tuning, symbolic loadout, and symbolic animation schemas,
 symbolic store stock, supplied explicit and procedural level metadata, world-rule identities,
 combat tuning, complete level-generation capacity metadata, complete symbolic
@@ -18,8 +18,9 @@ unique-monster identity, placement, and pack schemas when supplied. Supplied
 object item-gate, object presentation, and item quest-effect sidecars also
 require their complete ordered schemas. Quest dialogue messages, staged
 dialogue, sequence variants, towner interactions, and greetings likewise use
-complete ordered schemas. Direct compatibility loaders still accept older
-partial rows, and schema `1.493.0`
+complete ordered schemas. Quest identity catalogs for set-level names, quest
+types, and quest pools likewise use complete ordered schemas. Direct
+compatibility loaders still accept older partial rows, and schema `1.494.0`
 packs retain that migration fallback; current-schema packs reject omitted class,
 loadout, animation, store, level, procedural-level, level-generation,
 monster-spawn policy, combat, world-rule, or
@@ -93,7 +94,7 @@ Current-schema native-DUN fragment, fragment-object, and monster mapping tables
 also fail closed on incomplete or reordered headers; previous-schema packs
 retain the compatibility loaders for those tables.
 
-The active content schema is now `1.494.0` (with `1.493.0` retained as
+The active content schema is now `1.495.0` (with `1.494.0` retained as
 the previous additive contract). Optional `procedural_quest_piece_origins.tsv`
 rows publish deterministic ordinary-level quest geometry origins. Their
 identities are intentionally separate from the fixed native set-level origin

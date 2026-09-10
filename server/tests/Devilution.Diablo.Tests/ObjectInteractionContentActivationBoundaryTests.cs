@@ -47,7 +47,7 @@ public sealed class ObjectInteractionContentActivationBoundaryTests
             tables,
             basePack.Dependencies,
             basePack.Overlays,
-            new ContentSchemaIdentity("devilution.diablo", "1.493.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.494.0"),
             basePack.DependencyConstraints,
             basePack.Assets);
 

@@ -2,7 +2,7 @@
 
 All notable changes to this fork are documented below.
 
-- Advanced the active content schema to `1.494.0`, retaining `1.493.0` as
+- Advanced the active content schema to `1.495.0`, retaining `1.494.0` as
   the previous additive contract. Current-schema production activation now
   requires `world_rules.tsv` to carry the complete external town/service
   identities and Town Portal destination geometry, and `combat.tsv` to carry
@@ -46,7 +46,8 @@ All notable changes to this fork are documented below.
   and item quest-effect tables must also use their complete ordered schemas.
   Supplied dialogue-message, quest-dialogue-stage, quest-sequence-variant,
   quest/towner interaction, and towner-greeting tables must also use their
-  complete ordered schemas.
+  complete ordered schemas. Supplied set-level-name, quest-type, and quest-pool
+  tables must also use their complete ordered schemas.
   Older
   schema packs and direct compatibility callers retain support
   for partial rows, but new packs cannot reintroduce embedded defaults at the

@@ -708,10 +708,7 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
         var setLevelNames = content.TryGetTable(
             "set_level_names.tsv",
             out var setLevelNamesTable)
-            ? AuthoritativeSetLevelNameCatalog.LoadTsv(
-                setLevelNamesTable.SourcePath,
-                setLevelNamesTable.ToCanonicalTsv(),
-                stableIds)
+            ? LoadSetLevelNames(content, setLevelNamesTable, stableIds)
             : null;
         if (setLevelNames is not null)
             stableIds.ValidateReferences(
@@ -865,20 +862,12 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
         if (worldMutations is not null && nativeDunMonsters is not null)
             worldMutations.ValidateMonsterMappings(nativeDunMonsters);
         var questTypes = content.TryGetTable("quest_types.tsv", out var questTypesTable)
-            ? AuthoritativeQuestTypeCatalog.LoadTsv(
-                questTypesTable.SourcePath,
-                questTypesTable.ToCanonicalTsv(),
-                setLevelNames,
-                stableIds)
+            ? LoadQuestTypes(content, questTypesTable, setLevelNames, stableIds)
             : null;
         if (questTypes is not null)
             stableIds.ValidateReferences("quest", questId => questTypes.TryGet(questId, out _));
         var questPools = content.TryGetTable("quest_pools.tsv", out var questPoolsTable)
-            ? AuthoritativeQuestPoolCatalog.LoadTsv(
-                questPoolsTable.SourcePath,
-                questPoolsTable.ToCanonicalTsv(),
-                questTypes,
-                stableIds)
+            ? LoadQuestPools(content, questPoolsTable, questTypes, stableIds)
             : null;
         var quests = content.TryGetTable("quests.tsv", out var questsTable)
             ? LoadQuests(content, questsTable, questTypes, stableIds)
@@ -1509,6 +1498,49 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
         return AuthoritativeDialogueMessageCatalog.LoadTsv(
             table.SourcePath,
             table.ToCanonicalTsv());
+    }
+
+    private static AuthoritativeSetLevelNameCatalog LoadSetLevelNames(
+        ComposedContent content,
+        TsvTable table,
+        StableContentIdCatalog stableIds)
+    {
+        if (content.Manifest.Schema == DiabloContentSchema.Current)
+            AuthoritativeSetLevelNameCatalog.ValidateExternalizedProduction(table);
+        return AuthoritativeSetLevelNameCatalog.LoadTsv(
+            table.SourcePath,
+            table.ToCanonicalTsv(),
+            stableIds);
+    }
+
+    private static AuthoritativeQuestTypeCatalog LoadQuestTypes(
+        ComposedContent content,
+        TsvTable table,
+        AuthoritativeSetLevelNameCatalog? setLevelNames,
+        StableContentIdCatalog stableIds)
+    {
+        if (content.Manifest.Schema == DiabloContentSchema.Current)
+            AuthoritativeQuestTypeCatalog.ValidateExternalizedProduction(table);
+        return AuthoritativeQuestTypeCatalog.LoadTsv(
+            table.SourcePath,
+            table.ToCanonicalTsv(),
+            setLevelNames,
+            stableIds);
+    }
+
+    private static AuthoritativeQuestPoolCatalog LoadQuestPools(
+        ComposedContent content,
+        TsvTable table,
+        AuthoritativeQuestTypeCatalog? questTypes,
+        StableContentIdCatalog stableIds)
+    {
+        if (content.Manifest.Schema == DiabloContentSchema.Current)
+            AuthoritativeQuestPoolCatalog.ValidateExternalizedProduction(table);
+        return AuthoritativeQuestPoolCatalog.LoadTsv(
+            table.SourcePath,
+            table.ToCanonicalTsv(),
+            questTypes,
+            stableIds);
     }
 
     private static AuthoritativeWorld LoadWorldLevels(
