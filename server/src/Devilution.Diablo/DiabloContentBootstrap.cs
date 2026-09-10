@@ -272,13 +272,12 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
             stableIds);
         pricing.ValidateSpellReferences(spells);
         spells.ValidateExternalizedNativePatterns();
-        var nativeMissileAliases = content.TryGetTable(
-            "native_missile_aliases.tsv",
-            out var nativeMissileAliasesTable)
-            ? AuthoritativeNativeMissileCatalog.LoadCompatibilityAliasesTsv(
-                nativeMissileAliasesTable.SourcePath,
-                nativeMissileAliasesTable.ToCanonicalTsv())
-            : null;
+        var nativeMissileAliasesTable = GetRequiredExternalTable(
+            content,
+            "native_missile_aliases.tsv");
+        var nativeMissileAliases = AuthoritativeNativeMissileCatalog.LoadCompatibilityAliasesTsv(
+            nativeMissileAliasesTable.SourcePath,
+            nativeMissileAliasesTable.ToCanonicalTsv());
         var nativeMissilesTable = GetRequiredExternalTable(content, "native_missiles.tsv");
         var nativeMissiles = AuthoritativeNativeMissileCatalog.LoadTsv(
             nativeMissilesTable.SourcePath,
@@ -291,6 +290,7 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
             nativeMissileSpritesTable.SourcePath,
             nativeMissileSpritesTable.ToCanonicalTsv());
         nativeMissiles.ValidateCompleteNativeNamespace();
+        nativeMissiles.ValidateCompatibilityAliases();
         nativeMissileSprites.ValidateRequiredNativeNamespace();
         nativeMissiles.ValidateGraphicReferences(nativeMissileSprites);
         var nativeItemEffectsTable = GetRequiredExternalTable(content, "native_item_effects.tsv");

@@ -165,7 +165,8 @@ validated against this namespace during activation so presentation identities
 cannot silently drift from the native contract. The separate
 `native_missile_aliases.tsv` table explicitly carries the five monster-color
 presentation aliases that are declared by native monster data but do not have
-their own `misdat.tsv` rows.
+their own `misdat.tsv` rows; production activation requires the table and
+validates all five base aliases. Hellfire overlays may add further aliases.
 `native_missile_sprites.tsv` preserves native `missile_sprites.tsv` dimensions,
 sprite names, direction counts, flags, and all 16 directional frame-delay and
 frame-length values for presentation clients. The Hellfire overlay adds its 13

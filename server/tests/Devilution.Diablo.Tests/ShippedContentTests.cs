@@ -1246,6 +1246,7 @@ public sealed class ShippedContentTests
     [InlineData("native_item_hellfire_effects.tsv")]
     [InlineData("item_cursor_graphics.tsv")]
     [InlineData("native_missiles.tsv")]
+    [InlineData("native_missile_aliases.tsv")]
     [InlineData("native_missile_sprites.tsv")]
     [InlineData("monster_types.tsv")]
     [InlineData("monster_missiles.tsv")]

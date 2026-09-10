@@ -63,6 +63,9 @@ All notable changes to this fork are documented below.
   monster identity catalogs, making the authoritative combat namespace fully
   external and validated at the pack boundary.
 
+- Production Diablo activation now requires the external native missile alias
+  catalog and validates the base monster-color compatibility namespace.
+
 - Godot and the native compatibility client now validate every authoritative
   event batch before applying stale-tick or reconnect-epoch filters, so
   malformed discarded events fail closed instead of being silently ignored.

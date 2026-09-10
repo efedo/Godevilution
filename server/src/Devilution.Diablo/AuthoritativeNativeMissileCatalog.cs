@@ -94,6 +94,10 @@ public sealed class AuthoritativeNativeMissileCatalog
         ],
         StringComparer.Ordinal);
 
+    private static readonly IReadOnlySet<string> RequiredCompatibilityAliasIds = new HashSet<string>(
+        ["OrangeFlare", "YellowFlare", "BlueFlare", "RedFlare", "BlueFlare2"],
+        StringComparer.Ordinal);
+
     private static readonly IReadOnlySet<string> KnownFlags = new HashSet<string>(
         ["Acid", "Arrow", "Fire", "Invisible", "Lightning", "Magic", "Physical", "Unblockable"],
         StringComparer.Ordinal);
@@ -193,6 +197,23 @@ public sealed class AuthoritativeNativeMissileCatalog
             "The active native missile namespace must match the complete native misdat.tsv contract. "
             + $"Missing: {string.Join(", ", missing)}. "
             + $"Unexpected: {string.Join(", ", unexpected)}.");
+    }
+
+    /** Requires the base native monster-color aliases used by compatibility presentation. */
+    public void ValidateCompatibilityAliases()
+    {
+        var actual = definitions
+            .Where(definition => definition.CompatibilityAlias)
+            .Select(definition => definition.MissileId)
+            .ToHashSet(StringComparer.Ordinal);
+        var missing = RequiredCompatibilityAliasIds
+            .Except(actual, StringComparer.Ordinal)
+            .OrderBy(missileId => missileId, StringComparer.Ordinal)
+            .ToArray();
+        if (missing.Length != 0)
+            throw new InvalidDataException(
+                "The active native missile catalog is missing required compatibility aliases: "
+                + string.Join(", ", missing));
     }
 
     public bool TryGet(

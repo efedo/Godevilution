@@ -52,9 +52,9 @@ and cursor-graphics catalogs used by normalized item validation and projection.
 The native misc, topology, and tag catalogs remain available to direct legacy
 item-table compatibility loaders, but are no longer production requirements.
 Production activation now also requires the complete external native missile
-identity/sprite namespaces and monster type, monster-missile, and monster
-definition catalogs, keeping authoritative combat identity data out of the
-bootstrap fallback path.
+identity, compatibility-alias, and sprite namespaces plus monster type,
+monster-missile, and monster definition catalogs, keeping authoritative combat
+identity data out of the bootstrap fallback path.
 
 The active content schema is now `1.462.0` (with `1.461.0` retained as
 the previous additive contract). Optional `procedural_quest_piece_origins.tsv`

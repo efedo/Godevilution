@@ -68,6 +68,19 @@ public sealed class AuthoritativeNativeMissileCatalogTests
     }
 
     [Fact]
+    public void RequiresTheBaseCompatibilityAliasNamespace()
+    {
+        var catalog = AuthoritativeNativeMissileCatalog.LoadTsv(
+            "native_missiles.tsv",
+            "missile_id\nFireball\n",
+            ["OrangeFlare", "YellowFlare", "BlueFlare", "RedFlare"]);
+
+        var exception = Assert.Throws<InvalidDataException>(
+            catalog.ValidateCompatibilityAliases);
+        Assert.Contains("BlueFlare2", exception.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void RejectsUnknownGraphicReferences()
     {
         var missileCatalog = AuthoritativeNativeMissileCatalog.LoadTsv(
