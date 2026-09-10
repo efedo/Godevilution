@@ -90,6 +90,37 @@ public sealed class DialogueProtocolProjectionTests
     }
 
     [Fact]
+    public void RoundTripsExplicitGenericPresentationFamily()
+    {
+        var source = CreateOriginSnapshot(
+            new DiabloSetLevelObjectOriginState(6, 17, 7, 8)) with {
+                Objects = [
+                    new DiabloObjectState(
+                        1761633898,
+                        89,
+                        4,
+                        18,
+                        15,
+                        false,
+                        0,
+                        AuthoritativeObjectEffectKind.None,
+                        0) {
+                        NativeObjectId = 89,
+                        PresentationKind = AuthoritativeObjectPresentationKind.Generic,
+                    },
+                ],
+            };
+
+        var projected = DiabloProtocolMapper.ToProtocolSnapshot(source);
+        var restored = DiabloProtocolMapper.FromProtocolSnapshot(projected);
+
+        Assert.Equal(ObjectPresentationKind.Generic, Assert.Single(projected.Objects).PresentationKind);
+        Assert.Equal(
+            AuthoritativeObjectPresentationKind.Generic,
+            Assert.Single(restored.Objects).PresentationKind);
+    }
+
+    [Fact]
     public void ProjectsTownerGreetingMetadata()
     {
         var source = CreateOriginSnapshot(

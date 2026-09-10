@@ -2996,6 +2996,8 @@ internal static class DiabloProtocolMapper
         // behavior. Preserve only authored families that cannot be recovered
         // from the object state during a save round-trip.
         return kind switch {
+            ObjectPresentationKind.Generic
+                => AuthoritativeObjectPresentationKind.Generic,
             ObjectPresentationKind.NativeArmorStand
                 => AuthoritativeObjectPresentationKind.NativeArmorStand,
             ObjectPresentationKind.NativeWeaponRack

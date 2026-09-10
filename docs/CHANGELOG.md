@@ -2,6 +2,12 @@
 
 All notable changes to this fork are documented below.
 
+- Godot now honors an explicit server-authored generic object presentation
+  family even when legacy native identity metadata is `89` or `90`; native-ID
+  inference remains limited to older snapshots that omit the additive family.
+  Protocol snapshot restoration now preserves that explicit family across
+  reconnect and save/load boundaries.
+
 - Refreshed the checked-in replay fixture identities after authored native
   object presentation families became part of the canonical snapshot hash.
   Base-pack manifest hashes and object-interaction checkpoints now bind to the

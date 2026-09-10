@@ -35,6 +35,7 @@ public static class ObjectPresentationStyle
     {
         ArgumentNullException.ThrowIfNull(state);
         return state.PresentationKind switch {
+            ProtocolObjectPresentationKind.Generic => ObjectPresentationKind.Generic,
             ProtocolObjectPresentationKind.Shrine => ObjectPresentationKind.Shrine,
             ProtocolObjectPresentationKind.Quest => ObjectPresentationKind.Quest,
             ProtocolObjectPresentationKind.Breakable => ObjectPresentationKind.Breakable,

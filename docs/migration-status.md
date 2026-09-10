@@ -122,6 +122,10 @@ content-pack manifest hashes produced by the normalized source identities and
 active schema, keeping replay admission aligned with the validated packs.
 Object-interaction checkpoints also include the authored presentation-family
 metadata now carried by the canonical snapshot hash.
+Godot treats an explicit generic object family as authoritative and only uses
+the native 89/90 presentation fallback for older snapshots without that field.
+Protocol snapshot restoration preserves the explicit family so this boundary
+does not regress after reconnect or save/load.
 
 Authoritative TCP command responses now advance the host and snapshot provider
 to the maximum applied command tick before publishing acknowledgements,

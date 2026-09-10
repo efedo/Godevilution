@@ -53,6 +53,19 @@ public sealed class ObjectPresentationStyleTests
         Assert.Equal(expected, ObjectPresentationStyle.Resolve(state));
     }
 
+    [Theory]
+    [InlineData(89u)]
+    [InlineData(90u)]
+    public void ExplicitGenericPresentationDoesNotInferLegacyNativeIdentity(uint nativeObjectId)
+    {
+        var state = new ObjectSnapshot {
+            NativeObjectId = nativeObjectId,
+            PresentationKind = ProtocolObjectPresentationKind.Generic,
+        };
+
+        Assert.Equal(ObjectPresentationKind.Generic, ObjectPresentationStyle.Resolve(state));
+    }
+
     [Fact]
     public void UnknownNativeObjectIdentityRetainsGenericFallback()
     {
