@@ -26,6 +26,18 @@ public sealed class ProjectDocumentationConsistencyTests
         Assert.Contains("Close the remaining native-parity combat and AI edge cases", migrationStatus, StringComparison.Ordinal);
         Assert.Contains("Advance native-parity dungeon generation", migrationStatus, StringComparison.Ordinal);
         Assert.Contains("Complete external content coverage for the remaining Hellfire", migrationStatus, StringComparison.Ordinal);
+        Assert.Contains(
+            "version-4 canonical SHA-256 state and command-ledger integrity envelope bound to the active ruleset identity",
+            migrationStatus,
+            StringComparison.Ordinal);
+        Assert.Contains(
+            "ruleset-reload checkpoint publication before handshake identity changes",
+            migrationStatus,
+            StringComparison.Ordinal);
+        Assert.DoesNotContain(
+            "an atomic combined per-session checkpoint with a version-3 canonical",
+            migrationStatus,
+            StringComparison.Ordinal);
         Assert.DoesNotContain("Expand authoritative combat and spell fidelity for the migrated Firebolt", migrationStatus, StringComparison.Ordinal);
 
         var changelog = Read(root, "docs", "CHANGELOG.md");

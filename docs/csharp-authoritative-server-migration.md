@@ -259,7 +259,9 @@ return the exact previous activation. Engine accepts a host-owned candidate
 preparation callback, so session state can be validated against the candidate
 before publication. The generic host provides a read/write operation barrier,
 exports complete initialized session state from the old adapter, imports it into the
-candidate, and updates the handshake identity only after migration succeeds.
+candidate, publishes each migrated session checkpoint with the candidate ruleset
+identity, and updates the handshake identity only after migration succeeds.
+An immediate process restart therefore cannot reject successfully migrated state.
 Generation leases keep replaced activations alive until all in-flight
 operations release them; the host drains and disposes those targets through its
 injected disposal policy.

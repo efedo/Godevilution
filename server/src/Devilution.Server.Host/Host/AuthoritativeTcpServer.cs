@@ -191,14 +191,18 @@ public sealed class AuthoritativeTcpServer : IAsyncDisposable
             candidateModules,
             ActiveSessionIds);
         if (result.Succeeded) {
-            leasedAdapter.DisposeRetiredAdapters();
-            var currentIdentity = handshake.Identity;
-            handshake.UpdateIdentity(ProtocolServerIdentity.FromRuleset(
-                currentIdentity.BuildId,
-                currentIdentity.ProtocolSchemaVersion,
-                currentIdentity.TickRateHz,
+            var replacementIdentity = ProtocolServerIdentity.FromRuleset(
+                handshake.Identity.BuildId,
+                handshake.Identity.ProtocolSchemaVersion,
+                handshake.Identity.TickRateHz,
                 result.Active.Identity,
-                currentIdentity.GameMode));
+                handshake.Identity.GameMode);
+            foreach (var session in sessionsByToken.Values
+                         .Where(session => session.ParticipantInitialized)
+                         .OrderBy(session => session.Id, StringComparer.Ordinal))
+                SaveSession(session, replacementIdentity.RulesetIdentityHash);
+            leasedAdapter.DisposeRetiredAdapters();
+            handshake.UpdateIdentity(replacementIdentity);
         }
         return result;
     }
@@ -419,7 +423,7 @@ public sealed class AuthoritativeTcpServer : IAsyncDisposable
         }
     }
 
-    private void SaveSession(SessionState session)
+    private void SaveSession(SessionState session, string? rulesetIdentityHash = null)
     {
         commandServer.WithSynchronizedSession(session.Id, () => {
             if (!session.ParticipantInitialized)
@@ -432,7 +436,7 @@ public sealed class AuthoritativeTcpServer : IAsyncDisposable
                 session.Id,
                 serializedState,
                 completedCommands,
-                handshake.Identity.RulesetIdentityHash);
+                rulesetIdentityHash ?? handshake.Identity.RulesetIdentityHash);
         });
     }
 

@@ -1353,6 +1353,122 @@ public sealed class AuthoritativeTcpServerTests
     }
 
     [Fact]
+    public async Task TcpRulesetReloadPersistsMigratedSessionsBeforePublishingIdentity()
+    {
+        var saveRoot = Path.Combine(
+            Path.GetTempPath(),
+            "Godevilution-Ruleset-Reload-Persistence-" + Guid.NewGuid().ToString("N"));
+        const string resumeToken = "ruleset-reload-persistence-session";
+        var initialManifest = CreateReloadManifest("1", "initial");
+        var replacementManifest = CreateReloadManifest("2", "replacement");
+        var initialAdapter = new ReloadableHostAdapter("initial");
+        var initialRuntime = new GameplayRulesetRuntime<IAuthoritativeGameHostAdapter>(
+            initialManifest,
+            [new ReloadableModule("rules", "1.0.0")],
+            new DelegateAuthoritativeClock(() => 10),
+            (_, _) => initialAdapter);
+        var initialIdentity = initialRuntime.Active.Identity.CombinedSha256;
+
+        try {
+            using (var leasedAdapter = new LeasedAuthoritativeGameHostAdapter(initialRuntime)) {
+                var handshake = new ProtocolHandshake(new ProtocolServerIdentity(
+                    "server-build",
+                    "0.1.0",
+                    "content-hash",
+                    20) {
+                    RulesetIdentityHash = initialIdentity,
+                });
+                await using (var server = new AuthoritativeTcpServer(
+                                 new AuthoritativeCommandServer(leasedAdapter),
+                                 handshake,
+                                 new DelegateAuthoritativeClock(() => 10),
+                                 gameAdapter: leasedAdapter,
+                                 saveStore: new AuthoritativeSaveStore(saveRoot))) {
+                    server.Start();
+                    var cancellationToken = TestContext.Current.CancellationToken;
+                    using (var client = new TcpClient()) {
+                        await client.ConnectAsync(IPAddress.Loopback, server.Port, cancellationToken);
+                        await using var stream = client.GetStream();
+                        await SendHelloAsync(
+                            stream,
+                            cancellationToken,
+                            resumeToken: resumeToken,
+                            requestedCharacterName: "Reload-Hero");
+                        var hello = (await EnvelopeCodec.ReadAsync(
+                            stream,
+                            cancellationToken))!.ServerHello;
+                        Assert.Equal(initialIdentity, hello.RulesetIdentityHash);
+                        var snapshot = (await EnvelopeCodec.ReadAsync(
+                            stream,
+                            cancellationToken))!.Snapshot;
+                        Assert.Equal("Reload-Hero", Assert.Single(snapshot.Players).CharacterName);
+                    }
+
+                    var reload = server.TryReloadRuleset(
+                        replacementManifest,
+                        [new ReloadableModule("rules", "2.0.0")]);
+
+                    Assert.True(reload.Succeeded);
+                    var persisted = new AuthoritativeSessionStore(saveRoot).Load(
+                        SessionIdForToken(resumeToken),
+                        reload.Active.Identity.CombinedSha256);
+                    Assert.NotNull(persisted);
+                    Assert.Equal(reload.Active.Identity.CombinedSha256, persisted.RulesetIdentityHash);
+                    Assert.Equal("Reload-Hero", persisted.SerializedState);
+                }
+            }
+
+            var replacementAdapter = new ReloadableHostAdapter("replacement");
+            var replacementRuntime = new GameplayRulesetRuntime<IAuthoritativeGameHostAdapter>(
+                replacementManifest,
+                [new ReloadableModule("rules", "2.0.0")],
+                new DelegateAuthoritativeClock(() => 10),
+                (_, _) => replacementAdapter);
+            using var replacementLeasedAdapter = new LeasedAuthoritativeGameHostAdapter(replacementRuntime);
+            var replacementHandshake = new ProtocolHandshake(new ProtocolServerIdentity(
+                "server-build",
+                "0.1.0",
+                "content-hash",
+                20) {
+                RulesetIdentityHash = replacementRuntime.Active.Identity.CombinedSha256,
+            });
+            await using var replacementServer = new AuthoritativeTcpServer(
+                new AuthoritativeCommandServer(replacementLeasedAdapter),
+                replacementHandshake,
+                new DelegateAuthoritativeClock(() => 10),
+                gameAdapter: replacementLeasedAdapter,
+                saveStore: new AuthoritativeSaveStore(saveRoot));
+            replacementServer.Start();
+
+            using var resumedClient = new TcpClient();
+            var resumedCancellationToken = TestContext.Current.CancellationToken;
+            await resumedClient.ConnectAsync(
+                IPAddress.Loopback,
+                replacementServer.Port,
+                resumedCancellationToken);
+            await using var resumedStream = resumedClient.GetStream();
+            await SendHelloAsync(
+                resumedStream,
+                resumedCancellationToken,
+                resumeToken: resumeToken);
+            var resumedHello = (await EnvelopeCodec.ReadAsync(
+                resumedStream,
+                resumedCancellationToken))!.ServerHello;
+            Assert.Equal(
+                replacementRuntime.Active.Identity.CombinedSha256,
+                resumedHello.RulesetIdentityHash);
+            var resumedSnapshot = (await EnvelopeCodec.ReadAsync(
+                resumedStream,
+                resumedCancellationToken))!.Snapshot;
+            Assert.Equal("Reload-Hero", Assert.Single(resumedSnapshot.Players).CharacterName);
+            Assert.True(replacementAdapter.SessionStateImported);
+        } finally {
+            if (Directory.Exists(saveRoot))
+                Directory.Delete(saveRoot, recursive: true);
+        }
+    }
+
+    [Fact]
     public async Task TcpRulesetReloadSoakMigratesTwoConnectedSessionsAcrossGenerations()
     {
         const int replacementGenerations = 8;

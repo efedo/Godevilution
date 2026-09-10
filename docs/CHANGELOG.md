@@ -2,6 +2,10 @@
 
 All notable changes to this fork are documented below.
 
+- Ruleset replacement now persists every migrated session under the candidate
+  ruleset identity before publishing the new handshake identity, closing the
+  immediate-restart window introduced by identity-bound checkpoints.
+
 - Bound current-format authoritative session checkpoints to the active
   ruleset identity. Restart recovery now rejects state produced by a different
   content/module generation before import, while version-1 through version-3
