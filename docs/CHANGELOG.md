@@ -6,7 +6,9 @@ All notable changes to this fork are documented below.
   the previous additive contract. Current-schema activation now validates the
   complete ordered headers of supplied legacy compatibility namespaces for
   native spells, item miscellany, item topology, and item-generation tags;
-  previous-schema packs retain legacy loader compatibility.
+  those four namespaces are now required in current-schema packs, while
+  previous-schema packs retain legacy loader compatibility, including
+  omission of those tables.
 
 - Advanced the active content schema to `1.501.0`, retaining `1.500.0` as
   the previous additive contract. Current-schema activation now requires the

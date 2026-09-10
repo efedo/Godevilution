@@ -27,10 +27,11 @@ the complete ordered state schema. Generated set-piece, generated quest-piece,
 and native-DUN object catalogs likewise use complete ordered schemas. Native-DUN
 level asset catalogs likewise use the complete ordered schema. Shared native-DUN
 piece and tile-property geometry catalogs likewise use complete ordered schemas.
-Supplied legacy compatibility namespaces for native spells, item miscellany,
-item topology, and item-generation tags likewise use complete ordered headers.
-Direct compatibility loaders still accept older partial rows, and schema `1.501.0`
-packs retain that migration fallback; current-schema packs reject omitted class,
+Legacy compatibility namespaces for native spells, item miscellany, item
+topology, and item-generation tags are now required in current-schema packs
+and likewise use complete ordered headers. Direct compatibility loaders still
+accept older partial rows, and schema `1.501.0` packs retain that migration
+fallback, including omission of those tables; current-schema packs reject omitted class,
 loadout, animation, store, level, procedural-level, level-generation,
 monster-spawn policy, combat, world-rule, or
 service-pricing fields, and incomplete ordered optional catalogs before

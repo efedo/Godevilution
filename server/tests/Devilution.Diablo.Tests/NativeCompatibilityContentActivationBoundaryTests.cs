@@ -30,6 +30,27 @@ public sealed class NativeCompatibilityContentActivationBoundaryTests
         Assert.Contains("complete ordered schema", exception.Message, StringComparison.Ordinal);
     }
 
+    [Theory]
+    [InlineData("native_spells.tsv")]
+    [InlineData("native_item_misc.tsv")]
+    [InlineData("native_item_topology.tsv")]
+    [InlineData("native_item_tags.tsv")]
+    public void CurrentSchemaRequiresEveryLegacyCompatibilityNamespace(string sourcePath)
+    {
+        var basePack = LoadBasePack();
+        var pack = RemoveBaseTable(basePack, sourcePath);
+
+        var exception = Assert.Throws<InvalidDataException>(() =>
+            DiabloModule.Instance.ContentBootstrap.Activate(
+                ComposedContent.Compose(new ContentManifest(
+                    "missing-native-compatibility-namespace",
+                    "1",
+                    [pack]))));
+
+        Assert.Contains($"requires '{sourcePath}' compatibility content", exception.Message,
+            StringComparison.Ordinal);
+    }
+
     [Fact]
     public void PreviousSchemaRetainsLegacyOrderedCompatibilityLoading()
     {
@@ -56,6 +77,36 @@ public sealed class NativeCompatibilityContentActivationBoundaryTests
         var activation = DiabloModule.Instance.ContentBootstrap.Activate(
             ComposedContent.Compose(new ContentManifest(
                 "previous-native-compatibility-contract",
+                "1",
+                [previous])));
+
+        Assert.NotNull(activation);
+    }
+
+    [Fact]
+    public void PreviousSchemaRetainsCompatibilityNamespaceOmission()
+    {
+        var basePack = LoadBasePack();
+        var tables = basePack.Tables
+            .Where(table => table.SourcePath is not
+                ("native_spells.tsv"
+                or "native_item_misc.tsv"
+                or "native_item_topology.tsv"
+                or "native_item_tags.tsv"))
+            .ToArray();
+        var previous = new ContentPack(
+            basePack.Id,
+            basePack.Version,
+            tables,
+            basePack.Dependencies,
+            basePack.Overlays,
+            new ContentSchemaIdentity("devilution.diablo", "1.501.0"),
+            basePack.DependencyConstraints,
+            basePack.Assets);
+
+        var activation = DiabloModule.Instance.ContentBootstrap.Activate(
+            ComposedContent.Compose(new ContentManifest(
+                "previous-native-compatibility-omission",
                 "1",
                 [previous])));
 
@@ -95,6 +146,19 @@ public sealed class NativeCompatibilityContentActivationBoundaryTests
         lines.AddRange(table.Rows.Select(row =>
             string.Join('\t', columns.Select(column => row[column]))));
         return TsvTable.Parse(table.SourcePath, string.Join('\n', lines) + "\n");
+    }
+
+    private static ContentPack RemoveBaseTable(ContentPack basePack, string sourcePath)
+    {
+        return new ContentPack(
+            basePack.Id,
+            basePack.Version,
+            basePack.Tables.Where(table => table.SourcePath != sourcePath).ToArray(),
+            basePack.Dependencies,
+            basePack.Overlays,
+            basePack.Schema,
+            basePack.DependencyConstraints,
+            basePack.Assets);
     }
 
     private static string FindRepositoryRoot()

@@ -1611,31 +1611,33 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
 
     private static void ValidateLegacyCompatibilityCatalogs(ComposedContent content)
     {
-        ValidateOptionalCompatibilityTable(
+        ValidateRequiredCompatibilityTable(
             content,
             "native_spells.tsv",
             AuthoritativeNativeSpellCatalog.ValidateExternalizedProduction);
-        ValidateOptionalCompatibilityTable(
+        ValidateRequiredCompatibilityTable(
             content,
             "native_item_misc.tsv",
             AuthoritativeNativeMiscCatalog.ValidateExternalizedProduction);
-        ValidateOptionalCompatibilityTable(
+        ValidateRequiredCompatibilityTable(
             content,
             "native_item_topology.tsv",
             AuthoritativeNativeItemTopologyCatalog.ValidateExternalizedProduction);
-        ValidateOptionalCompatibilityTable(
+        ValidateRequiredCompatibilityTable(
             content,
             "native_item_tags.tsv",
             AuthoritativeNativeItemTagCatalog.ValidateExternalizedProduction);
     }
 
-    private static void ValidateOptionalCompatibilityTable(
+    private static void ValidateRequiredCompatibilityTable(
         ComposedContent content,
         string sourcePath,
         Action<TsvTable> validator)
     {
-        if (content.TryGetTable(sourcePath, out var table))
-            validator(table);
+        if (!content.TryGetTable(sourcePath, out var table))
+            throw new InvalidDataException(
+                $"Current-schema Diablo activation requires '{sourcePath}' compatibility content.");
+        validator(table);
     }
 
     private static AuthoritativeSetLevelObjectCatalog LoadSetLevelObjects(

@@ -26,7 +26,8 @@ Current-schema supplied shared native-DUN piece and tile-property geometry
 catalogs must use their complete ordered schemas as well.
 Current-schema supplied legacy compatibility namespaces must use complete
 ordered headers for `native_spells.tsv`, `native_item_misc.tsv`,
-`native_item_topology.tsv`, and `native_item_tags.tsv`.
+`native_item_topology.tsv`, and `native_item_tags.tsv`; all four tables are
+required. Previous-schema packs may omit these compatibility tables.
 The checked-in `hellfire` pack depends on `base` and overlays the validated
 `combat.tsv` variant selector plus the first content-owned towner turn-in row,
 the native `Crystalline`, `Jester's`, and `Doppelganger's` weapon prefixes and
