@@ -189,7 +189,22 @@ public sealed class AuthoritativeTcpServer : IAsyncDisposable
         var result = leasedAdapter.TryReload(
             candidateManifest,
             candidateModules,
-            ActiveSessionIds);
+            ActiveSessionIds,
+            candidate => {
+                var replacementIdentity = ProtocolServerIdentity.FromRuleset(
+                    handshake.Identity.BuildId,
+                    handshake.Identity.ProtocolSchemaVersion,
+                    handshake.Identity.TickRateHz,
+                    candidate.Identity,
+                    handshake.Identity.GameMode);
+                foreach (var session in sessionsByToken.Values
+                             .Where(session => session.ParticipantInitialized)
+                             .OrderBy(session => session.Id, StringComparer.Ordinal))
+                    SaveSession(
+                        session,
+                        candidate.Target,
+                        replacementIdentity.RulesetIdentityHash);
+            });
         if (result.Succeeded) {
             var replacementIdentity = ProtocolServerIdentity.FromRuleset(
                 handshake.Identity.BuildId,
@@ -197,10 +212,6 @@ public sealed class AuthoritativeTcpServer : IAsyncDisposable
                 handshake.Identity.TickRateHz,
                 result.Active.Identity,
                 handshake.Identity.GameMode);
-            foreach (var session in sessionsByToken.Values
-                         .Where(session => session.ParticipantInitialized)
-                         .OrderBy(session => session.Id, StringComparer.Ordinal))
-                SaveSession(session, replacementIdentity.RulesetIdentityHash);
             leasedAdapter.DisposeRetiredAdapters();
             handshake.UpdateIdentity(replacementIdentity);
         }
@@ -423,14 +434,18 @@ public sealed class AuthoritativeTcpServer : IAsyncDisposable
         }
     }
 
-    private void SaveSession(SessionState session, string? rulesetIdentityHash = null)
+    private void SaveSession(
+        SessionState session,
+        IAuthoritativeSaveProvider? stateProvider = null,
+        string? rulesetIdentityHash = null)
     {
         commandServer.WithSynchronizedSession(session.Id, () => {
             if (!session.ParticipantInitialized)
                 return;
-            var serializedState = saveProvider is null
+            var provider = stateProvider ?? saveProvider;
+            var serializedState = provider is null
                 ? null
-                : saveProvider.ExportSessionState(session.Id);
+                : provider.ExportSessionState(session.Id);
             var completedCommands = commandServer.ExportCompletedCommands(session.Id);
             sessionPersistence.Save(
                 session.Id,

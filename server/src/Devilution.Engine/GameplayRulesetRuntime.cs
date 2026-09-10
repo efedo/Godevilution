@@ -134,6 +134,21 @@ public sealed class GameplayRulesetRuntime<TActivation>
         ContentManifest candidateManifest,
         IEnumerable<IGameplayModule> candidateModules,
         Action<TActivation>? prepareCandidate = null)
+        => TryReloadWithActivation(
+            candidateManifest,
+            candidateModules,
+            prepareCandidate is null
+                ? null
+                : activation => prepareCandidate(activation.Target));
+
+    /**
+     * Replaces the active ruleset after preparation receives the complete
+     * candidate activation, still before the publication boundary.
+     */
+    public GameplayRulesetReloadResult<TActivation> TryReloadWithActivation(
+        ContentManifest candidateManifest,
+        IEnumerable<IGameplayModule> candidateModules,
+        Action<GameplayRulesetActivation<TActivation>>? prepareCandidate = null)
     {
         ArgumentNullException.ThrowIfNull(candidateManifest);
         ArgumentNullException.ThrowIfNull(candidateModules);
@@ -141,7 +156,7 @@ public sealed class GameplayRulesetRuntime<TActivation>
             try {
                 var candidate = Create(candidateManifest, candidateModules);
                 try {
-                    prepareCandidate?.Invoke(candidate.Target);
+                    prepareCandidate?.Invoke(candidate);
                 } catch (Exception exception) {
                     return new GameplayRulesetReloadResult<TActivation>(
                         false,

@@ -2,6 +2,10 @@
 
 All notable changes to this fork are documented below.
 
+- Ruleset replacement now publishes migrated session checkpoints during
+  candidate preparation, before activation or handshake identity publication;
+  failed exports or checkpoint writes keep the previous generation active.
+
 - Ruleset replacement now persists every migrated session under the candidate
   ruleset identity before publishing the new handshake identity, closing the
   immediate-restart window introduced by identity-bound checkpoints.

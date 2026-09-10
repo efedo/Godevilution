@@ -135,6 +135,29 @@ public sealed class GameplayRulesetRuntimeTests
     }
 
     [Fact]
+    public void ActivationPreparationReceivesCandidateBeforePublication()
+    {
+        var runtime = CreateRuntime(
+            CreateManifest("1", "initial"),
+            new TestModule("rules", "1.0.0", "initial"));
+        var original = runtime.Active;
+        GameplayRulesetActivation<TestActivation>? prepared = null;
+
+        var result = runtime.TryReloadWithActivation(
+            CreateManifest("2", "replacement"),
+            [new TestModule("rules", "2.0.0", "replacement")],
+            candidate => {
+                prepared = candidate;
+                Assert.Same(original, runtime.Active);
+                Assert.Equal("replacement", candidate.Target.Value);
+            });
+
+        Assert.True(result.Succeeded);
+        Assert.Same(result.Active, prepared);
+        Assert.Same(result.Active, runtime.Active);
+    }
+
+    [Fact]
     public void FailedCandidatePreparationKeepsThePreviousActivation()
     {
         var runtime = CreateRuntime(

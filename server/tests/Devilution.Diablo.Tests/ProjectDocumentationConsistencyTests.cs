@@ -31,7 +31,7 @@ public sealed class ProjectDocumentationConsistencyTests
             migrationStatus,
             StringComparison.Ordinal);
         Assert.Contains(
-            "ruleset-reload checkpoint publication before handshake identity changes",
+            "candidate-preparation ruleset-reload checkpoint publication before activation/handshake identity changes",
             migrationStatus,
             StringComparison.Ordinal);
         Assert.DoesNotContain(

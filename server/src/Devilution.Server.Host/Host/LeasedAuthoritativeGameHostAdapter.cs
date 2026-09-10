@@ -41,7 +41,8 @@ public sealed class LeasedAuthoritativeGameHostAdapter : IAuthoritativeGameHostA
     public GameplayRulesetReloadResult<IAuthoritativeGameHostAdapter> TryReload(
         ContentManifest candidateManifest,
         IEnumerable<IGameplayModule> candidateModules,
-        IEnumerable<string> sessionIds)
+        IEnumerable<string> sessionIds,
+        Action<GameplayRulesetActivation<IAuthoritativeGameHostAdapter>>? prepareCandidate = null)
     {
         ThrowIfDisposed();
         ArgumentNullException.ThrowIfNull(candidateManifest);
@@ -72,15 +73,16 @@ public sealed class LeasedAuthoritativeGameHostAdapter : IAuthoritativeGameHostA
                 return FailedReload("ruleset-session-export-failed", exception);
             }
 
-            return rulesets.TryReload(
+            return rulesets.TryReloadWithActivation(
                 candidateManifest,
                 candidateModules,
                 candidate => {
                     try {
                         foreach (var sessionId in sessions)
-                            candidate.ImportSessionState(sessionId, saves[sessionId]);
+                            candidate.Target.ImportSessionState(sessionId, saves[sessionId]);
+                        prepareCandidate?.Invoke(candidate);
                     } catch {
-                        disposeAdapter(candidate);
+                        disposeAdapter(candidate.Target);
                         throw;
                     }
                 });
