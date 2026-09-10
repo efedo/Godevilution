@@ -68,6 +68,22 @@ public sealed class AuthoritativeSimulationRuntimeTests
     }
 
     [Fact]
+    public void RestoreAtTickDoesNotRewindSharedTimeline()
+    {
+        var lifecycle = new TestLifecycle();
+        var runtime = new AuthoritativeSimulationRuntime<TestState, string>(lifecycle);
+        runtime.Read("first", state => state);
+
+        runtime.AdvanceTo(5);
+        runtime.RestoreAtTick(8);
+        runtime.RestoreAtTick(6);
+        runtime.AdvanceTo(9);
+
+        Assert.Equal(9UL, runtime.LastAdvancedTick);
+        Assert.Equal([1UL, 2UL, 3UL, 4UL, 5UL, 9UL], lifecycle.AdvancedTicks);
+    }
+
+    [Fact]
     public void RestoreAtTickDiscardsTransientEventsFromThePreRestoreTimeline()
     {
         var lifecycle = new TestLifecycle();

@@ -7,6 +7,10 @@ All notable changes to this fork are documented below.
   wall clock starts earlier from publishing a regressed snapshot or admitting
   a command before restored simulation state.
 
+- Shared simulation restoration is now monotonic across sessions: importing
+  an older participant checkpoint cannot rewind autonomous world progression
+  or replay ticks already advanced for another connected session.
+
 - Godot and the native compatibility client now validate every authoritative
   event batch before applying stale-tick or reconnect-epoch filters, so
   malformed discarded events fail closed instead of being silently ignored.

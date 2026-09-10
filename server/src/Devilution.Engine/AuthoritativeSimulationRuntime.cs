@@ -60,12 +60,14 @@ public sealed class AuthoritativeSimulationRuntime<TState, TEvent>
     /**
      * Synchronizes the runtime clock with a module snapshot loaded from
      * persistence. Pending events are transient and are discarded because
-     * they are not part of the restored snapshot.
+     * they are not part of the restored snapshot. The shared world timeline
+     * is monotonic, so an older participant checkpoint cannot rewind it when
+     * multiple sessions are restored into one runtime.
      */
     public void RestoreAtTick(ulong tick)
     {
         lock (synchronization) {
-            lastAdvancedTick = tick;
+            lastAdvancedTick = Math.Max(lastAdvancedTick, tick);
             sessions.ClearEvents();
         }
     }

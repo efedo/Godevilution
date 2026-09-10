@@ -14,6 +14,9 @@ generation active.
 Restored session state now also rehydrates the host's shared monotonic tick
 boundary, so a fresh process cannot publish a wall-clock tick older than the
 simulation state it just imported.
+Restoring multiple sessions into the shared runtime also preserves that
+monotonic world timeline, so an older participant checkpoint cannot replay
+autonomous ticks already processed for another session.
 
 The active content schema is now `1.462.0` (with `1.461.0` retained as
 the previous additive contract). Optional `procedural_quest_piece_origins.tsv`
