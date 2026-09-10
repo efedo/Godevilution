@@ -61,8 +61,17 @@ public sealed class AuthoritativeGameHostAdapterCatalog
 
     public IReadOnlyList<IGameplayModule> CreateBuiltInModules()
     {
+        var selectedFactories = selectedFactoryId is null
+            ? factories
+            : factories.Where(factory => string.Equals(
+                factory.Id,
+                selectedFactoryId,
+                StringComparison.Ordinal)).ToArray();
+        if (selectedFactories.Count == 0)
+            throw new InvalidOperationException(
+                $"Configured game-host adapter factory '{selectedFactoryId}' is not registered.");
         var modules = new List<IGameplayModule>();
-        foreach (var factory in factories) {
+        foreach (var factory in selectedFactories) {
             var factoryModules = factory.CreateBuiltInModules()
                 ?? throw new InvalidOperationException(
                     $"Game-host adapter factory '{factory.Id}' returned null modules.");

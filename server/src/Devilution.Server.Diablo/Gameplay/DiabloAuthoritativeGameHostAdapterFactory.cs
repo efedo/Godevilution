@@ -6,7 +6,7 @@ using Devilution.Server.Stores;
 namespace Devilution.Server.Gameplay;
 
 /** Server-side Diablo bridge kept outside Domain, Data, Engine, and the module. */
-internal sealed class DiabloAuthoritativeGameHostAdapterFactory
+public sealed class DiabloAuthoritativeGameHostAdapterFactory
     : IAuthoritativeGameHostAdapterFactory
 {
     public string Id => "devilution.diablo";

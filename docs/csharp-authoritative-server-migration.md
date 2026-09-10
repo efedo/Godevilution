@@ -85,7 +85,9 @@ adapter contract and deterministic factory catalog. The host can also load
 explicit hash-verified `game-host-adapter.json` packages whose entry assemblies
 may carry a bounded, hash-verified private dependency closure while shared
 Godevilution contracts remain identity-stable; configured factory IDs select
-one compatible adapter after module preflight. The executable
+one compatible adapter after module preflight. The first production package
+entry point is `Devilution.Server.Diablo.Package`, which exercises this
+boundary for the Diablo adapter. The executable
 composition root names no Diablo types. Exact assembly-reference tests enforce the separate
 Protocol, Host, Diablo adapter, and executable dependency graph, while a schema
 ownership test prevents duplicate managed Protobuf generation.

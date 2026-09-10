@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <AssemblyName>Godevilution.Server.Diablo.Package</AssemblyName>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../Devilution.Data/Devilution.Data.csproj" />
+    <ProjectReference Include="../Devilution.Diablo/Devilution.Diablo.csproj" />
+    <ProjectReference Include="../Devilution.Engine/Devilution.Engine.csproj" />
+    <ProjectReference Include="../Devilution.Server.Diablo/Devilution.Server.Diablo.csproj" />
+    <ProjectReference Include="../Devilution.Server.Host/Devilution.Server.Host.csproj" />
+  </ItemGroup>
+</Project>

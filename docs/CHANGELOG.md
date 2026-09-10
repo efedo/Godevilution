@@ -11,6 +11,12 @@ All notable changes to this fork are documented below.
   allowing production adapters to ship game-specific assemblies without
   duplicating shared host contracts.
 
+- Added the first production package entry point in
+  `Devilution.Server.Diablo.Package`. Explicit factory selection now scopes
+  built-in module candidates to the selected adapter, allowing the packaged
+  Diablo adapter to run without colliding with the built-in factory; focused
+  coverage loads its private Diablo dependency closure in isolation.
+
 - Advanced combined authoritative session checkpoints to format 3 with
   canonical SHA-256 hashes of serialized server state and the command ledger.
   Version-1 and version-2 checkpoints remain readable for migration and are

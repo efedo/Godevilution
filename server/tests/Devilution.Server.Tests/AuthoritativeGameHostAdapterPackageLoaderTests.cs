@@ -63,6 +63,23 @@ public sealed class AuthoritativeGameHostAdapterPackageLoaderTests
     }
 
     [Fact]
+    public void LoadsTheProductionDiabloAdapterPackageWithItsPrivateClosure()
+    {
+        var root = CreateProductionDiabloPackage();
+        try {
+            var package = new AuthoritativeGameHostAdapterPackageLoader().LoadDirectory(root);
+
+            Assert.Equal("godevilution.diablo.package", package.Factory.Id);
+            var catalog = new AuthoritativeGameHostAdapterCatalog(
+                [package.Factory],
+                package.Factory.Id);
+            Assert.Single(catalog.CreateBuiltInModules());
+        } finally {
+            Directory.Delete(root, recursive: true);
+        }
+    }
+
+    [Fact]
     public void RejectsAnUnlistedPrivateDependency()
     {
         var root = CreatePackage(includeDependency: false);
@@ -134,4 +151,44 @@ public sealed class AuthoritativeGameHostAdapterPackageLoaderTests
             JsonSerializer.Serialize(manifest));
         return root;
     }
+
+    private static string CreateProductionDiabloPackage()
+    {
+        var root = Path.Combine(
+            Path.GetTempPath(),
+            "godevilution-adapter-package-tests",
+            Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(root);
+        var files = new[] {
+            ("adapter.dll", typeof(Godevilution.Server.Diablo.Package.PackagedDiabloAuthoritativeGameHostAdapterFactory).Assembly.Location),
+            ("server-diablo.dll", typeof(Devilution.Server.Gameplay.DiabloAuthoritativeGameHostAdapterFactory).Assembly.Location),
+            ("diablo.dll", typeof(Devilution.Diablo.DiabloModule).Assembly.Location),
+            ("domain.dll", typeof(Devilution.Domain.Protocol.AuthoritativeLevelIdentityRules).Assembly.Location),
+            ("protobuf.dll", typeof(Google.Protobuf.IMessage).Assembly.Location),
+        };
+        foreach (var (name, source) in files)
+            File.Copy(source, Path.Combine(root, name));
+
+        var manifest = new {
+            formatVersion = 1,
+            id = "godevilution-diablo-package",
+            version = "0.1.0",
+            assembly = "adapter.dll",
+            assemblySha256 = GetSha256(Path.Combine(root, "adapter.dll")),
+            factoryType = "Godevilution.Server.Diablo.Package.PackagedDiabloAuthoritativeGameHostAdapterFactory",
+            dependencies = new[] {
+                new { assembly = "server-diablo.dll", assemblySha256 = GetSha256(Path.Combine(root, "server-diablo.dll")) },
+                new { assembly = "diablo.dll", assemblySha256 = GetSha256(Path.Combine(root, "diablo.dll")) },
+                new { assembly = "domain.dll", assemblySha256 = GetSha256(Path.Combine(root, "domain.dll")) },
+                new { assembly = "protobuf.dll", assemblySha256 = GetSha256(Path.Combine(root, "protobuf.dll")) },
+            },
+        };
+        File.WriteAllText(
+            Path.Combine(root, AuthoritativeGameHostAdapterPackageLoader.ManifestFileName),
+            JsonSerializer.Serialize(manifest));
+        return root;
+    }
+
+    private static string GetSha256(string path)
+        => Convert.ToHexString(SHA256.HashData(File.ReadAllBytes(path))).ToLowerInvariant();
 }

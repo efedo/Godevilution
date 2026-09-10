@@ -115,6 +115,23 @@ public sealed class AuthoritativeGameHostAdapterCatalogTests
         Assert.Same(module, Assert.Single(modules));
     }
 
+    [Fact]
+    public void ConfiguredFactoryOwnsBuiltInModuleSelection()
+    {
+        var firstModule = new TestModule();
+        var secondModule = new TestModule();
+        var catalog = new AuthoritativeGameHostAdapterCatalog(
+            [
+                new TestFactory("first", true, new TestAdapter(), [firstModule]),
+                new TestFactory("second", true, new TestAdapter(), [secondModule]),
+            ],
+            "second");
+
+        var modules = catalog.CreateBuiltInModules();
+
+        Assert.Same(secondModule, Assert.Single(modules));
+    }
+
     private static ComposedContent CreateContent()
     {
         return ComposedContent.Compose(new ContentManifest(

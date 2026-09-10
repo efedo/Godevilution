@@ -17,6 +17,7 @@
 
   <ItemGroup>
     <ProjectReference Include="../../src/Devilution.Server/Devilution.Server.csproj" />
+    <ProjectReference Include="../../src/Devilution.Server.Diablo.Package/Devilution.Server.Diablo.Package.csproj" />
     <ProjectReference Include="../Devilution.ModuleDependencyFixture/Devilution.ModuleDependencyFixture.csproj" />
     <ProjectReference Include="../Devilution.AdapterFixture/Devilution.AdapterFixture.csproj" />
     <ProjectReference Include="../Devilution.AdapterDependency/Devilution.AdapterDependency.csproj" />
