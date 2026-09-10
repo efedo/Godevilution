@@ -6765,6 +6765,9 @@ public sealed class DiabloCombatCommandProcessorTests
             5,
             blockedCells: [2, 9, 16, 23],
             nativeVisionBlockedCells: []));
+        // Movement blockers are also explicit vision blockers; keep the
+        // monster's native active window open so this test exercises routing
+        // rather than visibility wake-up.
         var monster = new AuthoritativeCombatTarget(
             9,
             1,
@@ -6772,9 +6775,12 @@ public sealed class DiabloCombatCommandProcessorTests
             10,
             levelId: 1,
             attackDamage: 3,
-            aggroRange: 10);
+            aggroRange: 10,
+            activeForTicks: byte.MaxValue);
         var world = new DiabloWorldState(geometry, combatTargets: [monster]);
-        Assert.Empty(world.LevelGeometry[0].NativeVisionBlockedCells);
+        Assert.Equal(
+            [2, 9, 16, 23],
+            world.LevelGeometry[0].NativeVisionBlockedCells);
         var processor = CreateProcessor(world);
         var player = CreatePlayer(
             positionX: 5,
@@ -6790,7 +6796,7 @@ public sealed class DiabloCombatCommandProcessorTests
         Assert.True(
             monster.PositionX > 1
             || monster.FuturePositionX > 1,
-            "The monster should route through the open corridor instead of remaining stuck.");
+            $"The monster should route through the open corridor instead of remaining stuck (current={monster.PositionX},{monster.PositionY}; future={monster.FuturePositionX},{monster.FuturePositionY}; moving={monster.IsMoving}).");
         Assert.True(player.Life < 20, "The routed monster should eventually reach attack range.");
     }
 
