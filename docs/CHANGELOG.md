@@ -2,6 +2,11 @@
 
 All notable changes to this fork are documented below.
 
+- Session restore now rehydrates the host’s monotonic command boundary from
+  the persisted authoritative state tick, preventing a fresh process whose
+  wall clock starts earlier from publishing a regressed snapshot or admitting
+  a command before restored simulation state.
+
 - Godot and the native compatibility client now validate every authoritative
   event batch before applying stale-tick or reconnect-epoch filters, so
   malformed discarded events fail closed instead of being silently ignored.

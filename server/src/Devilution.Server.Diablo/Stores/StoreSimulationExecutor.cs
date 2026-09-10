@@ -514,6 +514,15 @@ public sealed class StoreSimulationExecutor : IAuthoritativeGameHostAdapter
         ImportPlayerSave(sessionId, serializedState);
     }
 
+    /** Returns the world tick restored from the server-owned session state. */
+    public ulong GetSessionStateTick(string sessionId)
+    {
+        if (string.IsNullOrWhiteSpace(sessionId))
+            throw new ArgumentException("A session ID is required.", nameof(sessionId));
+
+        return runtime.LastAdvancedTick;
+    }
+
     /** Advances statuses and autonomous monster behavior at a server tick boundary. */
     public void AdvanceTo(ulong tick)
     {

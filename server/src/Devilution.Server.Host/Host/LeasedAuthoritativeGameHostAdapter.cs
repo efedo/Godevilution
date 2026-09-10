@@ -154,6 +154,12 @@ public sealed class LeasedAuthoritativeGameHostAdapter : IAuthoritativeGameHostA
         WithAdapter(adapter => adapter.ImportSessionState(sessionId, serializedState));
     }
 
+    public ulong GetSessionStateTick(string sessionId)
+    {
+        ThrowIfDisposed();
+        return WithAdapter(adapter => adapter.GetSessionStateTick(sessionId));
+    }
+
     public void InitializeParticipant(
         string sessionId,
         AuthoritativeParticipantSelection selection)

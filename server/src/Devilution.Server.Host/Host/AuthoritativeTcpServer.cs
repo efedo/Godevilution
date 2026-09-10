@@ -440,6 +440,7 @@ public sealed class AuthoritativeTcpServer : IAsyncDisposable
                 return false;
             }
             saveProvider.ImportSessionState(session.Id, serializedSave);
+            commandServer.AdvanceTo(saveProvider.GetSessionStateTick(session.Id));
             session.SaveLoaded = true;
             session.ParticipantInitialized = true;
             return true;

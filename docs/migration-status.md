@@ -11,6 +11,9 @@ prepares every initialized-session export before publishing any migrated
 checkpoint under the candidate identity during candidate preparation, before
 activation or handshake publication; failed exports leave the previous
 generation active.
+Restored session state now also rehydrates the host's shared monotonic tick
+boundary, so a fresh process cannot publish a wall-clock tick older than the
+simulation state it just imported.
 
 The active content schema is now `1.462.0` (with `1.461.0` retained as
 the previous additive contract). Optional `procedural_quest_piece_origins.tsv`

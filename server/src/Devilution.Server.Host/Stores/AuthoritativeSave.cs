@@ -21,4 +21,11 @@ public interface IAuthoritativeSaveProvider
     /** Imports a complete server-owned session state into the named session. */
     void ImportSessionState(string sessionId, string serializedState)
         => ImportPlayerSave(sessionId, serializedState);
+
+    /**
+     * Returns the deterministic tick represented by the imported session
+     * state. Legacy providers may return zero; the host retains its clock
+     * boundary in that case.
+     */
+    ulong GetSessionStateTick(string sessionId) => 0;
 }

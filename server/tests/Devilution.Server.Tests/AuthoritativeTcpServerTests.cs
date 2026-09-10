@@ -716,6 +716,68 @@ public sealed class AuthoritativeTcpServerTests
     }
 
     [Fact]
+    public async Task TcpRestoreRaisesSharedTickToPersistedStateBoundary()
+    {
+        var saveRoot = Path.Combine(
+            Path.GetTempPath(),
+            "Godevilution-Restored-Tick-Boundary-" + Guid.NewGuid().ToString("N"));
+        const string resumeToken = "restored-tick-boundary-session";
+        var sessionId = Convert.ToHexString(
+                SHA256.HashData(Encoding.UTF8.GetBytes(resumeToken)))
+            .ToLowerInvariant();
+        try {
+            var saveStore = new AuthoritativeSaveStore(saveRoot);
+            saveStore.Save(sessionId, "persisted-state");
+            var executor = new RecordingExecutor();
+            var saveProvider = new RecordingSaveProvider { ImportedStateTick = 15 };
+            var commandServer = new AuthoritativeCommandServer(executor);
+            var handshake = new ProtocolHandshake(new ProtocolServerIdentity(
+                "server-build",
+                "0.1.0",
+                "content-hash",
+                20));
+            await using var server = new AuthoritativeTcpServer(
+                commandServer,
+                handshake,
+                () => 10,
+                snapshotProvider: executor,
+                saveStore: saveStore,
+                saveProvider: saveProvider);
+            server.Start();
+
+            var cancellationToken = TestContext.Current.CancellationToken;
+            using var client = new TcpClient();
+            await client.ConnectAsync(IPAddress.Loopback, server.Port, cancellationToken);
+            await using var stream = client.GetStream();
+            await SendHelloAsync(stream, cancellationToken, resumeToken);
+
+            Assert.Equal(
+                Envelope.PayloadOneofCase.ServerHello,
+                (await EnvelopeCodec.ReadAsync(stream, cancellationToken))!.PayloadCase);
+            var restoredSnapshot = (await EnvelopeCodec.ReadAsync(stream, cancellationToken))!.Snapshot;
+            Assert.Equal(15UL, restoredSnapshot.Tick);
+            Assert.Equal([15UL], executor.SnapshotTicks);
+
+            await EnvelopeCodec.WriteAsync(stream, new Envelope {
+                CommandBatch = new CommandBatch {
+                    Commands = { new Command {
+                        ClientSequence = 1,
+                        RequestedTick = 15,
+                        AttackRequested = new AttackRequested { TargetEntityId = 1 },
+                    } },
+                },
+            }, cancellationToken);
+
+            var acknowledgement = (await EnvelopeCodec.ReadAsync(stream, cancellationToken))!.CommandAck.Results.Single();
+            Assert.Equal(CommandStatus.Accepted, acknowledgement.Status);
+            Assert.Equal(15UL, acknowledgement.AppliedTick);
+        } finally {
+            if (Directory.Exists(saveRoot))
+                Directory.Delete(saveRoot, recursive: true);
+        }
+    }
+
+    [Fact]
     public async Task TcpServerRestartRestoresSavedSessionStateAcrossFreshAdapters()
     {
         var saveRoot = Path.Combine(
@@ -3005,6 +3067,8 @@ public sealed class AuthoritativeTcpServerTests
 
         public int ExportCount => Volatile.Read(ref exportCount);
 
+        public ulong ImportedStateTick { get; init; }
+
         public string ExportPlayerSave(string sessionId)
         {
             Interlocked.Increment(ref exportCount);
@@ -3014,6 +3078,8 @@ public sealed class AuthoritativeTcpServerTests
         public void ImportPlayerSave(string sessionId, string serializedSave)
         {
         }
+
+        public ulong GetSessionStateTick(string sessionId) => ImportedStateTick;
     }
 
     private sealed class RejectingSaveProvider : IAuthoritativeSaveProvider

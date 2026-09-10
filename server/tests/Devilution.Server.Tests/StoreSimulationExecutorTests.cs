@@ -3631,6 +3631,7 @@ public sealed class StoreSimulationExecutorTests
         var restoredAtSave = replacement.CreateSnapshot("player-a", 7, 2);
 
         Assert.Equal(expectedAtSave.Tick, restoredAtSave.Tick);
+        Assert.Equal(expectedAtSave.Tick, replacement.GetSessionStateTick("player-a"));
         Assert.Equal(expectedAtSave.StateSha256, restoredAtSave.StateSha256);
         Assert.Equal(
             expectedAtSave.Monsters.Select(monster => (
