@@ -7,8 +7,8 @@ namespace Devilution.Server.Stores;
 /** Durable atomic checkpoint containing authoritative state and command receipts. */
 public sealed class AuthoritativeSessionStore
 {
-    /** Version 2 adds an integrity hash for the serialized authoritative state. */
-    public const int CurrentFormatVersion = 2;
+    /** Version 2 adds a state hash; version 3 also hashes the command ledger. */
+    public const int CurrentFormatVersion = 3;
     private static readonly Dictionary<string, object> PathLocks = new(StringComparer.OrdinalIgnoreCase);
     private static readonly object PathLockSynchronization = new();
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.General) {
@@ -46,7 +46,8 @@ public sealed class AuthoritativeSessionStore
                     CurrentFormatVersion,
                     serializedState,
                     receipts,
-                    ComputeStateSha256(serializedState));
+                    ComputeStateSha256(serializedState),
+                    ComputeReceiptsSha256(receipts));
                 var bytes = StrictUtf8Text.Encode(
                     JsonSerializer.Serialize(document, JsonOptions),
                     "authoritative session checkpoint");
@@ -87,10 +88,10 @@ public sealed class AuthoritativeSessionStore
             }
             if (document is null || string.IsNullOrWhiteSpace(document.SerializedState))
                 throw new InvalidDataException("The authoritative session checkpoint is incomplete.");
-            if (document.FormatVersion is not (1 or CurrentFormatVersion))
+            if (document.FormatVersion is not (1 or 2 or CurrentFormatVersion))
                 throw new InvalidDataException(
                     $"Authoritative session checkpoint format {document.FormatVersion} is unsupported.");
-            if (document.FormatVersion == CurrentFormatVersion
+            if (document.FormatVersion >= 2
                 && !string.Equals(
                     document.StateSha256,
                     ComputeStateSha256(document.SerializedState),
@@ -114,6 +115,13 @@ public sealed class AuthoritativeSessionStore
                         "The authoritative session checkpoint contains an invalid or duplicate command receipt.");
                 }
             }
+            if (document.FormatVersion == CurrentFormatVersion
+                && !string.Equals(
+                    document.CommandReceiptsSha256,
+                    ComputeReceiptsSha256(document.CommandReceipts),
+                    StringComparison.Ordinal))
+                throw new InvalidDataException(
+                    "The authoritative session checkpoint command-ledger integrity hash is invalid.");
 
             return new AuthoritativeSessionDocument(
                 document.FormatVersion,
@@ -146,11 +154,26 @@ public sealed class AuthoritativeSessionStore
         int FormatVersion,
         string SerializedState,
         Receipt[] CommandReceipts,
-        string? StateSha256);
+        string? StateSha256,
+        string? CommandReceiptsSha256);
 
     private static string ComputeStateSha256(string serializedState)
         => Convert.ToHexString(SHA256.HashData(
             StrictUtf8Text.Encode(serializedState, "authoritative session state")));
+
+    private static string ComputeReceiptsSha256(IReadOnlyList<Receipt> receipts)
+    {
+        var canonicalReceipts = receipts
+            .OrderBy(receipt => receipt.ClientSequence)
+            .ThenBy(receipt => receipt.ServerReceiptSequence)
+            .ThenBy(receipt => receipt.AppliedTick)
+            .ThenBy(receipt => receipt.Status)
+            .ThenBy(receipt => receipt.RejectReason)
+            .ToArray();
+        var serializedReceipts = JsonSerializer.Serialize(canonicalReceipts, JsonOptions);
+        return Convert.ToHexString(SHA256.HashData(
+            StrictUtf8Text.Encode(serializedReceipts, "authoritative command ledger")));
+    }
 
     private sealed record Receipt(
         ulong ClientSequence,

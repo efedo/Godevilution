@@ -257,6 +257,97 @@ public sealed class AuthoritativeSaveStoreTests
     }
 
     [Fact]
+    public void SessionStoreWritesReceiptIntegrityHashAndRejectsTampering()
+    {
+        var root = Path.Combine(
+            Path.GetTempPath(),
+            "godevilution-session-receipt-integrity-tests",
+            Guid.NewGuid().ToString("N"));
+        try {
+            var store = new AuthoritativeSessionStore(root);
+            store.Save("session-a", "state", new Dictionary<ulong, CommandResult> {
+                [2] = new CommandResult {
+                    ClientSequence = 2,
+                    ServerReceiptSequence = 7,
+                    AppliedTick = 14,
+                    Status = CommandStatus.Accepted,
+                    RejectReason = CommandRejectReason.Unspecified,
+                },
+            });
+
+            var path = Path.Combine(root, "session-a.session.json");
+            using var document = JsonDocument.Parse(File.ReadAllText(path));
+            var stateHash = document.RootElement.GetProperty("StateSha256").GetString();
+            var receiptHash = document.RootElement.GetProperty("CommandReceiptsSha256").GetString();
+            var tampered = "{\"FormatVersion\":3,\"SerializedState\":\"state\","
+                + "\"CommandReceipts\":[{\"ClientSequence\":2,\"ServerReceiptSequence\":7,"
+                + "\"AppliedTick\":15,\"Status\":1,\"RejectReason\":0}],"
+                + "\"StateSha256\":\"" + stateHash + "\","
+                + "\"CommandReceiptsSha256\":\"" + receiptHash + "\"}";
+            File.WriteAllText(path, tampered);
+
+            var exception = Assert.Throws<InvalidDataException>(() => store.Load("session-a"));
+            Assert.Contains("command-ledger integrity hash", exception.Message, StringComparison.Ordinal);
+        } finally {
+            if (Directory.Exists(root))
+                Directory.Delete(root, recursive: true);
+        }
+    }
+
+    [Fact]
+    public void SessionStoreAcceptsVersionTwoCheckpointsForMigration()
+    {
+        var root = Path.Combine(
+            Path.GetTempPath(),
+            "godevilution-session-format-two-tests",
+            Guid.NewGuid().ToString("N"));
+        try {
+            Directory.CreateDirectory(root);
+            var stateHash = Convert.ToHexString(
+                SHA256.HashData(Encoding.UTF8.GetBytes("state")));
+            File.WriteAllText(
+                Path.Combine(root, "session-a.session.json"),
+                "{\"FormatVersion\":2,\"SerializedState\":\"state\",\"CommandReceipts\":[],"
+                + "\"StateSha256\":\"" + stateHash + "\"}");
+
+            var document = new AuthoritativeSessionStore(root).Load("session-a");
+
+            Assert.NotNull(document);
+            Assert.Equal(2, document.FormatVersion);
+            Assert.Equal("state", document.SerializedState);
+            Assert.Empty(document.CommandReceipts);
+        } finally {
+            if (Directory.Exists(root))
+                Directory.Delete(root, recursive: true);
+        }
+    }
+
+    [Fact]
+    public void SessionStoreRejectsMissingVersionThreeReceiptIntegrityHash()
+    {
+        var root = Path.Combine(
+            Path.GetTempPath(),
+            "godevilution-session-receipt-integrity-missing-tests",
+            Guid.NewGuid().ToString("N"));
+        try {
+            Directory.CreateDirectory(root);
+            var stateHash = Convert.ToHexString(
+                SHA256.HashData(Encoding.UTF8.GetBytes("state")));
+            File.WriteAllText(
+                Path.Combine(root, "session-a.session.json"),
+                "{\"FormatVersion\":3,\"SerializedState\":\"state\",\"CommandReceipts\":[],"
+                + "\"StateSha256\":\"" + stateHash + "\"}");
+
+            var exception = Assert.Throws<InvalidDataException>(() =>
+                new AuthoritativeSessionStore(root).Load("session-a"));
+            Assert.Contains("command-ledger integrity hash", exception.Message, StringComparison.Ordinal);
+        } finally {
+            if (Directory.Exists(root))
+                Directory.Delete(root, recursive: true);
+        }
+    }
+
+    [Fact]
     public async Task ConcurrentSessionStoreInstancesPublishCompleteCheckpoints()
     {
         var root = Path.Combine(

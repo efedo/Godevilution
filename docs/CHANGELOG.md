@@ -2,10 +2,11 @@
 
 All notable changes to this fork are documented below.
 
-- Advanced combined authoritative session checkpoints to format 2 with a
-  canonical SHA-256 hash of serialized server state. Version-1 checkpoints
-  remain readable for migration and are upgraded when the next synchronized
-  checkpoint is written; tampered or incomplete version-2 state now fails closed.
+- Advanced combined authoritative session checkpoints to format 3 with
+  canonical SHA-256 hashes of serialized server state and the command ledger.
+  Version-1 and version-2 checkpoints remain readable for migration and are
+  upgraded when the next synchronized checkpoint is written; tampered or
+  incomplete current-format state or receipts now fail closed.
 
 - Corrected the migration-status and architecture references for procedural
   level geometry: native-vision blockers and multiple authored required-walkable

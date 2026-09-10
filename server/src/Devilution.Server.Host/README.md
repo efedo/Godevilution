@@ -11,9 +11,10 @@ module-package loader rejects malformed UTF-8 manifests, reparse-point
 entries, and noncanonical assembly paths before hashing or loading an assembly.
 Server-owned save envelopes, combined session checkpoints, command ledgers, and
 world-seed files use strict UTF-8 I/O and fail closed on malformed text during
-recovery. Combined session checkpoints are version 2 and carry a SHA-256
-integrity hash over serialized authoritative state; version-1 checkpoints remain
-readable and are upgraded on their next write.
+recovery. Combined session checkpoints are version 3 and carry canonical
+SHA-256 hashes over serialized authoritative state and the command ledger;
+version-1 and version-2 checkpoints remain readable and are upgraded on their
+next write.
 leased adapter wrapper uses a read/write operation barrier: replacement waits
 for in-flight operations, migrates initialized sessions before publication,
 and disposes drained game targets through an injected host policy.
