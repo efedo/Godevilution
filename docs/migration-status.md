@@ -2,6 +2,10 @@
 
 Status date: 2026-09-10
 
+Monster-arrow impact now matches the native `PlayerMHit` protection boundary:
+an Etherealized player does not consume the projectile, so the arrow continues
+through the protected tile and can complete its normal travel lifecycle.
+
 Server-owned dialogue events now cross every world-transition path: immediate
 movement, native-timed level triggers, occupancy-triggered objects, and the
 Warp spell all preserve the directed event through simulation and combat

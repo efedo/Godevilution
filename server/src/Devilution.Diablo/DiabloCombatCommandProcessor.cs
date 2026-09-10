@@ -12075,12 +12075,17 @@ public sealed class DiabloCombatCommandProcessor
                 nextX,
                 nextY);
             if (target is not null) {
-                ResolveMonsterArrowImpact(tick, projectile, target, players, events);
-                if (projectile.ImpactLifetime > 0)
-                    EnterProjectileImpact(projectile);
-                else
-                    world.Projectiles.Remove(projectile.EntityId);
-                return;
+                // Native PlayerMHit returns false for temporary player
+                // protection (for example Etherealize). In that case the
+                // arrow continues through the occupied tile instead of being
+                // consumed as a successful collision.
+                if (ResolveMonsterArrowImpact(tick, projectile, target, players, events)) {
+                    if (projectile.ImpactLifetime > 0)
+                        EnterProjectileImpact(projectile);
+                    else
+                        world.Projectiles.Remove(projectile.EntityId);
+                    return;
+                }
             }
 
             if (nextX == projectile.TargetX && nextY == projectile.TargetY)
@@ -12092,15 +12097,18 @@ public sealed class DiabloCombatCommandProcessor
             world.Projectiles.Remove(projectile.EntityId);
     }
 
-    private void ResolveMonsterArrowImpact(
+    private bool ResolveMonsterArrowImpact(
         ulong tick,
         AuthoritativeProjectile projectile,
         AuthoritativePlayerState target,
         IReadOnlyList<AuthoritativePlayerState> players,
         ICollection<DiabloDirectedGameplayEvent> events)
     {
-        if (IsPlayerProtectedByFlash(target))
-            return;
+        // DevilutionX's PlayerMHit rejects an arrow against an invincible or
+        // Etherealized player without marking the missile as hit. Preserve
+        // that distinction so the projectile keeps travelling.
+        if (IsPlayerProtectedByFlash(target) || IsPlayerEtherealized(target))
+            return false;
 
         var targetClass = GetPlayerClass(target);
         var resistance = GetPlayerResistance(target, targetClass, projectile.DamageType);
@@ -12148,6 +12156,7 @@ public sealed class DiabloCombatCommandProcessor
                 tick,
                 players,
                 PlayerDeathReason.MonsterOrTrap);
+        return true;
     }
 
     private bool ResolvePlayerWeaponArrowImpact(

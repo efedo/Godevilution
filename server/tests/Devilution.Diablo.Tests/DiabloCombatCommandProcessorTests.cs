@@ -11179,6 +11179,83 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void MonsterArrowContinuesThroughAnEtherealizedPlayer()
+    {
+        var monster = new AuthoritativeCombatTarget(
+            9,
+            1,
+            0,
+            20,
+            levelId: 0,
+            aggroRange: 8,
+            minDamage: 2,
+            maxDamage: 2,
+            toHit: 100,
+            nativeAi: "SkeletonRanged",
+            intelligence: 3);
+        var world = new DiabloWorldState(combatTargets: [monster]);
+        var processor = CreateProcessor(world);
+        var player = CreatePlayer(
+            entityId: 7,
+            positionX: 4,
+            life: 100,
+            lifeMaximum: 100);
+        world.Projectiles.Add(
+            0x80000000,
+            new AuthoritativeProjectile(
+                0x80000000,
+                monster.EntityId,
+                player.EntityId,
+                0,
+                0,
+                monster.PositionX,
+                monster.PositionY,
+                player.PositionX,
+                player.PositionY,
+                2,
+                AuthoritativeDamageType.Physical,
+                0,
+                8,
+                allowZeroSpellId: true) {
+                Behavior = AuthoritativeProjectileBehavior.MonsterArrow,
+                Speed = 1,
+                ImpactLifetime = 3,
+            });
+
+        processor.AdvanceTick(1, [player]);
+
+        var arrow = Assert.Single(world.Projectiles.Values);
+        Assert.Equal((2, 0), (arrow.PositionX, arrow.PositionY));
+        Assert.Equal(100, player.Life);
+        Assert.Equal(AuthoritativeProjectilePhase.Travel, arrow.Phase);
+
+        player.StatusEffects.Add(new AuthoritativeStatusEffect(
+            53,
+            uint.MaxValue,
+            0) {
+            Behavior = AuthoritativeStatusEffectBehavior.Etherealize,
+        });
+        processor.AdvanceTick(2, [player]);
+
+        arrow = Assert.Single(world.Projectiles.Values);
+        Assert.Equal((3, 0), (arrow.PositionX, arrow.PositionY));
+        Assert.Equal(100, player.Life);
+
+        processor.AdvanceTick(3, [player]);
+
+        arrow = Assert.Single(world.Projectiles.Values);
+        Assert.Equal((4, 0), (arrow.PositionX, arrow.PositionY));
+        Assert.Equal(AuthoritativeProjectilePhase.Travel, arrow.Phase);
+        Assert.Equal(100, player.Life);
+
+        for (ulong tick = 4; tick <= 12 && world.Projectiles.Count != 0; tick++)
+            processor.AdvanceTick(tick, [player]);
+
+        Assert.Empty(world.Projectiles);
+        Assert.Equal(100, player.Life);
+    }
+
+    [Fact]
     public void MonsterArrowUsesConfiguredDamageTypeAndPlayerResistance()
     {
         var monster = new AuthoritativeCombatTarget(
