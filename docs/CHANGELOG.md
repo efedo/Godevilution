@@ -2,6 +2,11 @@
 
 All notable changes to this fork are documented below.
 
+- Advanced the active content schema to `1.498.0`, retaining `1.497.0` as
+  the previous additive contract. Current-schema activation now requires the
+  complete ordered `quest_states.tsv` schema, while previous-schema packs
+  retain legacy loader compatibility.
+
 - Advanced the active content schema to `1.497.0`, retaining `1.496.0` as
   the previous additive contract. Current-schema activation now requires
   complete ordered `set_level_maps.tsv` and `set_level_objects.tsv` schemas,

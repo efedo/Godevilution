@@ -47,7 +47,7 @@ public sealed class QuestMetadataContentActivationBoundaryTests
             tables,
             basePack.Dependencies,
             basePack.Overlays,
-            new ContentSchemaIdentity("devilution.diablo", "1.496.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.497.0"),
             basePack.DependencyConstraints,
             basePack.Assets);
 

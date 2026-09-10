@@ -859,9 +859,9 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
             ? LoadQuests(content, questsTable, questTypes, stableIds)
             : null;
         if (content.TryGetTable("quest_states.tsv", out var questStatesTable)) {
-            var additionalQuests = AuthoritativeQuestCatalog.LoadTsv(
-                questStatesTable.SourcePath,
-                questStatesTable.ToCanonicalTsv(),
+            var additionalQuests = LoadQuestStates(
+                content,
+                questStatesTable,
                 questTypes,
                 stableIds);
             quests = quests is null
@@ -1664,6 +1664,21 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
     {
         if (content.Manifest.Schema == DiabloContentSchema.Current)
             AuthoritativeQuestCatalog.ValidateExternalizedProduction(table);
+        return AuthoritativeQuestCatalog.LoadTsv(
+            table.SourcePath,
+            table.ToCanonicalTsv(),
+            questTypes,
+            stableIds);
+    }
+
+    private static IReadOnlyList<AuthoritativeQuestState> LoadQuestStates(
+        ComposedContent content,
+        TsvTable table,
+        AuthoritativeQuestTypeCatalog? questTypes,
+        StableContentIdCatalog stableIds)
+    {
+        if (content.Manifest.Schema == DiabloContentSchema.Current)
+            AuthoritativeQuestCatalog.ValidateExternalizedStateProduction(table);
         return AuthoritativeQuestCatalog.LoadTsv(
             table.SourcePath,
             table.ToCanonicalTsv(),
