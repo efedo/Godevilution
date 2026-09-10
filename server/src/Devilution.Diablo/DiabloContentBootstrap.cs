@@ -299,6 +299,9 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
         var nativeMissileSpritesTable = GetRequiredExternalTable(
             content,
             "native_missile_sprites.tsv");
+        if (content.Manifest.Schema == DiabloContentSchema.Current)
+            AuthoritativeNativeMissileSpriteCatalog.ValidateExternalizedProduction(
+                nativeMissileSpritesTable);
         var nativeMissileSprites = AuthoritativeNativeMissileSpriteCatalog.LoadTsv(
             nativeMissileSpritesTable.SourcePath,
             nativeMissileSpritesTable.ToCanonicalTsv());

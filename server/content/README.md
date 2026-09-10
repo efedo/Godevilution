@@ -3,9 +3,9 @@
 Each directory under `server/content` is a server-owned, validated gameplay
 content pack. The default `base` pack is loaded by the standalone server and is
 included in its content manifest and combined ruleset identity.
-It declares its identity and `devilution.diablo@1.485.0` schema in
+It declares its identity and `devilution.diablo@1.486.0` schema in
 `base/content-pack.json`; the Diablo module also accepts the immediately
-previous additive `1.484.0` schema so existing manifest-based packs remain
+previous additive `1.485.0` schema so existing manifest-based packs remain
 loadable. A composed manifest must still use one exact schema identity across
 all declared packs; use the previous schema only for a complete compatible
 manifest rather than mixing it with the current pack. The standalone host falls
@@ -740,8 +740,8 @@ activation and command admission, preventing an ambiguous selector from
 mutating quest state before spawn resolution.
 The `monster_spawn_policies.tsv` table now owns procedural admission roles.
 Current-schema packs must publish its complete ordered symbolic schema and
-declare `coverage_mode=Complete`; that requires a role for every active monster
-type during activation. Previous-schema and direct compatibility callers retain
+declare `coverage_mode=Complete`; `Complete` requires a role for every active monster type
+during activation. Previous-schema and direct compatibility callers retain
 the optional table and `Partial` default. The base pack declares `Complete` and marks Skeleton King, The
 Butcher, and Snotspill as `Quest`, Golem as `Summon`, and The Dark Lord as
 `Boss`, so ordinary scattering no longer depends on monster names or flags in
@@ -3279,7 +3279,7 @@ and no implicit table replacements. For example:
   "dependencies": ["devilution.base"],
   "schema": {
     "id": "devilution.diablo",
-    "version": "1.485.0"
+    "version": "1.486.0"
   },
   "dependencyConstraints": [
     {
@@ -3313,8 +3313,8 @@ three-component semantic-version constraints for declared dependencies. All
 declared schemas in one ordered manifest must match, every constraint must name
 a declared dependency, and the loaded dependency version must satisfy its
 range. The first-party server rejects a declared schema other than
-`devilution.diablo@1.485.0` or its immediately previous additive
-`1.484.0`. Current-schema packs must provide the complete production table
+`devilution.diablo@1.486.0` or its immediately previous additive
+`1.485.0`. Current-schema packs must provide the complete production table
 contract; this includes ordered symbolic spell identity columns, required
 native spell/projectile metadata in `spells.tsv`. Previous-schema packs retain
 their documented compatibility fallbacks; `spell_books.tsv` must additionally
@@ -3328,7 +3328,8 @@ schema with explicit generation metadata. `item_generation.tsv` must use its
 complete ordered eleven-column schema, including the explicit always-magic misc
 list.
 `native_missiles.tsv` must additionally use its complete ordered native-missile
-metadata schema.
+metadata schema, and `native_missile_sprites.tsv` must use its complete ordered
+native-missile-sprite schema.
 Manifests without compatibility metadata retain their legacy identity and
 remain loadable during migration.
 

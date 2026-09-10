@@ -1,9 +1,36 @@
+using Devilution.Data;
 using Xunit;
 
 namespace Devilution.Diablo.Tests;
 
 public sealed class AuthoritativeNativeMissileSpriteCatalogTests
 {
+    [Fact]
+    public void AcceptsCompleteProductionSchema()
+    {
+        var values = string.Join(',', Enumerable.Repeat("2", 16));
+        var table = TsvTable.Parse(
+            "native_missile_sprites.tsv",
+            "missile_id\twidth\talternate_width\tname\tframe_count\tflags\tframe_delay\tframe_length\n"
+                + $"Fireball\t96\t16\tfireba\t16\t\t{values}\t{values}\n");
+
+        AuthoritativeNativeMissileSpriteCatalog.ValidateExternalizedProduction(table);
+    }
+
+    [Fact]
+    public void RejectsPartialProductionSchema()
+    {
+        var table = TsvTable.Parse(
+            "native_missile_sprites.tsv",
+            "missile_id\twidth\tname\tframe_count\tframe_delay\tframe_length\n"
+                + "Fireball\t96\tfireba\t16\t0\t0\n");
+
+        var exception = Assert.Throws<InvalidDataException>(() =>
+            AuthoritativeNativeMissileSpriteCatalog.ValidateExternalizedProduction(table));
+
+        Assert.Contains("complete ordered schema", exception.Message, StringComparison.Ordinal);
+    }
+
     [Fact]
     public void LoadsDirectionalSpriteTiming()
     {

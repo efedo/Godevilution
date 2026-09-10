@@ -17,6 +17,16 @@ public sealed record AuthoritativeNativeMissileSpriteDefinition(
 public sealed class AuthoritativeNativeMissileSpriteCatalog
 {
     public const int NativeDirectionCount = 16;
+    private static readonly IReadOnlyList<string> ProductionColumns = [
+        "missile_id",
+        "width",
+        "alternate_width",
+        "name",
+        "frame_count",
+        "flags",
+        "frame_delay",
+        "frame_length",
+    ];
     private static readonly IReadOnlySet<string> RequiredNativeSpriteIds = new HashSet<string>(
         [
             "Acid",
@@ -108,6 +118,24 @@ public sealed class AuthoritativeNativeMissileSpriteCatalog
 
     public IReadOnlyList<AuthoritativeNativeMissileSpriteDefinition> Definitions => definitions;
 
+    /** Rejects partial native missile sprite metadata at the current production boundary. */
+    public static void ValidateExternalizedProduction(TsvTable table)
+    {
+        ArgumentNullException.ThrowIfNull(table);
+        if (!table.Columns.SequenceEqual(ProductionColumns, StringComparer.Ordinal))
+            throw new InvalidDataException(
+                $"Production native-missile sprite table '{table.SourcePath}' must use the complete ordered schema.");
+        foreach (var row in table.Rows) {
+            _ = row.Required("missile_id");
+            _ = row.Required("width");
+            _ = row.Required("alternate_width");
+            _ = row.Required("frame_count");
+            _ = row["flags"];
+            _ = row.Required("frame_delay");
+            _ = row.Required("frame_length");
+        }
+    }
+
     /**
      * Requires every base native `missile_sprites.tsv` identity. Variant packs
      * may add presentation identities through ordered overlays.
@@ -151,7 +179,7 @@ public sealed class AuthoritativeNativeMissileSpriteCatalog
             new AuthoritativeNativeMissileSpriteDefinition(
                 row.Required("missile_id"),
                 row.RequiredInt32("width"),
-                row.RequiredInt32("alternate_width"),
+                row.OptionalInt32("alternate_width"),
                 OptionalText(row, "name"),
                 row.RequiredInt32("frame_count"),
                 OptionalText(row, "flags"),
