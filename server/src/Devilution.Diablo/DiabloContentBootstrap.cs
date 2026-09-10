@@ -745,10 +745,7 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
         var setLevelObjects = content.TryGetTable(
             "set_level_objects.tsv",
             out var setLevelObjectsTable)
-            ? AuthoritativeSetLevelObjectCatalog.LoadTsv(
-                setLevelObjectsTable.SourcePath,
-                setLevelObjectsTable.ToCanonicalTsv(),
-                stableIds)
+            ? LoadSetLevelObjects(content, setLevelObjectsTable, stableIds)
             : null;
         var nativeDunObjects = content.TryGetTable(
             "native_dun_objects.tsv",
@@ -789,10 +786,7 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
         var setLevelMaps = content.TryGetTable(
             "set_level_maps.tsv",
             out var setLevelMapsTable)
-            ? AuthoritativeSetLevelMapCatalog.LoadTsv(
-                setLevelMapsTable.SourcePath,
-                setLevelMapsTable.ToCanonicalTsv(),
-                stableIds)
+            ? LoadSetLevelMaps(content, setLevelMapsTable, stableIds)
             : null;
         if (setLevelMaps is not null) {
             if (setLevelNames is null)
@@ -1547,6 +1541,32 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
             table.ToCanonicalTsv(),
             stableIds,
             content);
+    }
+
+    private static AuthoritativeSetLevelObjectCatalog LoadSetLevelObjects(
+        ComposedContent content,
+        TsvTable table,
+        StableContentIdCatalog stableIds)
+    {
+        if (content.Manifest.Schema == DiabloContentSchema.Current)
+            AuthoritativeSetLevelObjectCatalog.ValidateExternalizedProduction(table);
+        return AuthoritativeSetLevelObjectCatalog.LoadTsv(
+            table.SourcePath,
+            table.ToCanonicalTsv(),
+            stableIds);
+    }
+
+    private static AuthoritativeSetLevelMapCatalog LoadSetLevelMaps(
+        ComposedContent content,
+        TsvTable table,
+        StableContentIdCatalog stableIds)
+    {
+        if (content.Manifest.Schema == DiabloContentSchema.Current)
+            AuthoritativeSetLevelMapCatalog.ValidateExternalizedProduction(table);
+        return AuthoritativeSetLevelMapCatalog.LoadTsv(
+            table.SourcePath,
+            table.ToCanonicalTsv(),
+            stableIds);
     }
 
     private static IReadOnlyList<AuthoritativeWarpTarget> LoadWarps(

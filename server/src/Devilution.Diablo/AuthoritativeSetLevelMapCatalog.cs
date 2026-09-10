@@ -65,6 +65,32 @@ public sealed record AuthoritativeSetLevelMapDefinition(
 /** Validated native set-level map asset selection and entry points. */
 public sealed class AuthoritativeSetLevelMapCatalog
 {
+    private static readonly IReadOnlyList<string> ProductionColumns = [
+        "set_level_id",
+        "set_level_symbol",
+        "pre_map_asset",
+        "active_map_asset",
+        "til_asset",
+        "sol_asset",
+        "transparency_asset",
+        "dungeon_type",
+        "spawn_x",
+        "spawn_y",
+    ];
+
+    public static void ValidateExternalizedProduction(TsvTable table)
+    {
+        ArgumentNullException.ThrowIfNull(table);
+        if (!table.Columns.SequenceEqual(ProductionColumns, StringComparer.Ordinal))
+            throw new InvalidDataException(
+                $"Production set-level map table '{table.SourcePath}' must use the complete ordered schema.");
+        foreach (var row in table.Rows) {
+            _ = row.RequiredInt32("set_level_id");
+            _ = row.RequiredInt32("spawn_x");
+            _ = row.RequiredInt32("spawn_y");
+        }
+    }
+
     /** Reserved level-ID range for materialized native set-level variants. */
     public const uint RuntimeLevelIdBase = 0x8000_0000;
 

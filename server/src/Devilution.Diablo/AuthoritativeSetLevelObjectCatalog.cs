@@ -43,6 +43,39 @@ public sealed record AuthoritativeSetLevelObjectPlacement(
 /** Validated external placements for native set-level object footprints. */
 public sealed class AuthoritativeSetLevelObjectCatalog
 {
+    private static readonly IReadOnlyList<string> ProductionColumns = [
+        "placement_id",
+        "set_level_id",
+        "set_level_symbol",
+        "object_id",
+        "position_x",
+        "position_y",
+        "template_x",
+        "template_y",
+        "template_width",
+        "template_height",
+        "template_entity_id",
+    ];
+
+    public static void ValidateExternalizedProduction(TsvTable table)
+    {
+        ArgumentNullException.ThrowIfNull(table);
+        if (!table.Columns.SequenceEqual(ProductionColumns, StringComparer.Ordinal))
+            throw new InvalidDataException(
+                $"Production set-level object table '{table.SourcePath}' must use the complete ordered schema.");
+        foreach (var row in table.Rows) {
+            _ = row.RequiredUInt32("placement_id");
+            _ = row.RequiredInt32("set_level_id");
+            _ = row.RequiredUInt32("object_id");
+            _ = row.RequiredInt32("position_x");
+            _ = row.RequiredInt32("position_y");
+            _ = row.RequiredInt32("template_x");
+            _ = row.RequiredInt32("template_y");
+            _ = row.RequiredInt32("template_width");
+            _ = row.RequiredInt32("template_height");
+        }
+    }
+
     /** Reserved entity-ID range for materialized native set-level objects. */
     public const uint RuntimeObjectEntityIdBase = 0x6000_0000;
 
