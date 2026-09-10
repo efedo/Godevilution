@@ -17,11 +17,21 @@ public sealed class AuthoritativeCommandServer
     private readonly CommandAdmissionPolicy admissionPolicy;
     private readonly IAuthoritativeCommandExecutor executor;
     private ulong nextServerReceiptSequence = 1;
+    private ulong currentTick;
 
     public AuthoritativeCommandServer(IAuthoritativeCommandExecutor executor, CommandAdmissionPolicy? admissionPolicy = null)
     {
         this.executor = executor ?? throw new ArgumentNullException(nameof(executor));
         this.admissionPolicy = admissionPolicy ?? new CommandAdmissionPolicy();
+    }
+
+    /** Returns the greatest authoritative tick admitted or simulated so far. */
+    public ulong CurrentTick
+    {
+        get {
+            lock (synchronization)
+                return currentTick;
+        }
     }
 
     /** Processes a batch in wire order and returns one result per command. */
@@ -31,7 +41,7 @@ public sealed class AuthoritativeCommandServer
 
         var acknowledgement = new CommandAck();
         if (batch.Commands.Count == 0) {
-            acknowledgement.Results.Add(CreateMalformedResult(0, currentTick));
+            acknowledgement.Results.Add(CreateMalformedResult(0, Math.Max(CurrentTick, currentTick)));
             return acknowledgement;
         }
 
@@ -45,9 +55,11 @@ public sealed class AuthoritativeCommandServer
     {
         ArgumentNullException.ThrowIfNull(command);
         if (string.IsNullOrWhiteSpace(sessionId) || command.ClientSequence == 0)
-            return CreateMalformedResult(command.ClientSequence, currentTick);
+            return CreateMalformedResult(command.ClientSequence, Math.Max(CurrentTick, currentTick));
 
         lock (synchronization) {
+            this.currentTick = Math.Max(this.currentTick, currentTick);
+            currentTick = this.currentTick;
             if (executor is IAuthoritativeTickExecutor tickExecutor)
                 tickExecutor.AdvanceTo(currentTick);
             var completedCommands = GetCompletedCommands(sessionId);
@@ -74,8 +86,9 @@ public sealed class AuthoritativeCommandServer
     public void AdvanceTo(ulong currentTick)
     {
         lock (synchronization) {
+            this.currentTick = Math.Max(this.currentTick, currentTick);
             if (executor is IAuthoritativeTickExecutor tickExecutor)
-                tickExecutor.AdvanceTo(currentTick);
+                tickExecutor.AdvanceTo(this.currentTick);
         }
     }
 

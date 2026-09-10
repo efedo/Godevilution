@@ -2,6 +2,11 @@
 
 All notable changes to this fork are documented below.
 
+- Fixed the authoritative tick boundary across connected sessions: a future
+  command applied by one participant now advances the shared command server
+  boundary, so another participant's later snapshot poll cannot regress to the
+  wall-clock tick. Added a two-client TCP regression for this ordering.
+
 - Fixed authoritative TCP snapshot timing when a client schedules a command
   for a future deterministic tick: the host now advances and publishes at the
   applied command boundary, including subsequent snapshot polls. Added live

@@ -29,7 +29,10 @@ Authoritative TCP command responses now advance the host and snapshot provider
 to the maximum applied command tick before publishing acknowledgements,
 events, or snapshots. Later snapshot polls retain that boundary instead of
 regressing to the wall-clock tick, so future-started player actions remain
-valid across the protocol stream. Godot live coverage now includes two
+valid across the protocol stream. The command server now owns that boundary
+monotonically across all connected sessions, so a participant that polls after
+another participant's future-tick command receives the same applied snapshot
+instead of a stale per-connection tick. Godot live coverage now includes two
 participants observing the same Mana Shield resource/status projection and
 the activating session restoring it after reconnect.
 

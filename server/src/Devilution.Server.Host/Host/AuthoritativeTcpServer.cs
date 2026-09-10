@@ -295,7 +295,7 @@ public sealed class AuthoritativeTcpServer : IAsyncDisposable
     {
         using var timer = new PeriodicTimer(TimeSpan.FromMilliseconds(10));
         while (await timer.WaitForNextTickAsync(cancellationToken)) {
-            var tick = clock.CurrentTick;
+            var tick = Math.Max(clock.CurrentTick, commandServer.CurrentTick);
             if (tick == lastSimulationTick)
                 continue;
             commandServer.AdvanceTo(tick);
@@ -332,7 +332,8 @@ public sealed class AuthoritativeTcpServer : IAsyncDisposable
             await EnvelopeCodec.WriteAsync(stream, new Envelope { ServerHello = serverHello }, cancellationToken);
             var sessionId = session.Id;
             var entityId = session.EntityId;
-            var currentTick = clock.CurrentTick;
+            var currentTick = Math.Max(clock.CurrentTick, commandServer.CurrentTick);
+            commandServer.AdvanceTo(currentTick);
             SaveSession(session);
             await SendSnapshotIfAvailableAsync(stream, sessionId, entityId, currentTick, cancellationToken);
             while (!cancellationToken.IsCancellationRequested) {
@@ -342,7 +343,7 @@ public sealed class AuthoritativeTcpServer : IAsyncDisposable
 
                 if (envelope.PayloadCase == Envelope.PayloadOneofCase.CommandBatch) {
                     AuthoritativeCommandBatchValidator.Validate(envelope.CommandBatch);
-                    currentTick = clock.CurrentTick;
+                    currentTick = Math.Max(clock.CurrentTick, commandServer.CurrentTick);
                     var acknowledgement = commandServer.ProcessBatch(sessionId, envelope.CommandBatch, currentTick);
                     AuthoritativeCommandAckValidator.Validate(acknowledgement);
                     // A client may submit a command for the next deterministic
@@ -350,7 +351,7 @@ public sealed class AuthoritativeTcpServer : IAsyncDisposable
                     // newly started action is never serialized as future state.
                     if (acknowledgement.Results.Count != 0)
                         currentTick = Math.Max(
-                            currentTick,
+                            Math.Max(currentTick, commandServer.CurrentTick),
                             acknowledgement.Results.Max(result => result.AppliedTick));
                     commandServer.AdvanceTo(currentTick);
                     SaveSession(session);
@@ -358,7 +359,9 @@ public sealed class AuthoritativeTcpServer : IAsyncDisposable
                     await SendEventsIfAvailable(stream, sessionId, entityId, currentTick, cancellationToken);
                     await SendSnapshotIfAvailableAsync(stream, sessionId, entityId, currentTick, cancellationToken);
                 } else if (envelope.PayloadCase == Envelope.PayloadOneofCase.SnapshotRequest) {
-                    currentTick = Math.Max(currentTick, clock.CurrentTick);
+                    currentTick = Math.Max(
+                        currentTick,
+                        Math.Max(clock.CurrentTick, commandServer.CurrentTick));
                     commandServer.AdvanceTo(currentTick);
                     await SendEventsIfAvailable(stream, sessionId, entityId, currentTick, cancellationToken);
                     await SendSnapshotIfAvailableAsync(stream, sessionId, entityId, currentTick, cancellationToken);

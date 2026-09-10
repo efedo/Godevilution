@@ -150,6 +150,59 @@ public sealed class AuthoritativeTcpServerTests
     }
 
     [Fact]
+    public async Task FutureAppliedTickIsVisibleToOtherConnectedSession()
+    {
+        var executor = new RecordingExecutor();
+        var commandServer = new AuthoritativeCommandServer(executor);
+        var handshake = new ProtocolHandshake(new ProtocolServerIdentity(
+            "server-build",
+            "0.1.0",
+            "content-hash",
+            20));
+        await using var server = new AuthoritativeTcpServer(
+            commandServer,
+            handshake,
+            () => 10,
+            snapshotProvider: executor);
+        server.Start();
+
+        using var firstClient = new TcpClient();
+        using var secondClient = new TcpClient();
+        var cancellationToken = TestContext.Current.CancellationToken;
+        await firstClient.ConnectAsync(IPAddress.Loopback, server.Port, cancellationToken);
+        await secondClient.ConnectAsync(IPAddress.Loopback, server.Port, cancellationToken);
+        await using var firstStream = firstClient.GetStream();
+        await using var secondStream = secondClient.GetStream();
+        await SendHelloAsync(firstStream, cancellationToken);
+        await SendHelloAsync(secondStream, cancellationToken);
+        await ReadHandshakeSnapshotAsync(firstStream, 10, cancellationToken);
+        await ReadHandshakeSnapshotAsync(secondStream, 10, cancellationToken);
+
+        await EnvelopeCodec.WriteAsync(firstStream, new Envelope {
+            CommandBatch = new CommandBatch {
+                Commands = {
+                    new Command {
+                        ClientSequence = 1,
+                        RequestedTick = 15,
+                        AttackRequested = new AttackRequested { TargetEntityId = 1 },
+                    },
+                },
+            },
+        }, cancellationToken);
+        var acknowledgement = await EnvelopeCodec.ReadAsync(firstStream, cancellationToken);
+        Assert.Equal(15UL, acknowledgement!.CommandAck.Results.Single().AppliedTick);
+        var firstSnapshot = await EnvelopeCodec.ReadAsync(firstStream, cancellationToken);
+        Assert.Equal(15UL, firstSnapshot!.Snapshot.Tick);
+
+        await EnvelopeCodec.WriteAsync(secondStream, new Envelope {
+            SnapshotRequest = new Envelope.Types.SnapshotRequest(),
+        }, cancellationToken);
+        var secondSnapshot = await EnvelopeCodec.ReadAsync(secondStream, cancellationToken);
+        Assert.Equal(15UL, secondSnapshot!.Snapshot.Tick);
+        Assert.Equal([10UL, 10UL, 15UL, 15UL], executor.SnapshotTicks);
+    }
+
+    [Fact]
     public async Task OversizedCommandBatchIsRejectedBeforeExecution()
     {
         var executor = new RecordingExecutor();
@@ -2563,6 +2616,18 @@ public sealed class AuthoritativeTcpServerTests
             stream,
             new Envelope { ClientHello = hello },
             cancellationToken);
+    }
+
+    private static async Task ReadHandshakeSnapshotAsync(
+        Stream stream,
+        ulong expectedTick,
+        CancellationToken cancellationToken)
+    {
+        var hello = await EnvelopeCodec.ReadAsync(stream, cancellationToken);
+        Assert.Equal(Envelope.PayloadOneofCase.ServerHello, hello!.PayloadCase);
+        var snapshot = await EnvelopeCodec.ReadAsync(stream, cancellationToken);
+        Assert.Equal(Envelope.PayloadOneofCase.Snapshot, snapshot!.PayloadCase);
+        Assert.Equal(expectedTick, snapshot.Snapshot.Tick);
     }
 
     private static ContentManifest CreateReloadManifest(string version, string value)
