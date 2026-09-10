@@ -10,8 +10,8 @@ All notable changes to this fork are documented below.
 
 - Aligned player attacks with native Gargoyle wake-up behavior: an active
   special flag is consumed by the waking hit before damage or equipment
-  effects are applied, and other petrified monsters reject physical player
-  damage until Stone Curse ends.
+  effects are applied. Other petrified monsters use guaranteed-hit physical
+  admission while Stone Curse remains active, without enabling knockback.
 
 - Added native class-driven Cleave resolution for Monk staffs, Bard dual
   swords, and Barbarian axe/two-handed melee, including adjacent hit penalty

@@ -30,8 +30,9 @@ replay runner and managed processor share this ordering.
 
 Player hits now also honor the native Gargoyle wake-up boundary: an active
 Gargoyle special flag is consumed by the first physical hit without applying
-that hit's damage or equipment effects; other petrified monsters reject
-physical player damage until Stone Curse ends.
+that hit's damage or equipment effects. Other petrified monsters use the
+native guaranteed-hit admission boundary while Stone Curse remains active;
+knockback and movement remain suppressed.
 
 Class-driven Cleave now resolves the native adjacent side targets for Monk
 staffs, Bard dual swords, and Barbarian axe/two-handed melee, applying the

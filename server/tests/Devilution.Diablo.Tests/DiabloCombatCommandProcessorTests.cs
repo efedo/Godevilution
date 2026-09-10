@@ -2240,6 +2240,7 @@ public sealed class DiabloCombatCommandProcessorTests
             8,
             5,
             5000,
+            armorClass: 100,
             petrified: true);
         var world = new DiabloWorldState(combatTargets: [target]);
         var bow = AuthoritativeItemState.Empty with {
@@ -7870,6 +7871,7 @@ public sealed class DiabloCombatCommandProcessorTests
             2,
             0,
             20,
+            armorClass: 100,
             moving: true,
             futurePositionX: 1,
             futurePositionY: 0,
