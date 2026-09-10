@@ -592,10 +592,7 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
         if (world is not null)
             stableIds.ValidateReferences("level", world.ContainsLevel);
         var objects = content.TryGetTable("objects.tsv", out var objectsTable)
-            ? AuthoritativeWorldObjectCatalog.LoadTsv(
-                objectsTable.SourcePath,
-                objectsTable.ToCanonicalTsv(),
-                stableIds)
+            ? LoadWorldObjects(content, objectsTable, stableIds)
             : null;
         var objectTemplates = content.TryGetTable("objects.tsv", out objectsTable)
             ? AuthoritativeWorldObjectCatalog.LoadTemplates(
@@ -1379,6 +1376,19 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
         if (content.Manifest.Schema == DiabloContentSchema.Current)
             AuthoritativeItemCombinationCatalog.ValidateExternalizedProduction(table);
         return AuthoritativeItemCombinationCatalog.LoadTsv(
+            table.SourcePath,
+            table.ToCanonicalTsv(),
+            stableIds);
+    }
+
+    private static IReadOnlyList<AuthoritativeWorldObject> LoadWorldObjects(
+        ComposedContent content,
+        TsvTable table,
+        StableContentIdCatalog stableIds)
+    {
+        if (content.Manifest.Schema == DiabloContentSchema.Current)
+            AuthoritativeWorldObjectCatalog.ValidateExternalizedProduction(table);
+        return AuthoritativeWorldObjectCatalog.LoadTsv(
             table.SourcePath,
             table.ToCanonicalTsv(),
             stableIds);

@@ -539,6 +539,72 @@ public sealed class AuthoritativeWorldObject
 /** External object placement and identity definitions. */
 public static class AuthoritativeWorldObjectCatalog
 {
+    private static readonly IReadOnlyList<string> ProductionColumns = [
+        "entity_id",
+        "object_id",
+        "object_symbol",
+        "level_id",
+        "level_symbol",
+        "position_x",
+        "position_y",
+        "activated",
+        "quest_id",
+        "quest_symbol",
+        "effect_kind",
+        "effect_amount",
+        "effect_item_symbol",
+        "missile_passable",
+        "breakable",
+        "destroyed",
+        "trap_armed",
+        "template_only",
+        "quest_sequence_follow_up_kind",
+        "quest_sequence_follow_up_amount",
+        "quest_sequence_follow_up_monster_symbol",
+        "quest_sequence_follow_up_offset_x",
+        "quest_sequence_follow_up_offset_y",
+        "quest_sequence_follow_up_world_mutation_id",
+        "effect_spell_symbol",
+        "projectile_target_offset_x",
+        "projectile_target_offset_y",
+        "projectile_source",
+        "quest_transition_kind",
+        "quest_transition_amount",
+        "quest_transition_required_variable1",
+        "quest_transition_required_variable2",
+        "activate_on_occupancy",
+        "required_activated_linked_objects",
+        "native_object_id",
+        "reward_kind",
+        "reward_id",
+        "reward_item_level",
+        "reward_offset_x",
+        "reward_offset_y",
+        "dialogue_message_id",
+    ];
+
+    /** Rejects legacy object-table headers at the current production boundary. */
+    public static void ValidateExternalizedProduction(TsvTable table)
+    {
+        ArgumentNullException.ThrowIfNull(table);
+        if (!table.Columns.SequenceEqual(ProductionColumns, StringComparer.Ordinal))
+            throw new InvalidDataException(
+                $"Production object table '{table.SourcePath}' must use the complete ordered schema.");
+        foreach (var row in table.Rows) {
+            _ = row.RequiredUInt32("entity_id");
+            _ = row.RequiredUInt32("object_id");
+            var templateOnly = row.RequiredBoolean("template_only");
+            if (!templateOnly) {
+                _ = row.RequiredInt32("level_id");
+                _ = row.RequiredInt32("position_x");
+                _ = row.RequiredInt32("position_y");
+            }
+            _ = row.Required("effect_kind");
+            _ = row.Required("quest_transition_kind");
+            _ = row.Required("reward_kind");
+        }
+    }
+
     /** Validates authored object levels and positions against world bounds. */
     public static void ValidateWorld(
         IEnumerable<AuthoritativeWorldObject> objects,
