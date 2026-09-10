@@ -74,6 +74,39 @@ public sealed record AuthoritativeWorldRules(
         }.Validate();
     }
 
+    /**
+     * Rejects compatibility fallbacks at the production content boundary.
+     * Direct callers may continue to load older partial rows.
+     */
+    public static void ValidateExternalizedProduction(TsvTable table)
+    {
+        ArgumentNullException.ThrowIfNull(table);
+        if (table.Rows.Count != 1)
+            throw new InvalidDataException(
+                $"Production world rules table '{table.SourcePath}' must contain exactly one row.");
+
+        var requiredColumns = new[] {
+            "town_level_id",
+            "adria_store_id",
+            "storyteller_store_id",
+            "town_portal_destination_position_x",
+            "town_portal_destination_position_y",
+            "town_portal_destination_slot_count",
+            "town_portal_destination_slot_spacing",
+        };
+        var missingColumns = requiredColumns
+            .Where(column => !table.Columns.Contains(column, StringComparer.Ordinal))
+            .ToArray();
+        if (missingColumns.Length != 0)
+            throw new InvalidDataException(
+                $"Production world rules table '{table.SourcePath}' is missing required columns: "
+                + string.Join(", ", missingColumns));
+
+        var row = table.Rows[0];
+        foreach (var column in requiredColumns)
+            _ = row.Required(column);
+    }
+
     /** Ensures the configured town identity exists in the activated geometry. */
     public void ValidateWorld(AuthoritativeWorld world)
     {

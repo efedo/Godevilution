@@ -78,6 +78,33 @@ public sealed class AuthoritativeWorldRulesTests
     }
 
     [Fact]
+    public void ProductionValidationRequiresCompleteExternalWorldRules()
+    {
+        var table = TsvTable.Parse(
+            "world_rules.tsv",
+            "town_level_id\tadria_store_id\tstoryteller_store_id\t"
+                + "town_portal_destination_position_x\ttown_portal_destination_position_y\t"
+                + "town_portal_destination_slot_count\ttown_portal_destination_slot_spacing\n"
+                + "7\t73\t74\t60\t41\t2\t4\n");
+
+        AuthoritativeWorldRules.ValidateExternalizedProduction(table);
+    }
+
+    [Fact]
+    public void ProductionValidationRejectsCompatibilityDefaults()
+    {
+        var table = TsvTable.Parse(
+            "world_rules.tsv",
+            "town_level_id\tadria_store_id\n7\t73\n");
+
+        var exception = Assert.Throws<InvalidDataException>(() =>
+            AuthoritativeWorldRules.ValidateExternalizedProduction(table));
+
+        Assert.Contains("missing required columns", exception.Message, StringComparison.Ordinal);
+        Assert.Contains("town_portal_destination_position_x", exception.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void ValidatesTownLevelAgainstWorldGeometry()
     {
         var rules = new AuthoritativeWorldRules(7);

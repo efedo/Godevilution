@@ -344,6 +344,8 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
             : null;
         itemCombinations?.ValidateItems(itemCatalog);
         var worldRulesTable = GetRequiredExternalTable(content, "world_rules.tsv");
+        if (content.Manifest.Schema == DiabloContentSchema.Current)
+            AuthoritativeWorldRules.ValidateExternalizedProduction(worldRulesTable);
         var worldRules = AuthoritativeWorldRules.LoadTsv(
             worldRulesTable.SourcePath,
             worldRulesTable.ToCanonicalTsv(),

@@ -2,6 +2,12 @@
 
 Status date: 2026-09-10
 
+Production schema `1.463.0` world-rule activation now requires external
+town/service identities and complete Town Portal destination geometry. Direct
+compatibility loaders still accept older partial rows, and schema `1.462.0`
+packs retain that migration fallback; current-schema packs reject those rows
+before publishing a ruleset.
+
 The content guide now documents the production activation contract separately
 from historical compatibility schemas. Normalized identity, economy, player,
 item, spell, world, and combat catalogs are fail-closed requirements; legacy
@@ -66,7 +72,7 @@ identity, compatibility-alias, and sprite namespaces plus monster type,
 monster-missile, and monster definition catalogs, keeping authoritative combat
 identity data out of the bootstrap fallback path.
 
-The active content schema is now `1.462.0` (with `1.461.0` retained as
+The active content schema is now `1.463.0` (with `1.462.0` retained as
 the previous additive contract). Optional `procedural_quest_piece_origins.tsv`
 rows publish deterministic ordinary-level quest geometry origins. Their
 identities are intentionally separate from the fixed native set-level origin

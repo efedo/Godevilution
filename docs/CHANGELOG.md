@@ -2,6 +2,13 @@
 
 All notable changes to this fork are documented below.
 
+- Advanced the active content schema to `1.463.0`, retaining `1.462.0` as
+  the previous additive contract. Current-schema production activation now
+  requires `world_rules.tsv` to carry the complete external town/service
+  identities and Town Portal destination geometry. Older schema packs and
+  direct compatibility callers retain support for partial world-rule rows,
+  but new packs cannot reintroduce embedded defaults at the server boundary.
+
 - Clarified the production content contract: normalized identity, economy,
   player, item, spell, world, and combat catalogs are required at activation,
   while native item-table namespaces and legacy prefix/suffix sources remain

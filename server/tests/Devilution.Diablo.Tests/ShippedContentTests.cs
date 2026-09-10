@@ -18,7 +18,7 @@ public sealed class ShippedContentTests
         Assert.Equal("devilution.base", pack.Id);
         Assert.Equal("0.1.0", pack.Version);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.462.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.463.0"),
             pack.Schema);
         Assert.Empty(pack.Overlays);
         var nativeDunMonsterTable = pack.Tables.Single(
@@ -1204,7 +1204,7 @@ public sealed class ShippedContentTests
             currentPack.Tables,
             currentPack.Dependencies,
             currentPack.Overlays,
-            new ContentSchemaIdentity("devilution.diablo", "1.461.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.462.0"),
             currentPack.DependencyConstraints,
             currentPack.Assets);
         var content = ComposedContent.Compose(new ContentManifest(
@@ -1281,6 +1281,72 @@ public sealed class ShippedContentTests
             $"requires external '{missingTable}' content",
             exception.Message,
             StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void ContentBootstrapRejectsWorldRulesCompatibilityDefaults()
+    {
+        var contentRoot = Path.Combine(FindRepositoryRoot(), "server", "content", "base");
+        var basePack = ContentPackLoader.LoadManifestDirectory(contentRoot);
+        var worldRules = basePack.Tables.Single(table => table.SourcePath == "world_rules.tsv");
+        var incompleteWorldRules = TsvTable.Parse(
+            "world_rules.tsv",
+            "town_level_id\tadria_store_id\tstoryteller_store_id\n0\t10\t11\n");
+        var incompletePack = new ContentPack(
+            basePack.Id,
+            basePack.Version,
+            basePack.Tables
+                .Select(table => table.SourcePath == worldRules.SourcePath
+                    ? incompleteWorldRules
+                    : table)
+                .ToArray(),
+            basePack.Dependencies,
+            basePack.Overlays,
+            basePack.Schema,
+            basePack.DependencyConstraints,
+            basePack.Assets);
+
+        var exception = Assert.Throws<InvalidDataException>(() =>
+            DiabloModule.Instance.ContentBootstrap.Activate(
+                ComposedContent.Compose(new ContentManifest(
+                    "missing-world-rules-geometry",
+                    "1",
+                    [incompletePack]))));
+
+        Assert.Contains("Production world rules table", exception.Message, StringComparison.Ordinal);
+        Assert.Contains("town_portal_destination_position_x", exception.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void PreviousSchemaRetainsPartialWorldRulesCompatibility()
+    {
+        var contentRoot = Path.Combine(FindRepositoryRoot(), "server", "content", "base");
+        var basePack = ContentPackLoader.LoadManifestDirectory(contentRoot);
+        var worldRules = basePack.Tables.Single(table => table.SourcePath == "world_rules.tsv");
+        var partialWorldRules = TsvTable.Parse(
+            worldRules.SourcePath,
+            "town_level_id\tadria_store_id\tstoryteller_store_id\n0\t10\t11\n");
+        var previousPack = new ContentPack(
+            basePack.Id,
+            basePack.Version,
+            basePack.Tables
+                .Select(table => table.SourcePath == worldRules.SourcePath
+                    ? partialWorldRules
+                    : table)
+                .ToArray(),
+            basePack.Dependencies,
+            basePack.Overlays,
+            new ContentSchemaIdentity("devilution.diablo", "1.462.0"),
+            basePack.DependencyConstraints,
+            basePack.Assets);
+
+        var activation = DiabloModule.Instance.ContentBootstrap.Activate(
+            ComposedContent.Compose(new ContentManifest(
+                "previous-world-rules-contract",
+                "1",
+                [previousPack])));
+
+        Assert.False(activation.WorldRules.HasTownPortalDestinationGeometry);
     }
 
     [Theory]
@@ -3078,7 +3144,10 @@ public sealed class ShippedContentTests
         var worldRules = basePack.Tables.Single(table => table.SourcePath == "world_rules.tsv");
         var invalidWorldRules = TsvTable.Parse(
             worldRules.SourcePath,
-            "town_level_id\n999\n");
+            worldRules.ToCanonicalTsv().Replace(
+                "0\ttown\t10\tadria\t11\tstoryteller",
+                "999\t\t10\tadria\t11\tstoryteller",
+                StringComparison.Ordinal));
         var incompletePack = new ContentPack(
             basePack.Id,
             basePack.Version,
@@ -3849,7 +3918,7 @@ public sealed class ShippedContentTests
 
         Assert.Equal("devilution.hellfire", hellfirePack.Id);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.462.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.463.0"),
             hellfirePack.Schema);
         Assert.Equal(DiabloGameVariant.Hellfire, combat.GameVariant);
         Assert.Equal(2, combat.UniqueExperienceMultiplier);
