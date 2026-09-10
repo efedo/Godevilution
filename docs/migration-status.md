@@ -36,6 +36,13 @@ The class-physical replay matrix is current for armor, armor-piercing, to-hit,
 damage-modifier, Barbarian, and Hellfire variants; both runners agree at each
 refreshed checkpoint.
 
+Hellfire ranged Peril profiles now also agree on the class-modified projectile
+ payload, Peril self-damage, multiplier, and deterministic snapshot hash.
+
+The remaining ranged-class replay profiles now agree across both runners for
+Hell difficulty, target armor admission, shifted Hellfire armor, and
+Multiple Arrows hit-seed payloads.
+
 Player hits now also honor the native Gargoyle wake-up boundary: an active
 Gargoyle special flag is consumed by the first physical hit without applying
 that hit's damage or equipment effects. Other petrified monsters use the

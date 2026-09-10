@@ -1018,8 +1018,8 @@ TEST(ReplayFixture, ExecutesRangedElementalArrowAttackAgainstCSharpCheckpoint)
 	ReplayFixtureExecutionResult hellfireClassPerilResult;
 	ASSERT_TRUE(ExecuteReplayFixture(hellfireClassPerilFixture, hellfireClassPerilState, hellfireClassPerilResult, error)) << error;
 	ASSERT_EQ(hellfireClassPerilState.projectiles.size(), 1U);
-	EXPECT_EQ(hellfireClassPerilState.projectiles[0].damage, 4);
-	EXPECT_EQ(hellfireClassPerilState.projectiles[0].damageQ6, 256);
+	EXPECT_EQ(hellfireClassPerilState.projectiles[0].damage, 12);
+	EXPECT_EQ(hellfireClassPerilState.projectiles[0].damageQ6, 768);
 	EXPECT_EQ(hellfireClassPerilState.projectiles[0].perilSelfDamageQ6, 256);
 	EXPECT_EQ(hellfireClassPerilState.randomState, 22695478U);
 	EXPECT_EQ(hellfireClassPerilResult.transitions[0].stateSha256, hellfireClassPerilFixture.checkpoints.back().stateSha256);
@@ -1049,7 +1049,7 @@ TEST(ReplayFixture, ExecutesRangedElementalArrowAttackAgainstCSharpCheckpoint)
 	ReplayFixtureExecutionResult hellfireClassPerilGetHitResult;
 	ASSERT_TRUE(ExecuteReplayFixture(hellfireClassPerilGetHitFixture, hellfireClassPerilGetHitState, hellfireClassPerilGetHitResult, error)) << error;
 	ASSERT_EQ(hellfireClassPerilGetHitState.projectiles.size(), 1U);
-	EXPECT_EQ(hellfireClassPerilGetHitState.projectiles[0].damageQ6, 256);
+	EXPECT_EQ(hellfireClassPerilGetHitState.projectiles[0].damageQ6, 768);
 	EXPECT_EQ(hellfireClassPerilGetHitState.projectiles[0].perilSelfDamageQ6, 448);
 	EXPECT_EQ(hellfireClassPerilGetHitState.randomState, 22695478U);
 	EXPECT_EQ(hellfireClassPerilGetHitResult.transitions[0].stateSha256, hellfireClassPerilGetHitFixture.checkpoints.back().stateSha256);
@@ -1080,8 +1080,8 @@ TEST(ReplayFixture, ExecutesRangedElementalArrowAttackAgainstCSharpCheckpoint)
 	ASSERT_TRUE(ExecuteReplayFixture(rangedHellFixture, rangedHellState, rangedHellResult, error)) << error;
 	ASSERT_EQ(rangedHellState.projectiles.size(), 1U);
 	EXPECT_TRUE(rangedHellState.projectiles[0].attackHit);
-	EXPECT_EQ(rangedHellState.projectiles[0].damage, 1);
-	EXPECT_EQ(rangedHellState.projectiles[0].damageQ6, 64);
+	EXPECT_EQ(rangedHellState.projectiles[0].damage, 9);
+	EXPECT_EQ(rangedHellState.projectiles[0].damageQ6, 576);
 	EXPECT_EQ(rangedHellState.combatTargetMaxHitPoints, 600);
 	EXPECT_EQ(rangedHellState.randomState, 22695478U);
 	EXPECT_EQ(rangedHellResult.transitions[0].stateSha256, rangedHellFixture.checkpoints.back().stateSha256);
@@ -1204,8 +1204,8 @@ TEST(ReplayFixture, ExecutesRangedElementalArrowAttackAgainstCSharpCheckpoint)
 	ReplayFixtureExecutionResult rangedClassArmorResult;
 	ASSERT_TRUE(ExecuteReplayFixture(rangedClassArmorFixture, rangedClassArmorState, rangedClassArmorResult, error)) << error;
 	ASSERT_EQ(rangedClassArmorState.projectiles.size(), 1U);
-	EXPECT_EQ(rangedClassArmorState.projectiles[0].damage, 4);
-	EXPECT_EQ(rangedClassArmorState.projectiles[0].damageQ6, 256);
+	EXPECT_EQ(rangedClassArmorState.projectiles[0].damage, 6);
+	EXPECT_EQ(rangedClassArmorState.projectiles[0].damageQ6, 384);
 	EXPECT_EQ(rangedClassArmorState.randomState, 22695478U);
 	EXPECT_EQ(rangedClassArmorResult.transitions[0].stateSha256, rangedClassArmorFixture.checkpoints.back().stateSha256);
 
@@ -1234,8 +1234,8 @@ TEST(ReplayFixture, ExecutesRangedElementalArrowAttackAgainstCSharpCheckpoint)
 	ReplayFixtureExecutionResult rangedClassHellfireArmorResult;
 	ASSERT_TRUE(ExecuteReplayFixture(rangedClassHellfireArmorFixture, rangedClassHellfireArmorState, rangedClassHellfireArmorResult, error)) << error;
 	ASSERT_EQ(rangedClassHellfireArmorState.projectiles.size(), 1U);
-	EXPECT_EQ(rangedClassHellfireArmorState.projectiles[0].damage, 2);
-	EXPECT_EQ(rangedClassHellfireArmorState.projectiles[0].damageQ6, 128);
+	EXPECT_EQ(rangedClassHellfireArmorState.projectiles[0].damage, 6);
+	EXPECT_EQ(rangedClassHellfireArmorState.projectiles[0].damageQ6, 384);
 	EXPECT_EQ(rangedClassHellfireArmorState.randomState, 22695478U);
 	EXPECT_EQ(rangedClassHellfireArmorResult.transitions[0].stateSha256, rangedClassHellfireArmorFixture.checkpoints.back().stateSha256);
 
@@ -1297,8 +1297,8 @@ TEST(ReplayFixture, ExecutesRangedElementalArrowAttackAgainstCSharpCheckpoint)
 	EXPECT_FALSE(rangedClassMultipleArrowsState.projectiles[0].attackHit);
 	EXPECT_EQ(rangedClassMultipleArrowsState.projectiles[0].damageQ6, 0);
 	EXPECT_TRUE(rangedClassMultipleArrowsState.projectiles[1].attackHit);
-	EXPECT_EQ(rangedClassMultipleArrowsState.projectiles[1].damage, 1);
-	EXPECT_EQ(rangedClassMultipleArrowsState.projectiles[1].damageQ6, 64);
+	EXPECT_EQ(rangedClassMultipleArrowsState.projectiles[1].damage, 6);
+	EXPECT_EQ(rangedClassMultipleArrowsState.projectiles[1].damageQ6, 384);
 	EXPECT_FALSE(rangedClassMultipleArrowsState.projectiles[2].attackHit);
 	EXPECT_EQ(rangedClassMultipleArrowsState.projectiles[2].damageQ6, 0);
 	EXPECT_EQ(rangedClassMultipleArrowsState.randomState, 2867233980U);

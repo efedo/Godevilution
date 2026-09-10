@@ -393,8 +393,8 @@ public sealed class BaseContentReplayTests
         Assert.False(arrows[0].AttackHit);
         Assert.Equal(0, arrows[0].DamageQ6);
         Assert.True(arrows[1].AttackHit);
-        Assert.Equal(1, arrows[1].Damage);
-        Assert.Equal(64, arrows[1].DamageQ6);
+        Assert.Equal(6, arrows[1].Damage);
+        Assert.Equal(384, arrows[1].DamageQ6);
         Assert.False(arrows[2].AttackHit);
         Assert.Equal(0, arrows[2].DamageQ6);
         Assert.Equal(2867233980U, result.FinalSnapshot.RandomState);
@@ -789,8 +789,8 @@ public sealed class BaseContentReplayTests
         Assert.Equal(CommandStatus.Accepted, Assert.Single(result.Results).Status);
         var arrow = Assert.Single(result.FinalSnapshot.Projectiles);
         Assert.True(arrow.AttackHit);
-        Assert.Equal(1, arrow.Damage);
-        Assert.Equal(64, arrow.DamageQ6);
+        Assert.Equal(9, arrow.Damage);
+        Assert.Equal(576, arrow.DamageQ6);
         Assert.Equal(600, Assert.Single(result.FinalSnapshot.Monsters).MaxHitPoints);
         Assert.Equal(22695478U, result.FinalSnapshot.RandomState);
         Assert.Equal(
@@ -853,8 +853,8 @@ public sealed class BaseContentReplayTests
 
         Assert.Equal(CommandStatus.Accepted, Assert.Single(result.Results).Status);
         var arrow = Assert.Single(result.FinalSnapshot.Projectiles);
-        Assert.Equal(4, arrow.Damage);
-        Assert.Equal(256, arrow.DamageQ6);
+        Assert.Equal(6, arrow.Damage);
+        Assert.Equal(384, arrow.DamageQ6);
         Assert.Equal(22695478U, result.FinalSnapshot.RandomState);
         Assert.Equal(
             fixture.Checkpoints.Select(checkpoint => checkpoint.StateSha256),
@@ -926,8 +926,8 @@ public sealed class BaseContentReplayTests
 
         Assert.Equal(CommandStatus.Accepted, Assert.Single(result.Results).Status);
         var arrow = Assert.Single(result.FinalSnapshot.Projectiles);
-        Assert.Equal(2, arrow.Damage);
-        Assert.Equal(128, arrow.DamageQ6);
+        Assert.Equal(6, arrow.Damage);
+        Assert.Equal(384, arrow.DamageQ6);
         Assert.Equal(22695478U, result.FinalSnapshot.RandomState);
         Assert.Equal(
             fixture.Checkpoints.Select(checkpoint => checkpoint.StateSha256),
@@ -1291,8 +1291,8 @@ public sealed class BaseContentReplayTests
 
         Assert.Equal(CommandStatus.Accepted, Assert.Single(result.Results).Status);
         var arrow = Assert.Single(result.FinalSnapshot.Projectiles);
-        Assert.Equal(4, arrow.Damage);
-        Assert.Equal(256, arrow.DamageQ6);
+        Assert.Equal(12, arrow.Damage);
+        Assert.Equal(768, arrow.DamageQ6);
         Assert.Equal(expectedPerilSelfDamageQ6, arrow.PerilSelfDamageQ6);
         Assert.Equal(22695478U, result.FinalSnapshot.RandomState);
         Assert.Equal(
