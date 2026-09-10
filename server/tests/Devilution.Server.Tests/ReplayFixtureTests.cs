@@ -2551,8 +2551,10 @@ public sealed class ReplayFixtureTests
             nativeAi: fixture.InitialState.CombatTargetNativeAi,
             initialStandAnimationFrame: fixture.InitialState.CombatTargetFallenStandAnimationFrame,
             initialStandAnimationTick: fixture.InitialState.CombatTargetFallenStandAnimationTick);
+        var catalog = new StoreCatalog();
+        catalog.AddStore(1, []);
         var executor = new StoreSimulationExecutor(
-            new StoreCatalog(),
+            catalog,
             fixture.InitialState.Gold,
             fixture.InitialState.Experience,
             fixture.InitialState.Life,
@@ -4308,6 +4310,80 @@ public sealed class ReplayFixtureTests
         var status = Assert.Single(player.StatusEffects);
         Assert.Equal(53U, status.EffectId);
         Assert.Equal(uint.MaxValue, status.RemainingTicks);
+        Assert.Equal(
+            fixture.Checkpoints.Select(checkpoint => checkpoint.StateSha256),
+            result.Checkpoints.Select(checkpoint => checkpoint.ActualStateSha256));
+    }
+
+    [Fact]
+    public void GameplayMonsterArrowFlashProtectionMatchesNativeLifecycle()
+    {
+        var fixture = LoadReplayFixture("gameplay-monster-arrow-flash-protected.json");
+        var initial = fixture.InitialState;
+        var target = new AuthoritativeCombatTarget(
+            initial.CombatTargetEntityId,
+            initial.CombatTargetPositionX,
+            initial.CombatTargetPositionY,
+            initial.CombatTargetHitPoints,
+            maxHitPoints: initial.CombatTargetMaxHitPoints,
+            levelId: initial.CombatTargetLevelId,
+            monsterLevel: initial.CombatTargetMonsterLevel);
+        var projectiles = fixture.InitialProjectiles.Select(definition =>
+            new AuthoritativeProjectile(
+                definition.EntityId,
+                definition.SourceEntityId,
+                definition.TargetEntityId,
+                definition.SpellId,
+                definition.LevelId,
+                definition.PositionX,
+                definition.PositionY,
+                definition.TargetX,
+                definition.TargetY,
+                definition.Damage,
+                (AuthoritativeDamageType)definition.DamageType,
+                definition.AreaRadius,
+                definition.RemainingTicks,
+                allowZeroSpellId: definition.SpellId == 0) {
+                Behavior = (AuthoritativeProjectileBehavior)definition.Behavior,
+                Phase = (AuthoritativeProjectilePhase)definition.Phase,
+                Speed = definition.Speed,
+                ImpactLifetime = definition.ImpactLifetime,
+                DamageMinimum = definition.DamageMinimum,
+                DamageMaximum = definition.DamageMaximum,
+            }).ToArray();
+        var catalog = new StoreCatalog();
+        catalog.AddStore(1, []);
+        var executor = new StoreSimulationExecutor(
+            catalog,
+            initial.Gold,
+            initial.Experience,
+            initial.Life,
+            initial.Mana,
+            startingLifeMaximum: initial.LifeMaximum,
+            startingManaMaximum: initial.ManaMaximum,
+            startingPositionX: initial.PositionX,
+            startingPositionY: initial.PositionY,
+            startingLevelId: initial.LevelId,
+            startingCombatTargets: [target],
+            startingSpells: LoadBaseSpells(fixture),
+            startingProjectiles: projectiles,
+            startingRandomSeed: checked((uint)fixture.RngSeed));
+
+        var result = ReplayFixtureExecutor.Execute(
+            fixture,
+            executor,
+            new AuthoritativeCommandServer(executor));
+        var player = Assert.Single(result.FinalSnapshot.Players);
+
+        Assert.Equal(CommandStatus.Accepted, Assert.Single(result.Results).Status);
+        Assert.Equal(initial.Life, player.Life);
+        var flash = Assert.Single(
+            result.FinalSnapshot.Projectiles,
+            projectile => projectile.Behavior == (int)AuthoritativeProjectileBehavior.FlashBottom);
+        Assert.Equal(10U, flash.RemainingTicks);
+        Assert.DoesNotContain(
+            result.FinalSnapshot.Projectiles,
+            projectile => projectile.Behavior == (int)AuthoritativeProjectileBehavior.MonsterArrow);
         Assert.Equal(
             fixture.Checkpoints.Select(checkpoint => checkpoint.StateSha256),
             result.Checkpoints.Select(checkpoint => checkpoint.ActualStateSha256));

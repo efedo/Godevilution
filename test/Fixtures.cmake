@@ -159,6 +159,7 @@ set(devilutionx_fixtures
   replay/gameplay-mega-inferno-multiplayer-target.json
   replay/gameplay-monster-arrow-autonomous.json
   replay/gameplay-monster-arrow-etherealized.json
+  replay/gameplay-monster-arrow-flash-protected.json
   replay/gameplay-monster-arrow-multiplayer-target.json
   replay/gameplay-monster-arrow-resolution.json
   replay/gameplay-monster-arrow-skeleton-ranged.json

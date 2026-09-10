@@ -343,7 +343,7 @@ The eight Blood Star fixtures likewise load the Succubus and Lazarus Succubus
 content pack.
 The nineteen Monster Magic fixtures likewise load their `OrangeFlare` mappings
 from the hash-checked `test/content/replay/monster-magic` content pack.
-The twelve Monster Arrow fixtures load their GoatRanged and SkeletonRanged
+The thirteen Monster Arrow fixtures load their GoatRanged and SkeletonRanged
 `Arrow` mappings from the hash-checked `monster-arrow` and
 `monster-arrow-admission` content packs.
 The nine Hork Spawn fixtures load their `HorkDemon` mapping from the
@@ -1172,6 +1172,9 @@ Notable shared fixtures include:
   protection boundary: an Etherealized player does not consume the arrow,
   which continues through the occupied tile and expires on its normal travel
   lifetime across both runners;
+- `gameplay-monster-arrow-flash-protected.json` for active Flash-layer
+  invulnerability at impact, preserving the arrow's travel/expiry state while
+  the player-owned Flash layer remains active across both runners;
 - `gameplay-monster-arrow-autonomous.json` for validated GoatRanged admission,
   stable nearest-player target selection, travel, impact damage, and lifecycle
   parity;

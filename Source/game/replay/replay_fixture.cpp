@@ -4348,11 +4348,20 @@ void AdvanceReplayMonsterArrowsOneTick(ReplayFixtureExecutionState &state)
 				hitLife = &state.secondaryPlayerLife;
 			}
 			if (hitLife != nullptr) {
+				const uint32_t playerEntityId = state.entityId == 0 ? 1U : state.entityId;
+				const bool protectedByFlash = std::any_of(
+					state.projectiles.begin(),
+					state.projectiles.end(),
+					[&](const auto &candidate) {
+						return (candidate.behavior == 6 || candidate.behavior == 7)
+						    && candidate.sourceEntityId == playerEntityId
+						    && candidate.remainingTicks < 19;
+					});
 				const bool protectedByEtherealize = std::any_of(
 					state.statusEffects.begin(),
 					state.statusEffects.end(),
 					[](const auto &effect) { return effect.behavior == EtherealizeStatusBehavior; });
-				if (!protectedByEtherealize) {
+				if (!protectedByFlash && !protectedByEtherealize) {
 					const bool secondaryHit = hitLife == &state.secondaryPlayerLife;
 					int32_t damage = projectile.damage;
 					if (damage > 0 && projectile.damageMinimum > 0

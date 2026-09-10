@@ -1,0 +1,85 @@
+{
+  "format_version": 1,
+  "fixture_id": "gameplay/monster-arrow-flash-protected",
+  "protocol_schema_version": "0.1.0",
+  "content_manifest": {
+    "id": "devilution.base",
+    "version": "0.1.0",
+    "sha256": "ee16097e8393e3807fa57356227992eed3265f5da8f182806cbd368c7c28658d"
+  },
+  "tick_rate_hz": 20,
+  "rng_seed": 1,
+  "game_variant": "Diablo",
+  "game_mode": "SinglePlayer",
+  "initial_state": {
+    "player": "A",
+    "gold": 0,
+    "experience": 0,
+    "life": 100,
+    "life_maximum": 100,
+    "mana": 1000,
+    "mana_maximum": 1000,
+    "position_x": 0,
+    "position_y": 0,
+    "level_id": 1,
+    "combat_target_entity_id": 9,
+    "combat_target_level_id": 1,
+    "combat_target_position_x": 4,
+    "combat_target_position_y": 0,
+    "combat_target_hit_points": 20,
+    "combat_target_max_hit_points": 20,
+    "combat_target_monster_level": 1
+  },
+  "initial_projectiles": [
+    {
+      "entity_id": 2147483648,
+      "source_entity_id": 1,
+      "target_entity_id": 1,
+      "spell_id": 4,
+      "level_id": 1,
+      "position_x": 0,
+      "position_y": 0,
+      "target_x": 0,
+      "target_y": 0,
+      "damage": 0,
+      "damage_type": 3,
+      "area_radius": 1,
+      "remaining_ticks": 18,
+      "behavior": 6,
+      "phase": 0,
+      "speed": 1,
+      "impact_lifetime": 1
+    },
+    {
+      "entity_id": 2147483649,
+      "source_entity_id": 9,
+      "target_entity_id": 1,
+      "spell_id": 0,
+      "level_id": 1,
+      "position_x": 4,
+      "position_y": 0,
+      "target_x": 0,
+      "target_y": 0,
+      "damage": 2,
+      "damage_type": 0,
+      "remaining_ticks": 8,
+      "behavior": 59,
+      "phase": 0,
+      "speed": 1,
+      "impact_lifetime": 3
+    }
+  ],
+  "commands": [
+    {
+      "client_sequence": 1,
+      "target_tick": 1,
+      "server_receipt_sequence": 1,
+      "kind": "OpenStore",
+      "payload": { "store_id": 1 }
+    }
+  ],
+  "checkpoints": [
+    { "tick": 1, "state_sha256": "9fcd976482c18709d5388cc2910aef4e4d36b1ea2984975d705f8b148c7c5e96" },
+    { "tick": 8, "state_sha256": "d6bdb478defc178b11cbcbb55735aef43fbd5905d8ebdd4e157a4d827c7ffa0a" }
+  ]
+}

@@ -7,6 +7,11 @@ the native `PlayerMHit` protection boundary: an Etherealized player does not
 consume a MonsterArrow, and both native and managed runners continue the arrow
 through the occupied tile until its normal travel lifetime expires.
 
+The companion `gameplay-monster-arrow-flash-protected.json` fixture now covers
+the other native `PlayerMHit` protection boundary: an active player-owned Flash
+layer prevents MonsterArrow impact without consuming the arrow, and both
+runners preserve the remaining Flash and projectile lifetimes.
+
 Monster-arrow impact now matches the native `PlayerMHit` protection boundary:
 an Etherealized player does not consume the projectile, so the arrow continues
 through the protected tile and can complete its normal travel lifecycle.
