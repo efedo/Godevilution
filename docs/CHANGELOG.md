@@ -27,6 +27,10 @@ All notable changes to this fork are documented below.
   another player still evaluates both monster side lanes, including when the
   primary player blocks, and consumes one shared durability boundary.
 
+- Corrected Hellfire Peril ordering so attacker self-damage includes the
+  native post-percentage flat weapon modifier while remaining before the class
+  damage modifier and final target-damage multiplier.
+
 - Completed the native `DamageWeapon` parity slice: successful melee attacks
   now use the 1-in-30 durability roll, each emitted ranged arrow uses the
   1-in-40 roll, hand/shield fallback ordering matches native behavior,

@@ -1942,7 +1942,7 @@ public sealed class DiabloCombatCommandProcessor
         if (perilActive) {
             perilSelfDamageQ6 = checked(
                 DeterministicFixedPointQ6.FromWhole(
-                    damageBeforeFlat)
+                    checked(damageBeforeFlat + damageFlat))
                 + DeterministicFixedPointQ6.FromWhole(
                     AuthoritativeEquipmentIncomingDamageRules.ResolveGetHitBonus(
                         player.Equipment)));

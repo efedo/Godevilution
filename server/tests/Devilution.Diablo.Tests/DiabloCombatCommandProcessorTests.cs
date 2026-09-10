@@ -19233,6 +19233,41 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void HellfirePerilSelfDamageIncludesTheNativeFlatWeaponModifier()
+    {
+        var target = new AuthoritativeCombatTarget(9, 1, 0, 100);
+        var processor = CreateProcessor(
+            new DiabloWorldState(combatTargets: [target]),
+            rules: new AuthoritativeCombatRules(
+                10,
+                1,
+                100,
+                gameVariant: DiabloGameVariant.Hellfire));
+        var player = CreatePlayer(
+            entityId: 7,
+            life: 6400,
+            lifeMaximum: 6400,
+            equipment: [new EquippedStoreItem(
+                4,
+                42,
+                AuthoritativeItemState.Empty with {
+                    StatFlag = true,
+                    PlusDamageModifier = 3,
+                    HellfireDamageArmorFlags =
+                        AuthoritativeEquipmentIncomingDamageRules.PerilFlag,
+                })]);
+
+        var result = processor.Execute(player, new DiabloAttackIntent(9), 1);
+
+        Assert.True(result.Succeeded, result.Failure?.ToString());
+        Assert.Equal(5568, player.Life);
+        Assert.Equal(4736, target.HitPointsQ6);
+        Assert.Equal(
+            [832, 1664],
+            result.Events.Select(gameplayEvent => gameplayEvent.AmountQ6));
+    }
+
+    [Fact]
     public void HellfirePerilUsesConfiguredDamageMultiplier()
     {
         var target = new AuthoritativeCombatTarget(9, 1, 0, 100);
