@@ -23,6 +23,11 @@ All notable changes to this fork are documented below.
   matching the existing fail-closed behavior for stale event batches without
   changing reconnect or tick filtering semantics.
 
+- Native and Godot clients now reject oversized or semantically inconsistent
+  command acknowledgements before direct-submit or retry-delivery state can
+  change; focused native coverage guards the shared 256-result and
+  status/rejection-reason contract.
+
 - Godot and the native compatibility client now validate every authoritative
   event batch before applying stale-tick or reconnect-epoch filters, so
   malformed discarded events fail closed instead of being silently ignored.

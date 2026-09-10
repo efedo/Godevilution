@@ -65,6 +65,39 @@ tl::expected<CommandAckStatus, std::string> ToCommandAckStatus(protocol::Command
 	return tl::make_unexpected(std::string("Authoritative server returned an unspecified command status."));
 }
 
+bool IsValidCommandRejectReason(protocol::CommandRejectReason reason)
+{
+	switch (reason) {
+	case protocol::COMMAND_REJECT_REASON_UNSPECIFIED:
+	case protocol::COMMAND_REJECT_REASON_MALFORMED:
+	case protocol::COMMAND_REJECT_REASON_TOO_LATE:
+	case protocol::COMMAND_REJECT_REASON_NOT_ALLOWED:
+	case protocol::COMMAND_REJECT_REASON_INVALID_TARGET:
+	case protocol::COMMAND_REJECT_REASON_INSUFFICIENT_RESOURCES:
+		return true;
+	}
+	return false;
+}
+
+tl::expected<void, std::string> ValidateCommandAcknowledgement(const protocol::CommandAck &acknowledgement)
+{
+	constexpr int MaximumResultCount = 256;
+	if (acknowledgement.results_size() > MaximumResultCount)
+		return tl::make_unexpected(std::string("The authoritative command acknowledgement is too large."));
+
+	for (const auto &result : acknowledgement.results()) {
+		if (result.status() == protocol::COMMAND_STATUS_UNSPECIFIED
+		    || ToCommandAckStatus(result.status()).has_value() == false
+		    || !IsValidCommandRejectReason(result.reject_reason())
+		    || (result.status() != protocol::COMMAND_STATUS_REJECTED
+		        && result.status() != protocol::COMMAND_STATUS_DUPLICATE
+		        && result.reject_reason() != protocol::COMMAND_REJECT_REASON_UNSPECIFIED)) {
+			return tl::make_unexpected(std::string("The authoritative command acknowledgement contains an invalid result."));
+		}
+	}
+	return {};
+}
+
 } // namespace
 
 ServerBackedClient::ServerBackedClient() = default;
@@ -227,6 +260,8 @@ tl::expected<protocol::CommandAck, std::string> ServerBackedClient::Submit(const
 		return tl::make_unexpected(response.error());
 	if (response->payload_case() != protocol::Envelope::kCommandAck)
 		return tl::make_unexpected(ProtocolErrorMessage(*response));
+	if (auto validation = ValidateCommandAcknowledgement(response->command_ack()); !validation.has_value())
+		return tl::make_unexpected(validation.error());
 	return response->command_ack();
 }
 
@@ -348,6 +383,8 @@ tl::expected<protocol::CommandAck, std::string> ServerBackedClient::ReceiveComma
 		return tl::make_unexpected(response.error());
 	if (response->payload_case() != protocol::Envelope::kCommandAck)
 		return tl::make_unexpected(ProtocolErrorMessage(*response));
+	if (auto validation = ValidateCommandAcknowledgement(response->command_ack()); !validation.has_value())
+		return tl::make_unexpected(validation.error());
 
 	for (const protocol::CommandResult &result : response->command_ack().results()) {
 		auto status = ToCommandAckStatus(result.status());

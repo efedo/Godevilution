@@ -76,6 +76,14 @@ duplicate outcomes. Commands express intent only: clients never supply the
 resulting gold, health, damage, inventory placement, quest state, or world
 mutation.
 
+Before acknowledgement results mutate retry or presentation state, native and
+Godot clients enforce the same admission rules: no more than 256 results;
+every status and rejection reason must be a defined protocol value; an
+accepted or rescheduled result must carry an unspecified rejection reason;
+and rejected or duplicate results may carry the server's rejection reason.
+Malformed acknowledgement batches fail closed, including when they arrive
+through the direct command-submit path.
+
 `OpenStoreRequested` selects a validated vendor or service store for the
 session. `CloseStoreRequested` clears that active-store selection and is
 idempotent, including when no store is open. The resulting snapshot carries no

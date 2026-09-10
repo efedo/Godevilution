@@ -24,6 +24,10 @@ Batch checkpoint publication applies the same uniqueness preflight before any
 session file is written, keeping the durable write path aligned with recovery.
 Godot snapshot validation now also runs before stale-tick filtering, so an
 older malformed snapshot cannot be silently hidden by the presentation boundary.
+Native and Godot command-acknowledgement admission now share the same bounded
+result-count and status/rejection-reason validation. The native client applies
+that validation before both direct command submission and tracked retry
+acknowledgements mutate delivery state.
 
 The active content schema is now `1.462.0` (with `1.461.0` retained as
 the previous additive contract). Optional `procedural_quest_piece_origins.tsv`

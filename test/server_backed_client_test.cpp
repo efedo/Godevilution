@@ -139,6 +139,173 @@ TEST(ServerBackedClient, CompletesHandshakeCommandAndSnapshotExchange)
 	EXPECT_TRUE(serverObservedExpectedMessages);
 }
 
+TEST(ServerBackedClient, RejectsMalformedCommandAcknowledgementBeforeTrackingResolution)
+{
+	asio::io_context serverIo;
+	tcp::acceptor acceptor { serverIo, { tcp::v4(), 0 } };
+	std::atomic_bool serverObservedExpectedMessages = false;
+	std::thread server([&]() {
+		tcp::socket socket(serverIo);
+		acceptor.accept(socket);
+		auto helloPayload = EnvelopeCodec::Read(socket);
+		if (!helloPayload.has_value() || !helloPayload->has_value())
+			return;
+		protocol::Envelope hello;
+		if (!hello.ParseFromArray(helloPayload->value().data(), static_cast<int>(helloPayload->value().size())))
+			return;
+		protocol::Envelope serverHello;
+		serverHello.mutable_server_hello()->set_protocol_schema_version("1");
+		serverHello.mutable_server_hello()->set_content_manifest_hash("content");
+		WriteEnvelope(socket, serverHello);
+
+		auto commandPayload = EnvelopeCodec::Read(socket);
+		if (!commandPayload.has_value() || !commandPayload->has_value())
+			return;
+		protocol::Envelope command;
+		if (!command.ParseFromArray(commandPayload->value().data(), static_cast<int>(commandPayload->value().size()))
+		    || command.payload_case() != protocol::Envelope::kCommandBatch)
+			return;
+		protocol::Envelope acknowledgement;
+		auto *result = acknowledgement.mutable_command_ack()->add_results();
+		result->set_client_sequence(1);
+		result->set_status(protocol::COMMAND_STATUS_ACCEPTED);
+		result->set_reject_reason(protocol::COMMAND_REJECT_REASON_NOT_ALLOWED);
+		WriteEnvelope(socket, acknowledgement);
+		serverObservedExpectedMessages = true;
+	});
+
+	ServerBackedClient::Configuration configuration {
+		.host = "127.0.0.1",
+		.port = acceptor.local_endpoint().port(),
+		.clientBuildId = "client",
+		.protocolSchemaVersion = "1",
+		.contentManifestHash = "content",
+	};
+	auto client = ServerBackedClient::Connect(configuration);
+	ASSERT_TRUE(client.has_value()) << client.error();
+	protocol::CommandBatch batch;
+	batch.add_commands()->mutable_move_requested()->set_direction_x(1);
+	auto acknowledgement = (*client)->Submit(batch);
+	ASSERT_FALSE(acknowledgement.has_value());
+	EXPECT_EQ(acknowledgement.error(), "The authoritative command acknowledgement contains an invalid result.");
+	(*client)->Close();
+	server.join();
+	EXPECT_TRUE(serverObservedExpectedMessages);
+}
+
+TEST(ServerBackedClient, RejectsOversizedCommandAcknowledgementBeforeTrackingResolution)
+{
+	asio::io_context serverIo;
+	tcp::acceptor acceptor { serverIo, { tcp::v4(), 0 } };
+	std::atomic_bool serverObservedExpectedMessages = false;
+	std::thread server([&]() {
+		tcp::socket socket(serverIo);
+		acceptor.accept(socket);
+		auto helloPayload = EnvelopeCodec::Read(socket);
+		if (!helloPayload.has_value() || !helloPayload->has_value())
+			return;
+		protocol::Envelope hello;
+		if (!hello.ParseFromArray(helloPayload->value().data(), static_cast<int>(helloPayload->value().size())))
+			return;
+		protocol::Envelope serverHello;
+		serverHello.mutable_server_hello()->set_protocol_schema_version("1");
+		serverHello.mutable_server_hello()->set_content_manifest_hash("content");
+		WriteEnvelope(socket, serverHello);
+
+		auto commandPayload = EnvelopeCodec::Read(socket);
+		if (!commandPayload.has_value() || !commandPayload->has_value())
+			return;
+		protocol::Envelope command;
+		if (!command.ParseFromArray(commandPayload->value().data(), static_cast<int>(commandPayload->value().size()))
+		    || command.payload_case() != protocol::Envelope::kCommandBatch)
+			return;
+		protocol::Envelope acknowledgement;
+		for (int index = 0; index < 257; ++index) {
+			auto *result = acknowledgement.mutable_command_ack()->add_results();
+			result->set_client_sequence(static_cast<uint64_t>(index + 1));
+			result->set_status(protocol::COMMAND_STATUS_ACCEPTED);
+		}
+		WriteEnvelope(socket, acknowledgement);
+		serverObservedExpectedMessages = true;
+	});
+
+	ServerBackedClient::Configuration configuration {
+		.host = "127.0.0.1",
+		.port = acceptor.local_endpoint().port(),
+		.clientBuildId = "client",
+		.protocolSchemaVersion = "1",
+		.contentManifestHash = "content",
+	};
+	auto client = ServerBackedClient::Connect(configuration);
+	ASSERT_TRUE(client.has_value()) << client.error();
+	protocol::CommandBatch batch;
+	batch.add_commands()->mutable_move_requested()->set_direction_x(1);
+	auto acknowledgement = (*client)->Submit(batch);
+	ASSERT_FALSE(acknowledgement.has_value());
+	EXPECT_EQ(acknowledgement.error(), "The authoritative command acknowledgement is too large.");
+	(*client)->Close();
+	server.join();
+	EXPECT_TRUE(serverObservedExpectedMessages);
+}
+
+TEST(ServerBackedClient, RejectsMalformedTrackedAcknowledgementBeforeApplyingDelivery)
+{
+	asio::io_context serverIo;
+	tcp::acceptor acceptor { serverIo, { tcp::v4(), 0 } };
+	std::atomic_bool serverObservedExpectedMessages = false;
+	std::thread server([&]() {
+		tcp::socket socket(serverIo);
+		acceptor.accept(socket);
+		auto helloPayload = EnvelopeCodec::Read(socket);
+		if (!helloPayload.has_value() || !helloPayload->has_value())
+			return;
+		protocol::Envelope hello;
+		if (!hello.ParseFromArray(helloPayload->value().data(), static_cast<int>(helloPayload->value().size())))
+			return;
+		protocol::Envelope serverHello;
+		serverHello.mutable_server_hello()->set_protocol_schema_version("1");
+		serverHello.mutable_server_hello()->set_content_manifest_hash("content");
+		WriteEnvelope(socket, serverHello);
+
+		auto commandPayload = EnvelopeCodec::Read(socket);
+		if (!commandPayload.has_value() || !commandPayload->has_value())
+			return;
+		protocol::Envelope command;
+		if (!command.ParseFromArray(commandPayload->value().data(), static_cast<int>(commandPayload->value().size()))
+		    || command.payload_case() != protocol::Envelope::kCommandBatch
+		    || command.command_batch().commands_size() != 1)
+			return;
+		protocol::Envelope acknowledgement;
+		auto *result = acknowledgement.mutable_command_ack()->add_results();
+		result->set_client_sequence(command.command_batch().commands(0).client_sequence());
+		result->set_status(protocol::COMMAND_STATUS_UNSPECIFIED);
+		WriteEnvelope(socket, acknowledgement);
+		serverObservedExpectedMessages = true;
+	});
+
+	ServerBackedClient::Configuration configuration {
+		.host = "127.0.0.1",
+		.port = acceptor.local_endpoint().port(),
+		.clientBuildId = "client",
+		.protocolSchemaVersion = "1",
+		.contentManifestHash = "content",
+	};
+	auto client = ServerBackedClient::Connect(configuration);
+	ASSERT_TRUE(client.has_value()) << client.error();
+	protocol::Command command;
+	command.mutable_move_requested()->set_direction_x(1);
+	const uint64_t sequence = (*client)->QueueCommand(std::move(command));
+	ASSERT_EQ(sequence, 1U);
+	ASSERT_TRUE((*client)->SendQueuedCommands(100).has_value());
+	auto acknowledgement = (*client)->ReceiveCommandAcknowledgement(100);
+	ASSERT_FALSE(acknowledgement.has_value());
+	EXPECT_EQ(acknowledgement.error(), "The authoritative command acknowledgement contains an invalid result.");
+	EXPECT_EQ((*client)->PendingTrackedCommandCount(), 1U);
+	(*client)->Close();
+	server.join();
+	EXPECT_TRUE(serverObservedExpectedMessages);
+}
+
 TEST(ServerBackedClient, RequestsAutonomousSnapshotsAfterHandshake)
 {
 	asio::io_context serverIo;
