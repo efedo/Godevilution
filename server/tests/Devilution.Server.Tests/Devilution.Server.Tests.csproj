@@ -46,6 +46,7 @@
     <None Include="../../../test/fixtures/replay/gameplay-class-physical-damage-sorcerer.json" Link="Fixtures/gameplay-class-physical-damage-sorcerer.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-class-physical-damage-armor.json" Link="Fixtures/gameplay-class-physical-damage-armor.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-class-physical-damage-miss.json" Link="Fixtures/gameplay-class-physical-damage-miss.json" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="../../../test/fixtures/replay/gameplay-class-physical-damage-miss-elemental.json" Link="Fixtures/gameplay-class-physical-damage-miss-elemental.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-class-physical-damage-armor-piercing.json" Link="Fixtures/gameplay-class-physical-damage-armor-piercing.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-class-physical-damage-hell.json" Link="Fixtures/gameplay-class-physical-damage-hell.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-class-physical-damage-modifiers.json" Link="Fixtures/gameplay-class-physical-damage-modifiers.json" CopyToOutputDirectory="PreserveNewest" />

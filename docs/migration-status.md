@@ -80,10 +80,12 @@ ordering: a usable fixed `StealLife3/5` effect replaces an earlier
 `RandomStealLife` amount, while `StealMana3/5` continues to use the later
 highest-rate assignment and the random roll remains consumed when authored.
 
-Native physical-hit ordering now preserves the `PlrHitMonst` miss boundary:
-initialized misses do not consume the weapon-damage RNG stream and do not
-apply Hellfire Peril self-damage or other hit-only effects. The boundary is
-covered with an initialized-class Hellfire attack fixture.
+Native physical-hit ordering now preserves the compact replay miss boundary:
+initialized misses consume the native weapon-range RNG draw, while Hellfire
+Peril and other hit-only effects remain suppressed. Shared checkpoint hashes
+now agree for the initialized physical-damage matrix, including armor, class,
+Hellfire, and miss cases; the boundary is covered with an initialized-class
+Hellfire attack regression.
 
 The external-content compatibility boundary is now explicit in both behavior
 and diagnostics: current-schema packs fail closed with the required external

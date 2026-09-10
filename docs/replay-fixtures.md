@@ -79,18 +79,21 @@ occupied but unclassified hand slot and proves native Monk unarmed range
 selection plus the staff/unarmed damage modifier branch.
 The armor and miss companions exercise the initialized class to-hit formula,
 native 5..95 chance clamp, deterministic hit seed, and the minimum successful
-damage boundary without changing the compact fallback. Monster armor is used
+damage boundary without changing the compact fallback. An initialized miss
+still consumes the native weapon-range draw before hit-only effects are
+discarded, so the shared gameplay RNG remains checkpoint-visible. Monster armor is used
 for admission only, matching native `PlrHitMonst` and `MonsterMHit`; it is not
 subtracted again from successful player damage. The armor-piercing companion
 adds the optional `plus_enemy_armor_class` equipment field and proves that an
 authored native armor-piercing bonus crosses the same hit-resolution boundary;
 omitting the field retains its zero-value compatibility behavior.
-The `gameplay/class-physical-damage-miss-elemental` native companion and its
-managed combat test keep that admission miss while adding melee `FireDamage`
-and `LightningDamage` channels; native melee WeaponExplosion missiles are
-emitted before physical hit resolution, so both elemental channels still
-damage the target. This is intentionally distinct from ranged arrow fixtures,
-where elemental channels are captured only for an admitted arrow.
+The `gameplay/class-physical-damage-miss-elemental` companion keeps that
+admission miss while adding melee `FireDamage` and `LightningDamage` channels;
+native melee WeaponExplosion missiles are emitted before physical hit
+resolution, so both elemental channels still damage the target. Native and
+managed replay checkpoints plus the direct combat test cover this boundary.
+This is intentionally distinct from ranged arrow fixtures, where elemental
+channels are captured only for an admitted arrow.
 `gameplay-class-physical-damage-hell.json` adds the Hell difficulty target
 modifiers, including the native 4x health plus 200 bonus and +80 armor.
 The damage-modifier and to-hit companions cover authored percentage/flat

@@ -21,6 +21,7 @@ public sealed class BaseContentReplayTests
     [InlineData("gameplay-class-physical-damage-sorcerer.json", 2, 95)]
     [InlineData("gameplay-class-physical-damage-armor.json", 0, 93)]
     [InlineData("gameplay-class-physical-damage-miss.json", 2, 100)]
+    [InlineData("gameplay-class-physical-damage-miss-elemental.json", 2, 88)]
     [InlineData("gameplay-class-physical-damage-armor-piercing.json", 0, 93)]
     [InlineData("gameplay-class-physical-damage-hell.json", 0, 600)]
     [InlineData("gameplay-class-physical-damage-modifiers.json", 0, 90)]
@@ -39,7 +40,9 @@ public sealed class BaseContentReplayTests
     public void ClassPhysicalDamageUsesExplicitAttributesAtSharedCheckpoint(
         string fixtureName,
         int expectedClassId,
-        int expectedHitPoints)
+        int expectedHitPoints,
+        int expectedMinimumDamage = 4,
+        int expectedMaximumDamage = 4)
     {
         var fixture = ReplayFixtureLoader.Load(File.ReadAllText(Path.Combine(
             AppContext.BaseDirectory,
@@ -98,8 +101,8 @@ public sealed class BaseContentReplayTests
             executor.CreateSnapshot(initial.Player, 1, 0).Players);
         Assert.Equal((uint)expectedClassId, beforeAttack.CharacterClassId);
         Assert.Equal(initial.Dexterity, beforeAttack.Attributes.Dexterity.Current);
-        Assert.Equal(4, Assert.Single(beforeAttack.Equipment).State.MinDamage);
-        Assert.Equal(4, Assert.Single(beforeAttack.Equipment).State.MaxDamage);
+        Assert.Equal(expectedMinimumDamage, Assert.Single(beforeAttack.Equipment).State.MinDamage);
+        Assert.Equal(expectedMaximumDamage, Assert.Single(beforeAttack.Equipment).State.MaxDamage);
 
         var result = ReplayFixtureExecutor.Execute(
             fixture,

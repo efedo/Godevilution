@@ -7183,7 +7183,7 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
-    public void MissedInitializedHellfireAttackDoesNotConsumeDamageRngOrPeril()
+    public void MissedInitializedHellfireAttackConsumesDamageRngButNotPeril()
     {
         var classes = LoadShippedPlayerClasses();
         var target = new AuthoritativeCombatTarget(9, 1, 0, 100);
@@ -7221,7 +7221,9 @@ public sealed class DiabloCombatCommandProcessorTests
         Assert.True(result.Succeeded);
         Assert.Equal(100, target.HitPoints);
         Assert.Equal(6400, player.Life);
-        Assert.Equal(initialRandomState, random.State);
+        var expectedRandom = new DiabloRandom(initialRandomState);
+        _ = expectedRandom.RandomIntBetween(7, 13);
+        Assert.Equal(expectedRandom.State, random.State);
         Assert.Empty(result.Events);
     }
 

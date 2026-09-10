@@ -75,11 +75,11 @@ All notable changes to this fork are documented below.
   replaces the earlier random amount, matching the native temporary-value
   reuse while preserving the shared RNG consumption.
 
-- Closed a native physical-hit ordering gap: missed initialized attacks now
-  restore the pre-damage RNG boundary and suppress Hellfire Peril self-damage,
-  matching `PlrHitMonst`'s hit-before-damage behavior. Added a class-initialized
-  Hellfire regression covering target life, attacker life, event emission, and
-  deterministic RNG state.
+- Closed a native replay-hash ordering gap: missed initialized attacks now
+  retain the native weapon-range RNG draw while suppressing Hellfire Peril and
+  other hit-only effects. The managed initialized physical-damage matrix now
+  agrees with native checkpoint hashes, and the Hellfire regression covers
+  target life, attacker life, event emission, and deterministic RNG state.
 
 - Restored the external-content migration boundary for legacy compatibility
   namespaces. Current-schema omissions now retain both the external-content
