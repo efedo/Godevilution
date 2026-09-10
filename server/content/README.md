@@ -129,17 +129,21 @@ loaders, but cannot replace stable IDs at the server boundary.
 `native_spells.tsv` defines the complete native spell-name namespace, including
 unused legacy ordinals, so `itemdat.tsv` compatibility names are data-driven
 and validated before they can resolve into the active stable spell catalog.
-Production activation requires every native ID from 0 through 51 when this
-table is present; direct compatibility callers may still construct a partial
-catalog explicitly.
+Direct compatibility callers may require every native ID from 0 through 51;
+normalized production activation consumes `spells.tsv` and does not select the
+legacy item-table path.
 The unused `DoomSerpents`, `BloodRitual`, and `Invisibility` identities, the
 service-capability identities (`ItemRepair`, `StaffRecharge`, and `TrapDisarm`),
 and the five rune identities remain namespace entries; rune items resolve to
 their existing authoritative spell behaviors through item metadata.
 `native_item_misc.tsv` does the same for the native miscellaneous-item symbols
-used by the legacy item-table fallback.
+used by direct legacy item-table compatibility.
 `native_item_topology.tsv` covers the legacy item type, item class, and
-equipment-location symbols used for compatibility placement and classification.
+equipment-location symbols used by direct compatibility placement and
+classification.
+`native_item_tags.tsv` supplies the legacy item-type generation tags used by
+direct compatibility loaders; normalized production activation carries its
+item tags in `items.tsv`.
 `native_item_effects.tsv` covers the native special-effect symbols and bit flags
 used by both normalized and legacy item loading.
 Unique-item and affix powers with matching ordinary effect symbols, including elemental

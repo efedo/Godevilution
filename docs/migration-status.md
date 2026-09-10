@@ -33,9 +33,9 @@ omits any core external rules/data table: store pricing, item-generation rules,
 experience thresholds, spells, world rules, or combat rules. Direct simulation
 factory callers retain their embedded compatibility defaults, but the server
 bootstrap can no longer silently substitute them for missing pack data.
-The production bootstrap now also requires and validates the complete external
-`native_spells.tsv` identity namespace (IDs 0 through 51); direct native spell
-catalog construction remains permissive for compatibility tooling.
+The complete external `native_spells.tsv` identity namespace remains available
+for direct legacy item-table compatibility; production activation now consumes
+the normalized spell and item catalogs instead of selecting that fallback.
 The production bootstrap also requires the external `content_ids.tsv` stable
 identity catalog, so symbolic classes, spells, items, levels, quests, objects,
 and stores cannot silently fall back to native numeric inference.
@@ -43,10 +43,10 @@ Production activation now also requires the normalized `items.tsv` and
 `unique_items.tsv` catalogs. The legacy `itemdat.tsv` and `unique_itemdat.tsv`
 loaders remain available to direct compatibility callers, but a server content
 pack cannot silently select source-row identities for authoritative item state.
-Production activation also requires the native item-misc, item-topology,
-item-tag, item-effect, Hellfire-effect, and cursor-graphics catalogs, so item
-identity and presentation no longer fall back to embedded native mappings at
-the server boundary.
+Production activation still requires the native item-effect, Hellfire-effect,
+and cursor-graphics catalogs used by normalized item validation and projection.
+The native misc, topology, and tag catalogs remain available to direct legacy
+item-table compatibility loaders, but are no longer production requirements.
 Production activation now also requires the complete external native missile
 identity/sprite namespaces and monster type, monster-missile, and monster
 definition catalogs, keeping authoritative combat identity data out of the

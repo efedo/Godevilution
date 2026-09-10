@@ -272,11 +272,6 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
             stableIds);
         pricing.ValidateSpellReferences(spells);
         spells.ValidateExternalizedNativePatterns();
-        var nativeSpellsTable = GetRequiredExternalTable(content, "native_spells.tsv");
-        var nativeSpells = AuthoritativeNativeSpellCatalog.LoadTsv(
-            nativeSpellsTable.SourcePath,
-            nativeSpellsTable.ToCanonicalTsv(),
-            requireCompleteNamespace: true);
         var nativeMissileAliases = content.TryGetTable(
             "native_missile_aliases.tsv",
             out var nativeMissileAliasesTable)
@@ -298,18 +293,6 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
         nativeMissiles.ValidateCompleteNativeNamespace();
         nativeMissileSprites.ValidateRequiredNativeNamespace();
         nativeMissiles.ValidateGraphicReferences(nativeMissileSprites);
-        var nativeMiscTable = GetRequiredExternalTable(content, "native_item_misc.tsv");
-        var nativeMisc = AuthoritativeNativeMiscCatalog.LoadTsv(
-            nativeMiscTable.SourcePath,
-            nativeMiscTable.ToCanonicalTsv());
-        var nativeTopologyTable = GetRequiredExternalTable(content, "native_item_topology.tsv");
-        var nativeTopology = AuthoritativeNativeItemTopologyCatalog.LoadTsv(
-            nativeTopologyTable.SourcePath,
-            nativeTopologyTable.ToCanonicalTsv());
-        var nativeItemTagsTable = GetRequiredExternalTable(content, "native_item_tags.tsv");
-        var nativeItemTags = AuthoritativeNativeItemTagCatalog.LoadTsv(
-            nativeItemTagsTable.SourcePath,
-            nativeItemTagsTable.ToCanonicalTsv());
         var nativeItemEffectsTable = GetRequiredExternalTable(content, "native_item_effects.tsv");
         var nativeItemEffects = AuthoritativeNativeItemEffectCatalog.LoadTsv(
             nativeItemEffectsTable.SourcePath,

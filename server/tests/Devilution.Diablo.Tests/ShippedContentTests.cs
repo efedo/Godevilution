@@ -1241,10 +1241,6 @@ public sealed class ShippedContentTests
     [InlineData("items.tsv")]
     [InlineData("unique_items.tsv")]
     [InlineData("spells.tsv")]
-    [InlineData("native_spells.tsv")]
-    [InlineData("native_item_misc.tsv")]
-    [InlineData("native_item_topology.tsv")]
-    [InlineData("native_item_tags.tsv")]
     [InlineData("native_item_effects.tsv")]
     [InlineData("native_item_hellfire_effects.tsv")]
     [InlineData("item_cursor_graphics.tsv")]
@@ -1282,6 +1278,38 @@ public sealed class ShippedContentTests
             $"requires external '{missingTable}' content",
             exception.Message,
             StringComparison.Ordinal);
+    }
+
+    [Theory]
+    [InlineData("native_spells.tsv")]
+    [InlineData("native_item_misc.tsv")]
+    [InlineData("native_item_topology.tsv")]
+    [InlineData("native_item_tags.tsv")]
+    public void ContentBootstrapAllowsMissingLegacyOnlyCatalog(string omittedTable)
+    {
+        var contentRoot = Path.Combine(FindRepositoryRoot(), "server", "content", "base");
+        var basePack = ContentPackLoader.LoadManifestDirectory(contentRoot);
+        var normalizedPack = new ContentPack(
+            basePack.Id,
+            basePack.Version,
+            basePack.Tables
+                .Where(table => table.SourcePath != omittedTable)
+                .ToArray(),
+            basePack.Dependencies,
+            basePack.Overlays,
+            basePack.Schema,
+            basePack.DependencyConstraints,
+            basePack.Assets);
+
+        var activation = DiabloModule.Instance.ContentBootstrap.Activate(
+            ComposedContent.Compose(new ContentManifest(
+                $"without-{omittedTable}",
+                "1",
+                [normalizedPack])));
+
+        Assert.NotNull(activation);
+        var items = Assert.IsType<AuthoritativeItemCatalog>(activation.Simulation.Items);
+        Assert.NotEmpty(items.Definitions);
     }
 
     [Fact]
