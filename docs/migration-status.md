@@ -28,6 +28,11 @@ Native and Godot command-acknowledgement admission now share the same bounded
 result-count and status/rejection-reason validation. The native client applies
 that validation before both direct command submission and tracked retry
 acknowledgements mutate delivery state.
+Production Diablo content activation now fails closed when the composed pack
+omits any core external rules/data table: store pricing, item-generation rules,
+experience thresholds, spells, world rules, or combat rules. Direct simulation
+factory callers retain their embedded compatibility defaults, but the server
+bootstrap can no longer silently substitute them for missing pack data.
 
 The active content schema is now `1.462.0` (with `1.461.0` retained as
 the previous additive contract). Optional `procedural_quest_piece_origins.tsv`

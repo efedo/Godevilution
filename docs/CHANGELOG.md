@@ -32,6 +32,10 @@ All notable changes to this fork are documented below.
   protocol-limit definitions across the host, Godot client, and native
   compatibility client instead of independent literals.
 
+- Production Diablo activation now requires external store pricing,
+  item-generation, experience, spell, world-rule, and combat-rule tables;
+  only direct compatibility simulation construction retains embedded defaults.
+
 - Godot and the native compatibility client now validate every authoritative
   event batch before applying stale-tick or reconnect-epoch filters, so
   malformed discarded events fail closed instead of being silently ignored.

@@ -12,9 +12,7 @@ public sealed class DiabloModule : IGameplayModule
     public DiabloModule(StoreServicePricing? pricing = null)
     {
         rules = new DiabloStoreRules(pricing);
-        contentBootstrap = new DiabloContentBootstrap(
-            rules.Pricing,
-            DiabloSimulationFactory.Instance);
+        contentBootstrap = new DiabloContentBootstrap(DiabloSimulationFactory.Instance);
     }
 
     public StoreServicePricing Pricing => rules.Pricing;

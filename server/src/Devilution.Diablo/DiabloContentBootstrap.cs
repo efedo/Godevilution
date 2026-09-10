@@ -207,15 +207,11 @@ public interface IDiabloContentBootstrap
 /** First-party content activation kept entirely inside the Diablo module. */
 internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
 {
-    private readonly StoreServicePricing fallbackPricing;
     private readonly IDiabloSimulationFactory simulationFactory;
 
     public DiabloContentBootstrap(
-        StoreServicePricing fallbackPricing,
         IDiabloSimulationFactory simulationFactory)
     {
-        this.fallbackPricing = fallbackPricing
-            ?? throw new ArgumentNullException(nameof(fallbackPricing));
         this.simulationFactory = simulationFactory
             ?? throw new ArgumentNullException(nameof(simulationFactory));
     }
@@ -245,26 +241,19 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
                 stableIdsTable.SourcePath,
                 stableIdsTable.ToCanonicalTsv())
             : null;
-        var pricing = content.TryGetTable("store_services.tsv", out var pricingTable)
-            ? StoreServicePricing.LoadTsv(
-                pricingTable.SourcePath,
-                pricingTable.ToCanonicalTsv(),
-                stableIds)
-            : fallbackPricing;
-        var generationRules = content.TryGetTable(
-            "item_generation.tsv",
-            out var generationTable)
-            ? AuthoritativeItemGenerationRules.LoadTsv(
-                generationTable.SourcePath,
-                generationTable.ToCanonicalTsv())
-            : AuthoritativeItemGenerationRules.Default;
-        var experience = content.TryGetTable(
-            "experience.tsv",
-            out var experienceTable)
-            ? AuthoritativeExperienceCatalog.LoadTsv(
-                experienceTable.SourcePath,
-                experienceTable.ToCanonicalTsv())
-            : null;
+        var pricingTable = GetRequiredExternalTable(content, "store_services.tsv");
+        var pricing = StoreServicePricing.LoadTsv(
+            pricingTable.SourcePath,
+            pricingTable.ToCanonicalTsv(),
+            stableIds);
+        var generationTable = GetRequiredExternalTable(content, "item_generation.tsv");
+        var generationRules = AuthoritativeItemGenerationRules.LoadTsv(
+            generationTable.SourcePath,
+            generationTable.ToCanonicalTsv());
+        var experienceTable = GetRequiredExternalTable(content, "experience.tsv");
+        var experience = AuthoritativeExperienceCatalog.LoadTsv(
+            experienceTable.SourcePath,
+            experienceTable.ToCanonicalTsv());
         var playerClassTable = content.GetRequiredTable("classes.tsv");
         var playerClasses = AuthoritativePlayerClassCatalog.LoadTsv(
             playerClassTable.SourcePath,
@@ -278,17 +267,13 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
             playerAnimationTable.ToCanonicalTsv(),
             playerClasses,
             stableIds);
-        var spells = content.TryGetTable("spells.tsv", out var spellsTable)
-            ? AuthoritativeSpellCatalog.LoadTsv(
-                spellsTable.SourcePath,
-                spellsTable.ToCanonicalTsv(),
-                stableIds)
-            : null;
-        if (spells is not null)
-        {
-            pricing.ValidateSpellReferences(spells);
-            spells.ValidateExternalizedNativePatterns();
-        }
+        var spellsTable = GetRequiredExternalTable(content, "spells.tsv");
+        var spells = AuthoritativeSpellCatalog.LoadTsv(
+            spellsTable.SourcePath,
+            spellsTable.ToCanonicalTsv(),
+            stableIds);
+        pricing.ValidateSpellReferences(spells);
+        spells.ValidateExternalizedNativePatterns();
         var nativeSpells = content.TryGetTable(
             "native_spells.tsv",
             out var nativeSpellsTable)
@@ -463,23 +448,17 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
                 stableIds)
             : null;
         itemCombinations?.ValidateItems(itemCatalog);
-        var worldRules = content.TryGetTable("world_rules.tsv", out var worldRulesTable)
-            ? AuthoritativeWorldRules.LoadTsv(
-                worldRulesTable.SourcePath,
-                worldRulesTable.ToCanonicalTsv(),
-                stableIds)
-            : AuthoritativeWorldRules.NativeDefaults;
-        var combatRules = content.TryGetTable("combat.tsv", out var combatTable)
-            ? AuthoritativeCombatRules.LoadTsv(
-                combatTable.SourcePath,
-                combatTable.ToCanonicalTsv(),
-                worldRules.TownLevelId,
-                stableIds)
-            : new AuthoritativeCombatRules(
-                10,
-                1,
-                100,
-                townLevelId: worldRules.TownLevelId);
+        var worldRulesTable = GetRequiredExternalTable(content, "world_rules.tsv");
+        var worldRules = AuthoritativeWorldRules.LoadTsv(
+            worldRulesTable.SourcePath,
+            worldRulesTable.ToCanonicalTsv(),
+            stableIds);
+        var combatTable = GetRequiredExternalTable(content, "combat.tsv");
+        var combatRules = AuthoritativeCombatRules.LoadTsv(
+            combatTable.SourcePath,
+            combatTable.ToCanonicalTsv(),
+            worldRules.TownLevelId,
+            stableIds);
         combatRules.ValidateItems(itemCatalog);
         var playerLoadoutTable = content.GetRequiredTable("class_loadouts.tsv");
         var playerLoadoutItemTable = content.GetRequiredTable(
@@ -1491,6 +1470,16 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
             }
         }
         return reserved;
+    }
+
+    private static TsvTable GetRequiredExternalTable(
+        ComposedContent content,
+        string sourcePath)
+    {
+        if (content.TryGetTable(sourcePath, out var table))
+            return table;
+        throw new InvalidDataException(
+            $"Production Diablo activation requires external '{sourcePath}' content.");
     }
 
     private static uint ResolveAbilityId(StableContentIdCatalog? stableIds, string symbol)

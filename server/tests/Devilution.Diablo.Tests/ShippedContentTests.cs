@@ -1233,6 +1233,42 @@ public sealed class ShippedContentTests
         Assert.Equal(1583495809U, experience.GetRequiredExperience(50));
     }
 
+    [Theory]
+    [InlineData("store_services.tsv")]
+    [InlineData("item_generation.tsv")]
+    [InlineData("experience.tsv")]
+    [InlineData("spells.tsv")]
+    [InlineData("world_rules.tsv")]
+    [InlineData("combat.tsv")]
+    public void ContentBootstrapRejectsMissingCoreExternalTable(string missingTable)
+    {
+        var contentRoot = Path.Combine(FindRepositoryRoot(), "server", "content", "base");
+        var basePack = ContentPackLoader.LoadManifestDirectory(contentRoot);
+        var incompletePack = new ContentPack(
+            basePack.Id,
+            basePack.Version,
+            basePack.Tables
+                .Where(table => table.SourcePath != missingTable)
+                .ToArray(),
+            basePack.Dependencies,
+            basePack.Overlays,
+            basePack.Schema,
+            basePack.DependencyConstraints,
+            basePack.Assets);
+
+        var exception = Assert.Throws<InvalidDataException>(() =>
+            DiabloModule.Instance.ContentBootstrap.Activate(
+                ComposedContent.Compose(new ContentManifest(
+                    $"missing-{missingTable}",
+                    "1",
+                    [incompletePack]))));
+
+        Assert.Contains(
+            $"requires external '{missingTable}' content",
+            exception.Message,
+            StringComparison.Ordinal);
+    }
+
     [Fact]
     public void HellfireMonsterTypesDeclareSkeletonSummonCandidates()
     {
