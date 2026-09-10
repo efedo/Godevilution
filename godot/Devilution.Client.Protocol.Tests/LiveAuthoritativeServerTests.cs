@@ -74,9 +74,11 @@ public sealed class LiveAuthoritativeServerTests
             "Godevilution-Godot-Packaged-Diablo-Restart-Test-"
                 + Guid.NewGuid().ToString("N"));
         Directory.CreateDirectory(saveRoot);
+        AuthoritativeClient? client = null;
         try {
-            string resumeToken;
             uint entityId;
+            int movedPositionY;
+            int serverPort;
             using (var server = await StartedServer.StartAsync(
                 TestContext.Current.CancellationToken,
                 saveRootOverride: saveRoot,
@@ -84,7 +86,8 @@ public sealed class LiveAuthoritativeServerTests
                 gameAdapterPackageRoot: package.Root,
                 gameAdapterId: "godevilution.diablo.package",
                 gameMode: "single-player")) {
-                await using var client = new AuthoritativeClient(
+                serverPort = server.Port;
+                client = new AuthoritativeClient(
                     CreateOptions(server, "godot-live-packaged-diablo-restart", requestedClassId: 2));
                 await client.ConnectAsync(TestContext.Current.CancellationToken);
                 var initial = await WaitForMessageAsync(
@@ -92,34 +95,81 @@ public sealed class LiveAuthoritativeServerTests
                     message => message.Snapshot is not null);
                 var player = Assert.Single(initial.Snapshot!.Players);
                 entityId = player.EntityId;
-                resumeToken = client.SessionToken;
-
-                for (var attempt = 0; attempt < 200 && !Directory.EnumerateFiles(saveRoot, "*.json").Any(); attempt++)
+                string? checkpointPath = null;
+                for (var attempt = 0; attempt < 200 && checkpointPath is null; attempt++) {
+                    checkpointPath = Directory.EnumerateFiles(saveRoot, "*.session.json")
+                        .SingleOrDefault();
                     await Task.Delay(25, TestContext.Current.CancellationToken);
-                Assert.NotEmpty(Directory.EnumerateFiles(saveRoot, "*.json"));
-                await Task.Delay(500, TestContext.Current.CancellationToken);
+                }
+                Assert.NotNull(checkpointPath);
+                var checkpointBeforeMove = await File.ReadAllBytesAsync(
+                    checkpointPath!,
+                    TestContext.Current.CancellationToken);
+                var model = new AuthoritativeClientModel();
+                model.Apply(initial);
+                var moveSequence = client.Queue(new Command {
+                    MoveRequested = new MoveRequested { DirectionX = 0, DirectionY = 1 },
+                }, client.SuggestedCommandTick(model.CurrentTick));
+                await client.PollAsync(TestContext.Current.CancellationToken);
+                Assert.Equal(
+                    CommandStatus.Accepted,
+                    (await WaitForAcknowledgementAsync(
+                        client,
+                        moveSequence)).Status);
+                var moved = await WaitForMessageAsync(
+                    client,
+                    message => message.Snapshot?.Players.Single().PositionY
+                        == player.PositionY + 1);
+                movedPositionY = moved.Snapshot!.Players.Single().PositionY;
+                await Task.Delay(750, TestContext.Current.CancellationToken);
+
+                for (var attempt = 0; attempt < 200; attempt++) {
+                    var checkpointAfterMove = await File.ReadAllBytesAsync(
+                        checkpointPath,
+                        TestContext.Current.CancellationToken);
+                    if (!checkpointAfterMove.SequenceEqual(checkpointBeforeMove))
+                        break;
+                    await Task.Delay(25, TestContext.Current.CancellationToken);
+                }
+                var checkpoint = System.Text.Json.JsonDocument.Parse(
+                    await File.ReadAllTextAsync(
+                        checkpointPath,
+                        TestContext.Current.CancellationToken));
+                var serializedState = checkpoint.RootElement
+                    .GetProperty("SerializedState")
+                    .GetString()!;
+                var save = System.Text.Json.JsonDocument.Parse(serializedState);
+                var checkpointSnapshot = Snapshot.Parser.ParseFrom(Convert.FromBase64String(
+                    save.RootElement.GetProperty("SnapshotBase64").GetString()!));
+                Assert.Equal(movedPositionY, checkpointSnapshot.Players.Single().PositionY);
             }
 
             using var restartedServer = await StartedServer.StartAsync(
                 TestContext.Current.CancellationToken,
+                portOverride: serverPort,
                 saveRootOverride: saveRoot,
                 gameAdapterPackageRoot: upgradedPackage.Root,
                 gameAdapterId: "godevilution.diablo.package",
                 gameMode: "single-player");
-            await using var resumedClient = new AuthoritativeClient(
-                CreateOptions(restartedServer, "godot-live-packaged-diablo-resumed", requestedClassId: 0) with {
-                    ResumeToken = resumeToken,
-                });
-            await resumedClient.ConnectAsync(TestContext.Current.CancellationToken);
+            Assert.NotEqual(package.Version, upgradedPackage.Version);
+            Assert.Equal(client.ServerIdentity!.ContentManifestHash, restartedServer.ContentHash);
+            Assert.Equal(client.ServerIdentity.RulesetIdentityHash, restartedServer.RulesetHash);
+            await client.ReconnectAsync(TestContext.Current.CancellationToken);
             var restored = await WaitForMessageAsync(
-                resumedClient,
+                client,
                 message => message.Snapshot is not null
-                    && message.Snapshot.Players.Single().EntityId == entityId);
+                    && message.Snapshot.Players.Single().EntityId == entityId
+                    && message.Snapshot.Players.Single().PositionY == movedPositionY);
             var restoredPlayer = Assert.Single(restored.Snapshot!.Players);
             Assert.Equal(entityId, restoredPlayer.EntityId);
             Assert.Equal(2U, restoredPlayer.CharacterClassId);
+            Assert.Equal(movedPositionY, restoredPlayer.PositionY);
             Assert.NotEmpty(restored.Snapshot.StateSha256);
+            Assert.Equal(restartedServer.ContentHash, client.ServerIdentity!.ContentManifestHash);
+            Assert.Equal(restartedServer.RulesetHash, client.ServerIdentity.RulesetIdentityHash);
         } finally {
+            if (client is not null)
+                await client.DisposeAsync();
             if (Directory.Exists(saveRoot))
                 Directory.Delete(saveRoot, recursive: true);
         }
@@ -5609,6 +5659,7 @@ public sealed class LiveAuthoritativeServerTests
             uint? randomSeed = null,
             string? gameMode = null,
             string? difficultyOverride = null,
+            int? portOverride = null,
             string? saveRootOverride = null,
             bool deleteSaveRootOnDispose = true,
             string? gameAdapterPackageRoot = null,
@@ -5641,7 +5692,8 @@ public sealed class LiveAuthoritativeServerTests
             }
             startInfo.ArgumentList.Add("--");
             startInfo.ArgumentList.Add("--port");
-            startInfo.ArgumentList.Add("0");
+            startInfo.ArgumentList.Add((portOverride ?? 0).ToString(
+                System.Globalization.CultureInfo.InvariantCulture));
             startInfo.ArgumentList.Add("--protocol-version");
             startInfo.ArgumentList.Add(ProtocolSchemaVersions.IndependentContentAndRulesetIdentity);
             startInfo.ArgumentList.Add("--save-root");

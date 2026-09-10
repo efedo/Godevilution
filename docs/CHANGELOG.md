@@ -2,6 +2,12 @@
 
 All notable changes to this fork are documented below.
 
+- Extended the packaged Godot process-restart fixture to keep one client
+  instance across an adapter replacement. It now submits a server-owned move
+  before shutdown and confirms the packaged adapter restores the player,
+  position, and protocol identity through the same client reconnect; reconnect
+  also clears only the previous transport-close notification.
+
 - Extended live ruleset reconnect safety across process restarts. A persisted
   session may refresh a stale client identity only when its integrity-checked
   checkpoint already binds to the active generation; unknown tokens and stale

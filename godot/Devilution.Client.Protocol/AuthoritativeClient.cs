@@ -172,12 +172,29 @@ public sealed class AuthoritativeClient : IAsyncDisposable
             throw new ObjectDisposedException(nameof(AuthoritativeClient));
 
         await CloseTransportAsync();
+        DiscardClosedTransportNotifications();
         lock (pendingLock) {
             foreach (var pendingCommand in pending.Values)
                 pendingCommand.LastSentMs = null;
         }
         lastSnapshotRequestMs = 0;
         await ConnectAsync(cancellationToken);
+    }
+
+    /** Removes the previous transport's transient close marker before a new epoch. */
+    private void DiscardClosedTransportNotifications()
+    {
+        var retained = new List<AuthoritativeClientMessage>();
+        while (incoming.TryDequeue(out var message)) {
+            if (message.Error?.Code == ProtocolErrorCode.NotAuthenticated
+                && message.Error.Detail.StartsWith(
+                    "Authoritative connection closed:",
+                    StringComparison.Ordinal))
+                continue;
+            retained.Add(message);
+        }
+        foreach (var message in retained)
+            incoming.Enqueue(message);
     }
 
     public ulong Queue(Command command, ulong requestedTick)

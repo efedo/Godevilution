@@ -2,6 +2,14 @@
 
 Status date: 2026-09-10
 
+The packaged Godot client restart fixture now keeps the same protocol client
+across a selected-adapter process replacement, submits a server-owned movement
+before shutdown, and verifies that the persisted checkpoint restores the same
+player, position, and protocol identity through the packaged adapter boundary.
+Explicit reconnect now removes only the prior transport-close notification
+before opening a new epoch, so protocol errors and retained authoritative
+messages are not discarded.
+
 Persisted sessions can now adopt the active ruleset identity after a server
 restart when their validated checkpoint was already published for that exact
 generation. The host still rejects unknown tokens and checkpoints from a
