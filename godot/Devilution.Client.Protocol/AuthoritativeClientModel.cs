@@ -322,18 +322,21 @@ public sealed class AuthoritativeClientModel
             RebuildPredictedPosition();
         }
 
-        if (message.Events is { } events
-            && !acceptNextSnapshotAsNewEpoch
-            && events.Tick >= CurrentTick) {
+        if (message.Events is { } events) {
+            // Validate even stale or reconnect-quarantined batches before
+            // discarding them; malformed server data must never be hidden by
+            // the presentation tick filter.
             ValidateEventBatch(events);
-            recentEvents.AddRange(events.Events.Select(gameEvent => gameEvent.Clone()));
-            recentEventsEndSequence = checked(
-                recentEventsEndSequence + (ulong)events.Events.Count);
-            var excess = recentEvents.Count - MaxRecentEvents;
-            if (excess > 0) {
-                recentEvents.RemoveRange(0, excess);
-                recentEventsStartSequence = checked(
-                    recentEventsStartSequence + (ulong)excess);
+            if (!acceptNextSnapshotAsNewEpoch && events.Tick >= CurrentTick) {
+                recentEvents.AddRange(events.Events.Select(gameEvent => gameEvent.Clone()));
+                recentEventsEndSequence = checked(
+                    recentEventsEndSequence + (ulong)events.Events.Count);
+                var excess = recentEvents.Count - MaxRecentEvents;
+                if (excess > 0) {
+                    recentEvents.RemoveRange(0, excess);
+                    recentEventsStartSequence = checked(
+                        recentEventsStartSequence + (ulong)excess);
+                }
             }
         }
 

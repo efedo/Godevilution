@@ -1778,6 +1778,23 @@ public sealed class ClientModelTests
     }
 
     [Fact]
+    public void RejectsMalformedStaleEventBatchesBeforeDiscardingThem()
+    {
+        var model = new AuthoritativeClientModel();
+        model.Apply(new AuthoritativeClientMessage(Snapshot: new Snapshot {
+            Tick = 12,
+            Players = { new PlayerSnapshot { EntityId = 7 } },
+        }));
+
+        Assert.Throws<InvalidDataException>(() =>
+            model.Apply(new AuthoritativeClientMessage(Events: new EventBatch {
+                Tick = 11,
+                Events = { new GameEvent() },
+            })));
+        Assert.Empty(model.RecentEvents);
+    }
+
+    [Fact]
     public void RejectsMalformedCommandAcknowledgementsBeforeStateMutation()
     {
         var model = new AuthoritativeClientModel();
