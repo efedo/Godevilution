@@ -60,7 +60,8 @@ changed geometry before the same effect-time revalidation cancels it.
 Protocol snapshot validators now preserve that boundary as well: pending moves
 must remain within the published level bounds, but a destination that is
 currently blocked is accepted for effect-time server revalidation rather than
-being rejected during transport or client-model validation.
+being rejected during managed transport, Godot client-model, or native
+compatibility validation.
 
 Player hits now also honor the native Gargoyle wake-up boundary: an active
 Gargoyle special flag is consumed by the first physical hit without applying

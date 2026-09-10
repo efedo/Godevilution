@@ -1300,7 +1300,7 @@ tl::expected<void, std::string> ValidatePlayerActionSnapshots(const protocol::Sn
 		if (!levels.emplace(level.level_id(), &level).second)
 			return tl::make_unexpected("Server-backed snapshot contains duplicate level geometry.");
 	}
-	const auto isProjectedMoveWalkable = [&](const protocol::PlayerSnapshot &player, const protocol::PlayerActionSnapshot &action) {
+	const auto isProjectedMoveDestinationInBounds = [&](const protocol::PlayerSnapshot &player, const protocol::PlayerActionSnapshot &action) {
 		const auto level = levels.find(player.level_id());
 		if (level == levels.end() || level->second->width() == 0 || level->second->height() == 0)
 			return true;
@@ -1311,8 +1311,7 @@ tl::expected<void, std::string> ValidatePlayerActionSnapshots(const protocol::Sn
 		const int64_t targetCell = targetY * level->second->width() + targetX;
 		if (targetCell > std::numeric_limits<int32_t>::max())
 			return false;
-		return std::find(level->second->blocked_cells().begin(), level->second->blocked_cells().end(), static_cast<int32_t>(targetCell))
-		    == level->second->blocked_cells().end();
+		return true;
 	};
 	const auto isProjectedActionTarget = [&](const protocol::PlayerSnapshot &player, const protocol::PlayerActionSnapshot &action) {
 		if (!IsValidNativeTileCoordinate(action.target_x(), action.target_y()))
@@ -1385,7 +1384,7 @@ tl::expected<void, std::string> ValidatePlayerActionSnapshots(const protocol::Sn
 	    && action.target_x() == 0 && action.target_y() == 0
 	    && !action.target_cell()
 		    && !action.has_cast()
-		    && isProjectedMoveWalkable(player, action);
+	    && isProjectedMoveDestinationInBounds(player, action);
 		const bool attackIsValid = kind == 2
 		    && (combatMode == protocol::PLAYER_COMBAT_MODE_ATTACK
 		        || combatMode == protocol::PLAYER_COMBAT_MODE_RANGED_ATTACK)

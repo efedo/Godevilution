@@ -13,7 +13,8 @@ All notable changes to this fork are documented below.
   the action was pending, allowing the effect-time guard to cancel them safely.
   Protocol and Godot client-model validation now retain those pending actions
   when their destination is in bounds but currently blocked, leaving the final
-  geometry decision to the authoritative effect tick.
+  geometry decision to the authoritative effect tick; the native compatibility
+  validator now follows the same boundary.
 
 - Aligned compatibility-template combat and replay RNG boundaries with the
   native runner: metadata-free monster armor keeps its legacy damage reduction,

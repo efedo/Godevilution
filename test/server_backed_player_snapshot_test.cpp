@@ -1839,6 +1839,7 @@ TEST(ServerBackedPlayerSnapshot, RejectsMalformedPlayerActions)
 	EXPECT_FALSE(ValidatePlayerActionSnapshots(cellAttackOutside).has_value());
 
 	protocol::Snapshot blockedMove;
+	blockedMove.set_tick(1);
 	player = blockedMove.add_players();
 	player->set_level_id(1);
 	player->set_position_x(0);
@@ -1857,7 +1858,10 @@ TEST(ServerBackedPlayerSnapshot, RejectsMalformedPlayerActions)
 	level->set_width(2);
 	level->set_height(2);
 	level->add_blocked_cells(1);
-	EXPECT_FALSE(ValidatePlayerActionSnapshots(blockedMove).has_value());
+	EXPECT_TRUE(ValidatePlayerActionSnapshots(blockedMove).has_value());
+	protocol::Snapshot outOfBoundsMove = blockedMove;
+	outOfBoundsMove.mutable_players(0)->set_position_x(1);
+	EXPECT_FALSE(ValidatePlayerActionSnapshots(outOfBoundsMove).has_value());
 
 	protocol::Snapshot invalidCast;
 	player = invalidCast.add_players();
