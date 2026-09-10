@@ -8175,6 +8175,29 @@ public sealed class ReplayFixtureTests
     }
 
     [Fact]
+    public void GameplayGoatRangedSecondaryMonsterArrowUsesQ6ImpactDamageRange()
+    {
+        var fixture = LoadReplayFixture("gameplay-monster-arrow-goat-ranged-secondary-q6-range.json");
+        var executor = CreateMonsterArrowExecutor(fixture);
+
+        var result = ReplayFixtureExecutor.Execute(
+            fixture,
+            executor,
+            new AuthoritativeCommandServer(executor));
+        var secondary = Assert.Single(result.FinalSnapshot.Players, player => player.EntityId == 8);
+        var projectile = Assert.Single(result.FinalSnapshot.Projectiles);
+
+        Assert.Equal(CommandStatus.Accepted, Assert.Single(result.Results).Status);
+        Assert.Equal(6144, secondary.Life);
+        Assert.Equal(6400, secondary.LifeMaximum);
+        Assert.Equal((int)AuthoritativeProjectilePhase.Impact, projectile.Phase);
+        Assert.Equal(8U, projectile.TargetEntityId);
+        Assert.Equal(
+            fixture.Checkpoints.Select(checkpoint => checkpoint.StateSha256),
+            result.Checkpoints.Select(checkpoint => checkpoint.ActualStateSha256));
+    }
+
+    [Fact]
     public void GameplayGoatRangedCloseRetreatMatchesNativeLifecycle()
     {
         var path = Path.Combine(

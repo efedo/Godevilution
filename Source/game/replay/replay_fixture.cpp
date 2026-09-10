@@ -4327,7 +4327,14 @@ void AdvanceReplayMonsterArrowsOneTick(ReplayFixtureExecutionState &state)
 					damage = projectile.damageMinimum
 					    + GenerateRnd(state, projectile.damageMaximum - projectile.damageMinimum + 1);
 				}
-				*hitLife = std::max(0, *hitLife - std::max(0, damage));
+				const int32_t damageQ6 = std::max(0, damage) * 64;
+				const int32_t lifeMaximum = secondaryHit
+				    ? state.secondaryPlayerLifeMaximum
+				    : state.lifeMaximum;
+				const int32_t appliedDamage = lifeMaximum % 64 == 0
+				    ? damageQ6
+				    : std::max(0, damage);
+				*hitLife = std::max(0, *hitLife - appliedDamage);
 				if (secondaryHit && *hitLife == 0)
 					StartReplaySecondaryPlayerDeath(state, true);
 				if (projectile.impactLifetime > 0) {
@@ -9956,6 +9963,10 @@ void AdmitReplayAutonomousMonsterArrow(
 	projectile.targetX = target.positionX;
 	projectile.targetY = target.positionY;
 	projectile.damage = state.combatTargetMaxDamage;
+	if (state.combatTargetMaxDamage > state.combatTargetMinDamage) {
+		projectile.damageMinimum = state.combatTargetMinDamage;
+		projectile.damageMaximum = state.combatTargetMaxDamage;
+	}
 	projectile.remainingTicks = static_cast<uint32_t>(std::max(1, candidateDistance(target)));
 	projectile.behavior = MonsterArrowBehavior;
 	projectile.speed = 1;

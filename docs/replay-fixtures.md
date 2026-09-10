@@ -374,6 +374,9 @@ load their complete stealth distance and
 retreat tuple from the hash-checked `sneak` content pack.
 The elemental equipment and ranged-arrow fixtures validate the canonical
 `devilution.base` content manifest before replaying their equipment channels.
+`gameplay-monster-arrow-goat-ranged-secondary-q6-range.json` adds a seeded
+GoatRanged arrow with a three-to-seven damage range and Q6-backed secondary
+life, proving native range metadata survives admission and impact.
 Optional `facing_direction` uses the native zero-through-seven ordinal. Both
 runners apply accepted action rotations, conditionally hash non-South facing,
 and use the direction for equipped-item death placement.
@@ -1066,6 +1069,8 @@ Notable shared fixtures include:
   preservation across the native and managed runners;
 - `gameplay-goat-melee-secondary-q6-range.json` for seeded secondary-player
   Q6 damage-range, incoming `_pIGetHit`, and canonical life parity;
+- `gameplay-monster-arrow-goat-ranged-secondary-q6-range.json` for seeded
+  MonsterArrow range metadata, Q6 secondary impact, and travel/impact parity;
 - `gameplay-multiplayer-secondary-monster-pathing.json` for bounded fallback
   movement around a dead primary participant and alternate first-step parity;
 - `gameplay-multiplayer-secondary-monster-object-pathing.json` for preserving

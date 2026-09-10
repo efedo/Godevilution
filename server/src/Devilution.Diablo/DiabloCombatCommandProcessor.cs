@@ -10598,14 +10598,18 @@ public sealed class DiabloCombatCommandProcessor
                     rules.HellfireArmorBonusAgainstDemons,
                     rules.HellfireArmorBonusAgainstUndead);
         }
+        // Native ProcessArrow uses the monster range when it is non-fixed; keep
+        // legacy fixed missile rows unchanged when their range is identical.
+        var damageRange = GetEffectiveMonsterDamageRange(monster, special: false);
+        var hasExplicitDamageRange = monster.MinDamage != 0 || monster.MaxDamage != 0;
         var hasConfiguredDamage = missile is not null
-            && missile.ProjectileDamage > 0;
+            && missile.ProjectileDamage > 0
+            && (!hasExplicitDamageRange
+                || damageRange.Minimum == damageRange.Maximum
+                    && damageRange.Minimum == missile.ProjectileDamage);
         var baseDamage = hasConfiguredDamage
             ? missile!.ProjectileDamage
-            : SelectEffectiveMonsterDamage(
-                monster,
-                special: false,
-                seed: attackSeed);
+            : damageRange.Maximum;
         var damage = rules.ResolveMonsterRangedAttackDamage(
             baseDamage,
             GetEffectiveMonsterToHit(monster, special: false),
@@ -10651,10 +10655,10 @@ public sealed class DiabloCombatCommandProcessor
             ResistantDamageDivisor = 1,
             DamageMinimum = hasConfiguredDamage
                 ? 0
-                : GetEffectiveMonsterDamageRange(monster, special: false).Minimum,
+                : damageRange.Minimum,
             DamageMaximum = hasConfiguredDamage
                 ? 0
-                : GetEffectiveMonsterDamageRange(monster, special: false).Maximum,
+                : damageRange.Maximum,
         };
         world.Projectiles.Add(projectile.EntityId, projectile);
         return true;

@@ -8594,6 +8594,9 @@ canonical checkpoint identical in the compact C++ and managed runners.
 The seeded secondary-player GoatMelee lane now applies the same Q6 range and
 incoming `_pIGetHit` boundary to Q6 life, preserving the canonical checkpoint
 and native AI-stream advancement in both runners.
+The seeded GoatRanged MonsterArrow lane now carries a non-fixed min/max range
+through projectile admission and applies its impact to Q6-backed secondary
+life, preserving travel, impact phase, and the canonical hash in both runners.
 
 ## Near-term priorities
 

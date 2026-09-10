@@ -29,6 +29,10 @@ All notable changes to this fork are documented below.
   and incoming `_pIGetHit` boundary, preserving Q6 life and AI-stream state;
   added a shared GoatMelee checkpoint.
 
+- Preserved validated MonsterArrow min/max damage metadata through native and
+  managed projectile admission and Q6-backed secondary impact; added a shared
+  seeded GoatRanged travel/impact checkpoint.
+
 - Ruleset replacement now publishes migrated session checkpoints during
   candidate preparation, before activation or handshake identity publication;
   failed exports or checkpoint writes keep the previous generation active.
