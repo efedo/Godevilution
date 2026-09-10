@@ -7,8 +7,8 @@ namespace Devilution.Server.Stores;
 /** Durable atomic checkpoint containing authoritative state and command receipts. */
 public sealed class AuthoritativeSessionStore
 {
-    /** Version 2 adds a state hash; version 3 also hashes the command ledger. */
-    public const int CurrentFormatVersion = 3;
+    /** Version 2 adds a state hash; version 3 hashes the command ledger; version 4 binds the ruleset identity. */
+    public const int CurrentFormatVersion = 4;
     private static readonly Dictionary<string, object> PathLocks = new(StringComparer.OrdinalIgnoreCase);
     private static readonly object PathLockSynchronization = new();
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.General) {
@@ -27,7 +27,8 @@ public sealed class AuthoritativeSessionStore
     public void Save(
         string sessionId,
         string serializedState,
-        IReadOnlyDictionary<ulong, CommandResult> commandResults)
+        IReadOnlyDictionary<ulong, CommandResult> commandResults,
+        string? rulesetIdentityHash = null)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(sessionId);
         ArgumentException.ThrowIfNullOrWhiteSpace(serializedState);
@@ -42,12 +43,16 @@ public sealed class AuthoritativeSessionStore
         var pathLock = GetPathLock(path);
         lock (pathLock) {
             try {
+                var formatVersion = string.IsNullOrWhiteSpace(rulesetIdentityHash)
+                    ? 3
+                    : CurrentFormatVersion;
                 var document = new SessionDocument(
-                    CurrentFormatVersion,
+                    formatVersion,
                     serializedState,
                     receipts,
                     ComputeStateSha256(serializedState),
-                    ComputeReceiptsSha256(receipts));
+                    ComputeReceiptsSha256(receipts),
+                    rulesetIdentityHash);
                 var bytes = StrictUtf8Text.Encode(
                     JsonSerializer.Serialize(document, JsonOptions),
                     "authoritative session checkpoint");
@@ -69,8 +74,13 @@ public sealed class AuthoritativeSessionStore
         }
     }
 
-    /** Loads one complete checkpoint, failing closed on corruption. */
-    public AuthoritativeSessionDocument? Load(string sessionId)
+    /**
+     * Loads one complete checkpoint, failing closed on corruption or an
+     * incompatible current-format ruleset identity.
+     */
+    public AuthoritativeSessionDocument? Load(
+        string sessionId,
+        string? expectedRulesetIdentityHash = null)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(sessionId);
         var path = GetPath(sessionId);
@@ -88,9 +98,21 @@ public sealed class AuthoritativeSessionStore
             }
             if (document is null || string.IsNullOrWhiteSpace(document.SerializedState))
                 throw new InvalidDataException("The authoritative session checkpoint is incomplete.");
-            if (document.FormatVersion is not (1 or 2 or CurrentFormatVersion))
+            if (document.FormatVersion is not (1 or 2 or 3 or CurrentFormatVersion))
                 throw new InvalidDataException(
                     $"Authoritative session checkpoint format {document.FormatVersion} is unsupported.");
+            if (document.FormatVersion == CurrentFormatVersion
+                && string.IsNullOrWhiteSpace(document.RulesetIdentityHash))
+                throw new InvalidDataException(
+                    "The current authoritative session checkpoint has no ruleset identity.");
+            if (!string.IsNullOrWhiteSpace(expectedRulesetIdentityHash)
+                && document.FormatVersion == CurrentFormatVersion
+                && !string.Equals(
+                    document.RulesetIdentityHash,
+                    expectedRulesetIdentityHash,
+                    StringComparison.Ordinal))
+                throw new InvalidDataException(
+                    "The authoritative session checkpoint ruleset identity does not match the active ruleset.");
             if (document.FormatVersion >= 2
                 && !string.Equals(
                     document.StateSha256,
@@ -115,7 +137,7 @@ public sealed class AuthoritativeSessionStore
                         "The authoritative session checkpoint contains an invalid or duplicate command receipt.");
                 }
             }
-            if (document.FormatVersion == CurrentFormatVersion
+            if (document.FormatVersion >= 3
                 && !string.Equals(
                     document.CommandReceiptsSha256,
                     ComputeReceiptsSha256(document.CommandReceipts),
@@ -128,7 +150,8 @@ public sealed class AuthoritativeSessionStore
                 document.SerializedState,
                 document.CommandReceipts
                     .Select(receipt => receipt.ToCommandResult())
-                    .ToArray());
+                    .ToArray(),
+                document.RulesetIdentityHash);
         }
     }
 
@@ -155,7 +178,8 @@ public sealed class AuthoritativeSessionStore
         string SerializedState,
         Receipt[] CommandReceipts,
         string? StateSha256,
-        string? CommandReceiptsSha256);
+        string? CommandReceiptsSha256,
+        string? RulesetIdentityHash);
 
     private static string ComputeStateSha256(string serializedState)
         => Convert.ToHexString(SHA256.HashData(
@@ -216,4 +240,5 @@ public sealed class AuthoritativeSessionStore
 public sealed record AuthoritativeSessionDocument(
     int FormatVersion,
     string SerializedState,
-    IReadOnlyList<CommandResult> CommandReceipts);
+    IReadOnlyList<CommandResult> CommandReceipts,
+    string? RulesetIdentityHash = null);

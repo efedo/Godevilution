@@ -428,7 +428,11 @@ public sealed class AuthoritativeTcpServer : IAsyncDisposable
                 ? null
                 : saveProvider.ExportSessionState(session.Id);
             var completedCommands = commandServer.ExportCompletedCommands(session.Id);
-            sessionPersistence.Save(session.Id, serializedState, completedCommands);
+            sessionPersistence.Save(
+                session.Id,
+                serializedState,
+                completedCommands,
+                handshake.Identity.RulesetIdentityHash);
         });
     }
 
@@ -452,7 +456,9 @@ public sealed class AuthoritativeTcpServer : IAsyncDisposable
     {
         if (session.SessionDocumentLoaded)
             return session.SessionDocument;
-        session.SessionDocument = sessionStore?.Load(session.Id);
+        session.SessionDocument = sessionStore?.Load(
+            session.Id,
+            handshake.Identity.RulesetIdentityHash);
         session.SessionDocumentLoaded = true;
         return session.SessionDocument;
     }

@@ -2,6 +2,13 @@
 
 Status date: 2026-09-10
 
+Authoritative session checkpoints now bind current-format state to the active
+ruleset identity in addition to their state and command-ledger hashes. A
+restart therefore fails closed before importing a checkpoint produced by a
+different content/module generation, while version-1 through version-3
+checkpoints remain readable for migration. Live ruleset replacement continues
+to use the explicit in-memory export/import migration path.
+
 The active content schema is now `1.462.0` (with `1.461.0` retained as
 the previous additive contract). Optional `procedural_quest_piece_origins.tsv`
 rows publish deterministic ordinary-level quest geometry origins. Their

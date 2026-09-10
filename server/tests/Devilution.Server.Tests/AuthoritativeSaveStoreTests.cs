@@ -152,11 +152,12 @@ public sealed class AuthoritativeSaveStoreTests
                     Status = CommandStatus.Accepted,
                     RejectReason = CommandRejectReason.Unspecified,
                 },
-            });
+            }, "ruleset-v4");
 
             var document = store.Load("session-a");
             Assert.NotNull(document);
             Assert.Equal(AuthoritativeSessionStore.CurrentFormatVersion, document.FormatVersion);
+            Assert.Equal("ruleset-v4", document.RulesetIdentityHash);
             Assert.Equal("authoritative-state", document.SerializedState);
             Assert.Collection(
                 document.CommandReceipts,
@@ -172,6 +173,84 @@ public sealed class AuthoritativeSaveStoreTests
                 });
             Assert.Throws<ArgumentException>(() => store.Load("../session-a"));
             Assert.Empty(Directory.GetFiles(root, "*.tmp"));
+        } finally {
+            if (Directory.Exists(root))
+                Directory.Delete(root, recursive: true);
+        }
+    }
+
+    [Fact]
+    public void SessionStoreRejectsCheckpointWrittenForAnotherRuleset()
+    {
+        var root = Path.Combine(
+            Path.GetTempPath(),
+            "godevilution-session-ruleset-tests",
+            Guid.NewGuid().ToString("N"));
+        try {
+            var store = new AuthoritativeSessionStore(root);
+            store.Save(
+                "session-a",
+                "state",
+                new Dictionary<ulong, CommandResult>(),
+                "ruleset-a");
+
+            var exception = Assert.Throws<InvalidDataException>(() =>
+                store.Load("session-a", "ruleset-b"));
+            Assert.Contains("ruleset identity", exception.Message, StringComparison.Ordinal);
+            var document = store.Load("session-a", "ruleset-a");
+            Assert.NotNull(document);
+            Assert.Equal("ruleset-a", document.RulesetIdentityHash);
+        } finally {
+            if (Directory.Exists(root))
+                Directory.Delete(root, recursive: true);
+        }
+    }
+
+    [Fact]
+    public void SessionStoreAcceptsLegacyCheckpointWhenRulesetIdentityIsRequested()
+    {
+        var root = Path.Combine(
+            Path.GetTempPath(),
+            "godevilution-session-legacy-ruleset-tests",
+            Guid.NewGuid().ToString("N"));
+        try {
+            var store = new AuthoritativeSessionStore(root);
+            store.Save("session-a", "legacy-state", new Dictionary<ulong, CommandResult>());
+
+            var document = store.Load("session-a", "current-ruleset");
+
+            Assert.NotNull(document);
+            Assert.Equal(3, document.FormatVersion);
+            Assert.Null(document.RulesetIdentityHash);
+            Assert.Equal("legacy-state", document.SerializedState);
+        } finally {
+            if (Directory.Exists(root))
+                Directory.Delete(root, recursive: true);
+        }
+    }
+
+    [Fact]
+    public void SessionStoreRejectsCurrentCheckpointWithoutRulesetIdentity()
+    {
+        var root = Path.Combine(
+            Path.GetTempPath(),
+            "godevilution-session-missing-ruleset-tests",
+            Guid.NewGuid().ToString("N"));
+        try {
+            Directory.CreateDirectory(root);
+            var stateHash = Convert.ToHexString(
+                SHA256.HashData(Encoding.UTF8.GetBytes("state")));
+            var receiptsHash = Convert.ToHexString(
+                SHA256.HashData(Encoding.UTF8.GetBytes("[]")));
+            File.WriteAllText(
+                Path.Combine(root, "session-a.session.json"),
+                "{\"FormatVersion\":4,\"SerializedState\":\"state\",\"CommandReceipts\":[],"
+                + "\"StateSha256\":\"" + stateHash + "\","
+                + "\"CommandReceiptsSha256\":\"" + receiptsHash + "\"}");
+
+            var exception = Assert.Throws<InvalidDataException>(() =>
+                new AuthoritativeSessionStore(root).Load("session-a"));
+            Assert.Contains("ruleset identity", exception.Message, StringComparison.Ordinal);
         } finally {
             if (Directory.Exists(root))
                 Directory.Delete(root, recursive: true);

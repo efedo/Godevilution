@@ -23,13 +23,14 @@ public sealed class AuthoritativeSessionPersistence
     public void Save(
         string sessionId,
         string? serializedState,
-        IReadOnlyDictionary<ulong, CommandResult> commandResults)
+        IReadOnlyDictionary<ulong, CommandResult> commandResults,
+        string? rulesetIdentityHash = null)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(sessionId);
         ArgumentNullException.ThrowIfNull(commandResults);
 
         if (sessionStore is not null && serializedState is not null)
-            sessionStore.Save(sessionId, serializedState, commandResults);
+            sessionStore.Save(sessionId, serializedState, commandResults, rulesetIdentityHash);
         if (saveStore is not null && serializedState is not null)
             saveStore.Save(sessionId, serializedState);
         if (commandReceiptStore is not null)

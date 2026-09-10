@@ -28,13 +28,15 @@ public sealed class AuthoritativeSessionPersistenceTests
                         Status = CommandStatus.Accepted,
                         RejectReason = CommandRejectReason.Unspecified,
                     },
-                }));
+                },
+                "ruleset-a"));
             Assert.NotNull(exception);
             Assert.True(exception is IOException or UnauthorizedAccessException);
 
             var checkpoint = new AuthoritativeSessionStore(primaryRoot).Load("session-a");
             Assert.NotNull(checkpoint);
             Assert.Equal("authoritative-state", checkpoint.SerializedState);
+            Assert.Equal("ruleset-a", checkpoint.RulesetIdentityHash);
             Assert.Single(checkpoint.CommandReceipts);
         } finally {
             DeleteRoot(primaryRoot);

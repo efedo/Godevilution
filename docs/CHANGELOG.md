@@ -2,6 +2,13 @@
 
 All notable changes to this fork are documented below.
 
+- Bound current-format authoritative session checkpoints to the active
+  ruleset identity. Restart recovery now rejects state produced by a different
+  content/module generation before import, while version-1 through version-3
+  checkpoints remain readable and are upgraded on their next synchronized
+  write. Live ruleset replacement retains its explicit in-memory migration
+  path.
+
 - Added the generic host-adapter package boundary. Repeatable
   `--game-adapter-package` roots now load hash-verified `game-host-adapter.json`
   packages, reject traversal/reparse-point paths and undeclared private

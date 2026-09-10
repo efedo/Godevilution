@@ -62,9 +62,11 @@ authoritative player-class identity and starting attributes.
 the wall-clock scheduler, module loading, filesystem persistence, and sessions
 without referencing Diablo. `Devilution.Server.Diablo` maps Diablo commands and
 projections to Protobuf through an explicit version-dispatching player-save
-codec. The generic host's combined session checkpoint is now format 3 with
-canonical SHA-256 state and command-ledger integrity envelopes and continues to
-accept format-1 and format-2 checkpoints until their next synchronized write.
+codec. The generic host's combined session checkpoint is now format 4 with
+canonical SHA-256 state and command-ledger integrity envelopes plus the active
+ruleset identity. Restart recovery rejects a current-format checkpoint written
+for a different ruleset before importing gameplay state, while format-1 through
+format-3 checkpoints remain readable until their next synchronized write.
 The .NET 10 `Devilution.Server` executable contains
 only `Program.cs` and composes these libraries. Data now composes
 manifest-declared composite-key overlays transactionally. Engine now preflights

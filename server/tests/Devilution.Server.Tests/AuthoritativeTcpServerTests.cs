@@ -748,6 +748,62 @@ public sealed class AuthoritativeTcpServerTests
     }
 
     [Fact]
+    public async Task TcpServerRejectsCurrentCheckpointFromAnotherRulesetBeforeImport()
+    {
+        var saveRoot = Path.Combine(
+            Path.GetTempPath(),
+            "Godevilution-Ruleset-Checkpoint-Rejection-" + Guid.NewGuid().ToString("N"));
+        const string resumeToken = "ruleset-checkpoint-session";
+        var sessionId = SessionIdForToken(resumeToken);
+        try {
+            new AuthoritativeSessionStore(saveRoot).Save(
+                sessionId,
+                "old-state",
+                new Dictionary<ulong, CommandResult>(),
+                "old-ruleset");
+
+            var adapter = new ReloadableHostAdapter("fresh");
+            var handshake = new ProtocolHandshake(new ProtocolServerIdentity(
+                "server-build",
+                "0.1.0",
+                "content-hash",
+                20) {
+                RulesetIdentityHash = "new-ruleset",
+            });
+            await using var server = new AuthoritativeTcpServer(
+                new AuthoritativeCommandServer(adapter),
+                handshake,
+                new DelegateAuthoritativeClock(() => 10),
+                gameAdapter: adapter,
+                saveStore: new AuthoritativeSaveStore(saveRoot));
+            server.Start();
+
+            using var client = new TcpClient();
+            var cancellationToken = TestContext.Current.CancellationToken;
+            await client.ConnectAsync(IPAddress.Loopback, server.Port, cancellationToken);
+            await using var stream = client.GetStream();
+            await EnvelopeCodec.WriteAsync(stream, new Envelope {
+                ClientHello = new ClientHello {
+                    ClientBuildId = "client-build",
+                    ProtocolSchemaVersion = "0.1.0",
+                    ContentManifestHash = "content-hash",
+                    ResumeToken = resumeToken,
+                },
+            }, cancellationToken);
+
+            var error = await EnvelopeCodec.ReadAsync(stream, cancellationToken);
+            Assert.NotNull(error);
+            Assert.Equal(Envelope.PayloadOneofCase.Error, error!.PayloadCase);
+            Assert.Equal(ProtocolErrorCode.InvalidMessage, error.Error.Code);
+            Assert.Contains("ruleset identity", error.Error.Detail, StringComparison.OrdinalIgnoreCase);
+            Assert.False(adapter.SessionStateImported);
+        } finally {
+            if (Directory.Exists(saveRoot))
+                Directory.Delete(saveRoot, recursive: true);
+        }
+    }
+
+    [Fact]
     public async Task TcpServerRestartRestoresTwoParticipantSessionsAndReceiptLedgers()
     {
         var saveRoot = Path.Combine(
