@@ -5801,8 +5801,10 @@ public sealed class ShippedContentTests
             activation.QuestPools.SelectUnavailableQuestIds(0).Contains(baseQuest.QuestId),
             baseQuest.Unavailable);
         Assert.False(activation.Simulation.WorldState.Quests[3021].Active);
-        Assert.Equal(286, activation.Simulation.WorldState.Quests[3021].MessageId);
+        Assert.Equal(0, activation.Simulation.WorldState.Quests[3021].MessageId);
         Assert.Equal("Defiler", activation.Simulation.WorldState.Quests[3021].CompletionUniqueIdentity);
+        Assert.Equal(286, activation.QuestRouteMessages!.Definitions
+            .Single(definition => definition.QuestId == 3021).MessageId);
         Assert.False(activation.Simulation.WorldState.Quests[3006].Active);
         Assert.False(activation.Simulation.WorldState.Quests[3006].ActivateOnRoute);
         Assert.True(activation.Simulation.WorldState.Quests[3006].CompletionDiablo);

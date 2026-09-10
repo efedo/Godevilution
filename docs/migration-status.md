@@ -11,10 +11,11 @@ before opening a new epoch, so protocol errors and retained authoritative
 messages are not discarded.
 
 Hellfire Defiler route activation now preserves the native quest-log boundary:
-the server marks the quest logged when level 17 is entered and carries the
-external `TEXT_DEFILER1` opening message through the active Hellfire dialogue
-catalog. Re-entering the route remains idempotent, and the quest's completion
-identity and Cathedral Map reward remain unchanged.
+the external route-message catalog keeps the initial quest state message-neutral
+and the server sets `TEXT_DEFILER1`, marks the quest logged, and emits one
+server-owned dialogue event when level 17 is first entered. Re-entering the
+route remains idempotent, and the quest's completion identity and Cathedral Map
+reward remain unchanged.
 
 Persisted sessions can now adopt the active ruleset identity after a server
 restart when their validated checkpoint was already published for that exact

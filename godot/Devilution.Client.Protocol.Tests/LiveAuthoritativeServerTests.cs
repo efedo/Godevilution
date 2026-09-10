@@ -2906,7 +2906,7 @@ public sealed class LiveAuthoritativeServerTests
         Assert.Equal(2U, monster.MonsterId);
         Assert.Equal(11, monster.MaxHitPoints);
         Assert.True(monster.IsUndead);
-        Assert.Equal(286, defilerQuest.MessageId);
+        Assert.Equal(0, defilerQuest.MessageId);
         Assert.True(defilerQuest.Initial);
         Assert.False(defilerQuest.Logged);
     }

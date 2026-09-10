@@ -3452,7 +3452,7 @@ public sealed class DiabloWorldCommandProcessorTests
             17,
             1,
             active: false,
-            messageId: 286,
+            messageId: 0,
             completionUniqueIdentity: "Defiler");
         var questTypes = new AuthoritativeQuestTypeCatalog([
             new AuthoritativeQuestTypeDefinition(
@@ -3466,9 +3466,13 @@ public sealed class DiabloWorldCommandProcessorTests
                 false),
         ]);
         var world = new DiabloWorldState(quests: [quest]);
+        var routeMessages = new AuthoritativeQuestRouteMessageCatalog([
+            new(3021, 17, 286),
+        ]);
         var processor = new DiabloWorldCommandProcessor(
             world,
             questTypes: questTypes,
+            questRouteMessages: routeMessages,
             gameMode: DiabloGameMode.SinglePlayer);
         var player = CreatePlayer(levelId: 17);
 
@@ -3482,6 +3486,10 @@ public sealed class DiabloWorldCommandProcessorTests
         Assert.True(quest.Active);
         Assert.True(quest.Logged);
         Assert.Equal(286, quest.MessageId);
+        var dialogue = Assert.Single(first.Events);
+        Assert.Equal(DiabloGameplayEventKind.Dialogue, dialogue.Kind);
+        Assert.Equal(3021u, dialogue.QuestId);
+        Assert.Equal(286, dialogue.MessageId);
 
         var second = processor.Execute(
             player,
@@ -3499,12 +3507,13 @@ public sealed class DiabloWorldCommandProcessorTests
             17,
             1,
             active: false,
-            messageId: 286,
+            messageId: 0,
             completionUniqueIdentity: "Defiler");
         var multiplayerWorld = new DiabloWorldState(quests: [multiplayerQuest]);
         var multiplayerProcessor = new DiabloWorldCommandProcessor(
             multiplayerWorld,
             questTypes: questTypes,
+            questRouteMessages: routeMessages,
             gameMode: DiabloGameMode.Multiplayer);
         var multiplayerPlayer = CreatePlayer(levelId: 17);
 
@@ -3517,6 +3526,7 @@ public sealed class DiabloWorldCommandProcessorTests
         Assert.True(multiplayerEntry.Succeeded, multiplayerEntry.Failure?.ToString());
         Assert.True(multiplayerQuest.Active);
         Assert.True(multiplayerQuest.Logged);
+        Assert.Equal(286, Assert.Single(multiplayerEntry.Events).MessageId);
     }
 
     [Fact]

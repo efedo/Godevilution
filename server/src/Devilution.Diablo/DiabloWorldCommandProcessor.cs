@@ -29,6 +29,8 @@ public sealed class DiabloWorldCommandProcessor
     private readonly AuthoritativeMonsterTypeCatalog? monsterTypes;
     private readonly AuthoritativeExperienceCatalog? experience;
     private readonly AuthoritativeTownerGreetingCatalog? townerGreetings;
+    private readonly AuthoritativeQuestRouteMessageCatalog? questRouteMessages;
+    private readonly List<DiabloGameplayEvent> pendingEntryEvents = [];
     private Func<int, AuthoritativeSetLevelObjectOrigin?>? setLevelOriginResolver;
     private readonly DeterministicEntityIdAllocator worldItemEntityIds = new(0x40000000);
     private readonly DeterministicEntityIdAllocator authoredProjectileEntityIds = new(0xC0000000);
@@ -58,7 +60,8 @@ public sealed class DiabloWorldCommandProcessor
         AuthoritativeMonsterTypeCatalog? monsterTypes = null,
         AuthoritativeExperienceCatalog? experience = null,
         AuthoritativeTownerGreetingCatalog? townerGreetings = null,
-        AuthoritativeObjectItemGateCatalog? objectItemGates = null)
+        AuthoritativeObjectItemGateCatalog? objectItemGates = null,
+        AuthoritativeQuestRouteMessageCatalog? questRouteMessages = null)
     {
         this.world = world ?? throw new ArgumentNullException(nameof(world));
         this.playerAnimations = playerAnimations;
@@ -83,6 +86,7 @@ public sealed class DiabloWorldCommandProcessor
         this.monsterTypes = monsterTypes;
         this.experience = experience;
         this.townerGreetings = townerGreetings;
+        this.questRouteMessages = questRouteMessages;
         if (useNativePlayerActionTiming && playerAnimations is null) {
             throw new ArgumentException(
                 "Native player action timing requires a player animation catalog.",
@@ -107,20 +111,22 @@ public sealed class DiabloWorldCommandProcessor
         ArgumentNullException.ThrowIfNull(intent);
         ArgumentNullException.ThrowIfNull(players);
 
-        EnsureLevelEntryState(player.LevelId);
+        pendingEntryEvents.Clear();
+        EnsureLevelEntryState(player.LevelId, player.EntityId, emitDialogue: true);
 
         if (intent is DiabloRestartTownIntent)
-            return RestartTown(player, appliedTick);
+            return AttachPendingEntryEvents(RestartTown(player, appliedTick));
 
         if (useNativePlayerActionTiming
             && (player.Life <= 0
                 || player.CombatMode is DiabloPlayerCombatMode.Death
                     or DiabloPlayerCombatMode.NewLevel
                     or DiabloPlayerCombatMode.Quit)) {
+            pendingEntryEvents.Clear();
             return DiabloWorldIntentResult.Rejected(DiabloRuleFailure.NotAllowed);
         }
 
-        return intent switch {
+        var result = intent switch {
             DiabloMoveIntent move => Move(player, move, appliedTick, players),
             DiabloMoveToIntent moveTo => MoveTo(player, moveTo, appliedTick, players),
             DiabloUsePortalIntent portal => UsePortal(
@@ -165,6 +171,19 @@ public sealed class DiabloWorldCommandProcessor
             DiabloAllocateAttributeIntent allocation => AllocateAttribute(player, allocation),
             _ => DiabloWorldIntentResult.Rejected(DiabloRuleFailure.Malformed),
         };
+        return AttachPendingEntryEvents(result);
+    }
+
+    private DiabloWorldIntentResult AttachPendingEntryEvents(
+        DiabloWorldIntentResult result)
+    {
+        if (!result.Succeeded || pendingEntryEvents.Count == 0) {
+            pendingEntryEvents.Clear();
+            return result;
+        }
+        var events = result.Events.Concat(pendingEntryEvents).ToArray();
+        pendingEntryEvents.Clear();
+        return DiabloWorldIntentResult.AcceptedWith(events);
     }
 
     /** Applies the native Telekinesis target operation after cast validation. */
@@ -470,7 +489,7 @@ public sealed class DiabloWorldCommandProcessor
         player.MarkLevelVisited(player.LevelId);
         player.PositionX = destination.Value.X;
         player.PositionY = destination.Value.Y;
-        EnsureLevelEntryState(player.LevelId);
+        EnsureLevelEntryState(player.LevelId, player.EntityId, emitDialogue: true);
         player.ManaShieldActive = false;
         RemoveLevelTransitionStatuses(player);
         if (useNativePlayerActionTiming) {
@@ -536,7 +555,7 @@ public sealed class DiabloWorldCommandProcessor
         player.MarkLevelVisited(player.LevelId);
         player.PositionX = combatRules.RestartPositionX;
         player.PositionY = combatRules.RestartPositionY;
-        EnsureLevelEntryState(player.LevelId);
+        EnsureLevelEntryState(player.LevelId, player.EntityId, emitDialogue: true);
         player.Life = Math.Min(
             player.LifeMaximum,
             checked(combatRules.RestartLife * combatRules.RestartLifeScale));
@@ -751,7 +770,7 @@ public sealed class DiabloWorldCommandProcessor
         player.MarkLevelVisited(player.LevelId);
         player.PositionX = destinationPositionX;
         player.PositionY = destinationPositionY;
-        EnsureLevelEntryState(player.LevelId);
+        EnsureLevelEntryState(player.LevelId, player.EntityId, emitDialogue: true);
         player.ManaShieldActive = false;
         RemoveLevelTransitionStatuses(player);
         if (useNativePlayerActionTiming) {
@@ -782,7 +801,10 @@ public sealed class DiabloWorldCommandProcessor
     }
 
     /** Ensures external QUEST_INIT rows are active whenever authoritative state observes a route level. */
-    internal void EnsureLevelEntryState(uint levelId)
+    internal void EnsureLevelEntryState(
+        uint levelId,
+        uint sourceEntityId = 0,
+        bool emitDialogue = false)
     {
         if (questTypes is null)
             return;
@@ -809,6 +831,21 @@ public sealed class DiabloWorldCommandProcessor
 
             quest.Active = true;
             quest.Logged = true;
+            if (questRouteMessages is not null
+                && questRouteMessages.TryGet(quest.QuestId, out var routeMessage)
+                && routeMessage.LevelId == levelId) {
+                quest.MessageId = routeMessage.MessageId;
+                if (emitDialogue) {
+                    pendingEntryEvents.Add(new DiabloGameplayEvent(
+                        DiabloGameplayEventKind.Dialogue,
+                        sourceEntityId,
+                        0,
+                        0) {
+                        MessageId = routeMessage.MessageId,
+                        QuestId = quest.QuestId,
+                    });
+                }
+            }
             if (quest.RouteActivationVariable1 >= 0)
                 quest.Variable1 = Math.Max(quest.Variable1, quest.RouteActivationVariable1);
         }

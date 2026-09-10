@@ -16,6 +16,53 @@ public sealed class DiabloSimulationTests
             DiabloContentSchema.Current);
     }
 
+    [Fact]
+    public void WorldExecutionPublishesRouteEntryDialogueAfterPlayerConfiguration()
+    {
+        var world = new AuthoritativeWorld();
+        world.AddLevel(new AuthoritativeLevel(17, 40, 40));
+        var quest = new AuthoritativeQuestState(
+            3021,
+            17,
+            1,
+            active: false,
+            messageId: 0);
+        var simulation = DiabloSimulationFactory.Instance.Create(
+            new DiabloSimulationOptions(new StoreCatalog(), DiabloModule.Instance.Rules) {
+                World = world,
+                Quests = [quest],
+                QuestTypes = new AuthoritativeQuestTypeCatalog([
+                    new AuthoritativeQuestTypeDefinition(
+                        3021,
+                        20,
+                        "The Defiler",
+                        17,
+                        17,
+                        string.Empty,
+                        0,
+                        false),
+                ]),
+                QuestRouteMessages = new AuthoritativeQuestRouteMessageCatalog([
+                    new(3021, 17, 286),
+                ]),
+            });
+        var player = CreatePlayer();
+        player.LevelId = 17;
+
+        var result = simulation.Execute(
+            player,
+            new DiabloMoveIntent(1, 0),
+            1,
+            [player]);
+
+        Assert.True(result.Succeeded, result.Failure?.ToString());
+        var dialogue = Assert.Single(result.Events);
+        Assert.Equal(DiabloGameplayEventKind.Dialogue, dialogue.Kind);
+        Assert.Equal(3021U, dialogue.QuestId);
+        Assert.Equal(286, dialogue.MessageId);
+        Assert.True(quest.Logged);
+    }
+
     [Theory]
     [InlineData("devilution.diablo", "1.417.0", false)]
     [InlineData("devilution.diablo", "1.501.0", true)]

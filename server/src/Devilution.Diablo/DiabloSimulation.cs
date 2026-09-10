@@ -68,6 +68,9 @@ public sealed class DiabloSimulationOptions
     /** Validated staged unique-monster dialogue supplied by content. */
     public AuthoritativeQuestDialogueStageCatalog? QuestDialogueStages { get; init; }
 
+    /** Validated route-entry dialogue supplied by content. */
+    public AuthoritativeQuestRouteMessageCatalog? QuestRouteMessages { get; init; }
+
     /** Validated native greetings for general town vendors and service NPCs. */
     public AuthoritativeTownerGreetingCatalog? TownerGreetings { get; init; }
 
@@ -321,7 +324,8 @@ public sealed class DiabloSimulationFactory : IDiabloSimulationFactory
             options.MonsterTypes,
             options.Experience,
             options.TownerGreetings,
-            options.ObjectItemGates);
+            options.ObjectItemGates,
+            options.QuestRouteMessages);
         var simulation = new DiabloSimulation(
             options.StoreCatalog,
             worldState,
@@ -858,6 +862,7 @@ public sealed partial class DiabloSimulation
         if (WorldState.VictoryTriggered)
             return DiabloIntentResult.Rejected(DiabloRuleFailure.NotAllowed);
         ConfigurePlayer(player);
+        worldCommands.EnsureLevelEntryState(player.LevelId);
         return storeCommands.Execute(player, intent, appliedTick);
     }
 
@@ -877,6 +882,9 @@ public sealed partial class DiabloSimulation
             ?? players.ToArray();
         foreach (var participant in participants)
             ConfigurePlayer(participant);
+        foreach (var participant in participants)
+            if (!ReferenceEquals(participant, player))
+                worldCommands.EnsureLevelEntryState(participant.LevelId);
         var previousLevelId = player.LevelId;
         var result = worldCommands.Execute(player, intent, appliedTick, participants);
         if (result.Succeeded && player.LevelId != previousLevelId) {
@@ -1187,6 +1195,7 @@ public sealed partial class DiabloSimulation
         if (WorldState.VictoryTriggered)
             return DiabloCombatIntentResult.Rejected(DiabloRuleFailure.NotAllowed);
         ConfigurePlayer(player);
+        worldCommands.EnsureLevelEntryState(player.LevelId);
         return combatCommands.Execute(player, intent, appliedTick, [player]);
     }
 
@@ -1204,6 +1213,9 @@ public sealed partial class DiabloSimulation
         ConfigurePlayer(player);
         foreach (var participant in players)
             ConfigurePlayer(participant);
+        worldCommands.EnsureLevelEntryState(player.LevelId);
+        foreach (var participant in players)
+            worldCommands.EnsureLevelEntryState(participant.LevelId);
         return combatCommands.Execute(player, intent, appliedTick, players);
     }
 
@@ -1213,6 +1225,7 @@ public sealed partial class DiabloSimulation
         if (WorldState.VictoryTriggered)
             return;
         ConfigurePlayer(player);
+        worldCommands.EnsureLevelEntryState(player.LevelId);
         DiabloCombatCommandProcessor.AdvanceStatusEffects(player, tick);
     }
 
@@ -1223,15 +1236,16 @@ public sealed partial class DiabloSimulation
         ArgumentNullException.ThrowIfNull(players);
         if (WorldState.VictoryTriggered)
             return [];
-        foreach (var participant in players)
+        foreach (var participant in players) {
             ConfigurePlayer(participant);
+            worldCommands.EnsureLevelEntryState(participant.LevelId);
+        }
         return combatCommands.AdvanceTick(tick, players);
     }
 
     private void ConfigurePlayer(AuthoritativePlayerState player)
     {
         ArgumentNullException.ThrowIfNull(player);
-        worldCommands.EnsureLevelEntryState(player.LevelId);
         player.ConfigureMaximumAttribute(CombatRules.MaximumAttribute);
     }
 }

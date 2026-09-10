@@ -37,6 +37,7 @@ public sealed record DiabloContentActivation
         AuthoritativeSpellBookCatalog? spellBooks = null,
         AuthoritativeQuestTownerInteractionCatalog? questTownerInteractions = null,
         AuthoritativeQuestDialogueStageCatalog? questDialogueStages = null,
+        AuthoritativeQuestRouteMessageCatalog? questRouteMessages = null,
         AuthoritativeDialogueMessageCatalog? dialogueMessages = null,
         AuthoritativeSetLevelObjectCatalog? setLevelObjects = null,
         AuthoritativeSetLevelMapCatalog? setLevelMaps = null,
@@ -81,6 +82,7 @@ public sealed record DiabloContentActivation
         SpellBooks = spellBooks;
         QuestTownerInteractions = questTownerInteractions;
         QuestDialogueStages = questDialogueStages;
+        QuestRouteMessages = questRouteMessages;
         DialogueMessages = dialogueMessages;
         SetLevelObjects = setLevelObjects;
         ProceduralSetPieceOrigins = proceduralSetPieceOrigins;
@@ -170,6 +172,9 @@ public sealed record DiabloContentActivation
 
     /** Validated staged unique-monster dialogue from the active content pack. */
     public AuthoritativeQuestDialogueStageCatalog? QuestDialogueStages { get; }
+
+    /** Validated route-entry dialogue supplied by the active content pack. */
+    public AuthoritativeQuestRouteMessageCatalog? QuestRouteMessages { get; }
 
     /** Validated server-owned text for authored dialogue events. */
     public AuthoritativeDialogueMessageCatalog? DialogueMessages { get; }
@@ -899,6 +904,11 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
             out var questDialogueStagesTable)
             ? LoadQuestDialogueStages(content, questDialogueStagesTable, stableIds)
             : null;
+        var questRouteMessages = content.TryGetTable(
+            "quest_route_messages.tsv",
+            out var questRouteMessagesTable)
+            ? LoadQuestRouteMessages(content, questRouteMessagesTable, stableIds)
+            : null;
         var townerGreetings = content.TryGetTable(
             "towner_greetings.tsv",
             out var townerGreetingsTable)
@@ -912,6 +922,9 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
         dialogueMessages?.ValidateMessageIds(
             (questDialogueStages?.Definitions ?? [])
                 .SelectMany(stage => new[] { stage.MessageId, stage.NextMessageId }));
+        dialogueMessages?.ValidateMessageIds(
+            (questRouteMessages?.Definitions ?? [])
+                .Select(definition => definition.MessageId));
         dialogueMessages?.ValidateMessageIds(
             objectDefinitions.Select(@object => @object.DialogueMessageId));
         dialogueMessages?.ValidateMessageIds(
@@ -929,6 +942,7 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
             townerGreetings.ValidateWorld(world);
         if (quests is not null) {
             AuthoritativeQuestCatalog.ValidateActivationTargets(quests);
+            questRouteMessages?.ValidateQuests(quests);
             if (monsterTypes is not null)
                 AuthoritativeQuestCatalog.ValidateMonsterCompletionTargets(
                     quests,
@@ -1213,6 +1227,7 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
             QuestTypes = questTypes,
             QuestTownerInteractions = questTownerInteractions,
             QuestDialogueStages = questDialogueStages,
+            QuestRouteMessages = questRouteMessages,
             TownerGreetings = townerGreetings,
             DialogueMessages = dialogueMessages,
             SetLevelObjects = setLevelObjects,
@@ -1274,6 +1289,7 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
             spellBooks,
             questTownerInteractions,
             questDialogueStages,
+            questRouteMessages,
             dialogueMessages,
             setLevelObjects,
             setLevelMaps,
@@ -1477,6 +1493,19 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
         if (content.Manifest.Schema == DiabloContentSchema.Current)
             AuthoritativeQuestDialogueStageCatalog.ValidateExternalizedProduction(table);
         return AuthoritativeQuestDialogueStageCatalog.LoadTsv(
+            table.SourcePath,
+            table.ToCanonicalTsv(),
+            stableIds);
+    }
+
+    private static AuthoritativeQuestRouteMessageCatalog LoadQuestRouteMessages(
+        ComposedContent content,
+        TsvTable table,
+        StableContentIdCatalog stableIds)
+    {
+        if (content.Manifest.Schema == DiabloContentSchema.Current)
+            AuthoritativeQuestRouteMessageCatalog.ValidateExternalizedProduction(table);
+        return AuthoritativeQuestRouteMessageCatalog.LoadTsv(
             table.SourcePath,
             table.ToCanonicalTsv(),
             stableIds);

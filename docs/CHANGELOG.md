@@ -2,11 +2,11 @@
 
 All notable changes to this fork are documented below.
 
-- Externalized the Hellfire Defiler route-entry opening message and made route
-  activation mark the quest as logged, matching native `ResyncMPQuests`/
-  `PlayDungMsgs` state publication while keeping the message identity in the
-  active Hellfire dialogue catalog. Added content-activation and route-entry
-  regression coverage.
+- Externalized the Hellfire Defiler route-entry opening message. The quest
+  state now remains message-neutral until level 17 is actually entered; the
+  authoritative route transition then sets the message, marks the quest
+  logged, and emits one server-owned dialogue event. Added catalog,
+  content-activation, and route-entry regression coverage.
 
 - Extended the packaged Godot process-restart fixture to keep one client
   instance across an adapter replacement. It now submits a server-owned move
