@@ -441,6 +441,9 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
                 }
             }
         }
+        if (content.Manifest.Schema == DiabloContentSchema.Current && world is null)
+            throw new InvalidDataException(
+                "Current-schema Diablo activation requires levels.tsv or procedural_levels.tsv content.");
         var nativeDunGeometry = AuthoritativeNativeDunGeometryCatalog.LoadOptional(content);
         var nativeDunLevels = content.TryGetTable(
             "native_dun_levels.tsv",

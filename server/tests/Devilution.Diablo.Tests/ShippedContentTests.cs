@@ -18,7 +18,7 @@ public sealed class ShippedContentTests
         Assert.Equal("devilution.base", pack.Id);
         Assert.Equal("0.1.0", pack.Version);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.473.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.474.0"),
             pack.Schema);
         Assert.Empty(pack.Overlays);
         var nativeDunMonsterTable = pack.Tables.Single(
@@ -403,7 +403,7 @@ public sealed class ShippedContentTests
                 .ToArray(),
             basePack.Dependencies,
             basePack.Overlays,
-            new ContentSchemaIdentity("devilution.diablo", "1.472.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.473.0"),
             basePack.DependencyConstraints,
             basePack.Assets);
 
@@ -414,6 +414,33 @@ public sealed class ShippedContentTests
                 [previousPack])));
 
         Assert.Null(activation.MonsterSpawnPolicies);
+    }
+
+    [Fact]
+    public void CurrentSchemaRequiresAnExternalWorldSource()
+    {
+        var contentRoot = Path.Combine(FindRepositoryRoot(), "server", "content", "base");
+        var basePack = ContentPackLoader.LoadManifestDirectory(contentRoot);
+        var incompletePack = new ContentPack(
+            basePack.Id,
+            basePack.Version,
+            basePack.Tables
+                .Where(table => table.SourcePath is not ("levels.tsv" or "procedural_levels.tsv"))
+                .ToArray(),
+            basePack.Dependencies,
+            basePack.Overlays,
+            basePack.Schema,
+            basePack.DependencyConstraints,
+            basePack.Assets);
+
+        var exception = Assert.Throws<InvalidDataException>(() =>
+            DiabloModule.Instance.ContentBootstrap.Activate(
+                ComposedContent.Compose(new ContentManifest(
+                    "missing-world-source",
+                    "1",
+                    [incompletePack]))));
+
+        Assert.Contains("requires levels.tsv or procedural_levels.tsv", exception.Message);
     }
 
     [Fact]
@@ -620,7 +647,7 @@ public sealed class ShippedContentTests
                 .ToArray(),
             basePack.Dependencies,
             basePack.Overlays,
-            new ContentSchemaIdentity("devilution.diablo", "1.472.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.473.0"),
             basePack.DependencyConstraints,
             basePack.Assets);
 
@@ -1323,7 +1350,7 @@ public sealed class ShippedContentTests
             currentPack.Tables,
             currentPack.Dependencies,
             currentPack.Overlays,
-            new ContentSchemaIdentity("devilution.diablo", "1.472.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.473.0"),
             currentPack.DependencyConstraints,
             currentPack.Assets);
         var content = ComposedContent.Compose(new ContentManifest(
@@ -1455,7 +1482,7 @@ public sealed class ShippedContentTests
                 .ToArray(),
             basePack.Dependencies,
             basePack.Overlays,
-            new ContentSchemaIdentity("devilution.diablo", "1.472.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.473.0"),
             basePack.DependencyConstraints,
             basePack.Assets);
 
@@ -1520,7 +1547,7 @@ public sealed class ShippedContentTests
                 .ToArray(),
             basePack.Dependencies,
             basePack.Overlays,
-            new ContentSchemaIdentity("devilution.diablo", "1.472.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.473.0"),
             basePack.DependencyConstraints,
             basePack.Assets);
 
@@ -1588,7 +1615,7 @@ public sealed class ShippedContentTests
                 .ToArray(),
             basePack.Dependencies,
             basePack.Overlays,
-            new ContentSchemaIdentity("devilution.diablo", "1.472.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.473.0"),
             basePack.DependencyConstraints,
             basePack.Assets);
 
@@ -1652,7 +1679,7 @@ public sealed class ShippedContentTests
                 .ToArray(),
             basePack.Dependencies,
             basePack.Overlays,
-            new ContentSchemaIdentity("devilution.diablo", "1.472.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.473.0"),
             basePack.DependencyConstraints,
             basePack.Assets);
 
@@ -1714,7 +1741,7 @@ public sealed class ShippedContentTests
                 .ToArray(),
             basePack.Dependencies,
             basePack.Overlays,
-            new ContentSchemaIdentity("devilution.diablo", "1.472.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.473.0"),
             basePack.DependencyConstraints,
             basePack.Assets);
 
@@ -1776,7 +1803,7 @@ public sealed class ShippedContentTests
                 .ToArray(),
             basePack.Dependencies,
             basePack.Overlays,
-            new ContentSchemaIdentity("devilution.diablo", "1.472.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.473.0"),
             basePack.DependencyConstraints,
             basePack.Assets);
 
@@ -2557,7 +2584,7 @@ public sealed class ShippedContentTests
                 .ToArray(),
             basePack.Dependencies,
             basePack.Overlays,
-            new ContentSchemaIdentity("devilution.diablo", "1.472.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.473.0"),
             basePack.DependencyConstraints,
             basePack.Assets);
 
@@ -3997,7 +4024,7 @@ public sealed class ShippedContentTests
                 .ToArray(),
             basePack.Dependencies,
             basePack.Overlays,
-            new ContentSchemaIdentity("devilution.diablo", "1.472.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.473.0"),
             basePack.DependencyConstraints,
             basePack.Assets);
 
@@ -4174,7 +4201,7 @@ public sealed class ShippedContentTests
                 .ToArray(),
             basePack.Dependencies,
             basePack.Overlays,
-            new ContentSchemaIdentity("devilution.diablo", "1.472.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.473.0"),
             basePack.DependencyConstraints,
             basePack.Assets);
 
@@ -4563,7 +4590,7 @@ public sealed class ShippedContentTests
 
         Assert.Equal("devilution.hellfire", hellfirePack.Id);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.473.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.474.0"),
             hellfirePack.Schema);
         Assert.Equal(DiabloGameVariant.Hellfire, combat.GameVariant);
         Assert.Equal(2, combat.UniqueExperienceMultiplier);

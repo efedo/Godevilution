@@ -3,9 +3,9 @@
 Each directory under `server/content` is a server-owned, validated gameplay
 content pack. The default `base` pack is loaded by the standalone server and is
 included in its content manifest and combined ruleset identity.
-It declares its identity and `devilution.diablo@1.473.0` schema in
+It declares its identity and `devilution.diablo@1.474.0` schema in
 `base/content-pack.json`; the Diablo module also accepts the immediately
-previous additive `1.472.0` schema so existing manifest-based packs remain
+previous additive `1.473.0` schema so existing manifest-based packs remain
 loadable. A composed manifest must still use one exact schema identity across
 all declared packs; use the previous schema only for a complete compatible
 manifest rather than mixing it with the current pack. The standalone host falls
@@ -1660,7 +1660,10 @@ Current-schema supplied rows must use the complete ordered symbolic schema:
 `suppress_multiplayer_death_drops`, and `required_walkable_cells`. This keeps
 procedural level identity and generation policy in the validated pack. Previous
 schema packs and direct catalog callers retain the numeric and omitted-column
-compatibility path, while a pack that omits the optional table remains valid.
+compatibility path. Current-schema packs must provide at least one validated
+world source (`levels.tsv` or `procedural_levels.tsv`); previous-schema direct
+loaders retain the no-world compatibility path, subject to dependent-table
+validation during activation.
 
 Schema 1.325 adds the optional `required_variable1` column to
 `item_quest_effects.tsv`. SetVariable1 transitions may require an exact
@@ -3273,7 +3276,7 @@ and no implicit table replacements. For example:
   "dependencies": ["devilution.base"],
   "schema": {
     "id": "devilution.diablo",
-    "version": "1.473.0"
+    "version": "1.474.0"
   },
   "dependencyConstraints": [
     {
@@ -3307,8 +3310,8 @@ three-component semantic-version constraints for declared dependencies. All
 declared schemas in one ordered manifest must match, every constraint must name
 a declared dependency, and the loaded dependency version must satisfy its
 range. The first-party server rejects a declared schema other than
-`devilution.diablo@1.473.0` or its immediately previous additive
-`1.472.0`. Current-schema packs must provide the complete production table
+`devilution.diablo@1.474.0` or its immediately previous additive
+`1.473.0`. Current-schema packs must provide the complete production table
 contract; previous-schema packs retain their documented compatibility fallbacks.
 Manifests without compatibility metadata retain their legacy identity and
 remain loadable during migration.
