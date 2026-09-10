@@ -486,8 +486,16 @@ public sealed class DiabloCombatCommandProcessor
                         player.EntityId)) {
                     player.PositionX = destinationX;
                     player.PositionY = destinationY;
-                    worldCommands?.ExecuteOccupancyTriggers(player, players);
-                    worldCommands?.ExecuteLevelTrigger(player, tick, players);
+                    if (worldCommands is not null) {
+                        AddDirectedEvents(
+                            player,
+                            worldCommands.ExecuteOccupancyTriggers(player, players),
+                            events);
+                        AddDirectedEvents(
+                            player,
+                            worldCommands.ExecuteLevelTrigger(player, tick, players),
+                            events);
+                    }
                 }
                 break;
             case DiabloPlayerActionKind.Attack:
@@ -543,6 +551,16 @@ public sealed class DiabloCombatCommandProcessor
     private static void AddDirectedEvents(
         AuthoritativePlayerState player,
         DiabloCombatIntentResult result,
+        ICollection<DiabloDirectedGameplayEvent> events)
+    {
+        foreach (var gameplayEvent in result.Events) {
+            events.Add(new DiabloDirectedGameplayEvent(player, gameplayEvent));
+        }
+    }
+
+    private static void AddDirectedEvents(
+        AuthoritativePlayerState player,
+        DiabloWorldIntentResult result,
         ICollection<DiabloDirectedGameplayEvent> events)
     {
         foreach (var gameplayEvent in result.Events) {
@@ -2925,6 +2943,7 @@ public sealed class DiabloCombatCommandProcessor
             if (!warpResult.Succeeded)
                 return DiabloCombatIntentResult.Rejected(
                     warpResult.Failure ?? DiabloRuleFailure.Malformed);
+            events.AddRange(warpResult.Events);
         }
         ApplyImmediateSelfDamage(
             player,

@@ -2,6 +2,13 @@
 
 Status date: 2026-09-10
 
+Server-owned dialogue events now cross every world-transition path: immediate
+movement, native-timed level triggers, occupancy-triggered objects, and the
+Warp spell all preserve the directed event through simulation and combat
+delivery. This closes a transient-event loss at the authoritative/protocol
+boundary while retaining the initial-snapshot behavior for participants created
+directly on an already-entered route level.
+
 The packaged Godot client restart fixture now keeps the same protocol client
 across a selected-adapter process replacement, submits a server-owned movement
 before shutdown, and verifies that the persisted checkpoint restores the same

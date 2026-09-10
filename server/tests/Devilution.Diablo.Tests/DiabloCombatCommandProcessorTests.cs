@@ -1067,6 +1067,82 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void TimedLevelTriggerForwardsRouteEntryDialogueEvent()
+    {
+        var geometry = new AuthoritativeWorld();
+        geometry.AddLevel(new AuthoritativeLevel(16, 4, 4));
+        geometry.AddLevel(new AuthoritativeLevel(17, 4, 4));
+        geometry.AddWarpTarget(new AuthoritativeWarpTarget(
+            7,
+            16,
+            1,
+            0,
+            17,
+            0,
+            0));
+        var quest = new AuthoritativeQuestState(
+            3021,
+            17,
+            1,
+            active: false,
+            messageId: 0);
+        var questTypes = new AuthoritativeQuestTypeCatalog([
+            new AuthoritativeQuestTypeDefinition(
+                3021,
+                20,
+                "The Defiler",
+                17,
+                17,
+                string.Empty,
+                0,
+                false),
+        ]);
+        var world = new DiabloWorldState(geometry, quests: [quest]);
+        var playerClasses = LoadShippedPlayerClasses();
+        var playerAnimations = LoadShippedPlayerAnimations(playerClasses);
+        var worldCommands = new DiabloWorldCommandProcessor(
+            world,
+            playerAnimations,
+            useNativePlayerActionTiming: true,
+            questTypes: questTypes,
+            questRouteMessages: new AuthoritativeQuestRouteMessageCatalog([
+                new(3021, 17, 286),
+            ]));
+        var processor = CreateProcessor(
+            world,
+            playerClasses: playerClasses,
+            playerAnimations: playerAnimations,
+            worldCommands: worldCommands,
+            useNativePlayerActionTiming: true);
+        var player = CreatePlayer(
+            levelId: 16,
+            positionX: 0,
+            positionY: 0,
+            entityId: 7,
+            characterClassId: 0);
+
+        var accepted = worldCommands.Execute(
+            player,
+            new DiabloMoveIntent(1, 0),
+            1,
+            [player]);
+        Assert.True(accepted.Succeeded, accepted.Failure?.ToString());
+        Assert.Empty(accepted.Events);
+        var action = Assert.IsType<AuthoritativePlayerActionState>(player.CurrentAction);
+
+        var deliveries = processor.AdvanceTick(action.EffectTick, [player]);
+
+        var dialogue = Assert.Single(
+            deliveries,
+            delivery => delivery.Event.Kind == DiabloGameplayEventKind.Dialogue);
+        Assert.Same(player, dialogue.Recipient);
+        Assert.Equal(3021U, dialogue.Event.QuestId);
+        Assert.Equal(286, dialogue.Event.MessageId);
+        Assert.Equal(17U, player.LevelId);
+        Assert.True(quest.Logged);
+    }
+
+    [Fact]
     public void TimedMovementRevalidatesWalkabilityAtEffectTick()
     {
         var geometry = new AuthoritativeWorld();

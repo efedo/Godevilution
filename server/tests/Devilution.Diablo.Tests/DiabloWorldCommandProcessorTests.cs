@@ -1004,6 +1004,59 @@ public sealed class DiabloWorldCommandProcessorTests
     }
 
     [Fact]
+    public void WarpPublishesRouteEntryDialogueEvent()
+    {
+        var authoritativeWorld = new AuthoritativeWorld();
+        authoritativeWorld.AddLevel(new AuthoritativeLevel(16, 5, 5));
+        authoritativeWorld.AddLevel(new AuthoritativeLevel(17, 5, 5));
+        authoritativeWorld.AddWarpTarget(new AuthoritativeWarpTarget(
+            7,
+            16,
+            1,
+            1,
+            17,
+            2,
+            2));
+        var quest = new AuthoritativeQuestState(
+            3021,
+            17,
+            1,
+            active: false,
+            messageId: 0);
+        var world = new DiabloWorldState(authoritativeWorld, quests: [quest]);
+        var processor = new DiabloWorldCommandProcessor(
+            world,
+            questTypes: new AuthoritativeQuestTypeCatalog([
+                new AuthoritativeQuestTypeDefinition(
+                    3021,
+                    20,
+                    "The Defiler",
+                    17,
+                    17,
+                    string.Empty,
+                    0,
+                    false),
+            ]),
+            questRouteMessages: new AuthoritativeQuestRouteMessageCatalog([
+                new(3021, 17, 286),
+            ]));
+        var player = CreatePlayer(
+            positionX: 0,
+            positionY: 0,
+            levelId: 16,
+            entityId: 1);
+
+        var result = processor.ExecuteWarp(player, 12, [player]);
+
+        Assert.True(result.Succeeded, result.Failure?.ToString());
+        var dialogue = Assert.Single(result.Events);
+        Assert.Equal(DiabloGameplayEventKind.Dialogue, dialogue.Kind);
+        Assert.Equal(3021U, dialogue.QuestId);
+        Assert.Equal(286, dialogue.MessageId);
+        Assert.True(quest.Logged);
+    }
+
+    [Fact]
     public void WarpUsesTheValidatedDestinationSearchRadius()
     {
         var authoritativeWorld = new AuthoritativeWorld();

@@ -377,13 +377,13 @@ public sealed class DiabloWorldCommandProcessor
         if (warp is null)
             return DiabloWorldIntentResult.Rejected(DiabloRuleFailure.InvalidTarget);
 
-        return ApplyWarpTarget(
+        return AttachPendingEntryEvents(ApplyWarpTarget(
             player,
             warp,
             appliedTick,
             players,
             applyEffects,
-            searchRadius);
+            searchRadius));
     }
 
     /** Applies an exact authored level-trigger after movement reaches its tile. */
@@ -410,13 +410,13 @@ public sealed class DiabloWorldCommandProcessor
         if (warp is null)
             return DiabloWorldIntentResult.Rejected(DiabloRuleFailure.InvalidTarget);
 
-        return ApplyWarpTarget(
+        return AttachPendingEntryEvents(ApplyWarpTarget(
             player,
             warp,
             appliedTick,
             players,
             applyEffects,
-            searchRadius);
+            searchRadius));
     }
 
     /** Applies authored object operations whose trigger tile is occupied by a player. */
@@ -637,11 +637,15 @@ public sealed class DiabloWorldCommandProcessor
             intent.DirectionY);
         player.PositionX = targetX;
         player.PositionY = targetY;
-        ExecuteOccupancyTriggers(player, players);
+        var occupancyResult = ExecuteOccupancyTriggers(player, players);
         var levelTrigger = ExecuteLevelTrigger(player, appliedTick, players);
-        if (levelTrigger.Succeeded)
-            return levelTrigger;
-        return DiabloWorldIntentResult.Accepted;
+        if (levelTrigger.Succeeded) {
+            if (occupancyResult.Events.Count == 0)
+                return levelTrigger;
+            return DiabloWorldIntentResult.AcceptedWith(
+                occupancyResult.Events.Concat(levelTrigger.Events).ToArray());
+        }
+        return occupancyResult;
     }
 
     private bool HasRequiredActivatedLinkedObjects(AuthoritativeWorldObject @object)

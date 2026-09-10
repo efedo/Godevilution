@@ -2,6 +2,11 @@
 
 All notable changes to this fork are documented below.
 
+- World-transition dialogue events now survive native-timed movement,
+  occupancy-trigger execution, and Warp transitions. The simulation forwards
+  the server-owned event through directed tick deliveries and combat casts;
+  focused route-entry tests cover both level triggers and spell Warp.
+
 - Externalized the Hellfire Defiler route-entry opening message. The quest
   state now remains message-neutral until level 17 is actually entered; the
   authoritative route transition then sets the message, marks the quest
