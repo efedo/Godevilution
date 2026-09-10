@@ -54,6 +54,10 @@ Monster-target arrows now defer the Gargoyle wake-up check until their native
 impact boundary, so launch-time projectile state does not consume or bypass the
 server-owned special lock.
 
+Petrified monsters now use the native guaranteed-hit boundary for player melee,
+bow, and magic projectile attacks; Stone Curse still suppresses movement and
+regeneration-side transitions rather than combat damage.
+
 The compact native replay runner now mirrors the managed monster activation
 window for fixtures that carry an active target: visible targets wake for the
 native 255-tick window, while targets outside live-player vision count down

@@ -2233,6 +2233,48 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void PetrifiedMonsterGuaranteesPlayerArrowDamage()
+    {
+        var target = new AuthoritativeCombatTarget(
+            9,
+            8,
+            5,
+            5000,
+            petrified: true);
+        var world = new DiabloWorldState(combatTargets: [target]);
+        var bow = AuthoritativeItemState.Empty with {
+            ItemType = 3,
+            ItemClass = 1,
+            MinDamage = 10,
+            MaxDamage = 10,
+            StatFlag = true,
+        };
+        var player = CreatePlayer(
+            positionX: 5,
+            positionY: 5,
+            entityId: 7,
+            equipment: [new EquippedStoreItem(4, 100, bow)]);
+        var processor = CreateProcessor(world);
+
+        var result = processor.Execute(
+            player,
+            new DiabloAttackIntent(target.EntityId),
+            1);
+
+        Assert.True(result.Succeeded, result.Failure?.ToString());
+        Assert.Equal(5000, target.HitPoints);
+
+        processor.AdvanceTick(1, [player]);
+        processor.AdvanceTick(2, [player]);
+        var deliveries = processor.AdvanceTick(3, [player]);
+
+        Assert.Empty(world.Projectiles);
+        Assert.Equal(4990, target.HitPoints);
+        Assert.True(target.IsPetrified);
+        Assert.Equal(10, Assert.Single(deliveries).Event.Amount);
+    }
+
+    [Fact]
     public void PlayerArrowResolvesTheFirstCombatantOnItsTravelPath()
     {
         var endpoint = new AuthoritativeCombatTarget(9, 8, 5, 5000);
@@ -6271,7 +6313,7 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
-    public void PetrifiedMonsterRejectsPlayerPhysicalDamage()
+    public void PetrifiedMonsterGuaranteesPlayerPhysicalDamage()
     {
         var target = new AuthoritativeCombatTarget(
             9,
@@ -6297,9 +6339,12 @@ public sealed class DiabloCombatCommandProcessorTests
         var result = processor.Execute(player, new DiabloAttackIntent(target.EntityId), 1);
 
         Assert.True(result.Succeeded, result.Failure?.ToString());
-        Assert.Equal(100, target.HitPoints);
+        Assert.Equal(90, target.HitPoints);
         Assert.True(target.IsPetrified);
-        Assert.Empty(result.Events);
+        Assert.Contains(
+            result.Events,
+            gameplayEvent => gameplayEvent.Kind == DiabloGameplayEventKind.Damage
+                && gameplayEvent.TargetEntityId == target.EntityId);
     }
 
     [Fact]
@@ -6562,7 +6607,7 @@ public sealed class DiabloCombatCommandProcessorTests
             2);
 
         Assert.True(petrifiedResult.Succeeded);
-        Assert.Equal(100, petrified.HitPoints);
+        Assert.Equal(90, petrified.HitPoints);
         Assert.Equal((1, 0), (petrified.PositionX, petrified.PositionY));
     }
 

@@ -1885,9 +1885,6 @@ public sealed class DiabloCombatCommandProcessor
             target.GargoyleSpecialActive = false;
             return 0;
         }
-        if (monsterTarget && target.IsPetrified)
-            return 0;
-
         var damagePercent = 0;
         var damageFlat = 0;
         var hitBonus = 0;
@@ -2023,6 +2020,10 @@ public sealed class DiabloCombatCommandProcessor
                     - (!monsterTarget ? targetArmorClass : 0)),
                 0,
                 100);
+        // Native PlrHitMonst/MonsterMHit set the hit roll to zero for a
+        // petrified monster, making Stone Curse a guaranteed-hit boundary.
+        if (monsterTarget && target.IsPetrified)
+            effectiveHitChance = 100;
         attackHit = rules.ResolveAttackHit(effectiveHitChance, seed);
         var criticalDamage = damage;
         if (attackHit
@@ -15641,7 +15642,8 @@ public sealed class DiabloCombatCommandProcessor
                 - GetEffectiveMonsterLevel(target) * hitMonsterLevelScale,
             minimumHitChance,
             maximumHitChance);
-        if (!target.IsPetrified && random.RandomIntLessThan(100) >= hitChance)
+        var hitRoll = random.RandomIntLessThan(100);
+        if (!target.IsPetrified && hitRoll >= hitChance)
             return false;
 
         var damageQ6 = target.HitPointsQ6 / damageHitPointsDivisor / DeterministicFixedPointQ6.Scale

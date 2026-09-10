@@ -39,6 +39,10 @@ All notable changes to this fork are documented below.
   consumed at arrow impact rather than launch, suppressing physical, elemental,
   Peril, knockback, and other attack effects on the waking arrow.
 
+- Aligned petrified-monster admission with native `PlrHitMonst` and
+  `MonsterMHit`: player physical and projectile attacks now use guaranteed-hit
+  admission while Stone Curse remains active, without enabling knockback movement.
+
 - Completed the native `DamageWeapon` parity slice: successful melee attacks
   now use the 1-in-30 durability roll, each emitted ranged arrow uses the
   1-in-40 roll, hand/shield fallback ordering matches native behavior,
