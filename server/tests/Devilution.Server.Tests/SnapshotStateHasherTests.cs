@@ -1708,6 +1708,25 @@ public sealed class SnapshotStateHasherTests
     }
 
     [Fact]
+    public void ObjectPresentationFamilyChangesTheHash()
+    {
+        var baseline = new Snapshot {
+            Objects = { new ObjectSnapshot { EntityId = 20, ObjectId = 4 } },
+        };
+        var armorStand = baseline.Clone();
+        armorStand.Objects[0].PresentationKind = ObjectPresentationKind.NativeArmorStand;
+        var weaponRack = armorStand.Clone();
+        weaponRack.Objects[0].PresentationKind = ObjectPresentationKind.NativeWeaponRack;
+
+        Assert.NotEqual(
+            SnapshotStateHasher.Compute(baseline),
+            SnapshotStateHasher.Compute(armorStand));
+        Assert.NotEqual(
+            SnapshotStateHasher.Compute(armorStand),
+            SnapshotStateHasher.Compute(weaponRack));
+    }
+
+    [Fact]
     public void ObjectDialogueIdentityChangesTheHash()
     {
         var baseline = new Snapshot {

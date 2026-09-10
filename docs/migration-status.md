@@ -3419,7 +3419,8 @@ applies lifecycle metadata and the authored presentation family to both ordinary
 object rows and behavior-only templates before set-level or native-DUN placements
 clone them, so existing `objects.tsv` overlay headers remain compatible. Native
 armory families therefore come from content rather than a server-side native-ID
-switch; `native_object_id` remains compatibility metadata only.
+switch; `native_object_id` remains compatibility metadata only. Nondefault families
+also participate in the versioned authoritative snapshot hash.
 
 Native-compatible eight-way direction sectors and coordinate-to-facing selection
 are now implemented by the engine-neutral deterministic grid primitive; the

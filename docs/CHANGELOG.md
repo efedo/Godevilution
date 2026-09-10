@@ -6,6 +6,7 @@ All notable changes to this fork are documented below.
   `object_presentations.tsv` content sidecar. The authoritative object state,
   save codec, and protocol now carry the family without deriving it from
   native IDs; `89` and `90` remain compatibility metadata for older peers.
+  Nondefault families now participate in the canonical snapshot hash.
 
 - Promoted native armory visuals to additive server-owned protocol presentation
   families (`NATIVE_ARMOR_STAND` and `NATIVE_WEAPON_RACK`). Godot uses those

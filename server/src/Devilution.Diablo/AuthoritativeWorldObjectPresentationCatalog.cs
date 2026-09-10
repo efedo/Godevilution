@@ -64,8 +64,13 @@ public sealed class AuthoritativeWorldObjectPresentationCatalog
         if (!table.Columns.SequenceEqual(ProductionColumns, StringComparer.Ordinal))
             throw new InvalidDataException(
                 $"Production object presentation table '{table.SourcePath}' must use the complete ordered schema.");
-        foreach (var row in table.Rows)
-            _ = row.Required("entity_id");
+        foreach (var row in table.Rows) {
+            _ = row.RequiredUInt32("entity_id");
+            _ = row.RequiredBoolean("hide_when_activated");
+            _ = row.RequiredInt32("animation_frame");
+            _ = row.RequiredInt32("activated_animation_frame");
+            _ = row.Required("presentation_kind");
+        }
     }
 
     public static AuthoritativeWorldObjectPresentationCatalog LoadTsv(

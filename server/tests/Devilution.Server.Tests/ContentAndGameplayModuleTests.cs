@@ -81,6 +81,18 @@ public sealed class ContentAndGameplayModuleTests
     }
 
     [Fact]
+    public void ProductionObjectPresentationSchemaRejectsIncompleteRows()
+    {
+        var table = TsvTable.Parse(
+            "object_presentations.tsv",
+            "entity_id\thide_when_activated\tanimation_frame\tactivated_animation_frame\tpresentation_kind\n"
+                + "2026\t1\t0\t0\t\n");
+
+        Assert.Throws<InvalidDataException>(
+            () => AuthoritativeWorldObjectPresentationCatalog.ValidateExternalizedProduction(table));
+    }
+
+    [Fact]
     public void StoreServicePricingLoadsOverridesAndSpellStaffCosts()
     {
         var pricing = StoreServicePricing.LoadTsv("store_services.tsv", "key\tspell_id\tvalue\nsale_divisor\t\t5\nspell_staff_cost\t7\t12\n");

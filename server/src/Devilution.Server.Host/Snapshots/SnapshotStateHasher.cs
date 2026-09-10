@@ -622,6 +622,10 @@ public static class SnapshotStateHasher
                     hasher.AppendInt32(checked((int)@object.AnimationFrame));
                     hasher.AppendInt32(checked((int)@object.ActivatedAnimationFrame));
                 }
+                if (@object.PresentationKind != ObjectPresentationKind.Unspecified) {
+                    hasher.AppendString("godevilution-object-presentation-family-v1");
+                    hasher.AppendInt32((int)@object.PresentationKind);
+                }
                 if (@object.DialogueMessageId != 0) {
                     hasher.AppendString("godevilution-object-dialogue-v1");
                     hasher.AppendInt32(@object.DialogueMessageId);
