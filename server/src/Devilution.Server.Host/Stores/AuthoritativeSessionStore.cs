@@ -155,6 +155,19 @@ public sealed class AuthoritativeSessionStore
         }
     }
 
+    /** Removes one combined checkpoint when a multi-session write rolls back. */
+    public bool Delete(string sessionId)
+    {
+        var path = GetPath(sessionId);
+        var pathLock = GetPathLock(path);
+        lock (pathLock) {
+            if (!File.Exists(path))
+                return false;
+            File.Delete(path);
+            return true;
+        }
+    }
+
     private string GetPath(string sessionId)
     {
         if (sessionId.Any(character => !char.IsLetterOrDigit(character) && character is not '-' and not '_'))

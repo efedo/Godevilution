@@ -475,12 +475,11 @@ public sealed class AuthoritativeTcpServer : IAsyncDisposable
                     stateProvider.ExportSessionState(session.Id),
                     commandServer.ExportCompletedCommands(session.Id))))
             .ToArray();
-        foreach (var save in prepared)
-            sessionPersistence.Save(
-                save.SessionId,
-                save.SerializedState,
-                save.CommandResults,
-                rulesetIdentityHash);
+        sessionPersistence.SaveBatch(prepared.Select(save => new AuthoritativeSessionWrite(
+            save.SessionId,
+            save.SerializedState,
+            save.CommandResults,
+            rulesetIdentityHash)));
     }
 
     private void EnsureCommandReceiptsLoaded(SessionState session)

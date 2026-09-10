@@ -71,6 +71,63 @@ public sealed class AuthoritativeSessionPersistenceTests
         }
     }
 
+    [Fact]
+    public void BatchWriteRollsBackEarlierSessionsWhenALaterMirrorFails()
+    {
+        var primaryRoot = CreateRoot("batch-primary");
+        var compatibilityRoot = CreateRoot("batch-compatibility");
+        try {
+            Directory.CreateDirectory(Path.Combine(compatibilityRoot, "session-b.json"));
+            var persistence = new AuthoritativeSessionPersistence(
+                new AuthoritativeSaveStore(compatibilityRoot),
+                new AuthoritativeCommandReceiptStore(compatibilityRoot),
+                new AuthoritativeSessionStore(primaryRoot));
+            persistence.Save(
+                "session-a",
+                "old-state",
+                new Dictionary<ulong, CommandResult> {
+                    [1] = new CommandResult {
+                        ClientSequence = 1,
+                        ServerReceiptSequence = 1,
+                        AppliedTick = 1,
+                        Status = CommandStatus.Accepted,
+                        RejectReason = CommandRejectReason.Unspecified,
+                    },
+                },
+                "ruleset-old");
+
+            var exception = Record.Exception(() => persistence.SaveBatch([
+                new AuthoritativeSessionWrite(
+                    "session-a",
+                    "state-a",
+                    new Dictionary<ulong, CommandResult>(),
+                    "ruleset-new"),
+                new AuthoritativeSessionWrite(
+                    "session-b",
+                    "state-b",
+                    new Dictionary<ulong, CommandResult>(),
+                    "ruleset-new"),
+            ]));
+
+            Assert.NotNull(exception);
+            var sessionStore = new AuthoritativeSessionStore(primaryRoot);
+            var restored = sessionStore.Load("session-a");
+            Assert.NotNull(restored);
+            Assert.Equal("old-state", restored.SerializedState);
+            Assert.Equal("ruleset-old", restored.RulesetIdentityHash);
+            Assert.Single(restored.CommandReceipts);
+            Assert.Equal("old-state", new AuthoritativeSaveStore(compatibilityRoot).Load("session-a"));
+            Assert.Single(new AuthoritativeCommandReceiptStore(compatibilityRoot).Load("session-a"));
+            Assert.Null(sessionStore.Load("session-b"));
+            Assert.True(File.Exists(Path.Combine(primaryRoot, "session-a.session.json")));
+            Assert.True(File.Exists(Path.Combine(compatibilityRoot, "session-a.json")));
+            Assert.True(File.Exists(Path.Combine(compatibilityRoot, "session-a.commands.json")));
+        } finally {
+            DeleteRoot(primaryRoot);
+            DeleteRoot(compatibilityRoot);
+        }
+    }
+
     private static string CreateRoot(string name)
     {
         var root = Path.Combine(

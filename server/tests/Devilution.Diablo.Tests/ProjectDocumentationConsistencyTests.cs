@@ -31,7 +31,11 @@ public sealed class ProjectDocumentationConsistencyTests
             migrationStatus,
             StringComparison.Ordinal);
         Assert.Contains(
-            "all-session candidate export preparation before ruleset-reload checkpoint publication and activation/handshake identity changes",
+            "all-session candidate export preparation before ruleset-reload checkpoint publication, transactional rollback of earlier combined and compatibility files",
+            migrationStatus,
+            StringComparison.Ordinal);
+        Assert.Contains(
+            "transactional rollback of earlier combined and compatibility files",
             migrationStatus,
             StringComparison.Ordinal);
         Assert.DoesNotContain(

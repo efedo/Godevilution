@@ -56,6 +56,7 @@ public sealed class AuthoritativeSaveStore
                 : null;
     }
 
+    /** Removes one compatibility save when a multi-session write rolls back. */
     public bool Delete(string sessionId)
     {
         var path = GetPath(sessionId);

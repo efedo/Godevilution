@@ -262,9 +262,11 @@ exports complete initialized session state from the old adapter, imports it into
 candidate, publishes each migrated session checkpoint with the candidate ruleset
 identity before the candidate activation is published, preparing every session
 export before writing any checkpoint. The handshake identity is updated only
-after that preparation succeeds, so a failed candidate export leaves the
-previous generation and identity active; an immediate process restart cannot
-reject successfully migrated state.
+after that preparation succeeds, and the batch persistence transaction rolls
+back earlier combined and compatibility files if a later session write fails.
+A failed candidate export therefore leaves the previous generation and
+identity active; an immediate process restart cannot reject successfully
+migrated state.
 Generation leases keep replaced activations alive until all in-flight
 operations release them; the host drains and disposes those targets through its
 injected disposal policy.

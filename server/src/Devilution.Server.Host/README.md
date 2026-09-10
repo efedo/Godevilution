@@ -27,9 +27,11 @@ replacement waits
 for in-flight operations, migrates initialized sessions and prepares every
 session export before publishing their new-identity checkpoints during
 candidate preparation. This all-session export phase runs before activation or
-handshake publication, so a failed candidate export leaves the prior
-generation active; successful replacement then disposes drained game targets
-through an injected host policy.
+handshake publication, and the batch persistence transaction restores earlier
+session checkpoints if a later combined or compatibility write fails. A failed
+candidate export or batch write therefore leaves the prior generation active;
+successful replacement then disposes drained game targets through an injected
+host policy.
 It exposes the active combined ruleset identity and the number of retired
 generations still awaiting disposal so operators can verify replacement health
 without inspecting game-specific state.

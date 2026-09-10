@@ -10,6 +10,9 @@ All notable changes to this fork are documented below.
   writing any candidate-identity checkpoint, preventing a later export failure
   from partially advancing a multi-session recovery set.
 
+- Multi-session reload checkpoint writes now roll back earlier combined and
+  compatibility files when a later session write fails.
+
 - Ruleset replacement now persists every migrated session under the candidate
   ruleset identity before publishing the new handshake identity, closing the
   immediate-restart window introduced by identity-bound checkpoints.
