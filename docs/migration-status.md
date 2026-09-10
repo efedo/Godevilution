@@ -7,6 +7,11 @@ and fixed life-steal flags. Its refreshed native/C# checkpoints prove that the
 random draw remains consumed before the fixed life amount replaces it at the
 projectile impact boundary.
 
+Delayed authoritative player arrows now repeat the native `Plr2PlrMHit`
+friendly-fire and Etherealize checks at impact. A target that changes friendly
+mode or becomes Etherealized while the arrow is in flight no longer takes
+damage, matching native launch-versus-impact admission boundaries.
+
 Native player-versus-player resource restoration now follows `PlrHitPlr`:
 only usable `RandomStealLife` can restore the attacker after a physical player
 hit. Fixed `StealLife3/5` and `StealMana3/5` remain monster-target effects for

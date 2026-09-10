@@ -2044,6 +2044,94 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void PlayerBowImpactRechecksFriendlyModeBeforeApplyingDamage()
+    {
+        var bow = AuthoritativeItemState.Empty with {
+            ItemType = 3,
+            ItemClass = 1,
+            MinDamage = 10,
+            MaxDamage = 10,
+            StatFlag = true,
+        };
+        var world = new DiabloWorldState();
+        var processor = CreateProcessor(
+            world,
+            rules: new AuthoritativeCombatRules(
+                10,
+                1,
+                100,
+                friendlyFire: false));
+        var attacker = CreatePlayer(
+            entityId: 7,
+            equipment: [new EquippedStoreItem(4, 42, bow)]);
+        attacker.FriendlyMode = false;
+        var victim = CreatePlayer(
+            positionX: 3,
+            entityId: 8,
+            life: 6400,
+            lifeMaximum: 6400);
+
+        var result = processor.Execute(
+            attacker,
+            new DiabloAttackIntent(victim.EntityId),
+            1,
+            [attacker, victim]);
+
+        Assert.True(result.Succeeded, result.Failure?.ToString());
+        attacker.FriendlyMode = true;
+
+        for (ulong tick = 1; tick <= 3; tick++)
+            Assert.Empty(processor.AdvanceTick(tick, [attacker, victim]));
+
+        Assert.Equal(6400, victim.Life);
+        Assert.Empty(world.Projectiles);
+    }
+
+    [Fact]
+    public void PlayerBowImpactRechecksEtherealizeBeforeApplyingDamage()
+    {
+        var bow = AuthoritativeItemState.Empty with {
+            ItemType = 3,
+            ItemClass = 1,
+            MinDamage = 10,
+            MaxDamage = 10,
+            StatFlag = true,
+        };
+        var world = new DiabloWorldState();
+        var processor = CreateProcessor(
+            world,
+            rules: new AuthoritativeCombatRules(10, 1, 100, friendlyFire: true));
+        var attacker = CreatePlayer(
+            entityId: 7,
+            equipment: [new EquippedStoreItem(4, 42, bow)]);
+        var victim = CreatePlayer(
+            positionX: 3,
+            entityId: 8,
+            life: 6400,
+            lifeMaximum: 6400);
+
+        var result = processor.Execute(
+            attacker,
+            new DiabloAttackIntent(victim.EntityId),
+            1,
+            [attacker, victim]);
+
+        Assert.True(result.Succeeded, result.Failure?.ToString());
+        victim.StatusEffects.Add(new AuthoritativeStatusEffect(
+            53,
+            uint.MaxValue,
+            0) {
+            Behavior = AuthoritativeStatusEffectBehavior.Etherealize,
+        });
+
+        for (ulong tick = 1; tick <= 3; tick++)
+            Assert.Empty(processor.AdvanceTick(tick, [attacker, victim]));
+
+        Assert.Equal(6400, victim.Life);
+        Assert.Empty(world.Projectiles);
+    }
+
+    [Fact]
     public void ElementalEquipmentDamagesPlayerTargetsThroughTheirResistances()
     {
         var world = new DiabloWorldState();

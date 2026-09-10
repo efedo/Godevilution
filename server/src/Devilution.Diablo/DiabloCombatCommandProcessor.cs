@@ -12167,6 +12167,14 @@ public sealed class DiabloCombatCommandProcessor
             }
         }
 
+        // Native Plr2PlrMHit repeats the friendly-fire and Etherealize
+        // boundaries when the delayed arrow reaches its target. The target
+        // may change state after launch, so launch-time admission is not
+        // sufficient.
+        if ((!rules.FriendlyFire && owner.FriendlyMode)
+            || IsPlayerEtherealized(target))
+            return false;
+
         if (projectile.AttackHit
             && TryResolvePlayerBlock(owner, target, tick)) {
             if (rules.GameVariant == DiabloGameVariant.Hellfire) {

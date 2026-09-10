@@ -2,6 +2,11 @@
 
 All notable changes to this fork are documented below.
 
+- Matched native delayed PvP arrow admission. Friendly-fire mode and
+  Etherealize are rechecked when a bow projectile reaches its target, so a
+  target that changes state during flight is protected without changing the
+  existing launch-time validation.
+
 - Extended the shared ranged resource-restoration replay fixture with both
   `RandomStealLife` and fixed life-steal flags. The refreshed native/C# hashes
   now verify that the random draw is consumed before the fixed amount replaces
