@@ -583,10 +583,7 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
         var uniqueMonsters = content.TryGetTable(
             "unique_monsters.tsv",
             out var uniqueMonstersTable)
-            ? AuthoritativeUniqueMonsterCatalog.LoadTsv(
-                uniqueMonstersTable.SourcePath,
-                uniqueMonstersTable.ToCanonicalTsv(),
-                stableIds)
+            ? LoadUniqueMonsters(content, uniqueMonstersTable, stableIds)
             : null;
         if (uniqueMonsters is not null) {
             if (monsters is null)
@@ -599,18 +596,12 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
         var uniqueMonsterPlacements = content.TryGetTable(
             "unique_monster_placements.tsv",
             out var uniqueMonsterPlacementsTable)
-            ? AuthoritativeUniqueMonsterPlacementCatalog.LoadTsv(
-                uniqueMonsterPlacementsTable.SourcePath,
-                uniqueMonsterPlacementsTable.ToCanonicalTsv(),
-                stableIds)
+            ? LoadUniqueMonsterPlacements(content, uniqueMonsterPlacementsTable, stableIds)
             : null;
         var uniqueMonsterPacks = content.TryGetTable(
             "unique_monster_packs.tsv",
             out var uniqueMonsterPacksTable)
-            ? AuthoritativeUniqueMonsterPackCatalog.LoadTsv(
-                uniqueMonsterPacksTable.SourcePath,
-                uniqueMonsterPacksTable.ToCanonicalTsv(),
-                stableIds)
+            ? LoadUniqueMonsterPacks(content, uniqueMonsterPacksTable, stableIds)
             : null;
         if (uniqueMonsterPacks is not null) {
             if (uniqueMonsterPlacements is null || monsterTypes is null)
@@ -1398,6 +1389,45 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
         if (content.Manifest.Schema == DiabloContentSchema.Current)
             AuthoritativeNativeDunMonsterCatalog.ValidateExternalizedProduction(table);
         return AuthoritativeNativeDunMonsterCatalog.LoadTsv(
+            table.SourcePath,
+            table.ToCanonicalTsv(),
+            stableIds);
+    }
+
+    private static AuthoritativeUniqueMonsterCatalog LoadUniqueMonsters(
+        ComposedContent content,
+        TsvTable table,
+        StableContentIdCatalog stableIds)
+    {
+        if (content.Manifest.Schema == DiabloContentSchema.Current)
+            AuthoritativeUniqueMonsterCatalog.ValidateExternalizedProduction(table);
+        return AuthoritativeUniqueMonsterCatalog.LoadTsv(
+            table.SourcePath,
+            table.ToCanonicalTsv(),
+            stableIds);
+    }
+
+    private static AuthoritativeUniqueMonsterPlacementCatalog LoadUniqueMonsterPlacements(
+        ComposedContent content,
+        TsvTable table,
+        StableContentIdCatalog stableIds)
+    {
+        if (content.Manifest.Schema == DiabloContentSchema.Current)
+            AuthoritativeUniqueMonsterPlacementCatalog.ValidateExternalizedProduction(table);
+        return AuthoritativeUniqueMonsterPlacementCatalog.LoadTsv(
+            table.SourcePath,
+            table.ToCanonicalTsv(),
+            stableIds);
+    }
+
+    private static AuthoritativeUniqueMonsterPackCatalog LoadUniqueMonsterPacks(
+        ComposedContent content,
+        TsvTable table,
+        StableContentIdCatalog stableIds)
+    {
+        if (content.Manifest.Schema == DiabloContentSchema.Current)
+            AuthoritativeUniqueMonsterPackCatalog.ValidateExternalizedProduction(table);
+        return AuthoritativeUniqueMonsterPackCatalog.LoadTsv(
             table.SourcePath,
             table.ToCanonicalTsv(),
             stableIds);

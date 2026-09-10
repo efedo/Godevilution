@@ -21,6 +21,15 @@ public sealed record AuthoritativeUniqueMonsterPackDefinition(
 /** Optional content table that externalizes native unique-pack placement. */
 public sealed class AuthoritativeUniqueMonsterPackCatalog
 {
+    private static readonly IReadOnlyList<string> ProductionColumns = [
+        "pack_id",
+        "placement_id",
+        "minion_monster_id",
+        "minion_monster_symbol",
+        "pack_size",
+        "pack_kind",
+    ];
+
     private readonly IReadOnlyList<AuthoritativeUniqueMonsterPackDefinition> definitions;
 
     public AuthoritativeUniqueMonsterPackCatalog(
@@ -68,6 +77,22 @@ public sealed class AuthoritativeUniqueMonsterPackCatalog
             if (!monsterTypes.TryGet(definition.MinionMonsterId, out _))
                 throw new InvalidDataException(
                     $"Unique monster pack {definition.PackId} references unknown minion monster {definition.MinionMonsterId}.");
+        }
+    }
+
+    /** Rejects partial unique-pack metadata at the current production boundary. */
+    public static void ValidateExternalizedProduction(TsvTable table)
+    {
+        ArgumentNullException.ThrowIfNull(table);
+        if (!table.Columns.SequenceEqual(ProductionColumns, StringComparer.Ordinal))
+            throw new InvalidDataException(
+                $"Production unique-monster pack table '{table.SourcePath}' must use the complete ordered schema.");
+        foreach (var row in table.Rows) {
+            _ = row.Required("pack_id");
+            _ = row.Required("placement_id");
+            _ = row.Required("minion_monster_id");
+            _ = row.Required("pack_size");
+            _ = row.Required("pack_kind");
         }
     }
 

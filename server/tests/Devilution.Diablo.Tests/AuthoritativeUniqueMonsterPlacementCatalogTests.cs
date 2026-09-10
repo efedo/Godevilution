@@ -298,8 +298,8 @@ public sealed class AuthoritativeUniqueMonsterPlacementCatalogTests
             table => table.SourcePath == "unique_monster_placements.tsv");
         var packTable = TsvTable.Parse(
             "unique_monster_packs.tsv",
-            "pack_id\tplacement_id\tminion_monster_id\tpack_size\tpack_kind\n"
-                + "1\t1\t1\t2\tleashed");
+            "pack_id\tplacement_id\tminion_monster_id\tminion_monster_symbol\tpack_size\tpack_kind\n"
+                + "1\t1\t1\tbase_monster\t2\tleashed");
         var uniqueHeader = uniqueTable.ToCanonicalTsv().Split('\n')[0];
         var placementHeader = placementTable.ToCanonicalTsv().Split('\n')[0];
         var overlay = new ContentPack(

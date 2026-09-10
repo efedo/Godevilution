@@ -26,6 +26,23 @@ public sealed record AuthoritativeUniqueMonsterPlacementDefinition(
 /** Validated authored placement contract kept separate from unique identity selectors. */
 public sealed class AuthoritativeUniqueMonsterPlacementCatalog
 {
+    private static readonly IReadOnlyList<string> ProductionColumns = [
+        "placement_id",
+        "unique_identity",
+        "monster_id",
+        "monster_symbol",
+        "level_id",
+        "level_symbol",
+        "entity_id",
+        "position_x",
+        "position_y",
+        "seed",
+        "direction",
+        "ignore_dungeon_level_range",
+        "required_quest_id",
+        "required_quest_symbol",
+    ];
+
     private readonly IReadOnlyList<AuthoritativeUniqueMonsterPlacementDefinition> definitions;
 
     public AuthoritativeUniqueMonsterPlacementCatalog(
@@ -238,6 +255,25 @@ public sealed class AuthoritativeUniqueMonsterPlacementCatalog
             return AuthoritativeMonsterSpawnPlanner.FirstGeneratedDropEntityId;
         return checked(AuthoritativeMonsterSpawnPlanner.FirstGeneratedDropEntityId
             + (monsterEntityId - AuthoritativeMonsterSpawnPlanner.FirstGeneratedMonsterEntityId));
+    }
+
+    /** Rejects partial generated-placement metadata at the current production boundary. */
+    public static void ValidateExternalizedProduction(TsvTable table)
+    {
+        ArgumentNullException.ThrowIfNull(table);
+        if (!table.Columns.SequenceEqual(ProductionColumns, StringComparer.Ordinal))
+            throw new InvalidDataException(
+                $"Production unique-monster placement table '{table.SourcePath}' must use the complete ordered schema.");
+        foreach (var row in table.Rows) {
+            _ = row.Required("placement_id");
+            _ = row.Required("unique_identity");
+            _ = row.Required("monster_id");
+            _ = row.Required("level_id");
+            _ = row.Required("entity_id");
+            _ = row.Required("position_x");
+            _ = row.Required("position_y");
+            _ = row.Required("seed");
+        }
     }
 
     public static AuthoritativeUniqueMonsterPlacementCatalog LoadTsv(

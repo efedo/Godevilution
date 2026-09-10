@@ -30,6 +30,20 @@ public sealed record AuthoritativeUniqueMonsterDefinition(
 /** External unique identity catalog kept separate from base monster type metadata. */
 public sealed class AuthoritativeUniqueMonsterCatalog
 {
+    private static readonly IReadOnlyList<string> ProductionColumns = [
+        "entity_id",
+        "monster_id",
+        "monster_symbol",
+        "identity",
+        "native_ai",
+        "spawn_health_percent",
+        "spawn_armor_delta",
+        "spawn_fire_resistance",
+        "spawn_lightning_resistance",
+        "spawn_magic_resistance",
+        "spawn_acid_resistance",
+    ];
+
     private readonly IReadOnlyList<AuthoritativeUniqueMonsterDefinition> definitions;
 
     public AuthoritativeUniqueMonsterCatalog(
@@ -229,6 +243,17 @@ public sealed class AuthoritativeUniqueMonsterCatalog
             target.MagicResistance = magic;
         if (definition.SpawnAcidResistance is int acid)
             target.AcidResistance = acid;
+    }
+
+    /** Rejects partial unique-monster identity metadata at the current production boundary. */
+    public static void ValidateExternalizedProduction(TsvTable table)
+    {
+        ArgumentNullException.ThrowIfNull(table);
+        if (!table.Columns.SequenceEqual(ProductionColumns, StringComparer.Ordinal))
+            throw new InvalidDataException(
+                $"Production unique-monster table '{table.SourcePath}' must use the complete ordered schema.");
+        foreach (var row in table.Rows)
+            _ = row.Required("identity");
     }
 
     public static AuthoritativeUniqueMonsterCatalog LoadTsv(

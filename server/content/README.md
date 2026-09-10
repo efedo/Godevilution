@@ -3,9 +3,9 @@
 Each directory under `server/content` is a server-owned, validated gameplay
 content pack. The default `base` pack is loaded by the standalone server and is
 included in its content manifest and combined ruleset identity.
-It declares its identity and `devilution.diablo@1.491.0` schema in
+It declares its identity and `devilution.diablo@1.492.0` schema in
 `base/content-pack.json`; the Diablo module also accepts the immediately
-previous additive `1.490.0` schema so existing manifest-based packs remain
+previous additive `1.491.0` schema so existing manifest-based packs remain
 loadable. A composed manifest must still use one exact schema identity across
 all declared packs; use the previous schema only for a complete compatible
 manifest rather than mixing it with the current pack. The standalone host falls
@@ -3279,7 +3279,7 @@ and no implicit table replacements. For example:
   "dependencies": ["devilution.base"],
   "schema": {
     "id": "devilution.diablo",
-    "version": "1.491.0"
+    "version": "1.492.0"
   },
   "dependencyConstraints": [
     {
@@ -3313,8 +3313,8 @@ three-component semantic-version constraints for declared dependencies. All
 declared schemas in one ordered manifest must match, every constraint must name
 a declared dependency, and the loaded dependency version must satisfy its
 range. The first-party server rejects a declared schema other than
-`devilution.diablo@1.491.0` or its immediately previous additive
-`1.490.0`. Current-schema packs must provide the complete production table
+`devilution.diablo@1.492.0` or its immediately previous additive
+`1.491.0`. Current-schema packs must provide the complete production table
 contract; this includes ordered symbolic spell identity columns, required
 native spell/projectile metadata in `spells.tsv`. Previous-schema packs retain
 their documented compatibility fallbacks; `spell_books.tsv` must additionally
@@ -3337,6 +3337,9 @@ The required `monster_types.tsv`, `monster_missiles.tsv`, and `monsters.tsv`
 tables must likewise use their complete ordered schemas.
 The optional `native_dun_fragments.tsv`, `native_dun_fragment_objects.tsv`,
 and `native_dun_monsters.tsv` tables must likewise use their complete ordered
+schemas when supplied by a current-schema pack.
+The optional `unique_monsters.tsv`, `unique_monster_placements.tsv`, and
+`unique_monster_packs.tsv` tables must likewise use their complete ordered
 schemas when supplied by a current-schema pack.
 Manifests without compatibility metadata retain their legacy identity and
 remain loadable during migration.
