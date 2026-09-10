@@ -338,6 +338,9 @@ public sealed record DiabloObjectState(
     /** Optional native object type used only by compatibility presentations. */
     public uint NativeObjectId { get; init; }
 
+    /** Data-authored presentation family; native_object_id remains compatibility metadata. */
+    public AuthoritativeObjectPresentationKind PresentationKind { get; init; }
+
     /** Compatibility presentation may retain an activated object on the map. */
     public bool HideWhenActivated { get; init; } = true;
 
@@ -779,6 +782,7 @@ public sealed partial class DiabloSimulation
                     ActivateOnOccupancy = @object.ActivateOnOccupancy,
                     RequiredActivatedLinkedObjects = @object.RequiredActivatedLinkedObjects,
                     NativeObjectId = @object.NativeObjectId,
+                    PresentationKind = @object.PresentationKind,
                     HideWhenActivated = @object.HideWhenActivated,
                     AnimationFrame = @object.AnimationFrame,
                     ActivatedAnimationFrame = @object.ActivatedAnimationFrame,
@@ -1304,6 +1308,7 @@ public sealed partial class DiabloSimulation
                     @object.HideWhenActivated,
                     @object.AnimationFrame,
                     @object.ActivatedAnimationFrame)
+                || !Enum.IsDefined(@object.PresentationKind)
                 || !AuthoritativeWorldObject.IsValidOccupancyTrigger(
                     @object.ActivateOnOccupancy,
                     @object.RequiredActivatedLinkedObjects,
@@ -2591,6 +2596,7 @@ public sealed partial class DiabloSimulation
                 target.ActivateOnOccupancy = @object.ActivateOnOccupancy;
                 target.RequiredActivatedLinkedObjects = @object.RequiredActivatedLinkedObjects;
                 target.NativeObjectId = @object.NativeObjectId;
+                target.PresentationKind = @object.PresentationKind;
                 target.HideWhenActivated = @object.HideWhenActivated;
                 target.AnimationFrame = @object.AnimationFrame;
                 target.ActivatedAnimationFrame = @object.ActivatedAnimationFrame;
@@ -2637,7 +2643,9 @@ public sealed partial class DiabloSimulation
                     @object.ActivatedAnimationFrame,
                     @object.RewardOriginKind,
                     @object.RewardSetLevelId,
-                    @object.DialogueMessageId));
+                    @object.DialogueMessageId) {
+                    PresentationKind = @object.PresentationKind,
+                });
             }
         }
     }

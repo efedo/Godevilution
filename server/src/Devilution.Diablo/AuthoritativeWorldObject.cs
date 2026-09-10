@@ -2,6 +2,19 @@ using Devilution.Data;
 
 namespace Devilution.Diablo;
 
+/** Data-authored object presentation family, independent of native object IDs. */
+public enum AuthoritativeObjectPresentationKind
+{
+    Unspecified = 0,
+    Generic = 1,
+    Shrine = 2,
+    Quest = 3,
+    Breakable = 4,
+    Trap = 5,
+    NativeArmorStand = 6,
+    NativeWeaponRack = 7,
+}
+
 /** Mutable server-owned object state used by interaction commands. */
 public sealed class AuthoritativeWorldObject
 {
@@ -246,6 +259,9 @@ public sealed class AuthoritativeWorldObject
     /** Optional authored dialogue emitted when this object is activated. */
     public int DialogueMessageId { get; set; }
 
+    /** Data-authored presentation family; native_object_id remains compatibility metadata. */
+    public AuthoritativeObjectPresentationKind PresentationKind { get; set; }
+
     /** Returns whether this object declares behavior that may be submitted as an intent. */
     public bool HasAuthoritativeInteraction
         => EffectKind != AuthoritativeObjectEffectKind.None
@@ -316,7 +332,9 @@ public sealed class AuthoritativeWorldObject
             ActivatedAnimationFrame,
             RewardOriginKind,
             RewardSetLevelId,
-            DialogueMessageId);
+            DialogueMessageId) {
+            PresentationKind = PresentationKind,
+        };
     }
 
     /** Returns whether another object has the same authoritative authored state. */
@@ -359,6 +377,7 @@ public sealed class AuthoritativeWorldObject
             && AnimationFrame == other.AnimationFrame
             && ActivatedAnimationFrame == other.ActivatedAnimationFrame
             && DialogueMessageId == other.DialogueMessageId
+            && PresentationKind == other.PresentationKind
             && MissilePassable == other.MissilePassable
             && Breakable == other.Breakable
             && Destroyed == other.Destroyed
@@ -765,6 +784,7 @@ public static class AuthoritativeWorldObjectCatalog
             .Select(item => item.Object)
             .ToArray();
     }
+
 
     /** Validates normalized item identities encoded by quest-item objects. */
     public static void ValidateItemRequirements(

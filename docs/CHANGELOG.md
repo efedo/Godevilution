@@ -2,6 +2,11 @@
 
 All notable changes to this fork are documented below.
 
+- Moved native armory presentation identity into the authored
+  `object_presentations.tsv` content sidecar. The authoritative object state,
+  save codec, and protocol now carry the family without deriving it from
+  native IDs; `89` and `90` remain compatibility metadata for older peers.
+
 - Promoted native armory visuals to additive server-owned protocol presentation
   families (`NATIVE_ARMOR_STAND` and `NATIVE_WEAPON_RACK`). Godot uses those
   families directly and retains numeric-ID fallback only for older snapshots.

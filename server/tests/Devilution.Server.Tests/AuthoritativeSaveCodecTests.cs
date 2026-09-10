@@ -178,6 +178,9 @@ public sealed class AuthoritativeSaveCodecTests
         var source = baseline with {
             Objects = [baseline.Objects[0] with {
                 Activated = true,
+                Breakable = false,
+                Destroyed = false,
+                PresentationKind = AuthoritativeObjectPresentationKind.NativeArmorStand,
                 HideWhenActivated = false,
                 AnimationFrame = 7,
                 ActivatedAnimationFrame = 11,
@@ -189,6 +192,9 @@ public sealed class AuthoritativeSaveCodecTests
         var @object = Assert.Single(restored.Objects);
 
         Assert.True(@object.Activated);
+        Assert.Equal(
+            AuthoritativeObjectPresentationKind.NativeArmorStand,
+            @object.PresentationKind);
         Assert.False(@object.HideWhenActivated);
         Assert.Equal(7, @object.AnimationFrame);
         Assert.Equal(11, @object.ActivatedAnimationFrame);

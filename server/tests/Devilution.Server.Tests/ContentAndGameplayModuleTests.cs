@@ -57,6 +57,30 @@ public sealed class ContentAndGameplayModuleTests
     }
 
     [Fact]
+    public void ObjectPresentationCatalogCarriesAuthoredNativeFamilies()
+    {
+        var objects = AuthoritativeWorldObjectCatalog.LoadTemplates(
+            "objects.tsv",
+            "entity_id\tobject_id\ttemplate_only\n"
+                + "2026\t89\t1\n"
+                + "2027\t90\t1\n");
+        var presentations = AuthoritativeWorldObjectPresentationCatalog.LoadTsv(
+            "object_presentations.tsv",
+            "entity_id\thide_when_activated\tanimation_frame\tactivated_animation_frame\tpresentation_kind\n"
+                + "2026\t1\t0\t0\tNativeArmorStand\n"
+                + "2027\t1\t0\t0\tNativeWeaponRack\n");
+
+        presentations.Apply(objects);
+
+        Assert.Equal(
+            AuthoritativeObjectPresentationKind.NativeArmorStand,
+            objects[0].PresentationKind);
+        Assert.Equal(
+            AuthoritativeObjectPresentationKind.NativeWeaponRack,
+            objects[1].PresentationKind);
+    }
+
+    [Fact]
     public void StoreServicePricingLoadsOverridesAndSpellStaffCosts()
     {
         var pricing = StoreServicePricing.LoadTsv("store_services.tsv", "key\tspell_id\tvalue\nsale_divisor\t\t5\nspell_staff_cost\t7\t12\n");

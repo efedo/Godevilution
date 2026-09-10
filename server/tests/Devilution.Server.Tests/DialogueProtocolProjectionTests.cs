@@ -28,6 +28,7 @@ public sealed class DialogueProtocolProjectionTests
                         AuthoritativeObjectEffectKind.None,
                         0) {
                         NativeObjectId = 90,
+                        PresentationKind = AuthoritativeObjectPresentationKind.NativeWeaponRack,
                     },
                     new DiabloObjectState(
                         1761633898,
@@ -40,6 +41,7 @@ public sealed class DialogueProtocolProjectionTests
                         AuthoritativeObjectEffectKind.None,
                         0) {
                         NativeObjectId = 89,
+                        PresentationKind = AuthoritativeObjectPresentationKind.NativeArmorStand,
                     },
                 ],
             };
@@ -59,6 +61,32 @@ public sealed class DialogueProtocolProjectionTests
                     @object.PresentationKind))
                 .ToArray());
         Assert.DoesNotContain(projected.Objects, @object => @object.NativeObjectId is 108 or 109);
+    }
+
+    [Fact]
+    public void NativeObjectIdentityAloneDoesNotSelectPresentationFamily()
+    {
+        var source = CreateOriginSnapshot(
+            new DiabloSetLevelObjectOriginState(6, 17, 7, 8)) with {
+                Objects = [
+                    new DiabloObjectState(
+                        1761633898,
+                        89,
+                        4,
+                        18,
+                        15,
+                        false,
+                        0,
+                        AuthoritativeObjectEffectKind.None,
+                        0) {
+                        NativeObjectId = 89,
+                    },
+                ],
+            };
+
+        var projected = DiabloProtocolMapper.ToProtocolSnapshot(source);
+
+        Assert.Equal(ObjectPresentationKind.Unspecified, Assert.Single(projected.Objects).PresentationKind);
     }
 
     [Fact]

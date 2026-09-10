@@ -703,6 +703,7 @@ internal static class DiabloProtocolMapper
                 || !producesProjectile && @object.ProjectileSourceKind
                     != AuthoritativeObjectProjectileSourceKind.Object
                 || @object.NativeObjectId > AuthoritativeLevel.NativeMaximumObjectId
+                || !Enum.IsDefined(@object.PresentationKind)
                 || @object.DialogueMessageId is < 0 or > short.MaxValue
                 || !AuthoritativeWorldObject.IsValidPresentation(
                     @object.HideWhenActivated,
@@ -2177,6 +2178,7 @@ internal static class DiabloProtocolMapper
                 QuestSequenceFollowUpOffsetY = @object.QuestSequenceFollowUpOffsetY,
                 ProjectileSourceKind = (AuthoritativeObjectProjectileSourceKind)@object.ProjectileSourceKind,
                 NativeObjectId = @object.NativeObjectId,
+                PresentationKind = FromProtocolObjectPresentationKind(@object.PresentationKind),
                 HideWhenActivated = !@object.KeepVisibleAfterActivation,
                 AnimationFrame = checked((int)@object.AnimationFrame),
                 ActivatedAnimationFrame = checked((int)@object.ActivatedAnimationFrame),
@@ -2975,13 +2977,30 @@ internal static class DiabloProtocolMapper
             return ObjectPresentationKind.Breakable;
         if (revealTraps && state.TrapArmed)
             return ObjectPresentationKind.Trap;
-        // Keep native presentation selection on the authoritative side. The
-        // native_object_id remains in the snapshot for compatibility bridges,
-        // while protocol-aware clients can render without their own ID table.
-        return state.NativeObjectId switch {
-            89 => ObjectPresentationKind.NativeArmorStand,
-            90 => ObjectPresentationKind.NativeWeaponRack,
+        // Presentation family is authored in object_presentations.tsv and carried through
+        // authoritative state; native_object_id remains compatibility metadata.
+        return state.PresentationKind switch {
+            AuthoritativeObjectPresentationKind.Generic => ObjectPresentationKind.Generic,
+            AuthoritativeObjectPresentationKind.NativeArmorStand
+                => ObjectPresentationKind.NativeArmorStand,
+            AuthoritativeObjectPresentationKind.NativeWeaponRack
+                => ObjectPresentationKind.NativeWeaponRack,
             _ => ObjectPresentationKind.Unspecified,
+        };
+    }
+
+    private static AuthoritativeObjectPresentationKind FromProtocolObjectPresentationKind(
+        ObjectPresentationKind kind)
+    {
+        // Shrine, quest, breakable, and trap are derived from authoritative
+        // behavior. Preserve only authored families that cannot be recovered
+        // from the object state during a save round-trip.
+        return kind switch {
+            ObjectPresentationKind.NativeArmorStand
+                => AuthoritativeObjectPresentationKind.NativeArmorStand,
+            ObjectPresentationKind.NativeWeaponRack
+                => AuthoritativeObjectPresentationKind.NativeWeaponRack,
+            _ => AuthoritativeObjectPresentationKind.Unspecified,
         };
     }
 

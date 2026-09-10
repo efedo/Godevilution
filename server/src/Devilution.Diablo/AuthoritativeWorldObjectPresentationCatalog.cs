@@ -2,22 +2,25 @@ using Devilution.Data;
 
 namespace Devilution.Diablo;
 
-/** Optional additive presentation lifecycle metadata for authored objects. */
+/** Optional additive presentation lifecycle and family metadata for authored objects. */
 public sealed record AuthoritativeWorldObjectPresentationDefinition(
     uint EntityId,
     bool HideWhenActivated = true,
     int AnimationFrame = 0,
-    int ActivatedAnimationFrame = 0)
+    int ActivatedAnimationFrame = 0,
+    AuthoritativeObjectPresentationKind PresentationKind
+        = AuthoritativeObjectPresentationKind.Unspecified)
 {
     public AuthoritativeWorldObjectPresentationDefinition Validate()
     {
         if (EntityId == 0
+            || !Enum.IsDefined(PresentationKind)
             || !AuthoritativeWorldObject.IsValidPresentation(
                 HideWhenActivated,
                 AnimationFrame,
                 ActivatedAnimationFrame)) {
             throw new InvalidDataException(
-                $"Object presentation definition {EntityId} contains invalid lifecycle metadata.");
+                $"Object presentation definition {EntityId} contains invalid lifecycle or family metadata.");
         }
         return this;
     }
@@ -31,6 +34,7 @@ public sealed class AuthoritativeWorldObjectPresentationCatalog
         "hide_when_activated",
         "animation_frame",
         "activated_animation_frame",
+        "presentation_kind",
     ];
 
     private readonly IReadOnlyList<AuthoritativeWorldObjectPresentationDefinition> definitions;
@@ -74,7 +78,8 @@ public sealed class AuthoritativeWorldObjectPresentationCatalog
                 row.RequiredUInt32("entity_id"),
                 row.OptionalBoolean("hide_when_activated", true),
                 row.OptionalInt32("animation_frame"),
-                row.OptionalInt32("activated_animation_frame"))));
+                row.OptionalInt32("activated_animation_frame"),
+                ParsePresentationKind(row))));
     }
 
     /** Applies all definitions atomically to authored objects and templates. */
@@ -94,6 +99,28 @@ public sealed class AuthoritativeWorldObjectPresentationCatalog
             target.HideWhenActivated = definition.HideWhenActivated;
             target.AnimationFrame = definition.AnimationFrame;
             target.ActivatedAnimationFrame = definition.ActivatedAnimationFrame;
+            target.PresentationKind = definition.PresentationKind;
         }
+    }
+
+    private static AuthoritativeObjectPresentationKind ParsePresentationKind(TsvRow row)
+    {
+        if (!row.TryGet("presentation_kind", out var value)
+            || string.IsNullOrWhiteSpace(value))
+            return AuthoritativeObjectPresentationKind.Unspecified;
+        return value.Trim() switch {
+            "Unspecified" or "unspecified" => AuthoritativeObjectPresentationKind.Unspecified,
+            "Generic" or "generic" => AuthoritativeObjectPresentationKind.Generic,
+            "Shrine" or "shrine" => AuthoritativeObjectPresentationKind.Shrine,
+            "Quest" or "quest" => AuthoritativeObjectPresentationKind.Quest,
+            "Breakable" or "breakable" => AuthoritativeObjectPresentationKind.Breakable,
+            "Trap" or "trap" => AuthoritativeObjectPresentationKind.Trap,
+            "NativeArmorStand" or "native_armor_stand"
+                => AuthoritativeObjectPresentationKind.NativeArmorStand,
+            "NativeWeaponRack" or "native_weapon_rack"
+                => AuthoritativeObjectPresentationKind.NativeWeaponRack,
+            _ => throw new InvalidDataException(
+                $"Column 'presentation_kind' on TSV row {row.LineNumber} is not a supported object presentation."),
+        };
     }
 }

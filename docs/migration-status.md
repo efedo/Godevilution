@@ -3415,9 +3415,11 @@ packs omit these columns and retain the previous behavior.
 
 Content packs can now supply the same values through optional validated
 `object_presentations.tsv` sidecars keyed by authored object entity. Activation
-applies sidecar metadata to both ordinary object rows and behavior-only templates
-before set-level or native-DUN placements clone them, so existing `objects.tsv`
-overlay headers remain compatible.
+applies lifecycle metadata and the authored presentation family to both ordinary
+object rows and behavior-only templates before set-level or native-DUN placements
+clone them, so existing `objects.tsv` overlay headers remain compatible. Native
+armory families therefore come from content rather than a server-side native-ID
+switch; `native_object_id` remains compatibility metadata only.
 
 Native-compatible eight-way direction sectors and coordinate-to-facing selection
 are now implemented by the engine-neutral deterministic grid primitive; the
@@ -3696,9 +3698,9 @@ presentation-only objects. Current-schema activation now runs the same mapping
 parser used by direct catalog callers before composing geometry, rejecting
 ambiguous targets and invalid `active_map` values at the content boundary.
 The protocol now carries additive server-owned `NATIVE_ARMOR_STAND` and
-`NATIVE_WEAPON_RACK` presentation families, so Godot does not need a native
-object-ID table for current snapshots and older snapshots retain compatibility
-fallbacks.
+`NATIVE_WEAPON_RACK` presentation families authored by the sidecar, so Godot
+does not need a native object-ID table for current snapshots and older snapshots
+retain compatibility fallbacks.
 
 Authoritative server startup now accepts an optional `--starting-level` override
 for newly created participants. This is a development and fixture control only;
