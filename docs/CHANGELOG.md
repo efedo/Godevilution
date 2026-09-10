@@ -15,6 +15,10 @@ All notable changes to this fork are documented below.
   owned by another session, preserving the documented global receipt ordering
   across multi-session restarts.
 
+- Batch checkpoint publication now performs the same cross-session receipt
+  uniqueness preflight before writing any session files, so persistence cannot
+  create a checkpoint set that recovery would reject.
+
 - Godot and the native compatibility client now validate every authoritative
   event batch before applying stale-tick or reconnect-epoch filters, so
   malformed discarded events fail closed instead of being silently ignored.

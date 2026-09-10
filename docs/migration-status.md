@@ -20,6 +20,8 @@ autonomous ticks already processed for another session.
 Persisted command-ledger restore now also rejects a server receipt sequence
 already owned by another session, preserving global receipt identity across
 multi-session restarts.
+Batch checkpoint publication applies the same uniqueness preflight before any
+session file is written, keeping the durable write path aligned with recovery.
 
 The active content schema is now `1.462.0` (with `1.461.0` retained as
 the previous additive contract). Optional `procedural_quest_piece_origins.tsv`

@@ -128,6 +128,43 @@ public sealed class AuthoritativeSessionPersistenceTests
         }
     }
 
+    [Fact]
+    public void BatchWriteRejectsDuplicateGlobalReceiptsBeforePublishing()
+    {
+        var root = CreateRoot("batch-duplicate-receipts");
+        try {
+            var persistence = new AuthoritativeSessionPersistence(
+                sessionStore: new AuthoritativeSessionStore(root));
+            var first = new CommandResult {
+                ClientSequence = 1,
+                ServerReceiptSequence = 7,
+                AppliedTick = 4,
+                Status = CommandStatus.Accepted,
+                RejectReason = CommandRejectReason.Unspecified,
+            };
+            var second = first.Clone();
+
+            var exception = Assert.Throws<InvalidDataException>(() => persistence.SaveBatch([
+                new AuthoritativeSessionWrite(
+                    "session-a",
+                    "state-a",
+                    new Dictionary<ulong, CommandResult> { [first.ClientSequence] = first },
+                    "ruleset-a"),
+                new AuthoritativeSessionWrite(
+                    "session-b",
+                    "state-b",
+                    new Dictionary<ulong, CommandResult> { [second.ClientSequence] = second },
+                    "ruleset-a"),
+            ]));
+
+            Assert.Contains("duplicate", exception.Message, StringComparison.OrdinalIgnoreCase);
+            Assert.Null(new AuthoritativeSessionStore(root).Load("session-a"));
+            Assert.Null(new AuthoritativeSessionStore(root).Load("session-b"));
+        } finally {
+            DeleteRoot(root);
+        }
+    }
+
     private static string CreateRoot(string name)
     {
         var root = Path.Combine(

@@ -55,6 +55,7 @@ public sealed class AuthoritativeSessionPersistence
                     $"The session write set contains duplicate session '{entry.SessionId}'.",
                     nameof(writes));
         }
+        ValidateGlobalReceiptSequences(entries);
 
         var backups = entries
             .Select(entry => Capture(entry.SessionId))
@@ -76,6 +77,24 @@ public sealed class AuthoritativeSessionPersistence
                 }
             }
             throw;
+        }
+    }
+
+    /** Rejects a batch that would publish duplicate globally ordered receipts. */
+    private static void ValidateGlobalReceiptSequences(
+        IReadOnlyList<AuthoritativeSessionWrite> entries)
+    {
+        var receiptSequences = new HashSet<ulong>();
+        foreach (var entry in entries) {
+            ArgumentNullException.ThrowIfNull(entry.CommandResults);
+            foreach (var result in entry.CommandResults.Values) {
+                ArgumentNullException.ThrowIfNull(result);
+                if (result.ServerReceiptSequence == 0
+                    || !receiptSequences.Add(result.ServerReceiptSequence)) {
+                    throw new InvalidDataException(
+                        "The session write set contains an invalid or duplicate global server receipt sequence.");
+                }
+            }
         }
     }
 
