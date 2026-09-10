@@ -8,6 +8,10 @@ All notable changes to this fork are documented below.
   penalty, non-Rogue class damage modifiers are halved for arrows, and
   initialized monster-target arrows apply the native distance penalty.
 
+- Aligned player attacks with native Gargoyle wake-up behavior: an active
+  special flag is consumed by the waking hit before damage or equipment
+  effects are applied.
+
 - Advanced the active content schema to `1.461.0`, retaining `1.460.0` as
   the previous additive contract for compatible packs.
 

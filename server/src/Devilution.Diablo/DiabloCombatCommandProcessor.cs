@@ -1468,6 +1468,20 @@ public sealed class DiabloCombatCommandProcessor
         out bool doppelgangerProc,
         out bool attackHit)
     {
+        perilSelfDamageQ6 = 0;
+        perilActive = false;
+        doppelgangerProc = false;
+        attackHit = false;
+        if (monsterTarget
+            && string.Equals(target.NativeAi, "Gargoyle", StringComparison.Ordinal)
+            && target.GargoyleSpecialActive) {
+            // Native PlrHitMonst/MonsterMHit calls tryLiftGargoyle before
+            // applying damage. The waking hit is admitted but deals neither
+            // physical nor equipment elemental damage.
+            target.GargoyleSpecialActive = false;
+            return 0;
+        }
+
         var damagePercent = 0;
         var damageFlat = 0;
         var hitBonus = 0;
@@ -1534,7 +1548,6 @@ public sealed class DiabloCombatCommandProcessor
             && HasUsableHellfireDamageArmorFlag(
                 player,
                 AuthoritativeEquipmentIncomingDamageRules.PerilFlag);
-        doppelgangerProc = false;
         perilSelfDamageQ6 = 0;
         if (perilActive) {
             perilSelfDamageQ6 = checked(

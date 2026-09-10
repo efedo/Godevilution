@@ -5672,6 +5672,39 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void GargoyleSpecialActivationConsumesTheWakingPlayerHit()
+    {
+        var target = new AuthoritativeCombatTarget(
+            9,
+            1,
+            0,
+            100,
+            nativeAi: "Gargoyle",
+            gargoyleSpecialActive: true);
+        var world = new DiabloWorldState(combatTargets: [target]);
+        var processor = CreateProcessor(world);
+        var player = CreatePlayer(
+            entityId: 7,
+            equipment: [new EquippedStoreItem(
+                4,
+                42,
+                AuthoritativeItemState.Empty with {
+                    ItemType = 1,
+                    ItemClass = 1,
+                    MinDamage = 10,
+                    MaxDamage = 10,
+                    StatFlag = true,
+                })]);
+
+        var result = processor.Execute(player, new DiabloAttackIntent(target.EntityId), 1);
+
+        Assert.True(result.Succeeded, result.Failure?.ToString());
+        Assert.Equal(100, target.HitPoints);
+        Assert.False(target.GargoyleSpecialActive);
+        Assert.Empty(result.Events);
+    }
+
+    [Fact]
     public void WarriorCriticalStrikeDoublesPhysicalDamageBeforeArmorAndConsumesItsNativeRoll()
     {
         var criticalTarget = new AuthoritativeCombatTarget(

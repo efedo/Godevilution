@@ -23,6 +23,10 @@ for arrows; initialized monster-target arrows now apply the same native
 distance admission penalty. Monster attacks retain their existing
 armor-adjusted damage and equipment-piercing rules.
 
+Player hits now also honor the native Gargoyle wake-up boundary: an active
+Gargoyle special flag is consumed by the first physical hit without applying
+that hit's damage or equipment effects.
+
 The compact native replay runner now mirrors the managed monster activation
 window for fixtures that carry an active target: visible targets wake for the
 native 255-tick window, while targets outside live-player vision count down
