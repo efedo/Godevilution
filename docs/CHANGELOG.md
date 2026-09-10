@@ -2,6 +2,11 @@
 
 All notable changes to this fork are documented below.
 
+- Externalized the remaining nonzero native object-layer values in the shipped
+  Warlord fragment. Stable armor-stand and weapon-rack templates plus an
+  ordinary-level `native_dun_objects.tsv` mapping now materialize all four
+  native armory objects authoritatively when the room is projected.
+
 - Added a three-participant fresh-host restart soak covering self-first snapshot
   ordering, restored character identities, durable receipt-ledger deduplication,
   and global receipt continuation after recovery.

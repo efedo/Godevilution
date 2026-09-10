@@ -12,3 +12,5 @@ entity_id	object_id	object_symbol	level_id	level_symbol	position_x	position_y	ac
 2023	73	gateway_of_blood_pedestal	0		0	0	0	3010	valor	None	0		0	0	0	0	1	None	0		0	0	0		0	0	Object	SetVariable2	1		0	false	0	73	None	0	0	0	0	0
 2024	73	gateway_of_blood_pedestal	0		0	0	0	3010	valor	None	0		0	0	0	0	1	None	0		0	0	0		0	0	Object	SetVariable2	2		1	false	0	73	None	0	0	0	0	0
 2025	73	gateway_of_blood_pedestal	0		0	0	0	3010	valor	WorldMutation	9310		0	0	0	0	1	None	0		0	0	0		0	0	Object	SetVariable2	3		2	false	0	73	UniqueItem	1009	1	-2	-13	0
+2026	89	warlord_armor_stand	0		0	0	0	0		None	0		0	0	0	0	1	None	0		0	0	0		0	0	Object	None	0			false	0	89	None	0	0	0	0	0
+2027	90	warlord_weapon_rack	0		0	0	0	0		None	0		0	0	0	0	1	None	0		0	0	0		0	0	Object	None	0			false	0	90	None	0	0	0	0	0

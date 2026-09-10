@@ -3685,6 +3685,12 @@ transient labels from another projected level.
 
 ## Current state
 
+The shipped Warlord native-DUN fragment now crosses the object boundary
+completely: its raw armor-stand and weapon-rack layer values are mapped through
+stable authored templates and materialize all four armory objects in the
+authoritative world. Unmapped native object-layer values remain inert by
+design.
+
 Authoritative server startup now accepts an optional `--starting-level` override
 for newly created participants. This is a development and fixture control only;
 when omitted, the active content pack's validated default level remains in use.

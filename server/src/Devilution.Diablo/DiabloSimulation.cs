@@ -1039,7 +1039,12 @@ public sealed partial class DiabloSimulation
         // The fragment may have introduced mapped native-DUN object cells.
         // Reconcile after geometry publication so deferred set-piece objects
         // enter the same authoritative object catalog as initial mappings.
-        WorldState.ReconcileNativeDunObjects();
+        // A quest-gated fragment may be unavailable for this session, leaving
+        // its ordinary level without a native object layer. Keep the same
+        // deferred-mapping policy used during initial activation; once a
+        // fragment publishes its layer, reconciliation still materializes and
+        // validates every mapped cell.
+        WorldState.ReconcileNativeDunObjects(allowMissingLayers: nativeDunFragments is not null);
         foreach (var candidate in candidates)
             appliedNativeDunFragments.Add(candidate.FragmentId);
     }

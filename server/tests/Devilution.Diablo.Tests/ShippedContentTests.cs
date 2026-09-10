@@ -1578,6 +1578,19 @@ public sealed class ShippedContentTests
             steelTome.PositionX,
             steelTome.PositionY,
             steelTome.QuestId));
+        var armories = activation.Simulation.WorldState.Objects.Values
+            .Where(@object => @object.ObjectId is 89 or 90)
+            .OrderBy(@object => @object.PositionX)
+            .ThenBy(@object => @object.PositionY)
+            .ToArray();
+        Assert.Equal(
+            [(90U, 15, 15, 1761633895U), (89U, 18, 15, 1761633898U),
+             (89U, 20, 15, 1761633900U), (90U, 23, 15, 1761633903U)],
+            armories.Select(@object => (
+                @object.ObjectId,
+                @object.PositionX,
+                @object.PositionY,
+                @object.EntityId)).ToArray());
         var level = activation.Simulation.WorldState.World!.Levels
             .Single(candidate => candidate.LevelId == 4);
         Assert.Equal(7, level.NativeMonsterLayer.Count(value => value == 98));

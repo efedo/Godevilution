@@ -181,6 +181,8 @@ object	halls_of_blind_book	71
 object	gateway_of_blood_book	72
 object	gateway_of_blood_pedestal	73
 object	warlord_steel_tome	88
+object	warlord_armor_stand	89
+object	warlord_weapon_rack	90
 warp	town_to_cathedral	1001
 warp	cathedral_to_catacombs	1002
 warp	catacombs_to_caves	1003
