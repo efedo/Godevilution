@@ -11045,7 +11045,43 @@ TEST(ReplayFixture, ExecutesLichMonsterMagicMissAgainstCSharpCheckpoints)
 	EXPECT_EQ(ComputeReplayFixtureStateHash(state), fixture.checkpoints.back().stateSha256);
 }
 
-void ExecuteMonsterMagicSecondaryImpactFixture(const char *path)
+void PopulateReplaySecondaryEquipment(
+	ReplayFixtureExecutionState &state,
+	const ReplayFixture &fixture)
+{
+	for (const auto &source : fixture.initialState.secondaryPlayer.equipment) {
+		ReplayFixtureItemState itemState;
+		itemState.stableItemId = source.stableItemId;
+		itemState.itemType = source.itemType;
+		itemState.itemClass = source.itemClass;
+		itemState.itemIndex = source.itemIndex;
+		itemState.value = source.value;
+		itemState.identifiedValue = source.identifiedValue;
+		itemState.identified = source.identified;
+		itemState.magical = source.magical;
+		itemState.minDamage = source.minDamage;
+		itemState.maxDamage = source.maxDamage;
+		itemState.plusDamage = source.plusDamage;
+		itemState.plusToHit = source.plusToHit;
+		itemState.plusDamageModifier = source.plusDamageModifier;
+		itemState.plusGetHit = source.plusGetHit;
+		itemState.plusFireResistance = source.plusFireResistance;
+		itemState.plusLightningResistance = source.plusLightningResistance;
+		itemState.plusMagicResistance = source.plusMagicResistance;
+		itemState.plusEnemyArmorClass = source.plusEnemyArmorClass;
+		itemState.fireMinDamage = source.fireMinDamage;
+		itemState.fireMaxDamage = source.fireMaxDamage;
+		itemState.lightningMinDamage = source.lightningMinDamage;
+		itemState.lightningMaxDamage = source.lightningMaxDamage;
+		itemState.flags = source.flags;
+		itemState.statFlag = source.statFlag;
+		state.secondaryEquipment.push_back({ source.slot, source.itemSeed, itemState });
+	}
+}
+
+void ExecuteMonsterMagicSecondaryImpactFixture(
+	const char *path,
+	int32_t expectedSecondaryLife = 6144)
 {
 	std::ifstream file(path);
 	ASSERT_TRUE(file.good());
@@ -11095,6 +11131,7 @@ void ExecuteMonsterMagicSecondaryImpactFixture(const char *path)
 	state.secondaryPlayerBlockCapable = fixture.initialState.secondaryPlayer.blockCapable;
 	state.secondaryPlayerCombatMode = fixture.initialState.secondaryPlayer.combatMode;
 	state.secondaryPlayerCombatModeEndTick = fixture.initialState.secondaryPlayer.combatModeEndTick;
+	PopulateReplaySecondaryEquipment(state, fixture);
 	state.secondaryInventoryGrid.assign(40, -1);
 
 	ReplayFixtureExecutionResult result;
@@ -11103,7 +11140,7 @@ void ExecuteMonsterMagicSecondaryImpactFixture(const char *path)
 	EXPECT_TRUE(result.transitions[0].accepted);
 	EXPECT_EQ(state.lastAppliedTick, 27U);
 	EXPECT_EQ(state.life, 0);
-	EXPECT_EQ(state.secondaryPlayerLife, 6144);
+	EXPECT_EQ(state.secondaryPlayerLife, expectedSecondaryLife);
 	ASSERT_EQ(state.projectiles.size(), 1U);
 	EXPECT_EQ(state.projectiles[0].behavior, 50);
 	EXPECT_EQ(state.projectiles[0].spellId, 1U);
@@ -11138,6 +11175,13 @@ TEST(ReplayFixture, ExecutesPsychorbMonsterMagicSecondaryImpactAgainstCSharpChec
 TEST(ReplayFixture, ExecutesNecromorbMonsterMagicSecondaryImpactAgainstCSharpCheckpoints)
 {
 	ExecuteMonsterMagicSecondaryImpactFixture("test/fixtures/replay/gameplay-monster-magic-necromorb-secondary-impact.json");
+}
+
+TEST(ReplayFixture, ExecutesLichMonsterMagicSecondaryGetHitAgainstCSharpCheckpoints)
+{
+	ExecuteMonsterMagicSecondaryImpactFixture(
+	    "test/fixtures/replay/gameplay-monster-magic-secondary-get-hit.json",
+	    6016);
 }
 
 TEST(ReplayFixture, ExecutesLichMonsterMagicSecondaryBlockAgainstCSharpCheckpoints)

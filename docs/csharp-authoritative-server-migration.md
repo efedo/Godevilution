@@ -239,6 +239,9 @@ The seeded GoatRanged MonsterArrow fixture also retains a non-fixed damage
 range through admission and Q6-backed secondary impact before projection.
 Its companion fixture carries secondary-player `_pIGetHit` equipment through
 impact-time range resolution, preserving native `PlayerMHit` ordering.
+The Lich MonsterMagic secondary-impact fixture now carries the same equipped
+secondary-player `_pIGetHit` ordering through spell impact and Q6 life
+projection, with matching native and managed checkpoints.
 The SnakeCharge path now also has a shared lifecycle fixture covering
 server-owned admission, travel, player collision, and impact timing.
 

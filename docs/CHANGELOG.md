@@ -42,6 +42,10 @@ All notable changes to this fork are documented below.
   impact-time `PlayerMHit` ordering, including a shared equipped-secondary
   checkpoint for the rolled range, Q6 life, and canonical hash.
 
+- Added a shared Lich MonsterMagic secondary-impact fixture carrying equipped
+  secondary-player `_pIGetHit` through impact-time damage, Q6 life, and native
+  and managed canonical checkpoints.
+
 - Ruleset replacement now publishes migrated session checkpoints during
   candidate preparation, before activation or handshake identity publication;
   failed exports or checkpoint writes keep the previous generation active.
