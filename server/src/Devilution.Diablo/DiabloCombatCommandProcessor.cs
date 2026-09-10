@@ -2044,7 +2044,10 @@ public sealed class DiabloCombatCommandProcessor
             items);
         var resolvedDamage = rules.ResolveAttackDamage(
             criticalDamage,
-            monsterTarget ? targetArmorClass : 0,
+            // Native PlrHitMonst/MonsterMHit use armor only for admission;
+            // successful player damage is applied without a second armor
+            // reduction. PvP keeps its separate armor-aware admission path.
+            0,
             effectiveHitChance,
             seed);
         if (target.IsDemon

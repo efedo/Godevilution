@@ -78,8 +78,10 @@ The `gameplay-class-physical-damage-monk-unknown-hand` companion adds an
 occupied but unclassified hand slot and proves native Monk unarmed range
 selection plus the staff/unarmed damage modifier branch.
 The armor and miss companions exercise the initialized class to-hit formula,
-native 5..95 chance clamp, deterministic hit seed, and minimum post-armor
-damage without changing the compact fallback. The armor-piercing companion
+native 5..95 chance clamp, deterministic hit seed, and the minimum successful
+damage boundary without changing the compact fallback. Monster armor is used
+for admission only, matching native `PlrHitMonst` and `MonsterMHit`; it is not
+subtracted again from successful player damage. The armor-piercing companion
 adds the optional `plus_enemy_armor_class` equipment field and proves that an
 authored native armor-piercing bonus crosses the same hit-resolution boundary;
 omitting the field retains its zero-value compatibility behavior.
@@ -88,22 +90,23 @@ modifiers, including the native 4x health plus 200 bonus and +80 armor.
 The damage-modifier and to-hit companions cover authored percentage/flat
 weapon bonuses and deterministic hit admission.
 The barbarian-armor-piercing companion covers the native Barbarian melee armor
-reduction divisor on hit admission while keeping post-hit damage armor intact.
+reduction divisor on hit admission while keeping successful damage independent
+of target armor.
 The undead-sword and undead-mace companions cover the native 50% sword
 penalty and 50% mace bonus against an undead target after critical and
 authored weapon modifiers are resolved.
 The matching animal-sword and animal-mace companions cover the inverse native
 target-class adjustments against an authored animal target.
 The demon-triple companion carries the native `TripleDemonDamage` flag and
-proves its validated 3x post-armor multiplier against an authored demon target.
+proves its validated 3x post-hit multiplier against an authored demon target.
 The Hellfire-devastation companion carries the authored Hellfire damage-armor
 flag and proves the post-hit 3x `Devastation` proc with native RNG ordering.
 The Hellfire-armor-piercing companion covers Hellfire's shifted armor
-admission semantics while preserving the unshifted post-hit damage armor.
+admission semantics while preserving the direct post-hit damage boundary.
 The Hellfire-decay companion proves slot-ordered post-attack `Decay`
 mutation: the attack uses the authored damage before the weapon's `PlusDamage`
 is reduced.
-The Hellfire-Jesters companion proves the post-armor 0..200 damage roll and
+The Hellfire-Jesters companion proves the post-hit 0..200 damage roll and
 upper-half expansion before the final Q6 damage is hashed.
 The Hellfire-Peril companion proves pre-modifier attacker self-damage and the
 final 2x target-damage multiplier at the same checkpoint.
@@ -149,13 +152,14 @@ and Barbarian critical-strike RNG consumption.
 The `gameplay/ranged-class-zero-strength` companion proves that a class
 definition with zero authored Strength uses the legacy compact damage/to-hit
 fallback in both runners without consuming a class damage roll.
-The `gameplay/ranged-class-armor` companion proves ranged hit admission and
-post-hit target armor reduction for the same initialized Rogue bow profile.
+The `gameplay/ranged-class-armor` companion proves ranged hit admission while
+preserving direct successful damage for the same initialized Rogue bow profile.
 The `gameplay/ranged-class-hell` companion proves Hell difficulty armor is
-applied before ranged hit admission and post-hit projectile damage.
+applied before ranged hit admission while successful projectile damage remains
+direct after impact.
 The `gameplay/ranged-class-hellfire-armor-piercing` companion proves Hellfire's
-shifted armor admission for a ranged class attack while retaining original
-target armor for post-hit damage reduction.
+shifted armor admission for a ranged class attack without a second target-armor
+reduction after impact.
 The `gameplay/ranged-class-critical-demon` companion proves initialized Warrior
 bow Critical Strike and Triple Demon Damage ordering before projectile capture.
 The `gameplay/ranged-elemental-impact` companion advances a fire-arrow through
@@ -174,8 +178,8 @@ The `gameplay/ranged-hellfire-doppelganger-unique` and
 native unique and Diablo target markers suppress the Doppelganger roll without
 advancing shared RNG state.
 The `gameplay/ranged-class-hellfire-peril-profile` companion proves initialized
-class Peril carries pre-armor attack damage while the projectile retains its
-post-armor Hellfire multiplier.
+class Peril carries pre-modifier attack damage while the projectile retains its
+post-hit Hellfire multiplier.
 The `gameplay/ranged-class-hellfire-peril-get-hit` and
 `gameplay-class-physical-damage-hellfire-peril-get-hit` companions prove that
 authored `PlusGetHit` is included in the carried/self-applied Peril payload
@@ -184,7 +188,7 @@ The Hellfire ranged-decay companion additionally proves that eligible hand
 weapons mutate once per emitted arrow before projectile resolution.
 The Hellfire ranged-Devastation companion proves the post-hit 3x multiplier
 before the projectile damage snapshot, including the shared native RNG draw.
-The Hellfire ranged-Peril companion proves the post-armor 2x multiplier and
+The Hellfire ranged-Peril companion proves the post-hit 2x multiplier and
 the carried attacker self-damage payload before projectile impact.
 Its impact companion advances the arrow through the next tick and proves the
 deferred self-damage application alongside target damage and removal.

@@ -23,6 +23,11 @@ for arrows; initialized monster-target arrows now apply the same native
 distance admission penalty. Monster attacks retain their existing
 armor-adjusted damage and equipment-piercing rules.
 
+Player-versus-monster physical attacks now use the same native armor boundary:
+target armor affects hit admission, while successful melee and weapon-arrow
+damage is applied directly without a second armor reduction. The compact native
+replay runner and managed processor share this ordering.
+
 Player hits now also honor the native Gargoyle wake-up boundary: an active
 Gargoyle special flag is consumed by the first physical hit without applying
 that hit's damage or equipment effects; other petrified monsters reject
@@ -316,8 +321,8 @@ runners, matching the native item and class rules.
 
 The replay parity boundary now covers initialized Rogue ranged attacks under
 Hellfire armor piercing: hit admission applies the shifted armor rule while
-projectile damage still applies the original target armor, with matching C# and
-native checkpoints.
+successful projectile damage remains direct, with matching C# and native
+checkpoints.
 
 Initialized Warrior ranged attacks now also apply the native Critical Strike
 roll and Triple Demon Damage multiplier before projectile capture, with matching
@@ -339,8 +344,8 @@ Hellfire ranged miss replay now skips the post-hit Devastation, Doppelganger,
 and Jesters rolls when no damage was admitted, preserving the native RNG state
 at the shared projectile checkpoint.
 
-Initialized class Peril replay now carries the pre-armor attack payload for
-self-damage while preserving post-armor projectile damage and the Hellfire
+Initialized class Peril replay now carries the pre-modifier attack payload for
+self-damage while preserving direct projectile damage and the Hellfire
 multiplier in both runners.
 
 Hellfire ranged replay now carries unique and Diablo target eligibility into
@@ -516,7 +521,7 @@ flat, and to-hit weapon modifiers now cross the same gate; other
 weapon/hit-resolution edge cases remain follow-up native-parity work. The
 initialized undead sword and mace paths now include the native target-class
 modifier, as do the corresponding animal paths. The initialized demon path now
-also includes the validated post-armor `TripleDemonDamage` multiplier. The
+also includes the validated post-hit `TripleDemonDamage` multiplier. The
 Barbarian path now covers the native melee armor-reduction divisor when
 armor-piercing equipment is present. Hellfire physical replay now carries
 authored damage-armor flags and the deterministic post-hit `Devastation` proc.
@@ -527,7 +532,7 @@ authored weapons.
 Ranged Hellfire replay now applies the same mutation once per emitted arrow,
 before projectile resolution, with the refreshed Hellfire manifest identity
 checked by both runners.
-Hellfire physical replay now also applies the native post-armor `Jesters`
+Hellfire physical replay now also applies the native post-hit `Jesters`
 roll and upper-half expansion at the shared checkpoint.
 Hellfire physical replay now also applies `Peril` self-damage from the
 pre-modifier attack and its final target-damage multiplier.
@@ -555,7 +560,7 @@ collision handling for breakable blockers.
 Both immediate and timed cell attacks now update the server-owned facing before
 resolving the native attack path.
 Ranged Hellfire replay now carries the validated `Peril` self-damage payload
-and post-armor multiplier into the projectile snapshot.
+and post-hit multiplier into the projectile snapshot.
 The ranged `Peril` impact replay now applies that deferred self-damage at the
 native arrow collision tick and preserves the shared target/removal checkpoint.
 Ranged Hellfire replay now carries the validated `Doppelganger` proc flag into

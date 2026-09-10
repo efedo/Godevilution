@@ -6073,13 +6073,14 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
-    public void InitializedClassPhysicalHitSubtractsTargetArmorBeforeNativeClamp()
+    public void InitializedClassPhysicalHitDoesNotSubtractMonsterArmorAfterAdmission()
     {
         var target = new AuthoritativeCombatTarget(
             9,
             1,
             0,
             100,
+            petrified: true,
             armorClass: 100);
         var world = new DiabloWorldState(combatTargets: [target]);
         var classes = LoadShippedPlayerClasses();
@@ -6093,13 +6094,13 @@ public sealed class DiabloCombatCommandProcessorTests
         var armored = processor.Execute(player, new DiabloAttackIntent(9), 1);
 
         Assert.True(armored.Succeeded);
-        Assert.Equal(100, target.HitPoints);
+        Assert.Equal(99, target.HitPoints);
 
         target.ArmorClass = 0;
         var unarmored = processor.Execute(player, new DiabloAttackIntent(9), 2);
 
         Assert.True(unarmored.Succeeded);
-        Assert.Equal(99, target.HitPoints);
+        Assert.Equal(98, target.HitPoints);
     }
 
     [Fact]
@@ -6320,6 +6321,7 @@ public sealed class DiabloCombatCommandProcessorTests
             1,
             0,
             100,
+            armorClass: 100,
             petrified: true);
         var world = new DiabloWorldState(combatTargets: [target]);
         var processor = CreateProcessor(world);

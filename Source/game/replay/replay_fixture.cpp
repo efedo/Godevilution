@@ -4033,22 +4033,24 @@ void CreateReplayWeaponArrow(
 		if (!attackHit)
 			damage = 0;
 		else {
-			int32_t damageBeforeArmor = damage;
+			int32_t damageAfterClassModifiers = damage;
 			if ((state.characterClassId == 0 || state.characterClassId == 5)
 			    && GenerateRnd(state, 100) < std::min(100, static_cast<int32_t>(state.characterLevel)))
-				damageBeforeArmor *= 2;
+				damageAfterClassModifiers *= 2;
 			if (state.combatTargetUndead) {
 				if (hasMace)
-					damageBeforeArmor += damageBeforeArmor / 2;
+					damageAfterClassModifiers += damageAfterClassModifiers / 2;
 				else if (hasSword)
-					damageBeforeArmor -= damageBeforeArmor / 2;
+					damageAfterClassModifiers -= damageAfterClassModifiers / 2;
 			} else if (state.combatTargetAnimal) {
 				if (hasMace)
-					damageBeforeArmor -= damageBeforeArmor / 2;
+					damageAfterClassModifiers -= damageAfterClassModifiers / 2;
 				else if (hasSword)
-					damageBeforeArmor += damageBeforeArmor / 2;
+					damageAfterClassModifiers += damageAfterClassModifiers / 2;
 			}
-			damage = std::max(1, damageBeforeArmor - targetArmorClass);
+			// Native PlrHitMonst/MonsterMHit apply successful damage directly;
+			// target armor has already served its admission purpose above.
+			damage = std::max(1, damageAfterClassModifiers);
 		}
 		if (attackHit
 		    && state.combatTargetDemon
@@ -6008,26 +6010,26 @@ bool ApplyReplayAttack(
 		if (state.hellfire
 		    && HasReplayHellfireEquipmentFlag(state, HellfirePerilFlag))
 			perilSelfDamageQ6 = std::max(0, damageBeforeFlat + getHitBonus) * 64;
-		int32_t damageBeforeArmor = damageBeforeFlat + damageFlat + damageModifier;
+		int32_t damageAfterClassModifiers = damageBeforeFlat + damageFlat + damageModifier;
 		// Warrior and Barbarian Critical Strike consume a native 0..99 roll
-		// after the class damage profile and double damage before armor reduction.
+		// after the class damage profile and before post-hit effects.
 		if (attackHit
 		    && (state.characterClassId == 0 || state.characterClassId == 5)
 		    && GenerateRnd(state, 100) < std::min(100, level))
-			damageBeforeArmor *= 2;
+			damageAfterClassModifiers *= 2;
 		if (state.combatTargetUndead) {
 			if (hasMace)
-				damageBeforeArmor += damageBeforeArmor / 2;
+				damageAfterClassModifiers += damageAfterClassModifiers / 2;
 			else if (hasSword)
-				damageBeforeArmor -= damageBeforeArmor / 2;
+				damageAfterClassModifiers -= damageAfterClassModifiers / 2;
 		} else if (state.combatTargetAnimal) {
 			if (hasMace)
-				damageBeforeArmor -= damageBeforeArmor / 2;
+				damageAfterClassModifiers -= damageAfterClassModifiers / 2;
 			else if (hasSword)
-				damageBeforeArmor += damageBeforeArmor / 2;
+				damageAfterClassModifiers += damageAfterClassModifiers / 2;
 		}
 		damage = attackHit
-		    ? std::max(1, damageBeforeArmor - std::max(0, damageArmorClass))
+		    ? std::max(1, damageAfterClassModifiers)
 		    : 0;
 		if (attackHit
 		    && state.combatTargetDemon
