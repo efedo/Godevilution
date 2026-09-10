@@ -793,6 +793,70 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void BarbarianCleaveAppliesHellfireElementalDamageToASideMonster()
+    {
+        var primary = new AuthoritativeCombatTarget(9, 1, 0, 6400);
+        var side = new AuthoritativeCombatTarget(
+            10,
+            1,
+            1,
+            6400,
+            fireResistance: 50,
+            lightningResistance: 25);
+        var classes = LoadShippedPlayerClasses();
+        var configuredClasses = new AuthoritativePlayerClassCatalog(
+            classes.Definitions.Select(definition => definition.ClassId == 5
+                ? definition with { CriticalStrikeChancePerLevelPercent = 0 }
+                : definition));
+        var world = new DiabloWorldState(combatTargets: [primary, side]);
+        var processor = CreateProcessor(
+            world,
+            rules: new AuthoritativeCombatRules(
+                10,
+                1,
+                100,
+                gameVariant: DiabloGameVariant.Hellfire),
+            random: new DiabloRandom(0),
+            playerClasses: configuredClasses);
+        var player = CreatePlayer(
+            entityId: 7,
+            characterClassId: 5,
+            characterLevel: 30,
+            attributes: configuredClasses.GetRequired(5).CreateStartingAttributes(),
+            equipment: [new EquippedStoreItem(
+                4,
+                42,
+                AuthoritativeItemState.Empty with {
+                    ItemType = 2,
+                    ItemClass = 1,
+                    EquipLocation = 2,
+                    MinDamage = 10,
+                    MaxDamage = 10,
+                    Flags = AuthoritativeEquipmentElementalDamageRules.FireDamageFlag
+                        | AuthoritativeEquipmentElementalDamageRules.LightningDamageFlag,
+                    FireMinDamage = 4,
+                    FireMaxDamage = 4,
+                    LightningMinDamage = 8,
+                    LightningMaxDamage = 8,
+                    StatFlag = true,
+                })]);
+
+        var result = processor.Execute(
+            player,
+            new DiabloAttackIntent(primary.EntityId),
+            1,
+            [player]);
+
+        Assert.True(result.Succeeded, result.Failure?.ToString());
+        Assert.Equal(408560, side.HitPointsQ6);
+        Assert.Equal(
+            [528, 128, 384],
+            result.Events
+                .Where(gameplayEvent => gameplayEvent.TargetEntityId == side.EntityId)
+                .Select(gameplayEvent => gameplayEvent.AmountQ6));
+    }
+
+    [Fact]
     public void BarbarianCellAttackCleaveHitsASideMonsterAfterBreakingThePrimaryObject()
     {
         var breakable = new AuthoritativeWorldObject(
@@ -813,6 +877,11 @@ public sealed class DiabloCombatCommandProcessorTests
             combatTargets: [side]);
         var processor = CreateProcessor(
             world,
+            rules: new AuthoritativeCombatRules(
+                10,
+                1,
+                100,
+                gameVariant: DiabloGameVariant.Hellfire),
             random: new DiabloRandom(0),
             playerClasses: configuredClasses);
         var player = CreatePlayer(
@@ -829,6 +898,12 @@ public sealed class DiabloCombatCommandProcessorTests
                     EquipLocation = 2,
                     MinDamage = 10,
                     MaxDamage = 10,
+                    Flags = AuthoritativeEquipmentElementalDamageRules.FireDamageFlag
+                        | AuthoritativeEquipmentElementalDamageRules.LightningDamageFlag,
+                    FireMinDamage = 4,
+                    FireMaxDamage = 4,
+                    LightningMinDamage = 8,
+                    LightningMaxDamage = 8,
                     Durability = 4,
                     MaxDurability = 4,
                     StatFlag = true,
@@ -842,8 +917,12 @@ public sealed class DiabloCombatCommandProcessorTests
 
         Assert.True(result.Succeeded, result.Failure?.ToString());
         Assert.True(breakable.Destroyed);
-        Assert.Equal(6392, side.HitPoints);
-        Assert.Equal(side.EntityId, Assert.Single(result.Events).TargetEntityId);
+        Assert.Equal(408304, side.HitPointsQ6);
+        Assert.Equal(
+            [528, 256, 512],
+            result.Events
+                .Where(gameplayEvent => gameplayEvent.TargetEntityId == side.EntityId)
+                .Select(gameplayEvent => gameplayEvent.AmountQ6));
     }
 
     [Fact]

@@ -725,7 +725,7 @@ public sealed class DiabloCombatCommandProcessor
                         ^ sideTarget.EntityId
                         ^ player.EntityId
                         ^ ++sideIndex),
-                    applyElemental: false,
+                    applyElemental: true,
                     events);
             }
         }
@@ -909,7 +909,7 @@ public sealed class DiabloCombatCommandProcessor
                             ^ sideTarget.EntityId
                             ^ player.EntityId
                             ^ ++sideIndex),
-                        applyElemental: false,
+                        applyElemental: true,
                         events);
                 }
             }

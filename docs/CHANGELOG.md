@@ -19,6 +19,10 @@ All notable changes to this fork are documented below.
   Cleave lanes even when the primary cell is empty or contains a breakable
   object, preserving one shared hit/durability boundary.
 
+- Extended Cleave parity to apply Hellfire fire and lightning weapon channels
+  to each admitted side target, including empty-cell and breakable-object cell
+  attacks, with native damage ordering and resistance handling.
+
 - Completed the native `DamageWeapon` parity slice: successful melee attacks
   now use the 1-in-30 durability roll, each emitted ranged arrow uses the
   1-in-40 roll, hand/shield fallback ordering matches native behavior,
