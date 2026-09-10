@@ -87,7 +87,9 @@ may carry a bounded, hash-verified private dependency closure while shared
 Godevilution contracts remain identity-stable; configured factory IDs select
 one compatible adapter after module preflight. The first production package
 entry point is `Devilution.Server.Diablo.Package`, which exercises this
-boundary for the Diablo adapter. The executable
+boundary for the Diablo adapter. A live Godot protocol smoke test now launches
+the server through that package, receives the initial snapshot, reconnects,
+and verifies resume-token and entity continuity. The executable
 composition root names no Diablo types. Exact assembly-reference tests enforce the separate
 Protocol, Host, Diablo adapter, and executable dependency graph, while a schema
 ownership test prevents duplicate managed Protobuf generation.

@@ -33,6 +33,37 @@ public sealed class LiveAuthoritativeServerTests
     }
 
     [Fact]
+    public async Task GodotTransportRunsThroughPackagedDiabloAdapterAndReconnects()
+    {
+        using var package = new PackagedDiabloAdapterPackage();
+        using var server = await StartedServer.StartAsync(
+            TestContext.Current.CancellationToken,
+            gameAdapterPackageRoot: package.Root,
+            gameAdapterId: "godevilution.diablo.package",
+            gameMode: "single-player");
+        await using var client = new AuthoritativeClient(
+            CreateOptions(server, "godot-live-packaged-diablo", requestedClassId: 2));
+
+        await client.ConnectAsync(TestContext.Current.CancellationToken);
+        var initial = await WaitForMessageAsync(
+            client,
+            message => message.Snapshot is not null);
+        var initialPlayer = Assert.Single(initial.Snapshot!.Players);
+        var sessionToken = client.SessionToken;
+        Assert.NotEmpty(sessionToken);
+
+        await client.ReconnectAsync(TestContext.Current.CancellationToken);
+        var resumed = await WaitForMessageAsync(
+            client,
+            message => message.Snapshot is not null
+                && message.Snapshot.Players.Single().EntityId == initialPlayer.EntityId);
+
+        Assert.Equal(sessionToken, client.SessionToken);
+        Assert.Equal(initialPlayer.EntityId, resumed.Snapshot!.Players.Single().EntityId);
+        Assert.NotEmpty(resumed.Snapshot.StateSha256);
+    }
+
+    [Fact]
     public async Task GodotTransportReceivesDifficultyScaledAuthoritativeMonsterState()
     {
         var hellfireRoot = Path.Combine(
@@ -5393,7 +5424,9 @@ public sealed class LiveAuthoritativeServerTests
             string? gameMode = null,
             string? difficultyOverride = null,
             string? saveRootOverride = null,
-            bool deleteSaveRootOnDispose = true)
+            bool deleteSaveRootOnDispose = true,
+            string? gameAdapterPackageRoot = null,
+            string? gameAdapterId = null)
         {
             var repositoryRoot = LiveAuthoritativeServerTests.FindRepositoryRoot();
             var ownsSaveRoot = string.IsNullOrWhiteSpace(saveRootOverride);
@@ -5472,6 +5505,14 @@ public sealed class LiveAuthoritativeServerTests
             if (!string.IsNullOrWhiteSpace(additionalContentOverlayRoot)) {
                 startInfo.ArgumentList.Add("--content-overlay");
                 startInfo.ArgumentList.Add(Path.GetFullPath(additionalContentOverlayRoot));
+            }
+            if (!string.IsNullOrWhiteSpace(gameAdapterPackageRoot)) {
+                startInfo.ArgumentList.Add("--game-adapter-package");
+                startInfo.ArgumentList.Add(Path.GetFullPath(gameAdapterPackageRoot));
+            }
+            if (!string.IsNullOrWhiteSpace(gameAdapterId)) {
+                startInfo.ArgumentList.Add("--game-adapter");
+                startInfo.ArgumentList.Add(gameAdapterId);
             }
             var process = Process.Start(startInfo) ?? throw new InvalidOperationException("Could not start the authoritative server.");
             var standardError = process.StandardError.ReadToEndAsync(cancellationToken);

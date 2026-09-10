@@ -19,5 +19,6 @@
     <ProjectReference Include="../../server/src/Devilution.Server/Devilution.Server.csproj"
                       ReferenceOutputAssembly="false"
                       SkipGetTargetFrameworkProperties="true" />
+    <ProjectReference Include="../../server/src/Devilution.Server.Diablo.Package/Devilution.Server.Diablo.Package.csproj" />
   </ItemGroup>
 </Project>

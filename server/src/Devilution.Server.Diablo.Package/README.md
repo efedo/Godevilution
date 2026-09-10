@@ -7,8 +7,9 @@ game-specific assemblies in the package's private dependency closure.
 
 Build the project, copy its entry assembly plus the private
 `Devilution.Server.Diablo`, `Devilution.Diablo`, and `Devilution.Domain`
-assemblies (and any non-platform dependency such as `Google.Protobuf`) into a
-package directory, and list each file with its SHA-256 in `dependencies`.
+assemblies into a package directory, and list each file with its SHA-256 in
+`dependencies`. `Google.Protobuf` is a shared runtime contract and must not be
+copied into the package.
 `Devilution.Data`, `Devilution.Engine`, `Devilution.Server.Host`, and
 `Devilution.Protocol` remain shared contracts and must not be duplicated in
 the package. Select the package with `--game-adapter`

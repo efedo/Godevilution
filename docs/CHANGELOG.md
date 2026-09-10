@@ -15,7 +15,14 @@ All notable changes to this fork are documented below.
   `Devilution.Server.Diablo.Package`. Explicit factory selection now scopes
   built-in module candidates to the selected adapter, allowing the packaged
   Diablo adapter to run without colliding with the built-in factory; focused
-  coverage loads its private Diablo dependency closure in isolation.
+  coverage loads its private Diablo dependency closure in isolation. The
+  adapter loader now shares `Google.Protobuf` with the host so isolated package
+  code cannot create incompatible generated-message type identities.
+
+- Added live Godot protocol coverage for the selected packaged Diablo adapter:
+  the server starts through the package boundary, the client receives its
+  initial authoritative snapshot, reconnects, and verifies resume-token and
+  entity continuity.
 
 - Advanced combined authoritative session checkpoints to format 3 with
   canonical SHA-256 hashes of serialized server state and the command ledger.

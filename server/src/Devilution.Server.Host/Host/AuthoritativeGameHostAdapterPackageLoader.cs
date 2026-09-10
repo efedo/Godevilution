@@ -4,6 +4,7 @@ using System.Runtime.Loader;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
+using Google.Protobuf;
 using Devilution.Data;
 using Devilution.Engine;
 using Devilution.Protocol.V1;
@@ -22,8 +23,9 @@ public sealed record LoadedAuthoritativeGameHostAdapterPackage(
  * Loads an explicitly selected adapter package without letting filesystem or
  * reflection concerns cross into Engine. Package assemblies may reference only
  * platform libraries and the shared Godevilution host, protocol, data, and
- * engine contracts. Private dependencies may be carried beside the entry
- * assembly when each dependency is listed and hash-verified by the manifest.
+ * engine contracts (including the shared Google.Protobuf runtime). Private
+ * dependencies may be carried beside the entry assembly when each dependency
+ * is listed and hash-verified by the manifest.
  */
 public sealed class AuthoritativeGameHostAdapterPackageLoader
 {
@@ -48,6 +50,7 @@ public sealed class AuthoritativeGameHostAdapterPackageLoader
             typeof(IGameplayModule).Assembly,
             typeof(IAuthoritativeGameHostAdapterFactory).Assembly,
             typeof(Command).Assembly,
+            typeof(IMessage).Assembly,
         }
             .Concat(additional)
             .GroupBy(assembly => assembly.GetName().Name!, StringComparer.OrdinalIgnoreCase)

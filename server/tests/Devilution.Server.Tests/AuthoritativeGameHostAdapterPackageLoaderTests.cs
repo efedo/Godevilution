@@ -164,7 +164,6 @@ public sealed class AuthoritativeGameHostAdapterPackageLoaderTests
             ("server-diablo.dll", typeof(Devilution.Server.Gameplay.DiabloAuthoritativeGameHostAdapterFactory).Assembly.Location),
             ("diablo.dll", typeof(Devilution.Diablo.DiabloModule).Assembly.Location),
             ("domain.dll", typeof(Devilution.Domain.Protocol.AuthoritativeLevelIdentityRules).Assembly.Location),
-            ("protobuf.dll", typeof(Google.Protobuf.IMessage).Assembly.Location),
         };
         foreach (var (name, source) in files)
             File.Copy(source, Path.Combine(root, name));
@@ -180,7 +179,6 @@ public sealed class AuthoritativeGameHostAdapterPackageLoaderTests
                 new { assembly = "server-diablo.dll", assemblySha256 = GetSha256(Path.Combine(root, "server-diablo.dll")) },
                 new { assembly = "diablo.dll", assemblySha256 = GetSha256(Path.Combine(root, "diablo.dll")) },
                 new { assembly = "domain.dll", assemblySha256 = GetSha256(Path.Combine(root, "domain.dll")) },
-                new { assembly = "protobuf.dll", assemblySha256 = GetSha256(Path.Combine(root, "protobuf.dll")) },
             },
         };
         File.WriteAllText(
