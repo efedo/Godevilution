@@ -1,3 +1,4 @@
+using Devilution.Data;
 using Devilution.Diablo;
 using Xunit;
 
@@ -5,6 +6,34 @@ namespace Devilution.Diablo.Tests;
 
 public sealed class AuthoritativeSpellBookCatalogTests
 {
+    [Fact]
+    public void ShippedSpellBooksUseTheProductionSchema()
+    {
+        var path = Path.Combine(
+            FindRepositoryRoot(),
+            "server",
+            "content",
+            "base",
+            "spell_books.tsv");
+        var table = TsvTable.Parse("spell_books.tsv", File.ReadAllText(path));
+
+        AuthoritativeSpellBookCatalog.ValidateExternalizedProduction(table);
+    }
+
+    [Fact]
+    public void ProductionSpellBookValidationRejectsNumericOnlyHeaders()
+    {
+        var table = TsvTable.Parse(
+            "spell_books.tsv",
+            "spell_id\tdisplay_name\tbook_level\tbook_cost\tmagic_type\tminimum_magic\n"
+                + "1\tFirebolt\t1\t1000\tFire\t15\n");
+
+        var exception = Assert.Throws<InvalidDataException>(() =>
+            AuthoritativeSpellBookCatalog.ValidateExternalizedProduction(table));
+
+        Assert.Contains("complete ordered schema", exception.Message, StringComparison.Ordinal);
+    }
+
     [Fact]
     public void LoadsNativeCursorSymbolThroughExternalCursorCatalog()
     {
@@ -352,5 +381,22 @@ public sealed class AuthoritativeSpellBookCatalogTests
             ResurrectionLifeScale = 64,
             ResurrectionSearchRadius = 50,
         };
+    }
+
+    private static string FindRepositoryRoot()
+    {
+        var configuredRoot = Environment.GetEnvironmentVariable("GODEVILUTION_REPOSITORY_ROOT");
+        var searchRoots = string.IsNullOrWhiteSpace(configuredRoot)
+            ? new[] { Directory.GetCurrentDirectory(), AppContext.BaseDirectory }
+            : new[] { configuredRoot!, Directory.GetCurrentDirectory(), AppContext.BaseDirectory };
+        foreach (var start in searchRoots) {
+            for (var directory = new DirectoryInfo(start);
+                 directory is not null;
+                 directory = directory.Parent) {
+                if (File.Exists(Path.Combine(directory.FullName, "AGENTS.md")))
+                    return directory.FullName;
+            }
+        }
+        throw new DirectoryNotFoundException("Could not locate the repository root.");
     }
 }

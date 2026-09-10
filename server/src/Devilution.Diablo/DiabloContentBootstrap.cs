@@ -337,6 +337,8 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
             nativeItemHellfireEffects);
         stableIds.ValidateReferences("item", itemId => itemCatalog.TryGet(itemId, out _));
         var spellBooksTable = GetRequiredExternalTable(content, "spell_books.tsv");
+        if (content.Manifest.Schema == DiabloContentSchema.Current)
+            AuthoritativeSpellBookCatalog.ValidateExternalizedProduction(spellBooksTable);
         var spellBooks = AuthoritativeSpellBookCatalog.LoadTsv(
             spellBooksTable.SourcePath,
             spellBooksTable.ToCanonicalTsv(),

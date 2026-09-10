@@ -36,6 +36,18 @@ public sealed record AuthoritativeSpellBookDefinition(
 /** Validated external spell-book metadata and deterministic item projection. */
 public sealed class AuthoritativeSpellBookCatalog
 {
+    private static readonly IReadOnlyList<string> ProductionColumns = [
+        "spell_id",
+        "spell_symbol",
+        "display_name",
+        "book_level",
+        "book_cost",
+        "magic_type",
+        "minimum_magic",
+        "cursor_symbol",
+        "single_player_excluded",
+    ];
+
     private const int BookMiscId = 25;
     private const uint FirstNativeSpellId = 1;
     private const uint MaximumNativeSpellId = NativeCompatibilityLimits.MaximumNativeSpellId;
@@ -75,6 +87,18 @@ public sealed class AuthoritativeSpellBookCatalog
 
     public IReadOnlyList<AuthoritativeSpellBookDefinition> Definitions
         => definitions.Values.OrderBy(definition => definition.SpellId).ToArray();
+
+    /** Rejects partial spell-book metadata at the current production boundary. */
+    public static void ValidateExternalizedProduction(TsvTable table)
+    {
+        ArgumentNullException.ThrowIfNull(table);
+        if (!table.Columns.SequenceEqual(ProductionColumns, StringComparer.Ordinal))
+            throw new InvalidDataException(
+                $"Production spell-book table '{table.SourcePath}' must use the complete ordered schema.");
+        foreach (var row in table.Rows)
+            foreach (var column in ProductionColumns)
+                _ = row.Required(column);
+    }
 
     public bool TryGet(uint spellId, out AuthoritativeSpellBookDefinition definition)
         => definitions.TryGetValue(spellId, out definition!);
