@@ -5819,6 +5819,40 @@ public sealed class DiabloCombatCommandProcessor
                         100);
                     if (blockRoll < blockChance) {
                         StartBlock(victim, victimClass, tick);
+                        // Native MonsterAttackPlayer still resolves Reflect on
+                        // a blocked hit. The blocked player takes no damage,
+                        // but the monster receives a percentage of the rolled
+                        // Q6 damage and one charge is consumed.
+                        if (victim.ReflectCharges > 0) {
+                            victim.ReflectCharges--;
+                            var reflectedBaseQ6 = AuthoritativeEquipmentIncomingDamageRules
+                                .ApplyGetHitQ6(
+                                    RollEffectiveMonsterDamageQ6(target, usesSpecialAttack),
+                                    DeterministicFixedPointQ6.Scale,
+                                    victim.Equipment);
+                            var reflectMinimum = reflectSpell?.ReflectDamagePercentMinimum > 0
+                                ? reflectSpell.ReflectDamagePercentMinimum
+                                : NativeReflectDamagePercentMinimum;
+                            var reflectMaximum = reflectSpell?.ReflectDamagePercentMaximum > 0
+                                ? reflectSpell.ReflectDamagePercentMaximum
+                                : NativeReflectDamagePercentMaximum;
+                            var reflectedDamageQ6 = checked(
+                                reflectedBaseQ6
+                                * random.RandomIntBetween(reflectMinimum, reflectMaximum)
+                                / 100);
+                            if (reflectedDamageQ6 > 0) {
+                                var reflectedEvents = new List<DiabloGameplayEvent>();
+                                ApplyResolvedDamageQ6(
+                                    victim,
+                                    target,
+                                    reflectedDamageQ6,
+                                    reflectedEvents);
+                                foreach (var reflectedEvent in reflectedEvents)
+                                    events.Add(new DiabloDirectedGameplayEvent(
+                                        victim,
+                                        reflectedEvent));
+                            }
+                        }
                         continue;
                     }
                 }

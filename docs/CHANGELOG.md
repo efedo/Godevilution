@@ -10,6 +10,11 @@ All notable changes to this fork are documented below.
   uploads the distributable Diablo adapter ZIP without publishing to a package
   registry or overwriting an existing release.
 
+- Preserved DevilutionX's blocked-monster-melee Reflect behavior in the
+  authoritative server: blocked hits consume a charge, roll Q6 damage, apply
+  the configured reflection percentage to the monster, and keep the player's
+  life unchanged with focused RNG-order coverage.
+
 - Ruleset replacement now publishes migrated session checkpoints during
   candidate preparation, before activation or handshake identity publication;
   failed exports or checkpoint writes keep the previous generation active.

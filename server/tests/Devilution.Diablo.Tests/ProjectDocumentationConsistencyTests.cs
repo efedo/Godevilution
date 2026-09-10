@@ -48,6 +48,7 @@ public sealed class ProjectDocumentationConsistencyTests
         Assert.Contains($"schema to `{currentVersion}`", changelog, StringComparison.Ordinal);
         Assert.Contains("documentation/content identity regression guard", changelog, StringComparison.Ordinal);
         Assert.Contains("distributable ZIP archive", changelog, StringComparison.Ordinal);
+        Assert.Contains("blocked-monster-melee Reflect behavior", changelog, StringComparison.Ordinal);
 
         var packageWorkflow = Read(root, ".github", "workflows", "diablo-adapter-package.yml");
         Assert.Contains("package-diablo-adapter.ps1", packageWorkflow, StringComparison.Ordinal);

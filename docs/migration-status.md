@@ -8572,6 +8572,12 @@ Seeded native MonsterMelee impacts now use the same secondary-player
 FlexibleBlock/base-chance boundary, with an unarmed Hellfire Monk fixture
 covering class admission while preserving the monster AI seed transition.
 
+Blocked native MonsterMelee impacts now retain DevilutionX's Reflect boundary:
+the server consumes one Reflect charge, rolls the incoming monster damage in Q6,
+applies the configured reflection percentage to the monster, and leaves the
+player's life unchanged. The regression covers the block/reflection RNG order
+and directed damage event without weakening the existing block lifecycle.
+
 ## Near-term priorities
 
 1. Close the remaining native-parity combat and AI edge cases, including class

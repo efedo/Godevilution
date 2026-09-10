@@ -3282,6 +3282,67 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void BlockedMonsterMeleeStillReflectsRolledDamageAndConsumesACharge()
+    {
+        var shield = AuthoritativeItemState.Empty with {
+            ItemType = 5,
+            StatFlag = true,
+        };
+        var victim = CreatePlayer(
+            positionX: 1,
+            entityId: 7,
+            life: 100,
+            lifeMaximum: 100,
+            attributes: PlayerAttributesState.Zero with {
+                Dexterity = new PlayerAttributeState(100, 100),
+            },
+            equipment: [new EquippedStoreItem(5, 99, shield)]);
+        victim.ReflectCharges = 1;
+        var target = new AuthoritativeCombatTarget(
+            9,
+            0,
+            0,
+            20,
+            attackDamage: 10,
+            aggroRange: 1,
+            minDamage: 10,
+            maxDamage: 10,
+            monsterLevel: 1,
+            toHit: 100);
+        var world = new DiabloWorldState(combatTargets: [target]);
+        var random = new DiabloRandom(0);
+        var processor = CreateProcessor(
+            world,
+            random: random,
+            spells: new AuthoritativeSpellCatalog([
+                CreateReflectSpell() with {
+                    ReflectDamagePercentMinimum = 50,
+                    ReflectDamagePercentMaximum = 50,
+                },
+            ]));
+
+        var deliveries = processor.AdvanceTick(1, [victim]);
+
+        Assert.Equal(100, victim.Life);
+        Assert.Equal(DiabloPlayerCombatMode.Block, victim.CombatMode);
+        Assert.Equal(15, target.HitPoints);
+        Assert.Equal(0U, victim.ReflectCharges);
+        var reflection = Assert.Single(
+            deliveries,
+            delivery => delivery.Event.Kind == DiabloGameplayEventKind.Damage);
+        Assert.Same(victim, reflection.Recipient);
+        Assert.Equal(victim.EntityId, reflection.Event.SourceEntityId);
+        Assert.Equal(target.EntityId, reflection.Event.TargetEntityId);
+        Assert.Equal(5, reflection.Event.Amount);
+        var expected = new DiabloRandom(0);
+        _ = expected.RandomIntLessThan(100);
+        _ = expected.RandomIntLessThan(100);
+        _ = expected.RandomIntBetween(10 * 64, 10 * 64);
+        _ = expected.RandomIntBetween(50, 50);
+        Assert.Equal(expected.State, random.State);
+    }
+
+    [Fact]
     public void FallenDeathTriggersNativeFearForNearbyFallen()
     {
         var deceased = new AuthoritativeCombatTarget(
