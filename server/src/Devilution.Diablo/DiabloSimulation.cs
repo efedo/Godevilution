@@ -101,6 +101,13 @@ public sealed class DiabloSimulationOptions
     /** Composed content bytes retained for deferred native fragment materialization. */
     public ComposedContent? Content { get; init; }
 
+    /**
+     * Requires production activation to provide composed content and the
+     * externally validated spell/combat catalogs instead of compatibility
+     * fallbacks.
+     */
+    public bool RequireExternalContentCatalogs { get; init; }
+
     /** Optional object templates used when mapped native DUN entities are rematerialized. */
     public IReadOnlyList<AuthoritativeWorldObject>? NativeObjectTemplates { get; init; }
 
@@ -210,6 +217,15 @@ public sealed class DiabloSimulationFactory : IDiabloSimulationFactory
     public DiabloSimulation Create(DiabloSimulationOptions options)
     {
         ArgumentNullException.ThrowIfNull(options);
+        if (options.RequireExternalContentCatalogs && options.Content is null)
+            throw new InvalidDataException(
+                "Production Diablo activation requires composed external content.");
+        if (options.RequireExternalContentCatalogs && options.Spells is null)
+            throw new InvalidDataException(
+                "Production Diablo activation requires an external spell catalog.");
+        if (options.RequireExternalContentCatalogs && options.CombatRules is null)
+            throw new InvalidDataException(
+                "Production Diablo activation requires external combat rules.");
         var worldState = new DiabloWorldState(
             options.World,
             options.FallbackWidth,

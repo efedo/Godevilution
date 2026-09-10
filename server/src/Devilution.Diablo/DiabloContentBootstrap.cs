@@ -1225,6 +1225,7 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
             NativeDunFragmentObjects = nativeDunFragmentObjects,
             NativeDunMonsters = nativeDunMonsters,
             Content = content,
+            RequireExternalContentCatalogs = true,
             NativeObjectTemplates = objectTemplates,
             Spells = spells,
             Experience = experience,

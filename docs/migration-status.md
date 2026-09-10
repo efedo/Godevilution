@@ -12,6 +12,12 @@ friendly-fire and Etherealize checks at impact. A target that changes friendly
 mode or becomes Etherealized while the arrow is in flight no longer takes
 damage, matching native launch-versus-impact admission boundaries.
 
+Production content activation now explicitly requires the composed external
+content payload, spell catalog, and combat rules. The simulation factory keeps
+its legacy defaults for compatibility callers, but the first-party activation
+path can no longer silently construct a production simulation from embedded
+fallback data.
+
 Native player-versus-player resource restoration now follows `PlrHitPlr`:
 only usable `RandomStealLife` can restore the attacker after a physical player
 hit. Fixed `StealLife3/5` and `StealMana3/5` remain monster-target effects for

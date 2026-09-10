@@ -2,6 +2,10 @@
 
 All notable changes to this fork are documented below.
 
+- Made the production content boundary explicit. First-party activation now
+  requires composed external content plus validated spell and combat catalogs;
+  compatibility callers retain the existing embedded defaults.
+
 - Matched native delayed PvP arrow admission. Friendly-fire mode and
   Etherealize are rechecked when a bow projectile reaches its target, so a
   target that changes state during flight is protected without changing the
