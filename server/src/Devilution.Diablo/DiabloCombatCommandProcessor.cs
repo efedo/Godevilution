@@ -475,10 +475,20 @@ public sealed class DiabloCombatCommandProcessor
         if (!action.EffectApplied && tick >= action.EffectTick) {
             switch (action.Kind) {
             case DiabloPlayerActionKind.Move:
-                player.PositionX = checked(player.PositionX + action.DirectionX);
-                player.PositionY = checked(player.PositionY + action.DirectionY);
-                worldCommands?.ExecuteOccupancyTriggers(player, players);
-                worldCommands?.ExecuteLevelTrigger(player, tick, players);
+                var destinationX = checked(player.PositionX + action.DirectionX);
+                var destinationY = checked(player.PositionY + action.DirectionY);
+                if (world.IsWalkable(player.LevelId, destinationX, destinationY)
+                    && !world.IsOccupied(
+                        player.LevelId,
+                        destinationX,
+                        destinationY,
+                        players,
+                        player.EntityId)) {
+                    player.PositionX = destinationX;
+                    player.PositionY = destinationY;
+                    worldCommands?.ExecuteOccupancyTriggers(player, players);
+                    worldCommands?.ExecuteLevelTrigger(player, tick, players);
+                }
                 break;
             case DiabloPlayerActionKind.Attack:
                 AddDirectedEvents(

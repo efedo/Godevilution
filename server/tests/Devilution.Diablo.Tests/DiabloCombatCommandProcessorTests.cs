@@ -946,6 +946,91 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void TimedMovementRevalidatesParticipantOccupancyAtEffectTick()
+    {
+        var world = new DiabloWorldState(fallbackWidth: 4, fallbackHeight: 4);
+        var playerClasses = LoadShippedPlayerClasses();
+        var playerAnimations = LoadShippedPlayerAnimations(playerClasses);
+        var worldCommands = new DiabloWorldCommandProcessor(
+            world,
+            playerAnimations,
+            useNativePlayerActionTiming: true);
+        var processor = CreateProcessor(
+            world,
+            playerClasses: playerClasses,
+            playerAnimations: playerAnimations,
+            worldCommands: worldCommands,
+            useNativePlayerActionTiming: true);
+        var mover = CreatePlayer(
+            positionX: 0,
+            positionY: 0,
+            entityId: 7,
+            characterClassId: 0);
+        var other = CreatePlayer(
+            positionX: 2,
+            positionY: 0,
+            entityId: 8,
+            characterClassId: 0);
+
+        var accepted = worldCommands.Execute(
+            mover,
+            new DiabloMoveIntent(1, 0),
+            1,
+            [mover, other]);
+
+        Assert.True(accepted.Succeeded);
+        var action = Assert.IsType<AuthoritativePlayerActionState>(mover.CurrentAction);
+        other.PositionX = 1;
+        processor.AdvanceTick(action.EffectTick, [mover, other]);
+
+        Assert.Equal((0, 0), (mover.PositionX, mover.PositionY));
+        Assert.True(action.EffectApplied);
+    }
+
+    [Fact]
+    public void TimedMovementRevalidatesWalkabilityAtEffectTick()
+    {
+        var geometry = new AuthoritativeWorld();
+        geometry.AddLevel(new AuthoritativeLevel(0, 4, 4));
+        var world = new DiabloWorldState(geometry);
+        var playerClasses = LoadShippedPlayerClasses();
+        var playerAnimations = LoadShippedPlayerAnimations(playerClasses);
+        var worldCommands = new DiabloWorldCommandProcessor(
+            world,
+            playerAnimations,
+            useNativePlayerActionTiming: true);
+        var processor = CreateProcessor(
+            world,
+            playerClasses: playerClasses,
+            playerAnimations: playerAnimations,
+            worldCommands: worldCommands,
+            useNativePlayerActionTiming: true);
+        var mover = CreatePlayer(
+            positionX: 0,
+            positionY: 0,
+            entityId: 7,
+            characterClassId: 0);
+
+        var accepted = worldCommands.Execute(
+            mover,
+            new DiabloMoveIntent(1, 0),
+            1,
+            [mover]);
+
+        Assert.True(accepted.Succeeded);
+        var action = Assert.IsType<AuthoritativePlayerActionState>(mover.CurrentAction);
+        world.ReplaceLevel(new AuthoritativeLevel(
+            0,
+            4,
+            4,
+            blockedCells: [1]));
+        processor.AdvanceTick(action.EffectTick, [mover]);
+
+        Assert.Equal((0, 0), (mover.PositionX, mover.PositionY));
+        Assert.True(action.EffectApplied);
+    }
+
+    [Fact]
     public void SuccessfulMeleeAttackConsumesNativeWeaponDurability()
     {
         var weapon = AuthoritativeItemState.Empty with {

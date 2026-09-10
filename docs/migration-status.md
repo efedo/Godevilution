@@ -49,6 +49,12 @@ hit recovery does not consume durability RNG when no eligible equipment is
 hydrated. The movement, Bone Spirit, and Fireball replay fixture families now
 agree at every checked-in checkpoint in the managed and native runners.
 
+Timed authoritative player movement now revalidates both effective level
+walkability and participant occupancy when its animation reaches the movement
+effect tick. A participant or world mutation that claims the destination during
+the animation therefore cancels the step instead of allowing the server state to
+overlap or enter newly blocked geometry.
+
 Player hits now also honor the native Gargoyle wake-up boundary: an active
 Gargoyle special flag is consumed by the first physical hit without applying
 that hit's damage or equipment effects. Other petrified monsters use the

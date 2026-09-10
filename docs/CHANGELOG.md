@@ -6,6 +6,10 @@ All notable changes to this fork are documented below.
   damage and block/hit recovery RNG boundaries, including empty-equipment
   recovery paths.
 
+- Revalidated timed authoritative player movement at its effect tick against
+  current level geometry and participant occupancy, preventing delayed movement
+  from entering a cell claimed by another participant or a world mutation.
+
 - Aligned compatibility-template combat and replay RNG boundaries with the
   native runner: metadata-free monster armor keeps its legacy damage reduction,
   petrified Bone Spirit targets skip hit rolls, and block/hit recovery skips
