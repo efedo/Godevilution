@@ -51,6 +51,9 @@ All notable changes to this fork are documented below.
   native early return before ordinary durability loss. Compatibility weapons
   without durability metadata no longer consume a spurious replay RNG roll.
 
+- Refreshed six class-physical replay checkpoints whose native and managed
+  runners now agree after the armor-admission and damage-boundary corrections.
+
 - Added native incoming durability handling at timed recovery boundaries:
   block expiry applies the 1-in-10 shield/staff parry roll, hit recovery
   applies the 3-in-4 helmet/chest armor roll, and broken equipment is removed

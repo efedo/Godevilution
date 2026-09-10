@@ -32,6 +32,10 @@ Legacy weapon durability remains authoritative for hydrated equipment. Replay
 compatibility weapons that omit durability metadata are inert placeholders and
 do not consume the native durability RNG boundary.
 
+The class-physical replay matrix is current for armor, armor-piercing, to-hit,
+damage-modifier, Barbarian, and Hellfire variants; both runners agree at each
+refreshed checkpoint.
+
 Player hits now also honor the native Gargoyle wake-up boundary: an active
 Gargoyle special flag is consumed by the first physical hit without applying
 that hit's damage or equipment effects. Other petrified monsters use the

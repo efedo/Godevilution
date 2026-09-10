@@ -620,7 +620,7 @@ TEST(ReplayFixture, ExecutesBarbarianPhysicalDamageAgainstCSharpCheckpoint)
 TEST(ReplayFixture, ExecutesBarbarianArmorPiercingAgainstCSharpCheckpoint)
 {
 	ExecuteClassPhysicalDamageFixture(
-	    "test/fixtures/replay/gameplay-class-physical-damage-barbarian-armor-piercing.json", 5, 40, 20, 25, 99);
+	    "test/fixtures/replay/gameplay-class-physical-damage-barbarian-armor-piercing.json", 5, 40, 20, 25, 89);
 }
 
 TEST(ReplayFixture, ExecutesWarriorPhysicalDamageAgainstCSharpCheckpoint)
@@ -638,7 +638,7 @@ TEST(ReplayFixture, ExecutesSorcererPhysicalDamageAgainstCSharpCheckpoint)
 TEST(ReplayFixture, ExecutesPhysicalDamageAgainstArmorCheckpoint)
 {
 	ExecuteClassPhysicalDamageFixture(
-	    "test/fixtures/replay/gameplay-class-physical-damage-armor.json", 0, 30, 20, 25, 99);
+	    "test/fixtures/replay/gameplay-class-physical-damage-armor.json", 0, 30, 20, 25, 93);
 }
 
 TEST(ReplayFixture, ExecutesPhysicalMissAgainstArmorCheckpoint)
@@ -650,7 +650,7 @@ TEST(ReplayFixture, ExecutesPhysicalMissAgainstArmorCheckpoint)
 TEST(ReplayFixture, ExecutesPhysicalArmorPiercingAgainstCSharpCheckpoint)
 {
 	ExecuteClassPhysicalDamageFixture(
-	    "test/fixtures/replay/gameplay-class-physical-damage-armor-piercing.json", 0, 30, 20, 25, 99);
+	    "test/fixtures/replay/gameplay-class-physical-damage-armor-piercing.json", 0, 30, 20, 25, 93);
 }
 
 TEST(ReplayFixture, ExecutesPhysicalHellDifficultyAgainstCSharpCheckpoint)
@@ -662,13 +662,13 @@ TEST(ReplayFixture, ExecutesPhysicalHellDifficultyAgainstCSharpCheckpoint)
 TEST(ReplayFixture, ExecutesPhysicalDamageModifiersAgainstCSharpCheckpoint)
 {
 	ExecuteClassPhysicalDamageFixture(
-	    "test/fixtures/replay/gameplay-class-physical-damage-modifiers.json", 0, 30, 20, 25, 95);
+	    "test/fixtures/replay/gameplay-class-physical-damage-modifiers.json", 0, 30, 20, 25, 90);
 }
 
 TEST(ReplayFixture, ExecutesPhysicalToHitBonusAgainstCSharpCheckpoint)
 {
 	ExecuteClassPhysicalDamageFixture(
-	    "test/fixtures/replay/gameplay-class-physical-damage-to-hit.json", 0, 30, 20, 25, 99);
+	    "test/fixtures/replay/gameplay-class-physical-damage-to-hit.json", 0, 30, 20, 25, 93);
 }
 
 TEST(ReplayFixture, ExecutesPhysicalUndeadSwordAgainstCSharpCheckpoint)
@@ -718,7 +718,7 @@ TEST(ReplayFixture, ExecutesPhysicalHellfireDevastationAgainstCSharpCheckpoint)
 TEST(ReplayFixture, ExecutesPhysicalHellfireArmorPiercingAgainstCSharpCheckpoint)
 {
 	ExecuteClassPhysicalDamageFixture(
-	    "test/fixtures/replay/gameplay-class-physical-damage-hellfire-armor-piercing.json", 0, 30, 20, 25, 99);
+	    "test/fixtures/replay/gameplay-class-physical-damage-hellfire-armor-piercing.json", 0, 30, 20, 25, 93);
 }
 
 TEST(ReplayFixture, ExecutesRangedElementalArrowAttackAgainstCSharpCheckpoint)
