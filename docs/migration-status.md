@@ -2,6 +2,11 @@
 
 Status date: 2026-09-10
 
+The cross-runner `gameplay-monster-arrow-etherealized.json` fixture now proves
+the native `PlayerMHit` protection boundary: an Etherealized player does not
+consume a MonsterArrow, and both native and managed runners continue the arrow
+through the occupied tile until its normal travel lifetime expires.
+
 Monster-arrow impact now matches the native `PlayerMHit` protection boundary:
 an Etherealized player does not consume the projectile, so the arrow continues
 through the protected tile and can complete its normal travel lifecycle.

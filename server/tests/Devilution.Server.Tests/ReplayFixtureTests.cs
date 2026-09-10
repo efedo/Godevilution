@@ -4244,6 +4244,76 @@ public sealed class ReplayFixtureTests
     }
 
     [Fact]
+    public void GameplayMonsterArrowEtherealizePassThroughMatchesNativeLifecycle()
+    {
+        var fixture = LoadReplayFixture("gameplay-monster-arrow-etherealized.json");
+        var initial = fixture.InitialState;
+        var target = new AuthoritativeCombatTarget(
+            initial.CombatTargetEntityId,
+            initial.CombatTargetPositionX,
+            initial.CombatTargetPositionY,
+            initial.CombatTargetHitPoints,
+            maxHitPoints: initial.CombatTargetMaxHitPoints,
+            levelId: initial.CombatTargetLevelId,
+            monsterLevel: initial.CombatTargetMonsterLevel);
+        var definition = Assert.Single(fixture.InitialProjectiles);
+        var projectile = new AuthoritativeProjectile(
+            definition.EntityId,
+            definition.SourceEntityId,
+            definition.TargetEntityId,
+            definition.SpellId,
+            definition.LevelId,
+            definition.PositionX,
+            definition.PositionY,
+            definition.TargetX,
+            definition.TargetY,
+            definition.Damage,
+            (AuthoritativeDamageType)definition.DamageType,
+            definition.AreaRadius,
+            definition.RemainingTicks,
+            allowZeroSpellId: true) {
+            Behavior = (AuthoritativeProjectileBehavior)definition.Behavior,
+            Phase = (AuthoritativeProjectilePhase)definition.Phase,
+            Speed = definition.Speed,
+            ImpactLifetime = definition.ImpactLifetime,
+            DamageMinimum = definition.DamageMinimum,
+            DamageMaximum = definition.DamageMaximum,
+        };
+        var executor = new StoreSimulationExecutor(
+            new StoreCatalog(),
+            initial.Gold,
+            initial.Experience,
+            initial.Life,
+            initial.Mana,
+            startingLifeMaximum: initial.LifeMaximum,
+            startingManaMaximum: initial.ManaMaximum,
+            startingPositionX: initial.PositionX,
+            startingPositionY: initial.PositionY,
+            startingLevelId: initial.LevelId,
+            startingCombatTargets: [target],
+            startingSpells: LoadBaseSpells(fixture),
+            startingAbilitySpellId: initial.AbilitySpellId,
+            startingProjectiles: [projectile],
+            startingRandomSeed: checked((uint)fixture.RngSeed));
+
+        var result = ReplayFixtureExecutor.Execute(
+            fixture,
+            executor,
+            new AuthoritativeCommandServer(executor));
+        var player = Assert.Single(result.FinalSnapshot.Players);
+
+        Assert.Equal(CommandStatus.Accepted, Assert.Single(result.Results).Status);
+        Assert.Equal(initial.Life, player.Life);
+        Assert.Empty(result.FinalSnapshot.Projectiles);
+        var status = Assert.Single(player.StatusEffects);
+        Assert.Equal(53U, status.EffectId);
+        Assert.Equal(uint.MaxValue, status.RemainingTicks);
+        Assert.Equal(
+            fixture.Checkpoints.Select(checkpoint => checkpoint.StateSha256),
+            result.Checkpoints.Select(checkpoint => checkpoint.ActualStateSha256));
+    }
+
+    [Fact]
     public void GameplaySecondaryMonsterDeathDropsMatchNativeLifecycle()
     {
         var path = Path.Combine(

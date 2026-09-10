@@ -1,0 +1,74 @@
+{
+  "format_version": 1,
+  "fixture_id": "gameplay/monster-arrow-etherealized",
+  "protocol_schema_version": "0.1.0",
+  "content_manifest": {
+    "id": "devilution.base",
+    "version": "0.1.0",
+    "sha256": "ee16097e8393e3807fa57356227992eed3265f5da8f182806cbd368c7c28658d"
+  },
+  "tick_rate_hz": 20,
+  "rng_seed": 1,
+  "game_variant": "Diablo",
+  "game_mode": "SinglePlayer",
+  "initial_state": {
+    "player": "A",
+    "gold": 0,
+    "experience": 0,
+    "life": 100,
+    "life_maximum": 100,
+    "mana": 1000,
+    "mana_maximum": 1000,
+    "position_x": 0,
+    "position_y": 0,
+    "level_id": 1,
+    "ability_spell_id": 53,
+    "spell_projectile_behavior": 49,
+    "combat_target_entity_id": 9,
+    "combat_target_level_id": 1,
+    "combat_target_position_x": 4,
+    "combat_target_position_y": 0,
+    "combat_target_hit_points": 20,
+    "combat_target_max_hit_points": 20,
+    "combat_target_monster_level": 1
+  },
+  "initial_projectiles": [
+    {
+      "entity_id": 2147483648,
+      "source_entity_id": 9,
+      "target_entity_id": 1,
+      "spell_id": 0,
+      "level_id": 1,
+      "position_x": 4,
+      "position_y": 0,
+      "target_x": 0,
+      "target_y": 0,
+      "damage": 2,
+      "damage_type": 0,
+      "remaining_ticks": 8,
+      "behavior": 59,
+      "phase": 0,
+      "speed": 1,
+      "impact_lifetime": 3
+    }
+  ],
+  "commands": [
+    {
+      "client_sequence": 1,
+      "target_tick": 1,
+      "server_receipt_sequence": 1,
+      "kind": "Cast",
+      "payload": {
+        "spell_id": 53,
+        "target_entity_id": 0,
+        "target_x": 0,
+        "target_y": 0
+      }
+    }
+  ],
+  "checkpoints": [
+    { "tick": 1, "state_sha256": "2a4835a85f64ae659e9982dd91ba84a3829ba6a7962251f7de444ffce12ffa6d" },
+    { "tick": 4, "state_sha256": "e283f4651d9780a25ac975d7a914754d8cd7364f3d5aba9f4441c99c9d2d0bf0" },
+    { "tick": 8, "state_sha256": "5650864b2cafacfed603c1d901a6341f0a4355195d7af83b5c83f696a44d6b64" }
+  ]
+}

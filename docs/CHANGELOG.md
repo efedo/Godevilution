@@ -5,6 +5,7 @@ All notable changes to this fork are documented below.
 - Native monster arrows now preserve their impact-time protection boundary:
   Etherealized players are not treated as a consumed collision, so the arrow
   continues through the protected tile instead of entering its impact phase.
+  Added a native/C# replay fixture covering the full travel and expiry lifecycle.
 
 - World-transition dialogue events now survive native-timed movement,
   occupancy-trigger execution, and Warp transitions. The simulation forwards

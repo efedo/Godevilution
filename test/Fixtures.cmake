@@ -158,6 +158,7 @@ set(devilutionx_fixtures
   replay/gameplay-mana-shield-resolution.json
   replay/gameplay-mega-inferno-multiplayer-target.json
   replay/gameplay-monster-arrow-autonomous.json
+  replay/gameplay-monster-arrow-etherealized.json
   replay/gameplay-monster-arrow-multiplayer-target.json
   replay/gameplay-monster-arrow-resolution.json
   replay/gameplay-monster-arrow-skeleton-ranged.json

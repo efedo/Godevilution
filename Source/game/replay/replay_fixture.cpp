@@ -4348,37 +4348,43 @@ void AdvanceReplayMonsterArrowsOneTick(ReplayFixtureExecutionState &state)
 				hitLife = &state.secondaryPlayerLife;
 			}
 			if (hitLife != nullptr) {
-				const bool secondaryHit = hitLife == &state.secondaryPlayerLife;
-				int32_t damage = projectile.damage;
-				if (damage > 0 && projectile.damageMinimum > 0
-				    && projectile.damageMaximum >= projectile.damageMinimum) {
-					damage = projectile.damageMinimum
-					    + GenerateRnd(state, projectile.damageMaximum - projectile.damageMinimum + 1);
+				const bool protectedByEtherealize = std::any_of(
+					state.statusEffects.begin(),
+					state.statusEffects.end(),
+					[](const auto &effect) { return effect.behavior == EtherealizeStatusBehavior; });
+				if (!protectedByEtherealize) {
+					const bool secondaryHit = hitLife == &state.secondaryPlayerLife;
+					int32_t damage = projectile.damage;
+					if (damage > 0 && projectile.damageMinimum > 0
+					    && projectile.damageMaximum >= projectile.damageMinimum) {
+						damage = projectile.damageMinimum
+						    + GenerateRnd(state, projectile.damageMaximum - projectile.damageMinimum + 1);
+					}
+					const auto &targetEquipment = secondaryHit
+					    ? state.secondaryEquipment
+					    : state.equipment;
+					const int32_t damageWithGetHit = ApplyReplayGetHitBonus(
+						targetEquipment,
+						std::max(1, damage));
+					const int32_t damageQ6 = damageWithGetHit * 64;
+					const int32_t lifeMaximum = secondaryHit
+					    ? state.secondaryPlayerLifeMaximum
+					    : state.lifeMaximum;
+					const int32_t appliedDamage = lifeMaximum % 64 == 0
+					    ? damageQ6
+					    : std::max(0, damageWithGetHit);
+					*hitLife = std::max(0, *hitLife - appliedDamage);
+					if (secondaryHit && *hitLife == 0)
+						StartReplaySecondaryPlayerDeath(state, true);
+					if (projectile.impactLifetime > 0) {
+						projectile.phase = 1;
+						projectile.remainingTicks = static_cast<uint32_t>(projectile.impactLifetime);
+					} else {
+						iterator = state.projectiles.erase(iterator);
+						removed = true;
+					}
+					break;
 				}
-				const auto &targetEquipment = secondaryHit
-				    ? state.secondaryEquipment
-				    : state.equipment;
-				const int32_t damageWithGetHit = ApplyReplayGetHitBonus(
-				    targetEquipment,
-				    std::max(1, damage));
-				const int32_t damageQ6 = damageWithGetHit * 64;
-				const int32_t lifeMaximum = secondaryHit
-				    ? state.secondaryPlayerLifeMaximum
-				    : state.lifeMaximum;
-				const int32_t appliedDamage = lifeMaximum % 64 == 0
-				    ? damageQ6
-				    : std::max(0, damageWithGetHit);
-				*hitLife = std::max(0, *hitLife - appliedDamage);
-				if (secondaryHit && *hitLife == 0)
-					StartReplaySecondaryPlayerDeath(state, true);
-				if (projectile.impactLifetime > 0) {
-					projectile.phase = 1;
-					projectile.remainingTicks = static_cast<uint32_t>(projectile.impactLifetime);
-				} else {
-					iterator = state.projectiles.erase(iterator);
-					removed = true;
-				}
-				break;
 			}
 			if (nextX == projectile.targetX && nextY == projectile.targetY)
 				break;

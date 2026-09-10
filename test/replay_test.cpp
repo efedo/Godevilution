@@ -7511,6 +7511,46 @@ TEST(ReplayFixture, ExecutesMonsterArrowResolutionAgainstCSharpCheckpoints)
 	EXPECT_EQ(ComputeReplayFixtureStateHash(state), fixture.checkpoints.back().stateSha256);
 }
 
+TEST(ReplayFixture, ExecutesMonsterArrowEtherealizePassThroughAgainstCSharpCheckpoints)
+{
+	std::ifstream file("test/fixtures/replay/gameplay-monster-arrow-etherealized.json");
+	ASSERT_TRUE(file.good());
+	const std::string json((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
+	ReplayFixture fixture;
+	std::string error;
+	ASSERT_TRUE(ParseReplayFixture(json, fixture, error)) << error;
+	ASSERT_EQ(fixture.initialProjectiles.size(), 1U);
+
+	ReplayFixtureExecutionState state;
+	state.life = fixture.initialState.life;
+	state.lifeMaximum = fixture.initialState.lifeMaximum;
+	state.mana = fixture.initialState.mana;
+	state.manaMaximum = fixture.initialState.manaMaximum;
+	state.positionX = fixture.initialState.positionX;
+	state.positionY = fixture.initialState.positionY;
+	state.levelId = fixture.initialState.levelId;
+	state.abilitySpellId = fixture.initialState.abilitySpellId;
+	state.spellProjectileBehavior = 49;
+	state.combatTargetEntityId = fixture.initialState.combatTargetEntityId;
+	state.combatTargetLevelId = fixture.initialState.combatTargetLevelId;
+	state.combatTargetPositionX = fixture.initialState.combatTargetPositionX;
+	state.combatTargetPositionY = fixture.initialState.combatTargetPositionY;
+	state.combatTargetHitPoints = fixture.initialState.combatTargetHitPoints;
+	state.combatTargetMaxHitPoints = fixture.initialState.combatTargetMaxHitPoints;
+	state.combatTargetMonsterLevel = fixture.initialState.combatTargetMonsterLevel;
+
+	ReplayFixtureExecutionResult result;
+	ASSERT_TRUE(ExecuteReplayFixture(fixture, state, result, error)) << error;
+	ASSERT_EQ(result.transitions.size(), 1U);
+	EXPECT_TRUE(result.transitions[0].accepted);
+	EXPECT_EQ(state.lastAppliedTick, 8U);
+	EXPECT_EQ(state.life, fixture.initialState.life);
+	EXPECT_TRUE(state.projectiles.empty());
+	ASSERT_EQ(state.statusEffects.size(), 1U);
+	EXPECT_EQ(state.statusEffects.front().effectId, 53U);
+	EXPECT_EQ(ComputeReplayFixtureStateHash(state), fixture.checkpoints.back().stateSha256);
+}
+
 TEST(ReplayFixture, ExecutesMultiplayerMonsterArrowAgainstCSharpCheckpoints)
 {
 	std::ifstream file("test/fixtures/replay/gameplay-multiplayer-monster-arrow.json");
