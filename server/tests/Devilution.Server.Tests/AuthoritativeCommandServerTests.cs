@@ -184,6 +184,26 @@ public sealed class AuthoritativeCommandServerTests
     }
 
     [Fact]
+    public void ImportRejectsReceiptSequenceAlreadyOwnedByAnotherSession()
+    {
+        var server = new AuthoritativeCommandServer(new RecordingExecutor());
+        var receipt = new CommandResult {
+            ClientSequence = 1,
+            ServerReceiptSequence = 1,
+            AppliedTick = 10,
+            Status = CommandStatus.Accepted,
+            RejectReason = CommandRejectReason.Unspecified,
+        };
+        server.ImportCompletedCommands("player-a", [receipt]);
+
+        var exception = Assert.Throws<InvalidDataException>(() =>
+            server.ImportCompletedCommands("player-b", [receipt]));
+
+        Assert.Contains("duplicate", exception.Message, StringComparison.OrdinalIgnoreCase);
+        Assert.Empty(server.ExportCompletedCommands("player-b"));
+    }
+
+    [Fact]
     public async Task SynchronizedSessionCallbackExcludesConcurrentCommandExecution()
     {
         var executor = new RecordingExecutor();

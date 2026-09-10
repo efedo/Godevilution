@@ -14,6 +14,7 @@ public sealed class AuthoritativeCommandServer
 {
     private readonly object synchronization = new();
     private readonly Dictionary<string, Dictionary<ulong, CommandResult>> completedCommandsBySession = new(StringComparer.Ordinal);
+    private readonly HashSet<ulong> allocatedReceiptSequences = [];
     private readonly CommandAdmissionPolicy admissionPolicy;
     private readonly IAuthoritativeCommandExecutor executor;
     private ulong nextServerReceiptSequence = 1;
@@ -149,7 +150,8 @@ public sealed class AuthoritativeCommandServer
                     || !Enum.IsDefined(result.Status)
                     || !Enum.IsDefined(result.RejectReason)
                     || !clientSequences.Add(result.ClientSequence)
-                    || !receiptSequences.Add(result.ServerReceiptSequence)) {
+                    || !receiptSequences.Add(result.ServerReceiptSequence)
+                    || allocatedReceiptSequences.Contains(result.ServerReceiptSequence)) {
                     throw new InvalidDataException("The command receipt ledger contains an invalid or duplicate result.");
                 }
             }
@@ -162,6 +164,7 @@ public sealed class AuthoritativeCommandServer
                     $"The command ledger for session '{sessionId}' is already initialized.");
             foreach (var result in pending) {
                 completedCommands.Add(result.ClientSequence, result.Clone());
+                allocatedReceiptSequences.Add(result.ServerReceiptSequence);
                 if (result.ServerReceiptSequence >= nextServerReceiptSequence)
                     nextServerReceiptSequence = checked(result.ServerReceiptSequence + 1);
             }
@@ -183,7 +186,10 @@ public sealed class AuthoritativeCommandServer
         if (nextServerReceiptSequence == 0)
             throw new InvalidOperationException("Server receipt sequence space is exhausted.");
 
-        return nextServerReceiptSequence++;
+        var receiptSequence = nextServerReceiptSequence++;
+        if (!allocatedReceiptSequences.Add(receiptSequence))
+            throw new InvalidOperationException("The server receipt sequence ledger contains a duplicate sequence.");
+        return receiptSequence;
     }
 
     private static CommandResult CreateResult(ulong clientSequence, ulong receiptSequence, CommandAdmission admission)

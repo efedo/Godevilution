@@ -11,6 +11,10 @@ All notable changes to this fork are documented below.
   an older participant checkpoint cannot rewind autonomous world progression
   or replay ticks already advanced for another connected session.
 
+- Persisted command-ledger restore now rejects server receipt sequences already
+  owned by another session, preserving the documented global receipt ordering
+  across multi-session restarts.
+
 - Godot and the native compatibility client now validate every authoritative
   event batch before applying stale-tick or reconnect-epoch filters, so
   malformed discarded events fail closed instead of being silently ignored.

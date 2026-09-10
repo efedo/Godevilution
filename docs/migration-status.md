@@ -17,6 +17,9 @@ simulation state it just imported.
 Restoring multiple sessions into the shared runtime also preserves that
 monotonic world timeline, so an older participant checkpoint cannot replay
 autonomous ticks already processed for another session.
+Persisted command-ledger restore now also rejects a server receipt sequence
+already owned by another session, preserving global receipt identity across
+multi-session restarts.
 
 The active content schema is now `1.462.0` (with `1.461.0` retained as
 the previous additive contract). Optional `procedural_quest_piece_origins.tsv`

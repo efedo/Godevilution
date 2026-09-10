@@ -161,7 +161,9 @@ authoritative results.
 - Client sequence numbers are reused for retries; the server deduplicates them.
   Completed command receipts are persisted beside the session save, restored
   before a resumed connection can submit commands, and included in the next
-  receipt-sequence allocation after a host restart.
+  receipt-sequence allocation after a host restart. Restore validation rejects
+  a server receipt identity already owned by another session, preserving the
+  global ordering across multi-session recovery.
 - Session save and receipt exports run under the same command-server
   synchronization boundary as command execution and autonomous ticks, so the
   persisted snapshot and idempotency ledger describe one authoritative state.

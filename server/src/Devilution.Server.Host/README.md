@@ -21,6 +21,9 @@ recovery. Combined session checkpoints are version 4 and carry canonical
 SHA-256 hashes over serialized authoritative state and the command ledger plus
 the active ruleset identity; restart recovery rejects a current-format
 checkpoint written for a different ruleset before importing gameplay state.
+When multiple session ledgers are restored, receipt identities are also
+validated globally so a duplicate server receipt cannot be admitted across
+sessions.
 Version-1 through version-3 checkpoints remain readable and are upgraded on
 their next write. The leased adapter wrapper uses a read/write operation barrier:
 replacement waits
