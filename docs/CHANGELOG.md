@@ -2,6 +2,13 @@
 
 All notable changes to this fork are documented below.
 
+- Corrected the migration-status and architecture references for procedural
+  level geometry: native-vision blockers and multiple authored required-walkable
+  entry cells are now called out explicitly, and ruleset replacement pressure
+  coverage is recorded as an existing boundary with broader multi-session soaks
+  retained as future work. The near-term priority list now matches the current
+  test coverage and second-adapter roadmap.
+
 - Advanced the active content schema to `1.462.0`, retaining `1.461.0` as
   the previous additive contract. Procedural level rows can now author
   multiple required-walkable `x,y` cells, with strict duplicate/bounds

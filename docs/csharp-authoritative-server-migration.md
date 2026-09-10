@@ -1513,8 +1513,11 @@ the optional `procedural_levels.tsv` table now materializes deterministic
 connected layouts from row and world seeds while preserving static-map
 compatibility. Schema 1.324 also permits a distinct deterministic
 `missile_blocked_percent` density while retaining movement-blocked cells as
-missile blockers. Full native map-synthesis parity remains a later migration
-stage.
+missile blockers. Schema 1.461 adds an independently seeded native-vision
+blocker layer, and schema 1.462 adds semicolon-separated authored
+`required_walkable_cells` entry cells that clear movement, missile, and vision
+blockers without changing the configured start cell. Full native map-synthesis
+parity remains a later migration stage.
 
 The Hellfire monster catalog now also carries native IDs 6 through 11 with
 validated baseline level, health, damage, and undead/capability metadata.
