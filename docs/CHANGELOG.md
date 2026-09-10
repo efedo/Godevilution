@@ -33,6 +33,10 @@ All notable changes to this fork are documented below.
   managed projectile admission and Q6-backed secondary impact; added a shared
   seeded GoatRanged travel/impact checkpoint.
 
+- Aligned MonsterArrow incoming `_pIGetHit` handling with native
+  impact-time `PlayerMHit` ordering, including a shared equipped-secondary
+  checkpoint for the rolled range, Q6 life, and canonical hash.
+
 - Ruleset replacement now publishes migrated session checkpoints during
   candidate preparation, before activation or handshake identity publication;
   failed exports or checkpoint writes keep the previous generation active.

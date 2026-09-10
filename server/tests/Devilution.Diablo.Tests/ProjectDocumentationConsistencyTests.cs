@@ -57,6 +57,7 @@ public sealed class ProjectDocumentationConsistencyTests
         Assert.Contains("gameplay-rhino-charge-native-q6-range.json", replayFixtures, StringComparison.Ordinal);
         Assert.Contains("gameplay-goat-melee-secondary-q6-range.json", replayFixtures, StringComparison.Ordinal);
         Assert.Contains("gameplay-monster-arrow-goat-ranged-secondary-q6-range.json", replayFixtures, StringComparison.Ordinal);
+        Assert.Contains("gameplay-monster-arrow-goat-ranged-secondary-get-hit.json", replayFixtures, StringComparison.Ordinal);
 
         var packageWorkflow = Read(root, ".github", "workflows", "diablo-adapter-package.yml");
         Assert.Contains("package-diablo-adapter.ps1", packageWorkflow, StringComparison.Ordinal);

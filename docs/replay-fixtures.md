@@ -377,6 +377,9 @@ The elemental equipment and ranged-arrow fixtures validate the canonical
 `gameplay-monster-arrow-goat-ranged-secondary-q6-range.json` adds a seeded
 GoatRanged arrow with a three-to-seven damage range and Q6-backed secondary
 life, proving native range metadata survives admission and impact.
+`gameplay-monster-arrow-goat-ranged-secondary-get-hit.json` adds equipped
+incoming `_pIGetHit` to that same lane, proving the bonus is applied at
+impact-time after the native range roll in both runners.
 Optional `facing_direction` uses the native zero-through-seven ordinal. Both
 runners apply accepted action rotations, conditionally hash non-South facing,
 and use the direction for equipped-item death placement.

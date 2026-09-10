@@ -8597,6 +8597,8 @@ and native AI-stream advancement in both runners.
 The seeded GoatRanged MonsterArrow lane now carries a non-fixed min/max range
 through projectile admission and applies its impact to Q6-backed secondary
 life, preserving travel, impact phase, and the canonical hash in both runners.
+Its companion incoming-damage fixture now applies secondary-player `_pIGetHit`
+at impact after the range roll, matching native `PlayerMHit` ordering.
 
 ## Near-term priorities
 

@@ -10598,18 +10598,19 @@ public sealed class DiabloCombatCommandProcessor
                     rules.HellfireArmorBonusAgainstDemons,
                     rules.HellfireArmorBonusAgainstUndead);
         }
-        // Native ProcessArrow uses the monster range when it is non-fixed; keep
-        // legacy fixed missile rows unchanged when their range is identical.
+        // Native ProcessArrow uses the monster range when it is non-fixed;
+        // fixed rows retain a configured missile payload when one is present.
         var damageRange = GetEffectiveMonsterDamageRange(monster, special: false);
-        var hasExplicitDamageRange = monster.MinDamage != 0 || monster.MaxDamage != 0;
         var hasConfiguredDamage = missile is not null
             && missile.ProjectileDamage > 0
-            && (!hasExplicitDamageRange
-                || damageRange.Minimum == damageRange.Maximum
-                    && damageRange.Minimum == missile.ProjectileDamage);
+            && damageRange.Minimum == damageRange.Maximum;
         var baseDamage = hasConfiguredDamage
             ? missile!.ProjectileDamage
-            : damageRange.Maximum;
+            : missile is not null && missile.ProjectileDamage == 0
+                ? damageRange.Minimum == damageRange.Maximum
+                    ? damageRange.Maximum
+                    : monster.AttackDamage
+                : damageRange.Maximum;
         var damage = rules.ResolveMonsterRangedAttackDamage(
             baseDamage,
             GetEffectiveMonsterToHit(monster, special: false),
@@ -10619,10 +10620,6 @@ public sealed class DiabloCombatCommandProcessor
             armorClass,
             distance,
             attackSeed);
-        damage = AuthoritativeEquipmentIncomingDamageRules.ApplyGetHit(
-            damage,
-            rules.MinimumDamage,
-            player.Equipment);
         var projectileSpeed = missile?.ProjectileSpeed > 0
             ? missile.ProjectileSpeed
             : 1;
@@ -12043,6 +12040,12 @@ public sealed class DiabloCombatCommandProcessor
                 projectile.DamageMinimum,
                 projectile.DamageMaximum);
         }
+        // Native PlayerMHit applies the target's `_pIGetHit` bonus after the
+        // impact-time arrow roll, before resistance reduces the incoming hit.
+        damage = AuthoritativeEquipmentIncomingDamageRules.ApplyGetHit(
+            damage,
+            rules.MinimumDamage,
+            target.Equipment);
         if (resistance > 0)
             damage -= damage * resistance / 100;
         var incomingDamageQ6 = DeterministicFixedPointQ6.FromWhole(Math.Max(0, damage));

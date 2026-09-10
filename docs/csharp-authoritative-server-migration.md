@@ -237,6 +237,8 @@ The seeded secondary-player GoatMelee fixture carries that same Q6 boundary
 through incoming `_pIGetHit` equipment and Q6 life before projection.
 The seeded GoatRanged MonsterArrow fixture also retains a non-fixed damage
 range through admission and Q6-backed secondary impact before projection.
+Its companion fixture carries secondary-player `_pIGetHit` equipment through
+impact-time range resolution, preserving native `PlayerMHit` ordering.
 The SnakeCharge path now also has a shared lifecycle fixture covering
 server-owned admission, travel, player collision, and impact timing.
 
@@ -935,6 +937,8 @@ MonsterArrow projectiles now retain the server-owned dynamic monster damage
 range and roll it at impact, matching native `ProcessArrow`; a positive
 validated `projectile_damage` remains a fixed payload. The range is included
 in snapshots, saves, protocol projection, and canonical hashing.
+The target's validated `_pIGetHit` equipment adjustment is applied after that
+impact-time roll and before resistance, matching native `PlayerMHit` ordering.
 
 Hork Spawn now performs native current-tile `PlayerMHit` collision before each
 movement/expiry decision. Its non-arrow zero-payload hit uses the authoritative

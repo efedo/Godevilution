@@ -4327,13 +4327,19 @@ void AdvanceReplayMonsterArrowsOneTick(ReplayFixtureExecutionState &state)
 					damage = projectile.damageMinimum
 					    + GenerateRnd(state, projectile.damageMaximum - projectile.damageMinimum + 1);
 				}
-				const int32_t damageQ6 = std::max(0, damage) * 64;
+				const auto &targetEquipment = secondaryHit
+				    ? state.secondaryEquipment
+				    : state.equipment;
+				const int32_t damageWithGetHit = ApplyReplayGetHitBonus(
+				    targetEquipment,
+				    std::max(1, damage));
+				const int32_t damageQ6 = damageWithGetHit * 64;
 				const int32_t lifeMaximum = secondaryHit
 				    ? state.secondaryPlayerLifeMaximum
 				    : state.lifeMaximum;
 				const int32_t appliedDamage = lifeMaximum % 64 == 0
 				    ? damageQ6
-				    : std::max(0, damage);
+				    : std::max(0, damageWithGetHit);
 				*hitLife = std::max(0, *hitLife - appliedDamage);
 				if (secondaryHit && *hitLife == 0)
 					StartReplaySecondaryPlayerDeath(state, true);
