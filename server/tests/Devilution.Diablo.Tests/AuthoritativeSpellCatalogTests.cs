@@ -85,6 +85,34 @@ public sealed class AuthoritativeSpellCatalogTests
     }
 
     [Fact]
+    public void ShippedDirectSpellsUseTheProductionIdentitySchema()
+    {
+        var path = Path.Combine(
+            FindRepositoryRoot(),
+            "server",
+            "content",
+            "base",
+            "spells.tsv");
+        var table = TsvTable.Parse("spells.tsv", File.ReadAllText(path));
+
+        AuthoritativeSpellCatalog.ValidateExternalizedProduction(table);
+    }
+
+    [Fact]
+    public void ProductionSpellValidationRejectsNumericOnlyIdentityHeaders()
+    {
+        var table = TsvTable.Parse(
+            "spells.tsv",
+            "spell_id\tmana_cost\tnative_spell_id\tprojectile_behavior\n"
+                + "1\t6\t1\tFirebolt\n");
+
+        var exception = Assert.Throws<InvalidDataException>(() =>
+            AuthoritativeSpellCatalog.ValidateExternalizedProduction(table));
+
+        Assert.Contains("ordered symbolic identity schema", exception.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void ShippedDirectSpellsCarryExternalizedNativePatterns()
     {
         var path = Path.Combine(

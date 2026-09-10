@@ -530,6 +530,16 @@ public sealed record AuthoritativeSpellDefinition(
 
 public sealed class AuthoritativeSpellCatalog
 {
+    private static readonly IReadOnlyList<string> ProductionIdentityColumns = [
+        "spell_id",
+        "spell_symbol",
+    ];
+
+    private static readonly IReadOnlyList<string> ProductionRequiredColumns = [
+        "native_spell_id",
+        "projectile_behavior",
+    ];
+
     private const uint MaximumNativeSpellId = NativeCompatibilityLimits.MaximumNativeSpellId;
     public const int LegacyRuneFireConsumableMiscId = 47;
     private const int FirstRuneMiscId = LegacyRuneFireConsumableMiscId;
@@ -2104,6 +2114,28 @@ public sealed class AuthoritativeSpellCatalog
     }
 
     public IReadOnlyList<AuthoritativeSpellDefinition> Definitions => spells.Values.OrderBy(spell => spell.SpellId).ToArray();
+
+    /** Rejects numeric-only spell identities at the current production boundary. */
+    public static void ValidateExternalizedProduction(TsvTable table)
+    {
+        ArgumentNullException.ThrowIfNull(table);
+        if (!table.Columns.Take(ProductionIdentityColumns.Count)
+                .SequenceEqual(ProductionIdentityColumns, StringComparer.Ordinal)) {
+            throw new InvalidDataException(
+                $"Production spell table '{table.SourcePath}' must begin with the ordered symbolic identity schema.");
+        }
+        foreach (var column in ProductionRequiredColumns) {
+            if (!table.Columns.Contains(column, StringComparer.Ordinal))
+                throw new InvalidDataException(
+                    $"Production spell table '{table.SourcePath}' is missing required column '{column}'.");
+        }
+        foreach (var row in table.Rows) {
+            _ = row.RequiredUInt32("spell_id");
+            _ = row.Required("spell_symbol");
+            _ = row.RequiredUInt32("native_spell_id");
+            _ = row.Required("projectile_behavior");
+        }
+    }
 
     public bool TryGet(uint spellId, out AuthoritativeSpellDefinition definition) => spells.TryGetValue(spellId, out definition!);
 

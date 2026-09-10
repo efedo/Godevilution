@@ -273,6 +273,8 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
             playerClasses,
             stableIds);
         var spellsTable = GetRequiredExternalTable(content, "spells.tsv");
+        if (content.Manifest.Schema == DiabloContentSchema.Current)
+            AuthoritativeSpellCatalog.ValidateExternalizedProduction(spellsTable);
         var spells = AuthoritativeSpellCatalog.LoadTsv(
             spellsTable.SourcePath,
             spellsTable.ToCanonicalTsv(),
