@@ -36,6 +36,10 @@ All notable changes to this fork are documented below.
   item-generation, experience, spell, world-rule, and combat-rule tables;
   only direct compatibility simulation construction retains embedded defaults.
 
+- Production Diablo activation now requires the complete external native spell
+  identity namespace, while direct native spell catalogs remain permissive for
+  compatibility tooling.
+
 - Godot and the native compatibility client now validate every authoritative
   event batch before applying stale-tick or reconnect-epoch filters, so
   malformed discarded events fail closed instead of being silently ignored.

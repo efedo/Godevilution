@@ -33,6 +33,9 @@ omits any core external rules/data table: store pricing, item-generation rules,
 experience thresholds, spells, world rules, or combat rules. Direct simulation
 factory callers retain their embedded compatibility defaults, but the server
 bootstrap can no longer silently substitute them for missing pack data.
+The production bootstrap now also requires and validates the complete external
+`native_spells.tsv` identity namespace (IDs 0 through 51); direct native spell
+catalog construction remains permissive for compatibility tooling.
 
 The active content schema is now `1.462.0` (with `1.461.0` retained as
 the previous additive contract). Optional `procedural_quest_piece_origins.tsv`

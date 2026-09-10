@@ -274,14 +274,11 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
             stableIds);
         pricing.ValidateSpellReferences(spells);
         spells.ValidateExternalizedNativePatterns();
-        var nativeSpells = content.TryGetTable(
-            "native_spells.tsv",
-            out var nativeSpellsTable)
-            ? AuthoritativeNativeSpellCatalog.LoadTsv(
-                nativeSpellsTable.SourcePath,
-                nativeSpellsTable.ToCanonicalTsv(),
-                requireCompleteNamespace: true)
-            : null;
+        var nativeSpellsTable = GetRequiredExternalTable(content, "native_spells.tsv");
+        var nativeSpells = AuthoritativeNativeSpellCatalog.LoadTsv(
+            nativeSpellsTable.SourcePath,
+            nativeSpellsTable.ToCanonicalTsv(),
+            requireCompleteNamespace: true);
         var nativeMissileAliases = content.TryGetTable(
             "native_missile_aliases.tsv",
             out var nativeMissileAliasesTable)
