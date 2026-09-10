@@ -317,9 +317,12 @@ public sealed class AuthoritativeTcpServer : IAsyncDisposable
             }
 
             var existingSession = FindExistingSession(helloEnvelope.ClientHello.ResumeToken);
+            var persistedSessionMatchesActiveIdentity = existingSession is null
+                && HasPersistedSessionForActiveIdentity(helloEnvelope.ClientHello.ResumeToken);
             var handshakeResult = handshake.Validate(
                 helloEnvelope.ClientHello,
-                allowResumedIdentityRefresh: existingSession is not null);
+                allowResumedIdentityRefresh: existingSession is not null
+                    || persistedSessionMatchesActiveIdentity);
             if (!handshakeResult.Accepted) {
                 await EnvelopeCodec.WriteAsync(stream, new Envelope { Error = handshakeResult.Error! }, cancellationToken);
                 return;
@@ -403,9 +406,7 @@ public sealed class AuthoritativeTcpServer : IAsyncDisposable
             var token = string.IsNullOrWhiteSpace(resumeToken)
                 ? Convert.ToHexString(Guid.NewGuid().ToByteArray()).ToLowerInvariant()
                 : resumeToken;
-            var sessionId = Convert.ToHexString(
-                SHA256.HashData(Encoding.UTF8.GetBytes(token)))
-                .ToLowerInvariant();
+            var sessionId = SessionIdForToken(token);
             var session = new SessionState(sessionId, token, entityIds.Allocate());
             sessionsByToken.TryAdd(session.Token, session);
             return session;
@@ -561,6 +562,33 @@ public sealed class AuthoritativeTcpServer : IAsyncDisposable
             set => Volatile.Write(ref participantInitialized, value ? 1 : 0);
         }
     }
+
+    /**
+     * Allows a persisted resumed session to adopt the active identity after a
+     * process restart, but only when its checkpoint was already published for
+     * that exact identity. Unknown tokens and checkpoints from another
+     * generation still take the strict handshake path.
+     */
+    private bool HasPersistedSessionForActiveIdentity(string resumeToken)
+    {
+        if (string.IsNullOrWhiteSpace(resumeToken)
+            || sessionStore is null
+            || saveProvider is null)
+            return false;
+
+        var sessionId = SessionIdForToken(resumeToken);
+        var document = sessionStore.Load(sessionId);
+        return document is not null
+            && string.Equals(
+                document.RulesetIdentityHash,
+                handshake.Identity.RulesetIdentityHash,
+                StringComparison.Ordinal);
+    }
+
+    private static string SessionIdForToken(string resumeToken)
+        => Convert.ToHexString(
+                SHA256.HashData(Encoding.UTF8.GetBytes(resumeToken)))
+            .ToLowerInvariant();
 
     private sealed record PreparedSessionSave(
         string SessionId,

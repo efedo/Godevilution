@@ -2,6 +2,12 @@
 
 Status date: 2026-09-10
 
+Persisted sessions can now adopt the active ruleset identity after a server
+restart when their validated checkpoint was already published for that exact
+generation. The host still rejects unknown tokens and checkpoints from a
+different generation, while the restored state and command ledger continue
+through the normal import path.
+
 The shared ranged resource-restoration replay fixture now carries both random
 and fixed life-steal flags. Its refreshed native/C# checkpoints prove that the
 random draw remains consumed before the fixed life amount replaces it at the

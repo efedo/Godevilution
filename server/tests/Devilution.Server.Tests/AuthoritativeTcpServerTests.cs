@@ -1933,7 +1933,8 @@ public sealed class AuthoritativeTcpServerTests
             await SendHelloAsync(
                 resumedStream,
                 resumedCancellationToken,
-                resumeToken: resumeToken);
+                resumeToken: resumeToken,
+                rulesetIdentityHash: initialIdentity);
             var resumedHello = (await EnvelopeCodec.ReadAsync(
                 resumedStream,
                 resumedCancellationToken))!.ServerHello;
@@ -3032,7 +3033,8 @@ public sealed class AuthoritativeTcpServerTests
         CancellationToken cancellationToken,
         string resumeToken = "",
         uint? requestedClassId = null,
-        string? requestedCharacterName = null)
+        string? requestedCharacterName = null,
+        string? rulesetIdentityHash = null)
     {
         var hello = new ClientHello {
             ClientBuildId = "client-build",
@@ -3040,6 +3042,8 @@ public sealed class AuthoritativeTcpServerTests
             ContentManifestHash = "content-hash",
             ResumeToken = resumeToken,
         };
+        if (rulesetIdentityHash is not null)
+            hello.RulesetIdentityHash = rulesetIdentityHash;
         if (requestedClassId.HasValue)
             hello.RequestedCharacterClassId = requestedClassId.Value;
         if (requestedCharacterName is not null)

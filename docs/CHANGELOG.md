@@ -2,6 +2,11 @@
 
 All notable changes to this fork are documented below.
 
+- Extended live ruleset reconnect safety across process restarts. A persisted
+  session may refresh a stale client identity only when its integrity-checked
+  checkpoint already binds to the active generation; unknown tokens and stale
+  checkpoints remain on the strict rejection path.
+
 - Made the production content boundary explicit. First-party activation now
   requires composed external content plus validated spell and combat catalogs;
   compatibility callers retain the existing embedded defaults.
