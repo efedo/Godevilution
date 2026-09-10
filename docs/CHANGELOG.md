@@ -6,6 +6,10 @@ All notable changes to this fork are documented below.
   the archive verifier extracts it in isolation and applies the same manifest,
   path, and assembly-hash release gate.
 
+- Added a manual/tag-triggered Windows workflow that builds, verifies, and
+  uploads the distributable Diablo adapter ZIP without publishing to a package
+  registry or overwriting an existing release.
+
 - Ruleset replacement now publishes migrated session checkpoints during
   candidate preparation, before activation or handshake identity publication;
   failed exports or checkpoint writes keep the previous generation active.

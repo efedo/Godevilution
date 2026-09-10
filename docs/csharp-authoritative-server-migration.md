@@ -107,6 +107,14 @@ composition root names no Diablo types. Exact assembly-reference tests enforce t
 Protocol, Host, Diablo adapter, and executable dependency graph, while a schema
 ownership test prevents duplicate managed Protobuf generation.
 
+The checked-in `.github/workflows/diablo-adapter-package.yml` workflow runs this
+same build, staging, and archive-verification path on demand or for
+`godevilution-v*` tags. It uploads only the verified ZIP as a workflow artifact;
+the workflow does not publish a package registry entry or overwrite an existing
+release. Manual runs must supply a semantic `package_version` matching the
+manifest validation rules; tag runs derive the same version from the
+`godevilution-v<major>.<minor>.<patch>` tag.
+
 ## Authority
 
 The server owns:

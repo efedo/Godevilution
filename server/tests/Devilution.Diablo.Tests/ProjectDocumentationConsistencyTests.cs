@@ -49,6 +49,15 @@ public sealed class ProjectDocumentationConsistencyTests
         Assert.Contains("documentation/content identity regression guard", changelog, StringComparison.Ordinal);
         Assert.Contains("distributable ZIP archive", changelog, StringComparison.Ordinal);
 
+        var packageWorkflow = Read(root, ".github", "workflows", "diablo-adapter-package.yml");
+        Assert.Contains("package-diablo-adapter.ps1", packageWorkflow, StringComparison.Ordinal);
+        Assert.Contains("verify-diablo-adapter-archive.ps1", packageWorkflow, StringComparison.Ordinal);
+        Assert.Contains("godevilution.diablo.package", packageWorkflow, StringComparison.Ordinal);
+        Assert.Contains("godevilution-v*", packageWorkflow, StringComparison.Ordinal);
+        Assert.Contains("GITHUB_REF_NAME -replace '^godevilution-v', ''", packageWorkflow, StringComparison.Ordinal);
+        Assert.Contains("actions/upload-artifact@v4", packageWorkflow, StringComparison.Ordinal);
+        Assert.Contains("only the verified ZIP", migrationStatus, StringComparison.Ordinal);
+
         var contentReadme = Read(root, "server", "content", "README.md");
         Assert.Contains(currentSchema, contentReadme, StringComparison.Ordinal);
         Assert.Contains("Explicit `monster_id` selectors are cross-checked", contentReadme, StringComparison.Ordinal);
