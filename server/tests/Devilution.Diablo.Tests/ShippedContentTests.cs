@@ -1238,6 +1238,7 @@ public sealed class ShippedContentTests
     [InlineData("item_generation.tsv")]
     [InlineData("experience.tsv")]
     [InlineData("content_ids.tsv")]
+    [InlineData("item_affixes.tsv")]
     [InlineData("items.tsv")]
     [InlineData("unique_items.tsv")]
     [InlineData("spells.tsv")]
@@ -6989,6 +6990,56 @@ public sealed class ShippedContentTests
             foreach (var key in nativeRows.Keys)
                 foreach (var column in native.Columns)
                     Assert.Equal(nativeRows[key][column], externalRows[key][column]);
+        }
+    }
+
+    [Fact]
+    public void NormalizedAffixesPreserveLegacyRowsAndNativeGenerationMetadata()
+    {
+        var repositoryRoot = FindRepositoryRoot();
+        var basePack = ContentPackLoader.LoadManifestDirectory(
+            Path.Combine(repositoryRoot, "server", "content", "base"));
+        var hellfirePack = ContentPackLoader.LoadManifestDirectory(
+            Path.Combine(repositoryRoot, "server", "content", "hellfire"));
+        var composed = ComposedContent.Compose(new ContentManifest(
+            "hellfire",
+            "1",
+            [basePack, hellfirePack]));
+
+        var legacy = AuthoritativeItemAffixCatalog.LoadLegacyTsv(
+            "item_prefixes.tsv",
+            composed.GetRequiredTable("item_prefixes.tsv").ToCanonicalTsv(),
+            "item_suffixes.tsv",
+            composed.GetRequiredTable("item_suffixes.tsv").ToCanonicalTsv());
+        var normalized = AuthoritativeItemAffixCatalog.LoadTsv(
+            "item_affixes.tsv",
+            composed.GetRequiredTable("item_affixes.tsv").ToCanonicalTsv());
+
+        Assert.True(normalized.UsesLegacyRandom);
+        Assert.Equal(legacy.Prefixes.Count, normalized.Prefixes.Count);
+        Assert.Equal(legacy.Suffixes.Count, normalized.Suffixes.Count);
+        foreach (var (expected, actual) in legacy.Prefixes.Zip(normalized.Prefixes))
+            AssertEquivalent(expected, actual);
+        foreach (var (expected, actual) in legacy.Suffixes.Zip(normalized.Suffixes))
+            AssertEquivalent(expected, actual);
+
+        static void AssertEquivalent(
+            AuthoritativeItemAffix expected,
+            AuthoritativeItemAffix actual)
+        {
+            Assert.Equal(expected.Name, actual.Name);
+            Assert.Equal(expected.Power, actual.Power);
+            Assert.Equal(expected.Value1, actual.Value1);
+            Assert.Equal(expected.Value2, actual.Value2);
+            Assert.Equal(expected.MinimumLevel, actual.MinimumLevel);
+            Assert.True(expected.ItemTags.SetEquals(actual.ItemTags));
+            Assert.Equal(expected.Chance, actual.Chance);
+            Assert.Equal(expected.Useful, actual.Useful);
+            Assert.Equal(expected.Alignment, actual.Alignment);
+            Assert.Equal(expected.MinimumValue, actual.MinimumValue);
+            Assert.Equal(expected.MaximumValue, actual.MaximumValue);
+            Assert.Equal(expected.ValueMultiplier, actual.ValueMultiplier);
+            Assert.Equal(expected.HasLegacyValueRange, actual.HasLegacyValueRange);
         }
     }
 

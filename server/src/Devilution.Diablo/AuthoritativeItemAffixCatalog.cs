@@ -262,10 +262,12 @@ public sealed class AuthoritativeItemAffixCatalog
         AuthoritativeNativeItemHellfireEffectCatalog? nativeItemHellfireEffectCatalog = null)
     {
         var table = TsvTable.Parse(sourcePath, contents);
+        var usesLegacyRandom = table.Rows.Any(row => row.OptionalBoolean("legacy_random"));
         return new AuthoritativeItemAffixCatalog(
             table.Rows.Where(row => !row.OptionalBoolean("is_suffix")).Select(row => Parse(row)),
             table.Rows.Where(row => row.OptionalBoolean("is_suffix")).Select(row => Parse(row)),
             generationRules,
+            usesLegacyRandom: usesLegacyRandom,
             nativeItemEffectCatalog: nativeItemEffectCatalog,
             nativeItemHellfireEffectCatalog: nativeItemHellfireEffectCatalog);
     }
@@ -297,6 +299,7 @@ public sealed class AuthoritativeItemAffixCatalog
             ? itemTags.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
                 .ToHashSet(StringComparer.OrdinalIgnoreCase)
             : new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        var legacyRandom = row.OptionalBoolean("legacy_random");
         return new AuthoritativeItemAffix(
             row.Required("name"),
             row.Required("power"),
@@ -305,7 +308,17 @@ public sealed class AuthoritativeItemAffixCatalog
             row.OptionalInt32("min_level"),
             tags,
             row.OptionalInt32("chance", 1),
-            row.OptionalBoolean("useful", true));
+            row.OptionalBoolean("useful", true)) {
+                Alignment = row.TryGet("alignment", out var alignment)
+                    && !string.IsNullOrWhiteSpace(alignment)
+                    ? alignment
+                    : "Any",
+                MinimumValue = row.OptionalInt32("min_value"),
+                MaximumValue = row.OptionalInt32("max_value"),
+                ValueMultiplier = row.OptionalInt32("value_multiplier"),
+                HasLegacyValueRange = legacyRandom
+                    || row.OptionalBoolean("legacy_value_range"),
+            };
     }
 
     private static AuthoritativeItemAffix ParseLegacy(TsvRow row)

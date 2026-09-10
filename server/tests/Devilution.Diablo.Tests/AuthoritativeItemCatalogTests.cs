@@ -591,6 +591,24 @@ public sealed class AuthoritativeItemCatalogTests
     }
 
     [Fact]
+    public void LoadsNormalizedLegacyAffixMetadataAndRandomMode()
+    {
+        var catalog = AuthoritativeItemAffixCatalog.LoadTsv(
+            "item_affixes.tsv",
+            "name\tpower\tvalue1\tvalue2\tmin_level\titem_tags\tchance\tuseful\tis_suffix\talignment\tmin_value\tmax_value\tvalue_multiplier\tlegacy_random\tlegacy_value_range\n"
+                + "Bronze\tTOHIT\t1\t5\t1\tWeapon\t1\ttrue\t0\tAny\t100\t500\t2\t1\t1\n"
+                + "Strength\tSTR\t2\t2\t1\tWeapon\t1\ttrue\t1\tAny\t0\t0\t0\t1\t1\n");
+
+        Assert.True(catalog.UsesLegacyRandom);
+        var prefix = Assert.Single(catalog.Prefixes);
+        Assert.Equal(100, prefix.MinimumValue);
+        Assert.Equal(500, prefix.MaximumValue);
+        Assert.Equal(2, prefix.ValueMultiplier);
+        Assert.True(prefix.HasLegacyValueRange);
+        Assert.Equal("Any", prefix.Alignment);
+    }
+
+    [Fact]
     public void LoadsLegacyPrefixAndSuffixColumnsAndGenerationProbabilities()
     {
         var rules = AuthoritativeItemGenerationRules.LoadTsv(

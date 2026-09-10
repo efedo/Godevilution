@@ -303,30 +303,14 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
         var nativeItemHellfireEffects = AuthoritativeNativeItemHellfireEffectCatalog.LoadTsv(
             nativeItemHellfireEffectsTable.SourcePath,
             nativeItemHellfireEffectsTable.ToCanonicalTsv());
-        var hasLegacyPrefixes = content.TryGetTable(
-            "item_prefixes.tsv",
-            out var legacyPrefixTable);
-        var hasLegacySuffixes = content.TryGetTable(
-            "item_suffixes.tsv",
-            out var legacySuffixTable);
-        var affixes = hasLegacyPrefixes && hasLegacySuffixes
-            ? AuthoritativeItemAffixCatalog.LoadLegacyTsv(
-                legacyPrefixTable.SourcePath,
-                legacyPrefixTable.ToCanonicalTsv(),
-                legacySuffixTable.SourcePath,
-                legacySuffixTable.ToCanonicalTsv(),
-                generationRules,
-                nativeItemEffectCatalog: nativeItemEffects,
-                nativeItemHellfireEffectCatalog: nativeItemHellfireEffects)
-            : content.TryGetTable("item_affixes.tsv", out var affixTable)
-                ? AuthoritativeItemAffixCatalog.LoadTsv(
-                    affixTable.SourcePath,
-                    affixTable.ToCanonicalTsv(),
-                    generationRules,
-                    nativeItemEffectCatalog: nativeItemEffects,
-                    nativeItemHellfireEffectCatalog: nativeItemHellfireEffects)
-                : null;
-        affixes?.ValidatePowers();
+        var affixTable = GetRequiredExternalTable(content, "item_affixes.tsv");
+        var affixes = AuthoritativeItemAffixCatalog.LoadTsv(
+            affixTable.SourcePath,
+            affixTable.ToCanonicalTsv(),
+            generationRules,
+            nativeItemEffectCatalog: nativeItemEffects,
+            nativeItemHellfireEffectCatalog: nativeItemHellfireEffects);
+        affixes.ValidatePowers();
         var cursorTable = GetRequiredExternalTable(content, "item_cursor_graphics.tsv");
         var cursorCatalog = AuthoritativeItemCursorCatalog.LoadTsv(
             cursorTable.SourcePath,

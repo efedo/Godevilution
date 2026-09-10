@@ -47,6 +47,10 @@ All notable changes to this fork are documented below.
   catalogs; legacy item-table loaders remain available only to direct
   compatibility callers.
 
+- Production Diablo activation now requires the complete normalized affix
+  catalog, with explicit native random-stream and value-range metadata so
+  generation no longer selects legacy prefix/suffix tables.
+
 - Legacy-only native spell, miscellaneous-item, topology, and item-tag tables
   are no longer required by normalized production activation; direct
   compatibility loaders continue to validate and consume them when supplied.
