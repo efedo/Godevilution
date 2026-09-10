@@ -202,6 +202,36 @@ public sealed class AuthoritativePlayerLoadoutCatalog
         }
     }
 
+    /**
+     * Rejects numeric-only and inferred loadout data at the current production
+     * boundary. Direct callers may continue to load older compatibility shapes.
+     */
+    public static void ValidateExternalizedProduction(
+        TsvTable loadoutTable,
+        TsvTable itemTable)
+    {
+        ArgumentNullException.ThrowIfNull(loadoutTable);
+        ArgumentNullException.ThrowIfNull(itemTable);
+        if (!loadoutTable.Columns.SequenceEqual(ClassSymbolicLoadoutColumns, StringComparer.Ordinal))
+            throw new InvalidDataException(
+                $"Production player-loadout table '{loadoutTable.SourcePath}' must use the complete ordered symbolic schema.");
+        if (!itemTable.Columns.SequenceEqual(ClassSymbolicItemColumns, StringComparer.Ordinal))
+            throw new InvalidDataException(
+                $"Production player-loadout item table '{itemTable.SourcePath}' must use the complete ordered symbolic schema.");
+
+        foreach (var row in loadoutTable.Rows) {
+            foreach (var column in ClassSymbolicLoadoutColumns) {
+                if (column is not "ability_spell_symbol" and not "starting_spell_symbol")
+                    _ = row.Required(column);
+            }
+            ValidateRequiredSpellSymbol(row, "ability_spell_id", "ability_spell_symbol");
+            ValidateRequiredSpellSymbol(row, "starting_spell_id", "starting_spell_symbol");
+        }
+        foreach (var row in itemTable.Rows)
+            foreach (var column in ClassSymbolicItemColumns)
+                _ = row.Required(column);
+    }
+
     /** Creates fresh deterministic state for a newly registered session. */
     public DiabloPlayerTemplate CreateTemplate(
         string sessionId,
@@ -491,6 +521,15 @@ public sealed class AuthoritativePlayerLoadoutCatalog
                 + $"which resolves to {resolvedId}.");
         }
         return resolvedId;
+    }
+
+    private static void ValidateRequiredSpellSymbol(
+        TsvRow row,
+        string numericColumn,
+        string symbolColumn)
+    {
+        if (row.RequiredUInt32(numericColumn) != 0)
+            _ = row.Required(symbolColumn);
     }
 
     private static DiabloPlayerAbilityKind ParseAbilityKind(TsvRow row)

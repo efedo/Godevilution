@@ -44,6 +44,38 @@ public sealed class AuthoritativePlayerLoadoutCatalogTests
     }
 
     [Fact]
+    public void ProductionValidationRejectsLegacyLoadoutSchemas()
+    {
+        var loadouts = TsvTable.Parse(
+            "class_loadouts.tsv",
+            "class_id\tstarting_gold\tability_spell_id\tstarting_spell_id\tstarting_spell_level\n"
+                + "0\t100\t26\t0\t0\n");
+        var items = TsvTable.Parse(
+            "class_loadout_items.tsv",
+            "class_id\titem_order\titem_id\tlocation\tslot\n"
+                + "0\t0\t100\tEquipment\t4\n");
+
+        var exception = Assert.Throws<InvalidDataException>(() =>
+            AuthoritativePlayerLoadoutCatalog.ValidateExternalizedProduction(loadouts, items));
+
+        Assert.Contains("complete ordered symbolic schema", exception.Message);
+    }
+
+    [Fact]
+    public void ProductionValidationAcceptsShippedLoadoutSchemas()
+    {
+        var root = FindRepositoryRoot();
+        var loadouts = TsvTable.Parse(
+            "class_loadouts.tsv",
+            ReadBase(root, "class_loadouts.tsv"));
+        var items = TsvTable.Parse(
+            "class_loadout_items.tsv",
+            ReadBase(root, "class_loadout_items.tsv"));
+
+        AuthoritativePlayerLoadoutCatalog.ValidateExternalizedProduction(loadouts, items);
+    }
+
+    [Fact]
     public void ShippedLoadoutsPreserveNativeClassCreationState()
     {
         var catalog = LoadShippedCatalog();

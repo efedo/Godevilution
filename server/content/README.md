@@ -3,9 +3,9 @@
 Each directory under `server/content` is a server-owned, validated gameplay
 content pack. The default `base` pack is loaded by the standalone server and is
 included in its content manifest and combined ruleset identity.
-It declares its identity and `devilution.diablo@1.466.0` schema in
+It declares its identity and `devilution.diablo@1.467.0` schema in
 `base/content-pack.json`; the Diablo module also accepts the immediately
-previous additive `1.465.0` schema so existing manifest-based packs remain
+previous additive `1.466.0` schema so existing manifest-based packs remain
 loadable. A composed manifest must still use one exact schema identity across
 all declared packs; use the previous schema only for a complete compatible
 manifest rather than mixing it with the current pack. The standalone host falls
@@ -135,7 +135,7 @@ publish a Diablo ruleset:
 | Contract area | Required tables |
 | --- | --- |
 | Stable identity and economy | `content_ids.tsv`, `store_services.tsv` (all service keys plus an explicit `spell_staff_cost` row), `item_generation.tsv`, `experience.tsv`, `stores.tsv` |
-| Player and spell sources | `classes.tsv` (complete class tuning schema), `class_animations.tsv`, `class_loadouts.tsv`, `class_loadout_items.tsv`, `spells.tsv`, `spell_books.tsv` |
+| Player and spell sources | `classes.tsv` (complete class tuning schema), `class_animations.tsv`, `class_loadouts.tsv` (complete symbolic loadout schema), `class_loadout_items.tsv` (complete symbolic item schema), `spells.tsv`, `spell_books.tsv` |
 | Item rules and presentation | `items.tsv`, `unique_items.tsv`, `item_affixes.tsv`, `item_cursor_graphics.tsv`, `native_item_effects.tsv`, `native_item_hellfire_effects.tsv` |
 | World and combat rules | `world_rules.tsv` (complete town/service identity and Town Portal geometry row), `combat.tsv` (complete tuning row) |
 | Combat identities and projections | `native_missiles.tsv`, `native_missile_aliases.tsv`, `native_missile_sprites.tsv`, `monster_types.tsv`, `monster_missiles.tsv`, `monsters.tsv` |
@@ -2542,10 +2542,11 @@ optional host `--starting-life` and `--starting-mana` values are explicit Q6
 development overrides. They are not content defaults.
 
 `class_loadouts.tsv` defines one complete starting wallet, stable class-skill
-ID, optional stable `ability_spell_symbol`, semantic `ability_kind`, and optional
-learned spell/level with `starting_spell_symbol` for every active class. Its companion
+ID, symbolic `ability_spell_symbol` when the ability ID is non-zero, semantic
+`ability_kind`, and an optional learned spell/level with its corresponding
+`starting_spell_symbol` for every active class. Its companion
 `class_loadout_items.tsv` gives each starting item a contiguous per-class order,
-stable `item_id` plus optional `item_symbol`, exact `Inventory`, `Equipment`, or
+stable `item_id` plus required `item_symbol` in current production schemas, exact `Inventory`, `Equipment`, or
 `Belt` location, and native slot or inventory-grid anchor. Activation rejects
 missing classes, unknown
 items, invalid stable spell bounds, unusable equipment, duplicate slots,
@@ -3175,8 +3176,8 @@ clients.
 | --- | --- | --- |
 | `classes.tsv` | `class_id` | Native-compatible class identity, availability, flags, attributes, combat modifiers, Q6 resource formulas, Mana spell scaling, melee armor reduction, Monk chest-armor tuning, class-ability tuning, Critical Strike chance/multiplier, IronSkin armor divisor, class defense tuning, FastBlock timing, and class-specific ranged-arrow speed tuning. |
 | `class_animations.tsv` | `class_id` | Native action and animation frame timings for each class. |
-| `class_loadouts.tsv` | `class_id` | Starting Gold, numeric compatibility and symbolic class-skill identity, semantic role, and optional learned spell/level. |
-| `class_loadout_items.tsv` | `class_id`, `item_order` | Deterministic starting equipment, belt, and inventory placement with optional stable `item_symbol` cross-checks. |
+| `class_loadouts.tsv` | `class_id` | Starting Gold, symbolic class-skill identity, semantic role, and optional learned spell/level; current production rows use the complete symbolic schema. |
+| `class_loadout_items.tsv` | `class_id`, `item_order` | Deterministic starting equipment, belt, and inventory placement with required stable `item_symbol` cross-checks in current production rows. |
 | `combat.tsv` | singleton | Variant, combat defaults, primary-attribute and resistance ceilings, native difficulty level/accuracy/armor/damage/experience/health tuning, Monk staff/unarmed/weapon, Bard sword/bow/fallback, standard fallback, Barbarian bow/fallback/axe/mace/vitality scaling, Thorns retaliation, Hellfire Decay, Devastation, Jesters, Peril, Doppelganger, Triple Demon Damage, PvP block tuning, equipment FastBlock timing, hit-recovery tiers, melee attack-speed tiers, Rogue damage scaling, Multiple Arrows count, follow-up delay, and perpendicular spread distance, monster hit-chance floors and accuracy formula tuning, post-hit equipment restoration, Hellfire class armor, restart rules, death-gold rules, and PvP-ear identity/projection with optional `pvp_ear_item_symbol`. |
 | `content_ids.tsv` | `kind`, `symbol` | Bidirectional stable symbolic IDs; item, unique-item, quest, class capabilities such as `ability:trap_disarm`, world objects, stores, set levels, procedural quest origins, spells, levels, and portals are declared separately from runtime projections and validated against their active catalogs during activation. |
 | `item_combinations.tsv` | `result_item_id`, `required_item_ids` | Validated server-owned item-combination recipes with optional result and input item symbols. |
@@ -3258,7 +3259,7 @@ and no implicit table replacements. For example:
   "dependencies": ["devilution.base"],
   "schema": {
     "id": "devilution.diablo",
-    "version": "1.466.0"
+    "version": "1.467.0"
   },
   "dependencyConstraints": [
     {
@@ -3292,8 +3293,8 @@ three-component semantic-version constraints for declared dependencies. All
 declared schemas in one ordered manifest must match, every constraint must name
 a declared dependency, and the loaded dependency version must satisfy its
 range. The first-party server rejects a declared schema other than
-`devilution.diablo@1.466.0` or its immediately previous additive
-`1.465.0`. Current-schema packs must provide the complete production table
+`devilution.diablo@1.467.0` or its immediately previous additive
+`1.466.0`. Current-schema packs must provide the complete production table
 contract; previous-schema packs retain their documented compatibility fallbacks.
 Manifests without compatibility metadata retain their legacy identity and
 remain loadable during migration.

@@ -366,6 +366,10 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
         var playerLoadoutTable = content.GetRequiredTable("class_loadouts.tsv");
         var playerLoadoutItemTable = content.GetRequiredTable(
             "class_loadout_items.tsv");
+        if (content.Manifest.Schema == DiabloContentSchema.Current)
+            AuthoritativePlayerLoadoutCatalog.ValidateExternalizedProduction(
+                playerLoadoutTable,
+                playerLoadoutItemTable);
         var playerLoadouts = AuthoritativePlayerLoadoutCatalog.LoadTsv(
             playerClasses,
             itemCatalog,
