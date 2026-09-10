@@ -51,7 +51,24 @@ internal static class Program
         var saveStore = new AuthoritativeSaveStore(options.SaveRoot);
         var worldSeedStore = new AuthoritativeWorldSeedStore(options.SaveRoot);
         var clock = new RealtimeAuthoritativeClock(options.TickRateHz);
-        var gameAdapters = BuiltInAuthoritativeGameHostAdapters.Create(options.GameAdapterId);
+        var adapterPackageLoader = new AuthoritativeGameHostAdapterPackageLoader();
+        var adapterPackages = options.GameHostAdapterPackageRoots
+            .Select(adapterPackageLoader.LoadDirectory)
+            .ToArray();
+        var duplicateAdapterPackageIds = adapterPackages
+            .GroupBy(package => package.PackageId, StringComparer.Ordinal)
+            .Where(group => group.Count() > 1)
+            .Select(group => group.Key)
+            .ToArray();
+        if (duplicateAdapterPackageIds.Length != 0)
+            throw new InvalidDataException(
+                $"Game-host adapter package IDs must be unique: {string.Join(", ", duplicateAdapterPackageIds)}.");
+        var adapterFactories = BuiltInAuthoritativeGameHostAdapters.CreateFactories()
+            .Concat(adapterPackages.Select(package => package.Factory))
+            .ToArray();
+        var gameAdapters = new AuthoritativeGameHostAdapterCatalog(
+            adapterFactories,
+            options.GameAdapterId);
         var builtInModules = gameAdapters.CreateBuiltInModules();
         var modulePackageLoader = new GameplayModulePackageLoader(
             builtInModules.Select(module => module.GetType().Assembly));
@@ -124,6 +141,10 @@ internal static class Program
         Console.WriteLine($"Content packs: {string.Join(", ", contentManifest.Packs.Select(pack => $"{pack.Id}@{pack.Version}"))}");
         if (modulePackages.Length != 0) {
             Console.WriteLine($"Module packages: {string.Join(", ", modulePackages.Select(package => $"{package.PackageId}@{package.PackageVersion}"))}");
+        }
+        if (adapterPackages.Length != 0) {
+            Console.WriteLine(
+                $"Game-host adapter packages: {string.Join(", ", adapterPackages.Select(package => $"{package.PackageId}@{package.PackageVersion}:{package.Factory.Id}"))}");
         }
         foreach (var diagnostic in modulePlan.Diagnostics)
             Console.WriteLine($"Module {diagnostic.ModuleId}: {diagnostic.Message}");

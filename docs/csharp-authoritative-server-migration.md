@@ -80,9 +80,12 @@ the Diablo module interprets them as authoritative geometry.
 Diablo-specific catalog/bootstrap construction now occurs behind the module's
 content-bootstrap capability; Server startup supplies only generic composed
 content and player-start settings. Separating generic host lifecycle from the
-Diablo-specific protocol adapter now occurs through a combined Server-side
-adapter contract and deterministic factory catalog. The executable composition
-root names no Diablo types. Exact assembly-reference tests enforce the separate
+Diablo-specific protocol adapter now occurs through a combined server-side
+adapter contract and deterministic factory catalog. The host can also load
+explicit hash-verified `game-host-adapter.json` packages whose assemblies are
+restricted to platform and shared Godevilution contracts; configured factory
+IDs select one compatible adapter after module preflight. The executable
+composition root names no Diablo types. Exact assembly-reference tests enforce the separate
 Protocol, Host, Diablo adapter, and executable dependency graph, while a schema
 ownership test prevents duplicate managed Protobuf generation.
 

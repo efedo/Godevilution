@@ -28,6 +28,7 @@ public sealed class ServerHostTests
         Assert.Null(ServerHostOptions.Defaults.ProceduralMonsterLimit);
         Assert.Null(ServerHostOptions.Defaults.ProceduralMonsterLevelId);
         Assert.Null(ServerHostOptions.Defaults.GameAdapterId);
+        Assert.Empty(ServerHostOptions.Defaults.GameHostAdapterPackageRoots);
     }
 
     [Fact]
@@ -43,6 +44,7 @@ public sealed class ServerHostTests
             "--content-overlay", "content/mod-b",
             "--module-package", "modules/rules-a",
             "--module-package", "modules/rules-b",
+            "--game-adapter-package", "adapters/example",
             "--game-adapter", "devilution.diablo",
             "--build-id", "test-server",
             "--protocol-version", "0.2.0",
@@ -68,6 +70,7 @@ public sealed class ServerHostTests
         Assert.Equal("2.0.0", options.ContentVersion);
         Assert.Equal(["content/mod-a", "content/mod-b"], options.ContentOverlayRoots);
         Assert.Equal(["modules/rules-a", "modules/rules-b"], options.GameplayModulePackageRoots);
+        Assert.Equal(["adapters/example"], options.GameHostAdapterPackageRoots);
         Assert.Equal("devilution.diablo", options.GameAdapterId);
         Assert.Equal(30U, options.TickRateHz);
         Assert.Equal(900U, options.StartingGold!.Value);

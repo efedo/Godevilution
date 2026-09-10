@@ -6,7 +6,11 @@ wall-clock scheduling, snapshots and events, save-provider contracts,
 filesystem persistence, adapter selection, per-operation ruleset-generation
 leases, live ruleset replacement, complete session-state migration through the
 save contract,
-handshake identity publication, and explicit verified module packages. The
+handshake identity publication, explicit verified module packages, and
+hash-verified `game-host-adapter.json` package discovery. Adapter packages are
+restricted to one assembly, canonical relative paths, shared Godevilution
+contracts, and public parameterless factory types before they enter the
+deterministic adapter catalog. The
 module-package loader rejects malformed UTF-8 manifests, reparse-point
 entries, and noncanonical assembly paths before hashing or loading an assembly.
 Server-owned save envelopes, combined session checkpoints, command ledgers, and
@@ -14,8 +18,8 @@ world-seed files use strict UTF-8 I/O and fail closed on malformed text during
 recovery. Combined session checkpoints are version 3 and carry canonical
 SHA-256 hashes over serialized authoritative state and the command ledger;
 version-1 and version-2 checkpoints remain readable and are upgraded on their
-next write.
-leased adapter wrapper uses a read/write operation barrier: replacement waits
+next write. The leased adapter wrapper uses a read/write operation barrier:
+replacement waits
 for in-flight operations, migrates initialized sessions before publication,
 and disposes drained game targets through an injected host policy.
 It exposes the active combined ruleset identity and the number of retired

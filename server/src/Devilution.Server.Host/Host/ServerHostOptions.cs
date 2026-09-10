@@ -35,6 +35,9 @@ public sealed record ServerHostOptions(
 
     public IReadOnlyList<string> GameplayModulePackageRoots { get; init; } = [];
 
+    /** Optional hash-verified packages that provide additional host adapters. */
+    public IReadOnlyList<string> GameHostAdapterPackageRoots { get; init; } = [];
+
     /** Optional adapter factory ID; null preserves single-compatible-factory selection. */
     public string? GameAdapterId { get; init; }
 
@@ -114,6 +117,13 @@ public sealed record ServerHostOptions(
             case "--module-package":
                 current = current with {
                     GameplayModulePackageRoots = current.GameplayModulePackageRoots
+                        .Append(value)
+                        .ToArray(),
+                };
+                break;
+            case "--game-adapter-package":
+                current = current with {
+                    GameHostAdapterPackageRoots = current.GameHostAdapterPackageRoots
                         .Append(value)
                         .ToArray(),
                 };
@@ -300,6 +310,7 @@ public sealed record ServerHostOptions(
           --content-version <version>  Content pack version
           --content-overlay <directory> Ordered pack with content-pack.json; repeatable
           --module-package <directory> Hash-verified gameplay-module package; repeatable
+          --game-adapter-package <directory> Hash-verified host-adapter package; repeatable
           --game-adapter <id>         Select a compatible host adapter factory
           --build-id <id>              Server build identity
           --protocol-version <version> Protocol schema version

@@ -2,6 +2,12 @@
 
 All notable changes to this fork are documented below.
 
+- Added the generic host-adapter package boundary. Repeatable
+  `--game-adapter-package` roots now load hash-verified `game-host-adapter.json`
+  packages, reject traversal/reparse-point paths and private assembly
+  references, validate public factory types, and merge them with the built-in
+  catalog under strict duplicate-ID and compatibility selection rules.
+
 - Advanced combined authoritative session checkpoints to format 3 with
   canonical SHA-256 hashes of serialized server state and the command ledger.
   Version-1 and version-2 checkpoints remain readable for migration and are
