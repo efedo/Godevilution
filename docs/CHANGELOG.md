@@ -2,7 +2,7 @@
 
 All notable changes to this fork are documented below.
 
-- Advanced the active content schema to `1.474.0`, retaining `1.473.0` as
+- Advanced the active content schema to `1.475.0`, retaining `1.474.0` as
   the previous additive contract. Current-schema production activation now
   requires `world_rules.tsv` to carry the complete external town/service
   identities and Town Portal destination geometry, and `combat.tsv` to carry
@@ -17,7 +17,8 @@ All notable changes to this fork are documented below.
   six-column generation schema, including ordinary monster capacity, and
   `monster_spawn_policies.tsv` must provide the complete symbolic policy
   coverage. Current-schema packs must also provide at least one validated
-  world source (`levels.tsv` or `procedural_levels.tsv`). Older
+  world source (`levels.tsv` or `procedural_levels.tsv`) and complete
+  `level_generation.tsv` metadata. Older
   schema packs and direct compatibility callers retain support
   for partial rows, but new packs cannot reintroduce embedded defaults at the
   server boundary.

@@ -484,11 +484,7 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
                 questSequenceVariantsTable.ToCanonicalTsv(),
                 stableIds)
             : null;
-        var levelGeneration = content.TryGetTable(
-            "level_generation.tsv",
-            out var levelGenerationTable)
-            ? LoadLevelGeneration(content, levelGenerationTable)
-            : null;
+        var levelGeneration = LoadLevelGeneration(content);
         playerLoadouts.ValidateCastSources(spells);
         spells.ValidateStableReferences(
             stableIds,
@@ -1362,10 +1358,15 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
             stableIds);
     }
 
-    private static AuthoritativeLevelGenerationCatalog LoadLevelGeneration(
-        ComposedContent content,
-        TsvTable table)
+    private static AuthoritativeLevelGenerationCatalog? LoadLevelGeneration(
+        ComposedContent content)
     {
+        TsvTable table;
+        if (content.Manifest.Schema == DiabloContentSchema.Current)
+            table = GetRequiredExternalTable(content, "level_generation.tsv");
+        else if (!content.TryGetTable("level_generation.tsv", out table!))
+            return null;
+
         if (content.Manifest.Schema == DiabloContentSchema.Current)
             AuthoritativeLevelGenerationCatalog.ValidateExternalizedProduction(table);
         return AuthoritativeLevelGenerationCatalog.LoadTsv(
