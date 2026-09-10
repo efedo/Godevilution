@@ -7348,6 +7348,49 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void MissedMeleeAttackStillResolvesNativeElementalWeaponChannels()
+    {
+        var target = new AuthoritativeCombatTarget(
+            9,
+            1,
+            0,
+            100,
+            armorClass: 100);
+        var world = new DiabloWorldState(combatTargets: [target]);
+        var processor = CreateProcessor(
+            world,
+            rules: new AuthoritativeCombatRules(10, 1, 100, hitChancePercent: 5),
+            random: new DiabloRandom(0));
+        var player = CreatePlayer(
+            entityId: 7,
+            equipment: [new EquippedStoreItem(
+                4,
+                42,
+                AuthoritativeItemState.Empty with {
+                    StatFlag = true,
+                    Flags = AuthoritativeEquipmentElementalDamageRules.FireDamageFlag
+                        | AuthoritativeEquipmentElementalDamageRules.LightningDamageFlag,
+                    FireMinDamage = 4,
+                    FireMaxDamage = 4,
+                    LightningMinDamage = 8,
+                    LightningMaxDamage = 8,
+                })]);
+
+        var result = processor.Execute(player, new DiabloAttackIntent(9), 1);
+
+        Assert.True(result.Succeeded);
+        Assert.Equal(88, target.HitPoints);
+        Assert.Contains(
+            result.Events,
+            gameplayEvent => gameplayEvent.Kind == DiabloGameplayEventKind.Damage
+                && gameplayEvent.AmountQ6 == 256);
+        Assert.Contains(
+            result.Events,
+            gameplayEvent => gameplayEvent.Kind == DiabloGameplayEventKind.Damage
+                && gameplayEvent.AmountQ6 == 512);
+    }
+
+    [Fact]
     public void RejectedAttackDoesNotMutateCombatState()
     {
         var target = new AuthoritativeCombatTarget(9, 4, 4, 10);

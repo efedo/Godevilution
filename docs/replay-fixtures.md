@@ -85,6 +85,12 @@ subtracted again from successful player damage. The armor-piercing companion
 adds the optional `plus_enemy_armor_class` equipment field and proves that an
 authored native armor-piercing bonus crosses the same hit-resolution boundary;
 omitting the field retains its zero-value compatibility behavior.
+The `gameplay/class-physical-damage-miss-elemental` native companion and its
+managed combat test keep that admission miss while adding melee `FireDamage`
+and `LightningDamage` channels; native melee WeaponExplosion missiles are
+emitted before physical hit resolution, so both elemental channels still
+damage the target. This is intentionally distinct from ranged arrow fixtures,
+where elemental channels are captured only for an admitted arrow.
 `gameplay-class-physical-damage-hell.json` adds the Hell difficulty target
 modifiers, including the native 4x health plus 200 bonus and +80 armor.
 The damage-modifier and to-hit companions cover authored percentage/flat

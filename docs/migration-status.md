@@ -288,6 +288,12 @@ The class-physical replay matrix is current for armor, armor-piercing, to-hit,
 damage-modifier, Barbarian, and Hellfire variants; both runners agree at each
 refreshed checkpoint.
 
+Melee elemental weapon channels now retain the native pre-hit boundary: both
+`FireDamage` and `LightningDamage` WeaponExplosions can damage a monster even
+when the physical `PlrHitMonst` roll misses. The native replay companion and
+managed combat test cover this separately from ranged arrows, which only carry
+channels on an admitted projectile.
+
 Hellfire ranged Peril profiles now also agree on the class-modified projectile
  payload, Peril self-damage, multiplier, and deterministic snapshot hash.
 

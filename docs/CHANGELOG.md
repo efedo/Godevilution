@@ -2,6 +2,10 @@
 
 All notable changes to this fork are documented below.
 
+- Preserved native melee FireDamage/LightningDamage resolution on physical
+  misses with a paired native replay fixture and managed combat test; ranged
+  arrows retain their admitted-shot boundary.
+
 - Native monster arrows now preserve their impact-time protection boundary:
   Etherealized players are not treated as a consumed collision, so the arrow
   continues through the protected tile instead of entering its impact phase.

@@ -647,6 +647,12 @@ TEST(ReplayFixture, ExecutesPhysicalMissAgainstArmorCheckpoint)
 	    "test/fixtures/replay/gameplay-class-physical-damage-miss.json", 2, 15, 35, 20, 100);
 }
 
+TEST(ReplayFixture, ExecutesPhysicalMissWithMeleeElementalDamageAgainstCSharpCheckpoint)
+{
+	ExecuteClassPhysicalDamageFixture(
+	    "test/fixtures/replay/gameplay-class-physical-damage-miss-elemental.json", 2, 15, 35, 20, 88);
+}
+
 TEST(ReplayFixture, ExecutesPhysicalArmorPiercingAgainstCSharpCheckpoint)
 {
 	ExecuteClassPhysicalDamageFixture(

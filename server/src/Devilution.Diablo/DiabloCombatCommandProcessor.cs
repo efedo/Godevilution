@@ -817,8 +817,12 @@ public sealed class DiabloCombatCommandProcessor
             }
         }
         ApplyResolvedDamageQ6(player, target, damageQ6, events);
+        // Native DoAttack emits melee WeaponExplosion missiles before
+        // PlrHitMonst resolves physical admission. FireDamage and
+        // LightningDamage therefore still reach a live monster when the
+        // physical roll misses; ranged arrow channels remain captured only
+        // for admitted arrows at launch.
         if (applyElemental
-            && attackHit
             && !gargoyleWake
             && target.HitPointsQ6 > 0)
             ApplyEquipmentElementalDamage(player, target, events, ranged: false);
