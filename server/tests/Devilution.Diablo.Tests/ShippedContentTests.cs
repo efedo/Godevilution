@@ -18,7 +18,7 @@ public sealed class ShippedContentTests
         Assert.Equal("devilution.base", pack.Id);
         Assert.Equal("0.1.0", pack.Version);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.467.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.468.0"),
             pack.Schema);
         Assert.Empty(pack.Overlays);
         var nativeDunMonsterTable = pack.Tables.Single(
@@ -1204,7 +1204,7 @@ public sealed class ShippedContentTests
             currentPack.Tables,
             currentPack.Dependencies,
             currentPack.Overlays,
-            new ContentSchemaIdentity("devilution.diablo", "1.466.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.467.0"),
             currentPack.DependencyConstraints,
             currentPack.Assets);
         var content = ComposedContent.Compose(new ContentManifest(
@@ -1336,7 +1336,7 @@ public sealed class ShippedContentTests
                 .ToArray(),
             basePack.Dependencies,
             basePack.Overlays,
-            new ContentSchemaIdentity("devilution.diablo", "1.466.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.467.0"),
             basePack.DependencyConstraints,
             basePack.Assets);
 
@@ -1401,7 +1401,7 @@ public sealed class ShippedContentTests
                 .ToArray(),
             basePack.Dependencies,
             basePack.Overlays,
-            new ContentSchemaIdentity("devilution.diablo", "1.466.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.467.0"),
             basePack.DependencyConstraints,
             basePack.Assets);
 
@@ -1469,7 +1469,7 @@ public sealed class ShippedContentTests
                 .ToArray(),
             basePack.Dependencies,
             basePack.Overlays,
-            new ContentSchemaIdentity("devilution.diablo", "1.466.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.467.0"),
             basePack.DependencyConstraints,
             basePack.Assets);
 
@@ -1483,6 +1483,68 @@ public sealed class ShippedContentTests
         Assert.All(
             activation.PlayerLoadouts.Definitions,
             definition => Assert.Equal(DiabloPlayerAbilityKind.None, definition.AbilityKind));
+    }
+
+    [Fact]
+    public void ContentBootstrapRejectsLegacyPlayerAnimationSchemaInCurrentSchema()
+    {
+        var contentRoot = Path.Combine(FindRepositoryRoot(), "server", "content", "base");
+        var basePack = ContentPackLoader.LoadManifestDirectory(contentRoot);
+        var animations = basePack.Tables.Single(table => table.SourcePath == "class_animations.tsv");
+        var legacyAnimations = CreateLegacyAnimationTable(animations);
+        var incompletePack = new ContentPack(
+            basePack.Id,
+            basePack.Version,
+            basePack.Tables
+                .Select(table => table.SourcePath == animations.SourcePath
+                    ? legacyAnimations
+                    : table)
+                .ToArray(),
+            basePack.Dependencies,
+            basePack.Overlays,
+            basePack.Schema,
+            basePack.DependencyConstraints,
+            basePack.Assets);
+
+        var exception = Assert.Throws<InvalidDataException>(() =>
+            DiabloModule.Instance.ContentBootstrap.Activate(
+                ComposedContent.Compose(new ContentManifest(
+                    "missing-player-animation-symbols",
+                    "1",
+                    [incompletePack]))));
+
+        Assert.Contains("Production player-animation table", exception.Message, StringComparison.Ordinal);
+        Assert.Contains("complete ordered symbolic schema", exception.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void PreviousSchemaRetainsLegacyPlayerAnimationCompatibility()
+    {
+        var contentRoot = Path.Combine(FindRepositoryRoot(), "server", "content", "base");
+        var basePack = ContentPackLoader.LoadManifestDirectory(contentRoot);
+        var animations = basePack.Tables.Single(table => table.SourcePath == "class_animations.tsv");
+        var previousPack = new ContentPack(
+            basePack.Id,
+            basePack.Version,
+            basePack.Tables
+                .Select(table => table.SourcePath == animations.SourcePath
+                    ? CreateLegacyAnimationTable(animations)
+                    : table)
+                .ToArray(),
+            basePack.Dependencies,
+            basePack.Overlays,
+            new ContentSchemaIdentity("devilution.diablo", "1.467.0"),
+            basePack.DependencyConstraints,
+            basePack.Assets);
+
+        var activation = DiabloModule.Instance.ContentBootstrap.Activate(
+            ComposedContent.Compose(new ContentManifest(
+                "previous-player-animation-contract",
+                "1",
+                [previousPack])));
+
+        Assert.Equal(6, activation.PlayerAnimations.Definitions.Count);
+        Assert.Equal(14, activation.PlayerAnimations.GetRequired(0).CastingActionFrame);
     }
 
     [Theory]
@@ -3624,7 +3686,7 @@ public sealed class ShippedContentTests
                 .ToArray(),
             basePack.Dependencies,
             basePack.Overlays,
-            new ContentSchemaIdentity("devilution.diablo", "1.466.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.467.0"),
             basePack.DependencyConstraints,
             basePack.Assets);
 
@@ -3801,7 +3863,7 @@ public sealed class ShippedContentTests
                 .ToArray(),
             basePack.Dependencies,
             basePack.Overlays,
-            new ContentSchemaIdentity("devilution.diablo", "1.466.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.467.0"),
             basePack.DependencyConstraints,
             basePack.Assets);
 
@@ -4190,7 +4252,7 @@ public sealed class ShippedContentTests
 
         Assert.Equal("devilution.hellfire", hellfirePack.Id);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.467.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.468.0"),
             hellfirePack.Schema);
         Assert.Equal(DiabloGameVariant.Hellfire, combat.GameVariant);
         Assert.Equal(2, combat.UniqueExperienceMultiplier);
@@ -7786,6 +7848,17 @@ public sealed class ShippedContentTests
                 return string.Join('\t', [fields[0], fields[2], fields[3], fields[5], fields[6]]);
             });
         return TsvTable.Parse(loadoutItems.SourcePath, string.Join('\n', lines) + "\n");
+    }
+
+    private static TsvTable CreateLegacyAnimationTable(TsvTable animations)
+    {
+        var lines = animations.ToCanonicalTsv()
+            .Split('\n', StringSplitOptions.RemoveEmptyEntries)
+            .Select(line => {
+                var fields = line.Split('\t');
+                return string.Join('\t', new[] { fields[0] }.Concat(fields.Skip(2)));
+            });
+        return TsvTable.Parse(animations.SourcePath, string.Join('\n', lines) + "\n");
     }
 
     private static string FindRepositoryRoot()

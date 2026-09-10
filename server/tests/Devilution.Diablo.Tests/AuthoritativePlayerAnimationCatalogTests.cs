@@ -1,3 +1,4 @@
+using Devilution.Data;
 using Xunit;
 
 namespace Devilution.Diablo.Tests;
@@ -130,6 +131,28 @@ public sealed class AuthoritativePlayerAnimationCatalogTests
         Assert.Throws<InvalidDataException>(() => Load(invalidAttackAction));
         Assert.Throws<InvalidDataException>(() => Load(invalidWalkFrames));
         Assert.Throws<InvalidDataException>(() => Load(invalidCastingAction));
+    }
+
+    [Fact]
+    public void ProductionValidationRejectsNumericAnimationSchema()
+    {
+        var table = TsvTable.Parse(
+            "class_animations.tsv",
+            "class_id\tunarmed_frames\tunarmed_action_frame\n"
+                + "0\t16\t9\n");
+
+        var exception = Assert.Throws<InvalidDataException>(() =>
+            AuthoritativePlayerAnimationCatalog.ValidateExternalizedProduction(table));
+
+        Assert.Contains("complete ordered symbolic schema", exception.Message);
+    }
+
+    [Fact]
+    public void ProductionValidationAcceptsShippedAnimationSchema()
+    {
+        var table = TsvTable.Parse("class_animations.tsv", ReadShippedAnimations());
+
+        AuthoritativePlayerAnimationCatalog.ValidateExternalizedProduction(table);
     }
 
     private static AuthoritativePlayerAnimationCatalog LoadShippedCatalog()

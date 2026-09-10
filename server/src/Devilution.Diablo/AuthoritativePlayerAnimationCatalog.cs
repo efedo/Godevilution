@@ -146,6 +146,21 @@ public sealed class AuthoritativePlayerAnimationCatalog
                 $"Player animation class ID {classId} is not defined.");
     }
 
+    /**
+     * Rejects numeric-only animation data at the current production boundary.
+     * Direct callers may continue to load older compatibility shapes.
+     */
+    public static void ValidateExternalizedProduction(TsvTable table)
+    {
+        ArgumentNullException.ThrowIfNull(table);
+        if (!table.Columns.SequenceEqual(SymbolicColumns, StringComparer.Ordinal))
+            throw new InvalidDataException(
+                $"Production player-animation table '{table.SourcePath}' must use the complete ordered symbolic schema.");
+        foreach (var row in table.Rows)
+            foreach (var column in SymbolicColumns)
+                _ = row.Required(column);
+    }
+
     public static AuthoritativePlayerAnimationCatalog LoadTsv(
         string sourcePath,
         string contents,

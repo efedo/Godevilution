@@ -264,6 +264,9 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
             stableIds);
         stableIds.ValidateReferences("class", classId => playerClasses.TryGet(classId, out _));
         var playerAnimationTable = content.GetRequiredTable("class_animations.tsv");
+        if (content.Manifest.Schema == DiabloContentSchema.Current)
+            AuthoritativePlayerAnimationCatalog.ValidateExternalizedProduction(
+                playerAnimationTable);
         var playerAnimations = AuthoritativePlayerAnimationCatalog.LoadTsv(
             playerAnimationTable.SourcePath,
             playerAnimationTable.ToCanonicalTsv(),
