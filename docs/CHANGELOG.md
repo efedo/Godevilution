@@ -14,7 +14,8 @@ All notable changes to this fork are documented below.
   authoritative server: blocked hits consume a charge, roll Q6 damage, apply
   the configured reflection percentage to the monster, and keep the player's
   life unchanged. Added a shared C++/C# replay checkpoint for the complete
-  blocked-hit transition and RNG order.
+  blocked-hit transition and RNG order, including the single-player
+  zero-AI-seed compatibility stream.
 
 - Ruleset replacement now publishes migrated session checkpoints during
   candidate preparation, before activation or handshake identity publication;

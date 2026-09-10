@@ -929,6 +929,11 @@ melee branch: hit and block RNG, block recovery timing, charge consumption,
 Q6 reflection, unchanged player life, and the same canonical checkpoint hash
 in both runners.
 
+`gameplay-singleplayer-blocked-monster-melee.json` repeats that transition with
+the monster's runtime AI seeds omitted. It proves that single-player native
+combat still uses the shared hit/block/Q6 stream when no multiplayer AI seed is
+available.
+
 `gameplay-etherealize-resolution.json` uses the Etherealize ability against an
 adjacent monster. Ticks 0 and 1 prove immediate permanent status admission,
 typed status hashing, and blocked autonomous monster damage while the status
@@ -1287,6 +1292,8 @@ Notable shared fixtures include:
 - `gameplay-reflect-blocked-monster-melee.json` for blocked-hit recovery,
   Reflect charge consumption, Q6 monster damage, and shared native/managed
   checkpoint parity;
+- `gameplay-singleplayer-blocked-monster-melee.json` for the zero-AI-seed
+  single-player native combat stream and the same blocked-hit checkpoint;
 - `gameplay-etherealize-resolution.json` for permanent status admission,
   typed status hashing, and autonomous monster-damage immunity;
 - `gameplay-berserk-resolution.json` for eligible-target admission, four-channel

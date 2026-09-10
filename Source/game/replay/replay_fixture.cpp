@@ -9388,7 +9388,8 @@ void AdvanceReplayMonsterAttack(
 		if (attackRoll >= attackChance)
 			return;
 	}
-	if (state.combatTargetMonsterAiSeed != 0 && state.combatTargetToHit > 0) {
+	const bool usesNativeCombatStream = !state.multiplayer || state.combatTargetMonsterAiSeed != 0;
+	if (usesNativeCombatStream && state.combatTargetToHit > 0) {
 		const int32_t targetLevel = victim.secondary
 		    ? static_cast<int32_t>(state.secondaryPlayerCharacterLevel)
 		    : static_cast<int32_t>(state.characterLevel);
@@ -9464,8 +9465,7 @@ void AdvanceReplayMonsterAttack(
 		int32_t damage = state.combatTargetAttackDamage == 0
 		    ? 0
 		    : std::max(1, state.combatTargetAttackDamage);
-		if (state.combatTargetMonsterAiSeed != 0
-		    && state.combatTargetToHit > 0) {
+		if (usesNativeCombatStream && state.combatTargetToHit > 0) {
 			const int32_t minimumDamage = state.combatTargetMinDamage == 0
 			        && state.combatTargetMaxDamage == 0
 			    ? damage
@@ -9513,8 +9513,6 @@ void AdvanceReplayMonsterAttack(
 	        && state.combatTargetMaxDamage == 0
 	    ? state.combatTargetAttackDamage
 	    : state.combatTargetMaxDamage;
-	const bool usesNativeCombatStream = !state.multiplayer
-	    || state.combatTargetMonsterAiSeed != 0;
 	const int32_t damage = maximumDamage >= minimumDamage
 	    ? minimumDamage
 	        + (usesNativeCombatStream

@@ -1099,10 +1099,12 @@ public sealed class ReplayFixtureTests
         Assert.Equal(fixture.Checkpoints[0].StateSha256, result.Checkpoints[0].ActualStateSha256);
     }
 
-    [Fact]
-    public void BlockedMonsterMeleeReflectFixturePreservesNativeTransition()
+    [Theory]
+    [InlineData("gameplay-reflect-blocked-monster-melee.json")]
+    [InlineData("gameplay-singleplayer-blocked-monster-melee.json")]
+    public void BlockedMonsterMeleeReflectFixturesPreserveNativeTransition(string fixtureName)
     {
-        var fixture = LoadReplayFixture("gameplay-reflect-blocked-monster-melee.json");
+        var fixture = LoadReplayFixture(fixtureName);
         var initial = fixture.InitialState;
         var target = new AuthoritativeCombatTarget(
             initial.CombatTargetEntityId,

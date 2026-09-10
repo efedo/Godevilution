@@ -1,0 +1,61 @@
+{
+  "format_version": 1,
+  "fixture_id": "gameplay/singleplayer-blocked-monster-melee",
+  "protocol_schema_version": "0.1.0",
+  "content_manifest": {
+    "id": "devilution.base",
+    "version": "0.1.0",
+    "sha256": "0464ed31c0400efe3e4b40dd4579b26576f725351670f8d8f553fffd1d3cf252"
+  },
+  "tick_rate_hz": 20,
+  "rng_seed": 1,
+  "game_variant": "Diablo",
+  "initial_state": {
+    "player": "A",
+    "gold": 0,
+    "experience": 0,
+    "life": 100,
+    "life_maximum": 100,
+    "dexterity": 100,
+    "character_class": 0,
+    "character_level": 1,
+    "position_x": 1,
+    "position_y": 0,
+    "level_id": 0,
+    "reflect_charges": 1,
+    "equipment": [
+      {
+        "slot": 5,
+        "item_seed": 1,
+        "item_type": 5,
+        "item_class": 0,
+        "flags": 0,
+        "stat_flag": true
+      }
+    ],
+    "combat_target_entity_id": 9,
+    "combat_target_level_id": 0,
+    "combat_target_position_x": 0,
+    "combat_target_position_y": 0,
+    "combat_target_hit_points": 20,
+    "combat_target_max_hit_points": 20,
+    "combat_target_aggro_range": 1,
+    "combat_target_attack_damage": 10,
+    "combat_target_min_damage": 10,
+    "combat_target_max_damage": 10,
+    "combat_target_monster_level": 0,
+    "combat_target_to_hit": 100
+  },
+  "commands": [
+    {
+      "client_sequence": 1,
+      "target_tick": 1,
+      "server_receipt_sequence": 1,
+      "kind": "OpenStore",
+      "payload": { "store_id": 1 }
+    }
+  ],
+  "checkpoints": [
+    { "tick": 1, "state_sha256": "d79acc6b19159502b193d1c198c21d33c8cc0fec812290f92301a21b79a8426b" }
+  ]
+}
