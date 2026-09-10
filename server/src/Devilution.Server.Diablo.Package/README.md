@@ -10,6 +10,20 @@ Build the project, copy its entry assembly plus the private
 assemblies into a package directory, and list each file with its SHA-256 in
 `dependencies`. `Google.Protobuf` is a shared runtime contract and must not be
 copied into the package.
+
+For a reproducible staging directory, run from the repository root:
+
+```powershell
+.\tools\package-diablo-adapter.ps1 `
+  -OutputRoot .artifacts\godevilution.diablo.package `
+  -Configuration Release `
+  -PackageVersion 0.1.0
+```
+
+The script builds the adapter and authoritative server, stages the private
+closure, and writes the hash-verified manifest without overwriting a
+non-empty output directory.
+
 `Devilution.Data`, `Devilution.Engine`, `Devilution.Server.Host`, and
 `Devilution.Protocol` remain shared contracts and must not be duplicated in
 the package. For upgrade-safe deployments, add a `sharedContracts` object to

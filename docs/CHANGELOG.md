@@ -30,6 +30,10 @@ All notable changes to this fork are documented below.
   Protobuf identities before loading a package, giving release deployments an
   early, fail-closed ABI mismatch check while preserving older manifests.
 
+- Added `tools/package-diablo-adapter.ps1` to build and stage the production
+  Diablo adapter entry assembly, private dependency closure, and verified
+  manifest without overwriting a non-empty output directory.
+
 - Advanced combined authoritative session checkpoints to format 3 with
   canonical SHA-256 hashes of serialized server state and the command ledger.
   Version-1 and version-2 checkpoints remain readable for migration and are
