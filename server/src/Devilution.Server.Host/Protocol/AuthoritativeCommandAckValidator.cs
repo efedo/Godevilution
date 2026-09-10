@@ -1,3 +1,4 @@
+using Devilution.Protocol;
 using Devilution.Protocol.V1;
 
 namespace Devilution.Server.Protocol;
@@ -5,7 +6,7 @@ namespace Devilution.Server.Protocol;
 /** Validates command acknowledgements before the host sends them to clients. */
 public static class AuthoritativeCommandAckValidator
 {
-    public const int MaximumResultCount = 256;
+    public const int MaximumResultCount = AuthoritativeProtocolLimits.MaximumCommandAcknowledgementResultCount;
 
     public static void Validate(CommandAck acknowledgement)
     {

@@ -81,8 +81,7 @@ bool IsValidCommandRejectReason(protocol::CommandRejectReason reason)
 
 tl::expected<void, std::string> ValidateCommandAcknowledgement(const protocol::CommandAck &acknowledgement)
 {
-	constexpr int MaximumResultCount = 256;
-	if (acknowledgement.results_size() > MaximumResultCount)
+	if (acknowledgement.results_size() > MaximumCommandAcknowledgementResultCount)
 		return tl::make_unexpected(std::string("The authoritative command acknowledgement is too large."));
 
 	for (const auto &result : acknowledgement.results()) {

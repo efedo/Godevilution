@@ -1,3 +1,4 @@
+using Devilution.Protocol;
 using Devilution.Protocol.V1;
 using Devilution.Server.Protocol;
 using Xunit;
@@ -31,6 +32,14 @@ public sealed class AuthoritativeCommandAckValidatorTests
                 },
             },
         });
+    }
+
+    [Fact]
+    public void UsesTheSharedProtocolAcknowledgementBound()
+    {
+        Assert.Equal(
+            AuthoritativeProtocolLimits.MaximumCommandAcknowledgementResultCount,
+            AuthoritativeCommandAckValidator.MaximumResultCount);
     }
 
     [Fact]

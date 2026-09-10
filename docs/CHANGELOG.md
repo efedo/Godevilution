@@ -28,6 +28,10 @@ All notable changes to this fork are documented below.
   change; focused native coverage guards the shared 256-result and
   status/rejection-reason contract.
 
+- Command-batch and command-acknowledgement bounds now come from shared
+  protocol-limit definitions across the host, Godot client, and native
+  compatibility client instead of independent literals.
+
 - Godot and the native compatibility client now validate every authoritative
   event batch before applying stale-tick or reconnect-epoch filters, so
   malformed discarded events fail closed instead of being silently ignored.

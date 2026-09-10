@@ -10,6 +10,8 @@ public static class AuthoritativeProtocolLimits
     public const int MaximumEnvelopeBytes = 1024 * 1024;
     public const int MaximumDialogueTextBytes = 16 * 1024;
     public const int MaximumIdentityBytes = 128;
+    public const int MaximumCommandBatchCount = 256;
+    public const int MaximumCommandAcknowledgementResultCount = 256;
     public const int MaximumEventBatchCount = 4096;
     public const int MaximumWorldMutationCount = 4096;
     public const int MaximumSnapshotQuestCount = 4096;

@@ -46,6 +46,9 @@ Windows toolchain command.
   while preserving them through authoritative snapshots.
 - `client_sequence` is scoped to a resumable session. Retrying a command with
   the same sequence returns the recorded result without applying it twice.
+- Command batches and command acknowledgements are each limited to 256 entries
+  by the shared protocol limits consumed by the host, Godot client, and native
+  compatibility client.
 - `DialogueEvent.text` carries server-owned localized presentation text. It is
   limited to 16 KiB of UTF-8 bytes and may not contain NUL or carriage-return
   characters; validators on the server, Godot client, and native bridge apply
