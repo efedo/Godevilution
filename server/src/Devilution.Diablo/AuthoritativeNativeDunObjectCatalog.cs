@@ -156,6 +156,7 @@ public sealed class AuthoritativeNativeDunObjectCatalog
             if (template.ObjectId != definition.ObjectId)
                 throw new InvalidDataException(
                     $"Native DUN object mapping for level {definition.GetRuntimeLevelId()} template {definition.TemplateEntityId} uses object {template.ObjectId}, expected {definition.ObjectId}.");
+            ValidateTemplateNativeObjectId(definition, template);
         }
     }
 
@@ -254,6 +255,7 @@ public sealed class AuthoritativeNativeDunObjectCatalog
                     if (template.ObjectId != definition.ObjectId)
                         throw new InvalidDataException(
                             $"Native DUN object mapping for level {levelId} template {definition.TemplateEntityId} uses object {template.ObjectId}, expected {definition.ObjectId}.");
+                    ValidateTemplateNativeObjectId(definition, template);
                     objects.Add(template.WithPlacement(
                         entityId,
                         levelId,
@@ -271,6 +273,25 @@ public sealed class AuthoritativeNativeDunObjectCatalog
             }
         }
         return objects;
+    }
+
+    /**
+     * A template may omit its native presentation identity for custom objects,
+     * but an explicit identity must agree with the mapped authored object
+     * identity. Raw DUN layer values are conversion-table indices and are not
+     * the same namespace as the native presentation enum.
+     */
+    private static void ValidateTemplateNativeObjectId(
+        AuthoritativeNativeDunObjectDefinition definition,
+        AuthoritativeWorldObject template)
+    {
+        if (template.NativeObjectId != 0
+            && template.NativeObjectId != definition.ObjectId) {
+            throw new InvalidDataException(
+                $"Native DUN object mapping for level {definition.GetRuntimeLevelId()} "
+                + $"template {definition.TemplateEntityId} uses native object "
+                + $"{template.NativeObjectId}, expected {definition.ObjectId}.");
+        }
     }
 
     public void ValidateSetLevels(AuthoritativeSetLevelNameCatalog setLevels)

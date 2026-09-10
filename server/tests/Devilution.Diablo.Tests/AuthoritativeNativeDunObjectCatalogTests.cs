@@ -272,6 +272,26 @@ public sealed class AuthoritativeNativeDunObjectCatalogTests
     }
 
     [Fact]
+    public void RejectsTemplateWithDifferentNativeObjectIdentityBeforeGeometryIsLoaded()
+    {
+        var catalog = new AuthoritativeNativeDunObjectCatalog([
+            new AuthoritativeNativeDunObjectDefinition(2, true, 109, 4, 3001),
+        ]);
+        var template = new AuthoritativeWorldObject(
+            3001,
+            4,
+            0,
+            0,
+            0,
+            nativeObjectId: 5);
+
+        var exception = Assert.Throws<InvalidDataException>(
+            () => catalog.ValidateTemplates([template]));
+
+        Assert.Contains("uses native object 5, expected 4", exception.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void EnforcesNativeObjectPoolCapacityPerLevel()
     {
         var catalog = new AuthoritativeNativeDunObjectCatalog([

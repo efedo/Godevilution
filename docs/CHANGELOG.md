@@ -2,6 +2,11 @@
 
 All notable changes to this fork are documented below.
 
+- Native-DUN object mappings now cross-check an authored template's optional
+  native presentation identity against its mapped object identity, while
+  preserving the distinction between raw DUN conversion IDs and presentation
+  enums.
+
 - Externalized the remaining nonzero native object-layer values in the shipped
   Warlord fragment. Stable armor-stand and weapon-rack templates plus an
   ordinary-level `native_dun_objects.tsv` mapping now materialize all four
