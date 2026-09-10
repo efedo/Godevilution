@@ -26,6 +26,13 @@ public sealed record AuthoritativeMonsterSpawnPolicyDefinition(
 /** Validated monster spawn-role overrides supplied by the active content pack. */
 public sealed class AuthoritativeMonsterSpawnPolicyCatalog
 {
+    private static readonly IReadOnlyList<string> ProductionColumns = [
+        "monster_id",
+        "monster_symbol",
+        "spawn_role",
+        "coverage_mode",
+    ];
+
     private readonly IReadOnlyDictionary<uint, AuthoritativeMonsterSpawnRole> roles;
 
     public AuthoritativeMonsterSpawnPolicyCatalog(
@@ -60,6 +67,18 @@ public sealed class AuthoritativeMonsterSpawnPolicyCatalog
         => roles
             .Select(entry => new AuthoritativeMonsterSpawnPolicyDefinition(entry.Key, entry.Value))
             .ToArray();
+
+    /** Rejects policy fallbacks at the current production content boundary. */
+    public static void ValidateExternalizedProduction(TsvTable table)
+    {
+        ArgumentNullException.ThrowIfNull(table);
+        if (!table.Columns.SequenceEqual(ProductionColumns, StringComparer.Ordinal))
+            throw new InvalidDataException(
+                $"Production monster-spawn policy table '{table.SourcePath}' must use the complete ordered symbolic schema.");
+        foreach (var row in table.Rows)
+            foreach (var column in ProductionColumns)
+                _ = row.Required(column);
+    }
 
     /** Returns true when an identity may enter ordinary procedural scattering. */
     public bool IsOrdinary(uint monsterId)

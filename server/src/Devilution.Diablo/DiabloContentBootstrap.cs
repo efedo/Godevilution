@@ -507,14 +507,7 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
             stableIds);
         ArgumentNullException.ThrowIfNull(spells);
         ArgumentNullException.ThrowIfNull(monsterTypes);
-        var monsterSpawnPolicies = content.TryGetTable(
-                "monster_spawn_policies.tsv",
-                out var monsterSpawnPoliciesTable)
-            ? AuthoritativeMonsterSpawnPolicyCatalog.LoadTsv(
-                monsterSpawnPoliciesTable.SourcePath,
-                monsterSpawnPoliciesTable.ToCanonicalTsv(),
-                stableIds)
-            : null;
+        var monsterSpawnPolicies = LoadMonsterSpawnPolicies(content, stableIds);
         if (monsterSpawnPolicies is not null) {
             if (monsterTypes is null)
                 throw new InvalidDataException(
@@ -1375,6 +1368,30 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
         return AuthoritativeLevelGenerationCatalog.LoadTsv(
             table.SourcePath,
             table.ToCanonicalTsv());
+    }
+
+    private static AuthoritativeMonsterSpawnPolicyCatalog? LoadMonsterSpawnPolicies(
+        ComposedContent content,
+        StableContentIdCatalog stableIds)
+    {
+        TsvTable table;
+        if (content.Manifest.Schema == DiabloContentSchema.Current)
+            table = GetRequiredExternalTable(content, "monster_spawn_policies.tsv");
+        else if (!content.TryGetTable("monster_spawn_policies.tsv", out table!))
+            return null;
+
+        if (content.Manifest.Schema == DiabloContentSchema.Current)
+            AuthoritativeMonsterSpawnPolicyCatalog.ValidateExternalizedProduction(table);
+        var catalog = AuthoritativeMonsterSpawnPolicyCatalog.LoadTsv(
+            table.SourcePath,
+            table.ToCanonicalTsv(),
+            stableIds);
+        if (content.Manifest.Schema == DiabloContentSchema.Current
+            && !catalog.RequiresCompleteCoverage) {
+            throw new InvalidDataException(
+                "Current-schema monster-spawn policy content must declare Complete coverage.");
+        }
+        return catalog;
     }
 
     private static TsvTable GetRequiredExternalTable(

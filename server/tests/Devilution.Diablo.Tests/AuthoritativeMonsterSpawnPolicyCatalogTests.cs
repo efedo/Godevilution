@@ -1,3 +1,4 @@
+using Devilution.Data;
 using Xunit;
 
 namespace Devilution.Diablo.Tests;
@@ -65,6 +66,25 @@ public sealed class AuthoritativeMonsterSpawnPolicyCatalogTests
             AuthoritativeMonsterSpawnPolicyCoverageMode.Complete,
             catalog.CoverageMode);
         Assert.True(catalog.RequiresCompleteCoverage);
+    }
+
+    [Fact]
+    public void ProductionValidationRequiresCompleteOrderedSymbolicSchema()
+    {
+        var complete = TsvTable.Parse(
+            "monster_spawn_policies.tsv",
+            "monster_id\tmonster_symbol\tspawn_role\tcoverage_mode\n"
+                + "2\tzombie_native_0\tOrdinary\tComplete\n");
+
+        AuthoritativeMonsterSpawnPolicyCatalog.ValidateExternalizedProduction(complete);
+
+        var legacy = TsvTable.Parse(
+            "monster_spawn_policies.tsv",
+            "monster_id\tspawn_role\n"
+                + "2\tOrdinary\n");
+        var exception = Assert.Throws<InvalidDataException>(() =>
+            AuthoritativeMonsterSpawnPolicyCatalog.ValidateExternalizedProduction(legacy));
+        Assert.Contains("complete ordered symbolic schema", exception.Message, StringComparison.Ordinal);
     }
 
     [Fact]
