@@ -2361,7 +2361,8 @@ TEST(ServerBackedPlayerSnapshot, WorldProjectionUsesAuthoritativeGeometryQueries
 	EXPECT_TRUE(*projection.IsBlocked(1, 1));
 	EXPECT_FALSE(*projection.IsBlocked(0, 0));
 	EXPECT_TRUE(*projection.IsMissileBlocked(1, 0));
-	EXPECT_TRUE(*projection.IsVisionBlocked(1, 1));
+	EXPECT_FALSE(*projection.IsVisionBlocked(1, 1));
+	EXPECT_TRUE(*projection.IsVisionBlocked(0, 1));
 	EXPECT_FALSE(*projection.IsVisionBlocked(0, 0));
 	EXPECT_FALSE(projection.IsBlocked(3, 0).has_value());
 	EXPECT_FALSE(projection.IsVisionBlocked(3, 0).has_value());

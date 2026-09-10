@@ -24,4 +24,13 @@ void InitializeMonsterPool()
 	ActiveMonsterCount = 0;
 }
 
+namespace MonsterPoolAdapter {
+
+size_t ActiveMonsterCountValue()
+{
+	return ActiveMonsterCount;
+}
+
+} // namespace MonsterPoolAdapter
+
 } // namespace devilution

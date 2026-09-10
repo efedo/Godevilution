@@ -16,6 +16,10 @@ All notable changes to this fork are documented below.
   geometry decision to the authoritative effect tick; the native compatibility
   validator now follows the same boundary.
 
+- Kept the native monster-pool count behind an exported adapter function so
+  shared-library compatibility tests can link the same pool boundary they
+  exercise in the client.
+
 - Aligned compatibility-template combat and replay RNG boundaries with the
   native runner: metadata-free monster armor keeps its legacy damage reduction,
   petrified Bone Spirit targets skip hit rolls, and block/hit recovery skips

@@ -56,10 +56,7 @@ namespace MonsterPoolAdapter {
 	return std::span<unsigned>(ActiveMonsters, ActiveMonsterCount);
 }
 
-[[nodiscard]] inline size_t ActiveMonsterCountValue()
-{
-	return ActiveMonsterCount;
-}
+[[nodiscard]] size_t ActiveMonsterCountValue();
 
 [[nodiscard]] inline bool HasFreeMonsterSlot()
 {
