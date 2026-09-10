@@ -934,6 +934,11 @@ the monster's runtime AI seeds omitted. It proves that single-player native
 combat still uses the shared hit/block/Q6 stream when no multiplayer AI seed is
 available.
 
+`gameplay-singleplayer-monster-melee-q6-range.json` covers the corresponding
+unblocked single-player primary hit. Its three-to-seven damage range is rolled
+in Q6 before the native `_pIGetHit` bonus boundary, keeping fractional damage
+and truncation aligned between the compact C++ runner and the managed server.
+
 `gameplay-etherealize-resolution.json` uses the Etherealize ability against an
 adjacent monster. Ticks 0 and 1 prove immediate permanent status admission,
 typed status hashing, and blocked autonomous monster damage while the status
@@ -1294,6 +1299,8 @@ Notable shared fixtures include:
   checkpoint parity;
 - `gameplay-singleplayer-blocked-monster-melee.json` for the zero-AI-seed
   single-player native combat stream and the same blocked-hit checkpoint;
+- `gameplay-singleplayer-monster-melee-q6-range.json` for the unblocked
+  single-player primary Q6 damage-range roll and `_pIGetHit` checkpoint parity;
 - `gameplay-etherealize-resolution.json` for permanent status admission,
   typed status hashing, and autonomous monster-damage immunity;
 - `gameplay-berserk-resolution.json` for eligible-target admission, four-channel

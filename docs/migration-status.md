@@ -8584,6 +8584,11 @@ applies the configured reflection percentage to the monster, and leaves the
 player's life unchanged. The regression covers the block/reflection RNG order
 and directed damage event without weakening the existing block lifecycle.
 
+The primary native MonsterMelee stream now also rolls an unblocked min/max
+damage range in Q6 before applying the validated `_pIGetHit` bonus boundary.
+The single-player range fixture keeps fractional damage, truncation, and the
+canonical checkpoint identical in the compact C++ and managed runners.
+
 ## Near-term priorities
 
 1. Close the remaining native-parity combat and AI edge cases, including class

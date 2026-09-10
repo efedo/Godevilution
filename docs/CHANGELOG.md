@@ -17,6 +17,10 @@ All notable changes to this fork are documented below.
   blocked-hit transition and RNG order, including the single-player
   zero-AI-seed compatibility stream.
 
+- Aligned the primary native MonsterMelee range path with the managed server:
+  unblocked single-player damage now rolls min/max values in Q6 before the
+  validated `_pIGetHit` bonus boundary, with a shared C++/C# checkpoint.
+
 - Ruleset replacement now publishes migrated session checkpoints during
   candidate preparation, before activation or handshake identity publication;
   failed exports or checkpoint writes keep the previous generation active.

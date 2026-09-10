@@ -942,6 +942,9 @@ damage percentage to the monster while taking no incoming damage; the shared
 C++/C# replay regression keeps the native hit, block, damage, and reflection
 random draws in the same order. A second zero-AI-seed single-player fixture
 keeps that native combat stream active when multiplayer runtime seeds are absent.
+The unblocked primary path now preserves the native min/max damage roll in Q6
+before applying the validated `_pIGetHit` bonus boundary; a range-valued
+single-player fixture covers fractional damage and canonical checkpoint parity.
 
 Counselor Charged Bolt mappings now emit three independent server-owned
 `MonsterChargedBolt` projectiles per admitted native attack and use the native

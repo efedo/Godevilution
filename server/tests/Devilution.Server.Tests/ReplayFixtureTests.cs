@@ -1170,6 +1170,56 @@ public sealed class ReplayFixtureTests
     }
 
     [Fact]
+    public void SinglePlayerMonsterMeleeRangeUsesNativeQ6DamageRoll()
+    {
+        var fixture = LoadReplayFixture("gameplay-singleplayer-monster-melee-q6-range.json");
+        var initial = fixture.InitialState;
+        var target = new AuthoritativeCombatTarget(
+            initial.CombatTargetEntityId,
+            initial.CombatTargetPositionX,
+            initial.CombatTargetPositionY,
+            initial.CombatTargetHitPoints,
+            maxHitPoints: initial.CombatTargetMaxHitPoints,
+            levelId: initial.CombatTargetLevelId,
+            attackDamage: initial.CombatTargetAttackDamage,
+            minDamage: initial.CombatTargetMinDamage,
+            maxDamage: initial.CombatTargetMaxDamage,
+            monsterLevel: initial.CombatTargetMonsterLevel,
+            toHit: initial.CombatTargetToHit,
+            aggroRange: initial.CombatTargetAggroRange);
+        var catalog = new StoreCatalog();
+        catalog.AddStore(1, []);
+        var executor = new StoreSimulationExecutor(
+            catalog,
+            initial.Gold,
+            initial.Experience,
+            initial.Life,
+            initial.Mana,
+            startingLifeMaximum: initial.LifeMaximum,
+            startingPositionX: initial.PositionX,
+            startingPositionY: initial.PositionY,
+            startingLevelId: initial.LevelId,
+            startingCharacterLevel: initial.CharacterLevel,
+            startingCombatTargets: [target],
+            startingRandomSeed: checked((uint)fixture.RngSeed),
+            startingCombatRules: CreateReplayCombatRules(fixture),
+            difficulty: fixture.Difficulty,
+            gameMode: fixture.GameMode);
+
+        var result = ReplayFixtureExecutor.Execute(
+            fixture,
+            executor,
+            new AuthoritativeCommandServer(executor));
+
+        Assert.Equal(CommandStatus.Accepted, Assert.Single(result.Results).Status);
+        var player = Assert.Single(result.FinalSnapshot.Players);
+        var monster = Assert.Single(result.FinalSnapshot.Monsters);
+        Assert.Equal(94, player.Life);
+        Assert.Equal(20, monster.HitPoints);
+        Assert.Equal(fixture.Checkpoints[0].StateSha256, result.Checkpoints[0].ActualStateSha256);
+    }
+
+    [Fact]
     public void EtherealizeFixtureMatchesNativePermanentStatusAndDamageImmunity()
     {
         var fixture = LoadReplayFixture("gameplay-etherealize-resolution.json");

@@ -3550,6 +3550,21 @@ int32_t ApplyReplayGetHitBonus(
 	return std::max(1, damage + getHitBonus);
 }
 
+int32_t ApplyReplayGetHitBonusQ6(
+	const std::vector<ReplayFixtureSlottedItem> &equipment,
+	int32_t damageQ6)
+{
+	if (damageQ6 <= 0)
+		return 0;
+
+	int32_t getHitBonus = 0;
+	for (const auto &item : equipment) {
+		if (IsReplayEquipmentUsable(item.state))
+			getHitBonus += item.state.plusGetHit;
+	}
+	return std::max(64, damageQ6 + getHitBonus * 64);
+}
+
 void ApplyReplayThorns(
 	ReplayFixtureExecutionState &state,
 	const std::vector<ReplayFixtureSlottedItem> &equipment,
@@ -9513,17 +9528,29 @@ void AdvanceReplayMonsterAttack(
 	        && state.combatTargetMaxDamage == 0
 	    ? state.combatTargetAttackDamage
 	    : state.combatTargetMaxDamage;
-	const int32_t damage = maximumDamage >= minimumDamage
-	    ? minimumDamage
-	        + (usesNativeCombatStream
-	            ? std::max(
-	                  GenerateRnd(
-	                      state,
-	                      maximumDamage - minimumDamage + 1),
-	                  0)
-	            : 0)
-	    : 0;
-	const int32_t adjustedDamage = ApplyReplayGetHitBonus(state, damage, false);
+	int32_t damageQ6 = 0;
+	if (maximumDamage >= minimumDamage) {
+		if (usesNativeCombatStream && state.combatTargetToHit > 0) {
+			const int32_t minimumDamageQ6 = minimumDamage * 64;
+			const int32_t maximumDamageQ6 = maximumDamage * 64;
+			damageQ6 = minimumDamageQ6 + std::max(
+			    GenerateRnd(state, maximumDamageQ6 - minimumDamageQ6 + 1),
+			    0);
+			damageQ6 = ApplyReplayGetHitBonusQ6(state.equipment, damageQ6);
+		} else {
+			const int32_t damage = minimumDamage
+			    + (usesNativeCombatStream
+			        ? std::max(
+			              GenerateRnd(
+			                  state,
+			                  maximumDamage - minimumDamage + 1),
+			              0)
+			        : 0);
+			damageQ6 = ApplyReplayGetHitBonus(state, damage, false) * 64;
+		}
+	}
+	const int32_t damage = damageQ6 / 64;
+	const int32_t adjustedDamage = damage;
 	int32_t lifeDamage = adjustedDamage;
 	int32_t reflectedDamage = 0;
 	if (adjustedDamage > 0 && state.reflectCharges > 0) {
