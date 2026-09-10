@@ -18,8 +18,9 @@ active schema, keeping replay admission aligned with the validated packs.
 Native player-versus-player physical attacks now use the native combat
 boundary: armor-piercing bonuses are ignored for player targets, target armor
 is applied only to admission (not damage), and ranged player attacks apply
-the native distance penalty. Monster attacks retain their existing
-armor-adjusted damage and equipment-piercing rules.
+the native distance penalty and non-Rogue class damage modifiers are halved
+for arrows. Monster attacks retain their existing armor-adjusted damage and
+equipment-piercing rules.
 
 The compact native replay runner now mirrors the managed monster activation
 window for fixtures that carry an active target: visible targets wake for the

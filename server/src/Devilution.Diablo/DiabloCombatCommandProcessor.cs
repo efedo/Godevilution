@@ -1518,7 +1518,18 @@ public sealed class DiabloCombatCommandProcessor
         var damageBeforeFlat = checked(
             rolledBaseDamage
             + rolledBaseDamage * damagePercent / 100);
-        var damage = checked(damageBeforeFlat + damageFlat + damageProfile.DamageModifier);
+        var classDamageModifier = damageProfile.DamageModifier;
+        if (!monsterTarget
+            && ranged
+            && usesNativeClassProfile
+            && playerClass!.PhysicalDamageFormula
+                != AuthoritativePhysicalDamageFormula.Rogue) {
+            // Native Plr2PlrMHit halves _pDamageMod for non-Rogue physical
+            // arrows; melee PvP and all monster attacks retain the full
+            // class-derived modifier.
+            classDamageModifier /= 2;
+        }
+        var damage = checked(damageBeforeFlat + damageFlat + classDamageModifier);
         perilActive = rules.GameVariant == DiabloGameVariant.Hellfire
             && HasUsableHellfireDamageArmorFlag(
                 player,

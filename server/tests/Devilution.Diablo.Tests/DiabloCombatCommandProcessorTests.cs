@@ -1388,6 +1388,55 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void NonRoguePlayerArrowHalvesNativeClassDamageModifier()
+    {
+        var bow = AuthoritativeItemState.Empty with {
+            ItemType = 3,
+            ItemClass = 1,
+            MinDamage = 10,
+            MaxDamage = 10,
+            StatFlag = true,
+        };
+        var classes = LoadShippedPlayerClasses();
+        var processor = CreateProcessor(
+            new DiabloWorldState(),
+            rules: new AuthoritativeCombatRules(10, 1, 100, friendlyFire: true),
+            playerClasses: classes,
+            gameMode: DiabloGameMode.Multiplayer);
+        var attacker = CreatePlayer(
+            entityId: 7,
+            characterClassId: 2,
+            characterLevel: 20,
+            attributes: classes.GetRequired(2).CreateStartingAttributes(),
+            equipment: [new EquippedStoreItem(4, 42, bow)]);
+        var victim = CreatePlayer(
+            positionX: 3,
+            entityId: 8,
+            life: 6400,
+            lifeMaximum: 6400);
+
+        var result = processor.Execute(
+            attacker,
+            new DiabloAttackIntent(victim.EntityId),
+            1,
+            [attacker, victim]);
+
+        Assert.True(result.Succeeded, result.Failure?.ToString());
+        Assert.Empty(result.Events);
+        Assert.Equal(6400, victim.Life);
+
+        var deliveries = processor.AdvanceTick(1, [attacker, victim]).ToList();
+        deliveries.AddRange(processor.AdvanceTick(2, [attacker, victim]));
+        deliveries.AddRange(processor.AdvanceTick(3, [attacker, victim]));
+
+        Assert.Equal(5696, victim.Life);
+        var delivery = Assert.Single(deliveries);
+        Assert.Equal(
+            new DiabloGameplayEvent(DiabloGameplayEventKind.Damage, 7, 8, 11),
+            delivery.Event);
+    }
+
+    [Fact]
     public void MultipleArrowsUsesConfiguredContentCountAgainstAPlayer()
     {
         var bow = AuthoritativeItemState.Empty with {
