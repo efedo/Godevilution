@@ -5,6 +5,7 @@
 
 #include <algorithm>
 #include <limits>
+#include <unordered_map>
 #include <unordered_set>
 #include <utility>
 
@@ -159,6 +160,21 @@ tl::expected<void, std::string> ServerBackedWorldProjection::Apply(
 	};
 	std::unordered_set<uint32_t> projectedEntityIds;
 	projectedEntityIds.reserve(monsters.size() + worldItems.size() + objects.size() + projectiles.size());
+	const auto exceedsNativePoolCapacity = [](const auto &entities, size_t capacity) {
+		std::unordered_map<uint32_t, size_t> countsByLevel;
+		countsByLevel.reserve(entities.size());
+		for (const auto &entity : entities) {
+			if (++countsByLevel[entity.levelId] > capacity)
+				return true;
+		}
+		return false;
+	};
+	if (exceedsNativePoolCapacity(monsters, NativeMaximumMonsterCount))
+		return tl::make_unexpected("Authoritative monster projection exceeds the native monster capacity on a level.");
+	if (exceedsNativePoolCapacity(worldItems, NativeMaximumItemCount))
+		return tl::make_unexpected("Authoritative item projection exceeds the native item capacity on a level.");
+	if (exceedsNativePoolCapacity(objects, NativeMaximumObjectCount))
+		return tl::make_unexpected("Authoritative object projection exceeds the native object capacity on a level.");
 	for (const auto &monster : monsters) {
 		if (monster.entityId == 0 || !projectedEntityIds.insert(monster.entityId).second)
 			return tl::make_unexpected("Authoritative monster projection contains invalid or duplicate entity IDs.");

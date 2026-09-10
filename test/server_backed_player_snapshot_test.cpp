@@ -2683,6 +2683,55 @@ TEST(ServerBackedPlayerSnapshot, WorldProjectionRejectsInvalidOrDuplicateProject
 	EXPECT_TRUE(ServerBackedWorldProjection {}.Apply({ }, { }, { }, { arrow }, 1).has_value());
 }
 
+TEST(ServerBackedPlayerSnapshot, WorldProjectionRejectsNativePoolOverflowPerLevel)
+{
+	std::vector<ProjectedMonsterSnapshot> monsters;
+	monsters.reserve(NativeMaximumMonsterCount + 1);
+	for (uint32_t entityId = 1; entityId <= NativeMaximumMonsterCount + 1; ++entityId) {
+		ProjectedMonsterSnapshot monster;
+		monster.entityId = entityId;
+		monster.levelId = 3;
+		monsters.push_back(monster);
+	}
+	auto result = ServerBackedWorldProjection {}.Apply(std::move(monsters), {}, {}, 3);
+	ASSERT_FALSE(result.has_value());
+	EXPECT_EQ(result.error(), "Authoritative monster projection exceeds the native monster capacity on a level.");
+
+	std::vector<ProjectedWorldItemSnapshot> items;
+	items.reserve(NativeMaximumItemCount + 1);
+	for (uint32_t entityId = 1; entityId <= NativeMaximumItemCount + 1; ++entityId) {
+		ProjectedWorldItemSnapshot item;
+		item.entityId = entityId;
+		item.levelId = 3;
+		items.push_back(item);
+	}
+	result = ServerBackedWorldProjection {}.Apply({}, std::move(items), {}, 3);
+	ASSERT_FALSE(result.has_value());
+	EXPECT_EQ(result.error(), "Authoritative item projection exceeds the native item capacity on a level.");
+
+	std::vector<ProjectedObjectSnapshot> objects;
+	objects.reserve(NativeMaximumObjectCount + 1);
+	for (uint32_t entityId = 1; entityId <= NativeMaximumObjectCount + 1; ++entityId) {
+		ProjectedObjectSnapshot object;
+		object.entityId = entityId;
+		object.levelId = 3;
+		objects.push_back(object);
+	}
+	result = ServerBackedWorldProjection {}.Apply({}, {}, std::move(objects), 3);
+	ASSERT_FALSE(result.has_value());
+	EXPECT_EQ(result.error(), "Authoritative object projection exceeds the native object capacity on a level.");
+
+	std::vector<ProjectedMonsterSnapshot> splitAcrossLevels;
+	splitAcrossLevels.reserve(NativeMaximumMonsterCount + 1);
+	for (uint32_t entityId = 1; entityId <= NativeMaximumMonsterCount + 1; ++entityId) {
+		ProjectedMonsterSnapshot monster;
+		monster.entityId = entityId;
+		monster.levelId = entityId == NativeMaximumMonsterCount + 1 ? 4 : 3;
+		splitAcrossLevels.push_back(monster);
+	}
+	EXPECT_TRUE(ServerBackedWorldProjection {}.Apply(std::move(splitAcrossLevels), {}, {}, 3).has_value());
+}
+
 TEST(ServerBackedPlayerSnapshot, PresentsAuthoritativeProjectileWithoutLocalSimulation)
 {
 	LoadMissileData();

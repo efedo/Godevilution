@@ -2328,6 +2328,12 @@ The same boundary now preserves the protocol's spell-less WeaponArrow and
 MonsterArrow exception and enforces the shared physical-through-acid damage
 type range.
 
+The same protocol-free boundary now rejects per-level monster, world-item, and
+object projections that exceed the native compatibility-pool capacities. This
+prevents direct legacy callers from silently losing authoritative entities when
+the richer managed snapshot validator is bypassed; split-level projections
+remain valid because each native pool is scoped to the rendered level.
+
 Explicit runtime AI identities now also select their native missile mapping
 before a generic monster-type catalog row. Unique encounters therefore cannot
 inherit a generic projectile or movement branch merely because their base type

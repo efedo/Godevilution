@@ -2,6 +2,10 @@
 
 All notable changes to this fork are documented below.
 
+- Native protocol-free world projection now fails closed when a single level
+  exceeds the legacy monster, world-item, or object compatibility-pool capacity,
+  matching the managed snapshot validator instead of silently dropping entities.
+
 - Advanced the active content schema to `1.502.0`, retaining `1.501.0` as
   the previous additive contract. Current-schema activation now validates the
   complete ordered headers of supplied legacy compatibility namespaces for
