@@ -80,6 +80,20 @@ public sealed class AuthoritativeGameHostAdapterPackageLoaderTests
     }
 
     [Fact]
+    public void RejectsAProductionPackageWithAnIncompatibleSharedContract()
+    {
+        var root = CreateProductionDiabloPackage(protocolSha256: new string('0', 64));
+        try {
+            var exception = Assert.Throws<InvalidDataException>(() =>
+                new AuthoritativeGameHostAdapterPackageLoader().LoadDirectory(root));
+
+            Assert.Contains("SHA-256", exception.Message, StringComparison.Ordinal);
+        } finally {
+            Directory.Delete(root, recursive: true);
+        }
+    }
+
+    [Fact]
     public void RejectsAnUnlistedPrivateDependency()
     {
         var root = CreatePackage(includeDependency: false);
@@ -152,7 +166,7 @@ public sealed class AuthoritativeGameHostAdapterPackageLoaderTests
         return root;
     }
 
-    private static string CreateProductionDiabloPackage()
+    private static string CreateProductionDiabloPackage(string? protocolSha256 = null)
     {
         var root = Path.Combine(
             Path.GetTempPath(),
@@ -175,6 +189,14 @@ public sealed class AuthoritativeGameHostAdapterPackageLoaderTests
             assembly = "adapter.dll",
             assemblySha256 = GetSha256(Path.Combine(root, "adapter.dll")),
             factoryType = "Godevilution.Server.Diablo.Package.PackagedDiabloAuthoritativeGameHostAdapterFactory",
+            sharedContracts = new Dictionary<string, string>(StringComparer.Ordinal) {
+                ["Devilution.Data"] = GetSha256(typeof(Devilution.Data.ContentManifest).Assembly.Location),
+                ["Devilution.Engine"] = GetSha256(typeof(Devilution.Engine.IGameplayModule).Assembly.Location),
+                ["Devilution.Server.Host"] = GetSha256(typeof(IAuthoritativeGameHostAdapterFactory).Assembly.Location),
+                ["Devilution.Protocol"] = protocolSha256
+                    ?? GetSha256(typeof(Devilution.Protocol.V1.Command).Assembly.Location),
+                ["Google.Protobuf"] = GetSha256(typeof(Google.Protobuf.IMessage).Assembly.Location),
+            },
             dependencies = new[] {
                 new { assembly = "server-diablo.dll", assemblySha256 = GetSha256(Path.Combine(root, "server-diablo.dll")) },
                 new { assembly = "diablo.dll", assemblySha256 = GetSha256(Path.Combine(root, "diablo.dll")) },

@@ -12,6 +12,9 @@ assemblies into a package directory, and list each file with its SHA-256 in
 copied into the package.
 `Devilution.Data`, `Devilution.Engine`, `Devilution.Server.Host`, and
 `Devilution.Protocol` remain shared contracts and must not be duplicated in
-the package. Select the package with `--game-adapter`
+the package. For upgrade-safe deployments, add a `sharedContracts` object to
+the manifest mapping each shared assembly name to its SHA-256; the host checks
+those hashes before loading the entry assembly. The field is optional for
+backward-compatible development packages. Select the package with `--game-adapter`
 `godevilution.diablo.package` and repeat `--game-adapter-package` with its
 directory.

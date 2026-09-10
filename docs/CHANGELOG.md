@@ -25,6 +25,11 @@ All notable changes to this fork are documented below.
   entity continuity. A companion process-restart fixture reuses the package
   and save root and verifies persisted entity and class identity.
 
+- Added optional `sharedContracts` SHA-256 declarations to adapter manifests.
+  The host validates declared shared Data, Engine, Host, Protocol, and
+  Protobuf identities before loading a package, giving release deployments an
+  early, fail-closed ABI mismatch check while preserving older manifests.
+
 - Advanced combined authoritative session checkpoints to format 3 with
   canonical SHA-256 hashes of serialized server state and the command ledger.
   Version-1 and version-2 checkpoints remain readable for migration and are

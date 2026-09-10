@@ -95,6 +95,7 @@ public sealed class AuthoritativeGameHostAdapterPackageLoader
         }
         if (!ContentSemanticVersion.TryParse(document.Version, out var packageVersion))
             throw PackageError(manifestPath, "version must contain three unsigned integers");
+        ValidateSharedContracts(document.SharedContracts, manifestPath);
 
         var assemblyPath = ResolvePackageAssembly(root, document.Assembly, manifestPath);
         var expectedHash = NormalizeSha256(document.AssemblySha256, manifestPath);
@@ -201,6 +202,37 @@ public sealed class AuthoritativeGameHostAdapterPackageLoader
                 manifestPath,
                 $"expected assembly SHA-256 {expectedHash}, but '{assemblyPath}' hashes to {actualHash}");
         return actualHash;
+    }
+
+    private void ValidateSharedContracts(
+        IReadOnlyDictionary<string, string>? declarations,
+        string manifestPath)
+    {
+        if (declarations is null)
+            return;
+        if (declarations.Count > 32)
+            throw PackageError(manifestPath, "sharedContracts cannot contain more than 32 assemblies");
+
+        var names = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        foreach (var declaration in declarations) {
+            if (string.IsNullOrWhiteSpace(declaration.Key)
+                || !names.Add(declaration.Key)
+                || !sharedAssemblies.TryGetValue(declaration.Key, out var sharedAssembly)
+                || string.IsNullOrWhiteSpace(declaration.Value))
+                throw PackageError(
+                    manifestPath,
+                    $"sharedContracts contains an unknown, duplicate, or incomplete assembly declaration '{declaration.Key}'");
+
+            var assemblyPath = sharedAssembly.Location;
+            if (string.IsNullOrWhiteSpace(assemblyPath))
+                throw PackageError(
+                    manifestPath,
+                    $"shared contract assembly '{declaration.Key}' has no file location to verify");
+            VerifyAssemblyHash(
+                assemblyPath,
+                NormalizeSha256(declaration.Value, manifestPath),
+                manifestPath);
+        }
     }
 
     private IReadOnlyList<PackageDependency> LoadDependencies(
@@ -340,7 +372,8 @@ public sealed class AuthoritativeGameHostAdapterPackageLoader
         string? Assembly,
         string? AssemblySha256,
         string? FactoryType,
-        IReadOnlyList<AdapterPackageDependencyDocument>? Dependencies);
+        IReadOnlyList<AdapterPackageDependencyDocument>? Dependencies,
+        IReadOnlyDictionary<string, string>? SharedContracts);
 
     private sealed record AdapterPackageDependencyDocument(
         string? Assembly,

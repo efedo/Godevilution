@@ -30,6 +30,13 @@ internal sealed class PackagedDiabloAdapterPackage : IDisposable
             assembly = "adapter.dll",
             assemblySha256 = Hash(Path.Combine(Root, "adapter.dll")),
             factoryType = "Godevilution.Server.Diablo.Package.PackagedDiabloAuthoritativeGameHostAdapterFactory",
+            sharedContracts = new Dictionary<string, string>(StringComparer.Ordinal) {
+                ["Devilution.Data"] = Hash(typeof(Devilution.Data.ContentManifest).Assembly.Location),
+                ["Devilution.Engine"] = Hash(typeof(Devilution.Engine.IGameplayModule).Assembly.Location),
+                ["Devilution.Server.Host"] = Hash(typeof(Devilution.Server.Host.IAuthoritativeGameHostAdapterFactory).Assembly.Location),
+                ["Devilution.Protocol"] = Hash(typeof(Devilution.Protocol.V1.Command).Assembly.Location),
+                ["Google.Protobuf"] = Hash(typeof(Google.Protobuf.IMessage).Assembly.Location),
+            },
             dependencies = new[] {
                 new { assembly = "server-diablo.dll", assemblySha256 = Hash(Path.Combine(Root, "server-diablo.dll")) },
                 new { assembly = "diablo.dll", assemblySha256 = Hash(Path.Combine(Root, "diablo.dll")) },
