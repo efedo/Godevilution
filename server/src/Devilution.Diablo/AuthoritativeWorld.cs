@@ -13,6 +13,33 @@ public sealed class AuthoritativeWorld
     private readonly Dictionary<uint, AuthoritativeLevel> levels = new();
     private readonly Dictionary<uint, AuthoritativeWarpTarget> warpTargets = new();
 
+    private static readonly IReadOnlyList<string> SymbolicProductionColumns = [
+        "level_id",
+        "level_symbol",
+        "width",
+        "height",
+        "blocked_cells",
+        "missile_blocked_cells",
+        "default_start",
+        "suppress_multiplayer_death_drops",
+    ];
+
+    /**
+     * Rejects numeric-only level metadata at the current production boundary.
+     * Procedural-only packs may omit levels.tsv; direct callers retain older
+     * numeric and partial table compatibility.
+     */
+    public static void ValidateExternalizedProduction(TsvTable table)
+    {
+        ArgumentNullException.ThrowIfNull(table);
+        if (!table.Columns.SequenceEqual(SymbolicProductionColumns, StringComparer.Ordinal))
+            throw new InvalidDataException(
+                $"Production level table '{table.SourcePath}' must use the complete ordered symbolic schema.");
+        foreach (var row in table.Rows)
+            foreach (var column in SymbolicProductionColumns)
+                _ = row.Required(column);
+    }
+
     public void AddLevel(AuthoritativeLevel level)
     {
         ArgumentNullException.ThrowIfNull(level);

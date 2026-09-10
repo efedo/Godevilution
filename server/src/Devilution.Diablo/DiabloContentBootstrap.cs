@@ -417,10 +417,7 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
         worldRules.ValidateStores(stores);
         stores.ValidateSpellReferences(spells);
         var world = content.TryGetTable("levels.tsv", out var levelsTable)
-            ? AuthoritativeWorld.LoadTsv(
-                levelsTable.SourcePath,
-                levelsTable.ToCanonicalTsv(),
-                stableIds)
+            ? LoadWorldLevels(content, levelsTable, stableIds)
             : null;
         if (content.TryGetTable(
                 "procedural_levels.tsv",
@@ -1353,6 +1350,19 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
             }
         }
         return reserved;
+    }
+
+    private static AuthoritativeWorld LoadWorldLevels(
+        ComposedContent content,
+        TsvTable table,
+        StableContentIdCatalog stableIds)
+    {
+        if (content.Manifest.Schema == DiabloContentSchema.Current)
+            AuthoritativeWorld.ValidateExternalizedProduction(table);
+        return AuthoritativeWorld.LoadTsv(
+            table.SourcePath,
+            table.ToCanonicalTsv(),
+            stableIds);
     }
 
     private static TsvTable GetRequiredExternalTable(
