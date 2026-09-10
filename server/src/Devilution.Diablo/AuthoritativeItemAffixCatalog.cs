@@ -75,6 +75,40 @@ public sealed record AuthoritativeItemAffix(
 /** External affix tables and deterministic modifier application for generated items. */
 public sealed class AuthoritativeItemAffixCatalog
 {
+    private static readonly IReadOnlyList<string> ProductionColumns = [
+        "name",
+        "power",
+        "value1",
+        "value2",
+        "min_level",
+        "item_tags",
+        "chance",
+        "useful",
+        "is_suffix",
+        "alignment",
+        "min_value",
+        "max_value",
+        "value_multiplier",
+        "legacy_random",
+        "legacy_value_range",
+    ];
+
+    private static readonly IReadOnlyList<string> ProductionRequiredColumns = [
+        "name",
+        "power",
+        "min_level",
+        "item_tags",
+        "chance",
+        "useful",
+        "is_suffix",
+        "alignment",
+        "min_value",
+        "max_value",
+        "value_multiplier",
+        "legacy_random",
+        "legacy_value_range",
+    ];
+
     private static readonly IReadOnlySet<string> SupportedPowerNames =
         new HashSet<string>(StringComparer.Ordinal) {
             "DAM", "DAMP", "DAMP_CURSE", "DAMMOD", "TOHIT", "TOHIT_CURSE", "TOHIT_DAMP",
@@ -117,6 +151,18 @@ public sealed class AuthoritativeItemAffixCatalog
     public IReadOnlyList<AuthoritativeItemAffix> Prefixes => prefixes;
     public IReadOnlyList<AuthoritativeItemAffix> Suffixes => suffixes;
     public AuthoritativeItemGenerationRules GenerationRules => generationRules;
+
+    /** Rejects partial normalized affix metadata at the current production boundary. */
+    public static void ValidateExternalizedProduction(TsvTable table)
+    {
+        ArgumentNullException.ThrowIfNull(table);
+        if (!table.Columns.SequenceEqual(ProductionColumns, StringComparer.Ordinal))
+            throw new InvalidDataException(
+                $"Production item-affix table '{table.SourcePath}' must use the complete ordered schema.");
+        foreach (var row in table.Rows)
+            foreach (var column in ProductionRequiredColumns)
+                _ = row.Required(column);
+    }
 
     /** Rejects affix powers that have no authoritative C# application handler. */
     public void ValidatePowers()

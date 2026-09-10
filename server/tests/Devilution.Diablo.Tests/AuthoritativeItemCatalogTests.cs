@@ -594,6 +594,34 @@ public sealed class AuthoritativeItemCatalogTests
     }
 
     [Fact]
+    public void ShippedItemAffixesUseTheProductionSchema()
+    {
+        var path = Path.Combine(
+            FindRepositoryRoot(),
+            "server",
+            "content",
+            "base",
+            "item_affixes.tsv");
+        var table = TsvTable.Parse("item_affixes.tsv", File.ReadAllText(path));
+
+        AuthoritativeItemAffixCatalog.ValidateExternalizedProduction(table);
+    }
+
+    [Fact]
+    public void ProductionItemAffixValidationRejectsPartialHeaders()
+    {
+        var table = TsvTable.Parse(
+            "item_affixes.tsv",
+            "name\tpower\tvalue1\tvalue2\tmin_level\titem_tags\tchance\tuseful\tis_suffix\n"
+                + "Tin\tTOHIT\t1\t5\t1\tWeapon\t2\ttrue\t0\n");
+
+        var exception = Assert.Throws<InvalidDataException>(() =>
+            AuthoritativeItemAffixCatalog.ValidateExternalizedProduction(table));
+
+        Assert.Contains("complete ordered schema", exception.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void AppliesSeedStableAffixesOnlyWhenLevelAndTagsMatch()
     {
         var affixes = AuthoritativeItemAffixCatalog.LoadTsv(

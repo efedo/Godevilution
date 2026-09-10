@@ -313,6 +313,8 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
             nativeItemHellfireEffectsTable.SourcePath,
             nativeItemHellfireEffectsTable.ToCanonicalTsv());
         var affixTable = GetRequiredExternalTable(content, "item_affixes.tsv");
+        if (content.Manifest.Schema == DiabloContentSchema.Current)
+            AuthoritativeItemAffixCatalog.ValidateExternalizedProduction(affixTable);
         var affixes = AuthoritativeItemAffixCatalog.LoadTsv(
             affixTable.SourcePath,
             affixTable.ToCanonicalTsv(),
