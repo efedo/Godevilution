@@ -72,4 +72,19 @@ public sealed class AuthoritativeNativeMiscCatalogTests
         Assert.Equal(40, staff.Charges);
         Assert.Equal(40, staff.MaxCharges);
     }
+
+    [Fact]
+    public void LegacyItemLoadingRejectsUnknownExternalMiscSymbols()
+    {
+        var catalog = new AuthoritativeNativeMiscCatalog([new(37, "CustomMisc")]);
+
+        var exception = Assert.Throws<InvalidDataException>(() =>
+            AuthoritativeItemCatalog.LoadLegacyTsv(
+                "itemdat.tsv",
+                "id\tdropRate\tclass\tequipType\tcursorGraphic\titemType\tuniqueBaseItem\tname\tshortName\tminMonsterLevel\tdurability\tminDamage\tmaxDamage\tminArmor\tmaxArmor\tminStrength\tminMagic\tminDexterity\tspecialEffects\tmiscId\tspell\tusable\tvalue\n"
+                    + "TEST\t0\tMisc\tUnequippable\tNONE\tMisc\tNONE\tTest\tTest\t0\t0\t0\t0\t0\t0\t0\t0\t0\t0\tUnknownMisc\tNull\tfalse\t1\n",
+                nativeMiscCatalog: catalog));
+
+        Assert.Contains("UnknownMisc", exception.Message, StringComparison.Ordinal);
+    }
 }

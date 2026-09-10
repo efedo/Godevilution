@@ -10,6 +10,8 @@ All notable changes to this fork are documented below.
   previous-schema packs retain legacy loader compatibility, including
   omission of those tables. Validated current-schema catalogs are retained on
   the module activation result for subsequent server-owned compatibility work.
+  Legacy item-table loading now fails closed when an explicitly supplied
+  external native namespace does not define a referenced symbol.
 
 - Advanced the active content schema to `1.501.0`, retaining `1.500.0` as
   the previous additive contract. Current-schema activation now requires the

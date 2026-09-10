@@ -56,4 +56,21 @@ public sealed class AuthoritativeNativeItemTagCatalogTests
             ["Misc", "Ring"],
             items.GetRequired(1).GenerationTags.OrderBy(tag => tag));
     }
+
+    [Fact]
+    public void LegacyItemLoadingRejectsUnknownExternalItemTypes()
+    {
+        var catalog = new AuthoritativeNativeItemTagCatalog([
+            new("CustomType", new HashSet<string>(["Misc"], StringComparer.OrdinalIgnoreCase)),
+        ]);
+
+        var exception = Assert.Throws<InvalidDataException>(() =>
+            AuthoritativeItemCatalog.LoadLegacyTsv(
+                "itemdat.tsv",
+                "id\tdropRate\tclass\tequipType\tcursorGraphic\titemType\tuniqueBaseItem\tname\tshortName\tminMonsterLevel\tdurability\tminDamage\tmaxDamage\tminArmor\tmaxArmor\tminStrength\tminMagic\tminDexterity\tspecialEffects\tmiscId\tspell\tusable\tvalue\n"
+                    + "TEST\t0\tMisc\tUnequippable\tNONE\tUnknownType\tNONE\tTest\tTest\t0\t0\t0\t0\t0\t0\t0\t0\t0\t0\tNONE\tNull\tfalse\t1\n",
+                nativeItemTagCatalog: catalog));
+
+        Assert.Contains("UnknownType", exception.Message, StringComparison.Ordinal);
+    }
 }

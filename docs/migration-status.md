@@ -30,7 +30,9 @@ piece and tile-property geometry catalogs likewise use complete ordered schemas.
 Legacy compatibility namespaces for native spells, item miscellany, item
 topology, and item-generation tags are now required in current-schema packs
 and likewise use complete ordered headers; their validated catalogs remain on
-the module activation result. Direct compatibility loaders still
+the module activation result. Legacy item-table adapters now reject unknown
+symbols whenever an external namespace is supplied, while direct compatibility
+loaders still
 accept older partial rows, and schema `1.501.0` packs retain that migration
 fallback, including omission of those tables; current-schema packs reject omitted class,
 loadout, animation, store, level, procedural-level, level-generation,

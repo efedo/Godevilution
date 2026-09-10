@@ -59,4 +59,23 @@ public sealed class AuthoritativeNativeItemTopologyCatalogTests
         var definition = items.GetRequired(1);
         Assert.Equal((9, 4, 2), (definition.ItemType, definition.ItemClass, definition.EquipLocation));
     }
+
+    [Fact]
+    public void LegacyItemLoadingRejectsUnknownExternalTopologySymbols()
+    {
+        var catalog = new AuthoritativeNativeItemTopologyCatalog([
+            new(AuthoritativeNativeItemTopologyKind.ItemType, "CustomType", 9),
+            new(AuthoritativeNativeItemTopologyKind.ItemClass, "CustomClass", 4),
+            new(AuthoritativeNativeItemTopologyKind.EquipLocation, "CustomLocation", 2),
+        ]);
+
+        var exception = Assert.Throws<InvalidDataException>(() =>
+            AuthoritativeItemCatalog.LoadLegacyTsv(
+                "itemdat.tsv",
+                "id\tdropRate\tclass\tequipType\tcursorGraphic\titemType\tuniqueBaseItem\tname\tshortName\tminMonsterLevel\tdurability\tminDamage\tmaxDamage\tminArmor\tmaxArmor\tminStrength\tminMagic\tminDexterity\tspecialEffects\tmiscId\tspell\tusable\tvalue\n"
+                    + "TEST\t0\tCustomClass\tUnknownLocation\tNONE\tCustomType\tNONE\tTest\tTest\t0\t0\t0\t0\t0\t0\t0\t0\t0\t0\tNONE\tNull\tfalse\t1\n",
+                nativeTopologyCatalog: catalog));
+
+        Assert.Contains("UnknownLocation", exception.Message, StringComparison.Ordinal);
+    }
 }

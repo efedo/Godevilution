@@ -84,4 +84,19 @@ public sealed class AuthoritativeNativeSpellCatalogTests
 
         Assert.Equal(5, items.GetRequired(1).SpellId);
     }
+
+    [Fact]
+    public void LegacyItemLoadingRejectsUnknownExternalSpellSymbols()
+    {
+        var catalog = new AuthoritativeNativeSpellCatalog([new(5, "CustomSpell")]);
+
+        var exception = Assert.Throws<InvalidDataException>(() =>
+            AuthoritativeItemCatalog.LoadLegacyTsv(
+                "itemdat.tsv",
+                "id\tdropRate\tclass\tequipType\tcursorGraphic\titemType\tuniqueBaseItem\tname\tshortName\tminMonsterLevel\tdurability\tminDamage\tmaxDamage\tminArmor\tmaxArmor\tminStrength\tminMagic\tminDexterity\tspecialEffects\tmiscId\tspell\tusable\tvalue\n"
+                    + "TEST\t0\tMisc\tUnequippable\tNONE\tMisc\tNONE\tTest\tTest\t0\t0\t0\t0\t0\t0\t0\t0\t0\t0\tNONE\tUnknownSpell\tfalse\t1\n",
+                nativeSpellCatalog: catalog));
+
+        Assert.Contains("UnknownSpell", exception.Message, StringComparison.Ordinal);
+    }
 }

@@ -1366,7 +1366,8 @@ public sealed class AuthoritativeItemCatalog
                     value,
                     out var nativeId)
                 ? nativeId
-                : -1;
+                : throw new InvalidDataException(
+                    $"Legacy item type '{value}' is not defined by the active native item topology catalog.");
         return value.ToLowerInvariant() switch {
             "misc" => 0,
             "weapon" or "sword" => 1,
@@ -1457,7 +1458,8 @@ public sealed class AuthoritativeItemCatalog
                     value,
                     out var nativeId)
                 ? nativeId
-                : 0;
+                : throw new InvalidDataException(
+                    $"Legacy item class '{value}' is not defined by the active native item topology catalog.");
         return value.ToLowerInvariant() switch {
             "weapon" => 1,
             "armor" => 2,
@@ -1483,7 +1485,8 @@ public sealed class AuthoritativeItemCatalog
                     normalized,
                     out var nativeId)
                 ? nativeId
-                : 0;
+                : throw new InvalidDataException(
+                    $"Legacy equipment location '{value}' is not defined by the active native item topology catalog.");
         }
         return value.ToLowerInvariant() switch {
             "one-handed" or "onehanded" => 1,
@@ -1502,10 +1505,14 @@ public sealed class AuthoritativeItemCatalog
         string value,
         AuthoritativeNativeMiscCatalog? nativeMiscCatalog = null)
     {
-        if (nativeMiscCatalog is not null)
+        if (nativeMiscCatalog is not null) {
+            if (string.IsNullOrWhiteSpace(value))
+                return 0;
             return nativeMiscCatalog.TryGetId(value, out var nativeMiscId)
                 ? nativeMiscId
-                : 0;
+                : throw new InvalidDataException(
+                    $"Legacy miscellaneous identity '{value}' is not defined by the active native misc catalog.");
+        }
         return value.ToUpperInvariant() switch {
             "STAFF" => 24,
             "BOOK" => 25,
@@ -1543,7 +1550,8 @@ public sealed class AuthoritativeItemCatalog
         uint nativeSpellId;
         if (nativeSpellCatalog is not null) {
             if (!nativeSpellCatalog.TryGetId(value, out nativeSpellId))
-                return 0;
+                throw new InvalidDataException(
+                    $"Legacy spell '{value}' is not defined by the active native spell catalog.");
         } else {
             nativeSpellId = ParseLegacyCompatibilitySpellId(value);
             if (nativeSpellId == uint.MaxValue)
@@ -1691,7 +1699,8 @@ public sealed class AuthoritativeItemCatalog
         if (nativeItemTagCatalog is not null)
             return nativeItemTagCatalog.TryGetTags(itemType, out var externalTags)
                 ? new HashSet<string>(externalTags, StringComparer.OrdinalIgnoreCase)
-                : new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+                : throw new InvalidDataException(
+                    $"Legacy item type '{itemType}' is not defined by the active native item tag catalog.");
         var tags = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         switch (itemType.ToLowerInvariant()) {
         case "sword":
