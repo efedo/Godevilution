@@ -2,10 +2,11 @@
 
 All notable changes to this fork are documented below.
 
-- Godot now validates every authoritative event batch before applying its
-  stale-tick and reconnect-epoch filters, so malformed discarded events fail
-  closed instead of being silently ignored. The protocol contract now records
-  the shared event-tick boundary enforced by server and client.
+- Godot and the native compatibility client now validate every authoritative
+  event batch before applying stale-tick or reconnect-epoch filters, so
+  malformed discarded events fail closed instead of being silently ignored.
+  The protocol contract now records the shared event-tick boundary enforced by
+  server and clients.
 
 - Authoritative TCP now rejects adapter event batches whose publication tick
   differs from the shared applied tick used for the command acknowledgement

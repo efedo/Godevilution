@@ -271,10 +271,10 @@ amounts, negative dialogue message IDs, or dialogue text containing NUL or
 carriage-return characters or exceeding 16 KiB of UTF-8 bytes; zero entity IDs
 remain tolerated for compatibility with events that do not target the local
 presentation. The server event-batch tick must equal the applied tick used for
-the corresponding command response or snapshot boundary. Godot validates event
-payloads even when a batch is stale or temporarily quarantined, rather than
-silently hiding malformed data behind its presentation tick filter. During a
-Godot reconnect epoch boundary,
+the corresponding command response or snapshot boundary. Godot and the native
+compatibility client validate event payloads even when a batch is stale or
+temporarily quarantined, rather than silently hiding malformed data behind
+their presentation tick filters. During a Godot reconnect epoch boundary,
 event batches are ignored until the next validated snapshot is accepted, so
 events from the prior transport stream cannot populate the new presentation
 history.

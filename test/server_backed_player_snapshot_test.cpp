@@ -524,6 +524,7 @@ TEST(ServerBackedPlayerSnapshot, RejectsMalformedAuthoritativeEventBatches)
 	};
 	for (const auto &configureEvent : configure) {
 		protocol::EventBatch invalid;
+		invalid.set_tick(11);
 		configureEvent(&invalid);
 		auto result = ValidateServerBackedEventBatch(invalid);
 		EXPECT_FALSE(result.has_value());
