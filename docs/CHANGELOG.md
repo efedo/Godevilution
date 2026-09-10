@@ -21,6 +21,10 @@ All notable changes to this fork are documented below.
   unblocked single-player damage now rolls min/max values in Q6 before the
   validated `_pIGetHit` bonus boundary, with a shared C++/C# checkpoint.
 
+- Aligned Rhino charge special damage with the native Q6 range boundary in the
+  compatibility stream, including incoming `_pIGetHit` equipment adjustment;
+  added a shared range-valued C++/C# checkpoint.
+
 - Ruleset replacement now publishes migrated session checkpoints during
   candidate preparation, before activation or handshake identity publication;
   failed exports or checkpoint writes keep the previous generation active.

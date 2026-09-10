@@ -10989,39 +10989,31 @@ public sealed class DiabloCombatCommandProcessor
                 usesNativeAiStream);
 
         monster.ApplyKnockback(destination.Value.X, destination.Value.Y);
-        var armorClass = player.ArmorClass;
-        if (rules.GameVariant == DiabloGameVariant.Hellfire) {
-            armorClass = AuthoritativeEquipmentIncomingDamageRules
-                .ApplyHellfireMonsterClassArmor(
-                    armorClass,
-                    monster.IsDemon,
-                    monster.IsUndead,
-                    player.Equipment,
-                    rules.HellfireArmorBonusAgainstDemons,
-                    rules.HellfireArmorBonusAgainstUndead);
-        }
-        var specialDamage = SelectNativeSpecialDamage(monster, attackSeed);
-        var damage = rules.ResolveMonsterAttackDamage(
-            specialDamage,
-            GetEffectiveMonsterToHit(monster, special: true),
-            GetEffectiveMonsterLevel(monster),
-            player.CharacterLevel,
-            monster.LevelId,
-            armorClass,
-            attackSeed);
-        damage = AuthoritativeEquipmentIncomingDamageRules.ApplyGetHit(
-            damage,
-            rules.MinimumDamage,
+        var damageQ6 = usesNativeAiStream
+            ? RollEffectiveMonsterDamageQ6(monster, special: true)
+            : SelectNativeSpecialDamageQ6(monster, attackSeed);
+        damageQ6 = AuthoritativeEquipmentIncomingDamageRules.ApplyGetHitQ6(
+            damageQ6,
+            DeterministicFixedPointQ6.Scale,
             player.Equipment);
-        var damageResult = playerDamage.Apply(player, damage);
+        var usesLegacyWholeLife = player.LifeMaximum % DeterministicFixedPointQ6.Scale != 0;
+        var appliedDamageQ6 = usesLegacyWholeLife
+            ? DeterministicFixedPointQ6.ToWholeTruncated(damageQ6)
+            : damageQ6;
+        var damageResult = playerDamage.Apply(player, appliedDamageQ6);
         if (damageResult.IncomingDamageQ6 > 0) {
+            var eventDamageQ6 = usesLegacyWholeLife
+                ? appliedDamageQ6
+                : damageResult.IncomingDamageQ6;
             events.Add(new DiabloDirectedGameplayEvent(
                 player,
                 new DiabloGameplayEvent(
                     DiabloGameplayEventKind.Damage,
                     monster.EntityId,
                     player.EntityId,
-                    damageResult.IncomingDamageQ6)));
+                    DeterministicFixedPointQ6.ToWholeTruncated(eventDamageQ6)) {
+                    AmountQ6 = eventDamageQ6,
+                }));
         }
         if (player.Life == 0)
             StartPlayerDeath(
@@ -11030,7 +11022,7 @@ public sealed class DiabloCombatCommandProcessor
                 tick,
                 players,
                 PlayerDeathReason.MonsterOrTrap);
-        else if (damage > 0)
+        else if (damageQ6 > 0)
             ApplyRhinoChargeKnockback(monster, player, players);
         return true;
     }
@@ -11368,6 +11360,20 @@ public sealed class DiabloCombatCommandProcessor
         uint attackSeed)
     {
         return SelectEffectiveMonsterDamage(target, special: true, seed: attackSeed);
+    }
+
+    /** Selects compatibility-stream Rhino damage in the native Q6 unit. */
+    private int SelectNativeSpecialDamageQ6(
+        AuthoritativeCombatTarget target,
+        uint attackSeed)
+    {
+        var range = GetEffectiveMonsterDamageRange(target, special: true);
+        var minimumQ6 = DeterministicFixedPointQ6.FromWhole(range.Minimum);
+        var maximumQ6 = DeterministicFixedPointQ6.FromWhole(range.Maximum);
+        if (maximumQ6 < minimumQ6)
+            return 0;
+        var widthQ6 = checked(maximumQ6 - minimumQ6 + 1);
+        return checked(minimumQ6 + (int)(attackSeed % (uint)widthQ6));
     }
 
     private static int SelectNativeDamage(int minimum, int maximum, uint attackSeed)

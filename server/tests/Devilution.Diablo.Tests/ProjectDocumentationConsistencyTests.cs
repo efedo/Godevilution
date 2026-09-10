@@ -54,6 +54,7 @@ public sealed class ProjectDocumentationConsistencyTests
         Assert.Contains("gameplay-reflect-blocked-monster-melee.json", replayFixtures, StringComparison.Ordinal);
         Assert.Contains("gameplay-singleplayer-blocked-monster-melee.json", replayFixtures, StringComparison.Ordinal);
         Assert.Contains("gameplay-singleplayer-monster-melee-q6-range.json", replayFixtures, StringComparison.Ordinal);
+        Assert.Contains("gameplay-rhino-charge-native-q6-range.json", replayFixtures, StringComparison.Ordinal);
 
         var packageWorkflow = Read(root, ".github", "workflows", "diablo-adapter-package.yml");
         Assert.Contains("package-diablo-adapter.ps1", packageWorkflow, StringComparison.Ordinal);

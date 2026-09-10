@@ -9270,21 +9270,22 @@ void AdvanceReplayMonsterAttack(
 				// Rhino's zero-seed compatibility fixtures use the deterministic
 				// attack seed; only initialized native AI owns the global stream.
 				const bool usesNativeCombatStream = state.combatTargetMonsterAiSeed != 0;
-				const int damage = maximumDamage >= minimumDamage
-				    ? minimumDamage
-				        + (usesNativeCombatStream
-				            ? std::max(
-				                  GenerateRnd(
-				                      state,
-				                      maximumDamage - minimumDamage + 1),
-				                  0)
-				            : static_cast<int>(attackSeed
-				                % static_cast<uint32_t>(maximumDamage - minimumDamage + 1)))
-				    : 0;
-				const int adjustedDamage = ApplyReplayGetHitBonus(
-				    state,
-				    damage,
-				    victim.secondary);
+				int32_t damageQ6 = 0;
+				if (maximumDamage >= minimumDamage) {
+					const int32_t minimumDamageQ6 = minimumDamage * 64;
+					const int32_t maximumDamageQ6 = maximumDamage * 64;
+					const int32_t damageRangeQ6 = maximumDamageQ6 - minimumDamageQ6 + 1;
+					const int32_t damageOffsetQ6 = usesNativeCombatStream
+					    ? std::max(GenerateRnd(state, damageRangeQ6), 0)
+					    : static_cast<int32_t>(attackSeed
+					        % static_cast<uint32_t>(damageRangeQ6));
+					damageQ6 = minimumDamageQ6 + damageOffsetQ6;
+					const auto &equipment = victim.secondary
+					    ? state.secondaryEquipment
+					    : state.equipment;
+					damageQ6 = ApplyReplayGetHitBonusQ6(equipment, damageQ6);
+				}
+				const int adjustedDamage = damageQ6 / 64;
 				const bool usesSkeletonFamilyEffects = state.combatTargetNativeAi == "SkeletonMelee"
 				    || state.combatTargetNativeAi == "Snotspill"
 				    || state.combatTargetNativeAi == "Warlord";

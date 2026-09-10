@@ -393,6 +393,10 @@ Optional `combat_target_to_hit`, `combat_target_to_hit_special`, and paired
 monster accuracy and damage channels for autonomous special attacks. The
 `gameplay-rhino-charge.json` fixture uses them to verify the server-owned charge
 landing and knockback transition.
+`gameplay-rhino-charge-native-q6-range.json` adds a three-to-seven special
+damage range and proves that the compatibility charge stream rolls it in Q6
+before applying incoming `_pIGetHit` equipment, preserving fractional damage
+and the canonical checkpoint in both runners.
 Native monster runtime seeds may be supplied as the paired
 `combat_target_monster_item_seed` and `combat_target_monster_ai_seed` fields.
 The multiplayer AI seed advances from the monster-owned stream at each
@@ -1066,6 +1070,8 @@ Notable shared fixtures include:
   movement-delay and failed adjacent-attack admission/countdown parity;
 - `gameplay-rhino-charge.json` for native charge admission, nearest adjacent
   landing, special damage, monster relocation, player knockback, and RNG parity;
+- `gameplay-rhino-charge-native-q6-range.json` for the compatibility charge
+  stream's Q6 special-damage range and incoming `_pIGetHit` boundary;
 - `gameplay-rhino-multiplayer-target.json` for nearest-participant charge
   admission, secondary damage and knockback, monster relocation, and farther-
   primary preservation;

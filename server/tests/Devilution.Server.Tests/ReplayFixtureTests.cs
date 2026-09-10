@@ -5648,6 +5648,55 @@ public sealed class ReplayFixtureTests
     }
 
     [Fact]
+    public void GameplayRhinoChargeNativeStreamUsesQ6SpecialDamageRange()
+    {
+        var fixture = LoadReplayFixture("gameplay-rhino-charge-native-q6-range.json");
+        var initial = fixture.InitialState;
+        var target = new AuthoritativeCombatTarget(
+            initial.CombatTargetEntityId,
+            initial.CombatTargetPositionX,
+            initial.CombatTargetPositionY,
+            initial.CombatTargetHitPoints,
+            maxHitPoints: initial.CombatTargetMaxHitPoints,
+            levelId: initial.CombatTargetLevelId,
+            monsterId: initial.CombatTargetMonsterId,
+            attackDamage: initial.CombatTargetAttackDamage,
+            aggroRange: initial.CombatTargetAggroRange,
+            monsterLevel: initial.CombatTargetMonsterLevel,
+            minDamage: initial.CombatTargetMinDamage,
+            maxDamage: initial.CombatTargetMaxDamage,
+            toHit: initial.CombatTargetToHit,
+            toHitSpecial: initial.CombatTargetToHitSpecial,
+            nativeAi: initial.CombatTargetNativeAi,
+            intelligence: initial.CombatTargetIntelligence,
+            monsterItemSeed: initial.CombatTargetMonsterItemSeed,
+            monsterAiSeed: initial.CombatTargetMonsterAiSeed);
+        var catalog = new StoreCatalog();
+        catalog.AddStore(1, []);
+        var executor = new StoreSimulationExecutor(
+            catalog,
+            initial.Gold,
+            initial.Experience,
+            initial.Life,
+            initial.Mana,
+            startingLifeMaximum: initial.LifeMaximum,
+            startingPositionX: initial.PositionX,
+            startingPositionY: initial.PositionY,
+            startingLevelId: initial.LevelId,
+            startingCombatTargets: [target],
+            startingMonsterTypes: LoadReplayMonsterTypes(fixture, "rhino-charge"),
+            startingRandomSeed: checked((uint)fixture.RngSeed),
+            gameMode: fixture.GameMode);
+
+        var result = ReplayFixtureExecutor.Execute(
+            fixture,
+            executor,
+            new AuthoritativeCommandServer(executor));
+        Assert.Equal(CommandStatus.Accepted, Assert.Single(result.Results).Status);
+        Assert.Equal(fixture.Checkpoints.Select(checkpoint => checkpoint.StateSha256), result.Checkpoints.Select(checkpoint => checkpoint.ActualStateSha256));
+    }
+
+    [Fact]
     public void GameplayRhinoChargeAppliesIncomingGetHitEquipment()
     {
         var fixture = LoadReplayFixture("gameplay-rhino-charge-get-hit.json");

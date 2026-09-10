@@ -333,6 +333,8 @@ do not consume a Thorns roll for a Rhino victim carrying that equipment.
 Rhino charge replay now applies the primary player's validated incoming GetHit
 equipment adjustment at the special-charge impact boundary in both runners,
 while preserving the native charge movement and knockback state.
+The range-valued compatibility fixture now rolls special damage in Q6 before
+that adjustment, preserving fractional damage and the canonical checkpoint.
 
 Special SkeletonMelee-family monster attacks now use the same validated
 incoming-equipment GetHit and Thorns boundary as generic monster hits. A shared
@@ -1416,7 +1418,8 @@ legacy mode and stash selections retain fail-closed compatibility behavior.
 The shared replay contract now covers the server-owned Rhino charge boundary.
 Native and managed runners agree on charge admission, nearest adjacent landing,
 special damage, monster relocation, player knockback, and unchanged
-single-player RNG in one authoritative tick.
+single-player RNG in one authoritative tick. Its range fixture also covers Q6
+special damage before incoming GetHit equipment.
 
 The shared replay contract now includes a stable-reference inventory-drop
 fixture. Native and managed runners both validate the stable identity, remove
