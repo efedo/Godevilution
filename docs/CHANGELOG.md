@@ -6,9 +6,9 @@ All notable changes to this fork are documented below.
   requires composed external content plus validated spell and combat catalogs;
   compatibility callers retain the existing embedded defaults.
 
-- Extended the production content boundary to normalized item, progression,
-  class, animation, spell-book, monster, and native-missile catalogs; direct
-  compatibility construction remains unchanged.
+- Extended the production content boundary to world rules plus normalized item,
+  progression, class, animation, spell-book, monster, and native-missile
+  catalogs; direct compatibility construction remains unchanged.
 
 - Serialized TCP snapshot and event projection with the authoritative command
   boundary, preventing concurrent participants from observing partially applied

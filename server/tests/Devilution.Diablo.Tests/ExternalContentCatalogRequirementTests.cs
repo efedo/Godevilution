@@ -15,99 +15,95 @@ public sealed class ExternalContentCatalogRequirementTests
         Assert.NotNull(simulation);
     }
 
-    [Fact]
-    public void ProductionActivationRejectsMissingComposedContent()
+    [Theory]
+    [InlineData("Content", "composed external content")]
+    [InlineData("WorldRules", "external world rules")]
+    [InlineData("Spells", "external spell catalog")]
+    [InlineData("CombatRules", "external combat rules")]
+    [InlineData("Items", "external item catalog")]
+    [InlineData("Experience", "external experience catalog")]
+    [InlineData("PlayerClasses", "external player-class catalog")]
+    [InlineData("PlayerAnimations", "external player-animation catalog")]
+    [InlineData("SpellBooks", "external spell-book catalog")]
+    [InlineData("MonsterTypes", "external monster-type catalog")]
+    [InlineData("MonsterMissiles", "external monster-missile catalog")]
+    [InlineData("NativeMissiles", "external native-missile catalog")]
+    [InlineData("NativeMissileSprites", "external native-missile sprite catalog")]
+    public void ProductionActivationRejectsEveryMissingRequiredCatalog(
+        string missingCatalog,
+        string expectedMessage)
     {
+        var source = CaptureProductionOptions();
         var exception = Assert.Throws<InvalidDataException>(() =>
             DiabloSimulationFactory.Instance.Create(
-                RequiredOptions(includeContent: false)));
+                CopyRequiredOptions(source, missingCatalog)));
 
-        Assert.Contains("composed external content", exception.Message, StringComparison.Ordinal);
-    }
-
-    [Fact]
-    public void ProductionActivationRejectsMissingSpellCatalog()
-    {
-        var exception = Assert.Throws<InvalidDataException>(() =>
-            DiabloSimulationFactory.Instance.Create(
-                RequiredOptions(includeSpells: false)));
-
-        Assert.Contains("external spell catalog", exception.Message, StringComparison.Ordinal);
-    }
-
-    [Fact]
-    public void ProductionActivationRejectsMissingCombatRules()
-    {
-        var exception = Assert.Throws<InvalidDataException>(() =>
-            DiabloSimulationFactory.Instance.Create(
-                RequiredOptions(includeCombatRules: false)));
-
-        Assert.Contains("external combat rules", exception.Message, StringComparison.Ordinal);
-    }
-
-    [Fact]
-    public void ProductionActivationRejectsMissingItemCatalog()
-    {
-        var exception = Assert.Throws<InvalidDataException>(() =>
-            DiabloSimulationFactory.Instance.Create(RequiredOptions()));
-
-        Assert.Contains("external item catalog", exception.Message, StringComparison.Ordinal);
+        Assert.Contains(expectedMessage, exception.Message, StringComparison.Ordinal);
     }
 
     [Fact]
     public void ContentBootstrapEnablesTheProductionRequirement()
     {
+        var options = CaptureProductionOptions();
+        Assert.True(options.RequireExternalContentCatalogs);
+        Assert.NotNull(options.Content);
+        Assert.NotNull(options.WorldRules);
+        Assert.NotNull(options.Spells);
+        Assert.NotNull(options.CombatRules);
+        Assert.NotNull(options.Items);
+        Assert.NotNull(options.Experience);
+        Assert.NotNull(options.PlayerClasses);
+        Assert.NotNull(options.PlayerAnimations);
+        Assert.NotNull(options.SpellBooks);
+        Assert.NotNull(options.MonsterTypes);
+        Assert.NotNull(options.MonsterMissiles);
+        Assert.NotNull(options.NativeMissiles);
+        Assert.NotNull(options.NativeMissileSprites);
+    }
+
+    private static DiabloSimulationOptions CaptureProductionOptions()
+    {
         var root = FindRepositoryRoot();
         var basePack = ContentPackLoader.LoadManifestDirectory(
             Path.Combine(root, "server", "content", "base"));
         var content = ComposedContent.Compose(new ContentManifest(
-            "external-content-bootstrap-test",
+            "external-content-requirement-tests",
             "1",
             [basePack]));
         var factory = new CapturingFactory();
         var bootstrap = new DiabloContentBootstrap(factory);
 
         Assert.Throws<ActivationCapturedException>(() => bootstrap.Activate(content));
-        Assert.NotNull(factory.Options);
-        Assert.True(factory.Options!.RequireExternalContentCatalogs);
-        Assert.Same(content, factory.Options.Content);
-        Assert.NotNull(factory.Options.Items);
-        Assert.NotNull(factory.Options.Experience);
-        Assert.NotNull(factory.Options.PlayerClasses);
-        Assert.NotNull(factory.Options.PlayerAnimations);
-        Assert.NotNull(factory.Options.SpellBooks);
-        Assert.NotNull(factory.Options.MonsterTypes);
-        Assert.NotNull(factory.Options.MonsterMissiles);
-        Assert.NotNull(factory.Options.NativeMissiles);
-        Assert.NotNull(factory.Options.NativeMissileSprites);
+        return factory.Options
+            ?? throw new InvalidOperationException("The bootstrap did not provide options.");
     }
 
-    private static DiabloSimulationOptions RequiredOptions(
-        bool includeContent = true,
-        bool includeSpells = true,
-        bool includeCombatRules = true)
+    private static DiabloSimulationOptions CopyRequiredOptions(
+        DiabloSimulationOptions source,
+        string missingCatalog)
     {
-        var root = FindRepositoryRoot();
-        var basePack = ContentPackLoader.LoadManifestDirectory(
-            Path.Combine(root, "server", "content", "base"));
-        var content = includeContent
-            ? ComposedContent.Compose(new ContentManifest(
-                "external-content-requirement-tests",
-                "1",
-                [basePack]))
-            : null;
-        var spells = includeSpells
-            ? new AuthoritativeSpellCatalog([
-                new AuthoritativeSpellDefinition(1, 5, 20, 0, 0, 0),
-            ])
-            : null;
-        var combatRules = includeCombatRules
-            ? new AuthoritativeCombatRules(10, 1, 100)
-            : null;
-        return new DiabloSimulationOptions(new StoreCatalog(), DiabloModule.Instance.Rules) {
-            Content = content,
-            Spells = spells,
-            CombatRules = combatRules,
+        return new DiabloSimulationOptions(source.StoreCatalog, source.StoreRules) {
+            Content = missingCatalog == "Content" ? null : source.Content,
+            WorldRules = missingCatalog == "WorldRules" ? null : source.WorldRules,
+            Spells = missingCatalog == "Spells" ? null : source.Spells,
+            CombatRules = missingCatalog == "CombatRules" ? null : source.CombatRules,
+            Items = missingCatalog == "Items" ? null : source.Items,
+            Experience = missingCatalog == "Experience" ? null : source.Experience,
+            PlayerClasses = missingCatalog == "PlayerClasses" ? null : source.PlayerClasses,
+            PlayerAnimations = missingCatalog == "PlayerAnimations"
+                ? null
+                : source.PlayerAnimations,
+            SpellBooks = missingCatalog == "SpellBooks" ? null : source.SpellBooks,
+            MonsterTypes = missingCatalog == "MonsterTypes" ? null : source.MonsterTypes,
+            MonsterMissiles = missingCatalog == "MonsterMissiles"
+                ? null
+                : source.MonsterMissiles,
+            NativeMissiles = missingCatalog == "NativeMissiles"
+                ? null
+                : source.NativeMissiles,
+            NativeMissileSprites = missingCatalog == "NativeMissileSprites"
+                ? null
+                : source.NativeMissileSprites,
             RequireExternalContentCatalogs = true,
         };
     }

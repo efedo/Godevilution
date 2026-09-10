@@ -220,6 +220,9 @@ public sealed class DiabloSimulationFactory : IDiabloSimulationFactory
         if (options.RequireExternalContentCatalogs && options.Content is null)
             throw new InvalidDataException(
                 "Production Diablo activation requires composed external content.");
+        if (options.RequireExternalContentCatalogs && options.WorldRules is null)
+            throw new InvalidDataException(
+                "Production Diablo activation requires external world rules.");
         if (options.RequireExternalContentCatalogs && options.Spells is null)
             throw new InvalidDataException(
                 "Production Diablo activation requires an external spell catalog.");

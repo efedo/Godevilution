@@ -169,7 +169,9 @@ monster-missile, and monster definition catalogs, keeping authoritative combat
 identity data out of the bootstrap fallback path.
 The simulation factory now enforces the corresponding normalized catalog
 presence at strict activation, so a production caller cannot bypass that
-boundary by constructing options without the bootstrap.
+boundary by constructing options without the bootstrap. It also requires the
+external world-rules catalog at that boundary; only non-strict compatibility
+callers retain the native-default world rules.
 
 Current-schema native-DUN fragment, fragment-object, and monster mapping tables
 also fail closed on incomplete or reordered headers; previous-schema packs
