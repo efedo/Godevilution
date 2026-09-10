@@ -25,6 +25,15 @@ public sealed record AuthoritativeLevelGenerationRule(
 /** Validated level-range metadata for server-owned encounter generation. */
 public sealed class AuthoritativeLevelGenerationCatalog
 {
+    private static readonly IReadOnlyList<string> ProductionColumns = [
+        "minimum_level",
+        "maximum_level",
+        "monster_density_divisor",
+        "multiplayer_monster_multiplier_percent",
+        "trap_percent",
+        "ordinary_monster_capacity",
+    ];
+
     private readonly IReadOnlyList<AuthoritativeLevelGenerationRule> definitions;
 
     public AuthoritativeLevelGenerationCatalog(
@@ -52,6 +61,18 @@ public sealed class AuthoritativeLevelGenerationCatalog
     }
 
     public IReadOnlyList<AuthoritativeLevelGenerationRule> Definitions => definitions;
+
+    /** Rejects omitted level-generation metadata at the current production boundary. */
+    public static void ValidateExternalizedProduction(TsvTable table)
+    {
+        ArgumentNullException.ThrowIfNull(table);
+        if (!table.Columns.SequenceEqual(ProductionColumns, StringComparer.Ordinal))
+            throw new InvalidDataException(
+                $"Production level-generation table '{table.SourcePath}' must use the complete ordered schema.");
+        foreach (var row in table.Rows)
+            foreach (var column in ProductionColumns)
+                _ = row.Required(column);
+    }
 
     /** Ensures every declared world level has an applicable generation rule. */
     public void ValidateWorld(AuthoritativeWorld world)

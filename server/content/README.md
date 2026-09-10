@@ -3,9 +3,9 @@
 Each directory under `server/content` is a server-owned, validated gameplay
 content pack. The default `base` pack is loaded by the standalone server and is
 included in its content manifest and combined ruleset identity.
-It declares its identity and `devilution.diablo@1.471.0` schema in
+It declares its identity and `devilution.diablo@1.472.0` schema in
 `base/content-pack.json`; the Diablo module also accepts the immediately
-previous additive `1.470.0` schema so existing manifest-based packs remain
+previous additive `1.471.0` schema so existing manifest-based packs remain
 loadable. A composed manifest must still use one exact schema identity across
 all declared packs; use the previous schema only for a complete compatible
 manifest rather than mixing it with the current pack. The standalone host falls
@@ -1270,9 +1270,10 @@ single-player availability remain external metadata.
 
 Schema 0.65 adds `level_generation.tsv`, which externalizes the native
 level-range monster-density divisor, multiplayer monster multiplier, and trap
-percentage. The optional `ordinary_monster_capacity` column controls the
-ordinary encounter ceiling and defaults to the native 190-slot limit for older
-rows. The catalog is validated at activation, must cover every declared world
+percentage. The `ordinary_monster_capacity` column controls the ordinary
+encounter ceiling. Current-schema activation requires all six ordered columns;
+older-schema rows retain the native 190-slot compatibility default. The catalog
+is validated at activation, must cover every declared world
 level when present, and owns deterministic encounter-count calculation; actual
 procedural map synthesis remains a separate migration.
 
@@ -3271,7 +3272,7 @@ and no implicit table replacements. For example:
   "dependencies": ["devilution.base"],
   "schema": {
     "id": "devilution.diablo",
-    "version": "1.471.0"
+    "version": "1.472.0"
   },
   "dependencyConstraints": [
     {
@@ -3305,8 +3306,8 @@ three-component semantic-version constraints for declared dependencies. All
 declared schemas in one ordered manifest must match, every constraint must name
 a declared dependency, and the loaded dependency version must satisfy its
 range. The first-party server rejects a declared schema other than
-`devilution.diablo@1.471.0` or its immediately previous additive
-`1.470.0`. Current-schema packs must provide the complete production table
+`devilution.diablo@1.472.0` or its immediately previous additive
+`1.471.0`. Current-schema packs must provide the complete production table
 contract; previous-schema packs retain their documented compatibility fallbacks.
 Manifests without compatibility metadata retain their legacy identity and
 remain loadable during migration.

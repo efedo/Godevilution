@@ -1,4 +1,5 @@
 using Devilution.Diablo;
+using Devilution.Data;
 using Xunit;
 
 namespace Devilution.Diablo.Tests;
@@ -28,6 +29,25 @@ public sealed class AuthoritativeLevelGenerationCatalogTests
                 + "1\t1\t30\t150\t10\t17\n");
 
         Assert.Equal(17, catalog.GetRequired(1).OrdinaryMonsterCapacity);
+    }
+
+    [Fact]
+    public void ProductionValidationRequiresCompleteOrderedSchema()
+    {
+        var complete = TsvTable.Parse(
+            "level_generation.tsv",
+            "minimum_level\tmaximum_level\tmonster_density_divisor\tmultiplayer_monster_multiplier_percent\ttrap_percent\tordinary_monster_capacity\n"
+                + "0\t0\t30\t150\t0\t190\n");
+
+        AuthoritativeLevelGenerationCatalog.ValidateExternalizedProduction(complete);
+
+        var legacy = TsvTable.Parse(
+            "level_generation.tsv",
+            "minimum_level\tmaximum_level\tmonster_density_divisor\tmultiplayer_monster_multiplier_percent\ttrap_percent\n"
+                + "0\t0\t30\t150\t0\n");
+        var exception = Assert.Throws<InvalidDataException>(() =>
+            AuthoritativeLevelGenerationCatalog.ValidateExternalizedProduction(legacy));
+        Assert.Contains("complete ordered schema", exception.Message, StringComparison.Ordinal);
     }
 
     [Fact]

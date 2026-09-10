@@ -2,14 +2,14 @@
 
 Status date: 2026-09-10
 
-Production schema `1.471.0` activation now requires the complete external
+Production schema `1.472.0` activation now requires the complete external
 player-class tuning, symbolic loadout, and symbolic animation schemas,
 symbolic store stock, supplied explicit and procedural level metadata, world-rule identities,
-combat tuning, and all store-service pricing keys in addition to the external
+combat tuning, complete level-generation capacity metadata, and all store-service pricing keys in addition to the external
 town/service identities and complete Town Portal destination geometry. Direct
-compatibility loaders still accept older partial rows, and schema `1.470.0`
+compatibility loaders still accept older partial rows, and schema `1.471.0`
 packs retain that migration fallback; current-schema packs reject omitted class,
-loadout, animation, store, level, procedural-level, combat, world-rule, or
+loadout, animation, store, level, procedural-level, level-generation, combat, world-rule, or
 service-pricing fields before publishing a ruleset.
 
 The content guide now documents the production activation contract separately
@@ -76,7 +76,7 @@ identity, compatibility-alias, and sprite namespaces plus monster type,
 monster-missile, and monster definition catalogs, keeping authoritative combat
 identity data out of the bootstrap fallback path.
 
-The active content schema is now `1.471.0` (with `1.470.0` retained as
+The active content schema is now `1.472.0` (with `1.471.0` retained as
 the previous additive contract). Optional `procedural_quest_piece_origins.tsv`
 rows publish deterministic ordinary-level quest geometry origins. Their
 identities are intentionally separate from the fixed native set-level origin
