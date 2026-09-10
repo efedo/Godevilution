@@ -2,6 +2,11 @@
 
 All notable changes to this fork are documented below.
 
+- Corrected Rhino charge event projection for legacy whole-life snapshots: the
+  displayed damage remains whole-point damage while `AmountQ6` preserves the
+  original native Q6 roll, and focused coverage now verifies the extra seeded
+  native damage draw.
+
 - The Diablo adapter staging script can now emit a distributable ZIP archive;
   the archive verifier extracts it in isolation and applies the same manifest,
   path, and assembly-hash release gate.

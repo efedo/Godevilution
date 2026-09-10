@@ -8600,11 +8600,12 @@ public sealed class DiabloCombatCommandProcessorTests
         var deliveries = processor.AdvanceTick(1, [player]);
 
         Assert.Equal((6, 0), (monster.PositionX, monster.PositionY));
-        Assert.Equal(80, player.Life);
+        Assert.Equal(95, player.Life);
         Assert.Equal((8, 0), (player.PositionX, player.PositionY));
         var damage = Assert.Single(deliveries).Event;
         Assert.Equal((9U, 7U), (damage.SourceEntityId, damage.TargetEntityId));
-        Assert.Equal(20, damage.Amount);
+        Assert.Equal(5, damage.Amount);
+        Assert.Equal(335, damage.AmountQ6);
     }
 
     [Fact]
@@ -8666,6 +8667,9 @@ public sealed class DiabloCombatCommandProcessorTests
         var expectedAiSeed = unchecked((uint)expected.AdvanceRndSeed());
         Assert.Equal(4, expected.RandomIntLessThan(100));
         Assert.True(expected.FlipCoin(4));
+        _ = expected.RandomIntBetween(
+            5 * DiabloFixedPointQ6.Scale,
+            32 * DiabloFixedPointQ6.Scale);
         var player = CreatePlayer(
             entityId: 7,
             positionX: 7,

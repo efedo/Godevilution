@@ -11004,7 +11004,7 @@ public sealed class DiabloCombatCommandProcessor
         var damageResult = playerDamage.Apply(player, appliedDamageQ6);
         if (damageResult.IncomingDamageQ6 > 0) {
             var eventDamageQ6 = usesLegacyWholeLife
-                ? appliedDamageQ6
+                ? damageQ6
                 : damageResult.IncomingDamageQ6;
             events.Add(new DiabloDirectedGameplayEvent(
                 player,
