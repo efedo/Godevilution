@@ -626,6 +626,29 @@ public sealed class AuthoritativeWorldMutation
 /** Validated external world-cell mutations used by object interactions. */
 public sealed class AuthoritativeWorldMutationCatalog
 {
+    private static readonly IReadOnlyList<string> ProductionColumns = [
+        "mutation_id", "level_id", "anchor_entity_id", "anchor_unique_identity",
+        "blocked_cells_add", "blocked_cells_remove", "missile_blocked_cells_add",
+        "missile_blocked_cells_remove", "geometry_rect_add", "geometry_rect_remove",
+        "transparency_rects", "object_layer_rects", "piece_layer_rects",
+        "anchor_mega_offset_x", "anchor_mega_offset_y", "mega_tile_assignments",
+        "create_transparency_layer", "mega_tile_copy_source_level_id", "mega_tile_copy_rects",
+        "piece_property_overrides", "monster_layer_rects", "mega_tile_asset_path",
+        "tile_asset_path", "sol_asset_path", "native_layer_asset_path",
+    ];
+
+    public static void ValidateExternalizedProduction(TsvTable table)
+    {
+        ArgumentNullException.ThrowIfNull(table);
+        if (!table.Columns.SequenceEqual(ProductionColumns, StringComparer.Ordinal))
+            throw new InvalidDataException(
+                $"Production world-mutation table '{table.SourcePath}' must use the complete ordered schema.");
+        foreach (var row in table.Rows) {
+            _ = row.RequiredUInt32("mutation_id");
+            _ = row.RequiredUInt32("level_id");
+        }
+    }
+
     private readonly IReadOnlyDictionary<uint, AuthoritativeWorldMutation> definitions;
 
     public AuthoritativeWorldMutationCatalog(IEnumerable<AuthoritativeWorldMutation> definitions)

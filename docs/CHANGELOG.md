@@ -2,6 +2,11 @@
 
 All notable changes to this fork are documented below.
 
+- Advanced the active content schema to `1.496.0`, retaining `1.495.0` as
+  the previous additive contract. Current-schema activation now requires
+  complete ordered `warps.tsv`, `portals.tsv`, and `world_mutations.tsv`
+  schemas, while previous-schema packs retain legacy loader compatibility.
+
 - Advanced the active content schema to `1.495.0`, retaining `1.494.0` as
   the previous additive contract. Current-schema production activation now
   requires `world_rules.tsv` to carry the complete external town/service

@@ -97,6 +97,30 @@ public sealed record DiabloPortalState(
 /** External portal definitions used to validate level transitions. */
 public static class AuthoritativePortalCatalog
 {
+    private static readonly IReadOnlyList<string> ProductionColumns = [
+        "portal_id", "portal_symbol", "source_level_id", "source_level_symbol",
+        "source_position_x", "source_position_y", "destination_level_id",
+        "destination_level_symbol", "destination_position_x", "destination_position_y",
+        "destination_set_level_id", "destination_set_level_symbol",
+        "destination_set_level_active_map",
+    ];
+
+    public static void ValidateExternalizedProduction(TsvTable table)
+    {
+        ArgumentNullException.ThrowIfNull(table);
+        if (!table.Columns.SequenceEqual(ProductionColumns, StringComparer.Ordinal))
+            throw new InvalidDataException(
+                $"Production portal table '{table.SourcePath}' must use the complete ordered schema.");
+        foreach (var row in table.Rows) {
+            _ = row.RequiredUInt32("portal_id");
+            _ = row.RequiredUInt32("source_level_id");
+            _ = row.RequiredInt32("source_position_x");
+            _ = row.RequiredInt32("source_position_y");
+            _ = row.RequiredInt32("destination_position_x");
+            _ = row.RequiredInt32("destination_position_y");
+        }
+    }
+
     /** Validates static portal levels and endpoint coordinates against world geometry. */
     public static void ValidateWorld(
         IEnumerable<AuthoritativePortal> portals,

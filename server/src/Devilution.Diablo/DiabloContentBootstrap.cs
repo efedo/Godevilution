@@ -635,11 +635,7 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
         var worldMutations = content.TryGetTable(
             "world_mutations.tsv",
             out var worldMutationsTable)
-            ? AuthoritativeWorldMutationCatalog.LoadTsv(
-                worldMutationsTable.SourcePath,
-                worldMutationsTable.ToCanonicalTsv(),
-                stableIds,
-                content)
+            ? LoadWorldMutations(content, worldMutationsTable, stableIds)
             : null;
         if (objectDefinitions.Length > 0)
             stableIds.ValidateReferences(
@@ -812,9 +808,9 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
         // Set-level geometry is published before warps so authored destinations
         // can target a materialized pre-map or active-map variant.
         if (world is not null && content.TryGetTable("warps.tsv", out var warpsTable)) {
-            foreach (var warp in AuthoritativeWarpCatalog.LoadTsv(
-                         warpsTable.SourcePath,
-                         warpsTable.ToCanonicalTsv(),
+            foreach (var warp in LoadWarps(
+                         content,
+                         warpsTable,
                          world,
                          stableIds,
                          setLevelMaps)) {
@@ -826,11 +822,7 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
                 "warp",
                 warpId => world.WarpTargets.Any(warp => warp.WarpId == warpId));
         var portals = content.TryGetTable("portals.tsv", out var portalsTable)
-            ? AuthoritativePortalCatalog.LoadTsv(
-                portalsTable.SourcePath,
-                portalsTable.ToCanonicalTsv(),
-                stableIds,
-                setLevelMaps)
+            ? LoadPortals(content, portalsTable, stableIds, setLevelMaps)
             : null;
         if (portals is not null)
             stableIds.ValidateReferences(
@@ -1541,6 +1533,52 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
             table.ToCanonicalTsv(),
             questTypes,
             stableIds);
+    }
+
+    private static AuthoritativeWorldMutationCatalog LoadWorldMutations(
+        ComposedContent content,
+        TsvTable table,
+        StableContentIdCatalog stableIds)
+    {
+        if (content.Manifest.Schema == DiabloContentSchema.Current)
+            AuthoritativeWorldMutationCatalog.ValidateExternalizedProduction(table);
+        return AuthoritativeWorldMutationCatalog.LoadTsv(
+            table.SourcePath,
+            table.ToCanonicalTsv(),
+            stableIds,
+            content);
+    }
+
+    private static IReadOnlyList<AuthoritativeWarpTarget> LoadWarps(
+        ComposedContent content,
+        TsvTable table,
+        AuthoritativeWorld world,
+        StableContentIdCatalog stableIds,
+        AuthoritativeSetLevelMapCatalog? setLevelMaps)
+    {
+        if (content.Manifest.Schema == DiabloContentSchema.Current)
+            AuthoritativeWarpCatalog.ValidateExternalizedProduction(table);
+        return AuthoritativeWarpCatalog.LoadTsv(
+            table.SourcePath,
+            table.ToCanonicalTsv(),
+            world,
+            stableIds,
+            setLevelMaps);
+    }
+
+    private static IReadOnlyList<AuthoritativePortal> LoadPortals(
+        ComposedContent content,
+        TsvTable table,
+        StableContentIdCatalog stableIds,
+        AuthoritativeSetLevelMapCatalog? setLevelMaps)
+    {
+        if (content.Manifest.Schema == DiabloContentSchema.Current)
+            AuthoritativePortalCatalog.ValidateExternalizedProduction(table);
+        return AuthoritativePortalCatalog.LoadTsv(
+            table.SourcePath,
+            table.ToCanonicalTsv(),
+            stableIds,
+            setLevelMaps);
     }
 
     private static AuthoritativeWorld LoadWorldLevels(

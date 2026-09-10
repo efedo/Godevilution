@@ -75,6 +75,30 @@ public sealed class AuthoritativeWarpTarget
 /** Loads normalized native trigger destinations from an external content table. */
 public static class AuthoritativeWarpCatalog
 {
+    private static readonly IReadOnlyList<string> ProductionColumns = [
+        "warp_id", "warp_symbol", "source_level_id", "source_level_symbol",
+        "trigger_x", "trigger_y", "target_level_id", "target_level_symbol",
+        "target_x", "target_y", "required_quest_id", "required_quest_symbol",
+        "required_quest_completed", "target_set_level_id", "target_set_level_symbol",
+        "target_set_level_active_map",
+    ];
+
+    public static void ValidateExternalizedProduction(TsvTable table)
+    {
+        ArgumentNullException.ThrowIfNull(table);
+        if (!table.Columns.SequenceEqual(ProductionColumns, StringComparer.Ordinal))
+            throw new InvalidDataException(
+                $"Production warp table '{table.SourcePath}' must use the complete ordered schema.");
+        foreach (var row in table.Rows) {
+            _ = row.RequiredUInt32("warp_id");
+            _ = row.RequiredUInt32("source_level_id");
+            _ = row.RequiredInt32("trigger_x");
+            _ = row.RequiredInt32("trigger_y");
+            _ = row.RequiredInt32("target_x");
+            _ = row.RequiredInt32("target_y");
+        }
+    }
+
     /** Validates quest identities referenced by content-owned level triggers. */
     public static void ValidateQuestRequirements(
         IEnumerable<AuthoritativeWarpTarget> targets,
