@@ -516,6 +516,11 @@ processed in native order, indestructible equipment is preserved, and broken
 weapons or shields are removed with equipment-resource recalculation. Hellfire
 `Decay` removal suppresses the subsequent ordinary durability roll, matching
 the native early return.
+Timed player recovery now carries the native incoming durability boundary:
+block expiry uses the 1-in-10 parry roll for left-hand shield/staff and
+right-hand shield damage, while hit recovery uses the 3-in-4 armor roll with
+native helmet/chest selection. Indestructible equipment is preserved and
+zero-durability items are removed with authoritative resource recalculation.
 Ranged Hellfire replay now carries the validated `Peril` self-damage payload
 and post-armor multiplier into the projectile snapshot.
 The ranged `Peril` impact replay now applies that deferred self-damage at the

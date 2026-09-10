@@ -377,6 +377,28 @@ public sealed class DiabloCombatCommandProcessor
         player.CombatModeEndTick = 0;
     }
 
+    /** Applies native block/hit recovery durability rolls before mode expiry. */
+    private void AdvanceCombatModeWithEquipmentDamage(
+        AuthoritativePlayerState player,
+        ulong tick)
+    {
+        if (player.CurrentAction is not null
+            || player.CombatModeEndTick == 0
+            || tick < player.CombatModeEndTick) {
+            return;
+        }
+
+        if (player.CombatMode == DiabloPlayerCombatMode.Block) {
+            if (random.FlipCoin(10))
+                ApplyNativeParryDurabilityLoss(player);
+        } else if (player.CombatMode == DiabloPlayerCombatMode.GotHit
+            && !random.FlipCoin(4)) {
+            ApplyNativeArmorDurabilityLoss(player);
+        }
+
+        AdvanceCombatMode(player, tick);
+    }
+
     /** Applies one deterministic autonomous world tick in caller-provided player order. */
     public IReadOnlyList<DiabloDirectedGameplayEvent> AdvanceTick(
         ulong tick,
@@ -395,7 +417,7 @@ public sealed class DiabloCombatCommandProcessor
             AdvancePlayerAction(player, tick, players, events);
         }
         foreach (var player in players)
-            AdvanceCombatMode(player, tick);
+            AdvanceCombatModeWithEquipmentDamage(player, tick);
         AdvanceMonsters(tick, players, events);
         AdvanceProjectiles(tick, players, events);
         return events;
@@ -1657,6 +1679,81 @@ public sealed class DiabloCombatCommandProcessor
         }
 
         return false;
+    }
+
+    /** Mirrors native DamageParryItem's left-hand-first block damage. */
+    private void ApplyNativeParryDurabilityLoss(AuthoritativePlayerState player)
+    {
+        var leftIndex = player.Equipment.FindIndex(item => item.Slot == 4);
+        if (leftIndex >= 0
+            && (AuthoritativeItemClassification.IsShield(
+                    player.Equipment[leftIndex].State,
+                    items)
+                || AuthoritativeItemClassification.IsStaff(
+                    player.Equipment[leftIndex].State,
+                    items))) {
+            var state = player.Equipment[leftIndex].State;
+            if (state.Durability == 255)
+                return;
+            if (state.Durability <= 1) {
+                player.Equipment.RemoveAt(leftIndex);
+                player.RecalculateEquipmentResources();
+            } else {
+                player.Equipment[leftIndex] = player.Equipment[leftIndex] with {
+                    State = state with { Durability = checked(state.Durability - 1) },
+                };
+            }
+        }
+
+        var rightIndex = player.Equipment.FindIndex(item => item.Slot == 5);
+        if (rightIndex < 0
+            || !AuthoritativeItemClassification.IsShield(
+                player.Equipment[rightIndex].State,
+                items)) {
+            return;
+        }
+
+        var rightState = player.Equipment[rightIndex].State;
+        if (rightState.Durability == 255)
+            return;
+        if (rightState.Durability <= 1) {
+            player.Equipment.RemoveAt(rightIndex);
+            player.RecalculateEquipmentResources();
+        } else {
+            player.Equipment[rightIndex] = player.Equipment[rightIndex] with {
+                State = rightState with { Durability = checked(rightState.Durability - 1) },
+            };
+        }
+    }
+
+    /** Mirrors native DamageArmor's helmet/chest selection and break path. */
+    private void ApplyNativeArmorDurabilityLoss(AuthoritativePlayerState player)
+    {
+        var headIndex = player.Equipment.FindIndex(item => item.Slot == 0);
+        var chestIndex = player.Equipment.FindIndex(item => item.Slot == 6);
+        if (headIndex < 0 && chestIndex < 0)
+            return;
+
+        var targetHead = random.FlipCoin(3);
+        if (chestIndex < 0)
+            targetHead = true;
+        else if (headIndex < 0)
+            targetHead = false;
+
+        var equipmentIndex = targetHead ? headIndex : chestIndex;
+        if (equipmentIndex < 0)
+            return;
+        var state = player.Equipment[equipmentIndex].State;
+        if (state.Durability == 255)
+            return;
+        if (state.Durability <= 1) {
+            player.Equipment.RemoveAt(equipmentIndex);
+            player.RecalculateEquipmentResources();
+        } else {
+            player.Equipment[equipmentIndex] = player.Equipment[equipmentIndex] with {
+                State = state with { Durability = checked(state.Durability - 1) },
+            };
+        }
     }
 
     /**

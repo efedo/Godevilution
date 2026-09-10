@@ -24502,6 +24502,52 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void BlockRecoveryUsesNativeParryDurabilityRoll()
+    {
+        var shield = AuthoritativeItemState.Empty with {
+            ItemType = 5,
+            Durability = 4,
+            MaxDurability = 4,
+            StatFlag = true,
+        };
+        var player = CreatePlayer(
+            equipment: [new EquippedStoreItem(5, 42, shield)]);
+        player.CombatMode = DiabloPlayerCombatMode.Block;
+        player.CombatModeEndTick = 1;
+        var processor = CreateProcessor(
+            new DiabloWorldState(),
+            random: new DiabloRandom(0));
+
+        processor.AdvanceTick(1, [player]);
+
+        Assert.Equal(DiabloPlayerCombatMode.Stand, player.CombatMode);
+        Assert.Equal(3, Assert.Single(player.Equipment).State.Durability);
+    }
+
+    [Fact]
+    public void HitRecoveryUsesNativeArmorDurabilityRoll()
+    {
+        var helmet = AuthoritativeItemState.Empty with {
+            ItemType = 6,
+            Durability = 4,
+            MaxDurability = 4,
+            StatFlag = true,
+        };
+        var player = CreatePlayer(
+            equipment: [new EquippedStoreItem(0, 42, helmet)]);
+        player.CombatMode = DiabloPlayerCombatMode.GotHit;
+        player.CombatModeEndTick = 1;
+        var processor = CreateProcessor(
+            new DiabloWorldState(),
+            random: new DiabloRandom(1));
+
+        processor.AdvanceTick(1, [player]);
+
+        Assert.Equal(DiabloPlayerCombatMode.Stand, player.CombatMode);
+        Assert.Equal(3, Assert.Single(player.Equipment).State.Durability);
+    }
+
+    [Fact]
     public void ClassFramesAndUsableSpeedFlagsControlNativeModeDurations()
     {
         var classes = LoadShippedPlayerClasses();

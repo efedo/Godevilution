@@ -24,6 +24,11 @@ All notable changes to this fork are documented below.
   authoritative resource recalculation. Hellfire `Decay` removal retains its
   native early return before ordinary durability loss.
 
+- Added native incoming durability handling at timed recovery boundaries:
+  block expiry applies the 1-in-10 shield/staff parry roll, hit recovery
+  applies the 3-in-4 helmet/chest armor roll, and broken equipment is removed
+  with authoritative resource recalculation.
+
 - Advanced the active content schema to `1.461.0`, retaining `1.460.0` as
   the previous additive contract for compatible packs.
 
