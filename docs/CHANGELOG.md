@@ -13,7 +13,8 @@ All notable changes to this fork are documented below.
 - Preserved DevilutionX's blocked-monster-melee Reflect behavior in the
   authoritative server: blocked hits consume a charge, roll Q6 damage, apply
   the configured reflection percentage to the monster, and keep the player's
-  life unchanged with focused RNG-order coverage.
+  life unchanged. Added a shared C++/C# replay checkpoint for the complete
+  blocked-hit transition and RNG order.
 
 - Ruleset replacement now publishes migrated session checkpoints during
   candidate preparation, before activation or handshake identity publication;

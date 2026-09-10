@@ -9402,25 +9402,61 @@ void AdvanceReplayMonsterAttack(
 		    100);
 		if (std::max(GenerateRnd(state, 100), 0) >= hitChance)
 			return;
-		const bool secondaryPlayerBlockCapable = state.secondaryPlayerBlockCapable
-		    || IsReplaySecondaryPlayerBlockCapable(state);
-		const bool canBlock = victim.secondary
-		    && secondaryPlayerBlockCapable
-		    && (state.secondaryPlayerCombatMode == 0
-		        || state.secondaryPlayerCombatMode == 4);
+		const bool blockCapable = victim.secondary
+		    ? state.secondaryPlayerBlockCapable
+		        || IsReplaySecondaryPlayerBlockCapable(state)
+		    : IsReplayPrimaryPlayerBlockCapable(state);
+		const bool canBlock = blockCapable
+		    && (victim.secondary
+		        ? state.secondaryPlayerCombatMode == 0
+		            || state.secondaryPlayerCombatMode == 4
+		        : state.combatMode == 0
+		            || state.combatMode == 4);
 		const int32_t blockChance = std::clamp(
-		    (victim.secondary ? state.secondaryPlayerDexterity : 0)
+		    (victim.secondary ? state.secondaryPlayerDexterity : state.attributes[5])
 		        + (victim.secondary
 		            ? GetReplayBaseBlockChance(state.secondaryPlayerCharacterClassId)
-		            : 0)
+		            : GetReplayBaseBlockChance(state.characterClassId))
 		        + 2 * targetLevel
 		        - 2 * state.combatTargetMonsterLevel,
 		    0,
 		    100);
 		const int32_t blockRoll = canBlock ? std::max(GenerateRnd(state, 100), 0) : 100;
 		if (canBlock && blockRoll < blockChance) {
-			state.secondaryPlayerCombatMode = 6;
-			state.secondaryPlayerCombatModeEndTick = tick + 4;
+			if (victim.secondary) {
+				state.secondaryPlayerCombatMode = 6;
+				state.secondaryPlayerCombatModeEndTick = tick + 4;
+			} else {
+				state.combatMode = 6;
+				state.combatModeEndTick = tick + 4;
+				if (state.reflectCharges > 0) {
+					--state.reflectCharges;
+					const int32_t minimumDamage = state.combatTargetMinDamage == 0
+					        && state.combatTargetMaxDamage == 0
+					    ? state.combatTargetAttackDamage
+					    : state.combatTargetMinDamage;
+					const int32_t maximumDamage = state.combatTargetMinDamage == 0
+					        && state.combatTargetMaxDamage == 0
+					    ? state.combatTargetAttackDamage
+					    : state.combatTargetMaxDamage;
+					const int32_t minimumDamageQ6 = minimumDamage * 64;
+					const int32_t maximumDamageQ6 = maximumDamage * 64;
+					const int32_t damageQ6 = minimumDamageQ6 + std::max(
+					    GenerateRnd(state, maximumDamageQ6 - minimumDamageQ6 + 1),
+					    0);
+					const int32_t reflectedDamageQ6 = damageQ6
+					    * (GenerateRnd(state, 11) + 20) / 100;
+					if (reflectedDamageQ6 > 0) {
+						state.combatTargetHitPointsQ6 = std::max(
+						    0,
+						    state.combatTargetHitPointsQ6 - reflectedDamageQ6);
+						state.combatTargetHitPoints = ToWholeCeilingQ6(
+						    state.combatTargetHitPointsQ6);
+						if (state.combatTargetHitPointsQ6 == 0)
+							DefeatReplayCombatTarget(state);
+					}
+				}
+			}
 			return;
 		}
 	}

@@ -50,6 +50,9 @@ public sealed class ProjectDocumentationConsistencyTests
         Assert.Contains("distributable ZIP archive", changelog, StringComparison.Ordinal);
         Assert.Contains("blocked-monster-melee Reflect behavior", changelog, StringComparison.Ordinal);
 
+        var replayFixtures = Read(root, "docs", "replay-fixtures.md");
+        Assert.Contains("gameplay-reflect-blocked-monster-melee.json", replayFixtures, StringComparison.Ordinal);
+
         var packageWorkflow = Read(root, ".github", "workflows", "diablo-adapter-package.yml");
         Assert.Contains("package-diablo-adapter.ps1", packageWorkflow, StringComparison.Ordinal);
         Assert.Contains("verify-diablo-adapter-archive.ps1", packageWorkflow, StringComparison.Ordinal);

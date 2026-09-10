@@ -1244,6 +1244,9 @@ monster-damage immunity across authoritative ticks.
 The shared replay contract now covers player Reflect casts and retaliation.
 Native and managed runners preserve level-scaled charges, canonical Reflect
 state, charge consumption, reflected monster damage, and gameplay RNG parity.
+The blocked-monster-melee case is now a shared C++/C# checkpoint as well,
+covering block recovery, Q6 reflection, unchanged player life, and identical
+canonical state hashing.
 
 The shared replay contract now covers player Guardian casts. Native and
 managed runners preserve turret admission, the deterministic native firing

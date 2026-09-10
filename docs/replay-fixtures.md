@@ -923,6 +923,12 @@ adjacent monster. Tick 1 proves charge consumption, the native 20-30 percent
 retaliation roll, reflected monster damage, reduced incoming damage, and shared
 gameplay RNG state.
 
+`gameplay-reflect-blocked-monster-melee.json` starts with a shield-capable,
+high-Dexterity player and one Reflect charge. Tick 1 proves the native blocked
+melee branch: hit and block RNG, block recovery timing, charge consumption,
+Q6 reflection, unchanged player life, and the same canonical checkpoint hash
+in both runners.
+
 `gameplay-etherealize-resolution.json` uses the Etherealize ability against an
 adjacent monster. Ticks 0 and 1 prove immediate permanent status admission,
 typed status hashing, and blocked autonomous monster damage while the status
@@ -1278,6 +1284,9 @@ Notable shared fixtures include:
   Reflect charge creation and canonical state hashing;
 - `gameplay-reflect-retaliation.json` for charge consumption, native reflected
   monster damage, reduced incoming damage, and gameplay RNG parity;
+- `gameplay-reflect-blocked-monster-melee.json` for blocked-hit recovery,
+  Reflect charge consumption, Q6 monster damage, and shared native/managed
+  checkpoint parity;
 - `gameplay-etherealize-resolution.json` for permanent status admission,
   typed status hashing, and autonomous monster-damage immunity;
 - `gameplay-berserk-resolution.json` for eligible-target admission, four-channel

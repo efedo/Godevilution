@@ -938,9 +938,9 @@ expiry behavior.
 
 Native monster melee now also preserves Reflect on the blocked-hit branch. A
 standing, block-capable player consumes one charge and reflects the rolled Q6
-damage percentage to the monster while taking no incoming damage; the managed
-regression keeps the native hit, block, damage, and reflection random draws in
-the same order.
+damage percentage to the monster while taking no incoming damage; the shared
+C++/C# replay regression keeps the native hit, block, damage, and reflection
+random draws in the same order.
 
 Counselor Charged Bolt mappings now emit three independent server-owned
 `MonsterChargedBolt` projectiles per admitted native attack and use the native
