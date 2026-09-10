@@ -2,6 +2,10 @@
 
 All notable changes to this fork are documented below.
 
+- Expanded the Godot session setup form into a new-character/resume menu. Users
+  can now enter a saved authoritative resume token in the client, while new
+  sessions continue to submit the selected class and native-compatible name.
+
 - Native protocol-free world projection now fails closed when a single level
   exceeds the legacy monster, world-item, or object compatibility-pool capacity,
   matching the managed snapshot validator instead of silently dropping entities.

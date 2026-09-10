@@ -31,13 +31,14 @@ public partial class Main : Node2D
         AddChild(feedback);
         characterSetup = new CharacterSetupPresentation();
         AddChild(characterSetup);
-        characterSetup.Submitted += (classId, name, host, port) => {
+        characterSetup.Submitted += (classId, name, host, port, resumeToken) => {
             if (connectionOptions is not null)
                 StartConnection(connectionOptions with {
                     Host = host,
                     Port = port,
-                    RequestedCharacterClassId = classId,
-                    RequestedCharacterName = name,
+                    ResumeToken = resumeToken,
+                    RequestedCharacterClassId = string.IsNullOrEmpty(resumeToken) ? classId : null,
+                    RequestedCharacterName = string.IsNullOrEmpty(resumeToken) ? name : null,
                 });
         };
         hud.OpenStoreRequested += storeId => QueueIfConnected(new Command { OpenStoreRequested = new OpenStoreRequested { StoreId = storeId } });
