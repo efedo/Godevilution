@@ -356,7 +356,7 @@ public sealed class LiveAuthoritativeServerTests
                   "id": "test.godot-quest-towner-stage",
                   "version": "1",
                   "dependencies": ["devilution.base"],
-                  "schema": { "id": "devilution.diablo", "version": "1.449.0" },
+                  "schema": { "id": "devilution.diablo", "version": "1.462.0" },
                   "dependencyConstraints": [
                     {
                       "id": "devilution.base",
@@ -495,7 +495,7 @@ public sealed class LiveAuthoritativeServerTests
                   "id": "test.godot-object-follow-up",
                   "version": "1",
                   "dependencies": ["devilution.base"],
-                  "schema": { "id": "devilution.diablo", "version": "1.449.0" },
+                  "schema": { "id": "devilution.diablo", "version": "1.462.0" },
                   "dependencyConstraints": [
                     {
                       "id": "devilution.base",
@@ -618,7 +618,7 @@ public sealed class LiveAuthoritativeServerTests
                   "id": "test.godot-snotspill-dialogue",
                   "version": "1",
                   "dependencies": ["devilution.base"],
-                  "schema": { "id": "devilution.diablo", "version": "1.449.0" },
+                  "schema": { "id": "devilution.diablo", "version": "1.462.0" },
                   "dependencyConstraints": [
                     {
                       "id": "devilution.base",
@@ -787,7 +787,7 @@ public sealed class LiveAuthoritativeServerTests
                   "id": "test.godot-lachdanan-dialogue",
                   "version": "1",
                   "dependencies": ["devilution.hellfire"],
-                  "schema": { "id": "devilution.diablo", "version": "1.449.0" },
+                  "schema": { "id": "devilution.diablo", "version": "1.462.0" },
                   "dependencyConstraints": [
                     {
                       "id": "devilution.hellfire",
@@ -982,7 +982,7 @@ public sealed class LiveAuthoritativeServerTests
                   "id": "test.godot-warp-transition",
                   "version": "1",
                   "dependencies": ["devilution.base"],
-                  "schema": { "id": "devilution.diablo", "version": "1.449.0" },
+                  "schema": { "id": "devilution.diablo", "version": "1.462.0" },
                   "dependencyConstraints": [
                     {
                       "id": "devilution.base",
@@ -1167,7 +1167,7 @@ public sealed class LiveAuthoritativeServerTests
                   "id": "test.godot-holy-bolt",
                   "version": "1",
                   "dependencies": ["devilution.base"],
-                  "schema": { "id": "devilution.diablo", "version": "1.449.0" },
+                  "schema": { "id": "devilution.diablo", "version": "1.462.0" },
                   "dependencyConstraints": [
                     {
                       "id": "devilution.base",
@@ -1342,7 +1342,7 @@ public sealed class LiveAuthoritativeServerTests
                   "id": "test.godot-unique-pack",
                   "version": "1",
                   "dependencies": ["devilution.base"],
-                  "schema": { "id": "devilution.diablo", "version": "1.449.0" },
+                  "schema": { "id": "devilution.diablo", "version": "1.462.0" },
                   "dependencyConstraints": [
                     {
                       "id": "devilution.base",
@@ -2085,7 +2085,7 @@ public sealed class LiveAuthoritativeServerTests
                   "id": "test.heal-other-pvp-overlay",
                   "version": "1",
                   "dependencies": ["devilution.base"],
-                  "schema": { "id": "devilution.diablo", "version": "1.449.0" },
+                  "schema": { "id": "devilution.diablo", "version": "1.462.0" },
                   "dependencyConstraints": [
                     {
                       "id": "devilution.base",
@@ -2215,7 +2215,7 @@ public sealed class LiveAuthoritativeServerTests
                   "id": "test.resurrection-pvp-overlay",
                   "version": "1",
                   "dependencies": ["devilution.base"],
-                  "schema": { "id": "devilution.diablo", "version": "1.449.0" },
+                  "schema": { "id": "devilution.diablo", "version": "1.462.0" },
                   "dependencyConstraints": [
                     {
                       "id": "devilution.base",
@@ -2387,7 +2387,7 @@ public sealed class LiveAuthoritativeServerTests
                   "id": "test.charged-bolt-pvp-overlay",
                   "version": "1",
                   "dependencies": ["devilution.base"],
-                  "schema": { "id": "devilution.diablo", "version": "1.449.0" },
+                  "schema": { "id": "devilution.diablo", "version": "1.462.0" },
                   "dependencyConstraints": [
                     {
                       "id": "devilution.base",
@@ -2524,7 +2524,7 @@ public sealed class LiveAuthoritativeServerTests
                   "id": "test.bone-spirit-pvp-overlay",
                   "version": "1",
                   "dependencies": ["devilution.base"],
-                  "schema": { "id": "devilution.diablo", "version": "1.449.0" },
+                  "schema": { "id": "devilution.diablo", "version": "1.462.0" },
                   "dependencyConstraints": [
                     {
                       "id": "devilution.base",
@@ -2661,7 +2661,7 @@ public sealed class LiveAuthoritativeServerTests
                   "id": "test.pvp-block-overlay",
                   "version": "1",
                   "dependencies": ["devilution.base"],
-                  "schema": { "id": "devilution.diablo", "version": "1.449.0" },
+                  "schema": { "id": "devilution.diablo", "version": "1.462.0" },
                   "dependencyConstraints": [
                     {
                       "id": "devilution.base",
@@ -3246,7 +3246,7 @@ public sealed class LiveAuthoritativeServerTests
                   "id": "test.trap-overlay",
                   "version": "1",
                   "dependencies": ["devilution.base"],
-                  "schema": { "id": "devilution.diablo", "version": "1.449.0" },
+                  "schema": { "id": "devilution.diablo", "version": "1.462.0" },
                   "dependencyConstraints": [
                     {
                       "id": "devilution.base",
@@ -3440,7 +3440,7 @@ public sealed class LiveAuthoritativeServerTests
                   "id": "test.etherealize-overlay",
                   "version": "1",
                   "dependencies": ["devilution.base"],
-                  "schema": { "id": "devilution.diablo", "version": "1.449.0" },
+                  "schema": { "id": "devilution.diablo", "version": "1.462.0" },
                   "dependencyConstraints": [
                     {
                       "id": "devilution.base",
@@ -3530,7 +3530,7 @@ public sealed class LiveAuthoritativeServerTests
                   "id": "test.reflect-overlay",
                   "version": "1",
                   "dependencies": ["devilution.base"],
-                  "schema": { "id": "devilution.diablo", "version": "1.449.0" },
+                  "schema": { "id": "devilution.diablo", "version": "1.462.0" },
                   "dependencyConstraints": [
                     {
                       "id": "devilution.base",
@@ -3614,7 +3614,7 @@ public sealed class LiveAuthoritativeServerTests
                   "id": "test.golem-overlay",
                   "version": "1",
                   "dependencies": ["devilution.base"],
-                  "schema": { "id": "devilution.diablo", "version": "1.449.0" },
+                  "schema": { "id": "devilution.diablo", "version": "1.462.0" },
                   "dependencyConstraints": [
                     {
                       "id": "devilution.base",
@@ -3703,7 +3703,7 @@ public sealed class LiveAuthoritativeServerTests
                   "id": "test.immolation-overlay",
                   "version": "1",
                   "dependencies": ["devilution.base"],
-                  "schema": { "id": "devilution.diablo", "version": "1.449.0" },
+                  "schema": { "id": "devilution.diablo", "version": "1.462.0" },
                   "dependencyConstraints": [
                     {
                       "id": "devilution.base",
@@ -3792,7 +3792,7 @@ public sealed class LiveAuthoritativeServerTests
                   "id": "test.nova-overlay",
                   "version": "1",
                   "dependencies": ["devilution.base"],
-                  "schema": { "id": "devilution.diablo", "version": "1.449.0" },
+                  "schema": { "id": "devilution.diablo", "version": "1.462.0" },
                   "dependencyConstraints": [
                     {
                       "id": "devilution.base",
@@ -3879,7 +3879,7 @@ public sealed class LiveAuthoritativeServerTests
                   "id": "test.teleport-overlay",
                   "version": "1",
                   "dependencies": ["devilution.base"],
-                  "schema": { "id": "devilution.diablo", "version": "1.449.0" },
+                  "schema": { "id": "devilution.diablo", "version": "1.462.0" },
                   "dependencyConstraints": [
                     {
                       "id": "devilution.base",
@@ -3967,7 +3967,7 @@ public sealed class LiveAuthoritativeServerTests
                   "id": "test.telekinesis-overlay",
                   "version": "1",
                   "dependencies": ["devilution.base"],
-                  "schema": { "id": "devilution.diablo", "version": "1.449.0" },
+                  "schema": { "id": "devilution.diablo", "version": "1.462.0" },
                   "dependencyConstraints": [
                     {
                       "id": "devilution.base",
@@ -4069,7 +4069,7 @@ public sealed class LiveAuthoritativeServerTests
                   "id": "test.mana-shield-overlay",
                   "version": "1",
                   "dependencies": ["devilution.base"],
-                  "schema": { "id": "devilution.diablo", "version": "1.449.0" },
+                  "schema": { "id": "devilution.diablo", "version": "1.462.0" },
                   "dependencyConstraints": [
                     {
                       "id": "devilution.base",
@@ -4143,6 +4143,127 @@ public sealed class LiveAuthoritativeServerTests
     }
 
     [Fact]
+    public async Task LiveServerProjectsManaShieldToRemoteParticipantAndRestoresItOnReconnect()
+    {
+        var overlayRoot = Path.Combine(
+            Path.GetTempPath(),
+            "Godevilution-ManaShield-Multiplayer-Test-" + Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(overlayRoot);
+        try {
+            await File.WriteAllTextAsync(
+                Path.Combine(overlayRoot, "content-pack.json"),
+                """
+                {
+                  "formatVersion": 1,
+                  "id": "test.mana-shield-multiplayer",
+                  "version": "1",
+                  "dependencies": ["devilution.base"],
+                  "schema": { "id": "devilution.diablo", "version": "1.462.0" },
+                  "dependencyConstraints": [
+                    {
+                      "id": "devilution.base",
+                      "minimumVersion": "0.1.0",
+                      "maximumVersion": "0.1.0"
+                    }
+                  ],
+                  "overlays": [
+                    {
+                      "table": "class_loadouts.tsv",
+                      "keys": ["class_id"],
+                      "mode": "upsert"
+                    }
+                  ]
+                }
+                """,
+                TestContext.Current.CancellationToken);
+            await File.WriteAllTextAsync(
+                Path.Combine(overlayRoot, "class_loadouts.tsv"),
+                "class_id\tclass_symbol\tstarting_gold\tability_spell_id\tability_spell_symbol\tability_kind\tstarting_spell_id\tstarting_spell_symbol\tstarting_spell_level\n2\t\t100\t27\t\tRecharge\t11\t\t1\n",
+                TestContext.Current.CancellationToken);
+
+            using var server = await StartedServer.StartAsync(
+                TestContext.Current.CancellationToken,
+                overlayRoot,
+                startingManaOverride: 10000,
+                gameMode: "multiplayer",
+                randomSeed: 0);
+            await using var first = new AuthoritativeClient(
+                CreateOptions(server, "godot-mana-shield-first", requestedClassId: 2));
+            await first.ConnectAsync(TestContext.Current.CancellationToken);
+            var firstInitial = await WaitForMessageAsync(
+                first,
+                message => message.Snapshot is { Players.Count: 1 });
+            var firstModel = new AuthoritativeClientModel();
+            firstModel.Apply(firstInitial);
+            var firstPlayer = Assert.Single(firstInitial.Snapshot!.Players);
+            var firstEntityId = firstPlayer.EntityId;
+            var initialMana = firstPlayer.Mana;
+            var sessionToken = first.SessionToken;
+
+            await using var second = new AuthoritativeClient(
+                CreateOptions(server, "godot-mana-shield-second", requestedClassId: 2));
+            await second.ConnectAsync(TestContext.Current.CancellationToken);
+            var secondInitial = await WaitForMessageAsync(
+                second,
+                message => message.Snapshot is { Players.Count: 2 });
+            Assert.Contains(
+                secondInitial.Snapshot!.Players,
+                player => player.EntityId == firstEntityId);
+
+            var sequence = first.Queue(new Command {
+                CastRequested = new CastRequested {
+                    SpellId = 11,
+                    TargetX = firstPlayer.PositionX,
+                    TargetY = firstPlayer.PositionY,
+                    Source = CastSourceKind.MemorizedSpell,
+                },
+            }, first.SuggestedCommandTick(firstModel.CurrentTick));
+            await first.PollAsync(TestContext.Current.CancellationToken);
+            Assert.Equal(
+                CommandStatus.Accepted,
+                (await WaitForAcknowledgementAsync(first, sequence)).Status);
+
+            var firstActive = await WaitForMessageAsync(
+                first,
+                message => message.Snapshot?.Players.SingleOrDefault(
+                    player => player.EntityId == firstEntityId) is { } candidate
+                    && candidate.ManaShieldActive
+                    && candidate.Mana < initialMana);
+            var activeFirst = firstActive.Snapshot!.Players.Single(
+                player => player.EntityId == firstEntityId);
+
+            var remoteActive = await WaitForMessageAsync(
+                second,
+                message => message.Snapshot?.Players.SingleOrDefault(
+                    player => player.EntityId == firstEntityId) is { } candidate
+                    && candidate.ManaShieldActive
+                    && candidate.Mana == activeFirst.Mana);
+            var activeRemote = remoteActive.Snapshot!.Players.Single(
+                player => player.EntityId == firstEntityId);
+            Assert.Equal(activeFirst.Mana, activeRemote.Mana);
+            Assert.Equal(activeFirst.ManaMaximum, activeRemote.ManaMaximum);
+
+            await first.ReconnectAsync(TestContext.Current.CancellationToken);
+            Assert.Equal(sessionToken, first.SessionToken);
+            var resumed = await WaitForMessageAsync(
+                first,
+                message => message.Snapshot is { Players.Count: 2 }
+                    && message.Snapshot.Players.SingleOrDefault(
+                        player => player.EntityId == firstEntityId) is { } candidate
+                    && candidate.ManaShieldActive
+                    && candidate.Mana == activeFirst.Mana);
+            var resumedFirst = resumed.Snapshot!.Players.Single(
+                player => player.EntityId == firstEntityId);
+            Assert.True(resumedFirst.ManaShieldActive);
+            Assert.Equal(activeFirst.Mana, resumedFirst.Mana);
+            Assert.True(second.IsConnected);
+        } finally {
+            if (Directory.Exists(overlayRoot))
+                Directory.Delete(overlayRoot, recursive: true);
+        }
+    }
+
+    [Fact]
     public async Task LiveServerUsesBerserkFromExternalMemorizedLoadout()
     {
         var overlayRoot = Path.Combine(
@@ -4158,7 +4279,7 @@ public sealed class LiveAuthoritativeServerTests
                   "id": "test.berserk-overlay",
                   "version": "1",
                   "dependencies": ["devilution.base"],
-                  "schema": { "id": "devilution.diablo", "version": "1.449.0" },
+                  "schema": { "id": "devilution.diablo", "version": "1.462.0" },
                   "dependencyConstraints": [
                     {
                       "id": "devilution.base",
@@ -4254,7 +4375,7 @@ public sealed class LiveAuthoritativeServerTests
                   "id": "test.ring-of-fire-overlay",
                   "version": "1",
                   "dependencies": ["devilution.base"],
-                  "schema": { "id": "devilution.diablo", "version": "1.449.0" },
+                  "schema": { "id": "devilution.diablo", "version": "1.462.0" },
                   "dependencyConstraints": [
                     {
                       "id": "devilution.base",
@@ -4346,7 +4467,7 @@ public sealed class LiveAuthoritativeServerTests
                   "id": "test.lightning-wall-overlay",
                   "version": "1",
                   "dependencies": ["devilution.base"],
-                  "schema": { "id": "devilution.diablo", "version": "1.449.0" },
+                  "schema": { "id": "devilution.diablo", "version": "1.462.0" },
                   "dependencyConstraints": [
                     {
                       "id": "devilution.base",
@@ -4447,7 +4568,7 @@ public sealed class LiveAuthoritativeServerTests
                   "id": "test.stone-curse-overlay",
                   "version": "1",
                   "dependencies": ["devilution.base"],
-                  "schema": { "id": "devilution.diablo", "version": "1.449.0" },
+                  "schema": { "id": "devilution.diablo", "version": "1.462.0" },
                   "dependencyConstraints": [
                     {
                       "id": "devilution.base",
@@ -4539,7 +4660,7 @@ public sealed class LiveAuthoritativeServerTests
                   "id": "test.phasing-overlay",
                   "version": "1",
                   "dependencies": ["devilution.base"],
-                  "schema": { "id": "devilution.diablo", "version": "1.449.0" },
+                  "schema": { "id": "devilution.diablo", "version": "1.462.0" },
                   "dependencyConstraints": [
                     {
                       "id": "devilution.base",
@@ -5203,7 +5324,7 @@ public sealed class LiveAuthoritativeServerTests
                   "id": "test.store-overlay",
                   "version": "1",
                   "dependencies": ["devilution.base"],
-                  "schema": { "id": "devilution.diablo", "version": "1.449.0" },
+                  "schema": { "id": "devilution.diablo", "version": "1.462.0" },
                   "dependencyConstraints": [
                     {
                       "id": "devilution.base",
@@ -5275,7 +5396,7 @@ public sealed class LiveAuthoritativeServerTests
                   "id": "test.class-overlay",
                   "version": "1",
                   "dependencies": ["devilution.base"],
-                  "schema": { "id": "devilution.diablo", "version": "1.449.0" },
+                  "schema": { "id": "devilution.diablo", "version": "1.462.0" },
                   "dependencyConstraints": [
                     {
                       "id": "devilution.base",
@@ -5380,6 +5501,9 @@ public sealed class LiveAuthoritativeServerTests
                 var pendingCount = backlog.Pending.Count;
                 for (var index = 0; index < pendingCount; index++) {
                     var message = backlog.Pending.Dequeue();
+                    if (message.Error is not null)
+                        throw new InvalidOperationException(
+                            $"Authoritative live-client error: {message.Error.Code}/{message.Error.Detail}");
                     if (predicate(message))
                         return message;
                     backlog.Pending.Enqueue(message);

@@ -2,6 +2,12 @@
 
 All notable changes to this fork are documented below.
 
+- Fixed authoritative TCP snapshot timing when a client schedules a command
+  for a future deterministic tick: the host now advances and publishes at the
+  applied command boundary, including subsequent snapshot polls. Added live
+  Godot multiplayer coverage for remote Mana Shield resource projection and
+  reconnect restoration, and updated inline content overlays to schema 1.462.
+
 - Corrected Rhino charge event projection for legacy whole-life snapshots: the
   displayed damage remains whole-point damage while `AmountQ6` preserves the
   original native Q6 roll, and focused coverage now verifies the extra seeded

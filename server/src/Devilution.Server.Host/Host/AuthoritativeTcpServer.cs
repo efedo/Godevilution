@@ -345,12 +345,20 @@ public sealed class AuthoritativeTcpServer : IAsyncDisposable
                     currentTick = clock.CurrentTick;
                     var acknowledgement = commandServer.ProcessBatch(sessionId, envelope.CommandBatch, currentTick);
                     AuthoritativeCommandAckValidator.Validate(acknowledgement);
+                    // A client may submit a command for the next deterministic
+                    // tick. Publish the snapshot at that applied boundary so a
+                    // newly started action is never serialized as future state.
+                    if (acknowledgement.Results.Count != 0)
+                        currentTick = Math.Max(
+                            currentTick,
+                            acknowledgement.Results.Max(result => result.AppliedTick));
+                    commandServer.AdvanceTo(currentTick);
                     SaveSession(session);
                     await EnvelopeCodec.WriteAsync(stream, new Envelope { CommandAck = acknowledgement }, cancellationToken);
                     await SendEventsIfAvailable(stream, sessionId, entityId, currentTick, cancellationToken);
                     await SendSnapshotIfAvailableAsync(stream, sessionId, entityId, currentTick, cancellationToken);
                 } else if (envelope.PayloadCase == Envelope.PayloadOneofCase.SnapshotRequest) {
-                    currentTick = clock.CurrentTick;
+                    currentTick = Math.Max(currentTick, clock.CurrentTick);
                     commandServer.AdvanceTo(currentTick);
                     await SendEventsIfAvailable(stream, sessionId, entityId, currentTick, cancellationToken);
                     await SendSnapshotIfAvailableAsync(stream, sessionId, entityId, currentTick, cancellationToken);

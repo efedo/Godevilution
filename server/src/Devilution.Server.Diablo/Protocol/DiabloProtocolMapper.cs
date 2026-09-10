@@ -1790,7 +1790,7 @@ internal static class DiabloProtocolMapper
                 action.EffectApplied)
             || action.EndTick != state.CombatModeEndTick) {
             throw new InvalidDataException(
-                "Authoritative player action timing is invalid.");
+                $"Authoritative player action timing is invalid at snapshot tick {snapshotTick}.");
         }
 
         var valid = action.Kind switch {

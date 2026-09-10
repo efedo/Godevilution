@@ -25,6 +25,14 @@ The checked-in base and Hellfire replay fixtures now use the canonical
 content-pack manifest hashes produced by the normalized source identities and
 active schema, keeping replay admission aligned with the validated packs.
 
+Authoritative TCP command responses now advance the host and snapshot provider
+to the maximum applied command tick before publishing acknowledgements,
+events, or snapshots. Later snapshot polls retain that boundary instead of
+regressing to the wall-clock tick, so future-started player actions remain
+valid across the protocol stream. Godot live coverage now includes two
+participants observing the same Mana Shield resource/status projection and
+the activating session restoring it after reconnect.
+
 Native player-versus-player physical attacks now use the native combat
 boundary: armor-piercing bonuses are ignored for player targets, target armor
 is applied only to admission (not damage), and ranged player attacks apply
