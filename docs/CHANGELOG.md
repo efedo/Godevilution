@@ -2,6 +2,11 @@
 
 All notable changes to this fork are documented below.
 
+- Native compatibility projection now carries authored object presentation
+  families through its protocol-free snapshot and no longer lets legacy
+  native IDs override an explicit generic, shrine, quest, breakable, or trap
+  family. Older unspecified snapshots retain their native-ID fallback.
+
 - Godot now honors an explicit server-authored generic object presentation
   family even when legacy native identity metadata is `89` or `90`; native-ID
   inference remains limited to older snapshots that omit the additive family.

@@ -1013,6 +1013,7 @@ TEST(ServerBackedPlayerSnapshot, ProjectsAndSortsAuthoritativeObjects)
 	EXPECT_EQ((*projected)[1].effectKind, static_cast<int32_t>(ProjectedObjectEffectKind::QuestSequence));
 	EXPECT_EQ((*projected)[1].effectAmount, 2);
 	EXPECT_EQ((*projected)[1].nativeObjectId, 107U);
+	EXPECT_EQ((*projected)[1].presentationKind, 0);
 	EXPECT_EQ((*projected)[1].questTransitionKind, 6);
 	EXPECT_EQ((*projected)[1].rewardKind, 2);
 	EXPECT_EQ((*projected)[1].questSequenceFollowUpKind, 1);
@@ -1020,6 +1021,84 @@ TEST(ServerBackedPlayerSnapshot, ProjectsAndSortsAuthoritativeObjects)
 	EXPECT_TRUE((*projected)[1].destroyed);
 	EXPECT_FALSE((*projected)[1].missilePassable);
 	EXPECT_TRUE((*projected)[1].trapArmed);
+}
+
+TEST(ServerBackedPlayerSnapshot, ExplicitGenericObjectPresentationDoesNotUseLegacyNativeIdentity)
+{
+	InitializeItemPool();
+	ObjectPoolAdapter::ResetLegacyObjectPools();
+	const int objectSlot = ObjectPoolAdapter::ReserveObjectSlot();
+	ASSERT_GE(objectSlot, 0);
+	Objects[objectSlot] = {};
+	Objects[objectSlot]._otype = OBJ_BARREL;
+	Objects[objectSlot].position = { 12, 12 };
+	tileAt({ 12, 12 }).setObject(objectSlot + 1);
+	ObjectPoolAdapter::CommitReservedObjectSlot();
+
+	protocol::Snapshot snapshot;
+	auto *object = snapshot.add_objects();
+	object->set_entity_id(7);
+	object->set_object_id(OBJ_BARREL);
+	object->set_native_object_id(OBJ_ARMORSTAND);
+	object->set_level_id(1);
+	object->set_position_x(12);
+	object->set_position_y(12);
+	object->set_presentation_kind(protocol::OBJECT_PRESENTATION_KIND_GENERIC);
+
+	auto projected = ProjectObjectSnapshots(snapshot);
+	ASSERT_TRUE(projected.has_value());
+	ASSERT_EQ(projected->size(), 1U);
+	EXPECT_EQ(projected->front().presentationKind,
+		static_cast<int32_t>(ObjectPresentationKind::Generic));
+
+	ServerBackedWorldProjection worldProjection;
+	ASSERT_TRUE(worldProjection.Apply({}, {}, *projected, 1).has_value());
+	ServerBackedWorldPresentation presentation;
+	ASSERT_TRUE(presentation.Apply(worldProjection, 1).has_value());
+	ASSERT_EQ(ObjectPoolAdapter::ActiveObjectCountValue(), 1);
+	ASSERT_EQ(ObjectPoolAdapter::ActiveObjectIndexAt(0), objectSlot);
+	EXPECT_EQ(Objects[objectSlot]._otype, OBJ_BARREL);
+
+	presentation.Clear();
+	ObjectPoolAdapter::ResetLegacyObjectPools();
+	InitializeItemPool();
+}
+
+TEST(ServerBackedPlayerSnapshot, ExplicitNativeObjectPresentationRetainsNativeIdentity)
+{
+	InitializeItemPool();
+	ObjectPoolAdapter::ResetLegacyObjectPools();
+	const int objectSlot = ObjectPoolAdapter::ReserveObjectSlot();
+	ASSERT_GE(objectSlot, 0);
+	Objects[objectSlot] = {};
+	Objects[objectSlot]._otype = OBJ_ARMORSTAND;
+	Objects[objectSlot].position = { 13, 13 };
+	tileAt({ 13, 13 }).setObject(objectSlot + 1);
+	ObjectPoolAdapter::CommitReservedObjectSlot();
+
+	protocol::Snapshot snapshot;
+	auto *object = snapshot.add_objects();
+	object->set_entity_id(8);
+	object->set_object_id(OBJ_BARREL);
+	object->set_native_object_id(OBJ_ARMORSTAND);
+	object->set_level_id(1);
+	object->set_position_x(13);
+	object->set_position_y(13);
+	object->set_presentation_kind(protocol::OBJECT_PRESENTATION_KIND_NATIVE_ARMOR_STAND);
+
+	auto projected = ProjectObjectSnapshots(snapshot);
+	ASSERT_TRUE(projected.has_value());
+	ServerBackedWorldProjection worldProjection;
+	ASSERT_TRUE(worldProjection.Apply({}, {}, *projected, 1).has_value());
+	ServerBackedWorldPresentation presentation;
+	ASSERT_TRUE(presentation.Apply(worldProjection, 1).has_value());
+	ASSERT_EQ(ObjectPoolAdapter::ActiveObjectCountValue(), 1);
+	ASSERT_EQ(ObjectPoolAdapter::ActiveObjectIndexAt(0), objectSlot);
+	EXPECT_EQ(Objects[objectSlot]._otype, OBJ_ARMORSTAND);
+
+	presentation.Clear();
+	ObjectPoolAdapter::ResetLegacyObjectPools();
+	InitializeItemPool();
 }
 
 TEST(ServerBackedPlayerSnapshot, RemovesUnclaimedCompatibilityWorldEntitySlots)

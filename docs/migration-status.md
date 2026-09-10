@@ -126,6 +126,10 @@ Godot treats an explicit generic object family as authoritative and only uses
 the native 89/90 presentation fallback for older snapshots without that field.
 Protocol snapshot restoration preserves the explicit family so this boundary
 does not regress after reconnect or save/load.
+The native compatibility projection now carries the same family through its
+protocol-free snapshot and uses the stable object identity for explicit
+semantic families, retaining native-ID inference only for explicit native
+families or older unspecified snapshots.
 
 Authoritative TCP command responses now advance the host and snapshot provider
 to the maximum applied command tick before publishing acknowledgements,

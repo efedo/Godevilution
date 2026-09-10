@@ -735,6 +735,7 @@ tl::expected<std::vector<ProjectedObjectSnapshot>, std::string> ProjectObjectSna
 		    .destroyed = source.destroyed(),
 		    .trapArmed = source.trap_armed(),
 		    .nativeObjectId = source.native_object_id(),
+		    .presentationKind = static_cast<int32_t>(source.presentation_kind()),
 		    .keepVisibleAfterActivation = source.keep_visible_after_activation(),
 		    .animationFrame = source.animation_frame(),
 		    .activatedAnimationFrame = source.activated_animation_frame(),

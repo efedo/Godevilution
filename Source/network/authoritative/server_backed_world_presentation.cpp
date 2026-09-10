@@ -861,6 +861,15 @@ void RemoveUnclaimedObjectSlots(const std::unordered_set<int> &claimedSlots)
 
 uint32_t NativeObjectPresentationId(const ProjectedObjectSnapshot &snapshot)
 {
+	// Authored semantic families own the native object template selected by the
+	// compatibility client. Only explicit native families and older unspecified
+	// snapshots may use native_object_id as a presentation fallback.
+	if (snapshot.presentationKind == static_cast<int32_t>(ObjectPresentationKind::Generic)
+		|| snapshot.presentationKind == static_cast<int32_t>(ObjectPresentationKind::Shrine)
+		|| snapshot.presentationKind == static_cast<int32_t>(ObjectPresentationKind::Quest)
+		|| snapshot.presentationKind == static_cast<int32_t>(ObjectPresentationKind::Breakable)
+		|| snapshot.presentationKind == static_cast<int32_t>(ObjectPresentationKind::Trap))
+		return snapshot.objectId;
 	return snapshot.nativeObjectId == 0 ? snapshot.objectId : snapshot.nativeObjectId;
 }
 

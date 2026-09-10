@@ -178,6 +178,11 @@ Windows toolchain command.
 - `ObjectSnapshot.native_object_id` uses the native object identity range
   (`0` through `OBJ_LAST`, currently `108`) when supplied; larger values are
   rejected by native, managed, and Godot validators.
+- Native compatibility projection treats an explicit semantic presentation
+  family as authoritative: `GENERIC`, `SHRINE`, `QUEST`, `BREAKABLE`, and
+  `TRAP` use the stable `object_id` template even when legacy native metadata
+  is present. Only explicit native armory families, or older `UNSPECIFIED`
+  snapshots, may use `native_object_id` as a presentation fallback.
 - `LevelGeometrySnapshot.warp_triggers` is additive presentation metadata for
   authored level transitions. Each trigger carries its server-owned source
   cell, destination, stable symbol, quest gate, and current availability;

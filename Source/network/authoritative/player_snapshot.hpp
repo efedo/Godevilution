@@ -218,6 +218,8 @@ struct ProjectedObjectSnapshot {
 	bool trapArmed = false;
 	/** Optional native object type used only by compatibility presentations. */
 	uint32_t nativeObjectId = 0;
+	/** Server-owned object presentation family; zero preserves legacy inference. */
+	int32_t presentationKind = 0;
 	/** Presentation-only lifecycle metadata for activated objects. */
 	bool keepVisibleAfterActivation = false;
 	uint32_t animationFrame = 0;
