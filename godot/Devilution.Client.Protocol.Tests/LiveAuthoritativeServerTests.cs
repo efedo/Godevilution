@@ -64,6 +64,66 @@ public sealed class LiveAuthoritativeServerTests
     }
 
     [Fact]
+    public async Task PackagedDiabloAdapterRestoresAuthoritativeStateAfterProcessRestart()
+    {
+        using var package = new PackagedDiabloAdapterPackage();
+        var saveRoot = Path.Combine(
+            Path.GetTempPath(),
+            "Godevilution-Godot-Packaged-Diablo-Restart-Test-"
+                + Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(saveRoot);
+        try {
+            string resumeToken;
+            uint entityId;
+            using (var server = await StartedServer.StartAsync(
+                TestContext.Current.CancellationToken,
+                saveRootOverride: saveRoot,
+                deleteSaveRootOnDispose: false,
+                gameAdapterPackageRoot: package.Root,
+                gameAdapterId: "godevilution.diablo.package",
+                gameMode: "single-player")) {
+                await using var client = new AuthoritativeClient(
+                    CreateOptions(server, "godot-live-packaged-diablo-restart", requestedClassId: 2));
+                await client.ConnectAsync(TestContext.Current.CancellationToken);
+                var initial = await WaitForMessageAsync(
+                    client,
+                    message => message.Snapshot is not null);
+                var player = Assert.Single(initial.Snapshot!.Players);
+                entityId = player.EntityId;
+                resumeToken = client.SessionToken;
+
+                for (var attempt = 0; attempt < 200 && !Directory.EnumerateFiles(saveRoot, "*.json").Any(); attempt++)
+                    await Task.Delay(25, TestContext.Current.CancellationToken);
+                Assert.NotEmpty(Directory.EnumerateFiles(saveRoot, "*.json"));
+                await Task.Delay(500, TestContext.Current.CancellationToken);
+            }
+
+            using var restartedServer = await StartedServer.StartAsync(
+                TestContext.Current.CancellationToken,
+                saveRootOverride: saveRoot,
+                gameAdapterPackageRoot: package.Root,
+                gameAdapterId: "godevilution.diablo.package",
+                gameMode: "single-player");
+            await using var resumedClient = new AuthoritativeClient(
+                CreateOptions(restartedServer, "godot-live-packaged-diablo-resumed", requestedClassId: 0) with {
+                    ResumeToken = resumeToken,
+                });
+            await resumedClient.ConnectAsync(TestContext.Current.CancellationToken);
+            var restored = await WaitForMessageAsync(
+                resumedClient,
+                message => message.Snapshot is not null
+                    && message.Snapshot.Players.Single().EntityId == entityId);
+            var restoredPlayer = Assert.Single(restored.Snapshot!.Players);
+            Assert.Equal(entityId, restoredPlayer.EntityId);
+            Assert.Equal(2U, restoredPlayer.CharacterClassId);
+            Assert.NotEmpty(restored.Snapshot.StateSha256);
+        } finally {
+            if (Directory.Exists(saveRoot))
+                Directory.Delete(saveRoot, recursive: true);
+        }
+    }
+
+    [Fact]
     public async Task GodotTransportReceivesDifficultyScaledAuthoritativeMonsterState()
     {
         var hellfireRoot = Path.Combine(

@@ -22,7 +22,8 @@ All notable changes to this fork are documented below.
 - Added live Godot protocol coverage for the selected packaged Diablo adapter:
   the server starts through the package boundary, the client receives its
   initial authoritative snapshot, reconnects, and verifies resume-token and
-  entity continuity.
+  entity continuity. A companion process-restart fixture reuses the package
+  and save root and verifies persisted entity and class identity.
 
 - Advanced combined authoritative session checkpoints to format 3 with
   canonical SHA-256 hashes of serialized server state and the command ledger.
