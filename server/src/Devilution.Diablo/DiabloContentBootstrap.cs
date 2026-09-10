@@ -344,10 +344,7 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
         var itemCombinations = content.TryGetTable(
             "item_combinations.tsv",
             out var itemCombinationsTable)
-            ? AuthoritativeItemCombinationCatalog.LoadTsv(
-                itemCombinationsTable.SourcePath,
-                itemCombinationsTable.ToCanonicalTsv(),
-                stableIds)
+            ? LoadItemCombinations(content, itemCombinationsTable, stableIds)
             : null;
         itemCombinations?.ValidateItems(itemCatalog);
         var worldRulesTable = GetRequiredExternalTable(content, "world_rules.tsv");
@@ -1372,6 +1369,19 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
         return AuthoritativeLevelGenerationCatalog.LoadTsv(
             table.SourcePath,
             table.ToCanonicalTsv());
+    }
+
+    private static AuthoritativeItemCombinationCatalog LoadItemCombinations(
+        ComposedContent content,
+        TsvTable table,
+        StableContentIdCatalog stableIds)
+    {
+        if (content.Manifest.Schema == DiabloContentSchema.Current)
+            AuthoritativeItemCombinationCatalog.ValidateExternalizedProduction(table);
+        return AuthoritativeItemCombinationCatalog.LoadTsv(
+            table.SourcePath,
+            table.ToCanonicalTsv(),
+            stableIds);
     }
 
     private static AuthoritativeMonsterSpawnPolicyCatalog? LoadMonsterSpawnPolicies(

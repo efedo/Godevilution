@@ -10,6 +10,13 @@ public sealed record AuthoritativeItemCombinationDefinition(
 /** Validated content-owned item-combination rules used by server inventory actions. */
 public sealed class AuthoritativeItemCombinationCatalog
 {
+    private static readonly IReadOnlyList<string> ProductionColumns = [
+        "result_item_id",
+        "result_item_symbol",
+        "required_item_ids",
+        "required_item_symbols",
+    ];
+
     private readonly IReadOnlyList<AuthoritativeItemCombinationDefinition> definitions;
 
     public AuthoritativeItemCombinationCatalog(
@@ -33,6 +40,18 @@ public sealed class AuthoritativeItemCombinationCatalog
     }
 
     public IReadOnlyList<AuthoritativeItemCombinationDefinition> Definitions => definitions;
+
+    /** Rejects numeric-only recipe identities at the current production boundary. */
+    public static void ValidateExternalizedProduction(TsvTable table)
+    {
+        ArgumentNullException.ThrowIfNull(table);
+        if (!table.Columns.SequenceEqual(ProductionColumns, StringComparer.Ordinal))
+            throw new InvalidDataException(
+                $"Production item-combination table '{table.SourcePath}' must use the complete ordered symbolic schema.");
+        foreach (var row in table.Rows)
+            foreach (var column in ProductionColumns)
+                _ = row.Required(column);
+    }
 
     /** Validates every combination identity against the active normalized item catalog. */
     public void ValidateItems(AuthoritativeItemCatalog items)

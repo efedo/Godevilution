@@ -28,6 +28,25 @@ public sealed class AuthoritativeItemCombinationCatalogTests
     }
 
     [Fact]
+    public void ProductionValidationRequiresCompleteOrderedSymbolicSchema()
+    {
+        var complete = TsvTable.Parse(
+            "item_combinations.tsv",
+            "result_item_id\tresult_item_symbol\trequired_item_ids\trequired_item_symbols\n"
+                + "2004\treconstructed_note\t2001,2002,2003\ttorn_note_1,torn_note_2,torn_note_3\n");
+
+        AuthoritativeItemCombinationCatalog.ValidateExternalizedProduction(complete);
+
+        var legacy = TsvTable.Parse(
+            "item_combinations.tsv",
+            "result_item_id\trequired_item_ids\n"
+                + "2004\t2001,2002,2003\n");
+        var exception = Assert.Throws<InvalidDataException>(() =>
+            AuthoritativeItemCombinationCatalog.ValidateExternalizedProduction(legacy));
+        Assert.Contains("complete ordered symbolic schema", exception.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void RejectsStableSymbolNumericMismatchForCombination()
     {
         var stableIds = new StableContentIdCatalog([

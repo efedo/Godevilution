@@ -3,9 +3,9 @@
 Each directory under `server/content` is a server-owned, validated gameplay
 content pack. The default `base` pack is loaded by the standalone server and is
 included in its content manifest and combined ruleset identity.
-It declares its identity and `devilution.diablo@1.475.0` schema in
+It declares its identity and `devilution.diablo@1.476.0` schema in
 `base/content-pack.json`; the Diablo module also accepts the immediately
-previous additive `1.474.0` schema so existing manifest-based packs remain
+previous additive `1.475.0` schema so existing manifest-based packs remain
 loadable. A composed manifest must still use one exact schema identity across
 all declared packs; use the previous schema only for a complete compatible
 manifest rather than mixing it with the current pack. The standalone host falls
@@ -3200,7 +3200,7 @@ clients.
 | `class_loadout_items.tsv` | `class_id`, `item_order` | Deterministic starting equipment, belt, and inventory placement with required stable `item_symbol` cross-checks in current production rows. |
 | `combat.tsv` | singleton | Variant, combat defaults, primary-attribute and resistance ceilings, native difficulty level/accuracy/armor/damage/experience/health tuning, Monk staff/unarmed/weapon, Bard sword/bow/fallback, standard fallback, Barbarian bow/fallback/axe/mace/vitality scaling, Thorns retaliation, Hellfire Decay, Devastation, Jesters, Peril, Doppelganger, Triple Demon Damage, PvP block tuning, equipment FastBlock timing, hit-recovery tiers, melee attack-speed tiers, Rogue damage scaling, Multiple Arrows count, follow-up delay, and perpendicular spread distance, monster hit-chance floors and accuracy formula tuning, post-hit equipment restoration, Hellfire class armor, restart rules, death-gold rules, and PvP-ear identity/projection with optional `pvp_ear_item_symbol`. |
 | `content_ids.tsv` | `kind`, `symbol` | Bidirectional stable symbolic IDs; item, unique-item, quest, class capabilities such as `ability:trap_disarm`, world objects, stores, set levels, procedural quest origins, spells, levels, and portals are declared separately from runtime projections and validated against their active catalogs during activation. |
-| `item_combinations.tsv` | `result_item_id`, `required_item_ids` | Validated server-owned item-combination recipes with optional result and input item symbols. |
+| `item_combinations.tsv` | `result_item_id`, `required_item_ids` | Optional validated server-owned item-combination recipes; current-schema supplied tables use the complete ordered `result_item_id`, `result_item_symbol`, `required_item_ids`, and `required_item_symbols` schema, while previous/direct loaders retain numeric-only compatibility. |
 | `levels.tsv` | `level_id` | Walkability, missile geometry, default-start selection, and multiplayer death-drop policy; supplied current-schema rows use the complete symbolic level schema. |
 | `procedural_levels.tsv` | `level_id` | Deterministic generated level dimensions, seeds, movement/missile/native-vision densities, default-start/death-drop flags, and optional semicolon-separated authored `required_walkable_cells` (`x,y;x,y`) entry cells; supplied current-schema rows use the complete symbolic procedural-level schema. |
 | `world_rules.tsv` | singleton | External town-level identity, optional stable Adria and Storyteller service-store identities, and optional Town Portal destination coordinates/slot layout; activation validates the level, requires every configured destination slot to be in-bounds and walkable, and rejects zero, colliding, or stock-vendor service IDs. |
@@ -3279,7 +3279,7 @@ and no implicit table replacements. For example:
   "dependencies": ["devilution.base"],
   "schema": {
     "id": "devilution.diablo",
-    "version": "1.475.0"
+    "version": "1.476.0"
   },
   "dependencyConstraints": [
     {
@@ -3313,8 +3313,8 @@ three-component semantic-version constraints for declared dependencies. All
 declared schemas in one ordered manifest must match, every constraint must name
 a declared dependency, and the loaded dependency version must satisfy its
 range. The first-party server rejects a declared schema other than
-`devilution.diablo@1.475.0` or its immediately previous additive
-`1.474.0`. Current-schema packs must provide the complete production table
+`devilution.diablo@1.476.0` or its immediately previous additive
+`1.475.0`. Current-schema packs must provide the complete production table
 contract; previous-schema packs retain their documented compatibility fallbacks.
 Manifests without compatibility metadata retain their legacy identity and
 remain loadable during migration.
