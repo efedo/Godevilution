@@ -869,11 +869,7 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
                 stableIds)
             : null;
         var quests = content.TryGetTable("quests.tsv", out var questsTable)
-            ? AuthoritativeQuestCatalog.LoadTsv(
-                questsTable.SourcePath,
-                questsTable.ToCanonicalTsv(),
-                questTypes,
-                stableIds)
+            ? LoadQuests(content, questsTable, questTypes, stableIds)
             : null;
         if (content.TryGetTable("quest_states.tsv", out var questStatesTable)) {
             var additionalQuests = AuthoritativeQuestCatalog.LoadTsv(
@@ -1391,6 +1387,21 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
         return AuthoritativeWorldObjectCatalog.LoadTsv(
             table.SourcePath,
             table.ToCanonicalTsv(),
+            stableIds);
+    }
+
+    private static IReadOnlyList<AuthoritativeQuestState> LoadQuests(
+        ComposedContent content,
+        TsvTable table,
+        AuthoritativeQuestTypeCatalog? questTypes,
+        StableContentIdCatalog stableIds)
+    {
+        if (content.Manifest.Schema == DiabloContentSchema.Current)
+            AuthoritativeQuestCatalog.ValidateExternalizedProduction(table);
+        return AuthoritativeQuestCatalog.LoadTsv(
+            table.SourcePath,
+            table.ToCanonicalTsv(),
+            questTypes,
             stableIds);
     }
 

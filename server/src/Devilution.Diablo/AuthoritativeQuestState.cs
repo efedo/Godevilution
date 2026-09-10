@@ -396,6 +396,94 @@ public sealed class AuthoritativeQuestState
 /** External quest definitions and initial progress. */
 public static class AuthoritativeQuestCatalog
 {
+    private static readonly IReadOnlyList<string> ProductionColumns = [
+        "quest_id",
+        "quest_symbol",
+        "level_id",
+        "level_symbol",
+        "required_progress",
+        "progress",
+        "completed",
+        "unavailable",
+        "initial",
+        "logged",
+        "variable1",
+        "variable2",
+        "message_id",
+        "completion_monster_id",
+        "completion_monster_symbol",
+        "completion_unique_identity",
+        "dialogue_variable1",
+        "dialogue_variable2",
+        "completion_variable1",
+        "completion_variable2",
+        "completion_activate_quest_id",
+        "completion_activate_quest_symbol",
+        "route_activation",
+        "completion_diablo",
+        "completion_reward_item_id",
+        "completion_reward_item_symbol",
+        "completion_reward_item_level",
+        "turn_in_towner_id",
+        "turn_in_level_id",
+        "turn_in_level_symbol",
+        "turn_in_position_x",
+        "turn_in_position_y",
+        "turn_in_item_id",
+        "turn_in_item_symbol",
+        "turn_in_required_variable2",
+        "turn_in_reward_unique_id",
+        "turn_in_reward_unique_symbol",
+        "turn_in_reward_item_level",
+        "turn_in_reward_position_x",
+        "turn_in_reward_position_y",
+        "turn_in_message_id",
+        "turn_in_reward_item_id",
+        "turn_in_reward_item_symbol",
+        "dialogue_item_id",
+        "dialogue_item_symbol",
+        "dialogue_reward_unique_id",
+        "dialogue_reward_unique_symbol",
+        "dialogue_reward_item_level",
+        "dialogue_reward_offset_x",
+        "dialogue_reward_offset_y",
+        "dialogue_completion_message_id",
+        "dialogue_reward_item_id",
+        "dialogue_reward_item_symbol",
+        "dialogue_reward_on_activation",
+        "turn_in_activation_only",
+        "turn_in_on_completion",
+        "turn_in_completion_variable2",
+        "turn_in_completion_message_id",
+        "turn_in_completion_reward_unique_id",
+        "turn_in_completion_reward_unique_symbol",
+        "turn_in_completion_reward_item_level",
+        "turn_in_completion_reward_position_x",
+        "turn_in_completion_reward_position_y",
+        "turn_in_completion_reward_item_id",
+        "turn_in_completion_reward_item_symbol",
+        "turn_in_alternate_item_id",
+        "turn_in_alternate_item_symbol",
+        "turn_in_alternate_message_id",
+        "turn_in_activation_variable1",
+        "turn_in_required_variable1",
+        "turn_in_variable1",
+        "turn_in_progress_only",
+    ];
+
+    /** Rejects legacy quest-table headers at the current production boundary. */
+    public static void ValidateExternalizedProduction(TsvTable table)
+    {
+        ArgumentNullException.ThrowIfNull(table);
+        if (!table.Columns.SequenceEqual(ProductionColumns, StringComparer.Ordinal))
+            throw new InvalidDataException(
+                $"Production quest table '{table.SourcePath}' must use the complete ordered schema.");
+        foreach (var row in table.Rows) {
+            _ = row.RequiredUInt32("quest_id");
+            _ = row.RequiredUInt32("required_progress");
+        }
+    }
+
     public static IReadOnlyList<AuthoritativeQuestState> LoadTsv(
         string sourcePath,
         string contents,

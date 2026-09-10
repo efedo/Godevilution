@@ -2,7 +2,7 @@
 
 All notable changes to this fork are documented below.
 
-- Advanced the active content schema to `1.477.0`, retaining `1.476.0` as
+- Advanced the active content schema to `1.478.0`, retaining `1.477.0` as
   the previous additive contract. Current-schema production activation now
   requires `world_rules.tsv` to carry the complete external town/service
   identities and Town Portal destination geometry, and `combat.tsv` to carry
@@ -20,7 +20,8 @@ All notable changes to this fork are documented below.
   world source (`levels.tsv` or `procedural_levels.tsv`) and complete
   `level_generation.tsv` metadata. Supplied `item_combinations.tsv` tables
   must use the complete ordered symbolic recipe schema. Supplied `objects.tsv`
-  tables must use the complete ordered object schema. Older
+  tables must use the complete ordered object schema, and supplied `quests.tsv`
+  tables must use the complete ordered quest schema. Older
   schema packs and direct compatibility callers retain support
   for partial rows, but new packs cannot reintroduce embedded defaults at the
   server boundary.
