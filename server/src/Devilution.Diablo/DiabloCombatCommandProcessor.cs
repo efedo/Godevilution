@@ -880,9 +880,22 @@ public sealed class DiabloCombatCommandProcessor
             ranged,
             players);
         // Native cell attacks still perform their animation when the lane is
-        // empty; accepting the intent without an event preserves that behavior.
-        if (targetEntityId == 0)
+        // empty; breakable objects are the one melee-only side effect.
+        if (targetEntityId == 0) {
+            if (!ranged
+                && TryGetMeleeBreakableObject(
+                    player,
+                    targetX,
+                    targetY,
+                    out var breakableObject)
+                && breakableObject is not null) {
+                breakableObject.Destroyed = true;
+                var hellfireRemoved = ApplyHellfireWeaponDecay(player);
+                if (!hellfireRemoved)
+                    ApplyNativeWeaponDurabilityLoss(player, 30);
+            }
             return DiabloCombatIntentResult.Accepted;
+        }
         return ResolveAttack(
             player,
             targetEntityId,
@@ -943,6 +956,34 @@ public sealed class DiabloCombatCommandProcessor
                 return playerTarget.EntityId;
         }
         return 0;
+    }
+
+    /** Returns the native adjacent breakable object selected by a melee cell attack. */
+    private bool TryGetMeleeBreakableObject(
+        AuthoritativePlayerState player,
+        int targetX,
+        int targetY,
+        out AuthoritativeWorldObject? breakableObject)
+    {
+        var direction = (DiabloPlayerDirection)DeterministicGridDirections.Toward(
+            player.PositionX,
+            player.PositionY,
+            targetX,
+            targetY);
+        var displacement = DeterministicGridDirections.GetDisplacement(
+            (DeterministicGridDirection)direction);
+        var positionX = checked(player.PositionX + displacement.X);
+        var positionY = checked(player.PositionY + displacement.Y);
+        breakableObject = world.Objects.Values
+            .Where(@object => @object.LevelId == player.LevelId
+                && @object.PositionX == positionX
+                && @object.PositionY == positionY
+                && @object.Breakable
+                && !@object.Activated
+                && !@object.Destroyed)
+            .OrderBy(@object => @object.EntityId)
+            .FirstOrDefault();
+        return breakableObject is not null;
     }
 
     /** Emits server-owned weapon arrows targeting another player. */

@@ -521,6 +521,11 @@ block expiry uses the 1-in-10 parry roll for left-hand shield/staff and
 right-hand shield damage, while hit recovery uses the 3-in-4 armor roll with
 native helmet/chest selection. Indestructible equipment is preserved and
 zero-durability items are removed with authoritative resource recalculation.
+Melee cell attacks now also honor the native `PlrHitObj` boundary: the first
+adjacent authored breakable object is destroyed through the authoritative
+world state, and the same Hellfire-decay/ordinary weapon-durability ordering
+is applied as a successful melee hit. Ranged cell attacks retain projectile
+collision handling for breakable blockers.
 Ranged Hellfire replay now carries the validated `Peril` self-damage payload
 and post-armor multiplier into the projectile snapshot.
 The ranged `Peril` impact replay now applies that deferred self-damage at the

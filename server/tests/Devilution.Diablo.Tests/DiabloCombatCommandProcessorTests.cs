@@ -708,6 +708,42 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void MeleeCellAttackBreaksAnAdjacentBreakableObject()
+    {
+        var breakable = new AuthoritativeWorldObject(
+            20,
+            4,
+            0,
+            1,
+            0,
+            breakable: true);
+        var weapon = AuthoritativeItemState.Empty with {
+            ItemType = 1,
+            ItemClass = 1,
+            MinDamage = 1,
+            MaxDamage = 1,
+            Durability = 4,
+            MaxDurability = 4,
+            StatFlag = true,
+        };
+        var world = new DiabloWorldState(objects: [breakable]);
+        var processor = CreateProcessor(world, random: new DiabloRandom(0));
+        var player = CreatePlayer(
+            entityId: 7,
+            equipment: [new EquippedStoreItem(4, 42, weapon)]);
+
+        var result = processor.Execute(
+            player,
+            new DiabloAttackAtIntent(1, 0),
+            1,
+            [player]);
+
+        Assert.True(result.Succeeded, result.Failure?.ToString());
+        Assert.True(breakable.Destroyed);
+        Assert.Equal(3, Assert.Single(player.Equipment).State.Durability);
+    }
+
+    [Fact]
     public void SuccessfulMeleeAttackConsumesNativeWeaponDurability()
     {
         var weapon = AuthoritativeItemState.Empty with {

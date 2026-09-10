@@ -29,6 +29,10 @@ All notable changes to this fork are documented below.
   applies the 3-in-4 helmet/chest armor roll, and broken equipment is removed
   with authoritative resource recalculation.
 
+- Aligned melee cell attacks with native `PlrHitObj`: adjacent authored
+  breakable objects are destroyed authoritatively, and successful object hits
+  consume the same native weapon-durability boundary as monster hits.
+
 - Advanced the active content schema to `1.461.0`, retaining `1.460.0` as
   the previous additive contract for compatible packs.
 
