@@ -3692,7 +3692,9 @@ authoritative world. Unmapped native object-layer values remain inert by
 design. Explicit native presentation identities on future templates must also
 match their mapped authored object identities; raw DUN layer IDs remain a
 separate conversion namespace, and omitted identities remain valid for custom
-presentation-only objects.
+presentation-only objects. Current-schema activation now runs the same mapping
+parser used by direct catalog callers before composing geometry, rejecting
+ambiguous targets and invalid `active_map` values at the content boundary.
 
 Authoritative server startup now accepts an optional `--starting-level` override
 for newly created participants. This is a development and fixture control only;

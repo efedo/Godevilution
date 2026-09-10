@@ -2035,6 +2035,12 @@ materializes every matching nonzero cell with a deterministic reserved entity
 ID; unmapped native values remain inert, and missing or mismatched templates
 reject activation. This keeps native object identity conversion explicit rather
 than inferring gameplay behavior from binary layer values.
+Current-schema activation also runs the mapping parser at the production
+boundary, so rows with ambiguous set-level/ordinary-level targets, invalid
+`active_map` usage, malformed raw IDs, or invalid template references fail
+before world geometry is composed. The raw layer value remains distinct from
+the template's optional native presentation identity; only the latter is sent
+to compatibility clients.
 
 Schema 1.369 adds the optional `template_only` Boolean column to `objects.tsv`.
 Rows marked `1` are validated with the active object catalog and are available

@@ -2,6 +2,11 @@
 
 All notable changes to this fork are documented below.
 
+- Hardened current-schema native-DUN object activation by running the same
+  target, Boolean, identity, and raw-layer validation used by direct catalog
+  loading before world composition. Added a protocol regression proving the
+  shipped Warlord raw IDs (108/109) project as presentation IDs (89/90).
+
 - Native-DUN object mappings now cross-check an authored template's optional
   native presentation identity against its mapped object identity, while
   preserving the distinction between raw DUN conversion IDs and presentation

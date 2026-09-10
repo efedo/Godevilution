@@ -81,6 +81,36 @@ public sealed class AuthoritativeNativeDunObjectCatalogTests
     }
 
     [Fact]
+    public void ProductionValidationRejectsRowsThatTargetBothLevelKinds()
+    {
+        var table = TsvTable.Parse(
+            "native_dun_objects.tsv",
+            "set_level_id\tset_level_symbol\tlevel_id\tlevel_symbol\tactive_map\tnative_object_id\tobject_id\tobject_symbol\ttemplate_entity_id\n"
+                + "2\tSL_BONECHAMB\t8\tcatacombs\t1\t71\t4\tbone_door\t3001\n");
+
+        var exception = Assert.Throws<InvalidDataException>(
+            () => AuthoritativeNativeDunObjectCatalog.ValidateExternalizedProduction(table));
+
+        Assert.Contains("must target exactly one set-level or ordinary level", exception.Message,
+            StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void ProductionValidationRejectsActiveMapOnOrdinaryLevelRows()
+    {
+        var table = TsvTable.Parse(
+            "native_dun_objects.tsv",
+            "set_level_id\tset_level_symbol\tlevel_id\tlevel_symbol\tactive_map\tnative_object_id\tobject_id\tobject_symbol\ttemplate_entity_id\n"
+                + "\t\t8\tcatacombs\t1\t71\t4\tbone_door\t3001\n");
+
+        var exception = Assert.Throws<InvalidDataException>(
+            () => AuthoritativeNativeDunObjectCatalog.ValidateExternalizedProduction(table));
+
+        Assert.Contains("cannot use active_map with an ordinary level target", exception.Message,
+            StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void TsvLoaderParsesOrdinaryLevelTarget()
     {
         var catalog = AuthoritativeNativeDunObjectCatalog.LoadTsv(

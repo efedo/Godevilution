@@ -12,6 +12,50 @@ namespace Devilution.Server.Tests;
 public sealed class DialogueProtocolProjectionTests
 {
     [Fact]
+    public void ProjectsNativeDunPresentationIdentityWithoutLeakingRawLayerIds()
+    {
+        var source = CreateOriginSnapshot(
+            new DiabloSetLevelObjectOriginState(6, 17, 7, 8)) with {
+                Objects = [
+                    new DiabloObjectState(
+                        1761633895,
+                        90,
+                        4,
+                        15,
+                        15,
+                        false,
+                        0,
+                        AuthoritativeObjectEffectKind.None,
+                        0) {
+                        NativeObjectId = 90,
+                    },
+                    new DiabloObjectState(
+                        1761633898,
+                        89,
+                        4,
+                        18,
+                        15,
+                        false,
+                        0,
+                        AuthoritativeObjectEffectKind.None,
+                        0) {
+                        NativeObjectId = 89,
+                    },
+                ],
+            };
+
+        var projected = DiabloProtocolMapper.ToProtocolSnapshot(source);
+
+        Assert.Equal(
+            [(1761633895U, 90U), (1761633898U, 89U)],
+            projected.Objects
+                .OrderBy(@object => @object.EntityId)
+                .Select(@object => (@object.EntityId, @object.NativeObjectId))
+                .ToArray());
+        Assert.DoesNotContain(projected.Objects, @object => @object.NativeObjectId is 108 or 109);
+    }
+
+    [Fact]
     public void ProjectsTownerGreetingMetadata()
     {
         var source = CreateOriginSnapshot(

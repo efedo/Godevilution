@@ -81,8 +81,11 @@ public sealed class AuthoritativeNativeDunObjectCatalog
             throw new InvalidDataException(
                 $"Production native-DUN object table '{table.SourcePath}' must use the complete ordered schema.");
         foreach (var row in table.Rows) {
-            _ = row.RequiredUInt32("native_object_id");
-            _ = row.RequiredUInt32("object_id");
+            // Run the same structural parser used by activation, without
+            // resolving stable symbols. This keeps malformed target rows from
+            // reaching world composition with weaker diagnostics than direct
+            // catalog callers receive.
+            _ = CreateDefinition(row, stableIds: null).Validate();
         }
     }
 

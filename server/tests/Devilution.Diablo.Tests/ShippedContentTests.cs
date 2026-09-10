@@ -1584,10 +1584,11 @@ public sealed class ShippedContentTests
             .ThenBy(@object => @object.PositionY)
             .ToArray();
         Assert.Equal(
-            [(90U, 15, 15, 1761633895U), (89U, 18, 15, 1761633898U),
-             (89U, 20, 15, 1761633900U), (90U, 23, 15, 1761633903U)],
+            [(90U, 90U, 15, 15, 1761633895U), (89U, 89U, 18, 15, 1761633898U),
+             (89U, 89U, 20, 15, 1761633900U), (90U, 90U, 23, 15, 1761633903U)],
             armories.Select(@object => (
                 @object.ObjectId,
+                @object.NativeObjectId,
                 @object.PositionX,
                 @object.PositionY,
                 @object.EntityId)).ToArray());
