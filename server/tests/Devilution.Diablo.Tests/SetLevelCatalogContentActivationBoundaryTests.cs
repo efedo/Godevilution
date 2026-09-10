@@ -44,7 +44,7 @@ public sealed class SetLevelCatalogContentActivationBoundaryTests
             tables,
             basePack.Dependencies,
             basePack.Overlays,
-            new ContentSchemaIdentity("devilution.diablo", "1.500.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.501.0"),
             basePack.DependencyConstraints,
             basePack.Assets);
 

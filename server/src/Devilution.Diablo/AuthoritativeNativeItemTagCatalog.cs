@@ -10,6 +10,23 @@ public sealed record AuthoritativeNativeItemTagDefinition(
 /** Validated external generation tags for legacy item-type symbols. */
 public sealed class AuthoritativeNativeItemTagCatalog
 {
+    private static readonly IReadOnlyList<string> ProductionColumns = [
+        "item_type",
+        "tags",
+    ];
+
+    public static void ValidateExternalizedProduction(TsvTable table)
+    {
+        ArgumentNullException.ThrowIfNull(table);
+        if (!table.Columns.SequenceEqual(ProductionColumns, StringComparer.Ordinal))
+            throw new InvalidDataException(
+                $"Production native-item-tag compatibility table '{table.SourcePath}' must use the complete ordered schema.");
+        foreach (var row in table.Rows) {
+            _ = row.Required("item_type");
+            _ = row.Required("tags");
+        }
+    }
+
     private readonly Dictionary<string, IReadOnlySet<string>> byItemType =
         new(StringComparer.OrdinalIgnoreCase);
 

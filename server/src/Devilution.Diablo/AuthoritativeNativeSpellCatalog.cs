@@ -13,6 +13,21 @@ public sealed class AuthoritativeNativeSpellCatalog
 {
     public const uint MaximumNativeSpellId = NativeCompatibilityLimits.MaximumNativeSpellId;
 
+    private static readonly IReadOnlyList<string> ProductionColumns = [
+        "native_spell_id",
+        "native_spell_symbol",
+    ];
+
+    public static void ValidateExternalizedProduction(TsvTable table)
+    {
+        ArgumentNullException.ThrowIfNull(table);
+        if (!table.Columns.SequenceEqual(ProductionColumns, StringComparer.Ordinal))
+            throw new InvalidDataException(
+                $"Production native-spell compatibility table '{table.SourcePath}' must use the complete ordered schema.");
+        var catalog = LoadTsv(table.SourcePath, table.ToCanonicalTsv());
+        catalog.ValidateCompleteNamespace();
+    }
+
     private readonly Dictionary<uint, AuthoritativeNativeSpellDefinition> byId;
     private readonly Dictionary<string, uint> bySymbol =
         new(StringComparer.OrdinalIgnoreCase);

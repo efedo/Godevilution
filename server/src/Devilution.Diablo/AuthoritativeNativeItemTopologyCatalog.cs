@@ -20,6 +20,25 @@ public sealed class AuthoritativeNativeItemTopologyCatalog
 {
     public const int MaximumNativeId = 127;
 
+    private static readonly IReadOnlyList<string> ProductionColumns = [
+        "kind",
+        "symbol",
+        "native_id",
+    ];
+
+    public static void ValidateExternalizedProduction(TsvTable table)
+    {
+        ArgumentNullException.ThrowIfNull(table);
+        if (!table.Columns.SequenceEqual(ProductionColumns, StringComparer.Ordinal))
+            throw new InvalidDataException(
+                $"Production native-item-topology compatibility table '{table.SourcePath}' must use the complete ordered schema.");
+        foreach (var row in table.Rows) {
+            _ = row.Required("kind");
+            _ = row.Required("symbol");
+            _ = row.RequiredInt32("native_id");
+        }
+    }
+
     private readonly Dictionary<
         (AuthoritativeNativeItemTopologyKind Kind, string Symbol),
         int> bySymbol;

@@ -41,7 +41,7 @@ public sealed class GeneratedOriginContentActivationBoundaryTests
         var previous = AddTables(
             basePack,
             tables,
-            new ContentSchemaIdentity("devilution.diablo", "1.500.0"));
+            new ContentSchemaIdentity("devilution.diablo", "1.501.0"));
 
         var activation = DiabloModule.Instance.ContentBootstrap.Activate(
             ComposedContent.Compose(new ContentManifest(

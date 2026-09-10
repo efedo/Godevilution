@@ -53,7 +53,7 @@ public sealed class NativeDunGeometryContentActivationBoundaryTests
             basePack,
             "native_dun_piece_definitions.tsv",
             ReverseColumns(CreateTable("native_dun_piece_definitions.tsv")),
-            new ContentSchemaIdentity("devilution.diablo", "1.500.0"));
+            new ContentSchemaIdentity("devilution.diablo", "1.501.0"));
         pack = ReplaceTable(
             pack,
             "native_dun_tile_properties.tsv",

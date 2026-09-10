@@ -235,6 +235,8 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
                 $"Content schema '{content.Manifest.Schema}' is incompatible with "
                 + $"the Diablo module schema '{Schema}'.");
         }
+        if (content.Manifest.Schema == DiabloContentSchema.Current)
+            ValidateLegacyCompatibilityCatalogs(content);
 
         var stableIdsTable = GetRequiredExternalTable(content, "content_ids.tsv");
         if (content.Manifest.Schema == DiabloContentSchema.Current)
@@ -1605,6 +1607,35 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
             }
         }
         return AuthoritativeNativeDunGeometryCatalog.LoadOptional(content);
+    }
+
+    private static void ValidateLegacyCompatibilityCatalogs(ComposedContent content)
+    {
+        ValidateOptionalCompatibilityTable(
+            content,
+            "native_spells.tsv",
+            AuthoritativeNativeSpellCatalog.ValidateExternalizedProduction);
+        ValidateOptionalCompatibilityTable(
+            content,
+            "native_item_misc.tsv",
+            AuthoritativeNativeMiscCatalog.ValidateExternalizedProduction);
+        ValidateOptionalCompatibilityTable(
+            content,
+            "native_item_topology.tsv",
+            AuthoritativeNativeItemTopologyCatalog.ValidateExternalizedProduction);
+        ValidateOptionalCompatibilityTable(
+            content,
+            "native_item_tags.tsv",
+            AuthoritativeNativeItemTagCatalog.ValidateExternalizedProduction);
+    }
+
+    private static void ValidateOptionalCompatibilityTable(
+        ComposedContent content,
+        string sourcePath,
+        Action<TsvTable> validator)
+    {
+        if (content.TryGetTable(sourcePath, out var table))
+            validator(table);
     }
 
     private static AuthoritativeSetLevelObjectCatalog LoadSetLevelObjects(

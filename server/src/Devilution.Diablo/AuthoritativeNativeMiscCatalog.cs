@@ -12,6 +12,23 @@ public sealed class AuthoritativeNativeMiscCatalog
 {
     public const int MaximumNativeMiscId = 127;
 
+    private static readonly IReadOnlyList<string> ProductionColumns = [
+        "native_misc_id",
+        "native_misc_symbol",
+    ];
+
+    public static void ValidateExternalizedProduction(TsvTable table)
+    {
+        ArgumentNullException.ThrowIfNull(table);
+        if (!table.Columns.SequenceEqual(ProductionColumns, StringComparer.Ordinal))
+            throw new InvalidDataException(
+                $"Production native-misc compatibility table '{table.SourcePath}' must use the complete ordered schema.");
+        foreach (var row in table.Rows) {
+            _ = row.RequiredInt32("native_misc_id");
+            _ = row.Required("native_misc_symbol");
+        }
+    }
+
     private readonly Dictionary<int, AuthoritativeNativeMiscDefinition> byId;
     private readonly Dictionary<string, int> bySymbol =
         new(StringComparer.OrdinalIgnoreCase);
