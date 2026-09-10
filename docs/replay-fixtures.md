@@ -145,6 +145,10 @@ The `gameplay/ranged-multiple-arrows` companion checks all three emitted
 projectiles, their spread positions, and the delayed activation state.
 The `gameplay/ranged-class-damage` companion proves authored Rogue bow ranges,
 class attribute scaling, and the shared damage-range RNG draw.
+The `gameplay/ranged-resource-restoration` companion carries both random and
+fixed life-steal flags alongside mana steal. Its impact checkpoints prove that
+the random life roll is consumed before the native fixed life amount replaces
+it, while life and mana remain capped identically in both runners.
 The `gameplay/ranged-class-monk`, `gameplay/ranged-class-bard`, and
 `gameplay/ranged-class-barbarian` companions extend that boundary across the
 remaining ranged class profiles, including the class-specific damage branches

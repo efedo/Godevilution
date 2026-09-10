@@ -2,6 +2,11 @@
 
 All notable changes to this fork are documented below.
 
+- Extended the shared ranged resource-restoration replay fixture with both
+  `RandomStealLife` and fixed life-steal flags. The refreshed native/C# hashes
+  now verify that the random draw is consumed before the fixed amount replaces
+  it at projectile impact.
+
 - Matched native player-versus-player resource restoration. Melee and bow
   attacks now honor only `RandomStealLife`; fixed life-steal and mana-steal
   effects remain restricted to monster-target attacks, with focused coverage

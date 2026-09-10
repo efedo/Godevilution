@@ -710,7 +710,7 @@ public sealed class BaseContentReplayTests
     }
 
     [Fact]
-    public void RangedClassAttackRestoresLifeAndManaFromEquipment()
+    public void RangedClassAttackPreservesNativeLifeStealOrdering()
     {
         var fixture = ReplayFixtureLoader.Load(File.ReadAllText(Path.Combine(
             AppContext.BaseDirectory,
@@ -728,7 +728,7 @@ public sealed class BaseContentReplayTests
         Assert.Empty(result.FinalSnapshot.Projectiles);
         Assert.Equal(2, result.Checkpoints.Count);
         Assert.Equal(
-            ["eb31441d2a69d6c94af279fe8ad677f795037d2aa515ca608ab45a958f723f72", "5a8787c43d7d5bd5199f76a02316dc99ecf94953e37c1f0ce7fb8d811ba54a0c"],
+            ["497ccd5f8b204e98aaaacfece4a2292b18f9223e14c7ef68419c6bc64deaef32", "d25cb863285ea16e9013c1cc440d60bb38de662468db3f4fe8a5f7ed5b92f20a"],
             result.Checkpoints.Select(checkpoint => checkpoint.ActualStateSha256));
     }
 

@@ -2,6 +2,11 @@
 
 Status date: 2026-09-10
 
+The shared ranged resource-restoration replay fixture now carries both random
+and fixed life-steal flags. Its refreshed native/C# checkpoints prove that the
+random draw remains consumed before the fixed life amount replaces it at the
+projectile impact boundary.
+
 Native player-versus-player resource restoration now follows `PlrHitPlr`:
 only usable `RandomStealLife` can restore the attacker after a physical player
 hit. Fixed `StealLife3/5` and `StealMana3/5` remain monster-target effects for
@@ -524,8 +529,9 @@ guards reflected in the shared checkpoint.
 
 Ranged physical replay now applies validated usable-equipment StealLife and
 StealMana restoration at the impact boundary in both runners. The new fixture
-covers life/mana caps and a shared post-impact checkpoint, including the
-server-owned projectile removal transition.
+covers life/mana caps, random/fixed life-steal ordering, and a shared
+post-impact checkpoint, including the server-owned projectile removal
+transition.
 
 Initialized ranged class replay now cross-checks Monk, Bard, and Barbarian
 damage profiles in both runners, including the Monk weapon, Bard bow, and
