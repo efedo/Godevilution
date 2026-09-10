@@ -3535,6 +3535,26 @@ public sealed class ClientModelTests
     }
 
     [Fact]
+    public void RejectsNativeVisionLayerThatOmitsMovementBlockers()
+    {
+        var model = new AuthoritativeClientModel();
+        var snapshot = new Snapshot {
+            LevelGeometry = {
+                new LevelGeometrySnapshot {
+                    LevelId = 2,
+                    Width = 2,
+                    Height = 2,
+                    BlockedCells = { 0 },
+                    NativeVisionBlockedCells = { 1 },
+                },
+            },
+        };
+
+        Assert.Throws<InvalidDataException>(() =>
+            model.Apply(new AuthoritativeClientMessage(Snapshot: snapshot)));
+    }
+
+    [Fact]
     public void RejectsInvalidProjectedPlayerLightRadius()
     {
         var model = new AuthoritativeClientModel();

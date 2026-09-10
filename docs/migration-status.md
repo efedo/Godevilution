@@ -37,6 +37,10 @@ vision-blocker density. Movement collision remains authoritative for walking,
 while the projected vision layer can diverge for BlockLight-style geometry;
 older rows retain the previous movement-derived vision behavior.
 
+Server and Godot snapshot validation now reject explicit vision layers that
+omit movement-blocked cells, preserving the same movement-is-vision invariant
+at both ends of the protocol.
+
 Godot combat, Telekinesis, and unique-monster dialogue target selection now
 uses the same projected native vision boundary as monster rendering. Hidden,
 dead, sneak-hidden, and out-of-radius monsters therefore cannot be selected

@@ -1385,6 +1385,9 @@ public sealed class AuthoritativeClientModel
                         != level.MissileBlockedCells.Count
                     || level.NativeVisionBlockedCells.Distinct().Count()
                         != level.NativeVisionBlockedCells.Count
+                    || level.NativeVisionBlockedCells.Count != 0
+                        && level.BlockedCells.Any(cell =>
+                            !level.NativeVisionBlockedCells.Contains(cell))
                     || level.NativeTransparency.Count != 0
                         && level.NativeTransparency.Count != cellCount
                     || level.NativeObjectLayer.Count != 0

@@ -824,6 +824,9 @@ public static class AuthoritativeSnapshotValidator
                 if (!AreValidCells(level.BlockedCells, cellCount)
                     || !AreValidCells(level.MissileBlockedCells, cellCount)
                     || !AreValidCells(level.NativeVisionBlockedCells, cellCount)
+                    || level.NativeVisionBlockedCells.Count != 0
+                        && level.BlockedCells.Any(cell =>
+                            !level.NativeVisionBlockedCells.Contains(cell))
                     || level.NativeTransparency.Count != 0
                         && level.NativeTransparency.Count != cellCount
                     || level.NativeObjectLayer.Count != 0

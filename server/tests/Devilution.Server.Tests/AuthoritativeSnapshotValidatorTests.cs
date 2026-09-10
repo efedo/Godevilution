@@ -216,6 +216,17 @@ public sealed class AuthoritativeSnapshotValidatorTests
                 },
             },
         };
+        var movementCellMissingFromVision = new Snapshot {
+            LevelGeometry = {
+                new LevelGeometrySnapshot {
+                    LevelId = 1,
+                    Width = 10,
+                    Height = 10,
+                    BlockedCells = { 4 },
+                    NativeVisionBlockedCells = { 5 },
+                },
+            },
+        };
         var invalidLayerValue = new Snapshot {
             LevelGeometry = {
                 new LevelGeometrySnapshot {
@@ -248,6 +259,7 @@ public sealed class AuthoritativeSnapshotValidatorTests
         foreach (var snapshot in new[] {
             oversized,
             duplicateCell,
+            movementCellMissingFromVision,
             invalidLayerValue,
             unknownWarpTarget,
         })

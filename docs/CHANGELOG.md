@@ -11,6 +11,10 @@ All notable changes to this fork are documented below.
   BlockLight-style cells can now be projected to server and Godot clients
   without changing movement.
 
+- Hardened the shared geometry contract: snapshots with an explicit native
+  vision layer are rejected unless every movement-blocked cell is also a
+  vision blocker, keeping server and Godot validation aligned.
+
 - Completed the remaining compact native replay checkpoint alignment slice:
   store fixtures now include validated cursor graphics, zero-seed Rhino charges
   use their deterministic compatibility damage stream, Reflect retaliation no
