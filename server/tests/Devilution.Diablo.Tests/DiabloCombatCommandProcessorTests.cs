@@ -976,6 +976,36 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void CompatibilityWeaponWithoutDurabilityMetadataDoesNotConsumeDurabilityRoll()
+    {
+        var weapon = AuthoritativeItemState.Empty with {
+            ItemType = 1,
+            ItemClass = 1,
+            MinDamage = 4,
+            MaxDamage = 4,
+            StatFlag = true,
+        };
+        var target = new AuthoritativeCombatTarget(9, 1, 0, 100);
+        var world = new DiabloWorldState(combatTargets: [target]);
+        var random = new DiabloRandom(1);
+        var expected = new DiabloRandom(1);
+        var processor = CreateProcessor(world, random: random);
+        var player = CreatePlayer(
+            entityId: 7,
+            equipment: [new EquippedStoreItem(4, 42, weapon)]);
+
+        var result = processor.Execute(
+            player,
+            new DiabloAttackIntent(target.EntityId),
+            1,
+            [player]);
+
+        Assert.True(result.Succeeded, result.Failure?.ToString());
+        Assert.Equal(expected.State, random.State);
+        Assert.Equal(0, Assert.Single(player.Equipment).State.MaxDurability);
+    }
+
+    [Fact]
     public void MissedMeleeAttackDoesNotConsumeNativeWeaponDurability()
     {
         var weapon = AuthoritativeItemState.Empty with {

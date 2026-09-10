@@ -1694,6 +1694,11 @@ public sealed class DiabloCombatCommandProcessor
         AuthoritativePlayerState player,
         uint damageFrequency)
     {
+        // Compact replay fixtures may carry compatibility weapons without
+        // durability metadata. Native server-backed clients do not mutate
+        // those placeholder items, so they must not consume a durability roll.
+        if (!HasNativeWeaponDurabilityTarget(player))
+            return false;
         if (!random.FlipCoin(damageFrequency))
             return false;
 
@@ -1774,6 +1779,29 @@ public sealed class DiabloCombatCommandProcessor
         }
 
         return false;
+    }
+
+    private bool HasNativeWeaponDurabilityTarget(AuthoritativePlayerState player)
+    {
+        var left = player.Equipment.FirstOrDefault(item => item.Slot == 4);
+        var right = player.Equipment.FirstOrDefault(item => item.Slot == 5);
+        if (left is not null
+            && AuthoritativeItemClassification.IsWeapon(left.State, items)
+            && left.State.MaxDurability > 0)
+            return true;
+        if (right is not null
+            && AuthoritativeItemClassification.IsWeapon(right.State, items)
+            && right.State.MaxDurability > 0)
+            return true;
+        if (left is null
+            && right is not null
+            && AuthoritativeItemClassification.IsShield(right.State, items)
+            && right.State.MaxDurability > 0)
+            return true;
+        return right is null
+            && left is not null
+            && AuthoritativeItemClassification.IsShield(left.State, items)
+            && left.State.MaxDurability > 0;
     }
 
     /** Mirrors native DamageParryItem's left-hand-first block damage. */

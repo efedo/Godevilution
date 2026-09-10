@@ -48,7 +48,8 @@ All notable changes to this fork are documented below.
   1-in-40 roll, hand/shield fallback ordering matches native behavior,
   indestructible items are preserved, and broken equipment is removed with
   authoritative resource recalculation. Hellfire `Decay` removal retains its
-  native early return before ordinary durability loss.
+  native early return before ordinary durability loss. Compatibility weapons
+  without durability metadata no longer consume a spurious replay RNG roll.
 
 - Added native incoming durability handling at timed recovery boundaries:
   block expiry applies the 1-in-10 shield/staff parry roll, hit recovery

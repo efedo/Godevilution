@@ -28,6 +28,10 @@ target armor affects hit admission, while successful melee and weapon-arrow
 damage is applied directly without a second armor reduction. The compact native
 replay runner and managed processor share this ordering.
 
+Legacy weapon durability remains authoritative for hydrated equipment. Replay
+compatibility weapons that omit durability metadata are inert placeholders and
+do not consume the native durability RNG boundary.
+
 Player hits now also honor the native Gargoyle wake-up boundary: an active
 Gargoyle special flag is consumed by the first physical hit without applying
 that hit's damage or equipment effects. Other petrified monsters use the
