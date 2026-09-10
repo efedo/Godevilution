@@ -22,6 +22,11 @@ deterministically. The restart-town fixture records that window explicitly and
 now passes shared checkpoints in both runners through death, recovery, and town
 transition.
 
+The compact replay parity slice now also covers validated store cursor graphics,
+zero-seed Rhino charge damage, Reflect retaliation draw consumption, and
+equipped-death drop checkpoints. These paths now produce the same canonical
+state in the native and managed runners.
+
 Godot combat, Telekinesis, and unique-monster dialogue target selection now
 uses the same projected native vision boundary as monster rendering. Hidden,
 dead, sneak-hidden, and out-of-radius monsters therefore cannot be selected

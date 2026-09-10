@@ -1371,6 +1371,8 @@ TEST(ReplayFixture, ExecutesBaseContentPurchaseAndSaleAgainstCSharpCheckpoints)
 	itemState.maxDurability = 20;
 	itemState.baseName = "Short Sword";
 	itemState.identifiedName = "Short Sword";
+	itemState.hasNativeCursorGraphic = true;
+	itemState.nativeCursorGraphic = 64;
 	state.activeStoreItems.push_back({ 0, 42, 75, itemState });
 	ReplayFixtureItemState armorState;
 	armorState.createInfo = 43;
@@ -1384,6 +1386,8 @@ TEST(ReplayFixture, ExecutesBaseContentPurchaseAndSaleAgainstCSharpCheckpoints)
 	armorState.maxDurability = 20;
 	armorState.baseName = "Buckler";
 	armorState.identifiedName = "Buckler";
+	armorState.hasNativeCursorGraphic = true;
+	armorState.nativeCursorGraphic = 83;
 	state.activeStoreItems.push_back({ 1, 43, 25, armorState });
 
 	ReplayFixtureExecutionResult result;

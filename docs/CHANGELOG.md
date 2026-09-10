@@ -2,6 +2,12 @@
 
 All notable changes to this fork are documented below.
 
+- Completed the remaining compact native replay checkpoint alignment slice:
+  store fixtures now include validated cursor graphics, zero-seed Rhino charges
+  use their deterministic compatibility damage stream, Reflect retaliation no
+  longer consumes an extra native draw, and the equipped-death checkpoint now
+  records the canonical managed/native state.
+
 - Aligned compact native replay with managed monster activation visibility:
   replay now refreshes tracked visible targets and decrements their activation window when
   players die or leave range. The restart-town fixture now declares its active

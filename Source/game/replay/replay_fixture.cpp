@@ -9250,8 +9250,9 @@ void AdvanceReplayMonsterAttack(
 				        && state.combatTargetMaxDamage == 0
 				    ? state.combatTargetAttackDamage
 				    : state.combatTargetMaxDamage;
-				const bool usesNativeCombatStream = !state.multiplayer
-				    || state.combatTargetMonsterAiSeed != 0;
+				// Rhino's zero-seed compatibility fixtures use the deterministic
+				// attack seed; only initialized native AI owns the global stream.
+				const bool usesNativeCombatStream = state.combatTargetMonsterAiSeed != 0;
 				const int damage = maximumDamage >= minimumDamage
 				    ? minimumDamage
 				        + (usesNativeCombatStream
@@ -9500,10 +9501,7 @@ void AdvanceReplayMonsterAttack(
 			if (state.combatTargetHitPointsQ6 == 0)
 				DefeatReplayCombatTarget(state);
 		}
-		// Keep the replay stream aligned with the authoritative monster-hit
-		// boundary, which advances once after resolving the Reflect percentage.
-		if (!state.multiplayer)
-			AdvanceRandom(state);
+		// The Reflect percentage draw is the final random operation for this hit.
 		lifeDamage = std::max(0, adjustedDamage - reflectedDamage);
 	}
 	const bool hasNoManaItem = std::any_of(
