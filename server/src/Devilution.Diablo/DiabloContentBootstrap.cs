@@ -502,10 +502,7 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
         var questSequenceVariants = content.TryGetTable(
                 "quest_sequence_variants.tsv",
                 out var questSequenceVariantsTable)
-            ? AuthoritativeQuestSequenceVariantCatalog.LoadTsv(
-                questSequenceVariantsTable.SourcePath,
-                questSequenceVariantsTable.ToCanonicalTsv(),
-                stableIds)
+            ? LoadQuestSequenceVariants(content, questSequenceVariantsTable, stableIds)
             : null;
         var levelGeneration = LoadLevelGeneration(content);
         playerLoadouts.ValidateCastSources(spells);
@@ -905,33 +902,22 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
         var questTownerInteractions = content.TryGetTable(
             "quest_towner_interactions.tsv",
             out var questTownerInteractionsTable)
-            ? AuthoritativeQuestTownerInteractionCatalog.LoadTsv(
-                questTownerInteractionsTable.SourcePath,
-                questTownerInteractionsTable.ToCanonicalTsv(),
-                stableIds)
+            ? LoadQuestTownerInteractions(content, questTownerInteractionsTable, stableIds)
             : null;
         var questDialogueStages = content.TryGetTable(
             "quest_dialogue_stages.tsv",
             out var questDialogueStagesTable)
-            ? AuthoritativeQuestDialogueStageCatalog.LoadTsv(
-                questDialogueStagesTable.SourcePath,
-                questDialogueStagesTable.ToCanonicalTsv(),
-                stableIds)
+            ? LoadQuestDialogueStages(content, questDialogueStagesTable, stableIds)
             : null;
         var townerGreetings = content.TryGetTable(
             "towner_greetings.tsv",
             out var townerGreetingsTable)
-            ? AuthoritativeTownerGreetingCatalog.LoadTsv(
-                townerGreetingsTable.SourcePath,
-                townerGreetingsTable.ToCanonicalTsv(),
-                stableIds)
+            ? LoadTownerGreetings(content, townerGreetingsTable, stableIds)
             : null;
         var dialogueMessages = content.TryGetTable(
             "dialogue_messages.tsv",
             out var dialogueMessagesTable)
-            ? AuthoritativeDialogueMessageCatalog.LoadTsv(
-                dialogueMessagesTable.SourcePath,
-                dialogueMessagesTable.ToCanonicalTsv())
+            ? LoadDialogueMessages(content, dialogueMessagesTable)
             : null;
         dialogueMessages?.ValidateMessageIds(
             (questDialogueStages?.Definitions ?? [])
@@ -1460,6 +1446,69 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
             table.SourcePath,
             table.ToCanonicalTsv(),
             stableIds);
+    }
+
+    private static AuthoritativeQuestSequenceVariantCatalog LoadQuestSequenceVariants(
+        ComposedContent content,
+        TsvTable table,
+        StableContentIdCatalog stableIds)
+    {
+        if (content.Manifest.Schema == DiabloContentSchema.Current)
+            AuthoritativeQuestSequenceVariantCatalog.ValidateExternalizedProduction(table);
+        return AuthoritativeQuestSequenceVariantCatalog.LoadTsv(
+            table.SourcePath,
+            table.ToCanonicalTsv(),
+            stableIds);
+    }
+
+    private static AuthoritativeQuestTownerInteractionCatalog LoadQuestTownerInteractions(
+        ComposedContent content,
+        TsvTable table,
+        StableContentIdCatalog stableIds)
+    {
+        if (content.Manifest.Schema == DiabloContentSchema.Current)
+            AuthoritativeQuestTownerInteractionCatalog.ValidateExternalizedProduction(table);
+        return AuthoritativeQuestTownerInteractionCatalog.LoadTsv(
+            table.SourcePath,
+            table.ToCanonicalTsv(),
+            stableIds);
+    }
+
+    private static AuthoritativeQuestDialogueStageCatalog LoadQuestDialogueStages(
+        ComposedContent content,
+        TsvTable table,
+        StableContentIdCatalog stableIds)
+    {
+        if (content.Manifest.Schema == DiabloContentSchema.Current)
+            AuthoritativeQuestDialogueStageCatalog.ValidateExternalizedProduction(table);
+        return AuthoritativeQuestDialogueStageCatalog.LoadTsv(
+            table.SourcePath,
+            table.ToCanonicalTsv(),
+            stableIds);
+    }
+
+    private static AuthoritativeTownerGreetingCatalog LoadTownerGreetings(
+        ComposedContent content,
+        TsvTable table,
+        StableContentIdCatalog stableIds)
+    {
+        if (content.Manifest.Schema == DiabloContentSchema.Current)
+            AuthoritativeTownerGreetingCatalog.ValidateExternalizedProduction(table);
+        return AuthoritativeTownerGreetingCatalog.LoadTsv(
+            table.SourcePath,
+            table.ToCanonicalTsv(),
+            stableIds);
+    }
+
+    private static AuthoritativeDialogueMessageCatalog LoadDialogueMessages(
+        ComposedContent content,
+        TsvTable table)
+    {
+        if (content.Manifest.Schema == DiabloContentSchema.Current)
+            AuthoritativeDialogueMessageCatalog.ValidateExternalizedProduction(table);
+        return AuthoritativeDialogueMessageCatalog.LoadTsv(
+            table.SourcePath,
+            table.ToCanonicalTsv());
     }
 
     private static AuthoritativeWorld LoadWorldLevels(

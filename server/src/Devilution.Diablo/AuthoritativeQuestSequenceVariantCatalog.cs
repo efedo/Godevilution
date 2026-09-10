@@ -21,6 +21,15 @@ public sealed record AuthoritativeQuestSequenceVariantStep(
  */
 public sealed class AuthoritativeQuestSequenceVariantCatalog
 {
+    private static readonly IReadOnlyList<string> ProductionColumns = [
+        "variant_id",
+        "quest_id",
+        "quest_symbol",
+        "slot_index",
+        "object_entity_id",
+        "step",
+    ];
+
     private readonly IReadOnlyList<AuthoritativeQuestSequenceVariantStep> definitions;
 
     public AuthoritativeQuestSequenceVariantCatalog(
@@ -188,6 +197,22 @@ public sealed class AuthoritativeQuestSequenceVariantCatalog
         }
         foreach (var update in updates)
             update.Object.EffectAmount = update.Step;
+    }
+
+    /** Rejects partial quest-sequence variant metadata at the current production boundary. */
+    public static void ValidateExternalizedProduction(TsvTable table)
+    {
+        ArgumentNullException.ThrowIfNull(table);
+        if (!table.Columns.SequenceEqual(ProductionColumns, StringComparer.Ordinal))
+            throw new InvalidDataException(
+                $"Production quest-sequence variant table '{table.SourcePath}' must use the complete ordered schema.");
+        foreach (var row in table.Rows) {
+            _ = row.Required("variant_id");
+            _ = row.Required("quest_id");
+            _ = row.Required("slot_index");
+            _ = row.Required("object_entity_id");
+            _ = row.Required("step");
+        }
     }
 
     public static AuthoritativeQuestSequenceVariantCatalog LoadTsv(

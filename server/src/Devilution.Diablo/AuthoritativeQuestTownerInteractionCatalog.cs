@@ -41,6 +41,36 @@ public sealed record AuthoritativeQuestTownerInteractionDefinition(
 /** Validated repeatable quest/towner interactions supplied by external content. */
 public sealed class AuthoritativeQuestTownerInteractionCatalog
 {
+    private static readonly IReadOnlyList<string> ProductionColumns = [
+        "interaction_id",
+        "quest_id",
+        "quest_symbol",
+        "towner_id",
+        "level_id",
+        "level_symbol",
+        "position_x",
+        "position_y",
+        "item_id",
+        "item_symbol",
+        "kind",
+        "required_variable1",
+        "required_variable2",
+        "variable1",
+        "variable2",
+        "message_id",
+        "consume_item",
+        "allow_completed",
+        "required_visited_level1",
+        "required_visited_level2",
+        "require_unlogged",
+        "required_item_id",
+        "required_item_symbol",
+        "require_item_present",
+        "allow_initial",
+        "use_quest_turn_in_reward",
+        "use_quest_completion_reward",
+    ];
+
     private readonly IReadOnlyList<AuthoritativeQuestTownerInteractionDefinition> definitions = [];
 
     public AuthoritativeQuestTownerInteractionCatalog(
@@ -190,6 +220,24 @@ public sealed class AuthoritativeQuestTownerInteractionCatalog
                 throw new InvalidDataException(
                     $"Quest/towner interaction {definition.InteractionId} contains an invalid position.");
             }
+        }
+    }
+
+    /** Rejects partial quest/towner interaction metadata at the current production boundary. */
+    public static void ValidateExternalizedProduction(TsvTable table)
+    {
+        ArgumentNullException.ThrowIfNull(table);
+        if (!table.Columns.SequenceEqual(ProductionColumns, StringComparer.Ordinal))
+            throw new InvalidDataException(
+                $"Production quest/towner interaction table '{table.SourcePath}' must use the complete ordered schema.");
+        foreach (var row in table.Rows) {
+            _ = row.Required("interaction_id");
+            _ = row.Required("quest_id");
+            _ = row.Required("towner_id");
+            _ = row.Required("level_id");
+            _ = row.Required("position_x");
+            _ = row.Required("position_y");
+            _ = row.Required("kind");
         }
     }
 

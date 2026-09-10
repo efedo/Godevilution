@@ -13,6 +13,11 @@ public sealed record AuthoritativeDialogueMessage(
 public sealed class AuthoritativeDialogueMessageCatalog
 {
     private const int MaximumTextBytes = 16 * 1024;
+    private static readonly IReadOnlyList<string> ProductionColumns = [
+        "message_id",
+        "message_symbol",
+        "text",
+    ];
     private readonly IReadOnlyDictionary<int, AuthoritativeDialogueMessage> definitionsById;
 
     public AuthoritativeDialogueMessageCatalog(
@@ -62,6 +67,20 @@ public sealed class AuthoritativeDialogueMessageCatalog
             if (!TryGet(messageId, out _))
                 throw new InvalidDataException(
                     $"Dialogue route references unknown message {messageId}.");
+        }
+    }
+
+    /** Rejects partial dialogue message metadata at the current production boundary. */
+    public static void ValidateExternalizedProduction(TsvTable table)
+    {
+        ArgumentNullException.ThrowIfNull(table);
+        if (!table.Columns.SequenceEqual(ProductionColumns, StringComparer.Ordinal))
+            throw new InvalidDataException(
+                $"Production dialogue-message table '{table.SourcePath}' must use the complete ordered schema.");
+        foreach (var row in table.Rows) {
+            _ = row.Required("message_id");
+            _ = row.Required("message_symbol");
+            _ = row.Required("text");
         }
     }
 

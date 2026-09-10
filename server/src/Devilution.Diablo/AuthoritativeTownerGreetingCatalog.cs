@@ -13,6 +13,15 @@ public sealed record AuthoritativeTownerGreetingDefinition(
 /** Validated greeting metadata used before a connected vendor menu opens. */
 public sealed class AuthoritativeTownerGreetingCatalog
 {
+    private static readonly IReadOnlyList<string> ProductionColumns = [
+        "towner_id",
+        "level_id",
+        "level_symbol",
+        "position_x",
+        "position_y",
+        "message_id",
+    ];
+
     private readonly IReadOnlyDictionary<int, AuthoritativeTownerGreetingDefinition> definitions;
 
     public AuthoritativeTownerGreetingCatalog(
@@ -55,6 +64,22 @@ public sealed class AuthoritativeTownerGreetingCatalog
                 throw new InvalidDataException(
                     $"Towner {definition.TownerId} contains an invalid greeting position.");
             }
+        }
+    }
+
+    /** Rejects partial towner greeting metadata at the current production boundary. */
+    public static void ValidateExternalizedProduction(TsvTable table)
+    {
+        ArgumentNullException.ThrowIfNull(table);
+        if (!table.Columns.SequenceEqual(ProductionColumns, StringComparer.Ordinal))
+            throw new InvalidDataException(
+                $"Production towner greeting table '{table.SourcePath}' must use the complete ordered schema.");
+        foreach (var row in table.Rows) {
+            _ = row.Required("towner_id");
+            _ = row.Required("level_id");
+            _ = row.Required("position_x");
+            _ = row.Required("position_y");
+            _ = row.Required("message_id");
         }
     }
 

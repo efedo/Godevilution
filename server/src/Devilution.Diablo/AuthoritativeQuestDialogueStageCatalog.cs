@@ -48,6 +48,33 @@ public sealed record AuthoritativeQuestDialogueStage(
 /** Validated staged dialogue definitions supplied by an external content pack. */
 public sealed class AuthoritativeQuestDialogueStageCatalog
 {
+    private static readonly IReadOnlyList<string> ProductionColumns = [
+        "quest_id",
+        "quest_symbol",
+        "required_variable1",
+        "required_variable2",
+        "message_id",
+        "next_variable1",
+        "next_variable2",
+        "required_item_id",
+        "required_item_symbol",
+        "consume_item",
+        "complete_quest",
+        "reward_kind",
+        "reward_item_level",
+        "reward_offset_x",
+        "reward_offset_y",
+        "next_message_id",
+        "follow_up_kind",
+        "follow_up_amount",
+        "reward_item_id",
+        "reward_item_symbol",
+        "defeat_target",
+        "reward_unique_id",
+        "reward_unique_symbol",
+        "require_item_present",
+    ];
+
     private readonly IReadOnlyList<AuthoritativeQuestDialogueStage> definitions;
     private readonly IReadOnlySet<uint> questIds;
 
@@ -277,6 +304,21 @@ public sealed class AuthoritativeQuestDialogueStageCatalog
             if (!mutations.TryGet(stage.FollowUpAmount, out _))
                 throw new InvalidDataException(
                     $"Quest dialogue stage for quest {stage.QuestId} references unknown world mutation {stage.FollowUpAmount}.");
+        }
+    }
+
+    /** Rejects partial staged-dialogue metadata at the current production boundary. */
+    public static void ValidateExternalizedProduction(TsvTable table)
+    {
+        ArgumentNullException.ThrowIfNull(table);
+        if (!table.Columns.SequenceEqual(ProductionColumns, StringComparer.Ordinal))
+            throw new InvalidDataException(
+                $"Production quest-dialogue stage table '{table.SourcePath}' must use the complete ordered schema.");
+        foreach (var row in table.Rows) {
+            _ = row.Required("quest_id");
+            _ = row.Required("required_variable1");
+            _ = row.Required("message_id");
+            _ = row.Required("next_variable1");
         }
     }
 
