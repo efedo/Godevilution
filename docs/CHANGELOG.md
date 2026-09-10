@@ -2,6 +2,10 @@
 
 All notable changes to this fork are documented below.
 
+- Added a three-participant fresh-host restart soak covering self-first snapshot
+  ordering, restored character identities, durable receipt-ledger deduplication,
+  and global receipt continuation after recovery.
+
 - Expanded the Godot session setup form into a new-character/resume menu. Users
   can now enter a saved authoritative resume token in the client, while new
   sessions continue to submit the selected class and native-compatible name.

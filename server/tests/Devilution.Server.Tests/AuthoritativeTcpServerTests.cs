@@ -1241,6 +1241,195 @@ public sealed class AuthoritativeTcpServerTests
     }
 
     [Fact]
+    public async Task TcpServerRestartRestoresThreeParticipantSessionsAndGlobalReceiptLedger()
+    {
+        var saveRoot = Path.Combine(
+            Path.GetTempPath(),
+            "Godevilution-Three-Participant-Restart-" + Guid.NewGuid().ToString("N"));
+        string[] resumeTokens = [
+            "three-participant-first",
+            "three-participant-second",
+            "three-participant-third",
+        ];
+        string[] characterNames = [
+            "First-Participant",
+            "Second-Participant",
+            "Third-Participant",
+        ];
+        var entityIds = new uint[resumeTokens.Length];
+
+        try {
+            var initial = new MultiParticipantReloadableHostAdapter("initial");
+            var initialRuntime = new GameplayRulesetRuntime<IAuthoritativeGameHostAdapter>(
+                CreateReloadManifest("1", "initial"),
+                [new ReloadableModule("rules", "1.0.0")],
+                new DelegateAuthoritativeClock(() => 10),
+                (_, _) => initial);
+            var initialAdapter = new LeasedAuthoritativeGameHostAdapter(initialRuntime);
+            var handshake = new ProtocolHandshake(new ProtocolServerIdentity(
+                "server-build",
+                "0.1.0",
+                "content-hash",
+                20));
+            var saveStore = new AuthoritativeSaveStore(saveRoot);
+            await using (var server = new AuthoritativeTcpServer(
+                             new AuthoritativeCommandServer(initialAdapter),
+                             handshake,
+                             new DelegateAuthoritativeClock(() => 10),
+                             gameAdapter: initialAdapter,
+                             saveStore: saveStore)) {
+                server.Start();
+                var cancellationToken = TestContext.Current.CancellationToken;
+                var clients = new List<TcpClient>();
+                try {
+                    var streams = new List<NetworkStream>();
+                    for (var index = 0; index < resumeTokens.Length; index++) {
+                        var client = new TcpClient();
+                        clients.Add(client);
+                        await client.ConnectAsync(IPAddress.Loopback, server.Port, cancellationToken);
+                        var stream = client.GetStream();
+                        streams.Add(stream);
+                        await SendHelloAsync(
+                            stream,
+                            cancellationToken,
+                            resumeTokens[index],
+                            requestedCharacterName: characterNames[index]);
+                        var hello = (await EnvelopeCodec.ReadAsync(
+                            stream,
+                            cancellationToken))!.ServerHello;
+                        var snapshot = (await EnvelopeCodec.ReadAsync(
+                            stream,
+                            cancellationToken))!.Snapshot;
+                        entityIds[index] = Assert.Single(
+                            snapshot.Players,
+                            player => player.CharacterName == characterNames[index]).EntityId;
+                        Assert.Equal(resumeTokens[index], hello.SessionToken);
+                        Assert.Equal(entityIds[index], snapshot.Players[0].EntityId);
+                        Assert.Equal(index + 1, snapshot.Players.Count);
+                    }
+
+                    Assert.Equal(entityIds.Length, entityIds.Distinct().Count());
+                    for (var index = 0; index < streams.Count; index++) {
+                        await EnvelopeCodec.WriteAsync(streams[index], new Envelope {
+                            CommandBatch = new CommandBatch {
+                                Commands = { new Command {
+                                    ClientSequence = 1,
+                                    RequestedTick = 10,
+                                    AttackRequested = new AttackRequested {
+                                        TargetEntityId = entityIds[(index + 1) % entityIds.Length],
+                                    },
+                                } },
+                            },
+                        }, cancellationToken);
+                        var acknowledgement = (await EnvelopeCodec.ReadAsync(
+                            streams[index],
+                            cancellationToken))!.CommandAck.Results.Single();
+                        Assert.Equal(CommandStatus.Accepted, acknowledgement.Status);
+                        Assert.Equal((ulong)index + 1, acknowledgement.ServerReceiptSequence);
+                        await EnvelopeCodec.ReadAsync(streams[index], cancellationToken);
+                    }
+                } finally {
+                    foreach (var client in clients)
+                        client.Dispose();
+                }
+            }
+
+            foreach (var resumeToken in resumeTokens)
+                Assert.NotNull(new AuthoritativeSessionStore(saveRoot).Load(SessionIdForToken(resumeToken)));
+
+            var replacement = new MultiParticipantReloadableHostAdapter("replacement");
+            var replacementRuntime = new GameplayRulesetRuntime<IAuthoritativeGameHostAdapter>(
+                CreateReloadManifest("1", "initial"),
+                [new ReloadableModule("rules", "1.0.0")],
+                new DelegateAuthoritativeClock(() => 10),
+                (_, _) => replacement);
+            var replacementAdapter = new LeasedAuthoritativeGameHostAdapter(replacementRuntime);
+            await using (var restartedServer = new AuthoritativeTcpServer(
+                             new AuthoritativeCommandServer(replacementAdapter),
+                             handshake,
+                             new DelegateAuthoritativeClock(() => 10),
+                             gameAdapter: replacementAdapter,
+                             saveStore: saveStore)) {
+                restartedServer.Start();
+                var cancellationToken = TestContext.Current.CancellationToken;
+                var clients = new List<TcpClient>();
+                try {
+                    var streams = new List<NetworkStream>();
+                    for (var index = 0; index < resumeTokens.Length; index++) {
+                        var client = new TcpClient();
+                        clients.Add(client);
+                        await client.ConnectAsync(IPAddress.Loopback, restartedServer.Port, cancellationToken);
+                        var stream = client.GetStream();
+                        streams.Add(stream);
+                        await SendHelloAsync(stream, cancellationToken, resumeTokens[index]);
+                        var hello = (await EnvelopeCodec.ReadAsync(
+                            stream,
+                            cancellationToken))!.ServerHello;
+                        var snapshot = (await EnvelopeCodec.ReadAsync(
+                            stream,
+                            cancellationToken))!.Snapshot;
+                        Assert.Equal(resumeTokens[index], hello.SessionToken);
+                        Assert.Equal(entityIds[index], snapshot.Players[0].EntityId);
+                        Assert.Equal(
+                            entityIds.Take(index + 1).OrderBy(entityId => entityId),
+                            snapshot.Players.Select(player => player.EntityId).OrderBy(entityId => entityId));
+                        Assert.Equal(
+                            characterNames.Take(index + 1).OrderBy(name => name),
+                            snapshot.Players.Select(player => player.CharacterName).OrderBy(name => name));
+                        Assert.Equal(index + 1, snapshot.Players.Count);
+                    }
+
+                    Assert.True(replacement.SessionStateImported);
+                    Assert.Equal(resumeTokens.Length, replacement.ImportCount);
+                    for (var index = 0; index < streams.Count; index++) {
+                        await EnvelopeCodec.WriteAsync(streams[index], new Envelope {
+                            CommandBatch = new CommandBatch {
+                                Commands = { new Command {
+                                    ClientSequence = 1,
+                                    RequestedTick = 10,
+                                    AttackRequested = new AttackRequested {
+                                        TargetEntityId = entityIds[(index + 1) % entityIds.Length],
+                                    },
+                                } },
+                            },
+                        }, cancellationToken);
+                        var duplicate = (await EnvelopeCodec.ReadAsync(
+                            streams[index],
+                            cancellationToken))!.CommandAck.Results.Single();
+                        Assert.Equal(CommandStatus.Duplicate, duplicate.Status);
+                        Assert.Equal((ulong)index + 1, duplicate.ServerReceiptSequence);
+                        await EnvelopeCodec.ReadAsync(streams[index], cancellationToken);
+                    }
+
+                    await EnvelopeCodec.WriteAsync(streams[^1], new Envelope {
+                        CommandBatch = new CommandBatch {
+                            Commands = { new Command {
+                                ClientSequence = 2,
+                                RequestedTick = 10,
+                                AttackRequested = new AttackRequested {
+                                    TargetEntityId = entityIds[0],
+                                },
+                            } },
+                        },
+                    }, cancellationToken);
+                    var accepted = (await EnvelopeCodec.ReadAsync(
+                        streams[^1],
+                        cancellationToken))!.CommandAck.Results.Single();
+                    Assert.Equal(CommandStatus.Accepted, accepted.Status);
+                    Assert.Equal(4UL, accepted.ServerReceiptSequence);
+                    await EnvelopeCodec.ReadAsync(streams[^1], cancellationToken);
+                } finally {
+                    foreach (var client in clients)
+                        client.Dispose();
+                }
+            }
+        } finally {
+            if (Directory.Exists(saveRoot))
+                Directory.Delete(saveRoot, recursive: true);
+        }
+    }
+
+    [Fact]
     public async Task ConcurrentConnectionsForOneTokenShareOneParticipantInitialization()
     {
         var executor = new RecordingExecutor();
