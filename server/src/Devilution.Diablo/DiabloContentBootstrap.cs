@@ -310,12 +310,18 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
         nativeMissileSprites.ValidateRequiredNativeNamespace();
         nativeMissiles.ValidateGraphicReferences(nativeMissileSprites);
         var nativeItemEffectsTable = GetRequiredExternalTable(content, "native_item_effects.tsv");
+        if (content.Manifest.Schema == DiabloContentSchema.Current)
+            AuthoritativeNativeItemEffectCatalog.ValidateExternalizedProduction(
+                nativeItemEffectsTable);
         var nativeItemEffects = AuthoritativeNativeItemEffectCatalog.LoadTsv(
             nativeItemEffectsTable.SourcePath,
             nativeItemEffectsTable.ToCanonicalTsv());
         var nativeItemHellfireEffectsTable = GetRequiredExternalTable(
             content,
             "native_item_hellfire_effects.tsv");
+        if (content.Manifest.Schema == DiabloContentSchema.Current)
+            AuthoritativeNativeItemHellfireEffectCatalog.ValidateExternalizedProduction(
+                nativeItemHellfireEffectsTable);
         var nativeItemHellfireEffects = AuthoritativeNativeItemHellfireEffectCatalog.LoadTsv(
             nativeItemHellfireEffectsTable.SourcePath,
             nativeItemHellfireEffectsTable.ToCanonicalTsv());
@@ -330,6 +336,8 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
             nativeItemHellfireEffectCatalog: nativeItemHellfireEffects);
         affixes.ValidatePowers();
         var cursorTable = GetRequiredExternalTable(content, "item_cursor_graphics.tsv");
+        if (content.Manifest.Schema == DiabloContentSchema.Current)
+            AuthoritativeItemCursorCatalog.ValidateExternalizedProduction(cursorTable);
         var cursorCatalog = AuthoritativeItemCursorCatalog.LoadTsv(
             cursorTable.SourcePath,
             cursorTable.ToCanonicalTsv());

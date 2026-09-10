@@ -11,6 +11,11 @@ public sealed record AuthoritativeItemCursorDefinition(
 /** Validated item cursor graphics shared by normalized and legacy item tables. */
 public sealed class AuthoritativeItemCursorCatalog
 {
+    private static readonly IReadOnlyList<string> ProductionColumns = [
+        "symbol",
+        "native_cursor_graphic",
+    ];
+
     private readonly Dictionary<string, AuthoritativeItemCursorDefinition> definitionsBySymbol;
     private readonly Dictionary<int, AuthoritativeItemCursorDefinition> definitionsByGraphic;
 
@@ -60,6 +65,19 @@ public sealed class AuthoritativeItemCursorCatalog
             ? definition.NativeCursorGraphic
             : throw new InvalidDataException(
                 $"Item cursor graphic '{symbol}' is not present in the active catalog.");
+    }
+
+    /** Rejects partial item cursor metadata at the current production boundary. */
+    public static void ValidateExternalizedProduction(TsvTable table)
+    {
+        ArgumentNullException.ThrowIfNull(table);
+        if (!table.Columns.SequenceEqual(ProductionColumns, StringComparer.Ordinal))
+            throw new InvalidDataException(
+                $"Production item-cursor table '{table.SourcePath}' must use the complete ordered schema.");
+        foreach (var row in table.Rows) {
+            _ = row.Required("symbol");
+            _ = row.RequiredInt32("native_cursor_graphic");
+        }
     }
 
     public static AuthoritativeItemCursorCatalog LoadTsv(

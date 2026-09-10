@@ -10,6 +10,11 @@ public sealed record AuthoritativeNativeItemEffectDefinition(
 /** Validated external item special-effect flags shared by legacy and normalized loaders. */
 public sealed class AuthoritativeNativeItemEffectCatalog
 {
+    private static readonly IReadOnlyList<string> ProductionColumns = [
+        "symbol",
+        "native_flag",
+    ];
+
     private readonly Dictionary<string, uint> bySymbol =
         new(StringComparer.OrdinalIgnoreCase);
 
@@ -52,6 +57,19 @@ public sealed class AuthoritativeNativeItemEffectCatalog
             ? nativeFlag
             : throw new KeyNotFoundException(
                 $"Native item effect symbol '{symbol}' is not defined by the active content pack.");
+    }
+
+    /** Rejects partial native item-effect metadata at the current production boundary. */
+    public static void ValidateExternalizedProduction(TsvTable table)
+    {
+        ArgumentNullException.ThrowIfNull(table);
+        if (!table.Columns.SequenceEqual(ProductionColumns, StringComparer.Ordinal))
+            throw new InvalidDataException(
+                $"Production native-item-effect table '{table.SourcePath}' must use the complete ordered schema.");
+        foreach (var row in table.Rows) {
+            _ = row.Required("symbol");
+            _ = row.RequiredUInt32("native_flag");
+        }
     }
 
     public static AuthoritativeNativeItemEffectCatalog LoadTsv(

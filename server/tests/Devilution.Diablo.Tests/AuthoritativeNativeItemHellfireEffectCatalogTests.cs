@@ -1,3 +1,4 @@
+using Devilution.Data;
 using Devilution.Diablo;
 using Xunit;
 
@@ -5,6 +6,29 @@ namespace Devilution.Diablo.Tests;
 
 public sealed class AuthoritativeNativeItemHellfireEffectCatalogTests
 {
+    [Fact]
+    public void AcceptsCompleteProductionSchema()
+    {
+        var table = TsvTable.Parse(
+            "native_item_hellfire_effects.tsv",
+            "symbol\tnative_flag\nCustomEffect\t8\n");
+
+        AuthoritativeNativeItemHellfireEffectCatalog.ValidateExternalizedProduction(table);
+    }
+
+    [Fact]
+    public void RejectsPartialProductionSchema()
+    {
+        var table = TsvTable.Parse(
+            "native_item_hellfire_effects.tsv",
+            "native_flag\tsymbol\n8\tCustomEffect\n");
+
+        var exception = Assert.Throws<InvalidDataException>(() =>
+            AuthoritativeNativeItemHellfireEffectCatalog.ValidateExternalizedProduction(table));
+
+        Assert.Contains("complete ordered schema", exception.Message, StringComparison.Ordinal);
+    }
+
     [Fact]
     public void LoadsHellfireEffectFlagsAndAliases()
     {

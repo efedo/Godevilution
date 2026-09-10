@@ -11,6 +11,10 @@ public sealed record AuthoritativeNativeItemHellfireEffectDefinition(
 public sealed class AuthoritativeNativeItemHellfireEffectCatalog
 {
     public const int MaximumNativeFlag = 0x7F;
+    private static readonly IReadOnlyList<string> ProductionColumns = [
+        "symbol",
+        "native_flag",
+    ];
 
     private readonly Dictionary<string, int> bySymbol =
         new(StringComparer.OrdinalIgnoreCase);
@@ -58,6 +62,19 @@ public sealed class AuthoritativeNativeItemHellfireEffectCatalog
             ? nativeFlag
             : throw new KeyNotFoundException(
                 $"Native Hellfire item effect symbol '{symbol}' is not defined by the active content pack.");
+    }
+
+    /** Rejects partial native Hellfire item-effect metadata at the current production boundary. */
+    public static void ValidateExternalizedProduction(TsvTable table)
+    {
+        ArgumentNullException.ThrowIfNull(table);
+        if (!table.Columns.SequenceEqual(ProductionColumns, StringComparer.Ordinal))
+            throw new InvalidDataException(
+                $"Production native-Hellfire-item-effect table '{table.SourcePath}' must use the complete ordered schema.");
+        foreach (var row in table.Rows) {
+            _ = row.Required("symbol");
+            _ = row.RequiredInt32("native_flag");
+        }
     }
 
     public static AuthoritativeNativeItemHellfireEffectCatalog LoadTsv(
