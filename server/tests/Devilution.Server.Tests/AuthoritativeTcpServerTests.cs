@@ -1880,6 +1880,66 @@ public sealed class AuthoritativeTcpServerTests
     }
 
     [Fact]
+    public async Task ConcurrentCommandAndSnapshotProjectionShareTheAuthoritativeBoundary()
+    {
+        var executor = new ProjectionBoundaryExecutor();
+        var commandServer = new AuthoritativeCommandServer(executor);
+        var handshake = new ProtocolHandshake(new ProtocolServerIdentity(
+            "server-build",
+            "0.1.0",
+            "content-hash",
+            20));
+        await using var server = new AuthoritativeTcpServer(
+            commandServer,
+            handshake,
+            () => 10,
+            snapshotProvider: executor,
+            eventProvider: executor);
+        server.Start();
+        var cancellationToken = TestContext.Current.CancellationToken;
+        using var commandClient = new TcpClient();
+        using var projectionClient = new TcpClient();
+        await commandClient.ConnectAsync(IPAddress.Loopback, server.Port, cancellationToken);
+        await projectionClient.ConnectAsync(IPAddress.Loopback, server.Port, cancellationToken);
+        await using var commandStream = commandClient.GetStream();
+        await using var projectionStream = projectionClient.GetStream();
+
+        await SendHelloAsync(commandStream, cancellationToken);
+        var commandHello = (await EnvelopeCodec.ReadAsync(
+            commandStream,
+            cancellationToken))!.ServerHello;
+        await EnvelopeCodec.ReadAsync(commandStream, cancellationToken);
+        await SendHelloAsync(projectionStream, cancellationToken, commandHello.SessionToken);
+        await EnvelopeCodec.ReadAsync(projectionStream, cancellationToken);
+        await EnvelopeCodec.ReadAsync(projectionStream, cancellationToken);
+        executor.EnableRaceWindow();
+
+        await Task.WhenAll(
+            EnvelopeCodec.WriteAsync(commandStream, new Envelope {
+                CommandBatch = new CommandBatch {
+                    Commands = { new Command {
+                        ClientSequence = 1,
+                        RequestedTick = 10,
+                        AttackRequested = new AttackRequested { TargetEntityId = 1 },
+                    } },
+                },
+            }, cancellationToken).AsTask(),
+            EnvelopeCodec.WriteAsync(projectionStream, new Envelope {
+                SnapshotRequest = new Envelope.Types.SnapshotRequest(),
+            }, cancellationToken).AsTask());
+
+        await executor.FirstProjectionEntered.Task.WaitAsync(cancellationToken);
+        await Task.Delay(100, cancellationToken);
+        executor.ReleaseFirstProjection();
+
+        var commandAck = await EnvelopeCodec.ReadAsync(commandStream, cancellationToken);
+        var projection = await EnvelopeCodec.ReadAsync(projectionStream, cancellationToken);
+        Assert.Equal(Envelope.PayloadOneofCase.CommandAck, commandAck!.PayloadCase);
+        Assert.Equal(Envelope.PayloadOneofCase.Snapshot, projection!.PayloadCase);
+        Assert.False(executor.OverlapDetected);
+    }
+
+    [Fact]
     public async Task TcpRulesetReloadCheckpointFailureKeepsPreviousGenerationAndIdentity()
     {
         var saveRoot = Path.Combine(
@@ -2986,6 +3046,88 @@ public sealed class AuthoritativeTcpServerTests
                 Tick = tick,
                 Events = { new GameEvent() },
             };
+        }
+    }
+
+    private sealed class ProjectionBoundaryExecutor
+        : IAuthoritativeCommandExecutor,
+          IAuthoritativeSnapshotProvider,
+          IAuthoritativeEventProvider
+    {
+        private readonly ManualResetEventSlim releaseFirstProjection = new(false);
+        private int activeProjections;
+        private int firstProjectionEntered;
+        private int overlapDetected;
+        private bool raceWindowEnabled;
+
+        public TaskCompletionSource FirstProjectionEntered { get; } = new(
+            TaskCreationOptions.RunContinuationsAsynchronously);
+
+        public bool OverlapDetected => Volatile.Read(ref overlapDetected) != 0;
+
+        public CommandExecutionResult Execute(
+            string sessionId,
+            Command command,
+            ulong appliedTick)
+        {
+            EnterProjection();
+            try {
+                return CommandExecutionResult.Accepted;
+            } finally {
+                ExitProjection();
+            }
+        }
+
+        public Snapshot CreateSnapshot(string sessionId, uint entityId, ulong tick)
+        {
+            EnterProjection();
+            try {
+                return new Snapshot {
+                    Tick = tick,
+                    Players = { new PlayerSnapshot { EntityId = entityId } },
+                };
+            } finally {
+                ExitProjection();
+            }
+        }
+
+        public EventBatch? DrainEvents(string sessionId, uint entityId, ulong tick)
+        {
+            EnterProjection();
+            try {
+                return null;
+            } finally {
+                ExitProjection();
+            }
+        }
+
+        public void EnableRaceWindow()
+        {
+            raceWindowEnabled = true;
+        }
+
+        public void ReleaseFirstProjection()
+        {
+            releaseFirstProjection.Set();
+        }
+
+        private void EnterProjection()
+        {
+            if (!raceWindowEnabled)
+                return;
+            var active = Interlocked.Increment(ref activeProjections);
+            if (active > 1)
+                Interlocked.Exchange(ref overlapDetected, 1);
+            if (Interlocked.Exchange(ref firstProjectionEntered, 1) == 0) {
+                FirstProjectionEntered.TrySetResult();
+                releaseFirstProjection.Wait(TimeSpan.FromSeconds(5));
+            }
+        }
+
+        private void ExitProjection()
+        {
+            if (raceWindowEnabled)
+                Interlocked.Decrement(ref activeProjections);
         }
     }
 

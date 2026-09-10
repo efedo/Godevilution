@@ -6,6 +6,10 @@ All notable changes to this fork are documented below.
   requires composed external content plus validated spell and combat catalogs;
   compatibility callers retain the existing embedded defaults.
 
+- Serialized TCP snapshot and event projection with the authoritative command
+  boundary, preventing concurrent participants from observing partially applied
+  simulation state during commands, ticks, or reconnects.
+
 - Matched native delayed PvP arrow admission. Friendly-fire mode and
   Etherealize are rechecked when a bow projectile reaches its target, so a
   target that changes state during flight is protected without changing the

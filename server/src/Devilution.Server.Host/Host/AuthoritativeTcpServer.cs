@@ -561,11 +561,17 @@ public sealed class AuthoritativeTcpServer : IAsyncDisposable
         if (snapshotProvider is null)
             return;
 
-        var snapshot = snapshotProvider.CreateSnapshot(sessionId, entityId, tick);
-        var currentIdentity = handshake.Identity;
-        snapshot.ContentManifestHash = currentIdentity.ContentManifestHash;
-        snapshot.RulesetIdentityHash = currentIdentity.RulesetIdentityHash;
-        AuthoritativeSnapshotValidator.Validate(snapshot);
+        // Snapshot materialization is part of the authoritative state
+        // boundary. Do not allow a concurrent command or autonomous tick to
+        // mutate the module while the projection is being assembled.
+        var snapshot = commandServer.WithSynchronizedSession(sessionId, () => {
+            var result = snapshotProvider.CreateSnapshot(sessionId, entityId, tick);
+            var currentIdentity = handshake.Identity;
+            result.ContentManifestHash = currentIdentity.ContentManifestHash;
+            result.RulesetIdentityHash = currentIdentity.RulesetIdentityHash;
+            AuthoritativeSnapshotValidator.Validate(result);
+            return result;
+        });
         await EnvelopeCodec.WriteAsync(stream, new Envelope { Snapshot = snapshot }, cancellationToken);
     }
 
@@ -576,7 +582,15 @@ public sealed class AuthoritativeTcpServer : IAsyncDisposable
         ulong tick,
         CancellationToken cancellationToken)
     {
-        var events = eventProvider?.DrainEvents(sessionId, entityId, tick);
+        // Event draining must observe the same command/tick boundary as the
+        // snapshot that follows it. Drain under the authoritative lock, then
+        // serialize outside the lock so network backpressure cannot stall the
+        // simulation.
+        var events = eventProvider is null
+            ? null
+            : commandServer.WithSynchronizedSession(
+                sessionId,
+                () => eventProvider.DrainEvents(sessionId, entityId, tick));
         return events is null || events.Events.Count == 0
             ? ValueTask.CompletedTask
             : WriteEventBatchAsync(stream, events, tick, cancellationToken);

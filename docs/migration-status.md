@@ -18,6 +18,11 @@ its legacy defaults for compatibility callers, but the first-party activation
 path can no longer silently construct a production simulation from embedded
 fallback data.
 
+Authoritative TCP snapshot materialization and event draining now share the
+command server's state lock with command execution and autonomous ticks. A
+concurrent reconnect or second participant can no longer receive a projection
+assembled halfway through another participant's state transition.
+
 Native player-versus-player resource restoration now follows `PlrHitPlr`:
 only usable `RandomStealLife` can restore the attacker after a physical player
 hit. Fixed `StealLife3/5` and `StealMana3/5` remain monster-target effects for
