@@ -160,6 +160,10 @@ authoritative results.
 - Snapshots are canonical state. Events are transient presentation deltas.
 - Every network snapshot includes all assigned participants, with the receiver
   first on the wire and every player sorted by entity ID for canonical hashing.
+- A live two-participant restart soak restores both session saves and receipt
+  ledgers through a fresh host, preserves entity identity and self-first order,
+  rejects duplicate retries without re-execution, and continues global receipt
+  allocation for the next accepted command.
 - Live snapshots may include additive authoritative level geometry from the
   active content pack. Godot uses that projection for rendering and retains its
   asset catalog only as a legacy fallback; static geometry is omitted from

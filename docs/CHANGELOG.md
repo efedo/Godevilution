@@ -43,6 +43,11 @@ All notable changes to this fork are documented below.
   the loader suite now proves that a candidate with a changed private closure
   fails closed while the previous package remains loadable.
 
+- Added a two-participant live restart soak. Separate resume tokens now prove
+  that both authoritative session saves, entity identities, self-first snapshot
+  order, and per-session command receipts survive a fresh host, while duplicate
+  retries remain idempotent and the next accepted receipt continues globally.
+
 - Advanced combined authoritative session checkpoints to format 3 with
   canonical SHA-256 hashes of serialized server state and the command ledger.
   Version-1 and version-2 checkpoints remain readable for migration and are
