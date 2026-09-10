@@ -1481,6 +1481,8 @@ public sealed class DiabloCombatCommandProcessor
             target.GargoyleSpecialActive = false;
             return 0;
         }
+        if (monsterTarget && target.IsPetrified)
+            return 0;
 
         var damagePercent = 0;
         var damageFlat = 0;

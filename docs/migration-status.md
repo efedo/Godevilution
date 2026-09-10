@@ -25,7 +25,8 @@ armor-adjusted damage and equipment-piercing rules.
 
 Player hits now also honor the native Gargoyle wake-up boundary: an active
 Gargoyle special flag is consumed by the first physical hit without applying
-that hit's damage or equipment effects.
+that hit's damage or equipment effects; other petrified monsters reject
+physical player damage until Stone Curse ends.
 
 The compact native replay runner now mirrors the managed monster activation
 window for fixtures that carry an active target: visible targets wake for the

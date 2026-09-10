@@ -10,7 +10,8 @@ All notable changes to this fork are documented below.
 
 - Aligned player attacks with native Gargoyle wake-up behavior: an active
   special flag is consumed by the waking hit before damage or equipment
-  effects are applied.
+  effects are applied, and other petrified monsters reject physical player
+  damage until Stone Curse ends.
 
 - Advanced the active content schema to `1.461.0`, retaining `1.460.0` as
   the previous additive contract for compatible packs.
