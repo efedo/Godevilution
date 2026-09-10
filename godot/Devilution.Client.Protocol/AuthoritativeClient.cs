@@ -138,6 +138,7 @@ public sealed class AuthoritativeClient : IAsyncDisposable
                 throw new InvalidDataException(initialSnapshot.Error.Detail);
             if (initialSnapshot.PayloadCase != Envelope.PayloadOneofCase.Snapshot)
                 throw new InvalidDataException("The second server response must be an authoritative snapshot.");
+            ValidateInitialSnapshotIdentity(initialSnapshot.Snapshot);
             Enqueue(initialSnapshot);
             var connectedStream = stream;
             var connectionLifetime = CancellationTokenSource.CreateLinkedTokenSource(lifetime.Token);
@@ -325,6 +326,23 @@ public sealed class AuthoritativeClient : IAsyncDisposable
         effectiveContentManifestHash = snapshot.ContentManifestHash;
         effectiveRulesetIdentityHash = snapshot.RulesetIdentityHash;
         return true;
+    }
+
+    /**
+     * The first snapshot may reflect a ruleset generation published between
+     * the hello and the projection, so a complete identity can intentionally
+     * replace the hello identity. A partial identity is never actionable, and
+     * older protocol snapshots may omit both additive fields entirely.
+     */
+    private void ValidateInitialSnapshotIdentity(Snapshot snapshot)
+    {
+        var hasContentIdentity = !string.IsNullOrEmpty(snapshot.ContentManifestHash);
+        var hasRulesetIdentity = !string.IsNullOrEmpty(snapshot.RulesetIdentityHash);
+        if (!hasContentIdentity && !hasRulesetIdentity)
+            return;
+        if (!hasContentIdentity || !hasRulesetIdentity)
+            throw new InvalidDataException(
+                "The initial authoritative snapshot contains an incomplete ruleset identity.");
     }
 
     private void Acknowledge(CommandAck acknowledgement)

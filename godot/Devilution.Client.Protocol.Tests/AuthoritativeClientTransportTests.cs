@@ -164,6 +164,47 @@ public sealed class AuthoritativeClientTransportTests
     }
 
     [Fact]
+    public async Task AcceptsACompleteInitialSnapshotIdentityAfterLiveReload()
+    {
+        var listener = new TcpListener(IPAddress.Loopback, 0);
+        listener.Start();
+        var serverTask = RunInitialSnapshotIdentityServerAsync(listener, incomplete: false);
+        await using var client = new AuthoritativeClient(new ClientConnectionOptions(
+            "127.0.0.1",
+            ((IPEndPoint)listener.LocalEndpoint).Port,
+            "godot-test",
+            "0.1.0",
+            "content-hash",
+            "ruleset-hash"));
+
+        await client.ConnectAsync(TestContext.Current.CancellationToken);
+        Assert.True(client.IsConnected);
+        Assert.Equal("different-ruleset", client.ServerIdentity!.RulesetIdentityHash);
+        Assert.NotNull(Assert.Single(client.DrainMessages()).Snapshot);
+        await serverTask;
+    }
+
+    [Fact]
+    public async Task RejectsAnInitialSnapshotWithAnIncompleteIdentity()
+    {
+        var listener = new TcpListener(IPAddress.Loopback, 0);
+        listener.Start();
+        var serverTask = RunInitialSnapshotIdentityServerAsync(listener, incomplete: true);
+        await using var client = new AuthoritativeClient(new ClientConnectionOptions(
+            "127.0.0.1",
+            ((IPEndPoint)listener.LocalEndpoint).Port,
+            "godot-test",
+            "0.1.0",
+            "content-hash",
+            "ruleset-hash"));
+
+        await Assert.ThrowsAsync<InvalidDataException>(
+            () => client.ConnectAsync(TestContext.Current.CancellationToken));
+        Assert.False(client.IsConnected);
+        await serverTask;
+    }
+
+    [Fact]
     public async Task RejectsAnErrorBeforeTheInitialSnapshot()
     {
         var listener = new TcpListener(IPAddress.Loopback, 0);
@@ -292,6 +333,35 @@ public sealed class AuthoritativeClientTransportTests
                 ContentManifestHash = "content-hash",
                 RulesetIdentityHash = "server-ruleset-hash",
                 TickRateHz = 20,
+            },
+        });
+        listener.Stop();
+    }
+
+    private static async Task RunInitialSnapshotIdentityServerAsync(
+        TcpListener listener,
+        bool incomplete)
+    {
+        using var tcpClient = await listener.AcceptTcpClientAsync();
+        await using var stream = tcpClient.GetStream();
+        _ = await ReadEnvelopeAsync(stream);
+        await WriteEnvelopeAsync(stream, new Envelope {
+            ServerHello = new ServerHello {
+                ServerBuildId = "test-server",
+                ProtocolSchemaVersion = "0.1.0",
+                ContentManifestHash = "content-hash",
+                RulesetIdentityHash = "ruleset-hash",
+                TickRateHz = 20,
+                SessionToken = "resume-token",
+                GameMode = GameMode.SinglePlayer,
+            },
+        });
+        await WriteEnvelopeAsync(stream, new Envelope {
+            Snapshot = new Snapshot {
+                Tick = 1,
+                ContentManifestHash = "content-hash",
+                RulesetIdentityHash = incomplete ? string.Empty : "different-ruleset",
+                Players = { new PlayerSnapshot { EntityId = 7 } },
             },
         });
         listener.Stop();

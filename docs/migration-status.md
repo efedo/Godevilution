@@ -23,6 +23,11 @@ command server's state lock with command execution and autonomous ticks. A
 concurrent reconnect or second participant can no longer receive a projection
 assembled halfway through another participant's state transition.
 
+The Godot protocol client now fails closed if the initial snapshot carries a
+partial content/ruleset identity. Complete identity changes remain accepted so
+a ruleset generation published between `ServerHello` and its first snapshot
+can be adopted; legacy snapshots that omit both additive fields remain valid.
+
 Native player-versus-player resource restoration now follows `PlrHitPlr`:
 only usable `RandomStealLife` can restore the attacker after a physical player
 hit. Fixed `StealLife3/5` and `StealMana3/5` remain monster-target effects for

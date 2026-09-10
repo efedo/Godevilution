@@ -10,6 +10,11 @@ All notable changes to this fork are documented below.
   boundary, preventing concurrent participants from observing partially applied
   simulation state during commands, ticks, or reconnects.
 
+- Hardened the Godot client handshake boundary. An initial snapshot with a
+  partial content/ruleset identity is rejected, while complete live-reload
+  identity changes and legacy snapshots that omit both additive fields remain
+  compatible.
+
 - Matched native delayed PvP arrow admission. Friendly-fire mode and
   Etherealize are rechecked when a bow projectile reaches its target, so a
   target that changes state during flight is protected without changing the
