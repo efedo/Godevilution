@@ -11081,7 +11081,9 @@ void PopulateReplaySecondaryEquipment(
 
 void ExecuteMonsterMagicSecondaryImpactFixture(
 	const char *path,
-	int32_t expectedSecondaryLife = 6144)
+	int32_t expectedSecondaryLife = 6144,
+	int32_t expectedSecondaryMana = 0,
+	bool expectedSecondaryManaShieldActive = false)
 {
 	std::ifstream file(path);
 	ASSERT_TRUE(file.good());
@@ -11127,6 +11129,10 @@ void ExecuteMonsterMagicSecondaryImpactFixture(
 	state.secondaryPlayerCharacterClassId = fixture.initialState.secondaryPlayer.characterClass;
 	state.secondaryPlayerMagic = fixture.initialState.secondaryPlayer.magic;
 	state.secondaryPlayerDexterity = fixture.initialState.secondaryPlayer.dexterity;
+	state.secondaryPlayerMana = fixture.initialState.secondaryPlayer.mana;
+	state.secondaryPlayerManaMaximum = fixture.initialState.secondaryPlayer.manaMaximum;
+	state.secondaryPlayerManaShieldActive = fixture.initialState.secondaryPlayer.manaShieldActive;
+	state.secondaryPlayerMemorizedSpells = fixture.initialState.secondaryPlayer.memorizedSpells;
 	state.secondaryPlayerFriendlyMode = fixture.initialState.secondaryPlayer.friendlyMode;
 	state.secondaryPlayerBlockCapable = fixture.initialState.secondaryPlayer.blockCapable;
 	state.secondaryPlayerCombatMode = fixture.initialState.secondaryPlayer.combatMode;
@@ -11141,6 +11147,8 @@ void ExecuteMonsterMagicSecondaryImpactFixture(
 	EXPECT_EQ(state.lastAppliedTick, 27U);
 	EXPECT_EQ(state.life, 0);
 	EXPECT_EQ(state.secondaryPlayerLife, expectedSecondaryLife);
+	EXPECT_EQ(state.secondaryPlayerMana, expectedSecondaryMana);
+	EXPECT_EQ(state.secondaryPlayerManaShieldActive, expectedSecondaryManaShieldActive);
 	ASSERT_EQ(state.projectiles.size(), 1U);
 	EXPECT_EQ(state.projectiles[0].behavior, 50);
 	EXPECT_EQ(state.projectiles[0].spellId, 1U);
@@ -11188,7 +11196,9 @@ TEST(ReplayFixture, ExecutesLichMonsterMagicSecondaryResistanceAgainstCSharpChec
 {
 	ExecuteMonsterMagicSecondaryImpactFixture(
 	    "test/fixtures/replay/gameplay-monster-magic-secondary-resistance.json",
-	    6272);
+	    6400,
+	    5878,
+	    true);
 }
 
 TEST(ReplayFixture, ExecutesLichMonsterMagicSecondaryBlockAgainstCSharpCheckpoints)

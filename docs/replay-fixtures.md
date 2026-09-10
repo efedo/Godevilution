@@ -327,6 +327,8 @@ nearest-participant selection, and secondary-participant impact resolution,
 including equipped secondary-player `_pIGetHit` ordering;
 the companion secondary-resistance lane also proves the validated magic
 resistance reduction at impact;
+the secondary replay contract carries authored mana, Mana Shield, and
+memorized-spell state for this resource-absorption boundary;
 the Mega InfernoController moving fire-stream controller, segment lifetime,
 recovery-delay lifecycle, and nearest-participant selection, including seeded
 multiplayer AI-stream advancement. Mega fixtures load their spell and
@@ -1252,7 +1254,8 @@ Notable shared fixtures include:
   secondary-player `_pIGetHit` at MonsterMagic impact, Q6 life projection,
   and native/managed checkpoint parity;
 - `gameplay-monster-magic-secondary-resistance.json` for secondary-player
-  magic resistance at MonsterMagic impact and native/managed Q6 parity;
+  magic resistance and Mana Shield at MonsterMagic impact, including
+  secondary mana consumption and native/managed Q6 parity;
 - `gameplay-monster-magic-bone-demon-multiplayer-target.json`,
   `gameplay-monster-magic-arch-lich-multiplayer-target.json`,
   `gameplay-monster-magic-psychorb-multiplayer-target.json`, and

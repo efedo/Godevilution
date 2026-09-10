@@ -64,8 +64,8 @@ public static class ReplayFixtureExecutor
                     secondary.Gold,
                     0,
                     secondary.Life,
-                    0,
-                    0,
+                    secondary.Mana,
+                    secondary.ManaMaximum,
                     PlayerAttributesState.Zero with {
                         Magic = new PlayerAttributeState(
                             secondary.Magic,
@@ -97,10 +97,14 @@ public static class ReplayFixtureExecutor
                     0,
                     secondary.CharacterClass,
                     inventory: secondaryInventory,
+                    memorizedSpells: secondary.MemorizedSpells
+                        .Select(spell => new MemorizedSpellState(spell.SpellId, spell.Level))
+                        .ToArray(),
                     friendlyMode: secondary.FriendlyMode,
                     combatMode: secondary.CombatMode,
                     combatModeEndTick: secondary.CombatModeEndTick,
                     characterName: secondary.CharacterName,
+                    manaShieldActive: secondary.ManaShieldActive,
                     goldTopologyEnabled: false,
                     heldItem: secondary.HeldItem?.ToOwnedStoreItem()));
             _ = executor.CreateSnapshot(

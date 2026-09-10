@@ -50,6 +50,10 @@ All notable changes to this fork are documented below.
   secondary-player magic resistance is applied at impact with matching Q6 life
   and native/managed canonical checkpoints.
 
+- Extended secondary replay state with authored mana, Mana Shield, and
+  memorized-spell fields; the new MonsterMagic resistance lane verifies that
+  secondary Mana Shield absorbs the reduced impact in both runners.
+
 - Ruleset replacement now publishes migrated session checkpoints during
   candidate preparation, before activation or handshake identity publication;
   failed exports or checkpoint writes keep the previous generation active.

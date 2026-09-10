@@ -167,6 +167,10 @@ public sealed record ReplaySecondaryPlayer(
 {
     public string CharacterName { get; init; } = string.Empty;
     public int LifeMaximum { get; init; }
+    public int Mana { get; init; }
+    public int ManaMaximum { get; init; }
+    public bool ManaShieldActive { get; init; }
+    public IReadOnlyList<ReplayMemorizedSpell> MemorizedSpells { get; init; } = [];
     public uint Gold { get; init; }
     public uint LevelId { get; init; }
 

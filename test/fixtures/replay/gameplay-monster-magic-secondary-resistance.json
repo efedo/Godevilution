@@ -37,6 +37,12 @@
       "entity_id": 8,
       "life": 6400,
       "life_maximum": 6400,
+      "mana": 6000,
+      "mana_maximum": 6000,
+      "mana_shield_active": true,
+      "memorized_spells": [
+        { "spell_id": 11, "level": 1 }
+      ],
       "position_x": 0,
       "position_y": 0,
       "level_id": 1,
@@ -64,7 +70,7 @@
     }
   ],
   "checkpoints": [
-    { "tick": 1, "state_sha256": "a1bd18afcbab94ddc614e6626c67c5e453fba51c71290d5414a34f5e3234dc4b" },
-    { "tick": 27, "state_sha256": "97ca134cba5c5f084282c428170729e1628dd5ea4819be0de1f1a9cb9e4b2939" }
+    { "tick": 1, "state_sha256": "cecb0dc56808a5dbe06e70e19f4d58e1d0ad0089898e69c4db0c6884cff61a91" },
+    { "tick": 27, "state_sha256": "d5f46a18ba9c578201e6cedf5fa36bd9287cf390454d4f4449e2da8a170e2b44" }
   ]
 }

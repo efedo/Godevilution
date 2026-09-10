@@ -112,6 +112,10 @@ struct ReplayFixtureSecondaryPlayer {
 	uint32_t entityId = 0;
 	int32_t life = 0;
 	int32_t lifeMaximum = 0;
+	int32_t mana = 0;
+	int32_t manaMaximum = 0;
+	bool manaShieldActive = false;
+	std::vector<ReplayFixtureMemorizedSpell> memorizedSpells;
 	uint32_t gold = 0;
 	int32_t positionX = 0;
 	int32_t positionY = 0;
@@ -601,6 +605,10 @@ struct ReplayFixtureExecutionState {
 	uint32_t secondaryPlayerEntityId = 0;
 	int32_t secondaryPlayerLife = 0;
 	int32_t secondaryPlayerLifeMaximum = 0;
+	int32_t secondaryPlayerMana = 0;
+	int32_t secondaryPlayerManaMaximum = 0;
+	bool secondaryPlayerManaShieldActive = false;
+	std::vector<ReplayFixtureMemorizedSpell> secondaryPlayerMemorizedSpells;
 	uint32_t secondaryPlayerGold = 0;
 	int32_t secondaryPlayerPositionX = 0;
 	int32_t secondaryPlayerPositionY = 0;

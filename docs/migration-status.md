@@ -38,6 +38,9 @@ secondary-player `_pIGetHit` ordering through impact-time Q6 damage, and the
 native and managed replay runners agree at both launch and impact checkpoints.
 The companion secondary-resistance lane now agrees at those checkpoints after
 applying the validated magic-resistance reduction.
+The replay contract now also carries secondary mana, Mana Shield, and
+memorized-spell state, proving the reduced impact is absorbed without changing
+secondary life while preserving the canonical hash.
 
 Player-versus-monster physical attacks now use the same native armor boundary:
 target armor affects hit admission, while successful melee and weapon-arrow

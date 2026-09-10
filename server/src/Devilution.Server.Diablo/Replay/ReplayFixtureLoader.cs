@@ -735,6 +735,12 @@ public static class ReplayFixtureLoader
             LifeMaximum = player.TryGetProperty("life_maximum", out var lifeMaximum)
                 ? lifeMaximum.GetInt32()
                 : RequiredInt(player, "life"),
+            Mana = GetOptionalInt(player, "mana"),
+            ManaMaximum = player.TryGetProperty("mana_maximum", out var manaMaximum)
+                ? manaMaximum.GetInt32()
+                : GetOptionalInt(player, "mana"),
+            ManaShieldActive = GetOptionalBool(player, "mana_shield_active"),
+            MemorizedSpells = ParseMemorizedSpells(player),
             CharacterName = OptionalString(player, "character_name") ?? string.Empty,
             Gold = GetOptionalUInt(player, "gold"),
             LevelId = GetOptionalUInt(player, "level_id"),
@@ -761,6 +767,8 @@ public static class ReplayFixtureLoader
             || result.Life < 0
             || result.LifeMaximum <= 0
             || result.Life > result.LifeMaximum
+            || result.Mana < 0
+            || result.ManaMaximum < result.Mana
             || result.CharacterLevel is < 1 or > MaximumNativeCharacterLevel
             || (!string.IsNullOrEmpty(result.CharacterName)
                 && !DiabloPlayerName.IsValid(result.CharacterName))

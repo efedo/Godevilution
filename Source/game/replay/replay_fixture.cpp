@@ -258,8 +258,8 @@ void AppendSecondaryPlayerState(ReplayStateHasher &hasher, const ReplayFixtureEx
 	hasher.AppendInt32(state.secondaryPlayerPositionX);
 	hasher.AppendInt32(state.secondaryPlayerPositionY);
 	hasher.AppendInt32(state.secondaryPlayerLife);
-	hasher.AppendInt32(0);
-	hasher.AppendInt32(0);
+	hasher.AppendInt32(state.secondaryPlayerMana);
+	hasher.AppendInt32(state.secondaryPlayerManaMaximum);
 	hasher.AppendInt32(state.secondaryPlayerLifeMaximum);
 	hasher.AppendUint32(state.secondaryPlayerCharacterLevel);
 	hasher.AppendUint32(state.secondaryPlayerLevelId);
@@ -282,6 +282,25 @@ void AppendSecondaryPlayerState(ReplayStateHasher &hasher, const ReplayFixtureEx
 	if (!state.secondaryPlayerCharacterName.empty()) {
 		hasher.AppendString("godevilution-player-name-v1");
 		hasher.AppendString(state.secondaryPlayerCharacterName);
+	}
+	if (state.secondaryPlayerManaShieldActive) {
+		hasher.AppendString("godevilution-player-mana-shield-v1");
+		hasher.AppendBool(true);
+	}
+	std::vector<ReplayFixtureMemorizedSpell> secondaryMemorizedSpells = state.secondaryPlayerMemorizedSpells;
+	std::sort(secondaryMemorizedSpells.begin(), secondaryMemorizedSpells.end(), [](const auto &left, const auto &right) {
+		if (left.spellId != right.spellId)
+			return left.spellId < right.spellId;
+		return left.level < right.level;
+	});
+	if (!secondaryMemorizedSpells.empty()) {
+		hasher.AppendString("godevilution-player-spells-v1");
+		hasher.AppendUint32(0);
+		hasher.AppendUint64(secondaryMemorizedSpells.size());
+		for (const auto &spell : secondaryMemorizedSpells) {
+			hasher.AppendUint32(spell.spellId);
+			hasher.AppendUint32(spell.level);
+		}
 	}
 	if (!state.secondaryPlayerFriendlyMode) {
 		hasher.AppendString("godevilution-player-hostile-mode-v1");
@@ -3727,26 +3746,35 @@ int32_t GetReplayBaseBlockChance(uint32_t characterClassId)
 
 int32_t ApplyReplayManaShield(
 	ReplayFixtureExecutionState &state,
-	int32_t damageQ6)
+	int32_t damageQ6,
+	bool secondary = false)
 {
 	int32_t lifeDamageQ6 = damageQ6;
+	const auto &equipment = secondary ? state.secondaryEquipment : state.equipment;
+	bool &manaShieldActive = secondary
+	    ? state.secondaryPlayerManaShieldActive
+	    : state.manaShieldActive;
+	int32_t &mana = secondary ? state.secondaryPlayerMana : state.mana;
+	auto &memorizedSpells = secondary
+	    ? state.secondaryPlayerMemorizedSpells
+	    : state.memorizedSpells;
 	const bool hasNoManaItem = std::any_of(
-		state.equipment.begin(),
-		state.equipment.end(),
+		equipment.begin(),
+		equipment.end(),
 		[](const ReplayFixtureSlottedItem &item) {
 			return IsReplayEquipmentUsable(item.state)
 			    && (item.state.flags & NoManaFlag) != 0;
 		});
-	if (!state.manaShieldActive || hasNoManaItem)
+	if (!manaShieldActive || hasNoManaItem)
 		return lifeDamageQ6;
 
 	const auto spell = std::find_if(
-		state.memorizedSpells.begin(),
-		state.memorizedSpells.end(),
+		memorizedSpells.begin(),
+		memorizedSpells.end(),
 		[](const ReplayFixtureMemorizedSpell &candidate) {
 			return candidate.spellId == 11;
 		});
-	const int32_t level = spell == state.memorizedSpells.end()
+	const int32_t level = spell == memorizedSpells.end()
 		? 0
 		: static_cast<int32_t>(spell->level);
 	int32_t divisor = 24;
@@ -3755,17 +3783,17 @@ int32_t ApplyReplayManaShield(
 		divisor -= std::min(level, 7) * 3;
 		manaDamageQ6 += manaDamageQ6 / -divisor;
 	}
-	if (state.mana >= manaDamageQ6) {
-		state.mana -= manaDamageQ6;
+	if (mana >= manaDamageQ6) {
+		mana -= manaDamageQ6;
 		lifeDamageQ6 = 0;
-		if (state.mana == 0)
-			state.manaShieldActive = false;
+		if (mana == 0)
+			manaShieldActive = false;
 	} else {
-		lifeDamageQ6 = manaDamageQ6 - state.mana;
+		lifeDamageQ6 = manaDamageQ6 - mana;
 		if (level > 0)
 			lifeDamageQ6 += lifeDamageQ6 / (divisor - 1);
-		state.mana = 0;
-		state.manaShieldActive = false;
+		mana = 0;
+		manaShieldActive = false;
 	}
 	return lifeDamageQ6;
 }
@@ -9836,12 +9864,13 @@ void AdvanceReplayAutonomousMonsterMagicOneTick(
 				    * 64;
 				if (resistance > 0)
 					damageQ6 -= damageQ6 * resistance / 100;
-				state.secondaryPlayerLife = std::max(0, state.secondaryPlayerLife - damageQ6);
+				const int32_t lifeDamageQ6 = ApplyReplayManaShield(state, damageQ6, true);
+				state.secondaryPlayerLife = std::max(0, state.secondaryPlayerLife - lifeDamageQ6);
 				if (state.secondaryPlayerLife == 0)
 					StartReplaySecondaryPlayerDeath(state, true);
 				else if (state.secondaryPlayerLife > 0
 				    && resistance == 0
-				    && (damageQ6 >> 6) >= static_cast<int32_t>(state.secondaryPlayerCharacterLevel)) {
+				    && (lifeDamageQ6 >> 6) >= static_cast<int32_t>(state.secondaryPlayerCharacterLevel)) {
 					state.secondaryPlayerCombatMode = 7;
 					state.secondaryPlayerCombatModeEndTick = tick + 6;
 				}
@@ -11639,7 +11668,7 @@ private:
 			if (key == "ability_spell_id")
 				return ParseUnsigned(fixture_.initialState.abilitySpellId);
 			if (key == "memorized_spells")
-				return ParseMemorizedSpells();
+				return ParseMemorizedSpells(fixture_.initialState.memorizedSpells);
 			if (key == "equipment")
 				return ParseEquipment();
 			if (key == "belt")
@@ -11740,6 +11769,12 @@ private:
 				return ParseSigned(player.life);
 			if (key == "life_maximum")
 				return ParseSigned(player.lifeMaximum);
+			if (key == "mana")
+				return ParseSigned(player.mana);
+			if (key == "mana_maximum")
+				return ParseSigned(player.manaMaximum);
+			if (key == "mana_shield_active")
+				return ParseBool(player.manaShieldActive);
 			if (key == "gold")
 				return ParseUnsigned(player.gold);
 			if (key == "position_x")
@@ -11764,6 +11799,8 @@ private:
 				return ParseUnsigned(player.combatMode);
 			if (key == "combat_mode_end_tick")
 				return ParseUnsigned(player.combatModeEndTick);
+			if (key == "memorized_spells")
+				return ParseMemorizedSpells(player.memorizedSpells);
 			if (key == "inventory_filler_count")
 				return ParseUnsigned(player.inventoryFillerCount);
 			if (key == "equipment")
@@ -11812,11 +11849,11 @@ private:
 		});
 	}
 
-	bool ParseMemorizedSpells()
+	bool ParseMemorizedSpells(std::vector<ReplayFixtureMemorizedSpell> &target)
 	{
 		if (!Consume('['))
 			return Fail("expected memorized spell array");
-		fixture_.initialState.memorizedSpells.clear();
+		target.clear();
 		SkipWhitespace();
 		if (Consume(']'))
 			return true;
@@ -11833,12 +11870,12 @@ private:
 			}
 			if (spell.spellId == 0 || spell.spellId > 52 || spell.level == 0 || spell.level > 15)
 				return Fail("invalid memorized spell");
-			if (std::any_of(fixture_.initialState.memorizedSpells.begin(), fixture_.initialState.memorizedSpells.end(), [&](const auto &candidate) {
+			if (std::any_of(target.begin(), target.end(), [&](const auto &candidate) {
 				    return candidate.spellId == spell.spellId;
 			    })) {
 				return Fail("duplicate memorized spell");
 			}
-			fixture_.initialState.memorizedSpells.push_back(spell);
+			target.push_back(spell);
 			SkipWhitespace();
 			if (Consume(']'))
 				return true;
@@ -12673,6 +12710,8 @@ bool ParseReplayFixture(std::string_view json, ReplayFixture &fixture, std::stri
 	        || secondaryPlayer.life < 0
 	        || secondaryPlayer.lifeMaximum <= 0
 	        || secondaryPlayer.life > secondaryPlayer.lifeMaximum
+	        || secondaryPlayer.mana < 0
+	        || secondaryPlayer.manaMaximum < secondaryPlayer.mana
 	        || secondaryPlayer.characterLevel == 0
 	        || secondaryPlayer.characterLevel > 50
 	        || (!secondaryPlayer.characterName.empty()
@@ -13244,6 +13283,10 @@ bool ExecuteReplayFixture(
 		state.secondaryPlayerEntityId = secondary.entityId;
 		state.secondaryPlayerLife = secondary.life;
 		state.secondaryPlayerLifeMaximum = secondary.lifeMaximum;
+		state.secondaryPlayerMana = secondary.mana;
+		state.secondaryPlayerManaMaximum = secondary.manaMaximum;
+		state.secondaryPlayerManaShieldActive = secondary.manaShieldActive;
+		state.secondaryPlayerMemorizedSpells = secondary.memorizedSpells;
 		state.secondaryPlayerGold = secondary.gold;
 		state.secondaryPlayerPositionX = secondary.positionX;
 		state.secondaryPlayerPositionY = secondary.positionY;

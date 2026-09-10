@@ -244,6 +244,9 @@ secondary-player `_pIGetHit` ordering through spell impact and Q6 life
 projection, with matching native and managed checkpoints.
 Its companion secondary-resistance fixture also preserves the validated magic
 resistance reduction at the same impact boundary.
+Secondary replay participants now carry authored mana, Mana Shield, and
+memorized-spell state through the fixture contract and canonical snapshot hash,
+so resource absorption is validated for multiplayer targets as well.
 The SnakeCharge path now also has a shared lifecycle fixture covering
 server-owned admission, travel, player collision, and impact timing.
 

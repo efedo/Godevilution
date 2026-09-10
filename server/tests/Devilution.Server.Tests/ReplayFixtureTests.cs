@@ -9124,7 +9124,9 @@ public sealed class ReplayFixtureTests
         Assert.Equal(CommandStatus.Accepted, Assert.Single(result.Results).Status);
         Assert.Equal([1U, secondary.EntityId], result.FinalSnapshot.Players.Select(player => player.EntityId));
         Assert.Equal(0, result.FinalSnapshot.Players[0].Life);
-        Assert.Equal(6272, secondaryState.Life);
+        Assert.Equal(6400, secondaryState.Life);
+        Assert.Equal(5878, secondaryState.Mana);
+        Assert.True(secondaryState.ManaShieldActive);
         Assert.Equal((int)AuthoritativeProjectileBehavior.MonsterMagic, projectile.Behavior);
         Assert.Equal(secondary.EntityId, projectile.TargetEntityId);
         Assert.Equal((int)AuthoritativeProjectilePhase.Impact, projectile.Phase);
