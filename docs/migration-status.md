@@ -11,9 +11,9 @@ saves, and protocol projection. The Warlord room and the Halls/Gateway
 Catacombs quest rooms now use the separate native-DUN path; remaining licensed
 native assets and authored quest placement rows remain deferred.
 
-The checked-in base replay fixtures now use the canonical content-pack
-manifest hash produced by the normalized source identities, keeping replay
-admission aligned with the active validated pack.
+The checked-in base and Hellfire replay fixtures now use the canonical
+content-pack manifest hashes produced by the normalized source identities and
+active schema, keeping replay admission aligned with the validated packs.
 
 The compact native replay runner now mirrors the managed monster activation
 window for fixtures that carry an active target: visible targets wake for the
