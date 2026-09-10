@@ -50,7 +50,7 @@ public sealed class UniqueMonsterContentActivationBoundaryTests
             tables,
             basePack.Dependencies,
             basePack.Overlays,
-            new ContentSchemaIdentity("devilution.diablo", "1.499.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.500.0"),
             basePack.DependencyConstraints,
             basePack.Assets);
 

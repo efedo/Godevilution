@@ -3,9 +3,9 @@
 Each directory under `server/content` is a server-owned, validated gameplay
 content pack. The default `base` pack is loaded by the standalone server and is
 included in its content manifest and combined ruleset identity.
-It declares its identity and `devilution.diablo@1.500.0` schema in
+It declares its identity and `devilution.diablo@1.501.0` schema in
 `base/content-pack.json`; the Diablo module also accepts the immediately
-previous additive `1.499.0` schema so existing manifest-based packs remain
+previous additive `1.500.0` schema so existing manifest-based packs remain
 loadable. A composed manifest must still use one exact schema identity across
 all declared packs; use the previous schema only for a complete compatible
 manifest rather than mixing it with the current pack. The standalone host falls
@@ -22,6 +22,8 @@ Current-schema supplied generated-origin and native-DUN object mapping catalogs
 must also use their complete ordered schemas.
 Current-schema supplied `native_dun_levels.tsv` catalogs must use their complete
 ordered asset schema as well.
+Current-schema supplied shared native-DUN piece and tile-property geometry
+catalogs must use their complete ordered schemas as well.
 The checked-in `hellfire` pack depends on `base` and overlays the validated
 `combat.tsv` variant selector plus the first content-owned towner turn-in row,
 the native `Crystalline`, `Jester's`, and `Doppelganger's` weapon prefixes and
@@ -3241,8 +3243,8 @@ clients.
 | `native_dun_fragment_objects.tsv` | `placement_id`, `fragment_id`, `entity_id` | Optional anchor-relative placement for existing authored objects or behavior-only templates. `offset_x`/`offset_y` are validated relative to the referenced fragment's entity, unique encounter, explicit `anchor_set_level_id`/`anchor_set_level_symbol`, explicit `anchor_procedural_origin_id`/`anchor_procedural_origin_symbol`, or an inherited coordinate/set-level/procedural-origin anchor; unique, set-level, and procedural-origin anchors resolve after their runtime anchors materialize. Optional `template_entity_id` clones a `template_only=1` object when the target entity is absent. Each object may be targeted once, resulting positions must remain in bounds, and template clones that exceed DevilutionX's native `MAXOBJECTS` capacity of 127 active objects per level reject materialization. |
 | `quest_sequence_variants.tsv` | `variant_id`, `slot_index` | Optional complete permutations for ordered quest-object layouts. Each variant uses the same quest and object slots, and activation selects one variant per quest with the native-compatible deterministic RNG before simulation creation. |
 | `set_level_maps.tsv` | `set_level_id`, `pre_map_asset`, `active_map_asset` | Validated native set-level map asset paths, optional shared `til_asset`/`sol_asset` geometry inputs, optional `transparency_asset`, dungeon type, and entry spawn positions. Stable `set_level_symbol` values cross-check `set_level_names.tsv`; map and transparency paths are relative `.dun` assets, geometry paths are relative `.til`/`.sol` assets, and traversal is rejected. Rows without binary geometry may use the shared native geometry tables. |
-| `native_dun_piece_definitions.tsv` | `mega_tile_id` | Optional shared native `.til` equivalent. Each row maps one mega-tile ID to four validated d-piece IDs through `piece_north_west`, `piece_north_east`, `piece_south_west`, and `piece_south_east`. |
-| `native_dun_tile_properties.tsv` | `piece_id` | Optional shared native `.sol` equivalent. Required `solid` and `block_missile` flags plus optional `block_light`, `transparent`, `transparent_left`, `transparent_right`, and `trap` flags are validated against the native d-piece range. |
+| `native_dun_piece_definitions.tsv` | `mega_tile_id` | Optional shared native `.til` equivalent. Current-schema tables use the complete ordered header; each row maps one mega-tile ID to four validated d-piece IDs through `piece_north_west`, `piece_north_east`, `piece_south_west`, and `piece_south_east`. |
+| `native_dun_tile_properties.tsv` | `piece_id` | Optional shared native `.sol` equivalent. Current-schema tables use the complete ordered header; required `solid` and `block_missile` flags plus optional `block_light`, `transparent`, `transparent_left`, `transparent_right`, and `trap` flags are validated against the native d-piece range. |
 | Native binary assets (`.dun`, `.til`, `.sol`) | relative asset path | Immutable native map, mega-tile, and d-piece property bytes carried beside TSV tables. Asset bytes are included in the content manifest identity; identical inherited copies are accepted and conflicting copies reject composition. |
 | `quests.tsv` | `quest_id` | Optional level-scoped quest state and authored interaction definitions; current-schema supplied tables use the complete ordered quest schema, while previous/direct loaders retain numeric-only identity compatibility. Includes optional stable quest/level/monster/item/unique symbols, native lifecycle and variables, dialogue/completion transitions, follow-on activation, route markers, single-player pool exclusion, staged item turn-ins, alternate-item interactions, and unique-monster dialogue/reward definitions. |
 | `quest_towner_interactions.tsv` | `interaction_id` | Repeatable content-owned quest/towner stages keyed by quest and towner identity, level/adjacency position, optional item identity, and interaction kind (`Activate`, `Advance`, `Complete`, `Dialogue`, or `CompleteAfterQuest`); optional `_qvar1`/`_qvar2` gates and authored markers/messages reproduce multi-stage native conversations while preserving inventory/belt consumption rules. Itemless activation/dialogue stages are supported, activation stages may use variable gates on already-active quests, `allow_completed` explicitly permits a post-completion dialogue stage, and `CompleteAfterQuest` models a one-shot conversation after native DONE. `required_visited_level1`/`required_visited_level2` provide an OR-gate over server-owned native `_pLvlVisited` state, and `require_unlogged` preserves native branches that only surface before the quest is logged. `required_item_id` plus `require_item_present=false` makes an itemless stage available only when the item is absent, allowing a direct hand-in to take precedence. `allow_initial` permits a completion stage before activation, `use_quest_turn_in_reward` reuses the quest's declared normal or unique reward on activation, advancement, or completion, and `use_quest_completion_reward` reuses a completion-stage reward. |
@@ -3290,7 +3292,7 @@ and no implicit table replacements. For example:
   "dependencies": ["devilution.base"],
   "schema": {
     "id": "devilution.diablo",
-    "version": "1.500.0"
+    "version": "1.501.0"
   },
   "dependencyConstraints": [
     {
@@ -3324,8 +3326,8 @@ three-component semantic-version constraints for declared dependencies. All
 declared schemas in one ordered manifest must match, every constraint must name
 a declared dependency, and the loaded dependency version must satisfy its
 range. The first-party server rejects a declared schema other than
-`devilution.diablo@1.500.0` or its immediately previous additive
-`1.499.0`. Current-schema packs must provide the complete production table
+`devilution.diablo@1.501.0` or its immediately previous additive
+`1.500.0`. Current-schema packs must provide the complete production table
 contract; this includes ordered symbolic spell identity columns, required
 native spell/projectile metadata in `spells.tsv`. Previous-schema packs retain
 their documented compatibility fallbacks; `spell_books.tsv` must additionally

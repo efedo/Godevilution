@@ -2,7 +2,7 @@
 
 Status date: 2026-09-10
 
-Production schema `1.500.0` activation now requires the complete external
+Production schema `1.501.0` activation now requires the complete external
 player-class tuning, symbolic loadout, and symbolic animation schemas,
 symbolic store stock, supplied explicit and procedural level metadata, world-rule identities,
 combat tuning, complete level-generation capacity metadata, complete symbolic
@@ -25,12 +25,14 @@ complete ordered schemas. Set-level map and set-level object catalogs likewise
 use complete ordered schemas. Additive `quest_states.tsv` catalogs likewise use
 the complete ordered state schema. Generated set-piece, generated quest-piece,
 and native-DUN object catalogs likewise use complete ordered schemas. Native-DUN
-level asset catalogs likewise use the complete ordered schema. Direct
-compatibility loaders still accept older partial rows, and schema `1.499.0`
+level asset catalogs likewise use the complete ordered schema. Shared native-DUN
+piece and tile-property geometry catalogs likewise use complete ordered schemas.
+Direct compatibility loaders still accept older partial rows, and schema `1.500.0`
 packs retain that migration fallback; current-schema packs reject omitted class,
 loadout, animation, store, level, procedural-level, level-generation,
 monster-spawn policy, combat, world-rule, or
-service-pricing fields before publishing a ruleset.
+service-pricing fields, and incomplete ordered optional catalogs before
+publishing a ruleset.
 
 The content guide now documents the production activation contract separately
 from historical compatibility schemas. Normalized identity, economy, player,
@@ -100,7 +102,7 @@ Current-schema native-DUN fragment, fragment-object, and monster mapping tables
 also fail closed on incomplete or reordered headers; previous-schema packs
 retain the compatibility loaders for those tables.
 
-The active content schema is now `1.500.0` (with `1.499.0` retained as
+The active content schema is now `1.501.0` (with `1.500.0` retained as
 the previous additive contract). Optional `procedural_quest_piece_origins.tsv`
 rows publish deterministic ordinary-level quest geometry origins. Their
 identities are intentionally separate from the fixed native set-level origin
@@ -337,7 +339,8 @@ TSV pair (`native_dun_piece_definitions.tsv` and
 set-level maps may use that shared expansion when licensed `.til`/`.sol` bytes
 are unavailable; declared binary pairs remain authoritative. This advances
 the content boundary without claiming that any missing licensed tile data has
-been recreated.
+been recreated. Current-schema packs must publish both tables with their
+complete ordered headers; previous-schema packs retain row-compatible loading.
 
 The Hellfire Warlord room is now published as an availability-gated native DUN
 fragment at an explicit validated anchor on runtime Hell (the native level-13

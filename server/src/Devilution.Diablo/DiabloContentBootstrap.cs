@@ -473,7 +473,7 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
         if (content.Manifest.Schema == DiabloContentSchema.Current && world is null)
             throw new InvalidDataException(
                 "Current-schema Diablo activation requires levels.tsv or procedural_levels.tsv content.");
-        var nativeDunGeometry = AuthoritativeNativeDunGeometryCatalog.LoadOptional(content);
+        var nativeDunGeometry = LoadNativeDunGeometry(content);
         var nativeDunLevels = content.TryGetTable(
             "native_dun_levels.tsv",
             out var nativeDunLevelsTable)
@@ -1587,6 +1587,24 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
             table.SourcePath,
             table.ToCanonicalTsv(),
             stableIds);
+    }
+
+    private static AuthoritativeNativeDunGeometryCatalog? LoadNativeDunGeometry(
+        ComposedContent content)
+    {
+        if (content.Manifest.Schema == DiabloContentSchema.Current) {
+            if (content.TryGetTable(
+                    AuthoritativeNativeDunGeometryCatalog.PieceDefinitionsTablePath,
+                    out var piecesTable)) {
+                AuthoritativeDunPieceCatalog.ValidateExternalizedProduction(piecesTable);
+            }
+            if (content.TryGetTable(
+                    AuthoritativeNativeDunGeometryCatalog.TilePropertiesTablePath,
+                    out var propertiesTable)) {
+                AuthoritativeDunTilePropertyCatalog.ValidateExternalizedProduction(propertiesTable);
+            }
+        }
+        return AuthoritativeNativeDunGeometryCatalog.LoadOptional(content);
     }
 
     private static AuthoritativeSetLevelObjectCatalog LoadSetLevelObjects(

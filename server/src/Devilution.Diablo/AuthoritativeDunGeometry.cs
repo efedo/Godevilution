@@ -40,6 +40,29 @@ public sealed record AuthoritativeDunPieceDefinition(
 /** Validated native .til expansion definitions. */
 public sealed class AuthoritativeDunPieceCatalog
 {
+    private static readonly IReadOnlyList<string> ProductionColumns = [
+        "mega_tile_id",
+        "piece_north_west",
+        "piece_north_east",
+        "piece_south_west",
+        "piece_south_east",
+    ];
+
+    public static void ValidateExternalizedProduction(TsvTable table)
+    {
+        ArgumentNullException.ThrowIfNull(table);
+        if (!table.Columns.SequenceEqual(ProductionColumns, StringComparer.Ordinal))
+            throw new InvalidDataException(
+                $"Production native-DUN piece table '{table.SourcePath}' must use the complete ordered schema.");
+        foreach (var row in table.Rows) {
+            _ = row.RequiredUInt32("mega_tile_id");
+            _ = row.RequiredUInt32("piece_north_west");
+            _ = row.RequiredUInt32("piece_north_east");
+            _ = row.RequiredUInt32("piece_south_west");
+            _ = row.RequiredUInt32("piece_south_east");
+        }
+    }
+
     private readonly IReadOnlyDictionary<uint, AuthoritativeDunPieceDefinition> definitions;
 
     public AuthoritativeDunPieceCatalog(
@@ -126,6 +149,30 @@ public sealed record AuthoritativeDunTileProperty(
 public sealed class AuthoritativeDunTilePropertyCatalog
 {
     public const int NativeTileCount = 1379;
+
+    private static readonly IReadOnlyList<string> ProductionColumns = [
+        "piece_id",
+        "solid",
+        "block_light",
+        "block_missile",
+        "transparent",
+        "transparent_left",
+        "transparent_right",
+        "trap",
+    ];
+
+    public static void ValidateExternalizedProduction(TsvTable table)
+    {
+        ArgumentNullException.ThrowIfNull(table);
+        if (!table.Columns.SequenceEqual(ProductionColumns, StringComparer.Ordinal))
+            throw new InvalidDataException(
+                $"Production native-DUN tile-properties table '{table.SourcePath}' must use the complete ordered schema.");
+        foreach (var row in table.Rows) {
+            _ = row.RequiredUInt32("piece_id");
+            _ = row.RequiredBoolean("solid");
+            _ = row.RequiredBoolean("block_missile");
+        }
+    }
 
     private readonly IReadOnlyDictionary<uint, AuthoritativeDunTileFlags> properties;
 
