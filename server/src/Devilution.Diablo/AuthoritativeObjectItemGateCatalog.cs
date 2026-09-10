@@ -11,6 +11,13 @@ public sealed record AuthoritativeObjectItemGateDefinition(
 /** Validated item requirements applied at the object interaction boundary. */
 public sealed class AuthoritativeObjectItemGateCatalog
 {
+    private static readonly IReadOnlyList<string> ProductionColumns = [
+        "entity_id",
+        "item_id",
+        "item_symbol",
+        "consume_item",
+    ];
+
     private readonly IReadOnlyDictionary<uint, AuthoritativeObjectItemGateDefinition> definitions;
 
     public AuthoritativeObjectItemGateCatalog(
@@ -56,6 +63,19 @@ public sealed class AuthoritativeObjectItemGateCatalog
             if (!items.TryGet(definition.ItemId, out _))
                 throw new InvalidDataException(
                     $"Object item gate references unknown item {definition.ItemId}.");
+        }
+    }
+
+    /** Rejects partial object-gate metadata at the current production boundary. */
+    public static void ValidateExternalizedProduction(TsvTable table)
+    {
+        ArgumentNullException.ThrowIfNull(table);
+        if (!table.Columns.SequenceEqual(ProductionColumns, StringComparer.Ordinal))
+            throw new InvalidDataException(
+                $"Production object item-gate table '{table.SourcePath}' must use the complete ordered schema.");
+        foreach (var row in table.Rows) {
+            _ = row.Required("entity_id");
+            _ = row.Required("item_id");
         }
     }
 

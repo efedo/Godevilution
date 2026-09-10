@@ -26,6 +26,13 @@ public sealed record AuthoritativeWorldObjectPresentationDefinition(
 /** Validated object presentation metadata loaded from an optional sidecar table. */
 public sealed class AuthoritativeWorldObjectPresentationCatalog
 {
+    private static readonly IReadOnlyList<string> ProductionColumns = [
+        "entity_id",
+        "hide_when_activated",
+        "animation_frame",
+        "activated_animation_frame",
+    ];
+
     private readonly IReadOnlyList<AuthoritativeWorldObjectPresentationDefinition> definitions;
 
     public AuthoritativeWorldObjectPresentationCatalog(
@@ -45,6 +52,17 @@ public sealed class AuthoritativeWorldObjectPresentationCatalog
 
     public IReadOnlyList<AuthoritativeWorldObjectPresentationDefinition> Definitions
         => definitions;
+
+    /** Rejects partial object-presentation metadata at the current production boundary. */
+    public static void ValidateExternalizedProduction(TsvTable table)
+    {
+        ArgumentNullException.ThrowIfNull(table);
+        if (!table.Columns.SequenceEqual(ProductionColumns, StringComparer.Ordinal))
+            throw new InvalidDataException(
+                $"Production object presentation table '{table.SourcePath}' must use the complete ordered schema.");
+        foreach (var row in table.Rows)
+            _ = row.Required("entity_id");
+    }
 
     public static AuthoritativeWorldObjectPresentationCatalog LoadTsv(
         string sourcePath,

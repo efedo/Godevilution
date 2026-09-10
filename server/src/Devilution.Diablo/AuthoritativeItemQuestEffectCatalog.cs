@@ -21,6 +21,16 @@ public sealed record AuthoritativeItemQuestEffectDefinition(
 /** Validated content-owned quest effects applied at the server pickup boundary. */
 public sealed class AuthoritativeItemQuestEffectCatalog
 {
+    private static readonly IReadOnlyList<string> ProductionColumns = [
+        "item_id",
+        "item_symbol",
+        "quest_id",
+        "quest_symbol",
+        "effect_kind",
+        "effect_amount",
+        "required_variable1",
+    ];
+
     private readonly IReadOnlyList<AuthoritativeItemQuestEffectDefinition> definitions;
 
     public AuthoritativeItemQuestEffectCatalog(
@@ -72,6 +82,20 @@ public sealed class AuthoritativeItemQuestEffectCatalog
             if (!questIds.Contains(definition.QuestId))
                 throw new InvalidDataException(
                     $"Item quest effect references unknown quest {definition.QuestId}.");
+        }
+    }
+
+    /** Rejects partial item-to-quest transition metadata at the current production boundary. */
+    public static void ValidateExternalizedProduction(TsvTable table)
+    {
+        ArgumentNullException.ThrowIfNull(table);
+        if (!table.Columns.SequenceEqual(ProductionColumns, StringComparer.Ordinal))
+            throw new InvalidDataException(
+                $"Production item quest-effect table '{table.SourcePath}' must use the complete ordered schema.");
+        foreach (var row in table.Rows) {
+            _ = row.Required("item_id");
+            _ = row.Required("quest_id");
+            _ = row.Required("effect_kind");
         }
     }
 

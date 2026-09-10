@@ -623,17 +623,12 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
         var objectItemGates = content.TryGetTable(
                 "object_item_gates.tsv",
                 out var objectItemGatesTable)
-            ? AuthoritativeObjectItemGateCatalog.LoadTsv(
-                objectItemGatesTable.SourcePath,
-                objectItemGatesTable.ToCanonicalTsv(),
-                stableIds)
+            ? LoadObjectItemGates(content, objectItemGatesTable, stableIds)
             : null;
         var objectPresentations = content.TryGetTable(
             "object_presentations.tsv",
             out var objectPresentationsTable)
-            ? AuthoritativeWorldObjectPresentationCatalog.LoadTsv(
-                objectPresentationsTable.SourcePath,
-                objectPresentationsTable.ToCanonicalTsv())
+            ? LoadObjectPresentations(content, objectPresentationsTable)
             : null;
         objectPresentations?.Apply((objects ?? []).Concat(objectTemplates ?? []));
         nativeDunFragmentObjects?.ValidateTemplates(objectTemplates ?? []);
@@ -1084,10 +1079,7 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
         var itemQuestEffects = content.TryGetTable(
             "item_quest_effects.tsv",
             out var itemQuestEffectsTable)
-            ? AuthoritativeItemQuestEffectCatalog.LoadTsv(
-                itemQuestEffectsTable.SourcePath,
-                itemQuestEffectsTable.ToCanonicalTsv(),
-                stableIds)
+            ? LoadItemQuestEffects(content, itemQuestEffectsTable, stableIds)
             : null;
         if (itemQuestEffects is not null) {
             if (itemCatalog is null || quests is null)
@@ -1428,6 +1420,43 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
         if (content.Manifest.Schema == DiabloContentSchema.Current)
             AuthoritativeUniqueMonsterPackCatalog.ValidateExternalizedProduction(table);
         return AuthoritativeUniqueMonsterPackCatalog.LoadTsv(
+            table.SourcePath,
+            table.ToCanonicalTsv(),
+            stableIds);
+    }
+
+    private static AuthoritativeObjectItemGateCatalog LoadObjectItemGates(
+        ComposedContent content,
+        TsvTable table,
+        StableContentIdCatalog stableIds)
+    {
+        if (content.Manifest.Schema == DiabloContentSchema.Current)
+            AuthoritativeObjectItemGateCatalog.ValidateExternalizedProduction(table);
+        return AuthoritativeObjectItemGateCatalog.LoadTsv(
+            table.SourcePath,
+            table.ToCanonicalTsv(),
+            stableIds);
+    }
+
+    private static AuthoritativeWorldObjectPresentationCatalog LoadObjectPresentations(
+        ComposedContent content,
+        TsvTable table)
+    {
+        if (content.Manifest.Schema == DiabloContentSchema.Current)
+            AuthoritativeWorldObjectPresentationCatalog.ValidateExternalizedProduction(table);
+        return AuthoritativeWorldObjectPresentationCatalog.LoadTsv(
+            table.SourcePath,
+            table.ToCanonicalTsv());
+    }
+
+    private static AuthoritativeItemQuestEffectCatalog LoadItemQuestEffects(
+        ComposedContent content,
+        TsvTable table,
+        StableContentIdCatalog stableIds)
+    {
+        if (content.Manifest.Schema == DiabloContentSchema.Current)
+            AuthoritativeItemQuestEffectCatalog.ValidateExternalizedProduction(table);
+        return AuthoritativeItemQuestEffectCatalog.LoadTsv(
             table.SourcePath,
             table.ToCanonicalTsv(),
             stableIds);
