@@ -2,6 +2,11 @@
 
 All notable changes to this fork are documented below.
 
+- Corrected shipped-content regression coverage for the `1.502.0` contract:
+  current-schema activation now has explicit rejection tests for omitted native
+  spell, item-miscellany, item-topology, and item-generation-tag namespaces,
+  while matching `1.501.0` tests preserve omission compatibility.
+
 - Moved native armory presentation identity into the authored
   `object_presentations.tsv` content sidecar. The authoritative object state,
   save codec, and protocol now carry the family without deriving it from

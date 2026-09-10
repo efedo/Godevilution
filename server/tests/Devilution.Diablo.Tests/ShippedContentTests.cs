@@ -284,7 +284,7 @@ public sealed class ShippedContentTests
             presentationTable.SourcePath,
             presentationTable.ToCanonicalTsv());
         Assert.Equal(
-            [2020U, 2021U, 2022U, 2023U, 2024U, 2025U],
+            [2020U, 2021U, 2022U, 2023U, 2024U, 2025U, 2026U, 2027U],
             presentations.Definitions.Select(definition => definition.EntityId).ToArray());
         Assert.All(presentations.Definitions.Where(definition => definition.EntityId <= 2022), definition => {
             Assert.False(definition.HideWhenActivated);
@@ -295,6 +295,12 @@ public sealed class ShippedContentTests
             presentations.Definitions.Where(definition => definition.EntityId is 2023 or 2024),
             definition => Assert.True(definition.HideWhenActivated));
         Assert.False(presentations.Definitions.Single(definition => definition.EntityId == 2025).HideWhenActivated);
+        Assert.Equal(
+            AuthoritativeObjectPresentationKind.NativeArmorStand,
+            presentations.Definitions.Single(definition => definition.EntityId == 2026).PresentationKind);
+        Assert.Equal(
+            AuthoritativeObjectPresentationKind.NativeWeaponRack,
+            presentations.Definitions.Single(definition => definition.EntityId == 2027).PresentationKind);
         var itemGateTable = pack.Tables.Single(table => table.SourcePath == "object_item_gates.tsv");
         var itemGates = AuthoritativeObjectItemGateCatalog.LoadTsv(
             itemGateTable.SourcePath,
@@ -2406,7 +2412,7 @@ public sealed class ShippedContentTests
     [InlineData("native_item_misc.tsv")]
     [InlineData("native_item_topology.tsv")]
     [InlineData("native_item_tags.tsv")]
-    public void ContentBootstrapAllowsMissingLegacyOnlyCatalog(string omittedTable)
+    public void ContentBootstrapRejectsMissingCurrentSchemaLegacyOnlyCatalog(string omittedTable)
     {
         var contentRoot = Path.Combine(FindRepositoryRoot(), "server", "content", "base");
         var basePack = ContentPackLoader.LoadManifestDirectory(contentRoot);
@@ -2422,11 +2428,42 @@ public sealed class ShippedContentTests
             basePack.DependencyConstraints,
             basePack.Assets);
 
+        var exception = Assert.Throws<InvalidDataException>(() =>
+            DiabloModule.Instance.ContentBootstrap.Activate(
+                ComposedContent.Compose(new ContentManifest(
+                    $"without-{omittedTable}",
+                    "1",
+                    [normalizedPack]))));
+
+        Assert.Contains($"requires external '{omittedTable}' content", exception.Message, StringComparison.Ordinal);
+    }
+
+    [Theory]
+    [InlineData("native_spells.tsv")]
+    [InlineData("native_item_misc.tsv")]
+    [InlineData("native_item_topology.tsv")]
+    [InlineData("native_item_tags.tsv")]
+    public void PreviousSchemaAllowsMissingLegacyOnlyCatalog(string omittedTable)
+    {
+        var contentRoot = Path.Combine(FindRepositoryRoot(), "server", "content", "base");
+        var basePack = ContentPackLoader.LoadManifestDirectory(contentRoot);
+        var previousPack = new ContentPack(
+            basePack.Id,
+            basePack.Version,
+            basePack.Tables
+                .Where(table => table.SourcePath != omittedTable)
+                .ToArray(),
+            basePack.Dependencies,
+            basePack.Overlays,
+            new ContentSchemaIdentity("devilution.diablo", "1.501.0"),
+            basePack.DependencyConstraints,
+            basePack.Assets);
+
         var activation = DiabloModule.Instance.ContentBootstrap.Activate(
             ComposedContent.Compose(new ContentManifest(
-                $"without-{omittedTable}",
+                $"previous-without-{omittedTable}",
                 "1",
-                [normalizedPack])));
+                [previousPack])));
 
         Assert.NotNull(activation);
         var items = Assert.IsType<AuthoritativeItemCatalog>(activation.Simulation.Items);
@@ -2434,15 +2471,11 @@ public sealed class ShippedContentTests
     }
 
     [Fact]
-    public void ContentBootstrapUsesNormalizedContractWithoutLegacyItemTables()
+    public void ContentBootstrapUsesNormalizedContractWithoutLegacyItemRowTables()
     {
         var contentRoot = Path.Combine(FindRepositoryRoot(), "server", "content", "base");
         var basePack = ContentPackLoader.LoadManifestDirectory(contentRoot);
         var legacyTables = new HashSet<string>(StringComparer.OrdinalIgnoreCase) {
-            "native_spells.tsv",
-            "native_item_misc.tsv",
-            "native_item_topology.tsv",
-            "native_item_tags.tsv",
             "itemdat.tsv",
             "item_prefixes.tsv",
             "item_suffixes.tsv",
