@@ -808,6 +808,7 @@ public sealed class DiabloWorldCommandProcessor
                 continue;
 
             quest.Active = true;
+            quest.Logged = true;
             if (quest.RouteActivationVariable1 >= 0)
                 quest.Variable1 = Math.Max(quest.Variable1, quest.RouteActivationVariable1);
         }

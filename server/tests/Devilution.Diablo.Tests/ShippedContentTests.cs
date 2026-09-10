@@ -5801,6 +5801,7 @@ public sealed class ShippedContentTests
             activation.QuestPools.SelectUnavailableQuestIds(0).Contains(baseQuest.QuestId),
             baseQuest.Unavailable);
         Assert.False(activation.Simulation.WorldState.Quests[3021].Active);
+        Assert.Equal(286, activation.Simulation.WorldState.Quests[3021].MessageId);
         Assert.Equal("Defiler", activation.Simulation.WorldState.Quests[3021].CompletionUniqueIdentity);
         Assert.False(activation.Simulation.WorldState.Quests[3006].Active);
         Assert.False(activation.Simulation.WorldState.Quests[3006].ActivateOnRoute);
@@ -5844,6 +5845,9 @@ public sealed class ShippedContentTests
             .Symbol);
         Assert.Equal("TEXT_VEIL11", activation.DialogueMessages.Definitions
             .Single(message => message.MessageId == 83)
+            .Symbol);
+        Assert.Equal("TEXT_DEFILER1", activation.DialogueMessages.Definitions
+            .Single(message => message.MessageId == 286)
             .Symbol);
         Assert.Equal((0U, 0, 0, 0, false), (
             activation.Simulation.WorldState.Quests[3004].DialogueRewardItemId,

@@ -10,6 +10,12 @@ Explicit reconnect now removes only the prior transport-close notification
 before opening a new epoch, so protocol errors and retained authoritative
 messages are not discarded.
 
+Hellfire Defiler route activation now preserves the native quest-log boundary:
+the server marks the quest logged when level 17 is entered and carries the
+external `TEXT_DEFILER1` opening message through the active Hellfire dialogue
+catalog. Re-entering the route remains idempotent, and the quest's completion
+identity and Cathedral Map reward remain unchanged.
+
 Persisted sessions can now adopt the active ruleset identity after a server
 restart when their validated checkpoint was already published for that exact
 generation. The host still rejects unknown tokens and checkpoints from a

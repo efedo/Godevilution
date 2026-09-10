@@ -2899,10 +2899,16 @@ public sealed class LiveAuthoritativeServerTests
         var monster = Assert.Single(
             initial.Snapshot!.Monsters,
             candidate => candidate.EntityId == 10);
+        var defilerQuest = Assert.Single(
+            initial.Snapshot.Quests,
+            candidate => candidate.QuestId == 3021);
 
         Assert.Equal(2U, monster.MonsterId);
         Assert.Equal(11, monster.MaxHitPoints);
         Assert.True(monster.IsUndead);
+        Assert.Equal(286, defilerQuest.MessageId);
+        Assert.True(defilerQuest.Initial);
+        Assert.False(defilerQuest.Logged);
     }
 
     [Fact]

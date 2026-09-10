@@ -3445,6 +3445,81 @@ public sealed class DiabloWorldCommandProcessorTests
     }
 
     [Fact]
+    public void RouteEntryLogsHellfireDefilerQuestAndPreservesItsOpeningMessage()
+    {
+        var quest = new AuthoritativeQuestState(
+            3021,
+            17,
+            1,
+            active: false,
+            messageId: 286,
+            completionUniqueIdentity: "Defiler");
+        var questTypes = new AuthoritativeQuestTypeCatalog([
+            new AuthoritativeQuestTypeDefinition(
+                3021,
+                20,
+                "The Defiler",
+                17,
+                17,
+                string.Empty,
+                0,
+                false),
+        ]);
+        var world = new DiabloWorldState(quests: [quest]);
+        var processor = new DiabloWorldCommandProcessor(
+            world,
+            questTypes: questTypes,
+            gameMode: DiabloGameMode.SinglePlayer);
+        var player = CreatePlayer(levelId: 17);
+
+        var first = processor.Execute(
+            player,
+            new DiabloMoveIntent(1, 0),
+            1,
+            [player]);
+
+        Assert.True(first.Succeeded, first.Failure?.ToString());
+        Assert.True(quest.Active);
+        Assert.True(quest.Logged);
+        Assert.Equal(286, quest.MessageId);
+
+        var second = processor.Execute(
+            player,
+            new DiabloMoveIntent(0, 1),
+            2,
+            [player]);
+
+        Assert.True(second.Succeeded, second.Failure?.ToString());
+        Assert.True(quest.Active);
+        Assert.True(quest.Logged);
+        Assert.Equal(286, quest.MessageId);
+
+        var multiplayerQuest = new AuthoritativeQuestState(
+            3021,
+            17,
+            1,
+            active: false,
+            messageId: 286,
+            completionUniqueIdentity: "Defiler");
+        var multiplayerWorld = new DiabloWorldState(quests: [multiplayerQuest]);
+        var multiplayerProcessor = new DiabloWorldCommandProcessor(
+            multiplayerWorld,
+            questTypes: questTypes,
+            gameMode: DiabloGameMode.Multiplayer);
+        var multiplayerPlayer = CreatePlayer(levelId: 17);
+
+        var multiplayerEntry = multiplayerProcessor.Execute(
+            multiplayerPlayer,
+            new DiabloMoveIntent(1, 0),
+            1,
+            [multiplayerPlayer]);
+
+        Assert.True(multiplayerEntry.Succeeded, multiplayerEntry.Failure?.ToString());
+        Assert.True(multiplayerQuest.Active);
+        Assert.True(multiplayerQuest.Logged);
+    }
+
+    [Fact]
     public void ContentOwnedUnloggedTownerStagesMatchNativePoisonedWaterBranches()
     {
         var interactions = new AuthoritativeQuestTownerInteractionCatalog([
