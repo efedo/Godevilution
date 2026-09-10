@@ -17,6 +17,13 @@ All notable changes to this fork are documented below.
   swords, and Barbarian axe/two-handed melee, including adjacent hit penalty
   and quarter damage.
 
+- Completed the native `DamageWeapon` parity slice: successful melee attacks
+  now use the 1-in-30 durability roll, each emitted ranged arrow uses the
+  1-in-40 roll, hand/shield fallback ordering matches native behavior,
+  indestructible items are preserved, and broken equipment is removed with
+  authoritative resource recalculation. Hellfire `Decay` removal retains its
+  native early return before ordinary durability loss.
+
 - Advanced the active content schema to `1.461.0`, retaining `1.460.0` as
   the previous additive contract for compatible packs.
 

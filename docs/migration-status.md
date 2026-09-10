@@ -509,6 +509,13 @@ Ranged Hellfire replay now applies the native `Jesters` Q6 scaling before
 elemental channel resolution.
 Ranged Hellfire replay now also applies the validated post-hit `Devastation`
 multiplier before projectile snapshotting.
+Native player attacks now carry the remaining `DamageWeapon` boundary into the
+authoritative runtime: successful melee hits use the native 1-in-30 roll,
+weapon volleys use the native 1-in-40 roll per emitted arrow, hand slots are
+processed in native order, indestructible equipment is preserved, and broken
+weapons or shields are removed with equipment-resource recalculation. Hellfire
+`Decay` removal suppresses the subsequent ordinary durability roll, matching
+the native early return.
 Ranged Hellfire replay now carries the validated `Peril` self-damage payload
 and post-armor multiplier into the projectile snapshot.
 The ranged `Peril` impact replay now applies that deferred self-damage at the

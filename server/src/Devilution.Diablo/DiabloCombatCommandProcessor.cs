@@ -707,8 +707,11 @@ public sealed class DiabloCombatCommandProcessor
                     events);
             }
         }
-        if (ranged || attackHit)
-            ApplyHellfireWeaponDecay(player);
+        if (ranged || attackHit) {
+            var hellfireRemoved = ApplyHellfireWeaponDecay(player);
+            if (!hellfireRemoved)
+                ApplyNativeWeaponDurabilityLoss(player, ranged ? 40U : 30U);
+        }
         return events.Count == 0
             ? DiabloCombatIntentResult.Accepted
             : new DiabloCombatIntentResult(true, null, events);
@@ -1011,7 +1014,8 @@ public sealed class DiabloCombatCommandProcessor
                 Speed = arrowSpeed,
             };
             world.Projectiles.Add(projectile.EntityId, projectile);
-            ApplyHellfireWeaponDecay(player);
+            if (!ApplyHellfireWeaponDecay(player))
+                ApplyNativeWeaponDurabilityLoss(player, 40);
         }
         return DiabloCombatIntentResult.Accepted;
     }
@@ -1085,7 +1089,9 @@ public sealed class DiabloCombatCommandProcessor
         }
 
         if (attackHit && TryResolvePlayerBlock(player, target, effectTick)) {
-            ApplyHellfireWeaponDecay(player);
+            var hellfireRemoved = ApplyHellfireWeaponDecay(player);
+            if (!hellfireRemoved)
+                ApplyNativeWeaponDurabilityLoss(player, 30);
             return events.Count == 0
                 ? DiabloCombatIntentResult.Accepted
                 : new DiabloCombatIntentResult(true, null, events);
@@ -1121,7 +1127,11 @@ public sealed class DiabloCombatCommandProcessor
         ApplyPlayerKnockback(player, target, damageQ6, players);
         if (damageQ6 > 0)
             ApplyEquipmentAttackEffects(player, damageQ6, events);
-        ApplyHellfireWeaponDecay(player);
+        if (attackHit) {
+            var hellfireRemoved = ApplyHellfireWeaponDecay(player);
+            if (!hellfireRemoved)
+                ApplyNativeWeaponDurabilityLoss(player, 30);
+        }
         return events.Count == 0
             ? DiabloCombatIntentResult.Accepted
             : new DiabloCombatIntentResult(true, null, events);
@@ -1220,7 +1230,8 @@ public sealed class DiabloCombatCommandProcessor
                 Speed = arrowSpeed,
             };
             world.Projectiles.Add(projectile.EntityId, projectile);
-            ApplyHellfireWeaponDecay(player);
+            if (!ApplyHellfireWeaponDecay(player))
+                ApplyNativeWeaponDurabilityLoss(player, 40);
         }
         return DiabloCombatIntentResult.Accepted;
     }
@@ -1526,10 +1537,10 @@ public sealed class DiabloCombatCommandProcessor
     }
 
     /** Applies native Hellfire Decay to eligible hand weapons in native order. */
-    private void ApplyHellfireWeaponDecay(AuthoritativePlayerState player)
+    private bool ApplyHellfireWeaponDecay(AuthoritativePlayerState player)
     {
         if (rules.GameVariant != DiabloGameVariant.Hellfire)
-            return;
+            return false;
 
         foreach (var slot in new uint[] { 4, 5 }) {
             var equipmentIndex = player.Equipment.FindIndex(item => item.Slot == slot);
@@ -1556,8 +1567,96 @@ public sealed class DiabloCombatCommandProcessor
                 };
             player.RecalculateEquipmentResources();
             if (decayedState.PlusDamage <= -rules.HellfireDecayRemovalThreshold)
-                return;
+                return true;
         }
+        return false;
+    }
+
+    /** Mirrors native DamageWeapon's slot ordering and break semantics. */
+    private bool ApplyNativeWeaponDurabilityLoss(
+        AuthoritativePlayerState player,
+        uint damageFrequency)
+    {
+        if (!random.FlipCoin(damageFrequency))
+            return false;
+
+        var leftIndex = player.Equipment.FindIndex(item => item.Slot == 4);
+        if (leftIndex >= 0
+            && AuthoritativeItemClassification.IsWeapon(
+                player.Equipment[leftIndex].State,
+                items)) {
+            if (player.Equipment[leftIndex].State.Durability == 255)
+                return false;
+            var state = player.Equipment[leftIndex].State;
+            if (state.Durability <= 1) {
+                player.Equipment.RemoveAt(leftIndex);
+                player.RecalculateEquipmentResources();
+                return true;
+            }
+            player.Equipment[leftIndex] = player.Equipment[leftIndex] with {
+                State = state with { Durability = checked(state.Durability - 1) },
+            };
+        }
+
+        var rightIndex = player.Equipment.FindIndex(item => item.Slot == 5);
+        if (rightIndex >= 0
+            && AuthoritativeItemClassification.IsWeapon(
+                player.Equipment[rightIndex].State,
+                items)) {
+            if (player.Equipment[rightIndex].State.Durability == 255)
+                return false;
+            var state = player.Equipment[rightIndex].State;
+            if (state.Durability <= 1) {
+                player.Equipment.RemoveAt(rightIndex);
+                player.RecalculateEquipmentResources();
+                return true;
+            }
+            player.Equipment[rightIndex] = player.Equipment[rightIndex] with {
+                State = state with { Durability = checked(state.Durability - 1) },
+            };
+        }
+
+        leftIndex = player.Equipment.FindIndex(item => item.Slot == 4);
+        rightIndex = player.Equipment.FindIndex(item => item.Slot == 5);
+        if (leftIndex < 0
+            && rightIndex >= 0
+            && AuthoritativeItemClassification.IsShield(
+                player.Equipment[rightIndex].State,
+                items)) {
+            if (player.Equipment[rightIndex].State.Durability == 255)
+                return false;
+            var state = player.Equipment[rightIndex].State;
+            if (state.Durability <= 1) {
+                player.Equipment.RemoveAt(rightIndex);
+                player.RecalculateEquipmentResources();
+                return true;
+            }
+            player.Equipment[rightIndex] = player.Equipment[rightIndex] with {
+                State = state with { Durability = checked(state.Durability - 1) },
+            };
+        }
+
+        leftIndex = player.Equipment.FindIndex(item => item.Slot == 4);
+        rightIndex = player.Equipment.FindIndex(item => item.Slot == 5);
+        if (rightIndex < 0
+            && leftIndex >= 0
+            && AuthoritativeItemClassification.IsShield(
+                player.Equipment[leftIndex].State,
+                items)) {
+            if (player.Equipment[leftIndex].State.Durability == 255)
+                return false;
+            var state = player.Equipment[leftIndex].State;
+            if (state.Durability <= 1) {
+                player.Equipment.RemoveAt(leftIndex);
+                player.RecalculateEquipmentResources();
+                return true;
+            }
+            player.Equipment[leftIndex] = player.Equipment[leftIndex] with {
+                State = state with { Durability = checked(state.Durability - 1) },
+            };
+        }
+
+        return false;
     }
 
     /**

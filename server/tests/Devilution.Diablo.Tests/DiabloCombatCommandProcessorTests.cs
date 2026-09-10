@@ -708,6 +708,168 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void SuccessfulMeleeAttackConsumesNativeWeaponDurability()
+    {
+        var weapon = AuthoritativeItemState.Empty with {
+            ItemType = 1,
+            ItemClass = 1,
+            MinDamage = 1,
+            MaxDamage = 1,
+            Durability = 4,
+            MaxDurability = 4,
+            StatFlag = true,
+        };
+        var target = new AuthoritativeCombatTarget(9, 1, 0, 100);
+        var world = new DiabloWorldState(combatTargets: [target]);
+        var processor = CreateProcessor(world, random: new DiabloRandom(0));
+        var player = CreatePlayer(
+            entityId: 7,
+            equipment: [new EquippedStoreItem(4, 42, weapon)]);
+
+        var result = processor.Execute(
+            player,
+            new DiabloAttackIntent(target.EntityId),
+            1,
+            [player]);
+
+        Assert.True(result.Succeeded, result.Failure?.ToString());
+        var equipped = Assert.Single(player.Equipment);
+        Assert.Equal(3, equipped.State.Durability);
+    }
+
+    [Fact]
+    public void MissedMeleeAttackDoesNotConsumeNativeWeaponDurability()
+    {
+        var weapon = AuthoritativeItemState.Empty with {
+            ItemType = 1,
+            ItemClass = 1,
+            MinDamage = 1,
+            MaxDamage = 1,
+            Durability = 4,
+            MaxDurability = 4,
+            StatFlag = true,
+        };
+        var target = new AuthoritativeCombatTarget(9, 1, 0, 100);
+        var world = new DiabloWorldState(combatTargets: [target]);
+        var processor = CreateProcessor(
+            world,
+            rules: new AuthoritativeCombatRules(10, 1, 100, hitChancePercent: 0),
+            random: new DiabloRandom(0));
+        var player = CreatePlayer(
+            entityId: 7,
+            equipment: [new EquippedStoreItem(4, 42, weapon)]);
+
+        var result = processor.Execute(
+            player,
+            new DiabloAttackIntent(target.EntityId),
+            1,
+            [player]);
+
+        Assert.True(result.Succeeded, result.Failure?.ToString());
+        Assert.Equal(4, Assert.Single(player.Equipment).State.Durability);
+    }
+
+    [Fact]
+    public void BrokenMeleeWeaponIsRemovedAndRecalculatesEquipmentResources()
+    {
+        var weapon = AuthoritativeItemState.Empty with {
+            ItemType = 1,
+            ItemClass = 1,
+            MinDamage = 1,
+            MaxDamage = 1,
+            Durability = 1,
+            MaxDurability = 1,
+            StatFlag = true,
+            PlusHitPoints = 5,
+        };
+        var target = new AuthoritativeCombatTarget(9, 1, 0, 100);
+        var world = new DiabloWorldState(combatTargets: [target]);
+        var processor = CreateProcessor(world, random: new DiabloRandom(0));
+        var player = CreatePlayer(
+            entityId: 7,
+            life: 50,
+            lifeMaximum: 50,
+            equipment: [new EquippedStoreItem(4, 42, weapon)]);
+        player.RecalculateEquipmentResources();
+        var lifeWithWeapon = player.LifeMaximum;
+
+        var result = processor.Execute(
+            player,
+            new DiabloAttackIntent(target.EntityId),
+            1,
+            [player]);
+
+        Assert.True(result.Succeeded, result.Failure?.ToString());
+        Assert.Empty(player.Equipment);
+        Assert.Equal(lifeWithWeapon - 5, player.LifeMaximum);
+    }
+
+    [Fact]
+    public void IndestructiblePrimaryWeaponPreservesNativeOffhandBoundary()
+    {
+        var indestructibleWeapon = AuthoritativeItemState.Empty with {
+            ItemType = 1,
+            ItemClass = 1,
+            MinDamage = 1,
+            MaxDamage = 1,
+            Durability = 255,
+            MaxDurability = 255,
+            StatFlag = true,
+        };
+        var offhandWeapon = indestructibleWeapon with {
+            Durability = 4,
+            MaxDurability = 4,
+        };
+        var target = new AuthoritativeCombatTarget(9, 1, 0, 100);
+        var world = new DiabloWorldState(combatTargets: [target]);
+        var processor = CreateProcessor(world, random: new DiabloRandom(0));
+        var player = CreatePlayer(
+            entityId: 7,
+            equipment: [
+                new EquippedStoreItem(4, 42, indestructibleWeapon),
+                new EquippedStoreItem(5, 43, offhandWeapon),
+            ]);
+
+        var result = processor.Execute(
+            player,
+            new DiabloAttackIntent(target.EntityId),
+            1,
+            [player]);
+
+        Assert.True(result.Succeeded, result.Failure?.ToString());
+        Assert.Equal(255, player.Equipment.Single(item => item.Slot == 4).State.Durability);
+        Assert.Equal(4, player.Equipment.Single(item => item.Slot == 5).State.Durability);
+    }
+
+    [Fact]
+    public void UnarmedMeleeAttackDamagesAStandaloneShield()
+    {
+        var shield = AuthoritativeItemState.Empty with {
+            ItemType = 5,
+            MinDamage = 1,
+            MaxDamage = 1,
+            Durability = 4,
+            MaxDurability = 4,
+            StatFlag = true,
+        };
+        var target = new AuthoritativeCombatTarget(9, 1, 0, 100);
+        var world = new DiabloWorldState(combatTargets: [target]);
+        var processor = CreateProcessor(world, random: new DiabloRandom(0));
+        var player = CreatePlayer(
+            entityId: 7,
+            equipment: [new EquippedStoreItem(5, 42, shield)]);
+
+        var result = processor.Execute(
+            player,
+            new DiabloAttackIntent(target.EntityId),
+            1,
+            [player]);
+
+        Assert.True(result.Succeeded, result.Failure?.ToString());
+        Assert.Equal(3, Assert.Single(player.Equipment).State.Durability);
+    }
+
+    [Fact]
     public void BarbarianAxeAttackUsesConfiguredStrengthDamageDivisor()
     {
         var world = new DiabloWorldState();
