@@ -160,6 +160,32 @@ public sealed class StoreCatalog
     private readonly Dictionary<uint, Dictionary<uint, StoreItem>> stores = new();
     private readonly Dictionary<uint, AuthoritativeStoreRole> roles = new();
 
+    private static readonly IReadOnlyList<string> SymbolicProductionColumns = [
+        "store_id",
+        "store_symbol",
+        "store_role",
+        "store_slot",
+        "item_seed",
+        "price",
+        "item_id",
+        "item_symbol",
+    ];
+
+    /**
+     * Rejects numeric-only store and item identities at the current
+     * production boundary. Direct callers may continue to load older shapes.
+     */
+    public static void ValidateExternalizedProduction(TsvTable table)
+    {
+        ArgumentNullException.ThrowIfNull(table);
+        if (!table.Columns.SequenceEqual(SymbolicProductionColumns, StringComparer.Ordinal))
+            throw new InvalidDataException(
+                $"Production store table '{table.SourcePath}' must use the complete ordered symbolic schema.");
+        foreach (var row in table.Rows)
+            foreach (var column in SymbolicProductionColumns)
+                _ = row.Required(column);
+    }
+
     /** Loads the first store slice from an external TSV table. */
     public static StoreCatalog LoadTsv(
         string sourcePath,

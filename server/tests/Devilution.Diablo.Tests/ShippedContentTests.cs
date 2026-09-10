@@ -18,7 +18,7 @@ public sealed class ShippedContentTests
         Assert.Equal("devilution.base", pack.Id);
         Assert.Equal("0.1.0", pack.Version);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.468.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.469.0"),
             pack.Schema);
         Assert.Empty(pack.Overlays);
         var nativeDunMonsterTable = pack.Tables.Single(
@@ -1204,7 +1204,7 @@ public sealed class ShippedContentTests
             currentPack.Tables,
             currentPack.Dependencies,
             currentPack.Overlays,
-            new ContentSchemaIdentity("devilution.diablo", "1.467.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.468.0"),
             currentPack.DependencyConstraints,
             currentPack.Assets);
         var content = ComposedContent.Compose(new ContentManifest(
@@ -1336,7 +1336,7 @@ public sealed class ShippedContentTests
                 .ToArray(),
             basePack.Dependencies,
             basePack.Overlays,
-            new ContentSchemaIdentity("devilution.diablo", "1.467.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.468.0"),
             basePack.DependencyConstraints,
             basePack.Assets);
 
@@ -1401,7 +1401,7 @@ public sealed class ShippedContentTests
                 .ToArray(),
             basePack.Dependencies,
             basePack.Overlays,
-            new ContentSchemaIdentity("devilution.diablo", "1.467.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.468.0"),
             basePack.DependencyConstraints,
             basePack.Assets);
 
@@ -1469,7 +1469,7 @@ public sealed class ShippedContentTests
                 .ToArray(),
             basePack.Dependencies,
             basePack.Overlays,
-            new ContentSchemaIdentity("devilution.diablo", "1.467.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.468.0"),
             basePack.DependencyConstraints,
             basePack.Assets);
 
@@ -1533,7 +1533,7 @@ public sealed class ShippedContentTests
                 .ToArray(),
             basePack.Dependencies,
             basePack.Overlays,
-            new ContentSchemaIdentity("devilution.diablo", "1.467.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.468.0"),
             basePack.DependencyConstraints,
             basePack.Assets);
 
@@ -1545,6 +1545,68 @@ public sealed class ShippedContentTests
 
         Assert.Equal(6, activation.PlayerAnimations.Definitions.Count);
         Assert.Equal(14, activation.PlayerAnimations.GetRequired(0).CastingActionFrame);
+    }
+
+    [Fact]
+    public void ContentBootstrapRejectsLegacyStoreSchemaInCurrentSchema()
+    {
+        var contentRoot = Path.Combine(FindRepositoryRoot(), "server", "content", "base");
+        var basePack = ContentPackLoader.LoadManifestDirectory(contentRoot);
+        var stores = basePack.Tables.Single(table => table.SourcePath == "stores.tsv");
+        var legacyStores = CreateLegacyStoreTable(stores);
+        var incompletePack = new ContentPack(
+            basePack.Id,
+            basePack.Version,
+            basePack.Tables
+                .Select(table => table.SourcePath == stores.SourcePath
+                    ? legacyStores
+                    : table)
+                .ToArray(),
+            basePack.Dependencies,
+            basePack.Overlays,
+            basePack.Schema,
+            basePack.DependencyConstraints,
+            basePack.Assets);
+
+        var exception = Assert.Throws<InvalidDataException>(() =>
+            DiabloModule.Instance.ContentBootstrap.Activate(
+                ComposedContent.Compose(new ContentManifest(
+                    "missing-store-symbols",
+                    "1",
+                    [incompletePack]))));
+
+        Assert.Contains("Production store table", exception.Message, StringComparison.Ordinal);
+        Assert.Contains("complete ordered symbolic schema", exception.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void PreviousSchemaRetainsLegacyStoreCompatibility()
+    {
+        var contentRoot = Path.Combine(FindRepositoryRoot(), "server", "content", "base");
+        var basePack = ContentPackLoader.LoadManifestDirectory(contentRoot);
+        var stores = basePack.Tables.Single(table => table.SourcePath == "stores.tsv");
+        var previousPack = new ContentPack(
+            basePack.Id,
+            basePack.Version,
+            basePack.Tables
+                .Select(table => table.SourcePath == stores.SourcePath
+                    ? CreateLegacyStoreTable(stores)
+                    : table)
+                .ToArray(),
+            basePack.Dependencies,
+            basePack.Overlays,
+            new ContentSchemaIdentity("devilution.diablo", "1.468.0"),
+            basePack.DependencyConstraints,
+            basePack.Assets);
+
+        var activation = DiabloModule.Instance.ContentBootstrap.Activate(
+            ComposedContent.Compose(new ContentManifest(
+                "previous-store-contract",
+                "1",
+                [previousPack])));
+
+        Assert.NotNull(activation);
+        Assert.Equal(6, activation.PlayerClasses.Definitions.Count);
     }
 
     [Theory]
@@ -3686,7 +3748,7 @@ public sealed class ShippedContentTests
                 .ToArray(),
             basePack.Dependencies,
             basePack.Overlays,
-            new ContentSchemaIdentity("devilution.diablo", "1.467.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.468.0"),
             basePack.DependencyConstraints,
             basePack.Assets);
 
@@ -3863,7 +3925,7 @@ public sealed class ShippedContentTests
                 .ToArray(),
             basePack.Dependencies,
             basePack.Overlays,
-            new ContentSchemaIdentity("devilution.diablo", "1.467.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.468.0"),
             basePack.DependencyConstraints,
             basePack.Assets);
 
@@ -4252,7 +4314,7 @@ public sealed class ShippedContentTests
 
         Assert.Equal("devilution.hellfire", hellfirePack.Id);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.468.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.469.0"),
             hellfirePack.Schema);
         Assert.Equal(DiabloGameVariant.Hellfire, combat.GameVariant);
         Assert.Equal(2, combat.UniqueExperienceMultiplier);
@@ -7859,6 +7921,17 @@ public sealed class ShippedContentTests
                 return string.Join('\t', new[] { fields[0] }.Concat(fields.Skip(2)));
             });
         return TsvTable.Parse(animations.SourcePath, string.Join('\n', lines) + "\n");
+    }
+
+    private static TsvTable CreateLegacyStoreTable(TsvTable stores)
+    {
+        var lines = stores.ToCanonicalTsv()
+            .Split('\n', StringSplitOptions.RemoveEmptyEntries)
+            .Select(line => {
+                var fields = line.Split('\t');
+                return string.Join('\t', [fields[0], fields[3], fields[4], fields[5], fields[6]]);
+            });
+        return TsvTable.Parse(stores.SourcePath, string.Join('\n', lines) + "\n");
     }
 
     private static string FindRepositoryRoot()

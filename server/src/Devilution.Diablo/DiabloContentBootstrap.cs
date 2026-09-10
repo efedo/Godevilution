@@ -399,6 +399,8 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
             uniqueId => uniqueItems.TryGet(uniqueId, out _));
 
         var storeTable = content.GetRequiredTable("stores.tsv");
+        if (content.Manifest.Schema == DiabloContentSchema.Current)
+            StoreCatalog.ValidateExternalizedProduction(storeTable);
         var stores = StoreCatalog.LoadTsv(
             storeTable.SourcePath,
             storeTable.ToCanonicalTsv(),

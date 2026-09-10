@@ -3,9 +3,9 @@
 Each directory under `server/content` is a server-owned, validated gameplay
 content pack. The default `base` pack is loaded by the standalone server and is
 included in its content manifest and combined ruleset identity.
-It declares its identity and `devilution.diablo@1.468.0` schema in
+It declares its identity and `devilution.diablo@1.469.0` schema in
 `base/content-pack.json`; the Diablo module also accepts the immediately
-previous additive `1.467.0` schema so existing manifest-based packs remain
+previous additive `1.468.0` schema so existing manifest-based packs remain
 loadable. A composed manifest must still use one exact schema identity across
 all declared packs; use the previous schema only for a complete compatible
 manifest rather than mixing it with the current pack. The standalone host falls
@@ -134,7 +134,7 @@ publish a Diablo ruleset:
 
 | Contract area | Required tables |
 | --- | --- |
-| Stable identity and economy | `content_ids.tsv`, `store_services.tsv` (all service keys plus an explicit `spell_staff_cost` row), `item_generation.tsv`, `experience.tsv`, `stores.tsv` |
+| Stable identity and economy | `content_ids.tsv`, `store_services.tsv` (all service keys plus an explicit `spell_staff_cost` row), `item_generation.tsv`, `experience.tsv`, `stores.tsv` (complete symbolic store/item schema) |
 | Player and spell sources | `classes.tsv` (complete class tuning schema), `class_animations.tsv` (complete symbolic animation schema), `class_loadouts.tsv` (complete symbolic loadout schema), `class_loadout_items.tsv` (complete symbolic item schema), `spells.tsv`, `spell_books.tsv` |
 | Item rules and presentation | `items.tsv`, `unique_items.tsv`, `item_affixes.tsv`, `item_cursor_graphics.tsv`, `native_item_effects.tsv`, `native_item_hellfire_effects.tsv` |
 | World and combat rules | `world_rules.tsv` (complete town/service identity and Town Portal geometry row), `combat.tsv` (complete tuning row) |
@@ -3237,7 +3237,7 @@ clients.
 | `item_affixes.tsv` | `name`, `is_suffix` | Complete normalized prefix/suffix definitions and deterministic effects; shipped legacy-compatible rows may opt into native random/value-range semantics through explicit `alignment`, `min_value`, `max_value`, `value_multiplier`, `legacy_random`, and `legacy_value_range` columns. |
 | `item_generation.tsv` | singleton | Item-generation bounds, quality rolls, and native-compatible random selection rules. |
 | `unique_items.tsv` | `unique_id` | Normalized unique-item definitions with optional stable `unique_symbol`, base-item references and optional `base_item_symbol` validated against the active item catalog (both symbols required by shipped base and Hellfire rows), authoritative presentation names, optional cursor symbols, and fixed effects; production activation rejects unsupported power symbols, while ordinary and Hellfire effect powers resolve through their validated native effect catalogs. |
-| `stores.tsv` | `store_id`, `store_slot` | Deterministic vendor inventory and item-generation references, with optional `store_role` (`Generic`, `Smith`, `Witch`, `Wirt`, `Healer`, or `Adria`) and stable `store_symbol`, `item_symbol`, `unique_item_symbol`, and `spell_symbol` cross-checks validated against active store, item, unique-item, and spell catalogs. Omitted roles infer only known native vendor symbols and retain `Generic` for custom stores. Book-template rows use `spell_books.tsv` to generate a deterministic random book unless an explicit `spell_id`/`spell_symbol` is supplied. |
+| `stores.tsv` | `store_id`, `store_slot` | Deterministic vendor inventory and item-generation references. Current production rows use the complete symbolic store/item schema; older rows may use optional `store_role` (`Generic`, `Smith`, `Witch`, `Wirt`, `Healer`, or `Adria`) and stable `store_symbol`, `item_symbol`, `unique_item_symbol`, and `spell_symbol` cross-checks validated against active catalogs. Omitted roles infer only known native vendor symbols and retain `Generic` for custom stores. Book-template rows use `spell_books.tsv` to generate a deterministic random book unless an explicit `spell_id`/`spell_symbol` is supplied. |
 | `store_services.tsv` | `key`, `spell_id`, `spell_symbol` | Service pricing and spell-staff costs, with optional stable `spell_symbol` cross-checks and non-zero spell identities validated against active `spells.tsv`; omitted keys use module defaults. |
 | `itemdat.tsv`, `item_prefixes.tsv`, `item_suffixes.tsv` | source-row compatibility | Legacy tables retained for direct compatibility loaders; production activation requires normalized item data. |
 | `unique_itemdat.tsv` | source-row compatibility | Legacy unique-item table retained for direct compatibility loaders; production activation requires `unique_items.tsv`. |
@@ -3261,7 +3261,7 @@ and no implicit table replacements. For example:
   "dependencies": ["devilution.base"],
   "schema": {
     "id": "devilution.diablo",
-    "version": "1.468.0"
+    "version": "1.469.0"
   },
   "dependencyConstraints": [
     {
@@ -3295,8 +3295,8 @@ three-component semantic-version constraints for declared dependencies. All
 declared schemas in one ordered manifest must match, every constraint must name
 a declared dependency, and the loaded dependency version must satisfy its
 range. The first-party server rejects a declared schema other than
-`devilution.diablo@1.468.0` or its immediately previous additive
-`1.467.0`. Current-schema packs must provide the complete production table
+`devilution.diablo@1.469.0` or its immediately previous additive
+`1.468.0`. Current-schema packs must provide the complete production table
 contract; previous-schema packs retain their documented compatibility fallbacks.
 Manifests without compatibility metadata retain their legacy identity and
 remain loadable during migration.

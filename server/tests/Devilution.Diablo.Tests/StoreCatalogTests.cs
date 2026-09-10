@@ -28,6 +28,35 @@ public sealed class StoreCatalogTests
     }
 
     [Fact]
+    public void ProductionValidationRejectsNumericStoreSchema()
+    {
+        var table = TsvTable.Parse(
+            "stores.tsv",
+            "store_id\tstore_slot\titem_seed\tprice\titem_id\n"
+                + "1\t0\t42\t75\t1\n");
+
+        var exception = Assert.Throws<InvalidDataException>(() =>
+            StoreCatalog.ValidateExternalizedProduction(table));
+
+        Assert.Contains("complete ordered symbolic schema", exception.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void ProductionValidationAcceptsShippedStoreSchema()
+    {
+        var table = TsvTable.Parse(
+            "stores.tsv",
+            File.ReadAllText(Path.Combine(
+                FindRepositoryRoot(),
+                "server",
+                "content",
+                "base",
+                "stores.tsv")));
+
+        StoreCatalog.ValidateExternalizedProduction(table);
+    }
+
+    [Fact]
     public void LoadsExplicitVendorRoleAndRetainsItWhenStockIsReplaced()
     {
         var catalog = StoreCatalog.LoadTsv(
@@ -344,5 +373,28 @@ public sealed class StoreCatalogTests
             gameMode: DiabloGameMode.Multiplayer);
         var item = Assert.Single(multiplayer.GetItems(1));
         Assert.Equal(34, item.State.SpellId);
+    }
+
+    private static string FindRepositoryRoot()
+    {
+        var configuredRoot = Environment.GetEnvironmentVariable(
+            "GODEVILUTION_REPOSITORY_ROOT");
+        var searchRoots = string.IsNullOrWhiteSpace(configuredRoot)
+            ? new[] { Directory.GetCurrentDirectory(), AppContext.BaseDirectory }
+            : new[] {
+                configuredRoot!,
+                Directory.GetCurrentDirectory(),
+                AppContext.BaseDirectory,
+            };
+        foreach (var start in searchRoots) {
+            for (var directory = new DirectoryInfo(start);
+                 directory is not null;
+                 directory = directory.Parent) {
+                if (File.Exists(Path.Combine(directory.FullName, "AGENTS.md")))
+                    return directory.FullName;
+            }
+        }
+        throw new DirectoryNotFoundException(
+            "Could not locate the Godevilution repository root.");
     }
 }
