@@ -2,6 +2,13 @@
 
 All notable changes to this fork are documented below.
 
+- Advanced the active content schema to `1.462.0`, retaining `1.461.0` as
+  the previous additive contract. Procedural level rows can now author
+  multiple required-walkable `x,y` cells, with strict duplicate/bounds
+  validation and collision/vision clearing across generated geometry layers.
+  Refreshed the checked-in replay fixture manifest hashes without changing
+  their gameplay checkpoints.
+
 - Added combat regression coverage for compatibility-template fallback armor
   damage and block/hit recovery RNG boundaries, including empty-equipment
   recovery paths.

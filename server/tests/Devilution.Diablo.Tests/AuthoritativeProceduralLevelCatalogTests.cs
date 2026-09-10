@@ -69,6 +69,25 @@ public sealed class AuthoritativeProceduralLevelCatalogTests
     }
 
     [Fact]
+    public void ClearsMultipleAuthoredRequiredCellsFromAllGeneratedGeometryLayers()
+    {
+        var catalog = AuthoritativeProceduralLevelCatalog.LoadTsv(
+            "procedural_levels.tsv",
+            "level_id\twidth\theight\tgeneration_seed\tblocked_percent\tmissile_blocked_percent\tvision_blocked_percent\tstart_x\tstart_y\trequired_walkable_cells\n"
+                + "7\t40\t40\t2779096485\t80\t80\t80\t2\t2\t1,1;30,30\n");
+
+        var level = catalog.GenerateWorld().Levels.Single();
+
+        foreach (var (x, y) in new[] { (1, 1), (2, 2), (30, 30) }) {
+            var cell = y * level.Width + x;
+            Assert.DoesNotContain(cell, level.BlockedCells);
+            Assert.DoesNotContain(cell, level.MissileBlockedCells);
+            Assert.DoesNotContain(cell, level.NativeVisionBlockedCells);
+            Assert.True(level.IsWalkable(x, y));
+        }
+    }
+
+    [Fact]
     public void OptionalMissileDensityAddsIndependentOcclusion()
     {
         var catalog = new AuthoritativeProceduralLevelCatalog([
@@ -164,6 +183,22 @@ public sealed class AuthoritativeProceduralLevelCatalogTests
                 10,
                 VisionBlockedPercent: 81).Validate());
         Assert.Throws<InvalidDataException>(() =>
+            new AuthoritativeProceduralLevelDefinition(
+                1,
+                10,
+                10,
+                0,
+                10,
+                RequiredWalkableCells: [(1, 1), (1, 1)]).Validate());
+        Assert.Throws<InvalidDataException>(() =>
+            new AuthoritativeProceduralLevelDefinition(
+                1,
+                10,
+                10,
+                0,
+                10,
+                RequiredWalkableCells: [(10, 1)]).Validate());
+        Assert.Throws<InvalidDataException>(() =>
             new AuthoritativeProceduralLevelCatalog([
                 new AuthoritativeProceduralLevelDefinition(1, 10, 10, 0, 10),
                 new AuthoritativeProceduralLevelDefinition(1, 12, 12, 1, 20),
@@ -183,6 +218,21 @@ public sealed class AuthoritativeProceduralLevelCatalogTests
                 "procedural_levels.tsv",
                 "level_id\twidth\theight\tsuppress_multiplayer_death_drops\n"
                     + "7\t12\t12\t-1\n"));
+    }
+
+    [Fact]
+    public void RejectsMalformedRequiredWalkableCellRows()
+    {
+        Assert.Throws<InvalidDataException>(() =>
+            AuthoritativeProceduralLevelCatalog.LoadTsv(
+                "procedural_levels.tsv",
+                "level_id\twidth\theight\trequired_walkable_cells\n"
+                    + "7\t12\t12\t1;2,3\n"));
+        Assert.Throws<InvalidDataException>(() =>
+            AuthoritativeProceduralLevelCatalog.LoadTsv(
+                "procedural_levels.tsv",
+                "level_id\twidth\theight\trequired_walkable_cells\n"
+                    + "7\t12\t12\t12,3\n"));
     }
 
     private static void AssertConnected(AuthoritativeLevel level)

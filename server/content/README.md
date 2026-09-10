@@ -3,9 +3,9 @@
 Each directory under `server/content` is a server-owned, validated gameplay
 content pack. The default `base` pack is loaded by the standalone server and is
 included in its content manifest and combined ruleset identity.
-It declares its identity and `devilution.diablo@1.461.0` schema in
+It declares its identity and `devilution.diablo@1.462.0` schema in
 `base/content-pack.json`; the Diablo module also accepts the immediately
-previous additive `1.460.0` schema so existing manifest-based packs remain
+previous additive `1.461.0` schema so existing manifest-based packs remain
 loadable. A composed manifest must still use one exact schema identity across
 all declared packs; use the previous schema only for a complete compatible
 manifest rather than mixing it with the current pack. The standalone host falls
@@ -1615,6 +1615,13 @@ Schema 1.461 adds the optional `vision_blocked_percent` column to
 procedural geometry. Movement blockers are always included in that layer;
 omitted values retain the legacy movement-density behavior.
 
+Schema 1.462 adds the optional `required_walkable_cells` column to
+`procedural_levels.tsv`. It accepts semicolon-separated `x,y` coordinates and
+clears each authored cell from movement, missile, and explicit native-vision
+blockers. The configured start cell remains required automatically, duplicate
+or out-of-bounds coordinates are rejected, and omitted values preserve older
+rows.
+
 Schema 1.325 adds the optional `required_variable1` column to
 `item_quest_effects.tsv`. SetVariable1 transitions may require an exact
 native quest variable before applying, preserving conditional quest-item
@@ -3144,6 +3151,7 @@ clients.
 | `content_ids.tsv` | `kind`, `symbol` | Bidirectional stable symbolic IDs; item, unique-item, quest, class capabilities such as `ability:trap_disarm`, world objects, stores, set levels, procedural quest origins, spells, levels, and portals are declared separately from runtime projections and validated against their active catalogs during activation. |
 | `item_combinations.tsv` | `result_item_id`, `required_item_ids` | Validated server-owned item-combination recipes with optional result and input item symbols. |
 | `levels.tsv` | `level_id` | Walkability, missile geometry, default-start selection, and multiplayer death-drop policy. |
+| `procedural_levels.tsv` | `level_id` | Deterministic generated level dimensions, seeds, movement/missile/native-vision densities, default-start/death-drop flags, and optional semicolon-separated authored `required_walkable_cells` (`x,y;x,y`) entry cells. |
 | `world_rules.tsv` | singleton | External town-level identity, optional stable Adria and Storyteller service-store identities, and optional Town Portal destination coordinates/slot layout; activation validates the level, requires every configured destination slot to be in-bounds and walkable, and rejects zero, colliding, or stock-vendor service IDs. |
 | `level_generation.tsv` | `minimum_level`, `maximum_level` | Native level-range monster density, multiplayer scaling, and trap-generation metadata. |
 | `experience.tsv` | `level` | Cumulative native character-level experience thresholds used by server-owned progression. |
@@ -3220,7 +3228,7 @@ and no implicit table replacements. For example:
   "dependencies": ["devilution.base"],
   "schema": {
     "id": "devilution.diablo",
-    "version": "1.461.0"
+    "version": "1.462.0"
   },
   "dependencyConstraints": [
     {
@@ -3254,7 +3262,7 @@ three-component semantic-version constraints for declared dependencies. All
 declared schemas in one ordered manifest must match, every constraint must name
 a declared dependency, and the loaded dependency version must satisfy its
 range. The first-party server rejects a declared schema other than
-`devilution.diablo@1.461.0`. Manifests without compatibility metadata retain their
+`devilution.diablo@1.462.0`. Manifests without compatibility metadata retain their
 legacy identity and remain loadable during migration.
 
 Useful overlay keys are `class_id` for `classes.tsv`, `class_animations.tsv`,

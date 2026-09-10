@@ -2,7 +2,7 @@
 
 Status date: 2026-09-10
 
-The active content schema is now `1.461.0` (with `1.460.0` retained as
+The active content schema is now `1.462.0` (with `1.461.0` retained as
 the previous additive contract). Optional `procedural_quest_piece_origins.tsv`
 rows publish deterministic ordinary-level quest geometry origins. Their
 identities are intentionally separate from the fixed native set-level origin
@@ -115,6 +115,11 @@ Procedural level generation now accepts authored entry cells as deterministic
 required-walkable inputs. The generator clears both movement and missile
 collision at those cells, and engine/Diablo regression coverage rejects
 out-of-grid requirements while proving seeded start positions remain usable.
+
+Schema 1.462 extends those procedural rows with optional semicolon-separated
+`required_walkable_cells` coordinates. Multiple authored entry cells now clear
+movement, missile, and explicit native-vision blockers while preserving the
+single configured start cell and older row shapes.
 
 Schema 1.461 adds an optional independently seeded native
 vision-blocker density. Movement collision remains authoritative for walking,

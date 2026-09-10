@@ -18,7 +18,7 @@ public sealed class ShippedContentTests
         Assert.Equal("devilution.base", pack.Id);
         Assert.Equal("0.1.0", pack.Version);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.461.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.462.0"),
             pack.Schema);
         Assert.Empty(pack.Overlays);
         var nativeDunMonsterTable = pack.Tables.Single(
@@ -1204,7 +1204,7 @@ public sealed class ShippedContentTests
             currentPack.Tables,
             currentPack.Dependencies,
             currentPack.Overlays,
-            new ContentSchemaIdentity("devilution.diablo", "1.460.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.461.0"),
             currentPack.DependencyConstraints,
             currentPack.Assets);
         var content = ComposedContent.Compose(new ContentManifest(
@@ -1851,7 +1851,7 @@ public sealed class ShippedContentTests
         var procedural = basePack.Tables
             .Single(table => table.SourcePath == "procedural_levels.tsv")
             .ToCanonicalTsv()
-            + "25\tgenerated_test\t25\t21\t1234\t60\t70\t0\t0\n";
+            + "25\tgenerated_test\t25\t21\t1234\t60\t70\t0\t0\t\n";
         var tables = basePack.Tables
             .Where(table => table.SourcePath is not ("level_generation.tsv" or "procedural_levels.tsv"))
             .Append(TsvTable.Parse("level_generation.tsv", generation))
@@ -3728,7 +3728,7 @@ public sealed class ShippedContentTests
 
         Assert.Equal("devilution.hellfire", hellfirePack.Id);
         Assert.Equal(
-            new ContentSchemaIdentity("devilution.diablo", "1.461.0"),
+            new ContentSchemaIdentity("devilution.diablo", "1.462.0"),
             hellfirePack.Schema);
         Assert.Equal(DiabloGameVariant.Hellfire, combat.GameVariant);
         Assert.Equal(2, combat.UniqueExperienceMultiplier);

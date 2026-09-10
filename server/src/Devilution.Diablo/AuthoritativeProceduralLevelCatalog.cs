@@ -1,3 +1,4 @@
+using System.Globalization;
 using Devilution.Data;
 using Devilution.Engine;
 
@@ -15,7 +16,8 @@ public sealed record AuthoritativeProceduralLevelDefinition(
     int? MissileBlockedPercent = null,
     int StartPositionX = 0,
     int StartPositionY = 0,
-    int? VisionBlockedPercent = null)
+    int? VisionBlockedPercent = null,
+    IReadOnlyList<(int X, int Y)>? RequiredWalkableCells = null)
 {
     /** Stable level symbol retained for composed-pack identity diagnostics. */
     public string StableSymbol { get; init; } = string.Empty;
@@ -43,6 +45,15 @@ public sealed record AuthoritativeProceduralLevelDefinition(
             throw new InvalidDataException(
                 $"Procedural level {LevelId} start position ({StartPositionX}, {StartPositionY}) is outside its dimensions.");
         }
+        var requiredCells = RequiredWalkableCells ?? [];
+        if (requiredCells.Distinct().Count() != requiredCells.Count)
+            throw new InvalidDataException(
+                $"Procedural level {LevelId} required-walkable cells must be unique.");
+        foreach (var (x, y) in requiredCells) {
+            if (x < 0 || x >= Width || y < 0 || y >= Height)
+                throw new InvalidDataException(
+                    $"Procedural level {LevelId} required-walkable cell ({x}, {y}) is outside its dimensions.");
+        }
         return this;
     }
 
@@ -50,13 +61,18 @@ public sealed record AuthoritativeProceduralLevelDefinition(
     public AuthoritativeLevel Generate(uint worldSeed = 0)
     {
         Validate();
+        var requiredCells = (RequiredWalkableCells ?? [])
+            .Select(cell => cell.Y * Width + cell.X)
+            .Append(StartPositionY * Width + StartPositionX)
+            .Distinct()
+            .ToArray();
         var layout = DeterministicProceduralGrid.Generate(
             Width,
             Height,
             GenerationSeed ^ worldSeed,
             BlockedPercent,
             MissileBlockedPercent ?? BlockedPercent,
-            [StartPositionY * Width + StartPositionX],
+            requiredCells,
             VisionBlockedPercent ?? BlockedPercent);
         var level = new AuthoritativeLevel(
             LevelId,
@@ -135,11 +151,39 @@ public sealed class AuthoritativeProceduralLevelCatalog
                     : 0,
                 row.TryGet("vision_blocked_percent", out _)
                     ? row.OptionalInt32("vision_blocked_percent")
-                    : null) {
+                    : null,
+                ParseRequiredWalkableCells(row,
+                    row.RequiredInt32("width"),
+                    row.RequiredInt32("height"))) {
                 StableSymbol = row.TryGet("level_symbol", out var symbol)
                     ? symbol
                     : string.Empty,
             }));
+    }
+
+    private static IReadOnlyList<(int X, int Y)> ParseRequiredWalkableCells(
+        TsvRow row,
+        int width,
+        int height)
+    {
+        if (!row.TryGet("required_walkable_cells", out var value)
+            || string.IsNullOrWhiteSpace(value))
+            return [];
+
+        var cells = new List<(int X, int Y)>();
+        foreach (var token in value.Split(';', StringSplitOptions.RemoveEmptyEntries)) {
+            var coordinates = token.Split(',', StringSplitOptions.TrimEntries);
+            if (coordinates.Length != 2
+                || !int.TryParse(coordinates[0], NumberStyles.Integer, CultureInfo.InvariantCulture, out var x)
+                || !int.TryParse(coordinates[1], NumberStyles.Integer, CultureInfo.InvariantCulture, out var y))
+                throw new InvalidDataException(
+                    $"Column 'required_walkable_cells' on TSV row {row.LineNumber} must contain semicolon-separated x,y coordinates.");
+            if (x < 0 || x >= width || y < 0 || y >= height)
+                throw new InvalidDataException(
+                    $"Column 'required_walkable_cells' on TSV row {row.LineNumber} contains ({x}, {y}) outside its dimensions.");
+            cells.Add((x, y));
+        }
+        return cells;
     }
 
 }
