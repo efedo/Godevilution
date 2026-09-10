@@ -226,6 +226,33 @@ public sealed class DiabloSimulationFactory : IDiabloSimulationFactory
         if (options.RequireExternalContentCatalogs && options.CombatRules is null)
             throw new InvalidDataException(
                 "Production Diablo activation requires external combat rules.");
+        if (options.RequireExternalContentCatalogs && options.Items is null)
+            throw new InvalidDataException(
+                "Production Diablo activation requires an external item catalog.");
+        if (options.RequireExternalContentCatalogs && options.Experience is null)
+            throw new InvalidDataException(
+                "Production Diablo activation requires an external experience catalog.");
+        if (options.RequireExternalContentCatalogs && options.PlayerClasses is null)
+            throw new InvalidDataException(
+                "Production Diablo activation requires an external player-class catalog.");
+        if (options.RequireExternalContentCatalogs && options.PlayerAnimations is null)
+            throw new InvalidDataException(
+                "Production Diablo activation requires an external player-animation catalog.");
+        if (options.RequireExternalContentCatalogs && options.SpellBooks is null)
+            throw new InvalidDataException(
+                "Production Diablo activation requires an external spell-book catalog.");
+        if (options.RequireExternalContentCatalogs && options.MonsterTypes is null)
+            throw new InvalidDataException(
+                "Production Diablo activation requires an external monster-type catalog.");
+        if (options.RequireExternalContentCatalogs && options.MonsterMissiles is null)
+            throw new InvalidDataException(
+                "Production Diablo activation requires an external monster-missile catalog.");
+        if (options.RequireExternalContentCatalogs && options.NativeMissiles is null)
+            throw new InvalidDataException(
+                "Production Diablo activation requires an external native-missile catalog.");
+        if (options.RequireExternalContentCatalogs && options.NativeMissileSprites is null)
+            throw new InvalidDataException(
+                "Production Diablo activation requires an external native-missile sprite catalog.");
         var worldState = new DiabloWorldState(
             options.World,
             options.FallbackWidth,

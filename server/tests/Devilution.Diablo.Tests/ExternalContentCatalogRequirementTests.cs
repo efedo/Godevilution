@@ -46,6 +46,15 @@ public sealed class ExternalContentCatalogRequirementTests
     }
 
     [Fact]
+    public void ProductionActivationRejectsMissingItemCatalog()
+    {
+        var exception = Assert.Throws<InvalidDataException>(() =>
+            DiabloSimulationFactory.Instance.Create(RequiredOptions()));
+
+        Assert.Contains("external item catalog", exception.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void ContentBootstrapEnablesTheProductionRequirement()
     {
         var root = FindRepositoryRoot();
@@ -62,6 +71,15 @@ public sealed class ExternalContentCatalogRequirementTests
         Assert.NotNull(factory.Options);
         Assert.True(factory.Options!.RequireExternalContentCatalogs);
         Assert.Same(content, factory.Options.Content);
+        Assert.NotNull(factory.Options.Items);
+        Assert.NotNull(factory.Options.Experience);
+        Assert.NotNull(factory.Options.PlayerClasses);
+        Assert.NotNull(factory.Options.PlayerAnimations);
+        Assert.NotNull(factory.Options.SpellBooks);
+        Assert.NotNull(factory.Options.MonsterTypes);
+        Assert.NotNull(factory.Options.MonsterMissiles);
+        Assert.NotNull(factory.Options.NativeMissiles);
+        Assert.NotNull(factory.Options.NativeMissileSprites);
     }
 
     private static DiabloSimulationOptions RequiredOptions(

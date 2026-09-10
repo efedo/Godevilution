@@ -167,6 +167,9 @@ Production activation now also requires the complete external native missile
 identity, compatibility-alias, and sprite namespaces plus monster type,
 monster-missile, and monster definition catalogs, keeping authoritative combat
 identity data out of the bootstrap fallback path.
+The simulation factory now enforces the corresponding normalized catalog
+presence at strict activation, so a production caller cannot bypass that
+boundary by constructing options without the bootstrap.
 
 Current-schema native-DUN fragment, fragment-object, and monster mapping tables
 also fail closed on incomplete or reordered headers; previous-schema packs
