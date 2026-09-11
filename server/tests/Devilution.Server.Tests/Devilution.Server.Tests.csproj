@@ -110,6 +110,7 @@
     <None Include="../../../test/fixtures/replay/gameplay-firebolt-hellfire-block.json" Link="Fixtures/gameplay-firebolt-hellfire-block.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-firebolt-hellfire-secondary-warrior-block-chance.json" Link="Fixtures/gameplay-firebolt-hellfire-secondary-warrior-block-chance.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-firebolt-hellfire-primary-warrior-block-chance.json" Link="Fixtures/gameplay-firebolt-hellfire-primary-warrior-block-chance.json" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="../../../test/fixtures/replay/gameplay-fireball-hellfire-primary-warrior-block-chance.json" Link="Fixtures/gameplay-fireball-hellfire-primary-warrior-block-chance.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-fireball-hellfire-secondary-warrior-block-chance.json" Link="Fixtures/gameplay-fireball-hellfire-secondary-warrior-block-chance.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-pvp-ear-death.json" Link="Fixtures/gameplay-pvp-ear-death.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-charged-bolt-hellfire-block.json" Link="Fixtures/gameplay-charged-bolt-hellfire-block.json" CopyToOutputDirectory="PreserveNewest" />

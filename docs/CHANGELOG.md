@@ -2,6 +2,11 @@
 
 All notable changes to this fork are documented below.
 
+- Extended the replay parity gate to 378 fixtures and 387 native tests with
+  secondary-participant Fireball casts against primary Warrior targets. Both
+  runners now preserve caster-specific hit chance, primary-target routing,
+  Hellfire block RNG, block expiry, splash damage, and impact removal.
+
 - Extended the replay parity gate to 377 fixtures and 386 native tests with
   secondary-participant Firebolt casts against primary Warrior targets. Both
   runners now preserve primary-target routing, class-aware Hellfire block

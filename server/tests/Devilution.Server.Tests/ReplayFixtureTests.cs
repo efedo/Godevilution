@@ -2190,6 +2190,64 @@ public sealed class ReplayFixtureTests
     }
 
     [Fact]
+    public void HellfireFireballPrimaryWarriorBlocksAtClassChanceFromSecondaryCast()
+    {
+        var fixture = LoadReplayFixture(
+            "gameplay-fireball-hellfire-primary-warrior-block-chance.json");
+        var spells = LoadReplaySpells(fixture, "projectile-variants");
+        var classes = AuthoritativePlayerClassCatalog.LoadTsv(
+            "classes.tsv",
+            File.ReadAllText(Path.Combine(FindRepositoryRoot(), "server", "content", "base", "classes.tsv")));
+        var initial = fixture.InitialState;
+        var executor = new StoreSimulationExecutor(
+            new StoreCatalog(),
+            initial.Gold,
+            initial.Experience,
+            initial.Life,
+            initial.Mana,
+            startingManaMaximum: initial.ManaMaximum,
+            startingLifeMaximum: initial.LifeMaximum,
+            startingCharacterLevel: initial.CharacterLevel,
+            startingLevelId: initial.LevelId,
+            startingCharacterClassId: checked((uint)initial.CharacterClass),
+            startingPlayerClasses: classes,
+            startingEquipment: initial.Equipment
+                .Select(item => item.ToEquippedStoreItem())
+                .ToArray(),
+            startingPositionX: initial.PositionX,
+            startingPositionY: initial.PositionY,
+            startingAttributes: PlayerAttributesState.Zero with {
+                Magic = new PlayerAttributeState(initial.Magic, initial.Magic),
+                Dexterity = new PlayerAttributeState(initial.Dexterity, initial.Dexterity),
+            },
+            startingCombatRules: new AuthoritativeCombatRules(
+                10,
+                1,
+                100,
+                gameVariant: fixture.GameVariant),
+            startingSpells: spells,
+            startingRandomSeed: checked((uint)fixture.RngSeed),
+            gameMode: DiabloGameMode.Multiplayer);
+
+        var result = ReplayFixtureExecutor.Execute(
+            fixture,
+            executor,
+            new AuthoritativeCommandServer(executor));
+
+        var player = executor.GetPlayerState(initial.Player);
+        Assert.Equal(CommandStatus.Accepted, Assert.Single(result.Results).Status);
+        Assert.Equal(1984, player.Life);
+        Assert.Equal(DiabloPlayerCombatMode.Stand, player.CombatMode);
+        Assert.Equal(0UL, player.CombatModeEndTick);
+        Assert.Equal(17UL, result.FinalSnapshot.Tick);
+        Assert.Equal(3, result.Checkpoints.Count);
+        Assert.Empty(result.FinalSnapshot.Projectiles);
+        Assert.Equal(
+            fixture.Checkpoints.Select(checkpoint => checkpoint.StateSha256),
+            result.Checkpoints.Select(checkpoint => checkpoint.ActualStateSha256));
+    }
+
+    [Fact]
     public void ChargedBoltMovingOccupancyFixtureHitsPetrifiedFutureCell()
     {
         var path = Path.Combine(

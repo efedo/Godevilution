@@ -89,6 +89,7 @@ public sealed class ProjectDocumentationConsistencyTests
         Assert.Contains("gameplay-bone-spirit-hellfire-secondary-warrior-block-chance.json", replayFixtures, StringComparison.Ordinal);
         Assert.Contains("gameplay-firebolt-hellfire-secondary-warrior-block-chance.json", replayFixtures, StringComparison.Ordinal);
         Assert.Contains("gameplay-firebolt-hellfire-primary-warrior-block-chance.json", replayFixtures, StringComparison.Ordinal);
+        Assert.Contains("gameplay-fireball-hellfire-primary-warrior-block-chance.json", replayFixtures, StringComparison.Ordinal);
         Assert.Contains("gameplay-fireball-hellfire-secondary-warrior-block-chance.json", replayFixtures, StringComparison.Ordinal);
         Assert.Contains("gameplay-charged-bolt-hellfire-secondary-warrior-block-chance.json", replayFixtures, StringComparison.Ordinal);
         Assert.Contains("gameplay-hork-spawn-secondary-warrior-block-chance.json", replayFixtures, StringComparison.Ordinal);

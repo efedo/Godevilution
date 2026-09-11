@@ -6,6 +6,10 @@ The multiplayer replay boundary now accepts secondary-participant Firebolt
 casts and preserves primary-player Warrior block admission, Hellfire RNG
 ordering, and retained impact checkpoints in both runners.
 
+The same boundary now covers secondary-participant Fireball casts against a
+primary Warrior, including caster-specific hit chance, primary-target routing,
+Hellfire block RNG, timed block expiry, splash damage, and projectile removal.
+
 Primary-player MonsterMagic and Blood Star impacts now preserve the native
 low-Dexterity Warrior class chance and shield admission, including retained
 impact-phase projectile state and canonical checkpoints, in both replay
