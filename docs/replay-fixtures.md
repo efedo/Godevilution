@@ -13,6 +13,14 @@ behavior can be characterized. An optional command-level `player` routes a
 command to a declared participant; omitted commands target the primary player,
 and client sequences are unique per participant.
 
+Ranged-retreat tuning is a complete three-field tuple:
+`combat_target_ranged_retreat_minimum_distance`,
+`combat_target_ranged_retreat_chance_base`, and
+`combat_target_ranged_retreat_chance_intelligence_scale`. The native contract
+bounds distance to 0-64 and each chance to 0-100; supplying any nonzero member
+requires all three values to be positive, and the tuple is invalid without a
+combat target. Both runners enforce these rules before execution.
+
 An optional top-level `player_action_timing` object records the activated
 walking, selected attack-profile, and casting frame boundaries used by a
 deferred-action fixture. Fixtures that can kill a player may also declare the

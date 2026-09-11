@@ -5532,6 +5532,66 @@ TEST(ReplayFixture, RejectsInvalidFallenRallyCompanionState)
 	}
 }
 
+TEST(ReplayFixture, RejectsInvalidRangedRetreatTuning)
+{
+	std::ifstream file("test/fixtures/replay/gameplay-monster-arrow-autonomous.json");
+	ASSERT_TRUE(file.good());
+	const std::string source((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
+	const std::vector<std::tuple<std::string, std::string>> mutations {
+	    { "\"combat_target_ranged_retreat_minimum_distance\": 1", "\"combat_target_ranged_retreat_minimum_distance\": 65" },
+	    { "\"combat_target_ranged_retreat_chance_base\": 1", "\"combat_target_ranged_retreat_chance_base\": 101" },
+	    { "\"combat_target_ranged_retreat_chance_intelligence_scale\": 1", "\"combat_target_ranged_retreat_chance_intelligence_scale\": 101" },
+	    { "\"combat_target_ranged_retreat_chance_base\": 1", "\"combat_target_ranged_retreat_chance_base\": 0" },
+	};
+
+	for (const auto &[valid, invalid] : mutations) {
+		SCOPED_TRACE(valid);
+		std::string json = source;
+		const size_t position = json.find(valid);
+		ASSERT_NE(position, std::string::npos);
+		json.replace(position, valid.size(), invalid);
+
+		ReplayFixture fixture;
+		std::string error;
+		EXPECT_FALSE(ParseReplayFixture(json, fixture, error));
+		EXPECT_EQ(error, "Replay fixture contains invalid combat-target occupancy state.");
+	}
+}
+
+TEST(ReplayFixture, RejectsRangedRetreatTuningWithoutCombatTarget)
+{
+	const std::string json = R"json({
+  "format_version": 1,
+  "fixture_id": "gameplay/invalid-ranged-retreat-target",
+  "protocol_schema_version": "0.1.0",
+  "tick_rate_hz": 20,
+  "rng_seed": 1,
+  "initial_state": {
+    "player": "A",
+    "gold": 0,
+    "experience": 0,
+    "life": 1,
+    "mana": 1,
+    "combat_target_ranged_retreat_minimum_distance": 1,
+    "combat_target_ranged_retreat_chance_base": 1,
+    "combat_target_ranged_retreat_chance_intelligence_scale": 1
+  },
+  "commands": [{
+    "client_sequence": 1,
+    "target_tick": 0,
+    "server_receipt_sequence": 1,
+    "kind": "Move",
+    "payload": { "direction_x": 0, "direction_y": 0 }
+  }],
+  "checkpoints": []
+})json";
+
+	ReplayFixture fixture;
+	std::string error;
+	EXPECT_FALSE(ParseReplayFixture(json, fixture, error));
+	EXPECT_EQ(error, "Replay fixture contains invalid combat-target occupancy state.");
+}
+
 TEST(ReplayFixture, ExecutesGargoyleHealingAgainstCSharpCheckpoints)
 {
 	std::ifstream file("test/fixtures/replay/gameplay-gargoyle-healing.json");

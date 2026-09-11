@@ -7499,6 +7499,76 @@ public sealed class ReplayFixtureTests
             result.Checkpoints.Select(checkpoint => checkpoint.ActualStateSha256));
     }
 
+    [Theory]
+    [InlineData(
+        "\"combat_target_ranged_retreat_minimum_distance\": 1",
+        "\"combat_target_ranged_retreat_minimum_distance\": 65")]
+    [InlineData(
+        "\"combat_target_ranged_retreat_chance_base\": 1",
+        "\"combat_target_ranged_retreat_chance_base\": 101")]
+    [InlineData(
+        "\"combat_target_ranged_retreat_chance_intelligence_scale\": 1",
+        "\"combat_target_ranged_retreat_chance_intelligence_scale\": 101")]
+    [InlineData(
+        "\"combat_target_ranged_retreat_chance_base\": 1",
+        "\"combat_target_ranged_retreat_chance_base\": 0")]
+    public void InvalidCombatTargetRangedRetreatTuningIsRejected(
+        string valid,
+        string invalid)
+    {
+        var path = Path.Combine(
+            AppContext.BaseDirectory,
+            "Fixtures",
+            "gameplay-monster-arrow-autonomous.json");
+        var json = File.ReadAllText(path).Replace(valid, invalid, StringComparison.Ordinal);
+
+        var exception = Assert.Throws<InvalidDataException>(
+            () => ReplayFixtureLoader.Load(json));
+
+        Assert.Equal(
+            "Replay fixture contains invalid combat-target occupancy state.",
+            exception.Message);
+    }
+
+    [Fact]
+    public void RangedRetreatTuningRequiresACombatTarget()
+    {
+        const string json = """
+            {
+              "format_version": 1,
+              "fixture_id": "gameplay/invalid-ranged-retreat-target",
+              "protocol_schema_version": "0.1.0",
+              "tick_rate_hz": 20,
+              "rng_seed": 1,
+              "initial_state": {
+                "player": "A",
+                "gold": 0,
+                "experience": 0,
+                "life": 1,
+                "mana": 1,
+                "combat_target_ranged_retreat_minimum_distance": 1,
+                "combat_target_ranged_retreat_chance_base": 1,
+                "combat_target_ranged_retreat_chance_intelligence_scale": 1
+              },
+              "commands": [{
+                "client_sequence": 1,
+                "target_tick": 0,
+                "server_receipt_sequence": 1,
+                "kind": "Move",
+                "payload": { "direction_x": 0, "direction_y": 0 }
+              }],
+              "checkpoints": []
+            }
+            """;
+
+        var exception = Assert.Throws<InvalidDataException>(
+            () => ReplayFixtureLoader.Load(json));
+
+        Assert.Equal(
+            "Replay fixture contains invalid combat-target occupancy state.",
+            exception.Message);
+    }
+
     [Fact]
     public void GameplayLazarusSuccubusBloodStarMultiplayerTargetSelectionMatchesNativeLifecycle()
     {

@@ -713,6 +713,11 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Closed a replay-validation parity gap: managed fixtures now enforce the native
+  ranged-retreat distance/chance bounds, require all three tuning values
+  together, and reject nonzero tuning without a combat target. Added mirrored
+  native and managed mutation coverage.
+
 - Refreshed all checked-in base replay fixtures to the canonical content-pack
   manifest hash produced by the normalized source identities.
 

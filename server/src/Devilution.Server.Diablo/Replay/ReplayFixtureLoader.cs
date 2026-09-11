@@ -170,6 +170,9 @@ public static class ReplayFixtureLoader
                     || initialTarget.CombatTargetCounselorDelayTicks != 0
                     || initialTarget.CombatTargetCounselorRetreatTicks != 0
                     || initialTarget.CombatTargetRangedDelayTicks != 0
+                    || initialTarget.CombatTargetRangedRetreatMinimumDistance != 0
+                    || initialTarget.CombatTargetRangedRetreatChanceBase != 0
+                    || initialTarget.CombatTargetRangedRetreatChanceIntelligenceScale != 0
                     || initialTarget.CombatTargetMegaDelayTicks != 0
                     || initialTarget.CombatTargetSkeletonRangedMovementIdleTicks != -1
                     || initialTarget.CombatTargetSkeletonRangedMovementMode != 0
@@ -218,6 +221,15 @@ public static class ReplayFixtureLoader
             || initialTarget.CombatTargetCounselorDelayTicks is < 0 or > MaximumNativeMonsterAiTimerTicks
             || initialTarget.CombatTargetCounselorRetreatTicks is < 0 or > MaximumNativeMonsterRetreatTicks
             || initialTarget.CombatTargetRangedDelayTicks is < 0 or > MaximumNativeMonsterAiTimerTicks
+            || initialTarget.CombatTargetRangedRetreatMinimumDistance is < 0 or > 64
+            || initialTarget.CombatTargetRangedRetreatChanceBase is < 0 or > 100
+            || initialTarget.CombatTargetRangedRetreatChanceIntelligenceScale is < 0 or > 100
+            || ((initialTarget.CombatTargetRangedRetreatMinimumDistance != 0
+                    || initialTarget.CombatTargetRangedRetreatChanceBase != 0
+                    || initialTarget.CombatTargetRangedRetreatChanceIntelligenceScale != 0)
+                && (initialTarget.CombatTargetRangedRetreatMinimumDistance <= 0
+                    || initialTarget.CombatTargetRangedRetreatChanceBase <= 0
+                    || initialTarget.CombatTargetRangedRetreatChanceIntelligenceScale <= 0))
             || initialTarget.CombatTargetMegaDelayTicks is < 0 or > MaximumNativeMonsterAiTimerTicks
             || initialTarget.CombatTargetSkeletonRangedMovementIdleTicks is < -1 or > MaximumNativeMonsterAiTimerTicks
             || initialTarget.CombatTargetSkeletonRangedMovementMode is < -1 or > MaximumNativeMonsterMovementMode
