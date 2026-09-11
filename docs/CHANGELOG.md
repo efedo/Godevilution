@@ -2,6 +2,11 @@
 
 All notable changes to this fork are documented below.
 
+- The native server-backed client now carries authored occupancy-trigger
+  metadata through projected object snapshots and leaves those trigger tiles
+  enterable while retaining ordinary live-object occupancy. Native projection
+  and lifecycle reconciliation are covered by focused object snapshot tests.
+
 - Extended the authoritative object projection with native occupancy-trigger
   metadata. Godot movement prediction now matches server occupancy for live
   monsters, participants, and solid authored objects, while occupancy-trigger

@@ -739,6 +739,7 @@ tl::expected<std::vector<ProjectedObjectSnapshot>, std::string> ProjectObjectSna
 		    .keepVisibleAfterActivation = source.keep_visible_after_activation(),
 		    .animationFrame = source.animation_frame(),
 		    .activatedAnimationFrame = source.activated_animation_frame(),
+		    .activateOnOccupancy = source.activate_on_occupancy(),
 		    .questTransitionKind = source.quest_transition_kind(),
 		    .rewardKind = source.reward_kind(),
 		    .questSequenceFollowUpKind = source.quest_sequence_follow_up_kind(),

@@ -2,6 +2,12 @@
 
 Status date: 2026-09-10
 
+The native server-backed client now consumes the authored occupancy-trigger
+flag from projected object snapshots. Its tile reconciliation leaves live
+occupancy triggers enterable while preserving ordinary object occupancy and
+activation cleanup, keeping native presentation aligned with server movement
+authority.
+
 The authoritative object projection now publishes native occupancy-trigger
 metadata. Godot's bounded movement prediction uses the same live-object rule as
 the server—monsters, remote participants, and solid authored objects block a

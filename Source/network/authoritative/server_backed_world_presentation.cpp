@@ -765,7 +765,9 @@ void ApplyItemSnapshot(Item &item, const ProjectedWorldItemSnapshot &snapshot)
 void ApplyObjectSnapshot(Object &object, int objectSlot, const ProjectedObjectSnapshot &snapshot)
 {
 	const Point position { snapshot.positionX, snapshot.positionY };
-	const bool shouldOccupyTile = (!snapshot.activated || snapshot.keepVisibleAfterActivation) && !snapshot.destroyed;
+	const bool shouldOccupyTile = !snapshot.activateOnOccupancy
+	    && (!snapshot.activated || snapshot.keepVisibleAfterActivation)
+	    && !snapshot.destroyed;
 	const auto clearOwnedTile = [objectSlot](const Point tilePosition) {
 		if (InDungeonBounds(tilePosition) && tileAt(tilePosition).object() == objectSlot + 1)
 			tileAt(tilePosition).setObject(0);

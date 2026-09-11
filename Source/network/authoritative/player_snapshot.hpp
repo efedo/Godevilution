@@ -224,6 +224,8 @@ struct ProjectedObjectSnapshot {
 	bool keepVisibleAfterActivation = false;
 	uint32_t animationFrame = 0;
 	uint32_t activatedAnimationFrame = 0;
+	/** Native movement metadata: occupancy-trigger objects do not block entry. */
+	bool activateOnOccupancy = false;
 	/** Authored quest-state transition identity, when present. */
 	int32_t questTransitionKind = 0;
 	/** Authored item reward identity, when present. */

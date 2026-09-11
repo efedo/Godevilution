@@ -992,6 +992,7 @@ TEST(ServerBackedPlayerSnapshot, ProjectsAndSortsAuthoritativeObjects)
 	second->set_breakable(true);
 	second->set_destroyed(true);
 	second->set_trap_armed(true);
+	second->set_activate_on_occupancy(true);
 	auto *first = snapshot.add_objects();
 	first->set_entity_id(10);
 	first->set_object_id(1);
@@ -1021,6 +1022,7 @@ TEST(ServerBackedPlayerSnapshot, ProjectsAndSortsAuthoritativeObjects)
 	EXPECT_TRUE((*projected)[1].destroyed);
 	EXPECT_FALSE((*projected)[1].missilePassable);
 	EXPECT_TRUE((*projected)[1].trapArmed);
+	EXPECT_TRUE((*projected)[1].activateOnOccupancy);
 }
 
 TEST(ServerBackedPlayerSnapshot, ExplicitGenericObjectPresentationDoesNotUseLegacyNativeIdentity)
@@ -1353,6 +1355,16 @@ TEST(ServerBackedPlayerSnapshot, ResynchronizesObjectTileOccupancyAcrossLifecycl
 	ASSERT_TRUE(presentation.Apply(projection, 1).has_value());
 	EXPECT_EQ(tileAt(21, 20).object(), 0);
 	EXPECT_TRUE(Objects[objectSlot]._oDelFlag);
+
+	snapshot.destroyed = false;
+	snapshot.activated = false;
+	snapshot.keepVisibleAfterActivation = false;
+	snapshot.activateOnOccupancy = true;
+	snapshot.positionX = 22;
+	ASSERT_TRUE(projection.Apply({}, {}, { snapshot }, 1).has_value());
+	ASSERT_TRUE(presentation.Apply(projection, 1).has_value());
+	EXPECT_EQ(tileAt(22, 20).object(), 0);
+	EXPECT_FALSE(Objects[objectSlot]._oDelFlag);
 
 	presentation.Clear();
 	ObjectPoolAdapter::ResetLegacyObjectPools();
