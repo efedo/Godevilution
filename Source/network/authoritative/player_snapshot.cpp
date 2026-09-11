@@ -134,6 +134,28 @@ tl::expected<ProjectedPlayerSnapshot, std::string> ProjectPlayerSnapshot(const p
 		return tl::make_unexpected("Server-backed snapshot contains an unsupported player level identity.");
 	if (!IsValidCharacterName(player->character_name()))
 		return tl::make_unexpected("Server-backed snapshot contains an invalid character name.");
+	if (player->life() < 0
+	    || player->life_maximum() < 0
+	    || player->life_maximum() > 0 && player->life() > player->life_maximum()
+	    || player->mana() < 0
+	    || player->mana_maximum() < 0
+	    || player->mana_maximum() > 0 && player->mana() > player->mana_maximum()
+	    || player->base_life_maximum() < 0
+	    || player->base_mana_maximum() < 0
+	    || player->character_level() == 0
+	    || player->character_level() > MaximumNativeCharacterLevel
+	    || player->diablo_kill_level() > MaximumNativeDiabloKillLevel
+	    || player->character_class_id() > static_cast<uint32_t>(HeroClass::LAST)
+	    || static_cast<int32_t>(player->facing_direction()) > static_cast<int32_t>(Direction::SouthEast)
+	    || player->attributes().strength().base() < 0
+	    || player->attributes().strength().current() < 0
+	    || player->attributes().magic().base() < 0
+	    || player->attributes().magic().current() < 0
+	    || player->attributes().dexterity().base() < 0
+	    || player->attributes().dexterity().current() < 0
+	    || player->attributes().vitality().base() < 0
+	    || player->attributes().vitality().current() < 0)
+		return tl::make_unexpected("Server-backed snapshot contains player resources outside the native range.");
 	if (player->visited_level_ids_size() > MaximumNativeVisitedLevelCount) {
 		return tl::make_unexpected("Server-backed snapshot contains too many visited levels.");
 	}

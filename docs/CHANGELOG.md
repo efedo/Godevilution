@@ -2,6 +2,10 @@
 
 All notable changes to this fork are documented below.
 
+- Native player projection now rejects life or mana above their declared
+  maxima, over-cap character levels, and negative attribute values at both
+  local and remote presentation boundaries.
+
 - Native monster snapshot ingress now validates raw and fixed-point vitality
   together, rejecting contradictory negative fields and derived Q6 values
   outside the native signed range before projection.

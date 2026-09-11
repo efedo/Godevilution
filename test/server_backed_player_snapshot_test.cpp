@@ -4567,6 +4567,46 @@ TEST(ServerBackedPlayerSnapshot, RejectsReflectChargesOutsideNativeRangeWithoutM
 	EXPECT_EQ(player.wReflections, 3);
 }
 
+TEST(ServerBackedPlayerSnapshot, RejectsPlayerResourcesOutsideNativeRange)
+{
+	const auto makeSnapshot = [] {
+		protocol::Snapshot snapshot;
+		auto *player = snapshot.add_players();
+		player->set_entity_id(7);
+		player->set_life(10);
+		player->set_life_maximum(10);
+		player->set_mana(10);
+		player->set_mana_maximum(10);
+		player->set_character_level(1);
+		return snapshot;
+	};
+
+	protocol::Snapshot invalidLife = makeSnapshot();
+	invalidLife.mutable_players(0)->set_life(11);
+	EXPECT_FALSE(ProjectPlayerSnapshot(invalidLife, 7).has_value());
+
+	protocol::Snapshot invalidMana = makeSnapshot();
+	invalidMana.mutable_players(0)->set_mana(11);
+	EXPECT_FALSE(ProjectPlayerSnapshot(invalidMana, 7).has_value());
+
+	protocol::Snapshot invalidLevel = makeSnapshot();
+	invalidLevel.mutable_players(0)->set_character_level(MaximumNativeCharacterLevel + 1);
+	EXPECT_FALSE(ProjectPlayerSnapshot(invalidLevel, 7).has_value());
+
+	protocol::Snapshot invalidAttributes = makeSnapshot();
+	invalidAttributes.mutable_players(0)->mutable_attributes()->mutable_strength()->set_current(-1);
+	EXPECT_FALSE(ProjectPlayerSnapshot(invalidAttributes, 7).has_value());
+
+	ProjectedPlayerSnapshot projected;
+	projected.entityId = 7;
+	projected.characterLevel = 1;
+	projected.life = 11;
+	projected.lifeMaximum = 10;
+	projected.inventoryGrid.assign(InventoryGridCells, -1);
+	Player player;
+	EXPECT_FALSE(ApplyServerBackedPlayerSnapshot(player, projected).has_value());
+}
+
 TEST(ServerBackedPlayerSnapshot, RejectsDiabloKillLevelOutsideNativeRangeWithoutMutation)
 {
 	Player player;

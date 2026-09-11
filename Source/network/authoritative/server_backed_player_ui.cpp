@@ -38,8 +38,18 @@ tl::expected<void, std::string> ValidateSnapshot(const ProjectedPlayerSnapshot &
 		return tl::make_unexpected("Server-backed player level identity is unsupported.");
 	if (snapshot.positionX < 0 || snapshot.positionX > UINT8_MAX || snapshot.positionY < 0 || snapshot.positionY > UINT8_MAX)
 		return tl::make_unexpected("Server-backed player position is outside the native tile range.");
-	if (snapshot.life < 0 || snapshot.lifeMaximum < 0 || snapshot.lifeMaximumBase < 0 || snapshot.mana < 0 || snapshot.manaMaximum < 0 || snapshot.manaMaximumBase < 0 || snapshot.characterLevel == 0 || snapshot.gold > static_cast<uint32_t>(INT_MAX) || snapshot.statPoints > static_cast<uint32_t>(INT_MAX) || snapshot.reflectCharges > UINT16_MAX)
+	if (snapshot.life < 0 || snapshot.lifeMaximum < 0 || snapshot.lifeMaximum > 0 && snapshot.life > snapshot.lifeMaximum
+	    || snapshot.lifeMaximumBase < 0 || snapshot.mana < 0 || snapshot.manaMaximum < 0
+	    || snapshot.manaMaximum > 0 && snapshot.mana > snapshot.manaMaximum
+	    || snapshot.manaMaximumBase < 0 || snapshot.characterLevel == 0
+	    || snapshot.characterLevel > MaximumNativeCharacterLevel
+	    || snapshot.gold > static_cast<uint32_t>(INT_MAX) || snapshot.statPoints > static_cast<uint32_t>(INT_MAX) || snapshot.reflectCharges > UINT16_MAX)
 		return tl::make_unexpected("Server-backed player resources are outside the native range.");
+	if (snapshot.strength.base < 0 || snapshot.strength.current < 0
+	    || snapshot.magic.base < 0 || snapshot.magic.current < 0
+	    || snapshot.dexterity.base < 0 || snapshot.dexterity.current < 0
+	    || snapshot.vitality.base < 0 || snapshot.vitality.current < 0)
+		return tl::make_unexpected("Server-backed player attributes are outside the native range.");
 	if (snapshot.stashGold > static_cast<uint32_t>(INT_MAX)
 	    || snapshot.stash.size() > NativeStashPageCount * NativeStashCellCount)
 		return tl::make_unexpected("Server-backed stash resources are outside the native range.");

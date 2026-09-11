@@ -2,6 +2,11 @@
 
 Status date: 2026-09-10
 
+Native player projection now enforces the managed resource invariants across
+both local application and remote-player presentation: current life/mana cannot
+exceed positive maxima, character levels stay within the native cap, and all
+projected attributes are non-negative.
+
 Native monster vitality validation now checks raw and Q6 hit-point forms
 together, including maximum-vitality ordering and the native signed fixed-point
 range. Malformed raw fields can no longer be hidden behind an alternate Q6
