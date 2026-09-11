@@ -2,9 +2,10 @@
 
 Status date: 2026-09-11
 
-Succubus Blood Star secondary-player impact now preserves the native
-low-Dexterity Warrior class chance and shield admission, including block
-recovery and canonical impact checkpoints, in both replay runners.
+Succubus and LazarusSuccubus Blood Star secondary-player impacts now preserve
+the native low-Dexterity Warrior class chance and shield admission, including
+alias-specific block recovery and canonical impact checkpoints, in both replay
+runners.
 
 The ArchLich, Psychorb, Necromorb, and BoneDemon MonsterMagic aliases now
 share the same class-aware secondary Warrior shield boundary as Lich, with
@@ -1662,7 +1663,7 @@ controller spell row and its native `Mega`/`InfernoControl` missile mapping.
 The managed runner validates the composite pack hash before loading either
 catalog.
 
-The nine Blood Star replay fixtures now share the validated
+The ten Blood Star replay fixtures now share the validated
 `test/content/replay/blood-star` pack, which externalizes the Succubus and
 Lazarus Succubus `BloodStar` missile mappings. The managed runner validates the
 pack hash before loading the native-AI projectile catalog.

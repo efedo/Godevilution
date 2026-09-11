@@ -366,7 +366,7 @@ recovery-delay lifecycle, and nearest-participant selection, including seeded
 multiplayer AI-stream advancement. Mega fixtures load their spell and
 native missile rows from
 the hash-checked `test/content/replay/mega-inferno` content pack.
-The nine Blood Star fixtures likewise load the Succubus and Lazarus Succubus
+The ten Blood Star fixtures likewise load the Succubus and Lazarus Succubus
 `BloodStar` mappings from the hash-checked `test/content/replay/blood-star`
 content pack.
 The twenty-four Monster Magic fixtures likewise load their `OrangeFlare` mappings
@@ -569,7 +569,7 @@ The compact native replay projection now carries the same server-owned corpse
 tile representation and per-tick monster regeneration as the C# checkpoints.
 Ordinary-death and Firebolt, Fireball, Lightning, and Flash
  spell/projectile-timeline checkpoints pass in both runners. As of 2026-09-11,
-the native replay gate contains 360 checked-in JSON fixtures and 369 registered
+the native replay gate contains 361 checked-in JSON fixtures and 370 registered
 tests; the test count also includes parser and validation cases that do not
 introduce another fixture file. Coverage includes seeded and autonomous MonsterArrow
 source coverage, Hellfire HorkDemon Hork Spawn admission, player impact, and
@@ -577,7 +577,8 @@ miss-before-expiry, secondary-player Hork Spawn block and impact, current-tile
 breakable-object removal, primary-player Hork Spawn block, multiplayer
 HorkDemon target selection, SkeletonRanged MonsterArrow nearest-participant
 selection, autonomous Succubus BloodStar admission/impact/block lanes, Succubus
-and LazarusSuccubus BloodStar multiplayer target-selection lanes, FireBat
+and LazarusSuccubus BloodStar multiplayer target-selection and secondary
+Warrior block-chance lanes, FireBat
 Firebolt, Torchant Fireball, Magma MagmaBall, and Storm ThinLightning
 multiplayer target selection,
 Hellfire Acid and AcidUnique secondary-participant impact and puddle-expiry
@@ -634,8 +635,9 @@ autonomous-tick participant timeline with explicit secondary-session movement
 commands, a secondary-session melee attack timeline, multi-level world
 occupancy, a secondary-session portal transition, seeded MonsterArrow
 travel/impact/removal, autonomous GoatRanged and
-SkeletonRanged MonsterArrow admission, autonomous Succubus BloodStar admission,
-travel, player impact, and secondary-player block, Hellfire HorkDemon Hork Spawn
+SkeletonRanged MonsterArrow admission, autonomous Succubus and LazarusSuccubus
+BloodStar admission, travel, player impact, and secondary-player block,
+Hellfire HorkDemon Hork Spawn
 admission, multiplayer target selection, decision-delay state,
 miss-before-expiry lifecycle, secondary-player
 block and impact, current-tile breakable-object removal, primary-player block,
@@ -1370,6 +1372,9 @@ Notable shared fixtures include:
 - `gameplay-blood-star-secondary-warrior-block-chance.json` for the
   low-Dexterity secondary Warrior's authored class base chance, shield
   admission, block animation timing, and canonical impact checkpoints;
+- `gameplay-blood-star-lazarus-succubus-secondary-warrior-block-chance.json`
+  for the LazarusSuccubus low-Dexterity secondary Warrior class chance, shield
+  admission, block animation timing, and alias-specific impact checkpoints;
 - `gameplay-blood-star-native-ai-seed.json` for restored BloodStar AI-stream
   advancement, secondary-player routing, and stream-derived post-shot delay;
 - `gameplay-blood-star-close-native-ai-seed.json` for restored close-range

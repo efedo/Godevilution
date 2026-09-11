@@ -9993,13 +9993,15 @@ public sealed class ReplayFixtureTests
             result.Checkpoints.Select(checkpoint => checkpoint.ActualStateSha256));
     }
 
-    [Fact]
-    public void GameplaySuccubusBloodStarSecondaryWarriorUsesClassBlockChance()
+    [Theory]
+    [InlineData("gameplay-blood-star-secondary-warrior-block-chance.json")]
+    [InlineData("gameplay-blood-star-lazarus-succubus-secondary-warrior-block-chance.json")]
+    public void GameplayBloodStarAliasesSecondaryWarriorUseClassBlockChance(string fixtureName)
     {
         var path = Path.Combine(
             AppContext.BaseDirectory,
             "Fixtures",
-            "gameplay-blood-star-secondary-warrior-block-chance.json");
+            fixtureName);
         var fixture = ReplayFixtureLoader.Load(File.ReadAllText(path));
         var initial = fixture.InitialState;
         var secondary = Assert.IsType<ReplaySecondaryPlayer>(initial.SecondaryPlayer);

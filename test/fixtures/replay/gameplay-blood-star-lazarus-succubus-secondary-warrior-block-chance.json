@@ -1,0 +1,70 @@
+{
+  "format_version": 1,
+  "fixture_id": "gameplay/blood-star-lazarus-succubus-secondary-warrior-block-chance",
+  "protocol_schema_version": "0.1.0",
+  "content_manifest": {
+    "id": "replay.blood-star",
+    "version": "0.1.0",
+    "sha256": "49c7a884bd11ab5525c8eb3358b20248c8124ff5273e00c981faf2317d24fc17"
+  },
+  "tick_rate_hz": 20,
+  "rng_seed": 13,
+  "game_variant": "Diablo",
+  "game_mode": "Multiplayer",
+  "initial_state": {
+    "player": "A",
+    "gold": 0,
+    "experience": 0,
+    "life": 0,
+    "life_maximum": 6400,
+    "position_x": 0,
+    "position_y": 0,
+    "level_id": 1,
+    "character_level": 1,
+    "combat_target_entity_id": 9,
+    "combat_target_level_id": 1,
+    "combat_target_position_x": 10,
+    "combat_target_position_y": 0,
+    "combat_target_hit_points": 20,
+    "combat_target_max_hit_points": 20,
+    "combat_target_aggro_range": 10,
+    "combat_target_monster_level": 1,
+    "combat_target_native_ai": "LazarusSuccubus",
+    "secondary_player": {
+      "player": "B",
+      "entity_id": 8,
+      "life": 6400,
+      "life_maximum": 6400,
+      "position_x": 0,
+      "position_y": 0,
+      "level_id": 1,
+      "character_class": 0,
+      "character_level": 1,
+      "dexterity": 0,
+      "equipment": [
+        {
+          "slot": 5,
+          "item_seed": 44,
+          "item_type": 5,
+          "item_class": 0,
+          "flags": 0,
+          "stat_flag": true
+        }
+      ],
+      "combat_mode": 0
+    }
+  },
+  "commands": [
+    {
+      "client_sequence": 1,
+      "target_tick": 1,
+      "server_receipt_sequence": 1,
+      "kind": "OpenStore",
+      "payload": { "store_id": 1 }
+    }
+  ],
+  "checkpoints": [
+    { "tick": 1, "state_sha256": "1768dd1baa9eeac497a40058dbc711dc0b6c3b228c1990407485df56c5545120" },
+    { "tick": 27, "state_sha256": "3062c015064d762b6856442d722ba1b643da8e942c63d122f21d0db01c49af3d" }
+  ]
+}

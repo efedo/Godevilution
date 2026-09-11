@@ -114,6 +114,7 @@
     <None Include="../../../test/fixtures/replay/gameplay-charged-bolt-hellfire-block.json" Link="Fixtures/gameplay-charged-bolt-hellfire-block.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-charged-bolt-hellfire-secondary-warrior-block-chance.json" Link="Fixtures/gameplay-charged-bolt-hellfire-secondary-warrior-block-chance.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-blood-star-secondary-warrior-block-chance.json" Link="Fixtures/gameplay-blood-star-secondary-warrior-block-chance.json" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="../../../test/fixtures/replay/gameplay-blood-star-lazarus-succubus-secondary-warrior-block-chance.json" Link="Fixtures/gameplay-blood-star-lazarus-succubus-secondary-warrior-block-chance.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-magma-secondary-warrior-block-chance.json" Link="Fixtures/gameplay-magma-secondary-warrior-block-chance.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-charged-bolt-object-collision.json" Link="Fixtures/gameplay-charged-bolt-object-collision.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-charged-bolt-moving-occupancy.json" Link="Fixtures/gameplay-charged-bolt-moving-occupancy.json" CopyToOutputDirectory="PreserveNewest" />

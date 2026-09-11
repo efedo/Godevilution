@@ -2,6 +2,11 @@
 
 All notable changes to this fork are documented below.
 
+- Added LazarusSuccubus Blood Star secondary Warrior block-chance parity.
+  Native and managed runners now cover both Succubus-family aliases with the
+  class-derived shield admission, block recovery, and alias-specific impact
+  checkpoints.
+
 - Extended autonomous Firebolt/Fireball secondary Warrior block-chance parity
   to the FireBat and Torchant aliases. Native and managed runners now cover
   class-derived shield blocking, block recovery, and retained impact-phase
