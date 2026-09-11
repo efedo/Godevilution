@@ -11906,6 +11906,16 @@ TEST(ReplayFixture, ExecutesFireBatFireboltSecondaryWarriorBlockChanceAgainstCSh
 	    1);
 }
 
+TEST(ReplayFixture, ExecutesFireBatFireboltPrimaryWarriorBlockChanceAgainstCSharpCheckpoints)
+{
+	ExecuteMonsterProjectilePrimaryWarriorBlockChanceFixture(
+	    "test/fixtures/replay/gameplay-fire-bat-primary-warrior-block-chance.json",
+	    2,
+	    1,
+	    13,
+	    17);
+}
+
 TEST(ReplayFixture, ExecutesTorchantFireballSecondaryWarriorBlockChanceAgainstCSharpCheckpoints)
 {
 	ExecuteAutonomousMonsterRangedSecondaryWarriorBlockChanceFixture(
