@@ -419,6 +419,10 @@ life, proving native range metadata survives admission and impact.
 `gameplay-monster-arrow-goat-ranged-secondary-get-hit.json` adds equipped
 incoming `_pIGetHit` to that same lane, proving the bonus is applied at
 impact-time after the native range roll in both runners.
+`gameplay-monster-arrow-secondary-warrior-block-chance.json` extends the
+class/shield block boundary to the shared multiplayer participant path,
+preserving the secondary player's block recovery, participant hash, and
+impact-phase projectile lifetime in both runners.
 Optional `facing_direction` uses the native zero-through-seven ordinal. Both
 runners apply accepted action rotations, conditionally hash non-South facing,
 and use the direction for equipped-item death placement.
@@ -565,7 +569,7 @@ The compact native replay projection now carries the same server-owned corpse
 tile representation and per-tick monster regeneration as the C# checkpoints.
 Ordinary-death and Firebolt, Fireball, Lightning, and Flash
  spell/projectile-timeline checkpoints pass in both runners. As of 2026-09-11,
-the native replay gate contains 342 checked-in JSON fixtures and 351 registered
+the native replay gate contains 343 checked-in JSON fixtures and 352 registered
 tests; the test count also includes parser and validation cases that do not
 introduce another fixture file. Coverage includes seeded and autonomous MonsterArrow
 source coverage, Hellfire HorkDemon Hork Spawn admission, player impact, and
@@ -1267,6 +1271,9 @@ Notable shared fixtures include:
 - `gameplay-monster-arrow-primary-warrior-block-chance.json` for the native
   class/shield block boundary at MonsterArrow impact, block recovery, and
   projectile impact-lifetime parity;
+- `gameplay-monster-arrow-secondary-warrior-block-chance.json` for the same
+  class/shield block boundary routed through the multiplayer secondary
+  participant, including participant hashing and impact-lifetime parity;
 - `gameplay-monster-arrow-etherealized.json` for the native `PlayerMHit`
   protection boundary: an Etherealized player does not consume the arrow,
   which continues through the occupied tile and expires on its normal travel

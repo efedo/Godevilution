@@ -8846,6 +8846,89 @@ TEST(ReplayFixture, ExecutesMonsterArrowPrimaryWarriorBlockChanceAgainstCSharpCh
 	EXPECT_EQ(ComputeReplayFixtureStateHash(state), fixture.checkpoints.back().stateSha256);
 }
 
+TEST(ReplayFixture, ExecutesMonsterArrowSecondaryWarriorBlockChanceAgainstCSharpCheckpoints)
+{
+	std::ifstream file("test/fixtures/replay/gameplay-monster-arrow-secondary-warrior-block-chance.json");
+	ASSERT_TRUE(file.good());
+	const std::string json((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
+	ReplayFixture fixture;
+	std::string error;
+	ASSERT_TRUE(ParseReplayFixture(json, fixture, error)) << error;
+	ASSERT_TRUE(fixture.initialState.secondaryPlayer.defined);
+	ASSERT_EQ(fixture.initialProjectiles.size(), 1U);
+
+	ReplayFixtureExecutionState state;
+	state.multiplayer = true;
+	state.entityId = 1;
+	state.life = fixture.initialState.life;
+	state.lifeMaximum = fixture.initialState.lifeMaximum;
+	state.positionX = fixture.initialState.positionX;
+	state.positionY = fixture.initialState.positionY;
+	state.levelId = fixture.initialState.levelId;
+	state.characterLevel = fixture.initialState.characterLevel;
+	state.combatTargetEntityId = fixture.initialState.combatTargetEntityId;
+	state.combatTargetLevelId = fixture.initialState.combatTargetLevelId;
+	state.combatTargetPositionX = fixture.initialState.combatTargetPositionX;
+	state.combatTargetPositionY = fixture.initialState.combatTargetPositionY;
+	state.combatTargetHitPoints = fixture.initialState.combatTargetHitPoints;
+	state.combatTargetMaxHitPoints = fixture.initialState.combatTargetMaxHitPoints;
+	state.combatTargetMonsterLevel = fixture.initialState.combatTargetMonsterLevel;
+	state.secondaryPlayer = fixture.initialState.secondaryPlayer.player;
+	state.secondaryPlayerEntityId = fixture.initialState.secondaryPlayer.entityId;
+	state.secondaryPlayerLife = fixture.initialState.secondaryPlayer.life;
+	state.secondaryPlayerLifeMaximum = fixture.initialState.secondaryPlayer.lifeMaximum;
+	state.secondaryPlayerPositionX = fixture.initialState.secondaryPlayer.positionX;
+	state.secondaryPlayerPositionY = fixture.initialState.secondaryPlayer.positionY;
+	state.secondaryPlayerLevelId = fixture.initialState.secondaryPlayer.levelId;
+	state.secondaryPlayerCharacterLevel = fixture.initialState.secondaryPlayer.characterLevel;
+	state.secondaryPlayerCharacterClassId = fixture.initialState.secondaryPlayer.characterClass;
+	state.secondaryPlayerDexterity = fixture.initialState.secondaryPlayer.dexterity;
+	state.secondaryPlayerBlockCapable = fixture.initialState.secondaryPlayer.blockCapable;
+	state.secondaryPlayerCombatMode = fixture.initialState.secondaryPlayer.combatMode;
+	state.secondaryPlayerCombatModeEndTick = fixture.initialState.secondaryPlayer.combatModeEndTick;
+	for (const auto &source : fixture.initialState.secondaryPlayer.equipment) {
+		ReplayFixtureItemState itemState;
+		itemState.stableItemId = source.stableItemId;
+		itemState.itemType = source.itemType;
+		itemState.itemClass = source.itemClass;
+		itemState.itemIndex = source.itemIndex;
+		itemState.value = source.value;
+		itemState.identifiedValue = source.identifiedValue;
+		itemState.identified = source.identified;
+		itemState.magical = source.magical;
+		itemState.minDamage = source.minDamage;
+		itemState.maxDamage = source.maxDamage;
+		itemState.plusDamage = source.plusDamage;
+		itemState.plusToHit = source.plusToHit;
+		itemState.plusDamageModifier = source.plusDamageModifier;
+		itemState.plusGetHit = source.plusGetHit;
+		itemState.plusFireResistance = source.plusFireResistance;
+		itemState.plusLightningResistance = source.plusLightningResistance;
+		itemState.plusMagicResistance = source.plusMagicResistance;
+		itemState.plusEnemyArmorClass = source.plusEnemyArmorClass;
+		itemState.fireMinDamage = source.fireMinDamage;
+		itemState.fireMaxDamage = source.fireMaxDamage;
+		itemState.lightningMinDamage = source.lightningMinDamage;
+		itemState.lightningMaxDamage = source.lightningMaxDamage;
+		itemState.flags = source.flags;
+		itemState.statFlag = source.statFlag;
+		state.secondaryEquipment.push_back({ source.slot, source.itemSeed, itemState });
+	}
+	state.secondaryInventoryGrid.assign(40, -1);
+
+	ReplayFixtureExecutionResult result;
+	ASSERT_TRUE(ExecuteReplayFixture(fixture, state, result, error)) << error;
+	ASSERT_EQ(result.transitions.size(), 1U);
+	EXPECT_TRUE(result.transitions[0].accepted);
+	EXPECT_EQ(state.lastAppliedTick, 3U);
+	EXPECT_EQ(state.life, 100);
+	EXPECT_EQ(state.secondaryPlayerLife, 100);
+	EXPECT_EQ(state.secondaryPlayerCombatMode, 6U);
+	EXPECT_EQ(state.secondaryPlayerCombatModeEndTick, 6U);
+	EXPECT_TRUE(state.projectiles.empty());
+	EXPECT_EQ(ComputeReplayFixtureStateHash(state), fixture.checkpoints.back().stateSha256);
+}
+
 TEST(ReplayFixture, ExecutesMonsterArrowEtherealizePassThroughAgainstCSharpCheckpoints)
 {
 	std::ifstream file("test/fixtures/replay/gameplay-monster-arrow-etherealized.json");

@@ -2,6 +2,10 @@
 
 All notable changes to this fork are documented below.
 
+- Extended MonsterArrow Warrior block parity to multiplayer secondary players.
+  Native and managed runners now cover the shared class/shield block boundary,
+  participant hashing, block recovery, and impact-phase projectile lifetime.
+
 - Added MonsterArrow primary-player block parity. Native and managed runners
   now cover the low-Dexterity Warrior class/shield boundary, block recovery,
   and impact-phase projectile lifetime.

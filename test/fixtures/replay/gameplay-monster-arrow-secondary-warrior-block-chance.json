@@ -1,0 +1,85 @@
+{
+  "format_version": 1,
+  "fixture_id": "gameplay/monster-arrow-secondary-warrior-block-chance",
+  "protocol_schema_version": "0.1.0",
+  "content_manifest": {
+    "id": "test-content",
+    "version": "1",
+    "sha256": "monster-arrow-resolution-content"
+  },
+  "tick_rate_hz": 20,
+  "rng_seed": 7,
+  "game_variant": "Diablo",
+  "game_mode": "Multiplayer",
+  "initial_state": {
+    "player": "A",
+    "gold": 0,
+    "experience": 0,
+    "life": 100,
+    "life_maximum": 100,
+    "position_x": 0,
+    "position_y": 0,
+    "level_id": 1,
+    "secondary_player": {
+      "player": "B",
+      "entity_id": 8,
+      "life": 100,
+      "life_maximum": 100,
+      "position_x": 0,
+      "position_y": 1,
+      "level_id": 1,
+      "character_class": 0,
+      "character_level": 1,
+      "dexterity": 0,
+      "equipment": [
+        {
+          "slot": 5,
+          "item_seed": 1,
+          "item_type": 5,
+          "item_class": 0,
+          "flags": 0,
+          "stat_flag": true
+        }
+      ]
+    },
+    "combat_target_entity_id": 9,
+    "combat_target_level_id": 1,
+    "combat_target_position_x": 2,
+    "combat_target_position_y": 1,
+    "combat_target_hit_points": 20,
+    "combat_target_max_hit_points": 20,
+    "combat_target_monster_level": 1
+  },
+  "initial_projectiles": [
+    {
+      "entity_id": 2147483648,
+      "source_entity_id": 9,
+      "target_entity_id": 8,
+      "level_id": 1,
+      "position_x": 2,
+      "position_y": 1,
+      "target_x": 0,
+      "target_y": 1,
+      "damage": 4,
+      "damage_type": 0,
+      "remaining_ticks": 4,
+      "behavior": 59,
+      "phase": 0,
+      "speed": 1,
+      "impact_lifetime": 1
+    }
+  ],
+  "commands": [
+    {
+      "client_sequence": 1,
+      "target_tick": 1,
+      "server_receipt_sequence": 1,
+      "kind": "OpenStore",
+      "payload": { "store_id": 1 }
+    }
+  ],
+  "checkpoints": [
+    { "tick": 1, "state_sha256": "280c649c951af2fdcaa779348e7ac52f0508c3c279b471cd8d4f2a3644b573b6" },
+    { "tick": 3, "state_sha256": "e9fb064be99c5e6d4ea12dff5f2edd163c243077f86f59ff0f107933600a87b9" }
+  ]
+}

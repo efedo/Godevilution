@@ -196,6 +196,11 @@ Monster-arrow impact now matches the native `PlayerMHit` protection boundary:
 an Etherealized player does not consume the projectile, so the arrow continues
 through the protected tile and can complete its normal travel lifecycle.
 
+The shared MonsterArrow class/shield block boundary now covers both primary and
+secondary participants. The multiplayer secondary-player fixture preserves
+native block recovery, participant hashing, and impact-phase projectile lifetime
+in the managed and native replay runners.
+
 Server-owned dialogue events now cross every world-transition path: immediate
 movement, native-timed level triggers, occupancy-triggered objects, and the
 Warp spell all preserve the directed event through simulation and combat

@@ -280,6 +280,7 @@
     <None Include="../../../test/fixtures/replay/gameplay-multiplayer-secondary-portal.json" Link="Fixtures/gameplay-multiplayer-secondary-portal.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-monster-arrow-resolution.json" Link="Fixtures/gameplay-monster-arrow-resolution.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-monster-arrow-primary-warrior-block-chance.json" Link="Fixtures/gameplay-monster-arrow-primary-warrior-block-chance.json" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="../../../test/fixtures/replay/gameplay-monster-arrow-secondary-warrior-block-chance.json" Link="Fixtures/gameplay-monster-arrow-secondary-warrior-block-chance.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-monster-arrow-autonomous.json" Link="Fixtures/gameplay-monster-arrow-autonomous.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-monster-arrow-autonomous-multiplayer.json" Link="Fixtures/gameplay-monster-arrow-autonomous-multiplayer.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-monster-arrow-skeleton-ranged-autonomous-multiplayer.json" Link="Fixtures/gameplay-monster-arrow-skeleton-ranged-autonomous-multiplayer.json" CopyToOutputDirectory="PreserveNewest" />
