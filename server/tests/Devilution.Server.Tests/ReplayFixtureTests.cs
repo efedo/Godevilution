@@ -9918,6 +9918,42 @@ public sealed class ReplayFixtureTests
     }
 
     [Fact]
+    public void GameplaySuccubusBloodStarSecondaryWarriorUsesClassBlockChance()
+    {
+        var path = Path.Combine(
+            AppContext.BaseDirectory,
+            "Fixtures",
+            "gameplay-blood-star-secondary-warrior-block-chance.json");
+        var fixture = ReplayFixtureLoader.Load(File.ReadAllText(path));
+        var initial = fixture.InitialState;
+        var secondary = Assert.IsType<ReplaySecondaryPlayer>(initial.SecondaryPlayer);
+        var classes = AuthoritativePlayerClassCatalog.LoadTsv(
+            "classes.tsv",
+            File.ReadAllText(Path.Combine(FindRepositoryRoot(), "server", "content", "base", "classes.tsv")));
+        var executor = CreateBloodStarExecutor(fixture, classes);
+
+        var result = ReplayFixtureExecutor.Execute(
+            fixture,
+            executor,
+            new AuthoritativeCommandServer(executor));
+        var secondaryState = executor.GetPlayerState(secondary.Player);
+        var projectile = Assert.Single(result.FinalSnapshot.Projectiles);
+
+        Assert.Equal(CommandStatus.Accepted, Assert.Single(result.Results).Status);
+        Assert.Equal(0U, secondary.CharacterClass);
+        Assert.Equal(0, secondary.Dexterity);
+        Assert.Equal(secondary.Life, secondaryState.Life);
+        Assert.Equal(DiabloPlayerCombatMode.Block, secondaryState.CombatMode);
+        Assert.Equal(31UL, secondaryState.CombatModeEndTick);
+        Assert.Equal((int)AuthoritativeProjectilePhase.Impact, projectile.Phase);
+        Assert.Equal(1U, projectile.RemainingTicks);
+        Assert.Equal(27UL, result.FinalSnapshot.Tick);
+        Assert.Equal(
+            fixture.Checkpoints.Select(checkpoint => checkpoint.StateSha256),
+            result.Checkpoints.Select(checkpoint => checkpoint.ActualStateSha256));
+    }
+
+    [Fact]
     public void GameplaySuccubusBloodStarNativeAiSeedMatchesNativeLifecycle()
     {
         var path = Path.Combine(
@@ -12467,7 +12503,9 @@ public sealed class ReplayFixtureTests
             gameMode: fixture.GameMode);
     }
 
-    private static StoreSimulationExecutor CreateBloodStarExecutor(ReplayFixture fixture)
+    private static StoreSimulationExecutor CreateBloodStarExecutor(
+        ReplayFixture fixture,
+        AuthoritativePlayerClassCatalog? startingPlayerClasses = null)
     {
         var initial = fixture.InitialState;
         var target = new AuthoritativeCombatTarget(
@@ -12505,6 +12543,7 @@ public sealed class ReplayFixtureTests
             startingCharacterLevel: initial.CharacterLevel,
             startingCombatTargets: [target],
             startingMonsterMissiles: missiles,
+            startingPlayerClasses: startingPlayerClasses,
             startingRandomSeed: checked((uint)fixture.RngSeed),
             startingCombatRules: CreateReplayCombatRules(fixture),
             difficulty: fixture.Difficulty,

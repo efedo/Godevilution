@@ -2,6 +2,10 @@
 
 All notable changes to this fork are documented below.
 
+- Added Blood Star secondary Warrior block-chance parity. Native and managed
+  runners now cover the low-Dexterity class base chance, shield admission,
+  block recovery, and canonical impact checkpoints.
+
 - Added Hellfire Charged Bolt secondary Warrior block-chance parity. Native and
   managed runners now cover the low-Dexterity class base chance, shield
   admission, Hellfire compatibility draw, and shared impact checkpoints.

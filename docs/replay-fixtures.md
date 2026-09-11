@@ -569,7 +569,7 @@ The compact native replay projection now carries the same server-owned corpse
 tile representation and per-tick monster regeneration as the C# checkpoints.
 Ordinary-death and Firebolt, Fireball, Lightning, and Flash
  spell/projectile-timeline checkpoints pass in both runners. As of 2026-09-11,
-the native replay gate contains 350 checked-in JSON fixtures and 359 registered
+the native replay gate contains 351 checked-in JSON fixtures and 360 registered
 tests; the test count also includes parser and validation cases that do not
 introduce another fixture file. Coverage includes seeded and autonomous MonsterArrow
 source coverage, Hellfire HorkDemon Hork Spawn admission, player impact, and
@@ -1357,6 +1357,9 @@ Notable shared fixtures include:
   Q6 player damage, impact-phase retention, and removal-boundary parity;
 - `gameplay-blood-star-secondary-block.json` for secondary-player target routing,
   shield-capable block admission, block animation timing, and RNG parity;
+- `gameplay-blood-star-secondary-warrior-block-chance.json` for the
+  low-Dexterity secondary Warrior's authored class base chance, shield
+  admission, block animation timing, and canonical impact checkpoints;
 - `gameplay-blood-star-native-ai-seed.json` for restored BloodStar AI-stream
   advancement, secondary-player routing, and stream-derived post-shot delay;
 - `gameplay-blood-star-close-native-ai-seed.json` for restored close-range
