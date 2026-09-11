@@ -2,6 +2,10 @@
 
 All notable changes to this fork are documented below.
 
+- Added autonomous multiplayer Warlord parity through the SkeletonAi alias.
+  Native and managed runners now cover Warlord AI-stream advancement, delay
+  state, and preserved two-participant checkpoints.
+
 - Added autonomous multiplayer SkeletonRanged MonsterArrow parity. Native and
   managed runners now cover restored AI-stream admission, nearest-secondary
   routing, projectile travel state, and the canonical checkpoint.

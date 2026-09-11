@@ -1200,8 +1200,9 @@ The adjacent Skeleton King branch now also has a shared melee-hit checkpoint
 with deterministic secondary damage and untouched primary state.
 
 Warlord and Snotspill now share the same two-participant SkeletonAi replay
-coverage. Native and managed runners preserve their explicit authored native-AI
-identities while agreeing on movement-delay admission and countdown state.
+coverage, including autonomous Warlord stream advancement. Native and managed
+runners preserve their explicit authored native-AI identities while agreeing on
+movement-delay admission, countdown state, and canonical final checkpoints.
 
 Gharbad now has two-participant replay coverage through the shared GoatMelee/
 AiAvoidance compatibility path. Native and managed runners preserve the
