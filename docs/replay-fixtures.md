@@ -370,7 +370,7 @@ The eight Blood Star fixtures likewise load the Succubus and Lazarus Succubus
 content pack.
 The twenty Monster Magic fixtures likewise load their `OrangeFlare` mappings
 from the hash-checked `test/content/replay/monster-magic` content pack.
-The thirteen Monster Arrow fixtures load their GoatRanged and SkeletonRanged
+The fourteen Monster Arrow fixtures load their GoatRanged and SkeletonRanged
 `Arrow` mappings from the hash-checked `monster-arrow` and
 `monster-arrow-admission` content packs.
 The nine Hork Spawn fixtures load their `HorkDemon` mapping from the
@@ -562,7 +562,7 @@ The compact native replay projection now carries the same server-owned corpse
 tile representation and per-tick monster regeneration as the C# checkpoints.
 Ordinary-death and Firebolt, Fireball, Lightning, and Flash
  spell/projectile-timeline checkpoints pass in both runners. As of 2026-09-09,
-the native replay gate contains 240 checked-in JSON fixtures and 255 registered
+the native replay gate contains 241 checked-in JSON fixtures and 256 registered
 tests; the test count also includes parser and validation cases that do not
 introduce another fixture file. Coverage includes seeded and autonomous MonsterArrow
 source coverage, Hellfire HorkDemon Hork Spawn admission, player impact, and
@@ -1256,6 +1256,9 @@ Notable shared fixtures include:
   parity;
 - `gameplay-monster-arrow-autonomous-multiplayer.json` for the same autonomous
   admission routed to the nearer secondary participant through impact;
+- `gameplay-monster-arrow-skeleton-ranged-autonomous-multiplayer.json` for
+  restored SkeletonRanged AI-stream admission, nearest-secondary routing, and
+  the canonical MonsterArrow travel checkpoint;
 - `gameplay-monster-arrow-goat-ranged-native-ai-seed.json` for restored
   GoatRanged AI-stream advancement, secondary-player arrow routing, and
   stream-derived post-shot delay;

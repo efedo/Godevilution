@@ -2,6 +2,10 @@
 
 All notable changes to this fork are documented below.
 
+- Added autonomous multiplayer SkeletonRanged MonsterArrow parity. Native and
+  managed runners now cover restored AI-stream admission, nearest-secondary
+  routing, projectile travel state, and the canonical checkpoint.
+
 - Added autonomous multiplayer Mega Inferno parity. Native and managed runners
   now cover the three-step controller lifecycle, path-indexed segment lifetime,
   nearest-secondary targeting, and canonical controller/segment checkpoints.

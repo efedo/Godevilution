@@ -1595,7 +1595,7 @@ The twenty Monster Magic replay fixtures now share the validated
 mapping for Lich-family and orb native AIs. The managed runner validates the
 pack hash before loading the native-AI projectile catalog.
 
-The thirteen Monster Arrow replay fixtures now load validated GoatRanged and
+The fourteen Monster Arrow replay fixtures now load validated GoatRanged and
 SkeletonRanged mappings from the shared `test/content/replay/monster-arrow`
 pack and the admission-specific `test/content/replay/monster-arrow-admission`
 pack. Both native and managed runners validate their manifest hashes before
@@ -1796,6 +1796,11 @@ The shared replay contract now covers SkeletonRanged close-range retreat.
 Native and managed runners preserve nearest-participant selection,
 deterministic retreat destinations, movement counters, and suppression of
 same-tick MonsterArrow admission.
+
+SkeletonRanged now also has autonomous two-participant replay coverage. Native
+and managed runners consume the restored AI stream, route the MonsterArrow to
+the nearer secondary participant, preserve the farther primary, and agree on
+the canonical travel checkpoint.
 
 The shared replay contract now carries GoatRanged ranged-delay state through
 the native and managed projections, verifying delayed admission before the

@@ -7815,6 +7815,35 @@ public sealed class ReplayFixtureTests
     }
 
     [Fact]
+    public void GameplayMonsterArrowSkeletonRangedAutonomousMultiplayerMatchesNativeLifecycle()
+    {
+        var fixture = LoadReplayFixture(
+            "gameplay-monster-arrow-skeleton-ranged-autonomous-multiplayer.json");
+        var secondary = Assert.IsType<ReplaySecondaryPlayer>(fixture.InitialState.SecondaryPlayer);
+        var executor = CreateMonsterArrowExecutor(fixture);
+
+        var result = ReplayFixtureExecutor.Execute(
+            fixture,
+            executor,
+            new AuthoritativeCommandServer(executor));
+        var primary = Assert.Single(result.FinalSnapshot.Players, player => player.EntityId == 1);
+        var secondaryState = executor.GetPlayerState(secondary.Player);
+        var projectile = Assert.Single(result.FinalSnapshot.Projectiles);
+
+        Assert.Equal(CommandStatus.Accepted, Assert.Single(result.Results).Status);
+        Assert.Equal(100, primary.Life);
+        Assert.Equal(100, secondaryState.Life);
+        Assert.Equal(secondary.EntityId, projectile.TargetEntityId);
+        Assert.Equal((int)AuthoritativeProjectileBehavior.MonsterArrow, projectile.Behavior);
+        Assert.Equal((int)AuthoritativeProjectilePhase.Travel, projectile.Phase);
+        Assert.Equal(6U, projectile.RemainingTicks);
+        Assert.Equal(1UL, result.FinalSnapshot.Tick);
+        Assert.Equal(
+            fixture.Checkpoints.Select(checkpoint => checkpoint.StateSha256),
+            result.Checkpoints.Select(checkpoint => checkpoint.ActualStateSha256));
+    }
+
+    [Fact]
     public void GameplayMonsterArrowSkeletonRangedAdmissionMatchesNativeLifecycle()
     {
         var path = Path.Combine(

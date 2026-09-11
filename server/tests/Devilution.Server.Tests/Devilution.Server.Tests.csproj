@@ -274,6 +274,7 @@
     <None Include="../../../test/fixtures/replay/gameplay-monster-arrow-resolution.json" Link="Fixtures/gameplay-monster-arrow-resolution.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-monster-arrow-autonomous.json" Link="Fixtures/gameplay-monster-arrow-autonomous.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-monster-arrow-autonomous-multiplayer.json" Link="Fixtures/gameplay-monster-arrow-autonomous-multiplayer.json" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="../../../test/fixtures/replay/gameplay-monster-arrow-skeleton-ranged-autonomous-multiplayer.json" Link="Fixtures/gameplay-monster-arrow-skeleton-ranged-autonomous-multiplayer.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-monster-arrow-etherealized.json" Link="Fixtures/gameplay-monster-arrow-etherealized.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-monster-arrow-flash-protected.json" Link="Fixtures/gameplay-monster-arrow-flash-protected.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-monster-arrow-skeleton-ranged.json" Link="Fixtures/gameplay-monster-arrow-skeleton-ranged.json" CopyToOutputDirectory="PreserveNewest" />
