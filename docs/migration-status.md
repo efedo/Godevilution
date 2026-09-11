@@ -22,6 +22,10 @@ future occupancy, countdown decrement, and fail-closed bounds at both runners.
 The multiplayer continuation also proves that the per-monster AI stream advances
 once before fear movement while the secondary participant remains unchanged.
 
+The autonomous MonsterMagic replay now also runs through a 27-tick multiplayer
+cast lifecycle, selecting the nearer secondary participant and preserving the
+primary participant's state through impact in both runners.
+
 Replay fixture state now carries the semantic class-skill role through both
 native and managed loaders, participant initialization, and canonical hashes.
 The role-only golden keeps C++ and C# checkpoint hashing aligned even when no
@@ -1488,7 +1492,7 @@ The eight Blood Star replay fixtures now share the validated
 Lazarus Succubus `BloodStar` missile mappings. The managed runner validates the
 pack hash before loading the native-AI projectile catalog.
 
-The nineteen Monster Magic replay fixtures now share the validated
+The twenty Monster Magic replay fixtures now share the validated
 `test/content/replay/monster-magic` pack, which externalizes the `OrangeFlare`
 mapping for Lich-family and orb native AIs. The managed runner validates the
 pack hash before loading the native-AI projectile catalog.

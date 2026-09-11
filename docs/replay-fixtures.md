@@ -368,7 +368,7 @@ the hash-checked `test/content/replay/mega-inferno` content pack.
 The eight Blood Star fixtures likewise load the Succubus and Lazarus Succubus
 `BloodStar` mappings from the hash-checked `test/content/replay/blood-star`
 content pack.
-The nineteen Monster Magic fixtures likewise load their `OrangeFlare` mappings
+The twenty Monster Magic fixtures likewise load their `OrangeFlare` mappings
 from the hash-checked `test/content/replay/monster-magic` content pack.
 The thirteen Monster Arrow fixtures load their GoatRanged and SkeletonRanged
 `Arrow` mappings from the hash-checked `monster-arrow` and
@@ -1251,6 +1251,8 @@ Notable shared fixtures include:
   retreat admission, RandomWalk direction draws, and movement parity;
 - `gameplay-monster-magic-autonomous.json` for validated Lich-family
   MonsterMagic admission, hit RNG, Q6 damage, and impact-phase parity;
+- `gameplay-monster-magic-autonomous-multiplayer.json` for the same autonomous
+  Lich lifecycle routed to the nearer secondary participant through impact;
 - `gameplay-monster-magic-primary-shield.json` for primary-player MonsterMagic
   impact GetHit adjustment, Mana Shield absorption, and shared Q6 checkpoints;
 - `gameplay-monster-magic-primary-resistance.json` for primary-player

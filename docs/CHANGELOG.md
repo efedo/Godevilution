@@ -11,6 +11,10 @@ All notable changes to this fork are documented below.
   per-monster AI-stream advance and preserve secondary-participant occupancy in
   the shared checkpoint hash.
 
+- Added a shared autonomous multiplayer MonsterMagic fixture. Native and
+  managed runners now cover the full Lich cast lifecycle against the nearer
+  secondary participant through impact.
+
 - Shared replay fixtures now carry native monster acid resistance through the
   C++ and C# loaders and canonical checkpoint hash, preserving zero-default
   compatibility while covering nonzero resistance with a cross-runner golden.
