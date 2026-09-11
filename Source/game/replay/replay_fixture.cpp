@@ -882,6 +882,14 @@ void AppendCanonicalState(ReplayStateHasher &hasher, const ReplayFixtureExecutio
 			hasher.AppendString("godevilution-object-trap-v1");
 			hasher.AppendBool(true);
 		}
+		// Managed object snapshots derive the semantic presentation family from
+		// the same authoritative behavior flags before hashing. Compact replay
+		// state has no separate presentation field, so reproduce that identity
+		// at the boundary for quest, breakable, and trap objects.
+		if (state.objectQuestId != 0 || state.objectBreakable || state.objectTrapArmed) {
+			hasher.AppendString("godevilution-object-presentation-family-v1");
+			hasher.AppendInt32(state.objectQuestId != 0 ? 3 : state.objectBreakable ? 4 : 5);
+		}
 		if (state.objectQuestId != 0) {
 			hasher.AppendString("godevilution-object-quest-v1");
 			hasher.AppendUint32(state.objectQuestId);

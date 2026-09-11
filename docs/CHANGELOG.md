@@ -2,6 +2,10 @@
 
 All notable changes to this fork are documented below.
 
+- Restored native replay hashing for derived object presentation families.
+  Quest, breakable, and trap object checkpoints now include the same semantic
+  presentation identity as managed snapshots.
+
 - Added seeded autonomous multiplayer HorkDemon parity. Native and managed
   runners now cover restored monster seeds, deterministic Hork Spawn admission,
   nearest-secondary routing, and the shared projectile checkpoint.

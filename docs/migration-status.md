@@ -2,6 +2,10 @@
 
 Status date: 2026-09-11
 
+Native replay hashing now carries the derived semantic presentation identity
+for quest, breakable, and trap objects, keeping object interaction checkpoints
+aligned with managed authoritative snapshots.
+
 HorkDemon’s seeded autonomous multiplayer lane now preserves restored monster
 seeds, deterministic Hork Spawn admission, nearest-secondary routing, and the
 shared projectile checkpoint in the compact native replay and managed server.
