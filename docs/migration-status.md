@@ -2,6 +2,10 @@
 
 Status date: 2026-09-11
 
+ArchLich’s seeded autonomous MonsterMagic alias now preserves secondary-target
+routing, 27-tick impact timing, and the canonical projectile hash in the compact
+native replay and managed server.
+
 GoatMelee’s seeded multiplayer RoundWalk lane now preserves the far-distance
 Move goal counter, native stream draws, and bounded diagonal future occupancy
 through a multi-tick checkpoint in the compact native replay and managed server.

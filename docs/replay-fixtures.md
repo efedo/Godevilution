@@ -1295,6 +1295,8 @@ Notable shared fixtures include:
   MonsterMagic admission, hit RNG, Q6 damage, and impact-phase parity;
 - `gameplay-monster-magic-autonomous-multiplayer.json` for the same autonomous
   Lich lifecycle routed to the nearer secondary participant through impact;
+- `gameplay-monster-magic-arch-lich-autonomous-multiplayer.json` for the seeded
+  ArchLich MonsterMagic alias, secondary-target routing, and impact lifecycle;
 - `gameplay-monster-magic-primary-shield.json` for primary-player MonsterMagic
   impact GetHit adjustment, Mana Shield absorption, and shared Q6 checkpoints;
 - `gameplay-monster-magic-primary-resistance.json` for primary-player

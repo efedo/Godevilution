@@ -2,6 +2,10 @@
 
 All notable changes to this fork are documented below.
 
+- Added seeded ArchLich autonomous multiplayer MonsterMagic coverage. The
+  native and managed alias paths now preserve secondary-target routing,
+  impact timing, and the canonical projectile checkpoint hash.
+
 - Added seeded GoatMelee multiplayer RoundWalk coverage. Native and managed
   runners now preserve the far-distance Move goal counter, stream draws, and
   bounded diagonal future occupancy across the multi-tick checkpoint.
