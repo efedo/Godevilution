@@ -176,10 +176,11 @@ The `gameplay/ranged-resource-restoration` companion carries both random and
 fixed life-steal flags alongside mana steal. Its impact checkpoints prove that
 the random life roll is consumed before the native fixed life amount replaces
 it, while life and mana remain capped identically in both runners.
-The `gameplay/ranged-class-monk`, `gameplay/ranged-class-bard`, and
-`gameplay/ranged-class-barbarian` companions extend that boundary across the
-remaining ranged class profiles, including the class-specific damage branches
-and Barbarian critical-strike RNG consumption.
+The `gameplay/ranged-class-monk`, `gameplay/ranged-class-bard`,
+`gameplay/ranged-class-sorcerer`, and `gameplay/ranged-class-barbarian`
+companions extend that boundary across the remaining ranged class profiles,
+including the class-specific damage branches and Barbarian critical-strike RNG
+consumption.
 The `gameplay/ranged-class-zero-strength` companion proves that a class
 definition with zero authored Strength uses the legacy compact damage/to-hit
 fallback in both runners without consuming a class damage roll.
@@ -564,7 +565,7 @@ The compact native replay projection now carries the same server-owned corpse
 tile representation and per-tick monster regeneration as the C# checkpoints.
 Ordinary-death and Firebolt, Fireball, Lightning, and Flash
  spell/projectile-timeline checkpoints pass in both runners. As of 2026-09-11,
-the native replay gate contains 247 checked-in JSON fixtures and 262 registered
+the native replay gate contains 248 checked-in JSON fixtures and 262 registered
 tests; the test count also includes parser and validation cases that do not
 introduce another fixture file. Coverage includes seeded and autonomous MonsterArrow
 source coverage, Hellfire HorkDemon Hork Spawn admission, player impact, and

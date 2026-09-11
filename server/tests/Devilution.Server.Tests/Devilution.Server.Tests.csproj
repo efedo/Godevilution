@@ -75,6 +75,7 @@
     <None Include="../../../test/fixtures/replay/gameplay-ranged-resource-restoration.json" Link="Fixtures/gameplay-ranged-resource-restoration.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-ranged-class-monk.json" Link="Fixtures/gameplay-ranged-class-monk.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-ranged-class-bard.json" Link="Fixtures/gameplay-ranged-class-bard.json" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="../../../test/fixtures/replay/gameplay-ranged-class-sorcerer.json" Link="Fixtures/gameplay-ranged-class-sorcerer.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-ranged-class-barbarian.json" Link="Fixtures/gameplay-ranged-class-barbarian.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-ranged-class-zero-strength.json" Link="Fixtures/gameplay-ranged-class-zero-strength.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-ranged-class-armor.json" Link="Fixtures/gameplay-ranged-class-armor.json" CopyToOutputDirectory="PreserveNewest" />

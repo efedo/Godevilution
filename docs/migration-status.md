@@ -792,9 +792,9 @@ covers life/mana caps, random/fixed life-steal ordering, and a shared
 post-impact checkpoint, including the server-owned projectile removal
 transition.
 
-Initialized ranged class replay now cross-checks Monk, Bard, and Barbarian
-damage profiles in both runners, including the Monk weapon, Bard bow, and
-Barbarian bow branches with their class-specific RNG checkpoints.
+Initialized ranged class replay now cross-checks Monk, Bard, Sorcerer, and
+Barbarian damage profiles in both runners, including their class-specific
+weapon branches and Barbarian critical-strike RNG checkpoints.
 
 Initialized class replay now retains the native compact fallback when authored
 Strength is zero, matching the native positive-attribute gate and preserving

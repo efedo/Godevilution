@@ -661,6 +661,7 @@ public sealed class BaseContentReplayTests
     [Theory]
     [InlineData("gameplay-ranged-class-monk.json", 3, 5, 22695478U)]
     [InlineData("gameplay-ranged-class-bard.json", 4, 6, 22695478U)]
+    [InlineData("gameplay-ranged-class-sorcerer.json", 2, 6, 22695478U)]
     [InlineData("gameplay-ranged-class-barbarian.json", 5, 4, 2156045615U)]
     public void RangedClassDamageUsesEachNativeClassProfile(
         string fixtureName,

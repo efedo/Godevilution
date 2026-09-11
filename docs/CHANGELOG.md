@@ -10,6 +10,10 @@ All notable changes to this fork are documented below.
   compatibility. The native and managed runners now select the special damage
   range from the deterministic attack seed in that legacy lane.
 
+- Added initialized Sorcerer ranged-damage replay coverage. Native and managed
+  runners now cross-check the Sorcerer class profile alongside the other
+  ranged class branches.
+
 - Added autonomous multiplayer Familiar parity. Native and managed runners now
   cover the validated Bat melee admission and range movement, seeded post-melee
   Lightning damage, nearest-secondary routing, Bat movement counters, and the
