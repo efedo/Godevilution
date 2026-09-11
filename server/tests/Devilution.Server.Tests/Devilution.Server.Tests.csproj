@@ -216,6 +216,7 @@
     <None Include="../../../test/fixtures/replay/gameplay-zombie-multiplayer-target.json" Link="Fixtures/gameplay-zombie-multiplayer-target.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-fat-movement.json" Link="Fixtures/gameplay-fat-movement.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-fat-multiplayer-target.json" Link="Fixtures/gameplay-fat-multiplayer-target.json" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="../../../test/fixtures/replay/gameplay-fat-autonomous-multiplayer.json" Link="Fixtures/gameplay-fat-autonomous-multiplayer.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-goat-melee-movement.json" Link="Fixtures/gameplay-goat-melee-movement.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-goat-melee-multiplayer-target.json" Link="Fixtures/gameplay-goat-melee-multiplayer-target.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-goat-melee-attack.json" Link="Fixtures/gameplay-goat-melee-attack.json" CopyToOutputDirectory="PreserveNewest" />

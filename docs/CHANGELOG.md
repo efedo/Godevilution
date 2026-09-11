@@ -35,6 +35,9 @@ All notable changes to this fork are documented below.
   managed runners now cover adjacent melee damage to the nearer secondary
   participant while preserving the farther primary participant.
 
+- Added autonomous multiplayer Fat melee coverage and aligned the native replay
+  harness with the validated Fat attack-admission RNG draw.
+
 - Shared replay fixtures now carry native monster acid resistance through the
   C++ and C# loaders and canonical checkpoint hash, preserving zero-default
   compatibility while covering nonzero resistance with a cross-runner golden.

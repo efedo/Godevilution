@@ -1162,6 +1162,11 @@ and managed runners preserve the authored Gargoyle identity, route an
 unblocked adjacent hit to the nearer secondary participant, and agree on the
 same damage, AI-stream, and canonical checkpoint state.
 
+Fat now has matching autonomous multiplayer melee coverage. The native replay
+harness and managed authoritative controller both consume the validated
+`20 + 4 * intelligence` attack-admission draw before applying the adjacent hit,
+preserving the secondary damage, farther-primary state, and global RNG parity.
+
 Zhar and Lazarus now share two-participant replay coverage through the native
 CounselorAi compatibility path. Native and managed runners preserve their
 authored identities, route the nearer secondary participant, and agree on the

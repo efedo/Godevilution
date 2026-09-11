@@ -9311,6 +9311,22 @@ void AdvanceReplayMonsterAttack(
 			return;
 		}
 	}
+	// Compact the validated native Fat adjacent-attack admission. The
+	// external fat-movement pack supplies the same 20 + 4 * intelligence band
+	// consumed by the managed authoritative controller.
+	if (state.combatTargetNativeAi == "Fat") {
+		const uint32_t attackSeed = static_cast<uint32_t>(tick)
+		    ^ state.combatTargetEntityId
+		    ^ (victim.secondary ? state.secondaryPlayerEntityId : state.entityId);
+		const int attackRoll = state.combatTargetMonsterAiSeed != 0
+		    ? std::max(GenerateRnd(state, 100), 0)
+		    : static_cast<int>(attackSeed % 100U);
+		const int attackChance = std::min(
+		    100,
+		    20 + 4 * state.combatTargetIntelligence);
+		if (attackRoll >= attackChance)
+			return;
+	}
 	if (state.combatTargetNativeAi == "Rhino"
 	    && distance >= 5
 	    && state.combatTargetToHitSpecial > 0) {

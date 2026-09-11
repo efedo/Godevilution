@@ -1,0 +1,62 @@
+{
+  "format_version": 1,
+  "fixture_id": "gameplay/fat-autonomous-multiplayer",
+  "protocol_schema_version": "0.1.0",
+  "content_manifest": {
+    "id": "replay.fat-movement",
+    "version": "0.1.0",
+    "sha256": "78d5b1d5172c91964e297255543aa12ea9d4b74fece62c62f291fc2863598582"
+  },
+  "tick_rate_hz": 20,
+  "rng_seed": 1,
+  "game_variant": "Diablo",
+  "game_mode": "Multiplayer",
+  "initial_state": {
+    "player": "A",
+    "gold": 0,
+    "experience": 0,
+    "life": 100,
+    "life_maximum": 100,
+    "position_x": 0,
+    "position_y": 0,
+    "level_id": 1,
+    "secondary_player": {
+      "player": "B",
+      "entity_id": 8,
+      "life": 100,
+      "life_maximum": 100,
+      "position_x": 2,
+      "position_y": 2,
+      "level_id": 1,
+      "character_level": 1
+    },
+    "combat_target_entity_id": 9,
+    "combat_target_level_id": 1,
+    "combat_target_position_x": 2,
+    "combat_target_position_y": 1,
+    "combat_target_hit_points": 40,
+    "combat_target_max_hit_points": 40,
+    "combat_target_aggro_range": 8,
+    "combat_target_monster_id": 109,
+    "combat_target_attack_damage": 3,
+    "combat_target_to_hit": 255,
+    "combat_target_min_damage": 3,
+    "combat_target_max_damage": 3,
+    "combat_target_native_ai": "Fat",
+    "combat_target_intelligence": 39,
+    "combat_target_monster_item_seed": 2654435769,
+    "combat_target_monster_ai_seed": 305419896
+  },
+  "commands": [
+    {
+      "client_sequence": 1,
+      "target_tick": 1,
+      "server_receipt_sequence": 1,
+      "kind": "OpenStore",
+      "payload": { "store_id": 1 }
+    }
+  ],
+  "checkpoints": [
+    { "tick": 1, "state_sha256": "161352cb6198c4be973dc85388d86c0227f88cd00500b0e475f2a1369c71f205" }
+  ]
+}

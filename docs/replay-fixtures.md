@@ -1174,6 +1174,9 @@ Notable shared fixtures include:
   selecting the nearer participant while preserving the farther primary;
 - `gameplay-fat-multiplayer-target.json` for Fat movement selecting the nearer
   participant while preserving its idle/mode and movement checkpoint state;
+- `gameplay-fat-autonomous-multiplayer.json` for an adjacent Fat melee hit
+  against the nearer secondary participant, including the validated attack
+  admission draw and farther-primary preservation;
 - `gameplay-goat-melee-movement.json` for zero-seed AiAvoidance movement
   admission, deterministic RandomWalk ordering, occupancy, and RNG stability;
 - `gameplay-goat-melee-attack.json` for seeded adjacent attack admission,
