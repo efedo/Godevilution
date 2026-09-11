@@ -215,6 +215,7 @@
     <None Include="../../../test/fixtures/replay/gameplay-scavenger-hellfire-corpse.json" Link="Fixtures/gameplay-scavenger-hellfire-corpse.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-zombie-action.json" Link="Fixtures/gameplay-zombie-action.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-zombie-multiplayer-target.json" Link="Fixtures/gameplay-zombie-multiplayer-target.json" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="../../../test/fixtures/replay/gameplay-zombie-autonomous-multiplayer.json" Link="Fixtures/gameplay-zombie-autonomous-multiplayer.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-fat-movement.json" Link="Fixtures/gameplay-fat-movement.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-fat-multiplayer-target.json" Link="Fixtures/gameplay-fat-multiplayer-target.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-fat-autonomous-multiplayer.json" Link="Fixtures/gameplay-fat-autonomous-multiplayer.json" CopyToOutputDirectory="PreserveNewest" />

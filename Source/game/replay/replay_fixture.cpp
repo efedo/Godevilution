@@ -8904,6 +8904,19 @@ void AdvanceReplayMonsterAttack(
 			}
 		}
 	}
+	// Seeded adjacent ZombieAi still consumes its validated action admission
+	// before falling through to the shared melee path. Long-range seeded
+	// movement remains a separate follow-up seam.
+	if (state.combatTargetNativeAi == "Zombie"
+	    && state.combatTargetMonsterAiSeed != 0
+	    && distance <= 1) {
+		const int actionRoll = std::max(GenerateRnd(state, 100), 0);
+		const int actionChance = std::min(
+		    100,
+		    10 + 2 * state.combatTargetIntelligence);
+		if (actionRoll >= actionChance)
+			return;
+	}
 	// Compact the native ZombieAi action band and deterministic long-range
 	// walk. Zero-seed fixtures use the same stable compatibility seed as the
 	// managed controller; seeded streams retain the existing native boundary.

@@ -1175,6 +1175,9 @@ Notable shared fixtures include:
   preservation;
 - `gameplay-zombie-multiplayer-target.json` for Zombie long-range action
   selecting the nearer participant while preserving the farther primary;
+- `gameplay-zombie-autonomous-multiplayer.json` for seeded adjacent Zombie
+  action admission before melee damage to the nearer secondary participant and
+  farther-primary preservation;
 - `gameplay-fat-multiplayer-target.json` for Fat movement selecting the nearer
   participant while preserving its idle/mode and movement checkpoint state;
 - `gameplay-fat-autonomous-multiplayer.json` for an adjacent Fat melee hit

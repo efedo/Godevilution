@@ -9003,6 +9003,11 @@ life, preserving travel, impact phase, and the canonical hash in both runners.
 Its companion incoming-damage fixture now applies secondary-player `_pIGetHit`
 at impact after the range roll, matching native `PlayerMHit` ordering.
 
+Zombie now has seeded adjacent-action coverage. Native and managed runners
+consume the validated `10 + 2 * intelligence` Zombie action-admission draw
+before the shared melee path, preserving secondary damage, farther-primary
+state, and canonical RNG parity.
+
 ## Near-term priorities
 
 1. Close the remaining native-parity combat and AI edge cases, including class
