@@ -1,0 +1,27 @@
+{
+  "format_version": 1,
+  "fixture_id": "gameplay/monster-magic-necromorb-primary-warrior-block-chance",
+  "protocol_schema_version": "0.1.0",
+  "content_manifest": { "id": "replay.monster-magic", "version": "0.1.0", "sha256": "b6787fdcf7701f3e4fe77f79a87e1b84024f86da2330d1559f6b7335a104ba4b" },
+  "tick_rate_hz": 20,
+  "rng_seed": 13,
+  "game_variant": "Diablo",
+  "game_mode": "SinglePlayer",
+  "initial_state": {
+    "player": "A", "gold": 0, "experience": 0, "life": 6400, "life_maximum": 6400,
+    "position_x": 0, "position_y": 0, "level_id": 1, "character_class": 0,
+    "character_level": 1, "dexterity": 0,
+    "equipment": [{ "slot": 5, "item_seed": 44, "item_type": 5, "item_class": 0, "flags": 0, "stat_flag": true }],
+    "combat_target_entity_id": 9, "combat_target_level_id": 1,
+    "combat_target_position_x": 10, "combat_target_position_y": 0,
+    "combat_target_hit_points": 20, "combat_target_max_hit_points": 20,
+    "combat_target_aggro_range": 10, "combat_target_monster_level": 1,
+    "combat_target_native_ai": "Necromorb", "combat_target_min_damage": 4,
+    "combat_target_max_damage": 4
+  },
+  "commands": [{ "client_sequence": 1, "target_tick": 1, "server_receipt_sequence": 1, "kind": "OpenStore", "payload": { "store_id": 1 } }],
+  "checkpoints": [
+    { "tick": 1, "state_sha256": "f4eb0b290a83575a37cf3e3013d709c5d11ddebbf7252587ccf5d1f87f93b791" },
+    { "tick": 27, "state_sha256": "e46a21ff9c0160c24fd388928fa314c8f4d145f0870741a644545b1589601962" }
+  ]
+}

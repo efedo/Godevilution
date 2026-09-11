@@ -13,6 +13,11 @@ The autonomous GoatRanged and SkeletonRanged MonsterArrow aliases now preserve
 the same primary-player Warrior shield boundary, including alias-specific
 admission/travel timing, block recovery, and retained impact checkpoints.
 
+The ArchLich, Psychorb, Necromorb, and BoneDemon MonsterMagic aliases now
+preserve that primary-player Warrior shield boundary as well, with alias-
+specific admission, impact, and canonical checkpoint coverage in both replay
+runners.
+
 Succubus and LazarusSuccubus Blood Star secondary-player impacts now preserve
 the native low-Dexterity Warrior class chance and shield admission, including
 alias-specific block recovery and canonical impact checkpoints, in both replay

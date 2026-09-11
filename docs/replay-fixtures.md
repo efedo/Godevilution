@@ -569,7 +569,7 @@ The compact native replay projection now carries the same server-owned corpse
 tile representation and per-tick monster regeneration as the C# checkpoints.
 Ordinary-death and Firebolt, Fireball, Lightning, and Flash
  spell/projectile-timeline checkpoints pass in both runners. As of 2026-09-11,
-the native replay gate contains 365 checked-in JSON fixtures and 374 registered
+the native replay gate contains 369 checked-in JSON fixtures and 378 registered
 tests; the test count also includes parser and validation cases that do not
 introduce another fixture file. Coverage includes seeded and autonomous MonsterArrow
 source coverage, Hellfire HorkDemon Hork Spawn admission, player impact, and
@@ -577,6 +577,7 @@ miss-before-expiry, secondary-player Hork Spawn block and impact, current-tile
 breakable-object removal, primary-player Hork Spawn block, multiplayer
 HorkDemon target selection, SkeletonRanged MonsterArrow nearest-participant
 selection, primary GoatRanged and SkeletonRanged MonsterArrow block lanes,
+primary ArchLich, Psychorb, Necromorb, and BoneDemon MonsterMagic block lanes,
 autonomous Succubus BloodStar admission/impact/block lanes, Succubus
 and LazarusSuccubus BloodStar multiplayer target-selection and secondary
 Warrior block-chance lanes, FireBat
@@ -1425,6 +1426,12 @@ Notable shared fixtures include:
   corresponding two-handed exclusion and normal MonsterMagic hit boundary;
 - `gameplay-monster-magic-primary-warrior-block-chance.json` for the
   validated Warrior base block chance at zero Dexterity;
+- `gameplay-monster-magic-arch-lich-primary-warrior-block-chance.json`,
+  `gameplay-monster-magic-psychorb-primary-warrior-block-chance.json`,
+  `gameplay-monster-magic-necromorb-primary-warrior-block-chance.json`, and
+  `gameplay-monster-magic-bone-demon-primary-warrior-block-chance.json` for
+  the same primary-player shield boundary across the remaining MonsterMagic
+  aliases;
 - `gameplay-monster-magic-secondary-monk-block.json` for multiplayer
   secondary-participant FlexibleBlock admission without equipment and shared
   class-aware impact checkpoints;

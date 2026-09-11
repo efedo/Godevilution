@@ -2,6 +2,11 @@
 
 All notable changes to this fork are documented below.
 
+- Extended primary-player MonsterMagic Warrior block-chance parity to the
+  ArchLich, Psychorb, Necromorb, and BoneDemon aliases. Native and managed
+  runners now cover the shared shield boundary with alias-specific impact
+  checkpoints.
+
 - Extended autonomous MonsterArrow primary-player Warrior block-chance parity
   to the GoatRanged and SkeletonRanged aliases. Native and managed runners now
   cover alias-specific admission/travel timing, shield blocking, block recovery,

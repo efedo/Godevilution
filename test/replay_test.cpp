@@ -11847,6 +11847,46 @@ TEST(ReplayFixture, ExecutesSuccubusBloodStarPrimaryWarriorBlockChanceAgainstCSh
 	    31);
 }
 
+TEST(ReplayFixture, ExecutesArchLichMonsterMagicPrimaryWarriorBlockChanceAgainstCSharpCheckpoints)
+{
+	ExecuteMonsterProjectilePrimaryWarriorBlockChanceFixture(
+	    "test/fixtures/replay/gameplay-monster-magic-arch-lich-primary-warrior-block-chance.json",
+	    50,
+	    1,
+	    27,
+	    31);
+}
+
+TEST(ReplayFixture, ExecutesPsychorbMonsterMagicPrimaryWarriorBlockChanceAgainstCSharpCheckpoints)
+{
+	ExecuteMonsterProjectilePrimaryWarriorBlockChanceFixture(
+	    "test/fixtures/replay/gameplay-monster-magic-psychorb-primary-warrior-block-chance.json",
+	    50,
+	    1,
+	    27,
+	    31);
+}
+
+TEST(ReplayFixture, ExecutesNecromorbMonsterMagicPrimaryWarriorBlockChanceAgainstCSharpCheckpoints)
+{
+	ExecuteMonsterProjectilePrimaryWarriorBlockChanceFixture(
+	    "test/fixtures/replay/gameplay-monster-magic-necromorb-primary-warrior-block-chance.json",
+	    50,
+	    1,
+	    27,
+	    31);
+}
+
+TEST(ReplayFixture, ExecutesBoneDemonMonsterMagicPrimaryWarriorBlockChanceAgainstCSharpCheckpoints)
+{
+	ExecuteMonsterProjectilePrimaryWarriorBlockChanceFixture(
+	    "test/fixtures/replay/gameplay-monster-magic-bone-demon-primary-warrior-block-chance.json",
+	    50,
+	    1,
+	    27,
+	    31);
+}
+
 TEST(ReplayFixture, ExecutesFireBatFireboltSecondaryWarriorBlockChanceAgainstCSharpCheckpoints)
 {
 	ExecuteAutonomousMonsterRangedSecondaryWarriorBlockChanceFixture(
