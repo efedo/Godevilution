@@ -2,6 +2,10 @@
 
 Status date: 2026-09-11
 
+Hellfire Charged Bolt player impact now preserves the native low-Dexterity
+secondary Warrior class chance and shield admission, including the Hellfire
+compatibility RNG draw and shared impact checkpoints, in both replay runners.
+
 Hellfire Fireball player impact now preserves the native low-Dexterity
 secondary Warrior class chance and shield admission before the later splash
 damage checkpoint in both replay runners.

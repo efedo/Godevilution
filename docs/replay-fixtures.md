@@ -569,7 +569,7 @@ The compact native replay projection now carries the same server-owned corpse
 tile representation and per-tick monster regeneration as the C# checkpoints.
 Ordinary-death and Firebolt, Fireball, Lightning, and Flash
  spell/projectile-timeline checkpoints pass in both runners. As of 2026-09-11,
-the native replay gate contains 349 checked-in JSON fixtures and 358 registered
+the native replay gate contains 350 checked-in JSON fixtures and 359 registered
 tests; the test count also includes parser and validation cases that do not
 introduce another fixture file. Coverage includes seeded and autonomous MonsterArrow
 source coverage, Hellfire HorkDemon Hork Spawn admission, player impact, and
@@ -835,6 +835,12 @@ shield and guaranteed block chance. Both runners consume hit, block, damage,
 and Hellfire rotation-selection draws in order, enter Block immediately so
 later bolts cannot block again, and reach the same RNG-backed checkpoints. A
 seeded live Godot/server test proves the host seed reaches a charged-item cast.
+
+`gameplay-charged-bolt-hellfire-secondary-warrior-block-chance.json` covers the
+same Hellfire impact with a level-1 secondary Warrior at zero Dexterity. Its
+shield supplies block capability while the authored Warrior base chance admits
+the block; both runners preserve the Hellfire compatibility draw and shared
+tick-1/tick-5 checkpoints.
 
 The five standard Charged Bolt fixtures share the validated `test/content/replay/charged-bolt`
 pack and canonical manifest identity; Hellfire rules remain a separate variant
@@ -1276,6 +1282,9 @@ Notable shared fixtures include:
   hit/damage RNG parity;
 - `gameplay-charged-bolt-hellfire-block.json` for animation-mode block
   admission and the Hellfire-only blocked-missile RNG draw;
+- `gameplay-charged-bolt-hellfire-secondary-warrior-block-chance.json` for the
+  low-Dexterity secondary Warrior's authored class base block chance, shield
+  admission, and Hellfire Charged Bolt checkpoints;
 - `gameplay-monster-arrow-resolution.json` for seeded MonsterArrow travel,
   player impact damage, impact-phase lifetime, and cross-runner removal parity;
 - `gameplay-monster-arrow-primary-warrior-block-chance.json` for the native

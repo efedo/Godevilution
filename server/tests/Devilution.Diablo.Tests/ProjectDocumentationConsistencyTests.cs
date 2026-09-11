@@ -69,6 +69,7 @@ public sealed class ProjectDocumentationConsistencyTests
         Assert.Contains("gameplay-bone-spirit-hellfire-secondary-warrior-block-chance.json", replayFixtures, StringComparison.Ordinal);
         Assert.Contains("gameplay-firebolt-hellfire-secondary-warrior-block-chance.json", replayFixtures, StringComparison.Ordinal);
         Assert.Contains("gameplay-fireball-hellfire-secondary-warrior-block-chance.json", replayFixtures, StringComparison.Ordinal);
+        Assert.Contains("gameplay-charged-bolt-hellfire-secondary-warrior-block-chance.json", replayFixtures, StringComparison.Ordinal);
         Assert.Contains("gameplay-hork-spawn-secondary-warrior-block-chance.json", replayFixtures, StringComparison.Ordinal);
 
         var packageWorkflow = Read(root, ".github", "workflows", "diablo-adapter-package.yml");

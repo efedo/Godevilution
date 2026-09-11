@@ -1964,6 +1964,63 @@ public sealed class ReplayFixtureTests
     }
 
     [Fact]
+    public void HellfireChargedBoltSecondaryWarriorUsesClassBlockChance()
+    {
+        var path = Path.Combine(
+            AppContext.BaseDirectory,
+            "Fixtures",
+            "gameplay-charged-bolt-hellfire-secondary-warrior-block-chance.json");
+        var fixture = ReplayFixtureLoader.Load(File.ReadAllText(path));
+        var spells = LoadReplaySpells(fixture, "charged-bolt");
+        var classes = AuthoritativePlayerClassCatalog.LoadTsv(
+            "classes.tsv",
+            File.ReadAllText(Path.Combine(FindRepositoryRoot(), "server", "content", "base", "classes.tsv")));
+        var initial = fixture.InitialState;
+        var executor = new StoreSimulationExecutor(
+            new StoreCatalog(),
+            initial.Gold,
+            initial.Experience,
+            initial.Life,
+            initial.Mana,
+            startingManaMaximum: initial.ManaMaximum,
+            startingLifeMaximum: initial.LifeMaximum,
+            startingCharacterLevel: initial.CharacterLevel,
+            startingLevelId: initial.LevelId,
+            startingPlayerClasses: classes,
+            startingPositionX: initial.PositionX,
+            startingPositionY: initial.PositionY,
+            startingAttributes: PlayerAttributesState.Zero with {
+                Magic = new PlayerAttributeState(initial.Magic, initial.Magic),
+            },
+            startingCombatRules: new AuthoritativeCombatRules(
+                10,
+                1,
+                100,
+                gameVariant: fixture.GameVariant),
+            startingSpells: spells,
+            startingMemorizedSpells: initial.MemorizedSpells
+                .Select(spell => new MemorizedSpellState(spell.SpellId, spell.Level))
+                .ToArray(),
+            startingRandomSeed: checked((uint)fixture.RngSeed),
+            gameMode: DiabloGameMode.Multiplayer);
+
+        var result = ReplayFixtureExecutor.Execute(
+            fixture,
+            executor,
+            new AuthoritativeCommandServer(executor));
+
+        var secondary = Assert.IsType<ReplaySecondaryPlayer>(initial.SecondaryPlayer);
+        var victim = executor.GetPlayerState(secondary.Player);
+        Assert.True(victim.Life < secondary.Life);
+        Assert.Equal(DiabloGameVariant.Hellfire, fixture.GameVariant);
+        Assert.Equal(5UL, result.FinalSnapshot.Tick);
+        Assert.Equal(2, result.Checkpoints.Count);
+        Assert.Equal(
+            fixture.Checkpoints.Select(checkpoint => checkpoint.StateSha256),
+            result.Checkpoints.Select(checkpoint => checkpoint.ActualStateSha256));
+    }
+
+    [Fact]
     public void HellfireFireboltBlockFixtureRetainsImpactAndPreservesLife()
     {
         var path = Path.Combine(

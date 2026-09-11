@@ -2,6 +2,10 @@
 
 All notable changes to this fork are documented below.
 
+- Added Hellfire Charged Bolt secondary Warrior block-chance parity. Native and
+  managed runners now cover the low-Dexterity class base chance, shield
+  admission, Hellfire compatibility draw, and shared impact checkpoints.
+
 - Added Hellfire Firebolt secondary Warrior block-chance parity. Native and
   managed runners now agree on fixed-damage RNG ordering, class-derived block
   admission, shield state, and the retained first-impact checkpoint.
