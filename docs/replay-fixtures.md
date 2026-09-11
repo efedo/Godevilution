@@ -1148,6 +1148,8 @@ Notable shared fixtures include:
 - `gameplay-skeleton-king-multiplayer-target.json` for nearest-participant
   Skeleton King pursuit, native RoundWalk 90/45/straight ordering, delay
   admission/countdown, and farther-primary preservation;
+- `gameplay-skeleton-king-autonomous-multiplayer.json` for an adjacent
+  Skeleton King melee hit against the nearer secondary participant;
 - `gameplay-snotspill-multiplayer-target.json` and
   `gameplay-warlord-multiplayer-target.json` for explicit native SkeletonAi
   alias admission, nearest-participant selection, and shared delay countdown;

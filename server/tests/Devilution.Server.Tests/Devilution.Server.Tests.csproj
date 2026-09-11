@@ -192,6 +192,7 @@
     <None Include="../../../test/fixtures/replay/gameplay-skeleton-melee-attack-delay.json" Link="Fixtures/gameplay-skeleton-melee-attack-delay.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-skeleton-melee-multiplayer-target.json" Link="Fixtures/gameplay-skeleton-melee-multiplayer-target.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-skeleton-king-multiplayer-target.json" Link="Fixtures/gameplay-skeleton-king-multiplayer-target.json" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="../../../test/fixtures/replay/gameplay-skeleton-king-autonomous-multiplayer.json" Link="Fixtures/gameplay-skeleton-king-autonomous-multiplayer.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-snotspill-multiplayer-target.json" Link="Fixtures/gameplay-snotspill-multiplayer-target.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-warlord-multiplayer-target.json" Link="Fixtures/gameplay-warlord-multiplayer-target.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-rhino-charge.json" Link="Fixtures/gameplay-rhino-charge.json" CopyToOutputDirectory="PreserveNewest" />

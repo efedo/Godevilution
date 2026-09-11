@@ -1142,6 +1142,8 @@ Skeleton King pursuit now has two-participant replay coverage. Native and
 managed runners select the nearer secondary participant, preserve the farther
 primary, agree on the compatibility RoundWalk 90/45/straight candidate
 ordering, and preserve the native decision-delay admission/countdown.
+The adjacent Skeleton King branch now also has a shared melee-hit checkpoint
+with deterministic secondary damage and untouched primary state.
 
 Warlord and Snotspill now share the same two-participant SkeletonAi replay
 coverage. Native and managed runners preserve their explicit authored native-AI
