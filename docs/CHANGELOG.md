@@ -2,6 +2,10 @@
 
 All notable changes to this fork are documented below.
 
+- Canonical snapshot hashing now includes nonzero stable item identities on
+  deferred cast-source references, making stale charged-item substitutions
+  visible without changing legacy zero-identity hashes.
+
 - Protocol-independent save/restore and Diablo wire projection now enforce the
   same authoritative cast-source ownership rule as the server, Godot, and
   native client boundaries, rejecting stale references before persistence or

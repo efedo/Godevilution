@@ -1295,8 +1295,11 @@ empty additive command alternative at field 27; neither client supplies the
 resulting state. Players in Death, NewLevel, or Quit cannot begin a
 native-timed world action, and NewLevel/Quit players are excluded from monster
 and projectile targeting. Present action state adds the tagged
-`godevilution-player-action-v1` canonical-hash section; an absent action adds
-nothing and retains all earlier hashes.
+`godevilution-player-action-v1` canonical-hash section; a nonzero cast-source
+stable item identity adds the tagged
+`godevilution-player-item-reference-stable-id-v1` field within that section.
+An absent action or legacy zero stable identity adds nothing and retains all
+earlier hashes.
 
 `PlayerSnapshot.held_item` field 26 carries the item owned by the server but
 presented on the local cursor. It is outside `inventory`, `inventory_grid`, and

@@ -510,6 +510,34 @@ public sealed class SnapshotStateHasherTests
     }
 
     [Fact]
+    public void CurrentCastSourceStableIdentityIsHashVisible()
+    {
+        var withoutStableIdentity = new Snapshot {
+            Players = {
+                new PlayerSnapshot {
+                    EntityId = 1,
+                    CurrentAction = new PlayerActionSnapshot {
+                        Kind = PlayerActionKind.Cast,
+                        Cast = new CastRequested {
+                            Source = CastSourceKind.ChargedItem,
+                            SourceItem = new PlayerItemReference {
+                                Location = PlayerItemLocation.Equipment,
+                                Slot = 4,
+                            },
+                        },
+                    },
+                },
+            },
+        };
+        var withStableIdentity = withoutStableIdentity.Clone();
+        withStableIdentity.Players[0].CurrentAction.Cast.SourceItem.StableItemId = 42;
+
+        Assert.NotEqual(
+            SnapshotStateHasher.Compute(withoutStableIdentity),
+            SnapshotStateHasher.Compute(withStableIdentity));
+    }
+
+    [Fact]
     public void SpellKnowledgeChangesHashAndIgnoresMemorizedSpellOrder()
     {
         var first = new Snapshot {

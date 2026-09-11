@@ -2,6 +2,11 @@
 
 Status date: 2026-09-10
 
+The canonical authoritative snapshot hash now includes nonzero stable item
+identities on deferred cast-source references. A stale or substituted charged
+item can no longer produce the same state hash as the action it replaces;
+legacy zero-identity references retain their prior hash shape.
+
 The protocol-independent Diablo snapshot and wire projection validators now
 apply the same cast-source ownership rule as the server host, Godot model, and
 native client. Save/restore and projection paths reject stale item references

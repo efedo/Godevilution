@@ -173,6 +173,10 @@ public static class SnapshotStateHasher
                     if (action.Cast.SourceItem is not null) {
                         hasher.AppendInt32((int)action.Cast.SourceItem.Location);
                         hasher.AppendUInt32(action.Cast.SourceItem.Slot);
+                        if (action.Cast.SourceItem.StableItemId != 0) {
+                            hasher.AppendString("godevilution-player-item-reference-stable-id-v1");
+                            hasher.AppendUInt32(action.Cast.SourceItem.StableItemId);
+                        }
                         if (action.Cast.SourceItem.Page != 0) {
                             hasher.AppendString("godevilution-player-item-reference-page-v1");
                             hasher.AppendUInt32(action.Cast.SourceItem.Page);
