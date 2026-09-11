@@ -280,6 +280,7 @@
     <None Include="../../../test/fixtures/replay/gameplay-monster-arrow-flash-protected.json" Link="Fixtures/gameplay-monster-arrow-flash-protected.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-monster-arrow-skeleton-ranged.json" Link="Fixtures/gameplay-monster-arrow-skeleton-ranged.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-hork-spawn-autonomous.json" Link="Fixtures/gameplay-hork-spawn-autonomous.json" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="../../../test/fixtures/replay/gameplay-hork-spawn-autonomous-multiplayer.json" Link="Fixtures/gameplay-hork-spawn-autonomous-multiplayer.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-acid-lifecycle.json" Link="Fixtures/gameplay-acid-lifecycle.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-acid-unique-lifecycle.json" Link="Fixtures/gameplay-acid-unique-lifecycle.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-acid-autonomous-multiplayer.json" Link="Fixtures/gameplay-acid-autonomous-multiplayer.json" CopyToOutputDirectory="PreserveNewest" />

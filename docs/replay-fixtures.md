@@ -373,7 +373,7 @@ from the hash-checked `test/content/replay/monster-magic` content pack.
 The fourteen Monster Arrow fixtures load their GoatRanged and SkeletonRanged
 `Arrow` mappings from the hash-checked `monster-arrow` and
 `monster-arrow-admission` content packs.
-The nine Hork Spawn fixtures load their `HorkDemon` mapping from the
+The ten Hork Spawn fixtures load their `HorkDemon` mapping from the
 hash-checked `monster-hork-spawn` content pack, including its summoned monster
 type row and level-generation rule. Snake delay fixtures load the default
 `SnakeCharge` mapping from `monster-snake-delay`, while the charge
@@ -562,7 +562,7 @@ The compact native replay projection now carries the same server-owned corpse
 tile representation and per-tick monster regeneration as the C# checkpoints.
 Ordinary-death and Firebolt, Fireball, Lightning, and Flash
  spell/projectile-timeline checkpoints pass in both runners. As of 2026-09-09,
-the native replay gate contains 242 checked-in JSON fixtures and 257 registered
+the native replay gate contains 243 checked-in JSON fixtures and 258 registered
 tests; the test count also includes parser and validation cases that do not
 introduce another fixture file. Coverage includes seeded and autonomous MonsterArrow
 source coverage, Hellfire HorkDemon Hork Spawn admission, player impact, and
@@ -1351,6 +1351,9 @@ Notable shared fixtures include:
 - `gameplay-monster-magic-secondary-monk-block.json` for multiplayer
   secondary-participant FlexibleBlock admission without equipment and shared
   class-aware impact checkpoints;
+- `gameplay-hork-spawn-autonomous-multiplayer.json` for seeded autonomous
+  HorkDemon admission, restored monster seeds, nearest-secondary routing, and
+  the shared projectile checkpoint;
 - `gameplay-hork-spawn-primary-monk-block.json` for Hellfire Monk
   FlexibleBlock admission during Hork Spawn impact without equipment; the
   Hork replay executor loads the shared class catalog and fixture Dexterity;

@@ -1,0 +1,61 @@
+{
+  "format_version": 1,
+  "fixture_id": "gameplay/hork-spawn-autonomous-multiplayer",
+  "protocol_schema_version": "0.1.0",
+  "content_manifest": {
+    "id": "replay.monster-hork-spawn",
+    "version": "0.1.0",
+    "sha256": "a9073737d81a108ccc128e6e4fbf3c4ae7c84f76e275ea3c20c34ebe15f2c985"
+  },
+  "tick_rate_hz": 20,
+  "rng_seed": 9,
+  "game_variant": "Hellfire",
+  "game_mode": "Multiplayer",
+  "initial_state": {
+    "player": "A",
+    "gold": 0,
+    "experience": 0,
+    "life": 100,
+    "life_maximum": 100,
+    "position_x": 0,
+    "position_y": 0,
+    "level_id": 1,
+    "character_level": 1,
+    "combat_target_entity_id": 9,
+    "combat_target_level_id": 1,
+    "combat_target_position_x": 4,
+    "combat_target_position_y": 0,
+    "combat_target_hit_points": 20,
+    "combat_target_max_hit_points": 20,
+    "combat_target_aggro_range": 5,
+    "combat_target_attack_damage": 4,
+    "combat_target_monster_level": 27,
+    "combat_target_native_ai": "HorkDemon",
+    "combat_target_monster_id": 0,
+    "combat_target_intelligence": 0,
+    "combat_target_monster_item_seed": 2654435769,
+    "combat_target_monster_ai_seed": 305419896,
+    "secondary_player": {
+      "player": "B",
+      "entity_id": 8,
+      "life": 100,
+      "life_maximum": 100,
+      "position_x": 1,
+      "position_y": 2,
+      "level_id": 1,
+      "character_level": 1
+    }
+  },
+  "commands": [
+    {
+      "client_sequence": 1,
+      "target_tick": 1,
+      "server_receipt_sequence": 1,
+      "kind": "OpenStore",
+      "payload": { "store_id": 1 }
+    }
+  ],
+  "checkpoints": [
+    { "tick": 1, "state_sha256": "d0787f057e4f5c6aff9fc735a7ad6298a2b00307e26f1aefaad8c6d9875b4361" }
+  ]
+}

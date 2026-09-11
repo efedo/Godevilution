@@ -2,6 +2,10 @@
 
 All notable changes to this fork are documented below.
 
+- Added seeded autonomous multiplayer HorkDemon parity. Native and managed
+  runners now cover restored monster seeds, deterministic Hork Spawn admission,
+  nearest-secondary routing, and the shared projectile checkpoint.
+
 - Added autonomous multiplayer Warlord parity through the SkeletonAi alias.
   Native and managed runners now cover Warlord AI-stream advancement, delay
   state, and preserved two-participant checkpoints.

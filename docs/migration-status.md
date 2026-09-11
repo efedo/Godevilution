@@ -2,6 +2,10 @@
 
 Status date: 2026-09-11
 
+HorkDemon’s seeded autonomous multiplayer lane now preserves restored monster
+seeds, deterministic Hork Spawn admission, nearest-secondary routing, and the
+shared projectile checkpoint in the compact native replay and managed server.
+
 AcidUnique’s autonomous Hellfire ranged alias now preserves normal ranged
 admission and nearest-secondary target projection in the compact native replay
 and managed server.
@@ -1602,7 +1606,7 @@ pack and the admission-specific `test/content/replay/monster-arrow-admission`
 pack. Both native and managed runners validate their manifest hashes before
 loading the projectile catalog.
 
-The nine Hork Spawn fixtures now load their validated `HorkDemon` mapping from
+The ten Hork Spawn fixtures now load their validated `HorkDemon` mapping from
 `test/content/replay/monster-hork-spawn`. The two Snake delay fixtures and the
 Snake Charge lifecycle fixture likewise load separate validated
 `monster-snake-delay` and `monster-snake-charge` packs, preserving the native

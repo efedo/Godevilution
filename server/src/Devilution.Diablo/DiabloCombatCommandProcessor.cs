@@ -6679,9 +6679,11 @@ public sealed class DiabloCombatCommandProcessor
         // Zero-seed fixtures and legacy multiplayer snapshots keep the
         // deterministic compatibility controller.
         var usesNativeAiStream = monster.MonsterAiSeed != 0;
-        var actionRoll = usesNativeAiStream
-            ? random.RandomIntLessThan(100)
-            : (int)(actionSeed % 100U);
+        // The compact replay HorkDemon controller admits its ranged spawn
+        // branch from the stable tick/entity action seed. The native replay
+        // boundary returns before generic MonsterAttack consumes the per-
+        // monster stream, so this decision must not advance the global RNG.
+        var actionRoll = (int)(actionSeed % 100U);
         if (distance <= 1) {
             var attackChance = Math.Min(
                 100,
