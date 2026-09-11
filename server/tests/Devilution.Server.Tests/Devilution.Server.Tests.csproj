@@ -183,6 +183,7 @@
     <None Include="../../../test/fixtures/replay/gameplay-fallen-fear-multiplayer.json" Link="Fixtures/gameplay-fallen-fear-multiplayer.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-gargoyle-healing.json" Link="Fixtures/gameplay-gargoyle-healing.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-gargoyle-attack.json" Link="Fixtures/gameplay-gargoyle-attack.json" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="../../../test/fixtures/replay/gameplay-gargoyle-autonomous-multiplayer.json" Link="Fixtures/gameplay-gargoyle-autonomous-multiplayer.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-gargoyle-avoidance-idle.json" Link="Fixtures/gameplay-gargoyle-avoidance-idle.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-gargoyle-avoidance-walk.json" Link="Fixtures/gameplay-gargoyle-avoidance-walk.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-gargoyle-multiplayer-target.json" Link="Fixtures/gameplay-gargoyle-multiplayer-target.json" CopyToOutputDirectory="PreserveNewest" />

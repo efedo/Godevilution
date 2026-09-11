@@ -31,6 +31,10 @@ All notable changes to this fork are documented below.
   runners now cover adjacent melee damage to the nearer secondary participant
   while preserving the farther primary participant.
 
+- Added a shared unblocked autonomous multiplayer Gargoyle fixture. Native and
+  managed runners now cover adjacent melee damage to the nearer secondary
+  participant while preserving the farther primary participant.
+
 - Shared replay fixtures now carry native monster acid resistance through the
   C++ and C# loaders and canonical checkpoint hash, preserving zero-default
   compatibility while covering nonzero resistance with a cross-runner golden.

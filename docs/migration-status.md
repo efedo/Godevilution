@@ -1157,6 +1157,11 @@ same validated avoidance-delay tuning as GoatMelee and Gargoyle. The shared
 autonomous melee fixture now also covers adjacent damage to the nearer
 secondary participant while preserving the farther primary participant.
 
+Gargoyle now has a complementary autonomous multiplayer melee fixture. Native
+and managed runners preserve the authored Gargoyle identity, route an
+unblocked adjacent hit to the nearer secondary participant, and agree on the
+same damage, AI-stream, and canonical checkpoint state.
+
 Zhar and Lazarus now share two-participant replay coverage through the native
 CounselorAi compatibility path. Native and managed runners preserve their
 authored identities, route the nearer secondary participant, and agree on the

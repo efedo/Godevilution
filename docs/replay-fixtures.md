@@ -389,7 +389,7 @@ The Lachdanan and FireMan non-combat fixtures reuse the same validated target
 pack while asserting their quest-only and unregistered native identities.
 The three GoatMelee fixtures load their native AiAvoidance and adjacent-attack
 tuning from the hash-checked `test/content/replay/goat-melee` content pack.
-The six Gargoyle fixtures load native safety, healing, avoidance, and
+The seven Gargoyle fixtures load native safety, healing, avoidance, and
 adjacent-attack tuning from the hash-checked `test/content/replay/gargoyle`
 content pack. The multiplayer Gargoyle fixture also covers nearest-participant
 selection through the autonomous avoidance branch.
@@ -1184,6 +1184,9 @@ Notable shared fixtures include:
 - `gameplay-gargoyle-multiplayer-target.json` for seeded Gargoyle AiAvoidance
   movement selecting the nearest live participant, preserving the farther
   primary, and advancing the native AI stream through the avoidance branch;
+- `gameplay-gargoyle-autonomous-multiplayer.json` for an unblocked adjacent
+  Gargoyle melee hit against the nearer secondary participant and
+  farther-primary preservation;
 - `gameplay-multiplayer-secondary-monster-native-ai-seed.json` for paired
   native monster runtime-seed advancement, secondary hit/block stream
   consumption, block timing, and cross-language canonical hashing;
