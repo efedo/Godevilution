@@ -2,6 +2,11 @@
 
 All notable changes to this fork are documented below.
 
+- Added autonomous multiplayer BloodStar parity for Succubus and
+  LazarusSuccubus. Native and managed runners now cover nearest-secondary
+  admission, Blood Star impact, and the 27-tick projectile lifecycle for both
+  aliases.
+
 - Added autonomous multiplayer MonsterMagic parity for the remaining
   Psychorb, Necromorb, and BoneDemon aliases. Native and managed runners now
   cover the complete generic Lich-family admission, nearest-secondary target,

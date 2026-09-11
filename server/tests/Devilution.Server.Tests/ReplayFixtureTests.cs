@@ -9143,6 +9143,37 @@ public sealed class ReplayFixtureTests
             result.Checkpoints.Select(checkpoint => checkpoint.ActualStateSha256));
     }
 
+    [Theory]
+    [InlineData("gameplay-blood-star-autonomous-multiplayer.json")]
+    [InlineData("gameplay-blood-star-lazarus-succubus-autonomous-multiplayer.json")]
+    public void GameplayBloodStarAliasesAutonomousMultiplayerMatchNativeLifecycle(string fixtureName)
+    {
+        var fixture = LoadReplayFixture(fixtureName);
+        var secondary = Assert.IsType<ReplaySecondaryPlayer>(fixture.InitialState.SecondaryPlayer);
+        var executor = CreateBloodStarExecutor(fixture);
+
+        var result = ReplayFixtureExecutor.Execute(
+            fixture,
+            executor,
+            new AuthoritativeCommandServer(executor));
+        var primary = Assert.Single(result.FinalSnapshot.Players, player => player.EntityId == 1);
+        var secondaryState = executor.GetPlayerState(secondary.Player);
+        var projectile = Assert.Single(result.FinalSnapshot.Projectiles);
+
+        Assert.Equal(CommandStatus.Accepted, Assert.Single(result.Results).Status);
+        Assert.Equal(6400, primary.Life);
+        Assert.Equal(6144, secondaryState.Life);
+        Assert.Equal(secondary.EntityId, projectile.TargetEntityId);
+        Assert.Equal((int)AuthoritativeProjectileBehavior.BloodStar, projectile.Behavior);
+        Assert.Equal(36U, projectile.SpellId);
+        Assert.Equal((int)AuthoritativeProjectilePhase.Impact, projectile.Phase);
+        Assert.Equal(1U, projectile.RemainingTicks);
+        Assert.Equal(27UL, result.FinalSnapshot.Tick);
+        Assert.Equal(
+            fixture.Checkpoints.Select(checkpoint => checkpoint.StateSha256),
+            result.Checkpoints.Select(checkpoint => checkpoint.ActualStateSha256));
+    }
+
     [Fact]
     public void GameplaySuccubusBloodStarCloseNativeAiSeedMatchesNativeLifecycle()
     {

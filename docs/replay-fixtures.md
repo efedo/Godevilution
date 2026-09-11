@@ -1263,6 +1263,10 @@ Notable shared fixtures include:
   clear-lane admission, long-range travel, impact damage, and lifecycle parity;
 - `gameplay-blood-star-autonomous.json` for validated Succubus BloodStar
   admission, native velocity/runtime state, and pre-impact lifecycle parity;
+- `gameplay-blood-star-autonomous-multiplayer.json` and
+  `gameplay-blood-star-lazarus-succubus-autonomous-multiplayer.json` for
+  Succubus and LazarusSuccubus nearest-secondary admission, Blood Star impact,
+  and the 27-tick autonomous lifecycle;
 - `gameplay-blood-star-lazarus-succubus.json` for the LazarusSuccubus
   BloodStar alias mapping and admission parity;
 - `gameplay-blood-star-lazarus-succubus-multiplayer-target.json` for
