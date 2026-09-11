@@ -4070,6 +4070,13 @@ TEST(ServerBackedPlayerSnapshot, RejectsMalformedAuthoritativeObjects)
 	invalidDialogue.mutable_objects(0)->set_dialogue_message_id(std::numeric_limits<int16_t>::max() + 1);
 	EXPECT_FALSE(ProjectObjectSnapshots(invalidDialogue).has_value());
 
+	protocol::Snapshot invalidOccupancy;
+	auto *occupancyObject = invalidOccupancy.add_objects();
+	occupancyObject->set_entity_id(7);
+	occupancyObject->set_object_id(1);
+	occupancyObject->set_activate_on_occupancy(true);
+	EXPECT_FALSE(ProjectObjectSnapshots(invalidOccupancy).has_value());
+
 	protocol::Snapshot atCapacity;
 	for (int index = 0; index < MAXOBJECTS; ++index) {
 		auto *object = atCapacity.add_objects();

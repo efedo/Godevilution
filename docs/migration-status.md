@@ -2,6 +2,12 @@
 
 Status date: 2026-09-10
 
+Occupancy-trigger object snapshots now enforce the authoritative content
+contract at both native and Godot ingress: an object that activates on entry
+must reference a validated quest identity. Malformed additive metadata is
+rejected before presentation or movement prediction, with focused data,
+managed-client, and native projection coverage.
+
 The native server-backed client now consumes the authored occupancy-trigger
 flag from projected object snapshots. Its tile reconciliation leaves live
 occupancy triggers enterable while preserving ordinary object occupancy and

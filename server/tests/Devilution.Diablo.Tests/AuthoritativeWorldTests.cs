@@ -924,6 +924,25 @@ public sealed class AuthoritativeWorldTests
             3,
             dialogueMessageId: short.MaxValue + 1));
     }
+    [Theory]
+    [InlineData(false, 0, 0, true)]
+    [InlineData(false, 1, 0, false)]
+    [InlineData(true, 0, 0, false)]
+    [InlineData(true, 1, 0, false)]
+    [InlineData(true, 1, 3017, true)]
+    public void ValidatesOccupancyTriggerQuestRequirements(
+        bool activateOnOccupancy,
+        int requiredActivatedLinkedObjects,
+        uint questId,
+        bool expected)
+    {
+        Assert.Equal(
+            expected,
+            AuthoritativeWorldObject.IsValidOccupancyTrigger(
+                activateOnOccupancy,
+                requiredActivatedLinkedObjects,
+                questId));
+    }
 
     [Fact]
     public void LoadsExternalQuestSequenceObjectSteps()

@@ -2,6 +2,11 @@
 
 All notable changes to this fork are documented below.
 
+- Occupancy-trigger object metadata now fails closed at the native and Godot
+  snapshot boundaries unless it carries the required quest identity. The
+  authoritative content, protocol, and projection tests cover the shared
+  contract.
+
 - The native server-backed client now carries authored occupancy-trigger
   metadata through projected object snapshots and leaves those trigger tiles
   enterable while retaining ordinary live-object occupancy. Native projection

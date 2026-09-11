@@ -716,7 +716,8 @@ tl::expected<std::vector<ProjectedObjectSnapshot>, std::string> ProjectObjectSna
 		    || source.quest_sequence_follow_up_offset_y() < MinimumNativeObjectOffset || source.quest_sequence_follow_up_offset_y() > MaximumNativeObjectOffset
 		    || !followUpValid
 		    || source.projectile_source_kind() < 0 || source.projectile_source_kind() > MaximumObjectProjectileSourceKind
-		    || (!producesProjectile && source.projectile_source_kind() != 0))
+		    || (!producesProjectile && source.projectile_source_kind() != 0)
+		    || (source.activate_on_occupancy() && source.quest_id() == 0))
 			return tl::make_unexpected("Server-backed snapshot contains invalid object effect metadata.");
 		if (std::any_of(projected.begin(), projected.end(), [&](const auto &candidate) { return candidate.entityId == source.entity_id(); }))
 			return tl::make_unexpected("Server-backed snapshot contains duplicate object entity IDs.");

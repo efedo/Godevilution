@@ -1107,6 +1107,7 @@ public sealed class AuthoritativeClientModel
             || @object.DialogueMessageId is < 0 or > short.MaxValue
             || @object.AnimationFrame > byte.MaxValue
             || @object.ActivatedAnimationFrame > byte.MaxValue
+            || @object.ActivateOnOccupancy && @object.QuestId == 0
             || @object.Breakable && @object.MissilePassable
             || @object.Destroyed && !@object.Breakable) {
             throw new InvalidDataException(

@@ -2027,6 +2027,10 @@ public sealed class ClientModelTests
         invalidDestroyedState.Objects[0].Destroyed = true;
         Assert.Throws<InvalidDataException>(() =>
             model.Apply(new AuthoritativeClientMessage(Snapshot: invalidDestroyedState)));
+        var invalidOccupancy = valid.Clone();
+        invalidOccupancy.Objects[0].ActivateOnOccupancy = true;
+        Assert.Throws<InvalidDataException>(() =>
+            model.Apply(new AuthoritativeClientMessage(Snapshot: invalidOccupancy)));
     }
 
     [Fact]
@@ -3768,8 +3772,12 @@ public sealed class ClientModelTests
                     LevelId = 1,
                     PositionX = 1,
                     PositionY = 1,
+                    QuestId = 3001,
                     ActivateOnOccupancy = true,
                 },
+            },
+            Quests = {
+                new QuestSnapshot { QuestId = 3001, RequiredProgress = 1 },
             },
         }));
 
