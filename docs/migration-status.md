@@ -2,6 +2,11 @@
 
 Status date: 2026-09-10
 
+Native monster ingress now also validates the Fallen stand-animation and rally
+fields against the shared protocol limits before compatibility projection.
+The compact native snapshot remains intentionally narrower, but malformed
+Fallen timing metadata cannot bypass the server/Godot contract.
+
 Native object ingress now also validates reward coordinate origins and
 set-level identities against the shared server/Godot contract before creating
 the compact compatibility projection. The native presentation path still

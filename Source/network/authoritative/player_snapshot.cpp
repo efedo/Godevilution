@@ -1558,6 +1558,9 @@ tl::expected<void, std::string> ValidateMonsterSnapshots(const protocol::Snapsho
 		    || monster.ranged_delay_ticks() < 0 || monster.ranged_delay_ticks() > MaximumNativeMonsterAiTimerTicks
 		    || monster.mega_delay_ticks() < 0 || monster.mega_delay_ticks() > MaximumNativeMonsterAiTimerTicks
 		    || monster.counselor_retreat_ticks() < 0 || monster.counselor_retreat_ticks() > MaximumNativeMonsterRetreatTicks
+		    || monster.fallen_stand_animation_frame() < 0 || monster.fallen_stand_animation_frame() > MaximumNativeMonsterFallenStandAnimationFrame
+		    || monster.fallen_stand_animation_tick() < 0 || monster.fallen_stand_animation_tick() > MaximumNativeMonsterFallenStandAnimationTick
+		    || monster.fallen_rally_ticks() < 0 || monster.fallen_rally_ticks() > MaximumNativeMonsterFallenRallyTicks
 		    || (!monster.moving()
 		        && (monster.movement_started_tick() != 0 || monster.movement_effect_tick() != 0))
 		    || (monster.movement_started_tick() != 0 || monster.movement_effect_tick() != 0)

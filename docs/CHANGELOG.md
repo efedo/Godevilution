@@ -2,6 +2,12 @@
 
 All notable changes to this fork are documented below.
 
+- Native monster snapshot ingress now enforces the shared bounds for Fallen
+  stand-animation frames, animation ticks, and rally timers. These
+  presentation/runtime fields are not copied into the compact native
+  projection, but malformed values are rejected consistently with the server
+  and Godot validators.
+
 - Native object projection now validates authored reward-origin and set-level
   metadata, matching the server and Godot contract even though the compact
   native presentation snapshot does not consume those fields. Invalid origins
