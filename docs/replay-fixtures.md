@@ -1167,6 +1167,9 @@ Notable shared fixtures include:
   selected-corpse checkpoint parity;
 - `gameplay-bat-multiplayer-target.json` for Bat retreat movement selecting the
   nearest live participant while preserving the farther primary participant;
+- `gameplay-bat-autonomous-multiplayer.json` for an adjacent Bat melee hit,
+  validated attack admission, post-hit retreat state, and farther-primary
+  preservation;
 - `gameplay-sneak-multiplayer-target.json` for Sneak concealment target
   selection, nearest-participant distance admission, and participant-state
   preservation;

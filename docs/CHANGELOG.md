@@ -38,6 +38,9 @@ All notable changes to this fork are documented below.
 - Added autonomous multiplayer Fat melee coverage and aligned the native replay
   harness with the validated Fat attack-admission RNG draw.
 
+- Added autonomous multiplayer Bat melee coverage, including the authored
+  post-hit retreat countdown and native attack-admission RNG draw.
+
 - Shared replay fixtures now carry native monster acid resistance through the
   C++ and C# loaders and canonical checkpoint hash, preserving zero-default
   compatibility while covering nonzero resistance with a cross-runner golden.

@@ -9327,6 +9327,22 @@ void AdvanceReplayMonsterAttack(
 		if (attackRoll >= attackChance)
 			return;
 	}
+	// Compact the validated native Bat adjacent-attack admission. The
+	// external bat-retreat pack supplies the same 8 + 4 * intelligence band
+	// consumed by the managed authoritative controller.
+	if (state.combatTargetNativeAi == "Bat") {
+		const uint32_t attackSeed = static_cast<uint32_t>(tick)
+		    ^ state.combatTargetEntityId
+		    ^ (victim.secondary ? state.secondaryPlayerEntityId : state.entityId);
+		const int attackRoll = state.combatTargetMonsterAiSeed != 0
+		    ? std::max(GenerateRnd(state, 100), 0)
+		    : static_cast<int>(attackSeed % 100U);
+		const int attackChance = std::min(
+		    100,
+		    8 + 4 * state.combatTargetIntelligence);
+		if (attackRoll >= attackChance)
+			return;
+	}
 	if (state.combatTargetNativeAi == "Rhino"
 	    && distance >= 5
 	    && state.combatTargetToHitSpecial > 0) {
@@ -9637,6 +9653,15 @@ void AdvanceReplayMonsterAttack(
 		state.secondaryPlayerLife = std::max(0, state.secondaryPlayerLife - appliedDamageQ6);
 		if (state.secondaryPlayerLife == 0)
 			StartReplaySecondaryPlayerDeath(state, true);
+		if (state.combatTargetNativeAi == "Bat"
+		    && state.combatTargetHitPointsQ6 > 0) {
+			state.combatTargetBatRetreatDirection = GetDirection(
+			    state.combatTargetPositionX,
+			    state.combatTargetPositionY,
+			    victim.positionX,
+			    victim.positionY);
+			state.combatTargetBatRetreatTicks = 2;
+		}
 		return;
 	}
 	const uint32_t playerEntityId = state.entityId == 0 ? 1U : state.entityId;
@@ -9749,6 +9774,15 @@ void AdvanceReplayMonsterAttack(
 		    timing,
 		    state.combatTargetEntityId,
 		    tick);
+	}
+	if (state.combatTargetNativeAi == "Bat"
+	    && state.combatTargetHitPointsQ6 > 0) {
+		state.combatTargetBatRetreatDirection = GetDirection(
+		    state.combatTargetPositionX,
+		    state.combatTargetPositionY,
+		    state.positionX,
+		    state.positionY);
+		state.combatTargetBatRetreatTicks = 2;
 	}
 }
 

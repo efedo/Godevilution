@@ -1167,6 +1167,11 @@ harness and managed authoritative controller both consume the validated
 `20 + 4 * intelligence` attack-admission draw before applying the adjacent hit,
 preserving the secondary damage, farther-primary state, and global RNG parity.
 
+Bat now has the same adjacent multiplayer hit coverage. Native and managed
+runners consume the validated `8 + 4 * intelligence` admission, apply the
+secondary damage, retain the authored post-hit retreat countdown, and preserve
+the farther primary participant and canonical RNG state.
+
 Zhar and Lazarus now share two-participant replay coverage through the native
 CounselorAi compatibility path. Native and managed runners preserve their
 authored identities, route the nearer secondary participant, and agree on the
