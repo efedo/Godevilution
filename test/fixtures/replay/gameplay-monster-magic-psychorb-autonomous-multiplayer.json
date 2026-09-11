@@ -1,0 +1,59 @@
+{
+  "format_version": 1,
+  "fixture_id": "gameplay/monster-magic-psychorb-autonomous-multiplayer",
+  "protocol_schema_version": "0.1.0",
+  "content_manifest": {
+    "id": "replay.monster-magic",
+    "version": "0.1.0",
+    "sha256": "b6787fdcf7701f3e4fe77f79a87e1b84024f86da2330d1559f6b7335a104ba4b"
+  },
+  "tick_rate_hz": 20,
+  "rng_seed": 9,
+  "game_variant": "Diablo",
+  "game_mode": "Multiplayer",
+  "initial_state": {
+    "player": "A",
+    "gold": 0,
+    "experience": 0,
+    "life": 6400,
+    "life_maximum": 6400,
+    "position_x": 30,
+    "position_y": 0,
+    "level_id": 1,
+    "character_level": 1,
+    "combat_target_entity_id": 9,
+    "combat_target_level_id": 1,
+    "combat_target_position_x": 10,
+    "combat_target_position_y": 0,
+    "combat_target_hit_points": 20,
+    "combat_target_max_hit_points": 20,
+    "combat_target_aggro_range": 10,
+    "combat_target_monster_level": 1,
+    "combat_target_native_ai": "Psychorb",
+    "combat_target_min_damage": 4,
+    "combat_target_max_damage": 4,
+    "secondary_player": {
+      "player": "B",
+      "entity_id": 8,
+      "life": 6400,
+      "life_maximum": 6400,
+      "position_x": 0,
+      "position_y": 0,
+      "level_id": 1,
+      "character_level": 1
+    }
+  },
+  "commands": [
+    {
+      "client_sequence": 1,
+      "target_tick": 1,
+      "server_receipt_sequence": 1,
+      "kind": "OpenStore",
+      "payload": { "store_id": 1 }
+    }
+  ],
+  "checkpoints": [
+    { "tick": 1, "state_sha256": "0c8b409e5f07d2189797e512467678ea18faa1985160e93e995d12c3b4f63429" },
+    { "tick": 27, "state_sha256": "fd3ea0d44742cdb944345e5695ea7dccc9c44ef697f7adb2247dbedcd605393d" }
+  ]
+}

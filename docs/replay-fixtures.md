@@ -1308,6 +1308,11 @@ Notable shared fixtures include:
   Lich lifecycle routed to the nearer secondary participant through impact;
 - `gameplay-monster-magic-arch-lich-autonomous-multiplayer.json` for the seeded
   ArchLich MonsterMagic alias, secondary-target routing, and impact lifecycle;
+- `gameplay-monster-magic-psychorb-autonomous-multiplayer.json`,
+  `gameplay-monster-magic-necromorb-autonomous-multiplayer.json`, and
+  `gameplay-monster-magic-bone-demon-autonomous-multiplayer.json` for the
+  remaining generic MonsterMagic aliases, each covering nearest-secondary
+  admission, impact, and the 27-tick autonomous lifecycle;
 - `gameplay-magma-autonomous-multiplayer.json` for Hellfire MagmaBall admission,
   secondary impact, and the two-tick lethal autonomous lifecycle;
 - `gameplay-monster-magic-primary-shield.json` for primary-player MonsterMagic

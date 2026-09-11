@@ -9958,6 +9958,38 @@ public sealed class ReplayFixtureTests
             result.Checkpoints.Select(checkpoint => checkpoint.ActualStateSha256));
     }
 
+    [Theory]
+    [InlineData("gameplay-monster-magic-psychorb-autonomous-multiplayer.json")]
+    [InlineData("gameplay-monster-magic-necromorb-autonomous-multiplayer.json")]
+    [InlineData("gameplay-monster-magic-bone-demon-autonomous-multiplayer.json")]
+    public void GameplayMonsterMagicAliasesAutonomousMultiplayerMatchNativeLifecycle(string fixtureName)
+    {
+        var fixture = LoadReplayFixture(fixtureName);
+        var secondary = Assert.IsType<ReplaySecondaryPlayer>(fixture.InitialState.SecondaryPlayer);
+        var executor = CreateMonsterMagicExecutor(fixture);
+
+        var result = ReplayFixtureExecutor.Execute(
+            fixture,
+            executor,
+            new AuthoritativeCommandServer(executor));
+        var primary = Assert.Single(result.FinalSnapshot.Players, player => player.EntityId == 1);
+        var secondaryState = executor.GetPlayerState(secondary.Player);
+        var projectile = Assert.Single(result.FinalSnapshot.Projectiles);
+
+        Assert.Equal(CommandStatus.Accepted, Assert.Single(result.Results).Status);
+        Assert.Equal(6400, primary.Life);
+        Assert.Equal(6144, secondaryState.Life);
+        Assert.Equal(secondary.EntityId, projectile.TargetEntityId);
+        Assert.Equal((int)AuthoritativeProjectileBehavior.MonsterMagic, projectile.Behavior);
+        Assert.Equal((int)AuthoritativeProjectilePhase.Impact, projectile.Phase);
+        Assert.Equal(1U, projectile.SpellId);
+        Assert.Equal(1U, projectile.RemainingTicks);
+        Assert.Equal(27UL, result.FinalSnapshot.Tick);
+        Assert.Equal(
+            fixture.Checkpoints.Select(checkpoint => checkpoint.StateSha256),
+            result.Checkpoints.Select(checkpoint => checkpoint.ActualStateSha256));
+    }
+
     [Fact]
     public void GameplayLichMonsterMagicPrimaryAppliesGetHitAndManaShield()
     {

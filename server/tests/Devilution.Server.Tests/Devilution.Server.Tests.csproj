@@ -312,6 +312,9 @@
     <None Include="../../../test/fixtures/replay/gameplay-monster-magic-autonomous.json" Link="Fixtures/gameplay-monster-magic-autonomous.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-monster-magic-autonomous-multiplayer.json" Link="Fixtures/gameplay-monster-magic-autonomous-multiplayer.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-monster-magic-arch-lich-autonomous-multiplayer.json" Link="Fixtures/gameplay-monster-magic-arch-lich-autonomous-multiplayer.json" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="../../../test/fixtures/replay/gameplay-monster-magic-psychorb-autonomous-multiplayer.json" Link="Fixtures/gameplay-monster-magic-psychorb-autonomous-multiplayer.json" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="../../../test/fixtures/replay/gameplay-monster-magic-necromorb-autonomous-multiplayer.json" Link="Fixtures/gameplay-monster-magic-necromorb-autonomous-multiplayer.json" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="../../../test/fixtures/replay/gameplay-monster-magic-bone-demon-autonomous-multiplayer.json" Link="Fixtures/gameplay-monster-magic-bone-demon-autonomous-multiplayer.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-monster-magic-arch-lich.json" Link="Fixtures/gameplay-monster-magic-arch-lich.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-monster-magic-bone-demon.json" Link="Fixtures/gameplay-monster-magic-bone-demon.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-monster-magic-miss.json" Link="Fixtures/gameplay-monster-magic-miss.json" CopyToOutputDirectory="PreserveNewest" />

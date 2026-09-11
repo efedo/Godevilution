@@ -2,6 +2,10 @@
 
 All notable changes to this fork are documented below.
 
+- Added autonomous multiplayer MonsterMagic parity for the remaining
+  Psychorb, Necromorb, and BoneDemon aliases. Native and managed runners now
+  cover the complete generic Lich-family admission, nearest-secondary target,
+  impact, and 27-tick projectile lifecycle.
 - Added autonomous multiplayer AcidUnique admission coverage. Native and
   managed runners now preserve the alias's normal ranged dispatch and nearest
   secondary-target projection through the shared checkpoint.
