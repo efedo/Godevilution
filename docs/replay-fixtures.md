@@ -1382,6 +1382,11 @@ normal native GTest build described in `docs/ai/msvc-build.md` and:
 dotnet run --project server/tests/Devilution.Server.Tests/Devilution.Server.Tests.csproj
 ```
 
+The managed replay suite also enumerates every shipped fixture that declares
+the active `devilution.base` or composed `hellfire` pack and verifies its
+manifest hash against the current validated content directories. This keeps
+content-contract drift visible before a replay reaches gameplay execution.
+
 Future fixtures should prioritize uncovered legacy parity rather than repeat
 already-characterized transitions: broader autonomous MonsterArrow and
 MonsterMagic AI branches, additional melee/avoidance AI branches beyond the

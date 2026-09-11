@@ -12,6 +12,48 @@ namespace Devilution.Server.Tests;
 public sealed class ReplayFixtureTests
 {
     [Fact]
+    public void ShippedBaseAndHellfireFixturesUseCurrentManifestIdentities()
+    {
+        var repositoryRoot = FindRepositoryRoot();
+        var baseRoot = Path.Combine(repositoryRoot, "server", "content", "base");
+        var hellfireRoot = Path.Combine(repositoryRoot, "server", "content", "hellfire");
+        var baseCompatibilityPack = ContentPackLoader.LoadDirectory(
+            "devilution.base",
+            "0.1.0",
+            baseRoot);
+        var basePack = ContentPackLoader.LoadManifestDirectory(
+            baseRoot);
+        var hellfirePack = ContentPackLoader.LoadManifestDirectory(
+            hellfireRoot);
+        var expected = new Dictionary<string, string>(StringComparer.Ordinal) {
+            ["devilution.base"] = new ContentManifest(
+                "devilution.base",
+                "0.1.0",
+                [baseCompatibilityPack]).Sha256,
+            ["hellfire"] = new ContentManifest(
+                "hellfire",
+                "1",
+                [basePack, hellfirePack]).Sha256,
+        };
+        var fixtures = Directory.EnumerateFiles(
+                Path.Combine(repositoryRoot, "test", "fixtures", "replay"),
+                "*.json",
+                SearchOption.TopDirectoryOnly)
+            .Select(path => (Path: path, Fixture: ReplayFixtureLoader.Load(File.ReadAllText(path))))
+            .Where(entry => entry.Fixture.ContentManifest is ReplayContentManifest identity
+                && expected.ContainsKey(identity.Id))
+            .ToArray();
+
+        Assert.NotEmpty(fixtures);
+        foreach (var entry in fixtures) {
+            var identity = Assert.IsType<ReplayContentManifest>(entry.Fixture.ContentManifest);
+            Assert.True(
+                string.Equals(expected[identity.Id], identity.Sha256, StringComparison.Ordinal),
+                $"Replay fixture '{Path.GetFileName(entry.Path)}' uses a stale {identity.Id} manifest.");
+        }
+    }
+
+    [Fact]
     public void ProjectionOnlyCheckpointMarkerLoadsWithoutHashValidation()
     {
         const string json = """

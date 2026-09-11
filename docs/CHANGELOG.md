@@ -2,6 +2,10 @@
 
 All notable changes to this fork are documented below.
 
+- Added a manifest-integrity guard that enumerates all shipped base and
+  Hellfire replay fixtures and rejects stale hashes against the active
+  validated content packs before gameplay execution.
+
 - Refreshed the 13 Hellfire ranged replay fixtures that still declared the
   pre-`1.502.0` composed-pack hash. Their manifests now bind to the active
   normalized base-plus-Hellfire content identity, restoring the complete
