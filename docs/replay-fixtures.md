@@ -418,6 +418,9 @@ Optional `combat_target_to_hit`, `combat_target_to_hit_special`, and paired
 monster accuracy and damage channels for autonomous special attacks. The
 `gameplay-rhino-charge.json` fixture uses them to verify the server-owned charge
 landing and knockback transition.
+Optional `combat_target_acid_resistance` carries the native monster acid
+resistance through both replay loaders and the tagged canonical monster hash;
+omitting it retains the zero-resistance compatibility state.
 `gameplay-rhino-charge-native-q6-range.json` adds a three-to-seven special
 damage range and proves that the compatibility charge stream rolls it in Q6
 before applying incoming `_pIGetHit` equipment, preserving fractional damage

@@ -147,6 +147,46 @@ public sealed class ReplayFixtureTests
     }
 
     [Fact]
+    public void ReplayFixtureParsesCombatTargetAcidResistance()
+    {
+        const string json = """
+            {
+              "format_version": 1,
+              "fixture_id": "gameplay/acid-resistance",
+              "protocol_schema_version": "0.1.0",
+              "tick_rate_hz": 20,
+              "rng_seed": 1,
+              "initial_state": {
+                "player": "A",
+                "gold": 0,
+                "experience": 0,
+                "life": 1,
+                "mana": 1,
+                "combat_target_entity_id": 9,
+                "combat_target_hit_points": 5,
+                "combat_target_max_hit_points": 5,
+                "combat_target_acid_resistance": 100
+              },
+              "commands": [{
+                "client_sequence": 1,
+                "target_tick": 0,
+                "server_receipt_sequence": 1,
+                "kind": "Move",
+                "payload": {
+                  "direction_x": 0,
+                  "direction_y": 0
+                }
+              }],
+              "checkpoints": []
+            }
+            """;
+
+        var fixture = ReplayFixtureLoader.Load(json);
+
+        Assert.Equal(100, fixture.InitialState.CombatTargetAcidResistance);
+    }
+
+    [Fact]
     public void BasicBuyFixtureLoadsAndSortsByAuthoritativeOrder()
     {
         var fixture = LoadFixture();

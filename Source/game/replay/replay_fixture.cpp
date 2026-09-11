@@ -573,12 +573,17 @@ void AppendCanonicalState(ReplayStateHasher &hasher, const ReplayFixtureExecutio
 		hasher.AppendInt32(state.combatTargetArmorClass);
 		hasher.AppendBool(state.combatTargetHitPoints > 0);
 		if (state.combatTargetAttackDamage != 0 || state.combatTargetAggroRange != 0 || state.combatTargetFireResistance != 0
-		    || state.combatTargetLightningResistance != 0 || state.combatTargetMagicResistance != 0) {
+		    || state.combatTargetLightningResistance != 0 || state.combatTargetMagicResistance != 0
+		    || state.combatTargetAcidResistance != 0) {
 			hasher.AppendInt32(state.combatTargetAttackDamage);
 			hasher.AppendInt32(state.combatTargetAggroRange);
 			hasher.AppendInt32(state.combatTargetFireResistance);
 			hasher.AppendInt32(state.combatTargetLightningResistance);
 			hasher.AppendInt32(state.combatTargetMagicResistance);
+			if (state.combatTargetAcidResistance != 0) {
+				hasher.AppendString("godevilution-monster-acid-resistance-v1");
+				hasher.AppendInt32(state.combatTargetAcidResistance);
+			}
 		}
 		if (state.combatTargetMonsterLevel != 0) {
 			hasher.AppendString("godevilution-monster-level-v1");
@@ -11652,6 +11657,8 @@ private:
 				return ParseSigned(fixture_.initialState.combatTargetLightningResistance);
 			if (key == "combat_target_magic_resistance")
 				return ParseSigned(fixture_.initialState.combatTargetMagicResistance);
+			if (key == "combat_target_acid_resistance")
+				return ParseSigned(fixture_.initialState.combatTargetAcidResistance);
 			if (key == "combat_target_monster_level")
 				return ParseSigned(fixture_.initialState.combatTargetMonsterLevel);
 			if (key == "combat_target_undead")
@@ -12484,6 +12491,11 @@ bool ParseReplayFixture(std::string_view json, ReplayFixture &fixture, std::stri
 	}
 	if (fixture.initialState.abilityKind > 6) {
 		error = "Replay fixture contains invalid initial player ability kind.";
+		return false;
+	}
+	if (fixture.initialState.combatTargetAcidResistance < -100
+	    || fixture.initialState.combatTargetAcidResistance > 100) {
+		error = "Replay fixture contains invalid combat target acid resistance.";
 		return false;
 	}
 	if ((fixture.initialState.objectBreakable && fixture.initialState.objectMissilePassable)
@@ -13486,6 +13498,7 @@ bool ExecuteReplayFixture(
 		state.combatTargetFireResistance = fixture.initialState.combatTargetFireResistance;
 		state.combatTargetLightningResistance = fixture.initialState.combatTargetLightningResistance;
 		state.combatTargetMagicResistance = fixture.initialState.combatTargetMagicResistance;
+		state.combatTargetAcidResistance = fixture.initialState.combatTargetAcidResistance;
 		state.combatTargetMonsterLevel = fixture.initialState.combatTargetMonsterLevel;
 		state.combatTargetUndead = fixture.initialState.combatTargetUndead;
 		state.combatTargetDemon = fixture.initialState.combatTargetDemon;

@@ -2,6 +2,10 @@
 
 Status date: 2026-09-10
 
+Replay fixture monster projections now carry native acid resistance through
+both loaders and canonical hashes. A nonzero cross-runner golden closes the
+managed/native omission while zero-resistance fixtures retain their prior hash.
+
 Replay fixture state now carries the semantic class-skill role through both
 native and managed loaders, participant initialization, and canonical hashes.
 The role-only golden keeps C++ and C# checkpoint hashing aligned even when no

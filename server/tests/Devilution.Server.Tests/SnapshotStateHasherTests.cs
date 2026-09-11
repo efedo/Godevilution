@@ -828,12 +828,24 @@ public sealed class SnapshotStateHasherTests
     public void MonsterAcidResistanceExtendsTheStateHash()
     {
         var unresistant = new Snapshot {
+            Players = {
+                new PlayerSnapshot { EntityId = 1, CharacterLevel = 1 },
+            },
             Monsters = {
                 new MonsterSnapshot {
                     EntityId = 1,
                     HitPoints = 5,
                     MaxHitPoints = 5,
                     Alive = true,
+                    BatMovementIdleTicks = -1,
+                    RangedAvoidanceMoveTicks = -1,
+                    RangedAvoidanceMovementIdleTicks = -1,
+                    RhinoMovementTicks = -1,
+                    AvoidanceMovementTicks = -1,
+                    AvoidanceMovementIdleTicks = -1,
+                    SkeletonRangedMovementIdleTicks = -1,
+                    FatMovementIdleTicks = -1,
+                    RhinoMovementIdleTicks = -1,
                 },
             },
         };
@@ -842,6 +854,9 @@ public sealed class SnapshotStateHasherTests
 
         Assert.NotEqual(
             SnapshotStateHasher.Compute(unresistant),
+            SnapshotStateHasher.Compute(resistant));
+        Assert.Equal(
+            "d4ee141ccc5503d266b9ca3d255da482e073004599903040c000657fb97dcad1",
             SnapshotStateHasher.Compute(resistant));
     }
 

@@ -279,6 +279,7 @@ struct ReplayFixtureInitialState {
 	int32_t combatTargetFireResistance = 0;
 	int32_t combatTargetLightningResistance = 0;
 	int32_t combatTargetMagicResistance = 0;
+	int32_t combatTargetAcidResistance = 0;
 	int32_t combatTargetMonsterLevel = 0;
 	bool combatTargetUndead = false;
 	bool combatTargetDemon = false;
@@ -694,6 +695,7 @@ struct ReplayFixtureExecutionState {
 	int32_t combatTargetFireResistance = 0;
 	int32_t combatTargetLightningResistance = 0;
 	int32_t combatTargetMagicResistance = 0;
+	int32_t combatTargetAcidResistance = 0;
 	int32_t combatTargetMonsterLevel = 0;
 	bool combatTargetUndead = false;
 	bool combatTargetDemon = false;
