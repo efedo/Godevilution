@@ -1468,13 +1468,22 @@ tl::expected<void, std::string> ValidateMonsterSnapshots(const protocol::Snapsho
 		const int64_t hitPointsQ6 = monster.hit_points_q6() == 0 && monster.hit_points() != 0
 		    ? static_cast<int64_t>(monster.hit_points()) * 64
 		    : monster.hit_points_q6();
+		const int64_t maxHitPointsQ6 = monster.max_hit_points_q6() == 0 && monster.max_hit_points() != 0
+		    ? static_cast<int64_t>(monster.max_hit_points()) * 64
+		    : monster.max_hit_points_q6();
 		const auto owner = playersById.find(monster.owner_player_id());
 		const bool playerMinionOwnerValid = !monster.is_player_minion()
 		    || monster.owner_player_id() == 0
 		    || owner != playersById.end() && owner->second->level_id() == monster.level_id();
 		if (monster.unique_identity().size() > MaximumIdentityBytes
 		    || (!monster.is_unique() && !monster.unique_identity().empty())
+		    || monster.hit_points() < 0
+		    || monster.max_hit_points() < 0
+		    || monster.max_hit_points() > 0 && monster.hit_points() > monster.max_hit_points()
 		    || hitPointsQ6 < 0
+		    || hitPointsQ6 > std::numeric_limits<int32_t>::max()
+		    || maxHitPointsQ6 < hitPointsQ6
+		    || maxHitPointsQ6 > std::numeric_limits<int32_t>::max()
 		    || monster.alive() != (hitPointsQ6 > 0)
 		    || monster.attack_damage() < 0
 		    || monster.min_damage() < 0

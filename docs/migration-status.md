@@ -2,6 +2,11 @@
 
 Status date: 2026-09-10
 
+Native monster vitality validation now checks raw and Q6 hit-point forms
+together, including maximum-vitality ordering and the native signed fixed-point
+range. Malformed raw fields can no longer be hidden behind an alternate Q6
+value at the compatibility boundary.
+
 Native monster ingress now also validates the Fallen stand-animation and rally
 fields against the shared protocol limits before compatibility projection.
 The compact native snapshot remains intentionally narrower, but malformed

@@ -2106,6 +2106,21 @@ TEST(ServerBackedPlayerSnapshot, RejectsMalformedMonsterCombatMetadata)
 	invalidHitPoints.mutable_monsters(0)->set_alive(true);
 	EXPECT_FALSE(ValidateMonsterSnapshots(invalidHitPoints).has_value());
 
+	protocol::Snapshot invalidRawHitPoints = makeMonster();
+	invalidRawHitPoints.mutable_monsters(0)->set_hit_points_q6(640);
+	invalidRawHitPoints.mutable_monsters(0)->set_hit_points(-1);
+	EXPECT_FALSE(ValidateMonsterSnapshots(invalidRawHitPoints).has_value());
+
+	protocol::Snapshot invalidRawMaxHitPoints = makeMonster();
+	invalidRawMaxHitPoints.mutable_monsters(0)->set_max_hit_points_q6(640);
+	invalidRawMaxHitPoints.mutable_monsters(0)->set_max_hit_points(-1);
+	EXPECT_FALSE(ValidateMonsterSnapshots(invalidRawMaxHitPoints).has_value());
+
+	protocol::Snapshot overflowingHitPoints = makeMonster();
+	overflowingHitPoints.mutable_monsters(0)->set_hit_points(std::numeric_limits<int32_t>::max());
+	overflowingHitPoints.mutable_monsters(0)->set_max_hit_points(std::numeric_limits<int32_t>::max());
+	EXPECT_FALSE(ValidateMonsterSnapshots(overflowingHitPoints).has_value());
+
 	protocol::Snapshot invalidDamage = makeMonster();
 	invalidDamage.mutable_monsters(0)->set_max_damage(1);
 	invalidDamage.mutable_monsters(0)->set_min_damage(2);

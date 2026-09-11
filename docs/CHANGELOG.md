@@ -2,6 +2,10 @@
 
 All notable changes to this fork are documented below.
 
+- Native monster snapshot ingress now validates raw and fixed-point vitality
+  together, rejecting contradictory negative fields and derived Q6 values
+  outside the native signed range before projection.
+
 - Native monster snapshot ingress now enforces the shared bounds for Fallen
   stand-animation frames, animation ticks, and rally timers. These
   presentation/runtime fields are not copied into the compact native
