@@ -201,6 +201,11 @@ secondary participants. The multiplayer secondary-player fixture preserves
 native block recovery, participant hashing, and impact-phase projectile lifetime
 in the managed and native replay runners.
 
+The autonomous MonsterMagic block boundary now also covers a low-Dexterity
+secondary Warrior with an authored shield. Native and managed runners agree on
+the class base chance, block recovery, secondary participant hash, and retained
+impact-phase missile state.
+
 Server-owned dialogue events now cross every world-transition path: immediate
 movement, native-timed level triggers, occupancy-triggered objects, and the
 Warp spell all preserve the directed event through simulation and combat

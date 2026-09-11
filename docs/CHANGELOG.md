@@ -2,6 +2,11 @@
 
 All notable changes to this fork are documented below.
 
+- Added autonomous MonsterMagic secondary Warrior block-chance parity. Native
+  and managed runners now cover the authored low-Dexterity class base chance,
+  shield admission, participant hash, block recovery, and retained impact
+  projectile state.
+
 - Extended MonsterArrow Warrior block parity to multiplayer secondary players.
   Native and managed runners now cover the shared class/shield block boundary,
   participant hashing, block recovery, and impact-phase projectile lifetime.

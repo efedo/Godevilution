@@ -11322,6 +11322,37 @@ public sealed class ReplayFixtureTests
     }
 
     [Fact]
+    public void GameplayLichMonsterMagicWarriorBlocksOnSecondaryParticipantAtClassChance()
+    {
+        var fixture = LoadReplayFixture(
+            "gameplay-monster-magic-secondary-warrior-block-chance.json");
+        var secondary = Assert.IsType<ReplaySecondaryPlayer>(fixture.InitialState.SecondaryPlayer);
+        var executor = CreateMonsterMagicExecutor(fixture);
+
+        var result = ReplayFixtureExecutor.Execute(
+            fixture,
+            executor,
+            new AuthoritativeCommandServer(executor));
+        var secondaryState = executor.GetPlayerState(secondary.Player);
+        var projectile = Assert.Single(result.FinalSnapshot.Projectiles);
+
+        Assert.Equal(CommandStatus.Accepted, Assert.Single(result.Results).Status);
+        Assert.Equal([1U, secondary.EntityId], result.FinalSnapshot.Players.Select(player => player.EntityId));
+        Assert.Equal(0, result.FinalSnapshot.Players[0].Life);
+        Assert.Equal(6400, secondaryState.Life);
+        Assert.Equal(DiabloPlayerCombatMode.Block, secondaryState.CombatMode);
+        Assert.Equal(31UL, secondaryState.CombatModeEndTick);
+        Assert.Equal((int)AuthoritativeProjectileBehavior.MonsterMagic, projectile.Behavior);
+        Assert.Equal(secondary.EntityId, projectile.TargetEntityId);
+        Assert.Equal((int)AuthoritativeProjectilePhase.Impact, projectile.Phase);
+        Assert.Equal(1U, projectile.RemainingTicks);
+        Assert.Equal(27UL, result.FinalSnapshot.Tick);
+        Assert.Equal(
+            fixture.Checkpoints.Select(checkpoint => checkpoint.StateSha256),
+            result.Checkpoints.Select(checkpoint => checkpoint.ActualStateSha256));
+    }
+
+    [Fact]
     public void GameplayMultiplayerMonsterArrowRoutesImpactToSecondaryParticipant()
     {
         var path = Path.Combine(
