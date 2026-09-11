@@ -10842,6 +10842,36 @@ public sealed class ReplayFixtureTests
     }
 
     [Fact]
+    public void GameplayMagmaMonsterMagicSecondaryWarriorUsesClassBlockChance()
+    {
+        var fixture = LoadReplayFixture("gameplay-magma-secondary-warrior-block-chance.json");
+        var secondary = Assert.IsType<ReplaySecondaryPlayer>(fixture.InitialState.SecondaryPlayer);
+        var executor = CreateMonsterMagicExecutor(fixture, "monster-magma");
+
+        var result = ReplayFixtureExecutor.Execute(
+            fixture,
+            executor,
+            new AuthoritativeCommandServer(executor));
+        var secondaryState = executor.GetPlayerState(secondary.Player);
+
+        Assert.Equal(CommandStatus.Accepted, Assert.Single(result.Results).Status);
+        Assert.Equal(0U, secondary.CharacterClass);
+        Assert.Equal(0, secondary.Dexterity);
+        Assert.Equal(secondary.Life, secondaryState.Life);
+        Assert.Equal(DiabloPlayerCombatMode.Block, secondaryState.CombatMode);
+        Assert.Equal(6UL, secondaryState.CombatModeEndTick);
+        Assert.Equal(2UL, result.FinalSnapshot.Tick);
+        var projectile = Assert.Single(result.FinalSnapshot.Projectiles);
+        Assert.Equal((int)AuthoritativeProjectileBehavior.MonsterMagic, projectile.Behavior);
+        Assert.Equal((int)AuthoritativeProjectilePhase.Impact, projectile.Phase);
+        Assert.Equal(1U, projectile.SpellId);
+        Assert.Equal(1U, projectile.RemainingTicks);
+        Assert.Equal(
+            fixture.Checkpoints.Select(checkpoint => checkpoint.StateSha256),
+            result.Checkpoints.Select(checkpoint => checkpoint.ActualStateSha256));
+    }
+
+    [Fact]
     public void GameplayArchLichMonsterMagicAutonomousMultiplayerMatchesNativeLifecycle()
     {
         var fixture = LoadReplayFixture("gameplay-monster-magic-arch-lich-autonomous-multiplayer.json");

@@ -1,0 +1,74 @@
+{
+  "format_version": 1,
+  "fixture_id": "gameplay/magma-secondary-warrior-block-chance",
+  "protocol_schema_version": "0.1.0",
+  "content_manifest": {
+    "id": "replay.monster-magma",
+    "version": "0.1.0",
+    "sha256": "fbbc95efe4a81114c92acfe0a6cb72b307011ab23b8c118214ae03d119ee345b"
+  },
+  "tick_rate_hz": 20,
+  "rng_seed": 13,
+  "game_variant": "Hellfire",
+  "game_mode": "Multiplayer",
+  "initial_state": {
+    "player": "A",
+    "gold": 0,
+    "experience": 0,
+    "life": 0,
+    "life_maximum": 6400,
+    "position_x": 0,
+    "position_y": 0,
+    "level_id": 1,
+    "character_level": 1,
+    "combat_target_entity_id": 9,
+    "combat_target_level_id": 1,
+    "combat_target_position_x": 8,
+    "combat_target_position_y": 0,
+    "combat_target_hit_points": 20,
+    "combat_target_max_hit_points": 20,
+    "combat_target_aggro_range": 10,
+    "combat_target_monster_level": 1,
+    "combat_target_native_ai": "Magma",
+    "combat_target_to_hit": 100,
+    "combat_target_min_damage": 4,
+    "combat_target_max_damage": 4,
+    "combat_target_intelligence": 0,
+    "secondary_player": {
+      "player": "B",
+      "entity_id": 8,
+      "life": 6400,
+      "life_maximum": 6400,
+      "position_x": 6,
+      "position_y": 0,
+      "level_id": 1,
+      "character_class": 0,
+      "character_level": 1,
+      "dexterity": 0,
+      "equipment": [
+        {
+          "slot": 5,
+          "item_seed": 44,
+          "item_type": 5,
+          "item_class": 0,
+          "flags": 0,
+          "stat_flag": true
+        }
+      ],
+      "combat_mode": 0
+    }
+  },
+  "commands": [
+    {
+      "client_sequence": 1,
+      "target_tick": 1,
+      "server_receipt_sequence": 1,
+      "kind": "OpenStore",
+      "payload": { "store_id": 1 }
+    }
+  ],
+  "checkpoints": [
+    { "tick": 1, "state_sha256": "9249b6c1a33ce9ddd52d20ebb6a7e1c92f10a4fb0cba7d7a49e3fc2aa856c79a" },
+    { "tick": 2, "state_sha256": "28fd6bcdadc3a7b2047c0f92a532747032a0d3ea2931325b2c94892131e088d5" }
+  ]
+}

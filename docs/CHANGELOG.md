@@ -2,6 +2,10 @@
 
 All notable changes to this fork are documented below.
 
+- Added Hellfire MagmaBall secondary Warrior block-chance parity. Native and
+  managed runners now cover the low-Dexterity class base chance, shield
+  admission, external missile mapping, and shared impact checkpoints.
+
 - Added Blood Star secondary Warrior block-chance parity. Native and managed
   runners now cover the low-Dexterity class base chance, shield admission,
   block recovery, and canonical impact checkpoints.

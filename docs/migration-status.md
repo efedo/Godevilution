@@ -6,6 +6,10 @@ Succubus Blood Star secondary-player impact now preserves the native
 low-Dexterity Warrior class chance and shield admission, including block
 recovery and canonical impact checkpoints, in both replay runners.
 
+Hellfire MagmaBall secondary-player impact now preserves the native
+low-Dexterity Warrior class chance and shield admission through the external
+Magma missile mapping and shared impact checkpoints in both replay runners.
+
 Hellfire Charged Bolt player impact now preserves the native low-Dexterity
 secondary Warrior class chance and shield admission, including the Hellfire
 compatibility RNG draw and shared impact checkpoints, in both replay runners.
