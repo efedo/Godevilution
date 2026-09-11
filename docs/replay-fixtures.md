@@ -1292,6 +1292,8 @@ Notable shared fixtures include:
 - `gameplay-acid-autonomous-multiplayer.json` for Hellfire Acid
   RangedAvoidance admission, nearest-secondary targeting, and the first
   secondary-impact splat/puddle checkpoint;
+- `gameplay-acid-unique-autonomous-multiplayer.json` for the Hellfire
+  AcidUnique normal-ranged alias and nearest-secondary target projection;
 - `gameplay-blood-star-impact.json` for deterministic monster-magic hit RNG,
   Q6 player damage, impact-phase retention, and removal-boundary parity;
 - `gameplay-blood-star-secondary-block.json` for secondary-player target routing,

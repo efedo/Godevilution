@@ -11096,8 +11096,10 @@ void AdmitReplayAutonomousAcid(
     ReplayFixtureExecutionState &state,
     uint64_t tick)
 {
+	const bool isAcidUnique = state.combatTargetNativeAi == "AcidUnique";
 	if (state.combatTargetEntityId == 0
-	    || state.combatTargetNativeAi != "Acid"
+	    || (state.combatTargetNativeAi != "Acid"
+	        && state.combatTargetNativeAi != "AcidUnique")
 	    || state.combatTargetHitPointsQ6 <= 0
 	    || state.combatTargetAggroRange <= 0
 	    || state.combatTargetRangedDelayTicks < 0
@@ -11141,21 +11143,25 @@ void AdmitReplayAutonomousAcid(
 	});
 	const Candidate &target = candidates.front();
 	const int distance = candidateDistance(target);
-	if (distance > state.combatTargetAggroRange || distance < 2)
+	if (distance > state.combatTargetAggroRange
+	    || (!isAcidUnique && distance < 2)
+	    || (isAcidUnique && distance < 4))
 		return;
 
 	const uint32_t attackSeed = static_cast<uint32_t>(tick)
 	    ^ state.combatTargetEntityId
 	    ^ target.entityId;
 	const bool usesNativeAiStream = state.combatTargetMonsterAiSeed != 0;
-	const int actionRoll = usesNativeAiStream
-	    ? std::max(GenerateRnd(state, 10000), 0)
-	    : static_cast<int>(attackSeed % 10000U);
-	const int attackBand = 500
-	    + 500 * state.combatTargetIntelligence
-	    + (distance >= 3 ? 500 : 0);
-	if (actionRoll >= std::min(10000, attackBand))
-		return;
+	if (!isAcidUnique) {
+		const int actionRoll = usesNativeAiStream
+		    ? std::max(GenerateRnd(state, 10000), 0)
+		    : static_cast<int>(attackSeed % 10000U);
+		const int attackBand = 500
+		    + 500 * state.combatTargetIntelligence
+		    + (distance >= 3 ? 500 : 0);
+		if (actionRoll >= std::min(10000, attackBand))
+			return;
+	}
 
 	uint32_t nextEntityId = 0x80000000U;
 	for (const auto &projectile : state.projectiles)

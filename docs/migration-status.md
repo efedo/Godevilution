@@ -2,6 +2,10 @@
 
 Status date: 2026-09-11
 
+AcidUnique’s autonomous Hellfire ranged alias now preserves normal ranged
+admission and nearest-secondary target projection in the compact native replay
+and managed server.
+
 Acid’s autonomous Hellfire RangedAvoidance lane now preserves admission,
 secondary-player impact, and the first splat-to-puddle transition in the
 compact native replay and managed server.

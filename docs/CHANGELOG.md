@@ -2,6 +2,10 @@
 
 All notable changes to this fork are documented below.
 
+- Added autonomous multiplayer AcidUnique admission coverage. Native and
+  managed runners now preserve the alias's normal ranged dispatch and nearest
+  secondary-target projection through the shared checkpoint.
+
 - Added autonomous multiplayer Acid coverage. Native and managed runners now
   preserve RangedAvoidance admission, secondary-player impact, and the first
   splat-to-puddle checkpoint through the shared authoritative path.
