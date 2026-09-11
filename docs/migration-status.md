@@ -9,7 +9,9 @@ lifecycle in the compact native replay and managed server.
 
 GoatMelee’s wounded multiplayer lane now preserves the validated below-half-
 health special attack, special to-hit and Q6 damage range, and seeded AI-stream
-draw order in the compact native replay and managed server.
+draw order in the compact native replay and managed server. Its zero-seed
+compatibility lane now also selects the special range from the deterministic
+attack seed instead of falling back to regular damage.
 
 Native replay hashing now carries the derived semantic presentation identity
 for quest, breakable, and trap objects, keeping object interaction checkpoints

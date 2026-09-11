@@ -5299,6 +5299,26 @@ public sealed class ReplayFixtureTests
     }
 
     [Fact]
+    public void GameplayGoatMeleeWoundedSpecialZeroSeedMatchesNative()
+    {
+        var fixture = LoadReplayFixture("gameplay-goat-melee-special-zero-seed.json");
+        var executor = CreateGoatMeleeReplayExecutor(fixture);
+        var result = ReplayFixtureExecutor.Execute(
+            fixture,
+            executor,
+            new AuthoritativeCommandServer(executor));
+        var secondary = Assert.Single(result.FinalSnapshot.Players, player => player.EntityId == 8);
+        var monster = Assert.Single(result.FinalSnapshot.Monsters);
+
+        Assert.Equal(CommandStatus.Accepted, Assert.Single(result.Results).Status);
+        Assert.Equal(95, secondary.Life);
+        Assert.Equal(0U, monster.MonsterAiSeed);
+        Assert.Equal(
+            fixture.Checkpoints.Select(checkpoint => checkpoint.StateSha256),
+            result.Checkpoints.Select(checkpoint => checkpoint.ActualStateSha256));
+    }
+
+    [Fact]
     public void GameplayGoatMeleeGetHitEquipmentAddsIncomingDamage()
     {
         var fixture = LoadReplayFixture("gameplay-goat-melee-get-hit.json");
@@ -12453,7 +12473,10 @@ public sealed class ReplayFixtureTests
             maxHitPoints: initial.CombatTargetMaxHitPoints,
             levelId: initial.CombatTargetLevelId,
             monsterId: initial.CombatTargetMonsterId,
+            attackDamage: initial.CombatTargetAttackDamage,
             aggroRange: initial.CombatTargetAggroRange,
+            minDamage: initial.CombatTargetMinDamage,
+            maxDamage: initial.CombatTargetMaxDamage,
             nativeAi: initial.CombatTargetNativeAi,
             intelligence: initial.CombatTargetIntelligence,
             minDamageSpecial: initial.CombatTargetMinDamageSpecial,

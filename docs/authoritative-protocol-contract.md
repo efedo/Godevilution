@@ -518,7 +518,7 @@ controller. Pack leadership and GroupUnity are now server-owned in the
 gameplay module and survive internal snapshots. Additive protocol projection
 for leader identity, relation, and pack size, plus generated pack placement and
 visibility-driven activation are shipped; broader last-position interpolation
-and Fallen rally behavior remain follow-up work.
+remains follow-up work.
 Older peers may omit both fields; when present, the pair is included in the conditional
 `godevilution-monster-runtime-seeds-v1` canonical-hash section.
 

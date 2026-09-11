@@ -6,6 +6,10 @@ All notable changes to this fork are documented below.
   runners now preserve below-half-health special attack admission, special
   to-hit and Q6 damage range selection, and seeded AI-stream draw order.
 
+- Extended GoatMelee wounded-special parity to zero-seed multiplayer
+  compatibility. The native and managed runners now select the special damage
+  range from the deterministic attack seed in that legacy lane.
+
 - Added autonomous multiplayer Familiar parity. Native and managed runners now
   cover the validated Bat melee admission and range movement, seeded post-melee
   Lightning damage, nearest-secondary routing, Bat movement counters, and the

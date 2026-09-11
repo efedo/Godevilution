@@ -9720,13 +9720,13 @@ void AdvanceReplayMonsterAttack(
 				}
 		return;
 	}
+	const uint32_t attackSeed = static_cast<uint32_t>(tick)
+	    ^ state.combatTargetEntityId
+	    ^ (victim.secondary ? state.secondaryPlayerEntityId : state.entityId);
 	bool usesGoatSpecialAttack = false;
 	if (state.combatTargetNativeAi == "Gargoyle"
 	    || state.combatTargetNativeAi == "GoatMelee"
 	    || state.combatTargetNativeAi == "Gharbad") {
-		const uint32_t attackSeed = static_cast<uint32_t>(tick)
-		    ^ state.combatTargetEntityId
-		    ^ (victim.secondary ? state.secondaryPlayerEntityId : state.entityId);
 		const int attackChance = std::min(
 		    100,
 		    23 + 2 * state.combatTargetIntelligence);
@@ -9860,9 +9860,14 @@ void AdvanceReplayMonsterAttack(
 			    : state.equipment;
 			damageQ6 = ApplyReplayGetHitBonusQ6(equipment, damageQ6);
 		} else {
-			const int32_t damage = state.combatTargetAttackDamage == 0
-			    ? 0
-			    : std::max(1, state.combatTargetAttackDamage);
+			const int32_t damage = usesGoatSpecialAttack
+			    ? (effectiveMaximumDamage >= effectiveMinimumDamage
+			        ? effectiveMinimumDamage + static_cast<int32_t>(attackSeed
+			            % static_cast<uint32_t>(effectiveMaximumDamage - effectiveMinimumDamage + 1))
+			        : 0)
+			    : (state.combatTargetAttackDamage == 0
+			        ? 0
+			        : std::max(1, state.combatTargetAttackDamage));
 			damageQ6 = ApplyReplayGetHitBonus(
 				state,
 				damage,
@@ -9934,7 +9939,10 @@ void AdvanceReplayMonsterAttack(
 			                  state,
 			                  maximumDamage - minimumDamage + 1),
 			              0)
-			        : 0);
+			        : usesGoatSpecialAttack
+			            ? static_cast<int>(attackSeed
+			                % static_cast<uint32_t>(maximumDamage - minimumDamage + 1))
+			            : 0);
 			damageQ6 = ApplyReplayGetHitBonus(state, damage, false) * 64;
 		}
 	}

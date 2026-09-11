@@ -235,6 +235,7 @@
     <None Include="../../../test/fixtures/replay/gameplay-goat-melee-seeded-movement-multiplayer.json" Link="Fixtures/gameplay-goat-melee-seeded-movement-multiplayer.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-goat-melee-attack.json" Link="Fixtures/gameplay-goat-melee-attack.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-goat-melee-special.json" Link="Fixtures/gameplay-goat-melee-special.json" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="../../../test/fixtures/replay/gameplay-goat-melee-special-zero-seed.json" Link="Fixtures/gameplay-goat-melee-special-zero-seed.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-goat-melee-get-hit.json" Link="Fixtures/gameplay-goat-melee-get-hit.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-goat-melee-secondary-q6-range.json" Link="Fixtures/gameplay-goat-melee-secondary-q6-range.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-goat-melee-thorns.json" Link="Fixtures/gameplay-goat-melee-thorns.json" CopyToOutputDirectory="PreserveNewest" />
