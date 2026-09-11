@@ -6,6 +6,10 @@ All notable changes to this fork are documented below.
   maxima, over-cap character levels, and negative attribute values at both
   local and remote presentation boundaries.
 
+- Native player projection now preserves and validates the server-owned
+  semantic class-skill role, including fail-closed handling for invalid roles
+  and signed direction values.
+
 - Native monster snapshot ingress now validates raw and fixed-point vitality
   together, rejecting contradictory negative fields and derived Q6 values
   outside the native signed range before projection.

@@ -147,6 +147,9 @@ tl::expected<ProjectedPlayerSnapshot, std::string> ProjectPlayerSnapshot(const p
 	    || player->diablo_kill_level() > MaximumNativeDiabloKillLevel
 	    || player->character_class_id() > static_cast<uint32_t>(HeroClass::LAST)
 	    || static_cast<int32_t>(player->facing_direction()) > static_cast<int32_t>(Direction::SouthEast)
+	    || static_cast<int32_t>(player->facing_direction()) < static_cast<int32_t>(Direction::South)
+	    || static_cast<int32_t>(player->ability_kind()) < 0
+	    || static_cast<int32_t>(player->ability_kind()) > static_cast<int32_t>(protocol::PLAYER_ABILITY_KIND_RAGE)
 	    || player->attributes().strength().base() < 0
 	    || player->attributes().strength().current() < 0
 	    || player->attributes().magic().base() < 0
@@ -290,6 +293,7 @@ tl::expected<ProjectedPlayerSnapshot, std::string> ProjectPlayerSnapshot(const p
 		.characterName = player->character_name(),
 		.manaShieldActive = player->mana_shield_active(),
 		.abilitySpellId = player->ability_spell_id(),
+		.abilityKind = static_cast<ProjectedPlayerAbilityKind>(player->ability_kind()),
 		.abilitySpellTargetingKind = static_cast<ProjectedSpellTargetingKind>(player->ability_targeting_kind()),
 		.levelId = player->level_id(),
 		.visitedLevelIds = { player->visited_level_ids().begin(), player->visited_level_ids().end() },

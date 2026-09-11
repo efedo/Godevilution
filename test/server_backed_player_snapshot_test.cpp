@@ -82,6 +82,7 @@ TEST(ServerBackedPlayerSnapshot, ProjectsResourcesInventoryAndEquipment)
 	player->set_character_name("Dead-RogueDM");
 	player->set_mana_shield_active(true);
 	player->set_ability_spell_id(static_cast<uint32_t>(SpellID::Search));
+	player->set_ability_kind(protocol::PLAYER_ABILITY_KIND_REPAIR);
 	player->set_ability_targeting_kind(protocol::SPELL_TARGETING_KIND_TILE);
 	player->set_hostile_mode(true);
 	player->set_facing_direction(protocol::PLAYER_DIRECTION_NORTH_EAST);
@@ -160,6 +161,7 @@ TEST(ServerBackedPlayerSnapshot, ProjectsResourcesInventoryAndEquipment)
 	EXPECT_EQ(projected->characterName, "Dead-RogueDM");
 	EXPECT_TRUE(projected->manaShieldActive);
 	EXPECT_EQ(projected->abilitySpellId, static_cast<uint32_t>(SpellID::Search));
+	EXPECT_EQ(projected->abilityKind, ProjectedPlayerAbilityKind::Repair);
 	EXPECT_EQ(projected->abilitySpellTargetingKind, ProjectedSpellTargetingKind::Tile);
 	EXPECT_FALSE(projected->friendlyMode);
 	EXPECT_EQ(projected->facingDirection, static_cast<uint32_t>(Direction::NorthEast));
@@ -4596,6 +4598,14 @@ TEST(ServerBackedPlayerSnapshot, RejectsPlayerResourcesOutsideNativeRange)
 	protocol::Snapshot invalidAttributes = makeSnapshot();
 	invalidAttributes.mutable_players(0)->mutable_attributes()->mutable_strength()->set_current(-1);
 	EXPECT_FALSE(ProjectPlayerSnapshot(invalidAttributes, 7).has_value());
+
+	protocol::Snapshot invalidAbilityKind = makeSnapshot();
+	invalidAbilityKind.mutable_players(0)->set_ability_kind(static_cast<protocol::PlayerAbilityKind>(99));
+	EXPECT_FALSE(ProjectPlayerSnapshot(invalidAbilityKind, 7).has_value());
+
+	protocol::Snapshot invalidFacing = makeSnapshot();
+	invalidFacing.mutable_players(0)->set_facing_direction(static_cast<protocol::PlayerDirection>(-1));
+	EXPECT_FALSE(ProjectPlayerSnapshot(invalidFacing, 7).has_value());
 
 	ProjectedPlayerSnapshot projected;
 	projected.entityId = 7;

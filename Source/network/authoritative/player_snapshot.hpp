@@ -40,6 +40,17 @@ enum class ProjectedSpellTargetingKind : uint32_t {
 	WorldEntity = 4,
 };
 
+/** Server-owned semantic role for the projected class skill. */
+enum class ProjectedPlayerAbilityKind : uint32_t {
+	Unspecified = 0,
+	Repair = 1,
+	TrapDisarm = 2,
+	Recharge = 3,
+	Search = 4,
+	Identify = 5,
+	Rage = 6,
+};
+
 /** Presentation-side result for resolving a cursor target to an authoritative entity. */
 enum class ServerBackedSpellTargetResolution : uint8_t {
 	Tile,
@@ -398,6 +409,7 @@ struct ProjectedPlayerSnapshot {
 	std::string characterName;
 	bool manaShieldActive = false;
 	uint32_t abilitySpellId = 0;
+	ProjectedPlayerAbilityKind abilityKind = ProjectedPlayerAbilityKind::Unspecified;
 	ProjectedSpellTargetingKind abilitySpellTargetingKind = ProjectedSpellTargetingKind::Unspecified;
 	uint32_t levelId = 0;
 	/** Server-owned native _pLvlVisited flags keyed by authored level ID. */

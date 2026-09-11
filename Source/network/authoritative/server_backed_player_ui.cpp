@@ -50,6 +50,8 @@ tl::expected<void, std::string> ValidateSnapshot(const ProjectedPlayerSnapshot &
 	    || snapshot.dexterity.base < 0 || snapshot.dexterity.current < 0
 	    || snapshot.vitality.base < 0 || snapshot.vitality.current < 0)
 		return tl::make_unexpected("Server-backed player attributes are outside the native range.");
+	if (static_cast<uint32_t>(snapshot.abilityKind) > static_cast<uint32_t>(ProjectedPlayerAbilityKind::Rage))
+		return tl::make_unexpected("Server-backed player ability kind is outside the native range.");
 	if (snapshot.stashGold > static_cast<uint32_t>(INT_MAX)
 	    || snapshot.stash.size() > NativeStashPageCount * NativeStashCellCount)
 		return tl::make_unexpected("Server-backed stash resources are outside the native range.");
