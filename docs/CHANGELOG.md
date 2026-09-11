@@ -2,6 +2,10 @@
 
 All notable changes to this fork are documented below.
 
+- Added autonomous multiplayer Torchant Fireball coverage. Native and managed
+  runners now preserve the delayed Fireball admission, secondary impact, and
+  lethal 27-tick lifecycle through the shared authoritative path.
+
 - Added autonomous multiplayer Storm ThinLightning coverage. Native and managed
   runners now preserve controller travel, repeated lightning segments, lethal
   secondary impact, and the native post-hit RNG draw.

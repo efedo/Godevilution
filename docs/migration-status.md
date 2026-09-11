@@ -2,6 +2,10 @@
 
 Status date: 2026-09-11
 
+Torchant’s autonomous Diablo Fireball lane now preserves delayed admission,
+secondary impact, and the lethal 27-tick lifecycle in the compact native replay
+and managed server.
+
 Storm’s autonomous Hellfire ThinLightning lane now preserves controller travel,
 repeated segment creation, lethal secondary impact, and the native post-hit RNG
 draw in the compact native replay and managed server.

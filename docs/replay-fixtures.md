@@ -1273,6 +1273,8 @@ Notable shared fixtures include:
   admission, secondary impact, and the 27-tick lethal autonomous lifecycle;
 - `gameplay-torchant-multiplayer-target.json` for Torchant's external Fireball
   mapping and nearest-secondary target selection;
+- `gameplay-torchant-autonomous-multiplayer.json` for Torchant's delayed
+  Fireball admission, secondary impact, and lethal autonomous lifecycle;
 - `gameplay-torchant-multiplayer-secondary-impact.json` for Torchant's full-Q6
   secondary-player impact and two-tick impact/removal lifecycle;
 - `gameplay-torchant-multiplayer-secondary-miss.json` for distance-based
