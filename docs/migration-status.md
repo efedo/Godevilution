@@ -27,6 +27,11 @@ primary Warrior block boundary, including primary-player admission, 17-tick
 block recovery, and retained alias-specific impact checkpoints in both replay
 runners.
 
+Storm ThinLightning now preserves the corresponding primary Warrior boundary,
+including primary-player target routing, the controller/segment lifecycle,
+native zero-width damage-roll ordering after a blocked hit, and the retained
+controller checkpoint in both replay runners.
+
 Succubus and LazarusSuccubus Blood Star secondary-player impacts now preserve
 the native low-Dexterity Warrior class chance and shield admission, including
 alias-specific block recovery and canonical impact checkpoints, in both replay

@@ -11895,6 +11895,32 @@ public sealed class ReplayFixtureTests
             result.Checkpoints.Select(checkpoint => checkpoint.ActualStateSha256));
     }
 
+    [Fact]
+    public void GameplayStormThinLightningPrimaryWarriorBlockChanceMatchesNativeLifecycle()
+    {
+        var fixture = LoadReplayFixture("gameplay-storm-primary-warrior-block-chance.json");
+        var executor = CreateStormExecutor(fixture);
+
+        var result = ReplayFixtureExecutor.Execute(
+            fixture,
+            executor,
+            new AuthoritativeCommandServer(executor));
+        var player = Assert.Single(result.FinalSnapshot.Players);
+        var controller = Assert.Single(
+            result.FinalSnapshot.Projectiles,
+            projectile => projectile.Behavior == (int)AuthoritativeProjectileBehavior.Lightning);
+
+        Assert.Equal(CommandStatus.Accepted, Assert.Single(result.Results).Status);
+        Assert.Equal(6400, player.Life);
+        Assert.Equal(PlayerCombatMode.Block, player.CombatMode);
+        Assert.Equal(7UL, player.CombatModeEndTick);
+        Assert.Equal(1U, controller.TargetEntityId);
+        Assert.Equal(4UL, result.FinalSnapshot.Tick);
+        Assert.Equal(
+            fixture.Checkpoints.Select(checkpoint => checkpoint.StateSha256),
+            result.Checkpoints.Select(checkpoint => checkpoint.ActualStateSha256));
+    }
+
     [Theory]
     [InlineData("gameplay-monster-magic-arch-lich-secondary-warrior-block-chance.json")]
     [InlineData("gameplay-monster-magic-psychorb-secondary-warrior-block-chance.json")]
@@ -12712,6 +12738,9 @@ public sealed class ReplayFixtureTests
             intelligence: initial.CombatTargetIntelligence);
         var missiles = LoadReplayMonsterMissiles(fixture, "monster-storm");
         var spells = LoadReplaySpells(fixture, "monster-storm");
+        var classes = AuthoritativePlayerClassCatalog.LoadTsv(
+            "classes.tsv",
+            File.ReadAllText(Path.Combine(FindRepositoryRoot(), "server", "content", "base", "classes.tsv")));
         var catalog = new StoreCatalog();
         catalog.AddStore(1, []);
         return new StoreSimulationExecutor(
@@ -12721,10 +12750,21 @@ public sealed class ReplayFixtureTests
             initial.Life,
             initial.Mana,
             startingLifeMaximum: initial.LifeMaximum,
+            startingAttributes: PlayerAttributesState.Zero with {
+                Strength = new PlayerAttributeState(initial.Strength, initial.Strength),
+                Magic = new PlayerAttributeState(initial.Magic, initial.Magic),
+                Dexterity = new PlayerAttributeState(initial.Dexterity, initial.Dexterity),
+                Vitality = new PlayerAttributeState(initial.Vitality, initial.Vitality),
+            },
             startingPositionX: initial.PositionX,
             startingPositionY: initial.PositionY,
             startingLevelId: initial.LevelId,
             startingCharacterLevel: initial.CharacterLevel,
+            startingCharacterClassId: checked((uint)initial.CharacterClass),
+            startingPlayerClasses: classes,
+            startingEquipment: initial.Equipment
+                .Select(item => item.ToEquippedStoreItem())
+                .ToArray(),
             startingCombatTargets: [target],
             startingMonsterMissiles: missiles,
             startingSpells: spells,

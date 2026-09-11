@@ -569,7 +569,7 @@ The compact native replay projection now carries the same server-owned corpse
 tile representation and per-tick monster regeneration as the C# checkpoints.
 Ordinary-death and Firebolt, Fireball, Lightning, and Flash
  spell/projectile-timeline checkpoints pass in both runners. As of 2026-09-11,
-the native replay gate contains 372 checked-in JSON fixtures and 381 registered
+the native replay gate contains 373 checked-in JSON fixtures and 382 registered
 tests; the test count also includes parser and validation cases that do not
 introduce another fixture file. Coverage includes seeded and autonomous MonsterArrow
 source coverage, Hellfire HorkDemon Hork Spawn admission, player impact, and
@@ -1362,6 +1362,9 @@ Notable shared fixtures include:
 - `gameplay-torchant-multiplayer-secondary-miss.json` for distance-based
   monster-magic miss admission, duplicate-collision suppression, and retained
   impact-phase projectile parity;
+- `gameplay-storm-primary-warrior-block-chance.json` for Storm's
+  low-Dexterity primary Warrior shield admission, 4-tick controller/segment
+  lifecycle, 4-tick block recovery, and retained ThinLightning controller;
 - `gameplay-magma-multiplayer-target.json` for Magma's external MagmaBall
   mapping, native initial travel advance, and nearest-secondary target selection;
 - `gameplay-storm-multiplayer-target.json` for Storm's external ThinLightning

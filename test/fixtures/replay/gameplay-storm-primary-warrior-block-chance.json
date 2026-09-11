@@ -1,0 +1,60 @@
+{
+  "format_version": 1,
+  "fixture_id": "gameplay/storm-primary-warrior-block-chance",
+  "protocol_schema_version": "0.1.0",
+  "content_manifest": {
+    "id": "replay.monster-storm",
+    "version": "0.1.0",
+    "sha256": "c851273264164d842b506cde823719feba65aef9c9315b49c8346d1b2c73ba4b"
+  },
+  "tick_rate_hz": 20,
+  "rng_seed": 9,
+  "game_variant": "Hellfire",
+  "game_mode": "SinglePlayer",
+  "initial_state": {
+    "player": "A",
+    "gold": 0,
+    "experience": 0,
+    "life": 6400,
+    "life_maximum": 6400,
+    "position_x": 6,
+    "position_y": 0,
+    "level_id": 1,
+    "character_class": 0,
+    "character_level": 1,
+    "dexterity": 0,
+    "equipment": [{
+      "slot": 5,
+      "item_seed": 44,
+      "item_type": 5,
+      "item_class": 0,
+      "flags": 0,
+      "stat_flag": true
+    }],
+    "combat_target_entity_id": 9,
+    "combat_target_level_id": 1,
+    "combat_target_position_x": 8,
+    "combat_target_position_y": 0,
+    "combat_target_hit_points": 20,
+    "combat_target_max_hit_points": 20,
+    "combat_target_attack_damage": 4,
+    "combat_target_aggro_range": 10,
+    "combat_target_monster_level": 1,
+    "combat_target_native_ai": "Storm",
+    "combat_target_to_hit": 100,
+    "combat_target_min_damage": 4,
+    "combat_target_max_damage": 4,
+    "combat_target_intelligence": 0
+  },
+  "commands": [{
+    "client_sequence": 1,
+    "target_tick": 1,
+    "server_receipt_sequence": 1,
+    "kind": "OpenStore",
+    "payload": { "store_id": 1 }
+  }],
+  "checkpoints": [
+    { "tick": 1, "state_sha256": "7e685cbfad444b6c16144bbfb08f9550ba358b3c9698c92fc1eba220c9df90c1" },
+    { "tick": 4, "state_sha256": "cad011a0528da9412069138e46836d386341a17399728a5bf62fafd70e209a78" }
+  ]
+}

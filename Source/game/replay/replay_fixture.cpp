@@ -3192,40 +3192,108 @@ void AdvanceLightningOneTick(ReplayFixtureExecutionState &state, uint64_t tick)
 						DefeatReplayCombatTarget(state);
 				}
 			} else {
-				const bool playerAtTile = state.secondaryPlayerEntityId != 0
+				const bool primaryPlayerAtTile = monsterOwned
+				    && state.life > 0
+				    && state.levelId == segment.levelId
+				    && state.positionX == segment.positionX
+				    && state.positionY == segment.positionY;
+				const bool secondaryPlayerAtTile = state.secondaryPlayerEntityId != 0
 				    && state.secondaryPlayerLife > 0
 				    && state.secondaryPlayerLevelId == segment.levelId
 				    && state.secondaryPlayerPositionX == segment.positionX
 				    && state.secondaryPlayerPositionY == segment.positionY;
+				const bool primaryTargetFirst = primaryPlayerAtTile
+				    && (!secondaryPlayerAtTile
+				        || state.entityId < state.secondaryPlayerEntityId);
+				const bool playerAtTile = primaryTargetFirst || secondaryPlayerAtTile;
 				if (playerAtTile) {
+					const bool primaryPlayer = primaryTargetFirst;
+					const int32_t playerPositionX = primaryPlayer
+					    ? state.positionX
+					    : state.secondaryPlayerPositionX;
+					const int32_t playerPositionY = primaryPlayer
+					    ? state.positionY
+					    : state.secondaryPlayerPositionY;
+					const uint32_t playerCharacterLevel = primaryPlayer
+					    ? state.characterLevel
+					    : state.secondaryPlayerCharacterLevel;
 					const int32_t hitChance = monsterOwned
 					    ? std::clamp(
 					          std::max(10, 40 + 2 * state.combatTargetMonsterLevel
-					              - 2 * static_cast<int32_t>(state.secondaryPlayerCharacterLevel)
+					              - 2 * static_cast<int32_t>(playerCharacterLevel)
 					              - 2 * std::max(
-					                    std::abs(segment.positionX - state.combatTargetPositionX),
-					                    std::abs(segment.positionY - state.combatTargetPositionY))),
+					                    std::abs(playerPositionX - state.combatTargetPositionX),
+					                    std::abs(playerPositionY - state.combatTargetPositionY))),
 					          0,
 					          100)
 					    : std::clamp(
 					          state.attributes[3]
 					              + GetReplayBaseMagicToHit(state.characterClassId)
-					              - static_cast<int32_t>(state.secondaryPlayerCharacterLevel) * 2,
+					              - static_cast<int32_t>(playerCharacterLevel) * 2,
 					          5,
 					          95);
 					if (std::max(GenerateRnd(state, 100), 0) < hitChance) {
-						static_cast<void>(GenerateRnd(state, 1));
 						const int32_t damage = monsterOwned
 						    ? segment.damage * 64
 						    : segment.damage / 2;
-						state.secondaryPlayerLife = std::max(
-						    0,
-						    state.secondaryPlayerLife - damage);
-						if (state.secondaryPlayerLife == 0) {
-							StartReplaySecondaryPlayerDeath(state);
-						} else if ((damage >> 6) >= static_cast<int32_t>(state.secondaryPlayerCharacterLevel)) {
-							state.secondaryPlayerCombatMode = 7;
-							state.secondaryPlayerCombatModeEndTick = tick + 6;
+						bool blocked = false;
+						if (monsterOwned) {
+							const bool blockCapable = primaryPlayer
+							    ? IsReplayPrimaryPlayerBlockCapable(state)
+							    : state.secondaryPlayerBlockCapable
+							        || IsReplaySecondaryPlayerBlockCapable(state);
+							const bool canBlock = blockCapable
+							    && (primaryPlayer
+							        ? state.combatMode == 0 || state.combatMode == 4
+							        : state.secondaryPlayerCombatMode == 0
+							            || state.secondaryPlayerCombatMode == 4);
+							const int32_t blockChance = std::clamp(
+							    (primaryPlayer ? state.attributes[5] : state.secondaryPlayerDexterity)
+							        + GetReplayBaseBlockChance(primaryPlayer
+							            ? state.characterClassId
+							            : state.secondaryPlayerCharacterClassId)
+							        + static_cast<int32_t>(playerCharacterLevel) * 2
+							        - static_cast<int32_t>(state.combatTargetMonsterLevel) * 2,
+							    0,
+							    100);
+							const int32_t blockRoll = canBlock
+							    ? std::max(GenerateRnd(state, 100), 0)
+							    : 100;
+							blocked = blockRoll < blockChance;
+							if (blocked) {
+								if (primaryPlayer) {
+									state.combatMode = 6;
+									state.combatModeEndTick = tick + 4;
+								} else {
+									state.secondaryPlayerCombatMode = 6;
+									state.secondaryPlayerCombatModeEndTick = tick + 4;
+								}
+							}
+						}
+						if (monsterOwned)
+							static_cast<void>(GenerateRnd(state, 1));
+						if (!blocked) {
+							if (!monsterOwned)
+								static_cast<void>(GenerateRnd(state, 1));
+							if (primaryPlayer) {
+								state.life = std::max(0, state.life - damage);
+								if (state.life == 0)
+									StartReplayPlayerDeath(state, {}, segment.sourceEntityId, tick);
+								else if ((damage >> 6) >= static_cast<int32_t>(state.characterLevel)) {
+									state.combatMode = 7;
+									state.combatModeEndTick = tick + 6;
+								}
+							} else {
+								state.secondaryPlayerLife = std::max(
+								    0,
+								    state.secondaryPlayerLife - damage);
+								if (state.secondaryPlayerLife == 0) {
+									StartReplaySecondaryPlayerDeath(state);
+								} else if ((damage >> 6) >= static_cast<int32_t>(state.secondaryPlayerCharacterLevel)) {
+									state.secondaryPlayerCombatMode = 7;
+									state.secondaryPlayerCombatModeEndTick = tick + 6;
+								}
+							}
 						}
 					}
 				}

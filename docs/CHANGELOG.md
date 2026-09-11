@@ -3,7 +3,7 @@
 All notable changes to this fork are documented below.
 
 - Synchronized the replay-fixture parity status with the September primary-alias
-  coverage batch. The documentation now records the 372-fixture, 381-test native
+  coverage batch. The documentation now records the 373-fixture, 382-test native
   gate and names the GoatRanged, SkeletonRanged, Lich-family, Succubus, and
   LazarusSuccubus primary Warrior block lanes covered by both runners.
 
@@ -11,6 +11,11 @@ All notable changes to this fork are documented below.
   and Torchant Fireball aliases. Native and managed runners now cover their
   authored admission timing, 17-tick shield block/recovery, and retained
   alias-specific impact state.
+
+- Extended primary-player Warrior block-chance parity to the Storm ThinLightning
+  alias. Native and managed runners now cover primary target routing, the
+  controller/segment lifecycle, blocked-hit RNG ordering, and the retained
+  controller checkpoint.
 
 - Added primary-player Warrior block-chance parity for the LazarusSuccubus
   Blood Star alias, including native spell identity, block recovery, and the
