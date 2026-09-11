@@ -26,6 +26,10 @@ The autonomous MonsterMagic replay now also runs through a 27-tick multiplayer
 cast lifecycle, selecting the nearer secondary participant and preserving the
 primary participant's state through impact in both runners.
 
+The autonomous MonsterArrow replay now also routes a GoatRanged admission to a
+nearer secondary participant, preserving the primary participant and the
+impact-phase projectile across both runners.
+
 Replay fixture state now carries the semantic class-skill role through both
 native and managed loaders, participant initialization, and canonical hashes.
 The role-only golden keeps C++ and C# checkpoint hashing aligned even when no
@@ -1497,7 +1501,7 @@ The twenty Monster Magic replay fixtures now share the validated
 mapping for Lich-family and orb native AIs. The managed runner validates the
 pack hash before loading the native-AI projectile catalog.
 
-The eleven Monster Arrow replay fixtures now load validated GoatRanged and
+The thirteen Monster Arrow replay fixtures now load validated GoatRanged and
 SkeletonRanged mappings from the shared `test/content/replay/monster-arrow`
 pack and the admission-specific `test/content/replay/monster-arrow-admission`
 pack. Both native and managed runners validate their manifest hashes before

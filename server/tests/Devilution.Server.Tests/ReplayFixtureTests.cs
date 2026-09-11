@@ -7038,6 +7038,34 @@ public sealed class ReplayFixtureTests
     }
 
     [Fact]
+    public void GameplayMonsterArrowAutonomousMultiplayerMatchesNativeLifecycle()
+    {
+        var fixture = LoadReplayFixture("gameplay-monster-arrow-autonomous-multiplayer.json");
+        var secondary = Assert.IsType<ReplaySecondaryPlayer>(fixture.InitialState.SecondaryPlayer);
+        var executor = CreateMonsterArrowExecutor(fixture, "monster-arrow-autonomous");
+
+        var result = ReplayFixtureExecutor.Execute(
+            fixture,
+            executor,
+            new AuthoritativeCommandServer(executor));
+        var primary = Assert.Single(result.FinalSnapshot.Players, player => player.EntityId == 1);
+        var secondaryState = executor.GetPlayerState(secondary.Player);
+        var projectile = Assert.Single(result.FinalSnapshot.Projectiles);
+
+        Assert.Equal(CommandStatus.Accepted, Assert.Single(result.Results).Status);
+        Assert.Equal(100, primary.Life);
+        Assert.Equal(76, secondaryState.Life);
+        Assert.Equal(secondary.EntityId, projectile.TargetEntityId);
+        Assert.Equal((int)AuthoritativeProjectileBehavior.MonsterArrow, projectile.Behavior);
+        Assert.Equal((int)AuthoritativeProjectilePhase.Impact, projectile.Phase);
+        Assert.Equal(1U, projectile.RemainingTicks);
+        Assert.Equal(2UL, result.FinalSnapshot.Tick);
+        Assert.Equal(
+            fixture.Checkpoints.Select(checkpoint => checkpoint.StateSha256),
+            result.Checkpoints.Select(checkpoint => checkpoint.ActualStateSha256));
+    }
+
+    [Fact]
     public void GameplayMonsterArrowSkeletonRangedAdmissionMatchesNativeLifecycle()
     {
         var path = Path.Combine(
@@ -10471,7 +10499,9 @@ public sealed class ReplayFixtureTests
             gameMode: fixture.GameMode);
     }
 
-    private static StoreSimulationExecutor CreateMonsterArrowExecutor(ReplayFixture fixture)
+    private static StoreSimulationExecutor CreateMonsterArrowExecutor(
+        ReplayFixture fixture,
+        string missilePackDirectory = "monster-arrow")
     {
         var initial = fixture.InitialState;
         var target = new AuthoritativeCombatTarget(
@@ -10495,7 +10525,7 @@ public sealed class ReplayFixtureTests
             rangedDelayTicks: initial.CombatTargetRangedDelayTicks,
             skeletonRangedMovementIdleTicks: initial.CombatTargetSkeletonRangedMovementIdleTicks,
             skeletonRangedMovementMode: initial.CombatTargetSkeletonRangedMovementMode);
-        var missiles = LoadReplayMonsterMissiles(fixture, "monster-arrow");
+        var missiles = LoadReplayMonsterMissiles(fixture, missilePackDirectory);
         var catalog = new StoreCatalog();
         catalog.AddStore(1, []);
         return new StoreSimulationExecutor(

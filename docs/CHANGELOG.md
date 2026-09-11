@@ -15,6 +15,10 @@ All notable changes to this fork are documented below.
   managed runners now cover the full Lich cast lifecycle against the nearer
   secondary participant through impact.
 
+- Added a shared autonomous multiplayer MonsterArrow fixture. Native and
+  managed runners now cover GoatRanged admission, secondary routing, and the
+  retained impact-phase projectile.
+
 - Shared replay fixtures now carry native monster acid resistance through the
   C++ and C# loaders and canonical checkpoint hash, preserving zero-default
   compatibility while covering nonzero resistance with a cross-runner golden.

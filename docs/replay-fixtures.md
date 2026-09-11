@@ -1211,6 +1211,8 @@ Notable shared fixtures include:
 - `gameplay-monster-arrow-autonomous.json` for validated GoatRanged admission,
   stable nearest-player target selection, travel, impact damage, and lifecycle
   parity;
+- `gameplay-monster-arrow-autonomous-multiplayer.json` for the same autonomous
+  admission routed to the nearer secondary participant through impact;
 - `gameplay-monster-arrow-goat-ranged-native-ai-seed.json` for restored
   GoatRanged AI-stream advancement, secondary-player arrow routing, and
   stream-derived post-shot delay;
