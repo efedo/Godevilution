@@ -9370,6 +9370,11 @@ void AdvanceReplayMonsterAttack(
 		    43 + 2 * state.combatTargetIntelligence);
 		if (attackRoll >= chargeChance)
 			return;
+		// Seeded RhinoAi consumes its validated movement-goal admission after
+		// action admission, even when the bounded replay lane resolves the
+		// same tick as a charge.
+		if (state.combatTargetMonsterAiSeed != 0)
+			static_cast<void>(GenerateRnd(state, 4));
 		const int originalMonsterX = state.combatTargetPositionX;
 			const int originalMonsterY = state.combatTargetPositionY;
 			std::vector<std::pair<int32_t, int32_t>> destinations;

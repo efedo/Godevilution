@@ -1130,6 +1130,9 @@ Notable shared fixtures include:
 - `gameplay-rhino-multiplayer-target.json` for nearest-participant charge
   admission, secondary damage and knockback, monster relocation, and farther-
   primary preservation;
+- `gameplay-rhino-autonomous-multiplayer.json` for seeded nearest-participant
+  charge admission, AI-stream advancement, secondary knockback, monster
+  relocation, and farther-primary preservation;
 - `gameplay-skeleton-melee-multiplayer-target.json` for nearest-participant
   adjacent attack admission, secondary damage, and farther-primary preservation;
 - `gameplay-snake-multiplayer-target.json` for nearest-participant charge

@@ -41,6 +41,9 @@ All notable changes to this fork are documented below.
 - Added autonomous multiplayer Bat melee coverage, including the authored
   post-hit retreat countdown and native attack-admission RNG draw.
 
+- Added seeded autonomous multiplayer Rhino charge coverage and aligned the
+  native replay harness with Rhino's validated movement-goal RNG draw.
+
 - Added seeded autonomous multiplayer Zombie melee coverage and aligned the
   native replay harness with Zombie's validated action-admission RNG draw.
 

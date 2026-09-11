@@ -1172,6 +1172,11 @@ runners consume the validated `8 + 4 * intelligence` admission, apply the
 secondary damage, retain the authored post-hit retreat countdown, and preserve
 the farther primary participant and canonical RNG state.
 
+Rhino now has seeded autonomous multiplayer charge coverage. Native and
+managed runners preserve the nearest-secondary charge, knockback, monster
+relocation, per-monster AI-stream advancement, and the validated movement-goal
+draw before the shared charge damage path.
+
 Zhar and Lazarus now share two-participant replay coverage through the native
 CounselorAi compatibility path. Native and managed runners preserve their
 authored identities, route the nearer secondary participant, and agree on the

@@ -200,6 +200,7 @@
     <None Include="../../../test/fixtures/replay/gameplay-rhino-charge.json" Link="Fixtures/gameplay-rhino-charge.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-rhino-charge-native-q6-range.json" Link="Fixtures/gameplay-rhino-charge-native-q6-range.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-rhino-multiplayer-target.json" Link="Fixtures/gameplay-rhino-multiplayer-target.json" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="../../../test/fixtures/replay/gameplay-rhino-autonomous-multiplayer.json" Link="Fixtures/gameplay-rhino-autonomous-multiplayer.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-snake-distant-delay.json" Link="Fixtures/gameplay-snake-distant-delay.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-snake-adjacent-delay.json" Link="Fixtures/gameplay-snake-adjacent-delay.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-snake-charge-lifecycle.json" Link="Fixtures/gameplay-snake-charge-lifecycle.json" CopyToOutputDirectory="PreserveNewest" />
