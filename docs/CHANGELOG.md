@@ -2,6 +2,12 @@
 
 All notable changes to this fork are documented below.
 
+- Native object projection now accepts the same transition-owned quest
+  sequence follow-ups as the authoritative server and managed client,
+  including world-mutation, projectile, and native-monster follow-up kinds.
+  Focused projection coverage prevents valid transition snapshots from being
+  rejected at the native compatibility boundary.
+
 - Occupancy-trigger object metadata now fails closed at the native and Godot
   snapshot boundaries unless it carries the required quest identity. The
   authoritative content, protocol, and projection tests cover the shared

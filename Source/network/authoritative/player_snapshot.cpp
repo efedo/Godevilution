@@ -675,21 +675,23 @@ tl::expected<std::vector<ProjectedObjectSnapshot>, std::string> ProjectObjectSna
 		const bool producesProjectile = source.effect_kind() == static_cast<int32_t>(ProjectedObjectEffectKind::SpawnSpellProjectile)
 		    || source.effect_kind() == static_cast<int32_t>(ProjectedObjectEffectKind::GrantSpellLevelAndSpawnProjectile)
 		    || source.quest_sequence_follow_up_kind() == 2;
+		const bool allowsQuestSequenceFollowUp = source.effect_kind() == static_cast<int32_t>(ProjectedObjectEffectKind::QuestSequence)
+		    || source.quest_transition_kind() != 0;
 		const bool followUpValid = source.quest_sequence_follow_up_kind() == 0
 		    ? source.quest_sequence_follow_up_amount() == 0
 		        && source.quest_sequence_follow_up_offset_x() == 0
 		        && source.quest_sequence_follow_up_offset_y() == 0
 		    : source.quest_sequence_follow_up_kind() == 1
-		        ? source.effect_kind() == static_cast<int32_t>(ProjectedObjectEffectKind::QuestSequence)
+		        ? allowsQuestSequenceFollowUp
 		            && source.quest_sequence_follow_up_amount() != 0
 		            && source.quest_sequence_follow_up_offset_x() == 0
 		            && source.quest_sequence_follow_up_offset_y() == 0
 		        : source.quest_sequence_follow_up_kind() == 2
-		            ? (source.effect_kind() == static_cast<int32_t>(ProjectedObjectEffectKind::QuestSequence)
+		            ? (allowsQuestSequenceFollowUp
 		                || source.effect_kind() == static_cast<int32_t>(ProjectedObjectEffectKind::WorldMutation))
 		                && source.quest_sequence_follow_up_amount() != 0
 		            : source.quest_sequence_follow_up_kind() == 3
-		                && source.effect_kind() == static_cast<int32_t>(ProjectedObjectEffectKind::QuestSequence)
+		                && allowsQuestSequenceFollowUp
 		                && source.quest_sequence_follow_up_amount() != 0;
 		if ((source.breakable() && source.missile_passable()) || (source.destroyed() && !source.breakable()))
 			return tl::make_unexpected("Server-backed snapshot contains an object with invalid missile-collision state.");

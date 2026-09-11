@@ -4047,6 +4047,22 @@ TEST(ServerBackedPlayerSnapshot, RejectsMalformedAuthoritativeObjects)
 	invalidFlags->set_quest_sequence_follow_up_amount(1);
 	EXPECT_FALSE(ProjectObjectSnapshots(invalidFollowUp).has_value());
 
+	for (const int followUpKind : { 1, 2, 3 }) {
+		protocol::Snapshot transitionFollowUp;
+		transitionFollowUp.add_quests()->set_quest_id(30);
+		auto *transitionObject = transitionFollowUp.add_objects();
+		transitionObject->set_entity_id(7);
+		transitionObject->set_object_id(1);
+		transitionObject->set_quest_id(30);
+		transitionObject->set_quest_transition_kind(7);
+		transitionObject->set_quest_transition_amount(1);
+		transitionObject->set_quest_sequence_follow_up_kind(followUpKind);
+		transitionObject->set_quest_sequence_follow_up_amount(1);
+		auto projectedTransitionFollowUp = ProjectObjectSnapshots(transitionFollowUp);
+		ASSERT_TRUE(projectedTransitionFollowUp.has_value());
+		EXPECT_EQ(projectedTransitionFollowUp->front().questSequenceFollowUpKind, followUpKind);
+	}
+
 	protocol::Snapshot invalidNativePresentation;
 	invalidFlags = invalidNativePresentation.add_objects();
 	invalidFlags->set_entity_id(7);

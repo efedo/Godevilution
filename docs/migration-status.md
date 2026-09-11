@@ -2,6 +2,12 @@
 
 Status date: 2026-09-10
 
+Native object projection now shares the server and managed-client rule that a
+quest transition may own a quest-sequence follow-up even when the base effect
+is not `QuestSequence`. World-mutation, projectile, and native-monster
+follow-ups therefore survive the native compatibility boundary when their
+validated quest transition is present.
+
 Occupancy-trigger object snapshots now enforce the authoritative content
 contract at both native and Godot ingress: an object that activates on entry
 must reference a validated quest identity. Malformed additive metadata is
