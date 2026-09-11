@@ -8807,6 +8807,45 @@ TEST(ReplayFixture, ExecutesMonsterArrowResolutionAgainstCSharpCheckpoints)
 	EXPECT_EQ(ComputeReplayFixtureStateHash(state), fixture.checkpoints.back().stateSha256);
 }
 
+TEST(ReplayFixture, ExecutesMonsterArrowPrimaryWarriorBlockChanceAgainstCSharpCheckpoints)
+{
+	std::ifstream file("test/fixtures/replay/gameplay-monster-arrow-primary-warrior-block-chance.json");
+	ASSERT_TRUE(file.good());
+	const std::string json((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
+	ReplayFixture fixture;
+	std::string error;
+	ASSERT_TRUE(ParseReplayFixture(json, fixture, error)) << error;
+	ASSERT_EQ(fixture.initialProjectiles.size(), 1U);
+
+	ReplayFixtureExecutionState state;
+	state.characterClassId = static_cast<uint32_t>(fixture.initialState.characterClass);
+	state.attributes[0] = fixture.initialState.strength;
+	state.attributes[1] = fixture.initialState.strength;
+	state.attributes[2] = fixture.initialState.magic;
+	state.attributes[3] = fixture.initialState.magic;
+	state.attributes[4] = fixture.initialState.dexterity;
+	state.attributes[5] = fixture.initialState.dexterity;
+	state.attributes[6] = fixture.initialState.vitality;
+	state.attributes[7] = fixture.initialState.vitality;
+	state.characterLevel = fixture.initialState.characterLevel;
+	state.life = fixture.initialState.life;
+	state.lifeMaximum = fixture.initialState.lifeMaximum;
+	state.positionX = fixture.initialState.positionX;
+	state.positionY = fixture.initialState.positionY;
+	state.levelId = fixture.initialState.levelId;
+
+	ReplayFixtureExecutionResult result;
+	ASSERT_TRUE(ExecuteReplayFixture(fixture, state, result, error)) << error;
+	ASSERT_EQ(result.transitions.size(), 1U);
+	EXPECT_TRUE(result.transitions[0].accepted);
+	EXPECT_EQ(state.lastAppliedTick, 3U);
+	EXPECT_EQ(state.life, 100);
+	EXPECT_EQ(state.combatMode, 6U);
+	EXPECT_EQ(state.combatModeEndTick, 6U);
+	EXPECT_TRUE(state.projectiles.empty());
+	EXPECT_EQ(ComputeReplayFixtureStateHash(state), fixture.checkpoints.back().stateSha256);
+}
+
 TEST(ReplayFixture, ExecutesMonsterArrowEtherealizePassThroughAgainstCSharpCheckpoints)
 {
 	std::ifstream file("test/fixtures/replay/gameplay-monster-arrow-etherealized.json");

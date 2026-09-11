@@ -1,0 +1,76 @@
+{
+  "format_version": 1,
+  "fixture_id": "gameplay/monster-arrow-primary-warrior-block-chance",
+  "protocol_schema_version": "0.1.0",
+  "content_manifest": {
+    "id": "test-content",
+    "version": "1",
+    "sha256": "monster-arrow-resolution-content"
+  },
+  "tick_rate_hz": 20,
+  "rng_seed": 7,
+  "game_variant": "Diablo",
+  "game_mode": "SinglePlayer",
+  "initial_state": {
+    "player": "A",
+    "gold": 0,
+    "experience": 0,
+    "life": 100,
+    "life_maximum": 100,
+    "dexterity": 0,
+    "character_class": 0,
+    "character_level": 1,
+    "position_x": 0,
+    "position_y": 0,
+    "level_id": 1,
+    "equipment": [
+      {
+        "slot": 5,
+        "item_seed": 1,
+        "item_type": 5,
+        "item_class": 0,
+        "flags": 0,
+        "stat_flag": true
+      }
+    ],
+    "combat_target_entity_id": 9,
+    "combat_target_level_id": 1,
+    "combat_target_position_x": 2,
+    "combat_target_position_y": 0,
+    "combat_target_hit_points": 20,
+    "combat_target_max_hit_points": 20,
+    "combat_target_monster_level": 1
+  },
+  "initial_projectiles": [
+    {
+      "entity_id": 2147483648,
+      "source_entity_id": 9,
+      "target_entity_id": 1,
+      "level_id": 1,
+      "position_x": 2,
+      "position_y": 0,
+      "target_x": 0,
+      "target_y": 0,
+      "damage": 4,
+      "damage_type": 0,
+      "remaining_ticks": 4,
+      "behavior": 59,
+      "phase": 0,
+      "speed": 1,
+      "impact_lifetime": 1
+    }
+  ],
+  "commands": [
+    {
+      "client_sequence": 1,
+      "target_tick": 1,
+      "server_receipt_sequence": 1,
+      "kind": "OpenStore",
+      "payload": { "store_id": 1 }
+    }
+  ],
+  "checkpoints": [
+    { "tick": 1, "state_sha256": "a24efcd501d6ccff6d2e42cce1f5360440e475bbdb02cfa54a2412070f4b7567" },
+    { "tick": 3, "state_sha256": "c4f2e740a2b8fadd20ea3531a3fc19fcda2be444079418b3bdc0722f2534aa8c" }
+  ]
+}

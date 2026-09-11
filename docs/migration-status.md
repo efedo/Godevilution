@@ -9062,6 +9062,10 @@ The primary MonsterMelee path now exercises that same class base-block table.
 The low-Dexterity Warrior replay preserves the native block recovery, Reflect
 charge consumption, Q6 reflection, and canonical checkpoint in both runners.
 
+MonsterArrow impact now uses the shared class/shield block boundary as well.
+The primary Warrior fixture preserves zero-Dexterity admission, block recovery,
+and the one-tick projectile impact lifetime across native and managed replay.
+
 Managed MonsterMagic replay setup now retains the authored mana maximum, Mana
 Shield state, memorized spells, spell catalog, and equipment equip-location.
 The in-process xUnit runner executes the complete MonsterMagic fixture family

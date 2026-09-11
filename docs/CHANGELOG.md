@@ -2,6 +2,10 @@
 
 All notable changes to this fork are documented below.
 
+- Added MonsterArrow primary-player block parity. Native and managed runners
+  now cover the low-Dexterity Warrior class/shield boundary, block recovery,
+  and impact-phase projectile lifetime.
+
 - Added primary MonsterMelee Warrior block-chance parity. Native and managed
   runners now cover the low-Dexterity class base-block branch, block recovery,
   and blocked-hit Reflect transition through a shared checkpoint.

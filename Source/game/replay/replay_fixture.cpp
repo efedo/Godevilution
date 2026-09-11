@@ -4326,7 +4326,7 @@ void AdvanceReplayWeaponArrowsOneTick(ReplayFixtureExecutionState &state)
 }
 
 /** Advances a seeded native MonsterArrow projectile through travel and impact frames. */
-void AdvanceReplayMonsterArrowsOneTick(ReplayFixtureExecutionState &state)
+void AdvanceReplayMonsterArrowsOneTick(ReplayFixtureExecutionState &state, uint64_t tick)
 {
 	for (auto iterator = state.projectiles.begin(); iterator != state.projectiles.end();) {
 		auto &projectile = *iterator;
@@ -4405,6 +4405,45 @@ void AdvanceReplayMonsterArrowsOneTick(ReplayFixtureExecutionState &state)
 						targetEquipment,
 						std::max(1, damage));
 					const int32_t damageQ6 = damageWithGetHit * 64;
+					const int32_t targetLevel = secondaryHit
+					    ? static_cast<int32_t>(state.secondaryPlayerCharacterLevel)
+					    : static_cast<int32_t>(state.characterLevel);
+					const bool primaryPlayerBlockCapable = !secondaryHit
+					    && (state.combatMode == 0 || state.combatMode == 4)
+					    && IsReplayPrimaryPlayerBlockCapable(state);
+					const bool secondaryPlayerBlockCapable = secondaryHit
+					    && (state.secondaryPlayerCombatMode == 0
+					        || state.secondaryPlayerCombatMode == 4)
+					    && (state.secondaryPlayerBlockCapable
+					        || IsReplaySecondaryPlayerBlockCapable(state));
+					const bool canBlock = primaryPlayerBlockCapable || secondaryPlayerBlockCapable;
+					const int32_t blockChance = std::clamp(
+					    (secondaryHit ? state.secondaryPlayerDexterity : state.attributes[5])
+					        + (secondaryHit
+					            ? GetReplayBaseBlockChance(state.secondaryPlayerCharacterClassId)
+					            : GetReplayBaseBlockChance(state.characterClassId))
+					        + 2 * targetLevel
+					        - 2 * state.combatTargetMonsterLevel,
+					    0,
+					    100);
+					const int32_t blockRoll = canBlock ? std::max(GenerateRnd(state, 100), 0) : 100;
+					if (canBlock && blockRoll < blockChance) {
+					    if (secondaryHit) {
+						    state.secondaryPlayerCombatMode = 6;
+						    state.secondaryPlayerCombatModeEndTick = tick + 4;
+					    } else {
+						    state.combatMode = 6;
+						    state.combatModeEndTick = tick + 4;
+					    }
+					    if (projectile.impactLifetime > 0) {
+						projectile.phase = 1;
+						projectile.remainingTicks = static_cast<uint32_t>(projectile.impactLifetime);
+					    } else {
+						iterator = state.projectiles.erase(iterator);
+						removed = true;
+					    }
+					    break;
+					}
 					const int32_t lifeMaximum = secondaryHit
 					    ? state.secondaryPlayerLifeMaximum
 					    : state.lifeMaximum;
@@ -11561,7 +11600,7 @@ void AdvanceReplayStateToTick(
 		AdmitReplayAutonomousMonsterArrow(state, simulationTick);
 		AdvanceReplayHorkSpawnsOneTick(state, simulationTick);
 		AdvanceReplayWeaponArrowsOneTick(state);
-		AdvanceReplayMonsterArrowsOneTick(state);
+		AdvanceReplayMonsterArrowsOneTick(state, simulationTick);
 		AdvanceReplaySnakeChargesOneTick(state, simulationTick);
 		AdvanceReplayPlayerApocalypseOneTick(state);
 		AdvanceReplayPlayerInfernoOneTick(state);

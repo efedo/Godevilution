@@ -12123,6 +12123,29 @@ public sealed class DiabloCombatCommandProcessor
                 projectile.DamageMinimum,
                 projectile.DamageMaximum);
         }
+        var sourceMonster = world.CombatTargets.TryGetValue(
+            projectile.SourceEntityId,
+            out var source)
+            ? source
+            : null;
+        var canBlock = (target.CombatMode is DiabloPlayerCombatMode.Stand
+                or DiabloPlayerCombatMode.Attack)
+            && CanBlock(target);
+        var blockChance = Math.Clamp(
+            target.Attributes.Dexterity.Current
+                + (targetClass?.BaseBlockChance ?? 0)
+                + checked((int)target.CharacterLevel * rules.MonsterPlayerBlockLevelScale)
+                - checked((sourceMonster is null
+                    ? 0
+                    : GetEffectiveMonsterLevel(sourceMonster))
+                    * rules.MonsterPlayerBlockLevelScale),
+            0,
+            100);
+        var blockRoll = canBlock ? random.RandomIntLessThan(100) : 100;
+        if (canBlock && blockRoll < blockChance) {
+            StartBlock(target, targetClass, tick);
+            return true;
+        }
         // Native PlayerMHit applies the target's `_pIGetHit` bonus after the
         // impact-time arrow roll, before resistance reduces the incoming hit.
         damage = AuthoritativeEquipmentIncomingDamageRules.ApplyGetHit(

@@ -4607,6 +4607,95 @@ public sealed class ReplayFixtureTests
     }
 
     [Fact]
+    public void GameplayMonsterArrowPrimaryWarriorBlockChanceMatchesNative()
+    {
+        var fixture = LoadReplayFixture(
+            "gameplay-monster-arrow-primary-warrior-block-chance.json");
+        var initial = fixture.InitialState;
+        var target = new AuthoritativeCombatTarget(
+            initial.CombatTargetEntityId,
+            initial.CombatTargetPositionX,
+            initial.CombatTargetPositionY,
+            initial.CombatTargetHitPoints,
+            maxHitPoints: initial.CombatTargetMaxHitPoints,
+            levelId: initial.CombatTargetLevelId,
+            monsterLevel: initial.CombatTargetMonsterLevel);
+        var definition = Assert.Single(fixture.InitialProjectiles);
+        var projectile = new AuthoritativeProjectile(
+            definition.EntityId,
+            definition.SourceEntityId,
+            definition.TargetEntityId,
+            definition.SpellId,
+            definition.LevelId,
+            definition.PositionX,
+            definition.PositionY,
+            definition.TargetX,
+            definition.TargetY,
+            definition.Damage,
+            (AuthoritativeDamageType)definition.DamageType,
+            definition.AreaRadius,
+            definition.RemainingTicks,
+            allowZeroSpellId: true) {
+            Behavior = (AuthoritativeProjectileBehavior)definition.Behavior,
+            Phase = (AuthoritativeProjectilePhase)definition.Phase,
+            Speed = definition.Speed,
+            ImpactLifetime = definition.ImpactLifetime,
+            DamageMinimum = definition.DamageMinimum,
+            DamageMaximum = definition.DamageMaximum,
+        };
+        var classes = AuthoritativePlayerClassCatalog.LoadTsv(
+            "classes.tsv",
+            File.ReadAllText(Path.Combine(
+                FindRepositoryRoot(),
+                "server",
+                "content",
+                "base",
+                "classes.tsv")));
+        var catalog = new StoreCatalog();
+        catalog.AddStore(1, []);
+        var executor = new StoreSimulationExecutor(
+            catalog,
+            initial.Gold,
+            initial.Experience,
+            initial.Life,
+            initial.Mana,
+            startingLifeMaximum: initial.LifeMaximum,
+            startingAttributes: PlayerAttributesState.Zero with {
+                Dexterity = new PlayerAttributeState(initial.Dexterity, initial.Dexterity),
+            },
+            startingCharacterLevel: initial.CharacterLevel,
+            startingCharacterClassId: checked((uint)initial.CharacterClass),
+            startingPlayerClasses: classes,
+            startingEquipment: initial.Equipment
+                .Select(item => item.ToEquippedStoreItem())
+                .ToArray(),
+            startingPositionX: initial.PositionX,
+            startingPositionY: initial.PositionY,
+            startingLevelId: initial.LevelId,
+            startingCombatTargets: [target],
+            startingProjectiles: [projectile],
+            startingRandomSeed: checked((uint)fixture.RngSeed),
+            startingCombatRules: CreateReplayCombatRules(fixture),
+            gameMode: fixture.GameMode);
+
+        var result = ReplayFixtureExecutor.Execute(
+            fixture,
+            executor,
+            new AuthoritativeCommandServer(executor));
+        var player = Assert.Single(result.FinalSnapshot.Players);
+
+        Assert.Equal(CommandStatus.Accepted, Assert.Single(result.Results).Status);
+        Assert.Equal(100, player.Life);
+        Assert.Equal(6, (int)player.CombatMode);
+        Assert.Equal(6UL, player.CombatModeEndTick);
+        Assert.Empty(result.FinalSnapshot.Projectiles);
+        Assert.Equal(3UL, result.FinalSnapshot.Tick);
+        Assert.Equal(
+            fixture.Checkpoints.Select(checkpoint => checkpoint.StateSha256),
+            result.Checkpoints.Select(checkpoint => checkpoint.ActualStateSha256));
+    }
+
+    [Fact]
     public void GameplayMonsterArrowEtherealizePassThroughMatchesNativeLifecycle()
     {
         var fixture = LoadReplayFixture("gameplay-monster-arrow-etherealized.json");

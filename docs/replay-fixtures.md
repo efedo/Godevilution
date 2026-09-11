@@ -565,7 +565,7 @@ The compact native replay projection now carries the same server-owned corpse
 tile representation and per-tick monster regeneration as the C# checkpoints.
 Ordinary-death and Firebolt, Fireball, Lightning, and Flash
  spell/projectile-timeline checkpoints pass in both runners. As of 2026-09-11,
-the native replay gate contains 341 checked-in JSON fixtures and 350 registered
+the native replay gate contains 342 checked-in JSON fixtures and 351 registered
 tests; the test count also includes parser and validation cases that do not
 introduce another fixture file. Coverage includes seeded and autonomous MonsterArrow
 source coverage, Hellfire HorkDemon Hork Spawn admission, player impact, and
@@ -1264,6 +1264,9 @@ Notable shared fixtures include:
   admission and the Hellfire-only blocked-missile RNG draw;
 - `gameplay-monster-arrow-resolution.json` for seeded MonsterArrow travel,
   player impact damage, impact-phase lifetime, and cross-runner removal parity;
+- `gameplay-monster-arrow-primary-warrior-block-chance.json` for the native
+  class/shield block boundary at MonsterArrow impact, block recovery, and
+  projectile impact-lifetime parity;
 - `gameplay-monster-arrow-etherealized.json` for the native `PlayerMHit`
   protection boundary: an Etherealized player does not consume the arrow,
   which continues through the occupied tile and expires on its normal travel
