@@ -2,6 +2,12 @@
 
 Status date: 2026-09-10
 
+The 13 Hellfire ranged replay fixtures that still carried the pre-`1.502.0`
+composed-pack identity now declare the active normalized base-plus-Hellfire
+manifest hash. Their replay state checkpoints remain unchanged, and the full
+managed `BaseContentReplayTests` class now passes without manifest-admission
+failures.
+
 The cross-runner `gameplay-monster-arrow-etherealized.json` fixture now proves
 the native `PlayerMHit` protection boundary: an Etherealized player does not
 consume a MonsterArrow, and both native and managed runners continue the arrow

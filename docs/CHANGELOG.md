@@ -2,6 +2,11 @@
 
 All notable changes to this fork are documented below.
 
+- Refreshed the 13 Hellfire ranged replay fixtures that still declared the
+  pre-`1.502.0` composed-pack hash. Their manifests now bind to the active
+  normalized base-plus-Hellfire content identity, restoring the complete
+  ranged replay class to green without changing gameplay checkpoints.
+
 - Preserved native melee FireDamage/LightningDamage resolution on physical
   misses with a paired native replay fixture and managed combat test; ranged
   arrows retain their admitted-shot boundary.
