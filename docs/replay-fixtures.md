@@ -387,8 +387,9 @@ from the hash-checked `test/content/replay/counselor` content pack. The Zhar
 and Lazarus fixtures exercise the corresponding native CounselorAi aliases.
 The Lachdanan and FireMan non-combat fixtures reuse the same validated target
 pack while asserting their quest-only and unregistered native identities.
-The three GoatMelee fixtures load their native AiAvoidance and adjacent-attack
-tuning from the hash-checked `test/content/replay/goat-melee` content pack.
+The four GoatMelee fixtures load their native AiAvoidance, adjacent-attack, and
+wounded-special tuning from the hash-checked `test/content/replay/goat-melee`
+content pack.
 The seven Gargoyle fixtures load native safety, healing, avoidance, and
 adjacent-attack tuning from the hash-checked `test/content/replay/gargoyle`
 content pack. The multiplayer Gargoyle fixture also covers nearest-participant
@@ -562,7 +563,7 @@ The compact native replay projection now carries the same server-owned corpse
 tile representation and per-tick monster regeneration as the C# checkpoints.
 Ordinary-death and Firebolt, Fireball, Lightning, and Flash
  spell/projectile-timeline checkpoints pass in both runners. As of 2026-09-11,
-the native replay gate contains 245 checked-in JSON fixtures and 260 registered
+the native replay gate contains 246 checked-in JSON fixtures and 261 registered
 tests; the test count also includes parser and validation cases that do not
 introduce another fixture file. Coverage includes seeded and autonomous MonsterArrow
 source coverage, Hellfire HorkDemon Hork Spawn admission, player impact, and
@@ -671,8 +672,9 @@ Zombie action admission and long-range movement are also covered in both
 runners. Fat/Overlord fresh movement admission, mode, idle counter, and
 occupancy are also covered in both runners. GoatMelee AiAvoidance movement
 admission, deterministic turn ordering, and occupancy are also covered in both
-runners. GoatMelee adjacent attack admission, block timing, and seeded
-AI-stream advancement are also covered in both runners. They are wired to
+runners. GoatMelee adjacent attack admission, wounded-special damage
+selection, block timing, and seeded AI-stream advancement are also covered in
+both runners. They are wired to
 preserve the same
 baseline resources,
 attributes, equipment, belt, inventory footprints, stock, item state, level

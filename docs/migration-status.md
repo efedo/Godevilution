@@ -7,6 +7,10 @@ admission and range movement, seeded post-melee Lightning projectile,
 nearest-secondary routing, Bat movement counters, and short-lived MonsterMagic
 lifecycle in the compact native replay and managed server.
 
+GoatMelee’s wounded multiplayer lane now preserves the validated below-half-
+health special attack, special to-hit and Q6 damage range, and seeded AI-stream
+draw order in the compact native replay and managed server.
+
 Native replay hashing now carries the derived semantic presentation identity
 for quest, breakable, and trap objects, keeping object interaction checkpoints
 aligned with managed authoritative snapshots.

@@ -9720,30 +9720,53 @@ void AdvanceReplayMonsterAttack(
 				}
 		return;
 	}
+	bool usesGoatSpecialAttack = false;
 	if (state.combatTargetNativeAi == "Gargoyle"
 	    || state.combatTargetNativeAi == "GoatMelee"
 	    || state.combatTargetNativeAi == "Gharbad") {
+		const uint32_t attackSeed = static_cast<uint32_t>(tick)
+		    ^ state.combatTargetEntityId
+		    ^ (victim.secondary ? state.secondaryPlayerEntityId : state.entityId);
 		const int attackChance = std::min(
 		    100,
 		    23 + 2 * state.combatTargetIntelligence);
 		const int attackRoll = state.combatTargetMonsterAiSeed != 0
 		    ? std::max(GenerateRnd(state, 100), 0)
-		    : static_cast<int>((static_cast<uint32_t>(tick)
-		        ^ state.combatTargetEntityId
-		        ^ (victim.secondary ? state.secondaryPlayerEntityId : state.entityId))
-		        % 100U);
+		    : static_cast<int>(attackSeed % 100U);
 		if (attackRoll >= attackChance)
 			return;
+		if (state.combatTargetNativeAi == "GoatMelee"
+		    || state.combatTargetNativeAi == "Gharbad") {
+			const bool isWounded = state.combatTargetMaxHitPointsQ6 > 0
+			    && state.combatTargetHitPointsQ6 * 100
+			        < state.combatTargetMaxHitPointsQ6 * 50;
+			const bool hasSpecialAttack = state.combatTargetToHitSpecial > 0
+			    && state.combatTargetMaxDamageSpecial > 0;
+			if (isWounded && hasSpecialAttack) {
+				usesGoatSpecialAttack = state.combatTargetMonsterAiSeed != 0
+				    ? std::max(GenerateRnd(state, 2), 0) == 0
+				    : (attackSeed / 100U) % 2U == 0;
+			}
+		}
 	}
+	const int32_t effectiveToHit = usesGoatSpecialAttack
+	    ? state.combatTargetToHitSpecial
+	    : state.combatTargetToHit;
+	const int32_t effectiveMinimumDamage = usesGoatSpecialAttack
+	    ? state.combatTargetMinDamageSpecial
+	    : state.combatTargetMinDamage;
+	const int32_t effectiveMaximumDamage = usesGoatSpecialAttack
+	    ? state.combatTargetMaxDamageSpecial
+	    : state.combatTargetMaxDamage;
 	const bool usesNativeCombatStream = !state.multiplayer || state.combatTargetMonsterAiSeed != 0;
-	if (usesNativeCombatStream && state.combatTargetToHit > 0) {
+	if (usesNativeCombatStream && effectiveToHit > 0) {
 		const int32_t targetLevel = victim.secondary
 		    ? static_cast<int32_t>(state.secondaryPlayerCharacterLevel)
 		    : static_cast<int32_t>(state.characterLevel);
 		const int32_t hitChance = std::clamp(
 		    std::max(
 		        15,
-		        state.combatTargetToHit
+				effectiveToHit
 		            + 2 * (state.combatTargetMonsterLevel - targetLevel)
 		            + 30),
 		    0,
@@ -9779,14 +9802,14 @@ void AdvanceReplayMonsterAttack(
 				state.combatModeEndTick = tick + 4;
 				if (state.reflectCharges > 0) {
 					--state.reflectCharges;
-					const int32_t minimumDamage = state.combatTargetMinDamage == 0
-					        && state.combatTargetMaxDamage == 0
+					const int32_t minimumDamage = effectiveMinimumDamage == 0
+					        && effectiveMaximumDamage == 0
 					    ? state.combatTargetAttackDamage
-					    : state.combatTargetMinDamage;
-					const int32_t maximumDamage = state.combatTargetMinDamage == 0
-					        && state.combatTargetMaxDamage == 0
+					    : effectiveMinimumDamage;
+					const int32_t maximumDamage = effectiveMinimumDamage == 0
+					        && effectiveMaximumDamage == 0
 					    ? state.combatTargetAttackDamage
-					    : state.combatTargetMaxDamage;
+					    : effectiveMaximumDamage;
 					const int32_t minimumDamageQ6 = minimumDamage * 64;
 					const int32_t maximumDamageQ6 = maximumDamage * 64;
 					const int32_t damageQ6 = minimumDamageQ6 + std::max(
@@ -9812,21 +9835,21 @@ void AdvanceReplayMonsterAttack(
 		// Seeded Skeleton-family MonsterAttack still consumes the native
 		// zero-width damage-range draw when accuracy is omitted.
 		if (state.combatTargetMonsterAiSeed != 0
-		    && state.combatTargetToHit == 0
+		    && effectiveToHit == 0
 		    && (state.combatTargetNativeAi == "SkeletonMelee"
 	            || state.combatTargetNativeAi == "Snotspill"
 	            || state.combatTargetNativeAi == "Warlord"))
 			static_cast<void>(GenerateRnd(state, 1));
 		int32_t damageQ6 = 0;
-		if (usesNativeCombatStream && state.combatTargetToHit > 0) {
-			const int32_t minimumDamage = state.combatTargetMinDamage == 0
-			        && state.combatTargetMaxDamage == 0
+		if (usesNativeCombatStream && effectiveToHit > 0) {
+			const int32_t minimumDamage = effectiveMinimumDamage == 0
+			        && effectiveMaximumDamage == 0
 			    ? std::max(1, state.combatTargetAttackDamage)
-			    : state.combatTargetMinDamage;
-			const int32_t maximumDamage = state.combatTargetMinDamage == 0
-			        && state.combatTargetMaxDamage == 0
+			    : effectiveMinimumDamage;
+			const int32_t maximumDamage = effectiveMinimumDamage == 0
+			        && effectiveMaximumDamage == 0
 			    ? std::max(1, state.combatTargetAttackDamage)
-			    : state.combatTargetMaxDamage;
+			    : effectiveMaximumDamage;
 			const int32_t minimumDamageQ6 = minimumDamage * 64;
 			const int32_t maximumDamageQ6 = maximumDamage * 64;
 			damageQ6 = minimumDamageQ6 + std::max(
@@ -9886,17 +9909,17 @@ void AdvanceReplayMonsterAttack(
 		[](const auto &effect) { return effect.behavior == EtherealizeStatusBehavior; });
 	if (protectedByEtherealize)
 		return;
-	const int32_t minimumDamage = state.combatTargetMinDamage == 0
-	        && state.combatTargetMaxDamage == 0
+	const int32_t minimumDamage = effectiveMinimumDamage == 0
+	        && effectiveMaximumDamage == 0
 	    ? state.combatTargetAttackDamage
-	    : state.combatTargetMinDamage;
-	const int32_t maximumDamage = state.combatTargetMinDamage == 0
-	        && state.combatTargetMaxDamage == 0
+	    : effectiveMinimumDamage;
+	const int32_t maximumDamage = effectiveMinimumDamage == 0
+	        && effectiveMaximumDamage == 0
 	    ? state.combatTargetAttackDamage
-	    : state.combatTargetMaxDamage;
+	    : effectiveMaximumDamage;
 	int32_t damageQ6 = 0;
 	if (maximumDamage >= minimumDamage) {
-		if (usesNativeCombatStream && state.combatTargetToHit > 0) {
+		if (usesNativeCombatStream && effectiveToHit > 0) {
 			const int32_t minimumDamageQ6 = minimumDamage * 64;
 			const int32_t maximumDamageQ6 = maximumDamage * 64;
 			damageQ6 = minimumDamageQ6 + std::max(

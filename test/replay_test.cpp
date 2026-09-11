@@ -6109,6 +6109,51 @@ TEST(ReplayFixture, ExecutesGoatMeleeAttackAgainstCSharpCheckpoint)
 	EXPECT_EQ(ComputeReplayFixtureStateHash(state), fixture.checkpoints.back().stateSha256);
 }
 
+TEST(ReplayFixture, ExecutesGoatMeleeWoundedSpecialAgainstCSharpCheckpoint)
+{
+	std::ifstream file("test/fixtures/replay/gameplay-goat-melee-special.json");
+	ASSERT_TRUE(file.good());
+	const std::string json((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
+	ReplayFixture fixture;
+	std::string error;
+	ASSERT_TRUE(ParseReplayFixture(json, fixture, error)) << error;
+
+	ReplayFixtureExecutionState state;
+	state.life = fixture.initialState.life;
+	state.lifeMaximum = fixture.initialState.lifeMaximum;
+	state.positionX = fixture.initialState.positionX;
+	state.positionY = fixture.initialState.positionY;
+	state.levelId = fixture.initialState.levelId;
+	state.combatTargetEntityId = fixture.initialState.combatTargetEntityId;
+	state.combatTargetLevelId = fixture.initialState.combatTargetLevelId;
+	state.combatTargetPositionX = fixture.initialState.combatTargetPositionX;
+	state.combatTargetPositionY = fixture.initialState.combatTargetPositionY;
+	state.combatTargetHitPoints = fixture.initialState.combatTargetHitPoints;
+	state.combatTargetMaxHitPoints = fixture.initialState.combatTargetMaxHitPoints;
+	state.combatTargetMonsterLevel = fixture.initialState.combatTargetMonsterLevel;
+	state.combatTargetAttackDamage = fixture.initialState.combatTargetAttackDamage;
+	state.combatTargetToHit = fixture.initialState.combatTargetToHit;
+	state.combatTargetToHitSpecial = fixture.initialState.combatTargetToHitSpecial;
+	state.combatTargetMinDamage = fixture.initialState.combatTargetMinDamage;
+	state.combatTargetMaxDamage = fixture.initialState.combatTargetMaxDamage;
+	state.combatTargetMinDamageSpecial = fixture.initialState.combatTargetMinDamageSpecial;
+	state.combatTargetMaxDamageSpecial = fixture.initialState.combatTargetMaxDamageSpecial;
+	state.combatTargetAggroRange = fixture.initialState.combatTargetAggroRange;
+	state.combatTargetNativeAi = fixture.initialState.combatTargetNativeAi;
+	state.combatTargetMonsterId = fixture.initialState.combatTargetMonsterId;
+	state.combatTargetMonsterItemSeed = fixture.initialState.combatTargetMonsterItemSeed;
+	state.combatTargetMonsterAiSeed = fixture.initialState.combatTargetMonsterAiSeed;
+	state.combatTargetIntelligence = fixture.initialState.combatTargetIntelligence;
+
+	ReplayFixtureExecutionResult result;
+	ASSERT_TRUE(ExecuteReplayFixture(fixture, state, result, error)) << error;
+	ASSERT_EQ(result.transitions.size(), 1U);
+	EXPECT_TRUE(result.transitions[0].accepted);
+	EXPECT_EQ(state.secondaryPlayerLife, 95);
+	EXPECT_EQ(state.combatTargetMonsterAiSeed, 1788971303U);
+	EXPECT_EQ(ComputeReplayFixtureStateHash(state), fixture.checkpoints.back().stateSha256);
+}
+
 TEST(ReplayFixture, ExecutesGoatMeleeGetHitEquipmentAgainstCSharpCheckpoint)
 {
 	std::ifstream file("test/fixtures/replay/gameplay-goat-melee-get-hit.json");
