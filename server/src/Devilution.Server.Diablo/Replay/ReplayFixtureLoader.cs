@@ -598,6 +598,7 @@ public static class ReplayFixtureLoader
             StatusDuration = value.TryGetProperty("status_duration", out var statusDuration) ? statusDuration.GetUInt32() : 0,
             StatusMagnitude = value.TryGetProperty("status_magnitude", out var statusMagnitude) ? statusMagnitude.GetInt32() : 0,
             AbilitySpellId = value.TryGetProperty("ability_spell_id", out var abilitySpellId) ? abilitySpellId.GetUInt32() : 0,
+            AbilityKind = ParseAbilityKind(value),
             MemorizedSpells = ParseMemorizedSpells(value),
             Equipment = ParseEquipment(value),
             Belt = ParseBelt(value),
@@ -676,6 +677,32 @@ public static class ReplayFixtureLoader
                 "Replay fixture game_variant must be Diablo or Hellfire.");
         }
         return variant;
+    }
+
+    private static DiabloPlayerAbilityKind ParseAbilityKind(JsonElement value)
+    {
+        if (!value.TryGetProperty("ability_kind", out var abilityKind))
+            return DiabloPlayerAbilityKind.None;
+        DiabloPlayerAbilityKind result;
+        if (abilityKind.ValueKind == JsonValueKind.Number
+            && abilityKind.TryGetUInt32(out var numericKind)) {
+            result = (DiabloPlayerAbilityKind)numericKind;
+        } else if (abilityKind.ValueKind == JsonValueKind.String
+            && Enum.TryParse<DiabloPlayerAbilityKind>(
+                abilityKind.GetString(),
+                ignoreCase: false,
+                out var parsedKind)
+            && Enum.GetName(parsedKind) == abilityKind.GetString()) {
+            result = parsedKind;
+        } else {
+            throw new InvalidDataException(
+                "Replay fixture ability_kind must be a valid semantic class-skill role.");
+        }
+        if (!Enum.IsDefined(result)) {
+            throw new InvalidDataException(
+                "Replay fixture ability_kind must be a valid semantic class-skill role.");
+        }
+        return result;
     }
 
     private static DiabloGameMode ParseGameMode(JsonElement root)

@@ -296,6 +296,7 @@ struct ReplayFixtureInitialState {
 	uint32_t statusDuration = 0;
 	int32_t statusMagnitude = 0;
 	uint32_t abilitySpellId = 0;
+	uint32_t abilityKind = 0;
 	bool manaShieldActive = false;
 	uint32_t reflectCharges = 0;
 	uint32_t combatMode = 0;
@@ -574,6 +575,7 @@ struct ReplayFixtureExecutionState {
 	bool suppressMultiplayerDeathDrops = false;
 	uint32_t characterClassId = 0;
 	uint32_t abilitySpellId = 0;
+	uint32_t abilityKind = 0;
 	bool manaShieldActive = false;
 	uint32_t reflectCharges = 0;
 	std::vector<ReplayFixtureMemorizedSpell> memorizedSpells;

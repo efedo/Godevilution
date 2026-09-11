@@ -468,6 +468,9 @@ public sealed record ReplayInitialState(string Player, uint Gold, uint Experienc
 
     public uint AbilitySpellId { get; init; }
 
+    /** Optional semantic class-skill role mirrored by PlayerSnapshot. */
+    public DiabloPlayerAbilityKind AbilityKind { get; init; }
+
     public IReadOnlyList<ReplayMemorizedSpell> MemorizedSpells { get; init; } = [];
 
     public IReadOnlyList<ReplayEquippedItem> Equipment { get; init; } = [];

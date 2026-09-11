@@ -600,6 +600,9 @@ public sealed class SnapshotStateHasherTests
         Assert.NotEqual(
             SnapshotStateHasher.Compute(unspecified),
             SnapshotStateHasher.Compute(semanticRole));
+        Assert.Equal(
+            "ae9745f8daf52f3d0d2ef7a8e8da5feb49f8ce4e0b0a859ad02542b8fbccbeae",
+            SnapshotStateHasher.Compute(semanticRole));
     }
 
     [Fact]

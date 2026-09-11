@@ -446,9 +446,13 @@ void AppendCanonicalState(ReplayStateHasher &hasher, const ReplayFixtureExecutio
 			return left.spellId < right.spellId;
 		return left.level < right.level;
 	});
-	if (state.abilitySpellId != 0 || !memorizedSpells.empty()) {
+	if (state.abilitySpellId != 0 || state.abilityKind != 0 || !memorizedSpells.empty()) {
 		hasher.AppendString("godevilution-player-spells-v1");
 		hasher.AppendUint32(state.abilitySpellId);
+		if (state.abilityKind != 0) {
+			hasher.AppendString("godevilution-player-ability-kind-v1");
+			hasher.AppendInt32(static_cast<int32_t>(state.abilityKind));
+		}
 		hasher.AppendUint64(memorizedSpells.size());
 		for (const auto &spell : memorizedSpells) {
 			hasher.AppendUint32(spell.spellId);
@@ -11682,6 +11686,8 @@ private:
 				return ParseSigned(fixture_.initialState.statusMagnitude);
 			if (key == "ability_spell_id")
 				return ParseUnsigned(fixture_.initialState.abilitySpellId);
+			if (key == "ability_kind")
+				return ParseUnsigned(fixture_.initialState.abilityKind);
 			if (key == "memorized_spells")
 				return ParseMemorizedSpells(fixture_.initialState.memorizedSpells);
 			if (key == "equipment")
@@ -12476,6 +12482,10 @@ bool ParseReplayFixture(std::string_view json, ReplayFixture &fixture, std::stri
 		error = "Replay fixture contains invalid initial player facing.";
 		return false;
 	}
+	if (fixture.initialState.abilityKind > 6) {
+		error = "Replay fixture contains invalid initial player ability kind.";
+		return false;
+	}
 	if ((fixture.initialState.objectBreakable && fixture.initialState.objectMissilePassable)
 	    || (fixture.initialState.objectDestroyed && !fixture.initialState.objectBreakable)
 	    || (fixture.initialState.objectEntityId == 0
@@ -13200,6 +13210,7 @@ bool ExecuteReplayFixture(
 	state.warpTargetX = fixture.initialState.warpTargetX;
 	state.warpTargetY = fixture.initialState.warpTargetY;
 	state.manaShieldActive = fixture.initialState.manaShieldActive;
+	state.abilityKind = fixture.initialState.abilityKind;
 	if (fixture.initialState.reflectCharges > std::numeric_limits<uint16_t>::max()) {
 		error = "Replay fixture Reflect charges must fit the native uint16 range.";
 		return false;

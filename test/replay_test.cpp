@@ -191,6 +191,14 @@ TEST(ReplayFixtureStateHasher, PlayerSpellKnowledgeMatchesCSharpGolden)
 	EXPECT_EQ(ComputeReplayFixtureStateHash(state), "55df082b2fffc775c1768adf67ce55dabaa2fa0cd811ce270fb1ddda0fad178e");
 }
 
+TEST(ReplayFixtureStateHasher, PlayerAbilityKindMatchesCSharpGolden)
+{
+	ReplayFixtureExecutionState state;
+	state.abilityKind = 1;
+
+	EXPECT_EQ(ComputeReplayFixtureStateHash(state), "ae9745f8daf52f3d0d2ef7a8e8da5feb49f8ce4e0b0a859ad02542b8fbccbeae");
+}
+
 TEST(ReplayFixtureStateHasher, PlayerCombatModeMatchesCSharpGolden)
 {
 	ReplayFixtureExecutionState state;
@@ -375,6 +383,35 @@ TEST(ReplayFixture, ParsesAndHashesInitialStoreState)
 	AppendReplayPlayerState(state, 0, player);
 	AppendReplayStoreState(state, store);
 	EXPECT_EQ(fixture.initialStateSha256, state.HexDigest());
+}
+
+TEST(ReplayFixture, ParsesSemanticAbilityKind)
+{
+	constexpr std::string_view Fixture = R"({
+  "initial_state": {
+    "player": "A",
+    "gold": 0,
+    "experience": 0,
+    "life": 1,
+    "mana": 1,
+    "ability_kind": 1
+  },
+  "commands": [
+    {
+      "client_sequence": 1,
+      "target_tick": 0,
+      "server_receipt_sequence": 1,
+      "kind": "Move",
+      "payload": { "direction_x": 0, "direction_y": 0 }
+    }
+  ],
+  "checkpoints": []
+})";
+
+	ReplayFixture fixture;
+	std::string error;
+	ASSERT_TRUE(ParseReplayFixture(Fixture, fixture, error)) << error;
+	EXPECT_EQ(fixture.initialState.abilityKind, 1U);
 }
 
 TEST(ReplayFixture, ParsesStructuredManifestCheckpointAndStorePayloads)

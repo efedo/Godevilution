@@ -121,7 +121,8 @@ public sealed class StoreSimulationExecutor : IAuthoritativeGameHostAdapter
         uint startingStatPoints = 0,
         IReadOnlyList<StashStoreItem>? startingStash = null,
         uint startingStashGold = 0,
-        AuthoritativeMonsterSpawnPlanner? startingMonsterSpawnPlanner = null)
+        AuthoritativeMonsterSpawnPlanner? startingMonsterSpawnPlanner = null,
+        DiabloPlayerAbilityKind startingAbilityKind = DiabloPlayerAbilityKind.None)
     {
         ArgumentNullException.ThrowIfNull(catalog);
         var storeRules = diabloRules ?? (gameplayRules switch {
@@ -181,6 +182,7 @@ public sealed class StoreSimulationExecutor : IAuthoritativeGameHostAdapter
             startingInventory,
             startingAbilitySpellId,
             startingMemorizedSpells,
+            abilityKind: startingAbilityKind,
             heldItem: startingHeldItem,
             facingDirection: startingFacingDirection,
             characterName: startingCharacterName,

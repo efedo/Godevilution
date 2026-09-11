@@ -2,6 +2,11 @@
 
 Status date: 2026-09-10
 
+Replay fixture state now carries the semantic class-skill role through both
+native and managed loaders, participant initialization, and canonical hashes.
+The role-only golden keeps C++ and C# checkpoint hashing aligned even when no
+ability spell ID is present.
+
 Canonical player hashing now covers a specified semantic class-skill role even
 when a compatibility projection has no ability spell ID or learned-spell list.
 The all-unspecified spell projection retains its legacy hash, while malformed

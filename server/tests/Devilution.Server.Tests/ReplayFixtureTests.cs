@@ -95,6 +95,58 @@ public sealed class ReplayFixtureTests
     }
 
     [Fact]
+    public void ReplayFixtureCarriesSemanticAbilityKindIntoTheInitialSnapshot()
+    {
+        const string json = """
+            {
+              "format_version": 1,
+              "fixture_id": "gameplay/ability-kind",
+              "protocol_schema_version": "0.1.0",
+              "tick_rate_hz": 20,
+              "rng_seed": 1,
+              "initial_state": {
+                "player": "A",
+                "gold": 0,
+                "experience": 0,
+                "life": 1,
+                "mana": 1,
+                "ability_kind": 1
+              },
+              "commands": [{
+                "client_sequence": 1,
+                "target_tick": 0,
+                "server_receipt_sequence": 1,
+                "kind": "Move",
+                "payload": {
+                  "direction_x": 0,
+                  "direction_y": 0
+                }
+              }],
+              "checkpoints": []
+            }
+            """;
+
+        var fixture = ReplayFixtureLoader.Load(json);
+        Assert.Equal(DiabloPlayerAbilityKind.Repair, fixture.InitialState.AbilityKind);
+
+        var executor = new StoreSimulationExecutor(
+            new StoreCatalog(),
+            startingGold: 0,
+            startingLife: 1,
+            startingMana: 1,
+            startingAbilityKind: fixture.InitialState.AbilityKind,
+            startingRandomSeed: checked((uint)fixture.RngSeed));
+        var result = ReplayFixtureExecutor.Execute(
+            fixture,
+            executor,
+            new AuthoritativeCommandServer(executor));
+
+        Assert.Equal(
+            PlayerAbilityKind.Repair,
+            Assert.Single(result.InitialSnapshot.Players).AbilityKind);
+    }
+
+    [Fact]
     public void BasicBuyFixtureLoadsAndSortsByAuthoritativeOrder()
     {
         var fixture = LoadFixture();

@@ -2,6 +2,10 @@
 
 All notable changes to this fork are documented below.
 
+- Shared replay fixtures now carry the semantic class-skill role through the
+  C++ and C# loaders, initial participant state, and canonical checkpoint hash,
+  including role-only states without a spell identity.
+
 - Canonical player hashing now includes a specified semantic class-skill role
   even when a compatibility projection has no ability spell ID or learned
   spells, while preserving the legacy hash for entirely unspecified spell

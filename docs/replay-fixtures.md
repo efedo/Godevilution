@@ -44,10 +44,11 @@ This includes deferred native attack damage draws. Object effect, trap, and
 quest-progress extensions, plus quest log/native metadata, use the same
 optional tagged fields in both projections.
 
-Gameplay initial state may declare `ability_spell_id` and a unique
-`memorized_spells` array of native-bounded spell IDs and nonzero levels. Both
-runners use that ownership state when admitting casts, and include nonempty
-spell knowledge in the same tagged canonical-hash extension used by snapshots.
+Gameplay initial state may declare `ability_spell_id`, the optional semantic
+`ability_kind` numeric role, and a unique `memorized_spells` array of native-bounded
+spell IDs and nonzero levels. Both runners use that ownership state when
+admitting casts, and include a specified ability role or nonempty spell
+knowledge in the same tagged canonical-hash extension used by snapshots.
 An optional `equipment` array carries protocol-shaped slot, item seed, native
 item index, type/class, optional native `equip_location` (where `2` denotes a
 two-handed item), value, identified value, flags, and usability state. Both
