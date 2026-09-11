@@ -301,6 +301,7 @@
     <None Include="../../../test/fixtures/replay/gameplay-torchant-multiplayer-secondary-miss.json" Link="Fixtures/gameplay-torchant-multiplayer-secondary-miss.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-torchant-multiplayer-target.json" Link="Fixtures/gameplay-torchant-multiplayer-target.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-magma-multiplayer-target.json" Link="Fixtures/gameplay-magma-multiplayer-target.json" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="../../../test/fixtures/replay/gameplay-magma-autonomous-multiplayer.json" Link="Fixtures/gameplay-magma-autonomous-multiplayer.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-magma-multiplayer-secondary-impact.json" Link="Fixtures/gameplay-magma-multiplayer-secondary-impact.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-storm-multiplayer-target.json" Link="Fixtures/gameplay-storm-multiplayer-target.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-monster-magic-autonomous.json" Link="Fixtures/gameplay-monster-magic-autonomous.json" CopyToOutputDirectory="PreserveNewest" />

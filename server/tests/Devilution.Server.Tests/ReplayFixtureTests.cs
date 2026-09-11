@@ -9834,6 +9834,29 @@ public sealed class ReplayFixtureTests
     }
 
     [Fact]
+    public void GameplayMagmaMonsterMagicAutonomousMultiplayerMatchesNativeLifecycle()
+    {
+        var fixture = LoadReplayFixture("gameplay-magma-autonomous-multiplayer.json");
+        var secondary = Assert.IsType<ReplaySecondaryPlayer>(fixture.InitialState.SecondaryPlayer);
+        var executor = CreateMonsterMagicExecutor(fixture, "monster-magma");
+
+        var result = ReplayFixtureExecutor.Execute(
+            fixture,
+            executor,
+            new AuthoritativeCommandServer(executor));
+        var primary = Assert.Single(result.FinalSnapshot.Players, player => player.EntityId == 1);
+        var secondaryState = executor.GetPlayerState(secondary.Player);
+
+        Assert.Equal(CommandStatus.Accepted, Assert.Single(result.Results).Status);
+        Assert.Equal(100, primary.Life);
+        Assert.Equal(0, secondaryState.Life);
+        Assert.Equal(2UL, result.FinalSnapshot.Tick);
+        Assert.Equal(
+            fixture.Checkpoints.Select(checkpoint => checkpoint.StateSha256),
+            result.Checkpoints.Select(checkpoint => checkpoint.ActualStateSha256));
+    }
+
+    [Fact]
     public void GameplayArchLichMonsterMagicAutonomousMultiplayerMatchesNativeLifecycle()
     {
         var fixture = LoadReplayFixture("gameplay-monster-magic-arch-lich-autonomous-multiplayer.json");
@@ -11218,7 +11241,9 @@ public sealed class ReplayFixtureTests
             gameMode: fixture.GameMode);
     }
 
-    private static StoreSimulationExecutor CreateMonsterMagicExecutor(ReplayFixture fixture)
+    private static StoreSimulationExecutor CreateMonsterMagicExecutor(
+        ReplayFixture fixture,
+        string missilePackDirectory = "monster-magic")
     {
         var initial = fixture.InitialState;
         var target = new AuthoritativeCombatTarget(
@@ -11240,7 +11265,7 @@ public sealed class ReplayFixtureTests
             rangedDelayTicks: initial.CombatTargetRangedDelayTicks,
             skeletonRangedMovementIdleTicks: initial.CombatTargetSkeletonRangedMovementIdleTicks,
             skeletonRangedMovementMode: initial.CombatTargetSkeletonRangedMovementMode);
-        var missiles = LoadReplayMonsterMissiles(fixture, "monster-magic");
+        var missiles = LoadReplayMonsterMissiles(fixture, missilePackDirectory);
         var classes = AuthoritativePlayerClassCatalog.LoadTsv(
             "classes.tsv",
             File.ReadAllText(Path.Combine(FindRepositoryRoot(), "server", "content", "base", "classes.tsv")));

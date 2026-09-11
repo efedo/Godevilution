@@ -2,6 +2,10 @@
 
 All notable changes to this fork are documented below.
 
+- Added autonomous multiplayer Magma MonsterMagic coverage. Native and managed
+  Hellfire runners now preserve the MagmaBall admission, secondary impact, and
+  two-tick lethal lifecycle through the shared authoritative path.
+
 - Added seeded ArchLich autonomous multiplayer MonsterMagic coverage. The
   native and managed alias paths now preserve secondary-target routing,
   impact timing, and the canonical projectile checkpoint hash.

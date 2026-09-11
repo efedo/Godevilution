@@ -2,6 +2,10 @@
 
 Status date: 2026-09-11
 
+Magma’s autonomous Hellfire MonsterMagic lane now preserves MagmaBall admission,
+secondary impact, and the two-tick lethal lifecycle in the compact native replay
+and managed server.
+
 ArchLich’s seeded autonomous MonsterMagic alias now preserves secondary-target
 routing, 27-tick impact timing, and the canonical projectile hash in the compact
 native replay and managed server.
