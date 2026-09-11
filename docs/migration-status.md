@@ -1153,7 +1153,9 @@ Gharbad now has two-participant replay coverage through the shared GoatMelee/
 AiAvoidance compatibility path. Native and managed runners preserve the
 authored Gharbad identity, select the nearest live participant, and agree on
 the deterministic movement checkpoints. External Gharbad rows also accept the
-same validated avoidance-delay tuning as GoatMelee and Gargoyle.
+same validated avoidance-delay tuning as GoatMelee and Gargoyle. The shared
+autonomous melee fixture now also covers adjacent damage to the nearer
+secondary participant while preserving the farther primary participant.
 
 Zhar and Lazarus now share two-participant replay coverage through the native
 CounselorAi compatibility path. Native and managed runners preserve their
