@@ -251,6 +251,8 @@ struct ReplayFixtureInitialState {
 	int32_t combatTargetIntelligence = 0;
 	int32_t combatTargetFallenStandAnimationFrame = 0;
 	int32_t combatTargetFallenStandAnimationTick = 0;
+	int32_t combatTargetFallenFearTicks = 0;
+	int32_t combatTargetFallenFearDirection = 0;
 	int32_t combatTargetFallenRallyTicks = 0;
 	int32_t combatTargetActiveForTicks = 0;
 	bool combatTargetGargoyleSpecialActive = false;
@@ -663,6 +665,8 @@ struct ReplayFixtureExecutionState {
 	int32_t combatTargetIntelligence = 0;
 	int32_t combatTargetFallenStandAnimationFrame = 0;
 	int32_t combatTargetFallenStandAnimationTick = 0;
+	int32_t combatTargetFallenFearTicks = 0;
+	int32_t combatTargetFallenFearDirection = 0;
 	int32_t combatTargetFallenRallyTicks = 0;
 	int32_t combatTargetActiveForTicks = 0;
 	bool combatTargetGargoyleSpecialActive = false;

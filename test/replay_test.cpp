@@ -5355,6 +5355,72 @@ TEST(ReplayFixture, ExecutesFallenRallyAdmissionAgainstCSharpCheckpoint)
 	EXPECT_EQ(ComputeReplayFixtureStateHash(state), fixture.checkpoints.back().stateSha256);
 }
 
+TEST(ReplayFixture, ExecutesFallenFearRandomWalkAgainstCSharpCheckpoint)
+{
+	std::ifstream file("test/fixtures/replay/gameplay-fallen-fear.json");
+	ASSERT_TRUE(file.good());
+	const std::string json((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
+	ReplayFixture fixture;
+	std::string error;
+	ASSERT_TRUE(ParseReplayFixture(json, fixture, error)) << error;
+
+	ReplayFixtureExecutionState state;
+	state.life = fixture.initialState.life;
+	state.lifeMaximum = fixture.initialState.lifeMaximum;
+	state.positionX = fixture.initialState.positionX;
+	state.positionY = fixture.initialState.positionY;
+	state.levelId = fixture.initialState.levelId;
+	state.combatTargetEntityId = fixture.initialState.combatTargetEntityId;
+	state.combatTargetLevelId = fixture.initialState.combatTargetLevelId;
+	state.combatTargetPositionX = fixture.initialState.combatTargetPositionX;
+	state.combatTargetPositionY = fixture.initialState.combatTargetPositionY;
+	state.combatTargetHitPoints = fixture.initialState.combatTargetHitPoints;
+	state.combatTargetMaxHitPoints = fixture.initialState.combatTargetMaxHitPoints;
+	state.combatTargetHitPointsQ6 = state.combatTargetHitPoints * 64;
+	state.combatTargetMaxHitPointsQ6 = state.combatTargetMaxHitPoints * 64;
+	state.combatTargetMonsterId = fixture.initialState.combatTargetMonsterId;
+	state.combatTargetMonsterLevel = fixture.initialState.combatTargetMonsterLevel;
+	state.combatTargetNativeAi = fixture.initialState.combatTargetNativeAi;
+	state.combatTargetFallenFearTicks = fixture.initialState.combatTargetFallenFearTicks;
+	state.combatTargetFallenFearDirection = fixture.initialState.combatTargetFallenFearDirection;
+
+	ReplayFixtureExecutionResult result;
+	ASSERT_TRUE(ExecuteReplayFixture(fixture, state, result, error)) << error;
+	ASSERT_EQ(result.transitions.size(), 1U);
+	EXPECT_TRUE(result.transitions[0].accepted);
+	EXPECT_EQ(state.lastAppliedTick, 1U);
+	EXPECT_EQ(state.combatTargetFallenFearTicks, 0);
+	EXPECT_TRUE(state.combatTargetMoving);
+	EXPECT_EQ(state.combatTargetFuturePositionX, 5);
+	EXPECT_EQ(state.combatTargetFuturePositionY, 2);
+	EXPECT_EQ(state.combatTargetDirection, 7);
+	EXPECT_EQ(ComputeReplayFixtureStateHash(state), fixture.checkpoints.back().stateSha256);
+}
+
+TEST(ReplayFixture, RejectsInvalidFallenFearState)
+{
+	std::ifstream file("test/fixtures/replay/gameplay-fallen-fear.json");
+	ASSERT_TRUE(file.good());
+	const std::string source((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
+	const std::vector<std::tuple<std::string, std::string>> mutations {
+	    { "\"combat_target_fallen_fear_ticks\": 1", "\"combat_target_fallen_fear_ticks\": 1025" },
+	    { "\"combat_target_fallen_fear_direction\": 7", "\"combat_target_fallen_fear_direction\": 8" },
+	};
+
+	for (const auto &[valid, invalid] : mutations) {
+		SCOPED_TRACE(valid);
+		std::string json = source;
+		const size_t position = json.find(valid);
+		ASSERT_NE(position, std::string::npos);
+		json.replace(position, valid.size(), invalid);
+
+		ReplayFixture fixture;
+		std::string error;
+		EXPECT_FALSE(ParseReplayFixture(json, fixture, error));
+		EXPECT_EQ(error, "Replay fixture contains invalid combat-target occupancy state.");
+	}
+}
+
 TEST(ReplayFixture, ExecutesFallenRallyPursuitAgainstCSharpCheckpoint)
 {
 	std::ifstream file("test/fixtures/replay/gameplay-fallen-rally-pursuit.json");

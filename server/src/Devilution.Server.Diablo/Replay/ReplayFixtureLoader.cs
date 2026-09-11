@@ -160,6 +160,8 @@ public static class ReplayFixtureLoader
                     || initialTarget.CombatTargetIntelligence != 0
                     || initialTarget.CombatTargetFallenStandAnimationFrame != 0
                     || initialTarget.CombatTargetFallenStandAnimationTick != 0
+                    || initialTarget.CombatTargetFallenFearTicks != 0
+                    || initialTarget.CombatTargetFallenFearDirection != 0
                     || initialTarget.CombatTargetFallenRallyTicks != 0
                     || initialTarget.CombatTargetActiveForTicks != 0
                     || initialTarget.CombatTargetGargoyleSpecialActive
@@ -212,6 +214,8 @@ public static class ReplayFixtureLoader
             || initialTarget.CombatTargetIntelligence is < 0 or > MaximumNativeMonsterIntelligence
             || initialTarget.CombatTargetFallenStandAnimationFrame is < 0 or > MaximumNativeMonsterFallenStandAnimationFrame
             || initialTarget.CombatTargetFallenStandAnimationTick is < 0 or > MaximumNativeMonsterFallenStandAnimationTick
+            || initialTarget.CombatTargetFallenFearTicks is < 0 or > MaximumNativeMonsterAiTimerTicks
+            || initialTarget.CombatTargetFallenFearDirection is < 0 or > MaximumNativeMonsterDirection
             || initialTarget.CombatTargetFallenRallyTicks is < 0 or > MaximumNativeMonsterFallenRallyTicks
             || initialTarget.CombatTargetActiveForTicks is < 0 or > MaximumNativeMonsterActiveTicks
             || initialTarget.CombatTargetHorkDemonDelayTicks is < 0 or > MaximumNativeMonsterAiTimerTicks
@@ -511,6 +515,12 @@ public static class ReplayFixtureLoader
             CombatTargetFallenStandAnimationTick = GetOptionalInt(
                 value,
                 "combat_target_fallen_stand_animation_tick"),
+            CombatTargetFallenFearTicks = GetOptionalInt(
+                value,
+                "combat_target_fallen_fear_ticks"),
+            CombatTargetFallenFearDirection = GetOptionalInt(
+                value,
+                "combat_target_fallen_fear_direction"),
             CombatTargetFallenRallyTicks = GetOptionalInt(
                 value,
                 "combat_target_fallen_rally_ticks"),

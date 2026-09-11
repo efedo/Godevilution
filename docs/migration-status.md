@@ -15,6 +15,11 @@ Replay fixture monster projections now also retain an authored initial Berserk
 state in the managed loader, matching the native parser and rejecting the same
 zero-target occupancy shape before execution.
 
+Replay fixtures now carry Fallen fear countdown and RandomWalk direction through
+the native and managed loaders, canonical state hash, and tick executor. The
+new seeded fear fixture proves identical side-pair RNG consumption, bounded
+future occupancy, countdown decrement, and fail-closed bounds at both runners.
+
 Replay fixture state now carries the semantic class-skill role through both
 native and managed loaders, participant initialization, and canonical hashes.
 The role-only golden keeps C++ and C# checkpoint hashing aligned even when no

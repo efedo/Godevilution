@@ -701,6 +701,12 @@ void AppendCanonicalState(ReplayStateHasher &hasher, const ReplayFixtureExecutio
 			hasher.AppendString("godevilution-monster-gargoyle-special-v1");
 			hasher.AppendBool(true);
 		}
+		if (state.combatTargetFallenFearTicks != 0
+		    || state.combatTargetFallenFearDirection != 0) {
+			hasher.AppendString("godevilution-monster-fallen-fear-v1");
+			hasher.AppendInt32(state.combatTargetFallenFearTicks);
+			hasher.AppendInt32(state.combatTargetFallenFearDirection);
+		}
 		if (state.combatTargetFallenStandAnimationFrame != 0
 		    || state.combatTargetFallenStandAnimationTick != 0
 		    || state.combatTargetFallenRallyTicks != 0) {
@@ -4531,6 +4537,42 @@ void AdvanceReplayFallenRallyPursuit(ReplayFixtureExecutionState &state)
 		}
 	}
 	--state.combatTargetFallenRallyTicks;
+}
+
+/** Advances the native Fallen RandomWalk branch while fear is active. */
+void AdvanceReplayFallenFear(ReplayFixtureExecutionState &state)
+{
+	if (state.combatTargetNativeAi != "Fallen"
+	    || state.combatTargetFallenFearTicks == 0
+	    || state.combatTargetHitPointsQ6 <= 0)
+		return;
+	const int32_t firstTurn = GenerateRnd(state, 2) == 0 ? 1 : -1;
+	const int32_t secondTurn = GenerateRnd(state, 2) == 0 ? 2 : -2;
+	const int32_t candidateDirections[] = {
+		state.combatTargetFallenFearDirection,
+		(state.combatTargetFallenFearDirection + firstTurn + 8) % 8,
+		(state.combatTargetFallenFearDirection - firstTurn + 8) % 8,
+		(state.combatTargetFallenFearDirection + secondTurn + 8) % 8,
+		(state.combatTargetFallenFearDirection - secondTurn + 8) % 8,
+	};
+	for (const int32_t candidateDirection : candidateDirections) {
+		const auto displacement = DirectionDisplacements[candidateDirection];
+		const int32_t candidateX = state.combatTargetPositionX + displacement.first;
+		const int32_t candidateY = state.combatTargetPositionY + displacement.second;
+		if (candidateX < 0 || candidateX >= 40
+		    || candidateY < 0 || candidateY >= 40
+		    || (candidateX == state.positionX && candidateY == state.positionY)
+		    || (state.secondaryPlayerEntityId != 0
+		        && candidateX == state.secondaryPlayerPositionX
+		        && candidateY == state.secondaryPlayerPositionY))
+			continue;
+		state.combatTargetMoving = true;
+		state.combatTargetFuturePositionX = candidateX;
+		state.combatTargetFuturePositionY = candidateY;
+		state.combatTargetDirection = candidateDirection;
+		break;
+	}
+	--state.combatTargetFallenFearTicks;
 }
 
 /** Advances the bounded companion projection used by the rally propagation fixture. */
@@ -11098,6 +11140,7 @@ void AdvanceReplayStateToTick(
 		}),
 		    state.statusEffects.end());
 		AdvanceReplayMonsterRegeneration(state);
+		AdvanceReplayFallenFear(state);
 		const int32_t rallyTicksBefore = state.combatTargetFallenRallyTicks;
 		if (!AdvanceReplayFallenStandAnimation(state))
 			AdvanceReplayFallenRallyPursuit(state);
@@ -11577,6 +11620,10 @@ private:
 				return ParseSigned(fixture_.initialState.combatTargetFallenStandAnimationFrame);
 			if (key == "combat_target_fallen_stand_animation_tick")
 				return ParseSigned(fixture_.initialState.combatTargetFallenStandAnimationTick);
+			if (key == "combat_target_fallen_fear_ticks")
+				return ParseSigned(fixture_.initialState.combatTargetFallenFearTicks);
+			if (key == "combat_target_fallen_fear_direction")
+				return ParseSigned(fixture_.initialState.combatTargetFallenFearDirection);
 			if (key == "combat_target_fallen_rally_ticks")
 				return ParseSigned(fixture_.initialState.combatTargetFallenRallyTicks);
 			if (key == "combat_target_active_for_ticks")
@@ -12559,8 +12606,10 @@ bool ParseReplayFixture(std::string_view json, ReplayFixture &fixture, std::stri
 			|| target.combatTargetMaxDamage != 0
 		    || target.combatTargetBerserked
 			|| target.combatTargetIntelligence != 0
-			|| target.combatTargetFallenStandAnimationFrame != 0
+		    || target.combatTargetFallenStandAnimationFrame != 0
 		    || target.combatTargetFallenStandAnimationTick != 0
+		    || target.combatTargetFallenFearTicks != 0
+		    || target.combatTargetFallenFearDirection != 0
 		    || target.combatTargetFallenRallyTicks != 0
 		    || target.combatTargetActiveForTicks != 0
 			|| target.combatTargetGargoyleSpecialActive
@@ -12655,6 +12704,10 @@ bool ParseReplayFixture(std::string_view json, ReplayFixture &fixture, std::stri
 		|| target.combatTargetFallenStandAnimationFrame > 127
 		|| target.combatTargetFallenStandAnimationTick < 0
 		|| target.combatTargetFallenStandAnimationTick > 127
+		|| target.combatTargetFallenFearTicks < 0
+		|| target.combatTargetFallenFearTicks > 1024
+		|| target.combatTargetFallenFearDirection < 0
+		|| target.combatTargetFallenFearDirection > 7
 	    || target.combatTargetFallenRallyTicks < 0
 	    || target.combatTargetFallenRallyTicks > 4096
 	    || target.combatTargetActiveForTicks < 0
@@ -13472,6 +13525,8 @@ bool ExecuteReplayFixture(
 		state.combatTargetIntelligence = fixture.initialState.combatTargetIntelligence;
 		state.combatTargetFallenStandAnimationFrame = fixture.initialState.combatTargetFallenStandAnimationFrame;
 		state.combatTargetFallenStandAnimationTick = fixture.initialState.combatTargetFallenStandAnimationTick;
+		state.combatTargetFallenFearTicks = fixture.initialState.combatTargetFallenFearTicks;
+		state.combatTargetFallenFearDirection = fixture.initialState.combatTargetFallenFearDirection;
 		state.combatTargetFallenRallyTicks = fixture.initialState.combatTargetFallenRallyTicks;
 		state.combatTargetActiveForTicks = fixture.initialState.combatTargetActiveForTicks;
 		state.combatTargetGargoyleSpecialActive = fixture.initialState.combatTargetGargoyleSpecialActive;

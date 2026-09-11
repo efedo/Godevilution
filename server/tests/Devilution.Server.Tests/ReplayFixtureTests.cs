@@ -2901,6 +2901,69 @@ public sealed class ReplayFixtureTests
     }
 
     [Fact]
+    public void GameplayFallenFearRandomWalkMatchesNativeCheckpoint()
+    {
+        var fixture = LoadReplayFixture("gameplay-fallen-fear.json");
+        var initial = fixture.InitialState;
+        var target = new AuthoritativeCombatTarget(
+            initial.CombatTargetEntityId,
+            initial.CombatTargetPositionX,
+            initial.CombatTargetPositionY,
+            initial.CombatTargetHitPoints,
+            maxHitPoints: initial.CombatTargetMaxHitPoints,
+            levelId: initial.CombatTargetLevelId,
+            monsterId: initial.CombatTargetMonsterId,
+            monsterLevel: initial.CombatTargetMonsterLevel,
+            nativeAi: initial.CombatTargetNativeAi,
+            fallenFearTicks: initial.CombatTargetFallenFearTicks,
+            fallenFearDirection: initial.CombatTargetFallenFearDirection);
+        var executor = new StoreSimulationExecutor(
+            new StoreCatalog(),
+            initial.Gold,
+            initial.Experience,
+            initial.Life,
+            initial.Mana,
+            startingLifeMaximum: initial.LifeMaximum,
+            startingPositionX: initial.PositionX,
+            startingPositionY: initial.PositionY,
+            startingLevelId: initial.LevelId,
+            startingCombatTargets: [target],
+            startingRandomSeed: checked((uint)fixture.RngSeed),
+            gameMode: fixture.GameMode);
+
+        var result = ReplayFixtureExecutor.Execute(
+            fixture,
+            executor,
+            new AuthoritativeCommandServer(executor));
+
+        var monster = Assert.Single(result.FinalSnapshot.Monsters);
+        Assert.Equal(CommandStatus.Accepted, Assert.Single(result.Results).Status);
+        Assert.Equal(0, monster.FallenFearTicks);
+        Assert.True(monster.Moving);
+        Assert.Equal((5, 2), (monster.FuturePositionX, monster.FuturePositionY));
+        Assert.Equal(7, monster.FallenFearDirection);
+        Assert.Equal(
+            fixture.Checkpoints.Select(checkpoint => checkpoint.StateSha256),
+            result.Checkpoints.Select(checkpoint => checkpoint.ActualStateSha256));
+    }
+
+    [Theory]
+    [InlineData("\"combat_target_fallen_fear_ticks\": 1", "\"combat_target_fallen_fear_ticks\": 1025")]
+    [InlineData("\"combat_target_fallen_fear_direction\": 7", "\"combat_target_fallen_fear_direction\": 8")]
+    public void InvalidFallenFearStateIsRejected(string valid, string invalid)
+    {
+        var path = Path.Combine(
+            AppContext.BaseDirectory,
+            "Fixtures",
+            "gameplay-fallen-fear.json");
+        var json = File.ReadAllText(path).Replace(valid, invalid, StringComparison.Ordinal);
+
+        var exception = Assert.Throws<InvalidDataException>(() => ReplayFixtureLoader.Load(json));
+
+        Assert.Equal("Replay fixture contains invalid combat-target occupancy state.", exception.Message);
+    }
+
+    [Fact]
     public void GameplayFallenRallyPursuitMatchesNativeCheckpoint()
     {
         var fixture = LoadReplayFixture("gameplay-fallen-rally-pursuit.json");

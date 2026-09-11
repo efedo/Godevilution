@@ -178,6 +178,7 @@
     <None Include="../../../test/fixtures/replay/gameplay-fallen-rally-pursuit.json" Link="Fixtures/gameplay-fallen-rally-pursuit.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-fallen-rally-multiplayer-target.json" Link="Fixtures/gameplay-fallen-rally-multiplayer-target.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-fallen-rally-companion.json" Link="Fixtures/gameplay-fallen-rally-companion.json" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="../../../test/fixtures/replay/gameplay-fallen-fear.json" Link="Fixtures/gameplay-fallen-fear.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-gargoyle-healing.json" Link="Fixtures/gameplay-gargoyle-healing.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-gargoyle-attack.json" Link="Fixtures/gameplay-gargoyle-attack.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-gargoyle-avoidance-idle.json" Link="Fixtures/gameplay-gargoyle-avoidance-idle.json" CopyToOutputDirectory="PreserveNewest" />

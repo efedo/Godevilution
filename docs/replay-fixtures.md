@@ -131,12 +131,17 @@ final 2x target-damage multiplier at the same checkpoint.
 
 Fallen parity fixtures may declare `combat_target_fallen_stand_animation_frame`,
 `combat_target_fallen_stand_animation_tick`, and
+`combat_target_fallen_fear_ticks`, `combat_target_fallen_fear_direction`, and
 `combat_target_fallen_rally_ticks`. Both runners validate the native bounds and
 advance the authored 11-frame/3-tick stand animation during simulation. At the
 animation boundary they perform the native `FlipCoin(4)` rally admission,
 apply the intelligence-scaled Q6 self-heal, and project the
 `30 * intelligence + 105` rally timer. Non-default Fallen state is included in
-the tagged `godevilution-monster-fallen-rally-v1` checkpoint extension. The
+the tagged `godevilution-monster-fallen-rally-v1` checkpoint extension. Fear
+countdown and RandomWalk direction use the tagged
+`godevilution-monster-fallen-fear-v1` extension; while fear is active, both
+runners consume the same two side-pair coin draws, choose the same bounded
+unoccupied step, update future occupancy, and decrement the countdown. The
 replay path models the primary target plus an optional bounded companion,
 including one-tick pursuit beyond normal aggro range with native future
 occupancy and rally-timer decrement. The companion form captures the
@@ -145,6 +150,8 @@ stand-animation/timer update;
 `gameplay-fallen-rally.json` covers admission and
 `gameplay-fallen-rally-pursuit.json` covers the pursuit tick. Multi-actor rally
 propagation is covered by `gameplay-fallen-rally-companion.json`.
+`gameplay-fallen-fear.json` covers the seeded single-player fear walk and its
+cross-runner checkpoint hash.
 That fixture uses the additive `combat_target_companion_*` fields for one
 same-level Fallen at the leader's rally radius; companion entity identity,
 position, vitality, native AI, animation, and rally timer are validated and

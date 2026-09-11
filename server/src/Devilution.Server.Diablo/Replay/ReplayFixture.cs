@@ -376,6 +376,11 @@ public sealed record ReplayInitialState(string Player, uint Gold, uint Experienc
 
     public int CombatTargetFallenStandAnimationTick { get; init; }
 
+    /** Optional native Fallen fear countdown and RandomWalk direction. */
+    public int CombatTargetFallenFearTicks { get; init; }
+
+    public int CombatTargetFallenFearDirection { get; init; }
+
     /** Optional native Fallen rally timer used by parity fixtures. */
     public int CombatTargetFallenRallyTicks { get; init; }
 

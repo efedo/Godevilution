@@ -2,6 +2,11 @@
 
 All notable changes to this fork are documented below.
 
+- Added a shared Fallen fear replay fixture. Native and managed runners now
+  carry and validate the fear countdown/direction, consume the same RandomWalk
+  coin draws, and agree on the canonical checkpoint hash and invalid-state
+  rejection.
+
 - Shared replay fixtures now carry native monster acid resistance through the
   C++ and C# loaders and canonical checkpoint hash, preserving zero-default
   compatibility while covering nonzero resistance with a cross-runner golden.
