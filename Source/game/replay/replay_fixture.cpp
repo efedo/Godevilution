@@ -8256,6 +8256,12 @@ void AdvanceReplayMonsterAttack(
 		    - (corpse->positionX < state.combatTargetPositionX);
 		const int deltaY = (corpse->positionY > state.combatTargetPositionY)
 		    - (corpse->positionY < state.combatTargetPositionY);
+		if (state.combatTargetMonsterAiSeed != 0) {
+			// Seeded managed Scavenger movement preserves native RandomWalk's
+			// two coin draws even when the compact projection has a clear step.
+			static_cast<void>(GenerateRnd(state, 2));
+			static_cast<void>(GenerateRnd(state, 2));
+		}
 		const int candidateX = state.combatTargetPositionX + deltaX;
 		const int candidateY = state.combatTargetPositionY + deltaY;
 		if (std::max(

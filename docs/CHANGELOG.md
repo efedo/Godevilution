@@ -2,6 +2,10 @@
 
 All notable changes to this fork are documented below.
 
+- Added seeded Scavenger autonomous multiplayer coverage. Native and managed
+  runners now preserve the per-monster seed advancement, RandomWalk coin draws,
+  secondary participant state, and corpse-healing checkpoint hashes.
+
 - Added seeded Counselor autonomous delay coverage. Native and managed runners
   now consume the same per-monster AI-stream draws for adjacent no-attack
   admission and recovery delay while preserving the existing Flash boundary.

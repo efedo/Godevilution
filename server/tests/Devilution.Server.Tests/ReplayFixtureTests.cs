@@ -7052,6 +7052,37 @@ public sealed class ReplayFixtureTests
     }
 
     [Fact]
+    public void GameplayScavengerAutonomousMultiplayerMatchesNative()
+    {
+        var fixture = LoadReplayFixture("gameplay-scavenger-autonomous-multiplayer.json");
+        var executor = CreateScavengerReplayExecutor(fixture, useSeededState: true);
+        var result = ReplayFixtureExecutor.Execute(
+            fixture,
+            executor,
+            new AuthoritativeCommandServer(executor));
+        var monster = Assert.Single(result.FinalSnapshot.Monsters);
+        var primary = Assert.Single(result.FinalSnapshot.Players, player => player.EntityId == 1);
+        var secondary = Assert.Single(result.FinalSnapshot.Players, player => player.EntityId == 8);
+        var corpse = Assert.Single(result.FinalSnapshot.Corpses);
+
+        Assert.Equal(2, result.Results.Count);
+        Assert.All(result.Results, command => Assert.Equal(CommandStatus.Accepted, command.Status));
+        Assert.Equal(100, primary.Life);
+        Assert.Equal(100, secondary.Life);
+        Assert.Equal(16, monster.HitPoints);
+        Assert.Equal((5, 10), (monster.PositionX, monster.PositionY));
+        Assert.False(monster.Moving);
+        Assert.Equal(8, monster.ScavengerHealingTicks);
+        Assert.Equal(30U, monster.ScavengerCorpseEntityId);
+        Assert.Equal(30U, corpse.EntityId);
+        Assert.Equal(2138921681U, monster.MonsterAiSeed);
+        Assert.Equal(2156045615U, result.FinalSnapshot.RandomState);
+        Assert.Equal(
+            fixture.Checkpoints.Select(checkpoint => checkpoint.StateSha256),
+            result.Checkpoints.Select(checkpoint => checkpoint.ActualStateSha256));
+    }
+
+    [Fact]
     public void GameplayScavengerMultiCandidateSelectionMatchesNative()
     {
         var fixture = LoadReplayFixture("gameplay-scavenger-multicandidate-selection.json");
@@ -11527,7 +11558,8 @@ public sealed class ReplayFixtureTests
     }
 
     private static StoreSimulationExecutor CreateScavengerReplayExecutor(
-        ReplayFixture fixture)
+        ReplayFixture fixture,
+        bool useSeededState = false)
     {
         var initial = fixture.InitialState;
         var target = new AuthoritativeCombatTarget(
@@ -11541,6 +11573,12 @@ public sealed class ReplayFixtureTests
             aggroRange: initial.CombatTargetAggroRange,
             nativeAi: initial.CombatTargetNativeAi,
             intelligence: initial.CombatTargetIntelligence,
+            monsterItemSeed: useSeededState
+                ? initial.CombatTargetMonsterItemSeed
+                : 0,
+            monsterAiSeed: useSeededState
+                ? initial.CombatTargetMonsterAiSeed
+                : 0,
             scavengerHealingTicks: initial.CombatTargetScavengerHealingTicks,
             scavengerCorpseEntityId: initial.CombatTargetScavengerCorpseEntityId,
             fatMovementIdleTicks: initial.CombatTargetFatMovementIdleTicks,

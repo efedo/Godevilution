@@ -2,6 +2,10 @@
 
 Status date: 2026-09-11
 
+Scavenger’s seeded autonomous corpse route now preserves the same per-monster
+seed advancement and two RandomWalk coin draws in the compact native replay and
+managed server, including secondary participant state and healing checkpoints.
+
 Counselor’s seeded autonomous adjacent no-attack lane now consumes the same
 native AI-stream action, adjacent admission, and recovery-delay draws in the
 compact native replay and managed server. The new multiplayer fixture keeps the

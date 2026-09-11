@@ -1177,6 +1177,8 @@ Notable shared fixtures include:
 - `gameplay-scavenger-multicandidate-selection.json` for native coin-directed
   corpse scan order, first-candidate selection, deterministic movement, and
   selected-corpse checkpoint parity;
+- `gameplay-scavenger-autonomous-multiplayer.json` for seeded low-health
+  corpse routing with a secondary participant and preserved healing state;
 - `gameplay-bat-multiplayer-target.json` for Bat retreat movement selecting the
   nearest live participant while preserving the farther primary participant;
 - `gameplay-bat-autonomous-multiplayer.json` for an adjacent Bat melee hit,
