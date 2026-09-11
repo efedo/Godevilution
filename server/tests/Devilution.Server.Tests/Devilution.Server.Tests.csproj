@@ -218,6 +218,7 @@
     <None Include="../../../test/fixtures/replay/gameplay-bat-multiplayer-target.json" Link="Fixtures/gameplay-bat-multiplayer-target.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-bat-autonomous-multiplayer.json" Link="Fixtures/gameplay-bat-autonomous-multiplayer.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-familiar-autonomous-multiplayer.json" Link="Fixtures/gameplay-familiar-autonomous-multiplayer.json" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="../../../test/fixtures/replay/gameplay-familiar-movement-multiplayer.json" Link="Fixtures/gameplay-familiar-movement-multiplayer.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-scavenger-corpse.json" Link="Fixtures/gameplay-scavenger-corpse.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-scavenger-autonomous-multiplayer.json" Link="Fixtures/gameplay-scavenger-autonomous-multiplayer.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-scavenger-multicandidate-selection.json" Link="Fixtures/gameplay-scavenger-multicandidate-selection.json" CopyToOutputDirectory="PreserveNewest" />

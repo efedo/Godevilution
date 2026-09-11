@@ -3,8 +3,9 @@
 All notable changes to this fork are documented below.
 
 - Added autonomous multiplayer Familiar parity. Native and managed runners now
-  cover the validated Bat melee admission, seeded post-melee Lightning damage,
-  nearest-secondary routing, and the short-lived MonsterMagic projectile.
+  cover the validated Bat melee admission and range movement, seeded post-melee
+  Lightning damage, nearest-secondary routing, Bat movement counters, and the
+  short-lived MonsterMagic projectile.
 
 - Restored native replay hashing for derived object presentation families.
   Quest, breakable, and trap object checkpoints now include the same semantic

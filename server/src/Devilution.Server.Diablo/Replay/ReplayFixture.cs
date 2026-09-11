@@ -440,6 +440,11 @@ public sealed record ReplayInitialState(string Player, uint Gold, uint Experienc
 
     public int CombatTargetBatRetreatDirection { get; init; }
 
+    /** Optional native Bat movement counter and mode state. */
+    public int CombatTargetBatMovementIdleTicks { get; init; } = -1;
+
+    public int CombatTargetBatMovementMode { get; init; }
+
     /** Optional native Scavenger healing state and selected corpse identity. */
     public int CombatTargetScavengerHealingTicks { get; init; }
 

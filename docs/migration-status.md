@@ -3,9 +3,9 @@
 Status date: 2026-09-11
 
 Familiar’s autonomous multiplayer lane now preserves the validated Bat melee
-admission, seeded post-melee Lightning projectile, nearest-secondary routing,
-and short-lived MonsterMagic lifecycle in the compact native replay and managed
-server.
+admission and range movement, seeded post-melee Lightning projectile,
+nearest-secondary routing, Bat movement counters, and short-lived MonsterMagic
+lifecycle in the compact native replay and managed server.
 
 Native replay hashing now carries the derived semantic presentation identity
 for quest, breakable, and trap objects, keeping object interaction checkpoints

@@ -7226,6 +7226,59 @@ public sealed class ReplayFixtureTests
     }
 
     [Fact]
+    public void GameplayFamiliarMovementMultiplayerMatchesNative()
+    {
+        var fixture = LoadReplayFixture("gameplay-familiar-movement-multiplayer.json");
+        var initial = fixture.InitialState;
+        var target = new AuthoritativeCombatTarget(
+            initial.CombatTargetEntityId,
+            initial.CombatTargetPositionX,
+            initial.CombatTargetPositionY,
+            initial.CombatTargetHitPoints,
+            maxHitPoints: initial.CombatTargetMaxHitPoints,
+            levelId: initial.CombatTargetLevelId,
+            monsterId: initial.CombatTargetMonsterId,
+            aggroRange: initial.CombatTargetAggroRange,
+            nativeAi: initial.CombatTargetNativeAi,
+            intelligence: initial.CombatTargetIntelligence,
+            batMovementIdleTicks: initial.CombatTargetBatMovementIdleTicks,
+            batMovementMode: initial.CombatTargetBatMovementMode,
+            monsterItemSeed: initial.CombatTargetMonsterItemSeed,
+            monsterAiSeed: initial.CombatTargetMonsterAiSeed);
+        var catalog = new StoreCatalog();
+        catalog.AddStore(1, []);
+        var executor = new StoreSimulationExecutor(
+            catalog,
+            initial.Gold,
+            initial.Experience,
+            initial.Life,
+            initial.Mana,
+            startingLifeMaximum: initial.LifeMaximum,
+            startingPositionX: initial.PositionX,
+            startingPositionY: initial.PositionY,
+            startingLevelId: initial.LevelId,
+            startingCombatTargets: [target],
+            startingMonsterTypes: LoadReplayMonsterTypes(fixture, "familiar"),
+            startingMonsterMissiles: LoadReplayMonsterMissiles(fixture, "familiar"),
+            startingRandomSeed: checked((uint)fixture.RngSeed),
+            startingCombatRules: CreateReplayCombatRules(fixture),
+            gameMode: fixture.GameMode);
+
+        var result = ReplayFixtureExecutor.Execute(
+            fixture,
+            executor,
+            new AuthoritativeCommandServer(executor));
+        var monster = Assert.Single(result.FinalSnapshot.Monsters);
+
+        Assert.Equal(CommandStatus.Accepted, Assert.Single(result.Results).Status);
+        Assert.Equal(
+            fixture.Checkpoints.Select(checkpoint => checkpoint.StateSha256),
+            result.Checkpoints.Select(checkpoint => checkpoint.ActualStateSha256));
+        Assert.Equal(1, monster.BatMovementMode);
+        Assert.Equal(-1, monster.BatMovementIdleTicks);
+    }
+
+    [Fact]
     public void GameplayScavengerCorpseLifecycleMatchesNative()
     {
         var fixture = LoadReplayFixture("gameplay-scavenger-corpse.json");

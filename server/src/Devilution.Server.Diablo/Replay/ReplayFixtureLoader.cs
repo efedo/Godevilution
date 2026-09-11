@@ -182,6 +182,8 @@ public static class ReplayFixtureLoader
                     || initialTarget.CombatTargetSneakRetreatTicks != 0
                     || initialTarget.CombatTargetBatRetreatTicks != 0
                     || initialTarget.CombatTargetBatRetreatDirection != 0
+                    || initialTarget.CombatTargetBatMovementIdleTicks != -1
+                    || initialTarget.CombatTargetBatMovementMode != 0
                     || initialTarget.CombatTargetScavengerHealingTicks != 0
                     || initialTarget.CombatTargetScavengerCorpseEntityId != 0
                     || initialTarget.CombatTargetFatMovementIdleTicks != -1
@@ -240,6 +242,8 @@ public static class ReplayFixtureLoader
             || initialTarget.CombatTargetSneakRetreatTicks is < 0 or > MaximumNativeMonsterShortTimerTicks
             || initialTarget.CombatTargetBatRetreatTicks is < 0 or > MaximumNativeMonsterRetreatTicks
             || initialTarget.CombatTargetBatRetreatDirection is < 0 or > MaximumNativeMonsterDirection
+            || initialTarget.CombatTargetBatMovementIdleTicks is < -1 or > MaximumNativeMonsterAiTimerTicks
+            || initialTarget.CombatTargetBatMovementMode is < 0 or > MaximumNativeMonsterMovementMode
             || initialTarget.CombatTargetScavengerHealingTicks is < 0 or > MaximumNativeMonsterShortTimerTicks
             || initialTarget.CombatTargetFatMovementIdleTicks is < -1 or > MaximumNativeMonsterAiTimerTicks
             || initialTarget.CombatTargetFatMovementMode is < 0 or > MaximumNativeMonsterMovementMode
@@ -583,6 +587,13 @@ public static class ReplayFixtureLoader
             CombatTargetBatRetreatDirection = GetOptionalInt(
                 value,
                 "combat_target_bat_retreat_direction"),
+            CombatTargetBatMovementIdleTicks = GetOptionalInt(
+                value,
+                "combat_target_bat_movement_idle_ticks",
+                defaultValue: -1),
+            CombatTargetBatMovementMode = GetOptionalInt(
+                value,
+                "combat_target_bat_movement_mode"),
             CombatTargetScavengerHealingTicks = GetOptionalInt(
                 value,
                 "combat_target_scavenger_healing_ticks"),

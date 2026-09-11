@@ -725,6 +725,12 @@ void AppendCanonicalState(ReplayStateHasher &hasher, const ReplayFixtureExecutio
 			hasher.AppendInt32(state.combatTargetBatRetreatTicks);
 			hasher.AppendInt32(state.combatTargetBatRetreatDirection);
 		}
+		if (state.combatTargetBatMovementIdleTicks != -1
+		    || state.combatTargetBatMovementMode != 0) {
+			hasher.AppendString("godevilution-monster-bat-movement-v1");
+			hasher.AppendInt32(state.combatTargetBatMovementIdleTicks);
+			hasher.AppendInt32(state.combatTargetBatMovementMode);
+		}
 		if (state.combatTargetScavengerHealingTicks != 0
 		    || state.combatTargetScavengerCorpseEntityId != 0) {
 			hasher.AppendString("godevilution-monster-scavenger-v1");
@@ -8073,6 +8079,91 @@ void AdmitReplayFamiliarLightning(
 	state.projectiles.push_back(std::move(projectile));
 }
 
+/** Advances Familiar's validated Bat movement admission at range. */
+bool AdvanceReplayFamiliarBatMovement(
+	ReplayFixtureExecutionState &state,
+	uint64_t tick,
+	uint32_t victimEntityId,
+	int32_t victimX,
+	int32_t victimY,
+	int32_t distance)
+{
+	if (state.combatTargetNativeAi != "Bat"
+	    || state.combatTargetMonsterId != 43
+	    || distance < 2)
+		return false;
+	const int movementChance = std::min(
+		100,
+		state.combatTargetBatMovementIdleTicks == -1
+		    ? 13 + state.combatTargetIntelligence + 50
+		    : state.combatTargetBatMovementIdleTicks > 20
+		    ? 13 + state.combatTargetIntelligence
+		    : state.combatTargetBatMovementIdleTicks == 0
+		          && state.combatTargetBatMovementMode >= 1
+		          && state.combatTargetBatMovementMode <= 3
+		    ? 13 + state.combatTargetIntelligence + 50
+		    : 0);
+	const uint32_t actionSeed = static_cast<uint32_t>(tick)
+	    ^ state.combatTargetEntityId
+	    ^ victimEntityId;
+	const bool usesNativeAiStream = state.combatTargetMonsterAiSeed != 0;
+	const int actionRoll = usesNativeAiStream
+	    ? std::max(GenerateRnd(state, 100), 0)
+	    : static_cast<int>(actionSeed % 100U);
+	if (actionRoll >= movementChance) {
+		if (state.combatTargetBatMovementIdleTicks < 1024)
+			++state.combatTargetBatMovementIdleTicks;
+		return true;
+	}
+	const int direction = GetDirection(
+		state.combatTargetPositionX,
+		state.combatTargetPositionY,
+		victimX,
+		victimY);
+	const int firstTurn = usesNativeAiStream
+	    ? (std::max(GenerateRnd(state, 2), 0) == 0 ? 1 : -1)
+	    : ((actionSeed / 100U) % 2U == 0 ? 1 : -1);
+	const int secondTurn = usesNativeAiStream
+	    ? (std::max(GenerateRnd(state, 2), 0) == 0 ? 2 : -2)
+	    : ((actionSeed / 200U) % 2U == 0 ? 2 : -2);
+	const int candidateDirections[] = {
+		direction,
+		RotateReplayDirection(direction, firstTurn),
+		RotateReplayDirection(direction, -firstTurn),
+		RotateReplayDirection(direction, secondTurn),
+		RotateReplayDirection(direction, -secondTurn),
+	};
+	for (const int candidateDirection : candidateDirections) {
+		const auto displacement = DirectionDisplacements[candidateDirection];
+		const int candidateX = state.combatTargetPositionX + displacement.first;
+		const int candidateY = state.combatTargetPositionY + displacement.second;
+		if (candidateX < 0 || candidateX >= 40
+		    || candidateY < 0 || candidateY >= 40
+		    || (candidateX == state.positionX && candidateY == state.positionY)
+		    || (state.secondaryPlayerEntityId != 0
+		        && candidateX == state.secondaryPlayerPositionX
+		        && candidateY == state.secondaryPlayerPositionY)
+		    || (state.objectEntityId != 0
+		        && !state.objectActivated
+		        && !state.objectDestroyed
+		        && !state.objectMissilePassable
+		        && state.objectLevelId == state.combatTargetLevelId
+		        && candidateX == state.objectPositionX
+		        && candidateY == state.objectPositionY))
+			continue;
+		state.combatTargetMoving = true;
+		state.combatTargetFuturePositionX = candidateX;
+		state.combatTargetFuturePositionY = candidateY;
+		state.combatTargetDirection = candidateDirection;
+		state.combatTargetBatMovementMode = candidateX - state.combatTargetPositionX;
+		state.combatTargetBatMovementIdleTicks = candidateY - state.combatTargetPositionY;
+		return true;
+	}
+	if (state.combatTargetBatMovementIdleTicks < 1024)
+		++state.combatTargetBatMovementIdleTicks;
+	return true;
+}
+
 void AdvanceReplayMonsterAttack(
     ReplayFixtureExecutionState &state,
     const ReplayFixturePlayerActionTiming &timing,
@@ -8696,6 +8787,14 @@ void AdvanceReplayMonsterAttack(
 			state.combatTargetBatRetreatDirection = 0;
 		return;
 	}
+	if (AdvanceReplayFamiliarBatMovement(
+			state,
+			tick,
+			victim.entityId,
+			victim.positionX,
+			victim.positionY,
+			distance))
+		return;
 	if ((state.combatTargetNativeAi == "Gargoyle"
 	        || state.combatTargetNativeAi == "GoatMelee"
 	        || state.combatTargetNativeAi == "Gharbad")
@@ -11960,6 +12059,10 @@ private:
 				return ParseSigned(fixture_.initialState.combatTargetBatRetreatTicks);
 			if (key == "combat_target_bat_retreat_direction")
 				return ParseSigned(fixture_.initialState.combatTargetBatRetreatDirection);
+			if (key == "combat_target_bat_movement_idle_ticks")
+				return ParseSigned(fixture_.initialState.combatTargetBatMovementIdleTicks);
+			if (key == "combat_target_bat_movement_mode")
+				return ParseSigned(fixture_.initialState.combatTargetBatMovementMode);
 			if (key == "combat_target_scavenger_healing_ticks")
 				return ParseSigned(fixture_.initialState.combatTargetScavengerHealingTicks);
 			if (key == "combat_target_scavenger_corpse_entity_id")
@@ -12902,6 +13005,8 @@ bool ParseReplayFixture(std::string_view json, ReplayFixture &fixture, std::stri
 		    || target.combatTargetSneakRetreatTicks != 0
 		    || target.combatTargetBatRetreatTicks != 0
 		    || target.combatTargetBatRetreatDirection != 0
+		    || target.combatTargetBatMovementIdleTicks != -1
+		    || target.combatTargetBatMovementMode != 0
 		    || target.combatTargetScavengerHealingTicks != 0
 		    || target.combatTargetScavengerCorpseEntityId != 0
 		    || target.combatTargetFatMovementIdleTicks != -1
@@ -12966,6 +13071,10 @@ bool ParseReplayFixture(std::string_view json, ReplayFixture &fixture, std::stri
 		|| target.combatTargetBatRetreatTicks > 1024
 		|| target.combatTargetBatRetreatDirection < 0
 		|| target.combatTargetBatRetreatDirection > 7
+		|| target.combatTargetBatMovementIdleTicks < -1
+		|| target.combatTargetBatMovementIdleTicks > 1024
+		|| target.combatTargetBatMovementMode < 0
+		|| target.combatTargetBatMovementMode > 3
 		|| target.combatTargetScavengerHealingTicks < 0
 		|| target.combatTargetScavengerHealingTicks > 1024
 		|| target.combatTargetFatMovementIdleTicks < -1
@@ -13819,6 +13928,8 @@ bool ExecuteReplayFixture(
 		state.combatTargetSneakRetreatTicks = fixture.initialState.combatTargetSneakRetreatTicks;
 		state.combatTargetBatRetreatTicks = fixture.initialState.combatTargetBatRetreatTicks;
 		state.combatTargetBatRetreatDirection = fixture.initialState.combatTargetBatRetreatDirection;
+		state.combatTargetBatMovementIdleTicks = fixture.initialState.combatTargetBatMovementIdleTicks;
+		state.combatTargetBatMovementMode = fixture.initialState.combatTargetBatMovementMode;
 		state.combatTargetScavengerHealingTicks = fixture.initialState.combatTargetScavengerHealingTicks;
 		state.combatTargetScavengerCorpseEntityId = fixture.initialState.combatTargetScavengerCorpseEntityId;
 		state.combatTargetFatMovementIdleTicks = fixture.initialState.combatTargetFatMovementIdleTicks;

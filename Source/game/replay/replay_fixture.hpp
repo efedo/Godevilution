@@ -274,6 +274,8 @@ struct ReplayFixtureInitialState {
 	int32_t combatTargetSneakRetreatTicks = 0;
 	int32_t combatTargetBatRetreatTicks = 0;
 	int32_t combatTargetBatRetreatDirection = 0;
+	int32_t combatTargetBatMovementIdleTicks = -1;
+	int32_t combatTargetBatMovementMode = 0;
 	int32_t combatTargetScavengerHealingTicks = 0;
 	uint32_t combatTargetScavengerCorpseEntityId = 0;
 	int32_t combatTargetFatMovementIdleTicks = -1;
@@ -692,6 +694,8 @@ struct ReplayFixtureExecutionState {
 	int32_t combatTargetSneakRetreatTicks = 0;
 	int32_t combatTargetBatRetreatTicks = 0;
 	int32_t combatTargetBatRetreatDirection = 0;
+	int32_t combatTargetBatMovementIdleTicks = -1;
+	int32_t combatTargetBatMovementMode = 0;
 	int32_t combatTargetScavengerHealingTicks = 0;
 	uint32_t combatTargetScavengerCorpseEntityId = 0;
 	int32_t combatTargetFatMovementIdleTicks = -1;
