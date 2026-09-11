@@ -3719,6 +3719,67 @@ public sealed class ClientModelTests
     }
 
     [Fact]
+    public void StopsPredictionAtKnownSolidAuthoredObjectOccupancy()
+    {
+        var model = new AuthoritativeClientModel();
+        model.Apply(new AuthoritativeClientMessage(Snapshot: new Snapshot {
+            Players = {
+                new PlayerSnapshot {
+                    EntityId = 7,
+                    LevelId = 1,
+                    PositionX = 0,
+                    PositionY = 1,
+                },
+            },
+            Objects = {
+                new ObjectSnapshot {
+                    EntityId = 20,
+                    ObjectId = 1,
+                    LevelId = 1,
+                    PositionX = 1,
+                    PositionY = 1,
+                },
+            },
+        }));
+
+        model.TrackPredictedMove(1, 1, 0);
+
+        Assert.Null(model.PredictedPlayerPosition);
+        Assert.False(model.IsCorrectingPosition);
+    }
+
+    [Fact]
+    public void AllowsPredictionIntoAnUnactivatedOccupancyTriggerObject()
+    {
+        var model = new AuthoritativeClientModel();
+        model.Apply(new AuthoritativeClientMessage(Snapshot: new Snapshot {
+            Players = {
+                new PlayerSnapshot {
+                    EntityId = 7,
+                    LevelId = 1,
+                    PositionX = 0,
+                    PositionY = 1,
+                },
+            },
+            Objects = {
+                new ObjectSnapshot {
+                    EntityId = 20,
+                    ObjectId = 1,
+                    LevelId = 1,
+                    PositionX = 1,
+                    PositionY = 1,
+                    ActivateOnOccupancy = true,
+                },
+            },
+        }));
+
+        model.TrackPredictedMove(1, 1, 0);
+
+        Assert.Equal(new ClientPosition(1, 1), model.PredictedPlayerPosition);
+        Assert.True(model.IsCorrectingPosition);
+    }
+
+    [Fact]
     public void ClearsPendingMovementPredictionWhenTheAuthoritativePlayerChangesLevel()
     {
         var model = new AuthoritativeClientModel();

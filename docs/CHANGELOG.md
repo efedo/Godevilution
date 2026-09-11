@@ -2,6 +2,12 @@
 
 All notable changes to this fork are documented below.
 
+- Extended the authoritative object projection with native occupancy-trigger
+  metadata. Godot movement prediction now matches server occupancy for live
+  monsters, participants, and solid authored objects, while occupancy-trigger
+  objects remain enterable; the new field is included in the canonical snapshot
+  hash and covered by focused client-model tests.
+
 - Added a manifest-integrity guard that enumerates all shipped base and
   Hellfire replay fixtures and rejects stale hashes against the active
   validated content packs before gameplay execution.

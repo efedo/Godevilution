@@ -1672,6 +1672,8 @@ public sealed class SnapshotStateHasherTests
         changedObject.Objects[0].Destroyed = true;
         var changedTrap = baseline.Clone();
         changedTrap.Objects[0].TrapArmed = true;
+        var changedOccupancy = baseline.Clone();
+        changedOccupancy.Objects[0].ActivateOnOccupancy = true;
         var changedProjectile = baseline.Clone();
         changedProjectile.Projectiles[0].LastCollisionTargetEntityId = 9;
 
@@ -1681,6 +1683,9 @@ public sealed class SnapshotStateHasherTests
         Assert.NotEqual(
             SnapshotStateHasher.Compute(baseline),
             SnapshotStateHasher.Compute(changedTrap));
+        Assert.NotEqual(
+            SnapshotStateHasher.Compute(baseline),
+            SnapshotStateHasher.Compute(changedOccupancy));
         Assert.NotEqual(
             SnapshotStateHasher.Compute(baseline),
             SnapshotStateHasher.Compute(changedProjectile));

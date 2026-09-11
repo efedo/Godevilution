@@ -466,13 +466,22 @@ public sealed class AuthoritativeClientModel
                     == new ClientPosition(targetX, targetY)))
             return false;
 
-        return !snapshot.Monsters.Any(monster =>
+        if (snapshot.Monsters.Any(monster =>
             monster.Alive
             && monster.LevelId == player.LevelId
             && ((monster.PositionX == targetX && monster.PositionY == targetY)
                 || (monster.Moving
                     && monster.FuturePositionX == targetX
-                    && monster.FuturePositionY == targetY)));
+                    && monster.FuturePositionY == targetY))))
+            return false;
+
+        return !snapshot.Objects.Any(@object =>
+            @object.LevelId == player.LevelId
+            && !@object.ActivateOnOccupancy
+            && !@object.Activated
+            && !@object.Destroyed
+            && @object.PositionX == targetX
+            && @object.PositionY == targetY);
     }
 
     private static void ValidatePlayerAction(Snapshot snapshot, PlayerSnapshot player)

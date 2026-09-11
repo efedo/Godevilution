@@ -2,6 +2,12 @@
 
 Status date: 2026-09-10
 
+The authoritative object projection now publishes native occupancy-trigger
+metadata. Godot's bounded movement prediction uses the same live-object rule as
+the server—monsters, remote participants, and solid authored objects block a
+tile, while unactivated occupancy triggers remain enterable—and the new field is
+covered by the canonical snapshot hash and client-model regressions.
+
 The 13 Hellfire ranged replay fixtures that still carried the pre-`1.502.0`
 composed-pack identity now declare the active normalized base-plus-Hellfire
 manifest hash. Their replay state checkpoints remain unchanged, and the full

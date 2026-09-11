@@ -328,6 +328,7 @@ internal static class DiabloProtocolMapper
                 AnimationFrame = checked((uint)@object.AnimationFrame),
                 ActivatedAnimationFrame = checked((uint)@object.ActivatedAnimationFrame),
                 DialogueMessageId = @object.DialogueMessageId,
+                ActivateOnOccupancy = @object.ActivateOnOccupancy,
                 PresentationKind = ResolveObjectPresentationKind(@object, revealTraps),
             });
         }
@@ -2182,6 +2183,7 @@ internal static class DiabloProtocolMapper
                 HideWhenActivated = !@object.KeepVisibleAfterActivation,
                 AnimationFrame = checked((int)@object.AnimationFrame),
                 ActivatedAnimationFrame = checked((int)@object.ActivatedAnimationFrame),
+                ActivateOnOccupancy = @object.ActivateOnOccupancy,
             }).ToArray(),
             source.Quests.Select(quest => new DiabloQuestState(
                 quest.QuestId,

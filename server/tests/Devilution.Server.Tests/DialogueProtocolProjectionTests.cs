@@ -121,6 +121,34 @@ public sealed class DialogueProtocolProjectionTests
     }
 
     [Fact]
+    public void RoundTripsOccupancyTriggerMetadata()
+    {
+        var source = CreateOriginSnapshot(
+            new DiabloSetLevelObjectOriginState(6, 17, 7, 8)) with {
+                Objects = [
+                    new DiabloObjectState(
+                        1761633898,
+                        89,
+                        4,
+                        18,
+                        15,
+                        false,
+                        0,
+                        AuthoritativeObjectEffectKind.None,
+                        0) {
+                        ActivateOnOccupancy = true,
+                    },
+                ],
+            };
+
+        var projected = DiabloProtocolMapper.ToProtocolSnapshot(source);
+        var restored = DiabloProtocolMapper.FromProtocolSnapshot(projected);
+
+        Assert.True(Assert.Single(projected.Objects).ActivateOnOccupancy);
+        Assert.True(Assert.Single(restored.Objects).ActivateOnOccupancy);
+    }
+
+    [Fact]
     public void ProjectsTownerGreetingMetadata()
     {
         var source = CreateOriginSnapshot(

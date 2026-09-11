@@ -1153,6 +1153,10 @@ wire-compatible and preserve the additive raw fields in their Protobuf payload.
 Field 15 carries the optional native shrine capability used by Nova Ball's
 target-tile collision rule; it is likewise persisted and included in the
 canonical hash when enabled.
+Field 40 carries the native occupancy-trigger distinction used by movement
+prediction: a live object with `activate_on_occupancy` set is enterable and
+activates on entry, while other live objects block the tile. The additive value
+is included in the tagged `godevilution-object-occupancy-v1` hash section.
 
 Player class identity is authoritative and persists through snapshots and
 server-owned saves. `PlayerSnapshot.character_class_id` field 19 carries the

@@ -941,6 +941,9 @@ message ObjectSnapshot {
 	// Optional authored dialogue identity emitted when this object is activated.
 	// Unlike quest-linked dialogue, this may be nonzero with quest_id unset.
 	int32 dialogue_message_id = 39;
+	// Native movement collision metadata. Objects that activate when occupied do
+	// not block player movement; all other live objects occupy their tile.
+	bool activate_on_occupancy = 40;
 }
 
 enum ObjectPresentationKind {

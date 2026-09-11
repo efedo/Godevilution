@@ -522,6 +522,12 @@ Windows toolchain command.
   dialogue identity emitted when an object activates. It may be nonzero when
   `quest_id` is zero, allowing dialogue-only environmental objects to be
   discovered and routed without client-side message tables.
+- `ObjectSnapshot.activate_on_occupancy` field 40 carries the native movement
+  collision distinction for live authored objects. When true, the object
+  activates as the player enters its tile and does not block movement; when
+  false, the live object occupies the tile until activation or destruction.
+  The field is additive and participates in the tagged
+  `godevilution-object-occupancy-v1` canonical-hash extension.
 - `ObjectSnapshot.projectile_source_kind` field 32 carries the authored
   projectile origin. Zero preserves target-origin compatibility; the additive
   activating-player value is currently valid for Phasing rows. Nonzero source
