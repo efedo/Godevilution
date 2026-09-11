@@ -47,6 +47,9 @@ All notable changes to this fork are documented below.
 - Added seeded autonomous multiplayer Snake charge coverage through projectile
   travel and cleanup, preserving the native per-monster AI stream.
 
+- Added seeded autonomous multiplayer SkeletonMelee coverage and aligned the
+  native zero-width damage-range draw for omitted accuracy.
+
 - Added seeded autonomous multiplayer Zombie melee coverage and aligned the
   native replay harness with Zombie's validated action-admission RNG draw.
 

@@ -1182,6 +1182,11 @@ Rhino projectile lifecycle. Native and managed runners preserve the nearer
 secondary target, farther-primary state, per-monster AI-stream advancement,
 and projectile cleanup across the four-tick replay.
 
+SkeletonMelee now has seeded autonomous multiplayer adjacent-attack coverage.
+Native and managed runners preserve the nearer-secondary damage, untouched
+primary participant, AI-stream advancement, and the native zero-width damage
+draw used when the monster omits accuracy metadata.
+
 Zhar and Lazarus now share two-participant replay coverage through the native
 CounselorAi compatibility path. Native and managed runners preserve their
 authored identities, route the nearer secondary participant, and agree on the

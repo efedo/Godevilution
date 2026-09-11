@@ -9635,6 +9635,14 @@ void AdvanceReplayMonsterAttack(
 		}
 	}
 	if (victim.secondary) {
+		// Seeded Skeleton-family MonsterAttack still consumes the native
+		// zero-width damage-range draw when accuracy is omitted.
+		if (state.combatTargetMonsterAiSeed != 0
+		    && state.combatTargetToHit == 0
+		    && (state.combatTargetNativeAi == "SkeletonMelee"
+	            || state.combatTargetNativeAi == "Snotspill"
+	            || state.combatTargetNativeAi == "Warlord"))
+			static_cast<void>(GenerateRnd(state, 1));
 		int32_t damageQ6 = 0;
 		if (usesNativeCombatStream && state.combatTargetToHit > 0) {
 			const int32_t minimumDamage = state.combatTargetMinDamage == 0

@@ -1135,6 +1135,9 @@ Notable shared fixtures include:
   relocation, and farther-primary preservation;
 - `gameplay-skeleton-melee-multiplayer-target.json` for nearest-participant
   adjacent attack admission, secondary damage, and farther-primary preservation;
+- `gameplay-skeleton-melee-autonomous-multiplayer.json` for seeded adjacent
+  SkeletonMelee damage, per-monster AI-stream advancement, and native omitted-
+  accuracy RNG parity;
 - `gameplay-snake-multiplayer-target.json` for nearest-participant charge
   routing through projectile travel/removal and farther-primary preservation;
 - `gameplay-snake-autonomous-multiplayer.json` for seeded nearest-participant
