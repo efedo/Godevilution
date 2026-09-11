@@ -141,6 +141,7 @@
     <None Include="../../../test/fixtures/replay/gameplay-jester-firebolt-resolution.json" Link="Fixtures/gameplay-jester-firebolt-resolution.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-town-portal-resolution.json" Link="Fixtures/gameplay-town-portal-resolution.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-counselor-delay.json" Link="Fixtures/gameplay-counselor-delay.json" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="../../../test/fixtures/replay/gameplay-counselor-autonomous-multiplayer.json" Link="Fixtures/gameplay-counselor-autonomous-multiplayer.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-counselor-multiplayer-target.json" Link="Fixtures/gameplay-counselor-multiplayer-target.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-zhar-multiplayer-target.json" Link="Fixtures/gameplay-zhar-multiplayer-target.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-lazarus-multiplayer-target.json" Link="Fixtures/gameplay-lazarus-multiplayer-target.json" CopyToOutputDirectory="PreserveNewest" />

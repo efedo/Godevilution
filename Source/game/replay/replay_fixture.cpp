@@ -8052,7 +8052,8 @@ void AdvanceReplayMonsterAttack(
 			--state.combatTargetCounselorDelayTicks;
 			return;
 		}
-		static_cast<void>(GenerateRnd(state, 100));
+		const bool usesNativeAiStream = state.combatTargetMonsterAiSeed != 0;
+		const int actionRoll = std::max(GenerateRnd(state, 100), 0);
 		const uint32_t primaryEntityId = state.entityId == 0 ? 1U : state.entityId;
 		const int primaryDistance = primaryAlive
 		    ? std::max(
@@ -8138,14 +8139,20 @@ void AdvanceReplayMonsterAttack(
 			const int adjacentAttackChance = std::min(
 			    100,
 			    20 + 2 * state.combatTargetIntelligence);
-			if (static_cast<int>(adjacentAttackSeed % 100U) >= adjacentAttackChance) {
+			const int adjacentAttackRoll = usesNativeAiStream
+			    ? std::max(GenerateRnd(state, 100), 0)
+			    : static_cast<int>(adjacentAttackSeed % 100U);
+			if (adjacentAttackRoll >= adjacentAttackChance) {
 				state.combatTargetCounselorDelayTicks = std::max(
 				    0,
 				    10 - 2 * state.combatTargetIntelligence
-				        + static_cast<int>((adjacentAttackSeed / 200U) % 10U));
+				        + (usesNativeAiStream
+				            ? std::max(GenerateRnd(state, 10), 0)
+				            : static_cast<int>((adjacentAttackSeed / 200U) % 10U)));
 			}
 			return;
 		}
+		static_cast<void>(actionRoll);
 		return;
 	}
 	// Mega owns its ranged Inferno admission below; do not let the generic

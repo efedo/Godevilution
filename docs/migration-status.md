@@ -1,6 +1,12 @@
 # Godevilution Migration Status
 
-Status date: 2026-09-10
+Status date: 2026-09-11
+
+Counselor’s seeded autonomous adjacent no-attack lane now consumes the same
+native AI-stream action, adjacent admission, and recovery-delay draws in the
+compact native replay and managed server. The new multiplayer fixture keeps the
+unmodeled Flash projectile branch out of this parity seam while preserving the
+existing compatibility delay and target-selection fixtures.
 
 Server-owned persistence now shares one safe session-file path contract across
 compatibility saves, command ledgers, and combined checkpoints. All path

@@ -1146,6 +1146,9 @@ Notable shared fixtures include:
 - `gameplay-counselor-multiplayer-target.json` for nearest-participant selection,
   entity-id tie-breaking, adjacent delay admission, and farther-primary
   preservation;
+- `gameplay-counselor-autonomous-multiplayer.json` for seeded adjacent
+  no-attack admission, three-draw Counselor AI-stream advancement, recovery
+  delay, and the preserved non-Flash replay boundary;
 - `gameplay-fallen-rally-multiplayer-target.json` for nearest-participant
   Fallen rally pursuit, diagonal movement, countdown, and farther-primary
   preservation;

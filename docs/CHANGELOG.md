@@ -2,6 +2,10 @@
 
 All notable changes to this fork are documented below.
 
+- Added seeded Counselor autonomous delay coverage. Native and managed runners
+  now consume the same per-monster AI-stream draws for adjacent no-attack
+  admission and recovery delay while preserving the existing Flash boundary.
+
 - Added a shared Fallen fear replay fixture. Native and managed runners now
   carry and validate the fear countdown/direction, consume the same RandomWalk
   coin draws, and agree on the canonical checkpoint hash and invalid-state
