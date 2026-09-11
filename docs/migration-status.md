@@ -215,6 +215,11 @@ secondary Warrior class chance with a shield. Both runners preserve the
 server-owned block recovery and secondary participant checkpoint for the
 zero-payload Hork Spawn collision path.
 
+The Hellfire Bone Spirit player-impact boundary now covers the same
+low-Dexterity secondary Warrior class chance with a shield. Both runners
+preserve the class-aware block decision, Hellfire compatibility RNG, and
+secondary participant checkpoints through the homing projectile lifecycle.
+
 Server-owned dialogue events now cross every world-transition path: immediate
 movement, native-timed level triggers, occupancy-triggered objects, and the
 Warp spell all preserve the directed event through simulation and combat

@@ -2,6 +2,10 @@
 
 All notable changes to this fork are documented below.
 
+- Added Hellfire Bone Spirit secondary Warrior block-chance parity. Native and
+  managed runners now cover the low-Dexterity class base chance, shield
+  admission, Hellfire compatibility RNG, and homing lifecycle checkpoints.
+
 - Added Hork Spawn secondary Warrior block-chance parity. Native and managed
   runners now cover the low-Dexterity class base chance, shield admission,
   block recovery, and canonical participant hash for the zero-payload impact.
