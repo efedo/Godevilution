@@ -1,0 +1,68 @@
+{
+  "format_version": 1,
+  "fixture_id": "gameplay/firebolt-hellfire-secondary-warrior-block-chance",
+  "protocol_schema_version": "0.1.0",
+  "game_variant": "Hellfire",
+  "content_manifest": {
+    "id": "replay.projectile-variants",
+    "version": "0.1.0",
+    "sha256": "9a04534c33948e1159b788fd21eb6a7f445c3fdbacb29d9904772ae1849ac458"
+  },
+  "tick_rate_hz": 20,
+  "rng_seed": 6,
+  "game_mode": "Multiplayer",
+  "initial_state": {
+    "player": "A",
+    "gold": 0,
+    "experience": 0,
+    "life": 640,
+    "mana": 640,
+    "mana_maximum": 640,
+    "magic": 35,
+    "position_x": 0,
+    "position_y": 0,
+    "character_level": 1,
+    "secondary_player": {
+      "player": "B",
+      "entity_id": 8,
+      "life": 640,
+      "life_maximum": 640,
+      "position_x": 1,
+      "position_y": 0,
+      "character_class": 0,
+      "character_level": 1,
+      "dexterity": 0,
+      "equipment": [
+        {
+          "slot": 5,
+          "item_seed": 44,
+          "item_type": 5,
+          "item_class": 0,
+          "flags": 0,
+          "stat_flag": true
+        }
+      ],
+      "combat_mode": 0
+    },
+    "memorized_spells": [
+      { "spell_id": 1, "level": 3 }
+    ]
+  },
+  "commands": [
+    {
+      "client_sequence": 1,
+      "target_tick": 1,
+      "server_receipt_sequence": 1,
+      "kind": "Cast",
+      "payload": {
+        "spell_id": 1,
+        "target_x": 4,
+        "target_y": 0
+      }
+    }
+  ],
+  "checkpoints": [
+    { "tick": 1, "state_sha256": "20890a47d869bd421ae24327e5572cb9bc5d387e02832f180f587c6840d2406e" },
+    { "tick": 2, "state_sha256": "f5449042617528fea3333e821d8c3948fe1648d992980d6238e52f63e9e8983c" }
+  ]
+}

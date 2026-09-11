@@ -2,6 +2,11 @@
 
 Status date: 2026-09-11
 
+Hellfire Firebolt player impact now preserves the native fixed-damage RNG
+ordering before the low-Dexterity secondary Warrior's authored class block
+chance, shield admission, and retained impact checkpoint in both replay
+runners.
+
 Familiar’s autonomous multiplayer lane now preserves the validated Bat melee
 admission and range movement, seeded post-melee Lightning projectile,
 nearest-secondary routing, Bat movement counters, and short-lived MonsterMagic

@@ -569,7 +569,7 @@ The compact native replay projection now carries the same server-owned corpse
 tile representation and per-tick monster regeneration as the C# checkpoints.
 Ordinary-death and Firebolt, Fireball, Lightning, and Flash
  spell/projectile-timeline checkpoints pass in both runners. As of 2026-09-11,
-the native replay gate contains 347 checked-in JSON fixtures and 356 registered
+the native replay gate contains 348 checked-in JSON fixtures and 357 registered
 tests; the test count also includes parser and validation cases that do not
 introduce another fixture file. Coverage includes seeded and autonomous MonsterArrow
 source coverage, Hellfire HorkDemon Hork Spawn admission, player impact, and
@@ -864,6 +864,11 @@ RNG, half-Q6 player damage, hit animation timing, projectile impact, and
 removal parity. `gameplay-firebolt-hellfire-block.json` adds a shield-capable
 participant and proves Hellfire block admission, block animation timing,
 variant RNG, and retained impact parity.
+
+`gameplay-firebolt-hellfire-secondary-warrior-block-chance.json` adds the
+low-Dexterity Warrior class catalog and explicit shield state, proving the
+native fixed-damage-before-block RNG order, class-derived block admission, and
+retained impact checkpoint at the first Hellfire impact.
 
 `gameplay-fireball-resolution.json` uses activated Fireball, a level-12
 Sorcerer with Magic 35 and effective spell level 3, a petrified adjacent target,
@@ -1395,6 +1400,10 @@ Notable shared fixtures include:
 - `gameplay-bone-spirit-hellfire-secondary-warrior-block-chance.json` for the
   low-Dexterity secondary Warrior's authored class base block chance and
   shield admission during Hellfire Bone Spirit impact;
+- `gameplay-firebolt-hellfire-secondary-warrior-block-chance.json` for the
+  low-Dexterity secondary Warrior's authored class base block chance, fixed
+  Firebolt damage-before-block RNG ordering, shield admission, and retained
+  Hellfire impact;
 - `gameplay-multiplayer-secondary-monster-monk-block.json` for unarmed Hellfire
   Monk blocking against a seeded native MonsterMelee attack;
 - `gameplay-multiplayer-secondary-monster-warrior-block-chance.json` for a

@@ -2,6 +2,10 @@
 
 All notable changes to this fork are documented below.
 
+- Added Hellfire Firebolt secondary Warrior block-chance parity. Native and
+  managed runners now agree on fixed-damage RNG ordering, class-derived block
+  admission, shield state, and the retained first-impact checkpoint.
+
 - Added Hellfire Bone Spirit secondary Warrior block-chance parity. Native and
   managed runners now cover the low-Dexterity class base chance, shield
   admission, Hellfire compatibility RNG, and homing lifecycle checkpoints.

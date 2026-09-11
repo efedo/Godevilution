@@ -16036,6 +16036,9 @@ public sealed class DiabloCombatCommandProcessor
         if (random.RandomIntLessThan(100) >= hitChance)
             return false;
 
+        // Devilution rolls Firebolt damage before the player block roll.
+        var damageQ6 = checked(
+            random.RandomIntBetween(projectile.Damage, projectile.Damage) * 32);
         var canBlock = (target.CombatMode is DiabloPlayerCombatMode.Stand
                 or DiabloPlayerCombatMode.Attack)
             && CanBlock(target);
@@ -16048,8 +16051,6 @@ public sealed class DiabloCombatCommandProcessor
             - checked((int)owner.CharacterLevel * rules.PvpBlockLevelScale),
             0,
             100);
-        var damageQ6 = checked(
-            random.RandomIntBetween(projectile.Damage, projectile.Damage) * 32);
         var resistance = GetPlayerResistance(
             target,
             targetClass,
