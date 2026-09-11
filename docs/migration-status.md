@@ -2,6 +2,11 @@
 
 Status date: 2026-09-10
 
+Server-owned persistence now shares one safe session-file path contract across
+compatibility saves, command ledgers, and combined checkpoints. All path
+operations reject empty, traversal, and unsupported session IDs before touching
+the filesystem, with focused coverage for both invalid and valid identifiers.
+
 Replay fixture monster projections now carry native acid resistance through
 both loaders and canonical hashes. A nonzero cross-runner golden closes the
 managed/native omission while zero-resistance fixtures retain their prior hash.

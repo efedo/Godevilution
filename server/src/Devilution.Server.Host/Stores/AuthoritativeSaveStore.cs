@@ -70,10 +70,5 @@ public sealed class AuthoritativeSaveStore
     }
 
     private string GetPath(string sessionId)
-    {
-        ArgumentException.ThrowIfNullOrWhiteSpace(sessionId);
-        if (sessionId.Any(character => !char.IsLetterOrDigit(character) && character is not '-' and not '_'))
-            throw new ArgumentException("Save session IDs may contain only letters, digits, '-' and '_'.", nameof(sessionId));
-        return Path.Combine(rootDirectory, sessionId + ".json");
-    }
+        => AuthoritativePersistencePaths.Combine(rootDirectory, sessionId, ".json");
 }

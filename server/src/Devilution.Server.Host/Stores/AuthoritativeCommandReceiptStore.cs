@@ -112,11 +112,7 @@ public sealed class AuthoritativeCommandReceiptStore
     }
 
     private string GetPath(string sessionId)
-    {
-        if (sessionId.Any(character => !char.IsLetterOrDigit(character) && character is not '-' and not '_'))
-            throw new ArgumentException("Session IDs may contain only letters, digits, '-' and '_'.", nameof(sessionId));
-        return Path.Combine(rootDirectory, sessionId + ".commands.json");
-    }
+        => AuthoritativePersistencePaths.Combine(rootDirectory, sessionId, ".commands.json");
 
     private static object GetPathLock(string path)
     {

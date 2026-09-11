@@ -75,6 +75,46 @@ public sealed class AuthoritativeSaveStoreTests
     }
 
     [Fact]
+    public void AllPersistenceStoresRejectInvalidSessionIdsForEveryPathOperation()
+    {
+        var root = Path.Combine(
+            Path.GetTempPath(),
+            "godevilution-persistence-path-tests",
+            Guid.NewGuid().ToString("N"));
+        var results = new Dictionary<ulong, CommandResult>();
+        try {
+            var saveStore = new AuthoritativeSaveStore(root);
+            var receiptStore = new AuthoritativeCommandReceiptStore(root);
+            var sessionStore = new AuthoritativeSessionStore(root);
+
+            foreach (var sessionId in new[] { "", " ", "../outside", "session.name" }) {
+                Assert.Throws<ArgumentException>(() => saveStore.Save(sessionId, "state"));
+                Assert.Throws<ArgumentException>(() => saveStore.Load(sessionId));
+                Assert.Throws<ArgumentException>(() => saveStore.Delete(sessionId));
+
+                Assert.Throws<ArgumentException>(() => receiptStore.Save(sessionId, results));
+                Assert.Throws<ArgumentException>(() => receiptStore.Load(sessionId));
+                Assert.Throws<ArgumentException>(() => receiptStore.Exists(sessionId));
+                Assert.Throws<ArgumentException>(() => receiptStore.Delete(sessionId));
+
+                Assert.Throws<ArgumentException>(() => sessionStore.Save(sessionId, "state", results));
+                Assert.Throws<ArgumentException>(() => sessionStore.Load(sessionId));
+                Assert.Throws<ArgumentException>(() => sessionStore.Delete(sessionId));
+            }
+
+            saveStore.Save("session-a_1", "state");
+            receiptStore.Save("session-a_1", results);
+            sessionStore.Save("session-a_1", "state", results);
+            Assert.Equal("state", saveStore.Load("session-a_1"));
+            Assert.True(receiptStore.Exists("session-a_1"));
+            Assert.NotNull(sessionStore.Load("session-a_1"));
+        } finally {
+            if (Directory.Exists(root))
+                Directory.Delete(root, recursive: true);
+        }
+    }
+
+    [Fact]
     public void CommandReceiptStoreRejectsDuplicateClientSequencesOnDisk()
     {
         var root = Path.Combine(

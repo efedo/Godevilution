@@ -713,6 +713,11 @@ All notable changes to this fork are documented below.
 
 ## Unreleased
 
+- Consolidated the server-owned persistence path contract across compatibility
+  saves, command ledgers, and combined session checkpoints. Every save, load,
+  exists, and delete operation now rejects empty, traversal, and unsupported
+  session IDs consistently while preserving the documented safe identifier set.
+
 - Closed a replay-validation parity gap: managed fixtures now enforce the native
   ranged-retreat distance/chance bounds, require all three tuning values
   together, and reject nonzero tuning without a combat target. Added mirrored
