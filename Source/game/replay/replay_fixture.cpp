@@ -8024,6 +8024,55 @@ bool AdvanceReplayAutonomousGargoyleHealing(
 	return true;
 }
 
+/** Emits the Familiar's short-lived Lightning bolt after a successful melee hit. */
+void AdmitReplayFamiliarLightning(
+	ReplayFixtureExecutionState &state,
+	uint32_t targetEntityId,
+	int32_t targetX,
+	int32_t targetY)
+{
+	if (state.combatTargetNativeAi != "Bat"
+	    || state.combatTargetMonsterId != 43
+	    || state.combatTargetHitPointsQ6 <= 0)
+		return;
+	uint32_t nextEntityId = 0x80000000U;
+	for (const auto &projectile : state.projectiles)
+		nextEntityId = std::max(nextEntityId, projectile.entityId + 1U);
+	const auto velocity = CalculateVelocity(
+		state.combatTargetPositionX,
+		state.combatTargetPositionY,
+		targetX,
+		targetY,
+		16);
+	ReplayFixtureProjectileState projectile;
+	projectile.entityId = nextEntityId;
+	projectile.sourceEntityId = state.combatTargetEntityId;
+	projectile.targetEntityId = targetEntityId;
+	projectile.spellId = 3;
+	projectile.levelId = state.combatTargetLevelId;
+	projectile.positionX = state.combatTargetPositionX;
+	projectile.positionY = state.combatTargetPositionY;
+	projectile.startX = projectile.positionX;
+	projectile.startY = projectile.positionY;
+	projectile.targetX = targetX;
+	projectile.targetY = targetY;
+	projectile.damage = std::max(1, GenerateRnd(state, 10) + 1);
+	projectile.damageType = LightningDamageType;
+	projectile.remainingTicks = 2;
+	projectile.behavior = MonsterMagicBehavior;
+	projectile.originalDirection = GetDirection(
+		projectile.positionX,
+		projectile.positionY,
+		projectile.targetX,
+		projectile.targetY);
+	projectile.velocityX = velocity.first;
+	projectile.velocityY = velocity.second;
+	projectile.speed = 16;
+	projectile.impactLifetime = 1;
+	projectile.resistantDamageDivisor = 1;
+	state.projectiles.push_back(std::move(projectile));
+}
+
 void AdvanceReplayMonsterAttack(
     ReplayFixtureExecutionState &state,
     const ReplayFixturePlayerActionTiming &timing,
@@ -9714,6 +9763,11 @@ void AdvanceReplayMonsterAttack(
 			    victim.positionY);
 			state.combatTargetBatRetreatTicks = 2;
 		}
+		AdmitReplayFamiliarLightning(
+			state,
+			state.secondaryPlayerEntityId,
+			victim.positionX,
+			victim.positionY);
 		return;
 	}
 	const uint32_t playerEntityId = state.entityId == 0 ? 1U : state.entityId;
@@ -9836,6 +9890,11 @@ void AdvanceReplayMonsterAttack(
 		    state.positionY);
 		state.combatTargetBatRetreatTicks = 2;
 	}
+	AdmitReplayFamiliarLightning(
+		state,
+		state.entityId == 0 ? 1U : state.entityId,
+		state.positionX,
+		state.positionY);
 }
 
 void AdvanceReplayPlayerAction(ReplayFixtureExecutionState &state, uint64_t tick)

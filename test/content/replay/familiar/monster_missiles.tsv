@@ -1,0 +1,2 @@
+native_ai	missile_id	projectile_behavior	monster_id	spell_id	projectile_speed	projectile_lifetime	damage_type	projectile_damage	projectile_impact_lifetime	projectile_damage_random_range	post_melee_missile
+Bat	Lightning	MonsterMagic	43	3	16	2	Lightning	0	1	10	true

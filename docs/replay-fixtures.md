@@ -561,8 +561,8 @@ the first drop remains authoritative.
 The compact native replay projection now carries the same server-owned corpse
 tile representation and per-tick monster regeneration as the C# checkpoints.
 Ordinary-death and Firebolt, Fireball, Lightning, and Flash
- spell/projectile-timeline checkpoints pass in both runners. As of 2026-09-09,
-the native replay gate contains 243 checked-in JSON fixtures and 258 registered
+ spell/projectile-timeline checkpoints pass in both runners. As of 2026-09-11,
+the native replay gate contains 244 checked-in JSON fixtures and 259 registered
 tests; the test count also includes parser and validation cases that do not
 introduce another fixture file. Coverage includes seeded and autonomous MonsterArrow
 source coverage, Hellfire HorkDemon Hork Spawn admission, player impact, and
@@ -600,7 +600,9 @@ selection are also covered in both runners. Snake distant-delay and failed
 adjacent-attack admission/countdown are also covered in both runners, as is
 the mapped SnakeCharge travel, player collision, and impact phase. Sneak
 conceal/reveal transitions and the Bat retreat movement/countdown lifecycle
-are also covered in both runners. Scavenger corpse selection, movement, Q6
+are also covered in both runners. Familiar adjacent melee admission, seeded
+post-melee Lightning damage, and the short-lived MonsterMagic projectile are
+also covered in both runners. Scavenger corpse selection, movement, Q6
 healing, countdown, and RNG consumption are also covered in both runners. The
 Hellfire Scavenger max-health healing and corpse-removal lifecycle is also
 covered in both runners. The dated full-suite baseline below records the last
@@ -1192,6 +1194,9 @@ Notable shared fixtures include:
 - `gameplay-bat-autonomous-multiplayer.json` for an adjacent Bat melee hit,
   validated attack admission, post-hit retreat state, and farther-primary
   preservation;
+- `gameplay-familiar-autonomous-multiplayer.json` for Familiar’s adjacent Bat
+  melee admission, seeded post-melee Lightning projectile, nearest-secondary
+  routing, and short-lived MonsterMagic lifecycle;
 - `gameplay-sneak-multiplayer-target.json` for Sneak concealment target
   selection, nearest-participant distance admission, and participant-state
   preservation;
