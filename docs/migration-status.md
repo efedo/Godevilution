@@ -2,6 +2,10 @@
 
 Status date: 2026-09-11
 
+The multiplayer replay boundary now accepts secondary-participant Firebolt
+casts and preserves primary-player Warrior block admission, Hellfire RNG
+ordering, and retained impact checkpoints in both runners.
+
 Primary-player MonsterMagic and Blood Star impacts now preserve the native
 low-Dexterity Warrior class chance and shield admission, including retained
 impact-phase projectile state and canonical checkpoints, in both replay

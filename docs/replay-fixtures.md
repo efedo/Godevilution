@@ -571,7 +571,7 @@ The compact native replay projection now carries the same server-owned corpse
 tile representation and per-tick monster regeneration as the C# checkpoints.
 Ordinary-death and Firebolt, Fireball, Lightning, and Flash
  spell/projectile-timeline checkpoints pass in both runners. As of 2026-09-11,
-the native replay gate contains 376 checked-in JSON fixtures and 385 registered
+the native replay gate contains 377 checked-in JSON fixtures and 386 registered
 tests; the test count also includes parser and validation cases that do not
 introduce another fixture file. Coverage includes seeded and autonomous MonsterArrow
 source coverage, Hellfire HorkDemon Hork Spawn admission, player impact, and
@@ -881,6 +881,11 @@ variant RNG, and retained impact parity.
 low-Dexterity Warrior class catalog and explicit shield state, proving the
 native fixed-damage-before-block RNG order, class-derived block admission, and
 retained impact checkpoint at the first Hellfire impact.
+
+`gameplay-firebolt-hellfire-primary-warrior-block-chance.json` mirrors that
+boundary with a secondary-participant Firebolt cast against the primary
+low-Dexterity Warrior, preserving primary-target routing, class-derived block
+admission, Hellfire RNG ordering, and retained impact parity.
 
 `gameplay-fireball-hellfire-secondary-warrior-block-chance.json` adds the same
 class-aware shield boundary to Fireball. Its intermediate checkpoint proves
@@ -1482,6 +1487,10 @@ Notable shared fixtures include:
   low-Dexterity secondary Warrior's authored class base block chance, fixed
   Firebolt damage-before-block RNG ordering, shield admission, and retained
   Hellfire impact;
+- `gameplay-firebolt-hellfire-primary-warrior-block-chance.json` for a
+  secondary-participant Firebolt cast against the low-Dexterity primary
+  Warrior, primary-target routing, class-derived shield admission, Hellfire
+  RNG ordering, and retained impact;
 - `gameplay-fireball-hellfire-secondary-warrior-block-chance.json` for the
   low-Dexterity secondary Warrior's authored class base block chance, direct
   Fireball block admission, later splash damage, and terminal impact expiry;

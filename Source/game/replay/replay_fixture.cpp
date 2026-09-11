@@ -2369,7 +2369,55 @@ void AdvanceMagicBoltsOneTick(ReplayFixtureExecutionState &state, uint64_t tick)
 					hitTarget = true;
 				}
 			}
+			const bool primaryPlayerAtTile = state.secondaryPlayerEntityId != 0
+			    && projectile.sourceEntityId == state.secondaryPlayerEntityId
+			    && state.life > 0
+			    && state.levelId == projectile.levelId
+			    && state.positionX == x
+			    && state.positionY == y;
+			if (!holyBolt && primaryPlayerAtTile) {
+				const int32_t hitChance = std::clamp(
+					state.secondaryPlayerMagic
+					    + GetReplayBaseMagicToHit(state.secondaryPlayerCharacterClassId)
+					    - static_cast<int32_t>(state.characterLevel) * 2,
+					5,
+					95);
+				const int32_t hitRoll = std::max(GenerateRnd(state, 100), 0);
+				if (hitRoll < hitChance) {
+					bool blocked = false;
+					const int32_t damageQ6 = projectile.damage * 32;
+					static_cast<void>(GenerateRnd(state, 1));
+					const bool canBlock = IsReplayPrimaryPlayerBlockCapable(state)
+					    && (state.combatMode == 0 || state.combatMode == 4);
+					const int32_t blockRoll = canBlock
+					    ? std::max(GenerateRnd(state, 100), 0)
+					    : 100;
+					const int32_t blockChance = std::clamp(
+						state.attributes[2]
+						    + GetReplayBaseBlockChance(state.characterClassId)
+						    + static_cast<int32_t>(state.characterLevel) * 2
+						    - static_cast<int32_t>(state.secondaryPlayerCharacterLevel) * 2,
+						0,
+						100);
+					blocked = blockRoll < blockChance;
+					if (blocked) {
+						state.combatMode = 6;
+						state.combatModeEndTick = tick + 4;
+						if (state.hellfire)
+							static_cast<void>(GenerateRnd(state, 2));
+					} else {
+						state.life = std::max(0, state.life - damageQ6);
+						if (state.life > 0
+						    && (damageQ6 >> 6) >= static_cast<int32_t>(state.characterLevel)) {
+							state.combatMode = 7;
+							state.combatModeEndTick = tick + 6;
+						}
+					}
+					hitTarget = true;
+				}
+			}
 			const bool playerAtTile = state.secondaryPlayerEntityId != 0
+			    && projectile.sourceEntityId != state.secondaryPlayerEntityId
 			    && state.secondaryPlayerLife > 0
 			    && state.multiplayer
 			    && state.secondaryPlayerLevelId == projectile.levelId
@@ -2437,7 +2485,9 @@ void AdvanceMagicBoltsOneTick(ReplayFixtureExecutionState &state, uint64_t tick)
 				hitTarget || blockingObject || outsideWorld,
 				 targetAtTile
 				     ? state.combatTargetEntityId
-				     : playerAtTile ? state.secondaryPlayerEntityId : 0,
+				     : primaryPlayerAtTile
+				         ? (state.entityId == 0 ? 1U : state.entityId)
+				         : playerAtTile ? state.secondaryPlayerEntityId : 0,
 			};
 		};
 
@@ -13769,6 +13819,59 @@ void AdvanceReplayInfernoOneTick(ReplayFixtureExecutionState &state)
 	}
 }
 
+/** Applies the compact secondary-player cast lanes used by multiplayer PvP replays. */
+bool ApplyReplaySecondaryCast(
+	ReplayFixtureExecutionState &state,
+	const ReplayFixtureCommand &command)
+{
+	if (state.secondaryPlayerEntityId == 0
+	    || (command.spellId != 1
+	        && command.spellId != 12
+	        && command.spellId != 30
+	        && command.spellId != 38))
+		return false;
+
+	ReplayFixtureExecutionState castState = state;
+	castState.entityId = state.secondaryPlayerEntityId;
+	castState.positionX = state.secondaryPlayerPositionX;
+	castState.positionY = state.secondaryPlayerPositionY;
+	castState.life = state.secondaryPlayerLife;
+	castState.lifeMaximum = state.secondaryPlayerLifeMaximum;
+	castState.mana = state.secondaryPlayerMana;
+	castState.manaMaximum = state.secondaryPlayerManaMaximum;
+	castState.levelId = state.secondaryPlayerLevelId;
+	castState.characterLevel = state.secondaryPlayerCharacterLevel;
+	castState.characterClassId = state.secondaryPlayerCharacterClassId;
+	castState.characterName = state.secondaryPlayerCharacterName;
+	castState.manaShieldActive = state.secondaryPlayerManaShieldActive;
+	castState.memorizedSpells = state.secondaryPlayerMemorizedSpells;
+	castState.equipment = state.secondaryEquipment;
+	castState.belt.clear();
+	castState.inventory = state.secondaryInventory;
+	castState.inventoryGrid = state.secondaryInventoryGrid;
+	castState.abilitySpellId = 0;
+	castState.attributes[2] = state.secondaryPlayerMagic;
+	castState.attributes[3] = state.secondaryPlayerMagic;
+	castState.combatMode = state.secondaryPlayerCombatMode;
+	castState.combatModeEndTick = state.secondaryPlayerCombatModeEndTick;
+
+	if (!ApplyReplayCast(castState, command))
+		return false;
+
+	castState.facingDirection = static_cast<uint32_t>(GetDirection(
+	    castState.positionX,
+	    castState.positionY,
+	    command.targetX,
+	    command.targetY));
+
+	state.randomState = castState.randomState;
+	state.projectiles = std::move(castState.projectiles);
+	state.secondaryPlayerMana = castState.mana;
+	state.secondaryPlayerManaShieldActive = castState.manaShieldActive;
+	state.secondaryPlayerFacingDirection = castState.facingDirection;
+	return true;
+}
+
 std::string GetReplayCastRejectReason(
 	const ReplayFixtureExecutionState &state,
 	const ReplayFixtureCommand &command)
@@ -14242,11 +14345,13 @@ bool ExecuteReplayFixture(
 			bool accepted = false;
 			std::string rejectReason;
 			if (!command.player.empty() && command.player == state.secondaryPlayer) {
-				if (command.kind != "Move" && command.kind != "Attack" && command.kind != "UsePortal" && command.kind != "DropItem" && command.kind != "PickupWorldItem" && command.kind != "DropHeldItem") {
-					error = "Secondary replay participant supports Move, Attack, UsePortal, DropItem, PickupWorldItem, and DropHeldItem commands only.";
+				if (command.kind != "Move" && command.kind != "Attack" && command.kind != "Cast" && command.kind != "UsePortal" && command.kind != "DropItem" && command.kind != "PickupWorldItem" && command.kind != "DropHeldItem") {
+					error = "Secondary replay participant supports Move, Attack, Cast, UsePortal, DropItem, PickupWorldItem, and DropHeldItem commands only.";
 					return false;
 				}
-				if (command.kind == "Move") {
+				if (command.kind == "Cast") {
+					accepted = ApplyReplaySecondaryCast(state, command);
+				} else if (command.kind == "Move") {
 					const int32_t targetX = state.secondaryPlayerPositionX + command.directionX;
 					const int32_t targetY = state.secondaryPlayerPositionY + command.directionY;
 					const bool occupiedByPrimary = targetX == state.positionX
@@ -15018,7 +15123,10 @@ bool ExecuteReplayFixture(
 				    state.positionY,
 				    state.combatTargetPositionX,
 				    state.combatTargetPositionY));
-			} else if (accepted && command.kind == "Cast" && state.spellProjectileBehavior != 42) {
+			} else if (accepted
+			    && command.kind == "Cast"
+			    && (command.player.empty() || command.player == fixture.initialState.player)
+			    && state.spellProjectileBehavior != 42) {
 				int32_t targetX = command.targetX;
 				int32_t targetY = command.targetY;
 				if (state.spellProjectileBehavior == 5

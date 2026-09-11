@@ -4944,6 +4944,38 @@ TEST(ReplayFixture, ExecutesHellfireFireboltSecondaryWarriorBlockChanceAgainstCS
 	EXPECT_EQ(ComputeReplayFixtureStateHash(state), fixture.checkpoints.back().stateSha256);
 }
 
+TEST(ReplayFixture, ExecutesHellfireFireboltPrimaryWarriorBlockChanceAgainstCSharpCheckpoints)
+{
+	std::ifstream file("test/fixtures/replay/gameplay-firebolt-hellfire-primary-warrior-block-chance.json");
+	ASSERT_TRUE(file.good());
+	const std::string json((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
+	ReplayFixture fixture;
+	std::string error;
+	ASSERT_TRUE(ParseReplayFixture(json, fixture, error)) << error;
+
+	ReplayFixtureExecutionState state;
+	state.multiplayer = true;
+	state.life = fixture.initialState.life;
+	state.lifeMaximum = fixture.initialState.lifeMaximum;
+	state.mana = fixture.initialState.mana;
+	state.manaMaximum = fixture.initialState.manaMaximum;
+	state.positionX = fixture.initialState.positionX;
+	state.positionY = fixture.initialState.positionY;
+	state.characterClassId = fixture.initialState.characterClass;
+	state.characterLevel = fixture.initialState.characterLevel;
+	state.spellProjectileBehavior = 2;
+
+	ReplayFixtureExecutionResult result;
+	ASSERT_TRUE(ExecuteReplayFixture(fixture, state, result, error)) << error;
+	EXPECT_EQ(state.life, 640);
+	EXPECT_EQ(state.combatMode, 6U);
+	EXPECT_EQ(state.combatModeEndTick, 6U);
+	EXPECT_EQ(state.secondaryPlayerMana, 320);
+	EXPECT_EQ(state.lastAppliedTick, 2U);
+	ASSERT_EQ(state.projectiles.size(), 1U);
+	EXPECT_EQ(ComputeReplayFixtureStateHash(state), fixture.checkpoints.back().stateSha256);
+}
+
 TEST(ReplayFixture, CreatesPvpEarAgainstCSharpCheckpoints)
 {
 	std::ifstream file("test/fixtures/replay/gameplay-pvp-ear-death.json");

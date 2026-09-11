@@ -2,6 +2,11 @@
 
 All notable changes to this fork are documented below.
 
+- Extended the replay parity gate to 377 fixtures and 386 native tests with
+  secondary-participant Firebolt casts against primary Warrior targets. Both
+  runners now preserve primary-target routing, class-aware Hellfire block
+  admission, RNG ordering, and retained impact state.
+
 - Extended the replay parity gate to 376 fixtures and 385 native tests with
   primary-participant Acid and AcidUnique autonomous coverage. The managed
   runner now reserves reused projectile IDs during Acid replacement so the
