@@ -1,0 +1,52 @@
+{
+  "format_version": 1,
+  "fixture_id": "gameplay/snotspill-autonomous-multiplayer",
+  "protocol_schema_version": "0.1.0",
+  "content_manifest": { "id": "replay.skeleton-melee", "version": "0.1.0", "sha256": "fd30d4364254f1b31f55e328ea3534a6bffa58b3b0a23be12332e1e91b6d79f1" },
+  "tick_rate_hz": 20,
+  "rng_seed": 4,
+  "game_variant": "Diablo",
+  "game_mode": "Multiplayer",
+  "initial_state": {
+    "player": "A",
+    "gold": 0,
+    "experience": 0,
+    "life": 100,
+    "life_maximum": 100,
+    "position_x": 6,
+    "position_y": 0,
+    "level_id": 1,
+    "character_level": 1,
+    "secondary_player": {
+      "player": "B",
+      "entity_id": 8,
+      "life": 100,
+      "life_maximum": 100,
+      "position_x": 2,
+      "position_y": 0,
+      "level_id": 1,
+      "character_level": 1,
+      "friendly_mode": true
+    },
+    "combat_target_entity_id": 200,
+    "combat_target_level_id": 1,
+    "combat_target_position_x": 0,
+    "combat_target_position_y": 0,
+    "combat_target_hit_points": 20,
+    "combat_target_max_hit_points": 20,
+    "combat_target_aggro_range": 4,
+    "combat_target_monster_id": 8,
+    "combat_target_native_ai": "Snotspill",
+    "combat_target_intelligence": 0,
+    "combat_target_monster_item_seed": 2654435769,
+    "combat_target_monster_ai_seed": 4
+  },
+  "commands": [
+    { "client_sequence": 1, "target_tick": 1, "server_receipt_sequence": 1, "kind": "OpenStore", "payload": { "store_id": 1 } },
+    { "client_sequence": 2, "target_tick": 2, "server_receipt_sequence": 2, "kind": "OpenStore", "payload": { "store_id": 1 } }
+  ],
+  "checkpoints": [
+    { "tick": 1, "state_sha256": "44360ee7dd85fc1f65f41f1b3f1597091720b3e9eebc55c32be174495e7f4096" },
+    { "tick": 2, "state_sha256": "5e13cbd20f13f15d31396e1e9a73b3e29be8d5effea6673d8ff9ef63e605b35a" }
+  ]
+}

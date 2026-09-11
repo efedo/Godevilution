@@ -1167,6 +1167,8 @@ Notable shared fixtures include:
 - `gameplay-snotspill-multiplayer-target.json` and
   `gameplay-warlord-multiplayer-target.json` for explicit native SkeletonAi
   alias admission, nearest-participant selection, and shared delay countdown;
+- `gameplay-snotspill-autonomous-multiplayer.json` for seeded Skeleton-family
+  action admission, movement-delay RNG, and secondary participant state;
 - `gameplay-mega-inferno-multiplayer-target.json` for nearest-participant
   InfernoController admission, secondary-target routing, and farther-primary
   preservation;

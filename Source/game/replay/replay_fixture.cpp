@@ -8826,10 +8826,13 @@ void AdvanceReplayMonsterAttack(
 			    0,
 			    35 - 4 * state.combatTargetIntelligence);
 			if (actionRoll < delayBand) {
+				const int delayRandom = state.combatTargetMonsterAiSeed != 0
+				    ? std::max(GenerateRnd(state, 10), 0)
+				    : static_cast<int>((actionSeed / 100U) % 10U);
 				state.combatTargetSkeletonMeleeDelayTicks = std::max(
 				    0,
 				    15 - 2 * state.combatTargetIntelligence
-				        + static_cast<int>((actionSeed / 100U) % 10U));
+				        + delayRandom);
 				return;
 			}
 		}

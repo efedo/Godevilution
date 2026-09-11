@@ -2,6 +2,10 @@
 
 Status date: 2026-09-11
 
+Snotspill’s seeded Skeleton-family delay lane now consumes the same native
+action and movement-delay draws in the compact native replay and managed server,
+including per-monster seed advancement and secondary participant hashing.
+
 Sneak’s seeded autonomous concealment lane now consumes the native visibility
 action draw in the compact native replay and managed server while preserving
 per-monster seed state and secondary participant hashing.

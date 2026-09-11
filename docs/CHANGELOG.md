@@ -2,6 +2,10 @@
 
 All notable changes to this fork are documented below.
 
+- Added seeded Snotspill autonomous multiplayer coverage. Skeleton-family
+  aliases now consume the native movement-delay draw consistently across the
+  native replay and managed server.
+
 - Added seeded Sneak autonomous multiplayer coverage. Native and managed
   runners now preserve the visibility action draw, per-monster seed state, and
   secondary participant checkpoint hash.
