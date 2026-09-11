@@ -54,6 +54,7 @@ public sealed class ProjectDocumentationConsistencyTests
         var replayFixtures = Read(root, "docs", "replay-fixtures.md");
         Assert.Contains("gameplay-reflect-blocked-monster-melee.json", replayFixtures, StringComparison.Ordinal);
         Assert.Contains("gameplay-singleplayer-blocked-monster-melee.json", replayFixtures, StringComparison.Ordinal);
+        Assert.Contains("gameplay-singleplayer-monster-melee-warrior-block-chance.json", replayFixtures, StringComparison.Ordinal);
         Assert.Contains("gameplay-singleplayer-monster-melee-q6-range.json", replayFixtures, StringComparison.Ordinal);
         Assert.Contains("gameplay-rhino-charge-native-q6-range.json", replayFixtures, StringComparison.Ordinal);
         Assert.Contains("gameplay-goat-melee-secondary-q6-range.json", replayFixtures, StringComparison.Ordinal);

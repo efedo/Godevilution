@@ -565,7 +565,7 @@ The compact native replay projection now carries the same server-owned corpse
 tile representation and per-tick monster regeneration as the C# checkpoints.
 Ordinary-death and Firebolt, Fireball, Lightning, and Flash
  spell/projectile-timeline checkpoints pass in both runners. As of 2026-09-11,
-the native replay gate contains 340 checked-in JSON fixtures and 349 registered
+the native replay gate contains 341 checked-in JSON fixtures and 350 registered
 tests; the test count also includes parser and validation cases that do not
 introduce another fixture file. Coverage includes seeded and autonomous MonsterArrow
 source coverage, Hellfire HorkDemon Hork Spawn admission, player impact, and
@@ -995,6 +995,10 @@ in both runners.
 the monster's runtime AI seeds omitted. It proves that single-player native
 combat still uses the shared hit/block/Q6 stream when no multiplayer AI seed is
 available.
+
+`gameplay-singleplayer-monster-melee-warrior-block-chance.json` adds the
+low-Dexterity Warrior boundary. Its 30-percent class base block chance admits
+the native block and Reflect path without relying on Dexterity alone.
 
 `gameplay-singleplayer-monster-melee-q6-range.json` covers the corresponding
 unblocked single-player primary hit. Its three-to-seven damage range is rolled

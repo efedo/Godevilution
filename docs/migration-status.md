@@ -9058,6 +9058,10 @@ chance table instead of treating non-Monk classes as zero. A low-Dexterity
 Warrior MonsterMagic fixture exercises the 30-percent base chance and shares
 its block checkpoint with the managed class catalog.
 
+The primary MonsterMelee path now exercises that same class base-block table.
+The low-Dexterity Warrior replay preserves the native block recovery, Reflect
+charge consumption, Q6 reflection, and canonical checkpoint in both runners.
+
 Managed MonsterMagic replay setup now retains the authored mana maximum, Mana
 Shield state, memorized spells, spell catalog, and equipment equip-location.
 The in-process xUnit runner executes the complete MonsterMagic fixture family

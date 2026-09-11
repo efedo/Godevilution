@@ -3860,6 +3860,46 @@ TEST(ReplayFixture, ExecutesSinglePlayerZeroSeedBlockedMonsterMeleeReflectAgains
 	EXPECT_EQ(ComputeReplayFixtureStateHash(state), fixture.checkpoints.back().stateSha256);
 }
 
+TEST(ReplayFixture, ExecutesSinglePlayerWarriorBlockChanceAgainstCSharpCheckpoint)
+{
+	std::ifstream file("test/fixtures/replay/gameplay-singleplayer-monster-melee-warrior-block-chance.json");
+	ASSERT_TRUE(file.good());
+	const std::string json((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
+	ReplayFixture fixture;
+	std::string error;
+	ASSERT_TRUE(ParseReplayFixture(json, fixture, error)) << error;
+
+	ReplayFixtureExecutionState state;
+	state.characterClassId = static_cast<uint32_t>(fixture.initialState.characterClass);
+	state.attributes[0] = fixture.initialState.strength;
+	state.attributes[1] = fixture.initialState.strength;
+	state.attributes[2] = fixture.initialState.magic;
+	state.attributes[3] = fixture.initialState.magic;
+	state.attributes[4] = fixture.initialState.dexterity;
+	state.attributes[5] = fixture.initialState.dexterity;
+	state.attributes[6] = fixture.initialState.vitality;
+	state.attributes[7] = fixture.initialState.vitality;
+	state.characterLevel = fixture.initialState.characterLevel;
+	state.life = fixture.initialState.life;
+	state.lifeMaximum = fixture.initialState.lifeMaximum;
+	state.positionX = fixture.initialState.positionX;
+	state.positionY = fixture.initialState.positionY;
+	state.levelId = fixture.initialState.levelId;
+	state.reflectCharges = fixture.initialState.reflectCharges;
+
+	ReplayFixtureExecutionResult result;
+	ASSERT_TRUE(ExecuteReplayFixture(fixture, state, result, error)) << error;
+	ASSERT_EQ(result.transitions.size(), 1U);
+	EXPECT_TRUE(result.transitions[0].accepted);
+	EXPECT_EQ(state.lastAppliedTick, 1U);
+	EXPECT_EQ(state.life, 100);
+	EXPECT_EQ(state.reflectCharges, 0U);
+	EXPECT_EQ(state.combatMode, 6U);
+	EXPECT_EQ(state.combatModeEndTick, 5U);
+	EXPECT_EQ(state.combatTargetHitPoints, 18);
+	EXPECT_EQ(ComputeReplayFixtureStateHash(state), fixture.checkpoints.back().stateSha256);
+}
+
 TEST(ReplayFixture, ExecutesSinglePlayerMonsterMeleeQ6RangeAgainstCSharpCheckpoint)
 {
 	std::ifstream file("test/fixtures/replay/gameplay-singleplayer-monster-melee-q6-range.json");

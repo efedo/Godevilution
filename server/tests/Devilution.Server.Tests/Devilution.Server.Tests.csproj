@@ -134,6 +134,7 @@
     <None Include="../../../test/fixtures/replay/gameplay-reflect-retaliation.json" Link="Fixtures/gameplay-reflect-retaliation.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-reflect-blocked-monster-melee.json" Link="Fixtures/gameplay-reflect-blocked-monster-melee.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-singleplayer-blocked-monster-melee.json" Link="Fixtures/gameplay-singleplayer-blocked-monster-melee.json" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="../../../test/fixtures/replay/gameplay-singleplayer-monster-melee-warrior-block-chance.json" Link="Fixtures/gameplay-singleplayer-monster-melee-warrior-block-chance.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-singleplayer-monster-melee-q6-range.json" Link="Fixtures/gameplay-singleplayer-monster-melee-q6-range.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-etherealize-resolution.json" Link="Fixtures/gameplay-etherealize-resolution.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-berserk-resolution.json" Link="Fixtures/gameplay-berserk-resolution.json" CopyToOutputDirectory="PreserveNewest" />

@@ -1315,6 +1315,7 @@ public sealed class ReplayFixtureTests
     [Theory]
     [InlineData("gameplay-reflect-blocked-monster-melee.json")]
     [InlineData("gameplay-singleplayer-blocked-monster-melee.json")]
+    [InlineData("gameplay-singleplayer-monster-melee-warrior-block-chance.json")]
     public void BlockedMonsterMeleeReflectFixturesPreserveNativeTransition(string fixtureName)
     {
         var fixture = LoadReplayFixture(fixtureName);

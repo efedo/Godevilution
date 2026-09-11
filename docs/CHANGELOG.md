@@ -2,6 +2,10 @@
 
 All notable changes to this fork are documented below.
 
+- Added primary MonsterMelee Warrior block-chance parity. Native and managed
+  runners now cover the low-Dexterity class base-block branch, block recovery,
+  and blocked-hit Reflect transition through a shared checkpoint.
+
 - Refreshed the replay-fixture inventory and added a documentation consistency
   guard so the native gate's fixture and registered-test counts stay aligned
   with the checked-in runner.
