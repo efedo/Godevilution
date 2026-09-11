@@ -6854,6 +6854,53 @@ TEST(ReplayFixture, ExecutesSnakeMultiplayerTargetSelectionAgainstCSharpCheckpoi
 	EXPECT_EQ(ComputeReplayFixtureStateHash(state), fixture.checkpoints.back().stateSha256);
 }
 
+TEST(ReplayFixture, ExecutesSnakeAutonomousMultiplayerChargeAgainstCSharpCheckpoints)
+{
+	std::ifstream file("test/fixtures/replay/gameplay-snake-autonomous-multiplayer.json");
+	ASSERT_TRUE(file.good());
+	const std::string json((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
+	ReplayFixture fixture;
+	std::string error;
+	ASSERT_TRUE(ParseReplayFixture(json, fixture, error)) << error;
+	ASSERT_TRUE(fixture.initialState.secondaryPlayer.defined);
+
+	ReplayFixtureExecutionState state;
+	state.entityId = 1;
+	state.life = fixture.initialState.life;
+	state.lifeMaximum = fixture.initialState.lifeMaximum;
+	state.positionX = fixture.initialState.positionX;
+	state.positionY = fixture.initialState.positionY;
+	state.levelId = fixture.initialState.levelId;
+	state.combatTargetEntityId = fixture.initialState.combatTargetEntityId;
+	state.combatTargetLevelId = fixture.initialState.combatTargetLevelId;
+	state.combatTargetPositionX = fixture.initialState.combatTargetPositionX;
+	state.combatTargetPositionY = fixture.initialState.combatTargetPositionY;
+	state.combatTargetHitPoints = fixture.initialState.combatTargetHitPoints;
+	state.combatTargetMaxHitPoints = fixture.initialState.combatTargetMaxHitPoints;
+	state.combatTargetAggroRange = fixture.initialState.combatTargetAggroRange;
+	state.combatTargetMonsterLevel = fixture.initialState.combatTargetMonsterLevel;
+	state.combatTargetNativeAi = fixture.initialState.combatTargetNativeAi;
+	state.combatTargetIntelligence = fixture.initialState.combatTargetIntelligence;
+	state.combatTargetMonsterItemSeed = fixture.initialState.combatTargetMonsterItemSeed;
+	state.combatTargetMonsterAiSeed = fixture.initialState.combatTargetMonsterAiSeed;
+
+	ReplayFixtureExecutionResult result;
+	ASSERT_TRUE(ExecuteReplayFixture(fixture, state, result, error)) << error;
+	ASSERT_EQ(result.transitions.size(), 1U);
+	ASSERT_TRUE(result.transitions[0].accepted);
+	EXPECT_EQ(state.life, 6400);
+	EXPECT_EQ(state.positionX, 8);
+	EXPECT_EQ(state.positionY, 0);
+	EXPECT_EQ(state.secondaryPlayerLife, 6400);
+	EXPECT_EQ(state.secondaryPlayerPositionX, 2);
+	EXPECT_EQ(state.secondaryPlayerPositionY, 0);
+	EXPECT_EQ(state.combatTargetPositionX, 2);
+	EXPECT_EQ(state.combatTargetPositionY, 0);
+	EXPECT_TRUE(state.projectiles.empty());
+	EXPECT_EQ(state.combatTargetMonsterAiSeed, 1599376446U);
+	EXPECT_EQ(ComputeReplayFixtureStateHash(state), fixture.checkpoints.back().stateSha256);
+}
+
 TEST(ReplayFixture, ExecutesSneakConcealmentAgainstCSharpCheckpoint)
 {
 	std::ifstream file("test/fixtures/replay/gameplay-sneak-conceal.json");

@@ -1137,6 +1137,9 @@ Notable shared fixtures include:
   adjacent attack admission, secondary damage, and farther-primary preservation;
 - `gameplay-snake-multiplayer-target.json` for nearest-participant charge
   routing through projectile travel/removal and farther-primary preservation;
+- `gameplay-snake-autonomous-multiplayer.json` for seeded nearest-participant
+  charge routing, per-monster AI-stream advancement, projectile travel, and
+  four-tick cleanup parity;
 - `gameplay-counselor-multiplayer-target.json` for nearest-participant selection,
   entity-id tie-breaking, adjacent delay admission, and farther-primary
   preservation;

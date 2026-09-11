@@ -205,6 +205,7 @@
     <None Include="../../../test/fixtures/replay/gameplay-snake-adjacent-delay.json" Link="Fixtures/gameplay-snake-adjacent-delay.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-snake-charge-lifecycle.json" Link="Fixtures/gameplay-snake-charge-lifecycle.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-snake-multiplayer-target.json" Link="Fixtures/gameplay-snake-multiplayer-target.json" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="../../../test/fixtures/replay/gameplay-snake-autonomous-multiplayer.json" Link="Fixtures/gameplay-snake-autonomous-multiplayer.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-sneak-conceal.json" Link="Fixtures/gameplay-sneak-conceal.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-sneak-reveal.json" Link="Fixtures/gameplay-sneak-reveal.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-sneak-multiplayer-target.json" Link="Fixtures/gameplay-sneak-multiplayer-target.json" CopyToOutputDirectory="PreserveNewest" />

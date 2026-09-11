@@ -6750,6 +6750,33 @@ public sealed class ReplayFixtureTests
     }
 
     [Fact]
+    public void GameplaySnakeAutonomousMultiplayerChargeMatchesNative()
+    {
+        var fixture = LoadReplayFixture("gameplay-snake-autonomous-multiplayer.json");
+        var executor = CreateSnakeChargeReplayExecutor(fixture);
+
+        var result = ReplayFixtureExecutor.Execute(
+            fixture,
+            executor,
+            new AuthoritativeCommandServer(executor));
+        var monster = Assert.Single(result.FinalSnapshot.Monsters);
+        var primary = Assert.Single(result.FinalSnapshot.Players, player => player.EntityId == 1);
+        var secondary = Assert.Single(result.FinalSnapshot.Players, player => player.EntityId == 8);
+
+        Assert.Equal(CommandStatus.Accepted, Assert.Single(result.Results).Status);
+        Assert.Equal(6400, primary.Life);
+        Assert.Equal((8, 0), (primary.PositionX, primary.PositionY));
+        Assert.Equal(6400, secondary.Life);
+        Assert.Equal((2, 0), (secondary.PositionX, secondary.PositionY));
+        Assert.Equal((2, 0), (monster.PositionX, monster.PositionY));
+        Assert.Empty(result.FinalSnapshot.Projectiles);
+        Assert.Equal(1599376446U, monster.MonsterAiSeed);
+        Assert.Equal(
+            fixture.Checkpoints.Select(checkpoint => checkpoint.StateSha256),
+            result.Checkpoints.Select(checkpoint => checkpoint.ActualStateSha256));
+    }
+
+    [Fact]
     public void GameplaySneakConcealmentMatchesNativeLifecycle()
     {
         var fixture = LoadReplayFixture("gameplay-sneak-conceal.json");
@@ -11575,7 +11602,9 @@ public sealed class ReplayFixtureTests
             aggroRange: initial.CombatTargetAggroRange,
             monsterLevel: initial.CombatTargetMonsterLevel,
             nativeAi: initial.CombatTargetNativeAi,
-            intelligence: initial.CombatTargetIntelligence);
+            intelligence: initial.CombatTargetIntelligence,
+            monsterItemSeed: initial.CombatTargetMonsterItemSeed,
+            monsterAiSeed: initial.CombatTargetMonsterAiSeed);
         var missiles = LoadReplayMonsterMissiles(fixture, "monster-snake-charge");
         var catalog = new StoreCatalog();
         catalog.AddStore(1, []);

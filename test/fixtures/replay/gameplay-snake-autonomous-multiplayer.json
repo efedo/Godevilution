@@ -1,0 +1,61 @@
+{
+  "format_version": 1,
+  "fixture_id": "gameplay/snake-autonomous-multiplayer",
+  "protocol_schema_version": "0.1.0",
+  "content_manifest": {
+    "id": "replay.monster-snake-charge",
+    "version": "0.1.0",
+    "sha256": "cc9b28e5cd36920b56c8fb53dfa163b5849e0124eac7f5619d4a8971e047a1e2"
+  },
+  "tick_rate_hz": 20,
+  "rng_seed": 9,
+  "game_variant": "Diablo",
+  "game_mode": "Multiplayer",
+  "initial_state": {
+    "player": "A",
+    "gold": 0,
+    "experience": 0,
+    "life": 6400,
+    "life_maximum": 6400,
+    "position_x": 8,
+    "position_y": 0,
+    "level_id": 1,
+    "secondary_player": {
+      "player": "B",
+      "entity_id": 8,
+      "life": 6400,
+      "life_maximum": 6400,
+      "position_x": 2,
+      "position_y": 0,
+      "level_id": 1,
+      "character_level": 1
+    },
+    "combat_target_entity_id": 9,
+    "combat_target_level_id": 1,
+    "combat_target_position_x": 0,
+    "combat_target_position_y": 0,
+    "combat_target_hit_points": 20,
+    "combat_target_max_hit_points": 20,
+    "combat_target_aggro_range": 8,
+    "combat_target_monster_level": 10,
+    "combat_target_native_ai": "Snake",
+    "combat_target_intelligence": 0,
+    "combat_target_monster_item_seed": 2654435769,
+    "combat_target_monster_ai_seed": 305419896
+  },
+  "commands": [
+    {
+      "client_sequence": 1,
+      "target_tick": 1,
+      "server_receipt_sequence": 1,
+      "kind": "OpenStore",
+      "payload": { "store_id": 1 }
+    }
+  ],
+  "checkpoints": [
+    { "tick": 1, "state_sha256": "3de68d36dd559408d8b29be14766a3da5a81a6e47fd563e4102a22f9bb342564" },
+    { "tick": 2, "state_sha256": "d13f946e4b10b8b5e9c6e0052e1dbcbc095a277aeedb42e199c607025cf8cde7" },
+    { "tick": 3, "state_sha256": "ce6527167b15b6e23e7872bc34071fc939bf3c0da6820796af1f5864f5270abf" },
+    { "tick": 4, "state_sha256": "84640d32cdfc427cd08d65a25d8171771ed875996d3f885cd3ef986cf4d3d7b0" }
+  ]
+}

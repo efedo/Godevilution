@@ -1177,6 +1177,11 @@ managed runners preserve the nearest-secondary charge, knockback, monster
 relocation, per-monster AI-stream advancement, and the validated movement-goal
 draw before the shared charge damage path.
 
+Snake now has seeded autonomous multiplayer charge coverage through the mapped
+Rhino projectile lifecycle. Native and managed runners preserve the nearer
+secondary target, farther-primary state, per-monster AI-stream advancement,
+and projectile cleanup across the four-tick replay.
+
 Zhar and Lazarus now share two-participant replay coverage through the native
 CounselorAi compatibility path. Native and managed runners preserve their
 authored identities, route the nearer secondary participant, and agree on the

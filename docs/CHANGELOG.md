@@ -44,6 +44,9 @@ All notable changes to this fork are documented below.
 - Added seeded autonomous multiplayer Rhino charge coverage and aligned the
   native replay harness with Rhino's validated movement-goal RNG draw.
 
+- Added seeded autonomous multiplayer Snake charge coverage through projectile
+  travel and cleanup, preserving the native per-monster AI stream.
+
 - Added seeded autonomous multiplayer Zombie melee coverage and aligned the
   native replay harness with Zombie's validated action-admission RNG draw.
 
