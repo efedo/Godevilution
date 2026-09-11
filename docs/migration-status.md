@@ -2,6 +2,10 @@
 
 Status date: 2026-09-11
 
+Hellfire Fireball player impact now preserves the native low-Dexterity
+secondary Warrior class chance and shield admission before the later splash
+damage checkpoint in both replay runners.
+
 Hellfire Firebolt player impact now preserves the native fixed-damage RNG
 ordering before the low-Dexterity secondary Warrior's authored class block
 chance, shield admission, and retained impact checkpoint in both replay

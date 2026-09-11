@@ -1,0 +1,69 @@
+{
+  "format_version": 1,
+  "fixture_id": "gameplay/fireball-hellfire-secondary-warrior-block-chance",
+  "protocol_schema_version": "0.1.0",
+  "content_manifest": {
+    "id": "replay.projectile-variants",
+    "version": "0.1.0",
+    "sha256": "9a04534c33948e1159b788fd21eb6a7f445c3fdbacb29d9904772ae1849ac458"
+  },
+  "tick_rate_hz": 20,
+  "rng_seed": 9,
+  "game_variant": "Hellfire",
+  "game_mode": "Multiplayer",
+  "initial_state": {
+    "player": "A",
+    "gold": 0,
+    "experience": 0,
+    "life": 640,
+    "mana": 2000,
+    "mana_maximum": 2000,
+    "magic": 35,
+    "character_level": 1,
+    "position_x": 0,
+    "position_y": 0,
+    "secondary_player": {
+      "player": "B",
+      "entity_id": 8,
+      "life": 2000,
+      "life_maximum": 2000,
+      "position_x": 1,
+      "position_y": 0,
+      "character_class": 0,
+      "character_level": 1,
+      "dexterity": 0,
+      "equipment": [
+        {
+          "slot": 5,
+          "item_seed": 44,
+          "item_type": 5,
+          "item_class": 0,
+          "flags": 0,
+          "stat_flag": true
+        }
+      ],
+      "combat_mode": 0
+    },
+    "memorized_spells": [
+      { "spell_id": 12, "level": 3 }
+    ]
+  },
+  "commands": [
+    {
+      "client_sequence": 1,
+      "target_tick": 1,
+      "server_receipt_sequence": 1,
+      "kind": "Cast",
+      "payload": {
+        "spell_id": 12,
+        "target_x": 4,
+        "target_y": 0
+      }
+    }
+  ],
+  "checkpoints": [
+    { "tick": 1, "state_sha256": "01744da6d30402cbaeb3471f57a77ca1099a8527bba8eed15b2477821509ff04" },
+    { "tick": 3, "state_sha256": "0e76c0421919988b6672587985faef4922c5b6b2d2eb16319b0c594347829904" },
+    { "tick": 17, "state_sha256": "bf388a7e08bd2f3aef215e0cb6eab87100cc1dc2744632044e2701c744b8fa7c" }
+  ]
+}

@@ -4848,6 +4848,37 @@ TEST(ReplayFixture, ExecutesHellfireFireballBlockAgainstCSharpCheckpoints)
 	EXPECT_EQ(ComputeReplayFixtureStateHash(state), fixture.checkpoints.back().stateSha256);
 }
 
+TEST(ReplayFixture, ExecutesHellfireFireballSecondaryWarriorBlockChanceAgainstCSharpCheckpoints)
+{
+	std::ifstream file("test/fixtures/replay/gameplay-fireball-hellfire-secondary-warrior-block-chance.json");
+	ASSERT_TRUE(file.good());
+	const std::string json((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
+	ReplayFixture fixture;
+	std::string error;
+	ASSERT_TRUE(ParseReplayFixture(json, fixture, error)) << error;
+
+	ReplayFixtureExecutionState state;
+	state.life = fixture.initialState.life;
+	state.lifeMaximum = fixture.initialState.lifeMaximum;
+	state.mana = fixture.initialState.mana;
+	state.manaMaximum = fixture.initialState.manaMaximum;
+	state.positionX = fixture.initialState.positionX;
+	state.positionY = fixture.initialState.positionY;
+	state.characterLevel = fixture.initialState.characterLevel;
+	state.memorizedSpells = fixture.initialState.memorizedSpells;
+	state.attributes[2] = fixture.initialState.magic;
+	state.attributes[3] = fixture.initialState.magic;
+	state.spellProjectileBehavior = 16;
+
+	ReplayFixtureExecutionResult result;
+	ASSERT_TRUE(ExecuteReplayFixture(fixture, state, result, error)) << error;
+	EXPECT_EQ(state.secondaryPlayerLife, 1984);
+	EXPECT_EQ(state.secondaryPlayerCharacterClassId, 0U);
+	EXPECT_EQ(state.lastAppliedTick, 17U);
+	EXPECT_TRUE(state.projectiles.empty());
+	EXPECT_EQ(ComputeReplayFixtureStateHash(state), fixture.checkpoints.back().stateSha256);
+}
+
 TEST(ReplayFixture, ExecutesHellfireFireboltBlockAgainstCSharpCheckpoints)
 {
 	std::ifstream file("test/fixtures/replay/gameplay-firebolt-hellfire-block.json");
