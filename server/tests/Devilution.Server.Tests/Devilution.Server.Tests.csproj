@@ -116,6 +116,7 @@
     <None Include="../../../test/fixtures/replay/gameplay-blood-star-secondary-warrior-block-chance.json" Link="Fixtures/gameplay-blood-star-secondary-warrior-block-chance.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-blood-star-lazarus-succubus-secondary-warrior-block-chance.json" Link="Fixtures/gameplay-blood-star-lazarus-succubus-secondary-warrior-block-chance.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-blood-star-primary-warrior-block-chance.json" Link="Fixtures/gameplay-blood-star-primary-warrior-block-chance.json" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="../../../test/fixtures/replay/gameplay-blood-star-lazarus-succubus-primary-warrior-block-chance.json" Link="Fixtures/gameplay-blood-star-lazarus-succubus-primary-warrior-block-chance.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-magma-secondary-warrior-block-chance.json" Link="Fixtures/gameplay-magma-secondary-warrior-block-chance.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-magma-primary-warrior-block-chance.json" Link="Fixtures/gameplay-magma-primary-warrior-block-chance.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-charged-bolt-object-collision.json" Link="Fixtures/gameplay-charged-bolt-object-collision.json" CopyToOutputDirectory="PreserveNewest" />

@@ -2,6 +2,10 @@
 
 All notable changes to this fork are documented below.
 
+- Added primary-player Warrior block-chance parity for the LazarusSuccubus
+  Blood Star alias, including native spell identity, block recovery, and the
+  retained impact-phase checkpoint in both runners.
+
 - Extended primary-player MonsterMagic Warrior block-chance parity to the
   ArchLich, Psychorb, Necromorb, and BoneDemon aliases. Native and managed
   runners now cover the shared shield boundary with alias-specific impact

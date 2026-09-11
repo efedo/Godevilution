@@ -366,7 +366,7 @@ recovery-delay lifecycle, and nearest-participant selection, including seeded
 multiplayer AI-stream advancement. Mega fixtures load their spell and
 native missile rows from
 the hash-checked `test/content/replay/mega-inferno` content pack.
-The eleven Blood Star fixtures likewise load the Succubus and Lazarus Succubus
+The twelve Blood Star fixtures likewise load the Succubus and Lazarus Succubus
 `BloodStar` mappings from the hash-checked `test/content/replay/blood-star`
 content pack.
 The twenty-four Monster Magic fixtures likewise load their `OrangeFlare` mappings
@@ -569,7 +569,7 @@ The compact native replay projection now carries the same server-owned corpse
 tile representation and per-tick monster regeneration as the C# checkpoints.
 Ordinary-death and Firebolt, Fireball, Lightning, and Flash
  spell/projectile-timeline checkpoints pass in both runners. As of 2026-09-11,
-the native replay gate contains 369 checked-in JSON fixtures and 378 registered
+the native replay gate contains 370 checked-in JSON fixtures and 379 registered
 tests; the test count also includes parser and validation cases that do not
 introduce another fixture file. Coverage includes seeded and autonomous MonsterArrow
 source coverage, Hellfire HorkDemon Hork Spawn admission, player impact, and
@@ -1380,6 +1380,8 @@ Notable shared fixtures include:
 - `gameplay-blood-star-primary-warrior-block-chance.json` for the
   low-Dexterity primary Warrior's authored class base chance, shield admission,
   block animation timing, and canonical impact checkpoints;
+- `gameplay-blood-star-lazarus-succubus-primary-warrior-block-chance.json` for
+  the same primary-player boundary through the LazarusSuccubus alias;
 - `gameplay-blood-star-lazarus-succubus-secondary-warrior-block-chance.json`
   for the LazarusSuccubus low-Dexterity secondary Warrior class chance, shield
   admission, block animation timing, and alias-specific impact checkpoints;

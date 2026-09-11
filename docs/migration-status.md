@@ -18,6 +18,10 @@ preserve that primary-player Warrior shield boundary as well, with alias-
 specific admission, impact, and canonical checkpoint coverage in both replay
 runners.
 
+The LazarusSuccubus Blood Star alias now has matching primary-player Warrior
+block-chance coverage, completing the Succubus-family primary alias pair with
+native spell identity and impact checkpoints in both runners.
+
 Succubus and LazarusSuccubus Blood Star secondary-player impacts now preserve
 the native low-Dexterity Warrior class chance and shield admission, including
 alias-specific block recovery and canonical impact checkpoints, in both replay
@@ -1679,7 +1683,7 @@ controller spell row and its native `Mega`/`InfernoControl` missile mapping.
 The managed runner validates the composite pack hash before loading either
 catalog.
 
-The eleven Blood Star replay fixtures now share the validated
+The twelve Blood Star replay fixtures now share the validated
 `test/content/replay/blood-star` pack, which externalizes the Succubus and
 Lazarus Succubus `BloodStar` missile mappings. The managed runner validates the
 pack hash before loading the native-AI projectile catalog.

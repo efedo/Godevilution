@@ -9624,6 +9624,7 @@ public sealed class ReplayFixtureTests
     [Theory]
     [InlineData("gameplay-magma-primary-warrior-block-chance.json", "monster-magma", AuthoritativeProjectileBehavior.MonsterMagic, 1U, 2UL, 6UL)]
     [InlineData("gameplay-blood-star-primary-warrior-block-chance.json", "blood-star", AuthoritativeProjectileBehavior.BloodStar, 36U, 27UL, 31UL)]
+    [InlineData("gameplay-blood-star-lazarus-succubus-primary-warrior-block-chance.json", "blood-star", AuthoritativeProjectileBehavior.BloodStar, 36U, 27UL, 31UL)]
     [InlineData("gameplay-monster-magic-arch-lich-primary-warrior-block-chance.json", "monster-magic", AuthoritativeProjectileBehavior.MonsterMagic, 1U, 27UL, 31UL)]
     [InlineData("gameplay-monster-magic-psychorb-primary-warrior-block-chance.json", "monster-magic", AuthoritativeProjectileBehavior.MonsterMagic, 1U, 27UL, 31UL)]
     [InlineData("gameplay-monster-magic-necromorb-primary-warrior-block-chance.json", "monster-magic", AuthoritativeProjectileBehavior.MonsterMagic, 1U, 27UL, 31UL)]

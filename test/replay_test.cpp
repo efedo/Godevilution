@@ -11847,6 +11847,16 @@ TEST(ReplayFixture, ExecutesSuccubusBloodStarPrimaryWarriorBlockChanceAgainstCSh
 	    31);
 }
 
+TEST(ReplayFixture, ExecutesLazarusSuccubusBloodStarPrimaryWarriorBlockChanceAgainstCSharpCheckpoints)
+{
+	ExecuteMonsterProjectilePrimaryWarriorBlockChanceFixture(
+	    "test/fixtures/replay/gameplay-blood-star-lazarus-succubus-primary-warrior-block-chance.json",
+	    20,
+	    36,
+	    27,
+	    31);
+}
+
 TEST(ReplayFixture, ExecutesArchLichMonsterMagicPrimaryWarriorBlockChanceAgainstCSharpCheckpoints)
 {
 	ExecuteMonsterProjectilePrimaryWarriorBlockChanceFixture(
