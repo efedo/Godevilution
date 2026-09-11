@@ -1066,6 +1066,45 @@ public sealed class DialogueProtocolProjectionTests
             levelGeometry: [new AuthoritativeLevel(1, 10, 10)]);
         Assert.Equal(4, Assert.Single(castProjection.Players).CurrentAction.Cast.TargetX);
 
+        var ownedItemPlayer = tileCast with {
+            Equipment = [new EquippedStoreItem(
+                4,
+                12,
+                AuthoritativeItemState.Empty with { StableItemId = 42 })],
+            CurrentAction = tileCast.CurrentAction! with {
+                CastIntent = tileCast.CurrentAction.CastIntent! with {
+                    Source = DiabloCastSourceKind.ChargedItem,
+                    SourceItem = new DiabloPlayerItemReference(
+                        DiabloPlayerItemLocation.Equipment,
+                        4,
+                        42),
+                },
+            },
+        };
+        var ownedItemSource = source with { Player = ownedItemPlayer };
+        var ownedItemProjection = DiabloProtocolMapper.ToProtocolSnapshot(
+            ownedItemSource,
+            levelGeometry: [new AuthoritativeLevel(1, 10, 10)]);
+        Assert.Equal(
+            42U,
+            Assert.Single(ownedItemProjection.Players).CurrentAction.Cast.SourceItem.StableItemId);
+
+        Assert.Throws<InvalidDataException>(() =>
+            DiabloProtocolMapper.ToProtocolSnapshot(
+                ownedItemSource with {
+                    Player = ownedItemPlayer with {
+                        CurrentAction = ownedItemPlayer.CurrentAction! with {
+                            CastIntent = ownedItemPlayer.CurrentAction.CastIntent! with {
+                                SourceItem = new DiabloPlayerItemReference(
+                                    DiabloPlayerItemLocation.Equipment,
+                                    4,
+                                    99),
+                            },
+                        },
+                    },
+                },
+                levelGeometry: [new AuthoritativeLevel(1, 10, 10)]));
+
         Assert.Throws<InvalidDataException>(() =>
             DiabloProtocolMapper.ToProtocolSnapshot(
                 tileCastSource with {

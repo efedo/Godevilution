@@ -4460,6 +4460,41 @@ public sealed class DiabloSimulationTests
         Assert.Throws<InvalidDataException>(() =>
             replacement.RestoreSnapshot(destination, invalidSource));
 
+        player.Equipment.Add(new EquippedStoreItem(
+            4,
+            12,
+            AuthoritativeItemState.Empty));
+        var ownedItemSnapshot = simulation.CaptureSnapshot(player, 1) with {
+            Player = simulation.CapturePlayerState(player) with {
+                CurrentAction = snapshot.Player.CurrentAction! with {
+                    EffectApplied = true,
+                    CastIntent = snapshot.Player.CurrentAction.CastIntent! with {
+                        Source = DiabloCastSourceKind.ChargedItem,
+                        SourceItem = new DiabloPlayerItemReference(
+                            DiabloPlayerItemLocation.Equipment,
+                            4,
+                            0),
+                    },
+                },
+            },
+        };
+        replacement.RestoreSnapshot(destination, ownedItemSnapshot);
+
+        var staleOwnedItemSnapshot = ownedItemSnapshot with {
+            Player = ownedItemSnapshot.Player with {
+                CurrentAction = ownedItemSnapshot.Player.CurrentAction! with {
+                    CastIntent = ownedItemSnapshot.Player.CurrentAction.CastIntent! with {
+                        SourceItem = new DiabloPlayerItemReference(
+                            DiabloPlayerItemLocation.Equipment,
+                            4,
+                            99),
+                    },
+                },
+            },
+        };
+        Assert.Throws<InvalidDataException>(() =>
+            replacement.RestoreSnapshot(destination, staleOwnedItemSnapshot));
+
         var invalidProgress = snapshot with {
             Player = snapshot.Player with {
                 CurrentAction = snapshot.Player.CurrentAction! with {

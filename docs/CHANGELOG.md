@@ -2,6 +2,11 @@
 
 All notable changes to this fork are documented below.
 
+- Protocol-independent save/restore and Diablo wire projection now enforce the
+  same authoritative cast-source ownership rule as the server, Godot, and
+  native client boundaries, rejecting stale references before persistence or
+  transport.
+
 - Authoritative cast-action validation now binds charged and consumable source
   references to the projected player inventory, belt, equipment, or open stash
   item. Server, Godot, and native boundaries reject stale or fabricated source

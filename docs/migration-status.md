@@ -2,6 +2,11 @@
 
 Status date: 2026-09-10
 
+The protocol-independent Diablo snapshot and wire projection validators now
+apply the same cast-source ownership rule as the server host, Godot model, and
+native client. Save/restore and projection paths reject stale item references
+before an action can cross a persistence or transport boundary.
+
 Authoritative cast actions now validate item-source ownership at every client
 boundary. Charged and consumable casts must reference the projected inventory,
 belt, equipment, or open-stash item at the declared slot/page, with an optional

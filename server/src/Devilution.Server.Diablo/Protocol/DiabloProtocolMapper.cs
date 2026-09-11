@@ -1831,7 +1831,7 @@ internal static class DiabloProtocolMapper
                 && action.CastIntent.SpellId != 0
                 && action.TargetEntityId == action.CastIntent.TargetEntityId
                 && IsProjectedCastTarget(state.LevelId, action.CastIntent, levels)
-                && IsValidCastSource(action.CastIntent)
+                && IsValidCastSource(state, action.CastIntent)
                 && Enum.IsDefined(action.CastIntent.Source)
                 && (!action.CastIntent.SourceItem.HasValue
                     || Enum.IsDefined(action.CastIntent.SourceItem.Value.Location)),
@@ -1913,7 +1913,9 @@ internal static class DiabloProtocolMapper
             || cast.TargetX < level.Width && cast.TargetY < level.Height;
     }
 
-    private static bool IsValidCastSource(DiabloCastIntent cast)
+    private static bool IsValidCastSource(
+        StorePlayerSnapshot player,
+        DiabloCastIntent cast)
     {
         var requiresItem = cast.Source is DiabloCastSourceKind.ChargedItem
             or DiabloCastSourceKind.ConsumableItem;
@@ -1924,16 +1926,37 @@ internal static class DiabloProtocolMapper
         var item = cast.SourceItem.Value;
         return item.Location switch {
             DiabloPlayerItemLocation.Inventory =>
-                item.Slot < NativeMaximumInventoryCount,
+                item.Slot < player.Inventory.Count
+                && MatchesStableItem(
+                    player.Inventory[(int)item.Slot].State,
+                    item.StableItemId),
             DiabloPlayerItemLocation.Belt =>
-                item.Slot < NativeMaximumBeltCount,
+                item.Slot < NativeMaximumBeltCount
+                && player.Belt.Any(candidate =>
+                    candidate.Slot == item.Slot
+                    && MatchesStableItem(candidate.State, item.StableItemId)),
             DiabloPlayerItemLocation.Equipment =>
-                item.Slot < NativeMaximumEquipmentCount,
+                item.Slot < NativeMaximumEquipmentCount
+                && player.Equipment.Any(candidate =>
+                    candidate.Slot == item.Slot
+                    && MatchesStableItem(candidate.State, item.StableItemId)),
             DiabloPlayerItemLocation.Stash =>
-                item.Slot < AuthoritativeProtocolLimits.NativeStashCellCount
-                && item.Page < AuthoritativeProtocolLimits.NativeStashPageCount,
+                player.StashOpen
+                && item.Slot < AuthoritativeProtocolLimits.NativeStashCellCount
+                && item.Page < AuthoritativeProtocolLimits.NativeStashPageCount
+                && player.Stash.Any(candidate =>
+                    candidate.Page == item.Page
+                    && candidate.Cell == item.Slot
+                    && MatchesStableItem(candidate.State, item.StableItemId)),
             _ => false,
         };
+    }
+
+    private static bool MatchesStableItem(
+        AuthoritativeItemState state,
+        uint stableItemId)
+    {
+        return stableItemId == 0 || state.StableItemId == stableItemId;
     }
 
     public static DiabloSimulationSnapshot FromProtocolSnapshot(Snapshot source)

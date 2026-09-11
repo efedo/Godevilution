@@ -2875,7 +2875,7 @@ public sealed partial class DiabloSimulation
                 && action.CastIntent.SpellId != 0
                 && action.TargetEntityId == action.CastIntent.TargetEntityId
                 && IsValidCastTarget(source.LevelId, action.CastIntent)
-                && IsValidCastSource(action.CastIntent)
+                && IsValidCastSource(source, action.CastIntent)
                 && Enum.IsDefined(action.CastIntent.Source)
                 && (!action.CastIntent.SourceItem.HasValue
                     || Enum.IsDefined(action.CastIntent.SourceItem.Value.Location)),
@@ -2931,7 +2931,9 @@ public sealed partial class DiabloSimulation
             || WorldState.ContainsPosition(levelId, cast.TargetX, cast.TargetY);
     }
 
-    private static bool IsValidCastSource(DiabloCastIntent cast)
+    private static bool IsValidCastSource(
+        StorePlayerSnapshot player,
+        DiabloCastIntent cast)
     {
         var requiresItem = cast.Source is DiabloCastSourceKind.ChargedItem
             or DiabloCastSourceKind.ConsumableItem;
@@ -2942,16 +2944,37 @@ public sealed partial class DiabloSimulation
         var item = cast.SourceItem.Value;
         return item.Location switch {
             DiabloPlayerItemLocation.Inventory =>
-                item.Slot < NativeCompatibilityLimits.MaximumInventoryCount,
+                item.Slot < player.Inventory.Count
+                && MatchesStableItem(
+                    player.Inventory[(int)item.Slot].State,
+                    item.StableItemId),
             DiabloPlayerItemLocation.Belt =>
-                item.Slot < NativeCompatibilityLimits.MaximumBeltCount,
+                item.Slot < NativeCompatibilityLimits.MaximumBeltCount
+                && player.Belt.Any(candidate =>
+                    candidate.Slot == item.Slot
+                    && MatchesStableItem(candidate.State, item.StableItemId)),
             DiabloPlayerItemLocation.Equipment =>
-                item.Slot < NativeCompatibilityLimits.MaximumEquipmentCount,
+                item.Slot < NativeCompatibilityLimits.MaximumEquipmentCount
+                && player.Equipment.Any(candidate =>
+                    candidate.Slot == item.Slot
+                    && MatchesStableItem(candidate.State, item.StableItemId)),
             DiabloPlayerItemLocation.Stash =>
-                item.Slot < NativeCompatibilityLimits.StashCellCount
-                && item.Page < NativeCompatibilityLimits.StashPageCount,
+                player.StashOpen
+                && item.Slot < NativeCompatibilityLimits.StashCellCount
+                && item.Page < NativeCompatibilityLimits.StashPageCount
+                && player.Stash.Any(candidate =>
+                    candidate.Page == item.Page
+                    && candidate.Cell == item.Slot
+                    && MatchesStableItem(candidate.State, item.StableItemId)),
             _ => false,
         };
+    }
+
+    private static bool MatchesStableItem(
+        AuthoritativeItemState state,
+        uint stableItemId)
+    {
+        return stableItemId == 0 || state.StableItemId == stableItemId;
     }
 
     private static AuthoritativePlayerActionState? ClonePlayerAction(
