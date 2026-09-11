@@ -8560,6 +8560,42 @@ public sealed class ReplayFixtureTests
             result.Checkpoints.Select(checkpoint => checkpoint.ActualStateSha256));
     }
 
+    [Theory]
+    [InlineData("gameplay-monster-arrow-goat-ranged-secondary-warrior-block-chance.json", "monster-arrow-autonomous", 2UL, 80)]
+    [InlineData("gameplay-monster-arrow-skeleton-ranged-secondary-warrior-block-chance.json", "monster-arrow", 7UL, 100)]
+    public void GameplayMonsterArrowAliasesSecondaryWarriorBlockAtClassChance(
+        string fixtureName,
+        string missilePackDirectory,
+        ulong expectedTick,
+        int expectedLife)
+    {
+        var fixture = LoadReplayFixture(fixtureName);
+        var secondary = Assert.IsType<ReplaySecondaryPlayer>(fixture.InitialState.SecondaryPlayer);
+        var executor = CreateMonsterArrowExecutor(fixture, missilePackDirectory);
+
+        var result = ReplayFixtureExecutor.Execute(
+            fixture,
+            executor,
+            new AuthoritativeCommandServer(executor));
+        var secondaryState = executor.GetPlayerState(secondary.Player);
+        var projectile = Assert.Single(result.FinalSnapshot.Projectiles);
+
+        Assert.Equal(CommandStatus.Accepted, Assert.Single(result.Results).Status);
+        Assert.Equal(0U, secondary.CharacterClass);
+        Assert.Equal(0, secondary.Dexterity);
+        Assert.Equal(expectedLife, secondaryState.Life);
+        Assert.Equal(DiabloPlayerCombatMode.Block, secondaryState.CombatMode);
+        Assert.Equal(expectedTick + 4, secondaryState.CombatModeEndTick);
+        Assert.Equal(secondary.EntityId, projectile.TargetEntityId);
+        Assert.Equal((int)AuthoritativeProjectileBehavior.MonsterArrow, projectile.Behavior);
+        Assert.Equal((int)AuthoritativeProjectilePhase.Impact, projectile.Phase);
+        Assert.Equal(1U, projectile.RemainingTicks);
+        Assert.Equal(expectedTick, result.FinalSnapshot.Tick);
+        Assert.Equal(
+            fixture.Checkpoints.Select(checkpoint => checkpoint.StateSha256),
+            result.Checkpoints.Select(checkpoint => checkpoint.ActualStateSha256));
+    }
+
     [Fact]
     public void GameplayMonsterArrowSkeletonRangedAdmissionMatchesNativeLifecycle()
     {
@@ -12504,6 +12540,9 @@ public sealed class ReplayFixtureTests
             skeletonRangedMovementIdleTicks: initial.CombatTargetSkeletonRangedMovementIdleTicks,
             skeletonRangedMovementMode: initial.CombatTargetSkeletonRangedMovementMode);
         var missiles = LoadReplayMonsterMissiles(fixture, missilePackDirectory);
+        var classes = AuthoritativePlayerClassCatalog.LoadTsv(
+            "classes.tsv",
+            File.ReadAllText(Path.Combine(FindRepositoryRoot(), "server", "content", "base", "classes.tsv")));
         var catalog = new StoreCatalog();
         catalog.AddStore(1, []);
         return new StoreSimulationExecutor(
@@ -12517,6 +12556,7 @@ public sealed class ReplayFixtureTests
             startingPositionY: initial.PositionY,
             startingLevelId: initial.LevelId,
             startingCharacterLevel: initial.CharacterLevel,
+            startingPlayerClasses: classes,
             startingCombatTargets: [target],
             startingMonsterMissiles: missiles,
             startingRandomSeed: checked((uint)fixture.RngSeed),

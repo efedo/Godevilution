@@ -2,6 +2,11 @@
 
 All notable changes to this fork are documented below.
 
+- Extended MonsterArrow secondary Warrior block-chance parity to the GoatRanged
+  and SkeletonRanged aliases. Native and managed runners now cover autonomous
+  admission, alias-specific travel timing, class-derived shield blocking,
+  block recovery, and retained impact-phase projectile state.
+
 - Extended MonsterMagic secondary Warrior block-chance parity to the ArchLich,
   Psychorb, Necromorb, and BoneDemon aliases. Native and managed runners now
   cover the shared low-Dexterity class boundary, shield admission, block

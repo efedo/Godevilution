@@ -371,7 +371,7 @@ The nine Blood Star fixtures likewise load the Succubus and Lazarus Succubus
 content pack.
 The twenty-four Monster Magic fixtures likewise load their `OrangeFlare` mappings
 from the hash-checked `test/content/replay/monster-magic` content pack.
-The fourteen Monster Arrow fixtures load their GoatRanged and SkeletonRanged
+The sixteen Monster Arrow fixtures load their GoatRanged and SkeletonRanged
 `Arrow` mappings from the hash-checked `monster-arrow` and
 `monster-arrow-admission` content packs.
 The eleven Hork Spawn fixtures load their `HorkDemon` mapping from the
@@ -569,7 +569,7 @@ The compact native replay projection now carries the same server-owned corpse
 tile representation and per-tick monster regeneration as the C# checkpoints.
 Ordinary-death and Firebolt, Fireball, Lightning, and Flash
  spell/projectile-timeline checkpoints pass in both runners. As of 2026-09-11,
-the native replay gate contains 356 checked-in JSON fixtures and 365 registered
+the native replay gate contains 358 checked-in JSON fixtures and 367 registered
 tests; the test count also includes parser and validation cases that do not
 introduce another fixture file. Coverage includes seeded and autonomous MonsterArrow
 source coverage, Hellfire HorkDemon Hork Spawn admission, player impact, and
@@ -1293,6 +1293,10 @@ Notable shared fixtures include:
 - `gameplay-monster-arrow-secondary-warrior-block-chance.json` for the same
   class/shield block boundary routed through the multiplayer secondary
   participant, including participant hashing and impact-lifetime parity;
+- `gameplay-monster-arrow-goat-ranged-secondary-warrior-block-chance.json` and
+  `gameplay-monster-arrow-skeleton-ranged-secondary-warrior-block-chance.json`
+  for the class-aware secondary shield boundary after each authored ranged-AI
+  alias's autonomous admission and travel timing;
 - `gameplay-monster-arrow-etherealized.json` for the native `PlayerMHit`
   protection boundary: an Etherealized player does not consume the arrow,
   which continues through the occupied tile and expires on its normal travel

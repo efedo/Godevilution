@@ -127,7 +127,10 @@ primary participant's state through impact in both runners.
 
 The autonomous MonsterArrow replay now also routes a GoatRanged admission to a
 nearer secondary participant, preserving the primary participant and the
-impact-phase projectile across both runners.
+impact-phase projectile across both runners. The GoatRanged and SkeletonRanged
+aliases now additionally preserve the authored low-Dexterity secondary Warrior
+block chance, shield admission, block recovery, and alias-specific travel/
+impact checkpoints.
 
 Replay fixture state now carries the semantic class-skill role through both
 native and managed loaders, participant initialization, and canonical hashes.
@@ -1665,7 +1668,7 @@ The twenty-four Monster Magic replay fixtures now share the validated
 mapping for Lich-family and orb native AIs. The managed runner validates the
 pack hash before loading the native-AI projectile catalog.
 
-The fourteen Monster Arrow replay fixtures now load validated GoatRanged and
+The sixteen Monster Arrow replay fixtures now load validated GoatRanged and
 SkeletonRanged mappings from the shared `test/content/replay/monster-arrow`
 pack and the admission-specific `test/content/replay/monster-arrow-admission`
 pack. Both native and managed runners validate their manifest hashes before
