@@ -366,7 +366,7 @@ recovery-delay lifecycle, and nearest-participant selection, including seeded
 multiplayer AI-stream advancement. Mega fixtures load their spell and
 native missile rows from
 the hash-checked `test/content/replay/mega-inferno` content pack.
-The ten Blood Star fixtures likewise load the Succubus and Lazarus Succubus
+The eleven Blood Star fixtures likewise load the Succubus and Lazarus Succubus
 `BloodStar` mappings from the hash-checked `test/content/replay/blood-star`
 content pack.
 The twenty-four Monster Magic fixtures likewise load their `OrangeFlare` mappings
@@ -569,7 +569,7 @@ The compact native replay projection now carries the same server-owned corpse
 tile representation and per-tick monster regeneration as the C# checkpoints.
 Ordinary-death and Firebolt, Fireball, Lightning, and Flash
  spell/projectile-timeline checkpoints pass in both runners. As of 2026-09-11,
-the native replay gate contains 361 checked-in JSON fixtures and 370 registered
+the native replay gate contains 363 checked-in JSON fixtures and 372 registered
 tests; the test count also includes parser and validation cases that do not
 introduce another fixture file. Coverage includes seeded and autonomous MonsterArrow
 source coverage, Hellfire HorkDemon Hork Spawn admission, player impact, and
@@ -1372,6 +1372,9 @@ Notable shared fixtures include:
 - `gameplay-blood-star-secondary-warrior-block-chance.json` for the
   low-Dexterity secondary Warrior's authored class base chance, shield
   admission, block animation timing, and canonical impact checkpoints;
+- `gameplay-blood-star-primary-warrior-block-chance.json` for the
+  low-Dexterity primary Warrior's authored class base chance, shield admission,
+  block animation timing, and canonical impact checkpoints;
 - `gameplay-blood-star-lazarus-succubus-secondary-warrior-block-chance.json`
   for the LazarusSuccubus low-Dexterity secondary Warrior class chance, shield
   admission, block animation timing, and alias-specific impact checkpoints;
@@ -1394,6 +1397,9 @@ Notable shared fixtures include:
   secondary impact, and the two-tick lethal autonomous lifecycle;
 - `gameplay-magma-secondary-warrior-block-chance.json` for the low-Dexterity
   secondary Warrior's authored class base chance, shield admission, and
+  Hellfire MagmaBall impact checkpoints;
+- `gameplay-magma-primary-warrior-block-chance.json` for the low-Dexterity
+  primary Warrior's authored class base chance, shield admission, and
   Hellfire MagmaBall impact checkpoints;
 - `gameplay-monster-magic-primary-shield.json` for primary-player MonsterMagic
   impact GetHit adjustment, Mana Shield absorption, and shared Q6 checkpoints;

@@ -11693,6 +11693,84 @@ void ExecuteAutonomousMonsterRangedSecondaryWarriorBlockChanceFixture(
 	EXPECT_EQ(ComputeReplayFixtureStateHash(state), fixture.checkpoints.back().stateSha256);
 }
 
+void ExecuteMonsterProjectilePrimaryWarriorBlockChanceFixture(
+	const char *fixturePath,
+	int32_t expectedBehavior,
+	uint32_t expectedSpellId,
+	uint32_t expectedTick,
+	uint32_t expectedBlockEndTick)
+{
+	std::ifstream file(fixturePath);
+	ASSERT_TRUE(file.good());
+	const std::string json((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
+	ReplayFixture fixture;
+	std::string error;
+	ASSERT_TRUE(ParseReplayFixture(json, fixture, error)) << error;
+	ASSERT_TRUE(fixture.initialProjectiles.empty());
+	ASSERT_FALSE(fixture.initialState.secondaryPlayer.defined);
+
+	ReplayFixtureExecutionState state;
+	state.entityId = 1;
+	state.life = fixture.initialState.life;
+	state.lifeMaximum = fixture.initialState.lifeMaximum;
+	state.positionX = fixture.initialState.positionX;
+	state.positionY = fixture.initialState.positionY;
+	state.levelId = fixture.initialState.levelId;
+	state.characterClassId = static_cast<uint32_t>(fixture.initialState.characterClass);
+	state.characterLevel = fixture.initialState.characterLevel;
+	state.attributes[4] = fixture.initialState.dexterity;
+	state.attributes[5] = fixture.initialState.dexterity;
+	state.combatTargetEntityId = fixture.initialState.combatTargetEntityId;
+	state.combatTargetLevelId = fixture.initialState.combatTargetLevelId;
+	state.combatTargetPositionX = fixture.initialState.combatTargetPositionX;
+	state.combatTargetPositionY = fixture.initialState.combatTargetPositionY;
+	state.combatTargetHitPoints = fixture.initialState.combatTargetHitPoints;
+	state.combatTargetMaxHitPoints = fixture.initialState.combatTargetMaxHitPoints;
+	state.combatTargetAggroRange = fixture.initialState.combatTargetAggroRange;
+	state.combatTargetMonsterLevel = fixture.initialState.combatTargetMonsterLevel;
+	state.combatTargetNativeAi = fixture.initialState.combatTargetNativeAi;
+	state.combatTargetMonsterId = fixture.initialState.combatTargetMonsterId;
+	state.combatTargetToHit = fixture.initialState.combatTargetToHit;
+	state.combatTargetMinDamage = fixture.initialState.combatTargetMinDamage;
+	state.combatTargetMaxDamage = fixture.initialState.combatTargetMaxDamage;
+	state.combatTargetIntelligence = fixture.initialState.combatTargetIntelligence;
+
+	ReplayFixtureExecutionResult result;
+	ASSERT_TRUE(ExecuteReplayFixture(fixture, state, result, error)) << error;
+	ASSERT_EQ(result.transitions.size(), 1U);
+	EXPECT_TRUE(result.transitions[0].accepted);
+	EXPECT_EQ(state.lastAppliedTick, expectedTick);
+	EXPECT_EQ(state.life, fixture.initialState.life);
+	EXPECT_EQ(state.combatMode, 6U);
+	EXPECT_EQ(state.combatModeEndTick, expectedBlockEndTick);
+	ASSERT_EQ(state.projectiles.size(), 1U);
+	EXPECT_EQ(state.projectiles[0].behavior, expectedBehavior);
+	EXPECT_EQ(state.projectiles[0].spellId, expectedSpellId);
+	EXPECT_EQ(state.projectiles[0].phase, 1);
+	EXPECT_EQ(state.projectiles[0].remainingTicks, 1U);
+	EXPECT_EQ(ComputeReplayFixtureStateHash(state), fixture.checkpoints.back().stateSha256);
+}
+
+TEST(ReplayFixture, ExecutesMagmaMonsterMagicPrimaryWarriorBlockChanceAgainstCSharpCheckpoints)
+{
+	ExecuteMonsterProjectilePrimaryWarriorBlockChanceFixture(
+	    "test/fixtures/replay/gameplay-magma-primary-warrior-block-chance.json",
+	    50,
+	    1,
+	    2,
+	    6);
+}
+
+TEST(ReplayFixture, ExecutesSuccubusBloodStarPrimaryWarriorBlockChanceAgainstCSharpCheckpoints)
+{
+	ExecuteMonsterProjectilePrimaryWarriorBlockChanceFixture(
+	    "test/fixtures/replay/gameplay-blood-star-primary-warrior-block-chance.json",
+	    20,
+	    36,
+	    27,
+	    31);
+}
+
 TEST(ReplayFixture, ExecutesFireBatFireboltSecondaryWarriorBlockChanceAgainstCSharpCheckpoints)
 {
 	ExecuteAutonomousMonsterRangedSecondaryWarriorBlockChanceFixture(

@@ -2,6 +2,13 @@
 
 Status date: 2026-09-11
 
+Primary-player MonsterMagic and Blood Star impacts now preserve the native
+low-Dexterity Warrior class chance and shield admission, including retained
+impact-phase projectile state and canonical checkpoints, in both replay
+runners. The Hellfire Magma alias is covered through its external missile
+mapping; the Blood Star fixture covers the Succubus alias and native spell
+identity.
+
 Succubus and LazarusSuccubus Blood Star secondary-player impacts now preserve
 the native low-Dexterity Warrior class chance and shield admission, including
 alias-specific block recovery and canonical impact checkpoints, in both replay
@@ -1663,7 +1670,7 @@ controller spell row and its native `Mega`/`InfernoControl` missile mapping.
 The managed runner validates the composite pack hash before loading either
 catalog.
 
-The ten Blood Star replay fixtures now share the validated
+The eleven Blood Star replay fixtures now share the validated
 `test/content/replay/blood-star` pack, which externalizes the Succubus and
 Lazarus Succubus `BloodStar` missile mappings. The managed runner validates the
 pack hash before loading the native-AI projectile catalog.

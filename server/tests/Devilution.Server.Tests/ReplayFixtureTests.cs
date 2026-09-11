@@ -9589,6 +9589,41 @@ public sealed class ReplayFixtureTests
             result.Checkpoints.Select(checkpoint => checkpoint.ActualStateSha256));
     }
 
+    [Theory]
+    [InlineData("gameplay-magma-primary-warrior-block-chance.json", "monster-magma", AuthoritativeProjectileBehavior.MonsterMagic, 1U, 2UL, 6UL)]
+    [InlineData("gameplay-blood-star-primary-warrior-block-chance.json", "blood-star", AuthoritativeProjectileBehavior.BloodStar, 36U, 27UL, 31UL)]
+    public void GameplayMonsterProjectileAliasesPrimaryWarriorBlockAtClassChance(
+        string fixtureName,
+        string missilePackDirectory,
+        AuthoritativeProjectileBehavior expectedBehavior,
+        uint expectedSpellId,
+        ulong expectedTick,
+        ulong expectedBlockEndTick)
+    {
+        var fixture = LoadReplayFixture(fixtureName);
+        var executor = CreateMonsterMagicExecutor(fixture, missilePackDirectory);
+
+        var result = ReplayFixtureExecutor.Execute(
+            fixture,
+            executor,
+            new AuthoritativeCommandServer(executor));
+        var player = Assert.Single(result.FinalSnapshot.Players);
+        var projectile = Assert.Single(result.FinalSnapshot.Projectiles);
+
+        Assert.Equal(CommandStatus.Accepted, Assert.Single(result.Results).Status);
+        Assert.Equal(6400, player.Life);
+        Assert.Equal(PlayerCombatMode.Block, player.CombatMode);
+        Assert.Equal(expectedBlockEndTick, player.CombatModeEndTick);
+        Assert.Equal(expectedTick, result.FinalSnapshot.Tick);
+        Assert.Equal((int)expectedBehavior, projectile.Behavior);
+        Assert.Equal(expectedSpellId, projectile.SpellId);
+        Assert.Equal((int)AuthoritativeProjectilePhase.Impact, projectile.Phase);
+        Assert.Equal(1U, projectile.RemainingTicks);
+        Assert.Equal(
+            fixture.Checkpoints.Select(checkpoint => checkpoint.StateSha256),
+            result.Checkpoints.Select(checkpoint => checkpoint.ActualStateSha256));
+    }
+
     [Fact]
     public void GameplayMagmaMagmaBallMultiplayerTargetSelectionMatchesNativeLifecycle()
     {

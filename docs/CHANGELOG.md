@@ -2,6 +2,11 @@
 
 All notable changes to this fork are documented below.
 
+- Added primary-player Warrior block-chance parity for Hellfire MagmaBall and
+  Succubus Blood Star. Native and managed runners now cover the low-Dexterity
+  class chance, shield admission, block recovery, alias-specific projectile
+  identity, and retained impact checkpoints.
+
 - Added LazarusSuccubus Blood Star secondary Warrior block-chance parity.
   Native and managed runners now cover both Succubus-family aliases with the
   class-derived shield admission, block recovery, and alias-specific impact
