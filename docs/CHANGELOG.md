@@ -2,6 +2,10 @@
 
 All notable changes to this fork are documented below.
 
+- Refreshed the replay-fixture inventory and added a documentation consistency
+  guard so the native gate's fixture and registered-test counts stay aligned
+  with the checked-in runner.
+
 - Added multiplayer GoatMelee wounded-special parity. Native and managed
   runners now preserve below-half-health special attack admission, special
   to-hit and Q6 damage range selection, and seeded AI-stream draw order.

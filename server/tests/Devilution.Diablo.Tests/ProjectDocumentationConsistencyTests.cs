@@ -1,4 +1,5 @@
 using System.Text.Json;
+using System.Text.RegularExpressions;
 using Devilution.Diablo;
 using Xunit;
 
@@ -82,6 +83,42 @@ public sealed class ProjectDocumentationConsistencyTests
             Assert.Equal(DiabloContentSchema.Current.Id, schema.GetProperty("id").GetString());
             Assert.Equal(currentVersion, schema.GetProperty("version").GetString());
         }
+    }
+
+    [Fact]
+    public void ReplayFixtureInventoryMatchesNativeGateDocumentation()
+    {
+        var root = FindRepositoryRoot();
+        var replayRoot = Path.Combine(root, "test", "fixtures", "replay");
+        var replaySource = Read(root, "test", "replay_test.cpp");
+        var replayDocumentation = Read(root, "docs", "replay-fixtures.md");
+
+        var fixtureCount = Directory.EnumerateFiles(
+                replayRoot,
+                "*.json",
+                SearchOption.AllDirectories)
+            .Count();
+        var referencedFixtures = Regex.Matches(
+                replaySource,
+                @"test/fixtures/replay/[A-Za-z0-9._/-]+\.json",
+                RegexOptions.CultureInvariant)
+            .Select(match => match.Value)
+            .Distinct(StringComparer.Ordinal)
+            .Count();
+        var nativeTestCount = Regex.Matches(
+                replaySource,
+                "(?m)^TEST\\(",
+                RegexOptions.CultureInvariant)
+            .Count;
+        var status = Regex.Match(
+            replayDocumentation,
+            @"native replay gate contains (?<fixtures>\d+) checked-in JSON fixtures and (?<tests>\d+) registered\s+tests",
+            RegexOptions.CultureInvariant);
+
+        Assert.True(status.Success, "Replay-fixture documentation must publish the native gate inventory.");
+        Assert.Equal(fixtureCount, referencedFixtures);
+        Assert.Equal(fixtureCount, int.Parse(status.Groups["fixtures"].Value));
+        Assert.Equal(nativeTestCount, int.Parse(status.Groups["tests"].Value));
     }
 
     [Fact]
