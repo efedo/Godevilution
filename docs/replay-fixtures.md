@@ -369,7 +369,7 @@ the hash-checked `test/content/replay/mega-inferno` content pack.
 The nine Blood Star fixtures likewise load the Succubus and Lazarus Succubus
 `BloodStar` mappings from the hash-checked `test/content/replay/blood-star`
 content pack.
-The twenty Monster Magic fixtures likewise load their `OrangeFlare` mappings
+The twenty-four Monster Magic fixtures likewise load their `OrangeFlare` mappings
 from the hash-checked `test/content/replay/monster-magic` content pack.
 The fourteen Monster Arrow fixtures load their GoatRanged and SkeletonRanged
 `Arrow` mappings from the hash-checked `monster-arrow` and
@@ -569,7 +569,7 @@ The compact native replay projection now carries the same server-owned corpse
 tile representation and per-tick monster regeneration as the C# checkpoints.
 Ordinary-death and Firebolt, Fireball, Lightning, and Flash
  spell/projectile-timeline checkpoints pass in both runners. As of 2026-09-11,
-the native replay gate contains 352 checked-in JSON fixtures and 361 registered
+the native replay gate contains 356 checked-in JSON fixtures and 365 registered
 tests; the test count also includes parser and validation cases that do not
 introduce another fixture file. Coverage includes seeded and autonomous MonsterArrow
 source coverage, Hellfire HorkDemon Hork Spawn admission, player impact, and
@@ -1406,6 +1406,12 @@ Notable shared fixtures include:
 - `gameplay-monster-magic-secondary-warrior-block-chance.json` for the
   low-Dexterity secondary Warrior's authored class base block chance, shield
   admission, and shared autonomous impact checkpoints;
+- `gameplay-monster-magic-arch-lich-secondary-warrior-block-chance.json`,
+  `gameplay-monster-magic-psychorb-secondary-warrior-block-chance.json`,
+  `gameplay-monster-magic-necromorb-secondary-warrior-block-chance.json`, and
+  `gameplay-monster-magic-bone-demon-secondary-warrior-block-chance.json` for
+  the same class-aware secondary shield boundary across every remaining
+  MonsterMagic alias, including alias-specific canonical checkpoints;
 - `gameplay-hork-spawn-autonomous-multiplayer.json` for seeded autonomous
   HorkDemon admission, restored monster seeds, nearest-secondary routing, and
   the shared projectile checkpoint;

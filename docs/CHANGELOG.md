@@ -2,6 +2,11 @@
 
 All notable changes to this fork are documented below.
 
+- Extended MonsterMagic secondary Warrior block-chance parity to the ArchLich,
+  Psychorb, Necromorb, and BoneDemon aliases. Native and managed runners now
+  cover the shared low-Dexterity class boundary, shield admission, block
+  recovery, alias-specific projectile checkpoints, and external content rows.
+
 - Added Hellfire MagmaBall secondary Warrior block-chance parity. Native and
   managed runners now cover the low-Dexterity class base chance, shield
   admission, external missile mapping, and shared impact checkpoints.

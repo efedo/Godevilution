@@ -6,6 +6,11 @@ Succubus Blood Star secondary-player impact now preserves the native
 low-Dexterity Warrior class chance and shield admission, including block
 recovery and canonical impact checkpoints, in both replay runners.
 
+The ArchLich, Psychorb, Necromorb, and BoneDemon MonsterMagic aliases now
+share the same class-aware secondary Warrior shield boundary as Lich, with
+alias-specific native and managed checkpoint hashes proving block recovery
+and retained impact state.
+
 Hellfire MagmaBall secondary-player impact now preserves the native
 low-Dexterity Warrior class chance and shield admission through the external
 Magma missile mapping and shared impact checkpoints in both replay runners.
@@ -1650,12 +1655,12 @@ controller spell row and its native `Mega`/`InfernoControl` missile mapping.
 The managed runner validates the composite pack hash before loading either
 catalog.
 
-The eight Blood Star replay fixtures now share the validated
+The nine Blood Star replay fixtures now share the validated
 `test/content/replay/blood-star` pack, which externalizes the Succubus and
 Lazarus Succubus `BloodStar` missile mappings. The managed runner validates the
 pack hash before loading the native-AI projectile catalog.
 
-The twenty Monster Magic replay fixtures now share the validated
+The twenty-four Monster Magic replay fixtures now share the validated
 `test/content/replay/monster-magic` pack, which externalizes the `OrangeFlare`
 mapping for Lich-family and orb native AIs. The managed runner validates the
 pack hash before loading the native-AI projectile catalog.
