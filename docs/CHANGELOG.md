@@ -2,6 +2,10 @@
 
 All notable changes to this fork are documented below.
 
+- Added seeded GoatMelee multiplayer RoundWalk coverage. Native and managed
+  runners now preserve the far-distance Move goal counter, stream draws, and
+  bounded diagonal future occupancy across the multi-tick checkpoint.
+
 - Added seeded GoatMelee autonomous multiplayer coverage. Native and managed
   runners now validate nearest-participant selection, the restored action draw,
   and AiAvoidance idle-state hashing.

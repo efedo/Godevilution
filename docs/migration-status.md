@@ -2,6 +2,10 @@
 
 Status date: 2026-09-11
 
+GoatMelee’s seeded multiplayer RoundWalk lane now preserves the far-distance
+Move goal counter, native stream draws, and bounded diagonal future occupancy
+through a multi-tick checkpoint in the compact native replay and managed server.
+
 GoatMelee’s seeded autonomous far-target idle lane now preserves nearest-
 participant routing, the native action draw, and AiAvoidance idle state in the
 compact native replay and managed server.

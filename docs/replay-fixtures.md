@@ -1205,6 +1205,8 @@ Notable shared fixtures include:
   admission, deterministic RandomWalk ordering, occupancy, and RNG stability;
 - `gameplay-goat-melee-autonomous-multiplayer.json` for seeded far-target
   action admission, nearest-participant routing, and AiAvoidance idle state;
+- `gameplay-goat-melee-seeded-movement-multiplayer.json` for seeded far-distance
+  Move-goal admission, RoundWalk stream ordering, and diagonal future occupancy;
 - `gameplay-goat-melee-attack.json` for seeded adjacent attack admission,
   secondary-player block timing, and native AI-stream advancement;
 - `gameplay-goat-melee-multiplayer-target.json` for seeded AiAvoidance movement

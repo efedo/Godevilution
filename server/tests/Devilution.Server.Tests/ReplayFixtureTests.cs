@@ -7440,6 +7440,34 @@ public sealed class ReplayFixtureTests
     }
 
     [Fact]
+    public void GameplayGoatMeleeSeededMovementMultiplayerMatchesNative()
+    {
+        var fixture = LoadReplayFixture("gameplay-goat-melee-seeded-movement-multiplayer.json");
+        var executor = CreateGoatMeleeReplayExecutor(fixture, useSeededState: true);
+        var result = ReplayFixtureExecutor.Execute(
+            fixture,
+            executor,
+            new AuthoritativeCommandServer(executor));
+        var monster = Assert.Single(result.FinalSnapshot.Monsters);
+        var primary = Assert.Single(result.FinalSnapshot.Players, player => player.EntityId == 1);
+        var secondary = Assert.Single(result.FinalSnapshot.Players, player => player.EntityId == 8);
+
+        Assert.Equal(CommandStatus.Accepted, Assert.Single(result.Results).Status);
+        Assert.Equal(100, primary.Life);
+        Assert.Equal(100, secondary.Life);
+        Assert.True(monster.Moving);
+        Assert.Equal((2, 0), (monster.PositionX, monster.PositionY));
+        Assert.Equal((2, 1), (monster.FuturePositionX, monster.FuturePositionY));
+        Assert.Equal(2, monster.AvoidanceMovementTicks);
+        Assert.Equal(1, monster.AvoidanceMovementIdleTicks);
+        Assert.Equal(0, monster.AvoidanceMovementMode);
+        Assert.Equal(26093185U, monster.MonsterAiSeed);
+        Assert.Equal(
+            fixture.Checkpoints.Select(checkpoint => checkpoint.StateSha256),
+            result.Checkpoints.Select(checkpoint => checkpoint.ActualStateSha256));
+    }
+
+    [Fact]
     public void GameplayFatMultiplayerTargetSelectionMatchesNative()
     {
         var fixture = LoadReplayFixture("gameplay-fat-multiplayer-target.json");

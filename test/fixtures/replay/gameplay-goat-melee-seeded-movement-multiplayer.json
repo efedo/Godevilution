@@ -1,0 +1,60 @@
+{
+  "format_version": 1,
+  "fixture_id": "gameplay/goat-melee-seeded-movement-multiplayer",
+  "protocol_schema_version": "0.1.0",
+  "content_manifest": {
+    "id": "replay.goat-melee",
+    "version": "0.1.0",
+    "sha256": "8cec36a938913b1e1908ec4513c2b9412e90fc5d889be8a048eaca53ddd45051"
+  },
+  "tick_rate_hz": 20,
+  "rng_seed": 1,
+  "game_variant": "Diablo",
+  "game_mode": "Multiplayer",
+  "initial_state": {
+    "player": "A",
+    "gold": 0,
+    "experience": 0,
+    "life": 100,
+    "life_maximum": 100,
+    "position_x": 10,
+    "position_y": 0,
+    "level_id": 1,
+    "character_level": 1,
+    "combat_target_entity_id": 9,
+    "combat_target_level_id": 1,
+    "combat_target_position_x": 2,
+    "combat_target_position_y": 0,
+    "combat_target_hit_points": 40,
+    "combat_target_max_hit_points": 40,
+    "combat_target_aggro_range": 12,
+    "combat_target_monster_id": 106,
+    "combat_target_native_ai": "GoatMelee",
+    "combat_target_intelligence": 0,
+    "combat_target_monster_item_seed": 2654435769,
+    "combat_target_monster_ai_seed": 1,
+    "secondary_player": {
+      "player": "B",
+      "entity_id": 8,
+      "life": 100,
+      "life_maximum": 100,
+      "position_x": 12,
+      "position_y": 0,
+      "level_id": 1,
+      "character_level": 1
+    }
+  },
+  "commands": [
+    {
+      "client_sequence": 1,
+      "target_tick": 1,
+      "server_receipt_sequence": 1,
+      "kind": "OpenStore",
+      "payload": { "store_id": 1 }
+    }
+  ],
+  "checkpoints": [
+    { "tick": 1, "state_sha256": "27e93623322f99a55921e97e5d53597a347631f1c6ef6618fb07d7f5ae228042" },
+    { "tick": 4, "state_sha256": "1b925b0f460e67aac20825439e908ae69a11a4c32f808079927e89891870a917" }
+  ]
+}
