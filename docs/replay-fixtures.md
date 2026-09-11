@@ -374,7 +374,7 @@ from the hash-checked `test/content/replay/monster-magic` content pack.
 The fourteen Monster Arrow fixtures load their GoatRanged and SkeletonRanged
 `Arrow` mappings from the hash-checked `monster-arrow` and
 `monster-arrow-admission` content packs.
-The ten Hork Spawn fixtures load their `HorkDemon` mapping from the
+The eleven Hork Spawn fixtures load their `HorkDemon` mapping from the
 hash-checked `monster-hork-spawn` content pack, including its summoned monster
 type row and level-generation rule. Snake delay fixtures load the default
 `SnakeCharge` mapping from `monster-snake-delay`, while the charge
@@ -569,7 +569,7 @@ The compact native replay projection now carries the same server-owned corpse
 tile representation and per-tick monster regeneration as the C# checkpoints.
 Ordinary-death and Firebolt, Fireball, Lightning, and Flash
  spell/projectile-timeline checkpoints pass in both runners. As of 2026-09-11,
-the native replay gate contains 345 checked-in JSON fixtures and 354 registered
+the native replay gate contains 346 checked-in JSON fixtures and 355 registered
 tests; the test count also includes parser and validation cases that do not
 introduce another fixture file. Coverage includes seeded and autonomous MonsterArrow
 source coverage, Hellfire HorkDemon Hork Spawn admission, player impact, and
@@ -1387,6 +1387,9 @@ Notable shared fixtures include:
 - `gameplay-hork-spawn-primary-monk-block.json` for Hellfire Monk
   FlexibleBlock admission during Hork Spawn impact without equipment; the
   Hork replay executor loads the shared class catalog and fixture Dexterity;
+- `gameplay-hork-spawn-secondary-warrior-block-chance.json` for the
+  low-Dexterity secondary Warrior's authored class base block chance and
+  shield admission during Hork Spawn impact;
 - `gameplay-bone-spirit-hellfire-monk-block.json` for secondary-player
   FlexibleBlock admission during Hellfire Bone Spirit impact without equipment;
 - `gameplay-multiplayer-secondary-monster-monk-block.json` for unarmed Hellfire

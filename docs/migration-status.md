@@ -210,6 +210,11 @@ The seeded native MonsterMelee boundary now covers the same low-Dexterity
 secondary Warrior class chance with a shield. Both runners preserve the block
 recovery tick, monster AI-seed advancement, and canonical participant hash.
 
+The Hork Spawn player-impact boundary now covers the same low-Dexterity
+secondary Warrior class chance with a shield. Both runners preserve the
+server-owned block recovery and secondary participant checkpoint for the
+zero-payload Hork Spawn collision path.
+
 Server-owned dialogue events now cross every world-transition path: immediate
 movement, native-timed level triggers, occupancy-triggered objects, and the
 Warp spell all preserve the directed event through simulation and combat
@@ -1635,7 +1640,7 @@ pack and the admission-specific `test/content/replay/monster-arrow-admission`
 pack. Both native and managed runners validate their manifest hashes before
 loading the projectile catalog.
 
-The ten Hork Spawn fixtures now load their validated `HorkDemon` mapping from
+The eleven Hork Spawn fixtures now load their validated `HorkDemon` mapping from
 `test/content/replay/monster-hork-spawn`. The two Snake delay fixtures and the
 Snake Charge lifecycle fixture likewise load separate validated
 `monster-snake-delay` and `monster-snake-charge` packs, preserving the native

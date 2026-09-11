@@ -2,6 +2,10 @@
 
 All notable changes to this fork are documented below.
 
+- Added Hork Spawn secondary Warrior block-chance parity. Native and managed
+  runners now cover the low-Dexterity class base chance, shield admission,
+  block recovery, and canonical participant hash for the zero-payload impact.
+
 - Added seeded MonsterMelee secondary Warrior block-chance parity. Native and
   managed runners now cover the authored class base chance, shield admission,
   monster AI-seed advancement, and canonical participant hash.
