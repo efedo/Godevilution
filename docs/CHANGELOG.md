@@ -19,6 +19,10 @@ All notable changes to this fork are documented below.
   managed runners now cover GoatRanged admission, secondary routing, and the
   retained impact-phase projectile.
 
+- Added a shared autonomous multiplayer Butcher fixture. Native and managed
+  runners now cover adjacent melee damage to the nearer secondary participant
+  while preserving the farther primary participant.
+
 - Shared replay fixtures now carry native monster acid resistance through the
   C++ and C# loaders and canonical checkpoint hash, preserving zero-default
   compatibility while covering nonzero resistance with a cross-runner golden.

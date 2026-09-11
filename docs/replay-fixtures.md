@@ -1143,6 +1143,8 @@ Notable shared fixtures include:
 - `gameplay-butcher-multiplayer-target.json` for nearest-participant Butcher
   pursuit, active-object blocking of the straight step, native five-direction
   RandomWalk turn ordering, and farther-primary preservation;
+- `gameplay-butcher-autonomous-multiplayer.json` for an adjacent Butcher melee
+  hit against the nearer secondary participant and farther-primary preservation;
 - `gameplay-skeleton-king-multiplayer-target.json` for nearest-participant
   Skeleton King pursuit, native RoundWalk 90/45/straight ordering, delay
   admission/countdown, and farther-primary preservation;

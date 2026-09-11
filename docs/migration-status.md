@@ -1135,7 +1135,8 @@ countdown checkpoint.
 Butcher pursuit now has two-participant replay coverage. Native and managed
 runners select the nearer secondary participant, preserve the farther primary,
 and agree on the seeded RandomWalk turn ordering when an active object blocks
-the straight candidate.
+the straight candidate. The adjacent Butcher branch now also has a shared hit
+checkpoint, preserving the secondary damage boundary and untouched primary.
 
 Skeleton King pursuit now has two-participant replay coverage. Native and
 managed runners select the nearer secondary participant, preserve the farther
