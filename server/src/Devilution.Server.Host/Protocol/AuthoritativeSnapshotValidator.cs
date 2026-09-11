@@ -1035,7 +1035,7 @@ public static class AuthoritativeSnapshotValidator
                     && action.Cast.SpellId != 0
                     && action.TargetEntityId == action.Cast.TargetEntityId
                     && IsProjectedCastTarget(snapshot, player, action.Cast)
-                    && IsValidCastSource(action.Cast)
+                    && IsValidCastSource(player, action.Cast)
                     && Enum.IsDefined(action.Cast.Source)
                     && (action.Cast.SourceItem is null
                         || Enum.IsDefined(action.Cast.SourceItem.Location)),
@@ -1169,7 +1169,7 @@ public static class AuthoritativeSnapshotValidator
             || cast.TargetX < level.Width && cast.TargetY < level.Height;
     }
 
-    private static bool IsValidCastSource(CastRequested cast)
+    private static bool IsValidCastSource(PlayerSnapshot player, CastRequested cast)
     {
         var requiresItem = cast.Source is CastSourceKind.ChargedItem
             or CastSourceKind.ConsumableItem;
@@ -1179,16 +1179,36 @@ public static class AuthoritativeSnapshotValidator
             return true;
         return cast.SourceItem.Location switch {
             PlayerItemLocation.Inventory =>
-                cast.SourceItem.Slot < NativeMaximumInventoryCount,
+                cast.SourceItem.Slot < player.Inventory.Count
+                && MatchesItemReference(
+                    player.Inventory[(int)cast.SourceItem.Slot]?.State,
+                    cast.SourceItem.StableItemId),
             PlayerItemLocation.Belt =>
-                cast.SourceItem.Slot < NativeMaximumBeltCount,
+                cast.SourceItem.Slot < NativeMaximumBeltCount
+                && player.Belt.Any(item =>
+                    item.Slot == cast.SourceItem.Slot
+                    && MatchesItemReference(item.State, cast.SourceItem.StableItemId)),
             PlayerItemLocation.Equipment =>
-                cast.SourceItem.Slot < NativeMaximumEquipmentCount,
+                cast.SourceItem.Slot < NativeMaximumEquipmentCount
+                && player.Equipment.Any(item =>
+                    item.Slot == cast.SourceItem.Slot
+                    && MatchesItemReference(item.State, cast.SourceItem.StableItemId)),
             PlayerItemLocation.Stash =>
-                cast.SourceItem.Slot < NativeStashCellCount
-                && cast.SourceItem.Page < NativeStashPageCount,
+                player.StashOpen
+                && cast.SourceItem.Slot < NativeStashCellCount
+                && cast.SourceItem.Page < NativeStashPageCount
+                && player.Stash.Any(item =>
+                    item.Page == cast.SourceItem.Page
+                    && item.Cell == cast.SourceItem.Slot
+                    && MatchesItemReference(item.Item?.State, cast.SourceItem.StableItemId)),
             _ => false,
         };
+    }
+
+    private static bool MatchesItemReference(ItemStateSnapshot? state, uint stableItemId)
+    {
+        return state is not null
+            && (stableItemId == 0 || state.StableItemId == stableItemId);
     }
 
     private static void ValidateMonsters(Snapshot snapshot)

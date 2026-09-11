@@ -2,6 +2,11 @@
 
 All notable changes to this fork are documented below.
 
+- Authoritative cast-action validation now binds charged and consumable source
+  references to the projected player inventory, belt, equipment, or open stash
+  item. Server, Godot, and native boundaries reject stale or fabricated source
+  references while preserving the existing wildcard stable-ID compatibility.
+
 - Native player projection now rejects life or mana above their declared
   maxima, over-cap character levels, and negative attribute values at both
   local and remote presentation boundaries.

@@ -2,6 +2,12 @@
 
 Status date: 2026-09-10
 
+Authoritative cast actions now validate item-source ownership at every client
+boundary. Charged and consumable casts must reference the projected inventory,
+belt, equipment, or open-stash item at the declared slot/page, with an optional
+stable-item identity match; stale or fabricated source references are rejected
+by the server validator, Godot model, and native compatibility projection.
+
 Native player projection now enforces the managed resource invariants across
 both local application and remote-player presentation: current life/mana cannot
 exceed positive maxima, character levels stay within the native cap, and all

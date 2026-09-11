@@ -945,6 +945,52 @@ public sealed class AuthoritativeSnapshotValidatorTests
     }
 
     [Fact]
+    public void RequiresCastItemSourcesToMatchProjectedOwnership()
+    {
+        var valid = new Snapshot {
+            Tick = 1,
+            Players = {
+                new PlayerSnapshot {
+                    EntityId = 1,
+                    CombatMode = PlayerCombatMode.Spell,
+                    CombatModeEndTick = 3,
+                    Equipment = {
+                        new EquippedItemSnapshot {
+                            Slot = 4,
+                            ItemSeed = 12,
+                            State = new ItemStateSnapshot { StableItemId = 42 },
+                        },
+                    },
+                    CurrentAction = new PlayerActionSnapshot {
+                        Kind = PlayerActionKind.Cast,
+                        StartedAtTick = 1,
+                        EffectTick = 1,
+                        ReadyTick = 2,
+                        EndTick = 3,
+                        EffectApplied = true,
+                        Cast = new CastRequested {
+                            SpellId = 1,
+                            Source = CastSourceKind.ChargedItem,
+                            SourceItem = new PlayerItemReference {
+                                Location = PlayerItemLocation.Equipment,
+                                Slot = 4,
+                                StableItemId = 42,
+                            },
+                        },
+                    },
+                },
+            },
+        };
+
+        AuthoritativeSnapshotValidator.Validate(valid);
+
+        var invalid = valid.Clone();
+        invalid.Players[0].CurrentAction.Cast.SourceItem.StableItemId = 99;
+        Assert.Throws<InvalidDataException>(() =>
+            AuthoritativeSnapshotValidator.Validate(invalid));
+    }
+
+    [Fact]
     public void RejectsProjectileTargetOutsideProjectedLevelGeometry()
     {
         var valid = new Snapshot {

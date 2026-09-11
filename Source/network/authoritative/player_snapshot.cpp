@@ -1367,7 +1367,7 @@ tl::expected<void, std::string> ValidatePlayerActionSnapshots(const protocol::Sn
 		return level == levels.end() || level->second->width() == 0 || level->second->height() == 0
 		    || cast.target_x() < level->second->width() && cast.target_y() < level->second->height();
 	};
-	const auto isValidCastSource = [](const protocol::CastRequested &cast) {
+	const auto isValidCastSource = [](const protocol::PlayerSnapshot &player, const protocol::CastRequested &cast) {
 		const auto source = static_cast<int32_t>(cast.source());
 		const bool requiresItem = source == static_cast<int32_t>(protocol::CAST_SOURCE_KIND_CHARGED_ITEM)
 		    || source == static_cast<int32_t>(protocol::CAST_SOURCE_KIND_CONSUMABLE_ITEM);
@@ -1376,15 +1376,33 @@ tl::expected<void, std::string> ValidatePlayerActionSnapshots(const protocol::Sn
 		if (!cast.has_source_item())
 			return true;
 		const auto &item = cast.source_item();
+		const auto matchesStableItem = [](const auto &state, uint32_t stableItemId) {
+			return stableItemId == 0 || state.stable_item_id() == stableItemId;
+		};
 		switch (static_cast<int32_t>(item.location())) {
 		case static_cast<int32_t>(protocol::PLAYER_ITEM_LOCATION_INVENTORY):
-			return item.slot() < NativeMaximumInventoryCount;
+			return item.slot() < static_cast<uint32_t>(player.inventory_size())
+			    && matchesStableItem(player.inventory(static_cast<int>(item.slot())).state(), item.stable_item_id());
 		case static_cast<int32_t>(protocol::PLAYER_ITEM_LOCATION_BELT):
-			return item.slot() < NativeMaximumBeltCount;
+			return item.slot() < NativeMaximumBeltCount
+			    && std::any_of(player.belt().begin(), player.belt().end(), [&](const auto &candidate) {
+				return candidate.slot() == item.slot()
+				    && matchesStableItem(candidate.state(), item.stable_item_id());
+			    });
 		case static_cast<int32_t>(protocol::PLAYER_ITEM_LOCATION_EQUIPMENT):
-			return item.slot() < NativeMaximumEquipmentCount;
+			return item.slot() < NativeMaximumEquipmentCount
+			    && std::any_of(player.equipment().begin(), player.equipment().end(), [&](const auto &candidate) {
+				return candidate.slot() == item.slot()
+				    && matchesStableItem(candidate.state(), item.stable_item_id());
+			    });
 		case static_cast<int32_t>(protocol::PLAYER_ITEM_LOCATION_STASH):
-			return item.slot() < StashCellCount && item.page() < StashPageCount;
+			return player.stash_open()
+			    && item.slot() < StashCellCount && item.page() < StashPageCount
+			    && std::any_of(player.stash().begin(), player.stash().end(), [&](const auto &candidate) {
+				return candidate.page() == item.page()
+				    && candidate.cell() == item.slot()
+				    && matchesStableItem(candidate.item().state(), item.stable_item_id());
+			    });
 		default:
 			return false;
 		}
@@ -1440,7 +1458,7 @@ tl::expected<void, std::string> ValidatePlayerActionSnapshots(const protocol::Sn
 		    && action.has_cast() && action.cast().spell_id() != 0
 		    && action.target_entity_id() == action.cast().target_entity_id()
 		    && isProjectedCastTarget(player, action.cast())
-		    && isValidCastSource(action.cast())
+		    && isValidCastSource(player, action.cast())
 		    && static_cast<int32_t>(action.cast().source()) >= protocol::CAST_SOURCE_KIND_UNSPECIFIED
 		    && static_cast<int32_t>(action.cast().source()) <= protocol::CAST_SOURCE_KIND_CONSUMABLE_ITEM
 		    && (!action.cast().has_source_item()
