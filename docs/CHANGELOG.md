@@ -2,8 +2,13 @@
 
 All notable changes to this fork are documented below.
 
+- Extended the replay parity gate to 375 fixtures and 384 native tests with
+  primary-participant Acid and AcidUnique autonomous coverage. The managed
+  runner now reserves reused projectile IDs during Acid replacement so the
+  same-tick splat-to-puddle lifecycle matches native execution.
+
 - Synchronized the replay-fixture parity status with the September primary-alias
-  coverage batch. The documentation now records the 373-fixture, 382-test native
+  coverage batch. The documentation now records the 375-fixture, 384-test native
   gate and names the GoatRanged, SkeletonRanged, Lich-family, Succubus, and
   LazarusSuccubus primary Warrior block lanes covered by both runners.
 

@@ -11864,6 +11864,41 @@ public sealed class ReplayFixtureTests
             result.Checkpoints.Select(checkpoint => checkpoint.ActualStateSha256));
     }
 
+    [Theory]
+    [InlineData("gameplay-acid-primary-autonomous.json", AuthoritativeProjectileBehavior.AcidPuddle, 0U, 7, 1, 2U, 6144, 5UL)]
+    [InlineData("gameplay-acid-unique-primary-autonomous.json", AuthoritativeProjectileBehavior.Acid, 1U, 8, 0, 19U, 6400, 1UL)]
+    public void GameplayAcidAliasesRouteAutonomousProjectileToPrimaryParticipant(
+        string fixtureName,
+        AuthoritativeProjectileBehavior expectedBehavior,
+        uint expectedTargetEntityId,
+        int expectedPositionX,
+        int expectedPositionY,
+        uint expectedRemainingTicks,
+        int expectedLife,
+        ulong expectedTick)
+    {
+        var fixture = LoadReplayFixture(fixtureName);
+        var executor = CreateAcidReplayExecutor(fixture);
+
+        var result = ReplayFixtureExecutor.Execute(
+            fixture,
+            executor,
+            new AuthoritativeCommandServer(executor));
+        var player = Assert.Single(result.FinalSnapshot.Players);
+        var projectile = Assert.Single(result.FinalSnapshot.Projectiles);
+        Assert.Equal(CommandStatus.Accepted, Assert.Single(result.Results).Status);
+        Assert.Equal(expectedLife, player.Life);
+        Assert.Equal((int)expectedBehavior, projectile.Behavior);
+        Assert.Equal(expectedTargetEntityId, projectile.TargetEntityId);
+        Assert.Equal(expectedPositionX, projectile.PositionX);
+        Assert.Equal(expectedPositionY, projectile.PositionY);
+        Assert.Equal(expectedRemainingTicks, projectile.RemainingTicks);
+        Assert.Equal(expectedTick, result.FinalSnapshot.Tick);
+        Assert.Equal(
+            fixture.Checkpoints.Select(checkpoint => checkpoint.StateSha256),
+            result.Checkpoints.Select(checkpoint => checkpoint.ActualStateSha256));
+    }
+
     [Fact]
     public void GameplayLichMonsterMagicWarriorBlocksOnSecondaryParticipantAtClassChance()
     {

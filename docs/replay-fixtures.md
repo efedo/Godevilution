@@ -343,6 +343,8 @@ The Hellfire Acid fixtures load the validated `Acid`/`AcidUnique` mappings from
 the hash-checked `test/content/replay/acid` pack. Their multiplayer companions
 route shifted Acid damage to the secondary participant while preserving the
 four-tick splat/puddle lifecycle.
+The primary-participant companions also cover Acid admission, primary impact,
+and the same replacement-entity lifecycle for both aliases.
 Native GoatRanged and SkeletonRanged content rows explicitly select their
 validated `Arrow`/`MonsterArrow` identities, while older `Targeted` rows remain
 compatible. The authoritative module projects `MonsterArrow` missiles with
@@ -569,7 +571,7 @@ The compact native replay projection now carries the same server-owned corpse
 tile representation and per-tick monster regeneration as the C# checkpoints.
 Ordinary-death and Firebolt, Fireball, Lightning, and Flash
  spell/projectile-timeline checkpoints pass in both runners. As of 2026-09-11,
-the native replay gate contains 373 checked-in JSON fixtures and 382 registered
+the native replay gate contains 375 checked-in JSON fixtures and 384 registered
 tests; the test count also includes parser and validation cases that do not
 introduce another fixture file. Coverage includes seeded and autonomous MonsterArrow
 source coverage, Hellfire HorkDemon Hork Spawn admission, player impact, and
@@ -583,8 +585,8 @@ and LazarusSuccubus BloodStar multiplayer target-selection and secondary
 Warrior block-chance lanes, FireBat
 Firebolt, Torchant Fireball, Magma MagmaBall, and Storm ThinLightning
 multiplayer target selection,
-Hellfire Acid and AcidUnique secondary-participant impact and puddle-expiry
-lanes,
+Hellfire Acid and AcidUnique primary- and secondary-participant impact and
+puddle-expiry lanes,
 ArchLich, Psychorb,
 Necromorb, BoneDemon, and two-projectile multiplayer MonsterArrow participant
 volley coverage, and Lich-family
@@ -1217,6 +1219,10 @@ Notable shared fixtures include:
   one-tile puddle placement, persistent impact, and deterministic expiry;
 - `gameplay-acid-unique-lifecycle.json` for the authored AcidUnique alias using
   the same validated lifecycle without generic-combat fallback;
+- `gameplay-acid-primary-autonomous.json` for primary-participant Acid
+  admission, shifted damage, and same-tick splat-to-puddle replacement;
+- `gameplay-acid-unique-primary-autonomous.json` for primary-participant
+  AcidUnique admission, target identity, and authored projectile lifetime;
 - `gameplay-scavenger-multicandidate-selection.json` for native coin-directed
   corpse scan order, first-candidate selection, deterministic movement, and
   selected-corpse checkpoint parity;

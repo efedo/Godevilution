@@ -12737,6 +12737,11 @@ public sealed class DiabloCombatCommandProcessor
         if (!world.Projectiles.Remove(projectile.EntityId))
             return;
 
+        // Native Acid replaces the missile with a fresh entity in the same
+        // tick. Admission may have reused a released missile ID, so reserve
+        // the removed ID before allocating the replacement to keep the new
+        // projectile visible to the current advancement pass.
+        projectileEntityIds.Reserve(projectile.EntityId);
         var entityId = AllocateProjectileEntityId();
         world.Projectiles.Add(
             entityId,

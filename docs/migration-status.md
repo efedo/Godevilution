@@ -32,6 +32,10 @@ including primary-player target routing, the controller/segment lifecycle,
 native zero-width damage-roll ordering after a blocked hit, and the retained
 controller checkpoint in both replay runners.
 
+Hellfire Acid and AcidUnique now preserve primary-participant autonomous
+admission, shifted Acid damage, target identity, and the same-tick
+Acid-to-Splat-to-Puddle lifecycle in both replay runners.
+
 Succubus and LazarusSuccubus Blood Star secondary-player impacts now preserve
 the native low-Dexterity Warrior class chance and shield admission, including
 alias-specific block recovery and canonical impact checkpoints, in both replay

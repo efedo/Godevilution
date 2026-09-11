@@ -10498,6 +10498,78 @@ TEST(ReplayFixture, ExecutesAcidAutonomousMultiplayerAgainstCSharpCheckpoints)
 	EXPECT_EQ(ComputeReplayFixtureStateHash(state), fixture.checkpoints.back().stateSha256);
 }
 
+void ExecuteAcidAutonomousPrimaryFixture(
+	const char *fixturePath,
+	uint32_t expectedTick,
+	int32_t expectedBehavior,
+	uint32_t expectedTargetEntityId,
+	int32_t expectedLife)
+{
+	std::ifstream file(fixturePath);
+	ASSERT_TRUE(file.good());
+	const std::string json((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
+	ReplayFixture fixture;
+	std::string error;
+	ASSERT_TRUE(ParseReplayFixture(json, fixture, error)) << error;
+	ASSERT_FALSE(fixture.initialState.secondaryPlayer.defined);
+	ASSERT_TRUE(fixture.initialProjectiles.empty());
+
+	ReplayFixtureExecutionState state;
+	state.entityId = 1;
+	state.life = fixture.initialState.life;
+	state.lifeMaximum = fixture.initialState.lifeMaximum;
+	state.positionX = fixture.initialState.positionX;
+	state.positionY = fixture.initialState.positionY;
+	state.levelId = fixture.initialState.levelId;
+	state.characterLevel = fixture.initialState.characterLevel;
+	state.combatTargetEntityId = fixture.initialState.combatTargetEntityId;
+	state.combatTargetLevelId = fixture.initialState.combatTargetLevelId;
+	state.combatTargetPositionX = fixture.initialState.combatTargetPositionX;
+	state.combatTargetPositionY = fixture.initialState.combatTargetPositionY;
+	state.combatTargetHitPoints = fixture.initialState.combatTargetHitPoints;
+	state.combatTargetMaxHitPoints = fixture.initialState.combatTargetMaxHitPoints;
+	state.combatTargetAttackDamage = fixture.initialState.combatTargetAttackDamage;
+	state.combatTargetAggroRange = fixture.initialState.combatTargetAggroRange;
+	state.combatTargetMonsterLevel = fixture.initialState.combatTargetMonsterLevel;
+	state.combatTargetNativeAi = fixture.initialState.combatTargetNativeAi;
+	state.combatTargetMonsterId = fixture.initialState.combatTargetMonsterId;
+	state.combatTargetToHit = fixture.initialState.combatTargetToHit;
+	state.combatTargetMinDamage = fixture.initialState.combatTargetMinDamage;
+	state.combatTargetMaxDamage = fixture.initialState.combatTargetMaxDamage;
+	state.combatTargetIntelligence = fixture.initialState.combatTargetIntelligence;
+
+	ReplayFixtureExecutionResult result;
+	ASSERT_TRUE(ExecuteReplayFixture(fixture, state, result, error)) << error;
+	ASSERT_EQ(result.transitions.size(), 1U);
+	EXPECT_TRUE(result.transitions[0].accepted);
+	EXPECT_EQ(state.lastAppliedTick, expectedTick);
+	EXPECT_EQ(state.life, expectedLife);
+	ASSERT_EQ(state.projectiles.size(), 1U);
+	EXPECT_EQ(state.projectiles.front().behavior, expectedBehavior);
+	EXPECT_EQ(state.projectiles.front().targetEntityId, expectedTargetEntityId);
+	EXPECT_EQ(ComputeReplayFixtureStateHash(state), fixture.checkpoints.back().stateSha256);
+}
+
+TEST(ReplayFixture, ExecutesAcidPrimaryAutonomousAgainstCSharpCheckpoints)
+{
+	ExecuteAcidAutonomousPrimaryFixture(
+	    "test/fixtures/replay/gameplay-acid-primary-autonomous.json",
+	    5,
+	    53,
+	    0,
+	    6144);
+}
+
+TEST(ReplayFixture, ExecutesAcidUniquePrimaryAutonomousAgainstCSharpCheckpoints)
+{
+	ExecuteAcidAutonomousPrimaryFixture(
+	    "test/fixtures/replay/gameplay-acid-unique-primary-autonomous.json",
+	    1,
+	    51,
+	    1,
+	    6400);
+}
+
 TEST(ReplayFixture, ExecutesAcidUniqueAutonomousMultiplayerAgainstCSharpCheckpoints)
 {
 	std::ifstream file("test/fixtures/replay/gameplay-acid-unique-autonomous-multiplayer.json");
