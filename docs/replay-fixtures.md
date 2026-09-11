@@ -617,15 +617,15 @@ corpse selection, movement, Q6
 healing, countdown, and RNG consumption are also covered in both runners. The
 Hellfire Scavenger max-health healing and corpse-removal lifecycle is also
 covered in both runners. The dated full-suite baseline below records the last
-complete run; on 2026-08-26 the native
-`replay_test` executable was rebuilt and the new multiplayer HorkDemon,
-SkeletonRanged MonsterArrow, Succubus BloodStar, ArchLich, Psychorb, Necromorb,
-and BoneDemon MonsterMagic tests passed, including the new Lich block lane and
-the two-projectile MonsterArrow volley, as did
-the focused managed counterparts. The full suites remain
-scheduled for the next periodic verification window. The secondary-portal,
-secondary cursor-pickup, and secondary monster-death-drop fixtures are verified
-in both runners.
+complete run. On 2026-09-11 the native `replay_test` executable was rebuilt and
+the focused native and managed runners passed the primary GoatRanged and
+SkeletonRanged MonsterArrow lanes, primary ArchLich, Psychorb, Necromorb, and
+BoneDemon MonsterMagic lanes, and primary Succubus and LazarusSuccubus Blood Star
+lanes, alongside the existing multiplayer HorkDemon, secondary projectile, and
+two-projectile MonsterArrow coverage. The full suites remain scheduled for the
+next periodic verification window. The secondary-portal, secondary
+cursor-pickup, and secondary monster-death-drop fixtures are verified in both
+runners.
 
 ## Current Coverage
 

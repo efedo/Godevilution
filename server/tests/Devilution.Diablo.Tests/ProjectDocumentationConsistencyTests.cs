@@ -65,6 +65,8 @@ public sealed class ProjectDocumentationConsistencyTests
         Assert.Contains("gameplay-monster-arrow-secondary-warrior-block-chance.json", replayFixtures, StringComparison.Ordinal);
         Assert.Contains("gameplay-monster-arrow-goat-ranged-secondary-warrior-block-chance.json", replayFixtures, StringComparison.Ordinal);
         Assert.Contains("gameplay-monster-arrow-skeleton-ranged-secondary-warrior-block-chance.json", replayFixtures, StringComparison.Ordinal);
+        Assert.Contains("gameplay-monster-arrow-goat-ranged-primary-warrior-block-chance.json", replayFixtures, StringComparison.Ordinal);
+        Assert.Contains("gameplay-monster-arrow-skeleton-ranged-primary-warrior-block-chance.json", replayFixtures, StringComparison.Ordinal);
         Assert.Contains("gameplay-fire-bat-secondary-warrior-block-chance.json", replayFixtures, StringComparison.Ordinal);
         Assert.Contains("gameplay-torchant-secondary-warrior-block-chance.json", replayFixtures, StringComparison.Ordinal);
         Assert.Contains("gameplay-monster-arrow-flash-protected.json", replayFixtures, StringComparison.Ordinal);
@@ -73,6 +75,10 @@ public sealed class ProjectDocumentationConsistencyTests
         Assert.Contains("gameplay-monster-magic-psychorb-secondary-warrior-block-chance.json", replayFixtures, StringComparison.Ordinal);
         Assert.Contains("gameplay-monster-magic-necromorb-secondary-warrior-block-chance.json", replayFixtures, StringComparison.Ordinal);
         Assert.Contains("gameplay-monster-magic-bone-demon-secondary-warrior-block-chance.json", replayFixtures, StringComparison.Ordinal);
+        Assert.Contains("gameplay-monster-magic-arch-lich-primary-warrior-block-chance.json", replayFixtures, StringComparison.Ordinal);
+        Assert.Contains("gameplay-monster-magic-psychorb-primary-warrior-block-chance.json", replayFixtures, StringComparison.Ordinal);
+        Assert.Contains("gameplay-monster-magic-necromorb-primary-warrior-block-chance.json", replayFixtures, StringComparison.Ordinal);
+        Assert.Contains("gameplay-monster-magic-bone-demon-primary-warrior-block-chance.json", replayFixtures, StringComparison.Ordinal);
         Assert.Contains("gameplay-multiplayer-secondary-monster-warrior-block-chance.json", replayFixtures, StringComparison.Ordinal);
         Assert.Contains("gameplay-bone-spirit-hellfire-secondary-warrior-block-chance.json", replayFixtures, StringComparison.Ordinal);
         Assert.Contains("gameplay-firebolt-hellfire-secondary-warrior-block-chance.json", replayFixtures, StringComparison.Ordinal);
@@ -80,6 +86,7 @@ public sealed class ProjectDocumentationConsistencyTests
         Assert.Contains("gameplay-charged-bolt-hellfire-secondary-warrior-block-chance.json", replayFixtures, StringComparison.Ordinal);
         Assert.Contains("gameplay-hork-spawn-secondary-warrior-block-chance.json", replayFixtures, StringComparison.Ordinal);
         Assert.Contains("gameplay-blood-star-secondary-warrior-block-chance.json", replayFixtures, StringComparison.Ordinal);
+        Assert.Contains("gameplay-blood-star-lazarus-succubus-primary-warrior-block-chance.json", replayFixtures, StringComparison.Ordinal);
         Assert.Contains("gameplay-magma-secondary-warrior-block-chance.json", replayFixtures, StringComparison.Ordinal);
 
         var packageWorkflow = Read(root, ".github", "workflows", "diablo-adapter-package.yml");

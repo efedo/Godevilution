@@ -2,6 +2,11 @@
 
 All notable changes to this fork are documented below.
 
+- Synchronized the replay-fixture parity status with the September primary-alias
+  coverage batch. The documentation now records the 370-fixture, 379-test native
+  gate and names the GoatRanged, SkeletonRanged, Lich-family, Succubus, and
+  LazarusSuccubus primary Warrior block lanes covered by both runners.
+
 - Added primary-player Warrior block-chance parity for the LazarusSuccubus
   Blood Star alias, including native spell identity, block recovery, and the
   retained impact-phase checkpoint in both runners.
