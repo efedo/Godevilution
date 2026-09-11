@@ -2,6 +2,10 @@
 
 All notable changes to this fork are documented below.
 
+- Added autonomous multiplayer FireBat Firebolt coverage. Native and managed
+  runners now preserve Firebolt admission, secondary impact, and the 27-tick
+  lethal lifecycle through the shared authoritative path.
+
 - Added autonomous multiplayer Magma MonsterMagic coverage. Native and managed
   Hellfire runners now preserve the MagmaBall admission, secondary impact, and
   two-tick lethal lifecycle through the shared authoritative path.

@@ -1269,6 +1269,8 @@ Notable shared fixtures include:
   LazarusSuccubus nearest-secondary target selection and Blood Star routing;
 - `gameplay-fire-bat-multiplayer-target.json` for FireBat's external Firebolt
   mapping and nearest-secondary target selection;
+- `gameplay-fire-bat-autonomous-multiplayer.json` for FireBat Firebolt
+  admission, secondary impact, and the 27-tick lethal autonomous lifecycle;
 - `gameplay-torchant-multiplayer-target.json` for Torchant's external Fireball
   mapping and nearest-secondary target selection;
 - `gameplay-torchant-multiplayer-secondary-impact.json` for Torchant's full-Q6

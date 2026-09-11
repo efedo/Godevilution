@@ -2,6 +2,10 @@
 
 Status date: 2026-09-11
 
+FireBat’s autonomous Diablo Firebolt lane now preserves admission, secondary
+impact, and the 27-tick lethal lifecycle in the compact native replay and
+managed server.
+
 Magma’s autonomous Hellfire MonsterMagic lane now preserves MagmaBall admission,
 secondary impact, and the two-tick lethal lifecycle in the compact native replay
 and managed server.
