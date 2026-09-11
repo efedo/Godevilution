@@ -152,6 +152,75 @@ void ExecuteBloodStarAutonomousMultiplayerFixture(const char *fixturePath)
 	EXPECT_EQ(ComputeReplayFixtureStateHash(state), fixture.checkpoints.back().stateSha256);
 }
 
+void ExecuteMegaInfernoAutonomousMultiplayerFixture(const char *fixturePath)
+{
+	std::ifstream file(fixturePath);
+	ASSERT_TRUE(file.good());
+	const std::string json((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
+	ReplayFixture fixture;
+	std::string error;
+	ASSERT_TRUE(ParseReplayFixture(json, fixture, error)) << error;
+	ASSERT_TRUE(fixture.initialState.secondaryPlayer.defined);
+	ASSERT_TRUE(fixture.initialProjectiles.empty());
+
+	ReplayFixtureExecutionState state;
+	state.multiplayer = true;
+	state.entityId = 1;
+	state.life = fixture.initialState.life;
+	state.lifeMaximum = fixture.initialState.lifeMaximum;
+	state.positionX = fixture.initialState.positionX;
+	state.positionY = fixture.initialState.positionY;
+	state.levelId = fixture.initialState.levelId;
+	state.characterLevel = fixture.initialState.characterLevel;
+	state.combatTargetEntityId = fixture.initialState.combatTargetEntityId;
+	state.combatTargetLevelId = fixture.initialState.combatTargetLevelId;
+	state.combatTargetPositionX = fixture.initialState.combatTargetPositionX;
+	state.combatTargetPositionY = fixture.initialState.combatTargetPositionY;
+	state.combatTargetHitPoints = fixture.initialState.combatTargetHitPoints;
+	state.combatTargetMaxHitPoints = fixture.initialState.combatTargetMaxHitPoints;
+	state.combatTargetAttackDamage = fixture.initialState.combatTargetAttackDamage;
+	state.combatTargetAggroRange = fixture.initialState.combatTargetAggroRange;
+	state.combatTargetMonsterLevel = fixture.initialState.combatTargetMonsterLevel;
+	state.combatTargetNativeAi = fixture.initialState.combatTargetNativeAi;
+	state.combatTargetMonsterItemSeed = fixture.initialState.combatTargetMonsterItemSeed;
+	state.combatTargetMonsterAiSeed = fixture.initialState.combatTargetMonsterAiSeed;
+	state.combatTargetMonsterId = fixture.initialState.combatTargetMonsterId;
+	state.combatTargetToHit = fixture.initialState.combatTargetToHit;
+	state.combatTargetMinDamage = fixture.initialState.combatTargetMinDamage;
+	state.combatTargetMaxDamage = fixture.initialState.combatTargetMaxDamage;
+	state.combatTargetIntelligence = fixture.initialState.combatTargetIntelligence;
+	state.combatTargetMegaDelayTicks = fixture.initialState.combatTargetMegaDelayTicks;
+
+	ReplayFixtureExecutionResult result;
+	ASSERT_TRUE(ExecuteReplayFixture(fixture, state, result, error)) << error;
+	ASSERT_EQ(result.transitions.size(), 1U);
+	EXPECT_TRUE(result.transitions[0].accepted);
+	EXPECT_EQ(state.lastAppliedTick, 3U);
+	EXPECT_EQ(state.life, 100);
+	EXPECT_EQ(state.secondaryPlayerLife, 100);
+	ASSERT_EQ(state.projectiles.size(), 3U);
+	EXPECT_EQ(state.projectiles[0].behavior, 26);
+	EXPECT_EQ(state.projectiles[0].targetEntityId, state.secondaryPlayerEntityId);
+	EXPECT_EQ(state.projectiles[0].pathIndex, 2);
+	EXPECT_EQ(state.projectiles[0].positionX, 2);
+	EXPECT_EQ(state.projectiles[0].positionY, 0);
+	EXPECT_EQ(state.projectiles[0].remainingTicks, 253U);
+	EXPECT_EQ(state.projectiles[0].traveledX, 4448640);
+	EXPECT_EQ(state.projectiles[0].traveledY, 2224320);
+	EXPECT_EQ(state.projectiles[0].velocityX, 1482880);
+	EXPECT_EQ(state.projectiles[0].velocityY, 741440);
+	EXPECT_EQ(state.projectiles[1].positionX, 1);
+	EXPECT_EQ(state.projectiles[1].remainingTicks, 37U);
+	EXPECT_EQ(state.projectiles[2].positionX, 2);
+	EXPECT_EQ(state.projectiles[2].remainingTicks, 40U);
+	for (size_t index = 1; index < state.projectiles.size(); ++index) {
+		const auto &projectile = state.projectiles[index];
+		EXPECT_EQ(projectile.behavior, 27);
+		EXPECT_EQ(projectile.damage, 4);
+	}
+	EXPECT_EQ(ComputeReplayFixtureStateHash(state), fixture.checkpoints.back().stateSha256);
+}
+
 ReplayFixtureExecutionState CreateTelekinesisWorldItemState(const ReplayFixture &fixture)
 {
 	ReplayFixtureExecutionState state;
@@ -11375,6 +11444,12 @@ TEST(ReplayFixture, ExecutesMegaInfernoMultiplayerTargetSelectionAgainstCSharpCh
 	EXPECT_EQ(state.projectiles[1].damage, 4);
 	EXPECT_EQ(state.projectiles[1].remainingTicks, 39U);
 	EXPECT_EQ(ComputeReplayFixtureStateHash(state), fixture.checkpoints.back().stateSha256);
+}
+
+TEST(ReplayFixture, ExecutesMegaInfernoAutonomousMultiplayerAgainstCSharpCheckpoints)
+{
+	ExecuteMegaInfernoAutonomousMultiplayerFixture(
+	    "test/fixtures/replay/gameplay-mega-inferno-autonomous-multiplayer.json");
 }
 
 void ExecuteMonsterMagicMultiplayerTargetFixture(const char *path)

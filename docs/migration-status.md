@@ -1296,6 +1296,11 @@ paths select the nearer secondary participant for InfernoController admission,
 preserve the farther primary, and agree on the controller, segment, and delay
 checkpoint state.
 
+The autonomous Mega Inferno lane now also covers the complete three-step
+controller lifecycle. Native and managed runners agree on path-indexed segment
+lifetime, controller recovery delay, nearest-secondary targeting, and the
+canonical final checkpoint.
+
 The shared object-quest replay fixture now carries an explicit authored quest
 link. Native and managed runners apply the same authored-interaction admission,
 quest progression, canonical object identity hashing, and duplicate-advance

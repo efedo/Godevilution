@@ -2,6 +2,10 @@
 
 All notable changes to this fork are documented below.
 
+- Added autonomous multiplayer Mega Inferno parity. Native and managed runners
+  now cover the three-step controller lifecycle, path-indexed segment lifetime,
+  nearest-secondary targeting, and canonical controller/segment checkpoints.
+
 - Added autonomous multiplayer BloodStar parity for Succubus and
   LazarusSuccubus. Native and managed runners now cover nearest-secondary
   admission, Blood Star impact, and the 27-tick projectile lifecycle for both

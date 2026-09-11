@@ -9324,6 +9324,45 @@ public sealed class ReplayFixtureTests
     }
 
     [Fact]
+    public void GameplayMegaInfernoAutonomousMultiplayerMatchesNativeLifecycle()
+    {
+        var fixture = LoadReplayFixture("gameplay-mega-inferno-autonomous-multiplayer.json");
+        var secondary = Assert.IsType<ReplaySecondaryPlayer>(fixture.InitialState.SecondaryPlayer);
+        var executor = CreateMegaInfernoExecutor(fixture);
+
+        var result = ReplayFixtureExecutor.Execute(
+            fixture,
+            executor,
+            new AuthoritativeCommandServer(executor));
+        var controller = Assert.Single(
+            result.FinalSnapshot.Projectiles,
+            projectile => projectile.Behavior
+                == (int)AuthoritativeProjectileBehavior.InfernoController);
+        var segments = result.FinalSnapshot.Projectiles
+            .Where(projectile => projectile.Behavior
+                == (int)AuthoritativeProjectileBehavior.InfernoSegment)
+            .OrderBy(projectile => projectile.EntityId)
+            .ToArray();
+        var primary = Assert.Single(result.FinalSnapshot.Players, player => player.EntityId == 1);
+        var secondaryState = executor.GetPlayerState(secondary.Player);
+
+        Assert.Equal(CommandStatus.Accepted, Assert.Single(result.Results).Status);
+        Assert.Equal(100, primary.Life);
+        Assert.Equal(100, secondaryState.Life);
+        Assert.Equal(secondary.EntityId, controller.TargetEntityId);
+        Assert.Equal(253U, controller.RemainingTicks);
+        Assert.Equal(2, controller.PathIndex);
+        Assert.Equal(2, segments.Length);
+        Assert.All(segments, segment => Assert.Equal(4, segment.Damage));
+        Assert.Equal(37U, segments[0].RemainingTicks);
+        Assert.Equal(40U, segments[1].RemainingTicks);
+        Assert.Equal(3UL, result.FinalSnapshot.Tick);
+        Assert.Equal(
+            fixture.Checkpoints.Select(checkpoint => checkpoint.StateSha256),
+            result.Checkpoints.Select(checkpoint => checkpoint.ActualStateSha256));
+    }
+
+    [Fact]
     public void GameplayLichMonsterMagicMultiplayerTargetSelectionMatchesNativeLifecycle()
     {
         var path = Path.Combine(

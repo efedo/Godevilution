@@ -13608,7 +13608,9 @@ public sealed class DiabloCombatCommandProcessor
                 damageRange.Maximum);
         }
         var segmentLifetime = checked(
-            5 * damage + spell.SecondaryProjectileLifetime);
+            5 * damage
+            + spell.SecondaryProjectileLifetime
+            + controller.PathIndex);
         var segmentEntityId = AllocateProjectileEntityId();
         world.Projectiles.Add(
             segmentEntityId,

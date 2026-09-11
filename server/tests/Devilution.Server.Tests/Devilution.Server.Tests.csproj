@@ -351,6 +351,7 @@
     <None Include="../../../test/fixtures/replay/gameplay-blood-star-native-ai-seed.json" Link="Fixtures/gameplay-blood-star-native-ai-seed.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-blood-star-close-native-ai-seed.json" Link="Fixtures/gameplay-blood-star-close-native-ai-seed.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-mega-inferno.json" Link="Fixtures/gameplay-mega-inferno.json" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="../../../test/fixtures/replay/gameplay-mega-inferno-autonomous-multiplayer.json" Link="Fixtures/gameplay-mega-inferno-autonomous-multiplayer.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-mega-inferno-native-ai-seed.json" Link="Fixtures/gameplay-mega-inferno-native-ai-seed.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-mega-inferno-multiplayer-target.json" Link="Fixtures/gameplay-mega-inferno-multiplayer-target.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-multiplayer-monster-arrow.json" Link="Fixtures/gameplay-multiplayer-monster-arrow.json" CopyToOutputDirectory="PreserveNewest" />
