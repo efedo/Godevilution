@@ -1282,6 +1282,8 @@ Notable shared fixtures include:
   mapping, native initial travel advance, and nearest-secondary target selection;
 - `gameplay-storm-multiplayer-target.json` for Storm's external ThinLightning
   mapping, controller/segment admission, and nearest-secondary target selection;
+- `gameplay-storm-autonomous-multiplayer.json` for Storm ThinLightning
+  controller travel, repeated segment creation, and lethal secondary impact;
 - `gameplay-acid-multiplayer-secondary-impact.json` and
   `gameplay-acid-unique-multiplayer-secondary-impact.json` for Hellfire Acid
   alias routing, shifted Q6 secondary-player impact, and splat/puddle expiry;

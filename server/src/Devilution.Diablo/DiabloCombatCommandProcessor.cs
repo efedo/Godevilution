@@ -15015,12 +15015,16 @@ public sealed class DiabloCombatCommandProcessor
             } else if (playerTarget is not null) {
                 if (projectile.TargetEntityId != 0
                     && world.CombatTargets.ContainsKey(projectile.SourceEntityId)) {
-                    _ = TryResolveMonsterMagicProjectilePlayerHit(
+                    var hit = TryResolveMonsterMagicProjectilePlayerHit(
                         tick,
                         projectile,
                         playerTarget,
                         players,
                         events);
+                    // Native lightning's PlayerMHit consumes the zero-width
+                    // damage-range draw after a successful monster hit.
+                    if (hit)
+                        _ = random.RandomIntBetween(1, 1);
                 } else {
                     _ = TryResolvePersistentShiftedProjectilePlayerHit(
                         tick,

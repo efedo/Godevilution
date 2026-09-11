@@ -2,6 +2,10 @@
 
 All notable changes to this fork are documented below.
 
+- Added autonomous multiplayer Storm ThinLightning coverage. Native and managed
+  runners now preserve controller travel, repeated lightning segments, lethal
+  secondary impact, and the native post-hit RNG draw.
+
 - Added autonomous multiplayer FireBat Firebolt coverage. Native and managed
   runners now preserve Firebolt admission, secondary impact, and the 27-tick
   lethal lifecycle through the shared authoritative path.

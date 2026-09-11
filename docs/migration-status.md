@@ -2,6 +2,10 @@
 
 Status date: 2026-09-11
 
+Storm’s autonomous Hellfire ThinLightning lane now preserves controller travel,
+repeated segment creation, lethal secondary impact, and the native post-hit RNG
+draw in the compact native replay and managed server.
+
 FireBat’s autonomous Diablo Firebolt lane now preserves admission, secondary
 impact, and the 27-tick lethal lifecycle in the compact native replay and
 managed server.
