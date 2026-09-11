@@ -569,14 +569,15 @@ The compact native replay projection now carries the same server-owned corpse
 tile representation and per-tick monster regeneration as the C# checkpoints.
 Ordinary-death and Firebolt, Fireball, Lightning, and Flash
  spell/projectile-timeline checkpoints pass in both runners. As of 2026-09-11,
-the native replay gate contains 363 checked-in JSON fixtures and 372 registered
+the native replay gate contains 365 checked-in JSON fixtures and 374 registered
 tests; the test count also includes parser and validation cases that do not
 introduce another fixture file. Coverage includes seeded and autonomous MonsterArrow
 source coverage, Hellfire HorkDemon Hork Spawn admission, player impact, and
 miss-before-expiry, secondary-player Hork Spawn block and impact, current-tile
 breakable-object removal, primary-player Hork Spawn block, multiplayer
 HorkDemon target selection, SkeletonRanged MonsterArrow nearest-participant
-selection, autonomous Succubus BloodStar admission/impact/block lanes, Succubus
+selection, primary GoatRanged and SkeletonRanged MonsterArrow block lanes,
+autonomous Succubus BloodStar admission/impact/block lanes, Succubus
 and LazarusSuccubus BloodStar multiplayer target-selection and secondary
 Warrior block-chance lanes, FireBat
 Firebolt, Torchant Fireball, Magma MagmaBall, and Storm ThinLightning
@@ -1299,6 +1300,9 @@ Notable shared fixtures include:
   `gameplay-monster-arrow-skeleton-ranged-secondary-warrior-block-chance.json`
   for the class-aware secondary shield boundary after each authored ranged-AI
   alias's autonomous admission and travel timing;
+- `gameplay-monster-arrow-goat-ranged-primary-warrior-block-chance.json` and
+  `gameplay-monster-arrow-skeleton-ranged-primary-warrior-block-chance.json`
+  for the same class-aware shield boundary against primary-player targets;
 - `gameplay-monster-arrow-etherealized.json` for the native `PlayerMHit`
   protection boundary: an Etherealized player does not consume the arrow,
   which continues through the occupied tile and expires on its normal travel

@@ -9,6 +9,10 @@ runners. The Hellfire Magma alias is covered through its external missile
 mapping; the Blood Star fixture covers the Succubus alias and native spell
 identity.
 
+The autonomous GoatRanged and SkeletonRanged MonsterArrow aliases now preserve
+the same primary-player Warrior shield boundary, including alias-specific
+admission/travel timing, block recovery, and retained impact checkpoints.
+
 Succubus and LazarusSuccubus Blood Star secondary-player impacts now preserve
 the native low-Dexterity Warrior class chance and shield admission, including
 alias-specific block recovery and canonical impact checkpoints, in both replay

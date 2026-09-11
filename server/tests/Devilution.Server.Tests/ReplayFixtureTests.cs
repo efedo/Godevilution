@@ -8596,6 +8596,38 @@ public sealed class ReplayFixtureTests
             result.Checkpoints.Select(checkpoint => checkpoint.ActualStateSha256));
     }
 
+    [Theory]
+    [InlineData("gameplay-monster-arrow-goat-ranged-primary-warrior-block-chance.json", "monster-arrow-autonomous", 2UL, 80)]
+    [InlineData("gameplay-monster-arrow-skeleton-ranged-primary-warrior-block-chance.json", "monster-arrow", 7UL, 100)]
+    public void GameplayMonsterArrowAliasesPrimaryWarriorBlockAtClassChance(
+        string fixtureName,
+        string missilePackDirectory,
+        ulong expectedTick,
+        int expectedLife)
+    {
+        var fixture = LoadReplayFixture(fixtureName);
+        var executor = CreateMonsterArrowExecutor(fixture, missilePackDirectory);
+
+        var result = ReplayFixtureExecutor.Execute(
+            fixture,
+            executor,
+            new AuthoritativeCommandServer(executor));
+        var player = Assert.Single(result.FinalSnapshot.Players);
+        var projectile = Assert.Single(result.FinalSnapshot.Projectiles);
+
+        Assert.Equal(CommandStatus.Accepted, Assert.Single(result.Results).Status);
+        Assert.Equal(expectedLife, player.Life);
+        Assert.Equal(PlayerCombatMode.Block, player.CombatMode);
+        Assert.Equal(expectedTick + 4, player.CombatModeEndTick);
+        Assert.Equal((int)AuthoritativeProjectileBehavior.MonsterArrow, projectile.Behavior);
+        Assert.Equal((int)AuthoritativeProjectilePhase.Impact, projectile.Phase);
+        Assert.Equal(1U, projectile.RemainingTicks);
+        Assert.Equal(expectedTick, result.FinalSnapshot.Tick);
+        Assert.Equal(
+            fixture.Checkpoints.Select(checkpoint => checkpoint.StateSha256),
+            result.Checkpoints.Select(checkpoint => checkpoint.ActualStateSha256));
+    }
+
     [Fact]
     public void GameplayMonsterArrowSkeletonRangedAdmissionMatchesNativeLifecycle()
     {
@@ -12629,11 +12661,21 @@ public sealed class ReplayFixtureTests
             initial.Life,
             initial.Mana,
             startingLifeMaximum: initial.LifeMaximum,
+            startingAttributes: PlayerAttributesState.Zero with {
+                Strength = new PlayerAttributeState(initial.Strength, initial.Strength),
+                Magic = new PlayerAttributeState(initial.Magic, initial.Magic),
+                Dexterity = new PlayerAttributeState(initial.Dexterity, initial.Dexterity),
+                Vitality = new PlayerAttributeState(initial.Vitality, initial.Vitality),
+            },
             startingPositionX: initial.PositionX,
             startingPositionY: initial.PositionY,
             startingLevelId: initial.LevelId,
             startingCharacterLevel: initial.CharacterLevel,
+            startingCharacterClassId: checked((uint)initial.CharacterClass),
             startingPlayerClasses: classes,
+            startingEquipment: initial.Equipment
+                .Select(item => item.ToEquippedStoreItem())
+                .ToArray(),
             startingCombatTargets: [target],
             startingMonsterMissiles: missiles,
             startingRandomSeed: checked((uint)fixture.RngSeed),

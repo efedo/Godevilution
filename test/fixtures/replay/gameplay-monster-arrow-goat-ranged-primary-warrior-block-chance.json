@@ -1,0 +1,31 @@
+{
+  "format_version": 1,
+  "fixture_id": "gameplay/monster-arrow-goat-ranged-primary-warrior-block-chance",
+  "protocol_schema_version": "0.1.0",
+  "content_manifest": { "id": "replay.monster-arrow-autonomous", "version": "0.1.0", "sha256": "dc2d0312272a840cc3531b9b859c6d4e2775b87ddb51a2026d2a86ec92935d1c" },
+  "tick_rate_hz": 20,
+  "rng_seed": 7,
+  "game_variant": "Diablo",
+  "game_mode": "SinglePlayer",
+  "initial_state": {
+    "player": "A", "gold": 0, "experience": 0, "life": 80, "life_maximum": 80,
+    "position_x": 0, "position_y": 0, "level_id": 1, "character_class": 0,
+    "character_level": 1, "dexterity": 0,
+    "equipment": [{ "slot": 5, "item_seed": 44, "item_type": 5, "item_class": 0, "flags": 0, "stat_flag": true }],
+    "combat_target_entity_id": 9, "combat_target_level_id": 1,
+    "combat_target_position_x": 2, "combat_target_position_y": 0,
+    "combat_target_hit_points": 20, "combat_target_max_hit_points": 20,
+    "combat_target_attack_damage": 4, "combat_target_aggro_range": 2,
+    "combat_target_monster_level": 1, "combat_target_native_ai": "GoatRanged",
+    "combat_target_to_hit": 100, "combat_target_min_damage": 4,
+    "combat_target_max_damage": 4, "combat_target_intelligence": 0,
+    "combat_target_ranged_retreat_minimum_distance": 1,
+    "combat_target_ranged_retreat_chance_base": 1,
+    "combat_target_ranged_retreat_chance_intelligence_scale": 1
+  },
+  "commands": [{ "client_sequence": 1, "target_tick": 1, "server_receipt_sequence": 1, "kind": "OpenStore", "payload": { "store_id": 1 } }],
+  "checkpoints": [
+    { "tick": 1, "state_sha256": "9c7b821bfc7de6d492c634c92c57c2a18c74323176194150573e886b0c12ec62" },
+    { "tick": 2, "state_sha256": "96fad6da058b255b8d87e048af402271a57f96d7cdb1e7911f4176c9ebba86c0" }
+  ]
+}

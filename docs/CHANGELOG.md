@@ -2,6 +2,11 @@
 
 All notable changes to this fork are documented below.
 
+- Extended autonomous MonsterArrow primary-player Warrior block-chance parity
+  to the GoatRanged and SkeletonRanged aliases. Native and managed runners now
+  cover alias-specific admission/travel timing, shield blocking, block recovery,
+  and retained impact-phase projectile state.
+
 - Added primary-player Warrior block-chance parity for Hellfire MagmaBall and
   Succubus Blood Star. Native and managed runners now cover the low-Dexterity
   class chance, shield admission, block recovery, alias-specific projectile
