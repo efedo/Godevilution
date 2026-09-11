@@ -2,6 +2,10 @@
 
 Status date: 2026-09-11
 
+GoatMelee’s seeded autonomous far-target idle lane now preserves nearest-
+participant routing, the native action draw, and AiAvoidance idle state in the
+compact native replay and managed server.
+
 Snotspill’s seeded Skeleton-family delay lane now consumes the same native
 action and movement-delay draws in the compact native replay and managed server,
 including per-monster seed advancement and secondary participant hashing.

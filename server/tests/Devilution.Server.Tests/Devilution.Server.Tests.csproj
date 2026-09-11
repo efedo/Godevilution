@@ -228,6 +228,7 @@
     <None Include="../../../test/fixtures/replay/gameplay-fat-autonomous-multiplayer.json" Link="Fixtures/gameplay-fat-autonomous-multiplayer.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-goat-melee-movement.json" Link="Fixtures/gameplay-goat-melee-movement.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-goat-melee-multiplayer-target.json" Link="Fixtures/gameplay-goat-melee-multiplayer-target.json" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="../../../test/fixtures/replay/gameplay-goat-melee-autonomous-multiplayer.json" Link="Fixtures/gameplay-goat-melee-autonomous-multiplayer.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-goat-melee-attack.json" Link="Fixtures/gameplay-goat-melee-attack.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-goat-melee-get-hit.json" Link="Fixtures/gameplay-goat-melee-get-hit.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-goat-melee-secondary-q6-range.json" Link="Fixtures/gameplay-goat-melee-secondary-q6-range.json" CopyToOutputDirectory="PreserveNewest" />

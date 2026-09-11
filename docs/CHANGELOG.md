@@ -2,6 +2,10 @@
 
 All notable changes to this fork are documented below.
 
+- Added seeded GoatMelee autonomous multiplayer coverage. Native and managed
+  runners now validate nearest-participant selection, the restored action draw,
+  and AiAvoidance idle-state hashing.
+
 - Added seeded Snotspill autonomous multiplayer coverage. Skeleton-family
   aliases now consume the native movement-delay draw consistently across the
   native replay and managed server.

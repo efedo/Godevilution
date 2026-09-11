@@ -7414,6 +7414,32 @@ public sealed class ReplayFixtureTests
     }
 
     [Fact]
+    public void GameplayGoatMeleeAutonomousMultiplayerMatchesNative()
+    {
+        var fixture = LoadReplayFixture("gameplay-goat-melee-autonomous-multiplayer.json");
+        var executor = CreateGoatMeleeReplayExecutor(fixture, useSeededState: true);
+        var result = ReplayFixtureExecutor.Execute(
+            fixture,
+            executor,
+            new AuthoritativeCommandServer(executor));
+        var monster = Assert.Single(result.FinalSnapshot.Monsters);
+        var primary = Assert.Single(result.FinalSnapshot.Players, player => player.EntityId == 1);
+        var secondary = Assert.Single(result.FinalSnapshot.Players, player => player.EntityId == 8);
+
+        Assert.Equal(CommandStatus.Accepted, Assert.Single(result.Results).Status);
+        Assert.Equal(100, primary.Life);
+        Assert.Equal(100, secondary.Life);
+        Assert.False(monster.Moving);
+        Assert.Equal(0, monster.AvoidanceMovementIdleTicks);
+        Assert.Equal(0, monster.AvoidanceMovementMode);
+        Assert.Equal(22695478U, monster.MonsterAiSeed);
+        Assert.Equal(2156045615U, result.FinalSnapshot.RandomState);
+        Assert.Equal(
+            fixture.Checkpoints.Select(checkpoint => checkpoint.StateSha256),
+            result.Checkpoints.Select(checkpoint => checkpoint.ActualStateSha256));
+    }
+
+    [Fact]
     public void GameplayFatMultiplayerTargetSelectionMatchesNative()
     {
         var fixture = LoadReplayFixture("gameplay-fat-multiplayer-target.json");
@@ -11772,7 +11798,8 @@ public sealed class ReplayFixtureTests
     }
 
     private static StoreSimulationExecutor CreateGoatMeleeReplayExecutor(
-        ReplayFixture fixture)
+        ReplayFixture fixture,
+        bool useSeededState = false)
     {
         var initial = fixture.InitialState;
         var target = new AuthoritativeCombatTarget(
@@ -11785,7 +11812,13 @@ public sealed class ReplayFixtureTests
             monsterId: initial.CombatTargetMonsterId,
             aggroRange: initial.CombatTargetAggroRange,
             nativeAi: initial.CombatTargetNativeAi,
-            intelligence: initial.CombatTargetIntelligence);
+            intelligence: initial.CombatTargetIntelligence,
+            monsterItemSeed: useSeededState
+                ? initial.CombatTargetMonsterItemSeed
+                : 0,
+            monsterAiSeed: useSeededState
+                ? initial.CombatTargetMonsterAiSeed
+                : 0);
         var catalog = new StoreCatalog();
         catalog.AddStore(1, []);
         return new StoreSimulationExecutor(
