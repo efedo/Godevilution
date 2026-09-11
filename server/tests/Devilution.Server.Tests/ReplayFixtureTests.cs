@@ -9549,6 +9549,46 @@ public sealed class ReplayFixtureTests
             result.Checkpoints.Select(checkpoint => checkpoint.ActualStateSha256));
     }
 
+    [Theory]
+    [InlineData("gameplay-fire-bat-secondary-warrior-block-chance.json", "monster-firebolt", AuthoritativeProjectileBehavior.Firebolt, 1U)]
+    [InlineData("gameplay-torchant-secondary-warrior-block-chance.json", "monster-fireball", AuthoritativeProjectileBehavior.Fireball, 12U)]
+    public void GameplayMonsterRangedAliasesSecondaryWarriorBlockAtClassChance(
+        string fixtureName,
+        string missilePackDirectory,
+        AuthoritativeProjectileBehavior expectedBehavior,
+        uint expectedSpellId)
+    {
+        var fixture = LoadReplayFixture(fixtureName);
+        var secondary = Assert.IsType<ReplaySecondaryPlayer>(fixture.InitialState.SecondaryPlayer);
+        var executor = CreateMonsterMagicExecutor(fixture, missilePackDirectory);
+
+        var result = ReplayFixtureExecutor.Execute(
+            fixture,
+            executor,
+            new AuthoritativeCommandServer(executor));
+        var primary = Assert.Single(result.FinalSnapshot.Players, player => player.EntityId == 1);
+        var secondaryState = executor.GetPlayerState(secondary.Player);
+        var projectile = Assert.Single(result.FinalSnapshot.Projectiles);
+
+        Assert.Equal(CommandStatus.Accepted, Assert.Single(result.Results).Status);
+        Assert.Equal(100, primary.Life);
+        Assert.Equal(0U, secondary.CharacterClass);
+        Assert.Equal(0, secondary.Dexterity);
+        Assert.Equal(100, secondaryState.Life);
+        Assert.Equal(DiabloPlayerCombatMode.Block, secondaryState.CombatMode);
+        Assert.Equal(31UL, secondaryState.CombatModeEndTick);
+        Assert.Equal(secondary.EntityId, projectile.TargetEntityId);
+        Assert.Equal((int)expectedBehavior, projectile.Behavior);
+        Assert.Equal(expectedSpellId, projectile.SpellId);
+        Assert.Equal((int)AuthoritativeDamageType.Fire, projectile.DamageType);
+        Assert.Equal((int)AuthoritativeProjectilePhase.Impact, projectile.Phase);
+        Assert.Equal(1U, projectile.RemainingTicks);
+        Assert.Equal(27UL, result.FinalSnapshot.Tick);
+        Assert.Equal(
+            fixture.Checkpoints.Select(checkpoint => checkpoint.StateSha256),
+            result.Checkpoints.Select(checkpoint => checkpoint.ActualStateSha256));
+    }
+
     [Fact]
     public void GameplayMagmaMagmaBallMultiplayerTargetSelectionMatchesNativeLifecycle()
     {

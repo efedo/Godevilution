@@ -9771,7 +9771,7 @@ public sealed class DiabloCombatCommandProcessor
                     damageType,
                     missile.ProjectileDamage)
                 : new AuthoritativeProjectile(
-                    AllocateProjectileEntityId(),
+                    AllocateProjectileEntityId(reuseReleasedId: true),
                     monster.EntityId,
                     player.EntityId,
                     spellId,
@@ -12518,10 +12518,13 @@ public sealed class DiabloCombatCommandProcessor
                         world.Projectiles.Remove(projectile.EntityId);
                     return;
                 }
-                projectile.PositionX = previousX;
-                projectile.PositionY = previousY;
-                projectile.TraveledX = previousTraveledX;
-                projectile.TraveledY = previousTraveledY;
+                if (!(projectile.Behavior == AuthoritativeProjectileBehavior.Firebolt
+                        && world.CombatTargets.ContainsKey(projectile.SourceEntityId))) {
+                    projectile.PositionX = previousX;
+                    projectile.PositionY = previousY;
+                    projectile.TraveledX = previousTraveledX;
+                    projectile.TraveledY = previousTraveledY;
+                }
                 EnterProjectileImpact(projectile);
                 return;
             }
@@ -15598,7 +15601,8 @@ public sealed class DiabloCombatCommandProcessor
             target.CharacterLevel,
             target.LevelId,
             distance);
-        if (random.RandomIntLessThan(100) >= hitChance)
+        var hitRoll = random.RandomIntLessThan(100);
+        if (hitRoll >= hitChance)
             return false;
 
         var targetClass = GetPlayerClass(target);
@@ -17344,9 +17348,23 @@ public sealed class DiabloCombatCommandProcessor
                     && item.PositionY == positionY));
     }
 
-    private uint AllocateProjectileEntityId()
+    private uint AllocateProjectileEntityId(bool reuseReleasedId = false)
     {
-        return projectileEntityIds.Allocate(entityId =>
+        if (reuseReleasedId) {
+            // Compact native replay lanes reuse the first available missile ID
+            // after an earlier autonomous projectile expires.
+            return DeterministicEntityIdAllocator.FindFirstAvailable(
+                0x80000000,
+                entityId =>
+                    activePlayers.Any(player => player.EntityId == entityId)
+                    || world.CombatTargets.ContainsKey(entityId)
+                    || world.WorldItems.ContainsKey(entityId)
+                    || world.Objects.ContainsKey(entityId)
+                    || world.Projectiles.ContainsKey(entityId)
+                    || world.Portals.ContainsKey(entityId)
+                    || world.Corpses.ContainsKey(entityId));
+        }
+        var allocated = projectileEntityIds.Allocate(entityId =>
             activePlayers.Any(player => player.EntityId == entityId)
             || world.CombatTargets.ContainsKey(entityId)
             || world.WorldItems.ContainsKey(entityId)
@@ -17354,6 +17372,7 @@ public sealed class DiabloCombatCommandProcessor
             || world.Projectiles.ContainsKey(entityId)
             || world.Portals.ContainsKey(entityId)
             || world.Corpses.ContainsKey(entityId));
+        return allocated;
     }
 
 }

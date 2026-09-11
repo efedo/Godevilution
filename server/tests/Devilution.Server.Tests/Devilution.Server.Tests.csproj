@@ -322,11 +322,13 @@
     <None Include="../../../test/fixtures/replay/gameplay-blood-star-lazarus-succubus-multiplayer-target.json" Link="Fixtures/gameplay-blood-star-lazarus-succubus-multiplayer-target.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-fire-bat-multiplayer-target.json" Link="Fixtures/gameplay-fire-bat-multiplayer-target.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-fire-bat-autonomous-multiplayer.json" Link="Fixtures/gameplay-fire-bat-autonomous-multiplayer.json" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="../../../test/fixtures/replay/gameplay-fire-bat-secondary-warrior-block-chance.json" Link="Fixtures/gameplay-fire-bat-secondary-warrior-block-chance.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-fire-bat-multiplayer-secondary-impact.json" Link="Fixtures/gameplay-fire-bat-multiplayer-secondary-impact.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-torchant-multiplayer-secondary-impact.json" Link="Fixtures/gameplay-torchant-multiplayer-secondary-impact.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-torchant-multiplayer-secondary-miss.json" Link="Fixtures/gameplay-torchant-multiplayer-secondary-miss.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-torchant-multiplayer-target.json" Link="Fixtures/gameplay-torchant-multiplayer-target.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-torchant-autonomous-multiplayer.json" Link="Fixtures/gameplay-torchant-autonomous-multiplayer.json" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="../../../test/fixtures/replay/gameplay-torchant-secondary-warrior-block-chance.json" Link="Fixtures/gameplay-torchant-secondary-warrior-block-chance.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-magma-multiplayer-target.json" Link="Fixtures/gameplay-magma-multiplayer-target.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-magma-autonomous-multiplayer.json" Link="Fixtures/gameplay-magma-autonomous-multiplayer.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-magma-multiplayer-secondary-impact.json" Link="Fixtures/gameplay-magma-multiplayer-secondary-impact.json" CopyToOutputDirectory="PreserveNewest" />

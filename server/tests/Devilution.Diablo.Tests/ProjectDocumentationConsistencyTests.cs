@@ -65,6 +65,8 @@ public sealed class ProjectDocumentationConsistencyTests
         Assert.Contains("gameplay-monster-arrow-secondary-warrior-block-chance.json", replayFixtures, StringComparison.Ordinal);
         Assert.Contains("gameplay-monster-arrow-goat-ranged-secondary-warrior-block-chance.json", replayFixtures, StringComparison.Ordinal);
         Assert.Contains("gameplay-monster-arrow-skeleton-ranged-secondary-warrior-block-chance.json", replayFixtures, StringComparison.Ordinal);
+        Assert.Contains("gameplay-fire-bat-secondary-warrior-block-chance.json", replayFixtures, StringComparison.Ordinal);
+        Assert.Contains("gameplay-torchant-secondary-warrior-block-chance.json", replayFixtures, StringComparison.Ordinal);
         Assert.Contains("gameplay-monster-arrow-flash-protected.json", replayFixtures, StringComparison.Ordinal);
         Assert.Contains("gameplay-monster-magic-secondary-warrior-block-chance.json", replayFixtures, StringComparison.Ordinal);
         Assert.Contains("gameplay-monster-magic-arch-lich-secondary-warrior-block-chance.json", replayFixtures, StringComparison.Ordinal);

@@ -2,6 +2,11 @@
 
 All notable changes to this fork are documented below.
 
+- Extended autonomous Firebolt/Fireball secondary Warrior block-chance parity
+  to the FireBat and Torchant aliases. Native and managed runners now cover
+  class-derived shield blocking, block recovery, and retained impact-phase
+  projectile state for both authored ranged families.
+
 - Extended MonsterArrow secondary Warrior block-chance parity to the GoatRanged
   and SkeletonRanged aliases. Native and managed runners now cover autonomous
   admission, alias-specific travel timing, class-derived shield blocking,

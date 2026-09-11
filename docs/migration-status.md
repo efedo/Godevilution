@@ -11,6 +11,10 @@ share the same class-aware secondary Warrior shield boundary as Lich, with
 alias-specific native and managed checkpoint hashes proving block recovery
 and retained impact state.
 
+FireBat Firebolt and Torchant Fireball now preserve the same class-aware
+secondary Warrior shield boundary through their autonomous admission and
+27-tick impact lanes, including alias-specific native and managed checkpoints.
+
 Hellfire MagmaBall secondary-player impact now preserves the native
 low-Dexterity Warrior class chance and shield admission through the external
 Magma missile mapping and shared impact checkpoints in both replay runners.
