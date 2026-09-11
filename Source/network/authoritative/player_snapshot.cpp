@@ -671,7 +671,13 @@ tl::expected<std::vector<ProjectedObjectSnapshot>, std::string> ProjectObjectSna
 		        && (transitionSetsVariable ? source.quest_transition_amount() > 0 : source.quest_transition_amount() == 0));
 		const bool rewardValid = source.reward_kind() == 0
 		    ? source.reward_id() == 0 && source.reward_item_level() == 0 && source.reward_offset_x() == 0 && source.reward_offset_y() == 0
+		        && source.reward_origin_kind() == 0 && source.reward_set_level_id() == 0
 		    : source.reward_id() != 0;
+		const bool rewardOriginValid = source.reward_origin_kind() >= 0
+		    && source.reward_origin_kind() <= MaximumObjectRewardOriginKind
+		    && (source.reward_origin_kind() == 0
+		        ? source.reward_set_level_id() == 0
+		        : source.reward_set_level_id() >= 0 && source.reward_set_level_id() <= MaximumNativeSetLevelId);
 		const bool producesProjectile = source.effect_kind() == static_cast<int32_t>(ProjectedObjectEffectKind::SpawnSpellProjectile)
 		    || source.effect_kind() == static_cast<int32_t>(ProjectedObjectEffectKind::GrantSpellLevelAndSpawnProjectile)
 		    || source.quest_sequence_follow_up_kind() == 2;
@@ -709,6 +715,7 @@ tl::expected<std::vector<ProjectedObjectSnapshot>, std::string> ProjectObjectSna
 		    || source.reward_item_level() > MaximumNativeQuestByte
 		    || source.reward_offset_x() < MinimumNativeRewardOffset || source.reward_offset_x() > MaximumNativeRewardOffset
 		    || source.reward_offset_y() < MinimumNativeRewardOffset || source.reward_offset_y() > MaximumNativeRewardOffset
+		    || !rewardOriginValid
 		    || !rewardValid
 		    || source.projectile_target_offset_x() < MinimumNativeObjectOffset || source.projectile_target_offset_x() > MaximumNativeObjectOffset
 		    || source.projectile_target_offset_y() < MinimumNativeObjectOffset || source.projectile_target_offset_y() > MaximumNativeObjectOffset

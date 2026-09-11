@@ -2,6 +2,12 @@
 
 Status date: 2026-09-10
 
+Native object ingress now also validates reward coordinate origins and
+set-level identities against the shared server/Godot contract before creating
+the compact compatibility projection. The native presentation path still
+does not consume those server-owned reward fields, but malformed metadata can
+no longer pass through it.
+
 Native object projection now shares the server and managed-client rule that a
 quest transition may own a quest-sequence follow-up even when the base effect
 is not `QuestSequence`. World-mutation, projectile, and native-monster

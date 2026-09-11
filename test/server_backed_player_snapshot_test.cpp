@@ -3,6 +3,7 @@
 #include <array>
 #include <limits>
 #include <string>
+#include <utility>
 
 #include "devilution.pb.h"
 #include "engine/cursor.h"
@@ -4038,6 +4039,30 @@ TEST(ServerBackedPlayerSnapshot, RejectsMalformedAuthoritativeObjects)
 	invalidFlags->set_object_id(1);
 	invalidFlags->set_reward_kind(1);
 	EXPECT_FALSE(ProjectObjectSnapshots(invalidReward).has_value());
+
+	for (const auto [originKind, setLevelId] : std::array<std::pair<int, int>, 3> {
+		     std::pair { -1, 0 },
+		     std::pair { 0, 1 },
+		     std::pair { 1, 9 },
+	     }) {
+		protocol::Snapshot invalidRewardOrigin;
+		auto *originObject = invalidRewardOrigin.add_objects();
+		originObject->set_entity_id(7);
+		originObject->set_object_id(1);
+		originObject->set_reward_origin_kind(originKind);
+		originObject->set_reward_set_level_id(setLevelId);
+		EXPECT_FALSE(ProjectObjectSnapshots(invalidRewardOrigin).has_value());
+	}
+
+	protocol::Snapshot validSetLevelReward;
+	auto *setLevelRewardObject = validSetLevelReward.add_objects();
+	setLevelRewardObject->set_entity_id(7);
+	setLevelRewardObject->set_object_id(1);
+	setLevelRewardObject->set_reward_kind(1);
+	setLevelRewardObject->set_reward_id(100);
+	setLevelRewardObject->set_reward_origin_kind(1);
+	setLevelRewardObject->set_reward_set_level_id(8);
+	EXPECT_TRUE(ProjectObjectSnapshots(validSetLevelReward).has_value());
 
 	protocol::Snapshot invalidFollowUp;
 	invalidFlags = invalidFollowUp.add_objects();

@@ -2,6 +2,11 @@
 
 All notable changes to this fork are documented below.
 
+- Native object projection now validates authored reward-origin and set-level
+  metadata, matching the server and Godot contract even though the compact
+  native presentation snapshot does not consume those fields. Invalid origins
+  and out-of-range set-level identities are rejected at ingress.
+
 - Native object projection now accepts the same transition-owned quest
   sequence follow-ups as the authoritative server and managed client,
   including world-mutation, projectile, and native-monster follow-up kinds.
