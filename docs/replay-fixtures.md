@@ -1289,6 +1289,9 @@ Notable shared fixtures include:
 - `gameplay-acid-multiplayer-secondary-impact.json` and
   `gameplay-acid-unique-multiplayer-secondary-impact.json` for Hellfire Acid
   alias routing, shifted Q6 secondary-player impact, and splat/puddle expiry;
+- `gameplay-acid-autonomous-multiplayer.json` for Hellfire Acid
+  RangedAvoidance admission, nearest-secondary targeting, and the first
+  secondary-impact splat/puddle checkpoint;
 - `gameplay-blood-star-impact.json` for deterministic monster-magic hit RNG,
   Q6 player damage, impact-phase retention, and removal-boundary parity;
 - `gameplay-blood-star-secondary-block.json` for secondary-player target routing,

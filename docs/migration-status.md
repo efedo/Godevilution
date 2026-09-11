@@ -2,6 +2,10 @@
 
 Status date: 2026-09-11
 
+Acid’s autonomous Hellfire RangedAvoidance lane now preserves admission,
+secondary-player impact, and the first splat-to-puddle transition in the
+compact native replay and managed server.
+
 Torchant’s autonomous Diablo Fireball lane now preserves delayed admission,
 secondary impact, and the lethal 27-tick lifecycle in the compact native replay
 and managed server.

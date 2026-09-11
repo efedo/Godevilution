@@ -11091,6 +11091,110 @@ void AdmitReplayAutonomousFireball(ReplayFixtureExecutionState &state)
 	state.projectiles.push_back(std::move(projectile));
 }
 
+/** Admits the compact Acid native AiRangedAvoidance projectile branch. */
+void AdmitReplayAutonomousAcid(
+    ReplayFixtureExecutionState &state,
+    uint64_t tick)
+{
+	if (state.combatTargetEntityId == 0
+	    || state.combatTargetNativeAi != "Acid"
+	    || state.combatTargetHitPointsQ6 <= 0
+	    || state.combatTargetAggroRange <= 0
+	    || state.combatTargetRangedDelayTicks < 0
+	    || std::any_of(state.projectiles.begin(), state.projectiles.end(), [&](const auto &projectile) {
+			return projectile.sourceEntityId == state.combatTargetEntityId
+			    && (projectile.behavior == AcidBehavior
+			        || projectile.behavior == AcidSplatBehavior
+			        || projectile.behavior == AcidPuddleBehavior);
+		}))
+		return;
+	if (state.combatTargetRangedDelayTicks > 0) {
+		--state.combatTargetRangedDelayTicks;
+		return;
+	}
+
+	struct Candidate {
+		uint32_t entityId;
+		int32_t positionX;
+		int32_t positionY;
+	};
+	std::vector<Candidate> candidates;
+	if (state.life > 0 && state.levelId == state.combatTargetLevelId)
+		candidates.push_back({ state.entityId == 0 ? 1U : state.entityId, state.positionX, state.positionY });
+	if (state.secondaryPlayerEntityId != 0
+	    && state.secondaryPlayerLife > 0
+	    && state.secondaryPlayerLevelId == state.combatTargetLevelId)
+		candidates.push_back({ state.secondaryPlayerEntityId, state.secondaryPlayerPositionX, state.secondaryPlayerPositionY });
+	if (candidates.empty())
+		return;
+	const auto candidateDistance = [&](const Candidate &candidate) {
+		return std::max(
+		    std::abs(candidate.positionX - state.combatTargetPositionX),
+		    std::abs(candidate.positionY - state.combatTargetPositionY));
+	};
+	std::sort(candidates.begin(), candidates.end(), [&](const auto &left, const auto &right) {
+		const int32_t leftDistance = candidateDistance(left);
+		const int32_t rightDistance = candidateDistance(right);
+		return leftDistance != rightDistance
+		    ? leftDistance < rightDistance
+		    : left.entityId < right.entityId;
+	});
+	const Candidate &target = candidates.front();
+	const int distance = candidateDistance(target);
+	if (distance > state.combatTargetAggroRange || distance < 2)
+		return;
+
+	const uint32_t attackSeed = static_cast<uint32_t>(tick)
+	    ^ state.combatTargetEntityId
+	    ^ target.entityId;
+	const bool usesNativeAiStream = state.combatTargetMonsterAiSeed != 0;
+	const int actionRoll = usesNativeAiStream
+	    ? std::max(GenerateRnd(state, 10000), 0)
+	    : static_cast<int>(attackSeed % 10000U);
+	const int attackBand = 500
+	    + 500 * state.combatTargetIntelligence
+	    + (distance >= 3 ? 500 : 0);
+	if (actionRoll >= std::min(10000, attackBand))
+		return;
+
+	uint32_t nextEntityId = 0x80000000U;
+	for (const auto &projectile : state.projectiles)
+		nextEntityId = std::max(nextEntityId, projectile.entityId + 1U);
+	const auto velocity = CalculateVelocity(
+	    state.combatTargetPositionX,
+	    state.combatTargetPositionY,
+	    target.positionX,
+	    target.positionY,
+	    16);
+	ReplayFixtureProjectileState projectile;
+	projectile.entityId = nextEntityId;
+	projectile.sourceEntityId = state.combatTargetEntityId;
+	projectile.targetEntityId = target.entityId;
+	projectile.spellId = 1;
+	projectile.levelId = state.combatTargetLevelId;
+	projectile.positionX = state.combatTargetPositionX;
+	projectile.positionY = state.combatTargetPositionY;
+	projectile.startX = projectile.positionX;
+	projectile.startY = projectile.positionY;
+	projectile.targetX = target.positionX;
+	projectile.targetY = target.positionY;
+	projectile.damage = state.combatTargetAttackDamage;
+	projectile.damageType = AcidDamageType;
+	projectile.remainingTicks = static_cast<uint32_t>(5 * (state.combatTargetIntelligence + 4));
+	projectile.behavior = AcidBehavior;
+	projectile.originalDirection = GetDirection(
+	    projectile.positionX,
+	    projectile.positionY,
+	    projectile.targetX,
+	    projectile.targetY);
+	projectile.velocityX = velocity.first;
+	projectile.velocityY = velocity.second;
+	projectile.speed = 16;
+	projectile.impactLifetime = 1;
+	projectile.resistantDamageDivisor = 1;
+	state.projectiles.push_back(std::move(projectile));
+}
+
 /** Admits the compact Storm native AiRangedAvoidance ThinLightning branch. */
 void AdmitReplayAutonomousStorm(ReplayFixtureExecutionState &state)
 {
@@ -11249,6 +11353,7 @@ void AdvanceReplayStateToTick(
 		AdmitReplayAutonomousMonsterMagic(state);
 		AdmitReplayAutonomousFirebolt(state);
 		AdmitReplayAutonomousFireball(state);
+		AdmitReplayAutonomousAcid(state, simulationTick);
 		AdmitReplayAutonomousStorm(state);
 		AdmitReplayAutonomousMonsterArrow(state, simulationTick);
 		AdvanceReplayHorkSpawnsOneTick(state, simulationTick);

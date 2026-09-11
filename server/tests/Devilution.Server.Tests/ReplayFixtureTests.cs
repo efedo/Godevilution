@@ -10320,6 +10320,33 @@ public sealed class ReplayFixtureTests
     }
 
     [Fact]
+    public void GameplayAcidAutonomousMultiplayerMatchesNativeLifecycle()
+    {
+        var fixture = LoadReplayFixture("gameplay-acid-autonomous-multiplayer.json");
+        var secondary = Assert.IsType<ReplaySecondaryPlayer>(fixture.InitialState.SecondaryPlayer);
+        var executor = CreateAcidReplayExecutor(fixture);
+
+        var result = ReplayFixtureExecutor.Execute(
+            fixture,
+            executor,
+            new AuthoritativeCommandServer(executor));
+        var primary = Assert.Single(result.FinalSnapshot.Players, player => player.EntityId == 1);
+        var secondaryState = executor.GetPlayerState(secondary.Player);
+        Assert.Equal(CommandStatus.Accepted, Assert.Single(result.Results).Status);
+        Assert.Equal(6400, primary.Life);
+        Assert.Equal(6144, secondaryState.Life);
+        Assert.Equal(5UL, result.FinalSnapshot.Tick);
+        var puddle = Assert.Single(result.FinalSnapshot.Projectiles);
+        Assert.Equal((int)AuthoritativeProjectileBehavior.AcidPuddle, puddle.Behavior);
+        Assert.Equal(7, puddle.PositionX);
+        Assert.Equal(1, puddle.PositionY);
+        Assert.Equal(2U, puddle.RemainingTicks);
+        Assert.Equal(
+            fixture.Checkpoints.Select(checkpoint => checkpoint.StateSha256),
+            result.Checkpoints.Select(checkpoint => checkpoint.ActualStateSha256));
+    }
+
+    [Fact]
     public void GameplayAcidUniqueProjectileSplatAndPuddleLifecycleMatchesNative()
     {
         var fixture = LoadReplayFixture("gameplay-acid-unique-lifecycle.json");
