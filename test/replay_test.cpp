@@ -210,6 +210,17 @@ TEST(ReplayFixtureStateHasher, MonsterAcidResistanceMatchesCSharpGolden)
 	EXPECT_EQ(ComputeReplayFixtureStateHash(state), "d4ee141ccc5503d266b9ca3d255da482e073004599903040c000657fb97dcad1");
 }
 
+TEST(ReplayFixtureStateHasher, MonsterBerserkedMatchesCSharpGolden)
+{
+	ReplayFixtureExecutionState state;
+	state.combatTargetEntityId = 1;
+	state.combatTargetHitPoints = 5;
+	state.combatTargetMaxHitPoints = 5;
+	state.combatTargetBerserked = true;
+
+	EXPECT_EQ(ComputeReplayFixtureStateHash(state), "c35c1947cd2e79a63be70050e9b95a806302551601ebcd1055ab11ae3939ced0");
+}
+
 TEST(ReplayFixtureStateHasher, PlayerCombatModeMatchesCSharpGolden)
 {
 	ReplayFixtureExecutionState state;
@@ -455,6 +466,67 @@ TEST(ReplayFixture, ParsesCombatTargetAcidResistance)
 	std::string error;
 	ASSERT_TRUE(ParseReplayFixture(Fixture, fixture, error)) << error;
 	EXPECT_EQ(fixture.initialState.combatTargetAcidResistance, 100);
+}
+
+TEST(ReplayFixture, ParsesCombatTargetBerserkedState)
+{
+	constexpr std::string_view Fixture = R"({
+  "initial_state": {
+    "player": "A",
+    "gold": 0,
+    "experience": 0,
+    "life": 1,
+    "mana": 1,
+    "combat_target_entity_id": 9,
+    "combat_target_hit_points": 5,
+    "combat_target_max_hit_points": 5,
+    "combat_target_berserked": true
+  },
+  "commands": [
+    {
+      "client_sequence": 1,
+      "target_tick": 0,
+      "server_receipt_sequence": 1,
+      "kind": "Move",
+      "payload": { "direction_x": 0, "direction_y": 0 }
+    }
+  ],
+  "checkpoints": []
+})";
+
+	ReplayFixture fixture;
+	std::string error;
+	ASSERT_TRUE(ParseReplayFixture(Fixture, fixture, error)) << error;
+	EXPECT_TRUE(fixture.initialState.combatTargetBerserked);
+}
+
+TEST(ReplayFixture, RejectsBerserkedStateWithoutCombatTarget)
+{
+	constexpr std::string_view Fixture = R"({
+  "initial_state": {
+    "player": "A",
+    "gold": 0,
+    "experience": 0,
+    "life": 1,
+    "mana": 1,
+    "combat_target_berserked": true
+  },
+  "commands": [
+    {
+      "client_sequence": 1,
+      "target_tick": 0,
+      "server_receipt_sequence": 1,
+      "kind": "Move",
+      "payload": { "direction_x": 0, "direction_y": 0 }
+    }
+  ],
+  "checkpoints": []
+})";
+
+	ReplayFixture fixture;
+	std::string error;
+	EXPECT_FALSE(ParseReplayFixture(Fixture, fixture, error));
+	EXPECT_EQ(error, "Replay fixture contains invalid combat-target occupancy state.");
 }
 
 TEST(ReplayFixture, ParsesStructuredManifestCheckpointAndStorePayloads)

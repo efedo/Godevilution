@@ -861,6 +861,42 @@ public sealed class SnapshotStateHasherTests
     }
 
     [Fact]
+    public void BerserkedMonsterStateExtendsTheStateHash()
+    {
+        var unberserked = new Snapshot {
+            Players = {
+                new PlayerSnapshot { EntityId = 1, CharacterLevel = 1 },
+            },
+            Monsters = {
+                new MonsterSnapshot {
+                    EntityId = 1,
+                    HitPoints = 5,
+                    MaxHitPoints = 5,
+                    Alive = true,
+                    BatMovementIdleTicks = -1,
+                    RangedAvoidanceMoveTicks = -1,
+                    RangedAvoidanceMovementIdleTicks = -1,
+                    RhinoMovementTicks = -1,
+                    AvoidanceMovementTicks = -1,
+                    AvoidanceMovementIdleTicks = -1,
+                    SkeletonRangedMovementIdleTicks = -1,
+                    FatMovementIdleTicks = -1,
+                    RhinoMovementIdleTicks = -1,
+                },
+            },
+        };
+        var berserked = unberserked.Clone();
+        berserked.Monsters[0].IsBerserked = true;
+
+        Assert.NotEqual(
+            SnapshotStateHasher.Compute(unberserked),
+            SnapshotStateHasher.Compute(berserked));
+        Assert.Equal(
+            "c35c1947cd2e79a63be70050e9b95a806302551601ebcd1055ab11ae3939ced0",
+            SnapshotStateHasher.Compute(berserked));
+    }
+
+    [Fact]
     public void MonsterDeathAnimationExtendsTheStateHash()
     {
         var first = new Snapshot {

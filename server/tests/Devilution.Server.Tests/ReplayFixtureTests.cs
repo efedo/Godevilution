@@ -187,6 +187,85 @@ public sealed class ReplayFixtureTests
     }
 
     [Fact]
+    public void ReplayFixtureParsesCombatTargetBerserkedState()
+    {
+        const string json = """
+            {
+              "format_version": 1,
+              "fixture_id": "gameplay/berserked-state",
+              "protocol_schema_version": "0.1.0",
+              "tick_rate_hz": 20,
+              "rng_seed": 1,
+              "initial_state": {
+                "player": "A",
+                "gold": 0,
+                "experience": 0,
+                "life": 1,
+                "mana": 1,
+                "combat_target_entity_id": 9,
+                "combat_target_hit_points": 5,
+                "combat_target_max_hit_points": 5,
+                "combat_target_berserked": true
+              },
+              "commands": [{
+                "client_sequence": 1,
+                "target_tick": 0,
+                "server_receipt_sequence": 1,
+                "kind": "Move",
+                "payload": {
+                  "direction_x": 0,
+                  "direction_y": 0
+                }
+              }],
+              "checkpoints": []
+            }
+            """;
+
+        var fixture = ReplayFixtureLoader.Load(json);
+
+        Assert.True(fixture.InitialState.CombatTargetBerserked);
+    }
+
+    [Fact]
+    public void ReplayFixtureRejectsBerserkedStateWithoutCombatTarget()
+    {
+        const string json = """
+            {
+              "format_version": 1,
+              "fixture_id": "gameplay/invalid-berserked-state",
+              "protocol_schema_version": "0.1.0",
+              "tick_rate_hz": 20,
+              "rng_seed": 1,
+              "initial_state": {
+                "player": "A",
+                "gold": 0,
+                "experience": 0,
+                "life": 1,
+                "mana": 1,
+                "combat_target_berserked": true
+              },
+              "commands": [{
+                "client_sequence": 1,
+                "target_tick": 0,
+                "server_receipt_sequence": 1,
+                "kind": "Move",
+                "payload": {
+                  "direction_x": 0,
+                  "direction_y": 0
+                }
+              }],
+              "checkpoints": []
+            }
+            """;
+
+        var exception = Assert.Throws<InvalidDataException>(() => ReplayFixtureLoader.Load(json));
+
+        Assert.Equal(
+            "Replay fixture contains invalid combat-target occupancy state.",
+            exception.Message);
+    }
+
+    [Fact]
     public void BasicBuyFixtureLoadsAndSortsByAuthoritativeOrder()
     {
         var fixture = LoadFixture();
@@ -1420,6 +1499,7 @@ public sealed class ReplayFixtureTests
             minDamageSpecial: initial.CombatTargetMinDamageSpecial,
             maxDamageSpecial: initial.CombatTargetMaxDamageSpecial,
             magicResistance: initial.CombatTargetMagicResistance);
+        target.IsBerserked = initial.CombatTargetBerserked;
         var spells = LoadBaseSpells(fixture);
         var executor = new StoreSimulationExecutor(
             new StoreCatalog(),

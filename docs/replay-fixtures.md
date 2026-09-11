@@ -421,6 +421,9 @@ landing and knockback transition.
 Optional `combat_target_acid_resistance` carries the native monster acid
 resistance through both replay loaders and the tagged canonical monster hash;
 omitting it retains the zero-resistance compatibility state.
+Optional `combat_target_berserked` carries the monster's initial Berserk state
+through both replay loaders and canonical hashing; a Berserk flag without a
+combat target is rejected as invalid occupancy metadata.
 `gameplay-rhino-charge-native-q6-range.json` adds a three-to-seven special
 damage range and proves that the compatibility charge stream rolls it in Q6
 before applying incoming `_pIGetHit` equipment, preserving fractional damage

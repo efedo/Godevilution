@@ -12557,6 +12557,7 @@ bool ParseReplayFixture(std::string_view json, ReplayFixture &fixture, std::stri
 			|| target.combatTargetToHitSpecial != 0
 			|| target.combatTargetMinDamage != 0
 			|| target.combatTargetMaxDamage != 0
+		    || target.combatTargetBerserked
 			|| target.combatTargetIntelligence != 0
 			|| target.combatTargetFallenStandAnimationFrame != 0
 		    || target.combatTargetFallenStandAnimationTick != 0

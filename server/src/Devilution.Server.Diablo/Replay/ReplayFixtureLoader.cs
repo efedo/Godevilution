@@ -156,6 +156,7 @@ public static class ReplayFixtureLoader
                     || initialTarget.CombatTargetMaxDamage != 0
                     || initialTarget.CombatTargetMinDamageSpecial != 0
                     || initialTarget.CombatTargetMaxDamageSpecial != 0
+                    || initialTarget.CombatTargetBerserked
                     || initialTarget.CombatTargetIntelligence != 0
                     || initialTarget.CombatTargetFallenStandAnimationFrame != 0
                     || initialTarget.CombatTargetFallenStandAnimationTick != 0
@@ -488,6 +489,9 @@ public static class ReplayFixtureLoader
             CombatTargetMaxDamage = GetOptionalInt(value, "combat_target_max_damage"),
             CombatTargetMinDamageSpecial = GetOptionalInt(value, "combat_target_min_damage_special"),
             CombatTargetMaxDamageSpecial = GetOptionalInt(value, "combat_target_max_damage_special"),
+            CombatTargetBerserked = GetOptionalBool(
+                value,
+                "combat_target_berserked"),
             CombatTargetIntelligence = GetOptionalInt(value, "combat_target_intelligence"),
             CombatTargetFallenStandAnimationFrame = GetOptionalInt(
                 value,

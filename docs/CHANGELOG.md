@@ -6,6 +6,9 @@ All notable changes to this fork are documented below.
   C++ and C# loaders and canonical checkpoint hash, preserving zero-default
   compatibility while covering nonzero resistance with a cross-runner golden.
 
+- Shared replay fixtures now preserve an initial monster Berserk flag through
+  both loaders and reject a Berserk-only zero-target occupancy state.
+
 - Shared replay fixtures now carry the semantic class-skill role through the
   C++ and C# loaders, initial participant state, and canonical checkpoint hash,
   including role-only states without a spell identity.

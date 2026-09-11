@@ -366,6 +366,9 @@ public sealed record ReplayInitialState(string Player, uint Gold, uint Experienc
 
     public int CombatTargetMaxDamageSpecial { get; init; }
 
+    /** Optional native berserk state used by initial monster parity fixtures. */
+    public bool CombatTargetBerserked { get; init; }
+
     public int CombatTargetIntelligence { get; init; }
 
     /** Optional native Fallen stand-animation state used by parity fixtures. */
