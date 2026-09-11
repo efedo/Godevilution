@@ -2,6 +2,10 @@
 
 Status date: 2026-09-11
 
+Sneak’s seeded autonomous concealment lane now consumes the native visibility
+action draw in the compact native replay and managed server while preserving
+per-monster seed state and secondary participant hashing.
+
 Scavenger’s seeded autonomous corpse route now preserves the same per-monster
 seed advancement and two RandomWalk coin draws in the compact native replay and
 managed server, including secondary participant state and healing checkpoints.

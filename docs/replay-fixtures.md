@@ -1187,6 +1187,8 @@ Notable shared fixtures include:
 - `gameplay-sneak-multiplayer-target.json` for Sneak concealment target
   selection, nearest-participant distance admission, and participant-state
   preservation;
+- `gameplay-sneak-autonomous-multiplayer.json` for seeded concealment action
+  draws, per-monster seed advancement, and secondary participant state;
 - `gameplay-zombie-multiplayer-target.json` for Zombie long-range action
   selecting the nearer participant while preserving the farther primary;
 - `gameplay-zombie-autonomous-multiplayer.json` for seeded adjacent Zombie

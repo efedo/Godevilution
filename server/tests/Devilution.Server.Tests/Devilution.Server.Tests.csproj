@@ -211,6 +211,7 @@
     <None Include="../../../test/fixtures/replay/gameplay-sneak-conceal.json" Link="Fixtures/gameplay-sneak-conceal.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-sneak-reveal.json" Link="Fixtures/gameplay-sneak-reveal.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-sneak-multiplayer-target.json" Link="Fixtures/gameplay-sneak-multiplayer-target.json" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="../../../test/fixtures/replay/gameplay-sneak-autonomous-multiplayer.json" Link="Fixtures/gameplay-sneak-autonomous-multiplayer.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-bat-retreat.json" Link="Fixtures/gameplay-bat-retreat.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-bat-multiplayer-target.json" Link="Fixtures/gameplay-bat-multiplayer-target.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-bat-autonomous-multiplayer.json" Link="Fixtures/gameplay-bat-autonomous-multiplayer.json" CopyToOutputDirectory="PreserveNewest" />

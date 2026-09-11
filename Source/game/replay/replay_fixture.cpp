@@ -8594,6 +8594,8 @@ void AdvanceReplayMonsterAttack(
 	// Compact the native Sneak visibility controller. Zero-seed fixtures use
 	// the compatibility path, so conceal/reveal transitions do not consume RNG.
 	if (state.combatTargetNativeAi == "Sneak") {
+		if (state.combatTargetMonsterAiSeed != 0)
+			static_cast<void>(GenerateRnd(state, 100));
 		const int preferredDistance = std::max(
 		    1,
 		    5 - state.combatTargetIntelligence);

@@ -6921,6 +6921,30 @@ public sealed class ReplayFixtureTests
     }
 
     [Fact]
+    public void GameplaySneakAutonomousMultiplayerMatchesNative()
+    {
+        var fixture = LoadReplayFixture("gameplay-sneak-autonomous-multiplayer.json");
+        var executor = CreateStealthReplayExecutor(fixture, "sneak", useSeededState: true);
+        var result = ReplayFixtureExecutor.Execute(
+            fixture,
+            executor,
+            new AuthoritativeCommandServer(executor));
+        var monster = Assert.Single(result.FinalSnapshot.Monsters);
+        var primary = Assert.Single(result.FinalSnapshot.Players, player => player.EntityId == 1);
+        var secondary = Assert.Single(result.FinalSnapshot.Players, player => player.EntityId == 8);
+
+        Assert.Equal(CommandStatus.Accepted, Assert.Single(result.Results).Status);
+        Assert.True(monster.SneakHidden);
+        Assert.Equal(100, primary.Life);
+        Assert.Equal(100, secondary.Life);
+        Assert.Equal(22695478U, monster.MonsterAiSeed);
+        Assert.Equal(2156045615U, result.FinalSnapshot.RandomState);
+        Assert.Equal(
+            fixture.Checkpoints.Select(checkpoint => checkpoint.StateSha256),
+            result.Checkpoints.Select(checkpoint => checkpoint.ActualStateSha256));
+    }
+
+    [Fact]
     public void GameplayBatRetreatMatchesNativeLifecycle()
     {
         var fixture = LoadReplayFixture("gameplay-bat-retreat.json");
@@ -11519,7 +11543,8 @@ public sealed class ReplayFixtureTests
 
     private static StoreSimulationExecutor CreateStealthReplayExecutor(
         ReplayFixture fixture,
-        string? monsterPack = null)
+        string? monsterPack = null,
+        bool useSeededState = false)
     {
         var initial = fixture.InitialState;
         var target = new AuthoritativeCombatTarget(
@@ -11533,6 +11558,12 @@ public sealed class ReplayFixtureTests
             aggroRange: initial.CombatTargetAggroRange,
             nativeAi: initial.CombatTargetNativeAi,
             intelligence: initial.CombatTargetIntelligence,
+            monsterItemSeed: useSeededState
+                ? initial.CombatTargetMonsterItemSeed
+                : 0,
+            monsterAiSeed: useSeededState
+                ? initial.CombatTargetMonsterAiSeed
+                : 0,
             sneakHidden: initial.CombatTargetSneakHidden,
             sneakRetreatTicks: initial.CombatTargetSneakRetreatTicks,
             batRetreatTicks: initial.CombatTargetBatRetreatTicks,

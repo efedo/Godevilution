@@ -2,6 +2,10 @@
 
 All notable changes to this fork are documented below.
 
+- Added seeded Sneak autonomous multiplayer coverage. Native and managed
+  runners now preserve the visibility action draw, per-monster seed state, and
+  secondary participant checkpoint hash.
+
 - Added seeded Scavenger autonomous multiplayer coverage. Native and managed
   runners now preserve the per-monster seed advancement, RandomWalk coin draws,
   secondary participant state, and corpse-healing checkpoint hashes.
