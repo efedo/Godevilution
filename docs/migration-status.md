@@ -2,6 +2,11 @@
 
 Status date: 2026-09-10
 
+Canonical player hashing now covers a specified semantic class-skill role even
+when a compatibility projection has no ability spell ID or learned-spell list.
+The all-unspecified spell projection retains its legacy hash, while malformed
+or transitional role-only state can no longer alias an empty player state.
+
 The canonical authoritative snapshot hash now includes nonzero stable item
 identities on deferred cast-source references. A stale or substituted charged
 item can no longer produce the same state hash as the action it replaces;

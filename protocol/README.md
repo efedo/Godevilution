@@ -267,8 +267,9 @@ Windows toolchain command.
   projection. Zero preserves legacy snapshots and clients, and the field is
   intentionally outside the legacy replay hash until a versioned hash
   extension is introduced.
-- Spell state extends the canonical player hash only when the ability is
-  nonzero or the learned-spell list is nonempty. The tagged
+- Spell state extends the canonical player hash when the ability is nonzero,
+  the semantic class-skill role is specified, or the learned-spell list is
+  nonempty. The tagged
   `godevilution-player-spells-v1` suffix preserves every pre-extension hash for
   legacy zero-state snapshots while giving C++ and C# one deterministic order.
 - Hostile player state extends the canonical player hash only when

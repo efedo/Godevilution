@@ -1198,9 +1198,10 @@ from the active validated spell catalog; older peers may ignore it. The server
 validates native bounds and uniqueness, saves this state, and sorts learned
 spells for protocol and hash projection. Native compatibility clients rebuild
 their ability and memorized-spell masks from the snapshot rather than retaining
-local creation state. When either field contains state, canonical hashing adds
-the tagged `godevilution-player-spells-v1` section; an entirely empty spell
-projection adds nothing so older state hashes remain unchanged.
+local creation state. When the ability ID, semantic ability role, or learned
+spell list contains state, canonical hashing adds the tagged
+`godevilution-player-spells-v1` section; an entirely empty spell projection
+adds nothing so older state hashes remain unchanged.
 
 Item-backed spell sources retain their existing `ItemStateSnapshot` identity and
 source-kind fields. Additive `spell_display_name` and `spell_targeting_kind`

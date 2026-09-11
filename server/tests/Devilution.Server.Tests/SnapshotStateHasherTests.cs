@@ -581,6 +581,28 @@ public sealed class SnapshotStateHasherTests
     }
 
     [Fact]
+    public void SemanticAbilityKindChangesHashWithoutAnAbilitySpell()
+    {
+        var unspecified = new Snapshot {
+            Players = {
+                new PlayerSnapshot {
+                    EntityId = 1,
+                    CharacterLevel = 1,
+                },
+            },
+        };
+        var semanticRole = unspecified.Clone();
+        semanticRole.Players[0].AbilityKind = PlayerAbilityKind.Repair;
+
+        Assert.Equal(
+            SnapshotStateHasher.Compute(unspecified),
+            SnapshotStateHasher.Compute(unspecified.Clone()));
+        Assert.NotEqual(
+            SnapshotStateHasher.Compute(unspecified),
+            SnapshotStateHasher.Compute(semanticRole));
+    }
+
+    [Fact]
     public void ItemInventoryFootprintChangesTheStateHash()
     {
         var first = new Snapshot {

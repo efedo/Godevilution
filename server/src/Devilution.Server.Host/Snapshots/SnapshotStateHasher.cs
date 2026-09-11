@@ -123,7 +123,9 @@ public static class SnapshotStateHasher
                 .OrderBy(spell => spell.SpellId)
                 .ThenBy(spell => spell.Level)
                 .ToArray();
-            if (player.AbilitySpellId != 0 || memorizedSpells.Length != 0) {
+            if (player.AbilitySpellId != 0
+                || player.AbilityKind != PlayerAbilityKind.Unspecified
+                || memorizedSpells.Length != 0) {
                 hasher.AppendString("godevilution-player-spells-v1");
                 hasher.AppendUInt32(player.AbilitySpellId);
                 if (player.AbilityKind != PlayerAbilityKind.Unspecified) {

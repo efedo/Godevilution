@@ -2,6 +2,11 @@
 
 All notable changes to this fork are documented below.
 
+- Canonical player hashing now includes a specified semantic class-skill role
+  even when a compatibility projection has no ability spell ID or learned
+  spells, while preserving the legacy hash for entirely unspecified spell
+  state.
+
 - Canonical snapshot hashing now includes nonzero stable item identities on
   deferred cast-source references, making stale charged-item substitutions
   visible without changing legacy zero-identity hashes.
