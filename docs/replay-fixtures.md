@@ -152,6 +152,8 @@ stand-animation/timer update;
 propagation is covered by `gameplay-fallen-rally-companion.json`.
 `gameplay-fallen-fear.json` covers the seeded single-player fear walk and its
 cross-runner checkpoint hash.
+`gameplay-fallen-fear-multiplayer.json` covers the per-monster AI-stream seed
+advance while a secondary participant remains an occupied, unchanged target.
 That fixture uses the additive `combat_target_companion_*` fields for one
 same-level Fallen at the leader's rally radius; companion entity identity,
 position, vitality, native AI, animation, and rally timer are validated and

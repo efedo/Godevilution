@@ -19,6 +19,8 @@ Replay fixtures now carry Fallen fear countdown and RandomWalk direction through
 the native and managed loaders, canonical state hash, and tick executor. The
 new seeded fear fixture proves identical side-pair RNG consumption, bounded
 future occupancy, countdown decrement, and fail-closed bounds at both runners.
+The multiplayer continuation also proves that the per-monster AI stream advances
+once before fear movement while the secondary participant remains unchanged.
 
 Replay fixture state now carries the semantic class-skill role through both
 native and managed loaders, participant initialization, and canonical hashes.

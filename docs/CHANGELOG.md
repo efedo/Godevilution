@@ -7,6 +7,10 @@ All notable changes to this fork are documented below.
   coin draws, and agree on the canonical checkpoint hash and invalid-state
   rejection.
 
+- Added seeded multiplayer Fallen fear coverage. Both runners now verify the
+  per-monster AI-stream advance and preserve secondary-participant occupancy in
+  the shared checkpoint hash.
+
 - Shared replay fixtures now carry native monster acid resistance through the
   C++ and C# loaders and canonical checkpoint hash, preserving zero-default
   compatibility while covering nonzero resistance with a cross-runner golden.

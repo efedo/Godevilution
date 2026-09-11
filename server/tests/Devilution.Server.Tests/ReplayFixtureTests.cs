@@ -2947,6 +2947,64 @@ public sealed class ReplayFixtureTests
             result.Checkpoints.Select(checkpoint => checkpoint.ActualStateSha256));
     }
 
+    [Fact]
+    public void GameplayFallenFearMultiplayerStreamMatchesNativeCheckpoint()
+    {
+        var fixture = LoadReplayFixture("gameplay-fallen-fear-multiplayer.json");
+        var initial = fixture.InitialState;
+        var secondary = Assert.IsType<ReplaySecondaryPlayer>(initial.SecondaryPlayer);
+        var target = new AuthoritativeCombatTarget(
+            initial.CombatTargetEntityId,
+            initial.CombatTargetPositionX,
+            initial.CombatTargetPositionY,
+            initial.CombatTargetHitPoints,
+            maxHitPoints: initial.CombatTargetMaxHitPoints,
+            levelId: initial.CombatTargetLevelId,
+            monsterId: initial.CombatTargetMonsterId,
+            monsterLevel: initial.CombatTargetMonsterLevel,
+            nativeAi: initial.CombatTargetNativeAi,
+            monsterItemSeed: initial.CombatTargetMonsterItemSeed,
+            monsterAiSeed: initial.CombatTargetMonsterAiSeed,
+            fallenFearTicks: initial.CombatTargetFallenFearTicks,
+            fallenFearDirection: initial.CombatTargetFallenFearDirection);
+        var catalog = new StoreCatalog();
+        catalog.AddStore(1, []);
+        var executor = new StoreSimulationExecutor(
+            catalog,
+            initial.Gold,
+            initial.Experience,
+            initial.Life,
+            initial.Mana,
+            startingLifeMaximum: initial.LifeMaximum,
+            startingPositionX: initial.PositionX,
+            startingPositionY: initial.PositionY,
+            startingLevelId: initial.LevelId,
+            startingCharacterLevel: initial.CharacterLevel,
+            startingCombatTargets: [target],
+            startingRandomSeed: checked((uint)fixture.RngSeed),
+            gameMode: fixture.GameMode);
+
+        var result = ReplayFixtureExecutor.Execute(
+            fixture,
+            executor,
+            new AuthoritativeCommandServer(executor));
+
+        var monster = Assert.Single(result.FinalSnapshot.Monsters);
+        var secondaryState = executor.GetPlayerState(secondary.Player);
+        var expectedAi = new DiabloRandom(initial.CombatTargetMonsterAiSeed);
+        var expectedAiSeed = unchecked((uint)expectedAi.AdvanceRndSeed());
+        Assert.Equal(CommandStatus.Accepted, Assert.Single(result.Results).Status);
+        Assert.Equal(expectedAiSeed, monster.MonsterAiSeed);
+        Assert.Equal(0, monster.FallenFearTicks);
+        Assert.True(monster.Moving);
+        Assert.Equal((5, 2), (monster.FuturePositionX, monster.FuturePositionY));
+        Assert.Equal(7, monster.Direction);
+        Assert.Equal((2, 2), (secondaryState.PositionX, secondaryState.PositionY));
+        Assert.Equal(
+            fixture.Checkpoints.Select(checkpoint => checkpoint.StateSha256),
+            result.Checkpoints.Select(checkpoint => checkpoint.ActualStateSha256));
+    }
+
     [Theory]
     [InlineData("\"combat_target_fallen_fear_ticks\": 1", "\"combat_target_fallen_fear_ticks\": 1025")]
     [InlineData("\"combat_target_fallen_fear_direction\": 7", "\"combat_target_fallen_fear_direction\": 8")]
