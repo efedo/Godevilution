@@ -8973,6 +8973,30 @@ public sealed class ReplayFixtureTests
     }
 
     [Fact]
+    public void GameplayHorkDemonHorkSpawnPrimaryWarriorBlocksAtClassChance()
+    {
+        var fixture = LoadReplayFixture(
+            "gameplay-hork-spawn-primary-warrior-block-chance.json");
+        var executor = CreateHorkSpawnExecutor(fixture, enableSpawnPlanner: false);
+
+        var result = ReplayFixtureExecutor.Execute(
+            fixture,
+            executor,
+            new AuthoritativeCommandServer(executor));
+        var player = Assert.Single(result.FinalSnapshot.Players);
+
+        Assert.Equal(CommandStatus.Accepted, Assert.Single(result.Results).Status);
+        Assert.Equal(6400, player.Life);
+        Assert.Equal(PlayerCombatMode.Block, player.CombatMode);
+        Assert.Equal(5UL, player.CombatModeEndTick);
+        Assert.Empty(result.FinalSnapshot.Projectiles);
+        Assert.Equal(1UL, result.FinalSnapshot.Tick);
+        Assert.Equal(
+            fixture.Checkpoints.Select(checkpoint => checkpoint.StateSha256),
+            result.Checkpoints.Select(checkpoint => checkpoint.ActualStateSha256));
+    }
+
+    [Fact]
     public void GameplayHorkDemonHorkSpawnSecondaryImpactMatchesNativeLifecycle()
     {
         var path = Path.Combine(

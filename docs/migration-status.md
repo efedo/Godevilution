@@ -36,6 +36,11 @@ Hellfire Acid and AcidUnique now preserve primary-participant autonomous
 admission, shifted Acid damage, target identity, and the same-tick
 Acid-to-Splat-to-Puddle lifecycle in both replay runners.
 
+The Hork Spawn player-impact boundary now covers the low-Dexterity primary
+Warrior class chance as well as the secondary participant, preserving shield
+admission, block recovery, and the zero-payload projectile checkpoint in both
+replay runners.
+
 Succubus and LazarusSuccubus Blood Star secondary-player impacts now preserve
 the native low-Dexterity Warrior class chance and shield admission, including
 alias-specific block recovery and canonical impact checkpoints, in both replay
