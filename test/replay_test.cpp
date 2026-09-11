@@ -11925,6 +11925,16 @@ TEST(ReplayFixture, ExecutesTorchantFireballSecondaryWarriorBlockChanceAgainstCS
 	    1);
 }
 
+TEST(ReplayFixture, ExecutesTorchantFireballPrimaryWarriorBlockChanceAgainstCSharpCheckpoints)
+{
+	ExecuteMonsterProjectilePrimaryWarriorBlockChanceFixture(
+	    "test/fixtures/replay/gameplay-torchant-primary-warrior-block-chance.json",
+	    16,
+	    12,
+	    13,
+	    17);
+}
+
 TEST(ReplayFixture, ExecutesFireBatFireboltAutonomousMultiplayerAgainstCSharpCheckpoints)
 {
 	std::ifstream file("test/fixtures/replay/gameplay-fire-bat-autonomous-multiplayer.json");

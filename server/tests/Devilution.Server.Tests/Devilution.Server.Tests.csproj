@@ -334,6 +334,7 @@
     <None Include="../../../test/fixtures/replay/gameplay-fire-bat-autonomous-multiplayer.json" Link="Fixtures/gameplay-fire-bat-autonomous-multiplayer.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-fire-bat-secondary-warrior-block-chance.json" Link="Fixtures/gameplay-fire-bat-secondary-warrior-block-chance.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-fire-bat-primary-warrior-block-chance.json" Link="Fixtures/gameplay-fire-bat-primary-warrior-block-chance.json" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="../../../test/fixtures/replay/gameplay-torchant-primary-warrior-block-chance.json" Link="Fixtures/gameplay-torchant-primary-warrior-block-chance.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-fire-bat-multiplayer-secondary-impact.json" Link="Fixtures/gameplay-fire-bat-multiplayer-secondary-impact.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-torchant-multiplayer-secondary-impact.json" Link="Fixtures/gameplay-torchant-multiplayer-secondary-impact.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-torchant-multiplayer-secondary-miss.json" Link="Fixtures/gameplay-torchant-multiplayer-secondary-miss.json" CopyToOutputDirectory="PreserveNewest" />

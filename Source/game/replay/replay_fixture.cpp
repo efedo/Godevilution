@@ -32,6 +32,7 @@ void AdvanceReplayPlayerApocalypseOneTick(ReplayFixtureExecutionState &state);
 namespace {
 
 bool IsReplaySecondaryPlayerBlockCapable(const ReplayFixtureExecutionState &state);
+bool IsReplayPrimaryPlayerBlockCapable(const ReplayFixtureExecutionState &state);
 int32_t GetReplayBaseBlockChance(uint32_t characterClassId);
 
 constexpr uint32_t FastAttackFlag = 1U << 18;
@@ -156,6 +157,11 @@ bool IsValidReplayCharacterName(std::string_view name)
 void StartReplaySecondaryPlayerDeath(
 	ReplayFixtureExecutionState &state,
 	bool monsterOrTrapDeath = false);
+void StartReplayPlayerDeath(
+	ReplayFixtureExecutionState &state,
+	const ReplayFixturePlayerActionTiming &timing,
+	uint32_t sourceEntityId,
+	uint64_t tick);
 
 void AppendItemState(ReplayStateHasher &hasher, const ReplayFixtureItemState &state)
 {
@@ -2502,6 +2508,26 @@ void AdvanceFireballsOneTick(ReplayFixtureExecutionState &state, uint64_t tick)
 
 		--projectile.remainingTicks;
 		const bool expiresAfterMovement = projectile.remainingTicks == 0;
+		const auto playerTargetAt = [&](int32_t x, int32_t y) {
+			const bool primaryPlayerAtTile = torchantMonsterProjectile
+			    && state.life > 0
+			    && state.levelId == projectile.levelId
+			    && state.positionX == x
+			    && state.positionY == y;
+			const bool secondaryPlayerAtTile = state.secondaryPlayerEntityId != 0
+			    && state.secondaryPlayerLife > 0
+			    && state.secondaryPlayerLevelId == projectile.levelId
+			    && state.secondaryPlayerPositionX == x
+			    && state.secondaryPlayerPositionY == y;
+			if (primaryPlayerAtTile
+			    && (!secondaryPlayerAtTile
+			        || state.entityId < state.secondaryPlayerEntityId))
+				return 1;
+			if (secondaryPlayerAtTile
+			    && (torchantMonsterProjectile || state.multiplayer))
+				return 2;
+			return 0;
+		};
 		const auto hitTargetAt = [&](int32_t x, int32_t y, bool shifted) {
 			const bool targetAtTile = state.combatTargetEntityId != 0
 			    && state.combatTargetEntityId != projectile.sourceEntityId
@@ -2512,11 +2538,7 @@ void AdvanceFireballsOneTick(ReplayFixtureExecutionState &state, uint64_t tick)
 			            && state.combatTargetPetrified
 			            && state.combatTargetFuturePositionX == x
 			            && state.combatTargetFuturePositionY == y));
-			const bool playerAtTile = state.secondaryPlayerEntityId != 0
-			    && state.secondaryPlayerLife > 0
-			    && state.secondaryPlayerLevelId == projectile.levelId
-			    && state.secondaryPlayerPositionX == x
-			    && state.secondaryPlayerPositionY == y;
+			const int playerTarget = playerTargetAt(x, y);
 			bool hitTarget = false;
 			if (targetAtTile && state.combatTargetFireResistance < 100) {
 				const int32_t hitChance = std::clamp(
@@ -2543,18 +2565,27 @@ void AdvanceFireballsOneTick(ReplayFixtureExecutionState &state, uint64_t tick)
 					hitTarget = true;
 				}
 			}
-			if (playerAtTile
-			    && state.multiplayer
-			    && (!shifted || state.secondaryPlayerLife > 0)) {
+			if (playerTarget != 0
+			    && (!shifted || (playerTarget == 1 ? state.life : state.secondaryPlayerLife) > 0)) {
+				const bool primaryPlayer = playerTarget == 1;
+				const int32_t playerPositionX = primaryPlayer
+				    ? state.positionX
+				    : state.secondaryPlayerPositionX;
+				const int32_t playerPositionY = primaryPlayer
+				    ? state.positionY
+				    : state.secondaryPlayerPositionY;
+				const uint32_t playerCharacterLevel = primaryPlayer
+				    ? state.characterLevel
+				    : state.secondaryPlayerCharacterLevel;
 				int32_t hitChance;
 				if (torchantMonsterProjectile) {
 					const int32_t distance = std::max(
-						std::abs(state.secondaryPlayerPositionX - state.combatTargetPositionX),
-						std::abs(state.secondaryPlayerPositionY - state.combatTargetPositionY));
+						std::abs(playerPositionX - state.combatTargetPositionX),
+						std::abs(playerPositionY - state.combatTargetPositionY));
 					hitChance = std::clamp(
 						40
 						    + state.combatTargetMonsterLevel * 2
-						    - static_cast<int32_t>(state.secondaryPlayerCharacterLevel) * 2
+						    - static_cast<int32_t>(playerCharacterLevel) * 2
 						    - distance * 2,
 						10,
 						100);
@@ -2575,39 +2606,61 @@ void AdvanceFireballsOneTick(ReplayFixtureExecutionState &state, uint64_t tick)
 					if (!torchantMonsterProjectile)
 						static_cast<void>(GenerateRnd(state, 1));
 					if (!shifted) {
-						const bool secondaryPlayerBlockCapable = state.secondaryPlayerBlockCapable
-						    || IsReplaySecondaryPlayerBlockCapable(state);
-						const bool canBlock = secondaryPlayerBlockCapable
-						    && (state.secondaryPlayerCombatMode == 0
-						        || state.secondaryPlayerCombatMode == 4);
+						const bool blockCapable = primaryPlayer
+						    ? IsReplayPrimaryPlayerBlockCapable(state)
+						    : state.secondaryPlayerBlockCapable
+						        || IsReplaySecondaryPlayerBlockCapable(state);
+						const bool canBlock = blockCapable
+						    && (primaryPlayer
+						        ? state.combatMode == 0 || state.combatMode == 4
+						        : state.secondaryPlayerCombatMode == 0
+						            || state.secondaryPlayerCombatMode == 4);
 						const int32_t blockRoll = canBlock
 						    ? std::max(GenerateRnd(state, 100), 0)
 						    : 100;
 						const int32_t blockChance = std::clamp(
-							state.secondaryPlayerDexterity
-							    + GetReplayBaseBlockChance(state.secondaryPlayerCharacterClassId)
-							    + static_cast<int32_t>(state.secondaryPlayerCharacterLevel) * 2
+							(primaryPlayer ? state.attributes[5] : state.secondaryPlayerDexterity)
+							    + GetReplayBaseBlockChance(primaryPlayer
+							        ? state.characterClassId
+							        : state.secondaryPlayerCharacterClassId)
+							    + static_cast<int32_t>(playerCharacterLevel) * 2
 							    - static_cast<int32_t>(state.characterLevel) * 2,
 							0,
 							100);
 						blocked = blockRoll < blockChance;
 						if (blocked) {
-							state.secondaryPlayerCombatMode = 6;
-							state.secondaryPlayerCombatModeEndTick = tick + 4;
+							if (primaryPlayer) {
+								state.combatMode = 6;
+								state.combatModeEndTick = tick + 4;
+							} else {
+								state.secondaryPlayerCombatMode = 6;
+								state.secondaryPlayerCombatModeEndTick = tick + 4;
+							}
 							if (state.hellfire)
 								static_cast<void>(GenerateRnd(state, 2));
 						}
 					}
 					if (!blocked) {
-						state.secondaryPlayerLife = std::max(
-							0,
-							state.secondaryPlayerLife - damageQ6);
-						if (state.secondaryPlayerLife == 0) {
-							StartReplaySecondaryPlayerDeath(state);
-						} else if ((damageQ6 >> 6)
-						    >= static_cast<int32_t>(state.secondaryPlayerCharacterLevel)) {
-							state.secondaryPlayerCombatMode = 7;
-							state.secondaryPlayerCombatModeEndTick = tick + 6;
+						if (primaryPlayer) {
+							state.life = std::max(0, state.life - damageQ6);
+							if (state.life == 0) {
+								StartReplayPlayerDeath(state, {}, projectile.sourceEntityId, tick);
+							} else if ((damageQ6 >> 6)
+							    >= static_cast<int32_t>(state.characterLevel)) {
+								state.combatMode = 7;
+								state.combatModeEndTick = tick + 6;
+							}
+						} else {
+							state.secondaryPlayerLife = std::max(
+								0,
+								state.secondaryPlayerLife - damageQ6);
+							if (state.secondaryPlayerLife == 0) {
+								StartReplaySecondaryPlayerDeath(state);
+							} else if ((damageQ6 >> 6)
+							    >= static_cast<int32_t>(state.secondaryPlayerCharacterLevel)) {
+								state.secondaryPlayerCombatMode = 7;
+								state.secondaryPlayerCombatModeEndTick = tick + 6;
+							}
 						}
 					}
 					hitTarget = true;
@@ -2624,11 +2677,7 @@ void AdvanceFireballsOneTick(ReplayFixtureExecutionState &state, uint64_t tick)
 			            && state.combatTargetPetrified
 			            && state.combatTargetFuturePositionX == x
 			            && state.combatTargetFuturePositionY == y));
-			const bool playerAtTile = state.secondaryPlayerEntityId != 0
-			    && state.secondaryPlayerLife > 0
-			    && state.secondaryPlayerLevelId == projectile.levelId
-			    && state.secondaryPlayerPositionX == x
-			    && state.secondaryPlayerPositionY == y;
+			const int playerTarget = playerTargetAt(x, y);
 			const bool hitTarget = hitTargetAt(x, y, false);
 			const bool blockingObject = state.objectEntityId != 0
 			    && !state.objectActivated
@@ -2644,7 +2693,9 @@ void AdvanceFireballsOneTick(ReplayFixtureExecutionState &state, uint64_t tick)
 				hitTarget || blockingObject || outsideWorld,
 				targetAtTile
 			    ? state.combatTargetEntityId
-			    : playerAtTile ? state.secondaryPlayerEntityId : 0,
+			    : playerTarget == 1
+			        ? state.entityId
+			        : playerTarget == 2 ? state.secondaryPlayerEntityId : 0,
 			};
 		};
 		const auto enterImpact = [&]() {

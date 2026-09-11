@@ -22,11 +22,10 @@ The LazarusSuccubus Blood Star alias now has matching primary-player Warrior
 block-chance coverage, completing the Succubus-family primary alias pair with
 native spell identity and impact checkpoints in both runners.
 
-FireBat Firebolt now also preserves the native low-Dexterity primary Warrior
-block boundary, adding primary-player admission, 17-tick block recovery, and a
-retained impact checkpoint to the authored Firebolt alias. Torchant Fireball
-remains secondary-player-only in this parity slice because its single-player
-delayed lifecycle has not yet been characterized.
+FireBat Firebolt and Torchant Fireball now preserve the native low-Dexterity
+primary Warrior block boundary, including primary-player admission, 17-tick
+block recovery, and retained alias-specific impact checkpoints in both replay
+runners.
 
 Succubus and LazarusSuccubus Blood Star secondary-player impacts now preserve
 the native low-Dexterity Warrior class chance and shield admission, including

@@ -1,0 +1,59 @@
+{
+  "format_version": 1,
+  "fixture_id": "gameplay/torchant-primary-warrior-block-chance",
+  "protocol_schema_version": "0.1.0",
+  "content_manifest": {
+    "id": "replay.monster-fireball",
+    "version": "0.1.0",
+    "sha256": "2aa9f8cca3d915be5a0862c786a6bf0c48ea22e89f7325f97085038b8caaf8c2"
+  },
+  "tick_rate_hz": 20,
+  "rng_seed": 13,
+  "game_variant": "Diablo",
+  "game_mode": "SinglePlayer",
+  "initial_state": {
+    "player": "A",
+    "gold": 0,
+    "experience": 0,
+    "life": 6400,
+    "life_maximum": 6400,
+    "position_x": 0,
+    "position_y": 0,
+    "level_id": 1,
+    "character_class": 0,
+    "character_level": 1,
+    "dexterity": 0,
+    "equipment": [{
+      "slot": 5,
+      "item_seed": 44,
+      "item_type": 5,
+      "item_class": 0,
+      "flags": 0,
+      "stat_flag": true
+    }],
+    "combat_target_entity_id": 9,
+    "combat_target_level_id": 1,
+    "combat_target_position_x": 5,
+    "combat_target_position_y": 0,
+    "combat_target_hit_points": 20,
+    "combat_target_max_hit_points": 20,
+    "combat_target_aggro_range": 10,
+    "combat_target_monster_level": 1,
+    "combat_target_native_ai": "Torchant",
+    "combat_target_to_hit": 100,
+    "combat_target_min_damage": 4,
+    "combat_target_max_damage": 4,
+    "combat_target_intelligence": 0
+  },
+  "commands": [{
+    "client_sequence": 1,
+    "target_tick": 1,
+    "server_receipt_sequence": 1,
+    "kind": "OpenStore",
+    "payload": { "store_id": 1 }
+  }],
+  "checkpoints": [
+    { "tick": 1, "state_sha256": "7a3b00f3b1ee9a944c44bcef9f201c3b8b052ffde052ec91670ecc71e3c336c9" },
+    { "tick": 13, "state_sha256": "914022a96a6fc2353a6f1a975303696457b7933c06b7317c487a278d31b91756" }
+  ]
+}
