@@ -206,6 +206,10 @@ secondary Warrior with an authored shield. Native and managed runners agree on
 the class base chance, block recovery, secondary participant hash, and retained
 impact-phase missile state.
 
+The seeded native MonsterMelee boundary now covers the same low-Dexterity
+secondary Warrior class chance with a shield. Both runners preserve the block
+recovery tick, monster AI-seed advancement, and canonical participant hash.
+
 Server-owned dialogue events now cross every world-transition path: immediate
 movement, native-timed level triggers, occupancy-triggered objects, and the
 Warp spell all preserve the directed event through simulation and combat

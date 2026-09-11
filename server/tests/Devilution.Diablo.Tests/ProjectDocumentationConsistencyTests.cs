@@ -65,6 +65,7 @@ public sealed class ProjectDocumentationConsistencyTests
         Assert.Contains("gameplay-monster-arrow-secondary-warrior-block-chance.json", replayFixtures, StringComparison.Ordinal);
         Assert.Contains("gameplay-monster-arrow-flash-protected.json", replayFixtures, StringComparison.Ordinal);
         Assert.Contains("gameplay-monster-magic-secondary-warrior-block-chance.json", replayFixtures, StringComparison.Ordinal);
+        Assert.Contains("gameplay-multiplayer-secondary-monster-warrior-block-chance.json", replayFixtures, StringComparison.Ordinal);
 
         var packageWorkflow = Read(root, ".github", "workflows", "diablo-adapter-package.yml");
         Assert.Contains("package-diablo-adapter.ps1", packageWorkflow, StringComparison.Ordinal);

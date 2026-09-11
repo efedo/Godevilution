@@ -2,6 +2,10 @@
 
 All notable changes to this fork are documented below.
 
+- Added seeded MonsterMelee secondary Warrior block-chance parity. Native and
+  managed runners now cover the authored class base chance, shield admission,
+  monster AI-seed advancement, and canonical participant hash.
+
 - Added autonomous MonsterMagic secondary Warrior block-chance parity. Native
   and managed runners now cover the authored low-Dexterity class base chance,
   shield admission, participant hash, block recovery, and retained impact

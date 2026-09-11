@@ -9663,6 +9663,50 @@ TEST(ReplayFixture, ExecutesMultiplayerSecondaryMonsterMonkBlockAgainstCSharpChe
 	EXPECT_EQ(ComputeReplayFixtureStateHash(state), fixture.checkpoints.back().stateSha256);
 }
 
+TEST(ReplayFixture, ExecutesMultiplayerSecondaryMonsterWarriorBlockChanceAgainstCSharpCheckpoints)
+{
+	std::ifstream file("test/fixtures/replay/gameplay-multiplayer-secondary-monster-warrior-block-chance.json");
+	ASSERT_TRUE(file.good());
+	const std::string json((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
+	ReplayFixture fixture;
+	std::string error;
+	ASSERT_TRUE(ParseReplayFixture(json, fixture, error)) << error;
+	ASSERT_TRUE(fixture.initialState.secondaryPlayer.defined);
+
+	ReplayFixtureExecutionState state;
+	state.multiplayer = true;
+	state.entityId = 1;
+	state.life = fixture.initialState.life;
+	state.lifeMaximum = fixture.initialState.lifeMaximum;
+	state.positionX = fixture.initialState.positionX;
+	state.positionY = fixture.initialState.positionY;
+	state.levelId = fixture.initialState.levelId;
+	state.combatTargetEntityId = fixture.initialState.combatTargetEntityId;
+	state.combatTargetLevelId = fixture.initialState.combatTargetLevelId;
+	state.combatTargetPositionX = fixture.initialState.combatTargetPositionX;
+	state.combatTargetPositionY = fixture.initialState.combatTargetPositionY;
+	state.combatTargetHitPoints = fixture.initialState.combatTargetHitPoints;
+	state.combatTargetMaxHitPoints = fixture.initialState.combatTargetMaxHitPoints;
+	state.combatTargetAttackDamage = fixture.initialState.combatTargetAttackDamage;
+	state.combatTargetAggroRange = fixture.initialState.combatTargetAggroRange;
+	state.combatTargetMonsterLevel = fixture.initialState.combatTargetMonsterLevel;
+	state.combatTargetToHit = fixture.initialState.combatTargetToHit;
+	state.combatTargetMinDamage = fixture.initialState.combatTargetMinDamage;
+	state.combatTargetMaxDamage = fixture.initialState.combatTargetMaxDamage;
+	state.combatTargetMonsterItemSeed = fixture.initialState.combatTargetMonsterItemSeed;
+	state.combatTargetMonsterAiSeed = fixture.initialState.combatTargetMonsterAiSeed;
+
+	ReplayFixtureExecutionResult result;
+	ASSERT_TRUE(ExecuteReplayFixture(fixture, state, result, error)) << error;
+	ASSERT_EQ(result.transitions.size(), 1U);
+	EXPECT_TRUE(result.transitions[0].accepted);
+	EXPECT_EQ(state.secondaryPlayerLife, 100);
+	EXPECT_EQ(state.secondaryPlayerCombatMode, 6U);
+	EXPECT_EQ(state.secondaryPlayerCombatModeEndTick, 5U);
+	EXPECT_EQ(state.combatTargetMonsterAiSeed, 113477386U);
+	EXPECT_EQ(ComputeReplayFixtureStateHash(state), fixture.checkpoints.back().stateSha256);
+}
+
 TEST(ReplayFixture, ExecutesMultiplayerSecondaryMonsterNativeAiSeedImpactAgainstCSharpCheckpoints)
 {
 	std::ifstream file("test/fixtures/replay/gameplay-multiplayer-secondary-monster-native-ai-seed-impact.json");

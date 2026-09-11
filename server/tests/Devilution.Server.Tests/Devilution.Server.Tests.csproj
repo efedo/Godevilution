@@ -276,6 +276,7 @@
     <None Include="../../../test/fixtures/replay/gameplay-multiplayer-secondary-monster-object-pathing.json" Link="Fixtures/gameplay-multiplayer-secondary-monster-object-pathing.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-multiplayer-secondary-monster-native-ai-seed.json" Link="Fixtures/gameplay-multiplayer-secondary-monster-native-ai-seed.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-multiplayer-secondary-monster-monk-block.json" Link="Fixtures/gameplay-multiplayer-secondary-monster-monk-block.json" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="../../../test/fixtures/replay/gameplay-multiplayer-secondary-monster-warrior-block-chance.json" Link="Fixtures/gameplay-multiplayer-secondary-monster-warrior-block-chance.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-multiplayer-secondary-monster-native-ai-seed-impact.json" Link="Fixtures/gameplay-multiplayer-secondary-monster-native-ai-seed-impact.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-multiplayer-secondary-portal.json" Link="Fixtures/gameplay-multiplayer-secondary-portal.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-monster-arrow-resolution.json" Link="Fixtures/gameplay-monster-arrow-resolution.json" CopyToOutputDirectory="PreserveNewest" />
