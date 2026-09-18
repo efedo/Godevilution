@@ -42,7 +42,7 @@ if (-not (Test-Path -LiteralPath $serverExecutable)) {
     if ($LASTEXITCODE -ne 0)
         { throw "Could not build the authoritative server project at $serverProject." }
 }
-$serverArguments = "--port $Port --protocol-version 0.2.0 --save-root `"$captureRoot/save`""
+$serverArguments = "--port $Port --protocol-version 0.2.0 --game-mode single-player --save-root `"$captureRoot/save`""
 $serverProcess = Start-Process -FilePath $serverExecutable -ArgumentList $serverArguments -WorkingDirectory $repositoryRoot -RedirectStandardOutput $stdoutPath -RedirectStandardError $stderrPath -PassThru
 
 try {

@@ -64,7 +64,11 @@ New-Item -ItemType Directory -Path $captureRoot, $saveRoot, $diagnosticsDirector
 
 $serverProcess = $null
 try {
-    $serverArguments = @('--port', '0', '--protocol-version', '0.2.0', '--save-root', $saveRoot)
+    # The native launcher enters the local new-game flow, so the paired server
+    # must advertise the matching single-player ruleset. A multiplayer server
+    # handshake would change gbIsMultiplayer after NetInit and leave the native
+    # level-loading path in an incompatible state.
+    $serverArguments = @('--port', '0', '--protocol-version', '0.2.0', '--game-mode', 'single-player', '--save-root', $saveRoot)
     $serverProcess = Start-Process -FilePath $serverExecutable -ArgumentList $serverArguments -WorkingDirectory $repositoryRoot -RedirectStandardOutput $serverOutput -RedirectStandardError $serverError -PassThru
 
     $port = $null

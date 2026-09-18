@@ -72,9 +72,9 @@ selection.
 The handshake also declares the server-owned game mode. The adapter synchronizes
 the legacy `gbIsMultiplayer` presentation flag to that value and rejects an
 unspecified mode, so native UI behavior cannot disagree with mode-sensitive
-authoritative rules. The standalone server defaults to multiplayer; a local
-single-player launch passes `--game-mode single-player` while using the same
-protocol and server implementation.
+authoritative rules. The standalone server defaults to multiplayer; the local
+native and Godot launchers explicitly pass `--game-mode single-player` while
+using the same protocol and server implementation.
 
 The accepted handshake identity is retained and refreshed from each complete
 authoritative snapshot, and the refreshed values are used on reconnect. This

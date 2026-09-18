@@ -2,6 +2,11 @@
 
 All notable changes to this fork are documented below.
 
+- Align the local native and Godot launchers with their single-player client
+  flows by starting the authoritative server with `--game-mode single-player`.
+  This prevents the handshake from switching the native client into multiplayer
+  level-loading after its local new-game setup has begun.
+
 - Added a zero-argument root `run-godot-client.ps1` launcher for the complete
   Godot/server session. It delegates to the existing diagnostic harness while
   keeping Godot-specific switches available under `godot/`.
