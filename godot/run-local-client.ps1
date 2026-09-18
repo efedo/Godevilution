@@ -18,6 +18,7 @@ $clientProject = Join-Path $repositoryRoot 'godot/Devilution.Client'
 $captureRoot = Join-Path ([System.IO.Path]::GetTempPath()) ('Godevilution-Godot-' + [guid]::NewGuid().ToString('N'))
 $stdoutPath = Join-Path $captureRoot 'server.stdout.log'
 $stderrPath = Join-Path $captureRoot 'server.stderr.log'
+$godotLogPath = Join-Path $captureRoot 'godot.log'
 New-Item -ItemType Directory -Path $captureRoot | Out-Null
 
 if ([string]::IsNullOrWhiteSpace($GodotExecutable)) {
@@ -77,7 +78,7 @@ try {
     } else {
         Remove-Item Env:DEVILUTION_CHARACTER_NAME -ErrorAction SilentlyContinue
     }
-    $godotArguments = if ($Headless) { "--headless --path `"$clientProject`" --quit-after $QuitAfterSeconds" } else { "--path `"$clientProject`"" }
+    $godotArguments = if ($Headless) { "--headless --path `"$clientProject`" --log-file `"$godotLogPath`" --quit-after $QuitAfterSeconds" } else { "--path `"$clientProject`" --log-file `"$godotLogPath`"" }
     $godotProcess = Start-Process -FilePath $GodotExecutable -ArgumentList $godotArguments -WorkingDirectory $repositoryRoot -PassThru -Wait
     if ($godotProcess.ExitCode -ne 0)
         { throw "Godot exited with code $($godotProcess.ExitCode)." }

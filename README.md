@@ -51,9 +51,11 @@ The standalone server defaults to multiplayer. Pass
 `-- --game-mode single-player` for a local single-player session; both modes use
 the same authoritative protocol and implementation.
 
-The Godot client requires Godot 4.7.1 Mono. See [godot/README.md](godot/README.md)
-for the local harness and [docs/native-client.md](docs/native-client.md) for the
-native compatibility client.
+The Godot client requires Godot 4.7.1 Mono. Run
+`powershell -ExecutionPolicy Bypass -File run-godot-client.ps1` for a complete
+local session. See [godot/README.md](godot/README.md) for details and
+[docs/native-client.md](docs/native-client.md) for the native compatibility
+client.
 
 ## Origin and game data
 

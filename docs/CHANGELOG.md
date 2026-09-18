@@ -2,6 +2,10 @@
 
 All notable changes to this fork are documented below.
 
+- Added a zero-argument root `run-godot-client.ps1` launcher for the complete
+  Godot/server session. It delegates to the existing diagnostic harness while
+  keeping Godot-specific switches available under `godot/`.
+
 - Moved the authoritative launcher to the repository root as a zero-argument
   `run-authoritative-client.ps1` command. It discovers or builds the native
   client and server, negotiates their identities, and leaves the old `tools/`

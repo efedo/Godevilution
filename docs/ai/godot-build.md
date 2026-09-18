@@ -38,13 +38,16 @@ $godot = (Get-Command 'Godot_v*-stable_mono_win64_console.exe' -CommandType Appl
 & $godot --headless --path godot/Devilution.Client --quit-after 5
 ```
 
-The local harness also checks the standard per-user WinGet package directory:
+The root launcher is the normal zero-argument entry point:
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File godot/run-local-client.ps1 -Headless -QuitAfterSeconds 5 -GodotExecutable $godot
+powershell -ExecutionPolicy Bypass -File run-godot-client.ps1
 ```
 
-The harness builds the authoritative server if its Debug executable is absent,
+It delegates to `godot/run-local-client.ps1`, which also checks the standard
+per-user WinGet package directory. For headless diagnostics or an explicit
+executable, invoke that underlying harness directly. The harness builds the
+authoritative server if its Debug executable is absent,
 starts it on a free port, passes the current ruleset identity to the client, and
 reports the temporary server-log directory. Build the solution explicitly
 before a direct Godot smoke launch; this is more deterministic than relying on

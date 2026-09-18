@@ -62,13 +62,15 @@ is not required for these commands.
 Install Godot 4.7.1 Mono, then run:
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File godot/run-local-client.ps1
+powershell -ExecutionPolicy Bypass -File run-godot-client.ps1
 ```
 
-The harness builds the server if needed, starts it on an available port, reads
+The root launcher is zero-argument and delegates to the complete-session
+harness. It discovers Godot Mono, builds the server if needed, starts it on an available port, reads
 the negotiated ruleset identity, configures the client environment, and launches
 Godot. The protocol client retains the server-owned game mode from the handshake.
-Pass `-GodotExecutable` when discovery cannot find the Mono executable.
+For diagnostics or automated smoke tests, invoke the underlying
+`godot/run-local-client.ps1` harness directly with its optional switches.
 For an automated smoke launch, add `-Headless -QuitAfterSeconds 5`.
 Pass `-CharacterClassId <0..5>` to request one of the shipped classes when
 creating a new session. Omitting it uses the active content default; a resume
