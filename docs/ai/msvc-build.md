@@ -83,8 +83,11 @@ Pass `-Legacy` to the launcher to verify the unchanged local path. The launcher
 requires the native executable path:
 
 ```powershell
-tools/run-authoritative-client.ps1 -ClientExecutable build/x64-Debug/devilutionx.exe
+tools/run-authoritative-client.ps1
 ```
+
+The launcher auto-detects the checked-in authoritative native build under
+`build/`; pass `-ClientExecutable <path>` to select another output.
 
 The C# xUnit project is an executable Microsoft Testing Platform runner. Run
 it directly when `dotnet test` selects a machine-wide VSTest host whose

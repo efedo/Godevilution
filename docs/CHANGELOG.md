@@ -2,10 +2,19 @@
 
 All notable changes to this fork are documented below.
 
+- Made `tools/run-authoritative-client.ps1` auto-detect the checked-in
+  authoritative native client when no executable path is supplied, while
+  retaining explicit `-ClientExecutable` support.
+
 - Extended the replay parity gate to 378 fixtures and 387 native tests with
   secondary-participant Fireball casts against primary Warrior targets. Both
   runners now preserve caster-specific hit chance, primary-target routing,
   Hellfire block RNG, block expiry, splash damage, and impact removal.
+
+- Extended the replay parity gate to 379 fixtures and 389 native tests with
+  Storm's secondary-participant ThinLightning cast against a low-Dexterity
+  Warrior. Both runners now preserve class-derived block admission, controller
+  targeting, and the retained controller checkpoint.
 
 - Extended the replay parity gate to 377 fixtures and 386 native tests with
   secondary-participant Firebolt casts against primary Warrior targets. Both

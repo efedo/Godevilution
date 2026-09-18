@@ -1,6 +1,5 @@
 [CmdletBinding()]
 param(
-    [Parameter(Mandatory = $true)]
     [string]$ClientExecutable,
     [string]$ServerExecutable,
     [string]$ServerEndpoint,
@@ -20,8 +19,32 @@ $serverError = Join-Path $captureRoot 'server.stderr.log'
 $resumeTokenPath = Join-Path $captureRoot 'resume-token.txt'
 New-Item -ItemType Directory -Path $captureRoot | Out-Null
 
-if (-not (Test-Path -LiteralPath $ClientExecutable))
+if ([string]::IsNullOrWhiteSpace($ClientExecutable)) {
+    $clientCandidates = @(
+        (Join-Path $repositoryRoot 'build/x64-Debug-authoritative-vcpkg/devilutionx.exe'),
+        (Join-Path $repositoryRoot 'build/x64-Debug-authoritative/devilutionx.exe'),
+        (Join-Path $repositoryRoot 'build/x64-Debug/devilutionx.exe'),
+        (Join-Path $repositoryRoot 'build/x64-Release-authoritative-vcpkg/devilutionx.exe'),
+        (Join-Path $repositoryRoot 'build/x64-Release-authoritative/devilutionx.exe')
+    )
+    $clientCandidates = @($clientCandidates | Where-Object { Test-Path -LiteralPath $_ -PathType Leaf })
+    if ($clientCandidates.Count -eq 0) {
+        throw "No DevilutionX client executable was found under $repositoryRoot\build. Build the authoritative client or pass -ClientExecutable <path>."
+    }
+    $ClientExecutable = $clientCandidates[0]
+} elseif (-not [System.IO.Path]::IsPathRooted($ClientExecutable)) {
+    $workingDirectoryPath = Join-Path (Get-Location) $ClientExecutable
+    $repositoryPath = Join-Path $repositoryRoot $ClientExecutable
+    if (Test-Path -LiteralPath $workingDirectoryPath -PathType Leaf) {
+        $ClientExecutable = $workingDirectoryPath
+    } elseif (Test-Path -LiteralPath $repositoryPath -PathType Leaf) {
+        $ClientExecutable = $repositoryPath
+    }
+}
+
+if (-not (Test-Path -LiteralPath $ClientExecutable -PathType Leaf))
     { throw "The client executable was not found at $ClientExecutable." }
+$ClientExecutable = (Resolve-Path -LiteralPath $ClientExecutable).Path
 
 $serverProcess = $null
 $startedServer = $false
