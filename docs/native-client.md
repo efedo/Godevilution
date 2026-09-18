@@ -50,12 +50,13 @@ After building the server and client, launch a local authoritative session with:
 
 ```powershell
 dotnet build server/src/Devilution.Server/Devilution.Server.csproj
-powershell -ExecutionPolicy Bypass -File tools/run-authoritative-client.ps1
+powershell -ExecutionPolicy Bypass -File run-authoritative-client.ps1
 ```
 
-The launcher auto-detects the checked-in authoritative native build under
-`build/`. Pass `-ClientExecutable <path-to-devilutionx.exe>` when using a
-different build output.
+The root launcher discovers or builds the authoritative native client and
+server, negotiates their hashes, and cleans up the temporary server when the
+client exits. The old `tools/run-authoritative-client.ps1` path remains a
+compatibility forwarder.
 
 Pass `-Legacy` to the launcher for the local legacy-authority path. In
 authoritative mode the server owns gameplay persistence, the native binary save

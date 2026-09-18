@@ -2,9 +2,10 @@
 
 All notable changes to this fork are documented below.
 
-- Made `tools/run-authoritative-client.ps1` auto-detect the checked-in
-  authoritative native client when no executable path is supplied, while
-  retaining explicit `-ClientExecutable` support.
+- Moved the authoritative launcher to the repository root as a zero-argument
+  `run-authoritative-client.ps1` command. It discovers or builds the native
+  client and server, negotiates their identities, and leaves the old `tools/`
+  path as a compatibility forwarder.
 
 - Extended the replay parity gate to 378 fixtures and 387 native tests with
   secondary-participant Fireball casts against primary Warrior targets. Both

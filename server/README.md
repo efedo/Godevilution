@@ -245,8 +245,8 @@ shared native/C# parity coverage.
 
 - Use `godot/run-local-client.ps1` for a complete local Godot session.
 - Build the native adapter with
-  `DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT=ON`, then use
-  `tools/run-authoritative-client.ps1`.
+  `DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT=ON`, then run the root
+  `run-authoritative-client.ps1` launcher.
 - Use the launcher's `-Legacy` switch to run the unchanged local native path.
 
 Both authoritative clients can request a stable class ID and native-valid
