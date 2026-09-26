@@ -237,6 +237,15 @@ included in canonical projectile hashing. The managed runner loads the
 validated base `spells.tsv` catalog and checks the active content-manifest hash
 used by the native runner.
 
+`gameplay-fire-wall-secondary-cast-primary-player.json` covers a hostile
+secondary-player Fire Wall cast against the primary participant. Divergent
+caster and target levels prove that segment damage and duration use the actual
+secondary owner; a distinct initial facing proves cast-direction projection.
+Persistent collision consumes the native hit and fixed damage RNG, excludes
+the owner, applies half-Q6 PvP damage, honors Flash and disabled-friendly-fire
+gates, and repeats through the primary player's life and canonical checkpoint
+state.
+
 `gameplay-lightning-wall-resolution.json` covers the same controller geometry
 for Lightning Wall, including its distinct lightning damage scale and long
 persistent-segment lifetime. Segments retain the shared behavior identity but
@@ -476,8 +485,8 @@ through shared native and managed checkpoints.
 multiplayer collision fixtures, including identity, entity ID, Q6 life,
 position, level, and character level. The runners initialize it before the
 timeline and tests assert its resulting life directly. Optional class, Magic,
-Dexterity, friendly mode, block capability, combat-mode ordinal, and mode end
-tick configure richer multiplayer fixtures. A top-level `game_variant` selects
+Dexterity, friendly mode, facing direction, block capability, combat-mode
+ordinal, and mode end tick configure richer multiplayer fixtures. A top-level `game_variant` selects
 strict `Diablo` or `Hellfire` rules for variant-sensitive draw order. A
 top-level `game_mode` selects `SinglePlayer` or `Multiplayer`; legacy fixtures
 default to single-player. Initial state may mirror validated level content with
@@ -570,8 +579,8 @@ the first drop remains authoritative.
 The compact native replay projection now carries the same server-owned corpse
 tile representation and per-tick monster regeneration as the C# checkpoints.
 Ordinary-death and Firebolt, Fireball, Lightning, and Flash
- spell/projectile-timeline checkpoints pass in both runners. As of 2026-09-11,
-the native replay gate contains 383 checked-in JSON fixtures and 392 registered
+ spell/projectile-timeline checkpoints pass in both runners. As of 2026-09-26,
+the native replay gate contains 384 checked-in JSON fixtures and 395 registered
 tests; the test count also includes parser and validation cases that do not
 introduce another fixture file. Coverage includes seeded and autonomous MonsterArrow
 source coverage, Hellfire HorkDemon Hork Spawn admission, player impact, and
@@ -619,7 +628,7 @@ corpse selection, movement, Q6
 healing, countdown, and RNG consumption are also covered in both runners. The
 Hellfire Scavenger max-health healing and corpse-removal lifecycle is also
 covered in both runners. The dated full-suite baseline below records the last
-complete run. On 2026-09-11 the native `replay_test` executable was rebuilt and
+complete run. On 2026-09-26 the native `replay_test` executable was rebuilt and
 the focused native and managed runners passed the primary GoatRanged and
 SkeletonRanged MonsterArrow lanes, primary ArchLich, Psychorb, Necromorb, and
 BoneDemon MonsterMagic lanes, and primary Succubus and LazarusSuccubus Blood Star

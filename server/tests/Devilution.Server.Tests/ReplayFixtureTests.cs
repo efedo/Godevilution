@@ -615,6 +615,149 @@ public sealed class ReplayFixtureTests
     }
 
     [Fact]
+    public void FireWallSecondaryCastDamagesOnlyThePrimaryPlayer()
+    {
+        var fixture = LoadReplayFixture("gameplay-fire-wall-secondary-cast-primary-player.json");
+        var initial = fixture.InitialState;
+        var secondary = Assert.IsType<ReplaySecondaryPlayer>(initial.SecondaryPlayer);
+        Assert.Equal((DiabloPlayerDirection)2, secondary.FacingDirection);
+        var spells = LoadBaseSpells(fixture);
+        var classes = AuthoritativePlayerClassCatalog.LoadTsv(
+            "classes.tsv",
+            File.ReadAllText(Path.Combine(FindRepositoryRoot(), "server", "content", "base", "classes.tsv")));
+        var executor = new StoreSimulationExecutor(
+            new StoreCatalog(),
+            initial.Gold,
+            initial.Experience,
+            initial.Life,
+            initial.Mana,
+            startingLifeMaximum: initial.LifeMaximum,
+            startingManaMaximum: initial.ManaMaximum,
+            startingCharacterLevel: initial.CharacterLevel,
+            startingCharacterClassId: checked((uint)initial.CharacterClass),
+            startingPlayerClasses: classes,
+            startingPositionX: initial.PositionX,
+            startingPositionY: initial.PositionY,
+            startingFacingDirection: (DiabloPlayerDirection)initial.FacingDirection,
+            startingLevelId: initial.LevelId,
+            startingAttributes: PlayerAttributesState.Zero with {
+                Magic = new PlayerAttributeState(initial.Magic, initial.Magic),
+            },
+            startingSpells: spells,
+            startingCombatRules: CreateReplayCombatRules(fixture),
+            startingRandomSeed: checked((uint)fixture.RngSeed),
+            gameMode: DiabloGameMode.Multiplayer);
+
+        var result = ReplayFixtureExecutor.Execute(
+            fixture,
+            executor,
+            new AuthoritativeCommandServer(executor));
+        var primary = Assert.Single(
+            result.FinalSnapshot.Players,
+            player => player.EntityId == 1);
+        var secondaryState = executor.GetPlayerState(secondary.Player);
+
+        Assert.Equal(CommandStatus.Accepted, Assert.Single(result.Results).Status);
+        Assert.Equal(8UL, result.FinalSnapshot.Tick);
+        Assert.True(primary.Life < initial.Life);
+        Assert.Equal(secondary.Life, secondaryState.Life);
+        Assert.Equal(1464, secondaryState.Mana);
+        Assert.Equal((DiabloPlayerDirection)7, secondaryState.FacingDirection);
+        Assert.NotEqual(secondary.FacingDirection, secondaryState.FacingDirection);
+        Assert.NotEmpty(result.FinalSnapshot.Projectiles);
+        Assert.DoesNotContain(
+            result.FinalSnapshot.Projectiles,
+            projectile => projectile.Behavior == (int)AuthoritativeProjectileBehavior.FireWallController);
+        Assert.All(result.FinalSnapshot.Projectiles, projectile => {
+            Assert.Equal(
+                (int)AuthoritativeProjectileBehavior.FireWallSegment,
+                projectile.Behavior);
+            Assert.Equal(secondary.EntityId, projectile.SourceEntityId);
+            Assert.True(projectile.Damage >= 112);
+            Assert.True(projectile.RemainingTicks > 700);
+        });
+        Assert.Contains(
+            result.FinalSnapshot.Projectiles,
+            projectile => projectile.SourceEntityId == secondary.EntityId
+                && projectile.PositionX == initial.PositionX
+                && projectile.PositionY == initial.PositionY);
+        Assert.Equal(
+            fixture.Checkpoints.Select(checkpoint => checkpoint.StateSha256),
+            result.Checkpoints.Select(checkpoint => checkpoint.ActualStateSha256));
+    }
+
+    [Fact]
+    public void DisabledFriendlyFireSkipsSecondaryFireWallPlayerCollision()
+    {
+        var source = LoadReplayFixture("gameplay-fire-wall-secondary-cast-primary-player.json");
+        var secondary = Assert.IsType<ReplaySecondaryPlayer>(source.InitialState.SecondaryPlayer) with {
+            FriendlyMode = true,
+        };
+        var fixture = source with {
+            InitialState = source.InitialState with {
+                SecondaryPlayer = secondary,
+            },
+            Checkpoints = [
+                new ReplayCheckpoint(
+                    1,
+                    "3c3ad004d5c54cba18eb4a72aa1345f9d2912113cc5eda43c136b6d7c0befbde"),
+                new ReplayCheckpoint(
+                    2,
+                    "d0a03f9cfc6aa3d0defbb94c4e6606514e77877b6d0c43ab538288bf13683905"),
+            ],
+        };
+        var initial = fixture.InitialState;
+        var spells = LoadBaseSpells(fixture);
+        var classes = AuthoritativePlayerClassCatalog.LoadTsv(
+            "classes.tsv",
+            File.ReadAllText(Path.Combine(FindRepositoryRoot(), "server", "content", "base", "classes.tsv")));
+        var executor = new StoreSimulationExecutor(
+            new StoreCatalog(),
+            initial.Gold,
+            initial.Experience,
+            initial.Life,
+            initial.Mana,
+            startingLifeMaximum: initial.LifeMaximum,
+            startingManaMaximum: initial.ManaMaximum,
+            startingCharacterLevel: initial.CharacterLevel,
+            startingCharacterClassId: checked((uint)initial.CharacterClass),
+            startingPlayerClasses: classes,
+            startingPositionX: initial.PositionX,
+            startingPositionY: initial.PositionY,
+            startingFacingDirection: (DiabloPlayerDirection)initial.FacingDirection,
+            startingLevelId: initial.LevelId,
+            startingAttributes: PlayerAttributesState.Zero with {
+                Magic = new PlayerAttributeState(initial.Magic, initial.Magic),
+            },
+            startingSpells: spells,
+            startingCombatRules: CreateReplayCombatRules(fixture, friendlyFire: false),
+            startingRandomSeed: checked((uint)fixture.RngSeed),
+            gameMode: DiabloGameMode.Multiplayer);
+
+        var result = ReplayFixtureExecutor.Execute(
+            fixture,
+            executor,
+            new AuthoritativeCommandServer(executor));
+        var primary = Assert.Single(
+            result.FinalSnapshot.Players,
+            player => player.EntityId == 1);
+        var secondaryState = executor.GetPlayerState(secondary.Player);
+
+        Assert.Equal(CommandStatus.Accepted, Assert.Single(result.Results).Status);
+        Assert.Equal(2UL, result.FinalSnapshot.Tick);
+        Assert.Equal(initial.Life, primary.Life);
+        Assert.Equal(secondary.Life, secondaryState.Life);
+        Assert.Contains(
+            result.FinalSnapshot.Projectiles,
+            projectile => projectile.Behavior == (int)AuthoritativeProjectileBehavior.FireWallSegment
+                && projectile.PositionX == initial.PositionX
+                && projectile.PositionY == initial.PositionY);
+        Assert.Equal(
+            fixture.Checkpoints.Select(checkpoint => checkpoint.StateSha256),
+            result.Checkpoints.Select(checkpoint => checkpoint.ActualStateSha256));
+    }
+
+    [Fact]
     public void LightningWallResolutionFixtureMatchesNativeControllerAndSegmentLifecycle()
     {
         var path = Path.Combine(
@@ -13417,10 +13560,17 @@ public sealed class ReplayFixtureTests
     }
 
     /** Builds the replay ruleset from fixture-owned variant metadata. */
-    private static AuthoritativeCombatRules CreateReplayCombatRules(ReplayFixture fixture)
+    private static AuthoritativeCombatRules CreateReplayCombatRules(
+        ReplayFixture fixture,
+        bool friendlyFire = true)
     {
         ArgumentNullException.ThrowIfNull(fixture);
-        return new AuthoritativeCombatRules(10, 1, 100, gameVariant: fixture.GameVariant);
+        return new AuthoritativeCombatRules(
+            10,
+            1,
+            100,
+            friendlyFire: friendlyFire,
+            gameVariant: fixture.GameVariant);
     }
 
     private static StoreSimulationExecutor CreateSnakeReplayExecutor(

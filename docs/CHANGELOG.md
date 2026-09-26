@@ -2,6 +2,14 @@
 
 All notable changes to this fork are documented below.
 
+- Extended the shared replay gate to 384 fixtures and 395 native tests with a
+  hostile secondary-player Fire Wall cast against the primary participant. The
+  compact native runner now derives persistent segment damage and lifetime from
+  the actual caster, applies owner-class hit chance and repeated half-Q6 PvP
+  damage with native RNG ordering, honors Flash and disabled-friendly-fire
+  collision gates, preserves four shared checkpoints, and advances concurrent
+  wall controllers without a single-controller shortcut.
+
 - Extended the shared replay gate to 383 fixtures and 392 native tests with a
   secondary Sorcerer's Flash cast around the primary participant. The compact
   native runner now uses the actual caster for Flash damage and hit chance,

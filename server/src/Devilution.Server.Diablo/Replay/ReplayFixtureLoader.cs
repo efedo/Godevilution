@@ -815,6 +815,9 @@ public static class ReplayFixtureLoader
             Magic = GetOptionalInt(player, "magic"),
             Dexterity = GetOptionalInt(player, "dexterity"),
             FriendlyMode = friendlyMode,
+            FacingDirection = (DiabloPlayerDirection)GetOptionalUInt(
+                player,
+                "facing_direction"),
             BlockCapable = GetOptionalBool(player, "block_capable"),
             Equipment = ParseEquipment(player),
             CombatMode = (DiabloPlayerCombatMode)GetOptionalUInt(player, "combat_mode"),
@@ -834,6 +837,7 @@ public static class ReplayFixtureLoader
             || result.Mana < 0
             || result.ManaMaximum < result.Mana
             || result.CharacterLevel is < 1 or > MaximumNativeCharacterLevel
+            || !Enum.IsDefined(result.FacingDirection)
             || (!string.IsNullOrEmpty(result.CharacterName)
                 && !DiabloPlayerName.IsValid(result.CharacterName))
             || !Enum.IsDefined(result.CombatMode)

@@ -179,6 +179,7 @@ public sealed record ReplaySecondaryPlayer(
     public int Magic { get; init; }
     public int Dexterity { get; init; }
     public bool FriendlyMode { get; init; } = true;
+    public DiabloPlayerDirection FacingDirection { get; init; }
     public bool BlockCapable { get; init; }
     public IReadOnlyList<ReplayEquippedItem> Equipment { get; init; } = [];
     public DiabloPlayerCombatMode CombatMode { get; init; }

@@ -1,6 +1,16 @@
 # Godevilution Migration Status
 
-Status date: 2026-09-11
+Status date: 2026-09-26
+
+Secondary-participant Fire Wall casts now cross the primary-player boundary in
+both replay runners. The compact native projection derives segment damage and
+lifetime from the secondary caster's character level, uses that caster's class
+and Magic for persistent hit chance, excludes owner collision, and preserves
+repeated half-Q6 primary-player damage, hit recovery, and RNG ordering at the
+shared tick-1, tick-2, tick-3, and tick-8 checkpoints. Concurrent wall
+controllers now advance in stable entity order instead of stopping after one;
+player collision also honors selected-target Flash protection and the active
+friendly-fire rule before consuming hit RNG.
 
 Player-owned Flash now crosses the secondary-to-primary participant boundary
 in both replay runners. The compact native projection uses the secondary

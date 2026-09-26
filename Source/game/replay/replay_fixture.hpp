@@ -125,6 +125,7 @@ struct ReplayFixtureSecondaryPlayer {
 	int32_t magic = 0;
 	int32_t dexterity = 0;
 	bool friendlyMode = true;
+	uint32_t facingDirection = 0;
 	bool blockCapable = false;
 	uint32_t combatMode = 0;
 	uint64_t combatModeEndTick = 0;
@@ -577,6 +578,8 @@ struct ReplayFixtureExecutionState {
 	int32_t warpTargetY = 0;
 	uint32_t facingDirection = 0;
 	bool multiplayer = false;
+	bool friendlyMode = true;
+	bool friendlyFire = true;
 	bool suppressMultiplayerDeathDrops = false;
 	uint32_t characterClassId = 0;
 	uint32_t abilitySpellId = 0;

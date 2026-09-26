@@ -103,6 +103,7 @@ public static class ReplayFixtureExecutor
                     friendlyMode: secondary.FriendlyMode,
                     combatMode: secondary.CombatMode,
                     combatModeEndTick: secondary.CombatModeEndTick,
+                    facingDirection: secondary.FacingDirection,
                     characterName: secondary.CharacterName,
                     manaShieldActive: secondary.ManaShieldActive,
                     goldTopologyEnabled: false,

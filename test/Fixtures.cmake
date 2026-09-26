@@ -184,6 +184,7 @@ set(devilutionx_fixtures
   replay/gameplay-fire-bat-primary-warrior-block-chance.json
   replay/gameplay-fire-bat-secondary-warrior-block-chance.json
   replay/gameplay-fire-wall-resolution.json
+  replay/gameplay-fire-wall-secondary-cast-primary-player.json
   replay/gameplay-fireball-hellfire-block.json
   replay/gameplay-fireball-hellfire-primary-warrior-block-chance.json
   replay/gameplay-fireball-hellfire-secondary-warrior-block-chance.json
