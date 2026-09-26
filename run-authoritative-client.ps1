@@ -5,50 +5,55 @@ $ErrorActionPreference = 'Stop'
 $repositoryRoot = (Resolve-Path -LiteralPath $PSScriptRoot).Path
 $serverProject = Join-Path $repositoryRoot 'server/src/Devilution.Server/Devilution.Server.csproj'
 $serverExecutable = Join-Path $repositoryRoot 'server/src/Devilution.Server/bin/Debug/net10.0/Devilution.Server.exe'
-$clientCandidates = @(
-    (Join-Path $repositoryRoot 'build/x64-Debug-authoritative-vcpkg/devilutionx.exe'),
-    (Join-Path $repositoryRoot 'build/x64-Debug-authoritative/devilutionx.exe'),
-    (Join-Path $repositoryRoot 'build/x64-Debug/devilutionx.exe'),
-    (Join-Path $repositoryRoot 'build/x64-Release-authoritative-vcpkg/devilutionx.exe'),
-    (Join-Path $repositoryRoot 'build/x64-Release-authoritative/devilutionx.exe')
-)
-$clientCandidates = @($clientCandidates | Where-Object { Test-Path -LiteralPath $_ -PathType Leaf })
-
-if ($clientCandidates.Count -eq 0) {
-    $clientBuildDirectory = @(
-        (Join-Path $repositoryRoot 'build/x64-Debug-authoritative-vcpkg'),
-        (Join-Path $repositoryRoot 'build/x64-Debug-authoritative'),
-        (Join-Path $repositoryRoot 'build/x64-Debug')
-    ) | Where-Object { Test-Path -LiteralPath (Join-Path $_ 'CMakeCache.txt') -PathType Leaf } | Select-Object -First 1
-    if ([string]::IsNullOrWhiteSpace($clientBuildDirectory)) {
-        throw "No authoritative native client build was found under $repositoryRoot\build. Configure an authoritative CMake build first."
-    }
-    if (-not (Get-Command cmake -ErrorAction SilentlyContinue)) {
-        throw 'CMake is required to build the authoritative native client, but it was not found on PATH.'
-    }
-    Write-Host "Building the authoritative native client in $clientBuildDirectory ..."
-    & cmake --build $clientBuildDirectory --config Debug --target devilutionx
-    if ($LASTEXITCODE -ne 0) {
-        throw "The authoritative native client build failed with exit code $LASTEXITCODE."
-    }
-    $clientCandidates = @(
-        (Join-Path $repositoryRoot 'build/x64-Debug-authoritative-vcpkg/devilutionx.exe'),
-        (Join-Path $repositoryRoot 'build/x64-Debug-authoritative/devilutionx.exe'),
-        (Join-Path $repositoryRoot 'build/x64-Debug/devilutionx.exe')
-    )
-    $clientCandidates = @($clientCandidates | Where-Object { Test-Path -LiteralPath $_ -PathType Leaf })
+$clientBuildDirectory = @(
+    (Join-Path $repositoryRoot 'build/x64-Debug-authoritative-vcpkg'),
+    (Join-Path $repositoryRoot 'build/x64-Debug-authoritative'),
+    (Join-Path $repositoryRoot 'build/x64-Release-authoritative-vcpkg'),
+    (Join-Path $repositoryRoot 'build/x64-Release-authoritative')
+) | Where-Object {
+    $cache = Join-Path $_ 'CMakeCache.txt'
+    (Test-Path -LiteralPath $cache -PathType Leaf) -and
+        (Select-String -LiteralPath $cache -Pattern '^DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT:BOOL=ON$' -Quiet)
+} | Select-Object -First 1
+if ([string]::IsNullOrWhiteSpace($clientBuildDirectory)) {
+    throw "No authoritative native client build was found under $repositoryRoot\build. Configure an authoritative CMake build first."
 }
-if ($clientCandidates.Count -eq 0) {
-    throw 'The authoritative native client build completed without producing devilutionx.exe.'
-}
-$clientExecutable = (Resolve-Path -LiteralPath $clientCandidates[0]).Path
 
-if (-not (Test-Path -LiteralPath $serverExecutable -PathType Leaf)) {
-    Write-Host 'Building the authoritative server ...'
-    & dotnet build $serverProject --configuration Debug --nologo
-    if ($LASTEXITCODE -ne 0) {
-        throw "The authoritative server build failed with exit code $LASTEXITCODE."
-    }
+$vsDevCmd = Get-ChildItem -Path (Join-Path $env:ProgramFiles 'Microsoft Visual Studio\*\*\Common7\Tools\VsDevCmd.bat') -File -ErrorAction SilentlyContinue |
+    Sort-Object FullName -Descending |
+    Select-Object -First 1
+if ($null -eq $vsDevCmd) {
+    throw 'A Visual Studio developer environment was not found.'
+}
+$cmakeCommand = Get-Command cmake.exe -ErrorAction SilentlyContinue
+$cmakeExecutable = if ($null -ne $cmakeCommand) {
+    $cmakeCommand.Source
+} else {
+    Join-Path $vsDevCmd.Directory.FullName '..\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe'
+}
+if (-not (Test-Path -LiteralPath $cmakeExecutable -PathType Leaf)) {
+    throw 'CMake is required to build the authoritative native client, but it was not found.'
+}
+
+Write-Host "Building the authoritative native client in $clientBuildDirectory ..."
+$nativeBuildCommand = 'call "{0}" -arch=x64 >nul && where cl.exe >nul && where rc.exe >nul && where mt.exe >nul && "{1}" --build "{2}" --config Debug --target devilutionx' -f
+    $vsDevCmd.FullName,
+    $cmakeExecutable,
+    $clientBuildDirectory
+& $env:ComSpec /d /c $nativeBuildCommand
+if ($LASTEXITCODE -ne 0) {
+    throw "The authoritative native client build failed with exit code $LASTEXITCODE."
+}
+$clientExecutable = Join-Path $clientBuildDirectory 'devilutionx.exe'
+if (-not (Test-Path -LiteralPath $clientExecutable -PathType Leaf)) {
+    throw "The authoritative native client build did not produce $clientExecutable."
+}
+$clientExecutable = (Resolve-Path -LiteralPath $clientExecutable).Path
+
+Write-Host 'Building the authoritative server ...'
+& dotnet build $serverProject --configuration Debug --nologo
+if ($LASTEXITCODE -ne 0) {
+    throw "The authoritative server build failed with exit code $LASTEXITCODE."
 }
 if (-not (Test-Path -LiteralPath $serverExecutable -PathType Leaf)) {
     throw "The authoritative server build did not produce $serverExecutable."
@@ -74,6 +79,7 @@ try {
     $port = $null
     $contentHash = $null
     $rulesetHash = $null
+    $gameMode = $null
     for ($attempt = 0; $attempt -lt 120; $attempt++) {
         Start-Sleep -Milliseconds 250
         if ($serverProcess.HasExited) {
@@ -84,13 +90,18 @@ try {
         $portMatch = [regex]::Match($output, 'listening on [^:]+:(\d+)')
         $contentMatch = [regex]::Match($output, 'Content manifest: ([0-9a-fA-F]+)')
         $rulesetMatch = [regex]::Match($output, 'Ruleset identity: ([0-9a-fA-F]+)')
+        $gameModeMatch = [regex]::Match($output, 'Game mode: ([A-Za-z]+)')
         if ($portMatch.Success) { $port = [int]$portMatch.Groups[1].Value }
         if ($contentMatch.Success) { $contentHash = $contentMatch.Groups[1].Value }
         if ($rulesetMatch.Success) { $rulesetHash = $rulesetMatch.Groups[1].Value }
-        if ($null -ne $port -and -not [string]::IsNullOrWhiteSpace($contentHash) -and -not [string]::IsNullOrWhiteSpace($rulesetHash)) { break }
+        if ($gameModeMatch.Success) { $gameMode = $gameModeMatch.Groups[1].Value }
+        if ($null -ne $port -and -not [string]::IsNullOrWhiteSpace($contentHash) -and -not [string]::IsNullOrWhiteSpace($rulesetHash) -and -not [string]::IsNullOrWhiteSpace($gameMode)) { break }
     }
-    if ($null -eq $port -or [string]::IsNullOrWhiteSpace($contentHash) -or [string]::IsNullOrWhiteSpace($rulesetHash)) {
+    if ($null -eq $port -or [string]::IsNullOrWhiteSpace($contentHash) -or [string]::IsNullOrWhiteSpace($rulesetHash) -or [string]::IsNullOrWhiteSpace($gameMode)) {
         throw "Timed out waiting for the authoritative server identity. See $serverOutput and $serverError"
+    }
+    if ($gameMode -ne 'SinglePlayer') {
+        throw "The local authoritative server started in $gameMode mode instead of SinglePlayer. See $serverOutput"
     }
 
     $serverEndpoint = "127.0.0.1:$port"

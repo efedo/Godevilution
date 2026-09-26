@@ -44,6 +44,46 @@ public sealed class LocalLauncherContractTests
             scriptAfterAssignment);
     }
 
+    [Fact]
+    public void NativeLauncherBuildsAnAuthoritativeClientAndValidatesServerMode()
+    {
+        var repositoryRoot = FindRepositoryRoot();
+        var launcher = File.ReadAllText(Path.Combine(
+            repositoryRoot,
+            "run-authoritative-client.ps1"));
+
+        Assert.Contains(
+            "DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT:BOOL=ON",
+            launcher,
+            StringComparison.Ordinal);
+        Assert.DoesNotContain(
+            "build/x64-Debug/devilutionx.exe",
+            launcher,
+            StringComparison.OrdinalIgnoreCase);
+
+        var nativeBuild = launcher.IndexOf(
+            "--target devilutionx",
+            StringComparison.OrdinalIgnoreCase);
+        var serverBuild = launcher.IndexOf(
+            "dotnet build",
+            StringComparison.OrdinalIgnoreCase);
+        var clientLaunch = launcher.IndexOf(
+            "$clientProcess = Start-Process",
+            StringComparison.OrdinalIgnoreCase);
+        Assert.True(nativeBuild >= 0, "The launcher must build the native client before use.");
+        Assert.True(serverBuild >= 0, "The launcher must build the authoritative server before use.");
+        Assert.True(clientLaunch > nativeBuild, "The native build must precede client launch.");
+        Assert.True(clientLaunch > serverBuild, "The server build must precede client launch.");
+
+        Assert.Matches(
+            @"\[regex\]::Match\(\$output,\s*'Game mode:",
+            launcher);
+        Assert.Contains(
+            "$gameMode -ne 'SinglePlayer'",
+            launcher,
+            StringComparison.Ordinal);
+    }
+
     private static string FindRepositoryRoot()
     {
         var configuredRoot = Environment.GetEnvironmentVariable(

@@ -54,14 +54,13 @@ powershell -ExecutionPolicy Bypass -File run-authoritative-client.ps1
 ```
 
 The root launcher discovers or builds the authoritative native client and
-server, negotiates their hashes, and cleans up the temporary server when the
-client exits. The old `tools/run-authoritative-client.ps1` path remains a
-compatibility forwarder.
-
-Pass `-Legacy` to the launcher for the local legacy-authority path. In
-authoritative mode the server owns gameplay persistence, the native binary save
-is not loaded or written, and a lost server connection ends the session rather
-than enabling local simulation.
+server, performs an incremental rebuild on every run so a stale executable is
+never selected, verifies that the local server reports single-player mode,
+negotiates their hashes, and cleans up the temporary server when the client
+exits. The old `tools/run-authoritative-client.ps1` path remains a compatibility
+forwarder. In authoritative mode the server owns gameplay persistence, the
+native binary save is not loaded or written, and a lost server connection ends
+the session rather than enabling local simulation.
 
 When a native hero is available at connection time, the adapter sends its
 stable class enum value as the new-session class selection. The server validates
@@ -69,12 +68,14 @@ that ID against active content and creates the authoritative player; reconnects
 retain the in-memory or persisted server class instead of reapplying the local
 selection.
 
-The handshake also declares the server-owned game mode. The adapter synchronizes
-the legacy `gbIsMultiplayer` presentation flag to that value and rejects an
-unspecified mode, so native UI behavior cannot disagree with mode-sensitive
-authoritative rules. The standalone server defaults to multiplayer; the local
-native and Godot launchers explicitly pass `--game-mode single-player` while
-using the same protocol and server implementation.
+The handshake also declares the server-owned game mode. Because native
+`NetInit` has already allocated either the single-player or multiplayer path,
+the adapter rejects an explicit server mode that disagrees with that selection
+before level setup instead of switching paths underneath the running client.
+Older servers that omit the field retain the selected compatibility path. The
+standalone server defaults to multiplayer; the local native and Godot launchers
+explicitly pass `--game-mode single-player` while using the same protocol and
+server implementation.
 
 The accepted handshake identity is retained and refreshed from each complete
 authoritative snapshot, and the refreshed values are used on reconnect. This

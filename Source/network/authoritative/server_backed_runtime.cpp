@@ -4,6 +4,7 @@
 
 #include "network/authoritative/server_backed_player_ui.hpp"
 #include "network/authoritative/protocol_limits.hpp"
+#include "network/protocol/legacy_world_state_policy.hpp"
 #include "network/protocol/multi.h"
 #include "engine/cursor.h"
 #include <algorithm>
@@ -110,22 +111,30 @@ tl::expected<void, std::string> ServerBackedRuntime::StartImpl(const ServerBacke
 	}
 
 	session_ = std::move(*session);
+	const bool selectedMultiplayer = gbIsMultiplayer;
 	const auto gameMode = session_->Client().ServerHello().game_mode();
+	std::optional<bool> serverMultiplayer;
 	switch (gameMode) {
 	case protocol::GAME_MODE_UNSPECIFIED:
 		// Additive compatibility: older servers omit the field, so retain the
 		// launch-selected legacy mode until the server declares one explicitly.
 		break;
 	case protocol::GAME_MODE_SINGLE_PLAYER:
-		gbIsMultiplayer = false;
+		serverMultiplayer = false;
 		break;
 	case protocol::GAME_MODE_MULTIPLAYER:
-		gbIsMultiplayer = true;
+		serverMultiplayer = true;
 		break;
 	default:
 		Stop();
 		return tl::make_unexpected("Authoritative server declared an invalid game mode.");
 	}
+	if (!IsAuthoritativeGameModeCompatible(selectedMultiplayer, serverMultiplayer)) {
+		Stop();
+		return tl::make_unexpected("Authoritative server game mode does not match the client path selected before NetInit.");
+	}
+	if (serverMultiplayer.has_value())
+		gbIsMultiplayer = *serverMultiplayer;
 	if (auto result = SaveResumeToken(configuration.resumeTokenPath, session_->Client().ServerHello().session_token()); !result.has_value()) {
 		Stop();
 		return result;

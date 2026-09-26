@@ -71,23 +71,25 @@ verified Windows setup.
 
 The authoritative client expects the server's content and ruleset hashes.
 The production launcher selects protocol `0.2.0` and passes the printed hashes
-independently; pass `-ProtocolVersion 0.1.0` only when exercising the legacy
-combined-hash compatibility boundary.
+independently.
 On Windows, `run-authoritative-client.ps1` starts a local server on a
 free port, reads those hashes, persists a resume token, and launches the
 client with matching arguments. A handshake identity mismatch writes a
 timestamped diagnostic report to `authoritative-diagnostics` (or the
 directory supplied with `--authoritative-diagnostics`). The report includes
 the endpoint, working directory, expected identities, and server identities.
-Pass `-Legacy` to the launcher to verify the unchanged local path. The launcher
-requires the native executable path:
+The root launcher takes no arguments:
 
 ```powershell
 run-authoritative-client.ps1
 ```
 
-The root launcher discovers existing authoritative builds and builds missing
-server/client binaries when their configured build directories are available.
+The root launcher selects only a CMake directory configured with
+`DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT=ON`, initializes the Visual Studio
+developer environment, and incrementally rebuilds both native client and server
+on every run. It also verifies the server's reported single-player mode before
+opening the client, so stale binaries and mode mismatches fail before native
+level setup.
 
 The C# xUnit project is an executable Microsoft Testing Platform runner. Run
 it directly when `dotnet test` selects a machine-wide VSTest host whose

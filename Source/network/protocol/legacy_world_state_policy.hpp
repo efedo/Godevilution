@@ -1,6 +1,19 @@
 #pragma once
 
+#include <optional>
+
 namespace devilution {
+
+/**
+ * NetInit has already selected and allocated the local single-player or
+ * multiplayer path before the authoritative handshake completes. An explicit
+ * server mode must match that selection; an older unspecified mode preserves
+ * the selected compatibility path.
+ */
+constexpr bool IsAuthoritativeGameModeCompatible(bool selectedMultiplayer, std::optional<bool> serverMultiplayer) noexcept
+{
+	return !serverMultiplayer.has_value() || selectedMultiplayer == *serverMultiplayer;
+}
 
 /**
  * Legacy quest, spell, object, and set-piece synchronization messages are

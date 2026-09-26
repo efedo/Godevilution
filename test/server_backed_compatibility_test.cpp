@@ -88,6 +88,16 @@ TEST(ServerBackedCompatibility, AuthoritativeModeDoesNotProcessLegacyLuaEvents)
 	EXPECT_FALSE(ShouldProcessLegacyLuaEvents(true));
 }
 
+TEST(ServerBackedCompatibility, AuthoritativeGameModeMustMatchTheNetInitPath)
+{
+	EXPECT_TRUE(IsAuthoritativeGameModeCompatible(false, std::nullopt));
+	EXPECT_TRUE(IsAuthoritativeGameModeCompatible(true, std::nullopt));
+	EXPECT_TRUE(IsAuthoritativeGameModeCompatible(false, false));
+	EXPECT_TRUE(IsAuthoritativeGameModeCompatible(true, true));
+	EXPECT_FALSE(IsAuthoritativeGameModeCompatible(false, true));
+	EXPECT_FALSE(IsAuthoritativeGameModeCompatible(true, false));
+}
+
 TEST(ServerBackedCompatibility, PresentationOnlyObjectsCannotBecomeCommandTargets)
 {
 	ServerBackedWorldProjection projection;

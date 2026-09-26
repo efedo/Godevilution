@@ -2,6 +2,13 @@
 
 All notable changes to this fork are documented below.
 
+- Hardened the zero-argument native launcher after the new-game crash. It now
+  selects only server-backed CMake configurations, incrementally rebuilds both
+  binaries on every run, verifies the server's reported single-player mode,
+  and rejects a handshake mode that disagrees with the native `NetInit` path
+  before level setup. Focused launcher and native policy regressions cover the
+  stale-build and mode-mismatch boundaries.
+
 - Extended the shared replay gate to 385 fixtures and 396 native tests with a
   hostile secondary-player Lightning Wall cast against the primary participant.
   The compact native runner now admits spell 50 for the secondary owner,
