@@ -2,6 +2,10 @@
 
 All notable changes to this fork are documented below.
 
+- Added a regression contract for both local client launchers so their
+  single-player new-game flows cannot silently return to the server's
+  multiplayer default and crash during native level setup.
+
 - Extended the replay parity gate to 381 fixtures and 390 native tests with
   secondary-participant Charged Bolt and Bone Spirit casts against primary
   Warriors. The native runner now routes both projectile families back to the
