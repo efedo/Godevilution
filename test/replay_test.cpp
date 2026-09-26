@@ -2747,6 +2747,56 @@ TEST(ReplayFixture, ExecutesSecondaryFireWallCastAgainstPrimaryPlayer)
 	EXPECT_EQ(ComputeReplayFixtureStateHash(state), fixture.checkpoints.back().stateSha256);
 }
 
+TEST(ReplayFixture, ExecutesSecondaryLightningWallCastAgainstPrimaryPlayer)
+{
+	std::ifstream file("test/fixtures/replay/gameplay-lightning-wall-secondary-cast-primary-player.json");
+	ASSERT_TRUE(file.good());
+	const std::string json((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
+	ReplayFixture fixture;
+	std::string error;
+	ASSERT_TRUE(ParseReplayFixture(json, fixture, error)) << error;
+	EXPECT_EQ(fixture.initialState.secondaryPlayer.facingDirection, 2U);
+	ReplayFixtureExecutionState state;
+	state.multiplayer = true;
+	state.life = fixture.initialState.life;
+	state.lifeMaximum = fixture.initialState.lifeMaximum;
+	state.mana = fixture.initialState.mana;
+	state.manaMaximum = fixture.initialState.manaMaximum;
+	state.positionX = fixture.initialState.positionX;
+	state.positionY = fixture.initialState.positionY;
+	state.levelId = fixture.initialState.levelId;
+	state.facingDirection = fixture.initialState.facingDirection;
+	state.characterClassId = static_cast<uint32_t>(fixture.initialState.characterClass);
+	state.characterLevel = fixture.initialState.characterLevel;
+	state.attributes[2] = fixture.initialState.magic;
+	state.attributes[3] = fixture.initialState.magic;
+	state.spellProjectileBehavior = 47;
+
+	ReplayFixtureExecutionResult result;
+	ASSERT_TRUE(ExecuteReplayFixture(fixture, state, result, error)) << error;
+	ASSERT_EQ(result.transitions.size(), 1U);
+	EXPECT_TRUE(result.transitions[0].accepted);
+	EXPECT_EQ(state.life, 18992);
+	EXPECT_EQ(state.secondaryPlayerLife, fixture.initialState.secondaryPlayer.life);
+	EXPECT_EQ(state.secondaryPlayerMana, 1144);
+	EXPECT_EQ(state.secondaryPlayerFacingDirection, 7U);
+	EXPECT_EQ(state.randomState, 0x8A74B963U);
+	EXPECT_EQ(state.projectiles.size(), 21U);
+	EXPECT_TRUE(std::all_of(state.projectiles.begin(), state.projectiles.end(), [](const auto &projectile) {
+		return projectile.behavior == 23
+			&& projectile.sourceEntityId == 8
+			&& projectile.spellId == 50
+			&& projectile.damageType == 2
+			&& projectile.damage >= 224
+			&& projectile.remainingTicks >= 1013
+			&& projectile.remainingTicks <= 1018;
+	}));
+	EXPECT_TRUE(std::any_of(state.projectiles.begin(), state.projectiles.end(), [](const auto &projectile) {
+		return projectile.positionX == 14 && projectile.positionY == 10;
+	}));
+	EXPECT_EQ(ComputeReplayFixtureStateHash(state), fixture.checkpoints.back().stateSha256);
+}
+
 TEST(ReplayFixture, DisabledFriendlyFireSkipsSecondaryFireWallPlayerCollision)
 {
 	std::ifstream file("test/fixtures/replay/gameplay-fire-wall-secondary-cast-primary-player.json");

@@ -246,6 +246,13 @@ the owner, applies half-Q6 PvP damage, honors Flash and disabled-friendly-fire
 gates, and repeats through the primary player's life and canonical checkpoint
 state.
 
+`gameplay-lightning-wall-secondary-cast-primary-player.json` covers a hostile
+secondary-player Lightning Wall cast against the primary participant. The
+secondary memorized spell proves owner-aware spell admission, mana, and facing;
+the four checkpoints prove caster-owned segment damage, long lifetime,
+Lightning typing, owner exclusion, primary-player collision, and native RNG
+parity.
+
 `gameplay-lightning-wall-resolution.json` covers the same controller geometry
 for Lightning Wall, including its distinct lightning damage scale and long
 persistent-segment lifetime. Segments retain the shared behavior identity but
@@ -580,7 +587,7 @@ The compact native replay projection now carries the same server-owned corpse
 tile representation and per-tick monster regeneration as the C# checkpoints.
 Ordinary-death and Firebolt, Fireball, Lightning, and Flash
  spell/projectile-timeline checkpoints pass in both runners. As of 2026-09-26,
-the native replay gate contains 384 checked-in JSON fixtures and 395 registered
+the native replay gate contains 385 checked-in JSON fixtures and 396 registered
 tests; the test count also includes parser and validation cases that do not
 introduce another fixture file. Coverage includes seeded and autonomous MonsterArrow
 source coverage, Hellfire HorkDemon Hork Spawn admission, player impact, and
@@ -1631,6 +1638,9 @@ Notable shared fixtures include:
 - `gameplay-lightning-secondary-cast-primary-player.json` for a secondary
   Sorcerer's owner-aware controller damage, primary-player segment collision,
   repeated Q6 damage, and shared participant hashing;
+- `gameplay-lightning-wall-secondary-cast-primary-player.json` for a secondary
+  Sorcerer's owner-aware Lightning Wall admission, segment lifetime and damage
+  typing, owner exclusion, primary-player collision, and shared hashing;
 - `gameplay-flash-resolution.json` for native dual-layer creation, repeated
   3x3 collision, magic resistance, final-tick expiry, and RNG parity;
 - `gameplay-flash-secondary-cast-primary-player.json` for secondary-caster

@@ -246,6 +246,7 @@ set(devilutionx_fixtures
   replay/gameplay-lazarus-multiplayer-target.json
   replay/gameplay-lightning-resolution.json
   replay/gameplay-lightning-secondary-cast-primary-player.json
+  replay/gameplay-lightning-wall-secondary-cast-primary-player.json
   replay/gameplay-lightning-wall-resolution.json
   replay/gameplay-magi-resolution.json
   replay/gameplay-magma-autonomous-multiplayer.json

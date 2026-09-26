@@ -2,6 +2,12 @@
 
 All notable changes to this fork are documented below.
 
+- Extended the shared replay gate to 385 fixtures and 396 native tests with a
+  hostile secondary-player Lightning Wall cast against the primary participant.
+  The compact native runner now admits spell 50 for the secondary owner,
+  preserves caster-owned lightning segment damage and lifetime, excludes the
+  owner, and matches primary-player collision RNG and four shared checkpoints.
+
 - Extended the shared replay gate to 384 fixtures and 395 native tests with a
   hostile secondary-player Fire Wall cast against the primary participant. The
   compact native runner now derives persistent segment damage and lifetime from

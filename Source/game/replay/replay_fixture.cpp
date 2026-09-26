@@ -14243,6 +14243,7 @@ bool ApplyReplaySecondaryCast(
 	if (state.secondaryPlayerEntityId == 0
 	    || (command.spellId != 1
 	        && command.spellId != 6
+	        && command.spellId != 50
 	        && command.spellId != 3
 	        && command.spellId != 4
 	        && command.spellId != 12

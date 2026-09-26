@@ -2,6 +2,13 @@
 
 Status date: 2026-09-26
 
+Secondary-participant Lightning Wall casts now cross the primary-player
+boundary in both replay runners. The compact native projection admits spell 50
+from the secondary memorized loadout, derives segment damage and lifetime from
+the secondary caster, preserves lightning damage typing and owner exclusion,
+and matches primary-player collision, mana/facing updates, RNG, and the shared
+tick-1, tick-2, tick-3, and tick-8 checkpoints.
+
 Secondary-participant Fire Wall casts now cross the primary-player boundary in
 both replay runners. The compact native projection derives segment damage and
 lifetime from the secondary caster's character level, uses that caster's class
