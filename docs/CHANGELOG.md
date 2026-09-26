@@ -2,6 +2,12 @@
 
 All notable changes to this fork are documented below.
 
+- Extended the shared replay gate to 383 fixtures and 392 native tests with a
+  secondary Sorcerer's Flash cast around the primary participant. The compact
+  native runner now uses the actual caster for Flash damage and hit chance,
+  excludes the owner, and routes persistent Bottom-layer damage to the primary
+  player through the shared tick-1, tick-2, tick-19, and tick-20 checkpoints.
+
 - Extended the shared replay gate to 382 fixtures and 391 native tests with a
   secondary Sorcerer's Lightning cast through the primary participant. The
   compact native runner now derives controller damage and hit chance from the

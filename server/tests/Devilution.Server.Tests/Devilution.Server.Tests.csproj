@@ -172,6 +172,7 @@
     <None Include="../../../test/fixtures/replay/gameplay-telekinesis-insufficient-mana.json" Link="Fixtures/gameplay-telekinesis-insufficient-mana.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-telekinesis-unmemorized.json" Link="Fixtures/gameplay-telekinesis-unmemorized.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-flash-resolution.json" Link="Fixtures/gameplay-flash-resolution.json" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="../../../test/fixtures/replay/gameplay-flash-secondary-cast-primary-player.json" Link="Fixtures/gameplay-flash-secondary-cast-primary-player.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-healing-resolution.json" Link="Fixtures/gameplay-healing-resolution.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-mana-shield-resolution.json" Link="Fixtures/gameplay-mana-shield-resolution.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-stone-curse-resolution.json" Link="Fixtures/gameplay-stone-curse-resolution.json" CopyToOutputDirectory="PreserveNewest" />

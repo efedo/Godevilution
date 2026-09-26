@@ -2753,6 +2753,42 @@ TEST(ReplayFixture, ExecutesFlashResolutionTimelineAgainstCSharpCheckpoints)
 	EXPECT_EQ(ComputeReplayFixtureStateHash(state), fixture.checkpoints.back().stateSha256);
 }
 
+TEST(ReplayFixture, ExecutesSecondaryFlashCastAgainstPrimaryPlayer)
+{
+	std::ifstream file("test/fixtures/replay/gameplay-flash-secondary-cast-primary-player.json");
+	ASSERT_TRUE(file.good());
+	const std::string json((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
+	ReplayFixture fixture;
+	std::string error;
+	ASSERT_TRUE(ParseReplayFixture(json, fixture, error)) << error;
+
+	ReplayFixtureExecutionState state;
+	state.multiplayer = true;
+	state.life = fixture.initialState.life;
+	state.lifeMaximum = fixture.initialState.lifeMaximum;
+	state.mana = fixture.initialState.mana;
+	state.manaMaximum = fixture.initialState.manaMaximum;
+	state.positionX = fixture.initialState.positionX;
+	state.positionY = fixture.initialState.positionY;
+	state.facingDirection = fixture.initialState.facingDirection;
+	state.characterClassId = fixture.initialState.characterClass;
+	state.characterLevel = fixture.initialState.characterLevel;
+	state.attributes[2] = fixture.initialState.magic;
+	state.attributes[3] = fixture.initialState.magic;
+	state.spellProjectileBehavior = 5;
+
+	ReplayFixtureExecutionResult result;
+	ASSERT_TRUE(ExecuteReplayFixture(fixture, state, result, error)) << error;
+	ASSERT_EQ(result.transitions.size(), 1U);
+	EXPECT_TRUE(result.transitions[0].accepted);
+	EXPECT_EQ(state.life, 17732);
+	EXPECT_EQ(state.secondaryPlayerLife, 2560);
+	EXPECT_EQ(state.secondaryPlayerMana, 1336);
+	EXPECT_EQ(state.lastAppliedTick, 20U);
+	EXPECT_TRUE(state.projectiles.empty());
+	EXPECT_EQ(ComputeReplayFixtureStateHash(state), fixture.checkpoints.back().stateSha256);
+}
+
 TEST(ReplayFixture, ExecutesHealingResolutionTimelineAgainstCSharpCheckpoints)
 {
 	std::ifstream file("test/fixtures/replay/gameplay-healing-resolution.json");

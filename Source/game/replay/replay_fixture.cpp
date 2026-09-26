@@ -3453,7 +3453,7 @@ void AdvanceLightningOneTick(ReplayFixtureExecutionState &state, uint64_t tick)
 	}
 }
 
-void AdvanceFlashOneTick(ReplayFixtureExecutionState &state)
+void AdvanceFlashOneTick(ReplayFixtureExecutionState &state, uint64_t tick)
 {
 	constexpr std::pair<int32_t, int32_t> BottomOffsets[] = {
 		{ -1, 0 },
@@ -3476,6 +3476,16 @@ void AdvanceFlashOneTick(ReplayFixtureExecutionState &state)
 		}
 
 		--projectile.remainingTicks;
+		const bool primaryPlayerOwned = projectile.sourceEntityId
+		    == (state.entityId == 0 ? 1U : state.entityId);
+		const bool secondaryPlayerOwned = state.secondaryPlayerEntityId != 0
+		    && projectile.sourceEntityId == state.secondaryPlayerEntityId;
+		const int32_t casterMagic = secondaryPlayerOwned
+		    ? state.secondaryPlayerMagic
+		    : state.attributes[3];
+		const uint32_t casterClass = secondaryPlayerOwned
+		    ? state.secondaryPlayerCharacterClassId
+		    : state.characterClassId;
 		const auto resolveTile = [&](const std::pair<int32_t, int32_t> &offset) {
 			const int32_t positionX = projectile.positionX + offset.first;
 			const int32_t positionY = projectile.positionY + offset.second;
@@ -3487,26 +3497,79 @@ void AdvanceFlashOneTick(ReplayFixtureExecutionState &state)
 			            && state.combatTargetPetrified
 			            && state.combatTargetFuturePositionX == positionX
 			            && state.combatTargetFuturePositionY == positionY));
-			if (targetAtTile && state.combatTargetMagicResistance < 100) {
-				const int32_t hitChance = std::clamp(
-				    state.attributes[3]
-				        + GetReplayBaseMagicToHit(state.characterClassId)
-				        - state.combatTargetMonsterLevel * 2,
-				    5,
-				    95);
-				const int32_t hitRoll = std::max(GenerateRnd(state, 100), 0);
-				if (state.combatTargetPetrified || hitRoll < hitChance) {
-					int32_t damage = projectile.damage;
-					static_cast<void>(GenerateRnd(state, 1));
-					if (state.combatTargetMagicResistance > 0)
-						damage /= projectile.resistantDamageDivisor;
-					state.combatTargetHitPointsQ6 = std::max(
-					    0,
-					    state.combatTargetHitPointsQ6 - damage);
-					state.combatTargetHitPoints = ToWholeCeilingQ6(
-					    state.combatTargetHitPointsQ6);
-					if (state.combatTargetHitPointsQ6 == 0)
-						DefeatReplayCombatTarget(state);
+			if (targetAtTile) {
+				if (state.combatTargetMagicResistance < 100) {
+					const int32_t hitChance = std::clamp(
+					    casterMagic
+					        + GetReplayBaseMagicToHit(casterClass)
+					        - state.combatTargetMonsterLevel * 2,
+					    5,
+					    95);
+					const int32_t hitRoll = std::max(GenerateRnd(state, 100), 0);
+					if (state.combatTargetPetrified || hitRoll < hitChance) {
+						int32_t damage = projectile.damage;
+						static_cast<void>(GenerateRnd(state, 1));
+						if (state.combatTargetMagicResistance > 0)
+							damage /= projectile.resistantDamageDivisor;
+						state.combatTargetHitPointsQ6 = std::max(
+						    0,
+						    state.combatTargetHitPointsQ6 - damage);
+						state.combatTargetHitPoints = ToWholeCeilingQ6(
+						    state.combatTargetHitPointsQ6);
+						if (state.combatTargetHitPointsQ6 == 0)
+							DefeatReplayCombatTarget(state);
+					}
+				}
+			} else {
+				const bool primaryTarget = secondaryPlayerOwned
+				    && state.life > 0
+				    && state.combatMode != 10
+				    && state.combatMode != 11
+				    && state.levelId == projectile.levelId
+				    && state.positionX == positionX
+				    && state.positionY == positionY;
+				const bool secondaryTarget = primaryPlayerOwned
+				    && state.secondaryPlayerEntityId != 0
+				    && state.secondaryPlayerLife > 0
+				    && state.secondaryPlayerCombatMode != 10
+				    && state.secondaryPlayerCombatMode != 11
+				    && state.secondaryPlayerLevelId == projectile.levelId
+				    && state.secondaryPlayerPositionX == positionX
+				    && state.secondaryPlayerPositionY == positionY;
+				if (primaryTarget || secondaryTarget) {
+					const uint32_t targetLevel = primaryTarget
+					    ? state.characterLevel
+					    : state.secondaryPlayerCharacterLevel;
+					const int32_t hitChance = std::clamp(
+					    casterMagic
+					        + GetReplayBaseMagicToHit(casterClass)
+					        - static_cast<int32_t>(targetLevel) * 2,
+					    5,
+					    95);
+					const int32_t hitRoll = std::max(GenerateRnd(state, 100), 0);
+					if (hitRoll < hitChance) {
+						static_cast<void>(GenerateRnd(state, 1));
+						const int32_t damage = projectile.damage / 2;
+						if (primaryTarget) {
+							state.life = std::max(0, state.life - damage);
+							if (state.life == 0)
+								StartReplayPlayerDeath(state, {}, projectile.sourceEntityId, tick);
+							else if ((damage >> 6) >= static_cast<int32_t>(state.characterLevel)) {
+								state.combatMode = 7;
+								state.combatModeEndTick = tick + 6;
+							}
+						} else {
+							state.secondaryPlayerLife = std::max(
+							    0,
+							    state.secondaryPlayerLife - damage);
+							if (state.secondaryPlayerLife == 0)
+								StartReplaySecondaryPlayerDeath(state);
+							else if ((damage >> 6) >= static_cast<int32_t>(state.secondaryPlayerCharacterLevel)) {
+								state.secondaryPlayerCombatMode = 7;
+								state.secondaryPlayerCombatModeEndTick = tick + 6;
+							}
+						}
+					}
 				}
 			}
 			if (state.objectEntityId != 0
@@ -11925,7 +11988,7 @@ void AdvanceReplayStateToTick(
 		AdvanceFireballsOneTick(state, simulationTick);
 		AdvanceBoneSpiritsOneTick(state, simulationTick);
 		AdvanceLightningOneTick(state, simulationTick);
-		AdvanceFlashOneTick(state);
+		AdvanceFlashOneTick(state, simulationTick);
 		AdvanceMovementControllersOneTick(state);
 		AdvanceResurrectionBeamsOneTick(state);
 		AdvanceStoneCursesOneTick(state);
@@ -13961,6 +14024,7 @@ bool ApplyReplaySecondaryCast(
 	if (state.secondaryPlayerEntityId == 0
 	    || (command.spellId != 1
 	        && command.spellId != 3
+	        && command.spellId != 4
 	        && command.spellId != 12
 	        && command.spellId != 30
 	        && command.spellId != 38))
@@ -13978,6 +14042,7 @@ bool ApplyReplaySecondaryCast(
 	castState.characterLevel = state.secondaryPlayerCharacterLevel;
 	castState.characterClassId = state.secondaryPlayerCharacterClassId;
 	castState.characterName = state.secondaryPlayerCharacterName;
+	castState.facingDirection = state.secondaryPlayerFacingDirection;
 	castState.manaShieldActive = state.secondaryPlayerManaShieldActive;
 	castState.memorizedSpells = state.secondaryPlayerMemorizedSpells;
 	castState.equipment = state.secondaryEquipment;
@@ -13993,11 +14058,13 @@ bool ApplyReplaySecondaryCast(
 	if (!ApplyReplayCast(castState, command))
 		return false;
 
-	castState.facingDirection = static_cast<uint32_t>(GetDirection(
-	    castState.positionX,
-	    castState.positionY,
-	    command.targetX,
-	    command.targetY));
+	if (command.spellId != 4) {
+		castState.facingDirection = static_cast<uint32_t>(GetDirection(
+		    castState.positionX,
+		    castState.positionY,
+		    command.targetX,
+		    command.targetY));
+	}
 
 	state.randomState = castState.randomState;
 	state.projectiles = std::move(castState.projectiles);

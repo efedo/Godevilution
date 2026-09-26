@@ -2,6 +2,12 @@
 
 Status date: 2026-09-11
 
+Player-owned Flash now crosses the secondary-to-primary participant boundary
+in both replay runners. The compact native projection uses the secondary
+caster's class, Magic, and character level for independent layer damage and
+hit chance, excludes the caster from its own 3x3 area, and preserves repeated
+primary-player Q6 impacts through layer expiry.
+
 Player-owned Lightning now crosses the secondary-to-primary participant
 boundary in both replay runners. The compact native projection uses the actual
 caster's class, Magic, and character level for controller/segment RNG, excludes

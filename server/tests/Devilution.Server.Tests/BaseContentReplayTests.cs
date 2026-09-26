@@ -2550,6 +2550,72 @@ public sealed class BaseContentReplayTests
     }
 
     [Fact]
+    public void SecondaryFlashCastDamagesThePrimaryParticipantWithoutHittingItsOwner()
+    {
+        var fixture = ReplayFixtureLoader.Load(File.ReadAllText(Path.Combine(
+            AppContext.BaseDirectory,
+            "Fixtures",
+            "gameplay-flash-secondary-cast-primary-player.json")));
+        var contentRoot = Path.Combine(
+            FindRepositoryRoot(),
+            "server",
+            "content",
+            "base");
+        AssertUsesBaseContentManifest(fixture, contentRoot);
+        var classes = AuthoritativePlayerClassCatalog.LoadTsv(
+            "classes.tsv",
+            File.ReadAllText(Path.Combine(contentRoot, "classes.tsv")));
+        var spells = AuthoritativeSpellCatalog.LoadTsv(
+            "spells.tsv",
+            File.ReadAllText(Path.Combine(contentRoot, "spells.tsv")));
+        var initial = fixture.InitialState;
+        var executor = new StoreSimulationExecutor(
+            new StoreCatalog(),
+            initial.Gold,
+            initial.Experience,
+            initial.Life,
+            initial.Mana,
+            startingLifeMaximum: initial.LifeMaximum,
+            startingPositionX: initial.PositionX,
+            startingPositionY: initial.PositionY,
+            startingFacingDirection: initial.FacingDirection,
+            startingCharacterLevel: initial.CharacterLevel,
+            startingCharacterClassId: checked((uint)initial.CharacterClass),
+            startingSpells: spells,
+            startingCombatRules: new AuthoritativeCombatRules(
+                10,
+                1,
+                100,
+                gameVariant: fixture.GameVariant),
+            startingRandomSeed: checked((uint)fixture.RngSeed),
+            startingPlayerClasses: classes,
+            gameMode: fixture.GameMode);
+
+        var result = ReplayFixtureExecutor.Execute(
+            fixture,
+            executor,
+            new AuthoritativeCommandServer(executor));
+
+        var primary = executor.GetPlayerState(initial.Player);
+        var secondary = Assert.Single(
+            result.FinalSnapshot.Players,
+            player => player.EntityId == 8);
+        Assert.Equal(CommandStatus.Accepted, Assert.Single(result.Results).Status);
+        Assert.Equal(17732, primary.Life);
+        Assert.Equal(2560, secondary.Life);
+        Assert.Equal(1336, secondary.Mana);
+        Assert.Equal(20UL, result.FinalSnapshot.Tick);
+        Assert.True(
+            fixture.Checkpoints
+                .Select(checkpoint => checkpoint.StateSha256)
+                .SequenceEqual(result.Checkpoints.Select(checkpoint => checkpoint.ActualStateSha256)),
+            string.Join(
+                Environment.NewLine,
+                result.Checkpoints.Select(checkpoint =>
+                    $"tick {checkpoint.Tick}: {checkpoint.ActualStateSha256}")));
+    }
+
+    [Fact]
     public void FlashUsesBaseContentAndMatchesNativeLayerTimeline()
     {
         var fixture = ReplayFixtureLoader.Load(File.ReadAllText(Path.Combine(

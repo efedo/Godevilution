@@ -197,6 +197,7 @@ set(devilutionx_fixtures
   replay/gameplay-fireman-non-combat.json
   replay/gameplay-flame-wave-resolution.json
   replay/gameplay-flash-resolution.json
+  replay/gameplay-flash-secondary-cast-primary-player.json
   replay/gameplay-gargoyle-attack.json
   replay/gameplay-gargoyle-autonomous-multiplayer.json
   replay/gameplay-gargoyle-avoidance-idle.json

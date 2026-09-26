@@ -571,7 +571,7 @@ The compact native replay projection now carries the same server-owned corpse
 tile representation and per-tick monster regeneration as the C# checkpoints.
 Ordinary-death and Firebolt, Fireball, Lightning, and Flash
  spell/projectile-timeline checkpoints pass in both runners. As of 2026-09-11,
-the native replay gate contains 382 checked-in JSON fixtures and 391 registered
+the native replay gate contains 383 checked-in JSON fixtures and 392 registered
 tests; the test count also includes parser and validation cases that do not
 introduce another fixture file. Coverage includes seeded and autonomous MonsterArrow
 source coverage, Hellfire HorkDemon Hork Spawn admission, player impact, and
@@ -984,6 +984,13 @@ resistance damage. Ticks 19 and 20 prove final-tick collision, simultaneous
 layer expiry, stable post-expiry state, and the final RNG value. Both runners
 validate all four checkpoints; invalid magic resistance is rejected before
 replay.
+
+`gameplay-flash-secondary-cast-primary-player.json` reverses Flash ownership
+with a level-12 secondary Sorcerer and places the primary participant in the
+Bottom layer. Ticks 1, 2, 19, and 20 prove secondary mana ownership,
+caster-specific independent layer damage, owner exclusion, repeated
+half-damage player impacts, primary life mutation, simultaneous layer expiry,
+and identical participant/projectile hashes in both runners.
 
 `gameplay-healing-resolution.json` uses activated Healing, a level-5 Rogue with
 effective spell level 3, an explicit larger maximum life, and seed `0x12345678`.
@@ -1617,6 +1624,9 @@ Notable shared fixtures include:
   repeated Q6 damage, and shared participant hashing;
 - `gameplay-flash-resolution.json` for native dual-layer creation, repeated
   3x3 collision, magic resistance, final-tick expiry, and RNG parity;
+- `gameplay-flash-secondary-cast-primary-player.json` for secondary-caster
+  layer damage, owner exclusion, repeated primary-player impact, and shared
+  participant/projectile hashing;
 - `gameplay-healing-resolution.json` for randomized class-scaled Q6 healing,
   life-cap truncation, and full-life mana/RNG consumption;
 - `gameplay-teleport-resolution.json` for native crawl ordering, multiplayer
