@@ -571,7 +571,7 @@ The compact native replay projection now carries the same server-owned corpse
 tile representation and per-tick monster regeneration as the C# checkpoints.
 Ordinary-death and Firebolt, Fireball, Lightning, and Flash
  spell/projectile-timeline checkpoints pass in both runners. As of 2026-09-11,
-the native replay gate contains 381 checked-in JSON fixtures and 390 registered
+the native replay gate contains 382 checked-in JSON fixtures and 391 registered
 tests; the test count also includes parser and validation cases that do not
 introduce another fixture file. Coverage includes seeded and autonomous MonsterArrow
 source coverage, Hellfire HorkDemon Hork Spawn admission, player impact, and
@@ -968,6 +968,13 @@ same-tick segment activation, exact Q6 resistance damage, and persistent
 repeated collision. Ticks 8 and 9 prove segment expiry, target death, retained
 controller/segment population, and the final RNG state. Both runners validate
 all four checkpoints; invalid lightning resistance is rejected before replay.
+
+`gameplay-lightning-secondary-cast-primary-player.json` reverses the player
+direction with a level-12 secondary Sorcerer casting through the primary
+participant. Ticks 1, 2, and 8 prove secondary mana ownership, caster-specific
+controller damage and magic hit chance, owner exclusion, repeated half-damage
+player impacts, primary life mutation, and identical persistent segment state
+in both runners.
 
 `gameplay-flash-resolution.json` uses activated Flash, a level-12 Sorcerer with
 Magic 35 and effective spell level 3, a petrified magic-resistant target in the
@@ -1605,6 +1612,9 @@ Notable shared fixtures include:
 - `gameplay-lightning-resolution.json` for native controller/segment creation,
   same-tick repeated collision, level-scaled lifetime, Q6 resistance, death,
   and RNG parity;
+- `gameplay-lightning-secondary-cast-primary-player.json` for a secondary
+  Sorcerer's owner-aware controller damage, primary-player segment collision,
+  repeated Q6 damage, and shared participant hashing;
 - `gameplay-flash-resolution.json` for native dual-layer creation, repeated
   3x3 collision, magic resistance, final-tick expiry, and RNG parity;
 - `gameplay-healing-resolution.json` for randomized class-scaled Q6 healing,

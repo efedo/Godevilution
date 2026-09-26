@@ -3176,6 +3176,9 @@ void AdvanceLightningOneTick(ReplayFixtureExecutionState &state, uint64_t tick)
 			const bool monsterOwned = controller.targetEntityId != 0
 			    && controller.sourceEntityId == state.combatTargetEntityId
 			    && state.combatTargetEntityId != 0;
+			const bool secondaryPlayerOwned = !monsterOwned
+			    && state.secondaryPlayerEntityId != 0
+			    && controller.sourceEntityId == state.secondaryPlayerEntityId;
 			--controller.remainingTicks;
 			int32_t segmentDamage = 0;
 			int32_t damageQ6 = 0;
@@ -3187,7 +3190,11 @@ void AdvanceLightningOneTick(ReplayFixtureExecutionState &state, uint64_t tick)
 			} else {
 				const int32_t characterLevelDamage = GenerateRnd(
 				    state,
-				    std::max<int32_t>(state.characterLevel, 1));
+				    std::max<int32_t>(
+				        secondaryPlayerOwned
+				            ? state.secondaryPlayerCharacterLevel
+				            : state.characterLevel,
+				        1));
 				const int32_t randomDamage = GenerateRnd(state, 2);
 				damageQ6 = (randomDamage + characterLevelDamage + 2) * 64;
 			}
@@ -3280,6 +3287,9 @@ void AdvanceLightningOneTick(ReplayFixtureExecutionState &state, uint64_t tick)
 			const bool monsterOwned = segment.targetEntityId != 0
 			    && segment.sourceEntityId == state.combatTargetEntityId
 			    && state.combatTargetEntityId != 0;
+			const bool secondaryPlayerOwned = !monsterOwned
+			    && state.secondaryPlayerEntityId != 0
+			    && segment.sourceEntityId == state.secondaryPlayerEntityId;
 			if (targetAtTile && state.combatTargetLightningResistance < 100) {
 				const int32_t hitChance = monsterOwned
 				    ? std::clamp(
@@ -3291,8 +3301,10 @@ void AdvanceLightningOneTick(ReplayFixtureExecutionState &state, uint64_t tick)
 				          0,
 				          100)
 				    : std::clamp(
-				          state.attributes[3]
-				              + GetReplayBaseMagicToHit(state.characterClassId)
+				          (secondaryPlayerOwned ? state.secondaryPlayerMagic : state.attributes[3])
+				              + GetReplayBaseMagicToHit(secondaryPlayerOwned
+				                  ? state.secondaryPlayerCharacterClassId
+				                  : state.characterClassId)
 				              - state.combatTargetMonsterLevel * 2,
 				          5,
 				          95);
@@ -3311,12 +3323,13 @@ void AdvanceLightningOneTick(ReplayFixtureExecutionState &state, uint64_t tick)
 						DefeatReplayCombatTarget(state);
 				}
 			} else {
-				const bool primaryPlayerAtTile = monsterOwned
+				const bool primaryPlayerAtTile = (monsterOwned || secondaryPlayerOwned)
 				    && state.life > 0
 				    && state.levelId == segment.levelId
 				    && state.positionX == segment.positionX
 				    && state.positionY == segment.positionY;
 				const bool secondaryPlayerAtTile = state.secondaryPlayerEntityId != 0
+				    && !secondaryPlayerOwned
 				    && state.secondaryPlayerLife > 0
 				    && state.secondaryPlayerLevelId == segment.levelId
 				    && state.secondaryPlayerPositionX == segment.positionX
@@ -3346,8 +3359,10 @@ void AdvanceLightningOneTick(ReplayFixtureExecutionState &state, uint64_t tick)
 					          0,
 					          100)
 					    : std::clamp(
-					          state.attributes[3]
-					              + GetReplayBaseMagicToHit(state.characterClassId)
+					          (secondaryPlayerOwned ? state.secondaryPlayerMagic : state.attributes[3])
+					              + GetReplayBaseMagicToHit(secondaryPlayerOwned
+					                  ? state.secondaryPlayerCharacterClassId
+					                  : state.characterClassId)
 					              - static_cast<int32_t>(playerCharacterLevel) * 2,
 					          5,
 					          95);
@@ -13945,6 +13960,7 @@ bool ApplyReplaySecondaryCast(
 {
 	if (state.secondaryPlayerEntityId == 0
 	    || (command.spellId != 1
+	        && command.spellId != 3
 	        && command.spellId != 12
 	        && command.spellId != 30
 	        && command.spellId != 38))

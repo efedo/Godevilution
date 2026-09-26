@@ -2,6 +2,12 @@
 
 Status date: 2026-09-11
 
+Player-owned Lightning now crosses the secondary-to-primary participant
+boundary in both replay runners. The compact native projection uses the actual
+caster's class, Magic, and character level for controller/segment RNG, excludes
+the caster from collision, and preserves repeated Q6 player impact through the
+shared tick-1, tick-2, and tick-8 checkpoints.
+
 The multiplayer replay boundary now accepts secondary-participant Firebolt
 casts and preserves primary-player Warrior block admission, Hellfire RNG
 ordering, and retained impact checkpoints in both runners.

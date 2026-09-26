@@ -2664,6 +2664,40 @@ TEST(ReplayFixture, ExecutesLightningResolutionTimelineAgainstCSharpCheckpoints)
 	EXPECT_EQ(ComputeReplayFixtureStateHash(state), fixture.checkpoints.back().stateSha256);
 }
 
+TEST(ReplayFixture, ExecutesSecondaryLightningCastAgainstPrimaryPlayer)
+{
+	std::ifstream file("test/fixtures/replay/gameplay-lightning-secondary-cast-primary-player.json");
+	ASSERT_TRUE(file.good());
+	const std::string json((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
+	ReplayFixture fixture;
+	std::string error;
+	ASSERT_TRUE(ParseReplayFixture(json, fixture, error)) << error;
+
+	ReplayFixtureExecutionState state;
+	state.multiplayer = true;
+	state.life = fixture.initialState.life;
+	state.lifeMaximum = fixture.initialState.lifeMaximum;
+	state.mana = fixture.initialState.mana;
+	state.manaMaximum = fixture.initialState.manaMaximum;
+	state.positionX = fixture.initialState.positionX;
+	state.positionY = fixture.initialState.positionY;
+	state.characterClassId = fixture.initialState.characterClass;
+	state.characterLevel = fixture.initialState.characterLevel;
+	state.attributes[2] = fixture.initialState.magic;
+	state.attributes[3] = fixture.initialState.magic;
+	state.spellProjectileBehavior = 3;
+
+	ReplayFixtureExecutionResult result;
+	ASSERT_TRUE(ExecuteReplayFixture(fixture, state, result, error)) << error;
+	ASSERT_EQ(result.transitions.size(), 1U);
+	EXPECT_TRUE(result.transitions[0].accepted);
+	EXPECT_EQ(state.life, 7696);
+	EXPECT_EQ(state.secondaryPlayerLife, 2560);
+	EXPECT_EQ(state.secondaryPlayerMana, 488);
+	EXPECT_EQ(state.lastAppliedTick, 8U);
+	EXPECT_EQ(ComputeReplayFixtureStateHash(state), fixture.checkpoints.back().stateSha256);
+}
+
 TEST(ReplayFixture, RejectsInvalidLightningResistance)
 {
 	std::ifstream file("test/fixtures/replay/gameplay-lightning-resolution.json");

@@ -2,6 +2,11 @@
 
 All notable changes to this fork are documented below.
 
+- Extended the shared replay gate to 382 fixtures and 391 native tests with a
+  secondary Sorcerer's Lightning cast through the primary participant. The
+  compact native runner now derives controller damage and hit chance from the
+  actual caster and excludes that caster while routing persistent segments.
+
 - Added a regression contract for both local client launchers so their
   single-player new-game flows cannot silently return to the server's
   multiplayer default and crash during native level setup.

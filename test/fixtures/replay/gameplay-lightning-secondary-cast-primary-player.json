@@ -1,0 +1,61 @@
+{
+  "format_version": 1,
+  "fixture_id": "gameplay/lightning-secondary-cast-primary-player",
+  "protocol_schema_version": "0.1.0",
+  "content_manifest": {
+    "id": "devilution.base",
+    "version": "0.1.0",
+    "sha256": "ee16097e8393e3807fa57356227992eed3265f5da8f182806cbd368c7c28658d"
+  },
+  "tick_rate_hz": 20,
+  "rng_seed": 305419896,
+  "game_variant": "Diablo",
+  "game_mode": "Multiplayer",
+  "initial_state": {
+    "player": "A",
+    "gold": 0,
+    "experience": 0,
+    "life": 10000,
+    "life_maximum": 10000,
+    "position_x": 1,
+    "position_y": 0,
+    "character_class": 0,
+    "character_level": 1,
+    "secondary_player": {
+      "player": "B",
+      "entity_id": 8,
+      "life": 2560,
+      "life_maximum": 2560,
+      "mana": 1000,
+      "mana_maximum": 1000,
+      "magic": 35,
+      "position_x": 0,
+      "position_y": 0,
+      "character_class": 2,
+      "character_level": 12,
+      "friendly_mode": false,
+      "memorized_spells": [
+        { "spell_id": 3, "level": 3 }
+      ]
+    }
+  },
+  "commands": [
+    {
+      "player": "B",
+      "client_sequence": 1,
+      "target_tick": 1,
+      "server_receipt_sequence": 1,
+      "kind": "Cast",
+      "payload": {
+        "spell_id": 3,
+        "target_x": 4,
+        "target_y": 0
+      }
+    }
+  ],
+  "checkpoints": [
+    { "tick": 1, "state_sha256": "344eb16bd2ed9ccf70ac3f9823586eafa3dc0cac0a6e906e968c5f43ed510713" },
+    { "tick": 2, "state_sha256": "41d6ca14459547f13676f998bc994514e6e34c59c66ad13cb9c0eda10056658c" },
+    { "tick": 8, "state_sha256": "5682975597cbe3d602e69bb322b3c43d87e0910cdcbc006466dc9c731494103e" }
+  ]
+}
