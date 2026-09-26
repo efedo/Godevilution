@@ -2,6 +2,9 @@
 
 All notable changes to this fork are documented below.
 
+- Registered every shipped replay JSON in the native CMake fixture-copy list so
+  the native and managed replay runners consume the same complete fixture set.
+
 - Align the local native and Godot launchers with their single-player client
   flows by starting the authoritative server with `--game-mode single-player`.
   This prevents the handshake from switching the native client into multiplayer

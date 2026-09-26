@@ -1634,8 +1634,14 @@ Notable shared fixtures include:
 
 `.github/workflows/authoritative-parity.yml` runs the native `replay_test` and
 the C# test suite as separate processes against the same fixtures. A checkpoint
-failure identifies the first divergent authoritative tick. Locally, use the
-normal native GTest build described in `docs/ai/msvc-build.md` and:
+failure identifies the first divergent authoritative tick.
+
+The native CMake fixture registry and managed test project each enumerate every
+`test/fixtures/replay/**/*.json` file. The parity workflow compares both
+registrations with the fixture tree to catch omissions and extras.
+
+Locally, use the normal native GTest build described in
+`docs/ai/msvc-build.md` and:
 
 ```powershell
 dotnet run --project server/tests/Devilution.Server.Tests/Devilution.Server.Tests.csproj

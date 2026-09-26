@@ -83,106 +83,242 @@ set(devilutionx_fixtures
   memory_map/player.txt
   memory_map/portal.txt
   memory_map/quest.txt
+  replay/gameplay-acid-autonomous-multiplayer.json
+  replay/gameplay-acid-lifecycle.json
+  replay/gameplay-acid-multiplayer-secondary-impact.json
+  replay/gameplay-acid-primary-autonomous.json
+  replay/gameplay-acid-primary-equipment.json
+  replay/gameplay-acid-puddle-object-break.json
+  replay/gameplay-acid-puddle-primary-equipment.json
+  replay/gameplay-acid-puddle-secondary-equipment.json
+  replay/gameplay-acid-unique-autonomous-multiplayer.json
+  replay/gameplay-acid-unique-lifecycle.json
+  replay/gameplay-acid-unique-multiplayer-secondary-impact.json
+  replay/gameplay-acid-unique-primary-autonomous.json
+  replay/gameplay-apocalypse-resolution.json
   replay/gameplay-autonomous-regen-soak.json
-  replay/gameplay-gargoyle-healing.json
-  replay/gameplay-gargoyle-attack.json
-  replay/gameplay-gargoyle-avoidance-idle.json
-  replay/gameplay-gargoyle-avoidance-walk.json
-  replay/gameplay-gargoyle-avoidance-move.json
-  replay/gameplay-gharbad-multiplayer-target.json
-  replay/gameplay-skeleton-melee-delay.json
-  replay/gameplay-skeleton-melee-attack-delay.json
-  replay/gameplay-skeleton-melee-multiplayer-target.json
-  replay/gameplay-skeleton-king-multiplayer-target.json
-  replay/gameplay-snotspill-multiplayer-target.json
-  replay/gameplay-warlord-multiplayer-target.json
-  replay/gameplay-rhino-charge.json
-  replay/gameplay-rhino-multiplayer-target.json
-  replay/gameplay-snake-distant-delay.json
-  replay/gameplay-snake-adjacent-delay.json
-  replay/gameplay-snake-charge-lifecycle.json
-  replay/gameplay-snake-multiplayer-target.json
+  replay/gameplay-bat-autonomous-multiplayer.json
+  replay/gameplay-bat-multiplayer-target.json
+  replay/gameplay-bat-retreat.json
+  replay/gameplay-berserk-resolution.json
+  replay/gameplay-blood-star-autonomous-multiplayer.json
   replay/gameplay-blood-star-autonomous.json
+  replay/gameplay-blood-star-close-native-ai-seed.json
   replay/gameplay-blood-star-impact.json
-  replay/gameplay-blood-star-multiplayer-target.json
+  replay/gameplay-blood-star-lazarus-succubus-autonomous-multiplayer.json
   replay/gameplay-blood-star-lazarus-succubus-multiplayer-target.json
-  replay/gameplay-fire-bat-multiplayer-target.json
-  replay/gameplay-fire-bat-multiplayer-secondary-impact.json
-  replay/gameplay-torchant-multiplayer-secondary-impact.json
-  replay/gameplay-torchant-multiplayer-secondary-miss.json
-  replay/gameplay-torchant-multiplayer-target.json
-  replay/gameplay-magma-multiplayer-target.json
-  replay/gameplay-magma-multiplayer-secondary-impact.json
-  replay/gameplay-storm-multiplayer-target.json
-  replay/gameplay-storm-secondary-warrior-block-chance.json
+  replay/gameplay-blood-star-lazarus-succubus-primary-warrior-block-chance.json
+  replay/gameplay-blood-star-lazarus-succubus-secondary-warrior-block-chance.json
+  replay/gameplay-blood-star-lazarus-succubus.json
+  replay/gameplay-blood-star-multiplayer-target.json
+  replay/gameplay-blood-star-native-ai-seed.json
+  replay/gameplay-blood-star-primary-warrior-block-chance.json
   replay/gameplay-blood-star-secondary-block.json
+  replay/gameplay-blood-star-secondary-warrior-block-chance.json
+  replay/gameplay-bone-spirit-hellfire-monk-block.json
+  replay/gameplay-bone-spirit-hellfire-secondary-warrior-block-chance.json
   replay/gameplay-bone-spirit-homing.json
   replay/gameplay-bone-spirit-pvp.json
+  replay/gameplay-butcher-autonomous-multiplayer.json
   replay/gameplay-butcher-multiplayer-target.json
+  replay/gameplay-chain-lightning-resolution.json
   replay/gameplay-charged-bolt-hellfire-block.json
+  replay/gameplay-charged-bolt-hellfire-secondary-warrior-block-chance.json
   replay/gameplay-charged-bolt-moving-occupancy.json
   replay/gameplay-charged-bolt-object-collision.json
   replay/gameplay-charged-bolt-pvp.json
   replay/gameplay-charged-bolt-resolution.json
   replay/gameplay-charged-bolt.json
+  replay/gameplay-class-physical-damage-animal-mace.json
+  replay/gameplay-class-physical-damage-animal-sword.json
+  replay/gameplay-class-physical-damage-armor-piercing.json
+  replay/gameplay-class-physical-damage-armor.json
+  replay/gameplay-class-physical-damage-barbarian-armor-piercing.json
+  replay/gameplay-class-physical-damage-barbarian.json
+  replay/gameplay-class-physical-damage-bard.json
+  replay/gameplay-class-physical-damage-demon-triple.json
+  replay/gameplay-class-physical-damage-hell.json
+  replay/gameplay-class-physical-damage-hellfire-armor-piercing.json
+  replay/gameplay-class-physical-damage-hellfire-decay.json
+  replay/gameplay-class-physical-damage-hellfire-devastation.json
+  replay/gameplay-class-physical-damage-hellfire-jesters.json
+  replay/gameplay-class-physical-damage-hellfire-peril-get-hit.json
+  replay/gameplay-class-physical-damage-hellfire-peril.json
+  replay/gameplay-class-physical-damage-knockback.json
+  replay/gameplay-class-physical-damage-miss-elemental.json
+  replay/gameplay-class-physical-damage-miss.json
+  replay/gameplay-class-physical-damage-modifiers.json
+  replay/gameplay-class-physical-damage-monk-unknown-hand.json
+  replay/gameplay-class-physical-damage-monk.json
+  replay/gameplay-class-physical-damage-sorcerer.json
+  replay/gameplay-class-physical-damage-to-hit.json
+  replay/gameplay-class-physical-damage-undead-mace.json
+  replay/gameplay-class-physical-damage-undead-sword.json
+  replay/gameplay-class-physical-damage-warrior.json
+  replay/gameplay-class-physical-damage.json
+  replay/gameplay-counselor-autonomous-multiplayer.json
+  replay/gameplay-counselor-delay.json
   replay/gameplay-counselor-multiplayer-target.json
-  replay/gameplay-zhar-multiplayer-target.json
-  replay/gameplay-lazarus-multiplayer-target.json
-  replay/gameplay-lachdanan-non-combat.json
-  replay/gameplay-fireman-non-combat.json
-  replay/gameplay-fallen-rally-multiplayer-target.json
+  replay/gameplay-counselor-retreat.json
   replay/gameplay-elemental-arrows.json
   replay/gameplay-elemental-equipment.json
+  replay/gameplay-elemental-resolution.json
+  replay/gameplay-etherealize-resolution.json
+  replay/gameplay-fallen-fear-multiplayer.json
+  replay/gameplay-fallen-fear.json
+  replay/gameplay-fallen-rally-companion.json
+  replay/gameplay-fallen-rally-multiplayer-target.json
+  replay/gameplay-fallen-rally-pursuit.json
+  replay/gameplay-fallen-rally.json
+  replay/gameplay-fallen-stand-animation.json
+  replay/gameplay-familiar-autonomous-multiplayer.json
+  replay/gameplay-familiar-movement-multiplayer.json
+  replay/gameplay-fat-autonomous-multiplayer.json
+  replay/gameplay-fat-movement.json
+  replay/gameplay-fat-multiplayer-target.json
+  replay/gameplay-fire-bat-autonomous-multiplayer.json
+  replay/gameplay-fire-bat-multiplayer-secondary-impact.json
+  replay/gameplay-fire-bat-multiplayer-target.json
+  replay/gameplay-fire-bat-primary-warrior-block-chance.json
+  replay/gameplay-fire-bat-secondary-warrior-block-chance.json
+  replay/gameplay-fire-wall-resolution.json
   replay/gameplay-fireball-hellfire-block.json
+  replay/gameplay-fireball-hellfire-primary-warrior-block-chance.json
+  replay/gameplay-fireball-hellfire-secondary-warrior-block-chance.json
   replay/gameplay-fireball-pvp.json
   replay/gameplay-fireball-resolution.json
   replay/gameplay-firebolt-hellfire-block.json
+  replay/gameplay-firebolt-hellfire-primary-warrior-block-chance.json
+  replay/gameplay-firebolt-hellfire-secondary-warrior-block-chance.json
   replay/gameplay-firebolt-pvp.json
   replay/gameplay-firebolt-resolution.json
+  replay/gameplay-fireman-non-combat.json
+  replay/gameplay-flame-wave-resolution.json
   replay/gameplay-flash-resolution.json
+  replay/gameplay-gargoyle-attack.json
+  replay/gameplay-gargoyle-autonomous-multiplayer.json
+  replay/gameplay-gargoyle-avoidance-idle.json
+  replay/gameplay-gargoyle-avoidance-move.json
+  replay/gameplay-gargoyle-avoidance-walk.json
+  replay/gameplay-gargoyle-healing.json
+  replay/gameplay-gargoyle-multiplayer-target.json
+  replay/gameplay-gharbad-autonomous-multiplayer.json
+  replay/gameplay-gharbad-multiplayer-target.json
+  replay/gameplay-goat-melee-attack.json
+  replay/gameplay-goat-melee-autonomous-multiplayer.json
+  replay/gameplay-goat-melee-get-hit.json
+  replay/gameplay-goat-melee-movement.json
+  replay/gameplay-goat-melee-multiplayer-target.json
+  replay/gameplay-goat-melee-secondary-q6-range.json
+  replay/gameplay-goat-melee-seeded-movement-multiplayer.json
+  replay/gameplay-goat-melee-special-zero-seed.json
+  replay/gameplay-goat-melee-special.json
+  replay/gameplay-goat-melee-thorns.json
   replay/gameplay-gold-pickup-overflow.json
+  replay/gameplay-golem-resolution.json
+  replay/gameplay-guardian-resolution.json
   replay/gameplay-heal-other-resolution.json
   replay/gameplay-healing-resolution.json
+  replay/gameplay-holy-bolt-living-target.json
+  replay/gameplay-holy-bolt-resolution.json
+  replay/gameplay-hork-spawn-autonomous-multiplayer.json
   replay/gameplay-hork-spawn-autonomous.json
-  replay/gameplay-acid-lifecycle.json
-  replay/gameplay-acid-unique-lifecycle.json
   replay/gameplay-hork-spawn-delay.json
   replay/gameplay-hork-spawn-impact.json
   replay/gameplay-hork-spawn-miss.json
   replay/gameplay-hork-spawn-multiplayer-target.json
   replay/gameplay-hork-spawn-object-break.json
   replay/gameplay-hork-spawn-primary-block.json
+  replay/gameplay-hork-spawn-primary-monk-block.json
+  replay/gameplay-hork-spawn-primary-warrior-block-chance.json
   replay/gameplay-hork-spawn-secondary-block.json
   replay/gameplay-hork-spawn-secondary-impact.json
+  replay/gameplay-hork-spawn-secondary-warrior-block-chance.json
+  replay/gameplay-immolation-radial-fan-resolution.json
+  replay/gameplay-inferno-resolution.json
   replay/gameplay-infravision-resolution.json
+  replay/gameplay-jester-firebolt-resolution.json
+  replay/gameplay-lachdanan-non-combat.json
+  replay/gameplay-lazarus-multiplayer-target.json
   replay/gameplay-lightning-resolution.json
+  replay/gameplay-lightning-wall-resolution.json
+  replay/gameplay-magi-resolution.json
+  replay/gameplay-magma-autonomous-multiplayer.json
+  replay/gameplay-magma-multiplayer-secondary-impact.json
+  replay/gameplay-magma-multiplayer-target.json
+  replay/gameplay-magma-primary-warrior-block-chance.json
+  replay/gameplay-magma-secondary-warrior-block-chance.json
+  replay/gameplay-mana-resolution.json
   replay/gameplay-mana-shield-resolution.json
+  replay/gameplay-mega-inferno-autonomous-multiplayer.json
   replay/gameplay-mega-inferno-multiplayer-target.json
+  replay/gameplay-mega-inferno-native-ai-seed.json
+  replay/gameplay-mega-inferno.json
+  replay/gameplay-monster-arrow-autonomous-multiplayer.json
   replay/gameplay-monster-arrow-autonomous.json
   replay/gameplay-monster-arrow-etherealized.json
   replay/gameplay-monster-arrow-flash-protected.json
+  replay/gameplay-monster-arrow-goat-ranged-close-native-ai-seed.json
+  replay/gameplay-monster-arrow-goat-ranged-close-retreat.json
+  replay/gameplay-monster-arrow-goat-ranged-delay.json
+  replay/gameplay-monster-arrow-goat-ranged-multiplayer-target.json
+  replay/gameplay-monster-arrow-goat-ranged-native-ai-seed.json
+  replay/gameplay-monster-arrow-goat-ranged-primary-warrior-block-chance.json
+  replay/gameplay-monster-arrow-goat-ranged-secondary-get-hit.json
+  replay/gameplay-monster-arrow-goat-ranged-secondary-q6-range.json
+  replay/gameplay-monster-arrow-goat-ranged-secondary-warrior-block-chance.json
   replay/gameplay-monster-arrow-multiplayer-target.json
+  replay/gameplay-monster-arrow-primary-warrior-block-chance.json
   replay/gameplay-monster-arrow-resolution.json
+  replay/gameplay-monster-arrow-secondary-warrior-block-chance.json
+  replay/gameplay-monster-arrow-skeleton-ranged-autonomous-multiplayer.json
+  replay/gameplay-monster-arrow-skeleton-ranged-close-retreat.json
+  replay/gameplay-monster-arrow-skeleton-ranged-native-ai-seed.json
+  replay/gameplay-monster-arrow-skeleton-ranged-primary-warrior-block-chance.json
+  replay/gameplay-monster-arrow-skeleton-ranged-secondary-warrior-block-chance.json
   replay/gameplay-monster-arrow-skeleton-ranged.json
+  replay/gameplay-monster-magic-arch-lich-autonomous-multiplayer.json
+  replay/gameplay-monster-magic-arch-lich-multiplayer-target.json
+  replay/gameplay-monster-magic-arch-lich-primary-warrior-block-chance.json
+  replay/gameplay-monster-magic-arch-lich-secondary-impact.json
+  replay/gameplay-monster-magic-arch-lich-secondary-warrior-block-chance.json
   replay/gameplay-monster-magic-arch-lich.json
+  replay/gameplay-monster-magic-autonomous-multiplayer.json
   replay/gameplay-monster-magic-autonomous.json
+  replay/gameplay-monster-magic-bone-demon-autonomous-multiplayer.json
+  replay/gameplay-monster-magic-bone-demon-multiplayer-target.json
+  replay/gameplay-monster-magic-bone-demon-primary-warrior-block-chance.json
+  replay/gameplay-monster-magic-bone-demon-secondary-impact.json
+  replay/gameplay-monster-magic-bone-demon-secondary-warrior-block-chance.json
   replay/gameplay-monster-magic-bone-demon.json
   replay/gameplay-monster-magic-miss.json
   replay/gameplay-monster-magic-multiplayer-target.json
-  replay/gameplay-monster-magic-bone-demon-multiplayer-target.json
-  replay/gameplay-monster-magic-arch-lich-multiplayer-target.json
-  replay/gameplay-monster-magic-psychorb-multiplayer-target.json
+  replay/gameplay-monster-magic-necromorb-autonomous-multiplayer.json
   replay/gameplay-monster-magic-necromorb-multiplayer-target.json
-  replay/gameplay-monster-magic-bone-demon-secondary-impact.json
-  replay/gameplay-monster-magic-arch-lich-secondary-impact.json
-  replay/gameplay-monster-magic-psychorb-secondary-impact.json
+  replay/gameplay-monster-magic-necromorb-primary-warrior-block-chance.json
   replay/gameplay-monster-magic-necromorb-secondary-impact.json
-  replay/gameplay-acid-multiplayer-secondary-impact.json
-  replay/gameplay-acid-unique-multiplayer-secondary-impact.json
+  replay/gameplay-monster-magic-necromorb-secondary-warrior-block-chance.json
   replay/gameplay-monster-magic-necromorb.json
+  replay/gameplay-monster-magic-primary-block.json
+  replay/gameplay-monster-magic-primary-monk-block.json
+  replay/gameplay-monster-magic-primary-monk-one-handed-block.json
+  replay/gameplay-monster-magic-primary-monk-two-handed-no-block.json
+  replay/gameplay-monster-magic-primary-natural-resistance.json
+  replay/gameplay-monster-magic-primary-resistance.json
+  replay/gameplay-monster-magic-primary-shield.json
+  replay/gameplay-monster-magic-primary-warrior-block-chance.json
+  replay/gameplay-monster-magic-psychorb-autonomous-multiplayer.json
+  replay/gameplay-monster-magic-psychorb-multiplayer-target.json
+  replay/gameplay-monster-magic-psychorb-primary-warrior-block-chance.json
+  replay/gameplay-monster-magic-psychorb-secondary-impact.json
+  replay/gameplay-monster-magic-psychorb-secondary-warrior-block-chance.json
   replay/gameplay-monster-magic-psychorb.json
   replay/gameplay-monster-magic-secondary-block.json
+  replay/gameplay-monster-magic-secondary-get-hit.json
   replay/gameplay-monster-magic-secondary-impact.json
+  replay/gameplay-monster-magic-secondary-monk-block.json
+  replay/gameplay-monster-magic-secondary-resistance.json
+  replay/gameplay-monster-magic-secondary-warrior-block-chance.json
   replay/gameplay-movement-combat.json
   replay/gameplay-multi-level-occupancy.json
   replay/gameplay-multiplayer-autonomous-tick.json
@@ -190,24 +326,25 @@ set(devilutionx_fixtures
   replay/gameplay-multiplayer-monster-arrow-volley.json
   replay/gameplay-multiplayer-monster-arrow.json
   replay/gameplay-multiplayer-secondary-attack.json
-  replay/gameplay-multiplayer-secondary-item-drop.json
-  replay/gameplay-multiplayer-secondary-item-pickup.json
-  replay/gameplay-multiplayer-secondary-item-pickup-with-existing-item.json
-  replay/gameplay-multiplayer-secondary-item-pickup-overflow.json
-  replay/gameplay-multiplayer-secondary-gold-pickup.json
   replay/gameplay-multiplayer-secondary-gold-pickup-malformed.json
   replay/gameplay-multiplayer-secondary-gold-pickup-overflow.json
-  replay/gameplay-primary-held-item-pickup-rejection.json
-  replay/gameplay-primary-held-item-pickup-replacement.json
-  replay/gameplay-multiplayer-secondary-held-item-pickup-replacement.json
+  replay/gameplay-multiplayer-secondary-gold-pickup.json
   replay/gameplay-multiplayer-secondary-held-item-pickup-rejection.json
+  replay/gameplay-multiplayer-secondary-held-item-pickup-replacement.json
+  replay/gameplay-multiplayer-secondary-item-drop.json
+  replay/gameplay-multiplayer-secondary-item-pickup-overflow.json
+  replay/gameplay-multiplayer-secondary-item-pickup-with-existing-item.json
+  replay/gameplay-multiplayer-secondary-item-pickup.json
   replay/gameplay-multiplayer-secondary-monster-death-drops.json
   replay/gameplay-multiplayer-secondary-monster-melee.json
-  replay/gameplay-multiplayer-secondary-monster-pathing.json
-  replay/gameplay-multiplayer-secondary-monster-object-pathing.json
-  replay/gameplay-multiplayer-secondary-monster-native-ai-seed.json
+  replay/gameplay-multiplayer-secondary-monster-monk-block.json
   replay/gameplay-multiplayer-secondary-monster-native-ai-seed-impact.json
+  replay/gameplay-multiplayer-secondary-monster-native-ai-seed.json
+  replay/gameplay-multiplayer-secondary-monster-object-pathing.json
+  replay/gameplay-multiplayer-secondary-monster-pathing.json
+  replay/gameplay-multiplayer-secondary-monster-warrior-block-chance.json
   replay/gameplay-multiplayer-secondary-portal.json
+  replay/gameplay-nova-radial-fan-resolution.json
   replay/gameplay-object-quest.json
   replay/gameplay-phasing-resolution.json
   replay/gameplay-player-action-lifecycle.json
@@ -218,15 +355,109 @@ set(devilutionx_fixtures
   replay/gameplay-player-level-transition.json
   replay/gameplay-player-restart-town.json
   replay/gameplay-portal-transition.json
+  replay/gameplay-primary-held-item-pickup-rejection.json
+  replay/gameplay-primary-held-item-pickup-replacement.json
   replay/gameplay-pvp-ear-death.json
   replay/gameplay-quest-selection.json
+  replay/gameplay-rage-resolution.json
+  replay/gameplay-ranged-class-armor.json
+  replay/gameplay-ranged-class-barbarian.json
+  replay/gameplay-ranged-class-bard.json
+  replay/gameplay-ranged-class-critical-demon.json
+  replay/gameplay-ranged-class-damage.json
+  replay/gameplay-ranged-class-hell.json
+  replay/gameplay-ranged-class-hellfire-armor-piercing.json
+  replay/gameplay-ranged-class-hellfire-peril-get-hit.json
+  replay/gameplay-ranged-class-hellfire-peril-profile.json
+  replay/gameplay-ranged-class-monk.json
+  replay/gameplay-ranged-class-multiple-arrows-hit-seeds.json
+  replay/gameplay-ranged-class-sorcerer.json
+  replay/gameplay-ranged-class-zero-strength.json
+  replay/gameplay-ranged-elemental-impact.json
+  replay/gameplay-ranged-hellfire-decay.json
+  replay/gameplay-ranged-hellfire-devastation.json
+  replay/gameplay-ranged-hellfire-doppelganger-diablo.json
+  replay/gameplay-ranged-hellfire-doppelganger-unique.json
+  replay/gameplay-ranged-hellfire-doppelganger.json
+  replay/gameplay-ranged-hellfire-jesters.json
+  replay/gameplay-ranged-hellfire-miss-effects.json
+  replay/gameplay-ranged-hellfire-peril-impact.json
+  replay/gameplay-ranged-hellfire-peril.json
+  replay/gameplay-ranged-miss-elemental.json
+  replay/gameplay-ranged-multiple-arrows.json
+  replay/gameplay-ranged-resource-restoration.json
+  replay/gameplay-reflect-blocked-monster-melee.json
+  replay/gameplay-reflect-resolution.json
+  replay/gameplay-reflect-retaliation.json
   replay/gameplay-resurrection-resolution.json
+  replay/gameplay-rhino-autonomous-multiplayer.json
+  replay/gameplay-rhino-charge-get-hit.json
+  replay/gameplay-rhino-charge-native-q6-range.json
+  replay/gameplay-rhino-charge-thorns-boundary.json
+  replay/gameplay-rhino-charge.json
+  replay/gameplay-rhino-multiplayer-target.json
+  replay/gameplay-ring-of-fire-resolution.json
+  replay/gameplay-scavenger-autonomous-multiplayer.json
+  replay/gameplay-scavenger-corpse.json
+  replay/gameplay-scavenger-hellfire-corpse.json
+  replay/gameplay-scavenger-multicandidate-selection.json
   replay/gameplay-search-resolution.json
+  replay/gameplay-singleplayer-blocked-monster-melee.json
+  replay/gameplay-singleplayer-monster-melee-q6-range.json
+  replay/gameplay-singleplayer-monster-melee-warrior-block-chance.json
+  replay/gameplay-skeleton-king-autonomous-multiplayer.json
+  replay/gameplay-skeleton-king-multiplayer-target.json
+  replay/gameplay-skeleton-melee-attack-delay.json
+  replay/gameplay-skeleton-melee-autonomous-multiplayer.json
+  replay/gameplay-skeleton-melee-delay.json
+  replay/gameplay-skeleton-melee-equipment-effects.json
+  replay/gameplay-skeleton-melee-multiplayer-target.json
+  replay/gameplay-skeleton-melee-primary-shields.json
+  replay/gameplay-snake-adjacent-delay.json
+  replay/gameplay-snake-autonomous-multiplayer.json
+  replay/gameplay-snake-charge-lifecycle.json
+  replay/gameplay-snake-distant-delay.json
+  replay/gameplay-snake-multiplayer-target.json
+  replay/gameplay-sneak-autonomous-multiplayer.json
+  replay/gameplay-sneak-conceal.json
+  replay/gameplay-sneak-multiplayer-target.json
+  replay/gameplay-sneak-reveal.json
+  replay/gameplay-snotspill-autonomous-multiplayer.json
+  replay/gameplay-snotspill-multiplayer-target.json
   replay/gameplay-spell-cast.json
+  replay/gameplay-stable-belt-drop-invalid-target.json
+  replay/gameplay-stable-belt-drop.json
+  replay/gameplay-stable-equipment-drop.json
+  replay/gameplay-stable-item-drop-retry.json
+  replay/gameplay-stable-item-drop.json
   replay/gameplay-status-expiry.json
   replay/gameplay-stone-curse-resolution.json
+  replay/gameplay-storm-autonomous-multiplayer.json
+  replay/gameplay-storm-multiplayer-target.json
+  replay/gameplay-storm-primary-warrior-block-chance.json
+  replay/gameplay-storm-secondary-warrior-block-chance.json
+  replay/gameplay-telekinesis-insufficient-mana.json
+  replay/gameplay-telekinesis-invalid-target.json
+  replay/gameplay-telekinesis-monster-knockback.json
+  replay/gameplay-telekinesis-object.json
+  replay/gameplay-telekinesis-unmemorized.json
+  replay/gameplay-telekinesis-world-item.json
   replay/gameplay-teleport-resolution.json
+  replay/gameplay-torchant-autonomous-multiplayer.json
+  replay/gameplay-torchant-multiplayer-secondary-impact.json
+  replay/gameplay-torchant-multiplayer-secondary-miss.json
+  replay/gameplay-torchant-multiplayer-target.json
+  replay/gameplay-torchant-primary-warrior-block-chance.json
+  replay/gameplay-torchant-secondary-warrior-block-chance.json
+  replay/gameplay-town-portal-resolution.json
+  replay/gameplay-warlord-autonomous-multiplayer.json
+  replay/gameplay-warlord-multiplayer-target.json
+  replay/gameplay-warp-resolution.json
   replay/gameplay-world-item-pickup.json
+  replay/gameplay-zhar-multiplayer-target.json
+  replay/gameplay-zombie-action.json
+  replay/gameplay-zombie-autonomous-multiplayer.json
+  replay/gameplay-zombie-multiplayer-target.json
   replay/stores/base-content-purchase.json
   replay/stores/basic-buy.json
   replay/stores/gold-topology-parity.json
