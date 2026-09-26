@@ -571,7 +571,7 @@ The compact native replay projection now carries the same server-owned corpse
 tile representation and per-tick monster regeneration as the C# checkpoints.
 Ordinary-death and Firebolt, Fireball, Lightning, and Flash
  spell/projectile-timeline checkpoints pass in both runners. As of 2026-09-11,
-the native replay gate contains 378 checked-in JSON fixtures and 387 registered
+the native replay gate contains 379 checked-in JSON fixtures and 388 registered
 tests; the test count also includes parser and validation cases that do not
 introduce another fixture file. Coverage includes seeded and autonomous MonsterArrow
 source coverage, Hellfire HorkDemon Hork Spawn admission, player impact, and
@@ -891,6 +891,11 @@ admission, Hellfire RNG ordering, and retained impact parity.
 secondary-caster boundary to Fireball, proving caster-specific hit chance,
 primary-target routing, Hellfire block RNG, timed block expiry, splash damage,
 and projectile removal.
+
+`gameplay-storm-secondary-warrior-block-chance.json` extends the Storm
+ThinLightning boundary to a low-Dexterity secondary Warrior, proving
+class-derived block admission, controller targeting, and retained controller
+state through the impact checkpoint.
 
 `gameplay-fireball-hellfire-secondary-warrior-block-chance.json` adds the same
 class-aware shield boundary to Fireball. Its intermediate checkpoint proves
@@ -1380,6 +1385,9 @@ Notable shared fixtures include:
   impact-phase projectile parity;
 - `gameplay-storm-primary-warrior-block-chance.json` for Storm's
   low-Dexterity primary Warrior shield admission, 4-tick controller/segment
+  lifecycle, 4-tick block recovery, and retained ThinLightning controller;
+- `gameplay-storm-secondary-warrior-block-chance.json` for Storm's
+  low-Dexterity secondary Warrior shield admission, 4-tick controller/segment
   lifecycle, 4-tick block recovery, and retained ThinLightning controller;
 - `gameplay-magma-multiplayer-target.json` for Magma's external MagmaBall
   mapping, native initial travel advance, and nearest-secondary target selection;

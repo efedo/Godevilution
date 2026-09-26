@@ -352,6 +352,7 @@
     <None Include="../../../test/fixtures/replay/gameplay-storm-multiplayer-target.json" Link="Fixtures/gameplay-storm-multiplayer-target.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-storm-autonomous-multiplayer.json" Link="Fixtures/gameplay-storm-autonomous-multiplayer.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-storm-primary-warrior-block-chance.json" Link="Fixtures/gameplay-storm-primary-warrior-block-chance.json" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="../../../test/fixtures/replay/gameplay-storm-secondary-warrior-block-chance.json" Link="Fixtures/gameplay-storm-secondary-warrior-block-chance.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-monster-magic-autonomous.json" Link="Fixtures/gameplay-monster-magic-autonomous.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-monster-magic-autonomous-multiplayer.json" Link="Fixtures/gameplay-monster-magic-autonomous-multiplayer.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-monster-magic-arch-lich-autonomous-multiplayer.json" Link="Fixtures/gameplay-monster-magic-arch-lich-autonomous-multiplayer.json" CopyToOutputDirectory="PreserveNewest" />

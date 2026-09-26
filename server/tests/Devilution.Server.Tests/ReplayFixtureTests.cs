@@ -12096,6 +12096,37 @@ public sealed class ReplayFixtureTests
             result.Checkpoints.Select(checkpoint => checkpoint.ActualStateSha256));
     }
 
+    [Fact]
+    public void GameplayStormThinLightningSecondaryWarriorBlockChanceMatchesNativeLifecycle()
+    {
+        var fixture = LoadReplayFixture("gameplay-storm-secondary-warrior-block-chance.json");
+        var secondary = Assert.IsType<ReplaySecondaryPlayer>(fixture.InitialState.SecondaryPlayer);
+        var executor = CreateStormExecutor(fixture);
+
+        var result = ReplayFixtureExecutor.Execute(
+            fixture,
+            executor,
+            new AuthoritativeCommandServer(executor));
+        var primary = Assert.Single(result.FinalSnapshot.Players, player => player.EntityId == 1);
+        var secondaryState = executor.GetPlayerState(secondary.Player);
+        var controller = Assert.Single(
+            result.FinalSnapshot.Projectiles,
+            projectile => projectile.Behavior == (int)AuthoritativeProjectileBehavior.Lightning);
+
+        Assert.Equal(CommandStatus.Accepted, Assert.Single(result.Results).Status);
+        Assert.Equal(100, primary.Life);
+        Assert.Equal(0U, secondary.CharacterClass);
+        Assert.Equal(0, secondary.Dexterity);
+        Assert.Equal(6400, secondaryState.Life);
+        Assert.Equal(DiabloPlayerCombatMode.Block, secondaryState.CombatMode);
+        Assert.Equal(7UL, secondaryState.CombatModeEndTick);
+        Assert.Equal(secondary.EntityId, controller.TargetEntityId);
+        Assert.Equal(4UL, result.FinalSnapshot.Tick);
+        Assert.Equal(
+            fixture.Checkpoints.Select(checkpoint => checkpoint.StateSha256),
+            result.Checkpoints.Select(checkpoint => checkpoint.ActualStateSha256));
+    }
+
     [Theory]
     [InlineData("gameplay-monster-magic-arch-lich-secondary-warrior-block-chance.json")]
     [InlineData("gameplay-monster-magic-psychorb-secondary-warrior-block-chance.json")]

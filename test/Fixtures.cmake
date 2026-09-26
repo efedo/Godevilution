@@ -114,6 +114,7 @@ set(devilutionx_fixtures
   replay/gameplay-magma-multiplayer-target.json
   replay/gameplay-magma-multiplayer-secondary-impact.json
   replay/gameplay-storm-multiplayer-target.json
+  replay/gameplay-storm-secondary-warrior-block-chance.json
   replay/gameplay-blood-star-secondary-block.json
   replay/gameplay-bone-spirit-homing.json
   replay/gameplay-bone-spirit-pvp.json

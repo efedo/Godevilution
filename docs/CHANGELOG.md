@@ -21,7 +21,7 @@ All notable changes to this fork are documented below.
   runners now preserve caster-specific hit chance, primary-target routing,
   Hellfire block RNG, block expiry, splash damage, and impact removal.
 
-- Extended the replay parity gate to 379 fixtures and 389 native tests with
+- Extended the replay parity gate to 379 fixtures and 388 native tests with
   Storm's secondary-participant ThinLightning cast against a low-Dexterity
   Warrior. Both runners now preserve class-derived block admission, controller
   targeting, and the retained controller checkpoint.
