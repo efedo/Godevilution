@@ -2021,6 +2021,71 @@ public sealed class ReplayFixtureTests
     }
 
     [Fact]
+    public void HellfireChargedBoltPrimaryWarriorUsesClassBlockChanceFromSecondaryCast()
+    {
+        var fixture = LoadReplayFixture(
+            "gameplay-charged-bolt-hellfire-primary-warrior-block-chance.json");
+        var spells = LoadReplaySpells(fixture, "charged-bolt");
+        var classes = AuthoritativePlayerClassCatalog.LoadTsv(
+            "classes.tsv",
+            File.ReadAllText(Path.Combine(FindRepositoryRoot(), "server", "content", "base", "classes.tsv")));
+        var initial = fixture.InitialState;
+        var executor = new StoreSimulationExecutor(
+            new StoreCatalog(),
+            initial.Gold,
+            initial.Experience,
+            initial.Life,
+            initial.Mana,
+            startingManaMaximum: initial.ManaMaximum,
+            startingLifeMaximum: initial.LifeMaximum,
+            startingCharacterLevel: initial.CharacterLevel,
+            startingCharacterClassId: checked((uint)initial.CharacterClass),
+            startingPlayerClasses: classes,
+            startingEquipment: initial.Equipment
+                .Select(item => item.ToEquippedStoreItem())
+                .ToArray(),
+            startingPositionX: initial.PositionX,
+            startingPositionY: initial.PositionY,
+            startingAttributes: PlayerAttributesState.Zero with {
+                Magic = new PlayerAttributeState(initial.Magic, initial.Magic),
+                Dexterity = new PlayerAttributeState(initial.Dexterity, initial.Dexterity),
+            },
+            startingCombatRules: new AuthoritativeCombatRules(
+                10,
+                1,
+                100,
+                gameVariant: fixture.GameVariant),
+            startingSpells: spells,
+            startingRandomSeed: checked((uint)fixture.RngSeed),
+            gameMode: DiabloGameMode.Multiplayer);
+
+        var result = ReplayFixtureExecutor.Execute(
+            fixture,
+            executor,
+            new AuthoritativeCommandServer(executor));
+
+        var player = executor.GetPlayerState(initial.Player);
+        var secondarySnapshot = Assert.Single(
+            result.FinalSnapshot.Players,
+            candidate => candidate.EntityId == 8);
+        Assert.Equal(CommandStatus.Accepted, Assert.Single(result.Results).Status);
+        Assert.Equal(608, player.Life);
+        Assert.Equal(DiabloPlayerCombatMode.Block, player.CombatMode);
+        Assert.Equal(9UL, player.CombatModeEndTick);
+        Assert.Equal(634, secondarySnapshot.Mana);
+        Assert.Equal(5UL, result.FinalSnapshot.Tick);
+        Assert.Equal(2, result.Checkpoints.Count);
+        Assert.Equal(3, result.FinalSnapshot.Projectiles.Count);
+        Assert.Equal(
+            2,
+            result.FinalSnapshot.Projectiles.Count(
+                projectile => projectile.LastCollisionTargetEntityId == 1U));
+        Assert.Equal(
+            fixture.Checkpoints.Select(checkpoint => checkpoint.StateSha256),
+            result.Checkpoints.Select(checkpoint => checkpoint.ActualStateSha256));
+    }
+
+    [Fact]
     public void HellfireFireboltBlockFixtureRetainsImpactAndPreservesLife()
     {
         var path = Path.Combine(
@@ -4947,6 +5012,65 @@ public sealed class ReplayFixtureTests
         var victim = executor.GetPlayerState(secondary.Player);
         Assert.Equal(CommandStatus.Accepted, Assert.Single(result.Results).Status);
         Assert.Equal(2000, victim.Life);
+        Assert.Equal(10UL, result.FinalSnapshot.Tick);
+        Assert.Empty(result.FinalSnapshot.Projectiles);
+        Assert.Equal(
+            fixture.Checkpoints.Select(checkpoint => checkpoint.StateSha256),
+            result.Checkpoints.Select(checkpoint => checkpoint.ActualStateSha256));
+    }
+
+    [Fact]
+    public void HellfireBoneSpiritPrimaryWarriorBlocksAtClassChanceFromSecondaryCast()
+    {
+        var fixture = LoadReplayFixture(
+            "gameplay-bone-spirit-hellfire-primary-warrior-block-chance.json");
+        var spells = LoadBaseSpells(fixture);
+        var classes = AuthoritativePlayerClassCatalog.LoadTsv(
+            "classes.tsv",
+            File.ReadAllText(Path.Combine(FindRepositoryRoot(), "server", "content", "base", "classes.tsv")));
+        var initial = fixture.InitialState;
+        var executor = new StoreSimulationExecutor(
+            new StoreCatalog(),
+            initial.Gold,
+            initial.Experience,
+            initial.Life,
+            initial.Mana,
+            startingManaMaximum: initial.ManaMaximum,
+            startingLifeMaximum: initial.LifeMaximum,
+            startingCharacterClassId: checked((uint)initial.CharacterClass),
+            startingPlayerClasses: classes,
+            startingEquipment: initial.Equipment
+                .Select(item => item.ToEquippedStoreItem())
+                .ToArray(),
+            startingPositionX: initial.PositionX,
+            startingPositionY: initial.PositionY,
+            startingSpells: spells,
+            startingCombatRules: new AuthoritativeCombatRules(
+                10,
+                1,
+                100,
+                gameVariant: fixture.GameVariant),
+            startingRandomSeed: checked((uint)fixture.RngSeed),
+            startingAttributes: PlayerAttributesState.Zero with {
+                Dexterity = new PlayerAttributeState(initial.Dexterity, initial.Dexterity),
+            },
+            gameMode: DiabloGameMode.Multiplayer);
+
+        var result = ReplayFixtureExecutor.Execute(
+            fixture,
+            executor,
+            new AuthoritativeCommandServer(executor));
+
+        var player = executor.GetPlayerState(initial.Player);
+        var secondarySnapshot = Assert.Single(
+            result.FinalSnapshot.Players,
+            candidate => candidate.EntityId == 8);
+        Assert.Equal(CommandStatus.Accepted, Assert.Single(result.Results).Status);
+        Assert.Equal(initial.Life, player.Life);
+        Assert.Equal(DiabloPlayerCombatMode.Stand, player.CombatMode);
+        Assert.Equal(0UL, player.CombatModeEndTick);
+        Assert.Equal(896, secondarySnapshot.Life);
+        Assert.Equal(528, secondarySnapshot.Mana);
         Assert.Equal(10UL, result.FinalSnapshot.Tick);
         Assert.Empty(result.FinalSnapshot.Projectiles);
         Assert.Equal(

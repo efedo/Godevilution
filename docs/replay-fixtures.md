@@ -571,7 +571,7 @@ The compact native replay projection now carries the same server-owned corpse
 tile representation and per-tick monster regeneration as the C# checkpoints.
 Ordinary-death and Firebolt, Fireball, Lightning, and Flash
  spell/projectile-timeline checkpoints pass in both runners. As of 2026-09-11,
-the native replay gate contains 379 checked-in JSON fixtures and 388 registered
+the native replay gate contains 381 checked-in JSON fixtures and 390 registered
 tests; the test count also includes parser and validation cases that do not
 introduce another fixture file. Coverage includes seeded and autonomous MonsterArrow
 source coverage, Hellfire HorkDemon Hork Spawn admission, player impact, and
@@ -848,6 +848,11 @@ shield supplies block capability while the authored Warrior base chance admits
 the block; both runners preserve the Hellfire compatibility draw and shared
 tick-1/tick-5 checkpoints.
 
+`gameplay-charged-bolt-hellfire-primary-warrior-block-chance.json` mirrors the
+fan from a secondary caster toward a primary low-Dexterity Warrior. It proves
+primary-player collision, content-scaled caster mana, mixed hit/block fan-out,
+block recovery, and retained projectile state through tick 5.
+
 The five standard Charged Bolt fixtures share the validated `test/content/replay/charged-bolt`
 pack and canonical manifest identity; Hellfire rules remain a separate variant
 overlay.
@@ -927,6 +932,12 @@ of a level-2 Bone Spirit cast. The fixture proves native current-life damage,
 including the non-arrow half-damage step, immediate self-damage, the single
 player-hit RNG draw, impact entry, and seven-tick projectile removal. Both
 runners validate the same two checkpoints and final participant projection.
+
+`gameplay-bone-spirit-hellfire-primary-warrior-block-chance.json` reverses the
+participant direction: a secondary caster pays mana and immediate current-life
+self-damage before the primary Warrior blocks the projectile. Both runners
+preserve the caster mutation, primary collision and block RNG, and tick-10
+projectile expiry.
 
 `gameplay-bone-spirit-homing.json` places a petrified, magic-resistant monster
 near a level-1 Bone Spirit path. The fixture proves native nearest-monster
@@ -1496,6 +1507,9 @@ Notable shared fixtures include:
 - `gameplay-bone-spirit-hellfire-secondary-warrior-block-chance.json` for the
   low-Dexterity secondary Warrior's authored class base block chance and
   shield admission during Hellfire Bone Spirit impact;
+- `gameplay-bone-spirit-hellfire-primary-warrior-block-chance.json` for a
+  secondary-participant Bone Spirit cast against the low-Dexterity primary
+  Warrior, including caster self-damage, primary block admission, and expiry;
 - `gameplay-firebolt-hellfire-secondary-warrior-block-chance.json` for the
   low-Dexterity secondary Warrior's authored class base block chance, fixed
   Firebolt damage-before-block RNG ordering, shield admission, and retained
@@ -1511,6 +1525,9 @@ Notable shared fixtures include:
 - `gameplay-fireball-hellfire-secondary-warrior-block-chance.json` for the
   low-Dexterity secondary Warrior's authored class base block chance, direct
   Fireball block admission, later splash damage, and terminal impact expiry;
+- `gameplay-charged-bolt-hellfire-primary-warrior-block-chance.json` for a
+  secondary-participant Charged Bolt fan against the low-Dexterity primary
+  Warrior, content-scaled mana, mixed impact/block state, and retained bolts;
 - `gameplay-multiplayer-secondary-monster-monk-block.json` for unarmed Hellfire
   Monk blocking against a seeded native MonsterMelee attack;
 - `gameplay-multiplayer-secondary-monster-warrior-block-chance.json` for a

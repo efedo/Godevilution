@@ -1,0 +1,69 @@
+{
+  "format_version": 1,
+  "fixture_id": "gameplay/charged-bolt-hellfire-primary-warrior-block-chance",
+  "protocol_schema_version": "0.1.0",
+  "content_manifest": {
+    "id": "replay.charged-bolt",
+    "version": "0.1.0",
+    "sha256": "14fb9d7ce27a1475d616aa1b66cb2cdc9b498dda2562281cf4e9587c7966385f"
+  },
+  "tick_rate_hz": 20,
+  "rng_seed": 9,
+  "game_variant": "Hellfire",
+  "game_mode": "Multiplayer",
+  "initial_state": {
+    "player": "A",
+    "gold": 0,
+    "experience": 0,
+    "life": 640,
+    "life_maximum": 640,
+    "position_x": 1,
+    "position_y": 1,
+    "character_class": 0,
+    "character_level": 1,
+    "dexterity": 0,
+    "equipment": [
+      {
+        "slot": 5,
+        "item_seed": 44,
+        "item_type": 5,
+        "item_class": 0,
+        "flags": 0,
+        "stat_flag": true
+      }
+    ],
+    "secondary_player": {
+      "player": "B",
+      "entity_id": 8,
+      "life": 640,
+      "life_maximum": 640,
+      "mana": 640,
+      "mana_maximum": 640,
+      "magic": 35,
+      "position_x": 0,
+      "position_y": 0,
+      "character_level": 1,
+      "memorized_spells": [
+        { "spell_id": 30, "level": 2 }
+      ]
+    }
+  },
+  "commands": [
+    {
+      "player": "B",
+      "client_sequence": 1,
+      "target_tick": 1,
+      "server_receipt_sequence": 1,
+      "kind": "Cast",
+      "payload": {
+        "spell_id": 30,
+        "target_x": 4,
+        "target_y": 0
+      }
+    }
+  ],
+  "checkpoints": [
+    { "tick": 1, "state_sha256": "fe39196471e2817d368d778de5f298b50c2a1c44fe4e5a8a04b2c212fb2c9077" },
+    { "tick": 5, "state_sha256": "77d0a4fe6ab08e576a47d6939353fab91680fd740afaefa85a6c4c3d0009432d" }
+  ]
+}

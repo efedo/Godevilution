@@ -116,6 +116,7 @@ set(devilutionx_fixtures
   replay/gameplay-blood-star-secondary-block.json
   replay/gameplay-blood-star-secondary-warrior-block-chance.json
   replay/gameplay-bone-spirit-hellfire-monk-block.json
+  replay/gameplay-bone-spirit-hellfire-primary-warrior-block-chance.json
   replay/gameplay-bone-spirit-hellfire-secondary-warrior-block-chance.json
   replay/gameplay-bone-spirit-homing.json
   replay/gameplay-bone-spirit-pvp.json
@@ -123,6 +124,7 @@ set(devilutionx_fixtures
   replay/gameplay-butcher-multiplayer-target.json
   replay/gameplay-chain-lightning-resolution.json
   replay/gameplay-charged-bolt-hellfire-block.json
+  replay/gameplay-charged-bolt-hellfire-primary-warrior-block-chance.json
   replay/gameplay-charged-bolt-hellfire-secondary-warrior-block-chance.json
   replay/gameplay-charged-bolt-moving-occupancy.json
   replay/gameplay-charged-bolt-object-collision.json

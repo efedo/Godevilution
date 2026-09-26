@@ -10,6 +10,11 @@ The same boundary now covers secondary-participant Fireball casts against a
 primary Warrior, including caster-specific hit chance, primary-target routing,
 Hellfire block RNG, timed block expiry, splash damage, and projectile removal.
 
+Secondary-participant Charged Bolt and Bone Spirit casts now cover the primary
+Warrior boundary as well. The compact native runner preserves primary-player
+collision and class blocking, content-scaled Charged Bolt mana, Bone Spirit
+caster self-damage, fan-out state, and terminal projectile lifecycles.
+
 Storm's Hellfire ThinLightning lane now also covers a low-Dexterity secondary
 Warrior, preserving class-derived block admission, controller targeting, and
 the retained controller checkpoint in both replay runners.

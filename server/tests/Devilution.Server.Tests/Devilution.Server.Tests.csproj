@@ -103,6 +103,7 @@
     <None Include="../../../test/fixtures/replay/gameplay-fireball-hellfire-block.json" Link="Fixtures/gameplay-fireball-hellfire-block.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-bone-spirit-pvp.json" Link="Fixtures/gameplay-bone-spirit-pvp.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-bone-spirit-hellfire-monk-block.json" Link="Fixtures/gameplay-bone-spirit-hellfire-monk-block.json" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="../../../test/fixtures/replay/gameplay-bone-spirit-hellfire-primary-warrior-block-chance.json" Link="Fixtures/gameplay-bone-spirit-hellfire-primary-warrior-block-chance.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-bone-spirit-hellfire-secondary-warrior-block-chance.json" Link="Fixtures/gameplay-bone-spirit-hellfire-secondary-warrior-block-chance.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-bone-spirit-homing.json" Link="Fixtures/gameplay-bone-spirit-homing.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-butcher-multiplayer-target.json" Link="Fixtures/gameplay-butcher-multiplayer-target.json" CopyToOutputDirectory="PreserveNewest" />
@@ -114,6 +115,7 @@
     <None Include="../../../test/fixtures/replay/gameplay-fireball-hellfire-secondary-warrior-block-chance.json" Link="Fixtures/gameplay-fireball-hellfire-secondary-warrior-block-chance.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-pvp-ear-death.json" Link="Fixtures/gameplay-pvp-ear-death.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-charged-bolt-hellfire-block.json" Link="Fixtures/gameplay-charged-bolt-hellfire-block.json" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="../../../test/fixtures/replay/gameplay-charged-bolt-hellfire-primary-warrior-block-chance.json" Link="Fixtures/gameplay-charged-bolt-hellfire-primary-warrior-block-chance.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-charged-bolt-hellfire-secondary-warrior-block-chance.json" Link="Fixtures/gameplay-charged-bolt-hellfire-secondary-warrior-block-chance.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-blood-star-secondary-warrior-block-chance.json" Link="Fixtures/gameplay-blood-star-secondary-warrior-block-chance.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-blood-star-lazarus-succubus-secondary-warrior-block-chance.json" Link="Fixtures/gameplay-blood-star-lazarus-succubus-secondary-warrior-block-chance.json" CopyToOutputDirectory="PreserveNewest" />

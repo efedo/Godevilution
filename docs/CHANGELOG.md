@@ -2,6 +2,12 @@
 
 All notable changes to this fork are documented below.
 
+- Extended the replay parity gate to 381 fixtures and 390 native tests with
+  secondary-participant Charged Bolt and Bone Spirit casts against primary
+  Warriors. The native runner now routes both projectile families back to the
+  primary participant, preserves content-scaled Charged Bolt mana, and retains
+  Bone Spirit caster self-damage.
+
 - Registered every shipped replay JSON in the native CMake fixture-copy list so
   the native and managed replay runners consume the same complete fixture set.
 
