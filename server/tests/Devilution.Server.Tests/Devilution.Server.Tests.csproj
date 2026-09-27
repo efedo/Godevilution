@@ -161,6 +161,7 @@
     <None Include="../../../test/fixtures/replay/gameplay-berserk-resolution.json" Link="Fixtures/gameplay-berserk-resolution.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-warp-resolution.json" Link="Fixtures/gameplay-warp-resolution.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-golem-resolution.json" Link="Fixtures/gameplay-golem-resolution.json" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="../../../test/fixtures/replay/gameplay-golem-secondary-summon.json" Link="Fixtures/gameplay-golem-secondary-summon.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-jester-firebolt-resolution.json" Link="Fixtures/gameplay-jester-firebolt-resolution.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-town-portal-resolution.json" Link="Fixtures/gameplay-town-portal-resolution.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-counselor-delay.json" Link="Fixtures/gameplay-counselor-delay.json" CopyToOutputDirectory="PreserveNewest" />

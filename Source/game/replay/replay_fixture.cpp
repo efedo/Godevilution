@@ -7898,11 +7898,11 @@ bool ApplyReplayCast(ReplayFixtureExecutionState &state, const ReplayFixtureComm
 			state.combatTargetPositionY = command.targetY;
 			state.combatTargetArmorClass = 25;
 			state.combatTargetMonsterLevel = static_cast<int32_t>(state.characterLevel);
-			state.combatTargetAttackDamage = 20;
-			state.combatTargetMinDamage = 12;
-			state.combatTargetMaxDamage = 20;
-			state.combatTargetMinDamageSpecial = 12;
-			state.combatTargetMaxDamageSpecial = 20;
+			state.combatTargetMinDamage = 2 * (spellLevel + 4);
+			state.combatTargetMaxDamage = 2 * (spellLevel + 8);
+			state.combatTargetAttackDamage = state.combatTargetMaxDamage;
+			state.combatTargetMinDamageSpecial = state.combatTargetMinDamage;
+			state.combatTargetMaxDamageSpecial = state.combatTargetMaxDamage;
 			state.combatTargetHitPointsQ6 = 2 * (320 * spellLevel + (state.manaMaximum * 64) / 3);
 			state.combatTargetMaxHitPointsQ6 = state.combatTargetHitPointsQ6;
 			state.combatTargetHitPoints = (state.combatTargetHitPointsQ6 + 63) / 64;
@@ -15059,7 +15059,8 @@ bool ApplyReplaySecondaryCast(
 	        && command.spellId != 12
 	        && command.spellId != 30
 	        && command.spellId != 31
-	        && command.spellId != 38))
+	        && command.spellId != 38
+	        && command.spellId != 52))
 		return false;
 
 	ReplayFixtureExecutionState castState = state;
@@ -15107,6 +15108,33 @@ bool ApplyReplaySecondaryCast(
 
 	state.randomState = castState.randomState;
 	state.projectiles = std::move(castState.projectiles);
+	if (command.spellId == 52) {
+		// The compact replay can project one combat target. Preserve the Golem
+		// created by the secondary cast without changing the primary participant.
+		state.combatTargetEntityId = castState.combatTargetEntityId;
+		state.combatTargetMonsterId = castState.combatTargetMonsterId;
+		state.combatTargetLevelId = castState.combatTargetLevelId;
+		state.combatTargetPositionX = castState.combatTargetPositionX;
+		state.combatTargetPositionY = castState.combatTargetPositionY;
+		state.combatTargetHitPoints = castState.combatTargetHitPoints;
+		state.combatTargetMaxHitPoints = castState.combatTargetMaxHitPoints;
+		state.combatTargetHitPointsQ6 = castState.combatTargetHitPointsQ6;
+		state.combatTargetMaxHitPointsQ6 = castState.combatTargetMaxHitPointsQ6;
+		state.combatTargetArmorClass = castState.combatTargetArmorClass;
+		state.combatTargetAttackDamage = castState.combatTargetAttackDamage;
+		state.combatTargetMinDamage = castState.combatTargetMinDamage;
+		state.combatTargetMaxDamage = castState.combatTargetMaxDamage;
+		state.combatTargetMinDamageSpecial = castState.combatTargetMinDamageSpecial;
+		state.combatTargetMaxDamageSpecial = castState.combatTargetMaxDamageSpecial;
+		state.combatTargetMonsterItemSeed = castState.combatTargetMonsterItemSeed;
+		state.combatTargetMonsterAiSeed = castState.combatTargetMonsterAiSeed;
+		state.combatTargetPlayerMinion = castState.combatTargetPlayerMinion;
+		state.combatTargetOwnerPlayerId = castState.combatTargetOwnerPlayerId;
+		state.combatTargetDeathAnimationTicks = castState.combatTargetDeathAnimationTicks;
+		state.combatTargetDeathTicksRemaining = castState.combatTargetDeathTicksRemaining;
+		state.combatTargetMonsterLevel = castState.combatTargetMonsterLevel;
+		state.combatTargetNativeAi = castState.combatTargetNativeAi;
+	}
 	state.secondaryPlayerLife = castState.life;
 	state.secondaryPlayerMana = castState.mana;
 	state.secondaryPlayerManaShieldActive = castState.manaShieldActive;

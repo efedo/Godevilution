@@ -5941,6 +5941,64 @@ TEST(ReplayFixture, ExecutesGolemSummonAgainstCSharpCheckpoint)
 	EXPECT_EQ(ComputeReplayFixtureStateHash(state), fixture.checkpoints.back().stateSha256);
 }
 
+TEST(ReplayFixture, ExecutesSecondaryGolemSummonFromActualCasterState)
+{
+	std::ifstream file("test/fixtures/replay/gameplay-golem-secondary-summon.json");
+	ASSERT_TRUE(file.good());
+	const std::string json((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
+	ReplayFixture fixture;
+	std::string error;
+	ASSERT_TRUE(ParseReplayFixture(json, fixture, error)) << error;
+
+	ReplayFixtureExecutionState state;
+	state.entityId = 1;
+	state.life = fixture.initialState.life;
+	state.lifeMaximum = fixture.initialState.lifeMaximum;
+	state.mana = fixture.initialState.mana;
+	state.manaMaximum = fixture.initialState.manaMaximum;
+	state.positionX = fixture.initialState.positionX;
+	state.positionY = fixture.initialState.positionY;
+	state.levelId = fixture.initialState.levelId;
+	state.characterLevel = fixture.initialState.characterLevel;
+	state.attributes[2] = fixture.initialState.magic;
+	state.attributes[3] = fixture.initialState.magic;
+	state.memorizedSpells = fixture.initialState.memorizedSpells;
+	state.spellProjectileBehavior = 21;
+
+	ReplayFixtureExecutionResult result;
+	ASSERT_TRUE(ExecuteReplayFixture(fixture, state, result, error)) << error;
+	ASSERT_EQ(result.transitions.size(), 1U);
+	EXPECT_TRUE(result.transitions[0].accepted);
+	EXPECT_EQ(state.lastAppliedTick, 0U);
+	EXPECT_EQ(state.mana, fixture.initialState.mana);
+	EXPECT_EQ(state.secondaryPlayerMana, 6752);
+	EXPECT_EQ(state.secondaryPlayerManaMaximum, 16000);
+	EXPECT_EQ(state.secondaryPlayerFacingDirection, 7U);
+	EXPECT_EQ(state.combatTargetEntityId, 0x80000000U);
+	EXPECT_EQ(state.combatTargetLevelId, 1U);
+	EXPECT_EQ(state.combatTargetPositionX, 13);
+	EXPECT_EQ(state.combatTargetPositionY, 10);
+	EXPECT_EQ(state.combatTargetHitPoints, 10707);
+	EXPECT_EQ(state.combatTargetMaxHitPoints, 10707);
+	EXPECT_EQ(state.combatTargetHitPointsQ6, 685226);
+	EXPECT_EQ(state.combatTargetMaxHitPointsQ6, 685226);
+	EXPECT_EQ(state.combatTargetArmorClass, 25);
+	EXPECT_EQ(state.combatTargetMonsterLevel, 12);
+	EXPECT_EQ(state.combatTargetAttackDamage, 24);
+	EXPECT_EQ(state.combatTargetMinDamage, 16);
+	EXPECT_EQ(state.combatTargetMaxDamage, 24);
+	EXPECT_EQ(state.combatTargetMinDamageSpecial, 16);
+	EXPECT_EQ(state.combatTargetMaxDamageSpecial, 24);
+	EXPECT_EQ(state.combatTargetMonsterItemSeed, 1443805422U);
+	EXPECT_EQ(state.combatTargetMonsterAiSeed, 1058065735U);
+	EXPECT_TRUE(state.combatTargetPlayerMinion);
+	EXPECT_EQ(state.combatTargetOwnerPlayerId, 8U);
+	EXPECT_EQ(state.combatTargetDeathAnimationTicks, 12);
+	EXPECT_EQ(state.combatTargetNativeAi, "Golem");
+	EXPECT_EQ(state.randomState, 1058065735U);
+	EXPECT_EQ(ComputeReplayFixtureStateHash(state), fixture.checkpoints.back().stateSha256);
+}
+
 TEST(ReplayFixture, ExecutesJesterFireboltDispatchAgainstCSharpCheckpoint)
 {
 	std::ifstream file("test/fixtures/replay/gameplay-jester-firebolt-resolution.json");

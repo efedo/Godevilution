@@ -2,6 +2,18 @@
 
 All notable changes to this fork are documented below.
 
+- Extended the shared replay gate to 390 fixtures and 415 native tests with a
+  secondary Sorcerer's Golem summon. The compact native runner now carries the
+  actual secondary owner, level, mana maximum, spell level, mana, facing, and
+  summon RNG into the server-owned minion projection while preserving the
+  primary participant. The exact tick-0 checkpoint pins summon stats and both
+  seeded monster streams; multi-Golem coexistence and replacement allocation
+  remain outside the compact single-target model.
+
+- Updated the managed test guide with the current self-contained runner
+  options: `--filter-class`, `--filter-method`, and `--no-ansi`. Focused runs
+  no longer need the machine-wide VSTest host.
+
 - Extended the shared replay gate to 389 fixtures and 414 native tests with a
   secondary Sorcerer's Elemental cast through the primary-player boundary. The
   compact native runner now admits spell 31, derives mana, projectile damage,

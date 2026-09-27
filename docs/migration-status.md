@@ -2,8 +2,18 @@
 
 Status date: 2026-09-27
 
-The shared replay gate now contains 389 checked-in fixtures and 414 registered
+The shared replay gate now contains 390 checked-in fixtures and 415 registered
 native tests.
+
+Secondary-participant Golem now crosses the summon boundary in both replay
+runners. The compact native cast lane uses the secondary participant's
+memorized spell level and maximum mana for Golem health, carries its owner ID,
+character level, position, mana, facing, and seeded monster streams into the
+summon projection, and leaves primary resources untouched. Exact tick-0
+checkpoints pin spawn stats, owner, mana cost, and RNG. Compact replay still
+models one combat target rather than a monster collection, so simultaneous
+Golems from different owners and owner-scoped replacement/entity allocation
+remain unrepresented.
 
 Secondary-participant Elemental now casts through the primary-player boundary
 in both replay runners. The compact native path admits spell 31 and carries the

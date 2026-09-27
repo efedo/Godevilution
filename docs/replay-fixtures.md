@@ -629,8 +629,8 @@ the first drop remains authoritative.
 The compact native replay projection now carries the same server-owned corpse
 tile representation and per-tick monster regeneration as the C# checkpoints.
 Ordinary-death and Firebolt, Fireball, Lightning, Flash, and Elemental
-spell/projectile-timeline checkpoints pass in both runners. As of 2026-09-26,
-the native replay gate contains 389 checked-in JSON fixtures and 414 registered
+spell/projectile-timeline checkpoints pass in both runners. As of 2026-09-27,
+the native replay gate contains 390 checked-in JSON fixtures and 415 registered
 tests; the test count also includes parser and validation cases that do not
 introduce another fixture file. Coverage includes seeded and autonomous MonsterArrow
 source coverage, Hellfire HorkDemon Hork Spawn admission, player impact, and
@@ -1151,6 +1151,14 @@ parity between the native and managed runners.
 stats and spawn-seed progression, death-animation timing, exact mana
 consumption, and canonical monster-state parity between the native and managed
 runners.
+
+`gameplay-golem-secondary-summon.json` casts the learned Golem spell from the
+secondary participant with deliberately different caster and primary-player
+resources. Tick 0 proves caster-owned mana/facing, Golem ownership, character-
+and spell-level summon statistics, and exact spawn-seed/RNG parity. Compact
+replay projects one combat target, so simultaneous Golems owned by different
+participants and owner-scoped replacement allocation remain outside this
+fixture's representable lifecycle.
 
 `gameplay-jester-firebolt-resolution.json` uses a learned Jester spell in the
 bounded Firebolt dispatch lane. Tick 0 proves deterministic dispatch RNG,
@@ -1721,6 +1729,8 @@ Notable shared fixtures include:
 - `gameplay-golem-resolution.json` for server-owned minion identity and
   ownership, native summon stats and spawn-seed progression, death-animation
   timing, mana consumption, and canonical monster state hashing;
+- `gameplay-golem-secondary-summon.json` for secondary-caster ownership,
+  caster-derived summon stats, mana/facing updates, and exact RNG parity;
 - `gameplay-jester-firebolt-resolution.json` for deterministic dispatch RNG,
   nested Firebolt projectile creation, one-time mana consumption, and canonical
   projectile state hashing;

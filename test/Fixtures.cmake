@@ -223,6 +223,7 @@ set(devilutionx_fixtures
   replay/gameplay-goat-melee-thorns.json
   replay/gameplay-gold-pickup-overflow.json
   replay/gameplay-golem-resolution.json
+  replay/gameplay-golem-secondary-summon.json
   replay/gameplay-guardian-resolution.json
   replay/gameplay-heal-other-resolution.json
   replay/gameplay-healing-resolution.json

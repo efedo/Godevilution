@@ -102,6 +102,7 @@ public sealed class ProjectDocumentationConsistencyTests
         Assert.Contains("gameplay-elemental-secondary-cast-primary-player.json", replayFixtures, StringComparison.Ordinal);
         Assert.Contains("gameplay-flash-secondary-cast-primary-player.json", replayFixtures, StringComparison.Ordinal);
         Assert.Contains("gameplay-fire-wall-secondary-cast-primary-player.json", replayFixtures, StringComparison.Ordinal);
+        Assert.Contains("gameplay-golem-secondary-summon.json", replayFixtures, StringComparison.Ordinal);
         Assert.Contains("gameplay-hork-spawn-secondary-warrior-block-chance.json", replayFixtures, StringComparison.Ordinal);
         Assert.Contains("gameplay-blood-star-secondary-warrior-block-chance.json", replayFixtures, StringComparison.Ordinal);
         Assert.Contains("gameplay-blood-star-lazarus-succubus-primary-warrior-block-chance.json", replayFixtures, StringComparison.Ordinal);

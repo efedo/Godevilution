@@ -5177,6 +5177,79 @@ public sealed class ReplayFixtureTests
     }
 
     [Fact]
+    public void SecondaryGolemFixtureMatchesNativeSummonOwnerAndResources()
+    {
+        var fixture = LoadReplayFixture("gameplay-golem-secondary-summon.json");
+        var initial = fixture.InitialState;
+        var secondary = Assert.IsType<ReplaySecondaryPlayer>(initial.SecondaryPlayer);
+        var classes = AuthoritativePlayerClassCatalog.LoadTsv(
+            "classes.tsv",
+            File.ReadAllText(Path.Combine(FindRepositoryRoot(), "server", "content", "base", "classes.tsv")));
+        var world = new AuthoritativeWorld();
+        world.AddLevel(new AuthoritativeLevel(initial.LevelId, 40, 40));
+        var executor = new StoreSimulationExecutor(
+            new StoreCatalog(),
+            initial.Gold,
+            initial.Experience,
+            initial.Life,
+            initial.Mana,
+            startingLifeMaximum: initial.LifeMaximum,
+            startingManaMaximum: initial.ManaMaximum,
+            startingCharacterLevel: initial.CharacterLevel,
+            startingCharacterClassId: checked((uint)initial.CharacterClass),
+            startingPlayerClasses: classes,
+            startingPositionX: initial.PositionX,
+            startingPositionY: initial.PositionY,
+            startingLevelId: initial.LevelId,
+            startingAttributes: PlayerAttributesState.Zero with {
+                Magic = new PlayerAttributeState(initial.Magic, initial.Magic),
+            },
+            startingSpells: LoadBaseSpells(fixture),
+            startingWorld: world,
+            startingCombatRules: CreateReplayCombatRules(fixture),
+            startingRandomSeed: checked((uint)fixture.RngSeed),
+            gameMode: DiabloGameMode.Multiplayer);
+
+        var result = ReplayFixtureExecutor.Execute(
+            fixture,
+            executor,
+            new AuthoritativeCommandServer(executor));
+        var primary = Assert.Single(result.FinalSnapshot.Players, player => player.EntityId == 1);
+        var secondaryState = executor.GetPlayerState(secondary.Player);
+        var golem = Assert.Single(result.FinalSnapshot.Monsters);
+
+        Assert.Equal(CommandStatus.Accepted, Assert.Single(result.Results).Status);
+        Assert.Equal(0UL, result.FinalSnapshot.Tick);
+        Assert.Equal(fixture.Checkpoints.Select(checkpoint => checkpoint.StateSha256),
+            result.Checkpoints.Select(checkpoint => checkpoint.ActualStateSha256));
+        Assert.Equal(initial.Mana, primary.Mana);
+        Assert.Equal(6752, secondaryState.Mana);
+        Assert.Equal(16000, secondaryState.ManaMaximum);
+        Assert.Equal((DiabloPlayerDirection)7, secondaryState.FacingDirection);
+        Assert.Equal(0x80000000U, golem.EntityId);
+        Assert.Equal(secondary.EntityId, golem.OwnerPlayerId);
+        Assert.True(golem.IsPlayerMinion);
+        Assert.Equal(initial.LevelId, golem.LevelId);
+        Assert.Equal((13, 10), (golem.PositionX, golem.PositionY));
+        Assert.Equal(10707, golem.HitPoints);
+        Assert.Equal(10707, golem.MaxHitPoints);
+        Assert.Equal(685226, golem.HitPointsQ6);
+        Assert.Equal(685226, golem.MaxHitPointsQ6);
+        Assert.Equal(25, golem.ArmorClass);
+        Assert.Equal(12, golem.MonsterLevel);
+        Assert.Equal(24, golem.AttackDamage);
+        Assert.Equal(16, golem.MinDamage);
+        Assert.Equal(24, golem.MaxDamage);
+        Assert.Equal(16, golem.MinDamageSpecial);
+        Assert.Equal(24, golem.MaxDamageSpecial);
+        Assert.Equal(1443805422U, golem.MonsterItemSeed);
+        Assert.Equal(1058065735U, golem.MonsterAiSeed);
+        Assert.Equal(12, golem.DeathAnimationTicks);
+        Assert.Equal("Golem", golem.NativeAi);
+        Assert.Equal(1058065735U, result.FinalSnapshot.RandomState);
+    }
+
+    [Fact]
     public void JesterFireboltFixtureMatchesNativeDispatchState()
     {
         var fixture = LoadReplayFixture("gameplay-jester-firebolt-resolution.json");
