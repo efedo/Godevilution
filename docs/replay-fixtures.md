@@ -397,17 +397,16 @@ Lightning bolt movement, impact segments, and canonical projectile hashing.
 `gameplay-chain-lightning-secondary-cast-primary-player.json` adds the hostile
 secondary-caster case with a concurrent primary controller, checking stable
 controller ordering, caster-owned mana and bolts, and primary-player impact in
-both runners. Native Chain controllers advance in entity-ID order in their
-original pre-Immolation phase. Chain bolts and Chain-owned spell-16 segments
-advance in entity-ID order in a distinct post-Fireball/Bone Spirit phase,
-including projectiles created during that pass. Ordinary Lightning and
-non-Chain segments remain in the later Lightning phase. Mixed Chain-versus-
-Fireball regressions pin the controller-before-Fireball and Fireball-before-
-bolt cases, with their RNG, allocation, and damage effects. Global
-controller/bolt interleaving across the two phases remains a separate
-deterministic-scheduler seam. Absent owners and non-Chain-Lightning spell IDs
-are discarded before bolt creation or advancement. The primary Chain Lightning
-fixture continues to cover the multi-target crawl fan-out.
+both runners. The compact replay scheduler merges Chain controllers, Chain
+bolts and spell-16 segments with Fireballs, Bone Spirits, ordinary Lightning,
+and Lightning segments by entity ID; it rescans after each item so newly
+created higher-ID missiles advance later in the same tick. This models native
+`ProcessMissiles()` traversal of the missile list, including appended entries.
+Paired managed/native regressions cover a lower-ID pre-existing Chain bolt
+before higher-ID controllers and before a higher-ID Fireball, reversed storage,
+new segment allocation, damage, and final RNG. Invalid Chain owner, spell, and
+level states are discarded before lifetime or RNG work. The primary Chain
+Lightning fixture continues to cover the multi-target crawl fan-out.
 
 `gameplay-immolation-radial-fan-resolution.json` covers the player Immolation
 cast, including the one-tick controller, deterministic radial fan ordering,

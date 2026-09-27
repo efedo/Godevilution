@@ -2,6 +2,12 @@
 
 All notable changes to this fork are documented below.
 
+- Closed the compact replay Chain Lightning scheduler seam: controllers, bolts,
+  spell-16 segments, Fireballs, Bone Spirits, and ordinary Lightning now share
+  entity-ID ordering, including same-tick creations. Managed and native
+  regressions pin both inverse-ID cases and invalid owner/spell/level rejection
+  before Chain lifetime or RNG work.
+
 - Extended the shared replay gate to 392 fixtures and 417 native tests with
   Elemental geometry and occupancy coverage. Production C# and compact native
   replay now agree on map-edge and missile-wall collision, Solid-only burst

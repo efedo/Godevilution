@@ -14194,12 +14194,13 @@ public sealed class DiabloCombatCommandProcessor
         AuthoritativeProjectile projectile,
         IReadOnlyList<AuthoritativePlayerState> players)
     {
+        var isChainLightningBolt =
+            projectile.Behavior == AuthoritativeProjectileBehavior.ChainLightningBolt;
         if (!spells.TryGet(projectile.SpellId, out var spell)
             || spell.ProjectileBehavior is not (
                 AuthoritativeProjectileBehavior.Lightning
                 or AuthoritativeProjectileBehavior.ChainLightningController)
-            || (projectile.Behavior == AuthoritativeProjectileBehavior.ChainLightningBolt
-                && projectile.SpellId != 16)) {
+            || (isChainLightningBolt && projectile.SpellId != 16)) {
             world.Projectiles.Remove(projectile.EntityId);
             return;
         }
@@ -14210,7 +14211,9 @@ public sealed class DiabloCombatCommandProcessor
             return;
         }
         var owner = players.FirstOrDefault(candidate => IsProjectileOwner(projectile, candidate));
-        if (owner is null) {
+        if (owner is null
+            || (isChainLightningBolt
+                && owner.LevelId != projectile.LevelId)) {
             world.Projectiles.Remove(projectile.EntityId);
             return;
         }
@@ -14286,15 +14289,18 @@ public sealed class DiabloCombatCommandProcessor
         AuthoritativeProjectile controller,
         IReadOnlyList<AuthoritativePlayerState> players)
     {
-        controller.RemainingTicks--;
-
         var owner = players.FirstOrDefault(player => IsProjectileOwner(controller, player));
-        if (owner is null
-            || !spells.TryGet(controller.SpellId, out var spell)
+        if (owner is null || owner.LevelId != controller.LevelId) {
+            world.Projectiles.Remove(controller.EntityId);
+            return;
+        }
+        if (!spells.TryGet(controller.SpellId, out var spell)
             || spell.ProjectileBehavior != AuthoritativeProjectileBehavior.ChainLightningController) {
             world.Projectiles.Remove(controller.EntityId);
             return;
         }
+
+        controller.RemainingTicks--;
 
         var targets = new List<(int X, int Y)> {
             (controller.TargetX, controller.TargetY),
@@ -15053,6 +15059,19 @@ public sealed class DiabloCombatCommandProcessor
         IReadOnlyList<AuthoritativePlayerState> players,
         ICollection<DiabloDirectedGameplayEvent> events)
     {
+        if (projectile.SpellId == 16) {
+            var owner = players.FirstOrDefault(player => IsProjectileOwner(projectile, player));
+            if (owner is null || owner.LevelId != projectile.LevelId) {
+                world.Projectiles.Remove(projectile.EntityId);
+                return;
+            }
+            if (!spells.TryGet(projectile.SpellId, out var spell)
+                || spell.ProjectileBehavior != AuthoritativeProjectileBehavior.ChainLightningController) {
+                world.Projectiles.Remove(projectile.EntityId);
+                return;
+            }
+        }
+
         projectile.RemainingTicks--;
         if (projectile.PositionX != projectile.StartX
             || projectile.PositionY != projectile.StartY) {

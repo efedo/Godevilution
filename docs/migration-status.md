@@ -67,17 +67,15 @@ unpopulated, so those optional branches are not claimed by its hashes.
 Secondary-participant Chain Lightning now casts through the primary-player
 boundary in both replay runners. The native replay admits spell 16 from the
 secondary memorized loadout and carries the actual caster into the controller
-and bolts. Chain controllers advance in entity-ID order in the original
-pre-Immolation phase. Chain bolts and spell-16 segments advance in a distinct,
-entity-ID-ordered phase after Fireball and Bone Spirit, including projectiles
-created during that pass. Ordinary Lightning remains in its later phase.
-Invalid owner/spell controllers are removed before RNG or bolt creation;
-invalid bolts are removed before decrement, RNG, or movement. Shared
-checkpoints cover caster mana/facing, bolt creation and RNG order, primary
-collision, and the concurrent primary/secondary controller case. Mixed-family
-regressions pin both Chain-versus-Fireball phase orders and RNG boundaries;
-global controller/bolt interleaving across these phases remains a separate
-deterministic-scheduler follow-up.
+and bolts. The compact replay scheduler now advances Chain controllers, bolts,
+spell-16 segments, Fireballs, Bone Spirits, and ordinary Lightning in global
+entity-ID order, then rescans so newly created higher-ID missiles run later in
+the same tick. This matches production's ordered dynamic projectile queue and
+native `ProcessMissiles()` list traversal. Invalid Chain owner/spell/level
+states are removed before lifetime, RNG, or bolt creation. Shared checkpoints
+cover caster mana/facing, bolt creation and RNG order, primary collision, and
+the concurrent primary/secondary controller case; paired managed/native mixed
+order regressions pin both inverse-ID cases and final RNG state.
 
 Secondary-participant Flame Wave casts now cross the primary-player boundary in
 both replay runners. The compact native projection admits spell 15 from the

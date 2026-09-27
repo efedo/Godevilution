@@ -1436,7 +1436,7 @@ public sealed class ReplayFixtureTests
     }
 
     [Fact]
-    public void ChainLightningControllersAdvanceInEntityOrderBeforeDeferredBolts()
+    public void ChainLightningControllersAndPreexistingBoltsAdvanceInGlobalEntityOrder()
     {
         var sourceFixture = LoadReplayFixture("gameplay-chain-lightning-secondary-cast-primary-player.json");
         var fixture = sourceFixture with {
@@ -1453,7 +1453,26 @@ public sealed class ReplayFixtureTests
             File.ReadAllText(Path.Combine(FindRepositoryRoot(), "server", "content", "base", "classes.tsv")));
         var projectiles = new AuthoritativeProjectile[] {
             new(
-                0x80000011,
+                0x80000010,
+                1,
+                0,
+                16,
+                initial.LevelId,
+                initial.PositionX,
+                initial.PositionY,
+                20,
+                10,
+                0,
+                AuthoritativeDamageType.Lightning,
+                0,
+                256) {
+                Behavior = AuthoritativeProjectileBehavior.ChainLightningBolt,
+                VelocityX = 32 << 16,
+                Speed = 32,
+                ResistantDamageDivisor = 4,
+            },
+            new(
+                0x80000012,
                 1,
                 0,
                 16,
@@ -1471,7 +1490,7 @@ public sealed class ReplayFixtureTests
                 ResistantDamageDivisor = 4,
             },
             new(
-                0x80000010,
+                0x80000011,
                 1,
                 0,
                 16,
@@ -1523,17 +1542,19 @@ public sealed class ReplayFixtureTests
         Assert.DoesNotContain(result.FinalSnapshot.Projectiles, projectile =>
             projectile.Behavior == (int)AuthoritativeProjectileBehavior.ChainLightningController);
         var lowerControllerBolt = Assert.Single(result.FinalSnapshot.Projectiles, projectile =>
-            projectile.EntityId == 0x80000012);
+            projectile.EntityId == 0x80000014);
         Assert.Equal(5, lowerControllerBolt.TargetY);
         var higherControllerBolt = Assert.Single(result.FinalSnapshot.Projectiles, projectile =>
-            projectile.EntityId == 0x80000013);
+            projectile.EntityId == 0x80000015);
         Assert.Equal(7, higherControllerBolt.TargetY);
-        Assert.Equal(2, result.FinalSnapshot.Projectiles.Count(projectile =>
+        Assert.Equal(3, result.FinalSnapshot.Projectiles.Count(projectile =>
             projectile.Behavior == (int)AuthoritativeProjectileBehavior.ChainLightningBolt));
-        Assert.Equal(2, result.FinalSnapshot.Projectiles.Count(projectile =>
+        Assert.Equal(3, result.FinalSnapshot.Projectiles.Count(projectile =>
             projectile.Behavior == (int)AuthoritativeProjectileBehavior.LightningSegment
                 && projectile.SpellId == 16));
-        Assert.Equal(3657601072U, result.FinalSnapshot.RandomState);
+        Assert.Equal(5U, Assert.Single(result.FinalSnapshot.Projectiles, projectile =>
+            projectile.EntityId == 0x80000013).RemainingTicks);
+        Assert.Equal(1914036127U, result.FinalSnapshot.RandomState);
     }
 
     [Fact]
@@ -1659,7 +1680,7 @@ public sealed class ReplayFixtureTests
     }
 
     [Fact]
-    public void LowerIdFireballBeforeHigherIdChainBoltMatchesNativeRngOrder()
+    public void ChainLightningBoltsInterleaveWithFireballByEntityId()
     {
         var sourceFixture = LoadReplayFixture("gameplay-chain-lightning-secondary-cast-primary-player.json");
         var initial = sourceFixture.InitialState with {
@@ -1701,7 +1722,7 @@ public sealed class ReplayFixtureTests
             levelId: initial.LevelId);
         var projectiles = new AuthoritativeProjectile[] {
             new(
-                0x80000011,
+                0x80000012,
                 1,
                 0,
                 16,
@@ -1719,7 +1740,7 @@ public sealed class ReplayFixtureTests
                 ResistantDamageDivisor = 4,
             },
             new(
-                0x80000010,
+                0x80000011,
                 1,
                 0,
                 12,
@@ -1736,6 +1757,24 @@ public sealed class ReplayFixtureTests
                 VelocityX = 16 << 16,
                 VelocityY = 8 << 16,
                 Speed = 16,
+                ResistantDamageDivisor = 4,
+            },
+            new(
+                0x80000010,
+                1,
+                0,
+                16,
+                initial.LevelId,
+                11,
+                10,
+                20,
+                10,
+                0,
+                AuthoritativeDamageType.Lightning,
+                0,
+                256) {
+                Behavior = AuthoritativeProjectileBehavior.ChainLightningBolt,
+                VelocityX = 32 << 16,
                 ResistantDamageDivisor = 4,
             },
         };
@@ -1773,20 +1812,26 @@ public sealed class ReplayFixtureTests
         Assert.Equal(96, Assert.Single(result.FinalSnapshot.Monsters).HitPoints);
         Assert.Equal((int)AuthoritativeProjectilePhase.Impact, Assert.Single(
             result.FinalSnapshot.Projectiles,
-            projectile => projectile.EntityId == 0x80000010).Phase);
+            projectile => projectile.EntityId == 0x80000011).Phase);
         var existingBolt = Assert.Single(result.FinalSnapshot.Projectiles, projectile =>
-            projectile.EntityId == 0x80000011);
+            projectile.EntityId == 0x80000010);
         Assert.Equal(254U, existingBolt.RemainingTicks);
-        var spawnedSegment = Assert.Single(result.FinalSnapshot.Projectiles, projectile =>
+        var laterBolt = Assert.Single(result.FinalSnapshot.Projectiles, projectile =>
             projectile.EntityId == 0x80000012);
-        Assert.Equal((int)AuthoritativeProjectileBehavior.LightningSegment, spawnedSegment.Behavior);
-        Assert.Equal(5U, spawnedSegment.RemainingTicks);
-        Assert.Equal(128, spawnedSegment.Damage);
-        Assert.Equal(1065698479U, result.FinalSnapshot.RandomState);
+        Assert.Equal(254U, laterBolt.RemainingTicks);
+        var firstSegment = Assert.Single(result.FinalSnapshot.Projectiles, projectile =>
+            projectile.EntityId == 0x80000013);
+        Assert.Equal((int)AuthoritativeProjectileBehavior.LightningSegment, firstSegment.Behavior);
+        Assert.Equal(5U, firstSegment.RemainingTicks);
+        var secondSegment = Assert.Single(result.FinalSnapshot.Projectiles, projectile =>
+            projectile.EntityId == 0x80000014);
+        Assert.Equal((int)AuthoritativeProjectileBehavior.LightningSegment, secondSegment.Behavior);
+        Assert.Equal(5U, secondSegment.RemainingTicks);
+        Assert.Equal(3647662738U, result.FinalSnapshot.RandomState);
     }
 
     [Fact]
-    public void ChainLightningBoltsRejectInvalidOwnersAndSpellIdsBeforeAdvancement()
+    public void ChainLightningProjectilesRejectInvalidOwnerSpellAndLevelBeforeAdvancement()
     {
         var sourceFixture = LoadReplayFixture("gameplay-chain-lightning-secondary-cast-primary-player.json");
         var fixture = sourceFixture with {
@@ -1801,48 +1846,86 @@ public sealed class ReplayFixtureTests
         var classes = AuthoritativePlayerClassCatalog.LoadTsv(
             "classes.tsv",
             File.ReadAllText(Path.Combine(FindRepositoryRoot(), "server", "content", "base", "classes.tsv")));
+        AuthoritativeProjectile CreateInvalidProjectile(
+            uint entityId,
+            uint sourceEntityId,
+            uint spellId,
+            uint levelId,
+            AuthoritativeProjectileBehavior behavior)
+        {
+            return new AuthoritativeProjectile(
+                entityId,
+                sourceEntityId,
+                0,
+                spellId,
+                levelId,
+                initial.PositionX,
+                initial.PositionY,
+                20,
+                10,
+                behavior == AuthoritativeProjectileBehavior.LightningSegment ? 128 : 0,
+                AuthoritativeDamageType.Lightning,
+                0,
+                256) {
+                Behavior = behavior,
+                VelocityX = 32 << 16,
+                Speed = behavior == AuthoritativeProjectileBehavior.ChainLightningBolt ? 32 : 0,
+                ResistantDamageDivisor = 4,
+            };
+        }
         var projectiles = new[] {
-            new AuthoritativeProjectile(
+            CreateInvalidProjectile(
                 0x80000010,
                 99,
-                0,
                 16,
                 initial.LevelId,
-                initial.PositionX,
-                initial.PositionY,
-                20,
-                10,
-                0,
-                AuthoritativeDamageType.Lightning,
-                0,
-                256) {
-                Behavior = AuthoritativeProjectileBehavior.ChainLightningBolt,
-                VelocityX = 32 << 16,
-                Speed = 32,
-                ResistantDamageDivisor = 4,
-            },
-            new AuthoritativeProjectile(
+                AuthoritativeProjectileBehavior.ChainLightningController),
+            CreateInvalidProjectile(
                 0x80000011,
                 1,
-                0,
                 3,
                 initial.LevelId,
-                initial.PositionX,
-                initial.PositionY,
-                20,
-                10,
-                0,
-                AuthoritativeDamageType.Lightning,
-                0,
-                256) {
-                Behavior = AuthoritativeProjectileBehavior.ChainLightningBolt,
-                VelocityX = 32 << 16,
-                Speed = 32,
-                ResistantDamageDivisor = 4,
-            },
+                AuthoritativeProjectileBehavior.ChainLightningController),
+            CreateInvalidProjectile(
+                0x80000012,
+                1,
+                16,
+                checked(initial.LevelId + 1),
+                AuthoritativeProjectileBehavior.ChainLightningController),
+            CreateInvalidProjectile(
+                0x80000013,
+                99,
+                16,
+                initial.LevelId,
+                AuthoritativeProjectileBehavior.ChainLightningBolt),
+            CreateInvalidProjectile(
+                0x80000014,
+                1,
+                3,
+                initial.LevelId,
+                AuthoritativeProjectileBehavior.ChainLightningBolt),
+            CreateInvalidProjectile(
+                0x80000015,
+                1,
+                16,
+                checked(initial.LevelId + 1),
+                AuthoritativeProjectileBehavior.ChainLightningBolt),
+            CreateInvalidProjectile(
+                0x80000016,
+                99,
+                16,
+                initial.LevelId,
+                AuthoritativeProjectileBehavior.LightningSegment),
+            CreateInvalidProjectile(
+                0x80000017,
+                1,
+                16,
+                checked(initial.LevelId + 1),
+                AuthoritativeProjectileBehavior.LightningSegment),
         };
         var world = new AuthoritativeWorld();
         world.AddLevel(new AuthoritativeLevel(initial.LevelId, 40, 40));
+        world.AddLevel(new AuthoritativeLevel(checked(initial.LevelId + 1), 40, 40));
         var executor = new StoreSimulationExecutor(
             new StoreCatalog(),
             initial.Gold,
