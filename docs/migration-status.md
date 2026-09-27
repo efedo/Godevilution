@@ -2,8 +2,21 @@
 
 Status date: 2026-09-27
 
-The shared replay gate now contains 390 checked-in fixtures and 415 registered
+The shared replay gate now contains 391 checked-in fixtures and 416 registered
 native tests.
+
+Secondary-participant Nova now crosses the primary-player boundary in both
+replay runners and in the production authoritative server path. The cast uses
+the secondary Sorcerer's class, Magic, character level, memorized spell level,
+mana, facing, and source identity, then allocates the native 36-ball fan in
+stable entity order with one native animation RNG draw per ball. Movement also
+preserves the native center-shrine exception. Player collision preserves
+`Plr2PlrMHit` hit/block/damage RNG order, half-Q6 damage, resistance precedence,
+hit recovery, and Hellfire's blocked-missile RNG draw. Exact tick-1 and tick-4
+checkpoints pin cast state, movement, primary damage, secondary resource
+isolation, and final RNG. The fixture is intentionally unresisted and
+unblocked, so those optional branches remain implementation-covered rather
+than hash-covered here.
 
 Secondary-participant Golem now crosses the summon boundary in both replay
 runners. The compact native cast lane uses the secondary participant's

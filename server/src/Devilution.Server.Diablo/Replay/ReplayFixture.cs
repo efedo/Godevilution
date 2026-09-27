@@ -303,6 +303,8 @@ public sealed record ReplayInitialState(string Player, uint Gold, uint Experienc
 
     public bool ObjectDestroyed { get; init; }
 
+    public bool ObjectIsShrine { get; init; }
+
     public uint CombatTargetEntityId { get; init; }
 
     public uint CombatTargetLevelId { get; init; }

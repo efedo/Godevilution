@@ -2,6 +2,15 @@
 
 All notable changes to this fork are documented below.
 
+- Extended the shared replay gate to 391 fixtures and 416 native tests with a
+  secondary Sorcerer's Nova cast through the primary-player boundary. The
+  production server and compact native runner now preserve secondary caster
+  ownership, spell level, mana, facing, 36-ball ordering, native skipped-tile
+  movement, per-ball animation RNG draws, center-shrine retention, and
+  `Plr2PlrMHit` RNG/damage/block/resistance ordering. Exact tick-1 and tick-4
+  hashes pin primary Q6 damage, secondary resource isolation, and final RNG
+  across both runtimes.
+
 - Extended the shared replay gate to 390 fixtures and 415 native tests with a
   secondary Sorcerer's Golem summon. The compact native runner now carries the
   actual secondary owner, level, mana maximum, spell level, mana, facing, and

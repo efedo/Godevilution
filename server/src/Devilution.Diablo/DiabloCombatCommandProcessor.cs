@@ -4484,7 +4484,7 @@ public sealed class DiabloCombatCommandProcessor
         };
     }
 
-    private static AuthoritativeProjectile CreateNovaBall(
+    private AuthoritativeProjectile CreateNovaBall(
         uint projectileEntityId,
         AuthoritativeProjectile controller,
         AuthoritativeSpellDefinition spell,
@@ -4502,7 +4502,7 @@ public sealed class DiabloCombatCommandProcessor
             targetX,
             targetY,
             spell.ProjectileSpeed);
-        return new AuthoritativeProjectile(
+        var ball = new AuthoritativeProjectile(
             projectileEntityId,
             controller.SourceEntityId,
             0,
@@ -4524,6 +4524,8 @@ public sealed class DiabloCombatCommandProcessor
             ResistantDamageDivisor = spell.ResistantDamageDivisor,
             EffectiveSpellLevel = controller.EffectiveSpellLevel,
         };
+        _ = random.RandomIntBetween(1, 8);
+        return ball;
     }
 
     private AuthoritativeProjectile CreateApocalypseController(
@@ -11753,7 +11755,7 @@ public sealed class DiabloCombatCommandProcessor
                     continue;
                 }
                 if (projectile.Behavior == AuthoritativeProjectileBehavior.NovaController) {
-                    AdvanceNovaController(projectile);
+                    AdvanceNovaController(projectile, players);
                     continue;
                 }
                 if (projectile.Behavior == AuthoritativeProjectileBehavior.ApocalypseController) {
@@ -14326,14 +14328,19 @@ public sealed class DiabloCombatCommandProcessor
         world.Projectiles.Remove(controller.EntityId);
     }
 
-    private void AdvanceNovaController(AuthoritativeProjectile controller)
+    private void AdvanceNovaController(
+        AuthoritativeProjectile controller,
+        IReadOnlyList<AuthoritativePlayerState> players)
     {
-        controller.RemainingTicks--;
-        if (!spells.TryGet(controller.SpellId, out var spell)
+        var owner = players.FirstOrDefault(player => IsProjectileOwner(controller, player));
+        if (owner is null
+            || !spells.TryGet(controller.SpellId, out var spell)
             || spell.ProjectileBehavior != AuthoritativeProjectileBehavior.NovaController) {
             world.Projectiles.Remove(controller.EntityId);
             return;
         }
+
+        controller.RemainingTicks--;
 
         foreach (var offset in CreateRadialProjectileOffsets(
                      spell.NovaSearchRadius,
@@ -14518,12 +14525,30 @@ public sealed class DiabloCombatCommandProcessor
                 return;
             }
 
-            if (world.IsMissileBlocked(
-                    projectile.LevelId,
-                    tile.X,
-                    tile.Y)) {
-                var isTargetShrine = tile.X == projectile.TargetX
-                    && tile.Y == projectile.TargetY
+            var target = FindProjectileTarget(projectile.LevelId, tile.X, tile.Y);
+            if (target is not null
+                && target.EntityId != projectile.LastCollisionTargetEntityId) {
+                _ = TryResolveNovaBallMonsterHit(projectile, target, players, events);
+                projectile.LastCollisionTargetEntityId = target.EntityId;
+            }
+
+            var playerTarget = FindProjectilePlayer(projectile, players, tile.X, tile.Y);
+            if (playerTarget is not null
+                && playerTarget.EntityId != projectile.LastCollisionTargetEntityId) {
+                _ = TryResolveNovaBallPlayerHit(
+                    tick,
+                    projectile,
+                    playerTarget,
+                    players,
+                    events);
+                projectile.LastCollisionTargetEntityId = playerTarget.EntityId;
+            } else if (target is null && playerTarget is null) {
+                projectile.LastCollisionTargetEntityId = 0;
+            }
+
+            if (world.IsMissileBlocked(projectile.LevelId, tile.X, tile.Y)) {
+                var isTargetShrine = tile.X == projectile.StartX
+                    && tile.Y == projectile.StartY
                     && world.TryGetMissileBlockingObject(
                         projectile.LevelId,
                         tile.X,
@@ -14538,16 +14563,13 @@ public sealed class DiabloCombatCommandProcessor
                     world.Projectiles.Remove(projectile.EntityId);
                     return;
                 }
+                // Native movement stops at the blocking target shrine, then
+                // ProcessNovaBall restores the tick's remaining duration.
+                return;
             }
 
-            var target = FindProjectileTarget(projectile.LevelId, tile.X, tile.Y);
-            if (target is not null
-                && target.EntityId != projectile.LastCollisionTargetEntityId) {
-                _ = TryResolveFireboltHit(projectile, target, players, events);
-                projectile.LastCollisionTargetEntityId = target.EntityId;
-            } else if (target is null) {
-                projectile.LastCollisionTargetEntityId = 0;
-            }
+            // Nova restores its duration after a monster/player hit, so native
+            // skipped-tile traversal continues until the final tile or a wall.
         }
     }
 
@@ -16079,6 +16101,131 @@ public sealed class DiabloCombatCommandProcessor
             return true;
         } else {
             stopsProjectile = true;
+        }
+
+        var damageResult = playerDamage.Apply(target, Math.Max(0, damageQ6));
+        if (damageResult.IncomingDamageQ6 > 0) {
+            events.Add(new DiabloDirectedGameplayEvent(
+                target,
+                new DiabloGameplayEvent(
+                    DiabloGameplayEventKind.Damage,
+                    owner.EntityId,
+                    target.EntityId,
+                    DeterministicFixedPointQ6.ToWholeTruncated(damageResult.IncomingDamageQ6)) {
+                    AmountQ6 = damageResult.IncomingDamageQ6,
+                }));
+        }
+        if (target.Life == 0) {
+            StartPlayerDeath(
+                target,
+                owner.EntityId,
+                tick,
+                players,
+                PlayerDeathReason.Player);
+        } else if (resistance == 0
+            && ShouldStartHit(target, targetClass, damageQ6)) {
+            StartHit(target, targetClass, tick);
+        }
+        return true;
+    }
+
+    /** Resolves NovaBall's native zero-distance MonsterMHit damage path. */
+    private bool TryResolveNovaBallMonsterHit(
+        AuthoritativeProjectile projectile,
+        AuthoritativeCombatTarget target,
+        IReadOnlyList<AuthoritativePlayerState> players,
+        ICollection<DiabloDirectedGameplayEvent> events)
+    {
+        var resistance = GetMonsterResistance(target, projectile.DamageType);
+        if (resistance >= 100)
+            return false;
+        var owner = players.FirstOrDefault(candidate => IsProjectileOwner(projectile, candidate));
+        if (owner is null)
+            return false;
+
+        var ownerClass = GetPlayerClass(owner);
+        // Native Nova balls never increment Missile::_midist, so MonsterMHit's
+        // distance penalty is zero for this projectile family.
+        var hitChance = Math.Clamp(
+            owner.Attributes.Magic.Current
+                + (ownerClass?.BaseMagicToHit ?? 50)
+                - GetEffectiveMonsterLevel(target) * 2,
+            5,
+            95);
+        var hitRoll = random.RandomIntLessThan(100);
+        if (!target.IsPetrified && hitRoll >= hitChance)
+            return false;
+
+        // Native MonsterMHit rolls one fixed-width damage value, shifts it to
+        // Q6, and quarters positive elemental resistance.
+        var damageWhole = random.RandomIntBetween(
+            projectile.Damage / DeterministicFixedPointQ6.Scale,
+            projectile.Damage / DeterministicFixedPointQ6.Scale);
+        var damageQ6 = checked(damageWhole * DeterministicFixedPointQ6.Scale);
+        if (resistance > 0)
+            damageQ6 /= Math.Max(projectile.ResistantDamageDivisor, 1);
+
+        var gameplayEvents = new List<DiabloGameplayEvent>();
+        ApplyResolvedDamageQ6(owner, target, damageQ6, gameplayEvents);
+        foreach (var gameplayEvent in gameplayEvents)
+            events.Add(new DiabloDirectedGameplayEvent(owner, gameplayEvent));
+        return true;
+    }
+
+    /** Native NovaBall PvP uses Plr2PlrMHit's non-arrow, unshifted damage path. */
+    private bool TryResolveNovaBallPlayerHit(
+        ulong tick,
+        AuthoritativeProjectile projectile,
+        AuthoritativePlayerState target,
+        IReadOnlyList<AuthoritativePlayerState> players,
+        ICollection<DiabloDirectedGameplayEvent> events)
+    {
+        var owner = players.FirstOrDefault(candidate => IsProjectileOwner(projectile, candidate));
+        if (owner is null
+            || IsPlayerProtectedByFlash(target)
+            || (!rules.FriendlyFire && owner.FriendlyMode)) {
+            return false;
+        }
+
+        var ownerClass = GetPlayerClass(owner);
+        // Native ProcessNovaBall never increments Missile::_midist, so its
+        // Plr2PlrMHit accuracy has no travel-distance penalty.
+        var hitChance = Math.Clamp(
+            owner.Attributes.Magic.Current
+                + (ownerClass?.BaseMagicToHit ?? 50)
+                - checked((int)target.CharacterLevel * rules.PlayerMagicHitCharacterLevelScale),
+            rules.PlayerMagicMinimumHitChance,
+            rules.PlayerMagicMaximumHitChance);
+        if (random.RandomIntLessThan(100) >= hitChance)
+            return false;
+
+        var targetClass = GetPlayerClass(target);
+        var canBlock = (target.CombatMode is DiabloPlayerCombatMode.Stand
+                or DiabloPlayerCombatMode.Attack)
+            && CanBlock(target);
+        var blockRoll = canBlock ? random.RandomIntLessThan(100) : 100;
+        var blockChance = Math.Clamp(
+            target.Attributes.Dexterity.Current
+                + (targetClass?.BaseBlockChance ?? 0)
+                + checked((int)target.CharacterLevel * rules.PvpBlockLevelScale)
+                - checked((int)owner.CharacterLevel * rules.PvpBlockLevelScale),
+            0,
+            100);
+
+        // Nova stores its scaled payload in Q6; native Plr2PlrMHit first rolls
+        // the fixed-width whole damage, then shifts it to Q6 and halves it.
+        var damageRoll = random.RandomIntBetween(
+            projectile.Damage / DeterministicFixedPointQ6.Scale,
+            projectile.Damage / DeterministicFixedPointQ6.Scale);
+        var damageQ6 = checked(damageRoll * 32);
+        var resistance = GetPlayerResistance(target, targetClass, projectile.DamageType);
+        if (resistance > 0) {
+            damageQ6 -= damageQ6 * resistance / 100;
+        } else if (blockRoll < blockChance) {
+            StartBlock(target, targetClass, tick);
+            if (rules.GameVariant == DiabloGameVariant.Hellfire)
+                _ = random.RandomIntLessThan(2);
+            return true;
         }
 
         var damageResult = playerDamage.Apply(target, Math.Max(0, damageQ6));

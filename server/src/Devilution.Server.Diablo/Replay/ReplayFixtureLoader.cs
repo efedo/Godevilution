@@ -87,6 +87,7 @@ public static class ReplayFixtureLoader
                 && (fixture.InitialState.ObjectMissilePassable
                     || fixture.InitialState.ObjectBreakable
                     || fixture.InitialState.ObjectDestroyed
+                    || fixture.InitialState.ObjectIsShrine
                     || fixture.InitialState.ObjectQuestId != 0
                     || fixture.InitialState.ObjectEffectKind != 0
                     || fixture.InitialState.ObjectEffectAmount != 0))
@@ -453,6 +454,7 @@ public static class ReplayFixtureLoader
             ObjectMissilePassable = GetOptionalBool(value, "object_missile_passable"),
             ObjectBreakable = GetOptionalBool(value, "object_breakable"),
             ObjectDestroyed = GetOptionalBool(value, "object_destroyed"),
+            ObjectIsShrine = GetOptionalBool(value, "object_is_shrine"),
             CombatTargetEntityId = GetOptionalUInt(value, "combat_target_entity_id"),
             CombatTargetLevelId = GetOptionalUInt(value, "combat_target_level_id"),
             CombatTargetPositionX = combatTargetPositionX,

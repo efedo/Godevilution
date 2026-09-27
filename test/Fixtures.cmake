@@ -356,6 +356,7 @@ set(devilutionx_fixtures
   replay/gameplay-multiplayer-secondary-monster-warrior-block-chance.json
   replay/gameplay-multiplayer-secondary-portal.json
   replay/gameplay-nova-radial-fan-resolution.json
+  replay/gameplay-nova-secondary-cast-primary-player.json
   replay/gameplay-object-quest.json
   replay/gameplay-phasing-resolution.json
   replay/gameplay-player-action-lifecycle.json

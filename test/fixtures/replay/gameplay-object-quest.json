@@ -22,6 +22,7 @@
     "object_entity_id": 30,
     "object_id": 4,
     "object_quest_id": 40,
+    "object_is_shrine": true,
     "object_position_x": 1,
     "object_position_y": 0,
     "quest_id": 40,
@@ -45,7 +46,7 @@
     }
   ],
   "checkpoints": [
-    { "tick": 1, "state_sha256": "3742a04ff4261c1d94974fa6cb89669216dd31d53df7de0153c16daf57922c3e" },
-    { "tick": 2, "state_sha256": "3742a04ff4261c1d94974fa6cb89669216dd31d53df7de0153c16daf57922c3e" }
+    { "tick": 1, "state_sha256": "ad12d73d222aeddccbd74a3d8ebc3372561a8014173ec38d00d4c12a1427e030" },
+    { "tick": 2, "state_sha256": "ad12d73d222aeddccbd74a3d8ebc3372561a8014173ec38d00d4c12a1427e030" }
   ]
 }

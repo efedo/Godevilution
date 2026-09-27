@@ -974,6 +974,100 @@ public sealed class ReplayFixtureTests
     }
 
     [Fact]
+    public void NovaSecondaryCastUsesSecondaryCasterAndDamagesPrimaryPlayer()
+    {
+        var fixture = LoadReplayFixture("gameplay-nova-secondary-cast-primary-player.json");
+        var initial = fixture.InitialState;
+        var secondary = Assert.IsType<ReplaySecondaryPlayer>(initial.SecondaryPlayer);
+        var prospectiveHitRolls = new DiabloRandom(checked((uint)fixture.RngSeed));
+        for (var castDamageRoll = 0; castDamageRoll < 5; castDamageRoll++)
+            _ = prospectiveHitRolls.RandomIntLessThan(6);
+        for (var projectileAnimationRoll = 0; projectileAnimationRoll < 36; projectileAnimationRoll++)
+            _ = prospectiveHitRolls.RandomIntBetween(1, 8);
+        var prospectiveHitRoll = prospectiveHitRolls.RandomIntLessThan(100);
+        Assert.Equal(87, prospectiveHitRoll);
+        // The secondary Sorcerer's 95% chance hits; incorrectly using the
+        // primary Warrior as caster would give 33% and miss this same roll.
+        Assert.InRange(prospectiveHitRoll, 33, 94);
+        var spells = LoadBaseSpells(fixture);
+        var classes = AuthoritativePlayerClassCatalog.LoadTsv(
+            "classes.tsv",
+            File.ReadAllText(Path.Combine(FindRepositoryRoot(), "server", "content", "base", "classes.tsv")));
+        var world = new AuthoritativeWorld();
+        world.AddLevel(new AuthoritativeLevel(initial.LevelId, 40, 40));
+        var executor = new StoreSimulationExecutor(
+            new StoreCatalog(),
+            initial.Gold,
+            initial.Experience,
+            initial.Life,
+            initial.Mana,
+            startingLifeMaximum: initial.LifeMaximum,
+            startingManaMaximum: initial.ManaMaximum,
+            startingCharacterLevel: initial.CharacterLevel,
+            startingCharacterClassId: checked((uint)initial.CharacterClass),
+            startingPlayerClasses: classes,
+            startingPositionX: initial.PositionX,
+            startingPositionY: initial.PositionY,
+            startingFacingDirection: (DiabloPlayerDirection)initial.FacingDirection,
+            startingLevelId: initial.LevelId,
+            startingAttributes: PlayerAttributesState.Zero with {
+                Magic = new PlayerAttributeState(initial.Magic, initial.Magic),
+            },
+            startingWorld: world,
+            startingSpells: spells,
+            startingCombatRules: CreateReplayCombatRules(fixture),
+            startingRandomSeed: checked((uint)fixture.RngSeed),
+            gameMode: DiabloGameMode.Multiplayer);
+
+        var result = ReplayFixtureExecutor.Execute(
+            fixture,
+            executor,
+            new AuthoritativeCommandServer(executor));
+        var primary = Assert.Single(result.FinalSnapshot.Players, player => player.EntityId == 1);
+        var secondaryState = executor.GetPlayerState(secondary.Player);
+        var projectiles = result.FinalSnapshot.Projectiles
+            .OrderBy(projectile => projectile.EntityId)
+            .ToArray();
+
+        Assert.True(
+            Assert.Single(result.Results).Status == CommandStatus.Accepted,
+            result.Results[0].RejectReason.ToString());
+        Assert.Equal(4UL, result.FinalSnapshot.Tick);
+        Assert.Equal(36, projectiles.Length);
+        Assert.All(projectiles, projectile => {
+            Assert.Equal((int)AuthoritativeProjectileBehavior.NovaBall, projectile.Behavior);
+            Assert.Equal((int)AuthoritativeDamageType.Lightning, projectile.DamageType);
+            Assert.Equal(secondary.EntityId, projectile.SourceEntityId);
+            Assert.Equal(18U, projectile.SpellId);
+            Assert.Equal(3, projectile.EffectiveSpellLevel);
+            Assert.Equal(252U, projectile.RemainingTicks);
+            Assert.Equal(16, projectile.Speed);
+        });
+        Assert.Equal(
+            Enumerable.Range(0, 36).Select(index => 0x80000001U + (uint)index),
+            projectiles.Select(projectile => projectile.EntityId));
+        Assert.Equal((11, 10), (projectiles[0].PositionX, projectiles[0].PositionY));
+        Assert.Equal((2_224_320, 1_112_160), (projectiles[0].TraveledX, projectiles[0].TraveledY));
+        Assert.Equal((741_440, 370_720), (projectiles[0].VelocityX, projectiles[0].VelocityY));
+        Assert.Equal(1U, projectiles[0].LastCollisionTargetEntityId);
+        Assert.Equal((10, 9), (projectiles[^1].PositionX, projectiles[^1].PositionY));
+        Assert.Equal((2_224_320, -1_112_160), (projectiles[^1].TraveledX, projectiles[^1].TraveledY));
+        Assert.Equal((741_440, -370_720), (projectiles[^1].VelocityX, projectiles[^1].VelocityY));
+        Assert.Equal(0U, projectiles[^1].LastCollisionTargetEntityId);
+        Assert.Equal(15392, primary.Life);
+        Assert.Equal(PlayerCombatMode.GotHit, primary.CombatMode);
+        Assert.Equal(9UL, primary.CombatModeEndTick);
+        Assert.Equal(1152, projectiles[0].Damage);
+        Assert.Equal(secondary.Life, secondaryState.Life);
+        Assert.Equal(6544, secondaryState.Mana);
+        Assert.Equal(DiabloPlayerDirection.SouthEast, secondaryState.FacingDirection);
+        Assert.Equal(2_935_866_451U, result.FinalSnapshot.RandomState);
+        Assert.Equal(
+            fixture.Checkpoints.Select(checkpoint => checkpoint.StateSha256),
+            result.Checkpoints.Select(checkpoint => checkpoint.ActualStateSha256));
+    }
+
+    [Fact]
     public void FlameWaveFixtureMatchesNativeBranchAdmissionAndMovement()
     {
         var path = Path.Combine(
@@ -3818,7 +3912,8 @@ public sealed class ReplayFixtureTests
             questId: initial.ObjectQuestId,
             missilePassable: initial.ObjectMissilePassable,
             breakable: initial.ObjectBreakable,
-            destroyed: initial.ObjectDestroyed);
+            destroyed: initial.ObjectDestroyed,
+            isShrine: initial.ObjectIsShrine);
         var executor = new StoreSimulationExecutor(
             new StoreCatalog(),
             initial.Gold,
@@ -4414,7 +4509,10 @@ public sealed class ReplayFixtureTests
                 fixture.InitialState.LevelId,
                 fixture.InitialState.ObjectPositionX,
                 fixture.InitialState.ObjectPositionY,
-                questId: fixture.InitialState.ObjectQuestId)],
+                questId: fixture.InitialState.ObjectQuestId,
+                isShrine: fixture.InitialState.ObjectIsShrine) {
+                PresentationKind = AuthoritativeObjectPresentationKind.Quest,
+            }],
             startingQuests: [new AuthoritativeQuestState(
                 fixture.InitialState.QuestId,
                 fixture.InitialState.LevelId,
@@ -4424,7 +4522,9 @@ public sealed class ReplayFixtureTests
         var result = ReplayFixtureExecutor.Execute(fixture, executor, new AuthoritativeCommandServer(executor));
 
         Assert.Equal([CommandStatus.Accepted, CommandStatus.Rejected], result.Results.Select(command => command.Status));
-        Assert.True(Assert.Single(result.FinalSnapshot.Objects).Activated);
+        var @object = Assert.Single(result.FinalSnapshot.Objects);
+        Assert.True(@object.Activated);
+        Assert.True(@object.IsShrine);
         var quest = Assert.Single(result.FinalSnapshot.Quests);
         Assert.Equal(1U, quest.Progress);
         Assert.True(quest.Completed);
@@ -7025,7 +7125,8 @@ public sealed class ReplayFixtureTests
             initial.ObjectPositionY,
             missilePassable: initial.ObjectMissilePassable,
             breakable: initial.ObjectBreakable,
-            destroyed: initial.ObjectDestroyed);
+            destroyed: initial.ObjectDestroyed,
+            isShrine: initial.ObjectIsShrine);
         var catalog = new StoreCatalog();
         catalog.AddStore(1, []);
         var executor = new StoreSimulationExecutor(
@@ -7089,7 +7190,8 @@ public sealed class ReplayFixtureTests
             initial.ObjectPositionY,
             missilePassable: initial.ObjectMissilePassable,
             breakable: initial.ObjectBreakable,
-            destroyed: initial.ObjectDestroyed);
+            destroyed: initial.ObjectDestroyed,
+            isShrine: initial.ObjectIsShrine);
         var catalog = new StoreCatalog();
         catalog.AddStore(1, []);
         var executor = new StoreSimulationExecutor(
@@ -7748,7 +7850,8 @@ public sealed class ReplayFixtureTests
             questId: initial.ObjectQuestId,
             missilePassable: initial.ObjectMissilePassable,
             breakable: initial.ObjectBreakable,
-            destroyed: initial.ObjectDestroyed);
+            destroyed: initial.ObjectDestroyed,
+            isShrine: initial.ObjectIsShrine);
         var catalog = new StoreCatalog();
         catalog.AddStore(1, []);
         var executor = new StoreSimulationExecutor(
@@ -10128,7 +10231,8 @@ public sealed class ReplayFixtureTests
             questId: fixture.InitialState.ObjectQuestId,
             missilePassable: fixture.InitialState.ObjectMissilePassable,
             breakable: fixture.InitialState.ObjectBreakable,
-            destroyed: fixture.InitialState.ObjectDestroyed);
+            destroyed: fixture.InitialState.ObjectDestroyed,
+            isShrine: fixture.InitialState.ObjectIsShrine);
         var catalog = new StoreCatalog();
         catalog.AddStore(1, []);
         var executor = new StoreSimulationExecutor(
@@ -14765,7 +14869,8 @@ public sealed class ReplayFixtureTests
                 questId: fixture.InitialState.ObjectQuestId,
                 missilePassable: fixture.InitialState.ObjectMissilePassable,
                 breakable: fixture.InitialState.ObjectBreakable,
-                destroyed: fixture.InitialState.ObjectDestroyed)];
+                destroyed: fixture.InitialState.ObjectDestroyed,
+                isShrine: fixture.InitialState.ObjectIsShrine)];
         var catalog = new StoreCatalog();
         catalog.AddStore(1, []);
         return new StoreSimulationExecutor(
@@ -14871,7 +14976,8 @@ public sealed class ReplayFixtureTests
                     questId: initial.ObjectQuestId,
                     missilePassable: initial.ObjectMissilePassable,
                     breakable: initial.ObjectBreakable,
-                    destroyed: initial.ObjectDestroyed)],
+                    destroyed: initial.ObjectDestroyed,
+                    isShrine: initial.ObjectIsShrine)],
             startingSpells: spells,
             startingPositionX: initial.PositionX,
             startingPositionY: initial.PositionY,

@@ -22895,7 +22895,7 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
-    public void NovaBallSurvivesItsTargetShrineCollision()
+    public void NovaBallSurvivesItsNativeCenterShrineCollision()
     {
         var shrine = new AuthoritativeWorldObject(
             20,
@@ -22913,7 +22913,7 @@ public sealed class DiabloCombatCommandProcessorTests
             0,
             2,
             2,
-            2,
+            3,
             2,
             1,
             AuthoritativeDamageType.Lightning,
@@ -23006,6 +23006,61 @@ public sealed class DiabloCombatCommandProcessorTests
 
         Assert.True(blocker.Destroyed);
         Assert.Empty(world.Projectiles);
+    }
+
+    [Fact]
+    public void NovaBallUsesNativePlayerBlockResolution()
+    {
+        var projectile = CreateStationaryNovaBall(1, 1);
+        var world = new DiabloWorldState(projectiles: [projectile]);
+        var processor = CreateProcessor(world, random: new DiabloRandom(0));
+        var owner = CreatePlayer(
+            entityId: 7,
+            attributes: PlayerAttributesState.Zero with {
+                Magic = new PlayerAttributeState(100, 100),
+            });
+        var victim = CreateBlockingVictim();
+
+        Assert.Empty(processor.AdvanceTick(1, [owner, victim]));
+
+        Assert.Equal(640, victim.Life);
+        Assert.Equal(DiabloPlayerCombatMode.Block, victim.CombatMode);
+        Assert.Equal(8U, projectile.LastCollisionTargetEntityId);
+    }
+
+    [Fact]
+    public void NovaBallResistanceOverridesBlockAndUsesNativePercentageDamage()
+    {
+        var projectile = CreateStationaryNovaBall(1, 1);
+        var world = new DiabloWorldState(projectiles: [projectile]);
+        var processor = CreateProcessor(world, random: new DiabloRandom(0));
+        var owner = CreatePlayer(
+            entityId: 7,
+            attributes: PlayerAttributesState.Zero with {
+                Magic = new PlayerAttributeState(100, 100),
+            });
+        var resistantShield = AuthoritativeItemState.Empty with {
+            ItemType = 5,
+            StatFlag = true,
+            PlusLightningResistance = 25,
+        };
+        var victim = CreatePlayer(
+            positionX: 1,
+            positionY: 1,
+            life: 640,
+            lifeMaximum: 640,
+            entityId: 8,
+            attributes: PlayerAttributesState.Zero with {
+                Dexterity = new PlayerAttributeState(100, 100),
+            },
+            equipment: [new EquippedStoreItem(5, 99, resistantShield)]);
+
+        var damage = Assert.Single(processor.AdvanceTick(1, [owner, victim])).Event;
+
+        Assert.Equal(592, victim.Life);
+        Assert.Equal(48, damage.AmountQ6);
+        Assert.Equal(DiabloPlayerCombatMode.Stand, victim.CombatMode);
+        Assert.Equal(8U, projectile.LastCollisionTargetEntityId);
     }
 
     [Fact]
@@ -28231,6 +28286,30 @@ public sealed class DiabloCombatCommandProcessorTests
             PathTicks = 1,
             Speed = 8,
             ImpactLifetime = 8,
+            ResistantDamageDivisor = 4,
+        };
+    }
+
+    private static AuthoritativeProjectile CreateStationaryNovaBall(
+        int positionX,
+        int positionY,
+        uint entityId = 0x80000000)
+    {
+        return new AuthoritativeProjectile(
+            entityId,
+            7,
+            0,
+            18,
+            0,
+            positionX,
+            positionY,
+            positionX,
+            positionY,
+            128,
+            AuthoritativeDamageType.Lightning,
+            0,
+            2) {
+            Behavior = AuthoritativeProjectileBehavior.NovaBall,
             ResistantDamageDivisor = 4,
         };
     }

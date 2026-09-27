@@ -266,6 +266,15 @@ creation, persistent segment lifetime, and canonical projectile hashing.
 including the one-tick controller, native 36-ball radial fan ordering,
 first-tick movement, and canonical projectile hashing.
 
+`gameplay-nova-secondary-cast-primary-player.json` covers a secondary
+Sorcerer's learned Nova cast through the primary-player boundary. The tick-1
+checkpoint pins secondary-owned spell admission, mana, facing, damage, and the
+one-tick controller; tick 4 pins the 36-ball fan, per-ball animation RNG draws,
+native skipped-tile movement, primary-player damage and hit recovery, owner
+exclusion, stable projectile identities, and final RNG. The seeded hit roll
+distinguishes the secondary caster's Magic and level from the primary
+participant's state.
+
 The Lightning Wall, Ring of Fire, Nova, and Flame Wave runners load the
 validated base `spells.tsv` catalog and check the active `devilution.base`
 manifest identity.
@@ -630,7 +639,7 @@ The compact native replay projection now carries the same server-owned corpse
 tile representation and per-tick monster regeneration as the C# checkpoints.
 Ordinary-death and Firebolt, Fireball, Lightning, Flash, and Elemental
 spell/projectile-timeline checkpoints pass in both runners. As of 2026-09-27,
-the native replay gate contains 390 checked-in JSON fixtures and 415 registered
+the native replay gate contains 391 checked-in JSON fixtures and 416 registered
 tests; the test count also includes parser and validation cases that do not
 introduce another fixture file. Coverage includes seeded and autonomous MonsterArrow
 source coverage, Hellfire HorkDemon Hork Spawn admission, player impact, and

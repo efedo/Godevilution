@@ -905,10 +905,10 @@ void AppendCanonicalState(ReplayStateHasher &hasher, const ReplayFixtureExecutio
 		// Managed object snapshots derive the semantic presentation family from
 		// the same authoritative behavior flags before hashing. Compact replay
 		// state has no separate presentation field, so reproduce that identity
-		// at the boundary for quest, breakable, and trap objects.
-		if (state.objectQuestId != 0 || state.objectBreakable || state.objectTrapArmed) {
+		// at the boundary for shrine, quest, breakable, and trap objects.
+		if (state.objectIsShrine || state.objectQuestId != 0 || state.objectBreakable || state.objectTrapArmed) {
 			hasher.AppendString("godevilution-object-presentation-family-v1");
-			hasher.AppendInt32(state.objectQuestId != 0 ? 3 : state.objectBreakable ? 4 : 5);
+			hasher.AppendInt32(state.objectIsShrine ? 2 : state.objectQuestId != 0 ? 3 : state.objectBreakable ? 4 : 5);
 		}
 		if (state.objectQuestId != 0) {
 			hasher.AppendString("godevilution-object-quest-v1");
@@ -917,6 +917,10 @@ void AppendCanonicalState(ReplayStateHasher &hasher, const ReplayFixtureExecutio
 		if (state.objectQuestProgressAmount != 1) {
 			hasher.AppendString("godevilution-object-quest-progress-v1");
 			hasher.AppendUint32(state.objectQuestProgressAmount);
+		}
+		if (state.objectIsShrine) {
+			hasher.AppendString("godevilution-object-shrine-v1");
+			hasher.AppendBool(true);
 		}
 	}
 
@@ -2233,9 +2237,9 @@ std::vector<ReplayVisitedProjectileTile> MoveReplayNativeProjectile(
 		const int64_t speedX = std::abs(static_cast<int64_t>(projectile.velocityX));
 		const int64_t speedY = std::abs(static_cast<int64_t>(projectile.velocityY));
 		const float denominator = static_cast<float>(2 * speedY >= speedX ? 2 * speedY : speedX);
-		const int32_t velocityFraction = static_cast<int32_t>((32 << 16) / denominator);
-		const int32_t incrementX = projectile.velocityX * velocityFraction;
-		const int32_t incrementY = projectile.velocityY * velocityFraction;
+		const float velocityFraction = (32 << 16) / denominator;
+		const int32_t incrementX = static_cast<int32_t>(projectile.velocityX * velocityFraction);
+		const int32_t incrementY = static_cast<int32_t>(projectile.velocityY * velocityFraction);
 		if (incrementX != 0 || incrementY != 0) {
 			int32_t traveledX = projectile.traveledX - projectile.velocityX;
 			int32_t traveledY = projectile.traveledY - projectile.velocityY;
@@ -6278,47 +6282,350 @@ void AdvanceReplayRingOfFireOneTick(ReplayFixtureExecutionState &state)
 
 void AdvanceReplayNovaOneTick(ReplayFixtureExecutionState &state)
 {
-	for (size_t index = 0; index < state.projectiles.size(); ++index) {
-		auto &controller = state.projectiles[index];
-		if (controller.behavior != NovaControllerBehavior)
+	std::vector<uint32_t> controllers;
+	for (const auto &projectile : state.projectiles) {
+		if (projectile.behavior == NovaControllerBehavior)
+			controllers.push_back(projectile.entityId);
+	}
+	std::sort(controllers.begin(), controllers.end());
+	for (const uint32_t controllerEntityId : controllers) {
+		auto controllerIterator = std::find_if(
+			state.projectiles.begin(),
+			state.projectiles.end(),
+			[controllerEntityId](const auto &projectile) {
+				return projectile.entityId == controllerEntityId;
+			});
+		if (controllerIterator == state.projectiles.end())
 			continue;
-		if (controller.remainingTicks > 0)
-			--controller.remainingTicks;
-		const auto controllerState = controller;
+
+		const uint32_t primaryEntityId = state.entityId == 0 ? 1U : state.entityId;
+		const bool primaryOwner = controllerIterator->sourceEntityId == primaryEntityId;
+		const bool secondaryOwner = state.secondaryPlayerEntityId != 0
+			&& controllerIterator->sourceEntityId == state.secondaryPlayerEntityId;
+		if (!primaryOwner && !secondaryOwner) {
+			state.projectiles.erase(controllerIterator);
+			continue;
+		}
+
+		if (controllerIterator->remainingTicks > 0)
+			--controllerIterator->remainingTicks;
+		const auto controllerState = *controllerIterator;
 		const auto offsets = CreateReplayRadialProjectileOffsets(4, 36);
 		std::vector<ReplayFixtureProjectileState> created;
 		created.reserve(offsets.size());
-		for (const auto offset : offsets)
+		for (const auto offset : offsets) {
 			created.push_back(CreateReplayNovaBall(
 				controllerState,
 				controllerState.positionX + offset.first,
 				controllerState.positionY + offset.second));
+			static_cast<void>(GenerateRnd(state, 8));
+		}
 		uint32_t nextEntityId = 0x80000000U;
 		for (const auto &existing : state.projectiles)
 			nextEntityId = std::max(nextEntityId, existing.entityId + 1U);
 		for (auto &spawned : created)
 			spawned.entityId = nextEntityId++;
-		state.projectiles.erase(state.projectiles.begin() + static_cast<ptrdiff_t>(index));
-		state.projectiles.insert(state.projectiles.end(), created.begin(), created.end());
-		return;
+		controllerIterator = std::find_if(
+			state.projectiles.begin(),
+			state.projectiles.end(),
+			[controllerEntityId](const auto &projectile) {
+				return projectile.entityId == controllerEntityId;
+			});
+		if (controllerIterator != state.projectiles.end()) {
+			state.projectiles.erase(controllerIterator);
+			state.projectiles.insert(state.projectiles.end(), created.begin(), created.end());
+		}
 	}
 }
 
-void AdvanceReplayNovaBallsOneTick(ReplayFixtureExecutionState &state)
+void AdvanceReplayNovaBallsOneTick(ReplayFixtureExecutionState &state, uint64_t tick)
 {
-	for (auto iterator = state.projectiles.begin(); iterator != state.projectiles.end();) {
+	std::vector<uint32_t> balls;
+	for (const auto &projectile : state.projectiles) {
+		if (projectile.behavior == NovaBallBehavior)
+			balls.push_back(projectile.entityId);
+	}
+	std::sort(balls.begin(), balls.end());
+	for (const uint32_t ballEntityId : balls) {
+		auto iterator = std::find_if(
+			state.projectiles.begin(),
+			state.projectiles.end(),
+			[ballEntityId](const auto &projectile) {
+				return projectile.entityId == ballEntityId;
+			});
+		if (iterator == state.projectiles.end())
+			continue;
 		auto &projectile = *iterator;
-		if (projectile.behavior != NovaBallBehavior) {
-			++iterator;
+		const uint32_t primaryEntityId = state.entityId == 0 ? 1U : state.entityId;
+		const bool primaryOwner = projectile.sourceEntityId == primaryEntityId;
+		const bool secondaryOwner = state.secondaryPlayerEntityId != 0
+			&& projectile.sourceEntityId == state.secondaryPlayerEntityId;
+		const bool ownerLevelMatches = primaryOwner
+			? projectile.levelId == state.levelId
+			: secondaryOwner && projectile.levelId == state.secondaryPlayerLevelId;
+		if ((!primaryOwner && !secondaryOwner)
+		    || projectile.effectiveSpellLevel < 0
+		    || projectile.effectiveSpellLevel > UINT8_MAX
+		    || !ownerLevelMatches) {
+			state.projectiles.erase(iterator);
 			continue;
 		}
 		if (projectile.remainingTicks > 0)
 			--projectile.remainingTicks;
-		MoveReplayNativeProjectile(projectile);
+		if (projectile.remainingTicks == 0) {
+			state.projectiles.erase(iterator);
+			continue;
+		}
+
+		const auto visitedTiles = MoveReplayNativeProjectile(projectile);
+		const auto resolveMonsterAt = [&](int32_t x, int32_t y) {
+			const bool monsterAtTile = state.combatTargetEntityId != 0
+				&& state.combatTargetHitPointsQ6 > 0
+				&& !state.combatTargetSneakHidden
+				&& (state.combatTargetLevelId == 0 || state.combatTargetLevelId == projectile.levelId)
+				&& ((state.combatTargetPositionX == x && state.combatTargetPositionY == y)
+				    || (state.combatTargetMoving
+				        && state.combatTargetPetrified
+				        && state.combatTargetFuturePositionX == x
+				        && state.combatTargetFuturePositionY == y));
+			if (!monsterAtTile
+			    || projectile.lastCollisionTargetEntityId == state.combatTargetEntityId)
+				return false;
+			projectile.lastCollisionTargetEntityId = state.combatTargetEntityId;
+			if (state.combatTargetLightningResistance >= 100)
+				return false;
+
+			const int32_t ownerMagic = secondaryOwner
+				? state.secondaryPlayerMagic
+				: state.attributes[3];
+			const uint32_t ownerClass = secondaryOwner
+				? state.secondaryPlayerCharacterClassId
+				: state.characterClassId;
+			const int32_t hitChance = std::clamp(
+				ownerMagic + GetReplayBaseMagicToHit(ownerClass)
+				    - state.combatTargetMonsterLevel * 2,
+				5,
+				95);
+			const int32_t hitRoll = std::max(GenerateRnd(state, 100), 0);
+			if (!state.combatTargetPetrified && hitRoll >= hitChance)
+				return false;
+
+			// Native Nova leaves _midist at zero. MonsterMHit still consumes
+			// one fixed-width damage draw before applying the Q6 payload.
+			static_cast<void>(GenerateRnd(state, 1));
+			int32_t damageQ6 = projectile.damage;
+			if (state.combatTargetLightningResistance > 0)
+				damageQ6 /= std::max(projectile.resistantDamageDivisor, 1);
+			state.combatTargetHitPointsQ6 = std::max(
+				0,
+				state.combatTargetHitPointsQ6 - damageQ6);
+			state.combatTargetHitPoints = ToWholeCeilingQ6(
+				state.combatTargetHitPointsQ6);
+			if (state.combatTargetHitPointsQ6 == 0)
+				DefeatReplayCombatTarget(state);
+			return true;
+		};
+		const auto resolvePlayerAt = [&](int32_t x, int32_t y) {
+			const bool primaryAtTile = !primaryOwner
+				&& state.life > 0
+				&& state.combatMode != 10
+				&& state.combatMode != 11
+				&& state.levelId == projectile.levelId
+				&& state.positionX == x
+				&& state.positionY == y;
+			const bool secondaryAtTile = state.secondaryPlayerEntityId != 0
+				&& !secondaryOwner
+				&& state.secondaryPlayerLife > 0
+				&& state.secondaryPlayerCombatMode != 10
+				&& state.secondaryPlayerCombatMode != 11
+				&& state.secondaryPlayerLevelId == projectile.levelId
+				&& state.secondaryPlayerPositionX == x
+				&& state.secondaryPlayerPositionY == y;
+			if (!primaryAtTile && !secondaryAtTile)
+				return false;
+
+			const bool primaryTarget = primaryAtTile
+				&& (!secondaryAtTile || primaryEntityId < state.secondaryPlayerEntityId);
+			const uint32_t targetEntityId = primaryTarget
+				? primaryEntityId
+				: state.secondaryPlayerEntityId;
+			if (targetEntityId == projectile.lastCollisionTargetEntityId)
+				return false;
+			projectile.lastCollisionTargetEntityId = targetEntityId;
+			if (IsReplayPlayerProtectedByFlash(state, targetEntityId)
+			    || (!state.friendlyFire
+			        && (primaryOwner ? state.friendlyMode : state.secondaryPlayerFriendlyMode))) {
+				return false;
+			}
+
+			const bool secondaryTarget = !primaryTarget;
+			const uint32_t ownerLevel = secondaryOwner
+				? state.secondaryPlayerCharacterLevel
+				: state.characterLevel;
+			const uint32_t targetLevel = primaryTarget
+				? state.characterLevel
+				: state.secondaryPlayerCharacterLevel;
+			const uint32_t ownerClass = secondaryOwner
+				? state.secondaryPlayerCharacterClassId
+				: state.characterClassId;
+			const uint32_t targetClass = primaryTarget
+				? state.characterClassId
+				: state.secondaryPlayerCharacterClassId;
+			const int32_t ownerMagic = secondaryOwner
+				? state.secondaryPlayerMagic
+				: state.attributes[3];
+			const int32_t hitChance = std::clamp(
+				ownerMagic + GetReplayBaseMagicToHit(ownerClass)
+				    - static_cast<int32_t>(targetLevel) * 2,
+				5,
+				95);
+			if (std::max(GenerateRnd(state, 100), 0) >= hitChance)
+				return false;
+
+			const uint32_t targetCombatMode = primaryTarget
+				? state.combatMode
+				: state.secondaryPlayerCombatMode;
+			const bool targetCanBlock = primaryTarget
+				? IsReplayPrimaryPlayerBlockCapable(state)
+				: state.secondaryPlayerBlockCapable || IsReplaySecondaryPlayerBlockCapable(state);
+			const int32_t blockRoll = targetCanBlock
+			        && (targetCombatMode == 0 || targetCombatMode == 4)
+				? std::max(GenerateRnd(state, 100), 0)
+				: 100;
+			// Native Plr2PlrMHit rolls block before fixed-width damage.
+			const int32_t damageWhole = projectile.damage / 64
+				+ std::max(GenerateRnd(state, 1), 0);
+			const int32_t targetDexterity = primaryTarget
+				? state.attributes[5]
+				: state.secondaryPlayerDexterity;
+			const int32_t blockChance = std::clamp(
+				targetDexterity + GetReplayBaseBlockChance(targetClass)
+				    + static_cast<int32_t>(targetLevel) * 2
+				    - static_cast<int32_t>(ownerLevel) * 2,
+				0,
+				100);
+			const int32_t resistance = ResolveReplayEquipmentResistance(
+				state,
+				secondaryTarget,
+				projectile.damageType);
+			int32_t damageQ6 = damageWhole * 32;
+			if (resistance > 0) {
+				damageQ6 -= damageQ6 * resistance / 100;
+			} else if (blockRoll < blockChance) {
+				if (primaryTarget) {
+					state.combatMode = 6;
+					state.combatModeEndTick = tick + GetReplayBlockDuration(state, false);
+				} else {
+					state.secondaryPlayerCombatMode = 6;
+					state.secondaryPlayerCombatModeEndTick = tick + GetReplayBlockDuration(state, true);
+				}
+				if (state.hellfire)
+					static_cast<void>(GenerateRnd(state, 2));
+				return true;
+			}
+
+			const int32_t lifeDamageQ6 = primaryTarget
+				? ApplyReplayManaShield(state, damageQ6)
+				: ApplyReplayManaShield(state, damageQ6, true);
+			if (primaryTarget) {
+				state.life = std::max(0, state.life - lifeDamageQ6);
+				if (state.life == 0)
+					StartReplayPrimaryPlayerPvpDeath(state);
+				else if (resistance == 0
+				    && (damageQ6 >> 6) >= GetReplayHeavyHitThreshold(
+					    state.characterClassId,
+					    state.characterLevel)) {
+					state.combatMode = 7;
+					state.combatModeEndTick = tick + GetReplayHitRecoveryDuration(state, false);
+				}
+			} else {
+				state.secondaryPlayerLife = std::max(0, state.secondaryPlayerLife - lifeDamageQ6);
+				if (state.secondaryPlayerLife == 0)
+					StartReplaySecondaryPlayerDeath(state);
+				else if (resistance == 0
+				    && (damageQ6 >> 6) >= GetReplayHeavyHitThreshold(
+					    state.secondaryPlayerCharacterClassId,
+					    state.secondaryPlayerCharacterLevel)) {
+					state.secondaryPlayerCombatMode = 7;
+					state.secondaryPlayerCombatModeEndTick = tick
+					    + GetReplayHitRecoveryDuration(state, true);
+				}
+			}
+			return true;
+		};
+
+		const auto checkTile = [&](int32_t x, int32_t y) {
+			if (x < 0 || x >= 40 || y < 0 || y >= 40) {
+				projectile.remainingTicks = 0;
+				return true;
+			}
+			const bool monsterAtTile = state.combatTargetEntityId != 0
+				&& state.combatTargetHitPointsQ6 > 0
+				&& !state.combatTargetSneakHidden
+				&& (state.combatTargetLevelId == 0 || state.combatTargetLevelId == projectile.levelId)
+				&& ((state.combatTargetPositionX == x && state.combatTargetPositionY == y)
+				    || (state.combatTargetMoving
+				        && state.combatTargetPetrified
+				        && state.combatTargetFuturePositionX == x
+				        && state.combatTargetFuturePositionY == y));
+			const bool primaryAtTile = !primaryOwner
+				&& state.life > 0
+				&& state.combatMode != 10
+				&& state.combatMode != 11
+				&& state.levelId == projectile.levelId
+				&& state.positionX == x
+				&& state.positionY == y;
+			const bool secondaryAtTile = state.secondaryPlayerEntityId != 0
+				&& !secondaryOwner
+				&& state.secondaryPlayerLife > 0
+				&& state.secondaryPlayerCombatMode != 10
+				&& state.secondaryPlayerCombatMode != 11
+				&& state.secondaryPlayerLevelId == projectile.levelId
+				&& state.secondaryPlayerPositionX == x
+				&& state.secondaryPlayerPositionY == y;
+			if (!monsterAtTile && !primaryAtTile && !secondaryAtTile)
+				projectile.lastCollisionTargetEntityId = 0;
+			static_cast<void>(resolveMonsterAt(x, y));
+			static_cast<void>(resolvePlayerAt(x, y));
+			const bool blockingObject = state.objectEntityId != 0
+				&& !state.objectDestroyed
+				&& !state.objectMissilePassable
+				&& state.objectLevelId == projectile.levelId
+				&& state.objectPositionX == x
+				&& state.objectPositionY == y;
+			const bool targetShrine = blockingObject
+				&& x == projectile.startX
+				&& y == projectile.startY
+				&& state.objectIsShrine;
+			if (blockingObject) {
+				if (!targetShrine) {
+					if (state.objectBreakable)
+						state.objectDestroyed = true;
+					projectile.remainingTicks = 0;
+				}
+				return true;
+			}
+			return false;
+		};
+		if (visitedTiles.empty()) {
+			static_cast<void>(checkTile(projectile.positionX, projectile.positionY));
+		} else {
+			for (const auto &tile : visitedTiles) {
+				projectile.positionX = tile.x;
+				projectile.positionY = tile.y;
+				projectile.traveledX = tile.traveledX;
+				projectile.traveledY = tile.traveledY;
+				if (checkTile(tile.x, tile.y))
+					break;
+			}
+		}
 		if (projectile.remainingTicks == 0)
-			iterator = state.projectiles.erase(iterator);
-		else
-			++iterator;
+			state.projectiles.erase(std::find_if(
+				state.projectiles.begin(),
+				state.projectiles.end(),
+				[ballEntityId](const auto &candidate) {
+					return candidate.entityId == ballEntityId;
+				}));
 	}
 }
 
@@ -12996,7 +13303,7 @@ void AdvanceReplayStateToTick(
 		AdvanceReplayRingOfFireOneTick(state);
 		AdvanceReplayFlameWaveOneTick(state, simulationTick);
 		AdvanceReplayNovaOneTick(state);
-		AdvanceReplayNovaBallsOneTick(state);
+		AdvanceReplayNovaBallsOneTick(state, simulationTick);
 		AdvanceChainLightningOneTick(state, simulationTick);
 		AdvanceReplayImmolationOneTick(state);
 		AdvanceReplayElementalOneTick(state, simulationTick);
@@ -13404,6 +13711,8 @@ private:
 				return ParseBool(fixture_.initialState.objectBreakable);
 			if (key == "object_destroyed")
 				return ParseBool(fixture_.initialState.objectDestroyed);
+			if (key == "object_is_shrine")
+				return ParseBool(fixture_.initialState.objectIsShrine);
 			if (key == "combat_target_entity_id")
 				return ParseUnsigned(fixture_.initialState.combatTargetEntityId);
 			if (key == "combat_target_level_id")
@@ -14387,6 +14696,7 @@ bool ParseReplayFixture(std::string_view json, ReplayFixture &fixture, std::stri
 	        && (fixture.initialState.objectMissilePassable
 	            || fixture.initialState.objectBreakable
 	            || fixture.initialState.objectDestroyed
+	            || fixture.initialState.objectIsShrine
 	            || fixture.initialState.objectQuestId != 0
 	            || fixture.initialState.objectEffectKind != 0
 	            || fixture.initialState.objectEffectAmount != 0))
@@ -15060,7 +15370,8 @@ bool ApplyReplaySecondaryCast(
 	        && command.spellId != 30
 	        && command.spellId != 31
 	        && command.spellId != 38
-	        && command.spellId != 52))
+	        && command.spellId != 52
+	        && command.spellId != 18))
 		return false;
 
 	ReplayFixtureExecutionState castState = state;
@@ -15440,6 +15751,7 @@ bool ExecuteReplayFixture(
 		state.objectMissilePassable = fixture.initialState.objectMissilePassable;
 		state.objectBreakable = fixture.initialState.objectBreakable;
 		state.objectDestroyed = fixture.initialState.objectDestroyed;
+		state.objectIsShrine = fixture.initialState.objectIsShrine;
 	}
 	if (state.combatTargetEntityId == 0 && fixture.initialState.combatTargetEntityId != 0) {
 		state.combatTargetEntityId = fixture.initialState.combatTargetEntityId;

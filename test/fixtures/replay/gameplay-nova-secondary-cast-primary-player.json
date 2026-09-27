@@ -1,0 +1,69 @@
+{
+  "format_version": 1,
+  "fixture_id": "gameplay/nova-secondary-cast-primary-player",
+  "protocol_schema_version": "0.1.0",
+  "content_manifest": {
+    "id": "devilution.base",
+    "version": "0.1.0",
+    "sha256": "ee16097e8393e3807fa57356227992eed3265f5da8f182806cbd368c7c28658d"
+  },
+  "tick_rate_hz": 20,
+  "rng_seed": 2,
+  "game_variant": "Diablo",
+  "game_mode": "Multiplayer",
+  "initial_state": {
+    "player": "A",
+    "gold": 0,
+    "experience": 0,
+    "life": 20000,
+    "life_maximum": 20000,
+    "mana": 10000,
+    "mana_maximum": 10000,
+    "magic": 7,
+    "dexterity": 0,
+    "character_class": 0,
+    "character_level": 2,
+    "position_x": 11,
+    "position_y": 10,
+    "level_id": 1,
+    "spell_projectile_behavior": 30,
+    "secondary_player": {
+      "player": "B",
+      "entity_id": 8,
+      "life": 2560,
+      "life_maximum": 2560,
+      "mana": 10000,
+      "mana_maximum": 10000,
+      "magic": 35,
+      "dexterity": 0,
+      "position_x": 10,
+      "position_y": 10,
+      "level_id": 1,
+      "character_class": 2,
+      "character_level": 12,
+      "facing_direction": 2,
+      "friendly_mode": false,
+      "memorized_spells": [
+        { "spell_id": 18, "level": 3 }
+      ]
+    }
+  },
+  "commands": [
+    {
+      "player": "B",
+      "client_sequence": 1,
+      "target_tick": 1,
+      "server_receipt_sequence": 1,
+      "kind": "Cast",
+      "payload": {
+        "spell_id": 18,
+        "target_x": 14,
+        "target_y": 10
+      }
+    }
+  ],
+  "checkpoints": [
+    { "tick": 1, "state_sha256": "e37ab2dbf906a19591d69d4a49c1a6d76018a14ddc3139abb9318750683d9ee8" },
+    { "tick": 4, "state_sha256": "314ae04b0d677333b3c4c2c36296afc10de8fdb99e023d29cd2d11d5f97e7bb6" }
+  ]
+}

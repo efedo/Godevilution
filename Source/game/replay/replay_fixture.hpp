@@ -229,6 +229,7 @@ struct ReplayFixtureInitialState {
 	bool objectMissilePassable = false;
 	bool objectBreakable = false;
 	bool objectDestroyed = false;
+	bool objectIsShrine = false;
 	uint32_t combatTargetEntityId = 0;
 	uint32_t combatTargetLevelId = 0;
 	int32_t combatTargetPositionX = 0;
@@ -751,6 +752,7 @@ struct ReplayFixtureExecutionState {
 	bool objectMissilePassable = false;
 	bool objectBreakable = false;
 	bool objectDestroyed = false;
+	bool objectIsShrine = false;
 	int32_t objectEffectKind = 0;
 	int32_t objectEffectAmount = 0;
 	uint32_t objectQuestProgressAmount = 1;
