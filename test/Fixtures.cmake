@@ -166,6 +166,7 @@ set(devilutionx_fixtures
   replay/gameplay-elemental-arrows.json
   replay/gameplay-elemental-equipment.json
   replay/gameplay-elemental-resolution.json
+  replay/gameplay-elemental-secondary-cast-primary-player.json
   replay/gameplay-etherealize-resolution.json
   replay/gameplay-fallen-fear-multiplayer.json
   replay/gameplay-fallen-fear.json

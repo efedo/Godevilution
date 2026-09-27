@@ -2045,6 +2045,324 @@ public sealed class ReplayFixtureTests
     }
 
     [Fact]
+    public void SecondaryElementalFixtureMatchesNativePlayerImpactAndLifetime()
+    {
+        var fixture = LoadReplayFixture("gameplay-elemental-secondary-cast-primary-player.json");
+        var result = ExecuteElementalFixtureThroughTick(fixture, 17);
+        var primary = Assert.Single(result.FinalSnapshot.Players, player => player.EntityId == 1);
+        var secondary = Assert.Single(result.FinalSnapshot.Players, player => player.EntityId == 8);
+
+        Assert.Equal([CommandStatus.Accepted], result.Results.Select(command => command.Status));
+        Assert.Equal(17UL, result.FinalSnapshot.Tick);
+        Assert.Equal(fixture.Checkpoints.Select(checkpoint => checkpoint.StateSha256),
+            result.Checkpoints.Select(checkpoint => checkpoint.ActualStateSha256));
+        Assert.Equal(18876, primary.Life);
+        Assert.Equal(4016, secondary.Mana);
+        Assert.Equal(PlayerDirection.SouthEast, secondary.FacingDirection);
+        Assert.Empty(result.FinalSnapshot.Projectiles);
+        Assert.Equal(2656185176U, result.FinalSnapshot.RandomState);
+
+        var inFlight = ExecuteElementalFixtureThroughTick(fixture, 2);
+        var movingProjectile = Assert.Single(inFlight.FinalSnapshot.Projectiles);
+        Assert.Equal(8U, movingProjectile.SourceEntityId);
+        Assert.Equal((int)AuthoritativeProjectileBehavior.Elemental, movingProjectile.Behavior);
+        Assert.Equal(10, movingProjectile.PositionX);
+        Assert.Equal(10, movingProjectile.PositionY);
+        Assert.Equal(255U, movingProjectile.RemainingTicks);
+        Assert.Equal(4016, Assert.Single(inFlight.FinalSnapshot.Players, player => player.EntityId == 8).Mana);
+
+        var directHit = ExecuteElementalFixtureThroughTick(fixture, 3);
+        var impact = Assert.Single(directHit.FinalSnapshot.Projectiles);
+        Assert.Equal(19072, Assert.Single(directHit.FinalSnapshot.Players, player => player.EntityId == 1).Life);
+        Assert.Equal((int)AuthoritativeProjectilePhase.Impact, impact.Phase);
+        Assert.Equal(14U, impact.RemainingTicks);
+        Assert.Equal(2667323828U, directHit.FinalSnapshot.RandomState);
+
+        var finalImpactTick = ExecuteElementalFixtureThroughTick(fixture, 16);
+        impact = Assert.Single(finalImpactTick.FinalSnapshot.Projectiles);
+        Assert.Equal(18890, Assert.Single(finalImpactTick.FinalSnapshot.Players, player => player.EntityId == 1).Life);
+        Assert.Equal((int)AuthoritativeProjectilePhase.Impact, impact.Phase);
+        Assert.Equal(1U, impact.RemainingTicks);
+        Assert.Equal(1818985650U, finalImpactTick.FinalSnapshot.RandomState);
+    }
+
+    [Fact]
+    public void ElementalProjectilesAdvanceInEntityOrderRegardlessOfStorageOrder()
+    {
+        var sourceFixture = LoadReplayFixture("gameplay-elemental-secondary-cast-primary-player.json");
+        var secondaryInitial = Assert.IsType<ReplaySecondaryPlayer>(sourceFixture.InitialState.SecondaryPlayer);
+        var fixture = sourceFixture with {
+            InitialState = sourceFixture.InitialState with { Magic = 100 },
+            Commands = [new ReplayFixtureCommand(1, 1, 1, "Move", 0, 0) { DirectionY = 1 }],
+            Checkpoints = [],
+            FinalStateSha256 = null,
+            InitialProjectiles = [],
+        };
+        AuthoritativeProjectile[] CreateProjectiles(bool reverseStorage)
+        {
+            var highIdPrimary = new AuthoritativeProjectile(
+                0x80000011,
+                1,
+                0,
+                31,
+                fixture.InitialState.LevelId,
+                fixture.InitialState.PositionX,
+                fixture.InitialState.PositionY,
+                fixture.InitialState.PositionX,
+                fixture.InitialState.PositionY,
+                640,
+                AuthoritativeDamageType.Fire,
+                0,
+                1) {
+                Behavior = AuthoritativeProjectileBehavior.Elemental,
+                Phase = AuthoritativeProjectilePhase.Impact,
+                ImpactLifetime = 14,
+                StartX = fixture.InitialState.PositionX,
+                StartY = fixture.InitialState.PositionY,
+                ElementalOriginX = fixture.InitialState.PositionX,
+                ElementalOriginY = fixture.InitialState.PositionY,
+            };
+            var lowIdSecondary = new AuthoritativeProjectile(
+                0x80000010,
+                8,
+                0,
+                31,
+                fixture.InitialState.LevelId,
+                secondaryInitial.PositionX,
+                secondaryInitial.PositionY,
+                secondaryInitial.PositionX,
+                secondaryInitial.PositionY,
+                640,
+                AuthoritativeDamageType.Fire,
+                0,
+                1) {
+                Behavior = AuthoritativeProjectileBehavior.Elemental,
+                Phase = AuthoritativeProjectilePhase.Impact,
+                ImpactLifetime = 14,
+                StartX = secondaryInitial.PositionX,
+                StartY = secondaryInitial.PositionY,
+                ElementalOriginX = secondaryInitial.PositionX,
+                ElementalOriginY = secondaryInitial.PositionY,
+            };
+            return reverseStorage
+                ? [highIdPrimary, lowIdSecondary]
+                : [lowIdSecondary, highIdPrimary];
+        }
+
+        var reversed = ExecuteElementalProjectiles(fixture, CreateProjectiles(reverseStorage: true));
+        var sortedStorage = ExecuteElementalProjectiles(fixture, CreateProjectiles(reverseStorage: false));
+        Assert.Equal(reversed.FinalSnapshot.StateSha256, sortedStorage.FinalSnapshot.StateSha256);
+        Assert.Equal(reversed.FinalSnapshot.RandomState, sortedStorage.FinalSnapshot.RandomState);
+        Assert.Equal(
+            reversed.FinalSnapshot.Players.Select(player => (player.EntityId, player.Life)),
+            sortedStorage.FinalSnapshot.Players.Select(player => (player.EntityId, player.Life)));
+        Assert.Empty(reversed.FinalSnapshot.Projectiles);
+        Assert.Equal(20000, Assert.Single(reversed.FinalSnapshot.Players, player => player.EntityId == 1).Life);
+        Assert.Equal(9680, Assert.Single(reversed.FinalSnapshot.Players, player => player.EntityId == 8).Life);
+        Assert.Equal(1058065735U, reversed.FinalSnapshot.RandomState);
+    }
+
+    [Fact]
+    public void ElementalProjectilesRejectInvalidOwnersSpellIdsLevelsAndLivesBeforeRng()
+    {
+        var sourceFixture = LoadReplayFixture("gameplay-elemental-secondary-cast-primary-player.json");
+        var secondaryInitial = Assert.IsType<ReplaySecondaryPlayer>(sourceFixture.InitialState.SecondaryPlayer);
+        var fixture = sourceFixture with {
+            Commands = [new ReplayFixtureCommand(1, 1, 1, "Move", 0, 0) { DirectionY = 1 }],
+            Checkpoints = [],
+            FinalStateSha256 = null,
+            InitialProjectiles = [],
+        };
+        var invalidSources = new[] {
+            (Owner: 99U, Spell: 31U, Level: fixture.InitialState.LevelId, SecondaryLife: 10000),
+            (Owner: 8U, Spell: 16U, Level: fixture.InitialState.LevelId, SecondaryLife: 10000),
+            (Owner: 8U, Spell: 31U, Level: 2U, SecondaryLife: 10000),
+            (Owner: 8U, Spell: 31U, Level: fixture.InitialState.LevelId, SecondaryLife: 0),
+        };
+
+        foreach (var invalid in invalidSources) {
+            var invalidFixture = fixture with {
+                InitialState = fixture.InitialState with {
+                    SecondaryPlayer = secondaryInitial with { Life = invalid.SecondaryLife },
+                },
+            };
+            var projectile = new AuthoritativeProjectile(
+                0x80000010,
+                invalid.Owner,
+                0,
+                invalid.Spell,
+                invalid.Level,
+                10,
+                10,
+                11,
+                10,
+                640,
+                AuthoritativeDamageType.Fire,
+                0,
+                1) {
+                Behavior = AuthoritativeProjectileBehavior.Elemental,
+                Phase = AuthoritativeProjectilePhase.Impact,
+                ImpactLifetime = 14,
+            };
+            var result = ExecuteElementalProjectiles(invalidFixture, [projectile]);
+
+            Assert.Empty(result.FinalSnapshot.Projectiles);
+            Assert.Equal(checked((uint)fixture.RngSeed), result.FinalSnapshot.RandomState);
+        }
+
+        foreach (var targetMode in new[] { DiabloPlayerCombatMode.NewLevel, DiabloPlayerCombatMode.Quit }) {
+            var transitionFixture = fixture with {
+                InitialState = fixture.InitialState with {
+                    SecondaryPlayer = secondaryInitial with { CombatMode = targetMode },
+                },
+                Commands = [new ReplayFixtureCommand(1, 1, 1, "Move", 0, 0) { Player = "B" }],
+                Checkpoints = [new ReplayCheckpoint(1, string.Empty)],
+            };
+            var primaryOwnedProjectile = new AuthoritativeProjectile(
+                0x80000011,
+                1,
+                0,
+                31,
+                transitionFixture.InitialState.LevelId,
+                secondaryInitial.PositionX,
+                secondaryInitial.PositionY,
+                secondaryInitial.PositionX,
+                secondaryInitial.PositionY,
+                640,
+                AuthoritativeDamageType.Fire,
+                0,
+                14) {
+                Behavior = AuthoritativeProjectileBehavior.Elemental,
+                Phase = AuthoritativeProjectilePhase.Impact,
+                ImpactLifetime = 14,
+                ElementalOriginX = secondaryInitial.PositionX,
+                ElementalOriginY = secondaryInitial.PositionY,
+            };
+            var transitionResult = ExecuteElementalProjectiles(
+                transitionFixture,
+                [primaryOwnedProjectile]);
+            Assert.Equal(checked((uint)fixture.RngSeed), transitionResult.FinalSnapshot.RandomState);
+            Assert.Equal(20000, Assert.Single(
+                transitionResult.FinalSnapshot.Players,
+                player => player.EntityId == 1).Life);
+            Assert.Equal(10000, Assert.Single(
+                transitionResult.FinalSnapshot.Players,
+                player => player.EntityId == 8).Life);
+        }
+
+        var repeatedTargetFixture = fixture with {
+            Commands = [new ReplayFixtureCommand(1, 1, 1, "Move", 0, 0) { Player = "B" }],
+            Checkpoints = [new ReplayCheckpoint(1, string.Empty)],
+        };
+        var repeatedTargetProjectile = new AuthoritativeProjectile(
+            0x80000012,
+            8,
+            0,
+            31,
+            repeatedTargetFixture.InitialState.LevelId,
+            repeatedTargetFixture.InitialState.PositionX,
+            repeatedTargetFixture.InitialState.PositionY,
+            repeatedTargetFixture.InitialState.PositionX + 1,
+            repeatedTargetFixture.InitialState.PositionY + 1,
+            640,
+            AuthoritativeDamageType.Fire,
+            0,
+            8) {
+            Behavior = AuthoritativeProjectileBehavior.Elemental,
+            PathIndex = 1,
+            LastCollisionTargetEntityId = 1,
+        };
+        var repeatedTargetResult = ExecuteElementalProjectiles(
+            repeatedTargetFixture,
+            [repeatedTargetProjectile]);
+        Assert.Equal(checked((uint)fixture.RngSeed), repeatedTargetResult.FinalSnapshot.RandomState);
+        Assert.Equal(20000, Assert.Single(
+            repeatedTargetResult.FinalSnapshot.Players,
+            player => player.EntityId == 1).Life);
+        Assert.Equal(
+            (int)AuthoritativeProjectilePhase.Travel,
+            Assert.Single(repeatedTargetResult.FinalSnapshot.Projectiles).Phase);
+
+        var objectFixture = repeatedTargetFixture with {
+            InitialState = repeatedTargetFixture.InitialState with {
+                PositionX = 20,
+                PositionY = 20,
+            },
+        };
+        var blocker = new AuthoritativeWorldObject(
+            0x80000030,
+            1,
+            objectFixture.InitialState.LevelId,
+            11,
+            10,
+            missilePassable: false,
+            breakable: true);
+        var blockerProjectile = new AuthoritativeProjectile(
+            0x80000013,
+            8,
+            0,
+            31,
+            objectFixture.InitialState.LevelId,
+            10,
+            10,
+            11,
+            10,
+            640,
+            AuthoritativeDamageType.Fire,
+            0,
+            8) {
+            Behavior = AuthoritativeProjectileBehavior.Elemental,
+            PathIndex = 1,
+            VelocityX = 32 << 16,
+            VelocityY = 16 << 16,
+        };
+        var blockedResult = ExecuteElementalProjectiles(
+            objectFixture,
+            [blockerProjectile],
+            [blocker]);
+        Assert.Equal(checked((uint)fixture.RngSeed), blockedResult.FinalSnapshot.RandomState);
+        Assert.True(Assert.Single(blockedResult.FinalSnapshot.Objects).Destroyed);
+        Assert.Equal(
+            (int)AuthoritativeProjectilePhase.Impact,
+            Assert.Single(blockedResult.FinalSnapshot.Projectiles).Phase);
+
+        var burstBlocker = new AuthoritativeWorldObject(
+            0x80000031,
+            1,
+            objectFixture.InitialState.LevelId,
+            11,
+            10,
+            missilePassable: false,
+            breakable: true);
+        var burstProjectile = new AuthoritativeProjectile(
+            0x80000014,
+            8,
+            0,
+            31,
+            objectFixture.InitialState.LevelId,
+            10,
+            10,
+            11,
+            10,
+            640,
+            AuthoritativeDamageType.Fire,
+            0,
+            14) {
+            Behavior = AuthoritativeProjectileBehavior.Elemental,
+            Phase = AuthoritativeProjectilePhase.Impact,
+            ImpactLifetime = 14,
+            ElementalOriginX = 10,
+            ElementalOriginY = 10,
+        };
+        var burstResult = ExecuteElementalProjectiles(
+            objectFixture,
+            [burstProjectile],
+            [burstBlocker]);
+        Assert.Equal(checked((uint)fixture.RngSeed), burstResult.FinalSnapshot.RandomState);
+        Assert.True(Assert.Single(burstResult.FinalSnapshot.Objects).Destroyed);
+    }
+
+    [Fact]
     public void GuardianFixtureMatchesNativeTurretAndFireboltAdmission()
     {
         var path = Path.Combine(
@@ -14552,6 +14870,78 @@ public sealed class ReplayFixtureTests
             startingCombatRules: CreateReplayCombatRules(fixture),
             startingRandomSeed: checked((uint)fixture.RngSeed),
             gameMode: fixture.GameMode);
+    }
+
+    private static StoreSimulationExecutor CreateElementalReplayExecutor(
+        ReplayFixture fixture,
+        IReadOnlyList<AuthoritativeProjectile>? startingProjectiles = null,
+        IReadOnlyList<AuthoritativeWorldObject>? startingObjects = null)
+    {
+        var initial = fixture.InitialState;
+        var classes = AuthoritativePlayerClassCatalog.LoadTsv(
+            "classes.tsv",
+            File.ReadAllText(Path.Combine(FindRepositoryRoot(), "server", "content", "base", "classes.tsv")));
+        var world = new AuthoritativeWorld();
+        world.AddLevel(new AuthoritativeLevel(initial.LevelId, 40, 40));
+        if (startingProjectiles is not null) {
+            foreach (var levelId in startingProjectiles.Select(projectile => projectile.LevelId).Distinct()) {
+                if (levelId != initial.LevelId)
+                    world.AddLevel(new AuthoritativeLevel(levelId, 40, 40));
+            }
+        }
+        return new StoreSimulationExecutor(
+            new StoreCatalog(),
+            initial.Gold,
+            initial.Experience,
+            initial.Life,
+            initial.Mana,
+            startingLifeMaximum: initial.LifeMaximum,
+            startingManaMaximum: initial.ManaMaximum,
+            startingCharacterLevel: initial.CharacterLevel,
+            startingCharacterClassId: checked((uint)initial.CharacterClass),
+            startingPlayerClasses: classes,
+            startingPositionX: initial.PositionX,
+            startingPositionY: initial.PositionY,
+            startingLevelId: initial.LevelId,
+            startingAttributes: PlayerAttributesState.Zero with {
+                Magic = new PlayerAttributeState(initial.Magic, initial.Magic),
+                Dexterity = new PlayerAttributeState(initial.Dexterity, initial.Dexterity),
+            },
+            startingWorld: world,
+            startingObjects: startingObjects,
+            startingSpells: LoadBaseSpells(fixture),
+            startingProjectiles: startingProjectiles ?? [],
+            startingCombatRules: CreateReplayCombatRules(fixture),
+            startingRandomSeed: checked((uint)fixture.RngSeed),
+            gameMode: fixture.GameMode);
+    }
+
+    private static ReplayExecutionResult ExecuteElementalFixtureThroughTick(
+        ReplayFixture fixture,
+        ulong tick)
+    {
+        var prefixFixture = fixture with {
+            Checkpoints = fixture.Checkpoints
+                .Where(checkpoint => checkpoint.Tick <= tick)
+                .ToArray(),
+        };
+        var executor = CreateElementalReplayExecutor(prefixFixture);
+        return ReplayFixtureExecutor.Execute(
+            prefixFixture,
+            executor,
+            new AuthoritativeCommandServer(executor));
+    }
+
+    private static ReplayExecutionResult ExecuteElementalProjectiles(
+        ReplayFixture fixture,
+        IReadOnlyList<AuthoritativeProjectile> projectiles,
+        IReadOnlyList<AuthoritativeWorldObject>? objects = null)
+    {
+        var executor = CreateElementalReplayExecutor(fixture, projectiles, objects);
+        return ReplayFixtureExecutor.Execute(
+            fixture,
+            executor,
+            new AuthoritativeCommandServer(executor));
     }
 
     private static ReplayExecutionResult ExecuteImmolationFixtureThroughTick(

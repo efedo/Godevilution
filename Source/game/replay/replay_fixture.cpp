@@ -6698,9 +6698,189 @@ void AdvanceReplayImmolationOneTick(ReplayFixtureExecutionState &state)
 	}
 }
 
-/** Advances the native Elemental projectile through retargeting and burst impact. */
+bool IsReplayElementalOwnerValid(
+    const ReplayFixtureExecutionState &state,
+    const ReplayFixtureProjectileState &projectile,
+    bool &secondaryOwner)
+{
+	if (projectile.behavior != ElementalBehavior || projectile.spellId != 31)
+		return false;
+	const uint32_t primaryEntityId = state.entityId == 0 ? 1U : state.entityId;
+	if (projectile.sourceEntityId == primaryEntityId) {
+		secondaryOwner = false;
+		return state.life > 0 && state.levelId == projectile.levelId;
+	}
+	if (state.secondaryPlayerEntityId != 0
+	    && projectile.sourceEntityId == state.secondaryPlayerEntityId) {
+		secondaryOwner = true;
+		return state.secondaryPlayerLife > 0
+		    && state.secondaryPlayerLevelId == projectile.levelId;
+	}
+	return false;
+}
+
+uint32_t FindReplayElementalPlayerTarget(
+    const ReplayFixtureExecutionState &state,
+    const ReplayFixtureProjectileState &projectile,
+    int32_t positionX,
+    int32_t positionY)
+{
+	const uint32_t primaryEntityId = state.entityId == 0 ? 1U : state.entityId;
+	const bool primaryAtTile = projectile.sourceEntityId != primaryEntityId
+	    && state.life > 0
+	    && state.combatMode != 10
+	    && state.combatMode != 11
+	    && state.levelId == projectile.levelId
+	    && state.positionX == positionX
+	    && state.positionY == positionY;
+	const bool secondaryAtTile = state.secondaryPlayerEntityId != 0
+	    && projectile.sourceEntityId != state.secondaryPlayerEntityId
+	    && state.secondaryPlayerLife > 0
+	    && state.secondaryPlayerCombatMode != 10
+	    && state.secondaryPlayerCombatMode != 11
+	    && state.secondaryPlayerLevelId == projectile.levelId
+	    && state.secondaryPlayerPositionX == positionX
+	    && state.secondaryPlayerPositionY == positionY;
+	if (primaryAtTile && secondaryAtTile)
+		return std::min(primaryEntityId, state.secondaryPlayerEntityId);
+	if (primaryAtTile)
+		return primaryEntityId;
+	if (secondaryAtTile)
+		return state.secondaryPlayerEntityId;
+	return 0;
+}
+
+/** Resolves Elemental direct and shifted PvP damage against the non-owner player. */
+bool ResolveReplayElementalPlayerHit(
+    ReplayFixtureExecutionState &state,
+    ReplayFixtureProjectileState &projectile,
+    uint32_t targetEntityId,
+    uint64_t tick,
+    bool shifted)
+{
+	const uint32_t primaryEntityId = state.entityId == 0 ? 1U : state.entityId;
+	const bool secondaryOwner = projectile.sourceEntityId == state.secondaryPlayerEntityId;
+	const bool primaryTarget = targetEntityId == primaryEntityId;
+	const bool secondaryTarget = targetEntityId == state.secondaryPlayerEntityId;
+	if ((!primaryTarget && !secondaryTarget)
+	    || (secondaryOwner && secondaryTarget)
+	    || (!secondaryOwner && primaryTarget))
+		return false;
+	const int32_t ownerLife = secondaryOwner ? state.secondaryPlayerLife : state.life;
+	const uint32_t ownerLevelId = secondaryOwner ? state.secondaryPlayerLevelId : state.levelId;
+	if (ownerLife <= 0 || ownerLevelId != projectile.levelId)
+		return false;
+	const bool ownerFriendly = secondaryOwner ? state.secondaryPlayerFriendlyMode : state.friendlyMode;
+	if (IsReplayPlayerProtectedByFlash(state, targetEntityId)
+	    || (!state.friendlyFire && ownerFriendly))
+		return false;
+	const uint32_t ownerClassId = secondaryOwner
+	    ? state.secondaryPlayerCharacterClassId
+	    : state.characterClassId;
+	const uint32_t ownerCharacterLevel = secondaryOwner
+	    ? state.secondaryPlayerCharacterLevel
+	    : state.characterLevel;
+	const int32_t ownerMagic = secondaryOwner ? state.secondaryPlayerMagic : state.attributes[3];
+	const uint32_t targetCharacterLevel = primaryTarget
+	    ? state.characterLevel
+	    : state.secondaryPlayerCharacterLevel;
+	const int32_t hitChance = std::clamp(
+	    ownerMagic + GetReplayBaseMagicToHit(ownerClassId)
+	        - static_cast<int32_t>(targetCharacterLevel) * 2,
+	    5,
+	    95);
+	if (std::max(GenerateRnd(state, 100), 0) >= hitChance)
+		return false;
+
+	int32_t damageQ6;
+	const int32_t resistance = ResolveReplayEquipmentResistance(
+	    state,
+	    secondaryTarget,
+	    projectile.damageType);
+	if (shifted) {
+		// Persistent Elemental impact applies its whole-damage value as Q6,
+		// divided by the spell's native player-impact divisor.
+		damageQ6 = projectile.damage / 2;
+		static_cast<void>(GenerateRnd(state, 1));
+	} else {
+		// Direct Elemental collision follows the native Firebolt player lane.
+		damageQ6 = projectile.damage * 32;
+		static_cast<void>(GenerateRnd(state, 1));
+		const bool targetCanBlock = primaryTarget
+		    ? IsReplayPrimaryPlayerBlockCapable(state)
+		    : state.secondaryPlayerBlockCapable || IsReplaySecondaryPlayerBlockCapable(state);
+		const uint32_t targetCombatMode = primaryTarget
+		    ? state.combatMode
+		    : state.secondaryPlayerCombatMode;
+		const int32_t blockRoll = targetCanBlock
+		        && (targetCombatMode == 0 || targetCombatMode == 4)
+		    ? std::max(GenerateRnd(state, 100), 0)
+		    : 100;
+		const int32_t targetDexterity = primaryTarget
+		    ? state.attributes[5]
+		    : state.secondaryPlayerDexterity;
+		const uint32_t targetClassId = primaryTarget
+		    ? state.characterClassId
+		    : state.secondaryPlayerCharacterClassId;
+		const int32_t blockChance = std::clamp(
+		    targetDexterity
+		        + GetReplayBaseBlockChance(targetClassId)
+		        + static_cast<int32_t>(targetCharacterLevel) * 2
+		        - static_cast<int32_t>(ownerCharacterLevel) * 2,
+		    0,
+		    100);
+		if (resistance > 0) {
+			damageQ6 -= damageQ6 * resistance / 100;
+		} else if (blockRoll < blockChance) {
+			if (primaryTarget) {
+				state.combatMode = 6;
+				state.combatModeEndTick = tick + GetReplayBlockDuration(state, false);
+			} else {
+				state.secondaryPlayerCombatMode = 6;
+				state.secondaryPlayerCombatModeEndTick = tick + GetReplayBlockDuration(state, true);
+			}
+			if (state.hellfire)
+				static_cast<void>(GenerateRnd(state, 2));
+			return true;
+		}
+	}
+
+	if (shifted && resistance > 0)
+		damageQ6 -= damageQ6 * resistance / 100;
+	const int32_t lifeDamageQ6 = secondaryTarget
+	    ? ApplyReplayManaShield(state, damageQ6, true)
+	    : ApplyReplayManaShield(state, damageQ6);
+	if (secondaryTarget) {
+		state.secondaryPlayerLife = std::max(0, state.secondaryPlayerLife - lifeDamageQ6);
+		if (state.secondaryPlayerLife == 0) {
+			StartReplaySecondaryPlayerDeath(state);
+		} else if (resistance == 0
+		    && (damageQ6 >> 6) >= GetReplayHeavyHitThreshold(
+			state.secondaryPlayerCharacterClassId,
+			state.secondaryPlayerCharacterLevel)) {
+			state.secondaryPlayerCombatMode = 7;
+			state.secondaryPlayerCombatModeEndTick = tick
+			    + GetReplayHitRecoveryDuration(state, true);
+		}
+	} else {
+		state.life = std::max(0, state.life - lifeDamageQ6);
+		if (state.life == 0) {
+			StartReplayPrimaryPlayerPvpDeath(state);
+		} else if (resistance == 0
+		    && (damageQ6 >> 6) >= GetReplayHeavyHitThreshold(
+			state.characterClassId,
+			state.characterLevel)) {
+			state.combatMode = 7;
+			state.combatModeEndTick = tick + GetReplayHitRecoveryDuration(state, false);
+		}
+	}
+	return true;
+}
+
+/** Advances native Elemental projectiles in entity-ID order. */
 void AdvanceReplayElementalOneTick(
-    ReplayFixtureExecutionState &state)
+    ReplayFixtureExecutionState &state,
+    uint64_t tick)
 {
 	constexpr std::pair<int32_t, int32_t> BurstOffsets[] = {
 		{ 0, 0 },
@@ -6713,64 +6893,101 @@ void AdvanceReplayElementalOneTick(
 		{ -1, 0 },
 		{ 0, -1 },
 	};
-	for (auto iterator = state.projectiles.begin(); iterator != state.projectiles.end();) {
+	std::vector<uint32_t> orderedEntityIds;
+	for (const auto &projectile : state.projectiles) {
+		if (projectile.behavior == ElementalBehavior)
+			orderedEntityIds.push_back(projectile.entityId);
+	}
+	std::sort(orderedEntityIds.begin(), orderedEntityIds.end());
+	for (const uint32_t entityId : orderedEntityIds) {
+		auto iterator = std::find_if(
+		    state.projectiles.begin(),
+		    state.projectiles.end(),
+		    [entityId](const auto &projectile) { return projectile.entityId == entityId; });
+		if (iterator == state.projectiles.end())
+			continue;
 		auto &projectile = *iterator;
-		if (projectile.behavior != ElementalBehavior) {
-			++iterator;
+		bool secondaryOwner = false;
+		if (!IsReplayElementalOwnerValid(state, projectile, secondaryOwner)) {
+			state.projectiles.erase(iterator);
 			continue;
 		}
+		const uint32_t ownerEntityId = secondaryOwner
+		    ? state.secondaryPlayerEntityId
+		    : state.entityId == 0 ? 1U : state.entityId;
+		const uint32_t ownerClassId = secondaryOwner
+		    ? state.secondaryPlayerCharacterClassId
+		    : state.characterClassId;
+		const int32_t ownerMagic = secondaryOwner ? state.secondaryPlayerMagic : state.attributes[3];
 		if (projectile.remainingTicks > 0)
 			--projectile.remainingTicks;
 		if (projectile.phase == 1) {
-			const int32_t startX = projectile.pathIndex == 1
-			    ? projectile.elementalOriginX
-			    : projectile.startX;
-			const int32_t startY = projectile.pathIndex == 1
-			    ? projectile.elementalOriginY
-			    : projectile.startY;
 			for (const auto offset : BurstOffsets) {
 				const int32_t targetX = projectile.positionX + offset.first;
 				const int32_t targetY = projectile.positionY + offset.second;
-				if (targetX < 0 || targetX >= 40 || targetY < 0 || targetY >= 40
-				    || state.combatTargetEntityId == 0
-				    || state.combatTargetHitPointsQ6 <= 0
-				    || state.combatTargetLevelId != projectile.levelId
-				    || state.combatTargetPositionX != targetX
-				    || state.combatTargetPositionY != targetY
-				    || state.combatTargetFireResistance >= 100)
+				if (targetX < 0 || targetX >= 40 || targetY < 0 || targetY >= 40)
 					continue;
-				const int32_t hitChance = std::clamp(
-					state.attributes[3]
-					    + GetReplayBaseMagicToHit(state.characterClassId)
-					    - state.combatTargetMonsterLevel * 2,
-					5,
-					95);
-				if (!state.combatTargetPetrified
-				    && std::max(GenerateRnd(state, 100), 0) >= hitChance)
-					continue;
-				static_cast<void>(GenerateRnd(state, 1));
-				int32_t damageQ6 = projectile.damage;
-				if (state.combatTargetFireResistance > 0)
-					damageQ6 /= projectile.resistantDamageDivisor;
-				state.combatTargetHitPointsQ6 = std::max(
-					0,
-					state.combatTargetHitPointsQ6 - damageQ6);
-				state.combatTargetHitPoints = ToWholeCeilingQ6(
-					state.combatTargetHitPointsQ6);
-				if (state.combatTargetHitPointsQ6 == 0)
-					DefeatReplayCombatTarget(state);
+				const bool combatTargetAtTile = state.combatTargetEntityId != 0
+				    && state.combatTargetEntityId != ownerEntityId
+				    && state.combatTargetHitPointsQ6 > 0
+				    && state.combatTargetLevelId == projectile.levelId
+				    && state.combatTargetPositionX == targetX
+				    && state.combatTargetPositionY == targetY;
+				if (combatTargetAtTile) {
+					if (state.combatTargetFireResistance < 100) {
+						const int32_t hitChance = std::clamp(
+						    ownerMagic + GetReplayBaseMagicToHit(ownerClassId)
+						        - state.combatTargetMonsterLevel * 2,
+						    5,
+						    95);
+						if (state.combatTargetPetrified
+						    || std::max(GenerateRnd(state, 100), 0) < hitChance) {
+							static_cast<void>(GenerateRnd(state, 1));
+							int32_t damageQ6 = projectile.damage;
+							if (state.combatTargetFireResistance > 0)
+								damageQ6 /= projectile.resistantDamageDivisor;
+							state.combatTargetHitPointsQ6 = std::max(
+							    0,
+							    state.combatTargetHitPointsQ6 - damageQ6);
+							state.combatTargetHitPoints = ToWholeCeilingQ6(
+							    state.combatTargetHitPointsQ6);
+							if (state.combatTargetHitPointsQ6 == 0)
+								DefeatReplayCombatTarget(state);
+						}
+					}
+				} else {
+					const uint32_t playerTargetEntityId = FindReplayElementalPlayerTarget(
+					    state,
+					    projectile,
+					    targetX,
+					    targetY);
+					if (playerTargetEntityId != 0)
+						static_cast<void>(ResolveReplayElementalPlayerHit(
+						    state,
+						    projectile,
+						    playerTargetEntityId,
+						    tick,
+						    true));
+				}
+				if (state.objectEntityId != 0
+				    && !state.objectActivated
+				    && !state.objectDestroyed
+				    && !state.objectMissilePassable
+				    && state.objectLevelId == projectile.levelId
+				    && state.objectPositionX == targetX
+				    && state.objectPositionY == targetY
+				    && state.objectBreakable) {
+					state.objectDestroyed = true;
+				}
 			}
 			if (projectile.remainingTicks == 0)
-				iterator = state.projectiles.erase(iterator);
-			else
-				++iterator;
+				state.projectiles.erase(iterator);
 			continue;
 		}
 
-		const auto visitedTiles = MoveReplayNativeProjectile(projectile);
-		bool impacted = false;
-		const auto resolveCollision = [&](int32_t x, int32_t y) {
+		const auto resolveCombatTarget = [&](int32_t x, int32_t y) {
 			if (state.combatTargetEntityId == 0
+			    || state.combatTargetEntityId == ownerEntityId
 			    || state.combatTargetHitPointsQ6 <= 0
 			    || state.combatTargetLevelId != projectile.levelId
 			    || state.combatTargetPositionX != x
@@ -6778,8 +6995,7 @@ void AdvanceReplayElementalOneTick(
 			    || state.combatTargetFireResistance >= 100)
 				return false;
 			const int32_t hitChance = std::clamp(
-				state.attributes[3]
-				    + GetReplayBaseMagicToHit(state.characterClassId)
+				ownerMagic + GetReplayBaseMagicToHit(ownerClassId)
 				    - state.combatTargetMonsterLevel * 2,
 				5,
 				95);
@@ -6796,18 +7012,78 @@ void AdvanceReplayElementalOneTick(
 			state.combatTargetHitPoints = ToWholeCeilingQ6(
 				state.combatTargetHitPointsQ6);
 			if (state.combatTargetHitPointsQ6 == 0)
-			DefeatReplayCombatTarget(state);
+				DefeatReplayCombatTarget(state);
 			return true;
 		};
+		const auto resolveCollision = [&](int32_t x, int32_t y) {
+			const bool targetAtTile = state.combatTargetEntityId != 0
+			    && state.combatTargetEntityId != ownerEntityId
+			    && state.combatTargetHitPointsQ6 > 0
+			    && state.combatTargetLevelId == projectile.levelId
+			    && state.combatTargetPositionX == x
+			    && state.combatTargetPositionY == y;
+			const uint32_t playerTargetEntityId = FindReplayElementalPlayerTarget(
+			    state,
+			    projectile,
+			    x,
+			    y);
+			const uint32_t collisionTargetEntityId = targetAtTile
+			    ? state.combatTargetEntityId
+			    : playerTargetEntityId;
+			bool hitTarget = resolveCombatTarget(x, y);
+			if (!hitTarget && playerTargetEntityId != 0)
+				hitTarget = ResolveReplayElementalPlayerHit(
+				    state,
+				    projectile,
+				    playerTargetEntityId,
+				    tick,
+				    false);
+			const bool blockingObject = state.objectEntityId != 0
+			    && !state.objectActivated
+			    && !state.objectDestroyed
+			    && !state.objectMissilePassable
+			    && state.objectLevelId == projectile.levelId
+			    && state.objectPositionX == x
+			    && state.objectPositionY == y;
+			if (blockingObject && state.objectBreakable)
+				state.objectDestroyed = true;
+		return std::pair<bool, uint32_t> { hitTarget || blockingObject, collisionTargetEntityId };
+		};
+		const auto findCollisionTargetEntityId = [&](int32_t x, int32_t y) {
+			const bool targetAtTile = state.combatTargetEntityId != 0
+			    && state.combatTargetEntityId != ownerEntityId
+			    && state.combatTargetHitPointsQ6 > 0
+			    && state.combatTargetLevelId == projectile.levelId
+			    && state.combatTargetPositionX == x
+			    && state.combatTargetPositionY == y;
+			const uint32_t playerTargetEntityId = FindReplayElementalPlayerTarget(
+			    state,
+			    projectile,
+			    x,
+			    y);
+			return targetAtTile ? state.combatTargetEntityId : playerTargetEntityId;
+		};
+		const auto visitedTiles = MoveReplayNativeProjectile(projectile);
+		bool impacted = false;
 		if (visitedTiles.empty()) {
-			impacted = resolveCollision(projectile.positionX, projectile.positionY);
+			const uint32_t collisionTargetEntityId = findCollisionTargetEntityId(
+			    projectile.positionX,
+			    projectile.positionY);
+			if (projectile.lastCollisionTargetEntityId != collisionTargetEntityId) {
+				const auto collision = resolveCollision(projectile.positionX, projectile.positionY);
+				if (collision.first)
+					impacted = true;
+			}
+			projectile.lastCollisionTargetEntityId = collisionTargetEntityId;
 		} else {
 			for (const auto &tile : visitedTiles) {
 				projectile.positionX = tile.x;
 				projectile.positionY = tile.y;
 				projectile.traveledX = tile.traveledX;
 				projectile.traveledY = tile.traveledY;
-				if (resolveCollision(tile.x, tile.y)) {
+				const auto collision = resolveCollision(tile.x, tile.y);
+				projectile.lastCollisionTargetEntityId = collision.second;
+				if (collision.first) {
 					impacted = true;
 					break;
 				}
@@ -6815,7 +7091,6 @@ void AdvanceReplayElementalOneTick(
 		}
 		if (impacted) {
 			EnterReplayProjectileImpact(projectile);
-			++iterator;
 			continue;
 		}
 		if (projectile.pathIndex == 0
@@ -6834,8 +7109,11 @@ void AdvanceReplayElementalOneTick(
 				targetX = state.combatTargetPositionX;
 				targetY = state.combatTargetPositionY;
 			} else {
-				targetX += DirectionDisplacements[state.facingDirection % 8].first;
-				targetY += DirectionDisplacements[state.facingDirection % 8].second;
+				const uint32_t ownerFacingDirection = secondaryOwner
+				    ? state.secondaryPlayerFacingDirection
+				    : state.facingDirection;
+				targetX += DirectionDisplacements[ownerFacingDirection % 8].first;
+				targetY += DirectionDisplacements[ownerFacingDirection % 8].second;
 			}
 			const int32_t direction = GetDirection(
 				projectile.positionX,
@@ -6859,10 +7137,10 @@ void AdvanceReplayElementalOneTick(
 			projectile.velocityY = velocity.second;
 			projectile.traveledX = 0;
 			projectile.traveledY = 0;
+			projectile.lastCollisionTargetEntityId = 0;
 		}
 		if (projectile.remainingTicks == 0)
 			EnterReplayProjectileImpact(projectile);
-		++iterator;
 	}
 }
 
@@ -7996,11 +8274,11 @@ bool ApplyReplayCast(ReplayFixtureExecutionState &state, const ReplayFixtureComm
 	    && command.targetY >= 0
 	    && command.targetY < 40) {
 		const int32_t spellLevel = GetReplayEffectiveSpellLevel(
-			state,
-			isMemorized ? &*memorizedSpell : nullptr);
+		    state,
+		    isMemorized ? &*memorizedSpell : nullptr);
 		const int32_t manaCost = std::max(
 			20,
-			40 - std::max(spellLevel - 1, 0) * 2)
+			35 - std::max(spellLevel - 1, 0) * 2)
 			* 64;
 		if (!isAbility && state.mana < manaCost)
 			return false;
@@ -12721,7 +12999,7 @@ void AdvanceReplayStateToTick(
 		AdvanceReplayNovaBallsOneTick(state);
 		AdvanceChainLightningOneTick(state, simulationTick);
 		AdvanceReplayImmolationOneTick(state);
-		AdvanceReplayElementalOneTick(state);
+		AdvanceReplayElementalOneTick(state, simulationTick);
 		AdvanceReplayGuardianOneTick(state);
 		AdvanceReplayRageOneTick(state);
 		AdvanceReplayFireWallsOneTick(state, simulationTick);
@@ -14780,6 +15058,7 @@ bool ApplyReplaySecondaryCast(
 	        && command.spellId != 4
 	        && command.spellId != 12
 	        && command.spellId != 30
+	        && command.spellId != 31
 	        && command.spellId != 38))
 		return false;
 

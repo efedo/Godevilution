@@ -2,6 +2,18 @@
 
 All notable changes to this fork are documented below.
 
+- Extended the shared replay gate to 389 fixtures and 414 native tests with a
+  secondary Sorcerer's Elemental cast through the primary-player boundary. The
+  compact native runner now admits spell 31, derives mana, projectile damage,
+  and collision hit chance from the actual caster, and resolves direct and
+  persistent Q6 player damage with owner exclusion and native RNG. Exact
+  checkpoints at ticks 1, 2, 3, 4, 16, and 17 cover cast state, direct impact,
+  the 14-tick burst, and cleanup;
+  reversed-storage and invalid owner/spell/level/life regressions pin stable
+  entity ordering and fail-closed advancement. Additional regressions preserve
+  transition/quit target exclusion, repeated-collision suppression, and direct
+  or burst breakable-object handling.
+
 - Extended the shared replay gate to 388 fixtures and 411 native tests with a
   secondary Sorcerer's Immolation cast against the primary participant. The
   compact native runner now admits spell 45 from the secondary memorized

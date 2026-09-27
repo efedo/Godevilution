@@ -144,6 +144,7 @@
     <None Include="../../../test/fixtures/replay/gameplay-immolation-radial-fan-resolution.json" Link="Fixtures/gameplay-immolation-radial-fan-resolution.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-immolation-secondary-cast-primary-player.json" Link="Fixtures/gameplay-immolation-secondary-cast-primary-player.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-elemental-resolution.json" Link="Fixtures/gameplay-elemental-resolution.json" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="../../../test/fixtures/replay/gameplay-elemental-secondary-cast-primary-player.json" Link="Fixtures/gameplay-elemental-secondary-cast-primary-player.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-guardian-resolution.json" Link="Fixtures/gameplay-guardian-resolution.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-rage-resolution.json" Link="Fixtures/gameplay-rage-resolution.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-inferno-resolution.json" Link="Fixtures/gameplay-inferno-resolution.json" CopyToOutputDirectory="PreserveNewest" />

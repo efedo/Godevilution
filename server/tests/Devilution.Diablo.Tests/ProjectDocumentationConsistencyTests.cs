@@ -99,6 +99,7 @@ public sealed class ProjectDocumentationConsistencyTests
         Assert.Contains("gameplay-flame-wave-secondary-cast-primary-player.json", replayFixtures, StringComparison.Ordinal);
         Assert.Contains("gameplay-chain-lightning-secondary-cast-primary-player.json", replayFixtures, StringComparison.Ordinal);
         Assert.Contains("gameplay-immolation-secondary-cast-primary-player.json", replayFixtures, StringComparison.Ordinal);
+        Assert.Contains("gameplay-elemental-secondary-cast-primary-player.json", replayFixtures, StringComparison.Ordinal);
         Assert.Contains("gameplay-flash-secondary-cast-primary-player.json", replayFixtures, StringComparison.Ordinal);
         Assert.Contains("gameplay-fire-wall-secondary-cast-primary-player.json", replayFixtures, StringComparison.Ordinal);
         Assert.Contains("gameplay-hork-spawn-secondary-warrior-block-chance.json", replayFixtures, StringComparison.Ordinal);

@@ -278,6 +278,14 @@ manifest identity.
 including the initial fire projectile, native retargeting lifecycle, and
 canonical projectile hashing.
 
+`gameplay-elemental-secondary-cast-primary-player.json` covers a secondary
+Sorcerer's spell-31 cast through the primary-player boundary, including caster
+mana/facing/RNG, direct collision, the persistent impact burst, and exact
+expiry. Separate native and managed regressions cover reversed projectile
+storage order; fail-closed owner, spell, level, and life validation;
+transitioning-player exclusion; repeated-collision suppression; and compact
+breakable-object handling.
+
 `gameplay-guardian-resolution.json` covers the player Guardian cast, including
 the one-tick turret admission, native 48-position firing arc, Firebolt
 creation, controller GuardianState transition, and projectile lifetime. Its
@@ -620,9 +628,9 @@ the first drop remains authoritative.
 
 The compact native replay projection now carries the same server-owned corpse
 tile representation and per-tick monster regeneration as the C# checkpoints.
-Ordinary-death and Firebolt, Fireball, Lightning, and Flash
- spell/projectile-timeline checkpoints pass in both runners. As of 2026-09-26,
-the native replay gate contains 388 checked-in JSON fixtures and 411 registered
+Ordinary-death and Firebolt, Fireball, Lightning, Flash, and Elemental
+spell/projectile-timeline checkpoints pass in both runners. As of 2026-09-26,
+the native replay gate contains 389 checked-in JSON fixtures and 414 registered
 tests; the test count also includes parser and validation cases that do not
 introduce another fixture file. Coverage includes seeded and autonomous MonsterArrow
 source coverage, Hellfire HorkDemon Hork Spawn admission, player impact, and
@@ -1650,6 +1658,8 @@ Notable shared fixtures include:
   native 36-ball radial ordering, first-tick movement, and canonical parity;
 - `gameplay-elemental-resolution.json` for the initial fire projectile,
   native retargeting lifecycle, and canonical parity;
+- `gameplay-elemental-secondary-cast-primary-player.json` for the secondary
+  caster's direct primary collision, persistent burst, and exact cleanup;
 - `gameplay-guardian-resolution.json` for turret admission, deterministic
   native firing-arc selection, Firebolt creation, controller state, and
   projectile lifetime;
