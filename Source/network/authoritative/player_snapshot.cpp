@@ -1282,6 +1282,19 @@ tl::expected<void, std::string> ValidateEntityPositionSnapshots(const protocol::
 		    && (!monster.moving()
 		        || isInBounds(monster.level_id(), monster.future_position_x(), monster.future_position_y()));
 	};
+	const auto isValidProjectilePosition = [&](const protocol::ProjectileSnapshot &projectile, int32_t x, int32_t y) {
+		if (isInBounds(projectile.level_id(), x, y))
+			return true;
+		const auto level = levels.find(projectile.level_id());
+		return level != levels.end()
+		    && IsElementalImpactPositionAtLevelEdge(
+		        projectile.behavior(),
+		        projectile.phase(),
+		        x,
+		        y,
+		        level->second->width(),
+		        level->second->height());
+	};
 	const auto invalidPlayer = std::any_of(snapshot.players().begin(), snapshot.players().end(), [&](const auto &player) {
 		return !isInBounds(player.level_id(), player.position_x(), player.position_y());
 	});
@@ -1295,8 +1308,8 @@ tl::expected<void, std::string> ValidateEntityPositionSnapshots(const protocol::
 		return !isInBounds(object.level_id(), object.position_x(), object.position_y());
 	});
 	const auto invalidProjectile = std::any_of(snapshot.projectiles().begin(), snapshot.projectiles().end(), [&](const auto &projectile) {
-		return !isInBounds(projectile.level_id(), projectile.position_x(), projectile.position_y())
-		    || !isInBounds(projectile.level_id(), projectile.target_x(), projectile.target_y());
+		return !isValidProjectilePosition(projectile, projectile.position_x(), projectile.position_y())
+		    || !isValidProjectilePosition(projectile, projectile.target_x(), projectile.target_y());
 	});
 	const auto invalidCorpse = std::any_of(snapshot.corpses().begin(), snapshot.corpses().end(), [&](const auto &corpse) {
 		return !isInBounds(corpse.level_id(), corpse.position_x(), corpse.position_y());

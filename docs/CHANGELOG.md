@@ -2,6 +2,15 @@
 
 All notable changes to this fork are documented below.
 
+- Extended the shared replay gate to 392 fixtures and 417 native tests with
+  Elemental geometry and occupancy coverage. Production C# and compact native
+  replay now agree on map-edge and missile-wall collision, Solid-only burst
+  line of sight, moving-petrified future-tile hits, and guaranteed-hit RNG
+  consumption. Four shared checkpoints pin the deterministic lifecycle, while
+  focused variants cover missile walls and the positive map edge. One-tile
+  positive-edge impact centers remain exact through authoritative saves and
+  managed, Godot, and native-client validation.
+
 - Extended the shared replay gate to 391 fixtures and 416 native tests with a
   secondary Sorcerer's Nova cast through the primary-player boundary. The
   production server and compact native runner now preserve secondary caster

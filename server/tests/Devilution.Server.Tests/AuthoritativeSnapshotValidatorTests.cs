@@ -1021,6 +1021,44 @@ public sealed class AuthoritativeSnapshotValidatorTests
     }
 
     [Fact]
+    public void AcceptsOnlyNativeElementalImpactCenterOneTileBeyondLevelEdge()
+    {
+        var valid = new Snapshot {
+            LevelGeometry = {
+                new LevelGeometrySnapshot { LevelId = 1, Width = 10, Height = 10 },
+            },
+            Projectiles = {
+                new ProjectileSnapshot {
+                    EntityId = 1,
+                    SourceEntityId = 2,
+                    SpellId = 31,
+                    LevelId = 1,
+                    PositionX = 10,
+                    PositionY = 4,
+                    TargetX = 10,
+                    TargetY = 4,
+                    RemainingTicks = 1,
+                    Behavior = (int)Devilution.Protocol.AuthoritativeProjectileBehavior.Elemental,
+                    Phase = AuthoritativeProtocolLimits.ElementalProjectileImpactPhase,
+                },
+            },
+        };
+
+        AuthoritativeSnapshotValidator.Validate(valid);
+
+        foreach (var mutate in new Action<Snapshot>[] {
+            snapshot => snapshot.Projectiles[0].TargetX = 11,
+            snapshot => snapshot.Projectiles[0].Behavior = (int)Devilution.Protocol.AuthoritativeProjectileBehavior.Firebolt,
+            snapshot => snapshot.Projectiles[0].Phase = 0,
+        }) {
+            var invalid = valid.Clone();
+            mutate(invalid);
+            Assert.Throws<InvalidDataException>(() =>
+                AuthoritativeSnapshotValidator.Validate(invalid));
+        }
+    }
+
+    [Fact]
     public void AcceptsValidWorldItemIdentityAndNativeState()
     {
         AuthoritativeSnapshotValidator.Validate(new Snapshot {

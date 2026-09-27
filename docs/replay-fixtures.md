@@ -38,6 +38,11 @@ An optional top-level `difficulty` selects the validated Normal, Nightmare, or
 Hell ruleset. Difficulty fixtures apply the native target armor and initial
 health modifiers in both runners; omitted values retain Normal compatibility.
 
+Gameplay initial state may optionally define bounded `level_width` and
+`level_height` plus row-major `blocked_cells` and `missile_blocked_cells`.
+Solid cells drive geometry-only line of sight; missile-only cells block direct
+projectile travel without becoming burst LOS blockers.
+
 An optional top-level `initial_projectiles` array seeds server-owned projectiles
 before the first simulation tick. It carries the stable entity/source/target
 identities, level and travel coordinates, damage channel, behavior, speed,
@@ -286,6 +291,19 @@ manifest identity.
 `gameplay-elemental-resolution.json` covers the player Elemental cast,
 including the initial fire projectile, native retargeting lifecycle, and
 canonical projectile hashing.
+
+`gameplay-elemental-geometry-and-occupancy.json` combines generic optional
+level dimensions and blocked-cell geometry with an Elemental cast against a
+moving petrified target. Its four shared checkpoints cover Solid-only burst
+line of sight, future-tile direct targeting, and native RNG parity. Focused
+managed and native variants cover missile-wall collision and the exact
+right-edge impact coordinate. Both loaders reject invalid dimensions, cells,
+and same-level initial actor positions before execution. An Elemental impact
+may remain one tile beyond a
+positive level edge in authoritative snapshots so persistence and later impact
+ticks retain the native center without relaxing validation for other entities
+or phases. The current nonnegative wire-coordinate contract cannot carry a
+hypothetical -1 impact beyond a passable left or top edge.
 
 `gameplay-elemental-secondary-cast-primary-player.json` covers a secondary
 Sorcerer's spell-31 cast through the primary-player boundary, including caster
@@ -1675,6 +1693,9 @@ Notable shared fixtures include:
   native 36-ball radial ordering, first-tick movement, and canonical parity;
 - `gameplay-elemental-resolution.json` for the initial fire projectile,
   native retargeting lifecycle, and canonical parity;
+- `gameplay-elemental-geometry-and-occupancy.json` for direct map-edge and
+  missile-wall collision, Solid-only burst LOS, moving-petrified future-tile
+  targeting, and four shared canonical checkpoints;
 - `gameplay-elemental-secondary-cast-primary-player.json` for the secondary
   caster's direct primary collision, persistent burst, and exact cleanup;
 - `gameplay-guardian-resolution.json` for turret admission, deterministic

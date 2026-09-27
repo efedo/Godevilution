@@ -675,6 +675,50 @@ public sealed class ClientModelTests
     }
 
     [Fact]
+    public void AcceptsOnlyNativeElementalImpactCenterOneTileBeyondLevelEdge()
+    {
+        var model = new AuthoritativeClientModel();
+        var valid = new Snapshot {
+            Players = { new PlayerSnapshot { EntityId = 7, LevelId = 1 } },
+            LevelGeometry = {
+                new LevelGeometrySnapshot {
+                    LevelId = 1,
+                    Width = 10,
+                    Height = 10,
+                },
+            },
+            Projectiles = {
+                new ProjectileSnapshot {
+                    EntityId = 11,
+                    SourceEntityId = 7,
+                    SpellId = 31,
+                    LevelId = 1,
+                    PositionX = 10,
+                    PositionY = 4,
+                    TargetX = 10,
+                    TargetY = 4,
+                    RemainingTicks = 1,
+                    Behavior = (int)AuthoritativeProjectileBehavior.Elemental,
+                    Phase = AuthoritativeProtocolLimits.ElementalProjectileImpactPhase,
+                },
+            },
+        };
+
+        model.Apply(new AuthoritativeClientMessage(Snapshot: valid));
+
+        foreach (var mutate in new Action<Snapshot>[] {
+            snapshot => snapshot.Projectiles[0].PositionX = 11,
+            snapshot => snapshot.Projectiles[0].Behavior = (int)AuthoritativeProjectileBehavior.Firebolt,
+            snapshot => snapshot.Projectiles[0].Phase = 0,
+        }) {
+            var invalid = valid.Clone();
+            mutate(invalid);
+            Assert.Throws<InvalidDataException>(() =>
+                model.Apply(new AuthoritativeClientMessage(Snapshot: invalid)));
+        }
+    }
+
+    [Fact]
     public void AcceptsCellTargetedAttackAndRejectsItsInvalidDestination()
     {
         var model = new AuthoritativeClientModel();

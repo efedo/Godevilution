@@ -1900,6 +1900,24 @@ TEST(ServerBackedPlayerSnapshot, RejectsEntityPositionsOutsideNativeGeometry)
 	worldEntitiesOutside.mutable_projectiles(0)->set_level_id(1);
 	EXPECT_FALSE(ValidateEntityPositionSnapshots(worldEntitiesOutside).has_value());
 	worldEntitiesOutside.clear_projectiles();
+	auto *elementalImpact = worldEntitiesOutside.add_projectiles();
+	elementalImpact->set_level_id(1);
+	elementalImpact->set_position_x(4);
+	elementalImpact->set_position_y(1);
+	elementalImpact->set_target_x(4);
+	elementalImpact->set_target_y(1);
+	elementalImpact->set_behavior(static_cast<int>(ProjectileBehavior::Elemental));
+	elementalImpact->set_phase(ElementalProjectileImpactPhase);
+	EXPECT_TRUE(ValidateEntityPositionSnapshots(worldEntitiesOutside).has_value());
+	elementalImpact->set_position_x(5);
+	EXPECT_FALSE(ValidateEntityPositionSnapshots(worldEntitiesOutside).has_value());
+	elementalImpact->set_position_x(4);
+	elementalImpact->set_behavior(static_cast<int>(ProjectileBehavior::Firebolt));
+	EXPECT_FALSE(ValidateEntityPositionSnapshots(worldEntitiesOutside).has_value());
+	elementalImpact->set_behavior(static_cast<int>(ProjectileBehavior::Elemental));
+	elementalImpact->set_phase(0);
+	EXPECT_FALSE(ValidateEntityPositionSnapshots(worldEntitiesOutside).has_value());
+	worldEntitiesOutside.clear_projectiles();
 	worldEntitiesOutside.add_corpses()->set_position_y(4);
 	worldEntitiesOutside.mutable_corpses(0)->set_level_id(1);
 	EXPECT_FALSE(ValidateEntityPositionSnapshots(worldEntitiesOutside).has_value());
@@ -2660,6 +2678,22 @@ TEST(ServerBackedPlayerSnapshot, WorldProjectionRejectsEntitiesOutsideProjectedG
 	projectile.levelId = 1;
 	projectile.positionY = 2;
 	projectile.remainingTicks = 1;
+	EXPECT_FALSE(ServerBackedWorldProjection {}.Apply({ }, { }, { }, { projectile }, { geometry }, 1).has_value());
+
+	projectile.positionY = 1;
+	projectile.positionX = 2;
+	projectile.targetX = 2;
+	projectile.targetY = 1;
+	projectile.behavior = static_cast<int>(ProjectileBehavior::Elemental);
+	projectile.phase = ElementalProjectileImpactPhase;
+	EXPECT_TRUE(ServerBackedWorldProjection {}.Apply({ }, { }, { }, { projectile }, { geometry }, 1).has_value());
+	projectile.targetX = 3;
+	EXPECT_FALSE(ServerBackedWorldProjection {}.Apply({ }, { }, { }, { projectile }, { geometry }, 1).has_value());
+	projectile.targetX = 2;
+	projectile.behavior = static_cast<int>(ProjectileBehavior::Firebolt);
+	EXPECT_FALSE(ServerBackedWorldProjection {}.Apply({ }, { }, { }, { projectile }, { geometry }, 1).has_value());
+	projectile.behavior = static_cast<int>(ProjectileBehavior::Elemental);
+	projectile.phase = 0;
 	EXPECT_FALSE(ServerBackedWorldProjection {}.Apply({ }, { }, { }, { projectile }, { geometry }, 1).has_value());
 
 	ProjectedWorldItemSnapshot invalidNativeCoordinate;

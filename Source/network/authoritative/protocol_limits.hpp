@@ -290,6 +290,7 @@ inline constexpr int MaximumMonsterLeaderRelation = 2;
 inline constexpr int MaximumMonsterDialogueState = 2;
 inline constexpr int MaximumProjectileDamageType = 4;
 inline constexpr int MaximumProjectilePhase = 1;
+inline constexpr int ElementalProjectileImpactPhase = 1;
 inline constexpr std::size_t MaximumDialogueTextBytes = 16 * 1024;
 inline constexpr std::size_t MaximumIdentityBytes = 128;
 inline constexpr int MaximumProjectileBehavior = static_cast<int>(ProjectileBehavior::MonsterArrow);
@@ -308,5 +309,27 @@ inline constexpr int MaximumObjectRewardOriginKind = 1;
 inline constexpr int MaximumObjectQuestSequenceFollowUpKind = 3;
 inline constexpr int MaximumObjectProjectileSourceKind = 1;
 inline constexpr int MaximumQuestTownerInteractionKind = 4;
+
+/** Native Elemental impacts may retain their collision center one tile beyond a positive map edge. */
+inline constexpr bool IsElementalImpactPositionAtLevelEdge(
+	int behavior,
+	int phase,
+	int x,
+	int y,
+	int width,
+	int height) noexcept
+{
+	return behavior == static_cast<int>(ProjectileBehavior::Elemental)
+	    && phase == ElementalProjectileImpactPhase
+	    && width > 0
+	    && height > 0
+	    && x >= MinimumNativeTileCoordinate
+	    && x <= MaximumNativeTileCoordinate
+	    && y >= MinimumNativeTileCoordinate
+	    && y <= MaximumNativeTileCoordinate
+	    && x <= width
+	    && y <= height
+	    && (x == width || y == height);
+}
 
 } // namespace devilution::authoritative

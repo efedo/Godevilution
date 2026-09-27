@@ -978,14 +978,14 @@ internal static class DiabloProtocolMapper
                     "Authoritative projectile contains an unknown or misplaced native missile identity.");
             }
 
-            ValidateProjectedEntityPosition(
-                projectile.LevelId,
+            ValidateProjectedProjectilePosition(
+                projectile,
                 projectile.PositionX,
                 projectile.PositionY,
                 levels,
                 "projectile");
-            ValidateProjectedEntityPosition(
-                projectile.LevelId,
+            ValidateProjectedProjectilePosition(
+                projectile,
                 projectile.TargetX,
                 projectile.TargetY,
                 levels,
@@ -1247,6 +1247,31 @@ internal static class DiabloProtocolMapper
                     "Authoritative monster state contains an invalid Scavenger corpse reference.");
             }
         }
+    }
+
+    private static void ValidateProjectedProjectilePosition(
+        DiabloProjectileState projectile,
+        int positionX,
+        int positionY,
+        IReadOnlyDictionary<uint, AuthoritativeLevel> levels,
+        string entityKind)
+    {
+        if (levels.TryGetValue(projectile.LevelId, out var level)
+            && AuthoritativeProtocolLimits.IsElementalImpactPositionAtLevelEdge(
+                (int)projectile.Behavior,
+                (int)projectile.Phase,
+                positionX,
+                positionY,
+                level.Width,
+                level.Height)) {
+            return;
+        }
+        ValidateProjectedEntityPosition(
+            projectile.LevelId,
+            positionX,
+            positionY,
+            levels,
+            entityKind);
     }
 
     private static void ValidateProjectedProceduralQuestPieceOrigins(

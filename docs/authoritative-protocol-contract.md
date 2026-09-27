@@ -903,6 +903,11 @@ managed mapper/host/Godot validators and native snapshot/world projection call
 the same named limit before applying level geometry bounds. This includes
 authored towner greeting positions, so a future geometry or presentation path
 cannot silently widen one boundary.
+The sole geometry-bound exception is an Elemental projectile already in Impact
+phase whose exact native collision center is one tile beyond a positive level
+edge. Managed, Godot, and native validators share that predicate, and the
+coordinate remains unchanged in state hashes and save restoration. The wire
+range still excludes negative left/top-edge centers.
 Projectile damage channels/phases and unique-monster dialogue states use the
 same shared maxima across managed validation and native projection.
 `ProjectileSnapshot.native_visual` field 56 carries the exact native

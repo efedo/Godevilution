@@ -953,6 +953,17 @@ public static class AuthoritativeSnapshotValidator
                         monster.FuturePositionX,
                         monster.FuturePositionY));
 
+        bool IsValidProjectilePosition(ProjectileSnapshot projectile, int x, int y)
+            => IsInBounds(projectile.LevelId, x, y)
+                || levels.TryGetValue(projectile.LevelId, out var level)
+                    && AuthoritativeProtocolLimits.IsElementalImpactPositionAtLevelEdge(
+                        projectile.Behavior,
+                        projectile.Phase,
+                        x,
+                        y,
+                        level.Width,
+                        level.Height);
+
         if (snapshot.Players.Any(player =>
                 !IsInBounds(player.LevelId, player.PositionX, player.PositionY))
             || snapshot.Monsters.Any(monster => !IsValidMonster(monster))
@@ -961,8 +972,8 @@ public static class AuthoritativeSnapshotValidator
             || snapshot.Objects.Any(@object =>
                 !IsInBounds(@object.LevelId, @object.PositionX, @object.PositionY))
             || snapshot.Projectiles.Any(projectile =>
-                !IsInBounds(projectile.LevelId, projectile.PositionX, projectile.PositionY)
-                || !IsInBounds(projectile.LevelId, projectile.TargetX, projectile.TargetY))
+                !IsValidProjectilePosition(projectile, projectile.PositionX, projectile.PositionY)
+                || !IsValidProjectilePosition(projectile, projectile.TargetX, projectile.TargetY))
             || snapshot.Corpses.Any(corpse =>
                 !IsInBounds(corpse.LevelId, corpse.PositionX, corpse.PositionY))
             || snapshot.Portals.Any(portal =>

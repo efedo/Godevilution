@@ -4932,6 +4932,142 @@ TEST(ReplayFixture, ExecutesElementalRetargetingProjectileLifecycle)
 	EXPECT_EQ(ComputeReplayFixtureStateHash(state), fixture.checkpoints.back().stateSha256);
 }
 
+TEST(ReplayFixture, ElementalGeometryAndFutureTileTargetingMatchNativeRules)
+{
+	std::ifstream file("test/fixtures/replay/gameplay-elemental-geometry-and-occupancy.json");
+	ASSERT_TRUE(file.good());
+	const std::string json((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
+	ReplayFixture fixture;
+	std::string error;
+	ASSERT_TRUE(ParseReplayFixture(json, fixture, error)) << error;
+
+	const auto execute = [&error](const ReplayFixture &caseFixture) {
+		ReplayFixtureExecutionState state;
+		state.entityId = 1;
+		state.life = caseFixture.initialState.life;
+		state.lifeMaximum = caseFixture.initialState.lifeMaximum;
+		state.mana = caseFixture.initialState.mana;
+		state.manaMaximum = caseFixture.initialState.manaMaximum;
+		state.positionX = caseFixture.initialState.positionX;
+		state.positionY = caseFixture.initialState.positionY;
+		state.levelId = caseFixture.initialState.levelId;
+		state.characterLevel = caseFixture.initialState.characterLevel;
+		state.characterClassId = static_cast<uint32_t>(caseFixture.initialState.characterClass);
+		state.abilitySpellId = caseFixture.initialState.abilitySpellId;
+		state.memorizedSpells = caseFixture.initialState.memorizedSpells;
+		state.spellProjectileBehavior = caseFixture.initialState.abilitySpellId == 31 ? 35 : 0;
+		state.attributes[2] = caseFixture.initialState.magic;
+		state.attributes[3] = caseFixture.initialState.magic;
+		state.attributes[4] = caseFixture.initialState.dexterity;
+		state.attributes[5] = caseFixture.initialState.dexterity;
+		ReplayFixtureExecutionResult result;
+		const bool succeeded = ExecuteReplayFixture(caseFixture, state, result, error);
+		return std::tuple { succeeded, std::move(state), std::move(result) };
+	};
+	const auto pendingHashes = [](ReplayFixture &caseFixture) {
+		for (auto &checkpoint : caseFixture.checkpoints)
+			checkpoint.stateSha256 = "pending";
+	};
+	const auto keepThrough = [](ReplayFixture &caseFixture, uint64_t tick) {
+		caseFixture.checkpoints.erase(
+		    std::remove_if(
+		        caseFixture.checkpoints.begin(),
+		        caseFixture.checkpoints.end(),
+		        [tick](const auto &checkpoint) { return checkpoint.tick > tick; }),
+		    caseFixture.checkpoints.end());
+	};
+	const auto expectInvalidGeometry = [&json](std::string_view from, std::string_view to) {
+		std::string invalidJson = json;
+		const size_t position = invalidJson.find(from);
+		ASSERT_NE(position, std::string::npos);
+		invalidJson.replace(position, from.size(), to);
+		ReplayFixture invalidFixture;
+		std::string invalidError;
+		EXPECT_FALSE(ParseReplayFixture(invalidJson, invalidFixture, invalidError));
+		EXPECT_EQ(invalidError, "Replay fixture contains invalid map geometry.");
+	};
+	expectInvalidGeometry("\"level_width\": 40", "\"level_width\": 0");
+	expectInvalidGeometry("\"blocked_cells\": [413]", "\"blocked_cells\": [413, 413]");
+	expectInvalidGeometry("\"blocked_cells\": [413]", "\"blocked_cells\": [1600]");
+	const auto expectInvalidActor = [&json](std::string_view from, std::string_view to) {
+		std::string invalidJson = json;
+		const size_t widthPosition = invalidJson.find("\"level_width\": 40");
+		ASSERT_NE(widthPosition, std::string::npos);
+		invalidJson.replace(widthPosition, std::string_view("\"level_width\": 40").size(), "\"level_width\": 16");
+		const size_t actorPosition = invalidJson.find(from);
+		ASSERT_NE(actorPosition, std::string::npos);
+		invalidJson.replace(actorPosition, from.size(), to);
+		ReplayFixture invalidFixture;
+		std::string invalidError;
+		EXPECT_FALSE(ParseReplayFixture(invalidJson, invalidFixture, invalidError));
+		EXPECT_EQ(invalidError, "Replay fixture contains an out-of-level initial actor position.");
+	};
+	expectInvalidActor("\"position_x\": 10", "\"position_x\": 16");
+	expectInvalidActor("\"combat_target_position_x\": 15", "\"combat_target_position_x\": 16");
+	expectInvalidActor("\"combat_target_future_position_x\": 14", "\"combat_target_future_position_x\": 16");
+
+	ReplayFixture futureTileFixture = fixture;
+	keepThrough(futureTileFixture, 14);
+	pendingHashes(futureTileFixture);
+	const auto [futureTileSucceeded, futureTileState, futureTileResult] = execute(futureTileFixture);
+	ASSERT_TRUE(futureTileSucceeded) << error;
+	ASSERT_EQ(futureTileResult.transitions.size(), 1U);
+	EXPECT_EQ(futureTileState.lastAppliedTick, 14U);
+	EXPECT_EQ(futureTileState.combatTargetHitPointsQ6, 639168);
+	EXPECT_LT(futureTileState.combatTargetHitPointsQ6, futureTileState.combatTargetMaxHitPointsQ6);
+
+	const auto [solidSucceeded, solidState, solidResult] = execute(fixture);
+	ASSERT_TRUE(solidSucceeded) << error;
+	ASSERT_EQ(solidResult.transitions.size(), 1U);
+	EXPECT_EQ(solidState.lastAppliedTick, 20U);
+
+	ReplayFixture openBurstFixture = fixture;
+	openBurstFixture.initialState.blockedCells.clear();
+	pendingHashes(openBurstFixture);
+	const auto [openSucceeded, openState, openResult] = execute(openBurstFixture);
+	ASSERT_TRUE(openSucceeded) << error;
+	ASSERT_EQ(openResult.transitions.size(), 1U);
+	EXPECT_LT(openState.combatTargetHitPointsQ6, solidState.combatTargetHitPointsQ6);
+
+	ReplayFixture hiddenTargetFixture = fixture;
+	hiddenTargetFixture.initialState.combatTargetSneakHidden = true;
+	keepThrough(hiddenTargetFixture, 14);
+	pendingHashes(hiddenTargetFixture);
+	const auto [hiddenTargetSucceeded, hiddenTargetState, hiddenTargetResult] = execute(hiddenTargetFixture);
+	ASSERT_TRUE(hiddenTargetSucceeded) << error;
+	ASSERT_EQ(hiddenTargetResult.transitions.size(), 1U);
+	EXPECT_EQ(hiddenTargetState.combatTargetHitPointsQ6, 639168);
+
+	ReplayFixture wallFixture = fixture;
+	wallFixture.initialState.missileBlockedCells = { 412 };
+	keepThrough(wallFixture, 8);
+	pendingHashes(wallFixture);
+	const auto [wallSucceeded, wallState, wallResult] = execute(wallFixture);
+	ASSERT_TRUE(wallSucceeded) << error;
+	ASSERT_EQ(wallResult.transitions.size(), 1U);
+	ASSERT_EQ(wallState.projectiles.size(), 1U);
+	EXPECT_EQ(wallState.projectiles[0].phase, 1);
+	EXPECT_EQ(wallState.projectiles[0].positionX, 12);
+	EXPECT_EQ(wallState.projectiles[0].positionY, 10);
+	EXPECT_EQ(wallState.combatTargetHitPointsQ6,
+	    static_cast<int32_t>(wallFixture.initialState.combatTargetHitPoints * 64));
+
+	ReplayFixture boundaryFixture = fixture;
+	boundaryFixture.initialState.levelWidth = 12;
+	boundaryFixture.initialState.blockedCells.clear();
+	boundaryFixture.initialState.missileBlockedCells.clear();
+	boundaryFixture.initialState.combatTargetEntityId = 0;
+	keepThrough(boundaryFixture, 8);
+	pendingHashes(boundaryFixture);
+	const auto [boundarySucceeded, boundaryState, boundaryResult] = execute(boundaryFixture);
+	ASSERT_TRUE(boundarySucceeded) << error;
+	ASSERT_EQ(boundaryResult.transitions.size(), 1U);
+	ASSERT_EQ(boundaryState.projectiles.size(), 1U);
+	EXPECT_EQ(boundaryState.projectiles[0].phase, 1);
+	EXPECT_EQ(boundaryState.projectiles[0].positionX, 12);
+	EXPECT_EQ(boundaryState.projectiles[0].positionY, 10);
+}
+
 TEST(ReplayFixture, ExecutesSecondaryElementalAgainstPrimaryPlayerCheckpoints)
 {
 	std::ifstream file("test/fixtures/replay/gameplay-elemental-secondary-cast-primary-player.json");

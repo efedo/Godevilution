@@ -59,6 +59,25 @@ public static class ReplayFixtureLoader
             throw new InvalidDataException("Replay fixture tick rate must be non-zero.");
         if (fixture.RngSeed > uint.MaxValue)
             throw new InvalidDataException("Replay fixture RNG seed must fit the native 32-bit stream.");
+        var initial = fixture.InitialState;
+        bool IsWithinInitialGeometry(int positionX, int positionY)
+            => positionX >= 0 && positionX < initial.LevelWidth
+                && positionY >= 0 && positionY < initial.LevelHeight;
+        var targetUsesInitialGeometry = initial.CombatTargetEntityId != 0
+            && (initial.CombatTargetLevelId == 0
+                || initial.CombatTargetLevelId == initial.LevelId);
+        if (!IsWithinInitialGeometry(initial.PositionX, initial.PositionY)
+            || (targetUsesInitialGeometry
+                && (!IsWithinInitialGeometry(
+                        initial.CombatTargetPositionX,
+                        initial.CombatTargetPositionY)
+                    || (initial.CombatTargetMoving
+                        && !IsWithinInitialGeometry(
+                            initial.CombatTargetFuturePositionX,
+                            initial.CombatTargetFuturePositionY))))) {
+            throw new InvalidDataException(
+                "Replay fixture contains an out-of-level initial actor position.");
+        }
         if (fixture.InitialState.Life < 0
             || fixture.InitialState.LifeMaximum < fixture.InitialState.Life
             || !Enum.IsDefined(fixture.InitialState.FacingDirection)
@@ -398,6 +417,16 @@ public static class ReplayFixtureLoader
         var combatTargetHitPoints = GetOptionalInt(
             value,
             "combat_target_hit_points");
+        var levelWidth = GetOptionalInt(value, "level_width", 40);
+        var levelHeight = GetOptionalInt(value, "level_height", 40);
+        var blockedCells = ParseCells(value, "blocked_cells");
+        var missileBlockedCells = ParseCells(value, "missile_blocked_cells");
+        if (levelWidth is <= 0 or > AuthoritativeLevel.NativeMaximumWidth
+            || levelHeight is <= 0 or > AuthoritativeLevel.NativeMaximumHeight
+            || blockedCells.Any(cell => cell >= checked(levelWidth * levelHeight))
+            || missileBlockedCells.Any(cell => cell >= checked(levelWidth * levelHeight))) {
+            throw new InvalidDataException("Replay fixture contains invalid map geometry.");
+        }
         return new ReplayInitialState(
             RequiredString(value, "player"),
             RequiredUInt(value, "gold"),
@@ -420,6 +449,10 @@ public static class ReplayFixtureLoader
             PositionX = value.TryGetProperty("position_x", out var positionX) ? positionX.GetInt32() : 0,
             PositionY = value.TryGetProperty("position_y", out var positionY) ? positionY.GetInt32() : 0,
             LevelId = value.TryGetProperty("level_id", out var levelId) ? levelId.GetUInt32() : 0,
+            LevelWidth = levelWidth,
+            LevelHeight = levelHeight,
+            BlockedCells = blockedCells,
+            MissileBlockedCells = missileBlockedCells,
             WarpId = GetOptionalUInt(value, "warp_id"),
             WarpSourceLevelId = GetOptionalUInt(value, "warp_source_level_id"),
             WarpTriggerX = GetOptionalInt(value, "warp_trigger_x"),
@@ -1166,6 +1199,23 @@ public static class ReplayFixtureLoader
         if (result.Any(corpse => corpse.EntityId == 0)
             || result.Select(corpse => corpse.EntityId).Distinct().Count() != result.Length)
             throw new InvalidDataException("Replay fixture corpses contain invalid or duplicate state.");
+        return result;
+    }
+
+    private static IReadOnlyList<int> ParseCells(JsonElement value, string property)
+    {
+        if (!value.TryGetProperty(property, out var cells))
+            return [];
+        if (cells.ValueKind != JsonValueKind.Array)
+            throw new InvalidDataException($"Replay fixture {property} must be an array.");
+        var result = cells.EnumerateArray()
+            .Select(cell => cell.TryGetInt32(out var index) && index >= 0
+                ? index
+                : throw new InvalidDataException(
+                    $"Replay fixture {property} contains an invalid cell index."))
+            .ToArray();
+        if (result.Distinct().Count() != result.Length)
+            throw new InvalidDataException($"Replay fixture {property} contains duplicate cell indices.");
         return result;
     }
 

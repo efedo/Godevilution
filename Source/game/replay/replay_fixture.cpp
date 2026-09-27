@@ -15,6 +15,7 @@
 #include <limits>
 #include <optional>
 #include <queue>
+#include <unordered_set>
 #include <utility>
 
 #include "engine/crawl.hpp"
@@ -7057,6 +7058,80 @@ uint32_t FindReplayElementalPlayerTarget(
 	return 0;
 }
 
+bool IsReplayElementalTileInBounds(
+    const ReplayFixtureExecutionState &state,
+    int32_t positionX,
+    int32_t positionY)
+{
+	return positionX >= 0 && positionX < state.levelWidth
+	    && positionY >= 0 && positionY < state.levelHeight;
+}
+
+bool IsReplayElementalMissileBlocked(
+    const ReplayFixtureExecutionState &state,
+    int32_t positionX,
+    int32_t positionY)
+{
+	if (!IsReplayElementalTileInBounds(state, positionX, positionY))
+		return true;
+	const int32_t cell = positionY * state.levelWidth + positionX;
+	return std::find(state.missileBlockedCells.begin(), state.missileBlockedCells.end(), cell)
+	    != state.missileBlockedCells.end();
+}
+
+bool HasReplayElementalBurstLineOfSight(
+    const ReplayFixtureExecutionState &state,
+    int32_t startX,
+    int32_t startY,
+    int32_t endX,
+    int32_t endY)
+{
+	if (!IsReplayElementalTileInBounds(state, startX, startY)
+	    || !IsReplayElementalTileInBounds(state, endX, endY)) {
+		return false;
+	}
+	int32_t positionX = startX;
+	int32_t positionY = startY;
+	for (int32_t step = 0; step <= state.levelWidth + state.levelHeight; ++step) {
+		if (positionX == endX && positionY == endY)
+			return true;
+		const uint32_t direction = static_cast<uint32_t>(GetDirection(
+		    positionX,
+		    positionY,
+		    endX,
+		    endY));
+		positionX += DirectionDisplacements[direction].first;
+		positionY += DirectionDisplacements[direction].second;
+		if (!IsReplayElementalTileInBounds(state, positionX, positionY))
+			return false;
+		const int32_t cell = positionY * state.levelWidth + positionX;
+		if (std::find(state.blockedCells.begin(), state.blockedCells.end(), cell)
+		    != state.blockedCells.end()) {
+			return false;
+		}
+	}
+	return false;
+}
+
+bool IsReplayElementalCombatTargetAtTile(
+    const ReplayFixtureExecutionState &state,
+    uint32_t ownerEntityId,
+    uint32_t levelId,
+    int32_t positionX,
+    int32_t positionY)
+{
+	return state.combatTargetEntityId != 0
+	    && state.combatTargetEntityId != ownerEntityId
+	    && state.combatTargetHitPointsQ6 > 0
+	    && (state.combatTargetLevelId == 0 || state.combatTargetLevelId == levelId)
+	    && ((state.combatTargetPositionX == positionX
+	            && state.combatTargetPositionY == positionY)
+	        || (state.combatTargetMoving
+	            && state.combatTargetPetrified
+	            && state.combatTargetFuturePositionX == positionX
+	            && state.combatTargetFuturePositionY == positionY));
+}
+
 /** Resolves Elemental direct and shifted PvP damage against the non-owner player. */
 bool ResolveReplayElementalPlayerHit(
     ReplayFixtureExecutionState &state,
@@ -7229,17 +7304,30 @@ void AdvanceReplayElementalOneTick(
 		if (projectile.remainingTicks > 0)
 			--projectile.remainingTicks;
 		if (projectile.phase == 1) {
+			const int32_t burstStartX = projectile.pathIndex == 1
+			    ? projectile.elementalOriginX
+			    : projectile.startX;
+			const int32_t burstStartY = projectile.pathIndex == 1
+			    ? projectile.elementalOriginY
+			    : projectile.startY;
 			for (const auto offset : BurstOffsets) {
 				const int32_t targetX = projectile.positionX + offset.first;
 				const int32_t targetY = projectile.positionY + offset.second;
-				if (targetX < 0 || targetX >= 40 || targetY < 0 || targetY >= 40)
+				if (!IsReplayElementalTileInBounds(state, targetX, targetY)
+				    || !HasReplayElementalBurstLineOfSight(
+				        state,
+				        burstStartX,
+				        burstStartY,
+				        targetX,
+				        targetY)) {
 					continue;
-				const bool combatTargetAtTile = state.combatTargetEntityId != 0
-				    && state.combatTargetEntityId != ownerEntityId
-				    && state.combatTargetHitPointsQ6 > 0
-				    && state.combatTargetLevelId == projectile.levelId
-				    && state.combatTargetPositionX == targetX
-				    && state.combatTargetPositionY == targetY;
+				}
+				const bool combatTargetAtTile = IsReplayElementalCombatTargetAtTile(
+				        state,
+				        ownerEntityId,
+				        projectile.levelId,
+				        targetX,
+				        targetY);
 				if (combatTargetAtTile) {
 					if (state.combatTargetFireResistance < 100) {
 						const int32_t hitChance = std::clamp(
@@ -7247,8 +7335,8 @@ void AdvanceReplayElementalOneTick(
 						        - state.combatTargetMonsterLevel * 2,
 						    5,
 						    95);
-						if (state.combatTargetPetrified
-						    || std::max(GenerateRnd(state, 100), 0) < hitChance) {
+						const int32_t hitRoll = std::max(GenerateRnd(state, 100), 0);
+						if (state.combatTargetPetrified || hitRoll < hitChance) {
 							static_cast<void>(GenerateRnd(state, 1));
 							int32_t damageQ6 = projectile.damage;
 							if (state.combatTargetFireResistance > 0)
@@ -7293,12 +7381,12 @@ void AdvanceReplayElementalOneTick(
 		}
 
 		const auto resolveCombatTarget = [&](int32_t x, int32_t y) {
-			if (state.combatTargetEntityId == 0
-			    || state.combatTargetEntityId == ownerEntityId
-			    || state.combatTargetHitPointsQ6 <= 0
-			    || state.combatTargetLevelId != projectile.levelId
-			    || state.combatTargetPositionX != x
-			    || state.combatTargetPositionY != y
+			if (!IsReplayElementalCombatTargetAtTile(
+			        state,
+			        ownerEntityId,
+			        projectile.levelId,
+			        x,
+			        y)
 			    || state.combatTargetFireResistance >= 100)
 				return false;
 			const int32_t hitChance = std::clamp(
@@ -7306,8 +7394,8 @@ void AdvanceReplayElementalOneTick(
 				    - state.combatTargetMonsterLevel * 2,
 				5,
 				95);
-			if (!state.combatTargetPetrified
-			    && std::max(GenerateRnd(state, 100), 0) >= hitChance)
+			const int32_t hitRoll = std::max(GenerateRnd(state, 100), 0);
+			if (!state.combatTargetPetrified && hitRoll >= hitChance)
 				return false;
 			static_cast<void>(GenerateRnd(state, 1));
 			int32_t damageQ6 = projectile.damage * 64;
@@ -7323,12 +7411,12 @@ void AdvanceReplayElementalOneTick(
 			return true;
 		};
 		const auto resolveCollision = [&](int32_t x, int32_t y) {
-			const bool targetAtTile = state.combatTargetEntityId != 0
-			    && state.combatTargetEntityId != ownerEntityId
-			    && state.combatTargetHitPointsQ6 > 0
-			    && state.combatTargetLevelId == projectile.levelId
-			    && state.combatTargetPositionX == x
-			    && state.combatTargetPositionY == y;
+			const bool targetAtTile = IsReplayElementalCombatTargetAtTile(
+			    state,
+			    ownerEntityId,
+			    projectile.levelId,
+			    x,
+			    y);
 			const uint32_t playerTargetEntityId = FindReplayElementalPlayerTarget(
 			    state,
 			    projectile,
@@ -7354,15 +7442,18 @@ void AdvanceReplayElementalOneTick(
 			    && state.objectPositionY == y;
 			if (blockingObject && state.objectBreakable)
 				state.objectDestroyed = true;
-		return std::pair<bool, uint32_t> { hitTarget || blockingObject, collisionTargetEntityId };
+		return std::pair<bool, uint32_t> {
+			hitTarget || blockingObject || IsReplayElementalMissileBlocked(state, x, y),
+			collisionTargetEntityId,
+		};
 		};
 		const auto findCollisionTargetEntityId = [&](int32_t x, int32_t y) {
-			const bool targetAtTile = state.combatTargetEntityId != 0
-			    && state.combatTargetEntityId != ownerEntityId
-			    && state.combatTargetHitPointsQ6 > 0
-			    && state.combatTargetLevelId == projectile.levelId
-			    && state.combatTargetPositionX == x
-			    && state.combatTargetPositionY == y;
+			const bool targetAtTile = IsReplayElementalCombatTargetAtTile(
+			    state,
+			    ownerEntityId,
+			    projectile.levelId,
+			    x,
+			    y);
 			const uint32_t playerTargetEntityId = FindReplayElementalPlayerTarget(
 			    state,
 			    projectile,
@@ -13652,6 +13743,14 @@ private:
 				return ParseSigned(fixture_.initialState.positionX);
 			if (key == "position_y")
 				return ParseSigned(fixture_.initialState.positionY);
+			if (key == "level_width")
+				return ParseSigned(fixture_.initialState.levelWidth);
+			if (key == "level_height")
+				return ParseSigned(fixture_.initialState.levelHeight);
+			if (key == "blocked_cells")
+				return ParseCellArray(fixture_.initialState.blockedCells);
+			if (key == "missile_blocked_cells")
+				return ParseCellArray(fixture_.initialState.missileBlockedCells);
 			if (key == "level_id") {
 				uint32_t levelId = 0;
 				if (!ParseUnsigned(levelId))
@@ -14379,6 +14478,28 @@ private:
 		}
 	}
 
+	bool ParseCellArray(std::vector<int32_t> &cells)
+	{
+		if (!Consume('['))
+			return Fail("expected collision cell array");
+		cells.clear();
+		SkipWhitespace();
+		if (Consume(']'))
+			return true;
+		while (true) {
+			int32_t cell = 0;
+			if (!ParseSigned(cell) || cell < 0)
+				return Fail("collision cell index must be non-negative");
+			cells.push_back(cell);
+			SkipWhitespace();
+			if (Consume(']'))
+				return true;
+			if (!Consume(','))
+				return Fail("expected comma or closing bracket");
+			SkipWhitespace();
+		}
+	}
+
 	bool ParseCommands()
 	{
 		if (!Consume('['))
@@ -14668,6 +14789,39 @@ bool ParseReplayFixture(std::string_view json, ReplayFixture &fixture, std::stri
 	error.clear();
 	if (!JsonReader(json, fixture, error).Parse())
 		return false;
+	const auto &map = fixture.initialState;
+	const int64_t mapCellCount = static_cast<int64_t>(map.levelWidth) * map.levelHeight;
+	const auto hasInvalidCells = [mapCellCount](const std::vector<int32_t> &cells) {
+		std::unordered_set<int32_t> uniqueCells;
+		return std::any_of(cells.begin(), cells.end(), [&](int32_t cell) {
+			return cell < 0 || cell >= mapCellCount || !uniqueCells.insert(cell).second;
+		});
+	};
+	if (map.levelWidth <= 0 || map.levelWidth > 112
+	    || map.levelHeight <= 0 || map.levelHeight > 112
+	    || hasInvalidCells(map.blockedCells)
+	    || hasInvalidCells(map.missileBlockedCells)) {
+		error = "Replay fixture contains invalid map geometry.";
+		return false;
+	}
+	const auto isWithinInitialGeometry = [&map](int32_t positionX, int32_t positionY) {
+		return positionX >= 0 && positionX < map.levelWidth
+		    && positionY >= 0 && positionY < map.levelHeight;
+	};
+	const bool targetUsesInitialGeometry = map.combatTargetEntityId != 0
+	    && (map.combatTargetLevelId == 0 || map.combatTargetLevelId == map.levelId);
+	if (!isWithinInitialGeometry(map.positionX, map.positionY)
+	    || (targetUsesInitialGeometry
+	        && (!isWithinInitialGeometry(
+	                map.combatTargetPositionX,
+	                map.combatTargetPositionY)
+	            || (map.combatTargetMoving
+	                && !isWithinInitialGeometry(
+	                    map.combatTargetFuturePositionX,
+	                    map.combatTargetFuturePositionY))))) {
+		error = "Replay fixture contains an out-of-level initial actor position.";
+		return false;
+	}
 	if (fixture.initialState.lifeMaximum == 0)
 		fixture.initialState.lifeMaximum = fixture.initialState.life;
 	if (fixture.initialState.life < 0
@@ -15514,6 +15668,10 @@ bool ExecuteReplayFixture(
 		return false;
 	}
 	state.randomState = static_cast<uint32_t>(fixture.rngSeed);
+	state.levelWidth = fixture.initialState.levelWidth;
+	state.levelHeight = fixture.initialState.levelHeight;
+	state.blockedCells = fixture.initialState.blockedCells;
+	state.missileBlockedCells = fixture.initialState.missileBlockedCells;
 	if (state.visitedLevelIds.empty())
 		state.visitedLevelIds.push_back(state.levelId);
 	state.hellfire = fixture.gameVariant == "Hellfire";

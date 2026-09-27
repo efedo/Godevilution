@@ -303,6 +303,36 @@ public sealed class DiabloWorldState
             && positionY >= 0 && positionY < fallbackHeight;
     }
 
+    /** Allows the exact native positive-edge center retained by an Elemental impact. */
+    public bool ContainsProjectilePosition(
+        AuthoritativeProjectileBehavior behavior,
+        AuthoritativeProjectilePhase phase,
+        uint levelId,
+        int positionX,
+        int positionY)
+    {
+        if (ContainsPosition(levelId, positionX, positionY))
+            return true;
+        if (behavior != AuthoritativeProjectileBehavior.Elemental
+            || phase != AuthoritativeProjectilePhase.Impact
+            || positionX < 0
+            || positionY < 0) {
+            return false;
+        }
+
+        var width = fallbackWidth;
+        var height = fallbackHeight;
+        if (World is not null) {
+            if (!projectedLevels.TryGetValue(levelId, out var level))
+                return false;
+            width = level.Width;
+            height = level.Height;
+        }
+        return positionX <= width
+            && positionY <= height
+            && (positionX == width || positionY == height);
+    }
+
     public bool SuppressMultiplayerDeathDrops(uint levelId)
     {
         return World?.SuppressMultiplayerDeathDrops(levelId) ?? false;
@@ -785,6 +815,46 @@ public sealed class DiabloWorldState
             (x, y) => IsMissileGeometryBlocked(levelId, x, y));
     }
 
+    /** Native Elemental CheckBlock semantics: Solid geometry only, endpoint included. */
+    public bool HasSolidLineOfSight(
+        uint levelId,
+        int startX,
+        int startY,
+        int endX,
+        int endY)
+    {
+        if (!ContainsPosition(levelId, startX, startY)
+            || !ContainsPosition(levelId, endX, endY)) {
+            return false;
+        }
+
+        if (World is not null) {
+            return projectedLevels.TryGetValue(levelId, out var level)
+                && level.HasSolidLineOfSight(startX, startY, endX, endY);
+        }
+
+        var positionX = startX;
+        var positionY = startY;
+        for (var step = 0; step <= AuthoritativeLevel.NativeMaximumWidth
+                + AuthoritativeLevel.NativeMaximumHeight; step++) {
+            if (positionX == endX && positionY == endY)
+                return true;
+
+            var direction = DeterministicGridDirections.Toward(
+                positionX,
+                positionY,
+                endX,
+                endY);
+            var displacement = DeterministicGridDirections.GetDisplacement(direction);
+            positionX = checked(positionX + displacement.X);
+            positionY = checked(positionY + displacement.Y);
+            if (!IsWalkable(levelId, positionX, positionY))
+                return false;
+        }
+
+        return false;
+    }
+
     public bool IsOccupied(
         uint levelId,
         int positionX,
@@ -881,8 +951,18 @@ public sealed class DiabloWorldState
                 || !Enum.IsDefined(projectile.DamageType)
                 || !Enum.IsDefined(projectile.Behavior)
                 || !Enum.IsDefined(projectile.Phase)
-                || !ContainsPosition(projectile.LevelId, projectile.PositionX, projectile.PositionY)
-                || !ContainsPosition(projectile.LevelId, projectile.TargetX, projectile.TargetY)) {
+                || !ContainsProjectilePosition(
+                    projectile.Behavior,
+                    projectile.Phase,
+                    projectile.LevelId,
+                    projectile.PositionX,
+                    projectile.PositionY)
+                || !ContainsProjectilePosition(
+                    projectile.Behavior,
+                    projectile.Phase,
+                    projectile.LevelId,
+                    projectile.TargetX,
+                    projectile.TargetY)) {
                 throw new InvalidDataException(
                     $"Projectile {projectile.EntityId} has invalid initial state.");
             }

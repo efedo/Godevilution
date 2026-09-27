@@ -2181,6 +2181,117 @@ public sealed class ReplayFixtureTests
     }
 
     [Fact]
+    public void ElementalGeometryFixtureMatchesSolidBurstAndMovingPetrifiedFutureTile()
+    {
+        var fixture = LoadReplayFixture("gameplay-elemental-geometry-and-occupancy.json");
+        var fixtureJson = File.ReadAllText(Path.Combine(
+            AppContext.BaseDirectory,
+            "Fixtures",
+            "gameplay-elemental-geometry-and-occupancy.json"));
+        foreach (var invalidJson in new[] {
+            fixtureJson.Replace("\"level_width\": 40", "\"level_width\": 0", StringComparison.Ordinal),
+            fixtureJson.Replace("\"blocked_cells\": [413]", "\"blocked_cells\": [413, 413]", StringComparison.Ordinal),
+            fixtureJson.Replace("\"blocked_cells\": [413]", "\"blocked_cells\": [1600]", StringComparison.Ordinal),
+        }) {
+            Assert.Throws<InvalidDataException>(() => ReplayFixtureLoader.Load(invalidJson));
+        }
+        var narrowFixtureJson = fixtureJson.Replace(
+            "\"level_width\": 40",
+            "\"level_width\": 16",
+            StringComparison.Ordinal);
+        foreach (var invalidJson in new[] {
+            narrowFixtureJson.Replace("\"position_x\": 10", "\"position_x\": 16", StringComparison.Ordinal),
+            narrowFixtureJson.Replace("\"combat_target_position_x\": 15", "\"combat_target_position_x\": 16", StringComparison.Ordinal),
+            narrowFixtureJson.Replace("\"combat_target_future_position_x\": 14", "\"combat_target_future_position_x\": 16", StringComparison.Ordinal),
+        }) {
+            var exception = Assert.Throws<InvalidDataException>(() =>
+                ReplayFixtureLoader.Load(invalidJson));
+            Assert.Contains("out-of-level initial actor", exception.Message, StringComparison.Ordinal);
+        }
+        var futureTileHit = ExecuteElementalFixtureThroughTick(fixture, 14);
+        var futureTileMonster = Assert.Single(futureTileHit.FinalSnapshot.Monsters);
+
+        var futureTileCommand = Assert.Single(futureTileHit.Results);
+        Assert.True(
+            futureTileCommand.Status == CommandStatus.Accepted,
+            $"{futureTileCommand.Status}: {futureTileCommand.RejectReason}");
+        Assert.Equal(14UL, futureTileHit.FinalSnapshot.Tick);
+        Assert.Equal(639168, futureTileMonster.HitPointsQ6);
+        Assert.True(futureTileMonster.HitPointsQ6 < futureTileMonster.MaxHitPointsQ6);
+
+        var result = ExecuteElementalFixtureThroughTick(fixture, 20);
+        var monster = Assert.Single(result.FinalSnapshot.Monsters);
+
+        Assert.Equal(
+            fixture.Checkpoints.Select(checkpoint => checkpoint.StateSha256),
+            result.Checkpoints.Select(checkpoint => checkpoint.ActualStateSha256));
+        Assert.Equal(20UL, result.FinalSnapshot.Tick);
+        Assert.True(monster.HitPointsQ6 < monster.MaxHitPointsQ6);
+
+        var openBurstFixture = fixture with {
+            InitialState = fixture.InitialState with { BlockedCells = [] },
+            Checkpoints = fixture.Checkpoints
+                .Select(checkpoint => checkpoint with { StateSha256 = "pending" })
+                .ToArray(),
+        };
+        var openBurst = ExecuteElementalFixtureThroughTick(openBurstFixture, 20);
+        Assert.True(
+            Assert.Single(openBurst.FinalSnapshot.Monsters).HitPointsQ6 < monster.HitPointsQ6);
+
+        var hiddenTargetFixture = fixture with {
+            InitialState = fixture.InitialState with { CombatTargetSneakHidden = true },
+            Checkpoints = fixture.Checkpoints
+                .Select(checkpoint => checkpoint with { StateSha256 = "pending" })
+                .ToArray(),
+        };
+        var hiddenTarget = ExecuteElementalFixtureThroughTick(hiddenTargetFixture, 14);
+        Assert.Equal(
+            639168,
+            Assert.Single(hiddenTarget.FinalSnapshot.Monsters).HitPointsQ6);
+
+        var wallFixture = fixture with {
+            InitialState = fixture.InitialState with { MissileBlockedCells = [412] },
+            Checkpoints = fixture.Checkpoints
+                .Select(checkpoint => checkpoint with { StateSha256 = "pending" })
+                .ToArray(),
+        };
+        var wallResult = ExecuteElementalFixtureThroughTick(wallFixture, 8);
+        var wallImpact = Assert.Single(wallResult.FinalSnapshot.Projectiles);
+        Assert.Equal((int)AuthoritativeProjectilePhase.Impact, wallImpact.Phase);
+        Assert.Equal((12, 10), (wallImpact.PositionX, wallImpact.PositionY));
+        Assert.Equal(
+            fixture.InitialState.CombatTargetHitPoints * 64,
+            Assert.Single(wallResult.FinalSnapshot.Monsters).HitPointsQ6);
+
+        var boundaryFixture = fixture with {
+            InitialState = fixture.InitialState with {
+                LevelWidth = 12,
+                BlockedCells = [],
+                MissileBlockedCells = [],
+                CombatTargetEntityId = 0,
+                CombatTargetLevelId = 0,
+                CombatTargetPositionX = 0,
+                CombatTargetPositionY = 0,
+                CombatTargetHitPoints = 0,
+                CombatTargetMaxHitPoints = 0,
+                CombatTargetMoving = false,
+                CombatTargetFuturePositionX = 0,
+                CombatTargetFuturePositionY = 0,
+                CombatTargetPetrified = false,
+                CombatTargetSneakHidden = false,
+            },
+            Checkpoints = fixture.Checkpoints
+                .Select(checkpoint => checkpoint with { StateSha256 = "pending" })
+                .ToArray(),
+        };
+        var boundaryResult = ExecuteElementalFixtureThroughTick(boundaryFixture, 8);
+        var boundaryImpact = Assert.Single(boundaryResult.FinalSnapshot.Projectiles);
+        Assert.Equal((int)AuthoritativeProjectilePhase.Impact, boundaryImpact.Phase);
+        Assert.Equal((12, 10), (boundaryImpact.PositionX, boundaryImpact.PositionY));
+        Assert.Equal((12, 10), (boundaryImpact.TargetX, boundaryImpact.TargetY));
+    }
+
+    [Fact]
     public void ElementalProjectilesAdvanceInEntityOrderRegardlessOfStorageOrder()
     {
         var sourceFixture = LoadReplayFixture("gameplay-elemental-secondary-cast-primary-player.json");
@@ -15061,7 +15172,29 @@ public sealed class ReplayFixtureTests
             "classes.tsv",
             File.ReadAllText(Path.Combine(FindRepositoryRoot(), "server", "content", "base", "classes.tsv")));
         var world = new AuthoritativeWorld();
-        world.AddLevel(new AuthoritativeLevel(initial.LevelId, 40, 40));
+        world.AddLevel(new AuthoritativeLevel(
+            initial.LevelId,
+            initial.LevelWidth,
+            initial.LevelHeight,
+            blockedCells: initial.BlockedCells,
+            missileBlockedCells: initial.MissileBlockedCells));
+        IReadOnlyList<AuthoritativeCombatTarget> startingCombatTargets =
+            initial.CombatTargetEntityId == 0
+                ? []
+                : [new AuthoritativeCombatTarget(
+                    initial.CombatTargetEntityId,
+                    initial.CombatTargetPositionX,
+                    initial.CombatTargetPositionY,
+                    initial.CombatTargetHitPoints,
+                    maxHitPoints: initial.CombatTargetMaxHitPoints,
+                    levelId: initial.CombatTargetLevelId,
+                    fireResistance: initial.CombatTargetFireResistance,
+                    monsterLevel: initial.CombatTargetMonsterLevel,
+                    moving: initial.CombatTargetMoving,
+                    futurePositionX: initial.CombatTargetFuturePositionX,
+                    futurePositionY: initial.CombatTargetFuturePositionY,
+                    petrified: initial.CombatTargetPetrified,
+                    sneakHidden: initial.CombatTargetSneakHidden)];
         if (startingProjectiles is not null) {
             foreach (var levelId in startingProjectiles.Select(projectile => projectile.LevelId).Distinct()) {
                 if (levelId != initial.LevelId)
@@ -15087,8 +15220,13 @@ public sealed class ReplayFixtureTests
                 Dexterity = new PlayerAttributeState(initial.Dexterity, initial.Dexterity),
             },
             startingWorld: world,
+            startingCombatTargets: startingCombatTargets,
             startingObjects: startingObjects,
             startingSpells: LoadBaseSpells(fixture),
+            startingMemorizedSpells: initial.MemorizedSpells
+                .Select(spell => new MemorizedSpellState(spell.SpellId, spell.Level))
+                .ToArray(),
+            startingAbilitySpellId: initial.AbilitySpellId,
             startingProjectiles: startingProjectiles ?? [],
             startingCombatRules: CreateReplayCombatRules(fixture),
             startingRandomSeed: checked((uint)fixture.RngSeed),

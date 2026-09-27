@@ -23437,6 +23437,101 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void ElementalBurstUsesNativeSolidOnlyCheckBlockTraversal()
+    {
+        foreach (var scenario in new[] {
+                     (CellX: 13, Solid: true, ExpectedDamage: false),
+                     (CellX: 14, Solid: true, ExpectedDamage: false),
+                     (CellX: 13, Solid: false, ExpectedDamage: true),
+                 }) {
+            var target = new AuthoritativeCombatTarget(
+                9,
+                14,
+                10,
+                1000,
+                petrified: true);
+            var cell = 10 * 40 + scenario.CellX;
+            var world = new DiabloWorldState(
+                combatTargets: [target],
+                fallbackWidth: 40,
+                fallbackHeight: 40,
+                fallbackBlockedCells: scenario.Solid ? [cell] : [],
+                fallbackMissileBlockedCells: scenario.Solid ? [] : [cell]);
+            var processor = CreateProcessor(
+                world,
+                new AuthoritativeSpellCatalog([CreateElementalSpell()]),
+                random: new DiabloRandom(0));
+            var player = CreatePlayer(
+                positionX: 10,
+                positionY: 10,
+                mana: 10000,
+                manaMaximum: 10000,
+                entityId: 7,
+                characterLevel: 3,
+                memorizedSpells: [new MemorizedSpellState(31, 1)]);
+            world.Projectiles.Add(0x80000001, new AuthoritativeProjectile(
+                0x80000001,
+                player.EntityId,
+                0,
+                31,
+                player.LevelId,
+                14,
+                10,
+                14,
+                10,
+                100,
+                AuthoritativeDamageType.Fire,
+                0,
+                14) {
+                Behavior = AuthoritativeProjectileBehavior.Elemental,
+                Phase = AuthoritativeProjectilePhase.Impact,
+                PathIndex = 1,
+                ImpactLifetime = 14,
+                ElementalOriginX = 11,
+                ElementalOriginY = 10,
+            });
+
+            processor.AdvanceTick(1, [player]);
+
+            Assert.Equal(
+                scenario.ExpectedDamage,
+                target.HitPointsQ6 < target.MaxHitPointsQ6);
+        }
+    }
+
+    [Fact]
+    public void ElementalProjectileImpactsAtExactLevelBoundary()
+    {
+        var world = new DiabloWorldState(fallbackWidth: 12, fallbackHeight: 40);
+        var processor = CreateProcessor(
+            world,
+            new AuthoritativeSpellCatalog([CreateElementalSpell()]),
+            random: new DiabloRandom(0),
+            playerClasses: LoadShippedPlayerClasses());
+        var player = CreatePlayer(
+            positionX: 10,
+            positionY: 10,
+            mana: 10000,
+            manaMaximum: 10000,
+            entityId: 7,
+            characterLevel: 3,
+            memorizedSpells: [new MemorizedSpellState(31, 1)]);
+
+        var cast = processor.Execute(
+            player,
+            new DiabloCastIntent(31, 0, 11, 10, DiabloCastSourceKind.MemorizedSpell),
+            1);
+
+        Assert.True(cast.Succeeded);
+        for (ulong tick = 2; tick <= 8; tick++)
+            processor.AdvanceTick(tick, [player]);
+
+        var projectile = Assert.Single(world.Projectiles.Values);
+        Assert.Equal(AuthoritativeProjectilePhase.Impact, projectile.Phase);
+        Assert.Equal((12, 10), (projectile.PositionX, projectile.PositionY));
+    }
+
+    [Fact]
     public void GuardianSpawnsAndFiresNativeFireboltOnSixTileArc()
     {
         var target = new AuthoritativeCombatTarget(

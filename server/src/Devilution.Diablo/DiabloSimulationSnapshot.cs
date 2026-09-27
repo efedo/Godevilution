@@ -1407,11 +1407,15 @@ public sealed partial class DiabloSimulation
                         || projectile.PathTicks != 0
                         || projectile.EffectiveSpellLevel != 0))
                 || IsInvalidStoneCurseProjectile(projectile, restoredMonsters)
-                || !WorldState.ContainsPosition(
+                || !WorldState.ContainsProjectilePosition(
+                    projectile.Behavior,
+                    projectile.Phase,
                     projectile.LevelId,
                     projectile.PositionX,
                     projectile.PositionY)
-                || !WorldState.ContainsPosition(
+                || !WorldState.ContainsProjectilePosition(
+                    projectile.Behavior,
+                    projectile.Phase,
                     projectile.LevelId,
                     projectile.TargetX,
                     projectile.TargetY)

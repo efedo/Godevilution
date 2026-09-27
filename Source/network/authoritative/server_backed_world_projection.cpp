@@ -158,6 +158,21 @@ tl::expected<void, std::string> ServerBackedWorldProjection::Apply(
 			return true;
 		return x >= 0 && y >= 0 && x < geometry->width && y < geometry->height;
 	};
+	const auto isValidProjectilePosition = [&levelGeometry, &isInBounds](const ProjectedProjectileSnapshot &projectile, int32_t x, int32_t y) {
+		if (isInBounds(projectile.levelId, x, y))
+			return true;
+		const auto geometry = std::find_if(levelGeometry.begin(), levelGeometry.end(), [&projectile](const auto &candidate) {
+			return candidate.levelId == projectile.levelId;
+		});
+		return geometry != levelGeometry.end()
+		    && IsElementalImpactPositionAtLevelEdge(
+		        projectile.behavior,
+		        projectile.phase,
+		        x,
+		        y,
+		        geometry->width,
+		        geometry->height);
+	};
 	std::unordered_set<uint32_t> projectedEntityIds;
 	projectedEntityIds.reserve(monsters.size() + worldItems.size() + objects.size() + projectiles.size());
 	const auto exceedsNativePoolCapacity = [](const auto &entities, size_t capacity) {
@@ -234,7 +249,7 @@ tl::expected<void, std::string> ServerBackedWorldProjection::Apply(
 			return !isInBounds(object.levelId, object.positionX, object.positionY);
 		}))
 		return tl::make_unexpected("Authoritative projection entity is outside projected level geometry.");
-	if (std::any_of(projectiles.begin(), projectiles.end(), [&isInBounds](const auto &projectile) {
+	if (std::any_of(projectiles.begin(), projectiles.end(), [&isValidProjectilePosition](const auto &projectile) {
 			return projectile.entityId == 0
 			    || projectile.sourceEntityId == 0
 			    || (projectile.spellId == 0
@@ -247,7 +262,8 @@ tl::expected<void, std::string> ServerBackedWorldProjection::Apply(
 			    || projectile.behavior < 0 || projectile.behavior > MaximumProjectileBehavior
 			    || projectile.phase < 0 || projectile.phase > MaximumProjectilePhase
 			    || projectile.nativeVisual < 0 || projectile.nativeVisual > MaximumNativeProjectileVisual
-			    || !isInBounds(projectile.levelId, projectile.positionX, projectile.positionY)
+			    || !isValidProjectilePosition(projectile, projectile.positionX, projectile.positionY)
+			    || !isValidProjectilePosition(projectile, projectile.targetX, projectile.targetY)
 			    || UsesDirectionalPresentation(projectile)
 			        && (projectile.originalDirection < 0 || projectile.originalDirection > MaximumNativeMonsterDirection)
 			    || !projectile.nativeMissileId.empty()

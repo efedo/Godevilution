@@ -243,6 +243,15 @@ public sealed record ReplayInitialState(string Player, uint Gold, uint Experienc
 
     public uint LevelId { get; init; }
 
+    /** Optional row-major map dimensions and collision geometry for replay cases. */
+    public int LevelWidth { get; init; } = 40;
+
+    public int LevelHeight { get; init; } = 40;
+
+    public IReadOnlyList<int> BlockedCells { get; init; } = [];
+
+    public IReadOnlyList<int> MissileBlockedCells { get; init; } = [];
+
     /** Optional normalized Warp trigger and destination used by replay fixtures. */
     public uint WarpId { get; init; }
 

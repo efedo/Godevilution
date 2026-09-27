@@ -3738,6 +3738,60 @@ public sealed class DiabloSimulationTests
     }
 
     [Fact]
+    public void SnapshotRoundTripsElementalImpactAtPositiveLevelEdge()
+    {
+        var simulation = DiabloSimulationFactory.Instance.Create(
+            new DiabloSimulationOptions(
+                new StoreCatalog(),
+                DiabloModule.Instance.Rules) {
+                FallbackWidth = 12,
+                FallbackHeight = 40,
+                Projectiles = [
+                    new AuthoritativeProjectile(
+                        0x8000000E,
+                        7,
+                        0,
+                        31,
+                        0,
+                        12,
+                        10,
+                        12,
+                        10,
+                        18,
+                        AuthoritativeDamageType.Fire,
+                        1,
+                        14) {
+                        Behavior = AuthoritativeProjectileBehavior.Elemental,
+                        Phase = AuthoritativeProjectilePhase.Impact,
+                        OriginalDirection = 7,
+                        Speed = 16,
+                        ImpactLifetime = 14,
+                        ResistantDamageDivisor = 4,
+                        PathIndex = 1,
+                        ElementalOriginX = 11,
+                        ElementalOriginY = 10,
+                        EffectiveSpellLevel = 2,
+                    },
+                ],
+            });
+        var snapshot = simulation.CaptureSnapshot(CreatePlayer(), 5);
+        var replacement = DiabloSimulationFactory.Instance.Create(
+            new DiabloSimulationOptions(
+                new StoreCatalog(),
+                DiabloModule.Instance.Rules) {
+                FallbackWidth = 12,
+                FallbackHeight = 40,
+            });
+
+        replacement.RestoreSnapshot(CreatePlayer(), snapshot);
+
+        var restored = Assert.Single(replacement.WorldState.Projectiles.Values);
+        Assert.Equal(AuthoritativeProjectilePhase.Impact, restored.Phase);
+        Assert.Equal((12, 10), (restored.PositionX, restored.PositionY));
+        Assert.Equal((12, 10), (restored.TargetX, restored.TargetY));
+    }
+
+    [Fact]
     public void SnapshotRoundTripsGuardianControllerState()
     {
         var simulation = DiabloSimulationFactory.Instance.Create(

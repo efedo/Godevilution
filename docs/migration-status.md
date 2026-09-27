@@ -2,7 +2,7 @@
 
 Status date: 2026-09-27
 
-The shared replay gate now contains 391 checked-in fixtures and 416 registered
+The shared replay gate now contains 392 checked-in fixtures and 417 registered
 native tests.
 
 Secondary-participant Nova now crosses the primary-player boundary in both
@@ -42,8 +42,17 @@ does not seed optional resistance or blocking equipment, so those branches
 remain covered by
 implementation rather than these particular hashes. Compact replay now honors
 direct missile-blocking objects and breakable burst targets. Exact direct
-map-boundary/wall collision, managed burst line of sight, and moving-petrified
-monster future-tile targeting remain open Elemental projection seams.
+map-boundary and missile-wall collision, Solid-only managed burst line of
+sight, and moving-petrified monster future-tile targeting now match between
+production C# and compact native replay. A shared geometry fixture pins the
+deterministic lifecycle at ticks 1, 8, 14, and 20; focused variants cover the
+missile wall and positive map edge. Elemental impact centers one tile beyond a
+positive level edge remain exact in authoritative saves and protocol state;
+managed, Godot, and native-client validation admit only that native impact
+case. Both compact direct and burst collision consume the native hit-roll RNG
+before applying petrified guaranteed-hit behavior. The protocol's nonnegative
+tile-coordinate contract still cannot represent a hypothetical impact at -1
+beyond a passable left or top edge, so that case remains an explicit seam.
 
 Secondary-participant Immolation now crosses the primary-player boundary in
 both replay runners. The compact native projection admits spell 45 using the

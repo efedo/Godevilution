@@ -203,6 +203,10 @@ struct ReplayFixtureInitialState {
 	int32_t positionX = 0;
 	int32_t positionY = 0;
 	uint32_t levelId = 0;
+	int32_t levelWidth = 40;
+	int32_t levelHeight = 40;
+	std::vector<int32_t> blockedCells;
+	std::vector<int32_t> missileBlockedCells;
 	uint32_t warpId = 0;
 	uint32_t warpSourceLevelId = 0;
 	int32_t warpTriggerX = 0;
@@ -563,6 +567,10 @@ struct ReplayFixtureExecutionState {
 	std::string characterName;
 	int32_t positionX = 0;
 	int32_t positionY = 0;
+	int32_t levelWidth = 40;
+	int32_t levelHeight = 40;
+	std::vector<int32_t> blockedCells;
+	std::vector<int32_t> missileBlockedCells;
 	int32_t life = 0;
 	int32_t mana = 0;
 	int32_t manaMaximum = 0;

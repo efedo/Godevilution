@@ -14951,7 +14951,7 @@ public sealed class DiabloCombatCommandProcessor
         foreach (var offset in burstOffsets) {
             var positionX = checked(projectile.PositionX + offset.X);
             var positionY = checked(projectile.PositionY + offset.Y);
-            if (!world.HasMissileLineOfSight(
+            if (!world.HasSolidLineOfSight(
                     projectile.LevelId,
                     startX,
                     startY,
@@ -15414,7 +15414,6 @@ public sealed class DiabloCombatCommandProcessor
     {
         return world.CombatTargets.Values
             .Where(candidate => candidate.HitPointsQ6 > 0
-                && !candidate.SneakHidden
                 && (candidate.LevelId == 0 || candidate.LevelId == levelId)
                 && ((candidate.PositionX == positionX
                         && candidate.PositionY == positionY)

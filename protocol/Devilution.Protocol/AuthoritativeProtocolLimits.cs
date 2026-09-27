@@ -94,6 +94,7 @@ public static class AuthoritativeProtocolLimits
         (int)MonsterDialogueState.Combat;
     public const int MaximumProjectileDamageType = 4;
     public const int MaximumProjectilePhase = 1;
+    public const int ElementalProjectileImpactPhase = 1;
     public const int MaximumProjectileBehavior =
         (int)AuthoritativeProjectileBehavior.MonsterArrow;
     public const int MaximumProjectilePresentationKind =
@@ -123,6 +124,23 @@ public static class AuthoritativeProtocolLimits
     public static bool IsNativeTileCoordinate(int x, int y)
         => x is >= MinimumNativeTileCoordinate and <= MaximumNativeTileCoordinate
             && y is >= MinimumNativeTileCoordinate and <= MaximumNativeTileCoordinate;
+
+    /** Native Elemental impacts may retain their exact collision center one tile beyond a positive map edge. */
+    public static bool IsElementalImpactPositionAtLevelEdge(
+        int behavior,
+        int phase,
+        int x,
+        int y,
+        int width,
+        int height)
+        => behavior == (int)AuthoritativeProjectileBehavior.Elemental
+            && phase == ElementalProjectileImpactPhase
+            && width > 0
+            && height > 0
+            && IsNativeTileCoordinate(x, y)
+            && x <= width
+            && y <= height
+            && (x == width || y == height);
 
     public static bool IsDialogueTextValid(string value)
     {

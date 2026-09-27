@@ -500,6 +500,35 @@ public sealed class AuthoritativeLevel
             (x, y) => !IsWalkable(x, y));
     }
 
+    /** Native missiles::CheckBlock traversal over Solid cells, including its endpoint. */
+    public bool HasSolidLineOfSight(int startX, int startY, int endX, int endY)
+    {
+        if (!ContainsPosition(startX, startY)
+            || !ContainsPosition(endX, endY)) {
+            return false;
+        }
+
+        var positionX = startX;
+        var positionY = startY;
+        for (var step = 0; step <= NativeMaximumWidth + NativeMaximumHeight; step++) {
+            if (positionX == endX && positionY == endY)
+                return true;
+
+            var direction = DeterministicGridDirections.Toward(
+                positionX,
+                positionY,
+                endX,
+                endY);
+            var displacement = DeterministicGridDirections.GetDisplacement(direction);
+            positionX = checked(positionX + displacement.X);
+            positionY = checked(positionY + displacement.Y);
+            if (!IsWalkable(positionX, positionY))
+                return false;
+        }
+
+        return false;
+    }
+
     /** Native DoVision-style line check, including diagonal corner blocking. */
     public bool HasNativeVisionLineOfSight(int startX, int startY, int endX, int endY)
         => HasNativeVisionLineOfSight(

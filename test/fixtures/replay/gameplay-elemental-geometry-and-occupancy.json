@@ -1,0 +1,64 @@
+{
+  "format_version": 1,
+  "fixture_id": "gameplay/elemental-geometry-and-occupancy",
+  "protocol_schema_version": "0.1.0",
+  "content_manifest": {
+    "id": "devilution.base",
+    "version": "0.1.0",
+    "sha256": "ee16097e8393e3807fa57356227992eed3265f5da8f182806cbd368c7c28658d"
+  },
+  "tick_rate_hz": 20,
+  "rng_seed": 305419896,
+  "initial_state": {
+    "player": "A",
+    "gold": 0,
+    "experience": 0,
+    "life": 2560,
+    "life_maximum": 2560,
+    "mana": 10000,
+    "mana_maximum": 10000,
+    "magic": 35,
+    "character_class": 2,
+    "character_level": 1,
+    "position_x": 10,
+    "position_y": 10,
+    "level_id": 1,
+    "level_width": 40,
+    "level_height": 40,
+    "blocked_cells": [413],
+    "missile_blocked_cells": [],
+    "ability_spell_id": 31,
+    "memorized_spells": [
+      { "spell_id": 31, "level": 3 }
+    ],
+    "combat_target_entity_id": 9,
+    "combat_target_level_id": 1,
+    "combat_target_position_x": 15,
+    "combat_target_position_y": 10,
+    "combat_target_hit_points": 10000,
+    "combat_target_max_hit_points": 10000,
+    "combat_target_moving": true,
+    "combat_target_future_position_x": 14,
+    "combat_target_future_position_y": 10,
+    "combat_target_petrified": true
+  },
+  "commands": [
+    {
+      "client_sequence": 1,
+      "target_tick": 1,
+      "server_receipt_sequence": 1,
+      "kind": "Cast",
+      "payload": {
+        "spell_id": 31,
+        "target_x": 11,
+        "target_y": 10
+      }
+    }
+  ],
+  "checkpoints": [
+    { "tick": 1, "state_sha256": "f5a5825add98413cdff4fcd589f3dd0cbe3ffa9298b08fad9d2e5fdd895ba57f" },
+    { "tick": 8, "state_sha256": "2aa5e8fd1dd19e2461eff3b150c022c42f296c0ddaa7eeb31469db12e90a4ad1" },
+    { "tick": 14, "state_sha256": "aa9996e72a4ffde9be98ee55de536d773a2ad1ac9513260b05fcf7d188c4cf5d" },
+    { "tick": 20, "state_sha256": "b27f7357a2e89d5ace8c88d0264c2ea0704728bca400a64be7fc427ccb1eaa25" }
+  ]
+}
