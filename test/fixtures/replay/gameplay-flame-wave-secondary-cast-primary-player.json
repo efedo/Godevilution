@@ -1,0 +1,72 @@
+{
+  "format_version": 1,
+  "fixture_id": "gameplay/flame-wave-secondary-cast-primary-player",
+  "protocol_schema_version": "0.1.0",
+  "content_manifest": {
+    "id": "devilution.base",
+    "version": "0.1.0",
+    "sha256": "ee16097e8393e3807fa57356227992eed3265f5da8f182806cbd368c7c28658d"
+  },
+  "tick_rate_hz": 20,
+  "rng_seed": 305419896,
+  "game_variant": "Diablo",
+  "game_mode": "Multiplayer",
+  "initial_state": {
+    "player": "A",
+    "gold": 0,
+    "experience": 0,
+    "life": 20000,
+    "life_maximum": 20000,
+    "mana": 10000,
+    "mana_maximum": 10000,
+    "magic": 7,
+    "character_class": 0,
+    "character_level": 2,
+    "position_x": 14,
+    "position_y": 10,
+    "level_id": 1,
+    "facing_direction": 3,
+    "secondary_player": {
+      "player": "B",
+      "entity_id": 8,
+      "life": 2560,
+      "life_maximum": 2560,
+      "mana": 3000,
+      "mana_maximum": 3000,
+      "magic": 35,
+      "position_x": 10,
+      "position_y": 10,
+      "level_id": 1,
+      "character_class": 2,
+      "character_level": 12,
+      "facing_direction": 2,
+      "friendly_mode": false,
+      "memorized_spells": [
+        { "spell_id": 15, "level": 3 }
+      ]
+    }
+  },
+  "commands": [
+    {
+      "player": "B",
+      "client_sequence": 1,
+      "target_tick": 1,
+      "server_receipt_sequence": 1,
+      "kind": "Cast",
+      "payload": {
+        "spell_id": 15,
+        "target_x": 14,
+        "target_y": 10
+      }
+    }
+  ],
+  "checkpoints": [
+    { "tick": 1, "state_sha256": "2b076b652b3e2e7f501d8accc94a3fbe77492229ebfdaae460e570f7b464c4ed" },
+    { "tick": 2, "state_sha256": "6ad4114c397ed09e673de46a0363fccd4c70440af20a683169e4ace72ea5df18" },
+    { "tick": 3, "state_sha256": "673ca6b71793b69d9023ef290ce4334e011cbbeabcdad021c855b66da9d16df6" },
+    { "tick": 4, "state_sha256": "7fb3a452bd5b6f487c0dabf7014bce7d2f4c0860bfb723efe811337c90b0929b" },
+    { "tick": 8, "state_sha256": "6442022a64e861b2e2056f31b9f46b2194a49784d60ee52d99e2cc69c9588329" },
+    { "tick": 9, "state_sha256": "8bd1dcdbcef8d3dde7e84fa6455e01a67f732cc7c02463021a6b6019cbd660c1" },
+    { "tick": 10, "state_sha256": "9211abf192772b7d7f0f83392e57510fa2e02a90e64ed69cfc84bc31f69cb82d" }
+  ]
+}

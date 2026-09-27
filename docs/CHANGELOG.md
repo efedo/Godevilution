@@ -9,6 +9,17 @@ All notable changes to this fork are documented below.
   before level setup. Focused launcher and native policy regressions cover the
   stale-build and mode-mismatch boundaries.
 
+- Extended the shared replay gate to 386 fixtures and 401 native tests with a
+  hostile secondary-player Flame Wave cast against the primary participant.
+  The compact native runner now derives segment damage and facing from the
+  actual caster, excludes the owner, preserves same-tick movement and the
+  representable blocking-object path, and matches seven shared checkpoints.
+  The fixture does not populate optional resistance or blocking-object state;
+  those branches remain implemented but are not claimed by its hashes. Focused
+  native regressions additionally cover concurrent controller ordering,
+  class/equipment block and recovery timing, and lethal primary-player PvP ear
+  drops without inventory loss.
+
 - Extended the shared replay gate to 385 fixtures and 396 native tests with a
   hostile secondary-player Lightning Wall cast against the primary participant.
   The compact native runner now admits spell 50 for the secondary owner,

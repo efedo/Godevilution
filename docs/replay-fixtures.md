@@ -343,6 +343,19 @@ checks the active `devilution.base` content-manifest identity.
 including the one-tick controller, deterministic center/branch geometry,
 per-segment damage, same-tick movement, and canonical projectile hashing.
 
+`gameplay-flame-wave-secondary-cast-primary-player.json` covers a hostile
+secondary-player Flame Wave cast against the primary participant. Divergent
+caster and target levels prove owner-derived segment damage, while the distinct
+initial facing proves cast-direction projection. The seven checkpoints cover
+secondary spell admission, mana/facing updates, owner exclusion, fire typing,
+primary-player collision, half-Q6 PvP damage, same-tick movement, and repeat
+suppression. The compact collision path retains managed fire-resistance and
+breakable-object rules, but this fixture leaves those optional states
+unpopulated and does not claim those branches by hash.
+Focused native regressions separately cover deterministic entity ordering for
+concurrent controllers, class/equipment block and recovery durations, and
+lethal primary-player PvP ear drops without inventory loss.
+
 `gameplay-chain-lightning-resolution.json` covers the player Chain Lightning
 cast, including the one-tick controller, deterministic native crawl fan-out,
 Lightning bolt movement, impact segments, and canonical projectile hashing.
@@ -587,7 +600,7 @@ The compact native replay projection now carries the same server-owned corpse
 tile representation and per-tick monster regeneration as the C# checkpoints.
 Ordinary-death and Firebolt, Fireball, Lightning, and Flash
  spell/projectile-timeline checkpoints pass in both runners. As of 2026-09-26,
-the native replay gate contains 385 checked-in JSON fixtures and 396 registered
+the native replay gate contains 386 checked-in JSON fixtures and 401 registered
 tests; the test count also includes parser and validation cases that do not
 introduce another fixture file. Coverage includes seeded and autonomous MonsterArrow
 source coverage, Hellfire HorkDemon Hork Spawn admission, player impact, and

@@ -1020,6 +1020,79 @@ public sealed class ReplayFixtureTests
     }
 
     [Fact]
+    public void FlameWaveSecondaryCastDamagesOnlyThePrimaryPlayer()
+    {
+        var fixture = LoadReplayFixture("gameplay-flame-wave-secondary-cast-primary-player.json");
+        var initial = fixture.InitialState;
+        var secondary = Assert.IsType<ReplaySecondaryPlayer>(initial.SecondaryPlayer);
+        Assert.Equal((DiabloPlayerDirection)2, secondary.FacingDirection);
+        var spells = LoadBaseSpells(fixture);
+        var classes = AuthoritativePlayerClassCatalog.LoadTsv(
+            "classes.tsv",
+            File.ReadAllText(Path.Combine(FindRepositoryRoot(), "server", "content", "base", "classes.tsv")));
+        var world = new AuthoritativeWorld();
+        world.AddLevel(new AuthoritativeLevel(initial.LevelId, 40, 40));
+        var executor = new StoreSimulationExecutor(
+            new StoreCatalog(),
+            initial.Gold,
+            initial.Experience,
+            initial.Life,
+            initial.Mana,
+            startingLifeMaximum: initial.LifeMaximum,
+            startingManaMaximum: initial.ManaMaximum,
+            startingCharacterLevel: initial.CharacterLevel,
+            startingCharacterClassId: checked((uint)initial.CharacterClass),
+            startingPlayerClasses: classes,
+            startingPositionX: initial.PositionX,
+            startingPositionY: initial.PositionY,
+            startingFacingDirection: (DiabloPlayerDirection)initial.FacingDirection,
+            startingLevelId: initial.LevelId,
+            startingAttributes: PlayerAttributesState.Zero with {
+                Magic = new PlayerAttributeState(initial.Magic, initial.Magic),
+            },
+            startingWorld: world,
+            startingSpells: spells,
+            startingCombatRules: CreateReplayCombatRules(fixture),
+            startingRandomSeed: checked((uint)fixture.RngSeed),
+            gameMode: DiabloGameMode.Multiplayer);
+
+        var result = ReplayFixtureExecutor.Execute(
+            fixture,
+            executor,
+            new AuthoritativeCommandServer(executor));
+        var primary = Assert.Single(
+            result.FinalSnapshot.Players,
+            player => player.EntityId == 1);
+        var secondaryState = executor.GetPlayerState(secondary.Player);
+
+        Assert.Equal(CommandStatus.Accepted, Assert.Single(result.Results).Status);
+        Assert.Equal(10UL, result.FinalSnapshot.Tick);
+        Assert.True(primary.Life < initial.Life);
+        Assert.Equal(secondary.Life, secondaryState.Life);
+        Assert.Equal(1144, secondaryState.Mana);
+        Assert.Equal((DiabloPlayerDirection)7, secondaryState.FacingDirection);
+        Assert.NotEqual(secondary.FacingDirection, secondaryState.FacingDirection);
+        Assert.NotEmpty(result.FinalSnapshot.Projectiles);
+        Assert.All(result.FinalSnapshot.Projectiles, projectile => {
+            Assert.Equal(
+                (int)AuthoritativeProjectileBehavior.FlameWaveSegment,
+                projectile.Behavior);
+            Assert.Equal((int)AuthoritativeDamageType.Fire, projectile.DamageType);
+            Assert.Equal(secondary.EntityId, projectile.SourceEntityId);
+            Assert.Equal(15U, projectile.SpellId);
+            Assert.True(projectile.Damage >= 13);
+        });
+        Assert.Contains(
+            result.FinalSnapshot.Projectiles,
+            projectile => projectile.SourceEntityId == secondary.EntityId
+                && projectile.PositionX == initial.PositionX
+                && projectile.PositionY == initial.PositionY);
+        Assert.Equal(
+            fixture.Checkpoints.Select(checkpoint => checkpoint.StateSha256),
+            result.Checkpoints.Select(checkpoint => checkpoint.ActualStateSha256));
+    }
+
+    [Fact]
     public void ChainLightningFixtureMatchesNativeFanOutAndImpactResolution()
     {
         var path = Path.Combine(

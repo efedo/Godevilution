@@ -2,6 +2,24 @@
 
 Status date: 2026-09-26
 
+The shared replay gate now contains 386 checked-in fixtures and 401 registered
+native tests.
+
+Secondary-participant Flame Wave casts now cross the primary-player boundary in
+both replay runners. The compact native projection admits spell 15 from the
+secondary memorized loadout, derives segment damage and facing from the actual
+caster, excludes the owner, and matches managed fire hit chance and half-Q6
+PvP damage for the authored primary collision, same-tick movement, and
+the shared tick-1, tick-2, tick-3, tick-4, tick-8, tick-9, and tick-10
+checkpoints.
+
+The compact collision path also retains managed fire-resistance and blocking-
+object semantics. This fixture intentionally leaves those optional states
+unpopulated, so those branches are not represented by its checkpoint hashes.
+Focused native regressions separately cover deterministic entity ordering for
+concurrent controllers, class/equipment block and recovery durations, and
+lethal primary-player PvP ear drops without inventory loss.
+
 Secondary-participant Lightning Wall casts now cross the primary-player
 boundary in both replay runners. The compact native projection admits spell 50
 from the secondary memorized loadout, derives segment damage and lifetime from
