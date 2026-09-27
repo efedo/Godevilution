@@ -14195,7 +14195,9 @@ public sealed class DiabloCombatCommandProcessor
         if (!spells.TryGet(projectile.SpellId, out var spell)
             || spell.ProjectileBehavior is not (
                 AuthoritativeProjectileBehavior.Lightning
-                or AuthoritativeProjectileBehavior.ChainLightningController)) {
+                or AuthoritativeProjectileBehavior.ChainLightningController)
+            || (projectile.Behavior == AuthoritativeProjectileBehavior.ChainLightningBolt
+                && projectile.SpellId != 16)) {
             world.Projectiles.Remove(projectile.EntityId);
             return;
         }

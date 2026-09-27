@@ -140,6 +140,7 @@
     <None Include="../../../test/fixtures/replay/gameplay-flame-wave-resolution.json" Link="Fixtures/gameplay-flame-wave-resolution.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-flame-wave-secondary-cast-primary-player.json" Link="Fixtures/gameplay-flame-wave-secondary-cast-primary-player.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-chain-lightning-resolution.json" Link="Fixtures/gameplay-chain-lightning-resolution.json" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="../../../test/fixtures/replay/gameplay-chain-lightning-secondary-cast-primary-player.json" Link="Fixtures/gameplay-chain-lightning-secondary-cast-primary-player.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-immolation-radial-fan-resolution.json" Link="Fixtures/gameplay-immolation-radial-fan-resolution.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-elemental-resolution.json" Link="Fixtures/gameplay-elemental-resolution.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../../test/fixtures/replay/gameplay-guardian-resolution.json" Link="Fixtures/gameplay-guardian-resolution.json" CopyToOutputDirectory="PreserveNewest" />

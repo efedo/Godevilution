@@ -1,0 +1,84 @@
+{
+  "format_version": 1,
+  "fixture_id": "gameplay/chain-lightning-secondary-cast-primary-player",
+  "protocol_schema_version": "0.1.0",
+  "content_manifest": {
+    "id": "devilution.base",
+    "version": "0.1.0",
+    "sha256": "ee16097e8393e3807fa57356227992eed3265f5da8f182806cbd368c7c28658d"
+  },
+  "tick_rate_hz": 20,
+  "rng_seed": 305419896,
+  "game_variant": "Diablo",
+  "game_mode": "Multiplayer",
+  "initial_state": {
+    "player": "A",
+    "gold": 0,
+    "experience": 0,
+    "life": 20000,
+    "life_maximum": 20000,
+    "mana": 10000,
+    "mana_maximum": 10000,
+    "magic": 7,
+    "character_class": 0,
+    "character_level": 2,
+    "position_x": 11,
+    "position_y": 10,
+    "level_id": 1,
+    "spell_projectile_behavior": 28,
+    "secondary_player": {
+      "player": "B",
+      "entity_id": 8,
+      "life": 2560,
+      "life_maximum": 2560,
+      "mana": 3000,
+      "mana_maximum": 3000,
+      "magic": 35,
+      "position_x": 10,
+      "position_y": 10,
+      "level_id": 1,
+      "character_class": 2,
+      "character_level": 12,
+      "facing_direction": 2,
+      "friendly_mode": false,
+      "memorized_spells": [
+        { "spell_id": 16, "level": 3 }
+      ]
+    }
+  },
+  "initial_projectiles": [
+    {
+      "entity_id": 2147483648,
+      "source_entity_id": 1,
+      "spell_id": 16,
+      "level_id": 1,
+      "position_x": 11,
+      "position_y": 10,
+      "target_x": 7,
+      "target_y": 14,
+      "damage": 0,
+      "damage_type": 2,
+      "remaining_ticks": 1,
+      "behavior": 28
+    }
+  ],
+  "commands": [
+    {
+      "player": "B",
+      "client_sequence": 1,
+      "target_tick": 1,
+      "server_receipt_sequence": 1,
+      "kind": "Cast",
+      "payload": {
+        "spell_id": 16,
+        "target_x": 11,
+        "target_y": 10
+      }
+    }
+  ],
+  "checkpoints": [
+    { "tick": 1, "state_sha256": "cb46155c0c440f5297e764e985caecd0643e68d50630927c34e9ef5df11e9c9a" },
+    { "tick": 2, "state_sha256": "35dcb84659d56df3d72536dc3bc57c4eca07cfd1ec77fae4ff8d1683321b1053" },
+    { "tick": 3, "state_sha256": "53e38338e083f39ad00b0b4d868bde1024842770c0b934ed5a3b473bad26b33c" }
+  ]
+}

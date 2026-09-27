@@ -123,6 +123,7 @@ set(devilutionx_fixtures
   replay/gameplay-butcher-autonomous-multiplayer.json
   replay/gameplay-butcher-multiplayer-target.json
   replay/gameplay-chain-lightning-resolution.json
+  replay/gameplay-chain-lightning-secondary-cast-primary-player.json
   replay/gameplay-charged-bolt-hellfire-block.json
   replay/gameplay-charged-bolt-hellfire-primary-warrior-block-chance.json
   replay/gameplay-charged-bolt-hellfire-secondary-warrior-block-chance.json

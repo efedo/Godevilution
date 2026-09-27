@@ -1153,6 +1153,636 @@ public sealed class ReplayFixtureTests
     }
 
     [Fact]
+    public void SecondaryChainLightningMatchesNativeFanOutAndControllerOrdering()
+    {
+        var fixture = LoadReplayFixture("gameplay-chain-lightning-secondary-cast-primary-player.json");
+        var initial = fixture.InitialState;
+        var secondary = Assert.IsType<ReplaySecondaryPlayer>(initial.SecondaryPlayer);
+        var classes = AuthoritativePlayerClassCatalog.LoadTsv(
+            "classes.tsv",
+            File.ReadAllText(Path.Combine(FindRepositoryRoot(), "server", "content", "base", "classes.tsv")));
+        var projectiles = fixture.InitialProjectiles.Select(definition =>
+            new AuthoritativeProjectile(
+                definition.EntityId,
+                definition.SourceEntityId,
+                definition.TargetEntityId,
+                definition.SpellId,
+                definition.LevelId,
+                definition.PositionX,
+                definition.PositionY,
+                definition.TargetX,
+                definition.TargetY,
+                definition.Damage,
+                (AuthoritativeDamageType)definition.DamageType,
+                definition.AreaRadius,
+                definition.RemainingTicks) {
+                Behavior = (AuthoritativeProjectileBehavior)definition.Behavior,
+                Phase = (AuthoritativeProjectilePhase)definition.Phase,
+                Speed = definition.Speed,
+                ImpactLifetime = definition.ImpactLifetime,
+                DamageMinimum = definition.DamageMinimum,
+                DamageMaximum = definition.DamageMaximum,
+            }).ToArray();
+        var world = new AuthoritativeWorld();
+        world.AddLevel(new AuthoritativeLevel(initial.LevelId, 40, 40));
+        var executor = new StoreSimulationExecutor(
+            new StoreCatalog(),
+            initial.Gold,
+            initial.Experience,
+            initial.Life,
+            initial.Mana,
+            startingLifeMaximum: initial.LifeMaximum,
+            startingManaMaximum: initial.ManaMaximum,
+            startingCharacterLevel: initial.CharacterLevel,
+            startingCharacterClassId: checked((uint)initial.CharacterClass),
+            startingPlayerClasses: classes,
+            startingPositionX: initial.PositionX,
+            startingPositionY: initial.PositionY,
+            startingLevelId: initial.LevelId,
+            startingAttributes: PlayerAttributesState.Zero with {
+                Magic = new PlayerAttributeState(initial.Magic, initial.Magic),
+            },
+            startingWorld: world,
+            startingSpells: LoadBaseSpells(fixture),
+            startingProjectiles: projectiles,
+            startingCombatRules: CreateReplayCombatRules(fixture),
+            startingRandomSeed: checked((uint)fixture.RngSeed),
+            gameMode: DiabloGameMode.Multiplayer);
+
+        var result = ReplayFixtureExecutor.Execute(
+            fixture,
+            executor,
+            new AuthoritativeCommandServer(executor));
+        var primary = Assert.Single(result.FinalSnapshot.Players, player => player.EntityId == 1);
+        var secondaryState = executor.GetPlayerState(secondary.Player);
+
+        Assert.Equal(CommandStatus.Accepted, Assert.Single(result.Results).Status);
+        Assert.Equal(3UL, result.FinalSnapshot.Tick);
+        Assert.True(primary.Life < initial.Life);
+        Assert.Equal(secondary.Life, secondaryState.Life);
+        Assert.Equal(1208, secondaryState.Mana);
+        Assert.DoesNotContain(result.FinalSnapshot.Projectiles, projectile =>
+            projectile.Behavior == (int)AuthoritativeProjectileBehavior.ChainLightningController);
+        var bolts = result.FinalSnapshot.Projectiles.Where(projectile =>
+            projectile.Behavior == (int)AuthoritativeProjectileBehavior.ChainLightningBolt).ToArray();
+        Assert.Equal(2, bolts.Length);
+        Assert.Contains(bolts, projectile => projectile.SourceEntityId == 1);
+        Assert.Contains(bolts, projectile => projectile.SourceEntityId == secondary.EntityId);
+        Assert.Equal(
+            fixture.Checkpoints.Select(checkpoint => checkpoint.StateSha256),
+            result.Checkpoints.Select(checkpoint => checkpoint.ActualStateSha256));
+    }
+
+    [Fact]
+    public void ChainLightningBoltsAdvanceInEntityOrderIncludingNewSegments()
+    {
+        var sourceFixture = LoadReplayFixture("gameplay-chain-lightning-secondary-cast-primary-player.json");
+        var fixture = sourceFixture with {
+            Commands = [new ReplayFixtureCommand(1, 1, 1, "Move", 0, 0) {
+                DirectionY = 1,
+            }],
+            Checkpoints = [],
+            FinalStateSha256 = null,
+            InitialProjectiles = [],
+        };
+        var initial = fixture.InitialState;
+        var classes = AuthoritativePlayerClassCatalog.LoadTsv(
+            "classes.tsv",
+            File.ReadAllText(Path.Combine(FindRepositoryRoot(), "server", "content", "base", "classes.tsv")));
+        var projectiles = new AuthoritativeProjectile[] {
+            new(
+                0x80000011,
+                1,
+                0,
+                16,
+                initial.LevelId,
+                initial.PositionX,
+                initial.PositionY,
+                20,
+                10,
+                0,
+                AuthoritativeDamageType.Lightning,
+                0,
+                256) {
+                Behavior = AuthoritativeProjectileBehavior.ChainLightningBolt,
+                VelocityX = 32 << 16,
+                Speed = 32,
+                ResistantDamageDivisor = 4,
+            },
+            new(
+                0x80000010,
+                1,
+                0,
+                16,
+                initial.LevelId,
+                initial.PositionX,
+                initial.PositionY,
+                20,
+                10,
+                0,
+                AuthoritativeDamageType.Lightning,
+                0,
+                256) {
+                Behavior = AuthoritativeProjectileBehavior.ChainLightningBolt,
+                VelocityX = 32 << 16,
+                Speed = 32,
+                ResistantDamageDivisor = 4,
+            },
+        };
+        var world = new AuthoritativeWorld();
+        world.AddLevel(new AuthoritativeLevel(initial.LevelId, 40, 40));
+        var executor = new StoreSimulationExecutor(
+            new StoreCatalog(),
+            initial.Gold,
+            initial.Experience,
+            initial.Life,
+            initial.Mana,
+            startingLifeMaximum: initial.LifeMaximum,
+            startingManaMaximum: initial.ManaMaximum,
+            startingCharacterLevel: initial.CharacterLevel,
+            startingCharacterClassId: checked((uint)initial.CharacterClass),
+            startingPlayerClasses: classes,
+            startingPositionX: initial.PositionX,
+            startingPositionY: initial.PositionY,
+            startingLevelId: initial.LevelId,
+            startingAttributes: PlayerAttributesState.Zero with {
+                Magic = new PlayerAttributeState(initial.Magic, initial.Magic),
+            },
+            startingWorld: world,
+            startingSpells: LoadBaseSpells(fixture),
+            startingProjectiles: projectiles,
+            startingRandomSeed: checked((uint)fixture.RngSeed),
+            gameMode: DiabloGameMode.Multiplayer);
+
+        var result = ReplayFixtureExecutor.Execute(
+            fixture,
+            executor,
+            new AuthoritativeCommandServer(executor));
+
+        Assert.Equal(CommandStatus.Accepted, Assert.Single(result.Results).Status);
+        var lowIdSegment = Assert.Single(result.FinalSnapshot.Projectiles, projectile =>
+            projectile.EntityId == 0x80000012);
+        Assert.Equal((int)AuthoritativeProjectileBehavior.LightningSegment, lowIdSegment.Behavior);
+        Assert.Equal(5U, lowIdSegment.RemainingTicks);
+        Assert.Equal(192, lowIdSegment.Damage);
+        var higherIdSegment = Assert.Single(result.FinalSnapshot.Projectiles, projectile =>
+            projectile.EntityId == 0x80000013);
+        Assert.Equal((int)AuthoritativeProjectileBehavior.LightningSegment, higherIdSegment.Behavior);
+        Assert.Equal(5U, higherIdSegment.RemainingTicks);
+        Assert.Equal(256, higherIdSegment.Damage);
+        Assert.Equal(2, result.FinalSnapshot.Projectiles.Count(projectile =>
+            projectile.Behavior == (int)AuthoritativeProjectileBehavior.ChainLightningBolt));
+        Assert.Equal(2, result.FinalSnapshot.Projectiles.Count(projectile =>
+            projectile.Behavior == (int)AuthoritativeProjectileBehavior.LightningSegment));
+        Assert.Equal(254U, Assert.Single(result.FinalSnapshot.Projectiles, projectile =>
+            projectile.EntityId == 0x80000010).RemainingTicks);
+        Assert.Equal(254U, Assert.Single(result.FinalSnapshot.Projectiles, projectile =>
+            projectile.EntityId == 0x80000011).RemainingTicks);
+        Assert.Equal(3892940362U, result.FinalSnapshot.RandomState);
+    }
+
+    [Fact]
+    public void ChainLightningControllersAdvanceInEntityOrderBeforeDeferredBolts()
+    {
+        var sourceFixture = LoadReplayFixture("gameplay-chain-lightning-secondary-cast-primary-player.json");
+        var fixture = sourceFixture with {
+            Commands = [new ReplayFixtureCommand(1, 1, 1, "Move", 0, 0) {
+                DirectionY = 1,
+            }],
+            Checkpoints = [],
+            FinalStateSha256 = null,
+            InitialProjectiles = [],
+        };
+        var initial = fixture.InitialState;
+        var classes = AuthoritativePlayerClassCatalog.LoadTsv(
+            "classes.tsv",
+            File.ReadAllText(Path.Combine(FindRepositoryRoot(), "server", "content", "base", "classes.tsv")));
+        var projectiles = new AuthoritativeProjectile[] {
+            new(
+                0x80000011,
+                1,
+                0,
+                16,
+                initial.LevelId,
+                5,
+                5,
+                8,
+                7,
+                0,
+                AuthoritativeDamageType.Lightning,
+                0,
+                1) {
+                Behavior = AuthoritativeProjectileBehavior.ChainLightningController,
+                EffectiveSpellLevel = 1,
+                ResistantDamageDivisor = 4,
+            },
+            new(
+                0x80000010,
+                1,
+                0,
+                16,
+                initial.LevelId,
+                5,
+                5,
+                8,
+                5,
+                0,
+                AuthoritativeDamageType.Lightning,
+                0,
+                1) {
+                Behavior = AuthoritativeProjectileBehavior.ChainLightningController,
+                EffectiveSpellLevel = 1,
+                ResistantDamageDivisor = 4,
+            },
+        };
+        var world = new AuthoritativeWorld();
+        world.AddLevel(new AuthoritativeLevel(initial.LevelId, 40, 40));
+        var executor = new StoreSimulationExecutor(
+            new StoreCatalog(),
+            initial.Gold,
+            initial.Experience,
+            initial.Life,
+            initial.Mana,
+            startingLifeMaximum: initial.LifeMaximum,
+            startingManaMaximum: initial.ManaMaximum,
+            startingCharacterLevel: initial.CharacterLevel,
+            startingCharacterClassId: checked((uint)initial.CharacterClass),
+            startingPlayerClasses: classes,
+            startingPositionX: initial.PositionX,
+            startingPositionY: initial.PositionY,
+            startingLevelId: initial.LevelId,
+            startingAttributes: PlayerAttributesState.Zero with {
+                Magic = new PlayerAttributeState(initial.Magic, initial.Magic),
+            },
+            startingWorld: world,
+            startingSpells: LoadBaseSpells(fixture),
+            startingProjectiles: projectiles,
+            startingRandomSeed: checked((uint)fixture.RngSeed),
+            gameMode: DiabloGameMode.Multiplayer);
+
+        var result = ReplayFixtureExecutor.Execute(
+            fixture,
+            executor,
+            new AuthoritativeCommandServer(executor));
+
+        Assert.Equal(CommandStatus.Accepted, Assert.Single(result.Results).Status);
+        Assert.DoesNotContain(result.FinalSnapshot.Projectiles, projectile =>
+            projectile.Behavior == (int)AuthoritativeProjectileBehavior.ChainLightningController);
+        var lowerControllerBolt = Assert.Single(result.FinalSnapshot.Projectiles, projectile =>
+            projectile.EntityId == 0x80000012);
+        Assert.Equal(5, lowerControllerBolt.TargetY);
+        var higherControllerBolt = Assert.Single(result.FinalSnapshot.Projectiles, projectile =>
+            projectile.EntityId == 0x80000013);
+        Assert.Equal(7, higherControllerBolt.TargetY);
+        Assert.Equal(2, result.FinalSnapshot.Projectiles.Count(projectile =>
+            projectile.Behavior == (int)AuthoritativeProjectileBehavior.ChainLightningBolt));
+        Assert.Equal(2, result.FinalSnapshot.Projectiles.Count(projectile =>
+            projectile.Behavior == (int)AuthoritativeProjectileBehavior.LightningSegment
+                && projectile.SpellId == 16));
+        Assert.Equal(3657601072U, result.FinalSnapshot.RandomState);
+    }
+
+    [Fact]
+    public void ChainLightningControllerBeforeHigherIdFireballMatchesNativeRngOrder()
+    {
+        var sourceFixture = LoadReplayFixture("gameplay-chain-lightning-secondary-cast-primary-player.json");
+        var initial = sourceFixture.InitialState with {
+            Magic = 100,
+            CombatTargetEntityId = 50,
+            CombatTargetLevelId = sourceFixture.InitialState.LevelId,
+            CombatTargetPositionX = 21,
+            CombatTargetPositionY = 20,
+            CombatTargetHitPoints = 100,
+            CombatTargetMaxHitPoints = 100,
+            CombatTargetActiveForTicks = 0,
+            CombatTargetFireResistance = 0,
+            CombatTargetMagicResistance = 0,
+            CombatTargetPetrified = false,
+            SecondaryPlayer = null,
+        };
+        var fixture = sourceFixture with {
+            InitialState = initial,
+            Commands = [new ReplayFixtureCommand(1, 1, 1, "Move", 0, 0) {
+                DirectionY = 1,
+            }],
+            Checkpoints = [],
+            FinalStateSha256 = null,
+            InitialProjectiles = [],
+            GameMode = DiabloGameMode.SinglePlayer,
+        };
+        var classes = AuthoritativePlayerClassCatalog.LoadTsv(
+            "classes.tsv",
+            File.ReadAllText(Path.Combine(FindRepositoryRoot(), "server", "content", "base", "classes.tsv")));
+        var world = new AuthoritativeWorld();
+        world.AddLevel(new AuthoritativeLevel(initial.LevelId, 40, 40));
+        var target = new AuthoritativeCombatTarget(
+            50,
+            21,
+            20,
+            100,
+            maxHitPoints: 100,
+            levelId: initial.LevelId);
+        var projectiles = new AuthoritativeProjectile[] {
+            new(
+                0x80000011,
+                1,
+                0,
+                12,
+                initial.LevelId,
+                20,
+                20,
+                21,
+                20,
+                4,
+                AuthoritativeDamageType.Fire,
+                0,
+                256) {
+                Behavior = AuthoritativeProjectileBehavior.Fireball,
+                VelocityX = 16 << 16,
+                VelocityY = 8 << 16,
+                Speed = 16,
+                ResistantDamageDivisor = 4,
+            },
+            new(
+                0x80000010,
+                1,
+                0,
+                16,
+                initial.LevelId,
+                initial.PositionX,
+                initial.PositionY,
+                initial.PositionX + 3,
+                initial.PositionY,
+                0,
+                AuthoritativeDamageType.Lightning,
+                0,
+                1) {
+                Behavior = AuthoritativeProjectileBehavior.ChainLightningController,
+                EffectiveSpellLevel = 1,
+                ResistantDamageDivisor = 4,
+            },
+        };
+        var executor = new StoreSimulationExecutor(
+            new StoreCatalog(),
+            initial.Gold,
+            initial.Experience,
+            initial.Life,
+            initial.Mana,
+            startingLifeMaximum: initial.LifeMaximum,
+            startingManaMaximum: initial.ManaMaximum,
+            startingCharacterLevel: initial.CharacterLevel,
+            startingCharacterClassId: checked((uint)initial.CharacterClass),
+            startingPlayerClasses: classes,
+            startingPositionX: initial.PositionX,
+            startingPositionY: initial.PositionY,
+            startingLevelId: initial.LevelId,
+            startingAttributes: PlayerAttributesState.Zero with {
+                Magic = new PlayerAttributeState(initial.Magic, initial.Magic),
+            },
+            startingWorld: world,
+            startingSpells: LoadBaseSpells(fixture),
+            startingProjectiles: projectiles,
+            startingCombatTargets: [target],
+            startingCombatRules: CreateReplayCombatRules(fixture),
+            startingRandomSeed: checked((uint)fixture.RngSeed),
+            gameMode: DiabloGameMode.SinglePlayer);
+
+        var result = ReplayFixtureExecutor.Execute(
+            fixture,
+            executor,
+            new AuthoritativeCommandServer(executor));
+
+        Assert.Equal(CommandStatus.Accepted, Assert.Single(result.Results).Status);
+        Assert.Equal(96, Assert.Single(result.FinalSnapshot.Monsters).HitPoints);
+        var spawnedSegment = Assert.Single(result.FinalSnapshot.Projectiles, projectile =>
+            projectile.EntityId == 0x80000013);
+        Assert.Equal((int)AuthoritativeProjectileBehavior.LightningSegment, spawnedSegment.Behavior);
+        Assert.Equal(192, spawnedSegment.Damage);
+        Assert.Equal(3657601072U, result.FinalSnapshot.RandomState);
+        Assert.Equal((int)AuthoritativeProjectilePhase.Impact, Assert.Single(
+            result.FinalSnapshot.Projectiles,
+            projectile => projectile.EntityId == 0x80000011).Phase);
+    }
+
+    [Fact]
+    public void LowerIdFireballBeforeHigherIdChainBoltMatchesNativeRngOrder()
+    {
+        var sourceFixture = LoadReplayFixture("gameplay-chain-lightning-secondary-cast-primary-player.json");
+        var initial = sourceFixture.InitialState with {
+            Magic = 100,
+            CombatTargetEntityId = 50,
+            CombatTargetLevelId = sourceFixture.InitialState.LevelId,
+            CombatTargetPositionX = 21,
+            CombatTargetPositionY = 20,
+            CombatTargetHitPoints = 100,
+            CombatTargetMaxHitPoints = 100,
+            CombatTargetActiveForTicks = 0,
+            CombatTargetFireResistance = 0,
+            CombatTargetMagicResistance = 0,
+            CombatTargetPetrified = false,
+            SecondaryPlayer = null,
+        };
+        var fixture = sourceFixture with {
+            InitialState = initial,
+            Commands = [new ReplayFixtureCommand(1, 1, 1, "Move", 0, 0) {
+                DirectionY = 1,
+            }],
+            Checkpoints = [],
+            FinalStateSha256 = null,
+            InitialProjectiles = [],
+            GameMode = DiabloGameMode.SinglePlayer,
+            RngSeed = 4,
+        };
+        var classes = AuthoritativePlayerClassCatalog.LoadTsv(
+            "classes.tsv",
+            File.ReadAllText(Path.Combine(FindRepositoryRoot(), "server", "content", "base", "classes.tsv")));
+        var world = new AuthoritativeWorld();
+        world.AddLevel(new AuthoritativeLevel(initial.LevelId, 40, 40));
+        var target = new AuthoritativeCombatTarget(
+            50,
+            21,
+            20,
+            100,
+            maxHitPoints: 100,
+            levelId: initial.LevelId);
+        var projectiles = new AuthoritativeProjectile[] {
+            new(
+                0x80000011,
+                1,
+                0,
+                16,
+                initial.LevelId,
+                11,
+                10,
+                20,
+                10,
+                0,
+                AuthoritativeDamageType.Lightning,
+                0,
+                256) {
+                Behavior = AuthoritativeProjectileBehavior.ChainLightningBolt,
+                VelocityX = 32 << 16,
+                ResistantDamageDivisor = 4,
+            },
+            new(
+                0x80000010,
+                1,
+                0,
+                12,
+                initial.LevelId,
+                20,
+                20,
+                21,
+                20,
+                4,
+                AuthoritativeDamageType.Fire,
+                0,
+                256) {
+                Behavior = AuthoritativeProjectileBehavior.Fireball,
+                VelocityX = 16 << 16,
+                VelocityY = 8 << 16,
+                Speed = 16,
+                ResistantDamageDivisor = 4,
+            },
+        };
+        var executor = new StoreSimulationExecutor(
+            new StoreCatalog(),
+            initial.Gold,
+            initial.Experience,
+            initial.Life,
+            initial.Mana,
+            startingLifeMaximum: initial.LifeMaximum,
+            startingManaMaximum: initial.ManaMaximum,
+            startingCharacterLevel: initial.CharacterLevel,
+            startingCharacterClassId: checked((uint)initial.CharacterClass),
+            startingPlayerClasses: classes,
+            startingPositionX: initial.PositionX,
+            startingPositionY: initial.PositionY,
+            startingLevelId: initial.LevelId,
+            startingAttributes: PlayerAttributesState.Zero with {
+                Magic = new PlayerAttributeState(initial.Magic, initial.Magic),
+            },
+            startingWorld: world,
+            startingSpells: LoadBaseSpells(fixture),
+            startingProjectiles: projectiles,
+            startingCombatTargets: [target],
+            startingCombatRules: CreateReplayCombatRules(fixture),
+            startingRandomSeed: 4U,
+            gameMode: DiabloGameMode.SinglePlayer);
+
+        var result = ReplayFixtureExecutor.Execute(
+            fixture,
+            executor,
+            new AuthoritativeCommandServer(executor));
+
+        Assert.Equal(CommandStatus.Accepted, Assert.Single(result.Results).Status);
+        Assert.Equal(96, Assert.Single(result.FinalSnapshot.Monsters).HitPoints);
+        Assert.Equal((int)AuthoritativeProjectilePhase.Impact, Assert.Single(
+            result.FinalSnapshot.Projectiles,
+            projectile => projectile.EntityId == 0x80000010).Phase);
+        var existingBolt = Assert.Single(result.FinalSnapshot.Projectiles, projectile =>
+            projectile.EntityId == 0x80000011);
+        Assert.Equal(254U, existingBolt.RemainingTicks);
+        var spawnedSegment = Assert.Single(result.FinalSnapshot.Projectiles, projectile =>
+            projectile.EntityId == 0x80000012);
+        Assert.Equal((int)AuthoritativeProjectileBehavior.LightningSegment, spawnedSegment.Behavior);
+        Assert.Equal(5U, spawnedSegment.RemainingTicks);
+        Assert.Equal(128, spawnedSegment.Damage);
+        Assert.Equal(1065698479U, result.FinalSnapshot.RandomState);
+    }
+
+    [Fact]
+    public void ChainLightningBoltsRejectInvalidOwnersAndSpellIdsBeforeAdvancement()
+    {
+        var sourceFixture = LoadReplayFixture("gameplay-chain-lightning-secondary-cast-primary-player.json");
+        var fixture = sourceFixture with {
+            Commands = [new ReplayFixtureCommand(1, 1, 1, "Move", 0, 0) {
+                DirectionX = 1,
+            }],
+            Checkpoints = [],
+            FinalStateSha256 = null,
+            InitialProjectiles = [],
+        };
+        var initial = fixture.InitialState;
+        var classes = AuthoritativePlayerClassCatalog.LoadTsv(
+            "classes.tsv",
+            File.ReadAllText(Path.Combine(FindRepositoryRoot(), "server", "content", "base", "classes.tsv")));
+        var projectiles = new[] {
+            new AuthoritativeProjectile(
+                0x80000010,
+                99,
+                0,
+                16,
+                initial.LevelId,
+                initial.PositionX,
+                initial.PositionY,
+                20,
+                10,
+                0,
+                AuthoritativeDamageType.Lightning,
+                0,
+                256) {
+                Behavior = AuthoritativeProjectileBehavior.ChainLightningBolt,
+                VelocityX = 32 << 16,
+                Speed = 32,
+                ResistantDamageDivisor = 4,
+            },
+            new AuthoritativeProjectile(
+                0x80000011,
+                1,
+                0,
+                3,
+                initial.LevelId,
+                initial.PositionX,
+                initial.PositionY,
+                20,
+                10,
+                0,
+                AuthoritativeDamageType.Lightning,
+                0,
+                256) {
+                Behavior = AuthoritativeProjectileBehavior.ChainLightningBolt,
+                VelocityX = 32 << 16,
+                Speed = 32,
+                ResistantDamageDivisor = 4,
+            },
+        };
+        var world = new AuthoritativeWorld();
+        world.AddLevel(new AuthoritativeLevel(initial.LevelId, 40, 40));
+        var executor = new StoreSimulationExecutor(
+            new StoreCatalog(),
+            initial.Gold,
+            initial.Experience,
+            initial.Life,
+            initial.Mana,
+            startingLifeMaximum: initial.LifeMaximum,
+            startingManaMaximum: initial.ManaMaximum,
+            startingCharacterLevel: initial.CharacterLevel,
+            startingCharacterClassId: checked((uint)initial.CharacterClass),
+            startingPlayerClasses: classes,
+            startingPositionX: initial.PositionX,
+            startingPositionY: initial.PositionY,
+            startingLevelId: initial.LevelId,
+            startingAttributes: PlayerAttributesState.Zero with {
+                Magic = new PlayerAttributeState(initial.Magic, initial.Magic),
+            },
+            startingWorld: world,
+            startingSpells: LoadBaseSpells(fixture),
+            startingProjectiles: projectiles,
+            startingRandomSeed: checked((uint)fixture.RngSeed),
+            gameMode: DiabloGameMode.Multiplayer);
+
+        var result = ReplayFixtureExecutor.Execute(
+            fixture,
+            executor,
+            new AuthoritativeCommandServer(executor));
+
+        Assert.Equal(CommandStatus.Accepted, Assert.Single(result.Results).Status);
+        Assert.Empty(result.FinalSnapshot.Projectiles);
+        Assert.Equal(checked((uint)fixture.RngSeed), result.FinalSnapshot.RandomState);
+    }
+
+    [Fact]
     public void ImmolationRadialFanFixtureMatchesNativeControllerAndFireballs()
     {
         var path = Path.Combine(

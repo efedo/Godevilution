@@ -2,6 +2,19 @@
 
 All notable changes to this fork are documented below.
 
+- Extended the shared replay gate to 387 fixtures and 408 native tests with a
+  secondary Sorcerer's Chain Lightning cast against the primary participant.
+  The compact native runner now admits spell 16 for the secondary caster and
+  advances Chain controllers in entity-ID order during their original
+  pre-Immolation phase. Chain bolts and spell-16 segments advance by entity ID
+  in a separate post-Fireball/Bone Spirit phase, including newly created
+  projectiles. Ordinary Lightning remains in its later phase. Invalid owners
+  and spell IDs are removed before tick work. Native and managed regressions
+  pin ordering within each phase and the controller-before-Fireball and
+  Fireball-before-bolt cases. Global controller/bolt interleaving remains a
+  deterministic-scheduler follow-up. Shared checkpoints cover mana/facing,
+  bolt creation order, RNG, and impact.
+
 - Hardened the zero-argument native launcher after the new-game crash. It now
   selects only server-backed CMake configurations, incrementally rebuilds both
   binaries on every run, verifies the server's reported single-player mode,

@@ -34,6 +34,9 @@ namespace {
 bool IsReplaySecondaryPlayerBlockCapable(const ReplayFixtureExecutionState &state);
 bool IsReplayPrimaryPlayerBlockCapable(const ReplayFixtureExecutionState &state);
 int32_t GetReplayBaseBlockChance(uint32_t characterClassId);
+void AdvanceReplayChainLightningControllerOneTick(
+    ReplayFixtureExecutionState &state,
+    size_t controllerIndex);
 
 constexpr uint32_t FastAttackFlag = 1U << 18;
 constexpr uint32_t FasterAttackFlag = 1U << 19;
@@ -3193,11 +3196,78 @@ void AdvanceStoneCursesOneTick(ReplayFixtureExecutionState &state)
 	}
 }
 
-void AdvanceLightningOneTick(ReplayFixtureExecutionState &state, uint64_t tick)
+void AdvanceLightningProjectilesOneTick(
+	ReplayFixtureExecutionState &state,
+	uint64_t tick,
+	bool chainLightningPhase,
+	const std::vector<uint32_t> *onlyEntityIds = nullptr,
+	const std::vector<uint32_t> *excludedEntityIds = nullptr,
+	bool chainControllersOnly = false)
 {
+	// Controllers retain their original pre-Immolation phase. Chain bolts and
+	// their segments run together later, after Fireball and Bone Spirit; ordinary
+	// Lightning retains its separate later phase.
+	const auto belongsToPhase = [chainLightningPhase, chainControllersOnly](const ReplayFixtureProjectileState &projectile) {
+		if (chainLightningPhase) {
+			if (chainControllersOnly)
+				return projectile.behavior == ChainLightningControllerBehavior;
+			return projectile.behavior == ChainLightningBoltBehavior
+			    || (projectile.behavior == LightningSegmentBehavior && projectile.spellId == 16);
+		}
+		return projectile.behavior == LightningBehavior
+		    || (projectile.behavior == LightningSegmentBehavior && projectile.spellId != 16);
+	};
+	const auto isEligible = [&](const ReplayFixtureProjectileState &projectile) {
+		if (!belongsToPhase(projectile))
+			return false;
+		if (onlyEntityIds != nullptr
+		    && !std::binary_search(onlyEntityIds->begin(), onlyEntityIds->end(), projectile.entityId))
+			return false;
+		return excludedEntityIds == nullptr
+		    || !std::binary_search(excludedEntityIds->begin(), excludedEntityIds->end(), projectile.entityId);
+	};
+	std::vector<size_t> advancingSlots;
+	std::vector<ReplayFixtureProjectileState> advancingProjectiles;
+	for (size_t index = 0; index < state.projectiles.size(); ++index) {
+		const auto &projectile = state.projectiles[index];
+		if (!isEligible(projectile))
+			continue;
+		advancingSlots.push_back(index);
+		advancingProjectiles.push_back(projectile);
+	}
+	std::sort(advancingProjectiles.begin(), advancingProjectiles.end(), [](const auto &left, const auto &right) {
+		return left.entityId < right.entityId;
+	});
+	for (size_t index = 0; index < advancingSlots.size(); ++index)
+		state.projectiles[advancingSlots[index]] = std::move(advancingProjectiles[index]);
+	// Chain-generated IDs always exceed every current projectile ID, so bolts
+	// and segments appended below naturally follow this sorted work queue.
 	for (size_t index = 0; index < state.projectiles.size();) {
-		if (state.projectiles[index].behavior == LightningBehavior
-		    || state.projectiles[index].behavior == ChainLightningBoltBehavior) {
+		if (!isEligible(state.projectiles[index])) {
+			++index;
+			continue;
+		}
+		if (chainLightningPhase
+		    && state.projectiles[index].behavior == ChainLightningControllerBehavior) {
+			AdvanceReplayChainLightningControllerOneTick(state, index);
+			continue;
+		}
+		if (chainLightningPhase
+		    && state.projectiles[index].behavior == ChainLightningBoltBehavior) {
+			const auto &bolt = state.projectiles[index];
+			const bool primaryOwner = bolt.sourceEntityId
+			    == (state.entityId == 0 ? 1U : state.entityId);
+			const bool secondaryOwner = state.secondaryPlayerEntityId != 0
+			    && bolt.sourceEntityId == state.secondaryPlayerEntityId;
+			if (bolt.spellId != 16 || (!primaryOwner && !secondaryOwner)) {
+				state.projectiles.erase(
+				    state.projectiles.begin() + static_cast<ptrdiff_t>(index));
+				continue;
+			}
+		}
+		if (state.projectiles[index].behavior == (chainLightningPhase
+		        ? ChainLightningBoltBehavior
+		        : LightningBehavior)) {
 			auto &controller = state.projectiles[index];
 			const bool monsterOwned = controller.targetEntityId != 0
 			    && controller.sourceEntityId == state.combatTargetEntityId
@@ -3477,6 +3547,41 @@ void AdvanceLightningOneTick(ReplayFixtureExecutionState &state, uint64_t tick)
 		}
 		++index;
 	}
+}
+
+void AdvanceChainLightningOneTick(
+	ReplayFixtureExecutionState &state,
+	uint64_t tick)
+{
+	std::vector<uint32_t> controllerEntityIds;
+	for (const auto &projectile : state.projectiles) {
+		if (projectile.behavior == ChainLightningControllerBehavior)
+			controllerEntityIds.push_back(projectile.entityId);
+	}
+	std::sort(controllerEntityIds.begin(), controllerEntityIds.end());
+	// Controller ordering is deterministic within its original phase; bolt and
+	// segment ordering remains in the later projectile phase.
+	AdvanceLightningProjectilesOneTick(
+	    state,
+	    tick,
+	    true,
+	    &controllerEntityIds,
+	    nullptr,
+	    true);
+}
+
+void AdvanceChainLightningContinuationOneTick(
+	ReplayFixtureExecutionState &state,
+	uint64_t tick)
+{
+	// This pass excludes controllers by family selection and dynamically advances
+	// deferred or controller-created bolts and Chain-owned segments by ID.
+	AdvanceLightningProjectilesOneTick(state, tick, true);
+}
+
+void AdvanceLightningOneTick(ReplayFixtureExecutionState &state, uint64_t tick)
+{
+	AdvanceLightningProjectilesOneTick(state, tick, false);
 }
 
 void AdvanceFlashOneTick(ReplayFixtureExecutionState &state, uint64_t tick)
@@ -6829,47 +6934,57 @@ void AdvanceReplayRageOneTick(ReplayFixtureExecutionState &state)
 	}
 }
 
-void AdvanceReplayChainLightningOneTick(ReplayFixtureExecutionState &state)
+void AdvanceReplayChainLightningControllerOneTick(
+    ReplayFixtureExecutionState &state,
+    size_t controllerIndex)
 {
-	for (size_t index = 0; index < state.projectiles.size(); ++index) {
-		auto &controller = state.projectiles[index];
-		if (controller.behavior != ChainLightningControllerBehavior)
-			continue;
-		if (controller.remainingTicks > 0)
-			--controller.remainingTicks;
-		const auto controllerState = controller;
-		std::vector<std::pair<int32_t, int32_t>> targets;
-		targets.emplace_back(controller.targetX, controller.targetY);
-		const int32_t radius = std::min(
-			controller.effectiveSpellLevel + 3,
-			ChainLightningMaximumRadius);
-		DoCrawl(1, radius, [&](Displacement displacement) {
-			const int32_t targetX = controller.positionX + displacement.deltaX;
-			const int32_t targetY = controller.positionY + displacement.deltaY;
-			if (state.combatTargetEntityId != 0
-			    && state.combatTargetHitPointsQ6 > 0
-			    && state.combatTargetPositionX == targetX
-			    && state.combatTargetPositionY == targetY)
-				targets.emplace_back(targetX, targetY);
-			return true;
-		});
-		std::vector<ReplayFixtureProjectileState> created;
-		created.reserve(targets.size());
-		for (const auto target : targets)
-			created.push_back(CreateReplayChainLightningBolt(
-				state,
-				controllerState,
-				target.first,
-				target.second));
-		uint32_t nextEntityId = 0x80000000U;
-		for (const auto &existing : state.projectiles)
-			nextEntityId = std::max(nextEntityId, existing.entityId + 1U);
-		for (auto &spawned : created)
-			spawned.entityId = nextEntityId++;
-		state.projectiles.erase(state.projectiles.begin() + static_cast<ptrdiff_t>(index));
-		state.projectiles.insert(state.projectiles.end(), created.begin(), created.end());
+	auto &controller = state.projectiles[controllerIndex];
+	if (controller.remainingTicks > 0)
+		--controller.remainingTicks;
+	const bool primaryOwner = controller.sourceEntityId
+	    == (state.entityId == 0 ? 1U : state.entityId);
+	const bool secondaryOwner = state.secondaryPlayerEntityId != 0
+	    && controller.sourceEntityId == state.secondaryPlayerEntityId;
+	if (controller.spellId != 16 || (!primaryOwner && !secondaryOwner)) {
+		state.projectiles.erase(
+			state.projectiles.begin() + static_cast<ptrdiff_t>(controllerIndex));
 		return;
 	}
+	const auto controllerState = controller;
+	std::vector<std::pair<int32_t, int32_t>> targets;
+	targets.emplace_back(controllerState.targetX, controllerState.targetY);
+	const int32_t radius = std::min(
+		controllerState.effectiveSpellLevel + 3,
+		ChainLightningMaximumRadius);
+	DoCrawl(1, radius, [&](Displacement displacement) {
+		const int32_t targetX = controllerState.positionX + displacement.deltaX;
+		const int32_t targetY = controllerState.positionY + displacement.deltaY;
+		if (state.combatTargetEntityId != 0
+		    && state.combatTargetHitPointsQ6 > 0
+		    && state.combatTargetPositionX == targetX
+		    && state.combatTargetPositionY == targetY)
+			targets.emplace_back(targetX, targetY);
+		return true;
+	});
+	std::vector<ReplayFixtureProjectileState> created;
+	created.reserve(targets.size());
+	for (const auto target : targets)
+		created.push_back(CreateReplayChainLightningBolt(
+			state,
+			controllerState,
+			target.first,
+			target.second));
+	uint32_t nextEntityId = 0x80000000U;
+	for (const auto &existing : state.projectiles)
+		nextEntityId = std::max(nextEntityId, existing.entityId + 1U);
+	for (auto &spawned : created)
+		spawned.entityId = nextEntityId++;
+	state.projectiles.erase(
+		state.projectiles.begin() + static_cast<ptrdiff_t>(controllerIndex));
+	state.projectiles.insert(
+		state.projectiles.end(),
+		created.begin(),
+		created.end());
 }
 
 /** Advances the compact SnakeCharge controller through travel and impact. */
@@ -12590,7 +12705,7 @@ void AdvanceReplayStateToTick(
 		AdvanceReplayFlameWaveOneTick(state, simulationTick);
 		AdvanceReplayNovaOneTick(state);
 		AdvanceReplayNovaBallsOneTick(state);
-		AdvanceReplayChainLightningOneTick(state);
+		AdvanceChainLightningOneTick(state, simulationTick);
 		AdvanceReplayImmolationOneTick(state);
 		AdvanceReplayElementalOneTick(state);
 		AdvanceReplayGuardianOneTick(state);
@@ -12602,6 +12717,7 @@ void AdvanceReplayStateToTick(
 		AdvanceMagicBoltsOneTick(state, simulationTick);
 		AdvanceFireballsOneTick(state, simulationTick);
 		AdvanceBoneSpiritsOneTick(state, simulationTick);
+		AdvanceChainLightningContinuationOneTick(state, simulationTick);
 		AdvanceLightningOneTick(state, simulationTick);
 		AdvanceFlashOneTick(state, simulationTick);
 		AdvanceMovementControllersOneTick(state);
@@ -14644,6 +14760,7 @@ bool ApplyReplaySecondaryCast(
 	        && command.spellId != 6
 	        && command.spellId != 50
 	        && command.spellId != 15
+	        && command.spellId != 16
 	        && command.spellId != 3
 	        && command.spellId != 4
 	        && command.spellId != 12

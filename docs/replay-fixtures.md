@@ -359,6 +359,20 @@ lethal primary-player PvP ear drops without inventory loss.
 `gameplay-chain-lightning-resolution.json` covers the player Chain Lightning
 cast, including the one-tick controller, deterministic native crawl fan-out,
 Lightning bolt movement, impact segments, and canonical projectile hashing.
+`gameplay-chain-lightning-secondary-cast-primary-player.json` adds the hostile
+secondary-caster case with a concurrent primary controller, checking stable
+controller ordering, caster-owned mana and bolts, and primary-player impact in
+both runners. Native Chain controllers advance in entity-ID order in their
+original pre-Immolation phase. Chain bolts and Chain-owned spell-16 segments
+advance in entity-ID order in a distinct post-Fireball/Bone Spirit phase,
+including projectiles created during that pass. Ordinary Lightning and
+non-Chain segments remain in the later Lightning phase. Mixed Chain-versus-
+Fireball regressions pin the controller-before-Fireball and Fireball-before-
+bolt cases, with their RNG, allocation, and damage effects. Global
+controller/bolt interleaving across the two phases remains a separate
+deterministic-scheduler seam. Absent owners and non-Chain-Lightning spell IDs
+are discarded before bolt creation or advancement. The primary Chain Lightning
+fixture continues to cover the multi-target crawl fan-out.
 
 `gameplay-immolation-radial-fan-resolution.json` covers the player Immolation
 cast, including the one-tick controller, deterministic radial fan ordering,
@@ -600,7 +614,7 @@ The compact native replay projection now carries the same server-owned corpse
 tile representation and per-tick monster regeneration as the C# checkpoints.
 Ordinary-death and Firebolt, Fireball, Lightning, and Flash
  spell/projectile-timeline checkpoints pass in both runners. As of 2026-09-26,
-the native replay gate contains 386 checked-in JSON fixtures and 401 registered
+the native replay gate contains 387 checked-in JSON fixtures and 408 registered
 tests; the test count also includes parser and validation cases that do not
 introduce another fixture file. Coverage includes seeded and autonomous MonsterArrow
 source coverage, Hellfire HorkDemon Hork Spawn admission, player impact, and
