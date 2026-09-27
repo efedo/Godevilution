@@ -241,6 +241,7 @@ set(devilutionx_fixtures
   replay/gameplay-hork-spawn-secondary-impact.json
   replay/gameplay-hork-spawn-secondary-warrior-block-chance.json
   replay/gameplay-immolation-radial-fan-resolution.json
+  replay/gameplay-immolation-secondary-cast-primary-player.json
   replay/gameplay-inferno-resolution.json
   replay/gameplay-infravision-resolution.json
   replay/gameplay-jester-firebolt-resolution.json

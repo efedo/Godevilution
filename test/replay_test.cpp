@@ -4614,6 +4614,220 @@ TEST(ReplayFixture, ExecutesImmolationRadialFanControllerAndFireballs)
 	}
 }
 
+TEST(ReplayFixture, ExecutesSecondaryImmolationCastAgainstPrimaryPlayer)
+{
+	std::ifstream file("test/fixtures/replay/gameplay-immolation-secondary-cast-primary-player.json");
+	ASSERT_TRUE(file.good());
+	const std::string json((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
+	ReplayFixture fixture;
+	std::string error;
+	ASSERT_TRUE(ParseReplayFixture(json, fixture, error)) << error;
+	ASSERT_EQ(fixture.checkpoints.size(), 4U);
+	std::vector<uint32_t> tickThreeImpactedIds;
+
+	for (size_t checkpointIndex = 0; checkpointIndex < fixture.checkpoints.size(); ++checkpointIndex) {
+		ReplayFixture checkpointFixture = fixture;
+		checkpointFixture.checkpoints.resize(checkpointIndex + 1);
+		ReplayFixtureExecutionState state;
+		state.multiplayer = true;
+		state.life = fixture.initialState.life;
+		state.lifeMaximum = fixture.initialState.lifeMaximum;
+		state.mana = fixture.initialState.mana;
+		state.manaMaximum = fixture.initialState.manaMaximum;
+		state.positionX = fixture.initialState.positionX;
+		state.positionY = fixture.initialState.positionY;
+		state.levelId = fixture.initialState.levelId;
+		state.characterLevel = fixture.initialState.characterLevel;
+		state.characterClassId = static_cast<uint32_t>(fixture.initialState.characterClass);
+		state.attributes[2] = fixture.initialState.magic;
+		state.attributes[3] = fixture.initialState.magic;
+		state.spellProjectileBehavior = 43;
+
+		ReplayFixtureExecutionResult result;
+		ASSERT_TRUE(ExecuteReplayFixture(checkpointFixture, state, result, error)) << error;
+		ASSERT_EQ(result.transitions.size(), 1U);
+		EXPECT_TRUE(result.transitions[0].accepted);
+		EXPECT_EQ(state.lastAppliedTick, fixture.checkpoints[checkpointIndex].tick);
+		EXPECT_EQ(
+		    ComputeReplayFixtureStateHash(state),
+		    fixture.checkpoints[checkpointIndex].stateSha256);
+		if (checkpointIndex == 0) {
+			const auto controller = std::find_if(state.projectiles.begin(), state.projectiles.end(), [](const auto &projectile) {
+				return projectile.sourceEntityId == 8;
+			});
+			ASSERT_NE(controller, state.projectiles.end());
+			EXPECT_EQ(controller->spellId, 45U);
+			EXPECT_EQ(controller->behavior, 43);
+			EXPECT_EQ(std::count_if(state.projectiles.begin(), state.projectiles.end(), [](const auto &projectile) {
+				return projectile.sourceEntityId == 8;
+			}), 1);
+		} else if (checkpointIndex == 1) {
+			std::vector<const ReplayFixtureProjectileState *> fireballs;
+			for (const auto &projectile : state.projectiles) {
+				if (projectile.sourceEntityId == 8)
+					fireballs.push_back(&projectile);
+			}
+			ASSERT_EQ(fireballs.size(), 36U);
+			std::sort(fireballs.begin(), fireballs.end(), [](const auto *left, const auto *right) {
+				return left->entityId < right->entityId;
+			});
+			EXPECT_EQ(fireballs.front()->entityId, 0x80000001U);
+			EXPECT_EQ(fireballs.back()->entityId, 0x80000024U);
+			EXPECT_EQ(fireballs[0]->targetX, 14);
+			EXPECT_EQ(fireballs[0]->targetY, 10);
+			EXPECT_EQ(fireballs[1]->targetX, 6);
+			EXPECT_EQ(fireballs[1]->targetY, 10);
+			EXPECT_TRUE(std::any_of(fireballs.begin(), fireballs.end(), [](const auto *projectile) {
+				return projectile->traveledX != 0 || projectile->traveledY != 0;
+			}));
+		} else if (checkpointIndex == 2) {
+			for (const auto &projectile : state.projectiles) {
+				if (projectile.sourceEntityId != 8 || projectile.phase != 1)
+					continue;
+				tickThreeImpactedIds.push_back(projectile.entityId);
+				EXPECT_EQ(projectile.remainingTicks, 1U);
+			}
+			EXPECT_FALSE(tickThreeImpactedIds.empty());
+		} else if (checkpointIndex == 3) {
+			for (const uint32_t entityId : tickThreeImpactedIds) {
+				EXPECT_TRUE(std::none_of(state.projectiles.begin(), state.projectiles.end(), [entityId](const auto &projectile) {
+					return projectile.entityId == entityId;
+				}));
+			}
+		}
+
+		if (checkpointIndex != fixture.checkpoints.size() - 1)
+			continue;
+		EXPECT_LT(state.life, fixture.initialState.life);
+		EXPECT_LT(state.secondaryPlayerMana, fixture.initialState.secondaryPlayer.mana);
+		EXPECT_EQ(state.secondaryPlayerFacingDirection, 7U);
+		EXPECT_TRUE(std::none_of(state.projectiles.begin(), state.projectiles.end(), [](const auto &projectile) {
+			return projectile.behavior == 43;
+		}));
+		EXPECT_TRUE(std::all_of(state.projectiles.begin(), state.projectiles.end(), [](const auto &projectile) {
+			return projectile.sourceEntityId == 8
+				&& projectile.spellId == 45
+				&& projectile.behavior == 16
+				&& projectile.damageType == 1;
+		}));
+	}
+}
+
+TEST(ReplayFixture, AdvancesConcurrentImmolationControllersInEntityOrder)
+{
+	std::ifstream file("test/fixtures/replay/gameplay-immolation-secondary-cast-primary-player.json");
+	ASSERT_TRUE(file.good());
+	const std::string json((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
+	ReplayFixture fixture;
+	std::string error;
+	ASSERT_TRUE(ParseReplayFixture(json, fixture, error)) << error;
+	fixture.contentManifest = {};
+	fixture.checkpoints.clear();
+	fixture.commands.clear();
+	ReplayFixtureCommand move;
+	move.clientSequence = 1;
+	move.order = { 1, 1 };
+	move.kind = "Move";
+	move.directionY = 1;
+	fixture.commands.push_back(move);
+	ReplayFixtureInitialProjectile secondaryController;
+	secondaryController.entityId = 0x80000012U;
+	secondaryController.sourceEntityId = 8;
+	secondaryController.spellId = 45;
+	secondaryController.levelId = 1;
+	secondaryController.positionX = 10;
+	secondaryController.positionY = 10;
+	secondaryController.targetX = 14;
+	secondaryController.targetY = 10;
+	secondaryController.damage = 128;
+	secondaryController.damageType = 1;
+	secondaryController.remainingTicks = 1;
+	secondaryController.behavior = 43;
+	ReplayFixtureInitialProjectile primaryController = secondaryController;
+	primaryController.entityId = 0x80000011U;
+	primaryController.sourceEntityId = 1;
+	primaryController.positionX = 11;
+	fixture.initialProjectiles = { secondaryController, primaryController };
+
+	ReplayFixtureExecutionState state;
+	state.multiplayer = true;
+	state.life = fixture.initialState.life;
+	state.lifeMaximum = fixture.initialState.lifeMaximum;
+	state.mana = fixture.initialState.mana;
+	state.manaMaximum = fixture.initialState.manaMaximum;
+	state.positionX = fixture.initialState.positionX;
+	state.positionY = fixture.initialState.positionY;
+	state.levelId = fixture.initialState.levelId;
+	state.characterLevel = fixture.initialState.characterLevel;
+	state.characterClassId = static_cast<uint32_t>(fixture.initialState.characterClass);
+	state.attributes[2] = fixture.initialState.magic;
+	state.attributes[3] = fixture.initialState.magic;
+	state.spellProjectileBehavior = 43;
+	ReplayFixtureExecutionResult result;
+	ASSERT_TRUE(ExecuteReplayFixture(fixture, state, result, error)) << error;
+
+	ASSERT_EQ(state.projectiles.size(), 72U);
+	std::sort(state.projectiles.begin(), state.projectiles.end(), [](const auto &left, const auto &right) {
+		return left.entityId < right.entityId;
+	});
+	for (size_t index = 0; index < state.projectiles.size(); ++index) {
+		const uint32_t expectedSource = index < 36 ? 1U : 8U;
+		EXPECT_EQ(state.projectiles[index].entityId, 0x80000013U + index);
+		EXPECT_EQ(state.projectiles[index].sourceEntityId, expectedSource);
+		EXPECT_EQ(state.projectiles[index].spellId, 45U);
+		EXPECT_EQ(state.projectiles[index].behavior, 16);
+	}
+}
+
+TEST(ReplayFixture, RejectsInvalidImmolationSpellBeforeFanAllocation)
+{
+	std::ifstream file("test/fixtures/replay/gameplay-immolation-secondary-cast-primary-player.json");
+	ASSERT_TRUE(file.good());
+	const std::string json((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
+	ReplayFixture fixture;
+	std::string error;
+	ASSERT_TRUE(ParseReplayFixture(json, fixture, error)) << error;
+	fixture.contentManifest = {};
+	fixture.checkpoints.clear();
+	fixture.commands.clear();
+	ReplayFixtureCommand move;
+	move.clientSequence = 1;
+	move.order = { 1, 1 };
+	move.kind = "Move";
+	move.directionY = 1;
+	fixture.commands.push_back(move);
+	ReplayFixtureInitialProjectile invalidController;
+	invalidController.entityId = 0x80000011U;
+	invalidController.sourceEntityId = 8;
+	invalidController.spellId = 16;
+	invalidController.levelId = 1;
+	invalidController.positionX = 10;
+	invalidController.positionY = 10;
+	invalidController.remainingTicks = 1;
+	invalidController.behavior = 43;
+	fixture.initialProjectiles = { invalidController };
+
+	ReplayFixtureExecutionState state;
+	state.multiplayer = true;
+	state.life = fixture.initialState.life;
+	state.lifeMaximum = fixture.initialState.lifeMaximum;
+	state.mana = fixture.initialState.mana;
+	state.manaMaximum = fixture.initialState.manaMaximum;
+	state.positionX = fixture.initialState.positionX;
+	state.positionY = fixture.initialState.positionY;
+	state.levelId = fixture.initialState.levelId;
+	state.characterLevel = fixture.initialState.characterLevel;
+	state.characterClassId = static_cast<uint32_t>(fixture.initialState.characterClass);
+	state.attributes[2] = fixture.initialState.magic;
+	state.attributes[3] = fixture.initialState.magic;
+	state.spellProjectileBehavior = 43;
+	ReplayFixtureExecutionResult result;
+	ASSERT_TRUE(ExecuteReplayFixture(fixture, state, result, error)) << error;
+
+	EXPECT_TRUE(state.projectiles.empty());
+	EXPECT_EQ(state.randomState, static_cast<uint32_t>(fixture.rngSeed));
+}
+
 TEST(ReplayFixture, ExecutesElementalRetargetingProjectileLifecycle)
 {
 	std::ifstream file("test/fixtures/replay/gameplay-elemental-resolution.json");

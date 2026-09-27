@@ -378,6 +378,14 @@ fixture continues to cover the multi-target crawl fan-out.
 cast, including the one-tick controller, deterministic radial fan ordering,
 Fireball movement, and canonical projectile hashing.
 
+`gameplay-immolation-secondary-cast-primary-player.json` covers a secondary
+Sorcerer's spell-45 cast through the primary-player boundary. Its shared
+tick-1 through tick-4 hashes pin secondary mana/facing and caster identity,
+controller removal, the ordered 36-Fireball fan, same-tick movement, primary
+damage, and impact-lifetime cleanup. A focused reversed-storage test pins
+entity-ID order for concurrent controllers; invalid spell IDs are removed
+without RNG or fan allocation.
+
 `gameplay-spell-cast.json` covers the basic self-healing cast. The managed
 runner loads its mana and healing values from the hash-checked
 `test/content/replay/spell-cast` content pack; native execution continues to
@@ -614,7 +622,7 @@ The compact native replay projection now carries the same server-owned corpse
 tile representation and per-tick monster regeneration as the C# checkpoints.
 Ordinary-death and Firebolt, Fireball, Lightning, and Flash
  spell/projectile-timeline checkpoints pass in both runners. As of 2026-09-26,
-the native replay gate contains 387 checked-in JSON fixtures and 408 registered
+the native replay gate contains 388 checked-in JSON fixtures and 411 registered
 tests; the test count also includes parser and validation cases that do not
 introduce another fixture file. Coverage includes seeded and autonomous MonsterArrow
 source coverage, Hellfire HorkDemon Hork Spawn admission, player impact, and
@@ -1659,6 +1667,9 @@ Notable shared fixtures include:
   and canonical parity;
 - `gameplay-immolation-radial-fan-resolution.json` for the one-tick controller,
   deterministic radial fan ordering, Fireball movement, and canonical parity;
+- `gameplay-immolation-secondary-cast-primary-player.json` for the secondary
+  caster boundary, four-tick radial Fireball lifecycle, primary-player impact,
+  controller ordering, and shared canonical checkpoints;
 - `gameplay-lightning-resolution.json` for native controller/segment creation,
   same-tick repeated collision, level-scaled lifetime, Q6 resistance, death,
   and RNG parity;

@@ -6658,13 +6658,28 @@ void AdvanceReplayFlameWaveOneTick(ReplayFixtureExecutionState &state, uint64_t 
 
 void AdvanceReplayImmolationOneTick(ReplayFixtureExecutionState &state)
 {
-	for (size_t index = 0; index < state.projectiles.size(); ++index) {
-		auto &controller = state.projectiles[index];
-		if (controller.behavior != ImmolationControllerBehavior)
+	std::vector<uint32_t> controllerEntityIds;
+	for (const auto &projectile : state.projectiles) {
+		if (projectile.behavior == ImmolationControllerBehavior)
+			controllerEntityIds.push_back(projectile.entityId);
+	}
+	std::sort(controllerEntityIds.begin(), controllerEntityIds.end());
+	for (const uint32_t controllerEntityId : controllerEntityIds) {
+		auto controller = std::find_if(
+		    state.projectiles.begin(),
+		    state.projectiles.end(),
+		    [controllerEntityId](const auto &projectile) {
+			    return projectile.entityId == controllerEntityId;
+		    });
+		if (controller == state.projectiles.end())
 			continue;
-		if (controller.remainingTicks > 0)
-			--controller.remainingTicks;
-		const auto controllerState = controller;
+		if (controller->spellId != 45) {
+			state.projectiles.erase(controller);
+			continue;
+		}
+		if (controller->remainingTicks > 0)
+			--controller->remainingTicks;
+		const auto controllerState = *controller;
 		const auto offsets = CreateReplayRadialProjectileOffsets(4, 36);
 		std::vector<ReplayFixtureProjectileState> created;
 		created.reserve(offsets.size());
@@ -6678,9 +6693,8 @@ void AdvanceReplayImmolationOneTick(ReplayFixtureExecutionState &state)
 			nextEntityId = std::max(nextEntityId, existing.entityId + 1U);
 		for (auto &spawned : created)
 			spawned.entityId = nextEntityId++;
-		state.projectiles.erase(state.projectiles.begin() + static_cast<ptrdiff_t>(index));
+		state.projectiles.erase(controller);
 		state.projectiles.insert(state.projectiles.end(), created.begin(), created.end());
-		return;
 	}
 }
 
@@ -14759,6 +14773,7 @@ bool ApplyReplaySecondaryCast(
 	    || (command.spellId != 1
 	        && command.spellId != 6
 	        && command.spellId != 50
+	        && command.spellId != 45
 	        && command.spellId != 15
 	        && command.spellId != 16
 	        && command.spellId != 3

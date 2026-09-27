@@ -2,6 +2,16 @@
 
 All notable changes to this fork are documented below.
 
+- Extended the shared replay gate to 388 fixtures and 411 native tests with a
+  secondary Sorcerer's Immolation cast against the primary participant. The
+  compact native runner now admits spell 45 from the secondary memorized
+  loadout, preserves the actual caster through radial Fireball creation, and
+  advances concurrent Immolation controllers in entity-ID order. Invalid
+  controller spell identities are removed before fan allocation. Four shared
+  checkpoints and focused regressions pin controller removal, radial
+  allocation/order, same-tick Fireball movement, primary damage, and impact
+  cleanup.
+
 - Extended the shared replay gate to 387 fixtures and 408 native tests with a
   secondary Sorcerer's Chain Lightning cast against the primary participant.
   The compact native runner now admits spell 16 for the secondary caster and

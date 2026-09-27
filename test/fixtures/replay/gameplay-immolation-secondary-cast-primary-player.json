@@ -1,0 +1,69 @@
+{
+  "format_version": 1,
+  "fixture_id": "gameplay/immolation-secondary-cast-primary-player",
+  "protocol_schema_version": "0.1.0",
+  "content_manifest": {
+    "id": "devilution.base",
+    "version": "0.1.0",
+    "sha256": "ee16097e8393e3807fa57356227992eed3265f5da8f182806cbd368c7c28658d"
+  },
+  "tick_rate_hz": 20,
+  "rng_seed": 305419896,
+  "game_variant": "Diablo",
+  "game_mode": "Multiplayer",
+  "initial_state": {
+    "player": "A",
+    "gold": 0,
+    "experience": 0,
+    "life": 20000,
+    "life_maximum": 20000,
+    "mana": 10000,
+    "mana_maximum": 10000,
+    "magic": 7,
+    "character_class": 0,
+    "character_level": 2,
+    "position_x": 11,
+    "position_y": 10,
+    "level_id": 1,
+    "spell_projectile_behavior": 43,
+    "secondary_player": {
+      "player": "B",
+      "entity_id": 8,
+      "life": 2560,
+      "life_maximum": 2560,
+      "mana": 6000,
+      "mana_maximum": 6000,
+      "magic": 35,
+      "position_x": 10,
+      "position_y": 10,
+      "level_id": 1,
+      "character_class": 2,
+      "character_level": 12,
+      "facing_direction": 7,
+      "friendly_mode": false,
+      "memorized_spells": [
+        { "spell_id": 45, "level": 3 }
+      ]
+    }
+  },
+  "commands": [
+    {
+      "player": "B",
+      "client_sequence": 1,
+      "target_tick": 1,
+      "server_receipt_sequence": 1,
+      "kind": "Cast",
+      "payload": {
+        "spell_id": 45,
+        "target_x": 14,
+        "target_y": 10
+      }
+    }
+  ],
+  "checkpoints": [
+    { "tick": 1, "state_sha256": "6df2f10b9272b8ad7b3b08239e5dcd7ca45f4e3593ff199d0ca197b0277522be" },
+    { "tick": 2, "state_sha256": "821a9d27f991d514f2a0c5d975468f6964a4e4535543cafc9973b3881572eb82" },
+    { "tick": 3, "state_sha256": "7e14dcee595864359acbc495681bae05bfef76c316f040b7c4ec4cd087cfcecd" },
+    { "tick": 4, "state_sha256": "fe85051cbd2bc19c7ee303bb9d9cfdfe739e45bcbb778f9424ddf44c07ef4f72" }
+  ]
+}

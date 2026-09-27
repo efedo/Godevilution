@@ -2,8 +2,18 @@
 
 Status date: 2026-09-26
 
-The shared replay gate now contains 387 checked-in fixtures and 408 registered
+The shared replay gate now contains 388 checked-in fixtures and 411 registered
 native tests.
+
+Secondary-participant Immolation now crosses the primary-player boundary in
+both replay runners. The compact native projection admits spell 45 using the
+secondary memorized loadout and carries that caster's identity, class, Magic,
+character level, spell level, mana, facing, and RNG through controller and
+radial Fireball creation. Concurrent controllers advance by entity ID; invalid
+spell identities are removed before fan allocation. Shared checkpoints pin the
+tick-1 controller, tick-2 radial allocation and movement, tick-3 primary impact,
+and tick-4 impact cleanup. The fixture leaves resistance and blocking state
+unpopulated, so those optional branches are not claimed by its hashes.
 
 Secondary-participant Chain Lightning now casts through the primary-player
 boundary in both replay runners. The native replay admits spell 16 from the

@@ -1831,6 +1831,176 @@ public sealed class ReplayFixtureTests
     }
 
     [Fact]
+    public void SecondaryImmolationMatchesNativeFanOutAndPrimaryImpact()
+    {
+        var fixture = LoadReplayFixture("gameplay-immolation-secondary-cast-primary-player.json");
+        var initial = fixture.InitialState;
+        var secondary = Assert.IsType<ReplaySecondaryPlayer>(initial.SecondaryPlayer);
+        var executor = CreateImmolationReplayExecutor(fixture);
+
+        var result = ReplayFixtureExecutor.Execute(
+            fixture,
+            executor,
+            new AuthoritativeCommandServer(executor));
+        var primary = Assert.Single(result.FinalSnapshot.Players, player => player.EntityId == 1);
+        var secondaryState = executor.GetPlayerState(secondary.Player);
+
+        Assert.Equal(CommandStatus.Accepted, Assert.Single(result.Results).Status);
+        Assert.Equal(4UL, result.FinalSnapshot.Tick);
+        Assert.Equal(
+            fixture.Checkpoints.Select(checkpoint => checkpoint.StateSha256),
+            result.Checkpoints.Select(checkpoint => checkpoint.ActualStateSha256));
+        var tickOneProjectiles = ExecuteImmolationFixtureThroughTick(fixture, 1).FinalSnapshot.Projectiles
+            .Where(projectile => projectile.SourceEntityId == secondary.EntityId)
+            .ToArray();
+        var controller = Assert.Single(tickOneProjectiles);
+        Assert.Equal(45U, controller.SpellId);
+        Assert.Equal((int)AuthoritativeProjectileBehavior.ImmolationController, controller.Behavior);
+        var tickTwo = ExecuteImmolationFixtureThroughTick(fixture, 2).FinalSnapshot.Projectiles
+            .Where(projectile => projectile.SourceEntityId == secondary.EntityId)
+            .OrderBy(projectile => projectile.EntityId)
+            .ToArray();
+        Assert.Equal(36, tickTwo.Length);
+        Assert.Equal(0x80000001U, tickTwo[0].EntityId);
+        Assert.Equal(0x80000024U, tickTwo[^1].EntityId);
+        Assert.Equal((14, 10), (tickTwo[0].TargetX, tickTwo[0].TargetY));
+        Assert.Equal((6, 10), (tickTwo[1].TargetX, tickTwo[1].TargetY));
+        Assert.Contains(tickTwo, projectile => projectile.TraveledX != 0 || projectile.TraveledY != 0);
+        var tickThree = ExecuteImmolationFixtureThroughTick(fixture, 3).FinalSnapshot.Projectiles;
+        var impactedIds = tickThree.Where(projectile =>
+                projectile.Phase == (int)AuthoritativeProjectilePhase.Impact)
+            .Select(projectile => projectile.EntityId)
+            .ToArray();
+        Assert.NotEmpty(impactedIds);
+        Assert.All(impactedIds, entityId => {
+            var impacted = Assert.Single(tickThree, projectile => projectile.EntityId == entityId);
+            Assert.Equal(1U, impacted.RemainingTicks);
+        });
+        var tickFour = result.FinalSnapshot.Projectiles;
+        Assert.All(impactedIds, entityId =>
+            Assert.DoesNotContain(tickFour, projectile => projectile.EntityId == entityId));
+        Assert.True(primary.Life < initial.Life);
+        Assert.True(secondaryState.Mana < secondary.Mana);
+        Assert.Equal((DiabloPlayerDirection)7, secondaryState.FacingDirection);
+        Assert.DoesNotContain(result.FinalSnapshot.Projectiles, projectile =>
+            projectile.Behavior == (int)AuthoritativeProjectileBehavior.ImmolationController);
+        var fireballs = result.FinalSnapshot.Projectiles.Where(projectile =>
+            projectile.SourceEntityId == secondary.EntityId).ToArray();
+        Assert.NotEmpty(fireballs);
+        Assert.All(fireballs, projectile => {
+            Assert.Equal(45U, projectile.SpellId);
+            Assert.Equal((int)AuthoritativeProjectileBehavior.Fireball, projectile.Behavior);
+            Assert.Equal((int)AuthoritativeDamageType.Fire, projectile.DamageType);
+        });
+    }
+
+    [Fact]
+    public void ConcurrentImmolationControllersUseEntityOrderWithReversedStorage()
+    {
+        var sourceFixture = LoadReplayFixture("gameplay-immolation-secondary-cast-primary-player.json");
+        var fixture = sourceFixture with {
+            Commands = [new ReplayFixtureCommand(1, 1, 1, "Move", 0, 0) {
+                DirectionY = 1,
+            }],
+            Checkpoints = [new ReplayCheckpoint(1, "pending")],
+            FinalStateSha256 = null,
+            InitialProjectiles = [],
+        };
+        var initial = fixture.InitialState;
+        var projectiles = new[] {
+            new AuthoritativeProjectile(
+                0x80000012,
+                8,
+                0,
+                45,
+                initial.LevelId,
+                10,
+                10,
+                14,
+                10,
+                128,
+                AuthoritativeDamageType.Fire,
+                0,
+                1) {
+                Behavior = AuthoritativeProjectileBehavior.ImmolationController,
+            },
+            new AuthoritativeProjectile(
+                0x80000011,
+                1,
+                0,
+                45,
+                initial.LevelId,
+                11,
+                10,
+                14,
+                10,
+                128,
+                AuthoritativeDamageType.Fire,
+                0,
+                1) {
+                Behavior = AuthoritativeProjectileBehavior.ImmolationController,
+            },
+        };
+        var executor = CreateImmolationReplayExecutor(fixture, projectiles);
+
+        var result = ReplayFixtureExecutor.Execute(
+            fixture,
+            executor,
+            new AuthoritativeCommandServer(executor));
+        var spawned = result.FinalSnapshot.Projectiles.OrderBy(projectile => projectile.EntityId).ToArray();
+
+        Assert.Equal(CommandStatus.Accepted, Assert.Single(result.Results).Status);
+        Assert.Equal(72, spawned.Length);
+        for (var index = 0; index < spawned.Length; index++) {
+            Assert.Equal(0x80000013U + checked((uint)index), spawned[index].EntityId);
+            Assert.Equal(index < 36 ? 1U : 8U, spawned[index].SourceEntityId);
+            Assert.Equal(45U, spawned[index].SpellId);
+            Assert.Equal((int)AuthoritativeProjectileBehavior.Fireball, spawned[index].Behavior);
+        }
+    }
+
+    [Fact]
+    public void InvalidImmolationSpellIsRemovedWithoutRngOrFanAllocation()
+    {
+        var sourceFixture = LoadReplayFixture("gameplay-immolation-secondary-cast-primary-player.json");
+        var fixture = sourceFixture with {
+            Commands = [new ReplayFixtureCommand(1, 1, 1, "Move", 0, 0) {
+                DirectionY = 1,
+            }],
+            Checkpoints = [new ReplayCheckpoint(1, "pending")],
+            FinalStateSha256 = null,
+            InitialProjectiles = [],
+        };
+        var initial = fixture.InitialState;
+        var invalidController = new AuthoritativeProjectile(
+            0x80000011,
+            8,
+            0,
+            16,
+            initial.LevelId,
+            10,
+            10,
+            14,
+            10,
+            128,
+            AuthoritativeDamageType.Lightning,
+            0,
+            1) {
+            Behavior = AuthoritativeProjectileBehavior.ImmolationController,
+        };
+        var executor = CreateImmolationReplayExecutor(fixture, [invalidController]);
+
+        var result = ReplayFixtureExecutor.Execute(
+            fixture,
+            executor,
+            new AuthoritativeCommandServer(executor));
+
+        Assert.Equal(CommandStatus.Accepted, Assert.Single(result.Results).Status);
+        Assert.Empty(result.FinalSnapshot.Projectiles);
+        Assert.Equal(checked((uint)fixture.RngSeed), result.FinalSnapshot.RandomState);
+    }
+
+    [Fact]
     public void ElementalFixtureMatchesNativeRetargetingProjectileLifecycle()
     {
         var path = Path.Combine(
@@ -14347,6 +14517,57 @@ public sealed class ReplayFixtureTests
             100,
             friendlyFire: friendlyFire,
             gameVariant: fixture.GameVariant);
+    }
+
+    private static StoreSimulationExecutor CreateImmolationReplayExecutor(
+        ReplayFixture fixture,
+        IReadOnlyList<AuthoritativeProjectile>? startingProjectiles = null)
+    {
+        var initial = fixture.InitialState;
+        var classes = AuthoritativePlayerClassCatalog.LoadTsv(
+            "classes.tsv",
+            File.ReadAllText(Path.Combine(FindRepositoryRoot(), "server", "content", "base", "classes.tsv")));
+        var world = new AuthoritativeWorld();
+        world.AddLevel(new AuthoritativeLevel(initial.LevelId, 40, 40));
+        return new StoreSimulationExecutor(
+            new StoreCatalog(),
+            initial.Gold,
+            initial.Experience,
+            initial.Life,
+            initial.Mana,
+            startingLifeMaximum: initial.LifeMaximum,
+            startingManaMaximum: initial.ManaMaximum,
+            startingCharacterLevel: initial.CharacterLevel,
+            startingCharacterClassId: checked((uint)initial.CharacterClass),
+            startingPlayerClasses: classes,
+            startingPositionX: initial.PositionX,
+            startingPositionY: initial.PositionY,
+            startingLevelId: initial.LevelId,
+            startingAttributes: PlayerAttributesState.Zero with {
+                Magic = new PlayerAttributeState(initial.Magic, initial.Magic),
+            },
+            startingWorld: world,
+            startingSpells: LoadBaseSpells(fixture),
+            startingProjectiles: startingProjectiles ?? [],
+            startingCombatRules: CreateReplayCombatRules(fixture),
+            startingRandomSeed: checked((uint)fixture.RngSeed),
+            gameMode: fixture.GameMode);
+    }
+
+    private static ReplayExecutionResult ExecuteImmolationFixtureThroughTick(
+        ReplayFixture fixture,
+        ulong tick)
+    {
+        var prefixFixture = fixture with {
+            Checkpoints = fixture.Checkpoints
+                .Where(checkpoint => checkpoint.Tick <= tick)
+                .ToArray(),
+        };
+        var executor = CreateImmolationReplayExecutor(prefixFixture);
+        return ReplayFixtureExecutor.Execute(
+            prefixFixture,
+            executor,
+            new AuthoritativeCommandServer(executor));
     }
 
     private static StoreSimulationExecutor CreateSnakeReplayExecutor(
