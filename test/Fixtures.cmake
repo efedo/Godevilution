@@ -226,6 +226,7 @@ set(devilutionx_fixtures
   replay/gameplay-golem-resolution.json
   replay/gameplay-golem-secondary-summon.json
   replay/gameplay-guardian-resolution.json
+  replay/gameplay-guardian-secondary-cast-primary-player.json
   replay/gameplay-heal-other-resolution.json
   replay/gameplay-healing-resolution.json
   replay/gameplay-holy-bolt-living-target.json

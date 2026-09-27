@@ -2,6 +2,17 @@
 
 All notable changes to this fork are documented below.
 
+- Extended the shared replay gate to 393 fixtures and 419 native tests with a
+  secondary Sorcerer's Guardian cast through the primary-player boundary.
+  Production and compact replay now preserve secondary cast ownership and
+  resources, turret-origin Firebolt creation, current owner spell-level
+  scaling, exact Guardian LOS, and entity-ID ordering for concurrent turrets.
+  Focused regressions cover invalid controllers before lifetime/RNG, dead-owner
+  persistence, projectile-occupied spawn tiles, player-minion exclusion, and
+  primary monster impact. Descriptive timeline markers retain
+  detailed shared assertions while canonical monster-snapshot hash shapes
+  remain different between compact and managed replay.
+
 - Closed the compact replay Chain Lightning scheduler seam: controllers, bolts,
   spell-16 segments, Fireballs, Bone Spirits, and ordinary Lightning now share
   entity-ID ordering, including same-tick creations. Managed and native

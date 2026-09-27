@@ -2,8 +2,23 @@
 
 Status date: 2026-09-27
 
-The shared replay gate now contains 392 checked-in fixtures and 417 registered
+The shared replay gate now contains 393 checked-in fixtures and 419 registered
 native tests.
+
+Secondary-participant Guardian now casts through the primary-player boundary
+in both replay runners and the production authoritative server. Cast mana,
+facing, and ownership use the secondary participant; the server-owned turret
+fires from its own tile, uses the owner's current Guardian spell level for its
+Firebolt, and applies owner-specific hit chance/damage. Compact advancement
+processes all controllers in entity-ID order, preserves native dead-owner
+turrets, rejects missing owner/wrong spell/level before lifetime or RNG, and
+uses native moving-missile LOS including activated-object pass-through. Spawn
+admission excludes projectile-occupied tiles, and targeting excludes player
+minions before RNG consumption. Shared timeline assertions cover turret
+creation, same-tick firing, and primary
+monster impact. Descriptive checkpoint markers are used because the compact
+native monster projection and full managed monster snapshot do not yet share a
+canonical hash shape; focused direct tests pin the Guardian state transitions.
 
 Secondary-participant Nova now crosses the primary-player boundary in both
 replay runners and in the production authoritative server path. The cast uses

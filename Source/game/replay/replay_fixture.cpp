@@ -2381,9 +2381,18 @@ void AdvanceMagicBoltsOneTick(ReplayFixtureExecutionState &state, uint64_t tick)
 			if (targetAtTile
 			    && (!holyBolt || state.combatTargetUndead)
 			    && (holyBolt || state.combatTargetFireResistance < 100)) {
+				const bool secondaryGuardianBolt = projectile.spellId == 7
+				    && state.secondaryPlayerEntityId != 0
+				    && projectile.sourceEntityId == state.secondaryPlayerEntityId;
+				const int32_t casterMagic = secondaryGuardianBolt
+				    ? state.secondaryPlayerMagic
+				    : state.attributes[3];
+				const uint32_t casterClassId = secondaryGuardianBolt
+				    ? state.secondaryPlayerCharacterClassId
+				    : state.characterClassId;
 				const int32_t hitChance = std::clamp(
-				    state.attributes[3]
-				        + GetReplayBaseMagicToHit(state.characterClassId)
+				    casterMagic
+				        + GetReplayBaseMagicToHit(casterClassId)
 				        - state.combatTargetMonsterLevel * 2,
 				    5,
 				    95);
@@ -5738,7 +5747,10 @@ ReplayFixtureProjectileState CreateReplayGuardianController(
 	controller.targetX = command.targetX;
 	controller.targetY = command.targetY;
 	controller.damageType = 1;
-	controller.remainingTicks = 30;
+	const int32_t durationUnits = std::min(
+	    30,
+	    spellLevel + static_cast<int32_t>(state.characterLevel / 2));
+	controller.remainingTicks = static_cast<uint32_t>(std::max(30, durationUnits * 16));
 	controller.behavior = GuardianControllerBehavior;
 	controller.originalDirection = state.facingDirection % 8;
 	controller.effectiveSpellLevel = spellLevel;
@@ -5776,6 +5788,32 @@ ReplayFixtureProjectileState CreateReplayGuardianBolt(
     int32_t targetX,
     int32_t targetY)
 {
+	const bool secondaryOwner = state.secondaryPlayerEntityId != 0
+	    && controller.sourceEntityId == state.secondaryPlayerEntityId;
+	const int32_t ownerMagic = secondaryOwner
+	    ? state.secondaryPlayerMagic
+	    : state.attributes[3];
+	const auto &ownerSpells = secondaryOwner
+	    ? state.secondaryPlayerMemorizedSpells
+	    : state.memorizedSpells;
+	const auto ownerSpell = std::find_if(
+	    ownerSpells.begin(),
+	    ownerSpells.end(),
+	    [](const ReplayFixtureMemorizedSpell &spell) {
+		    return spell.spellId == 7 && spell.level > 0;
+	    });
+	int32_t effectiveSpellLevel = ownerSpell == ownerSpells.end()
+	    ? 0
+	    : static_cast<int32_t>(ownerSpell->level);
+	const auto &ownerEquipment = secondaryOwner
+	    ? state.secondaryEquipment
+	    : state.equipment;
+	for (const auto &item : ownerEquipment) {
+		if (item.state.statFlag && (item.state.magical == 0 || item.state.identified))
+			effectiveSpellLevel += item.state.spellLevelAdd;
+	}
+	effectiveSpellLevel = std::max(effectiveSpellLevel, 0);
+	const int32_t speed = 16 + std::min(effectiveSpellLevel * 2, 47);
 	ReplayFixtureProjectileState bolt;
 	bolt.entityId = 0x80000000U;
 	for (const auto &existing : state.projectiles)
@@ -5783,42 +5821,42 @@ ReplayFixtureProjectileState CreateReplayGuardianBolt(
 	bolt.sourceEntityId = controller.sourceEntityId;
 	bolt.spellId = controller.spellId;
 	bolt.levelId = controller.levelId;
-	bolt.positionX = state.positionX;
-	bolt.positionY = state.positionY;
+	bolt.positionX = controller.positionX;
+	bolt.positionY = controller.positionY;
 	bolt.targetX = targetX;
 	bolt.targetY = targetY;
 	bolt.damage = GenerateRnd(state, 10)
-		+ state.attributes[3] / 8
-		+ controller.effectiveSpellLevel
+		+ ownerMagic / 8
+		+ effectiveSpellLevel
 		+ 1;
 	bolt.damageType = 1;
 	bolt.remainingTicks = 256;
 	bolt.behavior = 2;
-	bolt.startX = state.positionX;
-	bolt.startY = state.positionY;
+	bolt.startX = controller.positionX;
+	bolt.startY = controller.positionY;
 	bolt.originalDirection = GetDirection(
-		state.positionX,
-		state.positionY,
+		controller.positionX,
+		controller.positionY,
 		targetX,
 		targetY);
 	int32_t velocityTargetX = targetX;
 	int32_t velocityTargetY = targetY;
-	if (velocityTargetX == state.positionX && velocityTargetY == state.positionY) {
+	if (velocityTargetX == controller.positionX && velocityTargetY == controller.positionY) {
 		velocityTargetX += DirectionDisplacements[bolt.originalDirection].first;
 		velocityTargetY += DirectionDisplacements[bolt.originalDirection].second;
 	}
 	const auto velocity = CalculateVelocity(
-		state.positionX,
-		state.positionY,
+		controller.positionX,
+		controller.positionY,
 		velocityTargetX,
 		velocityTargetY,
-		16);
+		speed);
 	bolt.velocityX = velocity.first;
 	bolt.velocityY = velocity.second;
-	bolt.speed = 16;
+	bolt.speed = speed;
 	bolt.impactLifetime = 1;
 	bolt.resistantDamageDivisor = 4;
-	bolt.effectiveSpellLevel = controller.effectiveSpellLevel;
+	bolt.effectiveSpellLevel = effectiveSpellLevel;
 	return bolt;
 }
 
@@ -7139,6 +7177,101 @@ bool IsReplayElementalMissileBlocked(
 	    != state.missileBlockedCells.end();
 }
 
+bool IsReplayGuardianMissileBlocked(
+    const ReplayFixtureExecutionState &state,
+    uint32_t levelId,
+    int32_t positionX,
+    int32_t positionY)
+{
+	if (IsReplayElementalMissileBlocked(state, positionX, positionY))
+		return true;
+	return state.objectEntityId != 0
+	    && !state.objectActivated
+	    && !state.objectDestroyed
+	    && !state.objectMissilePassable
+	    && state.objectLevelId == levelId
+	    && state.objectPositionX == positionX
+	    && state.objectPositionY == positionY;
+}
+
+bool HasReplayGuardianTargetLineOfSight(
+    const ReplayFixtureExecutionState &state,
+    uint32_t levelId,
+    int32_t startX,
+    int32_t startY,
+    int32_t endX,
+    int32_t endY)
+{
+	if (!IsReplayElementalTileInBounds(state, startX, startY)
+	    || !IsReplayElementalTileInBounds(state, endX, endY)) {
+		return false;
+	}
+
+	int32_t positionX = startX;
+	int32_t positionY = startY;
+	int32_t targetX = endX;
+	int32_t targetY = endY;
+	const int32_t originalStartX = startX;
+	const int32_t originalStartY = startY;
+	int32_t dx = targetX - positionX;
+	int32_t dy = targetY - positionY;
+	int32_t steps = 0;
+	const int32_t maximumSteps = state.levelWidth + state.levelHeight;
+	if (std::max(std::abs(dx), std::abs(dy)) > maximumSteps)
+		return false;
+
+	if (std::abs(dx) > std::abs(dy)) {
+		if (dx < 0) {
+			std::swap(positionX, targetX);
+			std::swap(positionY, targetY);
+			dx = -dx;
+			dy = -dy;
+		}
+		const int32_t yIncrement = dy > 0 ? 1 : -1;
+		int32_t decision = dy > 0 ? 2 * dy - dx : 2 * dy + dx;
+		const int32_t diagonalIncrement = 2 * dy;
+		const int32_t horizontalIncrement = dy > 0 ? 2 * (dy - dx) : 2 * (dx + dy);
+		while (steps < maximumSteps && (positionX != targetX || positionY != targetY)) {
+			if ((decision <= 0) ^ (yIncrement < 0)) {
+				decision += diagonalIncrement;
+			} else {
+				decision += horizontalIncrement;
+				positionY += yIncrement;
+			}
+			++positionX;
+			++steps;
+			if ((positionX != originalStartX || positionY != originalStartY)
+			    && IsReplayGuardianMissileBlocked(state, levelId, positionX, positionY))
+				return false;
+		}
+	} else {
+		if (dy < 0) {
+			std::swap(positionX, targetX);
+			std::swap(positionY, targetY);
+			dx = -dx;
+			dy = -dy;
+		}
+		const int32_t xIncrement = dx > 0 ? 1 : -1;
+		int32_t decision = dx > 0 ? 2 * dx - dy : 2 * dx + dy;
+		const int32_t diagonalIncrement = 2 * dx;
+		const int32_t verticalIncrement = dx > 0 ? 2 * (dx - dy) : 2 * (dy + dx);
+		while (steps < maximumSteps && (positionX != targetX || positionY != targetY)) {
+			if ((decision <= 0) ^ (xIncrement < 0)) {
+				decision += diagonalIncrement;
+			} else {
+				decision += verticalIncrement;
+				positionX += xIncrement;
+			}
+			++positionY;
+			++steps;
+			if ((positionX != originalStartX || positionY != originalStartY)
+			    && IsReplayGuardianMissileBlocked(state, levelId, positionX, positionY))
+				return false;
+		}
+	}
+	return positionX == targetX && positionY == targetY;
+}
+
 bool HasReplayElementalBurstLineOfSight(
     const ReplayFixtureExecutionState &state,
     int32_t startX,
@@ -7606,20 +7739,49 @@ void AdvanceReplayElementalOneTick(
 void AdvanceReplayGuardianOneTick(
     ReplayFixtureExecutionState &state)
 {
-	for (size_t index = 0; index < state.projectiles.size(); ++index) {
-		auto &controller = state.projectiles[index];
-		if (controller.behavior != GuardianControllerBehavior)
+	std::vector<uint32_t> controllerIds;
+	for (const auto &projectile : state.projectiles) {
+		if (projectile.behavior == GuardianControllerBehavior)
+			controllerIds.push_back(projectile.entityId);
+	}
+	std::sort(controllerIds.begin(), controllerIds.end());
+	const uint32_t primaryEntityId = state.entityId == 0 ? 1U : state.entityId;
+	for (const uint32_t controllerId : controllerIds) {
+		auto controllerIterator = std::find_if(
+		    state.projectiles.begin(),
+		    state.projectiles.end(),
+		    [controllerId](const ReplayFixtureProjectileState &projectile) {
+			    return projectile.entityId == controllerId;
+		    });
+		if (controllerIterator == state.projectiles.end())
 			continue;
-		if (controller.remainingTicks > 0)
-			--controller.remainingTicks;
-		if (controller.guardianState > 0)
-			--controller.guardianState;
-		if (controller.remainingTicks == 0) {
-			state.projectiles.erase(state.projectiles.begin() + static_cast<ptrdiff_t>(index));
-			return;
+		const bool secondaryOwner = state.secondaryPlayerEntityId != 0
+		    && controllerIterator->sourceEntityId == state.secondaryPlayerEntityId;
+		const bool primaryOwner = controllerIterator->sourceEntityId == primaryEntityId;
+		const bool validOwner = secondaryOwner || primaryOwner;
+		const int32_t ownerLife = secondaryOwner ? state.secondaryPlayerLife : state.life;
+		const int32_t ownerLifeMaximum = secondaryOwner ? state.secondaryPlayerLifeMaximum : state.lifeMaximum;
+		const uint32_t ownerLevelId = secondaryOwner ? state.secondaryPlayerLevelId : state.levelId;
+		if (!validOwner
+		    || controllerIterator->spellId != 7
+		    || ownerLevelId != controllerIterator->levelId
+		    || ownerLife < 0
+		    || ownerLifeMaximum <= 0
+		    || ownerLife > ownerLifeMaximum) {
+			state.projectiles.erase(controllerIterator);
+			continue;
 		}
-		if (controller.remainingTicks % 16 != 0)
-			return;
+		if (controllerIterator->remainingTicks > 0)
+			--controllerIterator->remainingTicks;
+		if (controllerIterator->guardianState > 0)
+			--controllerIterator->guardianState;
+		if (controllerIterator->remainingTicks == 0) {
+			state.projectiles.erase(controllerIterator);
+			continue;
+		}
+		if (controllerIterator->remainingTicks % 16 != 0)
+			continue;
+		bool fired = false;
 		for (const auto offset : GuardianArc) {
 			const std::pair<int32_t, int32_t> candidates[] = {
 				{ offset.first, offset.second },
@@ -7628,31 +7790,41 @@ void AdvanceReplayGuardianOneTick(
 				{ offset.first, -offset.second },
 			};
 			for (const auto candidate : candidates) {
-				const int32_t targetX = controller.positionX + candidate.first;
-				const int32_t targetY = controller.positionY + candidate.second;
+				const int32_t targetX = controllerIterator->positionX + candidate.first;
+				const int32_t targetY = controllerIterator->positionY + candidate.second;
 				if (state.combatTargetEntityId == 0
 				    || state.combatTargetHitPointsQ6 <= 0
-				    || state.combatTargetLevelId != controller.levelId
+				    || state.combatTargetPlayerMinion
+				    || state.combatTargetLevelId != controllerIterator->levelId
 				    || state.combatTargetPositionX != targetX
 				    || state.combatTargetPositionY != targetY
+				    || !HasReplayGuardianTargetLineOfSight(
+					       state,
+					       controllerIterator->levelId,
+					       controllerIterator->positionX,
+					       controllerIterator->positionY,
+					       targetX,
+					       targetY)
 				    || std::max(
-					       std::abs(targetX - controller.positionX),
-					       std::abs(targetY - controller.positionY)) > 6)
+					       std::abs(targetX - controllerIterator->positionX),
+					       std::abs(targetY - controllerIterator->positionY)) > 6)
 					continue;
 				// Native GuardianTryFireAt checks line of sight and consumes one
 				// discarded damage roll before AddFirebolt's payload roll.
 				static_cast<void>(GenerateRnd(state, 10));
-				const auto controllerState = controller;
-				controller.guardianState = 3;
+				const auto controllerState = *controllerIterator;
+				controllerIterator->guardianState = 3;
 				state.projectiles.push_back(CreateReplayGuardianBolt(
 					state,
 					controllerState,
 					targetX,
 					targetY));
-				return;
+				fired = true;
+				break;
 			}
+			if (fired)
+				break;
 		}
-		return;
 	}
 }
 
@@ -8760,7 +8932,10 @@ bool ApplyReplayCast(ReplayFixtureExecutionState &state, const ReplayFixtureComm
 		const int32_t spellLevel = GetReplayEffectiveSpellLevel(
 			state,
 			isMemorized ? &*memorizedSpell : nullptr);
-		const int32_t manaCost = 50 * 64;
+		const int32_t manaCost = std::max(
+			30,
+			50 - std::max(spellLevel - 1, 0) * 2)
+			* 64;
 		if (!isAbility && state.mana < manaCost)
 			return false;
 		if (applyEffects) {
@@ -15572,6 +15747,7 @@ bool ApplyReplaySecondaryCast(
 {
 	if (state.secondaryPlayerEntityId == 0
 	    || (command.spellId != 1
+	        && command.spellId != 7
 	        && command.spellId != 6
 	        && command.spellId != 50
 	        && command.spellId != 45
@@ -15586,6 +15762,13 @@ bool ApplyReplaySecondaryCast(
 	        && command.spellId != 52
 	        && command.spellId != 18))
 		return false;
+	if (command.spellId == 7
+	    && (state.secondaryPlayerLife <= 0
+	        || state.secondaryPlayerLifeMaximum <= 0
+	        || state.secondaryPlayerLife > state.secondaryPlayerLifeMaximum
+	        || state.secondaryPlayerLevelId == 0)) {
+		return false;
+	}
 
 	ReplayFixtureExecutionState castState = state;
 	castState.entityId = state.secondaryPlayerEntityId;
@@ -15607,6 +15790,8 @@ bool ApplyReplaySecondaryCast(
 	castState.inventory = state.secondaryInventory;
 	castState.inventoryGrid = state.secondaryInventoryGrid;
 	castState.abilitySpellId = 0;
+	if (command.spellId == 7)
+		castState.spellProjectileBehavior = GuardianControllerBehavior;
 	castState.attributes[2] = state.secondaryPlayerMagic;
 	castState.attributes[3] = state.secondaryPlayerMagic;
 	castState.combatMode = state.secondaryPlayerCombatMode;

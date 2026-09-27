@@ -815,6 +815,48 @@ public sealed class DiabloWorldState
             (x, y) => IsMissileGeometryBlocked(levelId, x, y));
     }
 
+    /** Native `LineClearMissile` admission used while choosing a Guardian tile. */
+    public bool HasGuardianSpawnLineOfSight(
+        uint levelId,
+        int startX,
+        int startY,
+        int endX,
+        int endY)
+    {
+        if (!ContainsPosition(levelId, startX, startY)
+            || !ContainsPosition(levelId, endX, endY)) {
+            return false;
+        }
+
+        return DeterministicGridLineTraversal.HasNativeLineClear(
+            startX,
+            startY,
+            endX,
+            endY,
+            (x, y) => !IsMissileGeometryBlocked(levelId, x, y));
+    }
+
+    /** Native `LineClearMovingMissile` admission used by Guardian targeting. */
+    public bool HasGuardianTargetLineOfSight(
+        uint levelId,
+        int startX,
+        int startY,
+        int endX,
+        int endY)
+    {
+        if (!ContainsPosition(levelId, startX, startY)
+            || !ContainsPosition(levelId, endX, endY)) {
+            return false;
+        }
+
+        return DeterministicGridLineTraversal.HasNativeLineClear(
+            startX,
+            startY,
+            endX,
+            endY,
+            (x, y) => !IsMissileBlocked(levelId, x, y));
+    }
+
     /** Native Elemental CheckBlock semantics: Solid geometry only, endpoint included. */
     public bool HasSolidLineOfSight(
         uint levelId,

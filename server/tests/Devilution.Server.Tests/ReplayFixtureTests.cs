@@ -2711,6 +2711,216 @@ public sealed class ReplayFixtureTests
     }
 
     [Fact]
+    public void SecondaryGuardianFixtureMatchesNativeTurretOwnershipAndFireboltTiming()
+    {
+        var fixture = LoadReplayFixture("gameplay-guardian-secondary-cast-primary-player.json");
+        var initial = fixture.InitialState;
+        var secondary = Assert.IsType<ReplaySecondaryPlayer>(initial.SecondaryPlayer);
+
+        var atCast = ExecuteGuardianFixtureThroughTick(fixture, 1);
+        var primaryAtCast = Assert.Single(atCast.FinalSnapshot.Players, player => player.EntityId == 1);
+        var secondaryAtCast = Assert.Single(atCast.FinalSnapshot.Players, player => player.EntityId == secondary.EntityId);
+        var controller = Assert.Single(atCast.FinalSnapshot.Projectiles);
+        Assert.Equal(CommandStatus.Accepted, Assert.Single(atCast.Results).Status);
+        Assert.Equal(initial.Mana, primaryAtCast.Mana);
+        Assert.Equal(10000 - 46 * 64, secondaryAtCast.Mana);
+        Assert.Equal(PlayerDirection.SouthEast, secondaryAtCast.FacingDirection);
+        Assert.Equal(secondary.EntityId, controller.SourceEntityId);
+        Assert.Equal(7U, controller.SpellId);
+        Assert.Equal((int)AuthoritativeProjectileBehavior.GuardianController, controller.Behavior);
+        Assert.Equal(3, controller.EffectiveSpellLevel);
+        Assert.Equal((12, 10), (controller.PositionX, controller.PositionY));
+        Assert.Equal(144U, controller.RemainingTicks);
+
+        var atFire = ExecuteGuardianFixtureThroughTick(fixture, 17);
+        controller = Assert.Single(atFire.FinalSnapshot.Projectiles,
+            projectile => projectile.Behavior == (int)AuthoritativeProjectileBehavior.GuardianController);
+        var bolt = Assert.Single(atFire.FinalSnapshot.Projectiles,
+            projectile => projectile.Behavior == (int)AuthoritativeProjectileBehavior.Firebolt);
+        Assert.Equal(128U, controller.RemainingTicks);
+        Assert.Equal(3, controller.GuardianState);
+        Assert.Equal(secondary.EntityId, bolt.SourceEntityId);
+        Assert.Equal(7U, bolt.SpellId);
+        Assert.Equal((12, 10), (bolt.PositionX, bolt.PositionY));
+        Assert.Equal((14, 10), (bolt.TargetX, bolt.TargetY));
+        Assert.Equal(3, bolt.EffectiveSpellLevel);
+        Assert.Equal(22, bolt.Speed);
+        Assert.Equal(8, bolt.Damage);
+        Assert.Equal(255U, bolt.RemainingTicks);
+        Assert.Equal(5, Assert.Single(atFire.FinalSnapshot.Monsters).MonsterLevel);
+        Assert.Equal(1443805422U, atFire.FinalSnapshot.RandomState);
+
+        var final = ExecuteGuardianFixtureThroughTick(fixture, 26);
+        var finalPrimary = Assert.Single(final.FinalSnapshot.Players, player => player.EntityId == 1);
+        var finalSecondary = Assert.Single(final.FinalSnapshot.Players, player => player.EntityId == secondary.EntityId);
+        Assert.Equal(initial.Life, finalPrimary.Life);
+        Assert.Equal(10000 - 46 * 64, finalSecondary.Mana);
+
+        var damageFixture = fixture with {
+            Commands = fixture.Commands.Append(new ReplayFixtureCommand(2, 40, 2, "Move", 0, 0) {
+                DirectionY = 1,
+            }).ToArray(),
+            Checkpoints = [],
+            FinalStateSha256 = null,
+        };
+        var damageExecutor = CreateGuardianReplayExecutor(damageFixture);
+        var damage = ReplayFixtureExecutor.Execute(
+            damageFixture,
+            damageExecutor,
+            new AuthoritativeCommandServer(damageExecutor));
+        Assert.True(Assert.Single(damage.FinalSnapshot.Monsters).HitPointsQ6
+            < initial.CombatTargetHitPoints * 64);
+    }
+
+    [Fact]
+    public void GuardianRejectsBlockedTargetsAndMalformedControllersBeforeRngButKeepsDeadOwnerTurrets()
+    {
+        var sourceFixture = LoadReplayFixture("gameplay-guardian-secondary-cast-primary-player.json");
+        var fixture = sourceFixture with {
+            Commands = sourceFixture.Commands.Append(new ReplayFixtureCommand(2, 17, 2, "Move", 0, 0) {
+                DirectionY = 1,
+            }).ToArray(),
+            Checkpoints = [],
+            FinalStateSha256 = null,
+        };
+        var blockedFixture = fixture with {
+            InitialState = fixture.InitialState with { MissileBlockedCells = [413] },
+        };
+        var blockedExecutor = CreateGuardianReplayExecutor(blockedFixture);
+        var blocked = ReplayFixtureExecutor.Execute(
+            blockedFixture,
+            blockedExecutor,
+            new AuthoritativeCommandServer(blockedExecutor));
+        Assert.DoesNotContain(blocked.FinalSnapshot.Projectiles,
+            projectile => projectile.Behavior == (int)AuthoritativeProjectileBehavior.Firebolt);
+
+        var owner = Assert.IsType<ReplaySecondaryPlayer>(sourceFixture.InitialState.SecondaryPlayer);
+        var originalCommand = new ReplayFixtureCommand(1, 1, 1, "Move", 0, 0);
+        var oneTickFixture = sourceFixture with {
+            Commands = [originalCommand],
+            Checkpoints = [],
+            FinalStateSha256 = null,
+        };
+        AuthoritativeProjectile Controller(
+            uint id,
+            uint source,
+            uint spell,
+            uint level = 1,
+            uint remainingTicks = 17) => new(
+            id,
+            source,
+            0,
+            spell,
+            level,
+            12,
+            10,
+            fixture.InitialState.CombatTargetPositionX,
+            10,
+            0,
+            AuthoritativeDamageType.Fire,
+            0,
+            remainingTicks) {
+            Behavior = AuthoritativeProjectileBehavior.GuardianController,
+            EffectiveSpellLevel = 1,
+        };
+
+        var occupiedTarget = Controller(0x80000010, owner.EntityId, 7, remainingTicks: 18);
+        var occupiedResult = ExecuteGuardianFixtureThroughTick(
+            sourceFixture,
+            1,
+            [occupiedTarget]);
+        Assert.Equal(CommandStatus.Accepted, Assert.Single(occupiedResult.Results).Status);
+        var relocatedController = Assert.Single(
+            occupiedResult.FinalSnapshot.Projectiles,
+            projectile => projectile.Behavior == (int)AuthoritativeProjectileBehavior.GuardianController
+                && projectile.EntityId != occupiedTarget.EntityId
+                && projectile.SourceEntityId == owner.EntityId);
+        Assert.NotEqual((12, 10), (relocatedController.PositionX, relocatedController.PositionY));
+
+        foreach (var invalid in new[] {
+            Controller(0x80000010, 99, 7),
+            Controller(0x80000010, owner.EntityId, 1),
+            Controller(0x80000010, owner.EntityId, 7, 2),
+        }) {
+            var invalidExecutor = CreateGuardianReplayExecutor(oneTickFixture, [invalid]);
+            var result = ReplayFixtureExecutor.Execute(
+                oneTickFixture,
+                invalidExecutor,
+                new AuthoritativeCommandServer(invalidExecutor));
+            Assert.Empty(result.FinalSnapshot.Projectiles);
+            Assert.Equal(checked((uint)sourceFixture.RngSeed), result.FinalSnapshot.RandomState);
+        }
+
+        var currentLevelExecutor = CreateGuardianReplayExecutor(
+            oneTickFixture,
+            [Controller(0x80000010, owner.EntityId, 7)]);
+        var currentLevel = ReplayFixtureExecutor.Execute(
+            oneTickFixture,
+            currentLevelExecutor,
+            new AuthoritativeCommandServer(currentLevelExecutor));
+        var currentLevelBolt = Assert.Single(currentLevel.FinalSnapshot.Projectiles,
+            projectile => projectile.Behavior == (int)AuthoritativeProjectileBehavior.Firebolt);
+        Assert.Equal(3, currentLevelBolt.EffectiveSpellLevel);
+        Assert.Equal(22, currentLevelBolt.Speed);
+
+        var reversedExecutor = CreateGuardianReplayExecutor(
+            oneTickFixture,
+            [
+                Controller(0x80000011, owner.EntityId, 7),
+                Controller(0x80000010, 1, 7),
+            ]);
+        var reversed = ReplayFixtureExecutor.Execute(
+            oneTickFixture,
+            reversedExecutor,
+            new AuthoritativeCommandServer(reversedExecutor));
+        var orderedExecutor = CreateGuardianReplayExecutor(
+            oneTickFixture,
+            [
+                Controller(0x80000010, 1, 7),
+                Controller(0x80000011, owner.EntityId, 7),
+            ]);
+        var ordered = ReplayFixtureExecutor.Execute(
+            oneTickFixture,
+            orderedExecutor,
+            new AuthoritativeCommandServer(orderedExecutor));
+        Assert.Equal(reversed.FinalSnapshot.RandomState, ordered.FinalSnapshot.RandomState);
+        Assert.Equal(
+            reversed.FinalSnapshot.Projectiles.OrderBy(projectile => projectile.EntityId)
+                .Select(projectile => (projectile.EntityId, projectile.SourceEntityId, projectile.Behavior,
+                    projectile.RemainingTicks, projectile.Speed, projectile.PositionX, projectile.PositionY))
+                .ToArray(),
+            ordered.FinalSnapshot.Projectiles.OrderBy(projectile => projectile.EntityId)
+                .Select(projectile => (projectile.EntityId, projectile.SourceEntityId, projectile.Behavior,
+                    projectile.RemainingTicks, projectile.Speed, projectile.PositionX, projectile.PositionY))
+                .ToArray());
+        var spawned = reversed.FinalSnapshot.Projectiles
+            .Where(projectile => projectile.Behavior == (int)AuthoritativeProjectileBehavior.Firebolt)
+            .OrderBy(projectile => projectile.EntityId)
+            .ToArray();
+        Assert.Equal(2, spawned.Length);
+        Assert.Equal(1U, spawned[0].SourceEntityId);
+        Assert.Equal(owner.EntityId, spawned[1].SourceEntityId);
+        Assert.All(reversed.FinalSnapshot.Projectiles
+            .Where(projectile => projectile.Behavior == (int)AuthoritativeProjectileBehavior.GuardianController),
+            projectile => Assert.Equal(16U, projectile.RemainingTicks));
+
+        var deadOwnerFixture = oneTickFixture with {
+            InitialState = oneTickFixture.InitialState with {
+                SecondaryPlayer = owner with { Life = 0 },
+            },
+        };
+        var deadOwnerController = Controller(0x80000010, owner.EntityId, 7, remainingTicks: 18);
+        var deadExecutor = CreateGuardianReplayExecutor(deadOwnerFixture, [deadOwnerController]);
+        var dead = ReplayFixtureExecutor.Execute(
+            deadOwnerFixture,
+            deadExecutor,
+            new AuthoritativeCommandServer(deadExecutor));
+        var persistent = Assert.Single(dead.FinalSnapshot.Projectiles);
+        Assert.Equal(17U, persistent.RemainingTicks);
+        Assert.Equal(checked((uint)sourceFixture.RngSeed), dead.FinalSnapshot.RandomState);
+    }
+
+    [Fact]
     public void RageFixtureMatchesNativeActiveCooldownAndExpiryDamage()
     {
         var path = Path.Combine(
@@ -15314,6 +15524,90 @@ public sealed class ReplayFixtureTests
             startingCombatRules: CreateReplayCombatRules(fixture),
             startingRandomSeed: checked((uint)fixture.RngSeed),
             gameMode: fixture.GameMode);
+    }
+
+    private static StoreSimulationExecutor CreateGuardianReplayExecutor(
+        ReplayFixture fixture,
+        IReadOnlyList<AuthoritativeProjectile>? startingProjectiles = null,
+        IReadOnlyList<AuthoritativeWorldObject>? startingObjects = null)
+    {
+        var initial = fixture.InitialState;
+        var classes = AuthoritativePlayerClassCatalog.LoadTsv(
+            "classes.tsv",
+            File.ReadAllText(Path.Combine(FindRepositoryRoot(), "server", "content", "base", "classes.tsv")));
+        var world = new AuthoritativeWorld();
+        world.AddLevel(new AuthoritativeLevel(
+            initial.LevelId,
+            initial.LevelWidth,
+            initial.LevelHeight,
+            blockedCells: initial.BlockedCells,
+            missileBlockedCells: initial.MissileBlockedCells));
+        var startingCombatTargets = initial.CombatTargetEntityId == 0
+            ? Array.Empty<AuthoritativeCombatTarget>()
+            : new[] { new AuthoritativeCombatTarget(
+                initial.CombatTargetEntityId,
+                initial.CombatTargetPositionX,
+                initial.CombatTargetPositionY,
+                initial.CombatTargetHitPoints,
+                maxHitPoints: initial.CombatTargetMaxHitPoints,
+                levelId: initial.CombatTargetLevelId,
+                fireResistance: initial.CombatTargetFireResistance,
+                monsterLevel: initial.CombatTargetMonsterLevel,
+                petrified: initial.CombatTargetPetrified,
+                sneakHidden: initial.CombatTargetSneakHidden) };
+        if (startingProjectiles is not null) {
+            foreach (var levelId in startingProjectiles.Select(projectile => projectile.LevelId).Distinct()) {
+                if (levelId != initial.LevelId)
+                    world.AddLevel(new AuthoritativeLevel(levelId, 40, 40));
+            }
+        }
+        return new StoreSimulationExecutor(
+            new StoreCatalog(),
+            initial.Gold,
+            initial.Experience,
+            initial.Life,
+            initial.Mana,
+            startingLifeMaximum: initial.LifeMaximum,
+            startingManaMaximum: initial.ManaMaximum,
+            startingCharacterLevel: initial.CharacterLevel,
+            startingCharacterClassId: checked((uint)initial.CharacterClass),
+            startingPlayerClasses: classes,
+            startingPositionX: initial.PositionX,
+            startingPositionY: initial.PositionY,
+            startingLevelId: initial.LevelId,
+            startingAttributes: PlayerAttributesState.Zero with {
+                Magic = new PlayerAttributeState(initial.Magic, initial.Magic),
+                Dexterity = new PlayerAttributeState(initial.Dexterity, initial.Dexterity),
+            },
+            startingWorld: world,
+            startingCombatTargets: startingCombatTargets,
+            startingObjects: startingObjects,
+            startingSpells: LoadBaseSpells(fixture),
+            startingMemorizedSpells: initial.MemorizedSpells
+                .Select(spell => new MemorizedSpellState(spell.SpellId, spell.Level))
+                .ToArray(),
+            startingAbilitySpellId: initial.AbilitySpellId,
+            startingProjectiles: startingProjectiles ?? [],
+            startingCombatRules: CreateReplayCombatRules(fixture),
+            startingRandomSeed: checked((uint)fixture.RngSeed),
+            gameMode: fixture.GameMode);
+    }
+
+    private static ReplayExecutionResult ExecuteGuardianFixtureThroughTick(
+        ReplayFixture fixture,
+        ulong tick,
+        IReadOnlyList<AuthoritativeProjectile>? startingProjectiles = null)
+    {
+        var prefixFixture = fixture with {
+            Checkpoints = fixture.Checkpoints
+                .Where(checkpoint => checkpoint.Tick <= tick)
+                .ToArray(),
+        };
+        var executor = CreateGuardianReplayExecutor(prefixFixture, startingProjectiles);
+        return ReplayFixtureExecutor.Execute(
+            prefixFixture,
+            executor,
+            new AuthoritativeCommandServer(executor));
     }
 
     private static ReplayExecutionResult ExecuteElementalFixtureThroughTick(

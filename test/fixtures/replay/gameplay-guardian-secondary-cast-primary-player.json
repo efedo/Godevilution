@@ -1,0 +1,77 @@
+{
+  "format_version": 1,
+  "fixture_id": "gameplay/guardian-secondary-cast-primary-player",
+  "protocol_schema_version": "0.1.0",
+  "content_manifest": {
+    "id": "devilution.base",
+    "version": "0.1.0",
+    "sha256": "ee16097e8393e3807fa57356227992eed3265f5da8f182806cbd368c7c28658d"
+  },
+  "tick_rate_hz": 20,
+  "rng_seed": 305419896,
+  "game_variant": "Diablo",
+  "game_mode": "Multiplayer",
+  "initial_state": {
+    "player": "A",
+    "gold": 0,
+    "experience": 0,
+    "life": 20000,
+    "life_maximum": 20000,
+    "mana": 10000,
+    "mana_maximum": 10000,
+    "magic": 7,
+    "character_class": 0,
+    "character_level": 2,
+    "position_x": 5,
+    "position_y": 5,
+    "level_id": 1,
+    "spell_projectile_behavior": 36,
+    "combat_target_entity_id": 9,
+    "combat_target_level_id": 1,
+    "combat_target_position_x": 14,
+    "combat_target_position_y": 10,
+    "combat_target_hit_points": 1000,
+    "combat_target_max_hit_points": 1000,
+    "combat_target_monster_level": 5,
+    "combat_target_petrified": false,
+    "secondary_player": {
+      "player": "B",
+      "entity_id": 8,
+      "life": 10000,
+      "life_maximum": 10000,
+      "mana": 10000,
+      "mana_maximum": 10000,
+      "magic": 35,
+      "dexterity": 20,
+      "position_x": 10,
+      "position_y": 10,
+      "level_id": 1,
+      "character_class": 2,
+      "character_level": 12,
+      "facing_direction": 4,
+      "friendly_mode": false,
+      "memorized_spells": [
+        { "spell_id": 7, "level": 3 }
+      ]
+    }
+  },
+  "commands": [
+    {
+      "player": "B",
+      "client_sequence": 1,
+      "target_tick": 1,
+      "server_receipt_sequence": 1,
+      "kind": "Cast",
+      "payload": {
+        "spell_id": 7,
+        "target_x": 12,
+        "target_y": 10
+      }
+    }
+  ],
+  "checkpoints": [
+    { "tick": 1, "state_sha256": "timeline-guardian-secondary-cast" },
+    { "tick": 17, "state_sha256": "timeline-guardian-secondary-fire" },
+    { "tick": 26, "state_sha256": "timeline-guardian-secondary-impact" }
+  ]
+}

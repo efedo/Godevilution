@@ -4655,17 +4655,19 @@ public sealed class DiabloCombatCommandProcessor
         AuthoritativePlayerState player,
         AuthoritativeSpellDefinition spell,
         int effectiveSpellLevel,
+        int originX,
+        int originY,
         int targetX,
         int targetY)
     {
         var direction = GetDirection(
-            player.PositionX,
-            player.PositionY,
+            originX,
+            originY,
             targetX,
             targetY);
         var velocityTargetX = targetX;
         var velocityTargetY = targetY;
-        if (velocityTargetX == player.PositionX && velocityTargetY == player.PositionY) {
+        if (velocityTargetX == originX && velocityTargetY == originY) {
             var displacement = DirectionDisplacements[direction];
             velocityTargetX += displacement.X;
             velocityTargetY += displacement.Y;
@@ -4681,8 +4683,8 @@ public sealed class DiabloCombatCommandProcessor
             + effectiveSpellLevel * spell.SpellLevelDamage
             + spell.DamageBonus);
         var (velocityX, velocityY) = CalculateVelocity(
-            player.PositionX,
-            player.PositionY,
+            originX,
+            originY,
             velocityTargetX,
             velocityTargetY,
             speed);
@@ -4692,8 +4694,8 @@ public sealed class DiabloCombatCommandProcessor
             0,
             spell.SpellId,
             player.LevelId,
-            player.PositionX,
-            player.PositionY,
+            originX,
+            originY,
             targetX,
             targetY,
             damage,
@@ -5301,8 +5303,12 @@ public sealed class DiabloCombatCommandProcessor
                     candidateY,
                     players,
                     player.EntityId)
+                && !world.Projectiles.Values.Any(projectile =>
+                    projectile.LevelId == player.LevelId
+                    && projectile.PositionX == candidateX
+                    && projectile.PositionY == candidateY)
                 && !world.IsMissileBlocked(player.LevelId, candidateX, candidateY)
-                && world.HasMissileLineOfSight(
+                && world.HasGuardianSpawnLineOfSight(
                     player.LevelId,
                     player.PositionX,
                     player.PositionY,
@@ -14790,7 +14796,11 @@ public sealed class DiabloCombatCommandProcessor
             return;
         }
         var owner = players.FirstOrDefault(player => IsProjectileOwner(controller, player));
-        if (owner is null || owner.Life <= 0 || owner.LevelId != controller.LevelId) {
+        if (owner is null
+            || owner.LevelId != controller.LevelId
+            || owner.Life < 0
+            || owner.LifeMaximum <= 0
+            || owner.Life > owner.LifeMaximum) {
             world.Projectiles.Remove(controller.EntityId);
             return;
         }
@@ -14841,7 +14851,7 @@ public sealed class DiabloCombatCommandProcessor
         IReadOnlyList<AuthoritativePlayerState> players,
         ICollection<DiabloDirectedGameplayEvent> events)
     {
-        if (!world.HasMissileLineOfSight(
+        if (!world.HasGuardianTargetLineOfSight(
                 controller.LevelId,
                 controller.PositionX,
                 controller.PositionY,
@@ -14867,7 +14877,9 @@ public sealed class DiabloCombatCommandProcessor
                 entityId,
                 owner,
                 spell,
-                controller.EffectiveSpellLevel,
+                GetEffectiveSpellLevel(owner, spell.SpellId),
+                controller.PositionX,
+                controller.PositionY,
                 targetX,
                 targetY));
         controller.GuardianState = 3;

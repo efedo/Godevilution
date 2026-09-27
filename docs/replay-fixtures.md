@@ -320,6 +320,17 @@ timeline checkpoints intentionally omit snapshot hashes until the compact
 native monster projection and full managed monster snapshot share the same
 canonical shape.
 
+`gameplay-guardian-secondary-cast-primary-player.json` covers a secondary
+Sorcerer's Guardian cast through the primary-player boundary. Both runners pin
+secondary-owned mana/facing and turret creation, then check the turret-origin
+Firebolt, owner-derived spell level and damage, controller lifetime, and primary
+monster impact. Its descriptive timeline markers intentionally omit snapshot
+hashes for the same native/managed monster-projection shape limitation. Focused
+regressions cover exact Guardian LOS, invalid owner/spell/level rejection
+before lifetime or RNG, projectile-occupied spawn tiles, player-minion
+exclusion, dead-owner persistence, current owner spell level, and same-tick
+advancement in entity-ID order.
+
 `gameplay-rage-resolution.json` covers the Hellfire Rage cast, including the
 active controller, duplicate-cast suppression, cooldown transition, bounded
 Q6 self-damage, and expiry removal.
@@ -1700,6 +1711,8 @@ Notable shared fixtures include:
 - `gameplay-guardian-resolution.json` for turret admission, deterministic
   native firing-arc selection, Firebolt creation, controller state, and
   projectile lifetime;
+- `gameplay-guardian-secondary-cast-primary-player.json` for secondary-owned
+  turret admission, turret-origin Firebolt creation, and primary impact;
 - `gameplay-rage-resolution.json` for active/cooldown timing, duplicate-cast
   suppression, bounded Q6 expiry damage, and controller removal;
 - `gameplay-inferno-resolution.json` for moving-controller admission,

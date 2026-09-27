@@ -5473,15 +5473,243 @@ TEST(ReplayFixture, ExecutesGuardianTurretAndFireboltAdmission)
 		return projectile.behavior == 2;
 	});
 	ASSERT_NE(bolt, state.projectiles.end());
-	EXPECT_EQ(bolt->positionX, 5);
-	EXPECT_EQ(bolt->positionY, 5);
+	EXPECT_EQ(bolt->positionX, 10);
+	EXPECT_EQ(bolt->positionY, 10);
 	EXPECT_EQ(bolt->targetX, 16);
 	EXPECT_EQ(bolt->targetY, 10);
 	EXPECT_EQ(bolt->damage, 5);
-	EXPECT_EQ(bolt->velocityX, 368176);
-	EXPECT_EQ(bolt->velocityY, 490896);
+	EXPECT_EQ(bolt->velocityX, 741440);
+	EXPECT_EQ(bolt->velocityY, 370720);
 	EXPECT_EQ(state.randomState, 1443805422U);
 	EXPECT_FALSE(ComputeReplayFixtureStateHash(state).empty());
+}
+
+TEST(ReplayFixture, ExecutesSecondaryGuardianCastAndFireboltFromTurretAgainstCSharpCheckpoints)
+{
+	std::ifstream file("test/fixtures/replay/gameplay-guardian-secondary-cast-primary-player.json");
+	ASSERT_TRUE(file.good());
+	const std::string json((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
+	ReplayFixture fixture;
+	std::string error;
+	ASSERT_TRUE(ParseReplayFixture(json, fixture, error)) << error;
+	ASSERT_TRUE(fixture.initialState.secondaryPlayer.defined);
+	ASSERT_EQ(fixture.initialProjectiles.size(), 0U);
+
+	const auto makeState = [&fixture]() {
+		ReplayFixtureExecutionState state;
+		state.multiplayer = true;
+		state.entityId = 1;
+		state.life = fixture.initialState.life;
+		state.lifeMaximum = fixture.initialState.lifeMaximum;
+		state.mana = fixture.initialState.mana;
+		state.manaMaximum = fixture.initialState.manaMaximum;
+		state.positionX = fixture.initialState.positionX;
+		state.positionY = fixture.initialState.positionY;
+		state.levelId = fixture.initialState.levelId;
+		state.characterLevel = fixture.initialState.characterLevel;
+		state.characterClassId = static_cast<uint32_t>(fixture.initialState.characterClass);
+		state.spellProjectileBehavior = 36;
+		state.attributes[2] = fixture.initialState.magic;
+		state.attributes[3] = fixture.initialState.magic;
+		return state;
+	};
+	ReplayFixtureExecutionState state = makeState();
+
+	ReplayFixture fireFixture = fixture;
+	fireFixture.checkpoints.resize(2);
+	ReplayFixtureExecutionResult fireResult;
+	ASSERT_TRUE(ExecuteReplayFixture(fireFixture, state, fireResult, error)) << error;
+	ASSERT_EQ(fireResult.transitions.size(), 1U);
+	EXPECT_TRUE(fireResult.transitions[0].accepted);
+	EXPECT_EQ(state.lastAppliedTick, 17U);
+	EXPECT_EQ(state.secondaryPlayerMana, fixture.initialState.secondaryPlayer.mana - 46 * 64);
+	EXPECT_EQ(state.secondaryPlayerFacingDirection, 7U);
+	const auto controller = std::find_if(state.projectiles.begin(), state.projectiles.end(), [](const auto &projectile) {
+		return projectile.behavior == 36;
+	});
+	ASSERT_NE(controller, state.projectiles.end());
+	EXPECT_EQ(controller->sourceEntityId, 8U);
+	EXPECT_EQ(controller->spellId, 7U);
+	EXPECT_EQ(controller->positionX, 12);
+	EXPECT_EQ(controller->positionY, 10);
+	EXPECT_EQ(controller->remainingTicks, 128U);
+	EXPECT_EQ(controller->guardianState, 3);
+	const auto bolt = std::find_if(state.projectiles.begin(), state.projectiles.end(), [](const auto &projectile) {
+		return projectile.behavior == 2;
+	});
+	ASSERT_NE(bolt, state.projectiles.end());
+	EXPECT_EQ(bolt->sourceEntityId, 8U);
+	EXPECT_EQ(bolt->spellId, 7U);
+	EXPECT_EQ(bolt->positionX, 12);
+	EXPECT_EQ(bolt->positionY, 10);
+	EXPECT_EQ(bolt->targetX, 14);
+	EXPECT_EQ(bolt->targetY, 10);
+	EXPECT_EQ(bolt->damage, 8);
+	EXPECT_EQ(bolt->effectiveSpellLevel, 3);
+	EXPECT_EQ(bolt->speed, 22);
+	EXPECT_EQ(bolt->remainingTicks, 255U);
+	EXPECT_EQ(state.randomState, 1443805422U);
+
+	ReplayFixtureExecutionState finalState = makeState();
+	ReplayFixtureExecutionResult finalResult;
+	ASSERT_TRUE(ExecuteReplayFixture(fixture, finalState, finalResult, error)) << error;
+	EXPECT_EQ(finalState.lastAppliedTick, 26U);
+
+	ReplayFixture damageFixture = fixture;
+	ReplayFixtureCommand advance;
+	advance.clientSequence = 2;
+	advance.order = { .targetTick = 40, .serverReceiptSequence = 2 };
+	advance.kind = "Move";
+	advance.directionY = 1;
+	damageFixture.commands.push_back(advance);
+	damageFixture.checkpoints.push_back({ .tick = 40, .stateSha256 = "timeline-guardian-secondary-damage" });
+	ReplayFixtureExecutionState damageState = makeState();
+	ReplayFixtureExecutionResult damageResult;
+	ASSERT_TRUE(ExecuteReplayFixture(damageFixture, damageState, damageResult, error)) << error;
+	EXPECT_LT(damageState.combatTargetHitPointsQ6, fixture.initialState.combatTargetHitPoints * 64);
+}
+
+TEST(ReplayFixture, AdvancesConcurrentGuardiansInEntityOrderAndFailsClosedOnInvalidOwner)
+{
+	std::ifstream file("test/fixtures/replay/gameplay-guardian-secondary-cast-primary-player.json");
+	ASSERT_TRUE(file.good());
+	const std::string json((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
+	ReplayFixture fixture;
+	std::string error;
+	ASSERT_TRUE(ParseReplayFixture(json, fixture, error)) << error;
+	fixture.contentManifest = {};
+	fixture.checkpoints.clear();
+	fixture.commands.clear();
+	ReplayFixtureCommand move;
+	move.clientSequence = 1;
+	move.order = { 1, 1 };
+	move.kind = "Move";
+	move.directionY = 1;
+	fixture.commands.push_back(move);
+
+	const auto makeState = [&fixture]() {
+		ReplayFixtureExecutionState state;
+		state.multiplayer = true;
+		state.entityId = 1;
+		state.life = fixture.initialState.life;
+		state.lifeMaximum = fixture.initialState.lifeMaximum;
+		state.mana = fixture.initialState.mana;
+		state.manaMaximum = fixture.initialState.manaMaximum;
+		state.positionX = fixture.initialState.positionX;
+		state.positionY = fixture.initialState.positionY;
+		state.levelId = fixture.initialState.levelId;
+		state.characterLevel = fixture.initialState.characterLevel;
+		state.characterClassId = static_cast<uint32_t>(fixture.initialState.characterClass);
+		state.spellProjectileBehavior = 36;
+		state.attributes[2] = fixture.initialState.magic;
+		state.attributes[3] = fixture.initialState.magic;
+		state.combatTargetEntityId = fixture.initialState.combatTargetEntityId;
+		state.combatTargetLevelId = fixture.initialState.combatTargetLevelId;
+		state.combatTargetPositionX = fixture.initialState.combatTargetPositionX;
+		state.combatTargetPositionY = fixture.initialState.combatTargetPositionY;
+		state.combatTargetHitPoints = fixture.initialState.combatTargetHitPoints;
+		state.combatTargetMaxHitPoints = fixture.initialState.combatTargetMaxHitPoints;
+		state.combatTargetMonsterLevel = fixture.initialState.combatTargetMonsterLevel;
+		return state;
+	};
+	const auto makeController = [](uint32_t entityId, uint32_t sourceEntityId, uint32_t remainingTicks) {
+		ReplayFixtureProjectileState controller;
+		controller.entityId = entityId;
+		controller.sourceEntityId = sourceEntityId;
+		controller.spellId = 7;
+		controller.levelId = 1;
+		controller.positionX = 12;
+		controller.positionY = 10;
+		controller.startX = 12;
+		controller.startY = 10;
+		controller.targetX = 12;
+		controller.targetY = 10;
+		controller.remainingTicks = remainingTicks;
+		controller.behavior = 36;
+		controller.effectiveSpellLevel = 1;
+		return controller;
+	};
+	const auto execute = [&](const ReplayFixture &runFixture,
+		                     std::vector<ReplayFixtureProjectileState> projectiles,
+		                     ReplayFixtureExecutionState &state) {
+		state = makeState();
+		state.projectiles = std::move(projectiles);
+		ReplayFixtureExecutionResult result;
+		return ExecuteReplayFixture(runFixture, state, result, error);
+	};
+
+	const auto primaryController = makeController(0x80000010U, 1U, 17U);
+	const auto secondaryController = makeController(0x80000011U, 8U, 17U);
+	ReplayFixtureExecutionState reversedState;
+	ASSERT_TRUE(execute(fixture, { secondaryController, primaryController }, reversedState)) << error;
+	ASSERT_EQ(reversedState.projectiles.size(), 4U);
+	std::vector<ReplayFixtureProjectileState> bolts;
+	for (const auto &projectile : reversedState.projectiles) {
+		if (projectile.behavior == 2)
+			bolts.push_back(projectile);
+		if (projectile.behavior == 36)
+			EXPECT_EQ(projectile.remainingTicks, 16U);
+	}
+	ASSERT_EQ(bolts.size(), 2U);
+	std::sort(bolts.begin(), bolts.end(), [](const auto &left, const auto &right) {
+		return left.entityId < right.entityId;
+	});
+	EXPECT_EQ(bolts[0].sourceEntityId, 1U);
+	EXPECT_EQ(bolts[1].sourceEntityId, 8U);
+	EXPECT_EQ(bolts[0].positionX, 12);
+	EXPECT_EQ(bolts[1].positionX, 12);
+	EXPECT_EQ(bolts[1].speed, 22);
+	EXPECT_EQ(bolts[1].effectiveSpellLevel, 3);
+	ReplayFixtureExecutionState orderedState;
+	ASSERT_TRUE(execute(fixture, { primaryController, secondaryController }, orderedState)) << error;
+	EXPECT_EQ(ComputeReplayFixtureStateHash(reversedState), ComputeReplayFixtureStateHash(orderedState));
+
+	ReplayFixtureExecutionState invalidOwnerState;
+	const auto invalidOwner = makeController(0x80000012U, 99U, 17U);
+	ASSERT_TRUE(execute(fixture, { invalidOwner }, invalidOwnerState)) << error;
+	EXPECT_TRUE(invalidOwnerState.projectiles.empty());
+	EXPECT_EQ(invalidOwnerState.randomState, static_cast<uint32_t>(fixture.rngSeed));
+	for (const auto invalid : { std::pair { 8U, 1U }, std::pair { 8U, 7U } }) {
+		ReplayFixtureProjectileState invalidController = makeController(0x80000012U, invalid.first, 17U);
+		if (invalid.second == 1U)
+			invalidController.spellId = 1U;
+		else
+			invalidController.levelId = 2U;
+		ReplayFixtureExecutionState invalidState;
+		ASSERT_TRUE(execute(fixture, { invalidController }, invalidState)) << error;
+		EXPECT_TRUE(invalidState.projectiles.empty());
+		EXPECT_EQ(invalidState.randomState, static_cast<uint32_t>(fixture.rngSeed));
+	}
+
+	ReplayFixture deadOwnerFixture = fixture;
+	deadOwnerFixture.initialState.secondaryPlayer.life = 0;
+	ReplayFixtureExecutionState deadOwnerState;
+	ASSERT_TRUE(execute(deadOwnerFixture, { makeController(0x80000013U, 8U, 18U) }, deadOwnerState)) << error;
+	const auto deadOwnerController = std::find_if(deadOwnerState.projectiles.begin(), deadOwnerState.projectiles.end(), [](const auto &projectile) {
+		return projectile.behavior == 36;
+	});
+	ASSERT_NE(deadOwnerController, deadOwnerState.projectiles.end());
+	EXPECT_EQ(deadOwnerController->remainingTicks, 17U);
+	EXPECT_EQ(deadOwnerState.randomState, static_cast<uint32_t>(fixture.rngSeed));
+
+	ReplayFixture blockedFixture = fixture;
+	blockedFixture.initialState.missileBlockedCells = { 413 };
+	ReplayFixtureExecutionState blockedState;
+	ASSERT_TRUE(execute(blockedFixture, { makeController(0x80000014U, 8U, 17U) }, blockedState)) << error;
+	EXPECT_EQ(std::count_if(blockedState.projectiles.begin(), blockedState.projectiles.end(), [](const auto &projectile) {
+		return projectile.behavior == 2;
+	}), 0);
+	EXPECT_EQ(blockedState.randomState, static_cast<uint32_t>(fixture.rngSeed));
+
+	ReplayFixtureExecutionState minionState = makeState();
+	minionState.combatTargetPlayerMinion = true;
+	minionState.projectiles = { makeController(0x80000015U, 8U, 17U) };
+	ReplayFixtureExecutionResult minionResult;
+	ASSERT_TRUE(ExecuteReplayFixture(fixture, minionState, minionResult, error)) << error;
+	EXPECT_EQ(std::count_if(minionState.projectiles.begin(), minionState.projectiles.end(), [](const auto &projectile) {
+		return projectile.behavior == 2;
+	}), 0);
+	EXPECT_EQ(minionState.randomState, static_cast<uint32_t>(fixture.rngSeed));
 }
 
 TEST(ReplayFixture, ExecutesRageActiveCooldownAndExpiryDamage)
