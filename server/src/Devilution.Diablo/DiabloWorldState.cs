@@ -857,6 +857,27 @@ public sealed class DiabloWorldState
             (x, y) => !IsMissileBlocked(levelId, x, y));
     }
 
+    /** Native Apocalypse Hellfire admission: LineClear(PosOkMissile), geometry only. */
+    public bool HasApocalypseLineOfSight(
+        uint levelId,
+        int startX,
+        int startY,
+        int endX,
+        int endY)
+    {
+        if (!ContainsPosition(levelId, startX, startY)
+            || !ContainsPosition(levelId, endX, endY)) {
+            return false;
+        }
+
+        return DeterministicGridLineTraversal.HasNativeLineClear(
+            startX,
+            startY,
+            endX,
+            endY,
+            (x, y) => !IsMissileGeometryBlocked(levelId, x, y));
+    }
+
     /** Native Elemental CheckBlock semantics: Solid geometry only, endpoint included. */
     public bool HasSolidLineOfSight(
         uint levelId,

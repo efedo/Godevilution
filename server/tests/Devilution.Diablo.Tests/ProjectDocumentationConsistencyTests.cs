@@ -139,6 +139,10 @@ public sealed class ProjectDocumentationConsistencyTests
         var replayRoot = Path.Combine(root, "test", "fixtures", "replay");
         var replaySource = Read(root, "test", "replay_test.cpp");
         var replayDocumentation = Read(root, "docs", "replay-fixtures.md");
+        Assert.Contains(
+            "gameplay-apocalypse-secondary-cast-primary-player.json",
+            replayDocumentation,
+            StringComparison.Ordinal);
 
         var fixtureCount = Directory.EnumerateFiles(
                 replayRoot,

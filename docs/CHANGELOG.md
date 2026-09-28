@@ -2,6 +2,13 @@
 
 All notable changes to this fork are documented below.
 
+- Extended the shared replay gate to 394 fixtures and 422 native tests with
+  secondary-participant Apocalypse parity. Production and compact replay now
+  preserve caster ownership, mana/facing, native Solid and Hellfire missile
+  geometry admission, owner-specific hit/damage RNG, entity-ID scheduling, and
+  same-tick boom impact; focused regressions cover minion exclusion, misses,
+  moving-target retries, and reversed controller storage order.
+
 - Extended the shared replay gate to 393 fixtures and 419 native tests with a
   secondary Sorcerer's Guardian cast through the primary-player boundary.
   Production and compact replay now preserve secondary cast ownership and
@@ -2256,6 +2263,10 @@ All notable changes to this fork are documented below.
 - Add shared Apocalypse replay coverage. Native and managed runners now
   preserve row-major target scanning, physical boom emission, target impact,
   and boom lifetime.
+
+- Add secondary-participant Apocalypse parity: caster-owned controller state,
+  mana/facing, Solid-only target admission, Hellfire missile-geometry LOS, and
+  native hit/damage RNG with same-tick boom impact.
 
 - Add shared Magi and Mana replay coverage. Native and managed runners now
   preserve full-mana restoration and seeded, class-scaled mana restoration.

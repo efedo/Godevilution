@@ -5,6 +5,7 @@ using Devilution.Server.Commands;
 using Devilution.Server.Gameplay;
 using Devilution.Server.Replay;
 using Devilution.Server.Stores;
+using System.Text.Json.Nodes;
 using Xunit;
 
 namespace Devilution.Server.Tests;
@@ -3058,9 +3059,357 @@ public sealed class ReplayFixtureTests
         Assert.Equal(2, boom.PositionY);
         Assert.Equal(13U, boom.RemainingTicks);
         Assert.True(boom.ApocalypseHit);
-        Assert.True(
-            Assert.Single(result.FinalSnapshot.Monsters).HitPoints
-                < initial.CombatTargetHitPoints);
+        Assert.Equal(4, boom.Damage);
+        // The managed world advances native ProcessMonsters regeneration on tick 3,
+        // after this boom's tick-2 hit.
+        Assert.Equal(97 * 64, Assert.Single(result.FinalSnapshot.Monsters).HitPointsQ6);
+        Assert.Equal(1058065735U, result.FinalSnapshot.RandomState);
+    }
+
+    [Fact]
+    public void SecondaryApocalypseFixtureMatchesNativeOwnerRngAndSameTickImpact()
+    {
+        var fixture = LoadReplayFixture("gameplay-apocalypse-secondary-cast-primary-player.json");
+        var initial = fixture.InitialState;
+        var secondary = Assert.IsType<ReplaySecondaryPlayer>(initial.SecondaryPlayer);
+        var executor = CreateApocalypseSecondaryReplayExecutor(fixture);
+
+        var result = ReplayFixtureExecutor.Execute(
+            fixture,
+            executor,
+            new AuthoritativeCommandServer(executor));
+
+        var primary = Assert.Single(result.FinalSnapshot.Players, player => player.EntityId == 1);
+        var secondaryState = executor.GetPlayerState(secondary.Player);
+        var controller = Assert.Single(
+            result.FinalSnapshot.Projectiles,
+            projectile => projectile.Behavior == (int)AuthoritativeProjectileBehavior.ApocalypseController);
+        var boom = Assert.Single(
+            result.FinalSnapshot.Projectiles,
+            projectile => projectile.Behavior == (int)AuthoritativeProjectileBehavior.ApocalypseBoom);
+        var monster = Assert.Single(result.FinalSnapshot.Monsters);
+
+        Assert.Equal(CommandStatus.Accepted, Assert.Single(result.Results).Status);
+        Assert.Equal(2UL, result.FinalSnapshot.Tick);
+        Assert.Equal(initial.Mana, primary.Mana);
+        Assert.Equal(1168, secondaryState.Mana);
+        Assert.Equal((DiabloPlayerDirection)7, secondaryState.FacingDirection);
+        Assert.Equal(secondary.EntityId, controller.SourceEntityId);
+        Assert.Equal((10, 10), (controller.PositionX, controller.PositionY));
+        Assert.Equal((5, 2), (controller.ApocalypseScanX, controller.ApocalypseScanY));
+        Assert.Equal(secondary.EntityId, boom.SourceEntityId);
+        Assert.Equal((4, 2), (boom.PositionX, boom.PositionY));
+        Assert.Equal(14U, boom.RemainingTicks);
+        Assert.True(boom.ApocalypseHit);
+        Assert.Equal(49, boom.Damage);
+        Assert.Equal(100 - boom.Damage, monster.HitPoints);
+        Assert.Equal(4107751618U, result.FinalSnapshot.RandomState);
+    }
+
+    [Fact]
+    public void ApocalypseAdmissionMatchesNativeSolidAndHellfireMissileGeometry()
+    {
+        var fixture = LoadReplayFixture("gameplay-apocalypse-secondary-cast-primary-player.json");
+        ReplayExecutionResult Run(
+            ReplayFixture candidate,
+            IReadOnlyList<AuthoritativeProjectile>? startingProjectiles = null)
+        {
+            var executor = CreateApocalypseSecondaryReplayExecutor(candidate, startingProjectiles);
+            return ReplayFixtureExecutor.Execute(
+                candidate,
+                executor,
+                new AuthoritativeCommandServer(executor));
+        }
+
+        var repeatImpactFixture = fixture with {
+            Checkpoints = [
+                new ReplayCheckpoint(1, "timeline-apocalypse-repeat-impact-cast"),
+                new ReplayCheckpoint(2, "timeline-apocalypse-repeat-impact-first"),
+                new ReplayCheckpoint(3, "timeline-apocalypse-repeat-impact-second"),
+            ],
+            InitialState = fixture.InitialState with { MissileBlockedCells = [84] },
+        };
+        var missileOnlyBlocked = Run(repeatImpactFixture);
+        var repeatedBoom = Assert.Single(
+            missileOnlyBlocked.FinalSnapshot.Projectiles,
+            projectile => projectile.Behavior == (int)AuthoritativeProjectileBehavior.ApocalypseBoom);
+        Assert.False(repeatedBoom.ApocalypseHit);
+        Assert.Equal(13U, repeatedBoom.RemainingTicks);
+        Assert.Equal(49, repeatedBoom.Damage);
+        // Tick 3 regeneration follows the tick-2 impact, then the blocked tile
+        // lets the same boom resolve its second native collision.
+        Assert.Equal(3, Assert.Single(missileOnlyBlocked.FinalSnapshot.Monsters).HitPoints);
+        Assert.Equal(1480132328U, missileOnlyBlocked.FinalSnapshot.RandomState);
+
+        var breakableObjectFixture = repeatImpactFixture with {
+            Commands = [],
+            Checkpoints = [
+                new ReplayCheckpoint(1, "timeline-apocalypse-breakable-object-hit"),
+                new ReplayCheckpoint(2, "timeline-apocalypse-breakable-object-cleared"),
+            ],
+            InitialState = repeatImpactFixture.InitialState with {
+                MissileBlockedCells = [],
+                CombatTargetPositionX = 5,
+                CombatTargetFuturePositionX = 5,
+                ObjectEntityId = 500,
+                ObjectId = 1,
+                ObjectPositionX = 4,
+                ObjectPositionY = 2,
+                ObjectBreakable = true,
+            },
+        };
+        var breakableBoomSeed = new AuthoritativeProjectile(
+            20,
+            Assert.IsType<ReplaySecondaryPlayer>(fixture.InitialState.SecondaryPlayer).EntityId,
+            fixture.InitialState.CombatTargetEntityId,
+            25,
+            fixture.InitialState.LevelId,
+            4,
+            2,
+            4,
+            2,
+            10,
+            AuthoritativeDamageType.Physical,
+            0,
+            15) {
+            Behavior = AuthoritativeProjectileBehavior.ApocalypseBoom,
+        };
+        var breakableObject = Run(breakableObjectFixture, [breakableBoomSeed]);
+        var breakableBoom = Assert.Single(
+            breakableObject.FinalSnapshot.Projectiles,
+            projectile => projectile.Behavior == (int)AuthoritativeProjectileBehavior.ApocalypseBoom);
+        Assert.True(Assert.Single(breakableObject.FinalSnapshot.Objects).Destroyed);
+        Assert.False(breakableBoom.ApocalypseHit);
+        Assert.Equal(13U, breakableBoom.RemainingTicks);
+        Assert.Equal(100, Assert.Single(breakableObject.FinalSnapshot.Monsters).HitPoints);
+        Assert.Equal(fixture.RngSeed, breakableObject.FinalSnapshot.RandomState);
+
+        var missileOnlyAdmission = Run(fixture with {
+            InitialState = fixture.InitialState with { MissileBlockedCells = [84] },
+        });
+        Assert.Contains(
+            missileOnlyAdmission.FinalSnapshot.Projectiles,
+            projectile => projectile.Behavior == (int)AuthoritativeProjectileBehavior.ApocalypseBoom);
+
+        var playerMinion = Run(fixture with {
+            InitialState = fixture.InitialState with { CombatTargetPlayerMinion = true },
+        });
+        Assert.DoesNotContain(
+            playerMinion.FinalSnapshot.Projectiles,
+            projectile => projectile.Behavior == (int)AuthoritativeProjectileBehavior.ApocalypseBoom);
+        Assert.Equal(100, Assert.Single(playerMinion.FinalSnapshot.Monsters).HitPoints);
+
+        var hellfireWall = Run(fixture with {
+            GameVariant = DiabloGameVariant.Hellfire,
+            InitialState = fixture.InitialState with { MissileBlockedCells = [328] },
+        });
+        Assert.DoesNotContain(
+            hellfireWall.FinalSnapshot.Projectiles,
+            projectile => projectile.Behavior == (int)AuthoritativeProjectileBehavior.ApocalypseBoom);
+        Assert.Equal(100, Assert.Single(hellfireWall.FinalSnapshot.Monsters).HitPoints);
+
+        var missedTarget = Run(fixture with {
+            InitialState = fixture.InitialState with {
+                CombatTargetMonsterLevel = 50,
+                CombatTargetPetrified = false,
+                SecondaryPlayer = Assert.IsType<ReplaySecondaryPlayer>(fixture.InitialState.SecondaryPlayer) with {
+                    CharacterClass = 0,
+                    Magic = 0,
+                },
+            },
+        });
+        var missedBoom = Assert.Single(
+            missedTarget.FinalSnapshot.Projectiles,
+            projectile => projectile.Behavior == (int)AuthoritativeProjectileBehavior.ApocalypseBoom);
+        Assert.False(missedBoom.ApocalypseHit);
+        Assert.Equal(100, Assert.Single(missedTarget.FinalSnapshot.Monsters).HitPoints);
+        Assert.Equal(597178845U, missedTarget.FinalSnapshot.RandomState);
+
+        var retreatTarget = Run(fixture with {
+            InitialState = fixture.InitialState with {
+                CombatTargetNativeAi = "Counselor",
+                CombatTargetCounselorRetreatTicks = 64,
+                CombatTargetCounselorDelayTicks = 100,
+            },
+        });
+        var retreatBoom = Assert.Single(
+            retreatTarget.FinalSnapshot.Projectiles,
+            projectile => projectile.Behavior == (int)AuthoritativeProjectileBehavior.ApocalypseBoom);
+        Assert.False(retreatBoom.ApocalypseHit);
+        Assert.Equal(100, Assert.Single(retreatTarget.FinalSnapshot.Monsters).HitPoints);
+        Assert.Equal(2240789996U, retreatTarget.FinalSnapshot.RandomState);
+
+        var gargoyleTarget = Run(fixture with {
+            InitialState = fixture.InitialState with {
+                CombatTargetNativeAi = "Gargoyle",
+                CombatTargetMaxHitPoints = 100,
+                CombatTargetGargoyleSpecialActive = true,
+                CombatTargetMonsterLevel = 50,
+                CombatTargetPetrified = false,
+                SecondaryPlayer = Assert.IsType<ReplaySecondaryPlayer>(fixture.InitialState.SecondaryPlayer) with {
+                    CharacterClass = 0,
+                    Magic = 0,
+                },
+            },
+        });
+        var gargoyleBoom = Assert.Single(
+            gargoyleTarget.FinalSnapshot.Projectiles,
+            projectile => projectile.Behavior == (int)AuthoritativeProjectileBehavior.ApocalypseBoom);
+        var gargoyle = Assert.Single(gargoyleTarget.FinalSnapshot.Monsters);
+        Assert.True(gargoyleBoom.ApocalypseHit);
+        Assert.Equal(14U, gargoyleBoom.RemainingTicks);
+        Assert.Equal(100, gargoyle.HitPoints);
+        Assert.False(gargoyle.GargoyleSpecialActive);
+        Assert.Equal(597178845U, gargoyleTarget.FinalSnapshot.RandomState);
+
+        var petrifiedTarget = Run(fixture with {
+            InitialState = fixture.InitialState with {
+                CombatTargetMonsterLevel = 50,
+                CombatTargetPetrified = true,
+                SecondaryPlayer = Assert.IsType<ReplaySecondaryPlayer>(fixture.InitialState.SecondaryPlayer) with {
+                    CharacterClass = 0,
+                    Magic = 0,
+                },
+            },
+        });
+        var petrifiedBoom = Assert.Single(
+            petrifiedTarget.FinalSnapshot.Projectiles,
+            projectile => projectile.Behavior == (int)AuthoritativeProjectileBehavior.ApocalypseBoom);
+        Assert.True(petrifiedBoom.ApocalypseHit);
+        Assert.Equal(100 - petrifiedBoom.Damage, Assert.Single(petrifiedTarget.FinalSnapshot.Monsters).HitPoints);
+        Assert.Equal(4107751618U, petrifiedTarget.FinalSnapshot.RandomState);
+
+        var movingFixture = fixture with {
+            Commands = [],
+            Checkpoints = [new ReplayCheckpoint(1, "timeline-apocalypse-moving-target")],
+            InitialState = fixture.InitialState with {
+                CombatTargetMoving = true,
+                CombatTargetFuturePositionX = 5,
+                CombatTargetFuturePositionY = 2,
+                CombatTargetPetrified = false,
+            },
+        };
+        var movingBoomSeed = new AuthoritativeProjectile(
+            20,
+            Assert.IsType<ReplaySecondaryPlayer>(fixture.InitialState.SecondaryPlayer).EntityId,
+            fixture.InitialState.CombatTargetEntityId,
+            25,
+            fixture.InitialState.LevelId,
+            fixture.InitialState.CombatTargetPositionX,
+            fixture.InitialState.CombatTargetPositionY,
+            fixture.InitialState.CombatTargetPositionX,
+            fixture.InitialState.CombatTargetPositionY,
+            10,
+            AuthoritativeDamageType.Physical,
+            0,
+            15) {
+            Behavior = AuthoritativeProjectileBehavior.ApocalypseBoom,
+        };
+        var movingExecutor = CreateApocalypseSecondaryReplayExecutor(movingFixture, [movingBoomSeed]);
+        var movingTarget = ReplayFixtureExecutor.Execute(
+            movingFixture,
+            movingExecutor,
+            new AuthoritativeCommandServer(movingExecutor));
+        var movingBoom = Assert.Single(
+            movingTarget.FinalSnapshot.Projectiles,
+            projectile => projectile.Behavior == (int)AuthoritativeProjectileBehavior.ApocalypseBoom);
+        Assert.False(movingBoom.ApocalypseHit);
+        Assert.Equal(100, Assert.Single(movingTarget.FinalSnapshot.Monsters).HitPoints);
+        Assert.Equal(fixture.RngSeed, movingTarget.FinalSnapshot.RandomState);
+
+        var seededJson = JsonNode.Parse(File.ReadAllText(Path.Combine(
+            AppContext.BaseDirectory,
+            "Fixtures",
+            "gameplay-apocalypse-secondary-cast-primary-player.json")))!.AsObject();
+        seededJson["initial_projectiles"] = JsonNode.Parse("""
+            [{
+              "entity_id": 20,
+              "source_entity_id": 8,
+              "target_entity_id": 10,
+              "level_id": 1,
+              "position_x": 4,
+              "position_y": 2,
+              "target_x": 4,
+              "target_y": 2,
+              "damage": 49,
+              "damage_type": 0,
+              "remaining_ticks": 100,
+              "spell_id": 25,
+              "behavior": 33,
+              "apocalypse_scan_x": 7,
+              "apocalypse_scan_y": 6,
+              "apocalypse_hit": true
+            }]
+            """)!.AsArray();
+        var seededFixture = ReplayFixtureLoader.Load(seededJson.ToJsonString());
+        var parsedSeed = Assert.Single(seededFixture.InitialProjectiles);
+        Assert.Equal((7, 6, true), (parsedSeed.ApocalypseScanX, parsedSeed.ApocalypseScanY, parsedSeed.ApocalypseHit));
+        var seededExecution = Run(seededFixture);
+        var hydratedSeed = Assert.Single(
+            seededExecution.FinalSnapshot.Projectiles,
+            projectile => projectile.EntityId == 20);
+        Assert.Equal((7, 6, true), (hydratedSeed.ApocalypseScanX, hydratedSeed.ApocalypseScanY, hydratedSeed.ApocalypseHit));
+        Assert.Equal(98U, hydratedSeed.RemainingTicks);
+    }
+
+    [Fact]
+    public void ApocalypseControllersAndNewBoomsAdvanceInEntityIdOrder()
+    {
+        var source = LoadReplayFixture("gameplay-apocalypse-secondary-cast-primary-player.json");
+        var fixture = source with {
+            Commands = [],
+            Checkpoints = [new ReplayCheckpoint(1, "timeline-apocalypse-controller-order-hit")],
+        };
+        AuthoritativeProjectile Controller(uint entityId, uint sourceEntityId, int damage)
+            => new(
+                entityId,
+                sourceEntityId,
+                0,
+                25,
+                1,
+                10,
+                10,
+                10,
+                10,
+                damage,
+                AuthoritativeDamageType.Physical,
+                0,
+                255) {
+                Behavior = AuthoritativeProjectileBehavior.ApocalypseController,
+                StartX = 10,
+                StartY = 10,
+                ApocalypseScanX = 2,
+                ApocalypseScanY = 2,
+            };
+        ReplayExecutionResult Run(IReadOnlyList<AuthoritativeProjectile> projectiles)
+        {
+            var executor = CreateApocalypseSecondaryReplayExecutor(fixture, projectiles);
+            return ReplayFixtureExecutor.Execute(
+                fixture,
+                executor,
+                new AuthoritativeCommandServer(executor));
+        }
+
+        var ascending = Run([Controller(30, 1, 10), Controller(20, 8, 20)]);
+        var descending = Run([Controller(20, 8, 20), Controller(30, 1, 10)]);
+        Assert.Equal(ascending.FinalSnapshot.RandomState, descending.FinalSnapshot.RandomState);
+        Assert.Equal(
+            Assert.Single(ascending.FinalSnapshot.Monsters).HitPointsQ6,
+            Assert.Single(descending.FinalSnapshot.Monsters).HitPointsQ6);
+        Assert.Equal(
+            ascending.FinalSnapshot.Projectiles.Select(projectile =>
+                (projectile.EntityId, projectile.SourceEntityId, projectile.Behavior, projectile.Damage, projectile.RemainingTicks, projectile.ApocalypseHit)),
+            descending.FinalSnapshot.Projectiles.Select(projectile =>
+                (projectile.EntityId, projectile.SourceEntityId, projectile.Behavior, projectile.Damage, projectile.RemainingTicks, projectile.ApocalypseHit)));
+        var booms = ascending.FinalSnapshot.Projectiles
+            .Where(projectile => projectile.Behavior == (int)AuthoritativeProjectileBehavior.ApocalypseBoom)
+            .OrderBy(projectile => projectile.EntityId)
+            .ToArray();
+        Assert.Equal(2, booms.Length);
+        Assert.Equal([8U, 1U], booms.Select(projectile => projectile.SourceEntityId));
+        Assert.Equal(30, booms.Sum(projectile => projectile.Damage));
+        Assert.Equal(70 * 64, Assert.Single(ascending.FinalSnapshot.Monsters).HitPointsQ6);
+        Assert.All(booms, projectile => Assert.True(projectile.ApocalypseHit));
     }
 
     [Fact]
@@ -15398,6 +15747,111 @@ public sealed class ReplayFixtureTests
     {
         var path = Path.Combine(AppContext.BaseDirectory, "Fixtures", "basic-buy.json");
         return ReplayFixtureLoader.Load(File.ReadAllText(path));
+    }
+
+    private static StoreSimulationExecutor CreateApocalypseSecondaryReplayExecutor(
+        ReplayFixture fixture,
+        IReadOnlyList<AuthoritativeProjectile>? startingProjectiles = null)
+    {
+        var initial = fixture.InitialState;
+        var world = new AuthoritativeWorld();
+        world.AddLevel(new AuthoritativeLevel(
+            initial.LevelId,
+            initial.LevelWidth,
+            initial.LevelHeight,
+            blockedCells: initial.BlockedCells,
+            missileBlockedCells: initial.MissileBlockedCells));
+        IReadOnlyList<AuthoritativeWorldObject> worldObjects = initial.ObjectEntityId == 0
+            ? []
+            : [new AuthoritativeWorldObject(
+                initial.ObjectEntityId,
+                initial.ObjectId,
+                initial.LevelId,
+                initial.ObjectPositionX,
+                initial.ObjectPositionY,
+                questId: initial.ObjectQuestId,
+                missilePassable: initial.ObjectMissilePassable,
+                breakable: initial.ObjectBreakable,
+                destroyed: initial.ObjectDestroyed,
+                isShrine: initial.ObjectIsShrine)];
+        var fixtureProjectiles = fixture.InitialProjectiles
+            .Select(projectile => new AuthoritativeProjectile(
+                projectile.EntityId,
+                projectile.SourceEntityId,
+                projectile.TargetEntityId,
+                projectile.SpellId,
+                projectile.LevelId,
+                projectile.PositionX,
+                projectile.PositionY,
+                projectile.TargetX,
+                projectile.TargetY,
+                projectile.Damage,
+                (AuthoritativeDamageType)projectile.DamageType,
+                projectile.AreaRadius,
+                projectile.RemainingTicks) {
+                Behavior = (AuthoritativeProjectileBehavior)projectile.Behavior,
+                Phase = (AuthoritativeProjectilePhase)projectile.Phase,
+                Speed = projectile.Speed,
+                ImpactLifetime = projectile.ImpactLifetime,
+                DamageMinimum = projectile.DamageMinimum,
+                DamageMaximum = projectile.DamageMaximum,
+                ApocalypseScanX = projectile.ApocalypseScanX,
+                ApocalypseScanY = projectile.ApocalypseScanY,
+                ApocalypseHit = projectile.ApocalypseHit,
+            })
+            .ToArray();
+        var targets = initial.CombatTargetEntityId == 0
+            ? Array.Empty<AuthoritativeCombatTarget>()
+            : [new AuthoritativeCombatTarget(
+                initial.CombatTargetEntityId,
+                initial.CombatTargetPositionX,
+                initial.CombatTargetPositionY,
+                initial.CombatTargetHitPoints,
+                maxHitPoints: initial.CombatTargetMaxHitPoints,
+                levelId: initial.CombatTargetLevelId,
+                moving: initial.CombatTargetMoving,
+                futurePositionX: initial.CombatTargetFuturePositionX,
+                futurePositionY: initial.CombatTargetFuturePositionY,
+                monsterLevel: initial.CombatTargetMonsterLevel,
+                petrified: initial.CombatTargetPetrified,
+                playerMinion: initial.CombatTargetPlayerMinion,
+                nativeAi: initial.CombatTargetNativeAi,
+                gargoyleSpecialActive: initial.CombatTargetGargoyleSpecialActive,
+                counselorDelayTicks: initial.CombatTargetCounselorDelayTicks,
+                counselorRetreatTicks: initial.CombatTargetCounselorRetreatTicks,
+                sneakRetreatTicks: initial.CombatTargetSneakRetreatTicks)];
+        var classes = AuthoritativePlayerClassCatalog.LoadTsv(
+            "classes.tsv",
+            File.ReadAllText(Path.Combine(FindRepositoryRoot(), "server", "content", "base", "classes.tsv")));
+        return new StoreSimulationExecutor(
+            new StoreCatalog(),
+            initial.Gold,
+            initial.Experience,
+            initial.Life,
+            initial.Mana,
+            startingLifeMaximum: initial.LifeMaximum,
+            startingManaMaximum: initial.ManaMaximum,
+            startingCharacterLevel: initial.CharacterLevel,
+            startingCharacterClassId: checked((uint)initial.CharacterClass),
+            startingPlayerClasses: classes,
+            startingPositionX: initial.PositionX,
+            startingPositionY: initial.PositionY,
+            startingLevelId: initial.LevelId,
+            startingAttributes: PlayerAttributesState.Zero with {
+                Magic = new PlayerAttributeState(initial.Magic, initial.Magic),
+            },
+            startingWorld: world,
+            startingCombatTargets: targets,
+            startingObjects: worldObjects,
+            startingSpells: LoadBaseSpells(fixture),
+            startingAbilitySpellId: initial.AbilitySpellId,
+            startingMemorizedSpells: initial.MemorizedSpells
+                .Select(spell => new MemorizedSpellState(spell.SpellId, spell.Level))
+                .ToArray(),
+            startingProjectiles: startingProjectiles ?? fixtureProjectiles,
+            startingCombatRules: CreateReplayCombatRules(fixture),
+            startingRandomSeed: checked((uint)fixture.RngSeed),
+            gameMode: fixture.GameMode);
     }
 
     private static ReplayFixture LoadReplayFixture(string fileName)

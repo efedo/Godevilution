@@ -5730,6 +5730,166 @@ ReplayFixtureProjectileState CreateReplayApocalypseBoom(
 	return boom;
 }
 
+bool ReplayApocalypseTileIsSolid(
+	const ReplayFixtureExecutionState &state,
+	int32_t x,
+	int32_t y)
+{
+	if (x < 0 || x >= state.levelWidth || y < 0 || y >= state.levelHeight)
+		return true;
+	const int32_t cell = y * state.levelWidth + x;
+	return std::find(state.blockedCells.begin(), state.blockedCells.end(), cell)
+	    != state.blockedCells.end();
+}
+
+bool ReplayApocalypseTileBlocksMissiles(
+	const ReplayFixtureExecutionState &state,
+	uint32_t levelId,
+	int32_t x,
+	int32_t y)
+{
+	if (x < 0 || x >= state.levelWidth || y < 0 || y >= state.levelHeight)
+		return true;
+	const int32_t cell = y * state.levelWidth + x;
+	if (std::find(state.missileBlockedCells.begin(), state.missileBlockedCells.end(), cell)
+	    != state.missileBlockedCells.end()) {
+		return true;
+	}
+	return state.objectEntityId != 0
+	    && !state.objectActivated
+	    && !state.objectDestroyed
+	    && !state.objectMissilePassable
+	    && state.objectLevelId == levelId
+	    && state.objectPositionX == x
+	    && state.objectPositionY == y;
+}
+
+bool ReplayApocalypseLineClearMissile(
+	const ReplayFixtureExecutionState &state,
+	int32_t startX,
+	int32_t startY,
+	int32_t endX,
+	int32_t endY)
+{
+	if (startX < 0 || startX >= state.levelWidth || startY < 0 || startY >= state.levelHeight
+	    || endX < 0 || endX >= state.levelWidth || endY < 0 || endY >= state.levelHeight) {
+		return false;
+	}
+	auto isClear = [&](int32_t x, int32_t y) {
+		const int32_t cell = y * state.levelWidth + x;
+		return std::find(state.missileBlockedCells.begin(), state.missileBlockedCells.end(), cell)
+		    == state.missileBlockedCells.end();
+	};
+	int32_t x = startX;
+	int32_t y = startY;
+	int32_t targetX = endX;
+	int32_t targetY = endY;
+	int32_t dx = targetX - x;
+	int32_t dy = targetY - y;
+	if (std::abs(dx) > std::abs(dy)) {
+		if (dx < 0) {
+			std::swap(x, targetX);
+			std::swap(y, targetY);
+			dx = -dx;
+			dy = -dy;
+		}
+		const int32_t yIncrement = dy > 0 ? 1 : -1;
+		int32_t decision = dy > 0 ? 2 * dy - dx : 2 * dy + dx;
+		const int32_t diagonalIncrement = 2 * dy;
+		const int32_t horizontalIncrement = dy > 0 ? 2 * (dy - dx) : 2 * (dx + dy);
+		while (x != targetX) {
+			if ((decision <= 0) ^ (yIncrement < 0)) {
+				decision += diagonalIncrement;
+			} else {
+				decision += horizontalIncrement;
+				y += yIncrement;
+			}
+			++x;
+			if ((x != startX || y != startY) && !isClear(x, y))
+				return false;
+		}
+	} else {
+		if (dy < 0) {
+			std::swap(x, targetX);
+			std::swap(y, targetY);
+			dy = -dy;
+			dx = -dx;
+		}
+		const int32_t xIncrement = dx > 0 ? 1 : -1;
+		int32_t decision = dx > 0 ? 2 * dx - dy : 2 * dx + dy;
+		const int32_t diagonalIncrement = 2 * dx;
+		const int32_t verticalIncrement = dx > 0 ? 2 * (dx - dy) : 2 * (dy + dx);
+		while (y != targetY) {
+			if ((decision <= 0) ^ (xIncrement < 0)) {
+				decision += diagonalIncrement;
+			} else {
+				decision += verticalIncrement;
+				x += xIncrement;
+			}
+			++y;
+			if ((x != startX || y != startY) && !isClear(x, y))
+				return false;
+		}
+	}
+	return x == targetX && y == targetY;
+}
+
+bool ReplayApocalypseOwnerExists(
+	const ReplayFixtureExecutionState &state,
+	uint32_t sourceEntityId)
+{
+	return sourceEntityId == (state.entityId == 0 ? 1U : state.entityId)
+	    || (state.secondaryPlayerEntityId != 0
+	        && sourceEntityId == state.secondaryPlayerEntityId);
+}
+
+bool ReplayApocalypseMonsterHit(
+	ReplayFixtureExecutionState &state,
+	const ReplayFixtureProjectileState &projectile)
+{
+	const bool counselor = state.combatTargetNativeAi == "Counselor"
+	    || state.combatTargetNativeAi == "Zhar"
+	    || state.combatTargetNativeAi == "Lazarus";
+	const bool nativeRetreat = (counselor && state.combatTargetCounselorRetreatTicks != 0)
+	    || (state.combatTargetNativeAi == "Sneak"
+	        && state.combatTargetSneakRetreatTicks != 0);
+	if (state.combatTargetPlayerMinion
+	    || state.combatTargetHitPointsQ6 <= 0
+	    || (state.combatTargetMoving && !state.combatTargetPetrified)
+	    || nativeRetreat)
+		return false;
+	const bool secondaryOwner = state.secondaryPlayerEntityId != 0
+	    && projectile.sourceEntityId == state.secondaryPlayerEntityId;
+	const int32_t casterMagic = secondaryOwner
+	    ? state.secondaryPlayerMagic
+	    : state.attributes[3];
+	const uint32_t casterClassId = secondaryOwner
+	    ? state.secondaryPlayerCharacterClassId
+	    : state.characterClassId;
+	const int32_t hitChance = std::clamp(
+	    casterMagic + GetReplayBaseMagicToHit(casterClassId) - state.combatTargetMonsterLevel * 2,
+	    5,
+	    95);
+	const int32_t hitRoll = std::max(GenerateRnd(state, 100), 0);
+	if (state.combatTargetNativeAi == "Gargoyle"
+	    && state.combatTargetGargoyleSpecialActive) {
+		state.combatTargetGargoyleSpecialActive = false;
+		return true;
+	}
+	if (!state.combatTargetPetrified && hitRoll >= hitChance)
+		return false;
+
+	// Native MonsterMHit rolls fixed Apocalypse damage through RandomIntBetween,
+	// which still consumes one native RNG value when both bounds are equal.
+	static_cast<void>(GenerateRnd(state, 1));
+	const int32_t damageQ6 = std::max(0, projectile.damage) * 64;
+	state.combatTargetHitPointsQ6 = std::max(0, state.combatTargetHitPointsQ6 - damageQ6);
+	state.combatTargetHitPoints = ToWholeCeilingQ6(state.combatTargetHitPointsQ6);
+	if (state.combatTargetHitPointsQ6 == 0)
+		DefeatReplayCombatTarget(state);
+	return true;
+}
+
 ReplayFixtureProjectileState CreateReplayGuardianController(
     const ReplayFixtureExecutionState &state,
     const ReplayFixtureCommand &command,
@@ -14202,6 +14362,8 @@ private:
 				return ParseSigned(fixture_.initialState.combatTargetFuturePositionY);
 			if (key == "combat_target_petrified")
 				return ParseBool(fixture_.initialState.combatTargetPetrified);
+			if (key == "combat_target_player_minion")
+				return ParseBool(fixture_.initialState.combatTargetPlayerMinion);
 			if (key == "combat_target_stone_curse_immune")
 				return ParseBool(fixture_.initialState.combatTargetStoneCurseImmune);
 			if (key == "quest_id")
@@ -14279,6 +14441,12 @@ private:
 					return ParseSigned(projectile.damageMinimum);
 				if (key == "damage_maximum")
 					return ParseSigned(projectile.damageMaximum);
+				if (key == "apocalypse_scan_x")
+					return ParseSigned(projectile.apocalypseScanX);
+				if (key == "apocalypse_scan_y")
+					return ParseSigned(projectile.apocalypseScanY);
+				if (key == "apocalypse_hit")
+					return ParseBool(projectile.apocalypseHit);
 				return SkipValue();
 			})) {
 				return false;
@@ -15535,67 +15703,102 @@ void AdmitReplayAutonomousMegaInferno(
 /** Advances the player Apocalypse scan controller and its physical boom. */
 void AdvanceReplayPlayerApocalypseOneTick(ReplayFixtureExecutionState &state)
 {
-	const uint32_t playerEntityId = state.entityId == 0 ? 1U : state.entityId;
-	for (size_t index = 0; index < state.projectiles.size(); ++index) {
-		auto &projectile = state.projectiles[index];
-		if (projectile.behavior == ApocalypseBoomBehavior
-		    && projectile.sourceEntityId == playerEntityId) {
-			if (projectile.remainingTicks > 0)
-				--projectile.remainingTicks;
-			if (!projectile.apocalypseHit
-			    && state.combatTargetEntityId != 0
-			    && state.combatTargetHitPointsQ6 > 0
-			    && state.combatTargetLevelId == projectile.levelId
-			    && state.combatTargetPositionX == projectile.positionX
-			    && state.combatTargetPositionY == projectile.positionY) {
-				const int32_t damageQ6 = std::max(0, projectile.damage) * 64;
-				state.combatTargetHitPointsQ6 = std::max(
-					0,
-					state.combatTargetHitPointsQ6 - damageQ6);
-				state.combatTargetHitPoints = ToWholeCeilingQ6(state.combatTargetHitPointsQ6);
-				projectile.apocalypseHit = true;
+	std::vector<uint32_t> scheduled;
+	for (const auto &projectile : state.projectiles) {
+		if (projectile.behavior == ApocalypseControllerBehavior
+		    || projectile.behavior == ApocalypseBoomBehavior) {
+			scheduled.push_back(projectile.entityId);
+		}
+	}
+	std::sort(scheduled.begin(), scheduled.end());
+	for (size_t scheduledIndex = 0; scheduledIndex < scheduled.size(); ++scheduledIndex) {
+		const uint32_t entityId = scheduled[scheduledIndex];
+		auto iterator = std::find_if(state.projectiles.begin(), state.projectiles.end(), [&](const auto &projectile) {
+			return projectile.entityId == entityId;
+		});
+		if (iterator == state.projectiles.end())
+			continue;
+		if (iterator->behavior == ApocalypseBoomBehavior) {
+			if (iterator->remainingTicks > 0)
+				--iterator->remainingTicks;
+			if (!iterator->apocalypseHit) {
+				const bool missileBlocked = ReplayApocalypseTileBlocksMissiles(
+				    state,
+				    iterator->levelId,
+				    iterator->positionX,
+				    iterator->positionY);
+				if (state.combatTargetEntityId != 0
+				    && state.combatTargetHitPointsQ6 > 0
+				    && !state.combatTargetPlayerMinion
+				    && state.combatTargetLevelId == iterator->levelId
+				    && state.combatTargetPositionX == iterator->positionX
+				    && state.combatTargetPositionY == iterator->positionY
+				    && ReplayApocalypseOwnerExists(state, iterator->sourceEntityId)) {
+					if (ReplayApocalypseMonsterHit(state, *iterator))
+						iterator->apocalypseHit = true;
+				}
+				if (missileBlocked) {
+					if (state.objectEntityId != 0
+					    && state.objectLevelId == iterator->levelId
+					    && state.objectPositionX == iterator->positionX
+					    && state.objectPositionY == iterator->positionY
+					    && !state.objectActivated
+					    && !state.objectDestroyed
+					    && !state.objectMissilePassable
+					    && state.objectBreakable) {
+						state.objectDestroyed = true;
+					}
+					iterator->apocalypseHit = false;
+				}
 			}
-			if (projectile.remainingTicks == 0) {
-				state.projectiles.erase(state.projectiles.begin() + static_cast<ptrdiff_t>(index));
-				--index;
-			}
+			if (iterator->remainingTicks == 0)
+				state.projectiles.erase(iterator);
 			continue;
 		}
-		if (projectile.behavior != ApocalypseControllerBehavior
-		    || projectile.sourceEntityId != playerEntityId)
+		if (iterator->behavior != ApocalypseControllerBehavior
+		    || !ReplayApocalypseOwnerExists(state, iterator->sourceEntityId)) {
+			state.projectiles.erase(iterator);
 			continue;
-		const int32_t minimumX = std::max(projectile.startX - 8, 1);
-		const int32_t maximumX = projectile.startX + 8;
-		const int32_t maximumY = projectile.startY + 8;
-		const int32_t scanY = std::max(projectile.apocalypseScanY, 1);
-		const int32_t scanX = std::max(projectile.apocalypseScanX, minimumX);
+		}
+		const int32_t minimumX = std::max(iterator->startX - 8, 1);
+		const int32_t maximumX = std::min(iterator->startX + 8, state.levelWidth - 1);
+		const int32_t maximumY = std::min(iterator->startY + 8, state.levelHeight - 1);
+		const int32_t scanY = std::max(iterator->apocalypseScanY, 1);
+		const int32_t scanX = std::max(iterator->apocalypseScanX, minimumX);
 		bool emitted = false;
 		for (int32_t y = scanY; y < maximumY && !emitted; ++y) {
 			const int32_t firstX = y == scanY ? scanX : minimumX;
 			for (int32_t x = firstX; x < maximumX; ++x) {
-				projectile.apocalypseScanX = x + 1;
-				projectile.apocalypseScanY = y;
-				if (!ReplayWallPositionIsValid(state, x, y))
+				iterator->apocalypseScanX = x + 1;
+				iterator->apocalypseScanY = y;
+				if (ReplayApocalypseTileIsSolid(state, x, y))
 					continue;
 				if (state.combatTargetEntityId == 0
 				    || state.combatTargetHitPointsQ6 <= 0
-				    || state.combatTargetLevelId != projectile.levelId
+				    || state.combatTargetPlayerMinion
+				    || state.combatTargetLevelId != iterator->levelId
 				    || state.combatTargetPositionX != x
 				    || state.combatTargetPositionY != y)
 					continue;
-				state.projectiles.push_back(CreateReplayApocalypseBoom(
-					state,
-					projectile,
-					x,
-					y));
+				if (state.hellfire
+				    && !ReplayApocalypseLineClearMissile(
+				        state,
+				        iterator->startX,
+				        iterator->startY,
+					    x,
+					    y)) {
+					continue;
+				}
+				const auto boom = CreateReplayApocalypseBoom(state, *iterator, x, y);
+				const uint32_t boomEntityId = boom.entityId;
+				state.projectiles.push_back(boom);
+				scheduled.push_back(boomEntityId);
 				emitted = true;
 				break;
 			}
 		}
-		if (!emitted) {
-			state.projectiles.erase(state.projectiles.begin() + static_cast<ptrdiff_t>(index));
-			--index;
-		}
+		if (!emitted)
+			state.projectiles.erase(iterator);
 	}
 }
 
@@ -15760,9 +15963,10 @@ bool ApplyReplaySecondaryCast(
 	        && command.spellId != 31
 	        && command.spellId != 38
 	        && command.spellId != 52
-	        && command.spellId != 18))
+	        && command.spellId != 18
+	        && command.spellId != 25))
 		return false;
-	if (command.spellId == 7
+	if ((command.spellId == 7 || command.spellId == 25)
 	    && (state.secondaryPlayerLife <= 0
 	        || state.secondaryPlayerLifeMaximum <= 0
 	        || state.secondaryPlayerLife > state.secondaryPlayerLifeMaximum
@@ -15792,6 +15996,8 @@ bool ApplyReplaySecondaryCast(
 	castState.abilitySpellId = 0;
 	if (command.spellId == 7)
 		castState.spellProjectileBehavior = GuardianControllerBehavior;
+	else if (command.spellId == 25)
+		castState.spellProjectileBehavior = ApocalypseControllerBehavior;
 	castState.attributes[2] = state.secondaryPlayerMagic;
 	castState.attributes[3] = state.secondaryPlayerMagic;
 	castState.combatMode = state.secondaryPlayerCombatMode;
@@ -16225,6 +16431,7 @@ bool ExecuteReplayFixture(
 		state.combatTargetFuturePositionX = fixture.initialState.combatTargetFuturePositionX;
 		state.combatTargetFuturePositionY = fixture.initialState.combatTargetFuturePositionY;
 		state.combatTargetPetrified = fixture.initialState.combatTargetPetrified;
+		state.combatTargetPlayerMinion = fixture.initialState.combatTargetPlayerMinion;
 		state.combatTargetStoneCurseImmune = fixture.initialState.combatTargetStoneCurseImmune;
 	}
 	state.corpses = fixture.initialState.corpses;
@@ -16294,6 +16501,9 @@ bool ExecuteReplayFixture(
 			projectile.impactLifetime = source.impactLifetime;
 			projectile.damageMinimum = source.damageMinimum;
 			projectile.damageMaximum = source.damageMaximum;
+			projectile.apocalypseScanX = source.apocalypseScanX;
+			projectile.apocalypseScanY = source.apocalypseScanY;
+			projectile.apocalypseHit = source.apocalypseHit;
 			state.projectiles.push_back(std::move(projectile));
 		}
 	}

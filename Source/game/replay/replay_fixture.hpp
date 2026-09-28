@@ -300,6 +300,7 @@ struct ReplayFixtureInitialState {
 	int32_t combatTargetFuturePositionX = 0;
 	int32_t combatTargetFuturePositionY = 0;
 	bool combatTargetPetrified = false;
+	bool combatTargetPlayerMinion = false;
 	bool combatTargetStoneCurseImmune = false;
 	uint32_t questId = 0;
 	uint32_t questRequiredProgress = 0;
@@ -360,6 +361,9 @@ struct ReplayFixtureInitialProjectile {
 	int32_t impactLifetime = 1;
 	int32_t damageMinimum = 0;
 	int32_t damageMaximum = 0;
+	int32_t apocalypseScanX = 0;
+	int32_t apocalypseScanY = 0;
+	bool apocalypseHit = false;
 };
 
 struct ReplayFixture {

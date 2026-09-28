@@ -658,6 +658,9 @@ public static class ReplayFixtureLoader
             CombatTargetPetrified = GetOptionalBool(
                 value,
                 "combat_target_petrified"),
+            CombatTargetPlayerMinion = GetOptionalBool(
+                value,
+                "combat_target_player_minion"),
             CombatTargetStoneCurseImmune = GetOptionalBool(
                 value,
                 "combat_target_stone_curse_immune"),
@@ -710,6 +713,9 @@ public static class ReplayFixtureLoader
                     : 1,
                 DamageMinimum = GetOptionalInt(projectile, "damage_minimum"),
                 DamageMaximum = GetOptionalInt(projectile, "damage_maximum"),
+                ApocalypseScanX = GetOptionalInt(projectile, "apocalypse_scan_x"),
+                ApocalypseScanY = GetOptionalInt(projectile, "apocalypse_scan_y"),
+                ApocalypseHit = GetOptionalBool(projectile, "apocalypse_hit"),
             })
             .ToArray();
         if (projectiles.Any(projectile =>

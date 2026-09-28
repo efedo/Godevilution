@@ -477,6 +477,9 @@ public sealed record ReplayInitialState(string Player, uint Gold, uint Experienc
 
     public bool CombatTargetPetrified { get; init; }
 
+    /** Native Apocalypse excludes monsters marked as player minions. */
+    public bool CombatTargetPlayerMinion { get; init; }
+
     public bool CombatTargetStoneCurseImmune { get; init; }
 
     public bool CombatTargetDemon { get; init; }
@@ -534,6 +537,12 @@ public sealed record ReplayInitialProjectile(
     public int DamageMinimum { get; init; }
 
     public int DamageMaximum { get; init; }
+
+    public int ApocalypseScanX { get; init; }
+
+    public int ApocalypseScanY { get; init; }
+
+    public bool ApocalypseHit { get; init; }
 }
 
 public sealed record ReplayLegacyStoreState(

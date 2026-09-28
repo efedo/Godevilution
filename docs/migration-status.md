@@ -2,8 +2,14 @@
 
 Status date: 2026-09-27
 
-The shared replay gate now contains 393 checked-in fixtures and 419 registered
+The shared replay gate now contains 394 checked-in fixtures and 422 registered
 native tests.
+
+Secondary-participant Apocalypse casts now cross the primary-player replay
+boundary with native caster ownership, mana/facing, Solid-only admission,
+Hellfire missile-geometry LOS, owner-specific hit/damage RNG, and same-tick
+entity-ID scheduling. Native and managed regressions cover minion exclusion,
+moving non-petrified retries, and reversed controller storage order.
 
 Secondary-participant Guardian now casts through the primary-player boundary
 in both replay runners and the production authoritative server. Cast mana,

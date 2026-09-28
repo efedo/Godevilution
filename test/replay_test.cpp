@@ -5826,8 +5826,336 @@ TEST(ReplayFixture, ExecutesApocalypseRowMajorScanAndBoomLifecycle)
 	EXPECT_EQ(boom.positionY, 2);
 	EXPECT_EQ(boom.remainingTicks, 13U);
 	EXPECT_TRUE(boom.apocalypseHit);
-	EXPECT_LT(state.combatTargetHitPoints, state.combatTargetMaxHitPoints);
+	EXPECT_EQ(boom.damage, 4);
+	EXPECT_EQ(state.combatTargetHitPointsQ6, 96 * 64);
+	EXPECT_EQ(state.randomState, 1058065735U);
 	EXPECT_FALSE(ComputeReplayFixtureStateHash(state).empty());
+}
+
+TEST(ReplayFixture, ExecutesSecondaryApocalypseWithOwnerRngAndSameTickImpact)
+{
+	std::ifstream file("test/fixtures/replay/gameplay-apocalypse-secondary-cast-primary-player.json");
+	ASSERT_TRUE(file.good());
+	const std::string json((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
+	ReplayFixture fixture;
+	std::string error;
+	ASSERT_TRUE(ParseReplayFixture(json, fixture, error)) << error;
+
+	ReplayFixtureExecutionState state;
+	state.entityId = 1;
+	state.life = fixture.initialState.life;
+	state.lifeMaximum = fixture.initialState.lifeMaximum;
+	state.mana = fixture.initialState.mana;
+	state.manaMaximum = fixture.initialState.manaMaximum;
+	state.positionX = fixture.initialState.positionX;
+	state.positionY = fixture.initialState.positionY;
+	state.levelId = fixture.initialState.levelId;
+	state.characterLevel = fixture.initialState.characterLevel;
+	state.characterClassId = static_cast<uint32_t>(fixture.initialState.characterClass);
+	state.attributes[3] = fixture.initialState.magic;
+
+	ReplayFixtureExecutionResult result;
+	ASSERT_TRUE(ExecuteReplayFixture(fixture, state, result, error)) << error;
+	ASSERT_EQ(result.transitions.size(), 1U);
+	EXPECT_TRUE(result.transitions[0].accepted);
+	EXPECT_EQ(state.lastAppliedTick, 2U);
+	EXPECT_EQ(state.mana, fixture.initialState.mana);
+	EXPECT_EQ(state.secondaryPlayerMana, 1168);
+	EXPECT_EQ(state.secondaryPlayerFacingDirection, 7U);
+	ASSERT_EQ(state.projectiles.size(), 2U);
+	const auto controller = std::find_if(state.projectiles.begin(), state.projectiles.end(), [](const auto &projectile) {
+		return projectile.behavior == 32;
+	});
+	const auto boom = std::find_if(state.projectiles.begin(), state.projectiles.end(), [](const auto &projectile) {
+		return projectile.behavior == 33;
+	});
+	ASSERT_NE(controller, state.projectiles.end());
+	ASSERT_NE(boom, state.projectiles.end());
+	EXPECT_EQ(controller->sourceEntityId, 8U);
+	EXPECT_EQ(controller->positionX, 10);
+	EXPECT_EQ(controller->positionY, 10);
+	EXPECT_EQ(controller->apocalypseScanX, 5);
+	EXPECT_EQ(controller->apocalypseScanY, 2);
+	EXPECT_EQ(boom->sourceEntityId, 8U);
+	EXPECT_EQ(boom->positionX, 4);
+	EXPECT_EQ(boom->positionY, 2);
+	EXPECT_EQ(boom->remainingTicks, 14U);
+	EXPECT_TRUE(boom->apocalypseHit);
+	EXPECT_EQ(boom->damage, 49);
+	EXPECT_EQ(state.combatTargetHitPointsQ6, (100 - boom->damage) * 64);
+	EXPECT_EQ(state.randomState, 4107751618U);
+}
+
+TEST(ReplayFixture, ApocalypseAdmissionAndMissRngMatchNativeBoundaries)
+{
+	std::ifstream file("test/fixtures/replay/gameplay-apocalypse-secondary-cast-primary-player.json");
+	ASSERT_TRUE(file.good());
+	const std::string json((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
+	ReplayFixture fixture;
+	std::string error;
+	ASSERT_TRUE(ParseReplayFixture(json, fixture, error)) << error;
+
+	const auto run = [](
+	    const ReplayFixture &candidate,
+	    bool seedVacatedTileBoom = false,
+	    int32_t seededBoomX = -1,
+	    int32_t seededBoomY = -1) {
+		ReplayFixtureExecutionState state;
+		state.entityId = 1;
+		state.life = candidate.initialState.life;
+		state.lifeMaximum = candidate.initialState.lifeMaximum;
+		state.mana = candidate.initialState.mana;
+		state.manaMaximum = candidate.initialState.manaMaximum;
+		state.positionX = candidate.initialState.positionX;
+		state.positionY = candidate.initialState.positionY;
+		state.levelId = candidate.initialState.levelId;
+		state.characterLevel = candidate.initialState.characterLevel;
+		state.characterClassId = static_cast<uint32_t>(candidate.initialState.characterClass);
+		state.attributes[3] = candidate.initialState.magic;
+		if (seedVacatedTileBoom) {
+			ReplayFixtureProjectileState boom;
+			boom.entityId = 20;
+			boom.sourceEntityId = candidate.initialState.secondaryPlayer.entityId;
+			boom.targetEntityId = candidate.initialState.combatTargetEntityId;
+			boom.spellId = 25;
+			boom.levelId = candidate.initialState.levelId;
+			boom.positionX = seededBoomX >= 0 ? seededBoomX : candidate.initialState.combatTargetPositionX;
+			boom.positionY = seededBoomY >= 0 ? seededBoomY : candidate.initialState.combatTargetPositionY;
+			boom.targetX = boom.positionX;
+			boom.targetY = boom.positionY;
+			boom.damage = 10;
+			boom.damageType = 0;
+			boom.remainingTicks = 15;
+			boom.behavior = 33;
+			state.projectiles.push_back(boom);
+		}
+		ReplayFixtureExecutionResult result;
+		std::string runError;
+		EXPECT_TRUE(ExecuteReplayFixture(candidate, state, result, runError)) << runError;
+		if (!candidate.commands.empty()) {
+			EXPECT_EQ(result.transitions.size(), 1U);
+			EXPECT_TRUE(result.transitions[0].accepted);
+		}
+		return state;
+	};
+	const auto hasBoom = [](const ReplayFixtureExecutionState &state) {
+		return std::any_of(state.projectiles.begin(), state.projectiles.end(), [](const auto &projectile) {
+			return projectile.behavior == 33;
+		});
+	};
+
+	ReplayFixture missileOnlyTarget = fixture;
+	missileOnlyTarget.initialState.missileBlockedCells = { 84 };
+	missileOnlyTarget.checkpoints = {
+	    { 1, "timeline-apocalypse-repeat-impact-cast" },
+	    { 2, "timeline-apocalypse-repeat-impact-first" },
+	    { 3, "timeline-apocalypse-repeat-impact-second" },
+	};
+	const auto missileOnlyState = run(missileOnlyTarget);
+	const auto repeatedBoom = std::find_if(missileOnlyState.projectiles.begin(), missileOnlyState.projectiles.end(), [](const auto &projectile) {
+		return projectile.behavior == 33;
+	});
+	ASSERT_NE(repeatedBoom, missileOnlyState.projectiles.end());
+	EXPECT_FALSE(repeatedBoom->apocalypseHit);
+	EXPECT_EQ(repeatedBoom->remainingTicks, 13U);
+	EXPECT_EQ(repeatedBoom->damage, 49);
+	EXPECT_EQ(missileOnlyState.combatTargetHitPointsQ6, 3 * 64);
+	constexpr uint32_t expectedRepeatedHitRandomState = 1480132328U;
+	EXPECT_EQ(missileOnlyState.randomState, expectedRepeatedHitRandomState);
+
+	ReplayFixture breakableObject = fixture;
+	breakableObject.commands.clear();
+	breakableObject.checkpoints = {
+	    { 1, "timeline-apocalypse-breakable-object-hit" },
+	    { 2, "timeline-apocalypse-breakable-object-cleared" },
+	};
+	breakableObject.initialState.combatTargetPositionX = 5;
+	breakableObject.initialState.combatTargetFuturePositionX = 5;
+	breakableObject.initialState.objectEntityId = 500;
+	breakableObject.initialState.objectId = 1;
+	breakableObject.initialState.objectPositionX = 4;
+	breakableObject.initialState.objectPositionY = 2;
+	breakableObject.initialState.objectBreakable = true;
+	const auto breakableObjectState = run(breakableObject, true, 4, 2);
+	const auto breakableBoom = std::find_if(breakableObjectState.projectiles.begin(), breakableObjectState.projectiles.end(), [](const auto &projectile) {
+		return projectile.behavior == 33;
+	});
+	ASSERT_NE(breakableBoom, breakableObjectState.projectiles.end());
+	EXPECT_TRUE(breakableObjectState.objectDestroyed);
+	EXPECT_FALSE(breakableBoom->apocalypseHit);
+	EXPECT_EQ(breakableBoom->remainingTicks, 13U);
+	EXPECT_EQ(breakableObjectState.combatTargetHitPointsQ6, 100 * 64);
+	EXPECT_EQ(breakableObjectState.randomState, static_cast<uint32_t>(fixture.rngSeed));
+
+	ReplayFixture solidTarget = fixture;
+	solidTarget.initialState.blockedCells = { 84 };
+	const auto solidState = run(solidTarget);
+	EXPECT_FALSE(hasBoom(solidState));
+	EXPECT_EQ(solidState.combatTargetHitPointsQ6, 100 * 64);
+
+	ReplayFixture minion = fixture;
+	minion.initialState.combatTargetPlayerMinion = true;
+	const auto minionState = run(minion);
+	EXPECT_FALSE(hasBoom(minionState));
+	EXPECT_EQ(minionState.combatTargetHitPointsQ6, 100 * 64);
+
+	ReplayFixture hellfireWall = fixture;
+	hellfireWall.gameVariant = "Hellfire";
+	hellfireWall.initialState.missileBlockedCells = { 328 };
+	const auto hellfireState = run(hellfireWall);
+	EXPECT_FALSE(hasBoom(hellfireState));
+	EXPECT_EQ(hellfireState.combatTargetHitPointsQ6, 100 * 64);
+
+	ReplayFixture missed = fixture;
+	missed.initialState.secondaryPlayer.characterClass = 0;
+	missed.initialState.secondaryPlayer.magic = 0;
+	missed.initialState.combatTargetMonsterLevel = 50;
+	missed.initialState.combatTargetPetrified = false;
+	const auto missedState = run(missed);
+	const auto missedBoom = std::find_if(missedState.projectiles.begin(), missedState.projectiles.end(), [](const auto &projectile) {
+		return projectile.behavior == 33;
+	});
+	ASSERT_NE(missedBoom, missedState.projectiles.end());
+	EXPECT_FALSE(missedBoom->apocalypseHit);
+	EXPECT_EQ(missedState.combatTargetHitPointsQ6, 100 * 64);
+	EXPECT_EQ(missedState.randomState, 597178845U);
+
+	ReplayFixture counselorRetreat = fixture;
+	counselorRetreat.initialState.combatTargetNativeAi = "Counselor";
+	counselorRetreat.initialState.combatTargetCounselorRetreatTicks = 64;
+	counselorRetreat.initialState.combatTargetCounselorDelayTicks = 100;
+	const auto counselorRetreatState = run(counselorRetreat);
+	const auto counselorRetreatBoom = std::find_if(counselorRetreatState.projectiles.begin(), counselorRetreatState.projectiles.end(), [](const auto &projectile) {
+		return projectile.behavior == 33;
+	});
+	ASSERT_NE(counselorRetreatBoom, counselorRetreatState.projectiles.end());
+	EXPECT_FALSE(counselorRetreatBoom->apocalypseHit);
+	EXPECT_EQ(counselorRetreatState.combatTargetHitPointsQ6, 100 * 64);
+	EXPECT_EQ(counselorRetreatState.randomState, 2240789996U);
+
+	ReplayFixture gargoyle = fixture;
+	gargoyle.initialState.combatTargetNativeAi = "Gargoyle";
+	gargoyle.initialState.combatTargetMaxHitPoints = 100;
+	gargoyle.initialState.combatTargetGargoyleSpecialActive = true;
+	gargoyle.initialState.combatTargetMonsterLevel = 50;
+	gargoyle.initialState.secondaryPlayer.characterClass = 0;
+	gargoyle.initialState.secondaryPlayer.magic = 0;
+	gargoyle.initialState.combatTargetPetrified = false;
+	const auto gargoyleState = run(gargoyle);
+	const auto gargoyleBoom = std::find_if(gargoyleState.projectiles.begin(), gargoyleState.projectiles.end(), [](const auto &projectile) {
+		return projectile.behavior == 33;
+	});
+	ASSERT_NE(gargoyleBoom, gargoyleState.projectiles.end());
+	EXPECT_TRUE(gargoyleBoom->apocalypseHit);
+	EXPECT_EQ(gargoyleBoom->remainingTicks, 14U);
+	EXPECT_EQ(gargoyleState.combatTargetHitPointsQ6, 100 * 64);
+	EXPECT_FALSE(gargoyleState.combatTargetGargoyleSpecialActive);
+	EXPECT_EQ(gargoyleState.randomState, 597178845U);
+
+	ReplayFixture petrified = fixture;
+	petrified.initialState.secondaryPlayer.characterClass = 0;
+	petrified.initialState.secondaryPlayer.magic = 0;
+	petrified.initialState.combatTargetMonsterLevel = 50;
+	petrified.initialState.combatTargetPetrified = true;
+	const auto petrifiedState = run(petrified);
+	const auto petrifiedBoom = std::find_if(petrifiedState.projectiles.begin(), petrifiedState.projectiles.end(), [](const auto &projectile) {
+		return projectile.behavior == 33;
+	});
+	ASSERT_NE(petrifiedBoom, petrifiedState.projectiles.end());
+	EXPECT_TRUE(petrifiedBoom->apocalypseHit);
+	EXPECT_EQ(petrifiedState.combatTargetHitPoints, 100 - petrifiedBoom->damage);
+	EXPECT_EQ(petrifiedState.randomState, 4107751618U);
+
+	ReplayFixture moving = fixture;
+	moving.commands.clear();
+	moving.checkpoints = { { 1, "timeline-apocalypse-moving-target" } };
+	moving.initialState.combatTargetMoving = true;
+	moving.initialState.combatTargetFuturePositionX = 5;
+	moving.initialState.combatTargetFuturePositionY = 2;
+	moving.initialState.combatTargetPetrified = false;
+	const auto movingState = run(moving, true);
+	const auto movingBoom = std::find_if(movingState.projectiles.begin(), movingState.projectiles.end(), [](const auto &projectile) {
+		return projectile.behavior == 33;
+	});
+	ASSERT_NE(movingBoom, movingState.projectiles.end());
+	EXPECT_FALSE(movingBoom->apocalypseHit);
+	EXPECT_EQ(movingState.combatTargetHitPointsQ6, 100 * 64);
+	EXPECT_EQ(movingState.randomState, static_cast<uint32_t>(fixture.rngSeed));
+}
+
+TEST(ReplayFixture, ApocalypseControllersAndNewBoomsAdvanceInEntityIdOrder)
+{
+	std::ifstream file("test/fixtures/replay/gameplay-apocalypse-secondary-cast-primary-player.json");
+	ASSERT_TRUE(file.good());
+	const std::string json((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
+	ReplayFixture fixture;
+	std::string error;
+	ASSERT_TRUE(ParseReplayFixture(json, fixture, error)) << error;
+	fixture.commands.clear();
+	fixture.checkpoints = { { 1, "timeline-apocalypse-controller-order-hit" } };
+
+	const auto run = [&](bool reverseStorageOrder) {
+		ReplayFixtureExecutionState state;
+		state.entityId = 1;
+		state.life = fixture.initialState.life;
+		state.lifeMaximum = fixture.initialState.lifeMaximum;
+		state.mana = fixture.initialState.mana;
+		state.manaMaximum = fixture.initialState.manaMaximum;
+		state.positionX = fixture.initialState.positionX;
+		state.positionY = fixture.initialState.positionY;
+		state.levelId = fixture.initialState.levelId;
+		state.characterLevel = fixture.initialState.characterLevel;
+		state.characterClassId = static_cast<uint32_t>(fixture.initialState.characterClass);
+		state.attributes[3] = fixture.initialState.magic;
+		const auto addController = [&](uint32_t entityId, uint32_t sourceEntityId, int32_t damage) {
+			ReplayFixtureProjectileState controller;
+			controller.entityId = entityId;
+			controller.sourceEntityId = sourceEntityId;
+			controller.spellId = 25;
+			controller.levelId = 1;
+			controller.positionX = 10;
+			controller.positionY = 10;
+			controller.startX = 10;
+			controller.startY = 10;
+			controller.damage = damage;
+			controller.damageType = 0;
+			controller.remainingTicks = 255;
+			controller.behavior = 32;
+			controller.apocalypseScanX = 2;
+			controller.apocalypseScanY = 2;
+			state.projectiles.push_back(controller);
+		};
+		if (reverseStorageOrder) {
+			addController(20, 8, 20);
+			addController(30, 1, 10);
+		} else {
+			addController(30, 1, 10);
+			addController(20, 8, 20);
+		}
+		ReplayFixtureExecutionResult result;
+		std::string runError;
+		EXPECT_TRUE(ExecuteReplayFixture(fixture, state, result, runError)) << runError;
+		return state;
+	};
+
+	const auto forward = run(false);
+	const auto reverse = run(true);
+	EXPECT_EQ(forward.randomState, reverse.randomState);
+	EXPECT_EQ(forward.randomState, 2667323828U);
+	EXPECT_EQ(forward.combatTargetHitPointsQ6, 70 * 64);
+	EXPECT_EQ(forward.combatTargetHitPointsQ6, reverse.combatTargetHitPointsQ6);
+	const auto boomSources = [](const ReplayFixtureExecutionState &state) {
+		std::vector<uint32_t> result;
+		for (const auto &projectile : state.projectiles) {
+			if (projectile.behavior == 33) {
+				EXPECT_TRUE(projectile.apocalypseHit);
+				result.push_back(projectile.sourceEntityId);
+			}
+		}
+		return result;
+	};
+	EXPECT_EQ(boomSources(forward), boomSources(reverse));
+	EXPECT_EQ(boomSources(forward), (std::vector<uint32_t> { 8, 1 }));
 }
 
 TEST(ReplayFixture, ExecutesMagiFullManaRestorationAgainstCSharpCheckpoints)

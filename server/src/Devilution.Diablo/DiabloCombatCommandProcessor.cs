@@ -2423,9 +2423,8 @@ public sealed class DiabloCombatCommandProcessor
         IReadOnlyList<AuthoritativePlayerState> players)
     {
         intent = NormalizeVisiblePlayerTarget(player, intent, players);
-        if (!useNativePlayerActionTiming)
-            return ResolveCast(player, intent, appliedTick, players: players);
-        if (!DiabloPlayerActionLifecycle.CanStart(player, appliedTick))
+        if (useNativePlayerActionTiming
+            && !DiabloPlayerActionLifecycle.CanStart(player, appliedTick))
             return DiabloCombatIntentResult.Rejected(DiabloRuleFailure.NotAllowed);
 
         var validation = ResolveCast(
@@ -2438,6 +2437,9 @@ public sealed class DiabloCombatCommandProcessor
             return validation;
 
         UpdateFacingForCast(player, intent, players);
+        if (!useNativePlayerActionTiming)
+            return ResolveCast(player, intent, appliedTick, players: players);
+
         var animation = playerAnimations!.GetRequired(player.CharacterClassId);
         var effectTick = checked(appliedTick + (ulong)animation.CastingActionFrame);
         var endTick = checked(appliedTick + (ulong)(animation.CastingFrames - 1));
@@ -14450,14 +14452,14 @@ public sealed class DiabloCombatCommandProcessor
                 controller.ApocalypseScanX = checked(x + 1);
                 controller.ApocalypseScanY = y;
                 if (!world.ContainsPosition(controller.LevelId, x, y)
-                    || world.IsMissileBlocked(controller.LevelId, x, y)) {
+                    || !world.IsWalkable(controller.LevelId, x, y)) {
                     continue;
                 }
                 var target = FindProjectileTarget(controller.LevelId, x, y);
                 if (target is null || target.IsPlayerMinion)
                     continue;
                 if (rules.GameVariant == DiabloGameVariant.Hellfire
-                    && !world.HasMissileLineOfSight(
+                    && !world.HasApocalypseLineOfSight(
                         controller.LevelId,
                         controller.StartX,
                         controller.StartY,
@@ -14592,14 +14594,15 @@ public sealed class DiabloCombatCommandProcessor
         ICollection<DiabloDirectedGameplayEvent> events)
     {
         projectile.RemainingTicks--;
-        // Native CheckMissileCol runs once for the boom and breaks a hit
-        // breakable blocker without ending the boom's remaining lifetime.
-        BreakMissileBlockingObject(
-            projectile.LevelId,
-            projectile.PositionX,
-            projectile.PositionY);
-        if (world.CombatTargets.ContainsKey(projectile.SourceEntityId)) {
-            if (!projectile.ApocalypseHit) {
+        if (!projectile.ApocalypseHit) {
+            // Native CheckMissileCol resolves the occupant before it checks the
+            // missile-blocking tile. A surviving blocker clears the hit flag,
+            // so non-Solid missile geometry can be hit again next tick.
+            var missileBlocked = world.IsMissileBlocked(
+                projectile.LevelId,
+                projectile.PositionX,
+                projectile.PositionY);
+            if (world.CombatTargets.ContainsKey(projectile.SourceEntityId)) {
                 var playerTarget = players.FirstOrDefault(player =>
                     player.EntityId == projectile.TargetEntityId
                     && player.Life > 0
@@ -14615,20 +14618,24 @@ public sealed class DiabloCombatCommandProcessor
                         events)) {
                     projectile.ApocalypseHit = true;
                 }
+            } else {
+                var target = FindProjectileTarget(
+                    projectile.LevelId,
+                    projectile.PositionX,
+                    projectile.PositionY);
+                if (target is not null
+                    && !target.IsPlayerMinion
+                    && (!target.IsMoving || target.IsPetrified)
+                    && TryResolveFireboltHit(projectile, target, players, events)) {
+                    projectile.ApocalypseHit = true;
+                }
             }
-            if (projectile.RemainingTicks == 0)
-                world.Projectiles.Remove(projectile.EntityId);
-            return;
-        }
-        if (!projectile.ApocalypseHit) {
-            var target = FindProjectileTarget(
-                projectile.LevelId,
-                projectile.PositionX,
-                projectile.PositionY);
-            if (target is not null
-                && !target.IsPlayerMinion
-                && TryResolveFireboltHit(projectile, target, players, events)) {
-                projectile.ApocalypseHit = true;
+            if (missileBlocked) {
+                BreakMissileBlockingObject(
+                    projectile.LevelId,
+                    projectile.PositionX,
+                    projectile.PositionY);
+                projectile.ApocalypseHit = false;
             }
         }
         if (projectile.RemainingTicks == 0)
@@ -16036,6 +16043,14 @@ public sealed class DiabloCombatCommandProcessor
         IReadOnlyList<AuthoritativePlayerState> players,
         ICollection<DiabloDirectedGameplayEvent> events)
     {
+        if (target.HitPointsQ6 <= 0
+            || target.DialogueMessageId != 0
+            || target.DialogueState == AuthoritativeMonsterDialogueState.Inquiring
+            || IsQuestDialogueTarget(target)
+            || IsNativeRetreatTarget(target)) {
+            return false;
+        }
+
         var resistance = GetMonsterResistance(target, projectile.DamageType);
         if (resistance >= 100)
             return false;
@@ -16060,6 +16075,13 @@ public sealed class DiabloCombatCommandProcessor
             minimumHitChance,
             maximumHitChance);
         var hitRoll = random.RandomIntLessThan(100);
+        if (UsesNativeAi(target, "Gargoyle") && target.GargoyleSpecialActive) {
+            // MonsterMHit consumes the hit roll, then tryLiftGargoyle clears
+            // MFLAG_ALLOW_SPECIAL and reports a collision before hit testing
+            // or the fixed Apocalypse damage roll.
+            target.GargoyleSpecialActive = false;
+            return true;
+        }
         if (!target.IsPetrified && hitRoll >= hitChance)
             return false;
 

@@ -343,6 +343,12 @@ segment lifetimes.
 including row-major target scanning, physical boom emission, target impact,
 and boom lifetime.
 
+`gameplay-apocalypse-secondary-cast-primary-player.json` covers a secondary
+player's Apocalypse cast across the primary-owned gameplay boundary, including
+caster origin, mana/facing ownership, row scan state, native hit RNG, and
+same-tick boom impact. Focused regressions cover player-minion and Solid-cell
+exclusion, Diablo missile-only admission, and Hellfire geometry-only LOS.
+
 The Rage, Inferno, and Apocalypse runners load the validated base `spells.tsv`
 rows and check the active `devilution.base` content-manifest identity.
 
@@ -667,7 +673,7 @@ The compact native replay projection now carries the same server-owned corpse
 tile representation and per-tick monster regeneration as the C# checkpoints.
 Ordinary-death and Firebolt, Fireball, Lightning, Flash, and Elemental
 spell/projectile-timeline checkpoints pass in both runners. As of 2026-09-27,
-the native replay gate contains 391 checked-in JSON fixtures and 416 registered
+the native replay gate contains 394 checked-in JSON fixtures and 422 registered
 tests; the test count also includes parser and validation cases that do not
 introduce another fixture file. Coverage includes seeded and autonomous MonsterArrow
 source coverage, Hellfire HorkDemon Hork Spawn admission, player impact, and

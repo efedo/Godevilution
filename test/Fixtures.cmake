@@ -96,6 +96,7 @@ set(devilutionx_fixtures
   replay/gameplay-acid-unique-multiplayer-secondary-impact.json
   replay/gameplay-acid-unique-primary-autonomous.json
   replay/gameplay-apocalypse-resolution.json
+  replay/gameplay-apocalypse-secondary-cast-primary-player.json
   replay/gameplay-autonomous-regen-soak.json
   replay/gameplay-bat-autonomous-multiplayer.json
   replay/gameplay-bat-multiplayer-target.json
