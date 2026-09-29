@@ -102,6 +102,12 @@ public sealed class AuthoritativeCommandServer
     {
         if (string.IsNullOrWhiteSpace(sessionId))
             throw new ArgumentException("A session ID is required.", nameof(sessionId));
+        return WithSynchronizedState(callback);
+    }
+
+    /** Serializes whole-host publication, including ruleset replacement. */
+    public TResult WithSynchronizedState<TResult>(Func<TResult> callback)
+    {
         ArgumentNullException.ThrowIfNull(callback);
         lock (synchronization)
             return callback();
@@ -115,6 +121,16 @@ public sealed class AuthoritativeCommandServer
         ArgumentNullException.ThrowIfNull(callback);
         lock (synchronization)
             callback();
+    }
+
+    /** Returns the per-session high-water mark for fresh-process resume. */
+    public ulong LastClientSequence(string sessionId)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(sessionId);
+        lock (synchronization) {
+            return completedCommandsBySession.TryGetValue(sessionId, out var commands)
+                && commands.Count > 0 ? commands.Keys.Max() : 0;
+        }
     }
 
     /** Returns a defensive copy of the completed command ledger for a session. */

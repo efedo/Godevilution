@@ -1680,6 +1680,15 @@ public sealed class LiveAuthoritativeServerTests
             var restoredPlayer = Assert.Single(restored.Snapshot!.Players);
             Assert.Equal(movedPositionY, restoredPlayer.PositionY);
             Assert.Equal(0U, restoredPlayer.CharacterClassId);
+            var resumedSequence = resumedClient.Queue(new Command {
+                MoveRequested = new MoveRequested { DirectionY = 1 },
+            }, resumedClient.SuggestedCommandTick(restored.Snapshot.Tick));
+            Assert.Equal(2UL, resumedSequence);
+            await resumedClient.PollAsync(TestContext.Current.CancellationToken);
+            Assert.Equal(CommandStatus.Accepted,
+                (await WaitForAcknowledgementAsync(resumedClient, resumedSequence)).Status);
+            await WaitForMessageAsync(resumedClient,
+                message => message.Snapshot?.Players.Single().PositionY == movedPositionY + 1);
         } finally {
             if (Directory.Exists(saveRoot))
                 Directory.Delete(saveRoot, recursive: true);

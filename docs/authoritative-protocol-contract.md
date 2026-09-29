@@ -32,6 +32,17 @@ with that token retries the same save until an operator repairs or removes it.
 Concurrent first connections presenting one token are serialized and share the
 same authoritative session; only the first connection's creation hints apply.
 
+`ServerHello.last_client_sequence` (optional tag 8) reports the greatest
+completed command sequence for that session after restoring its receipt ledger,
+including rejected commands. A fresh Godot client allocates new commands above
+this value. A reconnecting instance takes the maximum of its local counter and
+the server value, without renumbering or discarding unresolved retries. Older
+peers may omit/ignore the field; omission retains the legacy zero baseline and
+does not provide safe fresh-process sequence recovery. This is sequential
+resume metadata, not a sequence reservation: concurrent writers sharing a token
+still require external coordination. The local launcher locks its session
+directory to prevent simultaneous local writers.
+
 `ServerHello.game_mode` additively declares whether the shared authoritative
 simulation uses single-player or multiplayer rules. It is server-owned process
 configuration, not inferred from connected participant count. Both native and

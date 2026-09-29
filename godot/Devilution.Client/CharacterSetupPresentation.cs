@@ -22,8 +22,8 @@ public partial class CharacterSetupPresentation : CanvasLayer
         (5, "Barbarian"),
     ];
 
-    private readonly OptionButton classSelector = new();
-    private readonly OptionButton sessionModeSelector = new();
+    private readonly OptionButton classSelector = new() { Name = "CharacterClass" };
+    private readonly OptionButton sessionModeSelector = new() { Name = "SessionMode" };
     private readonly LineEdit hostField = new() {
         PlaceholderText = "Server host",
         CustomMinimumSize = new Vector2(240, 0),
@@ -35,15 +35,18 @@ public partial class CharacterSetupPresentation : CanvasLayer
         Value = 6113,
         CustomMinimumSize = new Vector2(100, 0),
     };
-    private readonly LineEdit nameField = new() { PlaceholderText = "Character name" };
+    private readonly LineEdit nameField = new() { Name = "CharacterName", PlaceholderText = "Character name" };
     private readonly LineEdit resumeTokenField = new() {
         PlaceholderText = "Resume token",
+        Name = "ResumeToken",
         Secret = true,
     };
     private readonly Label classLabel = new() { Text = "Character class" };
     private readonly Label nameLabel = new() { Text = "Character name" };
     private readonly Label resumeTokenLabel = new() { Text = "Resume token" };
-    private readonly Label validation = new();
+    private readonly Label validation = new() {
+        Name = "Validation", AutowrapMode = TextServer.AutowrapMode.WordSmart,
+    };
 
     public event Action<uint, string, string, int, string>? Submitted;
 
@@ -52,8 +55,10 @@ public partial class CharacterSetupPresentation : CanvasLayer
         var panel = new PanelContainer {
             CustomMinimumSize = new Vector2(420, 320),
         };
-        panel.SetAnchorsAndOffsetsPreset(Control.LayoutPreset.Center);
-        AddChild(panel);
+        var center = new CenterContainer();
+        AddChild(center);
+        center.SetAnchorsAndOffsetsPreset(Control.LayoutPreset.FullRect);
+        center.AddChild(panel);
 
         var margin = new MarginContainer();
         margin.AddThemeConstantOverride("margin_left", 24);
@@ -101,7 +106,7 @@ public partial class CharacterSetupPresentation : CanvasLayer
         layout.AddChild(resumeTokenLabel);
         layout.AddChild(resumeTokenField);
 
-        var submit = new Button { Text = "Connect" };
+        var submit = new Button { Name = "Connect", Text = "Connect" };
         submit.Pressed += SubmitSelection;
         nameField.TextSubmitted += _ => SubmitSelection();
         resumeTokenField.TextSubmitted += _ => SubmitSelection();
@@ -137,6 +142,8 @@ public partial class CharacterSetupPresentation : CanvasLayer
     }
 
     public void HideSetup() => Visible = false;
+
+    public void ShowError(string message) => validation.Text = message;
 
     private void SubmitSelection()
     {

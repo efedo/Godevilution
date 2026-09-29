@@ -1,6 +1,7 @@
 using Devilution.Client.Protocol;
 using Devilution.Protocol.V1;
 using Godot;
+using Environment = System.Environment;
 
 namespace Devilution.Client;
 
@@ -20,16 +21,29 @@ public partial class Main : Node2D
     private string? pendingConnectionError;
     private string? selectedSpellSourceKey;
     private PendingWorldInteraction? pendingWorldInteraction;
+    private string? resumeTokenPath;
+    private bool persistLocalSession;
+    private string? localSessionWarning;
+    private double bookmarkRetrySeconds;
+
+    // Read-only copies for the scene acceptance harness; never a gameplay owner.
+    internal Snapshot? ObservedSnapshot => model.Snapshot?.Clone();
+    internal CommandResult? ObservedCommandResult => model.LastCommandResult?.Clone();
+    internal AuthoritativeServerIdentity? ObservedIdentity => client?.ServerIdentity;
+    internal bool TransportConnected => client?.IsConnected == true;
 
     public override void _Ready()
     {
+        if (int.TryParse(Environment.GetEnvironmentVariable("GODEVILUTION_QUIT_AFTER_SECONDS"), out var quitSeconds)
+            && quitSeconds is > 0 and <= 3600)
+            GetTree().CreateTimer(quitSeconds).Timeout += () => GetTree().Quit();
         world = new WorldPresentation();
         AddChild(world);
         hud = new HudPresentation();
         AddChild(hud);
         feedback = new PresentationFeedback();
         AddChild(feedback);
-        characterSetup = new CharacterSetupPresentation();
+        characterSetup = new CharacterSetupPresentation { Name = "CharacterSetup" };
         AddChild(characterSetup);
         characterSetup.Submitted += (classId, name, host, port, resumeToken) => {
             if (connectionOptions is not null)
@@ -137,12 +151,24 @@ public partial class Main : Node2D
         hud.ClearEventsRequested += model.ClearRecentEvents;
         hud.SpellSourceSelected += SelectSpellSource;
         connectionOptions = ClientConnectionOptions.FromEnvironment();
+        resumeTokenPath = Environment.GetEnvironmentVariable("DEVILUTION_RESUME_TOKEN_PATH");
         if (connectionOptions.ResumeToken.Length > 0
             || (connectionOptions.RequestedCharacterClassId.HasValue
                 && !string.IsNullOrWhiteSpace(connectionOptions.RequestedCharacterName))) {
             StartConnection(connectionOptions);
         } else {
-            characterSetup.ShowSetup(connectionOptions);
+            var defaults = connectionOptions;
+            string? bookmarkError = null;
+            if (!string.IsNullOrWhiteSpace(resumeTokenPath)) {
+                try {
+                    defaults = defaults with { ResumeToken = LocalSessionBookmark.Read(resumeTokenPath) ?? string.Empty };
+                } catch (Exception exception) when (exception is IOException or InvalidDataException or UnauthorizedAccessException) {
+                    bookmarkError = $"Could not read local resume bookmark: {exception.Message}";
+                }
+            }
+            characterSetup.ShowSetup(defaults);
+            if (bookmarkError is not null)
+                characterSetup.ShowError(bookmarkError);
             hud.SetStatus("Choose a character to connect to the authoritative server.");
         }
     }
@@ -152,6 +178,9 @@ public partial class Main : Node2D
         if (client is not null)
             return;
         characterSetup?.HideSetup();
+        // An edited remote endpoint must not replace the local host's bookmark.
+        persistLocalSession = options.Host == connectionOptions?.Host
+            && options.Port == connectionOptions?.Port && !string.IsNullOrWhiteSpace(resumeTokenPath);
         client = new AuthoritativeClient(options);
         connectionTask = ConnectAsync(lifetime.Token);
         hud?.SetStatus("Connecting to authoritative server...");
@@ -159,6 +188,13 @@ public partial class Main : Node2D
 
     public override void _Process(double delta)
     {
+        if (localSessionWarning is not null && client?.IsConnected == true) {
+            bookmarkRetrySeconds += delta;
+            if (bookmarkRetrySeconds >= 5) {
+                bookmarkRetrySeconds = 0;
+                PersistLocalBookmark();
+            }
+        }
         if (client is not null) {
             if (Interlocked.Exchange(ref pendingConnectionError, null) is { } connectionError)
                 model.Apply(new AuthoritativeClientMessage(Error: new ProtocolError {
@@ -206,6 +242,7 @@ public partial class Main : Node2D
         selectedSpellSourceKey = selectedSpell?.Key;
         hud?.SetSpellSources(spellSources, selectedSpellSourceKey);
         hud?.Apply(model, client, connectionTask);
+        hud?.SetSessionWarning(localSessionWarning);
         feedback?.Apply(model, world);
     }
 
@@ -697,6 +734,7 @@ public partial class Main : Node2D
     {
         try {
             await client!.ConnectAsync(cancellationToken);
+            PersistLocalBookmark();
         } catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested) {
         } catch (Exception exception) {
             Interlocked.Exchange(ref pendingConnectionError, exception.Message);
@@ -708,6 +746,18 @@ public partial class Main : Node2D
         model.ResetTransientPresentation();
         if (reconnectTask is null || reconnectTask.IsCompleted)
             reconnectTask = ReconnectLoopAsync(force);
+    }
+
+    private void PersistLocalBookmark()
+    {
+        if (!persistLocalSession || client is null)
+            return;
+        try {
+            LocalSessionBookmark.Write(resumeTokenPath!, client.SessionToken);
+            localSessionWarning = null;
+        } catch (Exception exception) when (exception is IOException or InvalidDataException or UnauthorizedAccessException) {
+            localSessionWarning = $"Resume bookmark could not be saved. Keep this session open and fix access to {resumeTokenPath}. Retrying every 5 seconds. {exception.Message}";
+        }
     }
 
     private async Task ReconnectLoopAsync(bool force)

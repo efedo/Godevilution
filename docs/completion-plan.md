@@ -21,8 +21,9 @@ embedded Lua nor the C++/SDL runtime.
 Execute this goal through the milestone dependencies and acceptance gates in
 this plan, with current evidence recorded in `migration-status.md`. The primary
 agent owns planning, integration, acceptance, documentation, and cohesive
-commits. Delegate substantial, bounded implementation packages and their
-independent critical review to **GPT-5.6 Luna workers at high reasoning effort**,
+commits. Delegate substantial, bounded implementation packages to GPT-5.6 Luna
+workers and independent critical review to a separate GPT-5.6 Terra reviewer,
+both at high reasoning effort,
 following the [worker delegation policy](#worker-delegation). Use focused tests
 per commit and broader integration/application acceptance at the relevant gates.
 
@@ -69,7 +70,7 @@ isolated spell or table rows while the playable route stays unchanged.
 
 | Gate | Deliverable | Dependencies | Current position |
 | --- | --- | --- | --- |
-| M0 | Reproducible launch and honest acceptance evidence | Existing implementation | Launchers and focused guards exist; actual create-game automation and fresh integration evidence remain |
+| M0 | Reproducible launch and honest acceptance evidence | Existing implementation | Godot create/move/restart/resume harness exists; see status for current evidence and remaining native/recovery/integration checks |
 | M1 | Usable Godot town-to-dungeon loop | M0 launch/acceptance harness | Protocol features exist; integrated visible journey remains |
 | M2 | Native-compatible generated world | M0 geometry/parity baseline | Geometry contracts and authored fragments exist; native map synthesis remains |
 | M3 | Complete base and Hellfire gameplay routes | M1 plus the relevant M2 world slices | Many rules exist; campaign and remaining behavioral coverage remain |
@@ -86,9 +87,9 @@ M4. M5 is the final removal gate, not a reason to postpone replacement work.
 
 1. Keep the two zero-argument root launchers. Make Godot's launcher build the
    current server and client assembly, validate handshake mode and identities,
-   report startup failures, and clean up only processes it owns. Currently its
-   harness builds the server only when the executable is absent, uses a
-   temporary save root, and does not explicitly build the Godot solution.
+   report startup failures, and clean up only processes it owns. The Godot
+   harness now rebuilds both projects, imports assets, and retains local saves
+   and a resume bookmark. Preserve these guarantees with application tests.
 2. Add an application-level acceptance path through the actual Godot scene and
    controls: launch, create a character, receive/render an authoritative world,
    submit movement, observe the acknowledged position, save, exit, and resume
@@ -117,7 +118,8 @@ deliberately does not claim native generated-world parity, which belongs to M2.
 1. Integrate session/new-character/resume menus, persistent local resume-token
    handling, disconnect feedback, and clean return/exit flows. Authoritative
    saves remain on the server; launching again must not accidentally discard
-   access to the previous session's temporary save directory.
+   access to the previous session's persistent save directory. Local bookmarks
+   are implemented; expand the complete menu/recovery journey from that base.
 2. Build a coherent town -> dungeon -> combat -> loot -> inventory/equipment ->
    portal -> vendor/stash -> save/resume journey. Add one quest interaction,
    death/restart, class skill, and resource-consuming cast to expose integration
@@ -284,18 +286,20 @@ batch. Do not restart completed engine extraction or package architecture work.
 
 ### Worker delegation
 
-- Use GPT-5.6 Luna (`gpt-5.6-luna`) with `high` reasoning effort for both
-  implementation workers and independent review workers. This supersedes the
-  earlier maximum-effort instruction. Do not silently substitute another model
+- Use GPT-5.6 Luna (`gpt-5.6-luna`) implementation workers and a separate
+  GPT-5.6 Terra (`gpt-5.6-terra`) reviewer, both with `high` reasoning effort.
+  This supersedes the earlier maximum-effort and Luna-reviewer instructions.
+  Do not silently substitute another model
   or effort setting; report unavailability and obtain direction for a change.
 - The primary agent selects milestone-aligned work packages, supplies scope,
   file/contract ownership, native references, and acceptance criteria, and owns
   integration, final verification, documentation, and commits.
 - Delegate substantial implementation packages that can proceed independently
-  alongside useful work. Limit work in progress to two implementation packages
-  plus integration. Assign disjoint files/contracts; serialize shared
+  alongside useful work. Allow up to five independent workers, including
+  reviewers, subject to the runtime's actual concurrency limit. Assign disjoint
+  files/contracts; serialize shared
   simulation, protocol, fixture-hash, and status edits.
-- Have a different GPT-5.6 Luna worker at high effort critically review each
+- Have a separate GPT-5.6 Terra reviewer at high effort critically review each
   substantial package. The reviewer inspects the actual diff, native behavior,
   test evidence, compatibility, and plan acceptance criteria, and identifies
   missing branches or regressions instead of relying on the implementer's

@@ -18,6 +18,44 @@ namespace Devilution.Server.Tests;
 public sealed class AuthoritativeTcpServerTests
 {
     [Fact]
+    public async Task FutureCommandsPublishOnlyAfterAdvancementAndKeepAutosaveAlive()
+    {
+        var probe = new FuturePublicationProbe();
+        var commandServer = new AuthoritativeCommandServer(probe);
+        var handshake = new ProtocolHandshake(new ProtocolServerIdentity("server-build", "0.1.0", "content-hash", 20));
+        ulong tick = 0;
+        await using var server = new AuthoritativeTcpServer(commandServer, handshake,
+            () => Volatile.Read(ref tick), saveProvider: probe);
+        server.Start();
+        using var timeout = CancellationTokenSource.CreateLinkedTokenSource(TestContext.Current.CancellationToken);
+        timeout.CancelAfter(TimeSpan.FromSeconds(10));
+        var cancellationToken = timeout.Token;
+        using var client = new TcpClient();
+        await client.ConnectAsync(IPAddress.Loopback, server.Port, cancellationToken);
+        await using var stream = client.GetStream();
+        await SendHelloAsync(stream, cancellationToken);
+        Assert.NotNull((await EnvelopeCodec.ReadAsync(stream, cancellationToken))!.ServerHello);
+
+        for (ulong sequence = 1; sequence <= 32; sequence++) {
+            var requestedTick = sequence * 100;
+            await EnvelopeCodec.WriteAsync(stream, new Envelope {
+                CommandBatch = new CommandBatch { Commands = { new Command {
+                    ClientSequence = sequence, RequestedTick = requestedTick,
+                    AttackRequested = new AttackRequested { TargetEntityId = 1 },
+                } } },
+            }, cancellationToken);
+            var result = (await EnvelopeCodec.ReadAsync(stream, cancellationToken))!.CommandAck.Results.Single();
+            Assert.Equal(CommandStatus.Accepted, result.Status);
+            Assert.Equal(requestedTick, result.AppliedTick);
+            Assert.Equal(requestedTick, commandServer.CurrentTick);
+            var saved = probe.ExportCount;
+            Volatile.Write(ref tick, requestedTick + 1);
+            await WaitUntilAsync(() => probe.ExportCount > saved, cancellationToken);
+        }
+        Assert.Equal(0, probe.InvalidExportCount);
+    }
+
+    [Fact]
     public async Task FailedStartRollsBackSoTheServerCanRetryAfterThePortIsReleased()
     {
         using var portHolder = new TcpListener(IPAddress.Loopback, 0);
@@ -787,8 +825,10 @@ public sealed class AuthoritativeTcpServerTests
         }
     }
 
-    [Fact]
-    public async Task TcpRestoreRaisesSharedTickToPersistedStateBoundary()
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task TcpRestoreRaisesSharedTickToPersistedStateBoundary(bool useRealtimeClock)
     {
         var saveRoot = Path.Combine(
             Path.GetTempPath(),
@@ -801,7 +841,12 @@ public sealed class AuthoritativeTcpServerTests
             var saveStore = new AuthoritativeSaveStore(saveRoot);
             saveStore.Save(sessionId, "persisted-state");
             var executor = new RecordingExecutor();
-            var saveProvider = new RecordingSaveProvider { ImportedStateTick = 15 };
+            var restoredTick = useRealtimeClock ? 10000UL : 15UL;
+            var saveProvider = new RecordingSaveProvider { ImportedStateTick = restoredTick };
+            var time = new ManualClockTimeProvider();
+            IAuthoritativeClock clock = useRealtimeClock
+                ? new Devilution.Server.Simulation.RealtimeAuthoritativeClock(20, time)
+                : new DelegateAuthoritativeClock(() => 10);
             var commandServer = new AuthoritativeCommandServer(executor);
             var handshake = new ProtocolHandshake(new ProtocolServerIdentity(
                 "server-build",
@@ -811,7 +856,7 @@ public sealed class AuthoritativeTcpServerTests
             await using var server = new AuthoritativeTcpServer(
                 commandServer,
                 handshake,
-                () => 10,
+                clock,
                 snapshotProvider: executor,
                 saveStore: saveStore,
                 saveProvider: saveProvider);
@@ -827,14 +872,24 @@ public sealed class AuthoritativeTcpServerTests
                 Envelope.PayloadOneofCase.ServerHello,
                 (await EnvelopeCodec.ReadAsync(stream, cancellationToken))!.PayloadCase);
             var restoredSnapshot = (await EnvelopeCodec.ReadAsync(stream, cancellationToken))!.Snapshot;
-            Assert.Equal(15UL, restoredSnapshot.Tick);
-            Assert.Equal([15UL], executor.SnapshotTicks);
+            Assert.Equal(restoredTick, restoredSnapshot.Tick);
+            Assert.Equal([restoredTick], executor.SnapshotTicks);
+            if (useRealtimeClock) {
+                Assert.Equal(restoredTick, clock.CurrentTick);
+                time.AdvanceMilliseconds(50);
+                // No command/poll may be required to unfreeze the resumed host.
+                using var progressionTimeout = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+                progressionTimeout.CancelAfter(TimeSpan.FromSeconds(5));
+                while (commandServer.CurrentTick != restoredTick + 1)
+                    await Task.Delay(10, progressionTimeout.Token);
+                restoredTick++;
+            }
 
             await EnvelopeCodec.WriteAsync(stream, new Envelope {
                 CommandBatch = new CommandBatch {
                     Commands = { new Command {
                         ClientSequence = 1,
-                        RequestedTick = 15,
+                        RequestedTick = restoredTick,
                         AttackRequested = new AttackRequested { TargetEntityId = 1 },
                     } },
                 },
@@ -842,7 +897,7 @@ public sealed class AuthoritativeTcpServerTests
 
             var acknowledgement = (await EnvelopeCodec.ReadAsync(stream, cancellationToken))!.CommandAck.Results.Single();
             Assert.Equal(CommandStatus.Accepted, acknowledgement.Status);
-            Assert.Equal(15UL, acknowledgement.AppliedTick);
+            Assert.Equal(restoredTick, acknowledgement.AppliedTick);
         } finally {
             if (Directory.Exists(saveRoot))
                 Directory.Delete(saveRoot, recursive: true);
@@ -3466,6 +3521,35 @@ public sealed class AuthoritativeTcpServerTests
         {
             release.Set();
         }
+    }
+
+    private sealed class FuturePublicationProbe : IAuthoritativeCommandExecutor,
+        IAuthoritativeTickExecutor, IAuthoritativeSaveProvider
+    {
+        private ulong advancedTick;
+        private ulong actionTick;
+        private int exportCount;
+        private int invalidExportCount;
+        public int ExportCount => Volatile.Read(ref exportCount);
+        public int InvalidExportCount => Volatile.Read(ref invalidExportCount);
+
+        public CommandExecutionResult Execute(string sessionId, Command command, ulong appliedTick)
+        {
+            actionTick = appliedTick;
+            // Let the periodic publisher contend while admission is in flight.
+            Thread.Sleep(20);
+            return CommandExecutionResult.Accepted;
+        }
+
+        public void AdvanceTo(ulong tick) => advancedTick = Math.Max(advancedTick, tick);
+        public string ExportPlayerSave(string sessionId)
+        {
+            if (advancedTick < actionTick)
+                Interlocked.Increment(ref invalidExportCount);
+            Interlocked.Increment(ref exportCount);
+            return "{}";
+        }
+        public void ImportPlayerSave(string sessionId, string serializedSave) { }
     }
 
     private sealed class RecordingSaveProvider : IAuthoritativeSaveProvider

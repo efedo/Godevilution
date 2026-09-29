@@ -10,6 +10,10 @@ public partial class HudPresentation : CanvasLayer
     private const int InventoryColumns = 10;
     private const int VisibleInventoryRows = 4;
     private readonly Label status = new();
+    private readonly Label sessionWarning = new() {
+        Name = "SessionWarning", Visible = false, Modulate = new Color("ff9b9b"),
+        AutowrapMode = TextServer.AutowrapMode.WordSmart,
+    };
     private readonly Label state = new();
     private readonly Label statusEffects = new();
     private readonly Label attributes = new();
@@ -128,6 +132,7 @@ public partial class HudPresentation : CanvasLayer
         var statusBox = new VBoxContainer();
         statusPanel.AddChild(statusBox);
         statusBox.AddChild(status);
+        statusBox.AddChild(sessionWarning);
         statusBox.AddChild(state);
         statusBox.AddChild(statusEffects);
         AddChild(statusPanel);
@@ -382,6 +387,12 @@ public partial class HudPresentation : CanvasLayer
     }
 
     public void ToggleDiagnostics() => diagnosticsToggle.ButtonPressed = !diagnosticsToggle.ButtonPressed;
+
+    public void SetSessionWarning(string? message)
+    {
+        sessionWarning.Text = message ?? string.Empty;
+        sessionWarning.Visible = !string.IsNullOrEmpty(message);
+    }
 
     public void ToggleHighContrast() => highContrastToggle.ButtonPressed = !highContrastToggle.ButtonPressed;
 

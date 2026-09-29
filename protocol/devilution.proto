@@ -46,6 +46,9 @@ message ServerHello {
 	string session_token = 5;
 	string ruleset_identity_hash = 6;
 	GameMode game_mode = 7;
+	// Additive resume metadata. New client processes must allocate commands above
+	// the persisted ledger while retries keep their original sequence numbers.
+	optional uint64 last_client_sequence = 8;
 }
 
 enum GameMode {

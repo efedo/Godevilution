@@ -11,6 +11,46 @@ namespace Devilution.Client.Protocol.Tests;
 
 public sealed class AuthoritativeClientTransportTests
 {
+    [Theory]
+    [InlineData(null, 0, 1)]
+    [InlineData(0UL, 0, 1)]
+    [InlineData(42UL, 0, 43)]
+    [InlineData(1UL, 3, 4)]
+    [InlineData(42UL, 3, 43)]
+    public async Task SeedsNewCommandsWithoutRenumberingPendingRetries(ulong? highWater, int pendingCount, ulong expectedSequence)
+    {
+        using var listener = new TcpListener(IPAddress.Loopback, 0);
+        listener.Start();
+        var serverTask = Task.Run(async () => {
+            using var connection = await listener.AcceptTcpClientAsync(TestContext.Current.CancellationToken);
+            await using var stream = connection.GetStream();
+            _ = await ReadEnvelopeAsync(stream);
+            var hello = new ServerHello {
+                ProtocolSchemaVersion = "0.1.0", ContentManifestHash = "content-hash",
+                RulesetIdentityHash = "ruleset-hash", GameMode = GameMode.SinglePlayer,
+            };
+            if (highWater.HasValue)
+                hello.LastClientSequence = highWater.Value;
+            await WriteEnvelopeAsync(stream, new Envelope { ServerHello = hello });
+            await WriteEnvelopeAsync(stream, new Envelope { Snapshot = new Snapshot {
+                ContentManifestHash = "content-hash", RulesetIdentityHash = "ruleset-hash",
+            } });
+            for (var i = 0; i <= pendingCount; i++) {
+                var command = Assert.Single((await ReadEnvelopeAsync(stream)).CommandBatch.Commands);
+                Assert.Equal(i < pendingCount ? (ulong)i + 1 : expectedSequence, command.ClientSequence);
+            }
+        }, TestContext.Current.CancellationToken);
+        await using var client = new AuthoritativeClient(new ClientConnectionOptions(
+            "127.0.0.1", ((IPEndPoint)listener.LocalEndpoint).Port, "test", "0.1.0", "content-hash"));
+        for (var i = 0; i < pendingCount; i++)
+            client.Queue(new Command { MoveRequested = new MoveRequested { DirectionY = 1 } }, 1);
+        await client.ConnectAsync(TestContext.Current.CancellationToken);
+        Assert.Equal(pendingCount, client.PendingCommandCount);
+        Assert.Equal(expectedSequence, client.Queue(new Command { MoveRequested = new MoveRequested { DirectionY = 1 } }, 1));
+        await client.PollAsync(TestContext.Current.CancellationToken);
+        await serverTask.WaitAsync(TimeSpan.FromSeconds(10), TestContext.Current.CancellationToken);
+    }
+
     [Fact]
     public void PreservesTownerGreetingCommandAcrossProtocolSerialization()
     {

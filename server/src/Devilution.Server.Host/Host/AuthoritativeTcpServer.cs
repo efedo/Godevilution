@@ -181,6 +181,13 @@ public sealed class AuthoritativeTcpServer : IAsyncDisposable
     public Devilution.Engine.GameplayRulesetReloadResult<IAuthoritativeGameHostAdapter> TryReloadRuleset(
         ContentManifest candidateManifest,
         IEnumerable<Devilution.Engine.IGameplayModule> candidateModules)
+        // Match ordinary host operations: command state before adapter barrier.
+        // The candidate-save callback must never invert those two locks.
+        => commandServer.WithSynchronizedState(() => TryReloadRulesetCore(candidateManifest, candidateModules));
+
+    private Devilution.Engine.GameplayRulesetReloadResult<IAuthoritativeGameHostAdapter> TryReloadRulesetCore(
+        ContentManifest candidateManifest,
+        IEnumerable<Devilution.Engine.IGameplayModule> candidateModules)
     {
         if (gameAdapter is not LeasedAuthoritativeGameHostAdapter leasedAdapter)
             throw new InvalidOperationException(
@@ -336,6 +343,7 @@ public sealed class AuthoritativeTcpServer : IAsyncDisposable
                 InitializeParticipantIfNeeded(session, helloEnvelope.ClientHello);
             var serverHello = handshakeResult.ServerHello!.Clone();
             serverHello.SessionToken = session.Token;
+            serverHello.LastClientSequence = commandServer.LastClientSequence(session.Id);
             await EnvelopeCodec.WriteAsync(stream, new Envelope { ServerHello = serverHello }, cancellationToken);
             var sessionId = session.Id;
             var entityId = session.EntityId;
@@ -350,18 +358,21 @@ public sealed class AuthoritativeTcpServer : IAsyncDisposable
 
                 if (envelope.PayloadCase == Envelope.PayloadOneofCase.CommandBatch) {
                     AuthoritativeCommandBatchValidator.Validate(envelope.CommandBatch);
-                    currentTick = Math.Max(clock.CurrentTick, commandServer.CurrentTick);
-                    var acknowledgement = commandServer.ProcessBatch(sessionId, envelope.CommandBatch, currentTick);
-                    AuthoritativeCommandAckValidator.Validate(acknowledgement);
-                    // A client may submit a command for the next deterministic
-                    // tick. Publish the snapshot at that applied boundary so a
-                    // newly started action is never serialized as future state.
-                    if (acknowledgement.Results.Count != 0)
-                        currentTick = Math.Max(
-                            Math.Max(currentTick, commandServer.CurrentTick),
-                            acknowledgement.Results.Max(result => result.AppliedTick));
-                    commandServer.AdvanceTo(currentTick);
-                    SaveSession(session);
+                    var acknowledgement = commandServer.WithSynchronizedSession(sessionId, () => {
+                        currentTick = Math.Max(clock.CurrentTick, commandServer.CurrentTick);
+                        var result = commandServer.ProcessBatch(sessionId, envelope.CommandBatch, currentTick);
+                        AuthoritativeCommandAckValidator.Validate(result);
+                        // Admission, applied-tick advancement and persistence
+                        // are one publication. The autonomous loop must not save
+                        // a future action against the previous tick in between.
+                        if (result.Results.Count != 0)
+                            currentTick = Math.Max(
+                                Math.Max(currentTick, commandServer.CurrentTick),
+                                result.Results.Max(entry => entry.AppliedTick));
+                        commandServer.AdvanceTo(currentTick);
+                        SaveSession(session);
+                        return result;
+                    });
                     await EnvelopeCodec.WriteAsync(stream, new Envelope { CommandAck = acknowledgement }, cancellationToken);
                     await SendEventsIfAvailable(stream, sessionId, entityId, currentTick, cancellationToken);
                     await SendSnapshotIfAvailableAsync(stream, sessionId, entityId, currentTick, cancellationToken);
@@ -424,12 +435,14 @@ public sealed class AuthoritativeTcpServer : IAsyncDisposable
             var requestedCharacterName = hello.HasRequestedCharacterName
                 ? hello.RequestedCharacterName
                 : null;
-            participantInitializer?.InitializeParticipant(
-                session.Id,
-                new AuthoritativeParticipantSelection(requestedClassId) {
-                    CharacterName = requestedCharacterName,
-                });
-            session.ParticipantInitialized = true;
+            commandServer.WithSynchronizedSession(session.Id, () => {
+                participantInitializer?.InitializeParticipant(
+                    session.Id,
+                    new AuthoritativeParticipantSelection(requestedClassId) {
+                        CharacterName = requestedCharacterName,
+                    });
+                session.ParticipantInitialized = true;
+            });
         }
     }
 
@@ -444,10 +457,15 @@ public sealed class AuthoritativeTcpServer : IAsyncDisposable
                 session.SaveLoaded = true;
                 return false;
             }
-            saveProvider.ImportSessionState(session.Id, serializedSave);
-            commandServer.AdvanceTo(saveProvider.GetSessionStateTick(session.Id));
-            session.SaveLoaded = true;
-            session.ParticipantInitialized = true;
+            commandServer.WithSynchronizedSession(session.Id, () => {
+                saveProvider.ImportSessionState(session.Id, serializedSave);
+                var restoredTick = saveProvider.GetSessionStateTick(session.Id);
+                if (clock is Devilution.Engine.IResumableAuthoritativeClock resumableClock)
+                    resumableClock.RestoreAtTick(restoredTick);
+                commandServer.AdvanceTo(restoredTick);
+                session.SaveLoaded = true;
+                session.ParticipantInitialized = true;
+            });
             return true;
         }
     }

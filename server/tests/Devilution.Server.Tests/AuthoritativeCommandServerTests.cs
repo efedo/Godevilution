@@ -7,6 +7,24 @@ namespace Devilution.Server.Tests;
 public sealed class AuthoritativeCommandServerTests
 {
     [Fact]
+    public void ResumeHighWaterIncludesRejectedAndOutOfOrderReceiptsPerSession()
+    {
+        var server = new AuthoritativeCommandServer(new RecordingExecutor());
+        Assert.Equal(0UL, server.LastClientSequence("first"));
+        var rejected = server.Process("first", Purchase(clientSequence: 42, requestedTick: 9), currentTick: 10);
+        Assert.Equal(CommandStatus.Rejected, rejected.Status);
+        server.Process("first", Attack(clientSequence: 2, requestedTick: 10), currentTick: 10);
+        server.Process("other", Attack(clientSequence: 80, requestedTick: 10), currentTick: 10);
+        Assert.Equal(42UL, server.LastClientSequence("first"));
+        Assert.Equal(80UL, server.LastClientSequence("other"));
+
+        var restored = new AuthoritativeCommandServer(new RecordingExecutor());
+        restored.ImportCompletedCommands("first", server.ExportCompletedCommands("first").Values.Reverse());
+        Assert.Equal(42UL, restored.LastClientSequence("first"));
+        Assert.Equal(0UL, restored.LastClientSequence("other"));
+    }
+
+    [Fact]
     public void DuplicateCommandExecutesOnceAndReusesItsReceipt()
     {
         var executor = new RecordingExecutor();

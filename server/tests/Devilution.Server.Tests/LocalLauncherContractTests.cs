@@ -84,6 +84,19 @@ public sealed class LocalLauncherContractTests
             StringComparison.Ordinal);
     }
 
+    [Fact]
+    public void GodotLauncherBuildsBothProjectsAndOwnsOnlyItsProcesses()
+    {
+        var launcher = File.ReadAllText(Path.Combine(FindRepositoryRoot(), "godot/run-local-client.ps1"));
+        var launch = launcher.IndexOf("$serverProcess = Start-Process", StringComparison.Ordinal);
+        Assert.True(launch > launcher.IndexOf("dotnet build $serverProject", StringComparison.Ordinal));
+        Assert.True(launch > launcher.IndexOf("dotnet build (Join-Path $clientProject", StringComparison.Ordinal));
+        Assert.DoesNotContain("Get-Process", launcher);
+        Assert.Contains("$gameMode -ne 'SinglePlayer'", launcher);
+        Assert.Contains("DEVILUTION_RESUME_TOKEN_PATH", launcher);
+        Assert.Contains("$savedEnvironment[$name]", launcher);
+    }
+
     private static string FindRepositoryRoot()
     {
         var configuredRoot = Environment.GetEnvironmentVariable(

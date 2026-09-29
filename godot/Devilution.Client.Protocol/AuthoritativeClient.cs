@@ -146,6 +146,10 @@ public sealed class AuthoritativeClient : IAsyncDisposable
             if (initialSnapshot.PayloadCase != Envelope.PayloadOneofCase.Snapshot)
                 throw new InvalidDataException("The second server response must be an authoritative snapshot.");
             ValidateInitialSnapshotIdentity(initialSnapshot.Snapshot);
+            // Do not renumber pending retries. Only new intents advance beyond
+            // the authoritative ledger restored by a fresh host/client process.
+            lock (pendingLock)
+                nextClientSequence = Math.Max(nextClientSequence, hello.ServerHello.LastClientSequence);
             Enqueue(initialSnapshot);
             var connectedStream = stream;
             var connectionLifetime = CancellationTokenSource.CreateLinkedTokenSource(lifetime.Token);
@@ -200,13 +204,13 @@ public sealed class AuthoritativeClient : IAsyncDisposable
     public ulong Queue(Command command, ulong requestedTick)
     {
         ArgumentNullException.ThrowIfNull(command);
-        var sequence = checked(++nextClientSequence);
-        command.ClientSequence = sequence;
-        command.RequestedTick = requestedTick;
-        var ownedCommand = command.Clone();
-        lock (pendingLock)
-            pending.Add(sequence, new PendingCommand(ownedCommand));
-        return sequence;
+        lock (pendingLock) {
+            var sequence = checked(++nextClientSequence);
+            command.ClientSequence = sequence;
+            command.RequestedTick = requestedTick;
+            pending.Add(sequence, new PendingCommand(command.Clone()));
+            return sequence;
+        }
     }
 
     /** Sends new commands and resubmits commands whose adaptive timeout elapsed. */

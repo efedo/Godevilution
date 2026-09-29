@@ -479,3 +479,6 @@ Testing/
 # Historical local build/test reports; do not commit generated output.
 /build_output.txt
 /objects_test_results.json
+
+# Local authoritative saves and private Godot resume credentials.
+/.local/

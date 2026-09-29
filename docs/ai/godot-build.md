@@ -51,17 +51,45 @@ powershell -ExecutionPolicy Bypass -File run-godot-client.ps1
 
 It delegates to `godot/run-local-client.ps1`, which also checks the standard
 per-user WinGet package directory. For headless diagnostics or an explicit
-executable, invoke that underlying harness directly. The harness builds the
-authoritative server if its Debug executable is absent,
-starts it on a free port, passes the current ruleset identity to the client, and
-reports the temporary server-log directory. It also creates a new save root in
-that directory per launch. Explicitly build both the server and Godot solution
-before launching after source changes; an existing server binary is not
-rebuilt by this harness. A resume token requires the matching host save root.
-Automatic build freshness and user-accessible persistent resume are M0/M1 work.
+executable, invoke that underlying harness directly. Every launch incrementally
+builds the server and Godot project and imports presentation assets. It starts
+the server on a free port, validates reported mode and hashes, and supplies those
+identities to the client. Only owned process handles are cleaned up, and changed
+environment values are restored when the harness returns.
+
+Normal launches retain authoritative saves under `.local/godot/save` and a
+private `resume-token.txt` bookmark beside them. Both are ignored by Git. Keep
+them together when backing up; do not share the token. The next launch defaults
+the setup form to resume, while New character remains available. A directory
+lock prevents simultaneous local writers. Logs are retained in the printed temp
+directory. `-SessionDirectory` on the inner harness isolates diagnostic runs.
+`-Headless -QuitAfterSeconds N` now measures real seconds, not Godot iterations.
+
+## Application acceptance
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File tools/test-godot-session.ps1
+powershell -NoProfile -ExecutionPolicy Bypass -File tools/test-godot-session.ps1 -Visible
+```
+
+These runs use separate server and Godot processes for create and resume, a
+unique retained test save directory, the real `Main.tscn` setup form, mouse
+submission, and movement key input. They require accepted movement, matching
+character/position after fresh-host resume, and a new command sequence after
+restart. Missing evidence, wrong identities/mode, absent checkpoints, timeout,
+or nonzero exits fail the run. No MPQs are required. The visible variant also
+captures setup/world PNGs for visual inspection; the private token is not emitted
+in JSON evidence. This is a narrow session journey, not campaign acceptance.
+The isolated creation phase deliberately starts with a corrupt bookmark, then
+holds its file open to verify persistent write-failure feedback and successful
+retry after access is restored. The test uses town level 0 and seed 0 to exclude
+combat knockback from its movement/save assertion; normal launch defaults are
+unchanged. Keep the evidence directory private because it contains a resume
+credential even though the JSON and screenshots do not reveal it.
 
 Protocol tests exercise the model/transport without the Godot scene. A headless
 startup verifies a different boundary and does not prove that a visible window
-renders or its controls create a game. The M0/M1 application acceptance must
-exercise actual controls, authoritative movement, and save/restart/resume, with
-a separate visible check for rendering and window behavior.
+renders. The application harness exercises controls even headlessly, but its
+visible variant and inspection of captured frames are separate evidence for
+rendering. Server-loss UI, native new-game, campaign, and broader recovery gates
+remain distinct checks.

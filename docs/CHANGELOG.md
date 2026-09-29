@@ -2,6 +2,18 @@
 
 All notable changes to this fork are documented below.
 
+- 2026-09-29: Added rebuilt Godot scene-level create/move/save/fresh-process
+  resume acceptance, including visible evidence and bookmark corruption/write
+  recovery. The launcher imports assets, retains private local saves, validates
+  mode/identity, restores environment settings, and owns its process cleanup.
+  Added additive resume sequence metadata, atomic command/checkpoint publication,
+  realtime-clock rebasing, and consistent ruleset-reload/initialization locking.
+  Updated verification evidence and unresolved integration/UI gaps without
+  claiming M0 or campaign completion. Refined delegation to Luna 5.6 high
+  implementation workers and a separate Terra 5.6 high reviewer, up to five
+  workers subject to runtime limits.
+  Normalized touched text files to CRLF, including pre-existing mixed endings.
+
 - 2026-09-29: Integrated the approved delegation mandate into the project goal
   and completion workflow: GPT-5.6 Luna implementation workers and separate
   critical-review workers, both at high effort, with bounded parallel work,

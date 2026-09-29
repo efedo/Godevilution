@@ -1,6 +1,7 @@
 # Godevilution Migration Status
 
-Status date: 2026-09-29. Implementation assessed: `8c03b365d`.
+Status date: 2026-09-29. Estimate baseline: `8c03b365d`; the M0 session-reliability
+batch following `45b159b77` is covered by the fresh verification below.
 
 The [completion plan](completion-plan.md) is the active delivery order and
 acceptance contract. The [architecture](csharp-authoritative-server-migration.md)
@@ -45,19 +46,26 @@ open. Their scope, dependencies, and exit checks are defined only in the
 - The checked-in replay inventory is 394 JSON fixtures. The available native
   replay discovery metadata registers 422 tests, including parser/validation
   cases; this is not the total native project test count or a fresh pass result.
-- This assessment inspected code, documentation, launcher contracts, and local
-  test registration. It did not run a new full managed/native suite, launch a
-  visible client, or certify a complete campaign. The August results below are
-  historical verification only.
+- Fresh managed suites and actual headless/visible Godot session journeys were
+  run for the M0 batch; results and unresolved failures are recorded below.
+  No new native GUI/campaign acceptance or full native suite was run. The August
+  results below remain historical verification only.
 - The native new-game startup failure was addressed by `923660c7b`, with the
   earlier single-player launcher contract in `0ef95acd9`. The launcher rebuilds
   current binaries and checks the reported mode; native policy also rejects a
   mismatched handshake. These fixes are present, but source/contract checks do
   not prove that the GUI can create and enter a game.
-- Godot's local harness builds the server only if its executable is absent and
-  does not explicitly build the Godot assembly. It uses a fresh temporary save
-  root. M0/M1 must address build freshness and user-accessible cross-launch
-  resume before launch reliability is considered complete.
+- Godot's local harness now builds the current server and client, imports
+  assets, checks mode/identities, and retains `.local/godot` saves plus a private
+  resume bookmark. Actual scene/control tests create a Rogue, move, restart both
+  processes, restore identity/position, and move with a fresh command sequence.
+  Corrupt-bookmark feedback and a blocked-write/retry path are exercised too.
+  This closes that narrow journey, not M0 as a whole: native creation,
+  application server-loss/reconnect, and a clean integration baseline remain.
+- The visible run renders setup and placeholder world presentation. The existing
+  fixed-width HUD clips at the observed 1028x720 window; responsive layout and
+  usable town/dungeon presentation remain M1 work. No campaign playability or
+  measured performance/platform matrix is claimed.
 - Godot currently requires no MPQs because it uses placeholder presentation.
   A complete MPQ-free client asset route remains a deliverable. Original-asset
   support is optional client tooling; the server must remain MPQ-independent.
@@ -75,6 +83,71 @@ open. Their scope, dependencies, and exit checks are defined only in the
 The following records describe implemented slices at this baseline. They are
 evidence, not a separate priority list; detailed older entries retain their
 original scope and may be superseded by later entries or the current assessment.
+
+### M0 Godot session-reliability verification (2026-09-29)
+
+The launcher retains only a client resume credential; gameplay state remains in
+server checkpoints. Additive `ServerHello.last_client_sequence` prevents a fresh
+client from replaying sequence 1 as a duplicate after restart, while pending
+retries retain their original identities. The host publishes command admission,
+applied-tick advancement, and checkpoint state under one lock. Restore rebases
+the realtime clock to the persisted boundary; it does not wait for uptime to
+catch up. Ruleset replacement and participant initialization follow the same
+command-state-before-adapter lock order, eliminating an observed reload deadlock.
+
+Verification used Windows, Godot 4.7.1 Mono, .NET 10.0.11 server tests and .NET
+8.0.30 client tests. Focused server classes `AuthoritativeClockTests`,
+`AuthoritativeTcpServerTests`, `AuthoritativeCommandServerTests`,
+`AuthoritativeSessionPersistenceTests`, `LocalLauncherContractTests`, and
+`ProtocolHandshakeTests` pass **73/73**, including future-command publication,
+clock resume, and live ruleset replacement. Client classes
+`LocalSessionBookmarkTests`, `AuthoritativeClientTransportTests`,
+`RetryReconnectTests`, `ClientBoundaryTests`, and `ClientConnectionOptionsTests`
+pass **36/36**; `LiveServerRestoresAuthoritativeStateAfterProcessRestart` passes
+**1/1**. Use the build and repeated `--filter-class`/`--filter-method` commands in
+[Godot build notes](ai/godot-build.md) with these fully qualified class names.
+
+`tools/test-godot-session.ps1` and its `-Visible` variant both pass against rebuilt
+artifacts, using an explicit local Godot executable. The deterministic test uses
+town level 0 and seed 0, independently of the normal launch defaults. Local
+evidence is retained under `%TEMP%/Godevilution-Scene-Acceptance-` with suffix
+`bfe2509169564103a5c7b889d5465c08` (headless) and
+`0335b06cda124bc5b3be1bd6355a3765` (visible). Create/resume evidence records entity
+1, class 1, positions `(0,1)` then `(0,2)`, and sequences 1 then 2. The visible
+setup/world PNGs were inspected; they expose the HUD clipping noted above.
+These private local artifacts are not checked in and do not replace reproducible
+tests. Never publish the accompanying resume-token file.
+
+The full server command
+`dotnet run --project server/tests/Devilution.Server.Tests/Devilution.Server.Tests.csproj --no-build -- --no-ansi`
+finishes **1045/1048 passed**. Two tick-1 Flash hash failures
+(`FlashUsesBaseContentAndMatchesNativeLayerTimeline` and
+`SecondaryFlashCastDamagesThePrimaryParticipantWithoutHittingItsOwner`) reproduce
+with identical hashes in untouched `45b159b77`; do not bless new hashes without
+native investigation. `ConcurrentStoreInstancesPublishCompleteAtomicSaves`
+times out waiting for writers during the full run. Its class and
+`RulesetLeaseHostAdapterTests` pass **26/26** in a focused rerun; an earlier full
+run also timed out in the adapter lease test. These remain integration gaps,
+not waived passes. NuGet vulnerability-audit requests were unavailable in the
+restricted environment (NU1900); cached builds succeeded. No security audit or
+fresh native parity pass is implied.
+
+The full client/protocol command
+`dotnet run --project godot/Devilution.Client.Protocol.Tests/Devilution.Client.Protocol.Tests.csproj --no-build -- --no-ansi`
+finishes **445/477 passed**. Failures include stale `1.462.0` test overlays against
+the `1.502.0` base pack, invalid overlay declarations, a projectile-behavior enum
+expectation, and a live cast-source RNG expectation. The enum test, Berserk schema
+mismatch, and `LiveServerConsumesTheExactDeclaredCastSource` independently fail
+in untouched `45b159b77` too; the RNG test's observed value differs between runs.
+The attempted full baseline run stalled without a final count. Remaining
+failures require classification rather than an assumption that all are
+pre-existing. This integration result is not replaced by the passing narrow
+Godot journey.
+
+Next M0 work: resolve the recorded integration failures, exercise application
+server-loss/reconnect and native new-game, and establish the target platform and
+measured performance matrix. Overall percentage estimates are unchanged by this
+narrow reliability batch.
 
 Secondary-participant Apocalypse casts now cross the primary-player replay
 boundary with native caster ownership, mana/facing, Solid-only admission,
