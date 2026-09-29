@@ -8,13 +8,29 @@ the native client remains usable for compatibility testing while authoritative
 systems move behind a shared protocol.
 
 This document defines the intended architecture and invariants. Current progress
-is tracked separately in [migration-status.md](migration-status.md).
+is tracked separately in [migration-status.md](migration-status.md). The
+[completion plan](completion-plan.md) is the sole active milestone sequence and
+defines acceptance. Detailed implementation examples below describe individual
+slices; they are not claims of complete gameplay or presentation coverage.
 
-The current parity slice also preserves Nova Ball's native interaction with
-shrines: regular missile-blocking objects terminate a ball, while an optional
-validated shrine on its target tile lets the ball continue. The capability is
-transported as authoritative object state and remains invisible to client-side
-gameplay logic.
+## Completion boundaries
+
+The final production runtime is a C# authoritative engine with a Godot C#
+presentation client. Single-player and multiplayer share the same simulation
+and protocol. Game rules, external validated data, generic engine composition,
+host infrastructure, and presentation remain separately owned. Native
+compatibility and deterministic parity must be preserved throughout migration.
+
+The server must never require MPQ files, a game installation, SDL, Godot, or
+embedded Lua. All gameplay data it needs arrives as explicit validated content
+packs. Original-asset discovery or conversion belongs in optional client/offline
+tooling. Godot must eventually support a complete presentation pack without
+MPQs; its current placeholder art is not completion of that requirement.
+
+Keep the native implementation available as a compatibility build and parity
+oracle until its consumers have characterized replacements. Retiring C++/SDL
+and Lua from production must not silently remove a supported compatibility
+surface; see the M5 gate in the completion plan.
 
 ## Components
 
@@ -686,7 +702,11 @@ content field carries the validated content-manifest hash and the ruleset field
 carries the combined content-and-module identity. Both are required by the v0.2
 handshake; v0.1 remains available for native compatibility clients.
 
-Recent content slices
+### Selected content implementation history
+
+These schema-by-schema records explain prior implementations. The current
+schema contract is maintained in [the content reference](../server/content/README.md),
+and outstanding delivery work belongs to the completion plan.
 
 Schema 1.250 adds the stable `warp` namespace. Static level-trigger routes may
 carry `warp_symbol` links, which are cross-checked against retained numeric IDs
@@ -1767,4 +1787,5 @@ or the protocol. Lua can be removed only after its data, gameplay, presentation,
 and developer-tooling capabilities have replacements with parity coverage.
 
 See [lua-capability-inventory.md](lua-capability-inventory.md) for the remaining
-replacement gates.
+replacement gates and [the completion plan](completion-plan.md#m5-remove-production-legacy-dependencies)
+for their delivery and compatibility conditions.

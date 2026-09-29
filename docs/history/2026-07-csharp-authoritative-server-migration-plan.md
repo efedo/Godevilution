@@ -3,6 +3,7 @@
 > Historical document. This was the July 2026 implementation plan and is
 > retained for decision context. Use `docs/csharp-authoritative-server-migration.md`
 > and `docs/migration-status.md` for current architecture and status.
+> Its phase/task sequence is superseded by [the completion plan](../completion-plan.md).
 
 ## Purpose
 

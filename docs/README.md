@@ -4,10 +4,17 @@ This index separates current project documentation from historical migration
 records. Documents under `docs/history/` are retained for context and are not
 implementation instructions.
 
+Read [migration status](migration-status.md#progress-assessment) for the dated
+baseline, then the [completion plan](completion-plan.md) for what to do next.
+The plan owns priorities and acceptance gates; architecture owns invariants;
+specialist guides own contracts and operation. Keep estimates only in migration
+status and chronological completed work in [the changelog](CHANGELOG.md).
+
 ## Current architecture and status
 
 - [Authoritative architecture](csharp-authoritative-server-migration.md)
 - [Migration status](migration-status.md)
+- [Completion plan and workflow](completion-plan.md)
 - [Protocol contract](authoritative-protocol-contract.md)
 - [Protocol package](../protocol/README.md)
 - [Authoritative server](../server/README.md)

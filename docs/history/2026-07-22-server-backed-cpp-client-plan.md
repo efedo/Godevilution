@@ -3,6 +3,8 @@
 > Historical document. This implementation plan is complete and is retained for
 > design context. Use `docs/native-client.md` for current build and operation
 > guidance.
+> Remaining project work follows [the completion plan](../completion-plan.md),
+> not the historical task sequence below.
 
 **Goal:** Add an opt-in C++ TCP client that speaks the canonical Protobuf protocol to the C# authoritative server while leaving the legacy multiplayer transport unchanged by default.
 

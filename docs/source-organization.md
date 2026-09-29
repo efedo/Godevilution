@@ -78,4 +78,6 @@ ordinary .NET tooling. Godot scripts adapt snapshots and events into scenes,
 input, rendering, audio, and UI; they must not become a second gameplay engine.
 
 See `docs/csharp-authoritative-server-migration.md` for ownership rules and
-`docs/migration-status.md` for the current extraction state.
+`docs/migration-status.md` for the current extraction state. Delivery order and
+acceptance gates are maintained in `docs/completion-plan.md`; this layout is
+not a list of architecture work that still needs to be implemented.

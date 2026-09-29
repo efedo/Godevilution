@@ -3,7 +3,16 @@
 Each directory under `server/content` is a server-owned, validated gameplay
 content pack. The default `base` pack is loaded by the standalone server and is
 included in its content manifest and combined ruleset identity.
-It declares its identity and `devilution.diablo@1.502.0` schema in
+
+These packs are the server's data boundary; no MPQ archive or game installation
+is required by the server. Current geometry loaders, generated grids, and native
+fragments do not establish full native dungeon synthesis or complete campaign
+content. The [completion plan](../../docs/completion-plan.md) owns the M2 world
+and M3 gameplay/content gates. Client art/audio and any optional original-asset
+import belong outside the authoritative runtime. This document specifies table
+contracts; [migration status](../../docs/migration-status.md) owns coverage.
+
+The base pack declares its identity and `devilution.diablo@1.502.0` schema in
 `base/content-pack.json`; the Diablo module also accepts the immediately
 previous additive `1.501.0` schema so existing manifest-based packs remain
 loadable. A composed manifest must still use one exact schema identity across

@@ -4,6 +4,12 @@ Replay fixtures are the cross-language behavioral baseline for the native
 engine and C# authoritative server. They are UTF-8 JSON test artifacts, not the
 runtime Protobuf transport.
 
+The [completion plan](completion-plan.md) selects new parity work by milestone
+and risk. Counts below describe inventory, not a whole-game completion measure.
+Use [migration status](migration-status.md) for dated verification evidence and
+known oracle limits. Protocol/model replay does not replace actual Godot
+application or campaign acceptance.
+
 A fixture records its format and protocol versions, content identity, tick rate,
 RNG seed, initial state, authoritative command order, checkpoint hashes or
 projection-only markers, and an
@@ -672,10 +678,12 @@ the first drop remains authoritative.
 The compact native replay projection now carries the same server-owned corpse
 tile representation and per-tick monster regeneration as the C# checkpoints.
 Ordinary-death and Firebolt, Fireball, Lightning, Flash, and Elemental
-spell/projectile-timeline checkpoints pass in both runners. As of 2026-09-27,
+spell/projectile-timeline checkpoints have recorded coverage in both runners.
+As inventoried on 2026-09-29,
 the native replay gate contains 394 checked-in JSON fixtures and 422 registered
 tests; the test count also includes parser and validation cases that do not
-introduce another fixture file. Coverage includes seeded and autonomous MonsterArrow
+introduce another fixture file. It is not a fresh execution result or the count
+of all native project tests. Coverage includes seeded and autonomous MonsterArrow
 source coverage, Hellfire HorkDemon Hork Spawn admission, player impact, and
 miss-before-expiry, secondary-player Hork Spawn block and impact, current-tile
 breakable-object removal, primary-player Hork Spawn block, multiplayer

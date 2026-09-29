@@ -25,7 +25,10 @@ randomness, world state, inventory, combat, and persistence.
 
 See the [documentation index](docs/README.md),
 [architecture](docs/csharp-authoritative-server-migration.md), and
-[current migration status](docs/migration-status.md).
+[current migration status](docs/migration-status.md). The
+[completion plan](docs/completion-plan.md) defines delivery order and acceptance
+gates. The backend foundations are established; full gameplay parity and the
+complete playable Godot client remain in progress.
 Contributor expectations are in [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## Quick verification
@@ -52,8 +55,10 @@ The standalone server defaults to multiplayer. Pass
 the same authoritative protocol and implementation.
 
 The Godot client requires Godot 4.7.1 Mono. Run
-`powershell -ExecutionPolicy Bypass -File run-godot-client.ps1` for a complete
-local session. See [godot/README.md](godot/README.md) for details and
+`powershell -ExecutionPolicy Bypass -File run-godot-client.ps1` for a local
+server/client prototype session. Build the server and Godot solution above
+first; the current Godot harness does not refresh every existing binary.
+See [godot/README.md](godot/README.md) for details and
 [docs/native-client.md](docs/native-client.md) for the native compatibility
 client.
 
@@ -62,6 +67,9 @@ client.
 Godevilution derives from DevilutionX and ultimately from the Devilution
 reverse-engineering project. It does not include Blizzard's Diablo game data.
 Running the inherited native client requires legally obtained Diablo assets.
+The C# server requires no MPQ files; it loads validated external content packs.
+Godot currently uses stand-in assets. The target is a complete MPQ-free client
+presentation pack with optional support for legally supplied original assets.
 
 ## License
 

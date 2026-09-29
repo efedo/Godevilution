@@ -6,9 +6,11 @@ and the protocol/replay contracts while making changes incrementally.
 
 ## Before Changing Code
 
-Read `docs/csharp-authoritative-server-migration.md` and
-`docs/migration-status.md`. Keep gameplay and persistence server-owned, keep the
-Godot client presentation-only, and keep the native path backward compatible.
+Read `docs/csharp-authoritative-server-migration.md`,
+`docs/migration-status.md`, and `docs/completion-plan.md`. Select work against
+the active milestone's acceptance gate. Keep gameplay and persistence
+server-owned, the Godot client presentation-only, and the native path backward
+compatible.
 
 ## Tests
 
@@ -18,7 +20,13 @@ Godot client presentation-only, and keep the native path backward compatible.
   corresponding xUnit v3 projects.
 - Update shared replay fixtures when authoritative behavior or canonical state
   hashing changes.
-- Run the narrowest affected tests, then the broader relevant suite.
+- Run the narrowest meaningful affected tests for each logical change. Run
+  broader affected suites at integration/milestone gates or when changes,
+  failures, or unresolved risks justify them; do not repeat unchanged suites
+  after every small edit.
+- Use actual application acceptance for launchers and Godot controls. A
+  source-contract test, protocol test, or headless startup does not prove that
+  the visible client can create and enter a game.
 
 See `docs/ai/msvc-build.md` for native MSVC setup and
 `docs/ai/godot-build.md` for C# and Godot verification.
@@ -30,6 +38,11 @@ specifies another platform format. Keep documentation concise and avoid
 duplicating current status across multiple files. Update `docs/CHANGELOG.md`
 with a brief summary of completed changes, and summarize the change in the
 commit message.
+
+Use cohesive commits containing a completed behavior family or playable slice,
+its relevant tests, and documentation. Avoid separate commits for individual
+fixture rows or status sentences. Follow `docs/completion-plan.md` for delivery
+order; update the milestone evidence in status rather than creating another plan.
 
 Do not commit generated build output, local saves, proprietary Diablo game
 data, or temporary agent planning files.

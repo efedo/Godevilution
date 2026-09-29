@@ -1,5 +1,11 @@
 # Entity-pool modernization strategy
 
+This is a compatibility strategy, not a separate project roadmap. Current
+projection/pool work is recorded in [migration status](migration-status.md);
+further work follows the [completion plan](completion-plan.md), with retirement
+subject to M5. Storage aliases, adapter operations, and snapshot reconciliation
+already exist; audit remaining consumers instead of restarting those steps.
+
 The native client is being migrated from globally indexed arrays toward
 server-owned entities without breaking Devilution-compatible code. The
 modernization is intentionally staged:
@@ -12,8 +18,10 @@ modernization is intentionally staged:
    any unclaimed compatibility slots on every snapshot.
 4. Native gameplay mutation is bypassed for connected sessions; the pools are
    used only for rendering, tile lookup, and legacy read-only affordances.
-5. Once Godot presentation covers the remaining native interactions, the
-   adapters can be removed or reduced to an offline compatibility layer.
+5. Once Godot passes the complete play/compatibility gates, remove production
+   dependence on these adapters. Retain an isolated native compatibility/oracle
+   build while supported consumers remain; physical removal requires their
+   characterized replacements, not just equivalent-looking Godot presentation.
 
 The migration must retain fixed capacities, native tile references, save-file
 compatibility, and deterministic replay behavior at each step. New gameplay

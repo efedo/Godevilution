@@ -5,6 +5,15 @@ intent to the C# server, receives complete snapshots and transient events, and
 renders the latest authoritative projection. It does not simulate gameplay or
 own persistence.
 
+This is a working presentation prototype, not a complete replacement client.
+It currently uses one main scene and SVG stand-ins. Full asset coverage, menus,
+audio, packaging, and a tested complete play flow remain open. The
+[completion plan](../docs/completion-plan.md) schedules application acceptance
+in M0, the playable loop in M1, and release presentation in M4; see
+[migration status](../docs/migration-status.md) for the dated assessment.
+The prototype uses no MPQs. A complete MPQ-free asset route and optional
+original-asset client tooling remain planned, with no server archive dependency.
+
 The client also converts authoritative damage, healing, and experience events
 into transient floating feedback positioned from the latest snapshot. This is
 the server-backed presentation path; the native Lua floating-number mods remain
@@ -41,8 +50,10 @@ only.
 
 ## Projects
 
-- `Devilution.Client.Protocol` contains generated Protobuf types, TCP framing,
-  handshake logic, command retry, and the client-side authoritative model.
+- `Devilution.Client.Protocol` references the shared generated
+  `Devilution.Protocol` types and owns TCP framing, handshake logic, command
+  retry, and the client-side authoritative model. It does not generate a second
+  copy of the Protobuf bindings.
 - `Devilution.Client.Protocol.Tests` verifies the protocol model and starts a
   real local server for live transport tests.
 - `Devilution.Client` is the Godot 4.7.1 Mono presentation project.
@@ -56,8 +67,10 @@ dotnet build godot/Devilution.Client/Devilution.Client.sln
 
 The live protocol tests build and launch their own server. A Godot installation
 is not required for these commands.
+These checks do not instantiate the Godot scene or verify the visible
+create-game flow. Use application/visible acceptance for those claims.
 
-## Run the Complete Local Session
+## Run the Local Prototype Session
 
 Install Godot 4.7.1 Mono, then run:
 
@@ -65,10 +78,18 @@ Install Godot 4.7.1 Mono, then run:
 powershell -ExecutionPolicy Bypass -File run-godot-client.ps1
 ```
 
-The root launcher is zero-argument and delegates to the complete-session
-harness. It discovers Godot Mono, builds the server if needed, starts it on an available port, reads
+The root launcher is zero-argument and delegates to the local-session
+harness. It discovers Godot Mono, builds the server only if its executable is
+absent, starts it on an available port, reads
 the negotiated ruleset identity, configures the client environment, and launches
 Godot. The protocol client retains the server-owned game mode from the handshake.
+Before launching after source changes, explicitly build both the server project
+and Godot solution; the current harness does not refresh the server when its
+binary already exists or explicitly build the client assembly. It creates an
+isolated temporary server/save directory on each invocation, so its default
+cross-launch flow is not a persistent user save library. A resume token must
+connect to a host using the corresponding saved state. M0/M1 address these
+launcher and user-flow gaps.
 For diagnostics or automated smoke tests, invoke the underlying
 `godot/run-local-client.ps1` harness directly with its optional switches.
 For an automated smoke launch, add `-Headless -QuitAfterSeconds 5`.

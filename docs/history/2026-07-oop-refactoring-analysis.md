@@ -3,6 +3,8 @@
 > Historical document. This July 2026 native-code analysis predates the current
 > Godevilution server/client migration status. Its observations are retained as
 > refactoring context, not as a current roadmap.
+> Use [the completion plan](../completion-plan.md) for current priorities;
+> native OOP refactoring is not an independent completion requirement.
 
 Analysis of the Godevilution native codebase for opportunities to refactor free functions into object-oriented patterns.
 

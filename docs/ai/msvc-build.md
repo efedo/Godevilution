@@ -10,6 +10,17 @@ The current working command prefix is:
 cmd /c '"C:\Program Files\Microsoft Visual Studio\18\Community\Common7\Tools\VsDevCmd.bat" -arch=x64 && <command>'
 ```
 
+Before configuring, building, or investigating native compilation failures,
+verify the compiler and Windows SDK tools in that same developer environment:
+
+```bat
+cmd /c '"C:\Program Files\Microsoft Visual Studio\18\Community\Common7\Tools\VsDevCmd.bat" -arch=x64 && where cl.exe && where rc.exe && where mt.exe'
+```
+
+Use focused targets for a logical change and broader affected suites at the
+integration gates in [the completion plan](../completion-plan.md#verification-policy).
+Neither test discovery counts nor old build logs establish a current pass.
+
 The Visual Studio bundled CMake used by this workspace is:
 
 ```bat

@@ -14,7 +14,15 @@ libraries:
 - `Devilution.Server` loads content and composes Engine, Host, and the selected
   built-in adapter. Its only C# source file is `Program.cs`.
 
-The implementation already covers the migration's playable vertical slice:
+The server requires no MPQ files or local game installation; it consumes
+validated external content packs. Preserve that boundary as geometry and
+remaining gameplay migrate. Implemented gameplay is authoritative, but complete
+Diablo/Hellfire campaign parity is still in progress. Current evidence is in
+[migration status](../docs/migration-status.md); work follows the
+[completion plan](../docs/completion-plan.md), not the order of features listed
+below.
+
+The implementation covers the following authoritative gameplay slices:
 stores and inventory, player resources and attributes, movement and occupancy,
 combat and spells, monsters and drops, objects and quests, portals, world-item
 pickup, player classes, death and restart-in-town transitions, exact Q6 monster

@@ -5,6 +5,14 @@ presentation architecture. Existing names and callback payloads remain stable
 until their replacements have parity coverage, but no new authoritative behavior
 should be added to Lua.
 
+As of 2026-09-29, the authoritative C# path, active content packs, and native
+authoritative mode are Lua-free. The legacy compatibility runtime and bundled
+scripts still exist. Capability migration, runtime disablement, and physical
+removal are different completion states. The
+[completion plan](completion-plan.md#m5-remove-production-legacy-dependencies)
+owns scheduling and the final removal gate; this document owns the capability
+mapping and compatibility requirements.
+
 ## Ownership Map
 
 | Legacy surface | Current role | Target owner |
@@ -136,9 +144,9 @@ rather than a Lua-owned data path.
 
 ## Bundled Scripts
 
-The clock mod now has a Godot HUD owner, while the legacy native client keeps
-its optional script for compatibility. Floating-number mods remain presentation
-candidates for Godot. The Adria mana-refill mod maps to trusted server store
+The clock mod and floating-number feedback now have Godot presentation owners,
+while the legacy native client keeps its optional scripts for compatibility.
+The Adria mana-refill mod maps to trusted server store
 rules. Hellfire activation
 now uses a native declarative archive-selection path rather than a Lua
 bootstrap. All six Diablo/Hellfire character
@@ -180,3 +188,21 @@ compatibility launches.
 4. Add presentation behavior to Godot and consume typed authoritative events.
 5. Update this inventory and add a characterization test or fixture whenever a
    compatibility surface changes.
+
+## Removal evidence
+
+For each remaining surface, record the replacement owner, supported legacy
+behavior, and the tests proving equivalence before deleting it. Data/mod hooks
+need validated pack/module replacements; audio/render/UI hooks need Godot
+presentation; REPL/admin capabilities need an explicit supported diagnostic
+route. Native offline mutation commands must not become an authoritative bypass.
+
+Keep the compatibility lifecycle and script names while supported legacy
+consumers remain. Production packages must exclude the runtime and scripts at
+M5, while any retained native oracle/compatibility build is explicitly isolated.
+If that active compatibility build still requires Lua, physical removal and M5
+remain open. Complete removal requires characterized replacements followed by
+deleting the runtime, bindings, and bundled scripts from the active project;
+historical Git revisions may retain the original reference implementation.
+Do not count a server boundary test rejecting Lua references as evidence that
+all legacy presentation and developer capabilities have been replaced.

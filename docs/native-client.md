@@ -3,6 +3,14 @@
 The inherited C++/SDL client remains available for legacy play and for parity
 testing while Godevilution moves authority to the C# server.
 
+Current delivery work follows the [completion plan](completion-plan.md).
+The native new-game startup fix in `923660c7b` rebuilds authoritative binaries
+and validates single-player mode before level setup. The launcher/source and
+native policy regressions do not automate a complete GUI new-game journey;
+that remains an M0 acceptance task. The C# server itself requires no MPQs;
+the native compatibility client still requires legally obtained game assets.
+Retirement follows M5 without dropping supported compatibility behavior.
+
 The default CMake configuration builds the unchanged legacy-authority path. To
 include the server-backed adapter, configure with:
 
@@ -375,9 +383,13 @@ rather than converting the stale highlight into a positional attack.
 
 ## Remaining native-only interaction inventory
 
-The following paths were audited against `Source/game` on 2026-08-24 and are
-still intentionally local when their authored content is absent. They are
-explicit migration seams, not server-authority claims:
+The following inventory began with a `Source/game` audit on 2026-08-24 and
+includes subsequent ports. Read each entry's remaining seam separately from its
+implemented authored path; this is not a new full audit of every interaction.
+Absent authoritative content is a migration gap. Connected gameplay must not
+fall back to local mutation; native speech/rendering and explicit legacy-mode
+behavior remain compatibility responsibilities. M2/M3 close these world and
+quest gaps through the completion plan:
 
 - `TalktoMonster` still owns Snotspill's Banner opening object/map
   resynchronization, encounter-state, and native speech/audio timing after the

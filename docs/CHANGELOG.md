@@ -2,6 +2,15 @@
 
 All notable changes to this fork are documented below.
 
+- 2026-09-29: Reconciled the progress baseline at `8c03b365d` and added one
+  dependency-ordered completion plan with six acceptance gates, cohesive
+  implementation batches, and focused/integration verification rules. Aligned
+  architecture, client/server/content guides, Lua/pool strategies, and historical
+  plan pointers. Distinguished prototype playability, MPQ independence, launcher
+  fixes versus missing GUI acceptance, and test inventory versus dated passes;
+  corrected stale Godot binding-ownership and floating-feedback documentation,
+  repaired the status table, and normalized touched documents to CRLF.
+
 - Extended the shared replay gate to 394 fixtures and 422 native tests with
   secondary-participant Apocalypse parity. Production and compact replay now
   preserve caster ownership, mana/facing, native Solid and Hellfire missile
