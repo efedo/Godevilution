@@ -38,8 +38,11 @@ public sealed class ProjectilePresentationStyleTests
         Assert.Equal(
             (int)SpellTargetingKind.WorldEntity,
             AuthoritativeProtocolLimits.MaximumSpellTargetingKind);
+        Assert.Equal(5, (int)ProtocolObjectPresentationKind.Trap);
+        Assert.Equal(6, (int)ProtocolObjectPresentationKind.NativeArmorStand);
+        Assert.Equal(7, (int)ProtocolObjectPresentationKind.NativeWeaponRack);
         Assert.Equal(
-            (int)ProtocolObjectPresentationKind.Trap,
+            (int)ProtocolObjectPresentationKind.NativeWeaponRack,
             AuthoritativeProtocolLimits.MaximumObjectPresentationKind);
         Assert.Equal(9, AuthoritativeProtocolLimits.MaximumObjectEffectKind);
         Assert.Equal(8, AuthoritativeProtocolLimits.MaximumObjectQuestTransitionKind);

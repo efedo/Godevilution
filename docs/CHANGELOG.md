@@ -2,6 +2,15 @@
 
 All notable changes to this fork are documented below.
 
+- 2026-09-29: Refreshed snapshot/event publication ticks under the authoritative
+  lock, with a deterministic TCP regression for concurrent advancement. Repaired
+  live overlay schema/symbol/table drift, additive object-kind assertions,
+  stale action selection, and cast-source observation; exact RNG remains replay
+  coverage. Removed test-pool starvation from blocking concurrency checks.
+  Reverified Godot's headless create/restart/resume journey and recorded the
+  remaining Flash parity failures without changing expected hashes. Full client
+  tests pass 477/477; server tests pass 1047/1049. Normalized touched text to CRLF.
+
 - 2026-09-29: Added rebuilt Godot scene-level create/move/save/fresh-process
   resume acceptance, including visible evidence and bookmark corruption/write
   recovery. The launcher imports assets, retains private local saves, validates

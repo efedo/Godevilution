@@ -627,6 +627,10 @@ public sealed class AuthoritativeTcpServer : IAsyncDisposable
         // boundary. Do not allow a concurrent command or autonomous tick to
         // mutate the module while the projection is being assembled.
         var snapshot = commandServer.WithSynchronizedSession(sessionId, () => {
+            // An autonomous tick may advance while the caller awaits network
+            // writes. Never label newer action state with that stale timestamp.
+            tick = Math.Max(tick, commandServer.CurrentTick);
+            commandServer.AdvanceTo(tick);
             var result = snapshotProvider.CreateSnapshot(sessionId, entityId, tick);
             var currentIdentity = handshake.Identity;
             result.ContentManifestHash = currentIdentity.ContentManifestHash;
@@ -644,15 +648,19 @@ public sealed class AuthoritativeTcpServer : IAsyncDisposable
         ulong tick,
         CancellationToken cancellationToken)
     {
-        // Event draining must observe the same command/tick boundary as the
-        // snapshot that follows it. Drain under the authoritative lock, then
+        // Drain at a current authoritative boundary before the next snapshot.
+        // Refresh and drain under the authoritative lock, then
         // serialize outside the lock so network backpressure cannot stall the
         // simulation.
         var events = eventProvider is null
             ? null
             : commandServer.WithSynchronizedSession(
                 sessionId,
-                () => eventProvider.DrainEvents(sessionId, entityId, tick));
+                () => {
+                    tick = Math.Max(tick, commandServer.CurrentTick);
+                    commandServer.AdvanceTo(tick);
+                    return eventProvider.DrainEvents(sessionId, entityId, tick);
+                });
         return events is null || events.Events.Count == 0
             ? ValueTask.CompletedTask
             : WriteEventBatchAsync(stream, events, tick, cancellationToken);

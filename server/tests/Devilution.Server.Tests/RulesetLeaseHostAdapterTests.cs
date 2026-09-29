@@ -28,9 +28,13 @@ public sealed class RulesetLeaseHostAdapterTests
         var runtime = CreateRuntime(candidates);
         var adapter = new LeasedAuthoritativeGameHostAdapter(runtime);
 
-        var operation = Task.Run(
+        // The operation deliberately blocks; do not depend on a test-runner
+        // pool slot becoming available while this test waits for its signal.
+        var operation = Task.Factory.StartNew(
             () => adapter.Execute("session", new Command(), 1),
-            TestContext.Current.CancellationToken);
+            TestContext.Current.CancellationToken,
+            TaskCreationOptions.LongRunning,
+            TaskScheduler.Default);
         try {
             Assert.True(operationStarted.Wait(
                 TimeSpan.FromSeconds(5),

@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
+using System.Text.Json;
 using Devilution.Client.Protocol;
 using Devilution.Protocol;
 using Devilution.Protocol.V1;
@@ -10,6 +11,17 @@ namespace Devilution.Client.Protocol.Tests;
 public sealed class LiveAuthoritativeServerTests
 {
     private static readonly ConditionalWeakTable<AuthoritativeClient, MessageBacklog> messageBacklogs = new();
+
+    // These overlays edit the checked-in base tables, so their schema must come
+    // from that same pack, not a version copied into every live test.
+    private static string BaseContentSchemaJson
+    {
+        get {
+            using var manifest = JsonDocument.Parse(File.ReadAllText(Path.Combine(
+                FindRepositoryRoot(), "server", "content", "base", "content-pack.json")));
+            return manifest.RootElement.GetProperty("schema").GetRawText();
+        }
+    }
 
     [Fact]
     public async Task GodotTransportProjectsTheServerSelectedDifficulty()
@@ -400,13 +412,13 @@ public sealed class LiveAuthoritativeServerTests
         try {
             await File.WriteAllTextAsync(
                 Path.Combine(overlayRoot, "content-pack.json"),
-                """
+                $$"""
                 {
                   "formatVersion": 1,
                   "id": "test.godot-quest-towner-stage",
                   "version": "1",
                   "dependencies": ["devilution.base"],
-                  "schema": { "id": "devilution.diablo", "version": "1.462.0" },
+                  "schema": {{BaseContentSchemaJson}},
                   "dependencyConstraints": [
                     {
                       "id": "devilution.base",
@@ -539,13 +551,13 @@ public sealed class LiveAuthoritativeServerTests
         try {
             await File.WriteAllTextAsync(
                 Path.Combine(overlayRoot, "content-pack.json"),
-                """
+                $$"""
                 {
                   "formatVersion": 1,
                   "id": "test.godot-object-follow-up",
                   "version": "1",
                   "dependencies": ["devilution.base"],
-                  "schema": { "id": "devilution.diablo", "version": "1.462.0" },
+                  "schema": {{BaseContentSchemaJson}},
                   "dependencyConstraints": [
                     {
                       "id": "devilution.base",
@@ -596,7 +608,7 @@ public sealed class LiveAuthoritativeServerTests
 
             await File.WriteAllTextAsync(
                 Path.Combine(overlayRoot, "world_mutations.tsv"),
-                "mutation_id\tlevel_id\tanchor_entity_id\tanchor_unique_identity\tblocked_cells_add\tblocked_cells_remove\tmissile_blocked_cells_add\tmissile_blocked_cells_remove\tgeometry_rect_add\tgeometry_rect_remove\ttransparency_rects\tobject_layer_rects\tpiece_layer_rects\tanchor_mega_offset_x\tanchor_mega_offset_y\tmega_tile_assignments\tcreate_transparency_layer\tmega_tile_copy_source_level_id\tmega_tile_copy_rects\tpiece_property_overrides\n9901\t1\t0\t\t42\tnone\tnone\tnone\tnone\tnone\tnone\tnone\tnone\t0\t0\tnone\tfalse\t0\tnone\tnone\n",
+                "mutation_id\tlevel_id\tanchor_entity_id\tanchor_unique_identity\tblocked_cells_add\tblocked_cells_remove\tmissile_blocked_cells_add\tmissile_blocked_cells_remove\tgeometry_rect_add\tgeometry_rect_remove\ttransparency_rects\tobject_layer_rects\tpiece_layer_rects\tanchor_mega_offset_x\tanchor_mega_offset_y\tmega_tile_assignments\tcreate_transparency_layer\tmega_tile_copy_source_level_id\tmega_tile_copy_rects\tpiece_property_overrides\tmonster_layer_rects\tmega_tile_asset_path\ttile_asset_path\tsol_asset_path\tnative_layer_asset_path\n9901\t1\t0\t\t42\tnone\tnone\tnone\tnone\tnone\tnone\tnone\tnone\t0\t0\tnone\tfalse\t0\tnone\tnone\tnone\tnone\tnone\tnone\tnone\n",
                 TestContext.Current.CancellationToken);
 
             using var server = await StartedServer.StartAsync(
@@ -662,13 +674,13 @@ public sealed class LiveAuthoritativeServerTests
         try {
             await File.WriteAllTextAsync(
                 Path.Combine(overlayRoot, "content-pack.json"),
-                """
+                $$"""
                 {
                   "formatVersion": 1,
                   "id": "test.godot-snotspill-dialogue",
                   "version": "1",
                   "dependencies": ["devilution.base"],
-                  "schema": { "id": "devilution.diablo", "version": "1.462.0" },
+                  "schema": {{BaseContentSchemaJson}},
                   "dependencyConstraints": [
                     {
                       "id": "devilution.base",
@@ -678,7 +690,6 @@ public sealed class LiveAuthoritativeServerTests
                   ],
                   "overlays": [
                     { "table": "quest_states.tsv", "keys": ["quest_id"], "mode": "upsert" },
-                    { "table": "monster_types.tsv", "keys": ["monster_id"], "mode": "upsert" },
                     { "table": "unique_monsters.tsv", "keys": ["identity"], "mode": "upsert" },
                     { "table": "unique_monster_placements.tsv", "keys": ["placement_id"], "mode": "upsert" }
                   ]
@@ -784,6 +795,8 @@ public sealed class LiveAuthoritativeServerTests
             var attackAcknowledgement = await WaitForAcknowledgementAsync(client, attackSequence);
             Assert.Equal(CommandStatus.Rejected, attackAcknowledgement.Status);
             Assert.Equal(CommandRejectReason.InvalidTarget, attackAcknowledgement.RejectReason);
+            model.Apply(await WaitForMessageAsync(client, message =>
+                message.Snapshot?.Tick >= attackAcknowledgement.AppliedTick));
 
             var sequence = client.Queue(new Command {
                 TalkToQuestRequested = new TalkToQuestRequested {
@@ -831,13 +844,13 @@ public sealed class LiveAuthoritativeServerTests
         try {
             await File.WriteAllTextAsync(
                 Path.Combine(overlayRoot, "content-pack.json"),
-                """
+                $$"""
                 {
                   "formatVersion": 1,
                   "id": "test.godot-lachdanan-dialogue",
                   "version": "1",
                   "dependencies": ["devilution.hellfire"],
-                  "schema": { "id": "devilution.diablo", "version": "1.462.0" },
+                  "schema": {{BaseContentSchemaJson}},
                   "dependencyConstraints": [
                     {
                       "id": "devilution.hellfire",
@@ -846,6 +859,7 @@ public sealed class LiveAuthoritativeServerTests
                     }
                   ],
                   "overlays": [
+                    { "table": "content_ids.tsv", "keys": ["kind", "symbol"], "mode": "upsert" },
                     { "table": "quest_states.tsv", "keys": ["quest_id"], "mode": "upsert" },
                     { "table": "monster_types.tsv", "keys": ["monster_id"], "mode": "upsert" },
                     { "table": "monster_spawn_policies.tsv", "keys": ["monster_id"], "mode": "upsert" },
@@ -873,7 +887,7 @@ public sealed class LiveAuthoritativeServerTests
                 .Single(line => line.StartsWith("3005\t", StringComparison.Ordinal))
                 .Split('\t');
             questState[QuestStateColumn("level_id")] = "14";
-            questState[QuestStateColumn("level_symbol")] = "";
+            questState[QuestStateColumn("level_symbol")] = "catacombs_depth_14";
             questState[QuestStateColumn("initial")] = "0";
             questState[QuestStateColumn("logged")] = "0";
             questState[QuestStateColumn("variable1")] = "0";
@@ -899,7 +913,7 @@ public sealed class LiveAuthoritativeServerTests
                 .Single(line => line.StartsWith("1\t", StringComparison.Ordinal))
                 .Split('\t');
             monsterType[MonsterTypeColumn("monster_id")] = "5000";
-            monsterType[MonsterTypeColumn("monster_symbol")] = "";
+            monsterType[MonsterTypeColumn("monster_symbol")] = "test_lachdanan";
             monsterType[MonsterTypeColumn("name")] = "Lachdanan Fixture";
             monsterType[MonsterTypeColumn("minimum_dungeon_level")] = "1";
             monsterType[MonsterTypeColumn("maximum_dungeon_level")] = "16";
@@ -912,13 +926,13 @@ public sealed class LiveAuthoritativeServerTests
             await File.WriteAllTextAsync(
                 Path.Combine(overlayRoot, "monster_spawn_policies.tsv"),
                 "monster_id\tmonster_symbol\tspawn_role\tcoverage_mode\n"
-                    + "5000\t\tQuest\tComplete\n",
+                    + "5000\ttest_lachdanan\tQuest\tComplete\n",
                 TestContext.Current.CancellationToken);
 
             await File.WriteAllTextAsync(
                 Path.Combine(overlayRoot, "unique_monsters.tsv"),
                 "entity_id\tmonster_id\tmonster_symbol\tidentity\tnative_ai\tspawn_health_percent\tspawn_armor_delta\tspawn_fire_resistance\tspawn_lightning_resistance\tspawn_magic_resistance\tspawn_acid_resistance\n"
-                    + "0\t5000\t\tLachdanan\tLachdanan\tnone\t0\tnone\tnone\tnone\tnone\n",
+                    + "0\t5000\ttest_lachdanan\tLachdanan\tLachdanan\tnone\t0\tnone\tnone\tnone\tnone\n",
                 TestContext.Current.CancellationToken);
 
             var placementsPath = Path.Combine(
@@ -936,9 +950,9 @@ public sealed class LiveAuthoritativeServerTests
             var placement = placementLines[1].Split('\t');
             placement[PlacementColumn("unique_identity")] = "Lachdanan";
             placement[PlacementColumn("monster_id")] = "5000";
-            placement[PlacementColumn("monster_symbol")] = "";
+            placement[PlacementColumn("monster_symbol")] = "test_lachdanan";
             placement[PlacementColumn("level_id")] = "14";
-            placement[PlacementColumn("level_symbol")] = "";
+            placement[PlacementColumn("level_symbol")] = "catacombs_depth_14";
             placement[PlacementColumn("entity_id")] = "100";
             placement[PlacementColumn("position_x")] = "0";
             placement[PlacementColumn("position_y")] = "1";
@@ -949,6 +963,9 @@ public sealed class LiveAuthoritativeServerTests
                 TestContext.Current.CancellationToken);
 
             var hellfireRoot = Path.Combine(repositoryRoot, "server", "content", "hellfire");
+            await File.WriteAllTextAsync(Path.Combine(overlayRoot, "content_ids.tsv"),
+                "kind\tsymbol\tnumeric_id\nmonster\ttest_lachdanan\t5000\n",
+                TestContext.Current.CancellationToken);
             using var server = await StartedServer.StartAsync(
                 TestContext.Current.CancellationToken,
                 hellfireRoot,
@@ -1026,13 +1043,13 @@ public sealed class LiveAuthoritativeServerTests
         try {
             await File.WriteAllTextAsync(
                 Path.Combine(overlayRoot, "content-pack.json"),
-                """
+                $$"""
                 {
                   "formatVersion": 1,
                   "id": "test.godot-warp-transition",
                   "version": "1",
                   "dependencies": ["devilution.base"],
-                  "schema": { "id": "devilution.diablo", "version": "1.462.0" },
+                  "schema": {{BaseContentSchemaJson}},
                   "dependencyConstraints": [
                     {
                       "id": "devilution.base",
@@ -1052,8 +1069,8 @@ public sealed class LiveAuthoritativeServerTests
                 TestContext.Current.CancellationToken);
             await File.WriteAllTextAsync(
                 Path.Combine(overlayRoot, "warps.tsv"),
-                "warp_id\twarp_symbol\tsource_level_id\tsource_level_symbol\ttrigger_x\ttrigger_y\ttarget_level_id\ttarget_level_symbol\ttarget_x\ttarget_y\trequired_quest_id\trequired_quest_symbol\trequired_quest_completed\n"
-                + "1002\tcathedral_to_catacombs\t1\tcathedral\t0\t1\t2\tcatacombs\t10\t10\t0\t\t0\n",
+                "warp_id\twarp_symbol\tsource_level_id\tsource_level_symbol\ttrigger_x\ttrigger_y\ttarget_level_id\ttarget_level_symbol\ttarget_x\ttarget_y\trequired_quest_id\trequired_quest_symbol\trequired_quest_completed\ttarget_set_level_id\ttarget_set_level_symbol\ttarget_set_level_active_map\n"
+                + "1002\tcathedral_to_catacombs\t1\tcathedral\t0\t1\t2\tcatacombs\t10\t10\t0\t\t0\tnone\t\tfalse\n",
                 TestContext.Current.CancellationToken);
 
             using var server = await StartedServer.StartAsync(
@@ -1211,13 +1228,13 @@ public sealed class LiveAuthoritativeServerTests
         try {
             await File.WriteAllTextAsync(
                 Path.Combine(overlayRoot, "content-pack.json"),
-                """
+                $$"""
                 {
                   "formatVersion": 1,
                   "id": "test.godot-holy-bolt",
                   "version": "1",
                   "dependencies": ["devilution.base"],
-                  "schema": { "id": "devilution.diablo", "version": "1.462.0" },
+                  "schema": {{BaseContentSchemaJson}},
                   "dependencyConstraints": [
                     {
                       "id": "devilution.base",
@@ -1386,13 +1403,13 @@ public sealed class LiveAuthoritativeServerTests
         try {
             await File.WriteAllTextAsync(
                 Path.Combine(overlayRoot, "content-pack.json"),
-                """
+                $$"""
                 {
                   "formatVersion": 1,
                   "id": "test.godot-unique-pack",
                   "version": "1",
                   "dependencies": ["devilution.base"],
-                  "schema": { "id": "devilution.diablo", "version": "1.462.0" },
+                  "schema": {{BaseContentSchemaJson}},
                   "dependencyConstraints": [
                     {
                       "id": "devilution.base",
@@ -1421,8 +1438,8 @@ public sealed class LiveAuthoritativeServerTests
                 TestContext.Current.CancellationToken);
             await File.WriteAllTextAsync(
                 Path.Combine(overlayRoot, "unique_monster_packs.tsv"),
-                "pack_id\tplacement_id\tminion_monster_id\tpack_size\tpack_kind\n"
-                    + "1\t1\t1\t2\tleashed\n",
+                "pack_id\tplacement_id\tminion_monster_id\tminion_monster_symbol\tpack_size\tpack_kind\n"
+                    + "1\t1\t1\tbase_monster\t2\tleashed\n",
                 TestContext.Current.CancellationToken);
 
             using var server = await StartedServer.StartAsync(
@@ -1906,6 +1923,8 @@ public sealed class LiveAuthoritativeServerTests
             attackerClient,
             friendlyModeSequence);
         Assert.Equal(CommandStatus.Accepted, friendlyModeAcknowledgement.Status);
+        model.Apply(await WaitForMessageAsync(attackerClient, message =>
+            message.Snapshot?.Tick >= friendlyModeAcknowledgement.AppliedTick));
 
         var sequence = attackerClient.Queue(new Command {
             AttackRequested = new AttackRequested {
@@ -2138,13 +2157,13 @@ public sealed class LiveAuthoritativeServerTests
         try {
             await File.WriteAllTextAsync(
                 Path.Combine(overlayRoot, "content-pack.json"),
-                """
+                $$"""
                 {
                   "formatVersion": 1,
                   "id": "test.heal-other-pvp-overlay",
                   "version": "1",
                   "dependencies": ["devilution.base"],
-                  "schema": { "id": "devilution.diablo", "version": "1.462.0" },
+                  "schema": {{BaseContentSchemaJson}},
                   "dependencyConstraints": [
                     {
                       "id": "devilution.base",
@@ -2164,7 +2183,7 @@ public sealed class LiveAuthoritativeServerTests
                 TestContext.Current.CancellationToken);
             await File.WriteAllTextAsync(
                 Path.Combine(overlayRoot, "class_loadouts.tsv"),
-                "class_id\tclass_symbol\tstarting_gold\tability_spell_id\tability_spell_symbol\tability_kind\tstarting_spell_id\tstarting_spell_symbol\tstarting_spell_level\n2\t\t100\t27\t\tNone\t34\t\t1\n",
+                "class_id\tclass_symbol\tstarting_gold\tability_spell_id\tability_spell_symbol\tability_kind\tstarting_spell_id\tstarting_spell_symbol\tstarting_spell_level\n2\tsorcerer\t100\t27\trecharge\tNone\t34\theal_other\t1\n",
                 TestContext.Current.CancellationToken);
 
             using var server = await StartedServer.StartAsync(
@@ -2268,13 +2287,13 @@ public sealed class LiveAuthoritativeServerTests
         try {
             await File.WriteAllTextAsync(
                 Path.Combine(overlayRoot, "content-pack.json"),
-                """
+                $$"""
                 {
                   "formatVersion": 1,
                   "id": "test.resurrection-pvp-overlay",
                   "version": "1",
                   "dependencies": ["devilution.base"],
-                  "schema": { "id": "devilution.diablo", "version": "1.462.0" },
+                  "schema": {{BaseContentSchemaJson}},
                   "dependencyConstraints": [
                     {
                       "id": "devilution.base",
@@ -2294,7 +2313,7 @@ public sealed class LiveAuthoritativeServerTests
                 TestContext.Current.CancellationToken);
             await File.WriteAllTextAsync(
                 Path.Combine(overlayRoot, "class_loadouts.tsv"),
-                "class_id\tclass_symbol\tstarting_gold\tability_spell_id\tability_spell_symbol\tability_kind\tstarting_spell_id\tstarting_spell_symbol\tstarting_spell_level\n2\t\t100\t27\t\tNone\t1\t\t1\n3\t\t100\t22\t\tNone\t32\t\t1\n",
+                "class_id\tclass_symbol\tstarting_gold\tability_spell_id\tability_spell_symbol\tability_kind\tstarting_spell_id\tstarting_spell_symbol\tstarting_spell_level\n2\tsorcerer\t100\t27\trecharge\tNone\t1\tfirebolt\t1\n3\tmonk\t100\t22\trage\tNone\t32\tresurrection\t1\n",
                 TestContext.Current.CancellationToken);
 
             using var server = await StartedServer.StartAsync(
@@ -2440,13 +2459,13 @@ public sealed class LiveAuthoritativeServerTests
         try {
             await File.WriteAllTextAsync(
                 Path.Combine(overlayRoot, "content-pack.json"),
-                """
+                $$"""
                 {
                   "formatVersion": 1,
                   "id": "test.charged-bolt-pvp-overlay",
                   "version": "1",
                   "dependencies": ["devilution.base"],
-                  "schema": { "id": "devilution.diablo", "version": "1.462.0" },
+                  "schema": {{BaseContentSchemaJson}},
                   "dependencyConstraints": [
                     {
                       "id": "devilution.base",
@@ -2466,7 +2485,7 @@ public sealed class LiveAuthoritativeServerTests
                 TestContext.Current.CancellationToken);
             await File.WriteAllTextAsync(
                 Path.Combine(overlayRoot, "class_loadouts.tsv"),
-                "class_id\tclass_symbol\tstarting_gold\tability_spell_id\tability_spell_symbol\tability_kind\tstarting_spell_id\tstarting_spell_symbol\tstarting_spell_level\n2\t\t100\t27\t\tNone\t30\t\t2\n",
+                "class_id\tclass_symbol\tstarting_gold\tability_spell_id\tability_spell_symbol\tability_kind\tstarting_spell_id\tstarting_spell_symbol\tstarting_spell_level\n2\tsorcerer\t100\t27\trecharge\tNone\t30\tcharged_bolt\t2\n",
                 TestContext.Current.CancellationToken);
 
             using var server = await StartedServer.StartAsync(
@@ -2577,13 +2596,13 @@ public sealed class LiveAuthoritativeServerTests
         try {
             await File.WriteAllTextAsync(
                 Path.Combine(overlayRoot, "content-pack.json"),
-                """
+                $$"""
                 {
                   "formatVersion": 1,
                   "id": "test.bone-spirit-pvp-overlay",
                   "version": "1",
                   "dependencies": ["devilution.base"],
-                  "schema": { "id": "devilution.diablo", "version": "1.462.0" },
+                  "schema": {{BaseContentSchemaJson}},
                   "dependencyConstraints": [
                     {
                       "id": "devilution.base",
@@ -2603,7 +2622,7 @@ public sealed class LiveAuthoritativeServerTests
                 TestContext.Current.CancellationToken);
             await File.WriteAllTextAsync(
                 Path.Combine(overlayRoot, "class_loadouts.tsv"),
-                "class_id\tclass_symbol\tstarting_gold\tability_spell_id\tability_spell_symbol\tability_kind\tstarting_spell_id\tstarting_spell_symbol\tstarting_spell_level\n2\t\t100\t27\t\tNone\t38\t\t2\n",
+                "class_id\tclass_symbol\tstarting_gold\tability_spell_id\tability_spell_symbol\tability_kind\tstarting_spell_id\tstarting_spell_symbol\tstarting_spell_level\n2\tsorcerer\t100\t27\trecharge\tNone\t38\tbone_spirit\t2\n",
                 TestContext.Current.CancellationToken);
 
             using var server = await StartedServer.StartAsync(
@@ -2714,13 +2733,13 @@ public sealed class LiveAuthoritativeServerTests
         try {
             await File.WriteAllTextAsync(
                 Path.Combine(overlayRoot, "content-pack.json"),
-                """
+                $$"""
                 {
                   "formatVersion": 1,
                   "id": "test.pvp-block-overlay",
                   "version": "1",
                   "dependencies": ["devilution.base"],
-                  "schema": { "id": "devilution.diablo", "version": "1.462.0" },
+                  "schema": {{BaseContentSchemaJson}},
                   "dependencyConstraints": [
                     {
                       "id": "devilution.base",
@@ -2842,15 +2861,19 @@ public sealed class LiveAuthoritativeServerTests
                 }, attackerClient.SuggestedCommandTick(model.CurrentTick));
                 await attackerClient.PollAsync(TestContext.Current.CancellationToken);
                 var acknowledgement = await WaitForAcknowledgementAsync(attackerClient, sequence);
-                Assert.Equal(CommandStatus.Accepted, acknowledgement.Status);
+                Assert.True(
+                    acknowledgement.Status == CommandStatus.Accepted,
+                    $"Melee block attempt {attempt} was {acknowledgement.Status}/{acknowledgement.RejectReason} at tick {acknowledgement.AppliedTick}; client tick was {model.CurrentTick}.");
 
                 var action = await WaitForMessageAsync(
                     attackerClient,
                     message => message.Snapshot?.Players.Single(
                         player => player.EntityId == attackerEntityId).CurrentAction is {
                             Kind: PlayerActionKind.Attack,
+                            StartedAtTick: var startTick,
                             TargetEntityId: var targetEntityId,
-                        } && targetEntityId == victim.EntityId);
+                        } && startTick == acknowledgement.AppliedTick
+                            && targetEntityId == victim.EntityId);
                 model.Apply(action);
                 var effectTick = action.Snapshot!.Players.Single(
                     player => player.EntityId == attackerEntityId).CurrentAction!.EffectTick;
@@ -2974,7 +2997,6 @@ public sealed class LiveAuthoritativeServerTests
         var model = new AuthoritativeClientModel();
         model.Apply(initial);
         var player = Assert.Single(model.Snapshot!.Players);
-        var target = Assert.Single(model.Snapshot.Monsters, monster => monster.EntityId == 9);
         var staff = Assert.Single(player.Equipment, item => item.Slot == 4);
 
         Assert.Equal(1, staff.State.SpellId);
@@ -2989,11 +3011,15 @@ public sealed class LiveAuthoritativeServerTests
         var sequence = client.Queue(new Command {
             CastRequested = new CastRequested {
                 SpellId = (uint)staff.State.SpellId,
-                TargetEntityId = target.EntityId,
+                // Fire away from the adjacent monsters so the live snapshot can
+                // observe the projectile before an immediate hit removes it.
+                TargetX = player.PositionX,
+                TargetY = player.PositionY + 8,
                 Source = CastSourceKind.ChargedItem,
                 SourceItem = new PlayerItemReference {
                     Location = PlayerItemLocation.Equipment,
                     Slot = 4,
+                    StableItemId = staff.State.StableItemId,
                 },
             },
         }, client.SuggestedCommandTick(model.CurrentTick));
@@ -3001,30 +3027,29 @@ public sealed class LiveAuthoritativeServerTests
         var acknowledgement = await WaitForAcknowledgementAsync(client, sequence);
         Assert.True(
             acknowledgement.Status == CommandStatus.Accepted,
-            $"Hellfire Firebolt was {acknowledgement.Status}/{acknowledgement.RejectReason} at tick {acknowledgement.AppliedTick}; staff item was {staff.State.ItemIndex} with {staff.State.Charges} charges and target was ({target.PositionX},{target.PositionY}).");
+            $"Hellfire Firebolt was {acknowledgement.Status}/{acknowledgement.RejectReason} at tick {acknowledgement.AppliedTick}; staff item was {staff.State.ItemIndex} with {staff.State.Charges} charges.");
 
         var consumed = await WaitForMessageAsync(
             client,
-            message => message.Snapshot?.Players.Single().Equipment
-                .Single(item => item.Slot == 4).State.Charges == 39);
+            message => message.Snapshot is { } snapshot && snapshot.Players.Single().Equipment
+                .Any(item => item.Slot == 4 && item.State.StableItemId == staff.State.StableItemId
+                    && item.State.Charges == 39)
+                && snapshot.Projectiles.Any(projectile =>
+                    projectile.SourceEntityId == player.EntityId && projectile.SpellId == 1));
         var updatedPlayer = Assert.Single(consumed.Snapshot!.Players);
-        Assert.Equal(39, Assert.Single(updatedPlayer.Equipment, item => item.Slot == 4).State.Charges);
-        var resolved = await WaitForMessageAsync(
-            client,
-            message => {
-                if (message.Snapshot is null)
-                    return false;
-                var candidate = message.Snapshot?.Monsters.FirstOrDefault(monster => monster.EntityId == target.EntityId);
-                return candidate is null
-                    || !candidate.Alive
-                    || candidate.HitPoints < target.HitPoints;
-            });
-        var resolvedTarget = resolved.Snapshot!.Monsters
-            .FirstOrDefault(monster => monster.EntityId == target.EntityId);
-        if (resolvedTarget is not null)
-            Assert.True(!resolvedTarget.Alive || resolvedTarget.HitPoints < target.HitPoints);
-        else
-            Assert.Contains(resolved.Snapshot.Corpses, corpse => corpse.EntityId == target.EntityId);
+        var updatedStaff = Assert.Single(updatedPlayer.Equipment, item => item.Slot == 4);
+        Assert.Equal(staff.State.StableItemId, updatedStaff.State.StableItemId);
+        Assert.Equal(39, updatedStaff.State.Charges);
+        Assert.Equal(player.Mana, updatedPlayer.Mana);
+        var bolt = Assert.Single(consumed.Snapshot.Projectiles, projectile =>
+            projectile.SourceEntityId == player.EntityId && projectile.SpellId == 1);
+        Assert.Equal((int)AuthoritativeProjectileBehavior.Firebolt, bolt.Behavior);
+        Assert.True(bolt.Damage > 0);
+        // A native Firebolt may miss. Verify the live source and lifecycle;
+        // deterministic replay tests own exact hit/damage/RNG expectations.
+        _ = await WaitForMessageAsync(client, message =>
+            message.Snapshot is { } snapshot && snapshot.Tick >= consumed.Snapshot.Tick
+                && snapshot.Projectiles.All(projectile => projectile.EntityId != bolt.EntityId));
     }
 
     [Fact]
@@ -3305,13 +3330,13 @@ public sealed class LiveAuthoritativeServerTests
         try {
             await File.WriteAllTextAsync(
                 Path.Combine(overlayRoot, "content-pack.json"),
-                """
+                $$"""
                 {
                   "formatVersion": 1,
                   "id": "test.trap-overlay",
                   "version": "1",
                   "dependencies": ["devilution.base"],
-                  "schema": { "id": "devilution.diablo", "version": "1.462.0" },
+                  "schema": {{BaseContentSchemaJson}},
                   "dependencyConstraints": [
                     {
                       "id": "devilution.base",
@@ -3499,13 +3524,13 @@ public sealed class LiveAuthoritativeServerTests
         try {
             await File.WriteAllTextAsync(
                 Path.Combine(overlayRoot, "content-pack.json"),
-                """
+                $$"""
                 {
                   "formatVersion": 1,
                   "id": "test.etherealize-overlay",
                   "version": "1",
                   "dependencies": ["devilution.base"],
-                  "schema": { "id": "devilution.diablo", "version": "1.462.0" },
+                  "schema": {{BaseContentSchemaJson}},
                   "dependencyConstraints": [
                     {
                       "id": "devilution.base",
@@ -3525,7 +3550,7 @@ public sealed class LiveAuthoritativeServerTests
                 TestContext.Current.CancellationToken);
             await File.WriteAllTextAsync(
                 Path.Combine(overlayRoot, "class_loadouts.tsv"),
-                "class_id\tclass_symbol\tstarting_gold\tability_spell_id\tability_spell_symbol\tability_kind\tstarting_spell_id\tstarting_spell_symbol\tstarting_spell_level\n2\t\t100\t27\t\tRecharge\t53\t\t1\n",
+                "class_id\tclass_symbol\tstarting_gold\tability_spell_id\tability_spell_symbol\tability_kind\tstarting_spell_id\tstarting_spell_symbol\tstarting_spell_level\n2\tsorcerer\t100\t27\trecharge\tRecharge\t53\tetherealize\t1\n",
                 TestContext.Current.CancellationToken);
 
             using var server = await StartedServer.StartAsync(
@@ -3589,13 +3614,13 @@ public sealed class LiveAuthoritativeServerTests
         try {
             await File.WriteAllTextAsync(
                 Path.Combine(overlayRoot, "content-pack.json"),
-                """
+                $$"""
                 {
                   "formatVersion": 1,
                   "id": "test.reflect-overlay",
                   "version": "1",
                   "dependencies": ["devilution.base"],
-                  "schema": { "id": "devilution.diablo", "version": "1.462.0" },
+                  "schema": {{BaseContentSchemaJson}},
                   "dependencyConstraints": [
                     {
                       "id": "devilution.base",
@@ -3615,7 +3640,7 @@ public sealed class LiveAuthoritativeServerTests
                 TestContext.Current.CancellationToken);
             await File.WriteAllTextAsync(
                 Path.Combine(overlayRoot, "class_loadouts.tsv"),
-                "class_id\tclass_symbol\tstarting_gold\tability_spell_id\tability_spell_symbol\tability_kind\tstarting_spell_id\tstarting_spell_symbol\tstarting_spell_level\n2\t\t100\t27\t\tRecharge\t43\t\t1\n",
+                "class_id\tclass_symbol\tstarting_gold\tability_spell_id\tability_spell_symbol\tability_kind\tstarting_spell_id\tstarting_spell_symbol\tstarting_spell_level\n2\tsorcerer\t100\t27\trecharge\tRecharge\t43\treflect\t1\n",
                 TestContext.Current.CancellationToken);
 
             using var server = await StartedServer.StartAsync(
@@ -3673,13 +3698,13 @@ public sealed class LiveAuthoritativeServerTests
         try {
             await File.WriteAllTextAsync(
                 Path.Combine(overlayRoot, "content-pack.json"),
-                """
+                $$"""
                 {
                   "formatVersion": 1,
                   "id": "test.golem-overlay",
                   "version": "1",
                   "dependencies": ["devilution.base"],
-                  "schema": { "id": "devilution.diablo", "version": "1.462.0" },
+                  "schema": {{BaseContentSchemaJson}},
                   "dependencyConstraints": [
                     {
                       "id": "devilution.base",
@@ -3699,7 +3724,7 @@ public sealed class LiveAuthoritativeServerTests
                 TestContext.Current.CancellationToken);
             await File.WriteAllTextAsync(
                 Path.Combine(overlayRoot, "class_loadouts.tsv"),
-                "class_id\tclass_symbol\tstarting_gold\tability_spell_id\tability_spell_symbol\tability_kind\tstarting_spell_id\tstarting_spell_symbol\tstarting_spell_level\n2\t\t100\t27\t\tRecharge\t52\t\t1\n",
+                "class_id\tclass_symbol\tstarting_gold\tability_spell_id\tability_spell_symbol\tability_kind\tstarting_spell_id\tstarting_spell_symbol\tstarting_spell_level\n2\tsorcerer\t100\t27\trecharge\tRecharge\t52\tgolem\t1\n",
                 TestContext.Current.CancellationToken);
 
             using var server = await StartedServer.StartAsync(
@@ -3762,13 +3787,13 @@ public sealed class LiveAuthoritativeServerTests
         try {
             await File.WriteAllTextAsync(
                 Path.Combine(overlayRoot, "content-pack.json"),
-                """
+                $$"""
                 {
                   "formatVersion": 1,
                   "id": "test.immolation-overlay",
                   "version": "1",
                   "dependencies": ["devilution.base"],
-                  "schema": { "id": "devilution.diablo", "version": "1.462.0" },
+                  "schema": {{BaseContentSchemaJson}},
                   "dependencyConstraints": [
                     {
                       "id": "devilution.base",
@@ -3788,7 +3813,7 @@ public sealed class LiveAuthoritativeServerTests
                 TestContext.Current.CancellationToken);
             await File.WriteAllTextAsync(
                 Path.Combine(overlayRoot, "class_loadouts.tsv"),
-                "class_id\tclass_symbol\tstarting_gold\tability_spell_id\tability_spell_symbol\tability_kind\tstarting_spell_id\tstarting_spell_symbol\tstarting_spell_level\n2\t\t100\t27\t\tRecharge\t45\t\t1\n",
+                "class_id\tclass_symbol\tstarting_gold\tability_spell_id\tability_spell_symbol\tability_kind\tstarting_spell_id\tstarting_spell_symbol\tstarting_spell_level\n2\tsorcerer\t100\t27\trecharge\tRecharge\t45\timmolation\t1\n",
                 TestContext.Current.CancellationToken);
 
             using var server = await StartedServer.StartAsync(
@@ -3851,13 +3876,13 @@ public sealed class LiveAuthoritativeServerTests
         try {
             await File.WriteAllTextAsync(
                 Path.Combine(overlayRoot, "content-pack.json"),
-                """
+                $$"""
                 {
                   "formatVersion": 1,
                   "id": "test.nova-overlay",
                   "version": "1",
                   "dependencies": ["devilution.base"],
-                  "schema": { "id": "devilution.diablo", "version": "1.462.0" },
+                  "schema": {{BaseContentSchemaJson}},
                   "dependencyConstraints": [
                     {
                       "id": "devilution.base",
@@ -3877,7 +3902,7 @@ public sealed class LiveAuthoritativeServerTests
                 TestContext.Current.CancellationToken);
             await File.WriteAllTextAsync(
                 Path.Combine(overlayRoot, "class_loadouts.tsv"),
-                "class_id\tclass_symbol\tstarting_gold\tability_spell_id\tability_spell_symbol\tability_kind\tstarting_spell_id\tstarting_spell_symbol\tstarting_spell_level\n2\t\t100\t27\t\tRecharge\t18\t\t1\n",
+                "class_id\tclass_symbol\tstarting_gold\tability_spell_id\tability_spell_symbol\tability_kind\tstarting_spell_id\tstarting_spell_symbol\tstarting_spell_level\n2\tsorcerer\t100\t27\trecharge\tRecharge\t18\tnova\t1\n",
                 TestContext.Current.CancellationToken);
 
             using var server = await StartedServer.StartAsync(
@@ -3938,13 +3963,13 @@ public sealed class LiveAuthoritativeServerTests
         try {
             await File.WriteAllTextAsync(
                 Path.Combine(overlayRoot, "content-pack.json"),
-                """
+                $$"""
                 {
                   "formatVersion": 1,
                   "id": "test.teleport-overlay",
                   "version": "1",
                   "dependencies": ["devilution.base"],
-                  "schema": { "id": "devilution.diablo", "version": "1.462.0" },
+                  "schema": {{BaseContentSchemaJson}},
                   "dependencyConstraints": [
                     {
                       "id": "devilution.base",
@@ -3964,7 +3989,7 @@ public sealed class LiveAuthoritativeServerTests
                 TestContext.Current.CancellationToken);
             await File.WriteAllTextAsync(
                 Path.Combine(overlayRoot, "class_loadouts.tsv"),
-                "class_id\tclass_symbol\tstarting_gold\tability_spell_id\tability_spell_symbol\tability_kind\tstarting_spell_id\tstarting_spell_symbol\tstarting_spell_level\n2\t\t100\t27\t\tRecharge\t23\t\t1\n",
+                "class_id\tclass_symbol\tstarting_gold\tability_spell_id\tability_spell_symbol\tability_kind\tstarting_spell_id\tstarting_spell_symbol\tstarting_spell_level\n2\tsorcerer\t100\t27\trecharge\tRecharge\t23\tteleport\t1\n",
                 TestContext.Current.CancellationToken);
 
             using var server = await StartedServer.StartAsync(
@@ -4026,13 +4051,13 @@ public sealed class LiveAuthoritativeServerTests
         try {
             await File.WriteAllTextAsync(
                 Path.Combine(overlayRoot, "content-pack.json"),
-                """
+                $$"""
                 {
                   "formatVersion": 1,
                   "id": "test.telekinesis-overlay",
                   "version": "1",
                   "dependencies": ["devilution.base"],
-                  "schema": { "id": "devilution.diablo", "version": "1.462.0" },
+                  "schema": {{BaseContentSchemaJson}},
                   "dependencyConstraints": [
                     {
                       "id": "devilution.base",
@@ -4052,7 +4077,7 @@ public sealed class LiveAuthoritativeServerTests
                 TestContext.Current.CancellationToken);
             await File.WriteAllTextAsync(
                 Path.Combine(overlayRoot, "class_loadouts.tsv"),
-                "class_id\tclass_symbol\tstarting_gold\tability_spell_id\tability_spell_symbol\tability_kind\tstarting_spell_id\tstarting_spell_symbol\tstarting_spell_level\n2\t\t100\t27\t\tRecharge\t33\t\t1\n",
+                "class_id\tclass_symbol\tstarting_gold\tability_spell_id\tability_spell_symbol\tability_kind\tstarting_spell_id\tstarting_spell_symbol\tstarting_spell_level\n2\tsorcerer\t100\t27\trecharge\tRecharge\t33\ttelekinesis\t1\n",
                 TestContext.Current.CancellationToken);
 
             using var server = await StartedServer.StartAsync(
@@ -4128,13 +4153,13 @@ public sealed class LiveAuthoritativeServerTests
         try {
             await File.WriteAllTextAsync(
                 Path.Combine(overlayRoot, "content-pack.json"),
-                """
+                $$"""
                 {
                   "formatVersion": 1,
                   "id": "test.mana-shield-overlay",
                   "version": "1",
                   "dependencies": ["devilution.base"],
-                  "schema": { "id": "devilution.diablo", "version": "1.462.0" },
+                  "schema": {{BaseContentSchemaJson}},
                   "dependencyConstraints": [
                     {
                       "id": "devilution.base",
@@ -4154,7 +4179,7 @@ public sealed class LiveAuthoritativeServerTests
                 TestContext.Current.CancellationToken);
             await File.WriteAllTextAsync(
                 Path.Combine(overlayRoot, "class_loadouts.tsv"),
-                "class_id\tclass_symbol\tstarting_gold\tability_spell_id\tability_spell_symbol\tability_kind\tstarting_spell_id\tstarting_spell_symbol\tstarting_spell_level\n2\t\t100\t27\t\tRecharge\t11\t\t1\n",
+                "class_id\tclass_symbol\tstarting_gold\tability_spell_id\tability_spell_symbol\tability_kind\tstarting_spell_id\tstarting_spell_symbol\tstarting_spell_level\n2\tsorcerer\t100\t27\trecharge\tRecharge\t11\tmana_shield\t1\n",
                 TestContext.Current.CancellationToken);
 
             using var server = await StartedServer.StartAsync(
@@ -4217,13 +4242,13 @@ public sealed class LiveAuthoritativeServerTests
         try {
             await File.WriteAllTextAsync(
                 Path.Combine(overlayRoot, "content-pack.json"),
-                """
+                $$"""
                 {
                   "formatVersion": 1,
                   "id": "test.mana-shield-multiplayer",
                   "version": "1",
                   "dependencies": ["devilution.base"],
-                  "schema": { "id": "devilution.diablo", "version": "1.462.0" },
+                  "schema": {{BaseContentSchemaJson}},
                   "dependencyConstraints": [
                     {
                       "id": "devilution.base",
@@ -4243,7 +4268,7 @@ public sealed class LiveAuthoritativeServerTests
                 TestContext.Current.CancellationToken);
             await File.WriteAllTextAsync(
                 Path.Combine(overlayRoot, "class_loadouts.tsv"),
-                "class_id\tclass_symbol\tstarting_gold\tability_spell_id\tability_spell_symbol\tability_kind\tstarting_spell_id\tstarting_spell_symbol\tstarting_spell_level\n2\t\t100\t27\t\tRecharge\t11\t\t1\n",
+                "class_id\tclass_symbol\tstarting_gold\tability_spell_id\tability_spell_symbol\tability_kind\tstarting_spell_id\tstarting_spell_symbol\tstarting_spell_level\n2\tsorcerer\t100\t27\trecharge\tRecharge\t11\tmana_shield\t1\n",
                 TestContext.Current.CancellationToken);
 
             using var server = await StartedServer.StartAsync(
@@ -4338,13 +4363,13 @@ public sealed class LiveAuthoritativeServerTests
         try {
             await File.WriteAllTextAsync(
                 Path.Combine(overlayRoot, "content-pack.json"),
-                """
+                $$"""
                 {
                   "formatVersion": 1,
                   "id": "test.berserk-overlay",
                   "version": "1",
                   "dependencies": ["devilution.base"],
-                  "schema": { "id": "devilution.diablo", "version": "1.462.0" },
+                  "schema": {{BaseContentSchemaJson}},
                   "dependencyConstraints": [
                     {
                       "id": "devilution.base",
@@ -4364,7 +4389,7 @@ public sealed class LiveAuthoritativeServerTests
                 TestContext.Current.CancellationToken);
             await File.WriteAllTextAsync(
                 Path.Combine(overlayRoot, "class_loadouts.tsv"),
-                "class_id\tclass_symbol\tstarting_gold\tability_spell_id\tability_spell_symbol\tability_kind\tstarting_spell_id\tstarting_spell_symbol\tstarting_spell_level\n2\t\t100\t27\t\tRecharge\t48\t\t1\n",
+                "class_id\tclass_symbol\tstarting_gold\tability_spell_id\tability_spell_symbol\tability_kind\tstarting_spell_id\tstarting_spell_symbol\tstarting_spell_level\n2\tsorcerer\t100\t27\trecharge\tRecharge\t48\tberserk\t1\n",
                 TestContext.Current.CancellationToken);
 
             using var server = await StartedServer.StartAsync(
@@ -4434,13 +4459,13 @@ public sealed class LiveAuthoritativeServerTests
         try {
             await File.WriteAllTextAsync(
                 Path.Combine(overlayRoot, "content-pack.json"),
-                """
+                $$"""
                 {
                   "formatVersion": 1,
                   "id": "test.ring-of-fire-overlay",
                   "version": "1",
                   "dependencies": ["devilution.base"],
-                  "schema": { "id": "devilution.diablo", "version": "1.462.0" },
+                  "schema": {{BaseContentSchemaJson}},
                   "dependencyConstraints": [
                     {
                       "id": "devilution.base",
@@ -4460,7 +4485,7 @@ public sealed class LiveAuthoritativeServerTests
                 TestContext.Current.CancellationToken);
             await File.WriteAllTextAsync(
                 Path.Combine(overlayRoot, "class_loadouts.tsv"),
-                "class_id\tclass_symbol\tstarting_gold\tability_spell_id\tability_spell_symbol\tability_kind\tstarting_spell_id\tstarting_spell_symbol\tstarting_spell_level\n2\t\t100\t27\t\tRecharge\t44\t\t1\n",
+                "class_id\tclass_symbol\tstarting_gold\tability_spell_id\tability_spell_symbol\tability_kind\tstarting_spell_id\tstarting_spell_symbol\tstarting_spell_level\n2\tsorcerer\t100\t27\trecharge\tRecharge\t44\tring_of_fire\t1\n",
                 TestContext.Current.CancellationToken);
 
             using var server = await StartedServer.StartAsync(
@@ -4526,13 +4551,13 @@ public sealed class LiveAuthoritativeServerTests
         try {
             await File.WriteAllTextAsync(
                 Path.Combine(overlayRoot, "content-pack.json"),
-                """
+                $$"""
                 {
                   "formatVersion": 1,
                   "id": "test.lightning-wall-overlay",
                   "version": "1",
                   "dependencies": ["devilution.base"],
-                  "schema": { "id": "devilution.diablo", "version": "1.462.0" },
+                  "schema": {{BaseContentSchemaJson}},
                   "dependencyConstraints": [
                     {
                       "id": "devilution.base",
@@ -4552,7 +4577,7 @@ public sealed class LiveAuthoritativeServerTests
                 TestContext.Current.CancellationToken);
             await File.WriteAllTextAsync(
                 Path.Combine(overlayRoot, "class_loadouts.tsv"),
-                "class_id\tclass_symbol\tstarting_gold\tability_spell_id\tability_spell_symbol\tability_kind\tstarting_spell_id\tstarting_spell_symbol\tstarting_spell_level\n2\t\t100\t27\t\tRecharge\t50\t\t1\n",
+                "class_id\tclass_symbol\tstarting_gold\tability_spell_id\tability_spell_symbol\tability_kind\tstarting_spell_id\tstarting_spell_symbol\tstarting_spell_level\n2\tsorcerer\t100\t27\trecharge\tRecharge\t50\tlightning_wall\t1\n",
                 TestContext.Current.CancellationToken);
 
             using var server = await StartedServer.StartAsync(
@@ -4627,13 +4652,13 @@ public sealed class LiveAuthoritativeServerTests
         try {
             await File.WriteAllTextAsync(
                 Path.Combine(overlayRoot, "content-pack.json"),
-                """
+                $$"""
                 {
                   "formatVersion": 1,
                   "id": "test.stone-curse-overlay",
                   "version": "1",
                   "dependencies": ["devilution.base"],
-                  "schema": { "id": "devilution.diablo", "version": "1.462.0" },
+                  "schema": {{BaseContentSchemaJson}},
                   "dependencyConstraints": [
                     {
                       "id": "devilution.base",
@@ -4653,7 +4678,7 @@ public sealed class LiveAuthoritativeServerTests
                 TestContext.Current.CancellationToken);
             await File.WriteAllTextAsync(
                 Path.Combine(overlayRoot, "class_loadouts.tsv"),
-                "class_id\tclass_symbol\tstarting_gold\tability_spell_id\tability_spell_symbol\tability_kind\tstarting_spell_id\tstarting_spell_symbol\tstarting_spell_level\n2\t\t100\t27\t\tRecharge\t8\t\t1\n",
+                "class_id\tclass_symbol\tstarting_gold\tability_spell_id\tability_spell_symbol\tability_kind\tstarting_spell_id\tstarting_spell_symbol\tstarting_spell_level\n2\tsorcerer\t100\t27\trecharge\tRecharge\t8\tstone_curse\t1\n",
                 TestContext.Current.CancellationToken);
 
             using var server = await StartedServer.StartAsync(
@@ -4719,13 +4744,13 @@ public sealed class LiveAuthoritativeServerTests
         try {
             await File.WriteAllTextAsync(
                 Path.Combine(overlayRoot, "content-pack.json"),
-                """
+                $$"""
                 {
                   "formatVersion": 1,
                   "id": "test.phasing-overlay",
                   "version": "1",
                   "dependencies": ["devilution.base"],
-                  "schema": { "id": "devilution.diablo", "version": "1.462.0" },
+                  "schema": {{BaseContentSchemaJson}},
                   "dependencyConstraints": [
                     {
                       "id": "devilution.base",
@@ -4745,7 +4770,7 @@ public sealed class LiveAuthoritativeServerTests
                 TestContext.Current.CancellationToken);
             await File.WriteAllTextAsync(
                 Path.Combine(overlayRoot, "class_loadouts.tsv"),
-                "class_id\tclass_symbol\tstarting_gold\tability_spell_id\tability_spell_symbol\tability_kind\tstarting_spell_id\tstarting_spell_symbol\tstarting_spell_level\n2\t\t100\t27\t\tRecharge\t10\t\t1\n",
+                "class_id\tclass_symbol\tstarting_gold\tability_spell_id\tability_spell_symbol\tability_kind\tstarting_spell_id\tstarting_spell_symbol\tstarting_spell_level\n2\tsorcerer\t100\t27\trecharge\tRecharge\t10\tphasing\t1\n",
                 TestContext.Current.CancellationToken);
 
             using var server = await StartedServer.StartAsync(
@@ -4830,6 +4855,7 @@ public sealed class LiveAuthoritativeServerTests
                 SourceItem = new PlayerItemReference {
                     Location = PlayerItemLocation.Equipment,
                     Slot = 4,
+                    StableItemId = staff.State.StableItemId,
                 },
             },
         }, client.SuggestedCommandTick(model.CurrentTick));
@@ -5015,6 +5041,7 @@ public sealed class LiveAuthoritativeServerTests
                 SourceItem = new PlayerItemReference {
                     Location = PlayerItemLocation.Equipment,
                     Slot = 4,
+                    StableItemId = staff.State.StableItemId,
                 },
             },
         }, client.SuggestedCommandTick(model.CurrentTick));
@@ -5030,13 +5057,18 @@ public sealed class LiveAuthoritativeServerTests
                 .Single(item => item.Slot == 4).State.Charges == initialCharges - 1);
         var updatedPlayer = Assert.Single(consumed.Snapshot!.Players);
         Assert.Equal(player.Mana, updatedPlayer.Mana);
-        Assert.Equal(initialCharges - 1,
-            Assert.Single(updatedPlayer.Equipment, item => item.Slot == 4).State.Charges);
-        Assert.Equal(0x46185DD5U, consumed.Snapshot.RandomState);
-        Assert.InRange(consumed.Snapshot.Projectiles.Count, 2, 4);
-        Assert.Equal([1, 5],
-            consumed.Snapshot.Projectiles.Select(projectile => projectile.Damage).Distinct());
-        Assert.All(consumed.Snapshot.Projectiles, projectile => Assert.Equal(1, projectile.Behavior));
+        var updatedStaff = Assert.Single(updatedPlayer.Equipment, item => item.Slot == 4);
+        Assert.Equal(staff.State.StableItemId, updatedStaff.State.StableItemId);
+        Assert.Equal(initialCharges - 1, updatedStaff.State.Charges);
+        var bolts = consumed.Snapshot.Projectiles.Where(projectile =>
+            projectile.SourceEntityId == player.EntityId && projectile.SpellId == 30).ToArray();
+        Assert.NotEmpty(bolts);
+        Assert.All(bolts, projectile => {
+            Assert.Equal((int)AuthoritativeProjectileBehavior.ChargedBolt, projectile.Behavior);
+            Assert.True(projectile.Damage > 0);
+        });
+        // Autonomous AI and projectile ticks make the live RNG sample variable.
+        // Exact vectors/RNG remain pinned by ChargedBoltFixtureMatchesNativeSpawnVectorAndRngState.
     }
 
     [Fact]
@@ -5383,13 +5415,13 @@ public sealed class LiveAuthoritativeServerTests
         try {
             await File.WriteAllTextAsync(
                 Path.Combine(overlayRoot, "content-pack.json"),
-                """
+                $$"""
                 {
                   "formatVersion": 1,
                   "id": "test.store-overlay",
                   "version": "1",
                   "dependencies": ["devilution.base"],
-                  "schema": { "id": "devilution.diablo", "version": "1.462.0" },
+                  "schema": {{BaseContentSchemaJson}},
                   "dependencyConstraints": [
                     {
                       "id": "devilution.base",
@@ -5455,13 +5487,13 @@ public sealed class LiveAuthoritativeServerTests
         try {
             await File.WriteAllTextAsync(
                 Path.Combine(overlayRoot, "content-pack.json"),
-                """
+                $$"""
                 {
                   "formatVersion": 1,
                   "id": "test.class-overlay",
                   "version": "1",
                   "dependencies": ["devilution.base"],
-                  "schema": { "id": "devilution.diablo", "version": "1.462.0" },
+                  "schema": {{BaseContentSchemaJson}},
                   "dependencyConstraints": [
                     {
                       "id": "devilution.base",

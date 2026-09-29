@@ -18,6 +18,47 @@ namespace Devilution.Server.Tests;
 public sealed class AuthoritativeTcpServerTests
 {
     [Fact]
+    public async Task StatePublicationRefreshesTickAfterEarlierHostWorkAdvancedTheSession()
+    {
+        var executor = new RecordingExecutor();
+        var commandServer = new AuthoritativeCommandServer(executor);
+        var saveProvider = new RecordingSaveProvider {
+            // Deterministically reproduce advancement between a caller's tick
+            // sample and its network projection, without thread timing races.
+            OnExport = () => commandServer.AdvanceTo(20),
+        };
+        var events = new TickRecordingEventProvider();
+        await using var server = new AuthoritativeTcpServer(commandServer,
+            new ProtocolHandshake(new ProtocolServerIdentity("server-build", "0.1.0", "content-hash", 20)),
+            () => 10, snapshotProvider: executor, eventProvider: events, saveProvider: saveProvider);
+        server.Start();
+        using var timeout = CancellationTokenSource.CreateLinkedTokenSource(TestContext.Current.CancellationToken);
+        timeout.CancelAfter(TimeSpan.FromSeconds(5));
+        using var client = new TcpClient();
+        await client.ConnectAsync(IPAddress.Loopback, server.Port, timeout.Token);
+        await using var stream = client.GetStream();
+        await SendHelloAsync(stream, timeout.Token);
+        _ = await EnvelopeCodec.ReadAsync(stream, timeout.Token);
+        Assert.Equal(20UL, (await EnvelopeCodec.ReadAsync(stream, timeout.Token))!.Snapshot.Tick);
+
+        saveProvider.OnExport = () => {
+            if (commandServer.CurrentTick >= 25)
+                commandServer.AdvanceTo(30);
+        };
+        await EnvelopeCodec.WriteAsync(stream, new Envelope {
+            CommandBatch = new CommandBatch { Commands = { new Command {
+                ClientSequence = 1, RequestedTick = 25,
+                AttackRequested = new AttackRequested { TargetEntityId = 1 },
+            } } },
+        }, timeout.Token);
+        var result = (await EnvelopeCodec.ReadAsync(stream, timeout.Token))!.CommandAck.Results.Single();
+        Assert.Equal(CommandStatus.Accepted, result.Status);
+        Assert.Equal(25UL, result.AppliedTick);
+        Assert.Equal(30UL, (await EnvelopeCodec.ReadAsync(stream, timeout.Token))!.EventBatch.Tick);
+        Assert.Equal(30UL, (await EnvelopeCodec.ReadAsync(stream, timeout.Token))!.Snapshot.Tick);
+    }
+
+    [Fact]
     public async Task FutureCommandsPublishOnlyAfterAdvancementAndKeepAutosaveAlive()
     {
         var probe = new FuturePublicationProbe();
@@ -3560,8 +3601,11 @@ public sealed class AuthoritativeTcpServerTests
 
         public ulong ImportedStateTick { get; init; }
 
+        public Action? OnExport { get; set; }
+
         public string ExportPlayerSave(string sessionId)
         {
+            OnExport?.Invoke();
             Interlocked.Increment(ref exportCount);
             return "{}";
         }
@@ -3571,6 +3615,12 @@ public sealed class AuthoritativeTcpServerTests
         }
 
         public ulong GetSessionStateTick(string sessionId) => ImportedStateTick;
+    }
+
+    private sealed class TickRecordingEventProvider : IAuthoritativeEventProvider
+    {
+        public EventBatch? DrainEvents(string sessionId, uint entityId, ulong tick)
+            => new() { Tick = tick, Events = { new GameEvent { Experience = new ExperienceEvent() } } };
     }
 
     private sealed class RejectingSaveProvider : IAuthoritativeSaveProvider

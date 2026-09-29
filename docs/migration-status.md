@@ -1,7 +1,8 @@
 # Godevilution Migration Status
 
-Status date: 2026-09-29. Estimate baseline: `8c03b365d`; the M0 session-reliability
-batch following `45b159b77` is covered by the fresh verification below.
+Status date: 2026-09-29. Estimate baseline: `8c03b365d`; M0 session reliability
+landed in `819b73936`. The integration-remediation batch following it is covered
+by the fresh verification below.
 
 The [completion plan](completion-plan.md) is the active delivery order and
 acceptance contract. The [architecture](csharp-authoritative-server-migration.md)
@@ -84,7 +85,55 @@ The following records describe implemented slices at this baseline. They are
 evidence, not a separate priority list; detailed older entries retain their
 original scope and may be superseded by later entries or the current assessment.
 
+### M0 integration baseline remediation (2026-09-29)
+
+Snapshot and event publication now refresh their tick inside the authoritative
+state lock. This prevents an autonomous advance during network writes from
+publishing newer action state under an older timestamp. A deterministic TCP
+regression forces advancement between tick sampling and publication and verifies
+both handshake snapshots and post-command events/snapshots. Wire formats and
+gameplay rules are unchanged.
+
+Live test overlays use their checked-in base pack's schema, supply current
+required columns and stable symbols, and declare only tables they actually
+write. Strict production content validation remains unchanged. Protocol enum
+assertions retain existing numeric identities and cover the additive rack/stand
+kinds. Deliberately blocking save-writer and adapter-lease test tasks use
+dedicated threads to avoid test-pool starvation without reducing concurrency.
+
+Sequential live commands now observe the preceding authoritative tick, and the
+block test correlates each action to its acknowledged start tick rather than
+reusing an older queued snapshot. Cast-source tests assert stable item identity,
+charge/mana consumption, owned projectile behavior, and Firebolt expiry. The
+Firebolt targets open space so an immediate hit cannot hide its short lifetime.
+Exact hit, damage, and RNG expectations remain in deterministic replay tests;
+wall-clock AI advancement is not treated as a fixed RNG checkpoint.
+
+The full client/protocol command documented below passes **477/477**, with no
+exclusions, on Windows/.NET 8.0.30. The focused Charged Bolt source, Hellfire
+Firebolt staff, and PvP block methods also pass **3/3**. Independent Terra 5.6
+high-effort review found no blocking issue in the final implementation/tests.
+
+After rebuilding, the full server command documented below finishes with
+**1047 passed, 2 failed** on Windows/.NET 10.0.11, with no exclusions. The two
+pre-existing Flash tick-1 hash failures remain; the blocking-writer and
+adapter-lease tests pass in the full run. Native/managed
+Flash source inspection has not established the divergent field. Next compare
+the canonical tick-1 field sequence with a freshly built native runner before
+changing behavior or any expected hash. This is not a native parity pass.
+
+The rebuilt headless `tools/test-godot-session.ps1 -GodotExecutable <local-path>`
+journey passes again, with evidence under `%TEMP%/Godevilution-Scene-Acceptance-`
+suffix `86fd1558f46d4a1bb2102a4a451b1d9e`. This rerun adds no new visible-rendering
+evidence; the earlier inspected visible run remains below. NuGet vulnerability
+auditing is still unavailable (NU1900). M0 remains open for the Flash failures,
+application server-loss/reconnect, native new-game, and the declared platform
+and measured performance matrix. Progress estimates remain unchanged.
+
 ### M0 Godot session-reliability verification (2026-09-29)
+
+This is the initial `819b73936` verification record; the remediation results
+above supersede its integration counts and outstanding test-fixture failures.
 
 The launcher retains only a client resume credential; gameplay state remains in
 server checkpoints. Additive `ServerHello.last_client_sequence` prevents a fresh
@@ -144,10 +193,7 @@ failures require classification rather than an assumption that all are
 pre-existing. This integration result is not replaced by the passing narrow
 Godot journey.
 
-Next M0 work: resolve the recorded integration failures, exercise application
-server-loss/reconnect and native new-game, and establish the target platform and
-measured performance matrix. Overall percentage estimates are unchanged by this
-narrow reliability batch.
+The current M0 follow-up is recorded in the newer remediation entry above.
 
 Secondary-participant Apocalypse casts now cross the primary-player replay
 boundary with native caster ownership, mana/facing, Solid-only admission,

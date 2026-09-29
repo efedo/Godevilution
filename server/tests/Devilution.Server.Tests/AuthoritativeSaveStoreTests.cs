@@ -25,11 +25,13 @@ public sealed class AuthoritativeSaveStoreTests
                 .Select(_ => new AuthoritativeSaveStore(root))
                 .ToArray();
             using var barrier = new Barrier(payloads.Length);
-            await Task.WhenAll(payloads.Select((payload, index) => Task.Run(() => {
+            // Blocking barrier participants need dedicated threads; a bounded
+            // test-runner pool can otherwise starve before all writers arrive.
+            await Task.WhenAll(payloads.Select((payload, index) => Task.Factory.StartNew(() => {
                 if (!barrier.SignalAndWait(TimeSpan.FromSeconds(5)))
                     throw new TimeoutException("Concurrent save writers did not start together.");
                 stores[index].Save("shared-session", payload);
-            })));
+            }, TestContext.Current.CancellationToken, TaskCreationOptions.LongRunning, TaskScheduler.Default)));
 
             var persisted = new AuthoritativeSaveStore(root).Load("shared-session");
             Assert.NotNull(persisted);
