@@ -23,7 +23,7 @@ public sealed class AuthoritativeCommandReceiptStore
         Directory.CreateDirectory(this.rootDirectory);
     }
 
-    /** Replaces the session ledger atomically with cloned command results. */
+    /** Durably publishes cloned results; Windows reuses and flushes identical bytes. */
     public void Save(string sessionId, IReadOnlyDictionary<ulong, CommandResult> results)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(sessionId);
@@ -33,13 +33,15 @@ public sealed class AuthoritativeCommandReceiptStore
             .Select(entry => Receipt.From(entry.Key, entry.Value))
             .ToArray();
         var path = GetPath(sessionId);
-        var temporaryPath = path + "." + Guid.NewGuid().ToString("N") + ".tmp";
         var pathLock = GetPathLock(path);
         lock (pathLock) {
+            var bytes = StrictUtf8Text.Encode(
+                JsonSerializer.Serialize(entries, JsonOptions),
+                "command receipt ledger");
+            if (FlushIfUnchanged(path, bytes))
+                return;
+            var temporaryPath = path + "." + Guid.NewGuid().ToString("N") + ".tmp";
             try {
-                var bytes = StrictUtf8Text.Encode(
-                    JsonSerializer.Serialize(entries, JsonOptions),
-                    "command receipt ledger");
                 using (var stream = new FileStream(
                     temporaryPath,
                     FileMode.CreateNew,
@@ -86,6 +88,41 @@ public sealed class AuthoritativeCommandReceiptStore
                 results.Add(receipt.ToCommandResult());
             }
             return results;
+        }
+    }
+
+    private static bool FlushIfUnchanged(string path, ReadOnlySpan<byte> bytes)
+    {
+        // Windows sharing protects this pathname through comparison and flush.
+        // Other platforms retain replacement until equivalent protection is proven.
+        if (!OperatingSystem.IsWindows())
+            return false;
+        FileStream? existing = null;
+        try {
+            try {
+                // Check the file itself, never cached hashes or receipt counts.
+                // Deny other writers/replacement until comparison and flush finish.
+                existing = new FileStream(path, FileMode.Open, FileAccess.ReadWrite, FileShare.Read);
+                if (existing.Length != bytes.Length)
+                    return false;
+                Span<byte> buffer = stackalloc byte[4096];
+                for (var offset = 0; offset < bytes.Length;) {
+                    var count = Math.Min(buffer.Length, bytes.Length - offset);
+                    var chunk = buffer[..count];
+                    existing.ReadExactly(chunk);
+                    if (!chunk.SequenceEqual(bytes.Slice(offset, count)))
+                        return false;
+                    offset += count;
+                }
+            } catch (Exception exception) when (exception is IOException or UnauthorizedAccessException) {
+                // Missing/unreadable mirrors retain the original atomic-write path.
+                return false;
+            }
+            // Do not swallow flush failures or assume existing bytes are durable.
+            existing.Flush(flushToDisk: true);
+            return true;
+        } finally {
+            existing?.Dispose();
         }
     }
 

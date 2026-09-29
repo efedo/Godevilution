@@ -124,6 +124,9 @@ Workload JSON records actual duration, command counts, and configuration. No
 client session credential is emitted in these reports; keep the save directory
 private. Failed/empty output is not a baseline. Record the verified revision and
 machine in migration status with each accepted measurement.
+Compare checkpoint changes on the same save volume and workload, with the new
+per-session capture/publication phases enabled on both sides. Their timings
+overlap the outer command/cycle measurements; do not add percentiles together.
 
 For focused execution after rebuilding, set `GODEVILUTION_PERFORMANCE_DIRECTORY`
 to an evidence parent and run:

@@ -1,4 +1,5 @@
 using Devilution.Protocol.V1;
+using Devilution.Server.Host;
 
 namespace Devilution.Server.Stores;
 
@@ -25,16 +26,34 @@ public sealed class AuthoritativeSessionPersistence
         string? serializedState,
         IReadOnlyDictionary<ulong, CommandResult> commandResults,
         string? rulesetIdentityHash = null)
+        => Save(sessionId, serializedState, commandResults, rulesetIdentityHash, null);
+
+    /** Host-only timings leave the public save and batch contracts unchanged. */
+    internal void Save(
+        string sessionId,
+        string? serializedState,
+        IReadOnlyDictionary<ulong, CommandResult> commandResults,
+        string? rulesetIdentityHash,
+        HostPerformanceRecorder? recorder)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(sessionId);
         ArgumentNullException.ThrowIfNull(commandResults);
 
-        if (sessionStore is not null && serializedState is not null)
+        if (sessionStore is not null && serializedState is not null) {
+            var publication = recorder?.Begin() ?? 0;
             sessionStore.Save(sessionId, serializedState, commandResults, rulesetIdentityHash);
-        if (saveStore is not null && serializedState is not null)
+            recorder?.Complete(HostPerformanceMetric.CombinedCheckpointPublishMilliseconds, publication);
+        }
+        if (saveStore is not null && serializedState is not null) {
+            var publication = recorder?.Begin() ?? 0;
             saveStore.Save(sessionId, serializedState);
-        if (commandReceiptStore is not null)
+            recorder?.Complete(HostPerformanceMetric.CompatibilityStatePublishMilliseconds, publication);
+        }
+        if (commandReceiptStore is not null) {
+            var publication = recorder?.Begin() ?? 0;
             commandReceiptStore.Save(sessionId, commandResults);
+            recorder?.Complete(HostPerformanceMetric.CompatibilityReceiptsPublishMilliseconds, publication);
+        }
     }
 
     /**

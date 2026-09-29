@@ -2,6 +2,15 @@
 
 All notable changes to this fork are documented below.
 
+- 2026-09-29: Measured checkpoint phases and reduced Windows receipt-mirror
+  replacement when validated bytes are unchanged, retaining disk flushes,
+  checkpoint order, compatibility files, and durable-before-command-ACK behavior.
+  Added corruption/concurrency/sharing and live failed-publication/restart tests.
+  Matched local four-player cycle p95 improved from 67.66ms to 44.31ms; no release
+  budget is claimed. Server tests pass 1069/1069, protocol tests 482 plus two
+  explicit workloads, and rebuilt headless Godot Create/Resume/Recovery passes.
+  Updated metric boundaries, plan, and evidence. Normalized touched text to CRLF.
+
 - 2026-09-29: Added bounded, opt-in standalone-host performance recording and
   reproducible one/four-participant Release workloads. Fixed the stale-snapshot
   command timestamps that the workload exposed without relaxing server authority

@@ -97,6 +97,74 @@ The following records describe implemented slices at this baseline. They are
 evidence, not a separate priority list; detailed older entries retain their
 original scope and may be superseded by later entries or the current assessment.
 
+### M0 durable checkpoint publication cost reduction (2026-09-29)
+
+This batch follows `cd3c2fc8a`. Added host phase measurements separate periodic
+advancement, checkpoint monitor wait, state/ledger capture, and the three durable
+publications. In this authored-town workload the disk publication calls dominate,
+not simulation advancement. On Windows, a byte-identical receipt mirror is now
+flushed without replacing it. Actual bytes are checked each time under path/handle
+protection; missing, changed, and corrupt mirrors retain atomic replacement.
+Other platforms retain the previous replacement path. Combined/raw checkpoints,
+disk flushes, formats, command admission, and durable-before-ACK ordering remain.
+
+Matched local measurements use the same C: temporary storage, Release binaries,
+Windows/CPU/runtime and one/four-player workload described in the previous entry,
+without concurrent agent builds/tests. The before build has phase instrumentation
+but not receipt reuse; the after build includes both. Evidence directories are
+`%TEMP%/Godevilution-Receipt-Phases-Before-20260929` and
+`%TEMP%/Godevilution-Receipt-Phases-After-20260929`. Each contains one case per
+participant count, host/workload reports, observations, and private saves.
+
+| Local measurement | One before | One after | Four before | Four after |
+| --- | ---: | ---: | ---: | ---: |
+| Warm-up / host recording seconds | 5.10 / 15.26 | 5.13 / 15.32 | 6.68 / 21.79 | 5.44 / 15.51 |
+| Completed periodic cycle samples | 254 | 252 | 262 | 239 |
+| Periodic advance + checkpoint p95 | 16.90ms | 11.62ms | 67.66ms | 44.31ms |
+| Command admission + checkpoint p95 (15 samples) | 30.23ms | 25.03ms | 231.23ms | 64.16ms |
+| Snapshot materialization/validation p95 | 0.63ms | 0.96ms | 15.82ms | 0.75ms |
+| Receipt publication mean | 5.25ms | 0.77ms | 3.20ms | 0.61ms |
+
+Four-player phase p95 before/after: advancement including its lock 0.070/0.094ms;
+checkpoint lock wait 0.514/0.001ms; state/ledger capture 0.270/0.281ms; combined
+checkpoint publication 10.310/7.104ms; raw compatibility state 9.992/6.973ms;
+receipt publication 6.753/0.785ms. Timings overlap and percentiles cannot be
+summed. Per-session phase counts differ at recording boundaries; reload batches
+are not instrumented by these phases. See the
+[metric definitions](../server/src/Devilution.Server.Host/README.md#opt-in-performance-evidence).
+
+All four measured cases passed, all participants observed all twenty moves, and
+no samples were dropped. The four-player cycle p95 improved about 35% in this
+single matched pair, but its maximum was still 50.87ms and command tails remain.
+This is not a sustained tick deadline, combat/campaign load, frame, memory-growth,
+or release-platform pass. Retain the remaining M0 budgets/platform/native GUI
+gaps; do not relax durability or reinterpret this sample as campaign completion.
+
+Verification:
+
+- `dotnet run --project server/tests/Devilution.Server.Tests/Devilution.Server.Tests.csproj --configuration Release --no-restore -- --no-ansi`:
+  **1069/1069 passed**. Eight store cases cover unchanged/empty/multi-buffer,
+  changed/deleted/corrupt, concurrent and invalid ledgers, plus Windows sharing
+  failure/retry. Two live TCP cases prove no ACK on receipt publication failure,
+  same-host retry, and fresh-host duplicate recovery directly from the stale
+  mirror as well as after repair. The initial pre-change store run failed five
+  of seven cases, demonstrating the replacement behavior being changed.
+- The equivalent full Release protocol command for
+  `godot/Devilution.Client.Protocol.Tests/Devilution.Client.Protocol.Tests.csproj`
+  passed **482 tests**; two explicit cases were excluded. The focused performance
+  command in the [build notes](ai/godot-build.md#standalone-host-performance-baseline)
+  then passed **2/2** against each before/after build.
+- `tools/test-godot-session.ps1` rebuilt server/client and passed actual headless
+  Create/Resume/Recovery. Evidence:
+  `%TEMP%/Godevilution-Scene-Acceptance-e87008330f3c40e88fffed0c51f4aca9`.
+  No new visible-window, native build, or non-Windows execution is claimed.
+  NU1900 package-audit availability warnings persist.
+
+Independent Terra 5.6 high-effort review found no remaining correctness blocker.
+The platform guard and direct-failure restart case address review findings.
+Overall progress estimates remain unchanged; this closes a bounded performance
+finding, not M0 or a full migration objective.
+
 ### M0 host measurement and stale-command timing repair (2026-09-29)
 
 This batch, based on `c063dcd24`, adds opt-in bounded host measurements and the
@@ -138,8 +206,8 @@ A periodic cycle may cover multiple ticks; its timing is not a total per-tick
 budget. Lock-inclusive timings overlap and cannot be summed. The four-player
 cycle already exceeds the nominal 50ms interval, and command/materialization
 tails show contention. This is an open performance finding, not a passed budget.
-Separate checkpoint, simulation, and lock costs before choosing an optimization;
-do not reduce durability or relax command admission to improve the benchmark.
+The follow-up entry above separates these costs and records a durable Windows
+receipt-publication optimization; wider performance acceptance remains open.
 An earlier D:-drive `.local/host-performance-baseline-20260929` run passed both
 workloads with a 40.54ms four-player periodic p95. Different save storage and
 local-machine variability make those runs unsuitable as a controlled regression

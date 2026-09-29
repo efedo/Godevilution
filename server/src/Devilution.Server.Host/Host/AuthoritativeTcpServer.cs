@@ -311,7 +311,9 @@ public sealed class AuthoritativeTcpServer : IAsyncDisposable
             if (tick == lastSimulationTick)
                 continue;
             var measurement = PerformanceRecorder?.Begin() ?? 0;
+            var advancement = PerformanceRecorder?.Begin() ?? 0;
             commandServer.AdvanceTo(tick);
+            PerformanceRecorder?.Complete(HostPerformanceMetric.PeriodicAdvanceLockInclusiveMilliseconds, advancement);
             lastSimulationTick = tick;
             foreach (var session in sessionsByToken.Values)
                 SaveSession(session);
@@ -484,19 +486,24 @@ public sealed class AuthoritativeTcpServer : IAsyncDisposable
         IAuthoritativeSaveProvider? stateProvider = null,
         string? rulesetIdentityHash = null)
     {
+        var lockWait = PerformanceRecorder?.Begin() ?? 0;
         commandServer.WithSynchronizedSession(session.Id, () => {
+            PerformanceRecorder?.Complete(HostPerformanceMetric.SessionCheckpointLockWaitMilliseconds, lockWait);
             if (!session.ParticipantInitialized)
                 return;
+            var capture = PerformanceRecorder?.Begin() ?? 0;
             var provider = stateProvider ?? saveProvider;
             var serializedState = provider is null
                 ? null
                 : provider.ExportSessionState(session.Id);
             var completedCommands = commandServer.ExportCompletedCommands(session.Id);
+            PerformanceRecorder?.Complete(HostPerformanceMetric.SessionStateAndLedgerCaptureMilliseconds, capture);
             sessionPersistence.Save(
                 session.Id,
                 serializedState,
                 completedCommands,
-                rulesetIdentityHash ?? handshake.Identity.RulesetIdentityHash);
+                rulesetIdentityHash ?? handshake.Identity.RulesetIdentityHash,
+                PerformanceRecorder);
         });
     }
 

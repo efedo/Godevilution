@@ -106,6 +106,10 @@ M4. M5 is the final removal gate, not a reason to postpone replacement work.
    The opt-in standalone host workload now measures one/four participants over
    loopback; it is a preliminary baseline, not a Godot-frame or release-budget
    pass. Preserve settled authoritative outcomes when extending this workload.
+   Use the recorded checkpoint-phase timings to target publication costs without
+   weakening durability; retain no-ack-on-write-failure and fresh-host duplicate
+   recovery coverage. Local Windows receipt-file reuse does not close the wider
+   performance/platform gate.
 
 Exit: the Godot launch/create/move/save/restart/resume journey passes from
 rebuilt artifacts without MPQs; visible UI is checked separately from headless

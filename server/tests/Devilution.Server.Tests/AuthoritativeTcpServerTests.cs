@@ -17,6 +17,84 @@ namespace Devilution.Server.Tests;
 
 public sealed class AuthoritativeTcpServerTests
 {
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task FailedReceiptPublicationSendsNoAckAndRetryRemainsDurableAcrossRestart(bool retryBeforeRestart)
+    {
+        if (!OperatingSystem.IsWindows())
+            return; // Uses Windows no-delete sharing to fail atomic replacement.
+        var root = Path.Combine(Path.GetTempPath(), "Godevilution-Receipt-Ack-" + Guid.NewGuid().ToString("N"));
+        const string resumeToken = "receipt-publication-session";
+        var sessionId = SessionIdForToken(resumeToken);
+        var command = new Command { ClientSequence = 1, RequestedTick = 0,
+            AttackRequested = new AttackRequested { TargetEntityId = 1 } };
+        using var timeout = CancellationTokenSource.CreateLinkedTokenSource(TestContext.Current.CancellationToken);
+        timeout.CancelAfter(TimeSpan.FromSeconds(10));
+        var cancellationToken = timeout.Token;
+        try {
+            var executor = new RecordingExecutor();
+            await using (var server = CreateServer(executor)) {
+                server.Start();
+                using var client = new TcpClient();
+                await client.ConnectAsync(IPAddress.Loopback, server.Port, cancellationToken);
+                await using var stream = client.GetStream();
+                await SendHelloAsync(stream, cancellationToken, resumeToken);
+                _ = await EnvelopeCodec.ReadAsync(stream, cancellationToken);
+                // An empty rejected batch also establishes initial persistence.
+                await EnvelopeCodec.WriteAsync(stream, new Envelope { CommandBatch = new CommandBatch() }, cancellationToken);
+                Assert.Equal(CommandRejectReason.Malformed,
+                    (await EnvelopeCodec.ReadAsync(stream, cancellationToken))!.CommandAck.Results.Single().RejectReason);
+                var path = Path.Combine(root, sessionId + ".commands.json");
+                using (var noDelete = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)) {
+                    await EnvelopeCodec.WriteAsync(stream, new Envelope {
+                        CommandBatch = new CommandBatch { Commands = { command } },
+                    }, cancellationToken);
+                    // Publication fails after the combined checkpoint, before ACK.
+                    Assert.Null(await EnvelopeCodec.ReadAsync(stream, cancellationToken));
+                    Assert.Empty(new AuthoritativeCommandReceiptStore(root).Load(sessionId));
+                    Assert.Equal(1UL, Assert.Single(new AuthoritativeSessionStore(root).Load(sessionId)!.CommandReceipts).ServerReceiptSequence);
+                }
+                if (retryBeforeRestart)
+                    await AssertDuplicateAsync(server.Port);
+                Assert.Equal(1, executor.CallCount);
+            }
+            var freshExecutor = new RecordingExecutor();
+            await using (var restarted = CreateServer(freshExecutor)) {
+                restarted.Start();
+                await AssertDuplicateAsync(restarted.Port);
+                Assert.Equal(0, freshExecutor.CallCount);
+            }
+            Assert.Empty(Directory.GetFiles(root, "*.tmp"));
+        } finally {
+            if (Directory.Exists(root))
+                Directory.Delete(root, recursive: true);
+        }
+
+        AuthoritativeTcpServer CreateServer(RecordingExecutor executor)
+            => new(new AuthoritativeCommandServer(executor),
+                new ProtocolHandshake(new ProtocolServerIdentity("server-build", "0.1.0", "content-hash", 20)),
+                // Frozen tick isolates publication failure from autonomous saves.
+                () => 0, saveStore: new AuthoritativeSaveStore(root), saveProvider: new RecordingSaveProvider());
+
+        async Task AssertDuplicateAsync(int port)
+        {
+            using var client = new TcpClient();
+            await client.ConnectAsync(IPAddress.Loopback, port, cancellationToken);
+            await using var stream = client.GetStream();
+            await SendHelloAsync(stream, cancellationToken, resumeToken);
+            _ = await EnvelopeCodec.ReadAsync(stream, cancellationToken);
+            await EnvelopeCodec.WriteAsync(stream, new Envelope {
+                CommandBatch = new CommandBatch { Commands = { command } },
+            }, cancellationToken);
+            var receipt = (await EnvelopeCodec.ReadAsync(stream, cancellationToken))!.CommandAck.Results.Single();
+            Assert.Equal(CommandStatus.Duplicate, receipt.Status);
+            Assert.Equal(1UL, receipt.ServerReceiptSequence);
+            Assert.Equal(1UL, receipt.ClientSequence);
+            Assert.Equal(1UL, Assert.Single(new AuthoritativeCommandReceiptStore(root).Load(sessionId)).ServerReceiptSequence);
+        }
+    }
+
     [Fact]
     public async Task StatePublicationRefreshesTickAfterEarlierHostWorkAdvancedTheSession()
     {

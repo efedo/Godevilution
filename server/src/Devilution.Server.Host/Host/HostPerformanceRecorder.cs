@@ -9,6 +9,12 @@ public enum HostPerformanceMetric
     SnapshotMaterializeMilliseconds,
     SnapshotWriteMilliseconds,
     SnapshotEnvelopePayloadBytes,
+    PeriodicAdvanceLockInclusiveMilliseconds,
+    SessionCheckpointLockWaitMilliseconds,
+    SessionStateAndLedgerCaptureMilliseconds,
+    CombinedCheckpointPublishMilliseconds,
+    CompatibilityStatePublishMilliseconds,
+    CompatibilityReceiptsPublishMilliseconds,
 }
 
 /** Opt-in, bounded diagnostics. No session IDs, credentials, or gameplay state. */

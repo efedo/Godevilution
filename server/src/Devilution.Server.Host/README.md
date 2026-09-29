@@ -58,6 +58,15 @@ Measurements describe completed operations, not a single summed tick cost:
 
 - Periodic cycle: authoritative advance plus per-session checkpoints; it can
   advance multiple ticks and excludes the scheduler wait.
+- Periodic advancement: `AdvanceTo` only, including its authoritative lock wait.
+- Session checkpoint lock wait: acquiring the authoritative monitor for one
+  `SaveSession` call; a command already holding it enters recursively. This is
+  not the command's initial lock wait.
+- Session capture: state export and completed-ledger cloning under that monitor.
+- Combined checkpoint, compatibility state, and compatibility receipt publication:
+  separate synchronous store calls, including validation, serialization, disk
+  flush, and replacement when needed. These phases cover ordinary `SaveSession`
+  calls, not ruleset-reload `SaveBatch`; phase sample counts need not match.
 - Command admission/apply/checkpoint: includes authoritative lock wait, but not
   network publication or initial command-batch validation.
 - Snapshot materialization/validation: includes lock wait and any advance.
@@ -74,3 +83,13 @@ Final and startup identity hashes expose an identity change during profiling;
 use a stable ruleset for comparable baselines. Timings overlap and must not be
 added together. The reproducible workload is documented in
 [Godot build notes](../../../docs/ai/godot-build.md#standalone-host-performance-baseline).
+
+On Windows, an unchanged compatibility receipt file is compared byte-for-byte
+under the store's per-path lock, then flushed to disk without replacement. The
+open handle excludes writers and pathname replacement through comparison/flush.
+No cached hash or receipt count substitutes for reading the actual file. Missing,
+different, or corrupt mirrors use the original write-through atomic replacement;
+an equality-path flush failure propagates. Other platforms retain unconditional
+replacement until equivalent pathname protection is verified. Combined and raw
+state checkpoints, compatibility formats, publication order, and durable-before-
+command-acknowledgement behavior are unchanged.
