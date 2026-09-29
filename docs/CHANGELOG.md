@@ -2,6 +2,14 @@
 
 All notable changes to this fork are documented below.
 
+- 2026-09-29: Added a zero-argument isolated native acceptance launcher, keeping
+  normal native saves/config unchanged. Matched native Diablo selection to the
+  base-content server, captured native logs and owned process identities, and
+  retained client ownership before waiting so cleanup covers both processes.
+  Verified spaced paths and abnormal-client cleanup; launcher regressions pass
+  6/6 and server tests 1051/1051. Native GUI acceptance remains unverified pending
+  app approval. Normalized touched text to CRLF.
+
 - 2026-09-29: Corrected compact native Flash replay to retain off-player cursor
   facing, after MPQ-free local/remote tests through the real legacy cast
   path established the behavior. Regenerated the two fixtures' eight hashes

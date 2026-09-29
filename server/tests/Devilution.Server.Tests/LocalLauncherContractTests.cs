@@ -85,6 +85,48 @@ public sealed class LocalLauncherContractTests
     }
 
     [Fact]
+    public void NativeAcceptanceUsesFreshIsolatedPathsWithoutChangingNormalSaveLocations()
+    {
+        var launcher = File.ReadAllText(Path.Combine(FindRepositoryRoot(), "run-authoritative-client.ps1"));
+        var wrapper = File.ReadAllText(Path.Combine(FindRepositoryRoot(), "tools/run-native-acceptance.ps1"));
+        Assert.Contains("param()", launcher, StringComparison.Ordinal);
+        Assert.Contains("param()", wrapper, StringComparison.Ordinal);
+        Assert.Contains("$env:GODEVILUTION_NATIVE_ACCEPTANCE_DIRECTORY", launcher, StringComparison.Ordinal);
+        var freshPathGuard = launcher.IndexOf("if (Test-Path -LiteralPath $candidate)", StringComparison.Ordinal);
+        Assert.True(freshPathGuard >= 0);
+        Assert.True(freshPathGuard < launcher.IndexOf("--target devilutionx", StringComparison.Ordinal));
+        Assert.Matches(@"(?s)if \(\$isAcceptanceRun\) \{\s*\$clientArguments \+= @\(.*?'--save-dir'.*?'--config-dir'", launcher);
+        Assert.Single(Regex.Matches(launcher, "'--save-dir'"));
+        Assert.Single(Regex.Matches(launcher, "'--config-dir'"));
+        Assert.Contains("Fullscreen=0", launcher, StringComparison.Ordinal);
+        Assert.Contains("'--diablo'", launcher, StringComparison.Ordinal);
+        Assert.DoesNotContain("'--hellfire'", launcher, StringComparison.Ordinal);
+        Assert.Contains("'--log-to-file'", launcher, StringComparison.Ordinal);
+        Assert.Contains("Join-Path $captureRoot 'native-save'", launcher, StringComparison.Ordinal);
+        Assert.Contains("Join-Path $captureRoot 'native-config'", launcher, StringComparison.Ordinal);
+        Assert.Contains("$env:GODEVILUTION_NATIVE_ACCEPTANCE_DIRECTORY = $previousAcceptanceRoot", wrapper, StringComparison.Ordinal);
+        Assert.Contains("Remove-Item Env:GODEVILUTION_NATIVE_ACCEPTANCE_DIRECTORY", wrapper, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void NativeLauncherOwnsClientBeforeWaitingAndCleansBothProcesses()
+    {
+        var launcher = File.ReadAllText(Path.Combine(FindRepositoryRoot(), "run-authoritative-client.ps1"));
+        Assert.Matches(@"(?m)^\s*\$serverProcess = Start-Process[^\r\n]*-WindowStyle Hidden", launcher);
+        var clientLaunch = Regex.Match(launcher, @"(?m)^\s*\$clientProcess = Start-Process[^\r\n]*");
+        Assert.True(clientLaunch.Success);
+        Assert.DoesNotContain("-Wait", clientLaunch.Value, StringComparison.OrdinalIgnoreCase);
+        Assert.True(launcher.IndexOf("$clientProcess.WaitForExit(250)", StringComparison.Ordinal) > clientLaunch.Index);
+        Assert.Contains("Join-Path $captureRoot 'processes.json'", launcher, StringComparison.Ordinal);
+        Assert.Contains("clientStartedUtc = $clientProcess.StartTime.ToUniversalTime()", launcher, StringComparison.Ordinal);
+        Assert.Contains("serverStartedUtc = $serverProcess.StartTime.ToUniversalTime()", launcher, StringComparison.Ordinal);
+        var cleanup = launcher[launcher.IndexOf("finally {", StringComparison.Ordinal)..];
+        Assert.Contains("Stop-Process -Id $clientProcess.Id", cleanup, StringComparison.Ordinal);
+        Assert.Contains("Stop-Process -Id $serverProcess.Id", cleanup, StringComparison.Ordinal);
+        Assert.DoesNotContain("Get-Process", launcher, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void GodotLauncherBuildsBothProjectsAndOwnsOnlyItsProcesses()
     {
         var launcher = File.ReadAllText(Path.Combine(FindRepositoryRoot(), "godot/run-local-client.ps1"));

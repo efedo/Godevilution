@@ -102,6 +102,37 @@ on every run. It also verifies the server's reported single-player mode before
 opening the client, so stale binaries and mode mismatches fail before native
 level setup.
 
+The root launcher pairs the base-content server with explicit `--diablo`, even
+when Hellfire is installed. A Hellfire acceptance run needs matching server
+content; native installation discovery must not silently select another game.
+Normal launches retain the user's native save/config locations. The server is
+hidden; the client is interactive. Native logs and owned process IDs/start times
+are retained beside the server logs. Cleanup owns only those process handles;
+forcibly killing the PowerShell launcher itself can bypass its `finally` block.
+
+For a reproducible, isolated manual native GUI check, run from an interactive
+PowerShell session:
+
+```powershell
+./tools/run-native-acceptance.ps1
+```
+
+This zero-argument wrapper uses the same rebuild/handshake launcher, with fresh
+native save/config folders, windowed presentation, skipped intro, and a separate
+server save root. Select Single Player, create a new hero, enter the world,
+observe the authoritative state, exercise movement, and exit normally. Record
+what actually happened; window discovery or exit code alone is not a GUI pass.
+Logs remain under the printed `Godevilution-Native-Acceptance-*` temp directory.
+Keep the resume-token file private. The wrapper restores the caller's internal
+`GODEVILUTION_NATIVE_ACCEPTANCE_DIRECTORY` environment setting; existing target
+directories are rejected before any build or launch to avoid reusing user data.
+
+On the verified desktop, a sandbox-launched client did not expose a targetable
+window, while the same rebuilt client launched on the interactive desktop did.
+Agents must request the appropriate launch permission and Computer Use app
+approval; they must not treat a running process as visible UI or bypass denied
+window access. See migration status for the still-unverified menu/world check.
+
 The C# xUnit project is an executable Microsoft Testing Platform runner. Run
 it directly when `dotnet test` selects a machine-wide VSTest host whose
 `testhost` package is unavailable:

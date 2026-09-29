@@ -2,8 +2,8 @@
 
 Status date: 2026-09-29. Estimate baseline: `8c03b365d`; M0 session reliability
 landed in `819b73936`, integration remediation in `818f63f32`, and application
-recovery in `cabc9b3fb`. The Flash replay correction following them is covered
-by the fresh verification below.
+recovery in `cabc9b3fb`. The Flash replay correction landed in `3b90b6be5`;
+newer native-launch evidence is recorded below.
 
 The [completion plan](completion-plan.md) is the active delivery order and
 acceptance contract. The [architecture](csharp-authoritative-server-migration.md)
@@ -57,7 +57,10 @@ open. Their scope, dependencies, and exit checks are defined only in the
   earlier single-player launcher contract in `0ef95acd9`. The launcher rebuilds
   current binaries and checks the reported mode; native policy also rejects a
   mismatched handshake. These fixes are present, but source/contract checks do
-  not prove that the GUI can create and enter a game.
+  not prove that the GUI can create and enter a game. The isolated native
+  acceptance launcher now preserves user saves/config and matches the base
+  server's Diablo variant. A targetable desktop window was observed, but app
+  approval timed out before its menus could be inspected or operated.
 - Godot's local harness now builds the current server and client, imports
   assets, checks mode/identities, and retains `.local/godot` saves plus a private
   resume bookmark. Actual scene/control tests create a Rogue, move, restart both
@@ -92,6 +95,51 @@ open. Their scope, dependencies, and exit checks are defined only in the
 The following records describe implemented slices at this baseline. They are
 evidence, not a separate priority list; detailed older entries retain their
 original scope and may be superseded by later entries or the current assessment.
+
+### M0 isolated native-launch verification (2026-09-29)
+
+`tools/run-native-acceptance.ps1` invokes the same zero-argument root launcher
+with a fresh evidence directory, isolated native save/config and server saves,
+windowed settings, and skipped intro. It is a manual acceptance launcher, not
+an automatic GUI pass. The root launcher now explicitly selects Diablo to match
+its base-content server rather than allowing an installed Hellfire copy to
+change the client variant. Normal native save/config locations are unchanged.
+Native logs and PID/start-time evidence supplement server logs; process ownership
+is captured before the interruptible wait, and `finally` cleans both owned
+processes. Force-killing the launcher itself can still bypass that cleanup.
+
+The current authoritative `build/x64-Debug-authoritative-vcpkg` client rebuilds
+successfully with MSVC 14.51, after verifying compiler/SDK tools in the developer
+environment. Server rebuild succeeds. In the initial isolated run, the sandbox
+client remained alive but had no targetable desktop window. Relaunching only that
+owned client outside the sandbox exposed a `DevilutionX` window in the Computer
+Use inventory. Approval to inspect/control it timed out: no screenshot, menu
+selection, new character, handshake, movement, or world-entry pass is claimed.
+The separate pre-existing Godot error dialog was not changed; its inspection
+also lacked app approval. These observations do not supersede earlier successful
+Godot acceptance evidence or explain that dialog's cause.
+
+Local evidence remains in `.local/native-acceptance-fc0b998d9b2b4b3d967be0e19dab7678`.
+Both owned client attempts and their server were stopped after verifying process
+path/start time. A second live root-launcher smoke run used the spaced path
+`.local/native acceptance smoke-e57d2981`: both rebuilds completed, the native
+client read/wrote the isolated configuration, and all logs/arguments stayed in
+that directory. Deliberately terminating the journaled test client propagated
+exit code 1 and exercised launcher cleanup; its paired server was confirmed gone.
+This is process-lifecycle/path evidence, not a successful game exit or GUI test.
+
+Both PowerShell files pass syntax parsing. An existing acceptance directory is
+rejected before building/launching. Rebuilt `LocalLauncherContractTests` pass
+**6/6** with the focused xUnit command in [build notes](ai/godot-build.md); the
+full server `--no-build -- --no-ansi` command passes **1051/1051**, no skips or
+exclusions. A sandbox rebuild initially could not write existing generated test
+DLLs; the approved unsandboxed focused rebuild succeeds without changing file
+permissions. NU1900 still reports unavailable vulnerability auditing.
+Independent Terra 5.6 high-effort review found no blocking issue.
+
+Native GUI new-game acceptance still requires app approval (or a recorded human
+run of the isolated launcher). The platform/measured performance matrix remains
+open, as do later gameplay/presentation gates. Overall estimates are unchanged.
 
 ### M0 Flash replay baseline correction (2026-09-29)
 
