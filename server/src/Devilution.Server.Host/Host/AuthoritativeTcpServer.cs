@@ -159,8 +159,13 @@ public sealed class AuthoritativeTcpServer : IAsyncDisposable
 
     public int Port => ((IPEndPoint?)listener.LocalEndpoint)?.Port ?? 0;
 
+    /** Null by default. Diagnostics never alter authoritative ticks or protocol state. */
+    public HostPerformanceRecorder? PerformanceRecorder { get; init; }
+
     /** Combined identity hash advertised by the current handshake. */
     public string ActiveRulesetIdentityHash => handshake.Identity.RulesetIdentityHash;
+
+    public string ActiveContentManifestHash => handshake.Identity.ContentManifestHash;
 
     /** Replaced generations awaiting host disposal, if live reload is enabled. */
     public int RetiredRulesetCount => gameAdapter is LeasedAuthoritativeGameHostAdapter leasedAdapter
@@ -305,10 +310,12 @@ public sealed class AuthoritativeTcpServer : IAsyncDisposable
             var tick = Math.Max(clock.CurrentTick, commandServer.CurrentTick);
             if (tick == lastSimulationTick)
                 continue;
+            var measurement = PerformanceRecorder?.Begin() ?? 0;
             commandServer.AdvanceTo(tick);
             lastSimulationTick = tick;
             foreach (var session in sessionsByToken.Values)
                 SaveSession(session);
+            PerformanceRecorder?.Complete(HostPerformanceMetric.PeriodicAdvanceAndCheckpointMilliseconds, measurement);
         }
     }
 
@@ -358,6 +365,7 @@ public sealed class AuthoritativeTcpServer : IAsyncDisposable
 
                 if (envelope.PayloadCase == Envelope.PayloadOneofCase.CommandBatch) {
                     AuthoritativeCommandBatchValidator.Validate(envelope.CommandBatch);
+                    var measurement = PerformanceRecorder?.Begin() ?? 0;
                     var acknowledgement = commandServer.WithSynchronizedSession(sessionId, () => {
                         currentTick = Math.Max(clock.CurrentTick, commandServer.CurrentTick);
                         var result = commandServer.ProcessBatch(sessionId, envelope.CommandBatch, currentTick);
@@ -373,6 +381,7 @@ public sealed class AuthoritativeTcpServer : IAsyncDisposable
                         SaveSession(session);
                         return result;
                     });
+                    PerformanceRecorder?.Complete(HostPerformanceMetric.CommandAdmissionAndCheckpointMilliseconds, measurement);
                     await EnvelopeCodec.WriteAsync(stream, new Envelope { CommandAck = acknowledgement }, cancellationToken);
                     await SendEventsIfAvailable(stream, sessionId, entityId, currentTick, cancellationToken);
                     await SendSnapshotIfAvailableAsync(stream, sessionId, entityId, currentTick, cancellationToken);
@@ -623,6 +632,8 @@ public sealed class AuthoritativeTcpServer : IAsyncDisposable
         if (snapshotProvider is null)
             return;
 
+        var materialization = PerformanceRecorder?.Begin() ?? 0;
+
         // Snapshot materialization is part of the authoritative state
         // boundary. Do not allow a concurrent command or autonomous tick to
         // mutate the module while the projection is being assembled.
@@ -638,7 +649,13 @@ public sealed class AuthoritativeTcpServer : IAsyncDisposable
             AuthoritativeSnapshotValidator.Validate(result);
             return result;
         });
-        await EnvelopeCodec.WriteAsync(stream, new Envelope { Snapshot = snapshot }, cancellationToken);
+        PerformanceRecorder?.Complete(HostPerformanceMetric.SnapshotMaterializeMilliseconds, materialization);
+        var envelope = new Envelope { Snapshot = snapshot };
+        var publication = PerformanceRecorder?.Begin() ?? 0;
+        await EnvelopeCodec.WriteAsync(stream, envelope, cancellationToken);
+        PerformanceRecorder?.Complete(HostPerformanceMetric.SnapshotWriteMilliseconds, publication);
+        if (publication != 0)
+            PerformanceRecorder!.Record(HostPerformanceMetric.SnapshotEnvelopePayloadBytes, envelope.CalculateSize());
     }
 
     private ValueTask SendEventsIfAvailable(

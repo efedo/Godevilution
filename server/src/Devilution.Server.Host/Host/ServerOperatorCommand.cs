@@ -9,6 +9,7 @@ public enum ServerOperatorCommandKind
     Reload,
     Quit,
     Unknown,
+    ProfileStart,
 }
 
 /** Parses the deliberately small, local-only operator command surface. */
@@ -21,6 +22,7 @@ public static class ServerOperatorCommand
             "help" or "?" => ServerOperatorCommandKind.Help,
             "status" => ServerOperatorCommandKind.Status,
             "reload" => ServerOperatorCommandKind.Reload,
+            "profile-start" => ServerOperatorCommandKind.ProfileStart,
             "quit" or "exit" or "stop" => ServerOperatorCommandKind.Quit,
             _ => ServerOperatorCommandKind.Unknown,
         };

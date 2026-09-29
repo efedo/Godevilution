@@ -70,7 +70,7 @@ isolated spell or table rows while the playable route stays unchanged.
 
 | Gate | Deliverable | Dependencies | Current position |
 | --- | --- | --- | --- |
-| M0 | Reproducible launch and honest acceptance evidence | Existing implementation | Godot session/recovery and server/native replay baselines pass; native GUI and platform/performance evidence remain |
+| M0 | Reproducible launch and honest acceptance evidence | Existing implementation | Godot session/recovery passes; local one/four-participant host measurements recorded; native GUI and performance/platform gaps remain |
 | M1 | Usable Godot town-to-dungeon loop | M0 launch/acceptance harness | Protocol features exist; integrated visible journey remains |
 | M2 | Native-compatible generated world | M0 geometry/parity baseline | Geometry contracts and authored fragments exist; native map synthesis remains |
 | M3 | Complete base and Hellfire gameplay routes | M1 plus the relevant M2 world slices | Many rules exist; campaign and remaining behavioral coverage remain |
@@ -103,6 +103,9 @@ M4. M5 is the final removal gate, not a reason to postpone replacement work.
    commands, configuration, selected tests, outcomes, and any exclusions in
    migration status. Establish the target platform/participant matrix and
    measured tick/frame/memory budgets there before claiming performance gates.
+   The opt-in standalone host workload now measures one/four participants over
+   loopback; it is a preliminary baseline, not a Godot-frame or release-budget
+   pass. Preserve settled authoritative outcomes when extending this workload.
 
 Exit: the Godot launch/create/move/save/restart/resume journey passes from
 rebuilt artifacts without MPQs; visible UI is checked separately from headless

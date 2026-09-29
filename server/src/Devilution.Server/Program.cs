@@ -6,6 +6,9 @@ using Devilution.Server.Host;
 using Devilution.Server.Protocol;
 using Devilution.Server.Simulation;
 using Devilution.Server.Stores;
+using System.Diagnostics;
+using System.Runtime.InteropServices;
+using System.Text.Json;
 
 namespace Devilution.Server;
 
@@ -33,6 +36,10 @@ internal static class Program
 
     private static async Task<int> RunAsync(ServerHostOptions options)
     {
+        // Reserve a new output before binding. Never overwrite an existing artifact.
+        using var performanceOutput = options.PerformanceOutput is null ? null
+            : new FileStream(Path.GetFullPath(options.PerformanceOutput), FileMode.CreateNew, FileAccess.Write, FileShare.Read);
+        var performance = performanceOutput is null ? null : new HostPerformanceRecorder();
         var contentRoot = Path.GetFullPath(options.ContentRoot);
         ContentManifest LoadContentManifest()
         {
@@ -135,7 +142,7 @@ internal static class Program
             gameAdapter,
             options.Port,
             options.BindAddress,
-            saveStore);
+            saveStore) { PerformanceRecorder = performance };
         server.Start();
         Console.WriteLine($"Godevilution authoritative server listening on {options.BindAddress}:{server.Port}");
         Console.WriteLine($"Content packs: {string.Join(", ", contentManifest.Packs.Select(pack => $"{pack.Id}@{pack.Version}"))}");
@@ -159,7 +166,7 @@ internal static class Program
                 + (options.ProceduralMonsterLevelId is uint levelId
                     ? $" on level {levelId}"
                     : " on the default starting level"));
-        Console.WriteLine("Operator commands: status, reload, help, quit.");
+        Console.WriteLine("Operator commands: status, reload, help, quit; profile-start (requires --performance-output).");
 
         using var cancellation = new CancellationTokenSource();
         Console.CancelKeyPress += (_, eventArgs) => {
@@ -180,6 +187,29 @@ internal static class Program
         try {
             await operatorLoop;
         } catch (OperationCanceledException) when (cancellation.IsCancellationRequested) {
+        }
+        if (performanceOutput is not null && performance is not null) {
+            var report = performance.Begin() != 0 ? performance.Stop() : null;
+            using var process = Process.GetCurrentProcess();
+            process.Refresh();
+            await JsonSerializer.SerializeAsync(performanceOutput, new {
+                SchemaVersion = 1,
+                Status = report is null ? "NotStarted" : "Completed",
+                Report = report,
+                options.TickRateHz,
+                GameMode = options.GameMode.ToString(),
+                ActiveParticipants = server.ActiveSessionIds.Count,
+                ContentHash = server.ActiveContentManifestHash,
+                RulesetHash = server.ActiveRulesetIdentityHash,
+                StartupRulesetHash = ruleset.CombinedSha256,
+                Runtime = RuntimeInformation.FrameworkDescription,
+                OperatingSystem = RuntimeInformation.OSDescription,
+                Architecture = RuntimeInformation.ProcessArchitecture.ToString(),
+                LogicalProcessors = Environment.ProcessorCount,
+                WorkingSetBytes = process.WorkingSet64,
+                PeakWorkingSetBytes = process.PeakWorkingSet64,
+                PrivateMemoryBytes = process.PrivateMemorySize64,
+            }, new JsonSerializerOptions { WriteIndented = true });
         }
         return 0;
     }
@@ -205,7 +235,12 @@ internal static class Program
             case ServerOperatorCommandKind.Empty:
                 continue;
             case ServerOperatorCommandKind.Help:
-                Console.WriteLine("Commands: status, reload, help, quit.");
+                Console.WriteLine("Commands: status, reload, help, quit; profile-start (requires --performance-output).");
+                break;
+            case ServerOperatorCommandKind.ProfileStart:
+                Console.WriteLine(server.PerformanceRecorder?.Start() == true
+                    ? "Performance recording started."
+                    : "Performance recording unavailable or already started.");
                 break;
             case ServerOperatorCommandKind.Status:
                 Console.WriteLine($"Active sessions: {server.ActiveSessionIds.Count}");

@@ -31,6 +31,9 @@ public sealed record ServerHostOptions(
 
     public string SaveRoot { get; init; } = Path.Combine("server", "saves");
 
+    /** Optional new file for an explicitly started local diagnostic recording. */
+    public string? PerformanceOutput { get; init; }
+
     public IReadOnlyList<string> ContentOverlayRoots { get; init; } = [];
 
     public IReadOnlyList<string> GameplayModulePackageRoots { get; init; } = [];
@@ -84,6 +87,14 @@ public sealed record ServerHostOptions(
 
             var value = args[++index];
             switch (argument) {
+            case "--performance-output":
+                if (string.IsNullOrWhiteSpace(value)) {
+                    options = current;
+                    error = "The performance output path cannot be empty.";
+                    return false;
+                }
+                current = current with { PerformanceOutput = value };
+                break;
             case "--bind":
                 if (!IPAddress.TryParse(value, out var bindAddress)) {
                     options = current;
@@ -326,5 +337,6 @@ public sealed record ServerHostOptions(
           --procedural-monsters <n>    Replace static encounters with at most n generated monsters
           --procedural-monster-level <id> Level for generated encounters (default: start level)
           --save-root <directory>      Server-owned authoritative save directory
+          --performance-output <file> New diagnostic JSON file; use profile-start after warm-up, then quit
         """;
 }

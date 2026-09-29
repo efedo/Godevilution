@@ -112,6 +112,11 @@ losing its server-issued resume token or pending command sequence ledger. Pendin
 commands become eligible for immediate retry after the replacement connection's
 authoritative snapshot is received, so the Godot presentation layer does not need to
 recreate its protocol model for a transient disconnect.
+Command scheduling accounts for monotonic time since the latest valid snapshot
+arrived before adding the adaptive retry lead. This prevents stale 250ms polling
+snapshots from making ordinary movement late when retry estimates fall to 150ms.
+The timing anchor resets on reconnect; it changes requested command timestamps,
+not authoritative state, presentation time, pending retries, or server admission.
 When no endpoint or resume token is supplied by the launch environment, the
 session setup menu accepts the authoritative server host and port and validates
 them before the initial connection. The menu can either create a new character

@@ -11,6 +11,37 @@ namespace Devilution.Client.Protocol.Tests;
 
 public sealed class AuthoritativeClientTransportTests
 {
+    [Fact]
+    public async Task SchedulesCommandsUsingTheAgeOfAReceivedSnapshot()
+    {
+        using var listener = new TcpListener(IPAddress.Loopback, 0);
+        listener.Start();
+        var serverTask = Task.Run(async () => {
+            using var connection = await listener.AcceptTcpClientAsync(TestContext.Current.CancellationToken);
+            await using var stream = connection.GetStream();
+            _ = await ReadEnvelopeAsync(stream);
+            await WriteEnvelopeAsync(stream, new Envelope { ServerHello = new ServerHello {
+                ProtocolSchemaVersion = "0.1.0", ContentManifestHash = "content-hash",
+                TickRateHz = 20, GameMode = GameMode.SinglePlayer,
+            } });
+            await WriteEnvelopeAsync(stream, new Envelope { Snapshot = new Snapshot { Tick = 100 } });
+            var command = Assert.Single((await ReadEnvelopeAsync(stream)).CommandBatch.Commands);
+            // Fixed 150ms retry lead is four ticks. A >300ms-old snapshot must
+            // add at least six elapsed ticks, without changing the server policy.
+            Assert.True(command.RequestedTick >= 110, $"Stale requested tick: {command.RequestedTick}");
+        }, TestContext.Current.CancellationToken);
+        await using var client = new AuthoritativeClient(new ClientConnectionOptions(
+            "127.0.0.1", ((IPEndPoint)listener.LocalEndpoint).Port, "clock-test", "0.1.0", "content-hash") {
+            MinimumRetryTimeout = TimeSpan.FromMilliseconds(150),
+            MaximumRetryTimeout = TimeSpan.FromMilliseconds(150),
+        });
+        await client.ConnectAsync(TestContext.Current.CancellationToken);
+        await Task.Delay(320, TestContext.Current.CancellationToken);
+        client.Queue(new Command { MoveRequested = new MoveRequested { DirectionY = 1 } }, client.SuggestedCommandTick(100));
+        await client.PollAsync(TestContext.Current.CancellationToken);
+        await serverTask.WaitAsync(TimeSpan.FromSeconds(10), TestContext.Current.CancellationToken);
+    }
+
     [Theory]
     [InlineData(null, 0, 1)]
     [InlineData(0UL, 0, 1)]

@@ -102,3 +102,37 @@ renders. The application harness exercises controls even headlessly, but its
 visible variant and inspection of captured frames are separate evidence for
 rendering. Native new-game, campaign, and broader multiplayer/pending-command
 recovery gates remain distinct checks.
+
+## Standalone host performance baseline
+
+Run `tools/measure-authoritative-host.ps1` from PowerShell. It rebuilds Release
+artifacts and explicitly selects the otherwise excluded real-time xUnit workload.
+Run it without concurrent builds/tests. The one-player single-player case and
+four-player multiplayer case each use a fresh standalone host, seed 0, authored
+town level 0, real loopback TCP clients, and on-disk checkpoints. One Rogue moves
+once per settled round (at least one second); all participants poll using the
+normal 250ms snapshot interval and must observe each completed move. Five warm-up
+moves precede `profile-start`; fifteen measured moves follow. The test fails on
+rejection, missing movement, stale observer state, missing metrics, truncated
+samples, bad identities, or nonzero host exit. It does not assert latency budgets.
+
+The printed private evidence directory retains `host.json`, `workload.json`,
+minimal final observations, and server saves. Host JSON contains exact metric
+boundaries described in the [host guide](../../server/src/Devilution.Server.Host/README.md#opt-in-performance-evidence),
+OS/runtime/architecture, participant count, and process memory observations.
+Workload JSON records actual duration, command counts, and configuration. No
+client session credential is emitted in these reports; keep the save directory
+private. Failed/empty output is not a baseline. Record the verified revision and
+machine in migration status with each accepted measurement.
+
+For focused execution after rebuilding, set `GODEVILUTION_PERFORMANCE_DIRECTORY`
+to an evidence parent and run:
+
+```powershell
+dotnet run --project godot/Devilution.Client.Protocol.Tests/Devilution.Client.Protocol.Tests.csproj --configuration Release --no-build -- --filter-method Devilution.Client.Protocol.Tests.LiveAuthoritativeServerTests.MeasureStandaloneHostBaseline --explicit only --no-ansi
+```
+
+This measures the standalone server, not Godot frame cost, full combat/campaign
+load, WAN latency, native map generation, supported-platform acceptance, or a
+release performance gate. Current measurements and remaining budgets belong in
+migration status; do not reinterpret a passing workload as a performance pass.

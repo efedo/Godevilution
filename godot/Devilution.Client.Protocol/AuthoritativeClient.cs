@@ -21,6 +21,7 @@ public sealed class AuthoritativeClient : IAsyncDisposable
     private readonly object pendingLock = new();
     private readonly CancellationTokenSource lifetime = new();
     private readonly Stopwatch clock = Stopwatch.StartNew();
+    private readonly AuthoritativeCommandClock commandClock = new();
     private TcpClient? tcpClient;
     private NetworkStream? stream;
     private Task? receiveTask;
@@ -45,7 +46,7 @@ public sealed class AuthoritativeClient : IAsyncDisposable
     public ulong SuggestedCommandTick(ulong observedTick)
     {
         var leadTicks = Math.Max(1, (int)Math.Ceiling(RetryTimeout.TotalSeconds * ServerTickRateHz) + 1);
-        return checked(observedTick + (ulong)leadTicks);
+        return checked(commandClock.Estimate(observedTick, ServerTickRateHz) + (ulong)leadTicks);
     }
 
     public AuthoritativeClient(ClientConnectionOptions options)
@@ -88,6 +89,7 @@ public sealed class AuthoritativeClient : IAsyncDisposable
                 "DEVILUTION_RULESET_HASH is required by this protocol version.");
 
         try {
+            commandClock.Reset();
             tcpClient = new TcpClient();
             await tcpClient.ConnectAsync(options.Host, options.Port, cancellationToken);
             stream = tcpClient.GetStream();
@@ -309,6 +311,8 @@ public sealed class AuthoritativeClient : IAsyncDisposable
         if (envelope.PayloadCase == Envelope.PayloadOneofCase.Snapshot
             && !ObserveSnapshotIdentity(envelope.Snapshot))
             return;
+        if (envelope.PayloadCase == Envelope.PayloadOneofCase.Snapshot)
+            commandClock.Observe(envelope.Snapshot.Tick);
         if (envelope.PayloadCase == Envelope.PayloadOneofCase.CommandAck) {
             try {
                 AuthoritativeCommandAckValidator.Validate(envelope.CommandAck);

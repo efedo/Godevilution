@@ -2,8 +2,8 @@
 
 Status date: 2026-09-29. Estimate baseline: `8c03b365d`; M0 session reliability
 landed in `819b73936`, integration remediation in `818f63f32`, and application
-recovery in `cabc9b3fb`. The Flash replay correction landed in `3b90b6be5`;
-newer native-launch evidence is recorded below.
+recovery in `cabc9b3fb`. The Flash replay correction landed in `3b90b6be5` and
+isolated native launch support in `c063dcd24`; newer host/timing evidence is below.
 
 The [completion plan](completion-plan.md) is the active delivery order and
 acceptance contract. The [architecture](csharp-authoritative-server-migration.md)
@@ -69,11 +69,12 @@ open. Their scope, dependencies, and exit checks are defined only in the
   The same application harness now verifies server loss, frozen disconnected
   state/input, automatic reconnect, and accepted movement after host restart.
   The two Flash baseline failures are resolved below. M0 still requires native
-  creation and the declared platform/performance matrix.
+  creation, client frame/budget evidence, and the release-platform matrix.
 - The visible run renders setup and placeholder world presentation. The existing
   fixed-width HUD clips at the observed 1028x720 window; responsive layout and
-  usable town/dungeon presentation remain M1 work. No campaign playability or
-  measured performance/platform matrix is claimed.
+  usable town/dungeon presentation remain M1 work. Local standalone-host
+  measurements are recorded below; no campaign playability, Godot frame budget,
+  or supported release-platform performance pass is claimed.
 - Godot currently requires no MPQs because it uses placeholder presentation.
   A complete MPQ-free client asset route remains a deliverable. Original-asset
   support is optional client tooling; the server must remain MPQ-independent.
@@ -95,6 +96,80 @@ open. Their scope, dependencies, and exit checks are defined only in the
 The following records describe implemented slices at this baseline. They are
 evidence, not a separate priority list; detailed older entries retain their
 original scope and may be superseded by later entries or the current assessment.
+
+### M0 host measurement and stale-command timing repair (2026-09-29)
+
+This batch, based on `c063dcd24`, adds opt-in bounded host measurements and the
+zero-argument `tools/measure-authoritative-host.ps1` Release workload. The first
+run exposed ordinary movement rejected as `TooLate`: the client's minimum retry
+lead covered 200ms, but its snapshot poll interval was 250ms. The client now
+accounts for monotonic snapshot age when scheduling a new command and resets
+that anchor on reconnect. Server admission, gameplay, retry identities, content,
+saves, and protocol schemas are unchanged. Deterministic clock tests and a real
+TCP stale-snapshot regression cover the repair; no benchmark-only lead is used.
+
+The measured workload uses one moving Rogue and zero/three observing participants
+on authored town level 0, seed 0, normal difficulty, and persistent checkpoints.
+Every participant must observe each settled move, not merely an acknowledgement.
+Five warm-up moves precede fifteen measured moves; the minimum interval is one
+second but completion may extend it. Actual durations are recorded. This is
+server/protocol evidence, not two visible Godot clients or a combat/campaign soak.
+
+Local baseline: Windows x64 build 26200, AMD Ryzen 5 5600X, 12 logical processors,
+.NET host 10.0.11/client runner 8.0.30, Release, loopback TCP, declared 20Hz
+(50ms nominal tick interval). The final zero-argument wrapper run used the C:
+temporary directory for saves, with no concurrent agent build/test. Evidence:
+`%TEMP%/Godevilution-Host-Performance-0ec01906c88c44c68694ee2f2c4114de`.
+
+| Local workload | One participant / single-player | Four participants / multiplayer |
+| --- | ---: | ---: |
+| Actual warm-up / host recording seconds | 5.13 / 15.33 | 7.20 / 21.74 |
+| Completed periodic cycle samples | 253 | 240 |
+| Periodic advance + checkpoint p95 | 17.52ms | 69.34ms |
+| Command admission + checkpoint p95 (15 samples) | 35.67ms | 239.69ms |
+| Snapshot materialization/validation p95 | 0.60ms | 109.34ms |
+| Snapshot write p95 | 0.36ms | 0.36ms |
+| Snapshot protobuf envelope p95 | 14,643 bytes | 17,217 bytes |
+| Final host working set / lifetime peak | 88.7 / 104.3 MiB | 92.6 / 106.0 MiB |
+
+No samples were dropped. Metric boundaries and limitations are defined in the
+[host guide](../server/src/Devilution.Server.Host/README.md#opt-in-performance-evidence).
+A periodic cycle may cover multiple ticks; its timing is not a total per-tick
+budget. Lock-inclusive timings overlap and cannot be summed. The four-player
+cycle already exceeds the nominal 50ms interval, and command/materialization
+tails show contention. This is an open performance finding, not a passed budget.
+Separate checkpoint, simulation, and lock costs before choosing an optimization;
+do not reduce durability or relax command admission to improve the benchmark.
+An earlier D:-drive `.local/host-performance-baseline-20260929` run passed both
+workloads with a 40.54ms four-player periodic p95. Different save storage and
+local-machine variability make those runs unsuitable as a controlled regression
+comparison. Final process memory is not leak/soak evidence.
+
+Verification against this batch:
+
+- `dotnet run --project server/tests/Devilution.Server.Tests/Devilution.Server.Tests.csproj --no-restore -- --no-ansi`:
+  **1059/1059 passed**. Initial focused host/options/operator tests passed 39/39.
+- `dotnet run --project godot/Devilution.Client.Protocol.Tests/Devilution.Client.Protocol.Tests.csproj --configuration Release --no-restore -- --no-ansi`:
+  **482 passed**, zero failures; only the two explicit performance cases were
+  excluded. The wrapper then ran those cases separately: **2/2 passed**, all 20
+  moves observed per workload, fresh output and graceful host shutdown validated.
+- Focused command-clock/transport/reconnect tests passed **25/25**; the live
+  output-preservation/NotStarted test passed **1/1**. Recorder tests cover
+  disabled/stopped behavior, exact percentiles, bounded truncation, concurrent
+  samples, and invalid values. The PowerShell wrapper passes syntax parsing.
+- `tools/test-godot-session.ps1` rebuilt the server and Godot client and passed
+  actual headless Create/Resume/Recovery phases. Evidence:
+  `%TEMP%/Godevilution-Scene-Acceptance-1bb8285d1ddb4bbda2344d5f74620f17`.
+  Final recovery is entity 1, Rogue, town `(0,4)`, sequence 4. All three journaled
+  recovery process IDs were confirmed stopped. No new visible-window acceptance
+  or native rebuild is claimed. NU1900 still reports unavailable package auditing.
+
+Independent Terra 5.6 high-effort review covered measurement boundaries and the
+timing fix. The local Windows one/four-participant host matrix is now measured;
+release platforms, Godot frame targets/measurements, realistic campaign/multiplayer
+load, memory growth/budgets, and native GUI acceptance remain open. Overall
+estimates are unchanged. M1/M2 work may advance with their established launch
+prerequisites while these explicit acceptance gaps are addressed.
 
 ### M0 isolated native-launch verification (2026-09-29)
 

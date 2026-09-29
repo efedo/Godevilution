@@ -13,6 +13,7 @@ public sealed class ServerOperatorCommandTests
     [InlineData("?", ServerOperatorCommandKind.Help)]
     [InlineData(" STATUS ", ServerOperatorCommandKind.Status)]
     [InlineData("reload", ServerOperatorCommandKind.Reload)]
+    [InlineData("profile-start", ServerOperatorCommandKind.ProfileStart)]
     [InlineData("exit", ServerOperatorCommandKind.Quit)]
     [InlineData("stop", ServerOperatorCommandKind.Quit)]
     [InlineData("quit", ServerOperatorCommandKind.Quit)]

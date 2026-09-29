@@ -18,6 +18,7 @@ public sealed class ServerHostTests
             ProtocolSchemaVersions.IndependentContentAndRulesetIdentity,
             ServerHostOptions.Defaults.ProtocolSchemaVersion);
         Assert.Null(ServerHostOptions.Defaults.StartingGold);
+        Assert.Null(ServerHostOptions.Defaults.PerformanceOutput);
         Assert.Null(ServerHostOptions.Defaults.StartingLife);
         Assert.Null(ServerHostOptions.Defaults.StartingMana);
         Assert.Null(ServerHostOptions.Defaults.StartingStatPoints);
@@ -49,6 +50,7 @@ public sealed class ServerHostTests
             "--build-id", "test-server",
             "--protocol-version", "0.2.0",
             "--tick-rate", "30",
+            "--performance-output", "evidence/host.json",
             "--starting-gold", "900",
             "--starting-life", "4480",
             "--starting-mana", "640",
@@ -73,6 +75,7 @@ public sealed class ServerHostTests
         Assert.Equal(["adapters/example"], options.GameHostAdapterPackageRoots);
         Assert.Equal("devilution.diablo", options.GameAdapterId);
         Assert.Equal(30U, options.TickRateHz);
+        Assert.Equal("evidence/host.json", options.PerformanceOutput);
         Assert.Equal(900U, options.StartingGold!.Value);
         Assert.Equal(4480, options.StartingLife);
         Assert.Equal(640, options.StartingMana);
@@ -101,6 +104,7 @@ public sealed class ServerHostTests
     [InlineData("--game-mode", "cooperative")]
     [InlineData("--difficulty", "torment")]
     [InlineData("--unknown", "value")]
+    [InlineData("--performance-output", " ")]
     public void RejectsInvalidOptions(string name, string value)
     {
         Assert.False(ServerHostOptions.TryParse([name, value], out _, out var error));

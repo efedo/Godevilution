@@ -8,7 +8,7 @@ using Xunit;
 
 namespace Devilution.Client.Protocol.Tests;
 
-public sealed class LiveAuthoritativeServerTests
+public sealed partial class LiveAuthoritativeServerTests
 {
     private static readonly ConditionalWeakTable<AuthoritativeClient, MessageBacklog> messageBacklogs = new();
 
@@ -5710,7 +5710,8 @@ public sealed class LiveAuthoritativeServerTests
             string? saveRootOverride = null,
             bool deleteSaveRootOnDispose = true,
             string? gameAdapterPackageRoot = null,
-            string? gameAdapterId = null)
+            string? gameAdapterId = null,
+            string? performanceOutput = null)
         {
             var repositoryRoot = LiveAuthoritativeServerTests.FindRepositoryRoot();
             var ownsSaveRoot = string.IsNullOrWhiteSpace(saveRootOverride);
@@ -5724,6 +5725,7 @@ public sealed class LiveAuthoritativeServerTests
                 UseShellExecute = false,
                 RedirectStandardOutput = true,
                 RedirectStandardError = true,
+                RedirectStandardInput = true,
                 CreateNoWindow = true,
             };
             startInfo.ArgumentList.Add("run");
@@ -5745,6 +5747,10 @@ public sealed class LiveAuthoritativeServerTests
             startInfo.ArgumentList.Add(ProtocolSchemaVersions.IndependentContentAndRulesetIdentity);
             startInfo.ArgumentList.Add("--save-root");
             startInfo.ArgumentList.Add(saveRoot);
+            if (performanceOutput is not null) {
+                startInfo.ArgumentList.Add("--performance-output");
+                startInfo.ArgumentList.Add(performanceOutput);
+            }
             if (startingGoldOverride.HasValue) {
                 startInfo.ArgumentList.Add("--starting-gold");
                 startInfo.ArgumentList.Add(startingGoldOverride.Value.ToString(
@@ -5830,6 +5836,29 @@ public sealed class LiveAuthoritativeServerTests
             var detail = string.IsNullOrWhiteSpace(error) ? string.Empty : Environment.NewLine + error.Trim();
             throw new InvalidOperationException(
                 $"The authoritative server exited with code {exitCode} before publishing its identity.{detail}");
+        }
+
+        public async Task StartPerformanceRecordingAsync(CancellationToken cancellationToken)
+        {
+            await process.StandardInput.WriteLineAsync("profile-start");
+            await process.StandardInput.FlushAsync(cancellationToken);
+            while (await process.StandardOutput.ReadLineAsync(cancellationToken) is { } line) {
+                if (line == "Performance recording started.")
+                    return;
+                if (line == "Performance recording unavailable or already started.")
+                    throw new InvalidOperationException(line);
+            }
+            throw new EndOfStreamException("Server exited before starting performance recording.");
+        }
+
+        public async Task QuitAsync(CancellationToken cancellationToken)
+        {
+            await process.StandardInput.WriteLineAsync("quit");
+            await process.StandardInput.FlushAsync(cancellationToken);
+            var remainingOutput = process.StandardOutput.ReadToEndAsync(cancellationToken);
+            await process.WaitForExitAsync(cancellationToken);
+            await remainingOutput;
+            Assert.Equal(0, process.ExitCode);
         }
 
         public void Dispose()

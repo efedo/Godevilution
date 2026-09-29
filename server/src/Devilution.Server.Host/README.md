@@ -44,3 +44,33 @@ generation, disposes the active target, and releases its operation barrier.
 It targets .NET 8 and depends on Protocol, Domain, Data, and Engine. It must not
 reference `Devilution.Diablo` or any other game module. The .NET 10 executable
 supplies concrete content, module candidates, and one compatible adapter.
+
+## Opt-in performance evidence
+
+The standalone host accepts `--performance-output <new-file>`. It reserves a
+new file before listening and never overwrites existing evidence. After warming
+up the intended participants, issue the local operator command `profile-start`,
+then `quit` to emit JSON. Repeated starts cannot reset a recording. A graceful
+quit without a start writes `Status: NotStarted`; a killed process may leave an
+incomplete file, which is not valid evidence. No recording is allocated by default.
+
+Measurements describe completed operations, not a single summed tick cost:
+
+- Periodic cycle: authoritative advance plus per-session checkpoints; it can
+  advance multiple ticks and excludes the scheduler wait.
+- Command admission/apply/checkpoint: includes authoritative lock wait, but not
+  network publication or initial command-batch validation.
+- Snapshot materialization/validation: includes lock wait and any advance.
+- Snapshot write: serialization and socket write outside the authoritative lock.
+- Snapshot envelope payload bytes: exact protobuf envelope size, excluding the
+  four-byte transport prefix, IP/TCP overhead, and non-snapshot messages.
+
+Each metric retains at most 20,000 samples with an explicit dropped count.
+Mean, nearest-rank p50/p95, and maximum apply only to retained samples. Failed or
+unfinished operations are not success samples. Metrics contain no session IDs,
+credentials, commands, or game state. Final process working set/private bytes
+and process-lifetime peak working set are observations, not leak/soak proof.
+Final and startup identity hashes expose an identity change during profiling;
+use a stable ruleset for comparable baselines. Timings overlap and must not be
+added together. The reproducible workload is documented in
+[Godot build notes](../../../docs/ai/godot-build.md#standalone-host-performance-baseline).

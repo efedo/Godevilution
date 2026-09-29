@@ -2,6 +2,15 @@
 
 All notable changes to this fork are documented below.
 
+- 2026-09-29: Added bounded, opt-in standalone-host performance recording and
+  reproducible one/four-participant Release workloads. Fixed the stale-snapshot
+  command timestamps that the workload exposed without relaxing server authority
+  or changing retry identities. Added deterministic/TCP timing and diagnostic
+  safety tests, refreshed headless Godot create/resume/recovery acceptance, and
+  recorded the remaining four-player checkpoint/lock latency finding. Server
+  tests pass 1059/1059; protocol tests pass 482 plus two separately run explicit
+  workloads. No release-performance pass is claimed. Normalized touched text to CRLF.
+
 - 2026-09-29: Added a zero-argument isolated native acceptance launcher, keeping
   normal native saves/config unchanged. Matched native Diablo selection to the
   base-content server, captured native logs and owned process identities, and
