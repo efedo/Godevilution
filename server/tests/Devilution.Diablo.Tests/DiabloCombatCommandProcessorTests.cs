@@ -19630,8 +19630,61 @@ public sealed class DiabloCombatCommandProcessorTests
 
         processor.AdvanceTick(1, [player]);
 
-        Assert.Equal(12, monster.HitPoints);
-        Assert.Equal(12 * DiabloFixedPointQ6.Scale, monster.HitPointsQ6);
+        Assert.Equal(11, monster.HitPoints);
+        Assert.Equal(642, monster.HitPointsQ6);
+    }
+
+    [Theory]
+    [InlineData(0, 0)]
+    [InlineData(63, 63)]
+    [InlineData(64, 66)]
+    [InlineData(1279, 1280)]
+    [InlineData(1280, 1280)]
+    public void NativeMonsterRegenerationPreservesRawQ6LifeAndMaximumBoundaries(int health, int expected)
+    {
+        var monster = new AuthoritativeCombatTarget(9, 1, 0, 20, monsterLevel: 4);
+        monster.RestoreHitPointsQ6(health, 1280);
+        var processor = CreateProcessor(new DiabloWorldState(combatTargets: [monster]));
+        processor.AdvanceTick(1, [CreatePlayer()]);
+        Assert.Equal(expected, monster.HitPointsQ6);
+    }
+
+    [Theory]
+    [InlineData(false, 1)]
+    [InlineData(true, 1)]
+    [InlineData(true, 2)]
+    public void NativeMonsterRegenerationStillRunsForPetrifiedOrOtherLevelTargets(bool petrified, uint level)
+    {
+        var monster = new AuthoritativeCombatTarget(9, 1, 0, 10, maxHitPoints: 20,
+            monsterLevel: 4, levelId: level, petrified: petrified);
+        var processor = CreateProcessor(new DiabloWorldState(combatTargets: [monster]));
+        processor.AdvanceTick(1, [CreatePlayer(levelId: 1)]);
+        Assert.Equal(642, monster.HitPointsQ6);
+    }
+
+    [Fact]
+    public void TimedRogueBowDamageSurvivesBetweenAttacksAndCanDefeatRegeneratingMonster()
+    {
+        var classes = LoadShippedPlayerClasses();
+        var bow = AuthoritativeItemState.Empty with {
+            ItemType = 3, ItemClass = 1, MinDamage = 4, MaxDamage = 4, StatFlag = true,
+        };
+        var player = CreatePlayer(entityId: 1, characterClassId: 1,
+            attributes: classes.GetRequired(1).CreateStartingAttributes(),
+            equipment: [new EquippedStoreItem(4, 42, bow)]);
+        var monster = new AuthoritativeCombatTarget(9, 1, 0, 11, monsterLevel: 1, armorClass: 2);
+        var world = new DiabloWorldState(combatTargets: [monster]);
+        var processor = CreateProcessor(world, playerClasses: classes, useNativePlayerActionTiming: true);
+        for (ulong tick = 100; tick <= 140; tick += 20) {
+            var previousHealth = monster.HitPointsQ6;
+            Assert.True(processor.Execute(player, new DiabloAttackIntent(9), tick).Succeeded);
+            Assert.Equal(DiabloPlayerCombatMode.RangedAttack, player.CombatMode);
+            Assert.Equal(tick + 6, player.CurrentAction!.EffectTick);
+            for (var current = tick + 1; current < tick + 20; current++)
+                processor.AdvanceTick(current, [player]);
+            Assert.True(monster.HitPointsQ6 < previousHealth, "Regeneration erased a complete timed bow attack.");
+        }
+        Assert.Equal(0, monster.HitPointsQ6);
     }
 
     [Fact]
@@ -19658,16 +19711,16 @@ public sealed class DiabloCombatCommandProcessorTests
         processor.AdvanceTick(1, [player]);
 
         Assert.Equal(11, monster.HitPoints);
-        Assert.Equal(11 * DiabloFixedPointQ6.Scale, monster.HitPointsQ6);
+        Assert.Equal(641, monster.HitPointsQ6);
     }
 
     [Theory]
-    [InlineData(DiabloDifficulty.Normal, 11)]
-    [InlineData(DiabloDifficulty.Nightmare, 18)]
-    [InlineData(DiabloDifficulty.Hell, 25)]
+    [InlineData(DiabloDifficulty.Normal, 641)]
+    [InlineData(DiabloDifficulty.Nightmare, 648)]
+    [InlineData(DiabloDifficulty.Hell, 655)]
     public void NativeMonsterRegenerationUsesDifficultyAdjustedLevel(
         DiabloDifficulty difficulty,
-        int expectedHitPoints)
+        int expectedHitPointsQ6)
     {
         var monster = new AuthoritativeCombatTarget(
             9,
@@ -19685,7 +19738,7 @@ public sealed class DiabloCombatCommandProcessorTests
 
         processor.AdvanceTick(1, [player]);
 
-        Assert.Equal(expectedHitPoints, monster.HitPoints);
+        Assert.Equal(expectedHitPointsQ6, monster.HitPointsQ6);
     }
 
     [Fact]
@@ -24583,8 +24636,9 @@ public sealed class DiabloCombatCommandProcessorTests
         Assert.Equal(2, processor.AdvanceTick(1, [player]).Count);
         Assert.Equal(2, processor.AdvanceTick(2, [player]).Count);
 
-        Assert.Equal(1217, bottomTarget.HitPointsQ6);
-        Assert.Equal(1198, topTarget.HitPointsQ6);
+        // Passive regeneration adds one raw Q6 unit between collision ticks.
+        Assert.Equal(1155, bottomTarget.HitPointsQ6);
+        Assert.Equal(1135, topTarget.HitPointsQ6);
         Assert.All(world.Projectiles.Values, layer => Assert.Equal(17U, layer.RemainingTicks));
         Assert.Equal(0x079606CEU, random.State);
     }

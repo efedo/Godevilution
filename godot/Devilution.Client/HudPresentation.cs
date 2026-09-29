@@ -32,7 +32,7 @@ public partial class HudPresentation : CanvasLayer
     private readonly ItemList beltItems = new();
     private readonly ItemList equipmentItems = new();
     private readonly ItemList oilTargets = new();
-    private readonly GridContainer inventoryGrid = new() { Columns = InventoryColumns };
+    private readonly GridContainer inventoryGrid = new() { Name = "InventoryGrid", Columns = InventoryColumns };
     private readonly GridContainer stashGrid = new() { Columns = StashLayout.ColumnCount };
     private readonly List<Button> inventoryCells = [];
     private readonly List<Button> stashCells = [];

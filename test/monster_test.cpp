@@ -6,6 +6,36 @@
 namespace devilution {
 namespace {
 
+TEST(MonsterTest, RegenerationAddsRawQ6AndHonorsNativeLifeAndMaximumBoundaries)
+{
+	struct Case {
+		int health;
+		unsigned level;
+		int expected;
+	};
+	for (const auto sample : { Case { 640, 0, 640 }, Case { 640, 1, 641 },
+	         Case { 640, 4, 642 }, Case { 640, 16, 648 }, Case { 640, 31, 655 },
+	         Case { 0, 4, 0 }, Case { 63, 4, 63 }, Case { 64, 4, 66 },
+	         Case { 1279, 4, 1280 }, Case { 1280, 4, 1280 } }) {
+		Monster monster;
+		monster.hitPoints = sample.health;
+		monster.maxHitPoints = 1280;
+		RegenerateMonsterHitPoints(monster, sample.level);
+		EXPECT_EQ(monster.hitPoints, sample.expected) << "health=" << sample.health << ", level=" << sample.level;
+	}
+}
+
+TEST(MonsterTest, PetrifiedMonsterRetainsPassiveRegeneration)
+{
+	Monster monster;
+	monster.mode = MonsterMode::Petrified;
+	monster.hitPoints = 640;
+	monster.maxHitPoints = 1280;
+	RegenerateMonsterHitPoints(monster, 4);
+	EXPECT_EQ(monster.hitPoints, 642);
+	EXPECT_EQ(monster.mode, MonsterMode::Petrified);
+}
+
 TEST(MonsterTest, IsMonsterModeMove)
 {
 	EXPECT_TRUE(IsMonsterModeMove(MonsterMode::MoveNorthwards));

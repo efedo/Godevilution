@@ -120,17 +120,17 @@ public partial class SessionAcceptance
         Require(sections.CurrentTab == index, $"The real tab control did not select {index}.");
     }
 
-    private async Task Click(Vector2 position, bool walk = false)
+    private async Task Click(Vector2 position, bool walk = false, MouseButton button = MouseButton.Left)
     {
         Require(GetViewport().GetVisibleRect().HasPoint(position), "Acceptance tried to click outside the viewport.");
         Input.ParseInputEvent(new InputEventMouseMotion { Position = position, GlobalPosition = position });
         await Frame();
         Input.ParseInputEvent(new InputEventMouseButton {
-            ButtonIndex = MouseButton.Left, Position = position, GlobalPosition = position, Pressed = true, CtrlPressed = walk,
+            ButtonIndex = button, Position = position, GlobalPosition = position, Pressed = true, CtrlPressed = walk,
         });
         await Frame();
         Input.ParseInputEvent(new InputEventMouseButton {
-            ButtonIndex = MouseButton.Left, Position = position, GlobalPosition = position, Pressed = false, CtrlPressed = walk,
+            ButtonIndex = button, Position = position, GlobalPosition = position, Pressed = false, CtrlPressed = walk,
         });
         await Frame();
     }

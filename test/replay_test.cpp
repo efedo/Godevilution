@@ -2474,8 +2474,8 @@ TEST(ReplayFixture, ExecutesFireboltResolutionTimelineAgainstCSharpCheckpoints)
 	EXPECT_EQ(result.transitions[0].stateSha256, fixture.checkpoints[0].stateSha256);
 	EXPECT_EQ(state.lastAppliedTick, 3U);
 	EXPECT_EQ(state.mana, 680);
-	EXPECT_EQ(state.combatTargetHitPoints, 8);
-	EXPECT_EQ(state.combatTargetHitPointsQ6, 464);
+	EXPECT_EQ(state.combatTargetHitPoints, 7);
+	EXPECT_EQ(state.combatTargetHitPointsQ6, 401);
 	EXPECT_EQ(state.randomState, 0x3F10CD47U);
 	EXPECT_TRUE(state.projectiles.empty());
 	EXPECT_EQ(ComputeReplayFixtureStateHash(state), fixture.checkpoints.back().stateSha256);
@@ -2594,8 +2594,8 @@ TEST(ReplayFixture, ExecutesFireballResolutionTimelineAgainstCSharpCheckpoints)
 	EXPECT_EQ(result.transitions[0].stateSha256, fixture.checkpoints[0].stateSha256);
 	EXPECT_EQ(state.lastAppliedTick, 17U);
 	EXPECT_EQ(state.mana, 1104);
-	EXPECT_EQ(state.combatTargetHitPoints, 156);
-	EXPECT_EQ(state.combatTargetHitPointsQ6, 9926);
+	EXPECT_EQ(state.combatTargetHitPoints, 142);
+	EXPECT_EQ(state.combatTargetHitPointsQ6, 9044);
 	EXPECT_EQ(state.randomState, 0xE8098E4AU);
 	EXPECT_TRUE(state.projectiles.empty());
 	EXPECT_EQ(ComputeReplayFixtureStateHash(state), fixture.checkpoints.back().stateSha256);
@@ -2649,8 +2649,8 @@ TEST(ReplayFixture, ExecutesLightningResolutionTimelineAgainstCSharpCheckpoints)
 	EXPECT_EQ(result.transitions[0].stateSha256, fixture.checkpoints[0].stateSha256);
 	EXPECT_EQ(state.lastAppliedTick, 9U);
 	EXPECT_EQ(state.mana, 488);
-	EXPECT_EQ(state.combatTargetHitPoints, 6);
-	EXPECT_EQ(state.combatTargetHitPointsQ6, 384);
+	EXPECT_EQ(state.combatTargetHitPoints, 0);
+	EXPECT_EQ(state.combatTargetHitPointsQ6, 0);
 	EXPECT_EQ(state.randomState, 0xCBBBD6A5U);
 	EXPECT_EQ(state.projectiles.size(), 6U);
 	EXPECT_EQ(std::count_if(state.projectiles.begin(), state.projectiles.end(), [](const auto &projectile) {
@@ -3270,8 +3270,8 @@ TEST(ReplayFixture, ExecutesFlashResolutionTimelineAgainstCSharpCheckpoints)
 	EXPECT_EQ(result.transitions[0].stateSha256, fixture.checkpoints[0].stateSha256);
 	EXPECT_EQ(state.lastAppliedTick, 20U);
 	EXPECT_EQ(state.mana, 1336);
-	EXPECT_EQ(state.combatTargetHitPoints, 97);
-	EXPECT_EQ(state.combatTargetHitPointsQ6, 6165);
+	EXPECT_EQ(state.combatTargetHitPoints, 79);
+	EXPECT_EQ(state.combatTargetHitPointsQ6, 5031);
 	EXPECT_EQ(state.facingDirection, static_cast<uint32_t>(Direction::North));
 	EXPECT_EQ(state.randomState, 0xE4BDD038U);
 	EXPECT_TRUE(state.projectiles.empty());
@@ -5962,7 +5962,7 @@ TEST(ReplayFixture, ApocalypseAdmissionAndMissRngMatchNativeBoundaries)
 	EXPECT_FALSE(repeatedBoom->apocalypseHit);
 	EXPECT_EQ(repeatedBoom->remainingTicks, 13U);
 	EXPECT_EQ(repeatedBoom->damage, 49);
-	EXPECT_EQ(missileOnlyState.combatTargetHitPointsQ6, 3 * 64);
+	EXPECT_EQ(missileOnlyState.combatTargetHitPointsQ6, 2 * 64 + 1);
 	constexpr uint32_t expectedRepeatedHitRandomState = 1480132328U;
 	EXPECT_EQ(missileOnlyState.randomState, expectedRepeatedHitRandomState);
 
@@ -7406,8 +7406,8 @@ TEST(ReplayFixture, ExecutesBoneSpiritHomingAgainstCSharpCheckpoints)
 	ASSERT_TRUE(ExecuteReplayFixture(fixture, state, result, error)) << error;
 	EXPECT_EQ(state.life, 896);
 	EXPECT_EQ(state.mana, 464);
-	EXPECT_EQ(state.combatTargetHitPoints, 38);
-	EXPECT_EQ(state.combatTargetHitPointsQ6, 2416);
+	EXPECT_EQ(state.combatTargetHitPoints, 37);
+	EXPECT_EQ(state.combatTargetHitPointsQ6, 2353);
 	EXPECT_EQ(state.lastAppliedTick, 10U);
 	ASSERT_EQ(state.projectiles.size(), 1U);
 	EXPECT_EQ(state.projectiles[0].lastCollisionTargetEntityId, 9U);

@@ -26,7 +26,7 @@ public partial class SessionAcceptance : Node
     private async Task RunAsync()
     {
         var phase = Environment.GetEnvironmentVariable("GODEVILUTION_ACCEPTANCE_PHASE");
-        if (phase is not ("Create" or "Resume" or "Recovery" or "Journey"))
+        if (phase is not ("Create" or "Resume" or "Recovery" or "Journey" or "JourneyResume"))
             throw new InvalidOperationException("Explicit acceptance phase is required.");
         var directory = Environment.GetEnvironmentVariable("GODEVILUTION_ACCEPTANCE_DIRECTORY")
             ?? throw new InvalidOperationException("An isolated evidence directory is required.");
@@ -56,7 +56,9 @@ public partial class SessionAcceptance : Node
             ((OptionButton)setup.FindChild("CharacterClass", true, false)).Select(1);
         } else {
             previous = JsonSerializer.Deserialize<Evidence>(System.IO.File.ReadAllText(
-                System.IO.Path.Combine(directory, phase == "Recovery" ? "resume.json" : "create.json")))
+                System.IO.Path.Combine(directory, phase switch {
+                    "Recovery" => "resume.json", "JourneyResume" => "journey.json", _ => "create.json",
+                })))
                 ?? throw new InvalidDataException("The creation evidence is empty.");
             Require(previous.Passed && mode.Selected == 1, "Resume must use the persisted form defaults.");
             Require(((LineEdit)setup.FindChild("ResumeToken", true, false)).Text.Length > 0,
@@ -106,6 +108,8 @@ public partial class SessionAcceptance : Node
                 && initial.PositionY == previous.Y && initial.LevelId == previous.LevelId,
                 $"Fresh host/client restore mismatch: expected entity/level/position {previous.EntityId}/{previous.LevelId}/{previous.X},{previous.Y}; observed {initial.EntityId}/{initial.LevelId}/{initial.PositionX},{initial.PositionY}.");
         }
+        if (phase == "JourneyResume")
+            VerifyCombatLootRestored(main, directory);
 
         GetViewport().GuiReleaseFocus();
         Input.ParseInputEvent(new InputEventKey { Keycode = Key.Down, PhysicalKeycode = Key.Down, Pressed = true });
@@ -133,6 +137,7 @@ public partial class SessionAcceptance : Node
         }
         if (phase == "Journey") {
             await VerifyRouteJourney(main, directory, visible);
+            await VerifyCombatAndLoot(main, directory, visible);
             moved = main.ObservedSnapshot!.Players.Single();
             result = main.ObservedCommandResult!;
         }
@@ -224,11 +229,13 @@ public partial class SessionAcceptance : Node
         System.IO.File.Move(staging, path);
     }
 
-    private async Task Until(Func<bool> condition, string failure)
+    private async Task Until(Func<bool> condition, string failure, double? stageSeconds = null)
     {
+        var stage = Stopwatch.StartNew();
         while (!condition()) {
             var seconds = Environment.GetEnvironmentVariable("GODEVILUTION_ACCEPTANCE_PHASE") == "Journey" ? 150 : 40;
             Require(deadline.Elapsed < TimeSpan.FromSeconds(seconds), failure);
+            Require(stageSeconds is null || stage.Elapsed.TotalSeconds < stageSeconds, failure);
             await Frame();
         }
     }

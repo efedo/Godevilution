@@ -7,7 +7,7 @@ param(
     [switch]$Headless,
     [ValidateRange(1, 3600)] [int]$QuitAfterSeconds = 120,
     [string]$SessionDirectory,
-    [ValidateSet('Create', 'Resume', 'Recovery', 'Journey')] [string]$AcceptancePhase
+    [ValidateSet('Create', 'Resume', 'Recovery', 'Journey', 'JourneyResume')] [string]$AcceptancePhase
 )
 
 $ErrorActionPreference = 'Stop'

@@ -10,6 +10,7 @@ public partial class Main : Node2D
     private readonly AuthoritativeClientModel model = new();
     private readonly CancellationTokenSource lifetime = new();
     private readonly AuthoritativeRouteTravel routeTravel = new();
+    private readonly AuthoritativeInteractionTravel interactionTravel = new();
     private readonly Control worldFrame = new() {
         Name = "WorldArea", ClipContents = true, MouseFilter = Control.MouseFilterEnum.Ignore,
     };
@@ -24,7 +25,6 @@ public partial class Main : Node2D
     private Task? reconnectTask;
     private string? pendingConnectionError;
     private string? selectedSpellSourceKey;
-    private PendingWorldInteraction? pendingWorldInteraction;
     private string? resumeTokenPath;
     private bool persistLocalSession;
     private string? localSessionWarning;
@@ -39,6 +39,7 @@ public partial class Main : Node2D
     internal int ObservedPendingCommandCount => client?.PendingCommandCount ?? 0;
     internal Vector2? ObservedPlayerScreenPosition => world?.ScreenPositionForEntity(model.PlayerEntityId);
     internal ulong ObservedSnapshotRevision => snapshotRevision;
+    internal Vector2 ObservedTileScreenPosition(int x, int y) => world!.ScreenPositionForTile(x, y);
 
     public override void _Ready()
     {
@@ -161,7 +162,7 @@ public partial class Main : Node2D
         hud.ClearEventsRequested += model.ClearRecentEvents;
         hud.SpellSourceSelected += SelectSpellSource;
         hud.TravelRequested += warpId => {
-            pendingWorldInteraction = null;
+            interactionTravel.Cancel();
             routeTravel.Start(model.Snapshot, warpId, client?.IsConnected == true);
         };
         hud.CancelTravelRequested += () => routeTravel.Cancel();
@@ -259,7 +260,7 @@ public partial class Main : Node2D
         TrySubmitPendingWorldInteraction();
         if (routeTravel.Next(model.Snapshot, model.LastCommandResult,
                 client?.IsConnected == true, client?.PendingCommandCount ?? 0) is { } routeStep) {
-            var sequence = Queue(routeStep, routeStep: true);
+            var sequence = Queue(routeStep, automaticInput: true);
             routeTravel.Submitted(sequence, model.Snapshot!.Players.First());
         }
         hud?.SetTravelStatus(routeTravel.Active, routeTravel.Status);
@@ -290,8 +291,9 @@ public partial class Main : Node2D
         }
 
         if (@event is InputEventKey key && key.Pressed && !key.Echo && client?.IsConnected == true) {
-            if (key.Keycode == Key.Escape && routeTravel.Active) {
+            if (key.Keycode == Key.Escape && (routeTravel.Active || interactionTravel.Active)) {
                 routeTravel.Cancel();
+                interactionTravel.Cancel();
                 GetViewport().SetInputAsHandled();
                 return;
             }
@@ -342,11 +344,11 @@ public partial class Main : Node2D
             if (!worldFrame.GetGlobalRect().HasPoint(mouse.Position))
                 return;
             routeTravel.Cancel("Travel cancelled by manual input.");
+            interactionTravel.Cancel();
             var target = world?.ScreenToTile(mouse.Position) ?? Vector2I.Zero;
             world?.SetTargetPreview(target);
 
             if (mouse.ButtonIndex == MouseButton.Right) {
-                pendingWorldInteraction = null;
                 if (world?.CombatTargetEntityIdAt(target) is { } targetEntityId) {
                     Queue(new Command {
                         AttackRequested = new AttackRequested {
@@ -363,7 +365,6 @@ public partial class Main : Node2D
             if (mouse.ButtonIndex != MouseButton.Left)
                 return;
 
-            pendingWorldInteraction = null;
             if (mouse.CtrlPressed) {
                 QueueMoveTo(target);
                 GetViewport().SetInputAsHandled();
@@ -548,76 +549,58 @@ public partial class Main : Node2D
 
     private void QueueInteractionAfterMove(Vector2I target, Command interaction)
     {
-        var player = model.Snapshot?.Players.FirstOrDefault();
-        if (player is null)
-            return;
-        if (IsInteractionInRange(player, interaction, target)) {
-            Queue(interaction);
-            return;
-        }
-
-        var movementSequence = QueueMoveTo(target);
-        pendingWorldInteraction = new PendingWorldInteraction(
-            target,
-            interaction,
-            movementSequence);
+        routeTravel.Cancel("Travel cancelled by an interaction.");
+        interactionTravel.Start(model.Snapshot, target.X, target.Y, interaction, client?.IsConnected == true);
+        TrySubmitPendingWorldInteraction();
     }
 
     private void TrySubmitPendingWorldInteraction()
     {
-        if (pendingWorldInteraction is not { } pending)
+        if (interactionTravel.Interaction is not { } interaction)
             return;
-        if (model.LastCommandResult is {
-                ClientSequence: var sequence,
-                Status: CommandStatus.Rejected,
-            } && sequence == pending.MovementSequence) {
-            pendingWorldInteraction = null;
-            return;
+        var target = new Vector2I(interactionTravel.Target.X, interactionTravel.Target.Y);
+        var player = model.Snapshot?.Players.FirstOrDefault();
+        var command = interactionTravel.Next(model.Snapshot, model.LastCommandResult,
+            client?.IsConnected == true, client?.PendingCommandCount ?? 0,
+            IsPendingTargetPresent(target, interaction),
+            player is not null && IsInteractionInRange(player, interaction, target));
+        if (command is not null) {
+            var sequence = Queue(command, automaticInput: true);
+            if (interactionTravel.Active)
+                interactionTravel.Submitted(sequence, player!);
         }
-        if (!IsPendingTargetPresent(pending)) {
-            pendingWorldInteraction = null;
-            return;
-        }
-        if (client?.IsConnected != true
-            || model.Snapshot?.Players.FirstOrDefault() is not { } player
-            || !IsInteractionInRange(player, pending.Command, pending.Target)) {
-            return;
-        }
-
-        pendingWorldInteraction = null;
-        Queue(pending.Command);
     }
 
-    private bool IsPendingTargetPresent(PendingWorldInteraction pending)
+    private bool IsPendingTargetPresent(Vector2I target, Command command)
     {
-        return pending.Command.IntentCase switch {
+        return command.IntentCase switch {
             Command.IntentOneofCase.PickupWorldItemRequested =>
-                world?.WorldItemEntityIdAt(pending.Target)
-                    == pending.Command.PickupWorldItemRequested.ItemEntityId,
+                world?.WorldItemEntityIdAt(target)
+                    == command.PickupWorldItemRequested.ItemEntityId,
             Command.IntentOneofCase.UsePortalRequested =>
-                world?.PortalEntityIdAt(pending.Target)
-                    == pending.Command.UsePortalRequested.PortalId,
+                world?.PortalEntityIdAt(target)
+                    == command.UsePortalRequested.PortalId,
             Command.IntentOneofCase.OperateObjectRequested =>
-                world?.ObjectEntityIdAt(pending.Target)
-                    == pending.Command.OperateObjectRequested.ObjectEntityId,
+                world?.ObjectEntityIdAt(target)
+                    == command.OperateObjectRequested.ObjectEntityId,
             Command.IntentOneofCase.DisarmTrapRequested =>
-                world?.ObjectEntityIdAt(pending.Target)
-                    == pending.Command.DisarmTrapRequested.ObjectEntityId,
+                world?.ObjectEntityIdAt(target)
+                    == command.DisarmTrapRequested.ObjectEntityId,
             Command.IntentOneofCase.TurnInQuestRequested =>
-                model.QuestTownerInteractionAt(pending.Target.X, pending.Target.Y) is { } interaction
-                && interaction.QuestId == pending.Command.TurnInQuestRequested.QuestId
-                && interaction.TownerId == pending.Command.TurnInQuestRequested.TownerId,
+                model.QuestTownerInteractionAt(target.X, target.Y) is { } interaction
+                && interaction.QuestId == command.TurnInQuestRequested.QuestId
+                && interaction.TownerId == command.TurnInQuestRequested.TownerId,
             Command.IntentOneofCase.TalkToQuestRequested =>
                 AuthoritativeMonsterDialogueSelector.Select(
                     model.Snapshot,
                     model.PlayerEntityId,
-                    pending.Target.X,
-                    pending.Target.Y) is { } dialogue
-                && dialogue.QuestId == pending.Command.TalkToQuestRequested.QuestId
-                && dialogue.MonsterEntityId == pending.Command.TalkToQuestRequested.TargetEntityId,
+                    target.X,
+                    target.Y) is { } dialogue
+                && dialogue.QuestId == command.TalkToQuestRequested.QuestId
+                && dialogue.MonsterEntityId == command.TalkToQuestRequested.TargetEntityId,
             Command.IntentOneofCase.TalkToTownerRequested =>
-                model.TownerGreetingAt(pending.Target.X, pending.Target.Y) is { } greeting
-                && greeting.TownerId == pending.Command.TalkToTownerRequested.TownerId,
+                model.TownerGreetingAt(target.X, target.Y) is { } greeting
+                && greeting.TownerId == command.TalkToTownerRequested.TownerId,
             _ => false,
         };
     }
@@ -635,11 +618,6 @@ public partial class Main : Node2D
         }
         return AuthoritativeInteractionRange.IsAdjacent(player, target.X, target.Y);
     }
-
-    private readonly record struct PendingWorldInteraction(
-        Vector2I Target,
-        Command Command,
-        ulong MovementSequence);
 
     private ItemServiceSourceKind ResolveItemServiceSource(PlayerAbilityKind abilityKind)
     {
@@ -785,7 +763,7 @@ public partial class Main : Node2D
     private void StartReconnect(bool force)
     {
         routeTravel.Cancel("Travel stopped: connection lost.");
-        pendingWorldInteraction = null;
+        interactionTravel.Cancel();
         model.ResetTransientPresentation();
         if (reconnectTask is null || reconnectTask.IsCompleted)
             reconnectTask = ReconnectLoopAsync(force);
@@ -834,10 +812,12 @@ public partial class Main : Node2D
         }
     }
 
-    private ulong Queue(Command command, Vector2I? predictedDirection = null, bool routeStep = false)
+    private ulong Queue(Command command, Vector2I? predictedDirection = null, bool automaticInput = false)
     {
-        if (!routeStep)
+        if (!automaticInput) {
             routeTravel.Cancel("Travel cancelled by another action.");
+            interactionTravel.Cancel();
+        }
         var sequence = client!.Queue(command, client.SuggestedCommandTick(model.CurrentTick));
         if (predictedDirection is { } direction)
             model.TrackPredictedMove(sequence, direction.X, direction.Y);

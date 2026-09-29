@@ -61,8 +61,13 @@ settled authoritative step. Cancel, Escape, manual movement, another action,
 disconnect, death, a missing/unavailable route, or level change stops it; it never
 resumes automatically. One already-submitted step may still finish after cancel.
 No client pathfinding, collision, teleportation, or gameplay simulation is added.
-The authored town-to-Cathedral route is covered by application acceptance; the
-complete combat/loot/town-services loop and generated-world parity remain open.
+Clicked items, portals, objects, traps, and dialogue targets use the same
+acknowledged-step discipline until in range, then submit one interaction.
+Escape or another gameplay action cancels that approach too. The server still
+validates movement, range, target presence, and the interaction itself.
+Application acceptance covers the authored town-to-Cathedral encounter, distant
+loot pickup, and fresh-host restore. Return/portal/town services, the complete
+gameplay loop, and generated-world parity remain open.
 
 ## Projects
 

@@ -2247,8 +2247,8 @@ public sealed class BaseContentReplayTests
 
         Assert.Equal(CommandStatus.Accepted, Assert.Single(result.Results).Status);
         Assert.Equal(680, player.Mana);
-        Assert.Equal(8, monster.HitPoints);
-        Assert.Equal(464, monster.HitPointsQ6);
+        Assert.Equal(7, monster.HitPoints);
+        Assert.Equal(401, monster.HitPointsQ6);
         Assert.Empty(result.FinalSnapshot.Projectiles);
         Assert.Equal(0x3F10CD47U, result.FinalSnapshot.RandomState);
         Assert.Equal(
@@ -2321,8 +2321,8 @@ public sealed class BaseContentReplayTests
 
         Assert.Equal(CommandStatus.Accepted, Assert.Single(result.Results).Status);
         Assert.Equal(1104, player.Mana);
-        Assert.Equal(156, monster.HitPoints);
-        Assert.Equal(9926, monster.HitPointsQ6);
+        Assert.Equal(142, monster.HitPoints);
+        Assert.Equal(9044, monster.HitPointsQ6);
         Assert.Empty(result.FinalSnapshot.Projectiles);
         Assert.Equal(0xE8098E4AU, result.FinalSnapshot.RandomState);
         Assert.Equal(
@@ -2473,15 +2473,14 @@ public sealed class BaseContentReplayTests
             executor,
             new AuthoritativeCommandServer(executor));
         var player = Assert.Single(result.FinalSnapshot.Players);
-        var monster = Assert.Single(result.FinalSnapshot.Monsters);
 
         Assert.Equal(CommandStatus.Accepted, Assert.Single(result.Results).Status);
         Assert.Equal(
             fixture.Checkpoints.Select(checkpoint => checkpoint.StateSha256),
             result.Checkpoints.Select(checkpoint => checkpoint.ActualStateSha256));
         Assert.Equal(488, player.Mana);
-        Assert.Equal(6, monster.HitPoints);
-        Assert.Equal(384, monster.HitPointsQ6);
+        Assert.Empty(result.FinalSnapshot.Monsters);
+        Assert.Equal(initial.CombatTargetEntityId, Assert.Single(result.FinalSnapshot.Corpses).EntityId);
         Assert.Equal(6, result.FinalSnapshot.Projectiles.Count);
         Assert.Equal(0xCBBBD6A5U, result.FinalSnapshot.RandomState);
         Assert.DoesNotContain(
@@ -2683,8 +2682,8 @@ public sealed class BaseContentReplayTests
 
         Assert.Equal(CommandStatus.Accepted, Assert.Single(result.Results).Status);
         Assert.Equal(1336, player.Mana);
-        Assert.Equal(97, monster.HitPoints);
-        Assert.Equal(6165, monster.HitPointsQ6);
+        Assert.Equal(79, monster.HitPoints);
+        Assert.Equal(5031, monster.HitPointsQ6);
         Assert.Equal(PlayerDirection.North, player.FacingDirection);
         Assert.Empty(result.FinalSnapshot.Projectiles);
         Assert.Equal(0xE4BDD038U, result.FinalSnapshot.RandomState);

@@ -11,7 +11,9 @@ try {
     if ($Journey) {
         $parameters.QuitAfterSeconds = 165
         & $launcher @parameters -AcceptancePhase Journey
-        Write-Host "PASS: actual Godot responsive controls, cancelled travel, and server-owned town-to-dungeon route. Evidence: $sessionDirectory"
+        $parameters.QuitAfterSeconds = 45
+        & $launcher @parameters -AcceptancePhase JourneyResume
+        Write-Host "PASS: actual Godot responsive controls, town-to-dungeon combat/loot, and fresh-host gameplay resume. Evidence: $sessionDirectory"
         return
     }
     & $launcher @parameters -AcceptancePhase Create

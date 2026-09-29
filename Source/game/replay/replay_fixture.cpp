@@ -12284,7 +12284,7 @@ void AdvanceReplayPlayerAction(ReplayFixtureExecutionState &state, uint64_t tick
 void AdvanceReplayMonsterRegeneration(ReplayFixtureExecutionState &state)
 {
 	if (state.combatTargetEntityId == 0
-	    || state.combatTargetHitPointsQ6 <= 0
+	    || state.combatTargetHitPointsQ6 < 64
 	    || state.combatTargetMonsterLevel <= 0
 	    || state.combatTargetHitPointsQ6 >= state.combatTargetMaxHitPointsQ6)
 		return;
@@ -12293,7 +12293,7 @@ void AdvanceReplayMonsterRegeneration(ReplayFixtureExecutionState &state)
 	    : state.combatTargetMonsterLevel;
 	state.combatTargetHitPointsQ6 = std::min(
 	    state.combatTargetMaxHitPointsQ6,
-	    state.combatTargetHitPointsQ6 + healing * 64);
+	    state.combatTargetHitPointsQ6 + healing);
 	state.combatTargetHitPoints = ToWholeCeilingQ6(state.combatTargetHitPointsQ6);
 }
 

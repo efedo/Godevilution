@@ -4244,6 +4244,14 @@ void RemoveEnemyReferences(const Player &player)
 	}
 }
 
+void RegenerateMonsterHitPoints(Monster &monster, unsigned monsterLevel)
+{
+	if (monster.hitPoints >= monster.maxHitPoints || monster.hasNoLife())
+		return;
+	monster.hitPoints += monsterLevel > 1 ? monsterLevel / 2 : monsterLevel;
+	monster.hitPoints = std::min(monster.hitPoints, monster.maxHitPoints);
+}
+
 void ProcessMonsters()
 {
 #ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
@@ -4261,14 +4269,9 @@ void ProcessMonsters()
 			SetRndSeed(monster.aiSeed);
 			monster.aiSeed = AdvanceRndSeed();
 		}
-		if (monster.hitPoints < monster.maxHitPoints && !monster.hasNoLife()) {
-			if (monster.level(sgGameInitInfo.nDifficulty) > 1) {
-				monster.hitPoints += monster.level(sgGameInitInfo.nDifficulty) / 2;
-			} else {
-				monster.hitPoints += monster.level(sgGameInitInfo.nDifficulty);
-			}
-			monster.hitPoints = std::min(monster.hitPoints, monster.maxHitPoints); // prevent going over max HP with part of a single regen tick
-		}
+		// Preserve lazy type-data lookup for full-health/dying monster slots.
+		if (monster.hitPoints < monster.maxHitPoints && !monster.hasNoLife())
+			RegenerateMonsterHitPoints(monster, monster.level(sgGameInitInfo.nDifficulty));
 
 		const bool isMonsterVisible = IsTileVisible(monster.position.tile);
 		if (isMonsterVisible && monster.activeForTicks == 0) {

@@ -50,6 +50,6 @@
     { "tick": 1, "state_sha256": "ed4b0809293ca2e64c98c77fba1347fa6b8e44827d002880eda9d1e4bf5596fc" },
     { "tick": 2, "state_sha256": "09a2e310e904ff73fa74e4f3b78ebcc02123cbb4d4aab7560ea4536bbb8113c7" },
     { "tick": 3, "state_sha256": "0f169baace8826e300fc79b92e8ef47a88938e2fa461d654a3f6d8e776273bfb" },
-    { "tick": 4, "state_sha256": "e7b498543d901bf650f2e3b601882b26d85853c4a4cc2e95552faf587e04376d" }
+    { "tick": 4, "state_sha256": "0ad539fcf5aeb8b9bb0b58b8e226c4eb45cdf512e3bbab0814029c95e558abce" }
   ]
 }

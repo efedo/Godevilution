@@ -104,17 +104,23 @@ visible variant and inspection of captured frames are separate evidence for
 rendering. Native new-game, campaign, and broader multiplayer/pending-command
 recovery gates remain distinct checks.
 
-`-Journey` selects a separate fresh-session town-to-Cathedral scenario instead
-of Create/Resume/Recovery; omit `-Visible` for headless execution. Both scenarios
+`-Journey` selects a separate fresh-session town-to-Cathedral combat/loot scenario
+and fresh-host JourneyResume instead of Create/Resume/Recovery; omit `-Visible`
+for headless execution. Both scenarios
 exercise all five HUD tabs at 960x600, 1028x720, and 1280x720, checking bounds,
 horizontal overflow, the exposed world area, and player visibility. Journey
 also Ctrl-clicks the resized world, starts/cancels travel through the real buttons,
 observes no further submissions after the in-flight step settles, restarts travel,
-and requires the server's level change and target geometry. It uses the shipped
-authored route, not test teleportation or client pathfinding. Visible runs retain
-layout/tab PNGs; Journey additionally captures dungeon entry. Allow up to 165
-seconds for this longer route. Combat/loot/services, return travel, multiplayer,
-native generated maps, and campaign completion are not certified by Journey.
+and requires the server's level change and target geometry. It then right-clicks
+the authored encounter, requires experience and loot, walks away, and clicks the
+distant drop to exercise repeated server-owned approach and pickup. A fresh host
+and client must retain identity/position, experience, loot, and the defeated
+encounter without duplicating the drop, then accept a fresh movement sequence.
+It uses shipped authored content, not test teleportation or client pathfinding.
+Visible runs retain layout/tab, dungeon, combat, and loot PNGs; a combat trace is
+retained for failure diagnosis. Allow up to 165 seconds for Journey and 45 for
+JourneyResume, plus builds. Services, return travel/portal, multiplayer, native
+generated maps, and campaign completion are not certified by Journey.
 
 ## Standalone host performance baseline
 

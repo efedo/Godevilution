@@ -72,8 +72,10 @@ open. Their scope, dependencies, and exit checks are defined only in the
   creation, client frame/budget evidence, and the release-platform matrix.
 - Rendered application acceptance now verifies responsive HUD controls at
   960x600, 1028x720, and 1280x720, and the authored town-to-Cathedral route.
-  The former 1028x720 HUD clipping is resolved. The complete combat/loot/return/
-  services loop remains M1 work. Local standalone-host measurements are below;
+  The former 1028x720 HUD clipping is resolved. Actual combat, distant loot
+  pickup, inventory display, and fresh-host restoration now pass too. Return,
+  equipment, services, and the complete loop remain M1 work. Local standalone-host
+  measurements are below;
   no campaign, Godot frame budget, or release-platform performance pass is claimed.
 - Godot currently requires no MPQs because it uses placeholder presentation.
   A complete MPQ-free client asset route remains a deliverable. Original-asset
@@ -96,6 +98,84 @@ open. Their scope, dependencies, and exit checks are defined only in the
 The following records describe implemented slices at this baseline. They are
 evidence, not a separate priority list; detailed older entries retain their
 original scope and may be superseded by later entries or the current assessment.
+
+### M1 combat, distant loot, and fresh-host resume (2026-09-29)
+
+This batch follows `b8ceb1dac`. The actual Godot journey now uses right-click
+attacks to defeat the authored Cathedral encounter, observes experience and
+the sword drop, walks away, and clicks the distant item. A client input
+controller repeats ordinary movement requests only after matching accepted
+acknowledgements, fresh settled snapshots, and actual position progress. The
+server retains all pathfinding, collision, timing, and pickup authority.
+Rejection, no progress, lost target, manual input, death, disconnect, or actor/
+level change cancels the approach. Real inventory controls must show the sword;
+fresh-host `JourneyResume` must preserve experience and exactly one looted item,
+with neither a revived encounter nor a duplicate ground drop.
+
+The combat journey exposed regeneration erasing damage between bow attacks.
+Native `ProcessMonsters` adds raw Q6 `level / 2` (minimum one at level one),
+whereas managed and compact replay code multiplied that increment by 64.
+Both now use the native raw increment and skip regeneration below 64 raw HP,
+matching `Actor::hasNoLife()`. Native arithmetic was extracted into a helper
+called by the real loop, retaining its lazy type-data lookup boundary; direct
+GTest cases cover it. Living petrified targets, and managed off-level targets
+under the existing server tick ordering, still regenerate. Nine new managed
+boundary/state/timed-bow cases supplement the five existing regeneration cases.
+Fourteen hashes across eight existing replay
+fixtures were regenerated from corrected compact native execution and checked
+against managed replay; schemas, pack identities, and save formats did not change.
+The compact replay is corroborating evidence, not a whole-game native oracle.
+
+Verification on rebuilt artifacts:
+
+- The rendered `tools/test-godot-session.ps1 -Journey -Visible` journey passes
+  through combat, distant pickup, actual inventory controls, and fresh-host
+  `JourneyResume`: six attacks, 100 experience, four approach/pickup commands,
+  and command sequence 71 -> 72. Combat/inventory/resume frames were inspected.
+  Evidence: `%TEMP%/Godevilution-Scene-Acceptance-ef2ae9c6e1c4401ea6a6c99be684ac3a`.
+  This rendered run preceded the final exact-one inventory-count assertion.
+- The final headless `-Journey` rerun, including that assertion in both pickup
+  and fresh-host resume, passes with the same six attacks, 100 experience,
+  one sword, and sequence 71 -> 72. Evidence:
+  `%TEMP%/Godevilution-Scene-Acceptance-68ce87826b84417fa9532d02edd3d724`.
+  A preceding attempt concurrent with a native rebuild stopped before combat
+  on route command 7, rejected `TooLate` at tick 186. Failed evidence remains at
+  `%TEMP%/Godevilution-Scene-Acceptance-7b36f53703e64b6293db785a1cf1cb17`.
+  The rerun had no concurrent native build; this does not establish the cause
+  or resolve command-admission reliability under load. No retry bypass or
+  admission-policy relaxation was added.
+- Rebuilt default headless Create/Resume/Recovery passes at
+  `%TEMP%/Godevilution-Scene-Acceptance-98325d38d4fc4aefb00d15cfd5cc7f77`.
+  Acceptance directories include private saves/bookmarks; do not publish them.
+- Full Release protocol-client suite: **513 passed, two opt-in performance
+  cases excluded**, including 14 new interaction sequencing/cancellation cases.
+  Full Release server suite: **1069/1069 passed**. Commands use the existing
+  `dotnet run --project <project.csproj> --configuration Release --no-restore
+  -- --no-ansi` runners. An earlier server run also reported transient failures
+  in `ReloadWaitsForInFlightHostOperations` and
+  `ConcurrentConnectionsForOneTokenShareOneParticipantInitialization`; both
+  passed focused retry and the final full run without changes to those tests.
+- Full Debug Diablo suite: **2424 passed, four failed** using the runner command
+  in the historical route-entry record below. The four baseline-confirmed Hork RNG
+  failures listed there remain unresolved; they are not excluded passes.
+- MSVC Debug native monster and replay checks pass **6/6** and **422/422** after
+  the final lazy-lookup guard and CRLF normalization. The developer environment
+  resolved `cl.exe`, `rc.exe`, and `mt.exe` before building `monster_test replay_test`.
+  Focused `ProjectDocumentationConsistencyTests` pass **3/3**. NuGet audit
+  connectivity and Godot certificate-store warnings remain nonfatal.
+
+Independent Terra 5.6 high-effort review covered authority, native arithmetic,
+cancellation, acceptance, and compatibility. Its inventory-duplication finding
+was addressed with a persisted exact count checked on fresh-host restore.
+Two broader parity gaps remain explicit: player physical-hit admission still
+uses a tick-derived synthetic roll rather than native shared impact-time RNG,
+which can synchronize repeated misses; managed monster lifecycle/AI can still
+treat 1-63 raw Q6 HP as living through its ceiling whole-HP projection. The
+regeneration guard does not resolve that lifecycle boundary. Do not change RNG
+or recorded expectations without native characterization. M0 native GUI/frame/
+platform gaps and M1 return/services/quest/death/skill/cast/multiplayer acceptance
+remain open. No full combat, campaign, or release gate is claimed; estimates
+remain unchanged.
 
 ### M1 responsive controls and authoritative route entry (2026-09-29)
 

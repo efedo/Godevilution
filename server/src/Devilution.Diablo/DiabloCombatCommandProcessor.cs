@@ -7962,13 +7962,15 @@ public sealed class DiabloCombatCommandProcessor
         int levelDivisor)
     {
         var effectiveMonsterLevel = GetEffectiveMonsterLevel(monster);
-        if (effectiveMonsterLevel <= 0 || monster.HitPointsQ6 >= monster.MaxHitPointsQ6)
+        if (effectiveMonsterLevel <= 0 || monster.HitPointsQ6 < DeterministicFixedPointQ6.Scale
+            || monster.HitPointsQ6 >= monster.MaxHitPointsQ6)
             return;
 
         var healing = effectiveMonsterLevel > 1
             ? effectiveMonsterLevel / levelDivisor
             : effectiveMonsterLevel;
-        monster.ApplyHealingQ6(DeterministicFixedPointQ6.FromWhole(healing));
+        // ProcessMonsters adds this amount directly to native Q6 hit points.
+        monster.ApplyHealingQ6(healing);
     }
 
     /** Native ZombieAi action band and long-range walk boundary. */

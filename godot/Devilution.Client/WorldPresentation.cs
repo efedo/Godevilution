@@ -245,6 +245,9 @@ public partial class WorldPresentation : Node2D
             tile.Y);
     }
 
+    /** Read-only tile projection shared with scene acceptance. */
+    internal Vector2 ScreenPositionForTile(int x, int y) => ToGlobal(ToScreen(x, y));
+
     public Vector2? ScreenPositionForEntity(uint entityId)
     {
         if (!displayedPositions.TryGetValue(entityId, out var position)

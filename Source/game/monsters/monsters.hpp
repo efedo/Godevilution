@@ -378,6 +378,8 @@ void PrepDoEnding();
 void GolumAi(Monster &golem);
 void DeleteMonsterList();
 void RemoveEnemyReferences(const Player &player);
+/** One native autonomous regeneration tick; health and the increment are raw Q6. */
+void RegenerateMonsterHitPoints(Monster &monster, unsigned monsterLevel);
 void ProcessMonsters();
 void FreeMonsters();
 bool LineClearMissile(Point startPoint, Point endPoint);

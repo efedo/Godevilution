@@ -3062,7 +3062,7 @@ public sealed class ReplayFixtureTests
         Assert.Equal(4, boom.Damage);
         // The managed world advances native ProcessMonsters regeneration on tick 3,
         // after this boom's tick-2 hit.
-        Assert.Equal(97 * 64, Assert.Single(result.FinalSnapshot.Monsters).HitPointsQ6);
+        Assert.Equal(96 * 64 + 1, Assert.Single(result.FinalSnapshot.Monsters).HitPointsQ6);
         Assert.Equal(1058065735U, result.FinalSnapshot.RandomState);
     }
 
@@ -4038,8 +4038,8 @@ public sealed class ReplayFixtureTests
             new AuthoritativeCommandServer(executor));
 
         var monster = Assert.Single(result.FinalSnapshot.Monsters);
-        Assert.Equal(38, monster.HitPoints);
-        Assert.Equal(2416, monster.HitPointsQ6);
+        Assert.Equal(37, monster.HitPoints);
+        Assert.Equal(2353, monster.HitPointsQ6);
         Assert.Equal(10UL, result.FinalSnapshot.Tick);
         var projectile = Assert.Single(result.FinalSnapshot.Projectiles);
         Assert.Equal(9U, projectile.LastCollisionTargetEntityId);

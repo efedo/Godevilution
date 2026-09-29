@@ -71,7 +71,7 @@ isolated spell or table rows while the playable route stays unchanged.
 | Gate | Deliverable | Dependencies | Current position |
 | --- | --- | --- | --- |
 | M0 | Reproducible launch and honest acceptance evidence | Existing implementation | Godot session/recovery passes; local one/four-participant host measurements recorded; native GUI and performance/platform gaps remain |
-| M1 | Usable Godot town-to-dungeon loop | M0 launch/acceptance harness | Responsive HUD and authored town-to-Cathedral traversal verified; complete gameplay/return loop remains |
+| M1 | Usable Godot town-to-dungeon loop | M0 launch/acceptance harness | Responsive HUD, authored entry, combat/loot and restore acceptance implemented; return/services and complete loop remain |
 | M2 | Native-compatible generated world | M0 geometry/parity baseline | Geometry contracts and authored fragments exist; native map synthesis remains |
 | M3 | Complete base and Hellfire gameplay routes | M1 plus the relevant M2 world slices | Many rules exist; campaign and remaining behavioral coverage remain |
 | M4 | Release-quality client, recovery, and packaging | M3; preparation begins during M1/M2 | Recovery and adapter packaging foundations exist; product acceptance remains |
@@ -109,7 +109,9 @@ M4. M5 is the final removal gate, not a reason to postpone replacement work.
    Use the recorded checkpoint-phase timings to target publication costs without
    weakening durability; retain no-ack-on-write-failure and fresh-host duplicate
    recovery coverage. Local Windows receipt-file reuse does not close the wider
-   performance/platform gate.
+   performance/platform gate. Reproduce the recorded Godot route `TooLate`
+   rejection under load and verify command-admission reliability without
+   relaxing server authority or silently retrying rejected gameplay.
 
 Exit: the Godot launch/create/move/save/restart/resume journey passes from
 rebuilt artifacts without MPQs; visible UI is checked separately from headless
@@ -132,8 +134,11 @@ deliberately does not claim native generated-world parity, which belongs to M2.
    death/restart, class skill, and resource-consuming cast to expose integration
    gaps. Reuse existing server intents and protocol models. Responsive tabs,
    explicit tile walking, and cancellable server-controlled route traversal now
-   cover town-to-Cathedral entry through actual controls. Extend that acceptance
-   into combat/loot and the return/services loop; entry alone does not close M1.
+   cover town-to-Cathedral entry through actual controls. Combat/loot and
+   fresh-host restore now extend that acceptance. Next integrate equipment and
+   return/portal/services with isolated authored content identities so existing
+   base-pack saves remain usable. Close the remaining quest, death/restart,
+   skill/cast, and multiplayer journeys; this partial route does not close M1.
 3. Give geometry, actors, projectiles, items, and interaction targets readable
    Godot presentation. Split the main scene/script only where this separates
    concrete input, rendering, menus, or HUD responsibilities. Keep placeholder

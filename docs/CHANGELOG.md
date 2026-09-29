@@ -2,6 +2,19 @@
 
 All notable changes to this fork are documented below.
 
+- 2026-09-29: Extended actual Godot acceptance through combat, distant loot,
+  inventory display, and fresh-host resume. Added acknowledged multi-step
+  interaction approach/cancellation without client gameplay authority. Corrected
+  managed/compact replay regeneration to native raw Q6 increments, characterized
+  the real native loop's helper, and refreshed eight affected replay fixtures.
+  Protocol tests pass 513 (two opt-in cases excluded), server 1069/1069,
+  native monster 6/6 and replay 422/422; Diablo passes 2424 with four known
+  baseline Hork RNG failures. Rendered/headless gameplay resume and default
+  session recovery pass; a concurrent-build route `TooLate` failure remains
+  recorded as an unresolved load-reliability finding. Updated plan, controls,
+  and evidence; broader hit RNG/lifecycle parity and full gameplay-loop gates remain open. Normalized
+  touched text to CRLF.
+
 - 2026-09-29: Added responsive Godot HUD tabs, a reserved world/input area,
   explicit Ctrl-click walking, and cancellable snapshot-derived route travel.
   Fixed server target-cell movement circling adjacent unoccupied endpoints while
