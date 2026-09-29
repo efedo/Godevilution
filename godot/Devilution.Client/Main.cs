@@ -9,6 +9,10 @@ public partial class Main : Node2D
 {
     private readonly AuthoritativeClientModel model = new();
     private readonly CancellationTokenSource lifetime = new();
+    private readonly AuthoritativeRouteTravel routeTravel = new();
+    private readonly Control worldFrame = new() {
+        Name = "WorldArea", ClipContents = true, MouseFilter = Control.MouseFilterEnum.Ignore,
+    };
     private AuthoritativeClient? client;
     private WorldPresentation? world;
     private HudPresentation? hud;
@@ -38,11 +42,13 @@ public partial class Main : Node2D
 
     public override void _Ready()
     {
+        GetWindow().MinSize = new Vector2I(960, 600);
         if (int.TryParse(Environment.GetEnvironmentVariable("GODEVILUTION_QUIT_AFTER_SECONDS"), out var quitSeconds)
             && quitSeconds is > 0 and <= 3600)
             GetTree().CreateTimer(quitSeconds).Timeout += () => GetTree().Quit();
         world = new WorldPresentation();
-        AddChild(world);
+        AddChild(worldFrame);
+        worldFrame.AddChild(world);
         hud = new HudPresentation();
         AddChild(hud);
         feedback = new PresentationFeedback();
@@ -154,6 +160,11 @@ public partial class Main : Node2D
         hud.DropHeldItemRequested += DropHeldItemAtPlayer;
         hud.ClearEventsRequested += model.ClearRecentEvents;
         hud.SpellSourceSelected += SelectSpellSource;
+        hud.TravelRequested += warpId => {
+            pendingWorldInteraction = null;
+            routeTravel.Start(model.Snapshot, warpId, client?.IsConnected == true);
+        };
+        hud.CancelTravelRequested += () => routeTravel.Cancel();
         connectionOptions = ClientConnectionOptions.FromEnvironment();
         resumeTokenPath = Environment.GetEnvironmentVariable("DEVILUTION_RESUME_TOKEN_PATH");
         if (connectionOptions.ResumeToken.Length > 0
@@ -235,12 +246,23 @@ public partial class Main : Node2D
                 StartReconnect(force: false);
         }
 
+        hud?.UpdateLayout();
+        if (hud is not null) {
+            worldFrame.Position = hud.PlayArea.Position;
+            worldFrame.Size = hud.PlayArea.Size;
+        }
         world?.Apply(
             model.Snapshot,
             delta,
             model.PredictedPlayerPosition,
             client?.ServerTickRateHz ?? AuthoritativePresentationClock.DefaultTickRateHz);
         TrySubmitPendingWorldInteraction();
+        if (routeTravel.Next(model.Snapshot, model.LastCommandResult,
+                client?.IsConnected == true, client?.PendingCommandCount ?? 0) is { } routeStep) {
+            var sequence = Queue(routeStep, routeStep: true);
+            routeTravel.Submitted(sequence, model.Snapshot!.Players.First());
+        }
+        hud?.SetTravelStatus(routeTravel.Active, routeTravel.Status);
         var spellSources = AuthoritativeSpellSourceSelector.GetSources(model.Snapshot);
         var selectedSpell = AuthoritativeSpellSourceSelector.Select(
             spellSources,
@@ -268,6 +290,11 @@ public partial class Main : Node2D
         }
 
         if (@event is InputEventKey key && key.Pressed && !key.Echo && client?.IsConnected == true) {
+            if (key.Keycode == Key.Escape && routeTravel.Active) {
+                routeTravel.Cancel();
+                GetViewport().SetInputAsHandled();
+                return;
+            }
             var localPlayer = model.Snapshot?.Players.FirstOrDefault();
             if (key.Keycode == Key.Escape
                 && localPlayer?.Life == 0
@@ -312,6 +339,9 @@ public partial class Main : Node2D
         }
 
         if (@event is InputEventMouseButton mouse && mouse.Pressed && client?.IsConnected == true) {
+            if (!worldFrame.GetGlobalRect().HasPoint(mouse.Position))
+                return;
+            routeTravel.Cancel("Travel cancelled by manual input.");
             var target = world?.ScreenToTile(mouse.Position) ?? Vector2I.Zero;
             world?.SetTargetPreview(target);
 
@@ -334,6 +364,11 @@ public partial class Main : Node2D
                 return;
 
             pendingWorldInteraction = null;
+            if (mouse.CtrlPressed) {
+                QueueMoveTo(target);
+                GetViewport().SetInputAsHandled();
+                return;
+            }
             var player = model.Snapshot?.Players.FirstOrDefault();
             if (player?.HeldItem is not null) {
                 Queue(new Command {
@@ -749,6 +784,8 @@ public partial class Main : Node2D
 
     private void StartReconnect(bool force)
     {
+        routeTravel.Cancel("Travel stopped: connection lost.");
+        pendingWorldInteraction = null;
         model.ResetTransientPresentation();
         if (reconnectTask is null || reconnectTask.IsCompleted)
             reconnectTask = ReconnectLoopAsync(force);
@@ -797,8 +834,10 @@ public partial class Main : Node2D
         }
     }
 
-    private ulong Queue(Command command, Vector2I? predictedDirection = null)
+    private ulong Queue(Command command, Vector2I? predictedDirection = null, bool routeStep = false)
     {
+        if (!routeStep)
+            routeTravel.Cancel("Travel cancelled by another action.");
         var sequence = client!.Queue(command, client.SuggestedCommandTick(model.CurrentTick));
         if (predictedDirection is { } direction)
             model.TrackPredictedMove(sequence, direction.X, direction.Y);

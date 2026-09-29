@@ -128,100 +128,12 @@ public partial class HudPresentation : CanvasLayer
 
     public override void _Ready()
     {
-        var statusPanel = new PanelContainer { Position = new Vector2(16, 16), Size = new Vector2(760, 100) };
-        var statusBox = new VBoxContainer();
-        statusPanel.AddChild(statusBox);
-        statusBox.AddChild(status);
-        statusBox.AddChild(sessionWarning);
-        statusBox.AddChild(state);
-        statusBox.AddChild(statusEffects);
-        AddChild(statusPanel);
-
-        clock.HorizontalAlignment = HorizontalAlignment.Right;
-        clock.Position = new Vector2(760, 16);
-        clock.Size = new Vector2(100, 24);
-        clock.MouseFilter = Control.MouseFilterEnum.Ignore;
-        AddChild(clock);
-
-        victory.HorizontalAlignment = HorizontalAlignment.Center;
-        victory.Modulate = new Color("ffe38a");
-        victory.AddThemeFontSizeOverride("font_size", 28);
-        victory.Position = new Vector2(280, 128);
-        victory.Size = new Vector2(480, 56);
-        victory.MouseFilter = Control.MouseFilterEnum.Ignore;
-        victory.Visible = false;
-        AddChild(victory);
-
-        sidePanel = new PanelContainer { Position = new Vector2(880, 16), Size = new Vector2(380, 680) };
-        var scroll = new ScrollContainer();
-        var sideBox = new VBoxContainer();
-        sidePanel.AddChild(scroll);
-        scroll.AddChild(sideBox);
-        sideBox.AddChild(new Label { Text = "AUTHORITATIVE CLIENT" });
-        sideBox.AddChild(commandFeedback);
-        sideBox.AddChild(diagnostics);
-        sideBox.AddChild(attributes);
-        var attributeControls = new GridContainer { Columns = 2 };
-        foreach (var button in new Control[] {
-            allocateStrength, allocateMagic, allocateDexterity, allocateVitality,
-        })
-            attributeControls.AddChild(button);
-        sideBox.AddChild(attributeControls);
-        sideBox.AddChild(new Label { Text = "Spell sources (click to select; Q/E cycles)" });
-        spellSources.CustomMinimumSize = new Vector2(340, 100);
-        sideBox.AddChild(spellSources);
-        sideBox.AddChild(inventory);
-        sideBox.AddChild(inventoryGrid);
-        sideBox.AddChild(new Label { Text = "Belt (select a source for books or consumables)" });
-        beltItems.CustomMinimumSize = new Vector2(340, 80);
-        sideBox.AddChild(beltItems);
-        sideBox.AddChild(new Label { Text = "Equipment (select a destination for an inventory item)" });
-        equipmentItems.CustomMinimumSize = new Vector2(340, 100);
-        sideBox.AddChild(equipmentItems);
-        sideBox.AddChild(new Label { Text = "Oil targets (select equipment or inventory)" });
-        oilTargets.CustomMinimumSize = new Vector2(340, 100);
-        sideBox.AddChild(oilTargets);
-        sideBox.AddChild(new Label { Text = "Store stock" });
-        storeItems.CustomMinimumSize = new Vector2(340, 110);
-        sideBox.AddChild(storeItems);
-        sideBox.AddChild(store);
-        sideBox.AddChild(new Label { Text = "Stash (authoritative summary)" });
-        stashPageSelector.AddItem("Page 0");
-        for (var page = 1U; page < StashLayout.PageCount; page++)
-            stashPageSelector.AddItem($"Page {page}");
-        stashPageSelector.Select(0);
-        stashPageSelector.ItemSelected += index => {
-            stashPage = checked((uint)index);
-            ApplyStash(currentPlayer);
-        };
-        sideBox.AddChild(stashPageSelector);
-        stashGrid.CustomMinimumSize = new Vector2(340, 340);
-        sideBox.AddChild(stashGrid);
-        stashItems.CustomMinimumSize = new Vector2(340, 90);
-        sideBox.AddChild(stashItems);
-        sideBox.AddChild(stash);
-        sideBox.AddChild(stashGoldAmount);
-        sideBox.AddChild(new Label { Text = "Dialog / world interactions" });
-        sideBox.AddChild(dialog);
-
-        var controls = new GridContainer { Columns = 2 };
-        foreach (var button in new Control[] {
-            openSmith, openAdria, closeStore, openStash, closeStash, depositStashGold,
-            withdrawStashGold, buySelected, sellSelected, repairSelected,
-            rechargeSelected, identifySelected, readBookSelected, disarmTrap, interactObject, advanceQuest,
-            useConsumableSelected, applyOilSelected,
-            questTownerInteraction,
-            refillMana, dropHeld, clearEvents,
-        })
-            controls.AddChild(button);
-        sideBox.AddChild(controls);
-        sideBox.AddChild(diagnosticsToggle);
-        sideBox.AddChild(highContrastToggle);
-        AddChild(sidePanel);
+        BuildLayout();
 
         for (var index = 0; index < InventoryColumns * VisibleInventoryRows; index++) {
             var cell = new Button {
                 CustomMinimumSize = new Vector2(32, 32),
+                ClipText = true, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
                 Text = "·",
             };
             var cellIndex = index;
@@ -233,6 +145,7 @@ public partial class HudPresentation : CanvasLayer
         for (var index = 0; index < StashLayout.CellCount; index++) {
             var cell = new Button {
                 CustomMinimumSize = new Vector2(32, 32),
+                ClipText = true, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
                 Text = "·",
             };
             var cellIndex = index;
@@ -486,6 +399,7 @@ public partial class HudPresentation : CanvasLayer
         availableQuestTownerInteraction = AuthoritativeQuestTownerInteractionSelector.Select(model.Snapshot);
 
         var connected = client?.IsConnected == true;
+        ApplyRoutes(model.VisibleWarpTriggers, connected && player is { Life: > 0 });
         var hasStatPoints = connected && player?.StatPoints > 0;
         var activeStore = model.Snapshot?.ActiveStore;
         var stashOpen = player?.StashOpen == true;

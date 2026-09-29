@@ -8,7 +8,7 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
-#include "engine/direction.hpp"
+#include "engine/math/direction.hpp"
 #include "utils/algorithm/container.hpp"
 
 namespace devilution {
@@ -106,6 +106,18 @@ void CheckPath(Point startPosition, Point destinationPosition, std::vector<std::
 TEST(PathTest, FindPathToSelf)
 {
 	CheckPath({ 8, 8 }, { 8, 8 }, {});
+}
+
+TEST(PathTest, FindPathEntersEachAdjacentDestination)
+{
+	CheckPath({ 8, 8 }, { 7, 7 }, { "↖" });
+	CheckPath({ 8, 8 }, { 8, 7 }, { "↑" });
+	CheckPath({ 8, 8 }, { 9, 7 }, { "↗" });
+	CheckPath({ 8, 8 }, { 7, 8 }, { "←" });
+	CheckPath({ 8, 8 }, { 9, 8 }, { "→" });
+	CheckPath({ 8, 8 }, { 7, 9 }, { "↙" });
+	CheckPath({ 8, 8 }, { 8, 9 }, { "↓" });
+	CheckPath({ 8, 8 }, { 9, 9 }, { "↘" });
 }
 
 TEST(PathTest, FindPathTwoStepsUp)

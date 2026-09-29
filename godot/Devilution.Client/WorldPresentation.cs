@@ -75,7 +75,12 @@ public partial class WorldPresentation : Node2D
         var activeEntityIds = new HashSet<uint>();
         levels.ApplyAuthoritative(snapshot.LevelGeometry);
         currentLevel = levels.Resolve(localPlayer?.LevelId ?? 0);
-        viewport = CreateViewportTransform(currentLevel, localPlayer);
+        var nextViewport = CreateViewportTransform(currentLevel, localPlayer);
+        if (nextViewport.ViewportWidth != viewport.ViewportWidth || nextViewport.ViewportHeight != viewport.ViewportHeight) {
+            displayedPositions.Clear();
+            displayedPositionLevels.Clear();
+        }
+        viewport = nextViewport;
         var localGeometry = localPlayer is null
             ? null
             : snapshot.LevelGeometry.FirstOrDefault(level => level.LevelId == localPlayer.LevelId);
@@ -220,7 +225,7 @@ public partial class WorldPresentation : Node2D
         LevelLayout level,
         PlayerSnapshot? localPlayer)
     {
-        var size = GetViewportRect().Size;
+        var size = GetParent() is Control frame ? frame.Size : GetViewportRect().Size;
         return AuthoritativeWorldViewport.Create(
             Math.Max(1, Mathf.RoundToInt(size.X)),
             Math.Max(1, Mathf.RoundToInt(size.Y)),
@@ -233,7 +238,8 @@ public partial class WorldPresentation : Node2D
 
     public Vector2I ScreenToTile(Vector2 screenPosition)
     {
-        var tile = viewport.ScreenToTile(screenPosition.X, screenPosition.Y);
+        var local = ToLocal(screenPosition);
+        var tile = viewport.ScreenToTile(local.X, local.Y);
         return new Vector2I(
             tile.X,
             tile.Y);
@@ -248,7 +254,7 @@ public partial class WorldPresentation : Node2D
                 entityLevelId,
                 localPlayer.LevelId))
             return null;
-        return position;
+        return ToGlobal(position);
     }
 
     public void SetTargetPreview(Vector2I? target)

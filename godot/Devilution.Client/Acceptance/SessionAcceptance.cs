@@ -26,7 +26,7 @@ public partial class SessionAcceptance : Node
     private async Task RunAsync()
     {
         var phase = Environment.GetEnvironmentVariable("GODEVILUTION_ACCEPTANCE_PHASE");
-        if (phase is not ("Create" or "Resume" or "Recovery"))
+        if (phase is not ("Create" or "Resume" or "Recovery" or "Journey"))
             throw new InvalidOperationException("Explicit acceptance phase is required.");
         var directory = Environment.GetEnvironmentVariable("GODEVILUTION_ACCEPTANCE_DIRECTORY")
             ?? throw new InvalidOperationException("An isolated evidence directory is required.");
@@ -34,7 +34,8 @@ public partial class SessionAcceptance : Node
         if (DisplayServer.GetName() == "headless")
             GetTree().Root.Size = new Vector2I(1280, 720);
         var bookmarkPath = System.IO.Path.Combine(directory, "resume-token.txt");
-        if (phase == "Create") {
+        var creating = phase is "Create" or "Journey";
+        if (creating) {
             Require(!System.IO.File.Exists(bookmarkPath), "Creation requires a fresh isolated bookmark directory.");
             System.IO.File.WriteAllText(bookmarkPath, "invalid token");
         }
@@ -47,7 +48,7 @@ public partial class SessionAcceptance : Node
         var mode = setup.FindChild("SessionMode", true, false) as OptionButton
             ?? throw new InvalidOperationException("Session mode control is missing.");
         Evidence? previous = null;
-        if (phase == "Create") {
+        if (creating) {
             Require(mode.Selected == 0, "A corrupt bookmark must leave new-character selection available.");
             Require(((Label)setup.FindChild("Validation", true, false)).Text.Contains("Could not read local resume bookmark"),
                 "The corrupt bookmark was not reported in the setup UI.");
@@ -99,6 +100,7 @@ public partial class SessionAcceptance : Node
         }
         Require(LocalSessionBookmark.Read(bookmarkPath) is not null,
             "No durable local resume bookmark was written.");
+        await VerifyResponsiveLayout(main, directory, visible && creating);
         if (previous is not null) {
             Require(initial.EntityId == previous.EntityId && initial.PositionX == previous.X
                 && initial.PositionY == previous.Y && initial.LevelId == previous.LevelId,
@@ -126,6 +128,11 @@ public partial class SessionAcceptance : Node
         await ToSignal(GetTree().CreateTimer(0.5), SceneTreeTimer.SignalName.Timeout);
         if (phase == "Recovery") {
             await VerifyRecovery(main, directory, visible);
+            moved = main.ObservedSnapshot!.Players.Single();
+            result = main.ObservedCommandResult!;
+        }
+        if (phase == "Journey") {
+            await VerifyRouteJourney(main, directory, visible);
             moved = main.ObservedSnapshot!.Players.Single();
             result = main.ObservedCommandResult!;
         }
@@ -220,7 +227,8 @@ public partial class SessionAcceptance : Node
     private async Task Until(Func<bool> condition, string failure)
     {
         while (!condition()) {
-            Require(deadline.Elapsed < TimeSpan.FromSeconds(30), failure);
+            var seconds = Environment.GetEnvironmentVariable("GODEVILUTION_ACCEPTANCE_PHASE") == "Journey" ? 150 : 40;
+            Require(deadline.Elapsed < TimeSpan.FromSeconds(seconds), failure);
             await Frame();
         }
     }

@@ -70,9 +70,10 @@ directory. `-SessionDirectory` on the inner harness isolates diagnostic runs.
 ```powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File tools/test-godot-session.ps1
 powershell -NoProfile -ExecutionPolicy Bypass -File tools/test-godot-session.ps1 -Visible
+powershell -NoProfile -ExecutionPolicy Bypass -File tools/test-godot-session.ps1 -Journey -Visible
 ```
 
-These runs use separate server and Godot processes for create and resume, a
+The first two commands use separate server and Godot processes for create and resume, a
 unique retained test save directory, the real `Main.tscn` setup form, mouse
 submission, and movement key input. They require accepted movement, matching
 character/position after fresh-host resume, and a new command sequence after
@@ -102,6 +103,18 @@ renders. The application harness exercises controls even headlessly, but its
 visible variant and inspection of captured frames are separate evidence for
 rendering. Native new-game, campaign, and broader multiplayer/pending-command
 recovery gates remain distinct checks.
+
+`-Journey` selects a separate fresh-session town-to-Cathedral scenario instead
+of Create/Resume/Recovery; omit `-Visible` for headless execution. Both scenarios
+exercise all five HUD tabs at 960x600, 1028x720, and 1280x720, checking bounds,
+horizontal overflow, the exposed world area, and player visibility. Journey
+also Ctrl-clicks the resized world, starts/cancels travel through the real buttons,
+observes no further submissions after the in-flight step settles, restarts travel,
+and requires the server's level change and target geometry. It uses the shipped
+authored route, not test teleportation or client pathfinding. Visible runs retain
+layout/tab PNGs; Journey additionally captures dungeon entry. Allow up to 165
+seconds for this longer route. Combat/loot/services, return travel, multiplayer,
+native generated maps, and campaign completion are not certified by Journey.
 
 ## Standalone host performance baseline
 

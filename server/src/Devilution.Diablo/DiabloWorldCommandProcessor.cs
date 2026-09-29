@@ -687,6 +687,13 @@ public sealed class DiabloWorldCommandProcessor
         if (targetOccupied && targetDistance <= 1)
             return DiabloWorldIntentResult.Accepted;
 
+        // Ordinary walk targets include their endpoint (native makePath endspace=true).
+        // Keep adjacent-goal navigation for blocked interaction targets and longer approaches.
+        if (targetDistance == 1 && !targetOccupied && world.IsWalkable(player.LevelId, intent.TargetX, intent.TargetY)) {
+            return Move(player, new DiabloMoveIntent(
+                intent.TargetX - player.PositionX, intent.TargetY - player.PositionY), appliedTick, participants);
+        }
+
         var step = DeterministicGridNavigation.FindStep(
             player.PositionX,
             player.PositionY,

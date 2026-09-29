@@ -314,6 +314,64 @@ public sealed class DiabloWorldCommandProcessorTests
         Assert.Contains(27, world.LevelGeometry.Single().BlockedCells);
     }
 
+    [Theory]
+    [InlineData(-1, -1)]
+    [InlineData(0, -1)]
+    [InlineData(1, -1)]
+    [InlineData(-1, 0)]
+    [InlineData(1, 0)]
+    [InlineData(-1, 1)]
+    [InlineData(0, 1)]
+    [InlineData(1, 1)]
+    public void TargetedMovementEntersEachAdjacentDestination(int dx, int dy)
+    {
+        var processor = new DiabloWorldCommandProcessor(new DiabloWorldState(fallbackWidth: 5, fallbackHeight: 5));
+        var player = CreatePlayer(positionX: 2, positionY: 2, entityId: 1);
+
+        var result = processor.Execute(player, new DiabloMoveToIntent(2 + dx, 2 + dy), 1, [player]);
+
+        Assert.True(result.Succeeded);
+        Assert.Equal((2 + dx, 2 + dy), (player.PositionX, player.PositionY));
+    }
+
+    [Fact]
+    public void TargetedMovementRetainsOccupiedAndSelfNoOpAndBlockedApproach()
+    {
+        var processor = new DiabloWorldCommandProcessor(new DiabloWorldState(
+            fallbackWidth: 3, fallbackHeight: 3, fallbackBlockedCells: [1]));
+        var player = CreatePlayer(entityId: 1);
+        var blocker = CreatePlayer(positionY: 1, entityId: 2);
+
+        Assert.True(processor.Execute(player, new DiabloMoveToIntent(0, 0), 1, [player, blocker]).Succeeded);
+        Assert.True(processor.Execute(player, new DiabloMoveToIntent(0, 1), 1, [player, blocker]).Succeeded);
+        Assert.Equal((0, 0), (player.PositionX, player.PositionY));
+        Assert.Equal(DiabloPlayerDirection.South, player.FacingDirection);
+        Assert.Null(player.CurrentAction);
+        Assert.True(processor.Execute(player, new DiabloMoveToIntent(1, 0), 1, [player, blocker]).Succeeded);
+        Assert.Equal((1, 1), (player.PositionX, player.PositionY)); // Existing adjacent approach, never the blocked tile.
+    }
+
+    [Fact]
+    public void RepeatedTargetedMovementEntersWarpInsteadOfOrbitingItsEndpoint()
+    {
+        var authoritativeWorld = new AuthoritativeWorld();
+        authoritativeWorld.AddLevel(new AuthoritativeLevel(0, 10, 10));
+        authoritativeWorld.AddLevel(new AuthoritativeLevel(1, 5, 5));
+        authoritativeWorld.AddWarpTarget(new AuthoritativeWarpTarget(1001, 0, 7, 6, 1, 2, 2));
+        var processor = new DiabloWorldCommandProcessor(new DiabloWorldState(authoritativeWorld));
+        var player = CreatePlayer(entityId: 1);
+        var visited = new HashSet<(int X, int Y)> { (0, 0) };
+
+        for (ulong tick = 1; tick <= 20 && player.LevelId == 0; tick++) {
+            Assert.True(processor.Execute(player, new DiabloMoveToIntent(7, 6), tick, [player]).Succeeded);
+            if (player.LevelId == 0)
+                Assert.True(visited.Add((player.PositionX, player.PositionY)), "Route revisited a tile instead of entering the warp.");
+        }
+
+        Assert.Equal(1U, player.LevelId);
+        Assert.Equal((2, 2), (player.PositionX, player.PositionY));
+    }
+
     [Fact]
     public void MovementRejectsMalformedBlockedAndOccupiedDestinationsWithoutMutation()
     {

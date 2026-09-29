@@ -24,9 +24,12 @@ public sealed class ProjectDocumentationConsistencyTests
         Assert.Contains("ordinary_monster_capacity", migrationStatus, StringComparison.Ordinal);
         Assert.Contains("default 190-slot", migrationStatus, StringComparison.Ordinal);
         Assert.Contains("coverage_mode=Complete", migrationStatus, StringComparison.Ordinal);
-        Assert.Contains("Close the remaining native-parity combat and AI edge cases", migrationStatus, StringComparison.Ordinal);
-        Assert.Contains("Advance native-parity dungeon generation", migrationStatus, StringComparison.Ordinal);
-        Assert.Contains("Complete external content coverage for the remaining Hellfire", migrationStatus, StringComparison.Ordinal);
+        // Delivery order belongs to the active plan, not a duplicated status backlog.
+        Assert.Contains("[completion plan](completion-plan.md)", migrationStatus, StringComparison.Ordinal);
+        var completionPlan = Read(root, "docs", "completion-plan.md");
+        Assert.Contains("## M2: Native-compatible world generation and placement", completionPlan, StringComparison.Ordinal);
+        Assert.Contains("## M3: Gameplay and content closure by playable route", completionPlan, StringComparison.Ordinal);
+        Assert.Contains("Hellfire world and quests", completionPlan, StringComparison.Ordinal);
         Assert.Contains(
             "version-4 canonical SHA-256 state and command-ledger integrity envelope bound to the active ruleset identity",
             migrationStatus,

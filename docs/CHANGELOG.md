@@ -2,6 +2,18 @@
 
 All notable changes to this fork are documented below.
 
+- 2026-09-29: Added responsive Godot HUD tabs, a reserved world/input area,
+  explicit Ctrl-click walking, and cancellable snapshot-derived route travel.
+  Fixed server target-cell movement circling adjacent unoccupied endpoints while
+  preserving interaction approaches and server authority. Added endpoint/native,
+  route-controller, and real-scene resize/cancel/town-to-Cathedral acceptance.
+  Rendered and headless route checks and rendered create/resume/recovery pass;
+  server tests pass 1069/1069, protocol tests 499 (two opt-in cases excluded),
+  native path tests 13/13. Diablo tests pass 2415 with four baseline-confirmed
+  Hork RNG failures retained as open findings. Repaired path-test build wiring
+  and stale documentation assertions, and updated plan/evidence/controls.
+  Normalized touched text to CRLF. Full gameplay-loop/campaign gates remain open.
+
 - 2026-09-29: Measured checkpoint phases and reduced Windows receipt-mirror
   replacement when validated bytes are unchanged, retaining disk flushes,
   checkpoint order, compatibility files, and durable-before-command-ACK behavior.

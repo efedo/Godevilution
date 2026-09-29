@@ -71,7 +71,7 @@ isolated spell or table rows while the playable route stays unchanged.
 | Gate | Deliverable | Dependencies | Current position |
 | --- | --- | --- | --- |
 | M0 | Reproducible launch and honest acceptance evidence | Existing implementation | Godot session/recovery passes; local one/four-participant host measurements recorded; native GUI and performance/platform gaps remain |
-| M1 | Usable Godot town-to-dungeon loop | M0 launch/acceptance harness | Protocol features exist; integrated visible journey remains |
+| M1 | Usable Godot town-to-dungeon loop | M0 launch/acceptance harness | Responsive HUD and authored town-to-Cathedral traversal verified; complete gameplay/return loop remains |
 | M2 | Native-compatible generated world | M0 geometry/parity baseline | Geometry contracts and authored fragments exist; native map synthesis remains |
 | M3 | Complete base and Hellfire gameplay routes | M1 plus the relevant M2 world slices | Many rules exist; campaign and remaining behavioral coverage remain |
 | M4 | Release-quality client, recovery, and packaging | M3; preparation begins during M1/M2 | Recovery and adapter packaging foundations exist; product acceptance remains |
@@ -130,7 +130,10 @@ deliberately does not claim native generated-world parity, which belongs to M2.
 2. Build a coherent town -> dungeon -> combat -> loot -> inventory/equipment ->
    portal -> vendor/stash -> save/resume journey. Add one quest interaction,
    death/restart, class skill, and resource-consuming cast to expose integration
-   gaps. Reuse existing server intents and protocol models.
+   gaps. Reuse existing server intents and protocol models. Responsive tabs,
+   explicit tile walking, and cancellable server-controlled route traversal now
+   cover town-to-Cathedral entry through actual controls. Extend that acceptance
+   into combat/loot and the return/services loop; entry alone does not close M1.
 3. Give geometry, actors, projectiles, items, and interaction targets readable
    Godot presentation. Split the main scene/script only where this separates
    concrete input, rendering, menus, or HUD responsibilities. Keep placeholder

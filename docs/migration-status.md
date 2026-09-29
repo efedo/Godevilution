@@ -70,11 +70,11 @@ open. Their scope, dependencies, and exit checks are defined only in the
   state/input, automatic reconnect, and accepted movement after host restart.
   The two Flash baseline failures are resolved below. M0 still requires native
   creation, client frame/budget evidence, and the release-platform matrix.
-- The visible run renders setup and placeholder world presentation. The existing
-  fixed-width HUD clips at the observed 1028x720 window; responsive layout and
-  usable town/dungeon presentation remain M1 work. Local standalone-host
-  measurements are recorded below; no campaign playability, Godot frame budget,
-  or supported release-platform performance pass is claimed.
+- Rendered application acceptance now verifies responsive HUD controls at
+  960x600, 1028x720, and 1280x720, and the authored town-to-Cathedral route.
+  The former 1028x720 HUD clipping is resolved. The complete combat/loot/return/
+  services loop remains M1 work. Local standalone-host measurements are below;
+  no campaign, Godot frame budget, or release-platform performance pass is claimed.
 - Godot currently requires no MPQs because it uses placeholder presentation.
   A complete MPQ-free client asset route remains a deliverable. Original-asset
   support is optional client tooling; the server must remain MPQ-independent.
@@ -96,6 +96,71 @@ open. Their scope, dependencies, and exit checks are defined only in the
 The following records describe implemented slices at this baseline. They are
 evidence, not a separate priority list; detailed older entries retain their
 original scope and may be superseded by later entries or the current assessment.
+
+### M1 responsive controls and authoritative route entry (2026-09-29)
+
+This batch follows `def0285fe`. Hero/Items/Trade/Stash/World tabs replace the
+clipped fixed-width HUD; the camera and world hit-testing use the remaining
+viewport. Ctrl+left click explicitly requests tile movement while ordinary
+click casting/interaction remains unchanged. World routes come from snapshots.
+Travel repeats ordinary target-cell intents only after acknowledgement and
+settled authoritative movement; cancel/manual input, disconnect, death, invalid
+route, no progress, or level change stops it without automatic restart.
+
+The first actual journey exposed accepted movement circling the stair tile:
+the shared approach helper intentionally stops adjacent to a target. The Diablo
+walk-target endpoint now enters an adjacent walkable, unoccupied tile through
+the existing movement lifecycle. Occupied/blocked approaches, generic navigation,
+action timing, triggers, schemas, and server ownership remain unchanged. Native
+`FindPath` characterization verifies all eight adjacent endpoints; inspection of
+`Player::makePath(..., endspace=true)` explains retaining that final step. This
+does not establish native A* parity for the managed longer-distance BFS route.
+
+Verification on rebuilt artifacts:
+
+- `tools/test-godot-session.ps1 -Journey -Visible` passes actual tab/button/input
+  acceptance, Ctrl-click after resize, cancellation/no further submissions,
+  restart, and town level 0 -> Cathedral level 1 through warp 1001. Final command
+  sequence is 58. Rendered layout/tab/dungeon PNGs were inspected. Evidence:
+  `%TEMP%/Godevilution-Scene-Acceptance-a51302e625ef433eb717e0db7e01ef55`.
+  The HUD stays within 960x600, 1028x720, and 1280x720; exposed world areas
+  are 524x446, 592x566, and approximately 809x588. Vertical tab scrolling remains.
+- The headless `-Journey` run also passes. Evidence:
+  `%TEMP%/Godevilution-Scene-Acceptance-e2e8c3c230be4ff3b0c952f9ae7fa066`.
+- `tools/test-godot-session.ps1 -Visible` passes Create/Resume/Recovery with the
+  new layout, including bookmark failure/retry and unchanged offline state.
+  Evidence: `%TEMP%/Godevilution-Scene-Acceptance-ed28f8342c3946c4a9c68dacd9277e0a`.
+  These directories contain private saves/bookmarks; do not publish them.
+- Full Release server suite: **1069/1069 passed**. Full Release protocol-client
+  suite: **499 passed, two opt-in performance cases excluded**, including 17 new
+  route sequencing/cancellation cases. Commands are the existing `dotnet run
+  --project <project.csproj> --configuration Release --no-restore -- --no-ansi`.
+- Full Debug Diablo suite (`dotnet run --project
+  server/tests/Devilution.Diablo.Tests/Devilution.Diablo.Tests.csproj --no-restore
+  -- --no-ansi`): **2415 passed, four failed**. Ten new endpoint/warp cases pass;
+  all eight endpoint directions and the circling route failed before the fix.
+  The obsolete status-backlog assertion now checks the canonical completion plan.
+  Final focused world-command/documentation checks pass **127/127**.
+- MSVC Debug `path_test`: **13/13 passed**, using the developer environment and
+  tool checks in [MSVC notes](ai/msvc-build.md). Its pre-existing stale direction
+  include and missing explicit GMock dependency were repaired. No native gameplay
+  implementation changed; no full native GUI/campaign pass is claimed.
+
+The four remaining failures are `MultiplayerHorkDemonConsumesNativeAdmissionAndRandomWalkRolls`,
+`MultiplayerHorkDemonConsumesItsNativeDelayRoll`,
+`MultiplayerHorkDemonConsumesItsNativeRoundWalkRolls`, and
+`SinglePlayerInitializedHorkDemonConsumesNativeActionAndMovementRolls` in
+`DiabloCombatCommandProcessorTests`. Rebuilding the existing `45b159b77` baseline
+worktree and running `--filter-method '*HorkDemonConsumes*'` reproduced the exact
+four expected/actual RNG mismatches. They are pre-existing unresolved parity/test
+findings, not excluded passes. Native characterization is required before changing
+their expectations or production RNG. NU1900 audit warnings and the Godot root
+certificate-store warning also persist; neither prevented these acceptance runs.
+
+Independent Terra 5.6 high-effort review covered authority, compatibility, the
+endpoint split, world transforms, and cancellation. M0's native GUI/platform/
+frame-budget gaps and M1's combat/loot/return/services/multiplayer loop remain.
+Overall estimates are unchanged; this proves authored entry, not the full gate.
 
 ### M0 durable checkpoint publication cost reduction (2026-09-29)
 

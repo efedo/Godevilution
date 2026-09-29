@@ -48,6 +48,22 @@ The protocol model rejects contradictory player-resource and monster-vitality
 values before Godot consumes a snapshot; presentation clamping is defensive
 only.
 
+## Prototype controls and routes
+
+The responsive HUD separates Hero, Items, Trade, Stash, and World tabs from the
+world view (minimum window 960x600). WASD/arrows move; Ctrl+left click requests a
+step toward a tile without casting. Ordinary left click retains interaction or
+selected-spell casting, and right click attacks a target. Q/E selects spell sources.
+
+World lists the current level's server-projected routes. Travel repeats the
+existing target-cell movement intent, waiting for each accepted command and
+settled authoritative step. Cancel, Escape, manual movement, another action,
+disconnect, death, a missing/unavailable route, or level change stops it; it never
+resumes automatically. One already-submitted step may still finish after cancel.
+No client pathfinding, collision, teleportation, or gameplay simulation is added.
+The authored town-to-Cathedral route is covered by application acceptance; the
+complete combat/loot/town-services loop and generated-world parity remain open.
+
 ## Projects
 
 - `Devilution.Client.Protocol` references the shared generated
