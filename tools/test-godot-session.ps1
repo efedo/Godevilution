@@ -10,7 +10,8 @@ if ($GodotExecutable) { $parameters.GodotExecutable = $GodotExecutable }
 try {
     & $launcher @parameters -AcceptancePhase Create
     & $launcher @parameters -AcceptancePhase Resume
-    Write-Host "PASS: actual Godot create/move/checkpoint/fresh-host resume/move. Evidence: $sessionDirectory"
+    & $launcher @parameters -AcceptancePhase Recovery
+    Write-Host "PASS: actual Godot create/move/checkpoint/fresh-host resume and server-loss/reconnect. Evidence: $sessionDirectory"
 } finally {
     # Retain isolated saves/logs for diagnosis; never modify normal launcher saves.
     Write-Host "Acceptance artifacts retained at $sessionDirectory"

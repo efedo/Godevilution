@@ -76,11 +76,20 @@ These runs use separate server and Godot processes for create and resume, a
 unique retained test save directory, the real `Main.tscn` setup form, mouse
 submission, and movement key input. They require accepted movement, matching
 character/position after fresh-host resume, and a new command sequence after
-restart. Missing evidence, wrong identities/mode, absent checkpoints, timeout,
+restart. A third Recovery phase keeps its Godot process alive while the launcher
+terminates only its owned host. For at least 1.5 seconds with no server, real key
+input must leave the authoritative snapshot, rendered position, and command
+ledger unchanged, with explicit reconnect feedback. Only then does the launcher
+restart the host on the same port/save root, revalidate its identity, and require
+a fresh snapshot plus the next accepted movement sequence. Marker/process
+evidence does not contain the resume credential. This checks a settled-command
+outage, not every pending-command, multiplayer, or campaign failure scenario.
+Missing evidence, wrong identities/mode, absent checkpoints, timeout,
 or nonzero exits fail the run. No MPQs are required. The visible variant also
 captures setup/world PNGs for visual inspection; the private token is not emitted
 in JSON evidence. This is a narrow session journey, not campaign acceptance.
-The isolated creation phase deliberately starts with a corrupt bookmark, then
+The visible run also captures disconnected and reconnected frames. The isolated
+creation phase deliberately starts with a corrupt bookmark, then
 holds its file open to verify persistent write-failure feedback and successful
 retry after access is restored. The test uses town level 0 and seed 0 to exclude
 combat knockback from its movement/save assertion; normal launch defaults are
@@ -91,5 +100,5 @@ Protocol tests exercise the model/transport without the Godot scene. A headless
 startup verifies a different boundary and does not prove that a visible window
 renders. The application harness exercises controls even headlessly, but its
 visible variant and inspection of captured frames are separate evidence for
-rendering. Server-loss UI, native new-game, campaign, and broader recovery gates
-remain distinct checks.
+rendering. Native new-game, campaign, and broader multiplayer/pending-command
+recovery gates remain distinct checks.

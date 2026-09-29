@@ -9,7 +9,7 @@ public partial class HudPresentation : CanvasLayer
 {
     private const int InventoryColumns = 10;
     private const int VisibleInventoryRows = 4;
-    private readonly Label status = new();
+    private readonly Label status = new() { Name = "ConnectionStatus" };
     private readonly Label sessionWarning = new() {
         Name = "SessionWarning", Visible = false, Modulate = new Color("ff9b9b"),
         AutowrapMode = TextServer.AutowrapMode.WordSmart,
@@ -399,7 +399,9 @@ public partial class HudPresentation : CanvasLayer
     public void Apply(AuthoritativeClientModel model, AuthoritativeClient? client, Task? connectionTask)
     {
         clock.Text = ClockPresentation.Format(DateTimeOffset.Now);
-        if (!string.IsNullOrWhiteSpace(model.LastError))
+        if (client is { IsConnected: false } && model.Snapshot is not null)
+            status.Text = "Connection lost - reconnecting. Gameplay input disabled.";
+        else if (!string.IsNullOrWhiteSpace(model.LastError))
             status.Text = model.LastError;
         else if (client?.IsConnected == true)
             status.Text = $"Connected - retry {client.RetryTimeout.TotalMilliseconds:0} ms";

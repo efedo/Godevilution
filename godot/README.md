@@ -79,17 +79,20 @@ powershell -ExecutionPolicy Bypass -File run-godot-client.ps1
 ```
 
 The root launcher is zero-argument and delegates to the local-session
-harness. It discovers Godot Mono, builds the server only if its executable is
-absent, starts it on an available port, reads
-the negotiated ruleset identity, configures the client environment, and launches
-Godot. The protocol client retains the server-owned game mode from the handshake.
-Before launching after source changes, explicitly build both the server project
-and Godot solution; the current harness does not refresh the server when its
-binary already exists or explicitly build the client assembly. It creates an
-isolated temporary server/save directory on each invocation, so its default
-cross-launch flow is not a persistent user save library. A resume token must
-connect to a host using the corresponding saved state. M0/M1 address these
-launcher and user-flow gaps.
+harness. It discovers Godot Mono, builds the current server and client, imports
+assets, and starts the host on an available port. It validates single-player
+mode and content/ruleset identities before launching Godot. The protocol client
+retains the server-owned mode from the handshake. Normal launches keep server
+checkpoints and a private resume bookmark under `.local/godot`; the next launch
+offers Resume. A resume token must accompany the corresponding server saves.
+Do not publish the token or reuse the same save directory for concurrent hosts.
+
+The client reports server loss, blocks new gameplay input while disconnected,
+and automatically reconnects when the same endpoint returns. Application
+acceptance covers creation, fresh-process resume, and host termination/restart
+with one Godot process retained through the outage. See the
+[Godot build and acceptance notes](../docs/ai/godot-build.md) for commands and
+the distinction between headless, visible, and full campaign evidence.
 For diagnostics or automated smoke tests, invoke the underlying
 `godot/run-local-client.ps1` harness directly with its optional switches.
 For an automated smoke launch, add `-Headless -QuitAfterSeconds 5`.

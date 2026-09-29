@@ -25,12 +25,16 @@ public partial class Main : Node2D
     private bool persistLocalSession;
     private string? localSessionWarning;
     private double bookmarkRetrySeconds;
+    private ulong snapshotRevision;
 
     // Read-only copies for the scene acceptance harness; never a gameplay owner.
     internal Snapshot? ObservedSnapshot => model.Snapshot?.Clone();
     internal CommandResult? ObservedCommandResult => model.LastCommandResult?.Clone();
     internal AuthoritativeServerIdentity? ObservedIdentity => client?.ServerIdentity;
     internal bool TransportConnected => client?.IsConnected == true;
+    internal int ObservedPendingCommandCount => client?.PendingCommandCount ?? 0;
+    internal Vector2? ObservedPlayerScreenPosition => world?.ScreenPositionForEntity(model.PlayerEntityId);
+    internal ulong ObservedSnapshotRevision => snapshotRevision;
 
     public override void _Ready()
     {
@@ -205,6 +209,8 @@ public partial class Main : Node2D
             foreach (var message in client.DrainMessages()) {
                 try {
                     model.Apply(message);
+                    if (message.Snapshot is not null)
+                        snapshotRevision++;
                 } catch (Exception exception) {
                     hud?.SetStatus($"Invalid authoritative state: {exception.Message}");
                 }

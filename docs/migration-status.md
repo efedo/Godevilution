@@ -1,8 +1,8 @@
 # Godevilution Migration Status
 
 Status date: 2026-09-29. Estimate baseline: `8c03b365d`; M0 session reliability
-landed in `819b73936`. The integration-remediation batch following it is covered
-by the fresh verification below.
+landed in `819b73936`, integration remediation in `818f63f32`. The application
+recovery batch following them is covered by the fresh verification below.
 
 The [completion plan](completion-plan.md) is the active delivery order and
 acceptance contract. The [architecture](csharp-authoritative-server-migration.md)
@@ -61,8 +61,10 @@ open. Their scope, dependencies, and exit checks are defined only in the
   resume bookmark. Actual scene/control tests create a Rogue, move, restart both
   processes, restore identity/position, and move with a fresh command sequence.
   Corrupt-bookmark feedback and a blocked-write/retry path are exercised too.
-  This closes that narrow journey, not M0 as a whole: native creation,
-  application server-loss/reconnect, and a clean integration baseline remain.
+  The same application harness now verifies server loss, frozen disconnected
+  state/input, automatic reconnect, and accepted movement after host restart.
+  M0 still requires native creation, Flash parity closure, and the declared
+  platform/performance matrix.
 - The visible run renders setup and placeholder world presentation. The existing
   fixed-width HUD clips at the observed 1028x720 window; responsive layout and
   usable town/dungeon presentation remain M1 work. No campaign playability or
@@ -84,6 +86,44 @@ open. Their scope, dependencies, and exit checks are defined only in the
 The following records describe implemented slices at this baseline. They are
 evidence, not a separate priority list; detailed older entries retain their
 original scope and may be superseded by later entries or the current assessment.
+
+### M0 application server-loss/reconnect acceptance (2026-09-29)
+
+The existing scene harness now runs Create, Resume, and Recovery phases. Recovery
+keeps one Godot process running, acknowledges/settles movement, and requests an
+owned-host termination. The launcher waits for that process to exit and leaves
+the host unavailable until the scene verifies at least 1.5 seconds of explicit
+disconnect feedback, frozen snapshot/revision/rendered position, and no queued
+or acknowledged commands despite real movement input. It then starts a new host
+on the same dynamic port with the same save root and verified mode/content/ruleset.
+The client must apply a fresh snapshot, restore the same hero/level/position,
+clear the disconnect status, and execute precisely the next movement sequence.
+Normal launches do not inject faults. No server, protocol, or gameplay rule was
+changed; all acceptance observations are read-only.
+
+Both `tools/test-godot-session.ps1 -GodotExecutable <local-path>` and its
+`-Visible` variant pass on Windows/Godot 4.7.1 Mono after rebuilding. Evidence is
+under `%TEMP%/Godevilution-Scene-Acceptance-` with suffixes
+`95cde861baf949fcb31f3b76698ce641` (headless) and
+`4ff6958392ee48b08ac3be02ac134756` (visible). Recovery preserves entity 1/class 1
+and finishes at `(0,4)`, sequence 4. Process evidence records distinct stopped
+and restarted hosts with one retained Godot process. The disconnected and
+reconnected PNGs were inspected: feedback is readable and clears on recovery;
+the previously recorded right-side HUD clipping remains M1 work.
+
+The focused `LocalLauncherContractTests` command passes **4/4**; client classes
+`RetryReconnectTests`, `AuthoritativeClientTransportTests`, and
+`LocalSessionBookmarkTests` pass **28/28**, using the focused commands in the
+[build notes](ai/godot-build.md). Independent Terra 5.6 high-effort review found
+no blocking issue. A separate normal launch with `-Headless -QuitAfterSeconds 3
+-CharacterClassId 1 -CharacterName M0-Smoke -SessionDirectory <isolated-path>`
+also persists a bookmark and server checkpoint without acceptance mode. No
+recorded recovery host/client process remains after cleanup.
+No new full-suite/native pass is claimed; the preceding integration counts and two Flash failures below
+remain the baseline. This closes the narrow M0 application server-loss journey,
+not multiplayer chaos, pending-command fault coverage, campaign acceptance,
+or M0 as a whole. Native new-game, the Flash comparison, and platform/performance
+matrix remain next; overall progress estimates are unchanged.
 
 ### M0 integration baseline remediation (2026-09-29)
 
@@ -126,9 +166,10 @@ The rebuilt headless `tools/test-godot-session.ps1 -GodotExecutable <local-path>
 journey passes again, with evidence under `%TEMP%/Godevilution-Scene-Acceptance-`
 suffix `86fd1558f46d4a1bb2102a4a451b1d9e`. This rerun adds no new visible-rendering
 evidence; the earlier inspected visible run remains below. NuGet vulnerability
-auditing is still unavailable (NU1900). M0 remains open for the Flash failures,
-application server-loss/reconnect, native new-game, and the declared platform
-and measured performance matrix. Progress estimates remain unchanged.
+auditing is still unavailable (NU1900). Application server-loss/reconnect was
+still unverified at this revision; the newer entry above closes that narrow gap.
+The Flash failures, native new-game, and declared platform/measured performance
+matrix remain open. Progress estimates are unchanged.
 
 ### M0 Godot session-reliability verification (2026-09-29)
 

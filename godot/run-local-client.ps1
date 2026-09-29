@@ -7,7 +7,7 @@ param(
     [switch]$Headless,
     [ValidateRange(1, 3600)] [int]$QuitAfterSeconds = 120,
     [string]$SessionDirectory,
-    [ValidateSet('Create', 'Resume')] [string]$AcceptancePhase
+    [ValidateSet('Create', 'Resume', 'Recovery')] [string]$AcceptancePhase
 )
 
 $ErrorActionPreference = 'Stop'
@@ -21,8 +21,6 @@ if ([string]::IsNullOrWhiteSpace($SessionDirectory)) {
 $SessionDirectory = [System.IO.Path]::GetFullPath($SessionDirectory)
 if ($SessionDirectory.Contains('"')) { throw 'The session directory must not contain a quote.' }
 $captureRoot = Join-Path ([System.IO.Path]::GetTempPath()) ('Godevilution-Godot-' + [guid]::NewGuid().ToString('N'))
-$stdoutPath = Join-Path $captureRoot 'server.stdout.log'
-$stderrPath = Join-Path $captureRoot 'server.stderr.log'
 $godotLogPath = Join-Path $captureRoot 'godot.log'
 New-Item -ItemType Directory -Path $captureRoot | Out-Null
 New-Item -ItemType Directory -Path $SessionDirectory -Force | Out-Null
@@ -71,26 +69,52 @@ try {
 
     # Acceptance uses a fixed seed and town to exclude autonomous combat/knockback.
     $acceptanceArguments = if ($AcceptancePhase) { '--starting-level 0 --random-seed 0' } else { '' }
-    $serverArguments = '--port {0} --protocol-version 0.2.0 --game-mode single-player --save-root "{1}/save" {2}' -f $Port, $SessionDirectory, $acceptanceArguments
-    $serverProcess = Start-Process -FilePath $serverExecutable -ArgumentList $serverArguments -WorkingDirectory $repositoryRoot -WindowStyle Hidden -RedirectStandardOutput $stdoutPath -RedirectStandardError $stderrPath -PassThru
-    $actualPort = $null
-    $contentHash = $null
-    $rulesetHash = $null
-    $gameMode = $null
-    for ($attempt = 0; $attempt -lt 120; $attempt++) {
-        if ($serverProcess.HasExited) { throw "Authoritative server exited during startup. See $stderrPath" }
-        $output = Get-Content -LiteralPath $stdoutPath -Raw -ErrorAction SilentlyContinue
-        if ($output -match 'listening on [^:]+:(\d+)') { $actualPort = [int]$Matches[1] }
-        if ($output -match 'Content manifest: ([0-9a-fA-F]{64})') { $contentHash = $Matches[1] }
-        if ($output -match 'Ruleset identity: ([0-9a-fA-F]{64})') { $rulesetHash = $Matches[1] }
-        if ($output -match 'Game mode: (\w+)') { $gameMode = $Matches[1] }
-        if ($actualPort -and $contentHash -and $rulesetHash -and $gameMode) { break }
-        Start-Sleep -Milliseconds 250
+    function Start-SessionServer([int]$ListenPort, [string]$LogPrefix) {
+        $serverArguments = '--port {0} --protocol-version 0.2.0 --game-mode single-player --save-root "{1}/save" {2}' -f $ListenPort, $SessionDirectory, $acceptanceArguments
+        $stdoutPath = Join-Path $captureRoot ($LogPrefix + '.stdout.log')
+        $stderrPath = Join-Path $captureRoot ($LogPrefix + '.stderr.log')
+        $serverProcess = Start-Process -FilePath $serverExecutable -ArgumentList $serverArguments -WorkingDirectory $repositoryRoot -WindowStyle Hidden -RedirectStandardOutput $stdoutPath -RedirectStandardError $stderrPath -PassThru
+        try {
+            $actualPort = $null
+            $contentHash = $null
+            $rulesetHash = $null
+            $gameMode = $null
+            for ($attempt = 0; $attempt -lt 120; $attempt++) {
+                if ($serverProcess.HasExited) { throw "Authoritative server exited during startup. See $stderrPath" }
+                $output = Get-Content -LiteralPath $stdoutPath -Raw -ErrorAction SilentlyContinue
+                if ($output -match 'listening on [^:]+:(\d+)') { $actualPort = [int]$Matches[1] }
+                if ($output -match 'Content manifest: ([0-9a-fA-F]{64})') { $contentHash = $Matches[1] }
+                if ($output -match 'Ruleset identity: ([0-9a-fA-F]{64})') { $rulesetHash = $Matches[1] }
+                if ($output -match 'Game mode: (\w+)') { $gameMode = $Matches[1] }
+                if ($actualPort -and $contentHash -and $rulesetHash -and $gameMode) { break }
+                Start-Sleep -Milliseconds 250
+            }
+            if (-not ($actualPort -and $contentHash -and $rulesetHash -and $gameMode)) {
+                throw "Timed out waiting for the authoritative server identity. See $stdoutPath and $stderrPath"
+            }
+            if ($gameMode -ne 'SinglePlayer') { throw "Unexpected server mode: $gameMode" }
+            return [pscustomobject]@{ Process = $serverProcess; Port = $actualPort; ContentHash = $contentHash; RulesetHash = $rulesetHash; Mode = $gameMode }
+        } catch {
+            if (-not $serverProcess.HasExited) { $serverProcess.Kill(); $serverProcess.WaitForExit() }
+            $serverProcess.Dispose()
+            throw
+        }
     }
-    if (-not ($actualPort -and $contentHash -and $rulesetHash -and $gameMode)) {
-        throw "Timed out waiting for the authoritative server identity. See $stdoutPath and $stderrPath"
+    function Wait-SceneEvidence([string]$Name) {
+        $path = Join-Path $SessionDirectory $Name
+        $deadline = [Diagnostics.Stopwatch]::StartNew()
+        while (-not (Test-Path -LiteralPath $path)) {
+            if ($godotProcess.HasExited) { throw "Godot exited before emitting $Name. See $godotLogPath" }
+            if ($deadline.Elapsed.TotalSeconds -ge 30) { throw "Godot did not emit $Name. See $godotLogPath" }
+            Start-Sleep -Milliseconds 100
+        }
+        return Get-Content -LiteralPath $path -Raw | ConvertFrom-Json
     }
-    if ($gameMode -ne 'SinglePlayer') { throw "Unexpected server mode: $gameMode" }
+    $startedServer = Start-SessionServer $Port 'server'
+    $serverProcess = $startedServer.Process
+    $actualPort = $startedServer.Port
+    $contentHash = $startedServer.ContentHash
+    $rulesetHash = $startedServer.RulesetHash
 
     # Clear inherited session/test settings, then supply this launch's identity.
     foreach ($name in $environmentNames) { [Environment]::SetEnvironmentVariable($name, $null, 'Process') }
@@ -110,12 +134,40 @@ try {
         $godotArguments += ' --scene res://Acceptance/SessionAcceptance.tscn'
         $evidencePath = Join-Path $SessionDirectory ($AcceptancePhase.ToLowerInvariant() + '.json')
         if (Test-Path -LiteralPath $evidencePath) { throw "Use a fresh acceptance directory; evidence already exists at $evidencePath" }
+        if ($AcceptancePhase -eq 'Recovery') {
+            foreach ($marker in @('recovery-ready.json', 'recovery-server-stopped.json', 'recovery-disconnected.json')) {
+                if (Test-Path -LiteralPath (Join-Path $SessionDirectory $marker)) { throw "Recovery evidence already exists: $marker" }
+            }
+        }
     } elseif ($Headless) {
         # Godot --quit-after counts frames, not seconds. The scene owns the timer.
         $env:GODEVILUTION_QUIT_AFTER_SECONDS = [string]$QuitAfterSeconds
     }
     $windowStyle = if ($Headless) { 'Hidden' } else { 'Normal' }
     $godotProcess = Start-Process -FilePath $GodotExecutable -ArgumentList $godotArguments -WorkingDirectory $repositoryRoot -WindowStyle $windowStyle -PassThru
+    if ($AcceptancePhase -eq 'Recovery') {
+        $ready = Wait-SceneEvidence 'recovery-ready.json'
+        if (-not $ready.Ready -or $ready.Sequence -lt 1) { throw 'Invalid recovery readiness evidence.' }
+        if ($serverProcess.HasExited) { throw 'The server exited before the recovery fault injection.' }
+        # Kill this owned host only. Keep the original Godot process running.
+        $stoppedProcessId = $serverProcess.Id
+        $serverProcess.Kill()
+        $serverProcess.WaitForExit()
+        $serverProcess.Dispose()
+        $serverProcess = $null
+        [IO.File]::WriteAllText((Join-Path $SessionDirectory 'recovery-server-stopped.json'), '{"Stopped":true}')
+        $offline = Wait-SceneEvidence 'recovery-disconnected.json'
+        if (-not $offline.Passed -or $offline.Sequence -ne $ready.Sequence -or $offline.OfflineSeconds -lt 1.5) {
+            throw 'Godot did not verify frozen disconnected state and disabled gameplay input.'
+        }
+        $restartedServer = Start-SessionServer $actualPort 'server-restarted'
+        $serverProcess = $restartedServer.Process
+        if ($restartedServer.Port -ne $actualPort -or $restartedServer.ContentHash -ne $contentHash -or $restartedServer.RulesetHash -ne $rulesetHash) {
+            throw 'The restarted host did not preserve the original endpoint and content/ruleset identity.'
+        }
+        $restartEvidence = @{ StoppedProcessId = $stoppedProcessId; RestartedProcessId = $serverProcess.Id; GodotProcessId = $godotProcess.Id; Port = $actualPort }
+        [IO.File]::WriteAllText((Join-Path $SessionDirectory 'recovery-processes.json'), ($restartEvidence | ConvertTo-Json))
+    }
     if ($Headless -or $AcceptancePhase) {
         if (-not $godotProcess.WaitForExit(($QuitAfterSeconds + 15) * 1000)) { throw 'Godot did not finish before the launch timeout.' }
     } else {

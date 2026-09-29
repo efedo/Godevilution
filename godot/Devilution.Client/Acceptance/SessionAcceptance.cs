@@ -26,7 +26,7 @@ public partial class SessionAcceptance : Node
     private async Task RunAsync()
     {
         var phase = Environment.GetEnvironmentVariable("GODEVILUTION_ACCEPTANCE_PHASE");
-        if (phase is not ("Create" or "Resume"))
+        if (phase is not ("Create" or "Resume" or "Recovery"))
             throw new InvalidOperationException("Explicit acceptance phase is required.");
         var directory = Environment.GetEnvironmentVariable("GODEVILUTION_ACCEPTANCE_DIRECTORY")
             ?? throw new InvalidOperationException("An isolated evidence directory is required.");
@@ -55,7 +55,7 @@ public partial class SessionAcceptance : Node
             ((OptionButton)setup.FindChild("CharacterClass", true, false)).Select(1);
         } else {
             previous = JsonSerializer.Deserialize<Evidence>(System.IO.File.ReadAllText(
-                System.IO.Path.Combine(directory, "create.json")))
+                System.IO.Path.Combine(directory, phase == "Recovery" ? "resume.json" : "create.json")))
                 ?? throw new InvalidDataException("The creation evidence is empty.");
             Require(previous.Passed && mode.Selected == 1, "Resume must use the persisted form defaults.");
             Require(((LineEdit)setup.FindChild("ResumeToken", true, false)).Text.Length > 0,
@@ -124,12 +124,97 @@ public partial class SessionAcceptance : Node
         // Permit the host's periodic checkpoint to catch up; the next phase
         // proves the actual disk restore instead of treating this delay as proof.
         await ToSignal(GetTree().CreateTimer(0.5), SceneTreeTimer.SignalName.Timeout);
+        if (phase == "Recovery") {
+            await VerifyRecovery(main, directory, visible);
+            moved = main.ObservedSnapshot!.Players.Single();
+            result = main.ObservedCommandResult!;
+        }
         var evidence = new Evidence(true, identity.GameMode.ToString(), identity.ContentManifestHash,
             identity.RulesetIdentityHash, moved.EntityId, moved.CharacterClassId, moved.LevelId,
             moved.PositionX, moved.PositionY, result.ClientSequence, visible);
         System.IO.File.WriteAllText(System.IO.Path.Combine(directory, phase!.ToLowerInvariant() + ".json"),
             JsonSerializer.Serialize(evidence, new JsonSerializerOptions { WriteIndented = true }));
         GD.Print($"Godot application acceptance passed: {phase}; visible={visible}; sequence={result.ClientSequence}");
+    }
+
+    private async Task VerifyRecovery(Main main, string directory, bool visible)
+    {
+        Require(main.ObservedPendingCommandCount == 0, "Recovery requires an acknowledged, settled command.");
+        var savedPlayer = main.ObservedSnapshot!.Players.Single();
+        var savedSequence = main.ObservedCommandResult!.ClientSequence;
+        var savedIdentity = main.ObservedIdentity!;
+        WriteEvidence(directory, "recovery-ready.json", new { Ready = true, Sequence = savedSequence });
+        // The launcher owns process termination/restart. The scene only observes
+        // the real transport and exercises the same input handlers as a user.
+        await Until(() => System.IO.File.Exists(System.IO.Path.Combine(directory, "recovery-server-stopped.json"))
+            && !main.TransportConnected, "The owned server did not stop or the client did not detect its loss.");
+        var status = (Label)main.FindChild("ConnectionStatus", true, false);
+        await Until(() => status.Text.Contains("Connection lost") && status.Text.Contains("reconnecting"),
+            "The scene did not show explicit disconnect/reconnect feedback.");
+        await Frame();
+        var disconnected = main.ObservedSnapshot!;
+        var disconnectedRevision = main.ObservedSnapshotRevision;
+        var screenPosition = main.ObservedPlayerScreenPosition
+            ?? throw new InvalidOperationException("The disconnected scene lost its last authoritative presentation.");
+        Require(main.ObservedPendingCommandCount == 0, "The disconnected scene retained an unexpected command.");
+        if (visible)
+            await Capture(System.IO.Path.Combine(directory, "recovery-disconnected.png"));
+
+        // Leave the host unavailable across several retry attempts. Key input
+        // must not change state, prediction/rendering, or the command ledger.
+        var offline = Stopwatch.StartNew();
+        while (offline.Elapsed < TimeSpan.FromSeconds(1.5)) {
+            await PressDown();
+            Require(!main.TransportConnected, "The host restarted before the offline assertions completed.");
+            Require(disconnected.Equals(main.ObservedSnapshot), "Gameplay state advanced without a server.");
+            Require(main.ObservedSnapshotRevision == disconnectedRevision, "An unexpected snapshot arrived while the host was absent.");
+            Require(main.ObservedPendingCommandCount == 0
+                && main.ObservedCommandResult!.ClientSequence == savedSequence,
+                "Disconnected input queued or acknowledged a gameplay command.");
+            Require(main.ObservedPlayerScreenPosition is { } displayed
+                && displayed.DistanceTo(screenPosition) < 0.01f,
+                "Disconnected input moved the rendered player.");
+            Require(status.Text.Contains("Connection lost"), "Disconnect feedback disappeared while the host was absent.");
+        }
+        WriteEvidence(directory, "recovery-disconnected.json", new {
+            Passed = true, Tick = disconnected.Tick, Sequence = savedSequence,
+            OfflineSeconds = offline.Elapsed.TotalSeconds,
+        });
+        await Until(() => main.TransportConnected && main.ObservedSnapshotRevision > disconnectedRevision,
+            "The same Godot client did not receive a fresh snapshot after host restart.");
+        Require(savedIdentity == main.ObservedIdentity, "Reconnect changed the server content/ruleset/mode identity.");
+        var restored = main.ObservedSnapshot!.Players.Single();
+        Require(restored.EntityId == savedPlayer.EntityId && restored.CharacterClassId == savedPlayer.CharacterClassId
+            && restored.CharacterName == savedPlayer.CharacterName && restored.LevelId == savedPlayer.LevelId
+            && restored.PositionX == savedPlayer.PositionX && restored.PositionY == savedPlayer.PositionY,
+            "The restarted host did not restore the saved character and position.");
+        await Until(() => status.Text.StartsWith("Connected -", StringComparison.Ordinal),
+            "The scene retained a stale disconnect error after receiving authoritative state.");
+        await PressDown();
+        await Until(() => main.ObservedCommandResult is { Status: CommandStatus.Accepted } result
+            && result.ClientSequence == savedSequence + 1
+            && main.ObservedSnapshot!.Players.Single() is { CombatMode: PlayerCombatMode.Stand, CurrentAction: null } player
+            && player.PositionX == restored.PositionX && player.PositionY == restored.PositionY + 1,
+            "Reconnect did not restore exactly-once authoritative movement with the next command sequence.");
+        if (visible)
+            await Capture(System.IO.Path.Combine(directory, "recovery-reconnected.png"));
+    }
+
+    private async Task PressDown()
+    {
+        GetViewport().GuiReleaseFocus();
+        Input.ParseInputEvent(new InputEventKey { Keycode = Key.Down, PhysicalKeycode = Key.Down, Pressed = true });
+        await Frame();
+        Input.ParseInputEvent(new InputEventKey { Keycode = Key.Down, PhysicalKeycode = Key.Down, Pressed = false });
+        await Frame();
+    }
+
+    private static void WriteEvidence(string directory, string filename, object evidence)
+    {
+        var path = System.IO.Path.Combine(directory, filename);
+        var staging = path + ".tmp";
+        System.IO.File.WriteAllText(staging, JsonSerializer.Serialize(evidence));
+        System.IO.File.Move(staging, path);
     }
 
     private async Task Until(Func<bool> condition, string failure)

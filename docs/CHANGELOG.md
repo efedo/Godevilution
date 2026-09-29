@@ -2,6 +2,14 @@
 
 All notable changes to this fork are documented below.
 
+- 2026-09-29: Added actual Godot server-loss/reconnect acceptance through the
+  scene and controls. The harness retains one client, terminates only its owned
+  host, verifies frozen disconnected state/rendering and ignored movement input,
+  then restarts the same endpoint/save and requires fresh state plus the next
+  accepted movement sequence. Added clear persistent disconnect feedback,
+  headless/visible evidence, and corrected stale launcher README instructions.
+  Normalized touched text to CRLF.
+
 - 2026-09-29: Refreshed snapshot/event publication ticks under the authoritative
   lock, with a deterministic TCP regression for concurrent advancement. Repaired
   live overlay schema/symbol/table drift, additive object-kind assertions,
