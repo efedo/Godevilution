@@ -2,6 +2,11 @@
 
 All notable changes to this fork are documented below.
 
+- 2026-09-29: Integrated the approved delegation mandate into the project goal
+  and completion workflow: GPT-5.6 Luna implementation workers and separate
+  critical-review workers, both at high effort, with bounded parallel work,
+  explicit ownership, primary-agent integration, and no silent model changes.
+
 - 2026-09-29: Reconciled the progress baseline at `8c03b365d` and added one
   dependency-ordered completion plan with six acceptance gates, cohesive
   implementation batches, and focused/integration verification rules. Aligned

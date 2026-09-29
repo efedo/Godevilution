@@ -18,6 +18,14 @@ presentation remain separate. The server owns all gameplay, randomness, world
 state, and persistence. Production gameplay and presentation require neither
 embedded Lua nor the C++/SDL runtime.
 
+Execute this goal through the milestone dependencies and acceptance gates in
+this plan, with current evidence recorded in `migration-status.md`. The primary
+agent owns planning, integration, acceptance, documentation, and cohesive
+commits. Delegate substantial, bounded implementation packages and their
+independent critical review to **GPT-5.6 Luna workers at high reasoning effort**,
+following the [worker delegation policy](#worker-delegation). Use focused tests
+per commit and broader integration/application acceptance at the relevant gates.
+
 The C# server must never require MPQ archives, an installed game, or a native
 client. It consumes explicit validated content packs. The finished Godot client
 must support a complete presentation pack without MPQs; optional use or local
@@ -269,17 +277,37 @@ compatibility build keeps the physical-removal gate open.
    once against the integrated revision. Record failures as open gaps. Do not
    use a historical green result or a source-text assertion as runtime evidence.
 
-Limit work in progress to two independent feature packages plus integration.
-If parallel work is authorized, divide it by disjoint files/contracts and use
-one integrator; serialize shared simulation, protocol, fixture-hash, and status
-edits. An independent review must inspect implementation and test evidence,
-not merely endorse another assessment. No delegation is required to use this
-workflow effectively.
-
 The immediate queue is M0 launch/build freshness and application acceptance,
 then M1's end-to-end authored loop and M2's Cathedral generation slice. Existing
 parity defects blocking those deliverables take precedence within the relevant
 batch. Do not restart completed engine extraction or package architecture work.
+
+### Worker delegation
+
+- Use GPT-5.6 Luna (`gpt-5.6-luna`) with `high` reasoning effort for both
+  implementation workers and independent review workers. This supersedes the
+  earlier maximum-effort instruction. Do not silently substitute another model
+  or effort setting; report unavailability and obtain direction for a change.
+- The primary agent selects milestone-aligned work packages, supplies scope,
+  file/contract ownership, native references, and acceptance criteria, and owns
+  integration, final verification, documentation, and commits.
+- Delegate substantial implementation packages that can proceed independently
+  alongside useful work. Limit work in progress to two implementation packages
+  plus integration. Assign disjoint files/contracts; serialize shared
+  simulation, protocol, fixture-hash, and status edits.
+- Have a different GPT-5.6 Luna worker at high effort critically review each
+  substantial package. The reviewer inspects the actual diff, native behavior,
+  test evidence, compatibility, and plan acceptance criteria, and identifies
+  missing branches or regressions instead of relying on the implementer's
+  summary. Reviews do not silently expand or rewrite the implementation scope.
+- Implementation workers report changed files, checks performed and results,
+  and unresolved gaps. The primary agent resolves review findings, verifies
+  the integrated result, and includes code, tests, and relevant documentation
+  in a cohesive commit. Review is not a substitute for execution evidence.
+- Handle small or tightly coupled tasks locally when delegation would mainly
+  duplicate work or add coordination overhead. Missing worker availability does
+  not prevent independent local progress, but local self-review does not count
+  as the required separate-worker review for a delegated package.
 
 ## Verification policy
 
