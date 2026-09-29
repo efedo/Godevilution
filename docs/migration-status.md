@@ -1,8 +1,9 @@
 # Godevilution Migration Status
 
 Status date: 2026-09-29. Estimate baseline: `8c03b365d`; M0 session reliability
-landed in `819b73936`, integration remediation in `818f63f32`. The application
-recovery batch following them is covered by the fresh verification below.
+landed in `819b73936`, integration remediation in `818f63f32`, and application
+recovery in `cabc9b3fb`. The Flash replay correction following them is covered
+by the fresh verification below.
 
 The [completion plan](completion-plan.md) is the active delivery order and
 acceptance contract. The [architecture](csharp-authoritative-server-migration.md)
@@ -44,11 +45,12 @@ follow its relevant prerequisites and can then progress together. M3-M5 remain
 open. Their scope, dependencies, and exit checks are defined only in the
 [completion plan](completion-plan.md#baseline-and-strategy).
 
-- The checked-in replay inventory is 394 JSON fixtures. The available native
-  replay discovery metadata registers 422 tests, including parser/validation
-  cases; this is not the total native project test count or a fresh pass result.
+- The checked-in replay inventory is 394 JSON fixtures. The freshly rebuilt
+  native replay suite passes 422 tests, including parser/validation cases;
+  this is not the total native project test count or whole-game parity.
 - Fresh managed suites and actual headless/visible Godot session journeys were
-  run for the M0 batch; results and unresolved failures are recorded below.
+  run for the M0 batch; current results and historical failures are distinguished
+  below.
   No new native GUI/campaign acceptance or full native suite was run. The August
   results below remain historical verification only.
 - The native new-game startup failure was addressed by `923660c7b`, with the
@@ -63,8 +65,8 @@ open. Their scope, dependencies, and exit checks are defined only in the
   Corrupt-bookmark feedback and a blocked-write/retry path are exercised too.
   The same application harness now verifies server loss, frozen disconnected
   state/input, automatic reconnect, and accepted movement after host restart.
-  M0 still requires native creation, Flash parity closure, and the declared
-  platform/performance matrix.
+  The two Flash baseline failures are resolved below. M0 still requires native
+  creation and the declared platform/performance matrix.
 - The visible run renders setup and placeholder world presentation. The existing
   fixed-width HUD clips at the observed 1028x720 window; responsive layout and
   usable town/dungeon presentation remain M1 work. No campaign playability or
@@ -80,12 +82,57 @@ open. Their scope, dependencies, and exit checks are defined only in the
   and replacement allocation are not represented. Guardian descriptive markers
   do not establish full canonical hash equivalence. Keep those oracle gaps
   visible when interpreting the extensive spell coverage below.
+- Same-tile cast facing remains a separate M3 parity gap: actual native Flash
+  casting turns southwest when cursor and caster coincide; managed/compact
+  replay retain the previous facing. The new native characterization records
+  this edge case, but the corrected Flash fixtures cover off-player cursors.
 
 ## Recent implementation evidence
 
 The following records describe implemented slices at this baseline. They are
 evidence, not a separate priority list; detailed older entries retain their
 original scope and may be superseded by later entries or the current assessment.
+
+### M0 Flash replay baseline correction (2026-09-29)
+
+The two failing Flash hashes came from the compact native replay suppressing
+caster rotation, not a managed damage/RNG defect. The real legacy path sends
+cursor coordinates through `OnSpellTile`, then `CheckNewPath` calls `StartSpell`
+with the direction to that cursor. Flash's two layers remain centered on the
+caster; the player's facing is a separate observable state.
+
+A `BUILD_TESTING` hook exercises that actual action path, with local and remote
+players, without loading MPQs. It verifies North for `(5,5) -> (0,0)` and
+SouthEast for `(0,0) -> (1,0)`, and characterizes the same-tile gap noted above.
+The compact replay now includes the off-player rotation for primary and
+secondary casters. All eight changed checkpoint hashes (ticks 1, 2, 19, 20)
+were obtained from the rebuilt native runner only after the real-path tests
+established the behavior. Both managed replay tests then matched those hashes
+with unchanged production C# gameplay. Explicit facing assertions supplement
+the hashes; existing damage, mana, RNG, ownership, and expiry assertions remain.
+
+Verification on Windows/MSVC 14.51 and .NET 10.0.11:
+
+- Initialize the VS environment and verify `cl.exe`, `rc.exe`, and `mt.exe` as
+  documented in [MSVC build notes](ai/msvc-build.md), then build
+  `build/x64-Debug` targets `player_test replay_test`.
+- `build/x64-Debug/player_test.exe --gtest_color=no`: **6/6 passed**, no skips.
+  The focused `--gtest_filter=*FlashCastFacing*` path passes **2/2** without
+  archive discovery; the older full-suite tests separately locate local MPQs.
+- `build/x64-Debug/replay_test.exe --gtest_color=no`: **422/422 passed**.
+- `dotnet run --project server/tests/Devilution.Server.Tests/Devilution.Server.Tests.csproj --no-restore -- --filter-method Devilution.Server.Tests.BaseContentReplayTests.FlashUsesBaseContentAndMatchesNativeLayerTimeline --filter-method Devilution.Server.Tests.BaseContentReplayTests.SecondaryFlashCastDamagesThePrimaryParticipantWithoutHittingItsOwner --no-ansi`:
+  **2/2 passed** after rebuilding and copying the current fixtures.
+- The full server command documented below, with `--no-build -- --no-ansi`,
+  passes **1049/1049**, no exclusions or skips. NU1900 still reports unavailable
+  package vulnerability auditing; compilation/tests succeed.
+
+These results supersede the two Flash failures in the earlier M0 records.
+Independent Terra 5.6 high-effort reviews found no actionable issue.
+No client, wire, save, content-schema, or production native gameplay behavior
+changed. Prior Godot/client evidence remains applicable; no new native GUI or
+campaign acceptance is claimed. Native new-game acceptance and the declared
+platform/measured performance matrix remain M0 work. Progress estimates remain
+unchanged, and the broader M3 parity gaps remain explicit.
 
 ### M0 application server-loss/reconnect acceptance (2026-09-29)
 
@@ -119,11 +166,12 @@ no blocking issue. A separate normal launch with `-Headless -QuitAfterSeconds 3
 -CharacterClassId 1 -CharacterName M0-Smoke -SessionDirectory <isolated-path>`
 also persists a bookmark and server checkpoint without acceptance mode. No
 recorded recovery host/client process remains after cleanup.
-No new full-suite/native pass is claimed; the preceding integration counts and two Flash failures below
-remain the baseline. This closes the narrow M0 application server-loss journey,
+At this revision, no new full-suite/native pass was claimed and the two Flash
+failures remained; the newer correction above supersedes that baseline.
+This closes the narrow M0 application server-loss journey,
 not multiplayer chaos, pending-command fault coverage, campaign acceptance,
-or M0 as a whole. Native new-game, the Flash comparison, and platform/performance
-matrix remain next; overall progress estimates are unchanged.
+or M0 as a whole. Native new-game and the platform/performance matrix remain
+next; overall progress estimates are unchanged.
 
 ### M0 integration baseline remediation (2026-09-29)
 
@@ -154,13 +202,13 @@ exclusions, on Windows/.NET 8.0.30. The focused Charged Bolt source, Hellfire
 Firebolt staff, and PvP block methods also pass **3/3**. Independent Terra 5.6
 high-effort review found no blocking issue in the final implementation/tests.
 
-After rebuilding, the full server command documented below finishes with
+At this revision, the full server command documented below finished with
 **1047 passed, 2 failed** on Windows/.NET 10.0.11, with no exclusions. The two
-pre-existing Flash tick-1 hash failures remain; the blocking-writer and
-adapter-lease tests pass in the full run. Native/managed
-Flash source inspection has not established the divergent field. Next compare
-the canonical tick-1 field sequence with a freshly built native runner before
-changing behavior or any expected hash. This is not a native parity pass.
+pre-existing Flash tick-1 hash failures remained; the blocking-writer and
+adapter-lease tests passed in the full run. Native/managed
+Flash source inspection had not established the divergent field. The newer
+native characterization/correction above supersedes these failures; this
+earlier run was not a native parity pass.
 
 The rebuilt headless `tools/test-godot-session.ps1 -GodotExecutable <local-path>`
 journey passes again, with evidence under `%TEMP%/Godevilution-Scene-Acceptance-`
@@ -168,8 +216,9 @@ suffix `86fd1558f46d4a1bb2102a4a451b1d9e`. This rerun adds no new visible-render
 evidence; the earlier inspected visible run remains below. NuGet vulnerability
 auditing is still unavailable (NU1900). Application server-loss/reconnect was
 still unverified at this revision; the newer entry above closes that narrow gap.
-The Flash failures, native new-game, and declared platform/measured performance
-matrix remain open. Progress estimates are unchanged.
+The Flash failures were still open at this revision and are resolved above.
+Native new-game and the declared platform/measured performance matrix remain
+open. Progress estimates are unchanged.
 
 ### M0 Godot session-reliability verification (2026-09-29)
 

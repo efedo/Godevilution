@@ -16013,7 +16013,9 @@ bool ApplyReplaySecondaryCast(
 	if (!ApplyReplayCast(castState, command))
 		return false;
 
-	if (command.spellId != 4) {
+	if (command.spellId != 4 || command.targetX != castState.positionX || command.targetY != castState.positionY) {
+		// Flash's layers stay on the caster, but legacy StartSpell still turns
+		// the player toward an off-player cursor before creating those layers.
 		castState.facingDirection = static_cast<uint32_t>(GetDirection(
 		    castState.positionX,
 		    castState.positionY,
@@ -17324,8 +17326,7 @@ bool ExecuteReplayFixture(
 			    && state.spellProjectileBehavior != 42) {
 				int32_t targetX = command.targetX;
 				int32_t targetY = command.targetY;
-				if (state.spellProjectileBehavior == 5
-				    || state.spellProjectileBehavior == 15) {
+				if (state.spellProjectileBehavior == 15) {
 					targetX = state.positionX;
 					targetY = state.positionY;
 				} else if (command.targetEntityId != 0

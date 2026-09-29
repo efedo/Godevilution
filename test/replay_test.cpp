@@ -3272,6 +3272,7 @@ TEST(ReplayFixture, ExecutesFlashResolutionTimelineAgainstCSharpCheckpoints)
 	EXPECT_EQ(state.mana, 1336);
 	EXPECT_EQ(state.combatTargetHitPoints, 97);
 	EXPECT_EQ(state.combatTargetHitPointsQ6, 6165);
+	EXPECT_EQ(state.facingDirection, static_cast<uint32_t>(Direction::North));
 	EXPECT_EQ(state.randomState, 0xE4BDD038U);
 	EXPECT_TRUE(state.projectiles.empty());
 	EXPECT_EQ(ComputeReplayFixtureStateHash(state), fixture.checkpoints.back().stateSha256);
@@ -3308,6 +3309,8 @@ TEST(ReplayFixture, ExecutesSecondaryFlashCastAgainstPrimaryPlayer)
 	EXPECT_EQ(state.life, 17732);
 	EXPECT_EQ(state.secondaryPlayerLife, 2560);
 	EXPECT_EQ(state.secondaryPlayerMana, 1336);
+	EXPECT_EQ(state.facingDirection, fixture.initialState.facingDirection);
+	EXPECT_EQ(state.secondaryPlayerFacingDirection, static_cast<uint32_t>(Direction::SouthEast));
 	EXPECT_EQ(state.lastAppliedTick, 20U);
 	EXPECT_TRUE(state.projectiles.empty());
 	EXPECT_EQ(ComputeReplayFixtureStateHash(state), fixture.checkpoints.back().stateSha256);

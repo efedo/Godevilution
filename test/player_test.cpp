@@ -1,17 +1,98 @@
 #include "player_test.h"
 
+#include <tuple>
+#include <vector>
+
 #include <gtest/gtest.h>
 
 #include "engine/cursor.h"
 #include "engine/assets.hpp"
+#include "engine/lighting.h"
 #include "application/init.hpp"
+#include "game/levels/dungeon_common.h"
 #include "tables/playerdat.hpp"
+#include "tables/spelldat.h"
 
 using namespace devilution;
 
 namespace devilution {
+extern void TestPlayerCheckNewPath(Player &player);
 extern bool TestPlayerDoGotHit(Player &player);
 }
+
+class FlashCastFacingTest : public testing::TestWithParam<size_t> {
+protected:
+	void SetUp() override
+	{
+		LoadSpellData();
+		Players.swap(previousPlayers_);
+		previousMyPlayer_ = MyPlayer;
+		previousMyPlayerId_ = MyPlayerId;
+		previousViewPosition_ = viewPosition();
+		previousLightManager_ = CurrentLightManager;
+		Players.resize(2);
+		MyPlayerId = 0;
+		MyPlayer = &Players[0];
+	}
+
+	void TearDown() override
+	{
+		Players.swap(previousPlayers_);
+		MyPlayer = previousMyPlayer_;
+		MyPlayerId = previousMyPlayerId_;
+		viewPosition() = previousViewPosition_;
+		CurrentLightManager = previousLightManager_;
+	}
+
+private:
+	std::vector<Player> previousPlayers_;
+	Player *previousMyPlayer_ = nullptr;
+	uint8_t previousMyPlayerId_ = 0;
+	Point previousViewPosition_;
+	LightManager previousLightManager_;
+};
+
+TEST_P(FlashCastFacingTest, LegacyActionTurnsTowardCursorBeforeSelfCenteredEffect)
+{
+	Player &player = Players[GetParam()];
+	player._pClass = HeroClass::Sorcerer;
+	player.life.current = 2560;
+	player.mana.current = 3000;
+	player._pSplLvl[static_cast<size_t>(SpellID::Flash)] = 3;
+	player._pSFrames = 14;
+	player._pSFNum = 6;
+	player.lightId = NO_LIGHT;
+	player.clearPath();
+	player.queuedSpell.spellId = SpellID::Flash;
+	player.queuedSpell.spellType = SpellType::Spell;
+
+	// Exercise CheckNewPath -> StartSpell, not compact replay's calculation.
+	// The final vector characterizes the still-open same-tile parity gap.
+	// Headless animation needs no MPQs.
+	for (const auto &[origin, cursor, expected] : {
+	         std::tuple { Point { 5, 5 }, Point { 0, 0 }, Direction::North },
+	         std::tuple { Point { 0, 0 }, Point { 1, 0 }, Direction::SouthEast },
+	         std::tuple { Point { 0, 0 }, Point { 0, 0 }, Direction::SouthWest } }) {
+		player.position.tile = origin;
+		player.position.future = origin;
+		player.position.old = origin;
+		player.direction = Direction::South;
+		player._pmode = PM_STAND;
+		player.destAction = ACTION_SPELL;
+		player.destParam1 = cursor.x;
+		player.destParam2 = cursor.y;
+
+		TestPlayerCheckNewPath(player);
+
+		EXPECT_EQ(player._pmode, PM_SPELL);
+		EXPECT_EQ(player.executedSpell.spellId, SpellID::Flash);
+		EXPECT_EQ(player.position.tile, origin);
+		EXPECT_EQ(player.position.temp, cursor);
+		EXPECT_EQ(player.direction, expected);
+	}
+}
+
+INSTANTIATE_TEST_SUITE_P(LocalAndRemote, FlashCastFacingTest, testing::Values(size_t { 0 }, size_t { 1 }));
 
 int RunBlockTest(int frames, ItemSpecialEffect flags)
 {

@@ -2,6 +2,14 @@
 
 All notable changes to this fork are documented below.
 
+- 2026-09-29: Corrected compact native Flash replay to retain off-player cursor
+  facing, after MPQ-free local/remote tests through the real legacy cast
+  path established the behavior. Regenerated the two fixtures' eight hashes
+  from native execution and added explicit directional assertions without
+  changing production gameplay. Native replay passes 422/422 and server tests
+  1049/1049. Recorded the remaining same-tile facing gap and M0 acceptance work.
+  Normalized touched text to CRLF.
+
 - 2026-09-29: Added actual Godot server-loss/reconnect acceptance through the
   scene and controls. The harness retains one client, terminates only its owned
   host, verifies frozen disconnected state/rendering and ignored movement input,

@@ -2604,6 +2604,8 @@ public sealed class BaseContentReplayTests
         Assert.Equal(17732, primary.Life);
         Assert.Equal(2560, secondary.Life);
         Assert.Equal(1336, secondary.Mana);
+        Assert.Equal(initial.FacingDirection, primary.FacingDirection);
+        Assert.Equal(PlayerDirection.SouthEast, secondary.FacingDirection);
         Assert.Equal(20UL, result.FinalSnapshot.Tick);
         Assert.True(
             fixture.Checkpoints
@@ -2683,6 +2685,7 @@ public sealed class BaseContentReplayTests
         Assert.Equal(1336, player.Mana);
         Assert.Equal(97, monster.HitPoints);
         Assert.Equal(6165, monster.HitPointsQ6);
+        Assert.Equal(PlayerDirection.North, player.FacingDirection);
         Assert.Empty(result.FinalSnapshot.Projectiles);
         Assert.Equal(0xE4BDD038U, result.FinalSnapshot.RandomState);
         Assert.True(

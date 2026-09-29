@@ -4249,6 +4249,11 @@ void PlayDungMsgs()
 }
 
 #ifdef BUILD_TESTING
+void TestPlayerCheckNewPath(Player &player)
+{
+	CheckNewPath(player, false);
+}
+
 bool TestPlayerDoGotHit(Player &player)
 {
 	return DoGotHit(player);

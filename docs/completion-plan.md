@@ -70,7 +70,7 @@ isolated spell or table rows while the playable route stays unchanged.
 
 | Gate | Deliverable | Dependencies | Current position |
 | --- | --- | --- | --- |
-| M0 | Reproducible launch and honest acceptance evidence | Existing implementation | Godot create/move/restart/resume and server-loss/reconnect harness exists; see status for remaining native/parity/platform checks |
+| M0 | Reproducible launch and honest acceptance evidence | Existing implementation | Godot session/recovery and server/native replay baselines pass; native GUI and platform/performance evidence remain |
 | M1 | Usable Godot town-to-dungeon loop | M0 launch/acceptance harness | Protocol features exist; integrated visible journey remains |
 | M2 | Native-compatible generated world | M0 geometry/parity baseline | Geometry contracts and authored fragments exist; native map synthesis remains |
 | M3 | Complete base and Hellfire gameplay routes | M1 plus the relevant M2 world slices | Many rules exist; campaign and remaining behavioral coverage remain |

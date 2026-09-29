@@ -1102,6 +1102,14 @@ caster-specific independent layer damage, owner exclusion, repeated
 half-damage player impacts, primary life mutation, simultaneous layer expiry,
 and identical participant/projectile hashes in both runners.
 
+Both Flash fixtures also preserve the caster's rotation toward the off-player
+cursor, independently of the self-centered layer origin. The native
+`LocalAndRemote/FlashCastFacingTest` exercises actual `CheckNewPath -> StartSpell`
+for local/remote players without MPQs. Its evidence justified correcting the
+compact oracle and regenerating all eight hashes; C# gameplay was unchanged.
+The separate same-tile cursor case is characterized but not yet parity-complete:
+legacy casting turns southwest, while managed/compact replay preserve facing.
+
 `gameplay-healing-resolution.json` uses activated Healing, a level-5 Rogue with
 effective spell level 3, an explicit larger maximum life, and seed `0x12345678`.
 Ticks 1 and 2 prove native mana, character/spell-level RNG order, the Rogue's
