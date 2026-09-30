@@ -115,7 +115,8 @@ stock is not a claim of complete native vendor generation or usable equipment.
   copy of the Protobuf bindings.
 - `Devilution.Client.Protocol.Tests` verifies the protocol model and starts a
   real local server for live transport tests.
-- `Devilution.Client` is the Godot 4.7.1 Mono presentation project.
+- `Devilution.Client` is the Godot 4.7.x Mono presentation project, with the
+  checked-in C# SDK pinned to 4.7.1.
 
 ## Verify Without Godot
 
@@ -131,15 +132,19 @@ create-game flow. Use application/visible acceptance for those claims.
 
 ## Run the Local Prototype Session
 
-Install Godot 4.7.1 Mono, then run:
+Install a stable Godot 4.7.x Mono engine, then run:
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File run-godot-client.ps1
 ```
 
 The root launcher is zero-argument and delegates to the local-session
-harness. It discovers Godot Mono, builds the current server and client, imports
-assets, and starts the host on an available port. It validates single-player
+harness. It discovers Godot Mono, builds the current server, imports assets in
+an isolated copy of the current client sources, builds that imported copy, and
+starts the host on an available port. Import-time SDK changes remain temporary;
+the checked-in 4.7.1 SDK pin and local source edits are unchanged. Unsupported
+engines or unexpected project upgrades fail before gameplay starts.
+It validates single-player
 mode and content/ruleset identities before launching Godot. The protocol client
 retains the server-owned mode from the handshake. Normal launches keep server
 checkpoints and a private resume bookmark under `.local/godot`; the next launch

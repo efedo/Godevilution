@@ -1,6 +1,6 @@
 # Godot Build Notes
 
-The presentation project targets Godot 4.7.1 Mono. Godot is not assumed to be
+The checked-in presentation project pins `Godot.NET.Sdk/4.7.1`. Godot is not assumed to be
 installed on every development machine, and repository tests that do not render
 the client must remain runnable without it.
 
@@ -35,7 +35,9 @@ gates or when new changes/failures justify them, as described in the
 
 ## Finding Godot
 
-Use a Godot 4.7.1 Mono engine executable. The launcher discovers it through
+Use a stable Godot 4.7.x Mono engine executable. The checked-in C# project keeps
+its 4.7.1 SDK pin; local launch acceptance qualifies the selected engine separately.
+The launcher discovers it through
 `PATH` or WinGet and resolves a console executable to its direct engine sibling.
 Use the isolated launcher for headless startup so imports and clients receive
 writable AppData paths:
@@ -52,11 +54,23 @@ powershell -ExecutionPolicy Bypass -File run-godot-client.ps1
 
 It delegates to `godot/run-local-client.ps1`, which also checks the standard
 per-user WinGet package directory. For headless diagnostics or an explicit
-executable, invoke that underlying harness directly. Every launch incrementally
-builds the server and Godot project and imports presentation assets. It starts
+executable, invoke that underlying harness directly. Every launch builds the
+server, stages the current client sources in its own temporary directory,
+imports that copy, then builds the imported project before starting clients. It starts
 the server on a free port, validates reported mode and hashes, and supplies those
 identities to the client. Only owned process handles are cleaned up, and changed
 environment values are restored when the harness returns.
+
+Godot's editor may upgrade a C# project's SDK during import. Only the staged
+copy may receive that change; the source project, existing upgrade backups,
+and local edits are not restored, deleted, or rewritten. Generated caches and
+build outputs are not copied. Staged project/solution references resolve to
+the original protocol projects, and NuGet configuration is retained. The
+launcher records engine/SDK identities and rejects unsupported engines or
+unexpected project migrations before starting the host or clients. Separate
+save profiles no longer share a client import/cache directory. Staging does
+not certify arbitrary future Godot compatibility or serialize unrelated
+manual builds of the shared server/protocol projects.
 
 Every Godot child, including the editor asset importer, gets its own writable
 `APPDATA` and `LOCALAPPDATA` directories beneath the printed launch-log directory.

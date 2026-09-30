@@ -96,6 +96,13 @@ M4. M5 is the final removal gate, not a reason to postpone replacement work.
    import access violation with denied AppData writes. Check native process
    exits and fatal import logs, retain stage process evidence, and fail before
    launching another phase. Scene success alone is not clean-process acceptance.
+   Stage current client sources per launch, import/build/run only that copy,
+   and retain engine/SDK evidence. Preserve the source SDK pin, local edits,
+   upgrade backups and saves; reject unsupported or unexpected migrations.
+   Do not import separate save profiles into a shared client cache.
+   Investigate the retained fresh-host two-client resume `TooLate` failure as
+   an outstanding timing gate; clean process cleanup is not multiplayer acceptance.
+   Preserve traces and authoritative admission rather than retrying to hide it.
 2. Add an application-level acceptance path through the actual Godot scene and
    controls: launch, create a character, receive/render an authoritative world,
    submit movement, observe the acknowledged position, save, exit, and resume

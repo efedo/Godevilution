@@ -67,8 +67,9 @@ open. Their scope, dependencies, and exit checks are defined only in the
   source and focused tests. A fresh visible world-entry check was blocked by a
   Windows firewall prompt; native create/move/save/resume acceptance remains
   open. The earlier app-approval timeout is historical.
-- Godot's local harness now builds the current server and client, imports
-  assets, checks mode/identities, and retains `.local/godot` saves plus a private
+- Godot's local harness now builds the current server, stages/imports/builds
+  the client without rewriting its source SDK pin, checks mode/identities,
+  and retains `.local/godot` saves plus a private
   resume bookmark. Actual scene/control tests create a Rogue, move, restart both
   processes, restore identity/position, and move with a fresh command sequence.
   Corrupt-bookmark feedback and a blocked-write/retry path are exercised too.
@@ -117,6 +118,53 @@ open. Their scope, dependencies, and exit checks are defined only in the
 The following records describe implemented slices at this baseline. They are
 evidence, not a separate priority list; detailed older entries retain their
 original scope and may be superseded by later entries or the current assessment.
+
+### M0 isolated Godot project import/build (2026-09-30)
+
+This batch follows `35c81d4dc`. The installed 4.7.2 Mono importer can upgrade
+the checked-in 4.7.1 C# SDK and create a backup; isolated AppData alone does not
+protect project sources. The harness now copies current authored sources and
+resources into each fresh launch directory, excluding generated caches/outputs
+and old project backups. Only that copy is imported, built and run. Staged
+project/solution references and NuGet policy remain validated; reparse traversal,
+missing references, unexpected project changes and engine/SDK mismatches fail
+before gameplay starts. The source SDK pin, local edits, existing backups,
+normal saves/bookmarks and protocol/content identities are not rewritten.
+
+Stable Mono 4.7.x engine probes run under the existing isolated process policy.
+Stage evidence records engine/SDK identities and source/stage hashes, including
+failures. Redirected probe output is retained after owned timeout termination;
+native error dialogs remain suppressed only for automated children, and crashes
+remain failures. Shared original server/protocol builds are not made concurrent-safe
+by isolating the client cache.
+
+Verification: Windows PowerShell 5.1 launcher/helper selection passes 18/18 with
+no exclusions. Synthetic cases exercise local edits/backups, references/config,
+cache exclusion, junction rejection, unexpected SDK/TFM/reference changes,
+concurrent source edits and redirected success/nonzero/timeout diagnostics.
+No actual application crash is induced. Initial hashing and junction-cleanup
+test failures were corrected before acceptance; build warnings report unavailable
+NuGet vulnerability data, not compilation errors.
+
+Actual installed Godot 4.7.2 headless create/resume/host-loss recovery passes in
+`%TEMP%/Godevilution-Scene-Acceptance-755129c6ed7e48d8a568c92fd6d4ab0e`.
+All nine version/import/client records have zero exits and no process errors.
+Each stage records original SDK 4.7.1 and imported SDK/engine 4.7.2 with the same
+source hash; the original project has no diff or generated backup. This is
+headless scene/control evidence, not a fresh rendered or campaign acceptance
+claim. M0 and the overall approximately 35% estimate remain open/unchanged.
+
+The headless portal/trade/stash TownLoop and fresh-host owner-return resume
+also pass in `%TEMP%/Godevilution-Scene-Acceptance-ef5f3073ef244598903e211a34d61ed8`,
+with six clean engine records and preserved source hashes. Separate two-client
+creation passes, but fresh-host multiplayer resume fails: player 1's movement
+sequence 5 is rejected `TooLate` (observed snapshot tick 111, rejection applied
+tick 125). Preserve `%TEMP%/Godevilution-Scene-Acceptance-ffb1c44379a341b59b608b2857a2d48f`
+and launch logs `Godevilution-Godot-6711e13dff0e482a9245fc3ade7d6dbe` for timing
+investigation. The client exits 1; the launcher fails and cleans up its peer and
+host, with no remaining Godot processes. This is not a native access violation
+or a multiplayer pass. No retry, admission relaxation or gameplay change was
+used to hide the failure; its relation to staging is not established.
 
 ### M1 native vendor transition cleanup (2026-09-30)
 

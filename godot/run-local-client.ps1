@@ -27,7 +27,8 @@ $serverGameMode = if ($Multiplayer) { 'multiplayer' } else { 'single-player' }
 $repositoryRoot = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot '..')).Path
 $serverProject = Join-Path $repositoryRoot 'server/src/Devilution.Server/Devilution.Server.csproj'
 $serverExecutable = Join-Path $repositoryRoot 'server/src/Devilution.Server/bin/Debug/net10.0/Devilution.Server.exe'
-$clientProject = Join-Path $repositoryRoot 'godot/Devilution.Client'
+$clientSourceProject = Join-Path $repositoryRoot 'godot/Devilution.Client'
+$clientProject = $clientSourceProject
 if ([string]::IsNullOrWhiteSpace($SessionDirectory)) {
     $SessionDirectory = Join-Path $repositoryRoot $(if ($Multiplayer) { '.local/godot-multiplayer' } elseif ($PortalPreviewContent) { '.local/godot-portal-preview' } elseif ($PreviewContent) { '.local/godot-preview' } else { '.local/godot' })
 }
@@ -71,6 +72,11 @@ $godotProcess = $null
 $startedClients = @()
 $importProcess = $null
 $importTracked = $null
+$versionTracked = $null
+$staging = $null
+$engineVersion = $null
+$projectStageEvidencePath = Join-Path $captureRoot 'project-stage.json'
+$launcherError = $null
 $sessionLock = $null
 $processEvidenceRoot = Join-Path $captureRoot 'processes'
 New-Item -ItemType Directory -Path $processEvidenceRoot -Force | Out-Null
@@ -96,6 +102,362 @@ function Assert-WritableDirectory([string]$Path, [string]$Purpose) {
             Remove-Item -LiteralPath $probePath -Force -ErrorAction SilentlyContinue
         }
     }
+}
+
+function Get-CanonicalPath([string]$Path) {
+    return [IO.Path]::GetFullPath((Resolve-Path -LiteralPath $Path -ErrorAction Stop).ProviderPath)
+}
+
+function Assert-PathWithinRepository([string]$Path, [string]$Purpose) {
+    $root = [IO.Path]::GetFullPath($repositoryRoot).TrimEnd([IO.Path]::DirectorySeparatorChar, [IO.Path]::AltDirectorySeparatorChar) + [IO.Path]::DirectorySeparatorChar
+    $candidate = [IO.Path]::GetFullPath($Path)
+    if (-not $candidate.StartsWith($root, [StringComparison]::OrdinalIgnoreCase)) {
+        throw "$Purpose must remain inside the repository: $candidate"
+    }
+    return $candidate
+}
+
+function Get-ProjectRelativePath([string]$Root, [string]$Path) {
+    $rootPrefix = [IO.Path]::GetFullPath($Root).TrimEnd([IO.Path]::DirectorySeparatorChar, [IO.Path]::AltDirectorySeparatorChar) + [IO.Path]::DirectorySeparatorChar
+    $fullPath = [IO.Path]::GetFullPath($Path)
+    if ($fullPath.TrimEnd([IO.Path]::DirectorySeparatorChar, [IO.Path]::AltDirectorySeparatorChar) -eq $rootPrefix.TrimEnd([IO.Path]::DirectorySeparatorChar, [IO.Path]::AltDirectorySeparatorChar)) {
+        return ''
+    }
+    if (-not $fullPath.StartsWith($rootPrefix, [StringComparison]::OrdinalIgnoreCase)) {
+        throw "A project file escaped its source root: $fullPath"
+    }
+    return $fullPath.Substring($rootPrefix.Length).Replace('\', '/')
+}
+
+function Assert-NoReparsePoint([IO.FileSystemInfo]$Item, [string]$Purpose) {
+    if (($Item.Attributes -band [IO.FileAttributes]::ReparsePoint) -ne 0) {
+        throw "$Purpose contains a reparse point, which is not permitted: $($Item.FullName)"
+    }
+}
+
+function Assert-NoReparseAncestry([string]$Path, [string]$Purpose) {
+    $current = Get-Item -LiteralPath $Path -Force -ErrorAction Stop
+    while ($null -ne $current) {
+        Assert-NoReparsePoint $current $Purpose
+        $current = if ($current -is [IO.FileInfo]) { $current.Directory } else { $current.Parent }
+    }
+}
+
+function Get-IsolatedProjectFiles([string]$Root) {
+    $rootInfo = Get-Item -LiteralPath $Root -Force -ErrorAction Stop
+    Assert-NoReparsePoint $rootInfo 'The client source project'
+    $pending = [Collections.Generic.Stack[IO.DirectoryInfo]]::new()
+    $pending.Push([IO.DirectoryInfo]$rootInfo)
+    $files = [Collections.Generic.List[IO.FileInfo]]::new()
+    while ($pending.Count -gt 0) {
+        $directory = $pending.Pop()
+        foreach ($entry in $directory.EnumerateFileSystemInfos('*', [IO.SearchOption]::TopDirectoryOnly)) {
+            Assert-NoReparsePoint $entry 'The client source project'
+            if ($entry -is [IO.DirectoryInfo]) {
+                if ($entry.Name -in @('.godot', 'bin', 'obj')) { continue }
+                $pending.Push([IO.DirectoryInfo]$entry)
+                continue
+            }
+            if ($entry.Name -like '*.csproj.old') { continue }
+            $files.Add([IO.FileInfo]$entry)
+        }
+    }
+    return $files
+}
+
+function Get-ProjectTreeHash([string]$Root) {
+    $manifest = [Text.StringBuilder]::new()
+    foreach ($file in (Get-IsolatedProjectFiles $Root | Sort-Object FullName)) {
+        $relative = Get-ProjectRelativePath $Root $file.FullName
+        $stream = $null
+        $fileSha = $null
+        try {
+            $stream = [IO.File]::OpenRead($file.FullName)
+            $fileSha = [Security.Cryptography.SHA256]::Create()
+            $hash = ([BitConverter]::ToString($fileSha.ComputeHash($stream)).Replace('-', '')).ToLowerInvariant()
+        } finally {
+            if ($null -ne $fileSha) { $fileSha.Dispose() }
+            if ($null -ne $stream) { $stream.Dispose() }
+        }
+        [void]$manifest.Append($relative).Append("`0").Append($file.Length).Append("`0").Append($hash).Append("`n")
+    }
+    $bytes = [Text.Encoding]::UTF8.GetBytes($manifest.ToString())
+    $sha = [Security.Cryptography.SHA256]::Create()
+    try {
+        return ([BitConverter]::ToString($sha.ComputeHash($bytes)).Replace('-', '')).ToLowerInvariant()
+    } finally {
+        $sha.Dispose()
+    }
+}
+
+function Get-FileSha256([string]$Path) {
+    if (-not (Test-Path -LiteralPath $Path -PathType Leaf)) { return $null }
+    $stream = [IO.File]::OpenRead($Path)
+    $sha = [Security.Cryptography.SHA256]::Create()
+    try {
+        return ([BitConverter]::ToString($sha.ComputeHash($stream)).Replace('-', '')).ToLowerInvariant()
+    } finally {
+        $sha.Dispose()
+        $stream.Dispose()
+    }
+}
+
+function Read-ProjectXml([string]$Path) {
+    $xml = [Xml.XmlDocument]::new()
+    $xml.PreserveWhitespace = $true
+    $xml.Load($Path)
+    if ($null -eq $xml.DocumentElement -or $xml.DocumentElement.Name -ne 'Project') {
+        throw "The staged client project is not an MSBuild Project: $Path"
+    }
+    if ([string]::IsNullOrWhiteSpace($xml.DocumentElement.GetAttribute('Sdk'))) {
+        throw "The client project has no SDK declaration: $Path"
+    }
+    return $xml
+}
+
+function Resolve-ValidatedProjectReference([string]$BaseDirectory, [string]$Include, [string]$Purpose) {
+    if ([string]::IsNullOrWhiteSpace($Include) -or $Include.Contains('"') -or $Include.Contains('*') -or $Include.Contains('?')) {
+        throw "$Purpose has an invalid project reference: '$Include'"
+    }
+    try {
+        $candidate = if ([IO.Path]::IsPathRooted($Include)) {
+            [IO.Path]::GetFullPath($Include)
+        } else {
+            [IO.Path]::GetFullPath((Join-Path $BaseDirectory $Include))
+        }
+    } catch {
+        throw "$Purpose has an invalid project reference '$Include': $($_.Exception.Message)"
+    }
+    if (-not (Test-Path -LiteralPath $candidate -PathType Leaf)) {
+        throw "$Purpose references a missing project: $candidate"
+    }
+    Assert-NoReparseAncestry $candidate $Purpose
+    $item = Get-Item -LiteralPath $candidate -Force
+    if ([IO.Path]::GetExtension($candidate) -ine '.csproj') {
+        throw "$Purpose references a non-project file: $candidate"
+    }
+    return [IO.Path]::GetFullPath($item.FullName)
+}
+
+function Get-ProjectSignature([Xml.XmlDocument]$Xml) {
+    $clone = [Xml.XmlDocument]::new()
+    $clone.PreserveWhitespace = $true
+    $clone.LoadXml($Xml.OuterXml)
+    $project = $clone.DocumentElement
+    $project.SetAttribute('Sdk', '__SDK__')
+    $referenceIndex = 0
+    foreach ($reference in @($project.SelectNodes('.//ProjectReference'))) {
+        $reference.SetAttribute('Include', "__REFERENCE_$referenceIndex__")
+        $referenceIndex++
+    }
+    return $clone.OuterXml
+}
+
+function Get-ProjectMetadata([string]$ProjectPath, [string]$ReferenceBaseDirectory) {
+    $xml = Read-ProjectXml $ProjectPath
+    $references = [Collections.Generic.List[string]]::new()
+    foreach ($reference in @($xml.DocumentElement.SelectNodes('.//ProjectReference'))) {
+        $include = $reference.GetAttribute('Include')
+        $references.Add((Resolve-ValidatedProjectReference $ReferenceBaseDirectory $include 'The client project'))
+    }
+    return [pscustomobject]@{
+        Path = [IO.Path]::GetFullPath($ProjectPath)
+        Sdk = $xml.DocumentElement.GetAttribute('Sdk')
+        References = @($references)
+        Signature = Get-ProjectSignature $xml
+        FileHash = Get-FileSha256 $ProjectPath
+    }
+}
+
+function Test-ExactStringSequence([string[]]$Left, [string[]]$Right) {
+    if ($Left.Count -ne $Right.Count) { return $false }
+    for ($index = 0; $index -lt $Left.Count; $index++) {
+        if ($Left[$index] -cne $Right[$index]) { return $false }
+    }
+    return $true
+}
+
+function Set-StagedProjectReferences([string]$ProjectPath, [string[]]$References) {
+    $xml = Read-ProjectXml $ProjectPath
+    $nodes = @($xml.DocumentElement.SelectNodes('.//ProjectReference'))
+    if ($nodes.Count -ne $References.Count) {
+        throw "The staged client project changed its ProjectReference count during staging."
+    }
+    for ($index = 0; $index -lt $nodes.Count; $index++) {
+        $nodes[$index].SetAttribute('Include', $References[$index])
+    }
+    $settings = [Xml.XmlWriterSettings]::new()
+    $settings.OmitXmlDeclaration = $true
+    $settings.Indent = $false
+    $settings.NewLineChars = "`r`n"
+    $settings.NewLineHandling = [Xml.NewLineHandling]::None
+    $writer = $null
+    try {
+        $writer = [Xml.XmlWriter]::Create($ProjectPath, $settings)
+        $xml.Save($writer)
+    } finally {
+        if ($null -ne $writer) { $writer.Dispose() }
+    }
+}
+
+function Copy-IsolatedProjectTree([string]$SourceDirectory, [string]$DestinationDirectory) {
+    New-Item -ItemType Directory -Path $DestinationDirectory -Force | Out-Null
+    $pending = [Collections.Generic.Stack[IO.DirectoryInfo]]::new()
+    $pending.Push([IO.DirectoryInfo](Get-Item -LiteralPath $SourceDirectory -Force))
+    while ($pending.Count -gt 0) {
+        $source = $pending.Pop()
+        $relativeDirectory = Get-ProjectRelativePath $SourceDirectory $source.FullName
+        $destination = if ([string]::IsNullOrEmpty($relativeDirectory)) { $DestinationDirectory } else { Join-Path $DestinationDirectory $relativeDirectory }
+        New-Item -ItemType Directory -Path $destination -Force | Out-Null
+        foreach ($entry in $source.EnumerateFileSystemInfos('*', [IO.SearchOption]::TopDirectoryOnly)) {
+            Assert-NoReparsePoint $entry 'The client source project'
+            if ($entry -is [IO.DirectoryInfo]) {
+                if ($entry.Name -in @('.godot', 'bin', 'obj')) { continue }
+                $pending.Push([IO.DirectoryInfo]$entry)
+                continue
+            }
+            if ($entry.Name -like '*.csproj.old') { continue }
+            Copy-Item -LiteralPath $entry.FullName -Destination (Join-Path $destination $entry.Name) -Force
+        }
+    }
+}
+
+function Rewrite-StagedSolutionReferences([string]$SourceDirectory, [string]$DestinationDirectory) {
+    $sourceSolution = Join-Path $SourceDirectory 'Devilution.Client.sln'
+    $destinationSolution = Join-Path $DestinationDirectory 'Devilution.Client.sln'
+    if (-not (Test-Path -LiteralPath $sourceSolution -PathType Leaf)) { return @() }
+    $sourceText = [IO.File]::ReadAllText($sourceSolution)
+    $references = [Collections.Generic.List[string]]::new()
+    $pattern = '(?m)^(Project\("[^"]+"\) = "[^"]+", )"([^"]+)"(, "[^"]+"\r?)$'
+    $rewritten = [Text.RegularExpressions.Regex]::Replace($sourceText, $pattern, [Text.RegularExpressions.MatchEvaluator]{
+        param($match)
+        $original = Resolve-ValidatedProjectReference $SourceDirectory $match.Groups[2].Value 'The client solution'
+        $replacement = if ($original -ieq (Join-Path $SourceDirectory 'Devilution.Client.csproj')) {
+            Join-Path $DestinationDirectory 'Devilution.Client.csproj'
+        } else {
+            $original
+        }
+        [void]$references.Add($replacement)
+        return $match.Groups[1].Value + '"' + $replacement + '"' + $match.Groups[3].Value
+    })
+    [IO.File]::WriteAllText($destinationSolution, $rewritten, [Text.UTF8Encoding]::new($false))
+    return @($references)
+}
+
+function New-IsolatedGodotProject([string]$SourceDirectory, [string]$DestinationDirectory) {
+    $source = Get-CanonicalPath $SourceDirectory
+    if (-not (Test-Path -LiteralPath $source -PathType Container)) { throw "The client source project directory is missing: $source" }
+    Assert-NoReparseAncestry $source 'The client source project'
+    $sourceProject = Join-Path $source 'Devilution.Client.csproj'
+    $sourceMetadata = Get-ProjectMetadata $sourceProject $source
+    $sourceHash = Get-ProjectTreeHash $source
+    $sourceConfig = Join-Path (Split-Path $source -Parent) 'NuGet.Config'
+    if (-not (Test-Path -LiteralPath $sourceConfig -PathType Leaf)) {
+        throw "The Godot NuGet.Config ancestor is missing: $sourceConfig"
+    }
+    Assert-NoReparseAncestry $sourceConfig 'The Godot NuGet.Config'
+    $sourceConfigHash = Get-FileSha256 $sourceConfig
+    $destination = [IO.Path]::GetFullPath($DestinationDirectory)
+    $sourcePrefix = $source.TrimEnd([IO.Path]::DirectorySeparatorChar, [IO.Path]::AltDirectorySeparatorChar) + [IO.Path]::DirectorySeparatorChar
+    $destinationComparable = $destination.TrimEnd([IO.Path]::DirectorySeparatorChar, [IO.Path]::AltDirectorySeparatorChar)
+    $sourceComparable = $source.TrimEnd([IO.Path]::DirectorySeparatorChar, [IO.Path]::AltDirectorySeparatorChar)
+    if ($destinationComparable.StartsWith($sourcePrefix, [StringComparison]::OrdinalIgnoreCase) -or $destinationComparable -eq $sourceComparable) {
+        throw "The isolated Godot destination must be outside the source project: $destination"
+    }
+    $destinationParent = Split-Path $destination -Parent
+    $stageConfig = Join-Path $destinationParent 'NuGet.Config'
+    if (Test-Path -LiteralPath $stageConfig) {
+        throw "The isolated Godot destination already has a NuGet.Config: $stageConfig"
+    }
+    if (Test-Path -LiteralPath $destination) {
+        if (@(Get-ChildItem -LiteralPath $destination -Force).Count -gt 0) {
+            throw "The isolated Godot destination must be fresh: $destination"
+        }
+    }
+    New-Item -ItemType Directory -Path $destination -Force | Out-Null
+    Copy-IsolatedProjectTree $source $destination
+    $stagedProject = Join-Path $destination 'Devilution.Client.csproj'
+    Set-StagedProjectReferences $stagedProject $sourceMetadata.References
+    $stagedSolutionReferences = Rewrite-StagedSolutionReferences $source $destination
+    Copy-Item -LiteralPath $sourceConfig -Destination $stageConfig -Force
+    $stagedMetadata = Get-ProjectMetadata $stagedProject $source
+    if ($stagedMetadata.Signature -ne $sourceMetadata.Signature) {
+        throw 'The staged client project changed outside its intended absolute ProjectReference paths.'
+    }
+    if (-not (Test-ExactStringSequence -Left @($stagedMetadata.References) -Right @($sourceMetadata.References))) {
+        throw 'The staged client project did not retain its validated absolute ProjectReference paths.'
+    }
+    return [pscustomobject]@{
+        SourceDirectory = $source
+        DestinationDirectory = $destination
+        SourceProject = $sourceProject
+        StagedProject = $stagedProject
+        SourceSdk = $sourceMetadata.Sdk
+        SourceReferences = @($sourceMetadata.References)
+        SourceSignature = $sourceMetadata.Signature
+        SourceProjectHash = $sourceMetadata.FileHash
+        SourceHash = $sourceHash
+        SourceNuGetConfig = $sourceConfig
+        StagedNuGetConfig = $stageConfig
+        SourceNuGetConfigHash = $sourceConfigHash
+        SolutionReferences = @($stagedSolutionReferences)
+        StageHash = Get-ProjectTreeHash $destination
+    }
+}
+
+function Complete-IsolatedGodotProject($Staging, [string]$EngineVersion) {
+    if ($null -eq $Staging) { throw 'The isolated Godot project metadata is missing.' }
+    if ([string]::IsNullOrWhiteSpace($EngineVersion)) { throw 'The imported Godot engine version is missing.' }
+    $sourceHash = Get-ProjectTreeHash $Staging.SourceDirectory
+    if ($sourceHash -cne $Staging.SourceHash) {
+        throw 'The checked-in Godot client source changed while the isolated project was importing.'
+    }
+    if ((Get-FileSha256 $Staging.SourceNuGetConfig) -cne $Staging.SourceNuGetConfigHash) {
+        throw 'The checked-in Godot NuGet.Config changed while the isolated project was importing.'
+    }
+    if ((Get-FileSha256 $Staging.StagedNuGetConfig) -cne $Staging.SourceNuGetConfigHash) {
+        throw 'The isolated Godot NuGet.Config changed or disappeared during import.'
+    }
+    $currentSource = Get-ProjectMetadata $Staging.SourceProject $Staging.SourceDirectory
+    if (($currentSource.Sdk -cne $Staging.SourceSdk) -or ($currentSource.FileHash -cne $Staging.SourceProjectHash) -or ($currentSource.Signature -cne $Staging.SourceSignature) -or -not (Test-ExactStringSequence -Left @($currentSource.References) -Right @($Staging.SourceReferences))) {
+        throw 'The checked-in Godot client project changed while the isolated project was importing.'
+    }
+    $stagedXml = Read-ProjectXml $Staging.StagedProject
+    $stagedReferences = @($stagedXml.DocumentElement.SelectNodes('.//ProjectReference') | ForEach-Object { $_.GetAttribute('Include') })
+    if (-not (Test-ExactStringSequence -Left @($stagedReferences) -Right @($Staging.SourceReferences))) {
+        throw 'Godot import changed the staged ProjectReference targets.'
+    }
+    if ((Get-ProjectSignature $stagedXml) -cne $Staging.SourceSignature) {
+        throw 'Godot import changed the staged client project outside the SDK declaration.'
+    }
+    $expectedImportedSdk = "Godot.NET.Sdk/$EngineVersion"
+    if ($stagedXml.DocumentElement.GetAttribute('Sdk') -cne $expectedImportedSdk) {
+        throw "Godot import produced staged SDK '$($stagedXml.DocumentElement.GetAttribute('Sdk'))'; expected '$expectedImportedSdk'."
+    }
+    $Staging | Add-Member -NotePropertyName ImportedSdk -NotePropertyValue $stagedXml.DocumentElement.GetAttribute('Sdk') -Force
+    $Staging | Add-Member -NotePropertyName StageHash -NotePropertyValue (Get-ProjectTreeHash $Staging.DestinationDirectory) -Force
+    return $Staging
+}
+
+function Write-ProjectStageEvidence($Staging, [string]$EngineVersion, [string]$EvidencePath, [string]$ErrorMessage) {
+    $importedSdk = $Staging.ImportedSdk
+    if ([string]::IsNullOrWhiteSpace($importedSdk) -and (Test-Path -LiteralPath $Staging.StagedProject -PathType Leaf)) {
+        try { $importedSdk = (Read-ProjectXml $Staging.StagedProject).DocumentElement.GetAttribute('Sdk') }
+        catch { $importedSdk = $null }
+    }
+    $stageHash = $Staging.StageHash
+    try { $stageHash = Get-ProjectTreeHash $Staging.DestinationDirectory }
+    catch { }
+    $record = [ordered]@{
+        SourceSdk = $Staging.SourceSdk
+        ImportedSdk = $importedSdk
+        EngineVersion = $EngineVersion
+        SourceHash = $Staging.SourceHash
+        StageHash = $stageHash
+        StagePath = $Staging.DestinationDirectory
+        Error = $ErrorMessage
+    }
+    [IO.File]::WriteAllText($EvidencePath, ($record | ConvertTo-Json))
 }
 
 function Write-ProcessEvidence($Tracked) {
@@ -124,7 +486,14 @@ function Start-GodotChildProcess($StartInfo) {
     return [Diagnostics.Process]::Start($StartInfo)
 }
 
-function New-GodotProcess([string]$StageName, [string]$Arguments, [hashtable]$EnvironmentOverrides, [bool]$Headless, [bool]$SuppressCrashDialog) {
+function New-GodotProcess(
+    [string]$StageName,
+    [string]$Arguments,
+    [hashtable]$EnvironmentOverrides,
+    [bool]$Headless,
+    [bool]$SuppressCrashDialog,
+    [string]$StandardOutputPath,
+    [string]$StandardErrorPath) {
     $stageRoot = Join-Path $captureRoot ('engine-state/' + $StageName)
     $appDataPath = Join-Path $stageRoot 'AppData'
     $localAppDataPath = Join-Path $stageRoot 'LocalAppData'
@@ -140,6 +509,11 @@ function New-GodotProcess([string]$StageName, [string]$Arguments, [hashtable]$En
     $startInfo.WindowStyle = if ($Headless) { 'Hidden' } else { 'Normal' }
     $startInfo.EnvironmentVariables['APPDATA'] = $appDataPath
     $startInfo.EnvironmentVariables['LOCALAPPDATA'] = $localAppDataPath
+    if (-not [string]::IsNullOrWhiteSpace($StandardOutputPath)) {
+        New-Item -ItemType Directory -Path (Split-Path $StandardOutputPath -Parent) -Force | Out-Null
+        $startInfo.RedirectStandardOutput = $true
+        $startInfo.RedirectStandardError = $true
+    }
     foreach ($entry in $EnvironmentOverrides.GetEnumerator()) {
         $startInfo.EnvironmentVariables[$entry.Key] = [string]$entry.Value
     }
@@ -174,6 +548,14 @@ function New-GodotProcess([string]$StageName, [string]$Arguments, [hashtable]$En
                 ExitCode = $null
                 Error = $null
             }
+            StandardOutputTask = $null
+            StandardErrorTask = $null
+            StandardOutputPath = $StandardOutputPath
+            StandardErrorPath = $StandardErrorPath
+        }
+        if (-not [string]::IsNullOrWhiteSpace($StandardOutputPath)) {
+            $tracked.StandardOutputTask = $process.StandardOutput.ReadToEndAsync()
+            $tracked.StandardErrorTask = $process.StandardError.ReadToEndAsync()
         }
         Write-ProcessEvidence $tracked
         return $tracked
@@ -190,6 +572,44 @@ function New-GodotProcess([string]$StageName, [string]$Arguments, [hashtable]$En
     }
 }
 
+function Parse-SupportedGodotEngineVersion([string]$VersionOutput) {
+    if ([string]::IsNullOrWhiteSpace($VersionOutput)) {
+        throw 'Godot version output was empty.'
+    }
+    $matches = [Text.RegularExpressions.Regex]::Matches($VersionOutput,
+        '(?m)^\s*(?:Godot Engine v)?(?<version>[0-9]+\.[0-9]+\.[0-9]+)\.stable\.mono(?:\.[A-Za-z0-9_-]+)*[ \t]*\r?$')
+    if ($matches.Count -ne 1) {
+        throw "Godot output must identify exactly one stable Mono version: $VersionOutput"
+    }
+    $version = $matches[0].Groups['version'].Value
+    if ($version -notmatch '^4\.7\.') {
+        throw "Unsupported Godot Mono engine version $version; this launcher requires 4.7.x."
+    }
+    return $version
+}
+
+function Get-GodotEngineVersion {
+    $stdoutPath = Join-Path $captureRoot 'engine-version.stdout.log'
+    $stderrPath = Join-Path $captureRoot 'engine-version.stderr.log'
+    $tracked = New-GodotProcess 'engine-version' '--version' @{} $true $true $stdoutPath $stderrPath
+    $script:versionTracked = $tracked
+    Complete-GodotProcess $tracked 30000 'Godot version probe'
+    $versionText = [IO.File]::ReadAllText($stdoutPath) + [Environment]::NewLine + [IO.File]::ReadAllText($stderrPath)
+    return Parse-SupportedGodotEngineVersion $versionText
+}
+
+function Write-GodotRedirectedOutput($Tracked) {
+    if ($null -eq $Tracked.StandardOutputTask) { return }
+    foreach ($entry in @(
+        @{ Task = $Tracked.StandardOutputTask; Path = $Tracked.StandardOutputPath },
+        @{ Task = $Tracked.StandardErrorTask; Path = $Tracked.StandardErrorPath })) {
+        if (-not $entry.Task.IsCompleted -and -not $entry.Task.Wait(1000)) {
+            throw "Godot redirected output did not close after process termination: $($entry.Path)"
+        }
+        [IO.File]::WriteAllText($entry.Path, $entry.Task.GetAwaiter().GetResult())
+    }
+}
+
 function Complete-GodotProcess($Tracked, [int]$TimeoutMilliseconds, [string]$FailurePrefix) {
     if ($null -eq $Tracked.Record.EndedUtc) {
         # HasExited is authoritative when the caller already observed process
@@ -201,6 +621,7 @@ function Complete-GodotProcess($Tracked, [int]$TimeoutMilliseconds, [string]$Fai
         }
         $Tracked.Record.EndedUtc = [DateTime]::UtcNow.ToString('O')
     }
+    Write-GodotRedirectedOutput $Tracked
     if ($null -eq $Tracked.Record.ExitCode) { $Tracked.Record.ExitCode = $Tracked.Process.ExitCode }
     if ($Tracked.Record.ExitCode -ne 0) {
         if ($null -eq $Tracked.Record.Error) { $Tracked.Record.Error = "$FailurePrefix exited with code $($Tracked.Record.ExitCode)." }
@@ -245,22 +666,32 @@ function Stop-GodotProcess($Tracked) {
         }
         Write-ProcessEvidence $Tracked
     }
+    # Drain redirected version-probe output even after timeout/owned-child cleanup.
+    # Callers retain the primary launch error if evidence storage also fails.
+    Write-GodotRedirectedOutput $Tracked
 }
 
 try {
     # One local writer per save directory; parallel tests use distinct directories.
     $sessionLock = [System.IO.File]::Open((Join-Path $SessionDirectory 'launcher.lock'), 'OpenOrCreate', 'ReadWrite', 'None')
+    $staging = New-IsolatedGodotProject $clientSourceProject (Join-Path $captureRoot 'godot/Devilution.Client')
+    $clientProject = $staging.DestinationDirectory
+    Write-ProjectStageEvidence $staging $null $projectStageEvidencePath $null
+    $engineVersion = Get-GodotEngineVersion
+    Write-ProjectStageEvidence $staging $engineVersion $projectStageEvidencePath $null
     & dotnet build $serverProject --nologo
     if ($LASTEXITCODE -ne 0) { throw 'Could not build the authoritative server.' }
-    & dotnet build (Join-Path $clientProject 'Devilution.Client.csproj') --nologo
-    if ($LASTEXITCODE -ne 0) { throw 'Could not build the Godot client.' }
-    # Import the checked-in SVG assets even on a clean checkout without .godot cache.
+    # Import the isolated SVG assets before building the staged client project.
     $importLogPath = Join-Path $captureRoot 'import.log'
     $importArguments = '--headless --editor --import --path "{0}" --log-file "{1}"' -f $clientProject, $importLogPath
     $importTracked = New-GodotProcess 'import' $importArguments @{} $true $true
     $importProcess = $importTracked.Process
     Complete-GodotProcess $importTracked 60000 'Godot asset import'
     Assert-GodotImportLog $importTracked $importLogPath
+    $staging = Complete-IsolatedGodotProject $staging $engineVersion
+    Write-ProjectStageEvidence $staging $engineVersion $projectStageEvidencePath $null
+    & dotnet build (Join-Path $clientProject 'Devilution.Client.csproj') --nologo
+    if ($LASTEXITCODE -ne 0) { throw 'Could not build the staged Godot client.' }
 
     # Stable town starts; gameplay acceptance travels into combat afterward.
     $acceptanceArguments = if ($AcceptancePhase -or $PreviewContent -or $PortalPreviewContent -or $Multiplayer) { '--starting-level 0 --random-seed 0' } else { '' }
@@ -445,14 +876,25 @@ try {
             }
         }
     }
+} catch {
+    $launcherError = $_
+    throw
 } finally {
-    foreach ($trackedProcess in @($startedClients | ForEach-Object { $_.Tracked }) + @($importTracked)) {
+    if ($null -ne $staging) {
+        try {
+            $errorMessage = if ($null -ne $launcherError) { $launcherError.Exception.Message } else { $null }
+            Write-ProjectStageEvidence $staging $engineVersion $projectStageEvidencePath $errorMessage
+        } catch {
+            Write-Warning "Could not finalize project-stage evidence: $($_.Exception.Message)"
+        }
+    }
+    foreach ($trackedProcess in @($startedClients | ForEach-Object { $_.Tracked }) + @($importTracked, $versionTracked)) {
         if ($null -ne $trackedProcess) {
             try { Stop-GodotProcess $trackedProcess }
             catch { Write-Warning "Could not finalize Godot process evidence: $($_.Exception.Message)" }
         }
     }
-    foreach ($ownedProcess in @($startedClients | ForEach-Object { $_.Process }) + @($serverProcess, $importProcess)) {
+    foreach ($ownedProcess in @($startedClients | ForEach-Object { $_.Process }) + @($serverProcess, $importProcess, $versionTracked.Process)) {
         if ($null -ne $ownedProcess) {
             try {
                 if (-not $ownedProcess.HasExited) { $ownedProcess.Kill(); $ownedProcess.WaitForExit() }

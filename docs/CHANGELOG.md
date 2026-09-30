@@ -2,6 +2,16 @@
 
 All notable changes to this fork are documented below.
 
+- 2026-09-30: Isolated Godot project import/build/run per launch, preserving
+  the source SDK pin, local edits, backups and saves. Validated staged references,
+  solution paths, NuGet policy and stable Mono engine/SDK identities; rejected
+  unexpected migrations and retained redirected timeout/error evidence.
+  Launcher regressions pass 18/18 and documentation guards 3/3. Actual headless
+  4.7.2 create/resume/recovery and portal TownLoop/resume pass with unchanged
+  source hashes. Two-client creation passes, but fresh-host resume rejects
+  movement as TooLate; preserved the failure and verified owned-process cleanup.
+  Updated existing guidance, plan and status; GUI/campaign and M0 remain open.
+
 - 2026-09-30: Added a zero-argument isolated local-asset Cathedral oracle with
   original-main-archive provenance, complete coarse/fine/RNG/stair comparisons,
   named SOL flags and independently checked opaque bits. Native 1/1 and all four

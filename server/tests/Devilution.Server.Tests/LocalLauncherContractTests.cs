@@ -156,8 +156,13 @@ public sealed class LocalLauncherContractTests
     {
         var launcher = File.ReadAllText(Path.Combine(FindRepositoryRoot(), "godot/run-local-client.ps1"));
         var launch = launcher.IndexOf("$serverProcess = Start-Process", StringComparison.Ordinal);
-        Assert.True(launch > launcher.IndexOf("dotnet build $serverProject", StringComparison.Ordinal));
-        Assert.True(launch > launcher.IndexOf("dotnet build (Join-Path $clientProject", StringComparison.Ordinal));
+        var serverBuild = launcher.IndexOf("dotnet build $serverProject", StringComparison.Ordinal);
+        var clientBuild = launcher.IndexOf("dotnet build (Join-Path $clientProject", StringComparison.Ordinal);
+        var imported = launcher.IndexOf("Assert-GodotImportLog $importTracked $importLogPath", StringComparison.Ordinal);
+        Assert.True(serverBuild >= 0 && launch > serverBuild);
+        Assert.True(imported >= 0 && clientBuild > imported && launch > clientBuild,
+            "The imported staged client must build successfully before the host starts.");
+        Assert.Contains("--path \"{0}\"", launcher, StringComparison.Ordinal);
         Assert.DoesNotContain("Get-Process", launcher);
         Assert.Contains("$gameMode -ne $expectedGameMode", launcher);
         Assert.Contains("$expectedGameMode = if ($Multiplayer) { 'Multiplayer' } else { 'SinglePlayer' }", launcher);
