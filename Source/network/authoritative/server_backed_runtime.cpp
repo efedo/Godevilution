@@ -3,10 +3,14 @@
 #include <array>
 
 #include "network/authoritative/server_backed_player_ui.hpp"
+#include "network/authoritative/authoritative_level_id.hpp"
 #include "network/authoritative/protocol_limits.hpp"
 #include "network/protocol/legacy_world_state_policy.hpp"
 #include "network/protocol/multi.h"
 #include "engine/cursor.h"
+#include "game/levels/dungeon_common.h"
+#include "game/levels/setmaps.h"
+#include "game/quests/quests.hpp"
 #include <algorithm>
 #include <exception>
 #include <filesystem>
@@ -59,6 +63,30 @@ tl::expected<void, std::string> SaveResumeToken(const std::string &path, const s
 	} catch (const std::exception &exception) {
 		return tl::make_unexpected("Could not persist the authoritative resume token: " + std::string(exception.what()));
 	}
+}
+
+tl::expected<LevelId, std::string> NativeLevelId(uint32_t levelId)
+{
+	if (IsAuthoritativeRegularLevel(levelId))
+		return LevelId { static_cast<uint8_t>(levelId), GetLevelType(static_cast<int>(levelId)), false, SL_NONE };
+
+	const auto setLevel = AuthoritativeNativeSetLevel(levelId);
+	if (!setLevel.has_value())
+		return tl::make_unexpected("Authoritative snapshot selected an unsupported native level.");
+
+	dungeon_type type = DTYPE_NONE;
+	for (const Quest &quest : Quests) {
+		if (quest._qslvl == *setLevel && quest._qlvltype != DTYPE_NONE) {
+			type = quest._qlvltype;
+			break;
+		}
+	}
+	if (type == DTYPE_NONE && *setLevel >= SL_FIRST_ARENA && *setLevel <= SL_LAST)
+		type = GetArenaLevelType(*setLevel);
+	if (type == DTYPE_NONE)
+		return tl::make_unexpected("Authoritative snapshot selected a native set level without a dungeon type.");
+
+	return LevelId { static_cast<uint8_t>(*setLevel), type, true, *setLevel };
 }
 
 } // namespace
@@ -150,6 +178,68 @@ tl::expected<void, std::string> ServerBackedRuntime::StartImpl(const ServerBacke
 	return { };
 }
 
+tl::expected<void, std::string> ServerBackedRuntime::PrepareNativeLevel()
+{
+	if (!session_ || player_ == nullptr)
+		return { };
+	const ProjectedPlayerSnapshot *snapshot = session_->PlayerState().Snapshot();
+	if (snapshot == nullptr)
+		return tl::make_unexpected("The server-backed session has no player snapshot.");
+
+	const auto level = NativeLevelId(snapshot->levelId);
+	if (!level.has_value())
+		return tl::make_unexpected(level.error());
+	SwitchCurrentLevel(*level);
+	InvalidateNativeLevelPresentation();
+	ApplyServerBackedQuestSnapshots(session_->QuestState());
+	nativePresentationLevelId_ = snapshot->levelId;
+	return { };
+}
+
+void ServerBackedRuntime::InvalidateNativeLevelPresentation() noexcept
+{
+	nativePresentationReady_ = false;
+	nativeLevelLoadPending_ = false;
+	nativePresentationLevelId_.reset();
+	worldPresentation_.Clear();
+}
+
+tl::expected<void, std::string> ServerBackedRuntime::MarkNativeLevelReady()
+{
+	if (!session_ || player_ == nullptr)
+		return { };
+	const ProjectedPlayerSnapshot *snapshot = session_->PlayerState().Snapshot();
+	if (snapshot == nullptr)
+		return tl::make_unexpected("The server-backed session has no player snapshot.");
+	if (!nativePresentationLevelId_.has_value() || *nativePresentationLevelId_ != snapshot->levelId)
+		return tl::make_unexpected("Native level assets do not match the authoritative player level.");
+	nativePresentationReady_ = true;
+	if (auto result = ApplyCurrentPlayerSnapshot(); !result.has_value()) {
+		nativePresentationReady_ = false;
+		worldPresentation_.Clear();
+		return result;
+	}
+	return { };
+}
+
+std::vector<uint32_t> ServerBackedRuntime::NativeObjectPresentationIds() const
+{
+	std::vector<uint32_t> result;
+	if (!session_)
+		return result;
+	for (const auto &snapshot : worldProjection_.Objects()) {
+		if (snapshot.levelId != 0 && snapshot.levelId != worldProjection_.LevelId())
+			continue;
+		const auto presentationKind = static_cast<ObjectPresentationKind>(snapshot.presentationKind);
+		const uint32_t nativeObjectId = UsesAuthoredObjectPresentationIdentity(presentationKind)
+		    ? snapshot.objectId
+		    : snapshot.nativeObjectId == 0 ? snapshot.objectId : snapshot.nativeObjectId;
+		if (std::find(result.begin(), result.end(), nativeObjectId) == result.end())
+			result.push_back(nativeObjectId);
+	}
+	return result;
+}
+
 void ServerBackedRuntime::Stop() noexcept
 {
 	if (session_)
@@ -166,7 +256,10 @@ void ServerBackedRuntime::Stop() noexcept
 	playerPresentationLevelId_.reset();
 	playerPresentationServerTick_.reset();
 	playerPresentationTicksSinceServerTick_ = 0;
+	nativePresentationLevelId_.reset();
+	nativePresentationReady_ = false;
 	worldProjection_.Clear();
+	nativeLevelLoadPending_ = false;
 	worldPresentation_.Clear();
 	player_ = nullptr;
 }
@@ -1133,13 +1226,21 @@ tl::expected<void, std::string> ServerBackedRuntime::ApplyCurrentPlayerSnapshot(
 	ApplyServerBackedQuestSnapshots(session_->QuestState());
 	if (auto result = worldProjection_.Apply(session_->MonsterState(), session_->WorldItemState(), session_->ObjectState(), session_->ProjectileState(), session_->LevelGeometryState(), snapshot->levelId, snapshot->serverTick); !result.has_value())
 		return result;
-	if (auto result = worldPresentation_.Apply(
-			worldProjection_,
-			snapshot->levelId,
-			session_->PlayerStates(),
-			session_->EntityId());
-		!result.has_value())
-		return result;
+	if (nativePresentationReady_) {
+		if (!nativePresentationLevelId_.has_value() || *nativePresentationLevelId_ != snapshot->levelId) {
+			// The main loop loads native assets for the new server-selected level.
+			// Drop borrowed views immediately; do not render them with old assets.
+			InvalidateNativeLevelPresentation();
+			nativeLevelLoadPending_ = true;
+		} else if (auto result = worldPresentation_.Apply(
+			           worldProjection_,
+			           snapshot->levelId,
+			           session_->PlayerStates(),
+			           session_->EntityId());
+		           !result.has_value()) {
+			return result;
+		}
+	}
 	for (const auto &eventBatch : session_->TakePendingEventBatches()) {
 		if (auto result = ValidateServerBackedEventBatch(eventBatch); !result.has_value())
 			return result;

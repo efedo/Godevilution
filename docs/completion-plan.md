@@ -107,8 +107,11 @@ M4. M5 is the final removal gate, not a reason to postpone replacement work.
    acceptance result, not an assumed pass or a blocker for Godot work.
    Actual GUI startup now exposed and corrected a native/managed reward-offset
    limit mismatch. Preserve visible connection-error recovery and the boundary
-   regressions. Close the remaining object-graphics world-entry assertion before
-   claiming native creation, movement or resume acceptance.
+   regressions. Deferred native projection and graphics/frame admission now
+   address the prior object-graphics assertion in source and focused tests.
+   Complete the fresh visible check after manual cancellation of the Windows
+   firewall prompt, then exercise movement/save/resume before claiming native
+   application acceptance. Do not enable network permissions for loopback tests.
 4. Record a fresh integration baseline for the current revision. Capture exact
    commands, configuration, selected tests, outcomes, and any exclusions in
    migration status. Establish the target platform/participant matrix and

@@ -6,6 +6,7 @@
 #include <limits>
 #include <unordered_set>
 
+#include "application/headless_mode.hpp"
 #include "engine/lighting_defs.hpp"
 #include "game/items/item_pool.hpp"
 #include "game/items/items.hpp"
@@ -762,8 +763,29 @@ void ApplyItemSnapshot(Item &item, const ProjectedWorldItemSnapshot &snapshot)
 	item._iPostDraw = postDraw;
 }
 
-void ApplyObjectSnapshot(Object &object, int objectSlot, const ProjectedObjectSnapshot &snapshot)
+tl::expected<uint32_t, std::string> ResolveObjectAnimationFrameInternal(const Object &object, const ProjectedObjectSnapshot &snapshot)
 {
+	const uint32_t requestedFrame = snapshot.activated ? snapshot.activatedAnimationFrame : snapshot.animationFrame;
+	if (HeadlessMode)
+		return requestedFrame == 0 ? std::max(object._oAnimFrame, 1U) : requestedFrame;
+	if (!object._oAnimData)
+		return tl::make_unexpected("Authoritative object presentation requires native art that is not loaded.");
+
+	const uint32_t frameCount = object._oAnimData->numSprites();
+	if (frameCount == 0)
+		return tl::make_unexpected("Authoritative object presentation loaded an empty native sprite list.");
+	if (requestedFrame > frameCount)
+		return tl::make_unexpected("Authoritative object presentation selected a native frame outside the loaded sprite list.");
+	if (requestedFrame == 0)
+		return std::clamp(object._oAnimFrame, 1U, frameCount);
+	return requestedFrame;
+}
+
+tl::expected<void, std::string> ApplyObjectSnapshot(Object &object, int objectSlot, const ProjectedObjectSnapshot &snapshot)
+{
+	const auto animationFrame = ResolveAuthoritativeObjectAnimationFrame(object, snapshot);
+	if (!animationFrame.has_value())
+		return tl::make_unexpected(animationFrame.error());
 	const Point position { snapshot.positionX, snapshot.positionY };
 	const bool shouldOccupyTile = !snapshot.activateOnOccupancy
 	    && (!snapshot.activated || snapshot.keepVisibleAfterActivation)
@@ -787,10 +809,21 @@ void ApplyObjectSnapshot(Object &object, int objectSlot, const ProjectedObjectSn
 			ObjectUnderCursor = nullptr;
 	}
 	object._oDelFlag = snapshot.destroyed || snapshot.activated && !snapshot.keepVisibleAfterActivation;
-	object._oAnimFrame = snapshot.activated ? snapshot.activatedAnimationFrame : snapshot.animationFrame;
+	object._oAnimFrame = *animationFrame;
+	if (object.isDoor()) {
+		// Match only the native draw/selection state. Door map mutations and
+		// collision decisions still belong to the authoritative server.
+		// Native tooltip states use 0 for closed and 1 for open.
+		object._oVar4 = static_cast<int>(snapshot.activated);
+		object._oPreFlag = snapshot.activated;
+		object.selectionRegion = snapshot.activated
+		    ? SelectionRegion::Middle
+		    : SelectionRegion::Bottom | SelectionRegion::Middle;
+	}
 	object._oTrapFlag = snapshot.trapArmed;
 	object._oMissFlag = snapshot.missilePassable;
 	object._oBreak = snapshot.destroyed && snapshot.breakable ? -1 : snapshot.breakable ? 1 : 0;
+	return {};
 }
 
 void RemoveMappedItem(unsigned itemSlot)
@@ -859,17 +892,6 @@ void RemoveUnclaimedObjectSlots(const std::unordered_set<int> &claimedSlots)
 
 		RemoveMappedObject(objectSlot);
 	}
-}
-
-uint32_t NativeObjectPresentationId(const ProjectedObjectSnapshot &snapshot)
-{
-	// Authored semantic families own the native object template selected by the
-	// compatibility client. Only explicit native families and older unspecified
-	// snapshots may use native_object_id as a presentation fallback.
-	if (UsesAuthoredObjectPresentationIdentity(
-		static_cast<ObjectPresentationKind>(snapshot.presentationKind)))
-		return snapshot.objectId;
-	return snapshot.nativeObjectId == 0 ? snapshot.objectId : snapshot.nativeObjectId;
 }
 
 tl::expected<void, std::string> ApplyAuthoritativeNativeGeometry(
@@ -950,6 +972,22 @@ tl::expected<void, std::string> ApplyAuthoritativeNativeGeometry(
 }
 
 } // namespace
+
+tl::expected<uint32_t, std::string> ResolveAuthoritativeObjectAnimationFrame(const Object &object, const ProjectedObjectSnapshot &snapshot)
+{
+	return ResolveObjectAnimationFrameInternal(object, snapshot);
+}
+
+uint32_t NativeObjectPresentationId(const ProjectedObjectSnapshot &snapshot)
+{
+	// Authored semantic families own the native object template selected by the
+	// compatibility client. Only explicit native families and older unspecified
+	// snapshots may use native_object_id as a presentation fallback.
+	if (UsesAuthoredObjectPresentationIdentity(
+		static_cast<ObjectPresentationKind>(snapshot.presentationKind)))
+		return snapshot.objectId;
+	return snapshot.nativeObjectId == 0 ? snapshot.objectId : snapshot.nativeObjectId;
+}
 
 player_graphic GetRemotePlayerGraphic(const ProjectedPlayerSnapshot &snapshot)
 {
@@ -1158,19 +1196,51 @@ tl::expected<void, std::string> ServerBackedWorldPresentation::Apply(
 	// items cannot remain visible or interactable on the connected client.
 	RemoveUnclaimedItemSlots(claimedItemSlots);
 
+	// Release omitted or changed templates before admitting replacements. A
+	// valid full-capacity snapshot must not require an extra temporary slot.
+	for (auto mapped = objectSlots_.begin(); mapped != objectSlots_.end();) {
+		const auto retained = std::find_if(projection.Objects().begin(), projection.Objects().end(), [&](const auto &snapshot) {
+			return IsCurrentLevel(snapshot.levelId, levelId) && snapshot.entityId == mapped->first
+			    && static_cast<uint32_t>(Objects[mapped->second]._otype) == NativeObjectPresentationId(snapshot);
+		});
+		if (retained == projection.Objects().end()) {
+			// A native reload may reuse the same slot for a different entity.
+			// Release its stale mapping without deleting an incoming entity's
+			// already matching template/position.
+			const Object &object = Objects[mapped->second];
+			const bool rebindsExistingSlot = std::any_of(projection.Objects().begin(), projection.Objects().end(), [&](const auto &snapshot) {
+				return IsCurrentLevel(snapshot.levelId, levelId)
+				    && static_cast<uint32_t>(object._otype) == NativeObjectPresentationId(snapshot)
+				    && object.position == Point { snapshot.positionX, snapshot.positionY };
+			});
+			if (!rebindsExistingSlot)
+				RemoveMappedObject(mapped->second);
+			mapped = objectSlots_.erase(mapped);
+		} else {
+			++mapped;
+		}
+	}
 	for (const auto &snapshot : projection.Objects()) {
 		if (!IsCurrentLevel(snapshot.levelId, levelId))
 			continue;
 		if (!IsValidWorldPosition(snapshot.positionX, snapshot.positionY))
 			return tl::make_unexpected("Authoritative object position cannot be represented by the native world tile type.");
 		currentObjectEntities.insert(snapshot.entityId);
+		const uint32_t nativeObjectId = NativeObjectPresentationId(snapshot);
+		if (nativeObjectId > static_cast<uint32_t>(OBJ_LAST))
+			return tl::make_unexpected("Authoritative object selected an unsupported native presentation template.");
+		if (!HeadlessMode && nativeObjectId >= AllObjects.size())
+			return tl::make_unexpected("Authoritative object presentation requires native template data that is not loaded.");
+		if (!HeadlessMode && !IsObjectGraphicLoaded(AllObjects[static_cast<_object_id>(nativeObjectId)].ofindex))
+			return tl::make_unexpected("Authoritative object presentation requires native art that is not loaded.");
 		int slot = -1;
+		bool admittedSlot = false;
 		if (const auto mapped = objectSlots_.find(snapshot.entityId); mapped != objectSlots_.end()
-		    && FindActiveObjectListIndex(mapped->second) >= 0)
+		    && FindActiveObjectListIndex(mapped->second) >= 0
+		    && static_cast<uint32_t>(Objects[mapped->second]._otype) == nativeObjectId)
 			slot = mapped->second;
 		if (slot < 0) {
 			const Point projectedPosition { snapshot.positionX, snapshot.positionY };
-			const uint32_t nativeObjectId = NativeObjectPresentationId(snapshot);
 			int positionMatchedSlot = -1;
 			for (int activeIndex = 0; activeIndex < ObjectPoolAdapter::ActiveObjectCountValue(); ++activeIndex) {
 				const int candidate = ObjectPoolAdapter::ActiveObjectIndexAt(activeIndex);
@@ -1188,17 +1258,42 @@ tl::expected<void, std::string> ServerBackedWorldPresentation::Apply(
 			if (slot < 0)
 				slot = positionMatchedSlot;
 		}
-		const uint32_t nativeObjectId = NativeObjectPresentationId(snapshot);
-		if (slot < 0 && nativeObjectId <= static_cast<uint32_t>(OBJ_LAST) && ObjectPoolAdapter::HasFreeObjectSlot()) {
-			if (Object *object = AddObject(static_cast<_object_id>(nativeObjectId), { snapshot.positionX, snapshot.positionY }); object != nullptr)
+		if (slot < 0 && !ObjectPoolAdapter::HasFreeObjectSlot()) {
+			// Native level loading can leave an entirely full compatibility pool.
+			// Reclaim only an unclaimed, unmapped slot; never evict another server
+			// entity that has yet to be applied in this snapshot.
+			for (int index = ObjectPoolAdapter::ActiveObjectCountValue() - 1; index >= 0; --index) {
+				const int candidate = ObjectPoolAdapter::ActiveObjectIndexAt(index);
+				if (claimedObjectSlots.contains(candidate)
+				    || std::any_of(objectSlots_.begin(), objectSlots_.end(), [candidate](const auto &entry) { return entry.second == candidate; }))
+					continue;
+				RemoveMappedObject(candidate);
+				break;
+			}
+		}
+		if (slot < 0 && ObjectPoolAdapter::HasFreeObjectSlot()) {
+			if (Object *object = AddObjectPresentation(static_cast<_object_id>(nativeObjectId), { snapshot.positionX, snapshot.positionY }); object != nullptr) {
 				slot = static_cast<int>(object - Objects);
+				admittedSlot = true;
+			}
 		}
 		if (slot < 0)
-			continue;
+			return tl::make_unexpected("Authoritative object presentation could not acquire a native object slot.");
+		if (!HeadlessMode && !Objects[slot]._oAnimData) {
+			if (admittedSlot)
+				RemoveMappedObject(slot);
+			return tl::make_unexpected("Authoritative object presentation acquired a slot without native art.");
+		}
+		if (auto result = ApplyObjectSnapshot(Objects[slot], slot, snapshot); !result.has_value()) {
+			// A newly admitted slot is not in objectSlots_ yet, so Clear() cannot
+			// discover it after a malformed frame or sprite-list failure.
+			if (admittedSlot)
+				RemoveMappedObject(slot);
+			return result;
+		}
 		claimedObjectSlots.insert(slot);
 		RebindPresentationSlot(objectSlots_, snapshot.entityId, slot);
 		objectSlots_[snapshot.entityId] = slot;
-		ApplyObjectSnapshot(Objects[slot], slot, snapshot);
 	}
 	// Native level loading may also leave compatibility-pool objects behind.
 	// Only objects claimed by the current authoritative snapshot may remain in

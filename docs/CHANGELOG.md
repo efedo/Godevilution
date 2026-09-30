@@ -2,6 +2,18 @@
 
 All notable changes to this fork are documented below.
 
+- 2026-09-30: Deferred authoritative native world projection until matching
+  level identity, quests and graphics are ready. Added presentation-only object
+  admission, frame/art guards, server-directed level reloads and before-draw
+  transition guards. Preserved pool-reload rebinding and full-capacity replacement;
+  reset reused metadata and kept door updates presentation-only. Ordinary connected
+  dungeon startup no longer constructs local actors/themes. Added loaded-art and
+  loopback lifecycle regressions, restricted the new test listener to loopback,
+  and passed 227 focused native plus 12 managed launcher tests. Fresh Godot
+  create/resume/recovery again exits cleanly. Native GUI verification was blocked
+  by a Windows firewall prompt; no network permissions changed and no world-entry
+  pass is claimed. Updated current status, plan and verification guidance.
+
 - 2026-09-30: Fixed native initial-snapshot rejection of the base-content
   Gateway of Blood reward by aligning reward offsets with the published
   `[-32,32]` contract. Added native boundary/base-object and managed parity

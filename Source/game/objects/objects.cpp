@@ -10,6 +10,7 @@
 #include <string>
 
 #include <algorithm>
+#include <iterator>
 
 #ifdef USE_SDL3
 #include <SDL3/SDL_timer.h>
@@ -130,8 +131,9 @@ enum {
 
 int trapid;
 int trapdir;
-OptionalOwnedClxSpriteList pObjCels[40];
-object_graphic_id ObjFileList[40];
+constexpr size_t MaximumObjectGraphicFiles = 65;
+OptionalOwnedClxSpriteList pObjCels[MaximumObjectGraphicFiles];
+object_graphic_id ObjFileList[MaximumObjectGraphicFiles];
 /** Specifies the number of active objects. */
 int leverid;
 int numobjfiles;
@@ -686,7 +688,18 @@ void AddCryptObject(Object &object, int a2)
 	object._oVar4 = object._oAnimFrame + 1;
 }
 
-void SetupObject(Object &object, Point position, _object_id ot)
+bool IsObjectGraphicLoadedInternal(object_graphic_id graphic)
+{
+	if (HeadlessMode)
+		return true;
+	const auto found = std::find(std::begin(ObjFileList), std::begin(ObjFileList) + numobjfiles, graphic);
+	if (found == std::begin(ObjFileList) + numobjfiles)
+		return false;
+	const size_t index = static_cast<size_t>(std::distance(std::begin(ObjFileList), found));
+	return index < static_cast<size_t>(numobjfiles) && pObjCels[index] && pObjCels[index]->numSprites() > 0;
+}
+
+void SetupObject(Object &object, Point position, _object_id ot, bool randomizeAnimation = true)
 {
 	const ObjectData &objectData = AllObjects[ot];
 	object._otype = ot;
@@ -694,8 +707,8 @@ void SetupObject(Object &object, Point position, _object_id ot)
 	object.position = position;
 
 	if (!HeadlessMode) {
-		const auto &found = c_find(ObjFileList, ofi);
-		if (found == std::end(ObjFileList)) {
+		const auto found = std::find(std::begin(ObjFileList), std::begin(ObjFileList) + numobjfiles, ofi);
+		if (found == std::begin(ObjFileList) + numobjfiles) {
 			LogCritical("Unable to find object_graphic_id {} in list of objects to load, level generation error.", static_cast<int>(ofi));
 			return;
 		}
@@ -711,9 +724,9 @@ void SetupObject(Object &object, Point position, _object_id ot)
 	object._oAnimFlag = objectData.isAnimated();
 	if (object._oAnimFlag) {
 		object._oAnimDelay = objectData.animDelay;
-		object._oAnimCnt = GenerateRnd(object._oAnimDelay);
+		object._oAnimCnt = randomizeAnimation ? GenerateRnd(object._oAnimDelay) : 0;
 		object._oAnimLen = objectData.animLen;
-		object._oAnimFrame = GenerateRnd(object._oAnimLen - 1) + 1;
+		object._oAnimFrame = randomizeAnimation ? GenerateRnd(object._oAnimLen - 1) + 1 : 1;
 	} else {
 		object._oAnimDelay = 1000;
 		object._oAnimCnt = 0;
@@ -730,6 +743,21 @@ void SetupObject(Object &object, Point position, _object_id ot)
 	object._oPreFlag = false;
 	object._oTrapFlag = false;
 	object._oDoorFlag = false;
+}
+
+void SetupPresentationObjectFlags(Object &object)
+{
+	object._oDoorFlag = object.isDoor();
+	object._oPreFlag = IsAnyOf(
+	    object._otype,
+	    OBJ_SHRINEL,
+	    OBJ_SHRINER,
+	    OBJ_BOOKCASEL,
+	    OBJ_BOOKCASER,
+	    OBJ_DECAP,
+	    OBJ_MCIRCLE1,
+	    OBJ_MCIRCLE2,
+	    OBJ_TNUDEM2);
 }
 
 void AddCryptBook(_object_id ot, int v2, Point position)
@@ -3627,6 +3655,11 @@ void TestObjSetMicro(Point position, int pn)
 }
 #endif
 
+bool IsObjectGraphicLoaded(object_graphic_id graphic)
+{
+	return IsObjectGraphicLoadedInternal(graphic);
+}
+
 unsigned int Object::GetId() const
 {
 	return std::abs(tileAt(position).object()) - 1;
@@ -3813,14 +3846,23 @@ tl::expected<void, std::string> LoadLevelObjects(uint16_t filesWidths[65])
 
 	for (const ObjectData objectData : AllObjects) {
 		if (levelType() == objectData.olvltype) {
+			if (objectData.ofindex >= MaximumObjectGraphicFiles)
+				return tl::make_unexpected("Native object graphic catalog exceeds its fixed capacity.");
 			filesWidths[objectData.ofindex] = objectData.animWidth;
 		}
 	}
 
 	for (size_t i = 0, n = ObjMasterLoadList.size(); i < n; ++i) {
+		if (i >= MaximumObjectGraphicFiles)
+			return tl::make_unexpected("Native object graphic catalog exceeds its fixed capacity.");
 		if (filesWidths[i] == 0) {
 			continue;
 		}
+		if (std::find(std::begin(ObjFileList), std::begin(ObjFileList) + numobjfiles, static_cast<object_graphic_id>(i))
+		    != std::begin(ObjFileList) + numobjfiles)
+			continue;
+		if (numobjfiles >= static_cast<int>(MaximumObjectGraphicFiles))
+			return tl::make_unexpected("Native object graphic load list exceeds its fixed capacity.");
 
 		ObjFileList[numobjfiles] = static_cast<object_graphic_id>(i);
 		char filestr[32];
@@ -3838,12 +3880,16 @@ tl::expected<void, std::string> InitObjectGFX()
 	if (IsAnyOf(currentLevelNumber(), 4, 8, 12)) {
 		for (const auto id : { OBJ_STORYBOOK, OBJ_STORYCANDLE }) {
 			const ObjectData &obj = AllObjects[id];
+			if (obj.ofindex >= MaximumObjectGraphicFiles)
+				return tl::make_unexpected("Native object graphic catalog exceeds its fixed capacity.");
 			filesWidths[obj.ofindex] = obj.animWidth;
 		}
 	}
 
 	for (size_t id = 0, n = AllObjects.size(); id < n; ++id) {
 		const ObjectData &objectData = AllObjects[id];
+		if (objectData.ofindex >= MaximumObjectGraphicFiles)
+			return tl::make_unexpected("Native object graphic catalog exceeds its fixed capacity.");
 		if (objectData.minlvl != 0 && currentLevelNumber() >= objectData.minlvl && currentLevelNumber() <= objectData.maxlvl) {
 			if (IsAnyOf(static_cast<_object_id>(id), OBJ_TRAPL, OBJ_TRAPR) && levelType() == DTYPE_HELL) {
 				continue;
@@ -3863,6 +3909,19 @@ tl::expected<void, std::string> InitObjectGFX()
 			filesWidths[objectData.ofindex] = objectData.animWidth;
 		}
 	}
+
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+	if (authoritative::GetServerBackedRuntime().IsConnected()) {
+		for (const uint32_t nativeObjectId : authoritative::GetServerBackedRuntime().NativeObjectPresentationIds()) {
+			if (nativeObjectId > static_cast<uint32_t>(OBJ_LAST))
+				continue;
+			const ObjectData &objectData = AllObjects[static_cast<_object_id>(nativeObjectId)];
+			if (objectData.ofindex >= MaximumObjectGraphicFiles)
+				return tl::make_unexpected("Authoritative object presentation selected an unsupported native graphic.");
+			filesWidths[objectData.ofindex] = objectData.animWidth;
+		}
+	}
+#endif
 
 	return LoadLevelObjects(filesWidths);
 }
@@ -4135,6 +4194,29 @@ void SetMapObjects(const uint16_t *dunData, int startx, int starty)
 			}
 		}
 	}
+}
+
+Object *AddObjectPresentation(_object_id objType, Point objPos)
+{
+	if (static_cast<size_t>(objType) >= AllObjects.size() || !InDungeonBounds(objPos))
+		return nullptr;
+	if (!ObjectPoolAdapter::HasFreeObjectSlot())
+		return nullptr;
+	if (!IsObjectGraphicLoaded(AllObjects[objType].ofindex))
+		return nullptr;
+
+	const int oi = ObjectPoolAdapter::ReserveObjectSlot();
+	tileAt(objPos).setObject(oi + 1);
+	Object &object = Objects[oi];
+	// Authoritative object state is already resolved by the server. Only bind
+	// the native template and its render metadata; legacy constructors can
+	// spawn monsters, roll shrine state, or mutate dungeon pieces.
+	object = {};
+	SetupObject(object, objPos, objType, false);
+	SetupPresentationObjectFlags(object);
+	AddObjectLight(object);
+	ObjectPoolAdapter::CommitReservedObjectSlot();
+	return &object;
 }
 
 Object *AddObject(_object_id objType, Point objPos)
@@ -4907,8 +4989,8 @@ void SyncObjectAnim(Object &object)
 	object_graphic_id index = AllObjects[object._otype].ofindex;
 
 	if (!HeadlessMode) {
-		const auto &found = c_find(ObjFileList, index);
-		if (found == std::end(ObjFileList)) {
+		const auto found = std::find(std::begin(ObjFileList), std::begin(ObjFileList) + numobjfiles, index);
+		if (found == std::begin(ObjFileList) + numobjfiles) {
 			LogCritical("Unable to find object_graphic_id {} in list of objects to load, level generation error.", static_cast<int>(index));
 			return;
 		}

@@ -22,6 +22,10 @@
 #include "network/authoritative/player_snapshot.hpp"
 #include "network/authoritative/server_backed_world_projection.hpp"
 
+namespace devilution {
+struct Object;
+}
+
 namespace devilution::authoritative {
 
 /** Maps an authoritative player combat mode to a native presentation graphic. */
@@ -51,6 +55,12 @@ void AdvanceProjectedPlayerAnimation(Player &player, player_graphic graphic, uin
 
 /** Returns whether an authoritative monster should occupy native presentation state. */
 [[nodiscard]] bool IsAuthoritativeMonsterPresentable(const ProjectedMonsterSnapshot &snapshot);
+
+/** Resolves the native object template used by an authoritative presentation. */
+[[nodiscard]] uint32_t NativeObjectPresentationId(const ProjectedObjectSnapshot &snapshot);
+
+/** Resolves the zero sentinel and validates positive frames against loaded art. */
+[[nodiscard]] tl::expected<uint32_t, std::string> ResolveAuthoritativeObjectAnimationFrame(const Object &object, const ProjectedObjectSnapshot &snapshot);
 
 /** Presentation interpretation of the additive server-owned dialogue state. */
 enum class AuthoritativeMonsterDialoguePresentationState : int32_t {

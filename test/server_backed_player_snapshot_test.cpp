@@ -6,6 +6,7 @@
 #include <utility>
 
 #include "devilution.pb.h"
+#include "application/headless_mode.hpp"
 #include "engine/cursor.h"
 #include "game/items/item_pool.hpp"
 #include "game/missiles/missiles.hpp"
@@ -28,6 +29,7 @@
 #include "tables/objdat.h"
 #include "ui/minitext.h"
 #include "ui/automap.h"
+#include "utils/paths.h"
 
 namespace devilution::authoritative {
 namespace protocol = ::devilution::protocol::v1;
@@ -1260,6 +1262,189 @@ TEST(ServerBackedPlayerSnapshot, AuthoredSemanticObjectFamiliesIgnoreLegacyNativ
 		ObjectPoolAdapter::ResetLegacyObjectPools();
 		InitializeItemPool();
 	}
+}
+
+class ScopedObjectPresentationTestState {
+public:
+	explicit ScopedObjectPresentationTestState(bool headless)
+	    : previousHeadlessMode_(HeadlessMode)
+	{
+		paths::SetAssetsPath(paths::BasePath() + "/assets/");
+		LoadObjectData();
+		HeadlessMode = headless;
+		InitializeItemPool();
+		InitializeMonsterPool();
+		ObjectPoolAdapter::ResetLegacyObjectPools();
+	}
+
+	~ScopedObjectPresentationTestState()
+	{
+		for (int index = 0; index < ObjectPoolAdapter::ActiveObjectCountValue(); ++index) {
+			const int slot = ObjectPoolAdapter::ActiveObjectIndexAt(index);
+			if (InDungeonBounds(Objects[slot].position) && tileAt(Objects[slot].position).object() == slot + 1)
+				tileAt(Objects[slot].position).setObject(0);
+		}
+		ObjectPoolAdapter::ResetLegacyObjectPools();
+		InitializeMonsterPool();
+		HeadlessMode = previousHeadlessMode_;
+	}
+
+private:
+	bool previousHeadlessMode_;
+};
+
+TEST(ServerBackedPlayerSnapshot, AuthoritativeObjectsUsePresentationOnlyAdmissionAndFrameSentinels)
+{
+	ScopedObjectPresentationTestState state(true);
+
+	ProjectedObjectSnapshot snapshot;
+	snapshot.entityId = 10;
+	snapshot.objectId = OBJ_SARC;
+	snapshot.nativeObjectId = OBJ_SARC;
+	snapshot.levelId = 1;
+	snapshot.positionX = 18;
+	snapshot.positionY = 18;
+	ServerBackedWorldProjection projection;
+	ASSERT_TRUE(projection.Apply({}, {}, { snapshot }, 1).has_value());
+	ServerBackedWorldPresentation presentation;
+	ASSERT_TRUE(presentation.Apply(projection, 1).has_value());
+	ASSERT_EQ(ObjectPoolAdapter::ActiveObjectCountValue(), 1);
+	EXPECT_EQ(MonsterPoolAdapter::ActiveMonsterCountValue(), 0U);
+	EXPECT_EQ(Objects[ObjectPoolAdapter::ActiveObjectIndexAt(0)]._oAnimFrame, 1U);
+
+	snapshot.animationFrame = 3;
+	ASSERT_TRUE(projection.Apply({}, {}, { snapshot }, 1).has_value());
+	ASSERT_TRUE(presentation.Apply(projection, 1).has_value());
+	EXPECT_EQ(Objects[ObjectPoolAdapter::ActiveObjectIndexAt(0)]._oAnimFrame, 3U);
+
+	snapshot.objectId = OBJ_CHEST1;
+	snapshot.nativeObjectId = OBJ_CHEST1;
+	snapshot.animationFrame = 0;
+	ASSERT_TRUE(projection.Apply({}, {}, { snapshot }, 1).has_value());
+	ASSERT_TRUE(presentation.Apply(projection, 1).has_value());
+	ASSERT_EQ(ObjectPoolAdapter::ActiveObjectCountValue(), 1);
+	EXPECT_EQ(Objects[ObjectPoolAdapter::ActiveObjectIndexAt(0)]._otype, OBJ_CHEST1);
+	EXPECT_EQ(Objects[ObjectPoolAdapter::ActiveObjectIndexAt(0)]._oAnimFrame, 1U);
+
+	presentation.Clear();
+}
+
+TEST(ServerBackedPlayerSnapshot, AuthoritativeObjectsRejectMissingNativeArt)
+{
+	ScopedObjectPresentationTestState state(false);
+	FreeObjectGFX();
+
+	ProjectedObjectSnapshot snapshot;
+	snapshot.entityId = 11;
+	snapshot.objectId = OBJ_L1LDOOR;
+	snapshot.nativeObjectId = OBJ_L1LDOOR;
+	snapshot.levelId = 1;
+	snapshot.positionX = 19;
+	snapshot.positionY = 19;
+	ServerBackedWorldProjection projection;
+	ASSERT_TRUE(projection.Apply({}, {}, { snapshot }, 1).has_value());
+	ServerBackedWorldPresentation presentation;
+	const auto result = presentation.Apply(projection, 1);
+	EXPECT_FALSE(result.has_value());
+	EXPECT_EQ(ObjectPoolAdapter::ActiveObjectCountValue(), 0);
+
+}
+
+TEST(ServerBackedPlayerSnapshot, ReplacesObjectTemplateAtFullNativeCapacity)
+{
+	ScopedObjectPresentationTestState state(true);
+	std::vector<ProjectedObjectSnapshot> snapshots;
+	for (uint32_t index = 0; index < MAXOBJECTS; ++index) {
+		ProjectedObjectSnapshot snapshot;
+		snapshot.entityId = index + 1;
+		snapshot.objectId = OBJ_CHEST1;
+		snapshot.nativeObjectId = OBJ_CHEST1;
+		snapshot.levelId = 1;
+		snapshot.positionX = 16 + index % 16;
+		snapshot.positionY = 16 + index / 16;
+		snapshots.push_back(snapshot);
+	}
+	ServerBackedWorldProjection projection;
+	ServerBackedWorldPresentation presentation;
+	ASSERT_TRUE(projection.Apply({}, {}, snapshots, 1).has_value());
+	ASSERT_TRUE(presentation.Apply(projection, 1).has_value());
+	ASSERT_EQ(ObjectPoolAdapter::ActiveObjectCountValue(), MAXOBJECTS);
+	snapshots.front().objectId = OBJ_SARC;
+	snapshots.front().nativeObjectId = OBJ_SARC;
+	ASSERT_TRUE(projection.Apply({}, {}, snapshots, 1).has_value());
+	ASSERT_TRUE(presentation.Apply(projection, 1).has_value());
+	EXPECT_EQ(ObjectPoolAdapter::ActiveObjectCountValue(), MAXOBJECTS);
+	EXPECT_EQ(Objects[tileAt(16, 16).object() - 1]._otype, OBJ_SARC);
+	EXPECT_EQ(MonsterPoolAdapter::ActiveMonsterCountValue(), 0U);
+	presentation.Clear();
+}
+
+TEST(ServerBackedPlayerSnapshot, ReclaimsFullUnmappedCompatibilityObjectPool)
+{
+	ScopedObjectPresentationTestState state(true);
+	for (int index = 0; index < MAXOBJECTS; ++index)
+		ASSERT_NE(AddObjectPresentation(OBJ_CHEST1, { 16 + index % 16, 16 + index / 16 }), nullptr);
+	ProjectedObjectSnapshot snapshot;
+	snapshot.entityId = 201;
+	snapshot.objectId = OBJ_SARC;
+	snapshot.nativeObjectId = OBJ_SARC;
+	snapshot.levelId = 1;
+	snapshot.positionX = 32;
+	snapshot.positionY = 32;
+	ServerBackedWorldProjection projection;
+	ServerBackedWorldPresentation presentation;
+	ASSERT_TRUE(projection.Apply({}, {}, { snapshot }, 1).has_value());
+	ASSERT_TRUE(presentation.Apply(projection, 1).has_value());
+	ASSERT_EQ(ObjectPoolAdapter::ActiveObjectCountValue(), 1);
+	EXPECT_EQ(Objects[ObjectPoolAdapter::ActiveObjectIndexAt(0)]._otype, OBJ_SARC);
+	presentation.Clear();
+}
+
+TEST(ServerBackedPlayerSnapshot, DoorActivationChangesOnlyPresentationPassAndSelection)
+{
+	ScopedObjectPresentationTestState state(true);
+	ProjectedObjectSnapshot snapshot;
+	snapshot.entityId = 202;
+	snapshot.objectId = OBJ_L1LDOOR;
+	snapshot.nativeObjectId = OBJ_L1LDOOR;
+	snapshot.levelId = 1;
+	snapshot.positionX = 20;
+	snapshot.positionY = 20;
+	snapshot.keepVisibleAfterActivation = true;
+	ServerBackedWorldProjection projection;
+	ServerBackedWorldPresentation presentation;
+	ASSERT_TRUE(projection.Apply({}, {}, { snapshot }, 1).has_value());
+	ASSERT_TRUE(presentation.Apply(projection, 1).has_value());
+	const int slot = ObjectPoolAdapter::ActiveObjectIndexAt(0);
+	EXPECT_TRUE(Objects[slot]._oDoorFlag);
+	EXPECT_FALSE(Objects[slot]._oPreFlag);
+	EXPECT_EQ(Objects[slot]._oVar4, 0);
+	EXPECT_EQ(Objects[slot].selectionRegion, SelectionRegion::Bottom | SelectionRegion::Middle);
+	tileAt(20, 20).setPiece(42);
+	snapshot.activated = true;
+	snapshot.missilePassable = true;
+	ASSERT_TRUE(projection.Apply({}, {}, { snapshot }, 1).has_value());
+	ASSERT_TRUE(presentation.Apply(projection, 1).has_value());
+	EXPECT_TRUE(Objects[slot]._oPreFlag);
+	EXPECT_EQ(Objects[slot]._oVar4, 1);
+	EXPECT_EQ(Objects[slot].selectionRegion, SelectionRegion::Middle);
+	EXPECT_EQ(tileAt(20, 20).piece(), 42);
+	presentation.Clear();
+}
+
+TEST(ServerBackedPlayerSnapshot, ClearsReusedObjectPresentationMetadata)
+{
+	ScopedObjectPresentationTestState state(true);
+	for (int slot = 0; slot < MAXOBJECTS; ++slot) {
+		Objects[slot]._oVar1 = std::numeric_limits<int>::max();
+		Objects[slot]._oVar3 = std::numeric_limits<int>::max();
+		Objects[slot]._oVar4 = std::numeric_limits<int>::max();
+	}
+	Object *object = AddObjectPresentation(OBJ_SHRINEL, { 21, 21 });
+	ASSERT_NE(object, nullptr);
+	EXPECT_EQ(object->_oVar1, 0);
+	EXPECT_EQ(object->_oVar3, 0);
+	EXPECT_EQ(object->_oVar4, 0);
 }
 
 TEST(ServerBackedPlayerSnapshot, RemovesUnclaimedCompatibilityWorldEntitySlots)

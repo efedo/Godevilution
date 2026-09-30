@@ -11,6 +11,7 @@
 #include <memory>
 #include <optional>
 #include <string>
+#include <vector>
 
 #include <expected.hpp>
 
@@ -29,6 +30,17 @@ public:
 	tl::expected<void, std::string> Start(const ServerBackedRuntimeConfiguration &configuration, StoreManager &storeManager);
 	tl::expected<void, std::string> Start(const ServerBackedRuntimeConfiguration &configuration, StoreManager &storeManager, Player &player);
 	void Stop() noexcept;
+
+	/** Selects the validated server level before native level loading begins. */
+	tl::expected<void, std::string> PrepareNativeLevel();
+	/** Invalidates presentation slots before native level assets are released. */
+	void InvalidateNativeLevelPresentation() noexcept;
+	/** Marks the current native level and its graphics as ready for projection. */
+	tl::expected<void, std::string> MarkNativeLevelReady();
+	/** A changed server level needs native assets loaded at the main-loop boundary. */
+	[[nodiscard]] bool NeedsNativeLevelLoad() const noexcept { return nativeLevelLoadPending_; }
+	/** Returns native object templates needed by the current authoritative level. */
+	[[nodiscard]] std::vector<uint32_t> NativeObjectPresentationIds() const;
 
 	[[nodiscard]] bool IsConnected() const noexcept { return session_ != nullptr; }
 	[[nodiscard]] bool IsAuthoritativeMode() const noexcept { return authoritativeMode_; }
@@ -191,6 +203,9 @@ private:
 	std::optional<uint32_t> playerPresentationLevelId_;
 	std::optional<uint64_t> playerPresentationServerTick_;
 	uint64_t playerPresentationTicksSinceServerTick_ = 0;
+	std::optional<uint32_t> nativePresentationLevelId_;
+	bool nativePresentationReady_ = false;
+	bool nativeLevelLoadPending_ = false;
 	ServerBackedWorldProjection worldProjection_;
 	ServerBackedWorldPresentation worldPresentation_;
 };

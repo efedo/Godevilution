@@ -62,9 +62,11 @@ open. Their scope, dependencies, and exit checks are defined only in the
   acceptance launcher preserves user saves/config and matches the base server's
   Diablo variant. Actual menus and hero creation are now observed. A further
   initial-snapshot reward-limit mismatch is corrected, and connection failures
-  visibly return to the menu. World entry still asserts while native object
-  graphics are unavailable; native create/move/save/resume acceptance remains
-  open. The earlier app-approval timeout is historical, not the current blocker.
+  visibly return to the menu. Deferred projection and explicit graphics/frame
+  validation now address the previously observed unloaded-object assertion in
+  source and focused tests. A fresh visible world-entry check was blocked by a
+  Windows firewall prompt; native create/move/save/resume acceptance remains
+  open. The earlier app-approval timeout is historical.
 - Godot's local harness now builds the current server and client, imports
   assets, checks mode/identities, and retains `.local/godot` saves plus a private
   resume bookmark. Actual scene/control tests create a Rogue, move, restart both
@@ -105,6 +107,51 @@ open. Their scope, dependencies, and exit checks are defined only in the
 The following records describe implemented slices at this baseline. They are
 evidence, not a separate priority list; detailed older entries retain their
 original scope and may be superseded by later entries or the current assessment.
+
+### M0 native presentation readiness and object admission (2026-09-30)
+
+This batch follows `fe0276802`. Initial snapshots are retained until native level
+identity, quests and graphics are prepared; native world pools are projected
+only after readiness. Current-level snapshot object templates supplement the
+graphics load list, including authored quest objects omitted by legacy quest
+selection. Borrowed presentation views are cleared before entity graphics are
+freed. A changed server level invalidates those views and requests the existing
+native transition wrapper before either draw path; synchronous input snapshots
+cannot render new player state against the previous level's geometry.
+
+New object admission binds render metadata without legacy object constructors,
+random rolls, monster spawning or door-map mutation. It resets reused metadata,
+preserves native pool-reload rebinding and releases stale templates before
+full-capacity replacement. Zero wire frames select a valid one-based native
+default; missing/empty art and positive frames beyond loaded art fail explicitly.
+Door activation updates only display/selection state. Ordinary connected dungeon
+loading also skips local object/monster/theme constructors; this does not certify
+all set-level bootstrap paths or complete server/native world parity.
+
+Verification:
+
+- Rebuilt x64 Debug authoritative targets pass 227 focused GTests: native
+  presentation 3, snapshot 136, session 6, compatibility 46, objects 16,
+  Diablo 1 and Cathedral 19. Coverage includes real loopback readiness/regular-to-
+  set-level changes, loaded-art frame bounds, missing-art admission, full object
+  capacity, reused metadata and unchanged door geometry. Legacy goldens remain
+  unchanged. Intermediate fixture/include/rebind failures were corrected before
+  this final run; no production validation was relaxed.
+- Fresh managed launcher behavior/contracts pass 12/12, using harmless children.
+  Native protobuf warnings and managed `NU1900` audit-metadata warnings remain.
+- The visible run at
+  `%TEMP%/Godevilution-Native-Acceptance-3273a332694e49eda0b772bc75d54ca6`
+  was blocked by a Windows firewall prompt for the new test executable, not an
+  observed native game assertion. No security permission was changed. The test
+  listener is now restricted to `127.0.0.1` and its three cases pass again.
+  The PID/start-time/path-verified isolated client was deliberately stopped and
+  its launcher cleaned up the owned server. This is not a normal GUI exit or a
+  world-entry/movement/save/resume pass; manual prompt cancellation and a fresh
+  visible check are still needed. User saves/config and renderer defaults remain
+  unchanged.
+
+The prior unloaded-sprite GUI failure below remains historical evidence, not a
+rerun outcome. Overall completion remains approximately 35%; M0 remains open.
 
 ### M0 native initial-snapshot contract and startup recovery (2026-09-30)
 
@@ -243,6 +290,16 @@ Post-fix verification:
   builds report unavailable NuGet vulnerability metadata (`NU1900`). The verified
   result is successful native process exits without fatal import-storage errors,
   not error-free logs or a cleared package-vulnerability audit.
+- A fresh 2026-09-30 same-engine headless create/resume/recovery rerun passes in
+  `%TEMP%/Godevilution-Scene-Acceptance-daa1a45a991948259920f39a655e207d`.
+  All six importer/client records exit 0 without recorded errors or fatal storage
+  diagnostics. Launch-log suffixes are `a6bc148451694f4f84ad7b15caa0d7c2`,
+  `d201c448834e41159fce295eaaa3dc47`, and `49f2e3797e03491e87fced2528730512`.
+  Harmless-child launcher behavior and current contracts pass 1/11 on the
+  permitted desktop environment. The restricted-shell behavior attempt failed
+  constructing the child environment; the identical permitted run passes.
+  No engine/server test processes remain; existing certificate/NU1900
+  qualifications and the separate native world-entry gap still apply.
 
 M0/M1 and the full migration remain open. The 35% estimate is unchanged; no new
 native, campaign, performance, audible-output or OS-focus acceptance is claimed.

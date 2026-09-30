@@ -123,7 +123,7 @@ struct Object {
 
 	[[nodiscard]] bool IsBreakable() const; // Is breakable (i.e. is an intact barrel or crux)?
 	[[nodiscard]] bool IsBroken() const; // Is broken?
-	[[nodiscard]] bool IsDisabled() const; // Returns true if the object is a harmful shrine and 
+	[[nodiscard]] bool IsDisabled() const; // Returns true if the object is a harmful shrine and
 										   // the player has disabled permanent shrine effects.
 	[[nodiscard]] bool canInteractWith() const;
 	[[nodiscard]] bool IsBarrel() const; // Is barrel (or explosive barrel)?
@@ -175,6 +175,7 @@ bool IsItemBlockingObjectAtPosition(Point position);
 
 tl::expected<void, std::string> InitObjectGFX();
 void FreeObjectGFX();
+[[nodiscard]] bool IsObjectGraphicLoaded(object_graphic_id graphic);
 void AddL1Objs(int x1, int y1, int x2, int y2);
 void AddL2Objs(int x1, int y1, int x2, int y2);
 void AddL3Objs(int x1, int y1, int x2, int y2);
@@ -182,6 +183,8 @@ void AddCryptObjects(int x1, int y1, int x2, int y2);
 void InitObjects();
 void SetMapObjects(const uint16_t *dunData, int startx, int starty);
 Object *AddObject(_object_id objType, Point objPos); // Spawns an object of the given type at the map coordinates provided
+/** Adds only the native presentation state for an authoritative object. */
+Object *AddObjectPresentation(_object_id objType, Point objPos);
 bool UpdateTrapState(Object &trap);
 void OperateTrap(Object &trap);
 void ProcessObjects();

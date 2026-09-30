@@ -93,6 +93,7 @@
 #include "utils/ui_fwd.h"
 #endif
 #include "game/objects/objects.hpp"
+#include "game/objects/object_pool.hpp"
 #include "persistence/options.h"
 #include "ui/panel/console.hpp"
 #include "ui/panel/info_box.hpp"
@@ -1159,6 +1160,17 @@ void RunGameLoop(interface_mode uMsg)
 						break;
 					}
 				}
+				if (authoritative::GetServerBackedRuntime().NeedsNativeLevelLoad()) {
+					// The server has already chosen and applied the destination.
+					// NEXTLVL loads from the player's identity without decrementing
+					// a legacy level or reading a local save. PrepareNativeLevel()
+					// restores regular/set identity before loading its assets.
+					SDL_Event levelEvent;
+					CustomEventToSdlEvent(levelEvent, WM_DIABNEXTLVL);
+					GameEventHandler(levelEvent, 0);
+					if (!gbRunGame)
+						break;
+				}
 			}
 #endif
 
@@ -1172,6 +1184,12 @@ void RunGameLoop(interface_mode uMsg)
 			if (processInput)
 				ProcessInput();
 			DvlNet_ProcessNetworkPackets();
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+			// Input can synchronously receive a destination snapshot. Do not
+			// draw its player state against the previous level's geometry.
+			if (authoritative::GetServerBackedRuntime().NeedsNativeLevelLoad())
+				continue;
+#endif
 			if (!drawGame)
 				continue;
 			RedrawViewport();
@@ -1183,6 +1201,10 @@ void RunGameLoop(interface_mode uMsg)
 		if (game_loop(gbGameLoopStartup))
 			diablo_color_cyc_logic();
 		gbGameLoopStartup = false;
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+		if (authoritative::GetServerBackedRuntime().NeedsNativeLevelLoad())
+			continue;
+#endif
 		if (drawGame)
 			DrawAndBlit();
 #ifdef GPERF_HEAP_FIRST_GAME_ITERATION
@@ -1864,6 +1886,8 @@ void GameLogic()
 	}
 	#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
 	const bool serverBackedGameplay = authoritative::GetServerBackedRuntime().IsConnected();
+	if (authoritative::GetServerBackedRuntime().NeedsNativeLevelLoad())
+		return;
 	#else
 	const bool serverBackedGameplay = false;
 	#endif
@@ -3026,6 +3050,10 @@ void FreeGameMem()
 	megaTiles() = nullptr;
 	specialCels() = std::nullopt;
 
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+	if (authoritative::GetServerBackedRuntime().IsConnected())
+		authoritative::GetServerBackedRuntime().InvalidateNativeLevelPresentation();
+#endif
 	FreeMonsters();
 	FreeMissileGFX();
 	FreeObjectGFX();
@@ -3081,6 +3109,23 @@ bool StartGame(bool bNewGame, bool bSinglePlayer)
 		if (bNewGame || !gbValidSaveFile) {
 			InitLevels();
 			InitQuests();
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+			if (authoritative::GetServerBackedRuntime().IsConnected()) {
+				if (auto result = authoritative::GetServerBackedRuntime().PrepareNativeLevel(); !result.has_value()) {
+					LogError("Failed to prepare the authoritative native level: {}", result.error());
+					printInConsole("Failed to prepare the authoritative native level: " + result.error());
+					printNewlineInConsole();
+					authoritative::GetServerBackedRuntime().Stop();
+					NetClose();
+					if (!HeadlessMode) {
+						UiInitialize();
+						UiErrorOkDialog(_("Unable to start authoritative game"), result.error(), /*error=*/true);
+					}
+					gbRunGameResult = !HeadlessMode;
+					break;
+				}
+			}
+#endif
 			InitPortals();
 			MyPlayer->initDungeonMessages();
 			DeltaSyncJunk();
@@ -3811,6 +3856,22 @@ void LoadGameLevelStash()
 
 tl::expected<void, std::string> LoadGameLevelDungeon(bool firstflag, lvl_entry lvldir, const Player &myPlayer)
 {
+	if (!LegacyLevelLoadMutationAllowed()) {
+		// Connected worlds initialize only presentation pools and resources.
+		// Do not run local monster/object/theme gameplay constructors and then
+		// discard their state when the authoritative snapshot is applied.
+		ObjectPoolAdapter::ResetLegacyObjectPools();
+		InitializeMonsterPool();
+		InitItems();
+		IncProgress();
+		RETURN_IF_ERROR(InitAllMonsterGFX());
+		IncProgress();
+		InitMissiles();
+		InitCorpses();
+		CurrentLightManager.SavePreLighting();
+		IncProgress();
+		return {};
+	}
 	if (firstflag || lvldir == ENTRY_LOAD || !myPlayer._pLvlVisited[currentLevelNumber()] || gbIsMultiplayer || !LegacyLevelLoadMutationAllowed()) {
 		HoldThemeRooms();
 		[[maybe_unused]] const uint32_t mid1Seed = GetLCGEngineState();
@@ -3937,6 +3998,10 @@ tl::expected<void, std::string> LoadGameLevelTown(bool firstflag, lvl_entry lvld
 
 tl::expected<void, std::string> LoadGameLevelSetLevel(bool firstflag, lvl_entry lvldir, const Player &myPlayer)
 {
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+	if (authoritative::GetServerBackedRuntime().IsConnected())
+		RETURN_IF_ERROR(InitObjectGFX());
+#endif
 	LoadSetMap();
 	IncProgress();
 	RETURN_IF_ERROR(GetLevelMTypes());
@@ -4003,6 +4068,11 @@ tl::expected<void, std::string> LoadGameLevelStandardLevel(bool firstflag, lvl_e
 	} else if (!HeadlessMode) {
 		IncProgress();
 
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+		if (authoritative::GetServerBackedRuntime().IsConnected())
+			RETURN_IF_ERROR(InitObjectGFX());
+#endif
+
 #if !defined(USE_SDL1) && !defined(__vita__)
 		InitVirtualGamepadGFX();
 #endif
@@ -4036,9 +4106,9 @@ tl::expected<void, std::string> LoadGameLevelStandardLevel(bool firstflag, lvl_e
 	SetRndSeedForDungeonLevel();
 
 	if (levelType() == DTYPE_TOWN) {
-		LoadGameLevelTown(firstflag, lvldir, myPlayer);
+		RETURN_IF_ERROR(LoadGameLevelTown(firstflag, lvldir, myPlayer));
 	} else {
-		LoadGameLevelDungeon(firstflag, lvldir, myPlayer);
+		RETURN_IF_ERROR(LoadGameLevelDungeon(firstflag, lvldir, myPlayer));
 	}
 
 	PlayDungMsgs();
@@ -4073,6 +4143,10 @@ void LoadGameLevelCalculateCursor()
 
 tl::expected<void, std::string> LoadGameLevel(bool firstflag, lvl_entry lvldir)
 {
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+	if (authoritative::GetServerBackedRuntime().IsConnected())
+		RETURN_IF_ERROR(authoritative::GetServerBackedRuntime().PrepareNativeLevel());
+#endif
 	const _music_id neededTrack = GetLevelMusic(levelType());
 
 	ClearFloatingNumbers();
@@ -4156,6 +4230,10 @@ tl::expected<void, std::string> LoadGameLevel(bool firstflag, lvl_entry lvldir)
 	CompleteProgress();
 
 	LoadGameLevelCalculateCursor();
+#ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
+	if (authoritative::GetServerBackedRuntime().IsConnected())
+		RETURN_IF_ERROR(authoritative::GetServerBackedRuntime().MarkNativeLevelReady());
+#endif
 	return {};
 }
 

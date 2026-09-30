@@ -134,8 +134,12 @@ approval; they must not treat a running process as visible UI or bypass denied
 window access. See migration status for current GUI outcomes and the remaining
 world-entry gap.
 
-Current GUI evidence reaches menus and hero creation, but world entry still
-asserts on unloaded native object sprites; do not count it as an acceptance pass.
+Current GUI evidence reaches menus and hero creation. Deferred projection and
+graphics/frame admission address the prior unloaded-object assertion in source
+and focused tests, but the fresh visible check was blocked by a Windows firewall
+prompt; world entry remains unverified. Never automate security prompts or enable
+public/private network permissions for the loopback test. Ask the user to cancel
+the prompt before another visible check; do not count tests as GUI acceptance.
 Authoritative connection failures are retained in `native.log` and show an error
 dialog that returns to the menu. A normal exit code alone remains insufficient.
 Controlled Direct3D captures stayed black, while a child-process launch with
