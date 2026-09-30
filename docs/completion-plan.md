@@ -192,8 +192,8 @@ this evidence. A sample art pack does not satisfy M4's full presentation gate.
    town and transition topology as part of the same world contract. Adjust
    independent family order only when it reduces a documented dependency.
    The ordinary original-Diablo level-1 coarse port now matches two native DUN
-   goldens but has no runtime call sites. Verify native continuation RNG, then
-   integrate validated external pattern/TIL/SOL data and geometry coordinates
+   goldens, continuation RNG and successful-attempt restoration but has no
+   runtime call sites. Integrate validated external pattern/TIL/SOL data and geometry coordinates
    before population or route acceptance; do not invent campaign seed mapping.
 3. Compare seed-for-seed native and managed generation: RNG consumption,
    mega-tiles/d-pieces, walk/missile/vision blockers, transparency, entrances,

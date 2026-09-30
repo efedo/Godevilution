@@ -126,15 +126,21 @@ Nine focused xUnit cases pass, including exact comparison against the existing
 `diablo/1-2588.dun` and `diablo/1-743271966.dun` coarse/transparency layers and
 MAIN/PREV positions, interleaved A/B/A generation, invalid entry, zero/high-bit/
 maximum seeds and the signed-minimum LCG edge, dimensions and access bounds.
+Both MAIN/PREV now also match raw native continuation states measured immediately
+after `CreateDungeon`, before theme-room RNG: seed 2588 gives attempt 1779836089
+and final 1552486206; seed 743271966 gives attempt 283661120 and final 980632310.
+Native cached-attempt restoration and managed regeneration from the successful
+attempt seed reproduce tiles, transparency and final state. All 21 freshly
+rebuilt Cathedral GTests pass, including the 19 existing goldens and two new
+RNG/restoration cases; the nine strengthened managed generator cases pass.
 The freshly rebuilt full game-module suite runs 2441 cases: 2437 pass and the
 same four previously baseline-confirmed Hork Demon RNG tests fail. They remain
 unresolved, not excluded passes. All 19 native Cathedral goldens also pass in
 the preceding native verification batch.
 
 No server bootstrap, content pack, protocol, save schema or gameplay route calls
-the new generator yet. It reads no MPQs and copies no asset fixtures. Attempt
-seed/final RNG continuation are deterministic but not yet compared to native
-oracle values. Native fine-piece/TIL/SOL expansion, coordinate-contract
+the new generator yet. It reads no MPQs and copies no asset fixtures. Native
+fine-piece/TIL/SOL expansion, coordinate-contract
 integration, external pattern-data validation, campaign seed derivation,
 population, quest/set pieces, Hellfire Crypt and other families remain work.
 This is the first coarse oracle port, not a playable generated-world or M2 pass.

@@ -1,5 +1,10 @@
 #include <gtest/gtest.h>
 
+#include <array>
+#include <cstdint>
+#include <optional>
+
+#include "engine/random.hpp"
 #include "level_test.hpp"
 
 using namespace devilution;
@@ -28,6 +33,78 @@ TEST(Drlg_l1, CreateL5Dungeon_diablo_1_743271966)
 	EXPECT_EQ(viewPosition(), Point(51, 82));
 	TestCreateDungeon(1, 743271966, ENTRY_PREV);
 	EXPECT_EQ(viewPosition(), Point(81, 47));
+}
+
+TEST(Drlg_l1, CreateL5Dungeon_rng_state_matches_native_oracle)
+{
+	struct OracleCase {
+		uint32_t seed;
+		lvl_entry entry;
+		uint32_t attemptSeed;
+		uint32_t finalRandomState;
+	};
+
+	const OracleCase cases[] = {
+		{ UINT32_C(2588), ENTRY_MAIN, UINT32_C(1779836089), UINT32_C(1552486206) },
+		{ UINT32_C(2588), ENTRY_PREV, UINT32_C(1779836089), UINT32_C(1552486206) },
+		{ UINT32_C(743271966), ENTRY_MAIN, UINT32_C(283661120), UINT32_C(980632310) },
+		{ UINT32_C(743271966), ENTRY_PREV, UINT32_C(283661120), UINT32_C(980632310) },
+	};
+
+	TestInitGame();
+	for (const auto &testCase : cases) {
+		LevelSeeds[1] = std::nullopt;
+		currentLevelNumber() = 1;
+		levelType() = GetLevelType(1);
+		megaTiles() = std::make_unique<MegaTile[]>(GetTileCount(levelType()));
+
+		CreateDungeon(testCase.seed, testCase.entry);
+		ASSERT_TRUE(LevelSeeds[1].has_value());
+		EXPECT_EQ(*LevelSeeds[1], testCase.attemptSeed);
+		EXPECT_EQ(GetLCGEngineState(), testCase.finalRandomState);
+	}
+}
+
+TEST(Drlg_l1, CreateL5Dungeon_reuses_successful_attempt_seed)
+{
+	TestInitGame();
+	constexpr uint32_t dungeonSeed = UINT32_C(2588);
+	constexpr lvl_entry entry = ENTRY_MAIN;
+
+	LevelSeeds[1] = std::nullopt;
+	currentLevelNumber() = 1;
+	levelType() = GetLevelType(1);
+	megaTiles() = std::make_unique<MegaTile[]>(GetTileCount(levelType()));
+	CreateDungeon(dungeonSeed, entry);
+	ASSERT_TRUE(LevelSeeds[1].has_value());
+	const uint32_t successfulAttemptSeed = *LevelSeeds[1];
+	const uint32_t initialFinalRandomState = GetLCGEngineState();
+
+	std::array<uint16_t, DMAXX * DMAXY> initialMegaTiles;
+	std::array<uint8_t, (DMAXX * 2) * (DMAXY * 2)> initialTransparency;
+	for (int y = 0; y < DMAXY; y++) {
+		for (int x = 0; x < DMAXX; x++)
+			initialMegaTiles[y * DMAXX + x] = megaTileAt(x, y).current();
+	}
+	for (int y = 0; y < DMAXY * 2; y++) {
+		for (int x = 0; x < DMAXX * 2; x++)
+			initialTransparency[y * DMAXX * 2 + x] = tileAt(x + 16, y + 16).transVal();
+	}
+
+	LevelSeeds[1] = successfulAttemptSeed;
+	megaTiles() = std::make_unique<MegaTile[]>(GetTileCount(levelType()));
+	CreateDungeon(dungeonSeed, entry);
+	ASSERT_TRUE(LevelSeeds[1].has_value());
+	EXPECT_EQ(*LevelSeeds[1], successfulAttemptSeed);
+	EXPECT_EQ(GetLCGEngineState(), initialFinalRandomState);
+	for (int y = 0; y < DMAXY; y++) {
+		for (int x = 0; x < DMAXX; x++)
+			EXPECT_EQ(megaTileAt(x, y).current(), initialMegaTiles[y * DMAXX + x]);
+	}
+	for (int y = 0; y < DMAXY * 2; y++) {
+		for (int x = 0; x < DMAXX * 2; x++)
+			EXPECT_EQ(tileAt(x + 16, y + 16).transVal(), initialTransparency[y * DMAXX * 2 + x]);
+	}
 }
 
 TEST(Drlg_l1, CreateL5Dungeon_diablo_2_1383137027)

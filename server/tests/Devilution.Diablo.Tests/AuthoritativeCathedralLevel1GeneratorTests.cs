@@ -7,20 +7,28 @@ namespace Devilution.Diablo.Tests;
 public sealed class AuthoritativeCathedralLevel1GeneratorTests
 {
     [Theory]
-    [InlineData(2588U, 77, 46, 49, 49)]
-    [InlineData(743271966U, 51, 82, 81, 47)]
+    [InlineData(2588U, 77, 46, 49, 49, 1779836089U, 1552486206U)]
+    [InlineData(743271966U, 51, 82, 81, 47, 283661120U, 980632310U)]
     public void OrdinaryLevel1MatchesNativeGolden(
         uint seed,
         int mainX,
         int mainY,
         int previousX,
-        int previousY)
+        int previousY,
+        uint attemptSeed,
+        uint finalRandomState)
     {
         var expected = ReadGolden(seed);
         var main = AuthoritativeCathedralLevel1Generator.Generate(seed, AuthoritativeCathedralEntry.Main);
         var previous = AuthoritativeCathedralLevel1Generator.Generate(seed, AuthoritativeCathedralEntry.Previous);
 
         var expectedUp = new AuthoritativeCathedralPoint((mainX - 19) / 2, (mainY - 20) / 2);
+        Assert.Equal(seed, main.InputSeed);
+        Assert.Equal(seed, previous.InputSeed);
+        Assert.Equal(attemptSeed, main.AttemptSeed);
+        Assert.Equal(attemptSeed, previous.AttemptSeed);
+        Assert.Equal(finalRandomState, main.FinalRandomState);
+        Assert.Equal(finalRandomState, previous.FinalRandomState);
         Assert.Equal(expectedUp, main.StairsUp);
         Assert.Equal(expected.MegaTiles, main.MegaTiles);
         Assert.Equal(expected.Transparency, main.NativeTransparency);
@@ -31,11 +39,11 @@ public sealed class AuthoritativeCathedralLevel1GeneratorTests
     }
 
     [Fact]
-    public void IndependentInstancesAndRepeatedGenerationAreDeterministic()
+    public void SuccessfulAttemptSeedRestoresDeterministicGeneration()
     {
         var first = AuthoritativeCathedralLevel1Generator.Generate(2588, AuthoritativeCathedralEntry.Main);
         var second = AuthoritativeCathedralLevel1Generator.Generate(2588, AuthoritativeCathedralEntry.Main);
-        var independent = AuthoritativeCathedralLevel1Generator.Generate(2588, AuthoritativeCathedralEntry.Main);
+        var independent = AuthoritativeCathedralLevel1Generator.Generate(first.AttemptSeed, AuthoritativeCathedralEntry.Main);
 
         Assert.Equal(first.InputSeed, second.InputSeed);
         Assert.Equal(first.AttemptSeed, second.AttemptSeed);
@@ -47,6 +55,9 @@ public sealed class AuthoritativeCathedralLevel1GeneratorTests
         Assert.Equal(first.EntryPosition, second.EntryPosition);
         Assert.Equal(first.MegaTiles, independent.MegaTiles);
         Assert.Equal(first.NativeTransparency, independent.NativeTransparency);
+        Assert.Equal(first.AttemptSeed, independent.InputSeed);
+        Assert.Equal(first.AttemptSeed, independent.AttemptSeed);
+        Assert.Equal(first.FinalRandomState, independent.FinalRandomState);
     }
 
     [Fact]

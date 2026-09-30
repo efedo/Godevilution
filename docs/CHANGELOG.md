@@ -2,6 +2,12 @@
 
 All notable changes to this fork are documented below.
 
+- 2026-09-30: Verified ordinary Cathedral level-1 attempt/final RNG states against
+  real native generation for both goldens and MAIN/PREV entry. Added durable native
+  continuation/cached-seed tests and managed successful-attempt restoration checks.
+  All 21 native Cathedral and nine managed generator cases pass. Updated the M2
+  dependency and evidence; external fine-layer data and runtime integration remain.
+
 - 2026-09-30: Added an isolated original-Diablo Cathedral level-1 coarse generator
   in the game module, using the shared legacy LCG with per-call state. Outputs
   read-only mega tiles/transparency, stairs, entry and seed metadata without MPQs.
