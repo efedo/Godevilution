@@ -32,6 +32,7 @@ public sealed class DiabloWorldCommandProcessor
     private readonly AuthoritativeQuestRouteMessageCatalog? questRouteMessages;
     private readonly List<DiabloGameplayEvent> pendingEntryEvents = [];
     private Func<int, AuthoritativeSetLevelObjectOrigin?>? setLevelOriginResolver;
+    private Action<AuthoritativePlayerState, uint, uint>? nativeStoreTransitionInvalidator;
     private readonly DeterministicEntityIdAllocator worldItemEntityIds = new(0x40000000);
     private readonly DeterministicEntityIdAllocator authoredProjectileEntityIds = new(0xC0000000);
     private readonly DeterministicEntityIdAllocator generatedMonsterEntityIds = new(
@@ -99,6 +100,13 @@ public sealed class DiabloWorldCommandProcessor
     {
         ArgumentNullException.ThrowIfNull(resolver);
         setLevelOriginResolver = resolver;
+    }
+
+    internal void SetNativeStoreTransitionInvalidator(
+        Action<AuthoritativePlayerState, uint, uint> invalidator)
+    {
+        ArgumentNullException.ThrowIfNull(invalidator);
+        nativeStoreTransitionInvalidator = invalidator;
     }
 
     public DiabloWorldIntentResult Execute(
@@ -501,6 +509,7 @@ public sealed class DiabloWorldCommandProcessor
         if (!applyEffects)
             return DiabloWorldIntentResult.Accepted;
 
+        var sourceLevelId = player.LevelId;
         player.LevelId = warp.TargetLevelId;
         player.MarkLevelVisited(player.LevelId);
         player.PositionX = destination.Value.X;
@@ -508,6 +517,10 @@ public sealed class DiabloWorldCommandProcessor
         EnsureLevelEntryState(player.LevelId, player.EntityId, emitDialogue: true);
         player.ManaShieldActive = false;
         RemoveLevelTransitionStatuses(player);
+        nativeStoreTransitionInvalidator?.Invoke(
+            player,
+            sourceLevelId,
+            player.LevelId);
         if (useNativePlayerActionTiming) {
             var endTick = checked(appliedTick + 2);
             DiabloPlayerActionLifecycle.Begin(
@@ -798,6 +811,7 @@ public sealed class DiabloWorldCommandProcessor
             && player.LevelId == combatRules.TownLevelId
             && destinationLevelId != combatRules.TownLevelId
             && portal.OwnerEntityId == player.EntityId;
+        var sourceLevelId = player.LevelId;
         player.LevelId = destinationLevelId;
         player.MarkLevelVisited(player.LevelId);
         player.PositionX = destinationPositionX;
@@ -805,6 +819,10 @@ public sealed class DiabloWorldCommandProcessor
         EnsureLevelEntryState(player.LevelId, player.EntityId, emitDialogue: true);
         player.ManaShieldActive = false;
         RemoveLevelTransitionStatuses(player);
+        nativeStoreTransitionInvalidator?.Invoke(
+            player,
+            sourceLevelId,
+            player.LevelId);
         if (useNativePlayerActionTiming) {
             var endTick = checked(appliedTick + 1);
             var action = new AuthoritativePlayerActionState(

@@ -2,6 +2,17 @@
 
 All notable changes to this fork are documented below.
 
+- 2026-09-30: Matched native non-town level-load vendor cleanup for accepted
+  cross-level warps/stairs/portals. Reused metadata-bound native-role mapping;
+  rejected/dry-run transitions, same-level/town-return behavior, Generic and
+  metadata-free stores, stash and save/restore remain unchanged. Added 12 focused
+  lifecycle cases; all 299 selected store/service/world/portal tests pass.
+  Full protocol verification passes 550 with two explicit performance exclusions;
+  actual headless Godot 4.7.2 town-loop/resume passes with four clean engine exits.
+  Kept the checked-in SDK target unchanged; four known module RNG failures remain.
+  Updated the module contract, active plan and qualified verification record;
+  complete service/pricing parity and M1 acceptance remain open.
+
 - 2026-09-30: Added an immutable Cathedral level-1 coarse/fine geometry pair and
   catalog-driven 112x112 materializer with native offset, exterior fill, quadrant
   ordering, transparency and SOL corrections. Kept the 40x40 generator result

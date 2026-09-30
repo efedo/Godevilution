@@ -69,8 +69,12 @@ and no held item. Reserved Adria/Cain IDs retain their town-only guard. Rejected
 entry occurs before inventory-dimension hydration; accepted entry and the
 metadata-free compatibility path retain hydration. Custom Generic stores are
 unchanged. Ongoing item actions do not reapply the entry cursor/range check;
-closing services remains possible anywhere. Full open-service lifecycle handling
-across movement/transitions is still an integration gap.
+closing services remains possible anywhere. The simulation clears a metadata-bound
+native vendor session after an accepted cross-level warp/portal into a non-town
+level, matching native level-load store cleanup. Rejected/dry-run transitions,
+same-level movement/warps, town returns, Generic and metadata-free stores retain
+their existing behavior. This does not change stash sessions, save/restore, general
+inventory hydration, or pricing; complete service lifecycle parity remains open.
 
 The ordinary Cathedral level-1 geometry adapter expands the generator's
 one-based coarse IDs through validated external TIL/SOL catalogs into native

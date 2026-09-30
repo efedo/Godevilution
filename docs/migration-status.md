@@ -85,8 +85,10 @@ open. Their scope, dependencies, and exit checks are defined only in the
   town return, active-portal fresh-host restore and owner-return closure.
   Two-client Godot town movement/state visibility and reverse-order fresh-host
   resume also have application evidence below. Real Smith/Gillian approach and
-  native-role service entry now pass; cooperative combat, remaining native portal
-  placement, open-service lifecycle/pricing and the complete loop remain M1 work. Local standalone-host
+  native-role service entry now pass. Accepted cross-level entry into a non-town
+  level now closes metadata-bound native vendors; cooperative combat, remaining
+  native portal placement, full service lifecycle/pricing and the complete loop
+  remain M1 work. Local standalone-host
   measurements are below;
   no campaign, Godot frame budget, or release-platform performance pass is claimed.
 - Godot currently requires no MPQs because it uses placeholder presentation.
@@ -115,6 +117,40 @@ The following records describe implemented slices at this baseline. They are
 evidence, not a separate priority list; detailed older entries retain their
 original scope and may be superseded by later entries or the current assessment.
 
+### M1 native vendor transition cleanup (2026-09-30)
+
+This bounded batch follows `b7f93f1a3`. Native `LoadGameLevelStores` calls
+`StoreManager::FreeStoreMem` outside town, which clears the active vendor.
+The simulation now binds the store processor's native-role mapping to accepted
+warp/stair/portal transitions. With greeting metadata, a cross-level transition
+into a non-town destination clears only the transitioning player's `ActiveStoreId`.
+Configured reserved Adria/Cain IDs use the existing mapping.
+
+Rejected/dry-run transitions, same-level movement/warps/portals, town returns,
+Generic stores and metadata-free callers preserve their existing behavior.
+Stash state/items/gold and the save/restore representation are unchanged. An old
+vendor purchase after closure cannot spend gold, consume stock or advance RNG;
+this is not a blanket rejection-hydration rollback claim. Existing general
+inventory-dimension hydration remains unchanged.
+
+The rebuilt focused store/service/world/portal selection passes 299 tests,
+including all 12 new lifecycle cases and simulation-factory binding. Independent
+review corrected test-fixture ownership, geometry, target-level and list-type
+errors before execution. The rebuilt full protocol suite passes 550 tests with
+zero failures and two explicit one/four-participant performance exclusions
+(552 total, 13m 09s). Complete output is retained at
+`%TEMP%/Godevilution-Protocol-Verification-16092ebadefd4ce5be008a466b4e1d89/protocol.stdout.log`.
+Actual headless TownLoop/TownLoopResume passes under
+`%TEMP%/Godevilution-Scene-Acceptance-345a42f52aad4f1ea7d7a8b655904975`;
+all four importer/client records exit zero without errors and no Godot process
+remains. This run used the installed Godot 4.7.2 Mono engine, not the earlier
+4.7.1 crash-reproduction binary. Its generated SDK-version edit and identical
+backup were removed; the checked-in 4.7.1 SDK target is unchanged. No fresh
+rendered or native GUI acceptance is claimed. Broader integrated module
+verification still has the same four known Hork RNG failures. This closes a
+narrow vendor transition gap, not complete service/pricing/stash parity, M1 or
+campaign acceptance.
+
 ### M1 real town-service approach and portal priority (2026-09-30)
 
 This batch follows `dc2403a95`. World controls now list already-projected NPCs
@@ -128,8 +164,9 @@ With validated greeting metadata, native-role stores and Gillian's stash require
 the NPC's declared level, Chebyshev distance at most one and no cursor-held item.
 Rejected entry occurs before dimension hydration and changes no resources or
 service state. Generic stores and metadata-free direct callers retain historical
-behavior. The check is entry-only: complete open-service lifecycle handling across
-movement/transitions and native stock/pricing are still gaps.
+behavior. This batch's check is entry-only; the later vendor-transition batch
+adds narrow level-load cleanup. Complete service lifecycle and native stock/pricing
+remain gaps.
 
 An active owned bidirectional dungeon-to-town portal now takes priority over a
 coincident automatic stair. Explicit warp/portal intents and ordinary/static

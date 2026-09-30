@@ -505,6 +505,8 @@ public sealed partial class DiabloSimulation
         WorldState = worldState ?? throw new ArgumentNullException(nameof(worldState));
         this.storeCommands = storeCommands ?? throw new ArgumentNullException(nameof(storeCommands));
         this.worldCommands = worldCommands ?? throw new ArgumentNullException(nameof(worldCommands));
+        this.worldCommands.SetNativeStoreTransitionInvalidator(
+            this.storeCommands.InvalidateNativeStoreAfterCrossLevelTransition);
         this.combatCommands = combatCommands ?? throw new ArgumentNullException(nameof(combatCommands));
         Spells = spells ?? throw new ArgumentNullException(nameof(spells));
         Experience = experience;

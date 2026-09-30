@@ -166,8 +166,10 @@ deliberately does not claim native generated-world parity, which belongs to M2.
    and portal destinations now support cancellable, acknowledged approach through
    World controls. Native-role vendor/stash entry requires the declared NPC level,
    adjacency and empty cursor; metadata-free/custom-store compatibility remains.
-   Owned portals take priority over coincident automatic stairs. Close remaining
-   native placement exclusions, open-service lifecycle/pricing, quest, death/restart,
+   Owned portals take priority over coincident automatic stairs. Metadata-bound
+   native vendors now close after accepted cross-level entry into a non-town level;
+   stash and compatibility-store policies remain unchanged. Close remaining
+   native placement exclusions, full service lifecycle/pricing, quest, death/restart,
    class skill, and cooperative gameplay/recovery journeys. Two actual Godot clients now
    have basic town movement/state visibility and reverse-order fresh-host resume
    acceptance; retain local-first identity and separate bookmarks when expanding

@@ -274,6 +274,23 @@ public sealed class DiabloStoreCommandProcessor
                 player.PositionY) <= 1;
     }
 
+    /** Clears a metadata-bound native vendor session after entering a non-town level. */
+    internal void InvalidateNativeStoreAfterCrossLevelTransition(
+        AuthoritativePlayerState player,
+        uint sourceLevelId,
+        uint destinationLevelId)
+    {
+        if (townerGreetings is null
+            || sourceLevelId == destinationLevelId
+            || destinationLevelId == townLevelId
+            || player.ActiveStoreId is not uint storeId
+            || !TryGetNativeStoreTownerId(storeId, out _)) {
+            return;
+        }
+
+        player.ActiveStoreId = null;
+    }
+
     /** Native Gillian admission for opening the server-owned stash. */
     private bool AllowsNativeStashEntry(AuthoritativePlayerState player)
     {
