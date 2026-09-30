@@ -2,6 +2,19 @@
 
 All notable changes to this fork are documented below.
 
+- 2026-09-30: Added opt-in actual Godot one/four-client performance workloads
+  through real controls with all-observer staging/round barriers and bounded,
+  credential-free callback/process evidence. Kept ordinary launch/save/protocol
+  behavior unchanged; reject incomplete samples, invalid counters and unclean
+  exits. Replaced a reproduced negative allocation estimate with explicitly
+  labelled last-GC heap size without forced collection. Focused tests pass 41/41;
+  rendered single/four profiles pass with nine clean engine exits and preserved
+  source SDK. Ordinary single-player recovery and two-client fresh-host resume
+  also pass without frame recording; final headless one/four diagnostics pass.
+  Retained earlier timeout/metric failures and updated existing guide, plan and
+  status. Local Debug baselines do not close native GUI, release
+  budget/platform, campaign or M0 gates.
+
 - 2026-09-30: Integrated negotiated whole-host clock-gated scheduling across
   admission, publication, durability, restore/reload fences and awaited shutdown.
   Added pending sequence resume and bounded protocol errors without weakening

@@ -792,6 +792,84 @@ public sealed class FakeCompletedProcess
         Assert.Contains("PASS", RunPowerShell(script), StringComparison.Ordinal);
     }
 
+    [Fact]
+    public void GodotPerformanceEvidenceRejectsInvalidWindowsAndComputesExactStatistics()
+    {
+        if (!OperatingSystem.IsWindows())
+            return;
+
+        var script = BuildPowerShellHarness(
+            ["Get-PerformanceMetricSummary", "Select-PerformancePublicFields", "Assert-GodotPerformanceEvidence"],
+            """
+            $statistics = Get-PerformanceMetricSummary @(4, 1, 3, 2)
+            if ($statistics.Count -ne 4 -or $statistics.MinimumMilliseconds -ne 1 -or
+                $statistics.MeanMilliseconds -ne 2.5 -or $statistics.P50Milliseconds -ne 2 -or
+                $statistics.P95Milliseconds -ne 4 -or $statistics.P99Milliseconds -ne 4 -or
+                $statistics.MaximumMilliseconds -ne 4) { throw 'Incorrect exact nearest-rank statistics.' }
+            foreach ($invalid in @(@(), @(-1), @([double]::NaN), @([double]::PositiveInfinity))) {
+                $rejected = $false
+                try { Get-PerformanceMetricSummary $invalid | Out-Null } catch { $rejected = $true }
+                if (-not $rejected) { throw 'Invalid performance metric was accepted.' }
+            }
+            $document = [pscustomobject]@{
+                SchemaVersion = '1'; CaptureState = 'stopped'
+                Outcome = @{ Succeeded = $true; Kind = 'workload-complete' }
+                Quality = @{ IsValid = $true; OriginalIdentityUnchanged = $true; ParticipantCountMatches = $true }
+                SampleCount = 3; DroppedSampleCount = 0; NonMonotonicTimestampCount = 0; InvalidTimestampCount = 0
+                MeasuredDurationMilliseconds = 15000; WarmupMilliseconds = 0; MeasurementWindowMilliseconds = 60000
+                ServerIdentity = @{ GameMode = 'SinglePlayer'; TickRateHz = 20; ProtocolSchemaVersion = '0.2.0'; ContentManifestHash = 'content'; RulesetIdentityHash = 'rules' }
+                Configuration = @{ ParticipantCount = 1; ProtocolSchemaVersion = '0.2.0'; ContentManifestHash = 'content'; RulesetIdentityHash = 'rules'; BuildConfiguration = 'Debug'; FrameCap = 60; Headless = $true; EngineVersion = '4.7.2'; Viewport = '1280x720'; Runtime = '.NET 8'; OperatingSystem = 'Windows'; Architecture = 'X64'; DisplayServer = 'headless' }
+                StartupProcess = @{ WorkingSetBytes = 100; PeakWorkingSetBytes = 120; LastGcHeapSizeBytes = 20; TotalProcessorTimeMilliseconds = 10 }
+                FinalProcess = @{ WorkingSetBytes = 110; PeakWorkingSetBytes = 130; LastGcHeapSizeBytes = 30; TotalProcessorTimeMilliseconds = 20 }
+                Samples = @(
+                    @{ ProcessCallbackMilliseconds = 1; CallbackIntervalMilliseconds = $null },
+                    @{ ProcessCallbackMilliseconds = 2; CallbackIntervalMilliseconds = 7500 },
+                    @{ ProcessCallbackMilliseconds = 3; CallbackIntervalMilliseconds = 7500 })
+            }
+            $serialized = $document | ConvertTo-Json -Depth 10
+            $summary = Assert-GodotPerformanceEvidence $document 1 'SinglePlayer' 'content' 'rules' $true
+            if ($summary.ProcessCallback.Count -ne 3 -or $summary.CallbackInterval.Count -ne 2 -or
+                $summary.ProcessCallback.P50Milliseconds -ne 2 -or $summary.CallbackInterval.P50Milliseconds -ne 7500) {
+                throw 'Callback cost and callback interval were conflated.'
+            }
+            $mutations = @(
+                { param($e) $e.Outcome.Succeeded = $false },
+                { param($e) $e.Quality.OriginalIdentityUnchanged = $false },
+                { param($e) $e.Quality.ParticipantCountMatches = $false },
+                { param($e) $e.DroppedSampleCount = 1 },
+                { param($e) $e.InvalidTimestampCount = 1 },
+                { param($e) $e.NonMonotonicTimestampCount = 1 },
+                { param($e) $e.Samples = @() },
+                { param($e) $e.MeasuredDurationMilliseconds = 14999 },
+                { param($e) $e.MeasuredDurationMilliseconds = [double]::NaN },
+                { param($e) $e.Configuration.ParticipantCount = 4 },
+                { param($e) $e.Configuration.Headless = $false },
+                { param($e) $e.Configuration.BuildConfiguration = 'Release' },
+                { param($e) $e.ServerIdentity.ContentManifestHash = 'other' },
+                { param($e) $e.StartupProcess = $null },
+                { param($e) $e.FinalProcess.WorkingSetBytes = -1 },
+                { param($e) $e.FinalProcess.LastGcHeapSizeBytes = -1 },
+                { param($e) $e.FinalProcess | Add-Member -NotePropertyName ManagedHeapBytes -NotePropertyValue -198408 },
+                { param($e) $e.FinalProcess.TotalProcessorTimeMilliseconds = 0 },
+                { param($e) $e.FinalProcess.PeakWorkingSetBytes = 1 },
+                { param($e) $e.Configuration | Add-Member -NotePropertyName ResumeToken -NotePropertyValue 'private' },
+                { param($e) $e.ServerIdentity | Add-Member -NotePropertyName SessionId -NotePropertyValue 'private' },
+                { param($e) $e.Samples[0].CallbackIntervalMilliseconds = 999 },
+                { param($e) $e.Samples[1].CallbackIntervalMilliseconds = -1 },
+                { param($e) $e.Samples[1].ProcessCallbackMilliseconds = [double]::PositiveInfinity })
+            foreach ($mutation in $mutations) {
+                $changed = $serialized | ConvertFrom-Json
+                & $mutation $changed
+                $rejected = $false
+                try { Assert-GodotPerformanceEvidence $changed 1 'SinglePlayer' 'content' 'rules' $true | Out-Null }
+                catch { $rejected = $true }
+                if (-not $rejected) { throw 'Invalid frame evidence was accepted as a baseline.' }
+            }
+            Write-Output 'PASS'
+            """);
+        Assert.Contains("PASS", RunPowerShell(script), StringComparison.Ordinal);
+    }
+
     private static string BuildPowerShellHarness(
         string[] functionNames,
         string body,

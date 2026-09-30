@@ -27,7 +27,7 @@ public partial class SessionAcceptance : Node
     private async Task RunAsync()
     {
         var phase = Environment.GetEnvironmentVariable("GODEVILUTION_ACCEPTANCE_PHASE");
-        if (phase is not ("Create" or "Resume" or "Recovery" or "Journey" or "JourneyResume" or "TownLoop" or "TownLoopResume" or "MultiplayerCreate" or "MultiplayerResume"))
+        if (phase is not ("Create" or "Resume" or "Recovery" or "Journey" or "JourneyResume" or "TownLoop" or "TownLoopResume" or "MultiplayerCreate" or "MultiplayerResume" or "Performance"))
             throw new InvalidOperationException("Explicit acceptance phase is required.");
         var portalPreview = Environment.GetEnvironmentVariable("GODEVILUTION_PORTAL_PREVIEW") == "1";
         var directory = Environment.GetEnvironmentVariable("GODEVILUTION_ACCEPTANCE_DIRECTORY")
@@ -37,6 +37,10 @@ public partial class SessionAcceptance : Node
             GetTree().Root.Size = new Vector2I(1280, 720);
         if (phase is "MultiplayerCreate" or "MultiplayerResume") {
             await RunMultiplayerAsync(directory, phase);
+            return;
+        }
+        if (phase == "Performance") {
+            await RunPerformanceAsync(directory);
             return;
         }
         var bookmarkPath = System.IO.Path.Combine(directory, "resume-token.txt");

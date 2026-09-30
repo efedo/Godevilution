@@ -10,16 +10,26 @@ param(
     [switch]$PreviewContent,
     [switch]$PortalPreviewContent,
     [switch]$Multiplayer,
-    [ValidateSet('Create', 'Resume', 'Recovery', 'Journey', 'JourneyResume', 'TownLoop', 'TownLoopResume', 'MultiplayerCreate', 'MultiplayerResume')] [string]$AcceptancePhase
+    [ValidateSet(1, 4)] [int]$PerformanceParticipants = 1,
+    [ValidateSet('Create', 'Resume', 'Recovery', 'Journey', 'JourneyResume', 'TownLoop', 'TownLoopResume', 'MultiplayerCreate', 'MultiplayerResume', 'Performance')] [string]$AcceptancePhase
 )
 
 $ErrorActionPreference = 'Stop'
+$performance = $AcceptancePhase -eq 'Performance'
+if ($performance) {
+    if ($PreviewContent -or $PortalPreviewContent -or ($Multiplayer -ne ($PerformanceParticipants -eq 4))) {
+        throw 'Performance uses base content and requires -Multiplayer only for four participants.'
+    }
+} elseif ($PerformanceParticipants -ne 1) {
+    throw 'PerformanceParticipants is only valid for Performance acceptance.'
+}
+$clientCount = if ($performance) { $PerformanceParticipants } elseif ($Multiplayer) { 2 } else { 1 }
 if ($PreviewContent -and $PortalPreviewContent) { throw 'Choose one preview profile.' }
 if ($AcceptancePhase -in @('TownLoop', 'TownLoopResume') -and -not ($PreviewContent -or $PortalPreviewContent)) {
     throw 'Town-loop acceptance requires -PreviewContent or -PortalPreviewContent and its isolated content identity.'
 }
 if ($Multiplayer -and ($PreviewContent -or $PortalPreviewContent)) { throw 'The local multiplayer profile uses base content, not the single-player preview.' }
-if ($AcceptancePhase -and ($Multiplayer -ne ($AcceptancePhase -in @('MultiplayerCreate', 'MultiplayerResume')))) {
+if ($AcceptancePhase -and -not $performance -and ($Multiplayer -ne ($AcceptancePhase -in @('MultiplayerCreate', 'MultiplayerResume')))) {
     throw 'Multiplayer acceptance phases require -Multiplayer; single-player phases cannot use it.'
 }
 $expectedGameMode = if ($Multiplayer) { 'Multiplayer' } else { 'SinglePlayer' }
@@ -38,6 +48,9 @@ $captureRoot = Join-Path ([System.IO.Path]::GetTempPath()) ('Godevilution-Godot-
 $godotLogPath = Join-Path $captureRoot 'godot.log'
 New-Item -ItemType Directory -Path $captureRoot | Out-Null
 New-Item -ItemType Directory -Path $SessionDirectory -Force | Out-Null
+if ($performance -and (Get-ChildItem -LiteralPath $SessionDirectory -Force)) {
+    throw 'Performance acceptance requires a fresh empty session directory.'
+}
 
 if ([string]::IsNullOrWhiteSpace($GodotExecutable)) {
     $wingetRoot = Join-Path $env:LOCALAPPDATA 'Microsoft\WinGet\Packages\GodotEngine.GodotEngine.Mono_Microsoft.Winget.Source_8wekyb3d8bbwe'
@@ -85,7 +98,10 @@ $environmentNames = @('DEVILUTION_SERVER_HOST', 'DEVILUTION_SERVER_PORT', 'DEVIL
     'DEVILUTION_CONTENT_HASH', 'DEVILUTION_RULESET_HASH', 'DEVILUTION_CHARACTER_CLASS_ID',
     'DEVILUTION_CHARACTER_NAME', 'DEVILUTION_RESUME_TOKEN', 'DEVILUTION_RESUME_TOKEN_PATH',
     'GODEVILUTION_ACCEPTANCE_PHASE', 'GODEVILUTION_ACCEPTANCE_DIRECTORY', 'GODEVILUTION_QUIT_AFTER_SECONDS',
-    'GODEVILUTION_LOCAL_PLAYER', 'GODEVILUTION_PORTAL_PREVIEW')
+    'GODEVILUTION_LOCAL_PLAYER', 'GODEVILUTION_PORTAL_PREVIEW',
+    'GODEVILUTION_PERFORMANCE_PARTICIPANTS', 'GODEVILUTION_PERFORMANCE_SHARED_DIRECTORY',
+    'GODEVILUTION_CLIENT_PERFORMANCE_OUTPUT', 'GODEVILUTION_CLIENT_PERFORMANCE_WARMUP_SECONDS',
+    'GODEVILUTION_CLIENT_PERFORMANCE_DURATION_SECONDS', 'GODEVILUTION_CLIENT_PERFORMANCE_MAX_SAMPLES')
 foreach ($name in $environmentNames) {
     $savedEnvironment[$name] = [Environment]::GetEnvironmentVariable($name, 'Process')
 }
@@ -101,6 +117,116 @@ function Assert-WritableDirectory([string]$Path, [string]$Purpose) {
         if (Test-Path -LiteralPath $probePath) {
             Remove-Item -LiteralPath $probePath -Force -ErrorAction SilentlyContinue
         }
+    }
+}
+
+function Get-PerformanceMetricSummary([double[]]$Values) {
+    if ($Values.Count -lt 1) { throw 'Performance metrics require nonempty samples.' }
+    foreach ($value in $Values) {
+        if ([double]::IsNaN($value) -or [double]::IsInfinity($value) -or $value -lt 0) {
+            throw 'Performance metrics must be finite and nonnegative.'
+        }
+    }
+    $sorted = @($Values | Sort-Object)
+    return [pscustomobject]@{
+        Count = $sorted.Count
+        MinimumMilliseconds = $sorted[0]
+        MeanMilliseconds = ($Values | Measure-Object -Average).Average
+        P50Milliseconds = $sorted[[int][Math]::Ceiling($sorted.Count * 0.50) - 1]
+        P95Milliseconds = $sorted[[int][Math]::Ceiling($sorted.Count * 0.95) - 1]
+        P99Milliseconds = $sorted[[int][Math]::Ceiling($sorted.Count * 0.99) - 1]
+        MaximumMilliseconds = $sorted[-1]
+    }
+}
+
+function Select-PerformancePublicFields($Value, [string[]]$Names) {
+    if ($null -eq $Value) { throw 'Performance metadata is missing.' }
+    $members = if ($Value -is [Collections.IDictionary]) { @($Value.Keys) } else { @($Value.PSObject.Properties.Name) }
+    foreach ($member in $members) {
+        if ($member -notin $Names) { throw 'Performance metadata contains an unexpected field.' }
+    }
+    $projected = [ordered]@{}
+    foreach ($name in $Names) { $projected[$name] = $Value.$name }
+    return [pscustomobject]$projected
+}
+
+function Assert-GodotPerformanceEvidence($Evidence, [int]$Participants, [string]$Mode, [string]$ContentHash, [string]$RulesetHash, [bool]$Headless) {
+    if ($null -eq $Evidence -or $Evidence.SchemaVersion -ne '1' -or $Evidence.CaptureState -ne 'stopped' -or
+        -not $Evidence.Outcome.Succeeded -or $Evidence.Outcome.Kind -ne 'workload-complete' -or
+        -not $Evidence.Quality.IsValid -or -not $Evidence.Quality.OriginalIdentityUnchanged -or
+        -not $Evidence.Quality.ParticipantCountMatches -or $Evidence.DroppedSampleCount -ne 0 -or
+        $Evidence.NonMonotonicTimestampCount -ne 0 -or $Evidence.InvalidTimestampCount -ne 0 -or
+        $Evidence.SampleCount -lt 2 -or $Evidence.SampleCount -gt 4096 -or
+        @($Evidence.Samples).Count -ne $Evidence.SampleCount -or
+        $Evidence.MeasuredDurationMilliseconds -lt 15000 -or $Evidence.MeasuredDurationMilliseconds -gt 60000 -or
+        [double]::IsNaN([double]$Evidence.MeasuredDurationMilliseconds) -or
+        $Evidence.WarmupMilliseconds -ne 0 -or $Evidence.MeasurementWindowMilliseconds -ne 60000) {
+        throw 'Incomplete, invalid or truncated Godot performance evidence is not a baseline.'
+    }
+    $identity = $Evidence.ServerIdentity
+    $configuration = $Evidence.Configuration
+    if ($identity.GameMode -ne $Mode -or $identity.TickRateHz -ne 20 -or
+        $identity.ProtocolSchemaVersion -ne '0.2.0' -or $identity.ContentManifestHash -cne $ContentHash -or
+        $identity.RulesetIdentityHash -cne $RulesetHash -or $configuration.ParticipantCount -ne $Participants -or
+        $configuration.ContentManifestHash -cne $ContentHash -or $configuration.RulesetIdentityHash -cne $RulesetHash -or
+        $configuration.ProtocolSchemaVersion -ne '0.2.0' -or $configuration.BuildConfiguration -ne 'Debug' -or
+        $configuration.FrameCap -ne 60 -or $configuration.Headless -ne $Headless -or
+        $configuration.EngineVersion -notmatch '^4\.7\.' -or $configuration.Viewport -notmatch '^\d+x\d+$' -or
+        [string]::IsNullOrWhiteSpace($configuration.Runtime) -or [string]::IsNullOrWhiteSpace($configuration.OperatingSystem) -or
+        [string]::IsNullOrWhiteSpace($configuration.Architecture) -or [string]::IsNullOrWhiteSpace($configuration.DisplayServer) -or
+        ($Headless -ne ($configuration.DisplayServer -eq 'headless'))) {
+        throw 'Godot performance identity/configuration did not match the actual workload.'
+    }
+    if (-not $Headless -and ([string]::IsNullOrWhiteSpace($configuration.Renderer) -or
+        [string]::IsNullOrWhiteSpace($configuration.Device) -or [string]::IsNullOrWhiteSpace($configuration.VsyncMode))) {
+        throw 'Rendered Godot performance evidence requires actual renderer/device/pacing metadata.'
+    }
+    $publicConfiguration = Select-PerformancePublicFields $configuration @(
+        'ClientBuildId', 'ProtocolSchemaVersion', 'ContentManifestHash', 'RulesetIdentityHash',
+        'Renderer', 'Device', 'Viewport', 'VsyncEnabled', 'FrameCap', 'Headless', 'EngineVersion',
+        'ParticipantCount', 'RenderingDriver', 'DisplayServer', 'OperatingSystem', 'OperatingSystemVersion',
+        'OperatingSystemFeatures', 'VsyncMode', 'Runtime', 'RuntimeOperatingSystem', 'Architecture',
+        'BuildConfiguration', 'WindowPosition', 'WindowMode', 'WindowCanDraw', 'WindowFocusedAtStart')
+    $publicIdentity = Select-PerformancePublicFields $identity @(
+        'BuildId', 'ProtocolSchemaVersion', 'ContentManifestHash', 'RulesetIdentityHash', 'TickRateHz', 'GameMode')
+    $processFields = @('WorkingSetBytes', 'PeakWorkingSetBytes', 'LastGcHeapSizeBytes', 'TotalProcessorTimeMilliseconds')
+    $startup = Select-PerformancePublicFields $Evidence.StartupProcess $processFields
+    $final = Select-PerformancePublicFields $Evidence.FinalProcess $processFields
+    foreach ($process in @($startup, $final)) {
+        foreach ($field in $processFields) {
+            if ($null -eq $process.$field -or [double]::IsNaN([double]$process.$field) -or
+                [double]::IsInfinity([double]$process.$field) -or [double]$process.$field -lt 0) {
+                throw 'Godot process observations must be available, finite and nonnegative.'
+            }
+        }
+        if ($process.PeakWorkingSetBytes -lt $process.WorkingSetBytes) { throw 'Godot process working-set observations are inconsistent.' }
+    }
+    if ($final.TotalProcessorTimeMilliseconds -lt $startup.TotalProcessorTimeMilliseconds) {
+        throw 'Godot process CPU counters moved backwards.'
+    }
+    $callbacks = @()
+    $intervals = @()
+    for ($index = 0; $index -lt $Evidence.Samples.Count; $index++) {
+        $sample = $Evidence.Samples[$index]
+        if ($null -eq $sample.ProcessCallbackMilliseconds -or
+            (($index -eq 0) -ne ($null -eq $sample.CallbackIntervalMilliseconds))) {
+            throw 'Godot callback boundaries are missing or include the pre-measurement gap.'
+        }
+        $callbacks += [double]$sample.ProcessCallbackMilliseconds
+        if ($index -gt 0) {
+            if ([double]$sample.CallbackIntervalMilliseconds -le 0) { throw 'Godot callback intervals must be positive.' }
+            $intervals += [double]$sample.CallbackIntervalMilliseconds
+        }
+    }
+    return [pscustomobject]@{
+        MeasuredDurationMilliseconds = $Evidence.MeasuredDurationMilliseconds
+        Configuration = $publicConfiguration
+        ServerIdentity = $publicIdentity
+        ProcessCallback = Get-PerformanceMetricSummary $callbacks
+        CallbackInterval = Get-PerformanceMetricSummary $intervals
+        StartupProcess = $startup
+        FinalProcess = $final
+        ProcessCpuDeltaMilliseconds = $final.TotalProcessorTimeMilliseconds - $startup.TotalProcessorTimeMilliseconds
     }
 }
 
@@ -672,6 +798,7 @@ function Stop-GodotProcess($Tracked) {
 }
 
 try {
+    foreach ($name in $environmentNames) { [Environment]::SetEnvironmentVariable($name, $null, 'Process') }
     # One local writer per save directory; parallel tests use distinct directories.
     $sessionLock = [System.IO.File]::Open((Join-Path $SessionDirectory 'launcher.lock'), 'OpenOrCreate', 'ReadWrite', 'None')
     $staging = New-IsolatedGodotProject $clientSourceProject (Join-Path $captureRoot 'godot/Devilution.Client')
@@ -776,8 +903,18 @@ try {
             $clientEnvironment['GODEVILUTION_LOCAL_PLAYER'] = [string]$Slot
             $clientEnvironment['DEVILUTION_CHARACTER_NAME'] = if ($CharacterName) { "$CharacterName $Slot" } else { "Hero $Slot" }
         }
+        if ($performance) {
+            $clientEnvironment['GODEVILUTION_LOCAL_PLAYER'] = [string]$Slot
+            $clientEnvironment['GODEVILUTION_PERFORMANCE_PARTICIPANTS'] = [string]$clientCount
+            $clientEnvironment['GODEVILUTION_PERFORMANCE_SHARED_DIRECTORY'] = $SessionDirectory
+            $clientEnvironment['GODEVILUTION_CLIENT_PERFORMANCE_OUTPUT'] = Join-Path $clientDirectory 'frame-measurement'
+            $clientEnvironment['GODEVILUTION_CLIENT_PERFORMANCE_WARMUP_SECONDS'] = '0'
+            $clientEnvironment['GODEVILUTION_CLIENT_PERFORMANCE_DURATION_SECONDS'] = '60'
+            $clientEnvironment['GODEVILUTION_CLIENT_PERFORMANCE_MAX_SAMPLES'] = '4096'
+        }
         $godotArguments = '--path "{0}" --log-file "{1}"' -f $clientProject, $clientLog
         if ($Headless) { $godotArguments += ' --headless' }
+        if ($performance) { $godotArguments += ' --max-fps 60' }
         $clientEvidence = $null
         if ($AcceptancePhase) {
             $clientEnvironment['GODEVILUTION_ACCEPTANCE_PHASE'] = $AcceptancePhase
@@ -808,8 +945,28 @@ try {
     }
     $startedClients += Start-SceneClient 1
     $godotProcess = $startedClients[0].Process
-    if ($Multiplayer) { $startedClients += Start-SceneClient 2 }
-    if ($Multiplayer -and $AcceptancePhase) {
+    if ($performance) {
+        for ($slot = 1; $slot -le $clientCount; $slot++) {
+            $readyPath = Join-Path $SessionDirectory "performance-ready-$slot.json"
+            $readyWait = [Diagnostics.Stopwatch]::StartNew()
+            while (-not (Test-Path -LiteralPath $readyPath)) {
+                if ($serverProcess.HasExited) { throw 'The performance host exited before client readiness.' }
+                foreach ($startedClient in $startedClients) {
+                    if ($startedClient.Process.HasExited) { throw "Performance client exited before slot $slot readiness. See $($startedClient.Log)" }
+                }
+                if ($readyWait.Elapsed.TotalSeconds -gt 30) { throw "Performance slot $slot did not become ready." }
+                Start-Sleep -Milliseconds 100
+            }
+            $ready = Get-Content -LiteralPath $readyPath -Raw | ConvertFrom-Json
+            if (-not $ready.Ready -or $ready.Slot -ne $slot -or $ready.ParticipantCount -ne $clientCount) {
+                throw 'Performance client emitted invalid readiness evidence.'
+            }
+            if ($slot -lt $clientCount) { $startedClients += Start-SceneClient ($slot + 1) }
+        }
+    } else {
+        if ($Multiplayer) { $startedClients += Start-SceneClient 2 }
+    }
+    if (($Multiplayer -or $performance) -and $AcceptancePhase) {
         $processEvidence = @{ HostProcessId = $serverProcess.Id; HostStartedUtc = $serverProcess.StartTime.ToUniversalTime().ToString('O'); Port = $actualPort;
             Clients = @($startedClients | ForEach-Object { @{ ProcessId = $_.Process.Id; StartedUtc = $_.Process.StartTime.ToUniversalTime().ToString('O') } }) }
         [IO.File]::WriteAllText((Join-Path $SessionDirectory ($AcceptancePhase.ToLowerInvariant() + '-processes.json')), ($processEvidence | ConvertTo-Json -Depth 4))
@@ -865,18 +1022,53 @@ try {
                 throw "Godot acceptance evidence failed identity/mode validation. See $($startedClient.Evidence)"
             }
         }
+        if ($performance) {
+            $summaries = @()
+            $slot = 0
+            foreach ($startedClient in $startedClients) {
+                $slot++
+                $workload = Get-Content -LiteralPath $startedClient.Evidence -Raw | ConvertFrom-Json
+                if ($workload.Phase -ne 'Performance' -or $workload.ParticipantCount -ne $clientCount -or
+                    $workload.Slot -ne $slot -or $workload.WarmupRounds -ne 5 -or $workload.MeasuredRounds -ne 15) {
+                    throw 'The Godot performance workload did not complete all settled movement rounds.'
+                }
+                $framePath = Join-Path $startedClient.Directory 'frame-measurement/client-frame-evidence.json'
+                $frames = Get-Content -LiteralPath $framePath -Raw | ConvertFrom-Json
+                $summary = Assert-GodotPerformanceEvidence $frames $clientCount $expectedGameMode $contentHash $rulesetHash ([bool]$Headless)
+                $summaries += [pscustomobject]@{ Slot = $slot; Metrics = $summary }
+            }
+            $baseline = [pscustomobject]@{
+                SchemaVersion = '1'; Passed = $true; ParticipantCount = $clientCount
+                WarmupRounds = 5; MeasuredRounds = 15; FrameCap = 60; Headless = [bool]$Headless
+                Statistic = 'Exact nearest-rank percentiles over bounded samples; not GPU/whole-frame timing'
+                ProcessObservationScope = 'Own process at capture creation/stop after workload warm-up; CPU delta includes recorder/barrier overhead; heap size is from the last GC, not live allocations; peak working set is lifetime peak, not leak/soak evidence'
+                EngineVersion = $engineVersion; SourceHash = $staging.SourceHash
+                LaunchLogs = $captureRoot; Clients = $summaries
+            }
+            $baselinePath = Join-Path $SessionDirectory 'performance-baseline.json'
+            if (Test-Path -LiteralPath $baselinePath) { throw 'A performance baseline must never overwrite evidence.' }
+        }
         if (-not (Get-ChildItem -LiteralPath (Join-Path $SessionDirectory 'save') -Filter '*.session.json' -File)) {
             throw 'Godot acceptance did not produce an authoritative checkpoint.'
         }
         if ($Multiplayer) {
-            if (@(Get-ChildItem -LiteralPath (Join-Path $SessionDirectory 'save') -Filter '*.session.json' -File).Count -ne 2) {
-                throw 'Multiplayer acceptance must preserve exactly two authoritative character checkpoints.'
+            if (@(Get-ChildItem -LiteralPath (Join-Path $SessionDirectory 'save') -Filter '*.session.json' -File).Count -ne $clientCount) {
+                throw 'Multiplayer acceptance must preserve one authoritative character checkpoint per client.'
             }
-            $firstBookmark = [IO.File]::ReadAllText((Join-Path $SessionDirectory 'player-1/resume-token.txt')).Trim()
-            $secondBookmark = [IO.File]::ReadAllText((Join-Path $SessionDirectory 'player-2/resume-token.txt')).Trim()
-            if ([string]::IsNullOrWhiteSpace($firstBookmark) -or [string]::IsNullOrWhiteSpace($secondBookmark) -or $firstBookmark -ceq $secondBookmark) {
-                throw 'Multiplayer players must retain distinct private resume bookmarks.'
+            $bookmarks = [Collections.Generic.HashSet[string]]::new([StringComparer]::Ordinal)
+            for ($slot = 1; $slot -le $clientCount; $slot++) {
+                $bookmark = [IO.File]::ReadAllText((Join-Path $SessionDirectory "player-$slot/resume-token.txt")).Trim()
+                if ([string]::IsNullOrWhiteSpace($bookmark) -or -not $bookmarks.Add($bookmark)) {
+                    throw 'Multiplayer players must retain distinct private resume bookmarks.'
+                }
             }
+        }
+        if ($performance) {
+            if ($serverProcess.HasExited) { throw 'The performance host exited unexpectedly; no baseline is accepted.' }
+            $baselineStream = [IO.File]::Open($baselinePath, [IO.FileMode]::CreateNew, [IO.FileAccess]::Write, [IO.FileShare]::Read)
+            $baselineWriter = [IO.StreamWriter]::new($baselineStream, [Text.UTF8Encoding]::new($false))
+            try { $baselineWriter.Write(($baseline | ConvertTo-Json -Depth 10)) }
+            finally { $baselineWriter.Dispose() }
         }
     }
 } catch {

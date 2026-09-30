@@ -1,6 +1,8 @@
 using Devilution.Client.Protocol;
+using Devilution.Client.Diagnostics;
 using Devilution.Protocol.V1;
 using Godot;
+using System.Runtime.InteropServices;
 using Environment = System.Environment;
 
 namespace Devilution.Client;
@@ -30,11 +32,13 @@ public partial class Main : Node2D
     private string? localSessionWarning;
     private double bookmarkRetrySeconds;
     private ulong snapshotRevision;
+    private ClientFrameEvidenceRecorder? frameEvidence;
 
     // Read-only copies for the scene acceptance harness; never a gameplay owner.
     internal Snapshot? ObservedSnapshot => model.Snapshot?.Clone();
     internal CommandResult? ObservedCommandResult => model.LastCommandResult?.Clone();
     internal AuthoritativeServerIdentity? ObservedIdentity => client?.ServerIdentity;
+    internal bool ObservedClockGatedScheduling => client?.IsClockGatedCommandScheduling == true;
     internal bool TransportConnected => client?.IsConnected == true;
     internal int ObservedPendingCommandCount => client?.PendingCommandCount ?? 0;
     internal Vector2? ObservedPlayerScreenPosition => world?.ScreenPositionForEntity(model.PlayerEntityId);
@@ -43,12 +47,111 @@ public partial class Main : Node2D
     internal Vector2 ObservedTileScreenPosition(int x, int y) => world!.ScreenPositionForTile(x, y);
     internal Vector2? ObservedEntityScreenPosition(uint entityId) => world?.ScreenPositionForEntity(entityId);
 
+    internal string? ClientFrameEvidencePath => frameEvidence?.EvidenceFilePath;
+
+    /** Starts an explicitly requested bounded capture; participant count is caller-supplied. */
+    internal bool StartPerformanceRecording(int participantCount, double warmupSeconds)
+    {
+        if (frameEvidence is not null
+            || participantCount is < 1 or > 64
+            || !double.IsFinite(warmupSeconds)
+            || warmupSeconds < 0)
+            return false;
+        if (string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable(
+                "GODEVILUTION_CLIENT_PERFORMANCE_OUTPUT")))
+            return false;
+
+        var snapshot = model.Snapshot;
+        var serverIdentity = client?.ServerIdentity;
+        if (snapshot is null
+            || serverIdentity is null
+            || snapshot.Players.Count != participantCount)
+            return false;
+
+        var options = connectionOptions ?? ClientConnectionOptions.FromEnvironment();
+        var viewport = GetViewport().GetVisibleRect().Size;
+        var displayServer = DisplayServer.GetName();
+        var vsyncMode = DisplayServer.WindowGetVsyncMode(0).ToString();
+        var metadata = new ClientFrameEvidenceMetadata(
+            options.ClientBuildId,
+            options.ProtocolSchemaVersion,
+            options.ContentManifestHash,
+            options.RulesetIdentityHash,
+            RenderingServer.GetCurrentRenderingMethod(),
+            RenderingServer.GetVideoAdapterName(),
+            FormattableString.Invariant($"{viewport.X:0}x{viewport.Y:0}"),
+            !string.Equals(vsyncMode, "Disabled", StringComparison.Ordinal),
+            Engine.GetMaxFps(),
+            string.Equals(displayServer, "headless", StringComparison.OrdinalIgnoreCase)
+                || OS.HasFeature("headless"),
+            GetGodotEngineVersion(),
+            participantCount,
+            RenderingServer.GetCurrentRenderingDriverName(),
+            displayServer,
+            OS.GetName(),
+            OS.GetVersion(),
+            GetOperatingSystemFeatures(),
+            vsyncMode,
+            RuntimeInformation.FrameworkDescription,
+            RuntimeInformation.OSDescription,
+            RuntimeInformation.ProcessArchitecture.ToString(),
+            GetBuildConfiguration(),
+            FormatWindowPosition(DisplayServer.WindowGetPosition(0)),
+            DisplayServer.WindowGetMode(0).ToString(),
+            DisplayServer.WindowCanDraw(0),
+            DisplayServer.WindowIsFocused(0));
+        frameEvidence = ClientFrameEvidenceRecorder.TryStartFromEnvironment(
+            metadata,
+            warmupSeconds);
+        if (frameEvidence is { } recorder) {
+            recorder.ObserveServerIdentity(serverIdentity);
+            recorder.ObserveParticipantCount(snapshot.Players.Count);
+        }
+        return frameEvidence is not null;
+    }
+
+    /** Stops the capture with an explicit workload result; application exit is never successful. */
+    internal bool StopPerformanceRecording(bool workloadPassed)
+        => frameEvidence?.Stop(
+            workloadPassed ? "workload-complete" : "workload-failed",
+            workloadPassed) == true;
+
+    private static string? GetGodotEngineVersion()
+    {
+        var versionInfo = Engine.GetVersionInfo();
+        return versionInfo.ContainsKey("string")
+            ? versionInfo["string"].AsString()
+            : null;
+    }
+
+    private static string GetOperatingSystemFeatures()
+    {
+        var candidates = new[] {
+            "headless", "server", "editor", "movie", "web", "mobile", "desktop",
+            "pc", "linux", "windows", "macos", "x11", "wayland",
+        };
+        return string.Join(",", candidates.Where(OS.HasFeature));
+    }
+
+    private static string GetBuildConfiguration()
+    {
+#if DEBUG
+        return "Debug";
+#else
+        return "Release";
+#endif
+    }
+
+    private static string FormatWindowPosition(Vector2I position)
+        => FormattableString.Invariant($"{position.X},{position.Y}");
+
     public override void _Ready()
     {
         GetWindow().MinSize = new Vector2I(960, 600);
         var playerSlot = Environment.GetEnvironmentVariable("GODEVILUTION_LOCAL_PLAYER");
-        if (playerSlot is "1" or "2")
-            GetWindow().Title = $"Godevilution - Player {playerSlot}";
+        if (int.TryParse(playerSlot, out var playerNumber)
+            && playerNumber is >= 1 and <= 4)
+            GetWindow().Title = $"Godevilution - Player {playerNumber}";
         if (int.TryParse(Environment.GetEnvironmentVariable("GODEVILUTION_QUIT_AFTER_SECONDS"), out var quitSeconds)
             && quitSeconds is > 0 and <= 3600)
             GetTree().CreateTimer(quitSeconds).Timeout += () => GetTree().Quit();
@@ -217,6 +320,10 @@ public partial class Main : Node2D
 
     public override void _Process(double delta)
     {
+        var evidenceFrameTimestamp = frameEvidence is null
+            ? 0
+            : ClientFrameEvidenceRecorder.GetTimestamp();
+        var evidenceSceneStartTimestamp = evidenceFrameTimestamp;
         if (localSessionWarning is not null && client?.IsConnected == true) {
             bookmarkRetrySeconds += delta;
             if (bookmarkRetrySeconds >= 5) {
@@ -289,6 +396,19 @@ public partial class Main : Node2D
         hud?.Apply(model, client, connectionTask);
         hud?.SetSessionWarning(localSessionWarning);
         feedback?.Apply(model, world);
+        var evidenceSceneEndTimestamp = frameEvidence is null
+            ? 0
+            : ClientFrameEvidenceRecorder.GetTimestamp();
+        if (frameEvidence is { } evidence && evidenceFrameTimestamp != 0) {
+            if (client?.ServerIdentity is { } identity)
+                evidence.ObserveServerIdentity(identity);
+            if (model.Snapshot is { } snapshot)
+                evidence.ObserveParticipantCount(snapshot.Players.Count);
+            evidence.RecordFrame(
+                evidenceFrameTimestamp,
+                evidenceSceneStartTimestamp,
+                evidenceSceneEndTimestamp);
+        }
     }
 
     public override void _UnhandledInput(InputEvent @event)
@@ -758,6 +878,11 @@ public partial class Main : Node2D
     public override async void _ExitTree()
     {
         lifetime.Cancel();
+        try {
+            frameEvidence?.Stop("application-exit", succeeded: false);
+        } catch (Exception exception) when (exception is IOException or UnauthorizedAccessException) {
+            GD.PushWarning($"Could not write client frame evidence: {exception.Message}");
+        }
         if (client is not null)
             await client.DisposeAsync();
         lifetime.Dispose();

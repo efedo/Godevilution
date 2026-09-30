@@ -237,7 +237,8 @@ public sealed class LocalLauncherContractTests
         Assert.Contains("$startedClients | ForEach-Object { $_.Process }", launcher);
         Assert.Contains("Complete-GodotProcess $startedClient.Tracked 0 'Godot client'", launcher);
         Assert.Contains("Multiplayer acceptance requires fresh phase markers", launcher);
-        Assert.Contains("exactly two authoritative character checkpoints", launcher);
+        Assert.Contains(".Count -ne $clientCount", launcher);
+        Assert.Contains("$clientCount = if ($performance) { $PerformanceParticipants } elseif ($Multiplayer) { 2 } else { 1 }", launcher);
         Assert.Contains("distinct private resume bookmarks", launcher);
         Assert.Contains("Multiplayer acceptance phases require -Multiplayer", launcher);
         Assert.Contains("$Multiplayer -and ($PreviewContent -or $PortalPreviewContent)", launcher);
@@ -260,6 +261,26 @@ public sealed class LocalLauncherContractTests
         Assert.Contains("Assert-GodotImportLog $importTracked $importLogPath", launcher, StringComparison.Ordinal);
         Assert.Contains("$resolvedPath = (Resolve-Path -LiteralPath $enginePath -ErrorAction Stop).ProviderPath", launcher, StringComparison.Ordinal);
         Assert.Contains("try { $sessionLock.Dispose() }", launcher, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void GodotPerformanceWorkloadIsOptInAndPreservesOrdinaryProfiles()
+    {
+        var root = FindRepositoryRoot();
+        var wrapper = File.ReadAllText(Path.Combine(root, "tools/measure-godot-client.ps1"));
+        var launcher = File.ReadAllText(Path.Combine(root, "godot/run-local-client.ps1"));
+        var normal = File.ReadAllText(Path.Combine(root, "run-godot-client.ps1"));
+        Assert.Contains("param()", wrapper);
+        Assert.Contains("-PerformanceParticipants 1", wrapper);
+        Assert.Contains("-PerformanceParticipants 4 -Multiplayer", wrapper);
+        Assert.DoesNotContain("Performance", normal);
+        Assert.Contains("Performance acceptance requires a fresh empty session directory", launcher);
+        Assert.Contains("performance-ready-$slot.json", launcher);
+        Assert.Contains("$startedClients += Start-SceneClient ($slot + 1)", launcher);
+        Assert.Contains("GODEVILUTION_CLIENT_PERFORMANCE_OUTPUT", launcher);
+        Assert.Contains("GODEVILUTION_PERFORMANCE_SHARED_DIRECTORY", launcher);
+        Assert.Contains("if ($performance) { $godotArguments += ' --max-fps 60' }", launcher);
+        Assert.Contains("[Environment]::SetEnvironmentVariable($name, $savedEnvironment[$name], 'Process')", launcher);
     }
 
     private static string FindRepositoryRoot()

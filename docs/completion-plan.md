@@ -70,7 +70,7 @@ isolated spell or table rows while the playable route stays unchanged.
 
 | Gate | Deliverable | Dependencies | Current position |
 | --- | --- | --- | --- |
-| M0 | Reproducible launch and honest acceptance evidence | Existing implementation | Godot session/recovery passes; local one/four-participant host measurements recorded; native GUI and performance/platform gaps remain |
+| M0 | Reproducible launch and honest acceptance evidence | Existing implementation | Godot session/recovery passes; opt-in one/four-participant host and actual-client baselines recorded in status; native GUI and release-budget/platform gaps remain |
 | M1 | Usable Godot town-to-dungeon loop | M0 launch/acceptance harness | Authored combat/loot/equipment, real NPC approach/service entry, purchased-scroll portal return and fresh-host owner-return closure pass; full loop remains |
 | M2 | Native-compatible generated world | M0 geometry/parity baseline | Ordinary Cathedral level-1 coarse/fine oracle passes two seeds and MAIN/PREV entry; runtime integration, population and remaining families remain |
 | M3 | Complete base and Hellfire gameplay routes | M1 plus the relevant M2 world slices | Many rules exist; campaign and remaining behavioral coverage remain |
@@ -139,6 +139,14 @@ M4. M5 is the final removal gate, not a reason to postpone replacement work.
    The opt-in standalone host workload now measures one/four participants over
    loopback; it is a preliminary baseline, not a Godot-frame or release-budget
    pass. Preserve settled authoritative outcomes when extending this workload.
+   The separate opt-in actual Godot workload uses fresh one/four-client profiles,
+   real controls, all-observer staging/round barriers, bounded callback evidence
+   and clean engine exits. Keep callback-body cost separate from start intervals
+   and GPU/whole-frame timing; last-GC heap and lifetime peak working set are not
+   live allocation or soak evidence. Preserve failed captures and reject invalid
+   metrics. Ordinary launches and two-client create/resume remain unchanged.
+   Local Debug town measurements do not establish a release budget or full
+   platform/campaign matrix; use status for exact configurations and outcomes.
    Use the recorded checkpoint-phase timings to target publication costs without
    weakening durability; retain no-ack-on-write-failure and fresh-host duplicate
    recovery coverage. Local Windows receipt-file reuse does not close the wider

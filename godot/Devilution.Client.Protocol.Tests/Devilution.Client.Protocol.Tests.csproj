@@ -14,6 +14,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Compile Include="../Devilution.Client/Diagnostics/ClientFrameEvidenceRecorder.cs"
+             Link="Diagnostics/ClientFrameEvidenceRecorder.cs" />
+    <Compile Include="../Devilution.Client/Acceptance/PerformanceWorkloadObservations.cs"
+             Link="Acceptance/PerformanceWorkloadObservations.cs" />
     <ProjectReference Include="../../protocol/Devilution.Protocol/Devilution.Protocol.csproj" />
     <ProjectReference Include="../Devilution.Client.Protocol/Devilution.Client.Protocol.csproj" />
     <ProjectReference Include="../../server/src/Devilution.Server/Devilution.Server.csproj"

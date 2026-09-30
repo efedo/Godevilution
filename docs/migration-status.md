@@ -80,7 +80,7 @@ open. Their scope, dependencies, and exit checks are defined only in the
   single-player create/resume/server-loss recovery. The earlier `TooLate` trace
   is retained; initial/unseen latency and shared-world cold-restore gaps remain.
   The two Flash baseline failures are resolved below. M0 still requires native
-  creation, client frame/budget evidence, and the release-platform matrix.
+  creation, agreed release frame/memory budgets, and the release-platform matrix.
 - Rendered application acceptance now verifies responsive HUD controls at
   960x600, 1028x720, and 1280x720, and the authored town-to-Cathedral route.
   The former 1028x720 HUD clipping is resolved. Actual combat, distant loot
@@ -93,9 +93,9 @@ open. Their scope, dependencies, and exit checks are defined only in the
   native-role service entry now pass. Accepted cross-level entry into a non-town
   level now closes metadata-bound native vendors; cooperative combat, remaining
   native portal placement, full service lifecycle/pricing and the complete loop
-  remain M1 work. Local standalone-host
-  measurements are below;
-  no campaign, Godot frame budget, or release-platform performance pass is claimed.
+  remain M1 work. Local standalone-host and actual one/four-client measurements
+  are below; no campaign, release frame budget, or platform performance pass
+  is claimed.
 - Godot currently requires no MPQs because it uses placeholder presentation.
   A complete MPQ-free client asset route remains a deliverable. Original-asset
   support is optional client tooling; the server must remain MPQ-independent.
@@ -122,6 +122,98 @@ open. Their scope, dependencies, and exit checks are defined only in the
 The following records describe implemented slices at this baseline. They are
 evidence, not a separate priority list; detailed older entries retain their
 original scope and may be superseded by later entries or the current assessment.
+
+### M0 actual Godot one/four-client baseline (2026-09-30)
+
+This opt-in batch follows `2c79ca0b9`. The zero-argument
+`tools/measure-godot-client.ps1` builds current Debug sources and runs fresh
+single-player and four-player multiplayer profiles. Real form/input paths stage
+participants; every observer confirms all staged players before the leader moves.
+Five settled warm-up rounds precede capture and fifteen paced measured rounds
+require all observers. Capture stops before screenshots/exit. Ordinary launch
+and two-client profiles remain unchanged; no server gameplay or save/wire schema
+changes were made.
+
+Bounded callback storage separates Main `_Process` body cost from callback-start
+intervals, not GPU/whole-frame timing. Missing rounds, changed identity/count,
+empty/dropped/nonmonotonic samples, invalid process counters, overwrite attempts,
+unclean exits or missing private checkpoints reject the baseline. Public metadata
+is explicitly projected; bounded controller diagnostics retain booleans/counts,
+not commands, player state or credentials. Saves/bookmarks remain private.
+
+Final rendered execution passes under
+`%TEMP%/Godevilution-Client-Performance-bc1888c24cf04193bee7b8cbdc6cc9d7`.
+Both `performance-baseline.json` reports have `Passed=true`, all gameplay rounds
+and one/four distinct checkpoints/bookmarks. The nine engine-version/import/client
+records exit zero with no recorded error. Launch-log suffixes are
+`ea91c4548b24448dbdb8eb5731ec0385` and `41393f5953e646d3aca4573c4fbe0873`
+(`Godevilution-Godot-*`). Source hash is
+`a2d62f85f95009752580997ad6a4ec0df000392b64fdd17bac5485cd3c14b338`;
+the source SDK remains 4.7.1 and only staged copies import as 4.7.2.
+
+Configuration: Godot 4.7.2 stable Mono, Windows x64 build 26200, actual engine
+runtime .NET 10.0.11, Debug, base town content/seed 0, schema 0.2.0, clock-gated
+20-Hz host, OpenGL3 compatibility, NVIDIA RTX 3070/driver 591.86, 1028x720,
+VSync enabled and 60-FPS cap. Four windows overlap; focus/occlusion is not
+controlled. Inspected single/four-player captures have readable placeholder HUD
+and actors; they do not prove four simultaneously visible desktop windows.
+
+| Rendered profile/slot | Measured seconds | Samples | Callback cost p95 ms | Interval p95/p99 ms | Final working set MiB | Lifetime peak MiB |
+| --- | --- | --- | --- | --- | --- | --- |
+| Single/1 | 28.470 | 1710 | 1.8155 | 16.7139/16.8311 | 247.98 | 254.13 |
+| Four/1 | 38.603 | 2318 | 2.2661 | 16.6898/16.8177 | 249.25 | 252.77 |
+| Four/2 | 38.587 | 2317 | 2.2959 | 16.7270/16.8372 | 249.32 | 253.71 |
+| Four/3 | 38.570 | 2316 | 2.2242 | 16.6940/16.7791 | 249.26 | 254.61 |
+| Four/4 | 38.687 | 2323 | 2.2704 | 16.6849/16.7675 | 253.02 | 254.50 |
+
+Process observations bracket capture creation/stop after workload warm-up; CPU
+deltas include recorder/barrier overhead. Last-GC heap is not live allocations
+and no collection is forced. Lifetime peak working set is not leak/soak evidence.
+Own-process CPU deltas are 11,750ms single and 16,921.875-17,843.750ms four-player.
+Final-source recorder/staging tests pass 21/21 (590ms), launcher tests 20/20
+(14.041s), and documentation guards 3/3 (371ms), with no skips; the unchanged
+source-SDK client builds without code errors. An attempted VSTest invocation
+aborted before test execution (connection
+timeout/missing test-platform assembly); the documented xUnit v3 in-process
+runner supplies the passing evidence, not a relaxed deadline. NU1900 package
+audit warnings remain. Host disconnect IO diagnostics on peer exit are retained;
+clean process outcomes are not a warning-free/security claim.
+
+Retained failed captures are not passes. First rendered four-player warm-up
+timed out under suffix `90d6cc3ec9a24723856b9f8d323c7613`; its exact stale field
+was not recorded. The later `c6f98e0905ed4098b44bd19966bf1340` diagnostics show
+observer 2 seeing count four before slot 4 was staged (revision 34), then all
+settled at revision 36. Pure stale-slot regressions and an all-observer staging
+barrier address that synchronization risk. That run completed all gameplay but
+correctly rejected slot 4's `GC.GetTotalMemory(false)` estimate of -198408 bytes,
+emitting no four-client baseline. The replacement `LastGcHeapSizeBytes` uses
+last-GC information without forced collection; the invalid estimate's cause is
+unproven. Earlier headless one/four profiles passed at suffix
+`cf397e3f1b3e4b6b9b2db7676b709b97` before these final changes and are historical,
+not final-source rendered evidence.
+
+These are local Debug town baselines, not agreed FPS/RAM budgets, a campaign or
+release-platform matrix, or native GUI acceptance. M0 and the approximately 35%
+overall estimate remain open. All profile directories contain private saves;
+do not publish them.
+
+Final-source ordinary compatibility also passes: zero-argument
+`tools/test-godot-session.ps1` verifies create/move/checkpoint/fresh-host resume
+and server-loss/reconnect under scene suffix `b2557f4a13164d488efcde6581056c55`;
+`-Multiplayer` verifies two clients, mutual visibility and reverse-order
+fresh-host resume at `aef1970f87e04566ae94864bcec636cc`. All nine single-player
+and eight multiplayer engine records exit zero without recorded errors. Neither
+ordinary profile produces frame captures. These are headless compatibility
+checks, not fresh native GUI or full rendered recovery acceptance.
+
+Final-source headless performance profiles also pass at
+`%TEMP%/Godevilution-Client-Headless-Performance-c5a4edf256a84fab8ceae4e95a4d47db`:
+invoke `godot/run-local-client.ps1 -Headless -AcceptancePhase Performance
+-PerformanceParticipants 1` and then `4 -Multiplayer`, each with a fresh absolute
+session directory and `-QuitAfterSeconds 150`. Both accept one/four-player
+baselines; all nine engine records exit zero, source hash/SDK match the rendered
+run, and no screenshots are emitted. These are headless diagnostics, not GPU or
+rendered acceptance. Public reports retain the exact configuration/statistics.
 
 ### M0 negotiated clock-gated host integration (2026-09-30)
 

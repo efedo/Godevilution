@@ -253,6 +253,46 @@ but not stock/pricing, complete open-service lifecycle handling,
 every placement exclusion,
 portal animation/art, a complete M1 loop or campaign parity.
 
+## Actual Godot client performance baseline
+
+From the root, run the zero-argument `tools/measure-godot-client.ps1`. It builds
+current Debug sources and runs separate rendered one-client single-player and
+four-client multiplayer profiles against clock-gated hosts. Do not run concurrent
+builds or application tests. Each profile uses base town content, seed 0, private
+fresh saves/bookmarks and a controlled 60-FPS cap; normal launches are unchanged.
+
+The real new-character form and input path prepare participants without state
+injection. Five settled warm-up movements precede recording; fifteen measured
+movements follow, paced at least one second apart. Every participant must observe
+each settled leader move while its own state remains unchanged. Recording starts
+after warm-up and stops before screenshots/exit. Marker barriers prevent skipped
+rounds and early peer disconnection. Controller observations add low-frequency
+test overhead; they are part of this workload, not normal play.
+
+`performance-baseline.json` summarizes exact nearest-rank percentiles from each
+client's bounded `frame-measurement/client-frame-evidence.json`. It separates
+`ProcessCallbackMilliseconds` (the Main `_Process` body) from
+`CallbackIntervalMilliseconds` (monotonic callback-start intervals). Neither is
+GPU time or whole-frame completion. Actual engine, renderer/device, display,
+viewport, pacing, Debug configuration, OS/runtime/architecture, participants and
+public server identity accompany the measurements. Four windows may overlap;
+focus/occlusion is uncontrolled and this is not four fully visible displays.
+Own-process observations bracket capture creation/stop after workload warm-up;
+CPU deltas include recorder/barrier overhead. `LastGcHeapSizeBytes` reports heap
+size at the [last garbage collection](https://learn.microsoft.com/en-us/dotnet/api/system.gcmemoryinfo.heapsizebytes),
+not live allocations; no collection is forced. Peak working set is a lifetime peak,
+not leak/soak evidence. Keep the printed directory private: its saved sessions
+and bookmarks contain credentials even though the frame reports do not.
+
+Missing rounds, changed identity, empty/invalid/truncated samples, overwritten
+output, nonzero client exits or missing checkpoints reject the baseline. Recording
+is explicitly enabled only for this acceptance phase; inherited capture settings
+are cleared/restored by the launcher. Headless diagnostics can use the inner
+`-AcceptancePhase Performance -PerformanceParticipants 1` (or `4 -Multiplayer`)
+with `-Headless` and a fresh absolute `-SessionDirectory`; they do not prove
+rendered performance. No FPS/RAM release target, supported-platform matrix,
+campaign workload or soak is certified by these local measurements.
+
 ## Standalone host performance baseline
 
 Run `tools/measure-authoritative-host.ps1` from PowerShell. It rebuilds Release
