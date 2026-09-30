@@ -39,6 +39,7 @@ public partial class Main : Node2D
     internal int ObservedPendingCommandCount => client?.PendingCommandCount ?? 0;
     internal Vector2? ObservedPlayerScreenPosition => world?.ScreenPositionForEntity(model.PlayerEntityId);
     internal ulong ObservedSnapshotRevision => snapshotRevision;
+    internal ulong ObservedLastQueuedSequence { get; private set; }
     internal Vector2 ObservedTileScreenPosition(int x, int y) => world!.ScreenPositionForTile(x, y);
     internal Vector2? ObservedEntityScreenPosition(uint entityId) => world?.ScreenPositionForEntity(entityId);
 
@@ -823,6 +824,7 @@ public partial class Main : Node2D
             interactionTravel.Cancel();
         }
         var sequence = client!.QueueRealtime(command, model.CurrentTick);
+        ObservedLastQueuedSequence = sequence;
         if (predictedDirection is { } direction)
             model.TrackPredictedMove(sequence, direction.X, direction.Y);
         return sequence;

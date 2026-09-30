@@ -48,8 +48,7 @@ public sealed class AuthoritativeInteractionTravel
         if (pendingSequence is { } sequence) {
             if (result?.ClientSequence != sequence)
                 return null;
-            if (result.Status is not (CommandStatus.Accepted or CommandStatus.Duplicate)
-                || result.RejectReason != CommandRejectReason.Unspecified) {
+            if (!AuthoritativeCommandAckValidator.IsAcceptedOrSuccessfulDuplicate(result)) {
                 Cancel();
                 return null;
             }

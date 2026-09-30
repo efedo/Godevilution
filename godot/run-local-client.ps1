@@ -39,8 +39,8 @@ New-Item -ItemType Directory -Path $SessionDirectory -Force | Out-Null
 if ([string]::IsNullOrWhiteSpace($GodotExecutable)) {
     $wingetRoot = Join-Path $env:LOCALAPPDATA 'Microsoft\WinGet\Packages\GodotEngine.GodotEngine.Mono_Microsoft.Winget.Source_8wekyb3d8bbwe'
     $GodotExecutable = @(
-        (Get-Command 'Godot_v*-stable_mono_win64_console.exe' -CommandType Application -ErrorAction SilentlyContinue).Source
         (Get-Command 'Godot_v*-stable_mono_win64.exe' -CommandType Application -ErrorAction SilentlyContinue).Source
+        (Get-Command 'Godot_v*-stable_mono_win64_console.exe' -CommandType Application -ErrorAction SilentlyContinue).Source
         if (Test-Path -LiteralPath $wingetRoot) {
             (Get-ChildItem -LiteralPath $wingetRoot -Filter 'Godot_v*-stable_mono_win64*.exe' -File -Recurse -ErrorAction SilentlyContinue).FullName
         }
@@ -49,15 +49,29 @@ if ([string]::IsNullOrWhiteSpace($GodotExecutable)) {
 if ([string]::IsNullOrWhiteSpace($GodotExecutable) -or -not (Test-Path -LiteralPath $GodotExecutable -PathType Leaf)) {
     throw 'A Godot Mono executable was not found on PATH or in WinGet. Pass -GodotExecutable to this inner harness.'
 }
-# Track the engine itself, not the console wrapper which spawns a child process.
-$engineExecutable = $GodotExecutable -replace '_console\.exe$', '.exe'
-if (Test-Path -LiteralPath $engineExecutable -PathType Leaf) { $GodotExecutable = $engineExecutable }
+function Resolve-DirectGodotExecutable([string]$Path) {
+    # Normalize again after selecting the GUI sibling so an explicit relative
+    # console path cannot leak a relative executable into ProcessStartInfo.
+    $resolvedPath = (Resolve-Path -LiteralPath $Path -ErrorAction Stop).ProviderPath
+    $enginePath = $resolvedPath -replace '_console\.exe$', '.exe'
+    if (Test-Path -LiteralPath $enginePath -PathType Leaf) {
+        $resolvedPath = (Resolve-Path -LiteralPath $enginePath -ErrorAction Stop).ProviderPath
+    }
+    if ([IO.Path]::GetFileName($resolvedPath) -match '_console\.exe$') {
+        throw 'A direct Godot Mono executable is required; the console executable has no concrete GUI sibling.'
+    }
+    return $resolvedPath
+}
+$GodotExecutable = Resolve-DirectGodotExecutable $GodotExecutable
 
 $serverProcess = $null
 $godotProcess = $null
 $startedClients = @()
 $importProcess = $null
+$importTracked = $null
 $sessionLock = $null
+$processEvidenceRoot = Join-Path $captureRoot 'processes'
+New-Item -ItemType Directory -Path $processEvidenceRoot -Force | Out-Null
 $savedEnvironment = @{}
 $environmentNames = @('DEVILUTION_SERVER_HOST', 'DEVILUTION_SERVER_PORT', 'DEVILUTION_PROTOCOL_VERSION',
     'DEVILUTION_CONTENT_HASH', 'DEVILUTION_RULESET_HASH', 'DEVILUTION_CHARACTER_CLASS_ID',
@@ -67,6 +81,170 @@ $environmentNames = @('DEVILUTION_SERVER_HOST', 'DEVILUTION_SERVER_PORT', 'DEVIL
 foreach ($name in $environmentNames) {
     $savedEnvironment[$name] = [Environment]::GetEnvironmentVariable($name, 'Process')
 }
+
+function Assert-WritableDirectory([string]$Path, [string]$Purpose) {
+    New-Item -ItemType Directory -Path $Path -Force | Out-Null
+    $probePath = Join-Path $Path ('.godevilution-write-probe-' + [guid]::NewGuid().ToString('N'))
+    try {
+        [IO.File]::WriteAllText($probePath, $Purpose)
+    } catch {
+        throw "Godot $Purpose storage is not writable: $Path. $($_.Exception.Message)"
+    } finally {
+        if (Test-Path -LiteralPath $probePath) {
+            Remove-Item -LiteralPath $probePath -Force -ErrorAction SilentlyContinue
+        }
+    }
+}
+
+function Write-ProcessEvidence($Tracked) {
+    [IO.File]::WriteAllText(
+        $Tracked.EvidencePath,
+        ($Tracked.Record | ConvertTo-Json -Depth 4))
+}
+
+if ($env:OS -eq 'Windows_NT' -and -not ('GodevilutionNativeErrorMode' -as [type])) {
+    Add-Type -TypeDefinition @'
+using System;
+using System.Runtime.InteropServices;
+
+public static class GodevilutionNativeErrorMode
+{
+    [DllImport("kernel32.dll")]
+    public static extern uint GetErrorMode();
+
+    [DllImport("kernel32.dll")]
+    public static extern uint SetErrorMode(uint mode);
+}
+'@
+}
+
+function Start-GodotChildProcess($StartInfo) {
+    return [Diagnostics.Process]::Start($StartInfo)
+}
+
+function New-GodotProcess([string]$StageName, [string]$Arguments, [hashtable]$EnvironmentOverrides, [bool]$Headless, [bool]$SuppressCrashDialog) {
+    $stageRoot = Join-Path $captureRoot ('engine-state/' + $StageName)
+    $appDataPath = Join-Path $stageRoot 'AppData'
+    $localAppDataPath = Join-Path $stageRoot 'LocalAppData'
+    Assert-WritableDirectory $appDataPath 'AppData'
+    Assert-WritableDirectory $localAppDataPath 'LocalAppData'
+
+    $startInfo = [Diagnostics.ProcessStartInfo]::new()
+    $startInfo.FileName = $GodotExecutable
+    $startInfo.Arguments = $Arguments
+    $startInfo.WorkingDirectory = $repositoryRoot
+    $startInfo.UseShellExecute = $false
+    $startInfo.CreateNoWindow = $Headless
+    $startInfo.WindowStyle = if ($Headless) { 'Hidden' } else { 'Normal' }
+    $startInfo.EnvironmentVariables['APPDATA'] = $appDataPath
+    $startInfo.EnvironmentVariables['LOCALAPPDATA'] = $localAppDataPath
+    foreach ($entry in $EnvironmentOverrides.GetEnumerator()) {
+        $startInfo.EnvironmentVariables[$entry.Key] = [string]$entry.Value
+    }
+
+    $process = $null
+    try {
+        $previousErrorMode = $null
+        try {
+            if ($SuppressCrashDialog -and $env:OS -eq 'Windows_NT') {
+                $previousErrorMode = [GodevilutionNativeErrorMode]::GetErrorMode()
+                [void][GodevilutionNativeErrorMode]::SetErrorMode($previousErrorMode -bor 3)
+            }
+            $process = Start-GodotChildProcess $startInfo
+        } finally {
+            if ($null -ne $previousErrorMode) {
+                [void][GodevilutionNativeErrorMode]::SetErrorMode($previousErrorMode)
+            }
+        }
+        if ($null -eq $process) { throw "Could not start Godot for stage $StageName." }
+        $startedUtc = [DateTime]::UtcNow.ToString('O')
+        try { $startedUtc = $process.StartTime.ToUniversalTime().ToString('O') }
+        catch { }
+        $tracked = [pscustomobject]@{
+            Process = $process
+            EvidencePath = Join-Path $processEvidenceRoot ($StageName + '.json')
+            Record = [pscustomobject]@{
+                Stage = $StageName
+                Executable = $GodotExecutable
+                ProcessId = $process.Id
+                StartedUtc = $startedUtc
+                EndedUtc = $null
+                ExitCode = $null
+                Error = $null
+            }
+        }
+        Write-ProcessEvidence $tracked
+        return $tracked
+    } catch {
+        $primaryError = $_
+        if ($null -ne $process) {
+            try {
+                if (-not $process.HasExited) { $process.Kill(); $process.WaitForExit() }
+            } catch { Write-Warning "Could not stop failed Godot process for stage ${StageName}: $($_.Exception.Message)" }
+            try { $process.Dispose() }
+            catch { Write-Warning "Could not dispose failed Godot process for stage ${StageName}: $($_.Exception.Message)" }
+        }
+        throw $primaryError
+    }
+}
+
+function Complete-GodotProcess($Tracked, [int]$TimeoutMilliseconds, [string]$FailurePrefix) {
+    if ($null -eq $Tracked.Record.EndedUtc) {
+        # HasExited is authoritative when the caller already observed process
+        # completion; a zero-time WaitForExit can transiently report false.
+        if (-not $Tracked.Process.HasExited -and -not $Tracked.Process.WaitForExit($TimeoutMilliseconds)) {
+            $Tracked.Record.Error = "$FailurePrefix timed out after $TimeoutMilliseconds ms."
+            Write-ProcessEvidence $Tracked
+            throw $Tracked.Record.Error
+        }
+        $Tracked.Record.EndedUtc = [DateTime]::UtcNow.ToString('O')
+    }
+    if ($null -eq $Tracked.Record.ExitCode) { $Tracked.Record.ExitCode = $Tracked.Process.ExitCode }
+    if ($Tracked.Record.ExitCode -ne 0) {
+        if ($null -eq $Tracked.Record.Error) { $Tracked.Record.Error = "$FailurePrefix exited with code $($Tracked.Record.ExitCode)." }
+        Write-ProcessEvidence $Tracked
+        throw "$($Tracked.Record.Error) See the stage log."
+    }
+    Write-ProcessEvidence $Tracked
+}
+
+function Assert-GodotImportLog($Tracked, [string]$ImportLogPath) {
+    if (-not (Test-Path -LiteralPath $ImportLogPath -PathType Leaf)) {
+        $Tracked.Record.Error = "Godot asset import did not produce its log: $ImportLogPath."
+        Write-ProcessEvidence $Tracked
+        throw $Tracked.Record.Error
+    }
+    $importLogText = Get-Content -LiteralPath $ImportLogPath -Raw -ErrorAction Stop
+    foreach ($fatalImportPattern in @(
+        'Cannot create file',
+        'Cannot save file',
+        'Cannot save editor help cache',
+        'Error saving editor settings')) {
+        if ($importLogText -match [regex]::Escape($fatalImportPattern)) {
+            $Tracked.Record.Error = "Godot asset import reported fatal storage error: $fatalImportPattern."
+            Write-ProcessEvidence $Tracked
+            throw "$($Tracked.Record.Error) See $ImportLogPath"
+        }
+    }
+}
+
+function Stop-GodotProcess($Tracked) {
+    if ($null -eq $Tracked -or $null -eq $Tracked.Process) { return }
+    if (-not $Tracked.Process.HasExited) {
+        $Tracked.Process.Kill()
+        $Tracked.Process.WaitForExit()
+        if ($null -eq $Tracked.Record.Error) { $Tracked.Record.Error = 'Terminated by launcher cleanup.' }
+    }
+    if ($null -eq $Tracked.Record.EndedUtc) {
+        $Tracked.Record.EndedUtc = [DateTime]::UtcNow.ToString('O')
+        $Tracked.Record.ExitCode = $Tracked.Process.ExitCode
+        if ($null -eq $Tracked.Record.Error -and $Tracked.Record.ExitCode -ne 0) {
+            $Tracked.Record.Error = "Godot $($Tracked.Record.Stage) exited with code $($Tracked.Record.ExitCode)."
+        }
+        Write-ProcessEvidence $Tracked
+    }
+}
+
 try {
     # One local writer per save directory; parallel tests use distinct directories.
     $sessionLock = [System.IO.File]::Open((Join-Path $SessionDirectory 'launcher.lock'), 'OpenOrCreate', 'ReadWrite', 'None')
@@ -75,10 +253,12 @@ try {
     & dotnet build (Join-Path $clientProject 'Devilution.Client.csproj') --nologo
     if ($LASTEXITCODE -ne 0) { throw 'Could not build the Godot client.' }
     # Import the checked-in SVG assets even on a clean checkout without .godot cache.
-    $importArguments = '--headless --editor --import --path "{0}" --log-file "{1}"' -f $clientProject, (Join-Path $captureRoot 'import.log')
-    $importProcess = Start-Process -FilePath $GodotExecutable -ArgumentList $importArguments -WorkingDirectory $repositoryRoot -WindowStyle Hidden -PassThru
-    if (-not $importProcess.WaitForExit(60000)) { throw 'Godot asset import timed out.' }
-    if ($importProcess.ExitCode -ne 0) { throw "Godot asset import failed. See $captureRoot/import.log" }
+    $importLogPath = Join-Path $captureRoot 'import.log'
+    $importArguments = '--headless --editor --import --path "{0}" --log-file "{1}"' -f $clientProject, $importLogPath
+    $importTracked = New-GodotProcess 'import' $importArguments @{} $true $true
+    $importProcess = $importTracked.Process
+    Complete-GodotProcess $importTracked 60000 'Godot asset import'
+    Assert-GodotImportLog $importTracked $importLogPath
 
     # Stable town starts; gameplay acceptance travels into combat afterward.
     $acceptanceArguments = if ($AcceptancePhase -or $PreviewContent -or $Multiplayer) { '--starting-level 0 --random-seed 0' } else { '' }
@@ -109,8 +289,13 @@ try {
             if ($gameMode -ne $expectedGameMode) { throw "Unexpected server mode: $gameMode" }
             return [pscustomobject]@{ Process = $serverProcess; Port = $actualPort; ContentHash = $contentHash; RulesetHash = $rulesetHash; Mode = $gameMode }
         } catch {
-            if (-not $serverProcess.HasExited) { $serverProcess.Kill(); $serverProcess.WaitForExit() }
-            $serverProcess.Dispose()
+            if ($null -ne $serverProcess) {
+                try {
+                    if (-not $serverProcess.HasExited) { $serverProcess.Kill(); $serverProcess.WaitForExit() }
+                } catch { Write-Warning "Could not stop the failed server process: $($_.Exception.Message)" }
+                try { $serverProcess.Dispose() }
+                catch { Write-Warning "Could not dispose the failed server process: $($_.Exception.Message)" }
+            }
             throw
         }
     }
@@ -141,26 +326,22 @@ try {
         $clientDirectory = if ($Multiplayer) { Join-Path $SessionDirectory "player-$Slot" } else { $SessionDirectory }
         New-Item -ItemType Directory -Path $clientDirectory -Force | Out-Null
         $clientLog = Join-Path $captureRoot $(if ($Multiplayer) { "godot-player-$Slot.log" } else { 'godot.log' })
-        # Each process gets its own environment block; bookmarks/roles never race.
-        $clientStart = New-Object System.Diagnostics.ProcessStartInfo
-        $clientStart.FileName = $GodotExecutable
-        $clientStart.WorkingDirectory = $repositoryRoot
-        $clientStart.UseShellExecute = $false
-        $clientStart.CreateNoWindow = [bool]$Headless
-        $clientStart.WindowStyle = if ($Headless) { 'Hidden' } else { 'Normal' }
-        $clientStart.EnvironmentVariables['DEVILUTION_RESUME_TOKEN_PATH'] = Join-Path $clientDirectory 'resume-token.txt'
-        if ($CharacterClassId -ge 0) { $clientStart.EnvironmentVariables['DEVILUTION_CHARACTER_CLASS_ID'] = [string]$CharacterClassId }
-        if (-not [string]::IsNullOrEmpty($CharacterName)) { $clientStart.EnvironmentVariables['DEVILUTION_CHARACTER_NAME'] = $CharacterName }
+        # Each process gets isolated engine storage and its own role/bookmark environment.
+        $clientEnvironment = @{
+            DEVILUTION_RESUME_TOKEN_PATH = Join-Path $clientDirectory 'resume-token.txt'
+        }
+        if ($CharacterClassId -ge 0) { $clientEnvironment['DEVILUTION_CHARACTER_CLASS_ID'] = [string]$CharacterClassId }
+        if (-not [string]::IsNullOrEmpty($CharacterName)) { $clientEnvironment['DEVILUTION_CHARACTER_NAME'] = $CharacterName }
         if ($Multiplayer) {
-            $clientStart.EnvironmentVariables['GODEVILUTION_LOCAL_PLAYER'] = [string]$Slot
-            $clientStart.EnvironmentVariables['DEVILUTION_CHARACTER_NAME'] = if ($CharacterName) { "$CharacterName $Slot" } else { "Hero $Slot" }
+            $clientEnvironment['GODEVILUTION_LOCAL_PLAYER'] = [string]$Slot
+            $clientEnvironment['DEVILUTION_CHARACTER_NAME'] = if ($CharacterName) { "$CharacterName $Slot" } else { "Hero $Slot" }
         }
         $godotArguments = '--path "{0}" --log-file "{1}"' -f $clientProject, $clientLog
         if ($Headless) { $godotArguments += ' --headless' }
         $clientEvidence = $null
         if ($AcceptancePhase) {
-            $clientStart.EnvironmentVariables['GODEVILUTION_ACCEPTANCE_PHASE'] = $AcceptancePhase
-            $clientStart.EnvironmentVariables['GODEVILUTION_ACCEPTANCE_DIRECTORY'] = $clientDirectory
+            $clientEnvironment['GODEVILUTION_ACCEPTANCE_PHASE'] = $AcceptancePhase
+            $clientEnvironment['GODEVILUTION_ACCEPTANCE_DIRECTORY'] = $clientDirectory
             $godotArguments += ' --scene res://Acceptance/SessionAcceptance.tscn'
             $clientEvidence = Join-Path $clientDirectory ($AcceptancePhase.ToLowerInvariant() + '.json')
             if (Test-Path -LiteralPath $clientEvidence) { throw "Use a fresh acceptance directory; evidence already exists at $clientEvidence" }
@@ -174,11 +355,16 @@ try {
             }
         } elseif ($Headless) {
             # Godot --quit-after counts frames, not seconds. The scene owns the timer.
-            $clientStart.EnvironmentVariables['GODEVILUTION_QUIT_AFTER_SECONDS'] = [string]$QuitAfterSeconds
+            $clientEnvironment['GODEVILUTION_QUIT_AFTER_SECONDS'] = [string]$QuitAfterSeconds
         }
-        $clientStart.Arguments = $godotArguments
-        $clientProcess = [System.Diagnostics.Process]::Start($clientStart)
-        return [pscustomobject]@{ Process = $clientProcess; Log = $clientLog; Evidence = $clientEvidence; Directory = $clientDirectory }
+        $clientTracked = New-GodotProcess ("client-$Slot") $godotArguments $clientEnvironment ([bool]$Headless) ([bool]($Headless -or $AcceptancePhase))
+        return [pscustomobject]@{
+            Process = $clientTracked.Process
+            Tracked = $clientTracked
+            Log = $clientLog
+            Evidence = $clientEvidence
+            Directory = $clientDirectory
+        }
     }
     $startedClients += Start-SceneClient 1
     $godotProcess = $startedClients[0].Process
@@ -216,9 +402,17 @@ try {
         $clientsRunning = $false
         foreach ($startedClient in $startedClients) {
             if (-not $startedClient.Process.HasExited) { $clientsRunning = $true }
-            elseif ($startedClient.Process.ExitCode -ne 0) { throw "Godot exited with code $($startedClient.Process.ExitCode). See $($startedClient.Log)" }
+            else {
+                Complete-GodotProcess $startedClient.Tracked 0 'Godot client'
+            }
         }
         if ($clientsRunning -and ($Headless -or $AcceptancePhase) -and $clientWait.Elapsed.TotalSeconds -gt ($QuitAfterSeconds + 15)) {
+            foreach ($startedClient in $startedClients) {
+                if (-not $startedClient.Process.HasExited) {
+                    $startedClient.Tracked.Record.Error = 'Godot did not finish before the launch timeout.'
+                    Write-ProcessEvidence $startedClient.Tracked
+                }
+            }
             throw 'Godot did not finish before the launch timeout.'
         }
         if ($clientsRunning) { Start-Sleep -Milliseconds 100 }
@@ -246,13 +440,25 @@ try {
         }
     }
 } finally {
-    foreach ($ownedProcess in @($startedClients | ForEach-Object { $_.Process }) + @($serverProcess, $importProcess)) {
-        if ($null -ne $ownedProcess) {
-            if (-not $ownedProcess.HasExited) { $ownedProcess.Kill(); $ownedProcess.WaitForExit() }
-            $ownedProcess.Dispose()
+    foreach ($trackedProcess in @($startedClients | ForEach-Object { $_.Tracked }) + @($importTracked)) {
+        if ($null -ne $trackedProcess) {
+            try { Stop-GodotProcess $trackedProcess }
+            catch { Write-Warning "Could not finalize Godot process evidence: $($_.Exception.Message)" }
         }
     }
-    if ($null -ne $sessionLock) { $sessionLock.Dispose() }
+    foreach ($ownedProcess in @($startedClients | ForEach-Object { $_.Process }) + @($serverProcess, $importProcess)) {
+        if ($null -ne $ownedProcess) {
+            try {
+                if (-not $ownedProcess.HasExited) { $ownedProcess.Kill(); $ownedProcess.WaitForExit() }
+            } catch { Write-Warning "Could not stop owned process $($ownedProcess.Id): $($_.Exception.Message)" }
+            try { $ownedProcess.Dispose() }
+            catch { Write-Warning "Could not dispose owned process: $($_.Exception.Message)" }
+        }
+    }
+    if ($null -ne $sessionLock) {
+        try { $sessionLock.Dispose() }
+        catch { Write-Warning "Could not dispose the session lock: $($_.Exception.Message)" }
+    }
     foreach ($name in $environmentNames) { [Environment]::SetEnvironmentVariable($name, $savedEnvironment[$name], 'Process') }
     Write-Host "Session files: $SessionDirectory"
     Write-Host "Launch logs: $captureRoot"

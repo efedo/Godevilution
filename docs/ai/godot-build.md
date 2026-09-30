@@ -35,13 +35,13 @@ gates or when new changes/failures justify them, as described in the
 
 ## Finding Godot
 
-Use a Godot 4.7.1 Mono console executable. When installed through WinGet it may
-not immediately appear in an existing shell's `PATH`. Discover it rather than
-hard-coding an installation directory:
+Use a Godot 4.7.1 Mono engine executable. The launcher discovers it through
+`PATH` or WinGet and resolves a console executable to its direct engine sibling.
+Use the isolated launcher for headless startup so imports and clients receive
+writable AppData paths:
 
 ```powershell
-$godot = (Get-Command 'Godot_v*-stable_mono_win64_console.exe' -CommandType Application).Source
-& $godot --headless --path godot/Devilution.Client --quit-after 5
+powershell -NoProfile -ExecutionPolicy Bypass -File godot/run-local-client.ps1 -Headless -QuitAfterSeconds 5
 ```
 
 The root launcher is the normal zero-argument entry point:
@@ -57,6 +57,29 @@ builds the server and Godot project and imports presentation assets. It starts
 the server on a free port, validates reported mode and hashes, and supplies those
 identities to the client. Only owned process handles are cleaned up, and changed
 environment values are restored when the harness returns.
+
+Every Godot child, including the editor asset importer, gets its own writable
+`APPDATA` and `LOCALAPPDATA` directories beneath the printed launch-log directory.
+These are child-process environment overrides, not changes to the user's profile,
+ACLs, or registry. Godot 4.7.1 was reproduced crashing with `0xC0000005` during
+restricted editor imports after denied writes to its normal settings/help cache;
+the same import with isolated AppData exited cleanly. A custom project save path
+alone does not redirect the editor's global settings. Authoritative saves and
+resume bookmarks retain their existing explicit paths.
+
+Automated imports and acceptance/headless clients suppress modal Windows crash
+dialogs only for those child processes; the launching process's error mode is
+restored immediately. Nonzero exits and fatal import-storage errors fail the
+launch, with process identity/exit evidence and logs retained. No crash is a pass,
+even if scene assertions already wrote successful evidence. Normal interactive
+client error reporting is unchanged. This prevents unattended dialog accumulation;
+it is not a substitute for fixing a recorded engine fault.
+
+`LocalLauncherBehaviorTests` in the server test project exercises the actual
+launcher helpers with harmless Windows PowerShell children, including isolated
+storage and rejected process/import outcomes. It does not require Godot or
+deliberately crash an application. Run actual scene acceptance separately to
+verify the installed engine and client/server lifecycle.
 
 Normal launches retain authoritative saves under `.local/godot/save` and a
 private `resume-token.txt` bookmark beside them. Both are ignored by Git. Keep
@@ -93,6 +116,18 @@ Per-phase process evidence distinguishes new processes from reused ones. Allow
 finish observing the peer. This is a town/session check, not cooperative combat,
 multiplayer host-loss recovery, stable cross-restart numeric entity IDs, or an
 OS foreground/focus guarantee. Keep the entire evidence directory private.
+
+Scene acceptance treats an accepted receipt or a successful duplicate receipt
+as the same applied outcome. A duplicate retaining a rejection reason still
+fails; command sequences, snapshot ticks, settled positions, and state changes
+remain required. This does not relax admission or resubmit rejected commands.
+Multiplayer inputs retain bounded `*-command-<sequence>.json` traces on success
+or failure: injected key, last queued sequence, pending count, connection,
+receipt fields, and observed local state/ticks. The initial sample and latest
+observations are retained, with at most 128 samples and a dropped-sample count.
+These files contain neither credentials nor raw snapshots. They distinguish
+input that never queued from missing/rejected receipts and unsettled outcomes;
+they do not measure OS focus or prove the cause of older runs without traces.
 
 ```powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File tools/test-godot-session.ps1

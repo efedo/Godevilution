@@ -22,8 +22,8 @@ Execute this goal through the milestone dependencies and acceptance gates in
 this plan, with current evidence recorded in `migration-status.md`. The primary
 agent owns planning, integration, acceptance, documentation, and cohesive
 commits. Delegate substantial, bounded implementation packages to GPT-5.6 Luna
-workers and independent critical review to a separate GPT-5.6 Terra reviewer,
-both at high reasoning effort,
+workers and independent critical review to a separate GPT-6.1 Sol reviewer,
+both at extra-high reasoning effort,
 following the [worker delegation policy](#worker-delegation). Use focused tests
 per commit and broader integration/application acceptance at the relevant gates.
 
@@ -91,6 +91,11 @@ M4. M5 is the final removal gate, not a reason to postpone replacement work.
    report startup failures, and clean up only processes it owns. The Godot
    harness now rebuilds both projects, imports assets, and retains local saves
    and a resume bookmark. Preserve these guarantees with application tests.
+   Isolate writable engine settings/cache for every importer/client process.
+   The reported Windows error-dialog accumulation was reproduced as an editor
+   import access violation with denied AppData writes. Check native process
+   exits and fatal import logs, retain stage process evidence, and fail before
+   launching another phase. Scene success alone is not clean-process acceptance.
 2. Add an application-level acceptance path through the actual Godot scene and
    controls: launch, create a character, receive/render an authoritative world,
    submit movement, observe the acknowledged position, save, exit, and resume
@@ -117,8 +122,11 @@ M4. M5 is the final removal gate, not a reason to postpone replacement work.
    This client fix does not certify admission under arbitrary post-send stalls;
    do not relax server authority or silently retry rejected gameplay.
    The earlier two-window rendered resume timeout also remains unexplained;
-   use the final-result/pending-state diagnostics to distinguish input loss,
-   rejected admission and unsettled movement. Passing reruns are not a causal fix.
+   use the bounded per-input queued-sequence/receipt/snapshot traces to distinguish
+   input loss, rejected admission and unsettled movement. Acceptance now recognizes
+   successful duplicate receipts while still rejecting duplicates of rejected
+   commands. That test correction and passing reruns do not establish the older
+   timeout's cause.
 
 Exit: the Godot launch/create/move/save/restart/resume journey passes from
 rebuilt artifacts without MPQs; visible UI is checked separately from headless
@@ -319,8 +327,8 @@ batch. Do not restart completed engine extraction or package architecture work.
 ### Worker delegation
 
 - Use GPT-5.6 Luna (`gpt-5.6-luna`) implementation workers and a separate
-  GPT-5.6 Terra (`gpt-5.6-terra`) reviewer, both with `high` reasoning effort.
-  This supersedes the earlier maximum-effort and Luna-reviewer instructions.
+  GPT-6.1 Sol (`gpt-6.1-sol`) reviewer, both with `xhigh` reasoning effort.
+  This supersedes the earlier high-effort and Terra-reviewer instructions.
   Do not silently substitute another model
   or effort setting; report unavailability and obtain direction for a change.
 - The primary agent selects milestone-aligned work packages, supplies scope,
@@ -331,7 +339,7 @@ batch. Do not restart completed engine extraction or package architecture work.
   reviewers, subject to the runtime's actual concurrency limit. Assign disjoint
   files/contracts; serialize shared
   simulation, protocol, fixture-hash, and status edits.
-- Have a separate GPT-5.6 Terra reviewer at high effort critically review each
+- Have a separate GPT-6.1 Sol reviewer at extra-high effort critically review each
   substantial package. The reviewer inspects the actual diff, native behavior,
   test evidence, compatibility, and plan acceptance criteria, and identifies
   missing branches or regressions instead of relying on the implementer's

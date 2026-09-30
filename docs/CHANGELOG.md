@@ -2,6 +2,19 @@
 
 All notable changes to this fork are documented below.
 
+- 2026-09-29: Reproduced the Godot Mono importer access violation after denied
+  shared AppData writes and isolated settings/cache per launched engine process.
+  Added writable-path checks, retained process/exit evidence, fatal import-log
+  rejection, and automation-only crash-dialog suppression without changing user
+  permissions, interactive error reporting, authoritative saves or server behavior.
+  Corrected successful duplicate receipt handling in scene acceptance and feedback,
+  with bounded credential-free multiplayer command traces and receipt regressions.
+  Fixed a zero-time completion race exposed by real multiplayer acceptance.
+  Launcher regressions pass 10/10; post-fix headless single-player recovery,
+  multiplayer resume and town-loop restore pass with clean process exits.
+  Updated launcher verification guidance and qualified earlier scene-only evidence.
+  Aligned the delegation policy with Luna/Sol extra-high implementation/review.
+
 - 2026-09-29: Added a zero-argument two-window Godot multiplayer launcher with
   one authoritative host, isolated per-player bookmarks, process-local client
   settings and owned-process cleanup. Added actual-scene mutual movement/state

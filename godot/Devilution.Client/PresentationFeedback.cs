@@ -74,7 +74,7 @@ public partial class PresentationFeedback : Node
         if (resultKey == appliedCommandResult)
             return;
         appliedCommandResult = resultKey;
-        if (result.Status != CommandStatus.Accepted)
+        if (!AuthoritativeCommandAckValidator.IsAcceptedOrSuccessfulDuplicate(result))
             commandRejected.Play();
     }
 

@@ -4,6 +4,7 @@ using Devilution.Client.Protocol;
 using Devilution.Protocol.V1;
 using Godot;
 using Environment = System.Environment;
+using static Devilution.Client.Protocol.AuthoritativeCommandAckValidator;
 
 namespace Devilution.Client.Acceptance;
 
@@ -138,7 +139,7 @@ public partial class SessionAcceptance : Node
         }
         await Frame();
         Input.ParseInputEvent(new InputEventKey { Keycode = moveKey, PhysicalKeycode = moveKey, Pressed = false });
-        await Until(() => main.ObservedCommandResult is { Status: CommandStatus.Accepted }
+        await Until(() => IsAcceptedOrSuccessfulDuplicate(main.ObservedCommandResult)
             && main.ObservedSnapshot?.Players.Single() is { CombatMode: PlayerCombatMode.Stand, CurrentAction: null } player
             && player.LevelId == initial.LevelId
             && player.PositionX == initial.PositionX + (moveKey == Key.Left ? -1 : 0)
@@ -236,7 +237,7 @@ public partial class SessionAcceptance : Node
         await Until(() => status.Text.StartsWith("Connected -", StringComparison.Ordinal),
             "The scene retained a stale disconnect error after receiving authoritative state.");
         await PressDown();
-        await Until(() => main.ObservedCommandResult is { Status: CommandStatus.Accepted } result
+        await Until(() => main.ObservedCommandResult is { } result && IsAcceptedOrSuccessfulDuplicate(result)
             && result.ClientSequence == savedSequence + 1
             && main.ObservedSnapshot!.Players.Single() is { CombatMode: PlayerCombatMode.Stand, CurrentAction: null } player
             && player.PositionX == restored.PositionX && player.PositionY == restored.PositionY + 1,

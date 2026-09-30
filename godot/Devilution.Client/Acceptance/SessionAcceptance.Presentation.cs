@@ -1,5 +1,6 @@
 using Devilution.Protocol.V1;
 using Godot;
+using static Devilution.Client.Protocol.AuthoritativeCommandAckValidator;
 
 namespace Devilution.Client.Acceptance;
 
@@ -60,7 +61,7 @@ public partial class SessionAcceptance
         var beforeClick = main.ObservedSnapshot!.Players.Single().Clone();
         var clickSequence = main.ObservedCommandResult!.ClientSequence;
         await Click(main.ObservedPlayerScreenPosition!.Value + new Vector2(32, 0), walk: true);
-        await Until(() => main.ObservedCommandResult is { Status: CommandStatus.Accepted } clickResult
+        await Until(() => main.ObservedCommandResult is { } clickResult && IsAcceptedOrSuccessfulDuplicate(clickResult)
             && clickResult.ClientSequence > clickSequence
             && main.ObservedSnapshot!.Players.Single() is { CombatMode: PlayerCombatMode.Stand, CurrentAction: null } clicked
             && clicked.PositionX == beforeClick.PositionX + 1 && clicked.PositionY == beforeClick.PositionY,
@@ -76,7 +77,7 @@ public partial class SessionAcceptance
         var cancel = (Button)main.FindChild("CancelTravel", true, false);
         var sequence = main.ObservedCommandResult!.ClientSequence;
         await Click(travel.GetGlobalRect().GetCenter());
-        await Until(() => main.ObservedCommandResult is { Status: CommandStatus.Accepted } result
+        await Until(() => main.ObservedCommandResult is { } result && IsAcceptedOrSuccessfulDuplicate(result)
             && result.ClientSequence > sequence, "Travel did not submit an accepted movement through the real button.");
         await Click(cancel.GetGlobalRect().GetCenter());
         await Until(() => main.ObservedPendingCommandCount == 0
@@ -100,7 +101,7 @@ public partial class SessionAcceptance
             return false;
         },
             "Route travel did not reach the server-projected target level.");
-        Require(main.ObservedCommandResult is { Status: CommandStatus.Accepted }, "Route ended without an accepted step.");
+        Require(IsAcceptedOrSuccessfulDuplicate(main.ObservedCommandResult), "Route ended without a successful step receipt.");
         Require(main.ObservedSnapshot!.LevelGeometry.Any(geometry => geometry.LevelId == route.TargetLevelId),
             "The target level geometry did not reach the presentation client.");
         await Frame();

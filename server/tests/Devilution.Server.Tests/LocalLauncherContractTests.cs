@@ -184,14 +184,14 @@ public sealed class LocalLauncherContractTests
         Assert.Contains("Test-Path -LiteralPath $godotLauncher -PathType Leaf", wrapper);
         Assert.Contains("if ($Multiplayer) { '.local/godot-multiplayer' }", launcher);
         Assert.Contains("Join-Path $SessionDirectory \"player-$Slot\"", launcher);
-        Assert.Contains("$clientStart.EnvironmentVariables['DEVILUTION_RESUME_TOKEN_PATH']", launcher);
-        Assert.Contains("$clientStart.EnvironmentVariables['GODEVILUTION_LOCAL_PLAYER']", launcher);
-        Assert.Contains("$clientStart.WindowStyle = if ($Headless) { 'Hidden' } else { 'Normal' }", launcher);
+        Assert.Contains("DEVILUTION_RESUME_TOKEN_PATH = Join-Path $clientDirectory 'resume-token.txt'", launcher);
+        Assert.Contains("$clientEnvironment['GODEVILUTION_LOCAL_PLAYER']", launcher);
+        Assert.Contains("$startInfo.WindowStyle = if ($Headless) { 'Hidden' } else { 'Normal' }", launcher);
         Assert.Contains("$startedClients += Start-SceneClient 1", launcher);
         Assert.Contains("if ($Multiplayer) { $startedClients += Start-SceneClient 2 }", launcher);
         Assert.Single(Regex.Matches(launcher, @"\$startedServer = Start-SessionServer"));
         Assert.Contains("$startedClients | ForEach-Object { $_.Process }", launcher);
-        Assert.Contains("$startedClient.Process.ExitCode -ne 0", launcher);
+        Assert.Contains("Complete-GodotProcess $startedClient.Tracked 0 'Godot client'", launcher);
         Assert.Contains("Multiplayer acceptance requires fresh phase markers", launcher);
         Assert.Contains("exactly two authoritative character checkpoints", launcher);
         Assert.Contains("distinct private resume bookmarks", launcher);
@@ -201,6 +201,21 @@ public sealed class LocalLauncherContractTests
         Assert.Contains("-AcceptancePhase MultiplayerResume", acceptance);
         Assert.Contains("Multiplayer resume did not start a fresh authoritative host", acceptance);
         Assert.Contains("Multiplayer resume did not start two fresh Godot processes", acceptance);
+    }
+
+    [Fact]
+    public void GodotLauncherRecordsProcessOutcomesAndPreservesPrimaryFailures()
+    {
+        var launcher = File.ReadAllText(Path.Combine(FindRepositoryRoot(), "godot/run-local-client.ps1"));
+        Assert.Contains("if ($null -eq $Tracked.Record.EndedUtc)", launcher, StringComparison.Ordinal);
+        Assert.Contains("if ($null -eq $Tracked.Record.ExitCode)", launcher, StringComparison.Ordinal);
+        Assert.Contains("$Tracked.Record.ExitCode = $Tracked.Process.ExitCode", launcher, StringComparison.Ordinal);
+        Assert.Contains("$primaryError = $_", launcher, StringComparison.Ordinal);
+        Assert.Contains("Could not stop failed Godot process", launcher, StringComparison.Ordinal);
+        Assert.Contains("Could not dispose failed Godot process", launcher, StringComparison.Ordinal);
+        Assert.Contains("Assert-GodotImportLog $importTracked $importLogPath", launcher, StringComparison.Ordinal);
+        Assert.Contains("$resolvedPath = (Resolve-Path -LiteralPath $enginePath -ErrorAction Stop).ProviderPath", launcher, StringComparison.Ordinal);
+        Assert.Contains("try { $sessionLock.Dispose() }", launcher, StringComparison.Ordinal);
     }
 
     private static string FindRepositoryRoot()

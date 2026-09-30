@@ -1,6 +1,7 @@
 using Devilution.Client.Protocol;
 using Devilution.Protocol.V1;
 using Godot;
+using static Devilution.Client.Protocol.AuthoritativeCommandAckValidator;
 using System.Text.Json;
 
 namespace Devilution.Client.Acceptance;
@@ -97,7 +98,7 @@ public partial class SessionAcceptance
         await Until(() => main.ObservedSnapshot!.WorldItems.All(item => item.EntityId != drop.EntityId)
             && main.ObservedSnapshot.Players.Single().Inventory.Any(item => item.ItemSeed == drop.ItemSeed),
             "Clicking distant loot did not complete the server-owned approach and pickup.", stageSeconds: 10);
-        Require(main.ObservedCommandResult is { Status: CommandStatus.Accepted } result
+        Require(main.ObservedCommandResult is { } result && IsAcceptedOrSuccessfulDuplicate(result)
             && result.ClientSequence >= pickupSequence + 4,
             "Distant pickup did not acknowledge the approach steps and interaction.");
         var lootInventoryCount = main.ObservedSnapshot!.Players.Single().Inventory.Count(item => item.ItemSeed == drop.ItemSeed);
@@ -165,7 +166,7 @@ public partial class SessionAcceptance
             var result = main.ObservedCommandResult;
             if (result is null || result.ClientSequence <= previousSequence)
                 return false;
-            Require(result.Status == CommandStatus.Accepted, $"{action}: {result.Status}/{result.RejectReason}.");
+            Require(IsAcceptedOrSuccessfulDuplicate(result), $"{action}: {result.Status}/{result.RejectReason}.");
             return main.ObservedSnapshot!.Tick >= result.AppliedTick && Settled(main);
         }, $"{action} did not finish.", stageSeconds: 10);
     }

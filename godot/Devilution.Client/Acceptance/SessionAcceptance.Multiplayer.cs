@@ -2,6 +2,7 @@ using System.Text.Json;
 using Devilution.Protocol.V1;
 using Godot;
 using Environment = System.Environment;
+using static Devilution.Client.Protocol.AuthoritativeCommandAckValidator;
 
 namespace Devilution.Client.Acceptance;
 
@@ -54,8 +55,8 @@ public partial class SessionAcceptance
             Require(ObservePlayer(local) == previous.Local, "The player's own durable state was not restored.");
         }
         if (creating && slot == firstSlot) {
-            await MultiplayerMove(main, Key.Down, 0, 1, 0);
-            await MultiplayerMove(main, Key.Down, 0, 1, 1);
+            await MultiplayerMove(main, Key.Down, 0, 1, 0, directory, prefix);
+            await MultiplayerMove(main, Key.Down, 0, 1, 1, directory, prefix);
         }
         await Until(() => System.IO.File.Exists(System.IO.Path.Combine(directory, "resume-token.txt")),
             "The player-specific resume bookmark was not persisted.");
@@ -75,12 +76,12 @@ public partial class SessionAcceptance
             "The peer did not verify the initial shared state.");
         var before = ObservePlayer(local);
         var sequence = previous?.Sequence ?? main.ObservedCommandResult?.ClientSequence ?? 0;
-        await MultiplayerMove(main, Key.Right, 1, 0, sequence);
-        await PressMultiplayerKey(Key.F);
-        await Until(() => main.ObservedCommandResult is { Status: CommandStatus.Accepted } result
-            && result.ClientSequence == sequence + 2 && main.ObservedPendingCommandCount == 0
-            && main.ObservedSnapshot!.Players.First().HostileMode != before.Hostile,
-            "Friendly-mode input did not change only the local authoritative player.");
+        await MultiplayerMove(main, Key.Right, 1, 0, sequence, directory, prefix);
+        await MultiplayerCommand(main, Key.F, sequence + 1, directory, prefix,
+            snapshot => snapshot.Players.First() is { CurrentAction: null, CombatMode: PlayerCombatMode.Stand } player
+                && player.EntityId == local.EntityId && player.HostileMode != before.Hostile
+                && player.PositionX == before.X + 1 && player.PositionY == before.Y,
+            "Friendly mode toggled for the same settled local player.");
         var moved = main.ObservedSnapshot!.Players.First();
         Require(moved.EntityId == local.EntityId && moved.PositionX == before.X + 1 && moved.PositionY == before.Y,
             "The local command moved or rebound the wrong player.");
@@ -115,24 +116,71 @@ public partial class SessionAcceptance
             "The peer did not finish its shared-state/rendering assertions.");
     }
 
-    private async Task MultiplayerMove(Main main, Key key, int x, int y, ulong previousSequence)
+    private Task MultiplayerMove(Main main, Key key, int x, int y, ulong previousSequence,
+        string directory, string prefix)
     {
         var before = main.ObservedSnapshot!.Players.First();
-        await PressMultiplayerKey(key);
+        return MultiplayerCommand(main, key, previousSequence, directory, prefix,
+            snapshot => snapshot.Players.First() is { CurrentAction: null, CombatMode: PlayerCombatMode.Stand } moved
+                && moved.EntityId == before.EntityId && moved.PositionX == before.PositionX + x && moved.PositionY == before.PositionY + y,
+            $"Same settled local player at ({before.PositionX + x},{before.PositionY + y}).");
+    }
+
+    private async Task MultiplayerCommand(Main main, Key key, ulong previousSequence,
+        string directory, string prefix, Func<Snapshot, bool> settled, string expected)
+    {
+        var trace = new List<MultiplayerCommandSample>();
+        var elapsed = System.Diagnostics.Stopwatch.StartNew();
+        var droppedSamples = 0;
+        var passed = false;
+        void Observe(string stage, bool force = false)
+        {
+            var snapshot = main.ObservedSnapshot;
+            var player = snapshot?.Players.FirstOrDefault();
+            var result = main.ObservedCommandResult;
+            var state = new MultiplayerCommandState(main.TransportConnected, main.ObservedPendingCommandCount,
+                main.ObservedLastQueuedSequence, main.ObservedSnapshotRevision, snapshot?.Tick,
+                player?.EntityId, player?.PositionX, player?.PositionY, player?.CombatMode.ToString(),
+                player?.CurrentAction?.ToString(), player?.HostileMode,
+                result?.ClientSequence, result?.Status.ToString(), result?.RejectReason.ToString(),
+                result?.AppliedTick, result?.ServerReceiptSequence);
+            if (!force && trace.LastOrDefault()?.State == state)
+                return;
+            // Keep the initial boundary and latest observations even on timeout.
+            if (trace.Count == 128) {
+                trace.RemoveAt(1);
+                droppedSamples++;
+            }
+            trace.Add(new MultiplayerCommandSample(elapsed.Elapsed.TotalMilliseconds, stage, state));
+        }
+        Observe("BeforeInput", force: true);
         try {
+            await PressMultiplayerKey(key);
+            Observe("AfterInput", force: true);
             await Until(() => {
+                Observe("AwaitingOutcome");
                 var result = main.ObservedCommandResult;
-                if (result is not null && result.ClientSequence > previousSequence)
-                    Require(result.Status == CommandStatus.Accepted, $"Movement {key} rejected: {result}.");
-                return result is not null && result.ClientSequence == previousSequence + 1 && main.ObservedPendingCommandCount == 0
-                    && main.ObservedSnapshot!.Tick >= result.AppliedTick
-                    && main.ObservedSnapshot.Players.First() is { CurrentAction: null, CombatMode: PlayerCombatMode.Stand } moved
-                    && moved.EntityId == before.EntityId && moved.PositionX == before.PositionX + x && moved.PositionY == before.PositionY + y;
-            }, "Multiplayer movement did not settle.", 10);
+                if (result is not null && result.ClientSequence > previousSequence) {
+                    Require(result.ClientSequence == previousSequence + 1, "Input advanced an unexpected command sequence.");
+                    Require(IsAcceptedOrSuccessfulDuplicate(result), $"Input {key} rejected: {result}.");
+                }
+                var snapshot = main.ObservedSnapshot;
+                return result is not null && result.ClientSequence == previousSequence + 1
+                    && main.ObservedLastQueuedSequence == result.ClientSequence && main.ObservedPendingCommandCount == 0
+                    && snapshot is not null && snapshot.Tick >= result.AppliedTick && settled(snapshot);
+            }, $"Multiplayer input {key} did not settle: {expected}", 10);
+            passed = true;
         } catch (Exception exception) {
-            throw new InvalidOperationException($"Movement {key}: previous sequence {previousSequence}; "
-                + $"connected {main.TransportConnected}; pending {main.ObservedPendingCommandCount}; result {main.ObservedCommandResult}; "
-                + $"local {ObservePlayer(main.ObservedSnapshot!.Players.First())}; expected ({before.PositionX + x},{before.PositionY + y}).", exception);
+            Observe("Failure", force: true);
+            throw new InvalidOperationException($"Input {key}: previous sequence {previousSequence}; "
+                + $"{trace.Last().State}; expected {expected}", exception);
+        } finally {
+            Observe(passed ? "Passed" : "Failed", force: true);
+            // Only bounded observations: never bookmarks, credentials or raw snapshots.
+            WriteEvidence(directory, $"{prefix}-command-{previousSequence + 1}.json", new {
+                Passed = passed, Key = key.ToString(), PreviousSequence = previousSequence, Expected = expected,
+                DroppedSamples = droppedSamples, Samples = trace,
+            });
         }
     }
 
@@ -154,6 +202,11 @@ public partial class SessionAcceptance
             ?? throw new InvalidDataException("Multiplayer evidence is empty.");
 
     private sealed record MultiplayerPlayerState(string Name, uint ClassId, uint LevelId, int X, int Y, uint Gold, bool Hostile);
+    private sealed record MultiplayerCommandSample(double Milliseconds, string Stage, MultiplayerCommandState State);
+    private sealed record MultiplayerCommandState(bool Connected, int Pending, ulong LastQueuedSequence,
+        ulong SnapshotRevision, ulong? SnapshotTick, uint? EntityId, int? X, int? Y, string? CombatMode,
+        string? Action, bool? Hostile, ulong? ResultSequence, string? Status, string? RejectReason,
+        ulong? AppliedTick, ulong? ReceiptSequence);
     private sealed record MultiplayerMoveEvidence(MultiplayerPlayerState Player, uint EntityId);
     private sealed record MultiplayerEvidence(bool Passed, string Mode, string ContentHash, string RulesetHash, int Slot,
         uint EntityId, uint PeerEntityId, MultiplayerPlayerState Local, MultiplayerPlayerState Remote, ulong Sequence, bool Visible);

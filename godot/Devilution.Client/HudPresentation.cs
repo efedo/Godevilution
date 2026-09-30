@@ -955,7 +955,7 @@ public partial class HudPresentation : CanvasLayer
     {
         if (result is null)
             return "Commands are sent to the authoritative server.";
-        return result.Status == CommandStatus.Accepted
+        return AuthoritativeCommandAckValidator.IsAcceptedOrSuccessfulDuplicate(result)
             ? $"Last command accepted at tick {result.AppliedTick}."
             : $"Last command: {result.Status} ({result.RejectReason}).";
     }

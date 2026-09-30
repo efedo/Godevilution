@@ -8,6 +8,12 @@ public static class AuthoritativeCommandAckValidator
 {
     public const int MaximumResultCount = AuthoritativeProtocolLimits.MaximumCommandAcknowledgementResultCount;
 
+    /** Accepted or successful replayed receipt; does not directly accept Rescheduled. */
+    public static bool IsAcceptedOrSuccessfulDuplicate(CommandResult? result)
+        // Duplicate retains the original rejection reason; duplicate alone is not success.
+        => result is { Status: CommandStatus.Accepted or CommandStatus.Duplicate,
+            RejectReason: CommandRejectReason.Unspecified };
+
     public static void Validate(CommandAck acknowledgement)
     {
         ArgumentNullException.ThrowIfNull(acknowledgement);

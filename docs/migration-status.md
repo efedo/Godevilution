@@ -102,6 +102,97 @@ The following records describe implemented slices at this baseline. They are
 evidence, not a separate priority list; detailed older entries retain their
 original scope and may be superseded by later entries or the current assessment.
 
+### M0 Godot import crash isolation and receipt outcomes (2026-09-29)
+
+This batch follows `ac4a9be7f`. The user reported many native Godot application
+error dialogs after automated runs. A bounded diagnostic reproduced the installed
+4.7.1 Mono editor importer exiting with `0xC0000005` after denied writes to
+`AppData/Local/Godot/editor_doc_cache-4.7.res` and
+`AppData/Roaming/Godot/editor_settings-4.7.tres`. Changing only the child's
+`APPDATA`/`LOCALAPPDATA` to writable isolated directories made the same import
+exit 0 and write both files. An isolated headless client also exited 0. Diagnostic
+children used a temporary inherited error mode to prevent further modal dialogs;
+no user-profile permissions or system error-reporting settings were changed.
+
+The launcher now isolates engine settings/cache separately for the importer and
+each client under the retained launch-log directory. Direct process handles,
+per-stage identity/exit records, and fatal import-storage checks enforce failure
+before later stages. Automated-child crash dialogs are suppressed locally while
+nonzero exits remain failures; normal interactive client reporting is unchanged.
+Authoritative saves, bookmarks, content, protocol, and server behavior are unchanged.
+Earlier scene assertions remain evidence of those gameplay outcomes, but their
+launcher PASS messages did not establish a clean importer lifecycle. The precise
+reason earlier runs continued despite import diagnostics was not established;
+do not attribute it to console wrappers or PowerShell exit reporting without proof.
+
+A separate receipt-handling defect was also corrected: scene acceptance and
+client feedback now recognize `Duplicate` with no rejection reason as a successful
+receipt. Duplicates of rejected commands still fail, and existing sequence,
+snapshot-tick and settled-state checks remain. Route/interaction logic shares
+the same predicate; transport, admission and retry behavior are unchanged.
+Direct `Rescheduled` handling remains unchanged. Multiplayer inputs retain bounded
+queued-sequence/receipt/local-state traces without credentials or raw snapshots.
+This correction does not prove the cause of the older rendered resume timeout.
+
+Verification recorded before the launcher correction:
+
+- Release protocol build and full in-process xUnit run pass 536 tests, with two
+  opt-in performance exclusions. The 15 new receipt cases cover successful and
+  rejected duplicates, invalid states, ordering and pending-command removal.
+- Updated receipt/trace scene checks pass rendered multiplayer create/resume in
+  `%TEMP%/Godevilution-Scene-Acceptance-bb1ee642d9a141689d5e03765004c7f5`
+  and headless in `%TEMP%/Godevilution-Scene-Acceptance-878534deb1f547a3a2fcee56aa92aed0`.
+  Both retain ten validated command traces; both rendered restored-view PNGs were
+  inspected. These pre-fix runs are not clean-import acceptance.
+- Single-player create/resume/recovery scene assertions pass in
+  `%TEMP%/Godevilution-Scene-Acceptance-c2e72376fd9f48669a4005b339951631`,
+  with the same pre-fix import qualification.
+- Native crash reproduction and isolated comparison logs are retained under
+  `.local/godot-crash-1ddf1628363949048d36d0836f75008e` and
+  `.local/godot-crash-11b8987fb18f4c8397d88b4e4650c033`; the isolated client
+  check is `.local/godot-crash-cfd1ffc256b048699f9a21fd1de7dc60`.
+
+Post-fix verification:
+
+- The launcher contract/behavior tests pass 10 cases using harmless Windows
+  PowerShell children, not intentional application crashes.
+- Actual headless create/move/checkpoint/fresh-host resume and host-loss recovery
+  pass in `%TEMP%/Godevilution-Scene-Acceptance-7eda99978a4d42549e485da58f8796b9`.
+  All six importer/client process records report exit 0 with no recorded error.
+  Launch-log suffixes are `274c0d5252ce4f69887e7117006ac63f`,
+  `af494a5eae8f4a5c9fc8945ce03a2e12`, and `b118a8ece26741b19b20e9c94c7e7d98`.
+- The first post-fix multiplayer create run correctly failed the harness despite
+  successful scene assertions: an already-exited client with exit 0 briefly
+  returned false from the subsequent zero-millisecond wait. The run is retained
+  in `%TEMP%/Godevilution-Scene-Acceptance-9e4a1278a5884d0abe924ebf1c95a922`
+  with launch-log suffix `cd6cf736e4594bf0b8c61aace5655260`; it is not a
+  multiplayer acceptance pass or recurrence of the importer access violation.
+  Completion now skips a redundant wait after `HasExited`, with a deterministic
+  regression preserving nonzero-exit rejection. Final headless multiplayer
+  create/reverse-order resume passes in
+  `%TEMP%/Godevilution-Scene-Acceptance-fe3fe6586e8948f29db92467bf201497`.
+  All six process records report exit 0 without recorded errors; ten bounded
+  command traces validate. Launch-log suffixes are
+  `282ea1fe65614417b75b6cb794ab00c2` and `400c2cd828fe403a9948b4a6789fb473`.
+- Final headless equipment/return-to-town/trade/stash/fresh-host preview resume
+  passes in `%TEMP%/Godevilution-Scene-Acceptance-da63c1e0c479411babf404bd262ec818`.
+  All four importer/client records exit 0 without recorded errors; import logs
+  contain no fatal storage diagnostics. Launch-log suffixes are
+  `c75f74ced8dd481b98e42951c989d83d` and `2bc30f99f6b44ba8914476e1c8744db1`.
+- After the application/session restart, the restricted shell no longer found
+  Godot on PATH and could not enumerate WinGet. The first discovery attempt
+  stopped before building or launching Godot. Controlled reruns supplied the
+  already located 4.7.1 Mono executable explicitly; no engine upgrade or change
+  to another project's files was made. This does not re-certify automatic
+  discovery from the restricted shell.
+- Isolated imports still report certificate-store access diagnostics, and client
+  builds report unavailable NuGet vulnerability metadata (`NU1900`). The verified
+  result is successful native process exits without fatal import-storage errors,
+  not error-free logs or a cleared package-vulnerability audit.
+
+M0/M1 and the full migration remain open. The 35% estimate is unchanged; no new
+native, campaign, performance, audible-output or OS-focus acceptance is claimed.
+
 ### M1 two-Godot multiplayer session and reverse-order resume (2026-09-29)
 
 This batch follows `a2ea42b15`. The zero-argument
