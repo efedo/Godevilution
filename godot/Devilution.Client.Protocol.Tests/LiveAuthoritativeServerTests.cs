@@ -3256,9 +3256,13 @@ public sealed partial class LiveAuthoritativeServerTests
             message => message.Snapshot is not null);
         var model = new AuthoritativeClientModel();
         model.Apply(initial);
+        await MoveToProjectedTownerAsync(client, model, 7);
         var player = Assert.Single(model.Snapshot!.Players);
         Assert.Equal(PlayerAbilityKind.Repair, player.AbilityKind);
         var equipment = Assert.Single(player.Equipment, item => item.Slot == 4);
+        // Native class repair accepts an already-full item without consuming durability.
+        Assert.Equal(24, equipment.State.Durability);
+        Assert.Equal(24, equipment.State.MaxDurability);
         var stableItemId = equipment.State.StableItemId;
         Assert.NotEqual(0U, stableItemId);
 
@@ -3266,9 +3270,10 @@ public sealed partial class LiveAuthoritativeServerTests
             OpenStashRequested = new OpenStashRequested(),
         }, client.SuggestedCommandTick(model.CurrentTick));
         await client.PollAsync(TestContext.Current.CancellationToken);
-        Assert.Equal(
-            CommandStatus.Accepted,
-            (await WaitForAcknowledgementAsync(client, openSequence)).Status);
+        var openAcknowledgement = await WaitForAcknowledgementAsync(client, openSequence);
+        Assert.True(
+            openAcknowledgement.Status == CommandStatus.Accepted,
+            $"Warrior stash entry was {openAcknowledgement.Status}/{openAcknowledgement.RejectReason} at tick {openAcknowledgement.AppliedTick}; player was at ({player.PositionX},{player.PositionY}) on level {player.LevelId}.");
         var opened = await WaitForMessageAsync(
             client,
             message => message.Snapshot?.Players.Single().StashOpen == true);
@@ -3313,15 +3318,20 @@ public sealed partial class LiveAuthoritativeServerTests
             },
         }, client.SuggestedCommandTick(model.CurrentTick));
         await client.PollAsync(TestContext.Current.CancellationToken);
-        Assert.Equal(
-            CommandStatus.Accepted,
-            (await WaitForAcknowledgementAsync(client, repairSequence)).Status);
+        var repairAcknowledgement = await WaitForAcknowledgementAsync(client, repairSequence);
+        Assert.True(
+            repairAcknowledgement.Status == CommandStatus.Accepted,
+            $"Warrior stash repair was {repairAcknowledgement.Status}/{repairAcknowledgement.RejectReason} at tick {repairAcknowledgement.AppliedTick}.");
         var repaired = await WaitForMessageAsync(
             client,
-            message => message.Snapshot?.Players.Single().Stash.Any(item =>
+            message => message.Snapshot is { } snapshot
+                && snapshot.Tick >= repairAcknowledgement.AppliedTick
+                && snapshot.Players.Single().Stash.Any(item =>
                 item.Page == 0
                 && item.Cell == 0
-                && item.Item.State.StableItemId == stableItemId) == true);
+                && item.Item.State.StableItemId == stableItemId
+                && item.Item.State.Durability == 24
+                && item.Item.State.MaxDurability == 24));
         var repairedItem = Assert.Single(repaired.Snapshot!.Players).Stash
             .Single(item => item.Page == 0 && item.Cell == 0);
         Assert.Equal(24, repairedItem.Item.State.Durability);

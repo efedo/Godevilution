@@ -24,7 +24,11 @@ All notable changes to this fork are documented below.
   qualified evidence; entry-only lifecycle/pricing, native GUI, full M1 and campaign
   gaps remain. Broader module verification retains four known Hork RNG failures.
   Destination/travel tests pass 44 and the rebuilt recharge/reconnect cases pass 2;
-  a clean full-protocol rerun remains pending.
+  a retained full-protocol rerun found one remaining Warrior stash fixture missing
+  Gillian approach. Corrected real walking and post-repair acknowledgement freshness
+  without relaxing native admission or its full-durability no-op; the focused case
+  passes. The final rebuilt protocol suite passes 550 tests with zero failures and
+  two opt-in performance exclusions; all four live stash-open fixtures were reviewed.
 
 - 2026-09-30: Added actual-control Town Portal scroll purchase/cast, town return,
   trade/stash and fresh-host owner-return acceptance. Matched native opening-counter

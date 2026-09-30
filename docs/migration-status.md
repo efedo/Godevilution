@@ -158,8 +158,17 @@ opt-in exclusions (552 total), not a clean pass. Starting the recharge fixture i
 town invalidated its offensive cast; it now casts in the dungeon and returns via
 the existing preview stair before approaching Gillian. Rebuilt recharge/reconnect
 cases pass 2/2 with fresh, settled snapshots. Another failure's truncated output
-did not establish its identity or cause; a retained-output full rerun remains
-pending. Do not attribute it to co-op, timing or the engine crash without evidence.
+did not establish its identity or cause; do not attribute it to co-op, timing or
+the engine crash. A retained-output rerun passed 549 and failed one Warrior stash
+fixture, with two opt-in exclusions. That fixture omitted Gillian approach before
+stash entry. It now walks to Gillian, explicitly retains native's accepted 24/24
+repair no-op and checks a post-acknowledgement snapshot with the same stable item.
+The corrected approach case passes in isolation; the final rebuilt full-protocol
+rerun passes 550 tests with zero failures and two opt-in performance exclusions
+(552 total, 13m 07s). Its complete output is retained at
+`%TEMP%/Godevilution-Protocol-Verification-04f2f2350d7b4dd9a4a66810aa679e9e/protocol.stdout.log`.
+Independent review verified all four live stash-open fixtures establish actual
+Gillian adjacency. No production admission or repair rule was relaxed.
 
 These authored routes do not close M1, generated-world/campaign acceptance, native
 GUI world entry, every portal placement exclusion or full vendor parity. Overall
