@@ -139,6 +139,28 @@ public sealed class LocalLauncherContractTests
         Assert.Contains("$savedEnvironment[$name]", launcher);
     }
 
+    [Fact]
+    public void AuthoredGodotPreviewIsOptInWithAnIsolatedSaveDirectory()
+    {
+        var root = FindRepositoryRoot();
+        var normal = File.ReadAllText(Path.Combine(root, "run-godot-client.ps1"));
+        var preview = File.ReadAllText(Path.Combine(root, "run-godot-preview.ps1"));
+        var harness = File.ReadAllText(Path.Combine(root, "godot/run-local-client.ps1"));
+        var acceptance = File.ReadAllText(Path.Combine(root, "tools/test-godot-session.ps1"));
+        Assert.Contains("param()", preview);
+        Assert.DoesNotContain("PreviewContent", normal);
+        Assert.Contains("& $godotLauncher -PreviewContent", preview);
+        Assert.Contains("Test-Path -LiteralPath $godotLauncher -PathType Leaf", preview);
+        Assert.Contains("if ($PreviewContent) { '.local/godot-preview' } else { '.local/godot' }", harness);
+        Assert.Contains("$overlayArguments = if ($PreviewContent)", harness);
+        Assert.Contains("--content-overlay", harness);
+        Assert.Contains("server/content/town-loop-preview", harness);
+        Assert.Contains("Town-loop acceptance requires -PreviewContent", harness);
+        Assert.Contains("$parameters.PreviewContent = $true", acceptance);
+        Assert.Contains("-AcceptancePhase TownLoopResume", acceptance);
+        Assert.Contains("if ($Journey -and $TownLoop)", acceptance);
+    }
+
     private static string FindRepositoryRoot()
     {
         var configuredRoot = Environment.GetEnvironmentVariable(

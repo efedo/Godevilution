@@ -58,6 +58,10 @@ The Godot client requires Godot 4.7.1 Mono. Run
 `powershell -ExecutionPolicy Bypass -File run-godot-client.ps1` for a local
 server/client prototype session. The launcher rebuilds both projects, imports
 assets, and retains local saves and the resume bookmark under `.local/godot`.
+For the optional authored town/combat/equipment/shop/stash preview, run
+`powershell -ExecutionPolicy Bypass -File run-godot-preview.ps1`. It starts in
+town with an isolated overlay and saves under `.local/godot-preview`; it does
+not change the default base pack or existing saves. This is not a full campaign.
 See [Godot build and application checks](docs/ai/godot-build.md) for acceptance.
 See [godot/README.md](godot/README.md) for details and
 [docs/native-client.md](docs/native-client.md) for the native compatibility

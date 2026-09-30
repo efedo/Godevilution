@@ -12,6 +12,15 @@ and M3 gameplay/content gates. Client art/audio and any optional original-asset
 import belong outside the authoritative runtime. This document specifies table
 contracts; [migration status](../../docs/migration-status.md) owns coverage.
 
+`town-loop-preview` is an optional authored playthrough overlay, exact-pinned to
+`devilution.base@0.1.0`. It adds return stair 1017 from Cathedral (4,1) to town
+(57,39) and changes encounter 9's drop to the existing one-handed native sword
+2160, retaining its seed and price. All other tables, starting resources, and
+base-pack bytes remain unchanged. Use the root `run-godot-preview.ps1` launcher
+for its distinct content/ruleset identity and isolated saves. This is a reverse-
+stair integration sample, not native map generation, a Town Portal acquisition
+route, or a campaign pack. It is not the default base content profile.
+
 The base pack declares its identity and `devilution.diablo@1.502.0` schema in
 `base/content-pack.json`; the Diablo module also accepts the immediately
 previous additive `1.501.0` schema so existing manifest-based packs remain

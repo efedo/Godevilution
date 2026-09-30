@@ -1,13 +1,23 @@
 [CmdletBinding()]
-param([string]$GodotExecutable, [switch]$Visible, [switch]$Journey)
+param([string]$GodotExecutable, [switch]$Visible, [switch]$Journey, [switch]$TownLoop)
 
 $ErrorActionPreference = 'Stop'
+if ($Journey -and $TownLoop) { throw 'Choose either -Journey or -TownLoop.' }
 $repositoryRoot = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot '..')).Path
 $sessionDirectory = Join-Path ([System.IO.Path]::GetTempPath()) ('Godevilution-Scene-Acceptance-' + [guid]::NewGuid().ToString('N'))
 $launcher = Join-Path $repositoryRoot 'godot/run-local-client.ps1'
 $parameters = @{ SessionDirectory = $sessionDirectory; Headless = -not $Visible; QuitAfterSeconds = 45 }
 if ($GodotExecutable) { $parameters.GodotExecutable = $GodotExecutable }
 try {
+    if ($TownLoop) {
+        $parameters.PreviewContent = $true
+        $parameters.QuitAfterSeconds = 240
+        & $launcher @parameters -AcceptancePhase TownLoop
+        $parameters.QuitAfterSeconds = 45
+        & $launcher @parameters -AcceptancePhase TownLoopResume
+        Write-Host "PASS: actual Godot equipment, return-to-town, trade/stash, and fresh-host preview resume. Evidence: $sessionDirectory"
+        return
+    }
     if ($Journey) {
         $parameters.QuitAfterSeconds = 165
         & $launcher @parameters -AcceptancePhase Journey

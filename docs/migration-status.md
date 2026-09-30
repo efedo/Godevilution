@@ -73,8 +73,9 @@ open. Their scope, dependencies, and exit checks are defined only in the
 - Rendered application acceptance now verifies responsive HUD controls at
   960x600, 1028x720, and 1280x720, and the authored town-to-Cathedral route.
   The former 1028x720 HUD clipping is resolved. Actual combat, distant loot
-  pickup, inventory display, and fresh-host restoration now pass too. Return,
-  equipment, services, and the complete loop remain M1 work. Local standalone-host
+  pickup, inventory display, and fresh-host restoration now pass too. The optional
+  authored preview adds equipment, reverse-stair return, purchase/stash transfers,
+  and restore; portal acquisition and the complete loop remain M1 work. Local standalone-host
   measurements are below;
   no campaign, Godot frame budget, or release-platform performance pass is claimed.
 - Godot currently requires no MPQs because it uses placeholder presentation.
@@ -98,6 +99,80 @@ open. Their scope, dependencies, and exit checks are defined only in the
 The following records describe implemented slices at this baseline. They are
 evidence, not a separate priority list; detailed older entries retain their
 original scope and may be superseded by later entries or the current assessment.
+
+### M1 isolated equipment, return, and services preview (2026-09-29)
+
+This batch follows `494712cf2`. The zero-argument `run-godot-preview.ps1` selects
+an optional exact-pinned `godevilution.town-loop-preview@0.1.0` overlay and its own
+`.local/godot-preview` saves/bookmark. It starts in town with seed 0, adds reverse
+stair 1017 from Cathedral (4,1) to town (57,39), and changes encounter 9's earned
+drop to existing equippable sword 2160/native index 119. Its seed 6001 and price
+25 remain unchanged. Base-pack bytes, default launcher/saves, schema, protocol,
+server rules, and starting resources are unchanged; no MPQs are used.
+
+The HUD now displays all seven equipment destinations, including when empty.
+Application acceptance also exposed and fixed a real stash selection defect:
+cleared selection defaults at page 0/cell 0 were being resolved as an actual
+selection on the next snapshot. The next inventory click could then withdraw
+that stash item unintentionally. Positional fallback now requires an existing
+explicit selection, preserving older-peer references. Regression checks require
+selection to remain clear after storage, inventory selection to emit no command,
+and explicit stash selection to survive snapshots and support withdrawal/redeposit.
+
+`tools/test-godot-session.ps1 -TownLoop` runs real scene controls through combat,
+earned loot, bow unequip/sword equip, return stairs, a 25-gold Smith buckler
+purchase, item storage/withdrawal/redeposit, deposit ten/withdraw five gold, and
+fresh-host resume. It checks exact equipment/stash identities and cells, remaining
+starting-potion identities, 100 XP, 70 carried/5 stashed gold, content/ruleset
+identity, and the next movement sequence. Combat uses only the original belt
+potions when low; an earlier attack-only run died, so no invulnerability/resource
+grant was added. Popup navigation targets the popup's window input handler;
+unidentified item labels are checked at the correct authoritative grid anchor.
+
+Verification:
+
+- New content checks pass 4/4; launcher contracts pass 7/7; documentation checks
+  pass 3/3. The base manifest remains
+  `8ca8a6d80722c06439ad6cf62efc75d1e486971669c0509f6a03e6438cd3fd1e`.
+- Rendered TownLoop/TownLoopResume passes with inspected equipment and stash
+  PNGs in `%TEMP%/Godevilution-Scene-Acceptance-7e81eb0227114edeb1276c8a8cd96a7f`:
+  seven attacks, no potion needed, 100 XP, exact 70/5 gold, sequences 89 -> 90.
+  Preview manifest is
+  `5d88aa59bf6a3759c082f0d14a1553846de0f9c04d26a23785791fc17f1f6d6f`;
+  ruleset is `abbd86c4e195512fd8c661fe348e6586dfdd74d0e65118312fb910b7ae86e8ed`.
+- Final headless TownLoop/TownLoopResume passes in
+  `%TEMP%/Godevilution-Scene-Acceptance-445449a18f7f4779be229ccf8f015eab`:
+  17 attacks, one original potion consumed, exact remaining belt restored,
+  100 XP, 70/5 gold, identical equipment/stash identities, sequences 100 -> 101.
+- Original base Journey/JourneyResume remains green in
+  `%TEMP%/Godevilution-Scene-Acceptance-0ce05f2d84a44558bb51ab2547ea0012`:
+  five attacks, no potion needed, 100 XP, original loot 1, sequences 70 -> 71.
+  Default Create/Resume/server-loss Recovery also passes in
+  `%TEMP%/Godevilution-Scene-Acceptance-9b09155a59ff4ce89667c8874ddcf278`.
+- The first broad protocol run passed 520, failed one, and excluded two opt-in
+  performance cases. The quest-object geometry test left its world seed random,
+  allowing single-player quest-pool selection to make quest 3008 unavailable.
+  A seed-5 diagnostic reproduced that failed precondition. The test now pins
+  seed 1, which leaves this quest available in both native and managed selection,
+  and asserts availability before operation. No server rejection rule or base
+  content was changed. Review also found a pre-existing native-parity gap:
+  `AuthoritativeQuestPoolCatalog` sorts pool entries by quest ID, whereas native
+  `quests.cpp` retains TSV order. Correcting seeded selection compatibility
+  remains an M3 follow-up; this preview does not certify quest-pool parity.
+- The final serial protocol run passes 521/521, with the two opt-in performance
+  cases excluded. The content/documentation and launcher checks also pass after
+  final review. No native suite or full campaign was run for this client/content
+  batch. An overlapping test-host rebuild hit a Windows executable lock; the
+  subsequent serial build/run succeeded.
+
+This remains an authored reverse-stair preview, not a Town Portal or campaign
+pass. Portal acquisition/use, native Smith/stash location gates, quest/death/
+skill/cast/multiplayer journeys, full native world generation, and production
+presentation remain open. Current Smith/stash commands are not town/range-gated;
+testing them after return does not certify that parity. M0's native GUI,
+post-send overload, frame-budget, and platform gaps also remain open. Overall
+35% (30-40% judgment range) is unchanged. Rendered PNGs do not certify OS window
+foreground/focus. No native or full campaign acceptance is claimed here.
 
 ### M0 first-dispatch timing and reconnect serialization (2026-09-29)
 

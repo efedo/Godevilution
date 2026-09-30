@@ -615,6 +615,8 @@ public sealed partial class LiveAuthoritativeServerTests
                 TestContext.Current.CancellationToken,
                 overlayRoot,
                 startingLevelOverride: 1,
+                // Seed 1 keeps Ogden's Sign available in native and managed pools.
+                randomSeed: 1,
                 gameMode: "single-player");
             await using var client = new AuthoritativeClient(
                 CreateOptions(server, "godot-live-object-follow-up", requestedClassId: 2));
@@ -632,6 +634,7 @@ public sealed partial class LiveAuthoritativeServerTests
             Assert.Equal(1, authoredObject.QuestTransitionAmount);
             Assert.Equal(1, authoredObject.QuestSequenceFollowUpKind);
             Assert.Equal(9901U, authoredObject.QuestSequenceFollowUpAmount);
+            Assert.False(Assert.Single(model.Snapshot.Quests, quest => quest.QuestId == 3008).Unavailable);
             var initialGeometry = model.Snapshot.LevelGeometry
                 .Single(level => level.LevelId == 1);
             Assert.DoesNotContain(42, initialGeometry.BlockedCells);

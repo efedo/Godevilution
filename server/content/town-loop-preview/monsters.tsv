@@ -1,0 +1,2 @@
+entity_id	monster_id	monster_symbol	level_id	level_symbol	position_x	position_y	hit_points	max_hit_points	armor_class	drop_item_entity_id	drop_item_seed	drop_item_price	drop_item_id	drop_item_symbol	drop_item_level	attack_damage	aggro_range	monster_level	stone_curse_immune	undead	player_minion	min_damage	max_damage	min_damage_special	max_damage_special	unique	diablo	berserk_immune	leader_entity_id	leader_relation	pack_size
+9	1	base_monster	1	cathedral	1	0	11	11	2	1000009	6001	25	2160	short_sword_standard	1	3	6	1	0	0	0	3	3	3	3	0	0	0	0	none	0

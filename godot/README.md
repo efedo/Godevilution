@@ -66,8 +66,19 @@ acknowledged-step discipline until in range, then submit one interaction.
 Escape or another gameplay action cancels that approach too. The server still
 validates movement, range, target presence, and the interaction itself.
 Application acceptance covers the authored town-to-Cathedral encounter, distant
-loot pickup, and fresh-host restore. Return/portal/town services, the complete
-gameplay loop, and generated-world parity remain open.
+loot pickup, and fresh-host restore. The optional town-loop preview extends this
+with equipment, a reverse stair, Smith purchase, and stash transfers. Portal
+acquisition, quest/death/skill/cast and multiplayer journeys, the complete
+gameplay loop, and generated-world parity remain open. Current Smith/stash
+server paths do not enforce town proximity; exercising them in town is not
+evidence that location gating matches native behavior.
+
+Items shows all seven equipment destinations, including empty slots. Select an
+equipped item and an empty inventory cell to unequip it; select an inventory
+item and an equipment slot to request equipping. The server validates the move.
+For storage, open Stash, select an item in Items, then choose a stash cell.
+Trade and Stash expose gold transfers and existing store stock; placeholder
+stock is not a claim of complete native vendor generation or usable equipment.
 
 ## Projects
 
@@ -107,6 +118,17 @@ retains the server-owned mode from the handshake. Normal launches keep server
 checkpoints and a private resume bookmark under `.local/godot`; the next launch
 offers Resume. A resume token must accompany the corresponding server saves.
 Do not publish the token or reuse the same save directory for concurrent hosts.
+
+Use the separate zero-argument `run-godot-preview.ps1` root launcher for an
+authored round trip. Its exact-pinned `town-loop-preview` overlay starts in town
+with seed 0, adds a Cathedral return stair, and makes the existing encounter
+drop an equippable native sword. Choose Rogue to follow the tested route.
+World -> Travel reaches Cathedral; right-click the monster, click its drop,
+and use Items to replace the starting bow. Select the preview return stair in
+World, then use Trade/Stash in town. The starting 100 gold can buy Smith's
+25-gold buckler. No extra gold, portal scroll, or equipment is granted.
+Saves/bookmarks live in `.local/godot-preview`, not `.local/godot`; do not mix
+the two identities. The inner harness exposes this profile as `-PreviewContent`.
 
 The client reports server loss, blocks new gameplay input while disconnected,
 and automatically reconnects when the same endpoint returns. Application

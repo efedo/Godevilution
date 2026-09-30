@@ -7,16 +7,20 @@ param(
     [switch]$Headless,
     [ValidateRange(1, 3600)] [int]$QuitAfterSeconds = 120,
     [string]$SessionDirectory,
-    [ValidateSet('Create', 'Resume', 'Recovery', 'Journey', 'JourneyResume')] [string]$AcceptancePhase
+    [switch]$PreviewContent,
+    [ValidateSet('Create', 'Resume', 'Recovery', 'Journey', 'JourneyResume', 'TownLoop', 'TownLoopResume')] [string]$AcceptancePhase
 )
 
 $ErrorActionPreference = 'Stop'
+if ($AcceptancePhase -in @('TownLoop', 'TownLoopResume') -and -not $PreviewContent) {
+    throw 'Town-loop acceptance requires -PreviewContent and its isolated content identity.'
+}
 $repositoryRoot = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot '..')).Path
 $serverProject = Join-Path $repositoryRoot 'server/src/Devilution.Server/Devilution.Server.csproj'
 $serverExecutable = Join-Path $repositoryRoot 'server/src/Devilution.Server/bin/Debug/net10.0/Devilution.Server.exe'
 $clientProject = Join-Path $repositoryRoot 'godot/Devilution.Client'
 if ([string]::IsNullOrWhiteSpace($SessionDirectory)) {
-    $SessionDirectory = Join-Path $repositoryRoot '.local/godot'
+    $SessionDirectory = Join-Path $repositoryRoot $(if ($PreviewContent) { '.local/godot-preview' } else { '.local/godot' })
 }
 $SessionDirectory = [System.IO.Path]::GetFullPath($SessionDirectory)
 if ($SessionDirectory.Contains('"')) { throw 'The session directory must not contain a quote.' }
@@ -67,10 +71,11 @@ try {
     if (-not $importProcess.WaitForExit(60000)) { throw 'Godot asset import timed out.' }
     if ($importProcess.ExitCode -ne 0) { throw "Godot asset import failed. See $captureRoot/import.log" }
 
-    # Acceptance uses a fixed seed and town to exclude autonomous combat/knockback.
-    $acceptanceArguments = if ($AcceptancePhase) { '--starting-level 0 --random-seed 0' } else { '' }
+    # Stable town starts; gameplay acceptance travels into combat afterward.
+    $acceptanceArguments = if ($AcceptancePhase -or $PreviewContent) { '--starting-level 0 --random-seed 0' } else { '' }
+    $overlayArguments = if ($PreviewContent) { '--content-overlay "{0}"' -f (Join-Path $repositoryRoot 'server/content/town-loop-preview') } else { '' }
     function Start-SessionServer([int]$ListenPort, [string]$LogPrefix) {
-        $serverArguments = '--port {0} --protocol-version 0.2.0 --game-mode single-player --save-root "{1}/save" {2}' -f $ListenPort, $SessionDirectory, $acceptanceArguments
+        $serverArguments = '--port {0} --protocol-version 0.2.0 --game-mode single-player --save-root "{1}/save" {2} {3}' -f $ListenPort, $SessionDirectory, $acceptanceArguments, $overlayArguments
         $stdoutPath = Join-Path $captureRoot ($LogPrefix + '.stdout.log')
         $stderrPath = Join-Path $captureRoot ($LogPrefix + '.stderr.log')
         $serverProcess = Start-Process -FilePath $serverExecutable -ArgumentList $serverArguments -WorkingDirectory $repositoryRoot -WindowStyle Hidden -RedirectStandardOutput $stdoutPath -RedirectStandardError $stderrPath -PassThru

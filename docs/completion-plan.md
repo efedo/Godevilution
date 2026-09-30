@@ -71,7 +71,7 @@ isolated spell or table rows while the playable route stays unchanged.
 | Gate | Deliverable | Dependencies | Current position |
 | --- | --- | --- | --- |
 | M0 | Reproducible launch and honest acceptance evidence | Existing implementation | Godot session/recovery passes; local one/four-participant host measurements recorded; native GUI and performance/platform gaps remain |
-| M1 | Usable Godot town-to-dungeon loop | M0 launch/acceptance harness | Responsive HUD, authored entry, combat/loot and restore acceptance implemented; return/services and complete loop remain |
+| M1 | Usable Godot town-to-dungeon loop | M0 launch/acceptance harness | Responsive HUD and authored combat/loot route exist; optional preview adds equipment, reverse stairs and shop/stash; full loop remains |
 | M2 | Native-compatible generated world | M0 geometry/parity baseline | Geometry contracts and authored fragments exist; native map synthesis remains |
 | M3 | Complete base and Hellfire gameplay routes | M1 plus the relevant M2 world slices | Many rules exist; campaign and remaining behavioral coverage remain |
 | M4 | Release-quality client, recovery, and packaging | M3; preparation begins during M1/M2 | Recovery and adapter packaging foundations exist; product acceptance remains |
@@ -85,7 +85,8 @@ M4. M5 is the final removal gate, not a reason to postpone replacement work.
 
 ## M0: Reproducible launch and acceptance baseline
 
-1. Keep the two zero-argument root launchers. Make Godot's launcher build the
+1. Preserve the zero-argument native and base Godot launchers, plus the isolated
+   optional Godot preview launcher. Make Godot's launcher build the
    current server and client assembly, validate handshake mode and identities,
    report startup failures, and clean up only processes it owns. The Godot
    harness now rebuilds both projects, imports assets, and retains local saves
@@ -138,10 +139,12 @@ deliberately does not claim native generated-world parity, which belongs to M2.
    gaps. Reuse existing server intents and protocol models. Responsive tabs,
    explicit tile walking, and cancellable server-controlled route traversal now
    cover town-to-Cathedral entry through actual controls. Combat/loot and
-   fresh-host restore now extend that acceptance. Next integrate equipment and
-   return/portal/services with isolated authored content identities so existing
-   base-pack saves remain usable. Close the remaining quest, death/restart,
-   skill/cast, and multiplayer journeys; this partial route does not close M1.
+   fresh-host restore now extend that acceptance. The optional exact-pinned
+   preview adds equippable earned loot, reverse stairs, Smith purchase and stash
+   transfers without changing base saves or granting resources. Preserve that
+   distinct content identity and close legitimate Town Portal acquisition/use,
+   native vendor/stash location validation, quest, death/restart, skill/cast,
+   and multiplayer journeys. A reverse-stair preview does not close M1.
 3. Give geometry, actors, projectiles, items, and interaction targets readable
    Godot presentation. Split the main scene/script only where this separates
    concrete input, rendering, menus, or HUD responsibilities. Keep placeholder
@@ -213,6 +216,11 @@ Guardian's descriptive markers are not full native/managed canonical hash
 equivalence. Add exact comparable-state assertions/native characterization and
 multi-actor scenarios as needed. A fixture that omits a resistance, block,
 geometry, or second participant branch does not certify that branch.
+
+Quest selection also needs native-order characterization: the managed catalog
+currently sorts entries within each pool by quest ID, while native loading
+retains TSV order. Correct this with explicit seeded parity and save/ruleset
+compatibility evidence, not by changing the optional preview's base identity.
 
 Exit: supported base and Hellfire campaign routes complete in Godot, and the
 coverage ledger has no unsupported required gameplay/world behavior. Each

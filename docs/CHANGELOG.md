@@ -2,6 +2,20 @@
 
 All notable changes to this fork are documented below.
 
+- 2026-09-29: Added an optional, isolated Godot town-loop preview with equippable
+  earned loot and reverse stairs while preserving base content and saves. Fixed
+  missing empty equipment destinations and unintended stash-cell-zero selection
+  after snapshots. Added actual-control equipment, shop/stash/gold, explicit
+  withdrawal/redeposit, and fresh-host restore acceptance, with starting-potion
+  conservation checks. Updated zero-argument launchers, content/launcher tests,
+  controls, acceptance guidance, active plan, and progress evidence. Stabilized
+  a live quest-object test by pinning an available single-player quest seed and
+  checking that precondition; server rejection behavior is unchanged. Final
+  protocol tests pass 521 (two opt-in exclusions), content/launcher/docs checks
+  pass 4/7/3, and rendered/headless preview plus original journey/recovery pass.
+  Recorded the pre-existing native quest-pool ordering gap. Portal,
+  native vendor-location, full gameplay-loop and migration gates remain open.
+
 - 2026-09-29: Fixed Godot input expiring while queued across a stalled frame by
   selecting interactive command ticks at first dispatch. Preserved explicit
   timestamps and byte-identical retry/reconnect payloads. Serialized polls and

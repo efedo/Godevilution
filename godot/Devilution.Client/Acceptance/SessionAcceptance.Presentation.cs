@@ -71,6 +71,7 @@ public partial class SessionAcceptance
             .WarpTriggers.First(trigger => trigger.Available).Clone();
         var sections = (TabContainer)main.FindChild("HudSections", true, false);
         await SelectTab(sections, sections.GetTabCount() - 1);
+        await SelectRoute((OptionButton)main.FindChild("Routes", true, false), 0);
         var travel = (Button)main.FindChild("Travel", true, false);
         var cancel = (Button)main.FindChild("CancelTravel", true, false);
         var sequence = main.ObservedCommandResult!.ClientSequence;

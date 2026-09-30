@@ -63,7 +63,7 @@ public partial class HudPresentation
         useConsumableSelected.Text = "Use item";
         items.AddChild(Buttons(readBookSelected, useConsumableSelected, dropHeld));
         AddList(items, "Belt: select a book or consumable source", beltItems, 80);
-        AddList(items, "Equipment: select an item, or an inventory item's destination", equipmentItems, 120);
+        AddList(items, "Equipment: select an item, or an inventory item's destination", equipmentItems, 200);
         AddList(items, "Oil targets: select equipment or inventory", oilTargets, 100);
         items.AddChild(applyOilSelected);
 

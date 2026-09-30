@@ -1,3 +1,4 @@
+using Devilution.Client.Protocol;
 using Devilution.Protocol.V1;
 using Godot;
 using System.Text.Json;
@@ -14,6 +15,7 @@ public partial class SessionAcceptance
         var snapshot = main.ObservedSnapshot!;
         var player = snapshot.Players.Single();
         Require(fields.GetProperty("Passed").GetBoolean(), "Previous gameplay acceptance did not pass.");
+        VerifyRemainingBelt(player, fields);
         Require(player.Experience == fields.GetProperty("Experience").GetUInt32(),
             "Fresh-host resume lost combat experience.");
         var expectedLootCount = fields.GetProperty("LootInventoryCount").GetInt32();
@@ -30,13 +32,29 @@ public partial class SessionAcceptance
     {
         await Until(() => Settled(main), "Dungeon entry did not settle.");
         var initialPlayer = main.ObservedSnapshot!.Players.Single();
+        Require(initialPlayer.Belt.Count == 2 && initialPlayer.Belt.All(item => item.State.BaseName == "Potion of Healing"),
+            "Combat acceptance requires the unmodified two-potion Rogue loadout.");
         var monsterId = main.ObservedSnapshot.Monsters.Single(monster => monster.Alive
             && monster.LevelId == initialPlayer.LevelId).EntityId;
         var attacks = 0;
+        var healingPotionsUsed = 0;
         var trace = new List<object>();
         ulong? lastTick = null;
         try {
             while (main.ObservedSnapshot!.Monsters.Any(monster => monster.EntityId == monsterId && monster.Alive)) {
+                var current = main.ObservedSnapshot.Players.Single();
+                if (current.Life <= current.LifeMaximum / 2 && current.Belt.Any(item => item.State.BaseName == "Potion of Healing")) {
+                    var healingSequence = main.ObservedCommandResult!.ClientSequence;
+                    var healingSlot = current.Belt.OrderBy(item => item.Slot).ToList()
+                        .FindIndex(item => item.State.BaseName == "Potion of Healing");
+                    var sections = (TabContainer)main.FindChild("HudSections", true, false);
+                    await ClickListItem(sections, 1, (ItemList)main.FindChild("BeltItems", true, false), healingSlot);
+                    await ClickControl(main, sections, 1, "UseConsumable");
+                    await AcceptedAndSettled(main, healingSequence, "Use starting healing potion");
+                    await Until(() => main.ObservedSnapshot!.Players.Single().Belt.Count == current.Belt.Count - 1,
+                        "The starting healing potion was not consumed.", 5);
+                    healingPotionsUsed++;
+                }
                 Require(++attacks <= 30 && main.ObservedSnapshot.Players.Single().Life > 0,
                     "The authored encounter was not defeated through normal combat.");
                 var monster = main.ObservedSnapshot.Monsters.Single(candidate => candidate.EntityId == monsterId);
@@ -84,21 +102,46 @@ public partial class SessionAcceptance
             "Distant pickup did not acknowledge the approach steps and interaction.");
         var lootInventoryCount = main.ObservedSnapshot!.Players.Single().Inventory.Count(item => item.ItemSeed == drop.ItemSeed);
         Require(lootInventoryCount == 1, "Pickup lost or duplicated the authored inventory item.");
+        var remainingBelt = BeltIdentities(main.ObservedSnapshot.Players.Single());
+        Require(remainingBelt.Length == 2 - healingPotionsUsed, "Combat granted or lost an unexpected belt item.");
         await SelectTab((TabContainer)main.FindChild("HudSections", true, false), 1);
         var inventory = (GridContainer)main.FindChild("InventoryGrid", true, false);
-        Require(inventory.IsVisibleInTree() && inventory.GetChildren().OfType<Button>()
-            .Any(cell => cell.Text != "·" && cell.TooltipText.Contains("Short Sword")),
-            "The looted sword did not appear in the actual inventory controls.");
+        var carrying = main.ObservedSnapshot!.Players.Single();
+        var lootIndex = carrying.Inventory.ToList().FindIndex(item => item.ItemSeed == drop.ItemSeed);
+        var lootName = ItemPresentationStyle.ResolveName(carrying.Inventory[lootIndex].State);
+        var anchor = InventoryLayout.Build(carrying.Inventory, carrying.InventoryGrid).Anchors[lootIndex];
+        var lootCell = inventory.GetChild<Button>(anchor);
+        Require(inventory.IsVisibleInTree() && !string.IsNullOrEmpty(lootName)
+            && lootCell.Text != "·" && lootCell.TooltipText.Contains(lootName),
+            $"The looted sword '{lootName}' did not appear in its actual inventory control: {lootCell.TooltipText}.");
         if (visible)
             await Capture(System.IO.Path.Combine(directory, "journey-loot.png"));
         WriteEvidence(directory, "journey-combat-loot.json", new {
-            Passed = true, MonsterId = monsterId, Attacks = attacks, DropEntityId = drop.EntityId,
+            Passed = true, MonsterId = monsterId, Attacks = attacks, HealingPotionsUsed = healingPotionsUsed, DropEntityId = drop.EntityId,
+            RemainingBelt = remainingBelt,
             drop.ItemSeed, Experience = main.ObservedSnapshot!.Players.Single().Experience,
             LootInventoryCount = lootInventoryCount,
             ApproachAndPickupCommands = main.ObservedCommandResult!.ClientSequence - pickupSequence,
             Sequence = main.ObservedCommandResult!.ClientSequence,
         });
     }
+
+    private static BeltIdentity[] BeltIdentities(PlayerSnapshot player)
+        => player.Belt.OrderBy(item => item.Slot)
+            .Select(item => new BeltIdentity(item.Slot, item.ItemSeed, item.State.StableItemId)).ToArray();
+
+    private static void VerifyRemainingBelt(PlayerSnapshot player, JsonElement evidence)
+    {
+        var consumed = evidence.GetProperty("HealingPotionsUsed").GetInt32();
+        var expected = evidence.GetProperty("RemainingBelt").Deserialize<BeltIdentity[]>()
+            ?? throw new InvalidDataException("Post-combat belt evidence is empty.");
+        Require(consumed is >= 0 and <= 2 && expected.Length == 2 - consumed,
+            "The original two-potion loadout was not conserved.");
+        Require(BeltIdentities(player).SequenceEqual(expected),
+            "Fresh-host resume lost or restored a consumed belt item.");
+    }
+
+    private sealed record BeltIdentity(uint Slot, uint Seed, uint StableId);
 
     private async Task ClickWorld(Main main, int x, int y, MouseButton button = MouseButton.Left)
     {

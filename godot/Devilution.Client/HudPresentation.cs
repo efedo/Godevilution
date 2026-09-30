@@ -26,14 +26,14 @@ public partial class HudPresentation : CanvasLayer
     private readonly Label diagnostics = new();
     private readonly Label victory = new();
     private readonly ItemList spellSources = new();
-    private readonly ItemList storeItems = new();
+    private readonly ItemList storeItems = new() { Name = "StoreItems" };
     private readonly ItemList stashItems = new();
     private readonly OptionButton stashPageSelector = new();
-    private readonly ItemList beltItems = new();
-    private readonly ItemList equipmentItems = new();
+    private readonly ItemList beltItems = new() { Name = "BeltItems" };
+    private readonly ItemList equipmentItems = new() { Name = "EquipmentItems" };
     private readonly ItemList oilTargets = new();
     private readonly GridContainer inventoryGrid = new() { Name = "InventoryGrid", Columns = InventoryColumns };
-    private readonly GridContainer stashGrid = new() { Columns = StashLayout.ColumnCount };
+    private readonly GridContainer stashGrid = new() { Name = "StashGrid", Columns = StashLayout.ColumnCount };
     private readonly List<Button> inventoryCells = [];
     private readonly List<Button> stashCells = [];
     private readonly List<uint> storeSlots = [];
@@ -41,24 +41,25 @@ public partial class HudPresentation : CanvasLayer
     private readonly List<uint> equipmentSlots = [];
     private readonly List<string> spellSourceKeys = [];
     private readonly List<PlayerItemReference> oilTargetReferences = [];
-    private readonly Button openSmith = new() { Text = "Open Smith" };
+    private readonly Button openSmith = new() { Name = "OpenSmith", Text = "Open Smith" };
     private readonly Button openAdria = new() { Text = "Open Adria" };
-    private readonly Button closeStore = new() { Text = "Close store" };
-    private readonly Button openStash = new() { Text = "Open stash" };
-    private readonly Button closeStash = new() { Text = "Close stash" };
-    private readonly Button depositStashGold = new() { Text = "Deposit stash gold" };
-    private readonly Button withdrawStashGold = new() { Text = "Withdraw stash gold" };
+    private readonly Button closeStore = new() { Name = "CloseStore", Text = "Close store" };
+    private readonly Button openStash = new() { Name = "OpenStash", Text = "Open stash" };
+    private readonly Button closeStash = new() { Name = "CloseStash", Text = "Close stash" };
+    private readonly Button depositStashGold = new() { Name = "DepositStashGold", Text = "Deposit stash gold" };
+    private readonly Button withdrawStashGold = new() { Name = "WithdrawStashGold", Text = "Withdraw stash gold" };
     private readonly LineEdit stashGoldAmount = new() {
+        Name = "StashGoldAmount",
         Text = "10",
         PlaceholderText = "Gold amount",
     };
-    private readonly Button buySelected = new() { Text = "Buy selected" };
+    private readonly Button buySelected = new() { Name = "BuySelected", Text = "Buy selected" };
     private readonly Button sellSelected = new() { Text = "Sell selected" };
     private readonly Button repairSelected = new() { Text = "Repair selected" };
     private readonly Button rechargeSelected = new() { Text = "Recharge selected" };
     private readonly Button identifySelected = new() { Text = "Identify selected" };
     private readonly Button readBookSelected = new() { Text = "Read book selected" };
-    private readonly Button useConsumableSelected = new() { Text = "Use consumable selected" };
+    private readonly Button useConsumableSelected = new() { Name = "UseConsumable", Text = "Use consumable selected" };
     private readonly Button applyOilSelected = new() { Text = "Apply oil to target" };
     private readonly Button allocateStrength = new() { Text = "+Strength" };
     private readonly Button allocateMagic = new() { Text = "+Magic" };
@@ -334,7 +335,9 @@ public partial class HudPresentation : CanvasLayer
                 selectedStashItemCell);
             if (selectedStashItemIndex < 0)
                 ClearSelectedStashItem();
-        } else {
+        } else if (selectedStashItemIndex >= 0) {
+            // Positional fallback is for an explicit older-peer selection only.
+            // Cleared defaults (page 0/cell 0) must not select a newly stored item.
             selectedStashItemIndex = FindStashItemIndex(
                 player,
                 selectedStashStableItemId,
@@ -482,7 +485,7 @@ public partial class HudPresentation : CanvasLayer
         beltItems.MouseFilter = !connected || player?.Belt.Count is not > 0
             ? Control.MouseFilterEnum.Ignore
             : Control.MouseFilterEnum.Stop;
-        equipmentItems.MouseFilter = !connected || player?.Equipment.Count is not > 0
+        equipmentItems.MouseFilter = !connected || player is null
             ? Control.MouseFilterEnum.Ignore
             : Control.MouseFilterEnum.Stop;
         spellSources.MouseFilter = !connected || spellSourceKeys.Count == 0
@@ -617,9 +620,13 @@ public partial class HudPresentation : CanvasLayer
             return;
         }
 
-        foreach (var item in player.Equipment.OrderBy(item => item.Slot)) {
-            equipmentSlots.Add(item.Slot);
-            equipmentItems.AddItem($"slot {item.Slot}: {DescribeItem(item.State)}");
+        // Empty destinations must remain selectable, including after unequipping
+        // the last item. The server still validates slot/type/attribute rules.
+        string[] labels = ["Head", "Left ring", "Right ring", "Amulet", "Left hand", "Right hand", "Body"];
+        for (var slot = 0U; slot < labels.Length; slot++) {
+            var item = player.Equipment.FirstOrDefault(candidate => candidate.Slot == slot);
+            equipmentSlots.Add(slot);
+            equipmentItems.AddItem($"{labels[slot]}: {(item is null ? "empty" : DescribeItem(item.State))}");
         }
         if (selectedEquipmentSlot is { } equipmentSlot) {
             var selectedIndex = equipmentSlots.IndexOf(equipmentSlot);

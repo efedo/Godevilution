@@ -15,8 +15,9 @@ dotnet build godot/Devilution.Client/Devilution.Client.sln
 ```
 
 The protocol-test project builds the current server once as an explicit,
-build-only dependency, then the live tests launch that Debug server without
-starting concurrent rebuilds.
+build-only dependency, then the live tests launch that matching-configuration
+server without starting concurrent rebuilds. Do not rebuild the same test
+project while its executable is running; Windows locks the active test host.
 
 For a focused class or method, invoke the xUnit v3 in-process runner directly.
 This avoids requiring the VSTest testhost package cache:
@@ -65,12 +66,18 @@ lock prevents simultaneous local writers. Logs are retained in the printed temp
 directory. `-SessionDirectory` on the inner harness isolates diagnostic runs.
 `-Headless -QuitAfterSeconds N` now measures real seconds, not Godot iterations.
 
+The additional zero-argument `run-godot-preview.ps1` selects the authored
+`town-loop-preview` overlay, town start, and seed 0. Its separate
+`.local/godot-preview` save/bookmark directory must not be mixed with the normal
+base profile. The original root launcher and base content identity are unchanged.
+
 ## Application acceptance
 
 ```powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File tools/test-godot-session.ps1
 powershell -NoProfile -ExecutionPolicy Bypass -File tools/test-godot-session.ps1 -Visible
 powershell -NoProfile -ExecutionPolicy Bypass -File tools/test-godot-session.ps1 -Journey -Visible
+powershell -NoProfile -ExecutionPolicy Bypass -File tools/test-godot-session.ps1 -TownLoop -Visible
 ```
 
 The first two commands use separate server and Godot processes for create and resume, a
@@ -97,7 +104,7 @@ combat knockback from its movement/save assertion; normal launch defaults are
 unchanged. Keep the evidence directory private because it contains a resume
 credential even though the JSON and screenshots do not reveal it.
 
-Create and Journey also flush a real movement key into the input handler,
+Create, Journey, and TownLoop also flush a real movement key into the input handler,
 require one queued command, and deliberately stall the client main thread for
 750ms before its next transport poll. The separate host is not paused. Movement
 must still be accepted and settle at the expected authoritative tile; the
@@ -120,15 +127,34 @@ horizontal overflow, the exposed world area, and player visibility. Journey
 also Ctrl-clicks the resized world, starts/cancels travel through the real buttons,
 observes no further submissions after the in-flight step settles, restarts travel,
 and requires the server's level change and target geometry. It then right-clicks
-the authored encounter, requires experience and loot, walks away, and clicks the
+the authored encounter, uses only starting belt potions below half health when
+needed, requires experience and loot, walks away, and clicks the
 distant drop to exercise repeated server-owned approach and pickup. A fresh host
-and client must retain identity/position, experience, loot, and the defeated
+and client must retain identity/position, experience, loot, remaining belt item
+identities (consumed potions stay consumed), and the defeated
 encounter without duplicating the drop, then accept a fresh movement sequence.
 It uses shipped authored content, not test teleportation or client pathfinding.
 Visible runs retain layout/tab, dungeon, combat, and loot PNGs; a combat trace is
 retained for failure diagnosis. Allow up to 165 seconds for Journey and 45 for
 JourneyResume, plus builds. Services, return travel/portal, multiplayer, native
 generated maps, and campaign completion are not certified by Journey.
+
+`-TownLoop` uses the optional preview overlay in another fresh isolated directory.
+It extends the same combat/loot inputs by unequipping the starting bow, equipping
+the earned sword into the now-empty hand, selecting/walking the reverse stair,
+buying the existing 25-gold Smith buckler, storing bow/buckler, explicitly
+withdrawing/redepositing the buckler, and depositing ten then withdrawing five
+gold. A fresh host/client verifies equipped/stashed item
+identities and placements, remaining starting potions, content/ruleset identity,
+experience, and the final
+70 carried/5 stashed gold before accepting the next sequence. Actual tab/list/grid
+and button input submits ordinary server intents; no teleport, state injection,
+or free resources is used. Item assertions use the server-provided display name
+at its inventory anchor, including unidentified names. Allow 240 seconds for
+TownLoop and 45 for TownLoopResume, plus builds. Omit `-Visible` for headless;
+do not combine `-TownLoop` with `-Journey`. PNGs cover equipment, return, purchase,
+stash, and restore. This does not certify dynamic portal acquisition, native
+vendor/stash location gates, a complete M1 loop, or campaign parity.
 
 ## Standalone host performance baseline
 

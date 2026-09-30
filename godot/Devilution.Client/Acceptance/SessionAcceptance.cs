@@ -26,7 +26,7 @@ public partial class SessionAcceptance : Node
     private async Task RunAsync()
     {
         var phase = Environment.GetEnvironmentVariable("GODEVILUTION_ACCEPTANCE_PHASE");
-        if (phase is not ("Create" or "Resume" or "Recovery" or "Journey" or "JourneyResume"))
+        if (phase is not ("Create" or "Resume" or "Recovery" or "Journey" or "JourneyResume" or "TownLoop" or "TownLoopResume"))
             throw new InvalidOperationException("Explicit acceptance phase is required.");
         var directory = Environment.GetEnvironmentVariable("GODEVILUTION_ACCEPTANCE_DIRECTORY")
             ?? throw new InvalidOperationException("An isolated evidence directory is required.");
@@ -34,7 +34,7 @@ public partial class SessionAcceptance : Node
         if (DisplayServer.GetName() == "headless")
             GetTree().Root.Size = new Vector2I(1280, 720);
         var bookmarkPath = System.IO.Path.Combine(directory, "resume-token.txt");
-        var creating = phase is "Create" or "Journey";
+        var creating = phase is "Create" or "Journey" or "TownLoop";
         if (creating) {
             Require(!System.IO.File.Exists(bookmarkPath), "Creation requires a fresh isolated bookmark directory.");
             System.IO.File.WriteAllText(bookmarkPath, "invalid token");
@@ -57,7 +57,8 @@ public partial class SessionAcceptance : Node
         } else {
             previous = JsonSerializer.Deserialize<Evidence>(System.IO.File.ReadAllText(
                 System.IO.Path.Combine(directory, phase switch {
-                    "Recovery" => "resume.json", "JourneyResume" => "journey.json", _ => "create.json",
+                    "Recovery" => "resume.json", "JourneyResume" => "journey.json",
+                    "TownLoopResume" => "townloop.json", _ => "create.json",
                 })))
                 ?? throw new InvalidDataException("The creation evidence is empty.");
             Require(previous.Passed && mode.Selected == 1, "Resume must use the persisted form defaults.");
@@ -104,16 +105,23 @@ public partial class SessionAcceptance : Node
             "No durable local resume bookmark was written.");
         await VerifyResponsiveLayout(main, directory, visible && creating);
         if (previous is not null) {
+            Require(main.ObservedIdentity!.ContentManifestHash == previous.ContentHash
+                && main.ObservedIdentity.RulesetIdentityHash == previous.RulesetHash,
+                "Fresh host/client changed the persisted content or ruleset identity.");
             Require(initial.EntityId == previous.EntityId && initial.PositionX == previous.X
                 && initial.PositionY == previous.Y && initial.LevelId == previous.LevelId,
                 $"Fresh host/client restore mismatch: expected entity/level/position {previous.EntityId}/{previous.LevelId}/{previous.X},{previous.Y}; observed {initial.EntityId}/{initial.LevelId}/{initial.PositionX},{initial.PositionY}.");
         }
         if (phase == "JourneyResume")
             VerifyCombatLootRestored(main, directory);
+        if (phase == "TownLoopResume")
+            await VerifyTownLoopRestored(main, directory, visible);
 
         GetViewport().GuiReleaseFocus();
         var preInputTick = main.ObservedSnapshot!.Tick;
-        Input.ParseInputEvent(new InputEventKey { Keycode = Key.Down, PhysicalKeycode = Key.Down, Pressed = true });
+        // The preview's town arrival is immediately north of the entry stair.
+        var moveKey = phase == "TownLoopResume" ? Key.Left : Key.Down;
+        Input.ParseInputEvent(new InputEventKey { Keycode = moveKey, PhysicalKeycode = moveKey, Pressed = true });
         double? inputStallMilliseconds = null;
         if (creating) {
             Input.FlushBufferedEvents();
@@ -125,10 +133,12 @@ public partial class SessionAcceptance : Node
             inputStallMilliseconds = stall.Elapsed.TotalMilliseconds;
         }
         await Frame();
-        Input.ParseInputEvent(new InputEventKey { Keycode = Key.Down, PhysicalKeycode = Key.Down, Pressed = false });
+        Input.ParseInputEvent(new InputEventKey { Keycode = moveKey, PhysicalKeycode = moveKey, Pressed = false });
         await Until(() => main.ObservedCommandResult is { Status: CommandStatus.Accepted }
             && main.ObservedSnapshot?.Players.Single() is { CombatMode: PlayerCombatMode.Stand, CurrentAction: null } player
-            && player.PositionY == initial.PositionY + 1,
+            && player.LevelId == initial.LevelId
+            && player.PositionX == initial.PositionX + (moveKey == Key.Left ? -1 : 0)
+            && player.PositionY == initial.PositionY + (moveKey == Key.Down ? 1 : 0),
             "Movement did not finish with an accepted command and settled authoritative position.");
         var moved = main.ObservedSnapshot!.Players.Single();
         var result = main.ObservedCommandResult!;
@@ -152,9 +162,11 @@ public partial class SessionAcceptance : Node
             moved = main.ObservedSnapshot!.Players.Single();
             result = main.ObservedCommandResult!;
         }
-        if (phase == "Journey") {
+        if (phase is "Journey" or "TownLoop") {
             await VerifyRouteJourney(main, directory, visible);
             await VerifyCombatAndLoot(main, directory, visible);
+            if (phase == "TownLoop")
+                await VerifyEquipmentAndTownLoop(main, directory, visible);
             moved = main.ObservedSnapshot!.Players.Single();
             result = main.ObservedCommandResult!;
         }
@@ -250,7 +262,9 @@ public partial class SessionAcceptance : Node
     {
         var stage = Stopwatch.StartNew();
         while (!condition()) {
-            var seconds = Environment.GetEnvironmentVariable("GODEVILUTION_ACCEPTANCE_PHASE") == "Journey" ? 150 : 40;
+            var seconds = Environment.GetEnvironmentVariable("GODEVILUTION_ACCEPTANCE_PHASE") switch {
+                "TownLoop" => 225, "Journey" => 150, _ => 40,
+            };
             Require(deadline.Elapsed < TimeSpan.FromSeconds(seconds), failure);
             Require(stageSeconds is null || stage.Elapsed.TotalSeconds < stageSeconds, failure);
             await Frame();

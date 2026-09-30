@@ -1,0 +1,15 @@
+{
+  "formatVersion": 1,
+  "id": "godevilution.town-loop-preview",
+  "version": "0.1.0",
+  "dependencies": ["devilution.base"],
+  "schema": { "id": "devilution.diablo", "version": "1.502.0" },
+  "dependencyConstraints": [
+    { "id": "devilution.base", "minimumVersion": "0.1.0", "maximumVersion": "0.1.0" }
+  ],
+  "overlays": [
+    { "table": "content_ids.tsv", "keys": ["kind", "symbol"], "mode": "upsert" },
+    { "table": "warps.tsv", "keys": ["warp_id"], "mode": "upsert" },
+    { "table": "monsters.tsv", "keys": ["entity_id"], "mode": "upsert" }
+  ]
+}
