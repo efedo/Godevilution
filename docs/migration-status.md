@@ -93,6 +93,9 @@ open. Their scope, dependencies, and exit checks are defined only in the
   campaign behavior, integrated Godot presentation, and end-to-end acceptance
   are the main completion constraints. Generic procedural geometry and authored
   fragments are implemented foundations, not complete native map generation.
+  An isolated ordinary original-Diablo Cathedral level-1 coarse generator now
+  matches two existing native goldens; runtime/fine-layer integration and the
+  remaining families, quests and placement gates remain open.
 - Compact Golem replay still models one combat target; multiple-owner summons
   and replacement allocation are not represented. Guardian descriptive markers
   do not establish full canonical hash equivalence. Keep those oracle gaps
@@ -107,6 +110,36 @@ open. Their scope, dependencies, and exit checks are defined only in the
 The following records describe implemented slices at this baseline. They are
 evidence, not a separate priority list; detailed older entries retain their
 original scope and may be superseded by later entries or the current assessment.
+
+### M2 ordinary Cathedral level-1 coarse generator (2026-09-30)
+
+This independent slice follows `6b5ceef95`. The game module now exposes a fresh
+ordinary original-Diablo Cathedral level-1 generator with an explicit 32-bit
+dungeon seed and MAIN/PREV entry. Its room/DMT/chamber/wall, tile fix, transparency,
+stair, substitution, shadow, lamp and floor stages use the shared legacy LCG.
+Generated output has read-only 40x40 mega tiles, unsigned 80x80 interior
+transparency, coarse stair anchors, world-tile entry and continuation metadata.
+Invalid entry values fail before generation. State is local to each invocation.
+Retries intentionally retain native behavior without an execution limit.
+
+Nine focused xUnit cases pass, including exact comparison against the existing
+`diablo/1-2588.dun` and `diablo/1-743271966.dun` coarse/transparency layers and
+MAIN/PREV positions, interleaved A/B/A generation, invalid entry, zero/high-bit/
+maximum seeds and the signed-minimum LCG edge, dimensions and access bounds.
+The freshly rebuilt full game-module suite runs 2441 cases: 2437 pass and the
+same four previously baseline-confirmed Hork Demon RNG tests fail. They remain
+unresolved, not excluded passes. All 19 native Cathedral goldens also pass in
+the preceding native verification batch.
+
+No server bootstrap, content pack, protocol, save schema or gameplay route calls
+the new generator yet. It reads no MPQs and copies no asset fixtures. Attempt
+seed/final RNG continuation are deterministic but not yet compared to native
+oracle values. Native fine-piece/TIL/SOL expansion, coordinate-contract
+integration, external pattern-data validation, campaign seed derivation,
+population, quest/set pieces, Hellfire Crypt and other families remain work.
+This is the first coarse oracle port, not a playable generated-world or M2 pass.
+Independent Sol review found no blocking source issue within this scope.
+Overall completion remains approximately 35%.
 
 ### M0 native presentation readiness and object admission (2026-09-30)
 

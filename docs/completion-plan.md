@@ -72,7 +72,7 @@ isolated spell or table rows while the playable route stays unchanged.
 | --- | --- | --- | --- |
 | M0 | Reproducible launch and honest acceptance evidence | Existing implementation | Godot session/recovery passes; local one/four-participant host measurements recorded; native GUI and performance/platform gaps remain |
 | M1 | Usable Godot town-to-dungeon loop | M0 launch/acceptance harness | Responsive HUD and authored combat/loot route exist; optional preview adds equipment, reverse stairs and shop/stash; full loop remains |
-| M2 | Native-compatible generated world | M0 geometry/parity baseline | Geometry contracts and authored fragments exist; native map synthesis remains |
+| M2 | Native-compatible generated world | M0 geometry/parity baseline | First ordinary Cathedral level-1 coarse oracle port exists; fine layers, runtime integration and remaining families remain |
 | M3 | Complete base and Hellfire gameplay routes | M1 plus the relevant M2 world slices | Many rules exist; campaign and remaining behavioral coverage remain |
 | M4 | Release-quality client, recovery, and packaging | M3; preparation begins during M1/M2 | Recovery and adapter packaging foundations exist; product acceptance remains |
 | M5 | Production legacy-runtime retirement | M4 and capability replacement gates | Authoritative mode is Lua-free; compatibility runtime remains |
@@ -191,6 +191,10 @@ this evidence. A sample art pack does not satisfy M4's full presentation gate.
    Catacombs, Caves, Hell, Hive, Crypt, and dependent quest/set levels. Treat
    town and transition topology as part of the same world contract. Adjust
    independent family order only when it reduces a documented dependency.
+   The ordinary original-Diablo level-1 coarse port now matches two native DUN
+   goldens but has no runtime call sites. Verify native continuation RNG, then
+   integrate validated external pattern/TIL/SOL data and geometry coordinates
+   before population or route acceptance; do not invent campaign seed mapping.
 3. Compare seed-for-seed native and managed generation: RNG consumption,
    mega-tiles/d-pieces, walk/missile/vision blockers, transparency, entrances,
    reachable routes, set-piece anchors, object and encounter placement. Reuse

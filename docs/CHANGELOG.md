@@ -2,6 +2,15 @@
 
 All notable changes to this fork are documented below.
 
+- 2026-09-30: Added an isolated original-Diablo Cathedral level-1 coarse generator
+  in the game module, using the shared legacy LCG with per-call state. Outputs
+  read-only mega tiles/transparency, stairs, entry and seed metadata without MPQs.
+  Matched two existing native DUN goldens and MAIN/PREV positions; added invalid
+  input, interleaving, seed-edge and bounds tests (9 pass). Full module verification
+  passes 2437/2441; four previously baseline-confirmed Hork RNG failures remain.
+  Updated the plan/status with explicit native-RNG, data/fine-layer and runtime
+  integration gaps. No campaign, generated-world route or M2 acceptance is claimed.
+
 - 2026-09-30: Deferred authoritative native world projection until matching
   level identity, quests and graphics are ready. Added presentation-only object
   admission, frame/art guards, server-directed level reloads and before-draw
