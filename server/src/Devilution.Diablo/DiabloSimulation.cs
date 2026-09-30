@@ -341,7 +341,8 @@ public sealed class DiabloSimulationFactory : IDiabloSimulationFactory
                 options.Items,
                 options.AdriaStoreId,
                 options.WorldRules?.TownLevelId ?? AuthoritativePortalRules.TownLevelId,
-                options.StorytellerStoreId),
+                options.StorytellerStoreId,
+                options.TownerGreetings),
             worldCommands,
             new DiabloCombatCommandProcessor(
                 worldState,

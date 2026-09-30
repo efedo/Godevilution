@@ -205,16 +205,19 @@ JourneyResume, plus builds. Services, return travel/portal, multiplayer, native
 generated maps, and campaign completion are not certified by Journey.
 
 `-TownLoop` now selects the separate portal preview in a fresh isolated directory.
-It buys the 50-gold scroll through Trade before the same combat/loot journey,
+It walks to projected Smith through World's declared-destination controls,
+verifies cancel/restart, and buys the 50-gold scroll before the combat/loot journey,
 unequips the starting bow, equips the earned sword, selects the consumed scroll
 source under Hero, and left-clicks to cast. Clicking the server-owned portal
 returns to its exact town endpoint, not the reverse stair. It then buys the
-existing 25-gold Smith buckler, stores bow/buckler, withdraws/redeposits the
+existing 25-gold Smith buckler after walking back to Smith, approaches Gillian,
+stores bow/buckler, withdraws/redeposits the
 buckler, and deposits ten then withdraws five gold. A fresh host/client verifies
 equipped/stashed identities, remaining starting potions, consumed-source absence,
 content/ruleset identity, experience, the active portal and 20 carried/5 stashed
-gold. The owner's actual town-to-dungeon return must close the portal before a
-fresh movement sequence. Actual tab/list/grid/world/button input submits ordinary
+gold. Walking back to the restored portal and the owner's town-to-dungeon
+return must close it before a fresh movement sequence.
+Actual tab/list/grid/world/button input submits ordinary
 server intents; no teleport, state injection, or free resources is used.
 Item assertions use server-provided names, including unidentified names.
 Allow 240 seconds for TownLoop and 45 for TownLoopResume, plus builds. Omit
@@ -222,7 +225,9 @@ Allow 240 seconds for TownLoop and 45 for TownLoopResume, plus builds. Omit
 cast, portal return, equipment, purchase, stash and restore. The original inner
 `-PreviewContent -AcceptancePhase TownLoop`/`TownLoopResume` path retains reverse
 stairs, 70 carried/5 stashed gold and legacy evidence compatibility. These checks
-do not certify native stock/price/location gates, every placement exclusion,
+and focused admission tests cover native-role entry level/range/cursor checks,
+but not stock/pricing, complete open-service lifecycle handling,
+every placement exclusion,
 portal animation/art, a complete M1 loop or campaign parity.
 
 ## Standalone host performance baseline

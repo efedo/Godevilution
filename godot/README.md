@@ -74,15 +74,24 @@ Clicked items, portals, objects, traps, and dialogue targets use the same
 acknowledged-step discipline until in range, then submit one interaction.
 Escape or another gameplay action cancels that approach too. The server still
 validates movement, range, target presence, and the interaction itself.
+World also lists already-projected towners and portal endpoints on the current
+level, including destinations outside the viewport. Select one and use Approach
+and interact to walk there through the same server-acknowledged steps; Cancel
+travel stops either repeater. This metadata selector does not reveal additional
+world entities or bypass the server's interaction checks. Towner numbers remain
+placeholder labels until the client localization/presentation pack supplies names.
 Application acceptance covers the authored town-to-Cathedral encounter, distant
 loot pickup, and fresh-host restore. The optional town-loop preview extends this
 with equipment, a reverse stair, Smith purchase, and stash transfers. A separate
 portal preview exercises scroll purchase/consumption, dungeon-to-town travel,
 active-portal restoration, and owner-return closure through actual controls.
 Quest/death/class-skill and cooperative gameplay/recovery journeys, the complete
-gameplay loop, and generated-world parity remain open. Current Smith/stash
-server paths do not enforce town proximity; exercising them in town is not
-evidence that location gating matches native behavior.
+gameplay loop, and generated-world parity remain open. Native-role store entry
+requires the projected vendor's level, distance at most one tile (including
+diagonals), and an empty held cursor; opening Stash requires Gillian (towner 7).
+Use World to approach Smith (towner 0) before Trade or Gillian before Stash.
+These are entry checks, not a completed open-service lifecycle or vendor-price
+parity claim. Generic/custom stores and metadata-free compatibility paths remain.
 
 Two-client application acceptance covers mutual movement/friendly-mode
 visibility and fresh-host resume through both setup forms, including reversed
@@ -93,7 +102,8 @@ combat, cross-player world interactions, or multiplayer host-loss recovery.
 Items shows all seven equipment destinations, including empty slots. Select an
 equipped item and an empty inventory cell to unequip it; select an inventory
 item and an equipment slot to request equipping. The server validates the move.
-For storage, open Stash, select an item in Items, then choose a stash cell.
+For storage, approach Gillian, open Stash, select an item in Items, then choose a
+stash cell.
 Trade and Stash expose gold transfers and existing store stock; placeholder
 stock is not a claim of complete native vendor generation or usable equipment.
 
@@ -142,16 +152,20 @@ with seed 0, adds a Cathedral return stair, and makes the existing encounter
 drop an equippable native sword. Choose Rogue to follow the tested route.
 World -> Travel reaches Cathedral; right-click the monster, click its drop,
 and use Items to replace the starting bow. Select the preview return stair in
-World, then use Trade/Stash in town. The starting 100 gold can buy Smith's
+World, then select Towner 0 and Approach and interact before using Trade in town.
+Select Towner 7 and approach Gillian before opening Stash. The starting 100 gold
+can buy Smith's
 25-gold buckler. No extra gold, portal scroll, or equipment is granted.
 Saves/bookmarks live in `.local/godot-preview`, not `.local/godot`; do not mix
 the two identities. The inner harness exposes this profile as `-PreviewContent`.
 
 The separate zero-argument `run-godot-portal-preview.ps1` adds the exact-pinned
 `town-portal-preview` stock overlay to that route. Buy the 50-gold Town Portal
-scroll from Smith before entering Cathedral, select it under Hero, then left-click
+scroll after approaching Smith before entering Cathedral, select it under Hero,
+then left-click
 the dungeon world to cast. Click the portal to return to town; the owner's return
-through the town endpoint closes it. Equipment, trade/stash and an active portal
+through the town endpoint closes it. World can approach an offscreen declared
+portal endpoint after resuming. Equipment, trade/stash and an active portal
 survive a fresh host/client restart. This stock/price is an authored integration
 sample, not native vendor generation or pricing parity. Starting resources stay
 unchanged; saves/bookmarks use `.local/godot-portal-preview` and the inner flag is

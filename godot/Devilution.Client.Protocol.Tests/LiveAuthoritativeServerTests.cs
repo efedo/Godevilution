@@ -259,7 +259,8 @@ public sealed partial class LiveAuthoritativeServerTests
     public async Task GodotTransportReconcilesAuthoritativeStashSessionGoldAndMoves()
     {
         using var server = await StartedServer.StartAsync(
-            TestContext.Current.CancellationToken);
+            TestContext.Current.CancellationToken,
+            startingLevelOverride: 0);
         await using var client = new AuthoritativeClient(
             CreateOptions(server, "godot-live-stash-session", requestedClassId: 0));
 
@@ -269,6 +270,7 @@ public sealed partial class LiveAuthoritativeServerTests
             message => message.Snapshot is not null);
         var model = new AuthoritativeClientModel();
         model.Apply(initial);
+        await MoveToProjectedTownerAsync(client, model, 7);
         var initialPlayer = Assert.Single(model.Snapshot!.Players);
         Assert.True(initialPlayer.Gold >= 10);
         var initialGold = initialPlayer.Gold;
@@ -3104,7 +3106,8 @@ public sealed partial class LiveAuthoritativeServerTests
     public async Task LiveServerUsesBardIdentifyAbilityOnAnOpenStashItem()
     {
         using var server = await StartedServer.StartAsync(
-            TestContext.Current.CancellationToken);
+            TestContext.Current.CancellationToken,
+            startingLevelOverride: 0);
         await using var client = new AuthoritativeClient(
             CreateOptions(server, "godot-bard-identify-stash", requestedClassId: 4));
 
@@ -3114,6 +3117,7 @@ public sealed partial class LiveAuthoritativeServerTests
             message => message.Snapshot is not null);
         var model = new AuthoritativeClientModel();
         model.Apply(initial);
+        await MoveToProjectedTownerAsync(client, model, 7);
         var initialPlayer = Assert.Single(model.Snapshot!.Players);
         Assert.Equal(PlayerAbilityKind.Identify, initialPlayer.AbilityKind);
         var equipment = Assert.Single(initialPlayer.Equipment, item => item.Slot == 4);
@@ -3241,7 +3245,8 @@ public sealed partial class LiveAuthoritativeServerTests
     public async Task LiveServerUsesWarriorRepairAbilityOnAnOpenStashItem()
     {
         using var server = await StartedServer.StartAsync(
-            TestContext.Current.CancellationToken);
+            TestContext.Current.CancellationToken,
+            startingLevelOverride: 0);
         await using var client = new AuthoritativeClient(
             CreateOptions(server, "godot-warrior-repair-stash", requestedClassId: 0));
 
@@ -4863,9 +4868,10 @@ public sealed partial class LiveAuthoritativeServerTests
             },
         }, client.SuggestedCommandTick(model.CurrentTick));
         await client.PollAsync(TestContext.Current.CancellationToken);
-        Assert.Equal(
-            CommandStatus.Accepted,
-            (await WaitForAcknowledgementAsync(client, castSequence)).Status);
+        var castAcknowledgement = await WaitForAcknowledgementAsync(client, castSequence);
+        Assert.True(
+            castAcknowledgement.Status == CommandStatus.Accepted,
+            $"Sorcerer charged cast was {castAcknowledgement.Status}/{castAcknowledgement.RejectReason} at tick {castAcknowledgement.AppliedTick}.");
         var consumed = await WaitForMessageAsync(
             client,
             message => message.Snapshot?.Players.Single().Equipment
@@ -4900,9 +4906,16 @@ public sealed partial class LiveAuthoritativeServerTests
     [Fact]
     public async Task LiveServerUsesSorcererRechargeAbilityOnAnOpenStashStaff()
     {
+        var townLoopPreviewRoot = Path.Combine(
+            FindRepositoryRoot(),
+            "server",
+            "content",
+            "town-loop-preview");
         using var server = await StartedServer.StartAsync(
             TestContext.Current.CancellationToken,
-            randomSeed: 1);
+            randomSeed: 1,
+            additionalContentOverlayRoot: townLoopPreviewRoot,
+            startingLevelOverride: 1);
         await using var client = new AuthoritativeClient(
             CreateOptions(server, "godot-sorcerer-recharge-stash", requestedClassId: 2));
 
@@ -4936,22 +4949,32 @@ public sealed partial class LiveAuthoritativeServerTests
             },
         }, client.SuggestedCommandTick(model.CurrentTick));
         await client.PollAsync(TestContext.Current.CancellationToken);
-        Assert.Equal(
-            CommandStatus.Accepted,
-            (await WaitForAcknowledgementAsync(client, castSequence)).Status);
+        var castAcknowledgement = await WaitForAcknowledgementAsync(client, castSequence);
+        Assert.True(
+            castAcknowledgement.Status == CommandStatus.Accepted,
+            $"Sorcerer stash charged cast was {castAcknowledgement.Status}/{castAcknowledgement.RejectReason} at tick {castAcknowledgement.AppliedTick}.");
         var consumed = await WaitForMessageAsync(
             client,
             message => message.Snapshot?.Players.Single().Equipment
                 .Single(item => item.Slot == 4).State.Charges == 39);
         model.Apply(consumed);
 
+        await MoveToProjectedWarpAsync(
+            client,
+            model,
+            "preview_cathedral_to_town",
+            castAcknowledgement.AppliedTick);
+        Assert.Equal(0U, Assert.Single(model.Snapshot!.Players).LevelId);
+        await MoveToProjectedTownerAsync(client, model, 7);
+
         var openSequence = client.Queue(new Command {
             OpenStashRequested = new OpenStashRequested(),
         }, client.SuggestedCommandTick(model.CurrentTick));
         await client.PollAsync(TestContext.Current.CancellationToken);
-        Assert.Equal(
-            CommandStatus.Accepted,
-            (await WaitForAcknowledgementAsync(client, openSequence)).Status);
+        var openAcknowledgement = await WaitForAcknowledgementAsync(client, openSequence);
+        Assert.True(
+            openAcknowledgement.Status == CommandStatus.Accepted,
+            $"Sorcerer stash open was {openAcknowledgement.Status}/{openAcknowledgement.RejectReason} at tick {openAcknowledgement.AppliedTick}.");
         var opened = await WaitForMessageAsync(
             client,
             message => message.Snapshot?.Players.Single().StashOpen == true);
@@ -4973,9 +4996,10 @@ public sealed partial class LiveAuthoritativeServerTests
             },
         }, client.SuggestedCommandTick(model.CurrentTick));
         await client.PollAsync(TestContext.Current.CancellationToken);
-        Assert.Equal(
-            CommandStatus.Accepted,
-            (await WaitForAcknowledgementAsync(client, moveSequence)).Status);
+        var moveAcknowledgement = await WaitForAcknowledgementAsync(client, moveSequence);
+        Assert.True(
+            moveAcknowledgement.Status == CommandStatus.Accepted,
+            $"Sorcerer stash move was {moveAcknowledgement.Status}/{moveAcknowledgement.RejectReason} at tick {moveAcknowledgement.AppliedTick}.");
         var moved = await WaitForMessageAsync(
             client,
             message => message.Snapshot?.Players.Single().Stash.Any(item =>
@@ -4996,9 +5020,10 @@ public sealed partial class LiveAuthoritativeServerTests
             },
         }, client.SuggestedCommandTick(model.CurrentTick));
         await client.PollAsync(TestContext.Current.CancellationToken);
-        Assert.Equal(
-            CommandStatus.Accepted,
-            (await WaitForAcknowledgementAsync(client, rechargeSequence)).Status);
+        var rechargeAcknowledgement = await WaitForAcknowledgementAsync(client, rechargeSequence);
+        Assert.True(
+            rechargeAcknowledgement.Status == CommandStatus.Accepted,
+            $"Sorcerer stash recharge was {rechargeAcknowledgement.Status}/{rechargeAcknowledgement.RejectReason} at tick {rechargeAcknowledgement.AppliedTick}.");
         var recharged = await WaitForMessageAsync(
             client,
             message => message.Snapshot?.Players.Single().Stash.Any(item =>
@@ -5079,7 +5104,8 @@ public sealed partial class LiveAuthoritativeServerTests
     {
         using var server = await StartedServer.StartAsync(
             TestContext.Current.CancellationToken,
-            startingGoldOverride: 5000);
+            startingGoldOverride: 5000,
+            startingLevelOverride: 0);
         await using var client = new AuthoritativeClient(new ClientConnectionOptions(
             "127.0.0.1",
             server.Port,
@@ -5092,6 +5118,7 @@ public sealed partial class LiveAuthoritativeServerTests
         var initial = await WaitForMessageAsync(client, message => message.Snapshot is not null);
         var model = new AuthoritativeClientModel();
         model.Apply(initial);
+        await MoveToProjectedTownerAsync(client, model, 0);
         var sequence = client.Queue(new Command {
             OpenStoreRequested = new OpenStoreRequested { StoreId = 1 },
         }, client.SuggestedCommandTick(model.CurrentTick));
@@ -5114,6 +5141,13 @@ public sealed partial class LiveAuthoritativeServerTests
             (3, 1), // Wirt
             (4, 2), // Healer
         }) {
+            var townerId = storeId switch {
+                2U => 6,
+                3U => 8,
+                4U => 1,
+                _ => throw new InvalidOperationException($"Unexpected live store {storeId}."),
+            };
+            await MoveToProjectedTownerAsync(client, model, townerId);
             sequence = client.Queue(new Command {
                 OpenStoreRequested = new OpenStoreRequested { StoreId = storeId },
             }, client.SuggestedCommandTick(model.CurrentTick));
@@ -5148,11 +5182,65 @@ public sealed partial class LiveAuthoritativeServerTests
     }
 
     [Fact]
+    public async Task LiveStoreAdmissionRejectsRemoteEntryWithoutPlayerMutation()
+    {
+        using var server = await StartedServer.StartAsync(
+            TestContext.Current.CancellationToken,
+            startingGoldOverride: 5000,
+            randomSeed: 1,
+            startingLevelOverride: 0);
+        await using var client = new AuthoritativeClient(
+            CreateOptions(server, "godot-live-store-admission", requestedClassId: 0));
+
+        await client.ConnectAsync(TestContext.Current.CancellationToken);
+        var initial = await WaitForMessageAsync(client, message => message.Snapshot is not null);
+        var model = new AuthoritativeClientModel();
+        model.Apply(initial);
+        var initialPlayer = Assert.Single(model.Snapshot!.Players);
+        var smith = model.Snapshot.TownerGreetings.Single(greeting => greeting.TownerId == 0);
+        Assert.True(
+            Math.Max(
+                Math.Abs(initialPlayer.PositionX - smith.PositionX),
+                Math.Abs(initialPlayer.PositionY - smith.PositionY)) > 1);
+        var initialGold = initialPlayer.Gold;
+        var initialInventory = initialPlayer.Inventory
+            .Select(item => (item.ItemSeed, item.State.StableItemId, item.Price))
+            .ToArray();
+
+        var remoteSequence = client.Queue(new Command {
+            OpenStoreRequested = new OpenStoreRequested { StoreId = 1 },
+        }, client.SuggestedCommandTick(model.CurrentTick));
+        await client.PollAsync(TestContext.Current.CancellationToken);
+        var remoteAcknowledgement = await WaitForAcknowledgementAsync(client, remoteSequence);
+        Assert.Equal(CommandStatus.Rejected, remoteAcknowledgement.Status);
+        Assert.Equal(CommandRejectReason.InvalidTarget, remoteAcknowledgement.RejectReason);
+
+        await MoveToProjectedTownerAsync(client, model, 0);
+        var nearPlayer = Assert.Single(model.Snapshot!.Players);
+        Assert.Equal(initialGold, nearPlayer.Gold);
+        Assert.Equal(initialInventory, nearPlayer.Inventory
+            .Select(item => (item.ItemSeed, item.State.StableItemId, item.Price)));
+        Assert.Null(model.Snapshot.ActiveStore);
+
+        var acceptedSequence = client.Queue(new Command {
+            OpenStoreRequested = new OpenStoreRequested { StoreId = 1 },
+        }, client.SuggestedCommandTick(model.CurrentTick));
+        await client.PollAsync(TestContext.Current.CancellationToken);
+        var acceptedAcknowledgement = await WaitForAcknowledgementAsync(client, acceptedSequence);
+        Assert.Equal(CommandStatus.Accepted, acceptedAcknowledgement.Status);
+        var opened = await WaitForMessageAsync(
+            client,
+            message => message.Snapshot?.ActiveStore?.StoreId == 1);
+        Assert.Equal(initialGold, opened.Snapshot!.Players.Single().Gold);
+    }
+
+    [Fact]
     public async Task GodotClientReconnectPreservesPurchasedStateAndSecondParticipant()
     {
         using var server = await StartedServer.StartAsync(
             TestContext.Current.CancellationToken,
-            startingGoldOverride: 5000);
+            startingGoldOverride: 5000,
+            startingLevelOverride: 0);
         await using var firstClient = new AuthoritativeClient(
             CreateOptions(server, "godot-live-store-first", requestedClassId: 0) with {
                 RequestedCharacterName = "Godot-Store-First",
@@ -5171,8 +5259,27 @@ public sealed partial class LiveAuthoritativeServerTests
         var secondInitial = await WaitForMessageAsync(
             secondClient,
             message => message.Snapshot is { Players.Count: 2 });
+        var secondModel = new AuthoritativeClientModel();
+        secondModel.Apply(secondInitial);
         var secondSnapshot = secondInitial.Snapshot!;
         var secondEntityId = secondSnapshot.Players.Single(player => player.EntityId != firstEntityId).EntityId;
+
+        await MoveToProjectedTownerAsync(firstClient, firstModel, 0);
+        await MoveToProjectedTownerAsync(secondClient, secondModel, 0, secondEntityId);
+
+        var firstSettledPlayer = firstModel.Snapshot!.Players.Single(
+            player => player.EntityId == firstEntityId);
+        var firstSettledPosition = (firstSettledPlayer.PositionX, firstSettledPlayer.PositionY);
+        var firstFresh = await WaitForMessageAsync(
+            firstClient,
+            message => message.Snapshot is { Players.Count: 2 } snapshot
+                && snapshot.Tick >= secondModel.CurrentTick
+                && snapshot.Players.SingleOrDefault(player => player.EntityId == firstEntityId) is { } player
+                && player.LevelId == firstSettledPlayer.LevelId
+                && (player.PositionX, player.PositionY) == firstSettledPosition
+                && player.CombatMode == PlayerCombatMode.Stand
+                && player.CurrentAction is null);
+        firstModel.Apply(firstFresh);
 
         var openSequence = firstClient.Queue(new Command {
             OpenStoreRequested = new OpenStoreRequested { StoreId = 1 },
@@ -5227,7 +5334,8 @@ public sealed partial class LiveAuthoritativeServerTests
     {
         using var server = await StartedServer.StartAsync(
             TestContext.Current.CancellationToken,
-            startingGoldOverride: 5000);
+            startingGoldOverride: 5000,
+            startingLevelOverride: 0);
         await using var client = new AuthoritativeClient(
             CreateOptions(server, "godot-live-retry-store", requestedClassId: 0));
 
@@ -5237,6 +5345,7 @@ public sealed partial class LiveAuthoritativeServerTests
             message => message.Snapshot is not null);
         var model = new AuthoritativeClientModel();
         model.Apply(initial);
+        await MoveToProjectedTownerAsync(client, model, 0);
 
         var openSequence = client.Queue(new Command {
             OpenStoreRequested = new OpenStoreRequested { StoreId = 1 },
@@ -5449,7 +5558,8 @@ public sealed partial class LiveAuthoritativeServerTests
 
             using var server = await StartedServer.StartAsync(
                 TestContext.Current.CancellationToken,
-                overlayRoot);
+                overlayRoot,
+                startingLevelOverride: 0);
             await using var client = new AuthoritativeClient(new ClientConnectionOptions(
                 "127.0.0.1",
                 server.Port,
@@ -5462,6 +5572,7 @@ public sealed partial class LiveAuthoritativeServerTests
             var initial = await WaitForMessageAsync(client, message => message.Snapshot is not null);
             var model = new AuthoritativeClientModel();
             model.Apply(initial);
+            await MoveToProjectedTownerAsync(client, model, 0);
             var sequence = client.Queue(new Command {
                 OpenStoreRequested = new OpenStoreRequested { StoreId = 1 },
             }, client.SuggestedCommandTick(model.CurrentTick));
@@ -5643,6 +5754,152 @@ public sealed partial class LiveAuthoritativeServerTests
         var message = await WaitForMessageAsync(client, message =>
             message.Acknowledgement?.Results.Any(result => result.ClientSequence == sequence) == true);
         return message.Acknowledgement!.Results.Single(result => result.ClientSequence == sequence);
+    }
+
+    /** Walks through acknowledged native target-cell steps to an authored level trigger. */
+    private static async Task MoveToProjectedWarpAsync(
+        AuthoritativeClient client,
+        AuthoritativeClientModel model,
+        string warpSymbol,
+        ulong minimumFreshTick = 0)
+    {
+        var snapshot = model.Snapshot
+            ?? throw new InvalidOperationException("A live snapshot is required before native warp travel.");
+        var player = snapshot.Players.FirstOrDefault()
+            ?? throw new InvalidOperationException("The live snapshot has no local player.");
+        var warp = model.VisibleWarpTriggers.SingleOrDefault(candidate =>
+            candidate.StableSymbol == warpSymbol
+            && candidate.Available);
+        Assert.NotNull(warp);
+        var sourceLevel = player.LevelId;
+        var targetLevel = warp!.TargetLevelId;
+        Assert.NotEqual(sourceLevel, targetLevel);
+        var sourceEntityId = player.EntityId;
+        var sourceObservationTick = Math.Max(model.CurrentTick, minimumFreshTick);
+        var settledSource = await WaitForMessageAsync(
+            client,
+            message => message.Snapshot is { } settledSnapshot
+                && settledSnapshot.Tick > sourceObservationTick
+                && settledSnapshot.Players.SingleOrDefault(
+                    candidate => candidate.EntityId == sourceEntityId) is { } settledPlayer
+                && settledPlayer.LevelId == sourceLevel
+                && settledPlayer.CombatMode == PlayerCombatMode.Stand
+                && settledPlayer.CurrentAction is null);
+        model.Apply(settledSource);
+
+        for (var attempt = 0; attempt < 32; attempt++) {
+            player = model.Snapshot!.Players.Single(candidate => candidate.EntityId == sourceEntityId);
+            if (player.LevelId == targetLevel) {
+                if (player.CombatMode == PlayerCombatMode.Stand
+                    && player.CurrentAction is null)
+                    return;
+
+                var targetObservationTick = model.CurrentTick;
+                var settledTarget = await WaitForMessageAsync(
+                    client,
+                    message => message.Snapshot is { } settledSnapshot
+                        && settledSnapshot.Tick > targetObservationTick
+                        && settledSnapshot.Players.SingleOrDefault(
+                            candidate => candidate.EntityId == sourceEntityId) is { } settledPlayer
+                        && settledPlayer.LevelId == targetLevel
+                        && settledPlayer.CombatMode == PlayerCombatMode.Stand
+                        && settledPlayer.CurrentAction is null);
+                model.Apply(settledTarget);
+                return;
+            }
+            Assert.Equal(sourceLevel, player.LevelId);
+
+            var beforePosition = (player.PositionX, player.PositionY);
+            var priorObservedTick = model.CurrentTick;
+            var sequence = client.Queue(new Command {
+                MoveRequested = new MoveRequested {
+                    TargetCell = true,
+                    TargetX = warp.TriggerX,
+                    TargetY = warp.TriggerY,
+                },
+            }, client.SuggestedCommandTick(model.CurrentTick));
+            await client.PollAsync(TestContext.Current.CancellationToken);
+            var acknowledgement = await WaitForAcknowledgementAsync(client, sequence);
+            Assert.True(
+                acknowledgement.Status == CommandStatus.Accepted,
+                $"Authored warp step to '{warpSymbol}' was {acknowledgement.Status}/{acknowledgement.RejectReason} at tick {acknowledgement.AppliedTick}.");
+            var moved = await WaitForMessageAsync(
+                client,
+                message => message.Snapshot is { } movedSnapshot
+                    && movedSnapshot.Tick >= acknowledgement.AppliedTick
+                    && movedSnapshot.Tick > priorObservedTick
+                    && movedSnapshot.Players.SingleOrDefault(
+                        candidate => candidate.EntityId == sourceEntityId) is { } candidate
+                    && ((candidate.LevelId == targetLevel
+                            && candidate.CombatMode == PlayerCombatMode.Stand
+                            && candidate.CurrentAction is null)
+                        || (candidate.LevelId == sourceLevel
+                            && (candidate.PositionX, candidate.PositionY) != beforePosition
+                            && candidate.CombatMode == PlayerCombatMode.Stand
+                            && candidate.CurrentAction is null)));
+            model.Apply(moved);
+        }
+
+        throw new TimeoutException(
+            $"Could not reach authored warp trigger '{warpSymbol}' from the authoritative player position.");
+    }
+
+    /** Walks through acknowledged native target-cell steps to a projected towner. */
+    private static async Task MoveToProjectedTownerAsync(
+        AuthoritativeClient client,
+        AuthoritativeClientModel model,
+        int townerId,
+        uint? localEntityId = null)
+    {
+        var snapshot = model.Snapshot
+            ?? throw new InvalidOperationException("A live snapshot is required before native town travel.");
+        var player = (localEntityId is uint entityId
+                ? snapshot.Players.SingleOrDefault(candidate => candidate.EntityId == entityId)
+                : snapshot.Players.FirstOrDefault())
+            ?? throw new InvalidOperationException("The live snapshot has no local player.");
+        var greeting = snapshot.TownerGreetings.SingleOrDefault(candidate =>
+            candidate.TownerId == townerId && candidate.LevelId == player.LevelId);
+        Assert.NotNull(greeting);
+
+        for (var attempt = 0; attempt < 200; attempt++) {
+            player = model.Snapshot!.Players.Single(candidate => candidate.EntityId == player.EntityId);
+            var distance = Math.Max(
+                Math.Abs(player.PositionX - greeting!.PositionX),
+                Math.Abs(player.PositionY - greeting.PositionY));
+            if (distance <= 1
+                && player.LevelId == greeting.LevelId
+                && player.CombatMode == PlayerCombatMode.Stand
+                && player.CurrentAction is null)
+                return;
+
+            var beforePosition = (player.PositionX, player.PositionY);
+            var priorObservedTick = model.CurrentTick;
+            var sequence = client.Queue(new Command {
+                MoveRequested = new MoveRequested {
+                    TargetCell = true,
+                    TargetX = greeting.PositionX,
+                    TargetY = greeting.PositionY,
+                },
+            }, client.SuggestedCommandTick(model.CurrentTick));
+            await client.PollAsync(TestContext.Current.CancellationToken);
+            var acknowledgement = await WaitForAcknowledgementAsync(client, sequence);
+            Assert.Equal(CommandStatus.Accepted, acknowledgement.Status);
+            var moved = await WaitForMessageAsync(
+                client,
+                message => message.Snapshot is { } movedSnapshot
+                    && movedSnapshot.Tick >= acknowledgement.AppliedTick
+                    && movedSnapshot.Tick > priorObservedTick
+                    && movedSnapshot.Players.SingleOrDefault(
+                        candidate => candidate.EntityId == player.EntityId) is { } candidate
+                    && candidate.LevelId == greeting.LevelId
+                    && (candidate.PositionX, candidate.PositionY) != beforePosition
+                    && candidate.CombatMode == PlayerCombatMode.Stand
+                    && candidate.CurrentAction is null);
+            model.Apply(moved);
+        }
+
+        throw new TimeoutException(
+            $"Could not reach projected towner {townerId} from the authoritative player position.");
     }
 
     private static string FindRepositoryRoot()

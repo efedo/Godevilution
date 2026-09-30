@@ -170,7 +170,15 @@ public partial class Main : Node2D
             interactionTravel.Cancel();
             routeTravel.Start(model.Snapshot, warpId, client?.IsConnected == true);
         };
-        hud.CancelTravelRequested += () => routeTravel.Cancel();
+        hud.CancelTravelRequested += () => {
+            routeTravel.Cancel();
+            interactionTravel.Cancel();
+        };
+        hud.DestinationRequested += destination => {
+            var interaction = destination.CreateInteraction();
+            if (AuthoritativeWorldDestinationSelector.IsPresent(model.Snapshot, destination.X, destination.Y, interaction))
+                QueueInteractionAfterMove(new Vector2I(destination.X, destination.Y), interaction);
+        };
         connectionOptions = ClientConnectionOptions.FromEnvironment();
         resumeTokenPath = Environment.GetEnvironmentVariable("DEVILUTION_RESUME_TOKEN_PATH");
         if (connectionOptions.ResumeToken.Length > 0
@@ -268,7 +276,10 @@ public partial class Main : Node2D
             var sequence = Queue(routeStep, automaticInput: true);
             routeTravel.Submitted(sequence, model.Snapshot!.Players.First());
         }
-        hud?.SetTravelStatus(routeTravel.Active, routeTravel.Status);
+        hud?.SetTravelStatus(routeTravel.Active || interactionTravel.Active,
+            interactionTravel.Active
+                ? $"Approaching ({interactionTravel.Target.X}, {interactionTravel.Target.Y}) — server-controlled"
+                : routeTravel.Status);
         var spellSources = AuthoritativeSpellSourceSelector.GetSources(model.Snapshot);
         var selectedSpell = AuthoritativeSpellSourceSelector.Select(
             spellSources,
@@ -583,8 +594,7 @@ public partial class Main : Node2D
                 world?.WorldItemEntityIdAt(target)
                     == command.PickupWorldItemRequested.ItemEntityId,
             Command.IntentOneofCase.UsePortalRequested =>
-                world?.PortalEntityIdAt(target)
-                    == command.UsePortalRequested.PortalId,
+                AuthoritativeWorldDestinationSelector.IsPresent(model.Snapshot, target.X, target.Y, command),
             Command.IntentOneofCase.OperateObjectRequested =>
                 world?.ObjectEntityIdAt(target)
                     == command.OperateObjectRequested.ObjectEntityId,
@@ -604,8 +614,7 @@ public partial class Main : Node2D
                 && dialogue.QuestId == command.TalkToQuestRequested.QuestId
                 && dialogue.MonsterEntityId == command.TalkToQuestRequested.TargetEntityId,
             Command.IntentOneofCase.TalkToTownerRequested =>
-                model.TownerGreetingAt(target.X, target.Y) is { } greeting
-                && greeting.TownerId == command.TalkToTownerRequested.TownerId,
+                AuthoritativeWorldDestinationSelector.IsPresent(model.Snapshot, target.X, target.Y, command),
             _ => false,
         };
     }

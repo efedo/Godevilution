@@ -403,6 +403,7 @@ public partial class HudPresentation : CanvasLayer
 
         var connected = client?.IsConnected == true;
         ApplyRoutes(model.VisibleWarpTriggers, connected && player is { Life: > 0 });
+        ApplyDestinations(model.Snapshot, connected && player is { Life: > 0 });
         var hasStatPoints = connected && player?.StatPoints > 0;
         var activeStore = model.Snapshot?.ActiveStore;
         var stashOpen = player?.StashOpen == true;

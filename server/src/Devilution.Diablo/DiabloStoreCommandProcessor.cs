@@ -27,7 +27,17 @@ public sealed class DiabloStoreCommandProcessor
     private readonly uint storytellerStoreId;
     private readonly AuthoritativeSpellCatalog? spells;
     private readonly AuthoritativeItemCatalog? items;
+    private readonly AuthoritativeTownerGreetingCatalog? townerGreetings;
     private readonly uint townLevelId;
+
+    // These IDs mirror _talker_id in Source/game/towners/towners.hpp. They are
+    // only used to connect validated greeting locations to native store roles.
+    private const int SmithTownerId = 0;
+    private const int HealerTownerId = 1;
+    private const int StorytellerTownerId = 4;
+    private const int WitchTownerId = 6;
+    private const int BarmaidTownerId = 7;
+    private const int WirtTownerId = 8;
 
     public DiabloStoreCommandProcessor(
         StoreCatalog catalog,
@@ -41,7 +51,8 @@ public sealed class DiabloStoreCommandProcessor
         AuthoritativeItemCatalog? items = null,
         uint adriaStoreId = AdriaStoreId,
         uint townLevelId = AuthoritativePortalRules.TownLevelId,
-        uint storytellerStoreId = StorytellerStoreId)
+        uint storytellerStoreId = StorytellerStoreId,
+        AuthoritativeTownerGreetingCatalog? townerGreetings = null)
     {
         this.catalog = catalog ?? throw new ArgumentNullException(nameof(catalog));
         this.rules = rules ?? new DiabloStoreRules();
@@ -59,6 +70,7 @@ public sealed class DiabloStoreCommandProcessor
         this.townLevelId = townLevelId;
         this.spells = spells;
         this.items = items;
+        this.townerGreetings = townerGreetings;
     }
 
     public DiabloIntentResult Execute(
@@ -68,6 +80,21 @@ public sealed class DiabloStoreCommandProcessor
     {
         ArgumentNullException.ThrowIfNull(player);
         ArgumentNullException.ThrowIfNull(intent);
+
+        // Native menu admission is a transaction boundary. When validated
+        // greeting metadata is active, preflight entry before hydration so a
+        // rejected request cannot change item dimensions. The metadata-free
+        // path intentionally retains the historical hydration order.
+        if (townerGreetings is not null) {
+            DiabloIntentResult? preflight = intent switch {
+                DiabloOpenStoreIntent open => ValidateOpenStore(player, open.StoreId),
+                DiabloOpenStashIntent => ValidateOpenStash(player),
+                _ => null,
+            };
+            if (preflight is { Succeeded: false })
+                return preflight.Value;
+        }
+
         HydrateInventoryDimensions(player);
 
         return intent switch {
@@ -141,6 +168,16 @@ public sealed class DiabloStoreCommandProcessor
 
     private DiabloIntentResult OpenStore(AuthoritativePlayerState player, uint storeId)
     {
+        var admission = ValidateOpenStore(player, storeId);
+        if (!admission.Succeeded)
+            return admission;
+
+        player.ActiveStoreId = storeId;
+        return DiabloIntentResult.Accepted;
+    }
+
+    private DiabloIntentResult ValidateOpenStore(AuthoritativePlayerState player, uint storeId)
+    {
         if (player.StashOpen)
             return DiabloIntentResult.Rejected(DiabloRuleFailure.NotAllowed);
         if ((storeId == adriaStoreId || storeId == storytellerStoreId)
@@ -150,8 +187,9 @@ public sealed class DiabloStoreCommandProcessor
             && storeId != storytellerStoreId
             && !catalog.ContainsStore(storeId))
             return DiabloIntentResult.Rejected(DiabloRuleFailure.InvalidTarget);
+        if (!AllowsNativeStoreEntry(player, storeId))
+            return DiabloIntentResult.Rejected(DiabloRuleFailure.InvalidTarget);
 
-        player.ActiveStoreId = storeId;
         return DiabloIntentResult.Accepted;
     }
 
@@ -161,11 +199,22 @@ public sealed class DiabloStoreCommandProcessor
         return DiabloIntentResult.Accepted;
     }
 
-    private static DiabloIntentResult OpenStash(AuthoritativePlayerState player)
+    private DiabloIntentResult OpenStash(AuthoritativePlayerState player)
+    {
+        var admission = ValidateOpenStash(player);
+        if (!admission.Succeeded)
+            return admission;
+
+        player.StashOpen = true;
+        return DiabloIntentResult.Accepted;
+    }
+
+    private DiabloIntentResult ValidateOpenStash(AuthoritativePlayerState player)
     {
         if (player.ActiveStoreId is not null)
             return DiabloIntentResult.Rejected(DiabloRuleFailure.NotAllowed);
-        player.StashOpen = true;
+        if (!AllowsNativeStashEntry(player))
+            return DiabloIntentResult.Rejected(DiabloRuleFailure.InvalidTarget);
         return DiabloIntentResult.Accepted;
     }
 
@@ -173,6 +222,71 @@ public sealed class DiabloStoreCommandProcessor
     {
         player.StashOpen = false;
         return DiabloIntentResult.Accepted;
+    }
+
+    /**
+     * Resolves only native store roles. Generic stores intentionally remain
+     * usable by direct callers even when greeting metadata is active.
+     */
+    private bool TryGetNativeStoreTownerId(uint storeId, out int townerId)
+    {
+        if (storeId == adriaStoreId) {
+            townerId = WitchTownerId;
+            return true;
+        }
+        if (storeId == storytellerStoreId) {
+            townerId = StorytellerTownerId;
+            return true;
+        }
+        if (!catalog.TryGetRole(storeId, out var role)) {
+            townerId = default;
+            return false;
+        }
+
+        var binding = role switch {
+            AuthoritativeStoreRole.Smith => (TownerId: SmithTownerId, IsNative: true),
+            AuthoritativeStoreRole.Healer => (TownerId: HealerTownerId, IsNative: true),
+            AuthoritativeStoreRole.Witch => (TownerId: WitchTownerId, IsNative: true),
+            AuthoritativeStoreRole.Wirt => (TownerId: WirtTownerId, IsNative: true),
+            AuthoritativeStoreRole.Adria => (TownerId: WitchTownerId, IsNative: true),
+            _ => (TownerId: default, IsNative: false),
+        };
+        townerId = binding.TownerId;
+        return binding.IsNative;
+    }
+
+    /** Native TalkToTowner admission used only when production metadata exists. */
+    private bool AllowsNativeStoreEntry(
+        AuthoritativePlayerState player,
+        uint storeId)
+    {
+        if (townerGreetings is null
+            || !TryGetNativeStoreTownerId(storeId, out var townerId)) {
+            return true;
+        }
+        return townerGreetings.TryGet(townerId, out var greeting)
+            && greeting.LevelId == player.LevelId
+            && player.HeldItem is null
+            && DeterministicGridMetrics.ChebyshevDistance(
+                greeting.PositionX,
+                greeting.PositionY,
+                player.PositionX,
+                player.PositionY) <= 1;
+    }
+
+    /** Native Gillian admission for opening the server-owned stash. */
+    private bool AllowsNativeStashEntry(AuthoritativePlayerState player)
+    {
+        if (townerGreetings is null)
+            return true;
+        return townerGreetings.TryGet(BarmaidTownerId, out var greeting)
+            && greeting.LevelId == player.LevelId
+            && player.HeldItem is null
+            && DeterministicGridMetrics.ChebyshevDistance(
+                greeting.PositionX,
+                greeting.PositionY,
+                player.PositionX,
+                player.PositionY) <= 1;
     }
 
     private static DiabloIntentResult DepositStashGold(

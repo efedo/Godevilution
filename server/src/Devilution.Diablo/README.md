@@ -63,6 +63,15 @@ Diablo adapter bridges this module to those representations behind the generic
 `IAuthoritativeGameHostAdapter`; the executable composition root does not
 reference Diablo types.
 
+When validated towner greetings are supplied, native-role store entry and
+Gillian's stash require the declared NPC level, Chebyshev distance at most one,
+and no held item. Reserved Adria/Cain IDs retain their town-only guard. Rejected
+entry occurs before inventory-dimension hydration; accepted entry and the
+metadata-free compatibility path retain hydration. Custom Generic stores are
+unchanged. Ongoing item actions do not reapply the entry cursor/range check;
+closing services remains possible anywhere. Full open-service lifecycle handling
+across movement/transitions is still an integration gap.
+
 Run the independent xUnit v3 suite from the repository root:
 
 ```powershell

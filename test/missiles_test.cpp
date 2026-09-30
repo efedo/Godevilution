@@ -9,8 +9,10 @@
 #include "engine/lighting.h"
 #include "engine/random.hpp"
 #include "game/levels/dungeon_common.h"
+#include "game/levels/triggers.h"
 #include "game/levels/tile.hpp"
 #include "game/missiles/missiles.hpp"
+#include "network/storm/storm_net.hpp"
 
 using namespace devilution;
 using ::testing::AllOf;
@@ -33,11 +35,14 @@ public:
 	    , savedLightManager_(CurrentLightManager)
 	    , savedFullyLitLightTable_(CurrentLightManager.fullyLitLightTable_)
 	    , savedFullyDarkLightTable_(CurrentLightManager.fullyDarkLightTable_)
+	    , savedTrigFlag_(trigFlag())
+	    , savedNumTriggers_(numTriggers())
 	{
 		Players.clear();
 		MyPlayer = nullptr;
 		MyPlayerId = 0;
 		levelType() = DTYPE_TOWN;
+		InitNoTriggers();
 	}
 
 	~ScopedTownPortalState()
@@ -50,6 +55,9 @@ public:
 		Players = std::move(savedPlayers_);
 		MyPlayerId = savedMyPlayerId_;
 		MyPlayer = savedMyPlayer_;
+		InitNoTriggers();
+		trigFlag() = savedTrigFlag_;
+		numTriggers() = savedNumTriggers_;
 	}
 
 	ScopedTownPortalState(const ScopedTownPortalState &) = delete;
@@ -65,6 +73,36 @@ private:
 	LightManager savedLightManager_;
 	uint8_t *savedFullyLitLightTable_;
 	uint8_t *savedFullyDarkLightTable_;
+	bool savedTrigFlag_;
+	int savedNumTriggers_;
+};
+
+void AssertNoActiveTriggers()
+{
+	ASSERT_EQ(numTriggers(), 0);
+	ASSERT_FALSE(trigFlag());
+}
+
+class ScopedLoopbackNetwork {
+public:
+	ScopedLoopbackNetwork()
+	    : initialized_(SNetInitializeProvider(SELCONN_LOOPBACK, nullptr))
+	{
+	}
+
+	~ScopedLoopbackNetwork()
+	{
+		if (initialized_)
+			SNetDestroy();
+	}
+
+	ScopedLoopbackNetwork(const ScopedLoopbackNetwork &) = delete;
+	ScopedLoopbackNetwork &operator=(const ScopedLoopbackNetwork &) = delete;
+
+	bool initialized() const { return initialized_; }
+
+private:
+	bool initialized_;
 };
 
 } // namespace
@@ -209,6 +247,7 @@ TEST(Missiles, GetDirection16)
 TEST(Missiles, ProcessTownPortalRetainsOpeningAtDurationOneAndDeletesAtZero)
 {
 	constexpr Point portalPosition { 10, 10 };
+	ASSERT_NO_FATAL_FAILURE(AssertNoActiveTriggers());
 	ScopedTownPortalState stateGuard(portalPosition);
 
 	// Keep the fixture in the already-open state; this characterizes lifetime semantics without loading portal sprites.
@@ -245,4 +284,66 @@ TEST(Missiles, ProcessTownPortalRetainsOpeningAtDurationOneAndDeletesAtZero)
 	ProcessTownPortal(expired);
 	EXPECT_EQ(expired.duration, 0);
 	EXPECT_TRUE(expired._miDelFlag);
+}
+
+TEST(Missiles, ProcessTownPortalPrecedesSameTileLevelTrigger)
+{
+	constexpr Point portalPosition { 25, 29 };
+	ASSERT_NO_FATAL_FAILURE(AssertNoActiveTriggers());
+	ScopedTownPortalState stateGuard(portalPosition);
+	// ProcessTownPortal emits CMD_WARP for the local player; loopback keeps that command in-process.
+	ScopedLoopbackNetwork networkGuard;
+	ASSERT_TRUE(networkGuard.initialized());
+
+	Players.emplace_back();
+	Player &player = Players.front();
+	MyPlayerId = 0;
+	MyPlayer = &player;
+	player.plractive = true;
+	player.plrlevel = currentLevelNumber();
+	player.plrIsOnSetLevel = false;
+	player._pLvlChanging = false;
+	player._pmode = PM_STAND;
+	player.position.tile = portalPosition;
+	player.position.future = portalPosition;
+	player.position.last = portalPosition;
+	player.position.old = portalPosition;
+	player.position.temp = portalPosition;
+
+	// InitTownTriggers places its first native Cathedral endpoint trigger at (25, 29).
+	InitTownTriggers();
+	ASSERT_GT(numTriggers(), 0);
+
+	Missile portal{};
+	portal._mitype = MissileID::TownPortal;
+	portal.position.tile = portalPosition;
+	portal.position.start = portalPosition;
+	portal.duration = 2;
+	portal.var1 = -1;
+	portal._miDelFlag = false;
+	portal._mlid = NO_LIGHT;
+	portal._miAnimType = MissileGraphicID::None;
+	portal.setFrameGroup<PortalFrame>(PortalFrame::Idle);
+
+	ProcessTownPortal(portal);
+	EXPECT_EQ(player._pmode, PM_NEWLVL);
+	const auto levelBeforeTriggerCheck = currentLevelNumber();
+	CheckTriggers();
+	EXPECT_EQ(player._pmode, PM_NEWLVL);
+	EXPECT_EQ(currentLevelNumber(), levelBeforeTriggerCheck);
+
+	player._pmode = PM_WALK_NORTHWARDS;
+	player._pLvlChanging = false;
+	ProcessTownPortal(portal);
+	EXPECT_EQ(player._pmode, PM_WALK_NORTHWARDS);
+
+	player._pmode = PM_STAND;
+	player.position.tile = portalPosition + Displacement { 1, 0 };
+	ProcessTownPortal(portal);
+	EXPECT_EQ(player._pmode, PM_STAND);
+
+	player.position.tile = portalPosition;
+	player._pLvlChanging = true;
+	ProcessTownPortal(portal);
+	EXPECT_EQ(player._pmode, PM_STAND);
 }

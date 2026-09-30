@@ -2,6 +2,20 @@
 
 All notable changes to this fork are documented below.
 
+- 2026-09-30: Added cancellable Godot approach controls for projected towners and
+  portal endpoints, using acknowledged server movement. Native-role store/Gillian
+  stash entry now checks declared level, adjacency and empty cursor before any
+  hydration; Generic stores and metadata-free compatibility behavior remain.
+  Owned dungeon portals take priority over coincident automatic stairs, with
+  blocked/static/source-endpoint regressions and native processing characterization.
+  Service/store/world tests pass 251 and native missiles pass 5. Actual headless/
+  rendered portal journeys, original-preview compatibility and base recovery pass
+  with clean engine exits. Updated existing usage, content contracts, plan and
+  qualified evidence; entry-only lifecycle/pricing, native GUI, full M1 and campaign
+  gaps remain. Broader module verification retains four known Hork RNG failures.
+  Destination/travel tests pass 44 and the rebuilt recharge/reconnect cases pass 2;
+  a clean full-protocol rerun remains pending.
+
 - 2026-09-30: Added actual-control Town Portal scroll purchase/cast, town return,
   trade/stash and fresh-host owner-return acceptance. Matched native opening-counter
   retention at one and owner-only accepted return closure; retained existing save/

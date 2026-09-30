@@ -99,8 +99,10 @@ fallback.
 
 The optional `towner_greetings.tsv` table owns the general vendor/service
 greeting boundary. Each row supplies a native towner identity, town position,
-and message identity. The server validates adjacency and cursor state before
-emitting the greeting event; the native client then opens the corresponding
+and message identity. The server validates level, adjacency and cursor state for
+greetings and direct native-role vendor/Gillian stash entry. Custom Generic
+stores and metadata-free compatibility callers retain their existing behavior.
+After a greeting event, the native client opens the corresponding
 presentation menu. Message text remains in the legacy/native text catalog until
 that presentation asset is migrated into a content pack.
 

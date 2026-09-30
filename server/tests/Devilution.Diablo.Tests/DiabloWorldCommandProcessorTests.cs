@@ -398,6 +398,93 @@ public sealed class DiabloWorldCommandProcessorTests
         Assert.Equal(DiabloPlayerDirection.South, player.FacingDirection);
     }
 
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void NativeTownPortalEndpointTakesPriorityOverAnAuthoredStair(bool blockedDestination)
+    {
+        var authoritativeWorld = new AuthoritativeWorld();
+        authoritativeWorld.AddLevel(new AuthoritativeLevel(0, 10, 10));
+        authoritativeWorld.AddLevel(new AuthoritativeLevel(1, 10, 10));
+        authoritativeWorld.AddLevel(new AuthoritativeLevel(2, 10, 10));
+        authoritativeWorld.AddWarpTarget(new AuthoritativeWarpTarget(1001, 0, 6, 6, 2, 1, 1));
+        var portal = new AuthoritativePortal(5, 1, 2, 3, 0, 6, 6) {
+            OwnerEntityId = 7, Bidirectional = true, RemainingTicks = 1,
+        };
+        var world = new DiabloWorldState(authoritativeWorld, portals: [portal]);
+        var processor = new DiabloWorldCommandProcessor(world);
+        var player = CreatePlayer(positionX: 5, positionY: 6, entityId: 7);
+        var blocker = CreatePlayer(positionX: 2, positionY: 3, levelId: 1, entityId: 8);
+        var participants = blockedDestination ? new[] { player, blocker } : new[] { player };
+
+        Assert.True(processor.Execute(player, new DiabloMoveToIntent(6, 6), 1, participants).Succeeded);
+        Assert.Equal((0U, 6, 6), (player.LevelId, player.PositionX, player.PositionY));
+        Assert.Same(portal, Assert.Single(world.Portals.Values));
+        var result = processor.Execute(player, new DiabloUsePortalIntent(5), 2, participants);
+        if (blockedDestination) {
+            AssertRejected(result, DiabloRuleFailure.NotAllowed);
+            Assert.Equal((0U, 6, 6), (player.LevelId, player.PositionX, player.PositionY));
+            Assert.Same(portal, Assert.Single(world.Portals.Values));
+        } else {
+            Assert.True(result.Succeeded);
+            Assert.Equal((1U, 2, 3), (player.LevelId, player.PositionX, player.PositionY));
+            Assert.Empty(world.Portals);
+        }
+    }
+
+    [Theory]
+    [InlineData("static-source")]
+    [InlineData("static-destination")]
+    [InlineData("non-town")]
+    [InlineData("unrelated-endpoint")]
+    public void ExistingStairMovementIsUnchangedWithoutActiveNativePortalEndpoint(string variation)
+    {
+        var authoritativeWorld = new AuthoritativeWorld();
+        authoritativeWorld.AddLevel(new AuthoritativeLevel(0, 10, 10));
+        authoritativeWorld.AddLevel(new AuthoritativeLevel(1, 10, 10));
+        authoritativeWorld.AddLevel(new AuthoritativeLevel(2, 10, 10));
+        authoritativeWorld.AddWarpTarget(new AuthoritativeWarpTarget(1001, 0, 6, 6, 1, 1, 1));
+        var isStatic = variation.StartsWith("static", StringComparison.Ordinal);
+        var portal = new AuthoritativePortal(5,
+            variation == "static-source" ? 0U : 1U,
+            variation == "static-source" ? 6 : 2,
+            variation == "static-source" ? 6 : 3,
+            variation == "non-town" ? 2U : 0U,
+            variation == "unrelated-endpoint" ? 7 : 6, 6) {
+            OwnerEntityId = isStatic ? 0U : 7U,
+            Bidirectional = !isStatic, RemainingTicks = isStatic ? 0U : 1U,
+        };
+        var world = new DiabloWorldState(authoritativeWorld, portals: [portal]);
+        var processor = new DiabloWorldCommandProcessor(world);
+        var player = CreatePlayer(positionX: 5, positionY: 6, entityId: 7);
+
+        Assert.True(processor.Execute(player, new DiabloMoveToIntent(6, 6), 1, [player]).Succeeded);
+        Assert.Equal((1U, 1, 1), (player.LevelId, player.PositionX, player.PositionY));
+        Assert.Same(portal, Assert.Single(world.Portals.Values));
+    }
+
+    [Fact]
+    public void NativeTownPortalSourceOverridesStairAndRetainsPortalOnTownReturn()
+    {
+        var authoritativeWorld = new AuthoritativeWorld();
+        authoritativeWorld.AddLevel(new AuthoritativeLevel(0, 10, 10));
+        authoritativeWorld.AddLevel(new AuthoritativeLevel(1, 10, 10));
+        authoritativeWorld.AddLevel(new AuthoritativeLevel(2, 10, 10));
+        authoritativeWorld.AddWarpTarget(new AuthoritativeWarpTarget(1001, 1, 2, 3, 2, 1, 1));
+        var portal = new AuthoritativePortal(5, 1, 2, 3, 0, 6, 6) {
+            OwnerEntityId = 7, Bidirectional = true, RemainingTicks = 1,
+        };
+        var world = new DiabloWorldState(authoritativeWorld, portals: [portal]);
+        var processor = new DiabloWorldCommandProcessor(world);
+        var player = CreatePlayer(positionX: 1, positionY: 3, levelId: 1, entityId: 7);
+
+        Assert.True(processor.Execute(player, new DiabloMoveToIntent(2, 3), 1, [player]).Succeeded);
+        Assert.Equal((1U, 2, 3), (player.LevelId, player.PositionX, player.PositionY));
+        Assert.True(processor.Execute(player, new DiabloUsePortalIntent(5), 2, [player]).Succeeded);
+        Assert.Equal((0U, 6, 6), (player.LevelId, player.PositionX, player.PositionY));
+        Assert.Same(portal, Assert.Single(world.Portals.Values));
+    }
+
     [Fact]
     public void MovementRejectsCoordinateOverflowWithoutWrappingOrMutating()
     {

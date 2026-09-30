@@ -57,7 +57,7 @@ public partial class SessionAcceptance
     private async Task VerifyRouteJourney(Main main, string directory, bool visible)
     {
         // Exercise global mouse -> reserved world-area coordinates after resizing.
-        // At this isolated town spawn, the adjacent right-hand cell is empty.
+        // The authored town leaves the adjacent right-hand cell empty, including after vendor approach.
         var beforeClick = main.ObservedSnapshot!.Players.Single().Clone();
         var clickSequence = main.ObservedCommandResult!.ClientSequence;
         await Click(main.ObservedPlayerScreenPosition!.Value + new Vector2(32, 0), walk: true);

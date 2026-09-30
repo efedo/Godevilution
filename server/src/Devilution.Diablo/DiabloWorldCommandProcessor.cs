@@ -400,6 +400,22 @@ public sealed class DiabloWorldCommandProcessor
             return DiabloWorldIntentResult.Rejected(DiabloRuleFailure.NotAllowed);
         }
 
+        // Native ProcessTownPortal runs before CheckTriggers and selects the
+        // portal before a same-tile stair. Keep the endpoint available for the
+        // explicit server portal intent, even if its eventual destination is busy.
+        if (world.Portals.Values.Any(portal => portal.OwnerEntityId != 0
+                && portal.RemainingTicks > 0 && portal.Bidirectional
+                && portal.SourceLevelId != combatRules.TownLevelId
+                && portal.DestinationLevelId == combatRules.TownLevelId
+                && (portal.SourceLevelId == player.LevelId
+                    && portal.SourcePositionX == player.PositionX
+                    && portal.SourcePositionY == player.PositionY
+                    || portal.DestinationLevelId == player.LevelId
+                    && portal.DestinationPositionX == player.PositionX
+                    && portal.DestinationPositionY == player.PositionY))) {
+            return DiabloWorldIntentResult.Rejected(DiabloRuleFailure.InvalidTarget);
+        }
+
         var warp = world.World.WarpTargets
             .Where(target => target.SourceLevelId == player.LevelId
                 && target.TriggerX == player.PositionX

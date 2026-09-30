@@ -111,8 +111,10 @@ public partial class SessionAcceptance : Node
             "No durable local resume bookmark was written.");
         await VerifyResponsiveLayout(main, directory, visible && creating);
         TownPortalPurchaseEvidence? portalPurchase = null;
-        if (phase == "TownLoop" && portalPreview)
+        if (phase == "TownLoop" && portalPreview) {
             portalPurchase = await VerifyTownPortalAcquisition(main);
+            initial = main.ObservedSnapshot!.Players.Single().Clone();
+        }
         if (previous is not null) {
             Require(main.ObservedIdentity!.ContentManifestHash == previous.ContentHash
                 && main.ObservedIdentity.RulesetIdentityHash == previous.RulesetHash,

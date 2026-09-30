@@ -14,9 +14,13 @@ public partial class HudPresentation
     private readonly Button cancelTravel = new() { Name = "CancelTravel", Text = "Cancel travel", Disabled = true };
     private readonly Label travelStatus = new() { Name = "TravelStatus" };
     private WarpTriggerSnapshot[] displayedRoutes = [];
+    private readonly OptionButton destinations = new() { Name = "WorldDestinations", ClipText = true };
+    private readonly Button approachDestination = new() { Name = "ApproachDestination", Text = "Approach and interact" };
+    private AuthoritativeWorldDestination[] displayedDestinations = [];
 
     public event Action<uint>? TravelRequested;
     public event Action? CancelTravelRequested;
+    public event Action<AuthoritativeWorldDestination>? DestinationRequested;
     public Rect2 PlayArea { get; private set; }
 
     private void BuildLayout()
@@ -101,6 +105,13 @@ public partial class HudPresentation
                 TravelRequested?.Invoke(displayedRoutes[routes.Selected].WarpId);
         };
         cancelTravel.Pressed += () => CancelTravelRequested?.Invoke();
+        interactions.AddChild(Caption("Declared towners and portal endpoints"));
+        interactions.AddChild(destinations);
+        interactions.AddChild(Buttons(approachDestination));
+        approachDestination.Pressed += () => {
+            if (destinations.Selected >= 0 && destinations.Selected < displayedDestinations.Length)
+                DestinationRequested?.Invoke(displayedDestinations[destinations.Selected]);
+        };
         interactions.AddChild(Caption("WASD / arrows: walk. Ctrl + left click: walk toward a tile. Left click: interact or cast. Right click: attack. Movement, world clicks, or Escape cancel travel."));
         interactions.AddChild(Buttons(interactObject, disarmTrap, advanceQuest, questTownerInteraction, clearEvents));
         interactions.AddChild(dialog);
@@ -185,5 +196,23 @@ public partial class HudPresentation
     {
         cancelTravel.Disabled = !active;
         travelStatus.Text = message;
+    }
+
+    private void ApplyDestinations(Snapshot? snapshot, bool enabled)
+    {
+        var next = AuthoritativeWorldDestinationSelector.GetDestinations(snapshot).ToArray();
+        if (!displayedDestinations.SequenceEqual(next)) {
+            var selectedKey = destinations.Selected >= 0 && destinations.Selected < displayedDestinations.Length
+                ? displayedDestinations[destinations.Selected].Key : null;
+            displayedDestinations = next;
+            destinations.Clear();
+            foreach (var destination in next)
+                destinations.AddItem(destination.Label);
+            var selected = Array.FindIndex(next, destination => destination.Key == selectedKey);
+            if (next.Length > 0)
+                destinations.Select(Math.Max(0, selected));
+        }
+        destinations.Disabled = !enabled || next.Length == 0;
+        approachDestination.Disabled = !enabled || destinations.Selected < 0 || destinations.Selected >= next.Length;
     }
 }

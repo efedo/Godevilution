@@ -12,6 +12,7 @@ public partial class SessionAcceptance
     private async Task<TownPortalPurchaseEvidence> VerifyTownPortalAcquisition(Main main)
     {
         var sections = (TabContainer)main.FindChild("HudSections", true, false);
+        await ApproachDeclaredDestination(main, "towner:0", verifyCancellation: true);
         var sequence = main.ObservedCommandResult?.ClientSequence ?? 0;
         await ClickControl(main, sections, 2, "OpenSmith");
         await AcceptedAndSettled(main, sequence, "Open Smith for Town Portal scroll");
@@ -118,6 +119,7 @@ public partial class SessionAcceptance
                 await Capture(System.IO.Path.Combine(directory, "townloop-return.png"));
         }
 
+        await ApproachDeclaredDestination(main, "towner:0");
         sequence = main.ObservedCommandResult!.ClientSequence;
         await ClickControl(main, sections, 2, "OpenSmith");
         await AcceptedAndSettled(main, sequence, "Open Smith in town");
@@ -138,6 +140,7 @@ public partial class SessionAcceptance
         sequence = main.ObservedCommandResult!.ClientSequence;
         await ClickControl(main, sections, 2, "CloseStore");
         await AcceptedAndSettled(main, sequence, "Close Smith");
+        await ApproachDeclaredDestination(main, "towner:7");
         sequence = main.ObservedCommandResult!.ClientSequence;
         await ClickControl(main, sections, 3, "OpenStash");
         await AcceptedAndSettled(main, sequence, "Open stash in town");
@@ -293,7 +296,7 @@ public partial class SessionAcceptance
             var restoredPortal = portal ?? throw new InvalidOperationException(
                 "Fresh-host restore lost the active Town Portal before its owner returned.");
             var useSequence = main.ObservedCommandResult?.ClientSequence ?? 0;
-            await ClickWorld(main, restoredPortal.DestinationPositionX, restoredPortal.DestinationPositionY);
+            await ApproachDeclaredDestination(main, $"portal:{restoredPortal.PortalId}");
             await Until(() => {
                 var snapshot = main.ObservedSnapshot!;
                 var result = main.ObservedCommandResult;
@@ -354,7 +357,8 @@ public partial class SessionAcceptance
                 || main.ObservedSnapshot.WorldItems.Any(item => IsConsumedSource(item.State, item.ItemSeed));
             Require(!sourceStillPresent,
                 "The consumed Town Portal scroll was restored or duplicated.");
-            AssertPortalState(main.ObservedSnapshot, player, expected.Portal, requireTownReturn: true);
+            // Services now require actual walking to towners after the exact portal return.
+            AssertPortalState(main.ObservedSnapshot, player, expected.Portal, requireTownReturn: false);
         } else {
             Require(expected.PortalScrollId is null && expected.PortalScrollSeed is null,
                 "Legacy Town-loop evidence unexpectedly contained portal source identity.");
@@ -437,6 +441,58 @@ public partial class SessionAcceptance
         await RevealControl(sections, page, control);
         Require(!control.Disabled, $"{name} is disabled.");
         await Click(control.GetGlobalRect().GetCenter());
+    }
+
+    /** Uses real destination controls; the ordinary server owns every approach step. */
+    private async Task ApproachDeclaredDestination(Main main, string key, bool verifyCancellation = false)
+    {
+        var targetList = AuthoritativeWorldDestinationSelector.GetDestinations(main.ObservedSnapshot);
+        var index = targetList.ToList().FindIndex(destination => destination.Key == key);
+        Require(index >= 0, $"The server did not declare destination {key}.");
+        var target = targetList[index];
+        var sections = (TabContainer)main.FindChild("HudSections", true, false);
+        var destinations = (OptionButton)main.FindChild("WorldDestinations", true, false);
+        await RevealControl(sections, 4, destinations);
+        Require(destinations.ItemCount == targetList.Count && destinations.GetItemText(index) == target.Label,
+            "The actual destination selector does not match authoritative metadata.");
+        await SelectRoute(destinations, index);
+        var sequence = main.ObservedCommandResult?.ClientSequence ?? 0;
+        await ClickControl(main, sections, 4, "ApproachDestination");
+        if (verifyCancellation) {
+            await Until(() => main.ObservedCommandResult is { } step
+                && step.ClientSequence > sequence && IsAcceptedOrSuccessfulDuplicate(step),
+                "The destination control did not submit acknowledged movement.", 10);
+            await ClickControl(main, sections, 4, "CancelTravel");
+            await Until(() => main.ObservedPendingCommandCount == 0 && Settled(main),
+                "The in-flight destination step did not settle after cancellation.", 10);
+            var cancelled = main.ObservedSnapshot!.Players.Single().Clone();
+            var cancelledSequence = main.ObservedCommandResult!.ClientSequence;
+            var tick = main.ObservedSnapshot.Tick;
+            await Until(() => main.ObservedSnapshot!.Tick >= tick + 8,
+                "No snapshots arrived after destination cancellation.", 10);
+            Require(main.ObservedCommandResult!.ClientSequence == cancelledSequence
+                && main.ObservedSnapshot.Players.Single().PositionX == cancelled.PositionX
+                && main.ObservedSnapshot.Players.Single().PositionY == cancelled.PositionY,
+                "Cancelled destination travel continued submitting movement.");
+            await ClickControl(main, sections, 4, "ApproachDestination");
+        }
+        await Until(() => {
+            var player = main.ObservedSnapshot!.Players.Single();
+            var result = main.ObservedCommandResult;
+            var arrived = target.IsPortal ? player.LevelId != target.LevelId
+                : player.LevelId == target.LevelId && AuthoritativeInteractionRange.IsAdjacent(player, target.X, target.Y);
+            return arrived && Settled(main) && main.ObservedPendingCommandCount == 0
+                && ((Button)main.FindChild("CancelTravel", true, false)).Disabled
+                && result is not null && result.ClientSequence > sequence && IsAcceptedOrSuccessfulDuplicate(result);
+        }, $"Server-controlled approach and interaction failed for {key}.", 80);
+        var arrivedPlayer = main.ObservedSnapshot!.Players.Single();
+        WriteEvidence(System.Environment.GetEnvironmentVariable("GODEVILUTION_ACCEPTANCE_DIRECTORY")!,
+            $"destination-approach-{main.ObservedCommandResult!.ClientSequence}.json", new {
+                Passed = true, target.Key, target.LevelId, target.X, target.Y,
+                InitialSequence = sequence, FinalSequence = main.ObservedCommandResult.ClientSequence,
+                ArrivedLevel = arrivedPlayer.LevelId, ArrivedX = arrivedPlayer.PositionX, ArrivedY = arrivedPlayer.PositionY,
+                VerifiedCancellation = verifyCancellation,
+            });
     }
 
     private async Task ClickGridCell(Main main, TabContainer sections, int page, string name, int cell)

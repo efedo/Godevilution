@@ -8108,6 +8108,12 @@ public sealed class ShippedContentTests
             .Activate(ComposedContent.Compose(firstManifest));
         Assert.Equal(0U, activated.Simulation.CombatRules.TownLevelId);
         Assert.Equal(10U, activated.AdriaStoreId);
+        var authoredTownerGreetings = AuthoritativeTownerGreetingCatalog.LoadTsv(
+            "towner_greetings.tsv",
+            File.ReadAllText(Path.Combine(contentRoot, "towner_greetings.tsv")),
+            stableIds);
+        var smithGreeting = authoredTownerGreetings.Definitions.Single(
+            greeting => greeting.TownerId == 0);
         var runtime = activated.Simulation.CreateRuntime(
             activated.PlayerLoadouts.CreateTemplate(
                 "player",
@@ -8115,7 +8121,9 @@ public sealed class ShippedContentTests
                 null,
                 null,
                 null,
-                activated.DefaultStartingLevelId));
+                smithGreeting.LevelId,
+                startingPositionX: smithGreeting.PositionX,
+                startingPositionY: smithGreeting.PositionY));
         var initial = runtime.Capture(
             "player",
             0,
@@ -8145,7 +8153,9 @@ public sealed class ShippedContentTests
 
         Assert.True(opened.Succeeded);
         Assert.True(moved.Succeeded);
-        Assert.Equal((0, 0), (moving.Player.PositionX, moving.Player.PositionY));
+        Assert.Equal(
+            (smithGreeting.PositionX, smithGreeting.PositionY),
+            (moving.Player.PositionX, moving.Player.PositionY));
         Assert.Equal(DiabloPlayerCombatMode.WalkSouthwards, moving.Player.CombatMode);
         Assert.Equal(10UL, moving.Player.CombatModeEndTick);
         var moveAction = Assert.IsType<AuthoritativePlayerActionState>(

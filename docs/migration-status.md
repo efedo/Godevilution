@@ -84,8 +84,9 @@ open. Their scope, dependencies, and exit checks are defined only in the
   and restore. A separate portal preview now verifies purchased-scroll cast,
   town return, active-portal fresh-host restore and owner-return closure.
   Two-client Godot town movement/state visibility and reverse-order fresh-host
-  resume also have application evidence below; cooperative combat, native portal/
-  vendor placement/location gates and the complete loop remain M1 work. Local standalone-host
+  resume also have application evidence below. Real Smith/Gillian approach and
+  native-role service entry now pass; cooperative combat, remaining native portal
+  placement, open-service lifecycle/pricing and the complete loop remain M1 work. Local standalone-host
   measurements are below;
   no campaign, Godot frame budget, or release-platform performance pass is claimed.
 - Godot currently requires no MPQs because it uses placeholder presentation.
@@ -112,6 +113,56 @@ open. Their scope, dependencies, and exit checks are defined only in the
 The following records describe implemented slices at this baseline. They are
 evidence, not a separate priority list; detailed older entries retain their
 original scope and may be superseded by later entries or the current assessment.
+
+### M1 real town-service approach and portal priority (2026-09-30)
+
+This batch follows `dc2403a95`. World controls now list already-projected NPCs
+and portal endpoints on the local player's level, even outside the viewport.
+Approach uses existing acknowledged movement and interaction intents; it adds no
+client pathfinding, state injection or service-role rules. Labels remain numbered
+placeholders until the presentation data boundary supplies names. Cancel, manual
+input, target removal, death, disconnect and level changes stop the approach.
+
+With validated greeting metadata, native-role stores and Gillian's stash require
+the NPC's declared level, Chebyshev distance at most one and no cursor-held item.
+Rejected entry occurs before dimension hydration and changes no resources or
+service state. Generic stores and metadata-free direct callers retain historical
+behavior. The check is entry-only: complete open-service lifecycle handling across
+movement/transitions and native stock/pricing are still gaps.
+
+An active owned bidirectional dungeon-to-town portal now takes priority over a
+coincident automatic stair. Explicit warp/portal intents and ordinary/static
+stairs are unchanged, including blocked portal admission. Native processing order
+is characterized separately; the authored town stairs at (57,40) are not native
+town geometry parity (native stairs are at (25,29)).
+
+Actual headless and rendered TownLoop/TownLoopResume pass through genuine Smith
+and Gillian walking, cancellation/restart, combat/loot, equipment, purchased-scroll
+cast, town return, trade/stash, fresh-host restore and portal owner-return closure.
+Evidence is retained under `%TEMP%/Godevilution-Scene-Acceptance-` suffixes
+`0d56950d114546ba8ec31adb6fd29d39` and `ac01502054a245c08d121bf019d771f2`.
+All eight importer/client records exit zero with no fatal import-storage errors;
+World and restored-stash frames were inspected. Base create/resume/server-loss
+recovery passes under suffix `1885da38f02e4824bafd4ec629f02ef2`. Original-preview
+headless create/resume passes under `Godevilution-Legacy-Preview-eb10b9d0b1e0493d8fcd1f151f55407c`,
+retaining original content/ruleset hashes and 70 carried/5 stashed gold. Those
+additional ten importer/client records also exit zero. Launcher safeguards pass
+13/13, service/store/world tests 251/251, destination/travel 44/44 and native
+missiles 5/5. Broader module verification retains four baseline-confirmed Hork
+Demon RNG failures; these are unresolved, not excluded passes.
+Documentation checks pass 3/3.
+No user saves, content identities, protocol fields or system reporting settings
+were changed. A prior full protocol run had 548 passes, two failures and two
+opt-in exclusions (552 total), not a clean pass. Starting the recharge fixture in
+town invalidated its offensive cast; it now casts in the dungeon and returns via
+the existing preview stair before approaching Gillian. Rebuilt recharge/reconnect
+cases pass 2/2 with fresh, settled snapshots. Another failure's truncated output
+did not establish its identity or cause; a retained-output full rerun remains
+pending. Do not attribute it to co-op, timing or the engine crash without evidence.
+
+These authored routes do not close M1, generated-world/campaign acceptance, native
+GUI world entry, every portal placement exclusion or full vendor parity. Overall
+completion remains approximately 35%. Private evidence/bookmarks must not be published.
 
 ### M1 purchased-scroll portal loop and restore (2026-09-30)
 
