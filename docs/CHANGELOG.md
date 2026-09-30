@@ -2,6 +2,18 @@
 
 All notable changes to this fork are documented below.
 
+- 2026-09-30: Added guarded explicit native test-profile resume with exclusive
+  locking, ancestor/bookmark validation, separate phase logs and actual terminal
+  client evidence. Preserved normal zero-argument/base-content launch behavior.
+  Enriched strict missing-art diagnostics without a speculative graphics reload.
+  Launcher tests pass 22/22, native presentation tests 3/3 and documentation
+  guards 3/3. Recorded rendered
+  Cathedral entry with a dead `(0,0)` hero, zero commands and forced exit -1 as a
+  failure, not native acceptance; deferred unsupported content-only entry overrides.
+  Fresh Godot create/resume/reconnect passes with nine clean engine exits and no
+  remaining project/crash-reporting processes. Updated existing guide, plan and
+  status; native gameplay and M0 remain open.
+
 - 2026-09-30: Added opt-in actual Godot one/four-client performance workloads
   through real controls with all-observer staging/round barriers and bounded,
   credential-free callback/process evidence. Kept ordinary launch/save/protocol

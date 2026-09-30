@@ -63,10 +63,13 @@ open. Their scope, dependencies, and exit checks are defined only in the
   Diablo variant. Actual menus and hero creation are now observed. A further
   initial-snapshot reward-limit mismatch is corrected, and connection failures
   visibly return to the menu. Deferred projection and explicit graphics/frame
-  validation now address the previously observed unloaded-object assertion in
-  source and focused tests. A fresh visible world-entry check was blocked by a
-  Windows firewall prompt; native create/move/save/resume acceptance remains
-  open. The earlier app-approval timeout is historical.
+  validation retain strict missing-art rejection. Current diagnostics identify
+  the failing object/template; the earlier missing-art failure remains unresolved.
+  The latest visible probe rendered Cathedral, but its retained checkpoint has a
+  dead hero at `(0,0)` and no accepted commands. It is not native gameplay
+  acceptance. Guarded, explicit test-profile resume support is now available;
+  alive creation, movement and fresh-host resume remain open. The earlier
+  firewall/app-approval interruptions are historical, not the latest outcome.
 - Godot's local harness now builds the current server, stages/imports/builds
   the client without rewriting its source SDK pin, checks mode/identities,
   and retains `.local/godot` saves plus a private
@@ -122,6 +125,70 @@ open. Their scope, dependencies, and exit checks are defined only in the
 The following records describe implemented slices at this baseline. They are
 evidence, not a separate priority list; detailed older entries retain their
 original scope and may be superseded by later entries or the current assessment.
+
+### M0 guarded native diagnostics and fresh Godot crash verification (2026-09-30)
+
+This batch follows `bb517da47`. The normal native launcher still takes no
+arguments and preserves its base-content Diablo variant, immediate host timing
+and existing native save/config locations. The separate diagnostic wrapper can
+resume only an explicitly supplied, version-1 marked test profile with its
+private bookmark, authoritative checkpoint and native configuration present.
+It rejects reparse-point ancestors and incompatible binary-line bookmarks,
+holds an exclusive writer lock through builds/owned-child cleanup, and puts
+each resume's logs in a fresh subdirectory without overwriting prior phase logs.
+Validation does not rewrite profile files; the resumed host/client can update
+their retained checkpoint, bookmark and native save state normally.
+Actual terminal client exits are retained even after forced owned-child cleanup.
+No normal-launch persistence, native gameplay, content, protocol or save-schema
+change is claimed. Missing-art messages now identify the object/template or
+level/entity/graphic while preserving admission and rollback; no speculative
+graphics reload was retained.
+
+The earlier failed profile `Godevilution-Native-Acceptance-d3ac79e6291f4be49d65d477b33f015b`
+retains the missing-art failure. The subsequent interactive software-renderer
+probe `Godevilution-Native-Acceptance-b38a5e47647c4f89bbc9225b8d045292` reached
+Single Player, Warrior creation and rendered Cathedral under base content,
+immediate timing and seed 1624417495. Its retained authoritative checkpoint
+later shows hero `q`, level 1, position `(0,0)`, life 0/70 and zero command
+receipts. Escape/close attempts did not terminate the client; cleanup validated
+the exact owned executable/PID/start time, terminated that client and allowed
+the wrapper to close its host. Recorded client exit is **-1**, not a pass.
+Profiles remain private under `%TEMP%`; no user saves/config were removed.
+Neither the absent missing-art error in this probe nor rendered geometry proves
+playability or fixes the older failure.
+
+The base authored levels currently supply no start coordinates and default to
+Cathedral level 1 at `(0,0)`. Native town's `ENTRY_MAIN` uses `(75,68)`.
+A proposed native-only `levels.tsv` start-coordinate overlay was not implemented:
+composition requires identical ordered columns, and production validation admits
+only the current eight-column schema. The unfinished launcher dependency was
+removed rather than shipping a missing pack or weakening validation. A validated
+entry contract and alive native create/move/save/fresh-host resume remain M0 work.
+
+Verification: the rebuilt Debug native presentation selection passes 3/3 under
+the initialized x64 Visual Studio environment; launcher regressions pass 22/22
+(17.939s), including profile preservation, exclusive locking, ancestor rejection,
+bookmark edge cases and terminal process evidence. Documentation consistency
+guards pass 3/3 (369ms). Existing generated protobuf
+C4251 warnings remain. A restricted launcher-test build first failed with CS2012
+output access denied; the permitted rebuild and test execution then passed.
+NuGet vulnerability-feed NU1900 warnings remain; these are not security-clean
+build claims. No full native or campaign suite is claimed.
+
+The original Godot crash remediation in `32307f45b` and isolated staging in
+`1c2921a7b` were freshly checked using `tools/test-godot-session.ps1`.
+Actual headless create/move/checkpoint, fresh-host resume and server-loss/reconnect
+pass under Godot 4.7.2 stable Mono, with nine engine-version/import/client records
+exiting zero and no recorded error. The source SDK remains 4.7.1. Private evidence
+is `Godevilution-Scene-Acceptance-b3fa0652831f41dc868eea874a1db600`; launch-log
+suffixes are `97fa8ad6e56541da81cc67cbf6cea677`,
+`05b073233c0f4e34a53a2eb96bd78b3c` and `d00c1493faa74cdf82a201019d0d8276`.
+Final process inspection found no Godot, native client, project host or WerFault
+processes. The original 4.7.1 internal access-violation cause and every historical
+dialog are not proven; the fresh isolated runs did not reproduce that path.
+Writable AppData isolation, fail-fast exit checks and automated-child-only dialog
+suppression mitigate the observed failure/accumulation path.
+This headless check is not a new visible-rendering or campaign gate pass.
 
 ### M0 actual Godot one/four-client baseline (2026-09-30)
 

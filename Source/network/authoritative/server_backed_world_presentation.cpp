@@ -4,6 +4,7 @@
 #include <cstdio>
 #include <cstdlib>
 #include <limits>
+#include <string>
 #include <unordered_set>
 
 #include "application/headless_mode.hpp"
@@ -768,8 +769,15 @@ tl::expected<uint32_t, std::string> ResolveObjectAnimationFrameInternal(const Ob
 	const uint32_t requestedFrame = snapshot.activated ? snapshot.activatedAnimationFrame : snapshot.animationFrame;
 	if (HeadlessMode)
 		return requestedFrame == 0 ? std::max(object._oAnimFrame, 1U) : requestedFrame;
-	if (!object._oAnimData)
-		return tl::make_unexpected("Authoritative object presentation requires native art that is not loaded.");
+	if (!object._oAnimData) {
+		const int objectType = static_cast<int>(object._otype);
+		const int graphic = objectType >= 0 && static_cast<size_t>(objectType) < AllObjects.size()
+		    ? static_cast<int>(AllObjects[static_cast<_object_id>(objectType)].ofindex)
+		    : -1;
+		return tl::make_unexpected(
+		    "Authoritative object presentation requires native art that is not loaded (object type "
+		    + std::to_string(objectType) + ", graphic " + std::to_string(graphic) + ").");
+	}
 
 	const uint32_t frameCount = object._oAnimData->numSprites();
 	if (frameCount == 0)
@@ -1231,8 +1239,13 @@ tl::expected<void, std::string> ServerBackedWorldPresentation::Apply(
 			return tl::make_unexpected("Authoritative object selected an unsupported native presentation template.");
 		if (!HeadlessMode && nativeObjectId >= AllObjects.size())
 			return tl::make_unexpected("Authoritative object presentation requires native template data that is not loaded.");
-		if (!HeadlessMode && !IsObjectGraphicLoaded(AllObjects[static_cast<_object_id>(nativeObjectId)].ofindex))
-			return tl::make_unexpected("Authoritative object presentation requires native art that is not loaded.");
+		if (!HeadlessMode && !IsObjectGraphicLoaded(AllObjects[static_cast<_object_id>(nativeObjectId)].ofindex)) {
+			return tl::make_unexpected(
+			    "Authoritative object presentation requires native art that is not loaded (level "
+			    + std::to_string(levelId) + ", entity " + std::to_string(snapshot.entityId)
+			    + ", native object " + std::to_string(nativeObjectId) + ", graphic "
+			    + std::to_string(AllObjects[static_cast<_object_id>(nativeObjectId)].ofindex) + ").");
+		}
 		int slot = -1;
 		bool admittedSlot = false;
 		if (const auto mapped = objectSlots_.find(snapshot.entityId); mapped != objectSlots_.end()

@@ -115,7 +115,7 @@ public sealed class LocalLauncherContractTests
         var launcher = File.ReadAllText(Path.Combine(FindRepositoryRoot(), "run-authoritative-client.ps1"));
         var wrapper = File.ReadAllText(Path.Combine(FindRepositoryRoot(), "tools/run-native-acceptance.ps1"));
         Assert.Contains("param()", launcher, StringComparison.Ordinal);
-        Assert.Contains("param()", wrapper, StringComparison.Ordinal);
+        Assert.Contains("param([string]$SessionDirectory, [switch]$Resume)", wrapper, StringComparison.Ordinal);
         Assert.Contains("$env:GODEVILUTION_NATIVE_ACCEPTANCE_DIRECTORY", launcher, StringComparison.Ordinal);
         var freshPathGuard = launcher.IndexOf("if (Test-Path -LiteralPath $candidate)", StringComparison.Ordinal);
         Assert.True(freshPathGuard >= 0);
@@ -127,8 +127,11 @@ public sealed class LocalLauncherContractTests
         Assert.Contains("'--diablo'", launcher, StringComparison.Ordinal);
         Assert.DoesNotContain("'--hellfire'", launcher, StringComparison.Ordinal);
         Assert.Contains("'--log-to-file'", launcher, StringComparison.Ordinal);
-        Assert.Contains("Join-Path $captureRoot 'native-save'", launcher, StringComparison.Ordinal);
-        Assert.Contains("Join-Path $captureRoot 'native-config'", launcher, StringComparison.Ordinal);
+        Assert.Contains("Join-Path $profileRoot 'native-save'", launcher, StringComparison.Ordinal);
+        Assert.Contains("Join-Path $profileRoot 'native-config'", launcher, StringComparison.Ordinal);
+        Assert.Contains("Get-NativeAcceptanceLayout $acceptanceRoot $isResumeAcceptance", launcher, StringComparison.Ordinal);
+        Assert.Contains("native-acceptance-profile.json", launcher, StringComparison.Ordinal);
+        Assert.Contains("$env:GODEVILUTION_NATIVE_ACCEPTANCE_RESUME = $previousResumeAcceptance", wrapper, StringComparison.Ordinal);
         Assert.Contains("$env:GODEVILUTION_NATIVE_ACCEPTANCE_DIRECTORY = $previousAcceptanceRoot", wrapper, StringComparison.Ordinal);
         Assert.Contains("Remove-Item Env:GODEVILUTION_NATIVE_ACCEPTANCE_DIRECTORY", wrapper, StringComparison.Ordinal);
     }

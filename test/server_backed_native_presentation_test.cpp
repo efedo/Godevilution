@@ -413,7 +413,10 @@ TEST(ServerBackedNativePresentation, RejectsMissingAndEmptyLoadedArt)
 	Object missingArt;
 	ProjectedObjectSnapshot snapshot;
 	snapshot.animationFrame = 1;
-	EXPECT_FALSE(ResolveAuthoritativeObjectAnimationFrame(missingArt, snapshot).has_value());
+	auto missingResult = ResolveAuthoritativeObjectAnimationFrame(missingArt, snapshot);
+	ASSERT_FALSE(missingResult.has_value());
+	EXPECT_NE(missingResult.error().find("Authoritative object presentation requires native art that is not loaded"), std::string::npos);
+	EXPECT_NE(missingResult.error().find("object type -1"), std::string::npos);
 
 	Object emptyArt;
 	OwnedClxSpriteList emptySprites = MakeSpriteList(0);

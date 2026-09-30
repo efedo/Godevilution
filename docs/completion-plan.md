@@ -127,11 +127,18 @@ M4. M5 is the final removal gate, not a reason to postpone replacement work.
    acceptance result, not an assumed pass or a blocker for Godot work.
    Actual GUI startup now exposed and corrected a native/managed reward-offset
    limit mismatch. Preserve visible connection-error recovery and the boundary
-   regressions. Deferred native projection and graphics/frame admission now
-   address the prior object-graphics assertion in source and focused tests.
-   Complete the fresh visible check after manual cancellation of the Windows
-   firewall prompt, then exercise movement/save/resume before claiming native
-   application acceptance. Do not enable network permissions for loopback tests.
+   regressions. Deferred projection and graphics/frame admission retain strict
+   missing-art rejection; current diagnostics identify the failing object/template.
+   The latest visible probe rendered Cathedral but retained a dead hero at the
+   default origin with no accepted commands. It is not gameplay acceptance, and
+   the earlier missing-art failure remains unresolved. Correct the native entry
+   contract through validated content without silently changing base/Godot pack
+   identities; current production level/overlay schemas do not admit the proposed
+   content-only start-coordinate override. Then verify alive creation, movement,
+   checkpointing and fresh-host resume using the explicitly marked, exclusively
+   locked native test profile. Keep per-phase logs and actual terminal exits;
+   helper tests and world rendering alone do not close this gate. Never automate
+   security prompts or enable network permissions for loopback tests.
 4. Record a fresh integration baseline for the current revision. Capture exact
    commands, configuration, selected tests, outcomes, and any exclusions in
    migration status. Establish the target platform/participant matrix and

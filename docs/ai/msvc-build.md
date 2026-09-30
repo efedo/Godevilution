@@ -117,15 +117,35 @@ PowerShell session:
 ./tools/run-native-acceptance.ps1
 ```
 
-This zero-argument wrapper uses the same rebuild/handshake launcher, with fresh
+The wrapper defaults to a zero-argument fresh run using the same rebuild/handshake launcher, with fresh
 native save/config folders, windowed presentation, skipped intro, and a separate
 server save root. Select Single Player, create a new hero, enter the world,
 observe the authoritative state, exercise movement, and exit normally. Record
 what actually happened; window discovery or exit code alone is not a GUI pass.
 Logs remain under the printed `Godevilution-Native-Acceptance-*` temp directory.
-Keep the resume-token file private. The wrapper restores the caller's internal
-`GODEVILUTION_NATIVE_ACCEPTANCE_DIRECTORY` environment setting; existing target
-directories are rejected before any build or launch to avoid reusing user data.
+Keep the resume-token file private. To reuse only an explicitly marked prior
+test profile with a fresh host/client and separate logs, use the diagnostic
+wrapper's resume option (the root launcher still takes no arguments):
+
+```powershell
+./tools/run-native-acceptance.ps1 -SessionDirectory 'C:\path\Godevilution-Native-Acceptance-profile' -Resume
+```
+
+Resume requires the matching version-1 profile marker, private bookmark,
+nonempty authoritative checkpoint and native save/config folders. The bookmark
+must match the native single-binary-line format; empty first lines, CRLF and
+extra tokens are rejected. Reparse-point ancestors are rejected, and an
+exclusive profile lock is held through builds and owned-child cleanup. Validation
+does not rewrite old files; resume logs get a unique `resume-*` subdirectory.
+Select the existing test hero, inspect the restored authoritative state and
+verify a newly accepted movement. Merely opening that hero is not a resume pass.
+Terminal client outcomes are retained even on forced owned-child cleanup.
+
+The wrapper restores both internal `GODEVILUTION_NATIVE_ACCEPTANCE_DIRECTORY`
+and `GODEVILUTION_NATIVE_ACCEPTANCE_RESUME` settings. Fresh runs reject existing
+target directories before any build or launch; resume never guesses a latest
+profile or uses the user's normal saves. This does not establish normal-launch
+server persistence or certify the test profile's gameplay state.
 
 On the verified desktop, a sandbox-launched client did not expose a targetable
 window, while the same rebuilt client launched on the interactive desktop did.
@@ -134,12 +154,16 @@ approval; they must not treat a running process as visible UI or bypass denied
 window access. See migration status for current GUI outcomes and the remaining
 world-entry gap.
 
-Current GUI evidence reaches menus and hero creation. Deferred projection and
-graphics/frame admission address the prior unloaded-object assertion in source
-and focused tests, but the fresh visible check was blocked by a Windows firewall
-prompt; world entry remains unverified. Never automate security prompts or enable
-public/private network permissions for the loopback test. Ask the user to cancel
-the prompt before another visible check; do not count tests as GUI acceptance.
+Current GUI evidence reaches menus, hero creation and rendered Cathedral, but
+the latest checkpoint has a dead hero at `(0,0)` with no accepted commands.
+Native create/move/save/resume acceptance remains open. The earlier missing-art
+failure is unresolved; diagnostics identify its exact object/template without
+relaxing graphics/frame admission or adding a speculative reload. Base entry
+coordinates need validated native-compatible content integration before an
+alive gameplay check. The earlier firewall interruption is historical. Never
+automate security prompts or enable public/private network permissions for the
+loopback test. If a prompt appears, ask the user to cancel it before continuing;
+do not count focused tests or world rendering as GUI gameplay acceptance.
 Authoritative connection failures are retained in `native.log` and show an error
 dialog that returns to the menu. A normal exit code alone remains insufficient.
 Controlled Direct3D captures stayed black, while a child-process launch with
