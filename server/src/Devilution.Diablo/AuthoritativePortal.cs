@@ -67,7 +67,7 @@ public static class AuthoritativePortalRules
 /** Mutable lifetime and ownership metadata for a dynamic native town portal. */
 public sealed partial record AuthoritativePortal
 {
-    /** Zero denotes an external/static route that does not expire. */
+    /** Native opening counter; owned Town Portals remain at one. Zero denotes a static route. */
     public uint RemainingTicks { get; set; }
 
     /** Player entity that owns a dynamic town portal; zero denotes static content. */

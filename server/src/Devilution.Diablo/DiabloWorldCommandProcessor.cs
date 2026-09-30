@@ -777,6 +777,11 @@ public sealed class DiabloWorldCommandProcessor
             return DiabloWorldIntentResult.Rejected(DiabloRuleFailure.NotAllowed);
         }
 
+        var closesOwnerTownPortal = useDestinationEndpoint
+            && !useSourceEndpoint
+            && player.LevelId == combatRules.TownLevelId
+            && destinationLevelId != combatRules.TownLevelId
+            && portal.OwnerEntityId == player.EntityId;
         player.LevelId = destinationLevelId;
         player.MarkLevelVisited(player.LevelId);
         player.PositionX = destinationPositionX;
@@ -800,6 +805,10 @@ public sealed class DiabloWorldCommandProcessor
                 action,
                 DiabloPlayerCombatMode.NewLevel);
         }
+        // Native GetPortalLevel deactivates only the owner's accepted return
+        // from town. Other players and rejected transitions retain the portal.
+        if (closesOwnerTownPortal)
+            world.Portals.Remove(portalId);
         return DiabloWorldIntentResult.Accepted;
     }
 

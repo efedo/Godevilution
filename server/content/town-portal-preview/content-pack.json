@@ -1,0 +1,14 @@
+{
+  "formatVersion": 1,
+  "id": "godevilution.town-portal-preview",
+  "version": "0.1.0",
+  "dependencies": ["devilution.base", "godevilution.town-loop-preview"],
+  "schema": { "id": "devilution.diablo", "version": "1.502.0" },
+  "dependencyConstraints": [
+    { "id": "devilution.base", "minimumVersion": "0.1.0", "maximumVersion": "0.1.0" },
+    { "id": "godevilution.town-loop-preview", "minimumVersion": "0.1.0", "maximumVersion": "0.1.0" }
+  ],
+  "overlays": [
+    { "table": "stores.tsv", "keys": ["store_id", "store_slot"], "mode": "upsert" }
+  ]
+}

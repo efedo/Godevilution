@@ -29,6 +29,7 @@ public partial class SessionAcceptance : Node
         var phase = Environment.GetEnvironmentVariable("GODEVILUTION_ACCEPTANCE_PHASE");
         if (phase is not ("Create" or "Resume" or "Recovery" or "Journey" or "JourneyResume" or "TownLoop" or "TownLoopResume" or "MultiplayerCreate" or "MultiplayerResume"))
             throw new InvalidOperationException("Explicit acceptance phase is required.");
+        var portalPreview = Environment.GetEnvironmentVariable("GODEVILUTION_PORTAL_PREVIEW") == "1";
         var directory = Environment.GetEnvironmentVariable("GODEVILUTION_ACCEPTANCE_DIRECTORY")
             ?? throw new InvalidOperationException("An isolated evidence directory is required.");
         // The headless display driver otherwise supplies a 64x64 viewport.
@@ -109,6 +110,9 @@ public partial class SessionAcceptance : Node
         Require(LocalSessionBookmark.Read(bookmarkPath) is not null,
             "No durable local resume bookmark was written.");
         await VerifyResponsiveLayout(main, directory, visible && creating);
+        TownPortalPurchaseEvidence? portalPurchase = null;
+        if (phase == "TownLoop" && portalPreview)
+            portalPurchase = await VerifyTownPortalAcquisition(main);
         if (previous is not null) {
             Require(main.ObservedIdentity!.ContentManifestHash == previous.ContentHash
                 && main.ObservedIdentity.RulesetIdentityHash == previous.RulesetHash,
@@ -120,7 +124,9 @@ public partial class SessionAcceptance : Node
         if (phase == "JourneyResume")
             VerifyCombatLootRestored(main, directory);
         if (phase == "TownLoopResume")
-            await VerifyTownLoopRestored(main, directory, visible);
+            await VerifyTownLoopRestored(main, directory, visible, portalPreview);
+        if (phase == "TownLoopResume" && portalPreview)
+            initial = main.ObservedSnapshot!.Players.Single().Clone();
 
         GetViewport().GuiReleaseFocus();
         var preInputTick = main.ObservedSnapshot!.Tick;
@@ -171,7 +177,7 @@ public partial class SessionAcceptance : Node
             await VerifyRouteJourney(main, directory, visible);
             await VerifyCombatAndLoot(main, directory, visible);
             if (phase == "TownLoop")
-                await VerifyEquipmentAndTownLoop(main, directory, visible);
+                await VerifyEquipmentAndTownLoop(main, directory, visible, portalPurchase);
             moved = main.ObservedSnapshot!.Players.Single();
             result = main.ObservedCommandResult!;
         }

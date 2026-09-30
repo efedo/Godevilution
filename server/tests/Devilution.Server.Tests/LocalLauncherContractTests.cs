@@ -178,13 +178,35 @@ public sealed class LocalLauncherContractTests
         Assert.Contains("& $godotLauncher -PreviewContent", preview);
         Assert.Contains("Test-Path -LiteralPath $godotLauncher -PathType Leaf", preview);
         Assert.Contains("if ($PreviewContent) { '.local/godot-preview' } else { '.local/godot' }", harness);
-        Assert.Contains("$overlayArguments = if ($PreviewContent)", harness);
+        Assert.Contains("$overlayArguments = if ($PreviewContent -or $PortalPreviewContent)", harness);
         Assert.Contains("--content-overlay", harness);
         Assert.Contains("server/content/town-loop-preview", harness);
         Assert.Contains("Town-loop acceptance requires -PreviewContent", harness);
-        Assert.Contains("$parameters.PreviewContent = $true", acceptance);
+        Assert.Contains("$parameters.PortalPreviewContent = $true", acceptance);
         Assert.Contains("-AcceptancePhase TownLoopResume", acceptance);
         Assert.Contains("if ($Journey -and $TownLoop)", acceptance);
+    }
+
+    [Fact]
+    public void PortalPreviewLayersOnTheOriginalPreviewWithoutReusingItsSaves()
+    {
+        var root = FindRepositoryRoot();
+        var original = File.ReadAllText(Path.Combine(root, "run-godot-preview.ps1"));
+        var portal = File.ReadAllText(Path.Combine(root, "run-godot-portal-preview.ps1"));
+        var harness = File.ReadAllText(Path.Combine(root, "godot/run-local-client.ps1"));
+        Assert.Contains("param()", portal);
+        Assert.Contains("& $godotLauncher -PreviewContent", original);
+        Assert.DoesNotContain("PortalPreviewContent", original);
+        Assert.Contains("& $godotLauncher -PortalPreviewContent", portal);
+        Assert.Contains("'.local/godot-portal-preview'", harness);
+        Assert.Contains("'.local/godot-preview'", harness);
+        Assert.Contains("server/content/town-portal-preview", harness);
+        Assert.True(harness.IndexOf("server/content/town-loop-preview", StringComparison.Ordinal)
+            < harness.IndexOf("server/content/town-portal-preview", StringComparison.Ordinal));
+        Assert.Contains("if ($PreviewContent -and $PortalPreviewContent)", harness);
+        Assert.Contains("GODEVILUTION_PORTAL_PREVIEW", harness);
+        Assert.Contains("$clientEnvironment['GODEVILUTION_PORTAL_PREVIEW'] = '1'", harness);
+        Assert.Contains("-not ($PreviewContent -or $PortalPreviewContent)", harness);
     }
 
     [Fact]
@@ -211,7 +233,7 @@ public sealed class LocalLauncherContractTests
         Assert.Contains("exactly two authoritative character checkpoints", launcher);
         Assert.Contains("distinct private resume bookmarks", launcher);
         Assert.Contains("Multiplayer acceptance phases require -Multiplayer", launcher);
-        Assert.Contains("$Multiplayer -and $PreviewContent", launcher);
+        Assert.Contains("$Multiplayer -and ($PreviewContent -or $PortalPreviewContent)", launcher);
         Assert.Contains("-AcceptancePhase MultiplayerCreate", acceptance);
         Assert.Contains("-AcceptancePhase MultiplayerResume", acceptance);
         Assert.Contains("Multiplayer resume did not start a fresh authoritative host", acceptance);

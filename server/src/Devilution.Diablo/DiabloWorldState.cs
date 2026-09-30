@@ -234,7 +234,7 @@ public sealed class DiabloWorldState
 
     public Dictionary<uint, AuthoritativePortal> Portals { get; } = [];
 
-    /** Expires dynamic portals using elapsed authoritative simulation ticks. */
+    /** Advances native Town Portal opening counters without expiring an open portal. */
     public void AdvancePortals(ulong tick)
     {
         if (lastPortalTick is not ulong previousTick) {
@@ -248,6 +248,14 @@ public sealed class DiabloWorldState
         foreach (var portal in Portals.Values.ToArray()) {
             if (portal.RemainingTicks == 0)
                 continue;
+            if (portal.Bidirectional && portal.OwnerEntityId != 0) {
+                // Native ProcessTownPortal decrements only above one. Recast,
+                // deactivation, or the owner's return removes the open portal.
+                portal.RemainingTicks = elapsed >= portal.RemainingTicks - 1
+                    ? 1
+                    : portal.RemainingTicks - (uint)elapsed;
+                continue;
+            }
             portal.RemainingTicks = elapsed >= portal.RemainingTicks
                 ? 0
                 : portal.RemainingTicks - (uint)elapsed;
@@ -257,7 +265,7 @@ public sealed class DiabloWorldState
         lastPortalTick = tick;
     }
 
-    /** Restores the authoritative clock used for dynamic portal expiry. */
+    /** Restores the authoritative clock used for portal opening counters. */
     public void RestorePortalClock(ulong tick)
     {
         lastPortalTick = tick;

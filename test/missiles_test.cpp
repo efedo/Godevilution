@@ -3,7 +3,13 @@
 
 #include <ankerl/unordered_dense.h>
 
+#include <utility>
+#include <vector>
+
+#include "engine/lighting.h"
 #include "engine/random.hpp"
+#include "game/levels/dungeon_common.h"
+#include "game/levels/tile.hpp"
 #include "game/missiles/missiles.hpp"
 
 using namespace devilution;
@@ -12,6 +18,56 @@ using ::testing::Gt;
 using ::testing::Lt;
 using ::testing::Pair;
 using ::testing::UnorderedElementsAre;
+
+namespace {
+
+class ScopedTownPortalState {
+public:
+	explicit ScopedTownPortalState(Point portalPosition)
+	    : portalPosition_(portalPosition)
+	    , savedPlayers_(std::move(Players))
+	    , savedMyPlayer_(MyPlayer)
+	    , savedMyPlayerId_(MyPlayerId)
+	    , savedLevelType_(levelType())
+	    , savedPortalTile_(tileAt(portalPosition))
+	    , savedLightManager_(CurrentLightManager)
+	    , savedFullyLitLightTable_(CurrentLightManager.fullyLitLightTable_)
+	    , savedFullyDarkLightTable_(CurrentLightManager.fullyDarkLightTable_)
+	{
+		Players.clear();
+		MyPlayer = nullptr;
+		MyPlayerId = 0;
+		levelType() = DTYPE_TOWN;
+	}
+
+	~ScopedTownPortalState()
+	{
+		tileAt(portalPosition_) = savedPortalTile_;
+		levelType() = savedLevelType_;
+		CurrentLightManager = savedLightManager_;
+		CurrentLightManager.fullyLitLightTable_ = savedFullyLitLightTable_;
+		CurrentLightManager.fullyDarkLightTable_ = savedFullyDarkLightTable_;
+		Players = std::move(savedPlayers_);
+		MyPlayerId = savedMyPlayerId_;
+		MyPlayer = savedMyPlayer_;
+	}
+
+	ScopedTownPortalState(const ScopedTownPortalState &) = delete;
+	ScopedTownPortalState &operator=(const ScopedTownPortalState &) = delete;
+
+private:
+	Point portalPosition_;
+	std::vector<Player> savedPlayers_;
+	Player *savedMyPlayer_;
+	uint8_t savedMyPlayerId_;
+	dungeon_type savedLevelType_;
+	Tile savedPortalTile_;
+	LightManager savedLightManager_;
+	uint8_t *savedFullyLitLightTable_;
+	uint8_t *savedFullyDarkLightTable_;
+};
+
+} // namespace
 
 void TestArrowRotatesUniformly(Missile &missile, int startingFrame, int leftFrame, int rightFrame)
 {
@@ -148,4 +204,45 @@ TEST(Missiles, GetDirection16)
 	EXPECT_EQ(Direction16::South_SouthEast, GetDirection16({ 2, 2 }, { 4, 3 }));
 
 	EXPECT_EQ(Direction16::South_SouthWest, GetDirection16({ 0, 0 }, { 0, 0 })) << "GetDirection16 is expected to default to Direction16::South_SouthWest when the points occupy the same tile";
+}
+
+TEST(Missiles, ProcessTownPortalRetainsOpeningAtDurationOneAndDeletesAtZero)
+{
+	constexpr Point portalPosition { 10, 10 };
+	ScopedTownPortalState stateGuard(portalPosition);
+
+	// Keep the fixture in the already-open state; this characterizes lifetime semantics without loading portal sprites.
+	Missile opening{};
+	opening._mitype = MissileID::TownPortal;
+	opening.position.tile = portalPosition;
+	opening.position.start = portalPosition;
+	opening.duration = 100;
+	opening.var1 = -1;
+	opening._miDelFlag = false;
+	opening._mlid = NO_LIGHT;
+	opening._miAnimType = MissileGraphicID::None;
+	opening.setFrameGroup<PortalFrame>(PortalFrame::Idle);
+
+	for (int tick = 0; tick < 99; tick++) {
+		ProcessTownPortal(opening);
+		EXPECT_EQ(opening.duration, 99 - tick);
+		EXPECT_FALSE(opening._miDelFlag);
+	}
+	EXPECT_EQ(opening.duration, 1);
+	ProcessTownPortal(opening);
+	EXPECT_EQ(opening.duration, 1);
+	EXPECT_FALSE(opening._miDelFlag);
+
+	Missile expired{};
+	expired._mitype = MissileID::TownPortal;
+	expired.position.tile = portalPosition;
+	expired.position.start = portalPosition;
+	expired.duration = 0;
+	expired.var1 = -1;
+	expired._miDelFlag = false;
+	expired._mlid = NO_LIGHT;
+
+	ProcessTownPortal(expired);
+	EXPECT_EQ(expired.duration, 0);
+	EXPECT_TRUE(expired._miDelFlag);
 }

@@ -3163,6 +3163,122 @@ public sealed class DiabloSimulationTests
     }
 
     [Fact]
+    public void SnapshotRoundTripsAnOpenPortalWithItsTickOneOpeningCounter()
+    {
+        var portal = new AuthoritativePortal(
+            0x20000002,
+            1,
+            12,
+            10,
+            0,
+            57,
+            40) {
+            OwnerEntityId = 7,
+            Bidirectional = true,
+            RemainingTicks = 1,
+        };
+        var simulation = DiabloSimulationFactory.Instance.Create(new DiabloSimulationOptions(
+            new StoreCatalog(),
+            DiabloModule.Instance.Rules) {
+            Portals = [portal],
+            FallbackWidth = 80,
+            FallbackHeight = 80,
+        });
+        var sourcePlayer = CreatePlayer();
+        sourcePlayer.LevelId = 1;
+        var snapshot = simulation.CaptureSnapshot(sourcePlayer, 5);
+
+        var restored = DiabloSimulationFactory.Instance.Create(new DiabloSimulationOptions(
+            new StoreCatalog(),
+            DiabloModule.Instance.Rules) {
+            FallbackWidth = 80,
+            FallbackHeight = 80,
+        });
+        var destinationPlayer = CreatePlayer();
+        destinationPlayer.LevelId = 1;
+
+        restored.RestoreSnapshot(destinationPlayer, snapshot);
+
+        var restoredPortal = Assert.Single(restored.WorldState.Portals.Values);
+        Assert.Equal(portal.PortalId, restoredPortal.PortalId);
+        Assert.Equal(portal.RemainingTicks, restoredPortal.RemainingTicks);
+        Assert.Equal(portal.OwnerEntityId, restoredPortal.OwnerEntityId);
+        Assert.Equal(
+            (portal.SourceLevelId, portal.SourcePositionX, portal.SourcePositionY,
+                portal.DestinationLevelId, portal.DestinationPositionX, portal.DestinationPositionY),
+            (restoredPortal.SourceLevelId, restoredPortal.SourcePositionX, restoredPortal.SourcePositionY,
+                restoredPortal.DestinationLevelId, restoredPortal.DestinationPositionX, restoredPortal.DestinationPositionY));
+
+        restored.AdvanceTick(6, [destinationPlayer]);
+        Assert.Equal(1U, Assert.Single(restored.WorldState.Portals.Values).RemainingTicks);
+    }
+
+    [Fact]
+    public void OwnerTownPortalReturnClosesBeforeLevelTransitionSnapshotRestore()
+    {
+        var (classes, animations) = LoadShippedPlayerMetadata();
+        var portal = new AuthoritativePortal(
+            0x20000003,
+            1,
+            12,
+            10,
+            0,
+            57,
+            40) {
+            OwnerEntityId = 7,
+            Bidirectional = true,
+            RemainingTicks = 1,
+        };
+        var sourceOptions = new DiabloSimulationOptions(
+            new StoreCatalog(),
+            DiabloModule.Instance.Rules) {
+            Portals = [portal],
+            FallbackWidth = 80,
+            FallbackHeight = 80,
+            PlayerClasses = classes,
+            PlayerAnimations = animations,
+            UseNativePlayerActionTiming = true,
+        };
+        var simulation = DiabloSimulationFactory.Instance.Create(sourceOptions);
+        var sourcePlayer = CreatePlayer();
+        sourcePlayer.LevelId = 0;
+        sourcePlayer.PositionX = 57;
+        sourcePlayer.PositionY = 40;
+
+        var returned = simulation.Execute(
+            sourcePlayer,
+            new DiabloUsePortalIntent(portal.PortalId),
+            10,
+            [sourcePlayer]);
+
+        Assert.True(returned.Succeeded, returned.Failure?.ToString());
+        Assert.Equal((1U, 12, 10), (sourcePlayer.LevelId, sourcePlayer.PositionX, sourcePlayer.PositionY));
+        Assert.Empty(simulation.WorldState.Portals);
+        var transition = Assert.IsType<AuthoritativePlayerActionState>(sourcePlayer.CurrentAction);
+        Assert.Equal(DiabloPlayerActionKind.LevelTransition, transition.Kind);
+        Assert.Equal(portal.PortalId, transition.TargetEntityId);
+
+        var snapshot = simulation.CaptureSnapshot(sourcePlayer, 10);
+        var restored = DiabloSimulationFactory.Instance.Create(new DiabloSimulationOptions(
+            new StoreCatalog(),
+            DiabloModule.Instance.Rules) {
+            FallbackWidth = 80,
+            FallbackHeight = 80,
+            PlayerClasses = classes,
+            PlayerAnimations = animations,
+            UseNativePlayerActionTiming = true,
+        });
+        var destinationPlayer = CreatePlayer();
+
+        restored.RestoreSnapshot(destinationPlayer, snapshot);
+
+        Assert.Empty(restored.WorldState.Portals);
+        Assert.Equal(sourcePlayer.CurrentAction, destinationPlayer.CurrentAction);
+        Assert.NotSame(sourcePlayer.CurrentAction, destinationPlayer.CurrentAction);
+        Assert.Equal(DiabloPlayerCombatMode.NewLevel, destinationPlayer.CombatMode);
+    }
+
+    [Fact]
     public void SnapshotRoundTripsMaterializedSetLevelWithoutRegularVisitedMarker()
     {
         var runtimeLevelId = AuthoritativeSetLevelMapCatalog.GetRuntimeLevelId(0, activeMap: true);
@@ -5125,6 +5241,42 @@ public sealed class DiabloSimulationTests
             0) {
             EntityId = 7,
         };
+    }
+
+    private static (
+        AuthoritativePlayerClassCatalog Classes,
+        AuthoritativePlayerAnimationCatalog Animations)
+        LoadShippedPlayerMetadata()
+    {
+        var root = FindRepositoryRoot();
+        var contentRoot = Path.Combine(root, "server", "content", "base");
+        var classes = AuthoritativePlayerClassCatalog.LoadTsv(
+            "classes.tsv",
+            File.ReadAllText(Path.Combine(contentRoot, "classes.tsv")));
+        var animations = AuthoritativePlayerAnimationCatalog.LoadTsv(
+            "class_animations.tsv",
+            File.ReadAllText(Path.Combine(contentRoot, "class_animations.tsv")),
+            classes);
+        return (classes, animations);
+    }
+
+    private static string FindRepositoryRoot()
+    {
+        var configuredRoot = Environment.GetEnvironmentVariable(
+            "GODEVILUTION_REPOSITORY_ROOT");
+        var searchRoots = string.IsNullOrWhiteSpace(configuredRoot)
+            ? new[] { Directory.GetCurrentDirectory(), AppContext.BaseDirectory }
+            : new[] { configuredRoot!, Directory.GetCurrentDirectory(), AppContext.BaseDirectory };
+        foreach (var start in searchRoots) {
+            for (var directory = new DirectoryInfo(start);
+                 directory is not null;
+                 directory = directory.Parent) {
+                if (File.Exists(Path.Combine(directory.FullName, "AGENTS.md")))
+                    return directory.FullName;
+            }
+        }
+        throw new DirectoryNotFoundException(
+            "Could not locate the Godevilution repository root.");
     }
 
     private static DiabloProjectileState CreateStoneCurseControllerState(

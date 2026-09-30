@@ -344,7 +344,7 @@ public sealed record AuthoritativeSpellDefinition(
     /** Maximum native crawl radius used to place Town Portal. */
     public int TownPortalSearchRadius { get; init; } = 5;
 
-    /** Native lifetime, in ticks, of a server-owned Town Portal. */
+    /** Native opening counter in ticks; the compatibility field name is retained. */
     public int TownPortalLifetime { get; init; } = 100;
 
     /** X coordinate of the first native Town Portal destination slot. */

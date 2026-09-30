@@ -25,7 +25,7 @@ public partial class HudPresentation : CanvasLayer
     private readonly Label commandFeedback = new();
     private readonly Label diagnostics = new();
     private readonly Label victory = new();
-    private readonly ItemList spellSources = new();
+    private readonly ItemList spellSources = new() { Name = "SpellSources" };
     private readonly ItemList storeItems = new() { Name = "StoreItems" };
     private readonly ItemList stashItems = new();
     private readonly OptionButton stashPageSelector = new();

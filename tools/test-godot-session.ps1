@@ -29,12 +29,12 @@ try {
         return
     }
     if ($TownLoop) {
-        $parameters.PreviewContent = $true
+        $parameters.PortalPreviewContent = $true
         $parameters.QuitAfterSeconds = 240
         & $launcher @parameters -AcceptancePhase TownLoop
         $parameters.QuitAfterSeconds = 45
         & $launcher @parameters -AcceptancePhase TownLoopResume
-        Write-Host "PASS: actual Godot equipment, return-to-town, trade/stash, and fresh-host preview resume. Evidence: $sessionDirectory"
+        Write-Host "PASS: actual Godot scroll acquisition/cast, portal return, equipment/trade/stash, and fresh-host owner-return closure. Evidence: $sessionDirectory"
         return
     }
     if ($Journey) {

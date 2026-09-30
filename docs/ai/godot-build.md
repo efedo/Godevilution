@@ -94,6 +94,14 @@ The additional zero-argument `run-godot-preview.ps1` selects the authored
 `.local/godot-preview` save/bookmark directory must not be mixed with the normal
 base profile. The original root launcher and base content identity are unchanged.
 
+The separate zero-argument `run-godot-portal-preview.ps1` adds the exact-pinned
+`town-portal-preview` overlay after the original preview. It supplies a purchasable
+50-gold Town Portal scroll without extra starting resources. Its distinct
+`.local/godot-portal-preview` save/bookmark profile must not be mixed with either
+existing profile. The inner harness uses `-PortalPreviewContent`; it cannot be
+combined with `-PreviewContent` or `-Multiplayer`. Original preview bytes, stock,
+content/ruleset hashes and the `-PreviewContent` acceptance path are preserved.
+
 `run-godot-multiplayer.ps1` is the zero-argument two-window local multiplayer
 entry point. Its explicit `-Multiplayer` inner-harness mode builds/imports once,
 starts one multiplayer host, and supplies separate process-local environment
@@ -196,22 +204,26 @@ retained for failure diagnosis. Allow up to 165 seconds for Journey and 45 for
 JourneyResume, plus builds. Services, return travel/portal, multiplayer, native
 generated maps, and campaign completion are not certified by Journey.
 
-`-TownLoop` uses the optional preview overlay in another fresh isolated directory.
-It extends the same combat/loot inputs by unequipping the starting bow, equipping
-the earned sword into the now-empty hand, selecting/walking the reverse stair,
-buying the existing 25-gold Smith buckler, storing bow/buckler, explicitly
-withdrawing/redepositing the buckler, and depositing ten then withdrawing five
-gold. A fresh host/client verifies equipped/stashed item
-identities and placements, remaining starting potions, content/ruleset identity,
-experience, and the final
-70 carried/5 stashed gold before accepting the next sequence. Actual tab/list/grid
-and button input submits ordinary server intents; no teleport, state injection,
-or free resources is used. Item assertions use the server-provided display name
-at its inventory anchor, including unidentified names. Allow 240 seconds for
-TownLoop and 45 for TownLoopResume, plus builds. Omit `-Visible` for headless;
-do not combine `-TownLoop` with `-Journey`. PNGs cover equipment, return, purchase,
-stash, and restore. This does not certify dynamic portal acquisition, native
-vendor/stash location gates, a complete M1 loop, or campaign parity.
+`-TownLoop` now selects the separate portal preview in a fresh isolated directory.
+It buys the 50-gold scroll through Trade before the same combat/loot journey,
+unequips the starting bow, equips the earned sword, selects the consumed scroll
+source under Hero, and left-clicks to cast. Clicking the server-owned portal
+returns to its exact town endpoint, not the reverse stair. It then buys the
+existing 25-gold Smith buckler, stores bow/buckler, withdraws/redeposits the
+buckler, and deposits ten then withdraws five gold. A fresh host/client verifies
+equipped/stashed identities, remaining starting potions, consumed-source absence,
+content/ruleset identity, experience, the active portal and 20 carried/5 stashed
+gold. The owner's actual town-to-dungeon return must close the portal before a
+fresh movement sequence. Actual tab/list/grid/world/button input submits ordinary
+server intents; no teleport, state injection, or free resources is used.
+Item assertions use server-provided names, including unidentified names.
+Allow 240 seconds for TownLoop and 45 for TownLoopResume, plus builds. Omit
+`-Visible` for headless; do not combine `-TownLoop` with `-Journey`. PNGs cover
+cast, portal return, equipment, purchase, stash and restore. The original inner
+`-PreviewContent -AcceptancePhase TownLoop`/`TownLoopResume` path retains reverse
+stairs, 70 carried/5 stashed gold and legacy evidence compatibility. These checks
+do not certify native stock/price/location gates, every placement exclusion,
+portal animation/art, a complete M1 loop or campaign parity.
 
 ## Standalone host performance baseline
 

@@ -8,15 +8,17 @@ param(
     [ValidateRange(1, 3600)] [int]$QuitAfterSeconds = 120,
     [string]$SessionDirectory,
     [switch]$PreviewContent,
+    [switch]$PortalPreviewContent,
     [switch]$Multiplayer,
     [ValidateSet('Create', 'Resume', 'Recovery', 'Journey', 'JourneyResume', 'TownLoop', 'TownLoopResume', 'MultiplayerCreate', 'MultiplayerResume')] [string]$AcceptancePhase
 )
 
 $ErrorActionPreference = 'Stop'
-if ($AcceptancePhase -in @('TownLoop', 'TownLoopResume') -and -not $PreviewContent) {
-    throw 'Town-loop acceptance requires -PreviewContent and its isolated content identity.'
+if ($PreviewContent -and $PortalPreviewContent) { throw 'Choose one preview profile.' }
+if ($AcceptancePhase -in @('TownLoop', 'TownLoopResume') -and -not ($PreviewContent -or $PortalPreviewContent)) {
+    throw 'Town-loop acceptance requires -PreviewContent or -PortalPreviewContent and its isolated content identity.'
 }
-if ($Multiplayer -and $PreviewContent) { throw 'The local multiplayer profile uses base content, not the single-player preview.' }
+if ($Multiplayer -and ($PreviewContent -or $PortalPreviewContent)) { throw 'The local multiplayer profile uses base content, not the single-player preview.' }
 if ($AcceptancePhase -and ($Multiplayer -ne ($AcceptancePhase -in @('MultiplayerCreate', 'MultiplayerResume')))) {
     throw 'Multiplayer acceptance phases require -Multiplayer; single-player phases cannot use it.'
 }
@@ -27,7 +29,7 @@ $serverProject = Join-Path $repositoryRoot 'server/src/Devilution.Server/Devilut
 $serverExecutable = Join-Path $repositoryRoot 'server/src/Devilution.Server/bin/Debug/net10.0/Devilution.Server.exe'
 $clientProject = Join-Path $repositoryRoot 'godot/Devilution.Client'
 if ([string]::IsNullOrWhiteSpace($SessionDirectory)) {
-    $SessionDirectory = Join-Path $repositoryRoot $(if ($Multiplayer) { '.local/godot-multiplayer' } elseif ($PreviewContent) { '.local/godot-preview' } else { '.local/godot' })
+    $SessionDirectory = Join-Path $repositoryRoot $(if ($Multiplayer) { '.local/godot-multiplayer' } elseif ($PortalPreviewContent) { '.local/godot-portal-preview' } elseif ($PreviewContent) { '.local/godot-preview' } else { '.local/godot' })
 }
 $SessionDirectory = [System.IO.Path]::GetFullPath($SessionDirectory)
 if ($SessionDirectory.Contains('"')) { throw 'The session directory must not contain a quote.' }
@@ -77,7 +79,7 @@ $environmentNames = @('DEVILUTION_SERVER_HOST', 'DEVILUTION_SERVER_PORT', 'DEVIL
     'DEVILUTION_CONTENT_HASH', 'DEVILUTION_RULESET_HASH', 'DEVILUTION_CHARACTER_CLASS_ID',
     'DEVILUTION_CHARACTER_NAME', 'DEVILUTION_RESUME_TOKEN', 'DEVILUTION_RESUME_TOKEN_PATH',
     'GODEVILUTION_ACCEPTANCE_PHASE', 'GODEVILUTION_ACCEPTANCE_DIRECTORY', 'GODEVILUTION_QUIT_AFTER_SECONDS',
-    'GODEVILUTION_LOCAL_PLAYER')
+    'GODEVILUTION_LOCAL_PLAYER', 'GODEVILUTION_PORTAL_PREVIEW')
 foreach ($name in $environmentNames) {
     $savedEnvironment[$name] = [Environment]::GetEnvironmentVariable($name, 'Process')
 }
@@ -261,8 +263,11 @@ try {
     Assert-GodotImportLog $importTracked $importLogPath
 
     # Stable town starts; gameplay acceptance travels into combat afterward.
-    $acceptanceArguments = if ($AcceptancePhase -or $PreviewContent -or $Multiplayer) { '--starting-level 0 --random-seed 0' } else { '' }
-    $overlayArguments = if ($PreviewContent) { '--content-overlay "{0}"' -f (Join-Path $repositoryRoot 'server/content/town-loop-preview') } else { '' }
+    $acceptanceArguments = if ($AcceptancePhase -or $PreviewContent -or $PortalPreviewContent -or $Multiplayer) { '--starting-level 0 --random-seed 0' } else { '' }
+    $overlayArguments = if ($PreviewContent -or $PortalPreviewContent) { '--content-overlay "{0}"' -f (Join-Path $repositoryRoot 'server/content/town-loop-preview') } else { '' }
+    if ($PortalPreviewContent) {
+        $overlayArguments += ' --content-overlay "{0}"' -f (Join-Path $repositoryRoot 'server/content/town-portal-preview')
+    }
     function Start-SessionServer([int]$ListenPort, [string]$LogPrefix) {
         $serverArguments = '--port {0} --protocol-version 0.2.0 --game-mode {4} --save-root "{1}/save" {2} {3}' -f $ListenPort, $SessionDirectory, $acceptanceArguments, $overlayArguments, $serverGameMode
         $stdoutPath = Join-Path $captureRoot ($LogPrefix + '.stdout.log')
@@ -330,6 +335,7 @@ try {
         $clientEnvironment = @{
             DEVILUTION_RESUME_TOKEN_PATH = Join-Path $clientDirectory 'resume-token.txt'
         }
+        if ($PortalPreviewContent) { $clientEnvironment['GODEVILUTION_PORTAL_PREVIEW'] = '1' }
         if ($CharacterClassId -ge 0) { $clientEnvironment['DEVILUTION_CHARACTER_CLASS_ID'] = [string]$CharacterClassId }
         if (-not [string]::IsNullOrEmpty($CharacterName)) { $clientEnvironment['DEVILUTION_CHARACTER_NAME'] = $CharacterName }
         if ($Multiplayer) {

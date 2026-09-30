@@ -76,8 +76,10 @@ Escape or another gameplay action cancels that approach too. The server still
 validates movement, range, target presence, and the interaction itself.
 Application acceptance covers the authored town-to-Cathedral encounter, distant
 loot pickup, and fresh-host restore. The optional town-loop preview extends this
-with equipment, a reverse stair, Smith purchase, and stash transfers. Portal
-acquisition, quest/death/skill/cast and cooperative gameplay/recovery journeys, the complete
+with equipment, a reverse stair, Smith purchase, and stash transfers. A separate
+portal preview exercises scroll purchase/consumption, dungeon-to-town travel,
+active-portal restoration, and owner-return closure through actual controls.
+Quest/death/class-skill and cooperative gameplay/recovery journeys, the complete
 gameplay loop, and generated-world parity remain open. Current Smith/stash
 server paths do not enforce town proximity; exercising them in town is not
 evidence that location gating matches native behavior.
@@ -144,6 +146,16 @@ World, then use Trade/Stash in town. The starting 100 gold can buy Smith's
 25-gold buckler. No extra gold, portal scroll, or equipment is granted.
 Saves/bookmarks live in `.local/godot-preview`, not `.local/godot`; do not mix
 the two identities. The inner harness exposes this profile as `-PreviewContent`.
+
+The separate zero-argument `run-godot-portal-preview.ps1` adds the exact-pinned
+`town-portal-preview` stock overlay to that route. Buy the 50-gold Town Portal
+scroll from Smith before entering Cathedral, select it under Hero, then left-click
+the dungeon world to cast. Click the portal to return to town; the owner's return
+through the town endpoint closes it. Equipment, trade/stash and an active portal
+survive a fresh host/client restart. This stock/price is an authored integration
+sample, not native vendor generation or pricing parity. Starting resources stay
+unchanged; saves/bookmarks use `.local/godot-portal-preview` and the inner flag is
+`-PortalPreviewContent`. Original base/preview identities and saves are unchanged.
 
 The client reports server loss, blocks new gameplay input while disconnected,
 and automatically reconnects when the same endpoint returns. Application

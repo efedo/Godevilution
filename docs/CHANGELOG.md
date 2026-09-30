@@ -2,6 +2,21 @@
 
 All notable changes to this fork are documented below.
 
+- 2026-09-30: Added actual-control Town Portal scroll purchase/cast, town return,
+  trade/stash and fresh-host owner-return acceptance. Matched native opening-counter
+  retention at one and owner-only accepted return closure; retained existing save/
+  protocol/content fields and rejection/static/non-owner behavior. Isolated authored
+  scroll stock in a new exact-pinned portal overlay and zero-argument root launcher,
+  preserving original base/preview bytes, identities and saves. Fixed initial null
+  receipt handling and named the existing spell-source control. Native missiles/
+  portal replay pass 4/4 each, managed portal/content/launcher checks pass 34/5/13,
+  and full protocol tests pass 536 with two opt-in exclusions. Actual rendered and
+  headless portal/resume plus original-preview compatibility pass with clean engine
+  exits; final base create/resume/server-loss recovery also passes. Documentation
+  checks pass 3/3. Full module tests pass 2443/2447; four known Hork RNG failures remain.
+  Updated usage, contracts, plan and qualified evidence; native GUI, placement/art/
+  vendor parity, full M1 loop and campaign gates remain open.
+
 - 2026-09-30: Verified ordinary Cathedral level-1 attempt/final RNG states against
   real native generation for both goldens and MAIN/PREV entry. Added durable native
   continuation/cached-seed tests and managed successful-attempt restoration checks.

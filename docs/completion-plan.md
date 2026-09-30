@@ -71,7 +71,7 @@ isolated spell or table rows while the playable route stays unchanged.
 | Gate | Deliverable | Dependencies | Current position |
 | --- | --- | --- | --- |
 | M0 | Reproducible launch and honest acceptance evidence | Existing implementation | Godot session/recovery passes; local one/four-participant host measurements recorded; native GUI and performance/platform gaps remain |
-| M1 | Usable Godot town-to-dungeon loop | M0 launch/acceptance harness | Responsive HUD and authored combat/loot route exist; optional preview adds equipment, reverse stairs and shop/stash; full loop remains |
+| M1 | Usable Godot town-to-dungeon loop | M0 launch/acceptance harness | Authored combat/loot/equipment, purchased-scroll portal return, shop/stash and fresh-host owner-return closure pass; full loop remains |
 | M2 | Native-compatible generated world | M0 geometry/parity baseline | First ordinary Cathedral level-1 coarse oracle port exists; fine layers, runtime integration and remaining families remain |
 | M3 | Complete base and Hellfire gameplay routes | M1 plus the relevant M2 world slices | Many rules exist; campaign and remaining behavioral coverage remain |
 | M4 | Release-quality client, recovery, and packaging | M3; preparation begins during M1/M2 | Recovery and adapter packaging foundations exist; product acceptance remains |
@@ -159,13 +159,15 @@ deliberately does not claim native generated-world parity, which belongs to M2.
    cover town-to-Cathedral entry through actual controls. Combat/loot and
    fresh-host restore now extend that acceptance. The optional exact-pinned
    preview adds equippable earned loot, reverse stairs, Smith purchase and stash
-   transfers without changing base saves or granting resources. Preserve that
-   distinct content identity and close legitimate Town Portal acquisition/use,
-   native vendor/stash location validation, quest, death/restart, skill/cast,
+   transfers without changing base saves or granting resources. A separate
+   exact-pinned portal overlay now adds a purchased, consumed scroll, actual cast,
+   town return, active-portal fresh-host restore and owner-return closure.
+   Preserve original and new profile identities/saves. Close native portal
+   placement/vendor/stash location validation, quest, death/restart, class skill,
    and cooperative gameplay/recovery journeys. Two actual Godot clients now
    have basic town movement/state visibility and reverse-order fresh-host resume
    acceptance; retain local-first identity and separate bookmarks when expanding
-   it to combat/world interactions. A reverse-stair preview does not close M1.
+   it to combat/world interactions. These authored previews do not close M1.
 3. Give geometry, actors, projectiles, items, and interaction targets readable
    Godot presentation. Split the main scene/script only where this separates
    concrete input, rendering, menus, or HUD responsibilities. Keep placeholder

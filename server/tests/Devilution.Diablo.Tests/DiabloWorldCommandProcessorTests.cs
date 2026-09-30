@@ -748,11 +748,13 @@ public sealed class DiabloWorldCommandProcessorTests
         AssertRejected(
             processor.Execute(player, new DiabloUsePortalIntent(5), 1, [player, otherPlayer]),
             DiabloRuleFailure.InvalidTarget);
+        Assert.Same(portal, Assert.Single(world.Portals.Values));
 
         player.PositionY = 0;
         AssertRejected(
             processor.Execute(player, new DiabloUsePortalIntent(5), 2, [player, otherPlayer]),
             DiabloRuleFailure.NotAllowed);
+        Assert.Same(portal, Assert.Single(world.Portals.Values));
 
         otherPlayer.PositionX = 2;
         player.StatusEffects.Add(new AuthoritativeStatusEffect(7, 30, 2));
@@ -769,8 +771,158 @@ public sealed class DiabloWorldCommandProcessorTests
         Assert.Contains(2U, player.VisitedLevelIds);
         Assert.Equal(3, player.PositionX);
         Assert.Equal(4, player.PositionY);
+        Assert.Same(portal, Assert.Single(world.Portals.Values));
         var retainedStatus = Assert.Single(player.StatusEffects);
         Assert.Equal(7U, retainedStatus.EffectId);
+    }
+
+    [Fact]
+    public void TownPortalOpeningCounterClampsAtOneAcrossLargeAndBackwardTicks()
+    {
+        var world = new DiabloWorldState(fallbackWidth: 80, fallbackHeight: 80);
+        var processor = new DiabloWorldCommandProcessor(world);
+        var player = CreatePlayer(positionX: 10, positionY: 10, levelId: 1, entityId: 7);
+
+        var created = processor.ExecuteTownPortal(
+            player,
+            12,
+            10,
+            1,
+            [player],
+            searchRadius: 2,
+            lifetime: 100);
+
+        Assert.True(created.Succeeded);
+        var portal = Assert.Single(world.Portals.Values);
+        Assert.Equal(100U, portal.RemainingTicks);
+
+        world.AdvancePortals(1);
+        world.AdvancePortals(1);
+        Assert.Equal(100U, portal.RemainingTicks);
+        world.AdvancePortals(100);
+        Assert.Equal(1U, portal.RemainingTicks);
+
+        world.AdvancePortals(99);
+        Assert.Equal(1U, portal.RemainingTicks);
+        world.AdvancePortals(ulong.MaxValue);
+        Assert.Equal(1U, portal.RemainingTicks);
+        Assert.Same(portal, Assert.Single(world.Portals.Values));
+
+        var staticPortal = new AuthoritativePortal(6, 1, 2, 2, 0, 4, 4);
+        var staticWorld = new DiabloWorldState(
+            fallbackWidth: 80,
+            fallbackHeight: 80,
+            portals: [staticPortal]);
+        staticWorld.AdvancePortals(1);
+        staticWorld.AdvancePortals(ulong.MaxValue);
+        Assert.Equal(0U, staticPortal.RemainingTicks);
+        Assert.Same(staticPortal, Assert.Single(staticWorld.Portals.Values));
+    }
+
+    [Fact]
+    public void TownPortalReturnIsAcceptedForNonOwnerWithoutClosingThePortal()
+    {
+        var portal = new AuthoritativePortal(5, 1, 0, 0, 0, 3, 4) {
+            OwnerEntityId = 7,
+            Bidirectional = true,
+            RemainingTicks = 1,
+        };
+        var world = new DiabloWorldState(fallbackWidth: 80, fallbackHeight: 80, portals: [portal]);
+        var processor = new DiabloWorldCommandProcessor(world);
+        var nonOwner = CreatePlayer(
+            positionX: 3,
+            positionY: 4,
+            levelId: 0,
+            entityId: 8);
+
+        var result = processor.Execute(
+            nonOwner,
+            new DiabloUsePortalIntent(portal.PortalId),
+            2,
+            [nonOwner]);
+
+        Assert.True(result.Succeeded);
+        Assert.Equal((1U, 0, 0), (nonOwner.LevelId, nonOwner.PositionX, nonOwner.PositionY));
+        Assert.Same(portal, Assert.Single(world.Portals.Values));
+
+        nonOwner.LevelId = 0;
+        nonOwner.PositionX = 3;
+        nonOwner.PositionY = 4;
+        var secondUse = processor.Execute(
+            nonOwner,
+            new DiabloUsePortalIntent(portal.PortalId),
+            3,
+            [nonOwner]);
+
+        Assert.True(secondUse.Succeeded);
+        Assert.Equal((1U, 0, 0), (nonOwner.LevelId, nonOwner.PositionX, nonOwner.PositionY));
+        Assert.Same(portal, Assert.Single(world.Portals.Values));
+    }
+
+    [Fact]
+    public void TownPortalRejectsBusyOwnerWithoutMutatingThePortal()
+    {
+        var (_, animations) = LoadShippedPlayerMetadata();
+        var portal = new AuthoritativePortal(5, 1, 0, 0, 0, 3, 4) {
+            OwnerEntityId = 7,
+            Bidirectional = true,
+            RemainingTicks = 9,
+        };
+        var world = new DiabloWorldState(fallbackWidth: 80, fallbackHeight: 80, portals: [portal]);
+        var processor = new DiabloWorldCommandProcessor(
+            world,
+            animations,
+            useNativePlayerActionTiming: true);
+        var owner = CreatePlayer(positionX: 3, positionY: 4, levelId: 0, entityId: 7);
+        owner.CombatMode = DiabloPlayerCombatMode.Attack;
+        owner.CurrentAction = new AuthoritativePlayerActionState(
+            DiabloPlayerActionKind.Attack,
+            1,
+            1,
+            2,
+            2) {
+            TargetEntityId = 99,
+        };
+
+        AssertRejected(
+            processor.Execute(
+                owner,
+                new DiabloUsePortalIntent(portal.PortalId),
+                2,
+                [owner]),
+            DiabloRuleFailure.NotAllowed);
+        Assert.Equal((0U, 3, 4), (owner.LevelId, owner.PositionX, owner.PositionY));
+        Assert.Equal(9U, portal.RemainingTicks);
+        Assert.Same(portal, Assert.Single(world.Portals.Values));
+
+        owner.CombatMode = DiabloPlayerCombatMode.Stand;
+        owner.CurrentAction = null;
+        var occupant = CreatePlayer(
+            positionX: 0,
+            positionY: 0,
+            levelId: 1,
+            entityId: 8);
+        AssertRejected(
+            processor.Execute(
+                owner,
+                new DiabloUsePortalIntent(portal.PortalId),
+                3,
+                [owner, occupant]),
+            DiabloRuleFailure.NotAllowed);
+        Assert.Equal(9U, portal.RemainingTicks);
+        Assert.Same(portal, Assert.Single(world.Portals.Values));
+
+        owner.PositionX = 4;
+        owner.PositionY = 4;
+        AssertRejected(
+            processor.Execute(
+                owner,
+                new DiabloUsePortalIntent(portal.PortalId),
+                4,
+                [owner]),
+            DiabloRuleFailure.InvalidTarget);
+        Assert.Equal(9U, portal.RemainingTicks);
+        Assert.Same(portal, Assert.Single(world.Portals.Values));
     }
 
     [Fact]
@@ -831,6 +983,7 @@ public sealed class DiabloWorldCommandProcessorTests
 
         Assert.False(malformed.Succeeded);
         Assert.Equal(DiabloRuleFailure.Malformed, malformed.Failure);
+        Assert.Same(portal, Assert.Single(world.Portals.Values));
     }
 
     [Fact]
@@ -894,6 +1047,20 @@ public sealed class DiabloWorldCommandProcessorTests
             [player]);
 
         AssertRejected(rejected, DiabloRuleFailure.InvalidTarget);
+
+        player.PositionX = portal.DestinationPositionX;
+        player.PositionY = portal.DestinationPositionY;
+        var returned = processor.Execute(
+            player,
+            new DiabloUsePortalIntent(portal.PortalId),
+            3,
+            [player]);
+
+        Assert.True(returned.Succeeded);
+        Assert.Equal(
+            (1U, portal.SourcePositionX, portal.SourcePositionY),
+            (player.LevelId, player.PositionX, player.PositionY));
+        Assert.Empty(world.Portals);
     }
 
     [Fact]
@@ -5547,6 +5714,42 @@ public sealed class DiabloWorldCommandProcessorTests
             heldItem: heldItem) {
             EntityId = entityId,
         };
+    }
+
+    private static (
+        AuthoritativePlayerClassCatalog Classes,
+        AuthoritativePlayerAnimationCatalog Animations)
+        LoadShippedPlayerMetadata()
+    {
+        var root = FindRepositoryRoot();
+        var contentRoot = Path.Combine(root, "server", "content", "base");
+        var classes = AuthoritativePlayerClassCatalog.LoadTsv(
+            "classes.tsv",
+            File.ReadAllText(Path.Combine(contentRoot, "classes.tsv")));
+        var animations = AuthoritativePlayerAnimationCatalog.LoadTsv(
+            "class_animations.tsv",
+            File.ReadAllText(Path.Combine(contentRoot, "class_animations.tsv")),
+            classes);
+        return (classes, animations);
+    }
+
+    private static string FindRepositoryRoot()
+    {
+        var configuredRoot = Environment.GetEnvironmentVariable(
+            "GODEVILUTION_REPOSITORY_ROOT");
+        var searchRoots = string.IsNullOrWhiteSpace(configuredRoot)
+            ? new[] { Directory.GetCurrentDirectory(), AppContext.BaseDirectory }
+            : new[] { configuredRoot!, Directory.GetCurrentDirectory(), AppContext.BaseDirectory };
+        foreach (var start in searchRoots) {
+            for (var directory = new DirectoryInfo(start);
+                 directory is not null;
+                 directory = directory.Parent) {
+                if (File.Exists(Path.Combine(directory.FullName, "AGENTS.md")))
+                    return directory.FullName;
+            }
+        }
+        throw new DirectoryNotFoundException(
+            "Could not locate the Godevilution repository root.");
     }
 
     private static OwnedStoreItem CreateGoldStack(

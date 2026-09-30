@@ -21,6 +21,14 @@ for its distinct content/ruleset identity and isolated saves. This is a reverse-
 stair integration sample, not native map generation, a Town Portal acquisition
 route, or a campaign pack. It is not the default base content profile.
 
+`town-portal-preview` is a separate optional overlay, exact-pinned to both
+`devilution.base@0.1.0` and `godevilution.town-loop-preview@0.1.0`. It adds only
+Smith stock slot 2: the existing Town Portal scroll 2119, seed 9100, price 50.
+It grants no items/gold and changes no existing stock or original preview bytes.
+Use `run-godot-portal-preview.ps1` for isolated saves and the distinct composed
+identity. Smith stock and price are authored acceptance data, not native vendor
+generation/pricing parity; the underlying cast and portal are server-owned.
+
 The base pack declares its identity and `devilution.diablo@1.502.0` schema in
 `base/content-pack.json`; the Diablo module also accepts the immediately
 previous additive `1.501.0` schema so existing manifest-based packs remain
@@ -2701,10 +2709,13 @@ radial burst (the shipped row retains 36 projectiles), spell-level speed cap,
 and FireballBow projectile impact lifecycle.
 
 Schema 0.44 adds stable Town Portal spell row `39` (native `SpellID` `7`).
-The typed behavior performs native five-cell portal placement, replaces the
-owner's prior portal, exposes a bidirectional dungeon/town route, and expires
-after 100 authoritative ticks. Portal state is server-owned through snapshots,
-saves, hashes, and the shared protocol.
+The typed behavior uses the native five-cell placement search, replaces the
+owner's prior portal, and exposes a bidirectional dungeon/town route. The default
+100-tick opening counter clamps at one: elapsed time does not expire an open
+owned portal. Recasting or the owner's accepted town-to-dungeon return removes
+it; rejected/non-owner use preserves it. Snapshots, saves, hashes and protocol
+retain the existing field names. Full native placement exclusions and portal
+animation/art parity remain unverified.
 
 Schema 0.43 adds stable Telekinesis spell row `33` (native `SpellID` `33`).
 The typed behavior applies the native cursor operation authoritatively to a
@@ -3732,8 +3743,9 @@ world-command callers.
 
 Schema 1.159 adds the optional `town_portal_search_radius` and
 `town_portal_lifetime` columns to `spells.tsv`. Town Portal uses the validated
-crawl radius and expiry ticks; omitted values retain five tiles and 100 ticks
-for direct legacy world-command callers.
+crawl radius and opening counter; omitted values retain five tiles and 100 ticks
+for direct legacy world-command callers. The positive owned-portal counter
+clamps at one rather than expiring; the column name remains compatible.
 
 Schema 1.160 adds optional monster magic-projectile accuracy columns to
 `combat.tsv`. Monster-owned magic projectiles now use validated base, level,

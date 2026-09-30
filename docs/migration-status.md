@@ -81,9 +81,11 @@ open. Their scope, dependencies, and exit checks are defined only in the
   The former 1028x720 HUD clipping is resolved. Actual combat, distant loot
   pickup, inventory display, and fresh-host restoration now pass too. The optional
   authored preview adds equipment, reverse-stair return, purchase/stash transfers,
-  and restore. Two-client Godot town movement/state visibility and reverse-order
-  fresh-host resume also have application evidence below; cooperative combat,
-  portal acquisition and the complete loop remain M1 work. Local standalone-host
+  and restore. A separate portal preview now verifies purchased-scroll cast,
+  town return, active-portal fresh-host restore and owner-return closure.
+  Two-client Godot town movement/state visibility and reverse-order fresh-host
+  resume also have application evidence below; cooperative combat, native portal/
+  vendor placement/location gates and the complete loop remain M1 work. Local standalone-host
   measurements are below;
   no campaign, Godot frame budget, or release-platform performance pass is claimed.
 - Godot currently requires no MPQs because it uses placeholder presentation.
@@ -110,6 +112,71 @@ open. Their scope, dependencies, and exit checks are defined only in the
 The following records describe implemented slices at this baseline. They are
 evidence, not a separate priority list; detailed older entries retain their
 original scope and may be superseded by later entries or the current assessment.
+
+### M1 purchased-scroll portal loop and restore (2026-09-30)
+
+This batch follows `73edc674e`. Godot acceptance buys and consumes the existing
+Town Portal scroll through real Trade/Hero/world controls, after which the server
+publishes the owned bidirectional route. Combat/loot, earned-sword equipment,
+portal town return, shop/stash and gold transfers pass. A fresh host/client retains
+the active portal, consumed-source absence, equipment, stash and 100 experience;
+the owner's actual return to the dungeon closes the portal, then movement resumes.
+The existing spell-source list now has a stable node name; gameplay handlers and
+server admission are unchanged. First-command receipt baselines handle null.
+
+Native `ProcessTownPortal` decrements duration only above one. The authoritative
+owned counter now clamps at one instead of expiring after 100 ticks. Only an
+accepted owner's town-to-dungeon return closes it, matching `GetPortalLevel`;
+rejected/non-owner transitions and static routes retain their behavior. Existing
+protocol/save/content field names remain unchanged. Restore, rejection, occupied
+destinations, large/backward ticks and successful owner/non-owner branches have
+focused regressions. Explicit native duration zero still deletes the missile.
+
+Compatibility requires a separate exact-pinned `town-portal-preview` overlay and
+zero-argument `run-godot-portal-preview.ps1`, with `.local/godot-portal-preview`
+saves. It adds only a purchasable 50-gold scroll (Smith slot 2, seed 9100) and
+grants no resources. Original base and `town-loop-preview` bytes, stock, identities,
+saves and launcher remain unchanged. The original inner preview acceptance still
+uses reverse stairs and conserves 70 carried/5 stashed gold; the portal profile
+conserves 20 carried/5 stashed gold. Smith stock/price are authored integration
+data, not native stock-generation/pricing parity.
+
+Verification against this integrated batch:
+
+- Rebuilt native missiles pass 4/4, including actual duration 100 -> 1 retention
+  and explicit-zero deletion; portal replay passes 4/4. Managed portal cases pass
+  34/34, preview content 5/5, and launcher contract/behavior cases 13/13. A restricted
+  launcher-helper run failed constructing a child environment before spawn;
+  approved normal Windows child-process access passes without code relaxation.
+- Full protocol tests pass 536 with two opt-in performance exclusions. The full
+  game-module suite runs 2447: 2443 pass and the same four baseline-confirmed Hork
+  Demon RNG failures remain; they are not excluded passes. Package-audit metadata
+  warnings, an existing xUnit analyzer warning and engine certificate-store errors
+  remain. These are not a clean-warning or release-security claim.
+- Actual portal TownLoop/TownLoopResume pass headlessly under temp evidence suffix
+  `972637c5f4e6486a9e67ecd8a7f44646` and rendered under
+  `0a0d1fe7a2e8485cb15b05051f34a97f` (`Godevilution-Scene-Acceptance-*`). All eight
+  importer/client process records show exit zero, with distinct fresh clients/hosts;
+  cast/return/restored equipment/stash frames were inspected. Original-preview
+  headless create/resume passes under `Godevilution-Legacy-Preview-28d26363e9ff4bb4bbcba81ea8c8222f`,
+  with four engine exits zero and unchanged content/ruleset hashes
+  `5d88aa59...f1f6d6f` / `abbd86c4...86e8ed`. No user saves were rewritten.
+- Final base-profile create/move/save/resume/server-loss recovery also passes
+  under `Godevilution-Scene-Acceptance-0072b2729495416b893178424e0f9836`;
+  all six importer/client records exit zero, with no owned engine left running.
+  Documentation consistency checks pass 3/3; all touched text uses CRLF and the
+  three launcher/harness scripts parse without errors.
+- Earlier scene attempts exposed a null first receipt and unnamed spell list;
+  both were corrected before final execution. They are failed attempts, not passes
+  or engine access violations. Independent Sol review found no source blocker.
+
+All evidence directories are under the printed Windows temp root and contain
+private bookmarks/saves; do not publish them. Rendered captures are not OS focus
+evidence. Portal art remains placeholder; every native placement exclusion,
+animation, native vendor/stash gates, quest/death/class-skill, cooperative gameplay,
+generated worlds and campaign acceptance remain open. Native GUI/world entry is
+still blocked by the separately recorded firewall prompt, with no permissions
+changed. M1 remains open and the overall planning estimate remains about 35%.
 
 ### M2 ordinary Cathedral level-1 coarse generator (2026-09-30)
 
@@ -7690,8 +7757,9 @@ ame` and `identified_name` item metadata. The
 
 - Schema 1.159 adds optional Town Portal placement and lifetime metadata:
   `town_portal_search_radius` and `town_portal_lifetime`. Portal creation now
-  consumes the validated crawl radius and expiry ticks; direct legacy
-  world-command callers retain native five-tile, 100-tick defaults.
+  consumes the validated crawl radius and opening counter; direct legacy
+  world-command callers retain native five-tile, 100-tick defaults. The owned
+  positive counter now clamps at one; this column's compatible name is retained.
 
 - Schema 1.160 adds optional monster magic-projectile accuracy metadata to
   `combat.tsv`. Monster-owned magic projectiles now use validated base, level,

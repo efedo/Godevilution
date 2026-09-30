@@ -534,10 +534,13 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
-    public void TownPortalCreatesAReversibleServerOwnedPortalAndExpires()
+    public void TownPortalCreatesAReversibleServerOwnedPortalAndOwnerReturnClosesIt()
     {
         var world = new DiabloWorldState(fallbackWidth: 80, fallbackHeight: 80);
-        var worldCommands = new DiabloWorldCommandProcessor(world);
+        var combatRules = new AuthoritativeCombatRules(10, 1, 100, townLevelId: 5);
+        var worldCommands = new DiabloWorldCommandProcessor(
+            world,
+            combatRules: combatRules);
         var processor = CreateProcessor(
             world,
             new AuthoritativeSpellCatalog([
@@ -549,6 +552,7 @@ public sealed class DiabloCombatCommandProcessorTests
                     TownPortalDestinationSlotSpacing = 3,
                 },
             ]),
+            rules: combatRules,
             worldCommands: worldCommands);
         var player = CreatePlayer(
             positionX: 10,
@@ -580,22 +584,22 @@ public sealed class DiabloCombatCommandProcessorTests
 
         player.PositionX = portal.SourcePositionX;
         player.PositionY = portal.SourcePositionY;
-        Assert.True(worldCommands.Execute(
+        var toTown = worldCommands.Execute(
             player,
             new DiabloUsePortalIntent(portal.PortalId),
             2,
-            [player]).Succeeded);
-        Assert.Equal((0U, 70, 42), (player.LevelId, player.PositionX, player.PositionY));
+            [player]);
+        Assert.True(toTown.Succeeded);
+        Assert.Equal((5U, 70, 42), (player.LevelId, player.PositionX, player.PositionY));
+        Assert.Same(portal, Assert.Single(world.Portals.Values));
 
-        Assert.True(worldCommands.Execute(
+        var toDungeon = worldCommands.Execute(
             player,
             new DiabloUsePortalIntent(portal.PortalId),
             3,
-            [player]).Succeeded);
+            [player]);
+        Assert.True(toDungeon.Succeeded);
         Assert.Equal((1U, 12, 10), (player.LevelId, player.PositionX, player.PositionY));
-
-        processor.AdvanceTick(2, [player]);
-        processor.AdvanceTick(102, [player]);
         Assert.Empty(world.Portals);
     }
 
