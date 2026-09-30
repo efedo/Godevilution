@@ -1,6 +1,7 @@
 using System.Collections.Concurrent;
 using System.Net;
 using System.Net.Sockets;
+using System.Runtime.ExceptionServices;
 using EngineClock = Devilution.Engine.IAuthoritativeClock;
 using System.Security.Cryptography;
 using System.Text;
@@ -39,8 +40,14 @@ public sealed class AuthoritativeTcpServer : IAsyncDisposable
     private IAuthoritativeGameHostAdapter? gameAdapter;
     private readonly EngineEntityIdAllocator entityIds = new();
     private readonly ConcurrentDictionary<TcpClient, byte> clients = new();
+    private readonly ConcurrentDictionary<TcpClient, Task> clientHandlers = new();
     private readonly ConcurrentDictionary<string, SessionState> sessionsByToken = new(StringComparer.Ordinal);
     private readonly object sessionCreationSynchronization = new();
+    private readonly object lifecycleSynchronization = new();
+    private readonly TaskCompletionSource completion = new(TaskCreationOptions.RunContinuationsAsynchronously);
+    private ClockGatedCommandScheduler? commandScheduler;
+    private Exception? lastClientFailure;
+    private Task? disposal;
     private CancellationTokenSource? cancellation;
     private Task? acceptLoop;
     private Task? simulationLoop;
@@ -162,6 +169,21 @@ public sealed class AuthoritativeTcpServer : IAsyncDisposable
     /** Null by default. Diagnostics never alter authoritative ticks or protocol state. */
     public HostPerformanceRecorder? PerformanceRecorder { get; init; }
 
+    /** Whole-host policy; legacy clients retain immediate scheduling by default. */
+    public bool UseClockGatedCommandScheduling { get; init; }
+
+    public int MaximumPendingCommands { get; init; } = ClockGatedCommandScheduler.DefaultMaximumPendingCommands;
+
+    public int PendingCommandCount => commandScheduler?.PendingCommandCount ?? 0;
+
+    /** Background termination/failure, excluding isolated session failures. */
+    public Task Completion => completion.Task;
+
+    /** Isolated failed session publication is observable and never acknowledged. */
+    public Exception? LastClientFailure => Volatile.Read(ref lastClientFailure);
+
+    public Action<Exception>? ClientFailureObserver { get; init; }
+
     /** Combined identity hash advertised by the current handshake. */
     public string ActiveRulesetIdentityHash => handshake.Identity.RulesetIdentityHash;
 
@@ -194,6 +216,11 @@ public sealed class AuthoritativeTcpServer : IAsyncDisposable
         ContentManifest candidateManifest,
         IEnumerable<Devilution.Engine.IGameplayModule> candidateModules)
     {
+        if (commandScheduler is not null) {
+            AdvanceCurrentTickCore();
+            if (commandScheduler.PendingCommandCount != 0)
+                throw new InvalidOperationException("Ruleset reload is unavailable while commands are queued.");
+        }
         if (gameAdapter is not LeasedAuthoritativeGameHostAdapter leasedAdapter)
             throw new InvalidOperationException(
                 "Live ruleset replacement requires the leased host adapter.");
@@ -233,6 +260,14 @@ public sealed class AuthoritativeTcpServer : IAsyncDisposable
 
     public void Start()
     {
+        lock (lifecycleSynchronization) {
+            ObjectDisposedException.ThrowIf(disposal is not null, this);
+            StartCore();
+        }
+    }
+
+    private void StartCore()
+    {
         if (cancellation is not null)
             throw new InvalidOperationException("The server has already started.");
 
@@ -240,10 +275,15 @@ public sealed class AuthoritativeTcpServer : IAsyncDisposable
         try {
             listener.Start();
             cancellation = startupCancellation;
-            acceptLoop = AcceptLoopAsync(startupCancellation.Token);
-            simulationLoop = SimulationLoopAsync(startupCancellation.Token);
+            if (UseClockGatedCommandScheduling)
+                commandScheduler = new ClockGatedCommandScheduler(
+                    commandServer, PublishScheduledCommand, MaximumPendingCommands, startupCancellation.Token);
+            acceptLoop = RunBackgroundLoopAsync(() => AcceptLoopAsync(startupCancellation.Token), startupCancellation);
+            simulationLoop = RunBackgroundLoopAsync(() => SimulationLoopAsync(startupCancellation.Token), startupCancellation);
         } catch {
             listener.Stop();
+            commandScheduler?.Dispose();
+            commandScheduler = null;
             startupCancellation.Dispose();
             cancellation = null;
             acceptLoop = null;
@@ -252,38 +292,76 @@ public sealed class AuthoritativeTcpServer : IAsyncDisposable
         }
     }
 
-    public async ValueTask DisposeAsync()
+    public ValueTask DisposeAsync()
     {
-        if (cancellation is null) {
-            if (gameAdapter is LeasedAuthoritativeGameHostAdapter unstartedLeasedAdapter)
-                unstartedLeasedAdapter.Dispose();
-            return;
-        }
+        lock (lifecycleSynchronization)
+            return new ValueTask(disposal ??= DisposeCoreAsync());
+    }
 
-        cancellation.Cancel();
+    private async Task DisposeCoreAsync()
+    {
+        var shutdown = cancellation;
+        Exception? failure = null;
+        try {
+            shutdown?.Cancel();
+        } catch (Exception exception) {
+            failure = exception;
+        }
         listener.Stop();
         foreach (var client in clients.Keys)
             client.Dispose();
+        // Stop accepting before taking the final handler set. Handlers are
+        // registered before invocation, including synchronous completion.
+        await ObserveAsync(acceptLoop);
+        foreach (var client in clients.Keys)
+            client.Dispose();
+        await ObserveAsync(simulationLoop);
+        foreach (var handler in clientHandlers.Values)
+            await ObserveAsync(handler);
+        clientHandlers.Clear();
+        try {
+            commandScheduler?.Dispose();
+        } catch (Exception exception) {
+            failure ??= exception;
+        } finally {
+            shutdown?.Dispose();
+            cancellation = null;
+            acceptLoop = null;
+            simulationLoop = null;
+        }
+        try {
+            if (gameAdapter is LeasedAuthoritativeGameHostAdapter leasedAdapter)
+                leasedAdapter.Dispose();
+        } catch (Exception exception) {
+            failure ??= exception;
+        }
+        completion.TrySetResult();
+        if (failure is not null)
+            ExceptionDispatchInfo.Capture(failure).Throw();
 
-        if (acceptLoop is not null) {
+        async Task ObserveAsync(Task? task)
+        {
+            if (task is null)
+                return;
             try {
-                await acceptLoop;
-            } catch (OperationCanceledException) when (cancellation.IsCancellationRequested) {
+                await task;
+            } catch (OperationCanceledException) when (shutdown?.IsCancellationRequested == true) {
+            } catch (Exception exception) {
+                failure ??= exception;
             }
         }
-        if (simulationLoop is not null) {
-            try {
-                await simulationLoop;
-            } catch (OperationCanceledException) when (cancellation.IsCancellationRequested) {
-            }
-        }
+    }
 
-        cancellation.Dispose();
-        cancellation = null;
-        acceptLoop = null;
-        simulationLoop = null;
-        if (gameAdapter is LeasedAuthoritativeGameHostAdapter leasedAdapter)
-            leasedAdapter.Dispose();
+    private async Task RunBackgroundLoopAsync(Func<Task> run, CancellationTokenSource shutdown)
+    {
+        try {
+            await run();
+        } catch (OperationCanceledException) when (shutdown.IsCancellationRequested) {
+        } catch (Exception exception) {
+            completion.TrySetException(exception);
+            shutdown.Cancel();
+            throw;
+        }
     }
 
     private async Task AcceptLoopAsync(CancellationToken cancellationToken)
@@ -299,7 +377,23 @@ public sealed class AuthoritativeTcpServer : IAsyncDisposable
             }
 
             clients.TryAdd(client, 0);
-            _ = HandleClientAsync(client, cancellationToken);
+            var finished = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+            clientHandlers.TryAdd(client, finished.Task);
+            _ = HandleTrackedClientAsync(client, finished, cancellationToken);
+        }
+    }
+
+    private async Task HandleTrackedClientAsync(TcpClient client, TaskCompletionSource finished, CancellationToken token)
+    {
+        try {
+            await HandleClientAsync(client, token);
+            finished.TrySetResult();
+            clientHandlers.TryRemove(client, out _);
+        } catch (Exception exception) {
+            // Retain unexpected handler faults for awaited host cleanup.
+            finished.TrySetException(exception);
+            completion.TrySetException(exception);
+            cancellation?.Cancel();
         }
     }
 
@@ -307,18 +401,43 @@ public sealed class AuthoritativeTcpServer : IAsyncDisposable
     {
         using var timer = new PeriodicTimer(TimeSpan.FromMilliseconds(10));
         while (await timer.WaitForNextTickAsync(cancellationToken)) {
-            var tick = Math.Max(clock.CurrentTick, commandServer.CurrentTick);
-            if (tick == lastSimulationTick)
-                continue;
             var measurement = PerformanceRecorder?.Begin() ?? 0;
             var advancement = PerformanceRecorder?.Begin() ?? 0;
-            commandServer.AdvanceTo(tick);
+            var advanced = commandServer.WithSynchronizedState(() => {
+                var tick = Math.Max(clock.CurrentTick, commandServer.CurrentTick);
+                if (tick == lastSimulationTick)
+                    return false;
+                AdvanceCurrentTickCore();
+                lastSimulationTick = commandServer.CurrentTick;
+                return true;
+            });
+            if (!advanced)
+                continue;
             PerformanceRecorder?.Complete(HostPerformanceMetric.PeriodicAdvanceLockInclusiveMilliseconds, advancement);
-            lastSimulationTick = tick;
             foreach (var session in sessionsByToken.Values)
                 SaveSession(session);
             PerformanceRecorder?.Complete(HostPerformanceMetric.PeriodicAdvanceAndCheckpointMilliseconds, measurement);
         }
+    }
+
+    /** Caller holds the authoritative lock; no pre-lock physical clock samples. */
+    private ulong AdvanceCurrentTickCore(ulong legacyMinimumTick = 0)
+    {
+        var tick = Math.Max(clock.CurrentTick, commandServer.CurrentTick);
+        if (commandScheduler is not null)
+            commandScheduler.DrainAndAdvanceTo(tick);
+        else
+            commandServer.AdvanceTo(Math.Max(tick, legacyMinimumTick));
+        return commandServer.CurrentTick;
+    }
+
+    private void PublishScheduledCommand(string sessionId, CommandAck result)
+    {
+        var measurement = PerformanceRecorder?.Begin() ?? 0;
+        AuthoritativeCommandAckValidator.Validate(result);
+        var session = sessionsByToken.Values.Single(session => session.Id == sessionId);
+        SaveSession(session);
+        PerformanceRecorder?.Complete(HostPerformanceMetric.ScheduledCommandCheckpointMilliseconds, measurement);
     }
 
     private async Task HandleClientAsync(TcpClient client, CancellationToken cancellationToken)
@@ -329,6 +448,12 @@ public sealed class AuthoritativeTcpServer : IAsyncDisposable
             var helloEnvelope = await EnvelopeCodec.ReadAsync(stream, cancellationToken);
             if (helloEnvelope is null || helloEnvelope.PayloadCase != Envelope.PayloadOneofCase.ClientHello) {
                 await SendErrorAsync(stream, ProtocolErrorCode.InvalidMessage, "The first envelope must be a client hello.", cancellationToken);
+                return;
+            }
+
+            if (UseClockGatedCommandScheduling && !helloEnvelope.ClientHello.SupportsClockGatedCommands) {
+                await SendErrorAsync(stream, ProtocolErrorCode.UnsupportedSchema,
+                    "This host requires clock-gated command support.", cancellationToken);
                 return;
             }
 
@@ -346,18 +471,18 @@ public sealed class AuthoritativeTcpServer : IAsyncDisposable
 
             var session = existingSession
                 ?? GetOrCreateSession(helloEnvelope.ClientHello.ResumeToken);
-            EnsureCommandReceiptsLoaded(session);
-            var restored = RestoreSessionIfAvailable(session);
-            if (!restored)
-                InitializeParticipantIfNeeded(session, helloEnvelope.ClientHello);
+            PrepareSession(session, helloEnvelope.ClientHello);
             var serverHello = handshakeResult.ServerHello!.Clone();
             serverHello.SessionToken = session.Token;
-            serverHello.LastClientSequence = commandServer.LastClientSequence(session.Id);
+            serverHello.LastClientSequence = commandServer.WithSynchronizedSession(session.Id, () =>
+                commandScheduler?.LastAdmittedClientSequence(session.Id)
+                ?? commandServer.LastClientSequence(session.Id));
+            serverHello.CommandSchedulingMode = UseClockGatedCommandScheduling
+                ? CommandSchedulingMode.ClockGated : CommandSchedulingMode.Immediate;
             await EnvelopeCodec.WriteAsync(stream, new Envelope { ServerHello = serverHello }, cancellationToken);
             var sessionId = session.Id;
             var entityId = session.EntityId;
-            var currentTick = Math.Max(clock.CurrentTick, commandServer.CurrentTick);
-            commandServer.AdvanceTo(currentTick);
+            var currentTick = commandServer.WithSynchronizedState(() => AdvanceCurrentTickCore());
             SaveSession(session);
             await SendSnapshotIfAvailableAsync(stream, sessionId, entityId, currentTick, cancellationToken);
             while (!cancellationToken.IsCancellationRequested) {
@@ -368,7 +493,18 @@ public sealed class AuthoritativeTcpServer : IAsyncDisposable
                 if (envelope.PayloadCase == Envelope.PayloadOneofCase.CommandBatch) {
                     AuthoritativeCommandBatchValidator.Validate(envelope.CommandBatch);
                     var measurement = PerformanceRecorder?.Begin() ?? 0;
-                    var acknowledgement = commandServer.WithSynchronizedSession(sessionId, () => {
+                    CommandAck acknowledgement;
+                    if (commandScheduler is not null) {
+                        var pending = commandServer.WithSynchronizedSession(sessionId, () =>
+                            commandScheduler.SubmitBatchAsync(sessionId, envelope.CommandBatch,
+                                Math.Max(clock.CurrentTick, commandServer.CurrentTick), cancellationToken));
+                        PerformanceRecorder?.Complete(HostPerformanceMetric.CommandQueueAdmissionMilliseconds, measurement);
+                        // Never retain the authority monitor during deliberate ACK waits.
+                        acknowledgement = await pending;
+                        AuthoritativeCommandAckValidator.Validate(acknowledgement);
+                        currentTick = commandServer.WithSynchronizedState(() => AdvanceCurrentTickCore());
+                    } else {
+                        acknowledgement = commandServer.WithSynchronizedSession(sessionId, () => {
                         currentTick = Math.Max(clock.CurrentTick, commandServer.CurrentTick);
                         var result = commandServer.ProcessBatch(sessionId, envelope.CommandBatch, currentTick);
                         AuthoritativeCommandAckValidator.Validate(result);
@@ -379,27 +515,35 @@ public sealed class AuthoritativeTcpServer : IAsyncDisposable
                             currentTick = Math.Max(
                                 Math.Max(currentTick, commandServer.CurrentTick),
                                 result.Results.Max(entry => entry.AppliedTick));
-                        commandServer.AdvanceTo(currentTick);
+                        AdvanceCurrentTickCore(currentTick);
                         SaveSession(session);
                         return result;
-                    });
-                    PerformanceRecorder?.Complete(HostPerformanceMetric.CommandAdmissionAndCheckpointMilliseconds, measurement);
+                        });
+                        PerformanceRecorder?.Complete(HostPerformanceMetric.CommandAdmissionAndCheckpointMilliseconds, measurement);
+                    }
                     await EnvelopeCodec.WriteAsync(stream, new Envelope { CommandAck = acknowledgement }, cancellationToken);
                     await SendEventsIfAvailable(stream, sessionId, entityId, currentTick, cancellationToken);
                     await SendSnapshotIfAvailableAsync(stream, sessionId, entityId, currentTick, cancellationToken);
                 } else if (envelope.PayloadCase == Envelope.PayloadOneofCase.SnapshotRequest) {
-                    currentTick = Math.Max(
-                        currentTick,
-                        Math.Max(clock.CurrentTick, commandServer.CurrentTick));
-                    commandServer.AdvanceTo(currentTick);
+                    currentTick = commandServer.WithSynchronizedState(() => AdvanceCurrentTickCore(currentTick));
                     await SendEventsIfAvailable(stream, sessionId, entityId, currentTick, cancellationToken);
                     await SendSnapshotIfAvailableAsync(stream, sessionId, entityId, currentTick, cancellationToken);
+                    if (UseClockGatedCommandScheduling && envelope.SnapshotRequest.TimingRequestId != 0)
+                        await EnvelopeCodec.WriteAsync(stream, new Envelope { TimingReply = new TimingReply {
+                            RequestId = envelope.SnapshotRequest.TimingRequestId,
+                        } }, cancellationToken);
                 } else {
                     await SendErrorAsync(stream, ProtocolErrorCode.InvalidMessage, "The session only accepts command batches after the handshake.", cancellationToken);
                     return;
                 }
             }
         } catch (EndOfStreamException) {
+        } catch (ClockGatedCommandCapacityException exception) {
+            try {
+                if (stream is not null)
+                    await SendErrorAsync(stream, ProtocolErrorCode.InvalidMessage, exception.Message, cancellationToken);
+            } catch (Exception) {
+            }
         } catch (InvalidDataException exception) {
             try {
                 if (stream is not null) {
@@ -412,9 +556,36 @@ public sealed class AuthoritativeTcpServer : IAsyncDisposable
             } catch (Exception) {
             }
         } catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested) {
+        } catch (ObjectDisposedException) when (cancellationToken.IsCancellationRequested) {
+        } catch (Exception exception) {
+            Volatile.Write(ref lastClientFailure, exception);
+            ClientFailureObserver?.Invoke(exception);
         } finally {
             clients.TryRemove(client, out _);
             client.Dispose();
+        }
+    }
+
+    private void PrepareSession(SessionState session, ClientHello hello)
+    {
+        lock (session) {
+            commandServer.WithSynchronizedSession(session.Id, () => {
+                if (commandScheduler is not null) {
+                    AdvanceCurrentTickCore();
+                    // Import may replace shared world state, not just this player.
+                    // Fence before ledger import, initialization or provider mutation.
+                    if (!session.SaveLoaded && saveProvider is not null
+                        && commandScheduler.PendingCommandCount != 0
+                        // A refused session must not cache an old-generation save
+                        // that could bypass validation after a later ruleset reload.
+                        && (sessionStore?.Load(session.Id, handshake.Identity.RulesetIdentityHash)?.SerializedState
+                            ?? saveStore?.Load(session.Id)) is not null)
+                        throw new InvalidDataException("Cold session restore is unavailable while commands are queued.");
+                }
+                EnsureCommandReceiptsLoaded(session);
+                if (!RestoreSessionIfAvailable(session))
+                    InitializeParticipantIfNeeded(session, hello);
+            });
         }
     }
 
@@ -473,7 +644,10 @@ public sealed class AuthoritativeTcpServer : IAsyncDisposable
                 var restoredTick = saveProvider.GetSessionStateTick(session.Id);
                 if (clock is Devilution.Engine.IResumableAuthoritativeClock resumableClock)
                     resumableClock.RestoreAtTick(restoredTick);
-                commandServer.AdvanceTo(restoredTick);
+                if (commandScheduler is not null)
+                    commandScheduler.DrainAndAdvanceTo(Math.Max(restoredTick, clock.CurrentTick));
+                else
+                    commandServer.AdvanceTo(restoredTick);
                 session.SaveLoaded = true;
                 session.ParticipantInitialized = true;
             });
@@ -647,8 +821,7 @@ public sealed class AuthoritativeTcpServer : IAsyncDisposable
         var snapshot = commandServer.WithSynchronizedSession(sessionId, () => {
             // An autonomous tick may advance while the caller awaits network
             // writes. Never label newer action state with that stale timestamp.
-            tick = Math.Max(tick, commandServer.CurrentTick);
-            commandServer.AdvanceTo(tick);
+            tick = AdvanceCurrentTickCore(tick);
             var result = snapshotProvider.CreateSnapshot(sessionId, entityId, tick);
             var currentIdentity = handshake.Identity;
             result.ContentManifestHash = currentIdentity.ContentManifestHash;
@@ -681,8 +854,7 @@ public sealed class AuthoritativeTcpServer : IAsyncDisposable
             : commandServer.WithSynchronizedSession(
                 sessionId,
                 () => {
-                    tick = Math.Max(tick, commandServer.CurrentTick);
-                    commandServer.AdvanceTo(tick);
+                    tick = AdvanceCurrentTickCore(tick);
                     return eventProvider.DrainEvents(sessionId, entityId, tick);
                 });
         return events is null || events.Events.Count == 0

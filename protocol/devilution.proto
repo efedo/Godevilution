@@ -15,12 +15,22 @@ message Envelope {
 		Snapshot snapshot = 30;
 		EventBatch event_batch = 31;
 		SnapshotRequest snapshot_request = 32;
+		TimingReply timing_reply = 33;
 		ProtocolError error = 40;
 	}
 
 	// Requests the latest authoritative state after the client has no unresolved
 	// command acknowledgement to consume.
-	message SnapshotRequest {}
+	message SnapshotRequest {
+		// Optional correlation for clock-gated clients; zero requests state only.
+		uint64 timing_request_id = 1;
+	}
+}
+
+// Sent after the correlated snapshot, measuring end-to-end state freshness
+// without including deliberately scheduled future-command acknowledgement waits.
+message TimingReply {
+	uint64 request_id = 1;
 }
 
 message ClientHello {
@@ -36,6 +46,8 @@ message ClientHello {
 	// Optional native-compatible character identity for a new participant.
 	// Resumed server-owned state takes precedence over this selection.
 	optional string requested_character_name = 7;
+	// Explicit support for deferred future-command acknowledgements and timing probes.
+	bool supports_clock_gated_commands = 8;
 }
 
 message ServerHello {
@@ -46,9 +58,17 @@ message ServerHello {
 	string session_token = 5;
 	string ruleset_identity_hash = 6;
 	GameMode game_mode = 7;
-	// Additive resume metadata. New client processes must allocate commands above
-	// the persisted ledger while retries keep their original sequence numbers.
+	// Additive resume metadata. Fresh clients allocate above completed and, in
+	// gated mode, admitted pending sequences. Retries retain original identities;
+	// queued intents themselves are not durable across host restart.
 	optional uint64 last_client_sequence = 8;
+	CommandSchedulingMode command_scheduling_mode = 9;
+}
+
+enum CommandSchedulingMode {
+	COMMAND_SCHEDULING_MODE_UNSPECIFIED = 0;
+	COMMAND_SCHEDULING_MODE_IMMEDIATE = 1;
+	COMMAND_SCHEDULING_MODE_CLOCK_GATED = 2;
 }
 
 enum GameMode {

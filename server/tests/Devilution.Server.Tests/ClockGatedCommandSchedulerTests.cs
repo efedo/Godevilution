@@ -664,13 +664,14 @@ public sealed class ClockGatedCommandSchedulerTests
             Batch(Attack(1, requestedTick: ulong.MaxValue, targetEntityId: 1)),
             actualAdmissionTick: 111, cancellationToken: TestContext.Current.CancellationToken);
         Assert.Equal(1, scheduler.PendingCommandCount);
-        Assert.Throws<InvalidOperationException>(() => {
+        Assert.Equal(1UL, scheduler.LastAdmittedClientSequence("player-a"));
+        Assert.Throws<ClockGatedCommandCapacityException>(() => {
             _ = scheduler.SubmitBatchAsync(
                 "player-a",
                 Batch(Attack(1, requestedTick: ulong.MaxValue, targetEntityId: 99)),
                 actualAdmissionTick: 111, cancellationToken: TestContext.Current.CancellationToken);
         });
-        Assert.Throws<InvalidOperationException>(() => {
+        Assert.Throws<ClockGatedCommandCapacityException>(() => {
             _ = scheduler.SubmitBatchAsync(
                 "player-a",
                 Batch(Attack(2, requestedTick: ulong.MaxValue, targetEntityId: 2)),
@@ -678,6 +679,7 @@ public sealed class ClockGatedCommandSchedulerTests
         });
 
         Assert.Equal(0, scheduler.DrainAndAdvanceTo(130));
+        Assert.Equal(1UL, scheduler.LastAdmittedClientSequence("player-a"));
         Assert.False(first.IsCompleted);
         Assert.Equal(0, fixture.Executor.CallCount);
 
@@ -686,6 +688,27 @@ public sealed class ClockGatedCommandSchedulerTests
         Assert.Equal(0, scheduler.PendingCommandCount);
         Assert.Throws<ObjectDisposedException>(() => scheduler.DrainAndAdvanceTo(ulong.MaxValue));
         await Assert.ThrowsAsync<TaskCanceledException>(() => AwaitWithin(first));
+    }
+
+    [Fact]
+    public async Task AdmittedSequenceHighWaterIsScopedAndIncludesCompletedAndPendingOwners()
+    {
+        var fixture = CreateFixture();
+        using var scheduler = fixture.Scheduler;
+        await scheduler.SubmitBatchAsync("player-a", Batch(Attack(3, 111, 1)), 111,
+            TestContext.Current.CancellationToken);
+        var first = scheduler.SubmitBatchAsync("player-a", Batch(Attack(10, 125, 1)), 111,
+            TestContext.Current.CancellationToken);
+        var second = scheduler.SubmitBatchAsync("player-b", Batch(Attack(20, 130, 2)), 111,
+            TestContext.Current.CancellationToken);
+        Assert.Equal(10UL, scheduler.LastAdmittedClientSequence("player-a"));
+        Assert.Equal(20UL, scheduler.LastAdmittedClientSequence("player-b"));
+        Assert.Equal(0UL, scheduler.LastAdmittedClientSequence("player-c"));
+        scheduler.Cancel();
+        await Assert.ThrowsAsync<TaskCanceledException>(() => AwaitWithin(first));
+        await Assert.ThrowsAsync<TaskCanceledException>(() => AwaitWithin(second));
+        Assert.Equal(3UL, scheduler.LastAdmittedClientSequence("player-a"));
+        Assert.Equal(0UL, scheduler.LastAdmittedClientSequence("player-b"));
     }
 
     [Fact]
@@ -700,7 +723,7 @@ public sealed class ClockGatedCommandSchedulerTests
             actualAdmissionTick: 111, cancellationToken: TestContext.Current.CancellationToken);
         Assert.Equal(CommandStatus.Accepted, Assert.Single(completed.Results).Status);
 
-        Assert.Throws<InvalidOperationException>(() => {
+        Assert.Throws<ClockGatedCommandCapacityException>(() => {
             _ = scheduler.SubmitBatchAsync(
                 "player-a",
                 Batch(

@@ -61,6 +61,15 @@ the server on a free port, validates reported mode and hashes, and supplies thos
 identities to the client. Only owned process handles are cleaned up, and changed
 environment values are restored when the harness returns.
 
+Both single-player and multiplayer Godot profiles explicitly require the host's
+negotiated clock-gated scheduling mode. Future commands wait for physical server
+time without moving peer snapshots ahead. Idle correlated snapshot probes measure
+end-to-end freshness; deliberate ACK waits do not inflate command lead. Retries
+wait for scheduled delay plus normal timeout and retain their original identities.
+Native launchers and the standalone host's default remain immediate for legacy
+compatibility. This is not a bound on arbitrary network/capture stalls or proof
+of campaign/shared-world restart recovery.
+
 Godot's editor may upgrade a C# project's SDK during import. Only the staged
 copy may receive that change; the source project, existing upgrade backups,
 and local edits are not restored, deleted, or rewritten. Generated caches and

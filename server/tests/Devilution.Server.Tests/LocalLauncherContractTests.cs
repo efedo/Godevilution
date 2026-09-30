@@ -155,6 +155,8 @@ public sealed class LocalLauncherContractTests
     public void GodotLauncherBuildsBothProjectsAndOwnsOnlyItsProcesses()
     {
         var launcher = File.ReadAllText(Path.Combine(FindRepositoryRoot(), "godot/run-local-client.ps1"));
+        Assert.Contains("--command-scheduling clock-gated", launcher, StringComparison.Ordinal);
+        Assert.Contains("Unexpected command scheduling:", launcher, StringComparison.Ordinal);
         var launch = launcher.IndexOf("$serverProcess = Start-Process", StringComparison.Ordinal);
         var serverBuild = launcher.IndexOf("dotnet build $serverProject", StringComparison.Ordinal);
         var clientBuild = launcher.IndexOf("dotnet build (Join-Path $clientProject", StringComparison.Ordinal);

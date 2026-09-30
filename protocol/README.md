@@ -38,6 +38,18 @@ Windows toolchain command.
   reserved, and breaking changes require a new package and schema version.
 - Additive fields and `oneof` alternatives must be safe for older peers to
   ignore. Required behavior is negotiated during the handshake.
+- `ClientHello.supports_clock_gated_commands` opts into deliberate future-ACK
+  waits. `ServerHello.command_scheduling_mode` selects one whole-host policy;
+  absent/Unspecified means legacy Immediate. Unknown modes fail closed in Godot.
+  A clock-gated host rejects an unsupported peer before any session mutation.
+- Gated idle `SnapshotRequest.timing_request_id` requests a correlated
+  `TimingReply` after events and the requested snapshot. Zero requests state
+  only; Immediate hosts do not emit timing replies. Timing metadata does not
+  enter snapshots or their canonical hashes. Native compatibility peers keep
+  Immediate timing until their synchronous transport is adapted and verified.
+- `ServerHello.last_client_sequence` includes admitted pending commands in gated
+  mode, as well as completed receipts. Fresh clients allocate above that mark;
+  retries still retain the original command identity and first-wins payload.
 - Protocol fields 54 (monster `unique_identity`) and 13 (quest
   `completion_unique_identity`) are additive opaque server-owned identities;
   each identity is limited to 128 UTF-8 bytes, and monster identities are only
@@ -85,6 +97,10 @@ Windows toolchain command.
   server validates ownership and consumes mana, one charge, or the item only
   after full cast validation. Source zero is compatibility inference from
   authoritative owned state, never permission to cast an unowned spell.
+  During a timed cast's post-effect animation tail, a consumed item reference
+  is historical: snapshots/save imports validate its location and native bounds,
+  not continued ownership. Pre-effect and charged-item ownership remain strict;
+  `effect_applied` prevents consumption or spell-effect replay after restore.
 - `PlayerItemReference.stable_item_id` is an additive stable content identity
   paired with the location and slot. The server uses it to reject a stale slot
   that now contains a different item; zero preserves older clients and

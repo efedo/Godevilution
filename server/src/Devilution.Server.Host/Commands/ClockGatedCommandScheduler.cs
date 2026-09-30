@@ -54,6 +54,16 @@ public sealed class ClockGatedCommandScheduler : IDisposable
     public int PendingCommandCount => commandServer.WithSynchronizedState(
         () => reservedPendingSlots);
 
+    /** Fresh resumed processes must not reuse a sequence already accepted into the queue. */
+    public ulong LastAdmittedClientSequence(string sessionId)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(sessionId);
+        return commandServer.WithSynchronizedState(() => Math.Max(
+            commandServer.LastClientSequence(sessionId),
+            pendingByKey.Keys.Where(key => key.SessionId == sessionId)
+                .Select(key => key.ClientSequence).DefaultIfEmpty(0UL).Max()));
+    }
+
     /** Queues or immediately executes one wire batch at an authoritative boundary. */
     public Task<CommandAck> SubmitBatchAsync(
         string sessionId,
@@ -166,7 +176,7 @@ public sealed class ClockGatedCommandScheduler : IDisposable
             return ExecuteImmediateBatch(sessionId, batch, effectiveAdmissionTick);
 
         if (checked(reservedPendingSlots + batch.Commands.Count) > maximumPendingCommands)
-            throw new InvalidOperationException(
+            throw new ClockGatedCommandCapacityException(
                 "The clock-gated command scheduler pending-command capacity is exhausted.");
 
         var completed = commandServer.ExportCompletedCommands(sessionId);
@@ -643,3 +653,6 @@ public sealed class ClockGatedCommandScheduler : IDisposable
         }
     }
 }
+
+/** Resource refusal is not gameplay lateness and allocates no new receipt. */
+public sealed class ClockGatedCommandCapacityException(string message) : InvalidOperationException(message);

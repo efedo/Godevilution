@@ -75,6 +75,10 @@ open. Their scope, dependencies, and exit checks are defined only in the
   Corrupt-bookmark feedback and a blocked-write/retry path are exercised too.
   The same application harness now verifies server loss, frozen disconnected
   state/input, automatic reconnect, and accepted movement after host restart.
+  Negotiated clock-gated timing now passes actual headless two-client creation,
+  mutual movement visibility and reverse-order fresh-host resume, plus fresh
+  single-player create/resume/server-loss recovery. The earlier `TooLate` trace
+  is retained; initial/unseen latency and shared-world cold-restore gaps remain.
   The two Flash baseline failures are resolved below. M0 still requires native
   creation, client frame/budget evidence, and the release-platform matrix.
 - Rendered application acceptance now verifies responsive HUD controls at
@@ -119,6 +123,103 @@ The following records describe implemented slices at this baseline. They are
 evidence, not a separate priority list; detailed older entries retain their
 original scope and may be superseded by later entries or the current assessment.
 
+### M0 negotiated clock-gated host integration (2026-09-30)
+
+This batch follows `4d6213e70`. The scheduler is now integrated across TCP
+admission, periodic advancement, hello, events/snapshots, checkpoint publication,
+restore/reload and shutdown. Clock reads occur under the authority monitor;
+queued future commands cannot leap a peer's shared tick. Additive capability and
+whole-host mode negotiation preserve schema/save compatibility and the legacy
+direct API. CLI/native default to immediate; both Godot profiles explicitly
+select clock-gated. Unsupported participants are rejected before state mutation.
+
+Pending commands retain first-wins identities and strict lateness. Completed
+and pending sequence high-water marks prevent reconnect identity reuse; pending
+intents remain non-durable. Checkpoints precede ACK completion. Capacity refusal
+allocates no receipt, due work drains before publication, and cold restore/reload
+refuse mutation while future work remains. Refused restores do not cache an
+old-generation checkpoint. Shutdown cancels waits and awaits owned handlers
+before adapter disposal; background faults are observable and isolated session
+publication failures receive no ACK.
+
+Godot separates scheduled ACK wait from command timing/retry. Correlated idle
+snapshot probes measure end-to-end freshness after snapshot publication;
+unmatched/expired samples are ignored. Retries keep their original tick, sequence
+and payload. Initial lead still assumes 100ms; historical probes cannot bound
+unseen latency spikes. Native synchronous-response responsiveness is not proved
+and its launcher remains immediate. Pending-work fences do not solve the game
+adapter's broader shared-world overwrite during cold participant restoration.
+
+Rebuilt host verification before the broader TownLoop check passes 1,129/1,129
+with no skips, including 19 new real-TCP integration cases and 24 scheduler
+cases. The expanded focused
+selection passes 125/125. The first full integrated run passed 1,128 and failed
+one injected receipt-mirror failure case: its initial periodic checkpoint raced
+the test's locked mirror. Freezing its physical/requested tick at zero removed
+that fixture race without relaxing durability/retry assertions; the full repeat
+passes. Initial worker compile errors were corrected before acceptance. Builds
+have no code errors; NU1900 warnings report unavailable vulnerability data.
+
+The integrated timing client passes the rebuilt full protocol suite: 556
+passed, two explicit performance skips (558 total, 13m 03s), including six new
+deferred-timing cases. That full run preceded the final host-only restore-cache
+and pending-high-water fixes and the later consumable correction below. Final
+rebuilt timing/transport/model selection passes 160/160, including consumed-source
+validation. These counts do not rerun the separate Diablo-module RNG or native
+GUI baselines.
+
+Actual installed Godot 4.7.2 headless multiplayer Create/Resume passes in
+`%TEMP%/Godevilution-Scene-Acceptance-2670528420a64b45a3a5f546fd1a6818`:
+two distinct characters, mutual movement/state visibility, private bookmarks,
+and reverse-order fresh-host resume with fresh command sequences. All eight
+version/import/client records exit zero without errors. Single-player
+create/move/checkpoint/fresh-host resume and server-loss/reconnect also pass in
+`%TEMP%/Godevilution-Scene-Acceptance-ddb3ba57fa274f9ca80cd91c95402362`,
+with nine clean engine records and 1.504 seconds of frozen disconnected state.
+Every host reports clock-gated timing; staged SDK/engine 4.7.2 preserves the
+source SDK 4.7.1. The older failed multiplayer trace below remains retained;
+its missing requested-tick/admission-clock evidence prevents an exact-cause
+claim.
+
+The broader TownLoop then failed in
+`%TEMP%/Godevilution-Scene-Acceptance-62e33266035143338e759fc473966292`
+(launch `Godevilution-Godot-d85111c731a74e5b9f234be0e4381967`): the host mapper
+reported `Authoritative player action is invalid`, and the Godot client exited 1
+after waiting for the portal. The retained last checkpoint is tick 1673, with a
+scroll cast's effect at 1674 and animation end at 1677. Native-timed resolution
+consumes/reindexes the scroll at the effect frame, retaining its source in the
+action until the animation ends. Snapshot/save validators incorrectly demanded
+current ownership of this historical reference. The narrow correction applies
+only to effect-applied consumable casts across module restore, mapper, generic
+host, Godot and native validation. It preserves native timing/consumption, bounded
+reference shape, pre-effect ownership and unchanged charged-item rules. The
+selected snapshot/save tests pass 113/113; freshly rebuilt native player snapshot
+GTests pass 137/137. Generated Protobuf DLL-interface warnings remain warnings.
+The original failure is retained, not recategorized as a pass or native crash.
+
+After correction, actual headless TownLoop and fresh-host owner-return resume
+pass in `%TEMP%/Godevilution-Scene-Acceptance-a18e2c1610d9407cb38a9359403c5429`.
+Scroll acquisition/consumption, portal town return, equipment/trade/stash and
+restored portal closure pass; all six engine records have clean zero exits.
+Final-source rendered multiplayer Create/Resume also passes in
+`%TEMP%/Godevilution-Scene-Acceptance-6e0155219ce04e1bbdf8c6874aa8e02f`.
+Both client slots report `Visible: true` and pass both phases; four retained
+screenshots show mutual player projection with readable HUDs. All eight engine
+records exit zero without errors. Both application profiles report clock-gated;
+source SDK 4.7.1 and normal save/config files remain unchanged.
+
+The final rebuilt full server suite passes 1,144/1,144 with no skips. Module
+consumable-save/action lifecycle selection passes 19/19, including three new
+real timed-cast restore cases: retained effect state completes without second
+consumption, projectile allocation or RNG replay. Its first run passed 16 and
+failed those three new cases before execution because the synthetic spell had
+zero mana cost, contrary to catalog requirements. Corrected the fixture cost,
+not production validation; all 19 pass. No test was excluded or deadline relaxed.
+
+The fresh session scenarios pass, not arbitrary WAN, cooperative combat,
+shared-world recovery, native GUI or campaign acceptance. M0 remains open and
+the approximately 35% overall estimate is unchanged.
+
 ### M0 future-tick scheduling characterization (2026-09-30)
 
 This batch follows `1c2921a7b`. Two deterministic real-loopback cases expose
@@ -158,7 +259,8 @@ recorded here; no test was excluded or deadline increased.
 These are managed/loopback and launcher-helper results, not a new actual Godot
 multiplayer journey or a rerun of the separate Diablo-module RNG baseline.
 
-The scheduler is not wired into `AuthoritativeTcpServer` or `Program`; legacy
+At this historical foundation commit, the scheduler was not wired into
+`AuthoritativeTcpServer` or `Program`; legacy
 direct/TCP behavior, protocol and save formats remain unchanged. Production
 activation still requires every advancement/publication path, restore/reload
 handling, awaited client-handler shutdown, deliberate ACK-wait retry/lead and

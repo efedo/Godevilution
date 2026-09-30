@@ -23,6 +23,9 @@ public sealed record ServerHostOptions(
     /** Optional server-owned primary-attribute points for development starts. */
     public uint? StartingStatPoints { get; init; }
 
+    /** Explicit whole-host opt-in; native compatibility retains immediate timing. */
+    public bool UseClockGatedCommandScheduling { get; init; }
+
     /** Optional content level override for newly initialized participants. */
     public uint? StartingLevelId { get; init; }
 
@@ -87,6 +90,14 @@ public sealed record ServerHostOptions(
 
             var value = args[++index];
             switch (argument) {
+            case "--command-scheduling":
+                if (value is not ("immediate" or "clock-gated")) {
+                    options = current;
+                    error = $"'{value}' is not a valid command scheduling mode.";
+                    return false;
+                }
+                current = current with { UseClockGatedCommandScheduling = value == "clock-gated" };
+                break;
             case "--performance-output":
                 if (string.IsNullOrWhiteSpace(value)) {
                     options = current;
@@ -326,6 +337,7 @@ public sealed record ServerHostOptions(
           --build-id <id>              Server build identity
           --protocol-version <version> Protocol schema version
           --tick-rate <hz>             Authoritative simulation rate
+          --command-scheduling <mode>  immediate (default) or clock-gated; requires capable clients
           --starting-gold <amount>     Override content-defined initial wallet
           --starting-life <amount>     Override content-derived initial life (Q6)
           --starting-mana <amount>     Override content-derived initial mana (Q6)

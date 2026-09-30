@@ -89,6 +89,11 @@ remain separate. Exact shared vision parity is not claimed: the existing level
 contract conservatively includes movement blockers in vision blockers. See
 `docs/ai/msvc-build.md` for the isolated local-asset comparison.
 
+Timed casts consume their source at the native effect frame, before the animation
+ends. Save/restore retains a bounded historical consumable reference afterward,
+without replaying consumption or the resolved effect. Pre-effect and charged-item
+ownership checks remain unchanged.
+
 Run the independent xUnit v3 suite from the repository root:
 
 ```powershell

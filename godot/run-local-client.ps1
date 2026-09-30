@@ -700,7 +700,7 @@ try {
         $overlayArguments += ' --content-overlay "{0}"' -f (Join-Path $repositoryRoot 'server/content/town-portal-preview')
     }
     function Start-SessionServer([int]$ListenPort, [string]$LogPrefix) {
-        $serverArguments = '--port {0} --protocol-version 0.2.0 --game-mode {4} --save-root "{1}/save" {2} {3}' -f $ListenPort, $SessionDirectory, $acceptanceArguments, $overlayArguments, $serverGameMode
+        $serverArguments = '--port {0} --protocol-version 0.2.0 --game-mode {4} --command-scheduling clock-gated --save-root "{1}/save" {2} {3}' -f $ListenPort, $SessionDirectory, $acceptanceArguments, $overlayArguments, $serverGameMode
         $stdoutPath = Join-Path $captureRoot ($LogPrefix + '.stdout.log')
         $stderrPath = Join-Path $captureRoot ($LogPrefix + '.stderr.log')
         $serverProcess = Start-Process -FilePath $serverExecutable -ArgumentList $serverArguments -WorkingDirectory $repositoryRoot -WindowStyle Hidden -RedirectStandardOutput $stdoutPath -RedirectStandardError $stderrPath -PassThru
@@ -709,6 +709,7 @@ try {
             $contentHash = $null
             $rulesetHash = $null
             $gameMode = $null
+            $commandScheduling = $null
             for ($attempt = 0; $attempt -lt 120; $attempt++) {
                 if ($serverProcess.HasExited) { throw "Authoritative server exited during startup. See $stderrPath" }
                 $output = Get-Content -LiteralPath $stdoutPath -Raw -ErrorAction SilentlyContinue
@@ -716,13 +717,15 @@ try {
                 if ($output -match 'Content manifest: ([0-9a-fA-F]{64})') { $contentHash = $Matches[1] }
                 if ($output -match 'Ruleset identity: ([0-9a-fA-F]{64})') { $rulesetHash = $Matches[1] }
                 if ($output -match 'Game mode: (\w+)') { $gameMode = $Matches[1] }
-                if ($actualPort -and $contentHash -and $rulesetHash -and $gameMode) { break }
+                if ($output -match 'Command scheduling: ([a-z-]+)') { $commandScheduling = $Matches[1] }
+                if ($actualPort -and $contentHash -and $rulesetHash -and $gameMode -and $commandScheduling) { break }
                 Start-Sleep -Milliseconds 250
             }
-            if (-not ($actualPort -and $contentHash -and $rulesetHash -and $gameMode)) {
+            if (-not ($actualPort -and $contentHash -and $rulesetHash -and $gameMode -and $commandScheduling)) {
                 throw "Timed out waiting for the authoritative server identity. See $stdoutPath and $stderrPath"
             }
             if ($gameMode -ne $expectedGameMode) { throw "Unexpected server mode: $gameMode" }
+            if ($commandScheduling -ne 'clock-gated') { throw "Unexpected command scheduling: $commandScheduling" }
             return [pscustomobject]@{ Process = $serverProcess; Port = $actualPort; ContentHash = $contentHash; RulesetHash = $rulesetHash; Mode = $gameMode }
         } catch {
             if ($null -ne $serverProcess) {

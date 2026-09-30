@@ -2250,6 +2250,66 @@ TEST(ServerBackedPlayerSnapshot, RejectsDuplicateEntityIdsAcrossSnapshotCollecti
 	EXPECT_FALSE(ValidateEntityIdentitySnapshots(duplicateCorpses).has_value());
 }
 
+TEST(ServerBackedPlayerSnapshot, ConsumedCastSourceRemainsValidDuringAnimationTail)
+{
+	protocol::Snapshot snapshot;
+	snapshot.set_tick(5);
+	auto *player = snapshot.add_players();
+	player->set_entity_id(1);
+	player->set_combat_mode(protocol::PLAYER_COMBAT_MODE_SPELL);
+	player->set_combat_mode_end_tick(10);
+	auto *action = player->mutable_current_action();
+	action->set_kind(protocol::PLAYER_ACTION_KIND_CAST);
+	action->set_started_at_tick(1);
+	action->set_effect_tick(5);
+	action->set_ready_tick(5);
+	action->set_end_tick(10);
+	action->set_effect_applied(true);
+	auto *cast = action->mutable_cast();
+	cast->set_spell_id(39);
+	cast->set_source(protocol::CAST_SOURCE_KIND_CONSUMABLE_ITEM);
+	auto *source = cast->mutable_source_item();
+	source->set_stable_item_id(2119);
+	const auto validSource = [&](protocol::PlayerItemLocation location, uint32_t slot, uint32_t page) {
+		source->set_location(location);
+		source->set_slot(slot);
+		source->set_page(page);
+		EXPECT_TRUE(ValidatePlayerActionSnapshots(snapshot).has_value());
+	};
+	validSource(protocol::PLAYER_ITEM_LOCATION_INVENTORY, 39, 0);
+	validSource(protocol::PLAYER_ITEM_LOCATION_BELT, 7, 0);
+	validSource(protocol::PLAYER_ITEM_LOCATION_EQUIPMENT, 6, 0);
+	validSource(protocol::PLAYER_ITEM_LOCATION_STASH, 99, 99);
+	const auto invalidSource = [&](protocol::PlayerItemLocation location, uint32_t slot, uint32_t page) {
+		source->set_location(location);
+		source->set_slot(slot);
+		source->set_page(page);
+		EXPECT_FALSE(ValidatePlayerActionSnapshots(snapshot).has_value());
+	};
+	invalidSource(protocol::PLAYER_ITEM_LOCATION_INVENTORY, 40, 0);
+	invalidSource(protocol::PLAYER_ITEM_LOCATION_BELT, 8, 0);
+	invalidSource(protocol::PLAYER_ITEM_LOCATION_EQUIPMENT, 7, 0);
+	invalidSource(protocol::PLAYER_ITEM_LOCATION_STASH, 100, 0);
+	invalidSource(protocol::PLAYER_ITEM_LOCATION_STASH, 0, 100);
+	invalidSource(static_cast<protocol::PlayerItemLocation>(99), 0, 0);
+
+	source->set_location(protocol::PLAYER_ITEM_LOCATION_INVENTORY);
+	source->set_slot(0);
+	source->set_page(0);
+	snapshot.set_tick(4);
+	action->set_effect_applied(false);
+	EXPECT_FALSE(ValidatePlayerActionSnapshots(snapshot).has_value());
+	snapshot.set_tick(5);
+	action->set_effect_applied(true);
+	cast->set_source(protocol::CAST_SOURCE_KIND_CHARGED_ITEM);
+	EXPECT_FALSE(ValidatePlayerActionSnapshots(snapshot).has_value());
+	cast->set_source(protocol::CAST_SOURCE_KIND_ABILITY);
+	EXPECT_FALSE(ValidatePlayerActionSnapshots(snapshot).has_value());
+	cast->set_source(protocol::CAST_SOURCE_KIND_CONSUMABLE_ITEM);
+	cast->clear_source_item();
+	EXPECT_FALSE(ValidatePlayerActionSnapshots(snapshot).has_value());
+}
+
 TEST(ServerBackedPlayerSnapshot, RejectsMalformedPlayerActions)
 {
 	protocol::Snapshot invalidTiming;

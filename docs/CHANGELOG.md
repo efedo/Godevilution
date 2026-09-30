@@ -2,6 +2,22 @@
 
 All notable changes to this fork are documented below.
 
+- 2026-09-30: Integrated negotiated whole-host clock-gated scheduling across
+  admission, publication, durability, restore/reload fences and awaited shutdown.
+  Added pending sequence resume and bounded protocol errors without weakening
+  strict lateness or first-wins receipts. Godot opts in and uses correlated
+  freshness probes plus scheduled-wait-aware retries; CLI/native remain immediate.
+  Broader application acceptance exposed consumed-scroll animation-tail rejection;
+  corrected historical references across restore, host, Godot and native boundaries
+  while preserving native consumption/timing and charged/pre-effect checks.
+  Final server suite passes 1,144/1,144, client selection 160/160, module selection
+  19/19 and native snapshots 137/137. Earlier full protocol passes 556 with two
+  explicit performance skips. Actual single-player create/resume/recovery,
+  corrected portal TownLoop/resume, and headless/rendered two-client reverse-order
+  fresh-host resume pass with clean engine exits. Retained initial fixture failures,
+  TownLoop failure and older multiplayer failure. Initial latency, shared-world
+  restore, native GUI and M0 remain open; updated existing contracts/plan/status.
+
 - 2026-09-30: Reproduced peer-driven shared future-tick advancement with two
   real TCP characterization cases and added an isolated clock-gated scheduler.
   Preserved strict admission, wire order, first-wins receipts and checkpoint-before-

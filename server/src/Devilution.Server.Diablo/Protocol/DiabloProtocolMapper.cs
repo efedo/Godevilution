@@ -1856,7 +1856,7 @@ internal static class DiabloProtocolMapper
                 && action.CastIntent.SpellId != 0
                 && action.TargetEntityId == action.CastIntent.TargetEntityId
                 && IsProjectedCastTarget(state.LevelId, action.CastIntent, levels)
-                && IsValidCastSource(state, action.CastIntent)
+                && IsValidCastSource(state, action.CastIntent, action.EffectApplied)
                 && Enum.IsDefined(action.CastIntent.Source)
                 && (!action.CastIntent.SourceItem.HasValue
                     || Enum.IsDefined(action.CastIntent.SourceItem.Value.Location)),
@@ -1940,7 +1940,8 @@ internal static class DiabloProtocolMapper
 
     private static bool IsValidCastSource(
         StorePlayerSnapshot player,
-        DiabloCastIntent cast)
+        DiabloCastIntent cast,
+        bool effectApplied)
     {
         var requiresItem = cast.Source is DiabloCastSourceKind.ChargedItem
             or DiabloCastSourceKind.ConsumableItem;
@@ -1949,6 +1950,18 @@ internal static class DiabloProtocolMapper
         if (!cast.SourceItem.HasValue)
             return true;
         var item = cast.SourceItem.Value;
+        // Consumption precedes the animation tail; its source is now history,
+        // not an inventory index that must survive removal/reindexing.
+        if (effectApplied && cast.Source == DiabloCastSourceKind.ConsumableItem)
+            return item.Location switch {
+                DiabloPlayerItemLocation.Inventory => item.Slot < NativeMaximumInventoryCount,
+                DiabloPlayerItemLocation.Belt => item.Slot < NativeMaximumBeltCount,
+                DiabloPlayerItemLocation.Equipment => item.Slot < NativeMaximumEquipmentCount,
+                DiabloPlayerItemLocation.Stash =>
+                    item.Slot < AuthoritativeProtocolLimits.NativeStashCellCount
+                    && item.Page < AuthoritativeProtocolLimits.NativeStashPageCount,
+                _ => false,
+            };
         return item.Location switch {
             DiabloPlayerItemLocation.Inventory =>
                 item.Slot < player.Inventory.Count

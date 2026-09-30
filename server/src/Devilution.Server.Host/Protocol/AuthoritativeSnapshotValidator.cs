@@ -1046,7 +1046,7 @@ public static class AuthoritativeSnapshotValidator
                     && action.Cast.SpellId != 0
                     && action.TargetEntityId == action.Cast.TargetEntityId
                     && IsProjectedCastTarget(snapshot, player, action.Cast)
-                    && IsValidCastSource(player, action.Cast)
+                    && IsValidCastSource(player, action.Cast, action.EffectApplied)
                     && Enum.IsDefined(action.Cast.Source)
                     && (action.Cast.SourceItem is null
                         || Enum.IsDefined(action.Cast.SourceItem.Location)),
@@ -1180,7 +1180,7 @@ public static class AuthoritativeSnapshotValidator
             || cast.TargetX < level.Width && cast.TargetY < level.Height;
     }
 
-    private static bool IsValidCastSource(PlayerSnapshot player, CastRequested cast)
+    private static bool IsValidCastSource(PlayerSnapshot player, CastRequested cast, bool effectApplied)
     {
         var requiresItem = cast.Source is CastSourceKind.ChargedItem
             or CastSourceKind.ConsumableItem;
@@ -1188,6 +1188,18 @@ public static class AuthoritativeSnapshotValidator
             return false;
         if (cast.SourceItem is null)
             return true;
+        // Consumed sources remain in the timed action until its animation ends.
+        // Keep structural bounds without requiring the removed item's ownership.
+        if (effectApplied && cast.Source == CastSourceKind.ConsumableItem)
+            return cast.SourceItem.Location switch {
+                PlayerItemLocation.Inventory => cast.SourceItem.Slot < NativeMaximumInventoryCount,
+                PlayerItemLocation.Belt => cast.SourceItem.Slot < NativeMaximumBeltCount,
+                PlayerItemLocation.Equipment => cast.SourceItem.Slot < NativeMaximumEquipmentCount,
+                PlayerItemLocation.Stash =>
+                    cast.SourceItem.Slot < NativeStashCellCount
+                    && cast.SourceItem.Page < NativeStashPageCount,
+                _ => false,
+            };
         return cast.SourceItem.Location switch {
             PlayerItemLocation.Inventory =>
                 cast.SourceItem.Slot < player.Inventory.Count

@@ -14,6 +14,7 @@ public sealed class ServerHostTests
         Assert.Equal(IPAddress.Loopback, ServerHostOptions.Defaults.BindAddress);
         Assert.Equal(6113, ServerHostOptions.Defaults.Port);
         Assert.Equal(20U, ServerHostOptions.Defaults.TickRateHz);
+        Assert.False(ServerHostOptions.Defaults.UseClockGatedCommandScheduling);
         Assert.Equal(
             ProtocolSchemaVersions.IndependentContentAndRulesetIdentity,
             ServerHostOptions.Defaults.ProtocolSchemaVersion);
@@ -89,6 +90,16 @@ public sealed class ServerHostTests
     }
 
     [Theory]
+    [InlineData("immediate", false)]
+    [InlineData("clock-gated", true)]
+    public void ParsesExplicitCommandScheduling(string mode, bool clockGated)
+    {
+        Assert.True(ServerHostOptions.TryParse(["--command-scheduling", mode], out var options, out var error), error);
+        Assert.Equal(clockGated, options.UseClockGatedCommandScheduling);
+    }
+
+    [Theory]
+    [InlineData("--command-scheduling", "automatic")]
     [InlineData("--port", "-1")]
     [InlineData("--port", "65536")]
     [InlineData("--tick-rate", "0")]

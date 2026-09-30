@@ -45,31 +45,54 @@ It targets .NET 8 and depends on Protocol, Domain, Data, and Engine. It must not
 reference `Devilution.Diablo` or any other game module. The .NET 10 executable
 supplies concrete content, module candidates, and one compatible adapter.
 
-## Clock-gated scheduling foundation
+## Negotiated clock-gated scheduling
 
-`ClockGatedCommandScheduler` is an isolated scheduling component, not enabled
-by `AuthoritativeTcpServer` or the standalone executable. Existing direct
-command/TCP behavior remains unchanged. Two loopback characterization cases
-demonstrate that the current host can advance from physical tick 111 to a
-peer's requested tick 125, rejecting another client's tick-120 input; without
-that peer, tick 120 is accepted. This establishes a mechanism, not the exact
-cause of the retained application failure.
+The standalone host accepts `--command-scheduling immediate|clock-gated`.
+Immediate is the compatibility default; `AuthoritativeCommandServer` keeps its
+existing direct API. Godot launchers explicitly select clock-gated timing in
+both single-player and multiplayer. The policy applies to the whole host, not
+individual participants. Clock-gated hosts require `ClientHello` capability
+support before loading receipts, restoring state or initializing a participant.
+The native synchronous client remains on the immediate path and is not enabled
+for deliberately delayed acknowledgements.
 
-The component retains future intents until their due boundary, preserves batch
-wire order, and drains due work before later autonomous advancement. Its caller
-must supply the actual authoritative admission boundary and route every advance
-through the gate. Receipt allocation and strict late-command policy remain in
+Two loopback characterization cases demonstrate that the legacy immediate host
+can advance from physical tick 111 to a peer's requested tick 125, rejecting
+another client's tick-120 input; without that peer, tick 120 is accepted. This
+establishes a mechanism, not proof of the retained application's exact cause.
+
+The host retains future intents until their due boundary, preserves batch wire
+order, and drains due work before later admission, autonomous advancement,
+handshake, event or snapshot publication. Physical time is sampled under the
+authoritative monitor. Receipt allocation and strict late-command policy remain in
 `AuthoritativeCommandServer`. A configured publication callback must checkpoint
 state and receipts before successful completion; queued intents themselves are
 not persisted. Connection loss cannot cancel received intents; host cancellation
 ends unresolved work. Retained slots, including duplicate waiters, are bounded.
+The default limit is 1,024 retained wire slots, including duplicate waiters.
+Capacity refusal is an explicit protocol error, not `TooLate`, and allocates no
+new receipt. A resumed hello includes both completed and pending sequence
+high-water marks so a fresh process cannot reuse an already admitted identity.
 Publication callbacks cannot re-enter submission, advancement or disposal;
 explicit cancellation and read-only queries remain available.
 
-Production activation requires complete host advancement/restore/reload and
-shutdown integration, client retry/lead checks for deliberately delayed
-acknowledgements, native synchronous-response verification, and fresh two-client
-resume acceptance. This component alone does not close M0 or fix multiplayer.
+Reload and cold persisted restore drain due work, then refuse mutation while
+any future command remains queued. In-memory reconnect is allowed; refused cold
+restores do not cache an old-generation checkpoint. This fence does not solve
+the existing game adapter's broader shared-world checkpoint replacement problem.
+Host shutdown cancels pending waits, closes owned transports and awaits handlers
+before disposing the adapter. Background `Completion` faults promptly;
+`DisposeAsync` completes cleanup before rethrowing retained failures. Isolated
+session publication failures are reported and
+receive no ACK. Arbitrary non-cooperative adapter callbacks are not bounded.
+
+Godot idle snapshot requests carry an optional timing correlation; the host
+replies only after the snapshot. This measures end-to-end state freshness, not
+pure network RTT. The client excludes deliberate command waits from its timing
+estimate and delays retry until remaining scheduled wait plus normal timeout.
+Retries retain their original payload/tick/sequence. Initial lead is based on
+100ms until a valid probe arrives; measured history cannot bound unseen latency
+spikes. Actual two-client restart acceptance remains distinct from these rules.
 
 ## Opt-in performance evidence
 
@@ -84,7 +107,8 @@ Measurements describe completed operations, not a single summed tick cost:
 
 - Periodic cycle: authoritative advance plus per-session checkpoints; it can
   advance multiple ticks and excludes the scheduler wait.
-- Periodic advancement: `AdvanceTo` only, including its authoritative lock wait.
+- Periodic advancement: authoritative lock wait and advance; gated mode also
+  includes due command execution and its checkpoints.
 - Session checkpoint lock wait: acquiring the authoritative monitor for one
   `SaveSession` call; a command already holding it enters recursively. This is
   not the command's initial lock wait.
@@ -93,8 +117,11 @@ Measurements describe completed operations, not a single summed tick cost:
   separate synchronous store calls, including validation, serialization, disk
   flush, and replacement when needed. These phases cover ordinary `SaveSession`
   calls, not ruleset-reload `SaveBatch`; phase sample counts need not match.
-- Command admission/apply/checkpoint: includes authoritative lock wait, but not
-  network publication or initial command-batch validation.
+- Immediate command admission/apply/checkpoint: includes authoritative lock wait,
+  but not network publication or initial command-batch validation.
+- Gated queue admission: synchronous admission/drain cost, excluding deliberate
+  future ACK wait. Scheduled checkpoint: result validation and owner-session
+  publication, excluding command execution. These overlap the draining operation.
 - Snapshot materialization/validation: includes lock wait and any advance.
 - Snapshot write: serialization and socket write outside the authoritative lock.
 - Snapshot envelope payload bytes: exact protobuf envelope size, excluding the

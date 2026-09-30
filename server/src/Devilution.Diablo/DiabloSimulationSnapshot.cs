@@ -2879,7 +2879,7 @@ public sealed partial class DiabloSimulation
                 && action.CastIntent.SpellId != 0
                 && action.TargetEntityId == action.CastIntent.TargetEntityId
                 && IsValidCastTarget(source.LevelId, action.CastIntent)
-                && IsValidCastSource(source, action.CastIntent)
+                && IsValidCastSource(source, action.CastIntent, action.EffectApplied)
                 && Enum.IsDefined(action.CastIntent.Source)
                 && (!action.CastIntent.SourceItem.HasValue
                     || Enum.IsDefined(action.CastIntent.SourceItem.Value.Location)),
@@ -2937,7 +2937,8 @@ public sealed partial class DiabloSimulation
 
     private static bool IsValidCastSource(
         StorePlayerSnapshot player,
-        DiabloCastIntent cast)
+        DiabloCastIntent cast,
+        bool effectApplied)
     {
         var requiresItem = cast.Source is DiabloCastSourceKind.ChargedItem
             or DiabloCastSourceKind.ConsumableItem;
@@ -2946,6 +2947,22 @@ public sealed partial class DiabloSimulation
         if (!cast.SourceItem.HasValue)
             return true;
         var item = cast.SourceItem.Value;
+        // Consumables are removed when their effect resolves, before the
+        // animation tail completes. Retain only the native reference bounds
+        // for this historical source; charged items still require ownership.
+        if (effectApplied && cast.Source == DiabloCastSourceKind.ConsumableItem)
+            return item.Location switch {
+                DiabloPlayerItemLocation.Inventory =>
+                    item.Slot < NativeCompatibilityLimits.MaximumInventoryCount,
+                DiabloPlayerItemLocation.Belt =>
+                    item.Slot < NativeCompatibilityLimits.MaximumBeltCount,
+                DiabloPlayerItemLocation.Equipment =>
+                    item.Slot < NativeCompatibilityLimits.MaximumEquipmentCount,
+                DiabloPlayerItemLocation.Stash =>
+                    item.Slot < NativeCompatibilityLimits.StashCellCount
+                    && item.Page < NativeCompatibilityLimits.StashPageCount,
+                _ => false,
+            };
         return item.Location switch {
             DiabloPlayerItemLocation.Inventory =>
                 item.Slot < player.Inventory.Count

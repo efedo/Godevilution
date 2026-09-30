@@ -142,7 +142,12 @@ internal static class Program
             gameAdapter,
             options.Port,
             options.BindAddress,
-            saveStore) { PerformanceRecorder = performance };
+            saveStore) {
+            PerformanceRecorder = performance,
+            UseClockGatedCommandScheduling = options.UseClockGatedCommandScheduling,
+            ClientFailureObserver = exception => Console.Error.WriteLine(
+                $"Authoritative session failed: {exception.GetType().Name}: {exception.Message}"),
+        };
         server.Start();
         Console.WriteLine($"Godevilution authoritative server listening on {options.BindAddress}:{server.Port}");
         Console.WriteLine($"Content packs: {string.Join(", ", contentManifest.Packs.Select(pack => $"{pack.Id}@{pack.Version}"))}");
@@ -160,6 +165,7 @@ internal static class Program
         Console.WriteLine($"Protocol schema: {options.ProtocolSchemaVersion}");
         Console.WriteLine($"Server/world RNG seed: {randomSeed}");
         Console.WriteLine($"Game mode: {options.GameMode}");
+        Console.WriteLine($"Command scheduling: {(options.UseClockGatedCommandScheduling ? "clock-gated" : "immediate")}");
         if (options.ProceduralMonsterLimit is int proceduralMonsterLimit)
             Console.WriteLine(
                 $"Procedural monsters: max {proceduralMonsterLimit}"
@@ -179,15 +185,26 @@ internal static class Program
             LoadModuleCandidates,
             cancellation.Cancel,
             cancellation.Token);
+        Exception? hostFailure = null;
         try {
-            await Task.Delay(Timeout.InfiniteTimeSpan, cancellation.Token);
+            var stopped = Task.Delay(Timeout.InfiniteTimeSpan, cancellation.Token);
+            await Task.WhenAny(stopped, server.Completion);
+            if (server.Completion.IsCompleted)
+                await server.Completion;
         } catch (OperationCanceledException) when (cancellation.IsCancellationRequested) {
+        } catch (Exception exception) {
+            hostFailure = exception;
+        } finally {
+            cancellation.Cancel();
+            try {
+                await operatorLoop;
+            } catch (OperationCanceledException) when (cancellation.IsCancellationRequested) {
+            } catch (Exception exception) {
+                hostFailure ??= exception;
+            }
         }
-        cancellation.Cancel();
-        try {
-            await operatorLoop;
-        } catch (OperationCanceledException) when (cancellation.IsCancellationRequested) {
-        }
+        if (hostFailure is not null)
+            System.Runtime.ExceptionServices.ExceptionDispatchInfo.Capture(hostFailure).Throw();
         if (performanceOutput is not null && performance is not null) {
             var report = performance.Begin() != 0 ? performance.Stop() : null;
             using var process = Process.GetCurrentProcess();

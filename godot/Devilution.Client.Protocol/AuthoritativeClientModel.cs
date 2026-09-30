@@ -540,7 +540,7 @@ public sealed class AuthoritativeClientModel
                 && action.Cast.SpellId != 0
                 && action.TargetEntityId == action.Cast.TargetEntityId
                     && IsProjectedCastTarget(snapshot, player, action.Cast)
-                    && IsValidCastSource(player, action.Cast)
+                    && IsValidCastSource(player, action.Cast, action.EffectApplied)
                 && Enum.IsDefined(action.Cast.Source)
                 && (action.Cast.SourceItem is null
                     || Enum.IsDefined(action.Cast.SourceItem.Location)),
@@ -650,7 +650,10 @@ public sealed class AuthoritativeClientModel
             || cast.TargetX < level.Width && cast.TargetY < level.Height;
     }
 
-    private static bool IsValidCastSource(PlayerSnapshot player, CastRequested cast)
+    private static bool IsValidCastSource(
+        PlayerSnapshot player,
+        CastRequested cast,
+        bool effectApplied)
     {
         var requiresItem = cast.Source is CastSourceKind.ChargedItem
             or CastSourceKind.ConsumableItem;
@@ -658,6 +661,8 @@ public sealed class AuthoritativeClientModel
             return false;
         if (cast.SourceItem is null)
             return true;
+        if (effectApplied && cast.Source == CastSourceKind.ConsumableItem)
+            return IsValidHistoricalConsumableSource(cast.SourceItem);
         return cast.SourceItem.Location switch {
             PlayerItemLocation.Inventory =>
                 cast.SourceItem.Slot < player.Inventory.Count
@@ -682,6 +687,27 @@ public sealed class AuthoritativeClientModel
                     item.Page == cast.SourceItem.Page
                     && item.Cell == cast.SourceItem.Slot
                     && MatchesItemReference(item.Item?.State, cast.SourceItem.StableItemId)),
+            _ => false,
+        };
+    }
+
+    /**
+     * A consumed item may no longer be present or retain its pre-effect index.
+     * Its source remains bounded and typed; authoritative admission checked
+     * ownership before the effect and it is intentionally not re-required here.
+     */
+    private static bool IsValidHistoricalConsumableSource(PlayerItemReference source)
+    {
+        return source.Location switch {
+            PlayerItemLocation.Inventory =>
+                source.Slot < NativeMaximumInventoryCount,
+            PlayerItemLocation.Belt =>
+                source.Slot < NativeMaximumBeltCount,
+            PlayerItemLocation.Equipment =>
+                source.Slot < NativeMaximumEquipmentCount,
+            PlayerItemLocation.Stash =>
+                source.Slot < AuthoritativeProtocolLimits.NativeStashCellCount
+                && source.Page < AuthoritativeProtocolLimits.NativeStashPageCount,
             _ => false,
         };
     }

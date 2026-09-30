@@ -34,6 +34,12 @@ public sealed class AuthoritativeClient : IAsyncDisposable
     private double roundTripMilliseconds = 100;
     private string effectiveContentManifestHash;
     private string effectiveRulesetIdentityHash;
+    private TimingProbe? timingProbe;
+    private ulong nextTimingRequestId;
+    private CommandSchedulingMode commandSchedulingMode;
+    // Probe expiry must not inherit a short command retry estimate: a delayed
+    // but valid snapshot reply is the signal that raises the gated lead.
+    private static readonly TimeSpan TimingProbeTimeout = TimeSpan.FromSeconds(2);
 
     public string SessionToken { get; private set; } = string.Empty;
 
@@ -41,12 +47,22 @@ public sealed class AuthoritativeClient : IAsyncDisposable
 
     public GameMode ServerGameMode { get; private set; } = GameMode.Unspecified;
 
+    /** The negotiated scheduler; omitted or Unspecified values remain immediate. */
+    public CommandSchedulingMode ServerCommandSchedulingMode => commandSchedulingMode;
+
+    public bool IsClockGatedCommandScheduling
+        => commandSchedulingMode == CommandSchedulingMode.ClockGated;
+
     /** The most recently accepted server identity; retained across reconnects. */
     public AuthoritativeServerIdentity? ServerIdentity { get; private set; }
 
     public ulong SuggestedCommandTick(ulong observedTick)
     {
-        var leadTicks = Math.Max(1, (int)Math.Ceiling(RetryTimeout.TotalSeconds * ServerTickRateHz) + 1);
+        var leadMilliseconds = IsClockGatedCommandScheduling
+            ? Volatile.Read(ref roundTripMilliseconds)
+            : RetryTimeout.TotalMilliseconds;
+        var leadTicks = Math.Max(1, (int)Math.Ceiling(
+            leadMilliseconds / 1000 * ServerTickRateHz) + 1);
         return checked(commandClock.Estimate(observedTick, ServerTickRateHz) + (ulong)leadTicks);
     }
 
@@ -91,6 +107,9 @@ public sealed class AuthoritativeClient : IAsyncDisposable
 
         try {
             commandClock.Reset();
+            lock (pendingLock)
+                timingProbe = null;
+            commandSchedulingMode = CommandSchedulingMode.Unspecified;
             tcpClient = new TcpClient();
             await tcpClient.ConnectAsync(options.Host, options.Port, cancellationToken);
             stream = tcpClient.GetStream();
@@ -103,6 +122,7 @@ public sealed class AuthoritativeClient : IAsyncDisposable
                 ContentManifestHash = effectiveContentManifestHash,
                 RulesetIdentityHash = effectiveRulesetIdentityHash,
                 ResumeToken = requestedResumeToken,
+                SupportsClockGatedCommands = true,
             };
             if (options.RequestedCharacterClassId.HasValue) {
                 clientHello.RequestedCharacterClassId
@@ -129,9 +149,16 @@ public sealed class AuthoritativeClient : IAsyncDisposable
                 || hello.ServerHello.GameMode is not (GameMode.SinglePlayer or GameMode.Multiplayer))
                 throw new InvalidDataException("The server returned an incompatible protocol, content, or ruleset identity.");
 
+            if (hello.ServerHello.CommandSchedulingMode is not (
+                    CommandSchedulingMode.Unspecified
+                    or CommandSchedulingMode.Immediate
+                    or CommandSchedulingMode.ClockGated))
+                throw new InvalidDataException("The server returned an unknown command scheduling mode.");
+
             SessionToken = hello.ServerHello.SessionToken;
             ServerTickRateHz = hello.ServerHello.TickRateHz == 0 ? 20 : hello.ServerHello.TickRateHz;
             ServerGameMode = hello.ServerHello.GameMode;
+            commandSchedulingMode = hello.ServerHello.CommandSchedulingMode;
             effectiveContentManifestHash = hello.ServerHello.ContentManifestHash;
             effectiveRulesetIdentityHash = hello.ServerHello.RulesetIdentityHash;
             ServerIdentity = new AuthoritativeServerIdentity(
@@ -186,7 +213,11 @@ public sealed class AuthoritativeClient : IAsyncDisposable
             DiscardClosedTransportNotifications();
             lock (pendingLock) {
                 foreach (var pendingCommand in pending.Values)
+                {
                     pendingCommand.LastSentMs = null;
+                    pendingCommand.RetryNotBeforeMs = null;
+                }
+                timingProbe = null;
             }
             lastSnapshotRequestMs = 0;
             await ConnectAsync(cancellationToken);
@@ -239,41 +270,105 @@ public sealed class AuthoritativeClient : IAsyncDisposable
                 return;
 
             var now = clock.ElapsedMilliseconds;
+            var normalRetryMilliseconds = RetryTimeout.TotalMilliseconds;
             PendingCommand[] dueCommands;
-            lock (pendingLock)
-                dueCommands = pending.Values.Where(command => command.LastSentMs is null || now - command.LastSentMs >= RetryTimeout.TotalMilliseconds).ToArray();
+            lock (pendingLock) {
+                ExpireTimingProbeLocked(now);
+                dueCommands = pending.Values
+                    .Where(command => IsCommandDue(command, now, normalRetryMilliseconds))
+                    .ToArray();
+            }
+            var attemptedCommandDispatch = dueCommands.Length != 0;
             foreach (var entry in dueCommands) {
                 try {
                     await WriteEnvelopeAsync(() => {
                         lock (pendingLock) {
                             if (!pending.ContainsKey(entry.Command.ClientSequence))
                                 return null;
-                            if (!entry.TransmissionStarted && entry.ObservedTick is { } observedTick)
-                                entry.Command.RequestedTick = SuggestedCommandTick(observedTick);
+                            if (!entry.TransmissionStarted) {
+                                if (entry.ObservedTick is { } observedTick)
+                                    entry.Command.RequestedTick = SuggestedCommandTick(observedTick);
+                            }
                             entry.Retransmitted |= entry.TransmissionStarted;
                             // Freeze before any write: cancellation/partial writes may
                             // leave the server with this exact command identity.
                             entry.TransmissionStarted = true;
                             entry.LastSentMs = clock.ElapsedMilliseconds;
+                            if (IsClockGatedCommandScheduling)
+                                entry.RetryNotBeforeMs = ComputeRetryNotBeforeMs(
+                                    entry.Command.RequestedTick,
+                                    entry.LastSentMs.Value);
                             return new Envelope { CommandBatch = new CommandBatch { Commands = { entry.Command } } };
                         }
                     }, cancellationToken);
                 } catch {
                     lock (pendingLock) {
                         if (pending.TryGetValue(entry.Command.ClientSequence, out var current) && ReferenceEquals(current, entry))
+                        {
                             entry.LastSentMs = null;
+                            entry.RetryNotBeforeMs = null;
+                        }
                     }
                     throw;
                 }
             }
 
             var hasPendingCommands = false;
-            lock (pendingLock)
+            lock (pendingLock) {
+                var probeNow = clock.ElapsedMilliseconds;
+                ExpireTimingProbeLocked(probeNow);
                 hasPendingCommands = pending.Count > 0;
+            }
             now = clock.ElapsedMilliseconds;
-            if (!hasPendingCommands && now - lastSnapshotRequestMs >= options.SnapshotPollInterval.TotalMilliseconds) {
-                await WriteEnvelopeAsync(new Envelope { SnapshotRequest = new Envelope.Types.SnapshotRequest() }, cancellationToken);
-                lastSnapshotRequestMs = clock.ElapsedMilliseconds;
+            if (!hasPendingCommands
+                && now - lastSnapshotRequestMs >= options.SnapshotPollInterval.TotalMilliseconds
+                && (!IsClockGatedCommandScheduling || !attemptedCommandDispatch)) {
+                if (!IsClockGatedCommandScheduling) {
+                    await WriteEnvelopeAsync(
+                        new Envelope { SnapshotRequest = new Envelope.Types.SnapshotRequest() },
+                        cancellationToken);
+                    lastSnapshotRequestMs = clock.ElapsedMilliseconds;
+                    return;
+                }
+
+                var timingRequestId = 0UL;
+                var probeRegistered = false;
+                try {
+                    await WriteEnvelopeAsync(() => {
+                        lock (pendingLock) {
+                            var dispatchNow = clock.ElapsedMilliseconds;
+                            ExpireTimingProbeLocked(dispatchNow);
+                            if (!IsClockGatedCommandScheduling
+                                || pending.Count > 0
+                                || timingProbe is not null
+                                || dispatchNow - lastSnapshotRequestMs
+                                    < options.SnapshotPollInterval.TotalMilliseconds)
+                                return null;
+
+                            timingRequestId = NextTimingRequestId();
+                            timingProbe = new TimingProbe(
+                                timingRequestId,
+                                dispatchNow,
+                                SaturatingAdd(dispatchNow, TimingProbeTimeout.TotalMilliseconds));
+                            probeRegistered = true;
+                            return new Envelope {
+                                SnapshotRequest = new Envelope.Types.SnapshotRequest {
+                                    TimingRequestId = timingRequestId,
+                                },
+                            };
+                        }
+                    }, cancellationToken);
+                    if (probeRegistered)
+                        lastSnapshotRequestMs = clock.ElapsedMilliseconds;
+                } catch {
+                    if (probeRegistered) {
+                        lock (pendingLock) {
+                            if (timingProbe?.RequestId == timingRequestId)
+                                timingProbe = null;
+                        }
+                    }
+                    throw;
+                }
             }
         } finally {
             pollLock.Release();
@@ -348,6 +443,10 @@ public sealed class AuthoritativeClient : IAsyncDisposable
 
     private void Enqueue(Envelope envelope)
     {
+        if (envelope.PayloadCase == Envelope.PayloadOneofCase.TimingReply) {
+            ObserveTimingReply(envelope.TimingReply);
+            return;
+        }
         if (envelope.PayloadCase == Envelope.PayloadOneofCase.Snapshot
             && !ObserveSnapshotIdentity(envelope.Snapshot))
             return;
@@ -417,6 +516,77 @@ public sealed class AuthoritativeClient : IAsyncDisposable
                 "The initial authoritative snapshot contains an incomplete ruleset identity.");
     }
 
+    private bool IsCommandDue(PendingCommand command, long now, double retryMilliseconds)
+    {
+        if (command.LastSentMs is null)
+            return true;
+        if (now - command.LastSentMs.Value < retryMilliseconds)
+            return false;
+        return !IsClockGatedCommandScheduling
+            || command.RetryNotBeforeMs is null
+            || now >= command.RetryNotBeforeMs.Value;
+    }
+
+    private long ComputeRetryNotBeforeMs(ulong requestedTick, long sentAtMs)
+    {
+        if (!IsClockGatedCommandScheduling)
+            return sentAtMs;
+
+        var estimatedCurrentTick = commandClock.Estimate(0, ServerTickRateHz);
+        var remainingTicks = requestedTick > estimatedCurrentTick
+            ? requestedTick - estimatedCurrentTick
+            : 0;
+        var remainingMilliseconds = remainingTicks == 0
+            ? 0
+            : Math.Ceiling(remainingTicks * 1000d / ServerTickRateHz);
+        return SaturatingAdd(
+            sentAtMs,
+            remainingMilliseconds + RetryTimeout.TotalMilliseconds);
+    }
+
+    private void ObserveTimingReply(TimingReply reply)
+    {
+        if (!IsClockGatedCommandScheduling || reply.RequestId == 0)
+            return;
+
+        var now = clock.ElapsedMilliseconds;
+        lock (pendingLock) {
+            if (timingProbe is not { } probe
+                || probe.RequestId != reply.RequestId
+                || now >= probe.ExpiresAtMs)
+                return;
+            timingProbe = null;
+            var sample = Math.Max(0, now - probe.SentAtMs);
+            var prior = Volatile.Read(ref roundTripMilliseconds);
+            // Gated admission waits on the full measured round trip. Keep the
+            // estimate conservative so a later short probe cannot lower the
+            // lead below an earlier valid sample.
+            Volatile.Write(ref roundTripMilliseconds, Math.Max(prior, sample));
+        }
+    }
+
+    private void ExpireTimingProbeLocked(long now)
+    {
+        if (timingProbe is { } probe && now >= probe.ExpiresAtMs)
+            timingProbe = null;
+    }
+
+    private ulong NextTimingRequestId()
+    {
+        if (nextTimingRequestId == ulong.MaxValue)
+            throw new InvalidOperationException("Timing request ID space is exhausted.");
+        return ++nextTimingRequestId;
+    }
+
+    private static long SaturatingAdd(long origin, double milliseconds)
+    {
+        if (milliseconds <= 0)
+            return origin;
+        if (milliseconds >= long.MaxValue - origin)
+            return long.MaxValue;
+        return origin + (long)Math.Ceiling(milliseconds);
+    }
+
     private void Acknowledge(CommandAck acknowledgement)
     {
         var now = clock.ElapsedMilliseconds;
@@ -424,9 +594,11 @@ public sealed class AuthoritativeClient : IAsyncDisposable
             lock (pendingLock) {
                 if (!pending.Remove(result.ClientSequence, out var command) || command.LastSentMs is null || command.Retransmitted)
                     continue;
-                // An ACK after retransmission cannot identify which send it times.
-                Volatile.Write(ref roundTripMilliseconds,
-                    (roundTripMilliseconds * 0.75) + ((now - command.LastSentMs.Value) * 0.25));
+                if (!IsClockGatedCommandScheduling) {
+                    // An ACK after retransmission cannot identify which send it times.
+                    Volatile.Write(ref roundTripMilliseconds,
+                        (roundTripMilliseconds * 0.75) + ((now - command.LastSentMs.Value) * 0.25));
+                }
             }
         }
     }
@@ -488,5 +660,8 @@ public sealed class AuthoritativeClient : IAsyncDisposable
         public bool TransmissionStarted { get; set; }
         public bool Retransmitted { get; set; }
         public long? LastSentMs { get; set; }
+        public long? RetryNotBeforeMs { get; set; }
     }
+
+    private sealed record TimingProbe(ulong RequestId, long SentAtMs, long ExpiresAtMs);
 }
