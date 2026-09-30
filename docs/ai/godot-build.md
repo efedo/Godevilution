@@ -97,6 +97,14 @@ combat knockback from its movement/save assertion; normal launch defaults are
 unchanged. Keep the evidence directory private because it contains a resume
 credential even though the JSON and screenshots do not reveal it.
 
+Create and Journey also flush a real movement key into the input handler,
+require one queued command, and deliberately stall the client main thread for
+750ms before its next transport poll. The separate host is not paused. Movement
+must still be accepted and settle at the expected authoritative tile; the
+`*-input-stall.json` artifact records the pause, pre-input tick, and applied tick.
+This covers unsent frame-stalled input, not arbitrary host/network delay after
+transmission. Resume and Recovery continue to verify durable state and sequences.
+
 Protocol tests exercise the model/transport without the Godot scene. A headless
 startup verifies a different boundary and does not prove that a visible window
 renders. The application harness exercises controls even headlessly, but its

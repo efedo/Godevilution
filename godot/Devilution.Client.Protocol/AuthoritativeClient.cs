@@ -18,6 +18,7 @@ public sealed class AuthoritativeClient : IAsyncDisposable
     private readonly ConcurrentQueue<AuthoritativeClientMessage> incoming = new();
     private readonly Dictionary<ulong, PendingCommand> pending = [];
     private readonly SemaphoreSlim writeLock = new(1, 1);
+    private readonly SemaphoreSlim pollLock = new(1, 1);
     private readonly object pendingLock = new();
     private readonly CancellationTokenSource lifetime = new();
     private readonly Stopwatch clock = Stopwatch.StartNew();
@@ -68,7 +69,7 @@ public sealed class AuthoritativeClient : IAsyncDisposable
     }
 
     public TimeSpan RetryTimeout => TimeSpan.FromMilliseconds(Math.Clamp(
-        roundTripMilliseconds * 4,
+        Volatile.Read(ref roundTripMilliseconds) * 4,
         options.MinimumRetryTimeout.TotalMilliseconds,
         options.MaximumRetryTimeout.TotalMilliseconds));
 
@@ -178,13 +179,20 @@ public sealed class AuthoritativeClient : IAsyncDisposable
             throw new ObjectDisposedException(nameof(AuthoritativeClient));
 
         await CloseTransportAsync();
-        DiscardClosedTransportNotifications();
-        lock (pendingLock) {
-            foreach (var pendingCommand in pending.Values)
-                pendingCommand.LastSentMs = null;
+        // Let an old poll finish against the closed transport before publishing
+        // a replacement stream or writing its handshake.
+        await pollLock.WaitAsync(cancellationToken);
+        try {
+            DiscardClosedTransportNotifications();
+            lock (pendingLock) {
+                foreach (var pendingCommand in pending.Values)
+                    pendingCommand.LastSentMs = null;
+            }
+            lastSnapshotRequestMs = 0;
+            await ConnectAsync(cancellationToken);
+        } finally {
+            pollLock.Release();
         }
-        lastSnapshotRequestMs = 0;
-        await ConnectAsync(cancellationToken);
     }
 
     /** Removes the previous transport's transient close marker before a new epoch. */
@@ -204,13 +212,20 @@ public sealed class AuthoritativeClient : IAsyncDisposable
     }
 
     public ulong Queue(Command command, ulong requestedTick)
+        => Queue(command, requestedTick, observedTick: null);
+
+    /** Schedules new interactive input at first dispatch; transmitted retries never change ticks. */
+    public ulong QueueRealtime(Command command, ulong observedTick)
+        => Queue(command, requestedTick: 0, observedTick);
+
+    private ulong Queue(Command command, ulong requestedTick, ulong? observedTick)
     {
         ArgumentNullException.ThrowIfNull(command);
         lock (pendingLock) {
             var sequence = checked(++nextClientSequence);
             command.ClientSequence = sequence;
             command.RequestedTick = requestedTick;
-            pending.Add(sequence, new PendingCommand(command.Clone()));
+            pending.Add(sequence, new PendingCommand(command.Clone(), observedTick));
             return sequence;
         }
     }
@@ -218,26 +233,50 @@ public sealed class AuthoritativeClient : IAsyncDisposable
     /** Sends new commands and resubmits commands whose adaptive timeout elapsed. */
     public async Task PollAsync(CancellationToken cancellationToken = default)
     {
-        if (!IsConnected || stream is null)
-            return;
+        await pollLock.WaitAsync(cancellationToken);
+        try {
+            if (!IsConnected || stream is null)
+                return;
 
-        var now = clock.ElapsedMilliseconds;
-        PendingCommand[] dueCommands;
-        lock (pendingLock)
-            dueCommands = pending.Values.Where(command => command.LastSentMs is null || now - command.LastSentMs >= RetryTimeout.TotalMilliseconds).ToArray();
-        foreach (var entry in dueCommands) {
-            await WriteEnvelopeAsync(new Envelope {
-                CommandBatch = new CommandBatch { Commands = { entry.Command } },
-            }, cancellationToken);
-            entry.LastSentMs = now;
-        }
+            var now = clock.ElapsedMilliseconds;
+            PendingCommand[] dueCommands;
+            lock (pendingLock)
+                dueCommands = pending.Values.Where(command => command.LastSentMs is null || now - command.LastSentMs >= RetryTimeout.TotalMilliseconds).ToArray();
+            foreach (var entry in dueCommands) {
+                try {
+                    await WriteEnvelopeAsync(() => {
+                        lock (pendingLock) {
+                            if (!pending.ContainsKey(entry.Command.ClientSequence))
+                                return null;
+                            if (!entry.TransmissionStarted && entry.ObservedTick is { } observedTick)
+                                entry.Command.RequestedTick = SuggestedCommandTick(observedTick);
+                            entry.Retransmitted |= entry.TransmissionStarted;
+                            // Freeze before any write: cancellation/partial writes may
+                            // leave the server with this exact command identity.
+                            entry.TransmissionStarted = true;
+                            entry.LastSentMs = clock.ElapsedMilliseconds;
+                            return new Envelope { CommandBatch = new CommandBatch { Commands = { entry.Command } } };
+                        }
+                    }, cancellationToken);
+                } catch {
+                    lock (pendingLock) {
+                        if (pending.TryGetValue(entry.Command.ClientSequence, out var current) && ReferenceEquals(current, entry))
+                            entry.LastSentMs = null;
+                    }
+                    throw;
+                }
+            }
 
-        var hasPendingCommands = false;
-        lock (pendingLock)
-            hasPendingCommands = pending.Count > 0;
-        if (!hasPendingCommands && now - lastSnapshotRequestMs >= options.SnapshotPollInterval.TotalMilliseconds) {
-            await WriteEnvelopeAsync(new Envelope { SnapshotRequest = new Envelope.Types.SnapshotRequest() }, cancellationToken);
-            lastSnapshotRequestMs = now;
+            var hasPendingCommands = false;
+            lock (pendingLock)
+                hasPendingCommands = pending.Count > 0;
+            now = clock.ElapsedMilliseconds;
+            if (!hasPendingCommands && now - lastSnapshotRequestMs >= options.SnapshotPollInterval.TotalMilliseconds) {
+                await WriteEnvelopeAsync(new Envelope { SnapshotRequest = new Envelope.Types.SnapshotRequest() }, cancellationToken);
+                lastSnapshotRequestMs = clock.ElapsedMilliseconds;
+            }
+        } finally {
+            pollLock.Release();
         }
     }
 
@@ -254,7 +293,8 @@ public sealed class AuthoritativeClient : IAsyncDisposable
         lifetime.Cancel();
         await CloseTransportAsync();
         lifetime.Dispose();
-        writeLock.Dispose();
+        // In-flight sends may still unwind and release these managed gates.
+        // No wait handle is allocated; let GC reclaim them after their users.
     }
 
     private async Task CloseTransportAsync()
@@ -382,26 +422,34 @@ public sealed class AuthoritativeClient : IAsyncDisposable
         var now = clock.ElapsedMilliseconds;
         foreach (var result in acknowledgement.Results) {
             lock (pendingLock) {
-                if (!pending.Remove(result.ClientSequence, out var command) || command.LastSentMs is null)
+                if (!pending.Remove(result.ClientSequence, out var command) || command.LastSentMs is null || command.Retransmitted)
                     continue;
-                roundTripMilliseconds = (roundTripMilliseconds * 0.75) + ((now - command.LastSentMs.Value) * 0.25);
+                // An ACK after retransmission cannot identify which send it times.
+                Volatile.Write(ref roundTripMilliseconds,
+                    (roundTripMilliseconds * 0.75) + ((now - command.LastSentMs.Value) * 0.25));
             }
         }
     }
 
-    private async Task WriteEnvelopeAsync(Envelope envelope, CancellationToken cancellationToken)
-    {
-        var payload = envelope.ToByteArray();
-        if (payload.Length == 0 || payload.Length > AuthoritativeProtocolLimits.MaximumEnvelopeBytes)
-            throw new InvalidDataException("The authoritative envelope is outside the allowed size range.");
-        var header = new byte[sizeof(int)];
-        BinaryPrimitives.WriteInt32LittleEndian(header, payload.Length);
+    private Task WriteEnvelopeAsync(Envelope envelope, CancellationToken cancellationToken)
+        => WriteEnvelopeAsync(() => envelope, cancellationToken);
 
+    private async Task WriteEnvelopeAsync(Func<Envelope?> createEnvelope, CancellationToken cancellationToken)
+    {
         await writeLock.WaitAsync(cancellationToken);
         try {
-            await stream!.WriteAsync(header, cancellationToken);
-            await stream.WriteAsync(payload, cancellationToken);
-            await stream.FlushAsync(cancellationToken);
+            var envelope = createEnvelope();
+            if (envelope is null)
+                return;
+            var payload = envelope.ToByteArray();
+            if (payload.Length == 0 || payload.Length > AuthoritativeProtocolLimits.MaximumEnvelopeBytes)
+                throw new InvalidDataException("The authoritative envelope is outside the allowed size range.");
+            var header = new byte[sizeof(int)];
+            BinaryPrimitives.WriteInt32LittleEndian(header, payload.Length);
+            var currentStream = stream ?? throw new IOException("The authoritative transport is closed.");
+            await currentStream.WriteAsync(header, cancellationToken);
+            await currentStream.WriteAsync(payload, cancellationToken);
+            await currentStream.FlushAsync(cancellationToken);
         } finally {
             writeLock.Release();
         }
@@ -433,9 +481,12 @@ public sealed class AuthoritativeClient : IAsyncDisposable
         return true;
     }
 
-    private sealed class PendingCommand(Command command)
+    private sealed class PendingCommand(Command command, ulong? observedTick)
     {
         public Command Command { get; } = command;
+        public ulong? ObservedTick { get; } = observedTick;
+        public bool TransmissionStarted { get; set; }
+        public bool Retransmitted { get; set; }
         public long? LastSentMs { get; set; }
     }
 }

@@ -109,9 +109,12 @@ M4. M5 is the final removal gate, not a reason to postpone replacement work.
    Use the recorded checkpoint-phase timings to target publication costs without
    weakening durability; retain no-ack-on-write-failure and fresh-host duplicate
    recovery coverage. Local Windows receipt-file reuse does not close the wider
-   performance/platform gate. Reproduce the recorded Godot route `TooLate`
-   rejection under load and verify command-admission reliability without
-   relaxing server authority or silently retrying rejected gameplay.
+   performance/platform gate. Client queue-to-first-dispatch stalls now have a
+   reproduced transport regression and actual-scene acceptance; preserve deferred
+   first-send timing and immutable retry identities. Continue reproducing the
+   recorded heavy-load route `TooLate` rejection with host/network timing evidence.
+   This client fix does not certify admission under arbitrary post-send stalls;
+   do not relax server authority or silently retry rejected gameplay.
 
 Exit: the Godot launch/create/move/save/restart/resume journey passes from
 rebuilt artifacts without MPQs; visible UI is checked separately from headless

@@ -112,7 +112,18 @@ public partial class SessionAcceptance : Node
             VerifyCombatLootRestored(main, directory);
 
         GetViewport().GuiReleaseFocus();
+        var preInputTick = main.ObservedSnapshot!.Tick;
         Input.ParseInputEvent(new InputEventKey { Keycode = Key.Down, PhysicalKeycode = Key.Down, Pressed = true });
+        double? inputStallMilliseconds = null;
+        if (creating) {
+            Input.FlushBufferedEvents();
+            Require(main.ObservedPendingCommandCount == 1, "The actual input handler did not queue movement before the frame stall.");
+            // Model a busy frame after real input but before the next transport poll.
+            // Only the client pauses; the separate authoritative host keeps running.
+            var stall = Stopwatch.StartNew();
+            System.Threading.Thread.Sleep(750);
+            inputStallMilliseconds = stall.Elapsed.TotalMilliseconds;
+        }
         await Frame();
         Input.ParseInputEvent(new InputEventKey { Keycode = Key.Down, PhysicalKeycode = Key.Down, Pressed = false });
         await Until(() => main.ObservedCommandResult is { Status: CommandStatus.Accepted }
@@ -121,6 +132,12 @@ public partial class SessionAcceptance : Node
             "Movement did not finish with an accepted command and settled authoritative position.");
         var moved = main.ObservedSnapshot!.Players.Single();
         var result = main.ObservedCommandResult!;
+        if (inputStallMilliseconds is { } stallMilliseconds)
+            WriteEvidence(directory, phase!.ToLowerInvariant() + "-input-stall.json", new {
+                Passed = true, StallMilliseconds = stallMilliseconds,
+                PreInputTick = preInputTick,
+                result.ClientSequence, result.AppliedTick,
+            });
         Require(previous is null || result.ClientSequence > previous.Sequence,
             "Fresh client reused a persisted command sequence.");
         var identity = main.ObservedIdentity!;

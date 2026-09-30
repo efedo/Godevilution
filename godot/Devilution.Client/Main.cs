@@ -818,7 +818,7 @@ public partial class Main : Node2D
             routeTravel.Cancel("Travel cancelled by another action.");
             interactionTravel.Cancel();
         }
-        var sequence = client!.Queue(command, client.SuggestedCommandTick(model.CurrentTick));
+        var sequence = client!.QueueRealtime(command, model.CurrentTick);
         if (predictedDirection is { } direction)
             model.TrackPredictedMove(sequence, direction.X, direction.Y);
         return sequence;

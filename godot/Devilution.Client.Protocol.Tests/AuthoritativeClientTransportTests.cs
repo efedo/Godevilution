@@ -9,8 +9,38 @@ using Xunit;
 
 namespace Devilution.Client.Protocol.Tests;
 
-public sealed class AuthoritativeClientTransportTests
+public sealed partial class AuthoritativeClientTransportTests
 {
+    [Fact]
+    public async Task SchedulesAnUnsentInteractiveCommandAfterAFrameStall()
+    {
+        using var listener = new TcpListener(IPAddress.Loopback, 0);
+        listener.Start();
+        var serverTask = Task.Run(async () => {
+            using var connection = await listener.AcceptTcpClientAsync(TestContext.Current.CancellationToken);
+            await using var stream = connection.GetStream();
+            _ = await ReadEnvelopeAsync(stream);
+            await WriteEnvelopeAsync(stream, new Envelope { ServerHello = new ServerHello {
+                ProtocolSchemaVersion = "0.1.0", ContentManifestHash = "content-hash",
+                TickRateHz = 20, GameMode = GameMode.SinglePlayer,
+            } });
+            await WriteEnvelopeAsync(stream, new Envelope { Snapshot = new Snapshot { Tick = 100 } });
+            var command = Assert.Single((await ReadEnvelopeAsync(stream)).CommandBatch.Commands);
+            Assert.True(command.RequestedTick >= 119, $"Unsent command retained its pre-stall tick: {command.RequestedTick}");
+        }, TestContext.Current.CancellationToken);
+        await using var client = new AuthoritativeClient(new ClientConnectionOptions(
+            "127.0.0.1", ((IPEndPoint)listener.LocalEndpoint).Port, "stall-test", "0.1.0", "content-hash") {
+            MinimumRetryTimeout = TimeSpan.FromMilliseconds(150),
+            MaximumRetryTimeout = TimeSpan.FromMilliseconds(150),
+        });
+        await client.ConnectAsync(TestContext.Current.CancellationToken);
+        client.QueueRealtime(new Command { MoveRequested = new MoveRequested { DirectionY = 1 } }, 100);
+        // Godot can queue during input/route handling and only poll on a later frame.
+        await Task.Delay(750, TestContext.Current.CancellationToken);
+        await client.PollAsync(TestContext.Current.CancellationToken);
+        await serverTask.WaitAsync(TimeSpan.FromSeconds(10), TestContext.Current.CancellationToken);
+    }
+
     [Fact]
     public async Task SchedulesCommandsUsingTheAgeOfAReceivedSnapshot()
     {

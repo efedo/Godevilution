@@ -2,6 +2,17 @@
 
 All notable changes to this fork are documented below.
 
+- 2026-09-29: Fixed Godot input expiring while queued across a stalled frame by
+  selecting interactive command ticks at first dispatch. Preserved explicit
+  timestamps and byte-identical retry/reconnect payloads. Serialized polls and
+  replacement handshakes, retained one stream per write, and excluded ambiguous
+  retransmission RTT samples. Added transport boundary regressions and real-input
+  750ms scene-stall acceptance. Full protocol tests pass 521 with two opt-in
+  exclusions; rendered combat/loot/fresh-host resume and final headless
+  create/resume/server-loss recovery pass. Updated controls,
+  acceptance instructions, plan, and evidence; post-send overload and full
+  migration gates remain open. Normalized touched text to CRLF.
+
 - 2026-09-29: Extended actual Godot acceptance through combat, distant loot,
   inventory display, and fresh-host resume. Added acknowledged multi-step
   interaction approach/cancellation without client gameplay authority. Corrected

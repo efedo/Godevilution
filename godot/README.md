@@ -136,8 +136,17 @@ recreate its protocol model for a transient disconnect.
 Command scheduling accounts for monotonic time since the latest valid snapshot
 arrived before adding the adaptive retry lead. This prevents stale 250ms polling
 snapshots from making ordinary movement late when retry estimates fall to 150ms.
-The timing anchor resets on reconnect; it changes requested command timestamps,
-not authoritative state, presentation time, pending retries, or server admission.
+Godot queues interactive input with `QueueRealtime`: the requested tick is chosen
+under the transport write lock immediately before its first dispatch, so a stalled
+frame cannot consume its lead while it is still unsent. The explicit `Queue`
+API retains caller-supplied ticks for scripted commands. Once a write is attempted,
+all retry/reconnect command bytes remain fixed, even after a partial/failed write.
+Concurrent polls are serialized; replacement handshakes wait for the old poll to
+finish against the closed transport. Retransmitted ACKs do not supply ambiguous
+round-trip samples. Rejections remain terminal, not automatically rescheduled.
+The timing anchor resets on reconnect; none of this advances authoritative state
+or presentation time, or relaxes server admission. Host/network stalls after
+dispatch can still exceed the normal adaptive lead and require separate profiling.
 When no endpoint or resume token is supplied by the launch environment, the
 session setup menu accepts the authoritative server host and port and validates
 them before the initial connection. The menu can either create a new character

@@ -99,6 +99,66 @@ The following records describe implemented slices at this baseline. They are
 evidence, not a separate priority list; detailed older entries retain their
 original scope and may be superseded by later entries or the current assessment.
 
+### M0 first-dispatch timing and reconnect serialization (2026-09-29)
+
+This batch follows `5ee051a6a`. A transport regression reproduced a concrete
+client-side timing defect: input queued from snapshot tick 100 at 20Hz retained
+requested tick 105 after a 750ms delay before its first poll, when the host could
+already be at tick 115. Main polls before it queues route steps, so slow frames
+can expose this gap. The existing snapshot-age estimate only helped input that
+was not yet queued. This is a demonstrated failure mechanism, not proof of the
+exact cause of the earlier concurrent-native-build route rejection.
+
+Godot now uses additive `QueueRealtime`, choosing its requested tick under the
+write gate immediately before first serialization with the existing adaptive
+lead. Explicit `Queue(command, tick)` semantics remain unchanged. All command
+bytes freeze before the first possible write, including a partial/failed write;
+timeouts and reconnect reuse that identity. Rejected commands are terminal.
+Polls serialize, send metadata precedes possible ACK receipt, and retransmitted
+ACKs do not bias round-trip estimation with ambiguous samples. Reconnect closes
+the old transport and joins its poll before writing the replacement handshake.
+Each transport write captures one stream; disposal does not invalidate managed gates
+while sends unwind. These changes do not alter server admission, simulation,
+protocol/content identities, persistence formats, or authority.
+
+Verification:
+
+- The old queue-time path fails the new 750ms transport regression at tick 105;
+  the fixed interactive path passes the stronger age-plus-lead bound (>=119).
+  Eight new cases cover first dispatch, cancelled dispatch entry, cloned input,
+  byte-identical timeout/reconnect, concurrent polling, ambiguous RTT exclusion,
+  replacement-handshake ordering/new clock, and terminal `TooLate` rejection.
+- Full Release protocol-client suite: **521 passed, two opt-in performance
+  cases excluded** (523 total), via `dotnet run --project
+  godot/Devilution.Client.Protocol.Tests/Devilution.Client.Protocol.Tests.csproj
+  --configuration Release --no-restore -- --no-ansi`.
+- Focused `ProjectDocumentationConsistencyTests`: **3/3 passed**.
+- `tools/test-godot-session.ps1 -Journey -Visible` passes after the lifecycle
+  fix. A flushed real input is pending before the 750.03ms client stall;
+  pre-input snapshot tick 68 leads to accepted movement at tick 95. The route,
+  combat, inventory, exact-one loot, and fresh-host resume then pass (five
+  attacks, 100 XP, sequence 70 -> 71). The inventory frame was inspected.
+  Evidence: `%TEMP%/Godevilution-Scene-Acceptance-2693c4b6095b4e6b9f61cde1255bdcf6`.
+- Final headless Create/Resume/Recovery passes after the lifecycle fix at
+  `%TEMP%/Godevilution-Scene-Acceptance-c2d07dbf161f4a589e4f03521d8d18bf`.
+  Its queued-input stall lasted 751.01ms; pre-input tick 139 was followed by
+  accepted movement at tick 166. Resume and same-client server-loss recovery
+  retained state and fresh command sequences. Keep these save/token directories private.
+  The first harness attempt failed because injected input was still buffered,
+  before transport dispatch. Explicit input flushing corrected the test boundary;
+  its pending-command assertion was retained, not bypassed.
+  Existing NuGet audit-connectivity and Godot certificate-store warnings were
+  nonfatal. No frame-rate or release-platform budget pass is implied.
+
+Independent Terra 5.6 high-effort review prompted the reconnect serialization
+and retry-boundary tests and found no remaining blocker in this batch. Godot's
+normal lifecycle is covered; arbitrary overlapping direct public Connect/Dispose
+calls are not certified. Heavy host/network delay after dispatch can still exceed
+the normal lead, so the earlier load-reliability finding, performance/platform/
+native-GUI gates, and broader gameplay parity gaps remain open. No new native or
+full Diablo/server unit-suite pass is claimed here; prior results and the four
+baseline Hork RNG failures remain as recorded below. Overall estimates do not change.
+
 ### M1 combat, distant loot, and fresh-host resume (2026-09-29)
 
 This batch follows `b8ceb1dac`. The actual Godot journey now uses right-click
