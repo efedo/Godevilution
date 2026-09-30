@@ -72,7 +72,7 @@ isolated spell or table rows while the playable route stays unchanged.
 | --- | --- | --- | --- |
 | M0 | Reproducible launch and honest acceptance evidence | Existing implementation | Godot session/recovery passes; local one/four-participant host measurements recorded; native GUI and performance/platform gaps remain |
 | M1 | Usable Godot town-to-dungeon loop | M0 launch/acceptance harness | Authored combat/loot/equipment, real NPC approach/service entry, purchased-scroll portal return and fresh-host owner-return closure pass; full loop remains |
-| M2 | Native-compatible generated world | M0 geometry/parity baseline | Ordinary Cathedral level-1 coarse oracle and fine-coordinate adapter exist; real fine-data comparison, runtime integration and remaining families remain |
+| M2 | Native-compatible generated world | M0 geometry/parity baseline | Ordinary Cathedral level-1 coarse/fine oracle passes two seeds and MAIN/PREV entry; runtime integration, population and remaining families remain |
 | M3 | Complete base and Hellfire gameplay routes | M1 plus the relevant M2 world slices | Many rules exist; campaign and remaining behavioral coverage remain |
 | M4 | Release-quality client, recovery, and packaging | M3; preparation begins during M1/M2 | Recovery and adapter packaging foundations exist; product acceptance remains |
 | M5 | Production legacy-runtime retirement | M4 and capability replacement gates | Authoritative mode is Lua-free; compatibility runtime remains |
@@ -203,8 +203,11 @@ this evidence. A sample art pack does not satisfy M4's full presentation gate.
    goldens, continuation RNG and successful-attempt restoration but has no
    runtime call sites. Its isolated adapter now expands validated TIL/SOL catalogs
    into 112x112 fine coordinates while retaining the separate coarse result.
-   Compare all fine layers against native output using locally supplied original
-   assets before runtime/coordinate integration, population or route acceptance.
+   Full fine-layer comparison using locally supplied original assets now passes
+   seeds 2588/743271966 with MAIN/PREV entry. The optional oracle retains raw data
+   privately and normalizes only the unnamed SOL bit for test-only named-flag
+   comparison; production loaders are unchanged. Broader seeded/topology checks,
+   runtime/coordinate integration, population and route acceptance remain.
    The shared vision contract remains conservative, not exact native light parity.
    Integrate validated external pattern data; do not invent campaign seed mapping
    or add server MPQ loading. Keep licensed oracle inputs outside the repository.

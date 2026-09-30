@@ -100,7 +100,8 @@ open. Their scope, dependencies, and exit checks are defined only in the
   fragments are implemented foundations, not complete native map generation.
   An isolated ordinary original-Diablo Cathedral level-1 coarse generator now
   matches two existing native goldens and now has an isolated 112x112 fine-coordinate
-  catalog adapter. Real fine-data oracle comparison, runtime/population integration,
+  catalog adapter. Real fine-data comparison now passes those two seeds with
+  MAIN/PREV entry; broader seed/topology evidence, runtime/population integration,
   remaining families, quests and placement gates remain open.
 - Compact Golem replay still models one combat target; multiple-owner summons
   and replacement allocation are not represented. Guardian descriptive markers
@@ -276,6 +277,61 @@ generated worlds and campaign acceptance remain open. Native GUI/world entry is
 still blocked by the separately recorded firewall prompt, with no permissions
 changed. M1 remains open and the overall planning estimate remains about 35%.
 
+### M2 local-asset Cathedral fine-coordinate oracle (2026-09-30)
+
+This isolated verification follows the fine-coordinate foundation and vendor
+transition batch `3576d5c57`. The zero-argument
+`tools/test-cathedral-geometry.ps1` rebuilds a packed-MPQ Debug native oracle and
+the managed tests. Native production discovery remounts the main Diablo archive,
+rejects spawn, removes loose overrides and proves both TIL/SOL references resolve
+from the main archive. Licensed data remains in fresh temporary storage, never
+in Git or the server's production data path.
+
+All four seed/entry combinations (2588/743271966, MAIN/PREV) match the complete
+40x40 coarse and 112x112 fine piece/transparency layers, successful-attempt and
+final RNG states, entry/stair positions, all 1379 named SOL flag values, movement
+and missile blocker sets and explicit native BlockLight cells. Existing shared
+vision still conservatively unions movement-solid cells with BlockLight; exact
+native vision, lighting or rendering behavior is not claimed.
+
+The original inputs are 1648-byte TIL and 453-byte SOL. Raw SOL has one unnamed
+`0x40` bit (piece 170), which the strict production catalog correctly rejects.
+The oracle zero-extends a clone, strips only that bit in a separate test-only
+semantic catalog, and verifies all native opaque bits independently against the
+unaltered raw/padded input. Raw files and full native flag bytes/hashes remain
+unchanged. This proves named-flag semantic parity, not production ingestion of
+original SOL or opaque-byte retention by the managed catalog. No production
+loader, enum, content/wire/save schema, game rules or MPQ boundary changed.
+
+Final execution requires native 1/1 and managed 4/4 with zero exclusions, six
+nonempty SHA-256-verified artifacts and `Passed=true`/zero exit codes. Evidence
+is retained under `%TEMP%/Godevilution-Cathedral-Oracle-620bf827cf80461b9c7634535e7c2696`;
+independent review recomputed every file hash and verified the exact results.
+The final wrapper rerun after packed-build selection tightening also passes at
+`%TEMP%/Godevilution-Cathedral-Oracle-e5ce835c35014bdeb79da0b5fc946225`.
+Earlier build/fixture, informational-stderr and strict raw-SOL failures were
+retained as failures. A later four-pass run also correctly failed the wrapper
+because it included three unrelated explicit-filter exclusions; exact-method
+selection fixed the invocation without weakening the four-pass gate.
+
+The rebuilt default native Cathedral suite passes 21 with its one new opt-in
+oracle skipped; that exclusion is not real-asset evidence. The full archive-free
+managed selection runs 2512: 2504 pass, four baseline-confirmed Hork RNG cases
+fail and four local-asset oracle cases are excluded. Those four oracle cases
+pass separately as above; the Hork failures remain unresolved, not excluded.
+Complete module output is retained under
+`%TEMP%/Godevilution-Module-Verification-82921b6f71114fe2ba468e67c147c78b/module.stdout.log`.
+Launcher/oracle-helper checks pass 16/16, including skipped/malformed evidence,
+build selection, stderr retention and harmless nonzero/crash-like exit codes.
+Combined Cathedral/generic-DUN/documentation checks pass 69 with four explicit
+asset exclusions (73 total); the three documentation cases are included.
+
+Runtime generation/coordinate integration, validated external runtime pattern
+data, campaign seed mapping, broader seeded reachability, population, quests/set
+pieces, generated Godot traversal and restore remain open. No runtime call sites
+were added. This bounded comparison does not close M2 or change the approximately
+35% overall planning estimate. Keep the entire oracle directory private.
+
 ### M2 Cathedral level-1 fine-coordinate foundation (2026-09-30)
 
 The isolated materializer expands the existing generator through validated
@@ -296,11 +352,11 @@ contract unions movement-solid cells into vision blockers; explicit light flags
 are retained, but exact native vision behavior is not claimed.
 
 The local GOG Diablo/Hellfire archives are confirmed available through installed
-registry paths; absent local files are not the current blocker. Next compare
-native and managed fine arrays for seeds 2588/743271966, MAIN/PREV, using existing
-archive/TIL/SOL APIs in isolated oracle tooling. Do not commit licensed data or
-transfer archive loading to the server. No real-asset fine comparison, runtime
-call site, populated generated traversal, restore or M2 acceptance exists yet.
+registry paths; absent local files are not the current blocker. This foundation
+did not yet compare real assets; the later isolated oracle above closes the
+two-seed MAIN/PREV fine-layer comparison. Do not commit licensed data or transfer
+archive loading to the server. Runtime call sites, populated generated traversal,
+restore and M2 acceptance remain open.
 This foundation does not change the approximately 35% overall estimate.
 
 ### M2 ordinary Cathedral level-1 coarse generator (2026-09-30)

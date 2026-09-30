@@ -2,6 +2,17 @@
 
 All notable changes to this fork are documented below.
 
+- 2026-09-30: Added a zero-argument isolated local-asset Cathedral oracle with
+  original-main-archive provenance, complete coarse/fine/RNG/stair comparisons,
+  named SOL flags and independently checked opaque bits. Native 1/1 and all four
+  managed seed/entry cases pass; six private artifacts are retained and hashed.
+  Kept strict production loaders and the server MPQ-free; licensed bytes never
+  enter Git. Added synthetic normalization and fail-closed wrapper regressions
+  (launcher/helper selection 16 pass). Default native tests pass 21 plus one
+  opt-in skip; full module selection passes 2504, fails four known Hork RNG cases
+  and excludes four separately verified asset oracles. Updated existing guidance,
+  contracts, plan and status; runtime/population, exact vision and M2 remain open.
+
 - 2026-09-30: Matched native non-town level-load vendor cleanup for accepted
   cross-level warps/stairs/portals. Reused metadata-bound native-role mapping;
   rejected/dry-run transitions, same-level/town-return behavior, Generic and

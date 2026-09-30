@@ -340,9 +340,199 @@ public sealed class FakeCompletedProcess
         Assert.Contains("PASS", result, StringComparison.Ordinal);
     }
 
-    private static string BuildPowerShellHarness(string[] functionNames, string body)
+    [Fact]
+    public void CathedralOracleHelpersRejectIncompleteOrSkippedEvidence()
     {
-        var launcherPath = Path.Combine(FindRepositoryRoot(), "godot", "run-local-client.ps1");
+        if (!OperatingSystem.IsWindows())
+            return;
+
+        var script = BuildPowerShellHarness(
+            ["Assert-CathedralNativeReport", "Assert-CathedralManagedReport", "Get-CathedralOracleArtifacts"],
+            """
+            $work = Join-Path ([IO.Path]::GetTempPath()) ('Godevilution-OracleHelperTest-' + [guid]::NewGuid().ToString('N'))
+            New-Item -ItemType Directory -Path $work | Out-Null
+            function Expect-Rejected([scriptblock]$Action) {
+                $rejected = $false
+                try { & $Action | Out-Null } catch { $rejected = $true }
+                if (-not $rejected) { throw "Incomplete oracle evidence was accepted by $Action. Native field=$field; managed summary=$badSummary" }
+            }
+            try {
+                $reportPath = Join-Path $work 'native.json'
+                Expect-Rejected { Assert-CathedralNativeReport $reportPath }
+                $report = [ordered]@{
+                    tests = 1; failures = 0; errors = 0; disabled = 0
+                    testsuites = @(@{ testsuite = @(@{
+                        classname = 'Drlg_l1'; name = 'CathedralFineGeometryLocalAssetOracle'
+                        status = 'RUN'; result = 'COMPLETED'
+                    }) })
+                }
+                function Save-NativeReport { [IO.File]::WriteAllText($reportPath, ($report | ConvertTo-Json -Depth 6)) }
+                Save-NativeReport
+                Assert-CathedralNativeReport $reportPath
+                foreach ($field in @('tests', 'failures', 'errors', 'disabled')) {
+                    $original = $report[$field]
+                    $report[$field] = if ($field -eq 'tests') { 0 } else { 1 }
+                    Save-NativeReport
+                    Expect-Rejected { Assert-CathedralNativeReport $reportPath }
+                    $report[$field] = $original
+                }
+                foreach ($field in @('classname', 'name', 'status', 'result')) {
+                    $nativeCase = $report.testsuites[0].testsuite[0]
+                    $original = $nativeCase[$field]
+                    $nativeCase[$field] = if ($field -eq 'result') { 'SKIPPED' } else { 'wrong' }
+                    Save-NativeReport
+                    Expect-Rejected { Assert-CathedralNativeReport $reportPath }
+                    $nativeCase[$field] = $original
+                }
+                [IO.File]::WriteAllText($reportPath, '{}')
+                Expect-Rejected { Assert-CathedralNativeReport $reportPath }
+
+                $managedPath = Join-Path $work 'managed.log'
+                $goodSummary = "Test run summary: Passed! - oracle.dll`r`n  total: 4`r`n  failed: 0`r`n  succeeded: 4`r`n  skipped: 0`r`n"
+                [IO.File]::WriteAllText($managedPath, $goodSummary)
+                Assert-CathedralManagedReport $managedPath
+                foreach ($badSummary in @('', 'Test run summary: Failed!',
+                        $goodSummary.Replace('total: 4', 'total: 0'),
+                        $goodSummary.Replace('failed: 0', 'failed: 1'),
+                        $goodSummary.Replace('succeeded: 4', 'succeeded: 3'),
+                        $goodSummary.Replace('skipped: 0', 'skipped: 1'),
+                        ($goodSummary + $goodSummary),
+                        ($goodSummary + 'Test run summary: Failed!'))) {
+                    [IO.File]::WriteAllText($managedPath, $badSummary)
+                    Expect-Rejected { Assert-CathedralManagedReport $managedPath }
+                }
+
+                Expect-Rejected { Get-CathedralOracleArtifacts $work }
+                $artifactNames = @('l1.til', 'l1.sol', 'cathedral-2588-main.json', 'cathedral-2588-previous.json',
+                    'cathedral-743271966-main.json', 'cathedral-743271966-previous.json')
+                foreach ($name in $artifactNames) { [IO.File]::WriteAllText((Join-Path $work $name), 'nonlicensed synthetic input') }
+                $artifacts = @(Get-CathedralOracleArtifacts $work)
+                if ($artifacts.Count -ne 6 -or @($artifacts | Where-Object { $_.Sha256 -notmatch '^[0-9a-f]{64}$' -or $_.Bytes -le 0 }).Count -ne 0) {
+                    throw 'Complete oracle artifacts were not hashed.'
+                }
+                [IO.File]::WriteAllText((Join-Path $work 'l1.sol'), '')
+                Expect-Rejected { Get-CathedralOracleArtifacts $work }
+                Write-Output 'PASS'
+            } finally {
+                $tempRoot = [IO.Path]::GetFullPath([IO.Path]::GetTempPath()).TrimEnd('\')
+                $resolvedWork = [IO.Path]::GetFullPath($work)
+                if ($resolvedWork.StartsWith($tempRoot + '\', [StringComparison]::OrdinalIgnoreCase) -and
+                    [IO.Path]::GetFileName($resolvedWork) -match '^Godevilution-OracleHelperTest-[0-9a-f]{32}$') {
+                    Remove-Item -LiteralPath $resolvedWork -Recurse -Force -ErrorAction SilentlyContinue
+                }
+            }
+            """,
+            "tools/test-cathedral-geometry.ps1");
+
+        Assert.Contains("PASS", RunPowerShell(script), StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void CathedralOracleBuildSelectionRequiresTheMatchingDebugSourceTree()
+    {
+        if (!OperatingSystem.IsWindows())
+            return;
+
+        var script = BuildPowerShellHarness(
+            ["Find-CathedralOracleBuild"],
+            """
+            $work = Join-Path ([IO.Path]::GetTempPath()) ('Godevilution-OracleBuildTest-' + [guid]::NewGuid().ToString('N'))
+            $build = Join-Path $work 'build/x64-Debug-authoritative-vcpkg'
+            $vs = Join-Path $work 'vs'
+            $developer = Join-Path $vs 'Common7/Tools/VsDevCmd.bat'
+            $cmake = Join-Path $vs 'Common7/IDE/CommonExtensions/Microsoft/CMake/CMake/bin/cmake.exe'
+            New-Item -ItemType Directory -Path $build, ([IO.Path]::GetDirectoryName($developer)), ([IO.Path]::GetDirectoryName($cmake)) | Out-Null
+            [IO.File]::WriteAllText($developer, 'synthetic developer environment')
+            [IO.File]::WriteAllText($cmake, 'synthetic CMake path')
+            $compiler = Join-Path $vs 'VC/Tools/MSVC/test/bin/Hostx64/x64/cl.exe'
+            $cachePath = Join-Path $build 'CMakeCache.txt'
+            function Save-Cache([string]$Source, [string]$Mode, [string]$Testing, [string]$Compiler) {
+                [IO.File]::WriteAllText($cachePath, "UNPACKED_MPQS:BOOL=OFF`r`nBUILD_TESTING:BOOL=$Testing`r`nCMAKE_BUILD_TYPE:STRING=$Mode`r`nCMAKE_HOME_DIRECTORY:INTERNAL=$Source`r`nCMAKE_CXX_COMPILER:FILEPATH=$Compiler`r`n")
+            }
+            function Expect-Rejected {
+                $rejected = $false
+                try { Find-CathedralOracleBuild $work | Out-Null } catch { $rejected = $true }
+                if (-not $rejected) { throw 'An incompatible native build tree was selected.' }
+            }
+            try {
+                Expect-Rejected
+                Save-Cache $work 'Debug' 'ON' $compiler
+                $selected = Find-CathedralOracleBuild $work
+                if ($selected.Directory -ne $build -or $selected.DeveloperCommand -ne $developer -or $selected.CMake -ne $cmake) {
+                    throw 'The matching developer environment was not selected.'
+                }
+                Save-Cache (Join-Path $work 'other-project') 'Debug' 'ON' $compiler
+                Expect-Rejected
+                Save-Cache $work 'Release' 'ON' $compiler
+                Expect-Rejected
+                Save-Cache $work 'Debug' 'OFF' $compiler
+                Expect-Rejected
+                Save-Cache $work 'Debug' 'ON' (Join-Path $vs 'bin/clang.exe')
+                Expect-Rejected
+                Save-Cache $work 'Debug' 'ON' 'C:/missing-vs/VC/cl.exe'
+                Expect-Rejected
+                Save-Cache $work 'Debug' 'ON' $compiler
+                [IO.File]::WriteAllText($cachePath, ([IO.File]::ReadAllText($cachePath).Replace('UNPACKED_MPQS:BOOL=OFF', 'UNPACKED_MPQS:BOOL=ON')))
+                Expect-Rejected
+                Write-Output 'PASS'
+            } finally {
+                $tempRoot = [IO.Path]::GetFullPath([IO.Path]::GetTempPath()).TrimEnd('\')
+                $resolvedWork = [IO.Path]::GetFullPath($work)
+                if ($resolvedWork.StartsWith($tempRoot + '\', [StringComparison]::OrdinalIgnoreCase) -and
+                    [IO.Path]::GetFileName($resolvedWork) -match '^Godevilution-OracleBuildTest-[0-9a-f]{32}$') {
+                    Remove-Item -LiteralPath $resolvedWork -Recurse -Force -ErrorAction SilentlyContinue
+                }
+            }
+            """,
+            "tools/test-cathedral-geometry.ps1");
+
+        Assert.Contains("PASS", RunPowerShell(script), StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void CathedralOracleNativeInvocationRetainsStderrAndNonzeroExitCodes()
+    {
+        if (!OperatingSystem.IsWindows())
+            return;
+
+        var script = BuildPowerShellHarness(
+            ["Invoke-CathedralNativeOracle"],
+            """
+            $work = Join-Path ([IO.Path]::GetTempPath()) ('Godevilution-OracleInvokeTest-' + [guid]::NewGuid().ToString('N'))
+            New-Item -ItemType Directory -Path $work | Out-Null
+            try {
+                $child = Join-Path $work 'harmless native child.cmd'
+                foreach ($expectedCode in @(0, 23, -1073741819)) {
+                    [IO.File]::WriteAllText($child, "@echo off`r`necho synthetic oracle stdout`r`necho INFO: synthetic oracle stderr 1>&2`r`nexit /b $expectedCode`r`n")
+                    $log = Join-Path $work 'retained native log.txt'
+                    $actualCode = Invoke-CathedralNativeOracle $child (Join-Path $work 'unused report.json') $log
+                    if ($actualCode -ne $expectedCode) { throw "Native exit $expectedCode became $actualCode." }
+                    $output = [IO.File]::ReadAllText($log)
+                    if ($output -notmatch 'synthetic oracle stdout' -or $output -notmatch 'synthetic oracle stderr') {
+                        throw 'Native output was not retained.'
+                    }
+                }
+                Write-Output 'PASS'
+            } finally {
+                $tempRoot = [IO.Path]::GetFullPath([IO.Path]::GetTempPath()).TrimEnd('\')
+                $resolvedWork = [IO.Path]::GetFullPath($work)
+                if ($resolvedWork.StartsWith($tempRoot + '\', [StringComparison]::OrdinalIgnoreCase) -and
+                    [IO.Path]::GetFileName($resolvedWork) -match '^Godevilution-OracleInvokeTest-[0-9a-f]{32}$') {
+                    Remove-Item -LiteralPath $resolvedWork -Recurse -Force -ErrorAction SilentlyContinue
+                }
+            }
+            """,
+            "tools/test-cathedral-geometry.ps1");
+
+        Assert.Contains("PASS", RunPowerShell(script), StringComparison.Ordinal);
+    }
+
+    private static string BuildPowerShellHarness(
+        string[] functionNames,
+        string body,
+        string relativeLauncherPath = "godot/run-local-client.ps1")
+    {
+        var launcherPath = Path.Combine(FindRepositoryRoot(), relativeLauncherPath);
         var lines = new List<string>
         {
             "$ErrorActionPreference = 'Stop'",

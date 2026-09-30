@@ -81,9 +81,13 @@ one-based coarse IDs through validated external TIL/SOL catalogs into native
 112x112 fine coordinates at offset (16,16), with exterior mega 22 and local
 Cathedral SOL corrections. Its immutable result retains the separate 40x40
 coarse/seed/stair output and fine level rather than changing generic DUN or wire
-geometry contracts. No MPQs are read. Native asset/oracle comparison, runtime
-integration, exact vision parity and population remain open; the existing level
-contract conservatively includes movement blockers in vision blockers.
+geometry contracts. No MPQs are read by this module. The separate opt-in native
+oracle now matches full fine layers and named SOL flags for two original-Diablo
+seeds with MAIN/PREV entry. Its temporary raw-SOL normalization is test-only;
+strict production loading, broader seed coverage, runtime integration and population
+remain separate. Exact shared vision parity is not claimed: the existing level
+contract conservatively includes movement blockers in vision blockers. See
+`docs/ai/msvc-build.md` for the isolated local-asset comparison.
 
 Run the independent xUnit v3 suite from the repository root:
 
