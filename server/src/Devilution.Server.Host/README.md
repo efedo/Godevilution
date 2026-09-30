@@ -45,6 +45,32 @@ It targets .NET 8 and depends on Protocol, Domain, Data, and Engine. It must not
 reference `Devilution.Diablo` or any other game module. The .NET 10 executable
 supplies concrete content, module candidates, and one compatible adapter.
 
+## Clock-gated scheduling foundation
+
+`ClockGatedCommandScheduler` is an isolated scheduling component, not enabled
+by `AuthoritativeTcpServer` or the standalone executable. Existing direct
+command/TCP behavior remains unchanged. Two loopback characterization cases
+demonstrate that the current host can advance from physical tick 111 to a
+peer's requested tick 125, rejecting another client's tick-120 input; without
+that peer, tick 120 is accepted. This establishes a mechanism, not the exact
+cause of the retained application failure.
+
+The component retains future intents until their due boundary, preserves batch
+wire order, and drains due work before later autonomous advancement. Its caller
+must supply the actual authoritative admission boundary and route every advance
+through the gate. Receipt allocation and strict late-command policy remain in
+`AuthoritativeCommandServer`. A configured publication callback must checkpoint
+state and receipts before successful completion; queued intents themselves are
+not persisted. Connection loss cannot cancel received intents; host cancellation
+ends unresolved work. Retained slots, including duplicate waiters, are bounded.
+Publication callbacks cannot re-enter submission, advancement or disposal;
+explicit cancellation and read-only queries remain available.
+
+Production activation requires complete host advancement/restore/reload and
+shutdown integration, client retry/lead checks for deliberately delayed
+acknowledgements, native synchronous-response verification, and fresh two-client
+resume acceptance. This component alone does not close M0 or fix multiplayer.
+
 ## Opt-in performance evidence
 
 The standalone host accepts `--performance-output <new-file>`. It reserves a

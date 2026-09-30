@@ -2,6 +2,18 @@
 
 All notable changes to this fork are documented below.
 
+- 2026-09-30: Reproduced peer-driven shared future-tick advancement with two
+  real TCP characterization cases and added an isolated clock-gated scheduler.
+  Preserved strict admission, wire order, first-wins receipts and checkpoint-before-
+  completion behavior; bounded retained slots and covered retry, dependency-failure,
+  cancellation, re-entry and copy isolation. All 25 focused cases pass without
+  exclusions. Corrected a full-suite concurrent-checkpoint barrier timeout with
+  dedicated writers, retaining the deadline and integrity assertions. Expanded
+  focused verification passes 43/43 and the fresh full suite 1,106/1,106, with
+  no skips; retained the initial timeout in status. Kept production
+  TCP/composition, protocol and save formats unchanged;
+  documented activation gates. The retained multiplayer failure and M0 remain open.
+
 - 2026-09-30: Isolated Godot project import/build/run per launch, preserving
   the source SDK pin, local edits, backups and saves. Validated staged references,
   solution paths, NuGet policy and stable Mono engine/SDK identities; rejected

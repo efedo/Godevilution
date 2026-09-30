@@ -119,6 +119,53 @@ The following records describe implemented slices at this baseline. They are
 evidence, not a separate priority list; detailed older entries retain their
 original scope and may be superseded by later entries or the current assessment.
 
+### M0 future-tick scheduling characterization (2026-09-30)
+
+This batch follows `1c2921a7b`. Two deterministic real-loopback cases expose
+the existing host's shared-tick leap: with physical time fixed at 111, a peer's
+tick-125 command is applied immediately, then another client's tick-120 command
+is rejected `TooLate`. The same tick-120 command without that peer is accepted.
+The retained multiplayer ledger also records the peer's accepted tick-125
+receipt immediately before the rejection. The application trace does not record
+the rejected command's requested tick or physical admission clock, so this is
+a proven mechanism and supporting evidence, not proof of that run's exact cause.
+
+Added an isolated `ClockGatedCommandScheduler` over the existing command server.
+It retains timely future intents, processes batch heads in wire order at their
+due ticks, drains older due work before later admission/advancement, and keeps
+strict gameplay lateness and the existing two-tick non-critical tolerance.
+Pending identities are first-wins; completion requires configured checkpoint
+publication. Failed publication can be retried without re-execution or a new
+receipt. Retained wire slots, including duplicate waiters and batch prefixes,
+are bounded; failed dependencies and host cancellation release unresolved work.
+Re-entry is guarded and outputs are cloned. Queued intents are not durable
+across host stop or process failure.
+
+Focused verification: all 25 selected xUnit cases pass, with zero failures or
+exclusions (23 scheduler cases plus two TCP characterization cases). The
+rebuilt server suite compiles without code/analyzer errors; four NU1900 warnings
+report unavailable NuGet vulnerability data. Initial locking-overload and test
+compilation errors were corrected before the passing run.
+The first full rebuilt server run passes all 1,106 tests. A latest-source repeat
+then passes 1,105 and fails one existing concurrent-checkpoint test: twelve
+blocking thread-pool writers cannot all reach its five-second barrier under
+suite load. Matched the raw-save test's existing dedicated-worker pattern while
+preserving the deadline, concurrent writes and complete state/receipt assertions.
+After that correction, the expanded focused selection passes 43/43 (the 25
+scheduling/TCP cases plus all 18 save-store cases), and the fresh full suite
+passes 1,106/1,106, both with zero failures or skips. The initial timeout remains
+recorded here; no test was excluded or deadline increased.
+These are managed/loopback and launcher-helper results, not a new actual Godot
+multiplayer journey or a rerun of the separate Diablo-module RNG baseline.
+
+The scheduler is not wired into `AuthoritativeTcpServer` or `Program`; legacy
+direct/TCP behavior, protocol and save formats remain unchanged. Production
+activation still requires every advancement/publication path, restore/reload
+handling, awaited client-handler shutdown, deliberate ACK-wait retry/lead and
+native synchronous-response checks, then actual fresh-host two-client resume.
+No new Godot GUI/recovery/campaign acceptance or multiplayer fix is claimed.
+The retained failure, M0 gate and overall approximately 35% estimate remain open.
+
 ### M0 isolated Godot project import/build (2026-09-30)
 
 This batch follows `35c81d4dc`. The installed 4.7.2 Mono importer can upgrade

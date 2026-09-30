@@ -103,6 +103,13 @@ M4. M5 is the final removal gate, not a reason to postpone replacement work.
    Investigate the retained fresh-host two-client resume `TooLate` failure as
    an outstanding timing gate; clean process cleanup is not multiplayer acceptance.
    Preserve traces and authoritative admission rather than retrying to hide it.
+   The loopback counterexample now isolates peer-driven future-tick advancement;
+   the clock-gated scheduler foundation remains outside production. Before
+   activating it, route all host advancement/publication paths through the gate,
+   define restore/reload and shutdown handling, and verify delayed-acknowledgement
+   retry/lead behavior and native responsiveness. Preserve the legacy direct API
+   and strict late-command policy. Then exercise actual fresh-host multiplayer
+   resume; isolated scheduler tests are not application acceptance.
 2. Add an application-level acceptance path through the actual Godot scene and
    controls: launch, create a character, receive/render an authoritative world,
    submit movement, observe the acknowledged position, save, exit, and resume

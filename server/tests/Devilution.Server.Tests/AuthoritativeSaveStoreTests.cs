@@ -482,7 +482,10 @@ public sealed class AuthoritativeSaveStoreTests
         try {
             var stores = states.Select(_ => new AuthoritativeSessionStore(root)).ToArray();
             using var barrier = new Barrier(states.Length);
-            await Task.WhenAll(states.Select((entry, index) => Task.Run(() => {
+            // Blocking a thread-pool worker at the barrier can starve the other
+            // writers during the full suite. Dedicated workers preserve genuine
+            // simultaneous admission without relaxing the five-second deadline.
+            await Task.WhenAll(states.Select((entry, index) => Task.Factory.StartNew(() => {
                 if (!barrier.SignalAndWait(
                         TimeSpan.FromSeconds(5),
                         TestContext.Current.CancellationToken))
@@ -496,7 +499,7 @@ public sealed class AuthoritativeSaveStoreTests
                         RejectReason = CommandRejectReason.Unspecified,
                     },
                 });
-            })));
+            }, TestContext.Current.CancellationToken, TaskCreationOptions.LongRunning, TaskScheduler.Default)));
 
             var persisted = new AuthoritativeSessionStore(root).Load("shared-session");
             Assert.NotNull(persisted);
