@@ -8,7 +8,7 @@ public sealed class LocalLauncherContractTests
     [Theory]
     [InlineData("run-authoritative-client.ps1")]
     [InlineData("godot/run-local-client.ps1")]
-    public void NewGameLaunchersPinTheServerToSinglePlayer(string relativePath)
+    public void NewGameLaunchersDefaultToSinglePlayer(string relativePath)
     {
         var repositoryRoot = FindRepositoryRoot();
         var launcher = File.ReadAllText(Path.Combine(
@@ -31,7 +31,17 @@ public sealed class LocalLauncherContractTests
             RegexOptions.IgnoreCase));
         var normalized = Regex.Replace(expression, "['\",=]+", " ");
         normalized = Regex.Replace(normalized, @"\s+", " ");
-        Assert.Contains("--game-mode single-player", normalized, StringComparison.OrdinalIgnoreCase);
+        if (relativePath.StartsWith("godot/", StringComparison.Ordinal)) {
+            Assert.Contains("--game-mode {4}", normalized, StringComparison.Ordinal);
+            Assert.Contains("$serverGameMode = if ($Multiplayer) { 'multiplayer' } else { 'single-player' }", launcher);
+            Assert.Contains("$overlayArguments, $serverGameMode", expression);
+            Assert.DoesNotContain("$Multiplayer = $true", launcher);
+            var wrapper = File.ReadAllText(Path.Combine(repositoryRoot, "run-godot-client.ps1"));
+            Assert.Contains("& $godotLauncher", wrapper);
+            Assert.DoesNotContain("Multiplayer", wrapper);
+        } else {
+            Assert.Contains("--game-mode single-player", normalized, StringComparison.OrdinalIgnoreCase);
+        }
         Assert.DoesNotContain("--game-mode multiplayer", normalized, StringComparison.OrdinalIgnoreCase);
 
         var scriptAfterAssignment = launcher[(assignment.Index + assignment.Length)..];
@@ -134,7 +144,8 @@ public sealed class LocalLauncherContractTests
         Assert.True(launch > launcher.IndexOf("dotnet build $serverProject", StringComparison.Ordinal));
         Assert.True(launch > launcher.IndexOf("dotnet build (Join-Path $clientProject", StringComparison.Ordinal));
         Assert.DoesNotContain("Get-Process", launcher);
-        Assert.Contains("$gameMode -ne 'SinglePlayer'", launcher);
+        Assert.Contains("$gameMode -ne $expectedGameMode", launcher);
+        Assert.Contains("$expectedGameMode = if ($Multiplayer) { 'Multiplayer' } else { 'SinglePlayer' }", launcher);
         Assert.Contains("DEVILUTION_RESUME_TOKEN_PATH", launcher);
         Assert.Contains("$savedEnvironment[$name]", launcher);
     }
@@ -159,6 +170,37 @@ public sealed class LocalLauncherContractTests
         Assert.Contains("$parameters.PreviewContent = $true", acceptance);
         Assert.Contains("-AcceptancePhase TownLoopResume", acceptance);
         Assert.Contains("if ($Journey -and $TownLoop)", acceptance);
+    }
+
+    [Fact]
+    public void GodotMultiplayerOwnsOneHostAndTwoIsolatedClientProcesses()
+    {
+        var root = FindRepositoryRoot();
+        var wrapper = File.ReadAllText(Path.Combine(root, "run-godot-multiplayer.ps1"));
+        var launcher = File.ReadAllText(Path.Combine(root, "godot/run-local-client.ps1"));
+        var acceptance = File.ReadAllText(Path.Combine(root, "tools/test-godot-session.ps1"));
+        Assert.Contains("param()", wrapper);
+        Assert.Contains("& $godotLauncher -Multiplayer", wrapper);
+        Assert.Contains("Test-Path -LiteralPath $godotLauncher -PathType Leaf", wrapper);
+        Assert.Contains("if ($Multiplayer) { '.local/godot-multiplayer' }", launcher);
+        Assert.Contains("Join-Path $SessionDirectory \"player-$Slot\"", launcher);
+        Assert.Contains("$clientStart.EnvironmentVariables['DEVILUTION_RESUME_TOKEN_PATH']", launcher);
+        Assert.Contains("$clientStart.EnvironmentVariables['GODEVILUTION_LOCAL_PLAYER']", launcher);
+        Assert.Contains("$clientStart.WindowStyle = if ($Headless) { 'Hidden' } else { 'Normal' }", launcher);
+        Assert.Contains("$startedClients += Start-SceneClient 1", launcher);
+        Assert.Contains("if ($Multiplayer) { $startedClients += Start-SceneClient 2 }", launcher);
+        Assert.Single(Regex.Matches(launcher, @"\$startedServer = Start-SessionServer"));
+        Assert.Contains("$startedClients | ForEach-Object { $_.Process }", launcher);
+        Assert.Contains("$startedClient.Process.ExitCode -ne 0", launcher);
+        Assert.Contains("Multiplayer acceptance requires fresh phase markers", launcher);
+        Assert.Contains("exactly two authoritative character checkpoints", launcher);
+        Assert.Contains("distinct private resume bookmarks", launcher);
+        Assert.Contains("Multiplayer acceptance phases require -Multiplayer", launcher);
+        Assert.Contains("$Multiplayer -and $PreviewContent", launcher);
+        Assert.Contains("-AcceptancePhase MultiplayerCreate", acceptance);
+        Assert.Contains("-AcceptancePhase MultiplayerResume", acceptance);
+        Assert.Contains("Multiplayer resume did not start a fresh authoritative host", acceptance);
+        Assert.Contains("Multiplayer resume did not start two fresh Godot processes", acceptance);
     }
 
     private static string FindRepositoryRoot()

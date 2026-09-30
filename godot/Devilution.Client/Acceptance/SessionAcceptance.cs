@@ -26,13 +26,17 @@ public partial class SessionAcceptance : Node
     private async Task RunAsync()
     {
         var phase = Environment.GetEnvironmentVariable("GODEVILUTION_ACCEPTANCE_PHASE");
-        if (phase is not ("Create" or "Resume" or "Recovery" or "Journey" or "JourneyResume" or "TownLoop" or "TownLoopResume"))
+        if (phase is not ("Create" or "Resume" or "Recovery" or "Journey" or "JourneyResume" or "TownLoop" or "TownLoopResume" or "MultiplayerCreate" or "MultiplayerResume"))
             throw new InvalidOperationException("Explicit acceptance phase is required.");
         var directory = Environment.GetEnvironmentVariable("GODEVILUTION_ACCEPTANCE_DIRECTORY")
             ?? throw new InvalidOperationException("An isolated evidence directory is required.");
         // The headless display driver otherwise supplies a 64x64 viewport.
         if (DisplayServer.GetName() == "headless")
             GetTree().Root.Size = new Vector2I(1280, 720);
+        if (phase is "MultiplayerCreate" or "MultiplayerResume") {
+            await RunMultiplayerAsync(directory, phase);
+            return;
+        }
         var bookmarkPath = System.IO.Path.Combine(directory, "resume-token.txt");
         var creating = phase is "Create" or "Journey" or "TownLoop";
         if (creating) {
@@ -263,7 +267,7 @@ public partial class SessionAcceptance : Node
         var stage = Stopwatch.StartNew();
         while (!condition()) {
             var seconds = Environment.GetEnvironmentVariable("GODEVILUTION_ACCEPTANCE_PHASE") switch {
-                "TownLoop" => 225, "Journey" => 150, _ => 40,
+                "TownLoop" => 225, "Journey" => 150, "MultiplayerCreate" or "MultiplayerResume" => 70, _ => 40,
             };
             Require(deadline.Elapsed < TimeSpan.FromSeconds(seconds), failure);
             Require(stageSeconds is null || stage.Elapsed.TotalSeconds < stageSeconds, failure);

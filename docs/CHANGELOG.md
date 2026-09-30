@@ -2,6 +2,15 @@
 
 All notable changes to this fork are documented below.
 
+- 2026-09-29: Added a zero-argument two-window Godot multiplayer launcher with
+  one authoritative host, isolated per-player bookmarks, process-local client
+  settings and owned-process cleanup. Added actual-scene mutual movement/state
+  visibility and reverse-order fresh-host resume acceptance, without treating
+  host-lifetime entity IDs as durable character identity. Headless and repeated
+  rendered runs pass; an earlier unexplained rendered movement stall remains
+  recorded with strengthened diagnostics. Preserved single-player/preview
+  defaults and updated launcher contracts, usage, plan and progress evidence.
+
 - 2026-09-29: Added an optional, isolated Godot town-loop preview with equippable
   earned loot and reverse stairs while preserving base content and saves. Fixed
   missing empty equipment destinations and unintended stash-cell-zero selection

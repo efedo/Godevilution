@@ -50,6 +50,15 @@ only.
 
 ## Prototype controls and routes
 
+The zero-argument root `run-godot-multiplayer.ps1` starts one authoritative
+multiplayer host and two independently named Godot windows. Each window has its
+own setup form and private resume bookmark in `.local/godot-multiplayer/player-1`
+or `player-2`; both use the shared server saves beside them. Keep these files
+together when backing up, and do not exchange the bookmarks. Use each window's
+ordinary controls; closing one leaves the other running, and closing both ends
+the owned host. This local profile starts in town with seed 0 and unchanged base
+content. Normal single-player and preview launchers keep their original saves.
+
 The responsive HUD separates Hero, Items, Trade, Stash, and World tabs from the
 world view (minimum window 960x600). WASD/arrows move; Ctrl+left click requests a
 step toward a tile without casting. Ordinary left click retains interaction or
@@ -68,10 +77,16 @@ validates movement, range, target presence, and the interaction itself.
 Application acceptance covers the authored town-to-Cathedral encounter, distant
 loot pickup, and fresh-host restore. The optional town-loop preview extends this
 with equipment, a reverse stair, Smith purchase, and stash transfers. Portal
-acquisition, quest/death/skill/cast and multiplayer journeys, the complete
+acquisition, quest/death/skill/cast and cooperative gameplay/recovery journeys, the complete
 gameplay loop, and generated-world parity remain open. Current Smith/stash
 server paths do not enforce town proximity; exercising them in town is not
 evidence that location gating matches native behavior.
+
+Two-client application acceptance covers mutual movement/friendly-mode
+visibility and fresh-host resume through both setup forms, including reversed
+connection order. Numeric entity IDs can change after host restart; each private
+bookmark identifies the durable character. This does not certify cooperative
+combat, cross-player world interactions, or multiplayer host-loss recovery.
 
 Items shows all seven equipment destinations, including empty slots. Select an
 equipped item and an empty inventory cell to unequip it; select an inventory

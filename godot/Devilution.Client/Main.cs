@@ -40,10 +40,14 @@ public partial class Main : Node2D
     internal Vector2? ObservedPlayerScreenPosition => world?.ScreenPositionForEntity(model.PlayerEntityId);
     internal ulong ObservedSnapshotRevision => snapshotRevision;
     internal Vector2 ObservedTileScreenPosition(int x, int y) => world!.ScreenPositionForTile(x, y);
+    internal Vector2? ObservedEntityScreenPosition(uint entityId) => world?.ScreenPositionForEntity(entityId);
 
     public override void _Ready()
     {
         GetWindow().MinSize = new Vector2I(960, 600);
+        var playerSlot = Environment.GetEnvironmentVariable("GODEVILUTION_LOCAL_PLAYER");
+        if (playerSlot is "1" or "2")
+            GetWindow().Title = $"Godevilution - Player {playerSlot}";
         if (int.TryParse(Environment.GetEnvironmentVariable("GODEVILUTION_QUIT_AFTER_SECONDS"), out var quitSeconds)
             && quitSeconds is > 0 and <= 3600)
             GetTree().CreateTimer(quitSeconds).Timeout += () => GetTree().Quit();

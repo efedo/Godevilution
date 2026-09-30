@@ -71,13 +71,35 @@ The additional zero-argument `run-godot-preview.ps1` selects the authored
 `.local/godot-preview` save/bookmark directory must not be mixed with the normal
 base profile. The original root launcher and base content identity are unchanged.
 
+`run-godot-multiplayer.ps1` is the zero-argument two-window local multiplayer
+entry point. Its explicit `-Multiplayer` inner-harness mode builds/imports once,
+starts one multiplayer host, and supplies separate process-local environment
+blocks and bookmarks to both clients. It uses `.local/godot-multiplayer/save`
+and `player-1/resume-token.txt` / `player-2/resume-token.txt`, not either existing
+single-player profile. Both windows must exit before normal host cleanup; any
+nonzero client exit or acceptance timeout cleans up all tracked owned processes.
+
 ## Application acceptance
+
+The multiplayer variant is separate from Journey/TownLoop. It runs two actual
+Godot processes through new-character forms, moves both players using ordinary
+keys, toggles friendly mode, and requires each client's snapshot and world
+presentation to show the other's changes without changing its own state.
+It checks two distinct private bookmarks and exactly two durable checkpoints.
+A fresh host and two fresh clients then resume in reverse connection order,
+verify both characters' state, and advance each player's own command sequence.
+Per-phase process evidence distinguishes new processes from reused ones. Allow
+75 seconds per phase plus builds. Both clients remain connected until both
+finish observing the peer. This is a town/session check, not cooperative combat,
+multiplayer host-loss recovery, stable cross-restart numeric entity IDs, or an
+OS foreground/focus guarantee. Keep the entire evidence directory private.
 
 ```powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File tools/test-godot-session.ps1
 powershell -NoProfile -ExecutionPolicy Bypass -File tools/test-godot-session.ps1 -Visible
 powershell -NoProfile -ExecutionPolicy Bypass -File tools/test-godot-session.ps1 -Journey -Visible
 powershell -NoProfile -ExecutionPolicy Bypass -File tools/test-godot-session.ps1 -TownLoop -Visible
+powershell -NoProfile -ExecutionPolicy Bypass -File tools/test-godot-session.ps1 -Multiplayer -Visible
 ```
 
 The first two commands use separate server and Godot processes for create and resume, a

@@ -75,7 +75,9 @@ open. Their scope, dependencies, and exit checks are defined only in the
   The former 1028x720 HUD clipping is resolved. Actual combat, distant loot
   pickup, inventory display, and fresh-host restoration now pass too. The optional
   authored preview adds equipment, reverse-stair return, purchase/stash transfers,
-  and restore; portal acquisition and the complete loop remain M1 work. Local standalone-host
+  and restore. Two-client Godot town movement/state visibility and reverse-order
+  fresh-host resume also have application evidence below; cooperative combat,
+  portal acquisition and the complete loop remain M1 work. Local standalone-host
   measurements are below;
   no campaign, Godot frame budget, or release-platform performance pass is claimed.
 - Godot currently requires no MPQs because it uses placeholder presentation.
@@ -99,6 +101,63 @@ open. Their scope, dependencies, and exit checks are defined only in the
 The following records describe implemented slices at this baseline. They are
 evidence, not a separate priority list; detailed older entries retain their
 original scope and may be superseded by later entries or the current assessment.
+
+### M1 two-Godot multiplayer session and reverse-order resume (2026-09-29)
+
+This batch follows `a2ea42b15`. The zero-argument
+`run-godot-multiplayer.ps1` selects an explicit two-client mode in the shared
+launcher. It builds/imports once, starts one multiplayer host and two separately
+titled Godot processes, and keeps one shared save root plus player-specific
+bookmarks under `.local/godot-multiplayer`. Child-specific settings use separate
+process environment blocks. Existing single-player/preview defaults, saves,
+base content, protocol, and authoritative rules are unchanged. Normal cleanup
+waits for both windows; failures clean up only the owned process handles.
+
+`tools/test-godot-session.ps1 -Multiplayer` exercises both real setup forms and
+key handlers, checks self-first snapshot identity, accepted local movement and
+friendly-mode changes, unchanged local state under peer commands, and the peer
+actor's settled on-screen position. It requires distinct bookmarks and exactly
+two durable checkpoints. Fresh host/client processes resume in reverse order,
+then each player advances its own persisted sequence. Character names, classes,
+positions, gold and friendly mode must restore; host-lifetime numeric entity IDs
+are deliberately not treated as durable identity. Process evidence proves the
+fresh restart without publishing credentials.
+
+Verification:
+
+- Headless create/resume passes in
+  `%TEMP%/Godevilution-Scene-Acceptance-f8d5c90c68e64751aa0e933fcdaeac25`.
+  Player 1 advances sequences 4 -> 6, player 2 advances 2 -> 4. Both keep 100
+  gold; resume changes their positions from (1,2)/(1,0) to (2,2)/(2,0). Their
+  numeric IDs swap with connection order while character ownership stays correct.
+- Rendered create/resume passes in
+  `%TEMP%/Godevilution-Scene-Acceptance-f7fbe308c5dd4cea847174d133ef1fa4`
+  and the repeat `%TEMP%/Godevilution-Scene-Acceptance-e472c423fb3d4f188d1b225390873399`.
+  Both players' restored-view PNGs from the first passing run were inspected;
+  each shows the correct local/remote actors. This is not OS focus acceptance.
+- An earlier rendered run in
+  `%TEMP%/Godevilution-Scene-Acceptance-dc597ffb524c44d082da27d75ef21e22`
+  passed creation but timed out on player 1's resumed Right movement. Its old
+  error captured pre-input state, so it does not distinguish input loss,
+  admission timing, or movement settling. Diagnostics now capture terminal
+  result/state and reject immediately on a rejected command; no server rule,
+  input routing, or production retry was changed. Two subsequent rendered runs
+  pass, but the original cause remains unproven in M0 reliability work. The
+  failed run's recorded host and two Godot PIDs were confirmed absent afterward.
+- Launcher contracts pass 8/8, documentation checks 3/3, and direct invalid-option
+  guards 3/3 before any build/launch. Default single-player create/resume/server-loss
+  recovery remains green in
+  `%TEMP%/Godevilution-Scene-Acceptance-f0abb5a67f1a478a925ebc722d8d925c`.
+- The original TownLoop/TownLoopResume also passes headlessly in
+  `%TEMP%/Godevilution-Scene-Acceptance-ee234554938b49c8a09240bf1938ec6c`:
+  12 attacks, no potion consumed, equipment/stash/gold and fresh-host restore
+  preserved. This exercises the original preview through the shared launcher.
+
+This establishes basic two-client town/session integration, not cooperative
+combat, shared dungeon/quest interactions, multiplayer host-loss recovery,
+native generation, or campaign completion. M0/M1 remain open and the overall
+35% (30-40% judgment range) estimate is unchanged. No new full protocol/native
+suite or performance pass is claimed for this launcher/scene batch.
 
 ### M1 isolated equipment, return, and services preview (2026-09-29)
 

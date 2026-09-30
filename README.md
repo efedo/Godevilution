@@ -62,6 +62,9 @@ For the optional authored town/combat/equipment/shop/stash preview, run
 `powershell -ExecutionPolicy Bypass -File run-godot-preview.ps1`. It starts in
 town with an isolated overlay and saves under `.local/godot-preview`; it does
 not change the default base pack or existing saves. This is not a full campaign.
+For two local Godot windows on one multiplayer host, run
+`powershell -ExecutionPolicy Bypass -File run-godot-multiplayer.ps1`. It uses
+base content with separate player bookmarks under `.local/godot-multiplayer`.
 See [Godot build and application checks](docs/ai/godot-build.md) for acceptance.
 See [godot/README.md](godot/README.md) for details and
 [docs/native-client.md](docs/native-client.md) for the native compatibility

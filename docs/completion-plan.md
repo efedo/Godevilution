@@ -86,7 +86,7 @@ M4. M5 is the final removal gate, not a reason to postpone replacement work.
 ## M0: Reproducible launch and acceptance baseline
 
 1. Preserve the zero-argument native and base Godot launchers, plus the isolated
-   optional Godot preview launcher. Make Godot's launcher build the
+   optional Godot preview and two-client multiplayer launchers. Make Godot's launcher build the
    current server and client assembly, validate handshake mode and identities,
    report startup failures, and clean up only processes it owns. The Godot
    harness now rebuilds both projects, imports assets, and retains local saves
@@ -116,6 +116,9 @@ M4. M5 is the final removal gate, not a reason to postpone replacement work.
    recorded heavy-load route `TooLate` rejection with host/network timing evidence.
    This client fix does not certify admission under arbitrary post-send stalls;
    do not relax server authority or silently retry rejected gameplay.
+   The earlier two-window rendered resume timeout also remains unexplained;
+   use the final-result/pending-state diagnostics to distinguish input loss,
+   rejected admission and unsettled movement. Passing reruns are not a causal fix.
 
 Exit: the Godot launch/create/move/save/restart/resume journey passes from
 rebuilt artifacts without MPQs; visible UI is checked separately from headless
@@ -144,7 +147,10 @@ deliberately does not claim native generated-world parity, which belongs to M2.
    transfers without changing base saves or granting resources. Preserve that
    distinct content identity and close legitimate Town Portal acquisition/use,
    native vendor/stash location validation, quest, death/restart, skill/cast,
-   and multiplayer journeys. A reverse-stair preview does not close M1.
+   and cooperative gameplay/recovery journeys. Two actual Godot clients now
+   have basic town movement/state visibility and reverse-order fresh-host resume
+   acceptance; retain local-first identity and separate bookmarks when expanding
+   it to combat/world interactions. A reverse-stair preview does not close M1.
 3. Give geometry, actors, projectiles, items, and interaction targets readable
    Godot presentation. Split the main scene/script only where this separates
    concrete input, rendering, menus, or HUD responsibilities. Keep placeholder
