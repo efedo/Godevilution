@@ -2,6 +2,16 @@
 
 All notable changes to this fork are documented below.
 
+- 2026-09-30: Added an immutable Cathedral level-1 coarse/fine geometry pair and
+  catalog-driven 112x112 materializer with native offset, exterior fill, quadrant
+  ordering, transparency and SOL corrections. Kept the 40x40 generator result
+  separate from the generic geometry contract; server MPQ independence is unchanged.
+  All 31 focused cases pass, including replacement of exterior blockers, piece-zero
+  light flags, malformed input and copy isolation. Combined module tests pass
+  2489/2493 with four known Hork RNG failures. Updated existing plan/status/contracts;
+  real-asset fine comparison, exact vision, runtime population/traversal and M2
+  acceptance remain open. Confirmed local GOG assets for the next isolated oracle.
+
 - 2026-09-30: Added cancellable Godot approach controls for projected towners and
   portal endpoints, using acknowledged server movement. Native-role store/Gillian
   stash entry now checks declared level, adjacency and empty cursor before any

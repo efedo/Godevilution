@@ -72,6 +72,15 @@ unchanged. Ongoing item actions do not reapply the entry cursor/range check;
 closing services remains possible anywhere. Full open-service lifecycle handling
 across movement/transitions is still an integration gap.
 
+The ordinary Cathedral level-1 geometry adapter expands the generator's
+one-based coarse IDs through validated external TIL/SOL catalogs into native
+112x112 fine coordinates at offset (16,16), with exterior mega 22 and local
+Cathedral SOL corrections. Its immutable result retains the separate 40x40
+coarse/seed/stair output and fine level rather than changing generic DUN or wire
+geometry contracts. No MPQs are read. Native asset/oracle comparison, runtime
+integration, exact vision parity and population remain open; the existing level
+contract conservatively includes movement blockers in vision blockers.
+
 Run the independent xUnit v3 suite from the repository root:
 
 ```powershell

@@ -97,7 +97,8 @@ open. Their scope, dependencies, and exit checks are defined only in the
   are the main completion constraints. Generic procedural geometry and authored
   fragments are implemented foundations, not complete native map generation.
   An isolated ordinary original-Diablo Cathedral level-1 coarse generator now
-  matches two existing native goldens; runtime/fine-layer integration and the
+  matches two existing native goldens and now has an isolated 112x112 fine-coordinate
+  catalog adapter. Real fine-data oracle comparison, runtime/population integration,
   remaining families, quests and placement gates remain open.
 - Compact Golem replay still models one combat target; multiple-owner summons
   and replacement allocation are not represented. Guardian descriptive markers
@@ -228,6 +229,33 @@ animation, native vendor/stash gates, quest/death/class-skill, cooperative gamep
 generated worlds and campaign acceptance remain open. Native GUI/world entry is
 still blocked by the separately recorded firewall prompt, with no permissions
 changed. M1 remains open and the overall planning estimate remains about 35%.
+
+### M2 Cathedral level-1 fine-coordinate foundation (2026-09-30)
+
+The isolated materializer expands the existing generator through validated
+external TIL/SOL catalogs. One-based mega IDs select catalog ID minus one;
+112x112 d-pieces use native quadrant ordering, Dirt exterior mega 22 and interior
+offset (16,16). It copies transparency into the same native coordinate space and
+applies Cathedral's SOL corrections without mutating inputs. The immutable pair
+retains the complete 40x40 coarse/seed/stair result separately; the incompatible
+generic `NativeMegaTileLayer` stays empty. No wire, save, generic DUN or content
+schema is changed and no MPQs are read by the game module.
+
+All 31 new managed cases pass: padding, offset/quadrants, transparency, default
+entry validation, corrections, collision/missile/light flags, piece-zero light,
+exterior blockers replaced by walkable interior, input isolation and malformed
+shapes/catalogs. The combined rebuilt module suite runs 2493: 2489 pass and only
+the four baseline-confirmed Hork Demon RNG failures remain. The existing level
+contract unions movement-solid cells into vision blockers; explicit light flags
+are retained, but exact native vision behavior is not claimed.
+
+The local GOG Diablo/Hellfire archives are confirmed available through installed
+registry paths; absent local files are not the current blocker. Next compare
+native and managed fine arrays for seeds 2588/743271966, MAIN/PREV, using existing
+archive/TIL/SOL APIs in isolated oracle tooling. Do not commit licensed data or
+transfer archive loading to the server. No real-asset fine comparison, runtime
+call site, populated generated traversal, restore or M2 acceptance exists yet.
+This foundation does not change the approximately 35% overall estimate.
 
 ### M2 ordinary Cathedral level-1 coarse generator (2026-09-30)
 
