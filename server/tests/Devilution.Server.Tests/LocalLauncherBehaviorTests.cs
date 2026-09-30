@@ -905,7 +905,8 @@ public sealed class FakeCompletedProcess
                 $checkpointPath = Join-Path $save 'test.session.json'
                 $configPath = Join-Path $config 'diablo.ini'
                 $firstLogPath = Join-Path $work 'native.log'
-                $marker = @{ Kind = 'GodevilutionNativeAcceptance'; Version = 1; ProfileRoot = $work }
+                $marker = @{ Kind = 'GodevilutionNativeAcceptance'; Version = 2; ProfileRoot = $work;
+                    ContentProfile = 'godevilution.native-start@0.1.0' }
                 [IO.File]::WriteAllText($markerPath, ($marker | ConvertTo-Json))
                 [IO.File]::WriteAllText($configPath, '[Graphics]')
                 [IO.File]::WriteAllText($bookmarkPath, 'synthetic-private-bookmark')
@@ -941,9 +942,9 @@ public sealed class FakeCompletedProcess
                 Expect-Rejected { Get-NativeAcceptanceLayout (Join-Path $ancestorLink 'uncreated-profile') $false }
                 [IO.Directory]::Delete($ancestorLink, $false)
                 [IO.File]::WriteAllText($markerPath, ($marker | ConvertTo-Json))
-                foreach ($field in @('Kind', 'Version', 'ProfileRoot')) {
+                foreach ($field in @('Kind', 'Version', 'ProfileRoot', 'ContentProfile')) {
                     $changed = $marker.Clone()
-                    $changed[$field] = if ($field -eq 'Version') { 2 } else { 'wrong' }
+                    $changed[$field] = if ($field -eq 'Version') { 1 } else { 'wrong' }
                     [IO.File]::WriteAllText($markerPath, ($changed | ConvertTo-Json))
                     Expect-Rejected { Get-NativeAcceptanceLayout $work $true }
                 }

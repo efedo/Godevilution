@@ -2,6 +2,20 @@
 
 All notable changes to this fork are documented below.
 
+- 2026-09-30: Added a strict optional content-owned level-entry contract and
+  exact-pinned native town-start pack; validate final effective geometry, stage
+  replacements atomically and refresh projections without changing base/Godot
+  identities, saved positions or existing schema. Bound private native profiles
+  to version 2 and preserve older profiles without migration. Added real
+  single/multiplayer-mode movement/cold-checkpoint/duplicate recovery regressions.
+  Actual GUI creates and restores healthy town state, but retains `TooLate`
+  movement and one access-denied resume failure; the delete-sharing inspection
+  retry exits normally. No native gameplay pass is claimed. Full module retains
+  four known Hork RNG failures; full server has one injected-persistence race
+  failure that passes alone. Final focused content/host/launcher/docs checks pass
+  25/5/22/3 cases. Updated existing plan, status and contract/build
+  guidance; M0 remains open.
+
 - 2026-09-30: Added guarded explicit native test-profile resume with exclusive
   locking, ancestor/bookmark validation, separate phase logs and actual terminal
   client evidence. Preserved normal zero-argument/base-content launch behavior.

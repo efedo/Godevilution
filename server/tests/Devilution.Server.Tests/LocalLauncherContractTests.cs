@@ -131,6 +131,10 @@ public sealed class LocalLauncherContractTests
         Assert.Contains("Join-Path $profileRoot 'native-config'", launcher, StringComparison.Ordinal);
         Assert.Contains("Get-NativeAcceptanceLayout $acceptanceRoot $isResumeAcceptance", launcher, StringComparison.Ordinal);
         Assert.Contains("native-acceptance-profile.json", launcher, StringComparison.Ordinal);
+        Assert.Contains("'--starting-level', '0', '--content-overlay'", launcher, StringComparison.Ordinal);
+        Assert.Contains("server/content/native-start", launcher, StringComparison.Ordinal);
+        Assert.Contains("ContentProfile = 'godevilution.native-start@0.1.0'", launcher, StringComparison.Ordinal);
+        Assert.Contains("$nativeSeedArguments = if ($isAcceptanceRun) { @('--random-seed', '0') } else { @() }", launcher, StringComparison.Ordinal);
         Assert.Contains("$env:GODEVILUTION_NATIVE_ACCEPTANCE_RESUME = $previousResumeAcceptance", wrapper, StringComparison.Ordinal);
         Assert.Contains("$env:GODEVILUTION_NATIVE_ACCEPTANCE_DIRECTORY = $previousAcceptanceRoot", wrapper, StringComparison.Ordinal);
         Assert.Contains("Remove-Item Env:GODEVILUTION_NATIVE_ACCEPTANCE_DIRECTORY", wrapper, StringComparison.Ordinal);

@@ -129,14 +129,20 @@ M4. M5 is the final removal gate, not a reason to postpone replacement work.
    limit mismatch. Preserve visible connection-error recovery and the boundary
    regressions. Deferred projection and graphics/frame admission retain strict
    missing-art rejection; current diagnostics identify the failing object/template.
-   The latest visible probe rendered Cathedral but retained a dead hero at the
-   default origin with no accepted commands. It is not gameplay acceptance, and
-   the earlier missing-art failure remains unresolved. Correct the native entry
-   contract through validated content without silently changing base/Godot pack
-   identities; current production level/overlay schemas do not admit the proposed
-   content-only start-coordinate override. Then verify alive creation, movement,
-   checkpointing and fresh-host resume using the explicitly marked, exclusively
-   locked native test profile. Keep per-phase logs and actual terminal exits;
+   Preserve the earlier dead-origin Cathedral and missing-art failures. The new
+   optional strict `level_start_positions.tsv` contract and exact-pinned
+   `native-start` pack now select town `(75,68)` only for the native pair, without
+   rewriting base/Godot content or widening the existing level/overlay schemas.
+   Validate final effective geometry atomically and refresh projected metadata;
+   saved-player positions remain authoritative. Fresh GUI creation and guarded
+   fresh-host resume now show town/HUD and full-life server state, with normal
+   exits, but no accepted native movement. Recorded clicks are rejected `TooLate`;
+   diagnose native command timestamps/transport/scheduling, then adapt the
+   demonstrated failing path without relaxing authority. Verify accepted
+   movement and moved-position restore under the selected host mode.
+   Player presentation is not yet established by the town captures. Use the
+   marked version-2, exclusively locked profile and retain per-phase logs/exits;
+   use delete-sharing reads when inspecting checkpoints during atomic publication.
    helper tests and world rendering alone do not close this gate. Never automate
    security prompts or enable network permissions for loopback tests.
 4. Record a fresh integration baseline for the current revision. Capture exact

@@ -65,10 +65,13 @@ open. Their scope, dependencies, and exit checks are defined only in the
   visibly return to the menu. Deferred projection and explicit graphics/frame
   validation retain strict missing-art rejection. Current diagnostics identify
   the failing object/template; the earlier missing-art failure remains unresolved.
-  The latest visible probe rendered Cathedral, but its retained checkpoint has a
-  dead hero at `(0,0)` and no accepted commands. It is not native gameplay
-  acceptance. Guarded, explicit test-profile resume support is now available;
-  alive creation, movement and fresh-host resume remain open. The earlier
+  The native pair now selects a separate validated town-entry pack, preserving
+  base/Godot bytes and defaults. Fresh GUI creation and guarded fresh-host resume
+  reach town/HUD with full-life authoritative state at `(75,68)` and normal exits.
+  Native movement is still unverified: recorded clicks reject `TooLate`, and
+  player presentation remains unclear in the captures. The earlier dead-origin
+  Cathedral and missing-art failures remain recorded; these partial checks do
+  not close native gameplay acceptance. The earlier
   firewall/app-approval interruptions are historical, not the latest outcome.
 - Godot's local harness now builds the current server, stages/imports/builds
   the client without rewriting its source SDK pin, checks mode/identities,
@@ -125,6 +128,88 @@ open. Their scope, dependencies, and exit checks are defined only in the
 The following records describe implemented slices at this baseline. They are
 evidence, not a separate priority list; detailed older entries retain their
 original scope and may be superseded by later entries or the current assessment.
+
+### M0 validated native town entry and retained timing failure (2026-09-30)
+
+This batch follows `2f8953e8f`. The optional module-owned
+`level_start_positions.tsv` requires the exact ordered ID/symbol/X/Y header,
+stable and registered identity agreement, unique levels, valid integers and
+walkable in-bounds coordinates. All replacements are staged before mutation.
+Activation validates effective geometry after simulation construction/deferred
+fragments, applies start-only copies, and refreshes projected metadata. Geometry,
+flags, explicit-vision semantics, default-start selection and unspecified levels
+are preserved. Absence remains a no-op, including schema `1.501.0`; current schema
+remains `1.502.0`. Previous hosts do not implement the new optional contract.
+
+The exact-pinned `godevilution.native-start@0.1.0` pack adds only level 0/town
+`(75,68)`, matching native `CreateTown(ENTRY_MAIN)`. The root native pair selects
+this pack and town; standalone/base/Godot defaults, base tables/assets and player
+resources are unchanged. Diagnostic seed is 0; ordinary seed selection is unchanged.
+The base hash remains
+`8ca8a6d80722c06439ad6cf62efc75d1e486971669c0509f6a03e6438cd3fd1e`.
+Private diagnostic markers are version 2 and bind the new content profile;
+version-1 profiles are retained and rejected, not migrated or teleported.
+The server still uses only external packs, never MPQs.
+
+Real adapter/command/checkpoint regressions cover both modes: new entry, accepted
+movement, on-disk cold restore of moved position/resources/ledger, duplicate
+receipt without re-execution, and a newly accepted post-restore movement. These
+are one-participant managed tests, not native GUI/TCP/cooperative acceptance.
+
+Actual Windows x64 Debug GUI evidence uses the rebuilt native client/server,
+single-player immediate scheduling and child-only software renderer override:
+
+- Fresh private profile `Godevilution-Native-Acceptance-c3cb18420d394f0190d0a7d029315c50`
+  creates Warrior `n` through normal menus. Town/HUD renders; the server checkpoint
+  shows class 0, level 0, `(75,68)`, life/max-life `4480/4480` (Q6). One floor click
+  produces sequence 1 rejected `TooLate` at tick 3707; position is unchanged.
+  Menu -> Exit to Main Menu -> Cancel -> Exit Diablo ends normally with client
+  exit 0. Escape alone did not open the menu; its cause is not established.
+- Fresh-host phase `resume-f0f48cd7b3724e138365d484cfba9188` restores identity,
+  full life, position and ledger. Sequence 2 is rejected `TooLate` at tick 9812.
+  The host later reports checkpoint access denied; native logs report connection
+  closure and client exit 0. This is a failed phase, not clean resume acceptance.
+  Live `Get-Content` inspection may have denied Windows atomic-replace sharing;
+  the exact denied operation was not logged. No permissions or durability rules
+  were changed.
+- Controlled phase `resume-a3618c4c32694ca1b46754dd0c881ac9` uses read-only
+  `FileStream` sharing `ReadWrite | Delete` for live checkpoint inspection. It
+  restores the same healthy state and two rejected receipts, records no host
+  stderr, and exits normally through Menu -> Quit Game with client exit 0.
+  Its click establishes no new durable receipt or accepted movement.
+
+No clearly visible player actor is established by the town captures. Entry and
+partial restoration evidence do not prove playable native movement, moved-position
+GUI restore, town collision/population, Cathedral art, campaign or default-renderer
+acceptance. Next M0 work is native timestamp/scheduling and presentation diagnosis,
+followed by accepted create/move/checkpoint/fresh-host resume. Retain strict late
+admission and the failed phases; do not turn zero process exits into gameplay passes.
+
+Verification: full module selection passes 2532, fails four previously documented
+Hork Demon RNG cases, and excludes four explicit original-asset oracle cases
+(2540 total). Full rebuilt server selection passes 1152/1153; the clock-gated
+`PersistenceFailureSendsNoAckAndRetryPublishesTheDurableDuplicate` case fails in
+background checkpoint export during its injected failure, then passes alone.
+The startup-publication race remains an open verification finding, not a clean
+full-suite result. The five new host cases pass. Independent GPT-6.1 Sol xhigh
+source review approves the package with those runtime/proof limits. Final focused
+checks pass content 25/25, host 5/5, launcher 22/22 and documentation 3/3.
+Reproducible managed runner commands use the existing executable xUnit v3 projects:
+
+```powershell
+dotnet run --project server/tests/Devilution.Diablo.Tests/Devilution.Diablo.Tests.csproj --no-restore -- --no-ansi
+dotnet run --project server/tests/Devilution.Server.Tests/Devilution.Server.Tests.csproj --no-build --no-restore -- --no-ansi
+```
+
+Focused runs use `--filter-class` with `Devilution.Diablo.Tests.NativeStartContentTests`,
+`Devilution.Server.Tests.NativeStartHostTests`, `Devilution.Server.Tests.LocalLauncher*`
+and `Devilution.Diablo.Tests.ProjectDocumentationConsistencyTests`. The isolated
+persistence rerun uses `--filter-method` with its fully qualified method name.
+GUI runs use `tools/run-native-acceptance.ps1`, then its explicit `-SessionDirectory`
+and `-Resume` options, with caller-restored `SDL_RENDER_DRIVER=software`.
+All three GUI handles
+are terminal; final process inspection found no native client, project host,
+Godot or WerFault process. Overall estimate and M0 gate remain unchanged.
 
 ### M0 guarded native diagnostics and fresh Godot crash verification (2026-09-30)
 

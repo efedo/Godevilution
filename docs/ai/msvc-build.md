@@ -102,9 +102,14 @@ on every run. It also verifies the server's reported single-player mode before
 opening the client, so stale binaries and mode mismatches fail before native
 level setup.
 
-The root launcher pairs the base-content server with explicit `--diablo`, even
+The root launcher pairs base plus the separate `native-start` entry pack with
+explicit `--starting-level 0` and `--diablo`, even
 when Hellfire is installed. A Hellfire acceptance run needs matching server
 content; native installation discovery must not silently select another game.
+Town entry `(75,68)` is validated module content, not a client teleport or
+server MPQ lookup. Standalone/base/Godot defaults and base pack bytes are
+unchanged; the root launcher rebuilds the module required by the optional table.
+Only diagnostic runs fix seed 0; normal native seed selection is unchanged.
 Normal launches retain the user's native save/config locations. The server is
 hidden; the client is interactive. Native logs and owned process IDs/start times
 are retained beside the server logs. Cleanup owns only those process handles;
@@ -117,7 +122,8 @@ PowerShell session:
 ./tools/run-native-acceptance.ps1
 ```
 
-The wrapper defaults to a zero-argument fresh run using the same rebuild/handshake launcher, with fresh
+The wrapper defaults to a zero-argument fresh run using the same rebuild/handshake
+launcher, with fresh
 native save/config folders, windowed presentation, skipped intro, and a separate
 server save root. Select Single Player, create a new hero, enter the world,
 observe the authoritative state, exercise movement, and exit normally. Record
@@ -131,7 +137,8 @@ wrapper's resume option (the root launcher still takes no arguments):
 ./tools/run-native-acceptance.ps1 -SessionDirectory 'C:\path\Godevilution-Native-Acceptance-profile' -Resume
 ```
 
-Resume requires the matching version-1 profile marker, private bookmark,
+Resume requires the matching version-2 profile marker with
+`ContentProfile=godevilution.native-start@0.1.0`, private bookmark,
 nonempty authoritative checkpoint and native save/config folders. The bookmark
 must match the native single-binary-line format; empty first lines, CRLF and
 extra tokens are rejected. Reparse-point ancestors are rejected, and an
@@ -146,21 +153,31 @@ and `GODEVILUTION_NATIVE_ACCEPTANCE_RESUME` settings. Fresh runs reject existing
 target directories before any build or launch; resume never guesses a latest
 profile or uses the user's normal saves. This does not establish normal-launch
 server persistence or certify the test profile's gameplay state.
+Earlier version-1 diagnostic profiles remain private and are rejected, not
+migrated or relocated into the new content identity. Negotiated host identities
+and checkpoint integrity remain separate strict checks.
 
 On the verified desktop, a sandbox-launched client did not expose a targetable
 window, while the same rebuilt client launched on the interactive desktop did.
 Agents must request the appropriate launch permission and Computer Use app
 approval; they must not treat a running process as visible UI or bypass denied
 window access. See migration status for current GUI outcomes and the remaining
-world-entry gap.
+native gameplay/timing/presentation gap.
 
-Current GUI evidence reaches menus, hero creation and rendered Cathedral, but
-the latest checkpoint has a dead hero at `(0,0)` with no accepted commands.
-Native create/move/save/resume acceptance remains open. The earlier missing-art
-failure is unresolved; diagnostics identify its exact object/template without
+Current GUI evidence reaches healthy authoritative town entry and fresh-host
+restoration at `(75,68)`, with full-life HUD/state and normal menu exits. Recorded
+movement clicks reject `TooLate`; player rendering is not established by the town
+captures, so native create/move/save/resume acceptance remains open. The earlier
+dead-origin Cathedral probe is retained; its missing-art failure remains
+unresolved. Diagnostics identify the exact object/template without
 relaxing graphics/frame admission or adding a speculative reload. Base entry
-coordinates need validated native-compatible content integration before an
-alive gameplay check. The earlier firewall interruption is historical. Never
+coordinates now have the optional validated contract, but timing/presentation
+integration still needs accepted movement and moved-position GUI restore.
+For live checkpoint inspection, use read-only `FileStream` handles sharing
+`ReadWrite | Delete`; ordinary no-delete file sharing can block Windows atomic
+checkpoint replacement. The retained first resume phase reported access denied;
+the sharing-safe retry did not. This is not a durability or permissions change.
+The earlier firewall interruption is historical. Never
 automate security prompts or enable public/private network permissions for the
 loopback test. If a prompt appears, ask the user to cancel it before continuing;
 do not count focused tests or world rendering as GUI gameplay acceptance.

@@ -466,6 +466,36 @@ public sealed class AuthoritativeLevel
         }
     }
 
+    /** Creates an immutable entry-point variant without dropping authored geometry. */
+    public AuthoritativeLevel WithStartPosition(int startPositionX, int startPositionY)
+    {
+        var level = new AuthoritativeLevel(
+            LevelId,
+            Width,
+            Height,
+            BlockedCells,
+            MissileBlockedCells,
+            IsDefaultStart,
+            SuppressMultiplayerDeathDrops,
+            NativeTransparency,
+            NativeObjectLayer,
+            NativeMegaTileLayer,
+            NativePieceLayer,
+            NativePieceProperties,
+            NativePieceCollisionCells,
+            NativePieceMissileBlockedCells,
+            NativeMonsterLayer,
+            startPositionX,
+            startPositionY,
+            HasExplicitNativeVisionBlockedCells
+                ? NativeVisionBlockedCells
+                : null) {
+            StableSymbol = StableSymbol,
+        };
+        level.ValidateStartPosition();
+        return level;
+    }
+
     public bool ContainsPosition(int positionX, int positionY)
     {
         return positionX >= 0 && positionX < Width

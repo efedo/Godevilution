@@ -58,7 +58,8 @@ function Get-NativeAcceptanceLayout([string]$Root, [bool]$Resume) {
         Assert-NativeProfileAncestry $path
     }
     $marker = Get-Content -LiteralPath $markerPath -Raw -ErrorAction Stop | ConvertFrom-Json
-    if ($marker.Kind -cne 'GodevilutionNativeAcceptance' -or $marker.Version -ne 1 -or
+    if ($marker.Kind -cne 'GodevilutionNativeAcceptance' -or $marker.Version -ne 2 -or
+        $marker.ContentProfile -cne 'godevilution.native-start@0.1.0' -or
         -not [string]::Equals([string]$marker.ProfileRoot, $candidate, [StringComparison]::OrdinalIgnoreCase)) {
         throw 'The native acceptance profile marker does not match the requested directory.'
     }
@@ -95,6 +96,10 @@ try {
     if ($isResumeAcceptance) { $nativeProfileLock = Open-NativeProfileLock $profileRoot }
     $serverProject = Join-Path $repositoryRoot 'server/src/Devilution.Server/Devilution.Server.csproj'
     $serverExecutable = Join-Path $repositoryRoot 'server/src/Devilution.Server/bin/Debug/net10.0/Devilution.Server.exe'
+    $nativeStartContent = Join-Path $repositoryRoot 'server/content/native-start'
+    if (-not (Test-Path -LiteralPath (Join-Path $nativeStartContent 'content-pack.json') -PathType Leaf)) {
+        throw 'The native new-game entry content pack is missing.'
+    }
     $clientBuildDirectory = @(
         (Join-Path $repositoryRoot 'build/x64-Debug-authoritative-vcpkg'),
         (Join-Path $repositoryRoot 'build/x64-Debug-authoritative'),
@@ -167,7 +172,8 @@ try {
                 "[Graphics]`r`nFullscreen=0`r`nWidth=1024`r`nHeight=768`r`n",
                 [System.Text.UTF8Encoding]::new($false))
             [IO.File]::WriteAllText((Join-Path $profileRoot 'native-acceptance-profile.json'),
-                (@{ Kind = 'GodevilutionNativeAcceptance'; Version = 1; ProfileRoot = $profileRoot } | ConvertTo-Json))
+                (@{ Kind = 'GodevilutionNativeAcceptance'; Version = 2; ProfileRoot = $profileRoot;
+                    ContentProfile = 'godevilution.native-start@0.1.0' } | ConvertTo-Json))
             $nativeProfileLock = Open-NativeProfileLock $profileRoot
         }
     }
@@ -184,7 +190,12 @@ try {
     # must advertise the matching single-player ruleset. A multiplayer server
     # handshake would change gbIsMultiplayer after NetInit and leave the native
     # level-loading path in an incompatible state.
-    $serverArguments = @('--port', '0', '--protocol-version', '0.2.0', '--game-mode', 'single-player', '--save-root', ('"' + $saveRoot + '"'))
+    # Only this native profile selects town's validated content-owned entry.
+    # Standalone/base/Godot defaults and pack bytes remain unchanged.
+    $nativeSeedArguments = if ($isAcceptanceRun) { @('--random-seed', '0') } else { @() }
+    $serverArguments = @('--port', '0', '--protocol-version', '0.2.0', '--game-mode', 'single-player',
+        '--starting-level', '0', '--content-overlay', ('"' + $nativeStartContent + '"'),
+        '--save-root', ('"' + $saveRoot + '"')) + $nativeSeedArguments
     $serverProcess = Start-Process -FilePath $serverExecutable -ArgumentList $serverArguments -WorkingDirectory $repositoryRoot -WindowStyle Hidden -RedirectStandardOutput $serverOutput -RedirectStandardError $serverError -PassThru
 
     $port = $null

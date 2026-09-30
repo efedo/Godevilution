@@ -1215,6 +1215,18 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
                 .Apply(content, world, objects, combatTargets, externalGeometry: nativeDunGeometry);
         }
 
+        var levelStartCatalog = content.TryGetTable(
+                "level_start_positions.tsv",
+                out var levelStartTable)
+            ? AuthoritativeLevelStartCatalog.LoadTsv(
+                levelStartTable.SourcePath,
+                levelStartTable.ToCanonicalTsv(),
+                stableIds)
+            : null;
+        if (levelStartCatalog is not null && world is null)
+            throw new InvalidDataException(
+                "Level-start positions require an active world.");
+
         var rules = new DiabloStoreRules(pricing, itemCatalog);
         var simulation = simulationFactory.Create(new DiabloSimulationOptions(stores, rules) {
             World = world,
@@ -1270,6 +1282,14 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap
             MonsterSpawnPlanner = monsterSpawnPlanner,
             ProceduralMonsterSpawns = monsterSpawns,
         });
+        if (levelStartCatalog is not null) {
+            var finalWorld = simulation.WorldState.World
+                ?? throw new InvalidDataException(
+                    "Level-start positions require an active simulation world.");
+            levelStartCatalog.ValidateEffectiveGeometry(simulation.WorldState);
+            levelStartCatalog.Apply(finalWorld);
+            simulation.WorldState.RefreshProjectedGeometry();
+        }
         return new DiabloContentActivation(
             simulation,
             rules,

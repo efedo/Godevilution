@@ -29,6 +29,25 @@ Use `run-godot-portal-preview.ps1` for isolated saves and the distinct composed
 identity. Smith stock and price are authored acceptance data, not native vendor
 generation/pricing parity; the underlying cast and portal are server-owned.
 
+`native-start` is a separate opt-in pack, exact-pinned to
+`devilution.base@0.1.0`. It adds only a town entry at `(75,68)`, matching native
+`CreateTown(ENTRY_MAIN)` in `Source/game/levels/town.cpp`. The native paired
+launcher explicitly selects level 0 and this pack; standalone/base/Godot
+defaults, base tables/assets and starting resources remain unchanged. It needs
+the rebuilt module: older binaries do not implement this optional contract.
+This entry profile is not native town collision/population or campaign parity.
+
+The optional `level_start_positions.tsv` table has the strict ordered columns
+`level_id`, `level_symbol`, `start_x`, `start_y`. Numeric IDs and required symbols
+must agree with stable IDs and registered levels; duplicate, malformed,
+out-of-bounds and blocked entries reject activation. Apply is start-only and
+atomic, preserving all geometry/flags and unspecified levels. Activation checks
+the effective world after deferred geometry is materialized. Only newly created
+participants use these entries; saved-player positions and warp/portal endpoints
+remain authoritative. An absent table is a no-op, including previous-schema packs.
+The optional addition keeps the existing schema and generic overlay rules;
+it does not extend or rewrite `levels.tsv`.
+
 The base pack declares its identity and `devilution.diablo@1.502.0` schema in
 `base/content-pack.json`; the Diablo module also accepts the immediately
 previous additive `1.501.0` schema so existing manifest-based packs remain
