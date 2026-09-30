@@ -2,6 +2,16 @@
 
 All notable changes to this fork are documented below.
 
+- 2026-09-30: Fixed native initial-snapshot rejection of the base-content
+  Gateway of Blood reward by aligning reward offsets with the published
+  `[-32,32]` contract. Added native boundary/base-object and managed parity
+  regressions. Native startup errors now persist in the log and visibly return
+  to the menu, while headless behavior remains non-modal. Repaired stale test
+  fixtures without weakening production validation. Native snapshot/session/
+  Diablo tests pass 130/6/1 and managed launcher contracts pass 11; actual
+  connection-error/menu recovery passes. Native world entry remains blocked by
+  unloaded object graphics and is explicitly not claimed as a GUI pass.
+
 - 2026-09-29: Reproduced the Godot Mono importer access violation after denied
   shared AppData writes and isolated settings/cache per launched engine process.
   Added writable-path checks, retained process/exit evidence, fatal import-log

@@ -212,7 +212,9 @@ TEST(ServerBackedPlayerSnapshot, ProjectsResourcesInventoryAndEquipment)
 TEST(ServerBackedPlayerSnapshot, ValidatesNonEmptyStateHashShape)
 {
 	protocol::Snapshot snapshot;
-	snapshot.add_players()->set_entity_id(7);
+	auto *player = snapshot.add_players();
+	player->set_entity_id(7);
+	player->set_character_level(1);
 
 	for (const std::string &hash : {
 		     std::string("not-a-hash"),
@@ -235,6 +237,7 @@ TEST(ServerBackedPlayerSnapshot, RejectsInvalidLightRadius)
 	protocol::Snapshot snapshot;
 	auto *player = snapshot.add_players();
 	player->set_entity_id(7);
+	player->set_character_level(1);
 	player->set_light_radius(16);
 
 	EXPECT_FALSE(ProjectPlayerSnapshot(snapshot, 7).has_value());
@@ -245,6 +248,7 @@ TEST(ServerBackedPlayerSnapshot, RejectsPlayerLevelOutsideNativeRange)
 	protocol::Snapshot snapshot;
 	auto *player = snapshot.add_players();
 	player->set_entity_id(7);
+	player->set_character_level(1);
 	player->set_level_id(NUMLEVELS);
 
 	EXPECT_FALSE(ProjectPlayerSnapshot(snapshot, 7).has_value());
@@ -255,6 +259,7 @@ TEST(ServerBackedPlayerSnapshot, ProjectsMaterializedSetLevelIdentity)
 	protocol::Snapshot snapshot;
 	auto *player = snapshot.add_players();
 	player->set_entity_id(7);
+	player->set_character_level(1);
 	player->set_level_id(AuthoritativeRuntimeSetLevelIdBase + 1);
 
 	auto projected = ProjectPlayerSnapshot(snapshot, 7);
@@ -265,7 +270,9 @@ TEST(ServerBackedPlayerSnapshot, ProjectsMaterializedSetLevelIdentity)
 TEST(ServerBackedPlayerSnapshot, RejectsInvalidCharacterNameShape)
 {
 	protocol::Snapshot snapshot;
-	snapshot.add_players()->set_entity_id(7);
+	auto *player = snapshot.add_players();
+	player->set_entity_id(7);
+	player->set_character_level(1);
 
 	for (const std::string &name : {
 		     std::string(32, 'A'),
@@ -307,6 +314,7 @@ TEST(ServerBackedPlayerSnapshot, RejectsInvalidTargetingMetadataDuringProjection
 	protocol::Snapshot snapshot;
 	auto *player = snapshot.add_players();
 	player->set_entity_id(7);
+	player->set_character_level(1);
 	player->set_ability_targeting_kind(static_cast<protocol::SpellTargetingKind>(99));
 	EXPECT_FALSE(ProjectPlayerSnapshot(snapshot, 7).has_value());
 
@@ -315,7 +323,9 @@ TEST(ServerBackedPlayerSnapshot, RejectsInvalidTargetingMetadataDuringProjection
 	EXPECT_FALSE(ProjectPlayerSnapshot(snapshot, 7).has_value());
 
 	player->clear_memorized_spells();
-	player->add_inventory()->mutable_state()->set_spell_targeting_kind(static_cast<protocol::SpellTargetingKind>(99));
+	auto *inventory = player->add_inventory();
+	inventory->set_item_seed(42);
+	inventory->mutable_state()->set_spell_targeting_kind(static_cast<protocol::SpellTargetingKind>(99));
 	EXPECT_FALSE(ProjectPlayerSnapshot(snapshot, 7).has_value());
 }
 
@@ -324,13 +334,16 @@ TEST(ServerBackedPlayerSnapshot, RejectsUnrepresentableItemPricesDuringProjectio
 	protocol::Snapshot snapshot;
 	auto *player = snapshot.add_players();
 	player->set_entity_id(7);
+	player->set_character_level(1);
 	auto *inventory = player->add_inventory();
+	inventory->set_item_seed(42);
 	inventory->set_price(std::numeric_limits<uint32_t>::max());
 	EXPECT_FALSE(ProjectPlayerSnapshot(snapshot, 7).has_value());
 
 	protocol::Snapshot worldSnapshot;
 	auto *worldItem = worldSnapshot.add_world_items();
 	worldItem->set_entity_id(9);
+	worldItem->set_item_seed(42);
 	worldItem->set_price(std::numeric_limits<uint32_t>::max());
 	EXPECT_FALSE(ProjectWorldItemSnapshots(worldSnapshot).has_value());
 }
@@ -340,6 +353,7 @@ TEST(ServerBackedPlayerSnapshot, RejectsDuplicatePlayerItemSeedsDuringProjection
 	protocol::Snapshot snapshot;
 	auto *player = snapshot.add_players();
 	player->set_entity_id(7);
+	player->set_character_level(1);
 	player->add_inventory()->set_item_seed(42);
 	player->add_equipment()->set_item_seed(42);
 	EXPECT_FALSE(ProjectPlayerSnapshot(snapshot, 7).has_value());
@@ -350,12 +364,14 @@ TEST(ServerBackedPlayerSnapshot, RejectsMalformedPlayerItemTopologyDuringProject
 	protocol::Snapshot invalidGridSize;
 	auto *gridSizePlayer = invalidGridSize.add_players();
 	gridSizePlayer->set_entity_id(7);
+	gridSizePlayer->set_character_level(1);
 	gridSizePlayer->add_inventory_grid(0);
 	EXPECT_FALSE(ProjectPlayerSnapshot(invalidGridSize, 7).has_value());
 
 	protocol::Snapshot invalidGridReference;
 	auto *gridReferencePlayer = invalidGridReference.add_players();
 	gridReferencePlayer->set_entity_id(7);
+	gridReferencePlayer->set_character_level(1);
 	for (int i = 0; i < 40; ++i)
 		gridReferencePlayer->add_inventory_grid(i == 0 ? 1 : -1);
 	EXPECT_FALSE(ProjectPlayerSnapshot(invalidGridReference, 7).has_value());
@@ -363,6 +379,7 @@ TEST(ServerBackedPlayerSnapshot, RejectsMalformedPlayerItemTopologyDuringProject
 	protocol::Snapshot invalidFootprint;
 	auto *footprintPlayer = invalidFootprint.add_players();
 	footprintPlayer->set_entity_id(7);
+	footprintPlayer->set_character_level(1);
 	auto *inventory = footprintPlayer->add_inventory();
 	inventory->set_item_seed(42);
 	inventory->mutable_state()->set_inventory_width(2);
@@ -373,6 +390,7 @@ TEST(ServerBackedPlayerSnapshot, RejectsMalformedPlayerItemTopologyDuringProject
 	protocol::Snapshot duplicateEquipmentSlot;
 	auto *equipmentPlayer = duplicateEquipmentSlot.add_players();
 	equipmentPlayer->set_entity_id(7);
+	equipmentPlayer->set_character_level(1);
 	equipmentPlayer->add_equipment()->set_slot(1);
 	equipmentPlayer->add_equipment()->set_slot(1);
 	EXPECT_FALSE(ProjectPlayerSnapshot(duplicateEquipmentSlot, 7).has_value());
@@ -380,6 +398,7 @@ TEST(ServerBackedPlayerSnapshot, RejectsMalformedPlayerItemTopologyDuringProject
 	protocol::Snapshot invalidBeltSlot;
 	auto *beltPlayer = invalidBeltSlot.add_players();
 	beltPlayer->set_entity_id(7);
+	beltPlayer->set_character_level(1);
 	beltPlayer->add_belt()->set_slot(8);
 	EXPECT_FALSE(ProjectPlayerSnapshot(invalidBeltSlot, 7).has_value());
 }
@@ -389,6 +408,7 @@ TEST(ServerBackedPlayerSnapshot, RejectsInvalidPlayerItemIdentityDuringProjectio
 	protocol::Snapshot snapshot;
 	auto *player = snapshot.add_players();
 	player->set_entity_id(7);
+	player->set_character_level(1);
 	player->add_inventory()->set_item_seed(0);
 	EXPECT_FALSE(ProjectPlayerSnapshot(snapshot, 7).has_value());
 }
@@ -398,6 +418,7 @@ TEST(ServerBackedPlayerSnapshot, RejectsInvalidItemSemanticStateDuringProjection
 	protocol::Snapshot snapshot;
 	auto *player = snapshot.add_players();
 	player->set_entity_id(7);
+	player->set_character_level(1);
 	auto *inventory = player->add_inventory();
 	inventory->set_item_seed(42);
 	inventory->mutable_state()->set_charges(-1);
@@ -550,6 +571,7 @@ TEST(ServerBackedPlayerSnapshot, ProjectsCompleteTimedCastAction)
 	snapshot.set_tick(12);
 	auto *player = snapshot.add_players();
 	player->set_entity_id(7);
+	player->set_character_level(1);
 	player->set_combat_mode(protocol::PLAYER_COMBAT_MODE_SPELL);
 	player->set_combat_mode_end_tick(20);
 	auto *action = player->mutable_current_action();
@@ -592,8 +614,12 @@ TEST(ServerBackedPlayerSnapshot, SelectsRequestedPlayerAndRejectsInvalidEntitySe
 	EXPECT_FALSE(ProjectPlayerSnapshot(missing, 7).has_value());
 
 	protocol::Snapshot multiple;
-	multiple.add_players()->set_entity_id(8);
-	multiple.add_players()->set_entity_id(7);
+	auto *firstPlayer = multiple.add_players();
+	firstPlayer->set_entity_id(8);
+	firstPlayer->set_character_level(1);
+	auto *secondPlayer = multiple.add_players();
+	secondPlayer->set_entity_id(7);
+	secondPlayer->set_character_level(1);
 	auto selected = ProjectPlayerSnapshot(multiple, 7);
 	ASSERT_TRUE(selected.has_value()) << selected.error();
 	EXPECT_EQ(selected->entityId, 7U);
@@ -605,20 +631,26 @@ TEST(ServerBackedPlayerSnapshot, SelectsRequestedPlayerAndRejectsInvalidEntitySe
 
 	protocol::Snapshot duplicate;
 	duplicate.add_players()->set_entity_id(7);
+	duplicate.mutable_players(0)->set_character_level(1);
 	duplicate.add_players()->set_entity_id(8);
+	duplicate.mutable_players(1)->set_character_level(1);
 	duplicate.add_players()->set_entity_id(8);
+	duplicate.mutable_players(2)->set_character_level(1);
 	EXPECT_FALSE(ProjectPlayerSnapshot(duplicate, 7).has_value());
 	EXPECT_FALSE(ProjectPlayerSnapshots(duplicate).has_value());
 
 	protocol::Snapshot invalid;
 	invalid.add_players()->set_entity_id(7);
+	invalid.mutable_players(0)->set_character_level(1);
 	invalid.add_players()->set_entity_id(0);
+	invalid.mutable_players(1)->set_character_level(1);
 	EXPECT_FALSE(ProjectPlayerSnapshot(invalid, 7).has_value());
 	EXPECT_FALSE(ProjectPlayerSnapshots(invalid).has_value());
 
 	protocol::Snapshot invalidNativeState;
 	auto *invalidPlayer = invalidNativeState.add_players();
 	invalidPlayer->set_entity_id(7);
+	invalidPlayer->set_character_level(1);
 	invalidPlayer->add_visited_level_ids(NUMLEVELS);
 	EXPECT_FALSE(ProjectPlayerSnapshot(invalidNativeState, 7).has_value());
 	invalidPlayer->clear_visited_level_ids();
@@ -645,8 +677,11 @@ TEST(ServerBackedPlayerSnapshot, SelectsRequestedPlayerAndRejectsInvalidEntitySe
 TEST(ServerBackedPlayerSnapshot, RejectsMorePlayersThanTheNativePool)
 {
 	protocol::Snapshot snapshot;
-	for (uint32_t entityId = 1; entityId <= MAX_PLRS + 1; ++entityId)
-		snapshot.add_players()->set_entity_id(entityId);
+	for (uint32_t entityId = 1; entityId <= MAX_PLRS + 1; ++entityId) {
+		auto *player = snapshot.add_players();
+		player->set_entity_id(entityId);
+		player->set_character_level(1);
+	}
 
 	EXPECT_FALSE(ProjectPlayerSnapshot(snapshot, 1).has_value());
 	EXPECT_FALSE(ProjectPlayerSnapshots(snapshot).has_value());
@@ -940,6 +975,7 @@ TEST(ServerBackedPlayerSnapshot, RejectsIncompleteDynamicItemIdentity)
 	protocol::Snapshot playerSnapshot;
 	auto *player = playerSnapshot.add_players();
 	player->set_entity_id(7);
+	player->set_character_level(1);
 	player->mutable_held_item()->mutable_state()->set_identified_name("A");
 	EXPECT_FALSE(ProjectPlayerSnapshot(playerSnapshot, 7).has_value());
 }
@@ -949,6 +985,7 @@ TEST(ServerBackedPlayerSnapshot, RejectsInvalidStashFootprintsAndSessionConflict
 	protocol::Snapshot snapshot;
 	auto *player = snapshot.add_players();
 	player->set_entity_id(7);
+	player->set_character_level(1);
 	auto *first = player->add_stash();
 	first->set_page(0);
 	first->set_cell(9);
@@ -1026,6 +1063,79 @@ TEST(ServerBackedPlayerSnapshot, ProjectsAndSortsAuthoritativeObjects)
 	EXPECT_FALSE((*projected)[1].missilePassable);
 	EXPECT_TRUE((*projected)[1].trapArmed);
 	EXPECT_TRUE((*projected)[1].activateOnOccupancy);
+}
+
+TEST(ServerBackedPlayerSnapshot, AcceptsBaseContentQuestRewardOffsets)
+{
+	protocol::Snapshot snapshot;
+	snapshot.add_quests()->set_quest_id(3010);
+	auto *object = snapshot.add_objects();
+	object->set_entity_id(2021);
+	object->set_object_id(72);
+	object->set_native_object_id(72);
+	object->set_level_id(2);
+	object->set_position_x(10);
+	object->set_position_y(4);
+	object->set_quest_id(3010);
+	object->set_presentation_kind(protocol::OBJECT_PRESENTATION_KIND_QUEST);
+	object->set_keep_visible_after_activation(true);
+	object->set_activated_animation_frame(1);
+	object->set_quest_transition_kind(5);
+	object->set_quest_transition_amount(1);
+	object->set_quest_transition_required_variable1(0);
+	object->set_quest_transition_required_variable2(-1);
+	object->set_reward_kind(1);
+	object->set_reward_id(2143);
+	object->set_reward_offset_x(9);
+	object->set_reward_offset_y(17);
+	object->set_dialogue_message_id(254);
+
+	auto projected = ProjectObjectSnapshots(snapshot);
+	ASSERT_TRUE(projected.has_value()) << projected.error();
+	ASSERT_EQ(projected->size(), 1U);
+	EXPECT_EQ((*projected)[0].entityId, 2021U);
+	EXPECT_EQ((*projected)[0].rewardKind, 1);
+}
+
+TEST(ServerBackedPlayerSnapshot, EnforcesNativeQuestRewardOffsetBounds)
+{
+	for (const int rewardKind : { 1, 2 }) {
+		for (const auto &[offsetX, offsetY] : std::array<std::pair<int, int>, 4> {
+			     std::pair { -32, 0 },
+			     std::pair { 32, 0 },
+			     std::pair { 0, -32 },
+			     std::pair { 0, 32 },
+		     }) {
+			protocol::Snapshot snapshot;
+			auto *object = snapshot.add_objects();
+			object->set_entity_id(2021);
+			object->set_object_id(72);
+			object->set_reward_kind(rewardKind);
+			object->set_reward_id(2143);
+			object->set_reward_offset_x(offsetX);
+			object->set_reward_offset_y(offsetY);
+			EXPECT_TRUE(ProjectObjectSnapshots(snapshot).has_value())
+			    << "rewardKind=" << rewardKind << " offset=(" << offsetX << "," << offsetY << ")";
+		}
+
+		for (const auto &[offsetX, offsetY] : std::array<std::pair<int, int>, 4> {
+			     std::pair { -33, 0 },
+			     std::pair { 33, 0 },
+			     std::pair { 0, -33 },
+			     std::pair { 0, 33 },
+		     }) {
+			protocol::Snapshot snapshot;
+			auto *object = snapshot.add_objects();
+			object->set_entity_id(2021);
+			object->set_object_id(72);
+			object->set_reward_kind(rewardKind);
+			object->set_reward_id(2143);
+			object->set_reward_offset_x(offsetX);
+			object->set_reward_offset_y(offsetY);
+			EXPECT_FALSE(ProjectObjectSnapshots(snapshot).has_value())
+			    << "rewardKind=" << rewardKind << " offset=(" << offsetX << "," << offsetY << ")";
+		}
+	}
 }
 
 TEST(ServerBackedPlayerSnapshot, ExplicitGenericObjectPresentationDoesNotUseLegacyNativeIdentity)
@@ -4207,6 +4317,7 @@ TEST(ServerBackedPlayerSnapshot, StateRetainsLastValidSnapshotUntilReplacement)
 	protocol::Snapshot snapshot;
 	auto *player = snapshot.add_players();
 	player->set_entity_id(7);
+	player->set_character_level(1);
 	player->set_combat_mode(protocol::PLAYER_COMBAT_MODE_BLOCK);
 	player->set_combat_mode_end_tick(9);
 	player->add_inventory()->set_item_seed(1);
@@ -4641,6 +4752,10 @@ TEST(ServerBackedPlayerSnapshot, RejectsPlayerResourcesOutsideNativeRange)
 	protocol::Snapshot invalidLevel = makeSnapshot();
 	invalidLevel.mutable_players(0)->set_character_level(MaximumNativeCharacterLevel + 1);
 	EXPECT_FALSE(ProjectPlayerSnapshot(invalidLevel, 7).has_value());
+
+	protocol::Snapshot invalidZeroLevel = makeSnapshot();
+	invalidZeroLevel.mutable_players(0)->set_character_level(0);
+	EXPECT_FALSE(ProjectPlayerSnapshot(invalidZeroLevel, 7).has_value());
 
 	protocol::Snapshot invalidAttributes = makeSnapshot();
 	invalidAttributes.mutable_players(0)->mutable_attributes()->mutable_strength()->set_current(-1);

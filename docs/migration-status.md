@@ -1,6 +1,6 @@
 # Godevilution Migration Status
 
-Status date: 2026-09-29. Estimate baseline: `8c03b365d`; M0 session reliability
+Status date: 2026-09-30. Estimate baseline: `8c03b365d`; M0 session reliability
 landed in `819b73936`, integration remediation in `818f63f32`, and application
 recovery in `cabc9b3fb`. The Flash replay correction landed in `3b90b6be5` and
 isolated native launch support in `c063dcd24`; newer host/timing evidence is below.
@@ -51,16 +51,20 @@ open. Their scope, dependencies, and exit checks are defined only in the
 - Fresh managed suites and actual headless/visible Godot session journeys were
   run for the M0 batch; current results and historical failures are distinguished
   below.
-  No new native GUI/campaign acceptance or full native suite was run. The August
-  results below remain historical verification only.
+  Native GUI checks now exercise menus, new-game startup and connection-error
+  recovery, with the remaining world-entry failure recorded below. No campaign
+  acceptance or full native suite was run; August results remain historical.
 - The native new-game startup failure was addressed by `923660c7b`, with the
   earlier single-player launcher contract in `0ef95acd9`. The launcher rebuilds
   current binaries and checks the reported mode; native policy also rejects a
   mismatched handshake. These fixes are present, but source/contract checks do
   not prove that the GUI can create and enter a game. The isolated native
-  acceptance launcher now preserves user saves/config and matches the base
-  server's Diablo variant. A targetable desktop window was observed, but app
-  approval timed out before its menus could be inspected or operated.
+  acceptance launcher preserves user saves/config and matches the base server's
+  Diablo variant. Actual menus and hero creation are now observed. A further
+  initial-snapshot reward-limit mismatch is corrected, and connection failures
+  visibly return to the menu. World entry still asserts while native object
+  graphics are unavailable; native create/move/save/resume acceptance remains
+  open. The earlier app-approval timeout is historical, not the current blocker.
 - Godot's local harness now builds the current server and client, imports
   assets, checks mode/identities, and retains `.local/godot` saves plus a private
   resume bookmark. Actual scene/control tests create a Rogue, move, restart both
@@ -101,6 +105,56 @@ open. Their scope, dependencies, and exit checks are defined only in the
 The following records describe implemented slices at this baseline. They are
 evidence, not a separate priority list; detailed older entries retain their
 original scope and may be superseded by later entries or the current assessment.
+
+### M0 native initial-snapshot contract and startup recovery (2026-09-30)
+
+This batch follows `32307f45b`. An isolated software-renderer GUI run selected
+Single Player, Warrior, a new hero and Normal difficulty, then closed before
+world entry with exit 0. Persistent startup logging exposed
+`Server-backed snapshot contains invalid object effect metadata` in
+`%TEMP%/Godevilution-Native-Acceptance-2e14a4dc4af64cadbc85772ea6ef4ef7`.
+The real base-content Gateway of Blood object 2021 carries reward offset `(9,17)`;
+native validation incorrectly used `[-16,16]`, while the published managed
+contract already uses `[-32,32]`. The native mirror now matches that contract.
+No content, wire fields, server behavior or local gameplay authority changed.
+
+Authoritative startup failures now reach the retained native log and an error
+dialog, then return to the main menu. Headless behavior remains non-modal.
+The isolated server-loss check in
+`%TEMP%/Godevilution-Native-Acceptance-ec9251d73b9c4f4db5b33f2879605d9f`
+shows the connection-refused dialog, its dismissal back to the menu, and normal
+menu exit. Only that run's PID/start-time-verified server was deliberately stopped.
+
+Verification:
+
+- Native snapshot tests pass 130/130, including actual object 2021 metadata,
+  both reward kinds/axes at `+/-32`, and rejection at `+/-33`. Session tests pass
+  6/6 and the Diablo test passes 1/1. All targets were freshly rebuilt with the
+  verified x64 Visual Studio compiler/SDK environment.
+- Broader execution exposed old protobuf fixtures that omitted character level;
+  the unchanged production validator requires a positive level. Valid fixtures
+  now specify level 1, zero/out-of-range rejection remains, and targeted invalid
+  item fixtures carry valid seeds so their assertions reach the intended guards.
+  These are fixture repairs, not relaxed production validation.
+- Managed launcher/contract tests pass 11/11, including two cross-language
+  reward-limit checks. Managed builds still report unavailable NuGet vulnerability
+  metadata (`NU1900`); native protobuf DLL-interface warnings remain.
+
+The corrected initial snapshot advances world setup, but
+`%TEMP%/Godevilution-Native-Acceptance-931a74751a4c444aa9d9246cf4bd38fb`
+still logs missing native object graphics 1/30 and asserts on an empty sprite
+list, exiting 1 after the assertion dialog is dismissed. This is not a native
+world-entry or campaign pass. An attempted synthetic bookmark fault did not
+produce a rejected-handshake outcome; no bookmark-rejection pass is claimed.
+The synthetic file was removed and user saves/config were untouched.
+
+Direct3D captures stayed black in the controlled comparison; the same rebuilt
+client with process-local `SDL_RENDER_DRIVER=software` displayed menus and
+responded to controls. This distinguishes presentation/capture from pre-menu
+startup, but does not establish the Direct3D display fault's cause or certify
+the normal renderer/platform matrix. No production renderer default changed.
+All owned native/server test processes were closed. Overall completion remains
+approximately 35%; M0 and the later delivery gates remain open.
 
 ### M0 Godot import crash isolation and receipt outcomes (2026-09-29)
 

@@ -46,6 +46,7 @@ TEST(ServerBackedSession, ConnectsOpensVendorAndAppliesAuthoritativeState)
 		protocol::Envelope initial;
 		auto *initialPlayer = initial.mutable_snapshot()->add_players();
 		initialPlayer->set_entity_id(7);
+		initialPlayer->set_character_level(1);
 		initialPlayer->add_visited_level_ids(0);
 		initialPlayer->add_visited_level_ids(4);
 		initialPlayer->add_visited_level_ids(21);
@@ -162,6 +163,7 @@ TEST(ServerBackedSession, ConnectsOpensVendorAndAppliesAuthoritativeState)
 		protocol::Envelope snapshot;
 		auto *player = snapshot.mutable_snapshot()->add_players();
 		player->set_entity_id(7);
+		player->set_character_level(1);
 		player->set_active_store_id(1);
 		snapshot.mutable_snapshot()->mutable_active_store()->set_store_id(1);
 		auto *item = snapshot.mutable_snapshot()->mutable_active_store()->add_items();
@@ -184,7 +186,9 @@ TEST(ServerBackedSession, ConnectsOpensVendorAndAppliesAuthoritativeState)
 		closeAck.mutable_command_ack()->mutable_results(0)->set_status(protocol::COMMAND_STATUS_ACCEPTED);
 		WriteEnvelope(socket, closeAck);
 		protocol::Envelope closedSnapshot;
-		closedSnapshot.mutable_snapshot()->add_players()->set_entity_id(7);
+		auto *closedPlayer = closedSnapshot.mutable_snapshot()->add_players();
+		closedPlayer->set_entity_id(7);
+		closedPlayer->set_character_level(1);
 		WriteEnvelope(socket, closedSnapshot);
 		observed = true;
 	});
@@ -253,6 +257,7 @@ TEST(ServerBackedSession, IgnoresStaleSnapshotsAndEventsDuringPolling)
 		protocol::Envelope initial;
 		auto *initialPlayer = initial.mutable_snapshot()->add_players();
 		initialPlayer->set_entity_id(7);
+		initialPlayer->set_character_level(1);
 		initialPlayer->set_position_x(4);
 		initialPlayer->set_position_y(5);
 		initial.mutable_snapshot()->set_tick(10);
@@ -275,6 +280,7 @@ TEST(ServerBackedSession, IgnoresStaleSnapshotsAndEventsDuringPolling)
 		protocol::Envelope stale;
 		auto *stalePlayer = stale.mutable_snapshot()->add_players();
 		stalePlayer->set_entity_id(7);
+		stalePlayer->set_character_level(1);
 		stalePlayer->set_position_x(1);
 		stalePlayer->set_position_y(2);
 		stale.mutable_snapshot()->set_tick(9);
@@ -326,6 +332,7 @@ TEST(ServerBackedSession, RejectsMalformedSnapshotWithoutPartialStateMutation)
 		protocol::Envelope initial;
 		auto *initialPlayer = initial.mutable_snapshot()->add_players();
 		initialPlayer->set_entity_id(7);
+		initialPlayer->set_character_level(1);
 		initialPlayer->set_position_x(4);
 		initialPlayer->set_position_y(5);
 		initial.mutable_snapshot()->set_tick(10);
@@ -342,6 +349,7 @@ TEST(ServerBackedSession, RejectsMalformedSnapshotWithoutPartialStateMutation)
 		protocol::Envelope malformed;
 		auto *malformedPlayer = malformed.mutable_snapshot()->add_players();
 		malformedPlayer->set_entity_id(7);
+		malformedPlayer->set_character_level(1);
 		malformedPlayer->set_position_x(9);
 		malformedPlayer->set_position_y(10);
 		malformed.mutable_snapshot()->set_tick(11);
@@ -398,6 +406,7 @@ TEST(ServerBackedSession, DoesNotTreatRejectedCommandAsLocalSuccess)
 		protocol::Envelope initial;
 		auto *initialPlayer = initial.mutable_snapshot()->add_players();
 		initialPlayer->set_entity_id(7);
+		initialPlayer->set_character_level(1);
 		auto *initialItem = initialPlayer->add_inventory();
 		initialItem->set_item_seed(42);
 		initialItem->mutable_state()->set_stable_item_id(700);
@@ -421,7 +430,9 @@ TEST(ServerBackedSession, DoesNotTreatRejectedCommandAsLocalSuccess)
 		result->set_status(protocol::COMMAND_STATUS_REJECTED);
 		WriteEnvelope(socket, ack);
 		protocol::Envelope snapshot;
-		snapshot.mutable_snapshot()->add_players()->set_entity_id(7);
+		auto *snapshotPlayer = snapshot.mutable_snapshot()->add_players();
+		snapshotPlayer->set_entity_id(7);
+		snapshotPlayer->set_character_level(1);
 		WriteEnvelope(socket, snapshot);
 		observed = true;
 	});
@@ -465,7 +476,9 @@ TEST(ServerBackedSession, SubmitsAuthoredQuestDialogueIntent)
 		serverHello.mutable_server_hello()->set_session_token("session");
 		WriteEnvelope(socket, serverHello);
 		protocol::Envelope initial;
-		initial.mutable_snapshot()->add_players()->set_entity_id(7);
+		auto *initialPlayer = initial.mutable_snapshot()->add_players();
+		initialPlayer->set_entity_id(7);
+		initialPlayer->set_character_level(1);
 		auto *quest = initial.mutable_snapshot()->add_quests();
 		quest->set_quest_id(3021);
 		quest->set_required_progress(1);
@@ -488,7 +501,9 @@ TEST(ServerBackedSession, SubmitsAuthoredQuestDialogueIntent)
 		result->set_status(protocol::COMMAND_STATUS_ACCEPTED);
 		WriteEnvelope(socket, ack);
 		protocol::Envelope snapshot;
-		snapshot.mutable_snapshot()->add_players()->set_entity_id(7);
+		auto *snapshotPlayer = snapshot.mutable_snapshot()->add_players();
+		snapshotPlayer->set_entity_id(7);
+		snapshotPlayer->set_character_level(1);
 		WriteEnvelope(socket, snapshot);
 		observed = true;
 	});
@@ -533,7 +548,9 @@ TEST(ServerBackedSession, SubmitsStableWorldDropIntent)
 		WriteEnvelope(socket, serverHello);
 
 		protocol::Envelope initial;
-		initial.mutable_snapshot()->add_players()->set_entity_id(7);
+		auto *initialPlayer = initial.mutable_snapshot()->add_players();
+		initialPlayer->set_entity_id(7);
+		initialPlayer->set_character_level(1);
 		auto *item = initial.mutable_snapshot()->mutable_players(0)->add_inventory();
 		item->set_item_seed(42);
 		item->mutable_state()->set_stable_item_id(700);
@@ -562,7 +579,9 @@ TEST(ServerBackedSession, SubmitsStableWorldDropIntent)
 		result->set_status(protocol::COMMAND_STATUS_ACCEPTED);
 		WriteEnvelope(socket, acknowledgement);
 		protocol::Envelope snapshot;
-		snapshot.mutable_snapshot()->add_players()->set_entity_id(7);
+		auto *snapshotPlayer = snapshot.mutable_snapshot()->add_players();
+		snapshotPlayer->set_entity_id(7);
+		snapshotPlayer->set_character_level(1);
 		WriteEnvelope(socket, snapshot);
 		observed = true;
 	});

@@ -264,8 +264,9 @@ inline constexpr int MinimumNativeMonsterResistance = -100;
 inline constexpr int MaximumNativeMonsterResistance = 100;
 inline constexpr int MaximumNativeQuestByte = UINT8_MAX;
 inline constexpr int MinimumNativeOptionalQuestByte = -1;
-inline constexpr int MinimumNativeRewardOffset = -16;
-inline constexpr int MaximumNativeRewardOffset = 16;
+// Native quest-book rewards include the Gateway of Blood's +9,+17 spawn.
+inline constexpr int MinimumNativeRewardOffset = -32;
+inline constexpr int MaximumNativeRewardOffset = 32;
 inline constexpr int MinimumNativeObjectOffset = -32;
 inline constexpr int MaximumNativeObjectOffset = 32;
 inline constexpr int MinimumNativeDirection = -1;

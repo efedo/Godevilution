@@ -105,6 +105,10 @@ M4. M5 is the final removal gate, not a reason to postpone replacement work.
    contract and native mode-policy tests; they are useful but do not prove GUI
    creation. Missing proprietary assets produce an explicit unverified native
    acceptance result, not an assumed pass or a blocker for Godot work.
+   Actual GUI startup now exposed and corrected a native/managed reward-offset
+   limit mismatch. Preserve visible connection-error recovery and the boundary
+   regressions. Close the remaining object-graphics world-entry assertion before
+   claiming native creation, movement or resume acceptance.
 4. Record a fresh integration baseline for the current revision. Capture exact
    commands, configuration, selected tests, outcomes, and any exclusions in
    migration status. Establish the target platform/participant matrix and

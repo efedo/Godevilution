@@ -90,6 +90,7 @@
 #ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
 #include "network/authoritative/server_backed_configuration.hpp"
 #include "network/authoritative/server_backed_runtime.hpp"
+#include "utils/ui_fwd.h"
 #endif
 #include "game/objects/objects.hpp"
 #include "persistence/options.h"
@@ -3052,10 +3053,15 @@ bool StartGame(bool bNewGame, bool bSinglePlayer)
 
 #ifdef DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT
 		if (auto result = authoritative::GetServerBackedRuntime().Start(authoritative::GetServerBackedRuntimeConfiguration(), CurrentStoreManager, *MyPlayer); !result.has_value()) {
+			LogError("Failed to start the server-backed runtime: {}", result.error());
 			printInConsole("Failed to start the server-backed runtime: " + result.error());
 			printNewlineInConsole();
 			NetClose();
-			gbRunGameResult = false;
+			if (!HeadlessMode)
+				UiErrorOkDialog(_("Unable to start authoritative game"), result.error(), /*error=*/true);
+			// Menu resources are still loaded. Keep startup failures recoverable
+			// without trying to render a modal dialog in a headless run.
+			gbRunGameResult = !HeadlessMode;
 			break;
 		}
 		if (authoritative::GetServerBackedRuntime().IsAuthoritativeMode()) {

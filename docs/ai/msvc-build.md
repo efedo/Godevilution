@@ -131,7 +131,17 @@ On the verified desktop, a sandbox-launched client did not expose a targetable
 window, while the same rebuilt client launched on the interactive desktop did.
 Agents must request the appropriate launch permission and Computer Use app
 approval; they must not treat a running process as visible UI or bypass denied
-window access. See migration status for the still-unverified menu/world check.
+window access. See migration status for current GUI outcomes and the remaining
+world-entry gap.
+
+Current GUI evidence reaches menus and hero creation, but world entry still
+asserts on unloaded native object sprites; do not count it as an acceptance pass.
+Authoritative connection failures are retained in `native.log` and show an error
+dialog that returns to the menu. A normal exit code alone remains insufficient.
+Controlled Direct3D captures stayed black, while a child-process launch with
+`SDL_RENDER_DRIVER=software` displayed the menus. Use that environment override
+only for a bounded diagnostic and restore the caller's prior value afterward;
+normal renderer defaults and the release-platform matrix are not certified.
 
 The C# xUnit project is an executable Microsoft Testing Platform runner. Run
 it directly when `dotnet test` selects a machine-wide VSTest host whose

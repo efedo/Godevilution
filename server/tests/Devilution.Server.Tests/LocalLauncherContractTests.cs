@@ -1,10 +1,25 @@
 using System.Text.RegularExpressions;
+using Devilution.Protocol;
 using Xunit;
 
 namespace Devilution.Server.Tests;
 
 public sealed class LocalLauncherContractTests
 {
+    [Theory]
+    [InlineData(nameof(AuthoritativeProtocolLimits.MinimumNativeRewardOffset), AuthoritativeProtocolLimits.MinimumNativeRewardOffset)]
+    [InlineData(nameof(AuthoritativeProtocolLimits.MaximumNativeRewardOffset), AuthoritativeProtocolLimits.MaximumNativeRewardOffset)]
+    public void NativeInitialSnapshotRewardLimitsMatchThePublishedContract(string name, int expected)
+    {
+        var nativeLimits = File.ReadAllText(Path.Combine(
+            FindRepositoryRoot(), "Source/network/authoritative/protocol_limits.hpp"));
+        var declaration = Regex.Match(nativeLimits,
+            $@"inline constexpr int {Regex.Escape(name)} = (-?\d+);");
+        Assert.True(declaration.Success, $"Missing native protocol limit {name}.");
+        Assert.Equal(expected, int.Parse(declaration.Groups[1].Value,
+            System.Globalization.CultureInfo.InvariantCulture));
+    }
+
     [Theory]
     [InlineData("run-authoritative-client.ps1")]
     [InlineData("godot/run-local-client.ps1")]
