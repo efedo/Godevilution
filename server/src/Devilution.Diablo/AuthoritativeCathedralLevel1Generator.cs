@@ -223,8 +223,33 @@ public static class AuthoritativeCathedralLevel1Generator
 
     public static AuthoritativeCathedralLevel1Result Generate(uint dungeonSeed, AuthoritativeCathedralEntry entry)
     {
+        var generated = GenerateDepth(
+            depth: 1,
+            dungeonSeed: dungeonSeed,
+            entry: entry,
+            policy: AuthoritativeCathedralDepthGenerationPolicy.QuestDisabledOriginalDiabloStairs);
+        return new AuthoritativeCathedralLevel1Result(
+            generated.InputSeed,
+            generated.AttemptSeed,
+            generated.FinalRandomState,
+            generated.MegaTiles,
+            generated.NativeTransparency,
+            generated.StairsUp,
+            generated.StairsDown,
+            generated.EntryPosition);
+    }
+
+    internal static AuthoritativeCathedralDepthResult GenerateDepth(
+        int depth,
+        uint dungeonSeed,
+        AuthoritativeCathedralEntry entry,
+        AuthoritativeCathedralDepthGenerationPolicy policy)
+    {
+        _ = AuthoritativeCathedralDepthGenerator.MinimumAreaForDepth(depth);
         if (entry is not AuthoritativeCathedralEntry.Main and not AuthoritativeCathedralEntry.Previous)
             throw new ArgumentOutOfRangeException(nameof(entry));
+        if (policy != AuthoritativeCathedralDepthGenerationPolicy.QuestDisabledOriginalDiabloStairs)
+            throw new ArgumentOutOfRangeException(nameof(policy));
 
         var random = new AuthoritativeLegacyRandom(dungeonSeed);
         var map = new byte[Width * Height];
@@ -245,7 +270,7 @@ public static class AuthoritativeCathedralLevel1Generator
             while (true) {
                 attemptSeed = random.State;
                 FirstRoom();
-                if (CountMask() >= 533)
+                if (CountMask() >= AuthoritativeCathedralDepthGenerator.MinimumAreaForDepth(depth))
                     break;
             }
 
@@ -276,7 +301,9 @@ public static class AuthoritativeCathedralLevel1Generator
         var entryPosition = entry == AuthoritativeCathedralEntry.Main
             ? new AuthoritativeCathedralPoint(stairsUp.X * 2 + 19, stairsUp.Y * 2 + 20)
             : new AuthoritativeCathedralPoint(stairsDown.X * 2 + 19, stairsDown.Y * 2 + 19);
-        return new AuthoritativeCathedralLevel1Result(
+        return new AuthoritativeCathedralDepthResult(
+            depth,
+            policy,
             dungeonSeed,
             attemptSeed,
             random.State,

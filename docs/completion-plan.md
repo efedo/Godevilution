@@ -72,7 +72,7 @@ isolated spell or table rows while the playable route stays unchanged.
 | --- | --- | --- | --- |
 | M0 | Reproducible launch and honest acceptance evidence | Existing implementation | Godot session/recovery passes; opt-in one/four-participant host and actual-client baselines recorded in status; native GUI and release-budget/platform gaps remain |
 | M1 | Usable Godot town-to-dungeon loop | M0 launch/acceptance harness | Authored combat/loot/equipment, real NPC approach/service entry, purchased-scroll portal return and fresh-host owner-return closure pass; full loop remains |
-| M2 | Native-compatible generated world | M0 geometry/parity baseline | Ordinary Cathedral level-1 coarse/fine oracle covers six seeds and MAIN/PREV; opt-in runtime plus isolated Godot walking/authored interaction/restore pass; native population, wider Cathedral scope and remaining families remain |
+| M2 | Native-compatible generated world | M0 geometry/parity baseline | Ordinary Cathedral depths 1-4 coarse/fine oracle covers six seeds and MAIN/PREV; only level 1 has opt-in runtime/Godot walking/authored interaction/restore; deeper activation, native population and remaining families remain |
 | M3 | Complete base and Hellfire gameplay routes | M1 plus the relevant M2 world slices | Many rules exist; campaign and remaining behavioral coverage remain |
 | M4 | Release-quality client, recovery, and packaging | M3; preparation begins during M1/M2 | Recovery and adapter packaging foundations exist; product acceptance remains |
 | M5 | Production legacy-runtime retirement | M4 and capability replacement gates | Authoritative mode is Lua-free; compatibility runtime remains |
@@ -291,12 +291,12 @@ this evidence. A sample art pack does not satisfy M4's full presentation gate.
    the diagnostic integration, not native population or the family exit gate.
    Preserve it while extending native Cathedral generation/depth and population;
    multiplayer and broader seed/topology checks remain relevant gates.
-   Next ordinary-depth package: Cathedral dungeon levels 1-4 all use native
-   `level_l1.cpp`, with minimum areas 533/693/761/761. First extend private oracle
-   capture to explicit depth, unavailable quests, original-Diablo stair policy,
-   MAIN/PREV entries, attempt/final RNG and complete coarse/fine layers. Then
-   extend the shared generator/materializer while keeping L1 results/APIs exact.
-   Multi-depth activation requires a separate opt-in catalog/adapter/profile/save
+   Ordinary Cathedral depths 1-4 now share the native-compatible generator and
+   materializer: `level_l1.cpp` minimum areas are 533/693/761/761. Private oracle
+   capture explicitly disables quests and selects original-Diablo stairs; all
+   six seeds with MAIN/PREV match attempt/final RNG, complete coarse/fine layers
+   and entry/stairs. Existing L1 APIs/results and its separate oracle remain.
+   Next, multi-depth activation requires a separate opt-in catalog/adapter/profile/save
    contract: preserve existing L1 v1 identities and version-2 saves. Audit profile
    level IDs and every dependent reference; base 2/3/4 are authored other families,
    not native Cathedral depths. Bind Down to next.Main and Up to previous.Previous;

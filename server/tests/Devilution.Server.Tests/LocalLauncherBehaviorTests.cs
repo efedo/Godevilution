@@ -509,7 +509,7 @@ public sealed class FakeCompletedProcess
             return;
 
         var script = BuildPowerShellHarness(
-            ["Assert-CathedralNativeReport", "Assert-CathedralManagedReport", "Get-CathedralOracleArtifacts"],
+            ["Assert-CathedralNativeReport", "Assert-CathedralManagedReport", "Get-CathedralOracleArtifactNames", "Get-CathedralOracleArtifacts"],
             """
             $work = Join-Path ([IO.Path]::GetTempPath()) ('Godevilution-OracleHelperTest-' + [guid]::NewGuid().ToString('N'))
             New-Item -ItemType Directory -Path $work | Out-Null
@@ -531,6 +531,16 @@ public sealed class FakeCompletedProcess
                 function Save-NativeReport { [IO.File]::WriteAllText($reportPath, ($report | ConvertTo-Json -Depth 6)) }
                 Save-NativeReport
                 Assert-CathedralNativeReport $reportPath
+                Expect-Rejected { Assert-CathedralNativeReport $reportPath 'CathedralDepthFineGeometryLocalAssetOracle' }
+                $report.testsuites[0].testsuite[0].name = 'CathedralDepthFineGeometryLocalAssetOracle'
+                Save-NativeReport
+                Assert-CathedralNativeReport $reportPath 'CathedralDepthFineGeometryLocalAssetOracle'
+                Expect-Rejected { Assert-CathedralNativeReport $reportPath }
+                $report.testsuites[0].testsuite[0].result = 'SKIPPED'
+                Save-NativeReport
+                Expect-Rejected { Assert-CathedralNativeReport $reportPath 'CathedralDepthFineGeometryLocalAssetOracle' }
+                $report.testsuites[0].testsuite[0].name = 'CathedralFineGeometryLocalAssetOracle'
+                $report.testsuites[0].testsuite[0].result = 'COMPLETED'
                 foreach ($field in @('tests', 'failures', 'errors', 'disabled')) {
                     $original = $report[$field]
                     $report[$field] = if ($field -eq 'tests') { 0 } else { 1 }
@@ -553,6 +563,18 @@ public sealed class FakeCompletedProcess
                 $goodSummary = "Test run summary: Passed! - oracle.dll`r`n  total: 12`r`n  failed: 0`r`n  succeeded: 12`r`n  skipped: 0`r`n"
                 [IO.File]::WriteAllText($managedPath, $goodSummary)
                 Assert-CathedralManagedReport $managedPath
+                Expect-Rejected { Assert-CathedralManagedReport $managedPath 48 }
+                $depthSummary = $goodSummary.Replace('total: 12', 'total: 48').Replace('succeeded: 12', 'succeeded: 48')
+                [IO.File]::WriteAllText($managedPath, $depthSummary)
+                Assert-CathedralManagedReport $managedPath 48
+                Expect-Rejected { Assert-CathedralManagedReport $managedPath }
+                foreach ($badSummary in @($depthSummary.Replace('total: 48', 'total: 47'),
+                        $depthSummary.Replace('succeeded: 48', 'succeeded: 47'),
+                        $depthSummary.Replace('failed: 0', 'failed: 1'),
+                        $depthSummary.Replace('skipped: 0', 'skipped: 1'), ($depthSummary + $depthSummary))) {
+                    [IO.File]::WriteAllText($managedPath, $badSummary)
+                    Expect-Rejected { Assert-CathedralManagedReport $managedPath 48 }
+                }
                 foreach ($badSummary in @('', 'Test run summary: Failed!',
                         $goodSummary.Replace('total: 12', 'total: 0'),
                         $goodSummary.Replace('total: 12', 'total: 4').Replace('succeeded: 12', 'succeeded: 4'),
@@ -573,12 +595,36 @@ public sealed class FakeCompletedProcess
                     'cathedral-2147483648-main.json', 'cathedral-2147483648-previous.json',
                     'cathedral-4294967295-main.json', 'cathedral-4294967295-previous.json')
                 foreach ($name in $artifactNames) { [IO.File]::WriteAllText((Join-Path $work $name), 'nonlicensed synthetic input') }
+                if (@(Compare-Object $artifactNames @(Get-CathedralOracleArtifactNames)).Count -ne 0) {
+                    throw 'The legacy level-1 artifact contract changed.'
+                }
                 $artifacts = @(Get-CathedralOracleArtifacts $work)
                 if ($artifacts.Count -ne 14 -or @($artifacts | Where-Object { $_.Sha256 -notmatch '^[0-9a-f]{64}$' -or $_.Bytes -le 0 }).Count -ne 0) {
                     throw 'Complete oracle artifacts were not hashed.'
                 }
                 [IO.File]::WriteAllText((Join-Path $work 'l1.sol'), '')
                 Expect-Rejected { Get-CathedralOracleArtifacts $work }
+                Expect-Rejected { Get-CathedralOracleArtifacts $work -CathedralDepths }
+                $depthNames = @(Get-CathedralOracleArtifactNames -CathedralDepths)
+                if ($depthNames.Count -ne 50 -or @($depthNames | Select-Object -Unique).Count -ne 50) {
+                    throw 'Depth oracle must require two raw inputs and 48 unique comparisons.'
+                }
+                foreach ($depth in 1..4) {
+                    foreach ($seed in @('2588', '743271966', '0', '1', '2147483648', '4294967295')) {
+                        foreach ($entry in @('main', 'previous')) {
+                            if ("cathedral-depth-$depth-$seed-$entry.json" -notin $depthNames) {
+                                throw 'Depth oracle omitted a mandatory depth/seed/entry.'
+                            }
+                        }
+                    }
+                }
+                foreach ($name in $depthNames) { [IO.File]::WriteAllText((Join-Path $work $name), 'nonlicensed synthetic input') }
+                $depthArtifacts = @(Get-CathedralOracleArtifacts $work -CathedralDepths)
+                if ($depthArtifacts.Count -ne 50 -or @($depthArtifacts | Where-Object { $_.Sha256 -notmatch '^[0-9a-f]{64}$' -or $_.Bytes -le 0 }).Count -ne 0) {
+                    throw 'Complete depth oracle artifacts were not hashed.'
+                }
+                [IO.File]::WriteAllText((Join-Path $work 'cathedral-depth-4-4294967295-previous.json'), '')
+                Expect-Rejected { Get-CathedralOracleArtifacts $work -CathedralDepths }
                 Write-Output 'PASS'
             } finally {
                 $tempRoot = [IO.Path]::GetFullPath([IO.Path]::GetTempPath()).TrimEnd('\')
@@ -669,15 +715,18 @@ public sealed class FakeCompletedProcess
             New-Item -ItemType Directory -Path $work | Out-Null
             try {
                 $child = Join-Path $work 'harmless native child.cmd'
-                foreach ($expectedCode in @(0, 23, -1073741819)) {
-                    [IO.File]::WriteAllText($child, "@echo off`r`necho synthetic oracle stdout`r`necho INFO: synthetic oracle stderr 1>&2`r`nexit /b $expectedCode`r`n")
+                foreach ($testName in @('CathedralFineGeometryLocalAssetOracle', 'CathedralDepthFineGeometryLocalAssetOracle')) {
+                  foreach ($expectedCode in @(0, 23, -1073741819)) {
+                    [IO.File]::WriteAllText($child, "@echo off`r`necho synthetic oracle stdout %*`r`necho INFO: synthetic oracle stderr 1>&2`r`nexit /b $expectedCode`r`n")
                     $log = Join-Path $work 'retained native log.txt'
-                    $actualCode = Invoke-CathedralNativeOracle $child (Join-Path $work 'unused report.json') $log
+                    $actualCode = Invoke-CathedralNativeOracle $child (Join-Path $work 'unused report.json') $log $testName
                     if ($actualCode -ne $expectedCode) { throw "Native exit $expectedCode became $actualCode." }
                     $output = [IO.File]::ReadAllText($log)
-                    if ($output -notmatch 'synthetic oracle stdout' -or $output -notmatch 'synthetic oracle stderr') {
+                    if ($output -notmatch 'synthetic oracle stdout' -or $output -notmatch 'synthetic oracle stderr' -or
+                        $output -notmatch [regex]::Escape("--gtest_filter=Drlg_l1.$testName")) {
                         throw 'Native output was not retained.'
                     }
+                  }
                 }
                 Write-Output 'PASS'
             } finally {

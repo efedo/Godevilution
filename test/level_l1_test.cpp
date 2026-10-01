@@ -29,8 +29,14 @@ namespace {
 constexpr char CathedralOracleDirectoryVariable[] = "GODEVILUTION_CATHEDRAL_ORACLE_DIRECTORY";
 constexpr char CathedralOracleFormat[] = "godevilution-cathedral-fine-oracle";
 constexpr uint32_t CathedralOracleVersion = 1;
+constexpr char CathedralDepthOracleDirectoryVariable[] = "GODEVILUTION_CATHEDRAL_DEPTH_ORACLE_DIRECTORY";
+constexpr char CathedralDepthOracleFormat[] = "godevilution-cathedral-depth-fine-oracle";
+constexpr char CathedralDepthOraclePolicy[] = "quest-disabled-original-diablo";
 constexpr int NativeWorldWidth = MAXDUNX;
 constexpr int NativeWorldHeight = MAXDUNY;
+constexpr int CathedralDepthFirst = 1;
+constexpr int CathedralDepthLast = 4;
+constexpr size_t CathedralDepthOracleCaseCount = 48;
 
 struct CathedralOracleCase {
 	uint32_t inputSeed;
@@ -47,6 +53,8 @@ struct CathedralOracleCase {
 	std::vector<uint32_t> solidCells;
 	std::vector<uint32_t> missileBlockedCells;
 	std::vector<uint32_t> blockLightCells;
+	int level = 1;
+	std::vector<uint8_t> coarseTransparency;
 };
 
 template <typename T>
@@ -173,6 +181,67 @@ bool WriteCathedralOracleCase(const std::filesystem::path &path, const Cathedral
 	return stream.good();
 }
 
+bool WriteCathedralDepthOracleCase(const std::filesystem::path &path, const CathedralOracleCase &oracleCase)
+{
+	std::ofstream stream(path, std::ios::binary | std::ios::trunc);
+	if (!stream.good())
+		return false;
+	const char *entry = oracleCase.entry == ENTRY_MAIN ? "main" : "previous";
+	stream << "{\n"
+	       << "\"format\":\"" << CathedralDepthOracleFormat << "\",\n"
+	       << "\"version\":" << CathedralOracleVersion << ",\n"
+	       << "\"level\":" << oracleCase.level << ",\n"
+	       << "\"policy\":\"" << CathedralDepthOraclePolicy << "\",\n"
+	       << "\"entry\":\"" << entry << "\",\n"
+	       << "\"inputSeed\":" << oracleCase.inputSeed << ",\n"
+	       << "\"attemptSeed\":" << oracleCase.attemptSeed << ",\n"
+	       << "\"finalRandomState\":" << oracleCase.finalRandomState << ",\n"
+	       << "\"coarseWidth\":40,\n"
+	       << "\"coarseHeight\":40,\n"
+	       << "\"coarseTransparencyWidth\":80,\n"
+	       << "\"coarseTransparencyHeight\":80,\n"
+	       << "\"nativeWidth\":" << NativeWorldWidth << ",\n"
+	       << "\"nativeHeight\":" << NativeWorldHeight << ",\n"
+	       << "\"solCount\":" << oracleCase.solProperties.size() << ",\n"
+	       << "\"entryPosition\":";
+	WriteCathedralOraclePoint(stream, oracleCase.entryPosition);
+	stream << ",\n\"stairsUp\":";
+	WriteCathedralOraclePoint(stream, oracleCase.stairsUp);
+	stream << ",\n\"stairsDown\":";
+	WriteCathedralOraclePoint(stream, oracleCase.stairsDown);
+	stream << ",\n\"megaTiles\":";
+	WriteCathedralOracleArray(stream, oracleCase.megaTiles);
+	stream << ",\n\"coarseTransparency\":";
+	WriteCathedralOracleArray(stream, oracleCase.coarseTransparency);
+	stream << ",\n\"pieces\":";
+	WriteCathedralOracleArray(stream, oracleCase.pieces);
+	stream << ",\n\"transparency\":";
+	WriteCathedralOracleArray(stream, oracleCase.transparency);
+	stream << ",\n\"solProperties\":";
+	WriteCathedralOracleArray(stream, oracleCase.solProperties);
+	stream << ",\n\"solidCells\":";
+	WriteCathedralOracleArray(stream, oracleCase.solidCells);
+	stream << ",\n\"missileBlockedCells\":";
+	WriteCathedralOracleArray(stream, oracleCase.missileBlockedCells);
+	stream << ",\n\"blockLightCells\":";
+	WriteCathedralOracleArray(stream, oracleCase.blockLightCells);
+	stream << ",\n\"hashes\":{\n"
+	       << "\"megaTiles\":\"" << CathedralOracleHex(CathedralOracleHashValues(oracleCase.megaTiles)) << "\",\n"
+	       << "\"coarseTransparency\":\"" << CathedralOracleHex(CathedralOracleHashValues(oracleCase.coarseTransparency)) << "\",\n"
+	       << "\"pieces\":\"" << CathedralOracleHex(CathedralOracleHashValues(oracleCase.pieces)) << "\",\n"
+	       << "\"transparency\":\"" << CathedralOracleHex(CathedralOracleHashValues(oracleCase.transparency)) << "\",\n"
+	       << "\"solProperties\":\"" << CathedralOracleHex(CathedralOracleHashValues(oracleCase.solProperties)) << "\",\n"
+	       << "\"solidCells\":\"" << CathedralOracleHex(CathedralOracleHashValues(oracleCase.solidCells)) << "\",\n"
+	       << "\"missileBlockedCells\":\"" << CathedralOracleHex(CathedralOracleHashValues(oracleCase.missileBlockedCells)) << "\",\n"
+	       << "\"blockLightCells\":\"" << CathedralOracleHex(CathedralOracleHashValues(oracleCase.blockLightCells)) << "\"\n"
+	       << "}\n}\n";
+	stream.flush();
+	if (!stream.good())
+		return false;
+	stream.close();
+	return stream.good();
+}
+
 bool WriteCathedralOracleRawAsset(const std::filesystem::path &path, const uint8_t *data, size_t size)
 {
 	std::ofstream stream(path, std::ios::binary | std::ios::trunc);
@@ -186,17 +255,26 @@ bool WriteCathedralOracleRawAsset(const std::filesystem::path &path, const uint8
 	return stream.good();
 }
 
-CathedralOracleCase CaptureCathedralOracleCase(uint32_t seed, lvl_entry entry)
+CathedralOracleCase CaptureCathedralOracleCaseAtLevel(uint32_t seed, lvl_entry entry, int level, bool resetDepthPolicy)
 {
-	LevelSeeds[1] = std::nullopt;
-	currentLevelNumber() = 1;
+	if (level < CathedralDepthFirst || level > CathedralDepthLast)
+		throw std::runtime_error("Cathedral depth oracle received an invalid level");
+	if (resetDepthPolicy) {
+		if (MyPlayer == nullptr)
+			throw std::runtime_error("Cathedral depth oracle has no player");
+		MyPlayer->pOriginalCathedral = true;
+		for (Quest &quest : Quests)
+			quest._qactive = QUEST_NOTAVAIL;
+	}
+	LevelSeeds[level] = std::nullopt;
+	currentLevelNumber() = level;
 	levelType() = DTYPE_CATHEDRAL;
 	CreateDungeon(seed, entry);
 
 	CathedralOracleCase oracleCase {
 		seed,
 		entry,
-		LevelSeeds[1].value(),
+		LevelSeeds[level].value(),
 		GetLCGEngineState(),
 		viewPosition(),
 		Point { -1, -1 },
@@ -209,6 +287,7 @@ CathedralOracleCase CaptureCathedralOracleCase(uint32_t seed, lvl_entry entry)
 		{},
 		{},
 	};
+	oracleCase.level = level;
 	int stairsUpCount = 0;
 	int stairsDownCount = 0;
 	for (int y = 0; y < DMAXY; y++) {
@@ -243,12 +322,21 @@ CathedralOracleCase CaptureCathedralOracleCase(uint32_t seed, lvl_entry entry)
 				oracleCase.blockLightCells.push_back(static_cast<uint32_t>(cell));
 		}
 	}
+	for (int y = 0; y < DMAXY * 2; y++) {
+		for (int x = 0; x < DMAXX * 2; x++)
+			oracleCase.coarseTransparency.push_back(static_cast<uint8_t>(tileAt(x + 16, y + 16).transVal()));
+	}
 	for (int piece = 0; piece < MAXTILES; piece++)
 		oracleCase.solProperties.push_back(static_cast<uint8_t>(tileProperties()[piece]));
 	if (stairsUpCount != 1 || stairsDownCount != 1
 		|| oracleCase.stairsUp.x == -1 || oracleCase.stairsDown.x == -1)
 		throw std::runtime_error("Cathedral oracle could not locate generated stairs");
 	return oracleCase;
+}
+
+CathedralOracleCase CaptureCathedralOracleCase(uint32_t seed, lvl_entry entry)
+{
+	return CaptureCathedralOracleCaseAtLevel(seed, entry, CathedralDepthFirst, false);
 }
 
 TEST(Drlg_l1, CreateL5Dungeon_diablo_1_2588)
@@ -434,6 +522,155 @@ TEST(Drlg_l1, CathedralFineGeometryLocalAssetOracle)
 	for (size_t index = 0; index < std::size(inputs); index++) {
 		ASSERT_TRUE(WriteCathedralOracleCase(outputPath / inputs[index].fileName, cases[index]));
 	}
+}
+
+TEST(Drlg_l1, CathedralDepthFineGeometryLocalAssetOracle)
+{
+	const char *outputDirectory = std::getenv(CathedralDepthOracleDirectoryVariable);
+	if (outputDirectory == nullptr || outputDirectory[0] == '\0') {
+		GTEST_SKIP() << "Set " << CathedralDepthOracleDirectoryVariable
+		             << " to run the opt-in local-asset Cathedral depth fine-geometry oracle";
+	}
+
+	const std::filesystem::path outputPath(outputDirectory);
+	ASSERT_TRUE(std::filesystem::exists(outputPath))
+		<< "Cathedral depth oracle output directory does not exist: " << outputPath.string();
+	ASSERT_TRUE(std::filesystem::is_directory(outputPath))
+		<< "Cathedral depth oracle output path is not a directory: " << outputPath.string();
+	std::error_code pathError;
+	const auto canonicalOutputPath = std::filesystem::weakly_canonical(outputPath, pathError);
+	ASSERT_FALSE(pathError) << "Unable to canonicalize Cathedral depth oracle output path: " << pathError.message();
+	const auto canonicalRepositoryPath = CathedralOracleRepositoryPath(pathError);
+	ASSERT_FALSE(pathError) << "Unable to locate repository root for depth oracle isolation: " << pathError.message();
+	std::string repositoryPrefix = CathedralOracleLower(canonicalRepositoryPath.generic_string());
+	if (!repositoryPrefix.ends_with('/'))
+		repositoryPrefix += '/';
+	const std::string canonicalOutput = CathedralOracleLower(canonicalOutputPath.generic_string());
+	ASSERT_FALSE(canonicalOutput == repositoryPrefix.substr(0, repositoryPrefix.size() - 1)
+		|| canonicalOutput.starts_with(repositoryPrefix))
+		<< "Cathedral depth oracle output must be outside the repository: " << canonicalOutputPath.string();
+	ASSERT_TRUE(std::filesystem::is_empty(outputPath))
+		<< "Cathedral depth oracle output directory must be fresh: " << outputPath.string();
+
+	TestInitGame();
+	// TestInitGame installs its preference directory as an asset override.
+	// Remove that override and any prior main archive before resolving the
+	// original archive through the production GOG-aware search order.
+	UnloadModArchives();
+	MpqArchives.erase(MainMpqPriority);
+	gbIsSpawn = false;
+	LoadGameArchives();
+	ASSERT_TRUE(HaveMainData()) << "DIABDAT.MPQ was not discovered by LoadGameArchives";
+	ASSERT_FALSE(gbIsSpawn) << "Cathedral depth oracle resolved spawn.mpq instead of original DIABDAT.MPQ";
+
+	levelType() = DTYPE_CATHEDRAL;
+	currentLevelNumber() = CathedralDepthFirst;
+
+#ifndef UNPACKED_MPQS
+	const auto &mainArchive = MpqArchives.at(MainMpqPriority);
+	for (const std::string_view assetPath : std::array<std::string_view, 2> {
+		"levels\\l1data\\l1.til",
+		"levels\\l1data\\l1.sol",
+	}) {
+		AssetRef asset = FindAsset(assetPath);
+		ASSERT_TRUE(asset.ok()) << "Required Cathedral depth asset is unavailable: " << assetPath;
+		ASSERT_EQ(asset.archive, &mainArchive)
+			<< "Cathedral depth asset did not resolve from the original main archive: " << assetPath;
+	}
+#endif
+
+	size_t tilCount = 0;
+	auto tilDefinitions = LoadFileInMemWithStatus<MegaTile>(
+		"levels\\l1data\\l1.til", &tilCount);
+	ASSERT_TRUE(tilDefinitions.has_value()) << tilDefinitions.error();
+	ASSERT_NE(tilDefinitions->get(), nullptr);
+	ASSERT_EQ(tilCount, static_cast<size_t>(GetTileCount(DTYPE_CATHEDRAL)));
+
+	size_t tilByteCount = 0;
+	auto tilBytesResult = LoadFileInMemWithStatus<std::byte>(
+		"levels\\l1data\\l1.til", &tilByteCount);
+	ASSERT_TRUE(tilBytesResult.has_value()) << tilBytesResult.error();
+	ASSERT_NE(tilBytesResult->get(), nullptr);
+	ASSERT_EQ(tilByteCount, tilCount * sizeof(MegaTile));
+	std::vector<uint8_t> tilBytes(tilByteCount);
+	std::memcpy(tilBytes.data(), tilBytesResult->get(), tilByteCount);
+
+	size_t solByteCount = 0;
+	auto solBytesResult = LoadFileInMemWithStatus<std::byte>(
+		"levels\\l1data\\l1.sol", &solByteCount);
+	ASSERT_TRUE(solBytesResult.has_value()) << solBytesResult.error();
+	ASSERT_NE(solBytesResult->get(), nullptr);
+	ASSERT_GT(solByteCount, static_cast<size_t>(0));
+	ASSERT_LE(solByteCount, static_cast<size_t>(MAXTILES));
+	std::vector<uint8_t> solBytes(solByteCount);
+	std::memcpy(solBytes.data(), solBytesResult->get(), solByteCount);
+
+	for (int piece = 0; piece < MAXTILES; piece++)
+		tileProperties()[piece] = TileProperties::None;
+	auto solLoad = LoadLevelSOLData();
+	ASSERT_TRUE(solLoad.has_value()) << solLoad.error();
+
+	std::vector<MegaTile> immutableTil(tilCount);
+	std::copy_n(tilDefinitions->get(), tilCount, immutableTil.begin());
+	const std::array<uint32_t, 6> seeds {
+		UINT32_C(2588),
+		UINT32_C(743271966),
+		UINT32_C(0),
+		UINT32_C(1),
+		UINT32_C(0x80000000),
+		UINT32_C(0xFFFFFFFF),
+	};
+	const std::array<lvl_entry, 2> entries { ENTRY_MAIN, ENTRY_PREV };
+	size_t depthCaseCount = 0;
+	for (int depth = CathedralDepthFirst; depth <= CathedralDepthLast; depth++) {
+		ASSERT_EQ(GetLevelType(depth), DTYPE_CATHEDRAL);
+		for (const uint32_t seed : seeds) {
+			for (const lvl_entry entry : entries) {
+				// Poison each per-depth slot and policy before capture. The capture
+				// must reset only the selected depth and restore the explicit policy.
+				constexpr uint32_t staleAttemptSeed = UINT32_C(0xDEADBEEF);
+				LevelSeeds[depth] = staleAttemptSeed;
+				currentLevelNumber() = depth;
+				levelType() = DTYPE_CATHEDRAL;
+				ASSERT_NE(MyPlayer, nullptr);
+				MyPlayer->pOriginalCathedral = false;
+				for (Quest &quest : Quests)
+					quest._qactive = QUEST_INIT;
+				ASSERT_EQ(currentLevelNumber(), depth);
+				ASSERT_EQ(levelType(), DTYPE_CATHEDRAL);
+				ASSERT_FALSE(MyPlayer->pOriginalCathedral);
+
+				megaTiles() = std::make_unique<MegaTile[]>(tilCount);
+				std::copy(immutableTil.begin(), immutableTil.end(), megaTiles().get());
+				const CathedralOracleCase captured = CaptureCathedralOracleCaseAtLevel(seed, entry, depth, true);
+
+				ASSERT_EQ(captured.level, depth);
+				ASSERT_EQ(captured.megaTiles.size(), static_cast<size_t>(DMAXX * DMAXY));
+				ASSERT_EQ(captured.coarseTransparency.size(), static_cast<size_t>(DMAXX * 2 * DMAXY * 2));
+				ASSERT_EQ(captured.pieces.size(), static_cast<size_t>(NativeWorldWidth * NativeWorldHeight));
+				ASSERT_EQ(captured.transparency.size(), static_cast<size_t>(NativeWorldWidth * NativeWorldHeight));
+				ASSERT_EQ(captured.solProperties.size(), static_cast<size_t>(MAXTILES));
+				ASSERT_EQ(currentLevelNumber(), depth);
+				ASSERT_EQ(levelType(), DTYPE_CATHEDRAL);
+				ASSERT_TRUE(MyPlayer->pOriginalCathedral);
+				ASSERT_TRUE(LevelSeeds[depth].has_value());
+				EXPECT_EQ(*LevelSeeds[depth], captured.attemptSeed);
+				EXPECT_NE(captured.attemptSeed, staleAttemptSeed);
+				for (const Quest &quest : Quests)
+					EXPECT_EQ(quest._qactive, QUEST_NOTAVAIL);
+
+				const char *entryName = entry == ENTRY_MAIN ? "main" : "previous";
+				const std::string fileName = "cathedral-depth-" + std::to_string(depth) + "-"
+				    + std::to_string(seed) + "-" + entryName + ".json";
+				ASSERT_TRUE(WriteCathedralDepthOracleCase(outputPath / fileName, captured));
+				depthCaseCount++;
+			}
+		}
+	}
+
+	ASSERT_EQ(depthCaseCount, CathedralDepthOracleCaseCount);
+	ASSERT_TRUE(WriteCathedralOracleRawAsset(outputPath / "l1.til", tilBytes.data(), tilBytes.size()));
+	ASSERT_TRUE(WriteCathedralOracleRawAsset(outputPath / "l1.sol", solBytes.data(), solBytes.size()));
 }
 
 TEST(Drlg_l1, CreateL5Dungeon_reuses_successful_attempt_seed)

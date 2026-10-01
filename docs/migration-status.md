@@ -112,8 +112,10 @@ open. Their scope, dependencies, and exit checks are defined only in the
   fragments are implemented foundations, not complete native map generation.
   An isolated ordinary original-Diablo Cathedral level-1 coarse generator now
   matches existing native goldens and has a 112x112 fine-coordinate catalog adapter.
-  Real fine-data comparison covers six seeds with MAIN/PREV entry. Opt-in ordinary
-  level-1 server activation, automatic stair-boundary transitions and identity-safe
+  The shared ordinary Cathedral depth API now matches native coarse/fine output
+  for depths 1-4, six seeds and MAIN/PREV, with quests disabled and original-Diablo
+  stairs. This is library generation, not multi-depth runtime activation.
+  Opt-in ordinary level-1 server activation, automatic stair-boundary transitions and identity-safe
   cold restore now pass, including a separate local-asset semantic-catalog check.
   Isolated headless/rendered Godot walking, authored object/combat/loot, moved-position
   restore and native-stair Town return now pass. Native population, broader
@@ -133,6 +135,61 @@ open. Their scope, dependencies, and exit checks are defined only in the
 The following records describe implemented slices at this baseline. They are
 evidence, not a separate priority list; detailed older entries retain their
 original scope and may be superseded by later entries or the current assessment.
+
+### M2 ordinary Cathedral depth generation and independent oracle (2026-10-01)
+
+The shared managed DRLG implementation now supports Cathedral dungeon depths
+1-4 with native minimum areas 533/693/761/761 and explicit
+`QuestDisabledOriginalDiabloStairs` policy. The level-1 facade retains its public
+API/result and exact output. The depth-aware fine materializer reuses validated
+TIL/SOL expansion and native property corrections with owned copied layers.
+Production native generation, runtime catalog/adapter IDs, profiles, wire and
+save contracts are unchanged; the server still consumes no MPQs.
+
+The new independent native GTest resets each selected depth seed, forces every
+quest unavailable and original-Diablo stairs, and exports a separate depth
+format. Root ran `tools/test-cathedral-geometry.ps1 -CathedralDepths` after
+initializing matching MSVC x64 and verifying `cl`, `rc` and `mt`. One native
+capture test passes (8.048s) and all 48 managed comparisons pass (2.640s), covering
+four depths, six seeds and MAIN/PREV without skips. Complete 40x40 mega tiles,
+80x80 coarse transparency, 112x112 fine pieces/transparency, attempt/final RNG,
+stair/entry anchors and SOL collision/light channels match. Fifty nonempty raw
+inputs/snapshots are privately hashed under
+`%TEMP%/Godevilution-Cathedral-Oracle-ce6f49181e0448d4b4716cd520ac79cd`.
+The unnamed raw SOL bit remains independently checked and stripped only at the
+test semantic boundary. Conservative shared vision is not exact native vision.
+
+The unchanged zero-argument oracle passes its native capture and all twelve
+managed L1 cases (963ms), with fourteen private artifacts under
+`%TEMP%/Godevilution-Cathedral-Oracle-d4df63b4aa1b4366a8cfb8445548302f`.
+All 21 existing native Cathedral/Crypt fixture and RNG tests pass (1.087s).
+Focused managed depth plus legacy generator/geometry/runtime-catalog checks pass
+78/78 (620ms), including all six L1 seeds with both entries and malformed/null
+layers, invalid policies/depths/entries, copied inputs and coordinate bounds.
+Rebuilt launcher behavior/contract checks pass 25/25 (18.394s); scope/count,
+missing/empty artifacts, skipped outcomes and retained native errors are checked.
+Documentation consistency guards pass 3/3 without skips (371ms). Final managed,
+launcher and documentation runner logs are retained beside the depth result.
+Native generated Protobuf C4251 and managed NU1900 audit-feed warnings remain;
+they are not a clean-warning or security-audit pass.
+
+The existing L1 Godot journey also passes headlessly through ordinary controls:
+Town entry, generated walking/collision, authored object/combat/loot, fresh-host
+restore and native stair Town return. Private session evidence is
+`.local/cathedral-playtest/sessions/acceptance-9a93c01a99a44cb18246429596ce7c9e`;
+launch-log suffixes are `bd43bfb10d224769a8e2e56007429b54` and
+`1ef573e5dded48eba3d2070d24f4f318`. All six engine version/import/client records
+exit zero with terminal times and no stage/diagnostic/cleanup errors. Engine
+4.7.2 Mono runs isolated staged copies; source SDK 4.7.1 is unchanged. No new
+rendered or multi-depth traversal is claimed. Final inspection finds no project,
+native-oracle, Godot or WerFault process remaining.
+
+Only L1 remains runtime-activated. The next package is the separate multi-depth
+catalog/identity/adapter/save/profile and reciprocal staircase topology. Keep
+base level IDs, L1 v1/version-2 saves, native Catacombs-5 boundary and default
+launches intact. Explicit per-depth seeds do not prove native campaign selection;
+population, quest/set-piece policies and complete Cathedral play remain open.
+M0/M2 and the approximately 35% overall planning estimate remain open.
 
 ### M0 live movement diagnostics and refreshed verification (2026-10-01)
 

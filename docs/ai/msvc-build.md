@@ -228,6 +228,24 @@ directory the new native test skips, and the twelve managed comparisons are
 explicit; neither default-suite exclusion counts as original-asset evidence.
 Unpacked-MPQ builds are not accepted by this original-archive wrapper.
 
+To compare ordinary Cathedral dungeon depths 1-4 through the shared native L1
+family, select the separate depth oracle explicitly:
+
+```powershell
+./tools/test-cathedral-geometry.ps1 -CathedralDepths
+```
+
+This path resets the selected depth seed, makes every quest unavailable and
+selects original-Diablo stairs before each native capture. It requires 48 managed
+comparisons (four depths, the same six seeds and MAIN/PREV) plus one completed
+native capture test, with no skips. The separate depth format records 80x80
+coarse transparency in addition to complete fine layers, RNG and stair/entry
+metadata. Fifty nonempty private artifacts are hashed. The original zero-argument
+level-1 format, twelve comparisons and fourteen artifacts remain unchanged.
+The managed depth API consumes validated TIL/SOL catalogs, never MPQs. These
+checks do not activate a multi-depth runtime profile or establish native
+population, quest variants, campaign seed selection or complete Cathedral play.
+
 The C# xUnit project is an executable Microsoft Testing Platform runner. Run
 it directly when `dotnet test` selects a machine-wide VSTest host whose
 `testhost` package is unavailable:

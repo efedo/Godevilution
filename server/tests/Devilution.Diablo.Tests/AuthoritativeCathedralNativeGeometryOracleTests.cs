@@ -13,7 +13,10 @@ namespace Devilution.Diablo.Tests;
 public sealed class AuthoritativeCathedralNativeGeometryOracleTests
 {
     private const string OracleDirectoryVariable = "GODEVILUTION_CATHEDRAL_ORACLE_DIRECTORY";
+    private const string DepthOracleDirectoryVariable = "GODEVILUTION_CATHEDRAL_DEPTH_ORACLE_DIRECTORY";
     private const string OracleFormat = "godevilution-cathedral-fine-oracle";
+    private const string DepthOracleFormat = "godevilution-cathedral-depth-fine-oracle";
+    private const string DepthOraclePolicy = "quest-disabled-original-diablo";
     private const int OracleVersion = 1;
     private const int CoarseWidth = 40;
     private const int CoarseHeight = 40;
@@ -68,10 +71,37 @@ public sealed class AuthoritativeCathedralNativeGeometryOracleTests
         string snapshotFileName,
         uint seed,
         string entryName)
+        => CompareNativeFineGeometry(snapshotFileName, seed, entryName);
+
+    public static TheoryData<int, uint, string> CathedralDepthCases
     {
-        var root = Environment.GetEnvironmentVariable(OracleDirectoryVariable);
+        get {
+            var cases = new TheoryData<int, uint, string>();
+            foreach (var depth in Enumerable.Range(1, 4)) {
+                foreach (var seed in new uint[] { 2588, 743271966, 0, 1, 0x80000000, uint.MaxValue }) {
+                    foreach (var entry in new[] { "main", "previous" })
+                        cases.Add(depth, seed, entry);
+                }
+            }
+            return cases;
+        }
+    }
+
+    [Theory(Explicit = true)]
+    [MemberData(nameof(CathedralDepthCases))]
+    public void NativeLocalAssetDepthFineGeometryMatchesManagedMaterializer(int depth, uint seed, string entryName)
+        => CompareNativeFineGeometry($"cathedral-depth-{depth}-{seed}-{entryName}.json", seed, entryName, depth);
+
+    private static void CompareNativeFineGeometry(
+        string snapshotFileName,
+        uint seed,
+        string entryName,
+        int? depth = null)
+    {
+        var directoryVariable = depth.HasValue ? DepthOracleDirectoryVariable : OracleDirectoryVariable;
+        var root = Environment.GetEnvironmentVariable(directoryVariable);
         Assert.False(string.IsNullOrWhiteSpace(root),
-            $"{OracleDirectoryVariable} must point to the native oracle directory.");
+            $"{directoryVariable} must point to the native oracle directory.");
         Assert.True(Directory.Exists(root), $"Native oracle directory does not exist: {root}");
 
         var tilBytes = ReadRequiredFile(root!, "l1.til");
@@ -92,9 +122,15 @@ public sealed class AuthoritativeCathedralNativeGeometryOracleTests
             comparisonSol);
 
         var snapshot = ReadSnapshot(root!, snapshotFileName);
-        Assert.Equal(OracleFormat, snapshot.Format);
+        Assert.Equal(depth.HasValue ? DepthOracleFormat : OracleFormat, snapshot.Format);
         Assert.Equal(OracleVersion, snapshot.Version);
-        Assert.Equal(1, snapshot.Level);
+        Assert.Equal(depth ?? 1, snapshot.Level);
+        if (depth.HasValue) {
+            Assert.Equal(DepthOraclePolicy, snapshot.Policy);
+            Assert.Equal(80, snapshot.CoarseTransparencyWidth);
+            Assert.Equal(80, snapshot.CoarseTransparencyHeight);
+            Assert.Equal(80 * 80, snapshot.CoarseTransparency.Length);
+        }
         Assert.Equal(seed, snapshot.InputSeed);
         Assert.Equal(entryName, snapshot.Entry);
         Assert.Equal(CoarseWidth, snapshot.CoarseWidth);
@@ -115,7 +151,23 @@ public sealed class AuthoritativeCathedralNativeGeometryOracleTests
             "previous" => AuthoritativeCathedralEntry.Previous,
             _ => throw new InvalidDataException($"Unknown oracle entry '{entryName}'."),
         };
-        var result = AuthoritativeCathedralLevel1Generator.Generate(seed, entry);
+        var depthResult = depth.HasValue
+            ? AuthoritativeCathedralDepthGenerator.Generate(depth.Value, seed, entry)
+            : null;
+        // Normalize only the comparison view; deeper production generation and
+        // materialization use their depth-aware APIs, not the level-1 facade.
+        var result = depthResult is null
+            ? AuthoritativeCathedralLevel1Generator.Generate(seed, entry)
+            : new AuthoritativeCathedralLevel1Result(
+                depthResult.InputSeed, depthResult.AttemptSeed, depthResult.FinalRandomState,
+                depthResult.MegaTiles, depthResult.NativeTransparency,
+                depthResult.StairsUp, depthResult.StairsDown, depthResult.EntryPosition);
+        if (depthResult is not null) {
+            Assert.Equal(depth, depthResult.Depth);
+            Assert.Equal(AuthoritativeCathedralDepthGenerationPolicy.QuestDisabledOriginalDiabloStairs, depthResult.Policy);
+            Assert.Equal(depthResult.NativeTransparency, snapshot.CoarseTransparency);
+            Assert.Equal(HashBytes(snapshot.CoarseTransparency), snapshot.Hashes.CoarseTransparency);
+        }
         Assert.Equal(result.AttemptSeed, snapshot.AttemptSeed);
         Assert.Equal(result.FinalRandomState, snapshot.FinalRandomState);
         Assert.Equal(result.EntryPosition.X, snapshot.EntryPosition[0]);
@@ -126,14 +178,19 @@ public sealed class AuthoritativeCathedralNativeGeometryOracleTests
         Assert.Equal(result.StairsDown.Y, snapshot.StairsDown[1]);
         Assert.Equal(result.MegaTiles, snapshot.MegaTiles);
 
-        var geometry = AuthoritativeCathedralLevel1GeometryMaterializer.Materialize(
+        var level = depthResult is null ? AuthoritativeCathedralLevel1GeometryMaterializer.Materialize(
             1,
             result,
             pieces,
             properties,
             stableSymbol: "cathedral",
-            isDefaultStart: false);
-        var level = geometry.Level;
+            isDefaultStart: false).Level : AuthoritativeCathedralDepthGeometryMaterializer.Materialize(
+                checked((uint)depthResult.Depth),
+                depthResult,
+                pieces,
+                properties,
+                stableSymbol: $"cathedral_depth_{depthResult.Depth}",
+                isDefaultStart: false).Level;
         Assert.Equal(snapshot.Pieces, level.NativePieceLayer);
         Assert.Equal(snapshot.Transparency, level.NativeTransparency);
 
@@ -277,12 +334,15 @@ public sealed class AuthoritativeCathedralNativeGeometryOracleTests
         public string Format { get; set; } = string.Empty;
         public int Version { get; set; }
         public int Level { get; set; }
+        public string Policy { get; set; } = string.Empty;
         public string Entry { get; set; } = string.Empty;
         public uint InputSeed { get; set; }
         public uint AttemptSeed { get; set; }
         public uint FinalRandomState { get; set; }
         public int CoarseWidth { get; set; }
         public int CoarseHeight { get; set; }
+        public int CoarseTransparencyWidth { get; set; }
+        public int CoarseTransparencyHeight { get; set; }
         public int NativeWidth { get; set; }
         public int NativeHeight { get; set; }
         public int SolCount { get; set; }
@@ -290,6 +350,7 @@ public sealed class AuthoritativeCathedralNativeGeometryOracleTests
         public int[] StairsUp { get; set; } = [];
         public int[] StairsDown { get; set; } = [];
         public ushort[] MegaTiles { get; set; } = [];
+        public ushort[] CoarseTransparency { get; set; } = [];
         public ushort[] Pieces { get; set; } = [];
         public ushort[] Transparency { get; set; } = [];
         public ushort[] SolProperties { get; set; } = [];
@@ -302,6 +363,7 @@ public sealed class AuthoritativeCathedralNativeGeometryOracleTests
     private sealed class OracleHashes
     {
         public string MegaTiles { get; set; } = string.Empty;
+        public string CoarseTransparency { get; set; } = string.Empty;
         public string Pieces { get; set; } = string.Empty;
         public string Transparency { get; set; } = string.Empty;
         public string SolProperties { get; set; } = string.Empty;

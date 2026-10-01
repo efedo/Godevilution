@@ -2,6 +2,18 @@
 
 All notable changes to this fork are documented below.
 
+- 2026-10-01: Extend shared ordinary original-Diablo Cathedral generation and
+  validated fine materialization to depths 1-4 with explicit quest-disabled
+  policy, preserving L1 API/results, profiles and saves. Add independent private
+  native depth capture and exact managed comparisons: all 48 cases pass; the
+  unchanged twelve-case L1 oracle, 21 native fixtures, 78 managed focused checks
+  and 25 launcher checks pass. Existing actual headless Godot L1 walking,
+  authored combat/loot and fresh-host restore pass with six clean engine exits.
+  Reject skipped/wrong-scope/incomplete oracle evidence and retain licensed files
+  outside Git. Documentation guards pass 3; update existing plan, status
+  and MSVC guidance. Deeper runtime activation, population and campaign remain;
+  no Cathedral-family or M0 exit is claimed.
+
 - 2026-10-01: Added exact queued-tick, receipt/rejection and observed action
   diagnostics to strict live town-travel assertions without changing production
   scheduling, gameplay, readiness or retry policy. The rebuilt isolated store

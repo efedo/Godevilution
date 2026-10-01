@@ -5,9 +5,11 @@
     Builds the native and managed oracle tests, retains private licensed inputs
     and comparisons in a fresh temporary directory, and rejects missing or
     skipped evidence. This is isolated verification, not a server MPQ importer.
+    -CathedralDepths compares ordinary quest-disabled original-Diablo depths
+    1-4; the zero-argument level-1 contract remains unchanged.
 #>
 [CmdletBinding()]
-param()
+param([switch]$CathedralDepths)
 
 $ErrorActionPreference = 'Stop'
 $repositoryRoot = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot '..')).Path
@@ -40,7 +42,10 @@ function Find-CathedralOracleBuild([string]$RepositoryRoot) {
     throw 'Configure a packed-MPQ Debug x64 MSVC CMake tree with BUILD_TESTING=ON first; see docs/ai/msvc-build.md.'
 }
 
-function Assert-CathedralNativeReport([string]$ReportPath) {
+function Assert-CathedralNativeReport(
+    [string]$ReportPath,
+    [ValidateSet('CathedralFineGeometryLocalAssetOracle', 'CathedralDepthFineGeometryLocalAssetOracle')]
+    [string]$TestName = 'CathedralFineGeometryLocalAssetOracle') {
     if (-not (Test-Path -LiteralPath $ReportPath -PathType Leaf)) {
         throw 'The native oracle did not emit its test result.'
     }
@@ -49,39 +54,52 @@ function Assert-CathedralNativeReport([string]$ReportPath) {
     if ($report.tests -ne 1 -or $report.failures -ne 0 -or $report.errors -ne 0 -or
         $report.disabled -ne 0 -or $cases.Count -ne 1 -or
         $cases[0].classname -ne 'Drlg_l1' -or
-        $cases[0].name -ne 'CathedralFineGeometryLocalAssetOracle' -or
+        $cases[0].name -ne $TestName -or
         $cases[0].status -ne 'RUN' -or $cases[0].result -ne 'COMPLETED') {
         throw 'The required native oracle did not complete successfully; skipped tests are not evidence.'
     }
 }
 
-function Invoke-CathedralNativeOracle([string]$Executable, [string]$ReportPath, [string]$LogPath) {
+function Invoke-CathedralNativeOracle(
+    [string]$Executable, [string]$ReportPath, [string]$LogPath,
+    [ValidateSet('CathedralFineGeometryLocalAssetOracle', 'CathedralDepthFineGeometryLocalAssetOracle')]
+    [string]$TestName = 'CathedralFineGeometryLocalAssetOracle') {
     # Merge native stderr before Windows PowerShell can turn an informational
     # message into NativeCommandError. Exit and structured evidence still gate success.
-    $command = '"{0}" --gtest_filter=Drlg_l1.CathedralFineGeometryLocalAssetOracle "--gtest_output=json:{1}" 2>&1' -f
-        $Executable, $ReportPath
+    $command = '"{0}" --gtest_filter=Drlg_l1.{2} "--gtest_output=json:{1}" 2>&1' -f
+        $Executable, $ReportPath, $TestName
     & $env:ComSpec /d /c $command | Tee-Object -FilePath $LogPath | Out-Host
     return $LASTEXITCODE
 }
 
-function Assert-CathedralManagedReport([string]$LogPath) {
+function Assert-CathedralManagedReport([string]$LogPath, [ValidateRange(1, 48)] [int]$ExpectedComparisons = 12) {
     $output = [IO.File]::ReadAllText($LogPath)
     $summaries = [regex]::Matches($output,
         '(?s)Test run summary: Passed!.*?total:\s*(\d+)\s+failed:\s*(\d+)\s+succeeded:\s*(\d+)\s+skipped:\s*(\d+)')
     if ([regex]::Matches($output, 'Test run summary:').Count -ne 1 -or
-        $summaries.Count -ne 1 -or $summaries[0].Groups[1].Value -ne '12' -or
-        $summaries[0].Groups[2].Value -ne '0' -or $summaries[0].Groups[3].Value -ne '12' -or
+        $summaries.Count -ne 1 -or [int]$summaries[0].Groups[1].Value -ne $ExpectedComparisons -or
+        $summaries[0].Groups[2].Value -ne '0' -or [int]$summaries[0].Groups[3].Value -ne $ExpectedComparisons -or
         $summaries[0].Groups[4].Value -ne '0') {
-        throw 'All twelve managed native-geometry comparisons must pass without exclusions.'
+        throw "All $ExpectedComparisons managed native-geometry comparisons must pass without exclusions."
     }
 }
 
-function Get-CathedralOracleArtifacts([string]$EvidenceRoot) {
-    foreach ($name in @('l1.til', 'l1.sol', 'cathedral-2588-main.json', 'cathedral-2588-previous.json',
-            'cathedral-743271966-main.json', 'cathedral-743271966-previous.json', 'cathedral-0-main.json',
-            'cathedral-0-previous.json', 'cathedral-1-main.json', 'cathedral-1-previous.json',
-            'cathedral-2147483648-main.json', 'cathedral-2147483648-previous.json',
-            'cathedral-4294967295-main.json', 'cathedral-4294967295-previous.json')) {
+function Get-CathedralOracleArtifactNames([switch]$CathedralDepths) {
+    'l1.til'
+    'l1.sol'
+    $depths = if ($CathedralDepths) { 1..4 } else { @(1) }
+    foreach ($depth in $depths) {
+        foreach ($seed in @('2588', '743271966', '0', '1', '2147483648', '4294967295')) {
+            foreach ($entry in @('main', 'previous')) {
+                if ($CathedralDepths) { "cathedral-depth-$depth-$seed-$entry.json" }
+                else { "cathedral-$seed-$entry.json" }
+            }
+        }
+    }
+}
+
+function Get-CathedralOracleArtifacts([string]$EvidenceRoot, [switch]$CathedralDepths) {
+    foreach ($name in (Get-CathedralOracleArtifactNames -CathedralDepths:$CathedralDepths)) {
         $path = Join-Path $EvidenceRoot $name
         if (-not (Test-Path -LiteralPath $path -PathType Leaf) -or
             (Get-Item -LiteralPath $path).Length -eq 0) {
@@ -104,6 +122,13 @@ function Get-CathedralOracleArtifacts([string]$EvidenceRoot) {
     }
 }
 
+$oracleDirectoryVariable = if ($CathedralDepths) { 'GODEVILUTION_CATHEDRAL_DEPTH_ORACLE_DIRECTORY' }
+    else { 'GODEVILUTION_CATHEDRAL_ORACLE_DIRECTORY' }
+$nativeTestName = if ($CathedralDepths) { 'CathedralDepthFineGeometryLocalAssetOracle' }
+    else { 'CathedralFineGeometryLocalAssetOracle' }
+$managedTestName = if ($CathedralDepths) { 'NativeLocalAssetDepthFineGeometryMatchesManagedMaterializer' }
+    else { 'NativeLocalAssetFineGeometryMatchesManagedMaterializer' }
+$expectedComparisons = if ($CathedralDepths) { 48 } else { 12 }
 $nativeBuild = Find-CathedralOracleBuild $repositoryRoot
 $evidenceRoot = Join-Path ([IO.Path]::GetTempPath()) ('Godevilution-Cathedral-Oracle-' + [guid]::NewGuid().ToString('N'))
 if (Test-Path -LiteralPath $evidenceRoot) { throw 'Oracle verification requires a fresh evidence directory.' }
@@ -114,13 +139,15 @@ if ($fullEvidenceRoot.StartsWith($repositoryRoot.TrimEnd('\') + '\', [StringComp
 New-Item -ItemType Directory -Path $evidenceRoot | Out-Null
 $artifactRoot = Join-Path $evidenceRoot 'geometry'
 New-Item -ItemType Directory -Path $artifactRoot | Out-Null
-$previousOracleDirectory = [Environment]::GetEnvironmentVariable('GODEVILUTION_CATHEDRAL_ORACLE_DIRECTORY', 'Process')
+$previousOracleDirectory = [Environment]::GetEnvironmentVariable($oracleDirectoryVariable, 'Process')
 $record = [ordered]@{
     Passed = $false
     StartedUtc = [DateTime]::UtcNow.ToString('O')
     EndedUtc = $null
     NativeBuild = $nativeBuild.Directory
     ArtifactDirectory = $artifactRoot
+    Scope = if ($CathedralDepths) { 'ordinary-cathedral-depths-1-4' } else { 'ordinary-cathedral-level-1' }
+    ExpectedComparisons = $expectedComparisons
     NativeExitCode = $null
     ManagedExitCode = $null
     Artifacts = @()
@@ -139,26 +166,26 @@ try {
         Tee-Object -FilePath (Join-Path $evidenceRoot 'managed-build.log')
     if ($LASTEXITCODE -ne 0) { throw "The managed oracle build failed with exit code $LASTEXITCODE." }
 
-    $env:GODEVILUTION_CATHEDRAL_ORACLE_DIRECTORY = $artifactRoot
+    [Environment]::SetEnvironmentVariable($oracleDirectoryVariable, $artifactRoot, 'Process')
     $nativeExecutable = Join-Path $nativeBuild.Directory 'level_l1_test.exe'
     $nativeReport = Join-Path $evidenceRoot 'native-tests.json'
-    $record.NativeExitCode = Invoke-CathedralNativeOracle $nativeExecutable $nativeReport (Join-Path $evidenceRoot 'native-tests.log')
+    $record.NativeExitCode = Invoke-CathedralNativeOracle $nativeExecutable $nativeReport (Join-Path $evidenceRoot 'native-tests.log') $nativeTestName
     if ($record.NativeExitCode -ne 0) { throw "The native oracle failed with exit code $($record.NativeExitCode)." }
-    Assert-CathedralNativeReport $nativeReport
-    $record.Artifacts = @(Get-CathedralOracleArtifacts $artifactRoot)
+    Assert-CathedralNativeReport $nativeReport $nativeTestName
+    $record.Artifacts = @(Get-CathedralOracleArtifacts $artifactRoot -CathedralDepths:$CathedralDepths)
 
     $managedLog = Join-Path $evidenceRoot 'managed-tests.log'
-    & server/tests/Devilution.Diablo.Tests/bin/Debug/net8.0/Devilution.Diablo.Tests.exe --no-ansi --filter-method 'Devilution.Diablo.Tests.AuthoritativeCathedralNativeGeometryOracleTests.NativeLocalAssetFineGeometryMatchesManagedMaterializer' --explicit only 2>&1 |
+    & server/tests/Devilution.Diablo.Tests/bin/Debug/net8.0/Devilution.Diablo.Tests.exe --no-ansi --filter-method "Devilution.Diablo.Tests.AuthoritativeCathedralNativeGeometryOracleTests.$managedTestName" --explicit only 2>&1 |
         Tee-Object -FilePath $managedLog
     $record.ManagedExitCode = $LASTEXITCODE
     if ($record.ManagedExitCode -ne 0) { throw "The managed oracle failed with exit code $($record.ManagedExitCode)." }
-    Assert-CathedralManagedReport $managedLog
+    Assert-CathedralManagedReport $managedLog $expectedComparisons
     $record.Passed = $true
 } catch {
     $primaryError = $_
     $record.Error = $_.Exception.Message
 } finally {
-    [Environment]::SetEnvironmentVariable('GODEVILUTION_CATHEDRAL_ORACLE_DIRECTORY', $previousOracleDirectory, 'Process')
+    [Environment]::SetEnvironmentVariable($oracleDirectoryVariable, $previousOracleDirectory, 'Process')
     Pop-Location
     $record.EndedUtc = [DateTime]::UtcNow.ToString('O')
 }
@@ -169,4 +196,8 @@ try {
     Write-Warning "Could not retain the result record: $($_.Exception.Message)"
 }
 if ($null -ne $primaryError) { throw $primaryError }
-Write-Host "PASS: twelve native/managed Cathedral fine-coordinate comparisons. Evidence: $evidenceRoot"
+if ($CathedralDepths) {
+    Write-Host "PASS: 48 native/managed Cathedral fine-coordinate comparisons. Evidence: $evidenceRoot"
+} else {
+    Write-Host "PASS: twelve native/managed Cathedral fine-coordinate comparisons. Evidence: $evidenceRoot"
+}
