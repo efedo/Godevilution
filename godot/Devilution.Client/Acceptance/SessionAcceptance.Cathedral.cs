@@ -105,6 +105,9 @@ public partial class SessionAcceptance
             "The real Travel button did not start generated-route input.", 5);
         var samples = new List<object>();
         var positions = new HashSet<(int X, int Y)> { (origin.PositionX, origin.PositionY) };
+        CathedralWallCheckpoint? boundary = null;
+        ulong? cancellationSequence = null;
+        var manualWallSetupSteps = 0;
         ulong lastTick = ulong.MaxValue;
         try {
             await Until(() => {
@@ -127,7 +130,10 @@ public partial class SessionAcceptance
                 }
                 Require(!((Button)main.FindChild("CancelTravel", true, false)).Disabled,
                     $"Generated-route traversal stopped: {main.ObservedCommandResult}; {((Label)main.FindChild("TravelStatus", true, false)).Text}");
-                return stopEarly && positions.Count >= 16 && HasAdjacentCathedralWall(main);
+                if (!stopEarly || positions.Count < 16)
+                    return false;
+                boundary = FindAdjacentCathedralWall(main);
+                return boundary is not null;
             }, "Continuous generated-route movement did not reach its boundary.", 120);
             if (stopEarly) {
                 await ClickControl(main, sections, 4, "CancelTravel");
@@ -136,24 +142,57 @@ public partial class SessionAcceptance
                     && settledResult.ClientSequence == main.ObservedLastQueuedSequence
                     && main.ObservedSnapshot!.Tick >= settledResult.AppliedTick && Settled(main),
                     "The final generated traversal step did not settle after cancellation.", 10);
+                Require(IsAcceptedOrSuccessfulDuplicate(main.ObservedCommandResult!),
+                    "The final generated traversal step did not receive an accepted authoritative receipt.");
                 Require(main.ObservedSnapshot!.Players.Single().LevelId == 1 && positions.Count >= 16,
                     "No continuously moved generated-level checkpoint was established.");
                 var stopped = main.ObservedSnapshot.Players.Single().Clone();
                 var stoppedSequence = main.ObservedCommandResult!.ClientSequence;
+                var stoppedAppliedTick = main.ObservedCommandResult.AppliedTick;
                 var stoppedTick = main.ObservedSnapshot.Tick;
+                cancellationSequence = stoppedSequence;
                 await Until(() => main.ObservedSnapshot!.Tick >= stoppedTick + 4,
                     "No snapshots arrived to verify generated-route cancellation.", 5);
                 Require(main.ObservedLastQueuedSequence == stoppedSequence && main.ObservedCommandResult!.ClientSequence == stoppedSequence
                     && main.ObservedSnapshot.Players.Single().PositionX == stopped.PositionX
                     && main.ObservedSnapshot.Players.Single().PositionY == stopped.PositionY && Settled(main),
                     "Cancelled generated travel continued submitting commands or moving the player.");
-                Require(HasAdjacentCathedralWall(main), "The final settled checkpoint is not adjacent to a native wall.");
+                Require(boundary is not null, "The generated route did not capture its adjacent-wall boundary.");
+                var capturedBoundary = boundary!;
+                var cancellationWall = FindAdjacentCathedralWall(main);
+                WriteEvidence(directory, $"cathedral-route-{warpId}-cancellation.json", new {
+                    Passed = true, StrictCancellationSettled = true,
+                    BoundaryX = capturedBoundary.PlayerX, BoundaryY = capturedBoundary.PlayerY,
+                    BoundaryWallX = capturedBoundary.WallX, BoundaryWallY = capturedBoundary.WallY,
+                    CancellationX = stopped.PositionX, CancellationY = stopped.PositionY,
+                    CancellationWallX = cancellationWall?.WallX, CancellationWallY = cancellationWall?.WallY,
+                    CancellationSequence = stoppedSequence, CancellationAppliedTick = stoppedAppliedTick,
+                    CancellationSnapshotTick = stoppedTick,
+                    RetainedBoundary = cancellationWall is not null
+                        && stopped.PositionX == capturedBoundary.PlayerX && stopped.PositionY == capturedBoundary.PlayerY
+                        && cancellationWall.WallX == capturedBoundary.WallX && cancellationWall.WallY == capturedBoundary.WallY,
+                });
+                var setupSteps = await RestoreCathedralWallBoundary(main, capturedBoundary);
+                manualWallSetupSteps = setupSteps;
+                var finalWall = FindAdjacentCathedralWall(main);
+                var finalPlayer = main.ObservedSnapshot!.Players.Single();
+                Require(finalWall is not null && finalWall.WallX == capturedBoundary.WallX && finalWall.WallY == capturedBoundary.WallY
+                    && finalPlayer.PositionX == capturedBoundary.PlayerX && finalPlayer.PositionY == capturedBoundary.PlayerY,
+                    "Ordinary movement did not restore the captured adjacent-wall checkpoint.");
+                WriteEvidence(directory, $"cathedral-route-{warpId}-manual-wall-setup.json", new {
+                    Passed = true, Steps = setupSteps,
+                    TargetX = capturedBoundary.PlayerX, TargetY = capturedBoundary.PlayerY,
+                    TargetWallX = capturedBoundary.WallX, TargetWallY = capturedBoundary.WallY,
+                    FinalSequence = main.ObservedCommandResult!.ClientSequence,
+                    FinalAppliedTick = main.ObservedCommandResult.AppliedTick,
+                });
             } else {
                 Require(positions.Count >= 8, "The route boundary was reached without continuous walking.");
             }
             WriteEvidence(directory, $"cathedral-route-{warpId}.json", new {
                 Passed = true, WarpId = warpId, SourceLevel = origin.LevelId, TargetLevel = destinationLevel,
                 StoppedInsideSource = stopEarly, DistinctObservedPositions = positions.Count,
+                CancellationSequence = cancellationSequence, ManualWallSetupSteps = manualWallSetupSteps,
                 Sequence = main.ObservedCommandResult!.ClientSequence,
             });
         } finally { WriteEvidence(directory, $"cathedral-route-{warpId}-trace.json", samples); }
@@ -193,6 +232,54 @@ public partial class SessionAcceptance
     private static LevelGeometrySnapshot CathedralGeometry(Main main)
         => main.ObservedSnapshot!.LevelGeometry.Single(level => level.LevelId == 1);
 
+    private async Task<int> RestoreCathedralWallBoundary(Main main, CathedralWallCheckpoint boundary)
+    {
+        var player = main.ObservedSnapshot!.Players.Single();
+        Require(player.LevelId == 1, "Manual Cathedral wall setup started outside level 1.");
+        var target = (X: boundary.PlayerX, Y: boundary.PlayerY);
+        var geometry = CathedralGeometry(main);
+        Require(target.X >= 0 && target.Y >= 0 && target.X < geometry.Width && target.Y < geometry.Height
+            && !geometry.BlockedCells.Contains(target.Y * geometry.Width + target.X)
+            && !geometry.WarpTriggers.Any(warp => warp.TriggerX == target.X && warp.TriggerY == target.Y),
+            "The captured Cathedral wall checkpoint is no longer a valid level-1 walk target.");
+        var previousAppliedTick = main.ObservedCommandResult?.AppliedTick ?? 0;
+        var previousPosition = (X: player.PositionX, Y: player.PositionY);
+        var steps = 0;
+        while (previousPosition != target) {
+            Require(steps < 8, "The captured Cathedral wall checkpoint is beyond the bounded ordinary setup path.");
+            Require(main.ObservedSnapshot!.Players.Single().LevelId == 1, "Manual Cathedral wall setup left level 1.");
+            var queuedBefore = main.ObservedLastQueuedSequence;
+            var previousDistance = Math.Abs(previousPosition.X - target.X) + Math.Abs(previousPosition.Y - target.Y);
+            await Click(main.ObservedTileScreenPosition(target.X, target.Y), walk: true);
+            var inputSequence = main.ObservedLastQueuedSequence;
+            Require(inputSequence > queuedBefore, "Ordinary Ctrl-click did not queue a fresh Cathedral wall-setup step.");
+            await Until(() => {
+                var result = main.ObservedCommandResult;
+                var current = main.ObservedSnapshot!.Players.Single();
+                if (result is null || result.ClientSequence < inputSequence || current.LevelId != 1)
+                    return false;
+                Require(result.ClientSequence == inputSequence,
+                    "A Cathedral wall-setup step was overtaken by another command receipt.");
+                Require(IsAcceptedOrSuccessfulDuplicate(result),
+                    $"Cathedral wall setup was rejected: {result.Status}/{result.RejectReason}.");
+                var distance = Math.Abs(current.PositionX - target.X) + Math.Abs(current.PositionY - target.Y);
+                return main.ObservedLastQueuedSequence == inputSequence
+                    && main.ObservedSnapshot.Tick >= result.AppliedTick && Settled(main)
+                    && distance < previousDistance;
+            }, "An ordinary Cathedral wall-setup step did not settle with authoritative progress.", 10);
+            var settled = main.ObservedSnapshot!.Players.Single();
+            Require((settled.PositionX, settled.PositionY) != previousPosition,
+                "A Cathedral wall-setup step settled without authoritative movement.");
+            Require(main.ObservedCommandResult!.ClientSequence == inputSequence
+                && main.ObservedCommandResult.AppliedTick >= previousAppliedTick,
+                "Cathedral wall setup lost the exact fresh receipt or applied tick.");
+            steps++;
+            previousAppliedTick = main.ObservedCommandResult.AppliedTick;
+            previousPosition = (settled.PositionX, settled.PositionY);
+        }
+        return steps;
+    }
+
     private async Task MoveCathedralNeighbor(Main main)
     {
         var player = main.ObservedSnapshot!.Players.Single().Clone();
@@ -210,12 +297,20 @@ public partial class SessionAcceptance
 
     private static readonly (int X, int Y)[] CardinalOffsets = [(0, 1), (1, 0), (0, -1), (-1, 0)];
 
-    private static bool HasAdjacentCathedralWall(Main main)
+    private sealed record CathedralWallCheckpoint(int PlayerX, int PlayerY, int WallX, int WallY);
+
+    private static CathedralWallCheckpoint? FindAdjacentCathedralWall(Main main)
     {
         var player = main.ObservedSnapshot!.Players.Single();
         var geometry = CathedralGeometry(main);
-        return CardinalOffsets.Any(offset => geometry.BlockedCells.Contains(
-            (player.PositionY + offset.Y) * geometry.Width + player.PositionX + offset.X));
+        foreach (var offset in CardinalOffsets) {
+            var wallX = player.PositionX + offset.X;
+            var wallY = player.PositionY + offset.Y;
+            if (wallX >= 0 && wallY >= 0 && wallX < geometry.Width && wallY < geometry.Height
+                && geometry.BlockedCells.Contains(wallY * geometry.Width + wallX))
+                return new CathedralWallCheckpoint(player.PositionX, player.PositionY, wallX, wallY);
+        }
+        return null;
     }
 
     private static (int X, int Y) SelectCathedralLootStep(Main main, WorldItemSnapshot drop, HashSet<(int X, int Y)> visited,

@@ -27,6 +27,7 @@ public partial class WorldPresentation : Node2D
     private readonly Dictionary<uint, ProjectileSnapshot> displayedProjectileSnapshots = [];
     private readonly AssetPalette assets = new();
     private readonly LevelLayoutCatalog levels = new();
+    private readonly AuthoritativeGeometryInstallationGate geometryInstallation = new();
     private readonly AuthoritativePresentationClock presentationClock = new();
     private Snapshot? snapshot;
     private uint? presentationLevelId;
@@ -43,6 +44,23 @@ public partial class WorldPresentation : Node2D
         double delta,
         ClientPosition? predicted = null,
         uint serverTickRateHz = AuthoritativePresentationClock.DefaultTickRateHz)
+        => ApplyCore(next, delta, predicted, serverTickRateHz, null);
+
+    /** Applies an admitted model snapshot while reusing its installed geometry generation. */
+    internal void ApplyAccepted(
+        Snapshot? next,
+        ulong acceptedSnapshotRevision,
+        double delta,
+        ClientPosition? predicted = null,
+        uint serverTickRateHz = AuthoritativePresentationClock.DefaultTickRateHz)
+        => ApplyCore(next, delta, predicted, serverTickRateHz, acceptedSnapshotRevision);
+
+    private void ApplyCore(
+        Snapshot? next,
+        double delta,
+        ClientPosition? predicted,
+        uint serverTickRateHz,
+        ulong? acceptedSnapshotRevision)
     {
         snapshot = next;
         predictedPlayerPosition = predicted;
@@ -54,6 +72,7 @@ public partial class WorldPresentation : Node2D
             displayedProjectileSnapshots.Clear();
             presentationClock.Reset();
             presentationLevelId = null;
+            geometryInstallation.Invalidate();
             levels.ApplyAuthoritative(Array.Empty<LevelGeometrySnapshot>());
             currentLevel = LevelLayout.Empty;
             viewport = CreateViewportTransform(currentLevel, null);
@@ -73,7 +92,15 @@ public partial class WorldPresentation : Node2D
         var snapshotRewound = presentationClock.LastAdvanceRewound;
 
         var activeEntityIds = new HashSet<uint>();
-        levels.ApplyAuthoritative(snapshot.LevelGeometry);
+        if (acceptedSnapshotRevision is { } revision) {
+            if (geometryInstallation.NeedsInstallation(revision)) {
+                levels.ApplyAuthoritative(snapshot.LevelGeometry);
+                geometryInstallation.MarkInstalled(revision);
+            }
+        } else {
+            geometryInstallation.Invalidate();
+            levels.ApplyAuthoritative(snapshot.LevelGeometry);
+        }
         currentLevel = levels.Resolve(localPlayer?.LevelId ?? 0);
         var nextViewport = CreateViewportTransform(currentLevel, localPlayer);
         if (nextViewport.ViewportWidth != viewport.ViewportWidth || nextViewport.ViewportHeight != viewport.ViewportHeight) {

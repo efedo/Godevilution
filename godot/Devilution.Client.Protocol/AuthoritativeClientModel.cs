@@ -104,6 +104,9 @@ public sealed class AuthoritativeClientModel
 
     public Snapshot? Snapshot { get; private set; }
 
+    /** Monotonic generation of the most recently admitted owned snapshot. */
+    public ulong AcceptedSnapshotRevision { get; private set; }
+
     public string? LastError { get; private set; }
 
     public CommandResult? LastCommandResult { get; private set; }
@@ -317,6 +320,7 @@ public sealed class AuthoritativeClientModel
                 // Keep an owned copy so callers cannot mutate validated state
                 // through a reused transport buffer after admission.
                 Snapshot = message.Snapshot.Clone();
+                AcceptedSnapshotRevision = checked(AcceptedSnapshotRevision + 1);
                 acceptNextSnapshotAsNewEpoch = false;
                 LastError = null;
                 RebuildPredictedPosition();

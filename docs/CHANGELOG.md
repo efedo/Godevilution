@@ -2,6 +2,22 @@
 
 All notable changes to this fork are documented below.
 
+- 2026-10-01: Reuse installed Godot geometry between accepted model snapshot
+  generations, preserving full replacement, same-tick/reconnect admission,
+  eager legacy calls, per-frame presentation and wire/save compatibility.
+  Add admission/gate regressions and separately evidenced ordinary wall setup
+  after strict Cathedral route cancellation; retain the original failed trace
+  and exact rejected-wall assertion. Focused checks pass 150; actual base
+  recovery, two-client resume and rendered Cathedral traversal/restore pass.
+  Before/after one/four-client measurements remain qualified: no consistent
+  overall speedup or release-budget pass. All 41 engine records across passing
+  checks are clean; the earlier failed Cathedral client is recorded separately.
+  Full protocol records 603 passes, one live store movement rejection and two
+  opt-in exclusions; the exact unchanged-binary method rerun passes, without
+  establishing the rejection's cause. Updated existing guide, plan and status;
+  documentation guards pass 3 and no project/crash-reporting processes remain.
+  Broader M0 and the unclassified live rejection remain open.
+
 - 2026-10-01: Added current-connection timing readiness before Godot's first
   clock-gated realtime dispatch. Probe pending input before gameplay batches;
   bound failed calibration to three expired probes, close the transport and

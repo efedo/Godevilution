@@ -176,6 +176,15 @@ M4. M5 is the final removal gate, not a reason to postpone replacement work.
    metrics. Ordinary launches and two-client create/resume remain unchanged.
    Local Debug town measurements do not establish a release budget or full
    platform/campaign matrix; use status for exact configurations and outcomes.
+   Godot now reuses installed geometry between model-accepted snapshot generations.
+   Preserve full replacement, same-tick/epoch admission and eager legacy behavior;
+   do not treat ownership as public protobuf immutability. Measure remaining
+   per-snapshot validation/cloning, full-world drawing and large-map costs before
+   selecting broader caches or presentation changes. Callback comparisons remain
+   local observations, not whole-frame or release-budget passes.
+   Retain the current full-suite live store movement rejection and isolated rerun
+   separately. Capture exact receipt/tick/action diagnostics before selecting a
+   correction; an isolated pass does not close full compatibility verification.
    Use the recorded checkpoint-phase timings to target publication costs without
    weakening durability; retain no-ack-on-write-failure and fresh-host duplicate
    recovery coverage. Local Windows receipt-file reuse does not close the wider

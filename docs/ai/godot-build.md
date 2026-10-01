@@ -76,6 +76,15 @@ Native acceptance is recorded separately in migration status. This is not a boun
 on arbitrary network/capture stalls or proof
 of campaign/shared-world restart recovery.
 
+Production world presentation installs the full geometry projection once per
+model-accepted snapshot generation, including same-tick replacements and the
+first admitted snapshot after reconnect. Omitted/empty geometry still replaces
+the prior projection. Legacy mutable presentation calls remain eager; null/legacy
+calls invalidate reuse. Camera, interpolation, visibility, prediction and drawing
+continue each frame. This avoids repeated installation between admissions, not
+per-snapshot validation/cloning or full-world drawing; measurements belong in
+migration status.
+
 Godot's editor may upgrade a C# project's SDK during import. Only the staged
 copy may receive that change; the source project, existing upgrade backups,
 and local edits are not restored, deleted, or rewritten. Generated caches and
@@ -200,6 +209,11 @@ The wrapper uses a fresh child session, not the interactive save. `CathedralJour
 walks into level 1, activates the object, fights and picks up distant loot, observes
 continuous fine-cell traversal, cancels and settles its final acknowledged step,
 then verifies an exact rejected wall input and a subsequent valid move.
+Cancellation evidence requires an accepted final receipt and four unchanged
+ticks with no new submissions. If an already queued step moves away from the
+captured wall boundary, separately recorded, bounded ordinary Ctrl-click inputs
+restore that exact checkpoint before collision testing; they do not count as
+continuous-route traversal or relax the wall rejection assertion.
 `CathedralResume` starts new host/client processes, compares position, geometry,
 object, combat, inventory and sequence state, then walks through native Up stairs
 back to Town. Compact route/collision/state evidence and all logs are retained.

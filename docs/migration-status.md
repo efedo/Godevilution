@@ -134,6 +134,113 @@ The following records describe implemented slices at this baseline. They are
 evidence, not a separate priority list; detailed older entries retain their
 original scope and may be superseded by later entries or the current assessment.
 
+### M0 admitted geometry reuse and cancellation evidence (2026-10-01)
+
+The production Godot scene now installs full level geometry once per accepted
+model snapshot generation, rather than every presentation frame. Admission
+increments an explicit revision alongside the owned snapshot clone, including
+same-tick replacement and reconnect rewind. Invalid/stale snapshots and
+non-snapshot messages do not increment it. Existing partial-message behavior is
+preserved: an admitted snapshot/revision remains published if a later event or
+acknowledgement in that message fails validation. Full replacement still clears
+omitted/empty geometry; null and legacy mutable presentation calls invalidate
+reuse. Legacy calls remain eager. Camera, interpolation, visibility, prediction
+and drawing still run per frame. Ownership is not public protobuf immutability;
+only the production model-admission path uses the revision gate. Wire/save formats,
+server authority, content, SDK pin and ordinary launch profiles are unchanged.
+
+Focused admission/gate/model/geometry/boundary/clock/visibility/viewport checks
+pass 150/150 without skips (389ms), using the protocol project's in-process
+runner with eight `--filter-class` selections. The synthetic 112x112 helper
+workload performs one three-layer copy (37,632 uint entries) for 60 decisions
+within one generation and counts 60 legacy refresh decisions. This is not a
+real catalog allocation benchmark, drawing test or whole-frame budget.
+
+Full protocol execution (`dotnet run --project
+godot/Devilution.Client.Protocol.Tests/Devilution.Client.Protocol.Tests.csproj
+--no-build -- --no-ansi`) finishes with 603 passes, one failure and two explicit
+performance cases not selected (606 total, 12m 11.445s). The failed
+`LiveStoreAdmissionRejectsRemoteEntryWithoutPlayerMutation` expected accepted
+movement in `MoveToProjectedTownerAsync` but received a rejection; the original
+assertion did not report its reason. The exact unchanged-binary method rerun
+passes 1/1 (52.863s). This is not a clean full-suite pass or a demonstrated cause.
+The fixture uses the legacy Immediate scheduler; do not attribute the failure
+to clock-gated Godot timing, geometry reuse or a native crash without evidence.
+NU1900 audit-feed and the existing xUnit2031 analyzer warnings remain.
+The next diagnostic must retain the exact rejection reason, requested/applied
+ticks, sequence and player action state before selecting a timing/helper fix;
+do not weaken admission or retry a rejected command to manufacture a pass.
+Documentation consistency passes 3/3 (380ms), and the post-run process scan
+finds no Godot, WerFault or project host processes remaining.
+
+Fresh actual base create/save/resume/server-loss recovery passes under Godot
+4.7.2 Mono, with nine clean engine records. Its private session is
+`%TEMP%/Godevilution-Scene-Acceptance-52b685b4ac6b435eaecec2ab581ee516`.
+Fresh two-client headless creation/mutual movement/reverse-order fresh-host resume
+also passes, with eight clean records, retained at
+`%TEMP%/Godevilution-Scene-Acceptance-766a217025564619ae0a792351ffad3f`.
+Commands use `tools/test-godot-session.ps1`, respectively default and `-Multiplayer`,
+with the installed 4.7.2 engine selected explicitly.
+
+The first rendered generated-Cathedral check failed its final wall-adjacency
+precondition, not an engine crash: cancellation settled at a tile reached by an
+already queued step. The route sample was `(65,62)`/sequence 82; the journal
+accepted sequence 83 at tick 1777 and the saved state settled at `(64,63)`.
+The original trace/save and exit-1 client record remain private at
+`.local/cathedral-playtest/sessions/acceptance-241c67f58b704bdebce823f2ce777b2d`.
+Cancellation cannot undo an admitted command. The harness now captures an exact
+wall checkpoint, requires the exact accepted final receipt/settlement and four
+unchanged ticks without new submissions, then separately records up to eight
+ordinary server-chosen target-cell steps back to that checkpoint if needed.
+Manual setup does not inflate continuous-route observations. The exact
+`Rejected/InvalidTarget` wall assertion and no-motion check remain unchanged.
+
+The repaired rendered Cathedral journey/fresh-host resume passes, including the
+positive one-step setup branch: captured `(59,58)`, canceled `(58,57)`, sequence
+90 applied at 1810 with snapshot 1821; ordinary sequence 91 restores the target
+at 1836, then wall sequence 92 rejects without motion. Object/combat/distant loot,
+moved-state restore and native Up-stair Town return pass; six engine records
+exit cleanly. Traversal/restored PNGs were inspected. Evidence is private at
+`.local/cathedral-playtest/sessions/acceptance-759c9600d9fa4860b004145f0a893a37`.
+Run `tools/test-godot-session.ps1` with
+`-CathedralProfileDirectory .local/cathedral-playtest -Visible` and the selected
+engine. This retains authored diagnostic population,
+not complete native Cathedral/campaign acceptance.
+
+Before/after rendered Debug town measurements used the zero-argument
+`tools/measure-godot-client.ps1`, five warm-up and fifteen measured settled rounds,
+all observers, 20 Hz clock-gated hosts, base seed 0, 1028x720, Vsync/60-FPS cap,
+OpenGL3 compatibility, RTX 3070/driver 591.86, Windows build 26200 x64 and
+.NET 10.0.11. Both profiles on both sides pass complete capture/identity/quality
+checks with nine clean engine records per side. No sample drops or invalid
+timings were recorded. Private roots are
+`%TEMP%/Godevilution-Client-Performance-e2ecbdc1d9f24d6db64e1ee86bb760e2`
+(before) and `...-afca6dfd475943cfbfa8138ad5afa61b` (after). Their original
+source hashes are `fc628ff7bc8360e4691373c597653d9b86ef3a7ed3c243d8971e0747a7f66351`
+and `c03bf44b527f9e43995d36d690d941d49435f9213dba306dc0f769cc5abcd33e`.
+The after measurement precedes the harness-only cancellation repair; do not
+relabel its aggregate hash as the final committed source.
+
+| Client | Samples before / after | Callback p50 ms before / after | Callback p99 ms before / after | Start-interval p99 ms before / after |
+| --- | --- | --- | --- | --- |
+| Single 1 | 1703 / 1689 | 1.4202 / 1.2969 | 2.1367 / 2.0748 | 16.8252 / 16.8676 |
+| Four 1 | 2495 / 2347 | 1.6524 / 1.5704 | 2.4274 / 2.4331 | 16.8189 / 16.8386 |
+| Four 2 | 2493 / 2350 | 1.5987 / 1.5222 | 2.3613 / 2.3679 | 16.7827 / 16.7894 |
+| Four 3 | 2492 / 2352 | 1.6258 / 1.5915 | 2.3852 / 2.5845 | 16.7786 / 16.8032 |
+| Four 4 | 2500 / 2351 | 1.6116 / 1.5625 | 2.3533 / 2.5231 | 16.8591 / 16.8174 |
+
+These mixed shifts do not establish a consistent overall speedup or causal
+performance effect. Four windows may overlap; focus/occlusion is uncontrolled.
+Callback-body and start-interval measurements are not GPU/whole-frame timing,
+large-generated-map performance, release budgets or soak. The after four-client
+host log retains two connection-aborted IOExceptions consistent with concurrent
+client shutdown; the lines lack timestamps, and clean process records are not a
+claim that every log is error-free. Across the passing application/performance
+checks above, all 41 engine records have exit 0, terminal times and no recorded
+process error; the separate failed Cathedral client is not counted as clean.
+Per-snapshot validation/cloning, server projection construction and full-map
+drawing remain costs to measure. M0 and the overall planning estimate remain open.
+
 ### M0 Godot startup timing readiness (2026-10-01)
 
 Clock-gated realtime input now waits for a correlated, unexpired timing reply in

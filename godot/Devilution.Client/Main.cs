@@ -372,8 +372,9 @@ public partial class Main : Node2D
             worldFrame.Position = hud.PlayArea.Position;
             worldFrame.Size = hud.PlayArea.Size;
         }
-        world?.Apply(
+        world?.ApplyAccepted(
             model.Snapshot,
+            model.AcceptedSnapshotRevision,
             delta,
             model.PredictedPlayerPosition,
             client?.ServerTickRateHz ?? AuthoritativePresentationClock.DefaultTickRateHz);
