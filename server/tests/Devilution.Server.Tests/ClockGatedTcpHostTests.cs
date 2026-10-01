@@ -898,7 +898,9 @@ public sealed class ClockGatedTcpHostTests
     [Fact]
     public async Task PersistenceFailureSendsNoAckAndRetryPublishesTheDurableDuplicate()
     {
-        ulong physicalTick = 111;
+        // Freeze at the initial simulation tick so the injected command-publication
+        // failure cannot race an unrelated periodic checkpoint export.
+        ulong physicalTick = 0;
         var executor = new RecordingExecutor();
         var commandServer = new AuthoritativeCommandServer(executor);
         var saveProvider = new ToggleSaveProvider();
@@ -916,12 +918,12 @@ public sealed class ClockGatedTcpHostTests
                 await client.ConnectAsync(IPAddress.Loopback, server.Port, cancellationToken);
                 await using var stream = client.GetStream();
                 await SendHelloAsync(stream, cancellationToken, resumeToken);
-                await ReadHandshakeSnapshotAsync(stream, 111, cancellationToken);
+                await ReadHandshakeSnapshotAsync(stream, 0, cancellationToken);
                 saveProvider.ThrowOnExport = true;
                 await SendBatchAsync(
                     stream,
                     cancellationToken,
-                    Attack(1, requestedTick: 111, targetEntityId: 1));
+                    Attack(1, requestedTick: 0, targetEntityId: 1));
                 var failedResponse = ReadAsync(stream, cancellationToken);
                 await AwaitConnectionClosureAsync(failedResponse, cancellationToken);
             }
@@ -937,11 +939,11 @@ public sealed class ClockGatedTcpHostTests
             await retryClient.ConnectAsync(IPAddress.Loopback, server.Port, cancellationToken);
             await using var retryStream = retryClient.GetStream();
             await SendHelloAsync(retryStream, cancellationToken, resumeToken);
-            await ReadHandshakeSnapshotAsync(retryStream, 111, cancellationToken);
+            await ReadHandshakeSnapshotAsync(retryStream, 0, cancellationToken);
             await SendBatchAsync(
                 retryStream,
                 cancellationToken,
-                Attack(1, requestedTick: 111, targetEntityId: 99));
+                Attack(1, requestedTick: 0, targetEntityId: 99));
             var retryAcknowledgement = await AwaitWithin(
                 ReadAsync(retryStream, cancellationToken),
                 cancellationToken);

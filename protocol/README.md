@@ -40,13 +40,15 @@ Windows toolchain command.
   ignore. Required behavior is negotiated during the handshake.
 - `ClientHello.supports_clock_gated_commands` opts into deliberate future-ACK
   waits. `ServerHello.command_scheduling_mode` selects one whole-host policy;
-  absent/Unspecified means legacy Immediate. Unknown modes fail closed in Godot.
+  absent/Unspecified means legacy Immediate. Unknown modes fail closed in Godot
+  and the native authoritative adapter. The paired native runtime opts in;
+  default low-level native configurations do not.
   A clock-gated host rejects an unsupported peer before any session mutation.
 - Gated idle `SnapshotRequest.timing_request_id` requests a correlated
   `TimingReply` after events and the requested snapshot. Zero requests state
   only; Immediate hosts do not emit timing replies. Timing metadata does not
-  enter snapshots or their canonical hashes. Native compatibility peers keep
-  Immediate timing until their synchronous transport is adapted and verified.
+  enter snapshots or their canonical hashes. Native gated exchanges remain
+  synchronous and bounded; deliberate future-ACK waits do not train RTT.
 - `ServerHello.last_client_sequence` includes admitted pending commands in gated
   mode, as well as completed receipts. Fresh clients allocate above that mark;
   retries still retain the original command identity and first-wins payload.

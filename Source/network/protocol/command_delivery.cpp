@@ -19,17 +19,49 @@ CommandDeliveryTracker::CommandDeliveryTracker(uint64_t initialRttMs)
 
 uint64_t CommandDeliveryTracker::RegisterCommand()
 {
+	if (!CanRegisterCommand())
+		return 0;
+
 	while (FindPending(nextClientSequence_) != nullptr) {
+		if (nextClientSequence_ == std::numeric_limits<uint64_t>::max())
+			return 0;
 		++nextClientSequence_;
 		if (nextClientSequence_ == 0)
 			nextClientSequence_ = 1;
 	}
 
 	const uint64_t sequence = nextClientSequence_++;
-	if (nextClientSequence_ == 0)
-		nextClientSequence_ = 1;
+	if (sequence == std::numeric_limits<uint64_t>::max()) {
+		nextClientSequence_ = 0;
+		sequenceSpaceExhausted_ = true;
+	}
 	pending_.push_back({ .clientSequence = sequence });
 	return sequence;
+}
+
+bool CommandDeliveryTracker::ObserveServerSequenceFloor(uint64_t floor) noexcept
+{
+	if (sequenceSpaceExhausted_)
+		return false;
+	if (floor < sequenceFloor_)
+		return true;
+	sequenceFloor_ = floor;
+	if (floor == std::numeric_limits<uint64_t>::max()) {
+		nextClientSequence_ = 0;
+		sequenceSpaceExhausted_ = true;
+		return false;
+	}
+	const uint64_t next = floor + 1;
+	if (nextClientSequence_ == 0 || nextClientSequence_ <= floor)
+		nextClientSequence_ = next;
+	return CanRegisterCommand();
+}
+
+bool CommandDeliveryTracker::CanRegisterCommand() const noexcept
+{
+	if (nextClientSequence_ == 0)
+		return false;
+	return !sequenceSpaceExhausted_ && sequenceFloor_ < std::numeric_limits<uint64_t>::max();
 }
 
 bool CommandDeliveryTracker::MarkSent(uint64_t clientSequence, uint64_t nowMs)
@@ -47,7 +79,8 @@ std::vector<uint64_t> CommandDeliveryTracker::PrepareResubmissions(uint64_t nowM
 {
 	std::vector<uint64_t> resubmissions;
 	for (PendingCommand &pending : pending_) {
-		if (!pending.sent || nowMs < pending.lastSentAtMs || nowMs - pending.lastSentAtMs < RetryTimeoutMs())
+		if (!pending.sent || nowMs < pending.lastSentAtMs || nowMs < pending.retryNotBeforeMs
+		    || nowMs - pending.lastSentAtMs < RetryTimeoutMs())
 			continue;
 		pending.lastSentAtMs = nowMs;
 		++pending.attemptCount;
@@ -56,7 +89,16 @@ std::vector<uint64_t> CommandDeliveryTracker::PrepareResubmissions(uint64_t nowM
 	return resubmissions;
 }
 
-bool CommandDeliveryTracker::ApplyAcknowledgement(const CommandAcknowledgement &ack, uint64_t nowMs)
+bool CommandDeliveryTracker::SetRetryNotBefore(uint64_t clientSequence, uint64_t notBeforeMs)
+{
+	PendingCommand *pending = FindPending(clientSequence);
+	if (pending == nullptr)
+		return false;
+	pending->retryNotBeforeMs = notBeforeMs;
+	return true;
+}
+
+bool CommandDeliveryTracker::ApplyAcknowledgement(const CommandAcknowledgement &ack, uint64_t nowMs, bool observeRoundTrip)
 {
 	const auto pending = std::find_if(pending_.begin(), pending_.end(), [&ack](const PendingCommand &command) {
 		return command.clientSequence == ack.clientSequence;
@@ -64,7 +106,7 @@ bool CommandDeliveryTracker::ApplyAcknowledgement(const CommandAcknowledgement &
 	if (pending == pending_.end())
 		return false;
 
-	if (pending->sent && nowMs >= pending->lastSentAtMs)
+	if (observeRoundTrip && pending->sent && nowMs >= pending->lastSentAtMs)
 		ObserveRoundTrip(nowMs - pending->lastSentAtMs);
 	pending_.erase(pending);
 	return true;

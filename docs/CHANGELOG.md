@@ -2,6 +2,22 @@
 
 All notable changes to this fork are documented below.
 
+- 2026-09-30: Integrated native clock-gated timing, bounded synchronous exchanges,
+  immutable retries, server sequence floors and reconnect epochs. Restored signed
+  authoritative player-display markers and activated existing authority guards in
+  nine independently compiled gameplay object targets. Corrected required stash
+  fixture metadata/context and a Windows codec backpressure assumption; restricted
+  35 test listeners to loopback without changing firewall settings. Independent
+  source review and affected native regressions pass 349 cases (including the
+  final 50-case transport/stash rerun), plus 70 broader gameplay cases: 419 total.
+  The feature-off game rebuild and 79 selected legacy tests pass; the full server
+  passes 1154 and documentation guards 3, without skips. Fresh GUI was visible
+  but covered by a
+  security prompt requiring manual cancellation; verified owned-process cleanup
+  retains exit -1. Accepted movement and moved-position restore are not yet proven.
+  Updated existing contracts/guides/status; M0 remains open and no campaign,
+  asynchronous rendering, protocol or save-format change is claimed.
+
 - 2026-09-30: Added a strict optional content-owned level-entry contract and
   exact-pinned native town-start pack; validate final effective geometry, stage
   replacements atomically and refresh projections without changing base/Godot

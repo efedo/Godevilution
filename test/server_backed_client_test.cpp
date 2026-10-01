@@ -1,7 +1,11 @@
 #include <atomic>
+#include <chrono>
 #include <cstdint>
+#include <exception>
 #include <filesystem>
 #include <fstream>
+#include <functional>
+#include <limits>
 #include <string>
 #include <thread>
 
@@ -19,18 +23,96 @@ namespace {
 using asio::ip::tcp;
 namespace protocol = ::devilution::protocol::v1;
 
+using SteadyClock = std::chrono::steady_clock;
+
+constexpr std::chrono::milliseconds PeerIoTimeout { 2'000 };
+
+bool AcceptWithin(tcp::acceptor &acceptor, tcp::socket &socket, SteadyClock::time_point deadline)
+{
+	asio::error_code error;
+	acceptor.non_blocking(true, error);
+	if (error)
+		return false;
+	for (;;) {
+		acceptor.accept(socket, error);
+		if (!error)
+			break;
+		if (error != asio::error::would_block && error != asio::error::try_again)
+			return false;
+		if (SteadyClock::now() >= deadline)
+			return false;
+		std::this_thread::sleep_for(std::chrono::milliseconds(1));
+	}
+	asio::error_code restoreError;
+	acceptor.non_blocking(false, restoreError);
+	socket.non_blocking(false, restoreError);
+	return !restoreError;
+}
+
+bool ReadEnvelopeWithin(tcp::socket &socket, protocol::Envelope &envelope, SteadyClock::time_point deadline)
+{
+	auto payload = EnvelopeCodec::Read(socket, deadline);
+	if (!payload.has_value() || !payload->has_value())
+		return false;
+	return envelope.ParseFromArray(payload->value().data(), static_cast<int>(payload->value().size()));
+}
+
+bool WriteEnvelopeWithin(tcp::socket &socket, const protocol::Envelope &envelope, SteadyClock::time_point deadline)
+{
+	const std::string payload = envelope.SerializeAsString();
+	return EnvelopeCodec::Write(socket, std::span<const uint8_t>(
+	                                reinterpret_cast<const uint8_t *>(payload.data()), payload.size()), deadline)
+		.has_value();
+}
+
+class PeerThread {
+public:
+	explicit PeerThread(std::function<void()> function)
+		: thread_([this, function = std::move(function)]() mutable {
+			try {
+				function();
+			} catch (...) {
+				error_ = std::current_exception();
+			}
+		})
+	{
+	}
+
+	~PeerThread()
+	{
+		Join();
+	}
+
+	PeerThread(const PeerThread &) = delete;
+	PeerThread &operator=(const PeerThread &) = delete;
+
+	void Join()
+	{
+		if (thread_.joinable())
+			thread_.join();
+	}
+
+	[[nodiscard]] bool Failed() const noexcept
+	{
+		return error_ != nullptr;
+	}
+
+private:
+	std::exception_ptr error_;
+	std::thread thread_;
+};
+
 void WriteEnvelope(tcp::socket &socket, const protocol::Envelope &envelope)
 {
 	const std::string payload = envelope.SerializeAsString();
-	ASSERT_TRUE(EnvelopeCodec::Write(socket, std::span<const uint8_t>(
-	                                      reinterpret_cast<const uint8_t *>(payload.data()), payload.size()))
-	                .has_value());
+	(void)EnvelopeCodec::Write(socket, std::span<const uint8_t>(
+	                                reinterpret_cast<const uint8_t *>(payload.data()), payload.size()));
 }
 
 TEST(ServerBackedClient, CompletesHandshakeCommandAndSnapshotExchange)
 {
 	asio::io_context serverIo;
-	tcp::acceptor acceptor { serverIo, { tcp::v4(), 0 } };
+	tcp::acceptor acceptor { serverIo, { asio::ip::address_v4::loopback(), 0 } };
 	std::atomic_bool serverObservedExpectedMessages = false;
 	std::thread server([&]() {
 		tcp::socket socket(serverIo);
@@ -142,7 +224,7 @@ TEST(ServerBackedClient, CompletesHandshakeCommandAndSnapshotExchange)
 TEST(ServerBackedClient, RejectsMalformedCommandAcknowledgementBeforeTrackingResolution)
 {
 	asio::io_context serverIo;
-	tcp::acceptor acceptor { serverIo, { tcp::v4(), 0 } };
+	tcp::acceptor acceptor { serverIo, { asio::ip::address_v4::loopback(), 0 } };
 	std::atomic_bool serverObservedExpectedMessages = false;
 	std::thread server([&]() {
 		tcp::socket socket(serverIo);
@@ -196,7 +278,7 @@ TEST(ServerBackedClient, RejectsMalformedCommandAcknowledgementBeforeTrackingRes
 TEST(ServerBackedClient, RejectsOversizedCommandAcknowledgementBeforeTrackingResolution)
 {
 	asio::io_context serverIo;
-	tcp::acceptor acceptor { serverIo, { tcp::v4(), 0 } };
+	tcp::acceptor acceptor { serverIo, { asio::ip::address_v4::loopback(), 0 } };
 	std::atomic_bool serverObservedExpectedMessages = false;
 	std::thread server([&]() {
 		tcp::socket socket(serverIo);
@@ -251,7 +333,7 @@ TEST(ServerBackedClient, RejectsOversizedCommandAcknowledgementBeforeTrackingRes
 TEST(ServerBackedClient, RejectsMalformedTrackedAcknowledgementBeforeApplyingDelivery)
 {
 	asio::io_context serverIo;
-	tcp::acceptor acceptor { serverIo, { tcp::v4(), 0 } };
+	tcp::acceptor acceptor { serverIo, { asio::ip::address_v4::loopback(), 0 } };
 	std::atomic_bool serverObservedExpectedMessages = false;
 	std::thread server([&]() {
 		tcp::socket socket(serverIo);
@@ -309,7 +391,7 @@ TEST(ServerBackedClient, RejectsMalformedTrackedAcknowledgementBeforeApplyingDel
 TEST(ServerBackedClient, RequestsAutonomousSnapshotsAfterHandshake)
 {
 	asio::io_context serverIo;
-	tcp::acceptor acceptor { serverIo, { tcp::v4(), 0 } };
+	tcp::acceptor acceptor { serverIo, { asio::ip::address_v4::loopback(), 0 } };
 	std::atomic_bool serverObservedExpectedMessages = false;
 	std::thread server([&]() {
 		tcp::socket socket(serverIo);
@@ -361,7 +443,7 @@ TEST(ServerBackedClient, RequestsAutonomousSnapshotsAfterHandshake)
 TEST(ServerBackedClient, RejectsIncompleteSnapshotIdentity)
 {
 	asio::io_context serverIo;
-	tcp::acceptor acceptor { serverIo, { tcp::v4(), 0 } };
+	tcp::acceptor acceptor { serverIo, { asio::ip::address_v4::loopback(), 0 } };
 	std::atomic_bool serverObservedExpectedMessages = false;
 	std::thread server([&]() {
 		tcp::socket socket(serverIo);
@@ -401,7 +483,7 @@ TEST(ServerBackedClient, RejectsIncompleteSnapshotIdentity)
 TEST(ServerBackedClient, WritesDetailedDiagnosticDumpForIdentityMismatch)
 {
 	asio::io_context serverIo;
-	tcp::acceptor acceptor { serverIo, { tcp::v4(), 0 } };
+	tcp::acceptor acceptor { serverIo, { asio::ip::address_v4::loopback(), 0 } };
 	std::thread server([&]() {
 		tcp::socket socket(serverIo);
 		acceptor.accept(socket);
@@ -452,7 +534,7 @@ TEST(ServerBackedClient, WritesDetailedDiagnosticDumpForIdentityMismatch)
 TEST(ServerBackedClient, RetriesTrackedCommandsWithTheOriginalSequence)
 {
 	asio::io_context serverIo;
-	tcp::acceptor acceptor { serverIo, { tcp::v4(), 0 } };
+	tcp::acceptor acceptor { serverIo, { asio::ip::address_v4::loopback(), 0 } };
 	std::atomic_bool serverObservedExpectedMessages = false;
 	std::thread server([&]() {
 		tcp::socket socket(serverIo);
@@ -536,7 +618,7 @@ TEST(ServerBackedClient, RetriesTrackedCommandsWithTheOriginalSequence)
 TEST(ServerBackedClient, ReconnectsWithSessionTokenAndResubmitsUnresolvedCommands)
 {
 	asio::io_context serverIo;
-	tcp::acceptor acceptor { serverIo, { tcp::v4(), 0 } };
+	tcp::acceptor acceptor { serverIo, { asio::ip::address_v4::loopback(), 0 } };
 	std::atomic_bool serverObservedExpectedMessages = false;
 	std::thread server([&]() {
 		tcp::socket initialSocket(serverIo);
@@ -592,10 +674,11 @@ TEST(ServerBackedClient, ReconnectsWithSessionTokenAndResubmitsUnresolvedCommand
 		resumedServerHello.mutable_server_hello()->set_content_manifest_hash("reloaded-content");
 		resumedServerHello.mutable_server_hello()->set_ruleset_identity_hash("reloaded-ruleset");
 		resumedServerHello.mutable_server_hello()->set_session_token("resume-session");
+		resumedServerHello.mutable_server_hello()->set_last_client_sequence(2);
 		WriteEnvelope(resumedSocket, resumedServerHello);
 
 		protocol::Envelope resynchronizationSnapshot;
-		resynchronizationSnapshot.mutable_snapshot()->set_tick(40);
+		resynchronizationSnapshot.mutable_snapshot()->set_tick(20);
 		resynchronizationSnapshot.mutable_snapshot()->set_state_sha256("resynchronized-state");
 		resynchronizationSnapshot.mutable_snapshot()->set_content_manifest_hash("reloaded-content");
 		resynchronizationSnapshot.mutable_snapshot()->set_ruleset_identity_hash("reloaded-ruleset");
@@ -631,6 +714,7 @@ TEST(ServerBackedClient, ReconnectsWithSessionTokenAndResubmitsUnresolvedCommand
 		.protocolSchemaVersion = "1",
 		.contentManifestHash = "content",
 		.expectInitialSnapshot = true,
+		.supportsClockGatedCommands = true,
 	};
 	auto client = ServerBackedClient::Connect(configuration);
 	ASSERT_TRUE(client.has_value()) << client.error();
@@ -651,7 +735,7 @@ TEST(ServerBackedClient, ReconnectsWithSessionTokenAndResubmitsUnresolvedCommand
 	ASSERT_TRUE(reconnect.has_value()) << reconnect.error();
 	auto snapshot = (*client)->ReadSnapshot();
 	ASSERT_TRUE(snapshot.has_value()) << snapshot.error();
-	EXPECT_EQ(snapshot->tick(), 40U);
+	EXPECT_EQ(snapshot->tick(), 20U);
 	EXPECT_EQ(snapshot->state_sha256(), "resynchronized-state");
 
 	auto acknowledgement = (*client)->ReceiveCommandAcknowledgement(125);
@@ -665,6 +749,831 @@ TEST(ServerBackedClient, ReconnectsWithSessionTokenAndResubmitsUnresolvedCommand
 	(*client)->Close();
 	server.join();
 	EXPECT_TRUE(serverObservedExpectedMessages);
+}
+
+TEST(ServerBackedClient, OptsIntoClockGatedModeAndStampsRealtimeCommandsAboveServerFloor)
+{
+	asio::io_context serverIo;
+	tcp::acceptor acceptor { serverIo, { asio::ip::address_v4::loopback(), 0 } };
+	std::atomic_bool serverObservedExpectedMessages = false;
+	PeerThread server([&]() {
+		const auto deadline = SteadyClock::now() + PeerIoTimeout;
+		tcp::socket socket(serverIo);
+		if (!AcceptWithin(acceptor, socket, deadline))
+			return;
+		protocol::Envelope hello;
+		if (!ReadEnvelopeWithin(socket, hello, deadline)
+		    || !hello.client_hello().supports_clock_gated_commands())
+			return;
+
+		protocol::Envelope serverHello;
+		auto *helloMessage = serverHello.mutable_server_hello();
+		helloMessage->set_protocol_schema_version("1");
+		helloMessage->set_content_manifest_hash("content");
+		helloMessage->set_tick_rate_hz(20);
+		helloMessage->set_command_scheduling_mode(protocol::COMMAND_SCHEDULING_MODE_CLOCK_GATED);
+		helloMessage->set_last_client_sequence(4);
+		if (!WriteEnvelopeWithin(socket, serverHello, deadline))
+			return;
+
+		protocol::Envelope initialSnapshot;
+		initialSnapshot.mutable_snapshot()->set_tick(100);
+		if (!WriteEnvelopeWithin(socket, initialSnapshot, deadline))
+			return;
+		protocol::Envelope command;
+		if (!ReadEnvelopeWithin(socket, command, deadline)
+		    || command.payload_case() != protocol::Envelope::kCommandBatch
+		    || command.command_batch().commands_size() != 1
+		    || command.command_batch().commands(0).client_sequence() != 5
+		    || command.command_batch().commands(0).requested_tick() <= 103)
+			return;
+		serverObservedExpectedMessages = true;
+	});
+
+	ServerBackedClient::Configuration configuration {
+		.host = "127.0.0.1",
+		.port = acceptor.local_endpoint().port(),
+		.clientBuildId = "client",
+		.protocolSchemaVersion = "1",
+		.contentManifestHash = "content",
+		.expectInitialSnapshot = true,
+		.supportsClockGatedCommands = true,
+	};
+	auto client = ServerBackedClient::Connect(configuration);
+	if (!client.has_value()) {
+		server.Join();
+		ADD_FAILURE() << client.error();
+		return;
+	}
+	if (!(*client)->IsClockGated()) {
+		(*client)->Close();
+		server.Join();
+		ADD_FAILURE() << "The negotiated scheduling mode was not clock-gated.";
+		return;
+	}
+	std::this_thread::sleep_for(std::chrono::milliseconds(500));
+	auto snapshot = (*client)->ReadSnapshot();
+	if (!snapshot.has_value()) {
+		(*client)->Close();
+		server.Join();
+		ADD_FAILURE() << snapshot.error();
+		return;
+	}
+	protocol::Command command;
+	command.mutable_move_requested()->set_direction_x(1);
+	EXPECT_EQ((*client)->QueueCommand(command), 5U);
+	auto send = (*client)->SendQueuedCommands(1000);
+	if (!send.has_value()) {
+		(*client)->Close();
+		server.Join();
+		ADD_FAILURE() << send.error();
+		return;
+	}
+	(*client)->Close();
+	server.Join();
+	EXPECT_TRUE(serverObservedExpectedMessages);
+}
+
+TEST(ServerBackedClient, RejectsClockGatedServerWithoutExplicitOptIn)
+{
+	asio::io_context serverIo;
+	tcp::acceptor acceptor { serverIo, { asio::ip::address_v4::loopback(), 0 } };
+	PeerThread server([&]() {
+		const auto deadline = SteadyClock::now() + PeerIoTimeout;
+		tcp::socket socket(serverIo);
+		if (!AcceptWithin(acceptor, socket, deadline))
+			return;
+		protocol::Envelope hello;
+		if (!ReadEnvelopeWithin(socket, hello, deadline))
+			return;
+		protocol::Envelope response;
+		response.mutable_server_hello()->set_protocol_schema_version("1");
+		response.mutable_server_hello()->set_content_manifest_hash("content");
+		response.mutable_server_hello()->set_command_scheduling_mode(protocol::COMMAND_SCHEDULING_MODE_CLOCK_GATED);
+		(void)WriteEnvelopeWithin(socket, response, deadline);
+	});
+
+	ServerBackedClient::Configuration configuration {
+		.host = "127.0.0.1",
+		.port = acceptor.local_endpoint().port(),
+		.clientBuildId = "client",
+		.protocolSchemaVersion = "1",
+		.contentManifestHash = "content",
+	};
+	auto client = ServerBackedClient::Connect(configuration);
+	if (client.has_value()) {
+		(*client)->Close();
+		server.Join();
+		ADD_FAILURE() << "A non-opted-in client accepted clock-gated scheduling.";
+		return;
+	}
+	EXPECT_EQ(client.error(), "Authoritative server selected clock-gated scheduling without client opt-in.");
+	server.Join();
+}
+
+TEST(ServerBackedClient, ClockGatedSnapshotProbeConsumesMixedEnvelopesAndIgnoresForeignReply)
+{
+	asio::io_context serverIo;
+	tcp::acceptor acceptor { serverIo, { asio::ip::address_v4::loopback(), 0 } };
+	std::atomic_bool serverObservedExpectedMessages = false;
+	PeerThread server([&]() {
+		const auto deadline = SteadyClock::now() + PeerIoTimeout;
+		tcp::socket socket(serverIo);
+		if (!AcceptWithin(acceptor, socket, deadline))
+			return;
+		protocol::Envelope hello;
+		if (!ReadEnvelopeWithin(socket, hello, deadline))
+			return;
+		protocol::Envelope serverHello;
+		serverHello.mutable_server_hello()->set_protocol_schema_version("1");
+		serverHello.mutable_server_hello()->set_content_manifest_hash("content");
+		serverHello.mutable_server_hello()->set_tick_rate_hz(20);
+		serverHello.mutable_server_hello()->set_command_scheduling_mode(protocol::COMMAND_SCHEDULING_MODE_CLOCK_GATED);
+		if (!WriteEnvelopeWithin(socket, serverHello, deadline))
+			return;
+		protocol::Envelope initial;
+		initial.mutable_snapshot()->set_tick(100);
+		if (!WriteEnvelopeWithin(socket, initial, deadline))
+			return;
+		protocol::Envelope request;
+		if (!ReadEnvelopeWithin(socket, request, deadline)
+		    || request.payload_case() != protocol::Envelope::kSnapshotRequest
+		    || request.snapshot_request().timing_request_id() == 0)
+			return;
+		const uint64_t requestId = request.snapshot_request().timing_request_id();
+		protocol::Envelope events;
+		events.mutable_event_batch()->set_tick(101);
+		if (!WriteEnvelopeWithin(socket, events, deadline))
+			return;
+		protocol::Envelope snapshot;
+		snapshot.mutable_snapshot()->set_tick(101);
+		if (!WriteEnvelopeWithin(socket, snapshot, deadline))
+			return;
+		protocol::Envelope foreignReply;
+		foreignReply.mutable_timing_reply()->set_request_id(requestId + 1);
+		if (!WriteEnvelopeWithin(socket, foreignReply, deadline))
+			return;
+		protocol::Envelope reply;
+		reply.mutable_timing_reply()->set_request_id(requestId);
+		if (!WriteEnvelopeWithin(socket, reply, deadline))
+			return;
+		serverObservedExpectedMessages = true;
+	});
+
+	ServerBackedClient::Configuration configuration {
+		.host = "127.0.0.1",
+		.port = acceptor.local_endpoint().port(),
+		.clientBuildId = "client",
+		.protocolSchemaVersion = "1",
+		.contentManifestHash = "content",
+		.expectInitialSnapshot = true,
+		.supportsClockGatedCommands = true,
+	};
+	auto client = ServerBackedClient::Connect(configuration);
+	if (!client.has_value()) {
+		server.Join();
+		ADD_FAILURE() << client.error();
+		return;
+	}
+	auto initial = (*client)->ReadSnapshot();
+	if (!initial.has_value()) {
+		(*client)->Close();
+		server.Join();
+		ADD_FAILURE() << initial.error();
+		return;
+	}
+	auto snapshot = (*client)->RequestSnapshot();
+	if (!snapshot.has_value()) {
+		(*client)->Close();
+		server.Join();
+		ADD_FAILURE() << snapshot.error();
+		return;
+	}
+	EXPECT_EQ(snapshot->tick(), 101U);
+	EXPECT_EQ((*client)->TakePendingEventBatches().size(), 1U);
+	(*client)->Close();
+	server.Join();
+	EXPECT_TRUE(serverObservedExpectedMessages);
+}
+
+TEST(ServerBackedClient, ClockGatedSilentAcknowledgementTimeoutRetainsPendingCommand)
+{
+	asio::io_context serverIo;
+	tcp::acceptor acceptor { serverIo, { asio::ip::address_v4::loopback(), 0 } };
+	std::atomic_bool observed = false;
+	std::string firstCommandBytes;
+	std::string resentCommandBytes;
+	PeerThread server([&]() {
+		const auto deadline = SteadyClock::now() + PeerIoTimeout;
+		tcp::socket socket(serverIo);
+		if (!AcceptWithin(acceptor, socket, deadline))
+			return;
+		protocol::Envelope hello;
+		if (!ReadEnvelopeWithin(socket, hello, deadline))
+			return;
+		protocol::Envelope serverHello;
+		serverHello.mutable_server_hello()->set_protocol_schema_version("1");
+		serverHello.mutable_server_hello()->set_content_manifest_hash("content");
+		serverHello.mutable_server_hello()->set_tick_rate_hz(20);
+		serverHello.mutable_server_hello()->set_command_scheduling_mode(protocol::COMMAND_SCHEDULING_MODE_CLOCK_GATED);
+		if (!WriteEnvelopeWithin(socket, serverHello, deadline))
+			return;
+		protocol::Envelope initial;
+		initial.mutable_snapshot()->set_tick(100);
+		if (!WriteEnvelopeWithin(socket, initial, deadline))
+			return;
+		protocol::Envelope command;
+		if (!ReadEnvelopeWithin(socket, command, deadline)
+		    || command.payload_case() != protocol::Envelope::kCommandBatch
+		    || command.command_batch().commands_size() != 1)
+			return;
+		firstCommandBytes = command.SerializeAsString();
+		tcp::socket resumed(serverIo);
+		if (!AcceptWithin(acceptor, resumed, deadline))
+			return;
+		protocol::Envelope resumedHello;
+		if (!ReadEnvelopeWithin(resumed, resumedHello, deadline))
+			return;
+		protocol::Envelope resumedServerHello;
+		resumedServerHello.mutable_server_hello()->set_protocol_schema_version("1");
+		resumedServerHello.mutable_server_hello()->set_content_manifest_hash("content");
+		resumedServerHello.mutable_server_hello()->set_session_token("resume");
+		resumedServerHello.mutable_server_hello()->set_tick_rate_hz(20);
+		resumedServerHello.mutable_server_hello()->set_command_scheduling_mode(protocol::COMMAND_SCHEDULING_MODE_CLOCK_GATED);
+		if (!WriteEnvelopeWithin(resumed, resumedServerHello, deadline))
+			return;
+		protocol::Envelope resumedSnapshot;
+		resumedSnapshot.mutable_snapshot()->set_tick(100);
+		if (!WriteEnvelopeWithin(resumed, resumedSnapshot, deadline))
+			return;
+		protocol::Envelope resentCommand;
+		if (!ReadEnvelopeWithin(resumed, resentCommand, deadline)
+		    || resentCommand.payload_case() != protocol::Envelope::kCommandBatch
+		    || resentCommand.command_batch().commands_size() != 1)
+			return;
+		resentCommandBytes = resentCommand.SerializeAsString();
+		observed = true;
+	});
+
+	ServerBackedClient::Configuration configuration {
+		.host = "127.0.0.1",
+		.port = acceptor.local_endpoint().port(),
+		.clientBuildId = "client",
+		.protocolSchemaVersion = "1",
+		.contentManifestHash = "content",
+		.expectInitialSnapshot = true,
+		.supportsClockGatedCommands = true,
+		.gatedReceiveTimeoutMs = 100,
+	};
+	auto client = ServerBackedClient::Connect(configuration);
+	if (!client.has_value()) {
+		server.Join();
+		ADD_FAILURE() << client.error();
+		return;
+	}
+	if (!(*client)->ReadSnapshot().has_value()) {
+		(*client)->Close();
+		server.Join();
+		ADD_FAILURE() << "Initial snapshot was not available.";
+		return;
+	}
+	protocol::Command command;
+	command.mutable_move_requested()->set_direction_x(1);
+	if ((*client)->QueueCommand(command) != 1 || !(*client)->SendQueuedCommands(0).has_value()) {
+		(*client)->Close();
+		server.Join();
+		ADD_FAILURE() << "Command was not sent.";
+		return;
+	}
+	auto acknowledgement = (*client)->ReceiveCommandAcknowledgement(0);
+	EXPECT_FALSE(acknowledgement.has_value());
+	EXPECT_EQ((*client)->PendingTrackedCommandCount(), 1U);
+	auto afterTimeout = (*client)->RequestSnapshot();
+	if (afterTimeout.has_value())
+		ADD_FAILURE() << "A request was accepted after the gated transport timeout.";
+	else
+		EXPECT_NE(afterTimeout.error(), "Timed out reading envelope.");
+	auto reconnect = (*client)->Reconnect(1'000);
+	if (!reconnect.has_value()) {
+		(*client)->Close();
+		server.Join();
+		ADD_FAILURE() << reconnect.error();
+		return;
+	}
+	(*client)->Close();
+	server.Join();
+	EXPECT_TRUE(observed);
+	EXPECT_EQ(resentCommandBytes, firstCommandBytes);
+	EXPECT_FALSE(server.Failed());
+}
+
+TEST(ServerBackedClient, ClockGatedTerminalAcknowledgementRequiresFreshProjection)
+{
+	asio::io_context serverIo;
+	tcp::acceptor acceptor { serverIo, { asio::ip::address_v4::loopback(), 0 } };
+	std::atomic_bool observed = false;
+	PeerThread server([&]() {
+		const auto deadline = SteadyClock::now() + PeerIoTimeout;
+		tcp::socket socket(serverIo);
+		if (!AcceptWithin(acceptor, socket, deadline))
+			return;
+		protocol::Envelope hello;
+		if (!ReadEnvelopeWithin(socket, hello, deadline))
+			return;
+		protocol::Envelope serverHello;
+		serverHello.mutable_server_hello()->set_protocol_schema_version("1");
+		serverHello.mutable_server_hello()->set_content_manifest_hash("content");
+		serverHello.mutable_server_hello()->set_tick_rate_hz(20);
+		serverHello.mutable_server_hello()->set_command_scheduling_mode(protocol::COMMAND_SCHEDULING_MODE_CLOCK_GATED);
+		if (!WriteEnvelopeWithin(socket, serverHello, deadline))
+			return;
+		protocol::Envelope initial;
+		initial.mutable_snapshot()->set_tick(100);
+		if (!WriteEnvelopeWithin(socket, initial, deadline))
+			return;
+		protocol::Envelope command;
+		if (!ReadEnvelopeWithin(socket, command, deadline)
+		    || command.payload_case() != protocol::Envelope::kCommandBatch
+		    || command.command_batch().commands_size() != 1)
+			return;
+		protocol::Envelope acknowledgement;
+		auto *result = acknowledgement.mutable_command_ack()->add_results();
+		result->set_client_sequence(1);
+		result->set_status(protocol::COMMAND_STATUS_ACCEPTED);
+		if (!WriteEnvelopeWithin(socket, acknowledgement, deadline))
+			return;
+		observed = true;
+		std::this_thread::sleep_for(std::chrono::milliseconds(300));
+	});
+
+	ServerBackedClient::Configuration configuration {
+		.host = "127.0.0.1",
+		.port = acceptor.local_endpoint().port(),
+		.clientBuildId = "client",
+		.protocolSchemaVersion = "1",
+		.contentManifestHash = "content",
+		.expectInitialSnapshot = true,
+		.supportsClockGatedCommands = true,
+		.gatedReceiveTimeoutMs = 100,
+	};
+	auto client = ServerBackedClient::Connect(configuration);
+	if (!client.has_value()) {
+		server.Join();
+		ADD_FAILURE() << client.error();
+		return;
+	}
+	protocol::CommandBatch batch;
+	batch.add_commands()->mutable_move_requested()->set_direction_x(1);
+	auto acknowledgement = (*client)->Submit(batch);
+	if (!acknowledgement.has_value()) {
+		(*client)->Close();
+		server.Join();
+		ADD_FAILURE() << acknowledgement.error();
+		return;
+	}
+	EXPECT_EQ(acknowledgement->results_size(), 1);
+	auto projection = (*client)->ReadSnapshot();
+	if (projection.has_value())
+		ADD_FAILURE() << "ReadSnapshot returned the cached handshake snapshot after the terminal ACK.";
+	else
+		EXPECT_EQ(projection.error(), "Timed out reading envelope.");
+	(*client)->Close();
+	server.Join();
+	EXPECT_TRUE(observed);
+	EXPECT_FALSE(server.Failed());
+}
+
+TEST(ServerBackedClient, ClockGatedRetryFenceUsesMeasuredRoundTripAboveNormalRto)
+{
+	asio::io_context serverIo;
+	tcp::acceptor acceptor { serverIo, { asio::ip::address_v4::loopback(), 0 } };
+	std::atomic_bool observed = false;
+	std::string firstCommandBytes;
+	std::string retryCommandBytes;
+	PeerThread server([&]() {
+		const auto deadline = SteadyClock::now() + PeerIoTimeout;
+		tcp::socket socket(serverIo);
+		if (!AcceptWithin(acceptor, socket, deadline))
+			return;
+		protocol::Envelope hello;
+		if (!ReadEnvelopeWithin(socket, hello, deadline))
+			return;
+		protocol::Envelope serverHello;
+		serverHello.mutable_server_hello()->set_protocol_schema_version("1");
+		serverHello.mutable_server_hello()->set_content_manifest_hash("content");
+		serverHello.mutable_server_hello()->set_tick_rate_hz(20);
+		serverHello.mutable_server_hello()->set_command_scheduling_mode(protocol::COMMAND_SCHEDULING_MODE_CLOCK_GATED);
+		if (!WriteEnvelopeWithin(socket, serverHello, deadline))
+			return;
+		protocol::Envelope initial;
+		initial.mutable_snapshot()->set_tick(100);
+		if (!WriteEnvelopeWithin(socket, initial, deadline))
+			return;
+		protocol::Envelope request;
+		if (!ReadEnvelopeWithin(socket, request, deadline)
+		    || request.payload_case() != protocol::Envelope::kSnapshotRequest
+		    || request.snapshot_request().timing_request_id() == 0)
+			return;
+		std::this_thread::sleep_for(std::chrono::milliseconds(350));
+		const uint64_t requestId = request.snapshot_request().timing_request_id();
+		protocol::Envelope snapshot;
+		snapshot.mutable_snapshot()->set_tick(101);
+		if (!WriteEnvelopeWithin(socket, snapshot, deadline))
+			return;
+		protocol::Envelope timing;
+		timing.mutable_timing_reply()->set_request_id(requestId);
+		if (!WriteEnvelopeWithin(socket, timing, deadline))
+			return;
+		protocol::Envelope firstCommand;
+		if (!ReadEnvelopeWithin(socket, firstCommand, deadline)
+		    || firstCommand.payload_case() != protocol::Envelope::kCommandBatch
+		    || firstCommand.command_batch().commands_size() != 1)
+			return;
+		firstCommandBytes = firstCommand.SerializeAsString();
+		protocol::Envelope retry;
+		if (!ReadEnvelopeWithin(socket, retry, deadline)
+		    || retry.payload_case() != protocol::Envelope::kCommandBatch
+		    || retry.command_batch().commands_size() != 1
+		    || retry.command_batch().commands(0).client_sequence()
+		        != firstCommand.command_batch().commands(0).client_sequence()
+		    || retry.command_batch().commands(0).requested_tick()
+		        != firstCommand.command_batch().commands(0).requested_tick())
+			return;
+		retryCommandBytes = retry.SerializeAsString();
+		observed = true;
+	});
+
+	ServerBackedClient::Configuration configuration {
+		.host = "127.0.0.1",
+		.port = acceptor.local_endpoint().port(),
+		.clientBuildId = "client",
+		.protocolSchemaVersion = "1",
+		.contentManifestHash = "content",
+		.expectInitialSnapshot = true,
+		.supportsClockGatedCommands = true,
+		.gatedReceiveTimeoutMs = 1'500,
+	};
+	auto client = ServerBackedClient::Connect(configuration);
+	if (!client.has_value()) {
+		server.Join();
+		ADD_FAILURE() << client.error();
+		return;
+	}
+	if (!(*client)->ReadSnapshot().has_value()) {
+		(*client)->Close();
+		server.Join();
+		ADD_FAILURE() << "Initial snapshot was not available.";
+		return;
+	}
+	auto freshSnapshot = (*client)->RequestSnapshot();
+	if (!freshSnapshot.has_value()) {
+		(*client)->Close();
+		server.Join();
+		ADD_FAILURE() << freshSnapshot.error();
+		return;
+	}
+	protocol::Command command;
+	command.mutable_move_requested()->set_direction_x(1);
+	if ((*client)->QueueCommand(command) != 1 || !(*client)->SendQueuedCommands(0).has_value()) {
+		(*client)->Close();
+		server.Join();
+		ADD_FAILURE() << "Command was not sent.";
+		return;
+	}
+	auto prematureResubmissions = (*client)->PrepareTrackedResubmissions(300);
+	if (!prematureResubmissions.has_value()) {
+		(*client)->Close();
+		server.Join();
+		ADD_FAILURE() << prematureResubmissions.error();
+		return;
+	}
+	EXPECT_TRUE(prematureResubmissions->empty());
+	auto resubmissions = (*client)->PrepareTrackedResubmissions(1'000);
+	if (!resubmissions.has_value()) {
+		(*client)->Close();
+		server.Join();
+		ADD_FAILURE() << resubmissions.error();
+		return;
+	}
+	EXPECT_EQ(resubmissions->size(), 1U);
+	(*client)->Close();
+	server.Join();
+	EXPECT_TRUE(observed);
+	EXPECT_EQ(retryCommandBytes, firstCommandBytes);
+	EXPECT_FALSE(server.Failed());
+}
+
+TEST(ServerBackedClient, RejectsUnknownSchedulingMode)
+{
+	asio::io_context serverIo;
+	tcp::acceptor acceptor { serverIo, { asio::ip::address_v4::loopback(), 0 } };
+	PeerThread server([&]() {
+		const auto deadline = SteadyClock::now() + PeerIoTimeout;
+		tcp::socket socket(serverIo);
+		if (!AcceptWithin(acceptor, socket, deadline))
+			return;
+		protocol::Envelope hello;
+		if (!ReadEnvelopeWithin(socket, hello, deadline))
+			return;
+		protocol::Envelope response;
+		response.mutable_server_hello()->set_protocol_schema_version("1");
+		response.mutable_server_hello()->set_content_manifest_hash("content");
+		response.mutable_server_hello()->set_command_scheduling_mode(static_cast<protocol::CommandSchedulingMode>(99));
+		(void)WriteEnvelopeWithin(socket, response, deadline);
+	});
+
+	ServerBackedClient::Configuration configuration {
+		.host = "127.0.0.1",
+		.port = acceptor.local_endpoint().port(),
+		.clientBuildId = "client",
+		.protocolSchemaVersion = "1",
+		.contentManifestHash = "content",
+		.supportsClockGatedCommands = true,
+	};
+	auto client = ServerBackedClient::Connect(configuration);
+	if (client.has_value()) {
+		(*client)->Close();
+		server.Join();
+		ADD_FAILURE() << "Unknown scheduling mode was accepted.";
+		return;
+	}
+	EXPECT_EQ(client.error(), "Authoritative server returned an unknown command scheduling mode.");
+	server.Join();
+}
+
+TEST(ServerBackedClient, PreservesSnapshotRecoveryWhenSequenceHighWaterIsExhausted)
+{
+	asio::io_context serverIo;
+	tcp::acceptor acceptor { serverIo, { asio::ip::address_v4::loopback(), 0 } };
+	PeerThread server([&]() {
+		const auto deadline = SteadyClock::now() + PeerIoTimeout;
+		tcp::socket socket(serverIo);
+		if (!AcceptWithin(acceptor, socket, deadline))
+			return;
+		protocol::Envelope hello;
+		if (!ReadEnvelopeWithin(socket, hello, deadline))
+			return;
+		protocol::Envelope response;
+		auto *serverHello = response.mutable_server_hello();
+		serverHello->set_protocol_schema_version("1");
+		serverHello->set_content_manifest_hash("content");
+		serverHello->set_last_client_sequence(std::numeric_limits<uint64_t>::max());
+		if (!WriteEnvelopeWithin(socket, response, deadline))
+			return;
+		protocol::Envelope snapshot;
+		snapshot.mutable_snapshot()->set_tick(1);
+		(void)WriteEnvelopeWithin(socket, snapshot, deadline);
+	});
+
+	ServerBackedClient::Configuration configuration {
+		.host = "127.0.0.1",
+		.port = acceptor.local_endpoint().port(),
+		.clientBuildId = "client",
+		.protocolSchemaVersion = "1",
+		.contentManifestHash = "content",
+		.expectInitialSnapshot = true,
+	};
+	auto client = ServerBackedClient::Connect(configuration);
+	if (!client.has_value()) {
+		server.Join();
+		ADD_FAILURE() << client.error();
+		return;
+	}
+	auto snapshot = (*client)->ReadSnapshot();
+	if (!snapshot.has_value()) {
+		(*client)->Close();
+		server.Join();
+		ADD_FAILURE() << snapshot.error();
+		return;
+	}
+	protocol::Command command;
+	EXPECT_EQ((*client)->QueueCommand(command), 0U);
+	(*client)->Close();
+	server.Join();
+}
+
+TEST(ServerBackedClient, ResubmitsMaximumSequenceAcrossExhaustedReconnectFloor)
+{
+	asio::io_context serverIo;
+	tcp::acceptor acceptor { serverIo, { asio::ip::address_v4::loopback(), 0 } };
+	std::atomic_bool observed = false;
+	PeerThread server([&]() {
+		const auto deadline = SteadyClock::now() + PeerIoTimeout;
+		tcp::socket first(serverIo);
+		if (!AcceptWithin(acceptor, first, deadline))
+			return;
+		protocol::Envelope firstHello;
+		if (!ReadEnvelopeWithin(first, firstHello, deadline))
+			return;
+		protocol::Envelope firstServerHello;
+		firstServerHello.mutable_server_hello()->set_protocol_schema_version("1");
+		firstServerHello.mutable_server_hello()->set_content_manifest_hash("content");
+		firstServerHello.mutable_server_hello()->set_session_token("resume");
+		firstServerHello.mutable_server_hello()->set_last_client_sequence(std::numeric_limits<uint64_t>::max() - 1);
+		if (!WriteEnvelopeWithin(first, firstServerHello, deadline))
+			return;
+		protocol::Envelope firstSnapshot;
+		firstSnapshot.mutable_snapshot()->set_tick(30);
+		if (!WriteEnvelopeWithin(first, firstSnapshot, deadline))
+			return;
+		protocol::Envelope firstCommand;
+		if (!ReadEnvelopeWithin(first, firstCommand, deadline)
+		    || firstCommand.command_batch().commands_size() != 1
+		    || firstCommand.command_batch().commands(0).client_sequence() != std::numeric_limits<uint64_t>::max())
+			return;
+		first.close();
+
+		tcp::socket resumed(serverIo);
+		if (!AcceptWithin(acceptor, resumed, deadline))
+			return;
+		protocol::Envelope resumedHello;
+		if (!ReadEnvelopeWithin(resumed, resumedHello, deadline))
+			return;
+		protocol::Envelope resumedServerHello;
+		resumedServerHello.mutable_server_hello()->set_protocol_schema_version("1");
+		resumedServerHello.mutable_server_hello()->set_content_manifest_hash("content");
+		resumedServerHello.mutable_server_hello()->set_session_token("resume");
+		resumedServerHello.mutable_server_hello()->set_last_client_sequence(std::numeric_limits<uint64_t>::max());
+		if (!WriteEnvelopeWithin(resumed, resumedServerHello, deadline))
+			return;
+		protocol::Envelope resumedSnapshot;
+		resumedSnapshot.mutable_snapshot()->set_tick(20);
+		if (!WriteEnvelopeWithin(resumed, resumedSnapshot, deadline))
+			return;
+		protocol::Envelope resent;
+		if (!ReadEnvelopeWithin(resumed, resent, deadline)
+		    || resent.command_batch().commands_size() != 1
+		    || resent.command_batch().commands(0).client_sequence() != std::numeric_limits<uint64_t>::max())
+			return;
+		protocol::Envelope acknowledgement;
+		auto *result = acknowledgement.mutable_command_ack()->add_results();
+		result->set_client_sequence(std::numeric_limits<uint64_t>::max());
+		result->set_status(protocol::COMMAND_STATUS_DUPLICATE);
+		if (!WriteEnvelopeWithin(resumed, acknowledgement, deadline))
+			return;
+		observed = true;
+	});
+
+	ServerBackedClient::Configuration configuration {
+		.host = "127.0.0.1",
+		.port = acceptor.local_endpoint().port(),
+		.clientBuildId = "client",
+		.protocolSchemaVersion = "1",
+		.contentManifestHash = "content",
+		.expectInitialSnapshot = true,
+		.supportsClockGatedCommands = true,
+	};
+	auto client = ServerBackedClient::Connect(configuration);
+	if (!client.has_value()) {
+		server.Join();
+		ADD_FAILURE() << client.error();
+		return;
+	}
+	if (!(*client)->ReadSnapshot().has_value()) {
+		(*client)->Close();
+		server.Join();
+		ADD_FAILURE() << "Initial snapshot was not available.";
+		return;
+	}
+	protocol::Command command;
+	command.set_requested_tick(31);
+	command.mutable_move_requested()->set_direction_x(1);
+	EXPECT_EQ((*client)->QueueCommand(command), std::numeric_limits<uint64_t>::max());
+	auto send = (*client)->SendQueuedCommands(0);
+	if (!send.has_value()) {
+		(*client)->Close();
+		server.Join();
+		ADD_FAILURE() << send.error();
+		return;
+	}
+	auto reconnect = (*client)->Reconnect(100);
+	if (!reconnect.has_value()) {
+		(*client)->Close();
+		server.Join();
+		ADD_FAILURE() << reconnect.error();
+		return;
+	}
+	if (!(*client)->ReadSnapshot().has_value()) {
+		(*client)->Close();
+		server.Join();
+		ADD_FAILURE() << "Reconnect snapshot was not available.";
+		return;
+	}
+	auto acknowledgement = (*client)->ReceiveCommandAcknowledgement(125);
+	if (!acknowledgement.has_value()) {
+		(*client)->Close();
+		server.Join();
+		ADD_FAILURE() << acknowledgement.error();
+		return;
+	}
+	EXPECT_EQ((*client)->PendingTrackedCommandCount(), 0U);
+	(*client)->Close();
+	server.Join();
+	EXPECT_TRUE(observed);
+}
+
+TEST(ServerBackedClient, PreservesZeroRequestedTickAcrossImmediateToClockGatedReconnect)
+{
+	asio::io_context serverIo;
+	tcp::acceptor acceptor { serverIo, { asio::ip::address_v4::loopback(), 0 } };
+	std::atomic_bool observed = false;
+	std::string firstCommandBytes;
+	std::string resentCommandBytes;
+	PeerThread server([&]() {
+		const auto deadline = SteadyClock::now() + PeerIoTimeout;
+		tcp::socket first(serverIo);
+		if (!AcceptWithin(acceptor, first, deadline))
+			return;
+		protocol::Envelope firstHello;
+		if (!ReadEnvelopeWithin(first, firstHello, deadline))
+			return;
+		protocol::Envelope immediateHello;
+		immediateHello.mutable_server_hello()->set_protocol_schema_version("1");
+		immediateHello.mutable_server_hello()->set_content_manifest_hash("content");
+		immediateHello.mutable_server_hello()->set_session_token("resume");
+		immediateHello.mutable_server_hello()->set_command_scheduling_mode(protocol::COMMAND_SCHEDULING_MODE_IMMEDIATE);
+		if (!WriteEnvelopeWithin(first, immediateHello, deadline))
+			return;
+		protocol::Envelope firstSnapshot;
+		firstSnapshot.mutable_snapshot()->set_tick(10);
+		if (!WriteEnvelopeWithin(first, firstSnapshot, deadline))
+			return;
+		protocol::Envelope firstCommand;
+		if (!ReadEnvelopeWithin(first, firstCommand, deadline)
+		    || firstCommand.command_batch().commands_size() != 1
+		    || firstCommand.command_batch().commands(0).requested_tick() != 0)
+			return;
+		firstCommandBytes = firstCommand.SerializeAsString();
+		first.close();
+
+		tcp::socket resumed(serverIo);
+		if (!AcceptWithin(acceptor, resumed, deadline))
+			return;
+		protocol::Envelope resumedHello;
+		if (!ReadEnvelopeWithin(resumed, resumedHello, deadline))
+			return;
+		protocol::Envelope gatedHello;
+		gatedHello.mutable_server_hello()->set_protocol_schema_version("1");
+		gatedHello.mutable_server_hello()->set_content_manifest_hash("content");
+		gatedHello.mutable_server_hello()->set_session_token("resume");
+		gatedHello.mutable_server_hello()->set_tick_rate_hz(20);
+		gatedHello.mutable_server_hello()->set_command_scheduling_mode(protocol::COMMAND_SCHEDULING_MODE_CLOCK_GATED);
+		if (!WriteEnvelopeWithin(resumed, gatedHello, deadline))
+			return;
+		protocol::Envelope resumedSnapshot;
+		resumedSnapshot.mutable_snapshot()->set_tick(10);
+		if (!WriteEnvelopeWithin(resumed, resumedSnapshot, deadline))
+			return;
+		protocol::Envelope resentCommand;
+		if (!ReadEnvelopeWithin(resumed, resentCommand, deadline)
+		    || resentCommand.command_batch().commands_size() != 1
+		    || resentCommand.command_batch().commands(0).requested_tick() != 0)
+			return;
+		resentCommandBytes = resentCommand.SerializeAsString();
+		observed = true;
+	});
+
+	ServerBackedClient::Configuration configuration {
+		.host = "127.0.0.1",
+		.port = acceptor.local_endpoint().port(),
+		.clientBuildId = "client",
+		.protocolSchemaVersion = "1",
+		.contentManifestHash = "content",
+		.expectInitialSnapshot = true,
+		.supportsClockGatedCommands = true,
+		.gatedReceiveTimeoutMs = 500,
+	};
+	auto client = ServerBackedClient::Connect(configuration);
+	if (!client.has_value()) {
+		server.Join();
+		ADD_FAILURE() << client.error();
+		return;
+	}
+	if (!(*client)->ReadSnapshot().has_value()) {
+		(*client)->Close();
+		server.Join();
+		ADD_FAILURE() << "Initial snapshot was not available.";
+		return;
+	}
+	protocol::Command command;
+	command.mutable_move_requested()->set_direction_x(1);
+	if ((*client)->QueueCommand(command) != 1 || !(*client)->SendQueuedCommands(100).has_value()) {
+		(*client)->Close();
+		server.Join();
+		ADD_FAILURE() << "Initial immediate command was not sent.";
+		return;
+	}
+	auto reconnect = (*client)->Reconnect(200);
+	if (!reconnect.has_value()) {
+		(*client)->Close();
+		server.Join();
+		ADD_FAILURE() << reconnect.error();
+		return;
+	}
+	(*client)->Close();
+	server.Join();
+	EXPECT_TRUE(observed);
+	EXPECT_EQ(resentCommandBytes, firstCommandBytes);
 }
 
 } // namespace

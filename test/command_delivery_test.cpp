@@ -1,5 +1,6 @@
 #include <array>
 #include <cstdint>
+#include <limits>
 #include <vector>
 
 #include <gtest/gtest.h>
@@ -87,6 +88,46 @@ TEST(CommandDelivery, IgnoresBackwardsTimestampsForRetriesAndRtt)
 
 	EXPECT_TRUE(tracker.PrepareResubmissions(50).empty());
 	EXPECT_TRUE(tracker.ApplyAcknowledgement({ .clientSequence = sequence }, 50));
+	EXPECT_EQ(tracker.SmoothedRttMs(), 100U);
+}
+
+TEST(CommandDelivery, RestoresServerSequenceFloorWithoutRewritingPendingCommands)
+{
+	CommandDeliveryTracker tracker;
+	const uint64_t pending = tracker.RegisterCommand();
+	ASSERT_EQ(pending, 1U);
+	ASSERT_TRUE(tracker.ObserveServerSequenceFloor(5));
+	const uint64_t next = tracker.RegisterCommand();
+	EXPECT_EQ(next, 6U);
+	EXPECT_TRUE(tracker.MarkSent(pending, 10));
+	EXPECT_TRUE(tracker.ApplyAcknowledgement({ .clientSequence = pending }, 10));
+}
+
+TEST(CommandDelivery, SequenceSpaceDoesNotWrapAfterMaximumFloor)
+{
+	CommandDeliveryTracker tracker;
+	ASSERT_TRUE(tracker.ObserveServerSequenceFloor(std::numeric_limits<uint64_t>::max() - 1));
+	const uint64_t maximum = tracker.RegisterCommand();
+	EXPECT_EQ(maximum, std::numeric_limits<uint64_t>::max());
+	ASSERT_TRUE(tracker.MarkSent(maximum, 1));
+	ASSERT_TRUE(tracker.ApplyAcknowledgement({ .clientSequence = maximum }, 1));
+	EXPECT_EQ(tracker.RegisterCommand(), 0U);
+	EXPECT_FALSE(tracker.ObserveServerSequenceFloor(std::numeric_limits<uint64_t>::max() - 1));
+	EXPECT_FALSE(tracker.ObserveServerSequenceFloor(1));
+	EXPECT_EQ(tracker.RegisterCommand(), 0U);
+}
+
+TEST(CommandDelivery, DeferredRetryDoesNotTrainRttOrResubmitEarly)
+{
+	CommandDeliveryTracker tracker;
+	const uint64_t sequence = tracker.RegisterCommand();
+	ASSERT_TRUE(tracker.MarkSent(sequence, 100));
+	ASSERT_TRUE(tracker.SetRetryNotBefore(sequence, 1000));
+	EXPECT_TRUE(tracker.PrepareResubmissions(399).empty());
+	EXPECT_EQ(tracker.PrepareResubmissions(999).size(), 0U);
+	EXPECT_EQ(tracker.PrepareResubmissions(1000), std::vector<uint64_t>({ sequence }));
+	EXPECT_EQ(tracker.SmoothedRttMs(), 100U);
+	EXPECT_TRUE(tracker.ApplyAcknowledgement({ .clientSequence = sequence }, 1100, false));
 	EXPECT_EQ(tracker.SmoothedRttMs(), 100U);
 }
 

@@ -170,6 +170,7 @@ private:
 	std::map<uint64_t, PendingIntent> pendingIntents_;
 	CommandResolution lastCommandResolution_ = CommandResolution::None;
 	std::optional<uint64_t> lastSnapshotRequestMs_;
+	bool acceptingReconnectSnapshot_ = false;
 };
 
 } // namespace devilution::authoritative

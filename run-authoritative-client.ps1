@@ -192,8 +192,11 @@ try {
     # level-loading path in an incompatible state.
     # Only this native profile selects town's validated content-owned entry.
     # Standalone/base/Godot defaults and pack bytes remain unchanged.
+    # Realtime native input is scheduled against the server's physical clock;
+    # a peer's future command must not advance the shared world immediately.
     $nativeSeedArguments = if ($isAcceptanceRun) { @('--random-seed', '0') } else { @() }
     $serverArguments = @('--port', '0', '--protocol-version', '0.2.0', '--game-mode', 'single-player',
+        '--command-scheduling', 'clock-gated',
         '--starting-level', '0', '--content-overlay', ('"' + $nativeStartContent + '"'),
         '--save-root', ('"' + $saveRoot + '"')) + $nativeSeedArguments
     $serverProcess = Start-Process -FilePath $serverExecutable -ArgumentList $serverArguments -WorkingDirectory $repositoryRoot -WindowStyle Hidden -RedirectStandardOutput $serverOutput -RedirectStandardError $serverError -PassThru
@@ -202,6 +205,7 @@ try {
     $contentHash = $null
     $rulesetHash = $null
     $gameMode = $null
+    $commandScheduling = $null
     for ($attempt = 0; $attempt -lt 120; $attempt++) {
         Start-Sleep -Milliseconds 250
         if ($serverProcess.HasExited) {
@@ -213,17 +217,22 @@ try {
         $contentMatch = [regex]::Match($output, 'Content manifest: ([0-9a-fA-F]+)')
         $rulesetMatch = [regex]::Match($output, 'Ruleset identity: ([0-9a-fA-F]+)')
         $gameModeMatch = [regex]::Match($output, 'Game mode: ([A-Za-z]+)')
+        $commandSchedulingMatch = [regex]::Match($output, 'Command scheduling: ([a-z-]+)')
         if ($portMatch.Success) { $port = [int]$portMatch.Groups[1].Value }
         if ($contentMatch.Success) { $contentHash = $contentMatch.Groups[1].Value }
         if ($rulesetMatch.Success) { $rulesetHash = $rulesetMatch.Groups[1].Value }
         if ($gameModeMatch.Success) { $gameMode = $gameModeMatch.Groups[1].Value }
-        if ($null -ne $port -and -not [string]::IsNullOrWhiteSpace($contentHash) -and -not [string]::IsNullOrWhiteSpace($rulesetHash) -and -not [string]::IsNullOrWhiteSpace($gameMode)) { break }
+        if ($commandSchedulingMatch.Success) { $commandScheduling = $commandSchedulingMatch.Groups[1].Value }
+        if ($null -ne $port -and -not [string]::IsNullOrWhiteSpace($contentHash) -and -not [string]::IsNullOrWhiteSpace($rulesetHash) -and -not [string]::IsNullOrWhiteSpace($gameMode) -and -not [string]::IsNullOrWhiteSpace($commandScheduling)) { break }
     }
-    if ($null -eq $port -or [string]::IsNullOrWhiteSpace($contentHash) -or [string]::IsNullOrWhiteSpace($rulesetHash) -or [string]::IsNullOrWhiteSpace($gameMode)) {
+    if ($null -eq $port -or [string]::IsNullOrWhiteSpace($contentHash) -or [string]::IsNullOrWhiteSpace($rulesetHash) -or [string]::IsNullOrWhiteSpace($gameMode) -or [string]::IsNullOrWhiteSpace($commandScheduling)) {
         throw "Timed out waiting for the authoritative server identity. See $serverOutput and $serverError"
     }
     if ($gameMode -ne 'SinglePlayer') {
         throw "The local authoritative server started in $gameMode mode instead of SinglePlayer. See $serverOutput"
+    }
+    if ($commandScheduling -ne 'clock-gated') {
+        throw "Unexpected command scheduling: $commandScheduling. See $serverOutput"
     }
 
     $serverEndpoint = "127.0.0.1:$port"

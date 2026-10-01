@@ -66,13 +66,13 @@ open. Their scope, dependencies, and exit checks are defined only in the
   validation retain strict missing-art rejection. Current diagnostics identify
   the failing object/template; the earlier missing-art failure remains unresolved.
   The native pair now selects a separate validated town-entry pack, preserving
-  base/Godot bytes and defaults. Fresh GUI creation and guarded fresh-host resume
+  base/Godot bytes and defaults. Pre-adaptation GUI creation and guarded fresh-host resume
   reach town/HUD with full-life authoritative state at `(75,68)` and normal exits.
   Native movement is still unverified: recorded clicks reject `TooLate`, and
   player presentation remains unclear in the captures. The earlier dead-origin
   Cathedral and missing-art failures remain recorded; these partial checks do
-  not close native gameplay acceptance. The earlier
-  firewall/app-approval interruptions are historical, not the latest outcome.
+  not close native gameplay acceptance. The latest timing/presentation batch
+  and current GUI interruption are recorded below.
 - Godot's local harness now builds the current server, stages/imports/builds
   the client without rewriting its source SDK pin, checks mode/identities,
   and retains `.local/godot` saves plus a private
@@ -128,6 +128,92 @@ open. Their scope, dependencies, and exit checks are defined only in the
 The following records describe implemented slices at this baseline. They are
 evidence, not a separate priority list; detailed older entries retain their
 original scope and may be superseded by later entries or the current assessment.
+
+### M0 native timing and presentation integration (2026-09-30)
+
+This work follows `27439e339`. Native realtime input supplies requested tick 0,
+while strict admission rejects that tick after startup. Fresh clients also
+previously allocated sequence 1 without importing the resumed server ledger.
+These are separate from native geometry and the earlier checkpoint-sharing
+failure. The native renderer finds living players through signed tile markers;
+the authoritative player projector did not restore those markers after native
+level loading cleared them. Preserve server-owned positions, strict lateness,
+first-wins receipts and the historical failed GUI phases below.
+
+The paired runtime now opts into clock-gated scheduling, bounds handshake and
+gated exchanges, and stamps zero-tick realtime intents once at first preparation.
+Prepared command bytes remain immutable across retries, including a changed
+negotiated mode. Resume imports the server sequence floor; exhaustion cannot wrap.
+Fresh reconnect epochs reset timing/projection boundaries, and correlated probes
+exclude scheduled acknowledgement waits from transport-latency estimates.
+Validated terminal acknowledgements retire intent even if the subsequent player
+snapshot fails validation; the prior player projection remains intact.
+
+Native presentation restores signed player tile markers with direction/effect
+ordering, suppresses inactive/off-level/new-level markers, preserves foreign
+markers and handles corpse/town life presentation. Source review approves these
+paths without transferring position, combat or movement authority to the client.
+
+Integration exposed an additional build defect: nine separately compiled native
+gameplay object targets did not inherit the authoritative feature definition.
+The feature-enabled CMake branch now gives each target the definition, generated
+protocol headers/build ordering and dependencies without a circular back-link.
+The generated Ninja rules cover all 38 guarded source objects with no missing
+definition. A managed exact-membership contract protects future object targets.
+The stash keyboard fixture now supplies required player level metadata and a
+matching dungeon context; the real keyboard path reaches the server command.
+Temporary diagnostic instrumentation was removed. The feature-off CMake branch
+is unchanged; existing authoritative guards are activated, not gameplay rules relaxed.
+
+Across rebuilt affected native selections, 349 cases pass, with another 70 broader
+gameplay regressions passing and no skips. The first integration selection passed
+347/348: Windows accepted a complete codec frame despite constrained socket
+buffers. The corrected fixture saturates with valid frames under a finite budget
+and checks a real timeout, available first-frame bytes and restored blocking mode;
+it does not identify bytes from the failed frame. Corrected codec/session suites
+pass 14/14 each. Final test-only refinements restrict 35 listeners to loopback,
+require a complete received header and bound every peer-close iteration. Their
+fresh rebuild and rerun pass codec 14/14 (186ms), client 19/19 (1913ms), session
+14/14 (810ms) and stash 3/3 (146ms), with no skips. The native build initializes
+VsDevCmd x64 and verifies cl/rc/mt before building the four affected targets.
+The existing `build/x64-Debug` feature-off tree also rebuilds the native game
+and ten selected test executables successfully in the matching developer
+environment. Its tracker and affected gameplay selections pass 79/79 without
+skips, separately from the 419 feature-enabled native results. The known CMake
+dependency/deprecation warnings are not build failures; this is not a full
+legacy suite or campaign pass.
+
+The fresh GUI launch reaches a visible native window, but a Windows Security
+prompt for `server_backed_stash_test.exe` covers it. The user was asked to cancel
+manually; no firewall setting or permission was automated. The isolated profile
+is `Godevilution-Native-Acceptance-f8c9e02e3f9d42de98b445b5f302c2d7`.
+The blocked run was stopped only after matching the client's executable and
+exact process-start ticks; its launcher cleaned up the server. Both owned
+processes are gone, and the retained client exit is -1, not a successful journey.
+Accepted native movement, visible player presentation and moved-position
+fresh-host restore remain unverified. This is not a native gameplay pass.
+
+The standalone host and default low-level native configuration retain Immediate
+compatibility. No Godot source, protocol or save format changes are part of this
+batch. Transport remains synchronous with a default two-second absolute gated
+exchange deadline; DNS/connect are still blocking. A finite exchange bound is not
+a rendering/responsiveness pass. Session-level malformed-player validation does
+not establish socket retirement. Initial/unseen network latency remains a gap.
+
+The earlier injected-persistence fixture race is corrected by holding its
+physical clock at initial tick 0. This prevents unrelated background checkpoint
+publication from consuming the injected failure; command publication still must
+send no acknowledgement, retain one execution and publish the durable duplicate
+on retry. No production persistence or clock code changed. Rebuilt focused
+clock-gated host tests pass 19/19. Fresh launcher regressions now pass 23/23
+(17.298s), including the object-target build contract. The final full server run,
+using `dotnet run --project server/tests/Devilution.Server.Tests/Devilution.Server.Tests.csproj --no-restore -- --no-ansi`,
+passes 1154/1154 with no skips (18.938s). The earlier full run passed 1153/1153
+before that added case (19.756s). Final documentation consistency checks pass
+3/3 with `--filter-class '*ProjectDocumentationConsistencyTests'` (368ms initial
+final pass, 462ms clarity rerun and 366ms final record check).
+NuGet audit-feed NU1900 warnings remain. The earlier failed full-suite
+result remains historical evidence below, not retroactively a pass.
 
 ### M0 validated native town entry and retained timing failure (2026-09-30)
 

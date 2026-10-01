@@ -6,6 +6,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <iterator>
+#include <optional>
 #include <set>
 
 #include "engine/cursor.h"
@@ -36,7 +37,7 @@ tl::expected<void, std::string> ValidateSnapshot(const ProjectedPlayerSnapshot &
 		return tl::make_unexpected("Server-backed player snapshot has an invalid entity ID.");
 	if (!IsAuthoritativeSupportedLevel(snapshot.levelId))
 		return tl::make_unexpected("Server-backed player level identity is unsupported.");
-	if (snapshot.positionX < 0 || snapshot.positionX > UINT8_MAX || snapshot.positionY < 0 || snapshot.positionY > UINT8_MAX)
+	if (!InDungeonBounds({ snapshot.positionX, snapshot.positionY }))
 		return tl::make_unexpected("Server-backed player position is outside the native tile range.");
 	if (snapshot.life < 0 || snapshot.lifeMaximum < 0 || snapshot.lifeMaximum > 0 && snapshot.life > snapshot.lifeMaximum
 	    || snapshot.lifeMaximumBase < 0 || snapshot.mana < 0 || snapshot.manaMaximum < 0
@@ -120,6 +121,9 @@ tl::expected<void, std::string> ValidateSnapshot(const ProjectedPlayerSnapshot &
 		    && action.readyTick == action.endTick
 		    && action.directionX == 0 && action.directionY == 0
 		    && action.targetEntityId == 0 && !action.hasCast;
+		if (moveIsValid && !action.effectApplied
+		    && !InDungeonBounds({ snapshot.positionX + action.directionX, snapshot.positionY + action.directionY }))
+			return tl::make_unexpected("Server-backed player walk destination is outside the native tile range.");
 		if (!timingIsValid
 		    || (!moveIsValid && !attackIsValid && !castIsValid
 		        && !deathIsValid && !transitionIsValid && !restartTownIsValid)) {
@@ -239,6 +243,108 @@ void ApplyResource(VitalResource &destination, int32_t current)
 	destination.base = std::clamp(destination.base, 0, destination.maximumBase);
 }
 
+/**
+ * Reconnects a server-backed player with the legacy dPlayer/dead-player presentation state.
+ *
+ * The authoritative projector is also used by tests with temporary Player objects.  Only a
+ * player whose address is currently registered in Players may receive a native marker, because
+ * Player::getId() is defined by that registration and is not valid for such temporary objects.
+ */
+std::optional<int8_t> RegisteredNativePlayerMarker(const Player &player)
+{
+	for (size_t playerIndex = 0; playerIndex < Players.size() && playerIndex < MAX_PLRS; ++playerIndex) {
+		if (&Players[playerIndex] == &player)
+			return static_cast<int8_t>(playerIndex + 1);
+	}
+	return std::nullopt;
+}
+
+void ClearNativePlayerMarkers(int8_t marker)
+{
+	for (int y = 0; y < MAXDUNY; ++y) {
+		for (int x = 0; x < MAXDUNX; ++x) {
+			Tile &tile = tileAt({ x, y });
+			if (tile.player() == marker || tile.player() == -marker)
+				tile.setPlayer(0);
+		}
+	}
+}
+
+bool HasOtherDeadPlayerAt(Point position, const Player &player)
+{
+	for (const Player &other : Players) {
+		if (&other == &player || !other.plractive || !other.hasNoLife() || !other.isOnActiveLevel())
+			continue;
+		if (other.position.tile == position)
+			return true;
+	}
+	return false;
+}
+
+void ClearDeadPlayerFlagIfUnoccupied(Point position, const Player &player)
+{
+	if (InDungeonBounds(position) && !HasOtherDeadPlayerAt(position, player))
+		tileAt(position).removeFlags(DungeonFlag::DeadPlayer);
+}
+
+void SynchronizeNativePlayerPresentation(
+	Player &player,
+	const ProjectedPlayerSnapshot &snapshot,
+	Point previousPosition,
+	bool wasOnActiveLevel)
+{
+	const auto marker = RegisteredNativePlayerMarker(player);
+	if (!marker.has_value())
+		return;
+
+	// The native level loader clears dPlayer and dead-player flags.  Reapplying a snapshot after
+	// that load must therefore rebuild only this player's presentation state.  The raw scan also
+	// removes a stale reservation left by a previous authoritative walk without consulting an
+	// unregistered Player pointer.
+	ClearNativePlayerMarkers(*marker);
+	if (wasOnActiveLevel)
+		ClearDeadPlayerFlagIfUnoccupied(previousPosition, player);
+	if (!player.plractive)
+		return;
+
+	if (!player.isOnActiveLevel() || !InDungeonBounds(player.position.tile))
+		return;
+
+	// A level transition has no native actor until the next level is ready.  The authoritative
+	// snapshot remains in Player::position so the level loader can use it on that next pass.
+	if (player._pLvlChanging) {
+		ClearDeadPlayerFlagIfUnoccupied(player.position.tile, player);
+		return;
+	}
+
+	if (player.hasNoLife()) {
+		tileAt(player.position.tile).addFlags(DungeonFlag::DeadPlayer);
+		return;
+	}
+
+	const bool drawFromBehind = player._pmode == PM_WALK_SOUTHWARDS
+	    || (player._pmode == PM_WALK_SIDEWAYS && player.direction == Direction::East);
+	Point markerPosition = player.position.tile;
+	if (snapshot.currentAction.has_value()
+	    && snapshot.currentAction->kind == 1
+	    && !snapshot.currentAction->effectApplied
+	    && drawFromBehind) {
+		// WalkInDirection reserves the destination.  The sign is part of native draw ordering:
+		// southward/eastward walking is drawn from a negative destination marker.
+		markerPosition = player.position.future;
+	}
+	if (!InDungeonBounds(markerPosition))
+		return;
+
+	const int8_t nativeMarker = drawFromBehind ? static_cast<int8_t>(-*marker) : *marker;
+	Tile &tile = tileAt(markerPosition);
+	// Never replace another registered player's marker.  A conflicting authoritative position
+	// remains invisible until the server supplies a non-conflicting projection.
+	if (tile.player() == 0 || tile.player() == *marker || tile.player() == -*marker)
+		tile.setPlayer(nativeMarker);
+	ClearDeadPlayerFlagIfUnoccupied(player.position.tile, player);
+}
+
 } // namespace
 
 tl::expected<void, std::string> ApplyServerBackedStashProjection(const ProjectedPlayerSnapshot &snapshot)
@@ -276,6 +382,8 @@ tl::expected<void, std::string> ApplyServerBackedPlayerSnapshot(Player &player, 
 	if (auto result = ValidateSnapshot(snapshot); !result.has_value())
 		return result;
 
+	const Point previousPosition = player.position.tile;
+	const bool wasOnActiveLevel = player.isOnActiveLevel();
 	player.position.tile = { static_cast<WorldTileCoord>(snapshot.positionX), static_cast<WorldTileCoord>(snapshot.positionY) };
 	player.position.future = player.position.tile;
 	if (snapshot.currentAction.has_value()
@@ -423,6 +531,7 @@ tl::expected<void, std::string> ApplyServerBackedPlayerSnapshot(Player &player, 
 	}
 	player.UpdateHitPointPercentage();
 	player.UpdateManaPercentage();
+	SynchronizeNativePlayerPresentation(player, snapshot, previousPosition, wasOnActiveLevel);
 	return { };
 }
 

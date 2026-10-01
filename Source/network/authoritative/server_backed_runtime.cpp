@@ -130,6 +130,7 @@ tl::expected<void, std::string> ServerBackedRuntime::StartImpl(const ServerBacke
 		        : std::optional<std::string> { player->_pName },
 		    .diagnosticsDirectory = configuration.diagnosticsDirectory,
 		    .expectInitialSnapshot = true,
+		    .supportsClockGatedCommands = true,
 		},
 	};
 	auto session = ServerBackedSession::Connect(std::move(sessionConfiguration));

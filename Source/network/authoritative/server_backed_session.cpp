@@ -32,6 +32,8 @@ tl::expected<void, std::string> ServerBackedSession::OpenVendor(uint32_t storeId
 	if (!command.has_value())
 		return tl::make_unexpected(command.error());
 	const uint64_t sequence = client_->QueueCommand(std::move(*command));
+	if (sequence == 0)
+		return tl::make_unexpected("The authoritative client sequence space is exhausted.");
 	pendingIntents_.emplace(sequence, PendingIntent { .kind = PendingIntent::Kind::OpenVendor, .storeId = storeId });
 	return Flush(nowMs, sequence);
 }
@@ -45,6 +47,8 @@ tl::expected<void, std::string> ServerBackedSession::CloseVendor(uint64_t reques
 	if (!command.has_value())
 		return tl::make_unexpected(command.error());
 	const uint64_t sequence = client_->QueueCommand(std::move(*command));
+	if (sequence == 0)
+		return tl::make_unexpected("The authoritative client sequence space is exhausted.");
 	pendingIntents_.emplace(sequence, PendingIntent { .kind = PendingIntent::Kind::CloseVendor });
 	return Flush(nowMs, sequence);
 }
@@ -93,9 +97,15 @@ tl::expected<void, std::string> ServerBackedSession::Purchase(uint32_t storeId, 
 	if (vendorState_.Purchase(storeId, storeSlot) != VendorIntentRoute::Pending)
 		return tl::make_unexpected("The server-backed vendor cannot accept this purchase.");
 	auto command = MakePurchaseCommand(storeId, storeSlot, requestedTick);
-	if (!command.has_value())
+	if (!command.has_value()) {
+		(void)vendorState_.ResolvePurchase(storeId, storeSlot, PurchaseResolution::Rejected);
 		return tl::make_unexpected(command.error());
+	}
 	const uint64_t sequence = client_->QueueCommand(std::move(*command));
+	if (sequence == 0) {
+		(void)vendorState_.ResolvePurchase(storeId, storeSlot, PurchaseResolution::Rejected);
+		return tl::make_unexpected("The authoritative client sequence space is exhausted.");
+	}
 	pendingIntents_.emplace(sequence, PendingIntent { .kind = PendingIntent::Kind::Purchase, .storeId = storeId, .storeSlot = storeSlot });
 	return Flush(nowMs, sequence);
 }
@@ -458,6 +468,8 @@ tl::expected<void, std::string> ServerBackedSession::SubmitInventoryCommand(tl::
 	if (!command.has_value())
 		return tl::make_unexpected(command.error());
 	const uint64_t sequence = client_->QueueCommand(std::move(*command));
+	if (sequence == 0)
+		return tl::make_unexpected("The authoritative client sequence space is exhausted.");
 	pendingIntents_.emplace(sequence, PendingIntent { .kind = PendingIntent::Kind::Inventory });
 	return Flush(nowMs, sequence);
 }
@@ -468,6 +480,8 @@ tl::expected<void, std::string> ServerBackedSession::SubmitGameplayCommand(tl::e
 	if (!command.has_value())
 		return tl::make_unexpected(command.error());
 	const uint64_t sequence = client_->QueueCommand(std::move(*command));
+	if (sequence == 0)
+		return tl::make_unexpected("The authoritative client sequence space is exhausted.");
 	pendingIntents_.emplace(sequence, PendingIntent { .kind = PendingIntent::Kind::Gameplay });
 	return Flush(nowMs, sequence);
 }
@@ -506,11 +520,18 @@ tl::expected<void, std::string> ServerBackedSession::Reconnect(uint64_t nowMs)
 	if (auto result = client_->Reconnect(nowMs); !result.has_value())
 		return tl::make_unexpected(result.error());
 	vendorState_.SetConnected(true);
+	acceptingReconnectSnapshot_ = true;
 	auto snapshot = client_->ReadSnapshot();
-	if (!snapshot.has_value())
+	if (!snapshot.has_value()) {
+		acceptingReconnectSnapshot_ = false;
 		return tl::make_unexpected(snapshot.error());
+	}
 	if (auto result = ApplySnapshot(*snapshot); !result.has_value())
+	{
+		acceptingReconnectSnapshot_ = false;
 		return tl::make_unexpected(result.error());
+	}
+	acceptingReconnectSnapshot_ = false;
 	if (client_->PendingTrackedCommandCount() == 0)
 		return { };
 	return Flush(nowMs);
@@ -572,7 +593,8 @@ tl::expected<void, std::string> ServerBackedSession::ApplySnapshot(const protoco
 		return tl::make_unexpected("Server-backed player and vendor snapshots disagree about the active store.");
 	}
 	if (const auto *previous = playerState_.Snapshot(); previous != nullptr
-	    && player->serverTick < previous->serverTick)
+	    && player->serverTick < previous->serverTick
+	    && !acceptingReconnectSnapshot_)
 		return { };
 	auto monsters = ProjectMonsterSnapshots(snapshot);
 	if (!monsters.has_value())
@@ -603,6 +625,8 @@ tl::expected<void, std::string> ServerBackedSession::ApplySnapshot(const protoco
 		vendor = std::move(*projectedVendor);
 	}
 	ServerBackedPlayerState candidatePlayerState = playerState_;
+	if (acceptingReconnectSnapshot_)
+		candidatePlayerState.Clear();
 	if (!candidatePlayerState.ApplySnapshot(*player))
 		return tl::make_unexpected("Server-backed player snapshot could not be applied.");
 	ServerBackedVendorState candidateVendorState = vendorState_;
@@ -656,10 +680,13 @@ void ServerBackedSession::ApplyAcknowledgements(const protocol::CommandAck &ackn
 		const auto pending = pendingIntents_.find(result.client_sequence());
 		if (pending == pendingIntents_.end())
 			continue;
+		const bool rejectedDuplicate = result.status() == protocol::COMMAND_STATUS_DUPLICATE
+		    && result.reject_reason() != protocol::COMMAND_REJECT_REASON_UNSPECIFIED;
 		if (pending->second.kind == PendingIntent::Kind::Purchase) {
-			if (result.status() == protocol::COMMAND_STATUS_REJECTED)
+			if (result.status() == protocol::COMMAND_STATUS_REJECTED || rejectedDuplicate)
 				(void)vendorState_.ResolvePurchase(pending->second.storeId, pending->second.storeSlot, PurchaseResolution::Rejected);
-			else if (result.status() == protocol::COMMAND_STATUS_ACCEPTED || result.status() == protocol::COMMAND_STATUS_DUPLICATE)
+			else if (result.status() == protocol::COMMAND_STATUS_ACCEPTED
+			    || result.status() == protocol::COMMAND_STATUS_DUPLICATE)
 				(void)vendorState_.ResolvePurchase(pending->second.storeId, pending->second.storeSlot, PurchaseResolution::Accepted);
 		}
 		if (!focusSequence.has_value() || *focusSequence == result.client_sequence()) {
@@ -674,7 +701,7 @@ void ServerBackedSession::ApplyAcknowledgements(const protocol::CommandAck &ackn
 				lastCommandResolution_ = CommandResolution::Rescheduled;
 				break;
 			case protocol::COMMAND_STATUS_DUPLICATE:
-				lastCommandResolution_ = CommandResolution::Duplicate;
+				lastCommandResolution_ = rejectedDuplicate ? CommandResolution::Rejected : CommandResolution::Duplicate;
 				break;
 			default:
 				lastCommandResolution_ = CommandResolution::None;

@@ -98,7 +98,8 @@ run-authoritative-client.ps1
 The root launcher selects only a CMake directory configured with
 `DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT=ON`, initializes the Visual Studio
 developer environment, and incrementally rebuilds both native client and server
-on every run. It also verifies the server's reported single-player mode before
+on every run. It also verifies the server's reported single-player mode and
+clock-gated scheduling before
 opening the client, so stale binaries and mode mismatches fail before native
 level setup.
 
@@ -110,6 +111,14 @@ Town entry `(75,68)` is validated module content, not a client teleport or
 server MPQ lookup. Standalone/base/Godot defaults and base pack bytes are
 unchanged; the root launcher rebuilds the module required by the optional table.
 Only diagnostic runs fix seed 0; normal native seed selection is unchanged.
+The paired native runtime advertises clock-gated support. Default low-level
+native configurations and standalone host timing retain Immediate compatibility.
+The feature-enabled CMake branch also defines the feature on separately compiled
+gameplay object libraries, with protocol-generation ordering and dependencies;
+enabling it only on the main library does not enable those existing guards.
+The native transport remains synchronous: deliberate future-command ACK waits
+are expected, with a default two-second absolute gated exchange deadline.
+This bound is not an asynchronous rendering/responsiveness or release-budget pass.
 Normal launches retain the user's native save/config locations. The server is
 hidden; the client is interactive. Native logs and owned process IDs/start times
 are retained beside the server logs. Cleanup owns only those process handles;
@@ -164,20 +173,22 @@ approval; they must not treat a running process as visible UI or bypass denied
 window access. See migration status for current GUI outcomes and the remaining
 native gameplay/timing/presentation gap.
 
-Current GUI evidence reaches healthy authoritative town entry and fresh-host
+Pre-adaptation Immediate-mode GUI evidence reaches healthy town entry and fresh-host
 restoration at `(75,68)`, with full-life HUD/state and normal menu exits. Recorded
 movement clicks reject `TooLate`; player rendering is not established by the town
 captures, so native create/move/save/resume acceptance remains open. The earlier
 dead-origin Cathedral probe is retained; its missing-art failure remains
 unresolved. Diagnostics identify the exact object/template without
 relaxing graphics/frame admission or adding a speculative reload. Base entry
-coordinates now have the optional validated contract, but timing/presentation
-integration still needs accepted movement and moved-position GUI restore.
+coordinates now have the optional validated contract. Timing/presentation source
+review and affected native tests pass; accepted movement and moved-position GUI
+restore remain required. See migration status for the latest verification.
 For live checkpoint inspection, use read-only `FileStream` handles sharing
 `ReadWrite | Delete`; ordinary no-delete file sharing can block Windows atomic
 checkpoint replacement. The retained first resume phase reported access denied;
 the sharing-safe retry did not. This is not a durability or permissions change.
-The earlier firewall interruption is historical. Never
+The latest fresh GUI run was stopped behind a test-executable firewall prompt;
+the affected TCP test listeners are now loopback-only and their rerun passes. Never
 automate security prompts or enable public/private network permissions for the
 loopback test. If a prompt appears, ask the user to cancel it before continuing;
 do not count focused tests or world rendering as GUI gameplay acceptance.

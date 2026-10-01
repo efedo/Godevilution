@@ -6,6 +6,35 @@ namespace Devilution.Server.Tests;
 
 public sealed class LocalLauncherContractTests
 {
+    [Fact]
+    public void NativeAuthoritativeBuildCoversIndependentlyCompiledGameplayObjects()
+    {
+        var root = FindRepositoryRoot();
+        var cmake = File.ReadAllText(Path.Combine(root, "Source/CMakeLists.txt"));
+        var configuredTargets = Regex.Match(cmake,
+            @"set\(DEVILUTIONX_AUTHORITATIVE_OBJECT_TARGETS\s+(?<targets>[^)]+)\)");
+        Assert.True(configuredTargets.Success);
+        var configuredTargetNames = Regex.Matches(configuredTargets.Groups["targets"].Value, @"\w+")
+            .Select(match => match.Value).ToHashSet(StringComparer.Ordinal);
+        var guardedTargets = new List<string>();
+        foreach (Match target in Regex.Matches(cmake,
+            @"add_devilutionx_object_library\((?<target>\w+)\s+(?<sources>[^)]+)\)")) {
+            foreach (Match source in Regex.Matches(target.Groups["sources"].Value, @"[\w/]+\.cpp")) {
+                var sourceText = File.ReadAllText(Path.Combine(root, "Source", source.Value));
+                if (sourceText.Contains("DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT", StringComparison.Ordinal)) {
+                    guardedTargets.Add(target.Groups["target"].Value);
+                    Assert.Contains(target.Groups["target"].Value, configuredTargetNames);
+                    break;
+                }
+            }
+        }
+        Assert.NotEmpty(guardedTargets);
+        Assert.Contains("foreach(authoritative_target libdevilutionx ${DEVILUTIONX_AUTHORITATIVE_OBJECT_TARGETS})", cmake);
+        Assert.Contains("target_compile_definitions(${authoritative_target} PRIVATE DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT)", cmake);
+        Assert.Contains("target_sources(${authoritative_target} PRIVATE ${DEVILUTIONX_PROTOCOL_HDRS})", cmake);
+        Assert.Contains("target_link_dependencies(${authoritative_target} PRIVATE asio)", cmake);
+    }
+
     [Theory]
     [InlineData(nameof(AuthoritativeProtocolLimits.MinimumNativeRewardOffset), AuthoritativeProtocolLimits.MinimumNativeRewardOffset)]
     [InlineData(nameof(AuthoritativeProtocolLimits.MaximumNativeRewardOffset), AuthoritativeProtocolLimits.MaximumNativeRewardOffset)]
@@ -107,6 +136,11 @@ public sealed class LocalLauncherContractTests
             "$gameMode -ne 'SinglePlayer'",
             launcher,
             StringComparison.Ordinal);
+        Assert.Contains("'--command-scheduling', 'clock-gated'", launcher, StringComparison.Ordinal);
+        Assert.Matches(@"\[regex\]::Match\(\$output,\s*'Command scheduling:", launcher);
+        var schedulingGuard = launcher.IndexOf("$commandScheduling -ne 'clock-gated'", StringComparison.Ordinal);
+        Assert.True(schedulingGuard >= 0 && schedulingGuard < clientLaunch,
+            "The negotiated native scheduling profile must be checked before client launch.");
     }
 
     [Fact]

@@ -106,8 +106,14 @@ M4. M5 is the final removal gate, not a reason to postpone replacement work.
    the clock-gated scheduler is now integrated under an explicit whole-host
    capability negotiation, with physical-clock sampling, queued sequence resume,
    checkpoint publication, restore/reload fences and awaited shutdown. Godot
-   profiles select it; default CLI/native timing stays immediate until the native
-   synchronous transport is separately adapted and verified. Preserve the legacy
+   profiles and the native pair select it; the standalone CLI and default low-level
+   native configuration retain Immediate compatibility. The native synchronous
+   adaptation and presentation source review are approved and affected native
+   regressions pass, including the final loopback-only fixture rerun. The build
+   now enables existing authoritative guards in all independently compiled
+   gameplay object targets. Actual GUI acceptance remains: the latest isolated
+   run was stopped behind a Windows Security prompt requiring manual cancellation.
+   Preserve the legacy
    direct API and strict late policy. Final-source host regressions and actual
    headless/rendered two-client creation/mutual movement/reverse-order fresh-host
    resume now pass, alongside single-player creation/resume/server-loss recovery
@@ -134,11 +140,12 @@ M4. M5 is the final removal gate, not a reason to postpone replacement work.
    `native-start` pack now select town `(75,68)` only for the native pair, without
    rewriting base/Godot content or widening the existing level/overlay schemas.
    Validate final effective geometry atomically and refresh projected metadata;
-   saved-player positions remain authoritative. Fresh GUI creation and guarded
+   saved-player positions remain authoritative. Pre-adaptation GUI creation and guarded
    fresh-host resume now show town/HUD and full-life server state, with normal
    exits, but no accepted native movement. Recorded clicks are rejected `TooLate`;
-   diagnose native command timestamps/transport/scheduling, then adapt the
-   demonstrated failing path without relaxing authority. Verify accepted
+   the rebuilt native adaptation corrects first-dispatch timing, imports the
+   resume sequence floor and restores signed player-display markers. Verify these
+   paths without relaxing authority, then demonstrate accepted
    movement and moved-position restore under the selected host mode.
    Player presentation is not yet established by the town captures. Use the
    marked version-2, exclusively locked profile and retain per-phase logs/exits;

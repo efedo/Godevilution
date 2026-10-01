@@ -66,8 +66,10 @@ negotiated clock-gated scheduling mode. Future commands wait for physical server
 time without moving peer snapshots ahead. Idle correlated snapshot probes measure
 end-to-end freshness; deliberate ACK waits do not inflate command lead. Retries
 wait for scheduled delay plus normal timeout and retain their original identities.
-Native launchers and the standalone host's default remain immediate for legacy
-compatibility. This is not a bound on arbitrary network/capture stalls or proof
+The paired native launcher also selects clock-gated scheduling; the standalone
+host and default low-level native configuration remain Immediate for compatibility.
+Native acceptance is recorded separately in migration status. This is not a bound
+on arbitrary network/capture stalls or proof
 of campaign/shared-world restart recovery.
 
 Godot's editor may upgrade a C# project's SDK during import. Only the staged

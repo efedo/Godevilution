@@ -7,6 +7,7 @@
  */
 
 #include <cstdint>
+#include <chrono>
 #include <optional>
 #include <span>
 #include <string>
@@ -31,9 +32,17 @@ public:
 
 	/** Writes one bounded, four-byte little-endian length-prefixed payload. */
 	static WriteResult Write(asio::ip::tcp::socket &socket, std::span<const uint8_t> payload);
+	/** Writes one payload under a single absolute deadline. */
+	static WriteResult Write(asio::ip::tcp::socket &socket, std::span<const uint8_t> payload, std::chrono::steady_clock::time_point deadline);
 
 	/** Reads one payload; an orderly close before the next header returns nullopt. */
 	static ReadResult Read(asio::ip::tcp::socket &socket);
+
+	/**
+	 * Reads one payload with one absolute deadline covering the header and all
+	 * payload fragments. The legacy blocking overload remains unchanged.
+	 */
+	static ReadResult Read(asio::ip::tcp::socket &socket, std::chrono::steady_clock::time_point deadline);
 };
 
 } // namespace devilution::authoritative

@@ -7,6 +7,7 @@
  */
 
 #include <cstdint>
+#include <chrono>
 #include <map>
 #include <memory>
 #include <optional>
@@ -43,6 +44,10 @@ public:
 		/** Directory for detailed handshake failure dumps. */
 		std::string diagnosticsDirectory;
 		bool expectInitialSnapshot = false;
+		/** Explicit opt-in; legacy clients never advertise deferred scheduling. */
+		bool supportsClockGatedCommands = false;
+		/** Absolute transaction deadline for gated ACK/snapshot exchanges. */
+		uint64_t gatedReceiveTimeoutMs = 2000;
 	};
 
 	static tl::expected<std::unique_ptr<ServerBackedClient>, std::string> Connect(Configuration configuration);
@@ -53,6 +58,7 @@ public:
 	ServerBackedClient &operator=(const ServerBackedClient &) = delete;
 
 	const protocol::ServerHello &ServerHello() const noexcept { return serverHello_; }
+	[[nodiscard]] bool IsClockGated() const noexcept { return clockGated_; }
 
 	/** Resumes the current server session and resubmits unresolved commands. */
 	tl::expected<void, std::string> Reconnect(uint64_t nowMs);
@@ -86,8 +92,15 @@ private:
 
 	tl::expected<void, std::string> ConnectTransport(bool expectInitialSnapshot);
 	tl::expected<protocol::Envelope, std::string> ReadEnvelope();
+	tl::expected<protocol::Envelope, std::string> ReadEnvelope(std::chrono::steady_clock::time_point deadline);
 	tl::expected<void, std::string> WriteEnvelope(const protocol::Envelope &envelope);
+	tl::expected<void, std::string> WriteEnvelope(const protocol::Envelope &envelope, std::chrono::steady_clock::time_point deadline);
 	tl::expected<void, std::string> ObserveSnapshotIdentity(const protocol::Snapshot &snapshot);
+	tl::expected<void, std::string> ObserveTimingReply(const protocol::TimingReply &reply);
+	[[nodiscard]] uint64_t GatedCurrentTick() const noexcept;
+	[[nodiscard]] uint64_t GatedDispatchTick() const noexcept;
+	[[nodiscard]] uint64_t GatedRetryNotBefore(uint64_t requestedTick, uint64_t nowMs) const noexcept;
+	void CloseAfterGatedTimeout() noexcept;
 	[[nodiscard]] std::string WriteHandshakeDiagnosticDump(std::string_view reason, const protocol::Envelope *response) const noexcept;
 
 	asio::io_context ioContext_;
@@ -98,9 +111,25 @@ private:
 	std::optional<protocol::Snapshot> pendingSnapshot_;
 	std::vector<protocol::EventBatch> pendingEventBatches_;
 	CommandDeliveryTracker deliveryTracker_;
+	bool clockGated_ = false;
+	uint32_t tickRateHz_ = 20;
+	uint64_t gatedRoundTripMs_ = 100;
+	uint64_t lastSnapshotTick_ = 0;
+	bool hasSnapshotClock_ = false;
+	std::chrono::steady_clock::time_point lastSnapshotObservedAt_ {};
+	std::optional<std::chrono::steady_clock::time_point> gatedTransactionDeadline_;
+	uint64_t nextTimingRequestId_ = 1;
+	struct PendingTimingProbe {
+		uint64_t requestId = 0;
+		std::chrono::steady_clock::time_point sentAt;
+		std::chrono::steady_clock::time_point expiresAt;
+	};
+	std::optional<PendingTimingProbe> pendingTimingProbe_;
 	struct PendingCommand {
 		protocol::Command command;
 		bool sent = false;
+		/** True once the command has been assembled into a first-write batch. */
+		bool prepared = false;
 	};
 	std::map<uint64_t, PendingCommand> pendingCommands_;
 };

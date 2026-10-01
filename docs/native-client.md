@@ -19,6 +19,10 @@ cmake -S . -B build-authoritative -DDEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT=ON -
 cmake --build build-authoritative
 ```
 
+The feature-enabled build also defines the adapter feature on its independently
+compiled gameplay object libraries and orders their generated protocol headers;
+these targets do not inherit the main library's definitions automatically.
+
 Connected Town Portal entry is server-authoritative: the client matches the
 collision cell against the latest projected portal route and submits
 `UsePortal`, including when the server-created portal has no local legacy
@@ -64,6 +68,7 @@ powershell -ExecutionPolicy Bypass -File run-authoritative-client.ps1
 The root launcher discovers or builds the authoritative native client and
 server, performs an incremental rebuild on every run so a stale executable is
 never selected, verifies that the local server reports single-player mode,
+requires clock-gated scheduling,
 negotiates their hashes, and cleans up the temporary server when the client
 exits. The old `tools/run-authoritative-client.ps1` path remains a compatibility
 forwarder. In authoritative mode the server owns gameplay persistence, the
@@ -75,6 +80,17 @@ stable class enum value as the new-session class selection. The server validates
 that ID against active content and creates the authoritative player; reconnects
 retain the in-memory or persisted server class instead of reapplying the local
 selection.
+
+The paired native runtime explicitly opts into clock-gated commands; default
+low-level configurations retain Immediate compatibility. Realtime tick-0 intents
+are stamped once at first dispatch using the received snapshot's clock anchor and
+correlated transport freshness. Explicit nonzero ticks and all retry identities
+remain unchanged. Gated exchanges have one finite deadline across writes,
+framing, acknowledgement and projection; the transport remains synchronous.
+Resume imports the server sequence floor, without wrapping exhausted sequences.
+Fresh connection epochs reset timing and projection boundaries; terminal command
+results remain resolved even if a subsequent player snapshot is invalid.
+See migration status for source review, rebuilt tests and actual GUI evidence.
 
 The handshake also declares the server-owned game mode. Because native
 `NetInit` has already allocated either the single-player or multiplayer path,

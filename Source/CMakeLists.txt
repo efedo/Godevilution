@@ -962,11 +962,37 @@ target_include_directories(libdevilutionx PUBLIC ${CMAKE_CURRENT_BINARY_DIR})
 if(DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT)
   target_include_directories(libdevilutionx PUBLIC ${CMAKE_BINARY_DIR} ${Protobuf_INCLUDE_DIRS})
   target_compile_definitions(libdevilutionx PUBLIC DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT)
-  if(WIN32 AND BUILD_TESTING)
-    target_compile_definitions(libdevilutionx PRIVATE "DVL_PROTOBUF_EXPORT=__declspec(dllexport)")
-  else()
-    target_compile_definitions(libdevilutionx PRIVATE DVL_PROTOBUF_EXPORT=)
-  endif()
+  # Object libraries compile independently: main-library definitions do not
+  # reach these gameplay/control sources containing authoritative guards.
+  set(DEVILUTIONX_AUTHORITATIVE_OBJECT_TARGETS
+    libdevilutionx_items
+    libdevilutionx_level_objects
+    libdevilutionx_monster
+    libdevilutionx_multiplayer
+    libdevilutionx_options
+    libdevilutionx_player
+    libdevilutionx_quests
+    libdevilutionx_spells
+    libdevilutionx_stores)
+  foreach(authoritative_target libdevilutionx ${DEVILUTIONX_AUTHORITATIVE_OBJECT_TARGETS})
+    target_include_directories(${authoritative_target} PRIVATE
+      ${CMAKE_CURRENT_BINARY_DIR} ${CMAKE_BINARY_DIR} ${Protobuf_INCLUDE_DIRS})
+    target_compile_definitions(${authoritative_target} PRIVATE DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT)
+    target_sources(${authoritative_target} PRIVATE ${DEVILUTIONX_PROTOCOL_HDRS})
+    if(WIN32 AND BUILD_TESTING)
+      target_compile_definitions(${authoritative_target} PRIVATE "DVL_PROTOBUF_EXPORT=__declspec(dllexport)")
+    else()
+      target_compile_definitions(${authoritative_target} PRIVATE DVL_PROTOBUF_EXPORT=)
+    endif()
+    if(NOT authoritative_target STREQUAL "libdevilutionx")
+      target_link_dependencies(${authoritative_target} PRIVATE asio)
+      if(TARGET protobuf::libprotobuf)
+        target_link_dependencies(${authoritative_target} PRIVATE protobuf::libprotobuf)
+      else()
+        target_link_dependencies(${authoritative_target} PRIVATE ${Protobuf_LIBRARIES})
+      endif()
+    endif()
+  endforeach()
 endif()
 target_include_directories(libdevilutionx PUBLIC ${PROJECT_SOURCE_DIR}/3rdParty/PicoSHA2)
 target_link_dependencies(libdevilutionx PUBLIC

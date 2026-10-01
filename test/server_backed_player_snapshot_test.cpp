@@ -4,6 +4,7 @@
 #include <limits>
 #include <string>
 #include <utility>
+#include <vector>
 
 #include "devilution.pb.h"
 #include "application/headless_mode.hpp"
@@ -4599,6 +4600,420 @@ TEST(ServerBackedPlayerSnapshot, StateRejectsStaleSnapshotWithoutRegression)
 	EXPECT_EQ(state.Snapshot()->serverTick, 12U);
 	EXPECT_EQ(state.Snapshot()->positionX, 4);
 	EXPECT_EQ(state.Snapshot()->positionY, 5);
+}
+
+class ScopedNativePlayerTileState {
+public:
+	ScopedNativePlayerTileState()
+	    : previousMyPlayer_(MyPlayer)
+	    , previousMyPlayerId_(MyPlayerId)
+	    , previousLevelId_(currentLevel().id())
+	{
+		previousPlayers_.swap(Players);
+		for (int y = 0; y < MAXDUNY; ++y) {
+			for (int x = 0; x < MAXDUNX; ++x) {
+				previousTiles_[y * MAXDUNX + x] = tileAt({ x, y });
+				tileAt({ x, y }) = Tile { };
+			}
+		}
+
+		currentLevel().setId({ 0, DTYPE_TOWN, false, SL_NONE });
+		Players.resize(2);
+		MyPlayerId = 0;
+		MyPlayer = &Players[0];
+		for (Player &player : Players) {
+			player.plractive = true;
+			player.setLevel(0);
+			player.plrIsOnSetLevel = false;
+			player.life.maximum = 100;
+			player.life.maximumBase = 100;
+			player.life.current = 100;
+		}
+	}
+
+	void UseActiveLevel(uint8_t level, dungeon_type type)
+	{
+		currentLevel().setId({ level, type, false, SL_NONE });
+		for (Player &player : Players) {
+			player.setLevel(level);
+			player.plrIsOnSetLevel = false;
+		}
+	}
+
+	~ScopedNativePlayerTileState()
+	{
+		for (int y = 0; y < MAXDUNY; ++y) {
+			for (int x = 0; x < MAXDUNX; ++x)
+				tileAt({ x, y }) = previousTiles_[y * MAXDUNX + x];
+		}
+		currentLevel().setId(previousLevelId_);
+		Players.swap(previousPlayers_);
+		MyPlayer = previousMyPlayer_;
+		MyPlayerId = previousMyPlayerId_;
+	}
+
+	ScopedNativePlayerTileState(const ScopedNativePlayerTileState &) = delete;
+	ScopedNativePlayerTileState &operator=(const ScopedNativePlayerTileState &) = delete;
+
+private:
+	std::vector<Player> previousPlayers_;
+	std::array<Tile, MAXDUNX * MAXDUNY> previousTiles_ { };
+	Player *previousMyPlayer_;
+	uint8_t previousMyPlayerId_;
+	LevelId previousLevelId_;
+};
+
+ProjectedPlayerSnapshot MakeNativeTileSnapshot(Point position, uint32_t levelId = 0)
+{
+	ProjectedPlayerSnapshot snapshot;
+	snapshot.entityId = 7;
+	snapshot.positionX = position.x;
+	snapshot.positionY = position.y;
+	snapshot.levelId = levelId;
+	snapshot.life = 100;
+	snapshot.lifeMaximum = 100;
+	snapshot.lifeMaximumBase = 100;
+	snapshot.characterLevel = 1;
+	snapshot.inventoryGrid.assign(InventoryGridCells, -1);
+	return snapshot;
+}
+
+TEST(ServerBackedPlayerSnapshot, RebindsRegisteredPlayerTileAfterAuthoritativeLevelPresentationReset)
+{
+	ScopedNativePlayerTileState state;
+	Player &player = Players[0];
+	const Point firstPosition { 75, 68 };
+	const Point secondPosition { 76, 68 };
+	ProjectedPlayerSnapshot snapshot = MakeNativeTileSnapshot(firstPosition);
+
+	ASSERT_TRUE(ApplyServerBackedPlayerSnapshot(player, snapshot).has_value());
+	EXPECT_EQ(tileAt(firstPosition).player(), 1);
+	EXPECT_EQ(PlayerAtPosition(firstPosition), &player);
+
+	player.plractive = false;
+	ASSERT_TRUE(ApplyServerBackedPlayerSnapshot(player, snapshot).has_value());
+	EXPECT_EQ(tileAt(firstPosition).player(), 0);
+	player.plractive = true;
+
+	// Native level loading clears dPlayer; the next authoritative apply must rebuild it.
+	tileAt(firstPosition).setPlayer(0);
+	ASSERT_TRUE(ApplyServerBackedPlayerSnapshot(player, snapshot).has_value());
+	EXPECT_EQ(tileAt(firstPosition).player(), 1);
+
+	// A relocation clears only this player's old reservation and preserves another player's marker.
+	const Point otherPosition { 77, 68 };
+	Players[1].position.tile = otherPosition;
+	tileAt(otherPosition).setPlayer(2);
+	snapshot.positionX = secondPosition.x;
+	snapshot.positionY = secondPosition.y;
+	ASSERT_TRUE(ApplyServerBackedPlayerSnapshot(player, snapshot).has_value());
+	EXPECT_EQ(tileAt(firstPosition).player(), 0);
+	EXPECT_EQ(tileAt(secondPosition).player(), 1);
+	EXPECT_EQ(tileAt(otherPosition).player(), 2);
+}
+
+TEST(ServerBackedPlayerSnapshot, ProjectsSignedDestinationMarkerForPendingWalk)
+{
+	ScopedNativePlayerTileState state;
+	Player &player = Players[0];
+	const Point origin { 40, 40 };
+	ProjectedPlayerSnapshot snapshot = MakeNativeTileSnapshot(origin);
+	snapshot.facingDirection = static_cast<uint32_t>(Direction::SouthWest);
+	snapshot.combatMode = static_cast<uint32_t>(PM_WALK_SOUTHWARDS);
+	snapshot.combatModeEndTick = 10;
+	snapshot.currentAction = ProjectedPlayerActionSnapshot {
+		.kind = 1,
+		.startedAtTick = 1,
+		.effectTick = 10,
+		.readyTick = 10,
+		.endTick = 10,
+		.directionY = 1,
+	};
+
+	ASSERT_TRUE(ApplyServerBackedPlayerSnapshot(player, snapshot).has_value());
+	const Point destination { 40, 41 };
+	EXPECT_EQ(player.position.tile, origin);
+	EXPECT_EQ(player.position.future, destination);
+	EXPECT_EQ(tileAt(origin).player(), 0);
+	EXPECT_EQ(tileAt(destination).player(), -1);
+
+	snapshot.positionX = destination.x;
+	snapshot.positionY = destination.y;
+	snapshot.currentAction->effectApplied = true;
+	ASSERT_TRUE(ApplyServerBackedPlayerSnapshot(player, snapshot).has_value());
+	EXPECT_EQ(tileAt(origin).player(), 0);
+	EXPECT_EQ(tileAt(destination).player(), -1);
+
+	// North/west walking uses the positive origin marker; reserving its future tile would draw
+	// the sprite one tile away from the authoritative origin.
+	const Point northOrigin { 40, 42 };
+	snapshot = MakeNativeTileSnapshot(northOrigin);
+	snapshot.facingDirection = static_cast<uint32_t>(Direction::NorthEast);
+	snapshot.combatMode = static_cast<uint32_t>(PM_WALK_NORTHWARDS);
+	snapshot.combatModeEndTick = 10;
+	snapshot.currentAction = ProjectedPlayerActionSnapshot {
+		.kind = 1,
+		.startedAtTick = 1,
+		.effectTick = 10,
+		.readyTick = 10,
+		.endTick = 10,
+		.directionY = -1,
+	};
+	ASSERT_TRUE(ApplyServerBackedPlayerSnapshot(player, snapshot).has_value());
+	EXPECT_EQ(tileAt(northOrigin).player(), 1);
+	EXPECT_EQ(tileAt({ 40, 41 }).player(), 0);
+
+	const Point eastOrigin { 44, 44 };
+	snapshot = MakeNativeTileSnapshot(eastOrigin);
+	snapshot.facingDirection = static_cast<uint32_t>(Direction::East);
+	snapshot.combatMode = static_cast<uint32_t>(PM_WALK_SIDEWAYS);
+	snapshot.combatModeEndTick = 10;
+	snapshot.currentAction = ProjectedPlayerActionSnapshot {
+		.kind = 1,
+		.startedAtTick = 1,
+		.effectTick = 10,
+		.readyTick = 10,
+		.endTick = 10,
+		.directionX = 1,
+		.directionY = -1,
+	};
+	ASSERT_TRUE(ApplyServerBackedPlayerSnapshot(player, snapshot).has_value());
+	const Point eastDestination { 45, 43 };
+	EXPECT_EQ(tileAt(eastOrigin).player(), 0);
+	EXPECT_EQ(tileAt(eastDestination).player(), -1);
+	snapshot.positionX = eastDestination.x;
+	snapshot.positionY = eastDestination.y;
+	snapshot.currentAction->effectApplied = true;
+	ASSERT_TRUE(ApplyServerBackedPlayerSnapshot(player, snapshot).has_value());
+	EXPECT_EQ(tileAt(eastOrigin).player(), 0);
+	EXPECT_EQ(tileAt(eastDestination).player(), -1);
+
+	const Point westOrigin { 48, 48 };
+	snapshot = MakeNativeTileSnapshot(westOrigin);
+	snapshot.facingDirection = static_cast<uint32_t>(Direction::West);
+	snapshot.combatMode = static_cast<uint32_t>(PM_WALK_SIDEWAYS);
+	snapshot.combatModeEndTick = 10;
+	snapshot.currentAction = ProjectedPlayerActionSnapshot {
+		.kind = 1,
+		.startedAtTick = 1,
+		.effectTick = 10,
+		.readyTick = 10,
+		.endTick = 10,
+		.directionX = -1,
+		.directionY = 1,
+	};
+	ASSERT_TRUE(ApplyServerBackedPlayerSnapshot(player, snapshot).has_value());
+	const Point westDestination { 47, 49 };
+	EXPECT_EQ(tileAt(westOrigin).player(), 1);
+	EXPECT_EQ(tileAt(westDestination).player(), 0);
+	snapshot.positionX = westDestination.x;
+	snapshot.positionY = westDestination.y;
+	snapshot.currentAction->effectApplied = true;
+	ASSERT_TRUE(ApplyServerBackedPlayerSnapshot(player, snapshot).has_value());
+	EXPECT_EQ(tileAt(westOrigin).player(), 0);
+	EXPECT_EQ(tileAt(westDestination).player(), 1);
+}
+
+TEST(ServerBackedPlayerSnapshot, PreservesDeadPlayerFlagWithoutNormalOccupancy)
+{
+	ScopedNativePlayerTileState state;
+	state.UseActiveLevel(1, DTYPE_CATHEDRAL);
+	Player &player = Players[0];
+	const Point corpsePosition { 50, 50 };
+	ProjectedPlayerSnapshot snapshot = MakeNativeTileSnapshot(corpsePosition, 1);
+	snapshot.life = 0;
+	snapshot.combatMode = static_cast<uint32_t>(PM_DEATH);
+	snapshot.combatModeEndTick = 10;
+	snapshot.currentAction = ProjectedPlayerActionSnapshot {
+		.kind = 4,
+		.startedAtTick = 1,
+		.effectTick = 1,
+		.readyTick = 10,
+		.endTick = 10,
+		.effectApplied = true,
+		.targetEntityId = 9,
+	};
+
+	ASSERT_TRUE(ApplyServerBackedPlayerSnapshot(player, snapshot).has_value());
+	EXPECT_EQ(tileAt(corpsePosition).player(), 0);
+	EXPECT_TRUE(tileAt(corpsePosition).hasDeadPlayer());
+
+	const Point resurrectionPosition { 51, 50 };
+	ProjectedPlayerSnapshot resurrection = MakeNativeTileSnapshot(resurrectionPosition, 1);
+	ASSERT_TRUE(ApplyServerBackedPlayerSnapshot(player, resurrection).has_value());
+	EXPECT_FALSE(tileAt(corpsePosition).hasDeadPlayer());
+	EXPECT_EQ(tileAt(resurrectionPosition).player(), 1);
+}
+
+TEST(ServerBackedPlayerSnapshot, DoesNotClearAnotherDeadPlayerDuringRelocation)
+{
+	ScopedNativePlayerTileState state;
+	state.UseActiveLevel(1, DTYPE_CATHEDRAL);
+	Player &player = Players[0];
+	const Point sharedCorpsePosition { 60, 60 };
+	ProjectedPlayerSnapshot dead = MakeNativeTileSnapshot(sharedCorpsePosition, 1);
+	dead.life = 0;
+	dead.combatMode = static_cast<uint32_t>(PM_DEATH);
+	dead.combatModeEndTick = 10;
+	dead.currentAction = ProjectedPlayerActionSnapshot {
+		.kind = 4,
+		.startedAtTick = 1,
+		.effectTick = 1,
+		.readyTick = 10,
+		.endTick = 10,
+		.effectApplied = true,
+		.targetEntityId = 9,
+	};
+	ASSERT_TRUE(ApplyServerBackedPlayerSnapshot(player, dead).has_value());
+
+	Players[1].life.current = 0;
+	Players[1].position.tile = sharedCorpsePosition;
+	tileAt(sharedCorpsePosition).addFlags(DungeonFlag::DeadPlayer);
+	ProjectedPlayerSnapshot alive = MakeNativeTileSnapshot({ 61, 60 }, 1);
+	ASSERT_TRUE(ApplyServerBackedPlayerSnapshot(player, alive).has_value());
+	EXPECT_TRUE(tileAt(sharedCorpsePosition).hasDeadPlayer());
+}
+
+TEST(ServerBackedPlayerSnapshot, ClearsInactivePlayerCorpseWithoutHidingAnotherCorpse)
+{
+	ScopedNativePlayerTileState state;
+	state.UseActiveLevel(1, DTYPE_CATHEDRAL);
+	Player &player = Players[0];
+	const Point corpsePosition { 62, 62 };
+	ProjectedPlayerSnapshot dead = MakeNativeTileSnapshot(corpsePosition, 1);
+	dead.life = 0;
+	dead.combatMode = static_cast<uint32_t>(PM_DEATH);
+	dead.combatModeEndTick = 10;
+	dead.currentAction = ProjectedPlayerActionSnapshot {
+		.kind = 4,
+		.startedAtTick = 1,
+		.effectTick = 1,
+		.readyTick = 10,
+		.endTick = 10,
+		.effectApplied = true,
+		.targetEntityId = 9,
+	};
+	ASSERT_TRUE(ApplyServerBackedPlayerSnapshot(player, dead).has_value());
+
+	player.plractive = false;
+	ASSERT_TRUE(ApplyServerBackedPlayerSnapshot(player, MakeNativeTileSnapshot({ 63, 62 }, 1)).has_value());
+	EXPECT_FALSE(tileAt(corpsePosition).hasDeadPlayer());
+
+	player.plractive = true;
+	const Point sharedCorpsePosition { 64, 62 };
+	dead = MakeNativeTileSnapshot(sharedCorpsePosition, 1);
+	dead.life = 0;
+	dead.combatMode = static_cast<uint32_t>(PM_DEATH);
+	dead.combatModeEndTick = 10;
+	dead.currentAction = ProjectedPlayerActionSnapshot {
+		.kind = 4,
+		.startedAtTick = 1,
+		.effectTick = 1,
+		.readyTick = 10,
+		.endTick = 10,
+		.effectApplied = true,
+		.targetEntityId = 9,
+	};
+	ASSERT_TRUE(ApplyServerBackedPlayerSnapshot(player, dead).has_value());
+	Players[1].life.current = 0;
+	Players[1].position.tile = sharedCorpsePosition;
+	tileAt(sharedCorpsePosition).addFlags(DungeonFlag::DeadPlayer);
+	player.plractive = false;
+	ASSERT_TRUE(ApplyServerBackedPlayerSnapshot(player, MakeNativeTileSnapshot({ 65, 62 }, 1)).has_value());
+	EXPECT_TRUE(tileAt(sharedCorpsePosition).hasDeadPlayer());
+}
+
+TEST(ServerBackedPlayerSnapshot, SuppressesNativeMarkerForOtherLevelAndTransitionSnapshots)
+{
+	ScopedNativePlayerTileState state;
+	Player &player = Players[0];
+	const Point position { 70, 70 };
+	ProjectedPlayerSnapshot snapshot = MakeNativeTileSnapshot(position);
+	ASSERT_TRUE(ApplyServerBackedPlayerSnapshot(player, snapshot).has_value());
+	ASSERT_EQ(tileAt(position).player(), 1);
+
+	snapshot.levelId = 1;
+	ASSERT_TRUE(ApplyServerBackedPlayerSnapshot(player, snapshot).has_value());
+	EXPECT_EQ(tileAt(position).player(), 0);
+
+	ProjectedPlayerSnapshot transition = MakeNativeTileSnapshot(position);
+	transition.combatMode = static_cast<uint32_t>(PM_NEWLVL);
+	transition.combatModeEndTick = 2;
+	transition.currentAction = ProjectedPlayerActionSnapshot {
+		.kind = 5,
+		.startedAtTick = 1,
+		.effectTick = 1,
+		.readyTick = 2,
+		.endTick = 2,
+		.effectApplied = true,
+		.targetEntityId = 5,
+	};
+	ASSERT_TRUE(ApplyServerBackedPlayerSnapshot(player, transition).has_value());
+	EXPECT_TRUE(player._pLvlChanging);
+	EXPECT_EQ(tileAt(position).player(), 0);
+
+	state.UseActiveLevel(1, DTYPE_CATHEDRAL);
+	ProjectedPlayerSnapshot deadTransition = MakeNativeTileSnapshot(position, 1);
+	deadTransition.life = 0;
+	deadTransition.combatMode = static_cast<uint32_t>(PM_NEWLVL);
+	ASSERT_TRUE(ApplyServerBackedPlayerSnapshot(player, deadTransition).has_value());
+	EXPECT_FALSE(tileAt(position).hasDeadPlayer());
+}
+
+TEST(ServerBackedPlayerSnapshot, RejectsInvalidSnapshotWithoutChangingNativePlayerPresentation)
+{
+	ScopedNativePlayerTileState state;
+	Player &player = Players[0];
+	const Point position { 80, 80 };
+	ProjectedPlayerSnapshot valid = MakeNativeTileSnapshot(position);
+	ASSERT_TRUE(ApplyServerBackedPlayerSnapshot(player, valid).has_value());
+	ASSERT_EQ(tileAt(position).player(), 1);
+
+	ProjectedPlayerSnapshot invalid = valid;
+	invalid.entityId = 0;
+	invalid.positionX = 81;
+	EXPECT_FALSE(ApplyServerBackedPlayerSnapshot(player, invalid).has_value());
+	EXPECT_EQ(player.position.tile, position);
+	EXPECT_EQ(tileAt(position).player(), 1);
+	EXPECT_EQ(tileAt({ 81, 80 }).player(), 0);
+
+	invalid = valid;
+	invalid.positionX = MAXDUNX;
+	EXPECT_FALSE(ApplyServerBackedPlayerSnapshot(player, invalid).has_value());
+	EXPECT_EQ(player.position.tile, position);
+	EXPECT_EQ(tileAt(position).player(), 1);
+
+	invalid = MakeNativeTileSnapshot({ MAXDUNX - 1, 80 });
+	invalid.facingDirection = static_cast<uint32_t>(Direction::East);
+	invalid.combatMode = static_cast<uint32_t>(PM_WALK_SIDEWAYS);
+	invalid.combatModeEndTick = 10;
+	invalid.currentAction = ProjectedPlayerActionSnapshot {
+		.kind = 1,
+		.startedAtTick = 1,
+		.effectTick = 10,
+		.readyTick = 10,
+		.endTick = 10,
+		.directionX = 1,
+		.directionY = -1,
+	};
+	EXPECT_FALSE(ApplyServerBackedPlayerSnapshot(player, invalid).has_value());
+	EXPECT_EQ(player.position.tile, position);
+	EXPECT_EQ(tileAt(position).player(), 1);
+}
+
+TEST(ServerBackedPlayerSnapshot, DoesNotProjectUnregisteredStackPlayerIntoNativeTiles)
+{
+	ScopedNativePlayerTileState state;
+	Player &registeredPlayer = Players[0];
+	const Point registeredPosition { 82, 82 };
+	ASSERT_TRUE(ApplyServerBackedPlayerSnapshot(registeredPlayer, MakeNativeTileSnapshot(registeredPosition)).has_value());
+	ASSERT_EQ(tileAt(registeredPosition).player(), 1);
+
+	Player stackPlayer;
+	const Point stackPosition { 83, 82 };
+	ASSERT_TRUE(ApplyServerBackedPlayerSnapshot(stackPlayer, MakeNativeTileSnapshot(stackPosition)).has_value());
+	EXPECT_EQ(tileAt(registeredPosition).player(), 1);
+	EXPECT_EQ(tileAt(stackPosition).player(), 0);
 }
 
 TEST(ServerBackedPlayerSnapshot, AppliesResourcesEquipmentInventoryAndGrid)
