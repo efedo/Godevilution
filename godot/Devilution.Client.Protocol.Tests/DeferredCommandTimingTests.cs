@@ -21,6 +21,11 @@ public sealed class DeferredCommandTimingTests
             using var connection = await listener.AcceptTcpClientAsync(TestContext.Current.CancellationToken);
             await using var stream = connection.GetStream();
             await DispatchHandshake(stream, CommandSchedulingMode.ClockGated, 100);
+            var readinessProbe = (await ReadEnvelopeAsync(stream)).SnapshotRequest;
+            Assert.True(readinessProbe.TimingRequestId > 0);
+            await WriteEnvelopeAsync(stream, new Envelope {
+                TimingReply = new TimingReply { RequestId = readinessProbe.TimingRequestId },
+            });
             var command = Assert.Single((await ReadEnvelopeAsync(stream)).CommandBatch.Commands);
             Interlocked.Increment(ref received);
             Assert.True(command.RequestedTick >= 103);
@@ -66,6 +71,11 @@ public sealed class DeferredCommandTimingTests
             using var connection = await listener.AcceptTcpClientAsync(TestContext.Current.CancellationToken);
             await using var stream = connection.GetStream();
             await DispatchHandshake(stream, CommandSchedulingMode.ClockGated, 100);
+            var readinessProbe = (await ReadEnvelopeAsync(stream)).SnapshotRequest;
+            Assert.True(readinessProbe.TimingRequestId > 0);
+            await WriteEnvelopeAsync(stream, new Envelope {
+                TimingReply = new TimingReply { RequestId = readinessProbe.TimingRequestId },
+            });
             var command = Assert.Single((await ReadEnvelopeAsync(stream)).CommandBatch.Commands);
             await Task.Delay(100, TestContext.Current.CancellationToken);
             await WriteEnvelopeAsync(stream, new Envelope { CommandAck = Accepted(command.ClientSequence) });
@@ -122,6 +132,9 @@ public sealed class DeferredCommandTimingTests
             });
             var secondRequest = (await ReadEnvelopeAsync(stream)).SnapshotRequest;
             Assert.True(secondRequest.TimingRequestId > firstRequest.TimingRequestId);
+            await WriteEnvelopeAsync(stream, new Envelope {
+                TimingReply = new TimingReply { RequestId = firstRequest.TimingRequestId },
+            });
             await Task.Delay(600, TestContext.Current.CancellationToken);
             await WriteEnvelopeAsync(stream, new Envelope {
                 TimingReply = new TimingReply { RequestId = secondRequest.TimingRequestId },
@@ -151,12 +164,19 @@ public sealed class DeferredCommandTimingTests
     {
         using var listener = new TcpListener(IPAddress.Loopback, 0);
         listener.Start();
+        var firstCommandSeen = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
         var serverTask = Task.Run(async () => {
             byte[] firstBytes;
             using (var firstConnection = await listener.AcceptTcpClientAsync(TestContext.Current.CancellationToken)) {
                 await using var firstStream = firstConnection.GetStream();
                 await DispatchHandshake(firstStream, CommandSchedulingMode.ClockGated, 100, "resume");
+                var readinessProbe = (await ReadEnvelopeAsync(firstStream)).SnapshotRequest;
+                Assert.True(readinessProbe.TimingRequestId > 0);
+                await WriteEnvelopeAsync(firstStream, new Envelope {
+                    TimingReply = new TimingReply { RequestId = readinessProbe.TimingRequestId },
+                });
                 firstBytes = (await ReadEnvelopeAsync(firstStream)).CommandBatch.Commands.Single().ToByteArray();
+                firstCommandSeen.SetResult();
             }
 
             using var resumedConnection = await listener.AcceptTcpClientAsync(TestContext.Current.CancellationToken);
@@ -171,6 +191,11 @@ public sealed class DeferredCommandTimingTests
         await client.ConnectAsync(TestContext.Current.CancellationToken);
         client.QueueRealtime(new Command { MoveRequested = new MoveRequested { DirectionX = 1 } }, 100);
         await client.PollAsync(TestContext.Current.CancellationToken);
+        for (var attempt = 0; attempt < 30 && !firstCommandSeen.Task.IsCompleted; attempt++) {
+            await Task.Delay(10, TestContext.Current.CancellationToken);
+            await client.PollAsync(TestContext.Current.CancellationToken);
+        }
+        await firstCommandSeen.Task.WaitAsync(TimeSpan.FromSeconds(10), TestContext.Current.CancellationToken);
         await client.ReconnectAsync(TestContext.Current.CancellationToken);
         await client.PollAsync(TestContext.Current.CancellationToken);
         await serverTask.WaitAsync(TimeSpan.FromSeconds(10), TestContext.Current.CancellationToken);

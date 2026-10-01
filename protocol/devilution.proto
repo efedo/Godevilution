@@ -19,8 +19,8 @@ message Envelope {
 		ProtocolError error = 40;
 	}
 
-	// Requests the latest authoritative state after the client has no unresolved
-	// command acknowledgement to consume.
+	// Requests the latest authoritative state. Clock-gated clients also probe
+	// startup readiness before dispatching queued realtime input.
 	message SnapshotRequest {
 		// Optional correlation for clock-gated clients; zero requests state only.
 		uint64 timing_request_id = 1;

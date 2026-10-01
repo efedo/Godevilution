@@ -125,8 +125,11 @@ M4. M5 is the final removal gate, not a reason to postpone replacement work.
    not campaign acceptance. Initial unmeasured
    latency and later spikes are not bounded by historical probes. A first-command
    `TooLate` counterexample is retained from the generated-geometry playtest.
-   Verify initial correlated-probe readiness and large-projection costs without
-   relaxing late admission or rewriting frozen retries. Pending-command
+   Godot now requires a correlated, unexpired current-epoch sample before the
+   first realtime send, even with unsent input queued. Validate bounded startup
+   refusal/reconnect and preserve explicit ticks/frozen retries. A passing local
+   rerun does not bound later spikes or remove large-projection costs; address
+   those without relaxing late admission. Pending-command
    fences do not solve the adapter's broader shared-world cold-restore overwrite.
 2. Add an application-level acceptance path through the actual Godot scene and
    controls: launch, create a character, receive/render an authoritative world,

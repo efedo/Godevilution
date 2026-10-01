@@ -44,11 +44,18 @@ Windows toolchain command.
   and the native authoritative adapter. The paired native runtime opts in;
   default low-level native configurations do not.
   A clock-gated host rejects an unsupported peer before any session mutation.
-- Gated idle `SnapshotRequest.timing_request_id` requests a correlated
+- Gated `SnapshotRequest.timing_request_id` requests a correlated
   `TimingReply` after events and the requested snapshot. Zero requests state
   only; Immediate hosts do not emit timing replies. Timing metadata does not
   enter snapshots or their canonical hashes. Native gated exchanges remain
   synchronous and bounded; deliberate future-ACK waits do not train RTT.
+- Godot's queued realtime input waits for a correlated, unexpired timing sample
+  in the current connection epoch before its first send. Startup probes may
+  precede pending unsent input and are sent before newly due gameplay batches.
+  Explicit requested ticks and transmitted retry bytes remain unchanged.
+  Bounded calibration failure closes the transport without discarding unresolved
+  commands; reconnect starts a new calibration epoch. This is readiness, not a
+  guarantee against arbitrary latency after a command is sent.
 - `ServerHello.last_client_sequence` includes admitted pending commands in gated
   mode, as well as completed receipts. Fresh clients allocate above that mark;
   retries still retain the original command identity and first-wins payload.

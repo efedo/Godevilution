@@ -84,7 +84,8 @@ open. Their scope, dependencies, and exit checks are defined only in the
   Negotiated clock-gated timing now passes actual headless two-client creation,
   mutual movement visibility and reverse-order fresh-host resume, plus fresh
   single-player create/resume/server-loss recovery. The earlier `TooLate` trace
-  is retained; initial/unseen latency and shared-world cold-restore gaps remain.
+  is retained; current-epoch first-send calibration is implemented below, while
+  later/unseen latency and shared-world cold-restore gaps remain.
   The two Flash baseline failures are resolved below. M0 still requires native
   creation, agreed release frame/memory budgets, and the release-platform matrix.
 - Rendered application acceptance now verifies responsive HUD controls at
@@ -132,6 +133,45 @@ open. Their scope, dependencies, and exit checks are defined only in the
 The following records describe implemented slices at this baseline. They are
 evidence, not a separate priority list; detailed older entries retain their
 original scope and may be superseded by later entries or the current assessment.
+
+### M0 Godot startup timing readiness (2026-10-01)
+
+Clock-gated realtime input now waits for a correlated, unexpired timing reply in
+the current transport epoch before first dispatch. Pending unsent input no longer
+prevents the required probe, which precedes newly due gameplay batches. Explicit
+requested ticks, Immediate/Unspecified behavior, sent retry bytes and strict
+server lateness remain unchanged. Each required probe expires after two seconds;
+startup retries use their own 250 ms minimum interval rather than an arbitrarily
+long idle polling interval. Three expired startup probes close the transport and
+fault the poll without discarding unresolved commands. Repeated input does not
+reset this per-epoch budget; reconnect starts a fresh calibration epoch, not a
+bounded overall reconnect campaign.
+
+Focused timing/transport/command-clock verification passes 40/40 without skips
+(9.328s). Full protocol verification passes 591, with two explicit performance
+cases not selected (593 total, 13m 06.539s). NU1900 audit-feed warnings and the
+existing xUnit2031 analyzer warning remain, not an audit pass or new protocol
+failure.
+
+Fresh Godot 4.7.2 actual-application checks pass base create/save/resume/server-loss
+recovery and two-client mutual movement/reverse-order fresh-host resume. Their
+retained sessions are `%TEMP%/Godevilution-Scene-Acceptance-` with suffixes
+`a2d478907e534f9881a375ce5c35de28` and `9801733ee2994ecf8cf0b6f0a5b6a277`.
+Rendered generated Cathedral traversal, wall rejection, authored object/combat/
+loot, moved-position restore and native stair Town return also pass; private
+evidence is `.local/cathedral-playtest/sessions/acceptance-76ebe7c959944f938508b91955cea79c`.
+Traversal/restored captures show the normal placeholder world/HUD. All 23 engine
+process records across these checks have exit zero, a terminal `EndedUtc`, and
+no recorded error. Documentation consistency passes 3/3 without skips; the final
+process check finds no Godot, crash-reporter or Godevilution host left running.
+The source SDK remains 4.7.1; wire fields, saves and server
+authority are unchanged. A preceding non-escalated base launch failed with
+`Process.Start` access denied before engine startup; its retained session suffix
+is `9e379801312f43f9841e6ed9152d2baa`, not a native-crash reproduction or a pass.
+
+The earlier generated-profile first-command
+`TooLate` failure remains evidence, not a pass. Readiness does not bound later
+network/publication stalls or eliminate large-projection costs; M0 remains open.
 
 ### M1/M2 isolated generated Cathedral playtest (2026-10-01)
 

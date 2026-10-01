@@ -36,10 +36,19 @@ public sealed class AuthoritativeClient : IAsyncDisposable
     private string effectiveRulesetIdentityHash;
     private TimingProbe? timingProbe;
     private ulong nextTimingRequestId;
+    private long timingEpoch;
+    private long? lastTimingProbeRequestMs;
+    private bool timingCalibrationReady;
+    private int timingCalibrationProbeAttempts;
+    private bool timingCalibrationTimedOut;
     private CommandSchedulingMode commandSchedulingMode;
     // Probe expiry must not inherit a short command retry estimate: a delayed
     // but valid snapshot reply is the signal that raises the gated lead.
     private static readonly TimeSpan TimingProbeTimeout = TimeSpan.FromSeconds(2);
+    // Readiness retries have their own bounded cadence; an idle snapshot poll
+    // interval may intentionally be much longer than startup calibration.
+    private static readonly TimeSpan TimingCalibrationRetryInterval = TimeSpan.FromMilliseconds(250);
+    private const int MaximumCalibrationProbeAttempts = 3;
 
     public string SessionToken { get; private set; } = string.Empty;
 
@@ -107,8 +116,14 @@ public sealed class AuthoritativeClient : IAsyncDisposable
 
         try {
             commandClock.Reset();
-            lock (pendingLock)
+            lock (pendingLock) {
                 timingProbe = null;
+                timingEpoch = 0;
+                lastTimingProbeRequestMs = null;
+                timingCalibrationReady = false;
+                timingCalibrationProbeAttempts = 0;
+                timingCalibrationTimedOut = false;
+            }
             commandSchedulingMode = CommandSchedulingMode.Unspecified;
             tcpClient = new TcpClient();
             await tcpClient.ConnectAsync(options.Host, options.Port, cancellationToken);
@@ -184,6 +199,13 @@ public sealed class AuthoritativeClient : IAsyncDisposable
             var connectedStream = stream;
             var connectionLifetime = CancellationTokenSource.CreateLinkedTokenSource(lifetime.Token);
             var connectionGeneration = Interlocked.Increment(ref transportGeneration);
+            lock (pendingLock) {
+                timingEpoch = connectionGeneration;
+                timingCalibrationReady = commandSchedulingMode != CommandSchedulingMode.ClockGated;
+                lastTimingProbeRequestMs = null;
+                timingCalibrationProbeAttempts = 0;
+                timingCalibrationTimedOut = false;
+            }
             transportLifetime = connectionLifetime;
             Volatile.Write(ref transportConnected, 1);
             receiveTask = Task.Run(
@@ -218,6 +240,10 @@ public sealed class AuthoritativeClient : IAsyncDisposable
                     pendingCommand.RetryNotBeforeMs = null;
                 }
                 timingProbe = null;
+                timingCalibrationReady = false;
+                lastTimingProbeRequestMs = null;
+                timingCalibrationProbeAttempts = 0;
+                timingCalibrationTimedOut = false;
             }
             lastSnapshotRequestMs = 0;
             await ConnectAsync(cancellationToken);
@@ -272,12 +298,31 @@ public sealed class AuthoritativeClient : IAsyncDisposable
             var now = clock.ElapsedMilliseconds;
             var normalRetryMilliseconds = RetryTimeout.TotalMilliseconds;
             PendingCommand[] dueCommands;
+            bool needsTimingCalibration;
+            bool timingCalibrationTimedOut;
             lock (pendingLock) {
                 ExpireTimingProbeLocked(now);
+                needsTimingCalibration = IsClockGatedCommandScheduling
+                    && !timingCalibrationReady
+                    && pending.Values.Any(command =>
+                        !command.TransmissionStarted && command.ObservedTick.HasValue);
+                timingCalibrationTimedOut = this.timingCalibrationTimedOut;
                 dueCommands = pending.Values
-                    .Where(command => IsCommandDue(command, now, normalRetryMilliseconds))
+                    .Where(command => IsCommandDue(command, now, normalRetryMilliseconds)
+                        && (!needsTimingCalibration
+                            || command.TransmissionStarted
+                            || !command.ObservedTick.HasValue))
                     .ToArray();
             }
+
+            if (timingCalibrationTimedOut)
+                await FailTimingCalibrationAsync(cancellationToken);
+
+            if (needsTimingCalibration)
+                await TrySendTimingProbeAsync(
+                    forceCalibration: true,
+                    cancellationToken: cancellationToken);
+
             var attemptedCommandDispatch = dueCommands.Length != 0;
             foreach (var entry in dueCommands) {
                 try {
@@ -314,15 +359,24 @@ public sealed class AuthoritativeClient : IAsyncDisposable
             }
 
             var hasPendingCommands = false;
+            bool forceTimingProbe;
             lock (pendingLock) {
                 var probeNow = clock.ElapsedMilliseconds;
                 ExpireTimingProbeLocked(probeNow);
                 hasPendingCommands = pending.Count > 0;
+                forceTimingProbe = IsClockGatedCommandScheduling
+                    && !timingCalibrationReady
+                    && pending.Values.Any(command =>
+                        !command.TransmissionStarted && command.ObservedTick.HasValue);
             }
+            if (timingCalibrationTimedOut || this.timingCalibrationTimedOut)
+                await FailTimingCalibrationAsync(cancellationToken);
             now = clock.ElapsedMilliseconds;
-            if (!hasPendingCommands
-                && now - lastSnapshotRequestMs >= options.SnapshotPollInterval.TotalMilliseconds
-                && (!IsClockGatedCommandScheduling || !attemptedCommandDispatch)) {
+            if ((!forceTimingProbe
+                    && !hasPendingCommands
+                    && now - lastSnapshotRequestMs >= options.SnapshotPollInterval.TotalMilliseconds
+                    && (!IsClockGatedCommandScheduling || !attemptedCommandDispatch))
+                || forceTimingProbe) {
                 if (!IsClockGatedCommandScheduling) {
                     await WriteEnvelopeAsync(
                         new Envelope { SnapshotRequest = new Envelope.Types.SnapshotRequest() },
@@ -330,49 +384,81 @@ public sealed class AuthoritativeClient : IAsyncDisposable
                     lastSnapshotRequestMs = clock.ElapsedMilliseconds;
                     return;
                 }
-
-                var timingRequestId = 0UL;
-                var probeRegistered = false;
-                try {
-                    await WriteEnvelopeAsync(() => {
-                        lock (pendingLock) {
-                            var dispatchNow = clock.ElapsedMilliseconds;
-                            ExpireTimingProbeLocked(dispatchNow);
-                            if (!IsClockGatedCommandScheduling
-                                || pending.Count > 0
-                                || timingProbe is not null
-                                || dispatchNow - lastSnapshotRequestMs
-                                    < options.SnapshotPollInterval.TotalMilliseconds)
-                                return null;
-
-                            timingRequestId = NextTimingRequestId();
-                            timingProbe = new TimingProbe(
-                                timingRequestId,
-                                dispatchNow,
-                                SaturatingAdd(dispatchNow, TimingProbeTimeout.TotalMilliseconds));
-                            probeRegistered = true;
-                            return new Envelope {
-                                SnapshotRequest = new Envelope.Types.SnapshotRequest {
-                                    TimingRequestId = timingRequestId,
-                                },
-                            };
-                        }
-                    }, cancellationToken);
-                    if (probeRegistered)
-                        lastSnapshotRequestMs = clock.ElapsedMilliseconds;
-                } catch {
-                    if (probeRegistered) {
-                        lock (pendingLock) {
-                            if (timingProbe?.RequestId == timingRequestId)
-                                timingProbe = null;
-                        }
-                    }
-                    throw;
-                }
+                await TrySendTimingProbeAsync(forceTimingProbe, cancellationToken);
             }
         } finally {
             pollLock.Release();
         }
+    }
+
+    private async Task<bool> TrySendTimingProbeAsync(
+        bool forceCalibration,
+        CancellationToken cancellationToken)
+    {
+        if (!IsClockGatedCommandScheduling)
+            return false;
+
+        var timingRequestId = 0UL;
+        var probeRegistered = false;
+        try {
+            await WriteEnvelopeAsync(() => {
+                lock (pendingLock) {
+                    var dispatchNow = clock.ElapsedMilliseconds;
+                    var requiresCalibration = forceCalibration
+                        && !timingCalibrationReady
+                        && pending.Values.Any(command =>
+                            !command.TransmissionStarted && command.ObservedTick.HasValue);
+                    var probeIntervalElapsed = !lastTimingProbeRequestMs.HasValue
+                        || dispatchNow - lastTimingProbeRequestMs.Value
+                            >= (requiresCalibration
+                                ? TimingCalibrationRetryInterval.TotalMilliseconds
+                                : options.SnapshotPollInterval.TotalMilliseconds);
+                    if (timingProbe is not null
+                        || (requiresCalibration
+                            ? !probeIntervalElapsed
+                            : forceCalibration
+                                || pending.Count > 0
+                                || dispatchNow - lastSnapshotRequestMs
+                                    < options.SnapshotPollInterval.TotalMilliseconds))
+                        return null;
+
+                    timingRequestId = NextTimingRequestId();
+                    timingProbe = new TimingProbe(
+                        timingRequestId,
+                        timingEpoch,
+                        requiresCalibration,
+                        dispatchNow,
+                        SaturatingAdd(dispatchNow, TimingProbeTimeout.TotalMilliseconds));
+                    lastTimingProbeRequestMs = dispatchNow;
+                    probeRegistered = true;
+                    return new Envelope {
+                        SnapshotRequest = new Envelope.Types.SnapshotRequest {
+                            TimingRequestId = timingRequestId,
+                        },
+                    };
+                }
+            }, cancellationToken);
+            if (probeRegistered)
+                lastSnapshotRequestMs = clock.ElapsedMilliseconds;
+            return probeRegistered;
+        } catch {
+            if (probeRegistered) {
+                lock (pendingLock) {
+                    if (timingProbe?.RequestId == timingRequestId)
+                        timingProbe = null;
+                }
+            }
+            throw;
+        }
+    }
+
+    private async Task FailTimingCalibrationAsync(CancellationToken cancellationToken)
+    {
+        const string detail = "Clock-gated timing calibration did not complete after the bounded probe deadline; the transport was closed without sending uncalibrated realtime commands.";
+        await CloseTransportAsync();
+        EnqueueConnectionClosed(detail);
+        cancellationToken.ThrowIfCancellationRequested();
+        throw new TimeoutException(detail);
     }
 
     public IReadOnlyList<AuthoritativeClientMessage> DrainMessages()
@@ -422,7 +508,7 @@ public sealed class AuthoritativeClient : IAsyncDisposable
                 var envelope = await ReadEnvelopeAsync(networkStream, cancellationToken);
                 if (envelope is null)
                     break;
-                Enqueue(envelope);
+                Enqueue(envelope, connectionGeneration);
             }
         } catch (Exception exception) when (!cancellationToken.IsCancellationRequested
             && (exception is IOException or SocketException or EndOfStreamException or ObjectDisposedException)) {
@@ -441,10 +527,11 @@ public sealed class AuthoritativeClient : IAsyncDisposable
         }));
     }
 
-    private void Enqueue(Envelope envelope)
+    private void Enqueue(Envelope envelope, long? connectionGeneration = null)
     {
         if (envelope.PayloadCase == Envelope.PayloadOneofCase.TimingReply) {
-            ObserveTimingReply(envelope.TimingReply);
+            if (connectionGeneration is { } epoch)
+                ObserveTimingReply(envelope.TimingReply, epoch);
             return;
         }
         if (envelope.PayloadCase == Envelope.PayloadOneofCase.Snapshot
@@ -544,7 +631,7 @@ public sealed class AuthoritativeClient : IAsyncDisposable
             remainingMilliseconds + RetryTimeout.TotalMilliseconds);
     }
 
-    private void ObserveTimingReply(TimingReply reply)
+    private void ObserveTimingReply(TimingReply reply, long connectionGeneration)
     {
         if (!IsClockGatedCommandScheduling || reply.RequestId == 0)
             return;
@@ -553,9 +640,14 @@ public sealed class AuthoritativeClient : IAsyncDisposable
         lock (pendingLock) {
             if (timingProbe is not { } probe
                 || probe.RequestId != reply.RequestId
+                || probe.Epoch != connectionGeneration
+                || timingEpoch != connectionGeneration
                 || now >= probe.ExpiresAtMs)
                 return;
             timingProbe = null;
+            timingCalibrationReady = true;
+            timingCalibrationProbeAttempts = 0;
+            lastTimingProbeRequestMs = null;
             var sample = Math.Max(0, now - probe.SentAtMs);
             var prior = Volatile.Read(ref roundTripMilliseconds);
             // Gated admission waits on the full measured round trip. Keep the
@@ -567,8 +659,15 @@ public sealed class AuthoritativeClient : IAsyncDisposable
 
     private void ExpireTimingProbeLocked(long now)
     {
-        if (timingProbe is { } probe && now >= probe.ExpiresAtMs)
-            timingProbe = null;
+        if (timingProbe is not { } probe || now < probe.ExpiresAtMs)
+            return;
+
+        timingProbe = null;
+        if (probe.RequiresCalibration
+            && ++timingCalibrationProbeAttempts >= MaximumCalibrationProbeAttempts) {
+            timingCalibrationTimedOut = pending.Values.Any(command =>
+                !command.TransmissionStarted && command.ObservedTick.HasValue);
+        }
     }
 
     private ulong NextTimingRequestId()
@@ -663,5 +762,10 @@ public sealed class AuthoritativeClient : IAsyncDisposable
         public long? RetryNotBeforeMs { get; set; }
     }
 
-    private sealed record TimingProbe(ulong RequestId, long SentAtMs, long ExpiresAtMs);
+    private sealed record TimingProbe(
+        ulong RequestId,
+        long Epoch,
+        bool RequiresCalibration,
+        long SentAtMs,
+        long ExpiresAtMs);
 }

@@ -63,9 +63,13 @@ environment values are restored when the harness returns.
 
 Both single-player and multiplayer Godot profiles explicitly require the host's
 negotiated clock-gated scheduling mode. Future commands wait for physical server
-time without moving peer snapshots ahead. Idle correlated snapshot probes measure
-end-to-end freshness; deliberate ACK waits do not inflate command lead. Retries
-wait for scheduled delay plus normal timeout and retain their original identities.
+time without moving peer snapshots ahead. Realtime input waits for a valid
+current-connection timing probe before first dispatch; pending unsent input does
+not prevent startup probes. Bounded calibration failure closes the transport and
+retains unresolved input for a fresh reconnect epoch. Idle correlated probes
+measure end-to-end freshness; deliberate ACK waits do not inflate command lead.
+Retries wait for scheduled delay plus normal timeout and retain their original
+identities.
 The paired native launcher also selects clock-gated scheduling; the standalone
 host and default low-level native configuration remain Immediate for compatibility.
 Native acceptance is recorded separately in migration status. This is not a bound

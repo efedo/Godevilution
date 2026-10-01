@@ -2,6 +2,18 @@
 
 All notable changes to this fork are documented below.
 
+- 2026-10-01: Added current-connection timing readiness before Godot's first
+  clock-gated realtime dispatch. Probe pending input before gameplay batches;
+  bound failed calibration to three expired probes, close the transport and
+  retain unresolved commands for reconnect. Preserve explicit ticks, legacy
+  scheduling, frozen retries, wire/save formats and server authority. Independent
+  review and focused timing/transport checks pass 40; full protocol passes 591
+  with two explicit performance cases not selected. Fresh actual base recovery,
+  two-client multiplayer resume and rendered generated Cathedral traversal/
+  restore pass with 23 clean engine records. Retain the pre-start access-denied
+  failure and older timing counterexample. Updated existing contracts/guidance/
+  plan/status; later latency, large projections and broader M0 remain open.
+
 - 2026-10-01: Added an explicit offline semantic-catalog compiler and isolated,
   identity/hash/reparse-guarded Cathedral Godot playtest with a zero-argument root
   launcher. Kept licensed catalogs private and production/default dependencies,
