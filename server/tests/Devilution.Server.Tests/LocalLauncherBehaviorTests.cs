@@ -434,7 +434,13 @@ public sealed class FakeCompletedProcess
                 $primaryResult = Get-Content -LiteralPath $primaryFailurePath -Raw | ConvertFrom-Json
                 $remainingPrimary = Get-Process -Id ([int]$primaryResult.ProcessId) -ErrorAction SilentlyContinue
                 if ($null -ne $remainingPrimary) {
-                    throw "Evidence-write failure left child process $($primaryResult.ProcessId) running."
+                    try {
+                        # Windows can still enumerate a terminal process object.
+                        # Presence alone does not establish a running child.
+                        if (-not $remainingPrimary.HasExited) {
+                            throw "Evidence-write failure left child process $($primaryResult.ProcessId) running."
+                        }
+                    } finally { $remainingPrimary.Dispose() }
                 }
 
                 function Assert-ImportRejected([string]$Stage, [string]$LogText) {

@@ -7,6 +7,20 @@ namespace Devilution.Server.Tests;
 public sealed class LocalLauncherContractTests
 {
     [Fact]
+    public void CathedralPlaytestIsAnExplicitIsolatedZeroArgumentLauncher()
+    {
+        var root = FindRepositoryRoot();
+        var launcher = File.ReadAllText(Path.Combine(root, "run-godot-cathedral-playtest.ps1"));
+        Assert.Contains("param()", launcher, StringComparison.Ordinal);
+        Assert.Contains("'.local/cathedral-playtest'", launcher, StringComparison.Ordinal);
+        Assert.Contains("'cathedral-playtest.json'", launcher, StringComparison.Ordinal);
+        Assert.Contains("& $godotLauncher -CathedralProfileDirectory $profileDirectory", launcher, StringComparison.Ordinal);
+        Assert.Contains("not campaign or native population parity", launcher, StringComparison.Ordinal);
+        foreach (var existing in new[] { "run-godot-client.ps1", "run-godot-preview.ps1", "run-godot-portal-preview.ps1", "run-godot-multiplayer.ps1" })
+            Assert.DoesNotContain("CathedralProfileDirectory", File.ReadAllText(Path.Combine(root, existing)), StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void NativeAuthoritativeBuildCoversIndependentlyCompiledGameplayObjects()
     {
         var root = FindRepositoryRoot();

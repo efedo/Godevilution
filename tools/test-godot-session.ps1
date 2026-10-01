@@ -1,15 +1,36 @@
 [CmdletBinding()]
-param([string]$GodotExecutable, [switch]$Visible, [switch]$Journey, [switch]$TownLoop, [switch]$Multiplayer)
+param([string]$GodotExecutable, [switch]$Visible, [switch]$Journey, [switch]$TownLoop, [switch]$Multiplayer, [string]$CathedralProfileDirectory)
 
 $ErrorActionPreference = 'Stop'
 if ($Journey -and $TownLoop) { throw 'Choose either -Journey or -TownLoop.' }
 if ($Multiplayer -and ($Journey -or $TownLoop)) { throw 'Multiplayer acceptance is a separate base-content profile.' }
+if ($CathedralProfileDirectory -and ($Journey -or $TownLoop -or $Multiplayer)) {
+    throw 'Cathedral acceptance is a separate compiled single-player playtest profile.'
+}
 $repositoryRoot = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot '..')).Path
-$sessionDirectory = Join-Path ([System.IO.Path]::GetTempPath()) ('Godevilution-Scene-Acceptance-' + [guid]::NewGuid().ToString('N'))
+$sessionDirectory = if ($CathedralProfileDirectory) {
+    Join-Path ([IO.Path]::GetFullPath($CathedralProfileDirectory)) ('sessions/acceptance-' + [guid]::NewGuid().ToString('N'))
+} else { Join-Path ([System.IO.Path]::GetTempPath()) ('Godevilution-Scene-Acceptance-' + [guid]::NewGuid().ToString('N')) }
 $launcher = Join-Path $repositoryRoot 'godot/run-local-client.ps1'
 $parameters = @{ SessionDirectory = $sessionDirectory; Headless = -not $Visible; QuitAfterSeconds = 45 }
 if ($GodotExecutable) { $parameters.GodotExecutable = $GodotExecutable }
 try {
+    if ($CathedralProfileDirectory) {
+        $parameters.CathedralProfileDirectory = $CathedralProfileDirectory
+        $parameters.QuitAfterSeconds = 315
+        & $launcher @parameters -AcceptancePhase CathedralJourney
+        $parameters.QuitAfterSeconds = 195
+        & $launcher @parameters -AcceptancePhase CathedralResume
+        $created = Get-Content -LiteralPath (Join-Path $sessionDirectory 'cathedraljourney-processes.json') -Raw | ConvertFrom-Json
+        $resumed = Get-Content -LiteralPath (Join-Path $sessionDirectory 'cathedralresume-processes.json') -Raw | ConvertFrom-Json
+        if (($created.HostProcessId -eq $resumed.HostProcessId -and $created.HostStartedUtc -eq $resumed.HostStartedUtc) -or
+            ($created.Clients[0].ProcessId -eq $resumed.Clients[0].ProcessId -and $created.Clients[0].StartedUtc -eq $resumed.Clients[0].StartedUtc) -or
+            $created.ProfileHash -cne $resumed.ProfileHash -or $created.ContentTreeHash -cne $resumed.ContentTreeHash) {
+            throw 'Cathedral resume requires fresh host/client processes and the same isolated profile.'
+        }
+        Write-Host "PASS: actual Godot generated Cathedral walking/collision, authored object/combat/loot, fresh-host restore and native Town return. Evidence: $sessionDirectory"
+        return
+    }
     if ($Multiplayer) {
         $parameters.Multiplayer = $true
         $parameters.QuitAfterSeconds = 75

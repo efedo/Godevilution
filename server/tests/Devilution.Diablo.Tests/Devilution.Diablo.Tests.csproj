@@ -15,5 +15,6 @@
 
   <ItemGroup>
     <ProjectReference Include="../../src/Devilution.Diablo/Devilution.Diablo.csproj" />
+    <ProjectReference Include="../../../tools/Cathedral.Playtest/Cathedral.Playtest.csproj" />
   </ItemGroup>
 </Project>

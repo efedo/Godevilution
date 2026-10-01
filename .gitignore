@@ -482,3 +482,7 @@ Testing/
 
 # Local authoritative saves and private Godot resume credentials.
 /.local/
+
+# Offline diagnostic content compiler outputs.
+/tools/Cathedral.Playtest/bin/
+/tools/Cathedral.Playtest/obj/

@@ -2,6 +2,18 @@
 
 All notable changes to this fork are documented below.
 
+- 2026-10-01: Added an explicit offline semantic-catalog compiler and isolated,
+  identity/hash/reparse-guarded Cathedral Godot playtest with a zero-argument root
+  launcher. Kept licensed catalogs private and production/default dependencies,
+  saves and authority unchanged. Actual headless/rendered controls pass generated
+  traversal, authored object/combat/distant loot, exact wall rejection, moved-state
+  fresh-host restore and native stair return. Corrected acceptance input/outcome
+  fences; existing rendered authored Journey/Resume also passes. All 18 engine
+  records exit cleanly. Full server passes 1193 with one explicit asset case not
+  selected; compiler/boundary checks pass 8 and documentation guards 3. Updated
+  existing guidance/plan/status.
+  Initial timing, native population/campaign and four known Hork RNG gaps remain.
+
 - 2026-09-30: Integrated explicitly selected ordinary Cathedral level-1 generation
   through the production C# bootstrap/host adapter, validated external semantic
   catalogs and native Town/stair bindings. Preserved default adapters/packs and

@@ -1,6 +1,6 @@
 # Godevilution Completion Plan
 
-Plan date: 2026-09-30. Implementation baseline: `8c03b365d`.
+Plan date: 2026-10-01. Implementation baseline: `8c03b365d`.
 
 This is the active delivery plan. The [architecture](csharp-authoritative-server-migration.md)
 defines the objective and ownership rules; [migration status](migration-status.md)
@@ -72,7 +72,7 @@ isolated spell or table rows while the playable route stays unchanged.
 | --- | --- | --- | --- |
 | M0 | Reproducible launch and honest acceptance evidence | Existing implementation | Godot session/recovery passes; opt-in one/four-participant host and actual-client baselines recorded in status; native GUI and release-budget/platform gaps remain |
 | M1 | Usable Godot town-to-dungeon loop | M0 launch/acceptance harness | Authored combat/loot/equipment, real NPC approach/service entry, purchased-scroll portal return and fresh-host owner-return closure pass; full loop remains |
-| M2 | Native-compatible generated world | M0 geometry/parity baseline | Ordinary Cathedral level-1 coarse/fine oracle covers six seeds and MAIN/PREV; opt-in server activation, stair boundaries and identity-safe restore pass; populated Godot traversal and remaining families remain |
+| M2 | Native-compatible generated world | M0 geometry/parity baseline | Ordinary Cathedral level-1 coarse/fine oracle covers six seeds and MAIN/PREV; opt-in runtime plus isolated Godot walking/authored interaction/restore pass; native population, wider Cathedral scope and remaining families remain |
 | M3 | Complete base and Hellfire gameplay routes | M1 plus the relevant M2 world slices | Many rules exist; campaign and remaining behavioral coverage remain |
 | M4 | Release-quality client, recovery, and packaging | M3; preparation begins during M1/M2 | Recovery and adapter packaging foundations exist; product acceptance remains |
 | M5 | Production legacy-runtime retirement | M4 and capability replacement gates | Authoritative mode is Lua-free; compatibility runtime remains |
@@ -123,7 +123,10 @@ M4. M5 is the final removal gate, not a reason to postpone replacement work.
    and the corrected portal TownLoop/resume. Keep delayed ACK, timing probe,
    failure and epoch-composition regressions; these scene/rendering checks are
    not campaign acceptance. Initial unmeasured
-   latency and later spikes are not bounded by historical probes. Pending-command
+   latency and later spikes are not bounded by historical probes. A first-command
+   `TooLate` counterexample is retained from the generated-geometry playtest.
+   Verify initial correlated-probe readiness and large-projection costs without
+   relaxing late admission or rewriting frozen retries. Pending-command
    fences do not solve the adapter's broader shared-world cold-restore overwrite.
 2. Add an application-level acceptance path through the actual Godot scene and
    controls: launch, create a character, receive/render an authoritative world,
@@ -264,9 +267,16 @@ this evidence. A sample art pack does not satisfy M4's full presentation gate.
    from compatible validated packs, resolves native Town/stair anchors, and fences
    saved geometry/catalog/route identity before restore. Synthetic SP/MP stair-boundary
    checks and a separately explicit local-asset semantic-catalog activation/return/cold
-   restore pass. This is not continuous generated Godot traversal or population proof.
-   Next integrate a compatible client presentation/profile and exercise continuous
-   collision-aware traversal, objects/encounters and fresh-host restore through Godot.
+   restore pass. Those earlier checks remain stair-boundary evidence only.
+   An offline explicit-semantic-TSV compiler now provides a separately hashed,
+   isolated playtest pack and zero-argument Godot launcher. Actual headless/rendered controls
+   now walk from Town through generated level 1, activate an authored object,
+   defeat/pick up an authored encounter, continuously traverse fine cells, reject
+   an exact wall input, restore through a fresh host/client and return via native
+   Up stairs. See status for exact evidence and retained failed runs. This proves
+   the diagnostic integration, not native population or the family exit gate.
+   Preserve it while extending native Cathedral generation/depth and population;
+   multiplayer and broader seed/topology checks remain relevant gates.
    Quest fragments/set pieces, wider topology and native population remain open;
    do not silently apply the base prototype's different-family quest fragment to L1.
    The shared vision contract remains conservative, not exact native light parity.

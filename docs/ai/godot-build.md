@@ -146,6 +146,62 @@ and `player-1/resume-token.txt` / `player-2/resume-token.txt`, not either existi
 single-player profile. Both windows must exit before normal host cleanup; any
 nonzero client exit or acceptance timeout cleans up all tracked owned processes.
 
+## Generated Cathedral playtest
+
+The optional offline compiler builds an isolated ordinary original-Diablo
+Cathedral level-1 profile from the explicit base pack and two semantic geometry
+tables: `native_dun_piece_definitions.tsv` and `native_dun_tile_properties.tsv`.
+It uses the existing strict catalogs and generated adapter. It does not discover
+installations or read MPQs, and neither does the server. Supply legally available
+semantic tables through a private directory; licensed geometry and generated
+packs must not be checked in or distributed as sample assets.
+
+From the repository root, replace the example private geometry directory:
+
+```powershell
+dotnet run --project tools/Cathedral.Playtest/Cathedral.Playtest.csproj -- --base-directory server/content/base --geometry-directory 'D:\Private\cathedral-geometry' --output-directory .local/cathedral-playtest --seed 2588
+.\run-godot-cathedral-playtest.ps1
+```
+
+The output directory must not already exist, even if empty. Compilation validates
+the complete pack before creating output, reloads and activates serialized content,
+and publishes metadata only after matching its manifest. The seed defaults to
+2588 and accepts any uint32, including zero; the CLI selects MAIN entry. A
+different seed/profile requires a new output directory and separate saves. The
+compiler is development tooling, not a production server dependency.
+
+The zero-argument root launcher requires that compiled private profile. It
+creates/resumes only `.local/cathedral-playtest/sessions/local`, keeping existing
+base, preview and multiplayer saves unchanged. Pack bytes, profile metadata and
+host manifest are checked before use; changed profiles, unmarked existing saves
+and reparse-point storage reject without migrating or overwriting saves.
+
+Create a character and use World / Routes / town to cathedral / Travel to walk
+from Town `(75,68)` through the native entrance. Every movement step remains
+server-chosen. Level 1 has native-generated fine geometry but an explicitly
+authored diagnostic object, small encounter and loot. The zero-effect object
+grants no resources and occupies its cell until activated. Other levels remain
+authored prototypes. This is not native population, quests, campaign mapping,
+full art, exact native vision or complete Cathedral/M2 acceptance.
+
+Run the actual scene/control traversal and separate fresh-host resume against
+the same compiled profile:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File tools/test-godot-session.ps1 -CathedralProfileDirectory .local/cathedral-playtest
+```
+
+`-Visible` enables rendered captures; otherwise this is headless scene acceptance.
+The wrapper uses a fresh child session, not the interactive save. `CathedralJourney`
+walks into level 1, activates the object, fights and picks up distant loot, observes
+continuous fine-cell traversal, cancels and settles its final acknowledged step,
+then verifies an exact rejected wall input and a subsequent valid move.
+`CathedralResume` starts new host/client processes, compares position, geometry,
+object, combat, inventory and sequence state, then walks through native Up stairs
+back to Town. Compact route/collision/state evidence and all logs are retained.
+Clean engine exits remain required in addition to scene assertions. Do not edit
+checkpoints to manufacture entry, traversal or restore evidence.
+
 ## Application acceptance
 
 The multiplayer variant is separate from Journey/TownLoop. It runs two actual

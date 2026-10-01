@@ -1,6 +1,6 @@
 # Godevilution Migration Status
 
-Status date: 2026-09-30. Estimate baseline: `8c03b365d`; M0 session reliability
+Status date: 2026-10-01. Estimate baseline: `8c03b365d`; M0 session reliability
 landed in `819b73936`, integration remediation in `818f63f32`, and application
 recovery in `cabc9b3fb`. The Flash replay correction landed in `3b90b6be5` and
 isolated native launch support in `c063dcd24`; newer host/timing evidence is below.
@@ -114,7 +114,9 @@ open. Their scope, dependencies, and exit checks are defined only in the
   Real fine-data comparison covers six seeds with MAIN/PREV entry. Opt-in ordinary
   level-1 server activation, automatic stair-boundary transitions and identity-safe
   cold restore now pass, including a separate local-asset semantic-catalog check.
-  Continuous populated Godot traversal, broader topology, remaining families,
+  Isolated headless/rendered Godot walking, authored object/combat/loot, moved-position
+  restore and native-stair Town return now pass. Native population, broader
+  Cathedral depth/topology, remaining families,
   campaign seed mapping, quests and placement gates remain open.
 - Compact Golem replay still models one combat target; multiple-owner summons
   and replacement allocation are not represented. Guardian descriptive markers
@@ -130,6 +132,80 @@ open. Their scope, dependencies, and exit checks are defined only in the
 The following records describe implemented slices at this baseline. They are
 evidence, not a separate priority list; detailed older entries retain their
 original scope and may be superseded by later entries or the current assessment.
+
+### M1/M2 isolated generated Cathedral playtest (2026-10-01)
+
+The offline `tools/Cathedral.Playtest` compiler consumes an explicit base pack
+and strict semantic geometry TSVs, validates complete generated activation before
+output, reloads/activates serialized content and verifies the manifest before
+publishing metadata. It is tooling, not a production server dependency; no MPQ or
+installation discovery is added. Output must be fresh. Both compiler and launcher
+use the same ordinal normalized-relative-path byte hash, including manifest/assets.
+The explicit profile rejects changed metadata/content, unmarked existing saves and
+reparse-point storage. Sessions are exclusively locked children of the profile.
+The root `run-godot-cathedral-playtest.ps1` uses only the prepared private
+`.local/cathedral-playtest` profile. Usage and acceptance commands are in
+[Godot build notes](ai/godot-build.md#generated-cathedral-playtest).
+
+Base/preview/multiplayer defaults and packs, the wire, runtime/save formats and
+server authority remain unchanged. Level 1 uses generated native geometry but
+explicitly authored diagnostic population: a zero-effect, missile-passable
+activation object and the existing small encounter/drop. The object grants no
+resources and occupies its cell until activated; the door remains a template.
+Incompatible native fragments are deliberately absent in this non-campaign pack.
+Licensed inputs and derived packs remain private, never checked in.
+
+Actual headless `CathedralJourney`/`CathedralResume` pass using engine 4.7.2 Mono
+with source SDK 4.7.1 unchanged. The native-semantic seed-2588 MAIN profile has
+manifest `2fa1fa2dfa4f0d5bf4fae6b484fc352420bc049dac0aa55c99fd72aa18779ee7`.
+Real controls observe 50 Town positions, object activation, combat/XP/distant
+loot, 16 generated-level positions and exact wall `Rejected/InvalidTarget` with
+unchanged position. A subsequent valid move saves `(70,61)` at sequence 91.
+Fresh host/client restore compares geometry, object, monster/loot, inventory,
+position and identities; new input advances the sequence, and 17 return-route
+positions reach Town `(25,31)` at sequence 109. No checkpoint teleportation or
+client simulation is used. Evidence is private under
+`.local/cathedral-playtest/sessions/acceptance-2bdd66b0aa994035bdad01ec5dacd1bc`;
+launch-log suffixes are `17ccaf25b0aa44d09af0b8ce9f58b785` and
+`48772057267e4ddd910aa807b109cd03`. This is headless scene evidence, not native
+population/campaign acceptance.
+
+The same generated Journey/Resume also passes rendered under private session
+`acceptance-4fe34853dfa74c94ba1298851c0916eb`, with launch-log suffixes
+`9675a6a43fea4a97bda9ece6696fc81c` and `a3107de4b6474fc59e75a58be4a80520`.
+The rendered route observes the same 50/16/17 positions, rejects exact wall
+sequence 87 without moving from `(68,61)`, saves `(69,61)` at sequence 88 and
+returns to Town `(25,31)` at sequence 106 after fresh-host restore. Captures show
+generated geometry, normal controls and placeholder presentation, not native art.
+The existing rendered authored Journey/Resume also passes at sequences 73/74
+under `%TEMP%/Godevilution-Scene-Acceptance-ee5dcb55245443ee97c6868bda70bded`,
+with launch-log suffixes `01efd6c95d9246568e293e029e4d9110` and
+`0e448c4744754ad09259f7956d1b81fc`. All 18 engine records across these three
+successful two-phase runs have terminal zero exits and no diagnostic errors.
+These are local application checks, not release performance/platform acceptance.
+
+The full server suite passes 1193, with one explicit local-asset case not selected
+(1194 total, 19.943s). Compiler and production-dependency boundary checks pass
+8/8 without skips (3.268s), including explicit private native-oracle compilation
+at `%TEMP%/Godevilution-Cathedral-Playtest-64d3d7895a78415c9fb22fbc46c9a18e`.
+Final documentation consistency checks pass 3/3. Compiler help succeeds; missing,
+unknown, duplicate and out-of-range seed arguments exit 1 without creating output.
+No fresh full module/native suite is claimed; the four known Hork RNG failures
+remain open. NuGet audit-feed NU1900 warnings remain, not an audit pass.
+
+Retained failed scene runs exposed premature button/cancellation checks, stale
+receipt/snapshot fences, an arrow still in flight after animation completion,
+moving-target aim delay and an incorrect fixed-input-to-pickup-count assumption.
+The harness now correlates exact wall input, fences the final acknowledged step,
+observes projectile outcome, dispatches world aim/press together and establishes
+a visible four-cell loot distance; compact pickup evidence is retained too.
+An earlier distant-loot timeout remains recorded. A separate first-route
+`TooLate` failure at snapshot ticks 51/57 and receipt tick 61 is retained under
+session `acceptance-6d3409e8e5df428a8a6c2a62fa661d82`; startup calibration/latency
+and large-projection costs remain M0 work, not solved by this successful rerun.
+Ordinary L1 native population/quests, broader depth/families, exact native vision,
+multiplayer generation and campaign mapping remain open. The planning
+estimate stays approximately 35%.
 
 ### M2 opt-in ordinary Cathedral runtime and restore (2026-09-30)
 

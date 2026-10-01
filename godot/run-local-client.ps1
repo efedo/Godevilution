@@ -10,12 +10,23 @@ param(
     [switch]$PreviewContent,
     [switch]$PortalPreviewContent,
     [switch]$Multiplayer,
+    [string]$CathedralProfileDirectory,
     [ValidateSet(1, 4)] [int]$PerformanceParticipants = 1,
-    [ValidateSet('Create', 'Resume', 'Recovery', 'Journey', 'JourneyResume', 'TownLoop', 'TownLoopResume', 'MultiplayerCreate', 'MultiplayerResume', 'Performance')] [string]$AcceptancePhase
+    [ValidateSet('Create', 'Resume', 'Recovery', 'Journey', 'JourneyResume', 'TownLoop', 'TownLoopResume', 'MultiplayerCreate', 'MultiplayerResume', 'Performance', 'CathedralJourney', 'CathedralResume')] [string]$AcceptancePhase
 )
 
 $ErrorActionPreference = 'Stop'
 $performance = $AcceptancePhase -eq 'Performance'
+$cathedral = -not [string]::IsNullOrWhiteSpace($CathedralProfileDirectory)
+if ($cathedral -and ($PreviewContent -or $PortalPreviewContent -or $Multiplayer -or $performance)) {
+    throw 'Cathedral playtests require their own single-player content and save profile.'
+}
+if (($AcceptancePhase -in @('CathedralJourney', 'CathedralResume')) -and -not $cathedral) {
+    throw 'Cathedral acceptance requires an explicit compiled -CathedralProfileDirectory.'
+}
+if ($cathedral -and $AcceptancePhase -and $AcceptancePhase -notin @('CathedralJourney', 'CathedralResume')) {
+    throw 'Compiled Cathedral content only supports its own acceptance phases.'
+}
 if ($performance) {
     if ($PreviewContent -or $PortalPreviewContent -or ($Multiplayer -ne ($PerformanceParticipants -eq 4))) {
         throw 'Performance uses base content and requires -Multiplayer only for four participants.'
@@ -40,17 +51,15 @@ $serverExecutable = Join-Path $repositoryRoot 'server/src/Devilution.Server/bin/
 $clientSourceProject = Join-Path $repositoryRoot 'godot/Devilution.Client'
 $clientProject = $clientSourceProject
 if ([string]::IsNullOrWhiteSpace($SessionDirectory)) {
-    $SessionDirectory = Join-Path $repositoryRoot $(if ($Multiplayer) { '.local/godot-multiplayer' } elseif ($PortalPreviewContent) { '.local/godot-portal-preview' } elseif ($PreviewContent) { '.local/godot-preview' } else { '.local/godot' })
+    $SessionDirectory = if ($cathedral) { Join-Path ([IO.Path]::GetFullPath($CathedralProfileDirectory)) 'sessions/local' } else {
+        Join-Path $repositoryRoot $(if ($Multiplayer) { '.local/godot-multiplayer' } elseif ($PortalPreviewContent) { '.local/godot-portal-preview' } elseif ($PreviewContent) { '.local/godot-preview' } else { '.local/godot' })
+    }
 }
 $SessionDirectory = [System.IO.Path]::GetFullPath($SessionDirectory)
 if ($SessionDirectory.Contains('"')) { throw 'The session directory must not contain a quote.' }
 $captureRoot = Join-Path ([System.IO.Path]::GetTempPath()) ('Godevilution-Godot-' + [guid]::NewGuid().ToString('N'))
 $godotLogPath = Join-Path $captureRoot 'godot.log'
 New-Item -ItemType Directory -Path $captureRoot | Out-Null
-New-Item -ItemType Directory -Path $SessionDirectory -Force | Out-Null
-if ($performance -and (Get-ChildItem -LiteralPath $SessionDirectory -Force)) {
-    throw 'Performance acceptance requires a fresh empty session directory.'
-}
 
 if ([string]::IsNullOrWhiteSpace($GodotExecutable)) {
     $wingetRoot = Join-Path $env:LOCALAPPDATA 'Microsoft\WinGet\Packages\GodotEngine.GodotEngine.Mono_Microsoft.Winget.Source_8wekyb3d8bbwe'
@@ -98,7 +107,7 @@ $environmentNames = @('DEVILUTION_SERVER_HOST', 'DEVILUTION_SERVER_PORT', 'DEVIL
     'DEVILUTION_CONTENT_HASH', 'DEVILUTION_RULESET_HASH', 'DEVILUTION_CHARACTER_CLASS_ID',
     'DEVILUTION_CHARACTER_NAME', 'DEVILUTION_RESUME_TOKEN', 'DEVILUTION_RESUME_TOKEN_PATH',
     'GODEVILUTION_ACCEPTANCE_PHASE', 'GODEVILUTION_ACCEPTANCE_DIRECTORY', 'GODEVILUTION_QUIT_AFTER_SECONDS',
-    'GODEVILUTION_LOCAL_PLAYER', 'GODEVILUTION_PORTAL_PREVIEW',
+    'GODEVILUTION_LOCAL_PLAYER', 'GODEVILUTION_PORTAL_PREVIEW', 'GODEVILUTION_CATHEDRAL_PROFILE',
     'GODEVILUTION_PERFORMANCE_PARTICIPANTS', 'GODEVILUTION_PERFORMANCE_SHARED_DIRECTORY',
     'GODEVILUTION_CLIENT_PERFORMANCE_OUTPUT', 'GODEVILUTION_CLIENT_PERFORMANCE_WARMUP_SECONDS',
     'GODEVILUTION_CLIENT_PERFORMANCE_DURATION_SECONDS', 'GODEVILUTION_CLIENT_PERFORMANCE_MAX_SAMPLES')
@@ -117,6 +126,94 @@ function Assert-WritableDirectory([string]$Path, [string]$Purpose) {
         if (Test-Path -LiteralPath $probePath) {
             Remove-Item -LiteralPath $probePath -Force -ErrorAction SilentlyContinue
         }
+    }
+}
+
+function Assert-NoCathedralReparsePoint([string]$Path) {
+    $candidate = [IO.Path]::GetFullPath($Path)
+    while ($candidate) {
+        if ((Test-Path -LiteralPath $candidate) -and
+            ((Get-Item -LiteralPath $candidate -Force).Attributes -band [IO.FileAttributes]::ReparsePoint)) {
+            throw 'Cathedral profile and session paths must not traverse reparse points.'
+        }
+        $parent = [IO.Directory]::GetParent($candidate)
+        $candidate = if ($null -eq $parent) { $null } else { $parent.FullName }
+    }
+}
+
+function Get-CathedralContentTreeHash([string]$ContentRoot) {
+    $files = [string[]]@(Get-ChildItem -LiteralPath $ContentRoot -Force -Recurse -File -ErrorAction Stop | ForEach-Object {
+        $_.FullName.Substring($ContentRoot.Length).TrimStart('\', '/').Replace('\', '/')
+    })
+    if ($files.Count -eq 0) { throw 'The compiled Cathedral content directory is empty.' }
+    [Array]::Sort($files, [StringComparer]::Ordinal)
+    $hashInput = [Text.StringBuilder]::new()
+    foreach ($relative in $files) {
+        $file = Join-Path $ContentRoot $relative
+        [void]$hashInput.Append($relative.Length).Append(':').Append($relative).Append(':')
+        [void]$hashInput.Append((Get-FileSha256 $file).ToUpperInvariant()).Append("`n")
+    }
+    $sha = [Security.Cryptography.SHA256]::Create()
+    try { return [BitConverter]::ToString($sha.ComputeHash([Text.Encoding]::UTF8.GetBytes($hashInput.ToString()))).Replace('-', '') }
+    finally { $sha.Dispose() }
+}
+
+function Get-CathedralPlaytestProfile([string]$Directory, [string]$Session) {
+    $root = [IO.Path]::GetFullPath($Directory).TrimEnd('\', '/')
+    $sessionRoot = [IO.Path]::GetFullPath($Session)
+    if ($root.Contains('"') -or $sessionRoot.Contains('"')) { throw 'Cathedral paths must not contain quotes.' }
+    Assert-NoCathedralReparsePoint $root
+    Assert-NoCathedralReparsePoint $sessionRoot
+    $allowedSessions = Join-Path $root 'sessions'
+    if (-not $sessionRoot.StartsWith($allowedSessions.TrimEnd('\', '/') + [IO.Path]::DirectorySeparatorChar, [StringComparison]::OrdinalIgnoreCase)) {
+        throw 'Cathedral saves must be in a separate child directory under the compiled profile sessions directory.'
+    }
+    $metadataPath = Join-Path $root 'cathedral-playtest.json'
+    Assert-NoCathedralReparsePoint $metadataPath
+    $metadata = Get-Content -LiteralPath $metadataPath -Raw -ErrorAction Stop | ConvertFrom-Json
+    if ($metadata.FormatVersion -ne 1 -or $metadata.AdapterId -cne 'devilution.diablo.cathedral-l1.v1' -or
+        $metadata.ContentDirectory -cne 'content' -or $metadata.ContentId -cne 'godevilution.cathedral-playtest' -or
+        $metadata.ContentVersion -cne '0.1.0' -or $metadata.Entry -cne 'main' -or
+        $metadata.ContentManifestHash -notmatch '^[0-9a-fA-F]{64}$' -or $metadata.PackFileHash -notmatch '^[0-9A-F]{64}$') {
+        throw 'Unsupported or incomplete Cathedral playtest profile.'
+    }
+    $contentRoot = Join-Path $root 'content'
+    Assert-NoCathedralReparsePoint $contentRoot
+    if (Test-Path -LiteralPath $sessionRoot) {
+        foreach ($entry in Get-ChildItem -LiteralPath $sessionRoot -Force -Recurse -ErrorAction Stop) {
+            if ($entry.Attributes -band [IO.FileAttributes]::ReparsePoint) { throw 'Cathedral session storage contains a reparse point.' }
+        }
+    }
+    foreach ($entry in Get-ChildItem -LiteralPath $contentRoot -Force -Recurse -ErrorAction Stop) {
+        if ($entry.Attributes -band [IO.FileAttributes]::ReparsePoint) { throw 'Compiled Cathedral content contains a reparse point.' }
+    }
+    $treeHash = Get-CathedralContentTreeHash $contentRoot
+    if ($treeHash -cne $metadata.PackFileHash) { throw 'The compiled Cathedral pack hash does not match its published profile.' }
+    return [pscustomobject]@{
+        Metadata = $metadata; MetadataPath = $metadataPath; ContentRoot = $contentRoot
+        MetadataHash = (Get-FileSha256 $metadataPath).ToUpperInvariant()
+        ContentTreeHash = $treeHash
+    }
+}
+
+function Initialize-CathedralPlaytestSession($Profile, [string]$Session) {
+    # Called only while the ordinary exclusive launcher lock is held.
+    $markerPath = Join-Path $Session 'cathedral-session.json'
+    if (Test-Path -LiteralPath $markerPath) {
+        $marker = Get-Content -LiteralPath $markerPath -Raw | ConvertFrom-Json
+        if ($marker.FormatVersion -ne 1 -or $marker.MetadataHash -cne $Profile.MetadataHash -or
+            $marker.ContentTreeHash -cne $Profile.ContentTreeHash) {
+            throw 'Cathedral profile changed; use a fresh session instead of mixing existing saves.'
+        }
+    } else {
+        if (Get-ChildItem -LiteralPath $Session -Force | Where-Object Name -ne 'launcher.lock') {
+            throw 'An unmarked existing save profile must never become a Cathedral session.'
+        }
+        $stream = [IO.File]::Open($markerPath, [IO.FileMode]::CreateNew, [IO.FileAccess]::Write, [IO.FileShare]::Read)
+        $writer = [IO.StreamWriter]::new($stream, [Text.UTF8Encoding]::new($false))
+        try {
+            $writer.Write(([ordered]@{ FormatVersion = 1; MetadataHash = $Profile.MetadataHash; ContentTreeHash = $Profile.ContentTreeHash } | ConvertTo-Json))
+        } finally { $writer.Dispose() }
     }
 }
 
@@ -828,8 +925,14 @@ function Stop-GodotProcess($Tracked) {
 
 try {
     foreach ($name in $environmentNames) { [Environment]::SetEnvironmentVariable($name, $null, 'Process') }
+    $cathedralProfile = if ($cathedral) { Get-CathedralPlaytestProfile $CathedralProfileDirectory $SessionDirectory } else { $null }
+    New-Item -ItemType Directory -Path $SessionDirectory -Force | Out-Null
+    if ($performance -and (Get-ChildItem -LiteralPath $SessionDirectory -Force)) {
+        throw 'Performance acceptance requires a fresh empty session directory.'
+    }
     # One local writer per save directory; parallel tests use distinct directories.
     $sessionLock = [System.IO.File]::Open((Join-Path $SessionDirectory 'launcher.lock'), 'OpenOrCreate', 'ReadWrite', 'None')
+    if ($cathedral) { Initialize-CathedralPlaytestSession $cathedralProfile $SessionDirectory }
     $staging = New-IsolatedGodotProject $clientSourceProject (Join-Path $captureRoot 'godot/Devilution.Client')
     $clientProject = $staging.DestinationDirectory
     Write-ProjectStageEvidence $staging $null $projectStageEvidencePath $null
@@ -850,10 +953,13 @@ try {
     if ($LASTEXITCODE -ne 0) { throw 'Could not build the staged Godot client.' }
 
     # Stable town starts; gameplay acceptance travels into combat afterward.
-    $acceptanceArguments = if ($AcceptancePhase -or $PreviewContent -or $PortalPreviewContent -or $Multiplayer) { '--starting-level 0 --random-seed 0' } else { '' }
+    $acceptanceArguments = if ($AcceptancePhase -or $PreviewContent -or $PortalPreviewContent -or $Multiplayer -or $cathedral) { '--starting-level 0 --random-seed 0' } else { '' }
     $overlayArguments = if ($PreviewContent -or $PortalPreviewContent) { '--content-overlay "{0}"' -f (Join-Path $repositoryRoot 'server/content/town-loop-preview') } else { '' }
     if ($PortalPreviewContent) {
         $overlayArguments += ' --content-overlay "{0}"' -f (Join-Path $repositoryRoot 'server/content/town-portal-preview')
+    }
+    if ($cathedral) {
+        $overlayArguments = '--content-root "{0}" --content-id godevilution.cathedral-playtest --content-version 0.1.0 --game-adapter devilution.diablo.cathedral-l1.v1' -f $cathedralProfile.ContentRoot
     }
     function Start-SessionServer([int]$ListenPort, [string]$LogPrefix) {
         $serverArguments = '--port {0} --protocol-version 0.2.0 --game-mode {4} --command-scheduling clock-gated --save-root "{1}/save" {2} {3}' -f $ListenPort, $SessionDirectory, $acceptanceArguments, $overlayArguments, $serverGameMode
@@ -882,6 +988,7 @@ try {
             }
             if ($gameMode -ne $expectedGameMode) { throw "Unexpected server mode: $gameMode" }
             if ($commandScheduling -ne 'clock-gated') { throw "Unexpected command scheduling: $commandScheduling" }
+            if ($cathedral -and $contentHash -cne $cathedralProfile.Metadata.ContentManifestHash) { throw 'The Cathedral host loaded a different content identity than the compiled profile.' }
             return [pscustomobject]@{ Process = $serverProcess; Port = $actualPort; ContentHash = $contentHash; RulesetHash = $rulesetHash; Mode = $gameMode }
         } catch {
             if ($null -ne $serverProcess) {
@@ -926,6 +1033,7 @@ try {
             DEVILUTION_RESUME_TOKEN_PATH = Join-Path $clientDirectory 'resume-token.txt'
         }
         if ($PortalPreviewContent) { $clientEnvironment['GODEVILUTION_PORTAL_PREVIEW'] = '1' }
+        if ($cathedral) { $clientEnvironment['GODEVILUTION_CATHEDRAL_PROFILE'] = $cathedralProfile.MetadataPath }
         if ($CharacterClassId -ge 0) { $clientEnvironment['DEVILUTION_CHARACTER_CLASS_ID'] = [string]$CharacterClassId }
         if (-not [string]::IsNullOrEmpty($CharacterName)) { $clientEnvironment['DEVILUTION_CHARACTER_NAME'] = $CharacterName }
         if ($Multiplayer) {
@@ -995,9 +1103,13 @@ try {
     } else {
         if ($Multiplayer) { $startedClients += Start-SceneClient 2 }
     }
-    if (($Multiplayer -or $performance) -and $AcceptancePhase) {
+    if (($Multiplayer -or $performance -or $cathedral) -and $AcceptancePhase) {
         $processEvidence = @{ HostProcessId = $serverProcess.Id; HostStartedUtc = $serverProcess.StartTime.ToUniversalTime().ToString('O'); Port = $actualPort;
             Clients = @($startedClients | ForEach-Object { @{ ProcessId = $_.Process.Id; StartedUtc = $_.Process.StartTime.ToUniversalTime().ToString('O') } }) }
+        if ($cathedral) {
+            $processEvidence.ProfileHash = $cathedralProfile.MetadataHash
+            $processEvidence.ContentTreeHash = $cathedralProfile.ContentTreeHash
+        }
         [IO.File]::WriteAllText((Join-Path $SessionDirectory ($AcceptancePhase.ToLowerInvariant() + '-processes.json')), ($processEvidence | ConvertTo-Json -Depth 4))
     }
     if ($AcceptancePhase -eq 'Recovery') {

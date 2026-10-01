@@ -8,10 +8,10 @@ namespace Devilution.Client.Acceptance;
 
 public partial class SessionAcceptance
 {
-    private static void VerifyCombatLootRestored(Main main, string directory)
+    private static void VerifyCombatLootRestored(Main main, string directory, string prefix = "journey")
     {
         using var evidence = JsonDocument.Parse(System.IO.File.ReadAllText(
-            System.IO.Path.Combine(directory, "journey-combat-loot.json")));
+            System.IO.Path.Combine(directory, prefix + "-combat-loot.json")));
         var fields = evidence.RootElement;
         var snapshot = main.ObservedSnapshot!;
         var player = snapshot.Players.Single();
@@ -29,8 +29,9 @@ public partial class SessionAcceptance
             "Fresh-host resume duplicated the picked-up loot.");
     }
 
-    private async Task VerifyCombatAndLoot(Main main, string directory, bool visible)
+    private async Task VerifyCombatAndLoot(Main main, string directory, bool visible, bool generated = false)
     {
+        var prefix = generated ? "cathedral" : "journey";
         await Until(() => Settled(main), "Dungeon entry did not settle.");
         var initialPlayer = main.ObservedSnapshot!.Players.Single();
         Require(initialPlayer.Belt.Count == 2 && initialPlayer.Belt.All(item => item.State.BaseName == "Potion of Healing"),
@@ -68,12 +69,19 @@ public partial class SessionAcceptance
                     var player = snapshot.Players.Single();
                     var target = snapshot.Monsters.SingleOrDefault(candidate => candidate.EntityId == monsterId);
                     trace.Add(new { snapshot.Tick, Attacks = attacks, player.Life,
+                        player.PositionX, player.PositionY, Sequence = main.ObservedCommandResult?.ClientSequence,
                         Mode = player.CombatMode.ToString(), Action = player.CurrentAction?.ToString(),
                         Target = target?.ToString(), Projectiles = snapshot.Projectiles.Select(item => item.ToString()).ToArray() });
                 });
+                // A ranged action can finish one tick before its arrow lands.
+                // Observe that outcome before submitting another attack against
+                // a monster which the in-flight arrow is about to defeat.
+                await Until(() => !main.ObservedSnapshot!.Monsters.Any(target => target.EntityId == monsterId && target.Alive)
+                    || !main.ObservedSnapshot.Projectiles.Any(projectile => projectile.SourceEntityId == current.EntityId
+                        && projectile.TargetEntityId == monsterId), "The acknowledged attack projectiles did not settle.", 5);
             }
         } finally {
-            WriteEvidence(directory, "journey-combat-trace.json", trace);
+            WriteEvidence(directory, prefix + "-combat-trace.json", trace);
         }
         Require(main.ObservedSnapshot!.Players.Single().Experience > initialPlayer.Experience,
             "The defeated monster did not grant authoritative experience.");
@@ -82,22 +90,50 @@ public partial class SessionAcceptance
         var drop = main.ObservedSnapshot!.WorldItems.Single(item => item.EntityId == 1000009).Clone();
         Require(drop.ItemSeed == 6001, "The encounter did not produce its authored drop.");
         if (visible)
-            await Capture(System.IO.Path.Combine(directory, "journey-combat.png"));
+            await Capture(System.IO.Path.Combine(directory, prefix + "-combat.png"));
 
         // Move away before clicking loot to verify the real multi-step approach.
-        for (var step = 0; step < 3; step++) {
+        var visited = new HashSet<(int X, int Y)> { (drop.PositionX, drop.PositionY) };
+        for (var step = 0; step < 3 || (generated && Math.Max(
+                 Math.Abs(main.ObservedSnapshot!.Players.Single().PositionX - drop.PositionX),
+                 Math.Abs(main.ObservedSnapshot.Players.Single().PositionY - drop.PositionY)) < 4); step++) {
+            Require(step < 8, "The generated loot approach did not establish a visible four-cell distance.");
             var previous = main.ObservedSnapshot!.Players.Single();
             var previousSequence = main.ObservedCommandResult!.ClientSequence;
-            await PressDown();
+            var offset = generated ? SelectCathedralLootStep(main, drop, visited, keepLootVisible: true) : (X: 0, Y: 1);
+            if (generated)
+                await Click(main.ObservedTileScreenPosition(previous.PositionX + offset.X, previous.PositionY + offset.Y), walk: true);
+            else
+                await PressDown();
             await AcceptedAndSettled(main, previousSequence, "Walk away from loot");
-            Require(main.ObservedSnapshot!.Players.Single().PositionY == previous.PositionY + 1,
+            Require(main.ObservedSnapshot!.Players.Single().PositionX == previous.PositionX + offset.X
+                && main.ObservedSnapshot.Players.Single().PositionY == previous.PositionY + offset.Y,
                 "Walking away from the loot did not advance one tile.");
+            visited.Add((previous.PositionX + offset.X, previous.PositionY + offset.Y));
         }
         var pickupSequence = main.ObservedCommandResult!.ClientSequence;
-        await ClickWorld(main, drop.PositionX, drop.PositionY);
-        await Until(() => main.ObservedSnapshot!.WorldItems.All(item => item.EntityId != drop.EntityId)
-            && main.ObservedSnapshot.Players.Single().Inventory.Any(item => item.ItemSeed == drop.ItemSeed),
-            "Clicking distant loot did not complete the server-owned approach and pickup.", stageSeconds: 10);
+        var pickupTrace = new List<object>();
+        ulong? pickupTick = null;
+        try {
+            await ClickWorld(main, drop.PositionX, drop.PositionY);
+            await Until(() => {
+                var snapshot = main.ObservedSnapshot!;
+                var player = snapshot.Players.Single();
+                if (pickupTick != snapshot.Tick && pickupTrace.Count < 256) {
+                    pickupTick = snapshot.Tick;
+                    pickupTrace.Add(new { snapshot.Tick, player.PositionX, player.PositionY,
+                        Mode = player.CombatMode.ToString(), Pending = main.ObservedPendingCommandCount,
+                        Sequence = main.ObservedCommandResult?.ClientSequence,
+                        Status = main.ObservedCommandResult?.Status.ToString(), Rejection = main.ObservedCommandResult?.RejectReason.ToString(),
+                        DropPresent = snapshot.WorldItems.Any(item => item.EntityId == drop.EntityId),
+                        LootVisible = AuthoritativeWorldItemPresentationVisibility.IsVisible(drop, player.LevelId,
+                            snapshot.LevelGeometry.Single(level => level.LevelId == player.LevelId), player.PositionX, player.PositionY,
+                            player.LightRadius is >= 2 and <= 15 ? player.LightRadius : 10) });
+                }
+                return snapshot.WorldItems.All(item => item.EntityId != drop.EntityId)
+                    && player.Inventory.Any(item => item.ItemSeed == drop.ItemSeed);
+            }, "Clicking distant loot did not complete the server-owned approach and pickup.", stageSeconds: 10);
+        } finally { WriteEvidence(directory, prefix + "-pickup-trace.json", pickupTrace); }
         Require(main.ObservedCommandResult is { } result && IsAcceptedOrSuccessfulDuplicate(result)
             && result.ClientSequence >= pickupSequence + 4,
             "Distant pickup did not acknowledge the approach steps and interaction.");
@@ -116,8 +152,8 @@ public partial class SessionAcceptance
             && lootCell.Text != "·" && lootCell.TooltipText.Contains(lootName),
             $"The looted sword '{lootName}' did not appear in its actual inventory control: {lootCell.TooltipText}.");
         if (visible)
-            await Capture(System.IO.Path.Combine(directory, "journey-loot.png"));
-        WriteEvidence(directory, "journey-combat-loot.json", new {
+            await Capture(System.IO.Path.Combine(directory, prefix + "-loot.png"));
+        WriteEvidence(directory, prefix + "-combat-loot.json", new {
             Passed = true, MonsterId = monsterId, Attacks = attacks, HealingPotionsUsed = healingPotionsUsed, DropEntityId = drop.EntityId,
             RemainingBelt = remainingBelt,
             drop.ItemSeed, Experience = main.ObservedSnapshot!.Players.Single().Experience,
@@ -149,7 +185,18 @@ public partial class SessionAcceptance
         var point = main.ObservedTileScreenPosition(x, y);
         var area = (Control)main.FindChild("WorldArea", true, false);
         Require(area.GetGlobalRect().HasPoint(point), "The observed target is outside the rendered world area.");
-        await Click(point, button: button);
+        // Aim and press in one normal input dispatch. Waiting a scene frame
+        // between them can move the monster or camera off the observed tile.
+        Input.ParseInputEvent(new InputEventMouseMotion { Position = point, GlobalPosition = point });
+        Input.ParseInputEvent(new InputEventMouseButton {
+            ButtonIndex = button, Position = point, GlobalPosition = point, Pressed = true,
+        });
+        Input.FlushBufferedEvents();
+        await Frame();
+        Input.ParseInputEvent(new InputEventMouseButton {
+            ButtonIndex = button, Position = point, GlobalPosition = point, Pressed = false,
+        });
+        await Frame();
     }
 
     private static bool Settled(Main main)
