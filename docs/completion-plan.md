@@ -141,7 +141,13 @@ M4. M5 is the final removal gate, not a reason to postpone replacement work.
    This reproduced estimator defect does not classify historical `TooLate`
    failures without requested-tick and host arrival/admission evidence.
    Pending-command fences do not solve the adapter's broader shared-world
-   cold-restore overwrite.
+   cold-restore overwrite. A real multiplayer loopback regression now reproduces
+   claimed-item resurrection in both cold-resume orders from actual same-tick
+   durable saves. Keep this known-gap fixture explicit until recovery publishes
+   one atomic, complete world/RNG/participant/receipt cohort and restores it
+   before admission or advancement. Include stable owner identities and inactive
+   modified stores; do not choose a participant by newest tick or join order.
+   Preserve the existing complete-world ImportSessionState migration contract.
 2. Add an application-level acceptance path through the actual Godot scene and
    controls: launch, create a character, receive/render an authoritative world,
    submit movement, observe the acknowledged position, save, exit, and resume

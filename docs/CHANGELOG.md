@@ -2,6 +2,13 @@
 
 All notable changes to this fork are documented below.
 
+- 2026-10-01: Add an independently reviewed explicit multiplayer cold-resume
+  regression using real loopback TCP and copied durable same-tick checkpoints.
+  Both resume orders reproducibly resurrect a claimed item; retain the two
+  expected invariant failures as known-gap evidence, not a passing recovery gate.
+  Update the active plan/status with atomic complete-cohort requirements while
+  preserving production behavior and the complete-world save-import contract.
+
 - 2026-10-01: Add private native Cathedral door characterization for depths 1-4,
   real sync/delta transitions, scoped legacy-pool cleanup and complete repeated
   captures. Add strict typed/cell/object/report/artifact validation and direct

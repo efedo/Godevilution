@@ -139,6 +139,30 @@ The following records describe implemented slices at this baseline. They are
 evidence, not a separate priority list; detailed older entries retain their
 original scope and may be superseded by later entries or the current assessment.
 
+### M0 same-tick multiplayer cold-resume counterexample (2026-10-01)
+
+`ColdParticipantWorldRestoreTests` adds two explicit xUnit v3 cases using real
+loopback TCP, multiplayer module/handshake policy and actual durable checkpoints.
+Both participants reach tick 11 before A picks up one identified world item at
+that same tick. A's command publishes its new state; B's checkpoint still contains
+the item. The fixture copies these real publications before shutdown and starts
+a fresh host against the copy, without rewriting saves or performing gameplay
+before the restore assertions.
+
+Fresh Release execution and an identical-binary repeat both reach the intended
+failures: B-first resurrects the item in the first snapshot; A-first resurrects
+it when B joins. Each run reports 2 failed, 0 passed, 0 skipped. Run explicitly:
+`dotnet run --project server/tests/Devilution.Server.Tests/Devilution.Server.Tests.csproj --configuration Release --no-restore -- --filter-class Devilution.Server.Tests.ColdParticipantWorldRestoreTests --explicit only --no-ansi`.
+Repeat output is retained privately at
+`.local/m0-cold-participant-world-restore/explicit-gap.log`.
+
+Independent review approves this as Immediate-mode known-gap evidence only.
+It is not a production fix, native-action/gated recovery acceptance, or proof of
+coherent receipts, owners, pending actions or inactive store recovery. The
+complete-world `ImportSessionState` compatibility contract is unchanged. M0
+requires atomic complete-cohort recovery before admission; equal ticks, newest
+checkpoint selection and connection-order heuristics cannot establish coherence.
+
 ### M2 private native Cathedral door characterization (2026-10-01)
 
 Two opt-in GTests use the real `AddL1Objs` scanner and public sync/delta door
