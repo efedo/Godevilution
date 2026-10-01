@@ -139,6 +139,69 @@ The following records describe implemented slices at this baseline. They are
 evidence, not a separate priority list; detailed older entries retain their
 original scope and may be superseded by later entries or the current assessment.
 
+### M0 forward-only native gated command clock (2026-10-01)
+
+The native gated receive path now retains its elapsed-time anchor for snapshots
+at or behind the current projection, including newer raw ticks. One observation
+timestamp is shared by comparison and reanchoring. Native whole-millisecond
+truncation, floor projection, minimum negotiated rate and saturating arithmetic
+are unchanged. A strictly ahead sample reanchors; reconnect clears the old epoch.
+Legacy Immediate observation, identity-validation ordering, command lead/deadline,
+explicit ticks, frozen retry bytes, strict server admission, protocol and saves
+remain unchanged.
+
+Before the fix, 19 existing transport tests pass (1.919s). Extracting the clock
+without changing its legacy behavior reproduces four deterministic failures:
+delayed 100/101 samples rewind projection 107, and equal samples discard elapsed
+fractions. That red run records 23 passes/four failures out of 27 (1.915s), with
+all 19 transport controls still passing. These are native estimator unit cases,
+not new native TCP regressions. Final focused checks pass 28/28 without skips
+(1.909s): nine clock cases plus the 19 existing transport tests. Reset to a lower
+tick at a different rate, anchored zero, backward/equal observation time,
+sub-millisecond truncation, addition/multiplication overflow and legacy raw-tick
+behavior are explicitly covered.
+
+The current game and 13 affected test executables rebuild in the source-matching
+`build/x64-Debug-authoritative-vcpkg` tree. Matching x64 developer tools
+`cl.exe`, `rc.exe` and `mt.exe` resolve before each build. The first
+`build/x64-Debug-authoritative` attempt stops at missing `build.ninja`,
+before compilation/tests; the complete existing tree is used instead.
+Generated Protobuf C4251 warnings remain.
+
+The first affected registered CTest run is not green: 313/316 pass (15.64s).
+Three remote-player presentation fixtures abort at missing player-animation
+tables when run in fresh processes: `ClearsRemoteInventoryWhenLegacyGridIsOmitted`,
+`ProjectsRemoteWalkDestinationIntoNativeFuturePosition` and
+`IgnoresStaleRemotePlayerSnapshots`. Their preceding whole-executable fixture
+initializes those tables; they never call the client clock. Each fixture now calls
+`LoadPlayerDataFiles()` itself, preserving all assertions and
+production code. After rebuilding, the three individually registered cases
+pass (0.23s), followed by all 316 affected registered tests (15.62s), with
+no exclusions. This is fixture independence, not a historical GUI/crash cause.
+
+The four existing documentation guards pass (0.400s). Current working-tree
+launcher classes pass 26/26 without skips (17.541s), including the separate
+pending Cathedral repeatability-helper case; no new Godot engine is launched.
+Logs are `.local/m0-native-clock-documentation-verification.log` and
+`.local/m0-native-clock-launcher-verification.log`.
+
+Retained logs are `.local/m0-native-clock-baseline-build.log`,
+`.local/m0-native-clock-baseline-build-reused.log`,
+`.local/m0-native-clock-baseline-tests.log`,
+`.local/m0-native-clock-red-build.log`,
+`.local/m0-native-clock-before-fix.log`,
+`.local/m0-native-clock-final-build.log`,
+`.local/m0-native-clock-after-fix.log`,
+`.local/m0-native-clock-affected-ctest.log`,
+`.local/m0-native-clock-fixture-build.log`,
+`.local/m0-native-clock-fixtures-after-fix.log`, and
+`.local/m0-native-clock-affected-ctest-after-fixture-fix.log`.
+This package does not reproduce or classify the retained native `TooLate`
+clicks, establish player visibility/accepted movement/moved-position GUI restore,
+or resolve the separate full C# protocol failure below. No new application
+launch or campaign/platform pass is claimed. M0 and the approximately 35%
+overall estimate remain open.
+
 ### M0 forward-only C# gated command clock (2026-10-01)
 
 Receiving a delayed snapshot previously reset the C# admission-time anchor, even
@@ -150,8 +213,8 @@ without accumulating ceiling rounding, and reanchors only genuinely ahead ticks.
 Delta comparison avoids overflowing the anchor during reception; dispatch retains
 checked overflow. The negotiated rate stays fixed until reconnect/reset. Legacy
 `Observe`, Immediate scheduling, explicit command ticks, frozen retries, server
-admission, gameplay, protocol and saves are unchanged. Native-client reanchoring
-remains a separate follow-up, not fixed by this package.
+admission, gameplay, protocol and saves are unchanged. The native counterpart
+is a separate package recorded above, not part of this C# fix.
 
 The earlier four-depth session `d9e2305a55744d2abd83cd7aa57f836f` proves sequence 2
 was `TooLate` at tick 94, but lacks requested-tick and snapshot/arrival timings.

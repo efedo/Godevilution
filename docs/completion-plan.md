@@ -133,7 +133,11 @@ M4. M5 is the final removal gate, not a reason to postpone replacement work.
    retains its elapsed-time anchor when a delayed snapshot falls behind or equals
    the projection, including newer raw ticks. Preserve ceiling-rounding and
    reconnect-rate/reset regressions, Immediate compatibility and frozen retries.
-   The equivalent native reanchor risk remains a separate source/test follow-up.
+   The native gated counterpart now preserves its elapsed-time anchor too,
+   retaining native whole-millisecond/floor projection and saturating arithmetic.
+   Preserve deterministic delayed/equal/ahead, epoch/reset and overflow checks,
+   alongside individually initialized registered native presentation fixtures.
+   Focused and affected native regressions do not establish GUI gameplay acceptance.
    This reproduced estimator defect does not classify historical `TooLate`
    failures without requested-tick and host arrival/admission evidence.
    Pending-command fences do not solve the adapter's broader shared-world

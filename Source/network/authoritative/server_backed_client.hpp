@@ -21,6 +21,7 @@
 
 #include "devilution.pb.h"
 #include "network/protocol/command_delivery.hpp"
+#include "network/authoritative/server_backed_clock.hpp"
 
 namespace devilution::authoritative {
 
@@ -111,12 +112,10 @@ private:
 	std::optional<protocol::Snapshot> pendingSnapshot_;
 	std::vector<protocol::EventBatch> pendingEventBatches_;
 	CommandDeliveryTracker deliveryTracker_;
+	detail::GatedSnapshotClock gatedSnapshotClock_;
 	bool clockGated_ = false;
 	uint32_t tickRateHz_ = 20;
 	uint64_t gatedRoundTripMs_ = 100;
-	uint64_t lastSnapshotTick_ = 0;
-	bool hasSnapshotClock_ = false;
-	std::chrono::steady_clock::time_point lastSnapshotObservedAt_ {};
 	std::optional<std::chrono::steady_clock::time_point> gatedTransactionDeadline_;
 	uint64_t nextTimingRequestId_ = 1;
 	struct PendingTimingProbe {

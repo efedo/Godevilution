@@ -3496,6 +3496,7 @@ TEST(ServerBackedPlayerSnapshot, RetainsRemotePlayersAsPresentationOnlyState)
 
 TEST(ServerBackedPlayerSnapshot, ClearsRemoteInventoryWhenLegacyGridIsOmitted)
 {
+	LoadPlayerDataFiles();
 	ProjectedPlayerSnapshot local;
 	local.entityId = 1;
 	local.levelId = 1;
@@ -3536,6 +3537,7 @@ TEST(ServerBackedPlayerSnapshot, ClearsRemoteInventoryWhenLegacyGridIsOmitted)
 
 TEST(ServerBackedPlayerSnapshot, ProjectsRemoteWalkDestinationIntoNativeFuturePosition)
 {
+	LoadPlayerDataFiles();
 	ProjectedPlayerSnapshot local;
 	local.entityId = 1;
 	local.levelId = 1;
@@ -3573,6 +3575,7 @@ TEST(ServerBackedPlayerSnapshot, ProjectsRemoteWalkDestinationIntoNativeFuturePo
 
 TEST(ServerBackedPlayerSnapshot, IgnoresStaleRemotePlayerSnapshots)
 {
+	LoadPlayerDataFiles();
 	ProjectedPlayerSnapshot local;
 	local.entityId = 1;
 	local.levelId = 1;

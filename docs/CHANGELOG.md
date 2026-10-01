@@ -2,6 +2,14 @@
 
 All notable changes to this fork are documented below.
 
+- 2026-10-01: Keep native gated command estimates forward-only across delayed/equal
+  snapshots while preserving native floor/saturation, Immediate behavior,
+  reconnect epochs and frozen retries. Retain four pre-fix estimator failures;
+  focused checks pass 28. Rebuild the game and 13 affected targets, correct three
+  order-dependent native presentation fixtures without weakening assertions,
+  and pass all 316 individually registered affected tests. Update existing plan,
+  status and guides; native GUI movement/restore and broader M0 remain open.
+
 - 2026-10-01: Keep C# gated command estimates forward-only across delayed snapshots
   without rounding drift, preserving Immediate observation, explicit/frozen ticks
   and strict server admission. Three transport regressions fail before the receive

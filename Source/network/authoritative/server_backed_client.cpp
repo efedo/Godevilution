@@ -138,9 +138,7 @@ tl::expected<void, std::string> ServerBackedClient::Reconnect(uint64_t nowMs)
 	pendingEventBatches_.clear();
 	pendingTimingProbe_.reset();
 	gatedTransactionDeadline_.reset();
-	lastSnapshotTick_ = 0;
-	hasSnapshotClock_ = false;
-	lastSnapshotObservedAt_ = {};
+	gatedSnapshotClock_.Reset();
 	gatedRoundTripMs_ = 100;
 	if (auto result = ConnectTransport(true); !result.has_value())
 		return result;
@@ -423,11 +421,11 @@ tl::expected<protocol::Snapshot, std::string> ServerBackedClient::ReadSnapshot()
 
 tl::expected<void, std::string> ServerBackedClient::ObserveSnapshotIdentity(const protocol::Snapshot &snapshot)
 {
-	if (!hasSnapshotClock_ || snapshot.tick() >= lastSnapshotTick_) {
-		lastSnapshotTick_ = snapshot.tick();
-		hasSnapshotClock_ = true;
-		lastSnapshotObservedAt_ = std::chrono::steady_clock::now();
-	}
+	const auto observedAt = std::chrono::steady_clock::now();
+	if (clockGated_)
+		gatedSnapshotClock_.ObserveMonotonic(snapshot.tick(), tickRateHz_, observedAt);
+	else
+		gatedSnapshotClock_.Observe(snapshot.tick(), observedAt);
 	const bool hasContentManifestHash = !snapshot.content_manifest_hash().empty();
 	const bool hasRulesetIdentityHash = !snapshot.ruleset_identity_hash().empty();
 	if (!hasContentManifestHash && !hasRulesetIdentityHash)
@@ -740,23 +738,15 @@ tl::expected<void, std::string> ServerBackedClient::WriteEnvelope(const protocol
 
 uint64_t ServerBackedClient::GatedCurrentTick() const noexcept
 {
-	if (!clockGated_ || !hasSnapshotClock_)
+	if (!clockGated_)
 		return 0;
-	const auto now = std::chrono::steady_clock::now();
-	uint64_t elapsedTicks = 0;
-	if (now > lastSnapshotObservedAt_) {
-		const auto elapsedMs = static_cast<uint64_t>(std::chrono::duration_cast<std::chrono::milliseconds>(now - lastSnapshotObservedAt_).count());
-		elapsedTicks = elapsedMs > std::numeric_limits<uint64_t>::max() / tickRateHz_
-		    ? std::numeric_limits<uint64_t>::max()
-		    : (elapsedMs * tickRateHz_) / 1000U;
-	}
-	return SaturatingAdd(lastSnapshotTick_, elapsedTicks);
+	return gatedSnapshotClock_.CurrentTick(tickRateHz_, std::chrono::steady_clock::now());
 }
 
 uint64_t ServerBackedClient::GatedDispatchTick() const noexcept
 {
 	const uint64_t currentTick = GatedCurrentTick();
-	if (currentTick == 0 && !hasSnapshotClock_)
+	if (currentTick == 0 && !gatedSnapshotClock_.HasSnapshotClock())
 		return 0;
 	const uint64_t leadTicks = SaturatingAdd(
 	    SaturatingMultiply(gatedRoundTripMs_, tickRateHz_) / 1000U,
@@ -766,7 +756,7 @@ uint64_t ServerBackedClient::GatedDispatchTick() const noexcept
 
 uint64_t ServerBackedClient::GatedRetryNotBefore(uint64_t requestedTick, uint64_t nowMs) const noexcept
 {
-	if (!clockGated_ || !hasSnapshotClock_)
+	if (!clockGated_ || !gatedSnapshotClock_.HasSnapshotClock())
 		return nowMs;
 	const uint64_t estimatedCurrentTick = GatedCurrentTick();
 	if (requestedTick <= estimatedCurrentTick)

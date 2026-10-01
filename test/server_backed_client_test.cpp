@@ -14,6 +14,7 @@
 #include <gtest/gtest.h>
 
 #include "devilution.pb.h"
+#include "network/authoritative/server_backed_clock.hpp"
 #include "network/authoritative/server_backed_client.hpp"
 #include "network/authoritative/envelope_codec.hpp"
 
@@ -832,6 +833,133 @@ TEST(ServerBackedClient, OptsIntoClockGatedModeAndStampsRealtimeCommandsAboveSer
 	(*client)->Close();
 	server.Join();
 	EXPECT_TRUE(serverObservedExpectedMessages);
+}
+
+TEST(ServerBackedClock, DelayedSnapshotsRetainTheProjectedTick)
+{
+	using Clock = detail::GatedSnapshotClock;
+	const auto start = Clock::TimePoint {};
+	for (const uint64_t snapshotTick : { 90U, 100U, 101U }) {
+		Clock clock;
+		clock.ObserveMonotonic(100, 20, start);
+		clock.ObserveMonotonic(snapshotTick, 20, start + std::chrono::milliseconds(350));
+
+		EXPECT_EQ(clock.CurrentTick(20, start + std::chrono::milliseconds(350)), 107U)
+			<< "delayed snapshot tick " << snapshotTick << " rewound the projection";
+	}
+}
+
+TEST(ServerBackedClock, EqualProjectedTickRetainsFractionalAge)
+{
+	using Clock = detail::GatedSnapshotClock;
+	const auto start = Clock::TimePoint {};
+	Clock clock;
+	clock.ObserveMonotonic(100, 20, start);
+	clock.ObserveMonotonic(107, 20, start + std::chrono::milliseconds(375));
+
+	EXPECT_EQ(clock.CurrentTick(20, start + std::chrono::milliseconds(400)), 108U);
+}
+
+TEST(ServerBackedClock, EqualFloorBoundarySampleRetainsTheElapsedFraction)
+{
+	using Clock = detail::GatedSnapshotClock;
+	const auto start = Clock::TimePoint {};
+	Clock clock;
+	clock.ObserveMonotonic(100, 20, start);
+	clock.ObserveMonotonic(100, 20, start + std::chrono::milliseconds(25));
+
+	EXPECT_EQ(clock.CurrentTick(20, start + std::chrono::milliseconds(50)), 101U);
+}
+
+TEST(ServerBackedClock, StrictlyAheadSnapshotReanchors)
+{
+	using Clock = detail::GatedSnapshotClock;
+	const auto start = Clock::TimePoint {};
+	Clock clock;
+	clock.ObserveMonotonic(100, 20, start);
+	clock.ObserveMonotonic(108, 20, start + std::chrono::milliseconds(350));
+
+	EXPECT_EQ(clock.CurrentTick(20, start + std::chrono::milliseconds(350)), 108U);
+}
+
+TEST(ServerBackedClock, DistinguishesNoAnchorFromAnchoredZeroAndResetsEpoch)
+{
+	using Clock = detail::GatedSnapshotClock;
+	const auto start = Clock::TimePoint {};
+	Clock clock;
+
+	EXPECT_FALSE(clock.HasSnapshotClock());
+	EXPECT_EQ(clock.CurrentTick(20, start + std::chrono::milliseconds(50)), 0U);
+	clock.ObserveMonotonic(0, 20, start);
+	EXPECT_TRUE(clock.HasSnapshotClock());
+	EXPECT_EQ(clock.CurrentTick(20, start + std::chrono::milliseconds(50)), 1U);
+
+	clock.ObserveMonotonic(500, 20, start + std::chrono::seconds(1));
+	EXPECT_EQ(clock.CurrentTick(20, start + std::chrono::milliseconds(1'100)), 502U);
+
+	clock.Reset();
+	EXPECT_FALSE(clock.HasSnapshotClock());
+	clock.ObserveMonotonic(10, 40, start + std::chrono::seconds(2));
+	EXPECT_EQ(clock.CurrentTick(40, start + std::chrono::milliseconds(2'100)), 14U);
+}
+
+TEST(ServerBackedClock, BackwardAndEqualObservationTimesDoNotRewind)
+{
+	using Clock = detail::GatedSnapshotClock;
+	const auto start = Clock::TimePoint {};
+	Clock clock;
+	clock.ObserveMonotonic(100, 20, start);
+	clock.ObserveMonotonic(100, 20, start);
+	clock.ObserveMonotonic(100, 20, start - std::chrono::milliseconds(25));
+
+	EXPECT_EQ(clock.CurrentTick(20, start + std::chrono::milliseconds(25)), 100U);
+}
+
+TEST(ServerBackedClock, SaturatesAdditionAndElapsedTickMultiplication)
+{
+	using Clock = detail::GatedSnapshotClock;
+	const auto start = Clock::TimePoint {};
+	Clock clock;
+	clock.ObserveMonotonic(std::numeric_limits<uint64_t>::max() - 1, 20, start);
+	EXPECT_EQ(clock.CurrentTick(20, start + std::chrono::milliseconds(100)), std::numeric_limits<uint64_t>::max());
+
+	clock.Reset();
+	clock.ObserveMonotonic(0, std::numeric_limits<uint32_t>::max(), start);
+	const auto multiplicationOverflowTime = start + std::chrono::milliseconds(5'000'000'000LL);
+	EXPECT_EQ(
+		clock.CurrentTick(std::numeric_limits<uint32_t>::max(), multiplicationOverflowTime),
+		std::numeric_limits<uint64_t>::max());
+}
+
+TEST(ServerBackedClock, TruncatesSubMillisecondAgeAndUsesMinimumRate)
+{
+	using Clock = detail::GatedSnapshotClock;
+	const auto start = Clock::TimePoint {};
+	Clock clock;
+	clock.ObserveMonotonic(100, 2'000, start);
+
+	EXPECT_EQ(clock.CurrentTick(2'000, start + std::chrono::microseconds(999)), 100U);
+	EXPECT_EQ(clock.CurrentTick(2'000, start + std::chrono::milliseconds(1)), 102U);
+
+	clock.Reset();
+	clock.ObserveMonotonic(0, 0, start);
+	EXPECT_EQ(clock.CurrentTick(0, start + std::chrono::milliseconds(1'500)), 1U);
+}
+
+TEST(ServerBackedClock, LegacyObservationRefreshesEqualAndIgnoresLowerTicks)
+{
+	using Clock = detail::GatedSnapshotClock;
+	const auto start = Clock::TimePoint {};
+	Clock clock;
+	clock.Observe(100, start);
+	clock.Observe(100, start + std::chrono::milliseconds(350));
+	EXPECT_EQ(clock.CurrentTick(20, start + std::chrono::milliseconds(350)), 100U);
+
+	clock.Observe(101, start + std::chrono::milliseconds(700));
+	EXPECT_EQ(clock.CurrentTick(20, start + std::chrono::milliseconds(700)), 101U);
+
+	clock.Observe(90, start + std::chrono::milliseconds(1'050));
+	EXPECT_EQ(clock.CurrentTick(20, start + std::chrono::milliseconds(1'050)), 108U);
 }
 
 TEST(ServerBackedClient, RejectsClockGatedServerWithoutExplicitOptIn)

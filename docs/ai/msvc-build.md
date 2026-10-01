@@ -113,6 +113,16 @@ unchanged; the root launcher rebuilds the module required by the optional table.
 Only diagnostic runs fix seed 0; normal native seed selection is unchanged.
 The paired native runtime advertises clock-gated support. Default low-level
 native configurations and standalone host timing retain Immediate compatibility.
+Within a gated connection, delayed/equal snapshots retain the native projected
+tick and fractional elapsed age; only strictly ahead samples reanchor it.
+Whole-millisecond truncation, floor projection, saturating arithmetic and the
+negotiated rate are preserved; reconnect clears the old epoch. Immediate raw-tick
+observation and explicit/frozen commands remain unchanged. Nine deterministic
+clock checks share the existing `server_backed_client_test` target; broader
+registered transport/presentation checks are recorded in migration status.
+CTest runs each named fixture in a fresh process, so native presentation fixtures
+must initialize their required player tables themselves. Neither estimator
+tests nor a successful game build prove accepted native GUI movement/restore.
 The feature-enabled CMake branch also defines the feature on separately compiled
 gameplay object libraries, with protocol-generation ordering and dependencies;
 enabling it only on the main library does not enable those existing guards.

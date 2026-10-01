@@ -79,8 +79,9 @@ identities. Within a connection, delayed snapshots (including newer raw ticks)
 do not rewind the C# command estimate or repeatedly round its anchor forward.
 The negotiated tick rate remains fixed until reconnect resets that anchor.
 Immediate observation and explicit/frozen command ticks are unchanged. This
-does not establish the cause of retained `TooLate` failures or fix the separate
-native-client reanchor risk.
+does not establish the cause of retained `TooLate` failures. The separately
+verified native counterpart retains native floor/saturation rules; see
+[MSVC guidance](msvc-build.md) and migration status for its evidence and GUI gap.
 The paired native launcher also selects clock-gated scheduling; the standalone
 host and default low-level native configuration remain Immediate for compatibility.
 Native acceptance is recorded separately in migration status. This is not a bound
