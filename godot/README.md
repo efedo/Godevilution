@@ -63,6 +63,13 @@ The responsive HUD separates Hero, Items, Trade, Stash, and World tabs from the
 world view (minimum window 960x600). WASD/arrows move; Ctrl+left click requests a
 step toward a tile without casting. Ordinary left click retains interaction or
 selected-spell casting, and right click attacks a target. Q/E selects spell sources.
+Explicit spell selection or Q/E cycling clears pending HUD item selection so
+the next world click casts instead of dropping the previously selected item.
+The authoritative held cursor retains its separate drop priority.
+
+When the server reports zero life, Hero shows Restart in Town. The button stays
+disabled until the projected death action has settled and the client is connected.
+It and Escape submit the same recovery intent; only the server restores the player.
 
 World lists the current level's server-projected routes. Travel repeats the
 existing target-cell movement intent, waiting for each accepted command and
@@ -85,8 +92,14 @@ loot pickup, and fresh-host restore. The optional town-loop preview extends this
 with equipment, a reverse stair, Smith purchase, and stash transfers. A separate
 portal preview exercises scroll purchase/consumption, dungeon-to-town travel,
 active-portal restoration, and owner-return closure through actual controls.
-Quest/death/class-skill and cooperative gameplay/recovery journeys, the complete
-gameplay loop, and generated-world parity remain open. Native-role store entry
+The separate zero-argument root `run-godot-lifecycle-preview.ps1` uses
+`.local/godot-lifecycle-preview`, the exact-pinned `town-lifecycle-preview` overlay
+and seed 5. Create a Sorcerer to exercise an itemless quest, charged staff,
+Recharge, Firebolt, death and Town restart with normal starting resources.
+Actual scene acceptance also verifies fresh-host resume and the exact off-level
+staff drop. This is an authored diagnostic, not native population or complete
+quest/class/campaign acceptance. Broader gameplay/recovery journeys, the complete
+loop and generated-world parity remain open. Native-role store entry
 requires the projected vendor's level, distance at most one tile (including
 diagonals), and an empty held cursor; opening Stash requires Gillian (towner 7).
 Use World to approach Smith (towner 0) before Trade or Gillian before Stash.

@@ -511,9 +511,12 @@ public partial class SessionAcceptance
 
     private async Task RevealControl(TabContainer sections, int page, Control control)
     {
+        Require(page >= 0 && page < sections.GetChildCount(), "The requested HUD tab does not exist.");
+        var scroll = (ScrollContainer)sections.GetChild(page);
+        Require(scroll.IsAncestorOf(control), $"{control.Name} does not belong to HUD tab {page}.");
         if (sections.CurrentTab != page)
             await SelectTab(sections, page);
-        ((ScrollContainer)sections.GetChild(page)).EnsureControlVisible(control);
+        scroll.EnsureControlVisible(control);
         await Frame();
         await Frame();
         Require(control.IsVisibleInTree(), $"{control.Name} is not visible in its tab.");

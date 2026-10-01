@@ -27,7 +27,7 @@ public partial class SessionAcceptance : Node
     private async Task RunAsync()
     {
         var phase = Environment.GetEnvironmentVariable("GODEVILUTION_ACCEPTANCE_PHASE");
-        if (phase is not ("Create" or "Resume" or "Recovery" or "Journey" or "JourneyResume" or "TownLoop" or "TownLoopResume" or "MultiplayerCreate" or "MultiplayerResume" or "Performance" or "CathedralJourney" or "CathedralResume" or "CathedralDepthJourney" or "CathedralDepthResume"))
+        if (phase is not ("Create" or "Resume" or "Recovery" or "Journey" or "JourneyResume" or "TownLoop" or "TownLoopResume" or "Lifecycle" or "LifecycleResume" or "MultiplayerCreate" or "MultiplayerResume" or "Performance" or "CathedralJourney" or "CathedralResume" or "CathedralDepthJourney" or "CathedralDepthResume"))
             throw new InvalidOperationException("Explicit acceptance phase is required.");
         var portalPreview = Environment.GetEnvironmentVariable("GODEVILUTION_PORTAL_PREVIEW") == "1";
         var directory = Environment.GetEnvironmentVariable("GODEVILUTION_ACCEPTANCE_DIRECTORY")
@@ -44,7 +44,7 @@ public partial class SessionAcceptance : Node
             return;
         }
         var bookmarkPath = System.IO.Path.Combine(directory, "resume-token.txt");
-        var creating = phase is "Create" or "Journey" or "TownLoop" or "CathedralJourney" or "CathedralDepthJourney";
+        var creating = phase is "Create" or "Journey" or "TownLoop" or "Lifecycle" or "CathedralJourney" or "CathedralDepthJourney";
         if (creating) {
             Require(!System.IO.File.Exists(bookmarkPath), "Creation requires a fresh isolated bookmark directory.");
             System.IO.File.WriteAllText(bookmarkPath, "invalid token");
@@ -62,14 +62,15 @@ public partial class SessionAcceptance : Node
             Require(mode.Selected == 0, "A corrupt bookmark must leave new-character selection available.");
             Require(((Label)setup.FindChild("Validation", true, false)).Text.Contains("Could not read local resume bookmark"),
                 "The corrupt bookmark was not reported in the setup UI.");
-            ((LineEdit)setup.FindChild("CharacterName", true, false)).Text = "M0-Rogue";
-            ((OptionButton)setup.FindChild("CharacterClass", true, false)).Select(1);
+            ((LineEdit)setup.FindChild("CharacterName", true, false)).Text = phase == "Lifecycle"
+                ? "M1-Sorcerer" : "M0-Rogue";
+            ((OptionButton)setup.FindChild("CharacterClass", true, false)).Select(phase == "Lifecycle" ? 2 : 1);
         } else {
             previous = JsonSerializer.Deserialize<Evidence>(System.IO.File.ReadAllText(
                 System.IO.Path.Combine(directory, phase switch {
                     "Recovery" => "resume.json", "JourneyResume" => "journey.json",
                     "TownLoopResume" => "townloop.json", "CathedralResume" => "cathedraljourney.json",
-                    "CathedralDepthResume" => "cathedraldepthjourney.json", _ => "create.json",
+                    "CathedralDepthResume" => "cathedraldepthjourney.json", "LifecycleResume" => "lifecycle.json", _ => "create.json",
                 })))
                 ?? throw new InvalidDataException("The creation evidence is empty.");
             Require(previous.Passed && mode.Selected == 1, "Resume must use the persisted form defaults.");
@@ -99,7 +100,10 @@ public partial class SessionAcceptance : Node
         await Until(() => main.TransportConnected && main.ObservedSnapshot?.Players.Count == 1,
             "No authoritative character snapshot arrived after submitting the form.");
         var initial = main.ObservedSnapshot!.Players.Single();
-        Require(initial.CharacterClassId == 1 && initial.CharacterName == "M0-Rogue", "Character creation identity did not reach the host.");
+        var lifecyclePhase = phase is "Lifecycle" or "LifecycleResume";
+        var expectedClass = lifecyclePhase ? 2U : 1U;
+        var expectedName = lifecyclePhase ? "M1-Sorcerer" : "M0-Rogue";
+        Require(initial.CharacterClassId == expectedClass && initial.CharacterName == expectedName, "Character creation identity did not reach the host.");
         Require(!setup.Visible, "Setup did not close after submission.");
         if (phase == "Create") {
             var warning = (Label)main.FindChild("SessionWarning", true, false);
@@ -127,6 +131,10 @@ public partial class SessionAcceptance : Node
             Require(initial.EntityId == previous.EntityId && initial.PositionX == previous.X
                 && initial.PositionY == previous.Y && initial.LevelId == previous.LevelId,
                 $"Fresh host/client restore mismatch: expected entity/level/position {previous.EntityId}/{previous.LevelId}/{previous.X},{previous.Y}; observed {initial.EntityId}/{initial.LevelId}/{initial.PositionX},{initial.PositionY}.");
+        }
+        if (phase is "Lifecycle" or "LifecycleResume") {
+            await VerifySorcererLifecycleAsync(main, directory, phase, visible, previous);
+            return;
         }
         if (phase is "CathedralJourney" or "CathedralResume") {
             await VerifyGeneratedCathedralAsync(main, directory, phase, visible);
@@ -291,6 +299,7 @@ public partial class SessionAcceptance : Node
             var seconds = Environment.GetEnvironmentVariable("GODEVILUTION_ACCEPTANCE_PHASE") switch {
                 "CathedralJourney" => 300, "CathedralResume" => 180,
                 "CathedralDepthJourney" => 885, "CathedralDepthResume" => 435,
+                "Lifecycle" => 345, "LifecycleResume" => 70,
                 "TownLoop" => 225, "Journey" => 150, "MultiplayerCreate" or "MultiplayerResume" => 70, _ => 40,
             };
             Require(deadline.Elapsed < TimeSpan.FromSeconds(seconds), failure);

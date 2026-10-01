@@ -163,6 +163,14 @@ existing profile. The inner harness uses `-PortalPreviewContent`; it cannot be
 combined with `-PreviewContent` or `-Multiplayer`. Original preview bytes, stock,
 content/ruleset hashes and the `-PreviewContent` acceptance path are preserved.
 
+The zero-argument `run-godot-lifecycle-preview.ps1` uses a distinct
+`.local/godot-lifecycle-preview` save/bookmark profile and exact-pinned
+`town-lifecycle-preview` overlay. Choose a Sorcerer in the normal setup form.
+The authored encounters grant no starting resources or loot. Seed 5 leaves the
+itemless Butcher quest available under both current production and native pool
+orderings; it does not establish complete quest-pool parity. Existing normal,
+town-loop, portal, multiplayer and generated-profile defaults are unchanged.
+
 `run-godot-multiplayer.ps1` is the zero-argument two-window local multiplayer
 entry point. Its explicit `-Multiplayer` inner-harness mode builds/imports once,
 starts one multiplayer host, and supplies separate process-local environment
@@ -313,8 +321,22 @@ powershell -NoProfile -ExecutionPolicy Bypass -File tools/test-godot-session.ps1
 powershell -NoProfile -ExecutionPolicy Bypass -File tools/test-godot-session.ps1 -Visible
 powershell -NoProfile -ExecutionPolicy Bypass -File tools/test-godot-session.ps1 -Journey -Visible
 powershell -NoProfile -ExecutionPolicy Bypass -File tools/test-godot-session.ps1 -TownLoop -Visible
+powershell -NoProfile -ExecutionPolicy Bypass -File tools/test-godot-session.ps1 -Lifecycle
+powershell -NoProfile -ExecutionPolicy Bypass -File tools/test-godot-session.ps1 -Lifecycle -Visible
 powershell -NoProfile -ExecutionPolicy Bypass -File tools/test-godot-session.ps1 -Multiplayer -Visible
 ```
+
+`Lifecycle` uses real equipment/spell controls, mouse reselection and Q/E cycling,
+itemless quest activation, staff casting, native-style class Recharge, a
+mana-consuming Firebolt, observed monster-caused player death and Hero /
+Restart in Town.
+`LifecycleResume` requires fresh host/client processes, unchanged identities,
+restored quest/resources, an exact new acknowledged Town step and the complete
+unchanged death-dropped staff with no owned duplicate. Off-level items are already
+in the complete snapshot; this check does not require another dungeon trip.
+Bounded receipt/death/state evidence and six distinct visible milestone captures
+are retained. Lifecycle cannot be mixed with the other diagnostic routes.
+These authored checks do not close M1, native population or multiplayer recovery.
 
 The first two commands use separate server and Godot processes for create and resume, a
 unique retained test save directory, the real `Main.tscn` setup form, mouse

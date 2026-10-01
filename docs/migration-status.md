@@ -22,7 +22,7 @@ of elapsed/remaining time. Recalibrate at demonstrated delivery gates.
 | Engine/data/game-module separation | 90% | Separate assemblies and dependency-boundary tests exist; retain neutrality as remaining gameplay is integrated |
 | Shared single-player/multiplayer protocol | 85% | Common protocol, sessions, retry, reconnect, snapshots, and live tests; broader production-client soaks remain |
 | Authoritative gameplay coverage | 65% | Implemented gameplay is server-owned; full native world, AI, quest, and campaign behavior remains incomplete |
-| Persistence | 85% | Versioned saves, integrity, combined checkpoints, world seeds, and restart/replacement recovery; broader integrated recovery remains |
+| Persistence infrastructure | 85% | Versioned saves, integrity, per-session combined checkpoints and focused restart/replacement recovery; cold participant imports can overwrite shared world/RNG, and atomic complete-cohort restore remains unimplemented |
 | External content architecture and coverage | 70% | Validated packs and overlays exist; native map synthesis, world behavior, and remaining content parity are incomplete |
 | Server MPQ independence | Achieved | The current server consumes external packs and has no MPQ runtime requirement; preserve this invariant |
 | Deterministic native parity | 45% | Extensive focused replay/native characterization; whole-game equivalence and several multi-actor projection cases remain unproven |
@@ -138,6 +138,61 @@ open. Their scope, dependencies, and exit checks are defined only in the
 The following records describe implemented slices at this baseline. They are
 evidence, not a separate priority list; detailed older entries retain their
 original scope and may be superseded by later entries or the current assessment.
+
+### M1 isolated Sorcerer lifecycle and input selection (2026-10-01)
+
+The opt-in zero-argument `run-godot-lifecycle-preview.ps1` uses a separate profile
+and exact-pinned authored encounter overlay. At the same seed, the overlay preserves
+normal resources/loadouts for all six classes, quest state and non-diagnostic
+actors. Seed 5
+leaves Butcher available under both production and native pool orderings; the
+existing complete-pool ordering/parity gap remains open. Original profiles,
+content bytes, server behavior, protocol and durable save formats are unchanged.
+
+Explicit mouse spell choice, same-source reselection and Q/E cycling now clear
+only pending HUD item selection. They do not change owned items or held cursors.
+A new real-control preflight fails before the fix because the equipment staff
+remains selected; its private evidence is
+`%TEMP%/Godevilution-Scene-Acceptance-78a0b8fefd834486b47ced1bedafb7d3`.
+The earlier occupied-target `NotAllowed` followed the item-drop routing branch,
+not a successful spell cast. The Hero death-recovery button and Escape submit
+the same existing server intent only when terminal death is settled/connected.
+
+Fresh `tools/test-godot-session.ps1 -Lifecycle` and `-Lifecycle -Visible` both
+pass creation and fresh-host/client resume with Godot 4.7.2 Mono. Source SDK
+4.7.1 is preserved; only private imported copies use SDK 4.7.2. All twelve
+engine-version/import/client records have zero exits and no errors; import/client
+logs have no fatal/error matches. Evidence roots are
+`%TEMP%/Godevilution-Scene-Acceptance-dd1322b2501a497faddf72b3f161a332` and
+`%TEMP%/Godevilution-Scene-Acceptance-b1de502900c7498d8ebb9b534b6e4a93`.
+All six new visible milestone captures were inspected; art remains prototype.
+
+Actual controls activate quest 3007, cast starter Charged Bolt (40/40 -> 39/40),
+apply Sorcerer Recharge (39/40 -> 39/39), and cast Firebolt (mana 4480 -> 4096).
+Pending native-style Death is observed with actual source entity 10, then settles
+at zero life. Restart returns to Town `(75,68)` with Q6 life 64/mana 0, without
+restoring the dropped staff. Fresh resume preserves those resources/quest state,
+then acknowledges sequence 98 at `(75,69)` after restart sequence 97.
+The complete world-item snapshot, stable identity, seed, position and 39/39
+charges remain exactly equal before/after resume and movement; no owned duplicate
+exists. Bounded command traces require exact receipts/applied ticks and positions.
+Only the deliberate lethal approach may finish with an observed pending death;
+ordinary quest movement still requires Stand. No rejected command is retried.
+
+Fresh focused Release checks pass without skips: 130 protocol/model tests,
+9 content activation tests (including seed-0 exclusion/seed-5 availability),
+31 launcher tests and 4 documentation checks. The client solution builds against
+its unchanged SDK 4.7.1 pin. Ordinary visible create/resume/server-loss recovery
+and two-client movement/reverse-order resume also pass, adding seventeen clean
+engine records (twenty-nine total). Their evidence roots are
+`%TEMP%/Godevilution-Scene-Acceptance-b06af3d5e5ef41c9bced03da9d311913` and
+`%TEMP%/Godevilution-Scene-Acceptance-4ac1436594d84c07891cbd22713bb847`.
+These are focused checks, not fresh full managed/native suites, campaign
+acceptance or coherent multiplayer shared-world recovery. Earlier
+type/seed/tab/settlement harness failures remain retained and were corrected
+without editing saves or manufacturing outcomes. Full M1, native
+population/quest/class/campaign parity and complete multiplayer recovery remain
+open; the overall estimate stays approximately 35%.
 
 ### M0 same-tick multiplayer cold-resume counterexample (2026-10-01)
 

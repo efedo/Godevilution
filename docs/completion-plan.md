@@ -71,7 +71,7 @@ isolated spell or table rows while the playable route stays unchanged.
 | Gate | Deliverable | Dependencies | Current position |
 | --- | --- | --- | --- |
 | M0 | Reproducible launch and honest acceptance evidence | Existing implementation | Godot session/recovery passes; opt-in one/four-participant host and actual-client baselines recorded in status; native GUI and release-budget/platform gaps remain |
-| M1 | Usable Godot town-to-dungeon loop | M0 launch/acceptance harness | Authored combat/loot/equipment, real NPC approach/service entry, purchased-scroll portal return and fresh-host owner-return closure pass; full loop remains |
+| M1 | Usable Godot town-to-dungeon loop | M0 launch/acceptance harness | Authored combat/loot/equipment, NPC/service approach, purchased-scroll portal and isolated Sorcerer quest/cast/Recharge/death/restart/restore journeys pass; full loop remains |
 | M2 | Native-compatible generated world | M0 geometry/parity baseline | Ordinary Cathedral depths 1-4 coarse/fine oracle covers six seeds and MAIN/PREV; separate opt-in four-depth runtime/profile/v3 restore and ordinary-control traversal are integrated; native population, campaign mapping, wider topology and remaining families remain |
 | M3 | Complete base and Hellfire gameplay routes | M1 plus the relevant M2 world slices | Many rules exist; campaign and remaining behavioral coverage remain |
 | M4 | Release-quality client, recovery, and packaging | M3; preparation begins during M1/M2 | Recovery and adapter packaging foundations exist; product acceptance remains |
@@ -247,6 +247,11 @@ deliberately does not claim native generated-world parity, which belongs to M2.
    transfers without changing base saves or granting resources. A separate
    exact-pinned portal overlay now adds a purchased, consumed scroll, actual cast,
    town return, active-portal fresh-host restore and owner-return closure.
+   A separate Sorcerer lifecycle profile now verifies itemless quest activation,
+   charged staff/class Recharge, mana-consuming Firebolt and observed
+   monster-caused player death,
+   Town restart and exact off-level dropped-staff restore through actual controls.
+   Normal resources and original profile identities remain unchanged.
    Preserve original and new profile identities/saves. Declared local-level NPC
    and portal destinations now support cancellable, acknowledged approach through
    World controls. Native-role vendor/stash entry requires the declared NPC level,
@@ -254,8 +259,8 @@ deliberately does not claim native generated-world parity, which belongs to M2.
    Owned portals take priority over coincident automatic stairs. Metadata-bound
    native vendors now close after accepted cross-level entry into a non-town level;
    stash and compatibility-store policies remain unchanged. Close remaining
-   native placement exclusions, full service lifecycle/pricing, quest, death/restart,
-   class skill, and cooperative gameplay/recovery journeys. Two actual Godot clients now
+   native placement exclusions, full service lifecycle/pricing, broader quest,
+   death/class coverage and cooperative gameplay/recovery journeys. Two actual Godot clients now
    have basic town movement/state visibility and reverse-order fresh-host resume
    acceptance; retain local-first identity and separate bookmarks when expanding
    it to combat/world interactions. These authored previews do not close M1.

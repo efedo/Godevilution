@@ -44,6 +44,7 @@ public partial class Main : Node2D
     internal Vector2? ObservedPlayerScreenPosition => world?.ScreenPositionForEntity(model.PlayerEntityId);
     internal ulong ObservedSnapshotRevision => snapshotRevision;
     internal ulong ObservedLastQueuedSequence { get; private set; }
+    internal PlayerItemReference? ObservedSelectedItemReference => hud?.SelectedItemReference?.Clone();
     internal Vector2 ObservedTileScreenPosition(int x, int y) => world!.ScreenPositionForTile(x, y);
     internal Vector2? ObservedEntityScreenPosition(uint entityId) => world?.ScreenPositionForEntity(entityId);
 
@@ -176,6 +177,7 @@ public partial class Main : Node2D
         };
         hud.OpenStoreRequested += storeId => QueueIfConnected(new Command { OpenStoreRequested = new OpenStoreRequested { StoreId = storeId } });
         hud.CloseStoreRequested += () => QueueIfConnected(new Command { CloseStoreRequested = new CloseStoreRequested() });
+        hud.RestartTownRequested += () => RequestTownRestart();
         hud.OpenStashRequested += () => QueueIfConnected(new Command { OpenStashRequested = new OpenStashRequested() });
         hud.CloseStashRequested += () => QueueIfConnected(new Command { CloseStashRequested = new CloseStashRequested() });
         hud.DepositStashGoldRequested += amount => QueueIfConnected(new Command {
@@ -412,6 +414,17 @@ public partial class Main : Node2D
         }
     }
 
+    private bool RequestTownRestart()
+    {
+        if (client?.IsConnected != true
+            || !AuthoritativeDeathRecoveryRules.CanRequestTownRestart(model.Snapshot?.Players.FirstOrDefault()))
+            return false;
+        routeTravel.Cancel();
+        interactionTravel.Cancel();
+        Queue(new Command { RestartTownRequested = new RestartTownRequested() });
+        return true;
+    }
+
     public override void _UnhandledInput(InputEvent @event)
     {
         if (@event is InputEventKey toggle && toggle.Pressed && !toggle.Echo) {
@@ -434,12 +447,7 @@ public partial class Main : Node2D
                 GetViewport().SetInputAsHandled();
                 return;
             }
-            var localPlayer = model.Snapshot?.Players.FirstOrDefault();
-            if (key.Keycode == Key.Escape
-                && localPlayer?.Life == 0
-                && localPlayer.CombatMode == PlayerCombatMode.Death
-                && localPlayer.CurrentAction is null) {
-                Queue(new Command { RestartTownRequested = new RestartTownRequested() });
+            if (key.Keycode == Key.Escape && RequestTownRestart()) {
                 GetViewport().SetInputAsHandled();
                 return;
             }
@@ -836,8 +844,10 @@ public partial class Main : Node2D
             selectedSpellSourceKey,
             direction);
         selectedSpellSourceKey = source?.Key;
-        if (source is not null)
+        if (source is not null) {
+            hud?.ClearItemSelection();
             hud?.SetStatus($"Selected {source.DisplayName} (click a target to cast; Q/E cycles)");
+        }
     }
 
     private void SelectSpellSource(string sourceKey)
@@ -846,8 +856,10 @@ public partial class Main : Node2D
             AuthoritativeSpellSourceSelector.GetSources(model.Snapshot),
             sourceKey);
         selectedSpellSourceKey = source?.Key;
-        if (source is not null)
+        if (source is not null) {
+            hud?.ClearItemSelection();
             hud?.SetStatus($"Selected {source.DisplayName} (click a target to cast)");
+        }
     }
 
     private uint ResolveVisibleCastTargetEntityId(

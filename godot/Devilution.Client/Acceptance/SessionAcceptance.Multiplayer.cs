@@ -77,7 +77,7 @@ public partial class SessionAcceptance
         var before = ObservePlayer(local);
         var sequence = previous?.Sequence ?? main.ObservedCommandResult?.ClientSequence ?? 0;
         await MultiplayerMove(main, Key.Right, 1, 0, sequence, directory, prefix);
-        await MultiplayerCommand(main, Key.F, sequence + 1, directory, prefix,
+        await KeyCommand(main, Key.F, sequence + 1, directory, prefix,
             snapshot => snapshot.Players.First() is { CurrentAction: null, CombatMode: PlayerCombatMode.Stand } player
                 && player.EntityId == local.EntityId && player.HostileMode != before.Hostile
                 && player.PositionX == before.X + 1 && player.PositionY == before.Y,
@@ -120,16 +120,17 @@ public partial class SessionAcceptance
         string directory, string prefix)
     {
         var before = main.ObservedSnapshot!.Players.First();
-        return MultiplayerCommand(main, key, previousSequence, directory, prefix,
+        return KeyCommand(main, key, previousSequence, directory, prefix,
             snapshot => snapshot.Players.First() is { CurrentAction: null, CombatMode: PlayerCombatMode.Stand } moved
                 && moved.EntityId == before.EntityId && moved.PositionX == before.PositionX + x && moved.PositionY == before.PositionY + y,
             $"Same settled local player at ({before.PositionX + x},{before.PositionY + y}).");
     }
 
-    private async Task MultiplayerCommand(Main main, Key key, ulong previousSequence,
+    /** Shared real-key acceptance with exact receipt and bounded failure evidence. */
+    private async Task KeyCommand(Main main, Key key, ulong previousSequence,
         string directory, string prefix, Func<Snapshot, bool> settled, string expected)
     {
-        var trace = new List<MultiplayerCommandSample>();
+        var trace = new List<AcceptanceCommandSample>();
         var elapsed = System.Diagnostics.Stopwatch.StartNew();
         var droppedSamples = 0;
         var passed = false;
@@ -138,7 +139,7 @@ public partial class SessionAcceptance
             var snapshot = main.ObservedSnapshot;
             var player = snapshot?.Players.FirstOrDefault();
             var result = main.ObservedCommandResult;
-            var state = new MultiplayerCommandState(main.TransportConnected, main.ObservedPendingCommandCount,
+            var state = new AcceptanceCommandState(main.TransportConnected, main.ObservedPendingCommandCount,
                 main.ObservedLastQueuedSequence, main.ObservedSnapshotRevision, snapshot?.Tick,
                 player?.EntityId, player?.PositionX, player?.PositionY, player?.CombatMode.ToString(),
                 player?.CurrentAction?.ToString(), player?.HostileMode,
@@ -151,11 +152,11 @@ public partial class SessionAcceptance
                 trace.RemoveAt(1);
                 droppedSamples++;
             }
-            trace.Add(new MultiplayerCommandSample(elapsed.Elapsed.TotalMilliseconds, stage, state));
+            trace.Add(new AcceptanceCommandSample(elapsed.Elapsed.TotalMilliseconds, stage, state));
         }
         Observe("BeforeInput", force: true);
         try {
-            await PressMultiplayerKey(key);
+            await PressAcceptanceKey(key);
             Observe("AfterInput", force: true);
             await Until(() => {
                 Observe("AwaitingOutcome");
@@ -168,7 +169,7 @@ public partial class SessionAcceptance
                 return result is not null && result.ClientSequence == previousSequence + 1
                     && main.ObservedLastQueuedSequence == result.ClientSequence && main.ObservedPendingCommandCount == 0
                     && snapshot is not null && snapshot.Tick >= result.AppliedTick && settled(snapshot);
-            }, $"Multiplayer input {key} did not settle: {expected}", 10);
+            }, $"Acceptance input {key} did not settle: {expected}", 10);
             passed = true;
         } catch (Exception exception) {
             Observe("Failure", force: true);
@@ -184,7 +185,7 @@ public partial class SessionAcceptance
         }
     }
 
-    private async Task PressMultiplayerKey(Key key)
+    private async Task PressAcceptanceKey(Key key)
     {
         GetViewport().GuiReleaseFocus();
         Input.ParseInputEvent(new InputEventKey { Keycode = key, PhysicalKeycode = key, Pressed = true });
@@ -202,8 +203,8 @@ public partial class SessionAcceptance
             ?? throw new InvalidDataException("Multiplayer evidence is empty.");
 
     private sealed record MultiplayerPlayerState(string Name, uint ClassId, uint LevelId, int X, int Y, uint Gold, bool Hostile);
-    private sealed record MultiplayerCommandSample(double Milliseconds, string Stage, MultiplayerCommandState State);
-    private sealed record MultiplayerCommandState(bool Connected, int Pending, ulong LastQueuedSequence,
+    private sealed record AcceptanceCommandSample(double Milliseconds, string Stage, AcceptanceCommandState State);
+    private sealed record AcceptanceCommandState(bool Connected, int Pending, ulong LastQueuedSequence,
         ulong SnapshotRevision, ulong? SnapshotTick, uint? EntityId, int? X, int? Y, string? CombatMode,
         string? Action, bool? Hostile, ulong? ResultSequence, string? Status, string? RejectReason,
         ulong? AppliedTick, ulong? ReceiptSequence);

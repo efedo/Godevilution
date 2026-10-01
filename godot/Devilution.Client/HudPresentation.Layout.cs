@@ -58,6 +58,7 @@ public partial class HudPresentation
         hero.AddChild(attributes);
         hero.AddChild(Buttons(allocateStrength, allocateMagic, allocateDexterity, allocateVitality));
         AddList(hero, "Spell sources (select here, or use Q/E)", spellSources, 140);
+        hero.AddChild(restartTown);
         hero.AddChild(highContrastToggle);
 
         var items = AddPage("Items");
@@ -112,7 +113,7 @@ public partial class HudPresentation
             if (destinations.Selected >= 0 && destinations.Selected < displayedDestinations.Length)
                 DestinationRequested?.Invoke(displayedDestinations[destinations.Selected]);
         };
-        interactions.AddChild(Caption("WASD / arrows: walk. Ctrl + left click: walk toward a tile. Left click: interact or cast. Right click: attack. Movement, world clicks, or Escape cancel travel."));
+        interactions.AddChild(Caption("WASD / arrows: walk. Ctrl + left click: walk toward a tile. Left click: interact or cast. Right click: attack. Movement, world clicks, or Escape cancel travel. After death settles, Escape or Hero / Restart in Town requests server recovery."));
         interactions.AddChild(Buttons(interactObject, disarmTrap, advanceQuest, questTownerInteraction, clearEvents));
         interactions.AddChild(dialog);
         interactions.AddChild(diagnosticsToggle);

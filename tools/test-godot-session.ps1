@@ -1,13 +1,14 @@
 [CmdletBinding()]
-param([string]$GodotExecutable, [switch]$Visible, [switch]$Journey, [switch]$TownLoop, [switch]$Multiplayer, [string]$CathedralProfileDirectory, [string]$CathedralDepthProfileDirectory)
+param([string]$GodotExecutable, [switch]$Visible, [switch]$Journey, [switch]$TownLoop, [switch]$Lifecycle, [switch]$Multiplayer, [string]$CathedralProfileDirectory, [string]$CathedralDepthProfileDirectory)
 
 $ErrorActionPreference = 'Stop'
-if ($CathedralDepthProfileDirectory -and ($CathedralProfileDirectory -or $Journey -or $TownLoop -or $Multiplayer)) {
+if ($CathedralDepthProfileDirectory -and ($CathedralProfileDirectory -or $Journey -or $TownLoop -or $Lifecycle -or $Multiplayer)) {
     throw 'Cathedral depth acceptance requires its own compiled profile.'
 }
 if ($Journey -and $TownLoop) { throw 'Choose either -Journey or -TownLoop.' }
-if ($Multiplayer -and ($Journey -or $TownLoop)) { throw 'Multiplayer acceptance is a separate base-content profile.' }
-if ($CathedralProfileDirectory -and ($Journey -or $TownLoop -or $Multiplayer)) {
+if ($Lifecycle -and ($Journey -or $TownLoop -or $Multiplayer)) { throw 'Lifecycle acceptance is a separate Sorcerer preview profile.' }
+if ($Multiplayer -and ($Journey -or $TownLoop -or $Lifecycle)) { throw 'Multiplayer acceptance is a separate base-content profile.' }
+if ($CathedralProfileDirectory -and ($Journey -or $TownLoop -or $Lifecycle -or $Multiplayer)) {
     throw 'Cathedral acceptance is a separate compiled single-player playtest profile.'
 }
 $repositoryRoot = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot '..')).Path
@@ -67,6 +68,28 @@ try {
             }
         }
         Write-Host "PASS: two actual Godot clients, mutual movement/state visibility, and fresh-host multiplayer resume. Evidence: $sessionDirectory"
+        return
+    }
+    if ($Lifecycle) {
+        $parameters.LifecyclePreviewContent = $true
+        $parameters.QuitAfterSeconds = 420
+        & $launcher @parameters -AcceptancePhase Lifecycle
+        $parameters.QuitAfterSeconds = 90
+        & $launcher @parameters -AcceptancePhase LifecycleResume
+        $created = Get-Content -LiteralPath (Join-Path $sessionDirectory 'lifecycle-processes.json') -Raw | ConvertFrom-Json
+        $resumed = Get-Content -LiteralPath (Join-Path $sessionDirectory 'lifecycleresume-processes.json') -Raw | ConvertFrom-Json
+        if (($created.HostProcessId -eq $resumed.HostProcessId -and $created.HostStartedUtc -eq $resumed.HostStartedUtc) -or
+            ($created.Clients[0].ProcessId -eq $resumed.Clients[0].ProcessId -and $created.Clients[0].StartedUtc -eq $resumed.Clients[0].StartedUtc)) {
+            throw 'Lifecycle resume did not start fresh authoritative host/client processes.'
+        }
+        $createdEvidence = Get-Content -LiteralPath (Join-Path $sessionDirectory 'lifecycle.json') -Raw | ConvertFrom-Json
+        $resumedEvidence = Get-Content -LiteralPath (Join-Path $sessionDirectory 'lifecycleresume.json') -Raw | ConvertFrom-Json
+        if ($createdEvidence.ContentHash -cne $resumedEvidence.ContentHash -or
+            $createdEvidence.RulesetHash -cne $resumedEvidence.RulesetHash -or
+            $createdEvidence.ClassId -ne 2 -or $resumedEvidence.ClassId -ne 2) {
+            throw 'Lifecycle resume changed the persisted content/ruleset identity or Sorcerer class.'
+        }
+        Write-Host "PASS: actual Sorcerer quest/charged-staff/recharge/Firebolt/death/restart and fresh-host resume. Evidence: $sessionDirectory"
         return
     }
     if ($TownLoop) {

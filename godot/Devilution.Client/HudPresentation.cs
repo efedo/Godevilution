@@ -25,7 +25,7 @@ public partial class HudPresentation : CanvasLayer
     private readonly Label commandFeedback = new();
     private readonly Label diagnostics = new();
     private readonly Label victory = new();
-    private readonly ItemList spellSources = new() { Name = "SpellSources" };
+    private readonly ItemList spellSources = new() { Name = "SpellSources", AllowReselect = true };
     private readonly ItemList storeItems = new() { Name = "StoreItems" };
     private readonly ItemList stashItems = new();
     private readonly OptionButton stashPageSelector = new();
@@ -56,7 +56,7 @@ public partial class HudPresentation : CanvasLayer
     private readonly Button buySelected = new() { Name = "BuySelected", Text = "Buy selected" };
     private readonly Button sellSelected = new() { Text = "Sell selected" };
     private readonly Button repairSelected = new() { Text = "Repair selected" };
-    private readonly Button rechargeSelected = new() { Text = "Recharge selected" };
+    private readonly Button rechargeSelected = new() { Name = "RechargeSelected", Text = "Recharge selected" };
     private readonly Button identifySelected = new() { Text = "Identify selected" };
     private readonly Button readBookSelected = new() { Text = "Read book selected" };
     private readonly Button useConsumableSelected = new() { Name = "UseConsumable", Text = "Use consumable selected" };
@@ -68,7 +68,11 @@ public partial class HudPresentation : CanvasLayer
     private readonly Button disarmTrap = new() { Text = "Disarm trap (Rogue)" };
     private readonly Button interactObject = new() { Text = "Interact" };
     private readonly Button advanceQuest = new() { Text = "Advance quest" };
-    private readonly Button questTownerInteraction = new() { Text = "Use quest/towner" };
+    private readonly Button questTownerInteraction = new() { Name = "QuestTowner", Text = "Use quest/towner" };
+    private readonly Button restartTown = new() {
+        Name = "RestartTown", Text = "Restart in Town (Esc)", Visible = false,
+        TooltipText = "Available after the server confirms that death has settled.",
+    };
     private readonly Button refillMana = new() { Text = "Refill mana" };
     private readonly Button dropHeld = new() { Text = "Drop held (X)" };
     private readonly Button clearEvents = new() { Text = "Clear events" };
@@ -116,6 +120,7 @@ public partial class HudPresentation : CanvasLayer
     public event Action<uint>? OperateObjectRequested;
     public event Action<uint>? AdvanceQuestRequested;
     public event Action<uint, uint>? QuestTownerInteractionRequested;
+    public event Action? RestartTownRequested;
     public event Action? RefillManaRequested;
     public event Action? DropHeldItemRequested;
     public event Action? ClearEventsRequested;
@@ -124,7 +129,7 @@ public partial class HudPresentation : CanvasLayer
     /** Selected carried item used by world-drop routing; stash items are rejected by the client rules. */
     public PlayerItemReference? SelectedItemReference => selectedItemReference;
 
-    /** Clears the HUD's item selection after a world-drop intent is queued. */
+    /** Clears pending item selection after a drop intent or explicit spell choice. */
     public void ClearItemSelection() => ClearSelectedItem();
 
     public override void _Ready()
@@ -245,6 +250,7 @@ public partial class HudPresentation : CanvasLayer
             if (availableQuestTownerInteraction is { } interaction)
                 QuestTownerInteractionRequested?.Invoke(interaction.QuestId, checked((uint)interaction.TownerId));
         };
+        restartTown.Pressed += () => RestartTownRequested?.Invoke();
         refillMana.Pressed += () => RefillManaRequested?.Invoke();
         dropHeld.Pressed += () => DropHeldItemRequested?.Invoke();
         clearEvents.Pressed += () => ClearEventsRequested?.Invoke();
@@ -402,6 +408,8 @@ public partial class HudPresentation : CanvasLayer
         availableQuestTownerInteraction = AuthoritativeQuestTownerInteractionSelector.Select(model.Snapshot);
 
         var connected = client?.IsConnected == true;
+        restartTown.Visible = player?.Life == 0;
+        restartTown.Disabled = !connected || !AuthoritativeDeathRecoveryRules.CanRequestTownRestart(player);
         ApplyRoutes(model.VisibleWarpTriggers, connected && player is { Life: > 0 });
         ApplyDestinations(model.Snapshot, connected && player is { Life: > 0 });
         var hasStatPoints = connected && player?.StatPoints > 0;

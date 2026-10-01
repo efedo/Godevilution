@@ -7,6 +7,54 @@ namespace Devilution.Server.Tests;
 public sealed class LocalLauncherBehaviorTests
 {
     [Fact]
+    public void LifecycleGuardsAllowInteractiveAndMatchingPhasesWithoutLaunchingAnEngine()
+    {
+        if (!OperatingSystem.IsWindows())
+            return;
+
+        var script = BuildPowerShellHarness([], """
+            $guardEnd = $launcherText.IndexOf('$repositoryRoot = ', [StringComparison]::Ordinal)
+            if ($guardEnd -le 0) { throw 'Could not isolate the launcher argument guards.' }
+            $guards = [scriptblock]::Create($launcherText.Substring(0, $guardEnd) + "`r`n'GUARDS-PASSED'")
+            $scenarios = @(
+                @{ Label = 'normal'; Parameters = @{}; Allowed = $true },
+                @{ Label = 'base create'; Parameters = @{ AcceptancePhase = 'Create' }; Allowed = $true },
+                @{ Label = 'base resume'; Parameters = @{ AcceptancePhase = 'Resume' }; Allowed = $true },
+                @{ Label = 'interactive lifecycle'; Parameters = @{ LifecyclePreviewContent = $true }; Allowed = $true },
+                @{ Label = 'lifecycle creation'; Parameters = @{ LifecyclePreviewContent = $true; AcceptancePhase = 'Lifecycle' }; Allowed = $true },
+                @{ Label = 'lifecycle resume'; Parameters = @{ LifecyclePreviewContent = $true; AcceptancePhase = 'LifecycleResume' }; Allowed = $true },
+                @{ Label = 'original preview'; Parameters = @{ PreviewContent = $true }; Allowed = $true },
+                @{ Label = 'portal preview'; Parameters = @{ PortalPreviewContent = $true }; Allowed = $true },
+                @{ Label = 'multiplayer'; Parameters = @{ Multiplayer = $true }; Allowed = $true },
+                @{ Label = 'creation without profile'; Parameters = @{ AcceptancePhase = 'Lifecycle' }; Allowed = $false },
+                @{ Label = 'resume without profile'; Parameters = @{ AcceptancePhase = 'LifecycleResume' }; Allowed = $false },
+                @{ Label = 'wrong acceptance'; Parameters = @{ LifecyclePreviewContent = $true; AcceptancePhase = 'Resume' }; Allowed = $false },
+                @{ Label = 'original preview mixture'; Parameters = @{ LifecyclePreviewContent = $true; PreviewContent = $true }; Allowed = $false },
+                @{ Label = 'portal preview mixture'; Parameters = @{ LifecyclePreviewContent = $true; PortalPreviewContent = $true }; Allowed = $false },
+                @{ Label = 'multiplayer mixture'; Parameters = @{ LifecyclePreviewContent = $true; Multiplayer = $true }; Allowed = $false },
+                @{ Label = 'performance mixture'; Parameters = @{ LifecyclePreviewContent = $true; AcceptancePhase = 'Performance' }; Allowed = $false },
+                @{ Label = 'L1 mixture'; Parameters = @{ LifecyclePreviewContent = $true; CathedralProfileDirectory = 'not-opened' }; Allowed = $false },
+                @{ Label = 'depth mixture'; Parameters = @{ LifecyclePreviewContent = $true; CathedralDepthProfileDirectory = 'not-opened' }; Allowed = $false }
+            )
+            foreach ($scenario in $scenarios) {
+                $arguments = $scenario.Parameters
+                $allowed = $false
+                try {
+                    $output = @(& $guards @arguments)
+                    $allowed = $output -contains 'GUARDS-PASSED'
+                } catch {
+                    if ($scenario.Allowed) { throw }
+                }
+                if ($allowed -ne $scenario.Allowed) {
+                    throw ('Unexpected guard outcome for ' + $scenario.Label)
+                }
+            }
+            Write-Output 'PASS'
+            """);
+        Assert.Contains("PASS", RunPowerShell(script), StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void GodotCleanupIsBoundedAndTerminalEvidenceSurvivesOutputFailure()
     {
         if (!OperatingSystem.IsWindows())

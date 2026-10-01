@@ -7,6 +7,35 @@ namespace Devilution.Server.Tests;
 public sealed class LocalLauncherContractTests
 {
     [Fact]
+    public void LifecyclePreviewHasAnExplicitZeroArgumentLauncherAndSeparateProfile()
+    {
+        var root = FindRepositoryRoot();
+        var wrapper = File.ReadAllText(Path.Combine(root, "run-godot-lifecycle-preview.ps1"));
+        var harness = File.ReadAllText(Path.Combine(root, "godot/run-local-client.ps1"));
+        var acceptance = File.ReadAllText(Path.Combine(root, "tools/test-godot-session.ps1"));
+        Assert.Contains("param()", wrapper);
+        Assert.Contains("& $godotLauncher -LifecyclePreviewContent", wrapper);
+        Assert.Contains("Test-Path -LiteralPath $godotLauncher -PathType Leaf", wrapper);
+        Assert.Contains("[switch]$LifecyclePreviewContent", harness);
+        Assert.Contains("'.local/godot-lifecycle-preview'", harness);
+        Assert.Contains("server/content/town-lifecycle-preview", harness);
+        Assert.Contains("if ($LifecyclePreviewContent) { '--starting-level 0 --random-seed 5' } elseif", harness);
+        Assert.Contains("{ '--starting-level 0 --random-seed 0' } else { '' }", harness);
+        Assert.Contains("'Lifecycle'", harness);
+        Assert.Contains("'LifecycleResume'", harness);
+        Assert.Contains("[switch]$Lifecycle", acceptance);
+        Assert.Contains("$parameters.LifecyclePreviewContent = $true", acceptance);
+        Assert.Contains("-AcceptancePhase LifecycleResume", acceptance);
+        foreach (var existing in new[] {
+            "run-godot-client.ps1", "run-godot-preview.ps1",
+            "run-godot-portal-preview.ps1", "run-godot-multiplayer.ps1",
+        })
+            Assert.DoesNotContain("LifecyclePreviewContent", File.ReadAllText(Path.Combine(root, existing)));
+        foreach (var resourceOverride in new[] { "--starting-gold", "--starting-life", "--starting-mana" })
+            Assert.DoesNotContain(resourceOverride, wrapper);
+    }
+
+    [Fact]
     public void CathedralPlaytestIsAnExplicitIsolatedZeroArgumentLauncher()
     {
         var root = FindRepositoryRoot();
@@ -269,7 +298,8 @@ public sealed class LocalLauncherContractTests
         Assert.Contains("server/content/town-portal-preview", harness);
         Assert.True(harness.IndexOf("server/content/town-loop-preview", StringComparison.Ordinal)
             < harness.IndexOf("server/content/town-portal-preview", StringComparison.Ordinal));
-        Assert.Contains("if ($PreviewContent -and $PortalPreviewContent)", harness);
+        Assert.Contains("($PreviewContent -and $PortalPreviewContent)", harness);
+        Assert.Contains("(($PreviewContent -or $PortalPreviewContent) -and $LifecyclePreviewContent)", harness);
         Assert.Contains("GODEVILUTION_PORTAL_PREVIEW", harness);
         Assert.Contains("$clientEnvironment['GODEVILUTION_PORTAL_PREVIEW'] = '1'", harness);
         Assert.Contains("-not ($PreviewContent -or $PortalPreviewContent)", harness);

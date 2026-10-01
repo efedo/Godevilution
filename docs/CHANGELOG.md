@@ -2,6 +2,16 @@
 
 All notable changes to this fork are documented below.
 
+- 2026-10-01: Add an isolated Sorcerer lifecycle preview and actual quest,
+  charged-staff/Recharge/Firebolt, monster-caused player death, Town restart and
+  exact dropped-staff fresh-host restore acceptance. Fix explicit spell selection retaining a
+  pending item-drop selection; add same-source and keyboard regression checks.
+  Expose a settled-death Hero recovery button using the existing server intent.
+  Lifecycle, ordinary recovery and multiplayer resume pass with twenty-nine
+  clean engine exits; lifecycle captures are inspected and 174 focused checks pass.
+  Preserve normal
+  resources, profiles, server authority, protocol and saves; M0/M1 remain open.
+
 - 2026-10-01: Add an independently reviewed explicit multiplayer cold-resume
   regression using real loopback TCP and copied durable same-tick checkpoints.
   Both resume orders reproducibly resurrect a claimed item; retain the two

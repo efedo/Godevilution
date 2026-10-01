@@ -9,21 +9,31 @@ param(
     [string]$SessionDirectory,
     [switch]$PreviewContent,
     [switch]$PortalPreviewContent,
+    [switch]$LifecyclePreviewContent,
     [switch]$Multiplayer,
     [string]$CathedralProfileDirectory,
     [string]$CathedralDepthProfileDirectory,
     [ValidateSet(1, 4)] [int]$PerformanceParticipants = 1,
-    [ValidateSet('Create', 'Resume', 'Recovery', 'Journey', 'JourneyResume', 'TownLoop', 'TownLoopResume', 'MultiplayerCreate', 'MultiplayerResume', 'Performance', 'CathedralJourney', 'CathedralResume', 'CathedralDepthJourney', 'CathedralDepthResume')] [string]$AcceptancePhase
+    [ValidateSet('Create', 'Resume', 'Recovery', 'Journey', 'JourneyResume', 'TownLoop', 'TownLoopResume', 'Lifecycle', 'LifecycleResume', 'MultiplayerCreate', 'MultiplayerResume', 'Performance', 'CathedralJourney', 'CathedralResume', 'CathedralDepthJourney', 'CathedralDepthResume')] [string]$AcceptancePhase
 )
 
 $ErrorActionPreference = 'Stop'
 $performance = $AcceptancePhase -eq 'Performance'
+$lifecyclePhases = @('Lifecycle', 'LifecycleResume')
+$lifecycle = [bool]$LifecyclePreviewContent
+$lifecyclePhase = $AcceptancePhase -in $lifecyclePhases
+if ($lifecyclePhase -and -not $lifecycle) {
+    throw 'Lifecycle acceptance requires -LifecyclePreviewContent.'
+}
+if ($lifecycle -and $AcceptancePhase -and -not $lifecyclePhase) {
+    throw 'The lifecycle preview only supports Lifecycle and LifecycleResume acceptance phases.'
+}
 $cathedralDepths = -not [string]::IsNullOrWhiteSpace($CathedralDepthProfileDirectory)
 if ($cathedralDepths -and -not [string]::IsNullOrWhiteSpace($CathedralProfileDirectory)) {
     throw 'Choose either the L1 or depths 1-4 Cathedral profile, never both.'
 }
 $cathedral = $cathedralDepths -or -not [string]::IsNullOrWhiteSpace($CathedralProfileDirectory)
-if ($cathedral -and ($PreviewContent -or $PortalPreviewContent -or $Multiplayer -or $performance)) {
+if ($cathedral -and ($PreviewContent -or $PortalPreviewContent -or $LifecyclePreviewContent -or $Multiplayer -or $performance)) {
     throw 'Cathedral playtests require their own single-player content and save profile.'
 }
 if (($AcceptancePhase -in @('CathedralJourney', 'CathedralResume')) -and (-not $cathedral -or $cathedralDepths)) {
@@ -37,14 +47,19 @@ if ($cathedral -and $AcceptancePhase -and $AcceptancePhase -notin $cathedralPhas
     throw 'Compiled Cathedral content only supports its own acceptance phases.'
 }
 if ($performance) {
-    if ($PreviewContent -or $PortalPreviewContent -or ($Multiplayer -ne ($PerformanceParticipants -eq 4))) {
+    if ($PreviewContent -or $PortalPreviewContent -or $LifecyclePreviewContent -or ($Multiplayer -ne ($PerformanceParticipants -eq 4))) {
         throw 'Performance uses base content and requires -Multiplayer only for four participants.'
     }
 } elseif ($PerformanceParticipants -ne 1) {
     throw 'PerformanceParticipants is only valid for Performance acceptance.'
 }
 $clientCount = if ($performance) { $PerformanceParticipants } elseif ($Multiplayer) { 2 } else { 1 }
-if ($PreviewContent -and $PortalPreviewContent) { throw 'Choose one preview profile.' }
+if (($PreviewContent -and $PortalPreviewContent) -or (($PreviewContent -or $PortalPreviewContent) -and $LifecyclePreviewContent)) {
+    throw 'Choose one preview profile.'
+}
+if ($LifecyclePreviewContent -and ($Multiplayer -or $performance)) {
+    throw 'The lifecycle preview requires its own single-player content and save profile.'
+}
 if ($AcceptancePhase -in @('TownLoop', 'TownLoopResume') -and -not ($PreviewContent -or $PortalPreviewContent)) {
     throw 'Town-loop acceptance requires -PreviewContent or -PortalPreviewContent and its isolated content identity.'
 }
@@ -64,7 +79,7 @@ if ([string]::IsNullOrWhiteSpace($SessionDirectory)) {
         $profileDirectory = if ($cathedralDepths) { $CathedralDepthProfileDirectory } else { $CathedralProfileDirectory }
         Join-Path ([IO.Path]::GetFullPath($profileDirectory)) 'sessions/local'
     } else {
-        Join-Path $repositoryRoot $(if ($Multiplayer) { '.local/godot-multiplayer' } elseif ($PortalPreviewContent) { '.local/godot-portal-preview' } elseif ($PreviewContent) { '.local/godot-preview' } else { '.local/godot' })
+        Join-Path $repositoryRoot $(if ($Multiplayer) { '.local/godot-multiplayer' } elseif ($lifecycle) { '.local/godot-lifecycle-preview' } elseif ($PortalPreviewContent) { '.local/godot-portal-preview' } elseif ($PreviewContent) { '.local/godot-preview' } else { '.local/godot' })
     }
 }
 $SessionDirectory = [System.IO.Path]::GetFullPath($SessionDirectory)
@@ -119,7 +134,7 @@ $environmentNames = @('DEVILUTION_SERVER_HOST', 'DEVILUTION_SERVER_PORT', 'DEVIL
     'DEVILUTION_CONTENT_HASH', 'DEVILUTION_RULESET_HASH', 'DEVILUTION_CHARACTER_CLASS_ID',
     'DEVILUTION_CHARACTER_NAME', 'DEVILUTION_RESUME_TOKEN', 'DEVILUTION_RESUME_TOKEN_PATH',
     'GODEVILUTION_ACCEPTANCE_PHASE', 'GODEVILUTION_ACCEPTANCE_DIRECTORY', 'GODEVILUTION_QUIT_AFTER_SECONDS',
-    'GODEVILUTION_LOCAL_PLAYER', 'GODEVILUTION_PORTAL_PREVIEW', 'GODEVILUTION_CATHEDRAL_PROFILE', 'GODEVILUTION_CATHEDRAL_DEPTH_PROFILE',
+    'GODEVILUTION_LOCAL_PLAYER', 'GODEVILUTION_PORTAL_PREVIEW', 'GODEVILUTION_LIFECYCLE_PREVIEW', 'GODEVILUTION_CATHEDRAL_PROFILE', 'GODEVILUTION_CATHEDRAL_DEPTH_PROFILE',
     'GODEVILUTION_PERFORMANCE_PARTICIPANTS', 'GODEVILUTION_PERFORMANCE_SHARED_DIRECTORY',
     'GODEVILUTION_CLIENT_PERFORMANCE_OUTPUT', 'GODEVILUTION_CLIENT_PERFORMANCE_WARMUP_SECONDS',
     'GODEVILUTION_CLIENT_PERFORMANCE_DURATION_SECONDS', 'GODEVILUTION_CLIENT_PERFORMANCE_MAX_SAMPLES')
@@ -989,9 +1004,11 @@ try {
     & dotnet build (Join-Path $clientProject 'Devilution.Client.csproj') --nologo
     if ($LASTEXITCODE -ne 0) { throw 'Could not build the staged Godot client.' }
 
-    # Stable town starts; gameplay acceptance travels into combat afterward.
-    $acceptanceArguments = if ($AcceptancePhase -or $PreviewContent -or $PortalPreviewContent -or $Multiplayer -or $cathedral) { '--starting-level 0 --random-seed 0' } else { '' }
-    $overlayArguments = if ($PreviewContent -or $PortalPreviewContent) { '--content-overlay "{0}"' -f (Join-Path $repositoryRoot 'server/content/town-loop-preview') } else { '' }
+    # Seed 5 keeps Butcher available under both production and native quest-pool
+    # orderings. This diagnostic does not certify parity of the complete pools.
+    # Existing acceptance and preview profiles retain seed 0.
+    $acceptanceArguments = if ($LifecyclePreviewContent) { '--starting-level 0 --random-seed 5' } elseif ($AcceptancePhase -or $PreviewContent -or $PortalPreviewContent -or $Multiplayer -or $cathedral) { '--starting-level 0 --random-seed 0' } else { '' }
+    $overlayArguments = if ($PreviewContent -or $PortalPreviewContent) { '--content-overlay "{0}"' -f (Join-Path $repositoryRoot 'server/content/town-loop-preview') } elseif ($LifecyclePreviewContent) { '--content-overlay "{0}"' -f (Join-Path $repositoryRoot 'server/content/town-lifecycle-preview') } else { '' }
     if ($PortalPreviewContent) {
         $overlayArguments += ' --content-overlay "{0}"' -f (Join-Path $repositoryRoot 'server/content/town-portal-preview')
     }
@@ -1070,6 +1087,7 @@ try {
             DEVILUTION_RESUME_TOKEN_PATH = Join-Path $clientDirectory 'resume-token.txt'
         }
         if ($PortalPreviewContent) { $clientEnvironment['GODEVILUTION_PORTAL_PREVIEW'] = '1' }
+        if ($LifecyclePreviewContent) { $clientEnvironment['GODEVILUTION_LIFECYCLE_PREVIEW'] = '1' }
         if ($cathedralDepths) { $clientEnvironment['GODEVILUTION_CATHEDRAL_DEPTH_PROFILE'] = $cathedralProfile.MetadataPath }
         elseif ($cathedral) { $clientEnvironment['GODEVILUTION_CATHEDRAL_PROFILE'] = $cathedralProfile.MetadataPath }
         if ($CharacterClassId -ge 0) { $clientEnvironment['DEVILUTION_CHARACTER_CLASS_ID'] = [string]$CharacterClassId }
@@ -1141,7 +1159,7 @@ try {
     } else {
         if ($Multiplayer) { $startedClients += Start-SceneClient 2 }
     }
-    if (($Multiplayer -or $performance -or $cathedral) -and $AcceptancePhase) {
+    if (($Multiplayer -or $performance -or $cathedral -or $lifecycle) -and $AcceptancePhase) {
         $processEvidence = @{ HostProcessId = $serverProcess.Id; HostStartedUtc = $serverProcess.StartTime.ToUniversalTime().ToString('O'); Port = $actualPort;
             Clients = @($startedClients | ForEach-Object { @{ ProcessId = $_.Process.Id; StartedUtc = $_.Process.StartTime.ToUniversalTime().ToString('O') } }) }
         if ($cathedral) {
