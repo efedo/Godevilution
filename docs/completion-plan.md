@@ -72,7 +72,7 @@ isolated spell or table rows while the playable route stays unchanged.
 | --- | --- | --- | --- |
 | M0 | Reproducible launch and honest acceptance evidence | Existing implementation | Godot session/recovery passes; opt-in one/four-participant host and actual-client baselines recorded in status; native GUI and release-budget/platform gaps remain |
 | M1 | Usable Godot town-to-dungeon loop | M0 launch/acceptance harness | Authored combat/loot/equipment, real NPC approach/service entry, purchased-scroll portal return and fresh-host owner-return closure pass; full loop remains |
-| M2 | Native-compatible generated world | M0 geometry/parity baseline | Ordinary Cathedral depths 1-4 coarse/fine oracle covers six seeds and MAIN/PREV; only level 1 has opt-in runtime/Godot walking/authored interaction/restore; deeper activation, native population and remaining families remain |
+| M2 | Native-compatible generated world | M0 geometry/parity baseline | Ordinary Cathedral depths 1-4 coarse/fine oracle covers six seeds and MAIN/PREV; separate opt-in four-depth runtime/profile/v3 restore and ordinary-control traversal are integrated; native population, campaign mapping, wider topology and remaining families remain |
 | M3 | Complete base and Hellfire gameplay routes | M1 plus the relevant M2 world slices | Many rules exist; campaign and remaining behavioral coverage remain |
 | M4 | Release-quality client, recovery, and packaging | M3; preparation begins during M1/M2 | Recovery and adapter packaging foundations exist; product acceptance remains |
 | M5 | Production legacy-runtime retirement | M4 and capability replacement gates | Authoritative mode is Lua-free; compatibility runtime remains |
@@ -296,15 +296,20 @@ this evidence. A sample art pack does not satisfy M4's full presentation gate.
    capture explicitly disables quests and selects original-Diablo stairs; all
    six seeds with MAIN/PREV match attempt/final RNG, complete coarse/fine layers
    and entry/stairs. Existing L1 APIs/results and its separate oracle remain.
-   Next, multi-depth activation requires a separate opt-in catalog/adapter/profile/save
-   contract: preserve existing L1 v1 identities and version-2 saves. Audit profile
-   level IDs and every dependent reference; base 2/3/4 are authored other families,
-   not native Cathedral depths. Bind Down to next.Main and Up to previous.Previous;
-   only L1.Up returns Town. Keep L4.Down's native Catacombs-5 boundary explicitly
-   incomplete until supported. Accept this diagnostic only after ordinary-control
-   descent/ascent, collision, middle-floor fresh-host restore, identity rejection
-   and unchanged default/L1 regressions. Explicit per-depth seeds and authored
-   diagnostic encounters do not close campaign seed selection or native population.
+   Multi-depth activation now uses a separate opt-in catalog/adapter/profile and
+   strict version-3 save identity, preserving existing L1 v1 identities/version-2
+   saves and authored defaults. Profile IDs 1-4 replace the base prototype's other
+   families only inside the isolated pack; dependent references are validated before
+   publication. Eight reciprocal routes bind Down to next.Main and Up to
+   previous.Previous; only L1.Up returns Town. L4.Down has no route until native
+   Catacombs-5 is supported. See status for ordinary-control descent/ascent,
+   collision, middle-floor fresh-host restore and unchanged default/L1 evidence.
+   Next, close native object/door and population placement before widening playable
+   topology coverage: some exact generated layouts currently have disconnected SOL
+   routes and the diagnostic compiler rejects them rather than altering geometry.
+   Explicit per-depth seeds and optional authored encounters do not close native
+   campaign seed selection or population. Keep existing timing failures visible;
+   one successful diagnostic route is not M0 or Cathedral-family acceptance.
    Quest fragments/set pieces, wider topology and native population remain open;
    do not silently apply the base prototype's different-family quest fragment to L1.
    The shared vision contract remains conservative, not exact native light parity.

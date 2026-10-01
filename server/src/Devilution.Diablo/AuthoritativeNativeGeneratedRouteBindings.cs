@@ -295,6 +295,153 @@ public static class AuthoritativeNativeGeneratedRouteBindings
 			fingerprint);
 	}
 
+	/**
+	 * Resolves the strict four-depth Cathedral route family. This overload is
+	 * intentionally additive: the level-one resolver above retains its older
+	 * continuation and portal behavior, while depth one through four admits only
+	 * the native Town/L1/L2/L3/L4 staircase topology.
+	 */
+	public static AuthoritativeNativeGeneratedRouteBindingResolution Resolve(
+		AuthoritativeWorld world,
+		AuthoritativeLevel townLevel,
+		AuthoritativeCathedralDepthGenerationPlan plan,
+		IEnumerable<AuthoritativeWarpTarget> warps,
+		IEnumerable<AuthoritativePortal> portals,
+		AuthoritativeNativeGeneratedRouteBindingCatalog bindings)
+	{
+		ArgumentNullException.ThrowIfNull(world);
+		ArgumentNullException.ThrowIfNull(townLevel);
+		ArgumentNullException.ThrowIfNull(plan);
+		ArgumentNullException.ThrowIfNull(warps);
+		ArgumentNullException.ThrowIfNull(portals);
+		ArgumentNullException.ThrowIfNull(bindings);
+
+		ValidateTownLevel(world, townLevel);
+		var generated = BuildGeneratedLevels(plan, townLevel);
+		var bindingMap = bindings.Bindings.ToDictionary(
+			binding => (binding.RouteKind, binding.RouteId, binding.Endpoint));
+		var consumedBindings = new HashSet<(AuthoritativeNativeGeneratedRouteKind Kind, uint Id, AuthoritativeNativeGeneratedRouteEndpoint Endpoint)>();
+		var resolvedRoutes = new List<ResolvedRouteInfo>();
+		var resolvedWarps = new List<AuthoritativeWarpTarget>();
+		var resolvedPortals = new List<AuthoritativePortal>();
+		var routeIds = new HashSet<(AuthoritativeNativeGeneratedRouteKind Kind, uint Id)>();
+
+		foreach (var warp in warps)
+		{
+			ArgumentNullException.ThrowIfNull(warp);
+			if (!routeIds.Add((AuthoritativeNativeGeneratedRouteKind.Warp, warp.WarpId)))
+				throw new InvalidDataException($"Warp {warp.WarpId} is present more than once.");
+			var source = ResolveEndpoint(
+				world,
+				townLevel,
+				generated,
+				bindingMap,
+				consumedBindings,
+				AuthoritativeNativeGeneratedRouteKind.Warp,
+				warp.WarpId,
+				warp.StableSymbol,
+				AuthoritativeNativeGeneratedRouteEndpoint.Source,
+				warp.SourceLevelId,
+				warp.TriggerX,
+				warp.TriggerY);
+			var destination = ResolveEndpoint(
+				world,
+				townLevel,
+				generated,
+				bindingMap,
+				consumedBindings,
+				AuthoritativeNativeGeneratedRouteKind.Warp,
+				warp.WarpId,
+				warp.StableSymbol,
+				AuthoritativeNativeGeneratedRouteEndpoint.Destination,
+				warp.TargetLevelId,
+				warp.TargetX,
+				warp.TargetY);
+			resolvedWarps.Add(CloneWarp(warp, source.Position, destination.Position));
+			resolvedRoutes.Add(new ResolvedRouteInfo(
+				AuthoritativeNativeGeneratedRouteKind.Warp,
+				warp.WarpId,
+				warp.StableSymbol,
+				source,
+				destination,
+				warp.RequiredQuestId,
+				warp.RequiredQuestCompleted,
+				warp.TargetSetLevelId,
+				warp.TargetSetLevelActiveMap,
+				warp.TargetSetLevelSymbol,
+				0,
+				0,
+				false));
+		}
+
+		foreach (var portal in portals)
+		{
+			ArgumentNullException.ThrowIfNull(portal);
+			if (!routeIds.Add((AuthoritativeNativeGeneratedRouteKind.Portal, portal.PortalId)))
+				throw new InvalidDataException($"Portal {portal.PortalId} is present more than once.");
+			var source = ResolveEndpoint(
+				world,
+				townLevel,
+				generated,
+				bindingMap,
+				consumedBindings,
+				AuthoritativeNativeGeneratedRouteKind.Portal,
+				portal.PortalId,
+				portal.StableSymbol,
+				AuthoritativeNativeGeneratedRouteEndpoint.Source,
+				portal.SourceLevelId,
+				portal.SourcePositionX,
+				portal.SourcePositionY);
+			var destination = ResolveEndpoint(
+				world,
+				townLevel,
+				generated,
+				bindingMap,
+				consumedBindings,
+				AuthoritativeNativeGeneratedRouteKind.Portal,
+				portal.PortalId,
+				portal.StableSymbol,
+				AuthoritativeNativeGeneratedRouteEndpoint.Destination,
+				portal.DestinationLevelId,
+				portal.DestinationPositionX,
+				portal.DestinationPositionY);
+			resolvedPortals.Add(portal with {
+				SourcePositionX = source.Position.X,
+				SourcePositionY = source.Position.Y,
+				DestinationPositionX = destination.Position.X,
+				DestinationPositionY = destination.Position.Y,
+			});
+			resolvedRoutes.Add(new ResolvedRouteInfo(
+				AuthoritativeNativeGeneratedRouteKind.Portal,
+				portal.PortalId,
+				portal.StableSymbol,
+				source,
+				destination,
+				0,
+				false,
+				portal.DestinationSetLevelId,
+				portal.DestinationSetLevelActiveMap,
+				portal.DestinationSetLevelSymbol,
+				portal.RemainingTicks,
+				portal.OwnerEntityId,
+				portal.Bidirectional));
+		}
+
+		foreach (var binding in bindings.Bindings)
+		{
+			if (!consumedBindings.Contains((binding.RouteKind, binding.RouteId, binding.Endpoint)))
+				throw new InvalidDataException(
+					$"{TableName} contains a dangling {RouteKindText(binding.RouteKind)} {binding.RouteId} {EndpointText(binding.Endpoint)} binding.");
+		}
+
+		RequireDepthRoutes(generated, resolvedRoutes);
+		var fingerprint = Fingerprint(resolvedRoutes, bindings.CatalogFingerprint);
+		return new AuthoritativeNativeGeneratedRouteBindingResolution(
+			resolvedWarps,
+			resolvedPortals,
+			fingerprint);
+	}
+
 	private static Dictionary<uint, GeneratedLevel> BuildGeneratedLevels(
 		AuthoritativeCathedralLevel1GenerationPlan plan,
 		AuthoritativeLevel townLevel)
@@ -306,6 +453,38 @@ public static class AuthoritativeNativeGeneratedRouteBindings
 				throw new InvalidDataException($"Native Cathedral generation plan contains duplicate level {candidate.Level.LevelId}.");
 			if (candidate.Level.LevelId == townLevel.LevelId)
 				throw new InvalidDataException("Native Cathedral generation plan cannot replace the Town level.");
+			if (candidate.Routes.UpTrigger == candidate.Routes.MainEntry)
+				throw new InvalidDataException(
+					$"Generated Cathedral level {candidate.Level.LevelId} has the UpTrigger at its MainEntry.");
+		}
+		return generated;
+	}
+
+	private static Dictionary<uint, GeneratedLevel> BuildGeneratedLevels(
+		AuthoritativeCathedralDepthGenerationPlan plan,
+		AuthoritativeLevel townLevel)
+	{
+		if (plan.Candidates.Count != 4)
+			throw new InvalidDataException("Native Cathedral depth generation requires exactly four candidates.");
+
+		var generated = new Dictionary<uint, GeneratedLevel>();
+		for (var index = 0; index < plan.Candidates.Count; index++)
+		{
+			var candidate = plan.Candidates[index];
+			var expectedLevelId = checked((uint)index + 1);
+			if (candidate.Identity.CatalogId != AuthoritativeCathedralDepthRuntimeCatalog.CatalogId
+				|| candidate.Identity.GeneratorId != AuthoritativeCathedralDepthRuntimeCatalog.GeneratorId
+				|| candidate.Identity.GeneratorRevision != AuthoritativeCathedralDepthRuntimeCatalog.GeneratorRevision
+				|| candidate.Identity.LevelSymbol != candidate.Level.StableSymbol
+				|| candidate.Identity.Policy != AuthoritativeCathedralDepthGenerationPolicy.QuestDisabledOriginalDiabloStairs
+				|| candidate.Identity.Depth != index + 1
+				|| candidate.Level.LevelId != expectedLevelId
+				|| candidate.Identity.LevelId != expectedLevelId
+				|| candidate.Level.LevelId == townLevel.LevelId)
+				throw new InvalidDataException(
+					"Native Cathedral depth generation candidates must be ordered levels 1 through 4 and cannot replace Town.");
+			if (!generated.TryAdd(candidate.Level.LevelId, new GeneratedLevel(candidate.Level, candidate.Routes)))
+				throw new InvalidDataException($"Native Cathedral generation plan contains duplicate level {candidate.Level.LevelId}.");
 			if (candidate.Routes.UpTrigger == candidate.Routes.MainEntry)
 				throw new InvalidDataException(
 					$"Generated Cathedral level {candidate.Level.LevelId} has the UpTrigger at its MainEntry.");
@@ -446,6 +625,55 @@ public static class AuthoritativeNativeGeneratedRouteBindings
 					$"Generated Cathedral level {levelId} requires explicit Town-to-Main and UpTrigger-to-TownReturn routes.");
 			if (generatedLevel.Routes.UpTrigger == generatedLevel.Routes.MainEntry)
 				throw new InvalidDataException($"Generated Cathedral level {levelId} has a non-distinct trigger and entry.");
+		}
+	}
+
+	private static void RequireDepthRoutes(
+		IReadOnlyDictionary<uint, GeneratedLevel> generated,
+		IEnumerable<ResolvedRouteInfo> routes)
+	{
+		if (generated.Count != 4 || !generated.Keys.OrderBy(id => id).SequenceEqual(new uint[] { 1, 2, 3, 4 }))
+			throw new InvalidDataException("Native Cathedral depth routing requires generated levels 1 through 4.");
+
+		var values = routes.ToArray();
+		var expected = new HashSet<(uint SourceLevelId, uint DestinationLevelId, AuthoritativeNativeGeneratedRouteAnchor SourceAnchor, AuthoritativeNativeGeneratedRouteAnchor DestinationAnchor)>
+		{
+			(AuthoritativePortalRules.TownLevelId, 1, AuthoritativeNativeGeneratedRouteAnchor.TownCathedralTrigger, AuthoritativeNativeGeneratedRouteAnchor.MainEntry),
+			(1, AuthoritativePortalRules.TownLevelId, AuthoritativeNativeGeneratedRouteAnchor.UpTrigger, AuthoritativeNativeGeneratedRouteAnchor.TownCathedralReturn),
+		};
+		for (uint depth = 1; depth < 4; depth++)
+		{
+			expected.Add((depth, depth + 1, AuthoritativeNativeGeneratedRouteAnchor.DownTrigger, AuthoritativeNativeGeneratedRouteAnchor.MainEntry));
+			expected.Add((depth + 1, depth, AuthoritativeNativeGeneratedRouteAnchor.UpTrigger, AuthoritativeNativeGeneratedRouteAnchor.PreviousEntry));
+		}
+
+		foreach (var route in values)
+		{
+			var touchesGenerated = generated.ContainsKey(route.Source.LevelId)
+				|| generated.ContainsKey(route.Destination.LevelId);
+			if (!touchesGenerated)
+				continue;
+			if (route.Kind != AuthoritativeNativeGeneratedRouteKind.Warp
+				|| !IsUnconditionalOrdinaryWarp(route)
+				|| route.Source.Anchor is not { } sourceAnchor
+				|| route.Destination.Anchor is not { } destinationAnchor
+				|| !expected.Contains((route.Source.LevelId, route.Destination.LevelId, sourceAnchor, destinationAnchor)))
+				throw new InvalidDataException(
+					"Native Cathedral depth routing contains an extra, conditional, portal, or bypass route; only the original Diablo staircase is supported and the native Catacombs5 boundary is unsupported.");
+		}
+
+		foreach (var routeKey in expected)
+		{
+			var matches = values.Count(route =>
+				route.Kind == AuthoritativeNativeGeneratedRouteKind.Warp
+				&& route.Source.LevelId == routeKey.SourceLevelId
+				&& route.Destination.LevelId == routeKey.DestinationLevelId
+				&& route.Source.Anchor == routeKey.SourceAnchor
+				&& route.Destination.Anchor == routeKey.DestinationAnchor
+				&& IsUnconditionalOrdinaryWarp(route));
+			if (matches != 1)
+				throw new InvalidDataException(
+					$"Native Cathedral depth routing requires exactly one unconditional warp from level {routeKey.SourceLevelId} to {routeKey.DestinationLevelId}.");
 		}
 	}
 

@@ -2,6 +2,21 @@
 
 All notable changes to this fork are documented below.
 
+- 2026-10-01: Integrate a separate opt-in Cathedral depths 1-4 runtime, reciprocal
+  staircase topology, immutable identity and strict v3 restore while preserving
+  authored/L1 adapters, v1/v2 saves and live protocol. Add an atomic offline private
+  profile compiler, disconnected-route/content-reference rejection, strict seed
+  metadata guards, isolated zero-argument launcher and real Godot descent/ascent,
+  collision and middle-floor fresh-host restore checks. Headless/rendered pairs
+  pass with twelve clean engine records; retain timing and failed-harness evidence.
+  Focused module 68 and server/launcher 113 pass; full server 1244 pass, each with
+  one explicit local-asset exclusion. Both local-asset cases also pass separately;
+  unchanged rendered L1 and default create/resume/reconnect pass with fifteen
+  clean engine records. Update existing plan/status/launch guidance.
+  The server never reads MPQs; licensed geometry/generated packs stay outside Git.
+  Native object/door/population placement, campaign mapping, wider topology and M0/M2
+  completion remain open.
+
 - 2026-10-01: Extend shared ordinary original-Diablo Cathedral generation and
   validated fine materialization to depths 1-4 with explicit quest-disabled
   policy, preserving L1 API/results, profiles and saves. Add independent private

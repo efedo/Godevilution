@@ -11,20 +11,29 @@ param(
     [switch]$PortalPreviewContent,
     [switch]$Multiplayer,
     [string]$CathedralProfileDirectory,
+    [string]$CathedralDepthProfileDirectory,
     [ValidateSet(1, 4)] [int]$PerformanceParticipants = 1,
-    [ValidateSet('Create', 'Resume', 'Recovery', 'Journey', 'JourneyResume', 'TownLoop', 'TownLoopResume', 'MultiplayerCreate', 'MultiplayerResume', 'Performance', 'CathedralJourney', 'CathedralResume')] [string]$AcceptancePhase
+    [ValidateSet('Create', 'Resume', 'Recovery', 'Journey', 'JourneyResume', 'TownLoop', 'TownLoopResume', 'MultiplayerCreate', 'MultiplayerResume', 'Performance', 'CathedralJourney', 'CathedralResume', 'CathedralDepthJourney', 'CathedralDepthResume')] [string]$AcceptancePhase
 )
 
 $ErrorActionPreference = 'Stop'
 $performance = $AcceptancePhase -eq 'Performance'
-$cathedral = -not [string]::IsNullOrWhiteSpace($CathedralProfileDirectory)
+$cathedralDepths = -not [string]::IsNullOrWhiteSpace($CathedralDepthProfileDirectory)
+if ($cathedralDepths -and -not [string]::IsNullOrWhiteSpace($CathedralProfileDirectory)) {
+    throw 'Choose either the L1 or depths 1-4 Cathedral profile, never both.'
+}
+$cathedral = $cathedralDepths -or -not [string]::IsNullOrWhiteSpace($CathedralProfileDirectory)
 if ($cathedral -and ($PreviewContent -or $PortalPreviewContent -or $Multiplayer -or $performance)) {
     throw 'Cathedral playtests require their own single-player content and save profile.'
 }
-if (($AcceptancePhase -in @('CathedralJourney', 'CathedralResume')) -and -not $cathedral) {
+if (($AcceptancePhase -in @('CathedralJourney', 'CathedralResume')) -and (-not $cathedral -or $cathedralDepths)) {
     throw 'Cathedral acceptance requires an explicit compiled -CathedralProfileDirectory.'
 }
-if ($cathedral -and $AcceptancePhase -and $AcceptancePhase -notin @('CathedralJourney', 'CathedralResume')) {
+if (($AcceptancePhase -in @('CathedralDepthJourney', 'CathedralDepthResume')) -and -not $cathedralDepths) {
+    throw 'Cathedral depth acceptance requires an explicit compiled -CathedralDepthProfileDirectory.'
+}
+$cathedralPhases = if ($cathedralDepths) { @('CathedralDepthJourney', 'CathedralDepthResume') } else { @('CathedralJourney', 'CathedralResume') }
+if ($cathedral -and $AcceptancePhase -and $AcceptancePhase -notin $cathedralPhases) {
     throw 'Compiled Cathedral content only supports its own acceptance phases.'
 }
 if ($performance) {
@@ -51,7 +60,10 @@ $serverExecutable = Join-Path $repositoryRoot 'server/src/Devilution.Server/bin/
 $clientSourceProject = Join-Path $repositoryRoot 'godot/Devilution.Client'
 $clientProject = $clientSourceProject
 if ([string]::IsNullOrWhiteSpace($SessionDirectory)) {
-    $SessionDirectory = if ($cathedral) { Join-Path ([IO.Path]::GetFullPath($CathedralProfileDirectory)) 'sessions/local' } else {
+    $SessionDirectory = if ($cathedral) {
+        $profileDirectory = if ($cathedralDepths) { $CathedralDepthProfileDirectory } else { $CathedralProfileDirectory }
+        Join-Path ([IO.Path]::GetFullPath($profileDirectory)) 'sessions/local'
+    } else {
         Join-Path $repositoryRoot $(if ($Multiplayer) { '.local/godot-multiplayer' } elseif ($PortalPreviewContent) { '.local/godot-portal-preview' } elseif ($PreviewContent) { '.local/godot-preview' } else { '.local/godot' })
     }
 }
@@ -107,7 +119,7 @@ $environmentNames = @('DEVILUTION_SERVER_HOST', 'DEVILUTION_SERVER_PORT', 'DEVIL
     'DEVILUTION_CONTENT_HASH', 'DEVILUTION_RULESET_HASH', 'DEVILUTION_CHARACTER_CLASS_ID',
     'DEVILUTION_CHARACTER_NAME', 'DEVILUTION_RESUME_TOKEN', 'DEVILUTION_RESUME_TOKEN_PATH',
     'GODEVILUTION_ACCEPTANCE_PHASE', 'GODEVILUTION_ACCEPTANCE_DIRECTORY', 'GODEVILUTION_QUIT_AFTER_SECONDS',
-    'GODEVILUTION_LOCAL_PLAYER', 'GODEVILUTION_PORTAL_PREVIEW', 'GODEVILUTION_CATHEDRAL_PROFILE',
+    'GODEVILUTION_LOCAL_PLAYER', 'GODEVILUTION_PORTAL_PREVIEW', 'GODEVILUTION_CATHEDRAL_PROFILE', 'GODEVILUTION_CATHEDRAL_DEPTH_PROFILE',
     'GODEVILUTION_PERFORMANCE_PARTICIPANTS', 'GODEVILUTION_PERFORMANCE_SHARED_DIRECTORY',
     'GODEVILUTION_CLIENT_PERFORMANCE_OUTPUT', 'GODEVILUTION_CLIENT_PERFORMANCE_WARMUP_SECONDS',
     'GODEVILUTION_CLIENT_PERFORMANCE_DURATION_SECONDS', 'GODEVILUTION_CLIENT_PERFORMANCE_MAX_SAMPLES')
@@ -158,7 +170,7 @@ function Get-CathedralContentTreeHash([string]$ContentRoot) {
     finally { $sha.Dispose() }
 }
 
-function Get-CathedralPlaytestProfile([string]$Directory, [string]$Session) {
+function Get-CathedralPlaytestProfile([string]$Directory, [string]$Session, [bool]$Depths = $false) {
     $root = [IO.Path]::GetFullPath($Directory).TrimEnd('\', '/')
     $sessionRoot = [IO.Path]::GetFullPath($Session)
     if ($root.Contains('"') -or $sessionRoot.Contains('"')) { throw 'Cathedral paths must not contain quotes.' }
@@ -168,14 +180,37 @@ function Get-CathedralPlaytestProfile([string]$Directory, [string]$Session) {
     if (-not $sessionRoot.StartsWith($allowedSessions.TrimEnd('\', '/') + [IO.Path]::DirectorySeparatorChar, [StringComparison]::OrdinalIgnoreCase)) {
         throw 'Cathedral saves must be in a separate child directory under the compiled profile sessions directory.'
     }
-    $metadataPath = Join-Path $root 'cathedral-playtest.json'
+    $metadataPath = Join-Path $root $(if ($Depths) { 'cathedral-depths-playtest.json' } else { 'cathedral-playtest.json' })
     Assert-NoCathedralReparsePoint $metadataPath
     $metadata = Get-Content -LiteralPath $metadataPath -Raw -ErrorAction Stop | ConvertFrom-Json
-    if ($metadata.FormatVersion -ne 1 -or $metadata.AdapterId -cne 'devilution.diablo.cathedral-l1.v1' -or
-        $metadata.ContentDirectory -cne 'content' -or $metadata.ContentId -cne 'godevilution.cathedral-playtest' -or
-        $metadata.ContentVersion -cne '0.1.0' -or $metadata.Entry -cne 'main' -or
+    $expectedAdapter = if ($Depths) { 'devilution.diablo.cathedral-depths.v1' } else { 'devilution.diablo.cathedral-l1.v1' }
+    $expectedContent = if ($Depths) { 'godevilution.cathedral-depths-playtest' } else { 'godevilution.cathedral-playtest' }
+    if ($metadata.FormatVersion -ne 1 -or $metadata.AdapterId -cne $expectedAdapter -or
+        $metadata.ContentDirectory -cne 'content' -or $metadata.ContentId -cne $expectedContent -or
+        $metadata.ContentVersion -cne '0.1.0' -or (-not $Depths -and $metadata.Entry -cne 'main') -or
         $metadata.ContentManifestHash -notmatch '^[0-9a-fA-F]{64}$' -or $metadata.PackFileHash -notmatch '^[0-9A-F]{64}$') {
         throw 'Unsupported or incomplete Cathedral playtest profile.'
+    }
+    if ($Depths) {
+        if (@($metadata.Levels).Count -ne 4 -or @($metadata.DepthSeeds).Count -ne 4 -or
+            $metadata.Entry -cne 'main' -or $metadata.NativePopulationClaim -isnot [bool] -or $metadata.NativePopulationClaim -or
+            $metadata.PlacementPolicy -cnotin @('none', 'authored-diagnostic')) {
+            throw 'Cathedral depth profiles require four explicit seeds and no native population claim.'
+        }
+        for ($index = 0; $index -lt 4; $index++) {
+            $level = $metadata.Levels[$index]
+            $seed = $metadata.DepthSeeds[$index]
+            # JSON integers deserialize as Int32/Int64; coercion would accept null, strings or booleans.
+            if (($seed -isnot [int] -and $seed -isnot [long]) -or $seed -lt 0 -or $seed -gt [uint32]::MaxValue -or
+                ($level.DungeonSeed -isnot [int] -and $level.DungeonSeed -isnot [long]) -or
+                $level.DungeonSeed -lt 0 -or $level.DungeonSeed -gt [uint32]::MaxValue) {
+                throw 'Cathedral depth seeds must be unsigned 32-bit integer JSON numbers.'
+            }
+            if ($level.Depth -ne ($index + 1) -or $level.LevelId -ne ($index + 1) -or $level.Entry -cne 'main' -or
+                $level.DungeonSeed -ne $seed) {
+                throw 'Cathedral depth profiles require ordered depths 1-4 and MAIN entries.'
+            }
+        }
     }
     $contentRoot = Join-Path $root 'content'
     Assert-NoCathedralReparsePoint $contentRoot
@@ -925,7 +960,9 @@ function Stop-GodotProcess($Tracked) {
 
 try {
     foreach ($name in $environmentNames) { [Environment]::SetEnvironmentVariable($name, $null, 'Process') }
-    $cathedralProfile = if ($cathedral) { Get-CathedralPlaytestProfile $CathedralProfileDirectory $SessionDirectory } else { $null }
+    $cathedralProfile = if ($cathedralDepths) {
+        Get-CathedralPlaytestProfile $CathedralDepthProfileDirectory $SessionDirectory $true
+    } elseif ($cathedral) { Get-CathedralPlaytestProfile $CathedralProfileDirectory $SessionDirectory } else { $null }
     New-Item -ItemType Directory -Path $SessionDirectory -Force | Out-Null
     if ($performance -and (Get-ChildItem -LiteralPath $SessionDirectory -Force)) {
         throw 'Performance acceptance requires a fresh empty session directory.'
@@ -959,7 +996,7 @@ try {
         $overlayArguments += ' --content-overlay "{0}"' -f (Join-Path $repositoryRoot 'server/content/town-portal-preview')
     }
     if ($cathedral) {
-        $overlayArguments = '--content-root "{0}" --content-id godevilution.cathedral-playtest --content-version 0.1.0 --game-adapter devilution.diablo.cathedral-l1.v1' -f $cathedralProfile.ContentRoot
+        $overlayArguments = '--content-root "{0}" --content-id {1} --content-version {2} --game-adapter {3}' -f $cathedralProfile.ContentRoot, $cathedralProfile.Metadata.ContentId, $cathedralProfile.Metadata.ContentVersion, $cathedralProfile.Metadata.AdapterId
     }
     function Start-SessionServer([int]$ListenPort, [string]$LogPrefix) {
         $serverArguments = '--port {0} --protocol-version 0.2.0 --game-mode {4} --command-scheduling clock-gated --save-root "{1}/save" {2} {3}' -f $ListenPort, $SessionDirectory, $acceptanceArguments, $overlayArguments, $serverGameMode
@@ -1033,7 +1070,8 @@ try {
             DEVILUTION_RESUME_TOKEN_PATH = Join-Path $clientDirectory 'resume-token.txt'
         }
         if ($PortalPreviewContent) { $clientEnvironment['GODEVILUTION_PORTAL_PREVIEW'] = '1' }
-        if ($cathedral) { $clientEnvironment['GODEVILUTION_CATHEDRAL_PROFILE'] = $cathedralProfile.MetadataPath }
+        if ($cathedralDepths) { $clientEnvironment['GODEVILUTION_CATHEDRAL_DEPTH_PROFILE'] = $cathedralProfile.MetadataPath }
+        elseif ($cathedral) { $clientEnvironment['GODEVILUTION_CATHEDRAL_PROFILE'] = $cathedralProfile.MetadataPath }
         if ($CharacterClassId -ge 0) { $clientEnvironment['DEVILUTION_CHARACTER_CLASS_ID'] = [string]$CharacterClassId }
         if (-not [string]::IsNullOrEmpty($CharacterName)) { $clientEnvironment['DEVILUTION_CHARACTER_NAME'] = $CharacterName }
         if ($Multiplayer) {

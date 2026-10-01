@@ -114,7 +114,9 @@ open. Their scope, dependencies, and exit checks are defined only in the
   matches existing native goldens and has a 112x112 fine-coordinate catalog adapter.
   The shared ordinary Cathedral depth API now matches native coarse/fine output
   for depths 1-4, six seeds and MAIN/PREV, with quests disabled and original-Diablo
-  stairs. This is library generation, not multi-depth runtime activation.
+  stairs. A separate opt-in four-depth runtime, strict v3 save identity and private
+  diagnostic profile now support reciprocal ordinary-control traversal and
+  middle-floor fresh-host restore; authored defaults and L1 v2 saves remain separate.
   Opt-in ordinary level-1 server activation, automatic stair-boundary transitions and identity-safe
   cold restore now pass, including a separate local-asset semantic-catalog check.
   Isolated headless/rendered Godot walking, authored object/combat/loot, moved-position
@@ -136,6 +138,98 @@ The following records describe implemented slices at this baseline. They are
 evidence, not a separate priority list; detailed older entries retain their
 original scope and may be superseded by later entries or the current assessment.
 
+### M1/M2 isolated Cathedral depths runtime, traversal and restore (2026-10-01)
+
+The separate `native_cathedral_depths.tsv` contract eagerly validates and activates
+four ordered ordinary original-Diablo Cathedral depths with explicit seeds and
+quest-disabled policy. Its immutable world identity binds every depth's generator,
+RNG states, coarse/fine geometry, routes and catalog. The opt-in
+`devilution.diablo.cathedral-depths.v1` host adapter and strict game-owned v3 save
+envelope reject mixed L1 identities, missing/duplicate/unknown identity fields,
+changed inputs and reordered depths before mutable restore. Existing authored v1,
+L1 v2 saves, adapter IDs and live protocol remain unchanged. The server reads no MPQs.
+
+Eight unconditional reciprocal routes connect Town/1/2/3/4: Down targets next.Main,
+Up targets previous.Previous and only L1.Up returns Town. L4 retains native Down
+geometry but has no Catacombs-5 route. The offline compiler validates dependent
+content references after replacing the prototype's different-family levels,
+scrubs unsupported quest/set-piece content, validates serialized activation, then
+atomically publishes a fresh private pack/profile. Its separate zero-argument
+launcher and hash/session/reparse/lock guards do not migrate ordinary or L1 saves.
+Explicit seed metadata rejects null/missing/coerced/non-uint32 values.
+
+Exact SOL walkability leaves some generated inputs disconnected. In the local
+catalog, depth 2 seed 743271966 cannot reach Down from MAIN in the server's
+eight-direction graph. The compiler now rejects disconnected required stair
+paths even with placement policy `none`; it does not change geometry or reseed.
+The verified diagnostic uses explicit seeds `2588,2588,1,4294967295` and `none`,
+with no native population claim. Town remains authored. Native object/door and
+population placement, broader topology and campaign seed selection remain open.
+
+Actual headless and rendered `CathedralDepthJourney`/`CathedralDepthResume` pairs
+pass with Godot 4.7.2 Mono staged copies and unchanged source SDK 4.7.1. Ordinary
+controls descend through all four floors, ascend to two, observe exact native
+arrivals and complete geometry, reject a blocked input, make a valid subsequent
+move, save L2 `(70,70)` at sequence 130, then restore in fresh host/client processes
+with the same hashes and all four geometries before returning Town `(25,31)` at
+sequence 168. L4's short native Up path requires its endpoint-distance lower bound;
+longer paths retain eight distinct positions and existing L1 defaults remain eight.
+No checkpoint injection or gameplay receipt/late-command relaxation is used.
+Root and independent reviewer inspected all five rendered depth/restore captures.
+
+Private headless session suffix is `fb29f71563ed4726841a909079638d0b`; rendered is
+`d821c32f2eef421a9e5f790167a8aa35`, under
+`.local/cathedral-depths-playtest/sessions/acceptance-<suffix>`.
+Launch-log suffixes under `%TEMP%/Godevilution-Godot-` are
+`b0870cdf7511447f955582a5b5b789fb`, `d299018b677240b59e10b490f1bd2c73`,
+`2a86fde4ea1141c19113a0562ec9ebb8`, and `7f87acfdcef9492c9c4facb87edc4b47`.
+All twelve passing version/import/client records exit zero with terminal times and
+no stage/diagnostic/cleanup errors. NU1900 audit-feed warnings remain, not a
+security-audit pass. These are diagnostic geometry/control checks, not original-art,
+population, performance, campaign or M0/M2 exit evidence.
+
+Failed evidence remains separate: session `d9e2305a55744d2abd83cd7aa57f836f`
+rejected Town movement sequence 2 as `TooLate`; strict timing policy is unchanged.
+Session `eb3fc98f7f16491ab0d4c6069dde6180` passed Journey but exposed a null prior
+receipt in the fresh-resume harness, now handled without bypassing the saved
+sequence floor. Its retry hit the immutable evidence guard; the guard stayed intact
+and the fresh full pairs above passed. Those failed client exits are not counted
+as clean engine runs.
+
+Current focused checks pass 68 module tests (7.567s) and 113 server/launcher tests
+(19.538s), each excluding one existing explicit local-asset case. They cover
+ordered activation, reciprocal routes, strict v3 tampering, atomic publication,
+retained old-family references, disconnected stairs and launcher metadata guards.
+The full server suite passes 1244 with one explicit exclusion (20.646s), after
+updating its unknown-format regression to use the next unsupported format rather
+than the newly supported v3; the initial failed assertion is retained. Logs are
+`.local/cathedral-depth-module-final-source.log`,
+`.local/cathedral-depth-server-final-source.log`, and
+`.local/cathedral-depth-server-broad-verified.log`.
+Native generator/materializer sources are unchanged by this integration; the
+independent 48-depth/12-L1 private oracle evidence below remains applicable.
+
+Both otherwise excluded private local-asset regressions also pass when explicitly
+selected against the retained twelve-case oracle inputs: L1 compiler 1/1 (1.121s)
+and production-host activation/traversal/restore 1/1 (1.323s), with no skips.
+Their separate logs are `.local/cathedral-depth-legacy-compiler-explicit.log` and
+`.local/cathedral-depth-legacy-server-explicit.log`. The real CLI rejects the
+disconnected depth-2 input with exit 1 and no output/staging; evidence is
+`.local/cathedral-depth-disconnected-rejection.log`. `--help` exposes both modes.
+
+Current-source unchanged L1 rendered walking/object/combat/loot/restore/Town return
+passes at `.local/cathedral-playtest/sessions/acceptance-7a500c3c12a54d50b58acc1f3423e7e7`.
+Its log suffixes are `8c8ac6e7618e4d3b9cedb4c9e2490e16` and
+`126cdf9026fc483890661694b16cc2ac`. Default headless create/checkpoint/fresh-host
+resume/server-loss/reconnect passes at
+`%TEMP%/Godevilution-Scene-Acceptance-15d6352394ef4639803b5ec658ec6fa1`, with
+log suffixes `a5fa27e54ade4a7fb26b8d50f8af52aa`,
+`b4db403ba9e24d0f86c9a05f0184754a`, and `b60fca4d9d4c469aaba1be5b72f07105`.
+All fifteen legacy version/import/client records exit zero with terminal times and
+no stage/diagnostic/cleanup errors. Final process inspection finds no Godot,
+WerFault or project host/launcher process remaining. M0/M2 and the approximately
+35% overall planning estimate remain open.
+
 ### M2 ordinary Cathedral depth generation and independent oracle (2026-10-01)
 
 The shared managed DRLG implementation now supports Cathedral dungeon depths
@@ -143,8 +237,9 @@ The shared managed DRLG implementation now supports Cathedral dungeon depths
 `QuestDisabledOriginalDiabloStairs` policy. The level-1 facade retains its public
 API/result and exact output. The depth-aware fine materializer reuses validated
 TIL/SOL expansion and native property corrections with owned copied layers.
-Production native generation, runtime catalog/adapter IDs, profiles, wire and
-save contracts are unchanged; the server still consumes no MPQs.
+At this generation-only batch's baseline, production native generation, runtime
+catalog/adapter IDs, profiles, wire and save contracts were unchanged; the server
+still consumed no MPQs. The later isolated runtime integration is recorded above.
 
 The new independent native GTest resets each selected depth seed, forces every
 quest unavailable and original-Diablo stairs, and exports a separate depth
@@ -184,7 +279,8 @@ exit zero with terminal times and no stage/diagnostic/cleanup errors. Engine
 rendered or multi-depth traversal is claimed. Final inspection finds no project,
 native-oracle, Godot or WerFault process remaining.
 
-Only L1 remains runtime-activated. The next package is the separate multi-depth
+At this generation-only batch's baseline, only L1 was runtime-activated. The
+subsequent four-depth integration record supersedes that limit with a separate
 catalog/identity/adapter/save/profile and reciprocal staircase topology. Keep
 base level IDs, L1 v1/version-2 saves, native Catacombs-5 boundary and default
 launches intact. Explicit per-depth seeds do not prove native campaign selection;
@@ -216,18 +312,15 @@ reason; this current pass neither explains it nor proves a timing/readiness fix.
 Actual Godot checks were not rerun for this test-helper/documentation-only batch;
 their last production-source evidence remains in the preceding batch below.
 
-Native-source planning confirms Cathedral dungeon depths 1-4 use the same L1
-family, not the separate Catacombs/Caves/Hell generator files. Minimum coarse
-areas are 533/693/761/761. Next generation work needs explicit depth-aware private
-oracle capture with quests unavailable and original-Diablo stairs; the existing
-depth-2 golden enables Poisoned Water and is not an ordinary-depth oracle.
-Current runtime catalogs, identity, adapter/profile and saves intentionally admit
-only L1. Base IDs 2/3/4 already mean authored Catacombs/Caves/Hell, so a separate
-opt-in native-depth profile must audit dependent references instead of silently
-reinterpreting the base pack. The updated M2 plan records the implementation and
-acceptance order. No deeper generated level, automatic campaign seed mapping,
-quest/population parity or Cathedral-family completion is claimed. M0 and the
-overall planning estimate remain open.
+At this diagnostics/planning batch's baseline, native-source analysis confirmed
+Cathedral depths 1-4 share the L1 family and minimum areas 533/693/761/761, not
+Catacombs/Caves/Hell. Depth-aware quest-disabled private oracle capture was still
+required: the existing depth-2 golden enables Poisoned Water and is not an
+ordinary-depth oracle. Runtime identity/adapter/profile/saves then admitted only
+L1. Base IDs 2/3/4 meant authored other families, so deeper activation needed a
+separate profile and dependent-reference audit. The later generation and isolated
+runtime records above supersede those limits, not the original evidence. Campaign
+mapping, quest/population parity, M0 and Cathedral-family completion remain open.
 
 ### M0 admitted geometry reuse and cancellation evidence (2026-10-01)
 

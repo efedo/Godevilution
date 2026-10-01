@@ -10,17 +10,24 @@ namespace Devilution.Server.Stores;
  * Compatibility codec for server-owned session state. Version 1 retains the
  * original JSON envelope containing a base64 Protobuf snapshot; player and
  * world state stay transport-neutral. Opt-in generated profiles use version 2
- * to retain game-owned geometry/route identity outside the live wire.
+ * to retain game-owned geometry/route identity outside the live wire. The separate
+ * Cathedral depths profile uses version 3 without widening either older envelope.
  */
 public sealed class AuthoritativeSaveCodec
 {
     // Preserve the public authored-profile format constant and its original bytes.
     public const int CurrentFormatVersion = 1;
     public const int NativeGeneratedFormatVersion = 2;
+    public const int CathedralDepthFormatVersion = 3;
     private static readonly string[] GeneratedLevelFields = [
         "CatalogId", "GeneratorId", "GeneratorRevision", "LevelId", "LevelSymbol",
         "DungeonSeed", "Entry", "AttemptSeed", "FinalRandomState", "CoarseFingerprint",
         "FineFingerprint", "RouteFingerprint", "CatalogFingerprint",
+    ];
+    private static readonly string[] CathedralDepthLevelFields = [
+        "CatalogId", "GeneratorId", "GeneratorRevision", "LevelId", "LevelSymbol",
+        "Depth", "Policy", "DungeonSeed", "Entry", "AttemptSeed", "FinalRandomState",
+        "CoarseFingerprint", "FineFingerprint", "RouteFingerprint", "CatalogFingerprint",
     ];
     private static readonly UTF8Encoding StrictUtf8 = new(
         encoderShouldEmitUTF8Identifier: false,
@@ -35,11 +42,16 @@ public sealed class AuthoritativeSaveCodec
     public string Serialize(DiabloSimulationSnapshot snapshot)
     {
         ArgumentNullException.ThrowIfNull(snapshot);
+        if (snapshot.NativeGeneratedWorldIdentity is not null && snapshot.CathedralDepthWorldIdentity is not null)
+            throw new InvalidDataException("A save cannot combine L1 and Cathedral depth generation identities.");
         var protocolSnapshot = DiabloProtocolMapper.ToProtocolSnapshot(
             snapshot,
             items: items,
             allowZeroPlayerEntityId: true);
         var snapshotBase64 = Convert.ToBase64String(protocolSnapshot.ToByteArray());
+        if (snapshot.CathedralDepthWorldIdentity is not null)
+            return JsonSerializer.Serialize(new CathedralDepthAuthoritativeSaveDocument(
+                CathedralDepthFormatVersion, snapshotBase64, snapshot.CathedralDepthWorldIdentity));
         // The legacy envelope remains byte-for-byte unchanged for authored profiles.
         // Generated metadata belongs to this game adapter, not the neutral host or wire.
         return snapshot.NativeGeneratedWorldIdentity is null
@@ -74,6 +86,7 @@ public sealed class AuthoritativeSaveCodec
         return document.FormatVersion switch {
             1 => DeserializeVersionOne(document.SnapshotBase64),
             NativeGeneratedFormatVersion => DeserializeGenerated(serializedSave, document.SnapshotBase64),
+            CathedralDepthFormatVersion => DeserializeCathedralDepths(serializedSave, document.SnapshotBase64),
             _ => throw new InvalidDataException(
                 $"Authoritative save format {document.FormatVersion} is unsupported."),
         };
@@ -114,10 +127,46 @@ public sealed class AuthoritativeSaveCodec
         }
     }
 
+    private static DiabloSimulationSnapshot DeserializeCathedralDepths(string serializedSave, string snapshotBase64)
+    {
+        CathedralDepthAuthoritativeSaveDocument? document;
+        try {
+            using var json = JsonDocument.Parse(serializedSave);
+            RequireExactFields(json.RootElement, ["FormatVersion", "SnapshotBase64", "CathedralDepthWorldIdentity"]);
+            var identity = json.RootElement.GetProperty("CathedralDepthWorldIdentity");
+            RequireExactFields(identity, ["Levels", "RouteFingerprint"]);
+            var levels = identity.GetProperty("Levels");
+            if (levels.ValueKind != JsonValueKind.Array)
+                throw new InvalidDataException("Cathedral depth save identities must be an explicit array.");
+            foreach (var level in levels.EnumerateArray())
+                RequireExactFields(level, CathedralDepthLevelFields);
+            document = JsonSerializer.Deserialize<CathedralDepthAuthoritativeSaveDocument>(serializedSave);
+        } catch (JsonException exception) {
+            throw new InvalidDataException("The Cathedral depth authoritative save metadata is not valid JSON.", exception);
+        }
+        if (document?.CathedralDepthWorldIdentity is null)
+            throw new InvalidDataException("Cathedral depth saves require their geometry and route identity.");
+        return DeserializeVersionOne(snapshotBase64) with {
+            CathedralDepthWorldIdentity = document.CathedralDepthWorldIdentity,
+        };
+    }
+
+    private static void RequireExactFields(JsonElement value, IReadOnlyList<string> fields)
+    {
+        RequireFields(value, fields);
+        if (value.EnumerateObject().Count() != fields.Count)
+            throw new InvalidDataException("Cathedral depth save metadata contains unsupported fields.");
+    }
+
     private sealed record GeneratedAuthoritativeSaveDocument(
         int FormatVersion,
         string SnapshotBase64,
         DiabloNativeGeneratedWorldIdentity NativeGeneratedWorldIdentity);
+
+    private sealed record CathedralDepthAuthoritativeSaveDocument(
+        int FormatVersion,
+        string SnapshotBase64,
+        DiabloCathedralDepthWorldIdentity CathedralDepthWorldIdentity);
 
     private static DiabloSimulationSnapshot DeserializeVersionOne(string snapshotBase64)
     {

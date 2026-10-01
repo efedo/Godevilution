@@ -38,6 +38,9 @@ public sealed class DiabloSimulationOptions
     /** Validated eagerly generated world identity, independent of gameplay RNG. */
     public DiabloNativeGeneratedWorldIdentity? NativeGeneratedWorldIdentity { get; init; }
 
+    /** Separate native depth profile identity; never changes the legacy L1 save contract. */
+    public DiabloCathedralDepthWorldIdentity? CathedralDepthWorldIdentity { get; init; }
+
     /** Validated content-backed level-cell overlays activated by world objects. */
     public AuthoritativeWorldMutationCatalog? WorldMutations { get; init; }
 
@@ -223,6 +226,8 @@ public sealed class DiabloSimulationFactory : IDiabloSimulationFactory
     public DiabloSimulation Create(DiabloSimulationOptions options)
     {
         ArgumentNullException.ThrowIfNull(options);
+        if (options.NativeGeneratedWorldIdentity is not null && options.CathedralDepthWorldIdentity is not null)
+            throw new InvalidDataException("A simulation cannot combine L1 and Cathedral depth generation identities.");
         if (options.RequireExternalContentCatalogs && options.Content is null)
             throw new InvalidDataException(
                 "Production Diablo activation requires composed external content.");
@@ -415,6 +420,7 @@ public sealed class DiabloSimulationFactory : IDiabloSimulationFactory
             simulation.ResolveProceduralQuestPieceOrigin);
         worldCommands.SetSetLevelOriginResolver(simulation.ResolveSetLevelObjectOrigin);
         simulation.ConfigureNativeGeneratedWorldIdentity(options.NativeGeneratedWorldIdentity);
+        simulation.ConfigureCathedralDepthWorldIdentity(options.CathedralDepthWorldIdentity);
         return simulation;
     }
 }

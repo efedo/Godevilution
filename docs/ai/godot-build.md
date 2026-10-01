@@ -226,6 +226,55 @@ back to Town. Compact route/collision/state evidence and all logs are retained.
 Clean engine exits remain required in addition to scene assertions. Do not edit
 checkpoints to manufacture entry, traversal or restore evidence.
 
+## Generated Cathedral depths playtest
+
+The separate four-depth compiler consumes the same private semantic TIL/SOL tables,
+never MPQs. Supply four explicit uint32 seeds in depth order; this selects ordinary,
+quest-disabled original-Diablo generation, not native campaign seed selection.
+The following diagnostic inputs have connected routes with the local semantic
+catalog used for verification; other inputs must pass validation independently:
+
+```powershell
+dotnet run --project tools/Cathedral.Playtest/Cathedral.Playtest.csproj -- --base-directory server/content/base --geometry-directory 'D:\Private\cathedral-geometry' --output-directory .local/cathedral-depths-playtest --depth-seeds '2588,2588,1,4294967295' --placement-policy none
+.\run-godot-cathedral-depths-playtest.ps1
+```
+
+Output must be fresh. Compilation validates all four geometries, ordered identities,
+eight reciprocal routes and surviving content references before atomic publication.
+It checks stair connectivity using the server's eight-direction walkability graph.
+Disconnected routes reject without changing SOL geometry or choosing replacement
+seeds; native object/door placement is still missing. `none` produces no diagnostic
+encounters/objects. The alternative/default `authored-diagnostic` policy adds
+explicitly authored interactions and never claims native population.
+
+The zero-argument launcher uses `.local/cathedral-depths-playtest/sessions/local`,
+the separate `devilution.diablo.cathedral-depths.v1` adapter and strict v3 save identity.
+All four seed values must be integer JSON numbers in uint32 range. Hash, session,
+reparse and exclusive-lock guards preserve ordinary and existing L1 saves.
+Do not overwrite or edit an existing compiled profile to change its seeds.
+Town remains authored; this profile does not provide native Town MAIN placement.
+Routes enter through the native Cathedral entrance `(25,29)` and return to
+Town `(25,31)`. Down arrives at next.Main and Up at previous.Previous.
+Floor four retains native Down geometry but deliberately has no Catacombs-5 route.
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File tools/test-godot-session.ps1 -CathedralDepthProfileDirectory .local/cathedral-depths-playtest -Visible
+```
+
+Omit `-Visible` for headless scene checks. `CathedralDepthJourney` walks through
+floors 1-4 and back to two, checks exact geometry/stair arrivals, rejects an exact
+blocked-cell input, then saves a subsequent valid move. `CathedralDepthResume`
+requires fresh host/client processes, the same content/profile hashes and all four
+geometry identities, then returns through floor one to Town. Every move uses
+ordinary client controls and authoritative receipts; short native stair paths use
+an endpoint-distance lower bound while long paths retain the existing eight-position
+requirement. Assertions, captures and engine lifecycle records are retained in a
+fresh child session. Failed evidence is never overwritten; rerun the full wrapper
+to create a new pair rather than reusing a failed phase's evidence directory.
+
+This verifies diagnostic traversal/restore, not native population, quests,
+campaign mapping, broader topology, exact light parity, full art or M2 completion.
+
 ## Application acceptance
 
 The multiplayer variant is separate from Journey/TownLoop. It runs two actual

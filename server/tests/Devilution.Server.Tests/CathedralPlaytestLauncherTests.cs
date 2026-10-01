@@ -82,6 +82,45 @@ public sealed class CathedralPlaytestLauncherTests
                 [IO.File]::WriteAllText((Join-Path $old 'resume-token.txt'), 'existing-user-bookmark')
                 Reject { Initialize-CathedralPlaytestSession (Get-CathedralPlaytestProfile $work $old) $old } 'unmarked existing'
                 if ([IO.File]::ReadAllText((Join-Path $old 'resume-token.txt')) -cne 'existing-user-bookmark') { throw 'Old bookmark changed.' }
+                $depthMetadata = [ordered]@{ FormatVersion=1; AdapterId='devilution.diablo.cathedral-depths.v1'; ContentDirectory='content';
+                    ContentId='godevilution.cathedral-depths-playtest'; ContentVersion='0.1.0'; Entry='main';
+                    ContentManifestHash=('1' * 64); PackFileHash=(Get-CathedralContentTreeHash $content);
+                    DepthSeeds=@(0,1,2,4294967295); PlacementPolicy='none'; NativePopulationClaim=$false;
+                    Levels=@(1..4 | ForEach-Object { [ordered]@{ Depth=$_; LevelId=$_; Entry='main';
+                        DungeonSeed=@(0,1,2,4294967295)[$_ - 1] } }) }
+                $depthPath = Join-Path $work 'cathedral-depths-playtest.json'
+                [IO.File]::WriteAllText($depthPath, ($depthMetadata | ConvertTo-Json -Depth 5))
+                $depthSession = Join-Path $work 'sessions/depths'
+                $depthProfile = Get-CathedralPlaytestProfile $work $depthSession $true
+                if (Test-Path -LiteralPath $depthSession) { throw 'Read-only depth validation created a session.' }
+                [IO.Directory]::CreateDirectory($depthSession) | Out-Null
+                Initialize-CathedralPlaytestSession $depthProfile $depthSession
+                $depthMarker = [IO.File]::ReadAllText((Join-Path $depthSession 'cathedral-session.json'))
+                Reject { Initialize-CathedralPlaytestSession (Get-CathedralPlaytestProfile $work $depthSession) $depthSession } 'profile changed'
+                if ([IO.File]::ReadAllText((Join-Path $depthSession 'cathedral-session.json')) -cne $depthMarker) { throw 'L1 mixing rewrote depth identity.' }
+                $depthMetadata.Levels[1].Depth = 3
+                [IO.File]::WriteAllText($depthPath, ($depthMetadata | ConvertTo-Json -Depth 5))
+                Reject { Get-CathedralPlaytestProfile $work $depthSession $true } 'ordered depths'
+                $depthMetadata.Levels[1].Depth = 2
+                $depthMetadata.NativePopulationClaim = $true
+                [IO.File]::WriteAllText($depthPath, ($depthMetadata | ConvertTo-Json -Depth 5))
+                Reject { Get-CathedralPlaytestProfile $work $depthSession $true } 'no native population claim'
+                $depthMetadata.NativePopulationClaim = $false
+                $depthMetadata.DepthSeeds[1] = 9
+                [IO.File]::WriteAllText($depthPath, ($depthMetadata | ConvertTo-Json -Depth 5))
+                Reject { Get-CathedralPlaytestProfile $work $depthSession $true } 'ordered depths'
+                foreach ($invalidSeed in @($null, -1, 4294967296, 0.5, $true, '1')) {
+                    $depthMetadata.DepthSeeds = @($invalidSeed, $invalidSeed, $invalidSeed, $invalidSeed)
+                    foreach ($level in $depthMetadata.Levels) { $level.DungeonSeed = $invalidSeed }
+                    [IO.File]::WriteAllText($depthPath, ($depthMetadata | ConvertTo-Json -Depth 5))
+                    Reject { Get-CathedralPlaytestProfile $work $depthSession $true } 'unsigned 32-bit integer'
+                }
+                $depthMetadata.DepthSeeds = @(0, 1, 2, 4294967295)
+                foreach ($index in 0..3) { $depthMetadata.Levels[$index].DungeonSeed = $depthMetadata.DepthSeeds[$index] }
+                $depthMetadata.Levels[0].Remove('DungeonSeed')
+                [IO.File]::WriteAllText($depthPath, ($depthMetadata | ConvertTo-Json -Depth 5))
+                Reject { Get-CathedralPlaytestProfile $work $depthSession $true } 'unsigned 32-bit integer'
+                if ([IO.File]::ReadAllText((Join-Path $depthSession 'cathedral-session.json')) -cne $depthMarker) { throw 'Invalid seeds rewrote depth identity.' }
                 $outside = Join-Path $work 'outside'
                 [IO.Directory]::CreateDirectory($outside) | Out-Null
                 [IO.File]::WriteAllText((Join-Path $outside 'must-preserve.txt'), 'unrelated')

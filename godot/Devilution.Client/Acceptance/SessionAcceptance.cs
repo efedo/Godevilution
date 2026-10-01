@@ -27,7 +27,7 @@ public partial class SessionAcceptance : Node
     private async Task RunAsync()
     {
         var phase = Environment.GetEnvironmentVariable("GODEVILUTION_ACCEPTANCE_PHASE");
-        if (phase is not ("Create" or "Resume" or "Recovery" or "Journey" or "JourneyResume" or "TownLoop" or "TownLoopResume" or "MultiplayerCreate" or "MultiplayerResume" or "Performance" or "CathedralJourney" or "CathedralResume"))
+        if (phase is not ("Create" or "Resume" or "Recovery" or "Journey" or "JourneyResume" or "TownLoop" or "TownLoopResume" or "MultiplayerCreate" or "MultiplayerResume" or "Performance" or "CathedralJourney" or "CathedralResume" or "CathedralDepthJourney" or "CathedralDepthResume"))
             throw new InvalidOperationException("Explicit acceptance phase is required.");
         var portalPreview = Environment.GetEnvironmentVariable("GODEVILUTION_PORTAL_PREVIEW") == "1";
         var directory = Environment.GetEnvironmentVariable("GODEVILUTION_ACCEPTANCE_DIRECTORY")
@@ -44,7 +44,7 @@ public partial class SessionAcceptance : Node
             return;
         }
         var bookmarkPath = System.IO.Path.Combine(directory, "resume-token.txt");
-        var creating = phase is "Create" or "Journey" or "TownLoop" or "CathedralJourney";
+        var creating = phase is "Create" or "Journey" or "TownLoop" or "CathedralJourney" or "CathedralDepthJourney";
         if (creating) {
             Require(!System.IO.File.Exists(bookmarkPath), "Creation requires a fresh isolated bookmark directory.");
             System.IO.File.WriteAllText(bookmarkPath, "invalid token");
@@ -68,7 +68,8 @@ public partial class SessionAcceptance : Node
             previous = JsonSerializer.Deserialize<Evidence>(System.IO.File.ReadAllText(
                 System.IO.Path.Combine(directory, phase switch {
                     "Recovery" => "resume.json", "JourneyResume" => "journey.json",
-                    "TownLoopResume" => "townloop.json", "CathedralResume" => "cathedraljourney.json", _ => "create.json",
+                    "TownLoopResume" => "townloop.json", "CathedralResume" => "cathedraljourney.json",
+                    "CathedralDepthResume" => "cathedraldepthjourney.json", _ => "create.json",
                 })))
                 ?? throw new InvalidDataException("The creation evidence is empty.");
             Require(previous.Passed && mode.Selected == 1, "Resume must use the persisted form defaults.");
@@ -129,6 +130,10 @@ public partial class SessionAcceptance : Node
         }
         if (phase is "CathedralJourney" or "CathedralResume") {
             await VerifyGeneratedCathedralAsync(main, directory, phase, visible);
+            return;
+        }
+        if (phase is "CathedralDepthJourney" or "CathedralDepthResume") {
+            await VerifyCathedralDepthsAsync(main, directory, phase, visible);
             return;
         }
         if (phase == "JourneyResume")
@@ -285,6 +290,7 @@ public partial class SessionAcceptance : Node
         while (!condition()) {
             var seconds = Environment.GetEnvironmentVariable("GODEVILUTION_ACCEPTANCE_PHASE") switch {
                 "CathedralJourney" => 300, "CathedralResume" => 180,
+                "CathedralDepthJourney" => 885, "CathedralDepthResume" => 435,
                 "TownLoop" => 225, "Journey" => 150, "MultiplayerCreate" or "MultiplayerResume" => 70, _ => 40,
             };
             Require(deadline.Elapsed < TimeSpan.FromSeconds(seconds), failure);

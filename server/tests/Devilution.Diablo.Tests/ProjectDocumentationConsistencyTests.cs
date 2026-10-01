@@ -136,6 +136,25 @@ public sealed class ProjectDocumentationConsistencyTests
     }
 
     [Fact]
+    public void CathedralDepthContractAndPlaytestDocumentationAgree()
+    {
+        var root = FindRepositoryRoot();
+        var contractText = Read(root, "docs", "csharp-authoritative-server-migration.md");
+        Assert.Single(Regex.Matches(contractText, "(?m)^- The separately selected `devilution\\.diablo\\.cathedral-depths\\.v1`"));
+        Assert.Contains(AuthoritativeCathedralDepthRuntimeCatalog.TableName, contractText, StringComparison.Ordinal);
+        Assert.Contains(AuthoritativeCathedralDepthRuntimeCatalog.GeneratorId, contractText, StringComparison.Ordinal);
+        Assert.Contains("level_id,level_symbol,depth,generator_id,generator_revision,dungeon_seed,entry,policy", contractText, StringComparison.Ordinal);
+        Assert.Contains("quest-disabled-original-diablo", contractText, StringComparison.Ordinal);
+        Assert.Contains("Strict version-3 saves", contractText, StringComparison.Ordinal);
+        Assert.Contains("L4.Down has no Catacombs-5 route", contractText, StringComparison.Ordinal);
+        Assert.Contains("ai/godot-build.md#generated-cathedral-depths-playtest", contractText, StringComparison.Ordinal);
+        var guide = Read(root, "docs", "ai", "godot-build.md");
+        Assert.Contains("run-godot-cathedral-depths-playtest.ps1", guide, StringComparison.Ordinal);
+        Assert.Contains("-CathedralDepthProfileDirectory", guide, StringComparison.Ordinal);
+        Assert.Contains("devilution.diablo.cathedral-depths.v1", guide, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void ReplayFixtureInventoryMatchesNativeGateDocumentation()
     {
         var root = FindRepositoryRoot();

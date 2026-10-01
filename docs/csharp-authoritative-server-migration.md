@@ -227,6 +227,20 @@ authoritative results.
   warps. Existing authored numeric placeholders must still be in bounds before
   binding resolution. This narrow profile rejects generated quest fragments and
   fixed entry overrides; it does not invent native campaign depth/seed mapping.
+- The separately selected `devilution.diablo.cathedral-depths.v1` adapter activates
+  the isolated four-depth contract `native_cathedral_depths.tsv`, with exact columns
+  `level_id,level_symbol,depth,generator_id,generator_revision,dungeon_seed,entry,policy`.
+  It requires exactly four ordered depth/level IDs 1-4, unique stable symbols,
+  generator `original-diablo.cathedral-depths` revision 1, uint32 seeds, entries
+  `main`/`previous` and policy `quest-disabled-original-diablo`. The same external
+  semantic TIL/SOL catalogs supply geometry without server MPQ loading.
+  Exactly eight unconditional reciprocal warps bind Down to next.Main and Up to
+  previous.Previous; only L1.Up returns Town. L4.Down has no Catacombs-5 route.
+  Strict version-3 saves bind all four ordered geometry/RNG/route/catalog identities
+  and reject mixed L1/depth metadata before mutable restore; default v1 and L1 v2
+  saves remain unchanged. See the
+  [four-depth Godot playtest](ai/godot-build.md#generated-cathedral-depths-playtest)
+  for private compilation, isolated sessions and diagnostic acceptance limits.
 - An authoritative client never falls back to local simulation after a server
   failure.
 

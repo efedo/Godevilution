@@ -87,7 +87,8 @@ public partial class SessionAcceptance
         GD.Print($"Godot generated Cathedral acceptance passed: {phase}; visible={visible}; sequence={lastSequence}");
     }
 
-    private async Task TravelCathedralRoute(Main main, string directory, uint warpId, uint destinationLevel, bool stopEarly)
+    private async Task TravelCathedralRoute(Main main, string directory, uint warpId, uint destinationLevel, bool stopEarly,
+        int minimumDistinctPositions = 8)
     {
         await Until(() => Settled(main), "Generated-route start did not settle.");
         var origin = main.ObservedSnapshot!.Players.Single().Clone();
@@ -187,11 +188,12 @@ public partial class SessionAcceptance
                     FinalAppliedTick = main.ObservedCommandResult.AppliedTick,
                 });
             } else {
-                Require(positions.Count >= 8, "The route boundary was reached without continuous walking.");
+                Require(positions.Count >= minimumDistinctPositions, "The route boundary was reached without continuous walking.");
             }
             WriteEvidence(directory, $"cathedral-route-{warpId}.json", new {
                 Passed = true, WarpId = warpId, SourceLevel = origin.LevelId, TargetLevel = destinationLevel,
                 StoppedInsideSource = stopEarly, DistinctObservedPositions = positions.Count,
+                MinimumDistinctPositions = minimumDistinctPositions,
                 CancellationSequence = cancellationSequence, ManualWallSetupSteps = manualWallSetupSteps,
                 Sequence = main.ObservedCommandResult!.ClientSequence,
             });

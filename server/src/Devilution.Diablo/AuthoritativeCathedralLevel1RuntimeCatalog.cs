@@ -257,7 +257,7 @@ public sealed class AuthoritativeCathedralLevel1RuntimeCatalogDefinition
 		return new AuthoritativeCathedralLevel1GenerationPlan(candidates);
 	}
 
-	private static void ValidateFineGeometry(AuthoritativeLevel level)
+	internal static void ValidateFineGeometry(AuthoritativeLevel level)
 	{
 		if (level.NativeMegaTileLayer.Count != 0)
 			throw new InvalidDataException("Native Cathedral level-one materialization must not contain a coarse mega-tile layer.");
@@ -267,7 +267,7 @@ public sealed class AuthoritativeCathedralLevel1RuntimeCatalogDefinition
 			throw new InvalidDataException("Native Cathedral level-one materialization has incomplete transparency.");
 	}
 
-	private static AuthoritativeCathedralLevel1RoutePoints FindRoutes(
+	internal static AuthoritativeCathedralLevel1RoutePoints FindRoutes(
 		AuthoritativeLevel level,
 		AuthoritativeCathedralPoint mainEntry,
 		AuthoritativeCathedralPoint previousEntry)

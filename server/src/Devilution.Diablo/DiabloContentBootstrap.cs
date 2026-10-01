@@ -240,8 +240,19 @@ public interface IDiabloNativeGeneratedContentBootstrap
         DiabloDifficulty difficulty = DiabloDifficulty.Normal);
 }
 
+/** Separate opt-in ordinary Cathedral depths 1-4 contract; existing L1 profiles stay unchanged. */
+public interface IDiabloCathedralDepthContentBootstrap
+{
+    DiabloContentActivation ActivateDepths(
+        ComposedContent content,
+        uint randomSeed = 0,
+        DiabloGameMode gameMode = DiabloGameMode.SinglePlayer,
+        DiabloMonsterSpawnConfiguration? monsterSpawns = null,
+        DiabloDifficulty difficulty = DiabloDifficulty.Normal);
+}
+
 /** First-party content activation kept entirely inside the Diablo module. */
-internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap, IDiabloNativeGeneratedContentBootstrap
+internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap, IDiabloNativeGeneratedContentBootstrap, IDiabloCathedralDepthContentBootstrap
 {
     private readonly IDiabloSimulationFactory simulationFactory;
 
@@ -270,18 +281,30 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap, IDiabloN
         DiabloDifficulty difficulty = DiabloDifficulty.Normal)
         => ActivateCore(content, randomSeed, gameMode, monsterSpawns, difficulty, nativeGenerated: true);
 
+    public DiabloContentActivation ActivateDepths(
+        ComposedContent content,
+        uint randomSeed = 0,
+        DiabloGameMode gameMode = DiabloGameMode.SinglePlayer,
+        DiabloMonsterSpawnConfiguration? monsterSpawns = null,
+        DiabloDifficulty difficulty = DiabloDifficulty.Normal)
+        => ActivateCore(content, randomSeed, gameMode, monsterSpawns, difficulty, nativeGenerated: false, cathedralDepths: true);
+
     private DiabloContentActivation ActivateCore(
         ComposedContent content,
         uint randomSeed,
         DiabloGameMode gameMode,
         DiabloMonsterSpawnConfiguration? monsterSpawns,
         DiabloDifficulty difficulty,
-        bool nativeGenerated)
+        bool nativeGenerated,
+        bool cathedralDepths = false)
     {
         ArgumentNullException.ThrowIfNull(content);
         var hasGeneratedLevels = content.TryGetTable(AuthoritativeCathedralLevel1RuntimeCatalog.TableName, out var generatedLevelsTable);
+        var hasDepthLevels = content.TryGetTable(AuthoritativeCathedralDepthRuntimeCatalog.TableName, out var depthLevelsTable);
         var hasGeneratedRoutes = content.TryGetTable(AuthoritativeNativeGeneratedRouteBindings.TableName, out var generatedRoutesTable);
-        if (nativeGenerated ? !hasGeneratedLevels || !hasGeneratedRoutes : hasGeneratedLevels || hasGeneratedRoutes) {
+        if (cathedralDepths && (!hasDepthLevels || !hasGeneratedRoutes || hasGeneratedLevels))
+            throw new InvalidDataException("Cathedral depths require their own level catalog and explicit route bindings, not an L1 catalog.");
+        if (!cathedralDepths && (nativeGenerated ? !hasGeneratedLevels || !hasGeneratedRoutes || hasDepthLevels : hasGeneratedLevels || hasGeneratedRoutes || hasDepthLevels)) {
             throw new InvalidDataException(nativeGenerated
                 ? "Native generation requires both level definitions and explicit route bindings."
                 : "Native generation content requires the explicitly selected native-generated host adapter.");
@@ -548,6 +571,8 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap, IDiabloN
             nativeDunLevels.Apply(content, world, nativeDunGeometry);
         }
         AuthoritativeCathedralLevel1GenerationPlan? nativeGenerationPlan = null;
+        AuthoritativeCathedralDepthGenerationPlan? depthGenerationPlan = null;
+        var generatedGeometry = new List<(AuthoritativeLevel Level, string FineFingerprint)>();
         if (nativeGenerated) {
             if (world is null || nativeDunGeometry is null)
                 throw new InvalidDataException("Native Cathedral generation requires a world and validated external geometry catalogs.");
@@ -559,6 +584,19 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap, IDiabloN
             }
             nativeGenerationPlan = catalog.Prepare(world, nativeDunGeometry);
             nativeGenerationPlan.Apply(world);
+            generatedGeometry.AddRange(nativeGenerationPlan.Candidates.Select(candidate => (candidate.Level, candidate.Identity.FineFingerprint)));
+        }
+        if (cathedralDepths) {
+            if (world is null || nativeDunGeometry is null)
+                throw new InvalidDataException("Native Cathedral depths require a world and validated external geometry catalogs.");
+            var catalog = AuthoritativeCathedralDepthRuntimeCatalog.Load(depthLevelsTable!.ToCanonicalTsv(), stableIds);
+            if (catalog.Definitions.Any(definition => definition.LevelId == worldRules.TownLevelId
+                || world.Levels.Any(level => level.LevelId == definition.LevelId
+                    && (level.NativePieceLayer.Count != 0 || level.NativeMegaTileLayer.Count != 0))))
+                throw new InvalidDataException("Native Cathedral depths cannot replace Town or another native map layer.");
+            depthGenerationPlan = catalog.Prepare(world, nativeDunGeometry);
+            depthGenerationPlan.Apply(world);
+            generatedGeometry.AddRange(depthGenerationPlan.Candidates.Select(candidate => (candidate.Level, candidate.Identity.FineFingerprint)));
         }
         var nativeDunFragments = content.TryGetTable(
                 "native_dun_fragments.tsv",
@@ -569,6 +607,9 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap, IDiabloN
                 nativeGenerationPlan.Candidates.Any(candidate => candidate.Level.LevelId == definition.LevelId)) == true) {
             throw new InvalidDataException("Ordinary generated Cathedral level 1 does not yet support native quest fragments.");
         }
+        if (depthGenerationPlan is not null && nativeDunFragments?.Definitions.Any(definition =>
+                depthGenerationPlan.Candidates.Any(candidate => candidate.Level.LevelId == definition.LevelId)) == true)
+            throw new InvalidDataException("Ordinary generated Cathedral depths do not yet support native quest fragments.");
         var nativeDunFragmentObjects = content.TryGetTable(
                 "native_dun_fragment_objects.tsv",
                 out var nativeDunFragmentObjectsTable)
@@ -880,6 +921,7 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap, IDiabloN
             ? LoadPortals(content, portalsTable, stableIds, setLevelMaps)
             : null;
         DiabloNativeGeneratedWorldIdentity? nativeGeneratedIdentity = null;
+        DiabloCathedralDepthWorldIdentity? cathedralDepthIdentity = null;
         if (nativeGenerationPlan is not null) {
             var town = world!.Levels.SingleOrDefault(level => level.LevelId == worldRules.TownLevelId)
                 ?? throw new InvalidDataException("Native generated routes require an active Town level.");
@@ -889,6 +931,16 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap, IDiabloN
             portals = resolved.Portals;
             nativeGeneratedIdentity = new DiabloNativeGeneratedWorldIdentity(
                 nativeGenerationPlan.Candidates.Select(candidate => candidate.Identity).ToArray(), resolved.RouteFingerprint);
+        }
+        if (depthGenerationPlan is not null) {
+            var town = world!.Levels.SingleOrDefault(level => level.LevelId == worldRules.TownLevelId)
+                ?? throw new InvalidDataException("Native Cathedral depth routes require an active Town level.");
+            var routeBindings = AuthoritativeNativeGeneratedRouteBindings.Load(generatedRoutesTable!.ToCanonicalTsv(), stableIds);
+            var resolved = AuthoritativeNativeGeneratedRouteBindings.Resolve(world, town, depthGenerationPlan, warps, portals ?? [], routeBindings);
+            warps = resolved.Warps;
+            portals = resolved.Portals;
+            cathedralDepthIdentity = new DiabloCathedralDepthWorldIdentity(
+                depthGenerationPlan.Candidates.Select(candidate => candidate.Identity).ToArray(), resolved.RouteFingerprint);
         }
         if (world is not null) {
             foreach (var warp in warps)
@@ -1283,8 +1335,8 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap, IDiabloN
         if (levelStartCatalog is not null && world is null)
             throw new InvalidDataException(
                 "Level-start positions require an active world.");
-        if (nativeGenerationPlan is not null && levelStartCatalog?.Definitions.Any(definition =>
-                nativeGenerationPlan.Candidates.Any(candidate => candidate.Level.LevelId == definition.LevelId)) == true) {
+        if (generatedGeometry.Count != 0 && levelStartCatalog?.Definitions.Any(definition =>
+                generatedGeometry.Any(candidate => candidate.Level.LevelId == definition.LevelId)) == true) {
             throw new InvalidDataException("Generated level entries cannot also have fixed level-start overrides.");
         }
 
@@ -1292,6 +1344,7 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap, IDiabloN
         var simulation = simulationFactory.Create(new DiabloSimulationOptions(stores, rules) {
             World = world,
             NativeGeneratedWorldIdentity = nativeGeneratedIdentity,
+            CathedralDepthWorldIdentity = cathedralDepthIdentity,
             WorldMutations = worldMutations,
             WorldRules = worldRules,
             CombatTargets = combatTargets,
@@ -1352,8 +1405,8 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap, IDiabloN
             levelStartCatalog.Apply(finalWorld);
             simulation.WorldState.RefreshProjectedGeometry();
         }
-        if (nativeGenerationPlan is not null) {
-            foreach (var candidate in nativeGenerationPlan.Candidates) {
+        if (generatedGeometry.Count != 0) {
+            foreach (var candidate in generatedGeometry) {
                 var effective = simulation.WorldState.LevelGeometry.SingleOrDefault(level => level.LevelId == candidate.Level.LevelId);
                 if (effective is null || effective.StartPositionX != candidate.Level.StartPositionX
                     || effective.StartPositionY != candidate.Level.StartPositionY
@@ -1361,7 +1414,7 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap, IDiabloN
                     || effective.IsDefaultStart != candidate.Level.IsDefaultStart
                     || effective.SuppressMultiplayerDeathDrops != candidate.Level.SuppressMultiplayerDeathDrops
                     || effective.NativeMegaTileLayer.Count != 0
-                    || !string.Equals(candidate.Identity.FineFingerprint,
+                    || !string.Equals(candidate.FineFingerprint,
                         AuthoritativeCathedralLevel1RuntimeCatalog.ComputeFineFingerprint(effective), StringComparison.Ordinal)) {
                     throw new InvalidDataException("Generated level geometry was changed by an incompatible activation fragment or entry override.");
                 }
