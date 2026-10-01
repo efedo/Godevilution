@@ -182,9 +182,11 @@ M4. M5 is the final removal gate, not a reason to postpone replacement work.
    per-snapshot validation/cloning, full-world drawing and large-map costs before
    selecting broader caches or presentation changes. Callback comparisons remain
    local observations, not whole-frame or release-budget passes.
-   Retain the current full-suite live store movement rejection and isolated rerun
-   separately. Capture exact receipt/tick/action diagnostics before selecting a
-   correction; an isolated pass does not close full compatibility verification.
+   Retain the earlier unclassified live store movement rejection separately from
+   the latest complete passing run. Exact queued/receipt/model/action diagnostics
+   now accompany travel assertions; observed state is not server admission state.
+   Do not infer a cause or timing correction from a later pass. Use status for
+   current compatibility evidence and keep broader M0 gates open.
    Use the recorded checkpoint-phase timings to target publication costs without
    weakening durability; retain no-ack-on-write-failure and fresh-host duplicate
    recovery coverage. Local Windows receipt-file reuse does not close the wider
@@ -289,6 +291,20 @@ this evidence. A sample art pack does not satisfy M4's full presentation gate.
    the diagnostic integration, not native population or the family exit gate.
    Preserve it while extending native Cathedral generation/depth and population;
    multiplayer and broader seed/topology checks remain relevant gates.
+   Next ordinary-depth package: Cathedral dungeon levels 1-4 all use native
+   `level_l1.cpp`, with minimum areas 533/693/761/761. First extend private oracle
+   capture to explicit depth, unavailable quests, original-Diablo stair policy,
+   MAIN/PREV entries, attempt/final RNG and complete coarse/fine layers. Then
+   extend the shared generator/materializer while keeping L1 results/APIs exact.
+   Multi-depth activation requires a separate opt-in catalog/adapter/profile/save
+   contract: preserve existing L1 v1 identities and version-2 saves. Audit profile
+   level IDs and every dependent reference; base 2/3/4 are authored other families,
+   not native Cathedral depths. Bind Down to next.Main and Up to previous.Previous;
+   only L1.Up returns Town. Keep L4.Down's native Catacombs-5 boundary explicitly
+   incomplete until supported. Accept this diagnostic only after ordinary-control
+   descent/ascent, collision, middle-floor fresh-host restore, identity rejection
+   and unchanged default/L1 regressions. Explicit per-depth seeds and authored
+   diagnostic encounters do not close campaign seed selection or native population.
    Quest fragments/set pieces, wider topology and native population remain open;
    do not silently apply the base prototype's different-family quest fragment to L1.
    The shared vision contract remains conservative, not exact native light parity.

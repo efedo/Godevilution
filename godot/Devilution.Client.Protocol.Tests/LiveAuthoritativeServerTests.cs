@@ -5884,16 +5884,25 @@ public sealed partial class LiveAuthoritativeServerTests
 
             var beforePosition = (player.PositionX, player.PositionY);
             var priorObservedTick = model.CurrentTick;
+            var requestedTick = client.SuggestedCommandTick(model.CurrentTick);
             var sequence = client.Queue(new Command {
                 MoveRequested = new MoveRequested {
                     TargetCell = true,
                     TargetX = greeting.PositionX,
                     TargetY = greeting.PositionY,
                 },
-            }, client.SuggestedCommandTick(model.CurrentTick));
+            }, requestedTick);
             await client.PollAsync(TestContext.Current.CancellationToken);
             var acknowledgement = await WaitForAcknowledgementAsync(client, sequence);
-            Assert.Equal(CommandStatus.Accepted, acknowledgement.Status);
+            var actionEndTick = player.CurrentAction is { } action
+                ? action.EndTick.ToString()
+                : "none";
+            Assert.True(
+                acknowledgement.Status == CommandStatus.Accepted,
+                $"Projected towner {townerId} attempt {attempt} sequence {sequence} requestedTick {requestedTick} "
+                    + $"ack={acknowledgement.Status}/{acknowledgement.RejectReason} appliedTick={acknowledgement.AppliedTick} "
+                    + $"modelTick={model.CurrentTick} player=({player.PositionX},{player.PositionY}) level={player.LevelId} "
+                    + $"mode={player.CombatMode} actionEndTick={actionEndTick} target=({greeting.PositionX},{greeting.PositionY}).");
             var moved = await WaitForMessageAsync(
                 client,
                 message => message.Snapshot is { } movedSnapshot

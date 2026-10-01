@@ -33,6 +33,12 @@ already include the change being checked. Run broader suites at integration
 gates or when new changes/failures justify them, as described in the
 [completion plan](../completion-plan.md#verification-policy).
 
+Live town-travel failures now include the exact command sequence, requested and
+receipt-applied ticks, status/rejection reason, and observed player/action state.
+Retain complete runner output when investigating them. The observed model state
+is not proof of server state at admission; do not assign a timing/action cause
+from a later isolated pass or retry a rejected command to hide the failure.
+
 ## Finding Godot
 
 Use a stable Godot 4.7.x Mono engine executable. The checked-in C# project keeps

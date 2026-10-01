@@ -134,6 +134,44 @@ The following records describe implemented slices at this baseline. They are
 evidence, not a separate priority list; detailed older entries retain their
 original scope and may be superseded by later entries or the current assessment.
 
+### M0 live movement diagnostics and refreshed verification (2026-10-01)
+
+Live town-travel assertions now capture the actual queued tick once and report
+towner, attempt, sequence, requested/applied/model ticks, receipt status/reason,
+observed position/level/mode/action end and target. Strict accepted-only receipts
+and existing fresh, moved, settled post-command observations remain unchanged.
+No production transport, server, gameplay, readiness fence or rejected retry was
+changed. Observed model state is not server state at admission.
+
+The rebuilt exact `LiveStoreAdmissionRejectsRemoteEntryWithoutPlayerMutation`
+case passes 1/1 (53.876s). The complete diagnostic-enabled protocol run then
+passes 604, with two explicit standalone-performance cases not selected (606
+total, 13m 04.444s), using the existing in-process runner without filters.
+Complete output is retained privately at
+`%TEMP%/Godevilution-Protocol-Verification-0e8445316060472f92c8acffb1db2b5c/protocol.stdout.log`.
+The build retains NU1900 audit-feed and the existing xUnit2031 warning.
+Documentation consistency guards pass 3/3. A fresh current-binary launcher check
+passes all 10 behavior and 15 contract cases without skips; it uses harmless
+children, not intentional native crashes. A final process scan finds no project
+server, Godot or WerFault processes remaining.
+The previous 603-pass/one-rejection run below remains a failure with no captured
+reason; this current pass neither explains it nor proves a timing/readiness fix.
+Actual Godot checks were not rerun for this test-helper/documentation-only batch;
+their last production-source evidence remains in the preceding batch below.
+
+Native-source planning confirms Cathedral dungeon depths 1-4 use the same L1
+family, not the separate Catacombs/Caves/Hell generator files. Minimum coarse
+areas are 533/693/761/761. Next generation work needs explicit depth-aware private
+oracle capture with quests unavailable and original-Diablo stairs; the existing
+depth-2 golden enables Poisoned Water and is not an ordinary-depth oracle.
+Current runtime catalogs, identity, adapter/profile and saves intentionally admit
+only L1. Base IDs 2/3/4 already mean authored Catacombs/Caves/Hell, so a separate
+opt-in native-depth profile must audit dependent references instead of silently
+reinterpreting the base pack. The updated M2 plan records the implementation and
+acceptance order. No deeper generated level, automatic campaign seed mapping,
+quest/population parity or Cathedral-family completion is claimed. M0 and the
+overall planning estimate remain open.
+
 ### M0 admitted geometry reuse and cancellation evidence (2026-10-01)
 
 The production Godot scene now installs full level geometry once per accepted

@@ -2,6 +2,17 @@
 
 All notable changes to this fork are documented below.
 
+- 2026-10-01: Added exact queued-tick, receipt/rejection and observed action
+  diagnostics to strict live town-travel assertions without changing production
+  scheduling, gameplay, readiness or retry policy. The rebuilt isolated store
+  case passes; complete retained-output protocol verification passes 604 with
+  two explicit performance exclusions. Preserve the earlier unexplained rejection
+  rather than attributing it to timing or claiming a fix. Updated existing build
+  guidance/status and source-backed Cathedral 1-4 oracle/depth/profile/topology
+  delivery steps; no deeper world or population acceptance is claimed.
+  Documentation guards pass 3 and current launcher behavior/contract checks pass
+  25 without skips. M0 remains open and no project/crash-reporting processes remain.
+
 - 2026-10-01: Reuse installed Godot geometry between accepted model snapshot
   generations, preserving full replacement, same-tick/reconnect admission,
   eager legacy calls, per-frame presentation and wire/save compatibility.
