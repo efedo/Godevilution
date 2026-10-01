@@ -97,8 +97,19 @@ dialogs only for those child processes; the launching process's error mode is
 restored immediately. Nonzero exits and fatal import-storage errors fail the
 launch, with process identity/exit evidence and logs retained. No crash is a pass,
 even if scene assertions already wrote successful evidence. Normal interactive
-client error reporting is unchanged. This prevents unattended dialog accumulation;
-it is not a substitute for fixing a recorded engine fault.
+client error reporting is unchanged. This mitigates unattended dialog accumulation;
+it is not universal fault-dialog prevention or a fix for Godot's internal fault.
+The retained comparison establishes the denied-write failure path, not the cause
+of every historical dialog. Never change user-profile permissions or system-wide
+error reporting to run these checks.
+
+Owned-process termination uses a five-second bounded wait per cleanup attempt,
+including importer startup failure and recovery-host shutdown. Failed termination
+is recorded separately without inventing an exit time/code. Terminal native exits
+are recorded before redirected logs are written; diagnostic-storage failures cannot
+replace a nonzero engine exit as the primary error. A zero engine exit with failed
+diagnostic storage still fails verification. These bounds cover direct owned handles,
+not arbitrary OS hangs or independently launched engines/crash reporters.
 
 `LocalLauncherBehaviorTests` in the server test project exercises the actual
 launcher helpers with harmless Windows PowerShell children, including isolated

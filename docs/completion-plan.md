@@ -96,6 +96,9 @@ M4. M5 is the final removal gate, not a reason to postpone replacement work.
    import access violation with denied AppData writes. Check native process
    exits and fatal import logs, retain stage process evidence, and fail before
    launching another phase. Scene success alone is not clean-process acceptance.
+   Bound owned-process termination and retain terminal native exits before
+   fallible log storage; preserve the engine failure as primary. Child-only
+   crash-dialog suppression is mitigation, not proof of every historical cause.
    Stage current client sources per launch, import/build/run only that copy,
    and retain engine/SDK evidence. Preserve the source SDK pin, local edits,
    upgrade backups and saves; reject unsupported or unexpected migrations.

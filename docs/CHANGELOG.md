@@ -2,6 +2,16 @@
 
 All notable changes to this fork are documented below.
 
+- 2026-09-30: Rechecked the reported Godot application-error accumulation against
+  retained denied-write/import evidence and the committed per-child storage fix.
+  Bounded every launcher post-kill wait, handled exit races, and retained terminal
+  native failures before fallible output storage without masking them with logging
+  errors. Added deterministic cleanup/diagnostic regressions; launcher checks pass
+  24/24 and actual headless create/save/resume/server-loss recovery passes with nine
+  clean Godot exits. Preserved source SDK, user permissions and normal saves;
+  qualified dialog suppression as mitigation. Updated existing guidance/plan/status;
+  unfinished Cathedral work and broader acceptance remain separate.
+
 - 2026-09-30: Integrated native clock-gated timing, bounded synchronous exchanges,
   immutable retries, server sequence floors and reconnect epochs. Restored signed
   authoritative player-display markers and activated existing authority guards in

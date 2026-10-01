@@ -129,6 +129,42 @@ The following records describe implemented slices at this baseline. They are
 evidence, not a separate priority list; detailed older entries retain their
 original scope and may be superseded by later entries or the current assessment.
 
+### M0 Godot crash-safety follow-up (2026-09-30)
+
+The user confirms the original application-error dialogs were closed. No Godot
+or crash-reporting processes were running at inspection. Retained 4.7.1 logs
+confirm denied editor settings/help-cache writes; the isolated comparison removes
+those diagnostics. The original remediation is `32307f45b`, not an engine upgrade.
+This identifies the reproduced failure path, not Godot's internal fault or the
+cause of every historical dialog.
+
+Independent review found two residual launcher gaps. All five unbounded post-kill
+waits now use a five-second owned-handle termination bound, including startup and
+recovery. Exit races are handled, and failed termination retains `CleanupError`
+without fabricating terminal status. Completion and cleanup persist native exit
+codes before fallible output storage. Nonzero engine failures remain primary;
+diagnostic-storage failures are separate, and a zero engine exit with failed
+diagnostics still rejects the run. Automated-child-only dialog suppression and
+per-stage writable storage remain; no user ACL, firewall, registry, save, protocol
+or gameplay change is made. This is mitigation, not universal dialog prevention.
+
+Rebuilt launcher regressions pass 24/24 without skips (18.016s), using harmless
+children and deterministic process probes, not intentional crashes. Initial
+verification used a stale pre-expansion Cathedral test binary; rebuilding resolves
+that unrelated mismatch. A new fake-record null/string mismatch was corrected
+before the final pass. Independent source review approves the safety changes;
+documentation consistency guards pass 3/3 without skips (365ms).
+
+Actual headless create/move/checkpoint, fresh-host resume and server-loss/reconnect
+pass under installed Godot 4.7.2 stable Mono. All nine version/import/client records
+exit zero without stage, diagnostic or cleanup errors; import logs contain no fatal
+storage diagnostics. Source SDK 4.7.1 is preserved. Private evidence is
+`Godevilution-Scene-Acceptance-7b471e5d7446448a90710d02f9b5c74b`; launch-log suffixes
+are `296230ce43824401a6710450d1dc3cac`, `3198d8d7d6d94311b08fc9084f9e0991` and
+`f58b851441d6401892ca9fb5f05ae90e`. Final process inspection finds no Godot,
+project server/native client or WerFault processes. NuGet audit-feed NU1900 warnings
+remain. This is not a new visible-rendering, native GUI, campaign or M0 gate pass.
+
 ### M0 native timing and presentation integration (2026-09-30)
 
 This work follows `27439e339`. Native realtime input supplies requested tick 0,

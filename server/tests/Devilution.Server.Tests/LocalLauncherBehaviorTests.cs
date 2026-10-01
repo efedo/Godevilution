@@ -7,6 +7,160 @@ namespace Devilution.Server.Tests;
 public sealed class LocalLauncherBehaviorTests
 {
     [Fact]
+    public void GodotCleanupIsBoundedAndTerminalEvidenceSurvivesOutputFailure()
+    {
+        if (!OperatingSystem.IsWindows())
+            return;
+
+        var script = BuildPowerShellHarness(
+            ["Stop-OwnedLocalProcess", "Write-ProcessEvidence", "Complete-GodotProcess", "Stop-GodotProcess"],
+            """
+            $ErrorActionPreference = 'Stop'
+            $work = Join-Path ([IO.Path]::GetTempPath()) ('Godevilution-CleanupTest-' + [guid]::NewGuid().ToString('N'))
+            New-Item -ItemType Directory -Path $work | Out-Null
+            try {
+                Add-Type -TypeDefinition @'
+using System;
+public sealed class CleanupProcessProbe
+{
+    public int Id { get { return 123; } }
+    public bool HasExited { get; set; }
+    public int ExitCode { get; set; }
+    public bool KillCompletes { get; set; }
+    public bool WaitCompletes { get; set; }
+    public bool KillThrows { get; set; }
+    public bool ExitDuringKill { get; set; }
+    public bool ExitDuringWait { get; set; }
+    public int KillCalls { get; private set; }
+    public int WaitCalls { get; private set; }
+    public int WaitMilliseconds { get; private set; }
+    public void Kill()
+    {
+        KillCalls++;
+        if (ExitDuringKill) HasExited = true;
+        if (KillThrows) throw new InvalidOperationException("injected termination denied");
+        if (KillCompletes) HasExited = true;
+    }
+    public bool WaitForExit(int milliseconds)
+    {
+        WaitCalls++;
+        WaitMilliseconds = milliseconds;
+        if (WaitCompletes || ExitDuringWait) HasExited = true;
+        return WaitCompletes;
+    }
+    public void WaitForExit() { throw new InvalidOperationException("unbounded wait is forbidden"); }
+}
+'@
+                function Write-GodotRedirectedOutput($Tracked) {
+                    if ($script:FailOutput) { throw 'injected output storage failure' }
+                }
+                function New-ProbeRecord([string]$Stage, $Process, [string]$ErrorMessage) {
+                    return [pscustomobject]@{
+                        Process = $Process
+                        EvidencePath = Join-Path $work ($Stage + '.json')
+                        Record = [pscustomobject]@{ Stage = $Stage; EndedUtc = $null; ExitCode = $null;
+                            Error = $(if ([string]::IsNullOrEmpty($ErrorMessage)) { $null } else { $ErrorMessage }) }
+                    }
+                }
+
+                $exited = [CleanupProcessProbe]::new()
+                $exited.HasExited = $true
+                Stop-OwnedLocalProcess $exited
+                if ($exited.KillCalls -ne 0 -or $exited.WaitCalls -ne 0) { throw 'An exited process was killed or waited on.' }
+
+                $delayed = [CleanupProcessProbe]::new()
+                $delayed.WaitCompletes = $true
+                Stop-OwnedLocalProcess $delayed 17
+                if ($delayed.KillCalls -ne 1 -or $delayed.WaitCalls -ne 1 -or $delayed.WaitMilliseconds -ne 17) {
+                    throw 'Cleanup did not pass the explicit deadline to the process.'
+                }
+
+                $race = [CleanupProcessProbe]::new()
+                $race.ExitDuringKill = $true
+                $race.KillThrows = $true
+                Stop-OwnedLocalProcess $race
+                if (-not $race.HasExited -or $race.WaitCalls -ne 0) { throw 'A natural exit during Kill was not handled.' }
+
+                $waitRace = [CleanupProcessProbe]::new()
+                $waitRace.ExitDuringWait = $true
+                Stop-OwnedLocalProcess $waitRace 17
+                if (-not $waitRace.HasExited -or $waitRace.WaitMilliseconds -ne 17) {
+                    throw 'A natural exit at the wait deadline was reported as failed termination.'
+                }
+
+                $stuck = [CleanupProcessProbe]::new()
+                $stuckTracked = New-ProbeRecord 'stuck' $stuck 'original stage timeout'
+                $rejected = $false
+                try { Stop-GodotProcess $stuckTracked } catch { $rejected = $true }
+                $stuckEvidence = Get-Content -LiteralPath $stuckTracked.EvidencePath -Raw | ConvertFrom-Json
+                if (-not $rejected -or $stuck.WaitMilliseconds -ne 5000 -or $stuck.WaitCalls -ne 1 -or
+                    $stuckEvidence.Error -cne 'original stage timeout' -or $stuckEvidence.CleanupError -notmatch 'did not terminate' -or
+                    $null -ne $stuckEvidence.EndedUtc -or $null -ne $stuckEvidence.ExitCode) {
+                    throw 'Failed termination was unbounded, concealed, or recorded as a terminal exit.'
+                }
+
+                $denied = [CleanupProcessProbe]::new()
+                $denied.KillThrows = $true
+                $deniedTracked = New-ProbeRecord 'denied' $denied 'original import failure'
+                $rejected = $false
+                try { Stop-GodotProcess $deniedTracked } catch { $rejected = $true }
+                $deniedEvidence = Get-Content -LiteralPath $deniedTracked.EvidencePath -Raw | ConvertFrom-Json
+                if (-not $rejected -or $denied.WaitCalls -ne 0 -or $deniedEvidence.Error -cne 'original import failure' -or
+                    $deniedEvidence.CleanupError -notmatch 'injected termination denied' -or $null -ne $deniedEvidence.EndedUtc) {
+                    throw 'A cleanup permission failure replaced the stage error or fabricated completion.'
+                }
+
+                $script:FailOutput = $true
+                foreach ($code in @(0, -1073741819)) {
+                    $terminal = [CleanupProcessProbe]::new()
+                    $terminal.HasExited = $true
+                    $terminal.ExitCode = $code
+                    $tracked = New-ProbeRecord ('output-' + $code) $terminal $null
+                    $rejected = $false
+                    $caughtMessage = $null
+                    try { Complete-GodotProcess $tracked 0 'probe engine' } catch { $rejected = $true; $caughtMessage = $_.Exception.Message }
+                    $evidence = Get-Content -LiteralPath $tracked.EvidencePath -Raw | ConvertFrom-Json
+                    if (-not $rejected -or $null -eq $evidence.EndedUtc -or $evidence.ExitCode -ne $code) {
+                        throw 'Output failure hid terminal exit evidence or was accepted.'
+                    }
+                    if ($code -ne 0 -and ($evidence.Error -notmatch 'exited with code -1073741819' -or
+                        $caughtMessage -notmatch 'probe engine exited with code -1073741819' -or
+                        $evidence.DiagnosticError -cne 'injected output storage failure')) {
+                        throw 'Output failure erased the original engine failure.'
+                    }
+                    if ($code -eq 0 -and $caughtMessage -cne 'injected output storage failure') {
+                        throw 'A successful engine exit concealed diagnostic-storage failure.'
+                    }
+                    $endedUtc = $evidence.EndedUtc
+                    try { Stop-GodotProcess $tracked } catch { }
+                    $finalEvidence = Get-Content -LiteralPath $tracked.EvidencePath -Raw | ConvertFrom-Json
+                    if ($finalEvidence.EndedUtc -cne $endedUtc -or $finalEvidence.ExitCode -ne $code) {
+                        throw 'Cleanup changed terminal status after output failure.'
+                    }
+                }
+                $script:FailOutput = $false
+                $killed = [CleanupProcessProbe]::new()
+                $killed.KillCompletes = $true
+                $killed.ExitCode = -1
+                $killedTracked = New-ProbeRecord 'killed' $killed $null
+                Stop-GodotProcess $killedTracked
+                if ($killedTracked.Record.ExitCode -ne -1 -or $killedTracked.Record.Error -cne 'Terminated by launcher cleanup.') {
+                    throw 'Successful owned-child cleanup lost its outcome.'
+                }
+            } finally {
+                $resolvedWork = [IO.Path]::GetFullPath($work)
+                $tempPrefix = [IO.Path]::GetFullPath([IO.Path]::GetTempPath()).TrimEnd('\', '/') + [IO.Path]::DirectorySeparatorChar
+                if (-not $resolvedWork.StartsWith($tempPrefix, [StringComparison]::OrdinalIgnoreCase) -or
+                    [IO.Path]::GetFileName($resolvedWork) -notmatch '^Godevilution-CleanupTest-[a-f0-9]{32}$') {
+                    throw 'Refusing to remove a test directory outside its validated temporary target.'
+                }
+                Remove-Item -LiteralPath $resolvedWork -Recurse -Force -ErrorAction SilentlyContinue
+            }
+""");
+        RunPowerShell(script);
+    }
+
+    [Fact]
     public void GodotLauncherProcessHelpersUseIsolatedChildrenAndRejectBadStages()
     {
         if (!OperatingSystem.IsWindows())
@@ -19,6 +173,7 @@ public sealed class LocalLauncherBehaviorTests
                     "Assert-WritableDirectory",
                     "Write-ProcessEvidence",
                     "Start-GodotChildProcess",
+                    "Stop-OwnedLocalProcess",
                     "New-GodotProcess",
                     "Write-GodotRedirectedOutput",
                     "Complete-GodotProcess",
@@ -714,6 +869,7 @@ public sealed class FakeCompletedProcess
 
         var script = BuildPowerShellHarness(
             ["Assert-WritableDirectory", "Write-ProcessEvidence", "Start-GodotChildProcess",
+                "Stop-OwnedLocalProcess",
                 "New-GodotProcess", "Write-GodotRedirectedOutput",
                 "Complete-GodotProcess", "Stop-GodotProcess"],
             """

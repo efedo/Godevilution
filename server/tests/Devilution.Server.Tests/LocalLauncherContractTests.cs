@@ -211,6 +211,10 @@ public sealed class LocalLauncherContractTests
         Assert.Contains("$expectedGameMode = if ($Multiplayer) { 'Multiplayer' } else { 'SinglePlayer' }", launcher);
         Assert.Contains("DEVILUTION_RESUME_TOKEN_PATH", launcher);
         Assert.Contains("$savedEnvironment[$name]", launcher);
+        Assert.DoesNotContain(".WaitForExit()", launcher);
+        Assert.Contains("Stop-OwnedLocalProcess $process", launcher);
+        Assert.Contains("Stop-OwnedLocalProcess $serverProcess", launcher);
+        Assert.Contains("Stop-OwnedLocalProcess $ownedProcess", launcher);
     }
 
     [Fact]

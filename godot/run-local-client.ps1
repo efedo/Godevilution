@@ -612,6 +612,19 @@ function Start-GodotChildProcess($StartInfo) {
     return [Diagnostics.Process]::Start($StartInfo)
 }
 
+function Stop-OwnedLocalProcess($Process, [ValidateRange(1, 60000)] [int]$TimeoutMilliseconds = 5000) {
+    if ($null -eq $Process -or $Process.HasExited) { return }
+    try {
+        $Process.Kill()
+    } catch {
+        # A natural exit between HasExited and Kill does not require cleanup.
+        if (-not $Process.HasExited) { throw }
+    }
+    if (-not $Process.HasExited -and -not $Process.WaitForExit($TimeoutMilliseconds) -and -not $Process.HasExited) {
+        throw "Owned process $($Process.Id) did not terminate within $TimeoutMilliseconds ms after cleanup."
+    }
+}
+
 function New-GodotProcess(
     [string]$StageName,
     [string]$Arguments,
@@ -689,7 +702,7 @@ function New-GodotProcess(
         $primaryError = $_
         if ($null -ne $process) {
             try {
-                if (-not $process.HasExited) { $process.Kill(); $process.WaitForExit() }
+                Stop-OwnedLocalProcess $process
             } catch { Write-Warning "Could not stop failed Godot process for stage ${StageName}: $($_.Exception.Message)" }
             try { $process.Dispose() }
             catch { Write-Warning "Could not dispose failed Godot process for stage ${StageName}: $($_.Exception.Message)" }
@@ -747,14 +760,25 @@ function Complete-GodotProcess($Tracked, [int]$TimeoutMilliseconds, [string]$Fai
         }
         $Tracked.Record.EndedUtc = [DateTime]::UtcNow.ToString('O')
     }
-    Write-GodotRedirectedOutput $Tracked
     if ($null -eq $Tracked.Record.ExitCode) { $Tracked.Record.ExitCode = $Tracked.Process.ExitCode }
     if ($Tracked.Record.ExitCode -ne 0) {
         if ($null -eq $Tracked.Record.Error) { $Tracked.Record.Error = "$FailurePrefix exited with code $($Tracked.Record.ExitCode)." }
-        Write-ProcessEvidence $Tracked
-        throw "$($Tracked.Record.Error) See the stage log."
     }
-    Write-ProcessEvidence $Tracked
+    $terminalError = if ($Tracked.Record.ExitCode -ne 0) { "$($Tracked.Record.Error) See the stage log." } else { $null }
+    # Persist terminal status before fallible redirected-output storage, and
+    # retain the engine failure as primary even when its diagnostics cannot save.
+    try {
+        Write-ProcessEvidence $Tracked
+        Write-GodotRedirectedOutput $Tracked
+    } catch {
+        if ($null -eq $terminalError) { throw }
+        $Tracked.Record | Add-Member -NotePropertyName DiagnosticError -NotePropertyValue $_.Exception.Message -Force
+        try { Write-ProcessEvidence $Tracked }
+        catch { Write-Warning "Could not retain terminal Godot evidence: $($_.Exception.Message)" }
+        Write-Warning "Could not retain Godot diagnostics: $($Tracked.Record.DiagnosticError)"
+        throw $terminalError
+    }
+    if ($null -ne $terminalError) { throw $terminalError }
 }
 
 function Assert-GodotImportLog($Tracked, [string]$ImportLogPath) {
@@ -780,18 +804,23 @@ function Assert-GodotImportLog($Tracked, [string]$ImportLogPath) {
 function Stop-GodotProcess($Tracked) {
     if ($null -eq $Tracked -or $null -eq $Tracked.Process) { return }
     if (-not $Tracked.Process.HasExited) {
-        $Tracked.Process.Kill()
-        $Tracked.Process.WaitForExit()
+        try {
+            Stop-OwnedLocalProcess $Tracked.Process
+        } catch {
+            $Tracked.Record | Add-Member -NotePropertyName CleanupError -NotePropertyValue $_.Exception.Message -Force
+            Write-ProcessEvidence $Tracked
+            throw
+        }
         if ($null -eq $Tracked.Record.Error) { $Tracked.Record.Error = 'Terminated by launcher cleanup.' }
     }
     if ($null -eq $Tracked.Record.EndedUtc) {
         $Tracked.Record.EndedUtc = [DateTime]::UtcNow.ToString('O')
-        $Tracked.Record.ExitCode = $Tracked.Process.ExitCode
-        if ($null -eq $Tracked.Record.Error -and $Tracked.Record.ExitCode -ne 0) {
-            $Tracked.Record.Error = "Godot $($Tracked.Record.Stage) exited with code $($Tracked.Record.ExitCode)."
-        }
-        Write-ProcessEvidence $Tracked
     }
+    if ($null -eq $Tracked.Record.ExitCode) { $Tracked.Record.ExitCode = $Tracked.Process.ExitCode }
+    if ($null -eq $Tracked.Record.Error -and $Tracked.Record.ExitCode -ne 0) {
+        $Tracked.Record.Error = "Godot $($Tracked.Record.Stage) exited with code $($Tracked.Record.ExitCode)."
+    }
+    Write-ProcessEvidence $Tracked
     # Drain redirected version-probe output even after timeout/owned-child cleanup.
     # Callers retain the primary launch error if evidence storage also fails.
     Write-GodotRedirectedOutput $Tracked
@@ -857,7 +886,7 @@ try {
         } catch {
             if ($null -ne $serverProcess) {
                 try {
-                    if (-not $serverProcess.HasExited) { $serverProcess.Kill(); $serverProcess.WaitForExit() }
+                    Stop-OwnedLocalProcess $serverProcess
                 } catch { Write-Warning "Could not stop the failed server process: $($_.Exception.Message)" }
                 try { $serverProcess.Dispose() }
                 catch { Write-Warning "Could not dispose the failed server process: $($_.Exception.Message)" }
@@ -977,8 +1006,7 @@ try {
         if ($serverProcess.HasExited) { throw 'The server exited before the recovery fault injection.' }
         # Kill this owned host only. Keep the original Godot process running.
         $stoppedProcessId = $serverProcess.Id
-        $serverProcess.Kill()
-        $serverProcess.WaitForExit()
+        Stop-OwnedLocalProcess $serverProcess
         $serverProcess.Dispose()
         $serverProcess = $null
         [IO.File]::WriteAllText((Join-Path $SessionDirectory 'recovery-server-stopped.json'), '{"Stopped":true}')
@@ -1092,7 +1120,7 @@ try {
     foreach ($ownedProcess in @($startedClients | ForEach-Object { $_.Process }) + @($serverProcess, $importProcess, $versionTracked.Process)) {
         if ($null -ne $ownedProcess) {
             try {
-                if (-not $ownedProcess.HasExited) { $ownedProcess.Kill(); $ownedProcess.WaitForExit() }
+                Stop-OwnedLocalProcess $ownedProcess
             } catch { Write-Warning "Could not stop owned process $($ownedProcess.Id): $($_.Exception.Message)" }
             try { $ownedProcess.Dispose() }
             catch { Write-Warning "Could not dispose owned process: $($_.Exception.Message)" }
