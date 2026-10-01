@@ -11,6 +11,76 @@ namespace Devilution.Client.Protocol.Tests;
 /** Transport-only coverage for the negotiated clock-gated command mode. */
 public sealed class DeferredCommandTimingTests
 {
+    [Theory]
+    [InlineData(90UL)]
+    [InlineData(100UL)]
+    [InlineData(101UL)]
+    public async Task DelayedSnapshotDoesNotRewindGatedFirstDispatch(ulong delayedTick)
+    {
+        using var timeout = CancellationTokenSource.CreateLinkedTokenSource(TestContext.Current.CancellationToken);
+        timeout.CancelAfter(TimeSpan.FromSeconds(10));
+        var cancellationToken = timeout.Token;
+        using var listener = new TcpListener(IPAddress.Loopback, 0);
+        listener.Start();
+        var releaseSnapshot = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var releaseConnection = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var commandSeen = new TaskCompletionSource<Command>(TaskCreationOptions.RunContinuationsAsynchronously);
+        var serverTask = Task.Run(async () => {
+            using var connection = await listener.AcceptTcpClientAsync(cancellationToken);
+            await using var stream = connection.GetStream();
+            await DispatchHandshake(stream, CommandSchedulingMode.ClockGated, 100, cancellationToken: cancellationToken);
+            await releaseSnapshot.Task.WaitAsync(cancellationToken);
+            await WriteEnvelopeAsync(stream, new Envelope { Snapshot = new Snapshot { Tick = delayedTick } }, cancellationToken);
+            var readinessProbe = (await ReadEnvelopeAsync(stream, cancellationToken)).SnapshotRequest;
+            Assert.True(readinessProbe.TimingRequestId > 0);
+            await WriteEnvelopeAsync(stream, new Envelope {
+                TimingReply = new TimingReply { RequestId = readinessProbe.TimingRequestId },
+            }, cancellationToken);
+            var command = Assert.Single((await ReadEnvelopeAsync(stream, cancellationToken)).CommandBatch.Commands);
+            commandSeen.SetResult(command);
+            await WriteEnvelopeAsync(stream, new Envelope { CommandAck = Accepted(command.ClientSequence) }, cancellationToken);
+            await releaseConnection.Task.WaitAsync(cancellationToken);
+        }, cancellationToken);
+
+        await using var client = new AuthoritativeClient(Options(listener));
+        try {
+            await client.ConnectAsync(cancellationToken);
+            Assert.Contains(client.DrainMessages(), message => message.Snapshot?.Tick == 100);
+            var initialHint = client.SuggestedCommandTick(100);
+            while (client.SuggestedCommandTick(100) < initialHint + 6)
+                await Task.Delay(10, cancellationToken);
+            var beforeSnapshot = client.SuggestedCommandTick(100);
+            releaseSnapshot.SetResult();
+            while (!client.DrainMessages().Any(message => message.Snapshot?.Tick == delayedTick))
+                await Task.Delay(10, cancellationToken);
+
+            // Even a newer raw tick can arrive behind the elapsed projection.
+            var afterSnapshot = client.SuggestedCommandTick(100);
+            Assert.True(afterSnapshot >= beforeSnapshot,
+                $"Delayed snapshot {delayedTick} rewound the gated command estimate from {beforeSnapshot} to {afterSnapshot}.");
+            client.QueueRealtime(new Command { MoveRequested = new MoveRequested { DirectionX = 1 } }, 100);
+            while (!commandSeen.Task.IsCompleted) {
+                await client.PollAsync(cancellationToken);
+                await Task.Delay(10, cancellationToken);
+            }
+            var sent = await commandSeen.Task.WaitAsync(cancellationToken);
+            Assert.Equal(1UL, sent.ClientSequence);
+            Assert.True(sent.RequestedTick >= beforeSnapshot);
+            while (client.PendingCommandCount != 0)
+                await Task.Delay(10, cancellationToken);
+            releaseConnection.SetResult();
+            await serverTask.WaitAsync(cancellationToken);
+        } finally {
+            timeout.Cancel();
+            releaseSnapshot.TrySetResult();
+            releaseConnection.TrySetResult();
+            try {
+                await serverTask;
+            } catch (OperationCanceledException) when (timeout.IsCancellationRequested) {
+            }
+        }
+    }
+
     [Fact]
     public async Task FutureAcknowledgementDoesNotCauseRoutinePrematureRetry()
     {
@@ -270,9 +340,10 @@ public sealed class DeferredCommandTimingTests
         NetworkStream stream,
         CommandSchedulingMode mode,
         ulong tick,
-        string sessionToken = "timing-session")
+        string sessionToken = "timing-session",
+        CancellationToken cancellationToken = default)
     {
-        var clientHello = await ReadEnvelopeAsync(stream);
+        var clientHello = await ReadEnvelopeAsync(stream, cancellationToken);
         Assert.Equal(Envelope.PayloadOneofCase.ClientHello, clientHello.PayloadCase);
         Assert.True(clientHello.ClientHello.SupportsClockGatedCommands);
         await WriteEnvelopeAsync(stream, new Envelope {
@@ -284,8 +355,8 @@ public sealed class DeferredCommandTimingTests
                 GameMode = GameMode.SinglePlayer,
                 CommandSchedulingMode = mode,
             },
-        });
-        await WriteEnvelopeAsync(stream, new Envelope { Snapshot = new Snapshot { Tick = tick } });
+        }, cancellationToken);
+        await WriteEnvelopeAsync(stream, new Envelope { Snapshot = new Snapshot { Tick = tick } }, cancellationToken);
     }
 
     private static CommandAck Accepted(ulong clientSequence)
@@ -306,14 +377,17 @@ public sealed class DeferredCommandTimingTests
         return Envelope.Parser.ParseFrom(payload);
     }
 
-    private static async Task WriteEnvelopeAsync(NetworkStream stream, Envelope envelope)
+    private static async Task WriteEnvelopeAsync(
+        NetworkStream stream,
+        Envelope envelope,
+        CancellationToken cancellationToken = default)
     {
         var payload = envelope.ToByteArray();
         var header = new byte[sizeof(int)];
         BinaryPrimitives.WriteInt32LittleEndian(header, payload.Length);
-        await stream.WriteAsync(header);
-        await stream.WriteAsync(payload);
-        await stream.FlushAsync();
+        await stream.WriteAsync(header, cancellationToken);
+        await stream.WriteAsync(payload, cancellationToken);
+        await stream.FlushAsync(cancellationToken);
     }
 
     private static async Task ReadExactlyAsync(

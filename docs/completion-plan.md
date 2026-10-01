@@ -129,8 +129,15 @@ M4. M5 is the final removal gate, not a reason to postpone replacement work.
    first realtime send, even with unsent input queued. Validate bounded startup
    refusal/reconnect and preserve explicit ticks/frozen retries. A passing local
    rerun does not bound later spikes or remove large-projection costs; address
-   those without relaxing late admission. Pending-command
-   fences do not solve the adapter's broader shared-world cold-restore overwrite.
+   those without relaxing late admission. The C# gated admission estimate now
+   retains its elapsed-time anchor when a delayed snapshot falls behind or equals
+   the projection, including newer raw ticks. Preserve ceiling-rounding and
+   reconnect-rate/reset regressions, Immediate compatibility and frozen retries.
+   The equivalent native reanchor risk remains a separate source/test follow-up.
+   This reproduced estimator defect does not classify historical `TooLate`
+   failures without requested-tick and host arrival/admission evidence.
+   Pending-command fences do not solve the adapter's broader shared-world
+   cold-restore overwrite.
 2. Add an application-level acceptance path through the actual Godot scene and
    controls: launch, create a character, receive/render an authoritative world,
    submit movement, observe the acknowledged position, save, exit, and resume
@@ -182,8 +189,8 @@ M4. M5 is the final removal gate, not a reason to postpone replacement work.
    per-snapshot validation/cloning, full-world drawing and large-map costs before
    selecting broader caches or presentation changes. Callback comparisons remain
    local observations, not whole-frame or release-budget passes.
-   Retain the earlier unclassified live store movement rejection separately from
-   the latest complete passing run. Exact queued/receipt/model/action diagnostics
+   Retain unclassified live store movement rejections alongside later isolated
+   or complete passing runs. Exact queued/receipt/model/action diagnostics
    now accompany travel assertions; observed state is not server admission state.
    Do not infer a cause or timing correction from a later pass. Use status for
    current compatibility evidence and keep broader M0 gates open.

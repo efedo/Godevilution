@@ -84,8 +84,9 @@ open. Their scope, dependencies, and exit checks are defined only in the
   Negotiated clock-gated timing now passes actual headless two-client creation,
   mutual movement visibility and reverse-order fresh-host resume, plus fresh
   single-player create/resume/server-loss recovery. The earlier `TooLate` trace
-  is retained; current-epoch first-send calibration is implemented below, while
-  later/unseen latency and shared-world cold-restore gaps remain.
+  is retained; current-epoch first-send calibration and forward-only gated clock
+  observation are implemented below, while later/unseen latency, legacy Immediate
+  timing and shared-world cold-restore gaps remain.
   The two Flash baseline failures are resolved below. M0 still requires native
   creation, agreed release frame/memory budgets, and the release-platform matrix.
 - Rendered application acceptance now verifies responsive HUD controls at
@@ -137,6 +138,72 @@ open. Their scope, dependencies, and exit checks are defined only in the
 The following records describe implemented slices at this baseline. They are
 evidence, not a separate priority list; detailed older entries retain their
 original scope and may be superseded by later entries or the current assessment.
+
+### M0 forward-only C# gated command clock (2026-10-01)
+
+Receiving a delayed snapshot previously reset the C# admission-time anchor, even
+when a newer raw snapshot tick fell behind the elapsed projection. Three TCP
+regressions (received ticks 90/100/101 after initial 100) all fail against the old
+receive path, then pass after gated-only monotonic observation. The method samples
+one timestamp under lock, retains the original anchor for equal/behind projections
+without accumulating ceiling rounding, and reanchors only genuinely ahead ticks.
+Delta comparison avoids overflowing the anchor during reception; dispatch retains
+checked overflow. The negotiated rate stays fixed until reconnect/reset. Legacy
+`Observe`, Immediate scheduling, explicit command ticks, frozen retries, server
+admission, gameplay, protocol and saves are unchanged. Native-client reanchoring
+remains a separate follow-up, not fixed by this package.
+
+The earlier four-depth session `d9e2305a55744d2abd83cd7aa57f836f` proves sequence 2
+was `TooLate` at tick 94, but lacks requested-tick and snapshot/arrival timings.
+This reproduced estimator defect is not a proven explanation of that failure.
+
+Relevant pre-change classes pass 20/20 (9.400s); current focused clock, timing,
+calibration and reconnect checks pass 27/27 without skips (9.403s). The three red
+transport cases take 1.263s. The full current protocol suite is **not green**:
+610 pass, one failure and two existing opt-in performance exclusions (12m13.865s).
+`LiveStoreAdmissionRejectsRemoteEntryWithoutPlayerMutation` rejects sequence 2,
+requested tick 23, applied tick 24, while the model still observes tick 14. Its
+fixture negotiates unchanged Immediate scheduling and pre-stamps explicit `Queue`
+before `Poll`; it does not execute the new gated observation branch. The identical
+binary method rerun passes 1/1 (52.563s), without classifying the failure's cause.
+No assertion, retry or late-policy relaxation is used.
+
+Logs are `.local/m0-clock-existing-baseline.log`,
+`.local/m0-clock-regression-before-fix-rebuilt.log`,
+`.local/m0-clock-focused-after-fix.log`,
+`.local/m0-clock-protocol-broad-after-fix.log`, and
+`.local/m0-clock-live-store-isolated.log`. The initial red attempt did not run
+tests: a sandbox compiler output-access denial is retained separately in
+`.local/m0-clock-regression-before-fix.log`. Scoped elevated verification resolved
+that denial without changing permissions. Existing NU1900 audit-feed and xUnit2031
+warnings remain; this is not a vulnerability-audit pass.
+
+Current-build actual Godot acceptance passes base headless create/move/save,
+fresh-host resume, server loss/reconnect; rendered four-depth descent/ascent,
+blocked-cell rejection and middle-floor restore; and headless two-client creation,
+mutual movement/state visibility and fresh-host resume. The rendered pair again
+saves L2 `(70,70)` at sequence 130 and returns Town `(25,31)` at sequence 168.
+Root reviewed the restored capture; independent review inspected all five depth
+captures. They establish visible geometry/HUD and placeholders, not native art or
+population acceptance. Existing documentation consistency checks pass 4/4 without
+skips; evidence is `.local/m0-clock-documentation-verified.log`.
+
+Private base session is `%TEMP%/Godevilution-Scene-Acceptance-0a5d68bfa6bb481e80dc3cb4973f69e2`;
+two-client session is `%TEMP%/Godevilution-Scene-Acceptance-54c925d5516845ebabdad67ef7145924`;
+depth session is `.local/cathedral-depths-playtest/sessions/acceptance-330a59689bbc46269514abef99a2e73b`.
+Console logs are `.local/m0-clock-godot-base.log`,
+`.local/m0-clock-godot-depths-rendered.log`, and `.local/m0-clock-godot-multiplayer.log`.
+Launch-log suffixes under `%TEMP%/Godevilution-Godot-` are
+`115956d2e3044d37b791a046fcfbed03`, `6201715b528d4a08950054157cb0ec6d`,
+`b6b8b12c87f54ac9a747ac9cb30773b2`, `1d45a303bf934a3daecc311ab40d381e`,
+`6db24d7d5cc640f8906e43a8448593dc`, `5ff54b4261234bc8a63621807db7b6f5`,
+and `7fe2a92ce14c41f6aa4257df29466ec9`.
+All seven launches report clock-gated hosting and staged engine/SDK 4.7.2 with
+source SDK 4.7.1 preserved. All 23 version/import/client records have terminal
+zero exits and no error/diagnostic/cleanup failure. Final process scan finds no
+Godot, WerFault or project host/launcher process. These are clean installed-engine
+checks, not a new 4.7.1 crash reproduction or campaign/platform exit. M0 and the
+approximately 35% overall estimate remain open.
 
 ### M1/M2 isolated Cathedral depths runtime, traversal and restore (2026-10-01)
 

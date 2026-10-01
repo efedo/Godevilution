@@ -2,6 +2,15 @@
 
 All notable changes to this fork are documented below.
 
+- 2026-10-01: Keep C# gated command estimates forward-only across delayed snapshots
+  without rounding drift, preserving Immediate observation, explicit/frozen ticks
+  and strict server admission. Three transport regressions fail before the receive
+  fix; focused checks pass 27. Actual base recovery, rendered four-depth restore
+  and two-client resume pass with 23 clean engine exits. Full protocol records
+  610 passes, one unchanged-Immediate live store timing failure and two opt-in
+  exclusions; identical-binary isolated rerun passes, without explaining the failure.
+  Update existing plan/status/guide; native reanchoring and broader M0 remain open.
+
 - 2026-10-01: Integrate a separate opt-in Cathedral depths 1-4 runtime, reciprocal
   staircase topology, immutable identity and strict v3 restore while preserving
   authored/L1 adapters, v1/v2 saves and live protocol. Add an atomic offline private

@@ -537,8 +537,14 @@ public sealed class AuthoritativeClient : IAsyncDisposable
         if (envelope.PayloadCase == Envelope.PayloadOneofCase.Snapshot
             && !ObserveSnapshotIdentity(envelope.Snapshot))
             return;
-        if (envelope.PayloadCase == Envelope.PayloadOneofCase.Snapshot)
-            commandClock.Observe(envelope.Snapshot.Tick);
+        if (envelope.PayloadCase == Envelope.PayloadOneofCase.Snapshot) {
+            // Model admission happens later; delayed snapshots must not rewind
+            // the clock-gated first-send estimate before that admission.
+            if (IsClockGatedCommandScheduling)
+                commandClock.ObserveMonotonic(envelope.Snapshot.Tick, ServerTickRateHz);
+            else
+                commandClock.Observe(envelope.Snapshot.Tick);
+        }
         if (envelope.PayloadCase == Envelope.PayloadOneofCase.CommandAck) {
             try {
                 AuthoritativeCommandAckValidator.Validate(envelope.CommandAck);
