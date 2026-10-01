@@ -35,6 +35,9 @@ public sealed class DiabloSimulationOptions
 
     public AuthoritativeWorld? World { get; init; }
 
+    /** Validated eagerly generated world identity, independent of gameplay RNG. */
+    public DiabloNativeGeneratedWorldIdentity? NativeGeneratedWorldIdentity { get; init; }
+
     /** Validated content-backed level-cell overlays activated by world objects. */
     public AuthoritativeWorldMutationCatalog? WorldMutations { get; init; }
 
@@ -411,6 +414,7 @@ public sealed class DiabloSimulationFactory : IDiabloSimulationFactory
         worldState.SetProceduralQuestPieceOriginResolver(
             simulation.ResolveProceduralQuestPieceOrigin);
         worldCommands.SetSetLevelOriginResolver(simulation.ResolveSetLevelObjectOrigin);
+        simulation.ConfigureNativeGeneratedWorldIdentity(options.NativeGeneratedWorldIdentity);
         return simulation;
     }
 }

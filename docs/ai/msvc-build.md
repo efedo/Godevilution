@@ -213,18 +213,18 @@ rebuilds the native `level_l1_test` and managed game-module tests. Native archiv
 discovery uses the existing GOG-aware path and requires TIL/SOL resolution from
 the main Diablo archive, not spawn or higher-priority loose/mod assets.
 
-One native GTest captures seeds 2588/743271966 with MAIN/PREV entry; four explicit
+One native GTest captures seeds 2588/743271966/0/1/0x80000000/0xFFFFFFFF with MAIN/PREV entry; twelve explicit
 managed cases compare complete coarse/fine layers, RNG/entry/stairs, named SOL
 flags and collision/light cells. Raw SOL is zero-extended only in memory and
 its unnamed `0x40` bit is checked separately before semantic comparison.
 Strict production SOL validation is unchanged; this is not a server importer.
 The shared conservative vision projection is not exact native vision parity.
 
-The wrapper requires the exact native result and four managed passes without
-skips, hashes six nonempty artifacts and retains logs plus `result.json` in a
+The wrapper requires the exact native result and twelve managed passes without
+skips, hashes fourteen nonempty artifacts and retains logs plus `result.json` in a
 fresh private `%TEMP%/Godevilution-Cathedral-Oracle-*` directory. Licensed raw
 inputs and snapshots must never be committed or published. Without the opt-in
-directory the new native test skips, and the four managed comparisons are
+directory the new native test skips, and the twelve managed comparisons are
 explicit; neither default-suite exclusion counts as original-asset evidence.
 Unpacked-MPQ builds are not accepted by this original-archive wrapper.
 

@@ -524,6 +524,9 @@ public sealed record DiabloSimulationSnapshot(
 {
     public uint RandomState { get; init; }
 
+    /** Game-owned generated geometry identity carried only by persistence adapters. */
+    public DiabloNativeGeneratedWorldIdentity? NativeGeneratedWorldIdentity { get; init; }
+
     /** Dynamic and external portal routes owned by the authoritative world. */
     public IReadOnlyList<DiabloPortalState> Portals { get; init; } = [];
 
@@ -912,6 +915,7 @@ public sealed partial class DiabloSimulation
                 .ToArray(),
             VictoryTriggered = WorldState.VictoryTriggered,
             Difficulty = this.Difficulty,
+            NativeGeneratedWorldIdentity = this.NativeGeneratedWorldIdentity,
             QuestTownerInteractions = QuestTownerInteractions?.Definitions ?? [],
             TownerGreetings = TownerGreetings?.Definitions.ToArray() ?? [],
             ActiveWorldMutationIds = WorldState.ActiveWorldMutationIds
@@ -946,6 +950,9 @@ public sealed partial class DiabloSimulation
     {
         ArgumentNullException.ThrowIfNull(destination);
         ArgumentNullException.ThrowIfNull(snapshot);
+        // Reject a different generation profile before rollback capture or any mutation.
+        DiabloNativeGeneratedWorldIdentity.RequireSame(
+            NativeGeneratedWorldIdentity, snapshot.NativeGeneratedWorldIdentity);
         // The incoming snapshot may be older than the live destination. Capture
         // rollback state at a tick that can represent any action already in
         // progress, otherwise validation of the rollback snapshot can fail and

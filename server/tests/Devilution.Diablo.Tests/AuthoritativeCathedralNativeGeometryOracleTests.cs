@@ -56,6 +56,14 @@ public sealed class AuthoritativeCathedralNativeGeometryOracleTests
     [InlineData("cathedral-2588-previous.json", 2588U, "previous")]
     [InlineData("cathedral-743271966-main.json", 743271966U, "main")]
     [InlineData("cathedral-743271966-previous.json", 743271966U, "previous")]
+    [InlineData("cathedral-0-main.json", 0U, "main")]
+    [InlineData("cathedral-0-previous.json", 0U, "previous")]
+    [InlineData("cathedral-1-main.json", 1U, "main")]
+    [InlineData("cathedral-1-previous.json", 1U, "previous")]
+    [InlineData("cathedral-2147483648-main.json", 2147483648U, "main")]
+    [InlineData("cathedral-2147483648-previous.json", 2147483648U, "previous")]
+    [InlineData("cathedral-4294967295-main.json", 4294967295U, "main")]
+    [InlineData("cathedral-4294967295-previous.json", 4294967295U, "previous")]
     public void NativeLocalAssetFineGeometryMatchesManagedMaterializer(
         string snapshotFileName,
         uint seed,

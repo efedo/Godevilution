@@ -297,13 +297,14 @@ public sealed class AuthoritativeSaveCodecTests
         Assert.Throws<InvalidDataException>(() => codec.Deserialize("{"));
         Assert.Throws<InvalidDataException>(() => codec.Deserialize(
             JsonSerializer.Serialize(new AuthoritativeSaveDocument(1, "not-base64"))));
+        var unknownFormat = AuthoritativeSaveCodec.NativeGeneratedFormatVersion + 1;
         var unsupported = JsonSerializer.Serialize(new AuthoritativeSaveDocument(
-            2,
+            unknownFormat,
             Convert.ToBase64String([1])));
         var exception = Assert.Throws<InvalidDataException>(() =>
             codec.Deserialize(unsupported));
 
-        Assert.Contains("format 2", exception.Message, StringComparison.Ordinal);
+        Assert.Contains($"format {unknownFormat}", exception.Message, StringComparison.Ordinal);
     }
 
     [Fact]

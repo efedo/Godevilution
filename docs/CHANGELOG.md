@@ -2,6 +2,20 @@
 
 All notable changes to this fork are documented below.
 
+- 2026-09-30: Integrated explicitly selected ordinary Cathedral level-1 generation
+  through the production C# bootstrap/host adapter, validated external semantic
+  catalogs and native Town/stair bindings. Preserved default adapters/packs and
+  the live wire; retained authored version-1 save bytes and added identity-fenced
+  game-owned generated version-2 saves. Reject incompatible quest fragments and
+  fixed starts; preserve mutation cold restore and rollback. Expanded the private
+  native fine oracle to six seeds/twelve entry cases. Independent review and
+  focused module 17, synthetic host/save 36, separate local-asset stair-boundary
+  activation/restore 1, native oracle 1 and managed oracle 12 checks pass. Full
+  server passes 1191 with its explicit asset case verified separately; full module
+  retains four known Hork RNG failures. Fresh base Godot create/save/resume/recovery
+  also passes with nine clean engine exits. Updated existing contracts/plan/status and
+  build guidance. Populated Godot traversal, campaign and M2 acceptance remain open.
+
 - 2026-09-30: Rechecked the reported Godot application-error accumulation against
   retained denied-write/import evidence and the committed per-child storage fix.
   Bounded every launcher post-kill wait, handled exit races, and retained terminal

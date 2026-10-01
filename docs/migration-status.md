@@ -110,10 +110,12 @@ open. Their scope, dependencies, and exit checks are defined only in the
   are the main completion constraints. Generic procedural geometry and authored
   fragments are implemented foundations, not complete native map generation.
   An isolated ordinary original-Diablo Cathedral level-1 coarse generator now
-  matches two existing native goldens and now has an isolated 112x112 fine-coordinate
-  catalog adapter. Real fine-data comparison now passes those two seeds with
-  MAIN/PREV entry; broader seed/topology evidence, runtime/population integration,
-  remaining families, quests and placement gates remain open.
+  matches existing native goldens and has a 112x112 fine-coordinate catalog adapter.
+  Real fine-data comparison covers six seeds with MAIN/PREV entry. Opt-in ordinary
+  level-1 server activation, automatic stair-boundary transitions and identity-safe
+  cold restore now pass, including a separate local-asset semantic-catalog check.
+  Continuous populated Godot traversal, broader topology, remaining families,
+  campaign seed mapping, quests and placement gates remain open.
 - Compact Golem replay still models one combat target; multiple-owner summons
   and replacement allocation are not represented. Guardian descriptive markers
   do not establish full canonical hash equivalence. Keep those oracle gaps
@@ -128,6 +130,73 @@ open. Their scope, dependencies, and exit checks are defined only in the
 The following records describe implemented slices at this baseline. They are
 evidence, not a separate priority list; detailed older entries retain their
 original scope and may be superseded by later entries or the current assessment.
+
+### M2 opt-in ordinary Cathedral runtime and restore (2026-09-30)
+
+The explicit `devilution.diablo.cathedral-l1.v1` host adapter activates exactly
+one original-Diablo ordinary level-1 definition. A compatible pack supplies an
+explicit dungeon seed/entry, the validated shared TIL/SOL semantic tables and
+complete generated endpoint bindings. Activation eagerly creates the 112x112
+fine level using local generator state, preserving default/death-drop metadata
+without consuming gameplay RNG or attaching a coarse mega layer. Required Town
+entry and return are unconditional ordinary warps. Optional portal metadata is
+preserved; all generated endpoints require bindings, and final effective geometry
+and route walkability are validated. Current scope rejects generated quest
+fragments and fixed start overrides rather than silently remapping prototype data.
+Default adapters, base/Godot pack bytes, live protocol and authored version-1
+save bytes are unchanged. The server still reads no MPQs.
+
+Generated saves use a separate game-owned version-2 envelope retaining explicit
+seed, generator, successful attempt/RNG and semantic coarse/fine/provenance,
+catalog and route identities. Required fields and canonical hashes are validated.
+Identity mismatch rejects before rollback capture or mutable restore. Tests
+exercise changed seed/entry/catalog/routes, generated-to-legacy and missing
+identity rejection, same-identity cold import, active geometry mutation
+preservation and rollback after a later invalid player state.
+
+Focused module checks pass 17/17 (568ms). Synthetic production-bootstrap/adapter
+and save checks pass 36/36 (3.675s), with one explicit asset case omitted there.
+That explicit case passes separately 1/1 (1.336s), using the retained native
+oracle's local TIL and a test-only named-SOL semantic export supplied through
+strict production TSV activation. It uses seed 2588 MAIN, one-step automatic
+Town stair entry, cold restore with matching effective geometry and adjacent Up
+stair return. Checkpoints deliberately start next to the stair tiles: this is
+stair-boundary acceptance, not continuous movement, population or GUI proof.
+The curated test profile explicitly disables incompatible other-family fragments,
+omits the exterior prototype encounter and retains its door only as a template.
+It is not a full gameplay pack. Licensed inputs remain private under
+`%TEMP%/Godevilution-Cathedral-Oracle-80826362218a4306a9b057740c2752c4`.
+
+The full server run passes 1191, with that one explicit case excluded (1192
+total, 19.546s). Its first run retained one stale unknown-version fixture failure;
+version 2 is now supported, so that fixture targets the next unsupported version.
+Earlier new-package syntax/type failures and incompatible prototype-fragment/
+placement activation failures were corrected or explicitly scoped in the test
+profile, never counted as passes. The full module runs 2565: 2549 pass, the same
+four baseline Hork RNG cases fail, and 12 explicit local-asset oracle cases are
+excluded (10.473s). Those failures remain open. Independent source review approves
+this narrow integration; two recommended rejection/fingerprint tests were
+strengthened and included in the final 17-pass focused run.
+
+The oracle expands from four to 12 comparisons: seeds 2588, 743271966, 0, 1,
+0x80000000 and 0xFFFFFFFF, each MAIN/PREV. The wrapper requires 12 managed passes
+and 14 nonempty private artifacts; historical four-case results below retain
+their original scope. The fresh matching-MSVC wrapper rebuild passes native 1/1
+(1.383s) and managed 12/12 (916ms), without skips, at private
+`%TEMP%/Godevilution-Cathedral-Oracle-9933aa7f7c564f908a63c7834584ff00`.
+Builds verify cl/rc/mt in the matching developer environment; the managed build
+has zero warnings/errors. The default rebuilt native Cathedral suite passes 21
+with its one opt-in case excluded (22 total, 1.052s); the separate oracle above
+is its real-asset evidence. Documentation consistency checks pass 3/3 (369ms).
+Fresh headless Godot base-profile create/save/resume/server-loss recovery also
+passes on the integrated code at private
+`%TEMP%/Godevilution-Scene-Acceptance-e721876174d047b4a2815e86b55bf7cd`, with nine
+terminal engine exits 0 and no process/cleanup/diagnostic errors. Source SDK
+4.7.1 is unchanged, with engine 4.7.2 used only in isolated staging. No Godot,
+WerFault or project process remains. NuGet audit-feed NU1900 warnings are retained;
+they are not a vulnerability-audit pass. M2, population, quest/set-piece generation,
+Godot traversal/restore, exact native vision and campaign mapping remain open.
+The overall planning estimate stays approximately 35%.
 
 ### M0 Godot crash-safety follow-up (2026-09-30)
 

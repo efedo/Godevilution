@@ -72,7 +72,7 @@ isolated spell or table rows while the playable route stays unchanged.
 | --- | --- | --- | --- |
 | M0 | Reproducible launch and honest acceptance evidence | Existing implementation | Godot session/recovery passes; opt-in one/four-participant host and actual-client baselines recorded in status; native GUI and release-budget/platform gaps remain |
 | M1 | Usable Godot town-to-dungeon loop | M0 launch/acceptance harness | Authored combat/loot/equipment, real NPC approach/service entry, purchased-scroll portal return and fresh-host owner-return closure pass; full loop remains |
-| M2 | Native-compatible generated world | M0 geometry/parity baseline | Ordinary Cathedral level-1 coarse/fine oracle passes two seeds and MAIN/PREV entry; runtime integration, population and remaining families remain |
+| M2 | Native-compatible generated world | M0 geometry/parity baseline | Ordinary Cathedral level-1 coarse/fine oracle covers six seeds and MAIN/PREV; opt-in server activation, stair boundaries and identity-safe restore pass; populated Godot traversal and remaining families remain |
 | M3 | Complete base and Hellfire gameplay routes | M1 plus the relevant M2 world slices | Many rules exist; campaign and remaining behavioral coverage remain |
 | M4 | Release-quality client, recovery, and packaging | M3; preparation begins during M1/M2 | Recovery and adapter packaging foundations exist; product acceptance remains |
 | M5 | Production legacy-runtime retirement | M4 and capability replacement gates | Authoritative mode is Lua-free; compatibility runtime remains |
@@ -252,13 +252,23 @@ this evidence. A sample art pack does not satisfy M4's full presentation gate.
    independent family order only when it reduces a documented dependency.
    The ordinary original-Diablo level-1 coarse port now matches two native DUN
    goldens, continuation RNG and successful-attempt restoration but has no
-   runtime call sites. Its isolated adapter now expands validated TIL/SOL catalogs
+   automatic campaign seed/depth mapping. Its fine adapter expands validated
+   TIL/SOL catalogs
    into 112x112 fine coordinates while retaining the separate coarse result.
    Full fine-layer comparison using locally supplied original assets now passes
-   seeds 2588/743271966 with MAIN/PREV entry. The optional oracle retains raw data
+   seeds 2588/743271966/0/1/0x80000000/0xFFFFFFFF with MAIN/PREV entry. The optional
+   oracle retains raw data
    privately and normalizes only the unnamed SOL bit for test-only named-flag
-   comparison; production loaders are unchanged. Broader seeded/topology checks,
-   runtime/coordinate integration, population and route acceptance remain.
+   comparison; production loaders are unchanged. Explicit adapter
+   `devilution.diablo.cathedral-l1.v1` now eagerly generates exactly ordinary level 1
+   from compatible validated packs, resolves native Town/stair anchors, and fences
+   saved geometry/catalog/route identity before restore. Synthetic SP/MP stair-boundary
+   checks and a separately explicit local-asset semantic-catalog activation/return/cold
+   restore pass. This is not continuous generated Godot traversal or population proof.
+   Next integrate a compatible client presentation/profile and exercise continuous
+   collision-aware traversal, objects/encounters and fresh-host restore through Godot.
+   Quest fragments/set pieces, wider topology and native population remain open;
+   do not silently apply the base prototype's different-family quest fragment to L1.
    The shared vision contract remains conservative, not exact native light parity.
    Integrate validated external pattern data; do not invent campaign seed mapping
    or add server MPQ loading. Keep licensed oracle inputs outside the repository.

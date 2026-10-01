@@ -397,14 +397,22 @@ TEST(Drlg_l1, CathedralFineGeometryLocalAssetOracle)
 		uint32_t seed;
 		lvl_entry entry;
 		const char *fileName;
-		uint32_t attemptSeed;
-		uint32_t finalRandomState;
-		Point expectedEntry;
+		std::optional<uint32_t> attemptSeed;
+		std::optional<uint32_t> finalRandomState;
+		std::optional<Point> expectedEntry;
 	} inputs[] = {
-		{ UINT32_C(2588), ENTRY_MAIN, "cathedral-2588-main.json", UINT32_C(1779836089), UINT32_C(1552486206), { 77, 46 } },
-		{ UINT32_C(2588), ENTRY_PREV, "cathedral-2588-previous.json", UINT32_C(1779836089), UINT32_C(1552486206), { 49, 49 } },
-		{ UINT32_C(743271966), ENTRY_MAIN, "cathedral-743271966-main.json", UINT32_C(283661120), UINT32_C(980632310), { 51, 82 } },
-		{ UINT32_C(743271966), ENTRY_PREV, "cathedral-743271966-previous.json", UINT32_C(283661120), UINT32_C(980632310), { 81, 47 } },
+		{ UINT32_C(2588), ENTRY_MAIN, "cathedral-2588-main.json", UINT32_C(1779836089), UINT32_C(1552486206), Point { 77, 46 } },
+		{ UINT32_C(2588), ENTRY_PREV, "cathedral-2588-previous.json", UINT32_C(1779836089), UINT32_C(1552486206), Point { 49, 49 } },
+		{ UINT32_C(743271966), ENTRY_MAIN, "cathedral-743271966-main.json", UINT32_C(283661120), UINT32_C(980632310), Point { 51, 82 } },
+		{ UINT32_C(743271966), ENTRY_PREV, "cathedral-743271966-previous.json", UINT32_C(283661120), UINT32_C(980632310), Point { 81, 47 } },
+		{ UINT32_C(0), ENTRY_MAIN, "cathedral-0-main.json", std::nullopt, std::nullopt, std::nullopt },
+		{ UINT32_C(0), ENTRY_PREV, "cathedral-0-previous.json", std::nullopt, std::nullopt, std::nullopt },
+		{ UINT32_C(1), ENTRY_MAIN, "cathedral-1-main.json", std::nullopt, std::nullopt, std::nullopt },
+		{ UINT32_C(1), ENTRY_PREV, "cathedral-1-previous.json", std::nullopt, std::nullopt, std::nullopt },
+		{ UINT32_C(0x80000000), ENTRY_MAIN, "cathedral-2147483648-main.json", std::nullopt, std::nullopt, std::nullopt },
+		{ UINT32_C(0x80000000), ENTRY_PREV, "cathedral-2147483648-previous.json", std::nullopt, std::nullopt, std::nullopt },
+		{ UINT32_C(0xFFFFFFFF), ENTRY_MAIN, "cathedral-4294967295-main.json", std::nullopt, std::nullopt, std::nullopt },
+		{ UINT32_C(0xFFFFFFFF), ENTRY_PREV, "cathedral-4294967295-previous.json", std::nullopt, std::nullopt, std::nullopt },
 	};
 	std::vector<CathedralOracleCase> cases;
 	cases.reserve(std::size(inputs));
@@ -413,9 +421,12 @@ TEST(Drlg_l1, CathedralFineGeometryLocalAssetOracle)
 		std::copy(immutableTil.begin(), immutableTil.end(), megaTiles().get());
 		cases.push_back(CaptureCathedralOracleCase(input.seed, input.entry));
 		const CathedralOracleCase &captured = cases.back();
-		ASSERT_EQ(captured.attemptSeed, input.attemptSeed);
-		ASSERT_EQ(captured.finalRandomState, input.finalRandomState);
-		ASSERT_EQ(captured.entryPosition, input.expectedEntry);
+		if (input.attemptSeed.has_value())
+			ASSERT_EQ(captured.attemptSeed, *input.attemptSeed);
+		if (input.finalRandomState.has_value())
+			ASSERT_EQ(captured.finalRandomState, *input.finalRandomState);
+		if (input.expectedEntry.has_value())
+			ASSERT_EQ(captured.entryPosition, *input.expectedEntry);
 	}
 
 	ASSERT_TRUE(WriteCathedralOracleRawAsset(outputPath / "l1.til", tilBytes.data(), tilBytes.size()));

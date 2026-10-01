@@ -70,7 +70,7 @@ internal static class Program
         if (duplicateAdapterPackageIds.Length != 0)
             throw new InvalidDataException(
                 $"Game-host adapter package IDs must be unique: {string.Join(", ", duplicateAdapterPackageIds)}.");
-        var adapterFactories = BuiltInAuthoritativeGameHostAdapters.CreateFactories()
+        var adapterFactories = BuiltInAuthoritativeGameHostAdapters.CreateFactories(options.GameAdapterId)
             .Concat(adapterPackages.Select(package => package.Factory))
             .ToArray();
         var gameAdapters = new AuthoritativeGameHostAdapterCatalog(

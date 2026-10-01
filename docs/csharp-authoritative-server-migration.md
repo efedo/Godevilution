@@ -210,6 +210,23 @@ authoritative results.
   optional behavior template; mapped cells receive deterministic reserved
   authoritative entity IDs.
 - Single-player launches or connects to the same server used by multiplayer.
+  The explicitly selected `devilution.diablo.cathedral-l1.v1` adapter adds eager
+  ordinary original-Diablo level-1 generation without changing default discovery.
+  Its compatible pack supplies `native_cathedral_level1.tsv` with exact columns
+  `level_id,level_symbol,generator_id,generator_revision,dungeon_seed,entry`;
+  exactly one stable level ID 1 is admitted, generator
+  `original-diablo.cathedral-level1` revision 1, entry `main` or `previous`.
+  Validated `native_dun_piece_definitions.tsv` and `native_dun_tile_properties.tsv`
+  supply semantic geometry; there is no archive/discovery path in the server.
+  `native_generated_route_bindings.tsv` has exact columns
+  `route_kind,route_id,route_symbol,endpoint,level_id,level_symbol,anchor`.
+  Kinds are `warp`/`portal`, endpoints `source`/`destination`; generated anchors
+  are `up_trigger`, `down_trigger`, `main_entry`, `previous_entry`, and Town
+  anchors are `town_cathedral_trigger`/`town_cathedral_return`. Every generated
+  route endpoint needs a binding; Town entry/return require unconditional ordinary
+  warps. Existing authored numeric placeholders must still be in bounds before
+  binding resolution. This narrow profile rejects generated quest fragments and
+  fixed entry overrides; it does not invent native campaign depth/seed mapping.
 - An authoritative client never falls back to local simulation after a server
   failure.
 

@@ -9,7 +9,17 @@ namespace Devilution.Server.Gameplay;
 public sealed class DiabloAuthoritativeGameHostAdapterFactory
     : IAuthoritativeGameHostAdapterFactory
 {
-    public string Id => "devilution.diablo";
+    public const string NativeGeneratedId = "devilution.diablo.cathedral-l1.v1";
+    private readonly bool nativeGenerated;
+
+    public DiabloAuthoritativeGameHostAdapterFactory() : this(false) { }
+
+    public DiabloAuthoritativeGameHostAdapterFactory(bool nativeGenerated)
+    {
+        this.nativeGenerated = nativeGenerated;
+    }
+
+    public string Id => nativeGenerated ? NativeGeneratedId : "devilution.diablo";
 
     public IReadOnlyList<IGameplayModule> CreateBuiltInModules()
     {
@@ -19,7 +29,9 @@ public sealed class DiabloAuthoritativeGameHostAdapterFactory
     public bool CanActivate(GameplayModuleRegistry registry)
     {
         ArgumentNullException.ThrowIfNull(registry);
-        return registry.TryGetCapability<IDiabloContentBootstrap>(out _);
+        return nativeGenerated
+            ? registry.TryGetCapability<IDiabloNativeGeneratedContentBootstrap>(out _)
+            : registry.TryGetCapability<IDiabloContentBootstrap>(out _);
     }
 
     public IAuthoritativeGameHostAdapter Activate(
@@ -30,27 +42,25 @@ public sealed class DiabloAuthoritativeGameHostAdapterFactory
         ArgumentNullException.ThrowIfNull(registry);
         ArgumentNullException.ThrowIfNull(content);
         ArgumentNullException.ThrowIfNull(playerStart);
-        var activatedContent = registry
-            .GetRequiredCapability<IDiabloContentBootstrap>()
-            .Activate(
-                content,
-                playerStart.RandomSeed,
-                playerStart.GameMode switch {
-                    AuthoritativeGameMode.SinglePlayer => DiabloGameMode.SinglePlayer,
-                    AuthoritativeGameMode.Multiplayer => DiabloGameMode.Multiplayer,
-                    _ => throw new ArgumentOutOfRangeException(nameof(playerStart)),
-                },
-                playerStart.ProceduralMonsterLimit is int maximumMonsters
-                    ? new DiabloMonsterSpawnConfiguration(
-                        maximumMonsters,
-                        playerStart.ProceduralMonsterLevelId)
-                    : null,
-                playerStart.Difficulty switch {
-                    AuthoritativeGameDifficulty.Normal => DiabloDifficulty.Normal,
-                    AuthoritativeGameDifficulty.Nightmare => DiabloDifficulty.Nightmare,
-                    AuthoritativeGameDifficulty.Hell => DiabloDifficulty.Hell,
-                    _ => throw new ArgumentOutOfRangeException(nameof(playerStart)),
-                });
+        var gameMode = playerStart.GameMode switch {
+            AuthoritativeGameMode.SinglePlayer => DiabloGameMode.SinglePlayer,
+            AuthoritativeGameMode.Multiplayer => DiabloGameMode.Multiplayer,
+            _ => throw new ArgumentOutOfRangeException(nameof(playerStart)),
+        };
+        var monsterSpawns = playerStart.ProceduralMonsterLimit is int maximumMonsters
+            ? new DiabloMonsterSpawnConfiguration(maximumMonsters, playerStart.ProceduralMonsterLevelId)
+            : null;
+        var difficulty = playerStart.Difficulty switch {
+            AuthoritativeGameDifficulty.Normal => DiabloDifficulty.Normal,
+            AuthoritativeGameDifficulty.Nightmare => DiabloDifficulty.Nightmare,
+            AuthoritativeGameDifficulty.Hell => DiabloDifficulty.Hell,
+            _ => throw new ArgumentOutOfRangeException(nameof(playerStart)),
+        };
+        var activatedContent = nativeGenerated
+            ? registry.GetRequiredCapability<IDiabloNativeGeneratedContentBootstrap>()
+                .ActivateGenerated(content, playerStart.RandomSeed, gameMode, monsterSpawns, difficulty)
+            : registry.GetRequiredCapability<IDiabloContentBootstrap>()
+                .Activate(content, playerStart.RandomSeed, gameMode, monsterSpawns, difficulty);
         var startingLevelId = playerStart.StartingLevelId
             ?? activatedContent.DefaultStartingLevelId;
         if (activatedContent.Simulation.WorldState.World is not { } world
@@ -87,13 +97,17 @@ public sealed class DiabloAuthoritativeGameHostAdapterFactory
 public static class BuiltInAuthoritativeGameHostAdapters
 {
     public static IReadOnlyList<IAuthoritativeGameHostAdapterFactory> CreateFactories()
+        => CreateFactories(null);
+
+    /** Only explicit selection exposes the opt-in profile; default discovery stays unambiguous. */
+    public static IReadOnlyList<IAuthoritativeGameHostAdapterFactory> CreateFactories(string? selectedFactoryId)
     {
-        return [new DiabloAuthoritativeGameHostAdapterFactory()];
+        return [new DiabloAuthoritativeGameHostAdapterFactory(selectedFactoryId == DiabloAuthoritativeGameHostAdapterFactory.NativeGeneratedId)];
     }
 
     public static AuthoritativeGameHostAdapterCatalog Create(
         string? selectedFactoryId = null)
     {
-        return new AuthoritativeGameHostAdapterCatalog(CreateFactories(), selectedFactoryId);
+        return new AuthoritativeGameHostAdapterCatalog(CreateFactories(selectedFactoryId), selectedFactoryId);
     }
 }

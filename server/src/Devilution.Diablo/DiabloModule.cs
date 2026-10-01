@@ -7,7 +7,7 @@ public sealed class DiabloModule : IGameplayModule
 {
     public static DiabloModule Instance { get; } = new();
     private readonly DiabloStoreRules rules;
-    private readonly IDiabloContentBootstrap contentBootstrap;
+    private readonly DiabloContentBootstrap contentBootstrap;
 
     public DiabloModule(StoreServicePricing? pricing = null)
     {
@@ -20,6 +20,8 @@ public sealed class DiabloModule : IGameplayModule
     public IDiabloStoreRules Rules => rules;
 
     public IDiabloContentBootstrap ContentBootstrap => contentBootstrap;
+
+    public IDiabloNativeGeneratedContentBootstrap NativeGeneratedContentBootstrap => contentBootstrap;
 
     public GameplayModuleIdentity Identity { get; } = new(
         "devilution.diablo",
@@ -37,5 +39,6 @@ public sealed class DiabloModule : IGameplayModule
         registry.RegisterCapability<IDiabloStoreRules>(rules);
         registry.RegisterCapability<IDiabloSimulationFactory>(DiabloSimulationFactory.Instance);
         registry.RegisterCapability<IDiabloContentBootstrap>(contentBootstrap);
+        registry.RegisterCapability<IDiabloNativeGeneratedContentBootstrap>(contentBootstrap);
     }
 }

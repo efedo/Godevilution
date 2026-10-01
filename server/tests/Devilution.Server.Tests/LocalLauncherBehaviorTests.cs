@@ -544,13 +544,14 @@ public sealed class FakeCompletedProcess
                 Expect-Rejected { Assert-CathedralNativeReport $reportPath }
 
                 $managedPath = Join-Path $work 'managed.log'
-                $goodSummary = "Test run summary: Passed! - oracle.dll`r`n  total: 4`r`n  failed: 0`r`n  succeeded: 4`r`n  skipped: 0`r`n"
+                $goodSummary = "Test run summary: Passed! - oracle.dll`r`n  total: 12`r`n  failed: 0`r`n  succeeded: 12`r`n  skipped: 0`r`n"
                 [IO.File]::WriteAllText($managedPath, $goodSummary)
                 Assert-CathedralManagedReport $managedPath
                 foreach ($badSummary in @('', 'Test run summary: Failed!',
-                        $goodSummary.Replace('total: 4', 'total: 0'),
+                        $goodSummary.Replace('total: 12', 'total: 0'),
+                        $goodSummary.Replace('total: 12', 'total: 4').Replace('succeeded: 12', 'succeeded: 4'),
                         $goodSummary.Replace('failed: 0', 'failed: 1'),
-                        $goodSummary.Replace('succeeded: 4', 'succeeded: 3'),
+                        $goodSummary.Replace('succeeded: 12', 'succeeded: 11'),
                         $goodSummary.Replace('skipped: 0', 'skipped: 1'),
                         ($goodSummary + $goodSummary),
                         ($goodSummary + 'Test run summary: Failed!'))) {
@@ -560,10 +561,14 @@ public sealed class FakeCompletedProcess
 
                 Expect-Rejected { Get-CathedralOracleArtifacts $work }
                 $artifactNames = @('l1.til', 'l1.sol', 'cathedral-2588-main.json', 'cathedral-2588-previous.json',
-                    'cathedral-743271966-main.json', 'cathedral-743271966-previous.json')
+                    'cathedral-743271966-main.json', 'cathedral-743271966-previous.json',
+                    'cathedral-0-main.json', 'cathedral-0-previous.json',
+                    'cathedral-1-main.json', 'cathedral-1-previous.json',
+                    'cathedral-2147483648-main.json', 'cathedral-2147483648-previous.json',
+                    'cathedral-4294967295-main.json', 'cathedral-4294967295-previous.json')
                 foreach ($name in $artifactNames) { [IO.File]::WriteAllText((Join-Path $work $name), 'nonlicensed synthetic input') }
                 $artifacts = @(Get-CathedralOracleArtifacts $work)
-                if ($artifacts.Count -ne 6 -or @($artifacts | Where-Object { $_.Sha256 -notmatch '^[0-9a-f]{64}$' -or $_.Bytes -le 0 }).Count -ne 0) {
+                if ($artifacts.Count -ne 14 -or @($artifacts | Where-Object { $_.Sha256 -notmatch '^[0-9a-f]{64}$' -or $_.Bytes -le 0 }).Count -ne 0) {
                     throw 'Complete oracle artifacts were not hashed.'
                 }
                 [IO.File]::WriteAllText((Join-Path $work 'l1.sol'), '')

@@ -247,6 +247,16 @@ additive `active_world_mutation_ids` field preserves those identities through
 protocol-compatible saves. Both are server-owned state: clients do not author
 map changes.
 
+The opt-in ordinary Cathedral level-1 adapter regenerates static fine geometry
+from its explicit validated content seed before restoring mutable state. Its
+game-owned save codec uses an additive version-2 JSON envelope containing the
+unchanged base64 protocol snapshot plus generated-world identity. Explicit
+generator/seed/attempt/RNG and geometry/provenance/catalog/route fingerprints
+must match the active profile before any mutable restore. The identity is not
+a live protocol field, and static geometry remains omitted from saves. Authored
+profiles retain their original version-1 envelope and bytes; they cannot import
+a generated identity, nor can generated profiles accept an identity-free save.
+
 The additive `set_level_object_origins` field preserves runtime-generated
 set-piece origins through snapshots and protocol-compatible saves. Each entry
 identifies one validated set-level origin by set-level ID, runtime level, and

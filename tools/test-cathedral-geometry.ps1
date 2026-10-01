@@ -69,16 +69,19 @@ function Assert-CathedralManagedReport([string]$LogPath) {
     $summaries = [regex]::Matches($output,
         '(?s)Test run summary: Passed!.*?total:\s*(\d+)\s+failed:\s*(\d+)\s+succeeded:\s*(\d+)\s+skipped:\s*(\d+)')
     if ([regex]::Matches($output, 'Test run summary:').Count -ne 1 -or
-        $summaries.Count -ne 1 -or $summaries[0].Groups[1].Value -ne '4' -or
-        $summaries[0].Groups[2].Value -ne '0' -or $summaries[0].Groups[3].Value -ne '4' -or
+        $summaries.Count -ne 1 -or $summaries[0].Groups[1].Value -ne '12' -or
+        $summaries[0].Groups[2].Value -ne '0' -or $summaries[0].Groups[3].Value -ne '12' -or
         $summaries[0].Groups[4].Value -ne '0') {
-        throw 'All four managed native-geometry comparisons must pass without exclusions.'
+        throw 'All twelve managed native-geometry comparisons must pass without exclusions.'
     }
 }
 
 function Get-CathedralOracleArtifacts([string]$EvidenceRoot) {
     foreach ($name in @('l1.til', 'l1.sol', 'cathedral-2588-main.json', 'cathedral-2588-previous.json',
-            'cathedral-743271966-main.json', 'cathedral-743271966-previous.json')) {
+            'cathedral-743271966-main.json', 'cathedral-743271966-previous.json', 'cathedral-0-main.json',
+            'cathedral-0-previous.json', 'cathedral-1-main.json', 'cathedral-1-previous.json',
+            'cathedral-2147483648-main.json', 'cathedral-2147483648-previous.json',
+            'cathedral-4294967295-main.json', 'cathedral-4294967295-previous.json')) {
         $path = Join-Path $EvidenceRoot $name
         if (-not (Test-Path -LiteralPath $path -PathType Leaf) -or
             (Get-Item -LiteralPath $path).Length -eq 0) {
@@ -166,4 +169,4 @@ try {
     Write-Warning "Could not retain the result record: $($_.Exception.Message)"
 }
 if ($null -ne $primaryError) { throw $primaryError }
-Write-Host "PASS: four native/managed Cathedral fine-coordinate comparisons. Evidence: $evidenceRoot"
+Write-Host "PASS: twelve native/managed Cathedral fine-coordinate comparisons. Evidence: $evidenceRoot"
