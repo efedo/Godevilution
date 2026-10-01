@@ -318,6 +318,19 @@ this evidence. A sample art pack does not satisfy M4's full presentation gate.
    Next, close native object/door and population placement before widening playable
    topology coverage: some exact generated layouts currently have disconnected SOL
    routes and the diagnostic compiler rejects them rather than altering geometry.
+   Use the separate `-CathedralDoors` native scanner oracle to characterize L/R
+   placement, closed/open/reclosed piece and collision mutations, delta opening
+   and observed non-restoration. Require complete fresh-capture equality, then
+   port server-owned placement/mutation and restore against those private cases.
+   Captures are independent expected fixtures, not seed-specific production
+   transition tables. Port native-compatible discovery/transition logic for
+   arbitrary seeds using validated external catalogs, preserving mutable geometry
+   and operation order through restore rather than rebuilding only from closed
+   base layers and open/closed flags.
+   Scanner RNG, including L1 lights, is not production `InitObjects`/population
+   RNG; characterize that separate seed/order boundary before full population.
+   Do not infer that door placement explains disconnected routes or repair native
+   geometry to make a diagnostic path pass.
    Explicit per-depth seeds and optional authored encounters do not close native
    campaign seed selection or population. Keep existing timing failures visible;
    one successful diagnostic route is not M0 or Cathedral-family acceptance.

@@ -256,6 +256,38 @@ The managed depth API consumes validated TIL/SOL catalogs, never MPQs. These
 checks do not activate a multi-depth runtime profile or establish native
 population, quest variants, campaign seed selection or complete Cathedral play.
 
+To characterize native Cathedral door placement and mutation separately, use:
+
+```powershell
+./tools/test-cathedral-geometry.ps1 -CathedralDoors
+```
+
+This native-only mode is mutually exclusive with `-CathedralDepths`. Two GTests
+capture ordinary depths 1-4, seeds 2588/743271966 and MAIN/PREV entry, plus one
+depth-2 delta-open case. They call the native `AddL1Objs` scanner and public
+sync/delta door operations, requiring real CLOSED/OPEN/CLOSED object transitions.
+Every case retains complete 112x112 closed layers, changed open/reclosed cells,
+native object fields, RNG observations and hashes. Non-restoring closes are
+recorded; a fresh generated/scanned baseline isolates the next door when needed.
+The test-local pool reset and scope cleanup match native legacy index ownership.
+
+The wrapper requires both completed fixtures, validates the separate door schema
+and compares all twenty mandatory artifacts by byte length and SHA-256 across
+two fresh private captures before reporting success. Typed native integers,
+booleans, transition/baseline consistency and the exact artifact set are checked;
+skips, floating numeric evidence and hidden extra files are rejected. Each capture
+retains raw
+`l1.til`/`l1.sol`, metadata, sixteen ordinary cases and the delta case. Logs,
+reports, hashes and `result.json` stay under the printed private oracle directory;
+licensed inputs must not be committed or published. Direct fixtures require
+`GODEVILUTION_CATHEDRAL_DOOR_ORACLE_DIRECTORY` and otherwise skip.
+
+This is native characterization, not a managed door/population parity result.
+Scanner RNG includes native L1 lights but is not production `InitObjects` or
+encounter-placement RNG; physical lighting/vision state is not captured. It
+does not establish that doors explain disconnected routes. Existing level-1
+and depth oracle modes and server/client runtime behavior remain unchanged.
+
 The C# xUnit project is an executable Microsoft Testing Platform runner. Run
 it directly when `dotnet test` selects a machine-wide VSTest host whose
 `testhost` package is unavailable:

@@ -2,6 +2,17 @@
 
 All notable changes to this fork are documented below.
 
+- 2026-10-01: Add private native Cathedral door characterization for depths 1-4,
+  real sync/delta transitions, scoped legacy-pool cleanup and complete repeated
+  captures. Add strict typed/cell/object/report/artifact validation and direct
+  malformed-layer regressions, including floating-point rounding counterexamples.
+  Independent review approves; 21 ordinary native tests, four fresh capture
+  processes and 29 launcher checks pass. All twenty door artifacts repeat exactly;
+  unchanged depth/L1 oracle modes pass 48/12 managed comparisons. Update existing
+  plan/status/MSVC guidance; production gameplay, wire and saves are unchanged.
+  Managed doors, population, occupancy/adjacent-door characterization and M0/M2
+  exits remain open; licensed inputs stay private and the server never reads MPQs.
+
 - 2026-10-01: Keep native gated command estimates forward-only across delayed/equal
   snapshots while preserving native floor/saturation, Immediate behavior,
   reconnect epochs and frozen retries. Retain four pre-fix estimator failures;

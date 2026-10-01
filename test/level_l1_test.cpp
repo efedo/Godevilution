@@ -15,11 +15,17 @@
 #include <stdexcept>
 #include <string>
 #include <system_error>
+#include <utility>
 #include <vector>
 
 #include "application/game_mode.hpp"
+#include "engine/lighting.h"
 #include "engine/random.hpp"
 #include "game/levels/dungeon_common.h"
+#include "game/levels/tile_properties.hpp"
+#include "game/objects/object_pool.hpp"
+#include "game/objects/objects.hpp"
+#include "network/protocol/msg.h"
 #include "level_test.hpp"
 
 using namespace devilution;
@@ -32,6 +38,18 @@ constexpr uint32_t CathedralOracleVersion = 1;
 constexpr char CathedralDepthOracleDirectoryVariable[] = "GODEVILUTION_CATHEDRAL_DEPTH_ORACLE_DIRECTORY";
 constexpr char CathedralDepthOracleFormat[] = "godevilution-cathedral-depth-fine-oracle";
 constexpr char CathedralDepthOraclePolicy[] = "quest-disabled-original-diablo";
+constexpr char CathedralDoorOracleDirectoryVariable[] = "GODEVILUTION_CATHEDRAL_DOOR_ORACLE_DIRECTORY";
+constexpr char CathedralDoorOracleFormat[] = "godevilution-cathedral-l1-door-oracle";
+constexpr uint32_t CathedralDoorOracleVersion = 1;
+constexpr size_t CathedralDoorOracleCaseCount = 16;
+// These values are the private native DOOR_* constants and SelectionRegion
+// flags used by OpenDoor/CloseDoor through SetDoorStateOpen/Closed in
+// Source/game/objects/objects.cpp. The oracle records all other fields rather
+// than reproducing native piece-transition logic.
+constexpr int NativeDoorClosedState = 0;
+constexpr int NativeDoorOpenState = 1;
+constexpr int NativeDoorOpenSelectionRegion = 2;
+constexpr int NativeDoorClosedSelectionRegion = 3;
 constexpr int NativeWorldWidth = MAXDUNX;
 constexpr int NativeWorldHeight = MAXDUNY;
 constexpr int CathedralDepthFirst = 1;
@@ -57,6 +75,90 @@ struct CathedralOracleCase {
 	std::vector<uint8_t> coarseTransparency;
 };
 
+struct CathedralDoorOracleLayer {
+	std::vector<uint16_t> pieces;
+	std::vector<uint8_t> special;
+	std::vector<uint8_t> transparency;
+	std::vector<uint8_t> properties;
+	std::vector<uint8_t> solid;
+	std::vector<uint8_t> missileBlocked;
+	std::vector<uint8_t> blockLight;
+	std::vector<uint8_t> walkable;
+	std::vector<uint8_t> itemBlocking;
+};
+
+struct CathedralDoorOracleTileState {
+	uint16_t piece = 0;
+	uint8_t special = 0;
+	uint8_t transparency = 0;
+	uint8_t properties = 0;
+	uint8_t solid = 0;
+	uint8_t missileBlocked = 0;
+	uint8_t blockLight = 0;
+	uint8_t walkable = 0;
+	uint8_t itemBlocking = 0;
+};
+
+struct CathedralDoorOracleObjectState {
+	int state = 0;
+	int var1OneBased = 0;
+	int var2OneBased = 0;
+	int animationFrame = 0;
+	int selectionRegion = 0;
+	bool doorFlag = false;
+	bool preFlag = false;
+	bool missFlag = false;
+	bool solidFlag = false;
+};
+
+struct CathedralDoorOracleIdentity {
+	int nativeType = 0;
+	Point position;
+	int var1OneBased = 0;
+	int var2OneBased = 0;
+
+	bool operator==(const CathedralDoorOracleIdentity &) const = default;
+};
+
+struct CathedralDoorOracleChangedCell {
+	uint32_t index = 0;
+	CathedralDoorOracleTileState closed;
+	CathedralDoorOracleTileState open;
+	CathedralDoorOracleTileState reclosed;
+};
+
+struct CathedralDoorOracleTransition {
+	size_t ordinal = 0;
+	size_t freshBaselineOrdinal = 0;
+	bool deltaOpen = false;
+	CathedralDoorOracleIdentity identity;
+	CathedralDoorOracleObjectState closedObject;
+	CathedralDoorOracleObjectState openObject;
+	CathedralDoorOracleObjectState reclosedObject;
+	uint64_t closedLayerHash = 0;
+	uint64_t openLayerHash = 0;
+	uint64_t reclosedLayerHash = 0;
+	bool reclosedLayerEqualsClosed = false;
+	bool reclosedObjectEqualsClosed = false;
+	std::vector<CathedralDoorOracleChangedCell> changedCells;
+};
+
+struct CathedralDoorOracleCase {
+	int level = 1;
+	uint32_t inputSeed = 0;
+	lvl_entry entry = ENTRY_MAIN;
+	uint32_t attemptSeed = 0;
+	uint32_t finalRandomState = 0;
+	uint32_t doorScanRandomStateBefore = 0;
+	uint32_t doorScanRandomStateAfter = 0;
+	size_t baselineRebuildCount = 0;
+	CathedralDoorOracleLayer closedBaseline;
+	std::vector<CathedralDoorOracleLayer> closedBaselines;
+	std::vector<uint32_t> baselineDoorScanRandomStateBefore;
+	std::vector<uint32_t> baselineDoorScanRandomStateAfter;
+	std::vector<CathedralDoorOracleTransition> transitions;
+};
+
 template <typename T>
 uint64_t CathedralOracleHashValues(const std::vector<T> &values)
 {
@@ -68,6 +170,172 @@ uint64_t CathedralOracleHashValues(const std::vector<T> &values)
 		}
 	}
 	return hash;
+}
+
+uint64_t CathedralDoorOracleLayerHash(const CathedralDoorOracleLayer &layer)
+{
+	uint64_t hash = UINT64_C(14695981039346656037);
+	const auto append = [&hash](uint64_t value) {
+		for (size_t byte = 0; byte < sizeof(value); byte++) {
+			hash ^= static_cast<uint8_t>(value >> (byte * 8));
+			hash *= UINT64_C(1099511628211);
+		}
+	};
+	append(CathedralOracleHashValues(layer.pieces));
+	append(CathedralOracleHashValues(layer.special));
+	append(CathedralOracleHashValues(layer.transparency));
+	append(CathedralOracleHashValues(layer.properties));
+	append(CathedralOracleHashValues(layer.solid));
+	append(CathedralOracleHashValues(layer.missileBlocked));
+	append(CathedralOracleHashValues(layer.blockLight));
+	append(CathedralOracleHashValues(layer.walkable));
+	append(CathedralOracleHashValues(layer.itemBlocking));
+	return hash;
+}
+
+bool CathedralDoorOracleLayerEqual(const CathedralDoorOracleLayer &left, const CathedralDoorOracleLayer &right)
+{
+	return left.pieces == right.pieces
+		&& left.special == right.special
+		&& left.transparency == right.transparency
+		&& left.properties == right.properties
+		&& left.solid == right.solid
+		&& left.missileBlocked == right.missileBlocked
+		&& left.blockLight == right.blockLight
+		&& left.walkable == right.walkable
+		&& left.itemBlocking == right.itemBlocking;
+}
+
+CathedralDoorOracleLayer CaptureCathedralDoorOracleLayer()
+{
+	CathedralDoorOracleLayer layer;
+	const size_t cellCount = static_cast<size_t>(NativeWorldWidth) * NativeWorldHeight;
+	layer.pieces.reserve(cellCount);
+	layer.special.reserve(cellCount);
+	layer.transparency.reserve(cellCount);
+	layer.properties.reserve(cellCount);
+	layer.solid.reserve(cellCount);
+	layer.missileBlocked.reserve(cellCount);
+	layer.blockLight.reserve(cellCount);
+	layer.walkable.reserve(cellCount);
+	layer.itemBlocking.reserve(cellCount);
+	for (int y = 0; y < NativeWorldHeight; y++) {
+		for (int x = 0; x < NativeWorldWidth; x++) {
+			const Point position { x, y };
+			const Tile &tile = tileAt(position);
+			if (tile.piece() >= MAXTILES)
+				throw std::runtime_error("Cathedral door oracle produced an out-of-range d-piece");
+			const TileProperties properties = tileProperties()[tile.piece()];
+			layer.pieces.push_back(tile.piece());
+			layer.special.push_back(static_cast<uint8_t>(tile.special()));
+			layer.transparency.push_back(static_cast<uint8_t>(tile.transVal()));
+			layer.properties.push_back(static_cast<uint8_t>(properties));
+			layer.solid.push_back(HasAnyOf(properties, TileProperties::Solid));
+			layer.missileBlocked.push_back(HasAnyOf(properties, TileProperties::BlockMissile));
+			layer.blockLight.push_back(HasAnyOf(properties, TileProperties::BlockLight));
+			layer.walkable.push_back(IsTileWalkable(position));
+			layer.itemBlocking.push_back(IsItemBlockingObjectAtPosition(position));
+		}
+	}
+	return layer;
+}
+
+CathedralDoorOracleTileState CathedralDoorOracleTile(const CathedralDoorOracleLayer &layer, uint32_t index)
+{
+	return {
+		layer.pieces[index],
+		layer.special[index],
+		layer.transparency[index],
+		layer.properties[index],
+		layer.solid[index],
+		layer.missileBlocked[index],
+		layer.blockLight[index],
+		layer.walkable[index],
+		layer.itemBlocking[index],
+	};
+}
+
+bool CathedralDoorOracleTileEqual(const CathedralDoorOracleTileState &left, const CathedralDoorOracleTileState &right)
+{
+	return left.piece == right.piece
+		&& left.special == right.special
+		&& left.transparency == right.transparency
+		&& left.properties == right.properties
+		&& left.solid == right.solid
+		&& left.missileBlocked == right.missileBlocked
+		&& left.blockLight == right.blockLight
+		&& left.walkable == right.walkable
+		&& left.itemBlocking == right.itemBlocking;
+}
+
+CathedralDoorOracleObjectState CaptureCathedralDoorOracleObject(const Object &object)
+{
+	return {
+		object._oVar4,
+		object._oVar1,
+		object._oVar2,
+		static_cast<int>(object._oAnimFrame),
+		static_cast<int>(object.selectionRegion),
+		object._oDoorFlag,
+		object._oPreFlag,
+		object._oMissFlag,
+		object._oSolidFlag,
+	};
+}
+
+bool CathedralDoorOracleObjectEqual(const CathedralDoorOracleObjectState &left, const CathedralDoorOracleObjectState &right)
+{
+	return left.state == right.state
+		&& left.var1OneBased == right.var1OneBased
+		&& left.var2OneBased == right.var2OneBased
+		&& left.animationFrame == right.animationFrame
+		&& left.selectionRegion == right.selectionRegion
+		&& left.doorFlag == right.doorFlag
+		&& left.preFlag == right.preFlag
+		&& left.missFlag == right.missFlag
+		&& left.solidFlag == right.solidFlag;
+}
+
+bool CathedralDoorOracleIsDoor(const Object &object)
+{
+	return object._otype == OBJ_L1LDOOR || object._otype == OBJ_L1RDOOR;
+}
+
+const char *CathedralDoorOracleObjectName(_object_id objectType)
+{
+	switch (objectType) {
+	case OBJ_L1LDOOR:
+		return "OBJ_L1LDOOR";
+	case OBJ_L1RDOOR:
+		return "OBJ_L1RDOOR";
+	default:
+		return "unknown";
+	}
+}
+
+CathedralDoorOracleIdentity CaptureCathedralDoorOracleIdentity(const Object &object)
+{
+	return {
+		static_cast<int>(object._otype),
+		object.position,
+		object._oVar1,
+		object._oVar2,
+	};
+}
+
+std::vector<Object *> CaptureCathedralDoorOracleDoors()
+{
+	std::vector<Object *> doors;
+	for (Object &object : ObjectPoolAdapter::ActiveObjectsRange()) {
+		if (CathedralDoorOracleIsDoor(object))
+			doors.push_back(&object);
+	}
+	return doors;
+}
+
+const char *CathedralDoorOracleEntryName(lvl_entry entry)
+{
+	return entry == ENTRY_MAIN ? "main" : "previous";
 }
 
 std::string CathedralOracleHex(uint64_t value)
@@ -124,6 +392,569 @@ void WriteCathedralOracleArray(std::ostream &stream, const std::vector<T> &value
 void WriteCathedralOraclePoint(std::ostream &stream, Point point)
 {
 	stream << '[' << point.x << ',' << point.y << ']';
+}
+
+void WriteCathedralDoorOracleTile(std::ostream &stream, const CathedralDoorOracleTileState &tile)
+{
+	stream << "{\"piece\":" << tile.piece
+	       << ",\"special\":" << static_cast<int>(tile.special)
+	       << ",\"transparency\":" << static_cast<int>(tile.transparency)
+	       << ",\"properties\":" << static_cast<int>(tile.properties)
+	       << ",\"solid\":" << static_cast<int>(tile.solid)
+	       << ",\"missileBlocked\":" << static_cast<int>(tile.missileBlocked)
+	       << ",\"blockLight\":" << static_cast<int>(tile.blockLight)
+	       << ",\"walkable\":" << static_cast<int>(tile.walkable)
+	       << ",\"itemBlocking\":" << static_cast<int>(tile.itemBlocking) << '}';
+}
+
+void WriteCathedralDoorOracleObject(std::ostream &stream, const CathedralDoorOracleObjectState &object)
+{
+	stream << "{\"state\":" << object.state
+	       << ",\"var1OneBased\":" << object.var1OneBased
+	       << ",\"var2OneBased\":" << object.var2OneBased
+	       << ",\"animationFrame\":" << object.animationFrame
+	       << ",\"selectionRegion\":" << object.selectionRegion
+	       << ",\"doorFlag\":" << (object.doorFlag ? "true" : "false")
+	       << ",\"preFlag\":" << (object.preFlag ? "true" : "false")
+	       << ",\"missFlag\":" << (object.missFlag ? "true" : "false")
+	       << ",\"solidFlag\":" << (object.solidFlag ? "true" : "false") << '}';
+}
+
+void WriteCathedralDoorOracleLayerHashes(std::ostream &stream, const CathedralDoorOracleLayer &layer)
+{
+	stream << "{\"fullLayer\":\"" << CathedralOracleHex(CathedralDoorOracleLayerHash(layer))
+	       << "\",\"pieces\":\"" << CathedralOracleHex(CathedralOracleHashValues(layer.pieces))
+	       << "\",\"special\":\"" << CathedralOracleHex(CathedralOracleHashValues(layer.special))
+	       << "\",\"transparency\":\"" << CathedralOracleHex(CathedralOracleHashValues(layer.transparency))
+	       << "\",\"properties\":\"" << CathedralOracleHex(CathedralOracleHashValues(layer.properties))
+	       << "\",\"solid\":\"" << CathedralOracleHex(CathedralOracleHashValues(layer.solid))
+	       << "\",\"missileBlocked\":\"" << CathedralOracleHex(CathedralOracleHashValues(layer.missileBlocked))
+	       << "\",\"blockLight\":\"" << CathedralOracleHex(CathedralOracleHashValues(layer.blockLight))
+	       << "\",\"walkable\":\"" << CathedralOracleHex(CathedralOracleHashValues(layer.walkable))
+	       << "\",\"itemBlocking\":\"" << CathedralOracleHex(CathedralOracleHashValues(layer.itemBlocking)) << "\"}";
+}
+
+void WriteCathedralDoorOracleLayerArrays(std::ostream &stream, const CathedralDoorOracleLayer &layer)
+{
+	stream << "{\"pieces\":";
+	WriteCathedralOracleArray(stream, layer.pieces);
+	stream << ",\"special\":";
+	WriteCathedralOracleArray(stream, layer.special);
+	stream << ",\"transparency\":";
+	WriteCathedralOracleArray(stream, layer.transparency);
+	stream << ",\"properties\":";
+	WriteCathedralOracleArray(stream, layer.properties);
+	stream << ",\"solid\":";
+	WriteCathedralOracleArray(stream, layer.solid);
+	stream << ",\"missileBlocked\":";
+	WriteCathedralOracleArray(stream, layer.missileBlocked);
+	stream << ",\"blockLight\":";
+	WriteCathedralOracleArray(stream, layer.blockLight);
+	stream << ",\"walkable\":";
+	WriteCathedralOracleArray(stream, layer.walkable);
+	stream << ",\"itemBlocking\":";
+	WriteCathedralOracleArray(stream, layer.itemBlocking);
+	stream << '}';
+}
+
+void WriteCathedralDoorOracleChangedCells(std::ostream &stream, const std::vector<CathedralDoorOracleChangedCell> &changedCells)
+{
+	stream << '[';
+	for (size_t index = 0; index < changedCells.size(); index++) {
+		if (index != 0)
+			stream << ',';
+		const auto &changed = changedCells[index];
+		stream << "{\"index\":" << changed.index
+		       << ",\"x\":" << changed.index % NativeWorldWidth
+		       << ",\"y\":" << changed.index / NativeWorldWidth
+		       << ",\"closed\":";
+		WriteCathedralDoorOracleTile(stream, changed.closed);
+		stream << ",\"open\":";
+		WriteCathedralDoorOracleTile(stream, changed.open);
+		stream << ",\"reclosed\":";
+		WriteCathedralDoorOracleTile(stream, changed.reclosed);
+		stream << '}';
+	}
+	stream << ']';
+}
+
+struct CathedralDoorOracleAssetBundle {
+	std::vector<MegaTile> megaTiles;
+	std::vector<uint8_t> tilBytes;
+	std::vector<uint8_t> solBytes;
+};
+
+void ResetCathedralDoorOracleNativeObjectsAndLights()
+{
+	// InitializeObjectPool uses the modern sparse free-list, while the native
+	// ReserveObjectSlot path still consumes the legacy zero-based aliases. Keep
+	// both representations synchronized exactly as InitObjects/ClrAllObjects do.
+	InitializeObjectPool();
+	for (int index = 0; index < MAXOBJECTS; index++)
+		Objects[index] = {};
+	ObjectPoolAdapter::ResetLegacyObjectPools();
+	for (Tile &tile : tiles().columnMajor())
+		tile.setObject(0);
+	CurrentLightManager.Init();
+}
+
+class CathedralDoorOracleScopeGuard {
+public:
+	CathedralDoorOracleScopeGuard()
+	{
+		ResetCathedralDoorOracleNativeObjectsAndLights();
+	}
+
+	~CathedralDoorOracleScopeGuard()
+	{
+		ResetCathedralDoorOracleNativeObjectsAndLights();
+	}
+
+	CathedralDoorOracleScopeGuard(const CathedralDoorOracleScopeGuard &) = delete;
+	CathedralDoorOracleScopeGuard &operator=(const CathedralDoorOracleScopeGuard &) = delete;
+};
+
+std::optional<CathedralDoorOracleAssetBundle> LoadCathedralDoorOracleAssets(std::string &error)
+{
+	try {
+		TestInitGame();
+		// TestInitGame installs a preference directory as an asset override. The
+		// door oracle must resolve the original DIABDAT assets instead.
+		UnloadModArchives();
+		MpqArchives.erase(MainMpqPriority);
+		gbIsSpawn = false;
+		LoadGameArchives();
+		if (!HaveMainData()) {
+			error = "DIABDAT.MPQ was not discovered by LoadGameArchives";
+			return std::nullopt;
+		}
+		if (gbIsSpawn) {
+			error = "LoadGameArchives resolved spawn.mpq instead of original DIABDAT.MPQ";
+			return std::nullopt;
+		}
+
+		levelType() = DTYPE_CATHEDRAL;
+		currentLevelNumber() = CathedralDepthFirst;
+#ifndef UNPACKED_MPQS
+		const auto &mainArchive = MpqArchives.at(MainMpqPriority);
+		for (const std::string_view assetPath : std::array<std::string_view, 2> {
+			"levels\\l1data\\l1.til",
+			"levels\\l1data\\l1.sol",
+		}) {
+			const AssetRef asset = FindAsset(assetPath);
+			if (!asset.ok()) {
+				error = "Required Cathedral asset is unavailable: " + std::string(assetPath);
+				return std::nullopt;
+			}
+			if (asset.archive != &mainArchive) {
+				error = "Cathedral asset did not resolve from original DIABDAT.MPQ: " + std::string(assetPath);
+				return std::nullopt;
+			}
+		}
+#endif
+
+		size_t tilCount = 0;
+		auto tilDefinitions = LoadFileInMemWithStatus<MegaTile>(
+			"levels\\l1data\\l1.til", &tilCount);
+		if (!tilDefinitions.has_value()) {
+			error = tilDefinitions.error();
+			return std::nullopt;
+		}
+		if (tilDefinitions->get() == nullptr || tilCount != static_cast<size_t>(GetTileCount(DTYPE_CATHEDRAL))) {
+			error = "Cathedral l1.til has an unexpected tile count";
+			return std::nullopt;
+		}
+
+		size_t tilByteCount = 0;
+		auto tilBytesResult = LoadFileInMemWithStatus<std::byte>(
+			"levels\\l1data\\l1.til", &tilByteCount);
+		if (!tilBytesResult.has_value() || tilBytesResult->get() == nullptr
+			|| tilByteCount != tilCount * sizeof(MegaTile)) {
+			error = tilBytesResult.has_value() ? "Cathedral l1.til has an unexpected byte count" : tilBytesResult.error();
+			return std::nullopt;
+		}
+
+		size_t solByteCount = 0;
+		auto solBytesResult = LoadFileInMemWithStatus<std::byte>(
+			"levels\\l1data\\l1.sol", &solByteCount);
+		if (!solBytesResult.has_value() || solBytesResult->get() == nullptr
+			|| solByteCount == 0 || solByteCount > static_cast<size_t>(MAXTILES)) {
+			error = solBytesResult.has_value() ? "Cathedral l1.sol has an unexpected byte count" : solBytesResult.error();
+			return std::nullopt;
+		}
+
+		for (int piece = 0; piece < MAXTILES; piece++)
+			tileProperties()[piece] = TileProperties::None;
+		auto solLoad = LoadLevelSOLData();
+		if (!solLoad.has_value()) {
+			error = solLoad.error();
+			return std::nullopt;
+		}
+		LoadObjectData();
+		auto trnsLoad = CurrentLightManager.LoadTrns();
+		if (!trnsLoad.has_value()) {
+			error = trnsLoad.error();
+			return std::nullopt;
+		}
+		CurrentLightManager.MakeLightTable();
+
+		CathedralDoorOracleAssetBundle bundle;
+		bundle.megaTiles.resize(tilCount);
+		std::copy_n(tilDefinitions->get(), tilCount, bundle.megaTiles.begin());
+		bundle.tilBytes.resize(tilByteCount);
+		std::memcpy(bundle.tilBytes.data(), tilBytesResult->get(), tilByteCount);
+		bundle.solBytes.resize(solByteCount);
+		std::memcpy(bundle.solBytes.data(), solBytesResult->get(), solByteCount);
+		return bundle;
+	} catch (const std::exception &exception) {
+		error = exception.what();
+		return std::nullopt;
+	}
+}
+
+struct CathedralDoorOraclePreparedState {
+	uint32_t attemptSeed = 0;
+	uint32_t finalRandomState = 0;
+	uint32_t doorScanRandomStateBefore = 0;
+	uint32_t doorScanRandomStateAfter = 0;
+	CathedralDoorOracleLayer layer;
+	std::vector<Object *> doors;
+};
+
+CathedralDoorOraclePreparedState PrepareCathedralDoorOracleLevel(
+	int level, uint32_t seed, lvl_entry entry, const std::vector<MegaTile> &immutableMegaTiles)
+{
+	if (level < CathedralDepthFirst || level > CathedralDepthLast)
+		throw std::runtime_error("Cathedral door oracle received an invalid level");
+	if (MyPlayer == nullptr)
+		throw std::runtime_error("Cathedral door oracle has no player");
+
+	MyPlayer->pOriginalCathedral = true;
+	for (Quest &quest : Quests)
+		quest._qactive = QUEST_NOTAVAIL;
+	LevelSeeds[level] = std::nullopt;
+	currentLevelNumber() = level;
+	levelType() = DTYPE_CATHEDRAL;
+	megaTiles() = std::make_unique<MegaTile[]>(immutableMegaTiles.size());
+	std::copy(immutableMegaTiles.begin(), immutableMegaTiles.end(), megaTiles().get());
+	CreateDungeon(seed, entry);
+	if (!LevelSeeds[level].has_value())
+		throw std::runtime_error("Cathedral door oracle did not record the generated attempt seed");
+
+	ResetCathedralDoorOracleNativeObjectsAndLights();
+	CathedralDoorOraclePreparedState prepared;
+	prepared.attemptSeed = *LevelSeeds[level];
+	prepared.finalRandomState = GetLCGEngineState();
+	prepared.doorScanRandomStateBefore = GetLCGEngineState();
+	AddL1Objs(0, 0, MAXDUNX, MAXDUNY);
+	prepared.doorScanRandomStateAfter = GetLCGEngineState();
+	prepared.layer = CaptureCathedralDoorOracleLayer();
+	prepared.doors = CaptureCathedralDoorOracleDoors();
+	if (prepared.doors.empty())
+		throw std::runtime_error("Cathedral door oracle generated no native Cathedral doors");
+	return prepared;
+}
+
+CathedralDoorOracleTransition CaptureCathedralDoorOracleTransition(
+	Object &door, size_t ordinal, size_t freshBaselineOrdinal,
+	const CathedralDoorOracleLayer &closedLayer, bool deltaOpen)
+{
+	CathedralDoorOracleTransition transition;
+	transition.ordinal = ordinal;
+	transition.freshBaselineOrdinal = freshBaselineOrdinal;
+	transition.deltaOpen = deltaOpen;
+	transition.identity = CaptureCathedralDoorOracleIdentity(door);
+	transition.closedObject = CaptureCathedralDoorOracleObject(door);
+	transition.closedLayerHash = CathedralDoorOracleLayerHash(closedLayer);
+	const std::string context = std::string(" for ") + CathedralDoorOracleObjectName(door._otype)
+	    + " at (" + std::to_string(door.position.x) + "," + std::to_string(door.position.y) + ")";
+	if (tileAt(door.position).hasPlayer())
+		throw std::runtime_error("Cathedral door oracle fixture is occupied before opening" + context);
+	if (transition.closedObject.state != NativeDoorClosedState)
+		throw std::runtime_error("Native Cathedral door did not start CLOSED" + context);
+	if (!transition.closedObject.doorFlag
+		|| transition.closedObject.preFlag
+		|| transition.closedObject.missFlag
+		|| transition.closedObject.selectionRegion != NativeDoorClosedSelectionRegion)
+		throw std::runtime_error("Native Cathedral door CLOSED flags differ from SetDoorStateClosed" + context);
+
+	Player remotePlayer {};
+	if (deltaOpen)
+		DeltaSyncOpObject(door);
+	else
+		SyncOpObject(remotePlayer, CMD_OPENDOOR, door);
+	const CathedralDoorOracleLayer openLayer = CaptureCathedralDoorOracleLayer();
+	transition.openObject = CaptureCathedralDoorOracleObject(door);
+	transition.openLayerHash = CathedralDoorOracleLayerHash(openLayer);
+	if (transition.openObject.state != NativeDoorOpenState)
+		throw std::runtime_error("Native Cathedral door did not become OPEN through the selected path" + context);
+	if (transition.openObject.animationFrame != transition.closedObject.animationFrame + 2)
+		throw std::runtime_error("Native Cathedral door OPEN animation did not advance by two frames" + context);
+	if (!transition.openObject.doorFlag
+		|| !transition.openObject.preFlag
+		|| !transition.openObject.missFlag
+		|| transition.openObject.selectionRegion != NativeDoorOpenSelectionRegion)
+		throw std::runtime_error("Native Cathedral door OPEN flags differ from SetDoorStateOpen" + context);
+
+	SyncOpObject(remotePlayer, CMD_CLOSEDOOR, door);
+	const CathedralDoorOracleLayer reclosedLayer = CaptureCathedralDoorOracleLayer();
+	transition.reclosedObject = CaptureCathedralDoorOracleObject(door);
+	transition.reclosedLayerHash = CathedralDoorOracleLayerHash(reclosedLayer);
+	if (transition.reclosedObject.state != NativeDoorClosedState)
+		throw std::runtime_error("Native Cathedral door did not become CLOSED through the remote close path" + context);
+	if (transition.reclosedObject.animationFrame != transition.openObject.animationFrame - 2)
+		throw std::runtime_error("Native Cathedral door CLOSED animation did not retreat by two frames" + context);
+	if (!transition.reclosedObject.doorFlag
+		|| transition.reclosedObject.preFlag
+		|| transition.reclosedObject.missFlag
+		|| transition.reclosedObject.selectionRegion != NativeDoorClosedSelectionRegion)
+		throw std::runtime_error("Native Cathedral door reclosed flags differ from SetDoorStateClosed" + context);
+	transition.reclosedLayerEqualsClosed = CathedralDoorOracleLayerEqual(closedLayer, reclosedLayer);
+	transition.reclosedObjectEqualsClosed = CathedralDoorOracleObjectEqual(transition.closedObject, transition.reclosedObject);
+
+	const uint32_t cellCount = NativeWorldWidth * NativeWorldHeight;
+	transition.changedCells.reserve(cellCount);
+	for (uint32_t index = 0; index < cellCount; index++) {
+		const auto closed = CathedralDoorOracleTile(closedLayer, index);
+		const auto open = CathedralDoorOracleTile(openLayer, index);
+		const auto reclosed = CathedralDoorOracleTile(reclosedLayer, index);
+		if (!CathedralDoorOracleTileEqual(closed, open) || !CathedralDoorOracleTileEqual(closed, reclosed))
+			transition.changedCells.push_back({ index, closed, open, reclosed });
+	}
+	return transition;
+}
+
+CathedralDoorOracleCase CaptureCathedralDoorOracleCase(
+	int level, uint32_t seed, lvl_entry entry, const std::vector<MegaTile> &immutableMegaTiles, bool deltaOpen)
+{
+	CathedralDoorOraclePreparedState prepared = PrepareCathedralDoorOracleLevel(level, seed, entry, immutableMegaTiles);
+	CathedralDoorOracleCase oracleCase;
+	oracleCase.level = level;
+	oracleCase.inputSeed = seed;
+	oracleCase.entry = entry;
+	oracleCase.attemptSeed = prepared.attemptSeed;
+	oracleCase.finalRandomState = prepared.finalRandomState;
+	oracleCase.doorScanRandomStateBefore = prepared.doorScanRandomStateBefore;
+	oracleCase.doorScanRandomStateAfter = prepared.doorScanRandomStateAfter;
+	oracleCase.closedBaseline = prepared.layer;
+	oracleCase.closedBaselines.push_back(prepared.layer);
+	oracleCase.baselineDoorScanRandomStateBefore.push_back(prepared.doorScanRandomStateBefore);
+	oracleCase.baselineDoorScanRandomStateAfter.push_back(prepared.doorScanRandomStateAfter);
+	oracleCase.baselineRebuildCount = 1;
+
+	std::vector<CathedralDoorOracleIdentity> identities;
+	identities.reserve(prepared.doors.size());
+	for (const Object *door : prepared.doors)
+		identities.push_back(CaptureCathedralDoorOracleIdentity(*door));
+
+	for (size_t ordinal = 0; ordinal < prepared.doors.size(); ordinal++) {
+		if (oracleCase.transitions.size() != ordinal)
+			throw std::runtime_error("Cathedral door oracle transition order was corrupted");
+		const auto transition = CaptureCathedralDoorOracleTransition(
+			*prepared.doors[ordinal], ordinal, oracleCase.baselineRebuildCount, prepared.layer, deltaOpen);
+		oracleCase.transitions.push_back(transition);
+		if (!transition.reclosedLayerEqualsClosed || !transition.reclosedObjectEqualsClosed) {
+			if (ordinal + 1 == prepared.doors.size())
+				break;
+			prepared = PrepareCathedralDoorOracleLevel(level, seed, entry, immutableMegaTiles);
+			oracleCase.baselineRebuildCount++;
+			if (prepared.doors.size() != identities.size())
+				throw std::runtime_error("Cathedral door oracle changed the native door count after a fresh baseline");
+			for (size_t identityIndex = 0; identityIndex < prepared.doors.size(); identityIndex++) {
+				if (CaptureCathedralDoorOracleIdentity(*prepared.doors[identityIndex]) != identities[identityIndex])
+					throw std::runtime_error("Cathedral door oracle changed native door identity after a fresh baseline");
+			}
+			oracleCase.closedBaselines.push_back(prepared.layer);
+			oracleCase.baselineDoorScanRandomStateBefore.push_back(prepared.doorScanRandomStateBefore);
+			oracleCase.baselineDoorScanRandomStateAfter.push_back(prepared.doorScanRandomStateAfter);
+			// The next transition uses the regenerated layer and object vector. Its
+			// fresh baseline is deliberately retained as evidence in that record.
+		}
+	}
+	return oracleCase;
+}
+
+bool WriteCathedralDoorOracleCase(const std::filesystem::path &path, const CathedralDoorOracleCase &oracleCase)
+{
+	std::ofstream stream(path, std::ios::binary | std::ios::trunc);
+	if (!stream.good())
+		return false;
+	stream << "{\n"
+	       << "\"format\":\"" << CathedralDoorOracleFormat << "\",\n"
+	       << "\"version\":" << CathedralDoorOracleVersion << ",\n"
+	       << "\"policy\":\"native-add-l1-objects-door-only\",\n"
+	       << "\"level\":" << oracleCase.level << ",\n"
+	       << "\"entry\":\"" << CathedralDoorOracleEntryName(oracleCase.entry) << "\",\n"
+	       << "\"inputSeed\":" << oracleCase.inputSeed << ",\n"
+	       << "\"attemptSeed\":" << oracleCase.attemptSeed << ",\n"
+	       << "\"finalRandomState\":" << oracleCase.finalRandomState << ",\n"
+	       << "\"doorScanRandomStateBefore\":" << oracleCase.doorScanRandomStateBefore << ",\n"
+	       << "\"doorScanRandomStateAfter\":" << oracleCase.doorScanRandomStateAfter << ",\n"
+	       << "\"nativeWidth\":" << NativeWorldWidth << ",\n"
+	       << "\"nativeHeight\":" << NativeWorldHeight << ",\n"
+	       << "\"rowMajor\":\"y*nativeWidth+x\",\n"
+	       << "\"baselineRebuildCount\":" << oracleCase.baselineRebuildCount << ",\n"
+	       << "\"closedBaselineHashes\":";
+	WriteCathedralDoorOracleLayerHashes(stream, oracleCase.closedBaseline);
+	stream << ",\n\"closedBaseline\":";
+	WriteCathedralDoorOracleLayerArrays(stream, oracleCase.closedBaseline);
+	stream << ",\n\"closedBaselines\":[";
+	for (size_t index = 0; index < oracleCase.closedBaselines.size(); index++) {
+		if (index != 0)
+			stream << ',';
+		stream << "{\"ordinal\":" << index + 1
+		       << ",\"doorScanRandomStateBefore\":" << oracleCase.baselineDoorScanRandomStateBefore[index]
+		       << ",\"doorScanRandomStateAfter\":" << oracleCase.baselineDoorScanRandomStateAfter[index]
+		       << ",\"hashes\":";
+		WriteCathedralDoorOracleLayerHashes(stream, oracleCase.closedBaselines[index]);
+		stream << ",\"layer\":";
+		WriteCathedralDoorOracleLayerArrays(stream, oracleCase.closedBaselines[index]);
+		stream << '}';
+	}
+	stream << "],\n\"doors\":[";
+	for (size_t index = 0; index < oracleCase.transitions.size(); index++) {
+		if (index != 0)
+			stream << ',';
+		const auto &transition = oracleCase.transitions[index];
+		stream << "{\"ordinal\":" << transition.ordinal
+		       << ",\"freshBaselineOrdinal\":" << transition.freshBaselineOrdinal
+		       << ",\"openPath\":\"" << (transition.deltaOpen ? "delta" : "sync") << "\""
+		       << ",\"nativeTypeId\":" << transition.identity.nativeType
+		       << ",\"nativeType\":\"" << CathedralDoorOracleObjectName(static_cast<_object_id>(transition.identity.nativeType)) << "\""
+		       << ",\"position\":";
+		WriteCathedralOraclePoint(stream, transition.identity.position);
+		stream << ",\"var1OneBased\":" << transition.identity.var1OneBased
+		       << ",\"var2OneBased\":" << transition.identity.var2OneBased
+		       << ",\"sourcePieceObserved\":" << transition.identity.var1OneBased - 1
+		       << ",\"neighborPieceObserved\":" << transition.identity.var2OneBased - 1
+		       << ",\"closedObject\":";
+		WriteCathedralDoorOracleObject(stream, transition.closedObject);
+		stream << ",\"openObject\":";
+		WriteCathedralDoorOracleObject(stream, transition.openObject);
+		stream << ",\"reclosedObject\":";
+		WriteCathedralDoorOracleObject(stream, transition.reclosedObject);
+		stream << ",\"closedLayerHash\":\"" << CathedralOracleHex(transition.closedLayerHash)
+		       << "\",\"openLayerHash\":\"" << CathedralOracleHex(transition.openLayerHash)
+		       << "\",\"reclosedLayerHash\":\"" << CathedralOracleHex(transition.reclosedLayerHash)
+		       << "\",\"reclosedLayerEqualsClosed\":" << (transition.reclosedLayerEqualsClosed ? "true" : "false")
+		       << ",\"reclosedObjectEqualsClosed\":" << (transition.reclosedObjectEqualsClosed ? "true" : "false")
+		       << ",\"changedCells\":";
+		WriteCathedralDoorOracleChangedCells(stream, transition.changedCells);
+		stream << '}';
+	}
+	stream << "]\n}\n";
+	stream.flush();
+	if (!stream.good())
+		return false;
+	stream.close();
+	return stream.good();
+}
+
+bool WriteCathedralDoorOracleMetadata(const std::filesystem::path &path)
+{
+	std::ofstream stream(path, std::ios::binary | std::ios::trunc);
+	if (!stream.good())
+		return false;
+	stream << "{\n"
+	       << "\"format\":\"" << CathedralDoorOracleFormat << "\",\n"
+	       << "\"version\":" << CathedralDoorOracleVersion << ",\n"
+	       << "\"policy\":\"native-add-l1-objects-door-only\",\n"
+	       << "\"caseCount\":" << CathedralDoorOracleCaseCount << ",\n"
+	       << "\"depths\":[1,2,3,4],\n"
+	       << "\"seeds\":[2588,743271966],\n"
+	       << "\"entries\":[\"main\",\"previous\"],\n"
+	       << "\"rawAssets\":[\"l1.til\",\"l1.sol\"],\n"
+	       << "\"width\":" << NativeWorldWidth << ",\n"
+	       << "\"height\":" << NativeWorldHeight << ",\n"
+	       << "\"rowMajor\":\"y*width+x\",\n"
+	       << "\"deltaCase\":\"cathedral-door-delta-depth-2-743271966-main.json\"\n"
+	       << "}\n";
+	stream.flush();
+	if (!stream.good())
+		return false;
+	stream.close();
+	return stream.good();
+}
+
+bool ValidateCathedralDoorOracleOutputPath(const std::filesystem::path &outputPath, bool requireEmpty, std::string &error)
+{
+	if (!std::filesystem::exists(outputPath)) {
+		error = "Cathedral door oracle output directory does not exist: " + outputPath.string();
+		return false;
+	}
+	if (!std::filesystem::is_directory(outputPath)) {
+		error = "Cathedral door oracle output path is not a directory: " + outputPath.string();
+		return false;
+	}
+	std::error_code pathError;
+	const auto canonicalOutputPath = std::filesystem::weakly_canonical(outputPath, pathError);
+	if (pathError) {
+		error = "Unable to canonicalize Cathedral door oracle output path: " + pathError.message();
+		return false;
+	}
+	const auto canonicalRepositoryPath = CathedralOracleRepositoryPath(pathError);
+	if (pathError) {
+		error = "Unable to locate repository root for Cathedral door oracle isolation: " + pathError.message();
+		return false;
+	}
+	std::string repositoryPrefix = CathedralOracleLower(canonicalRepositoryPath.generic_string());
+	if (!repositoryPrefix.ends_with('/'))
+		repositoryPrefix += '/';
+	const std::string canonicalOutput = CathedralOracleLower(canonicalOutputPath.generic_string());
+	if (canonicalOutput == repositoryPrefix.substr(0, repositoryPrefix.size() - 1)
+		|| canonicalOutput.starts_with(repositoryPrefix)) {
+		error = "Cathedral door oracle output must be outside the repository: " + canonicalOutputPath.string();
+		return false;
+	}
+	if (requireEmpty && !std::filesystem::is_empty(outputPath)) {
+		error = "Cathedral door oracle output directory must be fresh: " + outputPath.string();
+		return false;
+	}
+	return true;
+}
+
+std::string CathedralDoorOracleCaseFingerprint(const CathedralDoorOracleCase &oracleCase)
+{
+	std::ostringstream stream;
+	stream << oracleCase.level << ':' << oracleCase.inputSeed << ':' << static_cast<int>(oracleCase.entry)
+	       << ':' << oracleCase.attemptSeed << ':' << oracleCase.finalRandomState
+	       << ':' << oracleCase.doorScanRandomStateBefore << ':' << oracleCase.doorScanRandomStateAfter
+	       << ':' << oracleCase.baselineRebuildCount << ':' << CathedralDoorOracleLayerHash(oracleCase.closedBaseline);
+	for (const auto &baseline : oracleCase.closedBaselines)
+		stream << ':' << CathedralDoorOracleLayerHash(baseline);
+	for (const uint32_t state : oracleCase.baselineDoorScanRandomStateBefore)
+		stream << ':' << state;
+	for (const uint32_t state : oracleCase.baselineDoorScanRandomStateAfter)
+		stream << ':' << state;
+	for (const auto &transition : oracleCase.transitions) {
+		stream << ':' << transition.ordinal << ':' << transition.freshBaselineOrdinal << ':' << transition.deltaOpen
+		       << ':' << transition.identity.nativeType << ':' << transition.identity.position.x << ':' << transition.identity.position.y
+		       << ':' << transition.identity.var1OneBased << ':' << transition.identity.var2OneBased
+		       << ':' << transition.closedLayerHash << ':' << transition.openLayerHash << ':' << transition.reclosedLayerHash
+		       << ':' << transition.reclosedLayerEqualsClosed << ':' << transition.reclosedObjectEqualsClosed;
+		const auto appendObject = [&stream](const CathedralDoorOracleObjectState &object) {
+			stream << ':' << object.state << ':' << object.var1OneBased << ':' << object.var2OneBased
+			       << ':' << object.animationFrame << ':' << object.selectionRegion << ':' << object.doorFlag
+			       << ':' << object.preFlag << ':' << object.missFlag << ':' << object.solidFlag;
+		};
+		appendObject(transition.closedObject);
+		appendObject(transition.openObject);
+		appendObject(transition.reclosedObject);
+		for (const auto &changed : transition.changedCells) {
+			stream << ':' << changed.index;
+			const auto appendTile = [&stream](const CathedralDoorOracleTileState &tile) {
+				stream << ':' << tile.piece << ':' << static_cast<int>(tile.special)
+				       << ':' << static_cast<int>(tile.transparency) << ':' << static_cast<int>(tile.properties)
+				       << ':' << static_cast<int>(tile.solid) << ':' << static_cast<int>(tile.missileBlocked)
+				       << ':' << static_cast<int>(tile.blockLight) << ':' << static_cast<int>(tile.walkable)
+				       << ':' << static_cast<int>(tile.itemBlocking);
+			};
+			appendTile(changed.closed);
+			appendTile(changed.open);
+			appendTile(changed.reclosed);
+		}
+	}
+	return stream.str();
 }
 
 bool WriteCathedralOracleCase(const std::filesystem::path &path, const CathedralOracleCase &oracleCase)
@@ -671,6 +1502,109 @@ TEST(Drlg_l1, CathedralDepthFineGeometryLocalAssetOracle)
 	ASSERT_EQ(depthCaseCount, CathedralDepthOracleCaseCount);
 	ASSERT_TRUE(WriteCathedralOracleRawAsset(outputPath / "l1.til", tilBytes.data(), tilBytes.size()));
 	ASSERT_TRUE(WriteCathedralOracleRawAsset(outputPath / "l1.sol", solBytes.data(), solBytes.size()));
+}
+
+TEST(Drlg_l1, CathedralDoorNativeObjectOracle)
+{
+	const char *outputDirectory = std::getenv(CathedralDoorOracleDirectoryVariable);
+	if (outputDirectory == nullptr || outputDirectory[0] == '\0') {
+		GTEST_SKIP() << "Set " << CathedralDoorOracleDirectoryVariable
+		             << " to run the opt-in native Cathedral door object oracle";
+	}
+
+	const std::filesystem::path outputPath(outputDirectory);
+	std::string outputError;
+	ASSERT_TRUE(ValidateCathedralDoorOracleOutputPath(outputPath, true, outputError)) << outputError;
+	CathedralDoorOracleScopeGuard nativeStateGuard;
+	std::string assetError;
+	auto assets = LoadCathedralDoorOracleAssets(assetError);
+	ASSERT_TRUE(assets.has_value()) << assetError;
+
+	const std::array<uint32_t, 2> seeds { UINT32_C(2588), UINT32_C(743271966) };
+	const std::array<lvl_entry, 2> entries { ENTRY_MAIN, ENTRY_PREV };
+	std::vector<CathedralDoorOracleCase> cases;
+	std::vector<std::string> fileNames;
+	cases.reserve(CathedralDoorOracleCaseCount);
+	fileNames.reserve(CathedralDoorOracleCaseCount);
+	bool hasLeftDoor = false;
+	bool hasRightDoor = false;
+	for (int level = CathedralDepthFirst; level <= CathedralDepthLast; level++) {
+		for (const uint32_t seed : seeds) {
+			for (const lvl_entry entry : entries) {
+				CathedralDoorOracleCase captured;
+				CathedralDoorOracleCase repeated;
+				try {
+					captured = CaptureCathedralDoorOracleCase(level, seed, entry, assets->megaTiles, false);
+					repeated = CaptureCathedralDoorOracleCase(level, seed, entry, assets->megaTiles, false);
+				} catch (const std::exception &exception) {
+					ADD_FAILURE() << "Native Cathedral door capture failed for depth " << level
+					             << ", seed " << seed << ", entry " << CathedralDoorOracleEntryName(entry)
+					             << ": " << exception.what();
+					return;
+				}
+				ASSERT_EQ(CathedralDoorOracleCaseFingerprint(captured), CathedralDoorOracleCaseFingerprint(repeated))
+					<< "Repeated native Cathedral door capture changed for depth " << level
+					<< ", seed " << seed << ", entry " << CathedralDoorOracleEntryName(entry);
+				ASSERT_FALSE(captured.transitions.empty());
+				for (const auto &transition : captured.transitions) {
+					hasLeftDoor |= transition.identity.nativeType == static_cast<int>(OBJ_L1LDOOR);
+					hasRightDoor |= transition.identity.nativeType == static_cast<int>(OBJ_L1RDOOR);
+				}
+				const char *entryName = CathedralDoorOracleEntryName(entry);
+				fileNames.push_back("cathedral-door-depth-" + std::to_string(level) + "-"
+				    + std::to_string(seed) + "-" + entryName + ".json");
+				cases.push_back(std::move(captured));
+			}
+		}
+	}
+
+	ASSERT_EQ(cases.size(), CathedralDoorOracleCaseCount);
+	ASSERT_TRUE(hasLeftDoor) << "Native Cathedral door corpus did not contain an L door";
+	ASSERT_TRUE(hasRightDoor) << "Native Cathedral door corpus did not contain an R door";
+	ASSERT_TRUE(WriteCathedralOracleRawAsset(outputPath / "l1.til", assets->tilBytes.data(), assets->tilBytes.size()));
+	ASSERT_TRUE(WriteCathedralOracleRawAsset(outputPath / "l1.sol", assets->solBytes.data(), assets->solBytes.size()));
+	ASSERT_TRUE(WriteCathedralDoorOracleMetadata(outputPath / "door-oracle-format.json"));
+	for (size_t index = 0; index < cases.size(); index++)
+		ASSERT_TRUE(WriteCathedralDoorOracleCase(outputPath / fileNames[index], cases[index]));
+}
+
+TEST(Drlg_l1, CathedralDoorNativeDeltaOpenOracle)
+{
+	const char *outputDirectory = std::getenv(CathedralDoorOracleDirectoryVariable);
+	if (outputDirectory == nullptr || outputDirectory[0] == '\0') {
+		GTEST_SKIP() << "Set " << CathedralDoorOracleDirectoryVariable
+		             << " to run the opt-in native Cathedral delta-open oracle";
+	}
+
+	const std::filesystem::path outputPath(outputDirectory);
+	std::string outputError;
+	ASSERT_TRUE(ValidateCathedralDoorOracleOutputPath(outputPath, false, outputError)) << outputError;
+	CathedralDoorOracleScopeGuard nativeStateGuard;
+	std::string assetError;
+	auto assets = LoadCathedralDoorOracleAssets(assetError);
+	ASSERT_TRUE(assets.has_value()) << assetError;
+	const bool outputWasEmpty = std::filesystem::is_empty(outputPath);
+
+	CathedralDoorOracleCase captured;
+	CathedralDoorOracleCase repeated;
+	try {
+		captured = CaptureCathedralDoorOracleCase(
+			2, UINT32_C(743271966), ENTRY_MAIN, assets->megaTiles, true);
+		repeated = CaptureCathedralDoorOracleCase(
+			2, UINT32_C(743271966), ENTRY_MAIN, assets->megaTiles, true);
+	} catch (const std::exception &exception) {
+		FAIL() << "Native Cathedral delta-open capture failed: " << exception.what();
+	}
+	ASSERT_FALSE(captured.transitions.empty());
+	ASSERT_EQ(CathedralDoorOracleCaseFingerprint(captured), CathedralDoorOracleCaseFingerprint(repeated))
+		<< "Repeated native Cathedral delta-open capture changed.";
+	if (outputWasEmpty) {
+		ASSERT_TRUE(WriteCathedralOracleRawAsset(outputPath / "l1.til", assets->tilBytes.data(), assets->tilBytes.size()));
+		ASSERT_TRUE(WriteCathedralOracleRawAsset(outputPath / "l1.sol", assets->solBytes.data(), assets->solBytes.size()));
+		ASSERT_TRUE(WriteCathedralDoorOracleMetadata(outputPath / "door-oracle-format.json"));
+	}
+	ASSERT_TRUE(WriteCathedralDoorOracleCase(
+		outputPath / "cathedral-door-delta-depth-2-743271966-main.json", captured));
 }
 
 TEST(Drlg_l1, CreateL5Dungeon_reuses_successful_attempt_seed)

@@ -139,6 +139,73 @@ The following records describe implemented slices at this baseline. They are
 evidence, not a separate priority list; detailed older entries retain their
 original scope and may be superseded by later entries or the current assessment.
 
+### M2 private native Cathedral door characterization (2026-10-01)
+
+Two opt-in GTests use the real `AddL1Objs` scanner and public sync/delta door
+operations. The separate native-only corpus covers ordinary depths 1-4, seeds
+2588/743271966 and MAIN/PREV entry, plus depth-2/743271966 MAIN delta opening.
+It retains complete 112x112 closed piece/special/transparency/raw-SOL and derived
+collision/walk/item layers, native object fields, observed RNG, changed
+open/reclosed cells and layer hashes. TIL/SOL provenance is checked against the
+main original Diablo archive in the packed-MPQ path. The server and production
+runtime, protocol, content/profile identities and saves are unchanged.
+
+Source review caught an unsafe fixture-only pool setup before asset execution:
+`InitializeObjectPool()` alone leaves one-based free indices for the legacy
+allocator. The test now clears object storage, restores zero-based legacy indices,
+removes tile object references and resets lights before scans and on every scoped
+exit. Actual CLOSED/OPEN/CLOSED state, animation +2/-2 and native flags/selection
+checks reject suppressed/no-op operations. Both fixtures repeat their complete
+capture fingerprints before publication; close non-restoration is recorded,
+not repaired or universally rejected.
+
+The final source rebuild passes in `build/x64-Debug-authoritative-vcpkg` after
+matching x64 `cl.exe`, `rc.exe` and `mt.exe` checks. All 21 ordinary native
+Cathedral/Crypt tests pass without skips (1.068s); the four opt-in oracles are
+selected separately. Controlled original-archive capture passes the two new
+fixtures (14.189s and 1.010s), with all twenty mandatory artifacts retained
+privately at `%TEMP%/Godevilution-Cathedral-Door-Source-44f8dd2a4527462d8a032037ba8b230b`.
+Logs are `.local/m2-cathedral-door-native-final-build.log`,
+`.local/m2-cathedral-door-native-ordinary.log` and
+`.local/m2-cathedral-door-native-first-capture.log`.
+
+The sixteen ordinary cases contain 202 door observations; delta adds 17. Each
+observed transition changes two cells and restores the complete captured object
+and layer on close. Every case retains one baseline, so the non-restoring-close
+regeneration branch is not exercised by this corpus. TIL is 1648 bytes and raw
+SOL is 453 bytes. Scanner RNG includes L1 lights and changes during scanning;
+it is not production `InitObjects`/encounter RNG. Physical lighting/vision,
+occupied closes and interacting neighboring doors remain uncharacterized.
+Final `tools/test-cathedral-geometry.ps1 -CathedralDoors` acceptance passes four
+separate native fixture processes across two fresh captures (15.919s/1.034s and
+15.880s/1.014s). Every native exit is zero; both strict schemas pass, and all twenty
+artifact byte lengths/SHA-256 hashes match, also independently recomputed.
+Private evidence is `%TEMP%/Godevilution-Cathedral-Door-Oracle-4ca6b6da1a304c179cc7841937fcae48`;
+schema validation takes 7.308s/4.841s. The final launcher behavior/contract suite
+passes 29/29 without skips (33.851s). Typed integers/booleans, per-door transitions,
+baseline/cell/hash consistency, hidden/extra files, scope/report counts and full
+capture repeatability are guarded. Near-integer/tiny-fraction rejection fails
+before the numeric correction; final guards reject floating types before decimal
+conversion, with direct parsed-layer negatives that cannot be masked by later
+consistency checks. An initial synthetic-test ordered-map clone error was fixed
+before case validation; neither failure is a native application crash.
+Logs are `.local/m2-cathedral-door-wrapper-verified.log`,
+`.local/m2-cathedral-door-launcher-final.log` and
+`.local/m2-cathedral-door-fraction-before-fix.log`.
+
+Unchanged `-CathedralDepths` and zero-argument wrapper modes pass one native
+fixture plus 48/12 managed comparisons without skips; they retain 50/14 nonempty
+artifacts respectively. Private roots are
+`%TEMP%/Godevilution-Cathedral-Oracle-7a9cd41e3dc64a228dda50c7a4a9ca2b` and
+`%TEMP%/Godevilution-Cathedral-Oracle-d48190342ef84fe68719e7794a26a979`.
+Logs are `.local/m2-cathedral-door-legacy-depths.log` and
+`.local/m2-cathedral-door-legacy-l1.log`. Independent final source review approves
+the fixture, wrapper and unmasked guards. Rebuilt documentation consistency
+checks pass 4/4 without skips (401ms); the log is
+`.local/m2-cathedral-door-documentation-tests.log`. No managed door parity, topology
+explanation, population or M0/M2 exit is claimed; the overall estimate stays
+approximately 35%.
+
 ### M0 forward-only native gated command clock (2026-10-01)
 
 The native gated receive path now retains its elapsed-time anchor for snapshots
