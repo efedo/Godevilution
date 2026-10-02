@@ -2,6 +2,17 @@
 
 All notable changes to this fork are documented below.
 
+- 2026-10-01: Add complete-cohort recovery prerequisites: barrier-owned exact
+  runtime/command capture and fresh one-shot initialization, allocator cursor
+  restore, detached backing geometry/all-store restore, and a separately leased
+  canonical integrity checkpoint with atomic replacement and history/identity
+  fences. Preserve legacy APIs and save formats. Focused Engine/host/module
+  selections pass 138/48/96; full server passes 1,307 with three explicit
+  exclusions. Full Diablo retains four baseline Hork parity failures alongside
+  2,614 passes and 61 explicit exclusions; four documentation guards pass.
+  Resolve independent review findings and update existing contracts/plan/status;
+  full module/host integration and the multiplayer cold-resume defect remain open.
+
 - 2026-10-01: Add an isolated Sorcerer lifecycle preview and actual quest,
   charged-staff/Recharge/Firebolt, monster-caused player death, Town restart and
   exact dropped-staff fresh-host restore acceptance. Fix explicit spell selection retaining a

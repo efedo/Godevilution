@@ -62,12 +62,24 @@ The engine currently owns:
   reusable primitive and used directly by the server host while the host
   retains its source-compatible allocator facade;
 - serialized participant operations, exactly-once deterministic tick advancement,
-  module-supplied lifecycle hooks, and directed event routing.
+  module-supplied lifecycle hooks, directed event routing, and complete ordered
+  participant capture under the same runtime barrier.
 
 The first-party `Devilution.Diablo` module depends on this assembly and
 registers its store-rule and simulation-factory capabilities. The server host
 loads modules and consumes those capabilities; it must not add transport or
 Diablo-specific contracts to the engine registry.
+
+`AuthoritativeSimulationRuntime.CaptureCohort` captures the exact runtime clock
+and all existing session bindings without creating participants, advancing time
+or draining events. Module callbacks must detach their checkpoint data inside
+the barrier. `InitializeCohort` installs caller-created state and the exact clock
+once into a fresh, unexposed runtime; it prevalidates every binding without
+calling the lifecycle factory. It does not roll back mutable state in a live
+module. `DeterministicEntityIdAllocator.NextId` and `RestoreNextId` preserve
+allocation high-water marks, including zero exhaustion; modules must validate
+restored cursors against their complete identity graph. These primitives alone
+do not implement host checkpoint publication or multiplayer recovery.
 
 Hosts provide the trusted candidate set. `GameplayModuleRegistry.Inspect`
 returns the deterministic load order and actionable diagnostics for duplicate

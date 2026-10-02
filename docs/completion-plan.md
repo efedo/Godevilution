@@ -70,7 +70,7 @@ isolated spell or table rows while the playable route stays unchanged.
 
 | Gate | Deliverable | Dependencies | Current position |
 | --- | --- | --- | --- |
-| M0 | Reproducible launch and honest acceptance evidence | Existing implementation | Godot session/recovery passes; opt-in one/four-participant host and actual-client baselines recorded in status; native GUI and release-budget/platform gaps remain |
+| M0 | Reproducible launch and honest acceptance evidence | Existing implementation | Godot session/recovery passes; complete-cohort prerequisites exist but production multiplayer cold restore still overwrites shared state; native GUI and release-budget/platform gaps remain |
 | M1 | Usable Godot town-to-dungeon loop | M0 launch/acceptance harness | Authored combat/loot/equipment, NPC/service approach, purchased-scroll portal and isolated Sorcerer quest/cast/Recharge/death/restart/restore journeys pass; full loop remains |
 | M2 | Native-compatible generated world | M0 geometry/parity baseline | Ordinary Cathedral depths 1-4 coarse/fine oracle covers six seeds and MAIN/PREV; separate opt-in four-depth runtime/profile/v3 restore and ordinary-control traversal are integrated; native population, campaign mapping, wider topology and remaining families remain |
 | M3 | Complete base and Hellfire gameplay routes | M1 plus the relevant M2 world slices | Many rules exist; campaign and remaining behavioral coverage remain |
@@ -148,6 +148,17 @@ M4. M5 is the final removal gate, not a reason to postpone replacement work.
    before admission or advancement. Include stable owner identities and inactive
    modified stores; do not choose a participant by newest tick or join order.
    Preserve the existing complete-world ImportSessionState migration contract.
+   Generic runtime/command capture and fresh one-shot initialization, detached
+   backing geometry/all-store restore, and a separately leased canonical cohort
+   store are now implemented prerequisites, not production recovery. Next capture
+   the full module graph, exact allocator/portal clocks and same-tick markers;
+   restore all participants and stable owner bindings into a fresh candidate
+   before listening. Publish under the command barrier before exposing a Hello,
+   ACK, snapshot or reload; fence the entire host after post-mutation publication
+   failure, including advancement/admission and shutdown republishing. Verify
+   Immediate and gated recovery, both resume orders, failed publication and
+   cross-process lease ownership. Existing conflicting legacy multiplayer saves
+   must remain untouched pending an approved migration policy.
 2. Add an application-level acceptance path through the actual Godot scene and
    controls: launch, create a character, receive/render an authoritative world,
    submit movement, observe the acknowledged position, save, exit, and resume

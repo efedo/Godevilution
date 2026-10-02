@@ -45,6 +45,34 @@ It targets .NET 8 and depends on Protocol, Domain, Data, and Engine. It must not
 reference `Devilution.Diablo` or any other game module. The .NET 10 executable
 supplies concrete content, module candidates, and one compatible adapter.
 
+## Complete-cohort recovery prerequisites
+
+`AuthoritativeCommandServer.CaptureCohortState` detaches every existing ledger
+and its exact admission/receipt cursors under the command monitor.
+`InitializeCohortState` prevalidates the whole set before one-shot installation
+into a fresh server, without invoking gameplay. The legacy direct Immediate
+API can produce a future-applied receipt before advancing its admission clock;
+the command-only view preserves that intermediate state. Complete host
+publication must first settle the module/world boundary. The existing TCP
+Immediate path already advances to the greatest applied tick under the same
+monitor before persistence; gated publication occurs when work is due.
+
+The separate format-1 `AuthoritativeCohortStore` owns one canonical file and an
+exclusive lifetime save-root lease. Its integrity envelope fences host identity,
+complete roster bindings/ledgers, clocks, cursors and an opaque module payload.
+Publication requires the next generation, forward-only history and stable
+participants/receipts; zero exhaustion remains exact. Default identity changes
+reject. A trusted, explicitly fenced reload publication can change content,
+ruleset and module format only after matching the previous identity, while
+preserving module ID, protocol, mode and tick rate. Caller-owned module/owner
+validation is still required before publication.
+
+These APIs are not wired into production TCP recovery or adapter replacement
+yet. Legacy per-session formats/imports remain unchanged and must not be used
+as fallback for a corrupt canonical cohort. Whole-module capture/restore,
+pre-listen recovery, durable-before-exposure publication and whole-host failure
+fencing remain M0 work; the same-tick multiplayer overwrite remains open.
+
 ## Negotiated clock-gated scheduling
 
 The standalone host accepts `--command-scheduling immediate|clock-gated`.
@@ -53,8 +81,9 @@ existing direct API. Godot launchers explicitly select clock-gated timing in
 both single-player and multiplayer. The policy applies to the whole host, not
 individual participants. Clock-gated hosts require `ClientHello` capability
 support before loading receipts, restoring state or initializing a participant.
-The native synchronous client remains on the immediate path and is not enabled
-for deliberately delayed acknowledgements.
+The native paired launcher also selects clock-gated scheduling. The standalone
+CLI and default low-level native configuration retain Immediate compatibility;
+native GUI timing acceptance remains distinct from source and helper checks.
 
 Two loopback characterization cases demonstrate that the legacy immediate host
 can advance from physical tick 111 to a peer's requested tick 125, rejecting
@@ -90,9 +119,10 @@ Godot idle snapshot requests carry an optional timing correlation; the host
 replies only after the snapshot. This measures end-to-end state freshness, not
 pure network RTT. The client excludes deliberate command waits from its timing
 estimate and delays retry until remaining scheduled wait plus normal timeout.
-Retries retain their original payload/tick/sequence. Initial lead is based on
-100ms until a valid probe arrives; measured history cannot bound unseen latency
-spikes. Actual two-client restart acceptance remains distinct from these rules.
+Retries retain their original payload/tick/sequence. Godot requires a correlated,
+unexpired current-connection sample before its first realtime dispatch. Measured
+history cannot bound unseen latency spikes. Actual two-client restart acceptance
+remains distinct from these rules.
 
 ## Opt-in performance evidence
 

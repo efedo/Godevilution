@@ -10,8 +10,8 @@ using System.Globalization;
 /** Validated level geometry used by authoritative movement and transitions. */
 public sealed class AuthoritativeWorld
 {
-    private readonly Dictionary<uint, AuthoritativeLevel> levels = new();
-    private readonly Dictionary<uint, AuthoritativeWarpTarget> warpTargets = new();
+    private Dictionary<uint, AuthoritativeLevel> levels = new();
+    private Dictionary<uint, AuthoritativeWarpTarget> warpTargets = new();
 
     private static readonly IReadOnlyList<string> SymbolicProductionColumns = [
         "level_id",
@@ -104,7 +104,192 @@ public sealed class AuthoritativeWorld
         .OrderBy(target => target.WarpId)
         .ToArray();
 
+    /**
+     * Captures detached backing levels and warps in deterministic identity
+     * order. The caller owns synchronization; this method does not promise
+     * thread-safe multi-swap behavior.
+     */
+    public DiabloWorldGeometryState CaptureGeometryState()
+    {
+        return new DiabloWorldGeometryState(
+            levels.Values
+                .OrderBy(level => level.LevelId)
+                .Select(level => new DiabloWorldGeometryLevelState(
+                    level.LevelId,
+                    level.StableSymbol,
+                    level.Width,
+                    level.Height,
+                    level.BlockedCells.ToArray(),
+                    level.MissileBlockedCells.ToArray(),
+                    level.NativeTransparency.ToArray(),
+                    level.NativeObjectLayer.ToArray(),
+                    level.NativeMegaTileLayer.ToArray(),
+                    level.NativePieceLayer.ToArray(),
+                    level.NativePieceProperties
+                        .OrderBy(pair => pair.Key)
+                        .ToDictionary(pair => pair.Key, pair => pair.Value),
+                    level.NativePieceCollisionCells.ToArray(),
+                    level.NativeVisionBlockedCells.ToArray(),
+                    level.HasExplicitNativeVisionBlockedCells,
+                    level.NativePieceMissileBlockedCells.ToArray(),
+                    level.NativeMonsterLayer.ToArray(),
+                    level.IsDefaultStart,
+                    level.SuppressMultiplayerDeathDrops,
+                    level.StartPositionX,
+                    level.StartPositionY))
+                .ToArray(),
+            warpTargets.Values
+                .OrderBy(target => target.WarpId)
+                .Select(target => new DiabloWorldGeometryWarpState(
+                    target.WarpId,
+                    target.SourceLevelId,
+                    target.TriggerX,
+                    target.TriggerY,
+                    target.TargetLevelId,
+                    target.TargetX,
+                    target.TargetY,
+                    target.RequiredQuestId,
+                    target.RequiredQuestCompleted,
+                    target.TargetSetLevelId,
+                    target.TargetSetLevelActiveMap,
+                    target.TargetSetLevelSymbol,
+                    target.StableSymbol))
+                .ToArray());
+    }
+
+    /**
+     * Validates and restores complete backing geometry through a temporary
+     * world, swapping dictionaries only after every level and warp succeeds.
+     * The caller owns synchronization; this method does not promise thread-safe
+     * multi-swap behavior.
+     */
+    public void RestoreGeometryState(DiabloWorldGeometryState state)
+    {
+        ArgumentNullException.ThrowIfNull(state);
+        var savedLevels = RequireCollection(state.Levels, "levels");
+        var savedWarps = RequireCollection(state.WarpTargets, "warp targets");
+        var candidate = new AuthoritativeWorld();
+
+        foreach (var savedLevel in savedLevels) {
+            if (savedLevel is null)
+                throw new InvalidDataException("The geometry checkpoint contains a null level.");
+            var blockedCells = RequireCollection(
+                savedLevel.BlockedCells,
+                $"level {savedLevel.LevelId} blocked cells");
+            var missileBlockedCells = RequireCollection(
+                savedLevel.MissileBlockedCells,
+                $"level {savedLevel.LevelId} missile-blocked cells");
+            var nativeTransparency = RequireCollection(
+                savedLevel.NativeTransparency,
+                $"level {savedLevel.LevelId} transparency");
+            var nativeObjectLayer = RequireCollection(
+                savedLevel.NativeObjectLayer,
+                $"level {savedLevel.LevelId} object layer");
+            var nativeMegaTileLayer = RequireCollection(
+                savedLevel.NativeMegaTileLayer,
+                $"level {savedLevel.LevelId} mega-tile layer");
+            var nativePieceLayer = RequireCollection(
+                savedLevel.NativePieceLayer,
+                $"level {savedLevel.LevelId} piece layer");
+            var nativePieceProperties = RequireMap(
+                savedLevel.NativePieceProperties,
+                $"level {savedLevel.LevelId} piece properties");
+            var nativePieceCollisionCells = RequireCollection(
+                savedLevel.NativePieceCollisionCells,
+                $"level {savedLevel.LevelId} piece collision cells");
+            var nativeVisionBlockedCells = RequireCollection(
+                savedLevel.NativeVisionBlockedCells,
+                $"level {savedLevel.LevelId} vision cells");
+            var nativePieceMissileBlockedCells = RequireCollection(
+                savedLevel.NativePieceMissileBlockedCells,
+                $"level {savedLevel.LevelId} piece missile cells");
+            var nativeMonsterLayer = RequireCollection(
+                savedLevel.NativeMonsterLayer,
+                $"level {savedLevel.LevelId} monster layer");
+
+            var restoredLevel = new AuthoritativeLevel(
+                savedLevel.LevelId,
+                savedLevel.Width,
+                savedLevel.Height,
+                blockedCells,
+                missileBlockedCells,
+                savedLevel.IsDefaultStart,
+                savedLevel.SuppressMultiplayerDeathDrops,
+                nativeTransparency,
+                nativeObjectLayer,
+                nativeMegaTileLayer,
+                nativePieceLayer,
+                nativePieceProperties,
+                nativePieceCollisionCells,
+                nativePieceMissileBlockedCells,
+                nativeMonsterLayer,
+                savedLevel.StartPositionX,
+                savedLevel.StartPositionY,
+                savedLevel.HasExplicitNativeVisionBlockedCells
+                    ? nativeVisionBlockedCells
+                    : null) {
+                StableSymbol = savedLevel.StableSymbol,
+            };
+            if (restoredLevel.HasExplicitNativeVisionBlockedCells
+                    != savedLevel.HasExplicitNativeVisionBlockedCells
+                || !restoredLevel.NativeVisionBlockedCells.SequenceEqual(nativeVisionBlockedCells)) {
+                throw new InvalidDataException(
+                    $"Level {savedLevel.LevelId} does not preserve its native vision geometry.");
+            }
+            candidate.AddLevel(restoredLevel);
+        }
+
+        foreach (var savedWarp in savedWarps) {
+            if (savedWarp is null)
+                throw new InvalidDataException("The geometry checkpoint contains a null warp.");
+            var restoredWarp = new AuthoritativeWarpTarget(
+                savedWarp.WarpId,
+                savedWarp.SourceLevelId,
+                savedWarp.TriggerX,
+                savedWarp.TriggerY,
+                savedWarp.TargetLevelId,
+                savedWarp.TargetX,
+                savedWarp.TargetY,
+                savedWarp.RequiredQuestId,
+                savedWarp.RequiredQuestCompleted,
+                savedWarp.TargetSetLevelId,
+                savedWarp.TargetSetLevelActiveMap) {
+                TargetSetLevelSymbol = savedWarp.TargetSetLevelSymbol,
+                StableSymbol = savedWarp.StableSymbol,
+            };
+            // ReplaceLevel historically permits a registered warp endpoint to
+            // become blocked. Preserve that legal backing state during restore;
+            // new public registrations remain walkability-gated below.
+            candidate.AddWarpTargetCore(restoredWarp, requireWalkableEndpoints: false);
+        }
+
+        levels = candidate.levels;
+        warpTargets = candidate.warpTargets;
+    }
+
+    private static IReadOnlyList<T> RequireCollection<T>(
+        IReadOnlyList<T>? values,
+        string description)
+    {
+        return values ?? throw new InvalidDataException(
+            $"The geometry checkpoint contains null {description}.");
+    }
+
+    private static IReadOnlyDictionary<TKey, TValue> RequireMap<TKey, TValue>(
+        IReadOnlyDictionary<TKey, TValue>? values,
+        string description)
+        where TKey : notnull
+    {
+        return values ?? throw new InvalidDataException(
+            $"The geometry checkpoint contains null {description}.");
+    }
+
     public void AddWarpTarget(AuthoritativeWarpTarget target)
+        => AddWarpTargetCore(target, requireWalkableEndpoints: true);
+
+    private void AddWarpTargetCore(
+        AuthoritativeWarpTarget target,
+        bool requireWalkableEndpoints)
     {
         ArgumentNullException.ThrowIfNull(target);
         if (!levels.ContainsKey(target.SourceLevelId)
@@ -117,8 +302,9 @@ public sealed class AuthoritativeWorld
             throw new InvalidDataException(
                 $"Warp {target.WarpId} contains a position outside its level.");
         }
-        if (!IsWalkable(target.SourceLevelId, target.TriggerX, target.TriggerY)
-            || !IsWalkable(target.TargetLevelId, target.TargetX, target.TargetY)) {
+        if (requireWalkableEndpoints
+            && (!IsWalkable(target.SourceLevelId, target.TriggerX, target.TriggerY)
+                || !IsWalkable(target.TargetLevelId, target.TargetX, target.TargetY))) {
             throw new InvalidDataException(
                 $"Warp {target.WarpId} contains a blocked endpoint.");
         }

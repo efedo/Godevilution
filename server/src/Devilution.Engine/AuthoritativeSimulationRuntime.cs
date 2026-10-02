@@ -41,6 +41,7 @@ public sealed class AuthoritativeSimulationRuntime<TState, TEvent>
     private readonly IAuthoritativeSimulationLifecycle<TState, TEvent> lifecycle;
     private readonly SimulationSessionCoordinator<TState, TEvent> sessions;
     private ulong lastAdvancedTick;
+    private bool cohortInitialized;
 
     public AuthoritativeSimulationRuntime(
         IAuthoritativeSimulationLifecycle<TState, TEvent> lifecycle)
@@ -69,6 +70,41 @@ public sealed class AuthoritativeSimulationRuntime<TState, TEvent>
         lock (synchronization) {
             lastAdvancedTick = Math.Max(lastAdvancedTick, tick);
             sessions.ClearEvents();
+        }
+    }
+
+    /**
+     * Captures the exact clock and all existing participants in ordinal session
+     * order under one barrier, without creation, advancement or event delivery.
+     * The callback must detach its payload before returning: module states are
+     * mutable and must not escape the barrier as a purported immutable checkpoint.
+     */
+    public TResult CaptureCohort<TResult>(
+        Func<ulong, IReadOnlyList<SimulationSession<TState>>, TResult> capture)
+    {
+        ArgumentNullException.ThrowIfNull(capture);
+        lock (synchronization)
+            return capture(lastAdvancedTick, sessions.GetOrderedSessions());
+    }
+
+    /**
+     * Installs a prevalidated module cohort in a fresh, unexposed runtime without
+     * invoking lifecycle hooks. Invalid bindings leave the roster and clock
+     * untouched. This is one-shot even for an empty cohort at tick zero; it is
+     * not a rollback mechanism for a live module's shared mutable state.
+     */
+    public void InitializeCohort(
+        ulong tick,
+        IReadOnlyList<SimulationSession<TState>> participants)
+    {
+        ArgumentNullException.ThrowIfNull(participants);
+        lock (synchronization) {
+            if (cohortInitialized || sessions.Count != 0 || lastAdvancedTick != 0)
+                throw new InvalidOperationException(
+                    "Cohort initialization requires a fresh, empty runtime.");
+            sessions.AddRange(participants);
+            lastAdvancedTick = tick;
+            cohortInitialized = true;
         }
     }
 

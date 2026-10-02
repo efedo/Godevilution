@@ -63,6 +63,17 @@ Diablo adapter bridges this module to those representations behind the generic
 `IAuthoritativeGameHostAdapter`; the executable composition root does not
 reference Diablo types.
 
+`AuthoritativeWorld.CaptureGeometryState` captures detached backing levels and
+warps, including native layers and explicit-versus-derived vision. Restore
+prevalidates a temporary world before replacing its backing dictionaries. It
+preserves registered routes made temporarily blocked by `ReplaceLevel`; new
+public warp registrations retain their existing walkability checks.
+`StoreCatalog.CaptureAll`/`RestoreAll` cover every registered store, including
+closed or empty stock, with exact content-owned identities/roles and detached
+item state. Both helpers require the caller's simulation barrier. They are
+complete-cohort prerequisites, not a complete module checkpoint or a production
+multiplayer recovery fix; legacy snapshot/import behavior remains unchanged.
+
 When validated towner greetings are supplied, native-role store entry and
 Gillian's stash require the declared NPC level, Chebyshev distance at most one,
 and no held item. Reserved Adria/Cain IDs retain their town-only guard. Rejected
@@ -82,10 +93,12 @@ one-based coarse IDs through validated external TIL/SOL catalogs into native
 Cathedral SOL corrections. Its immutable result retains the separate 40x40
 coarse/seed/stair output and fine level rather than changing generic DUN or wire
 geometry contracts. No MPQs are read by this module. The separate opt-in native
-oracle now matches full fine layers and named SOL flags for two original-Diablo
-seeds with MAIN/PREV entry. Its temporary raw-SOL normalization is test-only;
-strict production loading, broader seed coverage, runtime integration and population
-remain separate. Exact shared vision parity is not claimed: the existing level
+oracle now matches full coarse/fine layers and named SOL flags for ordinary
+depths 1-4, six seeds and MAIN/PREV entry. Its temporary raw-SOL normalization is
+test-only. A separate opt-in four-depth runtime and private playtest profile
+support traversal/restore; native population, campaign mapping, broader topology
+and remaining families are still separate gaps. Exact shared vision parity is
+not claimed: the existing level
 contract conservatively includes movement blockers in vision blockers. See
 `docs/ai/msvc-build.md` for the isolated local-asset comparison.
 

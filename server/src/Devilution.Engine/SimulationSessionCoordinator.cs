@@ -64,6 +64,32 @@ public sealed class SimulationSessionCoordinator<TState, TEvent>
         return true;
     }
 
+    /**
+     * Validates the entire binding set before registering any caller-created
+     * state. Validation never invokes the fallback state factory and compares
+     * state ownership by reference, not module-defined value equality.
+     */
+    public void AddRange(IEnumerable<SimulationSession<TState>> participants)
+    {
+        ArgumentNullException.ThrowIfNull(participants);
+        var entries = participants.ToArray();
+        var candidateIds = new HashSet<string>(StringComparer.Ordinal);
+        var candidateStates = new HashSet<TState>(ReferenceEqualityComparer.Instance);
+        foreach (var entry in entries) {
+            ArgumentNullException.ThrowIfNull(entry);
+            ValidateSessionId(entry.Id);
+            ArgumentNullException.ThrowIfNull(entry.State);
+            if (states.ContainsKey(entry.Id) || !candidateIds.Add(entry.Id))
+                throw new InvalidOperationException(
+                    $"Session '{entry.Id}' already owns simulation state.");
+            if (sessionIds.ContainsKey(entry.State) || !candidateStates.Add(entry.State))
+                throw new InvalidOperationException(
+                    "The simulation state is already owned by another session.");
+        }
+        foreach (var entry in entries)
+            Add(entry.Id, entry.State);
+    }
+
     /** Finds state without implicitly creating a participant. */
     public bool TryGet(string sessionId, out TState? state)
     {

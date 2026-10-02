@@ -12,6 +12,16 @@ public class DeterministicEntityIdAllocator
         nextId = firstId;
     }
 
+    /** Exact allocation cursor, including zero for an exhausted identity space. */
+    public uint NextId => nextId;
+
+    /**
+     * Restores a cursor supplied by a validated complete checkpoint. The module
+     * must validate it against the full identity history before candidate
+     * publication; scanning only active identities cannot recover this cursor.
+     */
+    public void RestoreNextId(uint nextId) => this.nextId = nextId;
+
     public uint Allocate()
     {
         if (nextId == 0)

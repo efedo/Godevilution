@@ -13,12 +13,13 @@ namespace Devilution.Server.Commands;
 public sealed class AuthoritativeCommandServer
 {
     private readonly object synchronization = new();
-    private readonly Dictionary<string, Dictionary<ulong, CommandResult>> completedCommandsBySession = new(StringComparer.Ordinal);
-    private readonly HashSet<ulong> allocatedReceiptSequences = [];
+    private Dictionary<string, Dictionary<ulong, CommandResult>> completedCommandsBySession = new(StringComparer.Ordinal);
+    private HashSet<ulong> allocatedReceiptSequences = [];
     private readonly CommandAdmissionPolicy admissionPolicy;
     private readonly IAuthoritativeCommandExecutor executor;
     private ulong nextServerReceiptSequence = 1;
     private ulong currentTick;
+    private bool cohortInitialized;
 
     public AuthoritativeCommandServer(IAuthoritativeCommandExecutor executor, CommandAdmissionPolicy? admissionPolicy = null)
     {
@@ -144,6 +145,76 @@ public sealed class AuthoritativeCommandServer
                     entry => entry.Key,
                     entry => entry.Value.Clone())
                 : new Dictionary<ulong, CommandResult>();
+        }
+    }
+
+    /**
+     * Captures every existing completed ledger and the exact admission/receipt
+     * cursors under the command monitor, without advancing or creating sessions.
+     * Results are detached protobuf clones, not references to the live ledgers.
+     */
+    public AuthoritativeCommandCohortState CaptureCohortState()
+    {
+        lock (synchronization) {
+            return new AuthoritativeCommandCohortState(
+                currentTick,
+                nextServerReceiptSequence,
+                completedCommandsBySession
+                    .OrderBy(session => session.Key, StringComparer.Ordinal)
+                    .Select(session => new AuthoritativeSessionCommandLedger(
+                        session.Key,
+                        session.Value.OrderBy(command => command.Key)
+                            .Select(command => command.Value.Clone()).ToArray()))
+                    .ToArray());
+        }
+    }
+
+    /**
+     * Installs one fully validated ledger cohort into a fresh, unexposed command
+     * server without calling the executor. Validate all sessions and global
+     * receipt uniqueness before committing; legacy per-session import remains
+     * unchanged. The direct Immediate API can retain a receipt applied ahead
+     * of its admission clock. Preserve that intermediate state here; a complete
+     * host checkpoint separately requires a settled module/world boundary.
+     */
+    public void InitializeCohortState(AuthoritativeCommandCohortState state)
+    {
+        ArgumentNullException.ThrowIfNull(state);
+        lock (synchronization) {
+            if (cohortInitialized || currentTick != 0 || nextServerReceiptSequence != 1
+                || completedCommandsBySession.Count != 0 || allocatedReceiptSequences.Count != 0)
+                throw new InvalidOperationException(
+                    "Command cohort initialization requires a fresh, empty command server.");
+            if (state.Sessions is null)
+                throw new InvalidDataException("The command cohort has no session collection.");
+
+            var candidateLedgers = new Dictionary<string, Dictionary<ulong, CommandResult>>(StringComparer.Ordinal);
+            var candidateReceipts = new HashSet<ulong>();
+            foreach (var session in state.Sessions.ToArray()) {
+                if (session is null || string.IsNullOrWhiteSpace(session.SessionId)
+                    || session.CommandResults is null || candidateLedgers.ContainsKey(session.SessionId))
+                    throw new InvalidDataException("The command cohort contains an invalid or duplicate session.");
+                var commands = new Dictionary<ulong, CommandResult>();
+                foreach (var source in session.CommandResults.ToArray()) {
+                    if (source is null)
+                        throw new InvalidDataException("The command cohort contains a null command receipt.");
+                    var result = source.Clone();
+                    if (result.ClientSequence == 0 || result.ServerReceiptSequence == 0
+                        || !Enum.IsDefined(result.Status) || !Enum.IsDefined(result.RejectReason)
+                        || state.NextServerReceiptSequence != 0
+                            && result.ServerReceiptSequence >= state.NextServerReceiptSequence
+                        || !commands.TryAdd(result.ClientSequence, result)
+                        || !candidateReceipts.Add(result.ServerReceiptSequence))
+                        throw new InvalidDataException("The command cohort contains an invalid or duplicate command receipt.");
+                }
+                candidateLedgers.Add(session.SessionId, commands);
+            }
+
+            completedCommandsBySession = candidateLedgers;
+            allocatedReceiptSequences = candidateReceipts;
+            currentTick = state.CurrentTick;
+            nextServerReceiptSequence = state.NextServerReceiptSequence;
+            cohortInitialized = true;
         }
     }
 

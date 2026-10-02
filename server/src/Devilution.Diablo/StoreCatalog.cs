@@ -335,6 +335,84 @@ public sealed class StoreCatalog
         return stock.Values.OrderBy(item => item.StoreSlot).ToArray();
     }
 
+    /** Captures detached remaining stock and roles for every registered store. */
+    public IReadOnlyList<DiabloStoreCatalogState> CaptureAll()
+    {
+        return stores
+            .OrderBy(pair => pair.Key)
+            .Select(pair => new DiabloStoreCatalogState(
+                pair.Key,
+                roles[pair.Key],
+                pair.Value.Values
+                    .OrderBy(item => item.StoreSlot)
+                    .Select(CloneStoreItem)
+                    .ToArray()))
+            .ToArray();
+    }
+
+    /**
+     * Restores all registered stock atomically after validating the complete
+     * store identity and role set. Store registration and roles remain owned
+     * by the active content catalog.
+     */
+    public void RestoreAll(IReadOnlyList<DiabloStoreCatalogState> states)
+    {
+        ArgumentNullException.ThrowIfNull(states);
+        if (states.Count != stores.Count)
+            throw new InvalidDataException(
+                "The store catalog checkpoint does not contain the exact registered store set.");
+
+        var seenStoreIds = new HashSet<uint>();
+        var restoredStocks = new Dictionary<uint, Dictionary<uint, StoreItem>>();
+        foreach (var state in states) {
+            if (state is null)
+                throw new InvalidDataException("The store catalog checkpoint contains a null store.");
+            if (!seenStoreIds.Add(state.StoreId))
+                throw new InvalidDataException(
+                    $"The store catalog checkpoint contains duplicate store {state.StoreId}.");
+            if (!stores.ContainsKey(state.StoreId))
+                throw new InvalidDataException(
+                    $"The store catalog checkpoint references unregistered store {state.StoreId}.");
+            if (!Enum.IsDefined(state.Role))
+                throw new InvalidDataException(
+                    $"The store catalog checkpoint contains an invalid role for store {state.StoreId}.");
+            if (roles[state.StoreId] != state.Role)
+                throw new InvalidDataException(
+                    $"The store catalog checkpoint role does not match store {state.StoreId}.");
+            if (state.Items is null)
+                throw new InvalidDataException(
+                    $"The store catalog checkpoint contains null stock for store {state.StoreId}.");
+
+            var stock = new Dictionary<uint, StoreItem>();
+            foreach (var item in state.Items) {
+                if (item is null || item.State is null)
+                    throw new InvalidDataException(
+                        $"The store catalog checkpoint contains a null item in store {state.StoreId}.");
+                if (!stock.TryAdd(item.StoreSlot, CloneStoreItem(item)))
+                    throw new InvalidDataException(
+                        $"The store catalog checkpoint contains duplicate slot {item.StoreSlot} in store {state.StoreId}.");
+            }
+            restoredStocks.Add(state.StoreId, stock);
+        }
+
+        if (seenStoreIds.Count != stores.Count
+            || stores.Keys.Any(storeId => !seenStoreIds.Contains(storeId))) {
+            throw new InvalidDataException(
+                "The store catalog checkpoint does not contain the exact registered store set.");
+        }
+
+        foreach (var (storeId, stock) in restoredStocks)
+            stores[storeId] = stock;
+    }
+
+    private static StoreItem CloneStoreItem(StoreItem item)
+    {
+        ArgumentNullException.ThrowIfNull(item);
+        if (item.State is null)
+            throw new InvalidDataException("A store item must contain item state.");
+        return item with { State = item.State with { } };
+    }
+
     private static AuthoritativeItemState ParseItemState(
         TsvRow row,
         AuthoritativeItemCatalog? itemCatalog,

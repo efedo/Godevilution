@@ -22,7 +22,7 @@ of elapsed/remaining time. Recalibrate at demonstrated delivery gates.
 | Engine/data/game-module separation | 90% | Separate assemblies and dependency-boundary tests exist; retain neutrality as remaining gameplay is integrated |
 | Shared single-player/multiplayer protocol | 85% | Common protocol, sessions, retry, reconnect, snapshots, and live tests; broader production-client soaks remain |
 | Authoritative gameplay coverage | 65% | Implemented gameplay is server-owned; full native world, AI, quest, and campaign behavior remains incomplete |
-| Persistence infrastructure | 85% | Versioned saves, integrity, per-session combined checkpoints and focused restart/replacement recovery; cold participant imports can overwrite shared world/RNG, and atomic complete-cohort restore remains unimplemented |
+| Persistence infrastructure | 85% | Versioned saves, integrity, per-session checkpoints and new complete-cohort prerequisites; production cold participant imports still overwrite shared world/RNG, and complete module/host recovery remains unimplemented |
 | External content architecture and coverage | 70% | Validated packs and overlays exist; native map synthesis, world behavior, and remaining content parity are incomplete |
 | Server MPQ independence | Achieved | The current server consumes external packs and has no MPQ runtime requirement; preserve this invariant |
 | Deterministic native parity | 45% | Extensive focused replay/native characterization; whole-game equivalence and several multi-actor projection cases remain unproven |
@@ -138,6 +138,79 @@ open. Their scope, dependencies, and exit checks are defined only in the
 The following records describe implemented slices at this baseline. They are
 evidence, not a separate priority list; detailed older entries retain their
 original scope and may be superseded by later entries or the current assessment.
+
+### M0 complete-cohort recovery prerequisites (2026-10-01)
+
+The generic runtime now captures exact clock/ordered participant bindings under
+one barrier and prevalidates one-shot installation into a fresh runtime, without
+creation, advancement or event delivery. Entity allocation exposes its exact
+cursor, including holes and zero exhaustion. Command capture/initialization
+detaches all existing ledgers and exact admission/receipt cursors; it preserves
+the legacy direct API's legitimate future-applied intermediate receipts.
+Complete host publication separately requires a settled world/receipt boundary.
+
+Diablo's new backing-geometry and all-store helpers capture native layers,
+explicit/derived vision, warp metadata and every registered store, including
+closed/empty stock. Restore validates temporary candidates under a caller-owned
+barrier. Registered routes blocked later by legal `ReplaceLevel` calls round-trip;
+new public warp registration retains its existing walkability requirements.
+
+The separate format-1 `AuthoritativeCohortStore` holds an exclusive OS lifetime
+lease and atomically replaces one canonical integrity-protected checkpoint.
+Exact generations, forward-only clocks/cursors, stable roster/entity bindings
+and immutable completed receipts are validated before publication. Explicit
+expected-old identity fencing permits trusted content/ruleset/module-format
+transitions; other host identity fields cannot change. Strict JSON/UTF-8,
+malformed signed payloads, lower surviving maxima/exhaustion, directory
+collisions and failed Windows file replacement have rejection/preservation tests.
+Only same-process lease contention/reacquisition is tested here; production
+cross-process lifetime/recovery acceptance remains open.
+
+Fresh Release verification for this package, based on `15524502a`:
+
+- Engine: 138 passed, no failures/skips (`.local/m0-cohort-engine-current-suite.log`).
+- Command/canonical cohort: 48 passed, no failures/skips
+  (`.local/m0-cohort-server-final-focused.log`).
+- Full server: 1,307 passed, no failures, three explicit exclusions: the two
+  known-gap cold-participant cases and one local-asset activation case
+  (`.local/m0-cohort-server-current-suite.log`).
+- Geometry/all-store plus affected legacy module selection: 96 passed, no
+  failures/skips (`.local/m0-cohort-diablo-final-focused.log`).
+- Full Diablo: 2,614 passed, four failures, 61 explicit optional native/private
+  exclusions (`.local/m0-cohort-diablo-final-suite.log`). The four failures are
+  the previously baseline-confirmed Hork RNG cases recorded below; they remain
+  open parity findings, not exclusions or newly blessed expectations.
+- Existing documentation consistency checks: four passed, no failures/skips
+  (`.local/m0-cohort-documentation-final.log`).
+
+Independent review approves the source and documentation as prerequisites only.
+The stable-owner-binding negative now uses an otherwise valid forward cursor,
+asserts the intended binding guard and preserves exact committed bytes.
+
+The server commands invoke the rebuilt Release `Devilution.Server.Tests.exe`
+with `--no-ansi`; focused selection uses `--filter-class` for
+`Devilution.Server.Tests.AuthoritativeCommandCohortTests` and
+`Devilution.Server.Tests.AuthoritativeCohortStoreTests`. The full server run uses
+normal Windows execution context for harmless subprocess/loopback tests. Engine
+and full Diablo use `dotnet run --project` with
+`server/tests/Devilution.Engine.Tests/Devilution.Engine.Tests.csproj` and
+`server/tests/Devilution.Diablo.Tests/Devilution.Diablo.Tests.csproj`, respectively,
+plus `--configuration Release --no-restore -- --no-ansi`. The focused Diablo
+selection adds `--filter-class` for `StoreCatalogCohortTests`,
+`WorldGeometryCohortTests`, `AuthoritativeWorldTests`,
+`AuthoritativeNativeVisionBlockerTests` and `StoreCatalogTests`, all in
+`Devilution.Diablo.Tests`. Cached NuGet audit-feed NU1900 warnings remain. Initial
+new-test
+malformed-receipt/geometry-index mistakes were corrected before these final runs.
+
+These APIs are not wired into production TCP startup, adapter replacement or
+checkpoint publication. Complete module state, owner-graph validation, stable
+bindings before admission, durable-before-exposure publication and whole-host
+failure fencing remain required. Legacy save formats and complete-world imports
+are unchanged; no existing multiplayer saves are merged or migrated. The two
+real-TCP same-tick cold-resume invariant failures remain open. No native/Godot
+application was launched for this helper-only batch. M0 and the approximately
+35% overall estimate remain unchanged; the active plan owns the integration order.
 
 ### M1 isolated Sorcerer lifecycle and input selection (2026-10-01)
 
