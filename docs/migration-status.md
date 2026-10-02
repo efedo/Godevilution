@@ -1,7 +1,7 @@
 # Godevilution Migration Status
 
-Status date: 2026-10-02. Estimate baseline: `8c03b365d`; complete-host integration
-follows module-recovery baseline `70f030f39` and is recorded below. M0 session reliability
+Status date: 2026-10-02. Estimate baseline: `8c03b365d`; isolated Godot cohort
+acceptance follows complete-host baseline `915a4f0b9` and is recorded below. M0 session reliability
 landed in `819b73936`, integration remediation in `818f63f32`, and application
 recovery in `cabc9b3fb`. The Flash replay correction landed in `3b90b6be5` and
 isolated native launch support in `c063dcd24`; newer host/timing evidence is below.
@@ -25,7 +25,7 @@ of elapsed/remaining time. Recalibrate at demonstrated delivery gates.
 | Engine/data/game-module separation | 90% | Separate assemblies and dependency-boundary tests exist; retain neutrality as remaining gameplay is integrated |
 | Shared single-player/multiplayer protocol | 85% | Common protocol, sessions, retry, reconnect, snapshots, and live tests; broader production-client soaks remain |
 | Authoritative gameplay coverage | 65% | Implemented gameplay is server-owned; full native world, AI, quest, and campaign behavior remains incomplete |
-| Persistence infrastructure | 85% | Explicit complete-host cohort mode passes both TCP resume orders under Immediate/gated timing; broader fault/reload/lease/CLI/Godot acceptance and normal-launch adoption remain; legacy cold participant imports still overwrite shared world/RNG |
+| Persistence infrastructure | 85% | Explicit cohort mode passes both TCP resume orders and isolated Godot create/resume/outage plus headless/rendered two-client resume; staged-write/first-publication recovery, broader operator/fault/platform acceptance and normal-launch adoption remain; legacy cold participant imports still overwrite shared world/RNG |
 | External content architecture and coverage | 70% | Validated packs and overlays exist; native map synthesis, world behavior, and remaining content parity are incomplete |
 | Server MPQ independence | Achieved | The current server consumes external packs and has no MPQ runtime requirement; preserve this invariant |
 | Deterministic native parity | 45% | Extensive focused replay/native characterization; whole-game equivalence and several multi-actor projection cases remain unproven |
@@ -141,6 +141,79 @@ open. Their scope, dependencies, and exit checks are defined only in the
 The following records describe implemented slices at this baseline. They are
 evidence, not a separate priority list; detailed older entries retain their
 original scope and may be superseded by later entries or the current assessment.
+
+### M0 isolated Godot complete-cohort acceptance (2026-10-02)
+
+The inner launcher and actual-scene driver accept explicit `-PersistenceMode cohort`
+only with an isolated/dedicated session root. Normal zero-argument launchers remain
+legacy; no user profiles or conflicting saves were migrated. Process evidence
+records the CLI's actual persistence label, fresh phase hosts/clients and the same
+recovery client across host replacement. Cohort acceptance checks canonical bytes,
+integrity/identity, strict counters, complete bookmark-to-entity bindings and absence
+of legacy session files. Multiplayer requires stable local/peer IDs after reversed
+admission; the legacy path retains its existing allocation behavior.
+
+Actual Windows acceptance exposed a publication failure after successful creation
+and resume: canonical missing, with the old generation under `~RF...TMP` and the
+next generation in a staged file. This is consistent with interrupted Windows
+[ReplaceFile](https://learn.microsoft.com/en-us/windows/win32/api/winbase/nf-winbase-replacefilew),
+not proof of the exact native instruction. Retain `.local/m0-godot-cohort-single-scene.log`
+and its private root ending `b1d48b691f5148aca89afbc13a519dc7`; do not promote residues.
+Fully flushed same-directory publication now uses Windows handle-based POSIX rename
+(replacement only, no readonly bypass), with raw WCHAR paths and fail-closed errors;
+non-Windows retains overwrite rename. Independent readers validate complete bytes
+outside the store lock. Staged files inherit root metadata rather than merging
+target-specific ACLs/streams/creation metadata. Private-root policy must be agreed
+before normal-launch adoption. No first-publication/orphan-temp or power-loss
+recovery, unsupported filesystem or broader platform pass is claimed.
+
+Fresh final-source evidence uses Debug, .NET 10.0.11 and Windows PowerShell 5.1.
+Server tests are rebuilt with `dotnet build --no-restore -m:1`; executable runners
+use `--no-ansi --no-progress`, with focused class filters for
+`AuthoritativeCohortStoreTests`, `CohortLauncherBehaviorTests` and `LocalLauncherContractTests`.
+Scene commands are `powershell -File tools/test-godot-session.ps1` with the explicit
+installed Godot 4.7.2 Mono executable, adding the options below. All stage records
+retain source `Godot.NET.Sdk/4.7.1`; only disposable imports use 4.7.2.
+
+- Focused store/launcher: 49 passed, no failures/skips, 16.248s
+  (`.local/m0-godot-cohort-final-focused.log`). Harmless fixture children exercise
+  bounded timeout/exit joining; no intentional Godot crash is used.
+- Existing documentation guards: four passed, no failures/skips, 380ms
+  (`.local/m0-godot-cohort-documentation.log`, Release .NET 8.0.30).
+- Full server repeat: 1,424 passed, no failures, three existing explicit exclusions,
+  38.894s (`.local/m0-godot-cohort-final-suite-repeat.log`). The first final-source
+  run retains 1,423 passes, one concurrent-initialization null-envelope failure
+  after five seconds and the same exclusions (`.local/m0-godot-cohort-final-suite.log`).
+  That unchanged case passes in isolation (409ms,
+  `.local/m0-godot-cohort-concurrent-connection-isolated.log`); this does not explain
+  or resolve the full-run failure. Exclusions remain two legacy overwrite
+  counterexamples and one local-asset case. Existing NU1900 audit-feed warnings remain.
+- `-PersistenceMode cohort`: actual create/move, exact fresh-host resume and
+  surviving-client outage/frozen-input/reconnect/next-command pass
+  (`.local/m0-godot-cohort-single-scene-final.log`, private root ending
+  `999c836404844196b7f0e2c0e5241ca0`).
+- `-PersistenceMode cohort -Multiplayer`, with and without `-Visible`: both clients
+  pass mutual movement visibility and reverse-order fresh-host resume with stable
+  entity/peer IDs 2/3. Four viewport captures show both player stand-ins and connected
+  HUDs. Logs are `.local/m0-godot-cohort-multiplayer-scene.log` and
+  `.local/m0-godot-cohort-multiplayer-visible.log`; private roots end
+  `5557301549c84b3492cd6c3ff73f50b6` and `663ef9894b38448ca2ea76831d516c37`.
+- Default legacy create/resume/outage also passes
+  (`.local/m0-godot-cohort-legacy-scene.log`, root ending
+  `b361bac7fef7462da716d7f84be5a5c5`). Cohort runs retain 25 clean engine exits and
+  legacy nine: 34 total, no stage errors or remaining Godot/server/WerFault process.
+  Final single-player and headless multiplayer roots also retain interrupted staged
+  files alongside valid canonical checkpoints; nothing was removed or promoted.
+  Startup ignores these residues only when the canonical validates; a missing
+  canonical still fails closed. A further restart of these final roots was not run.
+
+Initial fixture/harness failures and the unsuccessful ordinary Windows overwrite
+rename are retained in `.local/m0-godot-cohort-launcher-focused.log` and
+`.local/m0-godot-cohort-publication-focused.log`; neither is passing evidence.
+Independent review approves the bounded source change. These town/session checks
+do not establish cooperative combat, multiplayer host-loss, campaign, native GUI,
+release budgets/platforms or M0 closure. Normal legacy persistence remains vulnerable
+to shared-world cold participant overwrite. The overall estimate remains 35%.
 
 ### M0 complete-host cohort integration (2026-10-02)
 
@@ -7165,7 +7238,7 @@ when omitted, the active content pack's validated default level remains in use.
 | Deterministic replay | Shared C++/C# gate hashing complete multiplayer participant state, with server-owned corpse tiles, native per-tick monster regeneration, refreshed ordinary-death and spell-timeline checkpoints, deterministic quest-pool selection/rejection, a 1,000-tick autonomous regeneration soak, multiplayer autonomous-tick participant fixtures with explicit secondary-session movement, melee-attack, and portal-transition routing, shared melee and ranged elemental-equipment fixtures covering native fire/lightning and arrow channels, resistance, and RNG, shared secondary-participant Elemental direct-hit and persistent-burst parity, native/C# chained-action timing coverage for first-frame attack skips, seeded and autonomous GoatRanged and SkeletonRanged MonsterArrow admission/travel/impact/removal parity including secondary-participant routing, Hellfire HorkDemon Hork Spawn admission, nearest-participant target selection, and decision-delay parity, complete autonomous Succubus and LazarusSuccubus BloodStar admission, nearest-participant target selection, travel/player-impact parity with deterministic monster-magic hit/block RNG, Q6 damage, and block-animation state, plus complete Lich-family MonsterMagic admission/travel/player-impact parity for Lich, ArchLich, Psychorb, Necromorb, BoneDemon, and Magma aliases, deterministic hits, misses, and secondary-participant impacts, live protocol coverage for the checked-in Hellfire encounter and Sorcerer loadout overlays, plus composed-manifest Hellfire ranged replay and shared Firebolt, Fireball, Bone Spirit player-target, and Bone Spirit homing/resistant-monster replays | Expand broader multi-actor autonomous and reconnect replay coverage |
 | Stores and inventory | C# remote for vendor actions, item services, spell-book, potion, rejuvenation, elixir (including Hellfire Spectral Elixir), and Blacksmith/Accuracy/Sharpness/Fortitude oil consumption, authoritative inventory relocation, and server-owned stash pages (100 native-compatible 10x10 grids) with stable page/cell item references, persistence, overlap validation, inventory↔stash transfers, explicit open/close session control, and authoritative stash-gold deposit/withdraw commands; stash-targeted Repair, Recharge, and Identify commands now require the server-owned stash session; stable item references remain carried by native and Godot clients; content-backed moves enforce native equipment-slot topology and belt footprint rules, normal native equipment drags preserve the selected slot through atomic `AutoEquipItemRequested`, all native automatic equipment, inventory, belt, potion, rejuvenation, elixir, and oil paths use stable server-owned intents, the server enforces active-arena-only Arena Potion admission, and the Godot HUD submits inventory or belt sources as stable references for books, targetless consumables, two-item oils, Cathedral Maps, and authored quest notes through the same protocol; native authoritative stash entry projects validated page grids, session state, and server-reconciled gold, and native normal, automatic, and Ctrl-click stash transfers now submit stable page/cell moves; non-consuming item dialogues resolve their message identities from validated content | Add broader live-client coverage and exact legacy edge-case characterization |
 | World gameplay | C# remote vertical slice with content-owned quest item transitions, generic authored towner turn-ins (including item-consuming activation-only, non-consuming dialogue-only, completion-stage, alternate-item, and normal-item rewards), repeatable content-owned quest/towner stages (including all four Black Mushroom/Adria stages and Ogden's post-completion King Leoric dialogue), explicit itemless and completed-quest interaction availability, server-owned per-player visited-level state for native `_pLvlVisited` gates, unique-monster quest dialogue and authored follow-up variable transitions, activation rewards, and hand-ins, content-declared quest-object effects with validated quest activation/completion, native variable transitions, and one-level spell grants, validated content-backed world-cell mutation overlays persisted with the session and projected through effective level geometry, and the Hellfire Na-Krul tome completion's deterministic server-owned unique spawn, native weakening transition, anchor-relative four-value native d-piece room-opening mutation, and validated `uberroom.dun` native mega-tile/d-piece fragment; the native authoritative client submits `TurnInQuestRequested`, `TalkToQuestRequested`, and `OperateObjectRequested` and projects server dialogue/events (first shipped base Skeleton King route/completion and Butcher activation/completion, Hellfire Farmer activation/post-Hive reward, base Cain/Lazarus staff hand-in and Lazarus Storyteller completion stage, Hellfire Grave Matters/Barmaid dialogue, base and Hellfire Magic Rock and Anvil/Blacksmith, base Ogden's Sign, Little Girl, Jersey's Jersey, Defiler, Zhar, Warlord, Lachdanan, and Na-Krul paths) | Expand AI, level generation, remaining quests, dialogs, towners, environmental behaviors, complete native Na-Krul collision/tile-definition parity beyond the projected fragment layer, then externalize the remaining set-piece mutation, book/lever, placement, projectile, and map behaviors not yet covered by the Chamber of Bone and Vile Betrayer templates; expand multiplayer coverage |
-| Persistence | Server-owned snapshot saves with an explicit version-1 player-save compatibility codec, integrity-hash verification, fail-closed player/session/world-state import validation, validated saved-class reconstruction for cold sessions, persisted per-player native-compatible `visited_level_ids`, immediate post-handshake session persistence, live process-restart restoration through a fresh TCP host/adapter with resume-token precedence, an atomic combined per-session checkpoint with a version-4 canonical SHA-256 state and command-ledger integrity envelope bound to the active ruleset identity, version-1 through version-3 checkpoint compatibility with next-write upgrade, compatibility fallback to separate files, a four-cycle fresh-host/adapter recovery soak that preserves canonical snapshot hashes and replays every accepted command while retaining durable receipt identities and exactly-once replacement execution, two- and three-participant fresh-host restart soaks preserving self-first participant order and global receipt continuation, all-session candidate export preparation before ruleset-reload checkpoint publication, transactional rollback of earlier combined and compatibility files when a later session write fails, and activation/handshake identity changes, command-synchronized state/receipt exports, concurrent multi-instance atomic-save publication coverage, a durable save-root world seed that keeps generated geometry stable across restarts, and explicit complete-host cohort restoration/publication with complete module capture/candidate/codec and a leased canonical checkpoint | Finish cohort fault/reload/lease and CLI/Godot acceptance beyond passing Immediate/gated TCP recovery; legacy per-participant imports still resurrect claimed items in both cold-resume orders. Preserve conflicting legacy saves pending an approved migration policy; broader recovery/soaks remain |
+| Persistence | Server-owned snapshot saves with an explicit version-1 player-save compatibility codec, integrity-hash verification, fail-closed player/session/world-state import validation, validated saved-class reconstruction for cold sessions, persisted per-player native-compatible `visited_level_ids`, immediate post-handshake session persistence, live process-restart restoration through a fresh TCP host/adapter with resume-token precedence, an atomic combined per-session checkpoint with a version-4 canonical SHA-256 state and command-ledger integrity envelope bound to the active ruleset identity, version-1 through version-3 checkpoint compatibility with next-write upgrade, compatibility fallback to separate files, a four-cycle fresh-host/adapter recovery soak that preserves canonical snapshot hashes and replays every accepted command while retaining durable receipt identities and exactly-once replacement execution, two- and three-participant fresh-host restart soaks preserving self-first participant order and global receipt continuation, all-session candidate export preparation before ruleset-reload checkpoint publication, transactional rollback of earlier combined and compatibility files when a later session write fails, and activation/handshake identity changes, command-synchronized state/receipt exports, concurrent multi-instance atomic-save publication coverage, a durable save-root world seed that keeps generated geometry stable across restarts, explicit complete-host cohort restoration/publication with complete module capture/candidate/codec and a leased canonical checkpoint, and isolated Godot cohort/legacy session plus headless/rendered stable-binding multiplayer resume | Finish staged-write/security policy and broader operator CLI/Godot fault/platform acceptance beyond passing isolated TCP/Godot recovery. Legacy per-participant imports still resurrect claimed items in both cold-resume orders. Preserve conflicting legacy saves pending an approved migration policy; broader recovery/soaks remain |
 | Native client | Explicit legacy or authoritative runtime mode; connected native character-panel attribute allocation now submits server-owned stat-point intents and applies projected stat points/resources, with legacy `CMD_ADD*` retained only when disconnected; connected native stash-close drops now submit the authoritative held-item drop intent, native mouse/controller dungeon talker interactions now submit authoritative quest dialogue, controller item/object projections fail closed when their entity IDs are unavailable, and controller quest-target movement submits authoritative target cells; connected controller monster, remote-player, and object interactions now resolve projected targets to authoritative entity IDs with fail-closed handling for missing projections, including stale highlighted objects that no longer have a projected entity; normal item-cursor inventory/belt placement uses stable-reference transfers, normal equipment drags carry the selected slot through atomic `AutoEquipItemRequested`, automatic inventory/equipment/belt relocation remains server-owned, connected native spell casts now honor server-projected tile, player, combat-entity, and world-entity targeting roles while preserving legacy behavior for older snapshots, and content-declared towner/unique-monster/quest-object interactions submit `TurnInQuestRequested`/`TalkToQuestRequested`/`OperateObjectRequested` with server dialogue/event projection, including repeatable Black Mushroom/Adria stages, server-owned `visited_level_ids` for native `_pLvlVisited` gates, and Ogden's itemless post-completion King Leoric dialogue (first shipped by the base Skeleton King route/completion and Butcher activation/completion, Hellfire Farmer activation/post-Hive reward, base Cain/Lazarus staff hand-in and Lazarus Storyteller completion stage, base and Hellfire Magic Rock and Anvil/Blacksmith, Ogden's Sign, Little Girl, Jersey's Jersey, Defiler, Zhar, Warlord, Lachdanan, and Na-Krul paths); presentation-only remote-player sprites now draw from authoritative snapshots without entering native simulation pools, including action-tick animation timing, automap arrows, party-panel portraits, party-panel hover/right-click entity routing, and projected inspection stats/spells/item layout | Continue removing compatibility-pool assumptions as Godot presentation matures; broaden interpolation soak coverage and finish legacy interaction parity |
 | Godot client | Prototype with broad protocol-boundary demonstrations, including typed Monk Search, Rogue Trap Disarm, and Etherealize presentation, live Etherealize, Barbarian Rage, Monk Search, Rogue Trap Disarm, Bard Identify, Warrior Repair, and Sorcerer Recharge service coverage, stable-reference Repair/Recharge/Identify targeting for items in an open authoritative stash, a stable authoritative spell-source selector with server-owned memorized and item-backed spell display names, validated selection and submission of adjacent content-owned quest/towner stages, server-authored unique-monster dialogue target selection and `TalkToQuestRequested` routing, fail-closed cross-validation of authored interaction quest references, contextual world-click routing for portals, authored objects, revealed traps, and authored quest/towner stages, ordinary presentation-only objects excluded from command routing, server-driven victory presentation from typed Diablo defeat state, same-instance reconnect with bounded automatic retry, right-click authoritative monster and remote-player attack intent routing, behavior-driven cast-cursor remote-player targeting without client spell-ID tables, stable authoritative monster entity targeting for spell casts, stable world-entity targeting for Godot Telekinesis casts, live entity-targeted monster, player attack, Firebolt, Holy Bolt against an authored undead target, Heal Other, Resurrection, server-owned attribute-allocation action coverage, and authoritative difficulty presentation with live Hell projection coverage, server-owned stealth target presentation, authoritative player action indicators, typed projectile presentation families, additive authored warp-trigger markers with destination geometry validation and unavailable-route feedback, an in-client new-character/resume session menu that submits either the selected class/name or an existing authoritative resume token, all-direction action-tick walk interpolation boundary coverage, authoritative stash session/gold controls with paged 10x10 grid presentation and server-routed stable-reference moves, and server-authored activated-object lifecycle-frame presentation | Complete asset coverage, menus/audio, application acceptance, packaging, and full play flow; assess prediction from measured responsiveness (M1/M4) |
 | Domain kernel | Independent dependency-free .NET 8 assembly | Extract additional game-neutral deterministic primitives only where reuse warrants it; keep Diablo state in its module |
@@ -12207,7 +12280,8 @@ state, and canonical RNG parity.
 ## Near-term priorities
 
 Follow the [completion plan](completion-plan.md#execution-workflow): finish M0 cohort
-failure/reload/lease and actual CLI/Godot acceptance beyond the passing Immediate/gated TCP slice, preserving launch
+staged-write recovery, security/metadata policy and approved normal-launch adoption,
+with broader operator CLI/fault/platform acceptance beyond passing isolated TCP/Godot journeys, preserving launch
 reliability and the remaining native GUI/platform checks; then M1's usable Godot loop alongside M2's native
 world generation. Select remaining combat/content/parity work by the routes it
 unblocks, then close campaign, release, and retirement gates M3-M5. This replaces

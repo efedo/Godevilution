@@ -1,9 +1,12 @@
+using System.ComponentModel;
+using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using Devilution.Protocol.V1;
 using Devilution.Server.Host;
+using Microsoft.Win32.SafeHandles;
 
 namespace Devilution.Server.Stores;
 
@@ -290,10 +293,14 @@ public sealed class AuthoritativeCohortStore : IDisposable
                 output.Flush(flushToDisk: true);
             }
 
-            if (checkpointExists)
-                File.Replace(temporaryPath, CheckpointPath, null, ignoreMetadataErrors: true);
+            // Keep publication to one same-directory rename. Windows ReplaceFile
+            // can first rename the old destination to an internal ~RF temporary
+            // name; process termination there leaves no canonical checkpoint.
+            // Both files inherit this dedicated root's access policy.
+            if (checkpointExists && OperatingSystem.IsWindows())
+                RenameWindowsCheckpoint(temporaryPath, CheckpointPath);
             else
-                File.Move(temporaryPath, CheckpointPath);
+                File.Move(temporaryPath, CheckpointPath, overwrite: checkpointExists);
         } catch (Exception exception) {
             primaryFailure = exception;
             throw;
@@ -307,6 +314,71 @@ public sealed class AuthoritativeCohortStore : IDisposable
             }
         }
     }
+
+    // POSIX rename semantics keep existing shared/delete readers on the old
+    // complete file. MoveFileEx overwrite instead refuses an open destination.
+    // Unsupported filesystems/Windows versions fail closed; never fall back to
+    // ReplaceFile or a delete-then-move sequence.
+    private static void RenameWindowsCheckpoint(string source, string destination)
+    {
+        const uint deleteAccess = 0x00010000;
+        const uint openExisting = 3;
+        const uint normalAttributes = 0x80;
+        const int fileRenameInfoEx = 22;
+        const int replaceExistingWithPosixSemantics = 0x3;
+        using var handle = CreateFileW(
+            source,
+            deleteAccess,
+            FileShare.ReadWrite | FileShare.Delete,
+            IntPtr.Zero,
+            openExisting,
+            normalAttributes,
+            IntPtr.Zero);
+        if (handle.IsInvalid)
+            throw RenameFailure(Marshal.GetLastPInvokeError());
+
+        // Copy raw WCHARs, not an encoder's replacement-fallback spelling.
+        var name = (destination + '\0').ToCharArray();
+        // FILE_RENAME_INFO's DWORD flags precede a pointer-aligned HANDLE,
+        // DWORD byte length and the variable WCHAR name (no trailing padding).
+        var rootOffset = IntPtr.Size == 8 ? 8 : 4;
+        var lengthOffset = rootOffset + IntPtr.Size;
+        var nameOffset = lengthOffset + sizeof(uint);
+        var size = checked(nameOffset + name.Length * sizeof(char));
+        var information = Marshal.AllocHGlobal(size);
+        try {
+            Marshal.Copy(new byte[size], 0, information, size);
+            Marshal.WriteInt32(information, replaceExistingWithPosixSemantics);
+            Marshal.WriteIntPtr(information, rootOffset, IntPtr.Zero);
+            Marshal.WriteInt32(information, lengthOffset, checked((name.Length - 1) * sizeof(char)));
+            Marshal.Copy(name, 0, IntPtr.Add(information, nameOffset), name.Length);
+            if (!SetFileInformationByHandle(handle, fileRenameInfoEx, information, (uint)size))
+                throw RenameFailure(Marshal.GetLastPInvokeError());
+        } finally {
+            Marshal.FreeHGlobal(information);
+        }
+    }
+
+    private static IOException RenameFailure(int error)
+        => new("Could not publish the canonical cohort by rename.", new Win32Exception(error));
+
+    [DllImport("kernel32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
+    private static extern SafeFileHandle CreateFileW(
+        string fileName,
+        uint desiredAccess,
+        FileShare shareMode,
+        IntPtr securityAttributes,
+        uint creationDisposition,
+        uint flagsAndAttributes,
+        IntPtr templateFile);
+
+    [DllImport("kernel32.dll", SetLastError = true)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static extern bool SetFileInformationByHandle(
+        SafeFileHandle file,
+        int informationClass,
+        IntPtr information,
+        uint bufferSize);
 
     private static AuthoritativeCohortDocument Normalize(AuthoritativeCohortDocument document)
     {

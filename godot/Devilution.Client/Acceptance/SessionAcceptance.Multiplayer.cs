@@ -17,6 +17,7 @@ public partial class SessionAcceptance
         var peerDirectory = System.IO.Path.Combine(System.IO.Directory.GetParent(directory)!.FullName, $"player-{peerSlot}");
         var prefix = phase.ToLowerInvariant();
         var creating = phase == "MultiplayerCreate";
+        var cohort = Environment.GetEnvironmentVariable("GODEVILUTION_PERSISTENCE_MODE") == "cohort";
         // Reverse the connection order at restart: entity allocation must not be
         // confused with durable character/token identity or command ownership.
         var firstSlot = creating ? 1 : 2;
@@ -53,6 +54,9 @@ public partial class SessionAcceptance
             Require(identity.ContentManifestHash == previous.ContentHash && identity.RulesetIdentityHash == previous.RulesetHash,
                 "Restart changed the multiplayer content/ruleset identity.");
             Require(ObservePlayer(local) == previous.Local, "The player's own durable state was not restored.");
+            if (cohort)
+                Require(local.EntityId == previous.EntityId,
+                    "Complete-cohort resume changed the durable local entity binding.");
         }
         if (creating && slot == firstSlot) {
             await MultiplayerMove(main, Key.Down, 0, 1, 0, directory, prefix);
@@ -68,8 +72,12 @@ public partial class SessionAcceptance
         var remote = pair.Last();
         Require(local.EntityId != remote.EntityId && remote.CharacterName == $"M1-Player-{peerSlot}",
             "The two player identities are duplicated or swapped.");
-        if (previous is not null)
+        if (previous is not null) {
             Require(ObservePlayer(remote) == previous.Remote, "The peer's durable state was not restored.");
+            if (cohort)
+                Require(remote.EntityId == previous.PeerEntityId,
+                    "Complete-cohort resume changed the durable peer entity binding.");
+        }
         // Both must check the initial restored pair before either changes it.
         WriteEvidence(directory, prefix + "-joined.json", new { Joined = true });
         await Until(() => System.IO.File.Exists(System.IO.Path.Combine(peerDirectory, prefix + "-joined.json")),

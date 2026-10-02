@@ -108,8 +108,10 @@ parity claim. Generic/custom stores and metadata-free compatibility paths remain
 
 Two-client application acceptance covers mutual movement/friendly-mode
 visibility and fresh-host resume through both setup forms, including reversed
-connection order. Numeric entity IDs can change after host restart; each private
-bookmark identifies the durable character. This does not certify cooperative
+connection order. Legacy persistence can reallocate numeric entity IDs after
+host restart; each private bookmark identifies the durable character. Explicit
+complete-cohort acceptance additionally requires both stable entity bindings.
+This does not certify cooperative
 combat, cross-player world interactions, or multiplayer host-loss recovery.
 
 Items shows all seven equipment destinations, including empty slots. Select an
@@ -163,6 +165,16 @@ retains the server-owned mode from the handshake. Normal launches keep server
 checkpoints and a private resume bookmark under `.local/godot`; the next launch
 offers Resume. A resume token must accompany the corresponding server saves.
 Do not publish the token or reuse the same save directory for concurrent hosts.
+
+Existing zero-argument launchers retain legacy persistence and their original
+profiles. The inner harness accepts `-PersistenceMode cohort` only with an
+explicit `-SessionDirectory` for a separate save/bookmark profile. It never
+merges or migrates legacy saves. Cohort mode uses one leased, integrity-checked
+`save/authoritative-cohort.json` for the whole authoritative world and roster;
+keep it with the original world seed and private client bookmarks. Use the
+[isolated acceptance commands](../docs/ai/godot-build.md#application-acceptance)
+before adopting a new profile. Broader fault/platform acceptance and a policy
+for conflicting legacy multiplayer saves remain open.
 
 Use the separate zero-argument `run-godot-preview.ps1` root launcher for an
 authored round trip. Its exact-pinned `town-loop-preview` overlay starts in town

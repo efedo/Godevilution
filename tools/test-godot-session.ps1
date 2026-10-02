@@ -1,7 +1,8 @@
 [CmdletBinding()]
-param([string]$GodotExecutable, [switch]$Visible, [switch]$Journey, [switch]$TownLoop, [switch]$Lifecycle, [switch]$Multiplayer, [string]$CathedralProfileDirectory, [string]$CathedralDepthProfileDirectory)
+param([string]$GodotExecutable, [ValidateSet('legacy', 'cohort')] [string]$PersistenceMode = 'legacy', [switch]$Visible, [switch]$Journey, [switch]$TownLoop, [switch]$Lifecycle, [switch]$Multiplayer, [string]$CathedralProfileDirectory, [string]$CathedralDepthProfileDirectory)
 
 $ErrorActionPreference = 'Stop'
+$PersistenceMode = $PersistenceMode.ToLowerInvariant()
 if ($CathedralDepthProfileDirectory -and ($CathedralProfileDirectory -or $Journey -or $TownLoop -or $Lifecycle -or $Multiplayer)) {
     throw 'Cathedral depth acceptance requires its own compiled profile.'
 }
@@ -17,8 +18,61 @@ $sessionDirectory = if ($CathedralProfileDirectory -or $CathedralDepthProfileDir
     Join-Path ([IO.Path]::GetFullPath($profileDirectory)) ('sessions/acceptance-' + [guid]::NewGuid().ToString('N'))
 } else { Join-Path ([System.IO.Path]::GetTempPath()) ('Godevilution-Scene-Acceptance-' + [guid]::NewGuid().ToString('N')) }
 $launcher = Join-Path $repositoryRoot 'godot/run-local-client.ps1'
-$parameters = @{ SessionDirectory = $sessionDirectory; Headless = -not $Visible; QuitAfterSeconds = 45 }
+$parameters = @{ SessionDirectory = $sessionDirectory; PersistenceMode = $PersistenceMode; Headless = -not $Visible; QuitAfterSeconds = 45 }
 if ($GodotExecutable) { $parameters.GodotExecutable = $GodotExecutable }
+function Read-ModeProcessEvidence([string]$Phase) {
+    $path = Join-Path $sessionDirectory ($Phase.ToLowerInvariant() + '-processes.json')
+    if (-not (Test-Path -LiteralPath $path -PathType Leaf)) {
+        throw "The launcher did not produce mode-labelled $Phase process evidence: $path"
+    }
+    $evidence = Get-Content -LiteralPath $path -Raw | ConvertFrom-Json
+    $expectedHostPersistence = if ($PersistenceMode -eq 'cohort') { 'complete cohort' } else { 'legacy per-session' }
+    if ($evidence.PersistenceMode -cne $PersistenceMode -or $evidence.HostPersistence -cne $expectedHostPersistence) {
+        throw "The $Phase process evidence did not preserve persistence mode '$PersistenceMode'."
+    }
+    if ($Phase -eq 'Recovery') {
+        if ($null -eq $evidence.StoppedProcessId -or [string]::IsNullOrWhiteSpace($evidence.StoppedHostStartedUtc) -or
+            $null -eq $evidence.RestartedProcessId -or [string]::IsNullOrWhiteSpace($evidence.RestartedHostStartedUtc) -or
+            $null -eq $evidence.GodotProcessId -or [string]::IsNullOrWhiteSpace($evidence.GodotStartedUtc) -or $null -eq $evidence.ExistingClients -or
+            $null -eq $evidence.HostProcessId -or [string]::IsNullOrWhiteSpace($evidence.HostStartedUtc) -or
+            $null -eq $evidence.Clients -or @($evidence.Clients).Count -lt 1) {
+            throw 'Recovery process evidence omitted a host restart or retained-client identity.'
+        }
+    } elseif ($null -eq $evidence.HostProcessId -or [string]::IsNullOrWhiteSpace($evidence.HostStartedUtc) -or
+        $null -eq $evidence.Clients -or @($evidence.Clients).Count -lt 1) {
+        throw "The $Phase process evidence omitted host or client identity."
+    }
+    return $evidence
+}
+function Assert-RecoveryProcessEvidence($Evidence) {
+    if ($Evidence.StoppedProcessId -ne $Evidence.HostProcessId -or
+        $Evidence.StoppedHostStartedUtc -ne $Evidence.HostStartedUtc) {
+        throw 'Recovery process evidence did not retain the initial recovery host identity.'
+    }
+    if ($Evidence.StoppedProcessId -eq $Evidence.RestartedProcessId -and
+        $Evidence.StoppedHostStartedUtc -eq $Evidence.RestartedHostStartedUtc) {
+        throw 'Recovery reused the authoritative host process identity.'
+    }
+    $client = @($Evidence.Clients)[0]
+    if ($Evidence.GodotProcessId -ne $client.ProcessId -or $Evidence.GodotStartedUtc -ne $client.StartedUtc -or
+        -not (@($Evidence.ExistingClients) | Where-Object {
+            $_.ProcessId -eq $client.ProcessId -and $_.StartedUtc -eq $client.StartedUtc })) {
+        throw 'Recovery did not retain the recovery-phase client process identity.'
+    }
+}
+function Assert-FreshProcessEvidence($Created, $Resumed, [int]$ExpectedClientCount) {
+    if ($Created.HostProcessId -eq $Resumed.HostProcessId -and $Created.HostStartedUtc -eq $Resumed.HostStartedUtc) {
+        throw 'Ruleset resume did not start a fresh authoritative host.'
+    }
+    if (@($Created.Clients).Count -ne $ExpectedClientCount -or @($Resumed.Clients).Count -ne $ExpectedClientCount) {
+        throw 'Ruleset process evidence did not retain the expected client count.'
+    }
+    foreach ($resumedClient in @($Resumed.Clients)) {
+        if (@($Created.Clients) | Where-Object { $_.ProcessId -eq $resumedClient.ProcessId -and $_.StartedUtc -eq $resumedClient.StartedUtc }) {
+            throw 'Ruleset resume reused a client process identity.'
+        }
+    }
+}
 try {
     if ($CathedralDepthProfileDirectory) {
         $parameters.CathedralDepthProfileDirectory = $CathedralDepthProfileDirectory
@@ -56,17 +110,10 @@ try {
         $parameters.Multiplayer = $true
         $parameters.QuitAfterSeconds = 75
         & $launcher @parameters -AcceptancePhase MultiplayerCreate
+        $created = Read-ModeProcessEvidence 'MultiplayerCreate'
         & $launcher @parameters -AcceptancePhase MultiplayerResume
-        $created = Get-Content -LiteralPath (Join-Path $sessionDirectory 'multiplayercreate-processes.json') -Raw | ConvertFrom-Json
-        $resumed = Get-Content -LiteralPath (Join-Path $sessionDirectory 'multiplayerresume-processes.json') -Raw | ConvertFrom-Json
-        if ($created.HostProcessId -eq $resumed.HostProcessId -and $created.HostStartedUtc -eq $resumed.HostStartedUtc) {
-            throw 'Multiplayer resume did not start a fresh authoritative host.'
-        }
-        foreach ($resumedClient in $resumed.Clients) {
-            if ($created.Clients | Where-Object { $_.ProcessId -eq $resumedClient.ProcessId -and $_.StartedUtc -eq $resumedClient.StartedUtc }) {
-                throw 'Multiplayer resume did not start two fresh Godot processes.'
-            }
-        }
+        $resumed = Read-ModeProcessEvidence 'MultiplayerResume'
+        Assert-FreshProcessEvidence $created $resumed 2
         Write-Host "PASS: two actual Godot clients, mutual movement/state visibility, and fresh-host multiplayer resume. Evidence: $sessionDirectory"
         return
     }
@@ -108,11 +155,17 @@ try {
         & $launcher @parameters -AcceptancePhase JourneyResume
         Write-Host "PASS: actual Godot responsive controls, town-to-dungeon combat/loot, and fresh-host gameplay resume. Evidence: $sessionDirectory"
         return
-    }
-    & $launcher @parameters -AcceptancePhase Create
-    & $launcher @parameters -AcceptancePhase Resume
-    & $launcher @parameters -AcceptancePhase Recovery
-    Write-Host "PASS: actual Godot create/move/checkpoint/fresh-host resume and server-loss/reconnect. Evidence: $sessionDirectory"
+        }
+        & $launcher @parameters -AcceptancePhase Create
+        $created = Read-ModeProcessEvidence 'Create'
+        & $launcher @parameters -AcceptancePhase Resume
+        $resumed = Read-ModeProcessEvidence 'Resume'
+        Assert-FreshProcessEvidence $created $resumed 1
+        & $launcher @parameters -AcceptancePhase Recovery
+        $recovery = Read-ModeProcessEvidence 'Recovery'
+        Assert-FreshProcessEvidence $resumed $recovery 1
+        Assert-RecoveryProcessEvidence $recovery
+        Write-Host "PASS: actual Godot create/move/checkpoint/fresh-host resume and server-loss/reconnect. Evidence: $sessionDirectory"
 } finally {
     # Retain isolated saves/logs for diagnosis; never modify normal launcher saves.
     Write-Host "Acceptance artifacts retained at $sessionDirectory"

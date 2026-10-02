@@ -587,6 +587,104 @@ public sealed class AuthoritativeCohortStoreTests
         }
     }
 
+    [Fact]
+    public void ReplacementKeepsAnOpenReaderOnTheCompletePreviousGeneration()
+    {
+        var root = CreateRoot();
+        try {
+            using var store = new AuthoritativeCohortStore(root);
+            store.Save(CreateDocument(1));
+            var original = File.ReadAllBytes(store.CheckpointPath);
+            using var reader = new FileStream(
+                store.CheckpointPath,
+                FileMode.Open,
+                FileAccess.Read,
+                FileShare.ReadWrite | FileShare.Delete);
+
+            store.Save(CreateDocument(2) with { Tick = 21 });
+            using var captured = new MemoryStream();
+            reader.CopyTo(captured);
+            Assert.Equal(original, captured.ToArray());
+            Assert.Equal(2UL, store.Load()!.Generation);
+            Assert.Equal(21UL, store.Load()!.Tick);
+            Assert.Equal(
+                ["authoritative-cohort.json", "authoritative-cohort.lease"],
+                Directory.GetFiles(root).Select(Path.GetFileName).Order(StringComparer.Ordinal));
+        } finally {
+            DeleteRoot(root);
+        }
+    }
+
+    [Fact]
+    public async Task ConcurrentReadersAlwaysObserveAnIntactCanonicalGeneration()
+    {
+        var root = CreateRoot();
+        CancellationTokenSource? finished = null;
+        ManualResetEventSlim? ready = null;
+        Task? reader = null;
+        try {
+            using var store = new AuthoritativeCohortStore(root);
+            store.Save(CreateDocument(1) with { SerializedModuleState = "module-state-1" });
+            finished = CancellationTokenSource.CreateLinkedTokenSource(
+                TestContext.Current.CancellationToken);
+            ready = new ManualResetEventSlim();
+            var reads = 0;
+            reader = Task.Run(() => {
+                do {
+                    using var input = new FileStream(
+                        store.CheckpointPath,
+                        FileMode.Open,
+                        FileAccess.Read,
+                        FileShare.ReadWrite | FileShare.Delete);
+                    using var buffer = new MemoryStream();
+                    input.CopyTo(buffer);
+                    var bytes = buffer.ToArray();
+                    using var parsed = JsonDocument.Parse(bytes);
+                    var document = parsed.RootElement;
+                    var generation = document.GetProperty("Generation").GetUInt64();
+                    var module = Encoding.UTF8.GetString(Convert.FromBase64String(
+                        document.GetProperty("SerializedModuleState").GetString()!));
+                    Assert.Equal($"module-state-{generation}", module);
+                    var text = Encoding.UTF8.GetString(bytes);
+                    var integrityOffset = text.LastIndexOf(
+                        ",\"IntegritySha256\":", StringComparison.Ordinal);
+                    Assert.True(integrityOffset > 0);
+                    var payload = Encoding.UTF8.GetBytes(text[..integrityOffset] + "}");
+                    Assert.Equal(
+                        Convert.ToHexString(SHA256.HashData(payload)).ToLowerInvariant(),
+                        document.GetProperty("IntegritySha256").GetString());
+                    Interlocked.Increment(ref reads);
+                    ready.Set();
+                } while (!finished.IsCancellationRequested);
+            }, TestContext.Current.CancellationToken);
+            try {
+                Assert.True(ready.Wait(TimeSpan.FromSeconds(5), TestContext.Current.CancellationToken),
+                    "The concurrent reader did not initialize.");
+                for (ulong generation = 2; generation <= 100; generation++)
+                    store.Save(CreateDocument(generation) with {
+                        SerializedModuleState = $"module-state-{generation}",
+                    });
+            } finally {
+                finished.Cancel();
+                // Cleanup must join independently of a cancelled xUnit token.
+#pragma warning disable xUnit1051
+                await reader.WaitAsync(TimeSpan.FromSeconds(5));
+#pragma warning restore xUnit1051
+            }
+            Assert.True(reads > 0);
+            Assert.Equal(100UL, store.Load()!.Generation);
+        } finally {
+            if (reader is null || reader.IsCompleted) {
+                ready?.Dispose();
+                finished?.Dispose();
+                DeleteRoot(root);
+            } else {
+                TestContext.Current.SendDiagnosticMessage(
+                    $"Retained publication fixture while its reader is still live: {root}");
+            }
+        }
+    }
+
     [Fact(SkipUnless = nameof(IsWindows), Skip = "File replacement sharing semantics are Windows-specific.")]
     public void FailedReplacementPreservesThePreviousCheckpointAndCleansItsTemporaryFile()
     {
@@ -611,6 +709,31 @@ public sealed class AuthoritativeCohortStoreTests
         } finally {
             blocker?.Dispose();
             store?.Dispose();
+            DeleteRoot(root);
+        }
+    }
+
+    [Fact(SkipUnless = nameof(IsWindows), Skip = "Readonly replacement semantics are Windows-specific.")]
+    public void ReadonlyCanonicalRefusesReplacementAndAllowsAnExactRetryAfterUnblocking()
+    {
+        var root = CreateRoot() + "- \u03a9";
+        var checkpoint = Path.Combine(root, AuthoritativeCohortStore.CheckpointFileName);
+        try {
+            using var store = new AuthoritativeCohortStore(root);
+            store.Save(CreateDocument(1));
+            var original = File.ReadAllBytes(checkpoint);
+            File.SetAttributes(checkpoint, FileAttributes.ReadOnly);
+            Assert.ThrowsAny<IOException>(() => store.Save(CreateDocument(2)));
+            Assert.Equal(original, File.ReadAllBytes(checkpoint));
+            Assert.Equal(FileAttributes.ReadOnly, File.GetAttributes(checkpoint) & FileAttributes.ReadOnly);
+            Assert.Empty(Directory.GetFiles(root, $".{AuthoritativeCohortStore.CheckpointFileName}.*.tmp"));
+
+            File.SetAttributes(checkpoint, FileAttributes.Normal);
+            store.Save(CreateDocument(2));
+            Assert.Equal(2UL, store.Load()!.Generation);
+        } finally {
+            if (File.Exists(checkpoint))
+                File.SetAttributes(checkpoint, FileAttributes.Normal);
             DeleteRoot(root);
         }
     }

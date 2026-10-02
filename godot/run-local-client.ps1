@@ -7,6 +7,7 @@ param(
     [switch]$Headless,
     [ValidateRange(1, 3600)] [int]$QuitAfterSeconds = 120,
     [string]$SessionDirectory,
+    [ValidateSet('legacy', 'cohort')] [string]$PersistenceMode = 'legacy',
     [switch]$PreviewContent,
     [switch]$PortalPreviewContent,
     [switch]$LifecyclePreviewContent,
@@ -18,6 +19,7 @@ param(
 )
 
 $ErrorActionPreference = 'Stop'
+$PersistenceMode = $PersistenceMode.ToLowerInvariant()
 $performance = $AcceptancePhase -eq 'Performance'
 $lifecyclePhases = @('Lifecycle', 'LifecycleResume')
 $lifecycle = [bool]$LifecyclePreviewContent
@@ -69,6 +71,9 @@ if ($AcceptancePhase -and -not $performance -and ($Multiplayer -ne ($AcceptanceP
 }
 $expectedGameMode = if ($Multiplayer) { 'Multiplayer' } else { 'SinglePlayer' }
 $serverGameMode = if ($Multiplayer) { 'multiplayer' } else { 'single-player' }
+if ($PersistenceMode -eq 'cohort' -and [string]::IsNullOrWhiteSpace($SessionDirectory)) {
+    throw 'Cohort persistence requires an explicit nonempty -SessionDirectory; it never adopts a legacy default profile.'
+}
 $repositoryRoot = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot '..')).Path
 $serverProject = Join-Path $repositoryRoot 'server/src/Devilution.Server/Devilution.Server.csproj'
 $serverExecutable = Join-Path $repositoryRoot 'server/src/Devilution.Server/bin/Debug/net10.0/Devilution.Server.exe'
@@ -134,6 +139,7 @@ $environmentNames = @('DEVILUTION_SERVER_HOST', 'DEVILUTION_SERVER_PORT', 'DEVIL
     'DEVILUTION_CONTENT_HASH', 'DEVILUTION_RULESET_HASH', 'DEVILUTION_CHARACTER_CLASS_ID',
     'DEVILUTION_CHARACTER_NAME', 'DEVILUTION_RESUME_TOKEN', 'DEVILUTION_RESUME_TOKEN_PATH',
     'GODEVILUTION_ACCEPTANCE_PHASE', 'GODEVILUTION_ACCEPTANCE_DIRECTORY', 'GODEVILUTION_QUIT_AFTER_SECONDS',
+    'GODEVILUTION_PERSISTENCE_MODE',
     'GODEVILUTION_LOCAL_PLAYER', 'GODEVILUTION_PORTAL_PREVIEW', 'GODEVILUTION_LIFECYCLE_PREVIEW', 'GODEVILUTION_CATHEDRAL_PROFILE', 'GODEVILUTION_CATHEDRAL_DEPTH_PROFILE',
     'GODEVILUTION_PERFORMANCE_PARTICIPANTS', 'GODEVILUTION_PERFORMANCE_SHARED_DIRECTORY',
     'GODEVILUTION_CLIENT_PERFORMANCE_OUTPUT', 'GODEVILUTION_CLIENT_PERFORMANCE_WARMUP_SECONDS',
@@ -733,6 +739,204 @@ function Write-ProjectStageEvidence($Staging, [string]$EngineVersion, [string]$E
     [IO.File]::WriteAllText($EvidencePath, ($record | ConvertTo-Json))
 }
 
+function Assert-CohortCheckpoint(
+    [string]$SaveDirectory,
+    [string]$ExpectedGameMode,
+    [string]$ContentHash,
+    [string]$RulesetHash,
+    [string[]]$BookmarkPaths,
+    [uint32[]]$ExpectedEntityIds = @()) {
+    $checkpointPath = Join-Path $SaveDirectory 'authoritative-cohort.json'
+    if (-not (Test-Path -LiteralPath $checkpointPath -PathType Leaf)) {
+        throw "Complete-cohort acceptance did not produce $checkpointPath."
+    }
+
+    # Keep one read handle open with replacement sharing. The host may publish
+    # the next generation while this verifier is reading the exact generation
+    # that it opened; pathname metadata must not be used as its identity.
+    $stream = $null
+    try {
+        $stream = [IO.File]::Open(
+            $checkpointPath,
+            [IO.FileMode]::Open,
+            [IO.FileAccess]::Read,
+            [IO.FileShare]::ReadWrite -bor [IO.FileShare]::Delete)
+        if ($stream.Length -gt [int]::MaxValue) { throw 'The cohort checkpoint is too large to verify.' }
+        $bytes = New-Object byte[] ([int]$stream.Length)
+        $offset = 0
+        while ($offset -lt $bytes.Length) {
+            $read = $stream.Read($bytes, $offset, $bytes.Length - $offset)
+            if ($read -le 0) { throw 'The cohort checkpoint ended during verification.' }
+            $offset += $read
+        }
+    } finally {
+        if ($null -ne $stream) { $stream.Dispose() }
+    }
+
+    $strictUtf8 = [Text.UTF8Encoding]::new($false, $true)
+    try { $json = $strictUtf8.GetString($bytes) }
+    catch { throw 'The cohort checkpoint is not strict UTF-8.' }
+    $integrityMatch = [Text.RegularExpressions.Regex]::Match(
+        $json,
+        ',"IntegritySha256":"(?<hash>[0-9a-f]{64})"}\z',
+        [Text.RegularExpressions.RegexOptions]::CultureInvariant)
+    if (-not $integrityMatch.Success) {
+        throw 'The cohort checkpoint does not use the canonical compact integrity suffix.'
+    }
+    $payloadJson = $json.Substring(0, $integrityMatch.Index) + '}'
+    $actualIntegrity = Get-Sha256Hex ($strictUtf8.GetBytes($payloadJson))
+    if ($actualIntegrity -cne $integrityMatch.Groups['hash'].Value) {
+        throw 'The cohort checkpoint integrity hash does not match its exact canonical payload bytes.'
+    }
+
+    try { $document = $json | ConvertFrom-Json -ErrorAction Stop }
+    catch { throw 'The cohort checkpoint JSON is malformed.' }
+    Assert-CohortJsonProperties $document @(
+        'FormatVersion', 'Generation', 'Identity', 'Tick', 'NextEntityId',
+        'NextServerReceiptSequence', 'Participants', 'SerializedModuleState', 'IntegritySha256') 'cohort root'
+    Assert-CohortJsonProperties $document.Identity @(
+        'ModuleId', 'ModuleFormatVersion', 'ProtocolSchemaVersion', 'ContentManifestHash',
+        'RulesetIdentityHash', 'TickRateHz', 'GameMode') 'cohort identity'
+    if ($null -eq $document -or $document.FormatVersion -ne 1 -or $null -eq $document.Identity) {
+        throw 'The cohort checkpoint format or identity is invalid.'
+    }
+    if (-not ($document.Participants -is [Array]) -or
+        -not (Test-CohortJsonInteger $document.FormatVersion 1 1) -or
+        -not (Test-CohortJsonInteger $document.Generation 1 ([decimal][uint64]::MaxValue)) -or
+        -not (Test-CohortJsonInteger $document.Tick 0 ([decimal][uint64]::MaxValue)) -or
+        -not (Test-CohortJsonInteger $document.NextEntityId 0 ([uint32]::MaxValue)) -or
+        -not (Test-CohortJsonInteger $document.NextServerReceiptSequence 0 ([decimal][uint64]::MaxValue)) -or
+        -not (Test-CohortJsonInteger $document.Identity.ModuleFormatVersion 1 ([int]::MaxValue)) -or
+        -not (Test-CohortJsonInteger $document.Identity.TickRateHz 1 ([uint32]::MaxValue)) -or
+        -not (Test-CohortJsonInteger $document.Identity.GameMode 0 1)) {
+        throw 'The cohort checkpoint contains a non-canonical numeric type or range.'
+    }
+    $expectedGameModeValue = if ($ExpectedGameMode -eq 'SinglePlayer') { 0 } elseif ($ExpectedGameMode -eq 'Multiplayer') { 1 } else { -1 }
+    if ($expectedGameModeValue -lt 0 -or $document.Identity.ProtocolSchemaVersion -cne '0.2.0' -or
+        $document.Identity.GameMode -ne $expectedGameModeValue -or
+        $document.Identity.ContentManifestHash -cne $ContentHash -or
+        $document.Identity.RulesetIdentityHash -cne $RulesetHash) {
+        throw 'The cohort checkpoint identity does not match the active host.'
+    }
+    if ([string]::IsNullOrWhiteSpace([string]$document.SerializedModuleState)) {
+        throw 'The cohort checkpoint has no serialized module state.'
+    }
+    try {
+        $moduleBytes = [Convert]::FromBase64String([string]$document.SerializedModuleState)
+        if ($moduleBytes.Length -eq 0 -or
+            [Convert]::ToBase64String($moduleBytes) -cne [string]$document.SerializedModuleState) {
+            throw 'non-canonical module state'
+        }
+        [void]([Text.UTF8Encoding]::new($false, $true).GetString($moduleBytes))
+    } catch { throw 'The cohort checkpoint module blob is empty or invalid Base64.' }
+
+    $participants = @($document.Participants)
+    $bookmarks = @($BookmarkPaths)
+    if ($participants.Count -ne $bookmarks.Count) {
+        throw 'The cohort participant count does not match the acceptance bookmarks.'
+    }
+    if ($ExpectedEntityIds.Count -ne 0 -and $ExpectedEntityIds.Count -ne $bookmarks.Count) {
+        throw 'The cohort expected entity bindings do not match the acceptance bookmarks.'
+    }
+    $sessionIds = [Collections.Generic.HashSet[string]]::new([StringComparer]::Ordinal)
+    $bookmarkSessionIds = [Collections.Generic.HashSet[string]]::new([StringComparer]::Ordinal)
+    foreach ($bookmarkPath in $bookmarks) {
+        if ([string]::IsNullOrWhiteSpace($bookmarkPath) -or -not (Test-Path -LiteralPath $bookmarkPath -PathType Leaf)) {
+            throw "The cohort acceptance bookmark is missing: $bookmarkPath"
+        }
+        $bookmark = [IO.File]::ReadAllText($bookmarkPath).Trim()
+        if ([string]::IsNullOrWhiteSpace($bookmark)) { throw "The cohort acceptance bookmark is empty: $bookmarkPath" }
+        $bookmarkSessionId = Get-Sha256Hex ([Text.Encoding]::UTF8.GetBytes($bookmark))
+        if (-not $bookmarkSessionIds.Add($bookmarkSessionId)) {
+            throw 'Cohort acceptance bookmarks must bind to distinct participants.'
+        }
+    }
+    $entityIds = [Collections.Generic.HashSet[uint32]]::new()
+    for ($index = 0; $index -lt $participants.Count; $index++) {
+        $participant = $participants[$index]
+        Assert-CohortJsonProperties $participant @('SessionId', 'EntityId', 'CommandReceipts') 'cohort participant'
+        if (-not ($participant.CommandReceipts -is [Array])) { throw 'The cohort participant receipt ledger must be an array.' }
+        if ($null -eq $participant -or [string]$participant.SessionId -notmatch '^[0-9a-f]{64}$') {
+            throw 'The cohort participant session identity is not a lowercase SHA-256 ID.'
+        }
+        try {
+            if (-not (Test-CohortJsonInteger $participant.EntityId 1 ([uint32]::MaxValue))) {
+                throw 'invalid entity ID'
+            }
+            $entityId = [uint32]$participant.EntityId
+        } catch { throw 'The cohort participant entity identity is invalid.' }
+        if (-not $sessionIds.Add([string]$participant.SessionId) -or -not $entityIds.Add($entityId)) {
+            throw 'The cohort participant session or entity identities are not unique.'
+        }
+        foreach ($receipt in @($participant.CommandReceipts)) {
+            Assert-CohortJsonProperties $receipt @('ClientSequence', 'ServerReceiptSequence', 'AppliedTick', 'Status', 'RejectReason') 'cohort receipt'
+            if (-not (Test-CohortJsonInteger $receipt.ClientSequence 1 ([decimal][uint64]::MaxValue)) -or
+                -not (Test-CohortJsonInteger $receipt.ServerReceiptSequence 1 ([decimal][uint64]::MaxValue)) -or
+                -not (Test-CohortJsonInteger $receipt.AppliedTick 0 ([decimal][uint64]::MaxValue)) -or
+                -not (Test-CohortJsonInteger $receipt.Status 0 ([uint32]::MaxValue)) -or
+                -not (Test-CohortJsonInteger $receipt.RejectReason 0 ([uint32]::MaxValue))) {
+                throw 'The cohort receipt contains a non-canonical numeric type or range.'
+            }
+        }
+    }
+    if ($bookmarkSessionIds.Count -ne $sessionIds.Count -or
+        @($bookmarkSessionIds | Where-Object { -not $sessionIds.Contains($_) }).Count -ne 0) {
+        throw 'The cohort acceptance bookmarks do not bind to the complete participant roster.'
+    }
+    if ($ExpectedEntityIds.Count -ne 0) {
+        $expectedBySession = @{}
+        for ($index = 0; $index -lt $bookmarks.Count; $index++) {
+            $bookmark = [IO.File]::ReadAllText($bookmarks[$index]).Trim()
+            $expectedBySession[(Get-Sha256Hex ([Text.Encoding]::UTF8.GetBytes($bookmark)))] = $ExpectedEntityIds[$index]
+        }
+        foreach ($participant in $participants) {
+            if ([uint32]$expectedBySession[[string]$participant.SessionId] -ne [uint32]$participant.EntityId) {
+                throw 'The cohort participant entity binding does not match the acceptance scene.'
+            }
+        }
+    }
+
+    $legacyCheckpoints = @(Get-ChildItem -LiteralPath $SaveDirectory -File -Force -Recurse -ErrorAction Stop |
+        Where-Object { $_.Name -eq '.session.json' -or $_.Name -like '*.session.json' })
+    if ($legacyCheckpoints.Count -ne 0) {
+        throw 'Complete-cohort acceptance must not leave legacy per-session checkpoints.'
+    }
+    return $null
+}
+
+function Get-CohortSceneEntityId($Evidence) {
+    if ($null -eq $Evidence -or $Evidence.PSObject.Properties.Name -notcontains 'EntityId' -or
+        -not (Test-CohortJsonInteger $Evidence.EntityId 1 ([uint32]::MaxValue))) {
+        throw 'Complete-cohort scene evidence must contain a nonzero uint32 entity binding.'
+    }
+    return [uint32]$Evidence.EntityId
+}
+
+function Assert-CohortJsonProperties($Value, [string[]]$Expected, [string]$Description) {
+    if ($null -eq $Value) { throw "The $Description is missing." }
+    $actual = @($Value.PSObject.Properties.Name)
+    if ($actual.Count -ne $Expected.Count -or
+        @($actual | Where-Object { $_ -notin $Expected }).Count -ne 0 -or
+        @($Expected | Where-Object { $_ -notin $actual }).Count -ne 0) {
+        throw "The $Description has unexpected or missing properties."
+    }
+}
+
+function Test-CohortJsonInteger($Value, [decimal]$Minimum, [decimal]$Maximum) {
+    if ($null -eq $Value -or $Value -is [bool] -or $Value -is [string] -or
+        $Value -is [double] -or $Value -is [single] -or $Value -is [decimal]) { return $false }
+    try {
+        $number = [decimal]$Value
+        return $number -ge $Minimum -and $number -le $Maximum -and $number -eq [decimal]::Truncate($number)
+    } catch { return $false }
+}
+
+function Get-Sha256Hex([byte[]]$Bytes) {
+    $sha = [Security.Cryptography.SHA256]::Create()
+    try { return [BitConverter]::ToString($sha.ComputeHash($Bytes)).Replace('-', '').ToLowerInvariant() }
+    finally { $sha.Dispose() }
+}
+
 function Write-ProcessEvidence($Tracked) {
     [IO.File]::WriteAllText(
         $Tracked.EvidencePath,
@@ -828,6 +1032,7 @@ function New-GodotProcess(
             Record = [pscustomobject]@{
                 Stage = $StageName
                 Executable = $GodotExecutable
+                PersistenceMode = $PersistenceMode
                 ProcessId = $process.Id
                 StartedUtc = $startedUtc
                 EndedUtc = $null
@@ -1016,7 +1221,7 @@ try {
         $overlayArguments = '--content-root "{0}" --content-id {1} --content-version {2} --game-adapter {3}' -f $cathedralProfile.ContentRoot, $cathedralProfile.Metadata.ContentId, $cathedralProfile.Metadata.ContentVersion, $cathedralProfile.Metadata.AdapterId
     }
     function Start-SessionServer([int]$ListenPort, [string]$LogPrefix) {
-        $serverArguments = '--port {0} --protocol-version 0.2.0 --game-mode {4} --command-scheduling clock-gated --save-root "{1}/save" {2} {3}' -f $ListenPort, $SessionDirectory, $acceptanceArguments, $overlayArguments, $serverGameMode
+        $serverArguments = '--port {0} --protocol-version 0.2.0 --game-mode {4} --command-scheduling clock-gated --save-root "{1}/save" {2} {3} --persistence-mode {5}' -f $ListenPort, $SessionDirectory, $acceptanceArguments, $overlayArguments, $serverGameMode, $PersistenceMode
         $stdoutPath = Join-Path $captureRoot ($LogPrefix + '.stdout.log')
         $stderrPath = Join-Path $captureRoot ($LogPrefix + '.stderr.log')
         $serverProcess = Start-Process -FilePath $serverExecutable -ArgumentList $serverArguments -WorkingDirectory $repositoryRoot -WindowStyle Hidden -RedirectStandardOutput $stdoutPath -RedirectStandardError $stderrPath -PassThru
@@ -1026,6 +1231,7 @@ try {
             $rulesetHash = $null
             $gameMode = $null
             $commandScheduling = $null
+            $persistence = $null
             for ($attempt = 0; $attempt -lt 120; $attempt++) {
                 if ($serverProcess.HasExited) { throw "Authoritative server exited during startup. See $stderrPath" }
                 $output = Get-Content -LiteralPath $stdoutPath -Raw -ErrorAction SilentlyContinue
@@ -1034,16 +1240,19 @@ try {
                 if ($output -match 'Ruleset identity: ([0-9a-fA-F]{64})') { $rulesetHash = $Matches[1] }
                 if ($output -match 'Game mode: (\w+)') { $gameMode = $Matches[1] }
                 if ($output -match 'Command scheduling: ([a-z-]+)') { $commandScheduling = $Matches[1] }
-                if ($actualPort -and $contentHash -and $rulesetHash -and $gameMode -and $commandScheduling) { break }
+                if ($output -match 'Persistence: (complete cohort|legacy per-session)') { $persistence = $Matches[1] }
+                if ($actualPort -and $contentHash -and $rulesetHash -and $gameMode -and $commandScheduling -and $persistence) { break }
                 Start-Sleep -Milliseconds 250
             }
-            if (-not ($actualPort -and $contentHash -and $rulesetHash -and $gameMode -and $commandScheduling)) {
+            if (-not ($actualPort -and $contentHash -and $rulesetHash -and $gameMode -and $commandScheduling -and $persistence)) {
                 throw "Timed out waiting for the authoritative server identity. See $stdoutPath and $stderrPath"
             }
             if ($gameMode -ne $expectedGameMode) { throw "Unexpected server mode: $gameMode" }
             if ($commandScheduling -ne 'clock-gated') { throw "Unexpected command scheduling: $commandScheduling" }
+            $expectedPersistence = if ($PersistenceMode -eq 'cohort') { 'complete cohort' } else { 'legacy per-session' }
+            if ($persistence -cne $expectedPersistence) { throw "Unexpected server persistence mode: $persistence" }
             if ($cathedral -and $contentHash -cne $cathedralProfile.Metadata.ContentManifestHash) { throw 'The Cathedral host loaded a different content identity than the compiled profile.' }
-            return [pscustomobject]@{ Process = $serverProcess; Port = $actualPort; ContentHash = $contentHash; RulesetHash = $rulesetHash; Mode = $gameMode }
+            return [pscustomobject]@{ Process = $serverProcess; Port = $actualPort; ContentHash = $contentHash; RulesetHash = $rulesetHash; Mode = $gameMode; Persistence = $persistence }
         } catch {
             if ($null -ne $serverProcess) {
                 try {
@@ -1078,6 +1287,7 @@ try {
     $env:DEVILUTION_PROTOCOL_VERSION = '0.2.0'
     $env:DEVILUTION_CONTENT_HASH = $contentHash
     $env:DEVILUTION_RULESET_HASH = $rulesetHash
+    $env:GODEVILUTION_PERSISTENCE_MODE = $PersistenceMode
     function Start-SceneClient([int]$Slot) {
         $clientDirectory = if ($Multiplayer) { Join-Path $SessionDirectory "player-$Slot" } else { $SessionDirectory }
         New-Item -ItemType Directory -Path $clientDirectory -Force | Out-Null
@@ -1085,6 +1295,7 @@ try {
         # Each process gets isolated engine storage and its own role/bookmark environment.
         $clientEnvironment = @{
             DEVILUTION_RESUME_TOKEN_PATH = Join-Path $clientDirectory 'resume-token.txt'
+            GODEVILUTION_PERSISTENCE_MODE = $PersistenceMode
         }
         if ($PortalPreviewContent) { $clientEnvironment['GODEVILUTION_PORTAL_PREVIEW'] = '1' }
         if ($LifecyclePreviewContent) { $clientEnvironment['GODEVILUTION_LIFECYCLE_PREVIEW'] = '1' }
@@ -1159,8 +1370,9 @@ try {
     } else {
         if ($Multiplayer) { $startedClients += Start-SceneClient 2 }
     }
-    if (($Multiplayer -or $performance -or $cathedral -or $lifecycle) -and $AcceptancePhase) {
+    if ($AcceptancePhase) {
         $processEvidence = @{ HostProcessId = $serverProcess.Id; HostStartedUtc = $serverProcess.StartTime.ToUniversalTime().ToString('O'); Port = $actualPort;
+            PersistenceMode = $PersistenceMode; HostPersistence = $startedServer.Persistence;
             Clients = @($startedClients | ForEach-Object { @{ ProcessId = $_.Process.Id; StartedUtc = $_.Process.StartTime.ToUniversalTime().ToString('O') } }) }
         if ($cathedral) {
             $processEvidence.ProfileHash = $cathedralProfile.MetadataHash
@@ -1174,6 +1386,10 @@ try {
         if ($serverProcess.HasExited) { throw 'The server exited before the recovery fault injection.' }
         # Kill this owned host only. Keep the original Godot process running.
         $stoppedProcessId = $serverProcess.Id
+        $stoppedHostStartedUtc = $serverProcess.StartTime.ToUniversalTime().ToString('O')
+        $existingClientEvidence = @($startedClients | ForEach-Object {
+            @{ ProcessId = $_.Process.Id; StartedUtc = $_.Process.StartTime.ToUniversalTime().ToString('O') }
+        })
         Stop-OwnedLocalProcess $serverProcess
         $serverProcess.Dispose()
         $serverProcess = $null
@@ -1184,11 +1400,17 @@ try {
         }
         $restartedServer = Start-SessionServer $actualPort 'server-restarted'
         $serverProcess = $restartedServer.Process
-        if ($restartedServer.Port -ne $actualPort -or $restartedServer.ContentHash -ne $contentHash -or $restartedServer.RulesetHash -ne $rulesetHash) {
+        if ($restartedServer.Port -ne $actualPort -or $restartedServer.ContentHash -ne $contentHash -or $restartedServer.RulesetHash -ne $rulesetHash -or
+            $restartedServer.Persistence -cne $startedServer.Persistence) {
             throw 'The restarted host did not preserve the original endpoint and content/ruleset identity.'
         }
-        $restartEvidence = @{ StoppedProcessId = $stoppedProcessId; RestartedProcessId = $serverProcess.Id; GodotProcessId = $godotProcess.Id; Port = $actualPort }
-        [IO.File]::WriteAllText((Join-Path $SessionDirectory 'recovery-processes.json'), ($restartEvidence | ConvertTo-Json))
+        $restartEvidence = @{ PersistenceMode = $PersistenceMode; HostPersistence = $restartedServer.Persistence;
+            HostProcessId = $stoppedProcessId; HostStartedUtc = $stoppedHostStartedUtc; Clients = $existingClientEvidence;
+            InitialHostProcessId = $stoppedProcessId; InitialHostStartedUtc = $stoppedHostStartedUtc; InitialClients = $existingClientEvidence;
+            StoppedProcessId = $stoppedProcessId; StoppedHostStartedUtc = $stoppedHostStartedUtc;
+            RestartedProcessId = $serverProcess.Id; RestartedHostStartedUtc = $serverProcess.StartTime.ToUniversalTime().ToString('O');
+            GodotProcessId = $godotProcess.Id; GodotStartedUtc = $godotProcess.StartTime.ToUniversalTime().ToString('O'); ExistingClients = $existingClientEvidence; Port = $actualPort }
+        [IO.File]::WriteAllText((Join-Path $SessionDirectory 'recovery-processes.json'), ($restartEvidence | ConvertTo-Json -Depth 4))
     }
     $clientWait = [Diagnostics.Stopwatch]::StartNew()
     do {
@@ -1211,11 +1433,21 @@ try {
         if ($clientsRunning) { Start-Sleep -Milliseconds 100 }
     } while ($clientsRunning)
     if ($AcceptancePhase) {
+        $acceptanceEntityIds = @()
+        $acceptanceEntityIdsComplete = $true
         foreach ($startedClient in $startedClients) {
             if (-not (Test-Path -LiteralPath $startedClient.Evidence)) { throw "Godot did not emit acceptance evidence. See $($startedClient.Log)" }
             $evidence = Get-Content -LiteralPath $startedClient.Evidence -Raw | ConvertFrom-Json
             if (-not $evidence.Passed -or $evidence.Mode -ne $expectedGameMode -or $evidence.ContentHash -ne $contentHash -or $evidence.RulesetHash -ne $rulesetHash) {
                 throw "Godot acceptance evidence failed identity/mode validation. See $($startedClient.Evidence)"
+            }
+            if ($PersistenceMode -eq 'cohort' -and -not $performance) {
+                $acceptanceEntityIds += Get-CohortSceneEntityId $evidence
+            } elseif ($performance -or $null -eq $evidence.EntityId) {
+                $acceptanceEntityIdsComplete = $false
+            } else {
+                try { $acceptanceEntityIds += [uint32]$evidence.EntityId }
+                catch { throw "Godot acceptance evidence has an invalid entity binding. See $($startedClient.Evidence)" }
             }
         }
         if ($performance) {
@@ -1244,18 +1476,36 @@ try {
             $baselinePath = Join-Path $SessionDirectory 'performance-baseline.json'
             if (Test-Path -LiteralPath $baselinePath) { throw 'A performance baseline must never overwrite evidence.' }
         }
-        if (-not (Get-ChildItem -LiteralPath (Join-Path $SessionDirectory 'save') -Filter '*.session.json' -File)) {
-            throw 'Godot acceptance did not produce an authoritative checkpoint.'
-        }
-        if ($Multiplayer) {
-            if (@(Get-ChildItem -LiteralPath (Join-Path $SessionDirectory 'save') -Filter '*.session.json' -File).Count -ne $clientCount) {
-                throw 'Multiplayer acceptance must preserve one authoritative character checkpoint per client.'
+        if ($PersistenceMode -eq 'cohort') {
+            if ($null -ne $serverProcess -and $serverProcess.HasExited) {
+                throw 'The complete-cohort host exited before its live checkpoint was verified.'
             }
-            $bookmarks = [Collections.Generic.HashSet[string]]::new([StringComparer]::Ordinal)
-            for ($slot = 1; $slot -le $clientCount; $slot++) {
-                $bookmark = [IO.File]::ReadAllText((Join-Path $SessionDirectory "player-$slot/resume-token.txt")).Trim()
-                if ([string]::IsNullOrWhiteSpace($bookmark) -or -not $bookmarks.Add($bookmark)) {
-                    throw 'Multiplayer players must retain distinct private resume bookmarks.'
+            $bookmarkPaths = if ($Multiplayer) {
+                @(for ($slot = 1; $slot -le $clientCount; $slot++) {
+                    Join-Path $SessionDirectory "player-$slot/resume-token.txt"
+                })
+            } else {
+                @(Join-Path $SessionDirectory 'resume-token.txt')
+            }
+            $entityBindings = if ($acceptanceEntityIdsComplete) { [uint32[]]$acceptanceEntityIds } else { @() }
+            [void](Assert-CohortCheckpoint (Join-Path $SessionDirectory 'save') $expectedGameMode $contentHash $rulesetHash $bookmarkPaths $entityBindings)
+            if ($null -ne $serverProcess -and $serverProcess.HasExited) {
+                throw 'The complete-cohort host exited while its live checkpoint was being verified.'
+            }
+        } else {
+            if (-not (Get-ChildItem -LiteralPath (Join-Path $SessionDirectory 'save') -Filter '*.session.json' -File)) {
+                throw 'Godot acceptance did not produce an authoritative checkpoint.'
+            }
+            if ($Multiplayer) {
+                if (@(Get-ChildItem -LiteralPath (Join-Path $SessionDirectory 'save') -Filter '*.session.json' -File).Count -ne $clientCount) {
+                    throw 'Multiplayer acceptance must preserve one authoritative character checkpoint per client.'
+                }
+                $bookmarks = [Collections.Generic.HashSet[string]]::new([StringComparer]::Ordinal)
+                for ($slot = 1; $slot -le $clientCount; $slot++) {
+                    $bookmark = [IO.File]::ReadAllText((Join-Path $SessionDirectory "player-$slot/resume-token.txt")).Trim()
+                    if ([string]::IsNullOrWhiteSpace($bookmark) -or -not $bookmarks.Add($bookmark)) {
+                        throw 'Multiplayer players must retain distinct private resume bookmarks.'
+                    }
                 }
             }
         }

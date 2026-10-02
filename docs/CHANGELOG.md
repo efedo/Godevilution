@@ -2,6 +2,18 @@
 
 All notable changes to this fork are documented below.
 
+- 2026-10-02: Add isolated actual-Godot complete-cohort acceptance with canonical
+  integrity/identity and bookmark/entity checks, stable reverse-order multiplayer
+  bindings and fresh/retained process proof. Preserve legacy launch defaults and
+  user saves. Fix the application-discovered interrupted Windows replacement risk
+  with flushed handle-based POSIX rename, strict reader/readonly/Unicode regressions
+  and bounded fixture cleanup. Final focused checks pass 49; full server repeat
+  passes 1,424 with three existing exclusions, while retaining one earlier unexplained
+  concurrent-initialization failure and its isolated pass. Cohort single-player,
+  headless/rendered multiplayer and default legacy recovery pass with 34 clean
+  engine exits. Update existing guidance/plan/status; staged-write recovery,
+  metadata policy, normal adoption and broader M0 gates remain open.
+
 - 2026-10-02: Integrate explicit complete-host cohort recovery,
   offline participants, exact ledgers/cursors, stable bindings and pre-exposure
   publication. Fence mutation/write failures synchronously, preserve fresh

@@ -295,13 +295,15 @@ The multiplayer variant is separate from Journey/TownLoop. It runs two actual
 Godot processes through new-character forms, moves both players using ordinary
 keys, toggles friendly mode, and requires each client's snapshot and world
 presentation to show the other's changes without changing its own state.
-It checks two distinct private bookmarks and exactly two durable checkpoints.
+It checks two distinct private bookmarks and the selected persistence format:
+two legacy participant checkpoints or one complete-cohort checkpoint containing
+both stable participant bindings.
 A fresh host and two fresh clients then resume in reverse connection order,
 verify both characters' state, and advance each player's own command sequence.
 Per-phase process evidence distinguishes new processes from reused ones. Allow
 75 seconds per phase plus builds. Both clients remain connected until both
 finish observing the peer. This is a town/session check, not cooperative combat,
-multiplayer host-loss recovery, stable cross-restart numeric entity IDs, or an
+multiplayer host-loss recovery, legacy cross-restart numeric entity IDs, or an
 OS foreground/focus guarantee. Keep the entire evidence directory private.
 
 Scene acceptance treats an accepted receipt or a successful duplicate receipt
@@ -324,7 +326,31 @@ powershell -NoProfile -ExecutionPolicy Bypass -File tools/test-godot-session.ps1
 powershell -NoProfile -ExecutionPolicy Bypass -File tools/test-godot-session.ps1 -Lifecycle
 powershell -NoProfile -ExecutionPolicy Bypass -File tools/test-godot-session.ps1 -Lifecycle -Visible
 powershell -NoProfile -ExecutionPolicy Bypass -File tools/test-godot-session.ps1 -Multiplayer -Visible
+powershell -NoProfile -ExecutionPolicy Bypass -File tools/test-godot-session.ps1 -PersistenceMode cohort
+powershell -NoProfile -ExecutionPolicy Bypass -File tools/test-godot-session.ps1 -PersistenceMode cohort -Multiplayer
+powershell -NoProfile -ExecutionPolicy Bypass -File tools/test-godot-session.ps1 -PersistenceMode cohort -Multiplayer -Visible
 ```
+
+`-PersistenceMode cohort` explicitly opts into a fresh isolated save root; the
+default remains `legacy` and existing normal-launch profiles are unchanged.
+The launcher verifies the actual host persistence mode and canonical checkpoint
+integrity, participant count and private bookmark bindings without emitting
+credentials. Reads allow atomic replacement by the running server. Per-phase
+process evidence proves fresh hosts/clients; Recovery proves a fresh host with
+the same surviving client. Cohort multiplayer reverses admission order and
+requires the same local and peer entity IDs as creation. These town/session
+checks do not cover multiplayer host loss, every fault, campaign or release.
+For manual cohort play, the inner launcher also requires an explicit separate
+`-SessionDirectory`; legacy files are never automatically imported or changed.
+
+Canonical publication uses a fully flushed same-directory rename. On Windows,
+handle-based POSIX replacement keeps shared/delete readers on the previous complete
+file; unsupported systems fail closed. Replacement retains staged-file/root metadata,
+not the previous target's custom ACLs, streams or creation metadata. Use a private
+dedicated root; normal-profile adoption and this metadata policy remain open.
+Interrupted first publication/staged-write recovery and power-loss/filesystem
+durability are not certified. Preserve unexpected temporary files for diagnosis;
+the launcher does not select, promote or delete them to repair a save.
 
 `Lifecycle` uses real equipment/spell controls, mouse reselection and Q/E cycling,
 itemless quest activation, staff casting, native-style class Recharge, a

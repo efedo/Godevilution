@@ -333,8 +333,8 @@ public sealed class LocalLauncherContractTests
         Assert.Contains("$Multiplayer -and ($PreviewContent -or $PortalPreviewContent)", launcher);
         Assert.Contains("-AcceptancePhase MultiplayerCreate", acceptance);
         Assert.Contains("-AcceptancePhase MultiplayerResume", acceptance);
-        Assert.Contains("Multiplayer resume did not start a fresh authoritative host", acceptance);
-        Assert.Contains("Multiplayer resume did not start two fresh Godot processes", acceptance);
+        Assert.Contains("Assert-FreshProcessEvidence $created $resumed 2", acceptance);
+        Assert.Contains("foreach ($resumedClient in @($Resumed.Clients))", acceptance);
     }
 
     [Fact]
