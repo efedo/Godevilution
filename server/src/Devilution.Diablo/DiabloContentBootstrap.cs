@@ -107,6 +107,9 @@ public sealed record DiabloContentActivation
 
     public DiabloSimulation Simulation { get; }
 
+    /** Trusted activated configuration retained without exposing host persistence. */
+    public Func<DiabloCohortState, DiabloCohortCandidate>? CohortCandidateFactory { get; init; }
+
     public IDiabloStoreRules StoreRules { get; }
 
     public AuthoritativePlayerClassCatalog PlayerClasses { get; }
@@ -1341,7 +1344,7 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap, IDiabloN
         }
 
         var rules = new DiabloStoreRules(pricing, itemCatalog);
-        var simulation = simulationFactory.Create(new DiabloSimulationOptions(stores, rules) {
+        var simulationOptions = new DiabloSimulationOptions(stores, rules) {
             World = world,
             NativeGeneratedWorldIdentity = nativeGeneratedIdentity,
             CathedralDepthWorldIdentity = cathedralDepthIdentity,
@@ -1396,7 +1399,8 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap, IDiabloN
             Difficulty = difficulty,
             MonsterSpawnPlanner = monsterSpawnPlanner,
             ProceduralMonsterSpawns = monsterSpawns,
-        });
+        };
+        var simulation = simulationFactory.Create(simulationOptions);
         if (levelStartCatalog is not null) {
             var finalWorld = simulation.WorldState.World
                 ?? throw new InvalidDataException(
@@ -1472,7 +1476,11 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap, IDiabloN
             nativeSpells: legacyCompatibility.NativeSpells,
             nativeItemMisc: legacyCompatibility.NativeItemMisc,
             nativeItemTopology: legacyCompatibility.NativeItemTopology,
-            nativeItemTags: legacyCompatibility.NativeItemTags);
+            nativeItemTags: legacyCompatibility.NativeItemTags) {
+                CohortCandidateFactory = simulationFactory is IDiabloCohortSimulationFactory cohortFactory
+                    ? state => cohortFactory.CreateCohortCandidate(simulationOptions, state)
+                    : null,
+            };
     }
 
     private static IReadOnlySet<(int X, int Y)> GetReservedPositions(

@@ -224,8 +224,16 @@ public interface IDiabloSimulationFactory
     DiabloSimulation Create(DiabloSimulationOptions options);
 }
 
+/** Optional factory capability for detached complete-state restoration. */
+public interface IDiabloCohortSimulationFactory : IDiabloSimulationFactory
+{
+    DiabloCohortCandidate CreateCohortCandidate(
+        DiabloSimulationOptions options,
+        DiabloCohortState state);
+}
+
 /** Default first-party simulation factory registered by the Diablo module. */
-public sealed class DiabloSimulationFactory : IDiabloSimulationFactory
+public sealed class DiabloSimulationFactory : IDiabloCohortSimulationFactory
 {
     public static DiabloSimulationFactory Instance { get; } = new();
 

@@ -45,7 +45,7 @@ It targets .NET 8 and depends on Protocol, Domain, Data, and Engine. It must not
 reference `Devilution.Diablo` or any other game module. The .NET 10 executable
 supplies concrete content, module candidates, and one compatible adapter.
 
-## Complete-cohort recovery prerequisites
+## Complete-cohort recovery
 
 `AuthoritativeCommandServer.CaptureCohortState` detaches every existing ledger
 and its exact admission/receipt cursors under the command monitor.
@@ -67,11 +67,32 @@ ruleset and module format only after matching the previous identity, while
 preserving module ID, protocol, mode and tick rate. Caller-owned module/owner
 validation is still required before publication.
 
-These APIs are not wired into production TCP recovery or adapter replacement
-yet. Legacy per-session formats/imports remain unchanged and must not be used
-as fallback for a corrupt canonical cohort. Whole-module capture/restore,
-pre-listen recovery, durable-before-exposure publication and whole-host failure
-fencing remain M0 work; the same-tick multiplayer overwrite remains open.
+The standalone executable explicitly selects this mode with
+`--persistence-mode cohort --save-root <dedicated-directory>`. Legacy remains
+the default; existing saves are never merged, reset or migrated implicitly.
+Acquire the root lease before seed writes. Refuse unknown/legacy files in a
+new cohort root and a missing original seed in an existing CLI cohort root.
+Never fall back to per-session imports after canonical corruption.
+
+The optional `IAuthoritativeGameCohortAdapter` supplies detached capture and
+fresh, one-shot Prepare/Commit restoration. The leased facade checks the actual
+adapter capability, owns immutable prepared bindings and serializes token
+installation/disposal. Restore the complete module, offline roster, all ledgers,
+exact cursors and clock before listening; raw resume tokens remain ephemeral.
+Admission, snapshot materialization and durable publication share the command
+barrier before Hello/ACK/snapshot exposure. Live mutation/publication failures
+fence transports, admission, advancement, reload and shutdown republishing.
+The optional synchronous scheduler failure callback cancels due peers and final
+advancement before an executor fault can escape; legacy callback behavior and
+constructor signatures remain unchanged.
+
+Healthy shutdown quiesces owned work, publishes settled state, then releases
+adapters and the root lease. Complete-candidate reload publishes the new identity
+before activation; changed or uncertain durable outcomes fence the host, while
+failed preparation may leave the old activation healthy only with verified old
+durable state. Cleanup must not replace the primary failure. Normal-launch
+adoption, broader fault/reload checks and application acceptance remain M0 work;
+legacy per-session multiplayer overwrite remains a separate compatibility gap.
 
 ## Negotiated clock-gated scheduling
 
@@ -105,10 +126,11 @@ high-water marks so a fresh process cannot reuse an already admitted identity.
 Publication callbacks cannot re-enter submission, advancement or disposal;
 explicit cancellation and read-only queries remain available.
 
-Reload and cold persisted restore drain due work, then refuse mutation while
+Reload and legacy cold persisted restore drain due work, then refuse mutation while
 any future command remains queued. In-memory reconnect is allowed; refused cold
 restores do not cache an old-generation checkpoint. This fence does not solve
-the existing game adapter's broader shared-world checkpoint replacement problem.
+the legacy per-session shared-world checkpoint replacement problem. Cohort mode
+uses complete pre-listen recovery rather than participant-world replacement.
 Host shutdown cancels pending waits, closes owned transports and awaits handlers
 before disposing the adapter. Background `Completion` faults promptly;
 `DisposeAsync` completes cleanup before rethrowing retained failures. Isolated

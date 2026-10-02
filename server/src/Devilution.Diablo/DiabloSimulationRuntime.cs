@@ -664,6 +664,56 @@ public sealed partial class DiabloSimulation
                 "The supplied runtime is not owned by this Diablo simulation.");
     }
 
+    /**
+     * Adds one explicitly admitted participant to a restored cohort runtime.
+     * This is deliberately separate from Engine's implicit participant access:
+     * restored runtimes must never create state while executing a command.
+     */
+    public void AdmitCohortParticipant(
+        AuthoritativeSimulationRuntime<AuthoritativePlayerState, DiabloGameplayEvent> runtime,
+        string sessionId,
+        AuthoritativePlayerState state)
+    {
+        ArgumentNullException.ThrowIfNull(runtime);
+        ArgumentException.ThrowIfNullOrWhiteSpace(sessionId);
+        ArgumentNullException.ThrowIfNull(state);
+        RequireOwnedRuntime(runtime);
+        if (System.Threading.Volatile.Read(ref cohortCandidateOnly) == 0
+            || System.Threading.Volatile.Read(ref cohortRuntimeBound) == 0)
+            throw new InvalidOperationException(
+                "Explicit cohort admission requires a restored Diablo runtime.");
+        runtime.CaptureCohort((_, participants) => {
+        if (participants.Any(participant => participant.Id == sessionId
+                || ReferenceEquals(participant.State, state)))
+            throw new InvalidOperationException(
+                "A participant or its state is already registered for this cohort.");
+        if (state.EntityId == 0)
+            throw new InvalidDataException(
+                "A restored cohort participant requires a nonzero entity binding.");
+        if (!ReferenceEquals(state.Items, Items))
+            throw new InvalidDataException(
+                "A restored cohort participant uses an independent item policy.");
+        if (PlayerClasses is null) {
+            if (state.PlayerClass is not null)
+                throw new InvalidDataException(
+                    "A restored cohort participant uses an independent player-class policy.");
+        } else if (state.PlayerClass is null
+            || !PlayerClasses.TryGet(state.CharacterClassId, out var activePlayerClass)
+            || !ReferenceEquals(activePlayerClass, state.PlayerClass))
+            throw new InvalidDataException(
+                "A restored cohort participant uses an independent player-class policy.");
+            if (participants.Any(participant => participant.State.EntityId == state.EntityId)
+                || WorldState.IsEntityIdOccupied(state.EntityId))
+                throw new InvalidDataException(
+                    $"Entity ID {state.EntityId} is already occupied by the restored cohort.");
+        // Validate ownership/binding before normalization, and register before
+        // releasing the same reentrant runtime barrier used for collision checks.
+        state.ConfigureMaximumAttribute(CombatRules.MaximumAttribute);
+        runtime.AddParticipant(sessionId, state);
+        return 0;
+        });
+    }
+
     private sealed class Lifecycle
         : IAuthoritativeSimulationLifecycle<AuthoritativePlayerState, DiabloGameplayEvent>
     {

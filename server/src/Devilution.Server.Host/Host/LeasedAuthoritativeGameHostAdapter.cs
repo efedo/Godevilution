@@ -12,7 +12,8 @@ namespace Devilution.Server.Host;
  * may publish a new adapter between operations, but cannot retire the adapter
  * used by an operation that is already in flight.
  */
-public sealed class LeasedAuthoritativeGameHostAdapter : IAuthoritativeGameHostAdapter, IDisposable
+public sealed class LeasedAuthoritativeGameHostAdapter
+    : IAuthoritativeGameHostAdapter, IAuthoritativeGameCohortAdapter, IDisposable
 {
     private readonly GameplayRulesetRuntime<IAuthoritativeGameHostAdapter> rulesets;
     private readonly Action<IAuthoritativeGameHostAdapter> disposeAdapter;
@@ -32,6 +33,133 @@ public sealed class LeasedAuthoritativeGameHostAdapter : IAuthoritativeGameHostA
 
     /** Replaced generations still awaiting explicit disposal by the host. */
     public int RetiredRulesetCount => rulesets.RetiredActivationCount;
+
+    public bool SupportsCohortPersistence
+    {
+        get {
+            ThrowIfDisposed();
+            return WithAdapter(adapter => adapter is IAuthoritativeGameCohortAdapter cohort
+                && cohort.SupportsCohortPersistence);
+        }
+    }
+
+    public string CohortModuleId
+    {
+        get {
+            ThrowIfDisposed();
+            return WithAdapter(adapter => RequireCohortAdapter(adapter).CohortModuleId);
+        }
+    }
+
+    public int CohortFormatVersion
+    {
+        get {
+            ThrowIfDisposed();
+            return WithAdapter(adapter => RequireCohortAdapter(adapter).CohortFormatVersion);
+        }
+    }
+
+    public AuthoritativeModuleCohortState CaptureCohortState()
+    {
+        ThrowIfDisposed();
+        return WithAdapter(adapter => RequireCohortAdapter(adapter).CaptureCohortState());
+    }
+
+    public bool IsEntityIdOccupied(uint entityId)
+    {
+        ThrowIfDisposed();
+        return WithAdapter(adapter => RequireCohortAdapter(adapter).IsEntityIdOccupied(entityId));
+    }
+
+    public IAuthoritativePreparedCohortRestore PrepareCohortRestore(
+        AuthoritativeModuleCohortState state)
+    {
+        ThrowIfDisposed();
+        ArgumentNullException.ThrowIfNull(state);
+        operationBarrier.EnterReadLock();
+        try {
+            using var lease = rulesets.Acquire();
+            var prepared = RequireCohortAdapter(lease.Activation.Target).PrepareCohortRestore(state);
+            try {
+                return new PreparedCohortRestore(this, lease.Activation, prepared);
+            } catch (Exception failure) {
+                try { prepared.Dispose(); }
+                catch (Exception cleanup) { PreserveCleanupFailure(failure, cleanup, "prepared-wrapper"); }
+                throw;
+            }
+        } finally {
+            operationBarrier.ExitReadLock();
+        }
+    }
+
+    public void CommitCohortRestore(IAuthoritativePreparedCohortRestore prepared)
+    {
+        ThrowIfDisposed();
+        ArgumentNullException.ThrowIfNull(prepared);
+        operationBarrier.EnterWriteLock();
+        try {
+            if (prepared is not PreparedCohortRestore owned)
+                throw new InvalidOperationException("The prepared cohort is not owned by this leased adapter.");
+            owned.Install(this, rulesets.Active);
+        } finally {
+            operationBarrier.ExitWriteLock();
+        }
+    }
+
+    /**
+     * Restores one detached complete graph into the unexposed candidate, then
+     * lets the host publish its new identity before Engine activation. The host
+     * owns durable-outcome checks and failure fencing; legacy migration below
+     * remains unchanged. Lock order is command monitor, lease barrier, runtime.
+     */
+    public GameplayRulesetReloadResult<IAuthoritativeGameHostAdapter> TryReloadCohort(
+        ContentManifest candidateManifest,
+        IEnumerable<IGameplayModule> candidateModules,
+        Action<GameplayRulesetActivation<IAuthoritativeGameHostAdapter>> prepareCandidate)
+    {
+        ThrowIfDisposed();
+        ArgumentNullException.ThrowIfNull(candidateManifest);
+        ArgumentNullException.ThrowIfNull(candidateModules);
+        ArgumentNullException.ThrowIfNull(prepareCandidate);
+        operationBarrier.EnterWriteLock();
+        try {
+            AuthoritativeModuleCohortState source;
+            try {
+                source = RequireCohortAdapter(rulesets.Active.Target).CaptureCohortState();
+            } catch (Exception exception) {
+                return FailedReload("ruleset-cohort-export-failed", exception);
+            }
+            return rulesets.TryReloadWithActivation(
+                candidateManifest,
+                candidateModules,
+                candidate => {
+                    IAuthoritativePreparedCohortRestore? prepared = null;
+                    Exception? primaryFailure = null;
+                    try {
+                        try {
+                            var cohort = RequireCohortAdapter(candidate.Target);
+                            prepared = cohort.PrepareCohortRestore(source);
+                            cohort.CommitCohortRestore(prepared);
+                            prepareCandidate(candidate);
+                        } catch (Exception failure) {
+                            primaryFailure = failure;
+                            throw;
+                        } finally {
+                            try { prepared?.Dispose(); }
+                            catch (Exception cleanup) when (primaryFailure is not null) {
+                                PreserveCleanupFailure(primaryFailure, cleanup, "prepared-candidate");
+                            }
+                        }
+                    } catch (Exception failure) {
+                        try { disposeAdapter(candidate.Target); }
+                        catch (Exception cleanup) { PreserveCleanupFailure(failure, cleanup, "candidate-adapter"); }
+                        throw;
+                    }
+                });
+        } finally {
+            operationBarrier.ExitWriteLock();
+        }
+    }
 
     /**
      * Replaces the active ruleset after migrating every named session through
@@ -174,8 +302,18 @@ public sealed class LeasedAuthoritativeGameHostAdapter : IAuthoritativeGameHostA
             return;
         operationBarrier.EnterWriteLock();
         try {
-            DisposeRetiredAdaptersCore();
-            disposeAdapter(rulesets.Active.Target);
+            Exception? primaryFailure = null;
+            try { DisposeRetiredAdaptersCore(); }
+            catch (Exception failure) { primaryFailure = failure; }
+            try { disposeAdapter(rulesets.Active.Target); }
+            catch (Exception cleanup) {
+                if (primaryFailure is null)
+                    primaryFailure = cleanup;
+                else
+                    PreserveCleanupFailure(primaryFailure, cleanup, "active-adapter");
+            }
+            if (primaryFailure is not null)
+                System.Runtime.ExceptionServices.ExceptionDispatchInfo.Capture(primaryFailure).Throw();
         } finally {
             operationBarrier.ExitWriteLock();
             operationBarrier.Dispose();
@@ -209,8 +347,20 @@ public sealed class LeasedAuthoritativeGameHostAdapter : IAuthoritativeGameHostA
     private int DisposeRetiredAdaptersCore()
     {
         var retired = rulesets.DrainRetired();
-        foreach (var activation in retired)
-            disposeAdapter(activation.Target);
+        Exception? primaryFailure = null;
+        for (var index = 0; index < retired.Count; index++) {
+            try { disposeAdapter(retired[index].Target); }
+            catch (Exception cleanup) {
+                if (primaryFailure is null)
+                    primaryFailure = cleanup;
+                else
+                    PreserveCleanupFailure(primaryFailure, cleanup, $"retired-adapter-{index}");
+            }
+        }
+        // Draining transfers cleanup ownership here. One adapter failure must
+        // not abandon the remaining targets or replace the first diagnostic.
+        if (primaryFailure is not null)
+            System.Runtime.ExceptionServices.ExceptionDispatchInfo.Capture(primaryFailure).Throw();
         return retired.Count;
     }
 
@@ -228,6 +378,67 @@ public sealed class LeasedAuthoritativeGameHostAdapter : IAuthoritativeGameHostA
     {
         if (adapter is IDisposable disposable)
             disposable.Dispose();
+    }
+
+    private static IAuthoritativeGameCohortAdapter RequireCohortAdapter(
+        IAuthoritativeGameHostAdapter adapter)
+        => adapter is IAuthoritativeGameCohortAdapter cohort && cohort.SupportsCohortPersistence
+            ? cohort
+            : throw new NotSupportedException("The active game adapter does not support complete-cohort recovery.");
+
+    private static void PreserveCleanupFailure(Exception primary, Exception cleanup, string stage)
+    {
+        try { primary.Data[$"cohort-cleanup-{stage}"] = cleanup; }
+        catch { /* Diagnostic storage cannot replace the original failure. */ }
+    }
+
+    private static AuthoritativeModuleCohortState DetachCohortMetadata(AuthoritativeModuleCohortState source)
+    {
+        ArgumentNullException.ThrowIfNull(source);
+        if (source.Participants is null || source.Participants.Any(participant => participant is null))
+            throw new InvalidDataException("The prepared cohort contains a null binding.");
+        return source with {
+            Participants = Array.AsReadOnly(source.Participants
+                .Select(participant => new AuthoritativeModuleCohortParticipant(participant.SessionId, participant.EntityId))
+                .ToArray()),
+        };
+    }
+
+    private sealed class PreparedCohortRestore(
+        LeasedAuthoritativeGameHostAdapter owner,
+        GameplayRulesetActivation<IAuthoritativeGameHostAdapter> activation,
+        IAuthoritativePreparedCohortRestore inner) : IAuthoritativePreparedCohortRestore
+    {
+        private readonly object synchronization = new();
+        private bool consumed;
+        private bool disposed;
+
+        public AuthoritativeModuleCohortState CohortState { get; } = DetachCohortMetadata(inner.CohortState);
+
+        public void Install(
+            LeasedAuthoritativeGameHostAdapter requestedOwner,
+            GameplayRulesetActivation<IAuthoritativeGameHostAdapter> currentActivation)
+        {
+            lock (synchronization) {
+                if (!ReferenceEquals(owner, requestedOwner)
+                    || !ReferenceEquals(activation, currentActivation) || disposed)
+                    throw new InvalidOperationException("The prepared cohort belongs to a different or retired generation.");
+                if (consumed)
+                    throw new InvalidOperationException("The prepared cohort can only be installed once.");
+                consumed = true;
+                RequireCohortAdapter(currentActivation.Target).CommitCohortRestore(inner);
+            }
+        }
+
+        public void Dispose()
+        {
+            lock (synchronization) {
+                if (disposed)
+                    return;
+                disposed = true;
+                inner.Dispose();
+            }
+        }
     }
 
     private void ThrowIfDisposed()

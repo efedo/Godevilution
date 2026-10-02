@@ -33,6 +33,9 @@ public interface IAuthoritativeGameHostAdapter
 /** Game-neutral new-participant selection supplied before initial state access. */
 public sealed record AuthoritativeParticipantSelection(uint? ArchetypeId)
 {
+    /** Nonzero host-owned binding supplied before complete-cohort publication. */
+    public uint? EntityId { get; init; }
+
     /** Optional game-facing character identity requested only for a new participant. */
     public string? CharacterName { get; init; }
 }

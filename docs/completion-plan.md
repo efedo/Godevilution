@@ -1,7 +1,7 @@
 # Godevilution Completion Plan
 
-Plan date: 2026-10-02. Implementation baseline: `571f15b26` plus the
-complete module-cohort package recorded in migration status.
+Plan date: 2026-10-02. Complete-host cohort integration follows module baseline
+`70f030f39`; verified evidence for this integration batch is recorded in migration status.
 
 This is the active delivery plan. The [architecture](csharp-authoritative-server-migration.md)
 defines the objective and ownership rules; [migration status](migration-status.md)
@@ -71,7 +71,7 @@ isolated spell or table rows while the playable route stays unchanged.
 
 | Gate | Deliverable | Dependencies | Current position |
 | --- | --- | --- | --- |
-| M0 | Reproducible launch and honest acceptance evidence | Existing implementation | Godot session/recovery passes; complete module-cohort capture/candidate/codec and generic prerequisites exist, but production host recovery is unwired and cold participant imports still overwrite shared state; native GUI and release-budget/platform gaps remain |
+| M0 | Reproducible launch and honest acceptance evidence | Existing implementation | Explicit dedicated-root cohort host passes both TCP resume orders, scoped mutation/snapshot/reload fault tests and actual CLI startup/lease refusal; Godot cohort journeys, normal-launch adoption and broader fault/platform acceptance remain; legacy cold participant imports still overwrite shared state; native GUI and release-budget gaps remain |
 | M1 | Usable Godot town-to-dungeon loop | M0 launch/acceptance harness | Authored combat/loot/equipment, NPC/service approach, purchased-scroll portal and isolated Sorcerer quest/cast/Recharge/death/restart/restore journeys pass; full loop remains |
 | M2 | Native-compatible generated world | M0 geometry/parity baseline | Ordinary Cathedral depths 1-4 coarse/fine oracle covers six seeds and MAIN/PREV; separate opt-in four-depth runtime/profile/v3 restore and ordinary-control traversal are integrated; native population, campaign mapping, wider topology and remaining families remain |
 | M3 | Complete base and Hellfire gameplay routes | M1 plus the relevant M2 world slices | Many rules exist; campaign and remaining behavioral coverage remain |
@@ -154,16 +154,20 @@ M4. M5 is the final removal gate, not a reason to postpone replacement work.
    store are now implemented prerequisites. Complete module graph capture,
    exact allocator/portal clocks and same-tick markers, fresh one-shot participant
    restoration, owner-graph validation and a strict host-owned Diablo codec are
-   implemented, but not wired into production recovery. Next compose one host
-   cohort with all command ledgers and stable bindings, validate trusted content/
-   ruleset identity fences, and restore it before listening. Explicitly admit new
-   participants through the host; the restored module candidate does not create
-   them implicitly. Publish under the command barrier before exposing a Hello,
-   ACK, snapshot or reload; fence the entire host after post-mutation publication
-   failure, including advancement/admission and shutdown republishing. Verify
-   Immediate and gated recovery, both resume orders, failed publication and
-   cross-process lease ownership. Existing conflicting legacy multiplayer saves
+   implemented. The dedicated-root host mode restores all module
+   state, bindings, ledgers and exact cursors before listening, publishes under
+   the command barrier before exposure, and fences live mutation/publication
+   failure. Both resume orders now pass actual Immediate/gated TCP recovery;
+   corruption/identity refusal, durable-write failures and rejected-admission
+   cursor gaps have focused coverage. Actual partial-executor/snapshot failure
+   and successful/rejected/post-publication-failure reload checks now pass.
+   Finish CLI participant/Godot cohort journeys and broaden the failure matrix
+   before normal-launch adoption. Do not substitute these focused results for
+   broader multiplayer or application acceptance. Existing conflicting legacy multiplayer saves
    must remain untouched pending an approved migration policy.
+   Rebuilt CLI empty-roster startup/quit/resume and live second-process lease
+   refusal now pass. Missing-seed and legacy-root refusals preserve their
+   canonical/legacy inputs without seed regeneration; these are not gameplay tests.
 2. Add an application-level acceptance path through the actual Godot scene and
    controls: launch, create a character, receive/render an authoritative world,
    submit movement, observe the acknowledged position, save, exit, and resume
@@ -501,8 +505,9 @@ compatibility build keeps the physical-removal gate open.
    once against the integrated revision. Record failures as open gaps. Do not
    use a historical green result or a source-text assertion as runtime evidence.
 
-The immediate queue is M0 whole-host cohort recovery integration and actual
-Immediate/gated TCP acceptance, while preserving launch/build freshness and the
+The immediate queue is M0 actual CLI participant/Godot cohort journeys and
+normal-launch adoption, with broader failure/reload checks accompanying those
+application tests. Preserve launch/build freshness and the
 remaining native GUI/platform checks. Then advance M1's end-to-end authored loop
 and M2's Cathedral generation slice. Existing
 parity defects blocking those deliverables take precedence within the relevant

@@ -68,6 +68,40 @@ public sealed class AuthoritativeSimulationRuntimeTests
     }
 
     [Fact]
+    public void RestoredNearLimitCohortAdvancesTheFinalTickExactlyOnce()
+    {
+        var lifecycle = new TestLifecycle();
+        var runtime = new AuthoritativeSimulationRuntime<TestState, string>(lifecycle);
+        var player = new TestState("player");
+        runtime.InitializeCohort(ulong.MaxValue - 1, [new SimulationSession<TestState>("player", player)]);
+        lifecycle.Deliveries.Add(new DirectedSimulationEvent<TestState, string>(player, "final"));
+
+        runtime.AdvanceTo(ulong.MaxValue);
+        runtime.AdvanceTo(ulong.MaxValue);
+        runtime.AdvanceTo(ulong.MaxValue - 1);
+
+        Assert.Equal(ulong.MaxValue, runtime.LastAdvancedTick);
+        Assert.Equal([ulong.MaxValue], lifecycle.AdvancedTicks);
+        Assert.Equal([("player", ulong.MaxValue)], lifecycle.ParticipantAdvances);
+        Assert.Equal(["final"], runtime.DrainEvents("player"));
+    }
+
+    [Fact]
+    public void CohortAlreadyAtFinalTickDoesNotAdvanceOrReplay()
+    {
+        var lifecycle = new TestLifecycle();
+        var runtime = new AuthoritativeSimulationRuntime<TestState, string>(lifecycle);
+        runtime.InitializeCohort(ulong.MaxValue, []);
+
+        runtime.AdvanceTo(ulong.MaxValue);
+        runtime.AdvanceTo(0);
+
+        Assert.Equal(ulong.MaxValue, runtime.LastAdvancedTick);
+        Assert.Empty(lifecycle.AdvancedTicks);
+        Assert.Empty(lifecycle.ParticipantAdvances);
+    }
+
+    [Fact]
     public void RestoreAtTickDoesNotRewindSharedTimeline()
     {
         var lifecycle = new TestLifecycle();

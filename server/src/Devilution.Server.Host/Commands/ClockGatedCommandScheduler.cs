@@ -22,6 +22,7 @@ public sealed class ClockGatedCommandScheduler : IDisposable
 
     private readonly AuthoritativeCommandServer commandServer;
     private readonly Action<string, CommandAck>? durablePublication;
+    private readonly Action<Exception>? executionFailure;
     private readonly int maximumPendingCommands;
     private readonly Dictionary<CommandKey, PendingCommand> pendingByKey = [];
     private readonly HashSet<PendingWork> activeWorks = [];
@@ -38,12 +39,24 @@ public sealed class ClockGatedCommandScheduler : IDisposable
         Action<string, CommandAck>? durablePublication = null,
         int maximumPendingCommands = DefaultMaximumPendingCommands,
         CancellationToken cancellationToken = default)
+        : this(commandServer, durablePublication, maximumPendingCommands, cancellationToken, null)
+    {
+    }
+
+    /** Optional whole-host fatal fence, invoked synchronously before further work. */
+    public ClockGatedCommandScheduler(
+        AuthoritativeCommandServer commandServer,
+        Action<string, CommandAck>? durablePublication,
+        int maximumPendingCommands,
+        CancellationToken cancellationToken,
+        Action<Exception>? executionFailure)
     {
         this.commandServer = commandServer ?? throw new ArgumentNullException(nameof(commandServer));
         if (maximumPendingCommands <= 0)
             throw new ArgumentOutOfRangeException(nameof(maximumPendingCommands));
         this.maximumPendingCommands = maximumPendingCommands;
         this.durablePublication = durablePublication;
+        this.executionFailure = executionFailure;
         if (cancellationToken.CanBeCanceled)
             hostCancellationRegistration = cancellationToken.Register(Cancel);
     }
@@ -271,6 +284,7 @@ public sealed class ClockGatedCommandScheduler : IDisposable
                 throw new OperationCanceledException("The scheduler was cancelled during publication.");
             return Task.FromResult(acknowledgement.Clone());
         } catch (Exception exception) {
+            ReportExecutionFailure(exception);
             return Task.FromException<CommandAck>(exception);
         }
     }
@@ -317,6 +331,7 @@ public sealed class ClockGatedCommandScheduler : IDisposable
             return true;
         } catch (Exception exception) {
             FailWork(work, exception, pending);
+            ReportExecutionFailure(exception);
             return false;
         }
     }
@@ -335,6 +350,21 @@ public sealed class ClockGatedCommandScheduler : IDisposable
             work.RedurablePublicationComplete = true;
         } catch (Exception exception) {
             FailWork(work, exception, null);
+            ReportExecutionFailure(exception);
+        }
+    }
+
+    private void ReportExecutionFailure(Exception failure)
+    {
+        if (executionFailure is null)
+            return;
+        try { executionFailure(failure); }
+        catch (Exception diagnosticFailure) {
+            try { failure.Data["SchedulerFailureNotification"] = diagnosticFailure; } catch { }
+        } finally {
+            // Even a fallible observer cannot permit a queued peer or final
+            // autonomous advance after a configured whole-host fatal failure.
+            CancelCore();
         }
     }
 

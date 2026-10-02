@@ -236,14 +236,16 @@ public sealed class AuthoritativeSimulationRuntime<TState, TEvent>
         var participants = GetOrderedStates();
         foreach (var participant in participants)
             lifecycle.AdvanceParticipant(participant, tick);
-        for (var simulationTick = lastAdvancedTick + 1;
-             simulationTick <= tick;
-             simulationTick++) {
+        for (var simulationTick = lastAdvancedTick + 1; ; simulationTick++) {
             var deliveries = lifecycle.AdvanceTick(simulationTick, participants)
                 ?? throw new InvalidOperationException(
                     "The simulation lifecycle returned a null event collection.");
             foreach (var delivery in deliveries)
                 sessions.EnqueueEvent(delivery.Recipient, delivery.Event);
+            // Stop before incrementing the final ulong tick; wrapping to zero
+            // would replay indefinitely after a near-limit cohort restore.
+            if (simulationTick == tick)
+                break;
         }
         lastAdvancedTick = tick;
     }

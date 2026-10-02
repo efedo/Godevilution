@@ -26,6 +26,9 @@ public sealed record ServerHostOptions(
     /** Explicit whole-host opt-in; native compatibility retains immediate timing. */
     public bool UseClockGatedCommandScheduling { get; init; }
 
+    /** Dedicated-root opt-in; existing per-session saves are never migrated implicitly. */
+    public bool UseCohortPersistence { get; init; }
+
     /** Optional content level override for newly initialized participants. */
     public uint? StartingLevelId { get; init; }
 
@@ -90,6 +93,14 @@ public sealed record ServerHostOptions(
 
             var value = args[++index];
             switch (argument) {
+            case "--persistence-mode":
+                if (value is not ("legacy" or "cohort")) {
+                    options = current;
+                    error = $"'{value}' is not a valid persistence mode.";
+                    return false;
+                }
+                current = current with { UseCohortPersistence = value == "cohort" };
+                break;
             case "--command-scheduling":
                 if (value is not ("immediate" or "clock-gated")) {
                     options = current;
@@ -349,6 +360,7 @@ public sealed record ServerHostOptions(
           --procedural-monsters <n>    Replace static encounters with at most n generated monsters
           --procedural-monster-level <id> Level for generated encounters (default: start level)
           --save-root <directory>      Server-owned authoritative save directory
+          --persistence-mode <mode>    legacy (default) or cohort; cohort requires a dedicated root
           --performance-output <file> New diagnostic JSON file; use profile-start after warm-up, then quit
         """;
 }

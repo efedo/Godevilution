@@ -18,7 +18,8 @@ namespace Devilution.Server.Stores;
  * The outer command server provides command-level deduplication, so each intent
  * is applied once even when a client command is retried.
  */
-public sealed class StoreSimulationExecutor : IAuthoritativeGameHostAdapter
+public sealed class StoreSimulationExecutor
+    : IAuthoritativeGameHostAdapter, IAuthoritativeGameCohortAdapter
 {
     /** Reserved service-only store used by Adria's mana refill action. */
     public const uint AdriaStoreId = DiabloStoreCommandProcessor.AdriaStoreId;
@@ -27,10 +28,102 @@ public sealed class StoreSimulationExecutor : IAuthoritativeGameHostAdapter
     private const int NativeMaximumEquipmentCount = AuthoritativeProtocolLimits.NativeMaximumEquipmentCount;
     private const int NativeStashPageCount = AuthoritativeProtocolLimits.NativeStashPageCount;
     private const int NativeStashCellCount = AuthoritativeProtocolLimits.NativeStashCellCount;
-    private readonly DiabloSimulation simulation;
-    private readonly AuthoritativeSimulationRuntime<AuthoritativePlayerState, DiabloGameplayEvent> runtime;
-    private readonly AuthoritativeSaveCodec saveCodec;
-    private readonly Func<string, uint?, DiabloPlayerTemplate> playerTemplateFactory;
+    private const string CohortModuleIdentity = "devilution.diablo";
+    private readonly ReaderWriterLockSlim activeStateBarrier = new();
+    private ActiveState activeState = null!;
+    private long activeStateGeneration;
+
+    private sealed class ActiveState
+    {
+        public ActiveState(
+            DiabloSimulation simulation,
+            AuthoritativeSimulationRuntime<AuthoritativePlayerState, DiabloGameplayEvent> runtime,
+            AuthoritativeSaveCodec saveCodec,
+            Func<string, uint?, DiabloPlayerTemplate> playerTemplateFactory,
+            Func<DiabloCohortState, DiabloCohortCandidate>? cohortCandidateFactory,
+            bool isRestoredCohort)
+        {
+            Simulation = simulation ?? throw new ArgumentNullException(nameof(simulation));
+            Runtime = runtime ?? throw new ArgumentNullException(nameof(runtime));
+            SaveCodec = saveCodec ?? throw new ArgumentNullException(nameof(saveCodec));
+            PlayerTemplateFactory = playerTemplateFactory
+                ?? throw new ArgumentNullException(nameof(playerTemplateFactory));
+            CohortCandidateFactory = cohortCandidateFactory;
+            IsRestoredCohort = isRestoredCohort;
+        }
+
+        public DiabloSimulation Simulation { get; }
+
+        public AuthoritativeSimulationRuntime<AuthoritativePlayerState, DiabloGameplayEvent> Runtime { get; }
+
+        public AuthoritativeSaveCodec SaveCodec { get; }
+
+        public Func<string, uint?, DiabloPlayerTemplate> PlayerTemplateFactory { get; }
+
+        public Func<DiabloCohortState, DiabloCohortCandidate>? CohortCandidateFactory { get; }
+
+        public bool IsRestoredCohort { get; }
+    }
+
+    private sealed class PreparedCohortRestore : IAuthoritativePreparedCohortRestore
+    {
+        private readonly StoreSimulationExecutor owner;
+        private readonly object synchronization = new();
+        private readonly ActiveState expectedActiveState;
+        private readonly long expectedGeneration;
+        private readonly ActiveState candidateActiveState;
+        private bool completed;
+        private bool committed;
+
+        public PreparedCohortRestore(
+            StoreSimulationExecutor owner,
+            ActiveState expectedActiveState,
+            long expectedGeneration,
+            ActiveState candidateActiveState,
+            AuthoritativeModuleCohortState cohortState)
+        {
+            this.owner = owner;
+            this.expectedActiveState = expectedActiveState;
+            this.expectedGeneration = expectedGeneration;
+            this.candidateActiveState = candidateActiveState;
+            CohortState = cohortState;
+        }
+
+        public AuthoritativeModuleCohortState CohortState { get; }
+
+        public void Dispose()
+        {
+            lock (synchronization) {
+                if (!committed)
+                    completed = true;
+            }
+        }
+
+        public void Commit()
+        {
+            lock (synchronization) {
+                if (completed)
+                    throw new InvalidOperationException(
+                        "The prepared Diablo cohort has already been consumed or disposed.");
+                owner.InstallPreparedCohort(this);
+                committed = true;
+                completed = true;
+            }
+        }
+
+        public void ValidateOwner(StoreSimulationExecutor candidateOwner)
+        {
+            if (!ReferenceEquals(candidateOwner, owner))
+                throw new InvalidOperationException(
+                    "The prepared Diablo cohort belongs to another executor.");
+        }
+
+        public ActiveState ExpectedActiveState => expectedActiveState;
+
+        public long ExpectedGeneration => expectedGeneration;
+
+        public ActiveState CandidateActiveState => candidateActiveState;
+    }
 
     /** Creates the protocol adapter over module-activated content and state. */
     public StoreSimulationExecutor(
@@ -49,13 +142,19 @@ public sealed class StoreSimulationExecutor : IAuthoritativeGameHostAdapter
     {
         ArgumentNullException.ThrowIfNull(content);
         ArgumentNullException.ThrowIfNull(playerTemplateFactory);
-        simulation = content.Simulation;
-        this.playerTemplateFactory = playerTemplateFactory;
+        var simulation = content.Simulation;
         var defaultTemplate = playerTemplateFactory("default", null)
             ?? throw new InvalidOperationException(
                 "The player-template factory returned no default template.");
-        runtime = simulation.CreateRuntime(defaultTemplate);
-        this.saveCodec = saveCodec ?? new AuthoritativeSaveCodec(simulation.Items);
+        var runtime = simulation.CreateRuntime(defaultTemplate);
+        var selectedSaveCodec = saveCodec ?? new AuthoritativeSaveCodec(simulation.Items);
+        activeState = new ActiveState(
+            simulation,
+            runtime,
+            selectedSaveCodec,
+            playerTemplateFactory,
+            content.CohortCandidateFactory,
+            isRestoredCohort: false);
     }
 
     /** Compatibility constructor retained for focused host-adapter tests. */
@@ -130,8 +229,8 @@ public sealed class StoreSimulationExecutor : IAuthoritativeGameHostAdapter
             DiabloGameplayModule module => module.Rules,
             _ => new StoreGameplayRulesBridge(gameplayRules),
         });
-        simulation = (simulationFactory ?? DiabloSimulationFactory.Instance).Create(
-            new DiabloSimulationOptions(catalog, storeRules) {
+        var selectedSimulationFactory = simulationFactory ?? DiabloSimulationFactory.Instance;
+        var simulationOptions = new DiabloSimulationOptions(catalog, storeRules) {
                 World = startingWorld,
                 FallbackWidth = worldWidth,
                 FallbackHeight = worldHeight,
@@ -161,7 +260,8 @@ public sealed class StoreSimulationExecutor : IAuthoritativeGameHostAdapter
                 MonsterMissiles = startingMonsterMissiles,
                 MonsterTypes = startingMonsterTypes,
                 MonsterSpawnPlanner = startingMonsterSpawnPlanner,
-            });
+            };
+        var simulation = selectedSimulationFactory.Create(simulationOptions);
         var compatibilityTemplate = new DiabloPlayerTemplate(
             startingGold,
             startingExperience,
@@ -193,10 +293,187 @@ public sealed class StoreSimulationExecutor : IAuthoritativeGameHostAdapter
             statPoints: startingStatPoints,
             stash: startingStash,
             stashGold: startingStashGold);
-        playerTemplateFactory = (_, _) => compatibilityTemplate;
-        runtime = simulation.CreateRuntime(compatibilityTemplate);
-        this.saveCodec = saveCodec ?? new AuthoritativeSaveCodec(simulation.Items);
+        var playerTemplateFactory = new Func<string, uint?, DiabloPlayerTemplate>(
+            (_, _) => compatibilityTemplate);
+        var runtime = simulation.CreateRuntime(compatibilityTemplate);
+        var selectedSaveCodec = saveCodec ?? new AuthoritativeSaveCodec(simulation.Items);
+        var cohortCandidateFactory = selectedSimulationFactory
+            is IDiabloCohortSimulationFactory cohortFactory
+            ? new Func<DiabloCohortState, DiabloCohortCandidate>(
+                state => cohortFactory.CreateCohortCandidate(simulationOptions, state))
+            : null;
+        activeState = new ActiveState(
+            simulation,
+            runtime,
+            selectedSaveCodec,
+            playerTemplateFactory,
+            cohortCandidateFactory,
+            isRestoredCohort: false);
     }
+
+    public bool SupportsCohortPersistence
+        => WithActiveState(state => state.CohortCandidateFactory is not null);
+
+    public string CohortModuleId => CohortModuleIdentity;
+
+    public int CohortFormatVersion => DiabloCohortState.CurrentFormatVersion;
+
+    public bool IsEntityIdOccupied(uint entityId)
+    {
+        if (entityId == 0)
+            return false;
+        return WithActiveState(state => state.Simulation.WorldState.IsEntityIdOccupied(entityId)
+            || state.Runtime.CaptureCohort(
+                (_, participants) => participants.Any(
+                    participant => participant.State.EntityId == entityId)));
+    }
+
+    public AuthoritativeModuleCohortState CaptureCohortState()
+    {
+        return WithActiveState(state => {
+            RequireCohortCapability(state);
+            return CreateModuleCohortState(
+                state.Simulation.CaptureCohortState(state.Runtime));
+        });
+    }
+
+    public IAuthoritativePreparedCohortRestore PrepareCohortRestore(
+        AuthoritativeModuleCohortState state)
+    {
+        ArgumentNullException.ThrowIfNull(state);
+        return WithActiveState(active => {
+            RequireCohortCapability(active);
+            ValidateModuleCohortState(state);
+            var decoded = new DiabloCohortCodec().Deserialize(state.SerializedState);
+            var candidate = active.CohortCandidateFactory!(decoded)
+                ?? throw new InvalidDataException(
+                    "The Diablo cohort candidate factory returned no candidate.");
+            var candidateRuntime = candidate.CreateRuntime();
+            var actualState = candidate.Simulation.CaptureCohortState(candidateRuntime);
+            var actualCohort = CreateModuleCohortState(actualState);
+            ValidatePreparedCohortState(state, actualCohort);
+            var candidateActiveState = new ActiveState(
+                candidate.Simulation,
+                candidateRuntime,
+                active.SaveCodec,
+                active.PlayerTemplateFactory,
+                active.CohortCandidateFactory,
+                isRestoredCohort: true);
+            return (IAuthoritativePreparedCohortRestore)new PreparedCohortRestore(
+                this,
+                active,
+                activeStateGeneration,
+                candidateActiveState,
+                actualCohort);
+        });
+    }
+
+    public void CommitCohortRestore(IAuthoritativePreparedCohortRestore prepared)
+    {
+        ArgumentNullException.ThrowIfNull(prepared);
+        if (prepared is not PreparedCohortRestore owned)
+            throw new InvalidOperationException(
+                "The prepared Diablo cohort belongs to another adapter implementation.");
+        owned.ValidateOwner(this);
+        owned.Commit();
+    }
+
+    private void InstallPreparedCohort(PreparedCohortRestore prepared)
+    {
+        activeStateBarrier.EnterWriteLock();
+        try {
+            if (!ReferenceEquals(activeState, prepared.ExpectedActiveState)
+                || activeStateGeneration != prepared.ExpectedGeneration)
+                throw new InvalidOperationException(
+                    "The Diablo cohort target changed after preparation.");
+            if (activeState.IsRestoredCohort)
+                throw new InvalidOperationException(
+                    "A restored Diablo cohort can only be installed once.");
+            var isFresh = activeState.Runtime.CaptureCohort(
+                (tick, participants) => tick == 0 && participants.Count == 0);
+            if (!isFresh)
+                throw new InvalidOperationException(
+                    "A Diablo cohort can only be committed into a fresh executor.");
+            activeState = prepared.CandidateActiveState;
+            activeStateGeneration++;
+        } finally {
+            activeStateBarrier.ExitWriteLock();
+        }
+    }
+
+    private static AuthoritativeModuleCohortState CreateModuleCohortState(
+        DiabloCohortState state)
+    {
+        var participants = Array.AsReadOnly(state.Participants
+            .Select(participant => new AuthoritativeModuleCohortParticipant(
+                participant.SessionId,
+                participant.EntityId))
+            .ToArray());
+        var serializedState = new DiabloCohortCodec().Serialize(state);
+        return new AuthoritativeModuleCohortState(
+            CohortModuleIdentity,
+            DiabloCohortState.CurrentFormatVersion,
+            state.Tick,
+            participants,
+            serializedState);
+    }
+
+    private static void ValidateModuleCohortState(
+        AuthoritativeModuleCohortState state)
+    {
+        if (!string.Equals(state.ModuleId, CohortModuleIdentity, StringComparison.Ordinal))
+            throw new InvalidDataException(
+                $"The cohort belongs to module '{state.ModuleId}', not '{CohortModuleIdentity}'.");
+        if (state.FormatVersion != DiabloCohortState.CurrentFormatVersion)
+            throw new InvalidDataException(
+                $"Unsupported Diablo cohort format version {state.FormatVersion}.");
+        if (string.IsNullOrWhiteSpace(state.SerializedState))
+            throw new InvalidDataException("The Diablo cohort payload is empty.");
+    }
+
+    private static void ValidatePreparedCohortState(
+        AuthoritativeModuleCohortState supplied,
+        AuthoritativeModuleCohortState actual)
+    {
+        if (supplied.Tick != actual.Tick)
+            throw new InvalidDataException(
+                "The Diablo cohort tick does not match the candidate recapture.");
+        if (supplied.Participants is null
+            || supplied.Participants.Count != actual.Participants.Count
+            || supplied.Participants.Zip(actual.Participants)
+                .Any(pair => !string.Equals(
+                        pair.First.SessionId,
+                        pair.Second.SessionId,
+                        StringComparison.Ordinal)
+                    || pair.First.EntityId != pair.Second.EntityId))
+            throw new InvalidDataException(
+                "The Diablo cohort participant bindings do not match the candidate recapture.");
+    }
+
+    private static void RequireCohortCapability(ActiveState state)
+    {
+        if (state.CohortCandidateFactory is null)
+            throw new NotSupportedException(
+                "The active Diablo configuration does not support complete cohort persistence.");
+    }
+
+    private T WithActiveState<T>(Func<ActiveState, T> operation)
+    {
+        ArgumentNullException.ThrowIfNull(operation);
+        activeStateBarrier.EnterReadLock();
+        try {
+            return operation(activeState);
+        } finally {
+            activeStateBarrier.ExitReadLock();
+        }
+    }
+
+    // Command helper methods execute only while their public operation holds
+    // the read lease, so these aliases remain one immutable active holder.
+    private DiabloSimulation simulation => activeState.Simulation;
+
+    private AuthoritativeSimulationRuntime<AuthoritativePlayerState, DiabloGameplayEvent> runtime
+        => activeState.Runtime;
 
     public void InitializeParticipant(
         string sessionId,
@@ -204,12 +481,22 @@ public sealed class StoreSimulationExecutor : IAuthoritativeGameHostAdapter
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(sessionId);
         ArgumentNullException.ThrowIfNull(selection);
-        var template = playerTemplateFactory(sessionId, selection.ArchetypeId)
-            ?? throw new InvalidOperationException(
-                "The player-template factory returned no selected template.");
-        if (!string.IsNullOrEmpty(selection.CharacterName))
-            template = template.WithCharacterName(selection.CharacterName);
-        runtime.AddParticipant(sessionId, template.CreatePlayer());
+        _ = WithActiveState(state => {
+            var template = state.PlayerTemplateFactory(sessionId, selection.ArchetypeId)
+                ?? throw new InvalidOperationException(
+                    "The player-template factory returned no selected template.");
+            if (!string.IsNullOrEmpty(selection.CharacterName))
+                template = template.WithCharacterName(selection.CharacterName);
+            var player = template.CreatePlayer();
+            if (selection.EntityId is uint entityId) {
+                if (entityId == 0)
+                    throw new InvalidDataException(
+                        "A participant entity binding must be nonzero.");
+                player.EntityId = entityId;
+            }
+            AddParticipant(state, sessionId, player, selection.EntityId.HasValue);
+            return 0;
+        });
     }
 
     /** Registers an explicitly constructed module template for deterministic replay setup. */
@@ -219,7 +506,30 @@ public sealed class StoreSimulationExecutor : IAuthoritativeGameHostAdapter
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(sessionId);
         ArgumentNullException.ThrowIfNull(template);
-        runtime.AddParticipant(sessionId, template.CreatePlayer());
+        _ = WithActiveState(state => {
+            AddParticipant(state, sessionId, template.CreatePlayer());
+            return 0;
+        });
+    }
+
+    private static void AddParticipant(
+        ActiveState state,
+        string sessionId,
+        AuthoritativePlayerState player,
+        bool explicitBinding = false)
+    {
+        if ((explicitBinding || state.IsRestoredCohort) && player.EntityId != 0
+            && (state.Simulation.WorldState.IsEntityIdOccupied(player.EntityId)
+                || state.Runtime.CaptureCohort(
+                    (_, participants) => participants.Any(
+                        participant => participant.State.EntityId == player.EntityId))))
+            throw new InvalidDataException(
+                $"Entity ID {player.EntityId} is already occupied by the active simulation.");
+        if (state.IsRestoredCohort) {
+            state.Simulation.AdmitCohortParticipant(state.Runtime, sessionId, player);
+            return;
+        }
+        state.Runtime.AddParticipant(sessionId, player);
     }
 
     private static Func<string, uint?, DiabloPlayerTemplate> CreateFixedPlayerTemplateFactory(
@@ -235,7 +545,7 @@ public sealed class StoreSimulationExecutor : IAuthoritativeGameHostAdapter
         if (string.IsNullOrWhiteSpace(sessionId))
             return CommandExecutionResult.Rejected(CommandRejectReason.Malformed);
 
-        return runtime.Execute(
+        return WithActiveState(_ => runtime.Execute(
             sessionId,
             appliedTick,
             (player, participants) => command.IntentCase switch {
@@ -424,7 +734,7 @@ public sealed class StoreSimulationExecutor : IAuthoritativeGameHostAdapter
                     appliedTick),
                 _ => new SimulationStepResult<CommandExecutionResult, DiabloGameplayEvent>(
                     CommandExecutionResult.Rejected(CommandRejectReason.Malformed)),
-            });
+            }));
     }
 
     private static DiabloAllocateAttributeIntent CreateAllocateAttributeIntent(
@@ -445,7 +755,8 @@ public sealed class StoreSimulationExecutor : IAuthoritativeGameHostAdapter
         if (string.IsNullOrWhiteSpace(sessionId))
             throw new ArgumentException("A session ID is required.", nameof(sessionId));
 
-        return runtime.Read(sessionId, simulation.CapturePlayerState);
+        return WithActiveState(state =>
+            state.Runtime.Read(sessionId, state.Simulation.CapturePlayerState));
     }
 
     public Snapshot CreateSnapshot(string sessionId, uint entityId, ulong tick)
@@ -453,23 +764,27 @@ public sealed class StoreSimulationExecutor : IAuthoritativeGameHostAdapter
         if (string.IsNullOrWhiteSpace(sessionId))
             throw new ArgumentException("A session ID is required.", nameof(sessionId));
 
-        return runtime.Capture(sessionId, tick, (state, participants) => {
-            state.EntityId = entityId;
+        return WithActiveState(active => active.Runtime.Capture(sessionId, tick, (state, participants) => {
+            if (active.IsRestoredCohort && state.EntityId != entityId)
+                throw new InvalidOperationException(
+                    "A restored cohort snapshot cannot rebind a participant entity.");
+            if (!active.IsRestoredCohort)
+                state.EntityId = entityId;
             var participantSnapshots = participants
                 .Where(participant => participant.EntityId != 0)
-                .Select(simulation.CapturePlayerState)
+                .Select(active.Simulation.CapturePlayerState)
                 .ToArray();
             return DiabloProtocolMapper.ToProtocolSnapshot(
-                simulation.CaptureSnapshot(state, tick),
+                active.Simulation.CaptureSnapshot(state, tick),
                 participantSnapshots,
                 state.PlayerClass?.Flags.HasFlag(DiabloPlayerClassFlags.TrapSense) ?? true,
-                simulation.Spells,
-                simulation.SpellBooks,
-                simulation.Items,
-                simulation.WorldState.LevelGeometry,
-                simulation.WorldState.World?.WarpTargets,
+                active.Simulation.Spells,
+                active.Simulation.SpellBooks,
+                active.Simulation.Items,
+                active.Simulation.WorldState.LevelGeometry,
+                active.Simulation.WorldState.World?.WarpTargets,
                 allowZeroPlayerEntityId: entityId == 0);
-        });
+        }));
     }
 
     /**
@@ -478,12 +793,14 @@ public sealed class StoreSimulationExecutor : IAuthoritativeGameHostAdapter
      */
     public string ExportPlayerSave(string sessionId)
     {
-        var tick = runtime.LastAdvancedTick;
-        var snapshot = runtime.Capture(
-            sessionId,
-            tick,
-            state => simulation.CaptureSnapshot(state, tick));
-        return saveCodec.Serialize(snapshot);
+        return WithActiveState(active => {
+            var tick = active.Runtime.LastAdvancedTick;
+            var snapshot = active.Runtime.Capture(
+                sessionId,
+                tick,
+                state => active.Simulation.CaptureSnapshot(state, tick));
+            return active.SaveCodec.Serialize(snapshot);
+        });
     }
 
     /** Exports the complete player and authoritative world state for migration. */
@@ -495,19 +812,22 @@ public sealed class StoreSimulationExecutor : IAuthoritativeGameHostAdapter
     /** Restores a validated save into an existing session without changing world configuration. */
     public void ImportPlayerSave(string sessionId, string serializedSave)
     {
-        var snapshot = saveCodec.Deserialize(serializedSave);
-        runtime.WriteOrAddParticipant(
-            sessionId,
-            () => {
-                var savedTemplate = playerTemplateFactory(
-                    sessionId,
-                    snapshot.Player.CharacterClassId)
-                    ?? throw new InvalidOperationException(
-                        "The player-template factory returned no saved-class template.");
-                return savedTemplate.CreatePlayer();
-            },
-            player => simulation.RestoreSnapshot(player, snapshot));
-        runtime.RestoreAtTick(snapshot.Tick);
+        _ = WithActiveState(active => {
+            var snapshot = active.SaveCodec.Deserialize(serializedSave);
+            active.Runtime.WriteOrAddParticipant(
+                sessionId,
+                () => {
+                    var savedTemplate = active.PlayerTemplateFactory(
+                        sessionId,
+                        snapshot.Player.CharacterClassId)
+                        ?? throw new InvalidOperationException(
+                            "The player-template factory returned no saved-class template.");
+                    return savedTemplate.CreatePlayer();
+                },
+                player => active.Simulation.RestoreSnapshot(player, snapshot));
+            active.Runtime.RestoreAtTick(snapshot.Tick);
+            return 0;
+        });
     }
 
     /** Restores the complete player and authoritative world state for migration. */
@@ -522,13 +842,16 @@ public sealed class StoreSimulationExecutor : IAuthoritativeGameHostAdapter
         if (string.IsNullOrWhiteSpace(sessionId))
             throw new ArgumentException("A session ID is required.", nameof(sessionId));
 
-        return runtime.LastAdvancedTick;
+        return WithActiveState(state => state.Runtime.LastAdvancedTick);
     }
 
     /** Advances statuses and autonomous monster behavior at a server tick boundary. */
     public void AdvanceTo(ulong tick)
     {
-        runtime.AdvanceTo(tick);
+        _ = WithActiveState(state => {
+            state.Runtime.AdvanceTo(tick);
+            return 0;
+        });
     }
 
     public EventBatch? DrainEvents(string sessionId, uint entityId, ulong tick)
@@ -536,11 +859,11 @@ public sealed class StoreSimulationExecutor : IAuthoritativeGameHostAdapter
         if (string.IsNullOrWhiteSpace(sessionId))
             throw new ArgumentException("A session ID is required.", nameof(sessionId));
 
-        return DiabloProtocolMapper.ToProtocolEventBatch(
-            runtime.DrainEvents(sessionId),
+        return WithActiveState(state => DiabloProtocolMapper.ToProtocolEventBatch(
+            state.Runtime.DrainEvents(sessionId),
             entityId,
             tick,
-            simulation.DialogueMessages);
+            state.Simulation.DialogueMessages));
     }
 
     private SimulationStepResult<CommandExecutionResult, DiabloGameplayEvent> ExecuteStoreIntent(

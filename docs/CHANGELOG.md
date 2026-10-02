@@ -2,6 +2,19 @@
 
 All notable changes to this fork are documented below.
 
+- 2026-10-02: Integrate explicit complete-host cohort recovery,
+  offline participants, exact ledgers/cursors, stable bindings and pre-exposure
+  publication. Fence mutation/write failures synchronously, preserve fresh
+  candidate ownership and primary cleanup/reload diagnostics, and fix the final
+  unsigned Engine-tick loop. Attempt every retired/active cleanup and retain
+  secondary failures by stage. Preserve legacy saves/APIs/observer behavior and
+  refuse implicit migration. Focused host/module/scheduler checks pass 148/44/27;
+  full server passes 1,410 with three existing explicit exclusions; managed
+  client integration passes 619 with two performance exclusions. Verify actual
+  CLI startup/quit/resume, second-process lease and missing-seed/legacy-root
+  refusal. Update existing host contracts, plan and status. Godot cohort
+  application acceptance and normal-launch adoption remain; this is not M0 completion.
+
 - 2026-10-02: Add complete module-cohort capture, validated fresh one-shot
   restoration and a strict host-owned Diablo codec. Preserve raw actors/quests,
   historical references, participant policies, RNG, exact independent cursors,

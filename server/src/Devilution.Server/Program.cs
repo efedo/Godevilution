@@ -36,6 +36,15 @@ internal static class Program
 
     private static async Task<int> RunAsync(ServerHostOptions options)
     {
+        // Lease precedes every seed/save-root write, including startup failures.
+        using var cohortStore = options.UseCohortPersistence
+            ? new AuthoritativeCohortStore(options.SaveRoot) : null;
+        if (cohortStore is not null) {
+            AuthoritativeTcpServer.ValidateCohortRootForStartup(cohortStore);
+            if (cohortStore.Load() is not null
+                && !File.Exists(Path.Combine(cohortStore.RootDirectory, AuthoritativeWorldSeedStore.FileName)))
+                throw new InvalidDataException("The cohort root is missing its original world seed. Preserve the complete root; no seed is regenerated.");
+        }
         // Reserve a new output before binding. Never overwrite an existing artifact.
         using var performanceOutput = options.PerformanceOutput is null ? null
             : new FileStream(Path.GetFullPath(options.PerformanceOutput), FileMode.CreateNew, FileAccess.Write, FileShare.Read);
@@ -55,7 +64,7 @@ internal static class Program
         }
 
         var contentManifest = LoadContentManifest();
-        var saveStore = new AuthoritativeSaveStore(options.SaveRoot);
+        var saveStore = options.UseCohortPersistence ? null : new AuthoritativeSaveStore(options.SaveRoot);
         var worldSeedStore = new AuthoritativeWorldSeedStore(options.SaveRoot);
         var clock = new RealtimeAuthoritativeClock(options.TickRateHz);
         var adapterPackageLoader = new AuthoritativeGameHostAdapterPackageLoader();
@@ -145,6 +154,7 @@ internal static class Program
             saveStore) {
             PerformanceRecorder = performance,
             UseClockGatedCommandScheduling = options.UseClockGatedCommandScheduling,
+            CohortStore = cohortStore,
             ClientFailureObserver = exception => Console.Error.WriteLine(
                 $"Authoritative session failed: {exception.GetType().Name}: {exception.Message}"),
         };
@@ -166,6 +176,7 @@ internal static class Program
         Console.WriteLine($"Server/world RNG seed: {randomSeed}");
         Console.WriteLine($"Game mode: {options.GameMode}");
         Console.WriteLine($"Command scheduling: {(options.UseClockGatedCommandScheduling ? "clock-gated" : "immediate")}");
+        Console.WriteLine($"Persistence: {(options.UseCohortPersistence ? "complete cohort" : "legacy per-session")}");
         if (options.ProceduralMonsterLimit is int proceduralMonsterLimit)
             Console.WriteLine(
                 $"Procedural monsters: max {proceduralMonsterLimit}"
