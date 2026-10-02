@@ -20,15 +20,7 @@ public sealed partial class AuthoritativeTcpServer
     public static void ValidateCohortRootForStartup(AuthoritativeCohortStore store)
     {
         ArgumentNullException.ThrowIfNull(store);
-        if (store.Load() is not null)
-            return;
-        foreach (var entry in Directory.EnumerateFileSystemEntries(store.RootDirectory)) {
-            var name = Path.GetFileName(entry);
-            if (name is "authoritative-cohort.lease" or AuthoritativeWorldSeedStore.FileName)
-                continue;
-            throw new InvalidDataException(
-                "The cohort root contains legacy or unknown files. Existing saves are preserved; an explicit migration policy or a fresh dedicated root is required.");
-        }
+        store.PrepareHostPublicationLayout();
     }
 
     private IAuthoritativeGameCohortAdapter RequireCohortAdapter(

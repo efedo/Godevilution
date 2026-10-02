@@ -343,14 +343,30 @@ checks do not cover multiplayer host loss, every fault, campaign or release.
 For manual cohort play, the inner launcher also requires an explicit separate
 `-SessionDirectory`; legacy files are never automatically imported or changed.
 
-Canonical publication uses a fully flushed same-directory rename. On Windows,
+Canonical publication uses a fully flushed same-volume rename. On Windows,
 handle-based POSIX replacement keeps shared/delete readers on the previous complete
-file; unsupported systems fail closed. Replacement retains staged-file/root metadata,
-not the previous target's custom ACLs, streams or creation metadata. Use a private
-dedicated root; normal-profile adoption and this metadata policy remain open.
-Interrupted first publication/staged-write recovery and power-loss/filesystem
-durability are not certified. Preserve unexpected temporary files for diagnosis;
-the launcher does not select, promote or delete them to repair a save.
+file; unsupported systems fail closed. The supported replacement profile preserves
+owner/group/DACL, creation time, supported basic attributes, named `$DATA` bytes and
+None/LZNT1 compression. Stage access is verified before any payload. First files
+inherit the dedicated root policy; no user/system ACL is changed. Encryption,
+object IDs, sparse streams, conditional access and special access-policy metadata
+are refused. Audit SACLs are outside this profile and are not copied; no auditing
+privilege is enabled. This is not full ReplaceFile metadata equivalence or short-name
+preservation. Use a private dedicated root; normal-profile adoption requires approval.
+
+Explicit cohort hosting creates `.authoritative-cohort.initializing` before seed
+or staged publication, then commits `.authoritative-cohort.committed` after the
+canonical checkpoint. A validated older canonical records committed history before
+new staging work. Strict lowercase GUID-named files in `.authoritative-staging`
+are preserved but never read/promoted on recovery. Unknown entries and malformed
+markers refuse; a committed root missing its canonical cannot reset. Generic stores
+and legacy persistence do not infer this host layout. The cohort seed factory remains
+bound to the originating live lease and cannot regenerate a missing original seed
+after canonical publication. Keep complete roots together when backing up.
+
+Process-kill verification does not certify hardware power-loss/filesystem durability
+or repair older unmarked failed roots. Preserve unexpected temporary files for
+diagnosis; the launcher does not select, promote or delete them to repair a save.
 
 `Lifecycle` uses real equipment/spell controls, mouse reselection and Q/E cycling,
 itemless quest activation, staff casting, native-style class Recharge, a

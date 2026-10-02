@@ -29,6 +29,8 @@ public sealed class AuthoritativeCohortStore : IDisposable
 
     private readonly object synchronization = new();
     private readonly FileStream lease;
+    private AuthoritativeCohortPublicationLayout? publicationLayout;
+    private bool hostPublicationRequested;
     private bool disposed;
 
     public AuthoritativeCohortStore(string rootDirectory)
@@ -79,6 +81,54 @@ public sealed class AuthoritativeCohortStore : IDisposable
 
     public string CheckpointPath => Path.Combine(RootDirectory, CheckpointFileName);
 
+    /** Explicit host-only publication observer used by managed interruption fixtures. */
+    internal Action<AuthoritativePublicationPhase, string>? PublicationObserver { get; set; }
+
+    /**
+     * Creates the cohort-aware seed store after host startup has authorized the
+     * marker/staging layout. The ordinary seed-store constructor remains
+     * unchanged for legacy persistence and direct callers.
+     */
+    public AuthoritativeWorldSeedStore CreateWorldSeedStore()
+    {
+        lock (synchronization) {
+            ThrowIfDisposed();
+            return publicationLayout is null
+                ? throw new InvalidOperationException(
+                    "The host publication layout has not been prepared.")
+                : new AuthoritativeWorldSeedStore(RootDirectory, publicationLayout, this);
+        }
+    }
+
+    /** Keeps a factory-created seed operation within its original lifetime lease. */
+    internal T ExecuteSeedOperation<T>(AuthoritativeCohortPublicationLayout layout, Func<T> operation)
+    {
+        lock (synchronization) {
+            ThrowIfDisposed();
+            if (!ReferenceEquals(publicationLayout, layout))
+                throw new InvalidOperationException("The seed store does not own this host publication layout.");
+            layout.ValidateCanonicalForSave();
+            layout.ValidateSeedAccess();
+            return operation();
+        }
+    }
+
+    /** Validates and prepares the host-only first-publication namespace. */
+    internal void PrepareHostPublicationLayout()
+    {
+        lock (synchronization) {
+            ThrowIfDisposed();
+            hostPublicationRequested = true;
+            // Validate the complete canonical envelope before any marker or
+            // staging metadata is created. A malformed checkpoint must remain
+            // the sole startup failure and must not gain recovery authority.
+            var canonicalExists = Load() is not null;
+            publicationLayout ??= AuthoritativeCohortPublicationLayout.Prepare(
+                RootDirectory,
+                canonicalExists);
+        }
+    }
+
     /** Loads and validates the complete checkpoint, if one has been published. */
     public AuthoritativeCohortDocument? Load(
         AuthoritativeCohortIdentity? expectedIdentity = null)
@@ -124,6 +174,10 @@ public sealed class AuthoritativeCohortStore : IDisposable
         ArgumentNullException.ThrowIfNull(document);
         lock (synchronization) {
             ThrowIfDisposed();
+            if (publicationLayout is not null)
+                publicationLayout.ValidateCanonicalForSave();
+            else if (hostPublicationRequested)
+                throw new InvalidOperationException("Host publication preparation has not succeeded; generic publication is not allowed.");
             var normalized = Normalize(document);
             var previous = ValidateCheckpointPathTarget()
                 ? ReadDocument(File.ReadAllBytes(CheckpointPath))
@@ -277,40 +331,72 @@ public sealed class AuthoritativeCohortStore : IDisposable
     private void PublishAtomically(byte[] bytes)
     {
         var checkpointExists = ValidateCheckpointPathTarget();
-        var temporaryPath = Path.Combine(
-            RootDirectory,
-            $".{CheckpointFileName}.{Guid.NewGuid():N}.tmp");
+        var temporaryPath = publicationLayout?.CreateStagePath(CheckpointFileName)
+            ?? Path.Combine(
+                RootDirectory,
+                $".{CheckpointFileName}.{Guid.NewGuid():N}.tmp");
         Exception? primaryFailure = null;
+        var temporaryOwned = false;
+        var observer = PublicationObserver;
+        WindowsCheckpointStage? secureStage = null;
         try {
-            using (var output = new FileStream(
+            if (OperatingSystem.IsWindows()) {
+                secureStage = WindowsCheckpointStage.Create(
+                    temporaryPath, CheckpointPath, Path.GetDirectoryName(temporaryPath)!);
+                AuthoritativePublicationWriter.Write(secureStage.Stream, bytes, temporaryPath, observer);
+                secureStage.FinalizeMetadataAndClose();
+            } else {
+                using var output = new FileStream(
                        temporaryPath,
                        FileMode.CreateNew,
                        FileAccess.Write,
                        FileShare.None,
                        bufferSize: 4096,
-                       options: FileOptions.WriteThrough)) {
-                output.Write(bytes, 0, bytes.Length);
-                output.Flush(flushToDisk: true);
+                       options: FileOptions.WriteThrough);
+                temporaryOwned = true;
+                AuthoritativePublicationWriter.Write(output, bytes, temporaryPath, observer);
             }
 
-            // Keep publication to one same-directory rename. Windows ReplaceFile
+            observer?.Invoke(
+                AuthoritativePublicationPhase.AfterFlushBeforeRename,
+                temporaryPath);
+
+            // Keep publication to one same-volume rename. Windows ReplaceFile
             // can first rename the old destination to an internal ~RF temporary
             // name; process termination there leaves no canonical checkpoint.
-            // Both files inherit this dedicated root's access policy.
+            // The Windows stage already has the verified target metadata profile.
             if (checkpointExists && OperatingSystem.IsWindows())
                 RenameWindowsCheckpoint(temporaryPath, CheckpointPath);
             else
                 File.Move(temporaryPath, CheckpointPath, overwrite: checkpointExists);
+            // The owned resource is the created file, not its old pathname.
+            // Release cleanup ownership before any observer can recreate that
+            // pathname after the canonical rename.
+            if (OperatingSystem.IsWindows())
+                secureStage?.MarkPublished();
+            temporaryOwned = false;
+            observer?.Invoke(
+                AuthoritativePublicationPhase.AfterCanonicalRename,
+                CheckpointPath);
+            if (publicationLayout?.FirstPublicationPending == true) {
+                publicationLayout.Commit();
+                observer?.Invoke(
+                    AuthoritativePublicationPhase.AfterMarkerCommit,
+                    CheckpointPath);
+            }
         } catch (Exception exception) {
             primaryFailure = exception;
             throw;
         } finally {
             try {
-                if (File.Exists(temporaryPath))
+                if (OperatingSystem.IsWindows())
+                    secureStage?.Dispose();
+                if (temporaryOwned && File.Exists(temporaryPath))
                     File.Delete(temporaryPath);
-            } catch when (primaryFailure is not null) {
+            } catch (Exception cleanupFailure) when (primaryFailure is not null) {
                 // Preserve the publication failure that explains the failed
                 // checkpoint; cleanup failure must not mask it.
+                primaryFailure.Data["CheckpointStageCleanupError"] = cleanupFailure;
             }
         }
     }

@@ -1,7 +1,7 @@
 # Godevilution Completion Plan
 
-Plan date: 2026-10-02. Isolated Godot cohort acceptance follows complete-host
-baseline `915a4f0b9`; verified results and retained failures are in migration status.
+Plan date: 2026-10-02. Interrupted first-publication and Windows staging acceptance
+follows Godot cohort baseline `60f60c8a1`; results and retained failures are in migration status.
 
 This is the active delivery plan. The [architecture](csharp-authoritative-server-migration.md)
 defines the objective and ownership rules; [migration status](migration-status.md)
@@ -71,7 +71,7 @@ isolated spell or table rows while the playable route stays unchanged.
 
 | Gate | Deliverable | Dependencies | Current position |
 | --- | --- | --- | --- |
-| M0 | Reproducible launch and honest acceptance evidence | Existing implementation | Dedicated-root cohort host passes TCP recovery, scoped faults, CLI startup/lease refusal and isolated Godot create/resume/outage plus headless/rendered two-client reverse-order resume; staged-write recovery, normal-launch adoption and broader fault/platform acceptance remain; legacy cold participant imports still overwrite shared state; native GUI and release-budget gaps remain |
+| M0 | Reproducible launch and honest acceptance evidence | Existing implementation | Dedicated-root cohort host passes TCP recovery, scoped faults, CLI startup/lease refusal, isolated Godot create/resume/outage and two-client resume; managed first-publication interruption and a scoped Windows metadata profile now pass; approval-gated normal-launch adoption and broader fault/filesystem/platform acceptance remain; legacy cold imports, native GUI and release-budget gaps remain |
 | M1 | Usable Godot town-to-dungeon loop | M0 launch/acceptance harness | Authored combat/loot/equipment, NPC/service approach, purchased-scroll portal and isolated Sorcerer quest/cast/Recharge/death/restart/restore journeys pass; full loop remains |
 | M2 | Native-compatible generated world | M0 geometry/parity baseline | Ordinary Cathedral depths 1-4 coarse/fine oracle covers six seeds and MAIN/PREV; separate opt-in four-depth runtime/profile/v3 restore and ordinary-control traversal are integrated; native population, campaign mapping, wider topology and remaining families remain |
 | M3 | Complete base and Hellfire gameplay routes | M1 plus the relevant M2 world slices | Many rules exist; campaign and remaining behavioral coverage remain |
@@ -165,10 +165,17 @@ M4. M5 is the final removal gate, not a reason to postpone replacement work.
    two-client reverse-order resume now pass with stable bindings. Preserve the
    retained interrupted Windows replacement failure: canonical publication now
    uses one handle-based POSIX rename with shared/delete reader support, not
-   multi-step ReplaceFile. Verify staged-write/first-publication interruption,
-   orphan-temporary policy, target-specific ACL/metadata requirements and the
-   wider filesystem/platform matrix before normal-launch adoption. Do not
-   silently promote or remove temporary files. Broaden standalone operator CLI
+   multi-step ReplaceFile. Owned managed child termination now verifies seed and
+   first-cohort write/flush/rename/marker boundaries, canonical-only restart and
+   committed-history refusal. An explicit initializing/committed layout preserves
+   strict regular stage files without reading, promoting or deleting them. Windows
+   staging verifies supported security before payload and preserves the documented
+   owner/group/DACL, creation/basic attributes, named-stream and compression profile;
+   unsupported access policy and metadata fail closed. See the
+   [supported profile](ai/godot-build.md). Keep audit-SACL/full-metadata equivalence,
+   power-loss recovery and the wider filesystem/platform matrix outside these claims.
+   Normal-launch adoption requires approval for separate dedicated profiles;
+   existing legacy/conflicting saves remain untouched. Broaden standalone operator CLI
    and fault scenarios; do not substitute these scoped results for
    broader multiplayer or application acceptance. Existing conflicting legacy multiplayer saves
    must remain untouched pending an approved migration policy.
@@ -512,9 +519,11 @@ compatibility build keeps the physical-removal gate open.
    once against the integrated revision. Record failures as open gaps. Do not
    use a historical green result or a source-text assertion as runtime evidence.
 
-The immediate queue is M0 staged-write/first-publication recovery and security/
-metadata policy, then approved normal-launch adoption, with broader operator CLI,
-failure/reload and filesystem checks accompanying application tests. Preserve
+The immediate queue is to obtain approval for separate dedicated cohort profiles,
+then adopt them in normal M0 launchers, with broader operator CLI, failure/reload and filesystem/platform
+checks accompanying application tests. Preserve the passing managed first-publication
+recovery and scoped Windows metadata profile without implying power-loss acceptance.
+Preserve
 the passing isolated Godot cohort/legacy journeys, launch/build freshness and the
 remaining native GUI/platform checks. Then advance M1's end-to-end authored loop
 and M2's Cathedral generation slice. Existing

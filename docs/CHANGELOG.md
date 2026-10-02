@@ -2,6 +2,18 @@
 
 All notable changes to this fork are documented below.
 
+- 2026-10-02: Add explicit leased cohort initialization/history markers and
+  canonical-only recovery across managed seed/first-checkpoint interruption
+  boundaries. Preserve all unknown/legacy stages and saves; bind cohort seed
+  operations to the original live lease and refuse missing history/reset paths.
+  Secure Windows stages before payload, preserve the documented ACL/basic metadata,
+  named streams and compression profile, and retain primary errors during cleanup.
+  Independent review and focused checks pass 78 with one link-privilege skip;
+  full server passes 1,476 with four skips/exclusions. Actual cohort create/resume/
+  outage, rendered multiplayer and legacy recovery pass with 26 clean engine exits.
+  Update existing guide/plan/status; normal adoption
+  awaits approval and power-loss/broader platform/M0 acceptance remain open.
+
 - 2026-10-02: Add isolated actual-Godot complete-cohort acceptance with canonical
   integrity/identity and bookmark/entity checks, stable reverse-order multiplayer
   bindings and fresh/retained process proof. Preserve legacy launch defaults and

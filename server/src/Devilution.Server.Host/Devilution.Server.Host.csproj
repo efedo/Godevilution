@@ -10,6 +10,11 @@
   </ItemGroup>
 
   <ItemGroup>
+    <InternalsVisibleTo Include="Devilution.Server.Tests" />
+    <InternalsVisibleTo Include="Devilution.CohortPublicationFixture" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="../../../protocol/Devilution.Protocol/Devilution.Protocol.csproj" />
     <ProjectReference Include="../Devilution.Data/Devilution.Data.csproj" />
     <ProjectReference Include="../Devilution.Domain/Devilution.Domain.csproj" />

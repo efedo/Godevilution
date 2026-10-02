@@ -40,10 +40,14 @@ internal static class Program
         using var cohortStore = options.UseCohortPersistence
             ? new AuthoritativeCohortStore(options.SaveRoot) : null;
         if (cohortStore is not null) {
-            AuthoritativeTcpServer.ValidateCohortRootForStartup(cohortStore);
-            if (cohortStore.Load() is not null
+            // Inspect the existing canonical and original seed before creating
+            // any first-publication metadata. Missing-seed/corrupt-root
+            // refusals must remain mutation-free.
+            var existingCohort = cohortStore.Load();
+            if (existingCohort is not null
                 && !File.Exists(Path.Combine(cohortStore.RootDirectory, AuthoritativeWorldSeedStore.FileName)))
                 throw new InvalidDataException("The cohort root is missing its original world seed. Preserve the complete root; no seed is regenerated.");
+            AuthoritativeTcpServer.ValidateCohortRootForStartup(cohortStore);
         }
         // Reserve a new output before binding. Never overwrite an existing artifact.
         using var performanceOutput = options.PerformanceOutput is null ? null
@@ -65,7 +69,9 @@ internal static class Program
 
         var contentManifest = LoadContentManifest();
         var saveStore = options.UseCohortPersistence ? null : new AuthoritativeSaveStore(options.SaveRoot);
-        var worldSeedStore = new AuthoritativeWorldSeedStore(options.SaveRoot);
+        var worldSeedStore = cohortStore is null
+            ? new AuthoritativeWorldSeedStore(options.SaveRoot)
+            : cohortStore.CreateWorldSeedStore();
         var clock = new RealtimeAuthoritativeClock(options.TickRateHz);
         var adapterPackageLoader = new AuthoritativeGameHostAdapterPackageLoader();
         var adapterPackages = options.GameHostAdapterPackageRoots
