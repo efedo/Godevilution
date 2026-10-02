@@ -2,6 +2,11 @@
 
 All notable changes to this fork are documented below.
 
+- 2026-10-02: Add real-file Windows object-ID and sparse-checkpoint refusal tests,
+  with positive metadata controls, canonical/generation preservation and bounded
+  owned cleanup. Both pass without skips; update existing guidance/status and
+  retain the scoped Godot crash mitigation without asserting a universal cause.
+
 - 2026-10-02: Add explicit leased cohort initialization/history markers and
   canonical-only recovery across managed seed/first-checkpoint interruption
   boundaries. Preserve all unknown/legacy stages and saves; bind cohort seed

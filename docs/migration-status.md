@@ -142,6 +142,24 @@ The following records describe implemented slices at this baseline. They are
 evidence, not a separate priority list; detailed older entries retain their
 original scope and may be superseded by later entries or the current assessment.
 
+### M0 additional unsupported Windows metadata refusal (2026-10-02)
+
+Two real-file publisher tests positively create/query an NTFS object identifier
+and mark/query a sparse main stream on separately owned temporary canonical files.
+Both refuse the next generation before any observed payload boundary, preserving
+exact canonical bytes, generation, root entries and queried metadata. Capability
+absence is an explicit skip, not a pass; both pass here with zero skips in 417ms
+(`.local/m0-surviving-participants-metadata-focused.log`). The Debug server-test
+build has zero errors and three existing NU1900 audit-feed warnings
+(`.local/m0-surviving-participants-metadata-build.log`). Independent source review
+finds no blocker. These assertions do not observe transient stage creation or
+certify EFS, all metadata, hardware power loss or broader M0 acceptance.
+
+The user confirms the original dialogs were closed. A fresh process inventory
+finds no Godot, WerFault or project server running. Existing crash mitigation and
+its clean-engine evidence below remain scoped; no intentional Godot crash, user
+save migration or Windows security/error-reporting change was made for this check.
+
 ### M0 interrupted first publication and secure Windows staging (2026-10-02)
 
 Explicit cohort startup now records zero-byte initializing/committed markers under

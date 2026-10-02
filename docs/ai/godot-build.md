@@ -352,7 +352,10 @@ inherit the dedicated root policy; no user/system ACL is changed. Encryption,
 object IDs, sparse streams, conditional access and special access-policy metadata
 are refused. Audit SACLs are outside this profile and are not copied; no auditing
 privilege is enabled. This is not full ReplaceFile metadata equivalence or short-name
-preservation. Use a private dedicated root; normal-profile adoption requires approval.
+preservation. Real-file tests positively query object-ID/sparse setup and verify
+that refusal preserves the canonical bytes/generation and metadata before any
+observed payload boundary; they do not observe every transient stage operation.
+Use a private dedicated root; normal-profile adoption requires approval.
 
 Explicit cohort hosting creates `.authoritative-cohort.initializing` before seed
 or staged publication, then commits `.authoritative-cohort.committed` after the
