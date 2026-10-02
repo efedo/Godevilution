@@ -1,6 +1,16 @@
 # Godevilution Changelog
 
-All notable changes to this fork are documented below.
+Notable changes to this fork are recorded below.
+
+- 2026-10-02: Add explicit two-surviving-client Godot cohort host-loss acceptance
+  and production CLI shared-item/participant recovery, exact duplicate/accepted
+  receipt continuation, live lease refusal and malformed-terminal preservation.
+  Add actual launcher guard/process/canonical-owner helper regressions and bounded
+  primary-preserving test cleanup. Keep existing profiles, authority and user saves
+  unchanged. Focused checks pass 23; full server passes 1,484 with four unchanged
+  skips/exclusions. Headless/rendered recovery and legacy compatibility pass with
+  50 clean engine exits and six inspected captures. Update existing guide/plan/status;
+  normal cohort adoption, broader fault/campaign/native/release and M0 gates remain.
 
 - 2026-10-02: Add real-file Windows object-ID and sparse-checkpoint refusal tests,
   with positive metadata controls, canonical/generation preservation and bounded

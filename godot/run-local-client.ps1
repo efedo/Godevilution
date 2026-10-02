@@ -15,7 +15,7 @@ param(
     [string]$CathedralProfileDirectory,
     [string]$CathedralDepthProfileDirectory,
     [ValidateSet(1, 4)] [int]$PerformanceParticipants = 1,
-    [ValidateSet('Create', 'Resume', 'Recovery', 'Journey', 'JourneyResume', 'TownLoop', 'TownLoopResume', 'Lifecycle', 'LifecycleResume', 'MultiplayerCreate', 'MultiplayerResume', 'Performance', 'CathedralJourney', 'CathedralResume', 'CathedralDepthJourney', 'CathedralDepthResume')] [string]$AcceptancePhase
+    [ValidateSet('Create', 'Resume', 'Recovery', 'Journey', 'JourneyResume', 'TownLoop', 'TownLoopResume', 'Lifecycle', 'LifecycleResume', 'MultiplayerCreate', 'MultiplayerResume', 'MultiplayerRecovery', 'Performance', 'CathedralJourney', 'CathedralResume', 'CathedralDepthJourney', 'CathedralDepthResume')] [string]$AcceptancePhase
 )
 
 $ErrorActionPreference = 'Stop'
@@ -66,8 +66,11 @@ if ($AcceptancePhase -in @('TownLoop', 'TownLoopResume') -and -not ($PreviewCont
     throw 'Town-loop acceptance requires -PreviewContent or -PortalPreviewContent and its isolated content identity.'
 }
 if ($Multiplayer -and ($PreviewContent -or $PortalPreviewContent)) { throw 'The local multiplayer profile uses base content, not the single-player preview.' }
-if ($AcceptancePhase -and -not $performance -and ($Multiplayer -ne ($AcceptancePhase -in @('MultiplayerCreate', 'MultiplayerResume')))) {
+if ($AcceptancePhase -and -not $performance -and ($Multiplayer -ne ($AcceptancePhase -in @('MultiplayerCreate', 'MultiplayerResume', 'MultiplayerRecovery')))) {
     throw 'Multiplayer acceptance phases require -Multiplayer; single-player phases cannot use it.'
+}
+if ($AcceptancePhase -eq 'MultiplayerRecovery' -and $PersistenceMode -cne 'cohort') {
+    throw 'MultiplayerRecovery requires the explicit complete-cohort persistence mode.'
 }
 $expectedGameMode = if ($Multiplayer) { 'Multiplayer' } else { 'SinglePlayer' }
 $serverGameMode = if ($Multiplayer) { 'multiplayer' } else { 'single-player' }
@@ -856,6 +859,9 @@ function Assert-CohortCheckpoint(
         $participant = $participants[$index]
         Assert-CohortJsonProperties $participant @('SessionId', 'EntityId', 'CommandReceipts') 'cohort participant'
         if (-not ($participant.CommandReceipts -is [Array])) { throw 'The cohort participant receipt ledger must be an array.' }
+        if ($AcceptancePhase -eq 'MultiplayerRecovery' -and @($participant.CommandReceipts).Count -eq 0) {
+            throw 'MultiplayerRecovery requires a nonempty canonical receipt ledger for every participant.'
+        }
         if ($null -eq $participant -or [string]$participant.SessionId -notmatch '^[0-9a-f]{64}$') {
             throw 'The cohort participant session identity is not a lowercase SHA-256 ID.'
         }
@@ -896,12 +902,47 @@ function Assert-CohortCheckpoint(
         }
     }
 
+    if ($AcceptancePhase -eq 'MultiplayerRecovery') {
+        foreach ($bookmarkPath in $bookmarks) {
+            $bookmark = [IO.File]::ReadAllText($bookmarkPath).Trim()
+            $sessionId = Get-Sha256Hex ([Text.Encoding]::UTF8.GetBytes($bookmark))
+            $participant = @($participants | Where-Object { $_.SessionId -ceq $sessionId })
+            $evidencePath = Join-Path (Split-Path $bookmarkPath -Parent) 'multiplayerrecovery.json'
+            if ($participant.Count -ne 1 -or -not (Test-Path -LiteralPath $evidencePath -PathType Leaf)) {
+                throw 'MultiplayerRecovery lacks the bookmark-bound final command evidence.'
+            }
+            $evidence = Get-Content -LiteralPath $evidencePath -Raw | ConvertFrom-Json
+            Assert-CohortRecoveryReceipt $participant[0] $evidence
+        }
+    }
+
     $legacyCheckpoints = @(Get-ChildItem -LiteralPath $SaveDirectory -File -Force -Recurse -ErrorAction Stop |
         Where-Object { $_.Name -eq '.session.json' -or $_.Name -like '*.session.json' })
     if ($legacyCheckpoints.Count -ne 0) {
         throw 'Complete-cohort acceptance must not leave legacy per-session checkpoints.'
     }
     return $null
+}
+
+function Assert-CohortRecoveryReceipt($Participant, $Evidence) {
+    if ($null -eq $Participant -or $null -eq $Evidence -or
+        -not ($Evidence.Passed -is [bool]) -or -not $Evidence.Passed -or
+        -not (Test-CohortJsonInteger $Evidence.EntityId 1 ([uint32]::MaxValue)) -or
+        -not (Test-CohortJsonInteger $Evidence.Sequence 1 ([decimal][uint64]::MaxValue)) -or
+        -not (Test-CohortJsonInteger $Evidence.ReceiptSequence 1 ([decimal][uint64]::MaxValue)) -or
+        -not (Test-CohortJsonInteger $Evidence.AppliedTick 0 ([decimal][uint64]::MaxValue)) -or
+        $Participant.EntityId -ne $Evidence.EntityId) {
+        throw 'MultiplayerRecovery final evidence is invalid for its canonical owner.'
+    }
+    $matches = @($Participant.CommandReceipts | Where-Object {
+        $_.ClientSequence -eq $Evidence.Sequence -and
+        $_.ServerReceiptSequence -eq $Evidence.ReceiptSequence -and
+        $_.AppliedTick -eq $Evidence.AppliedTick
+    })
+    # A successful duplicate retains the original accepted canonical receipt.
+    if ($matches.Count -ne 1 -or $matches[0].Status -ne 1 -or $matches[0].RejectReason -ne 0) {
+        throw 'MultiplayerRecovery final command has no exact accepted canonical receipt.'
+    }
 }
 
 function Get-CohortSceneEntityId($Evidence) {
@@ -1189,6 +1230,14 @@ try {
     }
     # One local writer per save directory; parallel tests use distinct directories.
     $sessionLock = [System.IO.File]::Open((Join-Path $SessionDirectory 'launcher.lock'), 'OpenOrCreate', 'ReadWrite', 'None')
+    if ($AcceptancePhase -eq 'MultiplayerRecovery') {
+        foreach ($marker in @('multiplayerrecovery-server-stopped.json', 'multiplayerrecovery-server-restarted.json',
+                'multiplayerrecovery-processes.json')) {
+            if (Test-Path -LiteralPath (Join-Path $SessionDirectory $marker)) {
+                throw "MultiplayerRecovery requires a fresh dedicated root; stale marker exists: $marker"
+            }
+        }
+    }
     if ($cathedral) { Initialize-CathedralPlaytestSession $cathedralProfile $SessionDirectory }
     $staging = New-IsolatedGodotProject $clientSourceProject (Join-Path $captureRoot 'godot/Devilution.Client')
     $clientProject = $staging.DestinationDirectory
@@ -1274,6 +1323,18 @@ try {
         }
         return Get-Content -LiteralPath $path -Raw | ConvertFrom-Json
     }
+    function Wait-SceneEvidencePath([string]$Path, [string]$Description) {
+        $deadline = [Diagnostics.Stopwatch]::StartNew()
+        while (-not (Test-Path -LiteralPath $Path -PathType Leaf)) {
+            if ($serverProcess.HasExited) { throw "The authoritative host exited before $Description." }
+            foreach ($startedClient in $startedClients) {
+                if ($startedClient.Process.HasExited) { throw "A Godot client exited before $Description. See $($startedClient.Log)" }
+            }
+            if ($deadline.Elapsed.TotalSeconds -ge 30) { throw "Timed out waiting for ${Description}: $Path" }
+            Start-Sleep -Milliseconds 100
+        }
+        return Get-Content -LiteralPath $Path -Raw | ConvertFrom-Json
+    }
     $startedServer = Start-SessionServer $Port 'server'
     $serverProcess = $startedServer.Process
     $actualPort = $startedServer.Port
@@ -1332,6 +1393,14 @@ try {
             if ($AcceptancePhase -eq 'Recovery') {
                 foreach ($marker in @('recovery-ready.json', 'recovery-server-stopped.json', 'recovery-disconnected.json')) {
                     if (Test-Path -LiteralPath (Join-Path $clientDirectory $marker)) { throw "Recovery evidence already exists: $marker" }
+                }
+            }
+            if ($AcceptancePhase -eq 'MultiplayerRecovery') {
+                foreach ($marker in @('multiplayerrecovery-connected.json', 'multiplayerrecovery-ready.json',
+                        'multiplayerrecovery-offline-ready.json', 'multiplayerrecovery-rejoined.json',
+                        'multiplayerrecovery-moved.json',
+                        'multiplayerrecovery.json')) {
+                    if (Test-Path -LiteralPath (Join-Path $clientDirectory $marker)) { throw "MultiplayerRecovery evidence already exists: $marker" }
                 }
             }
         } elseif ($Headless) {
@@ -1411,6 +1480,82 @@ try {
             RestartedProcessId = $serverProcess.Id; RestartedHostStartedUtc = $serverProcess.StartTime.ToUniversalTime().ToString('O');
             GodotProcessId = $godotProcess.Id; GodotStartedUtc = $godotProcess.StartTime.ToUniversalTime().ToString('O'); ExistingClients = $existingClientEvidence; Port = $actualPort }
         [IO.File]::WriteAllText((Join-Path $SessionDirectory 'recovery-processes.json'), ($restartEvidence | ConvertTo-Json -Depth 4))
+    }
+    if ($AcceptancePhase -eq 'MultiplayerRecovery') {
+        if ($PersistenceMode -cne 'cohort' -or -not $Multiplayer -or @($startedClients).Count -ne 2) {
+            throw 'MultiplayerRecovery requires exactly two clients in complete-cohort mode.'
+        }
+        $recoveryPrefix = 'multiplayerrecovery'
+        $recoveryReady = @()
+        for ($slot = 1; $slot -le 2; $slot++) {
+            $readyPath = Join-Path $SessionDirectory "player-$slot/$recoveryPrefix-ready.json"
+            $ready = Wait-SceneEvidencePath $readyPath "multiplayer recovery player $slot readiness"
+            if (-not $ready.Ready -or $ready.Slot -ne $slot -or $ready.EntityId -lt 1 -or
+                $ready.PeerEntityId -lt 1 -or [string]::IsNullOrWhiteSpace($ready.SnapshotFingerprint) -or
+                -not $ready.ClockGated) {
+                throw "Invalid multiplayer recovery readiness evidence for player $slot."
+            }
+            $recoveryReady += $ready
+        }
+        if ($serverProcess.HasExited) { throw 'The complete-cohort host exited before the multiplayer recovery fault injection.' }
+        $stoppedProcessId = $serverProcess.Id
+        $stoppedHostStartedUtc = $serverProcess.StartTime.ToUniversalTime().ToString('O')
+        $existingClientEvidence = @($startedClients | ForEach-Object {
+            @{ ProcessId = $_.Process.Id; StartedUtc = $_.Process.StartTime.ToUniversalTime().ToString('O') }
+        })
+        if (@($existingClientEvidence).Count -ne 2 -or
+            @($existingClientEvidence | Select-Object -ExpandProperty ProcessId -Unique).Count -ne 2) {
+            throw 'MultiplayerRecovery did not retain exactly two distinct Godot client processes.'
+        }
+        # Kill only this owned authoritative host; both original Godot clients
+        # remain alive and must cross their own offline barrier before restart.
+        Stop-OwnedLocalProcess $serverProcess
+        if (-not $serverProcess.HasExited) { throw 'The multiplayer recovery host did not terminate before replacement.' }
+        $stoppedHostExitCode = $serverProcess.ExitCode
+        $stoppedHostEndedUtc = [DateTime]::UtcNow.ToString('O')
+        $serverProcess.Dispose()
+        $serverProcess = $null
+        [IO.File]::WriteAllText((Join-Path $SessionDirectory "$recoveryPrefix-server-stopped.json"),
+            (@{ Stopped = $true; ProcessId = $stoppedProcessId; StartedUtc = $stoppedHostStartedUtc;
+                EndedUtc = $stoppedHostEndedUtc; ExitCode = $stoppedHostExitCode; Port = $actualPort } | ConvertTo-Json -Compress))
+        $offlineEvidence = @()
+        for ($slot = 1; $slot -le 2; $slot++) {
+            $offlinePath = Join-Path $SessionDirectory "player-$slot/$recoveryPrefix-offline-ready.json"
+            $offline = Wait-SceneEvidencePath $offlinePath "multiplayer recovery player $slot offline barrier"
+            if (-not $offline.Passed -or $offline.Slot -ne $slot -or $offline.OfflineSeconds -lt 2 -or
+                [string]::IsNullOrWhiteSpace($offline.SnapshotFingerprint)) {
+                throw "Invalid multiplayer recovery offline evidence for player $slot."
+            }
+            $offlineEvidence += $offline
+        }
+        $restartedServer = Start-SessionServer $actualPort 'server-multiplayer-recovery-restarted'
+        $serverProcess = $restartedServer.Process
+        if ($restartedServer.Port -ne $actualPort -or $restartedServer.ContentHash -ne $contentHash -or
+            $restartedServer.RulesetHash -ne $rulesetHash -or $restartedServer.Persistence -cne 'complete cohort') {
+            throw 'The multiplayer recovery host did not preserve the same port, root, persistence, or identity.'
+        }
+        $retainedClientEvidence = @($startedClients | ForEach-Object {
+            if ($_.Process.HasExited) { throw "Godot client $($_.Process.Id) exited before multiplayer recovery reconnect evidence." }
+            @{ ProcessId = $_.Process.Id; StartedUtc = $_.Process.StartTime.ToUniversalTime().ToString('O') }
+        })
+        if (@($retainedClientEvidence).Count -ne 2) {
+            throw 'MultiplayerRecovery lost a client before host replacement evidence was captured.'
+        }
+        [IO.File]::WriteAllText((Join-Path $SessionDirectory "$recoveryPrefix-server-restarted.json"),
+            (@{ Restarted = $true; ProcessId = $serverProcess.Id;
+                StartedUtc = $serverProcess.StartTime.ToUniversalTime().ToString('O'); Port = $actualPort } | ConvertTo-Json -Compress))
+        $recoveryProcessEvidence = @{ Phase = $AcceptancePhase; PersistenceMode = $PersistenceMode;
+            HostPersistence = $restartedServer.Persistence; Port = $actualPort;
+            ContentHash = $contentHash; RulesetHash = $rulesetHash;
+            HostProcessId = $processEvidence.HostProcessId; HostStartedUtc = $processEvidence.HostStartedUtc;
+            InitialHostProcessId = $processEvidence.HostProcessId; InitialHostStartedUtc = $processEvidence.HostStartedUtc;
+            StoppedProcessId = $stoppedProcessId; StoppedHostStartedUtc = $stoppedHostStartedUtc;
+            StoppedHostEndedUtc = $stoppedHostEndedUtc; StoppedHostExitCode = $stoppedHostExitCode;
+            RestartedProcessId = $serverProcess.Id; RestartedHostStartedUtc = $serverProcess.StartTime.ToUniversalTime().ToString('O');
+            Clients = $processEvidence.Clients; ExistingClients = $retainedClientEvidence;
+            Ready = $recoveryReady; Offline = $offlineEvidence }
+        [IO.File]::WriteAllText((Join-Path $SessionDirectory "$recoveryPrefix-processes.json"),
+            ($recoveryProcessEvidence | ConvertTo-Json -Depth 8))
     }
     $clientWait = [Diagnostics.Stopwatch]::StartNew()
     do {

@@ -27,7 +27,7 @@ public partial class SessionAcceptance : Node
     private async Task RunAsync()
     {
         var phase = Environment.GetEnvironmentVariable("GODEVILUTION_ACCEPTANCE_PHASE");
-        if (phase is not ("Create" or "Resume" or "Recovery" or "Journey" or "JourneyResume" or "TownLoop" or "TownLoopResume" or "Lifecycle" or "LifecycleResume" or "MultiplayerCreate" or "MultiplayerResume" or "Performance" or "CathedralJourney" or "CathedralResume" or "CathedralDepthJourney" or "CathedralDepthResume"))
+        if (phase is not ("Create" or "Resume" or "Recovery" or "Journey" or "JourneyResume" or "TownLoop" or "TownLoopResume" or "Lifecycle" or "LifecycleResume" or "MultiplayerCreate" or "MultiplayerResume" or "MultiplayerRecovery" or "Performance" or "CathedralJourney" or "CathedralResume" or "CathedralDepthJourney" or "CathedralDepthResume"))
             throw new InvalidOperationException("Explicit acceptance phase is required.");
         var portalPreview = Environment.GetEnvironmentVariable("GODEVILUTION_PORTAL_PREVIEW") == "1";
         var directory = Environment.GetEnvironmentVariable("GODEVILUTION_ACCEPTANCE_DIRECTORY")
@@ -35,7 +35,7 @@ public partial class SessionAcceptance : Node
         // The headless display driver otherwise supplies a 64x64 viewport.
         if (DisplayServer.GetName() == "headless")
             GetTree().Root.Size = new Vector2I(1280, 720);
-        if (phase is "MultiplayerCreate" or "MultiplayerResume") {
+        if (phase is "MultiplayerCreate" or "MultiplayerResume" or "MultiplayerRecovery") {
             await RunMultiplayerAsync(directory, phase);
             return;
         }
@@ -300,7 +300,8 @@ public partial class SessionAcceptance : Node
                 "CathedralJourney" => 300, "CathedralResume" => 180,
                 "CathedralDepthJourney" => 885, "CathedralDepthResume" => 435,
                 "Lifecycle" => 345, "LifecycleResume" => 70,
-                "TownLoop" => 225, "Journey" => 150, "MultiplayerCreate" or "MultiplayerResume" => 70, _ => 40,
+                "TownLoop" => 225, "Journey" => 150, "MultiplayerCreate" or "MultiplayerResume" => 70,
+                "MultiplayerRecovery" => 90, _ => 40,
             };
             Require(deadline.Elapsed < TimeSpan.FromSeconds(seconds), failure);
             Require(stageSeconds is null || stage.Elapsed.TotalSeconds < stageSeconds, failure);

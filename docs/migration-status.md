@@ -92,6 +92,10 @@ open. Their scope, dependencies, and exit checks are defined only in the
   timing and shared-world cold-restore gaps remain.
   The two Flash baseline failures are resolved below. M0 still requires native
   creation, agreed release frame/memory budgets, and the release-platform matrix.
+  Explicit cohort mode now also has headless/rendered two-surviving-client
+  host-loss evidence and production CLI participant/shared-item cold recovery,
+  with exact post-restart owner receipts. Legacy cold imports and broader
+  pending-command/fault/campaign acceptance remain separate gaps.
 - Rendered application acceptance now verifies responsive HUD controls at
   960x600, 1028x720, and 1280x720, and the authored town-to-Cathedral route.
   The former 1028x720 HUD clipping is resolved. Actual combat, distant loot
@@ -138,9 +142,57 @@ open. Their scope, dependencies, and exit checks are defined only in the
 
 ## Recent implementation evidence
 
-The following records describe implemented slices at this baseline. They are
+The records below describe verified implementation slices at this baseline. They are
 evidence, not a separate priority list; detailed older entries retain their
 original scope and may be superseded by later entries or the current assessment.
+
+### M0 surviving clients and production CLI participant recovery (2026-10-02)
+
+Explicit `-PersistenceMode cohort -MultiplayerRecovery` now verifies two original
+Godot clients through owned host termination/replacement, two-second frozen
+offline snapshot/input/result/rendering barriers, restored complete stable roster,
+mutual settled movement and exact accepted canonical owner receipts. Independent
+initial/retained process identities and terminal old-host exit precede replacement.
+Production CLI TCP tests additionally drop/claim a shipped starter item across
+abrupt restart, restore both participants in opposite cold-resume orders without
+resurrection, preserve duplicate receipts and accept both owners' next sequences
+after a second restart. Stopped Store.Load/strict module decoding correlates
+tick, original seed, mode and owner bindings; live lease refusal keeps the owner
+usable, while malformed stopped canonical refusal preserves exact bytes/seed.
+
+Fresh Debug/.NET 10.0.11 verification:
+
+- Build: zero errors, three existing NU1900 audit-feed warnings, no new analyzer
+  warnings (`.local/m0-surviving-participants-integrated-settled-build.log`).
+- Standalone CLI: 3 passed, zero skips, 9.656s; integrated CLI/launcher/Windows
+  metadata selection: 23 passed, zero skips, 33.825s (`cli-settled-focused` and
+  `integrated-final-focused` logs under `.local/m0-surviving-participants-`).
+- Full server: 1,484 passed, zero failures, four unchanged skips/exclusions,
+  48.099s (`.local/m0-surviving-participants-full-server.log`). These remain the
+  two explicit legacy-overwrite counterexamples, local-asset exclusion and
+  directory-link privilege skip; controlled-clock/module continuation tests run.
+- Documentation guards: 4 passed, zero skips, 378ms using the unchanged Release
+  .NET 8.0.30 guard executable against updated files
+  (`.local/m0-surviving-participants-final-documentation.log`).
+- Actual headless and rendered multiplayer recovery pass (`godot-headless-settled-render`
+  and `godot-visible` logs with the same prefix), private roots ending
+  `7e540bd885ed4d69822ff26a591577fa` and `36b08f65b7d346e3b80168c127943a45`.
+  All six player create/resume/recovery viewport captures were inspected.
+- Cohort single-player and default legacy single/multiplayer compatibility pass
+  (`godot-single`, `godot-legacy`, `godot-legacy-multiplayer` logs with that prefix).
+  All 50 engine records across 14 staged launches have terminal exit 0 and no
+  process/stage errors. Source SDK remains 4.7.1; staged qualification uses 4.7.2.
+  Final process inventory finds no Godot, WerFault or production server/fixture.
+
+Retained earlier attempts exposed CS0136, premature interpolation assertions,
+stale initial-snapshot TooLate, invalid cross-tick RNG equality and peer targets
+chosen before local movement settled. Their logs/failed roots remain evidence,
+not passes. Fixes are acceptance setup/waits/diagnostics, not relaxed authority or
+gameplay retries. Exact realtime RNG continuation, independent epoch calibration,
+pending commands at outage, all faults/platforms, campaign and native GUI remain
+outside this batch. Existing user saves/profiles and Windows security/error-reporting
+settings are unchanged. Normal cohort adoption awaits approval; M0 remains open
+and the overall estimate remains 35%.
 
 ### M0 additional unsupported Windows metadata refusal (2026-10-02)
 

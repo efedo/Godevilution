@@ -1,6 +1,9 @@
 using System.Text.Json;
+using Devilution.Client.Protocol;
 using Devilution.Protocol.V1;
+using Google.Protobuf;
 using Godot;
+using System.Security.Cryptography;
 using Environment = System.Environment;
 using static Devilution.Client.Protocol.AuthoritativeCommandAckValidator;
 
@@ -17,11 +20,15 @@ public partial class SessionAcceptance
         var peerDirectory = System.IO.Path.Combine(System.IO.Directory.GetParent(directory)!.FullName, $"player-{peerSlot}");
         var prefix = phase.ToLowerInvariant();
         var creating = phase == "MultiplayerCreate";
+        var recovery = phase == "MultiplayerRecovery";
         var cohort = Environment.GetEnvironmentVariable("GODEVILUTION_PERSISTENCE_MODE") == "cohort";
+        Require(!recovery || cohort, "Multiplayer recovery is only valid for a complete-cohort session.");
         // Reverse the connection order at restart: entity allocation must not be
         // confused with durable character/token identity or command ownership.
         var firstSlot = creating ? 1 : 2;
-        MultiplayerEvidence? previous = creating ? null : ReadMultiplayerEvidence(directory, "multiplayercreate.json");
+        MultiplayerEvidence? previous = creating
+            ? null
+            : ReadMultiplayerEvidence(directory, recovery ? "multiplayerresume.json" : "multiplayercreate.json");
         Require(creating != System.IO.File.Exists(System.IO.Path.Combine(directory, "resume-token.txt")),
             "Creation needs a fresh bookmark; resume needs this player's existing bookmark.");
         var main = GD.Load<PackedScene>("res://Main.tscn").Instantiate<Main>();
@@ -39,8 +46,9 @@ public partial class SessionAcceptance
             Require(previous!.Passed && ((LineEdit)setup.FindChild("ResumeToken", true, false)).Text.Length > 0,
                 "Resume requires successful creation evidence and the private player bookmark.");
         }
+        var connectionBarrier = recovery ? prefix + "-connected.json" : prefix + "-ready.json";
         if (slot != firstSlot)
-            await Until(() => System.IO.File.Exists(System.IO.Path.Combine(peerDirectory, prefix + "-ready.json")),
+            await Until(() => System.IO.File.Exists(System.IO.Path.Combine(peerDirectory, connectionBarrier)),
                 "The first player did not connect and prepare its own position.");
         await Click(((Button)setup.FindChild("Connect", true, false)).GetGlobalRect().GetCenter());
         await Until(() => main.TransportConnected && main.ObservedSnapshot?.Players.Count > 0,
@@ -64,7 +72,7 @@ public partial class SessionAcceptance
         }
         await Until(() => System.IO.File.Exists(System.IO.Path.Combine(directory, "resume-token.txt")),
             "The player-specific resume bookmark was not persisted.");
-        WriteEvidence(directory, prefix + "-ready.json", new { Ready = true, Slot = slot });
+        WriteEvidence(directory, connectionBarrier, new { Ready = true, Slot = slot });
         await Until(() => main.ObservedSnapshot!.Players.Count == 2,
             "The second authoritative player did not become visible.");
         var pair = main.ObservedSnapshot!.Players;
@@ -77,6 +85,10 @@ public partial class SessionAcceptance
             if (cohort)
                 Require(remote.EntityId == previous.PeerEntityId,
                     "Complete-cohort resume changed the durable peer entity binding.");
+        }
+        if (recovery) {
+            await VerifyMultiplayerRecoveryAsync(main, directory, prefix, slot, previous!, identity);
+            return;
         }
         // Both must check the initial restored pair before either changes it.
         WriteEvidence(directory, prefix + "-joined.json", new { Joined = true });
@@ -118,7 +130,8 @@ public partial class SessionAcceptance
             await Capture(System.IO.Path.Combine(directory, prefix + "-players.png"));
         WriteEvidence(directory, prefix + ".json", new MultiplayerEvidence(true, identity.GameMode.ToString(),
             identity.ContentManifestHash, identity.RulesetIdentityHash, slot, local.EntityId, peerMove.EntityId,
-            localState, peerMove.Player, sequence + 2, visible));
+            localState, peerMove.Player, sequence + 2, main.ObservedCommandResult?.ServerReceiptSequence ?? 0,
+            main.ObservedCommandResult?.AppliedTick ?? 0, visible));
         // Keep both clients connected until both finished their observations.
         await Until(() => System.IO.File.Exists(System.IO.Path.Combine(peerDirectory, prefix + ".json")),
             "The peer did not finish its shared-state/rendering assertions.");
@@ -206,6 +219,154 @@ public partial class SessionAcceptance
         => new(player.CharacterName, player.CharacterClassId, player.LevelId, player.PositionX, player.PositionY,
             player.Gold, player.HostileMode);
 
+    private async Task VerifyMultiplayerRecoveryAsync(Main main, string directory, string prefix, int slot,
+        MultiplayerEvidence previous, AuthoritativeServerIdentity identity)
+    {
+        var rootDirectory = System.IO.Directory.GetParent(directory)!.FullName;
+        var peerSlot = 3 - slot;
+        var peerDirectory = System.IO.Path.Combine(rootDirectory, $"player-{peerSlot}");
+        var status = (Label)main.FindChild("ConnectionStatus", true, false);
+        var baseline = main.ObservedSnapshot
+            ?? throw new InvalidOperationException("Recovery did not receive a complete roster snapshot.");
+        Require(baseline.Players.Count == 2, "Recovery requires the complete two-player roster before outage.");
+        var localBefore = baseline.Players.Single(player => player.CharacterName == $"M1-Player-{slot}");
+        var peerBefore = baseline.Players.Single(player => player.CharacterName == $"M1-Player-{peerSlot}");
+        Require(localBefore.EntityId == previous.EntityId && peerBefore.EntityId == previous.PeerEntityId,
+            "Recovery changed a durable local or peer entity binding before the outage.");
+        Require(ObservePlayer(localBefore) == previous.Local && ObservePlayer(peerBefore) == previous.Remote,
+            "Recovery changed the complete durable roster before the outage.");
+        Require(previous.ReceiptSequence > 0, "The resume phase did not publish a canonical command receipt.");
+        Require(main.ObservedClockGatedScheduling, "Recovery requires clock-gated authoritative scheduling.");
+
+        WriteEvidence(directory, prefix + "-ready.json", new {
+            Ready = true, Slot = slot, EntityId = localBefore.EntityId, PeerEntityId = peerBefore.EntityId,
+            Tick = baseline.Tick, SnapshotFingerprint = SnapshotFingerprint(baseline),
+            Sequence = previous.Sequence, ReceiptSequence = previous.ReceiptSequence,
+            ContentHash = identity.ContentManifestHash, RulesetHash = identity.RulesetIdentityHash,
+            ClockGated = main.ObservedClockGatedScheduling,
+        });
+        await Until(() => System.IO.File.Exists(System.IO.Path.Combine(rootDirectory, prefix + "-server-stopped.json"))
+            && !main.TransportConnected, "The owned complete-cohort host did not stop or this client did not lose transport.");
+        await Until(() => status.Text.Contains("Connection lost") && status.Text.Contains("reconnecting"),
+            "The client did not show explicit multiplayer disconnect/reconnect feedback.");
+
+        var disconnected = main.ObservedSnapshot
+            ?? throw new InvalidOperationException("The disconnected client lost its last authoritative roster.");
+        Require(disconnected.Players.Count == 2, "The disconnected snapshot did not retain the complete roster.");
+        var disconnectedFingerprint = SnapshotFingerprint(disconnected);
+        var disconnectedRevision = main.ObservedSnapshotRevision;
+        var disconnectedLastQueued = main.ObservedLastQueuedSequence;
+        var disconnectedResultFingerprint = CommandFingerprint(main.ObservedCommandResult);
+        var disconnectedScreen = main.ObservedPlayerScreenPosition
+            ?? throw new InvalidOperationException("The disconnected client lost its last rendered local player.");
+        var disconnectedPeerScreen = main.ObservedEntityScreenPosition(peerBefore.EntityId)
+            ?? throw new InvalidOperationException("The disconnected client lost its last rendered peer.");
+        var offline = System.Diagnostics.Stopwatch.StartNew();
+        while (offline.Elapsed < TimeSpan.FromSeconds(2)) {
+            await PressAcceptanceKey(slot == 1 ? Key.Down : Key.Up);
+            Require(!main.TransportConnected, "The complete-cohort host restarted before both offline barriers completed.");
+            Require(SnapshotFingerprint(main.ObservedSnapshot!) == disconnectedFingerprint
+                && main.ObservedSnapshotRevision == disconnectedRevision,
+                "The authoritative roster or snapshot revision changed while the host was offline.");
+            Require(main.ObservedPendingCommandCount == 0
+                && main.ObservedLastQueuedSequence == disconnectedLastQueued
+                && CommandFingerprint(main.ObservedCommandResult) == disconnectedResultFingerprint,
+                "Disconnected actual input changed pending, queued, or receipt state.");
+            Require(main.ObservedPlayerScreenPosition is { } screen
+                && screen.DistanceTo(disconnectedScreen) < 0.01f,
+                "Disconnected actual input moved the rendered player.");
+            Require(main.ObservedEntityScreenPosition(peerBefore.EntityId) is { } offlinePeerScreen
+                && offlinePeerScreen.DistanceTo(disconnectedPeerScreen) < 0.01f,
+                "Disconnected actual input moved the rendered peer.");
+            Require(status.Text.Contains("Connection lost"), "Multiplayer disconnect feedback disappeared offline.");
+        }
+        WriteEvidence(directory, prefix + "-offline-ready.json", new {
+            Passed = true, Slot = slot, OfflineSeconds = offline.Elapsed.TotalSeconds,
+            SnapshotFingerprint = disconnectedFingerprint, SnapshotRevision = disconnectedRevision,
+            Tick = disconnected.Tick, Sequence = previous.Sequence, ReceiptSequence = previous.ReceiptSequence,
+        });
+        await Until(() => System.IO.File.Exists(System.IO.Path.Combine(rootDirectory, prefix + "-server-restarted.json")),
+            "The launcher did not restart the complete-cohort host after both offline barriers.");
+
+        await Until(() => main.TransportConnected && main.ObservedSnapshotRevision > disconnectedRevision,
+            "This Godot client did not reconnect to the replacement complete-cohort host.");
+        var reconnected = main.ObservedSnapshot
+            ?? throw new InvalidOperationException("Reconnect did not publish a complete roster snapshot.");
+        Require(main.ObservedIdentity == identity && main.ObservedClockGatedScheduling,
+            "Reconnect changed the authoritative identity or scheduling epoch.");
+        Require(reconnected.Players.Count == 2
+            && reconnected.Players.Select(player => player.EntityId).Distinct().Count() == 2,
+            "Reconnect did not retain exactly two distinct roster entities.");
+        var localAfter = reconnected.Players.Single(player => player.CharacterName == $"M1-Player-{slot}");
+        var peerAfter = reconnected.Players.Single(player => player.CharacterName == $"M1-Player-{peerSlot}");
+        Require(localAfter.EntityId == localBefore.EntityId && peerAfter.EntityId == peerBefore.EntityId,
+            "Reconnect allocated duplicate or unstable player entities.");
+        Require(ObservePlayer(localAfter) == ObservePlayer(localBefore)
+            && ObservePlayer(peerAfter) == ObservePlayer(peerBefore),
+            "Reconnect changed durable roster state while no command was accepted offline.");
+        Require(reconnected.Tick >= disconnected.Tick,
+            "Reconnect returned a snapshot older than the disconnected authoritative tick.");
+
+        WriteEvidence(directory, prefix + "-rejoined.json", new {
+            Rejoined = true, Slot = slot, Tick = reconnected.Tick,
+            EntityId = localAfter.EntityId, PeerEntityId = peerAfter.EntityId,
+            SnapshotFingerprint = SnapshotFingerprint(reconnected),
+        });
+        await Until(() => System.IO.File.Exists(System.IO.Path.Combine(peerDirectory, prefix + "-rejoined.json")),
+            "The peer did not verify its restored complete roster before post-reconnect input.");
+
+        var previousSequence = previous.Sequence;
+        await KeyCommand(main, Key.Right, previousSequence, directory, prefix,
+            snapshot => snapshot.Players.Single(player => player.EntityId == localAfter.EntityId) is {
+                    CurrentAction: null, CombatMode: PlayerCombatMode.Stand } moved
+                && moved.EntityId == localAfter.EntityId && moved.PositionX == localAfter.PositionX + 1
+                && moved.PositionY == localAfter.PositionY,
+            "Post-reconnect actual control settled for the same durable local entity.");
+        var result = main.ObservedCommandResult!;
+        Require(result.ClientSequence == previousSequence + 1 && IsAcceptedOrSuccessfulDuplicate(result)
+            && result.ServerReceiptSequence > previous.ReceiptSequence
+            && result.AppliedTick >= reconnected.Tick && result.AppliedTick > previous.AppliedTick,
+            "Post-reconnect control did not produce a new accepted receipt.");
+        var movedLocal = main.ObservedSnapshot!.Players.Single(player => player.EntityId == localAfter.EntityId);
+        WriteEvidence(directory, prefix + "-moved.json", new MultiplayerMoveEvidence(
+            ObservePlayer(movedLocal), movedLocal.EntityId, result.ServerReceiptSequence, result.AppliedTick));
+        await Until(() => System.IO.File.Exists(System.IO.Path.Combine(peerDirectory, prefix + "-moved.json")),
+            "The peer did not complete its accepted post-reconnect control.");
+        var peerMove = JsonSerializer.Deserialize<MultiplayerMoveEvidence>(System.IO.File.ReadAllText(
+            System.IO.Path.Combine(peerDirectory, prefix + "-moved.json")))
+            ?? throw new InvalidDataException("Peer post-reconnect evidence is empty.");
+        Require(peerMove.ReceiptSequence > previous.ReceiptSequence && peerMove.AppliedTick >= reconnected.Tick,
+            "The peer did not publish a post-reconnect accepted receipt.");
+        await Until(() => main.ObservedSnapshot!.Players.Single(player => player.EntityId == peerBefore.EntityId) is { } peer
+            && ObservePlayer(peer) == peerMove.Player,
+            "The peer's accepted post-reconnect movement was not visible here.");
+        Require(ObservePlayer(main.ObservedSnapshot!.Players.Single(player => player.EntityId == localAfter.EntityId))
+            == ObservePlayer(movedLocal), "The peer's post-reconnect control changed this player's settled state.");
+        await Until(() => main.ObservedEntityScreenPosition(peerMove.EntityId) is { } peerScreen
+            && peerScreen.DistanceTo(main.ObservedTileScreenPosition(peerMove.Player.X, peerMove.Player.Y)) < 1,
+            "The peer's accepted post-reconnect movement was not visible on the actual world.");
+        var world = (Control)main.FindChild("WorldArea", true, false);
+        Require(world.GetGlobalRect().HasPoint(main.ObservedPlayerScreenPosition!.Value)
+            && world.GetGlobalRect().HasPoint(main.ObservedEntityScreenPosition(peerMove.EntityId)!.Value),
+            "The post-reconnect local or remote player was clipped outside the world area.");
+        var visible = DisplayServer.GetName() != "headless";
+        if (visible)
+            await Capture(System.IO.Path.Combine(directory, prefix + "-players.png"));
+        WriteEvidence(directory, prefix + ".json", new MultiplayerRecoveryEvidence(true,
+            identity.GameMode.ToString(), identity.ContentManifestHash, identity.RulesetIdentityHash,
+            slot, localAfter.EntityId, peerMove.EntityId, ObservePlayer(movedLocal), peerMove.Player,
+            result.ClientSequence, result.ServerReceiptSequence, result.AppliedTick, reconnected.Tick,
+            disconnectedFingerprint, true, visible));
+        await Until(() => System.IO.File.Exists(System.IO.Path.Combine(peerDirectory, prefix + ".json")),
+            "The peer did not finish its shared post-reconnect visibility assertions.");
+    }
+
+    private static string SnapshotFingerprint(Snapshot snapshot)
+        => Convert.ToHexString(SHA256.HashData(snapshot.ToByteArray()));
+
+    private static string CommandFingerprint(CommandResult? result)
+        => result is null ? string.Empty : Convert.ToHexString(SHA256.HashData(result.ToByteArray()));
+
     private static MultiplayerEvidence ReadMultiplayerEvidence(string directory, string name)
         => JsonSerializer.Deserialize<MultiplayerEvidence>(System.IO.File.ReadAllText(System.IO.Path.Combine(directory, name)))
             ?? throw new InvalidDataException("Multiplayer evidence is empty.");
@@ -216,7 +377,13 @@ public partial class SessionAcceptance
         ulong SnapshotRevision, ulong? SnapshotTick, uint? EntityId, int? X, int? Y, string? CombatMode,
         string? Action, bool? Hostile, ulong? ResultSequence, string? Status, string? RejectReason,
         ulong? AppliedTick, ulong? ReceiptSequence);
-    private sealed record MultiplayerMoveEvidence(MultiplayerPlayerState Player, uint EntityId);
+    private sealed record MultiplayerMoveEvidence(MultiplayerPlayerState Player, uint EntityId,
+        ulong ReceiptSequence = 0, ulong AppliedTick = 0);
     private sealed record MultiplayerEvidence(bool Passed, string Mode, string ContentHash, string RulesetHash, int Slot,
-        uint EntityId, uint PeerEntityId, MultiplayerPlayerState Local, MultiplayerPlayerState Remote, ulong Sequence, bool Visible);
+        uint EntityId, uint PeerEntityId, MultiplayerPlayerState Local, MultiplayerPlayerState Remote,
+        ulong Sequence, ulong ReceiptSequence, ulong AppliedTick, bool Visible);
+    private sealed record MultiplayerRecoveryEvidence(bool Passed, string Mode, string ContentHash,
+        string RulesetHash, int Slot, uint EntityId, uint PeerEntityId, MultiplayerPlayerState Local,
+        MultiplayerPlayerState Remote, ulong Sequence, ulong ReceiptSequence, ulong AppliedTick,
+        ulong ReconnectTick, string DisconnectedSnapshotFingerprint, bool ClockGated, bool Visible);
 }

@@ -1,8 +1,13 @@
 [CmdletBinding()]
-param([string]$GodotExecutable, [ValidateSet('legacy', 'cohort')] [string]$PersistenceMode = 'legacy', [switch]$Visible, [switch]$Journey, [switch]$TownLoop, [switch]$Lifecycle, [switch]$Multiplayer, [string]$CathedralProfileDirectory, [string]$CathedralDepthProfileDirectory)
+param([string]$GodotExecutable, [ValidateSet('legacy', 'cohort')] [string]$PersistenceMode = 'legacy', [switch]$Visible, [switch]$Journey, [switch]$TownLoop, [switch]$Lifecycle, [switch]$Multiplayer, [switch]$MultiplayerRecovery, [string]$CathedralProfileDirectory, [string]$CathedralDepthProfileDirectory)
 
 $ErrorActionPreference = 'Stop'
 $PersistenceMode = $PersistenceMode.ToLowerInvariant()
+$MultiplayerRecovery = [bool]$MultiplayerRecovery
+if ($MultiplayerRecovery) { $Multiplayer = $true }
+if ($MultiplayerRecovery -and $PersistenceMode -cne 'cohort') {
+    throw 'MultiplayerRecovery requires -PersistenceMode cohort.'
+}
 if ($CathedralDepthProfileDirectory -and ($CathedralProfileDirectory -or $Journey -or $TownLoop -or $Lifecycle -or $Multiplayer)) {
     throw 'Cathedral depth acceptance requires its own compiled profile.'
 }
@@ -73,6 +78,86 @@ function Assert-FreshProcessEvidence($Created, $Resumed, [int]$ExpectedClientCou
         }
     }
 }
+function Assert-MultiplayerRecoveryProcessEvidence($Evidence) {
+    if ($Evidence.PersistenceMode -cne 'cohort' -or $Evidence.HostPersistence -cne 'complete cohort' -or
+        $null -eq $Evidence.StoppedProcessId -or $null -eq $Evidence.RestartedProcessId -or
+        $Evidence.StoppedProcessId -le 0 -or $Evidence.RestartedProcessId -le 0 -or
+        [string]::IsNullOrWhiteSpace($Evidence.StoppedHostStartedUtc) -or
+        [string]::IsNullOrWhiteSpace($Evidence.StoppedHostEndedUtc) -or
+        [string]::IsNullOrWhiteSpace($Evidence.RestartedHostStartedUtc) -or
+        $null -eq $Evidence.StoppedHostExitCode -or
+        @($Evidence.Clients).Count -ne 2 -or @($Evidence.ExistingClients).Count -ne 2) {
+        throw 'MultiplayerRecovery process evidence omitted the complete-cohort host transition or both clients.'
+    }
+    if ($Evidence.StoppedProcessId -ne $Evidence.InitialHostProcessId -or
+        $Evidence.StoppedHostStartedUtc -ne $Evidence.InitialHostStartedUtc) {
+        throw 'MultiplayerRecovery did not retain the initial authoritative host identity in terminal evidence.'
+    }
+    if ($Evidence.StoppedProcessId -eq $Evidence.RestartedProcessId -and
+        $Evidence.StoppedHostStartedUtc -eq $Evidence.RestartedHostStartedUtc) {
+        throw 'MultiplayerRecovery reused the authoritative host process identity.'
+    }
+    $stoppedEnded = [DateTime]::Parse($Evidence.StoppedHostEndedUtc).ToUniversalTime()
+    $restartedStarted = [DateTime]::Parse($Evidence.RestartedHostStartedUtc).ToUniversalTime()
+    if ($restartedStarted -le $stoppedEnded) {
+        throw 'MultiplayerRecovery recorded the replacement host before the original host terminated.'
+    }
+    foreach ($client in @($Evidence.Clients) + @($Evidence.ExistingClients)) {
+        if ($client.ProcessId -le 0 -or [string]::IsNullOrWhiteSpace($client.StartedUtc)) {
+            throw 'MultiplayerRecovery emitted an invalid retained Godot client identity.'
+        }
+        try { [void][DateTime]::Parse($client.StartedUtc) } catch { throw 'MultiplayerRecovery emitted an unparsable client start time.' }
+    }
+    $clientKeys = @($Evidence.Clients | ForEach-Object { "$($_.ProcessId):$($_.StartedUtc)" })
+    $existingKeys = @($Evidence.ExistingClients | ForEach-Object { "$($_.ProcessId):$($_.StartedUtc)" })
+    if ($clientKeys.Count -ne 2 -or @($clientKeys | Select-Object -Unique).Count -ne 2 -or
+        (@($clientKeys | Where-Object { $_ -notin $existingKeys }).Count -ne 0) -or
+        (@($existingKeys | Where-Object { $_ -notin $clientKeys }).Count -ne 0)) {
+        throw 'MultiplayerRecovery did not retain the exact two Godot client process identities.'
+    }
+    if ($Evidence.Ready.Count -ne 2 -or $Evidence.Offline.Count -ne 2) {
+        throw 'MultiplayerRecovery did not retain both per-slot readiness and offline barriers.'
+    }
+}
+function Assert-MultiplayerRecoveryEvidence($SessionDirectory, $ContentHash, $RulesetHash) {
+    $final = @()
+    for ($slot = 1; $slot -le 2; $slot++) {
+        $playerDirectory = Join-Path $SessionDirectory "player-$slot"
+        $path = Join-Path $playerDirectory 'multiplayerrecovery.json'
+        if (-not (Test-Path -LiteralPath $path -PathType Leaf)) { throw "Missing multiplayer recovery evidence: $path" }
+        $evidence = Get-Content -LiteralPath $path -Raw | ConvertFrom-Json
+        if (-not $evidence.Passed -or $evidence.Mode -ne 'Multiplayer' -or
+            $evidence.ContentHash -cne $ContentHash -or $evidence.RulesetHash -cne $RulesetHash -or
+            $evidence.Slot -ne $slot -or $evidence.EntityId -lt 1 -or $evidence.PeerEntityId -lt 1 -or
+            $evidence.EntityId -eq $evidence.PeerEntityId -or -not $evidence.ClockGated -or
+            $evidence.ReceiptSequence -lt 1 -or $evidence.AppliedTick -lt $evidence.ReconnectTick -or
+            [string]::IsNullOrWhiteSpace($evidence.DisconnectedSnapshotFingerprint)) {
+            throw "Invalid multiplayer recovery evidence for player $slot."
+        }
+        $offlinePath = Join-Path $playerDirectory 'multiplayerrecovery-offline-ready.json'
+        $rejoinedPath = Join-Path $playerDirectory 'multiplayerrecovery-rejoined.json'
+        if (-not (Test-Path -LiteralPath $offlinePath) -or -not (Test-Path -LiteralPath $rejoinedPath)) {
+            throw "Multiplayer recovery barriers are incomplete for player $slot."
+        }
+        $offline = Get-Content -LiteralPath $offlinePath -Raw | ConvertFrom-Json
+        $rejoined = Get-Content -LiteralPath $rejoinedPath -Raw | ConvertFrom-Json
+        if (-not $offline.Passed -or $offline.OfflineSeconds -lt 2 -or
+            $rejoined.EntityId -ne $evidence.EntityId -or $rejoined.PeerEntityId -ne $evidence.PeerEntityId) {
+            throw "Multiplayer recovery did not prove bounded frozen offline/restored state for player $slot."
+        }
+        $commandPath = Join-Path $playerDirectory ("multiplayerrecovery-command-{0}.json" -f $evidence.Sequence)
+        if (-not (Test-Path -LiteralPath $commandPath)) { throw "Missing post-reconnect command evidence for player $slot." }
+        $command = Get-Content -LiteralPath $commandPath -Raw | ConvertFrom-Json
+        if (-not $command.Passed -or $command.PreviousSequence -ne ($evidence.Sequence - 1)) {
+            throw "Post-reconnect command evidence did not prove the next client sequence for player $slot."
+        }
+        $final += $evidence
+    }
+    if ($final[0].EntityId -ne $final[1].PeerEntityId -or $final[0].PeerEntityId -ne $final[1].EntityId -or
+        $final[0].EntityId -eq $final[0].PeerEntityId -or $final[1].EntityId -eq $final[1].PeerEntityId) {
+        throw 'MultiplayerRecovery clients disagree about the complete roster or duplicate an entity.'
+    }
+}
 try {
     if ($CathedralDepthProfileDirectory) {
         $parameters.CathedralDepthProfileDirectory = $CathedralDepthProfileDirectory
@@ -104,6 +189,23 @@ try {
             throw 'Cathedral resume requires fresh host/client processes and the same isolated profile.'
         }
         Write-Host "PASS: actual Godot generated Cathedral walking/collision, authored object/combat/loot, fresh-host restore and native Town return. Evidence: $sessionDirectory"
+        return
+    }
+    if ($MultiplayerRecovery) {
+        $parameters.Multiplayer = $true
+        $parameters.PersistenceMode = 'cohort'
+        $parameters.QuitAfterSeconds = 75
+        & $launcher @parameters -AcceptancePhase MultiplayerCreate
+        $created = Read-ModeProcessEvidence 'MultiplayerCreate'
+        & $launcher @parameters -AcceptancePhase MultiplayerResume
+        $resumed = Read-ModeProcessEvidence 'MultiplayerResume'
+        Assert-FreshProcessEvidence $created $resumed 2
+        $parameters.QuitAfterSeconds = 105
+        & $launcher @parameters -AcceptancePhase MultiplayerRecovery
+        $recovery = Read-ModeProcessEvidence 'MultiplayerRecovery'
+        Assert-MultiplayerRecoveryProcessEvidence $recovery
+        Assert-MultiplayerRecoveryEvidence $sessionDirectory $recovery.ContentHash $recovery.RulesetHash
+        Write-Host "PASS: bounded actual-Godot complete-cohort multiplayer host-loss/reconnect with two retained clients, stable roster, post-reconnect accepted controls, canonical receipts, and clean exits. Evidence: $sessionDirectory"
         return
     }
     if ($Multiplayer) {

@@ -141,6 +141,20 @@ launcher helpers with harmless Windows PowerShell children, including isolated
 storage and rejected process/import outcomes. It does not require Godot or
 deliberately crash an application. Run actual scene acceptance separately to
 verify the installed engine and client/server lifecycle.
+`MultiplayerRecoveryLauncherTests` additionally exercises the actual argument
+guards, exact retained-process evidence and canonical final-owner receipt helper;
+these helper tests complement, but do not replace, the application run below.
+
+`CohortCliParticipantRecoveryTests` launches the matching-configuration production
+server with shipped MPQ-free content and real TCP participants. It covers abrupt
+and graceful restart, reverse-order resume, claimed-item non-resurrection, exact
+duplicate/accepted receipts, live competing-lease refusal and malformed-terminal
+preservation. Stopped canonical integrity, strict module/outer tick and owner
+bindings are checked; RNG equality across different realtime ticks is not claimed.
+The test-project build includes the server; no artifact override is needed.
+An explicit `GODEVILUTION_SERVER_ASSEMBLY` must exist, with no binary fallback.
+Select this class through the server project's xUnit `--filter-class` option.
+Owned cleanup is bounded/reparse-checked; failed roots are retained.
 
 Normal launches retain authoritative saves under `.local/godot/save` and a
 private `resume-token.txt` bookmark beside them. Both are ignored by Git. Keep
@@ -302,9 +316,9 @@ A fresh host and two fresh clients then resume in reverse connection order,
 verify both characters' state, and advance each player's own command sequence.
 Per-phase process evidence distinguishes new processes from reused ones. Allow
 75 seconds per phase plus builds. Both clients remain connected until both
-finish observing the peer. This is a town/session check, not cooperative combat,
-multiplayer host-loss recovery, legacy cross-restart numeric entity IDs, or an
-OS foreground/focus guarantee. Keep the entire evidence directory private.
+finish observing the peer. This town/session check alone does not certify host-loss
+recovery, cooperative combat, legacy cross-restart numeric entity IDs or OS focus.
+Keep the entire evidence directory private.
 
 Scene acceptance treats an accepted receipt or a successful duplicate receipt
 as the same applied outcome. A duplicate retaining a rejection reason still
@@ -329,7 +343,26 @@ powershell -NoProfile -ExecutionPolicy Bypass -File tools/test-godot-session.ps1
 powershell -NoProfile -ExecutionPolicy Bypass -File tools/test-godot-session.ps1 -PersistenceMode cohort
 powershell -NoProfile -ExecutionPolicy Bypass -File tools/test-godot-session.ps1 -PersistenceMode cohort -Multiplayer
 powershell -NoProfile -ExecutionPolicy Bypass -File tools/test-godot-session.ps1 -PersistenceMode cohort -Multiplayer -Visible
+powershell -NoProfile -ExecutionPolicy Bypass -File tools/test-godot-session.ps1 -PersistenceMode cohort -MultiplayerRecovery -Visible
 ```
+
+`-MultiplayerRecovery` adds a separate town/session host-loss phase after creation
+and reverse-order resume. It requires explicit cohort mode and cannot be mixed
+with preview/generated-world journeys. Exactly two original clients remain alive
+while only their owned host is terminated. Each must show reconnect feedback and
+for at least two seconds retain its full snapshot fingerprint/revision, pending
+and queued command state, receipt and local/peer rendering despite actual key
+input. Both offline barriers precede same-port/root host restart. Both restored
+rosters must retain the same entity bindings before either submits its next
+command. New accepted or successful-duplicate receipts, mutual settled rendering,
+unchanged local state after peer movement and exact accepted canonical owner
+receipts are required. Rendering uses a bounded wait for interpolation, not an
+immediate position check. Process evidence correlates independently captured
+initial and retained client identities and terminal old-host exit before its
+replacement. Remove `-Visible` for headless execution. This does not cover pending
+commands at host loss, every failure, campaign play or hardware power loss; the
+negotiated clock flag and accepted commands alone do not independently prove
+reconnect-epoch calibration. Any assertion or nonzero engine exit fails the run.
 
 `-PersistenceMode cohort` explicitly opts into a fresh isolated save root; the
 default remains `legacy` and existing normal-launch profiles are unchanged.
@@ -339,7 +372,8 @@ credentials. Reads allow atomic replacement by the running server. Per-phase
 process evidence proves fresh hosts/clients; Recovery proves a fresh host with
 the same surviving client. Cohort multiplayer reverses admission order and
 requires the same local and peer entity IDs as creation. These town/session
-checks do not cover multiplayer host loss, every fault, campaign or release.
+checks without `-MultiplayerRecovery` do not cover multiplayer host loss; neither
+variant covers every fault, campaign or release.
 For manual cohort play, the inner launcher also requires an explicit separate
 `-SessionDirectory`; legacy files are never automatically imported or changed.
 

@@ -71,7 +71,7 @@ isolated spell or table rows while the playable route stays unchanged.
 
 | Gate | Deliverable | Dependencies | Current position |
 | --- | --- | --- | --- |
-| M0 | Reproducible launch and honest acceptance evidence | Existing implementation | Dedicated-root cohort host passes TCP recovery, scoped faults, CLI startup/lease refusal, isolated Godot create/resume/outage and two-client resume; managed first-publication interruption and a scoped Windows metadata profile now pass; approval-gated normal-launch adoption and broader fault/filesystem/platform acceptance remain; legacy cold imports, native GUI and release-budget gaps remain |
+| M0 | Reproducible launch and honest acceptance evidence | Existing implementation | Dedicated-root cohort host passes TCP recovery, scoped faults, production CLI participant/item recovery and lease refusal, isolated Godot create/resume/outage and two surviving clients through host loss; managed first-publication interruption and a scoped Windows metadata profile pass; approval-gated normal-launch adoption and broader fault/filesystem/platform acceptance remain; legacy cold imports, native GUI and release-budget gaps remain |
 | M1 | Usable Godot town-to-dungeon loop | M0 launch/acceptance harness | Authored combat/loot/equipment, NPC/service approach, purchased-scroll portal and isolated Sorcerer quest/cast/Recharge/death/restart/restore journeys pass; full loop remains |
 | M2 | Native-compatible generated world | M0 geometry/parity baseline | Ordinary Cathedral depths 1-4 coarse/fine oracle covers six seeds and MAIN/PREV; separate opt-in four-depth runtime/profile/v3 restore and ordinary-control traversal are integrated; native population, campaign mapping, wider topology and remaining families remain |
 | M3 | Complete base and Hellfire gameplay routes | M1 plus the relevant M2 world slices | Many rules exist; campaign and remaining behavioral coverage remain |
@@ -182,6 +182,16 @@ M4. M5 is the final removal gate, not a reason to postpone replacement work.
    Rebuilt CLI empty-roster startup/quit/resume and live second-process lease
    refusal now pass. Missing-seed and legacy-root refusals preserve their
    canonical/legacy inputs without seed regeneration; these are not gameplay tests.
+   Production CLI TCP acceptance now additionally creates two real participants,
+   drops/claims a shipped starter item across abrupt restart and opposite-order
+   cold resume, and checks duplicate suppression and both owners' next exact
+   accepted receipts after a second restart. Terminal integrity/strict module
+   decoding, live lease refusal and malformed-terminal preservation pass; this
+   realtime check does not independently certify exact RNG continuation.
+   Actual headless/rendered cohort multiplayer host loss now retains exactly two
+   clients, freezes offline snapshot/input/rendering, restores stable bindings and
+   requires mutual settled movement plus exact canonical accepted owner receipts.
+   Keep pending-at-outage, broader faults/campaign and release acceptance distinct.
 2. Add an application-level acceptance path through the actual Godot scene and
    controls: launch, create a character, receive/render an authoritative world,
    submit movement, observe the acknowledged position, save, exit, and resume
