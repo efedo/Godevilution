@@ -15,6 +15,7 @@ public sealed class DiabloWorldState
     private readonly AuthoritativeNativeDunObjectCatalog? nativeDunObjects;
     private readonly IReadOnlyList<AuthoritativeWorldObject> nativeObjectTemplates;
     private readonly bool allowMissingNativeDunLayers;
+    private bool deferCohortInitialization;
     private Func<int, AuthoritativeSetLevelObjectOrigin?>? setLevelOriginResolver;
     private Func<uint, AuthoritativeProceduralQuestPieceOrigin?>? proceduralQuestPieceOriginResolver;
     private readonly Dictionary<uint, AuthoritativeLevel> projectedLevels = [];
@@ -38,7 +39,8 @@ public sealed class DiabloWorldState
         IEnumerable<uint>? activeWorldMutationIds = null,
         AuthoritativeNativeDunObjectCatalog? nativeDunObjects = null,
         IReadOnlyList<AuthoritativeWorldObject>? nativeObjectTemplates = null,
-        bool allowMissingNativeDunLayers = false)
+        bool allowMissingNativeDunLayers = false,
+        bool deferCohortInitialization = false)
     {
         ValidateEntryCount(combatTargets, "combat target");
         ValidateEntryCount(
@@ -54,6 +56,7 @@ public sealed class DiabloWorldState
         this.nativeDunObjects = nativeDunObjects;
         this.nativeObjectTemplates = nativeObjectTemplates ?? [];
         this.allowMissingNativeDunLayers = allowMissingNativeDunLayers;
+        this.deferCohortInitialization = deferCohortInitialization;
         foreach (var mutationId in activeWorldMutationIds ?? []) {
             if (WorldMutations is null || !WorldMutations.TryGet(mutationId, out _))
                 throw new InvalidDataException(
@@ -119,9 +122,10 @@ public sealed class DiabloWorldState
             RegisterEntityId(corpse.EntityId);
             Corpses.Add(corpse.EntityId, corpse);
         }
-        if (World is not null)
+        if (World is not null && !deferCohortInitialization)
             WorldMutations?.ValidateWorld(World, Objects.Values, CombatTargets.Values);
-        RebuildProjectedGeometry();
+        if (!deferCohortInitialization)
+            RebuildProjectedGeometry();
 
         static void ValidateEntryCount<T>(
             IReadOnlyList<T>? entries,
@@ -144,7 +148,7 @@ public sealed class DiabloWorldState
             throw new InvalidDataException(
                 "Late-generated levels require an authoritative world geometry catalog.");
         World.AddLevel(level);
-        RebuildProjectedGeometry();
+        RebuildProjectedGeometry(materializeNativeDunObjects: !deferCohortInitialization);
     }
 
     /** Replaces late-generated level geometry and refreshes the effective projection. */
@@ -155,13 +159,13 @@ public sealed class DiabloWorldState
             throw new InvalidDataException(
                 "Generated level replacement requires an authoritative world geometry catalog.");
         World.ReplaceLevel(level);
-        RebuildProjectedGeometry();
+        RebuildProjectedGeometry(materializeNativeDunObjects: !deferCohortInitialization);
     }
 
     /** Rebuilds effective geometry after a catalog mutates the backing world. */
     public void RefreshProjectedGeometry()
     {
-        RebuildProjectedGeometry();
+        RebuildProjectedGeometry(materializeNativeDunObjects: !deferCohortInitialization);
     }
 
     /** Validated content-backed level-cell overlays available to object effects. */
@@ -169,6 +173,58 @@ public sealed class DiabloWorldState
 
     /** Active mutation identities persisted with the authoritative session. */
     public IReadOnlySet<uint> ActiveWorldMutationIds => activeWorldMutationIds;
+
+    /** Captures detached fallback and mutation infrastructure without side effects. */
+    internal DiabloWorldInfrastructureState CaptureCohortInfrastructure()
+    {
+        return new DiabloWorldInfrastructureState(
+            fallbackWidth,
+            fallbackHeight,
+            fallbackBlockedCells.Order().ToArray(),
+            fallbackMissileBlockedCells.Order().ToArray(),
+            activeWorldMutationIds.Order().ToArray(),
+            lastPortalTick,
+            projectedLevels.Values
+                .OrderBy(level => level.LevelId)
+                .Select(CaptureCohortLevel)
+                .ToArray());
+    }
+
+    /** Restores infrastructure after backing entities and origins are installed. */
+    internal void RestoreCohortInfrastructure(DiabloWorldInfrastructureState state)
+    {
+        ArgumentNullException.ThrowIfNull(state);
+        if (state.FallbackWidth != fallbackWidth
+            || state.FallbackHeight != fallbackHeight) {
+            throw new InvalidDataException(
+                "Cohort fallback geometry does not match the configured world.");
+        }
+
+        var blockedCells = ValidateCohortCells(
+            state.BlockedCells,
+            fallbackWidth,
+            fallbackHeight,
+            "blocked");
+        var missileBlockedCells = ValidateCohortCells(
+            state.MissileBlockedCells,
+            fallbackWidth,
+            fallbackHeight,
+            "missile-blocked");
+        var mutationIds = ValidateCohortMutationIds(state.ActiveWorldMutationIds);
+        var effectiveLevels = ValidateCohortEffectiveLevels(state.EffectiveLevels);
+
+        fallbackBlockedCells.Clear();
+        fallbackBlockedCells.UnionWith(blockedCells);
+        fallbackMissileBlockedCells.Clear();
+        fallbackMissileBlockedCells.UnionWith(missileBlockedCells);
+        activeWorldMutationIds.Clear();
+        activeWorldMutationIds.UnionWith(mutationIds);
+        lastPortalTick = state.LastPortalTick;
+        deferCohortInitialization = false;
+        projectedLevels.Clear();
+        foreach (var (levelId, level) in effectiveLevels)
+            projectedLevels.Add(levelId, level);
+    }
 
     /** Effective level geometry after all active content mutations. */
     public IReadOnlyList<AuthoritativeLevel> LevelGeometry
@@ -190,7 +246,7 @@ public sealed class DiabloWorldState
             return WorldMutations?.TryGet(mutationId, out _) == true
                 && activeWorldMutationIds.Contains(mutationId);
         }
-        RebuildProjectedGeometry();
+        RebuildProjectedGeometry(materializeNativeDunObjects: !deferCohortInitialization);
         return true;
     }
 
@@ -208,7 +264,7 @@ public sealed class DiabloWorldState
         }
         activeWorldMutationIds.Clear();
         activeWorldMutationIds.UnionWith(restoredMutationIds);
-        RebuildProjectedGeometry();
+        RebuildProjectedGeometry(materializeNativeDunObjects: !deferCohortInitialization);
     }
 
     internal void SetSetLevelOriginResolver(
@@ -216,7 +272,8 @@ public sealed class DiabloWorldState
     {
         ArgumentNullException.ThrowIfNull(resolver);
         setLevelOriginResolver = resolver;
-        RebuildProjectedGeometry();
+        if (!deferCohortInitialization)
+            RebuildProjectedGeometry();
     }
 
     internal void SetProceduralQuestPieceOriginResolver(
@@ -224,7 +281,8 @@ public sealed class DiabloWorldState
     {
         ArgumentNullException.ThrowIfNull(resolver);
         proceduralQuestPieceOriginResolver = resolver;
-        RebuildProjectedGeometry();
+        if (!deferCohortInitialization)
+            RebuildProjectedGeometry();
     }
 
     public Dictionary<uint, AuthoritativeCombatTarget> CombatTargets { get; } = [];
@@ -465,8 +523,10 @@ public sealed class DiabloWorldState
         return HasLineOfSight(levelId, startX, startY, endX, endY);
     }
 
-    private void RebuildProjectedGeometry()
+    private void RebuildProjectedGeometry(bool materializeNativeDunObjects = true)
     {
+        if (deferCohortInitialization)
+            return;
         projectedLevels.Clear();
         if (World is null)
             return;
@@ -704,7 +764,171 @@ public sealed class DiabloWorldState
                 });
         }
 
-        ReconcileNativeDunObjects(allowMissingNativeDunLayers);
+        if (materializeNativeDunObjects)
+            ReconcileNativeDunObjects(allowMissingNativeDunLayers);
+    }
+
+    private IReadOnlyList<uint> ValidateCohortMutationIds(
+        IReadOnlyList<uint>? mutationIds)
+    {
+        ArgumentNullException.ThrowIfNull(mutationIds);
+        var restoredMutationIds = new uint[mutationIds.Count];
+        uint previousMutationId = 0;
+        for (var index = 0; index < mutationIds.Count; index++) {
+            var mutationId = mutationIds[index];
+            if (mutationId == 0 || (index != 0 && mutationId <= previousMutationId)) {
+                throw new InvalidDataException(
+                    "Cohort world mutation IDs must be non-zero and strictly sorted.");
+            }
+            if (WorldMutations is null || !WorldMutations.TryGet(mutationId, out _)) {
+                throw new InvalidDataException(
+                    $"Active world mutation {mutationId} is not supplied by the content catalog.");
+            }
+            restoredMutationIds[index] = mutationId;
+            previousMutationId = mutationId;
+        }
+        return restoredMutationIds;
+    }
+
+    private IReadOnlyDictionary<uint, AuthoritativeLevel> ValidateCohortEffectiveLevels(
+        IReadOnlyList<DiabloWorldGeometryLevelState>? savedLevels)
+    {
+        if (savedLevels is null)
+            throw new InvalidDataException(
+                "Cohort projected geometry is required for a complete restore.");
+        if (World is null) {
+            if (savedLevels.Count != 0)
+                throw new InvalidDataException(
+                    "Fallback worlds cannot contain projected level geometry.");
+            return new Dictionary<uint, AuthoritativeLevel>();
+        }
+
+        var backingLevels = World.Levels.ToDictionary(level => level.LevelId);
+        if (savedLevels.Count != backingLevels.Count)
+            throw new InvalidDataException(
+                "Cohort projected geometry does not match the backing level count.");
+
+        var validatedGeometry = new AuthoritativeWorld();
+        validatedGeometry.RestoreGeometryState(
+            new DiabloWorldGeometryState(savedLevels, []));
+        var restoredLevels = new Dictionary<uint, AuthoritativeLevel>();
+        uint previousLevelId = 0;
+        for (var index = 0; index < savedLevels.Count; index++) {
+            var savedLevel = savedLevels[index]
+                ?? throw new InvalidDataException(
+                    "Cohort projected geometry contains a null level.");
+            ValidateCohortEffectiveLevelCells(savedLevel);
+            if ((index != 0 && savedLevel.LevelId <= previousLevelId)
+                || !backingLevels.TryGetValue(savedLevel.LevelId, out var backingLevel)
+                || !validatedGeometry.Levels.Any(level => level.LevelId == savedLevel.LevelId)
+                || savedLevel.Width != backingLevel.Width
+                || savedLevel.Height != backingLevel.Height
+                || !string.Equals(
+                    savedLevel.StableSymbol,
+                    backingLevel.StableSymbol,
+                    StringComparison.Ordinal)
+                || savedLevel.IsDefaultStart != backingLevel.IsDefaultStart
+                || savedLevel.SuppressMultiplayerDeathDrops
+                    != backingLevel.SuppressMultiplayerDeathDrops
+                || savedLevel.StartPositionX != backingLevel.StartPositionX
+                || savedLevel.StartPositionY != backingLevel.StartPositionY
+                || !restoredLevels.TryAdd(
+                    savedLevel.LevelId,
+                    validatedGeometry.Levels.Single(level =>
+                        level.LevelId == savedLevel.LevelId))) {
+                throw new InvalidDataException(
+                    $"Cohort projected geometry level {savedLevel.LevelId} does not match its backing level.");
+            }
+            previousLevelId = savedLevel.LevelId;
+        }
+        return restoredLevels;
+    }
+
+    private static void ValidateCohortEffectiveLevelCells(
+        DiabloWorldGeometryLevelState savedLevel)
+    {
+        try {
+            _ = ValidateCohortCells(
+                savedLevel.BlockedCells,
+                savedLevel.Width,
+                savedLevel.Height,
+                "projected blocked");
+            _ = ValidateCohortCells(
+                savedLevel.MissileBlockedCells,
+                savedLevel.Width,
+                savedLevel.Height,
+                "projected missile-blocked");
+            _ = ValidateCohortCells(
+                savedLevel.NativePieceCollisionCells,
+                savedLevel.Width,
+                savedLevel.Height,
+                "projected piece-collision");
+            _ = ValidateCohortCells(
+                savedLevel.NativePieceMissileBlockedCells,
+                savedLevel.Width,
+                savedLevel.Height,
+                "projected piece-missile");
+            _ = ValidateCohortCells(
+                savedLevel.NativeVisionBlockedCells,
+                savedLevel.Width,
+                savedLevel.Height,
+                "projected vision");
+        } catch (ArgumentNullException exception) {
+            throw new InvalidDataException(
+                $"Cohort projected geometry level {savedLevel.LevelId} has null cell data.",
+                exception);
+        }
+    }
+
+    private static DiabloWorldGeometryLevelState CaptureCohortLevel(
+        AuthoritativeLevel level)
+    {
+        return new DiabloWorldGeometryLevelState(
+            level.LevelId,
+            level.StableSymbol,
+            level.Width,
+            level.Height,
+            level.BlockedCells.ToArray(),
+            level.MissileBlockedCells.ToArray(),
+            level.NativeTransparency.ToArray(),
+            level.NativeObjectLayer.ToArray(),
+            level.NativeMegaTileLayer.ToArray(),
+            level.NativePieceLayer.ToArray(),
+            level.NativePieceProperties
+                .OrderBy(pair => pair.Key)
+                .ToDictionary(pair => pair.Key, pair => pair.Value),
+            level.NativePieceCollisionCells.ToArray(),
+            level.NativeVisionBlockedCells.ToArray(),
+            level.HasExplicitNativeVisionBlockedCells,
+            level.NativePieceMissileBlockedCells.ToArray(),
+            level.NativeMonsterLayer.ToArray(),
+            level.IsDefaultStart,
+            level.SuppressMultiplayerDeathDrops,
+            level.StartPositionX,
+            level.StartPositionY);
+    }
+
+    private static IReadOnlyList<int> ValidateCohortCells(
+        IReadOnlyList<int>? cells,
+        int width,
+        int height,
+        string category)
+    {
+        ArgumentNullException.ThrowIfNull(cells);
+        var maximumCell = (long)width * height;
+        var restoredCells = new int[cells.Count];
+        var previousCell = -1;
+        for (var index = 0; index < cells.Count; index++) {
+            var cell = cells[index];
+            if (cell < 0 || cell >= maximumCell
+                || (index != 0 && cell <= previousCell)) {
+                throw new InvalidDataException(
+                    $"Cohort {category} cells must be in-bounds and strictly sorted.");
+            }
+            restoredCells[index] = cell;
+            previousCell = cell;
+        }
+        return restoredCells;
     }
 
     /** Resolves an authored mutation origin from a fixed object, encounter, or set-level origin. */

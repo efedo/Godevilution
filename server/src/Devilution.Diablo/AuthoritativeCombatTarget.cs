@@ -105,7 +105,10 @@ public sealed class AuthoritativeCombatTarget
         AuthoritativeMonsterLeaderRelation leaderRelation = AuthoritativeMonsterLeaderRelation.None,
         int packSize = 0,
         int activeForTicks = 0,
-        AuthoritativeMonsterDialogueState dialogueState = AuthoritativeMonsterDialogueState.Unspecified)
+        AuthoritativeMonsterDialogueState dialogueState = AuthoritativeMonsterDialogueState.Unspecified,
+        uint? dropLevelId = null,
+        int? dropPositionX = null,
+        int? dropPositionY = null)
     {
         if (entityId == 0)
             throw new ArgumentOutOfRangeException(nameof(entityId));
@@ -362,9 +365,9 @@ public sealed class AuthoritativeCombatTarget
                 throw new ArgumentException("Monster drops require both entity and item IDs.");
             Drop = new AuthoritativeWorldItem(
                 dropItemEntityId,
-                levelId,
-                positionX,
-                positionY,
+                dropLevelId ?? levelId,
+                dropPositionX ?? positionX,
+                dropPositionY ?? positionY,
                 dropItemSeed,
                 dropItemPrice,
                 dropItemState ?? AuthoritativeItemState.Empty with { ItemType = 1, Value = (int)dropItemPrice, IdentifiedValue = (int)dropItemPrice });
@@ -634,6 +637,115 @@ public sealed class AuthoritativeCombatTarget
     public int AcidResistance { get; set; }
     public int MonsterLevel { get; set; }
     public AuthoritativeWorldItem? Drop { get; }
+
+    /** Captures the complete mutable monster projection without advancing timing. */
+    internal DiabloMonsterState CaptureCohortState()
+    {
+        return new DiabloMonsterState(
+            EntityId,
+            MonsterId,
+            LevelId,
+            PositionX,
+            PositionY,
+            HitPoints,
+            MaxHitPoints,
+            ArmorClass,
+            AttackDamage,
+            AggroRange,
+            FireResistance,
+            LightningResistance,
+            MagicResistance,
+            AcidResistance) {
+            MovementStartedTick = IsMoving ? MovementStartedTick : 0,
+            MovementEffectTick = IsMoving ? MovementEffectTick : 0,
+            MonsterLevel = MonsterLevel,
+            Moving = IsMoving,
+            FuturePositionX = FuturePositionX,
+            FuturePositionY = FuturePositionY,
+            Direction = Direction,
+            MonsterItemSeed = MonsterItemSeed,
+            MonsterAiSeed = MonsterAiSeed,
+            DialogueMessageId = DialogueMessageId,
+            DialogueState = DialogueState,
+            Petrified = IsPetrified,
+            StoneCurseImmune = StoneCurseImmune,
+            IsUndead = IsUndead,
+            IsDemon = IsDemon,
+            IsAnimal = IsAnimal,
+            HasKnockback = HasKnockback,
+            IsPlayerMinion = IsPlayerMinion,
+            OwnerPlayerId = OwnerPlayerId,
+            IsUnique = IsUnique,
+            UniqueIdentity = UniqueIdentity,
+            LeaderEntityId = LeaderEntityId,
+            LeaderRelation = LeaderRelation,
+            PackSize = PackSize,
+            ActiveForTicks = ActiveForTicks,
+            IsDiablo = IsDiablo,
+            BerserkImmune = BerserkImmune,
+            MinDamage = MinDamage,
+            MaxDamage = MaxDamage,
+            MinDamageSpecial = MinDamageSpecial,
+            MaxDamageSpecial = MaxDamageSpecial,
+            IsBerserked = IsBerserked,
+            DeathAnimationTicks = DeathAnimationTicks,
+            ExperienceReward = ExperienceReward,
+            ToHit = ToHit,
+            ToHitSpecial = ToHitSpecial,
+            NativeAi = NativeAi,
+            Intelligence = Intelligence,
+            GargoyleSpecialActive = GargoyleSpecialActive,
+            DeathTicksRemaining = DeathTicksRemaining,
+            FallenFearTicks = FallenFearTicks,
+            FallenFearDirection = FallenFearDirection,
+            FallenStandAnimationFrame = FallenStandAnimationFrame,
+            FallenStandAnimationTick = FallenStandAnimationTick,
+            FallenRallyTicks = FallenRallyTicks,
+            SneakHidden = SneakHidden,
+            SneakRetreatTicks = SneakRetreatTicks,
+            ScavengerHealingTicks = ScavengerHealingTicks,
+            ScavengerCorpseEntityId = ScavengerCorpseEntityId,
+            BatRetreatTicks = BatRetreatTicks,
+            BatRetreatDirection = BatRetreatDirection,
+            BatMovementIdleTicks = BatMovementIdleTicks,
+            BatMovementMode = BatMovementMode,
+            RangedAvoidanceMoveTicks = RangedAvoidanceMoveTicks,
+            RangedAvoidanceTurn = RangedAvoidanceTurn,
+            RangedAvoidanceMovementIdleTicks = RangedAvoidanceMovementIdleTicks,
+            RangedAvoidanceMovementMode = RangedAvoidanceMovementMode,
+            RhinoMovementTicks = RhinoMovementTicks,
+            RhinoMovementTurn = RhinoMovementTurn,
+            AvoidanceMovementTicks = AvoidanceMovementTicks,
+            AvoidanceMovementTurn = AvoidanceMovementTurn,
+            AvoidanceMovementIdleTicks = AvoidanceMovementIdleTicks,
+            AvoidanceMovementMode = AvoidanceMovementMode,
+            SkeletonMeleeDelayTicks = SkeletonMeleeDelayTicks,
+            SkeletonRangedMovementIdleTicks = SkeletonRangedMovementIdleTicks,
+            SkeletonRangedMovementMode = SkeletonRangedMovementMode,
+            FatMovementIdleTicks = FatMovementIdleTicks,
+            FatMovementMode = FatMovementMode,
+            RhinoMovementIdleTicks = RhinoMovementIdleTicks,
+            RhinoMovementMode = RhinoMovementMode,
+            RhinoDelayTicks = RhinoDelayTicks,
+            SkeletonKingDelayTicks = SkeletonKingDelayTicks,
+            HorkDemonDelayTicks = HorkDemonDelayTicks,
+            RangedAvoidanceDelayTicks = RangedAvoidanceDelayTicks,
+            SnakeDelayTicks = SnakeDelayTicks,
+            CounselorDelayTicks = CounselorDelayTicks,
+            AvoidanceDelayTicks = AvoidanceDelayTicks,
+            RangedDelayTicks = RangedDelayTicks,
+            MegaDelayTicks = MegaDelayTicks,
+            CounselorRetreatTicks = CounselorRetreatTicks,
+            HitPointsQ6 = HitPointsQ6,
+            MaxHitPointsQ6 = MaxHitPointsQ6,
+        };
+    }
+
+    /** Restores the one same-tick marker omitted by the legacy snapshot. */
+    internal void RestoreCohortFallenRallyAttackPending(bool pending)
+    {
+        FallenRallyAttackPending = pending;
+    }
 
     internal int ApplyDamageQ6(int damageQ6)
     {

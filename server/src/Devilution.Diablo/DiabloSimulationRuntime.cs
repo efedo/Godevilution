@@ -1,6 +1,7 @@
 using Devilution.Engine;
 using Devilution.Domain.Inventory;
 using Devilution.Shared;
+using System.Runtime.CompilerServices;
 
 namespace Devilution.Diablo;
 
@@ -573,13 +574,94 @@ public sealed class DiabloPlayerTemplate
 
 public sealed partial class DiabloSimulation
 {
+    private int cohortCandidateOnly;
+    private int ordinaryRuntimeCount;
+    private int cohortRuntimeBound;
+    private readonly object cohortBindingGate = new();
+
+    private static readonly ConditionalWeakTable<
+        AuthoritativeSimulationRuntime<AuthoritativePlayerState, DiabloGameplayEvent>,
+        DiabloSimulation> RuntimeOwners = new();
+
     /** Creates an Engine-owned runtime over this module-owned simulation. */
     public AuthoritativeSimulationRuntime<AuthoritativePlayerState, DiabloGameplayEvent>
         CreateRuntime(DiabloPlayerTemplate playerTemplate)
     {
         ArgumentNullException.ThrowIfNull(playerTemplate);
-        return new AuthoritativeSimulationRuntime<AuthoritativePlayerState, DiabloGameplayEvent>(
-            new Lifecycle(this, playerTemplate));
+        if (System.Threading.Volatile.Read(ref cohortCandidateOnly) != 0)
+            throw new InvalidOperationException(
+                "A restored Diablo cohort must bind through its candidate runtime exactly once.");
+        lock (cohortBindingGate) {
+            System.Threading.Interlocked.Increment(ref ordinaryRuntimeCount);
+            try {
+                var runtime = new AuthoritativeSimulationRuntime<AuthoritativePlayerState, DiabloGameplayEvent>(
+                    new Lifecycle(this, playerTemplate));
+                RuntimeOwners.Add(runtime, this);
+                return runtime;
+            } catch {
+                System.Threading.Interlocked.Decrement(ref ordinaryRuntimeCount);
+                throw;
+            }
+        }
+    }
+
+    /**
+     * Creates the runtime for an already restored cohort.  Unlike ordinary
+     * startup, this path does not validate or materialize a player template;
+     * the candidate roster and exact tick are installed in one engine barrier.
+     */
+    internal AuthoritativeSimulationRuntime<AuthoritativePlayerState, DiabloGameplayEvent>
+        CreateCohortRuntime(
+            ulong tick,
+        IReadOnlyList<SimulationSession<AuthoritativePlayerState>> participants)
+    {
+        ArgumentNullException.ThrowIfNull(participants);
+        if (participants.Any(participant => participant is null || participant.State is null))
+            throw new InvalidDataException("A cohort runtime contains a null participant.");
+        var ids = new HashSet<string>(StringComparer.Ordinal);
+        foreach (var participant in participants) {
+            if (string.IsNullOrWhiteSpace(participant.Id) || !ids.Add(participant.Id))
+                throw new InvalidDataException("A cohort runtime contains duplicate participant IDs.");
+        }
+        lock (cohortBindingGate) {
+            if (System.Threading.Volatile.Read(ref cohortCandidateOnly) == 0
+                || System.Threading.Interlocked.CompareExchange(ref cohortRuntimeBound, 1, 0) != 0)
+                throw new InvalidOperationException(
+                    "A Diablo cohort candidate can only bind one restored runtime.");
+            try {
+                var runtime = new AuthoritativeSimulationRuntime<AuthoritativePlayerState, DiabloGameplayEvent>(
+                    new CohortLifecycle(this));
+                runtime.InitializeCohort(tick, participants);
+                RuntimeOwners.Add(runtime, this);
+                return runtime;
+            } catch {
+                System.Threading.Interlocked.Exchange(ref cohortRuntimeBound, 0);
+                throw;
+            }
+        }
+    }
+
+    internal void MarkCohortCandidate()
+        => System.Threading.Interlocked.Exchange(ref cohortCandidateOnly, 1);
+
+    internal void RequireSingleCohortRuntimeOwner()
+    {
+        var count = System.Threading.Volatile.Read(ref cohortCandidateOnly) != 0
+            ? System.Threading.Volatile.Read(ref cohortRuntimeBound)
+            : System.Threading.Volatile.Read(ref ordinaryRuntimeCount);
+        if (count != 1)
+            throw new InvalidOperationException(
+                "A Diablo cohort capture requires one synchronized runtime owner.");
+    }
+
+    internal void RequireOwnedRuntime(
+        AuthoritativeSimulationRuntime<AuthoritativePlayerState, DiabloGameplayEvent> runtime)
+    {
+        ArgumentNullException.ThrowIfNull(runtime);
+        if (!RuntimeOwners.TryGetValue(runtime, out var owner)
+            || !ReferenceEquals(owner, this))
+            throw new InvalidOperationException(
+                "The supplied runtime is not owned by this Diablo simulation.");
     }
 
     private sealed class Lifecycle
@@ -610,6 +692,35 @@ public sealed partial class DiabloSimulation
         {
             simulation.AdvanceStatusEffects(state, tick);
         }
+
+        public IReadOnlyList<DirectedSimulationEvent<AuthoritativePlayerState, DiabloGameplayEvent>>
+            AdvanceTick(ulong tick, IReadOnlyList<AuthoritativePlayerState> participants)
+        {
+            return simulation.AdvanceTick(tick, participants)
+                .Select(delivery =>
+                    new DirectedSimulationEvent<AuthoritativePlayerState, DiabloGameplayEvent>(
+                        delivery.Recipient,
+                        delivery.Event))
+                .ToArray();
+        }
+    }
+
+    private sealed class CohortLifecycle
+        : IAuthoritativeSimulationLifecycle<AuthoritativePlayerState, DiabloGameplayEvent>
+    {
+        private readonly DiabloSimulation simulation;
+
+        public CohortLifecycle(DiabloSimulation simulation)
+        {
+            this.simulation = simulation;
+        }
+
+        public AuthoritativePlayerState CreateParticipant(string sessionId)
+            => throw new InvalidOperationException(
+                "A restored cohort cannot create an implicit participant.");
+
+        public void AdvanceParticipant(AuthoritativePlayerState state, ulong tick)
+            => simulation.AdvanceStatusEffects(state, tick);
 
         public IReadOnlyList<DirectedSimulationEvent<AuthoritativePlayerState, DiabloGameplayEvent>>
             AdvanceTick(ulong tick, IReadOnlyList<AuthoritativePlayerState> participants)

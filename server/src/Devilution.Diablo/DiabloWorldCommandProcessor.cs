@@ -109,6 +109,32 @@ public sealed class DiabloWorldCommandProcessor
         nativeStoreTransitionInvalidator = invalidator;
     }
 
+    /** Captures allocator cursors without inferring them from surviving entities. */
+    internal DiabloWorldCommandAllocatorState CaptureCohortAllocators()
+    {
+        return new DiabloWorldCommandAllocatorState(
+            worldItemEntityIds.NextId,
+            authoredProjectileEntityIds.NextId,
+            generatedMonsterEntityIds.NextId);
+    }
+
+    /** Restores exact allocator cursors, including zero exhaustion. */
+    internal void RestoreCohortAllocators(DiabloWorldCommandAllocatorState state)
+    {
+        ArgumentNullException.ThrowIfNull(state);
+        worldItemEntityIds.RestoreNextId(state.NextWorldItemEntityId);
+        authoredProjectileEntityIds.RestoreNextId(state.NextAuthoredProjectileEntityId);
+        generatedMonsterEntityIds.RestoreNextId(state.NextGeneratedMonsterEntityId);
+    }
+
+    /** Rejects a cohort capture while entry events are still being assembled. */
+    internal void AssertCohortCaptureBoundary()
+    {
+        if (pendingEntryEvents.Count != 0)
+            throw new InvalidOperationException(
+                "A cohort cannot be captured while world entry events are pending.");
+    }
+
     public DiabloWorldIntentResult Execute(
         AuthoritativePlayerState player,
         DiabloWorldIntent intent,

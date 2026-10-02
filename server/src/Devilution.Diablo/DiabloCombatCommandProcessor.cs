@@ -181,6 +181,24 @@ public sealed class DiabloCombatCommandProcessor
         }
     }
 
+    /** Captures allocator cursors without inferring them from surviving entities. */
+    internal DiabloCombatCommandAllocatorState CaptureCohortAllocators()
+    {
+        return new DiabloCombatCommandAllocatorState(
+            worldItemEntityIds.NextId,
+            monsterEntityIds.NextId,
+            projectileEntityIds.NextId);
+    }
+
+    /** Restores exact allocator cursors, including zero exhaustion. */
+    internal void RestoreCohortAllocators(DiabloCombatCommandAllocatorState state)
+    {
+        ArgumentNullException.ThrowIfNull(state);
+        worldItemEntityIds.RestoreNextId(state.NextWorldItemEntityId);
+        monsterEntityIds.RestoreNextId(state.NextMonsterEntityId);
+        projectileEntityIds.RestoreNextId(state.NextProjectileEntityId);
+    }
+
     private int GetDifficultyLevelOffset()
         => rules.DifficultyRules.GetLevelOffset(difficulty);
 

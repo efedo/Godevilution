@@ -2,6 +2,19 @@
 
 All notable changes to this fork are documented below.
 
+- 2026-10-02: Add complete module-cohort capture, validated fresh one-shot
+  restoration and a strict host-owned Diablo codec. Preserve raw actors/quests,
+  historical references, participant policies, RNG, exact independent cursors,
+  backing/effective geometry, cached projection, procedural markers and all
+  stores without replaying startup. Preserve legacy APIs/saves and distinguish
+  the raw procedural cursor from six exhausting allocators. New module/codec
+  checks pass 25/69; affected module checks pass 121 and full server passes 1,376
+  with three explicit exclusions. Full Diablo retains four baseline Hork failures
+  with 2,639 passes and 61 exclusions; both explicit TCP cold-resume counterexamples
+  remain red and four documentation guards pass. Update existing contracts/plan/status;
+  production whole-host
+  recovery and the multiplayer overwrite defect remain open.
+
 - 2026-10-01: Add complete-cohort recovery prerequisites: barrier-owned exact
   runtime/command capture and fresh one-shot initialization, allocator cursor
   restore, detached backing geometry/all-store restore, and a separately leased

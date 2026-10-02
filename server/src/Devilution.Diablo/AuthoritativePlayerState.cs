@@ -602,6 +602,21 @@ public sealed class AuthoritativePlayerState(
         AppliedEquipmentAttributeBonuses = AuthoritativeEquipmentAttributeRules.ResolveBonuses(Equipment);
     }
 
+    /** Restores derived equipment bookkeeping without recalculating raw state. */
+    internal void RestoreCohortDerivedState(
+        int armorClass,
+        AuthoritativeEquipmentAttributeBonuses appliedEquipmentAttributeBonuses)
+    {
+        if (armorClass < 0)
+            throw new ArgumentOutOfRangeException(nameof(armorClass));
+        ArmorClass = armorClass;
+        AppliedEquipmentAttributeBonuses = appliedEquipmentAttributeBonuses;
+    }
+
+    internal AuthoritativeEquipmentAttributeBonuses
+        CaptureAppliedEquipmentAttributeBonuses()
+        => AppliedEquipmentAttributeBonuses;
+
     /** Recomputes effective armor without changing current life or mana. */
     public void RecalculateEquipmentArmor()
     {

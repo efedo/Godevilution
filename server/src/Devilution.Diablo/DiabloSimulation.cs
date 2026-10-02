@@ -92,6 +92,10 @@ public sealed class DiabloSimulationOptions
     /** Deterministically planned origins for ordinary-level quest geometry. */
     public AuthoritativeProceduralQuestPieceOriginCatalog? ProceduralQuestPieceOrigins { get; init; }
 
+    /** Internal restore-only ordinary-level origins; legacy activation leaves this null. */
+    internal IReadOnlyDictionary<uint, AuthoritativeProceduralQuestPieceOrigin>?
+        CohortProceduralQuestPieceOrigins { get; init; }
+
     /** Validated mappings for native DUN object-layer materialization. */
     public AuthoritativeNativeDunObjectCatalog? NativeDunObjects { get; init; }
 
@@ -195,6 +199,12 @@ public sealed class DiabloSimulationOptions
     /** Server-owned initial state for the native-compatible gameplay RNG. */
     public uint RandomSeed { get; init; }
 
+    /** Internal restore-only construction fence; legacy activation remains unchanged. */
+    internal bool DeferCohortInitialization { get; init; }
+
+    /** Internal restore-only fence that suppresses initial difficulty mutation. */
+    internal bool SuppressInitialWorldScaling { get; init; }
+
     /** Explicit session mode; it must not be inferred from connected participants. */
     public DiabloGameMode GameMode { get; init; } = DiabloGameMode.SinglePlayer;
 
@@ -283,7 +293,8 @@ public sealed class DiabloSimulationFactory : IDiabloSimulationFactory
             options.WorldMutations,
             nativeDunObjects: options.NativeDunObjects,
             nativeObjectTemplates: options.NativeObjectTemplates,
-            allowMissingNativeDunLayers: options.NativeDunFragments is not null);
+            allowMissingNativeDunLayers: options.NativeDunFragments is not null,
+            deferCohortInitialization: options.DeferCohortInitialization);
         if (options.NativeDunFragments is not null && options.Content is null)
             throw new InvalidDataException(
                 "Deferred native DUN fragments require their composed content bytes.");
@@ -295,17 +306,19 @@ public sealed class DiabloSimulationFactory : IDiabloSimulationFactory
         var combatRules = options.CombatRules ?? new AuthoritativeCombatRules(10, 1, 100);
         if (options.Items is not null)
             combatRules.ValidateItems(options.Items);
-        foreach (var target in worldState.CombatTargets.Values) {
-            DiabloDifficultyMonsterScaling.ApplyInitialHealth(
-                target,
-                options.Difficulty,
-                combatRules.GameVariant,
-                options.GameMode,
-                combatRules.DifficultyRules);
-            DiabloDifficultyMonsterScaling.ApplyInitialResistances(
-                target,
-                options.Difficulty,
-                options.MonsterTypes);
+        if (!options.SuppressInitialWorldScaling) {
+            foreach (var target in worldState.CombatTargets.Values) {
+                DiabloDifficultyMonsterScaling.ApplyInitialHealth(
+                    target,
+                    options.Difficulty,
+                    combatRules.GameVariant,
+                    options.GameMode,
+                    combatRules.DifficultyRules);
+                DiabloDifficultyMonsterScaling.ApplyInitialResistances(
+                    target,
+                    options.Difficulty,
+                    options.MonsterTypes);
+            }
         }
         var random = new DeterministicLegacyRandom(options.RandomSeed);
         var playerDamage = new AuthoritativePlayerDamageResolver(spells);
@@ -391,7 +404,9 @@ public sealed class DiabloSimulationFactory : IDiabloSimulationFactory
             options.QuestDialogueStages,
             options.DialogueMessages,
             options.SetLevelObjects,
-            options.SetLevelObjectOrigins,
+            options.DeferCohortInitialization
+                ? null
+                : options.SetLevelObjectOrigins,
             options.SetLevelMaps,
             options.NativeDunObjects,
             options.NativeDunFragments,
@@ -400,21 +415,28 @@ public sealed class DiabloSimulationFactory : IDiabloSimulationFactory
             options.NativeObjectTemplates,
             options.Content,
             questTypes: options.QuestTypes,
-            proceduralSetPieceOrigins: options.ProceduralSetPieceOrigins?.Plan(
-                options.World ?? new AuthoritativeWorld(),
-                options.RandomSeed),
+            proceduralSetPieceOrigins: options.DeferCohortInitialization
+                ? options.SetLevelObjectOrigins
+                : options.ProceduralSetPieceOrigins?.Plan(
+                    options.World ?? new AuthoritativeWorld(),
+                    options.RandomSeed),
             proceduralSetPieceOriginCatalog: options.ProceduralSetPieceOrigins,
             proceduralSetPieceOriginSeed: options.RandomSeed,
-            proceduralQuestPieceOrigins: options.ProceduralQuestPieceOrigins?.Plan(
-                options.World ?? new AuthoritativeWorld(),
-                options.RandomSeed),
+            proceduralQuestPieceOrigins: options.DeferCohortInitialization
+                ? options.CohortProceduralQuestPieceOrigins
+                : options.ProceduralQuestPieceOrigins?.Plan(
+                    options.World ?? new AuthoritativeWorld(),
+                    options.RandomSeed),
             proceduralQuestPieceOriginCatalog: options.ProceduralQuestPieceOrigins,
             proceduralQuestPieceOriginSeed: options.RandomSeed,
             experience: options.Experience,
             nativeMissiles: options.NativeMissiles,
             nativeMissileSprites: options.NativeMissileSprites,
             townerGreetings: options.TownerGreetings,
-            nativeDunGeometry: options.NativeDunGeometry);
+            nativeDunGeometry: options.NativeDunGeometry,
+            initialRandomSeed: options.RandomSeed,
+            useNativePlayerActionTiming: options.UseNativePlayerActionTiming,
+            deferCohortInitialization: options.DeferCohortInitialization);
         worldState.SetSetLevelOriginResolver(simulation.ResolveSetLevelObjectOrigin);
         worldState.SetProceduralQuestPieceOriginResolver(
             simulation.ResolveProceduralQuestPieceOrigin);
@@ -422,6 +444,16 @@ public sealed class DiabloSimulationFactory : IDiabloSimulationFactory
         simulation.ConfigureNativeGeneratedWorldIdentity(options.NativeGeneratedWorldIdentity);
         simulation.ConfigureCathedralDepthWorldIdentity(options.CathedralDepthWorldIdentity);
         return simulation;
+    }
+
+    /** Builds a detached, unexposed module candidate from a complete cohort. */
+    public DiabloCohortCandidate CreateCohortCandidate(
+        DiabloSimulationOptions options,
+        DiabloCohortState state)
+    {
+        ArgumentNullException.ThrowIfNull(options);
+        ArgumentNullException.ThrowIfNull(state);
+        return DiabloSimulation.CreateCohortCandidate(options, state);
     }
 }
 
@@ -436,6 +468,8 @@ public sealed partial class DiabloSimulation
     private readonly DiabloWorldCommandProcessor worldCommands;
     private readonly DiabloCombatCommandProcessor combatCommands;
     private readonly DeterministicLegacyRandom random;
+    private readonly uint initialRandomSeed;
+    private readonly bool useNativePlayerActionTiming;
     private readonly AuthoritativeMonsterSpawnPlanner? monsterSpawnPlanner;
     private readonly DiabloMonsterSpawnConfiguration? proceduralMonsterSpawns;
     private readonly uint proceduralMonsterSeed;
@@ -509,7 +543,10 @@ public sealed partial class DiabloSimulation
         AuthoritativeNativeMissileCatalog? nativeMissiles = null,
         AuthoritativeNativeMissileSpriteCatalog? nativeMissileSprites = null,
         AuthoritativeTownerGreetingCatalog? townerGreetings = null,
-        AuthoritativeNativeDunGeometryCatalog? nativeDunGeometry = null)
+        AuthoritativeNativeDunGeometryCatalog? nativeDunGeometry = null,
+        uint initialRandomSeed = 0,
+        bool useNativePlayerActionTiming = false,
+        bool deferCohortInitialization = false)
     {
         this.storeCatalog = storeCatalog ?? throw new ArgumentNullException(nameof(storeCatalog));
         WorldState = worldState ?? throw new ArgumentNullException(nameof(worldState));
@@ -523,6 +560,8 @@ public sealed partial class DiabloSimulation
         NativeMissiles = nativeMissiles;
         NativeMissileSprites = nativeMissileSprites;
         this.random = random ?? throw new ArgumentNullException(nameof(random));
+        this.initialRandomSeed = initialRandomSeed;
+        this.useNativePlayerActionTiming = useNativePlayerActionTiming;
         CombatRules = combatRules ?? throw new ArgumentNullException(nameof(combatRules));
         PlayerClasses = playerClasses;
         PlayerAnimations = playerAnimations;
@@ -544,12 +583,20 @@ public sealed partial class DiabloSimulation
         DialogueMessages = dialogueMessages;
         SetLevelObjects = setLevelObjects;
         if (proceduralSetPieceOrigins is not null) {
-            foreach (var (setLevelId, origin) in proceduralSetPieceOrigins)
-                PublishSetLevelObjectOrigin(setLevelId, origin, materialize: false);
+            foreach (var (setLevelId, origin) in proceduralSetPieceOrigins) {
+                if (deferCohortInitialization)
+                    this.setLevelObjectOrigins.Add(setLevelId, origin);
+                else
+                    PublishSetLevelObjectOrigin(setLevelId, origin, materialize: false);
+            }
         }
         if (proceduralQuestPieceOrigins is not null) {
-            foreach (var (originId, origin) in proceduralQuestPieceOrigins)
-                PublishProceduralQuestPieceOrigin(originId, origin);
+            foreach (var (originId, origin) in proceduralQuestPieceOrigins) {
+                if (deferCohortInitialization)
+                    this.proceduralQuestPieceOrigins.Add(originId, origin);
+                else
+                    PublishProceduralQuestPieceOrigin(originId, origin);
+            }
         }
         if (setLevelObjectOrigins is not null) {
             foreach (var (setLevelId, origin) in setLevelObjectOrigins)
@@ -567,11 +614,13 @@ public sealed partial class DiabloSimulation
         this.proceduralSetPieceOriginSeed = proceduralSetPieceOriginSeed;
         this.proceduralQuestPieceOriginCatalog = proceduralQuestPieceOriginCatalog;
         this.proceduralQuestPieceOriginSeed = proceduralQuestPieceOriginSeed;
-        MaterializeRelativeSetLevelObjects();
-        ApplyDeferredNativeDunFragments();
-        MaterializeNativeDunMonsters();
-        ReconcileProceduralSpawnState();
-        RefreshAuthoredDialogueTargets();
+        if (!deferCohortInitialization) {
+            MaterializeRelativeSetLevelObjects();
+            ApplyDeferredNativeDunFragments();
+            MaterializeNativeDunMonsters();
+            ReconcileProceduralSpawnState();
+            RefreshAuthoredDialogueTargets();
+        }
     }
 
     public DiabloWorldState WorldState { get; }

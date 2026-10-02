@@ -3,7 +3,7 @@
 `Devilution.Diablo` is the first-party game module for authoritative Diablo and
 Hellfire behavior. It targets .NET 8, references the Domain kernel, Data runtime,
 and Engine capability contracts, and has no dependency on the server host,
-Protobuf, Godot, or persistence.
+Protobuf, Godot, or filesystem persistence.
 
 The module currently owns:
 
@@ -70,9 +70,29 @@ preserves registered routes made temporarily blocked by `ReplaceLevel`; new
 public warp registrations retain their existing walkability checks.
 `StoreCatalog.CaptureAll`/`RestoreAll` cover every registered store, including
 closed or empty stock, with exact content-owned identities/roles and detached
-item state. Both helpers require the caller's simulation barrier. They are
-complete-cohort prerequisites, not a complete module checkpoint or a production
-multiplayer recovery fix; legacy snapshot/import behavior remains unchanged.
+item state. Both helpers require the caller's simulation barrier.
+
+`DiabloSimulation.CaptureCohortState` captures the complete detached module graph
+at the owning Engine runtime's exact barrier tick: ordered participant bindings,
+raw players/actions, monsters and historical drop templates, items, objects,
+full quests, projectiles, portals, corpses, stores, RNG, backing/effective geometry,
+cached mutations, procedural markers, nullable portal clock and allocator cursors.
+The six processor cursors retain zero exhaustion; the separate raw procedural
+monster cursor retains legacy zero-to-one and occupancy-skipping behavior.
+Do not infer cursors from surviving entities or refresh cached projection on capture.
+
+`DiabloSimulationFactory.CreateCohortCandidate` validates a fresh, detached
+candidate against supplied trusted active content/rules catalogs. It restores
+without ordinary startup scaling, generation, entry-event replay or participant
+creation. Full checkpoints require bound nonzero participant identities, exactly
+one owning runtime, and module-owned class/item policies (or explicit absence).
+Unsupported independent template policies and unbound legacy players are rejected
+only by this new checkpoint path; ordinary runtime APIs remain unchanged.
+The candidate owns one fresh runtime installation and does not implicitly admit
+new participants. The future host must provide explicit trusted admission and
+outer content/ruleset identity fences. Transport, JSON, durable publication and
+command ledgers remain outside this module. Production cold multiplayer recovery
+is not yet wired to this API; legacy save/import behavior remains unchanged.
 
 When validated towner greetings are supplied, native-role store entry and
 Gillian's stash require the declared NPC level, Chebyshev distance at most one,
