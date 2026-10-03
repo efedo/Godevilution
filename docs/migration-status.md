@@ -143,6 +143,43 @@ open. Their scope, dependencies, and exit checks are defined only in the
 
 ## Recent implementation evidence
 
+### M0 bounded fixture lifetime qualification (2026-10-02)
+
+Following `0d99c2eba`, test-only lease operations/reload and participant
+initialization now use dedicated controlled workers, five-second gate/join
+bounds, release on every exit, and primary/cleanup failure retention. The two
+initialization fixtures have bounded reads with stage/elapsed/host-failure
+diagnostics; the affected initialization journey retains failed exact-GUID roots
+and refuses reparse traversal during successful cleanup. New negatives cover
+EOF, read deadline/cancellation, early gate failure and joining remaining tasks
+after fault/cancellation. Production deadlines, protocol, saves and collection
+parallelization are unchanged.
+
+- Reviewed-source build: zero errors, three existing NU1900 warnings
+  (`.local/m0-gate-lifetimes-reviewed-build.log`). Both initialization fixtures
+  retain primary assertion/cleanup failures through server disposal; secondary
+  disposal errors are attached before that primary is rethrown.
+- Both affected test classes: 52 passed, zero failures/skips, 3.911s
+  (`.local/m0-gate-lifetimes-reviewed-focused.log`).
+- Final full default-parallel server suite: 1,493 passed, zero failures and four
+  unchanged exclusions, 46.005s (`.local/m0-gate-lifetimes-reviewed-full.log`).
+  Earlier working-tree full runs also passed (46.638s and 46.326s); their logs
+  are retained. Exclusions
+  remain the local-asset case, two explicit legacy cold-overwrite counterexamples
+  and unavailable directory-link privilege.
+- Resumed crash-safety checks against the previously built baseline: 31 passed,
+  zero failures/skips, 33.041s (`.local/godot-crash-safety-resumed-20261002.log`).
+  They use harmless owned probes, not deliberate engine crashes. A scoped
+  process inspection found no owned Godevilution runtime/test or WerFault process.
+
+Independent GPT 6.1 Sol xhigh review identified and closed disposal-time primary
+failure masking in the concurrent initialization fixture. Initial allocation
+attempts reached the runtime thread limit; the requested reviewer was allocated
+after the client worker finished, without substituting another model.
+The historical lease/initialization failures remain unclassified; this finite
+qualification does not establish every load/fault outcome or close M0. Normal
+cohort adoption still awaits approval; existing user files/profiles are untouched.
+
 The records below describe verified implementation slices at this baseline. They are
 evidence, not a separate priority list; detailed older entries retain their
 original scope and may be superseded by later entries or the current assessment.

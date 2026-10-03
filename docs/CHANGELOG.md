@@ -2,6 +2,14 @@
 
 Notable changes to this fork are recorded below.
 
+- 2026-10-02: Bound test-only lease
+  and initialization gate lifetimes, preserve primary/cleanup and failed-root
+  evidence through disposal, and add EOF/deadline/cancellation/early-failure
+  regressions. Independent review closes primary-error masking. Focused
+  server checks pass 52; full default-parallel suite passes 1,493 with four
+  unchanged exclusions. Production semantics and normal profiles are unchanged;
+  retained historical concurrency failures remain unclassified.
+
 - 2026-10-02: Add committed-but-unobserved cohort command recovery through two
   original Godot clients, production CLI item drop and production C# relative
   movement. Verify canonical effects/original receipts before host loss, frozen

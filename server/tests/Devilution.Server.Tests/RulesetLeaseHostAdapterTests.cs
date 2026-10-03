@@ -21,7 +21,10 @@ public sealed class RulesetLeaseHostAdapterTests
             "initial",
             () => {
                 operationStarted.Set();
-                releaseOperation.Wait(TestContext.Current.CancellationToken);
+                if (!releaseOperation.Wait(
+                        TimeSpan.FromSeconds(5),
+                        TestContext.Current.CancellationToken))
+                    throw new TimeoutException("The host operation was not released.");
             });
         var replacement = new FakeAdapter("replacement");
         var candidates = new Queue<FakeAdapter>([initial, replacement]);
@@ -32,9 +35,10 @@ public sealed class RulesetLeaseHostAdapterTests
         // pool slot becoming available while this test waits for its signal.
         var operation = Task.Factory.StartNew(
             () => adapter.Execute("session", new Command(), 1),
-            TestContext.Current.CancellationToken,
+            CancellationToken.None,
             TaskCreationOptions.LongRunning,
             TaskScheduler.Default);
+        Exception? primaryFailure = null;
         try {
             Assert.True(operationStarted.Wait(
                 TimeSpan.FromSeconds(5),
@@ -47,8 +51,19 @@ public sealed class RulesetLeaseHostAdapterTests
             Assert.True(reload.Succeeded);
             Assert.Equal(1, runtime.RetiredActivationCount);
             Assert.Empty(runtime.DrainRetired());
+        } catch (Exception exception) {
+            primaryFailure = exception;
+            throw;
         } finally {
             releaseOperation.Set();
+            var cleanupFailure = await JoinTasksAsync(
+                (operation, "operation"));
+            if (cleanupFailure is not null) {
+                if (primaryFailure is not null)
+                    primaryFailure.Data["RulesetLeaseHostAdapterTests.OperationCleanupFailure"] = cleanupFailure;
+                else
+                    throw cleanupFailure;
+            }
         }
 
         var operationResult = await operation;
@@ -148,35 +163,58 @@ public sealed class RulesetLeaseHostAdapterTests
             "initial",
             () => {
                 operationStarted.Set();
-                releaseOperation.Wait(TestContext.Current.CancellationToken);
+                if (!releaseOperation.Wait(
+                        TimeSpan.FromSeconds(5),
+                        TestContext.Current.CancellationToken))
+                    throw new TimeoutException("The host operation was not released.");
             });
         var replacement = new FakeAdapter("replacement");
         var candidates = new Queue<FakeAdapter>([initial, replacement]);
         var runtime = CreateRuntime(candidates);
         var adapter = new LeasedAuthoritativeGameHostAdapter(runtime);
 
-        var operation = Task.Run(
+        var operation = Task.Factory.StartNew(
             () => adapter.Execute("session", new Command(), 1),
-            TestContext.Current.CancellationToken);
-        Assert.True(operationStarted.Wait(
-            TimeSpan.FromSeconds(5),
-            TestContext.Current.CancellationToken));
-
-        var reload = Task.Run(
-            () => adapter.TryReload(
-                CreateManifest("2", "replacement"),
-                [new TestModule("rules", "2.0.0")],
-                ["session"]),
-            TestContext.Current.CancellationToken);
+            CancellationToken.None,
+            TaskCreationOptions.LongRunning,
+            TaskScheduler.Default);
+        Task<GameplayRulesetReloadResult<IAuthoritativeGameHostAdapter>>? reload = null;
+        Exception? primaryFailure = null;
         try {
+            Assert.True(operationStarted.Wait(
+                TimeSpan.FromSeconds(5),
+                TestContext.Current.CancellationToken));
+
+            reload = Task.Factory.StartNew(
+                () => adapter.TryReload(
+                    CreateManifest("2", "replacement"),
+                    [new TestModule("rules", "2.0.0")],
+                    ["session"]),
+                CancellationToken.None,
+                TaskCreationOptions.LongRunning,
+                TaskScheduler.Default);
             await Task.Delay(100, TestContext.Current.CancellationToken);
-            Assert.False(reload.IsCompleted);
+            Assert.False(reload!.IsCompleted);
+        } catch (Exception exception) {
+            primaryFailure = exception;
+            throw;
         } finally {
             releaseOperation.Set();
+            var cleanupFailure = await JoinTasksAsync(
+                (operation, "operation"),
+                reload is null ? null : (reload, "reload"));
+            if (cleanupFailure is not null) {
+                if (primaryFailure is not null)
+                    primaryFailure.Data["RulesetLeaseHostAdapterTests.GateCleanupFailure"] = cleanupFailure;
+                else
+                    throw cleanupFailure;
+            }
         }
 
         Assert.True((await operation).Succeeded);
-        Assert.True((await reload).Succeeded);
+        var reloadTask = reload ?? throw new InvalidOperationException(
+            "The ruleset reload task was not created after the operation started.");
+        Assert.True((await reloadTask).Succeeded);
         Assert.Equal("initial", adapter.ExportPlayerSave("session"));
         Assert.True(replacement.SessionStateImported);
     }
@@ -274,6 +312,51 @@ public sealed class RulesetLeaseHostAdapterTests
                 "base",
                 version,
                 [TsvTable.Parse("rules.tsv", $"id\tvalue\na\t{value}\n")])]);
+    }
+
+    [Fact]
+    public async Task CleanupAttemptsEveryJoinAfterFaultAndCancellation()
+    {
+        using var canceled = new CancellationTokenSource();
+        canceled.Cancel();
+        var finalJoin = Task.Delay(50, TestContext.Current.CancellationToken);
+        var failure = await JoinTasksAsync(
+            (Task.FromException(new InvalidOperationException("expected cleanup fault")), "faulted"),
+            (Task.FromCanceled(canceled.Token), "canceled"),
+            (finalJoin, "final"));
+        var aggregate = Assert.IsType<AggregateException>(failure);
+        Assert.Equal(2, aggregate.InnerExceptions.Count);
+        Assert.True(finalJoin.IsCompletedSuccessfully);
+        Assert.Contains("faulted", aggregate.InnerExceptions[0].Message, StringComparison.Ordinal);
+        Assert.Contains("canceled", aggregate.InnerExceptions[1].Message, StringComparison.Ordinal);
+    }
+
+    private static async Task<Exception?> JoinTasksAsync(
+        params (Task Task, string Stage)?[] tasks)
+    {
+        var failures = new List<Exception>();
+        foreach (var entry in tasks) {
+            if (entry is null)
+                continue;
+            var (task, stage) = entry.Value;
+            try {
+                if (await Task.WhenAny(task, Task.Delay(TimeSpan.FromSeconds(5))) != task) {
+                    failures.Add(new TimeoutException(
+                        $"Timed out joining the {stage} task during fixture cleanup."));
+                    continue;
+                }
+                await task;
+            } catch (Exception exception) {
+                failures.Add(new InvalidOperationException(
+                    $"The {stage} task failed during fixture cleanup.",
+                    exception));
+            }
+        }
+        return failures.Count switch {
+            0 => null,
+            1 => failures[0],
+            _ => new AggregateException("Multiple fixture cleanup tasks failed.", failures),
+        };
     }
 
     private sealed class FakeAdapter(

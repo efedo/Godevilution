@@ -201,8 +201,11 @@ M4. M5 is the final removal gate, not a reason to postpone replacement work.
    intentionally nondurable and outside this committed-outcome contract.
    Keep broader faults/campaign, retained unclassified `TooLate` failures and
    release acceptance distinct. Retained full-suite lease/initialization fixture
-   failures remain unclassified despite later green checks; qualify their bounded
-   gate/cleanup behavior under load before claiming broader acceptance.
+   failures remain unclassified despite later green checks. Reviewed
+   test-only remediation now uses dedicated controlled gates, bounded joins and
+   stage-labelled read deadlines; focused/default-parallel qualification is in
+   status. Independent review closed a disposal-time primary-error masking gap;
+   neither these checks nor a green rerun establish the historical failure cause.
 2. Add an application-level acceptance path through the actual Godot scene and
    controls: launch, create a character, receive/render an authoritative world,
    submit movement, observe the acknowledged position, save, exit, and resume

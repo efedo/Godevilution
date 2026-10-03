@@ -1,6 +1,8 @@
 using System.Collections.Concurrent;
+using System.Diagnostics;
 using System.Net;
 using System.Net.Sockets;
+using System.Runtime.ExceptionServices;
 using System.Security.Cryptography;
 using System.Text;
 using Devilution.Data;
@@ -12,6 +14,7 @@ using Devilution.Server.Protocol;
 using Devilution.Server.Snapshots;
 using Devilution.Server.Stores;
 using Xunit;
+using Xunit.Sdk;
 
 namespace Devilution.Server.Tests;
 
@@ -843,6 +846,7 @@ public sealed class AuthoritativeTcpServerTests
         var saveRoot = Path.Combine(
             Path.GetTempPath(),
             "Godevilution-Initialization-Race-" + Guid.NewGuid().ToString("N"));
+        Exception? primaryFailure = null;
         try {
             var executor = new RecordingExecutor();
             var initializer = new BlockingParticipantInitializer();
@@ -863,33 +867,93 @@ public sealed class AuthoritativeTcpServerTests
                 saveProvider: saveProvider,
                 participantInitializer: initializer);
             server.Start();
-            var cancellationToken = TestContext.Current.CancellationToken;
+            using var fixtureDeadline = CancellationTokenSource.CreateLinkedTokenSource(TestContext.Current.CancellationToken);
+            fixtureDeadline.CancelAfter(TimeSpan.FromSeconds(15));
+            var cancellationToken = fixtureDeadline.Token;
+            var gateProbe = Task.Factory.StartNew(
+                () => {
+                    Assert.True(
+                        initializer.Entered.Task.Wait(TimeSpan.FromSeconds(5)),
+                        "The participant initializer did not enter its controlled gate.");
+                    Thread.Sleep(100);
+                    Assert.Equal(0, saveProvider.ExportCount);
+                    initializer.Release();
+                },
+                CancellationToken.None,
+                TaskCreationOptions.LongRunning,
+                TaskScheduler.Default);
+            try {
+                using var client = new TcpClient();
+                await client.ConnectAsync(
+                    IPAddress.Loopback,
+                    server.Port,
+                    cancellationToken);
+                await using var stream = client.GetStream();
+                await SendHelloAsync(stream, cancellationToken, requestedClassId: 2);
+                await gateProbe.WaitAsync(TimeSpan.FromSeconds(5), cancellationToken);
 
-            using var client = new TcpClient();
-            await client.ConnectAsync(
-                IPAddress.Loopback,
-                server.Port,
-                cancellationToken);
-            await using var stream = client.GetStream();
-            await SendHelloAsync(stream, cancellationToken, requestedClassId: 2);
-            await initializer.Entered.Task.WaitAsync(cancellationToken);
-            await Task.Delay(100, cancellationToken);
-
-            Assert.Equal(0, saveProvider.ExportCount);
-
-            initializer.Release();
-            Assert.Equal(
-                Envelope.PayloadOneofCase.ServerHello,
-                (await EnvelopeCodec.ReadAsync(stream, cancellationToken))!.PayloadCase);
-            Assert.Equal(
-                Envelope.PayloadOneofCase.Snapshot,
-                (await EnvelopeCodec.ReadAsync(stream, cancellationToken))!.PayloadCase);
-            await WaitUntilAsync(
-                () => saveProvider.ExportCount > 0,
-                cancellationToken);
+                var serverHello = await ReadRequiredEnvelopeAsync(
+                    stream,
+                    cancellationToken,
+                    server,
+                    "participant initialization server hello");
+                Assert.Equal(
+                    Envelope.PayloadOneofCase.ServerHello,
+                    serverHello.PayloadCase);
+                var snapshot = await ReadRequiredEnvelopeAsync(
+                    stream,
+                    cancellationToken,
+                    server,
+                    "participant initialization snapshot");
+                Assert.Equal(
+                    Envelope.PayloadOneofCase.Snapshot,
+                    snapshot.PayloadCase);
+                await WaitUntilAsync(
+                    () => saveProvider.ExportCount > 0,
+                    cancellationToken);
+            } catch (Exception exception) {
+                primaryFailure = exception;
+                throw;
+            } finally {
+                initializer.Release();
+                var gateCleanupFailure = await JoinTaskAsync(
+                    gateProbe,
+                    "participant initialization gate probe");
+                var initializerCleanupFailure = await JoinTaskAsync(
+                    initializer.Completed.Task,
+                    "participant initialization callback");
+                var cleanupFailure = CombineFailures(
+                    gateCleanupFailure,
+                    initializerCleanupFailure);
+                if (cleanupFailure is not null) {
+                    if (primaryFailure is not null)
+                        primaryFailure.Data["AuthoritativeTcpServerTests.InitializationCleanupFailure"] = cleanupFailure;
+                    else {
+                        primaryFailure = cleanupFailure;
+                        throw cleanupFailure;
+                    }
+                }
+            }
+        } catch (Exception exception) {
+            if (primaryFailure is null)
+                primaryFailure = exception;
+            else if (!ReferenceEquals(primaryFailure, exception)) {
+                primaryFailure.Data["AuthoritativeTcpServerTests.ServerDisposalFailure"] = exception;
+                ExceptionDispatchInfo.Capture(primaryFailure).Throw();
+            }
+            throw;
         } finally {
-            if (Directory.Exists(saveRoot))
-                Directory.Delete(saveRoot, recursive: true);
+            if (primaryFailure is null) {
+                try {
+                    DeleteOwnedFixtureRoot(saveRoot);
+                } catch (Exception cleanupFailure) {
+                    cleanupFailure.Data["AuthoritativeTcpServerTests.PreservedFailureRoot"] =
+                        Path.GetFullPath(saveRoot);
+                    throw;
+                }
+            } else {
+                PreserveFailedFixtureRoot(primaryFailure, saveRoot);
+            }
         }
     }
 
@@ -1678,47 +1742,95 @@ public sealed class AuthoritativeTcpServerTests
     [Fact]
     public async Task ConcurrentConnectionsForOneTokenShareOneParticipantInitialization()
     {
-        var executor = new RecordingExecutor();
-        var initializer = new BlockingParticipantInitializer();
-        var commandServer = new AuthoritativeCommandServer(executor);
-        var handshake = new ProtocolHandshake(new ProtocolServerIdentity(
-            "server-build",
-            "0.1.0",
-            "content-hash",
-            20));
-        await using var server = new AuthoritativeTcpServer(
-            commandServer,
-            handshake,
-            () => 10,
-            snapshotProvider: executor,
-            participantInitializer: initializer);
-        server.Start();
-        var cancellationToken = TestContext.Current.CancellationToken;
-        using var firstClient = new TcpClient();
-        using var secondClient = new TcpClient();
-        await firstClient.ConnectAsync(IPAddress.Loopback, server.Port, cancellationToken);
-        await secondClient.ConnectAsync(IPAddress.Loopback, server.Port, cancellationToken);
-        await using var firstStream = firstClient.GetStream();
-        await using var secondStream = secondClient.GetStream();
-        const string resumeToken = "concurrent-session-token";
-        await Task.WhenAll(
-            SendHelloAsync(firstStream, cancellationToken, resumeToken, requestedClassId: 2).AsTask(),
-            SendHelloAsync(secondStream, cancellationToken, resumeToken, requestedClassId: 5).AsTask());
-
+        Exception? primaryFailure = null;
         try {
-            await initializer.Entered.Task.WaitAsync(cancellationToken);
-            initializer.Release();
-            var firstHello = (await EnvelopeCodec.ReadAsync(firstStream, cancellationToken))!.ServerHello;
-            var secondHello = (await EnvelopeCodec.ReadAsync(secondStream, cancellationToken))!.ServerHello;
-            Assert.Equal(firstHello.SessionToken, secondHello.SessionToken);
-            var firstSnapshot = (await EnvelopeCodec.ReadAsync(firstStream, cancellationToken))!.Snapshot;
-            var secondSnapshot = (await EnvelopeCodec.ReadAsync(secondStream, cancellationToken))!.Snapshot;
-            Assert.Equal(
-                Assert.Single(firstSnapshot.Players).EntityId,
-                Assert.Single(secondSnapshot.Players).EntityId);
-            Assert.Equal(1, initializer.CallCount);
-        } finally {
-            initializer.Release();
+            var executor = new RecordingExecutor();
+            var initializer = new BlockingParticipantInitializer();
+            var commandServer = new AuthoritativeCommandServer(executor);
+            var handshake = new ProtocolHandshake(new ProtocolServerIdentity(
+                "server-build",
+                "0.1.0",
+                "content-hash",
+                20));
+            await using var server = new AuthoritativeTcpServer(
+                commandServer,
+                handshake,
+                () => 10,
+                snapshotProvider: executor,
+                participantInitializer: initializer);
+            server.Start();
+            using var fixtureDeadline = CancellationTokenSource.CreateLinkedTokenSource(TestContext.Current.CancellationToken);
+            fixtureDeadline.CancelAfter(TimeSpan.FromSeconds(15));
+            var cancellationToken = fixtureDeadline.Token;
+            using var firstClient = new TcpClient();
+            using var secondClient = new TcpClient();
+            var gateProbe = Task.Factory.StartNew(
+                () => {
+                    if (!initializer.Entered.Task.Wait(TimeSpan.FromSeconds(5)))
+                        throw new TimeoutException("The concurrent initializer did not enter its controlled gate.");
+                    initializer.Release();
+                },
+                CancellationToken.None,
+                TaskCreationOptions.LongRunning,
+                TaskScheduler.Default);
+            try {
+                await firstClient.ConnectAsync(IPAddress.Loopback, server.Port, cancellationToken);
+                await secondClient.ConnectAsync(IPAddress.Loopback, server.Port, cancellationToken);
+                await using var firstStream = firstClient.GetStream();
+                await using var secondStream = secondClient.GetStream();
+                const string resumeToken = "concurrent-session-token";
+                await Task.WhenAll(
+                    SendHelloAsync(firstStream, cancellationToken, resumeToken, requestedClassId: 2).AsTask(),
+                    SendHelloAsync(secondStream, cancellationToken, resumeToken, requestedClassId: 5).AsTask());
+                await gateProbe.WaitAsync(TimeSpan.FromSeconds(5), cancellationToken);
+                var firstHello = (await ReadRequiredEnvelopeAsync(
+                    firstStream,
+                    cancellationToken,
+                    server,
+                    "concurrent first participant server hello")).ServerHello;
+                var secondHello = (await ReadRequiredEnvelopeAsync(
+                    secondStream,
+                    cancellationToken,
+                    server,
+                    "concurrent second participant server hello")).ServerHello;
+                Assert.Equal(firstHello.SessionToken, secondHello.SessionToken);
+                var firstSnapshot = (await ReadRequiredEnvelopeAsync(
+                    firstStream,
+                    cancellationToken,
+                    server,
+                    "concurrent first participant snapshot")).Snapshot;
+                var secondSnapshot = (await ReadRequiredEnvelopeAsync(
+                    secondStream,
+                    cancellationToken,
+                    server,
+                    "concurrent second participant snapshot")).Snapshot;
+                Assert.Equal(
+                    Assert.Single(firstSnapshot.Players).EntityId,
+                    Assert.Single(secondSnapshot.Players).EntityId);
+                Assert.Equal(1, initializer.CallCount);
+            } catch (Exception exception) {
+                primaryFailure = exception;
+                throw;
+            } finally {
+                initializer.Release();
+                var cleanupFailure = CombineFailures(
+                    await JoinTaskAsync(gateProbe, "concurrent initialization gate probe"),
+                    await JoinTaskAsync(initializer.Completed.Task, "concurrent participant initialization callback"));
+                if (cleanupFailure is not null) {
+                    if (primaryFailure is not null)
+                        primaryFailure.Data["AuthoritativeTcpServerTests.ConcurrentInitializationCleanupFailure"] = cleanupFailure;
+                    else {
+                        primaryFailure = cleanupFailure;
+                        throw cleanupFailure;
+                    }
+                }
+            }
+        } catch (Exception exception) {
+            if (primaryFailure is not null && !ReferenceEquals(primaryFailure, exception)) {
+                primaryFailure.Data["AuthoritativeTcpServerTests.ConcurrentInitializationDisposalFailure"] = exception;
+                ExceptionDispatchInfo.Capture(primaryFailure).Throw();
+            }
+            throw;
         }
     }
 
@@ -3263,6 +3375,185 @@ public sealed class AuthoritativeTcpServerTests
         throw new TimeoutException("Timed out waiting for the server condition.");
     }
 
+    private static async Task<Envelope> ReadRequiredEnvelopeAsync(
+        Stream stream,
+        CancellationToken cancellationToken,
+        AuthoritativeTcpServer server,
+        string stage,
+        TimeSpan? maximumWait = null)
+    {
+        using var readDeadline = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        readDeadline.CancelAfter(maximumWait ?? TimeSpan.FromSeconds(5));
+        var elapsed = Stopwatch.StartNew();
+        string Diagnostics(string outcome) =>
+            $"{stage} {outcome} after {elapsed.Elapsed.TotalMilliseconds:F0}ms. "
+            + $"LastClientFailure: {DescribeFailure(server.LastClientFailure)}. "
+            + $"HostCompleted: {server.Completion.IsCompleted}; HostCompletionFailure: {DescribeFailure(server.Completion.Exception)}.";
+        try {
+            var envelope = await EnvelopeCodec.ReadAsync(stream, readDeadline.Token);
+            return envelope ?? throw new XunitException(Diagnostics("reached EOF"));
+        } catch (OperationCanceledException exception) {
+            throw new InvalidOperationException(Diagnostics(cancellationToken.IsCancellationRequested
+                ? "was canceled" : "exceeded its read deadline"), exception);
+        } catch (IOException exception) {
+            throw new InvalidOperationException(Diagnostics("failed while reading"), exception);
+        }
+    }
+
+    [Fact]
+    public async Task RequiredInitializationReadReportsEofWithoutNullDereference()
+    {
+        await using var server = CreateReadDiagnosticServer();
+        using var stream = new MemoryStream();
+        var failure = await Assert.ThrowsAsync<XunitException>(() => ReadRequiredEnvelopeAsync(
+            stream, TestContext.Current.CancellationToken, server, "negative EOF stage"));
+        Assert.Contains("negative EOF stage reached EOF after", failure.Message, StringComparison.Ordinal);
+        Assert.Contains("LastClientFailure:", failure.Message, StringComparison.Ordinal);
+        Assert.Contains("HostCompleted:", failure.Message, StringComparison.Ordinal);
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task RequiredInitializationReadReportsDeadlineOrCancellation(bool canceled)
+    {
+        await using var server = CreateReadDiagnosticServer();
+        using var stream = new CancellationOnlyReadStream();
+        using var cancellation = CancellationTokenSource.CreateLinkedTokenSource(TestContext.Current.CancellationToken);
+        if (canceled)
+            cancellation.Cancel();
+        var failure = await Assert.ThrowsAsync<InvalidOperationException>(() => ReadRequiredEnvelopeAsync(
+            stream, cancellation.Token, server, "negative bounded stage", TimeSpan.FromMilliseconds(50)));
+        Assert.Contains(canceled ? "was canceled" : "exceeded its read deadline", failure.Message, StringComparison.Ordinal);
+        Assert.Contains("negative bounded stage", failure.Message, StringComparison.Ordinal);
+        Assert.IsAssignableFrom<OperationCanceledException>(failure.InnerException);
+    }
+
+    [Fact]
+    public async Task InitializationGateReleaseJoinsCallbackAfterEarlyFailure()
+    {
+        var initializer = new BlockingParticipantInitializer();
+        var callback = Task.Factory.StartNew(
+            () => initializer.InitializeParticipant("fixture", new AuthoritativeParticipantSelection(1)),
+            CancellationToken.None, TaskCreationOptions.LongRunning, TaskScheduler.Default);
+        var sentinel = new InvalidOperationException("expected early assertion failure");
+        var failure = await Assert.ThrowsAsync<InvalidOperationException>(async () => {
+            try {
+                await initializer.Entered.Task.WaitAsync(TimeSpan.FromSeconds(5), TestContext.Current.CancellationToken);
+                throw sentinel;
+            } finally {
+                initializer.Release();
+                Assert.Null(await JoinTaskAsync(callback, "negative early-failure callback"));
+                Assert.Null(await JoinTaskAsync(initializer.Completed.Task, "negative initializer completion"));
+            }
+        });
+        Assert.Same(sentinel, failure);
+        Assert.True(callback.IsCompletedSuccessfully);
+        Assert.Equal(1, initializer.CallCount);
+    }
+
+    private static AuthoritativeTcpServer CreateReadDiagnosticServer()
+        => new(new AuthoritativeCommandServer(new RecordingExecutor()),
+            new ProtocolHandshake(new ProtocolServerIdentity("fixture", "0.1.0", "fixture", 20)), () => 0);
+
+    private sealed class CancellationOnlyReadStream : MemoryStream
+    {
+        public override async ValueTask<int> ReadAsync(Memory<byte> buffer, CancellationToken cancellationToken = default)
+        {
+            await Task.Delay(Timeout.InfiniteTimeSpan, cancellationToken);
+            return 0;
+        }
+    }
+
+    private static string DescribeFailure(Exception? failure)
+        => failure is null
+            ? "<none>"
+            : $"{failure.GetType().Name}: {failure.Message}";
+
+    private static async Task<Exception?> JoinTaskAsync(Task task, string stage)
+    {
+        try {
+            if (await Task.WhenAny(task, Task.Delay(TimeSpan.FromSeconds(5))) != task)
+                return new TimeoutException(
+                    $"Timed out joining the {stage} during fixture cleanup.");
+            await task;
+            return null;
+        } catch (Exception exception) {
+            return new InvalidOperationException(
+                $"The {stage} failed during fixture cleanup.",
+                exception);
+        }
+    }
+
+    private static Exception? CombineFailures(params Exception?[] failures)
+    {
+        var actual = failures.Where(failure => failure is not null)
+            .Cast<Exception>()
+            .ToArray();
+        return actual.Length switch {
+            0 => null,
+            1 => actual[0],
+            _ => new AggregateException("Multiple fixture cleanup tasks failed.", actual),
+        };
+    }
+
+    private static void DeleteOwnedFixtureRoot(string root)
+    {
+        var fullRoot = ValidateOwnedFixtureRoot(root);
+        if (!Directory.Exists(fullRoot))
+            return;
+        AssertNoFixtureReparsePoints(fullRoot);
+        Directory.Delete(fullRoot, recursive: true);
+    }
+
+    private static void PreserveFailedFixtureRoot(Exception primaryFailure, string root)
+    {
+        try {
+            primaryFailure.Data["AuthoritativeTcpServerTests.PreservedFailureRoot"] =
+                ValidateOwnedFixtureRoot(root);
+        } catch (Exception cleanupFailure) {
+            primaryFailure.Data["AuthoritativeTcpServerTests.FailureRootPreservationFailure"] =
+                cleanupFailure;
+        }
+    }
+
+    private static string ValidateOwnedFixtureRoot(string root)
+    {
+        var fullRoot = Path.GetFullPath(root);
+        var tempRoot = Path.GetFullPath(Path.GetTempPath())
+            .TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+        var leaf = new DirectoryInfo(fullRoot).Name;
+        const string prefix = "Godevilution-Initialization-Race-";
+        if (!string.Equals(
+                Path.GetDirectoryName(fullRoot)?.TrimEnd(
+                    Path.DirectorySeparatorChar,
+                    Path.AltDirectorySeparatorChar),
+                tempRoot,
+                StringComparison.OrdinalIgnoreCase)
+            || !leaf.StartsWith(prefix, StringComparison.Ordinal)
+            || !Guid.TryParseExact(leaf[prefix.Length..], "N", out _))
+            throw new InvalidOperationException(
+                $"Refusing to access an unowned initialization-race root: {fullRoot}");
+        return fullRoot;
+    }
+
+    private static void AssertNoFixtureReparsePoints(string root)
+    {
+        var pending = new Stack<string>();
+        pending.Push(root);
+        while (pending.Count != 0) {
+            var current = pending.Pop();
+            var attributes = File.GetAttributes(current);
+            if ((attributes & FileAttributes.ReparsePoint) != 0)
+                throw new InvalidOperationException(
+                    $"Refusing to recurse through a fixture reparse point: {current}");
+            if ((attributes & FileAttributes.Directory) == 0)
+                continue;
+            foreach (var child in Directory.EnumerateFileSystemEntries(current))
+                pending.Push(child);
+        }
+    }
+
     private sealed class RecordingExecutor : IAuthoritativeCommandExecutor, IAuthoritativeSnapshotProvider
     {
         public int CallCount { get; private set; }
@@ -3624,6 +3915,9 @@ public sealed class AuthoritativeTcpServerTests
         public TaskCompletionSource Entered { get; } = new(
             TaskCreationOptions.RunContinuationsAsynchronously);
 
+        public TaskCompletionSource Completed { get; } = new(
+            TaskCreationOptions.RunContinuationsAsynchronously);
+
         public int CallCount { get; private set; }
 
         public void InitializeParticipant(
@@ -3632,8 +3926,12 @@ public sealed class AuthoritativeTcpServerTests
         {
             CallCount++;
             Entered.TrySetResult();
-            if (!release.Wait(TimeSpan.FromSeconds(5)))
-                throw new TimeoutException("The participant initializer was not released.");
+            try {
+                if (!release.Wait(TimeSpan.FromSeconds(5)))
+                    throw new TimeoutException("The participant initializer was not released.");
+            } finally {
+                Completed.TrySetResult();
+            }
         }
 
         public void Release()
