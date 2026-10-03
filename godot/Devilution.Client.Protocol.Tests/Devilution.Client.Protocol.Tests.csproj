@@ -20,6 +20,14 @@
              Link="Acceptance/PerformanceWorkloadObservations.cs" />
     <Compile Include="../Devilution.Client/Acceptance/AcceptanceAckLossRelay.cs"
              Link="Acceptance/AcceptanceAckLossRelay.cs" />
+    <Compile Include="../Devilution.Client/PresentationAssets/PresentationAssetManifest.cs"
+             Link="PresentationAssets/PresentationAssetManifest.cs" />
+    <Compile Include="../Devilution.Client/PresentationAssets/PresentationAssetResolver.cs"
+             Link="PresentationAssets/PresentationAssetResolver.cs" />
+    <Compile Include="../Devilution.Client/PresentationAssets/PresentationFrameClock.cs"
+             Link="PresentationAssets/PresentationFrameClock.cs" />
+    <Compile Include="../Devilution.Client/PresentationAssets/PresentationLocalization.cs"
+             Link="PresentationAssets/PresentationLocalization.cs" />
     <ProjectReference Include="../../protocol/Devilution.Protocol/Devilution.Protocol.csproj" />
     <ProjectReference Include="../Devilution.Client.Protocol/Devilution.Client.Protocol.csproj" />
     <ProjectReference Include="../../server/src/Devilution.Server/Devilution.Server.csproj"

@@ -326,10 +326,17 @@ deliberately does not claim native generated-world parity, which belongs to M2.
    Godot presentation. Split the main scene/script only where this separates
    concrete input, rendering, menus, or HUD responsibilities. Keep placeholder
    art usable while the client asset-pack boundary is established.
-4. Define that presentation boundary with stable IDs, missing-asset fallbacks,
-   animation metadata, audio/localization lookup, and a small redistributable
-   sample pack. Any original-asset importer is optional client tooling with
-   explicit input/output and an MPQ-free alternative.
+4. The client-only presentation boundary now has stable IDs, atomic manifest
+   validation, missing/undersized texture fallbacks, atlas metadata and visual
+   frame clocks, optional audio/localization lookup, and a default manifest
+   reusing the existing six SVG stand-ins. Focused pure tests and actual base
+   create/resume/outage journeys cover default/animated/missing/undersized/refused
+   packs, offline frame freeze and admitted reconnect-epoch reset. Keep the
+   [manifest contract](ai/godot-build.md#client-presentation-packs) outside server
+   content, protocol identities, gameplay/RNG and saves. Expand semantic actor/
+   action/direction coverage, audible feedback and usable localized names; this
+   foundation does not close M1 or M4. Any original-asset importer remains optional
+   client tooling with explicit input/output and a complete MPQ-free alternative.
 
 Exit: a person can complete the loop through Godot controls without debug
 commands; application tests observe authoritative outcomes and visible-state

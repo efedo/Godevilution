@@ -112,8 +112,9 @@ open. Their scope, dependencies, and exit checks are defined only in the
   remain M1 work. Local standalone-host and actual one/four-client measurements
   are below; no campaign, release frame budget, or platform performance pass
   is claimed.
-- Godot currently requires no MPQs because it uses placeholder presentation.
-  A complete MPQ-free client asset route remains a deliverable. Original-asset
+- Godot currently requires no MPQs and has a validated client-only presentation
+  manifest with sample SVGs, atlas animation and missing-resource fallbacks.
+  Complete MPQ-free presentation coverage remains a deliverable. Original-asset
   support is optional client tooling; the server must remain MPQ-independent.
 - Native-compatible generated maps, collision/set-piece placement, remaining
   campaign behavior, integrated Godot presentation, and end-to-end acceptance
@@ -142,6 +143,70 @@ open. Their scope, dependencies, and exit checks are defined only in the
   this edge case, but the corrected Flash fixtures cover off-player cursors.
 
 ## Recent implementation evidence
+
+### M1 client-only presentation-pack foundation (2026-10-02)
+
+The immutable schema-1 catalog validates the whole manifest before activation;
+resource bindings remain relative to its directory, with unsafe/ambiguous paths,
+duplicate/unknown properties, unsupported shapes and out-of-bounds atlas metadata
+refused. The existing six SVGs are selected by the default manifest; their bytes,
+appearance and license are unchanged. Optional audio stays silent when absent;
+inline localization is a client-only lookup with caller fallbacks and optional
+feedback prefixes. The contract and commands are maintained only in the existing
+[Godot guide](ai/godot-build.md#client-presentation-packs), not a second schema doc.
+
+Real world drawing consumes the selected texture/atlas binding, checks actual
+texture dimensions, and retains procedural fallback for missing/undersized
+declared resources. Observation does not load resources or succeed before use.
+Visual frame time cannot alter gameplay/RNG; it freezes offline and resets once
+when a replacement admitted reconnect epoch arrives. Server production code,
+protocol identities, authoritative content/saves and normal launch profiles are
+unchanged. All six journeys below report the same authoritative identity pair.
+
+- Reviewed pure-helper/affected clock/feedback build: zero errors, three existing
+  NU1900 warnings and one existing xUnit2031 warning
+  (`.local/m1-presentation-pack-reviewed-build.log`). Focused checks: 57 passed,
+  zero failures/skips, 292ms (`.local/m1-presentation-pack-reviewed-focused.log`).
+  A new nullable warning was corrected before final qualification.
+- Six actual Godot 4.7.2 create/move/checkpoint/fresh-host resume/outage journeys
+  pass. Each has three matching-client lifecycle records plus version/import
+  records: 54 terminal engine stage exits, all zero with no recorded error.
+  Source SDK remains 4.7.1; import upgrades only each staged copy to 4.7.2.
+- The animated fixture reuses four 16x16 regions of the existing 32x32 player
+  SVG, not new release art. It observes at least two actual drawn regions; the
+  offline barrier retains one region for over 1.5s and exactly one admitted-epoch
+  reset follows restart. The undersized fixture requests a 64x64 grid from that
+  same texture and proves procedural fallback with no frame region.
+- All 16 rendered atlas captures and four rendered-default world/disconnect/
+  reconnect captures were inspected. The normal player remains its full SVG;
+  the deliberately quartered atlas fixture is diagnostic, not finished animation.
+
+Retained scene roots under `C:/Users/eric/AppData/Local/Temp/`:
+
+| Profile | `Godevilution-Scene-Acceptance-` suffix |
+| --- | --- |
+| Default, headless | `92d931bff59840849069b1adc4b10599` |
+| Atlas, rendered | `b2b726e9b82846d4bf1c662cd1e8e125` |
+| Missing, headless | `b03219b945464f11b8e5887c69c81ceb` |
+| Undersized, headless | `5a9d9a41a334402796938c248c8f2d2d` |
+| Refused unsafe manifest, headless | `0eb54cbd5b0146e9ae015b50e83f8a7e` |
+| Default, rendered | `6479b5d18422448493c123a0c7e92d31` |
+
+Driver/build logs use `.local/m1-presentation-pack-*.log`; native exit/import
+records remain beside each printed launch-log directory. The first focused run
+retains one incorrect assertion that treated a valid manifest `res://` path as
+an invalid relative binding. Initial default acceptance retains a pre-startup
+compile failure from duplicate diagnostic declarations. Both were corrected and
+the final-source checks above rerun; neither was an engine crash or hidden pass.
+
+This is a scoped foundation, not full art, audible playback, complete localized
+menus, semantic actor/action/direction coverage, optional original-art import,
+campaign or release acceptance. The full protocol suite was not rerun for this
+client-only slice; its earlier 623-pass result remains historical. M0/M1/M4 and
+the approximately 35% overall estimate remain unchanged. Normal cohort adoption
+still awaits approval. A final scoped process check found no owned runtime or
+WerFault process; existing user saves/configuration and global security/error
+reporting remain untouched.
 
 ### M0 bounded fixture lifetime qualification (2026-10-02)
 

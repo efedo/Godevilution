@@ -1,5 +1,6 @@
 using Devilution.Client.Protocol;
 using Devilution.Client.Diagnostics;
+using Devilution.Client.PresentationAssets;
 using Devilution.Protocol.V1;
 using Godot;
 using System.Runtime.InteropServices;
@@ -47,6 +48,10 @@ public partial class Main : Node2D
     internal PlayerItemReference? ObservedSelectedItemReference => hud?.SelectedItemReference?.Clone();
     internal Vector2 ObservedTileScreenPosition(int x, int y) => world!.ScreenPositionForTile(x, y);
     internal Vector2? ObservedEntityScreenPosition(uint entityId) => world?.ScreenPositionForEntity(entityId);
+    internal PresentationPackObservation? ObservedPresentationPack => world?.ObservePresentationPack();
+    internal ulong ObservedPresentationEpochResetCount => world?.PresentationEpochResetCount ?? 0;
+    internal PresentationPackObservation? ObservedFeedbackPresentationPack => feedback?.ObservePresentationPack();
+    internal PresentationTextureBindingObservation? ObservedPlayerTextureBinding => world?.ObserveTextureBinding("player");
 
     internal string? ClientFrameEvidencePath => frameEvidence?.EvidenceFilePath;
 
@@ -379,7 +384,8 @@ public partial class Main : Node2D
             model.AcceptedSnapshotRevision,
             delta,
             model.PredictedPlayerPosition,
-            client?.ServerTickRateHz ?? AuthoritativePresentationClock.DefaultTickRateHz);
+            client?.ServerTickRateHz ?? AuthoritativePresentationClock.DefaultTickRateHz,
+            client?.IsConnected == true);
         TrySubmitPendingWorldInteraction();
         if (routeTravel.Next(model.Snapshot, model.LastCommandResult,
                 client?.IsConnected == true, client?.PendingCommandCount ?? 0) is { } routeStep) {
@@ -917,6 +923,7 @@ public partial class Main : Node2D
         routeTravel.Cancel("Travel stopped: connection lost.");
         interactionTravel.Cancel();
         model.ResetTransientPresentation();
+        world?.MarkPresentationEpochPending();
         if (reconnectTask is null || reconnectTask.IsCompleted)
             reconnectTask = ReconnectLoopAsync(force);
     }

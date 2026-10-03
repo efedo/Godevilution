@@ -39,6 +39,53 @@ Retain complete runner output when investigating them. The observed model state
 is not proof of server state at admission; do not assign a timing/action cause
 from a later isolated pass or retry a rejected command to hide the failure.
 
+## Client presentation packs
+
+`res://assets/presentation-pack.json` is the default client-only manifest. It
+reuses the six existing SVG stand-ins without changing their appearance or
+license. Set `GODEVILUTION_PRESENTATION_PACK` to another `res://` manifest for an
+explicit selection; this is not authoritative content and never enters server
+packs, protocol identities, saves or gameplay/RNG decisions. No MPQs are needed.
+
+Schema 1 requires `schemaVersion`, a lowercase stable `packId`, and up to 256
+`assets` with unique lowercase IDs. Each binding has `id` and `kind` (`texture`,
+`audio`, or `localization`). Textures/audio require a path relative to the
+manifest directory; localization requires inline `text` and no resource path.
+Absolute, URI, parent/current-directory, control-character, backslash and
+Windows trailing-dot/space aliases reject. Unknown/duplicate JSON properties,
+unsupported schemas and any invalid binding refuse the whole catalog before use.
+Documents are limited to 1 MB; IDs to 64, paths to 240 and text to 1024 characters.
+
+Optional texture `frames` require `frameCount` (1-256), `frameWidth`/`frameHeight`
+(1-4096), `columns`/`rows` (1-64), finite `framesPerSecond` (greater than zero,
+at most 240), and explicit `loop`. Count must fit the atlas; actual texture size
+must contain its declared grid. Delta-driven animation is visual only, freezes
+offline, and resets after a new admitted reconnect epoch, level change or rewind.
+Unknown bindings retain safe legacy lookup; unavailable/undersized declared
+textures use procedural fallback rather than bypassing their declaration.
+Unavailable optional audio stays silent. Feedback accepts optional
+`feedback.damage.prefix`, `feedback.healing.prefix` and `feedback.other.prefix`
+localization; default numeric feedback remains unchanged.
+
+The base single-player acceptance driver observes actual resource/draw use,
+default appearance, changing atlas regions, missing/undersized textures,
+atomic unsafe-manifest refusal, offline frame freeze and admitted-epoch reset:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File tools/test-godot-session.ps1
+powershell -NoProfile -ExecutionPolicy Bypass -File tools/test-godot-session.ps1 -PresentationPackProfile atlas -Visible
+powershell -NoProfile -ExecutionPolicy Bypass -File tools/test-godot-session.ps1 -PresentationPackProfile missing
+powershell -NoProfile -ExecutionPolicy Bypass -File tools/test-godot-session.ps1 -PresentationPackProfile undersized
+powershell -NoProfile -ExecutionPolicy Bypass -File tools/test-godot-session.ps1 -PresentationPackProfile invalid
+```
+
+Accepted profile names are normalized to lowercase before child selection.
+Fixtures reuse the original SVGs and isolated acceptance saves, restore both
+selection environment variables on exit, and cannot combine with other journey
+profiles. Clean native exits remain mandatory. Pure catalog/resolver/clock tests
+run in `PresentationAssetPackTests` without Godot. This foundation is not full
+art, audible playback, complete localization, optional original-art import or M4.
+
 ## Finding Godot
 
 Use a stable Godot 4.7.x Mono engine executable. The checked-in C# project keeps

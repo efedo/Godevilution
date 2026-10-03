@@ -1,4 +1,5 @@
 using Devilution.Client.Protocol;
+using Devilution.Client.PresentationAssets;
 using Devilution.Protocol.V1;
 using Godot;
 using ProjectilePresentationKind = Devilution.Client.Protocol.ProjectilePresentationKind;
@@ -29,6 +30,10 @@ public partial class WorldPresentation : Node2D
     private readonly LevelLayoutCatalog levels = new();
     private readonly AuthoritativeGeometryInstallationGate geometryInstallation = new();
     private readonly AuthoritativePresentationClock presentationClock = new();
+    private ulong lastAcceptedSnapshotRevision;
+    private ulong pendingPresentationEpochRevision;
+    private bool presentationEpochPending;
+    internal ulong PresentationEpochResetCount { get; private set; }
     private Snapshot? snapshot;
     private uint? presentationLevelId;
     private ClientPosition? predictedPlayerPosition;
@@ -44,7 +49,7 @@ public partial class WorldPresentation : Node2D
         double delta,
         ClientPosition? predicted = null,
         uint serverTickRateHz = AuthoritativePresentationClock.DefaultTickRateHz)
-        => ApplyCore(next, delta, predicted, serverTickRateHz, null);
+        => ApplyCore(next, delta, predicted, serverTickRateHz, null, true);
 
     /** Applies an admitted model snapshot while reusing its installed geometry generation. */
     internal void ApplyAccepted(
@@ -52,16 +57,41 @@ public partial class WorldPresentation : Node2D
         ulong acceptedSnapshotRevision,
         double delta,
         ClientPosition? predicted = null,
-        uint serverTickRateHz = AuthoritativePresentationClock.DefaultTickRateHz)
-        => ApplyCore(next, delta, predicted, serverTickRateHz, acceptedSnapshotRevision);
+        uint serverTickRateHz = AuthoritativePresentationClock.DefaultTickRateHz,
+        bool transportConnected = true)
+        => ApplyCore(next, delta, predicted, serverTickRateHz, acceptedSnapshotRevision, transportConnected);
+
+    /** Freezes presentation animation until a newer admitted model epoch arrives. */
+    internal void MarkPresentationEpochPending()
+    {
+        pendingPresentationEpochRevision = lastAcceptedSnapshotRevision;
+        presentationEpochPending = true;
+    }
+
+    internal PresentationPackObservation ObservePresentationPack()
+        => assets.ObservePack();
+
+    internal PresentationTextureBindingObservation? ObserveTextureBinding(string assetName)
+        => assets.ObserveTexture(assetName);
 
     private void ApplyCore(
         Snapshot? next,
         double delta,
         ClientPosition? predicted,
         uint serverTickRateHz,
-        ulong? acceptedSnapshotRevision)
+        ulong? acceptedSnapshotRevision,
+        bool transportConnected)
     {
+        if (acceptedSnapshotRevision is { } acceptedRevision)
+            lastAcceptedSnapshotRevision = acceptedRevision;
+        if (transportConnected
+            && presentationEpochPending
+            && acceptedSnapshotRevision is { } epochRevision
+            && epochRevision != pendingPresentationEpochRevision) {
+            presentationEpochPending = false;
+            assets.ResetAnimation();
+            PresentationEpochResetCount++;
+        }
         snapshot = next;
         predictedPlayerPosition = predicted;
         if (snapshot is null) {
@@ -71,6 +101,7 @@ public partial class WorldPresentation : Node2D
             displayedMonsterSnapshots.Clear();
             displayedProjectileSnapshots.Clear();
             presentationClock.Reset();
+            assets.ResetAnimation();
             presentationLevelId = null;
             geometryInstallation.Invalidate();
             levels.ApplyAuthoritative(Array.Empty<LevelGeometrySnapshot>());
@@ -83,6 +114,7 @@ public partial class WorldPresentation : Node2D
         var localPlayer = snapshot.Players.FirstOrDefault();
         if (presentationLevelId != localPlayer?.LevelId) {
             presentationClock.Reset();
+            assets.ResetAnimation();
             presentationLevelId = localPlayer?.LevelId;
         }
         var presentationTick = presentationClock.Advance(
@@ -90,12 +122,16 @@ public partial class WorldPresentation : Node2D
             delta,
             serverTickRateHz);
         var snapshotRewound = presentationClock.LastAdvanceRewound;
+        if (snapshotRewound)
+            assets.ResetAnimation();
+        else if (transportConnected && !presentationEpochPending)
+            assets.AdvanceAnimation(delta);
 
         var activeEntityIds = new HashSet<uint>();
-        if (acceptedSnapshotRevision is { } revision) {
-            if (geometryInstallation.NeedsInstallation(revision)) {
+        if (acceptedSnapshotRevision is { } geometryRevision) {
+            if (geometryInstallation.NeedsInstallation(geometryRevision)) {
                 levels.ApplyAuthoritative(snapshot.LevelGeometry);
-                geometryInstallation.MarkInstalled(revision);
+                geometryInstallation.MarkInstalled(geometryRevision);
             }
         } else {
             geometryInstallation.Invalidate();
@@ -444,11 +480,11 @@ public partial class WorldPresentation : Node2D
     private void DrawGrid()
     {
         DrawRect(new Rect2(Vector2.Zero, GetViewportRect().Size), new Color("090914"));
-        if (assets.Get("floor") is { } floor) {
+        if (assets.GetTextureFrame("floor") is { } floor) {
             for (var x = 0; x < currentLevel.Width; x++)
                 for (var y = 0; y < currentLevel.Height; y++)
                     if (!currentLevel.IsBlocked(x, y))
-                        DrawTextureRect(floor, new Rect2(OriginX + x * TileSize, OriginY + y * TileSize, TileSize, TileSize), false);
+                        DrawTextureFrame(floor, new Rect2(OriginX + x * TileSize, OriginY + y * TileSize, TileSize, TileSize), Colors.White);
         }
         DrawNativeGeometryOverlay();
         DrawNativeObjectLayerOverlay();
@@ -919,8 +955,8 @@ public partial class WorldPresentation : Node2D
 
     private void DrawTextureOrRect(string assetName, Vector2 center, Vector2 size, Color fallback, bool outline = false)
     {
-        if (assets.Get(assetName) is { } texture) {
-            DrawTextureRect(texture, new Rect2(center - size / 2, size), false, fallback);
+        if (assets.GetTextureFrame(assetName) is { } frame) {
+            DrawTextureFrame(frame, new Rect2(center - size / 2, size), fallback);
             return;
         }
 
@@ -929,12 +965,28 @@ public partial class WorldPresentation : Node2D
 
     private void DrawTextureOrCircle(string assetName, Vector2 center, Vector2 size, Color fallback, float radius)
     {
-        if (assets.Get(assetName) is { } texture) {
-            DrawTextureRect(texture, new Rect2(center - size / 2, size), false, fallback);
+        if (assets.GetTextureFrame(assetName) is { } frame) {
+            DrawTextureFrame(frame, new Rect2(center - size / 2, size), fallback);
             return;
         }
 
         DrawCircle(center, radius, fallback);
+    }
+
+    private void DrawTextureFrame(
+        AssetPalette.TextureFrame frame,
+        Rect2 destination,
+        Color modulate)
+    {
+        if (frame.Region is { } region) {
+            DrawTextureRectRegion(
+                frame.Texture,
+                destination,
+                new Rect2(region.X, region.Y, region.Width, region.Height),
+                modulate);
+            return;
+        }
+        DrawTextureRect(frame.Texture, destination, false, modulate);
     }
 
     private Vector2 PositionFor(uint entityId, int x, int y)

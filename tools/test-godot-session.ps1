@@ -1,8 +1,9 @@
 [CmdletBinding()]
-param([string]$GodotExecutable, [ValidateSet('legacy', 'cohort')] [string]$PersistenceMode = 'legacy', [switch]$Visible, [switch]$Journey, [switch]$TownLoop, [switch]$Lifecycle, [switch]$Multiplayer, [switch]$MultiplayerRecovery, [switch]$MultiplayerPendingRecovery, [string]$CathedralProfileDirectory, [string]$CathedralDepthProfileDirectory)
+param([string]$GodotExecutable, [ValidateSet('legacy', 'cohort')] [string]$PersistenceMode = 'legacy', [switch]$Visible, [switch]$Journey, [switch]$TownLoop, [switch]$Lifecycle, [switch]$Multiplayer, [switch]$MultiplayerRecovery, [switch]$MultiplayerPendingRecovery, [string]$CathedralProfileDirectory, [string]$CathedralDepthProfileDirectory, [ValidateSet('default', 'atlas', 'missing', 'undersized', 'invalid')] [string]$PresentationPackProfile = 'default')
 
 $ErrorActionPreference = 'Stop'
 $PersistenceMode = $PersistenceMode.ToLowerInvariant()
+$PresentationPackProfile = $PresentationPackProfile.ToLowerInvariant()
 $MultiplayerRecovery = [bool]$MultiplayerRecovery
 if ($MultiplayerRecovery -and $MultiplayerPendingRecovery) { throw 'Choose settled or pending-command recovery, never both.' }
 if ($MultiplayerRecovery -or $MultiplayerPendingRecovery) { $Multiplayer = $true }
@@ -17,6 +18,9 @@ if ($Lifecycle -and ($Journey -or $TownLoop -or $Multiplayer)) { throw 'Lifecycl
 if ($Multiplayer -and ($Journey -or $TownLoop -or $Lifecycle)) { throw 'Multiplayer acceptance is a separate base-content profile.' }
 if ($CathedralProfileDirectory -and ($Journey -or $TownLoop -or $Lifecycle -or $Multiplayer)) {
     throw 'Cathedral acceptance is a separate compiled single-player playtest profile.'
+}
+if ($PresentationPackProfile -ne 'default' -and ($Journey -or $TownLoop -or $Lifecycle -or $Multiplayer -or $CathedralProfileDirectory -or $CathedralDepthProfileDirectory)) {
+    throw 'Presentation pack fixtures require the separate base single-player acceptance path.'
 }
 $repositoryRoot = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot '..')).Path
 $sessionDirectory = if ($CathedralProfileDirectory -or $CathedralDepthProfileDirectory) {
@@ -171,7 +175,18 @@ function Assert-MultiplayerRecoveryEvidence($SessionDirectory, $ContentHash, $Ru
         throw 'MultiplayerRecovery clients disagree about the complete roster or duplicate an entity.'
     }
 }
+$presentationEnvironmentNames = @('GODEVILUTION_PRESENTATION_PACK', 'GODEVILUTION_ACCEPTANCE_PRESENTATION_PACK')
+$savedPresentationEnvironment = @{}
+foreach ($name in $presentationEnvironmentNames) {
+    $savedPresentationEnvironment[$name] = [Environment]::GetEnvironmentVariable($name, 'Process')
+}
 try {
+    # A fixture selection never changes normal launch settings or authoritative content.
+    $env:GODEVILUTION_ACCEPTANCE_PRESENTATION_PACK = $PresentationPackProfile
+    [Environment]::SetEnvironmentVariable('GODEVILUTION_PRESENTATION_PACK', $null, 'Process')
+    if ($PresentationPackProfile -ne 'default') {
+        $env:GODEVILUTION_PRESENTATION_PACK = "res://assets/presentation-acceptance-$PresentationPackProfile.json"
+    }
     if ($CathedralDepthProfileDirectory) {
         $parameters.CathedralDepthProfileDirectory = $CathedralDepthProfileDirectory
         $parameters.QuitAfterSeconds = 900
@@ -287,6 +302,9 @@ try {
         Assert-RecoveryProcessEvidence $recovery
         Write-Host "PASS: actual Godot create/move/checkpoint/fresh-host resume and server-loss/reconnect. Evidence: $sessionDirectory"
 } finally {
+    foreach ($name in $presentationEnvironmentNames) {
+        [Environment]::SetEnvironmentVariable($name, $savedPresentationEnvironment[$name], 'Process')
+    }
     # Retain isolated saves/logs for diagnosis; never modify normal launcher saves.
     Write-Host "Acceptance artifacts retained at $sessionDirectory"
 }

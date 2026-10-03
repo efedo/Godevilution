@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "packId": "sample-default",
+  "assets": [
+    { "id": "floor", "kind": "texture", "path": "floor.svg" },
+    { "id": "player", "kind": "texture", "path": "player.svg" },
+    { "id": "monster", "kind": "texture", "path": "monster.svg" },
+    { "id": "item", "kind": "texture", "path": "item.svg" },
+    { "id": "object", "kind": "texture", "path": "object.svg" },
+    { "id": "projectile", "kind": "texture", "path": "projectile.svg" },
+    { "id": "damage", "kind": "audio", "path": "audio/damage.ogg" },
+    { "id": "healing", "kind": "audio", "path": "audio/healing.ogg" },
+    { "id": "command_rejected", "kind": "audio", "path": "audio/command_rejected.ogg" },
+    { "id": "feedback.damage", "kind": "localization", "text": "Damage" },
+    { "id": "feedback.healing", "kind": "localization", "text": "Healing" },
+    { "id": "feedback.other", "kind": "localization", "text": "Feedback" }
+  ]
+}

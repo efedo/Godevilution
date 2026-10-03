@@ -1,0 +1,14 @@
+{
+  "schemaVersion": 1,
+  "packId": "godevilution.acceptance-undersized",
+  "assets": [
+    { "id": "floor", "kind": "texture", "path": "floor.svg" },
+    {
+      "id": "player", "kind": "texture", "path": "player.svg",
+      "frames": {
+        "frameCount": 4, "frameWidth": 32, "frameHeight": 32,
+        "columns": 2, "rows": 2, "framesPerSecond": 8, "loop": true
+      }
+    }
+  ]
+}

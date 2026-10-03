@@ -11,8 +11,12 @@ audio, packaging, and a tested complete play flow remain open. The
 [completion plan](../docs/completion-plan.md) schedules application acceptance
 in M0, the playable loop in M1, and release presentation in M4; see
 [migration status](../docs/migration-status.md) for the dated assessment.
-The prototype uses no MPQs. A complete MPQ-free asset route and optional
-original-asset client tooling remain planned, with no server archive dependency.
+The prototype uses no MPQs. A validated client-only presentation manifest now
+binds the existing SVG sample, optional audio/localization and texture-atlas
+metadata, with legacy/procedural/silent fallbacks. See the
+[presentation-pack contract](../docs/ai/godot-build.md#client-presentation-packs).
+Complete asset coverage and optional original-asset tooling remain open; the
+server has no archive dependency.
 
 The client also converts authoritative damage, healing, and experience events
 into transient floating feedback positioned from the latest snapshot. This is

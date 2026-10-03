@@ -1,0 +1,8 @@
+{
+  "schemaVersion": 1,
+  "packId": "godevilution.acceptance-invalid",
+  "assets": [
+    { "id": "floor", "kind": "texture", "path": "floor.svg" },
+    { "id": "player", "kind": "texture", "path": "../player.svg" }
+  ]
+}

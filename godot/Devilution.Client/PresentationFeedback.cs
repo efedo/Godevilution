@@ -1,4 +1,5 @@
 using Devilution.Client.Protocol;
+using Devilution.Client.PresentationAssets;
 using Devilution.Protocol.V1;
 using Godot;
 
@@ -17,6 +18,7 @@ public partial class PresentationFeedback : Node
     private readonly AudioStreamPlayer healing = new();
     private readonly AudioStreamPlayer commandRejected = new();
     private readonly List<FloatingNumber> floatingNumbers = [];
+    private readonly AssetPalette assets = new();
     private ulong appliedEventSequence;
     private string? appliedCommandResult;
 
@@ -25,9 +27,9 @@ public partial class PresentationFeedback : Node
         AddChild(damage);
         AddChild(healing);
         AddChild(commandRejected);
-        damage.Stream = LoadOptional("res://assets/audio/damage.ogg");
-        healing.Stream = LoadOptional("res://assets/audio/healing.ogg");
-        commandRejected.Stream = LoadOptional("res://assets/audio/command_rejected.ogg");
+        damage.Stream = assets.GetAudio("damage");
+        healing.Stream = assets.GetAudio("healing");
+        commandRejected.Stream = assets.GetAudio("command_rejected");
     }
 
     public override void _Process(double delta)
@@ -54,10 +56,12 @@ public partial class PresentationFeedback : Node
             var gameEvent = model.RecentEvents[index];
             switch (gameEvent.EventCase) {
                 case GameEvent.EventOneofCase.Damage:
-                    damage.Play();
+                    if (damage.Stream is not null)
+                        damage.Play();
                     break;
                 case GameEvent.EventOneofCase.Healing:
-                    healing.Play();
+                    if (healing.Stream is not null)
+                        healing.Play();
                     break;
             }
             if (world is not null
@@ -74,7 +78,8 @@ public partial class PresentationFeedback : Node
         if (resultKey == appliedCommandResult)
             return;
         appliedCommandResult = resultKey;
-        if (!AuthoritativeCommandAckValidator.IsAcceptedOrSuccessfulDuplicate(result))
+        if (!AuthoritativeCommandAckValidator.IsAcceptedOrSuccessfulDuplicate(result)
+            && commandRejected.Stream is not null)
             commandRejected.Play();
     }
 
@@ -82,8 +87,20 @@ public partial class PresentationFeedback : Node
         AuthoritativeCombatFeedback feedback,
         Vector2 position)
     {
+        var localizationKey = feedback.Kind switch {
+            AuthoritativeCombatFeedbackKind.Damage => "feedback.damage",
+            AuthoritativeCombatFeedbackKind.Healing => "feedback.healing",
+            _ => "feedback.other",
+        };
+        var localizedPrefix = assets.Localize($"{localizationKey}.prefix", string.Empty);
+        var text = string.IsNullOrWhiteSpace(feedback.Text)
+            ? assets.Localize(localizationKey, "?")
+            : feedback.Text;
+        if (!string.IsNullOrWhiteSpace(localizedPrefix)
+            && !string.IsNullOrWhiteSpace(text))
+            text = $"{localizedPrefix} {text}";
         var label = new Label {
-            Text = feedback.Text,
+            Text = text,
             Position = position + new Vector2(-18, -22),
             MouseFilter = Control.MouseFilterEnum.Ignore,
             ZIndex = 20,
@@ -98,8 +115,6 @@ public partial class PresentationFeedback : Node
         floatingNumbers.Add(new FloatingNumber(label, 0.9f));
     }
 
-    private static AudioStream? LoadOptional(string path)
-    {
-        return ResourceLoader.Exists(path) ? ResourceLoader.Load<AudioStream>(path) : null;
-    }
+    internal PresentationPackObservation ObservePresentationPack()
+        => assets.ObservePack();
 }

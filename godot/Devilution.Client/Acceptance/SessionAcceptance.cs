@@ -105,6 +105,7 @@ public partial class SessionAcceptance : Node
         var expectedName = lifecyclePhase ? "M1-Sorcerer" : "M0-Rogue";
         Require(initial.CharacterClassId == expectedClass && initial.CharacterName == expectedName, "Character creation identity did not reach the host.");
         Require(!setup.Visible, "Setup did not close after submission.");
+        await VerifyPresentationPackAsync(main, directory, phase);
         if (phase == "Create") {
             var warning = (Label)main.FindChild("SessionWarning", true, false);
             await Until(() => warning.Visible, "Bookmark write failure was not shown persistently.");
@@ -231,6 +232,8 @@ public partial class SessionAcceptance : Node
         var disconnectedRevision = main.ObservedSnapshotRevision;
         var screenPosition = main.ObservedPlayerScreenPosition
             ?? throw new InvalidOperationException("The disconnected scene lost its last authoritative presentation.");
+        var disconnectedFrameRegion = main.ObservedPlayerTextureBinding?.FrameRegion;
+        var disconnectedEpochResetCount = main.ObservedPresentationEpochResetCount;
         Require(main.ObservedPendingCommandCount == 0, "The disconnected scene retained an unexpected command.");
         if (visible)
             await Capture(System.IO.Path.Combine(directory, "recovery-disconnected.png"));
@@ -250,14 +253,26 @@ public partial class SessionAcceptance : Node
                 && displayed.DistanceTo(screenPosition) < 0.01f,
                 "Disconnected input moved the rendered player.");
             Require(status.Text.Contains("Connection lost"), "Disconnect feedback disappeared while the host was absent.");
+            Require(main.ObservedPlayerTextureBinding?.FrameRegion == disconnectedFrameRegion,
+                "Presentation animation advanced while the authoritative host was absent.");
+            Require(main.ObservedPresentationEpochResetCount == disconnectedEpochResetCount,
+                "Presentation animation reset before a replacement authoritative epoch was admitted.");
         }
         WriteEvidence(directory, "recovery-disconnected.json", new {
             Passed = true, Tick = disconnected.Tick, Sequence = savedSequence,
             OfflineSeconds = offline.Elapsed.TotalSeconds,
+            FrameRegion = disconnectedFrameRegion, EpochResetCount = disconnectedEpochResetCount,
         });
         await Until(() => main.TransportConnected && main.ObservedSnapshotRevision > disconnectedRevision,
             "The same Godot client did not receive a fresh snapshot after host restart.");
         Require(savedIdentity == main.ObservedIdentity, "Reconnect changed the server content/ruleset/mode identity.");
+        await Until(() => main.ObservedPresentationEpochResetCount == disconnectedEpochResetCount + 1,
+            "The replacement admitted epoch did not reset presentation animation exactly once.");
+        WriteEvidence(directory, "recovery-presentation-epoch.json", new {
+            Passed = true, PreviousResetCount = disconnectedEpochResetCount,
+            ResetCount = main.ObservedPresentationEpochResetCount,
+            PreviousRevision = disconnectedRevision, Revision = main.ObservedSnapshotRevision,
+        });
         var restored = main.ObservedSnapshot!.Players.Single();
         Require(restored.EntityId == savedPlayer.EntityId && restored.CharacterClassId == savedPlayer.CharacterClassId
             && restored.CharacterName == savedPlayer.CharacterName && restored.LevelId == savedPlayer.LevelId

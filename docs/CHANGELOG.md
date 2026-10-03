@@ -2,6 +2,18 @@
 
 Notable changes to this fork are recorded below.
 
+- 2026-10-02: Add a client-only, atomic validated presentation manifest, immutable
+  catalog/resolver, visual atlas clock and optional audio/localization lookup.
+  Reuse the six SVG stand-ins by default; retain safe legacy/procedural/silent
+  fallbacks and freeze/reset animation across disconnect/admitted reconnect.
+  Add independent invalid-shape/path/bounds/immutability/long-clock regressions
+  and actual default/atlas/missing/undersized/refused-pack scene acceptance.
+  Focused tests pass 57; six create/resume/recovery journeys have 54 clean engine
+  stage exits and 20 inspected captures. Retain corrected integration failures
+  and update existing guide/readme/plan/status. Server, protocol, saves, SDK pin,
+  license and normal profiles are unchanged; full art/audio/localization,
+  original-asset tooling and M0/M1/M4 delivery gates remain open.
+
 - 2026-10-02: Bound test-only lease
   and initialization gate lifetimes, preserve primary/cleanup and failed-root
   evidence through disposal, and add EOF/deadline/cancellation/early-failure
