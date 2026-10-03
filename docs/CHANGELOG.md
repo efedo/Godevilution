@@ -2,6 +2,19 @@
 
 Notable changes to this fork are recorded below.
 
+- 2026-10-03: Add optional typed player-art rules to the client presentation
+  catalog, atomic ambiguity/budget refusal, actual per-entity drawing observations
+  and procedural fallback for missing selected art. Localize static HUD labels
+  while retaining control/intent identities and English fallbacks. Add action,
+  combat, facing, malformed-rule, bound and immutability regressions plus actual
+  semantic draw/HUD/freeze/reconnect acceptance. Focused checks pass 106 and the
+  full protocol-client suite passes 729 with two unchanged opt-in exclusions.
+  Six scene journeys retain 54 clean terminal engine stages, with 17 inspected
+  captures; four documentation guards pass.
+  Update the existing guide/readme/plan/status; preserve default SVGs, profiles,
+  server/protocol/saves, SDK pin and license. Native action timing, complete
+  art/audio/localization and M0/M1/M4 gates remain open.
+
 - 2026-10-02: Add a client-only, atomic validated presentation manifest, immutable
   catalog/resolver, visual atlas clock and optional audio/localization lookup.
   Reuse the six SVG stand-ins by default; retain safe legacy/procedural/silent

@@ -67,6 +67,40 @@ Unavailable optional audio stays silent. Feedback accepts optional
 `feedback.damage.prefix`, `feedback.healing.prefix` and `feedback.other.prefix`
 localization; default numeric feedback remains unchanged.
 
+Schema 1 also accepts an optional `actors` array of at most 512 player-art rules.
+Each rule has a unique stable `id`, an `assetId` referencing a declared texture,
+and at least one selector: unsigned `classId`, `action`, `combatMode`, or `facing`.
+Action names are `idle`, `move`, `attack`, `cast`, `death`, `level-transition`,
+and `restart-town`; idle means no action or an unspecified action. Combat/facing
+names are the existing protocol enum names, not numeric strings. Named selector values
+are case-insensitive and accept hyphen/underscore spelling; IDs remain exact.
+Empty or unknown selectors reject the entire pack. For example:
+
+```json
+"actors": [
+  { "id": "rogue-idle-south", "assetId": "rogue.idle", "classId": 1,
+    "action": "idle", "combatMode": "stand", "facing": "south" }
+]
+```
+
+The unique matching rule with the most specified fields wins. Any pair of
+equal-specificity rules whose selectors can overlap refuses the whole catalog,
+even if they share an asset. Array order never breaks ties. Oversized rule arrays
+refuse before construction and pairwise ambiguity checks. Unknown server enum
+values or no matching rule retain the base/procedural player path; missing or
+undersized selected art remains procedural rather than substituting base art.
+Actual per-entity drawing records the selected rule and resource; observation
+getters do not load resources. This extends player art selection only: its clock
+is still global and visual-only, not native action-frame timing or gameplay.
+
+HUD localization keys use `ui.hud.` followed by `tab.hero`, `tab.items`,
+`tab.trade`, `tab.stash`, `tab.world`, `travel`, `cancel-travel`, `approach`,
+`spell-sources`, `belt`, `equipment`, `oil-targets`, `store-stock`, `service-help`,
+`stored-items`, `routes`, `destinations`, or `world-help`.
+Missing entries retain English. Node names, server-supplied
+labels, intent IDs and event wiring do not localize. Fallback guidance names the
+displayed tab title. This is static HUD integration, not complete localization.
+
 The base single-player acceptance driver observes actual resource/draw use,
 default appearance, changing atlas regions, missing/undersized textures,
 atomic unsafe-manifest refusal, offline frame freeze and admitted-epoch reset:
@@ -74,6 +108,7 @@ atomic unsafe-manifest refusal, offline frame freeze and admitted-epoch reset:
 ```powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File tools/test-godot-session.ps1
 powershell -NoProfile -ExecutionPolicy Bypass -File tools/test-godot-session.ps1 -PresentationPackProfile atlas -Visible
+powershell -NoProfile -ExecutionPolicy Bypass -File tools/test-godot-session.ps1 -PresentationPackProfile semantic -Visible
 powershell -NoProfile -ExecutionPolicy Bypass -File tools/test-godot-session.ps1 -PresentationPackProfile missing
 powershell -NoProfile -ExecutionPolicy Bypass -File tools/test-godot-session.ps1 -PresentationPackProfile undersized
 powershell -NoProfile -ExecutionPolicy Bypass -File tools/test-godot-session.ps1 -PresentationPackProfile invalid
@@ -83,8 +118,12 @@ Accepted profile names are normalized to lowercase before child selection.
 Fixtures reuse the original SVGs and isolated acceptance saves, restore both
 selection environment variables on exit, and cannot combine with other journey
 profiles. Clean native exits remain mandatory. Pure catalog/resolver/clock tests
-run in `PresentationAssetPackTests` without Godot. This foundation is not full
-art, audible playback, complete localization, optional original-art import or M4.
+run in `PresentationAssetPackTests` and `SemanticPlayerPresentationTests` without
+Godot. The semantic fixture checks authoritative Rogue idle/facing selection,
+accepted south-west movement with missing-selected-art fallback, loaded idle
+atlas freeze/reconnect reset, and actual localized/default HUD controls. This is
+not full art, audible playback, complete localization, optional original-art
+import or M4.
 
 ## Finding Godot
 

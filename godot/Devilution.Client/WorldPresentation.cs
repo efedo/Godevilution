@@ -24,6 +24,8 @@ public partial class WorldPresentation : Node2D
     private readonly Dictionary<uint, Vector2> displayedPositions = [];
     private readonly Dictionary<uint, uint> displayedPositionLevels = [];
     private readonly Dictionary<uint, PlayerSnapshot> displayedPlayerSnapshots = [];
+    private readonly Dictionary<uint, PresentationPlayerTextureBindingObservation> playerTextureBindings = [];
+    private readonly Dictionary<uint, List<PresentationPlayerTextureBindingObservation>> playerTextureBindingHistory = [];
     private readonly Dictionary<uint, MonsterSnapshot> displayedMonsterSnapshots = [];
     private readonly Dictionary<uint, ProjectileSnapshot> displayedProjectileSnapshots = [];
     private readonly AssetPalette assets = new();
@@ -74,6 +76,16 @@ public partial class WorldPresentation : Node2D
     internal PresentationTextureBindingObservation? ObserveTextureBinding(string assetName)
         => assets.ObserveTexture(assetName);
 
+    /** Returns the binding recorded by the actual per-entity world draw. */
+    internal PresentationPlayerTextureBindingObservation? ObservePlayerTextureBinding(uint entityId)
+        => playerTextureBindings.TryGetValue(entityId, out var observation) ? observation : null;
+
+    /** Returns a bounded history of distinct actor selections observed during actual drawing. */
+    internal IReadOnlyList<PresentationPlayerTextureBindingObservation> ObservePlayerTextureBindingHistory(uint entityId)
+        => playerTextureBindingHistory.TryGetValue(entityId, out var history)
+            ? history.ToArray()
+            : Array.Empty<PresentationPlayerTextureBindingObservation>();
+
     private void ApplyCore(
         Snapshot? next,
         double delta,
@@ -98,6 +110,8 @@ public partial class WorldPresentation : Node2D
             displayedPositions.Clear();
             displayedPositionLevels.Clear();
             displayedPlayerSnapshots.Clear();
+            playerTextureBindings.Clear();
+            playerTextureBindingHistory.Clear();
             displayedMonsterSnapshots.Clear();
             displayedProjectileSnapshots.Clear();
             presentationClock.Reset();
@@ -277,6 +291,10 @@ public partial class WorldPresentation : Node2D
         }
         foreach (var entityId in displayedPlayerSnapshots.Keys.Where(id => !activeEntityIds.Contains(id)).ToArray())
             displayedPlayerSnapshots.Remove(entityId);
+        foreach (var entityId in playerTextureBindings.Keys.Where(id => !activeEntityIds.Contains(id)).ToArray())
+            playerTextureBindings.Remove(entityId);
+        foreach (var entityId in playerTextureBindingHistory.Keys.Where(id => !activeEntityIds.Contains(id)).ToArray())
+            playerTextureBindingHistory.Remove(entityId);
         foreach (var entityId in displayedMonsterSnapshots.Keys.Where(id => !activeEntityIds.Contains(id)).ToArray())
             displayedMonsterSnapshots.Remove(entityId);
         foreach (var entityId in displayedProjectileSnapshots.Keys.Where(id => !activeEntityIds.Contains(id)).ToArray())
@@ -632,7 +650,34 @@ public partial class WorldPresentation : Node2D
             etherealized
                 ? "dce3eb"
                 : isLocal ? "4da6ff" : "6dd47e");
-        DrawTextureOrCircle("player", center, new Vector2(26, 26), color, 11);
+        var actorFrame = assets.GetPlayerTextureFrame(player, out var actorSelection, out var actorAssetId);
+        var actorObservation = new PresentationPlayerTextureBindingObservation(
+            player.EntityId,
+            actorSelection is not null,
+            actorSelection?.RuleId,
+            actorAssetId,
+            assets.ObserveTexture(actorAssetId));
+        playerTextureBindings[player.EntityId] = actorObservation;
+        if (!playerTextureBindingHistory.TryGetValue(player.EntityId, out var history))
+            playerTextureBindingHistory[player.EntityId] = history = [];
+        var last = history.LastOrDefault();
+        if (last is null
+            || last.RuleId != actorObservation.RuleId
+            || last.AssetId != actorObservation.AssetId
+            || last.Binding?.IsLoaded != actorObservation.Binding?.IsLoaded
+            || last.Binding?.UsedFallback != actorObservation.Binding?.UsedFallback) {
+            history.Add(actorObservation);
+            if (history.Count > 32)
+                history.RemoveAt(0);
+        }
+        if (actorFrame is { } semanticFrame)
+            DrawTextureFrame(semanticFrame, new Rect2(center - new Vector2(13, 13), new Vector2(26, 26)), color);
+        else if (actorSelection is not null)
+            // A declared semantic resource must remain a procedural fallback;
+            // do not silently substitute the legacy/default player texture.
+            DrawCircle(center, 11, color);
+        else
+            DrawTextureOrCircle("player", center, new Vector2(26, 26), color, 11);
         var resources = PlayerResourceBarProjection.Resolve(player);
         if (resources.LifeVisible || resources.ManaVisible) {
             var bar = new Rect2(center.X - 13, center.Y - 21, 26, 3);

@@ -22,6 +22,8 @@
              Link="Acceptance/AcceptanceAckLossRelay.cs" />
     <Compile Include="../Devilution.Client/PresentationAssets/PresentationAssetManifest.cs"
              Link="PresentationAssets/PresentationAssetManifest.cs" />
+    <Compile Include="../Devilution.Client/PresentationAssets/SemanticPlayerPresentation.cs"
+             Link="PresentationAssets/SemanticPlayerPresentation.cs" />
     <Compile Include="../Devilution.Client/PresentationAssets/PresentationAssetResolver.cs"
              Link="PresentationAssets/PresentationAssetResolver.cs" />
     <Compile Include="../Devilution.Client/PresentationAssets/PresentationFrameClock.cs"

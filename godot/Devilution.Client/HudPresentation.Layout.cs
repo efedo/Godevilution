@@ -7,6 +7,7 @@ namespace Devilution.Client;
 /** Responsive controls only; all actions still use the existing server intents. */
 public partial class HudPresentation
 {
+    private readonly AssetPalette hudAssets = new();
     private readonly PanelContainer statusPanel = new() { Name = "StatusPanel" };
     private readonly TabContainer sections = new() { Name = "HudSections" };
     private readonly OptionButton routes = new() { Name = "Routes", ClipText = true };
@@ -25,6 +26,9 @@ public partial class HudPresentation
 
     private void BuildLayout()
     {
+        travel.Text = hudAssets.Localize("ui.hud.travel", "Travel to route");
+        cancelTravel.Text = hudAssets.Localize("ui.hud.cancel-travel", "Cancel travel");
+        approachDestination.Text = hudAssets.Localize("ui.hud.approach", "Approach and interact");
         foreach (var label in new[] { status, sessionWarning, state, statusEffects, attributes,
                      inventory, store, stash, dialog, commandFeedback, diagnostics, travelStatus }) {
             label.AutowrapMode = TextServer.AutowrapMode.WordSmart;
@@ -57,7 +61,7 @@ public partial class HudPresentation
         var hero = AddPage("Hero");
         hero.AddChild(attributes);
         hero.AddChild(Buttons(allocateStrength, allocateMagic, allocateDexterity, allocateVitality));
-        AddList(hero, "Spell sources (select here, or use Q/E)", spellSources, 140);
+        AddList(hero, "ui.hud.spell-sources", "Spell sources (select here, or use Q/E)", spellSources, 140);
         hero.AddChild(restartTown);
         hero.AddChild(highContrastToggle);
 
@@ -67,16 +71,17 @@ public partial class HudPresentation
         readBookSelected.Text = "Read book";
         useConsumableSelected.Text = "Use item";
         items.AddChild(Buttons(readBookSelected, useConsumableSelected, dropHeld));
-        AddList(items, "Belt: select a book or consumable source", beltItems, 80);
-        AddList(items, "Equipment: select an item, or an inventory item's destination", equipmentItems, 200);
-        AddList(items, "Oil targets: select equipment or inventory", oilTargets, 100);
+        AddList(items, "ui.hud.belt", "Belt: select a book or consumable source", beltItems, 80);
+        AddList(items, "ui.hud.equipment", "Equipment: select an item, or an inventory item's destination", equipmentItems, 200);
+        AddList(items, "ui.hud.oil-targets", "Oil targets: select equipment or inventory", oilTargets, 100);
         items.AddChild(applyOilSelected);
 
         var trade = AddPage("Trade");
         trade.AddChild(Buttons(openSmith, openAdria, closeStore, buySelected));
-        AddList(trade, "Store stock", storeItems, 160);
+        AddList(trade, "ui.hud.store-stock", "Store stock", storeItems, 160);
         trade.AddChild(store);
-        trade.AddChild(Caption("Select an item in Items or Stash before requesting a service."));
+        trade.AddChild(Caption("ui.hud.service-help",
+            $"Select an item in {hudAssets.Localize("ui.hud.tab.items", "Items")} or {hudAssets.Localize("ui.hud.tab.stash", "Stash")} before requesting a service."));
         trade.AddChild(Buttons(sellSelected, repairSelected, rechargeSelected, identifySelected, refillMana));
 
         var storage = AddPage("Stash");
@@ -89,7 +94,7 @@ public partial class HudPresentation
         };
         storage.AddChild(stashPageSelector);
         storage.AddChild(stashGrid);
-        AddList(storage, "Stored items", stashItems, 100);
+        AddList(storage, "ui.hud.stored-items", "Stored items", stashItems, 100);
         storage.AddChild(stash);
         storage.AddChild(stashGoldAmount);
         depositStashGold.Text = "Deposit gold";
@@ -97,7 +102,7 @@ public partial class HudPresentation
         storage.AddChild(Buttons(depositStashGold, withdrawStashGold));
 
         var interactions = AddPage("World");
-        interactions.AddChild(Caption("Routes supplied by the server"));
+        interactions.AddChild(Caption("ui.hud.routes", "Routes supplied by the server", "RouteCaption"));
         interactions.AddChild(routes);
         interactions.AddChild(Buttons(travel, cancelTravel));
         interactions.AddChild(travelStatus);
@@ -106,14 +111,16 @@ public partial class HudPresentation
                 TravelRequested?.Invoke(displayedRoutes[routes.Selected].WarpId);
         };
         cancelTravel.Pressed += () => CancelTravelRequested?.Invoke();
-        interactions.AddChild(Caption("Declared towners and portal endpoints"));
+        interactions.AddChild(Caption("ui.hud.destinations", "Declared towners and portal endpoints", "DestinationCaption"));
         interactions.AddChild(destinations);
         interactions.AddChild(Buttons(approachDestination));
         approachDestination.Pressed += () => {
             if (destinations.Selected >= 0 && destinations.Selected < displayedDestinations.Length)
                 DestinationRequested?.Invoke(displayedDestinations[destinations.Selected]);
         };
-        interactions.AddChild(Caption("WASD / arrows: walk. Ctrl + left click: walk toward a tile. Left click: interact or cast. Right click: attack. Movement, world clicks, or Escape cancel travel. After death settles, Escape or Hero / Restart in Town requests server recovery."));
+        interactions.AddChild(Caption("ui.hud.world-help",
+            $"WASD / arrows: walk. Ctrl + left click: walk toward a tile. Left click: interact or cast. Right click: attack. Movement, world clicks, or Escape cancel travel. After death settles, Escape or {hudAssets.Localize("ui.hud.tab.hero", "Hero")} / Restart in Town requests server recovery.",
+            "WorldHelpCaption"));
         interactions.AddChild(Buttons(interactObject, disarmTrap, advanceQuest, questTownerInteraction, clearEvents));
         interactions.AddChild(dialog);
         interactions.AddChild(diagnosticsToggle);
@@ -128,18 +135,29 @@ public partial class HudPresentation
             FollowFocus = true,
         };
         sections.AddChild(scroll);
+        // Display labels may localize; control names remain stable for input and accessibility.
+        sections.SetTabTitle(sections.GetTabCount() - 1,
+            hudAssets.Localize("ui.hud.tab." + title.ToLowerInvariant(), title));
         var box = new VBoxContainer { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill };
         box.AddThemeConstantOverride("separation", 8);
         scroll.AddChild(box);
         return box;
     }
 
-    private static Label Caption(string text)
-        => new() { Text = text, AutowrapMode = TextServer.AutowrapMode.WordSmart };
-
-    private static void AddList(VBoxContainer box, string caption, ItemList list, int height)
+    private Label Caption(string key, string fallback, string? name = null)
     {
-        box.AddChild(Caption(caption));
+        var caption = new Label {
+            Text = hudAssets.Localize(key, fallback),
+            AutowrapMode = TextServer.AutowrapMode.WordSmart,
+        };
+        if (name is not null)
+            caption.Name = name;
+        return caption;
+    }
+
+    private void AddList(VBoxContainer box, string key, string caption, ItemList list, int height)
+    {
+        box.AddChild(Caption(key, caption));
         list.CustomMinimumSize = new Vector2(0, height);
         box.AddChild(list);
     }

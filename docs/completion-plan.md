@@ -1,7 +1,7 @@
 # Godevilution Completion Plan
 
-Plan date: 2026-10-02. Committed-but-unobserved command recovery follows surviving-client
-baseline `3c55dcd78`; results and retained failures are in migration status.
+Plan date: 2026-10-03. Semantic player presentation follows client-pack baseline
+`d0f748305`; results and retained failures are in migration status.
 
 This is the active delivery plan. The [architecture](csharp-authoritative-server-migration.md)
 defines the objective and ownership rules; [migration status](migration-status.md)
@@ -115,8 +115,10 @@ M4. M5 is the final removal gate, not a reason to postpone replacement work.
    adaptation and presentation source review are approved and affected native
    regressions pass, including the final loopback-only fixture rerun. The build
    now enables existing authoritative guards in all independently compiled
-   gameplay object targets. Actual GUI acceptance remains: the latest isolated
+   gameplay object targets. Actual GUI acceptance remains: a prior isolated
    run was stopped behind a Windows Security prompt requiring manual cancellation.
+   The later Windows automation retry could not initialize its helper after the
+   documented reset/retry, so no new native client was launched or GUI pass claimed.
    Preserve the legacy
    direct API and strict late policy. Final-source host regressions and actual
    headless/rendered two-client creation/mutual movement/reverse-order fresh-host
@@ -333,9 +335,13 @@ deliberately does not claim native generated-world parity, which belongs to M2.
    create/resume/outage journeys cover default/animated/missing/undersized/refused
    packs, offline frame freeze and admitted reconnect-epoch reset. Keep the
    [manifest contract](ai/godot-build.md#client-presentation-packs) outside server
-   content, protocol identities, gameplay/RNG and saves. Expand semantic actor/
-   action/direction coverage, audible feedback and usable localized names; this
-   foundation does not close M1 or M4. Any original-asset importer remains optional
+   content, protocol identities, gameplay/RNG and saves. Player class/action/
+   combat/facing rules and static HUD localization now extend that boundary;
+   retain atomic ambiguity/count refusal, exact per-entity draw evidence and
+   missing-selected-art fallback. The clock remains global and visual-only.
+   Next integrate native action-frame timing, remaining actor/object/projectile
+   art, audible feedback and complete usable localized names; this foundation
+   does not close M1 or M4. Any original-asset importer remains optional
    client tooling with explicit input/output and a complete MPQ-free alternative.
 
 Exit: a person can complete the loop through Godot controls without debug

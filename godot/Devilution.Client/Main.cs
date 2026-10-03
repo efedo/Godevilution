@@ -52,6 +52,11 @@ public partial class Main : Node2D
     internal ulong ObservedPresentationEpochResetCount => world?.PresentationEpochResetCount ?? 0;
     internal PresentationPackObservation? ObservedFeedbackPresentationPack => feedback?.ObservePresentationPack();
     internal PresentationTextureBindingObservation? ObservedPlayerTextureBinding => world?.ObserveTextureBinding("player");
+    internal PresentationPlayerTextureBindingObservation? ObservedPlayerActorTextureBinding
+        => world?.ObservePlayerTextureBinding(model.PlayerEntityId);
+    internal IReadOnlyList<PresentationPlayerTextureBindingObservation> ObservedPlayerActorTextureBindingHistory
+        => world?.ObservePlayerTextureBindingHistory(model.PlayerEntityId)
+            ?? Array.Empty<PresentationPlayerTextureBindingObservation>();
 
     internal string? ClientFrameEvidencePath => frameEvidence?.EvidenceFilePath;
 

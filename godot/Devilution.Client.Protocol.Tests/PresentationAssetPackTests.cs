@@ -1,4 +1,5 @@
 using Devilution.Client.PresentationAssets;
+using Devilution.Protocol.V1;
 using System.Text.Json.Nodes;
 using Xunit;
 
@@ -303,4 +304,119 @@ public sealed class PresentationAssetPackTests
         clock.Advance(double.PositiveInfinity);
         Assert.Equal(before, clock.ElapsedSeconds);
     }
+
+    [Fact]
+    public void SemanticRulesCoverAllEightDirectionsWithoutListOrderSelection()
+    {
+        var directions = new[] {
+            "south", "south-west", "west", "north-west",
+            "north", "north-east", "east", "south-east",
+        };
+        var rules = string.Join(',', directions.Select(direction =>
+            $$"""{"id":"rogue-idle-{{direction}}","assetId":"player.semantic","classId":1,"action":"idle","combatMode":"stand","facing":"{{direction}}"}"""));
+        var catalog = ParseCatalog($$"""
+        {
+          "schemaVersion": 1,
+          "packId": "semantic-pack",
+          "assets": [{ "id": "player.semantic", "kind": "texture", "path": "player.svg" }],
+          "actors": [{{rules}}]
+        }
+        """);
+
+        foreach (var direction in directions) {
+            var player = NewPlayer(direction);
+            Assert.True(SemanticPlayerPresentation.TrySelect(catalog, player, out var selection));
+            Assert.Equal("rogue-idle-" + direction, selection.RuleId);
+            Assert.Equal("player.semantic", selection.AssetId);
+        }
+    }
+
+    [Fact]
+    public void MostSpecificSemanticRuleWinsRegardlessOfListOrder()
+    {
+        var first = ParseCatalog("""
+        { "schemaVersion": 1, "packId": "specificity", "assets": [{ "id": "a", "kind": "texture", "path": "a.svg" }, { "id": "b", "kind": "texture", "path": "b.svg" }],
+          "actors": [
+            { "id": "specific", "assetId": "b", "classId": 1, "action": "idle" },
+            { "id": "class-default", "assetId": "a", "classId": 1 }
+          ] }
+        """);
+        var second = ParseCatalog("""
+        { "schemaVersion": 1, "packId": "specificity", "assets": [{ "id": "a", "kind": "texture", "path": "a.svg" }, { "id": "b", "kind": "texture", "path": "b.svg" }],
+          "actors": [
+            { "id": "class-default", "assetId": "a", "classId": 1 },
+            { "id": "specific", "assetId": "b", "classId": 1, "action": "idle" }
+          ] }
+        """);
+
+        Assert.True(SemanticPlayerPresentation.TrySelect(first, NewPlayer("south"), out var firstSelection));
+        Assert.True(SemanticPlayerPresentation.TrySelect(second, NewPlayer("south"), out var secondSelection));
+        Assert.Equal("specific", firstSelection.RuleId);
+        Assert.Equal(firstSelection, secondSelection);
+    }
+
+    [Fact]
+    public void RejectsEqualSpecificityOverlappingSemanticRulesAtomically()
+    {
+        var json = """
+        { "schemaVersion": 1, "packId": "ambiguous", "assets": [{ "id": "a", "kind": "texture", "path": "a.svg" }],
+          "actors": [
+            { "id": "south", "assetId": "a", "classId": 1, "facing": "south" },
+            { "id": "idle", "assetId": "a", "classId": 1, "action": "idle" }
+          ] }
+        """;
+
+        Assert.False(PresentationAssetCatalog.TryParse(json, out var catalog, out var diagnostics));
+        Assert.Null(catalog);
+        Assert.Contains(diagnostics, message => message.Contains("ambiguous", StringComparison.OrdinalIgnoreCase));
+    }
+
+    [Fact]
+    public void UnknownServerEnumsSafelyUseProceduralFallback()
+    {
+        var catalog = ParseCatalog("""
+        { "schemaVersion": 1, "packId": "unknown", "assets": [{ "id": "a", "kind": "texture", "path": "a.svg" }],
+          "actors": [{ "id": "south", "assetId": "a", "classId": 1, "facing": "south" }] }
+        """);
+        var unknownFacing = NewPlayer("south");
+        unknownFacing.FacingDirection = (PlayerDirection)99;
+        Assert.False(SemanticPlayerPresentation.TrySelect(catalog, unknownFacing, out _));
+        var unknownAction = NewPlayer("south");
+        unknownAction.CurrentAction = new PlayerActionSnapshot { Kind = (PlayerActionKind)99 };
+        Assert.False(SemanticPlayerPresentation.TrySelect(catalog, unknownAction, out _));
+    }
+
+    [Fact]
+    public void SchemaOneWithoutActorsPreservesDefaultSelectionBoundary()
+    {
+        var catalog = ParseCatalog("""
+        { "schemaVersion": 1, "packId": "default", "assets": [{ "id": "player", "kind": "texture", "path": "player.svg" }] }
+        """);
+        Assert.Empty(catalog.ActorRules);
+        Assert.False(SemanticPlayerPresentation.TrySelect(catalog, NewPlayer("south"), out _));
+    }
+
+    [Fact]
+    public void RejectsEmptyTypedSelectorsInsteadOfWeakeningTheirRule()
+    {
+        var json = """
+        { "schemaVersion": 1, "packId": "empty-selector", "assets": [{ "id": "a", "kind": "texture", "path": "a.svg" }],
+          "actors": [{ "id": "invalid", "assetId": "a", "classId": 1, "action": " " }] }
+        """;
+        Assert.False(PresentationAssetCatalog.TryParse(json, out var catalog, out _));
+        Assert.Null(catalog);
+    }
+
+    private static PresentationAssetCatalog ParseCatalog(string json)
+    {
+        Assert.True(PresentationAssetCatalog.TryParse(json, out var catalog, out var diagnostics), string.Join(" ", diagnostics));
+        return catalog!;
+    }
+
+    private static PlayerSnapshot NewPlayer(string direction)
+        => new() {
+            CharacterClassId = 1,
+            CombatMode = PlayerCombatMode.Stand,
+            FacingDirection = Enum.Parse<PlayerDirection>(direction.Replace("-", string.Empty), true),
+        };
 }

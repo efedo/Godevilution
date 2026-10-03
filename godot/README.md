@@ -12,8 +12,10 @@ audio, packaging, and a tested complete play flow remain open. The
 in M0, the playable loop in M1, and release presentation in M4; see
 [migration status](../docs/migration-status.md) for the dated assessment.
 The prototype uses no MPQs. A validated client-only presentation manifest now
-binds the existing SVG sample, optional audio/localization and texture-atlas
-metadata, with legacy/procedural/silent fallbacks. See the
+binds the existing SVG sample, optional audio/localization, texture-atlas
+metadata and player class/action/combat/facing rules, with safe fallbacks.
+Static HUD captions can localize while control identities and server labels
+remain unchanged. The frame clock is visual-only, not native action timing. See the
 [presentation-pack contract](../docs/ai/godot-build.md#client-presentation-packs).
 Complete asset coverage and optional original-asset tooling remain open; the
 server has no archive dependency.
@@ -115,8 +117,10 @@ visibility and fresh-host resume through both setup forms, including reversed
 connection order. Legacy persistence can reallocate numeric entity IDs after
 host restart; each private bookmark identifies the durable character. Explicit
 complete-cohort acceptance additionally requires both stable entity bindings.
-This does not certify cooperative
-combat, cross-player world interactions, or multiplayer host-loss recovery.
+Separate explicit complete-cohort acceptance also retains two clients across
+host loss, checks shared movement and retries committed-but-unobserved commands.
+These checks do not certify cooperative combat, broader world interactions,
+all fault scenarios or complete multiplayer/campaign recovery.
 
 Items shows all seven equipment destinations, including empty slots. Select an
 equipped item and an empty inventory cell to unequip it; select an inventory

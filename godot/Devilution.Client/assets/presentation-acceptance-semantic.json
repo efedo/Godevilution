@@ -1,0 +1,36 @@
+{
+  "schemaVersion": 1,
+  "packId": "godevilution.acceptance-semantic",
+  "assets": [
+    { "id": "floor", "kind": "texture", "path": "floor.svg" },
+    {
+      "id": "player.semantic", "kind": "texture", "path": "player.svg",
+      "frames": {
+        "frameCount": 4, "frameWidth": 16, "frameHeight": 16,
+        "columns": 2, "rows": 2, "framesPerSecond": 8, "loop": true
+      }
+    },
+    {
+      "id": "player.semantic.move", "kind": "texture", "path": "semantic-move-missing.svg",
+      "frames": {
+        "frameCount": 4, "frameWidth": 16, "frameHeight": 16,
+        "columns": 2, "rows": 2, "framesPerSecond": 8, "loop": true
+      }
+    },
+    { "id": "ui.hud.tab.hero", "kind": "localization", "text": "Character" },
+    { "id": "ui.hud.tab.world", "kind": "localization", "text": "Travel" },
+    { "id": "ui.hud.routes", "kind": "localization", "text": "Path choices" },
+    { "id": "ui.hud.travel", "kind": "localization", "text": "Travel now" }
+  ],
+  "actors": [
+    { "id": "rogue-idle-south", "assetId": "player.semantic", "classId": 1, "action": "idle", "combatMode": "stand", "facing": "south" },
+    { "id": "rogue-move-south-west", "assetId": "player.semantic.move", "classId": 1, "action": "move", "facing": "south-west" },
+    { "id": "rogue-idle-south-west", "assetId": "player.semantic", "classId": 1, "action": "idle", "combatMode": "stand", "facing": "south-west" },
+    { "id": "rogue-idle-west", "assetId": "player.semantic", "classId": 1, "action": "idle", "combatMode": "stand", "facing": "west" },
+    { "id": "rogue-idle-north-west", "assetId": "player.semantic", "classId": 1, "action": "idle", "combatMode": "stand", "facing": "north-west" },
+    { "id": "rogue-idle-north", "assetId": "player.semantic", "classId": 1, "action": "idle", "combatMode": "stand", "facing": "north" },
+    { "id": "rogue-idle-north-east", "assetId": "player.semantic", "classId": 1, "action": "idle", "combatMode": "stand", "facing": "north-east" },
+    { "id": "rogue-idle-east", "assetId": "player.semantic", "classId": 1, "action": "idle", "combatMode": "stand", "facing": "east" },
+    { "id": "rogue-idle-south-east", "assetId": "player.semantic", "classId": 1, "action": "idle", "combatMode": "stand", "facing": "south-east" }
+  ]
+}

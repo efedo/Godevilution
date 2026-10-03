@@ -1,6 +1,7 @@
 # Godevilution Migration Status
 
-Status date: 2026-10-02. Estimate baseline: `8c03b365d`; interrupted first-publication
+Status date: 2026-10-03. Estimate baseline: `8c03b365d`; semantic player presentation
+follows client-pack baseline `d0f748305`. Interrupted first-publication
 and Windows staging acceptance follows Godot cohort baseline `60f60c8a1` below. M0 session reliability
 landed in `819b73936`, integration remediation in `818f63f32`, and application
 recovery in `cabc9b3fb`. The Flash replay correction landed in `3b90b6be5` and
@@ -114,6 +115,9 @@ open. Their scope, dependencies, and exit checks are defined only in the
   is claimed.
 - Godot currently requires no MPQs and has a validated client-only presentation
   manifest with sample SVGs, atlas animation and missing-resource fallbacks.
+  Player class/action/combat/facing rules now select actual drawn resources;
+  static HUD captions localize without changing control or intent identities.
+  Animation remains a global visual clock, not native action-frame timing.
   Complete MPQ-free presentation coverage remains a deliverable. Original-asset
   support is optional client tooling; the server must remain MPQ-independent.
 - Native-compatible generated maps, collision/set-piece placement, remaining
@@ -143,6 +147,78 @@ open. Their scope, dependencies, and exit checks are defined only in the
   this edge case, but the corrected Flash fixtures cover off-player cursors.
 
 ## Recent implementation evidence
+
+### M1 semantic player art and static HUD localization (2026-10-03)
+
+Schema 1 now optionally accepts at most 512 immutable player-art rules, with
+typed class/action/combat/facing selectors and declared texture references.
+The unique most-specific match wins; overlapping equal-specificity rules,
+invalid selectors and duplicate identities refuse the whole pack. Oversized
+arrays refuse before rule construction and pairwise ambiguity diagnostics.
+Existing manifests without rules retain the original player path. Unknown
+snapshot enums do not select semantic art; missing/undersized selected art
+stays procedural rather than silently substituting another texture.
+
+Actual per-entity world drawing records the selected rule/resource and a bounded
+selection history. Static HUD tab titles, list captions and travel controls use
+the existing client localization catalog while node names, callbacks, protocol
+intents and server labels remain unchanged. Missing entries retain English;
+fallback guidance names the displayed tab title. This is not full localization.
+
+- Reviewed helper build: zero errors, three existing NU1900 warnings and one
+  existing xUnit2031 warning (`.local/m1-semantic-player-build.log`). Focused
+  catalog/selector checks: 106 passed, zero failures/skips, 318ms
+  (`.local/m1-semantic-player-focused.log`). They cover all supported actions,
+  eight facings, defined combat modes, specificity, malformed/ambiguous rules,
+  the 512/513 boundary, immutable catalogs and unchanged server snapshots.
+- Full protocol-client suite: 729 passed, zero failures, two unchanged explicit
+  standalone-host performance exclusions, 13m01.866s
+  (`.local/m1-semantic-player-protocol-full.log`). This includes live host tests,
+  not whole-game or campaign acceptance.
+- The rendered semantic create/move/checkpoint/fresh-host resume/outage journey
+  passes in Godot 4.7.2. Observations require the exact Rogue idle/facing rule,
+  `res://assets/player.svg` and a loaded 16x16 atlas region. Accepted south-west
+  movement observes the declared missing semantic movement texture and its
+  procedural fallback, then a loaded settled-idle rule. Offline recovery retains
+  a non-null actual actor atlas binding for over 1.5s and resets once after the
+  replacement host's admitted epoch.
+- Actual HUD controls show Character/Travel, Path choices and Travel now while
+  preserving Hero/Items/Trade/Stash/World node identities. Default English
+  entries and travel tooltips are checked in every base presentation phase.
+  Nine semantic captures were inspected: both changed tabs, create/resume,
+  three layout sizes and offline/reconnected views. Four create/resume/offline/
+  reconnected captures from each rendered default and atlas journey were also
+  inspected, for 17 total. The quartered SVG is diagnostic, not release art.
+- Six final-source journeys below pass with one authoritative identity pair.
+  All 18 unique launch roots retain version/import/client records: 54 clean
+  terminal stage exits, zero errors. Source SDK is still 4.7.1; only staged
+  copies import/build against 4.7.2. No Godot or crash-reporter process remains.
+  Four documentation guards pass, zero failures/skips, 390ms; their build has
+  zero warnings/errors (`.local/m1-semantic-player-documentation-*.log`).
+
+Retained scene roots under `C:/Users/eric/AppData/Local/Temp/`; launcher logs are
+`.local/m1-semantic-player-{visible,default,atlas,missing,undersized,invalid}.log`
+in the same row order:
+
+| Profile | `Godevilution-Scene-Acceptance-` suffix |
+| --- | --- |
+| Semantic, rendered | `ca60eb57c5624ce1871999ad684ef072` |
+| Default, rendered | `35b8c2a4617e473abd9cd3d86973ee28` |
+| Atlas, rendered | `5c4bbbc20603421db090268d075379c3` |
+| Missing, headless | `13e6947e35314d6eb91a1741816a36ee` |
+| Undersized, headless | `cf43cfeeae09499fa13ff7624e1ec4fc` |
+| Unsafe/refused, headless | `fed706c07d1449a0bd9fe40894090386` |
+
+Review corrected a missing protocol test import, the isometric movement-facing
+expectation, pre-input sampling, exact idle-rule assertions and a null-equality
+offline-freeze proof. Final checks use already-drawn resources, not observation
+getters that load them. No current source failure is excluded by these fixes.
+The existing SVG bytes, default profiles, server/protocol/content/save code,
+source SDK pin and license remain unchanged. Native GUI acceptance could not
+resume because the Windows automation helper failed its documented retry/reset;
+no new native client was launched or GUI pass claimed. Overall remains 35% and
+M0/M1/M4 remain open: native action-frame alignment, remaining actor/object/
+projectile art, audio, original-asset tooling and complete play remain ahead.
 
 ### M1 client-only presentation-pack foundation (2026-10-02)
 

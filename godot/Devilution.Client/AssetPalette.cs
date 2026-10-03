@@ -1,4 +1,5 @@
 using Devilution.Client.PresentationAssets;
+using Devilution.Protocol.V1;
 using Godot;
 using Environment = System.Environment;
 using FileAccess = Godot.FileAccess;
@@ -128,6 +129,22 @@ public sealed class AssetPalette
         return texture is null
             ? null
             : new TextureFrame(texture, declared ? declaredRegion : null);
+    }
+
+    /** Resolves semantic actor art without allowing a missing selected asset to fall through to another art key. */
+    internal TextureFrame? GetPlayerTextureFrame(
+        PlayerSnapshot player,
+        out PresentationActorSelection? selection,
+        out string assetName)
+    {
+        selection = null;
+        assetName = "player";
+        if (catalog is not null
+            && SemanticPlayerPresentation.TrySelect(catalog, player, out var selected)) {
+            selection = selected;
+            assetName = selected.AssetId;
+        }
+        return GetTextureFrame(assetName);
     }
 
     internal AudioStream? GetAudio(string assetName)

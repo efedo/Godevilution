@@ -154,6 +154,7 @@ public partial class SessionAcceptance : Node
 
         GetViewport().GuiReleaseFocus();
         var preInputTick = main.ObservedSnapshot!.Tick;
+        var semanticInitialActorBinding = main.ObservedPlayerActorTextureBinding;
         // The preview's town arrival is immediately north of the entry stair.
         var moveKey = phase == "TownLoopResume" ? Key.Left : Key.Down;
         Input.ParseInputEvent(new InputEventKey { Keycode = moveKey, PhysicalKeycode = moveKey, Pressed = true });
@@ -177,6 +178,7 @@ public partial class SessionAcceptance : Node
             "Movement did not finish with an accepted command and settled authoritative position.");
         var moved = main.ObservedSnapshot!.Players.Single();
         var result = main.ObservedCommandResult!;
+        await VerifySemanticActorTransitionAsync(main, directory, phase, semanticInitialActorBinding);
         if (inputStallMilliseconds is { } stallMilliseconds)
             WriteEvidence(directory, phase!.ToLowerInvariant() + "-input-stall.json", new {
                 Passed = true, StallMilliseconds = stallMilliseconds,
@@ -233,6 +235,8 @@ public partial class SessionAcceptance : Node
         var screenPosition = main.ObservedPlayerScreenPosition
             ?? throw new InvalidOperationException("The disconnected scene lost its last authoritative presentation.");
         var disconnectedFrameRegion = main.ObservedPlayerTextureBinding?.FrameRegion;
+        var disconnectedActorBinding = main.ObservedPlayerActorTextureBinding;
+        var semanticPresentation = (Environment.GetEnvironmentVariable("GODEVILUTION_ACCEPTANCE_PRESENTATION_PACK") ?? "default") == "semantic";
         var disconnectedEpochResetCount = main.ObservedPresentationEpochResetCount;
         Require(main.ObservedPendingCommandCount == 0, "The disconnected scene retained an unexpected command.");
         if (visible)
@@ -255,13 +259,22 @@ public partial class SessionAcceptance : Node
             Require(status.Text.Contains("Connection lost"), "Disconnect feedback disappeared while the host was absent.");
             Require(main.ObservedPlayerTextureBinding?.FrameRegion == disconnectedFrameRegion,
                 "Presentation animation advanced while the authoritative host was absent.");
+            if (semanticPresentation) {
+                Require(disconnectedActorBinding is {
+                    IsSemanticSelection: true,
+                    Binding: { IsLoaded: true, FrameRegion: not null },
+                }, "The disconnected scene did not retain a loaded semantic actor atlas binding.");
+                Require(main.ObservedPlayerActorTextureBinding == disconnectedActorBinding,
+                    "The selected semantic actor changed while the authoritative host was absent.");
+            }
             Require(main.ObservedPresentationEpochResetCount == disconnectedEpochResetCount,
                 "Presentation animation reset before a replacement authoritative epoch was admitted.");
         }
         WriteEvidence(directory, "recovery-disconnected.json", new {
             Passed = true, Tick = disconnected.Tick, Sequence = savedSequence,
             OfflineSeconds = offline.Elapsed.TotalSeconds,
-            FrameRegion = disconnectedFrameRegion, EpochResetCount = disconnectedEpochResetCount,
+            FrameRegion = disconnectedFrameRegion, ActorBinding = disconnectedActorBinding,
+            EpochResetCount = disconnectedEpochResetCount,
         });
         await Until(() => main.TransportConnected && main.ObservedSnapshotRevision > disconnectedRevision,
             "The same Godot client did not receive a fresh snapshot after host restart.");
