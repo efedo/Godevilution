@@ -146,6 +146,24 @@ unexpired current-connection sample before its first realtime dispatch. Measured
 history cannot bound unseen latency spikes. Actual two-client restart acceptance
 remains distinct from these rules.
 
+## Opt-in command-timing diagnostics
+
+`--command-timing-trace true` enables bounded scalar diagnostics; the default is
+false and no protocol, save or admission policy changes. Incremental
+`COMMAND_TIMING_JSON:` stdout records correlate process-local connections, public
+entities, sequences and timing replies without retaining credentials or payloads.
+Read completion is after envelope parsing, not packet arrival. Admission fields
+are the existing clock/server samples used by the host. Snapshot materialization
+includes authority-lock acquisition, advancement, provider/validation and
+publication; snapshot write includes barrier, serialization and stream work.
+Neither interval isolates projection or disk cost. Explicit drops/failures or
+missing terminal records make the capture incomplete; abrupt termination can lose
+queued output. This diagnostic overhead is not release performance evidence.
+`PublisherComplete` reports publisher shutdown; `CaptureComplete` reports
+delivery accounting only, not completed operations or acceptance. Check each
+operation's terminal record separately. A cap marker reports lower-bound counts.
+The Godot acceptance workflow is in the [client guide](../../../docs/ai/godot-build.md#opt-in-command-timing-diagnostics).
+
 ## Opt-in performance evidence
 
 The standalone host accepts `--performance-output <new-file>`. It reserves a

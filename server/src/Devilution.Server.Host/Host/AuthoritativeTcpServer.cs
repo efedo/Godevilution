@@ -1,4 +1,5 @@
 using System.Collections.Concurrent;
+using System.Diagnostics;
 using System.Net;
 using System.Net.Sockets;
 using System.Runtime.ExceptionServices;
@@ -52,6 +53,8 @@ public sealed partial class AuthoritativeTcpServer : IAsyncDisposable
     private Task? acceptLoop;
     private Task? simulationLoop;
     private ulong lastSimulationTick;
+    private long nextConnectionOrdinal;
+    private long nextTimingOrdinal;
 
     public AuthoritativeTcpServer(
         AuthoritativeCommandServer commandServer,
@@ -171,6 +174,15 @@ public sealed partial class AuthoritativeTcpServer : IAsyncDisposable
 
     /** Null by default. Diagnostics never alter authoritative ticks or protocol state. */
     public HostPerformanceRecorder? PerformanceRecorder { get; init; }
+
+    /** Null by default. Timing evidence is bounded and never enters gameplay. */
+    public HostCommandTimingRecorder? CommandTimingRecorder { get; init; }
+
+    /**
+     * Optional post-lock drain hook. Hosts should enqueue the drain and return
+     * quickly; failures are diagnostic and cannot replace a gameplay failure.
+     */
+    public Action<HostCommandTimingDrain>? CommandTimingDrainObserver { get; init; }
 
     /** Whole-host policy; legacy clients retain immediate scheduling by default. */
     public bool UseClockGatedCommandScheduling { get; init; }
@@ -503,6 +515,9 @@ public sealed partial class AuthoritativeTcpServer : IAsyncDisposable
     private async Task HandleClientAsync(TcpClient client, CancellationToken cancellationToken)
     {
         NetworkStream? stream = null;
+        var connectionOrdinal = CommandTimingRecorder is null
+            ? 0
+            : unchecked((int)Interlocked.Increment(ref nextConnectionOrdinal));
         try {
             stream = client.GetStream();
             var helloEnvelope = await EnvelopeCodec.ReadAsync(stream, cancellationToken);
@@ -557,7 +572,14 @@ public sealed partial class AuthoritativeTcpServer : IAsyncDisposable
                 await EnvelopeCodec.WriteAsync(stream, new Envelope { ServerHello = serverHello }, cancellationToken);
                 currentTick = commandServer.WithSynchronizedState(() => AdvanceCurrentTickCore());
                 SaveSession(session);
-                await SendSnapshotIfAvailableAsync(stream, session.Id, session.EntityId, currentTick, cancellationToken);
+                await SendSnapshotIfAvailableAsync(
+                    stream,
+                    session.Id,
+                    session.EntityId,
+                    currentTick,
+                    connectionOrdinal,
+                    null,
+                    cancellationToken);
             }
             var sessionId = session.Id;
             var entityId = session.EntityId;
@@ -565,27 +587,68 @@ public sealed partial class AuthoritativeTcpServer : IAsyncDisposable
                 var envelope = await EnvelopeCodec.ReadAsync(stream, cancellationToken);
                 if (envelope is null)
                     return;
+                var envelopeReadCompletedTimestamp = CommandTimingRecorder is null
+                    ? (long?)null
+                    : Stopwatch.GetTimestamp();
 
                 if (envelope.PayloadCase == Envelope.PayloadOneofCase.CommandBatch) {
                     AuthoritativeCommandBatchValidator.Validate(envelope.CommandBatch);
                     var measurement = PerformanceRecorder?.Begin() ?? 0;
                     CommandAck acknowledgement;
+                    ulong sampledClockCurrentTick = 0;
+                    ulong sampledCommandServerCurrentTick = 0;
+                    ulong actualAdmissionTick = 0;
+                    long lockWaitStopwatchTicks = 0;
+                    IReadOnlyList<long> admissionTraceOrdinals = [];
+                    var lockWaitStart = CommandTimingRecorder is null
+                        ? 0L
+                        : Stopwatch.GetTimestamp();
+                    var lockEntered = 0L;
                     if (commandScheduler is not null) {
                         var pending = commandServer.WithSynchronizedSession(sessionId, () => {
+                            lockEntered = CommandTimingRecorder is null
+                                ? 0L
+                                : Stopwatch.GetTimestamp();
                             RequireCohortHealthy();
+                            sampledClockCurrentTick = clock.CurrentTick;
+                            sampledCommandServerCurrentTick = commandServer.CurrentTick;
+                            actualAdmissionTick = Math.Max(
+                                sampledClockCurrentTick,
+                                sampledCommandServerCurrentTick);
                             return commandScheduler.SubmitBatchAsync(sessionId, envelope.CommandBatch,
-                                Math.Max(clock.CurrentTick, commandServer.CurrentTick), cancellationToken);
+                                actualAdmissionTick,
+                                cancellationToken);
                         });
+                        if (lockEntered != 0)
+                            lockWaitStopwatchTicks = Math.Max(0, lockEntered - lockWaitStart);
                         PerformanceRecorder?.Complete(HostPerformanceMetric.CommandQueueAdmissionMilliseconds, measurement);
+                        admissionTraceOrdinals = RecordCommandAdmissionTiming(
+                            connectionOrdinal,
+                            entityId,
+                            envelopeReadCompletedTimestamp,
+                            lockWaitStopwatchTicks,
+                            sampledClockCurrentTick,
+                            sampledCommandServerCurrentTick,
+                            actualAdmissionTick,
+                            envelope.CommandBatch);
+                        EmitCommandTimingOutsideAuthorityLock();
                         // Never retain the authority monitor during deliberate ACK waits.
                         acknowledgement = await pending;
                         AuthoritativeCommandAckValidator.Validate(acknowledgement);
                         currentTick = commandServer.WithSynchronizedState(() => AdvanceAndPublishCohortCore());
                     } else {
                         acknowledgement = commandServer.WithSynchronizedSession(sessionId, () => {
+                            lockEntered = CommandTimingRecorder is null
+                                ? 0L
+                                : Stopwatch.GetTimestamp();
                             RequireCohortHealthy();
                             try {
-                                currentTick = Math.Max(clock.CurrentTick, commandServer.CurrentTick);
+                                sampledClockCurrentTick = clock.CurrentTick;
+                                sampledCommandServerCurrentTick = commandServer.CurrentTick;
+                                actualAdmissionTick = Math.Max(
+                                    sampledClockCurrentTick,
+                                    sampledCommandServerCurrentTick);
+                                currentTick = actualAdmissionTick;
                                 var result = commandServer.ProcessBatch(sessionId, envelope.CommandBatch, currentTick);
                                 AuthoritativeCommandAckValidator.Validate(result);
                                 // Admission, applied-tick advancement and persistence
@@ -603,19 +666,79 @@ public sealed partial class AuthoritativeTcpServer : IAsyncDisposable
                                 throw;
                             }
                         });
+                        if (lockEntered != 0)
+                            lockWaitStopwatchTicks = Math.Max(0, lockEntered - lockWaitStart);
                         PerformanceRecorder?.Complete(HostPerformanceMetric.CommandAdmissionAndCheckpointMilliseconds, measurement);
                     }
-                    await WriteAuthoritativeEnvelopeAsync(stream, new Envelope { CommandAck = acknowledgement }, cancellationToken);
+                    var commandTraceOrdinals = RecordCommandTiming(
+                        connectionOrdinal,
+                        entityId,
+                        envelopeReadCompletedTimestamp,
+                        lockWaitStopwatchTicks,
+                        sampledClockCurrentTick,
+                        sampledCommandServerCurrentTick,
+                        actualAdmissionTick,
+                        envelope.CommandBatch,
+                        acknowledgement,
+                        admissionTraceOrdinals);
+                    EmitCommandTimingOutsideAuthorityLock();
+                    var ackWriteStartTimestamp = CommandTimingRecorder is null
+                        ? (long?)null
+                        : Stopwatch.GetTimestamp();
+                    var ackWriteCompleted = false;
+                    try {
+                        await WriteAuthoritativeEnvelopeAsync(stream, new Envelope { CommandAck = acknowledgement }, cancellationToken);
+                        ackWriteCompleted = true;
+                    } finally {
+                        var ackWriteEndTimestamp = CommandTimingRecorder is null
+                            ? (long?)null
+                            : Stopwatch.GetTimestamp();
+                        RecordAckWriteTiming(
+                            connectionOrdinal,
+                            entityId,
+                            envelopeReadCompletedTimestamp,
+                            acknowledgement,
+                            commandTraceOrdinals,
+                            ackWriteStartTimestamp,
+                            ackWriteEndTimestamp,
+                            ackWriteCompleted);
+                        EmitCommandTimingOutsideAuthorityLock();
+                    }
                     await SendEventsIfAvailable(stream, sessionId, entityId, currentTick, cancellationToken);
-                    await SendSnapshotIfAvailableAsync(stream, sessionId, entityId, currentTick, cancellationToken);
+                    await SendSnapshotIfAvailableAsync(
+                        stream,
+                        sessionId,
+                        entityId,
+                        currentTick,
+                        connectionOrdinal,
+                        envelopeReadCompletedTimestamp,
+                        cancellationToken);
                 } else if (envelope.PayloadCase == Envelope.PayloadOneofCase.SnapshotRequest) {
                     currentTick = commandServer.WithSynchronizedState(() => AdvanceAndPublishCohortCore(currentTick));
                     await SendEventsIfAvailable(stream, sessionId, entityId, currentTick, cancellationToken);
-                    await SendSnapshotIfAvailableAsync(stream, sessionId, entityId, currentTick, cancellationToken);
+                    await SendSnapshotIfAvailableAsync(
+                        stream,
+                        sessionId,
+                        entityId,
+                        currentTick,
+                        connectionOrdinal,
+                        envelopeReadCompletedTimestamp,
+                        envelope.SnapshotRequest.TimingRequestId == 0
+                            ? null
+                            : envelope.SnapshotRequest.TimingRequestId,
+                        cancellationToken);
                     if (UseClockGatedCommandScheduling && envelope.SnapshotRequest.TimingRequestId != 0)
                         await WriteAuthoritativeEnvelopeAsync(stream, new Envelope { TimingReply = new TimingReply {
                             RequestId = envelope.SnapshotRequest.TimingRequestId,
                         } }, cancellationToken);
+                    if (UseClockGatedCommandScheduling && envelope.SnapshotRequest.TimingRequestId != 0) {
+                        RecordTimingReply(
+                            connectionOrdinal,
+                            entityId,
+                            envelopeReadCompletedTimestamp,
+                            envelope.SnapshotRequest.TimingRequestId);
+                        EmitCommandTimingOutsideAuthorityLock();
+                    }
                 } else {
                     await SendErrorAsync(stream, ProtocolErrorCode.InvalidMessage, "The session only accepts command batches after the handshake.", cancellationToken);
                     return;
@@ -903,17 +1026,214 @@ public sealed partial class AuthoritativeTcpServer : IAsyncDisposable
         string SerializedState,
         IReadOnlyDictionary<ulong, CommandResult> CommandResults);
 
+    private IReadOnlyList<long> RecordCommandTiming(
+        int connectionOrdinal,
+        uint entityId,
+        long? envelopeReadCompletedTimestamp,
+        long lockWaitStopwatchTicks,
+        ulong sampledClockCurrentTick,
+        ulong sampledCommandServerCurrentTick,
+        ulong actualAdmissionTick,
+        CommandBatch batch,
+        CommandAck acknowledgement,
+        IReadOnlyList<long> admissionTraceOrdinals)
+    {
+        var recorder = CommandTimingRecorder;
+        if (recorder is null)
+            return [];
+
+        var traceOrdinals = new List<long>(acknowledgement.Results.Count);
+        for (var index = 0; index < acknowledgement.Results.Count; index++) {
+            var result = acknowledgement.Results[index];
+            var traceOrdinal = index < admissionTraceOrdinals.Count
+                ? admissionTraceOrdinals[index]
+                : Interlocked.Increment(ref nextTimingOrdinal);
+            traceOrdinals.Add(traceOrdinal);
+            var requestedTick = index < batch.Commands.Count
+                ? batch.Commands[index].RequestedTick
+                : (ulong?)null;
+            recorder.Record(new HostCommandTimingRecord {
+                Kind = "command",
+                ConnectionOrdinal = connectionOrdinal,
+                TraceOrdinal = traceOrdinal,
+                EntityId = entityId,
+                ClientSequence = result.ClientSequence,
+                EnvelopeReadCompletedTimestamp = envelopeReadCompletedTimestamp,
+                AuthorityLockWaitStopwatchTicks = lockWaitStopwatchTicks,
+                SampledClockCurrentTick = sampledClockCurrentTick,
+                SampledCommandServerCurrentTick = sampledCommandServerCurrentTick,
+                ActualAdmissionTick = actualAdmissionTick,
+                RequestedTick = requestedTick,
+                AckStatus = result.Status.ToString(),
+                AckReason = result.RejectReason.ToString(),
+                ReceiptSequence = result.ServerReceiptSequence,
+                Status = result.Status.ToString(),
+                RejectReason = result.RejectReason.ToString(),
+                ServerReceiptSequence = result.ServerReceiptSequence,
+                AppliedTick = result.AppliedTick,
+            });
+        }
+        return traceOrdinals;
+    }
+
+    private void RecordAckWriteTiming(
+        int connectionOrdinal,
+        uint entityId,
+        long? envelopeReadCompletedTimestamp,
+        CommandAck acknowledgement,
+        IReadOnlyList<long> commandTraceOrdinals,
+        long? writeStartTimestamp,
+        long? writeEndTimestamp,
+        bool writeCompleted)
+    {
+        var recorder = CommandTimingRecorder;
+        if (recorder is null)
+            return;
+        for (var index = 0; index < acknowledgement.Results.Count; index++) {
+            var result = acknowledgement.Results[index];
+            recorder.Record(new HostCommandTimingRecord {
+                Kind = "command-ack-write",
+                ConnectionOrdinal = connectionOrdinal,
+                TraceOrdinal = index < commandTraceOrdinals.Count
+                    ? commandTraceOrdinals[index]
+                    : Interlocked.Increment(ref nextTimingOrdinal),
+                EntityId = entityId,
+                ClientSequence = result.ClientSequence,
+                EnvelopeReadCompletedTimestamp = envelopeReadCompletedTimestamp,
+                AckWriteStartTimestamp = writeStartTimestamp,
+                AckWriteEndTimestamp = writeEndTimestamp,
+                AckWriteCompleted = writeCompleted,
+            });
+        }
+    }
+
+    private IReadOnlyList<long> RecordCommandAdmissionTiming(
+        int connectionOrdinal,
+        uint entityId,
+        long? envelopeReadCompletedTimestamp,
+        long lockWaitStopwatchTicks,
+        ulong sampledClockCurrentTick,
+        ulong sampledCommandServerCurrentTick,
+        ulong actualAdmissionTick,
+        CommandBatch batch)
+    {
+        var recorder = CommandTimingRecorder;
+        if (recorder is null)
+            return [];
+        var traceOrdinals = new List<long>(batch.Commands.Count);
+        foreach (var command in batch.Commands) {
+            var traceOrdinal = Interlocked.Increment(ref nextTimingOrdinal);
+            traceOrdinals.Add(traceOrdinal);
+            recorder.Record(new HostCommandTimingRecord {
+                Kind = "command-admission",
+                ConnectionOrdinal = connectionOrdinal,
+                TraceOrdinal = traceOrdinal,
+                EntityId = entityId,
+                ClientSequence = command.ClientSequence,
+                EnvelopeReadCompletedTimestamp = envelopeReadCompletedTimestamp,
+                AuthorityLockWaitStopwatchTicks = lockWaitStopwatchTicks,
+                SampledClockCurrentTick = sampledClockCurrentTick,
+                SampledCommandServerCurrentTick = sampledCommandServerCurrentTick,
+                ActualAdmissionTick = actualAdmissionTick,
+                RequestedTick = command.RequestedTick,
+            });
+        }
+        return traceOrdinals;
+    }
+
+    private void RecordTimingReply(
+        int connectionOrdinal,
+        uint entityId,
+        long? envelopeReadCompletedTimestamp,
+        ulong requestId)
+    {
+        var recorder = CommandTimingRecorder;
+        if (recorder is null)
+            return;
+        recorder.Record(new HostCommandTimingRecord {
+            Kind = "timing-reply",
+            ConnectionOrdinal = connectionOrdinal,
+            TraceOrdinal = Interlocked.Increment(ref nextTimingOrdinal),
+            EntityId = entityId,
+            EnvelopeReadCompletedTimestamp = envelopeReadCompletedTimestamp,
+            TimingRequestId = requestId,
+            TimingReplyEmitted = true,
+        });
+    }
+
+    /** Invoked only after the request's authoritative work has left its lock. */
+    private void EmitCommandTimingOutsideAuthorityLock()
+    {
+        var recorder = CommandTimingRecorder;
+        var observer = CommandTimingDrainObserver;
+        if (recorder is null || observer is null)
+            return;
+        var drain = recorder.Drain();
+        if (drain.Records.Count == 0 && drain.DroppedCount == 0 && !drain.CaptureFaulted)
+            return;
+        try {
+            observer(drain);
+        } catch {
+            // Diagnostic output must never mask a gameplay or transport result.
+            recorder.MarkObserverFailure();
+        }
+    }
+
     private async ValueTask SendSnapshotIfAvailableAsync(
         Stream stream,
         string sessionId,
         uint entityId,
         ulong tick,
+        int connectionOrdinal,
+        long? envelopeReadCompletedTimestamp,
+        CancellationToken cancellationToken)
+    {
+        await SendSnapshotIfAvailableAsync(
+            stream,
+            sessionId,
+            entityId,
+            tick,
+            connectionOrdinal,
+            envelopeReadCompletedTimestamp,
+            null,
+            cancellationToken);
+    }
+
+    private async ValueTask SendSnapshotIfAvailableAsync(
+        Stream stream,
+        string sessionId,
+        uint entityId,
+        ulong tick,
+        int connectionOrdinal,
+        long? envelopeReadCompletedTimestamp,
+        ulong? timingRequestId,
         CancellationToken cancellationToken)
     {
         if (snapshotProvider is null)
             return;
 
         var materialization = PerformanceRecorder?.Begin() ?? 0;
+        var materializeStartTimestamp = CommandTimingRecorder is null
+            ? (long?)null
+            : Stopwatch.GetTimestamp();
+        var snapshotTraceOrdinal = CommandTimingRecorder is null
+            ? 0L
+            : Interlocked.Increment(ref nextTimingOrdinal);
+        if (CommandTimingRecorder is not null) {
+            // Publish the start before entering the authority monitor so a
+            // forced cleanup still retains evidence of an incomplete capture.
+            CommandTimingRecorder.Record(new HostCommandTimingRecord {
+                Kind = "snapshot-start",
+                ConnectionOrdinal = connectionOrdinal,
+                TraceOrdinal = snapshotTraceOrdinal,
+                EntityId = entityId,
+                EnvelopeReadCompletedTimestamp = envelopeReadCompletedTimestamp,
+                SnapshotMaterializeStartTimestamp = materializeStartTimestamp,
+                TimingRequestId = timingRequestId,
+                TimingReplyEmitted = timingRequestId.HasValue ? false : null,
+            });
+            EmitCommandTimingOutsideAuthorityLock();
+        }
 
         // Snapshot materialization is part of the authoritative state
         // boundary. Do not allow a concurrent command or autonomous tick to
@@ -936,13 +1256,55 @@ public sealed partial class AuthoritativeTcpServer : IAsyncDisposable
                 throw;
             }
         });
+        var materializeEndTimestamp = CommandTimingRecorder is null
+            ? (long?)null
+            : Stopwatch.GetTimestamp();
         PerformanceRecorder?.Complete(HostPerformanceMetric.SnapshotMaterializeMilliseconds, materialization);
         var envelope = new Envelope { Snapshot = snapshot };
         var publication = PerformanceRecorder?.Begin() ?? 0;
+        var writeStartTimestamp = CommandTimingRecorder is null
+            ? (long?)null
+            : Stopwatch.GetTimestamp();
+        if (CommandTimingRecorder is not null) {
+            CommandTimingRecorder.Record(new HostCommandTimingRecord {
+                Kind = "snapshot-write-start",
+                ConnectionOrdinal = connectionOrdinal,
+                TraceOrdinal = snapshotTraceOrdinal,
+                EntityId = entityId,
+                EnvelopeReadCompletedTimestamp = envelopeReadCompletedTimestamp,
+                SnapshotMaterializeStartTimestamp = materializeStartTimestamp,
+                SnapshotMaterializeEndTimestamp = materializeEndTimestamp,
+                SnapshotWriteStartTimestamp = writeStartTimestamp,
+                SnapshotTick = snapshot.Tick,
+                TimingRequestId = timingRequestId,
+                TimingReplyEmitted = timingRequestId.HasValue ? false : null,
+            });
+            EmitCommandTimingOutsideAuthorityLock();
+        }
         await WriteAuthoritativeEnvelopeAsync(stream, envelope, cancellationToken);
+        var writeEndTimestamp = CommandTimingRecorder is null
+            ? (long?)null
+            : Stopwatch.GetTimestamp();
         PerformanceRecorder?.Complete(HostPerformanceMetric.SnapshotWriteMilliseconds, publication);
         if (publication != 0)
             PerformanceRecorder!.Record(HostPerformanceMetric.SnapshotEnvelopePayloadBytes, envelope.CalculateSize());
+        if (CommandTimingRecorder is not null) {
+            CommandTimingRecorder.Record(new HostCommandTimingRecord {
+                Kind = "snapshot",
+                ConnectionOrdinal = connectionOrdinal,
+                TraceOrdinal = snapshotTraceOrdinal,
+                EntityId = entityId,
+                EnvelopeReadCompletedTimestamp = envelopeReadCompletedTimestamp,
+                SnapshotMaterializeStartTimestamp = materializeStartTimestamp,
+                SnapshotMaterializeEndTimestamp = materializeEndTimestamp,
+                SnapshotWriteStartTimestamp = writeStartTimestamp,
+                SnapshotWriteEndTimestamp = writeEndTimestamp,
+                SnapshotTick = snapshot.Tick,
+                TimingRequestId = timingRequestId,
+                TimingReplyEmitted = timingRequestId.HasValue ? false : null,
+            });
+            EmitCommandTimingOutsideAuthorityLock();
+        }
     }
 
     private ValueTask SendEventsIfAvailable(

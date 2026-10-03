@@ -53,6 +53,13 @@ internal static class Program
         using var performanceOutput = options.PerformanceOutput is null ? null
             : new FileStream(Path.GetFullPath(options.PerformanceOutput), FileMode.CreateNew, FileAccess.Write, FileShare.Read);
         var performance = performanceOutput is null ? null : new HostPerformanceRecorder();
+        var commandTiming = options.CommandTimingTrace
+            ? new HostCommandTimingRecorder()
+            : null;
+        var commandTimingSink = options.CommandTimingTrace
+            ? new HostCommandTimingTraceSink(Console.WriteLine)
+            : null;
+        Task? commandTimingPublisher = null;
         var contentRoot = Path.GetFullPath(options.ContentRoot);
         ContentManifest LoadContentManifest()
         {
@@ -159,12 +166,17 @@ internal static class Program
             options.BindAddress,
             saveStore) {
             PerformanceRecorder = performance,
+            CommandTimingRecorder = commandTiming,
+            CommandTimingDrainObserver = commandTimingSink is null
+                ? null
+                : commandTimingSink.Enqueue,
             UseClockGatedCommandScheduling = options.UseClockGatedCommandScheduling,
             CohortStore = cohortStore,
             ClientFailureObserver = exception => Console.Error.WriteLine(
                 $"Authoritative session failed: {exception.GetType().Name}: {exception.Message}"),
         };
         server.Start();
+        commandTimingPublisher = commandTimingSink?.RunAsync();
         Console.WriteLine($"Godevilution authoritative server listening on {options.BindAddress}:{server.Port}");
         Console.WriteLine($"Content packs: {string.Join(", ", contentManifest.Packs.Select(pack => $"{pack.Id}@{pack.Version}"))}");
         if (modulePackages.Length != 0) {
@@ -218,6 +230,21 @@ internal static class Program
             } catch (OperationCanceledException) when (cancellation.IsCancellationRequested) {
             } catch (Exception exception) {
                 hostFailure ??= exception;
+            }
+            if (commandTimingSink is not null && commandTimingPublisher is not null) {
+                try {
+                    await server.DisposeAsync();
+                } catch (Exception exception) {
+                    hostFailure ??= exception;
+                }
+                commandTimingSink.Complete();
+                try {
+                    await commandTimingPublisher.WaitAsync(TimeSpan.FromSeconds(2));
+                } catch (TimeoutException) {
+                    // A blocked diagnostic console must not hold host cleanup.
+                } catch (Exception exception) {
+                    hostFailure ??= exception;
+                }
             }
         }
         if (hostFailure is not null)
@@ -335,4 +362,5 @@ internal static class Program
                 options.ContentVersion,
                 contentRoot);
     }
+
 }

@@ -73,7 +73,7 @@ isolated spell or table rows while the playable route stays unchanged.
 | --- | --- | --- | --- |
 | M0 | Reproducible launch and honest acceptance evidence | Existing implementation | Dedicated-root cohort host passes TCP recovery, scoped faults, production CLI participant/item recovery and lease refusal, isolated Godot create/resume/outage and surviving-client committed-but-unobserved replay; managed first-publication interruption and a scoped Windows metadata profile pass; approval-gated normal-launch adoption and broader fault/filesystem/platform acceptance remain; legacy cold imports, native GUI and release-budget gaps remain |
 | M1 | Usable Godot town-to-dungeon loop | M0 launch/acceptance harness | Authored combat/loot/equipment, NPC/service approach, purchased-scroll portal and isolated Sorcerer quest/cast/Recharge/death/restart/restore journeys pass; full loop remains |
-| M2 | Native-compatible generated world | M0 geometry/parity baseline | Ordinary Cathedral depths 1-4 coarse/fine oracle covers six seeds and MAIN/PREV; separate opt-in depth and mutable-door profiles exist; headless door cold restore passes, rendered creation passes but first resumed movement rejects TooLate; native art/population, campaign mapping, wider topology and remaining families remain |
+| M2 | Native-compatible generated world | M0 geometry/parity baseline | Ordinary Cathedral depths 1-4 coarse/fine oracle covers six seeds and MAIN/PREV; separate opt-in depth and mutable-door profiles exist; headless and a fresh rendered door cold restore pass, with an earlier rendered TooLate retained and causally unclassified; native art/population, campaign mapping, wider topology and remaining families remain |
 | M3 | Complete base and Hellfire gameplay routes | M1 plus the relevant M2 world slices | Many rules exist; campaign and remaining behavioral coverage remain |
 | M4 | Release-quality client, recovery, and packaging | M3; preparation begins during M1/M2 | Recovery and adapter packaging foundations exist; product acceptance remains |
 | M5 | Production legacy-runtime retirement | M4 and capability replacement gates | Authoritative mode is Lua-free; compatibility runtime remains |
@@ -143,6 +143,13 @@ M4. M5 is the final removal gate, not a reason to postpone replacement work.
    Focused and affected native regressions do not establish GUI gameplay acceptance.
    This reproduced estimator defect does not classify historical `TooLate`
    failures without requested-tick and host arrival/admission evidence.
+   Use the opt-in bounded client/host command-timing capture on fresh isolated
+   acceptance sessions to compare frozen requested ticks with exact admission
+   ticks and software read/write boundaries. Keep normal launchers uninstrumented,
+   retain failed runs, and verify drop/fault accounting and operation terminals.
+   Tracing overhead is not a release-latency measurement. A passing repeat is
+   neither a causal explanation nor a timing fix; change behavior only for a
+   demonstrated counterexample, preserving strict admission and frozen retries.
    Pending-command fences do not solve the adapter's broader shared-world
    cold-restore overwrite. A real multiplayer loopback regression now reproduces
    claimed-item resurrection in both cold-resume orders from actual same-tick
@@ -409,11 +416,13 @@ this evidence. A sample art pack does not satisfy M4's full presentation gate.
    occupancy and routes without repairing native SOL, replacing seeds or changing
    depth/L1/default packs. Its isolated Godot path draws schematic server-owned
    CLOSED/OPEN/BLOCKED cues and uses ordinary input. Headless create/save/fresh-host
-   resume passes; rendered creation and restored-open drawing pass, but the first
-   resumed movement rejects TooLate. Keep this failed run and strict admission.
-   Capture exact dispatch/admission timing before diagnosing or changing timing
-   policy; a receipt alone does not classify the cause. Qualify rendered resume
-   and native loaded-art mapping before widening playable topology. Existing
+   resume passes. A fresh rendered diagnostic repeat now passes creation and cold
+   resume, with exact first-command dispatch/read/admission evidence. The earlier
+   rendered first-resume TooLate remains retained and causally unclassified; this
+   passing repeat is not its fix. Keep strict admission and the incomplete-capture
+   limits in status. Obtain a traced counterexample or bounded fault characterization
+   before changing timing policy, and qualify native loaded-art mapping and broader
+   door traversal before widening playable topology. Existing
    profiles and launchers must not silently adopt this new capability.
    Captures are independent expected fixtures, not seed-specific production
    transition tables. Port native-compatible discovery/transition logic for

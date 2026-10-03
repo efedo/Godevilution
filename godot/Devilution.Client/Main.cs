@@ -39,6 +39,8 @@ public partial class Main : Node2D
     internal Snapshot? ObservedSnapshot => model.Snapshot?.Clone();
     internal CommandResult? ObservedCommandResult => model.LastCommandResult?.Clone();
     internal AuthoritativeServerIdentity? ObservedIdentity => client?.ServerIdentity;
+    internal AuthoritativeClientTimingCaptureReport? ObservedCommandTimingReport
+        => client?.CommandTimingRecorder?.CaptureReport();
     internal bool ObservedClockGatedScheduling => client?.IsClockGatedCommandScheduling == true;
     internal bool TransportConnected => client?.IsConnected == true;
     internal int ObservedPendingCommandCount => client?.PendingCommandCount ?? 0;
@@ -327,7 +329,11 @@ public partial class Main : Node2D
         // An edited remote endpoint must not replace the local host's bookmark.
         persistLocalSession = options.Host == connectionOptions?.Host
             && options.Port == connectionOptions?.Port && !string.IsNullOrWhiteSpace(resumeTokenPath);
-        client = new AuthoritativeClient(options);
+        client = new AuthoritativeClient(options) {
+            CommandTimingRecorder = Environment.GetEnvironmentVariable("GODEVILUTION_COMMAND_TIMING_TRACE") == "1"
+                ? new AuthoritativeClientCommandTimingRecorder()
+                : null,
+        };
         connectionTask = ConnectAsync(lifetime.Token);
         hud?.SetStatus("Connecting to authoritative server...");
     }

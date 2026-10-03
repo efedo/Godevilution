@@ -16,12 +16,19 @@ param(
     [string]$CathedralDepthProfileDirectory,
     [string]$CathedralDoorProfileDirectory,
     [ValidateSet(1, 4)] [int]$PerformanceParticipants = 1,
-    [ValidateSet('Create', 'Resume', 'Recovery', 'Journey', 'JourneyResume', 'TownLoop', 'TownLoopResume', 'Lifecycle', 'LifecycleResume', 'MultiplayerCreate', 'MultiplayerResume', 'MultiplayerRecovery', 'MultiplayerPendingRecovery', 'Performance', 'CathedralJourney', 'CathedralResume', 'CathedralDepthJourney', 'CathedralDepthResume', 'CathedralDoorJourney', 'CathedralDoorResume')] [string]$AcceptancePhase
+    [ValidateSet('Create', 'Resume', 'Recovery', 'Journey', 'JourneyResume', 'TownLoop', 'TownLoopResume', 'Lifecycle', 'LifecycleResume', 'MultiplayerCreate', 'MultiplayerResume', 'MultiplayerRecovery', 'MultiplayerPendingRecovery', 'Performance', 'CathedralJourney', 'CathedralResume', 'CathedralDepthJourney', 'CathedralDepthResume', 'CathedralDoorJourney', 'CathedralDoorResume')] [string]$AcceptancePhase,
+    [switch]$CommandTimingTrace
 )
 
 $ErrorActionPreference = 'Stop'
+if ($CommandTimingTrace -and [string]::IsNullOrWhiteSpace($AcceptancePhase)) {
+    throw 'Command timing traces require an explicit isolated acceptance phase.'
+}
 $PersistenceMode = $PersistenceMode.ToLowerInvariant()
 $performance = $AcceptancePhase -eq 'Performance'
+if ($CommandTimingTrace -and $performance) {
+    throw 'Command timing diagnostics cannot be combined with performance measurement.'
+}
 $multiplayerRecovery = $AcceptancePhase -in @('MultiplayerRecovery', 'MultiplayerPendingRecovery')
 $pendingRecovery = $AcceptancePhase -eq 'MultiplayerPendingRecovery'
 $lifecyclePhases = @('Lifecycle', 'LifecycleResume')
@@ -154,7 +161,7 @@ $environmentNames = @('DEVILUTION_SERVER_HOST', 'DEVILUTION_SERVER_PORT', 'DEVIL
     'DEVILUTION_CONTENT_HASH', 'DEVILUTION_RULESET_HASH', 'DEVILUTION_CHARACTER_CLASS_ID',
     'DEVILUTION_CHARACTER_NAME', 'DEVILUTION_RESUME_TOKEN', 'DEVILUTION_RESUME_TOKEN_PATH',
     'GODEVILUTION_ACCEPTANCE_PHASE', 'GODEVILUTION_ACCEPTANCE_DIRECTORY', 'GODEVILUTION_QUIT_AFTER_SECONDS',
-    'GODEVILUTION_PERSISTENCE_MODE',
+    'GODEVILUTION_PERSISTENCE_MODE', 'GODEVILUTION_COMMAND_TIMING_TRACE',
     'GODEVILUTION_LOCAL_PLAYER', 'GODEVILUTION_PORTAL_PREVIEW', 'GODEVILUTION_LIFECYCLE_PREVIEW', 'GODEVILUTION_CATHEDRAL_PROFILE', 'GODEVILUTION_CATHEDRAL_DEPTH_PROFILE', 'GODEVILUTION_CATHEDRAL_DOOR_PROFILE',
     'GODEVILUTION_PERFORMANCE_PARTICIPANTS', 'GODEVILUTION_PERFORMANCE_SHARED_DIRECTORY',
     'GODEVILUTION_CLIENT_PERFORMANCE_OUTPUT', 'GODEVILUTION_CLIENT_PERFORMANCE_WARMUP_SECONDS',
@@ -1483,7 +1490,8 @@ try {
         $overlayArguments = '--content-root "{0}" --content-id {1} --content-version {2} --game-adapter {3}' -f $cathedralDoorProfile.ContentRoot, $cathedralDoorProfile.Metadata.ContentId, $cathedralDoorProfile.Metadata.ContentVersion, $cathedralDoorProfile.Metadata.AdapterId
     }
     function Start-SessionServer([int]$ListenPort, [string]$LogPrefix) {
-        $serverArguments = '--port {0} --protocol-version 0.2.0 --game-mode {4} --command-scheduling clock-gated --save-root "{1}/save" {2} {3} --persistence-mode {5}' -f $ListenPort, $SessionDirectory, $acceptanceArguments, $overlayArguments, $serverGameMode, $PersistenceMode
+        $commandTimingArguments = if ($CommandTimingTrace) { '--command-timing-trace true' } else { '' }
+        $serverArguments = '--port {0} --protocol-version 0.2.0 --game-mode {4} --command-scheduling clock-gated --save-root "{1}/save" {2} {3} --persistence-mode {5} {6}' -f $ListenPort, $SessionDirectory, $acceptanceArguments, $overlayArguments, $serverGameMode, $PersistenceMode, $commandTimingArguments
         $stdoutPath = Join-Path $captureRoot ($LogPrefix + '.stdout.log')
         $stderrPath = Join-Path $captureRoot ($LogPrefix + '.stderr.log')
         $serverProcess = Start-Process -FilePath $serverExecutable -ArgumentList $serverArguments -WorkingDirectory $repositoryRoot -WindowStyle Hidden -RedirectStandardOutput $stdoutPath -RedirectStandardError $stderrPath -PassThru
@@ -1577,6 +1585,7 @@ try {
             GODEVILUTION_PERSISTENCE_MODE = $PersistenceMode
         }
         if ($PortalPreviewContent) { $clientEnvironment['GODEVILUTION_PORTAL_PREVIEW'] = '1' }
+        if ($CommandTimingTrace) { $clientEnvironment['GODEVILUTION_COMMAND_TIMING_TRACE'] = '1' }
         if ($LifecyclePreviewContent) { $clientEnvironment['GODEVILUTION_LIFECYCLE_PREVIEW'] = '1' }
         if ($cathedralDepths) { $clientEnvironment['GODEVILUTION_CATHEDRAL_DEPTH_PROFILE'] = $cathedralProfile.MetadataPath }
         elseif ($cathedral) { $clientEnvironment['GODEVILUTION_CATHEDRAL_PROFILE'] = $cathedralProfile.MetadataPath }

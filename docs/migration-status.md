@@ -148,6 +148,77 @@ open. Their scope, dependencies, and exit checks are defined only in the
 
 ## Recent implementation evidence
 
+### M0 bounded command-timing capture and fresh rendered door repeat (2026-10-03)
+
+Client and host timing recorders are opt-in and bounded to 4,096 records. Normal
+launchers remain uninstrumented; `-CommandTimingTrace` requires isolated Godot
+acceptance and refuses performance measurement. The launcher clears/restores
+inherited tracing settings and appends the switch without changing existing
+positional parameter order. No gameplay, admission policy, command identity,
+retry tick, wire schema, save format or pack bytes change.
+
+Client evidence records frozen requested/observed ticks, transport generations,
+write outcomes, correlated probe outcomes, snapshot observations and ACKs. Its
+detached JSON export uses exclusive creation on success and failure; a null report
+or missing file does not become a successful capture. Export occurs before scene
+quit, not after transport shutdown. Host evidence records the exact existing
+clock/admission samples, post-envelope-read timestamp, authority-lock wait,
+command outcome and software ACK/snapshot boundaries. Observers and bounded
+asynchronous stdout publication run outside authoritative locks. Read completion
+is not physical packet arrival; snapshot materialization includes lock/advance/
+provider/validation/publication work. Tracing overhead is not release performance.
+See [Godot diagnostics](ai/godot-build.md#opt-in-command-timing-diagnostics) for
+invocation, correlation and completeness rules.
+
+Verification retains `.local/m0-command-timing-*` logs. Production Godot and
+client/server test builds have zero errors, with existing NuGet-feed warnings
+and one existing client analyzer warning. Final server focused/full runs pass
+61/1,541, with four unchanged full-suite exclusions. Two new positional-order
+guards pass; four existing documentation consistency cases pass. The full client run passes
+766 with two unchanged opt-in performance exclusions; this precedes the final
+host publisher/disposal follow-up. The ordinary final-host client rebuild and
+20 focused timing/export plus three live compatibility cases pass afterward,
+including performance-output refusal/no-overwrite, packaged adapter reconnect
+and requested-class/fresh resume. No new full domain/native suite is claimed.
+
+Retain the initial test-only compile errors, the old launcher's single-argument-
+assignment contract failure and the zero-selected-tests runner invocation.
+Corrections fix test predicates/types, fold the optional host flag into the
+existing single argument assignment and separate class/method filters. The old
+launcher test is unchanged; no failure is converted to a skip. Bounded fixtures
+cover explicit ticks, frozen reconnect retries, failed writes, probe expiry,
+immediate late rejection, gated admission-before-ACK, detached overflow,
+observer/output faults, sink saturation/capping and bounded blocked-writer cleanup.
+
+The fresh actual rendered driver `.local/m0-door-command-timing-rendered.log`
+passes creation/save and cold-host/client resume in
+`.local/cathedral-doors-playtest/sessions/acceptance-400c54dada8449d3b1b5285bb61dd702`.
+Ordinary controls exercise Town-to-L1 walking, CLOSED/open/occupied-close refusal,
+leave/close/reopen and restored OPEN drawing; final sequences are 74/78. Public
+content/ruleset identity and all four saved floor hashes match. The first resumed
+command is exactly sequence 75, requested tick 3358, actual admission tick 3347,
+accepted applied tick 3358. This establishes an 11-tick margin for that command,
+not the cause of the historical rejection. Traversal remains L1 only.
+
+Both client epilogue reports have zero recorded drops, with one unfinished probe
+each. Host stdout contains 788/52 incremental records but no terminal sink
+metadata after owned host termination: whole-host capture completeness and final
+drop totals are not established. Missing operation terminals remain incomplete
+intervals. Scene `AcceptancePassed` is distinct from native exit; sink completion
+labels describe publication/accounting, not gameplay or end-to-end delivery.
+All six new engine-version/import/client process records retain exit 0/error null.
+Source SDK remains 4.7.1; the staged installed engine/SDK is 4.7.2. Inspected OPEN
+restore drawing is schematic, not native art qualification. No Godot/WerFault
+process remains.
+
+The earlier `acceptance-ee80adadf96646b49fe8425189e121bf` rendered sequence-75
+`TooLate` failure remains retained and causally unclassified; a passing fresh
+repeat is not its fix. Next obtain a traced counterexample or bounded fault
+characterization before changing timing behavior. Compiler portable publication/
+pool/occupancy fixtures, native art/population, wider traversal, multiplayer,
+campaign and release acceptance remain. M0/M2 stay open and overall progress
+remains approximately 35%.
+
 ### M2 isolated Cathedral door playtest integration (2026-10-03)
 
 The offline compiler now has an explicit `--cathedral-doors` mode and a separate
@@ -235,8 +306,9 @@ Six inspected door-state captures support the rendered observations above.
 These journeys traverse L1 only; equality of all four floors' hashes is restore
 evidence, not four-floor door traversal. Native art/frame admission, full native
 population/RNG, map resynchronization, broader topology, multiplayer and campaign
-qualification remain open. Next obtain exact dispatch/admission measurements for
-the retained timing gap. M0/M2 remain open; overall completion stays approximately 35%.
+qualification remain open. The newer bounded timing capture and passing fresh
+rendered repeat above do not classify this retained timing gap. M0/M2 remain
+open; overall completion stays approximately 35%.
 
 ### M2 opt-in managed Cathedral door core (2026-10-03)
 

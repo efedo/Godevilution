@@ -673,6 +673,46 @@ but not stock/pricing, complete open-service lifecycle handling,
 every placement exclusion,
 portal animation/art, a complete M1 loop or campaign parity.
 
+## Opt-in command-timing diagnostics
+
+Add `-CommandTimingTrace` to `tools/test-godot-session.ps1` for a fresh isolated
+diagnostic journey, for example:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File tools/test-godot-session.ps1 -CathedralDoorProfileDirectory .local/cathedral-doors-playtest -Visible -CommandTimingTrace
+```
+
+Normal zero-argument launchers do not enable this capture. The inner launcher
+requires an explicit acceptance phase, clears/restores inherited trace settings,
+and refuses to mix diagnostics with performance measurement. It enables the
+host's `--command-timing-trace true` and bounded client recorder together.
+
+Each phase writes `<phase>-client-command-timing.json` before scene quit, on
+success or failure, using a new file without overwriting earlier evidence.
+`AcceptancePassed: false`, a null report, or explicit record drops must remain
+visible. A missing file after a native crash or forced timeout is incomplete
+evidence, not an empty successful capture. Capture ends at the acceptance
+epilogue, not transport shutdown. Host `COMMAND_TIMING_JSON:` lines are retained
+in that phase's printed server stdout log, incrementally rather than only at
+graceful host shutdown. Correlate phase/process/connection, client sequence and
+timing-request IDs; never concatenate fresh-process resumes as one clock epoch.
+`AcceptancePassed` describes the scene outcome only; terminal engine exits remain
+separate. Host `PublisherComplete` describes publisher shutdown, while
+`CaptureComplete` describes recorder/sink delivery accounting, not gameplay or
+operation completion. Missing operation terminals remain incomplete intervals;
+capped-marker counts are lower bounds, not final lifetime totals.
+
+Client freeze/write, snapshot/probe/ACK observations and exact host
+read/admission/ACK/snapshot boundaries contain scalar diagnostic metadata, not
+command payloads or resume credentials. Server read completion means full
+envelope parsing, not physical packet arrival. Stopwatch timestamps/frequency
+can support same-machine Windows interval comparisons; unrelated process-relative
+origins or cross-machine clocks cannot. Instrumentation adds overhead and cannot
+certify release latency. It changes neither strict late admission nor frozen
+retry identities. A passing diagnostic repeat does not explain or erase an
+earlier uninstrumented failure. Keep the containing session directory private:
+its saves/bookmarks still contain credentials.
+
 ## Actual Godot client performance baseline
 
 From the root, run the zero-argument `tools/measure-godot-client.ps1`. It builds

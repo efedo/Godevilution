@@ -40,6 +40,9 @@ public sealed record ServerHostOptions(
     /** Optional new file for an explicitly started local diagnostic recording. */
     public string? PerformanceOutput { get; init; }
 
+    /** Opt-in bounded stdout evidence for host command/snapshot timing. */
+    public bool CommandTimingTrace { get; init; }
+
     public IReadOnlyList<string> ContentOverlayRoots { get; init; } = [];
 
     public IReadOnlyList<string> GameplayModulePackageRoots { get; init; } = [];
@@ -116,6 +119,14 @@ public sealed record ServerHostOptions(
                     return false;
                 }
                 current = current with { PerformanceOutput = value };
+                break;
+            case "--command-timing-trace":
+                if (!bool.TryParse(value, out var commandTimingTrace)) {
+                    options = current;
+                    error = $"'{value}' is not a valid command timing trace setting.";
+                    return false;
+                }
+                current = current with { CommandTimingTrace = commandTimingTrace };
                 break;
             case "--bind":
                 if (!IPAddress.TryParse(value, out var bindAddress)) {
@@ -362,5 +373,6 @@ public sealed record ServerHostOptions(
           --save-root <directory>      Server-owned authoritative save directory
           --persistence-mode <mode>    legacy (default) or cohort; cohort requires a dedicated root
           --performance-output <file> New diagnostic JSON file; use profile-start after warm-up, then quit
+          --command-timing-trace <bool> Bounded command timing JSON lines on stdout (default: false)
         """;
 }

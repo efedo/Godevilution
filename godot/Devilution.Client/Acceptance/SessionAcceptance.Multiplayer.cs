@@ -53,6 +53,7 @@ public partial class SessionAcceptance
         Require(creating != System.IO.File.Exists(System.IO.Path.Combine(directory, "resume-token.txt")),
             "Creation needs a fresh bookmark; resume needs this player's existing bookmark.");
         var main = GD.Load<PackedScene>("res://Main.tscn").Instantiate<Main>();
+        timingObservedMain = main;
         AddChild(main);
         await Frame();
         await Frame();

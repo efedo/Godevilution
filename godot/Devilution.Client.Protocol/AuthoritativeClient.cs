@@ -52,6 +52,9 @@ public sealed class AuthoritativeClient : IAsyncDisposable
 
     public string SessionToken { get; private set; } = string.Empty;
 
+    /** Optional bounded, read-only diagnostic capture; null keeps tracing inert. */
+    public AuthoritativeClientCommandTimingRecorder? CommandTimingRecorder { get; init; }
+
     public uint ServerTickRateHz { get; private set; } = 20;
 
     public GameMode ServerGameMode { get; private set; } = GameMode.Unspecified;
@@ -300,8 +303,11 @@ public sealed class AuthoritativeClient : IAsyncDisposable
             PendingCommand[] dueCommands;
             bool needsTimingCalibration;
             bool timingCalibrationTimedOut;
+            AuthoritativeClientProbeOutcomeTiming? expiredTimingProbe;
+            var pollTimingRecorder = CommandTimingRecorder;
+            var expirationStopwatchTimestamp = pollTimingRecorder is null ? 0 : Stopwatch.GetTimestamp();
             lock (pendingLock) {
-                ExpireTimingProbeLocked(now);
+                expiredTimingProbe = ExpireTimingProbeLocked(now, expirationStopwatchTimestamp);
                 needsTimingCalibration = IsClockGatedCommandScheduling
                     && !timingCalibrationReady
                     && pending.Values.Any(command =>
@@ -314,6 +320,8 @@ public sealed class AuthoritativeClient : IAsyncDisposable
                             || !command.ObservedTick.HasValue))
                     .ToArray();
             }
+            if (expiredTimingProbe is not null)
+                TryRecordProbeOutcome(pollTimingRecorder, expiredTimingProbe);
 
             if (timingCalibrationTimedOut)
                 await FailTimingCalibrationAsync(cancellationToken);
@@ -325,6 +333,31 @@ public sealed class AuthoritativeClient : IAsyncDisposable
 
             var attemptedCommandDispatch = dueCommands.Length != 0;
             foreach (var entry in dueCommands) {
+                var commandTimingRecorder = CommandTimingRecorder;
+                CommandDispatchCapture? commandDispatch = null;
+                Action<WriteAttemptTiming>? commandWriteObserver = null;
+                if (commandTimingRecorder is not null) {
+                    commandWriteObserver = writeTiming => {
+                        if (commandDispatch is not { } dispatch)
+                            return;
+                        TryRecord(commandTimingRecorder, new AuthoritativeClientCommandTiming(
+                            dispatch.ClientSequence,
+                            dispatch.TransportGeneration,
+                            dispatch.DispatchKind,
+                            dispatch.Attempt,
+                            dispatch.ObservedTick,
+                            dispatch.RequestedTick,
+                            dispatch.FreezeElapsedMilliseconds,
+                            writeTiming.WriteStartElapsedMilliseconds,
+                            writeTiming.WriteEndElapsedMilliseconds,
+                            writeTiming.WriteOutcome,
+                            dispatch.FreezeStopwatchTimestamp,
+                            writeTiming.WriteStartStopwatchTimestamp,
+                            writeTiming.WriteEndStopwatchTimestamp,
+                            dispatch.MeasuredRoundTripMilliseconds,
+                            dispatch.TimingCalibrationReady));
+                    };
+                }
                 try {
                     await WriteEnvelopeAsync(() => {
                         lock (pendingLock) {
@@ -338,14 +371,34 @@ public sealed class AuthoritativeClient : IAsyncDisposable
                             // Freeze before any write: cancellation/partial writes may
                             // leave the server with this exact command identity.
                             entry.TransmissionStarted = true;
-                            entry.LastSentMs = clock.ElapsedMilliseconds;
+                            if (commandTimingRecorder is not null)
+                                entry.DispatchAttempt++;
+                            var freezeElapsedMilliseconds = clock.ElapsedMilliseconds;
+                            var freezeStopwatchTimestamp = commandTimingRecorder is null
+                                ? 0
+                                : Stopwatch.GetTimestamp();
+                            entry.LastSentMs = freezeElapsedMilliseconds;
                             if (IsClockGatedCommandScheduling)
                                 entry.RetryNotBeforeMs = ComputeRetryNotBeforeMs(
                                     entry.Command.RequestedTick,
                                     entry.LastSentMs.Value);
+                            if (commandTimingRecorder is not null)
+                                commandDispatch = new CommandDispatchCapture(
+                                    entry.Command.ClientSequence,
+                                    Volatile.Read(ref transportGeneration),
+                                    entry.Retransmitted
+                                        ? AuthoritativeClientCommandDispatchKind.Retransmission
+                                        : AuthoritativeClientCommandDispatchKind.FirstDispatch,
+                                    entry.DispatchAttempt,
+                                    entry.ObservedTick,
+                                    entry.Command.RequestedTick,
+                                    freezeElapsedMilliseconds,
+                                    freezeStopwatchTimestamp,
+                                    Volatile.Read(ref roundTripMilliseconds),
+                                    timingCalibrationReady);
                             return new Envelope { CommandBatch = new CommandBatch { Commands = { entry.Command } } };
                         }
-                    }, cancellationToken);
+                    }, cancellationToken, commandWriteObserver);
                 } catch {
                     lock (pendingLock) {
                         if (pending.TryGetValue(entry.Command.ClientSequence, out var current) && ReferenceEquals(current, entry))
@@ -360,15 +413,19 @@ public sealed class AuthoritativeClient : IAsyncDisposable
 
             var hasPendingCommands = false;
             bool forceTimingProbe;
+            AuthoritativeClientProbeOutcomeTiming? laterExpiredTimingProbe;
             lock (pendingLock) {
                 var probeNow = clock.ElapsedMilliseconds;
-                ExpireTimingProbeLocked(probeNow);
+                var probeStopwatchTimestamp = pollTimingRecorder is null ? 0 : Stopwatch.GetTimestamp();
+                laterExpiredTimingProbe = ExpireTimingProbeLocked(probeNow, probeStopwatchTimestamp);
                 hasPendingCommands = pending.Count > 0;
                 forceTimingProbe = IsClockGatedCommandScheduling
                     && !timingCalibrationReady
                     && pending.Values.Any(command =>
                         !command.TransmissionStarted && command.ObservedTick.HasValue);
             }
+            if (laterExpiredTimingProbe is not null)
+                TryRecordProbeOutcome(pollTimingRecorder, laterExpiredTimingProbe);
             if (timingCalibrationTimedOut || this.timingCalibrationTimedOut)
                 await FailTimingCalibrationAsync(cancellationToken);
             now = clock.ElapsedMilliseconds;
@@ -400,6 +457,28 @@ public sealed class AuthoritativeClient : IAsyncDisposable
 
         var timingRequestId = 0UL;
         var probeRegistered = false;
+        var probeTimingRecorder = CommandTimingRecorder;
+        ProbeSentCapture? probeSent = null;
+        Action<WriteAttemptTiming>? probeWriteObserver = null;
+        if (probeTimingRecorder is not null) {
+            probeWriteObserver = writeTiming => {
+                if (probeSent is not { } sent)
+                    return;
+                TryRecordProbeSent(probeTimingRecorder, new AuthoritativeClientProbeSentTiming(
+                    sent.TimingRequestId,
+                    sent.TransportGeneration,
+                    sent.RequiresCalibration,
+                    sent.SentElapsedMilliseconds,
+                    writeTiming.WriteStartElapsedMilliseconds,
+                    writeTiming.WriteEndElapsedMilliseconds,
+                    writeTiming.WriteOutcome,
+                    sent.SentStopwatchTimestamp,
+                    writeTiming.WriteStartStopwatchTimestamp,
+                    writeTiming.WriteEndStopwatchTimestamp,
+                    sent.MeasuredRoundTripMilliseconds,
+                    sent.TimingCalibrationReady));
+            };
+        }
         try {
             await WriteEnvelopeAsync(() => {
                 lock (pendingLock) {
@@ -423,21 +502,32 @@ public sealed class AuthoritativeClient : IAsyncDisposable
                         return null;
 
                     timingRequestId = NextTimingRequestId();
+                    var sentStopwatchTimestamp = probeTimingRecorder is null ? 0 : Stopwatch.GetTimestamp();
                     timingProbe = new TimingProbe(
                         timingRequestId,
                         timingEpoch,
                         requiresCalibration,
                         dispatchNow,
-                        SaturatingAdd(dispatchNow, TimingProbeTimeout.TotalMilliseconds));
+                        SaturatingAdd(dispatchNow, TimingProbeTimeout.TotalMilliseconds),
+                        sentStopwatchTimestamp);
                     lastTimingProbeRequestMs = dispatchNow;
                     probeRegistered = true;
+                    if (probeTimingRecorder is not null)
+                        probeSent = new ProbeSentCapture(
+                            timingRequestId,
+                            timingEpoch,
+                            requiresCalibration,
+                            dispatchNow,
+                            sentStopwatchTimestamp,
+                            Volatile.Read(ref roundTripMilliseconds),
+                            timingCalibrationReady);
                     return new Envelope {
                         SnapshotRequest = new Envelope.Types.SnapshotRequest {
                             TimingRequestId = timingRequestId,
                         },
                     };
                 }
-            }, cancellationToken);
+            }, cancellationToken, probeWriteObserver);
             if (probeRegistered)
                 lastSnapshotRequestMs = clock.ElapsedMilliseconds;
             return probeRegistered;
@@ -534,6 +624,9 @@ public sealed class AuthoritativeClient : IAsyncDisposable
                 ObserveTimingReply(envelope.TimingReply, epoch);
             return;
         }
+        var snapshotTiming = envelope.PayloadCase == Envelope.PayloadOneofCase.Snapshot
+            ? CaptureSnapshotTiming(envelope.Snapshot, connectionGeneration)
+            : null;
         if (envelope.PayloadCase == Envelope.PayloadOneofCase.Snapshot
             && !ObserveSnapshotIdentity(envelope.Snapshot))
             return;
@@ -555,8 +648,10 @@ public sealed class AuthoritativeClient : IAsyncDisposable
                 }));
                 return;
             }
-            Acknowledge(envelope.CommandAck);
+            Acknowledge(envelope.CommandAck, connectionGeneration);
         }
+        if (snapshotTiming is not null)
+            TryRecordSnapshot(CommandTimingRecorder, snapshotTiming);
         incoming.Enqueue(envelope.PayloadCase switch {
             Envelope.PayloadOneofCase.Snapshot => new AuthoritativeClientMessage(Snapshot: envelope.Snapshot),
             Envelope.PayloadOneofCase.EventBatch => new AuthoritativeClientMessage(Events: envelope.EventBatch),
@@ -567,6 +662,31 @@ public sealed class AuthoritativeClient : IAsyncDisposable
                 Detail = $"Unexpected server payload: {envelope.PayloadCase}",
             }),
         });
+    }
+
+    private AuthoritativeClientSnapshotTiming? CaptureSnapshotTiming(
+        Snapshot snapshot,
+        long? connectionGeneration)
+    {
+        var recorder = CommandTimingRecorder;
+        if (recorder is null)
+            return null;
+
+        var receivedElapsedMilliseconds = clock.ElapsedMilliseconds;
+        var receivedStopwatchTimestamp = Stopwatch.GetTimestamp();
+        ulong? pendingTimingRequestId = null;
+        bool calibrationReady;
+        lock (pendingLock) {
+            pendingTimingRequestId = timingProbe?.RequestId;
+            calibrationReady = timingCalibrationReady;
+        }
+        return new AuthoritativeClientSnapshotTiming(
+            connectionGeneration ?? Volatile.Read(ref transportGeneration),
+            snapshot.Tick,
+            receivedElapsedMilliseconds,
+            pendingTimingRequestId,
+            receivedStopwatchTimestamp,
+            calibrationReady);
     }
 
     private bool ObserveSnapshotIdentity(Snapshot snapshot)
@@ -643,6 +763,9 @@ public sealed class AuthoritativeClient : IAsyncDisposable
             return;
 
         var now = clock.ElapsedMilliseconds;
+        var recorder = CommandTimingRecorder;
+        var outcomeStopwatchTimestamp = recorder is null ? 0 : Stopwatch.GetTimestamp();
+        AuthoritativeClientProbeOutcomeTiming? outcome = null;
         lock (pendingLock) {
             if (timingProbe is not { } probe
                 || probe.RequestId != reply.RequestId
@@ -660,13 +783,26 @@ public sealed class AuthoritativeClient : IAsyncDisposable
             // estimate conservative so a later short probe cannot lower the
             // lead below an earlier valid sample.
             Volatile.Write(ref roundTripMilliseconds, Math.Max(prior, sample));
+            if (recorder is not null)
+                outcome = new AuthoritativeClientProbeOutcomeTiming(
+                    probe.RequestId,
+                    probe.Epoch,
+                    AuthoritativeClientProbeOutcome.Reply,
+                    now,
+                    sample,
+                    outcomeStopwatchTimestamp,
+                    timingCalibrationReady);
         }
+        if (outcome is not null)
+            TryRecordProbeOutcome(recorder, outcome);
     }
 
-    private void ExpireTimingProbeLocked(long now)
+    private AuthoritativeClientProbeOutcomeTiming? ExpireTimingProbeLocked(
+        long now,
+        long outcomeStopwatchTimestamp)
     {
         if (timingProbe is not { } probe || now < probe.ExpiresAtMs)
-            return;
+            return null;
 
         timingProbe = null;
         if (probe.RequiresCalibration
@@ -674,6 +810,16 @@ public sealed class AuthoritativeClient : IAsyncDisposable
             timingCalibrationTimedOut = pending.Values.Any(command =>
                 !command.TransmissionStarted && command.ObservedTick.HasValue);
         }
+        return CommandTimingRecorder is null
+            ? null
+            : new AuthoritativeClientProbeOutcomeTiming(
+                probe.RequestId,
+                probe.Epoch,
+                AuthoritativeClientProbeOutcome.Expired,
+                now,
+                null,
+                outcomeStopwatchTimestamp,
+                timingCalibrationReady);
     }
 
     private ulong NextTimingRequestId()
@@ -692,30 +838,63 @@ public sealed class AuthoritativeClient : IAsyncDisposable
         return origin + (long)Math.Ceiling(milliseconds);
     }
 
-    private void Acknowledge(CommandAck acknowledgement)
+    private void Acknowledge(CommandAck acknowledgement, long? connectionGeneration)
     {
         var now = clock.ElapsedMilliseconds;
+        var recorder = CommandTimingRecorder;
+        var receivedStopwatchTimestamp = recorder is null ? 0 : Stopwatch.GetTimestamp();
+        var transportGenerationForRecord = connectionGeneration ?? Volatile.Read(ref transportGeneration);
         foreach (var result in acknowledgement.Results) {
+            var trackedPendingCommand = false;
+            var wasRetransmitted = false;
+            long? commandRoundTripMilliseconds = null;
             lock (pendingLock) {
-                if (!pending.Remove(result.ClientSequence, out var command) || command.LastSentMs is null || command.Retransmitted)
-                    continue;
-                if (!IsClockGatedCommandScheduling) {
+                if (pending.Remove(result.ClientSequence, out var removedCommand)
+                    && removedCommand is not null) {
+                    trackedPendingCommand = true;
+                    wasRetransmitted = removedCommand.Retransmitted;
+                    if (!wasRetransmitted && removedCommand.LastSentMs is { } lastSentMs)
+                        commandRoundTripMilliseconds = now - lastSentMs;
+                }
+                if (commandRoundTripMilliseconds is { } commandRoundTrip
+                    && !IsClockGatedCommandScheduling) {
                     // An ACK after retransmission cannot identify which send it times.
                     Volatile.Write(ref roundTripMilliseconds,
-                        (roundTripMilliseconds * 0.75) + ((now - command.LastSentMs.Value) * 0.25));
+                        (roundTripMilliseconds * 0.75) + (commandRoundTrip * 0.25));
                 }
             }
+            if (recorder is not null)
+                TryRecordAcknowledgement(recorder, new AuthoritativeClientAcknowledgementTiming(
+                    transportGenerationForRecord,
+                    result.ClientSequence,
+                    now,
+                    result.Status,
+                    result.RejectReason,
+                    result.AppliedTick,
+                    trackedPendingCommand,
+                    wasRetransmitted,
+                    commandRoundTripMilliseconds,
+                    receivedStopwatchTimestamp));
         }
     }
 
     private Task WriteEnvelopeAsync(Envelope envelope, CancellationToken cancellationToken)
         => WriteEnvelopeAsync(() => envelope, cancellationToken);
 
-    private async Task WriteEnvelopeAsync(Func<Envelope?> createEnvelope, CancellationToken cancellationToken)
+    private async Task WriteEnvelopeAsync(
+        Func<Envelope?> createEnvelope,
+        CancellationToken cancellationToken,
+        Action<WriteAttemptTiming>? timingObserver = null)
     {
         await writeLock.WaitAsync(cancellationToken);
+        Envelope? envelope = null;
+        long? writeStartElapsedMilliseconds = null;
+        long? writeEndElapsedMilliseconds = null;
+        long? writeStartStopwatchTimestamp = null;
+        long? writeEndStopwatchTimestamp = null;
+        var writeOutcome = AuthoritativeClientWriteOutcome.Failed;
         try {
-            var envelope = createEnvelope();
+            envelope = createEnvelope();
             if (envelope is null)
                 return;
             var payload = envelope.ToByteArray();
@@ -724,10 +903,31 @@ public sealed class AuthoritativeClient : IAsyncDisposable
             var header = new byte[sizeof(int)];
             BinaryPrimitives.WriteInt32LittleEndian(header, payload.Length);
             var currentStream = stream ?? throw new IOException("The authoritative transport is closed.");
+            if (timingObserver is not null) {
+                writeStartElapsedMilliseconds = clock.ElapsedMilliseconds;
+                writeStartStopwatchTimestamp = Stopwatch.GetTimestamp();
+            }
             await currentStream.WriteAsync(header, cancellationToken);
             await currentStream.WriteAsync(payload, cancellationToken);
             await currentStream.FlushAsync(cancellationToken);
+            writeOutcome = AuthoritativeClientWriteOutcome.Completed;
         } finally {
+            if (timingObserver is not null && writeStartElapsedMilliseconds.HasValue) {
+                writeEndElapsedMilliseconds = clock.ElapsedMilliseconds;
+                writeEndStopwatchTimestamp = Stopwatch.GetTimestamp();
+            }
+            if (timingObserver is not null && envelope is not null) {
+                try {
+                    timingObserver(new WriteAttemptTiming(
+                        writeStartElapsedMilliseconds,
+                        writeEndElapsedMilliseconds,
+                        writeStartStopwatchTimestamp,
+                        writeEndStopwatchTimestamp,
+                        writeOutcome));
+                } catch {
+                    // Diagnostics cannot mask a transport or gameplay failure.
+                }
+            }
             writeLock.Release();
         }
     }
@@ -758,20 +958,111 @@ public sealed class AuthoritativeClient : IAsyncDisposable
         return true;
     }
 
+    private static void TryRecord(
+        AuthoritativeClientCommandTimingRecorder? recorder,
+        AuthoritativeClientCommandTiming timing)
+    {
+        if (recorder is null)
+            return;
+        try {
+            recorder.RecordCommand(timing);
+        } catch {
+            // Diagnostics cannot mask a transport or gameplay failure.
+        }
+    }
+
+    private static void TryRecordProbeSent(
+        AuthoritativeClientCommandTimingRecorder? recorder,
+        AuthoritativeClientProbeSentTiming timing)
+    {
+        if (recorder is null)
+            return;
+        try {
+            recorder.RecordProbeSent(timing);
+        } catch {
+        }
+    }
+
+    private static void TryRecordProbeOutcome(
+        AuthoritativeClientCommandTimingRecorder? recorder,
+        AuthoritativeClientProbeOutcomeTiming timing)
+    {
+        if (recorder is null)
+            return;
+        try {
+            recorder.RecordProbeOutcome(timing);
+        } catch {
+        }
+    }
+
+    private static void TryRecordSnapshot(
+        AuthoritativeClientCommandTimingRecorder? recorder,
+        AuthoritativeClientSnapshotTiming timing)
+    {
+        if (recorder is null)
+            return;
+        try {
+            recorder.RecordSnapshot(timing);
+        } catch {
+        }
+    }
+
+    private static void TryRecordAcknowledgement(
+        AuthoritativeClientCommandTimingRecorder? recorder,
+        AuthoritativeClientAcknowledgementTiming timing)
+    {
+        if (recorder is null)
+            return;
+        try {
+            recorder.RecordAcknowledgement(timing);
+        } catch {
+        }
+    }
+
     private sealed class PendingCommand(Command command, ulong? observedTick)
     {
         public Command Command { get; } = command;
         public ulong? ObservedTick { get; } = observedTick;
         public bool TransmissionStarted { get; set; }
         public bool Retransmitted { get; set; }
+        public int DispatchAttempt { get; set; }
         public long? LastSentMs { get; set; }
         public long? RetryNotBeforeMs { get; set; }
     }
+
+    private readonly record struct CommandDispatchCapture(
+        ulong ClientSequence,
+        long TransportGeneration,
+        AuthoritativeClientCommandDispatchKind DispatchKind,
+        int Attempt,
+        ulong? ObservedTick,
+        ulong RequestedTick,
+        long FreezeElapsedMilliseconds,
+        long FreezeStopwatchTimestamp,
+        double MeasuredRoundTripMilliseconds,
+        bool TimingCalibrationReady);
+
+    private readonly record struct ProbeSentCapture(
+        ulong TimingRequestId,
+        long TransportGeneration,
+        bool RequiresCalibration,
+        long SentElapsedMilliseconds,
+        long SentStopwatchTimestamp,
+        double MeasuredRoundTripMilliseconds,
+        bool TimingCalibrationReady);
+
+    private readonly record struct WriteAttemptTiming(
+        long? WriteStartElapsedMilliseconds,
+        long? WriteEndElapsedMilliseconds,
+        long? WriteStartStopwatchTimestamp,
+        long? WriteEndStopwatchTimestamp,
+        AuthoritativeClientWriteOutcome WriteOutcome);
 
     private sealed record TimingProbe(
         ulong RequestId,
         long Epoch,
         bool RequiresCalibration,
         long SentAtMs,
-        long ExpiresAtMs);
+        long ExpiresAtMs,
+        long SentStopwatchTimestamp);
 }

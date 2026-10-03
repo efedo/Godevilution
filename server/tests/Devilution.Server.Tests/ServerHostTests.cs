@@ -15,6 +15,7 @@ public sealed class ServerHostTests
         Assert.Equal(6113, ServerHostOptions.Defaults.Port);
         Assert.Equal(20U, ServerHostOptions.Defaults.TickRateHz);
         Assert.False(ServerHostOptions.Defaults.UseClockGatedCommandScheduling);
+        Assert.False(ServerHostOptions.Defaults.CommandTimingTrace);
         Assert.Equal(
             ProtocolSchemaVersions.IndependentContentAndRulesetIdentity,
             ServerHostOptions.Defaults.ProtocolSchemaVersion);
@@ -52,6 +53,7 @@ public sealed class ServerHostTests
             "--protocol-version", "0.2.0",
             "--tick-rate", "30",
             "--performance-output", "evidence/host.json",
+            "--command-timing-trace", "true",
             "--starting-gold", "900",
             "--starting-life", "4480",
             "--starting-mana", "640",
@@ -77,6 +79,7 @@ public sealed class ServerHostTests
         Assert.Equal("devilution.diablo", options.GameAdapterId);
         Assert.Equal(30U, options.TickRateHz);
         Assert.Equal("evidence/host.json", options.PerformanceOutput);
+        Assert.True(options.CommandTimingTrace);
         Assert.Equal(900U, options.StartingGold!.Value);
         Assert.Equal(4480, options.StartingLife);
         Assert.Equal(640, options.StartingMana);
@@ -99,6 +102,18 @@ public sealed class ServerHostTests
     }
 
     [Theory]
+    [InlineData("true", true)]
+    [InlineData("false", false)]
+    public void ParsesOptInCommandTimingTrace(string value, bool expected)
+    {
+        Assert.True(ServerHostOptions.TryParse(
+            ["--command-timing-trace", value],
+            out var options,
+            out var error), error);
+        Assert.Equal(expected, options.CommandTimingTrace);
+    }
+
+    [Theory]
     [InlineData("--command-scheduling", "automatic")]
     [InlineData("--port", "-1")]
     [InlineData("--port", "65536")]
@@ -116,6 +131,7 @@ public sealed class ServerHostTests
     [InlineData("--difficulty", "torment")]
     [InlineData("--unknown", "value")]
     [InlineData("--performance-output", " ")]
+    [InlineData("--command-timing-trace", "maybe")]
     public void RejectsInvalidOptions(string name, string value)
     {
         Assert.False(ServerHostOptions.TryParse([name, value], out _, out var error));

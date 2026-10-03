@@ -1,5 +1,5 @@
 [CmdletBinding()]
-param([string]$GodotExecutable, [ValidateSet('legacy', 'cohort')] [string]$PersistenceMode = 'legacy', [switch]$Visible, [switch]$Journey, [switch]$TownLoop, [switch]$Lifecycle, [switch]$Multiplayer, [switch]$MultiplayerRecovery, [switch]$MultiplayerPendingRecovery, [string]$CathedralProfileDirectory, [string]$CathedralDepthProfileDirectory, [string]$CathedralDoorProfileDirectory, [ValidateSet('default', 'atlas', 'semantic', 'missing', 'undersized', 'invalid')] [string]$PresentationPackProfile = 'default')
+param([string]$GodotExecutable, [ValidateSet('legacy', 'cohort')] [string]$PersistenceMode = 'legacy', [switch]$Visible, [switch]$Journey, [switch]$TownLoop, [switch]$Lifecycle, [switch]$Multiplayer, [switch]$MultiplayerRecovery, [switch]$MultiplayerPendingRecovery, [string]$CathedralProfileDirectory, [string]$CathedralDepthProfileDirectory, [string]$CathedralDoorProfileDirectory, [ValidateSet('default', 'atlas', 'semantic', 'missing', 'undersized', 'invalid')] [string]$PresentationPackProfile = 'default', [switch]$CommandTimingTrace)
 
 $ErrorActionPreference = 'Stop'
 $PersistenceMode = $PersistenceMode.ToLowerInvariant()
@@ -35,6 +35,7 @@ $sessionDirectory = if ($CathedralProfileDirectory -or $CathedralDepthProfileDir
 } else { Join-Path ([System.IO.Path]::GetTempPath()) ('Godevilution-Scene-Acceptance-' + [guid]::NewGuid().ToString('N')) }
 $launcher = Join-Path $repositoryRoot 'godot/run-local-client.ps1'
 $parameters = @{ SessionDirectory = $sessionDirectory; PersistenceMode = $PersistenceMode; Headless = -not $Visible; QuitAfterSeconds = 45 }
+if ($CommandTimingTrace) { $parameters.CommandTimingTrace = $true }
 if ($GodotExecutable) { $parameters.GodotExecutable = $GodotExecutable }
 function Read-ModeProcessEvidence([string]$Phase) {
     $path = Join-Path $sessionDirectory ($Phase.ToLowerInvariant() + '-processes.json')

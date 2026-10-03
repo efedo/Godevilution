@@ -12,16 +12,27 @@ namespace Devilution.Client.Acceptance;
 public partial class SessionAcceptance : Node
 {
     private readonly Stopwatch deadline = Stopwatch.StartNew();
+    private Main? timingObservedMain;
 
     public override async void _Ready()
     {
+        Exception? primaryFailure = null;
         try {
             await RunAsync();
-            GetTree().Quit();
         } catch (Exception exception) {
-            GD.PushError($"Godot session acceptance failed: {exception}");
-            GetTree().Quit(1);
+            primaryFailure = exception;
         }
+        try {
+            WriteCommandTimingEvidence(primaryFailure is null);
+        } catch (Exception traceFailure) {
+            if (primaryFailure is null)
+                primaryFailure = traceFailure;
+            else
+                GD.PushError($"Command timing evidence export also failed: {traceFailure}");
+        }
+        if (primaryFailure is not null)
+            GD.PushError($"Godot session acceptance failed: {primaryFailure}");
+        GetTree().Quit(primaryFailure is null ? 0 : 1);
     }
 
     private async Task RunAsync()
@@ -50,6 +61,7 @@ public partial class SessionAcceptance : Node
             System.IO.File.WriteAllText(bookmarkPath, "invalid token");
         }
         var main = GD.Load<PackedScene>("res://Main.tscn").Instantiate<Main>();
+        timingObservedMain = main;
         AddChild(main);
         await Frame();
         await Frame();

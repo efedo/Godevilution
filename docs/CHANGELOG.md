@@ -2,6 +2,21 @@
 
 Notable changes to this fork are recorded below.
 
+- 2026-10-03: Add opt-in bounded client/host command-timing diagnostics with
+  frozen dispatch/admission observations, detached failure-path export and
+  asynchronous bounded host publication. Preserve normal launchers, strict
+  admission, frozen retries, wire/save compatibility and MPQ-independent hosting;
+  append the script switch without shifting positional arguments and forbid
+  tracing in Godot performance acceptance. Verify 61 focused/1,541 full
+  server passes, 766 full client passes and final-host 20 timing/export plus
+  three live compatibility passes, with unchanged full-suite exclusions.
+  Fresh rendered Cathedral door creation/save/resume passes with six clean engine
+  stage exits; preserve the earlier unclassified TooLate failure. Client epilogue
+  drops are zero, but unfinished probes and missing host sink terminal metadata
+  prevent whole-capture completeness claims. Update existing guides/plan/status;
+  this is diagnostics and a fresh passing journey, not a demonstrated historical
+  timing fix or M0/M2 completion.
+
 - 2026-10-03: Add a separately identified, opt-in Cathedral door compiler/profile,
   isolated zero-argument Godot launcher, typed schematic state drawing and ordinary
   input/save/fresh-host acceptance. Preserve legacy profiles and native geometry;
