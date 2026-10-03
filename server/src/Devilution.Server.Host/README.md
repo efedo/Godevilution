@@ -126,6 +126,26 @@ high-water marks so a fresh process cannot reuse an already admitted identity.
 Publication callbacks cannot re-enter submission, advancement or disposal;
 explicit cancellation and read-only queries remain available.
 
+Clock-gated TCP ingress admits later envelopes while earlier commands await their
+due ticks. Each connection preserves whole-envelope FIFO, including duplicate
+waiters and empty batches; a single writer exposes ACK, events and the latest
+snapshot in order. Snapshots are current projections, not per-ACK historical
+states. Explicit snapshot requests and timing replies share that ordered lane.
+Immediate TCP and the direct command API retain their existing behavior.
+
+A separate host-wide response budget uses the same configured limit. It retains
+`max(1, command count)` weight per batch, or one for a snapshot/probe, until the
+entire response group is flushed or joined abandonment cleanup releases it.
+Thus completed receipts cannot bypass the bound while a writer is stalled.
+Exhaustion queues one terminal capacity error without waiting for a permit,
+allocating a receipt or changing requested ticks. Clean peer write-half-close
+drains accepted replies; transport loss stops replies, not admitted authority
+work. Host cancellation bounds owned shutdown joins. The first authority or
+publication failure fences following lane work and retains its original
+diagnostic. Transport-boundary IO/cancellation is distinct from authority or
+snapshot-provider failure; provider errors do not become transport loss.
+Canceled response lanes do not invoke queued snapshot providers.
+
 Reload and legacy cold persisted restore drain due work, then refuse mutation while
 any future command remains queued. In-memory reconnect is allowed; refused cold
 restores do not cache an old-generation checkpoint. This fence does not solve

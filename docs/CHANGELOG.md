@@ -2,6 +2,16 @@
 
 Notable changes to this fork are recorded below.
 
+- 2026-10-03: Fix a reproduced clock-gated same-connection ingress stall with
+  bounded pipelined admission, whole-envelope FIFO and ordered replies. Preserve
+  Immediate/direct APIs, strict late admission, frozen identity and durable
+  authority failure handling. Verify 71 focused and 1,550 full server passes,
+  plus rendered two-input Create/save/resume/outage recovery and nine clean
+  engine stage exits; rendered cohort two-client create/mutual visibility/resume
+  adds eight clean stage exits. Retain the client integration cleanup failure and
+  unchanged passing rerun; do not claim a historical TooLate fix, full-client green run or
+  M0/M2 completion. Update existing host guide, Godot guide, plan and status.
+
 - 2026-10-03: Add portable synthetic Cathedral door compiler fixtures for actual
   four-depth publication/activation, independent hashes, repeatability, overwrite
   refusal, scanner-light overflow and corrupted-pack authored/scanner overlap

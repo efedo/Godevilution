@@ -1,3 +1,4 @@
+using System.Runtime.ExceptionServices;
 using Devilution.Protocol.V1;
 
 namespace Devilution.Server.Commands;
@@ -83,11 +84,41 @@ public sealed class ClockGatedCommandScheduler : IDisposable
         CommandBatch batch,
         ulong actualAdmissionTick,
         CancellationToken cancellationToken = default)
+        => SubmitBatchAsync(
+            sessionId,
+            batch,
+            actualAdmissionTick,
+            cancellationToken,
+            lane: null);
+
+    /** Queues one batch on a connection-owned lane without changing direct API semantics. */
+    internal Task<CommandAck> SubmitBatchAsync(
+        string sessionId,
+        CommandBatch batch,
+        ulong actualAdmissionTick,
+        CancellationToken cancellationToken,
+        ClockGatedCommandLane? lane)
     {
         ArgumentNullException.ThrowIfNull(batch);
         cancellationToken.ThrowIfCancellationRequested();
         return commandServer.WithSynchronizedState(
-            () => SubmitBatchCore(sessionId, batch, actualAdmissionTick, cancellationToken));
+            () => SubmitBatchCore(sessionId, batch, actualAdmissionTick, cancellationToken, lane));
+    }
+
+    /** Poisons a connection lane and fails all of its not-yet-durable work. */
+    internal void PoisonLane(ClockGatedCommandLane lane, Exception failure)
+    {
+        ArgumentNullException.ThrowIfNull(lane);
+        ArgumentNullException.ThrowIfNull(failure);
+        commandServer.WithSynchronizedState(() => {
+            if (lane.TryPoison(failure)) {
+                foreach (var work in activeWorks
+                    .Where(work => ReferenceEquals(work.Lane, lane))
+                    .ToArray())
+                    FailWork(work, failure, null);
+            }
+            return true;
+        });
     }
 
     /** Executes due work without advancing the wrapped server's clock. */
@@ -157,15 +188,17 @@ public sealed class ClockGatedCommandScheduler : IDisposable
         string sessionId,
         CommandBatch batch,
         ulong actualAdmissionTick,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        ClockGatedCommandLane? lane)
     {
         EnsureActive();
+        lane?.ThrowIfPoisoned();
         if (operationInProgress)
             throw new InvalidOperationException(
                 "Command submission cannot re-enter while scheduler work is in progress.");
         operationInProgress = true;
         try {
-            return SubmitBatchCoreBody(sessionId, batch, actualAdmissionTick, cancellationToken);
+            return SubmitBatchCoreBody(sessionId, batch, actualAdmissionTick, cancellationToken, lane);
         } finally {
             operationInProgress = false;
         }
@@ -175,14 +208,19 @@ public sealed class ClockGatedCommandScheduler : IDisposable
         string sessionId,
         CommandBatch batch,
         ulong actualAdmissionTick,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        ClockGatedCommandLane? lane)
     {
         EnsureActive();
         cancellationToken.ThrowIfCancellationRequested();
         var effectiveAdmissionTick = Math.Max(actualAdmissionTick, commandServer.CurrentTick);
         RunDueWork(effectiveAdmissionTick);
         EnsureActive();
+        lane?.ThrowIfPoisoned();
         cancellationToken.ThrowIfCancellationRequested();
+
+        if (batch.Commands.Count == 0 && lane is not null)
+            return SubmitLaneBarrierBatch(sessionId, batch, lane, effectiveAdmissionTick);
 
         if (string.IsNullOrWhiteSpace(sessionId)
             || batch.Commands.Count == 0)
@@ -253,18 +291,54 @@ public sealed class ClockGatedCommandScheduler : IDisposable
             redurableKeys.ToArray(),
             redurableResults,
             arrivalOrder,
-            reservationCount);
+            reservationCount,
+            lane,
+            lane?.TakePredecessor());
+        lane?.SetTail(work.Completion.Task);
         activeWorks.Add(work);
         reservedPendingSlots += reservationCount;
         foreach (var slot in slots)
             if (slot.PendingOwner is { } owner && slot.IsDuplicate)
                 owner.DependentWorks.Add(work);
 
-        if (work.HasProgressableStep || work.HasPendingDurablePublication) {
+        if (!work.IsLanePredecessorReady
+            || work.HasProgressableStep
+            || work.HasPendingDurablePublication) {
             queuedWorks.Add(work);
             work.IsQueued = true;
         } else
             TryCompleteWork(work);
+        RunDueWork(effectiveAdmissionTick);
+        return work.Completion.Task;
+    }
+
+    /**
+     * Empty clock-gated batches are still ordered wire work. They do not
+     * consume scheduler slots, but preserve the ordinary malformed-command
+     * result and publication after earlier work on the same connection lane.
+     */
+    private Task<CommandAck> SubmitLaneBarrierBatch(
+        string sessionId,
+        CommandBatch batch,
+        ClockGatedCommandLane lane,
+        ulong effectiveAdmissionTick)
+    {
+        var work = new PendingWork(
+            sessionId,
+            slots: [],
+            originals: [],
+            redurableKeys: [],
+            redurableResults: [],
+            arrivalOrder: NextArrivalOrder(),
+            reservationCount: 0,
+            lane,
+            lane.TakePredecessor(),
+            laneBarrierBatch: batch.Clone(),
+            laneBarrierAdmissionTick: effectiveAdmissionTick);
+        lane.SetTail(work.Completion.Task);
+        activeWorks.Add(work);
+        queuedWorks.Add(work);
+        work.IsQueued = true;
         RunDueWork(effectiveAdmissionTick);
         return work.Completion.Task;
     }
@@ -306,6 +380,19 @@ public sealed class ClockGatedCommandScheduler : IDisposable
         }
 
         if (!work.TryPrepareNextStep(out var slot)) {
+            if (work.LaneBarrierBatch is { } barrierBatch) {
+                try {
+                    var acknowledgement = ExecuteImmediateBatch(work.SessionId, barrierBatch,
+                        Math.Max(work.LaneBarrierAdmissionTick, commandServer.CurrentTick))
+                        .GetAwaiter().GetResult();
+                    work.Completion.TrySetResult(acknowledgement);
+                    ReleaseWork(work);
+                    NotifyLaneSuccessors(work);
+                } catch (Exception failure) {
+                    FailWork(work, failure, null);
+                }
+                return false;
+            }
             if (work.HasPendingDurablePublication)
                 PublishRedurableResults(work);
             TryCompleteWork(work);
@@ -371,10 +458,20 @@ public sealed class ClockGatedCommandScheduler : IDisposable
     private void FailWork(
         PendingWork work,
         Exception exception,
-        PendingCommand? failedPending)
+        PendingCommand? failedPending,
+        bool poisonLane = true)
     {
         if (!activeWorks.Contains(work))
             return;
+        if (poisonLane
+            && work.Lane is { } lane
+            && lane.TryPoison(exception)) {
+            foreach (var peer in activeWorks
+                .Where(candidate => ReferenceEquals(candidate.Lane, lane)
+                    && !ReferenceEquals(candidate, work))
+                .ToArray())
+                FailWork(peer, exception, null, poisonLane: false);
+        }
         if (failedPending is not null
             && failedPending.Result is not null
             && !failedPending.Durable
@@ -400,6 +497,7 @@ public sealed class ClockGatedCommandScheduler : IDisposable
         ReleaseWork(work);
         foreach (var pending in failedOwners)
             NotifyDependents(pending);
+        NotifyLaneSuccessors(work);
     }
 
     private void NotifyDependents(PendingCommand pending)
@@ -417,8 +515,17 @@ public sealed class ClockGatedCommandScheduler : IDisposable
             FailWork(work, dependencyFailure!, null);
             return;
         }
-        if (work.IsQueued)
+        if (work.IsQueued) {
+            if (work.IsLanePredecessorReady
+                && !work.IsLaneBarrier
+                && !work.HasProgressableStep
+                && !work.HasPendingDurablePublication) {
+                queuedWorks.Remove(work);
+                work.IsQueued = false;
+                TryCompleteWork(work);
+            }
             return;
+        }
         if (work.HasPendingDurablePublication && !work.HasProgressableStep) {
             queuedWorks.Add(work);
             work.IsQueued = true;
@@ -435,6 +542,8 @@ public sealed class ClockGatedCommandScheduler : IDisposable
     private void TryCompleteWork(PendingWork work)
     {
         if (!activeWorks.Contains(work) || work.Completion.Task.IsCompleted)
+            return;
+        if (!work.IsLanePredecessorReady)
             return;
         if (work.TryGetBlockingFailure(out var dependencyFailure)) {
             FailWork(work, dependencyFailure!, null);
@@ -464,6 +573,16 @@ public sealed class ClockGatedCommandScheduler : IDisposable
 
         work.Completion.TrySetResult(CreateAcknowledgement(results));
         ReleaseWork(work);
+        NotifyLaneSuccessors(work);
+    }
+
+    private void NotifyLaneSuccessors(PendingWork completed)
+    {
+        var completion = completed.Completion.Task;
+        foreach (var successor in activeWorks
+            .Where(work => ReferenceEquals(work.PredecessorCompletion, completion))
+            .ToArray())
+            RequeueIfReady(successor);
     }
 
     private static CommandAck CreateSingleResultAcknowledgement(CommandResult result)
@@ -496,9 +615,15 @@ public sealed class ClockGatedCommandScheduler : IDisposable
         for (var index = 0; index < queuedWorks.Count; index++) {
             var candidate = queuedWorks[index];
             var hasNext = candidate.TryGetNextDueTick(out var candidateDueTick);
+            var hasBarrier = !hasNext && candidate.IsLaneBarrier
+                && candidate.IsLanePredecessorReady;
             if (!hasNext && candidate.HasPendingDurablePublication)
                 candidateDueTick = 0;
-            if (!hasNext && !candidate.HasPendingDurablePublication
+            if (hasBarrier)
+                candidateDueTick = 0;
+            if (!candidate.IsLanePredecessorReady)
+                continue;
+            if (!hasNext && !candidate.HasPendingDurablePublication && !hasBarrier
                 || candidateDueTick > targetTick)
                 continue;
             if (candidateIndex < 0
@@ -605,7 +730,11 @@ public sealed class ClockGatedCommandScheduler : IDisposable
         IReadOnlyList<CommandKey> redurableKeys,
         IReadOnlyList<CommandResult> redurableResults,
         ulong arrivalOrder,
-        int reservationCount)
+        int reservationCount,
+        ClockGatedCommandLane? lane,
+        Task<CommandAck>? predecessorCompletion,
+        CommandBatch? laneBarrierBatch = null,
+        ulong laneBarrierAdmissionTick = 0)
     {
         public string SessionId { get; } = sessionId;
         public IReadOnlyList<CommandSlot> Slots { get; } = slots;
@@ -614,6 +743,11 @@ public sealed class ClockGatedCommandScheduler : IDisposable
         public IReadOnlyList<CommandResult> RedurableResults { get; } = redurableResults;
         public ulong ArrivalOrder { get; } = arrivalOrder;
         public int ReservationCount { get; } = reservationCount;
+        public ClockGatedCommandLane? Lane { get; } = lane;
+        public Task<CommandAck>? PredecessorCompletion { get; } = predecessorCompletion;
+        public CommandBatch? LaneBarrierBatch { get; } = laneBarrierBatch;
+        public ulong LaneBarrierAdmissionTick { get; } = laneBarrierAdmissionTick;
+        public bool IsLaneBarrier => LaneBarrierBatch is not null;
         public TaskCompletionSource<CommandAck> Completion { get; } =
             new(TaskCreationOptions.RunContinuationsAsynchronously);
         public int NextSlotIndex { get; set; }
@@ -623,6 +757,9 @@ public sealed class ClockGatedCommandScheduler : IDisposable
 
         public bool HasPendingDurablePublication
             => RedurableResults.Count != 0 && !RedurablePublicationComplete;
+
+        public bool IsLanePredecessorReady
+            => PredecessorCompletion is null || PredecessorCompletion.IsCompleted;
 
         public bool HasProgressableStep
             => TryGetNextDueTick(out _);
@@ -656,6 +793,10 @@ public sealed class ClockGatedCommandScheduler : IDisposable
 
         public bool TryGetNextDueTick(out ulong dueTick)
         {
+            if (!IsLanePredecessorReady) {
+                dueTick = 0;
+                return false;
+            }
             if (!TryPrepareNextStep(out var slot)) {
                 dueTick = 0;
                 return false;
@@ -666,6 +807,15 @@ public sealed class ClockGatedCommandScheduler : IDisposable
 
         public bool TryGetBlockingFailure(out Exception? failure)
         {
+            if (Lane?.Failure is { } laneFailure) {
+                failure = laneFailure;
+                return true;
+            }
+            if (PredecessorCompletion?.IsFaulted == true) {
+                failure = PredecessorCompletion.Exception?.GetBaseException()
+                    ?? new InvalidOperationException("A preceding clock-gated lane work failed.");
+                return true;
+            }
             for (var index = NextSlotIndex; index < Slots.Count; index++) {
                 var candidate = Slots[index];
                 if (candidate.ImmediateResult is not null)
@@ -682,6 +832,44 @@ public sealed class ClockGatedCommandScheduler : IDisposable
             return false;
         }
     }
+}
+
+/** Connection-owned failure fence for clock-gated admission lanes. */
+internal sealed class ClockGatedCommandLane
+{
+    private Exception? failure;
+    private Task<CommandAck>? tail;
+    private int transportClosed;
+    private int failureReported;
+
+    public Exception? Failure => Volatile.Read(ref failure);
+    internal bool IsTransportClosed => Volatile.Read(ref transportClosed) != 0;
+
+    internal void MarkTransportClosed()
+        => Volatile.Write(ref transportClosed, 1);
+
+    internal bool TryMarkFailureReported()
+        => Interlocked.Exchange(ref failureReported, 1) == 0;
+
+    internal bool TryPoison(Exception exception)
+        => Interlocked.CompareExchange(ref failure, exception, null) is null;
+
+    internal void ThrowIfPoisoned()
+    {
+        if (Failure is { } exception)
+            ExceptionDispatchInfo.Capture(exception).Throw();
+    }
+
+    internal Task<CommandAck>? TakePredecessor()
+    {
+        var predecessor = tail;
+        if (predecessor?.IsCompleted == true)
+            predecessor = null;
+        return predecessor;
+    }
+
+    internal void SetTail(Task<CommandAck> completion)
+        => tail = completion;
 }
 
 /** Resource refusal is not gameplay lateness and allocates no new receipt. */

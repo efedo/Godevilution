@@ -170,6 +170,8 @@ public partial class SessionAcceptance : Node
             initial = main.ObservedSnapshot!.Players.Single().Clone();
 
         GetViewport().GuiReleaseFocus();
+        if (phase == "Create")
+            await VerifyInputBurstAsync(main, directory);
         var preInputTick = main.ObservedSnapshot!.Tick;
         var semanticInitialActorBinding = main.ObservedPlayerActorTextureBinding;
         // The preview's town arrival is immediately north of the entry stair.

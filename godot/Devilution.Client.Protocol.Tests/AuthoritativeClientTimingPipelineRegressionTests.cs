@@ -13,6 +13,106 @@ namespace Devilution.Client.Protocol.Tests;
 public sealed class AuthoritativeClientTimingPipelineRegressionTests
 {
     [Fact]
+    public async Task CalibratedRealtimeBurstSendsSeparateFrozenEnvelopesBeforeEitherAcknowledgement()
+    {
+        using var timeout = CancellationTokenSource.CreateLinkedTokenSource(TestContext.Current.CancellationToken);
+        timeout.CancelAfter(TimeSpan.FromSeconds(6));
+        using var listener = new TcpListener(IPAddress.Loopback, 0);
+        listener.Start();
+        var serverTask = Task.Run(async () => {
+            using var connection = await listener.AcceptTcpClientAsync(timeout.Token);
+            await using var stream = connection.GetStream();
+            await SendHandshakeAsync(stream, CommandSchedulingMode.ClockGated, 100, timeout.Token);
+            var probe = await ReadEnvelopeAsync(stream, timeout.Token);
+            Assert.Equal(Envelope.PayloadOneofCase.SnapshotRequest, probe.PayloadCase);
+            Assert.NotEqual(0UL, probe.SnapshotRequest.TimingRequestId);
+            await WriteEnvelopeAsync(stream, new Envelope { Snapshot = new Snapshot { Tick = 100 } }, timeout.Token);
+            await WriteEnvelopeAsync(stream, new Envelope { TimingReply = new TimingReply {
+                RequestId = probe.SnapshotRequest.TimingRequestId,
+            } }, timeout.Token);
+
+            var firstEnvelope = await ReadEnvelopeAsync(stream, timeout.Token);
+            Assert.Equal(Envelope.PayloadOneofCase.CommandBatch, firstEnvelope.PayloadCase);
+            var first = Assert.Single(firstEnvelope.CommandBatch.Commands);
+            // Withhold the first ACK until a distinct second envelope arrives.
+            // This fixture characterizes the client, not authoritative admission.
+            var secondEnvelope = await ReadEnvelopeAsync(stream, timeout.Token);
+            Assert.Equal(Envelope.PayloadOneofCase.CommandBatch, secondEnvelope.PayloadCase);
+            var second = Assert.Single(secondEnvelope.CommandBatch.Commands);
+            foreach (var command in new[] { first, second }) {
+                await WriteEnvelopeAsync(stream, new Envelope { CommandAck = new CommandAck {
+                    Results = { new CommandResult {
+                        ClientSequence = command.ClientSequence, Status = CommandStatus.Accepted,
+                        AppliedTick = command.RequestedTick, ServerReceiptSequence = command.ClientSequence,
+                    } },
+                } }, timeout.Token);
+            }
+            return new[] { first, second };
+        }, timeout.Token);
+
+        var recorder = new AuthoritativeClientCommandTimingRecorder();
+        await using var client = new AuthoritativeClient(ConnectionOptions(listener) with {
+            MinimumRetryTimeout = TimeSpan.FromMinutes(1),
+            MaximumRetryTimeout = TimeSpan.FromMinutes(1),
+        }) { CommandTimingRecorder = recorder };
+        Exception? primaryFailure = null;
+        try {
+            await client.ConnectAsync(timeout.Token);
+            var firstSequence = client.QueueRealtime(new Command {
+                SetFriendlyModeRequested = new SetFriendlyModeRequested { FriendlyMode = false },
+            }, 100);
+            var secondSequence = client.QueueRealtime(new Command {
+                SetFriendlyModeRequested = new SetFriendlyModeRequested { FriendlyMode = false },
+            }, 100);
+            Assert.Equal(2, client.PendingCommandCount);
+            await client.PollAsync(timeout.Token);
+            Assert.Empty(recorder.CaptureReport().Commands);
+            await WaitForBurstEvidenceAsync(() => recorder.CaptureReport().ProbeOutcomes.Any(probe =>
+                probe.Outcome == AuthoritativeClientProbeOutcome.Reply && probe.TimingCalibrationReady), timeout.Token);
+            await client.PollAsync(timeout.Token);
+            var commands = await serverTask.WaitAsync(timeout.Token);
+            await WaitForBurstEvidenceAsync(() => client.PendingCommandCount == 0
+                && recorder.CaptureReport().Acknowledgements.Count == 2, timeout.Token);
+
+            Assert.Equal(new[] { firstSequence, secondSequence }, commands.Select(command => command.ClientSequence));
+            var report = recorder.CaptureReport();
+            Assert.Equal(0, report.DroppedRecordCount);
+            Assert.Equal(new[] { firstSequence, secondSequence },
+                report.Commands.Select(command => command.ClientSequence));
+            for (var index = 0; index < commands.Length; index++) {
+                Assert.Equal(100UL, report.Commands[index].ObservedTick);
+                Assert.True(report.Commands[index].TimingCalibrationReady);
+                Assert.Equal(AuthoritativeClientCommandDispatchKind.FirstDispatch, report.Commands[index].DispatchKind);
+                Assert.Equal(AuthoritativeClientWriteOutcome.Completed, report.Commands[index].WriteOutcome);
+                Assert.Equal(commands[index].RequestedTick, report.Commands[index].RequestedTick);
+                Assert.True(commands[index].RequestedTick > 100);
+                Assert.Equal(Command.IntentOneofCase.SetFriendlyModeRequested, commands[index].IntentCase);
+                Assert.False(commands[index].SetFriendlyModeRequested.FriendlyMode);
+            }
+            Assert.Equal(new[] { firstSequence, secondSequence },
+                report.Acknowledgements.Select(acknowledgement => acknowledgement.ClientSequence));
+        } catch (Exception exception) {
+            primaryFailure = exception;
+            throw;
+        } finally {
+            timeout.Cancel();
+            try {
+                await serverTask.WaitAsync(TimeSpan.FromSeconds(2), CancellationToken.None);
+            } catch (Exception cleanupFailure) {
+                if (primaryFailure is null)
+                    throw;
+                try { primaryFailure.Data["RealtimeBurstServerCleanupFailure"] = cleanupFailure; } catch { }
+            }
+        }
+    }
+
+    private static async Task WaitForBurstEvidenceAsync(Func<bool> condition, CancellationToken cancellationToken)
+    {
+        while (!condition())
+            await Task.Delay(10, cancellationToken);
+    }
+
+    [Fact]
     public async Task CapturesTheExplicitRequestedTickFromQueueAndPoll()
     {
         using var timeout = CancellationTokenSource.CreateLinkedTokenSource(TestContext.Current.CancellationToken);

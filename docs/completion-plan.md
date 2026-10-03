@@ -150,6 +150,14 @@ M4. M5 is the final removal gate, not a reason to postpone replacement work.
    Tracing overhead is not a release-latency measurement. A passing repeat is
    neither a causal explanation nor a timing fix; change behavior only for a
    demonstrated counterexample, preserving strict admission and frozen retries.
+   A controlled TCP counterexample now reproduces same-connection ingress waiting
+   behind the first future command's ACK. The bounded clock-gated pipeline admits
+   later envelopes independently, preserves whole-envelope FIFO and ordered
+   replies, and fences authority failures without canceling admitted work on peer
+   loss. Keep causal held-clock, capacity, half-close, fault and shutdown checks,
+   plus actual two-input Create/save/resume acceptance. This fixes a demonstrated
+   ingress stall, not the unclassified historical first-resume `TooLate` cause;
+   source-reviewed stalled-writer and canceled snapshot paths need direct fixtures.
    Pending-command fences do not solve the adapter's broader shared-world
    cold-restore overwrite. A real multiplayer loopback regression now reproduces
    claimed-item resurrection in both cold-resume orders from actual same-tick

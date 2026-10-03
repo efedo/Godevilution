@@ -620,6 +620,15 @@ must still be accepted and settle at the expected authoritative tile; the
 This covers unsent frame-stalled input, not arbitrary host/network delay after
 transmission. Resume and Recovery continue to verify durable state and sequences.
 
+Create additionally flushes two real friendly-mode key inputs without a frame or
+transport poll between them. Both must be queued together and return separately
+accepted, ordered receipts before save/resume proceeds. Both inputs read the
+same snapshot and assign the same absolute mode; this is not a relative double
+toggle or client-owned simulation. `create-input-burst.json` retains detached
+results on success or failure. Normal play installs no acknowledgement observer.
+The host admits separate envelopes before awaiting their ACKs, while retaining
+whole-envelope FIFO, bounded responses, strict late admission and frozen retries.
+
 Protocol tests exercise the model/transport without the Godot scene. A headless
 startup verifies a different boundary and does not prove that a visible window
 renders. The application harness exercises controls even headlessly, but its

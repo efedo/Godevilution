@@ -47,6 +47,7 @@ public sealed partial class AuthoritativeTcpServer : IAsyncDisposable
     private readonly object lifecycleSynchronization = new();
     private readonly TaskCompletionSource completion = new(TaskCreationOptions.RunContinuationsAsynchronously);
     private ClockGatedCommandScheduler? commandScheduler;
+    private ClockGatedResponseBudget? clockGatedResponseBudget;
     private Exception? lastClientFailure;
     private Task? disposal;
     private CancellationTokenSource? cancellation;
@@ -298,6 +299,8 @@ public sealed partial class AuthoritativeTcpServer : IAsyncDisposable
             listener.Start();
             cancellation = startupCancellation;
             if (UseClockGatedCommandScheduling)
+                clockGatedResponseBudget = new ClockGatedResponseBudget(MaximumPendingCommands);
+            if (UseClockGatedCommandScheduling)
                 commandScheduler = new ClockGatedCommandScheduler(
                     commandServer, PublishScheduledCommand, MaximumPendingCommands, startupCancellation.Token,
                     CohortStore is null ? null : FenceCohort);
@@ -307,6 +310,7 @@ public sealed partial class AuthoritativeTcpServer : IAsyncDisposable
             listener.Stop();
             commandScheduler?.Dispose();
             commandScheduler = null;
+            clockGatedResponseBudget = null;
             startupCancellation.Dispose();
             cancellation = null;
             acceptLoop = null;
@@ -348,6 +352,7 @@ public sealed partial class AuthoritativeTcpServer : IAsyncDisposable
         } catch (Exception exception) {
             RecordShutdownFailure(exception, "scheduler");
         } finally {
+            clockGatedResponseBudget = null;
             shutdown?.Dispose();
             cancellation = null;
             acceptLoop = null;
@@ -515,6 +520,7 @@ public sealed partial class AuthoritativeTcpServer : IAsyncDisposable
     private async Task HandleClientAsync(TcpClient client, CancellationToken cancellationToken)
     {
         NetworkStream? stream = null;
+        var clockGatedPipelineOwnsWrites = false;
         var connectionOrdinal = CommandTimingRecorder is null
             ? 0
             : unchecked((int)Interlocked.Increment(ref nextConnectionOrdinal));
@@ -583,6 +589,17 @@ public sealed partial class AuthoritativeTcpServer : IAsyncDisposable
             }
             var sessionId = session.Id;
             var entityId = session.EntityId;
+            if (commandScheduler is not null) {
+                clockGatedPipelineOwnsWrites = true;
+                await HandleClockGatedConnectionAsync(
+                    stream,
+                    sessionId,
+                    entityId,
+                    currentTick,
+                    connectionOrdinal,
+                    cancellationToken);
+                return;
+            }
             while (!cancellationToken.IsCancellationRequested) {
                 var envelope = await EnvelopeCodec.ReadAsync(stream, cancellationToken);
                 if (envelope is null)
@@ -604,40 +621,7 @@ public sealed partial class AuthoritativeTcpServer : IAsyncDisposable
                         ? 0L
                         : Stopwatch.GetTimestamp();
                     var lockEntered = 0L;
-                    if (commandScheduler is not null) {
-                        var pending = commandServer.WithSynchronizedSession(sessionId, () => {
-                            lockEntered = CommandTimingRecorder is null
-                                ? 0L
-                                : Stopwatch.GetTimestamp();
-                            RequireCohortHealthy();
-                            sampledClockCurrentTick = clock.CurrentTick;
-                            sampledCommandServerCurrentTick = commandServer.CurrentTick;
-                            actualAdmissionTick = Math.Max(
-                                sampledClockCurrentTick,
-                                sampledCommandServerCurrentTick);
-                            return commandScheduler.SubmitBatchAsync(sessionId, envelope.CommandBatch,
-                                actualAdmissionTick,
-                                cancellationToken);
-                        });
-                        if (lockEntered != 0)
-                            lockWaitStopwatchTicks = Math.Max(0, lockEntered - lockWaitStart);
-                        PerformanceRecorder?.Complete(HostPerformanceMetric.CommandQueueAdmissionMilliseconds, measurement);
-                        admissionTraceOrdinals = RecordCommandAdmissionTiming(
-                            connectionOrdinal,
-                            entityId,
-                            envelopeReadCompletedTimestamp,
-                            lockWaitStopwatchTicks,
-                            sampledClockCurrentTick,
-                            sampledCommandServerCurrentTick,
-                            actualAdmissionTick,
-                            envelope.CommandBatch);
-                        EmitCommandTimingOutsideAuthorityLock();
-                        // Never retain the authority monitor during deliberate ACK waits.
-                        acknowledgement = await pending;
-                        AuthoritativeCommandAckValidator.Validate(acknowledgement);
-                        currentTick = commandServer.WithSynchronizedState(() => AdvanceAndPublishCohortCore());
-                    } else {
-                        acknowledgement = commandServer.WithSynchronizedSession(sessionId, () => {
+                    acknowledgement = commandServer.WithSynchronizedSession(sessionId, () => {
                             lockEntered = CommandTimingRecorder is null
                                 ? 0L
                                 : Stopwatch.GetTimestamp();
@@ -665,11 +649,10 @@ public sealed partial class AuthoritativeTcpServer : IAsyncDisposable
                                 FenceCohort(failure);
                                 throw;
                             }
-                        });
-                        if (lockEntered != 0)
-                            lockWaitStopwatchTicks = Math.Max(0, lockEntered - lockWaitStart);
-                        PerformanceRecorder?.Complete(HostPerformanceMetric.CommandAdmissionAndCheckpointMilliseconds, measurement);
-                    }
+                    });
+                    if (lockEntered != 0)
+                        lockWaitStopwatchTicks = Math.Max(0, lockEntered - lockWaitStart);
+                    PerformanceRecorder?.Complete(HostPerformanceMetric.CommandAdmissionAndCheckpointMilliseconds, measurement);
                     var commandTraceOrdinals = RecordCommandTiming(
                         connectionOrdinal,
                         entityId,
@@ -745,13 +728,15 @@ public sealed partial class AuthoritativeTcpServer : IAsyncDisposable
                 }
             }
         } catch (EndOfStreamException) {
-        } catch (ClockGatedCommandCapacityException exception) {
+        } catch (ClockGatedCommandCapacityException exception)
+            when (!clockGatedPipelineOwnsWrites) {
             try {
                 if (stream is not null)
                     await SendErrorAsync(stream, ProtocolErrorCode.InvalidMessage, exception.Message, cancellationToken);
             } catch (Exception) {
             }
-        } catch (InvalidDataException exception) {
+        } catch (InvalidDataException exception)
+            when (!clockGatedPipelineOwnsWrites) {
             try {
                 if (stream is not null) {
                     await SendErrorAsync(
@@ -765,18 +750,22 @@ public sealed partial class AuthoritativeTcpServer : IAsyncDisposable
         } catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested) {
         } catch (ObjectDisposedException) when (cancellationToken.IsCancellationRequested) {
         } catch (Exception exception) {
+            var clientFailure = exception is ClockGatedTransportException
+                && exception.InnerException is { } transportFailure
+                ? transportFailure
+                : exception;
             if (CohortStore is null) {
-                Volatile.Write(ref lastClientFailure, exception);
-                ClientFailureObserver?.Invoke(exception); // Preserve legacy observer-fault reporting.
+                Volatile.Write(ref lastClientFailure, clientFailure);
+                ClientFailureObserver?.Invoke(clientFailure); // Preserve legacy observer-fault reporting.
             } else {
                 // Peer transport cleanup can fail after fencing. Retain the
                 // first fatal cohort diagnostic under the same authority lock.
                 WithCohortBarrier(() => Volatile.Write(ref lastClientFailure,
-                    Volatile.Read(ref cohortFailure) ?? exception));
+                    Volatile.Read(ref cohortFailure) ?? clientFailure));
                 // A diagnostic observer cannot replace the primary cohort failure.
-                try { ClientFailureObserver?.Invoke(exception); }
+                try { ClientFailureObserver?.Invoke(clientFailure); }
                 catch (Exception diagnosticFailure) {
-                    try { exception.Data["CohortClientFailureObserver"] = diagnosticFailure; } catch { }
+                    try { clientFailure.Data["CohortClientFailureObserver"] = diagnosticFailure; } catch { }
                 }
             }
         } finally {
@@ -1186,7 +1175,9 @@ public sealed partial class AuthoritativeTcpServer : IAsyncDisposable
         ulong tick,
         int connectionOrdinal,
         long? envelopeReadCompletedTimestamp,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        bool classifyClockedTransportFailure = false,
+        CancellationToken hostCancellationToken = default)
     {
         await SendSnapshotIfAvailableAsync(
             stream,
@@ -1196,7 +1187,9 @@ public sealed partial class AuthoritativeTcpServer : IAsyncDisposable
             connectionOrdinal,
             envelopeReadCompletedTimestamp,
             null,
-            cancellationToken);
+            cancellationToken,
+            classifyClockedTransportFailure,
+            hostCancellationToken);
     }
 
     private async ValueTask SendSnapshotIfAvailableAsync(
@@ -1207,11 +1200,14 @@ public sealed partial class AuthoritativeTcpServer : IAsyncDisposable
         int connectionOrdinal,
         long? envelopeReadCompletedTimestamp,
         ulong? timingRequestId,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        bool classifyClockedTransportFailure = false,
+        CancellationToken hostCancellationToken = default)
     {
         if (snapshotProvider is null)
             return;
 
+        RequireClockedTransportActive(classifyClockedTransportFailure, cancellationToken);
         var materialization = PerformanceRecorder?.Begin() ?? 0;
         var materializeStartTimestamp = CommandTimingRecorder is null
             ? (long?)null
@@ -1239,6 +1235,7 @@ public sealed partial class AuthoritativeTcpServer : IAsyncDisposable
         // boundary. Do not allow a concurrent command or autonomous tick to
         // mutate the module while the projection is being assembled.
         var snapshot = commandServer.WithSynchronizedSession(sessionId, () => {
+            RequireClockedTransportActive(classifyClockedTransportFailure, cancellationToken);
             RequireCohortHealthy();
             try {
             // An autonomous tick may advance while the caller awaits network
@@ -1281,7 +1278,18 @@ public sealed partial class AuthoritativeTcpServer : IAsyncDisposable
             });
             EmitCommandTimingOutsideAuthorityLock();
         }
-        await WriteAuthoritativeEnvelopeAsync(stream, envelope, cancellationToken);
+        try {
+            await WriteAuthoritativeEnvelopeAsync(stream, envelope, cancellationToken);
+        } catch (Exception exception)
+            when (classifyClockedTransportFailure
+                && (exception is IOException or SocketException or ObjectDisposedException)
+                && exception is not ClockGatedTransportException) {
+            throw new ClockGatedTransportException(exception);
+        } catch (OperationCanceledException exception)
+            when (classifyClockedTransportFailure
+                && cancellationToken.IsCancellationRequested) {
+            throw new ClockGatedTransportException(exception);
+        }
         var writeEndTimestamp = CommandTimingRecorder is null
             ? (long?)null
             : Stopwatch.GetTimestamp();
@@ -1312,7 +1320,9 @@ public sealed partial class AuthoritativeTcpServer : IAsyncDisposable
         string sessionId,
         uint entityId,
         ulong tick,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        bool classifyClockedTransportFailure = false,
+        CancellationToken hostCancellationToken = default)
     {
         // Drain at a current authoritative boundary before the next snapshot.
         // Refresh and drain under the authoritative lock, then
@@ -1323,6 +1333,7 @@ public sealed partial class AuthoritativeTcpServer : IAsyncDisposable
             : commandServer.WithSynchronizedSession(
                 sessionId,
                 () => {
+                    RequireClockedTransportActive(classifyClockedTransportFailure, cancellationToken);
                     RequireCohortHealthy();
                     try {
                     tick = AdvanceCurrentTickCore(tick);
@@ -1338,17 +1349,54 @@ public sealed partial class AuthoritativeTcpServer : IAsyncDisposable
                 });
         return events is null || events.Events.Count == 0
             ? ValueTask.CompletedTask
-            : WriteEventBatchAsync(stream, events, tick, cancellationToken);
+            : WriteEventBatchAsync(
+                stream,
+                events,
+                tick,
+                cancellationToken,
+                classifyClockedTransportFailure,
+                hostCancellationToken);
     }
 
     private ValueTask WriteEventBatchAsync(
         Stream stream,
         EventBatch events,
         ulong expectedTick,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        bool classifyClockedTransportFailure = false,
+        CancellationToken hostCancellationToken = default)
     {
         AuthoritativeEventBatchValidator.Validate(events, expectedTick);
-        return WriteAuthoritativeEnvelopeAsync(stream, new Envelope { EventBatch = events }, cancellationToken);
+        return WriteClockedEventBatchAsync(
+            stream,
+            events,
+            cancellationToken,
+            classifyClockedTransportFailure,
+            hostCancellationToken);
+    }
+
+    private async ValueTask WriteClockedEventBatchAsync(
+        Stream stream,
+        EventBatch events,
+        CancellationToken cancellationToken,
+        bool classifyClockedTransportFailure,
+        CancellationToken hostCancellationToken)
+    {
+        try {
+            await WriteAuthoritativeEnvelopeAsync(
+                stream,
+                new Envelope { EventBatch = events },
+                cancellationToken);
+        } catch (Exception exception)
+            when (classifyClockedTransportFailure
+                && (exception is IOException or SocketException or ObjectDisposedException)
+                && exception is not ClockGatedTransportException) {
+            throw new ClockGatedTransportException(exception);
+        } catch (OperationCanceledException exception)
+            when (classifyClockedTransportFailure
+                && cancellationToken.IsCancellationRequested) {
+            throw new ClockGatedTransportException(exception);
+        }
     }
 
     private ValueTask WriteAuthoritativeEnvelopeAsync(Stream stream, Envelope envelope, CancellationToken cancellationToken)

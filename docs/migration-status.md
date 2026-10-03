@@ -148,6 +148,69 @@ open. Their scope, dependencies, and exit checks are defined only in the
 
 ## Recent implementation evidence
 
+### M0 bounded pipelined clock-gated ingress (2026-10-03)
+
+A causal TCP fixture holds physical time at 100, confirms admission of sequence 1
+requested for 120, then writes a separate sequence 2 envelope requested for 125.
+The old serial handler waits for ACK 1 and misses the second-admission deadline.
+The new handler admits both at 100 without executing either, then exposes ACKs
+at applied ticks 120/125 after physical time reaches 130. Following snapshots may
+show current tick 130, not historical per-ACK state. The retained baseline log is
+`.local/m0-pipeline-baseline-failing.log`. This demonstrates an ingress stall;
+it does not classify or prove a fix for the historical resumed-command `TooLate`.
+
+The negotiated TCP path now separates ingress from one ordered response writer,
+with per-connection whole-envelope FIFO and host-wide retained response weight.
+Duplicate waiters, empty batches, probes, descending ticks, clean half-close,
+transport loss, publication failure, capacity refusal/release and host shutdown
+have focused coverage. Empty batches retain their malformed result. Accepted
+work survives peer loss; authority failure fences successors and preserves the
+primary diagnostic. Immediate/direct APIs, strict late admission, frozen command
+identity, wire/save formats, pack bytes and MPQ-independent hosting are unchanged.
+Stalled-writer budget retention and canceled queued-snapshot provider avoidance
+are source-reviewed, not directly exercised by new transport fixtures.
+
+Final-source verification logs use `.local/m0-pipeline-reviewed-server-*`:
+71 focused passes (2.709s), then 1,550 full passes with four unchanged exclusions
+(55.544s). Builds have zero errors and three existing unavailable NuGet audit
+warnings. The initial integration build's test-only oneof errors and the first
+focused run's repeatedly failing publication fixture are retained; corrected
+fixtures and the final strengthened sequence/failure assertions pass. Four
+documentation consistency cases pass (396ms); CRLF and diff checks are clean.
+
+The client transport fixture verifies two calibrated separate envelopes before
+either ACK. The current-host timing/live integration run retains 85 passes, one
+failure and two explicit performance exclusions (13m15.114s). The failure is an
+existing Immediate-mode fixture deleting a locked receipt file after terminating
+its `dotnet run` process tree; the unchanged isolated rerun passes (3.154s).
+Waiting for the parent does not establish every descendant has exited, but the
+actual lock owner was not captured. No cleanup fix or whole-client green result
+is claimed. Logs are `.local/m0-pipeline-client-final-focused.log` and
+`.local/m0-pipeline-client-cleanup-rerun.log`; the earlier 766-pass full client
+suite remains historical, not a new full-suite run.
+
+Fresh rendered Create/Resume/Recovery passes in private session
+`Godevilution-Scene-Acceptance-1493c0bbfbcb499d87efac38fe3b79f3` with sequences
+3/4/6. `create-input-burst.json` records two real inputs queued before any frame,
+original Accepted results with distinct receipts 1/2. The harness also asserts
+unchanged identity and position; those are not fields in the burst artifact.
+Create also retains the separate 750ms unsent-input stall check.
+Inspected world/resume/outage/reconnected PNGs show the schematic client, frozen
+disconnected controls and reconnected movement. All nine version/import/client
+stage exits are zero, with no owned Godevilution processes remaining. Installed
+engine/staged SDK 4.7.2 preserves source SDK 4.7.1; this is not an engine-upgrade
+explanation for the earlier crash dialogs. Retain
+`.local/m0-pipeline-godot-rendered.log`. Tracing is diagnostic, not a release
+latency measurement or proof of complete captures. M0/M2 and campaign acceptance
+remain open; overall completion remains approximately 35%.
+
+Rendered complete-cohort two-client creation, mutual movement visibility and
+reverse-order fresh-host resume also pass in private session
+`Godevilution-Scene-Acceptance-c75b704374ce4cb9a1d8db4a2cb67dda`; all eight
+version/import/client stage exits are zero. Retain
+`.local/m0-pipeline-godot-cohort-multiplayer-rendered.log`. This is settled
+multiplayer resume, not pending-command recovery or the full release matrix.
+
 ### M2 portable Cathedral door compiler coverage (2026-10-03)
 
 Four portable cases now exercise actual compilation with labeled synthetic

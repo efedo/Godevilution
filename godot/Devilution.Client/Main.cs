@@ -38,6 +38,8 @@ public partial class Main : Node2D
     // Read-only copies for the scene acceptance harness; never a gameplay owner.
     internal Snapshot? ObservedSnapshot => model.Snapshot?.Clone();
     internal CommandResult? ObservedCommandResult => model.LastCommandResult?.Clone();
+    // Installed only for a bounded acceptance observation; normal scenes retain nothing.
+    internal Action<CommandAck>? AcceptanceAcknowledgementObserver { get; set; }
     internal AuthoritativeServerIdentity? ObservedIdentity => client?.ServerIdentity;
     internal AuthoritativeClientTimingCaptureReport? ObservedCommandTimingReport
         => client?.CommandTimingRecorder?.CaptureReport();
@@ -361,6 +363,8 @@ public partial class Main : Node2D
             foreach (var message in client.DrainMessages()) {
                 try {
                     model.Apply(message);
+                    if (message.Acknowledgement is { } acknowledgement)
+                        AcceptanceAcknowledgementObserver?.Invoke(acknowledgement.Clone());
                     if (message.Snapshot is not null)
                         snapshotRevision++;
                 } catch (Exception exception) {
