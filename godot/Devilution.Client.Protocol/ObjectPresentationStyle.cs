@@ -13,6 +13,7 @@ public enum ObjectPresentationKind
     Trap,
     NativeArmorStand,
     NativeWeaponRack,
+    CathedralDoor,
 }
 
 /** Native-compatible lifecycle frame selected for an authored object. */
@@ -20,6 +21,9 @@ public enum ObjectPresentationFrame
 {
     Default,
     Activated,
+    DoorClosed,
+    DoorOpen,
+    DoorBlocked,
 }
 
 /** Maps additive object presentation metadata with compatibility fallbacks. */
@@ -34,6 +38,8 @@ public static class ObjectPresentationStyle
     public static ObjectPresentationKind Resolve(ObjectSnapshot state)
     {
         ArgumentNullException.ThrowIfNull(state);
+        if (state.CathedralDoor is not null && AuthoritativeObjectSelector.HasAuthoritativeInteraction(state))
+            return ObjectPresentationKind.CathedralDoor;
         return state.PresentationKind switch {
             ProtocolObjectPresentationKind.Generic => ObjectPresentationKind.Generic,
             ProtocolObjectPresentationKind.Shrine => ObjectPresentationKind.Shrine,
@@ -53,6 +59,12 @@ public static class ObjectPresentationStyle
     public static ObjectPresentationFrame ResolveFrame(ObjectSnapshot state)
     {
         ArgumentNullException.ThrowIfNull(state);
+        if (Resolve(state) == ObjectPresentationKind.CathedralDoor)
+            return state.CathedralDoor.DoorState switch {
+                0 => ObjectPresentationFrame.DoorClosed,
+                1 => ObjectPresentationFrame.DoorOpen,
+                _ => ObjectPresentationFrame.DoorBlocked,
+            };
         return state.Activated
             && state.KeepVisibleAfterActivation
             && state.ActivatedAnimationFrame > 0

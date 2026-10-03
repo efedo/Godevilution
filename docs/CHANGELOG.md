@@ -2,6 +2,18 @@
 
 Notable changes to this fork are recorded below.
 
+- 2026-10-03: Add a separately identified, opt-in Cathedral door compiler/profile,
+  isolated zero-argument Godot launcher, typed schematic state drawing and ordinary
+  input/save/fresh-host acceptance. Preserve legacy profiles and native geometry;
+  validate final occupancy/routes rather than repairing seeds or SOL. Headless
+  create/resume passes. Rendered creation/restored-open drawing pass, but first
+  resumed movement rejects TooLate; retain that failed run without a rendered
+  acceptance claim or timing-policy relaxation. Verify 24 compiler/legacy/docs,
+  one private repeatability, 33 launcher/safety and 41 client focused passes;
+  full server/client pass 1,519/746 with unchanged exclusions. Freeze door and
+  legacy depth pack bytes. Portable compiler publication/pool/occupancy fixtures,
+  native art/population and M0/M2 gates remain open; see status for evidence.
+
 - 2026-10-03: Add isolated server-owned Cathedral door
   discovery, native operations, strict mutable-geometry checkpoint restoration,
   cohort-v2/save-v4 envelopes and typed live door projection. Preserve existing

@@ -28,6 +28,7 @@ public partial class WorldPresentation : Node2D
     private readonly Dictionary<uint, List<PresentationPlayerTextureBindingObservation>> playerTextureBindingHistory = [];
     private readonly Dictionary<uint, MonsterSnapshot> displayedMonsterSnapshots = [];
     private readonly Dictionary<uint, ProjectileSnapshot> displayedProjectileSnapshots = [];
+    private readonly Dictionary<uint, CathedralDoorDrawObservation> doorDrawObservations = [];
     private readonly AssetPalette assets = new();
     private readonly LevelLayoutCatalog levels = new();
     private readonly AuthoritativeGeometryInstallationGate geometryInstallation = new();
@@ -72,6 +73,10 @@ public partial class WorldPresentation : Node2D
 
     internal PresentationPackObservation ObservePresentationPack()
         => assets.ObservePack();
+
+    /** Records from actual drawing, not from a snapshot-derived observation getter. */
+    internal CathedralDoorDrawObservation? ObserveCathedralDoorDrawing(uint entityId)
+        => doorDrawObservations.TryGetValue(entityId, out var observation) ? observation : null;
 
     internal PresentationTextureBindingObservation? ObserveTextureBinding(string assetName)
         => assets.ObserveTexture(assetName);
@@ -411,6 +416,7 @@ public partial class WorldPresentation : Node2D
 
     public override void _Draw()
     {
+        doorDrawObservations.Clear();
         DrawGrid();
         if (snapshot is null || snapshot.Players.Count == 0)
             return;
@@ -834,6 +840,10 @@ public partial class WorldPresentation : Node2D
     {
         var kind = ObjectPresentationStyle.Resolve(@object);
         var frame = ObjectPresentationStyle.ResolveFrame(@object);
+        if (kind == ObjectPresentationKind.CathedralDoor) {
+            DrawCathedralDoor(@object, frame);
+            return;
+        }
         var color = kind switch {
             ObjectPresentationKind.Shrine => new Color("7d8cff"),
             ObjectPresentationKind.Quest => new Color("e5bd52"),
@@ -862,6 +872,28 @@ public partial class WorldPresentation : Node2D
             DrawLine(center + new Vector2(-6, -6), center + new Vector2(6, 6), trapColor, 2);
             DrawLine(center + new Vector2(6, -6), center + new Vector2(-6, 6), trapColor, 2);
         }
+    }
+
+    /** Snapshot-owned state; simple door cues until complete production art is available. */
+    private void DrawCathedralDoor(ObjectSnapshot state, ObjectPresentationFrame frame)
+    {
+        var center = PositionFor(state.EntityId, state.PositionX, state.PositionY);
+        var color = frame switch {
+            ObjectPresentationFrame.DoorClosed => new Color("bf9156"),
+            ObjectPresentationFrame.DoorBlocked => new Color("e4ad45"),
+            _ => new Color("78cba2"),
+        };
+        DrawLine(center + new Vector2(-12, -10), center + new Vector2(-12, 10), color, 3);
+        DrawLine(center + new Vector2(12, -10), center + new Vector2(12, 10), color, 3);
+        var hinge = state.CathedralDoor.NativeObjectId == 1 ? -12 : 12;
+        var endpoint = frame == ObjectPresentationFrame.DoorClosed
+            ? new Vector2(-hinge, 0) : new Vector2(hinge / 2f, -12);
+        DrawLine(center + new Vector2(hinge, 0), center + endpoint, color, 4);
+        if (frame == ObjectPresentationFrame.DoorBlocked)
+            DrawCircle(center + new Vector2(0, 10), 3, color);
+        doorDrawObservations[state.EntityId] = new CathedralDoorDrawObservation(
+            state.EntityId, state.CathedralDoor.NativeObjectId, state.CathedralDoor.DoorState,
+            state.AnimationFrame, frame);
     }
 
     /** Adds a compact stand cue until production sprite assets are available. */

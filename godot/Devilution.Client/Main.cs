@@ -48,6 +48,8 @@ public partial class Main : Node2D
     internal PlayerItemReference? ObservedSelectedItemReference => hud?.SelectedItemReference?.Clone();
     internal Vector2 ObservedTileScreenPosition(int x, int y) => world!.ScreenPositionForTile(x, y);
     internal Vector2? ObservedEntityScreenPosition(uint entityId) => world?.ScreenPositionForEntity(entityId);
+    internal CathedralDoorDrawObservation? ObservedCathedralDoorDrawing(uint entityId)
+        => world?.ObserveCathedralDoorDrawing(entityId);
     internal PresentationPackObservation? ObservedPresentationPack => world?.ObservePresentationPack();
     internal ulong ObservedPresentationEpochResetCount => world?.PresentationEpochResetCount ?? 0;
     internal PresentationPackObservation? ObservedFeedbackPresentationPack => feedback?.ObservePresentationPack();

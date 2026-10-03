@@ -357,7 +357,8 @@ Output must be fresh. Compilation validates all four geometries, ordered identit
 eight reciprocal routes and surviving content references before atomic publication.
 It checks stair connectivity using the server's eight-direction walkability graph.
 Disconnected routes reject without changing SOL geometry or choosing replacement
-seeds; native object/door placement is still missing. `none` produces no diagnostic
+seeds; this depth-only profile deliberately does not enable native doors or scanner
+lights. `none` produces no diagnostic
 encounters/objects. The alternative/default `authored-diagnostic` policy adds
 explicitly authored interactions and never claims native population.
 
@@ -388,6 +389,60 @@ to create a new pair rather than reusing a failed phase's evidence directory.
 
 This verifies diagnostic traversal/restore, not native population, quests,
 campaign mapping, broader topology, exact light parity, full art or M2 completion.
+
+## Generated Cathedral door playtest
+
+Door mode is a separate offline compiler/profile, not an upgrade of existing L1,
+depth-only, base or preview saves. It consumes explicit private semantic TIL/SOL
+tables and four ordered seeds. Neither compilation nor the server reads MPQs.
+Use a fresh output directory; never overwrite a compiled profile or its saves:
+
+```powershell
+dotnet run --project tools/Cathedral.Playtest/Cathedral.Playtest.csproj -- --base-directory server/content/base --geometry-directory 'D:\Private\cathedral-geometry' --output-directory .local/cathedral-doors-playtest --depth-seeds '2588,2588,1,4294967295' --cathedral-doors --placement-policy none
+.\run-godot-cathedral-doors-playtest.ps1
+```
+
+The marker is `cathedral-doors-playtest.json`; the adapter is
+`devilution.diablo.cathedral-doors.v1`. Its door-catalog identity, explicit left/right
+type mappings, content/file hashes and distinct session identity fence the private
+profile. The root wrapper uses only `.local/cathedral-doors-playtest/sessions/local`.
+Changed metadata/content, conflicting or unmarked saves and reparse-point storage
+refuse; no existing profile is migrated. Licensed geometry and generated packs
+remain private and must not be committed or distributed as sample assets.
+
+The server scans native doors and fixed-light footprints under the native pool
+limit. Operable-door reachability checks use native transitions on detached
+geometry, not wall repairs or replacement seeds. The published initial world
+still has closed doors. `none` is the default; `authored-diagnostic` is explicitly
+optional and must pass final production occupancy/pool validation. This is not
+complete native object/light/monster population, population RNG or campaign mapping.
+
+Godot displays schematic CLOSED, OPEN and BLOCKED cues from validated typed server
+state. Left-click operates a door; Ctrl-click walks through an open doorway.
+Occupied closing must retain the open frame/geometry until the occupant leaves.
+These cues are not original sprites or native loaded-art/frame qualification.
+Native activation/GUI acceptance remains a separate gate.
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File tools/test-godot-session.ps1 -CathedralDoorProfileDirectory .local/cathedral-doors-playtest -Visible
+```
+
+Omit `-Visible` for headless scene checks. The wrapper uses a fresh child session.
+`CathedralDoorJourney` enters L1 from Town, approaches a reachable closed door,
+opens it through ordinary input, physically occupies its cell, verifies BLOCKED
+and an unchanged occupied-close outcome, leaves, recloses and saves it open.
+`CathedralDoorResume` starts a fresh host/client, checks the exact saved identity,
+position and four-floor mutable geometry/typed-door hash before any input, then
+requires the first new movement sequence to equal the saved sequence plus one.
+It repeats occupied-close/clear/close through normal controls. Rendered checks
+observe actual door drawing and retain milestone PNGs. Allow 300/180 seconds for
+the scene phases plus launcher/build margins. Clean engine exits remain mandatory.
+A successful journey establishes L1 door integration and cold restore, not
+four-floor traversal, full native art/population, multiplayer door recovery, a
+campaign or M2 completion. Current headless phases pass; rendered creation and
+restored-open drawing pass, but first resumed movement rejects `TooLate`.
+See [migration status](../migration-status.md#m2-isolated-cathedral-door-playtest-integration-2026-10-03)
+for the retained failure. Do not relax admission or retry to hide that result.
 
 ## Application acceptance
 

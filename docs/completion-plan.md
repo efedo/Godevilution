@@ -73,7 +73,7 @@ isolated spell or table rows while the playable route stays unchanged.
 | --- | --- | --- | --- |
 | M0 | Reproducible launch and honest acceptance evidence | Existing implementation | Dedicated-root cohort host passes TCP recovery, scoped faults, production CLI participant/item recovery and lease refusal, isolated Godot create/resume/outage and surviving-client committed-but-unobserved replay; managed first-publication interruption and a scoped Windows metadata profile pass; approval-gated normal-launch adoption and broader fault/filesystem/platform acceptance remain; legacy cold imports, native GUI and release-budget gaps remain |
 | M1 | Usable Godot town-to-dungeon loop | M0 launch/acceptance harness | Authored combat/loot/equipment, NPC/service approach, purchased-scroll portal and isolated Sorcerer quest/cast/Recharge/death/restart/restore journeys pass; full loop remains |
-| M2 | Native-compatible generated world | M0 geometry/parity baseline | Ordinary Cathedral depths 1-4 coarse/fine oracle covers six seeds and MAIN/PREV; separate opt-in four-depth runtime/profile/v3 restore and ordinary-control traversal are integrated; native population, campaign mapping, wider topology and remaining families remain |
+| M2 | Native-compatible generated world | M0 geometry/parity baseline | Ordinary Cathedral depths 1-4 coarse/fine oracle covers six seeds and MAIN/PREV; separate opt-in depth and mutable-door profiles exist; headless door cold restore passes, rendered creation passes but first resumed movement rejects TooLate; native art/population, campaign mapping, wider topology and remaining families remain |
 | M3 | Complete base and Hellfire gameplay routes | M1 plus the relevant M2 world slices | Many rules exist; campaign and remaining behavioral coverage remain |
 | M4 | Release-quality client, recovery, and packaging | M3; preparation begins during M1/M2 | Recovery and adapter packaging foundations exist; product acceptance remains |
 | M5 | Production legacy-runtime retirement | M4 and capability replacement gates | Authoritative mode is Lua-free; compatibility runtime remains |
@@ -405,11 +405,16 @@ this evidence. A sample art pack does not satisfy M4's full presentation gate.
    and observed non-restoration. An isolated opt-in managed core implements
    discovery, repeatable operations and strict mutable-geometry restoration;
    seventeen private native cases compare its complete layers and transitions.
-   See status for current integration tests and limitations. Next qualify a
-   separately identified door-aware compiler/profile, validated native object
-   art mapping and ordinary Godot create/move/open/close/save/fresh-host-resume
-   journeys before widening playable topology. Existing depth/L1/default packs
-   and launchers must not silently adopt this new capability.
+   A separately identified door-aware compiler/profile now validates activated
+   occupancy and routes without repairing native SOL, replacing seeds or changing
+   depth/L1/default packs. Its isolated Godot path draws schematic server-owned
+   CLOSED/OPEN/BLOCKED cues and uses ordinary input. Headless create/save/fresh-host
+   resume passes; rendered creation and restored-open drawing pass, but the first
+   resumed movement rejects TooLate. Keep this failed run and strict admission.
+   Capture exact dispatch/admission timing before diagnosing or changing timing
+   policy; a receipt alone does not classify the cause. Qualify rendered resume
+   and native loaded-art mapping before widening playable topology. Existing
+   profiles and launchers must not silently adopt this new capability.
    Captures are independent expected fixtures, not seed-specific production
    transition tables. Port native-compatible discovery/transition logic for
    arbitrary seeds using validated external catalogs, preserving mutable geometry

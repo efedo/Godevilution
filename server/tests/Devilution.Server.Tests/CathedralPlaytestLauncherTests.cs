@@ -19,7 +19,15 @@ public sealed class CathedralPlaytestLauncherTests
             $errors = $null
             $ast = [Management.Automation.Language.Parser]::ParseFile((Join-Path $repository 'godot/run-local-client.ps1'), [ref]$tokens, [ref]$errors)
             if ($errors) { throw 'The launcher must parse.' }
-            foreach ($name in @('Get-FileSha256','Assert-NoCathedralReparsePoint','Get-CathedralContentTreeHash','Get-CathedralPlaytestProfile','Initialize-CathedralPlaytestSession')) {
+            $parameterNames = @($ast.ParamBlock.Parameters | ForEach-Object { $_.Name.VariablePath.UserPath })
+            foreach ($name in @('CathedralDoorProfileDirectory', 'AcceptancePhase')) {
+                if ($name -notin $parameterNames) { throw "Missing launcher argument: $name" }
+            }
+            if ($ast.Extent.Text -notmatch 'CathedralDoorJourney' -or $ast.Extent.Text -notmatch 'CathedralDoorResume' -or
+                $ast.Extent.Text -notmatch 'GODEVILUTION_CATHEDRAL_DOOR_PROFILE') {
+                throw 'The launcher omitted the Cathedral door phase or profile environment contract.'
+            }
+            foreach ($name in @('Get-FileSha256','Assert-NoCathedralReparsePoint','Get-CathedralContentTreeHash','Get-CathedralPlaytestProfile','Initialize-CathedralPlaytestSession','Get-CathedralDoorPlaytestProfile','Initialize-CathedralDoorPlaytestSession')) {
                 $functions = @($ast.FindAll({ param($node) $node -is [Management.Automation.Language.FunctionDefinitionAst] -and $node.Name -eq $name }, $true))
                 if ($functions.Count -ne 1) { throw "Missing actual launcher helper: $name" }
                 Invoke-Expression $functions[0].Extent.Text
@@ -77,10 +85,53 @@ public sealed class CathedralPlaytestLauncherTests
                 [IO.File]::WriteAllText($metadataPath, ($metadata | ConvertTo-Json))
                 Reject { Initialize-CathedralPlaytestSession (Get-CathedralPlaytestProfile $work $session) $session } 'profile changed'
                 if ([IO.File]::ReadAllText($markerPath) -cne $marker) { throw 'Rejected profile changes rewrote identity.' }
+                $doorCatalogSha = [Security.Cryptography.SHA256]::Create()
+                try { $doorCatalogFingerprint = [BitConverter]::ToString($doorCatalogSha.ComputeHash([Text.Encoding]::UTF8.GetBytes("1:1:2`n2:1:2`n3:1:2`n4:1:2"))).Replace('-', '') }
+                finally { $doorCatalogSha.Dispose() }
+                $doorMetadata = [ordered]@{ FormatVersion=1; AdapterId='devilution.diablo.cathedral-doors.v1'; ContentDirectory='content';
+                    ContentId='godevilution.cathedral-doors-playtest'; ContentVersion='0.1.0'; Entry='main';
+                    ContentManifestHash=('1' * 64); PackFileHash=(Get-CathedralContentTreeHash $content);
+                    DepthSeeds=@(0,1,2,4294967295); PlacementPolicy='none'; NativePopulationClaim=$false;
+                    Levels=@(1..4 | ForEach-Object { [ordered]@{ Depth=$_; LevelId=$_; LevelSymbol=if ($_ -eq 1) { 'cathedral' } else { "cathedral_depth_$_" }; Entry='main'; DungeonSeed=@(0,1,2,4294967295)[$_ - 1] } });
+                    Routes=@(1001,1002,1003,1004,1099,1100,1101,1102 | ForEach-Object { [ordered]@{ RouteId=$_; RouteSymbol="route$_"; Direction=if ($_ -le 1004) { 'down' } else { 'up' }; SourceLevelId=0; SourceLevelSymbol='town'; DestinationLevelId=1; DestinationLevelSymbol='cathedral' } }); DoorProfileId='original-diablo.cathedral-doors';
+                    DoorProfileRevision=1; DoorCatalogFingerprint=$doorCatalogFingerprint;
+                    DoorMappings=@(1..4 | ForEach-Object { [ordered]@{ Depth=$_; LevelId=$_; LevelSymbol=if ($_ -eq 1) { 'cathedral' } else { "cathedral_depth_$_" }; LeftObjectId=1; LeftObjectSymbol='l1_left_door'; LeftNativeObjectId=1; RightObjectId=2; RightObjectSymbol='l1_right_door'; RightNativeObjectId=2 } }) }
+                $doorMetadataPath = Join-Path $work 'cathedral-doors-playtest.json'
+                [IO.File]::WriteAllText($doorMetadataPath, ($doorMetadata | ConvertTo-Json -Depth 8))
+                $doorMetadata.DoorProfileRevision = $true
+                [IO.File]::WriteAllText($doorMetadataPath, ($doorMetadata | ConvertTo-Json -Depth 8))
+                Reject { Get-CathedralDoorPlaytestProfile $work (Join-Path $work 'sessions/doors') } 'complete door catalog identity'
+                $doorMetadata.DoorProfileRevision = 1
+                $doorMetadata.DoorMappings[0].LeftObjectId = '1'
+                [IO.File]::WriteAllText($doorMetadataPath, ($doorMetadata | ConvertTo-Json -Depth 8))
+                Reject { Get-CathedralDoorPlaytestProfile $work (Join-Path $work 'sessions/doors') } 'native left/right object IDs 1/2'
+                $doorMetadata.DoorMappings[0].LeftObjectId = 1
+                [IO.File]::WriteAllText($doorMetadataPath, ($doorMetadata | ConvertTo-Json -Depth 8))
+                $doorSession = Join-Path $work 'sessions/doors'
+                $doorProfile = Get-CathedralDoorPlaytestProfile $work $doorSession
+                if (Test-Path -LiteralPath $doorSession) { throw 'Read-only door validation created the session.' }
+                [IO.Directory]::CreateDirectory($doorSession) | Out-Null
+                $doorLock = [IO.File]::Open((Join-Path $doorSession 'launcher.lock'), 'OpenOrCreate', 'ReadWrite', 'None')
+                try {
+                    Initialize-CathedralDoorPlaytestSession $doorProfile $doorSession
+                    $doorMarkerPath = Join-Path $doorSession 'cathedral-door-session.json'
+                    $doorMarker = [IO.File]::ReadAllText($doorMarkerPath)
+                    $doorMarkerDocument = $doorMarker | ConvertFrom-Json
+                    if ($doorMarkerDocument.ProfileKind -cne 'cathedral-doors-playtest' -or
+                        $doorMarkerDocument.AdapterId -cne 'devilution.diablo.cathedral-doors.v1') { throw 'Door session marker did not preserve its distinct profile identity.' }
+                    Initialize-CathedralDoorPlaytestSession (Get-CathedralDoorPlaytestProfile $work $doorSession) $doorSession
+                    if ([IO.File]::ReadAllText($doorMarkerPath) -cne $doorMarker) { throw 'Door resume rewrote profile identity.' }
+                    Reject { Initialize-CathedralPlaytestSession $profile $doorSession } 'unmarked existing'
+                    $doorMetadata.DoorMappings[0].LeftNativeObjectId = 2
+                    [IO.File]::WriteAllText($doorMetadataPath, ($doorMetadata | ConvertTo-Json -Depth 8))
+                    Reject { Get-CathedralDoorPlaytestProfile $work $doorSession } 'native left/right object IDs 1/2'
+                    if ([IO.File]::ReadAllText($doorMarkerPath) -cne $doorMarker) { throw 'Rejected door metadata rewrote identity.' }
+                } finally { $doorLock.Dispose() }
                 $old = Join-Path $work 'sessions/old'
                 [IO.Directory]::CreateDirectory($old) | Out-Null
                 [IO.File]::WriteAllText((Join-Path $old 'resume-token.txt'), 'existing-user-bookmark')
                 Reject { Initialize-CathedralPlaytestSession (Get-CathedralPlaytestProfile $work $old) $old } 'unmarked existing'
+                Reject { Initialize-CathedralDoorPlaytestSession $doorProfile $old } 'unmarked existing'
                 if ([IO.File]::ReadAllText((Join-Path $old 'resume-token.txt')) -cne 'existing-user-bookmark') { throw 'Old bookmark changed.' }
                 $depthMetadata = [ordered]@{ FormatVersion=1; AdapterId='devilution.diablo.cathedral-depths.v1'; ContentDirectory='content';
                     ContentId='godevilution.cathedral-depths-playtest'; ContentVersion='0.1.0'; Entry='main';
@@ -137,6 +188,9 @@ public sealed class CathedralPlaytestLauncherTests
                 if ([IO.Directory]::Exists($absolute)) { [IO.Directory]::Delete($absolute, $true) }
             }
             """;
+        var scriptPath = Path.Combine(Path.GetTempPath(),
+            "Godevilution-CathedralLauncherTestScript-" + Guid.NewGuid().ToString("N") + ".ps1");
+        File.WriteAllText(scriptPath, script, new UTF8Encoding(false));
         using var child = new Process {
             StartInfo = new ProcessStartInfo("powershell.exe") {
                 UseShellExecute = false, CreateNoWindow = true,
@@ -146,20 +200,65 @@ public sealed class CathedralPlaytestLauncherTests
         child.StartInfo.ArgumentList.Add("-NoProfile");
         child.StartInfo.ArgumentList.Add("-OutputFormat");
         child.StartInfo.ArgumentList.Add("Text");
-        child.StartInfo.ArgumentList.Add("-EncodedCommand");
-        child.StartInfo.ArgumentList.Add(Convert.ToBase64String(Encoding.Unicode.GetBytes(script)));
-        Assert.True(child.Start());
-        var stdout = child.StandardOutput.ReadToEndAsync(TestContext.Current.CancellationToken);
-        var stderr = child.StandardError.ReadToEndAsync(TestContext.Current.CancellationToken);
+        child.StartInfo.ArgumentList.Add("-File");
+        child.StartInfo.ArgumentList.Add(scriptPath);
+        var started = false;
         try {
+            started = child.Start();
+            Assert.True(started);
+            var stdout = child.StandardOutput.ReadToEndAsync(TestContext.Current.CancellationToken);
+            var stderr = child.StandardError.ReadToEndAsync(TestContext.Current.CancellationToken);
             using var timeout = CancellationTokenSource.CreateLinkedTokenSource(TestContext.Current.CancellationToken);
             timeout.CancelAfter(TimeSpan.FromSeconds(30));
             await child.WaitForExitAsync(timeout.Token);
             Assert.True(child.ExitCode == 0, await stdout + "\r\n" + await stderr);
         } finally {
-            if (!child.HasExited) {
+            if (started && !child.HasExited) {
                 child.Kill();
                 Assert.True(child.WaitForExit(5000), "Owned regression child did not terminate.");
+            }
+            var absoluteScriptPath = Path.GetFullPath(scriptPath);
+            var tempRoot = Path.GetFullPath(Path.GetTempPath()).TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar) + Path.DirectorySeparatorChar;
+            Assert.StartsWith(tempRoot, absoluteScriptPath, StringComparison.OrdinalIgnoreCase);
+            Assert.Matches("^Godevilution-CathedralLauncherTestScript-[a-f0-9]{32}\\.ps1$",
+                Path.GetFileName(absoluteScriptPath));
+            if (File.Exists(absoluteScriptPath))
+                File.Delete(absoluteScriptPath);
+        }
+    }
+
+    [Fact(SkipUnless = nameof(IsWindows), Skip = "Requires Windows PowerShell.")]
+    public async Task DoorProfileArgumentGuardRefusesMixingWithLegacyProfile()
+    {
+        var root = FindRepositoryRoot();
+        var launcher = Path.Combine(root, "godot", "run-local-client.ps1");
+        using var child = new Process {
+            StartInfo = new ProcessStartInfo("powershell.exe") {
+                UseShellExecute = false, CreateNoWindow = true,
+                RedirectStandardOutput = true, RedirectStandardError = true,
+            },
+        };
+        child.StartInfo.ArgumentList.Add("-NoProfile");
+        child.StartInfo.ArgumentList.Add("-File");
+        child.StartInfo.ArgumentList.Add(launcher);
+        child.StartInfo.ArgumentList.Add("-CathedralProfileDirectory");
+        child.StartInfo.ArgumentList.Add(Path.Combine(root, ".local", "cathedral-playtest"));
+        child.StartInfo.ArgumentList.Add("-CathedralDoorProfileDirectory");
+        child.StartInfo.ArgumentList.Add(Path.Combine(root, ".local", "cathedral-doors-playtest"));
+        Assert.True(child.Start());
+        var stdout = child.StandardOutput.ReadToEndAsync(TestContext.Current.CancellationToken);
+        var stderr = child.StandardError.ReadToEndAsync(TestContext.Current.CancellationToken);
+        try {
+            using var timeout = CancellationTokenSource.CreateLinkedTokenSource(TestContext.Current.CancellationToken);
+            timeout.CancelAfter(TimeSpan.FromSeconds(15));
+            await child.WaitForExitAsync(timeout.Token);
+            Assert.NotEqual(0, child.ExitCode);
+            var output = await stdout + "\r\n" + await stderr;
+            Assert.Contains("Choose exactly one Cathedral profile mode", output, StringComparison.Ordinal);
+        } finally {
+            if (!child.HasExited) {
+                child.Kill();
+                Assert.True(child.WaitForExit(5000), "Owned argument-regression child did not terminate.");
             }
         }
     }

@@ -43,6 +43,8 @@ public sealed record CathedralDepthPlaytestCompilerOptions(
     public AuthoritativeCathedralEntry Entry { get; init; } = AuthoritativeCathedralEntry.Main;
     public CathedralDepthPlaytestPlacementPolicy PlacementPolicy { get; init; }
         = CathedralDepthPlaytestPlacementPolicy.AuthoredDiagnostic;
+    /** When enabled, route and diagnostic placement may operate native-scanned doors. */
+    internal bool DoorAwareConnectivity { get; init; }
     public uint Depth1Seed => DepthSeeds.Count > 0 ? DepthSeeds[0] : 0;
     public uint Depth2Seed => DepthSeeds.Count > 1 ? DepthSeeds[1] : 0;
     public uint Depth3Seed => DepthSeeds.Count > 2 ? DepthSeeds[2] : 0;
@@ -243,8 +245,9 @@ public static class CathedralDepthPlaytestCompiler
         if (plan.Candidates.Count != 4)
             throw new InvalidDataException("Cathedral depth compiler requires exactly four generated candidates.");
 
-        ValidateStairConnectivity(plan.Candidates);
-        var placements = SelectPlacements(plan.Candidates, options.PlacementPolicy);
+        ValidateStairConnectivity(plan.Candidates, options.DoorAwareConnectivity);
+        var placements = SelectPlacements(
+            plan.Candidates, options.PlacementPolicy, options.DoorAwareConnectivity);
         tables["objects.tsv"] = BuildObjects(
             RequireTable(tables, "objects.tsv"), placements, options.PlacementPolicy);
         tables["monsters.tsv"] = BuildMonsters(
@@ -349,21 +352,38 @@ public static class CathedralDepthPlaytestCompiler
 
     private static IReadOnlyList<Placement> SelectPlacements(
         IReadOnlyList<AuthoritativeCathedralDepthGenerationCandidate> candidates,
-        CathedralDepthPlaytestPlacementPolicy policy)
+        CathedralDepthPlaytestPlacementPolicy policy,
+        bool doorAwareConnectivity)
     {
         var placements = new List<Placement>(candidates.Count);
         foreach (var candidate in candidates)
         {
-            var path = PathFromEntry(candidate.Level, candidate.Routes);
+            var path = PathFromEntry(candidate.Level, candidate.Routes, doorAwareConnectivity);
             if (path.Length < 9)
                 throw new InvalidDataException($"Generated Cathedral depth {candidate.Level.LevelId} has no playable diagnostic corridor.");
-            var safe = path[Math.Min(6, path.Length - 1)];
-            var blocked = FindNearbyBlockedCell(candidate.Level, safe);
+            // Native discovery rebuilds the exact closed collision/layer baseline
+            // that activation publishes. Only door mode needs this extra snapshot;
+            // the legacy branch intentionally retains its original level predicate.
+            var closedLevel = doorAwareConnectivity
+                ? AuthoritativeCathedralDoors.Discover(candidate.Level).Level
+                : candidate.Level;
+            var reserved = doorAwareConnectivity ? DoorReservedCells(closedLevel) : null;
+            var safe = reserved is null
+                ? path[Math.Min(6, path.Length - 1)]
+                : SelectPathCell(path, 6, reserved!, closedLevel,
+                    $"Generated Cathedral depth {candidate.Level.LevelId} has no safe closed-state resume cell.");
+            var blocked = FindNearbyBlockedCell(closedLevel, safe, reserved);
             CathedralDepthPlaytestPoint? encounter = policy == CathedralDepthPlaytestPlacementPolicy.AuthoredDiagnostic
-                ? path[Math.Min(7, path.Length - 1)]
+                ? reserved is null
+                    ? path[Math.Min(7, path.Length - 1)]
+                    : SelectPathCell(path, 7, reserved!, closedLevel,
+                        $"Generated Cathedral depth {candidate.Level.LevelId} has no safe diagnostic encounter cell.")
                 : null;
             CathedralDepthPlaytestPoint? @object = policy == CathedralDepthPlaytestPlacementPolicy.AuthoredDiagnostic
-                ? path[3]
+                ? reserved is null
+                    ? path[3]
+                    : SelectPathCell(path, 3, reserved!, closedLevel,
+                        $"Generated Cathedral depth {candidate.Level.LevelId} has no safe diagnostic object cell.")
                 : null;
             if (encounter is not null && @object is not null && encounter == @object)
                 throw new InvalidDataException("Authored Cathedral diagnostic encounter and object overlap.");
@@ -374,8 +394,12 @@ public static class CathedralDepthPlaytestCompiler
 
     private static CathedralDepthPlaytestPoint[] PathFromEntry(
         AuthoritativeLevel level,
-        AuthoritativeCathedralLevel1RoutePoints routes)
+        AuthoritativeCathedralLevel1RoutePoints routes,
+        bool doorAwareConnectivity)
     {
+        var navigationLevel = doorAwareConnectivity
+            ? OpenReachableDoors(level, routes.MainEntry, routes.DownTrigger)
+            : level;
         var start = (routes.MainEntry.X, routes.MainEntry.Y);
         var blockedAnchors = new HashSet<(int X, int Y)>
         {
@@ -403,7 +427,7 @@ public static class CathedralDepthPlaytestCompiler
                 var next = (X: current.X + dx, Y: current.Y + dy);
                 if (previous.ContainsKey(next)
                     || (next != start && blockedAnchors.Contains(next))
-                    || !level.IsWalkable(next.X, next.Y))
+                    || !IsCompilerWalkable(navigationLevel, next.X, next.Y, doorAwareConnectivity))
                     continue;
                 previous[next] = current;
                 queue.Enqueue(next);
@@ -440,7 +464,8 @@ public static class CathedralDepthPlaytestCompiler
 
     private static CathedralDepthPlaytestPoint FindNearbyBlockedCell(
         AuthoritativeLevel level,
-        CathedralDepthPlaytestPoint origin)
+        CathedralDepthPlaytestPoint origin,
+        IReadOnlySet<(int X, int Y)>? reserved = null)
     {
         for (var radius = 1; radius < 16; radius++)
         {
@@ -450,7 +475,8 @@ public static class CathedralDepthPlaytestCompiler
                 {
                     if (Math.Abs(x - origin.X) + Math.Abs(y - origin.Y) != radius
                         || !level.ContainsPosition(x, y)
-                        || level.IsWalkable(x, y))
+                        || level.IsWalkable(x, y)
+                        || reserved?.Contains((x, y)) == true)
                         continue;
                     return new CathedralDepthPlaytestPoint(x, y);
                 }
@@ -459,28 +485,59 @@ public static class CathedralDepthPlaytestCompiler
         throw new InvalidDataException($"Generated Cathedral level {level.LevelId} has no nearby blocked fine cell.");
     }
 
+    private static HashSet<(int X, int Y)> DoorReservedCells(AuthoritativeLevel level)
+    {
+        var reserved = level.NativePieceLayer.Select((piece, cell) => (piece, cell))
+            .Where(value => value.piece == 269)
+            .Select(value => (value.cell % level.Width, value.cell / level.Width))
+            .ToHashSet();
+        foreach (var door in AuthoritativeCathedralDoors.Discover(level).Doors)
+            reserved.Add((door.PositionX, door.PositionY));
+        return reserved;
+    }
+
+    private static CathedralDepthPlaytestPoint SelectPathCell(
+        IReadOnlyList<CathedralDepthPlaytestPoint> path,
+        int minimumDistance,
+        IReadOnlySet<(int X, int Y)> reserved,
+        AuthoritativeLevel closedLevel,
+        string error)
+    {
+        for (var index = Math.Min(minimumDistance, path.Count - 1); index < path.Count; index++)
+            if (!reserved.Contains((path[index].X, path[index].Y))
+                && closedLevel.IsWalkable(path[index].X, path[index].Y))
+                return path[index];
+        throw new InvalidDataException(error);
+    }
+
     private static void ValidateStairConnectivity(
-        IReadOnlyList<AuthoritativeCathedralDepthGenerationCandidate> candidates)
+        IReadOnlyList<AuthoritativeCathedralDepthGenerationCandidate> candidates,
+        bool doorAwareConnectivity)
     {
         foreach (var candidate in candidates)
         {
             var routes = candidate.Routes;
             RequireStairPath(candidate.Level, routes.MainEntry, routes.UpTrigger,
-                candidate.Identity.Depth < 4 ? routes.DownTrigger : null, "MAIN to Up");
+                candidate.Identity.Depth < 4 ? routes.DownTrigger : null, "MAIN to Up",
+                doorAwareConnectivity);
             if (candidate.Identity.Depth < 4)
             {
                 RequireStairPath(candidate.Level, routes.MainEntry, routes.DownTrigger,
-                    routes.UpTrigger, "MAIN to Down");
+                    routes.UpTrigger, "MAIN to Down", doorAwareConnectivity);
                 RequireStairPath(candidate.Level, routes.PreviousEntry, routes.UpTrigger,
-                    routes.DownTrigger, "PREV to Up");
+                    routes.DownTrigger, "PREV to Up", doorAwareConnectivity);
             }
         }
     }
 
     private static void RequireStairPath(AuthoritativeLevel level,
         AuthoritativeCathedralPoint start, AuthoritativeCathedralPoint target,
-        AuthoritativeCathedralPoint? otherTrigger, string direction)
+        AuthoritativeCathedralPoint? otherTrigger, string direction,
+        bool doorAwareConnectivity)
     {
+        var navigationLevel = doorAwareConnectivity
+            ? OpenReachableDoors(level, start, otherTrigger)
+            : level;
         var queue = new Queue<AuthoritativeCathedralPoint>();
         var visited = new HashSet<AuthoritativeCathedralPoint> { start };
         queue.Enqueue(start);
@@ -492,7 +549,8 @@ public static class CathedralDepthPlaytestCompiler
             foreach (var offset in DeterministicGridNavigation.NeighborDisplacements)
             {
                 var next = new AuthoritativeCathedralPoint(current.X + offset.X, current.Y + offset.Y);
-                if (next == otherTrigger || !level.IsWalkable(next.X, next.Y) || !visited.Add(next))
+                if (next == otherTrigger || !IsCompilerWalkable(navigationLevel, next.X, next.Y, doorAwareConnectivity)
+                    || !visited.Add(next))
                     continue;
                 queue.Enqueue(next);
             }
@@ -500,6 +558,79 @@ public static class CathedralDepthPlaytestCompiler
         throw new InvalidDataException($"Generated Cathedral depth {level.LevelId} has no {direction} stair path. "
             + "The diagnostic profile does not supply native object/door placement; choose explicit supported inputs, not altered geometry.");
     }
+
+    /** Opens only doors reachable from the current side, retaining native mutation semantics. */
+    private static AuthoritativeLevel OpenReachableDoors(
+        AuthoritativeLevel level,
+        AuthoritativeCathedralPoint start,
+        AuthoritativeCathedralPoint? excluded)
+    {
+        var discovery = AuthoritativeCathedralDoors.Discover(level);
+        var current = discovery.Level;
+        var doors = discovery.Doors.ToArray();
+        var opened = new HashSet<(int X, int Y)>();
+        while (true)
+        {
+            var reachable = FloodWalkable(current, start, excluded);
+            var changed = false;
+            foreach (var door in doors)
+            {
+                if (opened.Contains((door.PositionX, door.PositionY))
+                    || !IsDoorApproachable(door, reachable))
+                    continue;
+                current = AuthoritativeCathedralDoors.Operate(current, door, occupied: false).Level;
+                opened.Add((door.PositionX, door.PositionY));
+                changed = true;
+            }
+            if (!changed)
+                return current;
+        }
+    }
+
+    private static HashSet<(int X, int Y)> FloodWalkable(
+        AuthoritativeLevel level,
+        AuthoritativeCathedralPoint start,
+        AuthoritativeCathedralPoint? excluded)
+    {
+        var reachable = new HashSet<(int X, int Y)>();
+        if (!IsCompilerWalkable(level, start.X, start.Y, doorAwareConnectivity: true))
+            return reachable;
+        var queue = new Queue<(int X, int Y)>();
+        queue.Enqueue((start.X, start.Y));
+        reachable.Add((start.X, start.Y));
+        while (queue.Count != 0)
+        {
+            var current = queue.Dequeue();
+            foreach (var offset in DeterministicGridNavigation.NeighborDisplacements)
+            {
+                var next = (X: current.X + offset.X, Y: current.Y + offset.Y);
+                if (excluded is not null && next.X == excluded.Value.X && next.Y == excluded.Value.Y)
+                    continue;
+                if (reachable.Contains(next) || !IsCompilerWalkable(level, next.X, next.Y, doorAwareConnectivity: true))
+                    continue;
+                reachable.Add(next);
+                queue.Enqueue(next);
+            }
+        }
+        return reachable;
+    }
+
+    private static bool IsDoorApproachable(
+        AuthoritativeCathedralDoorState door,
+        IReadOnlySet<(int X, int Y)> reachable)
+    {
+        for (var y = door.PositionY - 1; y <= door.PositionY + 1; y++)
+            for (var x = door.PositionX - 1; x <= door.PositionX + 1; x++)
+                if (reachable.Contains((x, y)))
+                    return true;
+        return false;
+    }
+
+    private static bool IsCompilerWalkable(
+        AuthoritativeLevel level, int x, int y, bool doorAwareConnectivity = false)
+        => level.ContainsPosition(x, y)
+            && level.IsWalkable(x, y)
+            && (!doorAwareConnectivity || level.NativePieceLayer[y * level.Width + x] != 269);
 
     private static TsvTable BuildDepthCatalog(CathedralDepthPlaytestCompilerOptions options)
     {

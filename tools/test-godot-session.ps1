@@ -1,5 +1,5 @@
 [CmdletBinding()]
-param([string]$GodotExecutable, [ValidateSet('legacy', 'cohort')] [string]$PersistenceMode = 'legacy', [switch]$Visible, [switch]$Journey, [switch]$TownLoop, [switch]$Lifecycle, [switch]$Multiplayer, [switch]$MultiplayerRecovery, [switch]$MultiplayerPendingRecovery, [string]$CathedralProfileDirectory, [string]$CathedralDepthProfileDirectory, [ValidateSet('default', 'atlas', 'semantic', 'missing', 'undersized', 'invalid')] [string]$PresentationPackProfile = 'default')
+param([string]$GodotExecutable, [ValidateSet('legacy', 'cohort')] [string]$PersistenceMode = 'legacy', [switch]$Visible, [switch]$Journey, [switch]$TownLoop, [switch]$Lifecycle, [switch]$Multiplayer, [switch]$MultiplayerRecovery, [switch]$MultiplayerPendingRecovery, [string]$CathedralProfileDirectory, [string]$CathedralDepthProfileDirectory, [string]$CathedralDoorProfileDirectory, [ValidateSet('default', 'atlas', 'semantic', 'missing', 'undersized', 'invalid')] [string]$PresentationPackProfile = 'default')
 
 $ErrorActionPreference = 'Stop'
 $PersistenceMode = $PersistenceMode.ToLowerInvariant()
@@ -13,18 +13,24 @@ if (($MultiplayerRecovery -or $MultiplayerPendingRecovery) -and $PersistenceMode
 if ($CathedralDepthProfileDirectory -and ($CathedralProfileDirectory -or $Journey -or $TownLoop -or $Lifecycle -or $Multiplayer)) {
     throw 'Cathedral depth acceptance requires its own compiled profile.'
 }
+if ($CathedralDoorProfileDirectory -and ($CathedralProfileDirectory -or $CathedralDepthProfileDirectory -or $Journey -or $TownLoop -or $Lifecycle -or $Multiplayer -or $MultiplayerRecovery -or $MultiplayerPendingRecovery)) {
+    throw 'Cathedral door acceptance requires its own compiled profile.'
+}
 if ($Journey -and $TownLoop) { throw 'Choose either -Journey or -TownLoop.' }
 if ($Lifecycle -and ($Journey -or $TownLoop -or $Multiplayer)) { throw 'Lifecycle acceptance is a separate Sorcerer preview profile.' }
 if ($Multiplayer -and ($Journey -or $TownLoop -or $Lifecycle)) { throw 'Multiplayer acceptance is a separate base-content profile.' }
 if ($CathedralProfileDirectory -and ($Journey -or $TownLoop -or $Lifecycle -or $Multiplayer)) {
     throw 'Cathedral acceptance is a separate compiled single-player playtest profile.'
 }
-if ($PresentationPackProfile -ne 'default' -and ($Journey -or $TownLoop -or $Lifecycle -or $Multiplayer -or $CathedralProfileDirectory -or $CathedralDepthProfileDirectory)) {
+if ($CathedralDoorProfileDirectory -and $PresentationPackProfile -ne 'default') {
+    throw 'Cathedral door acceptance cannot combine with presentation-pack fixtures.'
+}
+if ($PresentationPackProfile -ne 'default' -and ($Journey -or $TownLoop -or $Lifecycle -or $Multiplayer -or $CathedralProfileDirectory -or $CathedralDepthProfileDirectory -or $CathedralDoorProfileDirectory)) {
     throw 'Presentation pack fixtures require the separate base single-player acceptance path.'
 }
 $repositoryRoot = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot '..')).Path
-$sessionDirectory = if ($CathedralProfileDirectory -or $CathedralDepthProfileDirectory) {
-    $profileDirectory = if ($CathedralDepthProfileDirectory) { $CathedralDepthProfileDirectory } else { $CathedralProfileDirectory }
+$sessionDirectory = if ($CathedralProfileDirectory -or $CathedralDepthProfileDirectory -or $CathedralDoorProfileDirectory) {
+    $profileDirectory = if ($CathedralDepthProfileDirectory) { $CathedralDepthProfileDirectory } elseif ($CathedralDoorProfileDirectory) { $CathedralDoorProfileDirectory } else { $CathedralProfileDirectory }
     Join-Path ([IO.Path]::GetFullPath($profileDirectory)) ('sessions/acceptance-' + [guid]::NewGuid().ToString('N'))
 } else { Join-Path ([System.IO.Path]::GetTempPath()) ('Godevilution-Scene-Acceptance-' + [guid]::NewGuid().ToString('N')) }
 $launcher = Join-Path $repositoryRoot 'godot/run-local-client.ps1'
@@ -186,6 +192,23 @@ try {
     [Environment]::SetEnvironmentVariable('GODEVILUTION_PRESENTATION_PACK', $null, 'Process')
     if ($PresentationPackProfile -ne 'default') {
         $env:GODEVILUTION_PRESENTATION_PACK = "res://assets/presentation-acceptance-$PresentationPackProfile.json"
+    }
+    if ($CathedralDoorProfileDirectory) {
+        $parameters.CathedralDoorProfileDirectory = $CathedralDoorProfileDirectory
+        $parameters.QuitAfterSeconds = 300
+        & $launcher @parameters -AcceptancePhase CathedralDoorJourney
+        $parameters.QuitAfterSeconds = 180
+        & $launcher @parameters -AcceptancePhase CathedralDoorResume
+        $created = Get-Content -LiteralPath (Join-Path $sessionDirectory 'cathedraldoorjourney-processes.json') -Raw | ConvertFrom-Json
+        $resumed = Get-Content -LiteralPath (Join-Path $sessionDirectory 'cathedraldoorresume-processes.json') -Raw | ConvertFrom-Json
+        if (($created.HostProcessId -eq $resumed.HostProcessId -and $created.HostStartedUtc -eq $resumed.HostStartedUtc) -or
+            ($created.Clients[0].ProcessId -eq $resumed.Clients[0].ProcessId -and $created.Clients[0].StartedUtc -eq $resumed.Clients[0].StartedUtc) -or
+            $created.ProfileHash -cne $resumed.ProfileHash -or $created.ContentTreeHash -cne $resumed.ContentTreeHash -or
+            $created.ProfileKind -cne 'cathedral-doors-playtest' -or $resumed.ProfileKind -cne 'cathedral-doors-playtest') {
+            throw 'Cathedral door resume requires fresh host/client processes and the same isolated door profile.'
+        }
+        Write-Host "PASS: actual Godot Cathedral mutable-door journey, occupied blocking, close/reopen and fresh-host restore. Evidence: $sessionDirectory"
+        return
     }
     if ($CathedralDepthProfileDirectory) {
         $parameters.CathedralDepthProfileDirectory = $CathedralDepthProfileDirectory

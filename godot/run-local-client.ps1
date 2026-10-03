@@ -14,8 +14,9 @@ param(
     [switch]$Multiplayer,
     [string]$CathedralProfileDirectory,
     [string]$CathedralDepthProfileDirectory,
+    [string]$CathedralDoorProfileDirectory,
     [ValidateSet(1, 4)] [int]$PerformanceParticipants = 1,
-    [ValidateSet('Create', 'Resume', 'Recovery', 'Journey', 'JourneyResume', 'TownLoop', 'TownLoopResume', 'Lifecycle', 'LifecycleResume', 'MultiplayerCreate', 'MultiplayerResume', 'MultiplayerRecovery', 'MultiplayerPendingRecovery', 'Performance', 'CathedralJourney', 'CathedralResume', 'CathedralDepthJourney', 'CathedralDepthResume')] [string]$AcceptancePhase
+    [ValidateSet('Create', 'Resume', 'Recovery', 'Journey', 'JourneyResume', 'TownLoop', 'TownLoopResume', 'Lifecycle', 'LifecycleResume', 'MultiplayerCreate', 'MultiplayerResume', 'MultiplayerRecovery', 'MultiplayerPendingRecovery', 'Performance', 'CathedralJourney', 'CathedralResume', 'CathedralDepthJourney', 'CathedralDepthResume', 'CathedralDoorJourney', 'CathedralDoorResume')] [string]$AcceptancePhase
 )
 
 $ErrorActionPreference = 'Stop'
@@ -33,11 +34,16 @@ if ($lifecycle -and $AcceptancePhase -and -not $lifecyclePhase) {
     throw 'The lifecycle preview only supports Lifecycle and LifecycleResume acceptance phases.'
 }
 $cathedralDepths = -not [string]::IsNullOrWhiteSpace($CathedralDepthProfileDirectory)
-if ($cathedralDepths -and -not [string]::IsNullOrWhiteSpace($CathedralProfileDirectory)) {
-    throw 'Choose either the L1 or depths 1-4 Cathedral profile, never both.'
+$cathedralDoors = -not [string]::IsNullOrWhiteSpace($CathedralDoorProfileDirectory)
+$cathedralProfileModes = @(
+    $cathedralDepths,
+    -not [string]::IsNullOrWhiteSpace($CathedralProfileDirectory),
+    $cathedralDoors) | Where-Object { $_ }
+if ($cathedralProfileModes.Count -gt 1) {
+    throw 'Choose exactly one Cathedral profile mode: L1, depths 1-4, or mutable doors.'
 }
 $cathedral = $cathedralDepths -or -not [string]::IsNullOrWhiteSpace($CathedralProfileDirectory)
-if ($cathedral -and ($PreviewContent -or $PortalPreviewContent -or $LifecyclePreviewContent -or $Multiplayer -or $performance)) {
+if (($cathedral -or $cathedralDoors) -and ($PreviewContent -or $PortalPreviewContent -or $LifecyclePreviewContent -or $Multiplayer -or $performance)) {
     throw 'Cathedral playtests require their own single-player content and save profile.'
 }
 if (($AcceptancePhase -in @('CathedralJourney', 'CathedralResume')) -and (-not $cathedral -or $cathedralDepths)) {
@@ -46,8 +52,12 @@ if (($AcceptancePhase -in @('CathedralJourney', 'CathedralResume')) -and (-not $
 if (($AcceptancePhase -in @('CathedralDepthJourney', 'CathedralDepthResume')) -and -not $cathedralDepths) {
     throw 'Cathedral depth acceptance requires an explicit compiled -CathedralDepthProfileDirectory.'
 }
+if (($AcceptancePhase -in @('CathedralDoorJourney', 'CathedralDoorResume')) -and -not $cathedralDoors) {
+    throw 'Cathedral door acceptance requires an explicit compiled -CathedralDoorProfileDirectory.'
+}
 $cathedralPhases = if ($cathedralDepths) { @('CathedralDepthJourney', 'CathedralDepthResume') } else { @('CathedralJourney', 'CathedralResume') }
-if ($cathedral -and $AcceptancePhase -and $AcceptancePhase -notin $cathedralPhases) {
+if ($cathedralDoors) { $cathedralPhases = @('CathedralDoorJourney', 'CathedralDoorResume') }
+if (($cathedral -or $cathedralDoors) -and $AcceptancePhase -and $AcceptancePhase -notin $cathedralPhases) {
     throw 'Compiled Cathedral content only supports its own acceptance phases.'
 }
 if ($performance) {
@@ -85,8 +95,8 @@ $serverExecutable = Join-Path $repositoryRoot 'server/src/Devilution.Server/bin/
 $clientSourceProject = Join-Path $repositoryRoot 'godot/Devilution.Client'
 $clientProject = $clientSourceProject
 if ([string]::IsNullOrWhiteSpace($SessionDirectory)) {
-    $SessionDirectory = if ($cathedral) {
-        $profileDirectory = if ($cathedralDepths) { $CathedralDepthProfileDirectory } else { $CathedralProfileDirectory }
+    $SessionDirectory = if ($cathedral -or $cathedralDoors) {
+        $profileDirectory = if ($cathedralDepths) { $CathedralDepthProfileDirectory } elseif ($cathedralDoors) { $CathedralDoorProfileDirectory } else { $CathedralProfileDirectory }
         Join-Path ([IO.Path]::GetFullPath($profileDirectory)) 'sessions/local'
     } else {
         Join-Path $repositoryRoot $(if ($Multiplayer) { '.local/godot-multiplayer' } elseif ($lifecycle) { '.local/godot-lifecycle-preview' } elseif ($PortalPreviewContent) { '.local/godot-portal-preview' } elseif ($PreviewContent) { '.local/godot-preview' } else { '.local/godot' })
@@ -145,7 +155,7 @@ $environmentNames = @('DEVILUTION_SERVER_HOST', 'DEVILUTION_SERVER_PORT', 'DEVIL
     'DEVILUTION_CHARACTER_NAME', 'DEVILUTION_RESUME_TOKEN', 'DEVILUTION_RESUME_TOKEN_PATH',
     'GODEVILUTION_ACCEPTANCE_PHASE', 'GODEVILUTION_ACCEPTANCE_DIRECTORY', 'GODEVILUTION_QUIT_AFTER_SECONDS',
     'GODEVILUTION_PERSISTENCE_MODE',
-    'GODEVILUTION_LOCAL_PLAYER', 'GODEVILUTION_PORTAL_PREVIEW', 'GODEVILUTION_LIFECYCLE_PREVIEW', 'GODEVILUTION_CATHEDRAL_PROFILE', 'GODEVILUTION_CATHEDRAL_DEPTH_PROFILE',
+    'GODEVILUTION_LOCAL_PLAYER', 'GODEVILUTION_PORTAL_PREVIEW', 'GODEVILUTION_LIFECYCLE_PREVIEW', 'GODEVILUTION_CATHEDRAL_PROFILE', 'GODEVILUTION_CATHEDRAL_DEPTH_PROFILE', 'GODEVILUTION_CATHEDRAL_DOOR_PROFILE',
     'GODEVILUTION_PERFORMANCE_PARTICIPANTS', 'GODEVILUTION_PERFORMANCE_SHARED_DIRECTORY',
     'GODEVILUTION_CLIENT_PERFORMANCE_OUTPUT', 'GODEVILUTION_CLIENT_PERFORMANCE_WARMUP_SECONDS',
     'GODEVILUTION_CLIENT_PERFORMANCE_DURATION_SECONDS', 'GODEVILUTION_CLIENT_PERFORMANCE_MAX_SAMPLES')
@@ -254,6 +264,123 @@ function Get-CathedralPlaytestProfile([string]$Directory, [string]$Session, [boo
         Metadata = $metadata; MetadataPath = $metadataPath; ContentRoot = $contentRoot
         MetadataHash = (Get-FileSha256 $metadataPath).ToUpperInvariant()
         ContentTreeHash = $treeHash
+    }
+}
+
+function Get-CathedralDoorPlaytestProfile([string]$Directory, [string]$Session) {
+    # Door profiles deliberately use a separate metadata identity and session
+    # marker so ordinary L1/depth saves can never adopt mutable-door content.
+    $root = [IO.Path]::GetFullPath($Directory).TrimEnd('\', '/')
+    $sessionRoot = [IO.Path]::GetFullPath($Session)
+    if ($root.Contains('"') -or $sessionRoot.Contains('"')) { throw 'Cathedral door paths must not contain quotes.' }
+    Assert-NoCathedralReparsePoint $root
+    Assert-NoCathedralReparsePoint $sessionRoot
+    $allowedSessions = Join-Path $root 'sessions'
+    if (-not $sessionRoot.StartsWith($allowedSessions.TrimEnd('\', '/') + [IO.Path]::DirectorySeparatorChar, [StringComparison]::OrdinalIgnoreCase)) {
+        throw 'Cathedral door saves must be in a separate child directory under the compiled profile sessions directory.'
+    }
+    $metadataPath = Join-Path $root 'cathedral-doors-playtest.json'
+    Assert-NoCathedralReparsePoint $metadataPath
+    $metadata = Get-Content -LiteralPath $metadataPath -Raw -ErrorAction Stop | ConvertFrom-Json
+    if (($metadata.FormatVersion -isnot [int] -and $metadata.FormatVersion -isnot [long]) -or $metadata.FormatVersion -ne 1 -or $metadata.AdapterId -cne 'devilution.diablo.cathedral-doors.v1' -or
+        $metadata.ContentDirectory -cne 'content' -or $metadata.ContentId -cne 'godevilution.cathedral-doors-playtest' -or
+        $metadata.ContentVersion -cne '0.1.0' -or $metadata.Entry -cne 'main' -or
+        $metadata.ContentManifestHash -notmatch '^[0-9a-fA-F]{64}$' -or $metadata.PackFileHash -notmatch '^[0-9A-F]{64}$') {
+        throw 'Unsupported or incomplete Cathedral door playtest profile.'
+    }
+    if (@($metadata.DepthSeeds).Count -ne 4 -or @($metadata.Levels).Count -ne 4 -or
+        $metadata.PlacementPolicy -cnotin @('none', 'authored-diagnostic') -or
+        $metadata.NativePopulationClaim -isnot [bool] -or $metadata.NativePopulationClaim -or
+        $metadata.DoorProfileId -cne 'original-diablo.cathedral-doors' -or
+        ($metadata.DoorProfileRevision -isnot [int] -and $metadata.DoorProfileRevision -isnot [long]) -or $metadata.DoorProfileRevision -ne 1 -or
+        $metadata.DoorCatalogFingerprint -notmatch '^[0-9a-fA-F]{64}$' -or
+        @($metadata.DoorMappings).Count -ne 4 -or @($metadata.Routes).Count -ne 8) {
+        throw 'Cathedral door profiles require four ordered depths, the no-population policy, and a complete door catalog identity.'
+    }
+    for ($index = 0; $index -lt 4; $index++) {
+        $seed = $metadata.DepthSeeds[$index]
+        $level = $metadata.Levels[$index]
+        $levelSymbol = @('cathedral', 'cathedral_depth_2', 'cathedral_depth_3', 'cathedral_depth_4')[$index]
+        if (($seed -isnot [int] -and $seed -isnot [long]) -or $seed -lt 0 -or $seed -gt [uint32]::MaxValue -or
+            ($level.Depth -isnot [int] -and $level.Depth -isnot [long]) -or ($level.LevelId -isnot [int] -and $level.LevelId -isnot [long]) -or
+            $level.Depth -ne ($index + 1) -or $level.LevelId -ne ($index + 1) -or $level.LevelSymbol -cne $levelSymbol -or
+            $level.Entry -cne 'main' -or ($level.DungeonSeed -isnot [int] -and $level.DungeonSeed -isnot [long]) -or
+            $level.DungeonSeed -lt 0 -or $level.DungeonSeed -gt [uint32]::MaxValue -or
+            $level.DungeonSeed -ne $seed) {
+            throw 'Cathedral door profile depths and seeds must be ordered unsigned 32-bit integer JSON values.'
+        }
+        $mapping = $metadata.DoorMappings[$index]
+        if (($mapping.Depth -isnot [int] -and $mapping.Depth -isnot [long]) -or ($mapping.LevelId -isnot [int] -and $mapping.LevelId -isnot [long]) -or
+            ($mapping.LeftObjectId -isnot [int] -and $mapping.LeftObjectId -isnot [long]) -or ($mapping.RightObjectId -isnot [int] -and $mapping.RightObjectId -isnot [long]) -or
+            ($mapping.LeftNativeObjectId -isnot [int] -and $mapping.LeftNativeObjectId -isnot [long]) -or ($mapping.RightNativeObjectId -isnot [int] -and $mapping.RightNativeObjectId -isnot [long]) -or
+            $mapping.Depth -ne ($index + 1) -or $mapping.LevelId -ne ($index + 1) -or
+            $mapping.LevelSymbol -cne $levelSymbol -or $mapping.LeftObjectId -ne 1 -or $mapping.RightObjectId -ne 2 -or
+            $mapping.LeftNativeObjectId -ne 1 -or $mapping.RightNativeObjectId -ne 2 -or
+            $mapping.LeftObjectSymbol -cne 'l1_left_door' -or $mapping.RightObjectSymbol -cne 'l1_right_door') {
+            throw 'Cathedral door profile mappings must contain ordered depths and native left/right object IDs 1/2.'
+        }
+    }
+    $catalogCanonical = [string]::Join("`n", @($metadata.DoorMappings | ForEach-Object {
+        '{0}:{1}:{2}' -f $_.LevelId, $_.LeftObjectId, $_.RightObjectId
+    }))
+    $catalogSha = [Security.Cryptography.SHA256]::Create()
+    try { $expectedCatalogFingerprint = [BitConverter]::ToString($catalogSha.ComputeHash([Text.Encoding]::UTF8.GetBytes($catalogCanonical))).Replace('-', '') }
+    finally { $catalogSha.Dispose() }
+    if ($metadata.DoorCatalogFingerprint -cne $expectedCatalogFingerprint) {
+        throw 'Cathedral door profile catalog fingerprint does not match its ordered mappings.'
+    }
+    $routeIds = [Collections.Generic.HashSet[long]]::new()
+    foreach ($route in @($metadata.Routes)) {
+        if (($route.RouteId -isnot [int] -and $route.RouteId -isnot [long]) -or $route.RouteId -lt 1 -or
+            ($route.SourceLevelId -isnot [int] -and $route.SourceLevelId -isnot [long]) -or
+            ($route.DestinationLevelId -isnot [int] -and $route.DestinationLevelId -isnot [long]) -or
+            $route.SourceLevelId -lt 0 -or $route.DestinationLevelId -lt 0 -or
+            [string]::IsNullOrWhiteSpace($route.RouteSymbol) -or
+            $route.Direction -cnotin @('down', 'up') -or
+            [string]::IsNullOrWhiteSpace($route.SourceLevelSymbol) -or
+            [string]::IsNullOrWhiteSpace($route.DestinationLevelSymbol) -or
+            -not $routeIds.Add([long]$route.RouteId)) {
+            throw 'Cathedral door profile routes must contain eight unique typed route identities.'
+        }
+    }
+    $contentRoot = Join-Path $root 'content'
+    Assert-NoCathedralReparsePoint $contentRoot
+    if (Test-Path -LiteralPath $sessionRoot) {
+        foreach ($entry in Get-ChildItem -LiteralPath $sessionRoot -Force -Recurse -ErrorAction Stop) {
+            if ($entry.Attributes -band [IO.FileAttributes]::ReparsePoint) { throw 'Cathedral door session storage contains a reparse point.' }
+        }
+    }
+    foreach ($entry in Get-ChildItem -LiteralPath $contentRoot -Force -Recurse -ErrorAction Stop) {
+        if ($entry.Attributes -band [IO.FileAttributes]::ReparsePoint) { throw 'Compiled Cathedral door content contains a reparse point.' }
+    }
+    $treeHash = Get-CathedralContentTreeHash $contentRoot
+    if ($treeHash -cne $metadata.PackFileHash) { throw 'The compiled Cathedral door pack hash does not match its published profile.' }
+    return [pscustomobject]@{
+        Metadata = $metadata; MetadataPath = $metadataPath; ContentRoot = $contentRoot
+        MetadataHash = (Get-FileSha256 $metadataPath).ToUpperInvariant()
+        ContentTreeHash = $treeHash
+    }
+}
+
+function Initialize-CathedralDoorPlaytestSession($Profile, [string]$Session) {
+    # Called only while the ordinary exclusive launcher lock is held.
+    $markerPath = Join-Path $Session 'cathedral-door-session.json'
+    if (Test-Path -LiteralPath $markerPath) {
+        $marker = Get-Content -LiteralPath $markerPath -Raw | ConvertFrom-Json
+        if (($marker.FormatVersion -isnot [int] -and $marker.FormatVersion -isnot [long]) -or $marker.FormatVersion -ne 1 -or $marker.ProfileKind -cne 'cathedral-doors-playtest' -or
+            $marker.AdapterId -cne 'devilution.diablo.cathedral-doors.v1' -or
+            $marker.MetadataHash -cne $Profile.MetadataHash -or $marker.ContentTreeHash -cne $Profile.ContentTreeHash) {
+            throw 'Cathedral door profile changed; use a fresh session instead of mixing existing saves.'
+        }
+    } else {
+        if (Get-ChildItem -LiteralPath $Session -Force | Where-Object Name -ne 'launcher.lock') {
+            throw 'An unmarked existing save profile must never become a Cathedral door session.'
+        }
+        $stream = [IO.File]::Open($markerPath, [IO.FileMode]::CreateNew, [IO.FileAccess]::Write, [IO.FileShare]::Read)
+        $writer = [IO.StreamWriter]::new($stream, [Text.UTF8Encoding]::new($false))
+        try {
+            $writer.Write(([ordered]@{ FormatVersion = 1; ProfileKind = 'cathedral-doors-playtest'; AdapterId = 'devilution.diablo.cathedral-doors.v1'; MetadataHash = $Profile.MetadataHash; ContentTreeHash = $Profile.ContentTreeHash } | ConvertTo-Json))
+        } finally { $writer.Dispose() }
     }
 }
 
@@ -1302,6 +1429,9 @@ try {
     $cathedralProfile = if ($cathedralDepths) {
         Get-CathedralPlaytestProfile $CathedralDepthProfileDirectory $SessionDirectory $true
     } elseif ($cathedral) { Get-CathedralPlaytestProfile $CathedralProfileDirectory $SessionDirectory } else { $null }
+    $cathedralDoorProfile = if ($cathedralDoors) {
+        Get-CathedralDoorPlaytestProfile $CathedralDoorProfileDirectory $SessionDirectory
+    } else { $null }
     New-Item -ItemType Directory -Path $SessionDirectory -Force | Out-Null
     if ($performance -and (Get-ChildItem -LiteralPath $SessionDirectory -Force)) {
         throw 'Performance acceptance requires a fresh empty session directory.'
@@ -1318,6 +1448,7 @@ try {
         }
     }
     if ($cathedral) { Initialize-CathedralPlaytestSession $cathedralProfile $SessionDirectory }
+    if ($cathedralDoors) { Initialize-CathedralDoorPlaytestSession $cathedralDoorProfile $SessionDirectory }
     $staging = New-IsolatedGodotProject $clientSourceProject (Join-Path $captureRoot 'godot/Devilution.Client')
     $clientProject = $staging.DestinationDirectory
     Write-ProjectStageEvidence $staging $null $projectStageEvidencePath $null
@@ -1340,13 +1471,16 @@ try {
     # Seed 5 keeps Butcher available under both production and native quest-pool
     # orderings. This diagnostic does not certify parity of the complete pools.
     # Existing acceptance and preview profiles retain seed 0.
-    $acceptanceArguments = if ($LifecyclePreviewContent) { '--starting-level 0 --random-seed 5' } elseif ($AcceptancePhase -or $PreviewContent -or $PortalPreviewContent -or $Multiplayer -or $cathedral) { '--starting-level 0 --random-seed 0' } else { '' }
+    $acceptanceArguments = if ($LifecyclePreviewContent) { '--starting-level 0 --random-seed 5' } elseif ($AcceptancePhase -or $PreviewContent -or $PortalPreviewContent -or $Multiplayer -or $cathedral -or $cathedralDoors) { '--starting-level 0 --random-seed 0' } else { '' }
     $overlayArguments = if ($PreviewContent -or $PortalPreviewContent) { '--content-overlay "{0}"' -f (Join-Path $repositoryRoot 'server/content/town-loop-preview') } elseif ($LifecyclePreviewContent) { '--content-overlay "{0}"' -f (Join-Path $repositoryRoot 'server/content/town-lifecycle-preview') } else { '' }
     if ($PortalPreviewContent) {
         $overlayArguments += ' --content-overlay "{0}"' -f (Join-Path $repositoryRoot 'server/content/town-portal-preview')
     }
     if ($cathedral) {
         $overlayArguments = '--content-root "{0}" --content-id {1} --content-version {2} --game-adapter {3}' -f $cathedralProfile.ContentRoot, $cathedralProfile.Metadata.ContentId, $cathedralProfile.Metadata.ContentVersion, $cathedralProfile.Metadata.AdapterId
+    }
+    if ($cathedralDoors) {
+        $overlayArguments = '--content-root "{0}" --content-id {1} --content-version {2} --game-adapter {3}' -f $cathedralDoorProfile.ContentRoot, $cathedralDoorProfile.Metadata.ContentId, $cathedralDoorProfile.Metadata.ContentVersion, $cathedralDoorProfile.Metadata.AdapterId
     }
     function Start-SessionServer([int]$ListenPort, [string]$LogPrefix) {
         $serverArguments = '--port {0} --protocol-version 0.2.0 --game-mode {4} --command-scheduling clock-gated --save-root "{1}/save" {2} {3} --persistence-mode {5}' -f $ListenPort, $SessionDirectory, $acceptanceArguments, $overlayArguments, $serverGameMode, $PersistenceMode
@@ -1384,6 +1518,7 @@ try {
             $expectedPersistence = if ($PersistenceMode -eq 'cohort') { 'complete cohort' } else { 'legacy per-session' }
             if ($persistence -cne $expectedPersistence) { throw "Unexpected server persistence mode: $persistence" }
             if ($cathedral -and $contentHash -cne $cathedralProfile.Metadata.ContentManifestHash) { throw 'The Cathedral host loaded a different content identity than the compiled profile.' }
+            if ($cathedralDoors -and $contentHash -cne $cathedralDoorProfile.Metadata.ContentManifestHash) { throw 'The Cathedral door host loaded a different content identity than the compiled profile.' }
             return [pscustomobject]@{ Process = $serverProcess; Port = $actualPort; ContentHash = $contentHash; RulesetHash = $rulesetHash; Mode = $gameMode; Persistence = $persistence }
         } catch {
             if ($null -ne $serverProcess) {
@@ -1445,6 +1580,7 @@ try {
         if ($LifecyclePreviewContent) { $clientEnvironment['GODEVILUTION_LIFECYCLE_PREVIEW'] = '1' }
         if ($cathedralDepths) { $clientEnvironment['GODEVILUTION_CATHEDRAL_DEPTH_PROFILE'] = $cathedralProfile.MetadataPath }
         elseif ($cathedral) { $clientEnvironment['GODEVILUTION_CATHEDRAL_PROFILE'] = $cathedralProfile.MetadataPath }
+        elseif ($cathedralDoors) { $clientEnvironment['GODEVILUTION_CATHEDRAL_DOOR_PROFILE'] = $cathedralDoorProfile.MetadataPath }
         if ($CharacterClassId -ge 0) { $clientEnvironment['DEVILUTION_CHARACTER_CLASS_ID'] = [string]$CharacterClassId }
         if (-not [string]::IsNullOrEmpty($CharacterName)) { $clientEnvironment['DEVILUTION_CHARACTER_NAME'] = $CharacterName }
         if ($Multiplayer) {
@@ -1527,9 +1663,15 @@ try {
         $processEvidence = @{ HostProcessId = $serverProcess.Id; HostStartedUtc = $serverProcess.StartTime.ToUniversalTime().ToString('O'); Port = $actualPort;
             PersistenceMode = $PersistenceMode; HostPersistence = $startedServer.Persistence;
             Clients = @($startedClients | ForEach-Object { @{ ProcessId = $_.Process.Id; StartedUtc = $_.Process.StartTime.ToUniversalTime().ToString('O') } }) }
-        if ($cathedral) {
-            $processEvidence.ProfileHash = $cathedralProfile.MetadataHash
-            $processEvidence.ContentTreeHash = $cathedralProfile.ContentTreeHash
+        if ($cathedral -or $cathedralDoors) {
+            if ($cathedralDoors) {
+                $processEvidence.ProfileHash = $cathedralDoorProfile.MetadataHash
+                $processEvidence.ContentTreeHash = $cathedralDoorProfile.ContentTreeHash
+                $processEvidence.ProfileKind = 'cathedral-doors-playtest'
+            } else {
+                $processEvidence.ProfileHash = $cathedralProfile.MetadataHash
+                $processEvidence.ContentTreeHash = $cathedralProfile.ContentTreeHash
+            }
         }
         [IO.File]::WriteAllText((Join-Path $SessionDirectory ($AcceptancePhase.ToLowerInvariant() + '-processes.json')), ($processEvidence | ConvertTo-Json -Depth 4))
     }

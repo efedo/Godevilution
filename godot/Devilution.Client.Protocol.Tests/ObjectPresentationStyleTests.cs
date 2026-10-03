@@ -8,6 +8,48 @@ namespace Devilution.Client.Protocol.Tests;
 public sealed class ObjectPresentationStyleTests
 {
     [Theory]
+    [InlineData(1U, 0, ObjectPresentationFrame.DoorClosed)]
+    [InlineData(1U, 1, ObjectPresentationFrame.DoorOpen)]
+    [InlineData(1U, 2, ObjectPresentationFrame.DoorBlocked)]
+    [InlineData(2U, 0, ObjectPresentationFrame.DoorClosed)]
+    [InlineData(2U, 1, ObjectPresentationFrame.DoorOpen)]
+    [InlineData(2U, 2, ObjectPresentationFrame.DoorBlocked)]
+    public void TypedDoorPresentationUsesExactServerState(uint nativeId, int doorState, ObjectPresentationFrame frame)
+    {
+        var closed = doorState == 0;
+        var state = new ObjectSnapshot {
+            EntityId = 17, ObjectId = 99, NativeObjectId = nativeId, LevelId = 1,
+            KeepVisibleAfterActivation = true, MissilePassable = !closed,
+            AnimationFrame = nativeId + (closed ? 0U : 2U),
+        };
+        state.CathedralDoor = new CathedralDoorSnapshot {
+            EntityId = 17, LevelId = 1, NativeObjectId = nativeId, DoorState = doorState,
+            CachedPiece = 43, CachedNeighborPiece = 49, AnimationFrame = state.AnimationFrame,
+            SelectionRegion = closed ? 3U : 2U, PreDraw = !closed, MissilePassable = !closed,
+        };
+        Assert.Equal(ObjectPresentationKind.CathedralDoor, ObjectPresentationStyle.Resolve(state));
+        Assert.Equal(frame, ObjectPresentationStyle.ResolveFrame(state));
+        state.CathedralDoor = null;
+        Assert.Equal(ObjectPresentationKind.Generic, ObjectPresentationStyle.Resolve(state));
+        Assert.Equal(ObjectPresentationFrame.Default, ObjectPresentationStyle.ResolveFrame(state));
+    }
+
+    [Fact]
+    public void HybridTypedDoorDoesNotSelectDoorPresentation()
+    {
+        var state = new ObjectSnapshot {
+            EntityId = 17, NativeObjectId = 1, KeepVisibleAfterActivation = true, AnimationFrame = 1,
+            EffectKind = 1,
+            CathedralDoor = new CathedralDoorSnapshot {
+                EntityId = 17, NativeObjectId = 1, CachedPiece = 43, CachedNeighborPiece = 49,
+                AnimationFrame = 1, SelectionRegion = 3,
+            },
+        };
+        Assert.NotEqual(ObjectPresentationKind.CathedralDoor, ObjectPresentationStyle.Resolve(state));
+        Assert.Equal(ObjectPresentationFrame.Default, ObjectPresentationStyle.ResolveFrame(state));
+    }
+
+    [Theory]
     [InlineData(ProtocolObjectPresentationKind.Unspecified, false, false, false, 0, ObjectPresentationKind.Generic)]
     [InlineData(ProtocolObjectPresentationKind.Generic, false, false, false, 0, ObjectPresentationKind.Generic)]
     [InlineData(ProtocolObjectPresentationKind.Shrine, false, false, false, 0, ObjectPresentationKind.Shrine)]

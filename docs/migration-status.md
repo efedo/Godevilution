@@ -148,6 +148,96 @@ open. Their scope, dependencies, and exit checks are defined only in the
 
 ## Recent implementation evidence
 
+### M2 isolated Cathedral door playtest integration (2026-10-03)
+
+The offline compiler now has an explicit `--cathedral-doors` mode and a separate
+`godevilution.cathedral-doors-playtest@0.1.0` pack/marker. It consumes caller-supplied
+semantic TIL/SOL TSVs only; no server archive loading or installation discovery
+is added. Four explicit seeds, MAIN entry, canonical per-depth left/right mapping
+and an immutable profile are validated. Native open/close operations on detached
+worlds establish route reachability; final activation checks scanner pool limits,
+light occupancy, authored overlap and routes before atomic publication. Geometry,
+seeds and legacy depth/L1/default outputs are not repaired or silently replaced.
+Default population is `none`; authored diagnostics are an explicit option, never
+a native population/RNG claim.
+
+The zero-argument `run-godot-cathedral-doors-playtest.ps1` uses this marker and its
+own child session directory. Profile/catalog/content fingerprints, typed JSON
+identities, exclusive storage and reparse-point refusal prevent adoption of old
+saves. Godot draws schematic CLOSED/OPEN/BLOCKED cues from validated typed state;
+raw native IDs alone do not opt objects into the new presentation. These cues do
+not qualify native loaded-art frames or full light presentation.
+
+Actual private compilation succeeds for explicit seeds `2588,2588,1,4294967295`:
+manifest `ad467e4227694ade041c4bd99dad9e67edc89127e678043a2082b50817141a26`,
+pack file hash `CAD3423C0879642D54DF0933C37BD8907C76640479F1BA1EF644C75C4F37CA75`.
+Licensed semantic inputs and generated content stay private under `.local/`.
+The guide records compilation and launch commands without distributing assets.
+
+Final source/test verification:
+
+- Compiler/L1/depth/documentation checks: 24 passes, zero failures and two
+  explicit-filter exclusions (6.390s). One explicit private two-compile case
+  passes (16.022s); five ordinary facts are filtered, not unavailable-input skips.
+  The five new ordinary compiler facts cover contracts/refusals only. Portable
+  happy-path publication, pool and occupancy fixtures remain a CI limitation;
+  private application/oracle evidence does not replace those fixtures.
+- Fresh final compilation matches the application door marker plus all 56
+  content files exactly. Fresh depth-only compilation matches the existing
+  legacy marker plus all 55 content files exactly. Logs are
+  `.local/m2-door-playtest-final-compatibility-verified.log` and
+  `.local/m2-door-playtest-compiler-private-repeat.log`.
+  A separate authored-diagnostic private pack also publishes successfully; four
+  malformed CLI flag combinations refuse. See the `compiler-authored` and
+  `compiler-cli-refusals` logs with the same prefix. This is compiler validation,
+  not authored-population application or native-population parity acceptance.
+- Launcher/safety/contract checks: 33 passes without exclusions (33.279s).
+  Full server: 1,519 passes, zero failures and four unchanged exclusions (49.232s).
+  Client style/selector: 41 passes without exclusions (258ms); full protocol
+  client: 746 passes, zero failures and two unchanged performance exclusions
+  (13m02.045s). Four documentation guards are included in the compiler focus.
+- Builds have zero errors. Compiler has zero warnings; server/client retain
+  known NU1900 feed warnings and the existing client xUnit2031 warning.
+  Source Godot SDK remains 4.7.1; isolated application stages use installed
+  Godot 4.7.2. This is not an SDK/engine upgrade remediation.
+
+Logs use `.local/m2-door-playtest-*`. Retain the initial missing-namespace build,
+oversized encoded PowerShell test invocation and comparison-script precedence
+failure. The corrected bounded test transport and read-only comparison of the
+same compiled outputs pass; these harness failures are distinct from the
+rendered gameplay rejection below. Independent review approves only this
+opt-in implementation/test scope, not rendered application or M0/M2 acceptance.
+
+Actual application evidence:
+
+- Headless Town-to-L1 walking, CLOSED/open/occupied-close refusal/leave/close/reopen
+  and save pass. A fresh host/client preserves identity, position, all four floors'
+  mutable geometry/special bytes and typed door state, then sends exactly saved
+  sequence plus one. Final sequences are 74/78. Evidence is
+  `.local/cathedral-doors-playtest/sessions/acceptance-70de9005bcd74f6180c720646455e74f`;
+  log `.local/m2-door-playtest-headless.log`.
+- Rendered creation completes the same operations. Inspected captures show closed,
+  open and occupied schematic cues; cold restore also reaches the saved OPEN draw.
+  The first resumed ordinary move (sequence 75) then rejects `TooLate`, receipt
+  applied tick 2622. The harness exits 1 and stops, retaining
+  `acceptance-ee80adadf96646b49fe8425189e121bf` under the same sessions root and
+  `.local/m2-door-playtest-rendered.log`. This is not a rendered-resume pass.
+  No retry or relaxed admission masks it. The receipt lacks requested-tick and
+  host-arrival measurements, so its cause is not classified as an estimator defect,
+  projection cost or any other specific timing mechanism.
+
+Across four phases, twelve engine-version/import/client stage records retain
+eleven zero exits and the failed rendered resume's client exit 1. Importers pass;
+the failed scene stops the driver and owned processes are cleaned up. These
+terminal checks preserve crash-safety evidence, not a successful failed journey.
+Six inspected door-state captures support the rendered observations above.
+
+These journeys traverse L1 only; equality of all four floors' hashes is restore
+evidence, not four-floor door traversal. Native art/frame admission, full native
+population/RNG, map resynchronization, broader topology, multiplayer and campaign
+qualification remain open. Next obtain exact dispatch/admission measurements for
+the retained timing gap. M0/M2 remain open; overall completion stays approximately 35%.
+
 ### M2 opt-in managed Cathedral door core (2026-10-03)
 
 A separate `devilution.diablo.cathedral-doors.v1` adapter/capability uses validated
@@ -204,12 +294,12 @@ the successful final rebuild and server rerun were sequential after it ended.
 Domain/native builds have no errors; managed server/client builds retain known
 NU1900 vulnerability-feed warnings and the existing client xUnit2031 warning.
 
-Door-aware content compilation, an isolated playable profile, actual Godot door
-and cold-host journeys, full native population/RNG, map resynchronization and
-campaign qualification remain open. Native art/frame qualification is required
-before activation; byte-bounded persisted frames alone do not prove loaded-art
-admission. This is not M2/family or M0 acceptance;
-the overall estimate stays approximately 35%.
+At this core batch boundary, door-aware compilation and actual Godot journeys
+were still open; the isolated playtest integration above supersedes those gaps.
+Native art/frame qualification remains required for native-client activation;
+byte-bounded persisted frames alone do not prove loaded-art admission. Full native
+population/RNG, map resynchronization and campaign qualification remain open.
+This is not M2/family or M0 acceptance; the overall estimate stays approximately 35%.
 
 ### M1 semantic player art and static HUD localization (2026-10-03)
 
