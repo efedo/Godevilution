@@ -424,6 +424,12 @@ this evidence. A sample art pack does not satisfy M4's full presentation gate.
    before changing timing policy, and qualify native loaded-art mapping and broader
    door traversal before widening playable topology. Existing
    profiles and launchers must not silently adopt this new capability.
+   Portable synthetic fixtures now cover actual four-depth None-policy compiler
+   publication/activation, deterministic hashes, overwrite refusal, light-only
+   pool overflow and a corrupted-pack authored/scanner-door activation refusal.
+   Preserve their diagnostic-only scope. Add genuine compiler-level adjacent
+   authored-footprint and exact mixed door/light 127-slot boundary fixtures;
+   light-only massive overflow and activation refusal do not close those gaps.
    Captures are independent expected fixtures, not seed-specific production
    transition tables. Port native-compatible discovery/transition logic for
    arbitrary seeds using validated external catalogs, preserving mutable geometry

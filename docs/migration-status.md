@@ -148,6 +148,29 @@ open. Their scope, dependencies, and exit checks are defined only in the
 
 ## Recent implementation evidence
 
+### M2 portable Cathedral door compiler coverage (2026-10-03)
+
+Four portable cases now exercise actual compilation with labeled synthetic
+TIL/SOL semantics: four-depth None-policy publication and activation, independent
+manifest/file-tree hashes and base-table immutability, repeatable publication and
+overwrite refusal, scanner-light pool overflow without publication, and a
+corrupted generated pack's authored-object/scanner-door activation refusal.
+These are diagnostic fixtures, not native geometry, shipped-content or population
+parity. No MPQs, production compiler changes or private pack/save changes are
+required.
+
+The initial five-case run retained three passes and two failures: an authored
+footprint fixture never reached its intended compiler refusal, and cleanup of an
+absent output masked the expected overflow exception. The unreachable case was
+removed rather than weakened. The repaired four cases pass; builds have zero
+warnings/errors. Logs use `.local/m2-door-compiler-portable-*`.
+
+Compiler-level adjacent authored item-footprint refusal and the exact mixed
+door/light 127-slot boundary still need portable fixtures. Massive light-only
+overflow proves neither. Existing private oracle/application evidence is
+unchanged; native art/population, wider traversal, campaign and M0/M2 gates remain
+open. Overall completion remains approximately 35%.
+
 ### M0 bounded command-timing capture and fresh rendered door repeat (2026-10-03)
 
 Client and host timing recorders are opt-in and bounded to 4,096 records. Normal

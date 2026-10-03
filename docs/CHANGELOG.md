@@ -2,6 +2,14 @@
 
 Notable changes to this fork are recorded below.
 
+- 2026-10-03: Add portable synthetic Cathedral door compiler fixtures for actual
+  four-depth publication/activation, independent hashes, repeatability, overwrite
+  refusal, scanner-light overflow and corrupted-pack authored/scanner overlap
+  refusal. Four cases pass without MPQs or production changes. Retain initial
+  fixture failures and narrow claims; adjacent compiler footprint and exact
+  mixed door/light pool-boundary coverage remain open. Update existing status
+  and plan without claiming native population or M0/M2 completion.
+
 - 2026-10-03: Add opt-in bounded client/host command-timing diagnostics with
   frozen dispatch/admission observations, detached failure-path export and
   asynchronous bounded host publication. Preserve normal launchers, strict
