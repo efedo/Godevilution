@@ -25,6 +25,7 @@ set(tests
   diablo_test
   level_common_test
   level_l1_test
+  cathedral_population_test
   level_l2_test
   level_l3_test
   level_l4_test

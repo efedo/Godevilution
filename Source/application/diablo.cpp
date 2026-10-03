@@ -2194,6 +2194,13 @@ const auto OptionChangeHandlerLanguage = (GetOptions().Language.code.SetValueCha
 
 } // namespace
 
+#ifdef BUILD_TESTING
+void CreateLevelForTesting(lvl_entry entry)
+{
+	CreateLevel(entry);
+}
+#endif
+
 void InitKeymapActions()
 {
 	Options &options = GetOptions();

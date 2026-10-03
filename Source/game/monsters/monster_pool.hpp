@@ -32,8 +32,8 @@ using MonsterPool = DenseEntityPool<Monster, MaxMonsters, SparseAllocationPolicy
 extern MonsterPool gMonsterPool;
 
 // Active monster index bookkeeping (separate from pool internals)
-extern unsigned ActiveMonsters[MaxMonsters];
-extern size_t ActiveMonsterCount;
+extern DVL_API_FOR_TEST unsigned ActiveMonsters[MaxMonsters];
+extern DVL_API_FOR_TEST size_t ActiveMonsterCount;
 
 void InitializeMonsterPool();
 

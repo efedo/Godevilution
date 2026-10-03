@@ -216,6 +216,6 @@ private:
 };
 
 /** @brief The single global Bestiary instance for the current level. */
-extern Bestiary LevelBestiary;
+extern DVL_API_FOR_TEST Bestiary LevelBestiary;
 
 } // namespace devilution

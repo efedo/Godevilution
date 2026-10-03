@@ -153,7 +153,7 @@ extern DVL_API_FOR_TEST Object *Objects;
 extern DVL_API_FOR_TEST int *AvailableObjects;
 extern DVL_API_FOR_TEST int *ActiveObjects;
 extern DVL_API_FOR_TEST int &ActiveObjectCount;
-extern bool LoadingMapObjects; // Indicates that objects are being loaded during gameplay and pre-calculated data should be updated
+extern DVL_API_FOR_TEST bool LoadingMapObjects; // Indicates that objects are being loaded during gameplay and pre-calculated data should be updated
 extern int NaKrulTomeSequence; // Tracks progress through the tome sequence that spawns Na-Krul (see OperateNakrulBook())
 
 // Find an object given a point in map coordinates

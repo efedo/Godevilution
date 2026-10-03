@@ -68,7 +68,7 @@ enum class PlayerActionType : uint8_t {
 	OperateObject,
 };
 
-extern uint32_t DungeonSeeds[NUMLEVELS];
+extern DVL_API_FOR_TEST uint32_t DungeonSeeds[NUMLEVELS];
 extern DVL_API_FOR_TEST std::optional<uint32_t> LevelSeeds[NUMLEVELS];
 extern DVL_API_FOR_TEST Point MousePosition;
 
@@ -89,6 +89,10 @@ extern PlayerActionType LastPlayerAction;
 void InitKeymapActions();
 void SetCursorPos(Point position);
 void FreeGameMem();
+#ifdef BUILD_TESTING
+// Calls the actual native pre-population level boundary for isolated oracles.
+DVL_API_FOR_TEST void CreateLevelForTesting(lvl_entry entry);
+#endif
 bool StartGame(bool bNewGame, bool bSinglePlayer);
 [[noreturn]] void diablo_quit(int exitStatus);
 int DiabloMain(int argc, char **argv);

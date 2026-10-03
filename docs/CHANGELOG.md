@@ -2,6 +2,16 @@
 
 Notable changes to this fork are recorded below.
 
+- 2026-10-03: Add an isolated native Cathedral initial-object oracle and bounded
+  repeated-capture runner. Include real stair/theme/monster prerequisites,
+  separate seed boundaries, native metadata, object pools and skeleton
+  reservations. Preserve existing modes, profiles and MPQ-independent hosting;
+  keep local evidence private and distinguish `InitObjects` from final population.
+  Verify two identical 17-artifact native captures, 44 native regressions with
+  12 opt-in exclusions, 35 launcher passes and 1,556 full server passes with four
+  unchanged exclusions. Retain repaired draft failures and unchanged user saves.
+  Update the existing build guide, completion plan and status; M0/M2 remain open.
+
 - 2026-10-03: Own actual live-test host PIDs through evaluated direct-DLL launch,
   independent output drains, bounded confirmed-exit cleanup and guarded fixture
   roots. Preserve body failures, borrowed saves and configuration/artifact

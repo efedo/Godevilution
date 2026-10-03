@@ -452,7 +452,14 @@ this evidence. A sample art pack does not satisfy M4's full presentation gate.
    and operation order through restore rather than rebuilding only from closed
    base layers and open/closed flags.
    Scanner RNG, including L1 lights, is not production `InitObjects`/population
-   RNG; characterize that separate seed/order boundary before full population.
+   RNG. The separate `-CathedralPopulation` oracle targets the complete native
+   `InitObjects` phase after real trigger/stair reservations, monster-type and
+   theme initialization, an independent population seed reset and `InitGolems`.
+   Qualify its repeated corpus before using it to port object placement, native
+   metadata, seeded object state and skeleton reservations into a separately
+   identified opt-in server profile. Do not substitute it for final encounter
+   placement or the later `CreateThemeRooms` phase, and require ordinary Godot
+   interaction plus cold restore before claiming playable native population.
    Static light collision is a separate live object channel, not a new SOL,
    missile or vision wall. Full light animation, rendering and RNG population,
    quest-dependent map replacement and campaign activation remain unqualified.

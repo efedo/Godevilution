@@ -58,7 +58,7 @@ struct TSnd {
 	~TSnd();
 };
 
-extern bool gbSndInited;
+extern DVL_API_FOR_TEST bool gbSndInited;
 #ifdef USE_SDL3
 extern MIX_Mixer *CurrentMixer;
 #endif

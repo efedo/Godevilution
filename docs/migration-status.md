@@ -148,6 +148,56 @@ open. Their scope, dependencies, and exit checks are defined only in the
 
 ## Recent implementation evidence
 
+### M2 complete native initial-object reference (2026-10-03)
+
+The separate opt-in Cathedral population oracle targets native `InitObjects`,
+not the door scanner or final whole-world population. Its setup includes real
+triggers and stair reservations, actual monster definitions and theme selection,
+then an independent dungeon-population seed reset, `HoldThemeRooms`, `InitGolems`
+and the complete object initializer. Fixed retail-Diablo single-player Normal
+inputs and the separate story-book seed prevent hidden cross-case dependencies.
+The corpus covers depths 1-4, seeds 2588/743271966 and MAIN/PREV entry, retaining
+native catalogs, RNG boundaries, reserved cells, signed object occupancy, active
+object state, both complete object-index arrays and Golem/skeleton reservations.
+Raw native state is not a claim of normalized save-byte equivalence.
+
+MSVC test access uses a `BUILD_TESTING`-only forwarder to the existing native
+level initializer and the established DLL test-export annotations. Native
+algorithms and non-testing behavior are unchanged; the oracle disables audio.
+
+Verification passes:
+
+- The matching x64 MSVC environment resolves `cl.exe`, `rc.exe` and `mt.exe`;
+  the oracle and affected level/monster/object targets build successfully.
+  Focused CTest passes 44 tests, with 12 expected opt-in asset exclusions and
+  no failures; those exclusions are not original-asset evidence.
+- Windows PowerShell launcher regressions pass 35/35, including isolated Godot
+  lifecycle guards, bounded success/failure/timeout children, an actual junction
+  refusal and typed pool/reservation validation. Synthetic cases cover 24
+  malformed-case mutations, positive sarcophagus/barrel skeleton links and the
+  legitimate native `-1` reservation sentinel; they are not population parity.
+- Two fresh original-asset native fixtures complete successfully with confirmed
+  exit, retained logs and no timeout or cleanup error. All 17 artifacts per
+  capture match by byte length and SHA-256. The private result is
+  `%TEMP%/Godevilution-Cathedral-Population-Oracle-fe87e8577b474b20aa7d8b1c6a2fff90`;
+  metadata verifies 16 cases, 109 native object types, headless mode and disabled
+  audio. Licensed derived evidence must not be committed or published.
+- The managed build passes with three existing `NU1900` audit-feed warnings;
+  the full server suite passes 1,556 tests, with four unchanged explicit or
+  filesystem-privilege exclusions and no failures. User `diablo.ini` and
+  `single_0.hsv` hashes remain unchanged.
+
+Initial integration drafts failed native compilation/linking, PowerShell parsing
+and a synthetic fixture's dictionary copy. The repairs and final passing logs
+are retained in `.local/m2-population-*.log`; these draft failures are not engine
+crashes. No Godot application was launched for this batch.
+
+The isolated wrapper stops failed stages before another launch. Existing runtime
+profiles, geometry/depth/door modes and saves are unchanged. This reference does
+not supply managed full-population parity. `InitMonsters`, `CreateThemeRooms`,
+campaign seed selection and populated interaction/restore remain separate M2
+requirements; M0/M2 and the approximately 35% overall estimate remain open.
+
 ### M0 actual host ownership and causal transport cleanup (2026-10-03)
 
 Live protocol and cohort-replacement fixtures now evaluate the authoritative

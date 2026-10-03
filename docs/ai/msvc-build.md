@@ -303,6 +303,33 @@ encounter-placement RNG; physical lighting/vision state is not captured. It
 does not establish that doors explain disconnected routes. Existing level-1
 and depth oracle modes and server/client runtime behavior remain unchanged.
 
+To characterize the complete native `InitObjects` phase separately, use:
+
+```powershell
+./tools/test-cathedral-geometry.ps1 -CathedralPopulation
+```
+
+This isolated mode must be selected alone. It uses the dedicated
+`cathedral_population_test` target, ordinary original-Diablo depths 1-4,
+seeds 2588/743271966 and MAIN/PREV entry. Real stairs, reservations, monster
+definitions and theme selection precede the independently reset population
+stream, then native `HoldThemeRooms`, `InitGolems` and `InitObjects` run in order.
+The separate story-book seed and fixed single-player Normal-difficulty inputs
+are recorded; explicit seeds do not establish campaign seed selection.
+The headless fixture disables audio and calls the actual level initializer
+through a `BUILD_TESTING`-only forwarder; normal gameplay is unchanged.
+
+The runner requires a completed native fixture, complete typed artifacts and
+byte-identical independent captures. Logs and derived original-asset evidence
+remain in a fresh private temporary directory. Failed or timed-out stages stop
+the run before another capture. The opt-in environment is restored afterward;
+default geometry/depth/door modes and user saves remain unchanged.
+
+This is a reference for the initial object phase, not managed population parity,
+save-byte equivalence, final monster placement or the later `CreateThemeRooms`
+phase. It neither activates a populated server profile nor adds server MPQ
+access. Keep the entire printed evidence directory private.
+
 The C# xUnit project is an executable Microsoft Testing Platform runner. Run
 it directly when `dotnet test` selects a machine-wide VSTest host whose
 `testhost` package is unavailable:

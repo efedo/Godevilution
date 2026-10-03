@@ -19,7 +19,7 @@ struct TriggerStruct {
 	int _tlvl;
 };
 
-extern TriggerStruct trigs[MAXTRIGGERS];
+extern DVL_API_FOR_TEST TriggerStruct trigs[MAXTRIGGERS];
 
 void InitNoTriggers();
 bool IsWarpOpen(dungeon_type type);

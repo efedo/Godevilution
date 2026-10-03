@@ -9,11 +9,14 @@
     1-4; the zero-argument level-1 contract remains unchanged.
     -CathedralDoors captures the native-only Cathedral door oracle and repeats
     its complete frozen artifact corpus in a fresh process.
+    -CathedralPopulation captures the native initial object phase, reserved
+    monsters, bestiary, player context, and RNG boundaries without managed parity.
 #>
 [CmdletBinding()]
 param(
     [switch]$CathedralDepths,
-    [switch]$CathedralDoors)
+    [switch]$CathedralDoors,
+    [switch]$CathedralPopulation)
 
 $ErrorActionPreference = 'Stop'
 $repositoryRoot = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot '..')).Path
@@ -532,8 +535,510 @@ function Assert-CathedralDoorNativeReports([string[]]$ReportPaths) {
     }
 }
 
+function Assert-CathedralPopulationRequiredProperty($Object, [string]$Name) {
+    if ($null -eq $Object -or $null -eq $Object.PSObject.Properties[$Name]) {
+        throw "Cathedral population evidence is missing $Name."
+    }
+}
+
+function Assert-CathedralPopulationExactProperties($Object, [string[]]$Names, [string]$Scope) {
+    foreach ($name in $Names) { Assert-CathedralPopulationRequiredProperty $Object $name }
+    $actual = @($Object.PSObject.Properties.Name)
+    if (@($actual | Where-Object { $Names -cnotcontains $_ }).Count -ne 0 -or
+        @($Names | Where-Object { $actual -cnotcontains $_ }).Count -ne 0) {
+        throw "$Scope has an unexpected or missing property."
+    }
+}
+
+function Assert-CathedralPopulationInteger($Value, [long]$Minimum, [long]$Maximum, [string]$Scope) {
+    if ($null -eq $Value) { throw "$Scope is null." }
+    $type = $Value.GetType()
+    if ($type -ne [byte] -and $type -ne [sbyte] -and $type -ne [int16] -and $type -ne [uint16] -and
+        $type -ne [int32] -and $type -ne [uint32] -and $type -ne [int64] -and $type -ne [uint64]) {
+        throw "$Scope is not a native integer (floating-point, Boolean, and string values are rejected)."
+    }
+    try { $number = [decimal]$Value } catch { throw "$Scope is outside its native integer range." }
+    if ($number -lt [decimal]$Minimum -or $number -gt [decimal]$Maximum) {
+        throw "$Scope is outside its native integer range."
+    }
+}
+
+function Assert-CathedralPopulationString($Value, [string]$Expected, [string]$Scope) {
+    if ($Value -isnot [string] -or $Value -cne $Expected) { throw "$Scope has the wrong value or type." }
+}
+
+function Assert-CathedralPopulationArray([object[]]$Values, [int]$ExpectedCount, [string]$Scope) {
+    if ($Values.Count -ne $ExpectedCount) { throw "$Scope has an invalid count." }
+}
+
+function Assert-CathedralPopulationArrayCount([object[]]$Values, [int]$MinimumCount, [int]$MaximumCount, [string]$Scope) {
+    if ($Values.Count -lt $MinimumCount -or $Values.Count -gt $MaximumCount) { throw "$Scope has an invalid count." }
+}
+
+function Assert-CathedralPopulationPoint($Point, [string]$Scope, [int]$Minimum = -32768, [int]$Maximum = 32767) {
+    Assert-CathedralPopulationExactProperties $Point @('x', 'y') $Scope
+    Assert-CathedralPopulationInteger $Point.x $Minimum $Maximum "$Scope.x"
+    Assert-CathedralPopulationInteger $Point.y $Minimum $Maximum "$Scope.y"
+}
+
+function Assert-CathedralPopulationExactStringArray([object[]]$Values, [string[]]$Expected, [string]$Scope) {
+    Assert-CathedralPopulationArray $Values $Expected.Count $Scope
+    for ($index = 0; $index -lt $Expected.Count; $index++) {
+        Assert-CathedralPopulationString $Values[$index] $Expected[$index] "$Scope[$index]"
+    }
+}
+
+function Assert-CathedralPopulationMetadata([string]$EvidenceRoot) {
+    $path = Join-Path $EvidenceRoot 'metadata.json'
+    if (-not (Test-Path -LiteralPath $path -PathType Leaf)) { throw 'The Cathedral population metadata is missing.' }
+    try { $metadata = [IO.File]::ReadAllText($path) | ConvertFrom-Json }
+    catch { throw "The Cathedral population metadata is not valid JSON: $($_.Exception.Message)" }
+    $fields = @('format', 'version', 'policy', 'nativeWidth', 'nativeHeight', 'rowMajor', 'headless', 'soundInitialized',
+        'game', 'gameMode', 'difficulty', 'playerLifeQ6', 'caseCount', 'depths', 'seeds', 'entries', 'storySeed',
+        'objectFields', 'monsterFields', 'rngBoundaries', 'nativeObjectTypes', 'nativeObjectCatalog')
+    Assert-CathedralPopulationExactProperties $metadata $fields 'metadata'
+    Assert-CathedralPopulationString $metadata.format 'godevilution-cathedral-l1-population-oracle' 'metadata.format'
+    Assert-CathedralPopulationString $metadata.policy 'no-quest-original-diablo-initgolems-initobjects' 'metadata.policy'
+    Assert-CathedralPopulationInteger $metadata.version 1 1 'metadata.version'
+    Assert-CathedralPopulationInteger $metadata.nativeWidth 112 112 'metadata.nativeWidth'
+    Assert-CathedralPopulationInteger $metadata.nativeHeight 112 112 'metadata.nativeHeight'
+    Assert-CathedralPopulationInteger $metadata.caseCount 16 16 'metadata.caseCount'
+    Assert-CathedralPopulationInteger $metadata.storySeed 324508639 324508639 'metadata.storySeed'
+    if ($metadata.rowMajor -isnot [bool] -or -not $metadata.rowMajor -or $metadata.headless -isnot [bool] -or -not $metadata.headless -or
+        $metadata.soundInitialized -isnot [bool] -or $metadata.soundInitialized) { throw 'metadata runtime flags are not the required headless native values.' }
+    Assert-CathedralPopulationString $metadata.game 'diablo' 'metadata.game'
+    Assert-CathedralPopulationString $metadata.gameMode 'singleplayer' 'metadata.gameMode'
+    Assert-CathedralPopulationString $metadata.difficulty 'normal' 'metadata.difficulty'
+    Assert-CathedralPopulationInteger $metadata.playerLifeQ6 64 64 'metadata.playerLifeQ6'
+    Assert-CathedralPopulationArray @($metadata.depths) 4 'metadata.depths'
+    foreach ($depth in @($metadata.depths)) { Assert-CathedralPopulationInteger $depth 1 4 'metadata.depths' }
+    if ((@($metadata.depths) -join ',') -cne '1,2,3,4') { throw 'metadata.depths has the wrong order.' }
+    Assert-CathedralPopulationArray @($metadata.seeds) 2 'metadata.seeds'
+    foreach ($seed in @($metadata.seeds)) { Assert-CathedralPopulationInteger $seed 0 2147483647 'metadata.seeds' }
+    if (@($metadata.seeds)[0] -ne 2588 -or @($metadata.seeds)[1] -ne 743271966) { throw 'metadata.seeds has the wrong order.' }
+    Assert-CathedralPopulationExactStringArray @($metadata.entries) @('main', 'previous') 'metadata.entries'
+    Assert-CathedralPopulationExactStringArray @($metadata.objectFields) @(
+        'type', 'position', 'applyLighting', 'animFlag', 'animDelay', 'animCount', 'animLength', 'animFrame',
+        'animWidth', 'deleteFlag', 'breakFlag', 'solidFlag', 'missilePassable', 'selectionRegion', 'preFlag',
+        'trapFlag', 'doorFlag', 'lightId', 'rndSeed', 'var1', 'var2', 'var3', 'var4', 'var5', 'var6', 'bookMessage', 'var8') 'metadata.objectFields'
+    Assert-CathedralPopulationExactStringArray @($metadata.monsterFields) @(
+        'type', 'levelType', 'mode', 'goal', 'goalVar1', 'goalVar2', 'goalVar3', 'var1', 'var2', 'var3', 'pathCount',
+        'tile', 'future', 'old', 'last', 'direction', 'enemy', 'enemyPosition', 'invalid', 'ai', 'intelligence',
+        'activeForTicks', 'uniqueType', 'uniqueTranslation', 'corpseId', 'whoHit', 'minDamage', 'maxDamage',
+        'minDamageSpecial', 'maxDamageSpecial', 'armorClass', 'resistance', 'talkMessage', 'leader', 'leaderRelation',
+        'packSize', 'flags', 'rndItemSeed', 'aiSeed', 'lightId', 'hitPoints', 'maxHitPoints', 'animTicksPerFrame',
+        'animTickCounter', 'animNumberOfFrames', 'animCurrentFrame') 'metadata.monsterFields'
+    Assert-CathedralPopulationExactStringArray @($metadata.rngBoundaries) @(
+        'rngAfterCreateLevel', 'rngAfterPopulationReset', 'rngAfterGetLevelMTypes', 'rngAfterInitThemes', 'rngAfterInitGolems', 'rngAfterInitObjects') 'metadata.rngBoundaries'
+    Assert-CathedralPopulationExactProperties $metadata.nativeObjectTypes @('sarcophagus', 'barrel') 'metadata.nativeObjectTypes'
+    Assert-CathedralPopulationInteger $metadata.nativeObjectTypes.sarcophagus 0 126 'metadata.nativeObjectTypes.sarcophagus'
+    Assert-CathedralPopulationInteger $metadata.nativeObjectTypes.barrel 0 126 'metadata.nativeObjectTypes.barrel'
+    if ($metadata.nativeObjectTypes.sarcophagus -eq $metadata.nativeObjectTypes.barrel) { throw 'metadata.nativeObjectTypes must distinguish sarcophagus and barrel.' }
+    $catalogFields = @('nativeObjectId', 'graphicIndex', 'minLevel', 'maxLevel', 'levelType', 'theme', 'quest', 'flags', 'animDelay', 'animLength', 'animWidth', 'selectionRegion', 'behavior')
+    $catalog = @($metadata.nativeObjectCatalog)
+    Assert-CathedralPopulationArray $catalog 109 'metadata.nativeObjectCatalog'
+    $catalogIds = [Collections.Generic.HashSet[int]]::new()
+    foreach ($entry in $catalog) {
+        Assert-CathedralPopulationExactProperties $entry $catalogFields 'metadata.nativeObjectCatalog.entry'
+        Assert-CathedralPopulationInteger $entry.nativeObjectId 0 108 'metadata.nativeObjectCatalog.nativeObjectId'
+        if (-not $catalogIds.Add([int]$entry.nativeObjectId)) { throw 'metadata.nativeObjectCatalog has duplicate native object IDs.' }
+        foreach ($field in @('graphicIndex','minLevel','maxLevel','levelType','theme','quest','flags','animDelay','animLength','animWidth','selectionRegion')) {
+            Assert-CathedralPopulationInteger $entry.$field -2147483648 2147483647 "metadata.nativeObjectCatalog.$field"
+        }
+        if ($entry.behavior -isnot [string]) { throw 'metadata.nativeObjectCatalog.behavior is not a string.' }
+    }
+    if (-not $catalogIds.Contains([int]$metadata.nativeObjectTypes.sarcophagus) -or -not $catalogIds.Contains([int]$metadata.nativeObjectTypes.barrel)) { throw 'metadata.nativeObjectTypes is not represented in the native object catalog.' }
+}
+
+function Get-CathedralPopulationOracleArtifactNames {
+    $names = @('metadata.json')
+    foreach ($depth in 1..4) {
+        foreach ($seed in @('2588', '743271966')) {
+            foreach ($entry in @('main', 'previous')) { $names += "cathedral-population-depth-$depth-$seed-$entry.json" }
+        }
+    }
+    return $names
+}
+
+function Get-CathedralPopulationOracleArtifacts([string]$EvidenceRoot) {
+    $expectedNames = @(Get-CathedralPopulationOracleArtifactNames)
+    $expected = [Collections.Generic.HashSet[string]]::new([StringComparer]::Ordinal)
+    foreach ($name in $expectedNames) { [void]$expected.Add($name) }
+    $rootItem = Get-Item -LiteralPath $EvidenceRoot -ErrorAction Stop
+    if (($rootItem.Attributes -band [IO.FileAttributes]::ReparsePoint) -ne 0) { throw 'The Cathedral population artifact root must not be a reparse point.' }
+    $children = @(Get-ChildItem -LiteralPath $EvidenceRoot -Force)
+    if (@($children | Where-Object { $_.PSIsContainer }).Count -ne 0) { throw 'The Cathedral population oracle emitted an out-of-scope directory.' }
+    if (@($children | Where-Object { ($_.Attributes -band [IO.FileAttributes]::ReparsePoint) -ne 0 }).Count -ne 0) { throw 'The Cathedral population oracle emitted a reparse-point artifact.' }
+    $actualNames = @($children | ForEach-Object { $_.Name })
+    if ($actualNames.Count -ne $expectedNames.Count -or @($actualNames | Where-Object { -not $expected.Contains($_) }).Count -ne 0) {
+        throw 'The Cathedral population oracle emitted an incomplete or out-of-scope artifact set.'
+    }
+    foreach ($name in $expectedNames) {
+        $path = Join-Path $EvidenceRoot $name
+        if (-not (Test-Path -LiteralPath $path -PathType Leaf) -or (Get-Item -LiteralPath $path).Length -eq 0) { throw "The Cathedral population oracle did not emit a nonempty $name." }
+        $hasher = [Security.Cryptography.SHA256]::Create(); $stream = $null
+        try { $stream = [IO.File]::OpenRead($path); $hash = [BitConverter]::ToString($hasher.ComputeHash($stream)).Replace('-', '').ToLowerInvariant() }
+        finally { if ($null -ne $stream) { $stream.Dispose() }; $hasher.Dispose() }
+        [pscustomobject]@{ Name = $name; Bytes = (Get-Item -LiteralPath $path).Length; Sha256 = $hash }
+    }
+}
+
+function Assert-CathedralPopulationUnsignedArray([object[]]$Values, [int]$ExpectedCount, [long]$Maximum, [string]$Scope) {
+    Assert-CathedralPopulationArray $Values $ExpectedCount $Scope
+    foreach ($value in $Values) { Assert-CathedralPopulationInteger $value 0 $Maximum $Scope }
+}
+
+function Assert-CathedralPopulationCase([string]$Path, [string]$ExpectedFileName, $Metadata) {
+    try { $case = [IO.File]::ReadAllText($Path) | ConvertFrom-Json }
+    catch { throw "The Cathedral population case $ExpectedFileName is not valid JSON: $($_.Exception.Message)" }
+    $fields = @('format', 'version', 'policy', 'depth', 'inputSeed', 'geometrySeed', 'populationSeed', 'storySeed', 'entry', 'attemptSeed',
+        'rngAfterCreateLevel', 'rngAfterPopulationReset', 'rngAfterGetLevelMTypes', 'rngAfterInitThemes', 'rngAfterInitGolems', 'rngAfterInitObjects', 'entryPosition',
+        'stairsUp', 'stairsDown', 'triggers', 'populatedCellsBeforeHoldThemeRooms', 'populatedCellsAfterHoldThemeRooms', 'pieces', 'transparency',
+        'solProperties', 'activeObjectCount', 'activeObjectIds', 'availableObjectIds', 'tileObjectRefs', 'objects', 'activeMonsterCount',
+        'activeMonsterIds', 'monsters', 'bestiary', 'playerContext')
+    Assert-CathedralPopulationExactProperties $case $fields $ExpectedFileName
+    Assert-CathedralPopulationString $case.format 'godevilution-cathedral-l1-population-oracle' "$ExpectedFileName.format"
+    Assert-CathedralPopulationString $case.policy 'no-quest-original-diablo-initgolems-initobjects' "$ExpectedFileName.policy"
+    Assert-CathedralPopulationInteger $case.version 1 1 "$ExpectedFileName.version"
+    Assert-CathedralPopulationInteger $case.depth 1 4 "$ExpectedFileName.depth"
+    Assert-CathedralPopulationInteger $case.inputSeed 0 2147483647 "$ExpectedFileName.inputSeed"
+    Assert-CathedralPopulationInteger $case.geometrySeed 0 2147483647 "$ExpectedFileName.geometrySeed"
+    Assert-CathedralPopulationInteger $case.populationSeed 0 2147483647 "$ExpectedFileName.populationSeed"
+    if ($case.geometrySeed -ne $case.inputSeed -or $case.populationSeed -ne $case.inputSeed) { throw "$ExpectedFileName geometry/population seed boundaries must equal inputSeed." }
+    Assert-CathedralPopulationInteger $case.storySeed 324508639 324508639 "$ExpectedFileName.storySeed"
+    if ($case.entry -isnot [string] -or @('main', 'previous') -notcontains $case.entry) { throw "$ExpectedFileName.entry has the wrong value or type." }
+    foreach ($field in @('attemptSeed', 'rngAfterCreateLevel', 'rngAfterPopulationReset', 'rngAfterGetLevelMTypes', 'rngAfterInitThemes', 'rngAfterInitGolems', 'rngAfterInitObjects')) {
+        Assert-CathedralPopulationInteger $case.$field 0 4294967295 "$ExpectedFileName.$field"
+    }
+    $identity = [regex]::Match($ExpectedFileName, '^cathedral-population-depth-(1|2|3|4)-(2588|743271966)-(main|previous)\.json$')
+    if (-not $identity.Success -or $case.depth -ne [int]$identity.Groups[1].Value -or $case.inputSeed -ne [int64]$identity.Groups[2].Value -or $case.entry -cne $identity.Groups[3].Value) { throw "$ExpectedFileName has mismatched case identity." }
+    Assert-CathedralPopulationPoint $case.entryPosition "$ExpectedFileName.entryPosition" 0 111
+    Assert-CathedralPopulationPoint $case.stairsUp "$ExpectedFileName.stairsUp" 0 111
+    Assert-CathedralPopulationPoint $case.stairsDown "$ExpectedFileName.stairsDown" 0 111
+    $triggers = @($case.triggers); Assert-CathedralPopulationArrayCount $triggers 1 64 "$ExpectedFileName.triggers"
+    foreach ($trigger in $triggers) {
+        Assert-CathedralPopulationExactProperties $trigger @('position', 'message', 'level') "$ExpectedFileName.trigger"
+        Assert-CathedralPopulationPoint $trigger.position "$ExpectedFileName.trigger.position" 0 111
+        Assert-CathedralPopulationInteger $trigger.message 0 2147483647 "$ExpectedFileName.trigger.message"
+        Assert-CathedralPopulationInteger $trigger.level 0 2147483647 "$ExpectedFileName.trigger.level"
+    }
+    foreach($populationField in @('populatedCellsBeforeHoldThemeRooms','populatedCellsAfterHoldThemeRooms')){
+        Assert-CathedralPopulationArrayCount @($case.$populationField) 1 12544 "$ExpectedFileName.$populationField"
+        foreach($cell in @($case.$populationField)){Assert-CathedralPopulationInteger $cell 0 12543 "$ExpectedFileName.$populationField"}
+    }
+    Assert-CathedralPopulationUnsignedArray @($case.pieces) 12544 65535 "$ExpectedFileName.pieces"
+    Assert-CathedralPopulationUnsignedArray @($case.transparency) 12544 255 "$ExpectedFileName.transparency"
+    Assert-CathedralPopulationUnsignedArray @($case.solProperties) 1379 255 "$ExpectedFileName.solProperties"
+    Assert-CathedralPopulationInteger $case.activeObjectCount 1 127 "$ExpectedFileName.activeObjectCount"
+    Assert-CathedralPopulationUnsignedArray @($case.activeObjectIds) 127 126 "$ExpectedFileName.activeObjectIds"
+    Assert-CathedralPopulationUnsignedArray @($case.availableObjectIds) 127 126 "$ExpectedFileName.availableObjectIds"
+    $activeIds = [Collections.Generic.HashSet[int]]::new(); for($i=0;$i -lt [int]$case.activeObjectCount;$i++){ if(-not $activeIds.Add([int]$case.activeObjectIds[$i])){throw "$ExpectedFileName has duplicate active object ids."} }
+    $availableCount = 127 - [int]$case.activeObjectCount; $availableIds = [Collections.Generic.HashSet[int]]::new(); for($i=0;$i -lt $availableCount;$i++){ if(-not $availableIds.Add([int]$case.availableObjectIds[$i])){throw "$ExpectedFileName has duplicate available object ids."}; if($activeIds.Contains([int]$case.availableObjectIds[$i])){throw "$ExpectedFileName active and available object ids overlap."} }
+    if ($activeIds.Count + $availableIds.Count -ne 127) { throw "$ExpectedFileName object pools do not partition the native slots." }
+    $tileRefs = @($case.tileObjectRefs); Assert-CathedralPopulationArray $tileRefs 12544 "$ExpectedFileName.tileObjectRefs"
+    foreach ($reference in $tileRefs) {
+        Assert-CathedralPopulationInteger $reference -127 127 "$ExpectedFileName.tileObjectRefs"
+        if ([int]$reference -ne 0 -and -not $activeIds.Contains(([math]::Abs([int]$reference) - 1))) { throw "$ExpectedFileName tileObjectRefs points to an inactive object." }
+    }
+    $objectFields = @('slot', 'type', 'position', 'applyLighting', 'animFlag', 'animDelay', 'animCount', 'animLength', 'animFrame', 'animWidth', 'deleteFlag', 'breakFlag', 'solidFlag', 'missilePassable', 'selectionRegion', 'preFlag', 'trapFlag', 'doorFlag', 'lightId', 'rndSeed', 'var1', 'var2', 'var3', 'var4', 'var5', 'var6', 'bookMessage', 'var8')
+    $objects = @($case.objects); Assert-CathedralPopulationArray $objects ([int]$case.activeObjectCount) "$ExpectedFileName.objects"; $objectSlots = [Collections.Generic.HashSet[int]]::new()
+    foreach ($object in $objects) {
+        Assert-CathedralPopulationExactProperties $object $objectFields "$ExpectedFileName.object"
+        Assert-CathedralPopulationInteger $object.slot 0 126 "$ExpectedFileName.object.slot"; if(-not $objectSlots.Add([int]$object.slot)){throw "$ExpectedFileName has duplicate object slots."}; if(-not $activeIds.Contains([int]$object.slot)){throw "$ExpectedFileName object slot is not active."}
+        Assert-CathedralPopulationInteger $object.type -2147483648 2147483647 "$ExpectedFileName.object.type"; Assert-CathedralPopulationPoint $object.position "$ExpectedFileName.object.position" 0 111
+        foreach($field in @('applyLighting','deleteFlag','solidFlag','missilePassable','preFlag','trapFlag','doorFlag')){ if($object.$field -isnot [bool]){throw "$ExpectedFileName.object.$field is not Boolean."} }
+        foreach($field in @('animFlag','animLength','animFrame','rndSeed','var6')){ Assert-CathedralPopulationInteger $object.$field 0 4294967295 "$ExpectedFileName.object.$field" }
+        Assert-CathedralPopulationInteger $object.animWidth 0 65535 "$ExpectedFileName.object.animWidth"
+        foreach($field in @('animDelay','animCount','breakFlag','selectionRegion','lightId','var1','var2','var3','var4','var5','bookMessage','var8')){ Assert-CathedralPopulationInteger $object.$field -2147483648 2147483647 "$ExpectedFileName.object.$field" }
+        $positionCell = ([int]$object.position.y * 112) + [int]$object.position.x
+        if ([int]$tileRefs[$positionCell] -ne ([int]$object.slot + 1)) { throw "$ExpectedFileName primary object tile reference does not equal slot+1." }
+        if ([int]$object.type -eq [int]$Metadata.nativeObjectTypes.sarcophagus -and [int]$object.position.y -gt 0) {
+            $northCell = ([int]$object.position.y - 1) * 112 + [int]$object.position.x
+            if ([int]$tileRefs[$northCell] -ne -([int]$object.slot + 1)) { throw "$ExpectedFileName sarcophagus north tile reference is not negative slot+1." }
+        }
+    }
+    Assert-CathedralPopulationInteger $case.activeMonsterCount 0 200 "$ExpectedFileName.activeMonsterCount"; $monsterIds = @($case.activeMonsterIds); Assert-CathedralPopulationArray $monsterIds ([int]$case.activeMonsterCount) "$ExpectedFileName.activeMonsterIds"; $monsterSlots = [Collections.Generic.HashSet[int]]::new(); foreach($id in $monsterIds){Assert-CathedralPopulationInteger $id 0 199 "$ExpectedFileName.activeMonsterIds"; if(-not $monsterSlots.Add([int]$id)){throw "$ExpectedFileName has duplicate monster ids."}}
+    if ($null -eq $Metadata) { throw "$ExpectedFileName requires the exact native metadata catalog." }
+    $catalog = @($Metadata.nativeObjectCatalog); $catalogById = @{}; foreach($catalogEntry in $catalog){$catalogById[[int]$catalogEntry.nativeObjectId] = $catalogEntry}
+    $bestiary = @($case.bestiary); Assert-CathedralPopulationArrayCount $bestiary 1 255 "$ExpectedFileName.bestiary"
+    $bestiaryByType = @{}; $bestiaryByIndex = @{}
+    foreach($entry in $bestiary){ Assert-CathedralPopulationExactProperties $entry @('index','type','placeFlags','corpseId','frames','rates','widths','skeleton') "$ExpectedFileName.bestiary"; Assert-CathedralPopulationInteger $entry.index 0 255 "$ExpectedFileName.bestiary.index"; Assert-CathedralPopulationInteger $entry.type -2147483648 2147483647 "$ExpectedFileName.bestiary.type"; if($bestiaryByType.ContainsKey([int]$entry.type)){throw "$ExpectedFileName.bestiary has duplicate monster types."}; if($bestiaryByIndex.ContainsKey([int]$entry.index)){throw "$ExpectedFileName.bestiary has duplicate indices."}; $bestiaryByType[[int]$entry.type] = $entry; $bestiaryByIndex[[int]$entry.index] = $entry; Assert-CathedralPopulationInteger $entry.placeFlags -2147483648 2147483647 "$ExpectedFileName.bestiary.placeFlags"; Assert-CathedralPopulationInteger $entry.corpseId -2147483648 2147483647 "$ExpectedFileName.bestiary.corpseId"; if($entry.skeleton -isnot [bool]){throw "$ExpectedFileName.bestiary.skeleton is not Boolean."}; foreach($field in @('frames','rates','widths')){Assert-CathedralPopulationUnsignedArray @($entry.$field) 6 2147483647 "$ExpectedFileName.bestiary.$field"} }
+    $monsterFields = @('slot','type','levelType','mode','goal','goalVar1','goalVar2','goalVar3','var1','var2','var3','pathCount','tile','future','old','last','direction','enemy','enemyPosition','invalid','ai','intelligence','activeForTicks','uniqueType','uniqueTranslation','corpseId','whoHit','minDamage','maxDamage','minDamageSpecial','maxDamageSpecial','armorClass','resistance','talkMessage','leader','leaderRelation','packSize','flags','rndItemSeed','aiSeed','lightId','hitPoints','maxHitPoints','animTicksPerFrame','animTickCounter','animNumberOfFrames','animCurrentFrame')
+    $monsters = @($case.monsters); Assert-CathedralPopulationArray $monsters ([int]$case.activeMonsterCount) "$ExpectedFileName.monsters"
+    $monsterRecordSlots = [Collections.Generic.HashSet[int]]::new()
+    foreach($monster in $monsters){ Assert-CathedralPopulationExactProperties $monster $monsterFields "$ExpectedFileName.monster"; Assert-CathedralPopulationInteger $monster.slot 0 199 "$ExpectedFileName.monster.slot"; if(-not $monsterSlots.Contains([int]$monster.slot)){throw "$ExpectedFileName monster slot is not active."}; if(-not $monsterRecordSlots.Add([int]$monster.slot)){throw "$ExpectedFileName has duplicate monster records."}; if(-not $bestiaryByType.ContainsKey([int]$monster.type)){throw "$ExpectedFileName monster type is absent from bestiary."}; Assert-CathedralPopulationInteger $monster.type -2147483648 2147483647 "$ExpectedFileName.monster.type"; foreach($field in @('tile','future','old','last','enemyPosition')){Assert-CathedralPopulationPoint $monster.$field "$ExpectedFileName.monster.$field" -32768 32767}; if($monster.invalid -isnot [bool]){throw "$ExpectedFileName.monster.invalid is not Boolean."}; Assert-CathedralPopulationInteger $monster.levelType 0 ($bestiary.Count - 1) "$ExpectedFileName.monster.levelType"; if(-not $bestiaryByIndex.ContainsKey([int]$monster.levelType) -or [int]$bestiaryByIndex[[int]$monster.levelType].type -ne [int]$monster.type){throw "$ExpectedFileName monster type does not match its levelType bestiary link."}; foreach($field in @('mode','goal','goalVar1','goalVar2','goalVar3','var1','var2','var3','pathCount','direction','enemy','ai','intelligence','activeForTicks','uniqueType','uniqueTranslation','corpseId','whoHit','minDamage','maxDamage','minDamageSpecial','maxDamageSpecial','armorClass','resistance','talkMessage','leader','leaderRelation','packSize','animTicksPerFrame','animTickCounter','animNumberOfFrames','animCurrentFrame')){Assert-CathedralPopulationInteger $monster.$field -2147483648 2147483647 "$ExpectedFileName.monster.$field"}; foreach($field in @('flags','rndItemSeed','aiSeed')){Assert-CathedralPopulationInteger $monster.$field 0 4294967295 "$ExpectedFileName.monster.$field"} }
+    $bestiaryIndices = [Collections.Generic.HashSet[int]]::new(); foreach($entry in $bestiary){if(-not $bestiaryIndices.Add([int]$entry.index)){throw "$ExpectedFileName.bestiary has duplicate indices."}}
+    for($expectedIndex=0;$expectedIndex -lt $bestiary.Count;$expectedIndex++){if(-not $bestiaryIndices.Contains($expectedIndex)){throw "$ExpectedFileName.bestiary indices are not contiguous."}}
+    $golemEntry = @($bestiary | Where-Object { [int]$_.index -eq 0 })
+    if ($golemEntry.Count -ne 1) { throw "$ExpectedFileName.bestiary is missing native golem index 0." }
+    if ([int]$case.activeMonsterCount -lt 4) { throw "$ExpectedFileName does not retain the four native golem reservations." }
+    for($golemIndex=0;$golemIndex -lt 4;$golemIndex++){ if([int]$case.activeMonsterIds[$golemIndex] -ne $golemIndex){throw "$ExpectedFileName native golem IDs are not the first four slots."}; $golem = @($monsters | Where-Object { [int]$_.slot -eq $golemIndex })[0]; if([int]$golem.type -ne [int]$golemEntry[0].type -or [int]$golem.tile.x -ne 1 -or [int]$golem.tile.y -ne 0){throw "$ExpectedFileName native golem reservation is not at GolemHoldingCell."} }
+    Assert-CathedralPopulationExactProperties $case.playerContext @('id','class','level','active','levelChanging','tile','future','old') "$ExpectedFileName.playerContext"
+    foreach($field in @('id','class','level')){Assert-CathedralPopulationInteger $case.playerContext.$field -2147483648 2147483647 "$ExpectedFileName.playerContext.$field"}; foreach($field in @('active','levelChanging')){if($case.playerContext.$field -isnot [bool]){throw "$ExpectedFileName.playerContext.$field is not Boolean."}}; foreach($field in @('tile','future','old')){Assert-CathedralPopulationPoint $case.playerContext.$field "$ExpectedFileName.playerContext.$field" -32768 32767}
+    foreach($object in $objects){
+        $objectType = [int]$object.type
+        if (-not $catalogById.ContainsKey($objectType)) { throw "$ExpectedFileName object type is absent from metadata.nativeObjectCatalog." }
+        $reservationSlot = $null; $threshold = $null
+        if ($objectType -eq [int]$Metadata.nativeObjectTypes.sarcophagus) { $reservationSlot = [int]$object.var2; $threshold = [int]$object.var1 }
+        elseif ($objectType -eq [int]$Metadata.nativeObjectTypes.barrel) { $reservationSlot = [int]$object.var4; $threshold = [int]$object.var2 }
+        if ($null -ne $reservationSlot -and $reservationSlot -lt -1) { throw "$ExpectedFileName skeleton reservation is below the native -1 sentinel." }
+        if ($null -ne $reservationSlot -and $threshold -ge 8 -and $reservationSlot -ge 0) {
+            if (-not $monsterSlots.Contains($reservationSlot)) { throw "$ExpectedFileName skeleton reservation is not an active monster." }
+            $reservedMonster = @($monsters | Where-Object { [int]$_.slot -eq $reservationSlot })[0]
+            if (-not $bestiaryByType.ContainsKey([int]$reservedMonster.type) -or -not $bestiaryByType[[int]$reservedMonster.type].skeleton) { throw "$ExpectedFileName skeleton reservation does not reference a skeleton monster." }
+            if ([int]$reservedMonster.tile.x -ne 0 -or [int]$reservedMonster.tile.y -ne 0) { throw "$ExpectedFileName skeleton reservation is not at the native {0,0} cell." }
+        }
+    }
+}
+
+function Assert-CathedralPopulationNativeReport([string]$ReportPath) {
+    if (-not (Test-Path -LiteralPath $ReportPath -PathType Leaf)) { throw 'The native population oracle did not emit its test result.' }
+    try { $report = [IO.File]::ReadAllText($ReportPath) | ConvertFrom-Json } catch { throw "The native population report is not valid JSON: $($_.Exception.Message)" }
+    foreach($field in @('tests','failures','errors','disabled')){ Assert-CathedralPopulationRequiredProperty $report $field; Assert-CathedralPopulationInteger $report.$field 0 2147483647 "native report.$field" }
+    $cases = @($report.testsuites | ForEach-Object { $_.testsuite })
+    if ($report.tests -ne 1 -or $report.failures -ne 0 -or $report.errors -ne 0 -or $report.disabled -ne 0 -or $cases.Count -ne 1 -or $cases[0].classname -cne 'CathedralPopulation' -or $cases[0].name -cne 'NativeObjectPopulationLocalAssetOracle' -or $cases[0].status -cne 'RUN' -or $cases[0].result -cne 'COMPLETED') { throw 'The required native population oracle did not complete successfully; skipped tests are not evidence.' }
+}
+
+function Quote-CathedralNativeArgument([string]$Value) {
+    $builder = [Text.StringBuilder]::new(); [void]$builder.Append('"'); $slashes = 0
+    foreach($character in $Value.ToCharArray()) {
+        if($character -eq '\'){ $slashes++; continue }
+        if($character -eq '"') {
+            for($index = 0; $index -lt (($slashes * 2) + 1); $index++){ [void]$builder.Append('\') }
+            [void]$builder.Append('"')
+        } else {
+            for($index = 0; $index -lt $slashes; $index++){ [void]$builder.Append('\') }
+            $slashes = 0
+            [void]$builder.Append($character)
+        }
+        if($character -eq '"'){$slashes=0}
+    }
+    for($index = 0; $index -lt ($slashes * 2); $index++){ [void]$builder.Append('\') }
+    [void]$builder.Append('"'); return $builder.ToString()
+}
+
+function Add-CathedralPopulationCleanupError([System.Collections.IDictionary]$Outcome, [string]$Message) {
+    if ([string]::IsNullOrWhiteSpace($Message)) { return }
+    if ([string]::IsNullOrWhiteSpace([string]$Outcome.CleanupError)) { $Outcome.CleanupError = $Message }
+    else { $Outcome.CleanupError = [string]$Outcome.CleanupError + ' | ' + $Message }
+}
+
+function Stop-CathedralPopulationOwnedProcessTree([Diagnostics.Process]$Process, [System.Collections.IDictionary]$Outcome) {
+    if ($null -eq $Process) { return }
+    $pidValue = $Outcome.Pid
+    try {
+        if (-not $Process.HasExited) {
+            $taskKill = [Diagnostics.ProcessStartInfo]::new()
+            $taskKill.FileName = Join-Path $env:SystemRoot 'System32\taskkill.exe'
+            $taskKill.Arguments = "/PID $pidValue /T /F"
+            $taskKill.UseShellExecute = $false; $taskKill.CreateNoWindow = $true
+            $taskKill.RedirectStandardOutput = $true; $taskKill.RedirectStandardError = $true
+            $killer = $null; $killerStdoutTask = $null; $killerStderrTask = $null
+            try {
+                $killer = [Diagnostics.Process]::Start($taskKill)
+                if ($null -eq $killer) {
+                    Add-CathedralPopulationCleanupError $Outcome ('Could not start the task-tree terminator for owned PID ' + $pidValue + '.')
+                } else {
+                    $killerStdoutTask = $killer.StandardOutput.ReadToEndAsync(); $killerStderrTask = $killer.StandardError.ReadToEndAsync()
+                    if (-not $killer.WaitForExit(10000)) {
+                        Add-CathedralPopulationCleanupError $Outcome ('Could not confirm task-tree termination for owned PID ' + $pidValue + '.')
+                        try { $killer.Kill() } catch { Add-CathedralPopulationCleanupError $Outcome ('Could not terminate task-tree helper: ' + $_.Exception.Message) }
+                        if (-not $killer.WaitForExit(10000)) { Add-CathedralPopulationCleanupError $Outcome 'Task-tree helper did not terminate after its bounded cleanup.' }
+                    }
+                    foreach ($killerTask in @($killerStdoutTask, $killerStderrTask)) {
+                        if ($null -ne $killerTask) {
+                            try { if (-not $killerTask.Wait(10000)) { Add-CathedralPopulationCleanupError $Outcome 'Task-tree helper output did not drain by its deadline.' } }
+                            catch { Add-CathedralPopulationCleanupError $Outcome ('Could not drain task-tree helper output: ' + $_.Exception.Message) }
+                        }
+                    }
+                    $killerOutput = ''
+                    foreach ($killerTask in @($killerStdoutTask, $killerStderrTask)) { if ($null -ne $killerTask -and $killerTask.Status -eq [Threading.Tasks.TaskStatus]::RanToCompletion) { $killerOutput += $killerTask.Result } }
+                    if ($killer.ExitCode -ne 0 -and -not $Process.HasExited) { Add-CathedralPopulationCleanupError $Outcome ('taskkill failed for owned PID ' + $pidValue + ' (' + $killer.ExitCode + '): ' + $killerOutput) }
+                }
+            } catch { Add-CathedralPopulationCleanupError $Outcome ('Could not terminate owned PID ' + $pidValue + ': ' + $_.Exception.Message) }
+            finally {
+                if ($null -ne $killer) {
+                    try { if (-not $killer.HasExited) { $killer.Kill(); if (-not $killer.WaitForExit(10000)) { Add-CathedralPopulationCleanupError $Outcome 'Task-tree helper did not confirm exit during cleanup.' } } }
+                    catch { Add-CathedralPopulationCleanupError $Outcome "Could not finish task-tree helper cleanup: $($_.Exception.Message)" }
+                    try { $killer.Dispose() } catch { Add-CathedralPopulationCleanupError $Outcome "Could not dispose task-tree terminator: $($_.Exception.Message)" }
+                }
+            }
+        }
+        if (-not $Process.HasExited) { try { $Process.Kill() } catch { Add-CathedralPopulationCleanupError $Outcome ('Could not terminate owned PID ' + $pidValue + ' directly: ' + $_.Exception.Message) } }
+        if (-not $Process.WaitForExit(10000)) { Add-CathedralPopulationCleanupError $Outcome ('Owned PID ' + $pidValue + ' did not confirm exit after bounded termination.') }
+    } catch { Add-CathedralPopulationCleanupError $Outcome ('Could not confirm owned PID ' + $pidValue + ' exit: ' + $_.Exception.Message) }
+}
+
+function Invoke-CathedralPopulationOwnedProcess([string]$Executable, [string]$Arguments, [string]$LogPath, [int]$TimeoutMilliseconds = 180000) {
+    $outcome = [ordered]@{ Pid = $null; ExitCode = $null; Output = ''; TimedOut = $false; ConfirmedExited = $false; LogRetained = $false; Error = $null; CleanupError = $null }
+    $process = $null; $stdoutTask = $null; $stderrTask = $null; $previousErrorMode = $null
+    try {
+        if ($TimeoutMilliseconds -le 0) { throw 'The owned process stage deadline must be positive.' }
+        $start = [Diagnostics.ProcessStartInfo]::new(); $start.FileName = $Executable; $start.Arguments = $Arguments
+        $start.UseShellExecute = $false; $start.CreateNoWindow = $true; $start.RedirectStandardOutput = $true; $start.RedirectStandardError = $true
+        if ($env:OS -eq 'Windows_NT' -and -not ('GodevilutionNativeErrorMode' -as [type])) {
+            Add-Type -TypeDefinition @'
+using System;
+using System.Runtime.InteropServices;
+public static class GodevilutionNativeErrorMode
+{
+    [DllImport("kernel32.dll")] public static extern uint GetErrorMode();
+    [DllImport("kernel32.dll")] public static extern uint SetErrorMode(uint mode);
+}
+'@
+        }
+        try {
+            if ($env:OS -eq 'Windows_NT') { $previousErrorMode = [GodevilutionNativeErrorMode]::GetErrorMode(); [void][GodevilutionNativeErrorMode]::SetErrorMode($previousErrorMode -bor 3) }
+            try { $process = [Diagnostics.Process]::Start($start) } catch { $outcome.Error = "Could not start owned Cathedral population process '$Executable': $($_.Exception.Message)" }
+        } finally { if ($null -ne $previousErrorMode) { try { [void][GodevilutionNativeErrorMode]::SetErrorMode($previousErrorMode) } catch { Add-CathedralPopulationCleanupError $outcome "Could not restore native error mode: $($_.Exception.Message)" } } }
+        if ($null -eq $process) { if ($null -eq $outcome.Error) { $outcome.Error = "Could not start owned Cathedral population process '$Executable'." } }
+        else {
+            $outcome.Pid = $process.Id
+            $stdoutTask = $process.StandardOutput.ReadToEndAsync(); $stderrTask = $process.StandardError.ReadToEndAsync()
+            if (-not $process.WaitForExit($TimeoutMilliseconds)) { $outcome.TimedOut = $true; $outcome.Error = "Owned Cathedral population process PID $($outcome.Pid) exceeded the $TimeoutMilliseconds ms stage deadline."; Stop-CathedralPopulationOwnedProcessTree $process $outcome }
+        }
+    } catch {
+        if ($null -eq $outcome.Error) { $outcome.Error = $_.Exception.Message } else { Add-CathedralPopulationCleanupError $outcome $_.Exception.Message }
+    } finally {
+        if ($null -ne $process) {
+            try { if (-not $process.HasExited) { Stop-CathedralPopulationOwnedProcessTree $process $outcome } } catch { Add-CathedralPopulationCleanupError $outcome $_.Exception.Message }
+            try { if ($process.HasExited) { $outcome.ConfirmedExited = $true; $outcome.ExitCode = $process.ExitCode } } catch { Add-CathedralPopulationCleanupError $outcome "Could not retain owned PID $($outcome.Pid) exit state: $($_.Exception.Message)" }
+        }
+        foreach ($task in @($stdoutTask, $stderrTask)) {
+            if ($null -ne $task) { try { if ($task.Wait(10000)) { $outcome.Output += $task.Result } else { Add-CathedralPopulationCleanupError $outcome 'Owned population process output did not drain by its deadline.' } } catch { Add-CathedralPopulationCleanupError $outcome "Could not drain owned population process output: $($_.Exception.Message)" } }
+        }
+        try { [IO.File]::WriteAllText($LogPath, $outcome.Output, [Text.UTF8Encoding]::new($false)); $outcome.LogRetained = $true } catch { Add-CathedralPopulationCleanupError $outcome "Could not retain owned population process log: $($_.Exception.Message)" }
+        if ($null -ne $process) { try { $process.Dispose() } catch { Add-CathedralPopulationCleanupError $outcome "Could not dispose owned population process: $($_.Exception.Message)" } }
+    }
+    if ($null -eq $outcome.Error -and $null -ne $outcome.CleanupError) { $outcome.Error = $outcome.CleanupError }
+    return [pscustomobject]$outcome
+}
+
+function Invoke-CathedralPopulationNativeOracle([string]$Executable, [string]$ReportPath, [string]$LogPath, [int]$TimeoutMilliseconds = 180000, [string]$Arguments = '') {
+    $nativeArguments = if ([string]::IsNullOrWhiteSpace($Arguments)) {
+        '--gtest_filter=CathedralPopulation.NativeObjectPopulationLocalAssetOracle --gtest_output=json:' + (Quote-CathedralNativeArgument $ReportPath)
+    } else { $Arguments }
+    return Invoke-CathedralPopulationOwnedProcess $Executable $nativeArguments $LogPath $TimeoutMilliseconds
+}
+
+if ($CathedralPopulation -and ($CathedralDoors -or $CathedralDepths)) {
+    throw '-CathedralPopulation, -CathedralDoors, and -CathedralDepths are mutually exclusive.'
+}
+
 if ($CathedralDoors -and $CathedralDepths) {
     throw '-CathedralDoors and -CathedralDepths are mutually exclusive.'
+}
+
+if ($CathedralPopulation) {
+    $oracleDirectoryVariable = 'GODEVILUTION_CATHEDRAL_POPULATION_ORACLE_DIRECTORY'
+    $nativeBuild = Find-CathedralOracleBuild $repositoryRoot
+    $evidenceRoot = Join-Path ([IO.Path]::GetTempPath()) ('Godevilution-Cathedral-Population-Oracle-' + [guid]::NewGuid().ToString('N'))
+    if (Test-Path -LiteralPath $evidenceRoot) { throw 'Cathedral population verification requires a fresh evidence directory.' }
+    $fullEvidenceRoot = [IO.Path]::GetFullPath($evidenceRoot)
+    if ($fullEvidenceRoot.StartsWith($repositoryRoot.TrimEnd('\') + '\', [StringComparison]::OrdinalIgnoreCase)) {
+        throw 'Licensed Cathedral population inputs must remain outside the repository.'
+    }
+    New-Item -ItemType Directory -Path $evidenceRoot | Out-Null
+    $previousOracleDirectory = [Environment]::GetEnvironmentVariable($oracleDirectoryVariable, 'Process')
+    $record = [ordered]@{
+        Passed = $false
+        StartedUtc = [DateTime]::UtcNow.ToString('O')
+        EndedUtc = $null
+        NativeBuild = $nativeBuild.Directory
+        Scope = 'native-cathedral-l1-object-population'
+        NativeTestName = 'NativeObjectPopulationLocalAssetOracle'
+        Deterministic = $false
+        Captures = @()
+        Error = $null
+    }
+    $primaryError = $null
+    $locationPushed = $false
+    try {
+        Push-Location $repositoryRoot
+        $locationPushed = $true
+        Write-Host "Private Cathedral population oracle evidence: $evidenceRoot"
+        Write-Host 'This directory contains locally licensed geometry inputs; do not publish it.'
+        $buildCommand = 'call "{0}" -arch=x64 && where cl.exe && where rc.exe && where mt.exe && "{1}" --build "{2}" --config Debug --target cathedral_population_test --parallel 2' -f
+            $nativeBuild.DeveloperCommand, $nativeBuild.CMake, $nativeBuild.Directory
+        $buildOutcome = Invoke-CathedralPopulationOwnedProcess $env:ComSpec ("/d /c $buildCommand") (Join-Path $evidenceRoot 'native-build.log') 600000
+        $record.BuildPid = $buildOutcome.Pid
+        $record.BuildExitCode = $buildOutcome.ExitCode
+        $record.BuildTimedOut = $buildOutcome.TimedOut
+        $record.BuildConfirmedExited = $buildOutcome.ConfirmedExited
+        $record.BuildLogRetained = $buildOutcome.LogRetained
+        $record.BuildError = $buildOutcome.Error
+        $record.BuildCleanupError = $buildOutcome.CleanupError
+        if ($null -ne $buildOutcome.Error) { throw $buildOutcome.Error }
+        if ($buildOutcome.ExitCode -ne 0) { throw "The native Cathedral population build failed with exit code $($buildOutcome.ExitCode)." }
+        $nativeExecutable = Join-Path $nativeBuild.Directory 'cathedral_population_test.exe'
+        for ($captureIndex = 0; $captureIndex -lt 2; $captureIndex++) {
+            $captureName = if ($captureIndex -eq 0) { 'first' } else { 'repeated' }
+            $captureRoot = Join-Path $evidenceRoot ($captureName + '-capture')
+            if (Test-Path -LiteralPath $captureRoot) { throw 'A Cathedral population capture directory was not fresh.' }
+            New-Item -ItemType Directory -Path $captureRoot | Out-Null
+            $artifactRoot = Join-Path $captureRoot 'artifacts'
+            New-Item -ItemType Directory -Path $artifactRoot | Out-Null
+            $reportPath = Join-Path $captureRoot 'native-tests.json'
+            $logPath = Join-Path $captureRoot 'native-tests.log'
+            $record.Captures += [pscustomobject][ordered]@{
+                Name = $captureName
+                Root = $captureRoot
+                ArtifactDirectory = $artifactRoot
+                Report = $reportPath
+                Log = $logPath
+                NativePid = $null
+                NativeExitCode = $null
+                NativeTimedOut = $false
+                NativeConfirmedExited = $false
+                NativeLogRetained = $false
+                NativeError = $null
+                NativeCleanupError = $null
+                Artifacts = @()
+                Error = $null
+            }
+            [Environment]::SetEnvironmentVariable($oracleDirectoryVariable, $artifactRoot, 'Process')
+            $outcome = Invoke-CathedralPopulationNativeOracle $nativeExecutable $reportPath $logPath
+            $record.Captures[$captureIndex].NativePid = $outcome.Pid
+            $record.Captures[$captureIndex].NativeExitCode = $outcome.ExitCode
+            $record.Captures[$captureIndex].NativeTimedOut = $outcome.TimedOut
+            $record.Captures[$captureIndex].NativeConfirmedExited = $outcome.ConfirmedExited
+            $record.Captures[$captureIndex].NativeLogRetained = $outcome.LogRetained
+            $record.Captures[$captureIndex].NativeError = $outcome.Error
+            $record.Captures[$captureIndex].NativeCleanupError = $outcome.CleanupError
+            if ($null -ne $outcome.Error) { throw $outcome.Error }
+            if ($outcome.ExitCode -ne 0) { throw "The native Cathedral population oracle failed with exit code $($outcome.ExitCode)." }
+            Assert-CathedralPopulationNativeReport $reportPath
+            Assert-CathedralPopulationMetadata $artifactRoot
+            $metadata = [IO.File]::ReadAllText((Join-Path $artifactRoot 'metadata.json')) | ConvertFrom-Json
+            foreach ($name in (Get-CathedralPopulationOracleArtifactNames | Where-Object { $_ -ne 'metadata.json' })) {
+                Assert-CathedralPopulationCase (Join-Path $artifactRoot $name) $name $metadata
+            }
+            $record.Captures[$captureIndex].Artifacts = @(Get-CathedralPopulationOracleArtifacts $artifactRoot)
+        }
+        Assert-CathedralRepeatArtifacts $record.Captures[0].Artifacts $record.Captures[1].Artifacts 17
+        $record.Deterministic = $true
+        $record.Passed = $true
+    } catch {
+        $primaryError = $_
+        $record.Error = $_.Exception.Message
+        if ($record.Captures.Count -gt 0) { $record.Captures[-1].Error = $record.Error }
+    } finally {
+        try {
+            [Environment]::SetEnvironmentVariable($oracleDirectoryVariable, $previousOracleDirectory, 'Process')
+        } finally {
+            if ($locationPushed) { Pop-Location }
+        }
+        $record.EndedUtc = [DateTime]::UtcNow.ToString('O')
+    }
+    try {
+        [IO.File]::WriteAllText((Join-Path $evidenceRoot 'result.json'), ($record | ConvertTo-Json -Depth 24), [Text.UTF8Encoding]::new($false))
+    } catch {
+        if ($null -eq $primaryError) { throw }
+        Write-Warning "Could not retain the Cathedral population result record: $($_.Exception.Message)"
+    }
+    if ($null -ne $primaryError) { throw $primaryError }
+    Write-Host "PASS: native Cathedral object population captures are repeatable. Evidence: $evidenceRoot"
+    return
 }
 
 if ($CathedralDoors) {
