@@ -5,6 +5,7 @@
 #include <functional>
 #include <memory>
 #include <string>
+#include <tuple>
 #include <thread>
 #include <utility>
 #include <vector>
@@ -403,6 +404,66 @@ TEST(ServerBackedNativePresentation, ResolvesLoadedArtFrameSentinelAndBounds)
 	snapshot.activatedAnimationFrame = 5;
 	frame = ResolveAuthoritativeObjectAnimationFrame(object, snapshot);
 	EXPECT_FALSE(frame.has_value());
+}
+
+TEST(ServerBackedNativePresentation, AppliesTypedCathedralDoorNativeStateExactly)
+{
+	NativePresentationGlobalScope globals;
+	ServerBackedWorldProjection projection;
+	ServerBackedWorldPresentation presentation;
+	ProjectedObjectSnapshot object;
+	object.entityId = 3101;
+	object.objectId = OBJ_L1LDOOR;
+	object.nativeObjectId = OBJ_L1LDOOR;
+	object.levelId = 1;
+	object.positionX = 10;
+	object.positionY = 10;
+	object.keepVisibleAfterActivation = true;
+	const int initialSpecial = tileAt(object.positionX, object.positionY).special();
+
+	for (const auto &[state, frame, selectionRegion, preDraw, missilePassable] : std::array {
+		         std::tuple<int32_t, uint32_t, uint32_t, bool, bool> { 0, 1, 3, false, false },
+		         std::tuple<int32_t, uint32_t, uint32_t, bool, bool> { 1, 3, 2, true, true },
+		         std::tuple<int32_t, uint32_t, uint32_t, bool, bool> { 2, 5, 2, true, true },
+	         }) {
+		object.animationFrame = frame;
+		object.missilePassable = missilePassable;
+		object.cathedralDoor = ProjectedCathedralDoorSnapshot {
+			.entityId = object.entityId,
+			.levelId = object.levelId,
+			.positionX = object.positionX,
+			.positionY = object.positionY,
+			.nativeObjectId = object.nativeObjectId,
+			.doorState = state,
+			.cachedPiece = 43,
+			.cachedNeighborPiece = 49,
+			.animationFrame = frame,
+			.selectionRegion = selectionRegion,
+			.preDraw = preDraw,
+			.missilePassable = missilePassable,
+			.solid = false,
+		};
+		ASSERT_TRUE(projection.Apply({}, {}, { object }, 1).has_value());
+		EXPECT_EQ(
+		    projection.AuthoritativeObjectAt(object.positionX, object.positionY),
+		    std::optional<uint32_t> { object.entityId });
+		ASSERT_TRUE(presentation.Apply(projection, 1).has_value());
+		ASSERT_EQ(ObjectPoolAdapter::ActiveObjectCountValue(), 1);
+		const int slot = ObjectPoolAdapter::ActiveObjectIndexAt(0);
+		EXPECT_TRUE(Objects[slot]._oDoorFlag);
+		EXPECT_EQ(Objects[slot]._oVar1, 43);
+		EXPECT_EQ(Objects[slot]._oVar2, 49);
+		EXPECT_EQ(Objects[slot]._oVar4, state);
+		EXPECT_EQ(Objects[slot]._oAnimFrame, frame);
+		EXPECT_EQ(Objects[slot].selectionRegion, static_cast<SelectionRegion>(selectionRegion));
+		EXPECT_EQ(Objects[slot]._oPreFlag, preDraw);
+		EXPECT_EQ(Objects[slot]._oMissFlag, missilePassable);
+		EXPECT_FALSE(Objects[slot]._oSolidFlag);
+		EXPECT_EQ(tileAt(object.positionX, object.positionY).special(), state == 0 ? 0 : 7);
+	}
+
+	presentation.Clear();
+	tileAt(object.positionX, object.positionY).setSpecial(initialSpecial);
 }
 
 TEST(ServerBackedNativePresentation, RejectsMissingAndEmptyLoadedArt)

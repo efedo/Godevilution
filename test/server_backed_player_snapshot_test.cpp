@@ -1068,6 +1068,59 @@ TEST(ServerBackedPlayerSnapshot, ProjectsAndSortsAuthoritativeObjects)
 	EXPECT_TRUE((*projected)[1].activateOnOccupancy);
 }
 
+TEST(ServerBackedPlayerSnapshot, ProjectsTypedCathedralDoorFieldsAndPreservesNativeIdFallback)
+{
+	protocol::Snapshot typed;
+	auto *typedObject = typed.add_objects();
+	typedObject->set_entity_id(31);
+	typedObject->set_object_id(OBJ_L1LDOOR);
+	typedObject->set_native_object_id(1);
+	typedObject->set_level_id(1);
+	typedObject->set_position_x(10);
+	typedObject->set_position_y(11);
+	typedObject->set_keep_visible_after_activation(true);
+	typedObject->set_animation_frame(3);
+	typedObject->set_missile_passable(true);
+	const auto door = typedObject->mutable_cathedral_door();
+	door->set_entity_id(31);
+	door->set_level_id(1);
+	door->set_position_x(10);
+	door->set_position_y(11);
+	door->set_native_object_id(1);
+	door->set_door_state(1);
+	door->set_cached_piece(43);
+	door->set_cached_neighbor_piece(49);
+	door->set_animation_frame(3);
+	door->set_selection_region(2);
+	door->set_pre_draw(true);
+	door->set_missile_passable(true);
+
+	auto projected = ProjectObjectSnapshots(typed);
+	ASSERT_TRUE(projected.has_value()) << projected.error();
+	ASSERT_TRUE((*projected)[0].cathedralDoor.has_value());
+	EXPECT_EQ((*projected)[0].cathedralDoor->cachedPiece, 43U);
+	EXPECT_EQ((*projected)[0].cathedralDoor->cachedNeighborPiece, 49U);
+	EXPECT_EQ((*projected)[0].cathedralDoor->doorState, 1);
+	EXPECT_TRUE((*projected)[0].cathedralDoor->preDraw);
+	EXPECT_TRUE((*projected)[0].cathedralDoor->missilePassable);
+
+	protocol::Snapshot hybrid = typed;
+	hybrid.mutable_objects(0)->set_dialogue_message_id(1);
+	EXPECT_FALSE(ProjectObjectSnapshots(hybrid).has_value());
+
+	protocol::Snapshot legacy;
+	auto *legacyObject = legacy.add_objects();
+	legacyObject->set_entity_id(32);
+	legacyObject->set_object_id(OBJ_L1LDOOR);
+	legacyObject->set_native_object_id(1);
+	legacyObject->set_level_id(1);
+	legacyObject->set_position_x(10);
+	legacyObject->set_position_y(11);
+	auto legacyProjected = ProjectObjectSnapshots(legacy);
+	ASSERT_TRUE(legacyProjected.has_value());
+	EXPECT_FALSE((*legacyProjected)[0].cathedralDoor.has_value());
+}
+
 TEST(ServerBackedPlayerSnapshot, AcceptsBaseContentQuestRewardOffsets)
 {
 	protocol::Snapshot snapshot;
@@ -1991,6 +2044,25 @@ TEST(ServerBackedPlayerSnapshot, RejectsMalformedLevelGeometryAndWarpTriggers)
 	level->add_blocked_cells(4);
 	EXPECT_FALSE(ValidateLevelGeometrySnapshots(invalidCells).has_value());
 
+	protocol::Snapshot invalidStaticCells;
+	level = invalidStaticCells.add_level_geometry();
+	level->set_level_id(1);
+	level->set_width(2);
+	level->set_height(2);
+	level->add_static_object_blocked_cells(3);
+	level->add_static_object_blocked_cells(3);
+	EXPECT_FALSE(ValidateLevelGeometrySnapshots(invalidStaticCells).has_value());
+
+	protocol::Snapshot invalidNewLayerDimensions;
+	level = invalidNewLayerDimensions.add_level_geometry();
+	level->set_width(0);
+	level->set_height(1);
+	level->add_static_object_blocked_cells(0);
+	EXPECT_FALSE(ValidateLevelGeometrySnapshots(invalidNewLayerDimensions).has_value());
+	level->clear_static_object_blocked_cells();
+	level->add_native_special_layer(0);
+	EXPECT_FALSE(ValidateLevelGeometrySnapshots(invalidNewLayerDimensions).has_value());
+
 	protocol::Snapshot invalidLayer;
 	level = invalidLayer.add_level_geometry();
 	level->set_width(1);
@@ -2022,6 +2094,9 @@ TEST(ServerBackedPlayerSnapshot, RejectsMalformedLevelGeometryAndWarpTriggers)
 	EXPECT_FALSE(ValidateLevelGeometrySnapshots(invalidNativePresentation).has_value());
 	level->clear_native_mega_tile_layer();
 	level->add_native_object_layer(static_cast<uint32_t>(DUN_OBJECT_ID_LAST) + 1);
+	EXPECT_FALSE(ValidateLevelGeometrySnapshots(invalidNativePresentation).has_value());
+	level->clear_native_object_layer();
+	level->add_native_special_layer(256);
 	EXPECT_FALSE(ValidateLevelGeometrySnapshots(invalidNativePresentation).has_value());
 
 	protocol::Snapshot invalidNativeDimensions;
@@ -2830,6 +2905,10 @@ TEST(ServerBackedPlayerSnapshot, ProjectsAndSortsAuthoritativeLevelGeometry)
 	second->add_native_piece_layer(300);
 	second->add_native_piece_layer(299);
 	second->add_native_piece_layer(298);
+	second->add_native_special_layer(0);
+	second->add_native_special_layer(7);
+	second->add_native_special_layer(8);
+	second->add_native_special_layer(0);
 	auto *warp = second->add_warp_triggers();
 	warp->set_warp_id(200);
 	warp->set_trigger_x(1);
@@ -2855,6 +2934,7 @@ TEST(ServerBackedPlayerSnapshot, ProjectsAndSortsAuthoritativeLevelGeometry)
 	EXPECT_EQ(projected->back().nativeMegaTileLayer.front(), 42U);
 	EXPECT_EQ(projected->back().nativePieceLayer[0], 297U);
 	EXPECT_EQ(projected->back().nativePieceLayer[3], 298U);
+	EXPECT_EQ(projected->back().nativeSpecialLayer, std::vector<uint16_t>({ 0, 7, 8, 0 }));
 }
 
 TEST(ServerBackedPlayerSnapshot, ProjectsNativeVisionBlockedCells)
@@ -2870,6 +2950,98 @@ TEST(ServerBackedPlayerSnapshot, ProjectsNativeVisionBlockedCells)
 	ASSERT_TRUE(projected.has_value()) << projected.error();
 	ASSERT_EQ(projected->size(), 1U);
 	EXPECT_EQ(projected->front().nativeVisionBlockedCells, std::vector<int32_t>({ 1 }));
+}
+
+TEST(ServerBackedPlayerSnapshot, ProjectsStaticObjectBlockedCellsWithoutVisionUnion)
+{
+	protocol::Snapshot snapshot;
+	auto *level = snapshot.add_level_geometry();
+	level->set_level_id(1);
+	level->set_width(2);
+	level->set_height(2);
+	level->add_native_piece_layer(0);
+	level->add_native_piece_layer(0);
+	level->add_native_piece_layer(0);
+	level->add_native_piece_layer(269);
+	level->add_static_object_blocked_cells(3);
+
+	auto projected = ProjectLevelGeometrySnapshots(snapshot);
+	ASSERT_TRUE(projected.has_value()) << projected.error();
+	ASSERT_EQ(projected->size(), 1U);
+	EXPECT_EQ(projected->front().staticObjectBlockedCells, std::vector<int32_t>({ 3 }));
+
+	ServerBackedWorldProjection projection;
+	ASSERT_TRUE(projection.Apply({ }, { }, { }, { }, *projected, 1).has_value());
+	EXPECT_TRUE(projection.IsBlocked(1, 1).value());
+	EXPECT_FALSE(projection.IsVisionBlocked(1, 1).value());
+}
+
+TEST(ServerBackedPlayerSnapshot, RejectsTypedDoorWithConflictingNativeSpecialLayer)
+{
+	ProjectedObjectSnapshot object;
+	object.entityId = 31;
+	object.levelId = 1;
+	object.positionX = 0;
+	object.positionY = 0;
+	object.cathedralDoor = ProjectedCathedralDoorSnapshot {
+		.entityId = 31,
+		.levelId = 1,
+		.positionX = 0,
+		.positionY = 0,
+		.nativeObjectId = 1,
+		.doorState = 1,
+		.cachedPiece = 43,
+		.cachedNeighborPiece = 49,
+		.animationFrame = 3,
+		.selectionRegion = 2,
+		.preDraw = true,
+		.missilePassable = true,
+		.solid = false,
+	};
+	ProjectedLevelGeometrySnapshot geometry;
+	geometry.levelId = 1;
+	geometry.width = 1;
+	geometry.height = 1;
+	geometry.nativeSpecialLayer = { 8 };
+
+	ServerBackedWorldProjection projection;
+	EXPECT_FALSE(projection.Apply({ }, { }, { object }, { }, { geometry }, 1).has_value());
+}
+
+TEST(ServerBackedPlayerSnapshot, DirectProjectionRejectsMalformedSupplementalGeometryAtomically)
+{
+	ProjectedLevelGeometrySnapshot geometry;
+	geometry.levelId = 1;
+	geometry.width = 2;
+	geometry.height = 2;
+	geometry.staticObjectBlockedCells = { 3 };
+	geometry.nativeSpecialLayer = { 0, 7, 8, 0 };
+	ServerBackedWorldProjection projection;
+	ASSERT_TRUE(projection.Apply({}, {}, {}, {}, { geometry }, 1).has_value());
+	std::vector<ProjectedLevelGeometrySnapshot> invalid;
+	invalid.push_back(geometry);
+	invalid.back().width = 0;
+	invalid.push_back(geometry);
+	invalid.back().height = 0;
+	invalid.push_back(geometry);
+	invalid.back().width = MaximumNativeTileCoordinate + 2;
+	invalid.push_back(geometry);
+	invalid.back().staticObjectBlockedCells = { 3, 3 };
+	invalid.push_back(geometry);
+	invalid.back().staticObjectBlockedCells = { -1 };
+	invalid.push_back(geometry);
+	invalid.back().staticObjectBlockedCells = { 4 };
+	invalid.push_back(geometry);
+	invalid.back().nativeSpecialLayer = { 0 };
+	invalid.push_back(geometry);
+	invalid.back().nativeSpecialLayer[0] = 256;
+	for (const auto &candidate : invalid) {
+		EXPECT_FALSE(projection.Apply({}, {}, {}, {}, { candidate }, 1).has_value());
+		ASSERT_NE(projection.CurrentLevelGeometry(), nullptr);
+		EXPECT_EQ(projection.CurrentLevelGeometry()->staticObjectBlockedCells, geometry.staticObjectBlockedCells);
+		EXPECT_EQ(projection.CurrentLevelGeometry()->nativeSpecialLayer, geometry.nativeSpecialLayer);
+		EXPECT_TRUE(projection.IsBlocked(1, 1).value());
+	}
 }
 
 TEST(ServerBackedPlayerSnapshot, WorldProjectionRetainsEntitiesFromAnotherLevel)
@@ -2939,22 +3111,27 @@ TEST(ServerBackedPlayerSnapshot, AppliesAuthoritativeNativeGeometryLayers)
 	geometry.nativeTransparency[6] = 128;
 	geometry.nativePieceLayer.assign(16, 42);
 	geometry.nativePieceLayer[5] = 77;
+	geometry.nativeSpecialLayer.assign(16, 0);
+	geometry.nativeSpecialLayer[5] = 7;
 	geometry.nativeMegaTileLayer = { 12, 13, 14, 15 };
 
 	const auto previousPiece = tileAt(1, 1).piece();
 	const auto previousTransparency = tileAt(1, 1).transVal();
+	const auto previousSpecial = tileAt(1, 1).special();
 	const auto previousMegaTile = megaTileAt(0, 0).current();
 	struct RestoreNativeGeometry {
 		uint16_t piece;
 		int8_t transparency;
+		int8_t special;
 		uint8_t megaTile;
 		~RestoreNativeGeometry()
 		{
 			tileAt(1, 1).setPiece(piece);
 			tileAt(1, 1).setTransVal(transparency);
+			tileAt(1, 1).setSpecial(special);
 			megaTileAt(0, 0).setCurrent(megaTile);
 		}
-	} restore { previousPiece, previousTransparency, previousMegaTile };
+	} restore { previousPiece, previousTransparency, previousSpecial, previousMegaTile };
 
 	ServerBackedWorldProjection projection;
 	ASSERT_TRUE(projection.Apply({ }, { }, { }, { }, { geometry }, 1).has_value());
@@ -2962,6 +3139,7 @@ TEST(ServerBackedPlayerSnapshot, AppliesAuthoritativeNativeGeometryLayers)
 	ASSERT_TRUE(presentation.Apply(projection, 1).has_value());
 	EXPECT_EQ(tileAt(1, 1).piece(), 77);
 	EXPECT_EQ(tileAt(1, 1).transVal(), 9);
+	EXPECT_EQ(tileAt(1, 1).special(), 7);
 	EXPECT_EQ(tileAt(2, 1).transVal(), -128);
 	EXPECT_EQ(megaTileAt(0, 0).current(), 12);
 
@@ -2985,6 +3163,10 @@ TEST(ServerBackedPlayerSnapshot, AppliesAuthoritativeNativeGeometryLayers)
 	invalid.nativeObjectLayer[0] = static_cast<uint16_t>(DUN_OBJECT_ID_LAST) + 1;
 	ASSERT_TRUE(invalidProjection.Apply({ }, { }, { }, { }, { invalid }, 1).has_value());
 	EXPECT_FALSE(presentation.Apply(invalidProjection, 1).has_value());
+
+	invalid = geometry;
+	invalid.nativeSpecialLayer[0] = 256;
+	EXPECT_FALSE(invalidProjection.Apply({ }, { }, { }, { }, { invalid }, 1).has_value());
 }
 
 TEST(ServerBackedPlayerSnapshot, WorldProjectionRejectsDuplicateLevelGeometry)

@@ -18,20 +18,55 @@ namespace Devilution.Server.Stores;
  */
 public sealed class DiabloCohortCodec
 {
+    private const string CathedralDoorsPropertyName = "CathedralDoors";
+    private const int LegacyFormatVersion = DiabloCohortState.CurrentFormatVersion;
+    private const int CathedralDoorsFormatVersion = DiabloCohortState.CathedralDoorFormatVersion;
     private static readonly UTF8Encoding StrictUtf8 = new(false, true);
-    private static readonly ConcurrentDictionary<Type, PropertyInfo[]> Properties = new();
+    private static readonly ConcurrentDictionary<(Type Type, CodecSchema Schema), PropertyInfo[]> Properties = new();
     private static readonly ConcurrentDictionary<PropertyInfo, bool> NullableProperties = new();
-    private static readonly JsonSerializerOptions Options = CreateOptions();
+    private static readonly JsonSerializerOptions LegacyOptions = CreateOptions(CodecSchema.Legacy);
+    private static readonly JsonSerializerOptions CathedralDoorsOptions = CreateOptions(CodecSchema.CathedralDoors);
 
     public string Serialize(DiabloCohortState state)
     {
         ArgumentNullException.ThrowIfNull(state);
+        var schema = SelectSerializationSchema(state);
         try {
-            ValidateGraph(state, typeof(DiabloCohortState), new HashSet<object>(ReferenceEqualityComparer.Instance));
+            ValidateGraph(state, typeof(DiabloCohortState), new HashSet<object>(ReferenceEqualityComparer.Instance), schema);
             state.ValidateShape();
-            return JsonSerializer.Serialize(state, Options);
+            return JsonSerializer.Serialize(state, GetOptions(schema));
         } catch (Exception exception) when (IsEncodingFailure(exception)) {
             throw new InvalidDataException("The Diablo cohort cannot be encoded without losing state.", exception);
+        }
+    }
+
+    /** Strict standalone codec shared by Cathedral door save metadata. */
+    internal static string SerializeCathedralDoorCheckpoint(DiabloCathedralDoorCheckpoint checkpoint)
+    {
+        ArgumentNullException.ThrowIfNull(checkpoint);
+        try {
+            ValidateGraph(checkpoint, typeof(DiabloCathedralDoorCheckpoint),
+                new HashSet<object>(ReferenceEqualityComparer.Instance), CodecSchema.CathedralDoors);
+            checkpoint.ValidateShape();
+            return JsonSerializer.Serialize(checkpoint, CathedralDoorsOptions);
+        } catch (Exception exception) when (IsEncodingFailure(exception)) {
+            throw new InvalidDataException(
+                "The Cathedral door checkpoint cannot be encoded without losing state.", exception);
+        }
+    }
+
+    /** Strict standalone reader shared by Cathedral door save metadata. */
+    internal static DiabloCathedralDoorCheckpoint DeserializeCathedralDoorCheckpoint(JsonElement value)
+    {
+        try {
+            ValidateJson(value, typeof(DiabloCathedralDoorCheckpoint), false, CodecSchema.CathedralDoors);
+            var checkpoint = value.Deserialize<DiabloCathedralDoorCheckpoint>(CathedralDoorsOptions)
+                ?? throw new InvalidDataException("The Cathedral door checkpoint must be an explicit object.");
+            checkpoint.ValidateShape();
+            return checkpoint;
+        } catch (Exception exception) when (IsEncodingFailure(exception)) {
+            throw new InvalidDataException(
+                "The Cathedral door checkpoint is invalid or incomplete.", exception);
         }
     }
 
@@ -41,9 +76,12 @@ public sealed class DiabloCohortCodec
         try {
             StrictUtf8.GetByteCount(serializedState);
             using var document = JsonDocument.Parse(serializedState);
-            ValidateJson(document.RootElement, typeof(DiabloCohortState), false);
-            var state = document.RootElement.Deserialize<DiabloCohortState>(Options)
+            var schema = SelectDeserializationSchema(document.RootElement);
+            ValidateJson(document.RootElement, typeof(DiabloCohortState), false, schema);
+            var state = document.RootElement.Deserialize<DiabloCohortState>(GetOptions(schema))
                 ?? throw new InvalidDataException("The Diablo cohort must be an explicit object.");
+            if (state.FormatVersion != GetFormatVersion(schema))
+                throw new InvalidDataException("The Diablo cohort format version was normalized while decoding.");
             state.ValidateShape();
             return state;
         } catch (Exception exception) when (IsEncodingFailure(exception)) {
@@ -56,13 +94,13 @@ public sealed class DiabloCohortCodec
         or InvalidOperationException or NotSupportedException or TargetInvocationException
         or FormatException or OverflowException;
 
-    private static JsonSerializerOptions CreateOptions()
+    private static JsonSerializerOptions CreateOptions(CodecSchema schema)
     {
         var resolver = new DefaultJsonTypeInfoResolver();
         resolver.Modifiers.Add(info => {
             if (info.Kind != JsonTypeInfoKind.Object)
                 return;
-            var fields = GetProperties(info.Type).Select(field => field.Name).ToHashSet(StringComparer.Ordinal);
+            var fields = GetProperties(info.Type, schema).Select(field => field.Name).ToHashSet(StringComparer.Ordinal);
             for (var index = info.Properties.Count - 1; index >= 0; index--) {
                 if (!fields.Contains(info.Properties[index].Name))
                     info.Properties.RemoveAt(index);
@@ -75,22 +113,86 @@ public sealed class DiabloCohortCodec
         };
         // Immutable legacy projection records deliberately have convenience
         // constructors. Adapt those here, without JSON attributes in the module.
-        options.Converters.Add(new CompleteRecordConverterFactory());
+        options.Converters.Add(new CompleteRecordConverterFactory(schema));
         options.Converters.Add(new CheckedEnumConverterFactory());
         return options;
     }
 
-    private static PropertyInfo[] GetProperties(Type type) => Properties.GetOrAdd(
-        type,
-        static candidate => candidate.GetProperties(BindingFlags.Public | BindingFlags.Instance)
+    private static JsonSerializerOptions GetOptions(CodecSchema schema) => schema switch {
+        CodecSchema.Legacy => LegacyOptions,
+        CodecSchema.CathedralDoors => CathedralDoorsOptions,
+        _ => throw new ArgumentOutOfRangeException(nameof(schema)),
+    };
+
+    private static PropertyInfo[] GetProperties(Type type, CodecSchema schema) => Properties.GetOrAdd(
+        (type, schema),
+        static key => key.Type.GetProperties(BindingFlags.Public | BindingFlags.Instance)
             .Where(property => property.GetMethod?.IsPublic == true
                 && property.GetIndexParameters().Length == 0
                 && (property.SetMethod is not null
-                    || candidate.GetConstructors().Any(constructor => constructor.GetParameters().Any(parameter =>
+                    || key.Type.GetConstructors().Any(constructor => constructor.GetParameters().Any(parameter =>
                         string.Equals(property.Name, parameter.Name, StringComparison.OrdinalIgnoreCase)
-                        && property.PropertyType == parameter.ParameterType))))
+                        && property.PropertyType == parameter.ParameterType)))
+                && (key.Schema != CodecSchema.Legacy
+                    || key.Type != typeof(DiabloCohortState)
+                    || property.Name != CathedralDoorsPropertyName))
             .OrderBy(property => property.Name, StringComparer.Ordinal)
             .ToArray());
+
+    private static CodecSchema SelectSerializationSchema(DiabloCohortState state)
+    {
+        var hasCathedralDoors = GetCathedralDoors(state) is not null;
+        return state.FormatVersion switch {
+            LegacyFormatVersion when !hasCathedralDoors => CodecSchema.Legacy,
+            LegacyFormatVersion => throw new InvalidDataException(
+                "Legacy Diablo cohorts cannot carry Cathedral door state."),
+            CathedralDoorsFormatVersion when hasCathedralDoors => CodecSchema.CathedralDoors,
+            CathedralDoorsFormatVersion => throw new InvalidDataException(
+                "Cathedral door cohorts require explicit Cathedral door state."),
+            _ => throw new InvalidDataException(
+                $"Unsupported Diablo cohort format version {state.FormatVersion}."),
+        };
+    }
+
+    private static CodecSchema SelectDeserializationSchema(JsonElement root)
+    {
+        RequireKind(root, JsonValueKind.Object, typeof(DiabloCohortState));
+        var versionCount = 0;
+        var version = 0;
+        foreach (var field in root.EnumerateObject()) {
+            if (!string.Equals(field.Name, "FormatVersion", StringComparison.Ordinal))
+                continue;
+            if (++versionCount != 1)
+                throw new InvalidDataException("A Diablo cohort must contain exactly one FormatVersion field.");
+            if (field.Value.ValueKind != JsonValueKind.Number
+                || !field.Value.TryGetInt32(out version)
+                || !string.Equals(field.Value.GetRawText(),
+                    version.ToString(CultureInfo.InvariantCulture), StringComparison.Ordinal))
+                throw new InvalidDataException("A Diablo cohort FormatVersion must be one canonical integer.");
+        }
+        if (versionCount != 1)
+            throw new InvalidDataException("A Diablo cohort must contain exactly one FormatVersion field.");
+        return version switch {
+            LegacyFormatVersion => CodecSchema.Legacy,
+            CathedralDoorsFormatVersion => CodecSchema.CathedralDoors,
+            _ => throw new InvalidDataException(
+                $"Unsupported Diablo cohort format version {version}."),
+        };
+    }
+
+    private static int GetFormatVersion(CodecSchema schema) => schema switch {
+        CodecSchema.Legacy => LegacyFormatVersion,
+        CodecSchema.CathedralDoors => CathedralDoorsFormatVersion,
+        _ => throw new ArgumentOutOfRangeException(nameof(schema)),
+    };
+
+    private static DiabloCathedralDoorCheckpoint? GetCathedralDoors(DiabloCohortState state) =>
+        state.CathedralDoors;
+
+    private static bool IsRequiredCathedralDoors(Type type, PropertyInfo property, CodecSchema schema) =>
+        schema == CodecSchema.CathedralDoors
+        && type == typeof(DiabloCohortState)
+        && string.Equals(property.Name, CathedralDoorsPropertyName, StringComparison.Ordinal);
 
     private static bool AllowsNull(PropertyInfo property) => NullableProperties.GetOrAdd(
         property,
@@ -104,7 +206,7 @@ public sealed class DiabloCohortCodec
             : type.GetInterfaces().FirstOrDefault(candidate =>
                 candidate.IsGenericType && candidate.GetGenericTypeDefinition() == definition);
 
-    private static void ValidateJson(JsonElement value, Type declaredType, bool allowsNull)
+    private static void ValidateJson(JsonElement value, Type declaredType, bool allowsNull, CodecSchema schema)
     {
         var nullable = Nullable.GetUnderlyingType(declaredType);
         if (value.ValueKind == JsonValueKind.Null) {
@@ -138,7 +240,7 @@ public sealed class DiabloCohortCodec
                     if (Convert.ToString(key, CultureInfo.InvariantCulture) != entry.Name)
                         throw new InvalidDataException("Cohort numeric dictionary keys must be canonical.");
                 }
-                ValidateJson(entry.Value, arguments[1], false);
+                ValidateJson(entry.Value, arguments[1], false, schema);
             }
             return;
         }
@@ -147,16 +249,17 @@ public sealed class DiabloCohortCodec
             RequireKind(value, JsonValueKind.Array, type);
             var elementType = sequence.GetGenericArguments()[0];
             foreach (var element in value.EnumerateArray())
-                ValidateJson(element, elementType, false);
+                ValidateJson(element, elementType, false, schema);
             return;
         }
         RequireKind(value, JsonValueKind.Object, type);
-        var properties = GetProperties(type).ToDictionary(property => property.Name, StringComparer.Ordinal);
+        var properties = GetProperties(type, schema).ToDictionary(property => property.Name, StringComparer.Ordinal);
         var present = new HashSet<string>(StringComparer.Ordinal);
         foreach (var field in value.EnumerateObject()) {
             if (!present.Add(field.Name) || !properties.TryGetValue(field.Name, out var property))
                 throw new InvalidDataException($"Unknown or duplicate cohort field '{field.Name}'.");
-            ValidateJson(field.Value, property.PropertyType, AllowsNull(property));
+            ValidateJson(field.Value, property.PropertyType,
+                AllowsNull(property) && !IsRequiredCathedralDoors(type, property, schema), schema);
         }
         if (present.Count != properties.Count)
             throw new InvalidDataException($"The {type.Name} cohort object is missing required fields.");
@@ -168,7 +271,7 @@ public sealed class DiabloCohortCodec
             throw new InvalidDataException($"A cohort {type.Name} must be a JSON {kind}.");
     }
 
-    private static void ValidateGraph(object value, Type declaredType, HashSet<object> visited)
+    private static void ValidateGraph(object value, Type declaredType, HashSet<object> visited, CodecSchema schema)
     {
         var type = Nullable.GetUnderlyingType(declaredType) ?? declaredType;
         if (type == typeof(string)) {
@@ -191,10 +294,10 @@ public sealed class DiabloCohortCodec
                 var entryType = entry.GetType();
                 var key = entryType.GetProperty("Key")!.GetValue(entry)!;
                 var item = entryType.GetProperty("Value")!.GetValue(entry);
-                ValidateGraph(key, arguments[0], visited);
+                ValidateGraph(key, arguments[0], visited, schema);
                 if (item is null)
                     throw new InvalidDataException("Cohort dictionaries cannot contain null values.");
-                ValidateGraph(item, arguments[1], visited);
+                ValidateGraph(item, arguments[1], visited, schema);
             }
             return;
         }
@@ -207,18 +310,18 @@ public sealed class DiabloCohortCodec
             foreach (var element in (IEnumerable)value) {
                 if (element is null)
                     throw new InvalidDataException("Cohort arrays cannot contain null elements.");
-                ValidateGraph(element, elementType, visited);
+                ValidateGraph(element, elementType, visited, schema);
             }
             return;
         }
-        foreach (var property in GetProperties(type)) {
+        foreach (var property in GetProperties(type, schema)) {
             var item = property.GetValue(value);
             if (item is null) {
-                if (!AllowsNull(property))
+                if (!AllowsNull(property) || IsRequiredCathedralDoors(type, property, schema))
                     throw new InvalidDataException($"Cohort field '{property.Name}' cannot be null.");
                 continue;
             }
-            ValidateGraph(item, property.PropertyType, visited);
+            ValidateGraph(item, property.PropertyType, visited, schema);
         }
     }
 
@@ -264,6 +367,12 @@ public sealed class DiabloCohortCodec
         _ => Convert.ToUInt64(value, CultureInfo.InvariantCulture),
     };
 
+    private enum CodecSchema
+    {
+        Legacy,
+        CathedralDoors,
+    }
+
     private sealed class CheckedEnumConverterFactory : JsonConverterFactory
     {
         public override bool CanConvert(Type typeToConvert) => typeToConvert.IsEnum;
@@ -292,39 +401,57 @@ public sealed class DiabloCohortCodec
 
     private sealed class CompleteRecordConverterFactory : JsonConverterFactory
     {
+        private readonly CodecSchema schema;
+
+        public CompleteRecordConverterFactory(CodecSchema schema)
+        {
+            this.schema = schema;
+        }
+
         public override bool CanConvert(Type typeToConvert) =>
             typeToConvert.Assembly == typeof(DiabloCohortState).Assembly
             && typeToConvert.GetMethod("<Clone>$", BindingFlags.Public | BindingFlags.Instance) is not null
             && typeToConvert.GetConstructors().Length > 1;
 
         public override JsonConverter CreateConverter(Type typeToConvert, JsonSerializerOptions options) =>
-            (JsonConverter)Activator.CreateInstance(typeof(CompleteRecordConverter<>).MakeGenericType(typeToConvert))!;
+            (JsonConverter)Activator.CreateInstance(
+                typeof(CompleteRecordConverter<>).MakeGenericType(typeToConvert),
+                BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic,
+                binder: null,
+                args: [schema],
+                culture: null)!;
     }
 
     private sealed class CompleteRecordConverter<T> : JsonConverter<T> where T : class
     {
-        private static readonly PropertyInfo[] Fields = GetProperties(typeof(T));
-        private static readonly ConstructorInfo Constructor = typeof(T).GetConstructors()
-            .Where(constructor => constructor.GetParameters().All(parameter => Fields.Any(field =>
+        private readonly PropertyInfo[] fields;
+        private readonly ConstructorInfo constructor;
+
+        public CompleteRecordConverter(CodecSchema schema)
+        {
+            fields = GetProperties(typeof(T), schema);
+            constructor = typeof(T).GetConstructors()
+                .Where(candidate => candidate.GetParameters().All(parameter => fields.Any(field =>
                 string.Equals(field.Name, parameter.Name, StringComparison.OrdinalIgnoreCase)
                 && field.PropertyType == parameter.ParameterType)))
-            .OrderByDescending(constructor => constructor.GetParameters().Length)
-            .FirstOrDefault()
-            ?? throw new NotSupportedException($"No complete constructor is available for {typeof(T).Name}.");
+                .OrderByDescending(candidate => candidate.GetParameters().Length)
+                .FirstOrDefault()
+                ?? throw new NotSupportedException($"No complete constructor is available for {typeof(T).Name}.");
+        }
 
         public override T Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
         {
             using var document = JsonDocument.ParseValue(ref reader);
             var root = document.RootElement;
-            var values = Fields.ToDictionary(
+            var values = fields.ToDictionary(
                 field => field.Name,
                 field => root.GetProperty(field.Name).Deserialize(field.PropertyType, options),
                 StringComparer.Ordinal);
-            var parameters = Constructor.GetParameters();
-            var bound = parameters.Select(parameter => Fields.Single(field =>
+            var parameters = constructor.GetParameters();
+            var bound = parameters.Select(parameter => fields.Single(field =>
                 string.Equals(field.Name, parameter.Name, StringComparison.OrdinalIgnoreCase))).ToArray();
-            var result = (T)Constructor.Invoke(bound.Select(field => values[field.Name]).ToArray());
-            foreach (var field in Fields) {
+            var result = (T)constructor.Invoke(bound.Select(field => values[field.Name]).ToArray());
+            foreach (var field in fields) {
                 if (bound.Contains(field)) {
                     if (!Equals(field.GetValue(result), values[field.Name]))
                         throw new InvalidDataException($"Constructor normalized cohort field '{field.Name}'.");
@@ -340,7 +467,7 @@ public sealed class DiabloCohortCodec
         public override void Write(Utf8JsonWriter writer, T value, JsonSerializerOptions options)
         {
             writer.WriteStartObject();
-            foreach (var field in Fields) {
+            foreach (var field in fields) {
                 writer.WritePropertyName(field.Name);
                 JsonSerializer.Serialize(writer, field.GetValue(value), field.PropertyType, options);
             }

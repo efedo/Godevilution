@@ -529,6 +529,10 @@ message LevelGeometrySnapshot {
 	repeated int32 native_vision_blocked_cells = 11;
 	// Raw DUN monster-layer conversion indices after authoritative composition (0 through 157).
 	repeated uint32 native_monster_layer = 12;
+	// Collision-only static-object cells; intentionally excluded from native vision/LOS.
+	repeated int32 static_object_blocked_cells = 13;
+	// Raw native special bytes after authoritative composition; optional full fine-grid layer.
+	repeated uint32 native_special_layer = 14;
 }
 
 message WarpTriggerSnapshot {
@@ -967,6 +971,28 @@ message ObjectSnapshot {
 	// Native movement collision metadata. Objects that activate when occupied do
 	// not block player movement; all other live objects occupy their tile.
 	bool activate_on_occupancy = 40;
+	// Optional exact native Cathedral door state. Presence marks this object as a
+	// repeatable typed door; absence preserves legacy object wire bytes.
+	CathedralDoorSnapshot cathedral_door = 41;
+}
+
+// Exact native door presentation and cached geometry. The enclosing object
+// remains the authoritative interaction identity and coordinates; duplicated
+// identity fields make malformed cross-object payloads fail closed.
+message CathedralDoorSnapshot {
+	uint32 entity_id = 1;
+	uint32 level_id = 2;
+	int32 position_x = 3;
+	int32 position_y = 4;
+	uint32 native_object_id = 5;
+	int32 door_state = 6;
+	uint32 cached_piece = 7;
+	uint32 cached_neighbor_piece = 8;
+	uint32 animation_frame = 9;
+	uint32 selection_region = 10;
+	bool pre_draw = 11;
+	bool missile_passable = 12;
+	bool solid = 13;
 }
 
 enum ObjectPresentationKind {

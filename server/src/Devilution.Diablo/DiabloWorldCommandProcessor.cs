@@ -1067,6 +1067,7 @@ public sealed class DiabloWorldCommandProcessor
         var targetX = player.FuturePositionX;
         var targetY = player.FuturePositionY;
         if (!world.IsWalkable(player.LevelId, targetX, targetY)
+            || world.IsCathedralDoorItemBlocked(player.LevelId, targetX, targetY)
             || world.IsOccupied(
                 player.LevelId,
                 targetX,
@@ -1319,6 +1320,7 @@ public sealed class DiabloWorldCommandProcessor
                 originX,
                 originY) > 1
             || !world.IsWalkable(player.LevelId, targetX, targetY)
+            || world.IsCathedralDoorItemBlocked(player.LevelId, targetX, targetY)
             || world.IsOccupied(
                 player.LevelId,
                 targetX,
@@ -1426,6 +1428,10 @@ public sealed class DiabloWorldCommandProcessor
             && linkedQuest.Unavailable) {
             return DiabloWorldIntentResult.Rejected(DiabloRuleFailure.InvalidTarget);
         }
+        if (@object.CathedralDoor is not null)
+            return !applyEffects || world.TryOperateCathedralDoor(objectEntityId, participants)
+                ? DiabloWorldIntentResult.Accepted
+                : DiabloWorldIntentResult.Rejected(DiabloRuleFailure.InvalidTarget);
         if (@object.QuestTransitionKind != AuthoritativeObjectQuestTransitionKind.None
             && (!world.Quests.TryGetValue(@object.QuestId, out var transitionQuest)
                 || transitionQuest.Unavailable
@@ -2475,6 +2481,7 @@ public sealed class DiabloWorldCommandProcessor
         bool requireWalkable = true)
     {
         return (!requireWalkable || world.IsWalkable(levelId, positionX, positionY))
+            && !world.IsCathedralDoorItemBlocked(levelId, positionX, positionY)
             && !world.IsOccupied(
                 levelId,
                 positionX,

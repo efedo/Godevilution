@@ -271,6 +271,38 @@ public sealed class DialogueProtocolProjectionTests
     }
 
     [Fact]
+    public void ProjectsStaticObjectBlockedDpieceCellsWithoutVisionUnion()
+    {
+        var source = CreateOriginSnapshot(
+            new DiabloSetLevelObjectOriginState(6, 17, 7, 8)) with {
+                SetLevelObjectOrigins = [],
+            };
+        var level = new AuthoritativeLevel(
+            17,
+            2,
+            2,
+            nativePieceLayer: [0, 0, 0, 269],
+            staticObjectBlockedCells: [3],
+            nativeSpecialLayer: [0, 7, 8, 0]);
+
+        var projected = DiabloProtocolMapper.ToProtocolSnapshot(
+            source,
+            levelGeometry: [level]);
+        var geometry = Assert.Single(projected.LevelGeometry);
+        Assert.Equal([3], geometry.StaticObjectBlockedCells);
+        Assert.Equal([0U, 7U, 8U, 0U], geometry.NativeSpecialLayer);
+        Assert.DoesNotContain(3, geometry.NativeVisionBlockedCells);
+
+        var wireRoundTrip = Snapshot.Parser.ParseFrom(projected.ToByteArray());
+        Assert.Equal(
+            [3],
+            Assert.Single(wireRoundTrip.LevelGeometry).StaticObjectBlockedCells);
+        Assert.Equal(
+            [0U, 7U, 8U, 0U],
+            Assert.Single(wireRoundTrip.LevelGeometry).NativeSpecialLayer);
+    }
+
+    [Fact]
     public void RejectsMorePlayersThanTheNativePool()
     {
         var source = CreateOriginSnapshot(

@@ -262,9 +262,12 @@ public sealed class AuthoritativeWorldObject
     /** Data-authored presentation family; native_object_id remains compatibility metadata. */
     public AuthoritativeObjectPresentationKind PresentationKind { get; set; }
 
+    /** Native repeatable-door state; separate from one-shot authored activation. */
+    public AuthoritativeCathedralDoorState? CathedralDoor { get; internal set; }
+
     /** Returns whether this object declares behavior that may be submitted as an intent. */
     public bool HasAuthoritativeInteraction
-        => EffectKind != AuthoritativeObjectEffectKind.None
+        => CathedralDoor is not null || EffectKind != AuthoritativeObjectEffectKind.None
             || QuestId != 0
             || QuestTransitionKind != AuthoritativeObjectQuestTransitionKind.None
             || RewardKind != AuthoritativeObjectRewardKind.None
@@ -291,6 +294,10 @@ public sealed class AuthoritativeWorldObject
         int positionX,
         int positionY)
     {
+        if (CathedralDoor is not null
+            && (entityId != EntityId || levelId != LevelId
+                || positionX != PositionX || positionY != PositionY))
+            throw new InvalidDataException("A live Cathedral door cannot be relocated with cached geometry.");
         return new AuthoritativeWorldObject(
             entityId,
             ObjectId,
@@ -334,6 +341,7 @@ public sealed class AuthoritativeWorldObject
             RewardSetLevelId,
             DialogueMessageId) {
             PresentationKind = PresentationKind,
+            CathedralDoor = CathedralDoor,
         };
     }
 
@@ -378,6 +386,7 @@ public sealed class AuthoritativeWorldObject
             && ActivatedAnimationFrame == other.ActivatedAnimationFrame
             && DialogueMessageId == other.DialogueMessageId
             && PresentationKind == other.PresentationKind
+            && CathedralDoor == other.CathedralDoor
             && MissilePassable == other.MissilePassable
             && Breakable == other.Breakable
             && Destroyed == other.Destroyed

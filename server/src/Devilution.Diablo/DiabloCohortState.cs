@@ -96,13 +96,20 @@ public sealed record DiabloCohortState(
     DiabloWorldInfrastructureState WorldInfrastructure)
 {
     public const int CurrentFormatVersion = 1;
+    public const int CathedralDoorFormatVersion = 2;
+
+    /** Required only in the explicit version-two mutable-door cohort schema. */
+    public DiabloCathedralDoorCheckpoint? CathedralDoors { get; init; }
 
     /** Detached records are captured in deterministic identity order. */
     public void ValidateShape()
     {
-        if (FormatVersion != CurrentFormatVersion)
+        if ((FormatVersion != CurrentFormatVersion && FormatVersion != CathedralDoorFormatVersion)
+            || (FormatVersion == CurrentFormatVersion && CathedralDoors is not null)
+            || (FormatVersion == CathedralDoorFormatVersion && CathedralDoors is null))
             throw new InvalidDataException(
                 $"Unsupported Diablo cohort format version {FormatVersion}.");
+        CathedralDoors?.ValidateShape();
         ArgumentNullException.ThrowIfNull(Configuration);
         ArgumentNullException.ThrowIfNull(Participants);
         ArgumentNullException.ThrowIfNull(CombatTargets);

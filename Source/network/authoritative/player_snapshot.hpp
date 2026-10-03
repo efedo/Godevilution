@@ -212,6 +212,23 @@ enum class ProjectedObjectEffectKind : int32_t {
 	GrantSpellLevelAndSpawnProjectile = 9,
 };
 
+/** Exact native Cathedral door fields; absent preserves legacy object projection. */
+struct ProjectedCathedralDoorSnapshot {
+	uint32_t entityId = 0;
+	uint32_t levelId = 0;
+	int32_t positionX = 0;
+	int32_t positionY = 0;
+	uint32_t nativeObjectId = 0;
+	int32_t doorState = 0;
+	uint32_t cachedPiece = 0;
+	uint32_t cachedNeighborPiece = 0;
+	uint32_t animationFrame = 0;
+	uint32_t selectionRegion = 0;
+	bool preDraw = false;
+	bool missilePassable = false;
+	bool solid = false;
+};
+
 struct ProjectedObjectSnapshot {
 	uint32_t entityId = 0;
 	uint32_t objectId = 0;
@@ -245,6 +262,8 @@ struct ProjectedObjectSnapshot {
 	int32_t questSequenceFollowUpKind = 0;
 	/** Optional authored dialogue identity emitted when the object activates. */
 	int32_t dialogueMessageId = 0;
+	/** Optional exact native door projection; absent preserves legacy fallback. */
+	std::optional<ProjectedCathedralDoorSnapshot> cathedralDoor;
 };
 
 struct ProjectedProjectileSnapshot {
@@ -350,6 +369,7 @@ struct ProjectedLevelGeometrySnapshot {
 	int32_t width = 0;
 	int32_t height = 0;
 	std::vector<int32_t> blockedCells;
+	std::vector<int32_t> staticObjectBlockedCells;
 	std::vector<int32_t> missileBlockedCells;
 	std::vector<int32_t> nativeVisionBlockedCells;
 	std::vector<uint16_t> nativeTransparency;
@@ -358,6 +378,7 @@ struct ProjectedLevelGeometrySnapshot {
 	std::vector<uint16_t> nativeMegaTileLayer;
 	std::vector<uint16_t> nativePieceLayer;
 	std::vector<uint16_t> nativeMonsterLayer;
+	std::vector<uint16_t> nativeSpecialLayer;
 };
 
 /** Returns whether a content-owned native missile identity has valid wire syntax. */

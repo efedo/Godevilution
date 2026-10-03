@@ -73,6 +73,16 @@ internal static class DiabloProtocolMapper
         ValidateProjectedObjectPositions(source.Objects, projectedLevels);
         ValidateProjectedQuestStates(source.Quests);
         ValidateProjectedObjectStates(source.Objects, source.Quests);
+        ValidateProjectedCathedralDoorCheckpoint(
+            source.CathedralDoors,
+            source.CathedralDoorObjects);
+        var cathedralDoors = ValidateProjectedCathedralDoorObjects(
+            source.CathedralDoorObjects,
+            source.Objects,
+            projectedLevels);
+        ValidateProjectedCathedralDoorSpecialLayers(
+            cathedralDoors.Values,
+            projectedLevels);
         ValidateProjectedProjectileStates(source.Projectiles, projectedLevels);
         ValidateProjectedPortalStates(source.Portals);
         ValidateProjectedWarpTargets(projectedWarpTargets, projectedLevels, source.Quests);
@@ -287,7 +297,7 @@ internal static class DiabloProtocolMapper
             });
         }
         foreach (var @object in source.Objects) {
-            snapshot.Objects.Add(new ObjectSnapshot {
+            var projectedObject = new ObjectSnapshot {
                 EntityId = @object.EntityId,
                 ObjectId = @object.ObjectId,
                 LevelId = @object.LevelId,
@@ -330,7 +340,10 @@ internal static class DiabloProtocolMapper
                 DialogueMessageId = @object.DialogueMessageId,
                 ActivateOnOccupancy = @object.ActivateOnOccupancy,
                 PresentationKind = ResolveObjectPresentationKind(@object, revealTraps),
-            });
+            };
+            if (cathedralDoors.TryGetValue(@object.EntityId, out var cathedralDoor))
+                projectedObject.CathedralDoor = ToProtocolCathedralDoor(cathedralDoor);
+            snapshot.Objects.Add(projectedObject);
         }
         foreach (var quest in source.Quests) {
             var projectedQuest = new QuestSnapshot {
@@ -514,6 +527,7 @@ internal static class DiabloProtocolMapper
                 Height = level.Height,
             };
             geometry.BlockedCells.Add(level.BlockedCells);
+            geometry.StaticObjectBlockedCells.Add(level.StaticObjectBlockedCells);
             geometry.MissileBlockedCells.Add(level.MissileBlockedCells);
             geometry.NativeTransparency.Add(level.NativeTransparency.Select(value => (uint)value));
             geometry.NativeObjectLayer.Add(level.NativeObjectLayer.Select(value => (uint)value));
@@ -521,6 +535,7 @@ internal static class DiabloProtocolMapper
             geometry.NativePieceLayer.Add(level.NativePieceLayer.Select(value => (uint)value));
             geometry.NativeVisionBlockedCells.Add(level.NativeVisionBlockedCells);
             geometry.NativeMonsterLayer.Add(level.NativeMonsterLayer.Select(value => (uint)value));
+            geometry.NativeSpecialLayer.Add(level.NativeSpecialLayer.Select(value => (uint)value));
             foreach (var warp in projectedWarpTargets
                          .Where(warp => warp.SourceLevelId == level.LevelId)
                          .OrderBy(warp => warp.WarpId)) {
@@ -717,6 +732,149 @@ internal static class DiabloProtocolMapper
             }
         }
     }
+
+    /** Validates the optional typed Cathedral door projection without changing the legacy object shape. */
+    private static Dictionary<uint, DiabloCathedralDoorObjectState> ValidateProjectedCathedralDoorObjects(
+        IReadOnlyList<DiabloCathedralDoorObjectState> doors,
+        IReadOnlyList<DiabloObjectState> objects,
+        IReadOnlyDictionary<uint, AuthoritativeLevel> levels)
+    {
+        ArgumentNullException.ThrowIfNull(doors);
+        var objectByEntity = new Dictionary<uint, DiabloObjectState>();
+        foreach (var @object in objects) {
+            if (!objectByEntity.TryAdd(@object.EntityId, @object)) {
+                throw new InvalidDataException(
+                    "Authoritative object projection contains duplicate entity IDs.");
+            }
+        }
+        var byEntity = new Dictionary<uint, DiabloCathedralDoorObjectState>();
+        foreach (var door in doors) {
+            if (door is null || door.EntityId == 0 || !byEntity.TryAdd(door.EntityId, door)
+                || !objectByEntity.TryGetValue(door.EntityId, out var @object)) {
+                throw new InvalidDataException(
+                    "Authoritative Cathedral door projection contains an unknown or duplicate entity ID.");
+            }
+            ValidateCathedralDoorFields(door, levels);
+            if (door.LevelId != @object.LevelId
+                || door.PositionX != @object.PositionX
+                || door.PositionY != @object.PositionY
+                || door.NativeObjectId != @object.NativeObjectId
+                || @object.Activated
+                || @object.Destroyed
+                || @object.EffectKind != AuthoritativeObjectEffectKind.None
+                || @object.QuestId != 0
+                || @object.QuestTransitionKind != AuthoritativeObjectQuestTransitionKind.None
+                || @object.RewardKind != AuthoritativeObjectRewardKind.None
+                || @object.QuestSequenceFollowUpKind != AuthoritativeQuestSequenceFollowUpKind.None
+                || @object.DialogueMessageId != 0
+                || @object.TrapArmed
+                || @object.Breakable
+                || @object.IsShrine
+                || @object.ActivateOnOccupancy
+                || @object.HideWhenActivated
+                || @object.AnimationFrame != door.AnimationFrame
+                || @object.MissilePassable != door.MissilePassable) {
+                throw new InvalidDataException(
+                    "Authoritative Cathedral door projection conflicts with its object metadata.");
+            }
+        }
+
+        return byEntity;
+    }
+
+    private static void ValidateProjectedCathedralDoorCheckpoint(
+        DiabloCathedralDoorCheckpoint? checkpoint,
+        IReadOnlyList<DiabloCathedralDoorObjectState> doors)
+    {
+        if (checkpoint is null)
+            return;
+
+        checkpoint.ValidateShape();
+        var checkpointDoors = checkpoint.DoorLevels
+            .SelectMany(level => level.Doors)
+            .ToArray();
+        if (checkpointDoors.Length != doors.Count
+            || checkpointDoors.Length != checkpointDoors.Distinct().Count()
+            || doors.Count != doors.Distinct().Count()
+            || !checkpointDoors.ToHashSet().SetEquals(doors)) {
+            throw new InvalidDataException(
+                "Authoritative Cathedral door checkpoint does not match its detached object projection.");
+        }
+    }
+
+    private static void ValidateProjectedCathedralDoorSpecialLayers(
+        IEnumerable<DiabloCathedralDoorObjectState> doors,
+        IReadOnlyDictionary<uint, AuthoritativeLevel> levels)
+    {
+        foreach (var door in doors) {
+            if (!levels.TryGetValue(door.LevelId, out var level)
+                || level.NativeSpecialLayer.Count == 0
+                || door.PositionX < 0
+                || door.PositionY < 0
+                || door.PositionX >= level.Width
+                || door.PositionY >= level.Height) {
+                continue;
+            }
+            var cell = checked(door.PositionY * level.Width + door.PositionX);
+            var expected = door.DoorState == 0
+                ? 0
+                : door.NativeObjectId == 1 ? 7 : 8;
+            if (level.NativeSpecialLayer[cell] != expected) {
+                throw new InvalidDataException(
+                    "Authoritative Cathedral door conflicts with its projected native special layer.");
+            }
+        }
+    }
+
+    private static void ValidateCathedralDoorFields(
+        DiabloCathedralDoorObjectState door,
+        IReadOnlyDictionary<uint, AuthoritativeLevel> levels)
+    {
+        ValidateProjectedEntityPosition(
+            door.LevelId,
+            door.PositionX,
+            door.PositionY,
+            levels,
+            "Cathedral door");
+        var closed = door.DoorState == 0;
+        var baselineFrame = door.NativeObjectId == 1 ? 1 : 2;
+        if (door.NativeObjectId is < 1 or > 2
+            || door.DoorState is < 0 or > 2
+            || door.CachedPiece is <= 0
+            || door.CachedPiece > checked((int)AuthoritativeProtocolLimits.NativeMaximumDunPieceId + 1)
+            || door.CachedNeighborPiece is <= 0
+            || door.CachedNeighborPiece > checked((int)AuthoritativeProtocolLimits.NativeMaximumDunPieceId + 1)
+            || door.AnimationFrame is < 0 or > byte.MaxValue
+            || door.AnimationFrame < baselineFrame
+            || (door.AnimationFrame - baselineFrame) % 2 != 0
+            || closed && door.AnimationFrame > 253
+            || !closed && door.AnimationFrame < baselineFrame + 2
+            || door.SelectionRegion != (closed ? 3 : 2)
+            || door.PreDraw != !closed
+            || door.MissilePassable != !closed
+            || door.Solid) {
+            throw new InvalidDataException(
+                "Authoritative Cathedral door projection contains invalid native fields.");
+        }
+    }
+
+    private static CathedralDoorSnapshot ToProtocolCathedralDoor(
+        DiabloCathedralDoorObjectState door)
+        => new() {
+            EntityId = door.EntityId,
+            LevelId = door.LevelId,
+            PositionX = door.PositionX,
+            PositionY = door.PositionY,
+            NativeObjectId = checked((uint)door.NativeObjectId),
+            DoorState = door.DoorState,
+            CachedPiece = checked((uint)door.CachedPiece),
+            CachedNeighborPiece = checked((uint)door.CachedNeighborPiece),
+            AnimationFrame = checked((uint)door.AnimationFrame),
+            SelectionRegion = checked((uint)door.SelectionRegion),
+            PreDraw = door.PreDraw,
+            MissilePassable = door.MissilePassable,
+            Solid = door.Solid,
+        };
 
     private static void ValidateProjectedQuestStates(
         IReadOnlyList<DiabloQuestState> quests)
@@ -2033,6 +2191,10 @@ internal static class DiabloProtocolMapper
                     item.ItemSeed,
                     item.Price,
                     FromProtocolItemState(item.State))).ToArray());
+        var cathedralDoorObjects = source.Objects
+            .Where(@object => @object.CathedralDoor is not null)
+            .Select(FromProtocolCathedralDoor)
+            .ToArray();
         var snapshot = new DiabloSimulationSnapshot(
             source.Tick,
             player,
@@ -2378,6 +2540,7 @@ internal static class DiabloProtocolMapper
                     origin.PositionX,
                     origin.PositionY))
                 .ToArray(),
+            CathedralDoorObjects = cathedralDoorObjects,
         };
         ValidateImportedSimulationState(snapshot);
         return snapshot;
@@ -2464,6 +2627,63 @@ internal static class DiabloProtocolMapper
         if (entityId == 0 || !entityIds.Add(entityId))
             throw new InvalidDataException(
                 $"The authoritative snapshot contains a duplicate or zero {entityKind} entity ID ({entityId}).");
+    }
+
+    private static DiabloCathedralDoorObjectState FromProtocolCathedralDoor(
+        ObjectSnapshot @object)
+    {
+        var door = @object.CathedralDoor
+            ?? throw new InvalidDataException(
+                "The authoritative object does not contain its typed Cathedral door payload.");
+        if (door.EntityId == 0
+            || door.NativeObjectId is < 1 or > 2
+            || door.CachedPiece == 0
+            || door.CachedNeighborPiece == 0
+            || door.CachedPiece > AuthoritativeProtocolLimits.NativeMaximumDunPieceId + 1
+            || door.CachedNeighborPiece > AuthoritativeProtocolLimits.NativeMaximumDunPieceId + 1
+            || door.AnimationFrame > byte.MaxValue
+            || door.SelectionRegion > int.MaxValue
+            || door.DoorState is < 0 or > 2
+            || door.EntityId != @object.EntityId
+            || door.LevelId != @object.LevelId
+            || door.PositionX != @object.PositionX
+            || door.PositionY != @object.PositionY
+            || door.NativeObjectId != @object.NativeObjectId
+            || @object.Activated
+            || @object.Destroyed
+            || @object.EffectKind != (int)AuthoritativeObjectEffectKind.None
+            || @object.QuestId != 0
+            || @object.QuestTransitionKind != (int)AuthoritativeObjectQuestTransitionKind.None
+            || @object.RewardKind != (int)AuthoritativeObjectRewardKind.None
+            || @object.QuestSequenceFollowUpKind != (int)AuthoritativeQuestSequenceFollowUpKind.None
+            || @object.DialogueMessageId != 0
+            || @object.TrapArmed
+            || @object.Breakable
+            || @object.IsShrine
+            || @object.ActivateOnOccupancy
+            || !@object.KeepVisibleAfterActivation
+            || @object.AnimationFrame != door.AnimationFrame
+            || @object.MissilePassable != door.MissilePassable) {
+            throw new InvalidDataException(
+                "The authoritative Cathedral door payload conflicts with its object metadata.");
+        }
+
+        var state = new DiabloCathedralDoorObjectState(
+            door.EntityId,
+            door.LevelId,
+            door.PositionX,
+            door.PositionY,
+            checked((int)door.NativeObjectId),
+            door.DoorState,
+            checked((int)door.CachedPiece),
+            checked((int)door.CachedNeighborPiece),
+            checked((int)door.AnimationFrame),
+            checked((int)door.SelectionRegion),
+            door.PreDraw,
+            door.MissilePassable,
+            door.Solid);
+        ValidateCathedralDoorFields(state, new Dictionary<uint, AuthoritativeLevel>());
+        return state;
     }
 
     private static GameDifficulty ToProtocolDifficulty(DiabloDifficulty difficulty)

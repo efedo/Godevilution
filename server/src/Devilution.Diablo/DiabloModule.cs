@@ -25,6 +25,8 @@ public sealed class DiabloModule : IGameplayModule
 
     public IDiabloCathedralDepthContentBootstrap CathedralDepthContentBootstrap => contentBootstrap;
 
+    public IDiabloCathedralDoorContentBootstrap CathedralDoorContentBootstrap => contentBootstrap;
+
     public GameplayModuleIdentity Identity { get; } = new(
         "devilution.diablo",
         "0.1.0",
@@ -43,5 +45,6 @@ public sealed class DiabloModule : IGameplayModule
         registry.RegisterCapability<IDiabloContentBootstrap>(contentBootstrap);
         registry.RegisterCapability<IDiabloNativeGeneratedContentBootstrap>(contentBootstrap);
         registry.RegisterCapability<IDiabloCathedralDepthContentBootstrap>(contentBootstrap);
+        registry.RegisterCapability<IDiabloCathedralDoorContentBootstrap>(contentBootstrap);
     }
 }

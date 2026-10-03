@@ -11,6 +11,16 @@ public sealed class DiabloCohortCodecTests
     private readonly DiabloCohortCodec codec = new();
 
     [Fact]
+    public void LegacyVersionOneRetainsFrozenBaselineBytes()
+    {
+        // Captured independently from clean 06c0eb5e8, not this serializer.
+        var bytes = System.Text.Encoding.UTF8.GetBytes(codec.Serialize(CreateState()));
+        Assert.Equal(15991, bytes.Length);
+        Assert.Equal("067bdf7e13316b858887c1ffde3364da249dfde4783f4de5c977c81b0a1a3ed0",
+            Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(bytes)).ToLowerInvariant());
+    }
+
+    [Fact]
     public void FullQuestPoliciesRoundTripThroughTheHostCodec()
     {
         var quest = new AuthoritativeQuestState(9, 0, 3, progress: 1,
@@ -415,6 +425,53 @@ public sealed class DiabloCohortCodecTests
         Assert.Throws<InvalidDataException>(() => codec.Deserialize(document.ToJsonString()));
         Assert.Throws<InvalidDataException>(() => codec.Deserialize(codec.Serialize(CreateState()).Replace(
             "\"Tick\":42", "\"Tick\":18446744073709551616", StringComparison.Ordinal)));
+    }
+
+    [Fact]
+    public void LegacyCohortsRejectCathedralDoorExtensions()
+    {
+        var document = ParseState();
+        document["CathedralDoors"] = new JsonObject();
+
+        Assert.Throws<InvalidDataException>(() => codec.Deserialize(document.ToJsonString()));
+    }
+
+    [Fact]
+    public void CathedralDoorCohortsRequireNonNullCheckpoint()
+    {
+        var document = ParseState();
+        document["FormatVersion"] = 2;
+        Assert.Throws<InvalidDataException>(() => codec.Deserialize(document.ToJsonString()));
+
+        document["CathedralDoors"] = null;
+        Assert.Throws<InvalidDataException>(() => codec.Deserialize(document.ToJsonString()));
+    }
+
+    [Fact]
+    public void SerializationRejectsMismatchedCathedralDoorVersionsBeforeOmission()
+    {
+        var incomplete = new DiabloCathedralDoorCheckpoint(
+            0, "", 0, "", null!, null!, null!);
+        Assert.Throws<InvalidDataException>(() => codec.Serialize(CreateState() with {
+            CathedralDoors = incomplete,
+        }));
+        Assert.Throws<InvalidDataException>(() => codec.Serialize(CreateState() with {
+            FormatVersion = 2,
+        }));
+    }
+
+    [Fact]
+    public void FormatVersionMustBeOneUniqueCanonicalSupportedInteger()
+    {
+        var serialized = codec.Serialize(CreateState());
+        foreach (var duplicate in new[] { "\"FormatVersion\":1,", "\"\\u0046ormatVersion\":1," })
+            Assert.Throws<InvalidDataException>(() => codec.Deserialize(serialized.Insert(1, duplicate)));
+
+        foreach (var raw in new[] { "\"1\"", "1.0", "1e0", "true" }) {
+            var malformed = serialized.Replace(
+                "\"FormatVersion\":1", $"\"FormatVersion\":{raw}", StringComparison.Ordinal);
+            Assert.Throws<InvalidDataException>(() => codec.Deserialize(malformed));
+        }
     }
 
     [Fact]

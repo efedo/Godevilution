@@ -818,7 +818,22 @@ tl::expected<void, std::string> ApplyObjectSnapshot(Object &object, int objectSl
 	}
 	object._oDelFlag = snapshot.destroyed || snapshot.activated && !snapshot.keepVisibleAfterActivation;
 	object._oAnimFrame = *animationFrame;
-	if (object.isDoor()) {
+	if (snapshot.cathedralDoor.has_value()) {
+		// Typed Cathedral doors carry the complete native presentation state. Do
+		// not call SyncDoor: the server already owns the effective d-piece map.
+		const auto &door = *snapshot.cathedralDoor;
+		object._oDoorFlag = true;
+		object._oVar1 = static_cast<int>(door.cachedPiece);
+		object._oVar2 = static_cast<int>(door.cachedNeighborPiece);
+		object._oVar4 = door.doorState;
+		object._oAnimFrame = door.animationFrame;
+		object._oPreFlag = door.preDraw;
+		object._oMissFlag = door.missilePassable;
+		object._oSolidFlag = door.solid;
+		object.selectionRegion = static_cast<SelectionRegion>(door.selectionRegion);
+		if (InDungeonBounds(position))
+			tileAt(position).setSpecial(door.doorState == 0 ? 0 : door.nativeObjectId == 1 ? 7 : 8);
+	} else if (object.isDoor()) {
 		// Match only the native draw/selection state. Door map mutations and
 		// collision decisions still belong to the authoritative server.
 		// Native tooltip states use 0 for closed and 1 for open.
@@ -930,12 +945,14 @@ tl::expected<void, std::string> ApplyAuthoritativeNativeGeometry(
 		            || !candidate.nativeObjectLayer.empty()
 		            || !candidate.nativeMegaTileLayer.empty()
 		            || !candidate.nativePieceLayer.empty()
-		            || !candidate.nativeMonsterLayer.empty())
+		            || !candidate.nativeMonsterLayer.empty()
+		            || !candidate.nativeSpecialLayer.empty())
 		        : (( !candidate.nativeTransparency.empty() && candidate.nativeTransparency.size() != cellCount)
 		            || (!candidate.nativeObjectLayer.empty() && candidate.nativeObjectLayer.size() != cellCount)
 		            || (!candidate.nativeMegaTileLayer.empty() && candidate.nativeMegaTileLayer.size() != coarseCellCount)
 		            || (!candidate.nativePieceLayer.empty() && candidate.nativePieceLayer.size() != cellCount)
-		            || (!candidate.nativeMonsterLayer.empty() && candidate.nativeMonsterLayer.size() != cellCount));
+		            || (!candidate.nativeMonsterLayer.empty() && candidate.nativeMonsterLayer.size() != cellCount)
+		            || (!candidate.nativeSpecialLayer.empty() && candidate.nativeSpecialLayer.size() != cellCount));
 	};
 	if (hasInvalidSize(*geometry))
 		return tl::make_unexpected("Authoritative level geometry layer dimensions do not match the projected level.");
@@ -951,6 +968,9 @@ tl::expected<void, std::string> ApplyAuthoritativeNativeGeometry(
 		})
 	    || std::any_of(geometry->nativeMonsterLayer.begin(), geometry->nativeMonsterLayer.end(), [](uint16_t value) {
 			return value > NativeMaximumDunMonsterLayerId;
+		})
+	    || std::any_of(geometry->nativeSpecialLayer.begin(), geometry->nativeSpecialLayer.end(), [](uint16_t value) {
+			return value > std::numeric_limits<uint8_t>::max();
 		}))
 		return tl::make_unexpected("Authoritative level geometry contains a value outside the native presentation range.");
 
@@ -970,6 +990,12 @@ tl::expected<void, std::string> ApplyAuthoritativeNativeGeometry(
 		for (int y = 0; y < geometry->height; ++y) {
 			for (int x = 0; x < geometry->width; ++x)
 				tileAt(x, y).setTransVal(static_cast<int8_t>(geometry->nativeTransparency[static_cast<size_t>(y) * geometry->width + x]));
+		}
+	}
+	if (!geometry->nativeSpecialLayer.empty()) {
+		for (int y = 0; y < geometry->height; ++y) {
+			for (int x = 0; x < geometry->width; ++x)
+				tileAt(x, y).setSpecial(static_cast<uint8_t>(geometry->nativeSpecialLayer[static_cast<size_t>(y) * geometry->width + x]));
 		}
 	}
 

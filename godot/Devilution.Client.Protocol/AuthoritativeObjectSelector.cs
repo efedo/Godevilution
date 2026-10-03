@@ -1,3 +1,4 @@
+using Devilution.Protocol;
 using Devilution.Protocol.V1;
 
 namespace Devilution.Client.Protocol;
@@ -58,6 +59,8 @@ public static class AuthoritativeObjectSelector
     public static bool HasAuthoritativeInteraction(ObjectSnapshot @object)
     {
         ArgumentNullException.ThrowIfNull(@object);
+        if (@object.CathedralDoor is not null)
+            return IsValidCathedralDoorInteraction(@object);
         return @object.EffectKind != 0
             || @object.QuestId != 0
             || @object.QuestTransitionKind != 0
@@ -65,5 +68,48 @@ public static class AuthoritativeObjectSelector
             || @object.QuestSequenceFollowUpKind != 0
             || @object.DialogueMessageId != 0
             || @object.TrapArmed;
+    }
+
+    private static bool IsValidCathedralDoorInteraction(ObjectSnapshot @object)
+    {
+        var door = @object.CathedralDoor!;
+        var closed = door.DoorState == 0;
+        var baselineFrame = door.NativeObjectId == 1 ? 1U : 2U;
+        return door.EntityId == @object.EntityId
+            && door.LevelId == @object.LevelId
+            && door.PositionX == @object.PositionX
+            && door.PositionY == @object.PositionY
+            && door.NativeObjectId == @object.NativeObjectId
+            && door.NativeObjectId is 1 or 2
+            && door.DoorState is >= 0 and <= 2
+            && door.CachedPiece > 0
+            && door.CachedPiece <= AuthoritativeProtocolLimits.NativeMaximumDunPieceId + 1
+            && door.CachedNeighborPiece > 0
+            && door.CachedNeighborPiece <= AuthoritativeProtocolLimits.NativeMaximumDunPieceId + 1
+            && door.AnimationFrame <= byte.MaxValue
+            && door.AnimationFrame >= baselineFrame
+            && (door.AnimationFrame - baselineFrame) % 2 == 0
+            && (closed
+                ? door.AnimationFrame <= 253
+                : door.AnimationFrame >= baselineFrame + 2)
+            && door.SelectionRegion == (closed ? 3U : 2U)
+            && door.PreDraw == !closed
+            && door.MissilePassable == !closed
+            && !door.Solid
+            && !@object.Activated
+            && !@object.Destroyed
+            && @object.EffectKind == 0
+            && @object.QuestId == 0
+            && @object.QuestTransitionKind == 0
+            && @object.RewardKind == 0
+            && @object.QuestSequenceFollowUpKind == 0
+            && @object.DialogueMessageId == 0
+            && !@object.TrapArmed
+            && !@object.Breakable
+            && !@object.IsShrine
+            && !@object.ActivateOnOccupancy
+            && @object.KeepVisibleAfterActivation
+            && @object.AnimationFrame == door.AnimationFrame
+            && @object.MissilePassable == door.MissilePassable;
     }
 }

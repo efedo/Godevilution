@@ -775,13 +775,13 @@ public sealed class StoreSimulationExecutor
                 .Select(active.Simulation.CapturePlayerState)
                 .ToArray();
             return DiabloProtocolMapper.ToProtocolSnapshot(
-                active.Simulation.CaptureSnapshot(state, tick),
+                active.Simulation.CapturePresentationSnapshot(state, tick),
                 participantSnapshots,
                 state.PlayerClass?.Flags.HasFlag(DiabloPlayerClassFlags.TrapSense) ?? true,
                 active.Simulation.Spells,
                 active.Simulation.SpellBooks,
                 active.Simulation.Items,
-                active.Simulation.WorldState.LevelGeometry,
+                active.Simulation.WorldState.CapturePresentationLevelGeometry(),
                 active.Simulation.WorldState.World?.WarpTargets,
                 allowZeroPlayerEntityId: entityId == 0);
         }));

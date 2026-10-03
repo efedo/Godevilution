@@ -3,7 +3,7 @@ using Devilution.Engine;
 namespace Devilution.Diablo;
 
 /** Module-owned authoritative world state and deterministic navigation rules. */
-public sealed class DiabloWorldState
+public sealed partial class DiabloWorldState
 {
     /** Per-category bound shared by live state and save restoration. */
     public const int MaximumWorldStateEntries = 4096;
@@ -21,6 +21,23 @@ public sealed class DiabloWorldState
     private readonly Dictionary<uint, AuthoritativeLevel> projectedLevels = [];
     private readonly HashSet<uint> activeWorldMutationIds = [];
     private ulong? lastPortalTick;
+
+    /** Retains the original CLR constructor for previously compiled callers. */
+    public DiabloWorldState(AuthoritativeWorld? world, int fallbackWidth, int fallbackHeight,
+        IEnumerable<int>? fallbackBlockedCells, IReadOnlyList<AuthoritativeCombatTarget>? combatTargets,
+        IReadOnlyList<AuthoritativePortal>? portals, IReadOnlyList<AuthoritativeWorldItem>? worldItems,
+        IReadOnlyList<AuthoritativeWorldObject>? objects, IReadOnlyList<AuthoritativeQuestState>? quests,
+        IReadOnlyList<AuthoritativeProjectile>? projectiles, IEnumerable<int>? fallbackMissileBlockedCells,
+        IReadOnlyList<AuthoritativeCorpse>? corpses, AuthoritativeWorldMutationCatalog? worldMutations,
+        IEnumerable<uint>? activeWorldMutationIds, AuthoritativeNativeDunObjectCatalog? nativeDunObjects,
+        IReadOnlyList<AuthoritativeWorldObject>? nativeObjectTemplates, bool allowMissingNativeDunLayers,
+        bool deferCohortInitialization)
+        : this(world, fallbackWidth, fallbackHeight, fallbackBlockedCells, combatTargets, portals, worldItems,
+            objects, quests, projectiles, fallbackMissileBlockedCells, corpses, worldMutations,
+            activeWorldMutationIds, nativeDunObjects, nativeObjectTemplates, allowMissingNativeDunLayers,
+            deferCohortInitialization, null, null)
+    {
+    }
 
     public DiabloWorldState(
         AuthoritativeWorld? world = null,
@@ -40,7 +57,9 @@ public sealed class DiabloWorldState
         AuthoritativeNativeDunObjectCatalog? nativeDunObjects = null,
         IReadOnlyList<AuthoritativeWorldObject>? nativeObjectTemplates = null,
         bool allowMissingNativeDunLayers = false,
-        bool deferCohortInitialization = false)
+        bool deferCohortInitialization = false,
+        AuthoritativeCathedralDoorCatalog? cathedralDoors = null,
+        DiabloWorldGeometryState? cathedralDoorBackingGeometry = null)
     {
         ValidateEntryCount(combatTargets, "combat target");
         ValidateEntryCount(
@@ -57,6 +76,18 @@ public sealed class DiabloWorldState
         this.nativeObjectTemplates = nativeObjectTemplates ?? [];
         this.allowMissingNativeDunLayers = allowMissingNativeDunLayers;
         this.deferCohortInitialization = deferCohortInitialization;
+        cathedralDoorCatalog = cathedralDoors;
+        if (cathedralDoors is not null && world?.Levels.Any(level =>
+                level.NativeSpecialLayer.Count != 0
+                    && !cathedralDoors.Definitions.Any(value => value.LevelId == level.LevelId)) == true)
+            throw new InvalidDataException("The Cathedral door profile cannot persist unmapped special layers.");
+        trustedCathedralDoorBackingGeometry = cathedralDoors is null ? null
+            : cathedralDoorBackingGeometry ?? world?.CaptureGeometryState()
+                ?? throw new InvalidDataException("Cathedral doors require trusted backing geometry.");
+        if (cathedralDoors is not null
+            && worldMutations?.Definitions.Any(mutation => cathedralDoors.Definitions.Any(
+                definition => definition.LevelId == mutation.LevelId)) == true)
+            throw new InvalidDataException("The quest-disabled Cathedral door profile excludes door-level map mutations.");
         foreach (var mutationId in activeWorldMutationIds ?? []) {
             if (WorldMutations is null || !WorldMutations.TryGet(mutationId, out _))
                 throw new InvalidDataException(
@@ -126,6 +157,8 @@ public sealed class DiabloWorldState
             WorldMutations?.ValidateWorld(World, Objects.Values, CombatTargets.Values);
         if (!deferCohortInitialization)
             RebuildProjectedGeometry();
+        if (!deferCohortInitialization && cathedralDoors is not null)
+            InitializeCathedralDoors();
 
         static void ValidateEntryCount<T>(
             IReadOnlyList<T>? entries,
@@ -144,6 +177,8 @@ public sealed class DiabloWorldState
     public void AddLevel(AuthoritativeLevel level)
     {
         ArgumentNullException.ThrowIfNull(level);
+        if (cathedralDoorCatalog is not null)
+            throw new InvalidDataException("The current Cathedral door profile has fixed backing level coverage.");
         if (World is null)
             throw new InvalidDataException(
                 "Late-generated levels require an authoritative world geometry catalog.");
@@ -155,6 +190,8 @@ public sealed class DiabloWorldState
     public void ReplaceLevel(AuthoritativeLevel level)
     {
         ArgumentNullException.ThrowIfNull(level);
+        if (cathedralDoorCatalog is not null)
+            throw new InvalidDataException("The quest-disabled Cathedral door profile cannot replace a live door level.");
         if (World is null)
             throw new InvalidDataException(
                 "Generated level replacement requires an authoritative world geometry catalog.");
@@ -177,6 +214,7 @@ public sealed class DiabloWorldState
     /** Captures detached fallback and mutation infrastructure without side effects. */
     internal DiabloWorldInfrastructureState CaptureCohortInfrastructure()
     {
+        RequireSpecialLayerPersistenceCoverage();
         return new DiabloWorldInfrastructureState(
             fallbackWidth,
             fallbackHeight,
@@ -234,6 +272,7 @@ public sealed class DiabloWorldState
 
     public bool ApplyWorldMutation(uint mutationId)
     {
+        ValidateCathedralDoorMutation(mutationId);
         if (WorldMutations is null
             || !WorldMutations.TryGet(mutationId, out var mutation)
             || mutation.AnchorSetLevelId >= 0
@@ -255,6 +294,7 @@ public sealed class DiabloWorldState
         ArgumentNullException.ThrowIfNull(mutationIds);
         var restoredMutationIds = new HashSet<uint>();
         foreach (var mutationId in mutationIds) {
+            ValidateCathedralDoorMutation(mutationId);
             if (WorldMutations is null || !WorldMutations.TryGet(mutationId, out _))
                 throw new InvalidDataException(
                     $"Active world mutation {mutationId} is not supplied by the content catalog.");
@@ -527,9 +567,21 @@ public sealed class DiabloWorldState
     {
         if (deferCohortInitialization)
             return;
+        var rebuilt = BuildProjectedGeometry();
         projectedLevels.Clear();
+        foreach (var (levelId, level) in rebuilt)
+            projectedLevels.Add(levelId, level);
+        if (materializeNativeDunObjects)
+            ReconcileNativeDunObjects(allowMissingNativeDunLayers);
+        PreserveCathedralDoorProjection();
+    }
+
+    /** Detached projections also validate unmapped checkpoint levels without publication. */
+    private IReadOnlyDictionary<uint, AuthoritativeLevel> BuildProjectedGeometry()
+    {
+        var rebuilt = new Dictionary<uint, AuthoritativeLevel>();
         if (World is null)
-            return;
+            return rebuilt;
 
         foreach (var baseLevel in World.Levels) {
             var blocked = baseLevel.BlockedCells.ToHashSet();
@@ -737,7 +789,7 @@ public sealed class DiabloWorldState
                     }
                 }
             }
-            projectedLevels.Add(
+            rebuilt.Add(
                 baseLevel.LevelId,
                 new AuthoritativeLevel(
                     baseLevel.LevelId,
@@ -759,13 +811,13 @@ public sealed class DiabloWorldState
                     baseLevel.StartPositionY,
                     baseLevel.HasExplicitNativeVisionBlockedCells
                         ? baseLevel.NativeVisionBlockedCells
-                        : null) {
+                        : null,
+                    baseLevel.NativeSpecialLayer) {
                     StableSymbol = baseLevel.StableSymbol,
                 });
         }
 
-        if (materializeNativeDunObjects)
-            ReconcileNativeDunObjects(allowMissingNativeDunLayers);
+        return rebuilt;
     }
 
     private IReadOnlyList<uint> ValidateCohortMutationIds(
@@ -1158,7 +1210,8 @@ public sealed class DiabloWorldState
         uint excludedEntityId = 0)
     {
         ArgumentNullException.ThrowIfNull(players);
-        return CombatTargets.Values.Any(target => target.HitPoints > 0
+        return IsCathedralLightObjectSolid(levelId, positionX, positionY)
+            || CombatTargets.Values.Any(target => target.HitPoints > 0
             && target.EntityId != excludedEntityId
             && (target.LevelId == 0 || target.LevelId == levelId)
             && ((target.PositionX == positionX
@@ -1167,6 +1220,7 @@ public sealed class DiabloWorldState
                     && target.FuturePositionX == positionX
                     && target.FuturePositionY == positionY)))
             || players.Any(player => player.EntityId != 0
+                && !IsDeadPlayerOnCathedralDoor(player.Life, levelId, positionX, positionY)
                 && player.EntityId != excludedEntityId
                 && player.LevelId == levelId
                 && ((player.PositionX == positionX
@@ -1175,6 +1229,7 @@ public sealed class DiabloWorldState
                         && player.FuturePositionX == positionX
                         && player.FuturePositionY == positionY)))
             || Objects.Values.Any(@object => !@object.ActivateOnOccupancy
+                && @object.CathedralDoor is null
                 && !@object.Activated
                 && !@object.Destroyed
                 && @object.EntityId != excludedEntityId
@@ -1185,7 +1240,8 @@ public sealed class DiabloWorldState
 
     public void ValidateInitialPlayerPosition(uint levelId, int positionX, int positionY)
     {
-        if (!IsWalkable(levelId, positionX, positionY)) {
+        if (!IsWalkable(levelId, positionX, positionY)
+            || IsCathedralLightObjectSolid(levelId, positionX, positionY)) {
             throw new InvalidDataException(
                 "The starting player position is not walkable in the authoritative world.");
         }
@@ -1227,7 +1283,8 @@ public sealed class DiabloWorldState
         foreach (var entry in Objects) {
             ValidateEntityDictionaryKey(entry.Key, entry.Value.EntityId, "object");
             var @object = entry.Value;
-            ValidatePosition(@object.LevelId, @object.PositionX, @object.PositionY, "object");
+            if (!IsCathedralDoorObject(@object.EntityId, @object.LevelId, @object.PositionX, @object.PositionY))
+                ValidatePosition(@object.LevelId, @object.PositionX, @object.PositionY, "object");
             if (!entityIds.Add(@object.EntityId)) {
                 throw new InvalidDataException(
                     $"Entity {@object.EntityId} is registered more than once.");
@@ -1302,6 +1359,7 @@ public sealed class DiabloWorldState
             WorldItems.Values.Select(item => (item.LevelId, item.PositionX, item.PositionY)),
             Objects.Values
                 .Where(@object => !@object.Activated
+                    && @object.CathedralDoor is null
                     && !@object.Destroyed
                     && !@object.ActivateOnOccupancy)
                 .Select(@object => (@object.LevelId, @object.PositionX, @object.PositionY)));

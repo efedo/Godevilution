@@ -3843,6 +3843,254 @@ public sealed class ClientModelTests
         Assert.False(model.IsCorrectingPosition);
     }
 
+    [Theory]
+    [InlineData(0, false)]
+    [InlineData(1, true)]
+    [InlineData(2, true)]
+    public void PredictsThroughOnlyPassableTypedCathedralDoorStates(int doorState, bool passable)
+    {
+        var animationFrame = doorState == 0 ? 1U : 3U;
+        var missilePassable = doorState != 0;
+        var model = new AuthoritativeClientModel();
+        model.Apply(new AuthoritativeClientMessage(Snapshot: new Snapshot {
+            Players = {
+                new PlayerSnapshot {
+                    EntityId = 7,
+                    LevelId = 1,
+                    PositionX = 0,
+                    PositionY = 1,
+                },
+            },
+            Objects = {
+                new ObjectSnapshot {
+                    EntityId = 20,
+                    ObjectId = 1,
+                    NativeObjectId = 1,
+                    LevelId = 1,
+                    PositionX = 1,
+                    PositionY = 1,
+                    KeepVisibleAfterActivation = true,
+                    AnimationFrame = animationFrame,
+                    MissilePassable = missilePassable,
+                    CathedralDoor = new CathedralDoorSnapshot {
+                        EntityId = 20,
+                        LevelId = 1,
+                        PositionX = 1,
+                        PositionY = 1,
+                        NativeObjectId = 1,
+                        DoorState = doorState,
+                        CachedPiece = 43,
+                        CachedNeighborPiece = 49,
+                        AnimationFrame = animationFrame,
+                        SelectionRegion = doorState == 0 ? 3U : 2U,
+                        PreDraw = doorState != 0,
+                        MissilePassable = missilePassable,
+                    },
+                },
+            },
+        }));
+
+        model.TrackPredictedMove(1, 1, 0);
+
+        if (passable)
+            Assert.Equal(new ClientPosition(1, 1), model.PredictedPlayerPosition);
+        else
+            Assert.Null(model.PredictedPlayerPosition);
+    }
+
+    [Fact]
+    public void KeepsLegacyNativeIdPeerAsOccupied()
+    {
+        var model = new AuthoritativeClientModel();
+        model.Apply(new AuthoritativeClientMessage(Snapshot: new Snapshot {
+            Players = {
+                new PlayerSnapshot {
+                    EntityId = 7,
+                    LevelId = 1,
+                    PositionX = 0,
+                    PositionY = 1,
+                },
+            },
+            Objects = {
+                new ObjectSnapshot {
+                    EntityId = 20,
+                    ObjectId = 1,
+                    NativeObjectId = 1,
+                    LevelId = 1,
+                    PositionX = 1,
+                    PositionY = 1,
+                },
+            },
+        }));
+
+        model.TrackPredictedMove(1, 1, 0);
+
+        Assert.Null(model.PredictedPlayerPosition);
+    }
+
+    [Fact]
+    public void StaticObjectDPiece269BlocksMovementButNotNativeVision()
+    {
+        var geometry = new LevelGeometrySnapshot {
+            LevelId = 1,
+            Width = 2,
+            Height = 2,
+            NativePieceLayer = { 0, 0, 0, 269 },
+            StaticObjectBlockedCells = { 3 },
+        };
+        var model = new AuthoritativeClientModel();
+        model.Apply(new AuthoritativeClientMessage(Snapshot: new Snapshot {
+            LevelGeometry = { geometry },
+            Players = {
+                new PlayerSnapshot {
+                    EntityId = 7,
+                    LevelId = 1,
+                    PositionX = 0,
+                    PositionY = 1,
+                },
+            },
+        }));
+
+        model.TrackPredictedMove(1, 1, 0);
+
+        Assert.Null(model.PredictedPlayerPosition);
+        Assert.True(AuthoritativeNativeVisionVisibility.IsVisible(
+            1, 1, 1, 1, geometry, 0, 1, 10));
+    }
+
+    [Fact]
+    public void RejectsHybridTypedDoorDuringMovementPrediction()
+    {
+        var model = new AuthoritativeClientModel();
+        model.Apply(new AuthoritativeClientMessage(Snapshot: new Snapshot {
+            Players = {
+                new PlayerSnapshot {
+                    EntityId = 7,
+                    LevelId = 1,
+                    PositionX = 0,
+                    PositionY = 1,
+                },
+            },
+            Objects = {
+                new ObjectSnapshot {
+                    EntityId = 20,
+                    ObjectId = 1,
+                    NativeObjectId = 1,
+                    LevelId = 1,
+                    PositionX = 1,
+                    PositionY = 1,
+                    Breakable = true,
+                    KeepVisibleAfterActivation = true,
+                    AnimationFrame = 3,
+                    CathedralDoor = new CathedralDoorSnapshot {
+                        EntityId = 20,
+                        LevelId = 1,
+                        PositionX = 1,
+                        PositionY = 1,
+                        NativeObjectId = 1,
+                        DoorState = 1,
+                        CachedPiece = 43,
+                        CachedNeighborPiece = 49,
+                        AnimationFrame = 3,
+                        SelectionRegion = 2,
+                        PreDraw = true,
+                        MissilePassable = true,
+                    },
+                },
+            },
+        }));
+
+        model.TrackPredictedMove(1, 1, 0);
+
+        Assert.Null(model.PredictedPlayerPosition);
+    }
+
+    [Fact]
+    public void RejectsTypedDoorWithConflictingNativeSpecialLayer()
+    {
+        var model = new AuthoritativeClientModel();
+        var snapshot = new Snapshot {
+            LevelGeometry = {
+                new LevelGeometrySnapshot {
+                    LevelId = 1,
+                    Width = 2,
+                    Height = 2,
+                    NativeSpecialLayer = { 0, 0, 0, 8 },
+                },
+            },
+            Players = {
+                new PlayerSnapshot { EntityId = 7, LevelId = 1 },
+            },
+            Objects = {
+                new ObjectSnapshot {
+                    EntityId = 20,
+                    ObjectId = 1,
+                    NativeObjectId = 1,
+                    LevelId = 1,
+                    PositionX = 1,
+                    PositionY = 1,
+                    KeepVisibleAfterActivation = true,
+                    AnimationFrame = 3,
+                    MissilePassable = true,
+                    CathedralDoor = new CathedralDoorSnapshot {
+                        EntityId = 20,
+                        LevelId = 1,
+                        PositionX = 1,
+                        PositionY = 1,
+                        NativeObjectId = 1,
+                        DoorState = 1,
+                        CachedPiece = 43,
+                        CachedNeighborPiece = 49,
+                        AnimationFrame = 3,
+                        SelectionRegion = 2,
+                        PreDraw = true,
+                        MissilePassable = true,
+                    },
+                },
+            },
+        };
+
+        Assert.Throws<InvalidDataException>(() =>
+            model.Apply(new AuthoritativeClientMessage(Snapshot: snapshot)));
+        snapshot.LevelGeometry[0].NativeSpecialLayer[3] = 7;
+        snapshot.Objects[0].PositionX = 2;
+        snapshot.Objects[0].CathedralDoor.PositionX = 2;
+        Assert.Throws<InvalidDataException>(() =>
+            model.Apply(new AuthoritativeClientMessage(Snapshot: snapshot)));
+    }
+
+    [Fact]
+    public void RejectsNewGeometryLayersWithoutPositiveDimensions()
+    {
+        var staticCells = new Snapshot {
+            LevelGeometry = {
+                new LevelGeometrySnapshot {
+                    LevelId = 2,
+                    Width = 0,
+                    Height = 1,
+                    StaticObjectBlockedCells = { 0 },
+                },
+            },
+        };
+        Assert.Throws<InvalidDataException>(() =>
+            new AuthoritativeClientModel().Apply(
+                new AuthoritativeClientMessage(Snapshot: staticCells)));
+
+        var specialLayer = new Snapshot {
+            LevelGeometry = {
+                new LevelGeometrySnapshot {
+                    LevelId = 2,
+                    Width = 1,
+                    Height = 0,
+                    NativeSpecialLayer = { 0 },
+                },
+            },
+        };
+        Assert.Throws<InvalidDataException>(() =>
+            new AuthoritativeClientModel().Apply(
+                new AuthoritativeClientMessage(Snapshot: specialLayer)));
+    }
+
     [Fact]
     public void AllowsPredictionIntoAnUnactivatedOccupancyTriggerObject()
     {

@@ -111,6 +111,8 @@ public sealed class AuthoritativeWorld
      */
     public DiabloWorldGeometryState CaptureGeometryState()
     {
+        if (levels.Values.Any(level => level.StaticObjectBlockedCells.Count != 0))
+            throw new InvalidDataException("Live static-object collision must not be stored as backing geometry.");
         return new DiabloWorldGeometryState(
             levels.Values
                 .OrderBy(level => level.LevelId)
@@ -451,6 +453,23 @@ public sealed class AuthoritativeLevel
     private readonly IReadOnlyList<int> missileBlockedCellList;
     private readonly IReadOnlyList<int> nativeVisionBlockedCellList;
 
+    /** Retains the original CLR constructor for previously compiled callers. */
+    public AuthoritativeLevel(uint levelId, int width, int height,
+        IEnumerable<int>? blockedCells, IEnumerable<int>? missileBlockedCells,
+        bool isDefaultStart, bool suppressMultiplayerDeathDrops,
+        IEnumerable<ushort>? nativeTransparency, IEnumerable<ushort>? nativeObjectLayer,
+        IEnumerable<ushort>? nativeMegaTileLayer, IEnumerable<ushort>? nativePieceLayer,
+        IReadOnlyDictionary<ushort, AuthoritativeDunTileFlags>? nativePieceProperties,
+        IEnumerable<int>? nativePieceCollisionCells, IEnumerable<int>? nativePieceMissileBlockedCells,
+        IEnumerable<ushort>? nativeMonsterLayer, int startPositionX, int startPositionY,
+        IEnumerable<int>? nativeVisionBlockedCells)
+        : this(levelId, width, height, blockedCells, missileBlockedCells, isDefaultStart,
+            suppressMultiplayerDeathDrops, nativeTransparency, nativeObjectLayer, nativeMegaTileLayer,
+            nativePieceLayer, nativePieceProperties, nativePieceCollisionCells, nativePieceMissileBlockedCells,
+            nativeMonsterLayer, startPositionX, startPositionY, nativeVisionBlockedCells, null, null)
+    {
+    }
+
     public AuthoritativeLevel(
         uint levelId,
         int width,
@@ -469,7 +488,9 @@ public sealed class AuthoritativeLevel
         IEnumerable<ushort>? nativeMonsterLayer = null,
         int startPositionX = 0,
         int startPositionY = 0,
-        IEnumerable<int>? nativeVisionBlockedCells = null)
+        IEnumerable<int>? nativeVisionBlockedCells = null,
+        IEnumerable<ushort>? nativeSpecialLayer = null,
+        IEnumerable<int>? staticObjectBlockedCells = null)
     {
         if (width <= 0 || height <= 0)
             throw new ArgumentOutOfRangeException(nameof(width), "Level dimensions must be positive.");
@@ -493,6 +514,10 @@ public sealed class AuthoritativeLevel
                 $"Level {levelId} contains an out-of-range missile-blocked cell.");
         }
         blockedCellList = Array.AsReadOnly(this.blockedCells.OrderBy(cell => cell).ToArray());
+        var objectCells = (staticObjectBlockedCells ?? []).Distinct().Order().ToArray();
+        if (objectCells.Any(cell => cell < 0 || cell >= width * height))
+            throw new InvalidDataException($"Level {levelId} contains an out-of-range static object cell.");
+        StaticObjectBlockedCells = Array.AsReadOnly(objectCells);
         missileBlockedCellList = Array.AsReadOnly(
             this.missileBlockedCells.OrderBy(cell => cell).ToArray());
         var transparency = (nativeTransparency ?? [])
@@ -544,6 +569,14 @@ public sealed class AuthoritativeLevel
             throw new InvalidDataException(
                 $"Level {levelId} contains a native d-piece value outside the MAXTILES range.");
         NativePieceLayer = Array.AsReadOnly(pieces);
+        var special = (nativeSpecialLayer ?? []).ToArray();
+        if (special.Length != 0 && special.Length != width * height)
+            throw new InvalidDataException(
+                $"Level {levelId} contains a native special layer with an invalid length.");
+        if (special.Any(value => value > byte.MaxValue))
+            throw new InvalidDataException(
+                $"Level {levelId} contains a native special value outside the compatibility byte range.");
+        NativeSpecialLayer = Array.AsReadOnly(special);
         var pieceProperties = (nativePieceProperties ?? new Dictionary<ushort, AuthoritativeDunTileFlags>())
             .ToDictionary(pair => pair.Key, pair => pair.Value);
         if (pieceProperties.Keys.Any(value => value >= AuthoritativeDunTilePropertyCatalog.NativeTileCount))
@@ -598,6 +631,9 @@ public sealed class AuthoritativeLevel
     /** Stable row-major movement geometry for protocol and presentation projections. */
     public IReadOnlyList<int> BlockedCells => blockedCellList;
 
+    /** Supplementary live object collision; independent of SOL, missiles and vision. */
+    public IReadOnlyList<int> StaticObjectBlockedCells { get; }
+
     /** Stable row-major missile geometry for protocol and presentation projections. */
     public IReadOnlyList<int> MissileBlockedCells => missileBlockedCellList;
 
@@ -615,6 +651,9 @@ public sealed class AuthoritativeLevel
 
     /** Effective native DUN d-piece IDs retained for authoritative set-piece mutations. */
     public IReadOnlyList<ushort> NativePieceLayer { get; }
+
+    /** Native arch/door special values; absent on legacy geometry. */
+    public IReadOnlyList<ushort> NativeSpecialLayer { get; }
 
     /** Native d-piece flags retained for collision-aware authoritative mutations. */
     public IReadOnlyDictionary<ushort, AuthoritativeDunTileFlags> NativePieceProperties { get; }
@@ -675,7 +714,9 @@ public sealed class AuthoritativeLevel
             startPositionY,
             HasExplicitNativeVisionBlockedCells
                 ? NativeVisionBlockedCells
-                : null) {
+                : null,
+            NativeSpecialLayer,
+            StaticObjectBlockedCells) {
             StableSymbol = StableSymbol,
         };
         level.ValidateStartPosition();

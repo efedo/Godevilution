@@ -41,6 +41,12 @@ public sealed class DiabloSimulationOptions
     /** Separate native depth profile identity; never changes the legacy L1 save contract. */
     public DiabloCathedralDepthWorldIdentity? CathedralDepthWorldIdentity { get; init; }
 
+    /** Explicit generated-door capability; legacy authored and depth profiles leave this null. */
+    public AuthoritativeCathedralDoorCatalog? CathedralDoors { get; init; }
+
+    /** Trusted original static backing retained only across detached cohort construction. */
+    internal DiabloWorldGeometryState? CathedralDoorBackingGeometry { get; init; }
+
     /** Validated content-backed level-cell overlays activated by world objects. */
     public AuthoritativeWorldMutationCatalog? WorldMutations { get; init; }
 
@@ -302,7 +308,9 @@ public sealed class DiabloSimulationFactory : IDiabloCohortSimulationFactory
             nativeDunObjects: options.NativeDunObjects,
             nativeObjectTemplates: options.NativeObjectTemplates,
             allowMissingNativeDunLayers: options.NativeDunFragments is not null,
-            deferCohortInitialization: options.DeferCohortInitialization);
+            deferCohortInitialization: options.DeferCohortInitialization,
+            cathedralDoors: options.CathedralDoors,
+            cathedralDoorBackingGeometry: options.CathedralDoorBackingGeometry);
         if (options.NativeDunFragments is not null && options.Content is null)
             throw new InvalidDataException(
                 "Deferred native DUN fragments require their composed content bytes.");
@@ -1310,7 +1318,9 @@ public sealed partial class DiabloSimulation
             ConfigurePlayer(participant);
             worldCommands.EnsureLevelEntryState(participant.LevelId);
         }
-        return combatCommands.AdvanceTick(tick, players);
+        var events = combatCommands.AdvanceTick(tick, players);
+        WorldState.UpdateCathedralDoorOccupancy(players);
+        return events;
     }
 
     private void ConfigurePlayer(AuthoritativePlayerState player)

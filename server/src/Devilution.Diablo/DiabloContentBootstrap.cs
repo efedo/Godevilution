@@ -255,7 +255,17 @@ public interface IDiabloCathedralDepthContentBootstrap
 }
 
 /** First-party content activation kept entirely inside the Diablo module. */
-internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap, IDiabloNativeGeneratedContentBootstrap, IDiabloCathedralDepthContentBootstrap
+/** Explicit mutable-door profile; no existing generation profile changes behavior. */
+public interface IDiabloCathedralDoorContentBootstrap
+{
+    DiabloContentActivation ActivateDoors(
+        ComposedContent content, uint randomSeed = 0,
+        DiabloGameMode gameMode = DiabloGameMode.SinglePlayer,
+        DiabloMonsterSpawnConfiguration? monsterSpawns = null,
+        DiabloDifficulty difficulty = DiabloDifficulty.Normal);
+}
+
+internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap, IDiabloNativeGeneratedContentBootstrap, IDiabloCathedralDepthContentBootstrap, IDiabloCathedralDoorContentBootstrap
 {
     private readonly IDiabloSimulationFactory simulationFactory;
 
@@ -292,6 +302,14 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap, IDiabloN
         DiabloDifficulty difficulty = DiabloDifficulty.Normal)
         => ActivateCore(content, randomSeed, gameMode, monsterSpawns, difficulty, nativeGenerated: false, cathedralDepths: true);
 
+    public DiabloContentActivation ActivateDoors(
+        ComposedContent content, uint randomSeed = 0,
+        DiabloGameMode gameMode = DiabloGameMode.SinglePlayer,
+        DiabloMonsterSpawnConfiguration? monsterSpawns = null,
+        DiabloDifficulty difficulty = DiabloDifficulty.Normal)
+        => ActivateCore(content, randomSeed, gameMode, monsterSpawns, difficulty,
+            nativeGenerated: false, cathedralDepths: true, cathedralDoors: true);
+
     private DiabloContentActivation ActivateCore(
         ComposedContent content,
         uint randomSeed,
@@ -299,12 +317,16 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap, IDiabloN
         DiabloMonsterSpawnConfiguration? monsterSpawns,
         DiabloDifficulty difficulty,
         bool nativeGenerated,
-        bool cathedralDepths = false)
+        bool cathedralDepths = false,
+        bool cathedralDoors = false)
     {
         ArgumentNullException.ThrowIfNull(content);
         var hasGeneratedLevels = content.TryGetTable(AuthoritativeCathedralLevel1RuntimeCatalog.TableName, out var generatedLevelsTable);
         var hasDepthLevels = content.TryGetTable(AuthoritativeCathedralDepthRuntimeCatalog.TableName, out var depthLevelsTable);
         var hasGeneratedRoutes = content.TryGetTable(AuthoritativeNativeGeneratedRouteBindings.TableName, out var generatedRoutesTable);
+        var hasDoors = content.TryGetTable(AuthoritativeCathedralDoorCatalog.TableName, out var doorsTable);
+        if (cathedralDoors != hasDoors)
+            throw new InvalidDataException("Cathedral door content requires its separately selected door adapter and mapping catalog.");
         if (cathedralDepths && (!hasDepthLevels || !hasGeneratedRoutes || hasGeneratedLevels))
             throw new InvalidDataException("Cathedral depths require their own level catalog and explicit route bindings, not an L1 catalog.");
         if (!cathedralDepths && (nativeGenerated ? !hasGeneratedLevels || !hasGeneratedRoutes || hasDepthLevels : hasGeneratedLevels || hasGeneratedRoutes || hasDepthLevels)) {
@@ -329,6 +351,9 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap, IDiabloN
         var stableIds = StableContentIdCatalog.LoadTsv(
             stableIdsTable.SourcePath,
             stableIdsTable.ToCanonicalTsv());
+        var cathedralDoorCatalog = cathedralDoors
+            ? AuthoritativeCathedralDoorCatalog.Load(doorsTable!.ToCanonicalTsv(), stableIds)
+            : null;
         var pricingTable = GetRequiredExternalTable(content, "store_services.tsv");
         if (content.Manifest.Schema == DiabloContentSchema.Current)
             StoreServicePricing.ValidateExternalizedProduction(pricingTable);
@@ -1348,6 +1373,7 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap, IDiabloN
             World = world,
             NativeGeneratedWorldIdentity = nativeGeneratedIdentity,
             CathedralDepthWorldIdentity = cathedralDepthIdentity,
+            CathedralDoors = cathedralDoorCatalog,
             WorldMutations = worldMutations,
             WorldRules = worldRules,
             CombatTargets = combatTargets,

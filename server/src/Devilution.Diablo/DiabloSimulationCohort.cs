@@ -12,6 +12,15 @@ public sealed partial class DiabloSimulation
     {
         state.ValidateShape();
         ValidateCohortConfiguration(sourceOptions, state.Configuration);
+        DiabloWorldState.RequireCathedralDoorProfile(sourceOptions.CathedralDoors, state.CathedralDoors);
+        if (state.CathedralDoors is { } doors) {
+            DiabloCathedralDoorCheckpoint.RequireSameGeometry(state.Geometry, doors.BackingGeometry);
+            DiabloCathedralDoorCheckpoint.RequireSameLevels(
+                state.WorldInfrastructure.EffectiveLevels, doors.EffectiveLevels);
+            DiabloCathedralDoorCheckpoint.RequireSameGeometry(
+                sourceOptions.CathedralDoorBackingGeometry ?? sourceOptions.World?.CaptureGeometryState(),
+                doors.BackingGeometry);
+        }
         if (state.WorldInfrastructure.FallbackWidth != sourceOptions.FallbackWidth
             || state.WorldInfrastructure.FallbackHeight != sourceOptions.FallbackHeight)
             throw new InvalidDataException(
@@ -197,15 +206,27 @@ public sealed partial class DiabloSimulation
 
     private void ValidateCohortActorTopology(IReadOnlyList<AuthoritativePlayerState> players)
     {
+        foreach (var player in players) {
+            if (WorldState.IsCathedralLightObjectSolid(player.LevelId, player.PositionX, player.PositionY)
+                || WorldState.IsPendingPlayerMoveIntoCathedralLight(player.Life, player.LevelId,
+                    player.PositionX, player.PositionY, player.CurrentAction))
+                throw new InvalidDataException("A cohort player occupies a solid Cathedral light.");
+        }
         foreach (var target in WorldState.CombatTargets.Values) {
+            if (WorldState.IsCathedralLightObjectSolid(target.LevelId, target.PositionX, target.PositionY)
+                || target.IsMoving && WorldState.IsCathedralLightObjectSolid(target.LevelId, target.FuturePositionX, target.FuturePositionY))
+                throw new InvalidDataException("A cohort monster occupies a solid Cathedral light.");
             RequirePosition(target.LevelId, target.PositionX, target.PositionY, "combat target");
             if (target.IsMoving)
                 RequirePosition(target.LevelId, target.FuturePositionX, target.FuturePositionY, "moving target");
             if (target.Drop is { } drop)
                 RequirePosition(drop.LevelId, drop.PositionX, drop.PositionY, "fixed monster drop");
         }
-        foreach (var item in WorldState.WorldItems.Values)
+        foreach (var item in WorldState.WorldItems.Values) {
+            if (WorldState.IsCathedralLightObjectSolid(item.LevelId, item.PositionX, item.PositionY))
+                throw new InvalidDataException("A cohort item occupies a solid Cathedral light.");
             RequirePosition(item.LevelId, item.PositionX, item.PositionY, "world item");
+        }
         foreach (var item in WorldState.Objects.Values)
             RequirePosition(item.LevelId, item.PositionX, item.PositionY, "object");
         foreach (var corpse in WorldState.Corpses.Values)
@@ -992,6 +1013,9 @@ public sealed partial class DiabloSimulation
             World = world,
             NativeGeneratedWorldIdentity = state.Configuration.NativeGeneratedWorldIdentity,
             CathedralDepthWorldIdentity = state.Configuration.CathedralDepthWorldIdentity,
+            CathedralDoors = source.CathedralDoors,
+            CathedralDoorBackingGeometry = source.CathedralDoorBackingGeometry
+                ?? (source.CathedralDoors is null ? null : source.World?.CaptureGeometryState()),
             WorldMutations = source.WorldMutations,
             WorldRules = source.WorldRules,
             FallbackWidth = source.FallbackWidth,
@@ -1094,6 +1118,7 @@ public sealed partial class DiabloSimulation
         nextGeneratedMonsterEntityId = state.Allocators.NextGeneratedMonsterEntityId;
         WorldState.VictoryTriggered = state.VictoryTriggered;
         WorldState.RestoreCohortInfrastructure(state.WorldInfrastructure);
+        WorldState.RestoreCathedralDoors(state.CathedralDoors, state.Objects);
 
         // The candidate was built with all dynamic dictionaries detached from
         // the source.  No lifecycle replay or level-entry materialization is
@@ -1130,7 +1155,8 @@ public sealed partial class DiabloSimulation
         var infrastructure = WorldState.CaptureCohortInfrastructure();
 
         var state = new DiabloCohortState(
-            DiabloCohortState.CurrentFormatVersion,
+            WorldState.HasCathedralDoors ? DiabloCohortState.CathedralDoorFormatVersion
+                : DiabloCohortState.CurrentFormatVersion,
             tick,
             new DiabloCohortConfigurationState(
                 gameMode,
@@ -1210,7 +1236,9 @@ public sealed partial class DiabloSimulation
             RandomState: random.State,
             VictoryTriggered: WorldState.VictoryTriggered,
             Geometry: WorldState.World?.CaptureGeometryState(),
-            WorldInfrastructure: infrastructure);
+            WorldInfrastructure: infrastructure) {
+            CathedralDoors = WorldState.CaptureCathedralDoors(),
+        };
         state.ValidateShape();
         return state;
     }
@@ -1321,7 +1349,7 @@ public sealed partial class DiabloSimulation
         AuthoritativeWorldItem item)
         => CaptureOptionalWorldItem(item)!;
 
-    private static DiabloObjectState CaptureObject(AuthoritativeWorldObject @object)
+    internal static DiabloObjectState CaptureObject(AuthoritativeWorldObject @object)
     {
         return new DiabloObjectState(
             @object.EntityId,

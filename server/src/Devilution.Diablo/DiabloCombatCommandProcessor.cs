@@ -13256,7 +13256,8 @@ public sealed class DiabloCombatCommandProcessor
                 if (!world.ContainsPosition(controller.LevelId, targetX, targetY)
                     || !world.IsWalkable(controller.LevelId, targetX, targetY))
                     continue;
-                if (world.Objects.Values.Any(@object => !@object.Activated
+                if (world.IsCathedralLightObjectSolid(controller.LevelId, targetX, targetY)
+                    || world.Objects.Values.Any(@object => !@object.Activated
                         && !@object.Destroyed
                         && @object.LevelId == controller.LevelId
                         && @object.PositionX == targetX
@@ -16849,6 +16850,7 @@ public sealed class DiabloCombatCommandProcessor
         int positionY)
     {
         return world.IsWalkable(player.LevelId, positionX, positionY)
+            && !world.IsCathedralDoorItemBlocked(player.LevelId, positionX, positionY)
             && !world.IsOccupied(player.LevelId, positionX, positionY, players)
             && !world.WorldItems.Values.Any(item =>
                 item.LevelId == player.LevelId
@@ -17562,6 +17564,7 @@ public sealed class DiabloCombatCommandProcessor
             rules.DeathDropSearchRadius,
             (positionX, positionY) =>
                 world.IsWalkable(levelId, positionX, positionY)
+                && !world.IsCathedralDoorItemBlocked(levelId, positionX, positionY)
                 && !world.IsOccupied(
                     levelId,
                     positionX,

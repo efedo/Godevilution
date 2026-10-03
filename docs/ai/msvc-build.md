@@ -282,7 +282,22 @@ reports, hashes and `result.json` stay under the printed private oracle director
 licensed inputs must not be committed or published. Direct fixtures require
 `GODEVILUTION_CATHEDRAL_DOOR_ORACLE_DIRECTORY` and otherwise skip.
 
-This is native characterization, not a managed door/population parity result.
+This wrapper remains native characterization; run the managed comparisons
+separately against its private `first-capture/artifacts` directory after building
+the game-module test project:
+
+```powershell
+$env:GODEVILUTION_CATHEDRAL_DOOR_ORACLE_DIRECTORY = 'C:\path\Godevilution-Cathedral-Door-Oracle-profile\first-capture\artifacts'
+./server/tests/Devilution.Diablo.Tests/bin/Debug/net8.0/Devilution.Diablo.Tests.exe --filter-class '*AuthoritativeCathedralNativeDoorOracleTests' --explicit only --fail-skips on
+```
+
+Scope and restore the environment variable in an automated caller. All seventeen
+explicit cases must pass without skips. They compare complete geometry and
+native door fields/operations, not full population or physical-light parity.
+The validated server API consumes catalogs, never MPQs. A default-suite explicit
+exclusion is not private-asset evidence and these checks do not activate a
+door-enabled playable profile.
+
 Scanner RNG includes native L1 lights but is not production `InitObjects` or
 encounter-placement RNG; physical lighting/vision state is not captured. It
 does not establish that doors explain disconnected routes. Existing level-1

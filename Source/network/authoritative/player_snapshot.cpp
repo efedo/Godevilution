@@ -756,6 +756,66 @@ tl::expected<std::vector<ProjectedObjectSnapshot>, std::string> ProjectObjectSna
 			return tl::make_unexpected("Server-backed snapshot contains invalid object effect metadata.");
 		if (std::any_of(projected.begin(), projected.end(), [&](const auto &candidate) { return candidate.entityId == source.entity_id(); }))
 			return tl::make_unexpected("Server-backed snapshot contains duplicate object entity IDs.");
+		std::optional<ProjectedCathedralDoorSnapshot> cathedralDoor;
+		if (source.has_cathedral_door()) {
+			const auto &door = source.cathedral_door();
+			if (door.entity_id() != source.entity_id()
+			    || door.level_id() != source.level_id()
+			    || door.position_x() != source.position_x()
+			    || door.position_y() != source.position_y()
+			    || door.native_object_id() != source.native_object_id()
+			    || door.native_object_id() < 1 || door.native_object_id() > 2
+			    || !IsValidNativeTileCoordinate(door.position_x(), door.position_y())
+			    || door.cached_piece() == 0
+			    || door.cached_piece() > NativeMaximumDunPieceId + 1
+			    || door.cached_neighbor_piece() == 0
+			    || door.cached_neighbor_piece() > NativeMaximumDunPieceId + 1
+			    || door.door_state() < 0 || door.door_state() > 2
+			    || door.animation_frame() > std::numeric_limits<uint8_t>::max()
+			    || door.selection_region() > std::numeric_limits<int32_t>::max()
+			    || source.activated()
+			    || source.destroyed()
+			    || source.effect_kind() != static_cast<int32_t>(ProjectedObjectEffectKind::None)
+			    || source.quest_id() != 0
+			    || source.quest_transition_kind() != 0
+			    || source.reward_kind() != 0
+			    || source.quest_sequence_follow_up_kind() != 0
+			    || source.dialogue_message_id() != 0
+			    || source.trap_armed()
+			    || source.breakable()
+			    || source.is_shrine()
+			    || source.activate_on_occupancy()
+			    || !source.keep_visible_after_activation()
+			    || source.animation_frame() != door.animation_frame()
+			    || source.missile_passable() != door.missile_passable())
+				return tl::make_unexpected("Server-backed snapshot contains an invalid Cathedral door projection.");
+			const bool closed = door.door_state() == 0;
+			const uint32_t baselineFrame = door.native_object_id() == 1 ? 1 : 2;
+			if (door.animation_frame() < baselineFrame
+			    || (door.animation_frame() - baselineFrame) % 2 != 0
+			    || closed && door.animation_frame() > 253
+			    || !closed && door.animation_frame() < baselineFrame + 2
+			    || door.selection_region() != (closed ? 3U : 2U)
+			    || door.pre_draw() != !closed
+			    || door.missile_passable() != !closed
+			    || door.solid())
+				return tl::make_unexpected("Server-backed snapshot contains invalid Cathedral door native fields.");
+			cathedralDoor = ProjectedCathedralDoorSnapshot {
+				.entityId = door.entity_id(),
+				.levelId = door.level_id(),
+				.positionX = door.position_x(),
+				.positionY = door.position_y(),
+				.nativeObjectId = door.native_object_id(),
+				.doorState = door.door_state(),
+				.cachedPiece = door.cached_piece(),
+				.cachedNeighborPiece = door.cached_neighbor_piece(),
+				.animationFrame = door.animation_frame(),
+				.selectionRegion = door.selection_region(),
+				.preDraw = door.pre_draw(),
+				.missilePassable = door.missile_passable(),
+				.solid = door.solid(),
+			};
+		}
 		projected.push_back({
 		    .entityId = source.entity_id(),
 		    .objectId = source.object_id(),
@@ -781,6 +841,7 @@ tl::expected<std::vector<ProjectedObjectSnapshot>, std::string> ProjectObjectSna
 		    .questSequenceFollowUpKind = source.quest_sequence_follow_up_kind(),
 		    .dialogueMessageId = source.dialogue_message_id(),
 		});
+		projected.back().cathedralDoor = cathedralDoor;
 	}
 	std::sort(projected.begin(), projected.end(), [](const auto &left, const auto &right) { return left.entityId < right.entityId; });
 	return projected;
@@ -990,6 +1051,7 @@ tl::expected<std::vector<ProjectedLevelGeometrySnapshot>, std::string> ProjectLe
 			.height = source.height(),
 		};
 		level.blockedCells.assign(source.blocked_cells().begin(), source.blocked_cells().end());
+		level.staticObjectBlockedCells.assign(source.static_object_blocked_cells().begin(), source.static_object_blocked_cells().end());
 		level.missileBlockedCells.assign(source.missile_blocked_cells().begin(), source.missile_blocked_cells().end());
 		level.nativeVisionBlockedCells.assign(source.native_vision_blocked_cells().begin(), source.native_vision_blocked_cells().end());
 		level.nativeTransparency.reserve(source.native_transparency_size());
@@ -1007,6 +1069,9 @@ tl::expected<std::vector<ProjectedLevelGeometrySnapshot>, std::string> ProjectLe
 		level.nativeMonsterLayer.reserve(source.native_monster_layer_size());
 		for (const uint32_t value : source.native_monster_layer())
 			level.nativeMonsterLayer.push_back(static_cast<uint16_t>(value));
+		level.nativeSpecialLayer.reserve(source.native_special_layer_size());
+		for (const uint32_t value : source.native_special_layer())
+			level.nativeSpecialLayer.push_back(static_cast<uint16_t>(value));
 		level.warpTriggers.reserve(source.warp_triggers_size());
 		for (const auto &warp : source.warp_triggers()) {
 			level.warpTriggers.push_back({
@@ -1143,6 +1208,8 @@ tl::expected<void, std::string> ValidateLevelGeometrySnapshots(const protocol::S
 	for (const auto &level : snapshot.level_geometry()) {
 		if (level.width() < 0 || level.height() < 0
 		    || level.width() > NativeMaximumWidth || level.height() > NativeMaximumHeight
+		    || (level.width() == 0 || level.height() == 0)
+		        && (!level.static_object_blocked_cells().empty() || !level.native_special_layer().empty())
 		    || (!level.native_mega_tile_layer().empty()
 		        && ((static_cast<uint64_t>(level.width()) + 1) / 2 > NativeMaximumMegaWidth
 		            || (static_cast<uint64_t>(level.height()) + 1) / 2 > NativeMaximumMegaHeight))
@@ -1160,6 +1227,9 @@ tl::expected<void, std::string> ValidateLevelGeometrySnapshots(const protocol::S
 			})
 			|| !std::all_of(level.native_monster_layer().begin(), level.native_monster_layer().end(), [](uint32_t value) {
 				return value <= NativeMaximumDunMonsterLayerId;
+			})
+			|| !std::all_of(level.native_special_layer().begin(), level.native_special_layer().end(), [](uint32_t value) {
+				return value <= std::numeric_limits<uint8_t>::max();
 			}))
 			return tl::make_unexpected("Server-backed snapshot contains invalid level geometry dimensions.");
 		if (!levels.emplace(level.level_id(), &level).second)
@@ -1179,7 +1249,8 @@ tl::expected<void, std::string> ValidateLevelGeometrySnapshots(const protocol::S
 			}
 			return true;
 		};
-		if (!validateCells(level.blocked_cells()) || !validateCells(level.missile_blocked_cells())
+		if (!validateCells(level.blocked_cells()) || !validateCells(level.static_object_blocked_cells())
+		    || !validateCells(level.missile_blocked_cells())
 		    || !validateCells(level.native_vision_blocked_cells())
 		    || (level.native_transparency_size() != 0 && static_cast<uint64_t>(level.native_transparency_size()) != cellCount)
 		    || (level.native_object_layer_size() != 0 && static_cast<uint64_t>(level.native_object_layer_size()) != cellCount)
@@ -1189,7 +1260,9 @@ tl::expected<void, std::string> ValidateLevelGeometrySnapshots(const protocol::S
 		    || (level.native_piece_layer_size() != 0
 		        && static_cast<uint64_t>(level.native_piece_layer_size()) != cellCount)
 		    || (level.native_monster_layer_size() != 0
-		        && static_cast<uint64_t>(level.native_monster_layer_size()) != cellCount))
+		        && static_cast<uint64_t>(level.native_monster_layer_size()) != cellCount)
+		    || (level.native_special_layer_size() != 0
+		        && static_cast<uint64_t>(level.native_special_layer_size()) != cellCount))
 			return tl::make_unexpected("Server-backed snapshot contains invalid level geometry cells.");
 	}
 	std::unordered_set<uint32_t> questIds;

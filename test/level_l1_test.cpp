@@ -48,6 +48,7 @@ constexpr size_t CathedralDoorOracleCaseCount = 16;
 // than reproducing native piece-transition logic.
 constexpr int NativeDoorClosedState = 0;
 constexpr int NativeDoorOpenState = 1;
+constexpr int NativeDoorBlockedState = 2;
 constexpr int NativeDoorOpenSelectionRegion = 2;
 constexpr int NativeDoorClosedSelectionRegion = 3;
 constexpr int NativeWorldWidth = MAXDUNX;
@@ -1605,6 +1606,242 @@ TEST(Drlg_l1, CathedralDoorNativeDeltaOpenOracle)
 	}
 	ASSERT_TRUE(WriteCathedralDoorOracleCase(
 		outputPath / "cathedral-door-delta-depth-2-743271966-main.json", captured));
+}
+
+// These tests exercise the live native door state machine without adding any
+// files to the private door oracle. They intentionally use the original asset
+// loader above, so the production AddObject/SyncOpObject/DeltaSyncOpObject
+// paths see the same object data and L1 SOL properties as the oracle.
+class CathedralDoorNativeEdgeTest : public ::testing::Test {
+protected:
+	void SetUp() override
+	{
+		const char *assetDirectory = std::getenv(CathedralDoorOracleDirectoryVariable);
+		if (assetDirectory == nullptr || assetDirectory[0] == '\0') {
+			GTEST_SKIP() << "Set " << CathedralDoorOracleDirectoryVariable
+			             << " to run opt-in native Cathedral door edge tests";
+		}
+		const std::filesystem::path outputPath(assetDirectory);
+		std::string outputError;
+		if (!ValidateCathedralDoorOracleOutputPath(outputPath, false, outputError))
+			GTEST_SKIP() << outputError;
+
+		nativeStateGuard.emplace();
+		std::string assetError;
+		if (!LoadCathedralDoorOracleAssets(assetError).has_value())
+			GTEST_SKIP() << assetError;
+
+		ResetCathedralDoorOracleNativeObjectsAndLights();
+		currentLevel().setId(Level::create(LevelId { .levelNum = 1, .type = DTYPE_CATHEDRAL }).id());
+		currentLevelNumber() = 1;
+		levelType() = DTYPE_CATHEDRAL;
+		for (Tile &tile : tiles().columnMajor())
+			tile.clear();
+		SetRndSeed(UINT32_C(0x13579BDF));
+	}
+
+public:
+	Object *AddSyntheticL1Door(_object_id objectType, Point position)
+	{
+		const Direction openDirection = objectType == OBJ_L1LDOOR
+			? Direction::NorthEast
+			: Direction::NorthWest;
+		tileAt(position).setPiece(49);
+		tileAt(position + openDirection).setPiece(49);
+		return AddObject(objectType, position);
+	}
+
+	std::optional<CathedralDoorOracleScopeGuard> nativeStateGuard;
+};
+
+void SetCathedralDoorOccupancy(Point position, char occupancy)
+{
+	Tile &tile = tileAt(position);
+	tile.setPlayer(0);
+	tile.setMonster(0);
+	tile.setItem(0);
+	tile.setCorpse(0);
+	switch (occupancy) {
+	case 'p':
+		tile.setPlayer(1);
+		break;
+	case 'm':
+		tile.setMonster(1);
+		break;
+	case 'i':
+		tile.setItem(1);
+		break;
+	case 'c':
+		tile.setCorpse(1);
+		break;
+	default:
+		break;
+	}
+}
+
+void ExerciseCathedralDoorBlockedClose(CathedralDoorNativeEdgeTest &fixture, char occupancy)
+{
+	Object *door = fixture.AddSyntheticL1Door(OBJ_L1LDOOR, { 60, 60 });
+	ASSERT_NE(door, nullptr);
+	ASSERT_EQ(door->_oVar1, 50);
+	ASSERT_EQ(door->_oVar2, 50);
+	const CathedralDoorOracleLayer closedLayer = CaptureCathedralDoorOracleLayer();
+	const CathedralDoorOracleObjectState closedObject = CaptureCathedralDoorOracleObject(*door);
+
+	const uint32_t randomStateBeforeOpen = GetLCGEngineState();
+	DeltaSyncOpObject(*door);
+	ASSERT_EQ(door->_oVar4, NativeDoorOpenState);
+	EXPECT_EQ(GetLCGEngineState(), randomStateBeforeOpen);
+	const CathedralDoorOracleObjectState openObject = CaptureCathedralDoorOracleObject(*door);
+	ASSERT_EQ(openObject.animationFrame, closedObject.animationFrame + 2);
+
+	SetCathedralDoorOccupancy(door->position, occupancy);
+	const CathedralDoorOracleLayer blockedBeforeLayer = CaptureCathedralDoorOracleLayer();
+	const CathedralDoorOracleObjectState blockedBeforeObject = CaptureCathedralDoorOracleObject(*door);
+	const uint32_t randomStateBeforeBlockedClose = GetLCGEngineState();
+	Player remotePlayer {};
+	SyncOpObject(remotePlayer, CMD_CLOSEDOOR, *door);
+	EXPECT_EQ(door->_oVar4, NativeDoorBlockedState) << "native DOOR_BLOCKED state";
+	EXPECT_EQ(door->_oAnimFrame, openObject.animationFrame);
+	EXPECT_TRUE(CathedralDoorOracleLayerEqual(blockedBeforeLayer, CaptureCathedralDoorOracleLayer()));
+	const auto blockedObject = CaptureCathedralDoorOracleObject(*door);
+	EXPECT_EQ(blockedObject.var1OneBased, blockedBeforeObject.var1OneBased);
+	EXPECT_EQ(blockedObject.var2OneBased, blockedBeforeObject.var2OneBased);
+	EXPECT_EQ(blockedObject.animationFrame, blockedBeforeObject.animationFrame);
+	EXPECT_EQ(blockedObject.selectionRegion, blockedBeforeObject.selectionRegion);
+	EXPECT_EQ(blockedObject.doorFlag, blockedBeforeObject.doorFlag);
+	EXPECT_EQ(blockedObject.preFlag, blockedBeforeObject.preFlag);
+	EXPECT_EQ(blockedObject.missFlag, blockedBeforeObject.missFlag);
+	EXPECT_EQ(blockedObject.solidFlag, blockedBeforeObject.solidFlag);
+	EXPECT_EQ(GetLCGEngineState(), randomStateBeforeBlockedClose);
+
+	SetCathedralDoorOccupancy(door->position, '\0');
+	SyncOpObject(remotePlayer, CMD_CLOSEDOOR, *door);
+	EXPECT_EQ(door->_oVar4, NativeDoorClosedState);
+	EXPECT_EQ(door->_oAnimFrame, closedObject.animationFrame);
+	EXPECT_TRUE(CathedralDoorOracleLayerEqual(closedLayer, CaptureCathedralDoorOracleLayer()));
+	EXPECT_TRUE(CathedralDoorOracleObjectEqual(closedObject, CaptureCathedralDoorOracleObject(*door)));
+	EXPECT_EQ(GetLCGEngineState(), randomStateBeforeBlockedClose);
+}
+
+TEST_F(CathedralDoorNativeEdgeTest, CloseBlockedByPlayerThenReleased)
+{
+	ExerciseCathedralDoorBlockedClose(*this, 'p');
+}
+
+TEST_F(CathedralDoorNativeEdgeTest, CloseBlockedByMonsterThenReleased)
+{
+	ExerciseCathedralDoorBlockedClose(*this, 'm');
+}
+
+TEST_F(CathedralDoorNativeEdgeTest, CloseBlockedByItemThenReleased)
+{
+	ExerciseCathedralDoorBlockedClose(*this, 'i');
+}
+
+TEST_F(CathedralDoorNativeEdgeTest, CloseBlockedByCorpseThenReleased)
+{
+	ExerciseCathedralDoorBlockedClose(*this, 'c');
+}
+
+TEST_F(CathedralDoorNativeEdgeTest, ProcessObjectsTracksDoorOccupancy)
+{
+	Object *door = AddSyntheticL1Door(OBJ_L1LDOOR, { 60, 60 });
+	ASSERT_NE(door, nullptr);
+	const uint32_t randomStateBeforeOpen = GetLCGEngineState();
+	DeltaSyncOpObject(*door);
+	ASSERT_EQ(door->_oVar4, NativeDoorOpenState);
+	EXPECT_EQ(GetLCGEngineState(), randomStateBeforeOpen);
+	const auto openLayer = CaptureCathedralDoorOracleLayer();
+	const auto openFrame = door->_oAnimFrame;
+	const uint32_t randomState = GetLCGEngineState();
+
+	SetCathedralDoorOccupancy(door->position, 'p');
+	ProcessObjects();
+	EXPECT_EQ(door->_oVar4, NativeDoorBlockedState) << "UpdateDoor marks occupied open door BLOCKED";
+	EXPECT_EQ(door->_oAnimFrame, openFrame);
+	EXPECT_TRUE(CathedralDoorOracleLayerEqual(openLayer, CaptureCathedralDoorOracleLayer()));
+	EXPECT_EQ(GetLCGEngineState(), randomState);
+
+	SetCathedralDoorOccupancy(door->position, '\0');
+	ProcessObjects();
+	EXPECT_EQ(door->_oVar4, NativeDoorOpenState) << "UpdateDoor reopens state after occupancy is released";
+	EXPECT_EQ(door->_oAnimFrame, openFrame);
+	EXPECT_TRUE(CathedralDoorOracleLayerEqual(openLayer, CaptureCathedralDoorOracleLayer()));
+	EXPECT_EQ(GetLCGEngineState(), randomState);
+}
+
+TEST_F(CathedralDoorNativeEdgeTest, DeadPlayerFlagDoesNotBlockDoor)
+{
+	Object *door = AddSyntheticL1Door(OBJ_L1LDOOR, { 60, 60 });
+	ASSERT_NE(door, nullptr);
+	DeltaSyncOpObject(*door);
+	SetCathedralDoorOccupancy(door->position, '\0');
+	tileAt(door->position).addFlags(DungeonFlag::DeadPlayer);
+	ProcessObjects();
+	EXPECT_EQ(door->_oVar4, NativeDoorOpenState);
+	Player remotePlayer {};
+	SyncOpObject(remotePlayer, CMD_CLOSEDOOR, *door);
+	EXPECT_EQ(door->_oVar4, NativeDoorClosedState);
+	EXPECT_TRUE(tileAt(door->position).hasAnyFlag(DungeonFlag::DeadPlayer));
+}
+
+TEST_F(CathedralDoorNativeEdgeTest, SharedArchCloseUsesCurrentStateAnd395Branch)
+{
+	const Point leftPosition { 60, 60 };
+	const Point rightPosition { 61, 59 };
+	const Point sharedArchPosition { 60, 59 };
+	Object *leftDoor = AddSyntheticL1Door(OBJ_L1LDOOR, leftPosition);
+	Object *rightDoor = AddSyntheticL1Door(OBJ_L1RDOOR, rightPosition);
+	ASSERT_NE(leftDoor, nullptr);
+	ASSERT_NE(rightDoor, nullptr);
+	ASSERT_EQ(leftDoor->_oVar1, 50);
+	ASSERT_EQ(leftDoor->_oVar2, 50);
+	ASSERT_EQ(rightDoor->_oVar1, 50);
+	ASSERT_EQ(rightDoor->_oVar2, 50);
+	const auto closedLayer = CaptureCathedralDoorOracleLayer();
+	const auto leftClosedFrame = leftDoor->_oAnimFrame;
+	const auto rightClosedFrame = rightDoor->_oAnimFrame;
+	const uint32_t randomState = GetLCGEngineState();
+	Player remotePlayer {};
+
+	// A close command is ignored when the native object is already CLOSED.
+	SyncOpObject(remotePlayer, CMD_CLOSEDOOR, *leftDoor);
+	EXPECT_EQ(leftDoor->_oVar4, NativeDoorClosedState);
+	EXPECT_EQ(leftDoor->_oAnimFrame, leftClosedFrame);
+	EXPECT_EQ(tileAt(sharedArchPosition).piece(), 49);
+	EXPECT_EQ(GetLCGEngineState(), randomState);
+
+	// Use the native delta path for the first open, then exercise SyncOpObject's
+	// current-state guard and the shared-arch ordering through the remote path.
+	DeltaSyncOpObject(*leftDoor);
+	ASSERT_EQ(leftDoor->_oVar4, NativeDoorOpenState);
+	EXPECT_EQ(tileAt(sharedArchPosition).piece(), 410);
+	const auto leftOpenFrame = leftDoor->_oAnimFrame;
+	SyncOpObject(remotePlayer, CMD_OPENDOOR, *leftDoor);
+	EXPECT_EQ(leftDoor->_oVar4, NativeDoorOpenState);
+	EXPECT_EQ(leftDoor->_oAnimFrame, leftOpenFrame);
+
+	SyncOpObject(remotePlayer, CMD_OPENDOOR, *rightDoor);
+	ASSERT_EQ(rightDoor->_oVar4, NativeDoorOpenState);
+	EXPECT_EQ(rightDoor->_oAnimFrame, rightClosedFrame + 2);
+	EXPECT_EQ(tileAt(sharedArchPosition).piece(), 395);
+
+	// Closing left while the shared arch is 395 selects the native 411 frame;
+	// reversing this order would not take the var2==50/395 branch.
+	SyncOpObject(remotePlayer, CMD_CLOSEDOOR, *leftDoor);
+	EXPECT_EQ(leftDoor->_oVar4, NativeDoorClosedState);
+	EXPECT_EQ(leftDoor->_oAnimFrame, leftClosedFrame);
+	EXPECT_EQ(tileAt(sharedArchPosition).piece(), 411);
+	SyncOpObject(remotePlayer, CMD_CLOSEDOOR, *leftDoor);
+	EXPECT_EQ(tileAt(sharedArchPosition).piece(), 411);
+
+	SyncOpObject(remotePlayer, CMD_CLOSEDOOR, *rightDoor);
+	EXPECT_EQ(rightDoor->_oVar4, NativeDoorClosedState);
+	EXPECT_EQ(rightDoor->_oAnimFrame, rightClosedFrame);
+	EXPECT_EQ(tileAt(sharedArchPosition).piece(), 49);
+	EXPECT_TRUE(CathedralDoorOracleLayerEqual(closedLayer, CaptureCathedralDoorOracleLayer()));
+	EXPECT_EQ(GetLCGEngineState(), randomState);
 }
 
 TEST(Drlg_l1, CreateL5Dungeon_reuses_successful_attempt_seed)

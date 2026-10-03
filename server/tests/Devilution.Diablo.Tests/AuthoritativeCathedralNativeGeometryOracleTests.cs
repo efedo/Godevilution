@@ -245,7 +245,7 @@ public sealed class AuthoritativeCathedralNativeGeometryOracleTests
         Assert.Equal(Hash(snapshot.BlockLightCells), snapshot.Hashes.BlockLightCells);
     }
 
-    private static byte[] PreparePaddedSol(byte[] raw)
+    internal static byte[] PreparePaddedSol(byte[] raw)
     {
         if (raw.Length is < 1 or > NativeTileCount)
             throw new InvalidDataException(
@@ -256,7 +256,7 @@ public sealed class AuthoritativeCathedralNativeGeometryOracleTests
         return padded;
     }
 
-    private static byte[] StripNativeOpaqueSolBit(byte[] padded)
+    internal static byte[] StripNativeOpaqueSolBit(byte[] padded)
     {
         if (padded.Length != NativeTileCount)
             throw new InvalidDataException(

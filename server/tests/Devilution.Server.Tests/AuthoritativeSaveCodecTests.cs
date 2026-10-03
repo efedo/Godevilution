@@ -10,6 +10,16 @@ namespace Devilution.Server.Tests;
 public sealed class AuthoritativeSaveCodecTests
 {
     [Fact]
+    public void LegacyVersionOneRetainsFrozenBaselineBytes()
+    {
+        // Captured independently from clean 06c0eb5e8, not this serializer.
+        var bytes = System.Text.Encoding.UTF8.GetBytes(new AuthoritativeSaveCodec().Serialize(CreateSnapshot()));
+        Assert.Equal(1824, bytes.Length);
+        Assert.Equal("8240dcf0e36cdb8b82f89431125bf399ac507416398c200cc33656280d811c89",
+            Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(bytes)).ToLowerInvariant());
+    }
+
+    [Fact]
     public void VersionOneRoundTripsNeutralStateThroughStableEnvelope()
     {
         var codec = new AuthoritativeSaveCodec();
@@ -297,7 +307,7 @@ public sealed class AuthoritativeSaveCodecTests
         Assert.Throws<InvalidDataException>(() => codec.Deserialize("{"));
         Assert.Throws<InvalidDataException>(() => codec.Deserialize(
             JsonSerializer.Serialize(new AuthoritativeSaveDocument(1, "not-base64"))));
-        var unknownFormat = AuthoritativeSaveCodec.CathedralDepthFormatVersion + 1;
+        var unknownFormat = AuthoritativeSaveCodec.CathedralDoorFormatVersion + 1;
         var unsupported = JsonSerializer.Serialize(new AuthoritativeSaveDocument(
             unknownFormat,
             Convert.ToBase64String([1])));

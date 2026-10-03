@@ -148,6 +148,46 @@ tl::expected<void, std::string> ServerBackedWorldProjection::Apply(
 		}) != levelGeometry.end()) {
 		return tl::make_unexpected("Authoritative level geometry projection contains duplicate level IDs.");
 	}
+	for (const auto &geometry : levelGeometry) {
+		if (geometry.staticObjectBlockedCells.empty() && geometry.nativeSpecialLayer.empty())
+			continue;
+		if (geometry.width <= 0 || geometry.height <= 0
+		    || !IsValidNativeTileCoordinate(geometry.width - 1, geometry.height - 1))
+			return tl::make_unexpected("Authoritative supplemental geometry requires valid native dimensions.");
+		const auto area = static_cast<size_t>(geometry.width) * geometry.height;
+		std::unordered_set<int32_t> objectCells;
+		for (const auto cell : geometry.staticObjectBlockedCells) {
+			if (cell < 0 || static_cast<size_t>(cell) >= area || !objectCells.insert(cell).second)
+				return tl::make_unexpected("Authoritative static object geometry contains invalid or duplicate cells.");
+		}
+		if (!geometry.nativeSpecialLayer.empty()
+		    && (geometry.nativeSpecialLayer.size() != area
+		        || std::any_of(geometry.nativeSpecialLayer.begin(), geometry.nativeSpecialLayer.end(), [](uint16_t value) { return value > 255; })))
+			return tl::make_unexpected("Authoritative native special geometry must contain complete byte values.");
+	}
+	for (const auto &object : objects) {
+		if (!object.cathedralDoor.has_value())
+			continue;
+		const auto geometry = std::find_if(levelGeometry.begin(), levelGeometry.end(), [&object](const auto &candidate) {
+			return candidate.levelId == object.levelId;
+		});
+		if (geometry == levelGeometry.end()
+		    || geometry->nativeSpecialLayer.empty()
+		    || geometry->width <= 0
+		    || geometry->height <= 0
+		    || object.positionX < 0
+		    || object.positionY < 0
+		    || object.positionX >= geometry->width
+		    || object.positionY >= geometry->height
+		    || geometry->nativeSpecialLayer.size()
+		        != static_cast<size_t>(geometry->width) * geometry->height)
+			continue;
+		const auto cell = static_cast<size_t>(object.positionY) * geometry->width + object.positionX;
+		const auto &door = *object.cathedralDoor;
+		const auto expected = door.doorState == 0 ? 0 : door.nativeObjectId == 1 ? 7 : 8;
+		if (geometry->nativeSpecialLayer[cell] != expected)
+			return tl::make_unexpected("Authoritative Cathedral door conflicts with its projected native special layer.");
+	}
 	const auto isInBounds = [&levelGeometry](uint32_t projectedLevelId, int32_t x, int32_t y) {
 		if (!IsValidNativeTileCoordinate(x, y))
 			return false;
@@ -328,7 +368,9 @@ std::optional<bool> ServerBackedWorldProjection::IsBlocked(int32_t positionX, in
 	    || positionX < 0 || positionY < 0 || positionX >= geometry->width || positionY >= geometry->height)
 		return std::nullopt;
 	const auto cell = positionY * geometry->width + positionX;
-	return std::find(geometry->blockedCells.begin(), geometry->blockedCells.end(), cell) != geometry->blockedCells.end();
+	return std::find(geometry->blockedCells.begin(), geometry->blockedCells.end(), cell) != geometry->blockedCells.end()
+	    || std::find(geometry->staticObjectBlockedCells.begin(), geometry->staticObjectBlockedCells.end(), cell)
+	        != geometry->staticObjectBlockedCells.end();
 }
 
 std::optional<bool> ServerBackedWorldProjection::IsMissileBlocked(int32_t positionX, int32_t positionY) const noexcept
@@ -449,7 +491,8 @@ std::optional<uint32_t> ServerBackedWorldProjection::AuthoritativeObjectAt(int32
 		    || candidate.questTransitionKind != 0
 		    || candidate.rewardKind != 0
 		    || candidate.questSequenceFollowUpKind != 0
-		    || candidate.dialogueMessageId != 0;
+		    || candidate.dialogueMessageId != 0
+		    || candidate.cathedralDoor.has_value();
 		return candidate.entityId != 0 && !candidate.activated && !candidate.destroyed
 		    && (hasAuthoritativeBehavior || candidate.trapArmed)
 		    && IsAuthoritativeLevelVisible(candidate.levelId, levelId)

@@ -2,6 +2,18 @@
 
 Notable changes to this fork are recorded below.
 
+- 2026-10-03: Add isolated server-owned Cathedral door
+  discovery, native operations, strict mutable-geometry checkpoint restoration,
+  cohort-v2/save-v4 envelopes and typed live door projection. Preserve existing
+  profiles, nested legacy DTOs and launchers. Validate typed native/Godot receivers,
+  complete special-byte layers and collision-only scanner-light footprints.
+  Compare seventeen private native cases; 77 focused domain, 244 focused server,
+  140 focused client and seven native edge checks pass. Full server/client have
+  1,518/739 passes with unchanged exclusions; four domain Hork RNG failures are
+  independently reproduced on clean HEAD. Freeze unchanged legacy save bytes.
+  Full population, art/frame qualification, isolated playable-pack activation and
+  M2 acceptance remain open; see migration status for retained evidence and limits.
+
 - 2026-10-03: Add optional typed player-art rules to the client presentation
   catalog, atomic ambiguity/budget refusal, actual per-entity drawing observations
   and procedural fallback for missing selected art. Localize static HUD labels

@@ -458,7 +458,9 @@ public sealed class AuthoritativeClientModel
                 || targetY >= level.Height)
                 return false;
             var targetCell = (long)targetY * level.Width + targetX;
-            if (targetCell > int.MaxValue || level.BlockedCells.Contains((int)targetCell))
+            if (targetCell > int.MaxValue
+                || level.BlockedCells.Contains((int)targetCell)
+                || level.StaticObjectBlockedCells.Contains((int)targetCell))
                 return false;
         }
 
@@ -481,12 +483,19 @@ public sealed class AuthoritativeClientModel
 
         return !snapshot.Objects.Any(@object =>
             @object.LevelId == player.LevelId
-            && !@object.ActivateOnOccupancy
-            && !@object.Activated
-            && !@object.Destroyed
             && @object.PositionX == targetX
-            && @object.PositionY == targetY);
+            && @object.PositionY == targetY
+            && (@object.CathedralDoor is not null
+                ? !IsValidPassableCathedralDoor(@object)
+                : !@object.ActivateOnOccupancy
+                    && !@object.Activated
+                    && !@object.Destroyed));
     }
+
+    /** Only a fully validated typed OPEN/BLOCKED door is passable in prediction. */
+    private static bool IsValidPassableCathedralDoor(ObjectSnapshot @object)
+        => @object.CathedralDoor is { DoorState: 1 or 2 }
+            && AuthoritativeObjectSelector.HasAuthoritativeInteraction(@object);
 
     private static void ValidatePlayerAction(Snapshot snapshot, PlayerSnapshot player)
     {
@@ -1440,6 +1449,10 @@ public sealed class AuthoritativeClientModel
                 || level.NativeMegaTileLayer.Any(value => value > byte.MaxValue)
                 || level.NativePieceLayer.Any(value => value > NativeMaximumDunPieceId)
                 || level.NativeMonsterLayer.Any(value => value > NativeMaximumDunMonsterLayerId)
+                || level.NativeSpecialLayer.Any(value => value > byte.MaxValue)
+                || (level.Width == 0 || level.Height == 0)
+                    && (level.StaticObjectBlockedCells.Count != 0
+                        || level.NativeSpecialLayer.Count != 0)
                 || level.NativeMegaTileLayer.Count != 0
                     && (coarseWidth > NativeMaximumMegaWidth
                         || coarseHeight > NativeMaximumMegaHeight)) {
@@ -1449,12 +1462,16 @@ public sealed class AuthoritativeClientModel
             if (level.Width > 0 && level.Height > 0) {
                 var cellCount = checked((long)level.Width * level.Height);
                 if (level.BlockedCells.Count > cellCount
+                    || level.StaticObjectBlockedCells.Count > cellCount
                     || level.MissileBlockedCells.Count > cellCount
                     || level.NativeVisionBlockedCells.Count > cellCount
                     || level.BlockedCells.Any(cell => cell < 0 || cell >= cellCount)
+                    || level.StaticObjectBlockedCells.Any(cell => cell < 0 || cell >= cellCount)
                     || level.MissileBlockedCells.Any(cell => cell < 0 || cell >= cellCount)
                     || level.NativeVisionBlockedCells.Any(cell => cell < 0 || cell >= cellCount)
                     || level.BlockedCells.Distinct().Count() != level.BlockedCells.Count
+                    || level.StaticObjectBlockedCells.Distinct().Count()
+                        != level.StaticObjectBlockedCells.Count
                     || level.MissileBlockedCells.Distinct().Count()
                         != level.MissileBlockedCells.Count
                     || level.NativeVisionBlockedCells.Distinct().Count()
@@ -1472,7 +1489,9 @@ public sealed class AuthoritativeClientModel
                     || level.NativePieceLayer.Count != 0
                         && level.NativePieceLayer.Count != cellCount
                     || level.NativeMonsterLayer.Count != 0
-                        && level.NativeMonsterLayer.Count != cellCount) {
+                        && level.NativeMonsterLayer.Count != cellCount
+                    || level.NativeSpecialLayer.Count != 0
+                        && level.NativeSpecialLayer.Count != cellCount) {
                     throw new InvalidDataException(
                         "The authoritative snapshot contains invalid level geometry cells.");
                 }
@@ -1480,6 +1499,30 @@ public sealed class AuthoritativeClientModel
             if (!levels.TryAdd(level.LevelId, level)) {
                 throw new InvalidDataException(
                     "The authoritative snapshot contains duplicate level geometry.");
+            }
+        }
+        foreach (var @object in snapshot.Objects) {
+            var door = @object.CathedralDoor;
+            if (door is null
+                || !levels.TryGetValue(door.LevelId, out var level)
+                || level.NativeSpecialLayer.Count == 0) {
+                continue;
+            }
+            if (door.PositionX < 0
+                || door.PositionY < 0
+                || door.PositionX >= level.Width
+                || door.PositionY >= level.Height
+                || level.Width <= 0
+                || level.Height <= 0) {
+                throw new InvalidDataException("The authoritative Cathedral door lies outside its projected special layer.");
+            }
+            var cell = checked(door.PositionY * level.Width + door.PositionX);
+            var expected = door.DoorState == 0
+                ? 0U
+                : door.NativeObjectId == 1 ? 7U : 8U;
+            if (level.NativeSpecialLayer[cell] != expected) {
+                throw new InvalidDataException(
+                    "The authoritative Cathedral door conflicts with its projected native special layer.");
             }
         }
 

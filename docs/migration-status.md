@@ -148,6 +148,69 @@ open. Their scope, dependencies, and exit checks are defined only in the
 
 ## Recent implementation evidence
 
+### M2 opt-in managed Cathedral door core (2026-10-03)
+
+A separate `devilution.diablo.cathedral-doors.v1` adapter/capability uses validated
+external per-depth left/right object identities. Server-owned native scan order,
+cached pieces, repeatable open/blocked/close operations and special bytes retain
+shared-arch history rather than replaying door synchronization on restore.
+Strict detached restore compares trusted backing topology, duplicated geometry,
+complete generated-object capabilities, mutable SOL-derived collision and native
+status/frame constraints before publishing. Unsupported mapped-level mutations
+and replacement are rejected by this quest-disabled profile.
+
+Mutable persistence uses cohort version 2 and save version 4; legacy nested DTOs
+and authored/L1/depth envelopes remain separate. Live typed-door fields carry
+exact native state without copying complete persistence geometry each frame.
+Static scanner-light occupancy uses a separately validated collision-only channel;
+it does not change SOL, missile or vision blockers. Native and Godot receivers
+validate full special-byte geometry and typed-door copies. Native presentation
+uses the saved state directly, without rerunning door synchronization. Full light
+population is not implemented. Existing normal profiles, compiler modes and
+launchers are unchanged.
+
+Current evidence:
+
+- Final domain checks: 77 focused passes, zero failures/skips (726ms); all
+  17 explicit managed/private-native comparisons pass without skips (12.296s).
+  Fresh native captures retain twenty mandatory artifacts with repeated
+  byte/SHA-256 equality. Seven occupied-close/shared-arch/dead-player native
+  edge checks pass with private assets (180ms), not merely default-suite skips.
+- Broader domain: 2,721 passes, four Hork Demon RNG failures and 78 explicit
+  exclusions (12.413s). A clean isolated `06c0eb5e8` run independently reproduces
+  all four failures with the same expected/actual values. They are pre-existing
+  failures, not fixed by this batch; this is not a green full domain suite.
+- Server: 244 focused passes without skips (977ms); full default suite has
+  1,518 passes, zero failures and four unchanged exclusions (52.489s).
+  Protocol client: 140 final-source focused passes without skips (410ms);
+  full live/default suite has 739 passes, zero failures and two unchanged
+  performance exclusions (13m04.045s).
+- Rebuilt native client and affected bridge targets pass. Registered fresh-process
+  checks have 186 actual passes plus seven private-asset exclusions; native L1
+  geometry compatibility has 21 actual passes plus four capture exclusions.
+  No native/Godot gameplay GUI acceptance is claimed by these headless checks.
+- Independently generated HEAD/current cohort-v1 and authored-save-v1 fixtures
+  match exactly (15,991 and 1,824 UTF-8 bytes). Frozen SHA-256 regressions guard
+  them; original CLR constructor signatures are invoked alongside extended
+  overloads. Legacy profile IDs, save envelopes and nested DTOs remain separate.
+
+Logs are retained under `.local/m2-cathedral-door-*`; final results use the
+`domain-final-source-*`, `oracle-final-source`, `server-unlocked-*`,
+`client-final-source-*`/`client-integrated-full` and `native-integrated-*` names.
+Independent byte/baseline evidence is under `.local/m2-legacy-baseline/`.
+Earlier invalid-fixture, converter/assertion and stale-binary failures remain
+retained. A build during the live client run encountered locked host DLLs;
+the successful final rebuild and server rerun were sequential after it ended.
+Domain/native builds have no errors; managed server/client builds retain known
+NU1900 vulnerability-feed warnings and the existing client xUnit2031 warning.
+
+Door-aware content compilation, an isolated playable profile, actual Godot door
+and cold-host journeys, full native population/RNG, map resynchronization and
+campaign qualification remain open. Native art/frame qualification is required
+before activation; byte-bounded persisted frames alone do not prove loaded-art
+admission. This is not M2/family or M0 acceptance;
+the overall estimate stays approximately 35%.
+
 ### M1 semantic player art and static HUD localization (2026-10-03)
 
 Schema 1 now optionally accepts at most 512 immutable player-art rules, with

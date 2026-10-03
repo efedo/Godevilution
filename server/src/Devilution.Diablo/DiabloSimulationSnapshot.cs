@@ -530,6 +530,12 @@ public sealed record DiabloSimulationSnapshot(
     /** Explicit depth profile identity, separate from legacy L1 persistence metadata. */
     public DiabloCathedralDepthWorldIdentity? CathedralDepthWorldIdentity { get; init; }
 
+    /** Exact mutable-door projection owned by explicit save version four. */
+    public DiabloCathedralDoorCheckpoint? CathedralDoors { get; init; }
+
+    /** Bounded presentation fields; clients never replay native door operations. */
+    public IReadOnlyList<DiabloCathedralDoorObjectState> CathedralDoorObjects { get; init; } = [];
+
     /** Dynamic and external portal routes owned by the authoritative world. */
     public IReadOnlyList<DiabloPortalState> Portals { get; init; } = [];
 
@@ -620,6 +626,18 @@ public sealed partial class DiabloSimulation
     public DiabloSimulationSnapshot CaptureSnapshot(
         AuthoritativePlayerState player,
         ulong tick)
+        => CaptureSnapshotCore(player, tick, includeDoorPersistence: true);
+
+    /** Live presentation omits full door geometry copies; exports use CaptureSnapshot. */
+    public DiabloSimulationSnapshot CapturePresentationSnapshot(
+        AuthoritativePlayerState player,
+        ulong tick)
+        => CaptureSnapshotCore(player, tick, includeDoorPersistence: false);
+
+    private DiabloSimulationSnapshot CaptureSnapshotCore(
+        AuthoritativePlayerState player,
+        ulong tick,
+        bool includeDoorPersistence)
     {
         ArgumentNullException.ThrowIfNull(player);
         var activeStore = player.ActiveStoreId is uint storeId
@@ -920,6 +938,8 @@ public sealed partial class DiabloSimulation
             Difficulty = this.Difficulty,
             NativeGeneratedWorldIdentity = this.NativeGeneratedWorldIdentity,
             CathedralDepthWorldIdentity = this.CathedralDepthWorldIdentity,
+            CathedralDoors = includeDoorPersistence ? WorldState.CaptureCathedralDoors() : null,
+            CathedralDoorObjects = WorldState.CaptureCathedralDoorObjects(),
             QuestTownerInteractions = QuestTownerInteractions?.Definitions ?? [],
             TownerGreetings = TownerGreetings?.Definitions.ToArray() ?? [],
             ActiveWorldMutationIds = WorldState.ActiveWorldMutationIds
@@ -959,6 +979,8 @@ public sealed partial class DiabloSimulation
             NativeGeneratedWorldIdentity, snapshot.NativeGeneratedWorldIdentity);
         DiabloCathedralDepthWorldIdentity.RequireSame(
             CathedralDepthWorldIdentity, snapshot.CathedralDepthWorldIdentity);
+        WorldState.RequireCathedralDoorProfile(snapshot.CathedralDoors);
+        DiabloCathedralDoorCheckpoint.RequireSnapshotCopies(snapshot);
         // The incoming snapshot may be older than the live destination. Capture
         // rollback state at a tick that can represent any action already in
         // progress, otherwise validation of the rollback snapshot can fail and
@@ -1053,6 +1075,7 @@ public sealed partial class DiabloSimulation
             ActiveStore = ResolveStoreState(snapshot.ActiveStore),
         };
         WorldState.RestoreWorldMutations(snapshot.ActiveWorldMutationIds);
+        WorldState.RestoreCathedralDoors(snapshot.CathedralDoors, snapshot.Objects);
         ValidateSavedPlayer(source, destination, snapshot.Tick);
 
         var monsterEntityIds = snapshot.Monsters.Select(monster => monster.EntityId).ToArray();
@@ -1281,7 +1304,9 @@ public sealed partial class DiabloSimulation
                 "The authoritative save contains an unknown Scavenger corpse.");
         }
         var restoredObjects = snapshot.Objects.Select(@object => {
-            if (!WorldState.IsWalkable(@object.LevelId, @object.PositionX, @object.PositionY)
+            if ((!WorldState.IsWalkable(@object.LevelId, @object.PositionX, @object.PositionY)
+                    && !WorldState.IsCathedralDoorObject(@object.EntityId, @object.LevelId,
+                        @object.PositionX, @object.PositionY))
                 || @object.ObjectId == 0
                 || @object.EffectAmount < 0
                 || !Enum.IsDefined(@object.EffectKind)
@@ -1909,21 +1934,35 @@ public sealed partial class DiabloSimulation
         // A timed move still occupies only its current cell. Its future cell
         // is revalidated at the effect tick and may be claimed by geometry or
         // another participant while the action is in flight.
+        if (WorldState.IsCathedralLightObjectSolid(source.LevelId, source.PositionX, source.PositionY)
+            || WorldState.IsPendingPlayerMoveIntoCathedralLight(source.Life, source.LevelId,
+                source.PositionX, source.PositionY, source.CurrentAction))
+            throw new InvalidDataException("The authoritative save places a player inside a Cathedral light.");
+        if (restoredWorldItems.Any(item => WorldState.IsCathedralLightObjectSolid(item.LevelId, item.PositionX, item.PositionY))
+            || restoredMonsters.Any(monster => WorldState.IsCathedralLightObjectSolid(monster.LevelId, monster.PositionX, monster.PositionY)
+                || monster.Moving && WorldState.IsCathedralLightObjectSolid(monster.LevelId, monster.FuturePositionX, monster.FuturePositionY)))
+            throw new InvalidDataException("The authoritative save places an actor inside a Cathedral light.");
+        var deadDoorCell = WorldState.IsDeadPlayerOnCathedralDoor(source.Life, source.LevelId, source.PositionX, source.PositionY);
+        bool IsAtDeadDoor((uint LevelId, int PositionX, int PositionY) position)
+            => deadDoorCell && position == (source.LevelId, source.PositionX, source.PositionY);
+        var liveMonsterPositions = restoredMonsters.Where(monster => monster.HitPoints > 0)
+            .SelectMany(monster => monster.Moving
+                ? new[] { (monster.LevelId, monster.PositionX, monster.PositionY),
+                    (monster.LevelId, monster.FuturePositionX, monster.FuturePositionY) }
+                : [(monster.LevelId, monster.PositionX, monster.PositionY)]).ToArray();
+        var itemPositions = restoredWorldItems.Select(item => (item.LevelId, item.PositionX, item.PositionY)).ToArray();
+        if (liveMonsterPositions.Count(IsAtDeadDoor) > 1 || itemPositions.Count(IsAtDeadDoor) > 1)
+            throw new InvalidDataException("The authoritative save duplicates native occupancy in a dead-player door cell.");
         DiabloWorldState.ValidateOccupancy(
             source.LevelId,
             source.PositionX,
             source.PositionY,
-            restoredMonsters
-                .Where(monster => monster.HitPoints > 0)
-                .SelectMany(monster => monster.Moving
-                    ? new[] {
-                        (monster.LevelId, monster.PositionX, monster.PositionY),
-                        (monster.LevelId, monster.FuturePositionX, monster.FuturePositionY),
-                    }
-                    : [(monster.LevelId, monster.PositionX, monster.PositionY)]),
-            restoredWorldItems.Select(item => (item.LevelId, item.PositionX, item.PositionY)),
+            liveMonsterPositions.Where(position => !IsAtDeadDoor(position)),
+            itemPositions.Where(position => !IsAtDeadDoor(position)),
             restoredObjects
                 .Where(@object => !@object.Activated
+                    && !WorldState.IsCathedralDoorObject(@object.EntityId, @object.LevelId,
+                        @object.PositionX, @object.PositionY)
                     && !@object.Destroyed
                     && !@object.ActivateOnOccupancy)
                 .Select(@object => (@object.LevelId, @object.PositionX, @object.PositionY)));
@@ -2775,6 +2814,7 @@ public sealed partial class DiabloSimulation
                 && !DiabloPlayerName.IsValid(source.CharacterName))
             || !hasValidClass
             || !WorldState.IsWalkable(source.LevelId, source.PositionX, source.PositionY)
+                && !WorldState.IsDeadPlayerOnCathedralDoor(source.Life, source.LevelId, source.PositionX, source.PositionY)
             || source.Inventory.Count > 40
             || source.Equipment.Count > 7
             || source.Belt.Count > 8

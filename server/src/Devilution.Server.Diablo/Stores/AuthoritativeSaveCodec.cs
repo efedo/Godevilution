@@ -11,7 +11,8 @@ namespace Devilution.Server.Stores;
  * original JSON envelope containing a base64 Protobuf snapshot; player and
  * world state stay transport-neutral. Opt-in generated profiles use version 2
  * to retain game-owned geometry/route identity outside the live wire. The separate
- * Cathedral depths profile uses version 3 without widening either older envelope.
+ * Cathedral depths profile uses version 3; mutable doors use version 4 without
+ * widening any older envelope.
  */
 public sealed class AuthoritativeSaveCodec
 {
@@ -19,6 +20,7 @@ public sealed class AuthoritativeSaveCodec
     public const int CurrentFormatVersion = 1;
     public const int NativeGeneratedFormatVersion = 2;
     public const int CathedralDepthFormatVersion = 3;
+    public const int CathedralDoorFormatVersion = 4;
     private static readonly string[] GeneratedLevelFields = [
         "CatalogId", "GeneratorId", "GeneratorRevision", "LevelId", "LevelSymbol",
         "DungeonSeed", "Entry", "AttemptSeed", "FinalRandomState", "CoarseFingerprint",
@@ -41,6 +43,7 @@ public sealed class AuthoritativeSaveCodec
 
     public string Serialize(DiabloSimulationSnapshot snapshot)
     {
+        DiabloCathedralDoorCheckpoint.RequireSnapshotCopies(snapshot);
         ArgumentNullException.ThrowIfNull(snapshot);
         if (snapshot.NativeGeneratedWorldIdentity is not null && snapshot.CathedralDepthWorldIdentity is not null)
             throw new InvalidDataException("A save cannot combine L1 and Cathedral depth generation identities.");
@@ -49,6 +52,15 @@ public sealed class AuthoritativeSaveCodec
             items: items,
             allowZeroPlayerEntityId: true);
         var snapshotBase64 = Convert.ToBase64String(protocolSnapshot.ToByteArray());
+        if (snapshot.CathedralDoors is not null) {
+            if (snapshot.CathedralDepthWorldIdentity is null)
+                throw new InvalidDataException("Mutable Cathedral doors require their depth generation identity.");
+            using var checkpoint = JsonDocument.Parse(
+                DiabloCohortCodec.SerializeCathedralDoorCheckpoint(snapshot.CathedralDoors));
+            return JsonSerializer.Serialize(new CathedralDoorAuthoritativeSaveDocument(
+                CathedralDoorFormatVersion, snapshotBase64,
+                snapshot.CathedralDepthWorldIdentity, checkpoint.RootElement));
+        }
         if (snapshot.CathedralDepthWorldIdentity is not null)
             return JsonSerializer.Serialize(new CathedralDepthAuthoritativeSaveDocument(
                 CathedralDepthFormatVersion, snapshotBase64, snapshot.CathedralDepthWorldIdentity));
@@ -72,6 +84,21 @@ public sealed class AuthoritativeSaveCodec
         }
         AuthoritativeSaveDocument? document;
         try {
+            using var json = JsonDocument.Parse(serializedSave);
+            // New capability metadata must not be silently discarded by a legacy
+            // envelope, including a duplicate version key that selects version 1.
+            if (json.RootElement.ValueKind == JsonValueKind.Object
+                && json.RootElement.EnumerateObject().Any(property => property.NameEquals("CathedralDoors")
+                    || property.NameEquals("FormatVersion") && property.Value.ValueKind == JsonValueKind.Number
+                        && property.Value.TryGetInt32(out var version)
+                        && version == CathedralDoorFormatVersion)) {
+                RequireExactFields(json.RootElement, ["FormatVersion", "SnapshotBase64",
+                    "CathedralDepthWorldIdentity", "CathedralDoors"]);
+                if (json.RootElement.GetProperty("FormatVersion").ValueKind != JsonValueKind.Number
+                    || !json.RootElement.GetProperty("FormatVersion").TryGetInt32(out var version)
+                    || version != CathedralDoorFormatVersion)
+                    throw new InvalidDataException("Cathedral door metadata requires the version 4 envelope.");
+            }
             document = JsonSerializer.Deserialize<AuthoritativeSaveDocument>(serializedSave);
         } catch (JsonException exception) {
             throw new InvalidDataException(
@@ -83,13 +110,16 @@ public sealed class AuthoritativeSaveCodec
                 "The authoritative save format is unsupported or incomplete.");
         }
 
-        return document.FormatVersion switch {
+        var restored = document.FormatVersion switch {
             1 => DeserializeVersionOne(document.SnapshotBase64),
             NativeGeneratedFormatVersion => DeserializeGenerated(serializedSave, document.SnapshotBase64),
             CathedralDepthFormatVersion => DeserializeCathedralDepths(serializedSave, document.SnapshotBase64),
+            CathedralDoorFormatVersion => DeserializeCathedralDoors(serializedSave, document.SnapshotBase64),
             _ => throw new InvalidDataException(
                 $"Authoritative save format {document.FormatVersion} is unsupported."),
         };
+        DiabloCathedralDoorCheckpoint.RequireSnapshotCopies(restored);
+        return restored;
     }
 
     private static DiabloSimulationSnapshot DeserializeGenerated(string serializedSave, string snapshotBase64)
@@ -158,6 +188,33 @@ public sealed class AuthoritativeSaveCodec
             throw new InvalidDataException("Cathedral depth save metadata contains unsupported fields.");
     }
 
+    private static DiabloSimulationSnapshot DeserializeCathedralDoors(
+        string serializedSave, string snapshotBase64)
+    {
+        try {
+            using var json = JsonDocument.Parse(serializedSave);
+            RequireExactFields(json.RootElement, ["FormatVersion", "SnapshotBase64",
+                "CathedralDepthWorldIdentity", "CathedralDoors"]);
+            var identityJson = json.RootElement.GetProperty("CathedralDepthWorldIdentity");
+            RequireExactFields(identityJson, ["Levels", "RouteFingerprint"]);
+            var levels = identityJson.GetProperty("Levels");
+            if (levels.ValueKind != JsonValueKind.Array)
+                throw new InvalidDataException("Door saves require an explicit depth identity array.");
+            foreach (var level in levels.EnumerateArray())
+                RequireExactFields(level, CathedralDepthLevelFields);
+            var identity = identityJson.Deserialize<DiabloCathedralDepthWorldIdentity>()
+                ?? throw new InvalidDataException("Door saves require their depth generation identity.");
+            var checkpoint = DiabloCohortCodec.DeserializeCathedralDoorCheckpoint(
+                json.RootElement.GetProperty("CathedralDoors"));
+            return DeserializeVersionOne(snapshotBase64) with {
+                CathedralDepthWorldIdentity = identity,
+                CathedralDoors = checkpoint,
+            };
+        } catch (JsonException exception) {
+            throw new InvalidDataException("The mutable-door save metadata is not valid JSON.", exception);
+        }
+    }
+
     private sealed record GeneratedAuthoritativeSaveDocument(
         int FormatVersion,
         string SnapshotBase64,
@@ -167,6 +224,12 @@ public sealed class AuthoritativeSaveCodec
         int FormatVersion,
         string SnapshotBase64,
         DiabloCathedralDepthWorldIdentity CathedralDepthWorldIdentity);
+
+    private sealed record CathedralDoorAuthoritativeSaveDocument(
+        int FormatVersion,
+        string SnapshotBase64,
+        DiabloCathedralDepthWorldIdentity CathedralDepthWorldIdentity,
+        JsonElement CathedralDoors);
 
     private static DiabloSimulationSnapshot DeserializeVersionOne(string snapshotBase64)
     {

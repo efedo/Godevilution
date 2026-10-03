@@ -22010,6 +22010,33 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void RingOfFireSkipsSolidScannerLightWithoutMakingItAMissileWall()
+    {
+        var pieces = new ushort[40 * 40];
+        pieces[13 * 40 + 10] = 269;
+        var geometry = new AuthoritativeWorld();
+        geometry.AddLevel(new AuthoritativeLevel(1, 40, 40, nativePieceLayer: pieces,
+            nativePieceProperties: new Dictionary<ushort, AuthoritativeDunTileFlags> {
+                [0] = AuthoritativeDunTileFlags.None, [269] = AuthoritativeDunTileFlags.None,
+            }));
+        var world = new DiabloWorldState(geometry,
+            cathedralDoors: new AuthoritativeCathedralDoorCatalog([new(1, 1, 2)]));
+        var processor = CreateProcessor(world,
+            new AuthoritativeSpellCatalog([CreateRingOfFireSpell()]), random: new DiabloRandom(0));
+        var player = CreatePlayer(positionX: 10, positionY: 10, mana: 5000,
+            manaMaximum: 5000, entityId: 7, memorizedSpells: [new MemorizedSpellState(44, 1)]);
+        player.LevelId = 1;
+        Assert.True(processor.Execute(player,
+            new DiabloCastIntent(44, 0, 10, 10, DiabloCastSourceKind.MemorizedSpell), 1).Succeeded);
+        processor.AdvanceTick(1, [player]);
+        var segments = world.Projectiles.Values
+            .Where(projectile => projectile.Behavior == AuthoritativeProjectileBehavior.FireWallSegment).ToArray();
+        Assert.Equal(23, segments.Length);
+        Assert.DoesNotContain(segments, projectile => (projectile.PositionX, projectile.PositionY) == (10, 13));
+        Assert.False(world.IsMissileBlocked(1, 10, 13));
+    }
+
+    [Fact]
     public void RingOfFireStopsAtTheFirstNativeMissileBlocker()
     {
         var world = new DiabloWorldState(

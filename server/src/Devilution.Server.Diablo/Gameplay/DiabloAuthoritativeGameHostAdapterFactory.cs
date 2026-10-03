@@ -11,6 +11,7 @@ public sealed class DiabloAuthoritativeGameHostAdapterFactory
 {
     public const string NativeGeneratedId = "devilution.diablo.cathedral-l1.v1";
     public const string CathedralDepthId = "devilution.diablo.cathedral-depths.v1";
+    public const string CathedralDoorId = "devilution.diablo.cathedral-doors.v1";
     private readonly string adapterId;
 
     public DiabloAuthoritativeGameHostAdapterFactory() : this(false) { }
@@ -21,7 +22,7 @@ public sealed class DiabloAuthoritativeGameHostAdapterFactory
     /** Explicit profile selection; the bool constructor retains its original L1 meaning. */
     public DiabloAuthoritativeGameHostAdapterFactory(string adapterId)
     {
-        if (adapterId is not ("devilution.diablo" or NativeGeneratedId or CathedralDepthId))
+        if (adapterId is not ("devilution.diablo" or NativeGeneratedId or CathedralDepthId or CathedralDoorId))
             throw new ArgumentException("Unsupported built-in Diablo adapter profile.", nameof(adapterId));
         this.adapterId = adapterId;
     }
@@ -39,6 +40,7 @@ public sealed class DiabloAuthoritativeGameHostAdapterFactory
         return adapterId switch {
             NativeGeneratedId => registry.TryGetCapability<IDiabloNativeGeneratedContentBootstrap>(out _),
             CathedralDepthId => registry.TryGetCapability<IDiabloCathedralDepthContentBootstrap>(out _),
+            CathedralDoorId => registry.TryGetCapability<IDiabloCathedralDoorContentBootstrap>(out _),
             _ => registry.TryGetCapability<IDiabloContentBootstrap>(out _),
         };
     }
@@ -66,6 +68,8 @@ public sealed class DiabloAuthoritativeGameHostAdapterFactory
             _ => throw new ArgumentOutOfRangeException(nameof(playerStart)),
         };
         var activatedContent = adapterId switch {
+            CathedralDoorId => registry.GetRequiredCapability<IDiabloCathedralDoorContentBootstrap>()
+                .ActivateDoors(content, playerStart.RandomSeed, gameMode, monsterSpawns, difficulty),
             NativeGeneratedId => registry.GetRequiredCapability<IDiabloNativeGeneratedContentBootstrap>()
                 .ActivateGenerated(content, playerStart.RandomSeed, gameMode, monsterSpawns, difficulty),
             CathedralDepthId => registry.GetRequiredCapability<IDiabloCathedralDepthContentBootstrap>()
@@ -114,8 +118,9 @@ public static class BuiltInAuthoritativeGameHostAdapters
     /** Only explicit selection exposes the opt-in profile; default discovery stays unambiguous. */
     public static IReadOnlyList<IAuthoritativeGameHostAdapterFactory> CreateFactories(string? selectedFactoryId)
     {
-        return [selectedFactoryId == DiabloAuthoritativeGameHostAdapterFactory.CathedralDepthId
-            ? new DiabloAuthoritativeGameHostAdapterFactory(DiabloAuthoritativeGameHostAdapterFactory.CathedralDepthId)
+        return [selectedFactoryId is DiabloAuthoritativeGameHostAdapterFactory.CathedralDepthId
+                or DiabloAuthoritativeGameHostAdapterFactory.CathedralDoorId
+            ? new DiabloAuthoritativeGameHostAdapterFactory(selectedFactoryId)
             : new DiabloAuthoritativeGameHostAdapterFactory(selectedFactoryId == DiabloAuthoritativeGameHostAdapterFactory.NativeGeneratedId)];
     }
 
