@@ -2,6 +2,20 @@
 
 Notable changes to this fork are recorded below.
 
+- 2026-10-02: Add committed-but-unobserved cohort command recovery through two
+  original Godot clients, production CLI item drop and production C# relative
+  movement. Verify canonical effects/original receipts before host loss, frozen
+  parsed-command retries, exact Duplicate receipts and next new sequences.
+  Add actual-relay negative tests, bounded fixture deadlines/cleanup, safe timing
+  diagnostics and measured probe-based leads for new CLI commands. Fix PowerShell
+  5 process-identity enumeration and require real terminal host-exit evidence.
+  Final full server passes 1,488 with four unchanged exclusions and protocol
+  passes 623 with two performance exclusions; headless/rendered
+  pending recovery and default legacy journeys have 33 clean engine stage exits.
+  Update existing guide/plan/status, retaining failed runs and verification limits.
+  Normal profiles, strict admission, user saves and security settings remain
+  unchanged; normal cohort adoption awaits approval and M0 remains open.
+
 - 2026-10-02: Add explicit two-surviving-client Godot cohort host-loss acceptance
   and production CLI shared-item/participant recovery, exact duplicate/accepted
   receipt continuation, live lease refusal and malformed-terminal preservation.

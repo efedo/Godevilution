@@ -15,12 +15,14 @@ param(
     [string]$CathedralProfileDirectory,
     [string]$CathedralDepthProfileDirectory,
     [ValidateSet(1, 4)] [int]$PerformanceParticipants = 1,
-    [ValidateSet('Create', 'Resume', 'Recovery', 'Journey', 'JourneyResume', 'TownLoop', 'TownLoopResume', 'Lifecycle', 'LifecycleResume', 'MultiplayerCreate', 'MultiplayerResume', 'MultiplayerRecovery', 'Performance', 'CathedralJourney', 'CathedralResume', 'CathedralDepthJourney', 'CathedralDepthResume')] [string]$AcceptancePhase
+    [ValidateSet('Create', 'Resume', 'Recovery', 'Journey', 'JourneyResume', 'TownLoop', 'TownLoopResume', 'Lifecycle', 'LifecycleResume', 'MultiplayerCreate', 'MultiplayerResume', 'MultiplayerRecovery', 'MultiplayerPendingRecovery', 'Performance', 'CathedralJourney', 'CathedralResume', 'CathedralDepthJourney', 'CathedralDepthResume')] [string]$AcceptancePhase
 )
 
 $ErrorActionPreference = 'Stop'
 $PersistenceMode = $PersistenceMode.ToLowerInvariant()
 $performance = $AcceptancePhase -eq 'Performance'
+$multiplayerRecovery = $AcceptancePhase -in @('MultiplayerRecovery', 'MultiplayerPendingRecovery')
+$pendingRecovery = $AcceptancePhase -eq 'MultiplayerPendingRecovery'
 $lifecyclePhases = @('Lifecycle', 'LifecycleResume')
 $lifecycle = [bool]$LifecyclePreviewContent
 $lifecyclePhase = $AcceptancePhase -in $lifecyclePhases
@@ -66,10 +68,10 @@ if ($AcceptancePhase -in @('TownLoop', 'TownLoopResume') -and -not ($PreviewCont
     throw 'Town-loop acceptance requires -PreviewContent or -PortalPreviewContent and its isolated content identity.'
 }
 if ($Multiplayer -and ($PreviewContent -or $PortalPreviewContent)) { throw 'The local multiplayer profile uses base content, not the single-player preview.' }
-if ($AcceptancePhase -and -not $performance -and ($Multiplayer -ne ($AcceptancePhase -in @('MultiplayerCreate', 'MultiplayerResume', 'MultiplayerRecovery')))) {
+if ($AcceptancePhase -and -not $performance -and ($Multiplayer -ne ($AcceptancePhase -in @('MultiplayerCreate', 'MultiplayerResume', 'MultiplayerRecovery', 'MultiplayerPendingRecovery')))) {
     throw 'Multiplayer acceptance phases require -Multiplayer; single-player phases cannot use it.'
 }
-if ($AcceptancePhase -eq 'MultiplayerRecovery' -and $PersistenceMode -cne 'cohort') {
+if ($multiplayerRecovery -and $PersistenceMode -cne 'cohort') {
     throw 'MultiplayerRecovery requires the explicit complete-cohort persistence mode.'
 }
 $expectedGameMode = if ($Multiplayer) { 'Multiplayer' } else { 'SinglePlayer' }
@@ -859,7 +861,7 @@ function Assert-CohortCheckpoint(
         $participant = $participants[$index]
         Assert-CohortJsonProperties $participant @('SessionId', 'EntityId', 'CommandReceipts') 'cohort participant'
         if (-not ($participant.CommandReceipts -is [Array])) { throw 'The cohort participant receipt ledger must be an array.' }
-        if ($AcceptancePhase -eq 'MultiplayerRecovery' -and @($participant.CommandReceipts).Count -eq 0) {
+        if ($multiplayerRecovery -and @($participant.CommandReceipts).Count -eq 0) {
             throw 'MultiplayerRecovery requires a nonempty canonical receipt ledger for every participant.'
         }
         if ($null -eq $participant -or [string]$participant.SessionId -notmatch '^[0-9a-f]{64}$') {
@@ -902,17 +904,18 @@ function Assert-CohortCheckpoint(
         }
     }
 
-    if ($AcceptancePhase -eq 'MultiplayerRecovery') {
+    if ($multiplayerRecovery) {
         foreach ($bookmarkPath in $bookmarks) {
             $bookmark = [IO.File]::ReadAllText($bookmarkPath).Trim()
             $sessionId = Get-Sha256Hex ([Text.Encoding]::UTF8.GetBytes($bookmark))
             $participant = @($participants | Where-Object { $_.SessionId -ceq $sessionId })
-            $evidencePath = Join-Path (Split-Path $bookmarkPath -Parent) 'multiplayerrecovery.json'
+            $evidencePath = Join-Path (Split-Path $bookmarkPath -Parent) ($AcceptancePhase.ToLowerInvariant() + '.json')
             if ($participant.Count -ne 1 -or -not (Test-Path -LiteralPath $evidencePath -PathType Leaf)) {
                 throw 'MultiplayerRecovery lacks the bookmark-bound final command evidence.'
             }
             $evidence = Get-Content -LiteralPath $evidencePath -Raw | ConvertFrom-Json
             Assert-CohortRecoveryReceipt $participant[0] $evidence
+            if ($pendingRecovery) { Assert-CohortPendingReceipt $participant[0] $evidence }
         }
     }
 
@@ -943,6 +946,69 @@ function Assert-CohortRecoveryReceipt($Participant, $Evidence) {
     if ($matches.Count -ne 1 -or $matches[0].Status -ne 1 -or $matches[0].RejectReason -ne 0) {
         throw 'MultiplayerRecovery final command has no exact accepted canonical receipt.'
     }
+}
+
+function Assert-CohortPendingReceipt($Participant, $Evidence) {
+    if ($null -eq $Evidence -or
+        -not (Test-CohortJsonInteger $Evidence.PendingSequence 1 ([decimal][uint64]::MaxValue)) -or
+        -not (Test-CohortJsonInteger $Evidence.PendingReceiptSequence 1 ([decimal][uint64]::MaxValue)) -or
+        -not (Test-CohortJsonInteger $Evidence.PendingAppliedTick 0 ([decimal][uint64]::MaxValue))) {
+        throw 'Pending recovery omitted an exact original committed receipt.'
+    }
+    Assert-CohortRecoveryReceipt $Participant ([pscustomobject]@{
+        Passed = $true; EntityId = $Evidence.EntityId; Sequence = $Evidence.PendingSequence;
+        ReceiptSequence = $Evidence.PendingReceiptSequence; AppliedTick = $Evidence.PendingAppliedTick
+    })
+}
+
+function Assert-CohortPendingPlayer($Owner, $ModuleOwner, $Prior) {
+    $player = $ModuleOwner.Player
+    if ($null -eq $Owner -or $null -eq $ModuleOwner -or $null -eq $Prior -or
+        -not ($Prior.Passed -is [bool]) -or -not $Prior.Passed -or
+        -not ($player.FriendlyMode -is [bool]) -or -not ($Prior.Local.Hostile -is [bool]) -or
+        $ModuleOwner.SessionId -cne $Owner.SessionId -or
+        $Owner.EntityId -ne $ModuleOwner.EntityId -or $Owner.EntityId -ne $player.EntityId -or
+        $Owner.EntityId -ne $Prior.EntityId -or $player.FriendlyMode -ne $Prior.Local.Hostile -or
+        $player.PositionX -ne $Prior.Local.X -or $player.PositionY -ne $Prior.Local.Y -or
+        $player.LevelId -ne $Prior.Local.LevelId -or $player.CharacterName -cne $Prior.Local.Name -or
+        $player.CharacterClassId -ne $Prior.Local.ClassId -or $player.Gold -ne $Prior.Local.Gold) {
+        throw 'Pending recovery canonical state does not contain the committed friendly-mode assignment.'
+    }
+}
+
+function Assert-PendingRecoveryCanonicalBoundary([string]$SaveDirectory, $Ready, [string]$RootDirectory) {
+    $stream = $null; $reader = $null
+    try {
+        $stream = [IO.File]::Open((Join-Path $SaveDirectory 'authoritative-cohort.json'),
+            [IO.FileMode]::Open, [IO.FileAccess]::Read, [IO.FileShare]::ReadWrite -bor [IO.FileShare]::Delete)
+        $reader = [IO.StreamReader]::new($stream)
+        $document = $reader.ReadToEnd() | ConvertFrom-Json
+    } finally {
+        if ($null -ne $reader) { $reader.Dispose() }
+        elseif ($null -ne $stream) { $stream.Dispose() }
+    }
+    if (@($document.Participants).Count -ne 2) { throw 'Pending recovery canonical boundary needs two owners.' }
+    $moduleBytes = [Convert]::FromBase64String($document.SerializedModuleState)
+    if ([Convert]::ToBase64String($moduleBytes) -cne $document.SerializedModuleState) {
+        throw 'Pending recovery requires canonical module Base64.'
+    }
+    $module = ([Text.UTF8Encoding]::new($false, $true).GetString($moduleBytes)) | ConvertFrom-Json
+    if ($module.FormatVersion -ne 1 -or $module.Tick -ne $document.Tick -or @($module.Participants).Count -ne 2) {
+        throw 'Pending recovery module and host do not describe the same complete tick.'
+    }
+    foreach ($evidence in $Ready) {
+        $bookmark = [IO.File]::ReadAllText((Join-Path $RootDirectory "player-$($evidence.Slot)/resume-token.txt")).Trim()
+        $sessionId = Get-Sha256Hex ([Text.Encoding]::UTF8.GetBytes($bookmark))
+        $participant = @($document.Participants | Where-Object { $_.SessionId -ceq $sessionId })
+        if ($participant.Count -ne 1) { throw 'Pending recovery canonical boundary lost an owner binding.' }
+        Assert-CohortPendingReceipt $participant[0] $evidence
+        $moduleOwner = @($module.Participants | Where-Object { $_.SessionId -ceq $sessionId })
+        $prior = Get-Content -LiteralPath (Join-Path $RootDirectory "player-$($evidence.Slot)/multiplayerresume.json") -Raw | ConvertFrom-Json
+        if ($moduleOwner.Count -ne 1) { throw 'Pending recovery module lost an owner binding.' }
+        Assert-CohortPendingPlayer $participant[0] $moduleOwner[0] $prior
+    }
+    # Safe boundary metadata only: never expose private bookmarks/module state.
+    return [pscustomobject]@{ Verified = $true; Generation = $document.Generation; Tick = $document.Tick }
 }
 
 function Get-CohortSceneEntityId($Evidence) {
@@ -1015,6 +1081,18 @@ function Stop-OwnedLocalProcess($Process, [ValidateRange(1, 60000)] [int]$Timeou
     if (-not $Process.HasExited -and -not $Process.WaitForExit($TimeoutMilliseconds) -and -not $Process.HasExited) {
         throw "Owned process $($Process.Id) did not terminate within $TimeoutMilliseconds ms after cleanup."
     }
+}
+
+function Get-OwnedTerminalExitCode($Process) {
+    if ($null -eq $Process -or -not $Process.HasExited) {
+        throw 'Native exit evidence requires a terminated owned process.'
+    }
+    if (-not $Process.WaitForExit(5000)) {
+        throw 'The terminated owned process did not complete its bounded terminal wait.'
+    }
+    $code = $Process.ExitCode
+    if ($null -eq $code) { throw 'The terminated owned process did not expose a native exit code.' }
+    return $code
 }
 
 function New-GodotProcess(
@@ -1230,9 +1308,10 @@ try {
     }
     # One local writer per save directory; parallel tests use distinct directories.
     $sessionLock = [System.IO.File]::Open((Join-Path $SessionDirectory 'launcher.lock'), 'OpenOrCreate', 'ReadWrite', 'None')
-    if ($AcceptancePhase -eq 'MultiplayerRecovery') {
-        foreach ($marker in @('multiplayerrecovery-server-stopped.json', 'multiplayerrecovery-server-restarted.json',
-                'multiplayerrecovery-processes.json')) {
+    if ($multiplayerRecovery) {
+        $recoveryPrefix = $AcceptancePhase.ToLowerInvariant()
+        foreach ($marker in @("$recoveryPrefix-server-stopped.json", "$recoveryPrefix-server-restarted.json",
+                "$recoveryPrefix-processes.json")) {
             if (Test-Path -LiteralPath (Join-Path $SessionDirectory $marker)) {
                 throw "MultiplayerRecovery requires a fresh dedicated root; stale marker exists: $marker"
             }
@@ -1275,6 +1354,10 @@ try {
         $stderrPath = Join-Path $captureRoot ($LogPrefix + '.stderr.log')
         $serverProcess = Start-Process -FilePath $serverExecutable -ArgumentList $serverArguments -WorkingDirectory $repositoryRoot -WindowStyle Hidden -RedirectStandardOutput $stdoutPath -RedirectStandardError $stderrPath -PassThru
         try {
+            # Retain the native handle before startup polling can observe an
+            # exit. Terminal evidence must come from this owned handle, never
+            # a PID lookup after termination or a synthesized exit code.
+            $null = $serverProcess.Handle
             $actualPort = $null
             $contentHash = $null
             $rulesetHash = $null
@@ -1395,11 +1478,12 @@ try {
                     if (Test-Path -LiteralPath (Join-Path $clientDirectory $marker)) { throw "Recovery evidence already exists: $marker" }
                 }
             }
-            if ($AcceptancePhase -eq 'MultiplayerRecovery') {
-                foreach ($marker in @('multiplayerrecovery-connected.json', 'multiplayerrecovery-ready.json',
-                        'multiplayerrecovery-offline-ready.json', 'multiplayerrecovery-rejoined.json',
-                        'multiplayerrecovery-moved.json',
-                        'multiplayerrecovery.json')) {
+            if ($multiplayerRecovery) {
+                $recoveryPrefix = $AcceptancePhase.ToLowerInvariant()
+                foreach ($marker in @("$recoveryPrefix-connected.json", "$recoveryPrefix-ready.json",
+                        "$recoveryPrefix-offline-ready.json", "$recoveryPrefix-rejoined.json",
+                        "$recoveryPrefix-moved.json", "$recoveryPrefix-prepared.json",
+                        "$recoveryPrefix.json")) {
                     if (Test-Path -LiteralPath (Join-Path $clientDirectory $marker)) { throw "MultiplayerRecovery evidence already exists: $marker" }
                 }
             }
@@ -1481,11 +1565,11 @@ try {
             GodotProcessId = $godotProcess.Id; GodotStartedUtc = $godotProcess.StartTime.ToUniversalTime().ToString('O'); ExistingClients = $existingClientEvidence; Port = $actualPort }
         [IO.File]::WriteAllText((Join-Path $SessionDirectory 'recovery-processes.json'), ($restartEvidence | ConvertTo-Json -Depth 4))
     }
-    if ($AcceptancePhase -eq 'MultiplayerRecovery') {
+    if ($multiplayerRecovery) {
         if ($PersistenceMode -cne 'cohort' -or -not $Multiplayer -or @($startedClients).Count -ne 2) {
             throw 'MultiplayerRecovery requires exactly two clients in complete-cohort mode.'
         }
-        $recoveryPrefix = 'multiplayerrecovery'
+        $recoveryPrefix = $AcceptancePhase.ToLowerInvariant()
         $recoveryReady = @()
         for ($slot = 1; $slot -le 2; $slot++) {
             $readyPath = Join-Path $SessionDirectory "player-$slot/$recoveryPrefix-ready.json"
@@ -1496,7 +1580,14 @@ try {
                 throw "Invalid multiplayer recovery readiness evidence for player $slot."
             }
             $recoveryReady += $ready
+            if ($pendingRecovery -and ($ready.PendingStatus -cne 'Accepted' -or
+                $ready.PendingRejectReason -cne 'Unspecified' -or $ready.PendingCount -ne 1)) {
+                throw 'Pending recovery must stop with a committed Accepted receipt withheld from each client.'
+            }
         }
+        $pendingLiveBoundary = if ($pendingRecovery) {
+            Assert-PendingRecoveryCanonicalBoundary (Join-Path $SessionDirectory 'save') $recoveryReady $SessionDirectory
+        } else { $null }
         if ($serverProcess.HasExited) { throw 'The complete-cohort host exited before the multiplayer recovery fault injection.' }
         $stoppedProcessId = $serverProcess.Id
         $stoppedHostStartedUtc = $serverProcess.StartTime.ToUniversalTime().ToString('O')
@@ -1504,15 +1595,18 @@ try {
             @{ ProcessId = $_.Process.Id; StartedUtc = $_.Process.StartTime.ToUniversalTime().ToString('O') }
         })
         if (@($existingClientEvidence).Count -ne 2 -or
-            @($existingClientEvidence | Select-Object -ExpandProperty ProcessId -Unique).Count -ne 2) {
+            @($existingClientEvidence | ForEach-Object { $_.ProcessId } | Select-Object -Unique).Count -ne 2) {
             throw 'MultiplayerRecovery did not retain exactly two distinct Godot client processes.'
         }
         # Kill only this owned authoritative host; both original Godot clients
         # remain alive and must cross their own offline barrier before restart.
         Stop-OwnedLocalProcess $serverProcess
         if (-not $serverProcess.HasExited) { throw 'The multiplayer recovery host did not terminate before replacement.' }
-        $stoppedHostExitCode = $serverProcess.ExitCode
+        $stoppedHostExitCode = Get-OwnedTerminalExitCode $serverProcess
         $stoppedHostEndedUtc = [DateTime]::UtcNow.ToString('O')
+        $pendingStoppedBoundary = if ($pendingRecovery) {
+            Assert-PendingRecoveryCanonicalBoundary (Join-Path $SessionDirectory 'save') $recoveryReady $SessionDirectory
+        } else { $null }
         $serverProcess.Dispose()
         $serverProcess = $null
         [IO.File]::WriteAllText((Join-Path $SessionDirectory "$recoveryPrefix-server-stopped.json"),
@@ -1527,6 +1621,10 @@ try {
                 throw "Invalid multiplayer recovery offline evidence for player $slot."
             }
             $offlineEvidence += $offline
+            if ($pendingRecovery -and ($offline.PendingCount -ne 1 -or
+                $offline.PendingSequence -ne $recoveryReady[$slot - 1].PendingSequence)) {
+                throw 'Pending recovery offline evidence lost or renumbered the original command.'
+            }
         }
         $restartedServer = Start-SessionServer $actualPort 'server-multiplayer-recovery-restarted'
         $serverProcess = $restartedServer.Process
@@ -1553,7 +1651,8 @@ try {
             StoppedHostEndedUtc = $stoppedHostEndedUtc; StoppedHostExitCode = $stoppedHostExitCode;
             RestartedProcessId = $serverProcess.Id; RestartedHostStartedUtc = $serverProcess.StartTime.ToUniversalTime().ToString('O');
             Clients = $processEvidence.Clients; ExistingClients = $retainedClientEvidence;
-            Ready = $recoveryReady; Offline = $offlineEvidence }
+            Ready = $recoveryReady; Offline = $offlineEvidence;
+            PendingLiveBoundary = $pendingLiveBoundary; PendingStoppedBoundary = $pendingStoppedBoundary }
         [IO.File]::WriteAllText((Join-Path $SessionDirectory "$recoveryPrefix-processes.json"),
             ($recoveryProcessEvidence | ConvertTo-Json -Depth 8))
     }

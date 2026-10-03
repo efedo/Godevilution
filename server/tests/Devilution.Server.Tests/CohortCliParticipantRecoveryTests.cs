@@ -61,6 +61,8 @@ public sealed class CohortCliParticipantRecoveryTests
                 var seedBefore = ReadSeed(root);
                 await participantB.DisposeAsync();
 
+                // B's startup/disconnect work may outlive A's initial scheduling horizon.
+                await participantA.RequestSnapshotAsync(TestContext.Current.CancellationToken);
                 var starterItem = Assert.Single(
                     participantA.Snapshot.Players
                         .Single(player => player.CharacterName == "cli-A")
@@ -70,23 +72,26 @@ public sealed class CohortCliParticipantRecoveryTests
                             && candidate.item.State.PresentationKind != ItemPresentationKind.Gold
                             && candidate.item.State.StableItemId != 0);
                 var target = FindDropTarget(participantA.Snapshot, entityA);
-                // B's startup/disconnect work may outlive A's initial scheduling horizon.
-                await participantA.RequestSnapshotAsync(TestContext.Current.CancellationToken);
-                var drop = await participantA.SendAsync(
-                    new Command {
-                        ClientSequence = 1,
-                        RequestedTick = participantA.Snapshot.Tick + 4,
-                        DropItemRequested = new DropItemRequested {
-                            Item = new PlayerItemReference {
-                                Location = PlayerItemLocation.Inventory,
-                                Slot = checked((uint)starterItem.slot),
-                                StableItemId = starterItem.item.State.StableItemId,
-                            },
-                            TargetX = target.X,
-                            TargetY = target.Y,
+                var dropLeadTicks = ComputeFutureLeadTicks(
+                    participantA.LastProbeRoundTrip,
+                    participantA.TickRateHz);
+                var dropCommand = new Command {
+                    ClientSequence = 1,
+                    RequestedTick = checked(participantA.Snapshot.Tick + dropLeadTicks),
+                    DropItemRequested = new DropItemRequested {
+                        Item = new PlayerItemReference {
+                            Location = PlayerItemLocation.Inventory,
+                            Slot = checked((uint)starterItem.slot),
+                            StableItemId = starterItem.item.State.StableItemId,
                         },
+                        TargetX = target.X,
+                        TargetY = target.Y,
                     },
-                    TestContext.Current.CancellationToken);
+                };
+                var drop = await participantA.SendAsync(
+                    dropCommand,
+                    TestContext.Current.CancellationToken,
+                    AdmissionDiagnostics(participantA, dropLeadTicks));
                 RequireAccepted(drop.Result);
                 Assert.Equal(1UL, drop.Result.ServerReceiptSequence);
                 var dropped = Assert.Single(
@@ -147,6 +152,7 @@ public sealed class CohortCliParticipantRecoveryTests
                         TestContext.Current.CancellationToken);
                     Assert.Equal(entityA, resumedB.EntityIdFor("cli-A"));
                     Assert.Equal(entityB, resumedB.EntityIdFor("cli-B"));
+                    await resumedB.RequestSnapshotAsync(TestContext.Current.CancellationToken);
                     // Realtime simulation advances between these observations; RNG
                     // equality across different snapshot ticks is not a restore oracle.
                     var restoredWorldItem = Assert.Single(
@@ -156,15 +162,20 @@ public sealed class CohortCliParticipantRecoveryTests
                     Assert.Equal(dropped.EntityId, restoredWorldItem.EntityId);
                     Assert.Equal(dropped.ItemSeed, restoredWorldItem.ItemSeed);
 
-                    var pickup = await resumedB.SendAsync(
-                        new Command {
-                            ClientSequence = 1,
-                            RequestedTick = resumedB.Snapshot.Tick + 4,
-                            PickupWorldItemRequested = new PickupWorldItemRequested {
-                                ItemEntityId = restoredWorldItem.EntityId,
-                            },
+                    var pickupLeadTicks = ComputeFutureLeadTicks(
+                        resumedB.LastProbeRoundTrip,
+                        resumedB.TickRateHz);
+                    var pickupCommand = new Command {
+                        ClientSequence = 1,
+                        RequestedTick = checked(resumedB.Snapshot.Tick + pickupLeadTicks),
+                        PickupWorldItemRequested = new PickupWorldItemRequested {
+                            ItemEntityId = restoredWorldItem.EntityId,
                         },
-                        TestContext.Current.CancellationToken);
+                    };
+                    var pickup = await resumedB.SendAsync(
+                        pickupCommand,
+                        TestContext.Current.CancellationToken,
+                        AdmissionDiagnostics(resumedB, pickupLeadTicks));
                     RequireAccepted(pickup.Result);
                     Assert.Equal(2UL, pickup.Result.ServerReceiptSequence);
                     Assert.DoesNotContain(
@@ -186,19 +197,7 @@ public sealed class CohortCliParticipantRecoveryTests
                         resumedA.Snapshot.WorldItems,
                         item => item.EntityId == restoredWorldItem.EntityId);
                     var duplicate = await resumedA.SendAsync(
-                        new Command {
-                            ClientSequence = 1,
-                            RequestedTick = resumedA.Snapshot.Tick + 4,
-                            DropItemRequested = new DropItemRequested {
-                                Item = new PlayerItemReference {
-                                    Location = PlayerItemLocation.Inventory,
-                                    Slot = checked((uint)starterItem.slot),
-                                    StableItemId = starterItem.item.State.StableItemId,
-                                },
-                                TargetX = target.X,
-                                TargetY = target.Y,
-                            },
-                        },
+                        dropCommand,
                         TestContext.Current.CancellationToken);
                     Assert.Equal(CommandStatus.Duplicate, duplicate.Result.Status);
                     Assert.Equal(1UL, duplicate.Result.ServerReceiptSequence);
@@ -267,47 +266,53 @@ public sealed class CohortCliParticipantRecoveryTests
                         await finalA.RequestSnapshotAsync(TestContext.Current.CancellationToken);
                         var nextTarget = FindDropTarget(finalA.Snapshot, entityA);
                         var ownerPosition = finalA.Snapshot.Players.Single(player => player.EntityId == entityA);
-                        var directionX = nextTarget.X - ownerPosition.PositionX;
-                        var directionY = nextTarget.Y - ownerPosition.PositionY;
-                        var nextOwnerCommand = await finalA.SendAsync(
-                            new Command {
-                                ClientSequence = 2,
-                                RequestedTick = finalA.Snapshot.Tick + 4,
-                                MoveRequested = new MoveRequested {
-                                    DirectionX = directionX, DirectionY = directionY,
-                                },
+                        var nextOwnerLeadTicks = ComputeFutureLeadTicks(
+                            finalA.LastProbeRoundTrip,
+                            finalA.TickRateHz);
+                        var nextOwnerCommand = new Command {
+                            ClientSequence = 2,
+                            RequestedTick = checked(finalA.Snapshot.Tick + nextOwnerLeadTicks),
+                            MoveRequested = new MoveRequested {
+                                DirectionX = nextTarget.X - ownerPosition.PositionX,
+                                DirectionY = nextTarget.Y - ownerPosition.PositionY,
                             },
-                            TestContext.Current.CancellationToken);
-                        RequireAccepted(nextOwnerCommand.Result);
-                        Assert.Equal(3UL, nextOwnerCommand.Result.ServerReceiptSequence);
-                        finalAResult = nextOwnerCommand.Result;
+                        };
+                        var nextOwnerResult = await finalA.SendAsync(
+                            nextOwnerCommand,
+                            TestContext.Current.CancellationToken,
+                            AdmissionDiagnostics(finalA, nextOwnerLeadTicks));
+                        RequireAccepted(nextOwnerResult.Result);
+                        Assert.Equal(3UL, nextOwnerResult.Result.ServerReceiptSequence);
+                        finalAResult = nextOwnerResult.Result;
                         var duplicateOwnerCommand = await finalA.SendAsync(
-                            new Command {
-                                ClientSequence = 2,
-                                RequestedTick = finalA.Snapshot.Tick + 4,
-                                MoveRequested = new MoveRequested {
-                                    DirectionX = directionX, DirectionY = directionY,
-                                },
-                            },
+                            nextOwnerCommand,
                             TestContext.Current.CancellationToken);
                         Assert.Equal(CommandStatus.Duplicate, duplicateOwnerCommand.Result.Status);
                         Assert.Equal(3UL, duplicateOwnerCommand.Result.ServerReceiptSequence);
-                        AssertDuplicateReceipt(duplicateOwnerCommand.Result, nextOwnerCommand.Result);
+                        AssertDuplicateReceipt(duplicateOwnerCommand.Result, nextOwnerResult.Result);
                         await finalA.WaitForSnapshotAsync(snapshot => IsSettledAt(snapshot, entityA, nextTarget),
                             TestContext.Current.CancellationToken);
                         await finalB.RequestSnapshotAsync(TestContext.Current.CancellationToken);
                         var peerTarget = FindDropTarget(finalB.Snapshot, entityB);
                         var peerPosition = finalB.Snapshot.Players.Single(player => player.EntityId == entityB);
-                        var nextPeerCommand = await finalB.SendAsync(new Command {
-                            ClientSequence = 2, RequestedTick = finalB.Snapshot.Tick + 4,
+                        var nextPeerLeadTicks = ComputeFutureLeadTicks(
+                            finalB.LastProbeRoundTrip,
+                            finalB.TickRateHz);
+                        var nextPeerCommand = new Command {
+                            ClientSequence = 2,
+                            RequestedTick = checked(finalB.Snapshot.Tick + nextPeerLeadTicks),
                             MoveRequested = new MoveRequested {
                                 DirectionX = peerTarget.X - peerPosition.PositionX,
                                 DirectionY = peerTarget.Y - peerPosition.PositionY,
                             },
-                        }, TestContext.Current.CancellationToken);
-                        RequireAccepted(nextPeerCommand.Result);
-                        Assert.Equal(4UL, nextPeerCommand.Result.ServerReceiptSequence);
-                        finalBResult = nextPeerCommand.Result;
+                        };
+                        var nextPeerResult = await finalB.SendAsync(
+                            nextPeerCommand,
+                            TestContext.Current.CancellationToken,
+                            AdmissionDiagnostics(finalB, nextPeerLeadTicks));
+                        RequireAccepted(nextPeerResult.Result);
+                        Assert.Equal(4UL, nextPeerResult.Result.ServerReceiptSequence);
+                        finalBResult = nextPeerResult.Result;
                         await finalB.WaitForSnapshotAsync(snapshot => IsSettledAt(snapshot, entityB, peerTarget),
                             TestContext.Current.CancellationToken);
                     } catch (Exception exception) {
@@ -414,15 +419,19 @@ public sealed class CohortCliParticipantRecoveryTests
                     TestContext.Current.CancellationToken);
                 Assert.Equal(ownerEntityId, liveSnapshot.Players.Single(
                     player => player.CharacterName == "lease-owner").EntityId);
+                var usableLeadTicks = ComputeFutureLeadTicks(
+                    ownerParticipant.LastProbeRoundTrip,
+                    ownerParticipant.TickRateHz);
                 var usable = await ownerParticipant.SendAsync(
                     new Command {
                         ClientSequence = 1,
-                        RequestedTick = ownerParticipant.Snapshot.Tick + 4,
+                        RequestedTick = checked(ownerParticipant.Snapshot.Tick + usableLeadTicks),
                         MoveRequested = new MoveRequested {
                             DirectionX = 1,
                         },
                     },
-                    TestContext.Current.CancellationToken);
+                    TestContext.Current.CancellationToken,
+                    AdmissionDiagnostics(ownerParticipant, usableLeadTicks));
                 RequireAccepted(usable.Result);
                 Assert.Equal(1UL, usable.Result.ServerReceiptSequence);
             } catch (Exception exception) {
@@ -457,15 +466,19 @@ public sealed class CohortCliParticipantRecoveryTests
                     string.Empty,
                     TestContext.Current.CancellationToken);
                 await participant.RequestSnapshotAsync(TestContext.Current.CancellationToken);
+                var acceptedLeadTicks = ComputeFutureLeadTicks(
+                    participant.LastProbeRoundTrip,
+                    participant.TickRateHz);
                 var accepted = await participant.SendAsync(
                     new Command {
                         ClientSequence = 1,
-                        RequestedTick = participant.Snapshot.Tick + 4,
+                        RequestedTick = checked(participant.Snapshot.Tick + acceptedLeadTicks),
                         MoveRequested = new MoveRequested {
                             DirectionX = 1,
                         },
                     },
-                    TestContext.Current.CancellationToken);
+                    TestContext.Current.CancellationToken,
+                    AdmissionDiagnostics(participant, acceptedLeadTicks));
                 RequireAccepted(accepted.Result);
                 Assert.Equal(1UL, accepted.Result.ServerReceiptSequence);
             } catch (Exception exception) {
@@ -554,6 +567,31 @@ public sealed class CohortCliParticipantRecoveryTests
             && result.RejectReason == CommandRejectReason.Unspecified,
             $"Production CLI command {result.ClientSequence}: {result.Status}/{result.RejectReason}; "
             + $"applied tick {result.AppliedTick}, receipt {result.ServerReceiptSequence}.");
+
+    private static ulong ComputeFutureLeadTicks(
+        TimeSpan probeRoundTrip,
+        uint tickRateHz)
+    {
+        Assert.True(tickRateHz > 0, "The production handshake must negotiate a tick rate.");
+        Assert.True(
+            probeRoundTrip >= TimeSpan.Zero
+                && probeRoundTrip.TotalSeconds < ulong.MaxValue / (double)tickRateHz,
+            "The measured timing probe duration must be finite and bounded.");
+        var measuredTicks = probeRoundTrip.TotalSeconds * tickRateHz;
+        Assert.True(
+            double.IsFinite(measuredTicks),
+            "The measured timing probe duration must produce a finite tick count.");
+        return checked((ulong)Math.Ceiling(measuredTicks) + 1);
+    }
+
+    private static string AdmissionDiagnostics(
+        CliParticipant participant,
+        ulong futureLeadTicks)
+        => $"timing request {participant.LastTimingRequestId}, "
+            + $"timing reply snapshot tick {participant.LastTimingReplySnapshotTick}, "
+            + $"command snapshot tick {participant.Snapshot.Tick}, "
+            + $"probe RTT {participant.LastProbeRoundTrip.TotalMilliseconds:F3} ms, "
+            + $"tick rate {participant.TickRateHz}, future lead {futureLeadTicks}";
 
     private static async Task<CohortCheckpointSummary> WaitForCheckpointAsync(
         string root,
@@ -1020,6 +1058,7 @@ public sealed class CohortCliParticipantRecoveryTests
     {
         private readonly TcpClient client;
         private readonly NetworkStream stream;
+        private ulong nextTimingRequestId;
 
         private CliParticipant(
             TcpClient client,
@@ -1027,7 +1066,8 @@ public sealed class CohortCliParticipantRecoveryTests
             string sessionToken,
             Snapshot snapshot,
             string characterName,
-            ulong lastClientSequence)
+            ulong lastClientSequence,
+            uint tickRateHz)
         {
             this.client = client;
             this.stream = stream;
@@ -1035,6 +1075,7 @@ public sealed class CohortCliParticipantRecoveryTests
             Snapshot = snapshot;
             CharacterName = characterName;
             LastClientSequence = lastClientSequence;
+            TickRateHz = tickRateHz;
         }
 
         public string SessionToken { get; }
@@ -1042,6 +1083,10 @@ public sealed class CohortCliParticipantRecoveryTests
         public Snapshot Snapshot { get; private set; }
         public uint EntityId => EntityIdForCharacter(Snapshot, CharacterName);
         public ulong LastClientSequence { get; }
+        public uint TickRateHz { get; }
+        public ulong LastTimingReplySnapshotTick { get; private set; }
+        public ulong LastTimingRequestId { get; private set; }
+        public TimeSpan LastProbeRoundTrip { get; private set; }
         private string CharacterName { get; }
 
         public static async Task<CliParticipant> ConnectAsync(
@@ -1077,6 +1122,7 @@ public sealed class CohortCliParticipantRecoveryTests
                 Assert.Equal(host.ProtocolSchemaVersion, hello.ServerHello.ProtocolSchemaVersion);
                 Assert.Equal(GameMode.Multiplayer, hello.ServerHello.GameMode);
                 Assert.Equal(CommandSchedulingMode.ClockGated, hello.ServerHello.CommandSchedulingMode);
+                Assert.NotEqual(0U, hello.ServerHello.TickRateHz);
                 var snapshot = await ReadSnapshotAsync(stream, timeout.Token);
                 return new CliParticipant(
                     client,
@@ -1084,7 +1130,8 @@ public sealed class CohortCliParticipantRecoveryTests
                     hello.ServerHello.SessionToken,
                     snapshot,
                     characterName,
-                    hello.ServerHello.LastClientSequence);
+                    hello.ServerHello.LastClientSequence,
+                    hello.ServerHello.TickRateHz);
             } catch {
                 client.Dispose();
                 throw;
@@ -1093,10 +1140,12 @@ public sealed class CohortCliParticipantRecoveryTests
 
         public async Task<(CommandResult Result, Snapshot Snapshot)> SendAsync(
             Command command,
-            CancellationToken cancellationToken)
+            CancellationToken cancellationToken,
+            string? admissionDiagnostics = null)
         {
             using var timeout = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
             timeout.CancelAfter(TimeSpan.FromSeconds(10));
+            var admissionSnapshotTick = Snapshot.Tick;
             await EnvelopeCodec.WriteAsync(
                 stream,
                 new Envelope { CommandBatch = new CommandBatch { Commands = { command } } },
@@ -1122,9 +1171,21 @@ public sealed class CohortCliParticipantRecoveryTests
                         $"Unexpected payload while waiting for command {command.ClientSequence}: {envelope.PayloadCase}.");
                 }
             }
+            if (result!.Status is CommandStatus.Rejected or CommandStatus.Rescheduled) {
+                throw new XunitException(
+                    "Production CLI command admission was not accepted: "
+                    + $"timing request {LastTimingRequestId}, "
+                    + $"timing reply snapshot tick {LastTimingReplySnapshotTick}, "
+                    + $"requested tick {command.RequestedTick}, snapshot tick {admissionSnapshotTick}, "
+                    + $"status {result.Status}, reason {result.RejectReason}, "
+                    + $"applied tick {result.AppliedTick}, receipt {result.ServerReceiptSequence}."
+                    + (admissionDiagnostics is null
+                        ? string.Empty
+                        : $" Admission probe: {admissionDiagnostics}."));
+            }
             Snapshot = await ReadSnapshotAsync(stream, timeout.Token);
             Assert.True(
-                Snapshot.Tick >= result!.AppliedTick,
+                Snapshot.Tick >= result.AppliedTick,
                 $"Snapshot tick {Snapshot.Tick} regressed below applied tick {result.AppliedTick}.");
             return (result!, Snapshot);
         }
@@ -1133,12 +1194,51 @@ public sealed class CohortCliParticipantRecoveryTests
         {
             using var timeout = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
             timeout.CancelAfter(TimeSpan.FromSeconds(10));
+            var timingRequestId = checked(++nextTimingRequestId);
+            var probeStarted = Stopwatch.GetTimestamp();
             await EnvelopeCodec.WriteAsync(
                 stream,
-                new Envelope { SnapshotRequest = new Envelope.Types.SnapshotRequest() },
+                new Envelope {
+                    SnapshotRequest = new Envelope.Types.SnapshotRequest {
+                        TimingRequestId = timingRequestId,
+                    },
+                },
                 timeout.Token);
-            Snapshot = await ReadSnapshotAsync(stream, timeout.Token);
-            return Snapshot;
+            Snapshot? timingSnapshot = null;
+            while (true) {
+                var envelope = await ReadRequiredEnvelopeAsync(stream, timeout.Token);
+                switch (envelope.PayloadCase) {
+                case Envelope.PayloadOneofCase.Snapshot:
+                    // The host publishes the correlated snapshot before its
+                    // matching timing reply. Keep consuming queued broadcasts
+                    // until that reply is observed.
+                    timingSnapshot = envelope.Snapshot;
+                    break;
+                case Envelope.PayloadOneofCase.TimingReply:
+                    if (envelope.TimingReply.RequestId != timingRequestId)
+                        continue;
+                    timingSnapshot ??= await ReadSnapshotAsync(stream, timeout.Token);
+                    await EnvelopeCodec.WriteAsync(
+                        stream,
+                        new Envelope {
+                            // Request a snapshot after the matching timing
+                            // reply so pre-request broadcasts are excluded.
+                            SnapshotRequest = new Envelope.Types.SnapshotRequest(),
+                        },
+                        timeout.Token);
+                    Snapshot = await ReadSnapshotAsync(stream, timeout.Token);
+                    LastTimingRequestId = timingRequestId;
+                    LastTimingReplySnapshotTick = timingSnapshot.Tick;
+                    LastProbeRoundTrip = Stopwatch.GetElapsedTime(probeStarted);
+                    return Snapshot;
+                case Envelope.PayloadOneofCase.EventBatch:
+                    break;
+                default:
+                    throw new XunitException(
+                        $"Unexpected payload while waiting for timing request {timingRequestId}: "
+                        + $"{envelope.PayloadCase}.");
+                }
+            }
         }
 
         public async Task WaitForSnapshotAsync(Func<Snapshot, bool> predicate, CancellationToken cancellationToken)

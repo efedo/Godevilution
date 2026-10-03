@@ -1,11 +1,12 @@
 [CmdletBinding()]
-param([string]$GodotExecutable, [ValidateSet('legacy', 'cohort')] [string]$PersistenceMode = 'legacy', [switch]$Visible, [switch]$Journey, [switch]$TownLoop, [switch]$Lifecycle, [switch]$Multiplayer, [switch]$MultiplayerRecovery, [string]$CathedralProfileDirectory, [string]$CathedralDepthProfileDirectory)
+param([string]$GodotExecutable, [ValidateSet('legacy', 'cohort')] [string]$PersistenceMode = 'legacy', [switch]$Visible, [switch]$Journey, [switch]$TownLoop, [switch]$Lifecycle, [switch]$Multiplayer, [switch]$MultiplayerRecovery, [switch]$MultiplayerPendingRecovery, [string]$CathedralProfileDirectory, [string]$CathedralDepthProfileDirectory)
 
 $ErrorActionPreference = 'Stop'
 $PersistenceMode = $PersistenceMode.ToLowerInvariant()
 $MultiplayerRecovery = [bool]$MultiplayerRecovery
-if ($MultiplayerRecovery) { $Multiplayer = $true }
-if ($MultiplayerRecovery -and $PersistenceMode -cne 'cohort') {
+if ($MultiplayerRecovery -and $MultiplayerPendingRecovery) { throw 'Choose settled or pending-command recovery, never both.' }
+if ($MultiplayerRecovery -or $MultiplayerPendingRecovery) { $Multiplayer = $true }
+if (($MultiplayerRecovery -or $MultiplayerPendingRecovery) -and $PersistenceMode -cne 'cohort') {
     throw 'MultiplayerRecovery requires -PersistenceMode cohort.'
 }
 if ($CathedralDepthProfileDirectory -and ($CathedralProfileDirectory -or $Journey -or $TownLoop -or $Lifecycle -or $Multiplayer)) {
@@ -119,11 +120,11 @@ function Assert-MultiplayerRecoveryProcessEvidence($Evidence) {
         throw 'MultiplayerRecovery did not retain both per-slot readiness and offline barriers.'
     }
 }
-function Assert-MultiplayerRecoveryEvidence($SessionDirectory, $ContentHash, $RulesetHash) {
+function Assert-MultiplayerRecoveryEvidence($SessionDirectory, $ContentHash, $RulesetHash, [string]$Prefix = 'multiplayerrecovery') {
     $final = @()
     for ($slot = 1; $slot -le 2; $slot++) {
         $playerDirectory = Join-Path $SessionDirectory "player-$slot"
-        $path = Join-Path $playerDirectory 'multiplayerrecovery.json'
+        $path = Join-Path $playerDirectory ($Prefix + '.json')
         if (-not (Test-Path -LiteralPath $path -PathType Leaf)) { throw "Missing multiplayer recovery evidence: $path" }
         $evidence = Get-Content -LiteralPath $path -Raw | ConvertFrom-Json
         if (-not $evidence.Passed -or $evidence.Mode -ne 'Multiplayer' -or
@@ -134,18 +135,30 @@ function Assert-MultiplayerRecoveryEvidence($SessionDirectory, $ContentHash, $Ru
             [string]::IsNullOrWhiteSpace($evidence.DisconnectedSnapshotFingerprint)) {
             throw "Invalid multiplayer recovery evidence for player $slot."
         }
-        $offlinePath = Join-Path $playerDirectory 'multiplayerrecovery-offline-ready.json'
-        $rejoinedPath = Join-Path $playerDirectory 'multiplayerrecovery-rejoined.json'
+        $offlinePath = Join-Path $playerDirectory ($Prefix + '-offline-ready.json')
+        $rejoinedPath = Join-Path $playerDirectory ($Prefix + '-rejoined.json')
         if (-not (Test-Path -LiteralPath $offlinePath) -or -not (Test-Path -LiteralPath $rejoinedPath)) {
             throw "Multiplayer recovery barriers are incomplete for player $slot."
         }
         $offline = Get-Content -LiteralPath $offlinePath -Raw | ConvertFrom-Json
         $rejoined = Get-Content -LiteralPath $rejoinedPath -Raw | ConvertFrom-Json
         if (-not $offline.Passed -or $offline.OfflineSeconds -lt 2 -or
+            $offline.SnapshotFingerprint -cne $evidence.DisconnectedSnapshotFingerprint -or
             $rejoined.EntityId -ne $evidence.EntityId -or $rejoined.PeerEntityId -ne $evidence.PeerEntityId) {
             throw "Multiplayer recovery did not prove bounded frozen offline/restored state for player $slot."
         }
-        $commandPath = Join-Path $playerDirectory ("multiplayerrecovery-command-{0}.json" -f $evidence.Sequence)
+        if ($Prefix -eq 'multiplayerpendingrecovery' -and
+            (-not ($evidence.FrozenCommand -is [bool]) -or -not $evidence.FrozenCommand -or
+             $evidence.DuplicateStatus -cne 'Duplicate' -or $evidence.RetryTransmissions -lt 1 -or
+             $evidence.PendingSequence -ne ($evidence.Sequence - 1) -or
+             $evidence.PendingReceiptSequence -ge $evidence.ReceiptSequence -or
+             $offline.PendingCount -ne 1 -or $offline.PendingSequence -ne $evidence.PendingSequence -or
+             $rejoined.PendingCount -ne 0 -or $rejoined.PendingSequence -ne $evidence.PendingSequence -or
+             $rejoined.PendingReceiptSequence -ne $evidence.PendingReceiptSequence -or
+             $rejoined.PendingAppliedTick -ne $evidence.PendingAppliedTick)) {
+            throw 'Pending recovery did not prove exact original retry/receipt continuation.'
+        }
+        $commandPath = Join-Path $playerDirectory ("$Prefix-command-{0}.json" -f $evidence.Sequence)
         if (-not (Test-Path -LiteralPath $commandPath)) { throw "Missing post-reconnect command evidence for player $slot." }
         $command = Get-Content -LiteralPath $commandPath -Raw | ConvertFrom-Json
         if (-not $command.Passed -or $command.PreviousSequence -ne ($evidence.Sequence - 1)) {
@@ -191,7 +204,7 @@ try {
         Write-Host "PASS: actual Godot generated Cathedral walking/collision, authored object/combat/loot, fresh-host restore and native Town return. Evidence: $sessionDirectory"
         return
     }
-    if ($MultiplayerRecovery) {
+    if ($MultiplayerRecovery -or $MultiplayerPendingRecovery) {
         $parameters.Multiplayer = $true
         $parameters.PersistenceMode = 'cohort'
         $parameters.QuitAfterSeconds = 75
@@ -201,10 +214,15 @@ try {
         $resumed = Read-ModeProcessEvidence 'MultiplayerResume'
         Assert-FreshProcessEvidence $created $resumed 2
         $parameters.QuitAfterSeconds = 105
-        & $launcher @parameters -AcceptancePhase MultiplayerRecovery
-        $recovery = Read-ModeProcessEvidence 'MultiplayerRecovery'
+        $recoveryPhase = if ($MultiplayerPendingRecovery) { 'MultiplayerPendingRecovery' } else { 'MultiplayerRecovery' }
+        & $launcher @parameters -AcceptancePhase $recoveryPhase
+        $recovery = Read-ModeProcessEvidence $recoveryPhase
         Assert-MultiplayerRecoveryProcessEvidence $recovery
-        Assert-MultiplayerRecoveryEvidence $sessionDirectory $recovery.ContentHash $recovery.RulesetHash
+        if ($MultiplayerPendingRecovery -and
+            (-not $recovery.PendingLiveBoundary.Verified -or -not $recovery.PendingStoppedBoundary.Verified)) {
+            throw 'Pending recovery omitted independent live and stopped canonical receipt boundaries.'
+        }
+        Assert-MultiplayerRecoveryEvidence $sessionDirectory $recovery.ContentHash $recovery.RulesetHash $recoveryPhase.ToLowerInvariant()
         Write-Host "PASS: bounded actual-Godot complete-cohort multiplayer host-loss/reconnect with two retained clients, stable roster, post-reconnect accepted controls, canonical receipts, and clean exits. Evidence: $sessionDirectory"
         return
     }

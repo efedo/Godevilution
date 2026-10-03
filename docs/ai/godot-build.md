@@ -344,6 +344,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File tools/test-godot-session.ps1
 powershell -NoProfile -ExecutionPolicy Bypass -File tools/test-godot-session.ps1 -PersistenceMode cohort -Multiplayer
 powershell -NoProfile -ExecutionPolicy Bypass -File tools/test-godot-session.ps1 -PersistenceMode cohort -Multiplayer -Visible
 powershell -NoProfile -ExecutionPolicy Bypass -File tools/test-godot-session.ps1 -PersistenceMode cohort -MultiplayerRecovery -Visible
+powershell -NoProfile -ExecutionPolicy Bypass -File tools/test-godot-session.ps1 -PersistenceMode cohort -MultiplayerPendingRecovery -Visible
 ```
 
 `-MultiplayerRecovery` adds a separate town/session host-loss phase after creation
@@ -364,6 +365,35 @@ commands at host loss, every failure, campaign play or hardware power loss; the
 negotiated clock flag and accepted commands alone do not independently prove
 reconnect-epoch calibration. Any assertion or nonzero engine exit fails the run.
 
+`-MultiplayerPendingRecovery` selects a different third phase, never combined
+with `-MultiplayerRecovery`. Two scene-only loopback relays withhold each owner's
+original accepted reply and subsequent responses. Before terminating the host,
+the launcher independently binds both private bookmarks to exact canonical
+receipts and module state; it repeats those checks at the stopped boundary.
+Both original clients retain exactly one pending command through two seconds of
+offline controls. Automatic reconnect must resend the same parsed Command bytes
+(sequence, requested tick and intent), receive the original successful Duplicate
+receipt, restore the stable roster and accept the next new real control. Final
+offline fingerprints are bound to their per-slot barriers. Terminal host evidence
+uses a retained owned handle, a bounded terminal wait and a real native exit code;
+missing evidence fails rather than synthesizing a result.
+
+The actual F control assigns friendly mode; it is not a non-idempotent toggle.
+`CohortCliPendingCommandRecoveryTests` supplies a production TCP item-drop outcome
+that remains unread across restart, while `CohortPendingCommandRecoveryTests`
+exercises the production C# transport's relative-movement retry. Relay length and
+changed-command negatives execute the scene relay itself without crashing an
+engine. These checks do not establish literal envelope-byte equality, durability
+of uncommitted future scheduler intents, every outage, independent epoch timing
+calibration or campaign/release readiness. Failed fixture roots/logs are retained;
+successful owned cleanup is bounded and refuses reparse trees. New CLI commands
+use a correlated probe through the following fresh snapshot and the negotiated
+tick rate to select `ceil(RTT * tickRate) + 1` future lead; duplicate retries keep
+their original requested tick. This does not bound later load. The C# transport
+fixture has a linked 90-second deadline, stage diagnostics and bounded client
+cleanup; only its explicitly marked original-host loss permits committed-frame
+truncation/reset. Unexpected replacement relay faults still fail.
+
 `-PersistenceMode cohort` explicitly opts into a fresh isolated save root; the
 default remains `legacy` and existing normal-launch profiles are unchanged.
 The launcher verifies the actual host persistence mode and canonical checkpoint
@@ -372,7 +402,7 @@ credentials. Reads allow atomic replacement by the running server. Per-phase
 process evidence proves fresh hosts/clients; Recovery proves a fresh host with
 the same surviving client. Cohort multiplayer reverses admission order and
 requires the same local and peer entity IDs as creation. These town/session
-checks without `-MultiplayerRecovery` do not cover multiplayer host loss; neither
+checks without either recovery switch do not cover multiplayer host loss; no
 variant covers every fault, campaign or release.
 For manual cohort play, the inner launcher also requires an explicit separate
 `-SessionDirectory`; legacy files are never automatically imported or changed.

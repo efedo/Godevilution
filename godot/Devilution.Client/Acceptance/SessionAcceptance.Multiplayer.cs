@@ -14,13 +14,34 @@ public partial class SessionAcceptance
     /** Two independent real scenes coordinate observations, never gameplay state. */
     private async Task RunMultiplayerAsync(string directory, string phase)
     {
+        AcceptanceAckLossRelay? relay = null;
+        Exception? primary = null;
+        try {
+            if (phase == "MultiplayerPendingRecovery") {
+                var previous = ReadMultiplayerEvidence(directory, "multiplayerresume.json");
+                relay = new AcceptanceAckLossRelay(ClientConnectionOptions.FromEnvironment().Port, previous.Sequence + 1);
+            }
+            await RunMultiplayerCoreAsync(directory, phase, relay);
+        } catch (Exception exception) {
+            primary = exception;
+            throw;
+        } finally {
+            if (relay is not null)
+                try { await relay.DisposeAsync(); } catch (Exception cleanup) when (primary is not null) {
+                    primary.Data["AcceptanceRelayCleanup"] = cleanup.Message;
+                }
+        }
+    }
+
+    private async Task RunMultiplayerCoreAsync(string directory, string phase, AcceptanceAckLossRelay? relay)
+    {
         Require(int.TryParse(Environment.GetEnvironmentVariable("GODEVILUTION_LOCAL_PLAYER"), out var slot)
             && slot is 1 or 2, "Multiplayer acceptance requires player slot 1 or 2.");
         var peerSlot = 3 - slot;
         var peerDirectory = System.IO.Path.Combine(System.IO.Directory.GetParent(directory)!.FullName, $"player-{peerSlot}");
         var prefix = phase.ToLowerInvariant();
         var creating = phase == "MultiplayerCreate";
-        var recovery = phase == "MultiplayerRecovery";
+        var recovery = phase is "MultiplayerRecovery" or "MultiplayerPendingRecovery";
         var cohort = Environment.GetEnvironmentVariable("GODEVILUTION_PERSISTENCE_MODE") == "cohort";
         Require(!recovery || cohort, "Multiplayer recovery is only valid for a complete-cohort session.");
         // Reverse the connection order at restart: entity allocation must not be
@@ -36,6 +57,10 @@ public partial class SessionAcceptance
         await Frame();
         await Frame();
         var setup = main.GetNode<CharacterSetupPresentation>("CharacterSetup");
+        if (relay is not null)
+            setup.ShowSetup(ClientConnectionOptions.FromEnvironment() with {
+                Port = relay.Port, ResumeToken = LocalSessionBookmark.Read(System.IO.Path.Combine(directory, "resume-token.txt"))!,
+            });
         Require(setup.Visible && !main.TransportConnected, "Each player must enter through the real setup form.");
         var mode = (OptionButton)setup.FindChild("SessionMode", true, false);
         Require(mode.Selected == (creating ? 0 : 1), "The player-specific bookmark did not select the correct session mode.");
@@ -87,7 +112,10 @@ public partial class SessionAcceptance
                     "Complete-cohort resume changed the durable peer entity binding.");
         }
         if (recovery) {
-            await VerifyMultiplayerRecoveryAsync(main, directory, prefix, slot, previous!, identity);
+            if (relay is not null)
+                await VerifyMultiplayerPendingRecoveryAsync(main, directory, prefix, slot, previous!, identity, relay);
+            else
+                await VerifyMultiplayerRecoveryAsync(main, directory, prefix, slot, previous!, identity);
             return;
         }
         // Both must check the initial restored pair before either changes it.

@@ -1,7 +1,7 @@
 # Godevilution Completion Plan
 
-Plan date: 2026-10-02. Interrupted first-publication and Windows staging acceptance
-follows Godot cohort baseline `60f60c8a1`; results and retained failures are in migration status.
+Plan date: 2026-10-02. Committed-but-unobserved command recovery follows surviving-client
+baseline `3c55dcd78`; results and retained failures are in migration status.
 
 This is the active delivery plan. The [architecture](csharp-authoritative-server-migration.md)
 defines the objective and ownership rules; [migration status](migration-status.md)
@@ -71,7 +71,7 @@ isolated spell or table rows while the playable route stays unchanged.
 
 | Gate | Deliverable | Dependencies | Current position |
 | --- | --- | --- | --- |
-| M0 | Reproducible launch and honest acceptance evidence | Existing implementation | Dedicated-root cohort host passes TCP recovery, scoped faults, production CLI participant/item recovery and lease refusal, isolated Godot create/resume/outage and two surviving clients through host loss; managed first-publication interruption and a scoped Windows metadata profile pass; approval-gated normal-launch adoption and broader fault/filesystem/platform acceptance remain; legacy cold imports, native GUI and release-budget gaps remain |
+| M0 | Reproducible launch and honest acceptance evidence | Existing implementation | Dedicated-root cohort host passes TCP recovery, scoped faults, production CLI participant/item recovery and lease refusal, isolated Godot create/resume/outage and surviving-client committed-but-unobserved replay; managed first-publication interruption and a scoped Windows metadata profile pass; approval-gated normal-launch adoption and broader fault/filesystem/platform acceptance remain; legacy cold imports, native GUI and release-budget gaps remain |
 | M1 | Usable Godot town-to-dungeon loop | M0 launch/acceptance harness | Authored combat/loot/equipment, NPC/service approach, purchased-scroll portal and isolated Sorcerer quest/cast/Recharge/death/restart/restore journeys pass; full loop remains |
 | M2 | Native-compatible generated world | M0 geometry/parity baseline | Ordinary Cathedral depths 1-4 coarse/fine oracle covers six seeds and MAIN/PREV; separate opt-in four-depth runtime/profile/v3 restore and ordinary-control traversal are integrated; native population, campaign mapping, wider topology and remaining families remain |
 | M3 | Complete base and Hellfire gameplay routes | M1 plus the relevant M2 world slices | Many rules exist; campaign and remaining behavioral coverage remain |
@@ -191,7 +191,18 @@ M4. M5 is the final removal gate, not a reason to postpone replacement work.
    Actual headless/rendered cohort multiplayer host loss now retains exactly two
    clients, freezes offline snapshot/input/rendering, restores stable bindings and
    requires mutual settled movement plus exact canonical accepted owner receipts.
-   Keep pending-at-outage, broader faults/campaign and release acceptance distinct.
+   Unread production CLI replies and deliberately withheld actual-Godot replies
+   now cover already committed but unobserved outcomes. Require canonical effect
+   and original Accepted receipt before host termination, exact parsed-command
+   identity on retry, original successful Duplicate receipt, stable owner bindings
+   and the next genuinely new sequence. Godot's friendly-mode control is an
+   idempotent assignment; non-idempotent item drop and production C# relative
+   movement supply independent effect coverage. Future scheduler intents remain
+   intentionally nondurable and outside this committed-outcome contract.
+   Keep broader faults/campaign, retained unclassified `TooLate` failures and
+   release acceptance distinct. Retained full-suite lease/initialization fixture
+   failures remain unclassified despite later green checks; qualify their bounded
+   gate/cleanup behavior under load before claiming broader acceptance.
 2. Add an application-level acceptance path through the actual Godot scene and
    controls: launch, create a character, receive/render an authoritative world,
    submit movement, observe the acknowledged position, save, exit, and resume

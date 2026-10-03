@@ -94,8 +94,9 @@ open. Their scope, dependencies, and exit checks are defined only in the
   creation, agreed release frame/memory budgets, and the release-platform matrix.
   Explicit cohort mode now also has headless/rendered two-surviving-client
   host-loss evidence and production CLI participant/shared-item cold recovery,
-  with exact post-restart owner receipts. Legacy cold imports and broader
-  pending-command/fault/campaign acceptance remain separate gaps.
+  with exact post-restart owner receipts. Legacy cold imports, uncommitted future
+  intents, broader fault and campaign acceptance remain separate
+  gaps; committed-but-unobserved pending outcomes are covered below.
 - Rendered application acceptance now verifies responsive HUD controls at
   960x600, 1028x720, and 1280x720, and the authored town-to-Cathedral route.
   The former 1028x720 HUD clipping is resolved. Actual combat, distant loot
@@ -145,6 +146,106 @@ open. Their scope, dependencies, and exit checks are defined only in the
 The records below describe verified implementation slices at this baseline. They are
 evidence, not a separate priority list; detailed older entries retain their
 original scope and may be superseded by later entries or the current assessment.
+
+### M0 committed-but-unobserved command recovery (2026-10-02)
+
+Following `3c55dcd78`, explicit `-PersistenceMode cohort` with
+`-MultiplayerPendingRecovery` adds a separate third actual-Godot phase. Scene-only
+loopback relays withhold each owner's accepted F reply and subsequent responses.
+The launcher binds private bookmarks to the exact canonical Accepted receipt and
+friendly-mode assignment before host termination and again at the stopped
+boundary. Both original clients retain one pending command and frozen
+snapshot/result/input/rendering state for at least two seconds offline. Automatic
+reconnect resends identical parsed Command bytes, receives the original successful
+Duplicate receipt, restores stable owners and accepts each next new real control
+with a higher receipt sequence. Final offline fingerprints bind to their barriers.
+
+F is an idempotent friendly-mode assignment, not a toggle. A production CLI TCP
+fixture independently commits a shipped item drop without reading its reply,
+then cold-resumes and retries the unchanged original command. The production C#
+transport fixture retains its original client through host replacement and checks
+non-idempotent relative movement, exact frozen retry and next sequence. New CLI
+commands use a correlated probe through the following snapshot and negotiated-rate
+`ceil(RTT * tickRate) + 1` future lead; original retries are never retimestamped.
+Safe rejection diagnostics retain requested/snapshot/applied ticks and probe
+duration. These samples do not bound later load or weaken strict admission.
+
+Independent final source review approves the canonical boundaries, narrow relay
+fault handling, owned cleanup and compatibility scope. Verification evidence:
+
+- Focused protocol: 4 passed, zero failures/skips, 6.362s
+  (`.local/m0-pending-reset-protocol-focused.log`). Negative frame-size and
+  changed-command checks execute the actual scene relay.
+- Full protocol: 623 passed, zero failures and two explicit performance
+  exclusions, 13m10.420s (`.local/m0-pending-reset-protocol-full.log`). The final
+  build has zero errors, three existing NU1900 warnings and the existing xUnit2031
+  warning; no new analyzer warnings (`.local/m0-pending-reset-protocol-build.log`).
+- Final server build: zero errors and three existing NU1900 warnings; focused
+  CLI/launcher checks: 10 passed, zero failures/skips, 9.994s
+  (`.local/m0-pending-final-timing-server-build.log` and `-focused.log`). All six
+  new-action sites in the older participant fixture now also use measured lead;
+  neither fixture changes the original duplicate command.
+- Final full server, default collection parallelization: 1,488 passed, zero
+  failures and four unchanged exclusions, 50.884s
+  (`.local/m0-pending-final-timing-server-full.log`). Exclusions remain the two
+  explicit legacy-overwrite counterexamples, local-asset test and link-privilege
+  skip. This green rerun does not classify the retained concurrency failures.
+- Documentation guards: 4 passed, zero failures/skips, 389ms using the unchanged
+  Release .NET 8.0.30 executable (`.local/m0-pending-final-documentation.log`).
+- Actual headless/rendered pending recovery and default legacy single-player
+  create/resume/outage pass (`.local/m0-pending-final-godot-headless.log`,
+  `-visible.log`, `-legacy.log`). Private root suffixes are
+  `7116e82d27b944519472b4e7d9fe4ac2`, `c93a93a62e4543b685fce2315b47aa72`
+  and `0afbd3b93c944a169b596c3adfc5548d`. All six rendered create/resume/pending
+  viewport captures were inspected. The 12/12/9 stage records all have native
+  exit 0 without stage/cleanup errors; each deliberately stopped host has its
+  real terminal exit recorded before replacement. Source SDK remains 4.7.1;
+  staged qualification uses installed 4.7.2.
+- Crash-safety recheck: 31 launcher/helper checks passed without failures/skips,
+  34.430s (`.local/godot-crash-safety-recheck-20261002.log`). These use harmless
+  owned probes, not deliberate engine crashes; the historical crash cause remains
+  scoped as documented below.
+
+Failed attempts remain evidence, not passes. Earlier CLI live-lease/module reads
+and stale-snapshot setup were corrected. The two full server attempts in
+`.local/m0-pending-final-server-full.log` and `-corrected-server-full.log` each
+failed one CLI rejection assertion; exact requested-tick evidence was absent.
+The corrected run's retained canonical root suffix
+`f1ef9cf5fdd74d449e9c893ffc8aeea6` independently records seq2 Rejected/TooLate,
+receipt2 at tick63, after original Accepted receipt1 at tick32. The runner alone
+reported only Accepted-versus-Rejected. Fresh correlation and measured lead improve
+fixture setup, not prove a bound on future delays. The retained Godot create-phase TooLate
+failure (`.local/m0-pending-outcome-godot-headless-corrected.log`) also lacks its
+requested tick and remains unclassified. The initial headless attempt failed
+PowerShell 5 hashtable property expansion; the earlier rendered attempt failed
+the missing native host-exit guard, not an engine crash. Both roots/logs remain.
+Owned handle retention plus bounded terminal waits now refuse missing exit codes;
+this does not establish why the previous code was absent.
+
+The measured pending-fixture full run
+(`.local/m0-pending-measured-server-full.log`) retained 1,485 passes, three failures
+and four unchanged exclusions, 48.827s. The older CLI's fixed four-tick lead was
+rejected: probe reply69, snapshot73, requested77, TooLate applied85/receipt1.
+Two unchanged concurrency fixtures also failed: lease-operation entry exceeded
+its five-second fixture wait, and initialization returned EOF before its expected
+hello. Both pass unchanged in an isolated serialized check (2 passed, 720ms,
+`.local/m0-pending-server-concurrency-isolated.log`). Blocking fixture gates and
+incomplete failure cleanup are source risks; isolated passes do not diagnose the
+full-run failures or close broader load acceptance. No production deadline or
+assertion was relaxed, and no rejected command was retried to manufacture a pass.
+
+The first focused protocol run stalled and was explicitly terminated with its
+fixture preserved. A bounded diagnostic rerun exposed a relay ConnectionReset
+after the deliberate original-host kill
+(`.local/m0-pending-bounded-protocol-focused.log`). Its fix permits reset/truncated
+EOF only at the explicitly marked first-host boundary after the committed receipt
+is retained. A linked 90-second test deadline, stage diagnostics and bounded client
+cleanup prevent indefinite fixture waits; production transport timing is unchanged.
+No future scheduler-intent durability, literal envelope-byte equality, independent
+epoch calibration, broader faults/platforms, campaign or native GUI acceptance is
+claimed. User saves/profiles and Windows security/error-reporting settings remain
+unchanged. Normal cohort adoption awaits approval; M0 remains open and overall
+progress remains approximately 35%.
 
 ### M0 surviving clients and production CLI participant recovery (2026-10-02)
 
