@@ -109,6 +109,15 @@ public sealed partial class AuthoritativeTcpServer
                 try { primaryFailure.Data["ClockGatedTransportFailure"] = outcome; } catch { }
             }
             ReportClockGatedOrphanFailureOnce(lane, primaryFailure);
+        } catch (ClockGatedTransportException outcome)
+            when (outcome.InnerException is OperationCanceledException
+                && reader.IsFaulted
+                && reader.Exception?.InnerException is { } readFailure
+                && readFailure is IOException or SocketException or ObjectDisposedException) {
+            // The failed reader cancels a stalled writer before rethrowing.
+            // After both tasks join, keep that original read error as primary.
+            try { readFailure.Data["ClockGatedWriterCancellation"] = outcome; } catch { }
+            ExceptionDispatchInfo.Capture(readFailure).Throw();
         } finally {
             pipelineCancellation.Cancel();
             workChannel.Writer.TryComplete();

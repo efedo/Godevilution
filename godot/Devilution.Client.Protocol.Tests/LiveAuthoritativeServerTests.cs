@@ -5937,41 +5937,46 @@ public sealed partial class LiveAuthoritativeServerTests
     }
 
     private static string ResolveBuildConfiguration()
-    {
-        var outputDirectory = new DirectoryInfo(AppContext.BaseDirectory.TrimEnd(
-            Path.DirectorySeparatorChar,
-            Path.AltDirectorySeparatorChar));
-        var configuration = outputDirectory.Parent?.Name;
-        return string.IsNullOrWhiteSpace(configuration) ? "Debug" : configuration;
-    }
+        => LiveServerProcess.BuildConfiguration;
 
     private sealed class StartedServer : IDisposable
     {
-        private readonly Process process;
+        private readonly LiveServerProcess process;
         private readonly string saveRoot;
         private readonly bool deleteSaveRootOnDispose;
+        private readonly bool ownsSaveRoot;
+        private readonly LiveAuthoritativeServerTests owner;
+        private readonly LiveTestSaveRoot? cleanupRoot;
+        private LiveServerProcess.Identity identity = new(0, string.Empty, string.Empty);
+        private bool startupComplete;
+        private bool disposed;
+        private bool retainRootAfterCleanupFailure;
 
         private StartedServer(
-            Process process,
+            LiveServerProcess process,
             string saveRoot,
             bool deleteSaveRootOnDispose,
-            int port,
-            string contentHash,
-            string rulesetHash)
+            bool ownsSaveRoot,
+            LiveAuthoritativeServerTests owner,
+            LiveTestSaveRoot? cleanupRoot)
         {
             this.process = process;
             this.saveRoot = saveRoot;
             this.deleteSaveRootOnDispose = deleteSaveRootOnDispose;
-            Port = port;
-            ContentHash = contentHash;
-            RulesetHash = rulesetHash;
+            this.ownsSaveRoot = ownsSaveRoot;
+            this.owner = owner;
+            this.cleanupRoot = cleanupRoot;
         }
 
-        public int Port { get; }
+        public int Port => identity.Port;
 
-        public string ContentHash { get; }
+        public string ContentHash => identity.ContentHash;
 
-        public string RulesetHash { get; }
+        public string RulesetHash => identity.RulesetHash;
+
+        public int ProcessId => process.Id;
+        public bool HasExited => process.HasExited;
+        public string SaveRoot => saveRoot;
 
         public static async Task<StartedServer> StartAsync(
             CancellationToken cancellationToken,
@@ -5993,32 +5998,22 @@ public sealed partial class LiveAuthoritativeServerTests
             string? performanceOutput = null)
         {
             var repositoryRoot = LiveAuthoritativeServerTests.FindRepositoryRoot();
+            var owner = TestContext.Current.TestClassInstance as LiveAuthoritativeServerTests
+                ?? throw new InvalidOperationException("Live hosts require a per-test cleanup owner.");
+            var assembly = await LiveServerProcess.ResolveAssemblyAsync(
+                repositoryRoot, ResolveBuildConfiguration(),
+                Environment.GetEnvironmentVariable("GODEVILUTION_ARTIFACTS_PATH"),
+                Environment.GetEnvironmentVariable("GODEVILUTION_SERVER_ASSEMBLY"),
+                cancellationToken);
+            cancellationToken.ThrowIfCancellationRequested();
             var ownsSaveRoot = string.IsNullOrWhiteSpace(saveRootOverride);
-            var saveRoot = saveRootOverride ?? Path.Combine(
+            var saveRoot = Path.GetFullPath(saveRootOverride ?? Path.Combine(
                 Path.GetTempPath(),
-                "Godevilution-Godot-Test-" + Guid.NewGuid().ToString("N"));
+                "Godevilution-Godot-Test-" + Guid.NewGuid().ToString("N")));
+            var cleanupRoot = ownsSaveRoot || deleteSaveRootOnDispose
+                ? LiveTestSaveRoot.Register(saveRoot) : null;
             Directory.CreateDirectory(saveRoot);
-            var startInfo = new ProcessStartInfo {
-                FileName = "dotnet",
-                WorkingDirectory = repositoryRoot,
-                UseShellExecute = false,
-                RedirectStandardOutput = true,
-                RedirectStandardError = true,
-                RedirectStandardInput = true,
-                CreateNoWindow = true,
-            };
-            startInfo.ArgumentList.Add("run");
-            startInfo.ArgumentList.Add("--project");
-            startInfo.ArgumentList.Add(Path.Combine(repositoryRoot, "server/src/Devilution.Server/Devilution.Server.csproj"));
-            startInfo.ArgumentList.Add("--configuration");
-            startInfo.ArgumentList.Add(ResolveBuildConfiguration());
-            startInfo.ArgumentList.Add("--no-build");
-            var artifactsPath = Environment.GetEnvironmentVariable("GODEVILUTION_ARTIFACTS_PATH");
-            if (!string.IsNullOrWhiteSpace(artifactsPath)) {
-                startInfo.ArgumentList.Add("--artifacts-path");
-                startInfo.ArgumentList.Add(Path.GetFullPath(artifactsPath));
-            }
-            startInfo.ArgumentList.Add("--");
+            var startInfo = LiveServerProcess.CreateStartInfo(repositoryRoot, assembly);
             startInfo.ArgumentList.Add("--port");
             startInfo.ArgumentList.Add((portOverride ?? 0).ToString(
                 System.Globalization.CultureInfo.InvariantCulture));
@@ -6084,71 +6079,59 @@ public sealed partial class LiveAuthoritativeServerTests
                 startInfo.ArgumentList.Add("--game-adapter");
                 startInfo.ArgumentList.Add(gameAdapterId);
             }
-            var process = Process.Start(startInfo) ?? throw new InvalidOperationException("Could not start the authoritative server.");
-            var standardError = process.StandardError.ReadToEndAsync(cancellationToken);
-            int? port = null;
-            string? contentHash = null;
-            string? rulesetHash = null;
-            while (await process.StandardOutput.ReadLineAsync(cancellationToken) is { } line) {
-                if (line.Contains("listening on", StringComparison.Ordinal)
-                    && int.TryParse(line[(line.LastIndexOf(':') + 1)..], out var parsedPort))
-                    port = parsedPort;
-                if (line.StartsWith("Content manifest: ", StringComparison.Ordinal))
-                    contentHash = line["Content manifest: ".Length..];
-                if (line.StartsWith("Ruleset identity: ", StringComparison.Ordinal))
-                    rulesetHash = line["Ruleset identity: ".Length..];
-                if (port.HasValue && contentHash is not null && rulesetHash is not null)
-                    return new StartedServer(
-                        process,
-                        saveRoot,
-                        deleteSaveRootOnDispose,
-                        port.Value,
-                        contentHash,
-                        rulesetHash);
+            LiveServerProcess process;
+            try {
+                cancellationToken.ThrowIfCancellationRequested();
+                process = LiveServerProcess.Start(startInfo);
+            } catch (Exception failure) {
+                if (failure.Data["LiveServerConstructionExitConfirmed"] is false) {
+                    owner.cleanupFailures.Add(new InvalidOperationException(
+                        "The started host did not confirm exit; retain its owned save root.", failure));
+                } else if (ownsSaveRoot) {
+                    try { cleanupRoot!.Delete(); } catch (Exception cleanup) {
+                        failure.Data["LiveServerStartupCleanupFailure"] = cleanup;
+                        owner.cleanupFailures.Add(cleanup);
+                    }
+                }
+                throw;
             }
-            var error = await standardError;
-            await process.WaitForExitAsync(cancellationToken);
-            var exitCode = process.ExitCode;
-            process.Dispose();
-            if (ownsSaveRoot && Directory.Exists(saveRoot))
-                Directory.Delete(saveRoot, true);
-            var detail = string.IsNullOrWhiteSpace(error) ? string.Empty : Environment.NewLine + error.Trim();
-            throw new InvalidOperationException(
-                $"The authoritative server exited with code {exitCode} before publishing its identity.{detail}");
+            var server = new StartedServer(process, saveRoot, deleteSaveRootOnDispose, ownsSaveRoot, owner, cleanupRoot);
+            owner.ownedServers.Add(server);
+            try {
+                server.identity = await process.WaitForIdentityAsync(cancellationToken);
+                server.startupComplete = true;
+                return server;
+            } catch (Exception failure) {
+                server.Dispose();
+                failure.Data["LiveServerDiagnostics"] = process.Diagnostics;
+                throw;
+            }
         }
 
         public async Task StartPerformanceRecordingAsync(CancellationToken cancellationToken)
-        {
-            await process.StandardInput.WriteLineAsync("profile-start");
-            await process.StandardInput.FlushAsync(cancellationToken);
-            while (await process.StandardOutput.ReadLineAsync(cancellationToken) is { } line) {
-                if (line == "Performance recording started.")
-                    return;
-                if (line == "Performance recording unavailable or already started.")
-                    throw new InvalidOperationException(line);
-            }
-            throw new EndOfStreamException("Server exited before starting performance recording.");
-        }
+            => await process.StartPerformanceRecordingAsync(cancellationToken);
 
         public async Task QuitAsync(CancellationToken cancellationToken)
         {
-            await process.StandardInput.WriteLineAsync("quit");
-            await process.StandardInput.FlushAsync(cancellationToken);
-            var remainingOutput = process.StandardOutput.ReadToEndAsync(cancellationToken);
-            await process.WaitForExitAsync(cancellationToken);
-            await remainingOutput;
+            await process.QuitAsync(cancellationToken);
             Assert.Equal(0, process.ExitCode);
         }
 
         public void Dispose()
         {
-            if (!process.HasExited) {
-                process.Kill(entireProcessTree: true);
-                process.WaitForExit();
+            if (disposed)
+                return;
+            try {
+                process.DisposeAsync().AsTask().GetAwaiter().GetResult();
+                disposed = true;
+                if (!retainRootAfterCleanupFailure && (startupComplete ? deleteSaveRootOnDispose : ownsSaveRoot))
+                    cleanupRoot!.Delete();
+            } catch (Exception failure) {
+                retainRootAfterCleanupFailure = true;
+                // Report at class cleanup so a using scope cannot mask its body failure.
+                owner.cleanupFailures.Add(failure);
             }
-            process.Dispose();
-            if (deleteSaveRootOnDispose && Directory.Exists(saveRoot))
-                Directory.Delete(saveRoot, true);
         }
+
     }
 }

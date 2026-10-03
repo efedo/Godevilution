@@ -720,29 +720,10 @@ public sealed class CohortPendingCommandRecoveryTests
             CancellationToken cancellationToken)
         {
             var repositoryRoot = FindRepositoryRoot();
-            var startInfo = new ProcessStartInfo {
-                FileName = "dotnet",
-                WorkingDirectory = repositoryRoot,
-                UseShellExecute = false,
-                RedirectStandardOutput = true,
-                RedirectStandardError = true,
-                RedirectStandardInput = true,
-                CreateNoWindow = true,
-            };
-            startInfo.ArgumentList.Add("run");
-            startInfo.ArgumentList.Add("--project");
-            startInfo.ArgumentList.Add(Path.Combine(
-                repositoryRoot,
-                "server/src/Devilution.Server/Devilution.Server.csproj"));
-            startInfo.ArgumentList.Add("--configuration");
-            startInfo.ArgumentList.Add(ResolveBuildConfiguration());
-            startInfo.ArgumentList.Add("--no-build");
-            var artifactsPath = Environment.GetEnvironmentVariable("GODEVILUTION_ARTIFACTS_PATH");
-            if (!string.IsNullOrWhiteSpace(artifactsPath)) {
-                startInfo.ArgumentList.Add("--artifacts-path");
-                startInfo.ArgumentList.Add(Path.GetFullPath(artifactsPath));
-            }
-            startInfo.ArgumentList.Add("--");
+            var assembly = await LiveServerProcess.ResolveAssemblyAsync(repositoryRoot, ResolveBuildConfiguration(),
+                Environment.GetEnvironmentVariable("GODEVILUTION_ARTIFACTS_PATH"),
+                Environment.GetEnvironmentVariable("GODEVILUTION_SERVER_ASSEMBLY"), cancellationToken);
+            var startInfo = LiveServerProcess.CreateStartInfo(repositoryRoot, assembly);
             startInfo.ArgumentList.Add("--bind");
             startInfo.ArgumentList.Add("127.0.0.1");
             startInfo.ArgumentList.Add("--port");
@@ -763,6 +744,7 @@ public sealed class CohortPendingCommandRecoveryTests
                 startInfo.ArgumentList.Add("17");
             }
 
+            cancellationToken.ThrowIfCancellationRequested();
             var process = Process.Start(startInfo)
                 ?? throw new InvalidOperationException("Could not start the production authoritative server.");
             var drainLifetime = new CancellationTokenSource();

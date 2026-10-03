@@ -179,6 +179,9 @@ public sealed partial class AuthoritativeTcpServer : IAsyncDisposable
     /** Null by default. Timing evidence is bounded and never enters gameplay. */
     public HostCommandTimingRecorder? CommandTimingRecorder { get; init; }
 
+    /** Internal transport seam for causal write/cancellation tests; normal hosts leave it null. */
+    internal Func<Stream, Stream>? ClockGatedTransportDecorator { get; init; }
+
     /**
      * Optional post-lock drain hook. Hosts should enqueue the drain and return
      * quickly; failures are diagnostic and cannot replace a gameplay failure.
@@ -591,8 +594,9 @@ public sealed partial class AuthoritativeTcpServer : IAsyncDisposable
             var entityId = session.EntityId;
             if (commandScheduler is not null) {
                 clockGatedPipelineOwnsWrites = true;
+                await using var decoratedStream = ClockGatedTransportDecorator?.Invoke(stream);
                 await HandleClockGatedConnectionAsync(
-                    stream,
+                    decoratedStream ?? stream,
                     sessionId,
                     entityId,
                     currentTick,

@@ -157,7 +157,15 @@ M4. M5 is the final removal gate, not a reason to postpone replacement work.
    loss. Keep causal held-clock, capacity, half-close, fault and shutdown checks,
    plus actual two-input Create/save/resume acceptance. This fixes a demonstrated
    ingress stall, not the unclassified historical first-resume `TooLate` cause;
-   source-reviewed stalled-writer and canceled snapshot paths need direct fixtures.
+   Direct write-gated TCP fixtures now verify stalled-writer response-budget
+   retention and canceled queued-snapshot provider avoidance. Preserve their
+   actual reset/read exception identity, joined cleanup and repeated causal
+   checks; writer cancellation must not replace the initiating read error.
+   Live protocol fixtures now launch the evaluated matching-configuration host
+   DLL directly, drain output independently of caller cancellation, and confirm
+   actual host exit before registered fixture-root cleanup. Preserve startup
+   refusal, borrowed-root, faulted-reader, teardown-failure and Release/artifact
+   checks; do not infer the historical receipt-file lock owner from passing tests.
    Pending-command fences do not solve the adapter's broader shared-world
    cold-restore overwrite. A real multiplayer loopback regression now reproduces
    claimed-item resurrection in both cold-resume orders from actual same-tick

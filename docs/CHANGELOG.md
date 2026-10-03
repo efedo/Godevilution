@@ -2,6 +2,18 @@
 
 Notable changes to this fork are recorded below.
 
+- 2026-10-03: Own actual live-test host PIDs through evaluated direct-DLL launch,
+  independent output drains, bounded confirmed-exit cleanup and guarded fixture
+  roots. Preserve body failures, borrowed saves and configuration/artifact
+  selection; add startup, output-fault, cleanup and reparse regressions. Direct
+  write-gated TCP tests expose and fix writer cancellation masking the original
+  reset read error without changing admission or accepted authority. Verify 67
+  focused and 1,552 full server passes plus 20 repeated backpressure runs,
+  12 helper/cohort and eight lifecycle/Stone Curse passes, and eight final-host Release
+  artifact passes, plus 785 full client passes with two unchanged performance
+  exclusions. Preserve historical failures and narrow claims; M0 remains
+  open. Update existing guides, plan and status.
+
 - 2026-10-03: Fix a reproduced clock-gated same-connection ingress stall with
   bounded pipelined admission, whole-envelope FIFO and ordered replies. Preserve
   Immediate/direct APIs, strict late admission, frozen identity and durable

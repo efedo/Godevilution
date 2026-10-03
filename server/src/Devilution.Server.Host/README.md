@@ -117,7 +117,7 @@ handshake, event or snapshot publication. Physical time is sampled under the
 authoritative monitor. Receipt allocation and strict late-command policy remain in
 `AuthoritativeCommandServer`. A configured publication callback must checkpoint
 state and receipts before successful completion; queued intents themselves are
-not persisted. Connection loss cannot cancel received intents; host cancellation
+not persisted. Connection loss cannot cancel admitted intents; host cancellation
 ends unresolved work. Retained slots, including duplicate waiters, are bounded.
 The default limit is 1,024 retained wire slots, including duplicate waiters.
 Capacity refusal is an explicit protocol error, not `TooLate`, and allocates no
@@ -145,6 +145,10 @@ publication failure fences following lane work and retains its original
 diagnostic. Transport-boundary IO/cancellation is distinct from authority or
 snapshot-provider failure; provider errors do not become transport loss.
 Canceled response lanes do not invoke queued snapshot providers.
+If a failed reader cancels a stalled writer, joined diagnostics preserve the
+same original read exception. When writer cancellation wins joined selection,
+it is attached as a secondary diagnostic rather than replacing that read error.
+Authoritative failures retain priority over transport cleanup.
 
 Reload and legacy cold persisted restore drain due work, then refuse mutation while
 any future command remains queued. In-memory reconnect is allowed; refused cold

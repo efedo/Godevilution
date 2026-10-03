@@ -148,6 +148,63 @@ open. Their scope, dependencies, and exit checks are defined only in the
 
 ## Recent implementation evidence
 
+### M0 actual host ownership and causal transport cleanup (2026-10-03)
+
+Live protocol and cohort-replacement fixtures now evaluate the authoritative
+server's MSBuild `TargetPath` and launch its DLL directly. The owned PID is the
+actual host, not an SDK `dotnet run` parent. Executing-assembly configuration,
+the selected artifact tree and an explicit DLL override are respected; absent
+selected outputs refuse without fallback builds. One stdout parser handles
+identity and operator replies while independent drains outlive caller
+cancellation. Abrupt-stop coverage remains abrupt, not a graceful-shutdown
+substitute. Bounded cleanup confirms exit before deleting an exactly registered
+GUID-owned root. Borrowed startup roots and uncertain/failed cleanup roots are
+retained; file replacement, unregistered paths and reparse traversal refuse.
+Per-test lifecycle cleanup reports secondary errors without replacing body
+failures. Throwing output factories and faulted output pumps have actual-host
+termination/handle regressions.
+
+Two direct TCP fixtures hold the actual ACK `WriteAsync` boundary while physical
+time is controlled. The first verifies retained response-budget weight after
+execution and fresh capacity after the full response is read. The second
+observes complete snapshot frame 42 after frame 41 was queued, then aborts the
+socket and proves queued snapshot/timing provider work is skipped. This is a
+controlled write gate, not an OS-buffer saturation claim. Initial use of
+`TcpClient.Dispose` caused graceful FIN instead of the intended reset. Direct
+socket close exposed a real diagnostic race: reader failure canceled the held
+writer before rethrowing, and joined reporting selected the writer's
+`TaskCanceledException`. The retained 148ms counterexample is
+`.local/m0-owned-host-reset-primary-counterexample.log`. The narrow repair
+preserves the exact original read exception after both tasks join, attaching
+secondary writer cancellation without replacing authoritative failure priority.
+Accepted work, strict admission, FIFO, budgets, EOF behavior and formats remain
+unchanged; the internal transport decorator is null for normal hosts.
+
+Final server verification: 67 focused passes (1.813s), both backpressure cases
+passing in 20 consecutive runs, and 1,552 full passes with four unchanged
+exclusions (54.905s). Logs are `.local/m0-owned-host-server-final-focused.log`,
+`.local/m0-owned-host-server-backpressure-repeat.log` and
+`.local/m0-owned-host-server-full.log`. Initial fixture failures remain retained.
+Client helper/guard/cohort selection passes 12/12 (5.184s), including all seven
+guard cases without privilege skips after a bounded NTFS junction fallback.
+Seven lifecycle cases plus the previously failing Stone Curse case pass 8/8
+(6.010s). The final-host Release/artifact-tree repeat passes 8/8 (6.159s).
+Logs use `.local/m0-owned-host-client-helpers-final.log`,
+`.local/m0-owned-host-client-lifetime-final.log` and
+`.local/m0-owned-host-artifacts-release-final-lifetime.log`.
+Final-host full client verification passes 785 tests with two unchanged explicit
+performance exclusions (12m17.016s), retained in
+`.local/m0-owned-host-client-full.log`. Builds have zero errors; existing NU1900
+audit-feed and xUnit2031 warnings remain. The isolated Release build used cached
+restore with audit disabled, without changing repository or machine settings.
+
+This strengthens the cleanup contract; the historical receipt-file lock owner
+was not captured and is still not classified. Normal launch defaults, saves,
+bookmarks, content and source Godot SDK pin are untouched. Earlier rendered
+Create/save/resume/outage and complete-cohort two-client evidence below remains
+separate; no new rendered or native GUI journey is claimed for this test package.
+M0/M2 and campaign acceptance remain open; overall completion remains about 35%.
+
 ### M0 bounded pipelined clock-gated ingress (2026-10-03)
 
 A causal TCP fixture holds physical time at 100, confirms admission of sequence 1
@@ -167,8 +224,9 @@ have focused coverage. Empty batches retain their malformed result. Accepted
 work survives peer loss; authority failure fences successors and preserves the
 primary diagnostic. Immediate/direct APIs, strict late admission, frozen command
 identity, wire/save formats, pack bytes and MPQ-independent hosting are unchanged.
-Stalled-writer budget retention and canceled queued-snapshot provider avoidance
-are source-reviewed, not directly exercised by new transport fixtures.
+At this earlier batch, stalled-writer budget retention and canceled queued
+snapshot provider avoidance were source-reviewed, not directly exercised.
+The later causal transport fixtures above now cover those paths.
 
 Final-source verification logs use `.local/m0-pipeline-reviewed-server-*`:
 71 focused passes (2.709s), then 1,550 full passes with four unchanged exclusions
@@ -185,7 +243,7 @@ existing Immediate-mode fixture deleting a locked receipt file after terminating
 its `dotnet run` process tree; the unchanged isolated rerun passes (3.154s).
 Waiting for the parent does not establish every descendant has exited, but the
 actual lock owner was not captured. No cleanup fix or whole-client green result
-is claimed. Logs are `.local/m0-pipeline-client-final-focused.log` and
+is claimed for that run. Logs are `.local/m0-pipeline-client-final-focused.log` and
 `.local/m0-pipeline-client-cleanup-rerun.log`; the earlier 766-pass full client
 suite remains historical, not a new full-suite run.
 

@@ -19,6 +19,18 @@ build-only dependency, then the live tests launch that matching-configuration
 server without starting concurrent rebuilds. Do not rebuild the same test
 project while its executable is running; Windows locks the active test host.
 
+Live fixtures resolve the server's evaluated MSBuild `TargetPath` and execute
+`dotnet <server.dll>` directly, so the owned PID is the actual host rather than
+a `dotnet run` parent. Configuration comes from the executing test assembly;
+`GODEVILUTION_ARTIFACTS_PATH` selects the matching artifact tree, while
+`GODEVILUTION_SERVER_ASSEMBLY` explicitly selects a prebuilt DLL. Missing selected
+outputs refuse startup without a fallback build. One stdout parser handles both
+identity and operator replies; stdout/stderr drains outlive caller cancellation.
+Bounded teardown confirms host exit before deleting a registered GUID-owned
+fixture subtree, rejects reparse traversal, and retains uncertain/failed roots.
+Per-test cleanup reports teardown failures separately from body failures;
+borrowed roots remain untouched after startup refusal.
+
 For a focused class or method, invoke the xUnit v3 in-process runner directly.
 This avoids requiring the VSTest testhost package cache:
 
