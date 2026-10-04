@@ -157,6 +157,51 @@ open. Their scope, dependencies, and exit checks are defined only in the
 
 ## Recent implementation evidence
 
+### M0 abrupt-checkpoint and rendered-session qualification (2026-10-04)
+
+The rendered isolated cohort journey against `96962331d` passes actual Godot
+Create, Resume and Recovery controls. It preserves Rogue entity 2 and content/
+ruleset identities, observes accepted sequences 3/4/6, restores through fresh
+host/client processes, freezes input/state during host loss and accepts movement
+after reconnection. All nine version/import/client engine stage records have
+zero exits, terminal timestamps and no error/cleanup error. Captured setup,
+created/resumed world and disconnected/reconnected frames were inspected.
+The intentional corrupt-bookmark feedback is expected acceptance coverage.
+
+Evidence is retained in
+`%TEMP%/Godevilution-Scene-Acceptance-7b15750b90cf4e72b89d32025810e108` and
+`.local/m0-checkpoint-race-scene-cohort.log`. The installed engine is 4.7.2;
+the source SDK remains 4.7.1. Server builds have no warnings/errors; staged client
+builds retain NU1900 audit-feed warnings. This is one session journey, not
+normal-profile adoption, campaign/release acceptance or proof of every historical
+crash cause. Existing saves/defaults remain unchanged; normal cohort adoption
+still requires approval.
+
+The packaged-adapter restart fixture now inspects its legacy canonical only after
+confirmed abrupt host termination. The production store validates ruleset, state
+and ledger integrity; assertions require the exact prior Accepted receipt and
+entity/class/X/Y before a fresh packaged host restores the client. A real live-host
+guard rejects premature inspection. Canceled and malformed inputs fail without
+retries. Failed registered roots are retained, with cleanup errors reported
+without masking primary assertions.
+
+Nine focused checks and eight documentation checks pass without exclusions.
+The actual Windows store counterexample confirms File.Move publication is refused
+while a delete-sharing reader is held, preserves the old generation, then publishes
+after closure. The initial File.Replace reader draft was rejected because it did
+not exercise that publisher. Release draft and final Debug build/test diagnostics
+are distinct; the final build retains three NU1900 and one existing xUnit2031
+warning, with no errors. Evidence uses `.local/m0-stopped-checkpoint-*`; retained
+earlier fixture failures and deadlined full runs are not accepted passes.
+
+The final unfiltered Debug client/protocol run passes 799 cases, with zero failures,
+errors or Skip results. Two explicit standalone-host performance cases (one/four
+participants) are NotRun, not performance acceptance. The suite completes in
+11m51s under the owned 20-minute deadline, exits zero and confirms process-tree
+cleanup with no secondary error. Its report/log are
+`.local/m0-stopped-checkpoint-client-full-long.xml` and `.log`. The earlier
+10-minute attempt timed out and was cleaned; its distinct log remains retained.
+
 ### M2 native monster import/checkpoint prerequisite (2026-10-04)
 
 This batch follows `711b7edde`. A distinct 138-row runtime metadata catalog

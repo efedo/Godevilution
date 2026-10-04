@@ -636,6 +636,15 @@ Missing evidence, wrong identities/mode, absent checkpoints, timeout,
 or nonzero exits fail the run. No MPQs are required. The visible variant also
 captures setup/world PNGs for visual inspection; the private token is not emitted
 in JSON evidence. This is a narrow session journey, not campaign acceptance.
+Managed packaged-restart fixtures inspect legacy checkpoints only after confirmed
+owned-host exit. Windows `File.Move(overwrite:true)` can refuse publication even
+with a delete-sharing reader; a different replacement API is not evidence for
+that publisher. The test abruptly stops the host after an Accepted move, then
+uses the production store to validate identity/state/receipt integrity and checks
+the exact durable receipt and player state. No byte/tick shortcut, graceful flush
+or corruption retry substitutes for this proof. Cancellation and missing/corrupt
+inputs remain failures. Failed GUID-owned roots are retained; guarded cleanup
+reports secondary failures without replacing the primary assertion.
 The visible run also captures disconnected and reconnected frames. The isolated
 creation phase deliberately starts with a corrupt bookmark, then
 holds its file open to verify persistent write-failure feedback and successful

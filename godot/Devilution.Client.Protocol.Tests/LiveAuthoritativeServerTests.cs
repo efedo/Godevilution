@@ -4,6 +4,7 @@ using System.Text.Json;
 using Devilution.Client.Protocol;
 using Devilution.Protocol;
 using Devilution.Protocol.V1;
+using Devilution.Server.Stores;
 using Xunit;
 
 namespace Devilution.Client.Protocol.Tests;
@@ -85,8 +86,9 @@ public sealed partial class LiveAuthoritativeServerTests
             Path.GetTempPath(),
             "Godevilution-Godot-Packaged-Diablo-Restart-Test-"
                 + Guid.NewGuid().ToString("N"));
-        Directory.CreateDirectory(saveRoot);
+        var saveRootLease = LiveTestSaveRoot.Register(saveRoot);
         AuthoritativeClient? client = null;
+        Exception? primaryFailure = null;
         try {
             uint entityId;
             int movedPositionY;
@@ -107,53 +109,41 @@ public sealed partial class LiveAuthoritativeServerTests
                     message => message.Snapshot is not null);
                 var player = Assert.Single(initial.Snapshot!.Players);
                 entityId = player.EntityId;
-                string? checkpointPath = null;
-                for (var attempt = 0; attempt < 200 && checkpointPath is null; attempt++) {
-                    checkpointPath = Directory.EnumerateFiles(saveRoot, "*.session.json")
-                        .SingleOrDefault();
-                    await Task.Delay(25, TestContext.Current.CancellationToken);
-                }
-                Assert.NotNull(checkpointPath);
-                var checkpointBeforeMove = await File.ReadAllBytesAsync(
-                    checkpointPath!,
-                    TestContext.Current.CancellationToken);
+                Assert.Throws<InvalidOperationException>(() => ReadStoppedSessionCheckpoint(
+                    server, TestContext.Current.CancellationToken));
                 var model = new AuthoritativeClientModel();
                 model.Apply(initial);
                 var moveSequence = client.Queue(new Command {
                     MoveRequested = new MoveRequested { DirectionX = 0, DirectionY = 1 },
                 }, client.SuggestedCommandTick(model.CurrentTick));
                 await client.PollAsync(TestContext.Current.CancellationToken);
-                Assert.Equal(
-                    CommandStatus.Accepted,
-                    (await WaitForAcknowledgementAsync(
-                        client,
-                        moveSequence)).Status);
+                var acceptedMove = await WaitForAcknowledgementAsync(client, moveSequence);
+                Assert.Equal(CommandStatus.Accepted, acceptedMove.Status);
                 var moved = await WaitForMessageAsync(
                     client,
                     message => message.Snapshot?.Players.Single().PositionY
                         == player.PositionY + 1);
                 movedPositionY = moved.Snapshot!.Players.Single().PositionY;
-                await Task.Delay(750, TestContext.Current.CancellationToken);
 
-                for (var attempt = 0; attempt < 200; attempt++) {
-                    var checkpointAfterMove = await File.ReadAllBytesAsync(
-                        checkpointPath,
-                        TestContext.Current.CancellationToken);
-                    if (!checkpointAfterMove.SequenceEqual(checkpointBeforeMove))
-                        break;
-                    await Task.Delay(25, TestContext.Current.CancellationToken);
+                // Accepted receipts are published only after SaveSession. Kill,
+                // do not gracefully flush, then inspect the quiescent checkpoint.
+                // Live readers can interfere with Windows File.Move publication.
+                server.Dispose();
+                Assert.True(server.HasExited);
+                Assert.Empty(cleanupFailures);
+                using (var canceledRead = new CancellationTokenSource()) {
+                    canceledRead.Cancel();
+                    Assert.Throws<OperationCanceledException>(() => ReadStoppedSessionCheckpoint(
+                        server, canceledRead.Token));
                 }
-                var checkpoint = System.Text.Json.JsonDocument.Parse(
-                    await File.ReadAllTextAsync(
-                        checkpointPath,
-                        TestContext.Current.CancellationToken));
-                var serializedState = checkpoint.RootElement
-                    .GetProperty("SerializedState")
-                    .GetString()!;
-                var save = System.Text.Json.JsonDocument.Parse(serializedState);
-                var checkpointSnapshot = Snapshot.Parser.ParseFrom(Convert.FromBase64String(
-                    save.RootElement.GetProperty("SnapshotBase64").GetString()!));
-                Assert.Equal(movedPositionY, checkpointSnapshot.Players.Single().PositionY);
+                var checkpoint = ReadStoppedSessionCheckpoint(server, TestContext.Current.CancellationToken);
+                var savedMove = Assert.Single(checkpoint.CommandReceipts, receipt => receipt.ClientSequence == moveSequence);
+                Assert.Equal(acceptedMove, savedMove);
+                var checkpointPlayer = Assert.Single(ParseCheckpointSnapshot(checkpoint).Players);
+                Assert.Equal(entityId, checkpointPlayer.EntityId);
+                Assert.Equal(2U, checkpointPlayer.CharacterClassId);
+                Assert.Equal(player.PositionX, checkpointPlayer.PositionX);
+                Assert.Equal(movedPositionY, checkpointPlayer.PositionY);
             }
 
             using var restartedServer = await StartedServer.StartAsync(
@@ -179,11 +169,19 @@ public sealed partial class LiveAuthoritativeServerTests
             Assert.NotEmpty(restored.Snapshot.StateSha256);
             Assert.Equal(restartedServer.ContentHash, client.ServerIdentity!.ContentManifestHash);
             Assert.Equal(restartedServer.RulesetHash, client.ServerIdentity.RulesetIdentityHash);
+        } catch (Exception failure) {
+            primaryFailure = failure;
+            throw;
         } finally {
-            if (client is not null)
-                await client.DisposeAsync();
-            if (Directory.Exists(saveRoot))
-                Directory.Delete(saveRoot, recursive: true);
+            if (client is not null) {
+                try {
+                    await client.DisposeAsync();
+                } catch (Exception cleanupFailure) {
+                    cleanupFailures.Add(cleanupFailure);
+                }
+            }
+            if (primaryFailure is null && cleanupFailures.Count == 0)
+                CleanupLocalRoot(saveRootLease);
         }
     }
 
@@ -5706,6 +5704,29 @@ public sealed partial class LiveAuthoritativeServerTests
             server.RulesetHash) {
             RequestedCharacterClassId = requestedClassId,
         };
+    }
+
+    /** Never open a legacy canonical checkpoint while its File.Move publisher is live. */
+    private static AuthoritativeSessionDocument ReadStoppedSessionCheckpoint(
+        StartedServer server, CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        if (!server.HasExited)
+            throw new InvalidOperationException("Checkpoint inspection requires confirmed owned-host exit.");
+        var path = Assert.Single(Directory.EnumerateFiles(server.SaveRoot, "*.session.json"));
+        var sessionId = Path.GetFileName(path)[..^".session.json".Length];
+        return new AuthoritativeSessionStore(server.SaveRoot).Load(sessionId, server.RulesetHash)
+            ?? throw new InvalidDataException("The stopped host has no durable session checkpoint.");
+    }
+
+    private static Snapshot ParseCheckpointSnapshot(AuthoritativeSessionDocument checkpoint)
+    {
+        using var save = JsonDocument.Parse(checkpoint.SerializedState);
+        var snapshotBase64 = save.RootElement
+            .GetProperty("SnapshotBase64")
+            .GetString()
+            ?? throw new InvalidDataException("The checkpoint SnapshotBase64 property is empty.");
+        return Snapshot.Parser.ParseFrom(Convert.FromBase64String(snapshotBase64));
     }
 
     private static async Task<AuthoritativeClientMessage> WaitForMessageAsync(

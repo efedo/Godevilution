@@ -241,6 +241,10 @@ M4. M5 is the final removal gate, not a reason to postpone replacement work.
    controls: launch, create a character, receive/render an authoritative world,
    submit movement, observe the acknowledged position, save, exit, and resume
    through a fresh host. Use isolated test saves and deterministic content.
+   Inspect legacy checkpoints after verified owned-host exit, not while their
+   Windows File.Move publisher is live. Preserve abrupt-stop durable-state and
+   exact Accepted-receipt checks, the causal held-reader limitation, strict
+   decoding/cancellation and owned-root cleanup evidence alongside scene journeys.
 3. Cover native launch-to-new-game with the same explicit single-player mode,
    current binaries, and available local assets. Retain the existing launcher
    contract and native mode-policy tests; they are useful but do not prove GUI
@@ -264,8 +268,10 @@ M4. M5 is the final removal gate, not a reason to postpone replacement work.
    movement and moved-position restore under the selected host mode.
    Player presentation is not yet established by the town captures. Use the
    marked version-2, exclusively locked profile and retain per-phase logs/exits;
-   use delete-sharing reads when inspecting checkpoints during atomic publication.
-   helper tests and world rendering alone do not close this gate. Never automate
+   inspect legacy checkpoints only after confirmed owned-publisher exit or a
+   verified publication barrier; delete sharing alone is insufficient for the
+   Windows File.Move path. Cohort POSIX-rename reader support is a separate
+   qualified contract. Helper tests and world rendering do not close this gate. Never automate
    security prompts or enable network permissions for loopback tests.
 4. Record a fresh integration baseline for the current revision. Capture exact
    commands, configuration, selected tests, outcomes, and any exclusions in

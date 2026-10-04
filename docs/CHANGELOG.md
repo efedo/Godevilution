@@ -2,6 +2,15 @@
 
 Notable changes to this fork are recorded below.
 
+- 2026-10-04: Inspect packaged-adapter checkpoints only after verified abrupt host
+  exit, validating exact saved player state and Accepted receipts through the
+  production store. Preserve strict decoding/cancellation and primary/cleanup
+  diagnostics; retain failed owned roots. Characterize the Windows File.Move
+  held-reader limitation and qualify actual
+  rendered Godot create, checkpoint, fresh-host resume and host-loss recovery in
+  an isolated cohort profile. Existing defaults, saves and production persistence
+  remain unchanged; broader release/campaign and normal cohort adoption remain open.
+
 - 2026-10-04: Add a separate 138-row native monster runtime catalog and detached
   cold-state binding adapter. Preserve unavailable rows, complete monster and
   animation-petrification tails, active order, identity/leader bindings, Q6 HP,
