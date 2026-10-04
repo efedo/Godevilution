@@ -148,6 +148,60 @@ open. Their scope, dependencies, and exit checks are defined only in the
 
 ## Recent implementation evidence
 
+### M2 detached Cathedral theme-item setup and unique continuation (2026-10-04)
+
+The new raw metadata path ports ordinary original-Diablo SP Normal item setup
+for Cathedral depths 1-4 without changing the earlier normalized item API.
+It preserves partial attribute writes, raw item-seed reseeding, native
+quality/affix draw order, book/staff selection, gold values/cursors, durability,
+native-width conversions, name truncation and font-width shortening. Unique
+continuation preserves all 128 history flags, position-only resets and separate
+absolute-seed retry streams, reverse-compatible reseeding and UID-offset
+fallback. Ground setup projects the five public animation scalars without
+renderer or sprite ownership.
+
+`tools/test-theme-item-generation.ps1` independently calls native setup, unique
+continuation and ground setup, then compares complete public fields, flags and
+RNG across 3,040 cases. Two fresh captures are byte-identical: 20,408,775 bytes,
+SHA256 `7ae45c4229f543cf1afb5cdc879484acbcb6c7030089c0571cbd8e5e1029ded2`.
+Four exact native fixtures and four explicit managed depth theories pass without
+skips. The private metadata contains 168 item rows, 83 prefixes, 95 suffixes,
+90 uniques, 37 spells, 229 cursor animations and twelve complete font rows.
+Coverage includes 221 initial uniques, 70 changed uniques (38 reverse-compatible,
+32 offset), 61 exhausted-history rerolls, 168 books, 64 gold outputs, 103 non-Null
+staff spells, ten good Null-spell staff outputs (including the signed-counter
+fallback), 1,274 magical-affix outputs and 558 ordinary durability changes.
+The actual native records, not expected selections, supply comparison evidence.
+
+Portable module/parser guards pass 25; the five existing documentation contracts
+also pass. All eleven shared/new oracle-launcher regressions pass without skips.
+The full module suite passes 2,925 with zero failures and 131 explicit/private
+exclusions (3,056 total); four new explicit cases pass separately above.
+The full serial server suite passes 1,586 with zero failures and four existing
+exclusions (1,590 total). CTest discovers the four new registered fixtures;
+three existing native base-metadata/repair/recharge regressions also pass.
+Module builds have zero warnings/errors; server retains three NU1900 audit-feed
+warnings. Existing generated Protobuf native warnings remain; no clean package
+vulnerability audit is claimed. Logs/XML remain under `.local/m2-theme-items-*`;
+the final private capture is in the printed external oracle directory. No full
+native project suite or fresh Godot application acceptance is claimed.
+
+Independent review and native comparisons exposed and corrected draft enum
+ordinals, spell-loop/coin order, retry chance, name-width and narrowing issues;
+initial failed runs remain retained. Native non-dropping cursor-255 placeholders
+keep their source ordinals/availability but fail closed if directly generated.
+Caller state and metadata are detached; malformed evidence and unsupported
+policies are rejected. Builds/captures/comparisons are bounded, dialog-suppressed
+owned children; no Godot application, MPQ archive, save or normal profile is opened.
+
+This is not `CreateThemeRooms` or full `CreateRndItem`/`CreateTypeItem` acceptance.
+Detached selector APIs still need independent native proof; item-pool allocation,
+placement/world RNG, every selected theme type, complete external packs and a
+separate opt-in populated profile remain next. Sprite/private renderer state
+and restoration of a borrowed font cache are excluded from the isolated fixture.
+No content/protocol/save schema, runtime default or user-save change is introduced.
+M0/M2 and campaign acceptance remain open; the approximately 35% estimate is unchanged.
+
 ### M3 Hork Demon decision RNG and save continuation (2026-10-04)
 
 The four earlier baseline Hork RNG failures are resolved, not excluded. Native

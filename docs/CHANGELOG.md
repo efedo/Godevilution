@@ -2,6 +2,18 @@
 
 Notable changes to this fork are recorded below.
 
+- 2026-10-04: Port detached raw Cathedral item setup, unique-history continuation
+  and public ground-animation scalars, preserving native RNG, affixes, books,
+  staffs, gold, durability, names and field widths. Add a separate bounded,
+  dialog-suppressed private oracle: 3,040 cases match native, four explicit depth
+  comparisons pass and two captures are byte-identical. Resolve independent
+  review/native-comparison findings and harden immutable metadata/evidence gates.
+  Full module/server suites pass 2,925/1,586 with 131/four explicit exclusions;
+  focused guards, four native fixtures and three existing native item checks pass.
+  Update status, plan and build guidance. Full selection/placement, theme rooms,
+  complete packs and populated-profile/Godot acceptance remain open. Preserve
+  normal launchers, saves, earlier oracle modes and server MPQ independence.
+
 - 2026-10-04: Correct Hork Demon native decision/RNG ordering and persist active
   Move counter/turn through clone, snapshots, cohort/protocol saves and hashes.
   Preserve legacy zero-seed behavior, frozen save/cohort bytes and strict JSON

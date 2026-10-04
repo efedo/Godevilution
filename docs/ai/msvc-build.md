@@ -432,6 +432,30 @@ failure/cleanup checks apply. `CreateThemeRooms`, quest/campaign generation,
 physical lighting and populated Godot interaction/cold restore remain open.
 No server MPQ requirement, runtime default or user save is changed.
 
+For detached ordinary Cathedral item setup, run this separate zero-argument wrapper:
+
+```powershell
+./tools/test-theme-item-generation.ps1
+```
+
+It builds the dedicated registered `theme_item_generation_test` target and the
+existing module tests, initializing and checking the matching MSVC environment.
+Two independent native captures must be byte-identical; all four native fixtures
+and four explicit managed depth comparisons must complete without skips. Every
+owned stage has a deadline, inherited dialog suppression, exit/log/cleanup gates
+and retained private evidence outside the repository. The opt-in environment is
+restored exactly. No engine client or user save is opened.
+
+The 3,040-case corpus uses parsed raw item/affix/unique/spell rows, cursor animation
+lengths and available English-context font-row widths. It compares complete
+public item scalar/string fields, five animation scalars, unique history and RNG
+after `SetupAllItems`, `TryRandomUniqueItem` and `SetupItem`; expected final state
+is never an input. It requires no Diablo MPQ. Non-dropping cursor-255 placeholders
+retain source ordinals but cannot be selected for ordinary generation. Keep all
+captured names/metadata private. Selector, pool/placement/world RNG, complete
+`CreateThemeRooms`, runtime-pack/profile activation and Godot cold restore remain
+separate gates. Earlier oracle modes, runtime defaults and saves are unchanged.
+
 The C# xUnit project is an executable Microsoft Testing Platform runner. Run
 it directly when `dotnet test` selects a machine-wide VSTest host whose
 `testhost` package is unavailable:

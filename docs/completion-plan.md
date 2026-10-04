@@ -486,11 +486,16 @@ this evidence. A sample art pack does not satisfy M4's full presentation gate.
    The four prior Hork RNG failures are addressed by the controller/save batch
    recorded in migration status; this is bounded decision parity, not complete
    Hork animation, directional-corner or whole-`ProcessMonsters` parity.
-   Next port `CreateThemeRooms` in source order: first its generic
-   `CreateRndItem`/`CreateTypeItem` and `SetupAllItems` dependencies, including
-   affixes, books and gold, against
-   raw external metadata. The normalized gameplay item catalog and initial-potion
-   port are not substitutes. Then port every selected theme type without stubs
+   The separate zero-argument `tools/test-theme-item-generation.ps1` now compares
+   detached `SetupAllItems`, `TryRandomUniqueItem` and public ground-animation
+   scalars against raw native metadata for original-Diablo SP Normal depths 1-4.
+   Its 3,040 cases cover affixes, books, gold, staff outcomes and unique history;
+   this does not close item selection, allocation or placement/world RNG.
+   Next port `CreateThemeRooms` in source order: complete its generic
+   `CreateRndItem`/`CreateTypeItem` pool/placement dependencies, including full-pool
+   and signed-coordinate boundaries, and independently verify the detached
+   selectors before composing them. The normalized gameplay item catalog and
+   initial-potion port are not substitutes. Then port every selected theme type without stubs
    or skipping item-producing themes, compile the validated external prerequisites
    and item/unique metadata into complete packs, then activate a separately
    identified opt-in populated server profile. Never use expected final state

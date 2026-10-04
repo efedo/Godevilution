@@ -332,6 +332,10 @@ uint8_t PlaceItemInWorld(Item &&item, WorldTilePosition position);
 Point GetSuperItemLoc(Point position);
 void GetItemAttrs(Item &item, _item_indexes itemData, int lvl);
 void SetupItem(Item &item);
+#ifdef BUILD_TESTING
+// Detached scalar metadata for independent item-generation fixtures.
+std::optional<int> GetItemAnimationLengthForTesting(int cursor);
+#endif
 Item *SpawnUnique(_unique_items uid, Point position, std::optional<int> level = std::nullopt, bool sendmsg = true, bool exactPosition = false);
 void GetSuperItemSpace(Point position, int8_t inum);
 _item_indexes RndItemForMonsterLevel(int8_t monsterLevel);

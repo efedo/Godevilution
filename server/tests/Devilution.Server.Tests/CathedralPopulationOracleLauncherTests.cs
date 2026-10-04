@@ -8,6 +8,87 @@ namespace Devilution.Server.Tests;
 
 public sealed class CathedralPopulationOracleLauncherTests
 {
+    [Fact]
+    public void ThemeItemStageRejectsEveryIncompleteOwnedProcessOutcome()
+    {
+        if (!OperatingSystem.IsWindows()) return;
+        var script = BuildPowerShellHarness(["Assert-ThemeOwnedStage"],
+            """
+            $valid = [ordered]@{ Pid=1; ExitCode=0; Error=$null; CleanupError=$null; TimedOut=$false; ConfirmedExited=$true; LogRetained=$true }
+            Assert-ThemeOwnedStage ([pscustomobject]$valid) 'valid'
+            foreach ($field in @('Pid','ExitCode','Error','CleanupError','TimedOut','ConfirmedExited','LogRetained')) {
+                $bad = [ordered]@{}; foreach ($entry in $valid.GetEnumerator()) { $bad[$entry.Key] = $entry.Value }
+                switch ($field) {
+                    'Pid' { $bad.Pid=$null }
+                    'ExitCode' { $bad.ExitCode=1 }
+                    'Error' { $bad.Error='failure' }
+                    'CleanupError' { $bad.CleanupError='failure' }
+                    'TimedOut' { $bad.TimedOut=$true }
+                    'ConfirmedExited' { $bad.ConfirmedExited=$false }
+                    'LogRetained' { $bad.LogRetained=$false }
+                }
+                $rejected=$false; try { Assert-ThemeOwnedStage ([pscustomobject]$bad) 'invalid' } catch { $rejected=$true }
+                if (-not $rejected) { throw "Theme-item verification admitted failed ownership field $field." }
+            }
+            Write-Output 'PASS'
+            """, "tools/test-theme-item-generation.ps1");
+        Assert.Contains("PASS", RunPowerShell(script), StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void ThemeItemNativeReportRequiresExactCompletedFixtures()
+    {
+        if (!OperatingSystem.IsWindows()) return;
+        var script = BuildPowerShellHarness(["Assert-ThemeNativeReport"],
+            """
+            $work = Join-Path ([IO.Path]::GetTempPath()) ('Godevilution-PopulationValidator-' + [guid]::NewGuid().ToString('N'))
+            New-Item -ItemType Directory -Path $work | Out-Null
+            $primaryFailure=$null
+            try {
+                $path=Join-Path $work 'report.json'
+                $names=@('GoldUsesCurrentDepthAndRetainsBaseIdentifiedValue','SetupRetainsFieldsOutsideBaseAttributes',
+                    'ScalarFontMetricsMatchNativePanelWidth','CaptureIndependentRawSetupAndUniqueContinuation')
+                foreach ($mutation in @('valid','skip','disabled','failure','errors','caseFailure','short','wrongName','duplicate','wrongClass')) {
+                    $cases=@($names | ForEach-Object { [pscustomobject]@{name=$_;classname='ThemeItemGenerationTest';status='RUN';result='COMPLETED'} })
+                    $report=[ordered]@{tests=4;failures=0;disabled=0;errors=0;testsuites=@(@{testsuite=$cases})}
+                    switch ($mutation) {
+                        'skip' { $cases[0].result='SKIPPED' }
+                        'disabled' { $report.disabled=1 }
+                        'failure' { $report.failures=1 }
+                        'errors' { $report.errors=1 }
+                        'caseFailure' { $cases[0] | Add-Member -NotePropertyName failures -NotePropertyValue @(@{failure='retained failure'}) }
+                        'short' { $report.testsuites=@(@{testsuite=@($cases | Select-Object -First 3)}) }
+                        'wrongName' { $cases[0].name='another-test' }
+                        'duplicate' { $cases[0].name=$cases[1].name }
+                        'wrongClass' { $cases[0].classname='another-class' }
+                    }
+                    [IO.File]::WriteAllText($path, ($report | ConvertTo-Json -Depth 6))
+                    $rejected=$false; try { Assert-ThemeNativeReport $path } catch { $rejected=$true }
+                    if (($mutation -eq 'valid') -eq $rejected) { throw "Theme-item report gate failed for $mutation." }
+                }
+                Write-Output 'PASS'
+            } catch { $primaryFailure=$_; throw }
+            finally { Remove-PopulationTestDirectory $work $primaryFailure }
+            """, "tools/test-theme-item-generation.ps1");
+        Assert.Contains("PASS", RunPowerShell(script), StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void ThemeItemRunnerKeepsIsolatedBoundedSharedHarnessAndNoRuntimeLaunch()
+    {
+        var source = File.ReadAllText(Path.Combine(FindRepositoryRoot(), "tools/test-theme-item-generation.ps1"));
+        Assert.Contains("param()", source, StringComparison.Ordinal);
+        Assert.Contains("FunctionDefinitionAst", source, StringComparison.Ordinal);
+        Assert.Contains("Invoke-CathedralPopulationOwnedProcess", source, StringComparison.Ordinal);
+        Assert.Contains("where cl.exe && where rc.exe && where mt.exe", source, StringComparison.Ordinal);
+        Assert.Contains("Independent native captures differ", source, StringComparison.Ordinal);
+        Assert.Contains("--explicit only --fail-skips on", source, StringComparison.Ordinal);
+        Assert.Contains("Restore-CathedralOracleEnvironmentVariable 'GODEVILUTION_THEME_ITEM_ORACLE_DIRECTORY' $themePreviousDirectory", source, StringComparison.Ordinal);
+        Assert.DoesNotContain("run-godot-client", source, StringComparison.Ordinal);
+        Assert.DoesNotContain("run-authoritative-client", source, StringComparison.Ordinal);
+        Assert.DoesNotContain("Start-Process", source, StringComparison.Ordinal);
+    }
+
     public static bool HasPowerShellCore => OperatingSystem.IsWindows() && FindPowerShellCore() is not null;
 
     [Fact]

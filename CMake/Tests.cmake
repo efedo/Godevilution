@@ -32,6 +32,7 @@ set(tests
   effects_test
   inventory_test
   items_test
+  theme_item_generation_test
   math_test
   missiles_test
   monster_test
@@ -123,6 +124,15 @@ foreach(test_target ${tests} ${standalone_tests} ${benchmarks})
     target_link_libraries(${test_target} PUBLIC ${GPERFTOOLS_LIBRARIES})
   endif()
 endforeach()
+
+if(APPLE)
+  add_custom_target(theme_item_generation_test_resources
+    DEPENDS "${PROJECT_SOURCE_DIR}/assets/fonts/12-00.clx")
+else()
+  add_custom_target(theme_item_generation_test_resources
+    DEPENDS "${DEVILUTIONX_ASSETS_OUTPUT_DIRECTORY}/fonts/12-00.clx")
+endif()
+add_dependencies(theme_item_generation_test theme_item_generation_test_resources)
 
 if(DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT)
   foreach(server_backed_test server_backed_client_test server_backed_configuration_test server_backed_compatibility_test server_backed_native_presentation_test server_backed_player_snapshot_test server_backed_session_test server_backed_stash_test server_backed_vendor_command_test server_backed_vendor_snapshot_test server_backed_vendor_state_test server_backed_vendor_ui_test)

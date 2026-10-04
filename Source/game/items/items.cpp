@@ -3391,6 +3391,18 @@ void GetItemAttrs(Item &item, _item_indexes itemData, int lvl)
 	SetPlrHandGoldCurs(item);
 }
 
+#ifdef BUILD_TESTING
+std::optional<int> GetItemAnimationLengthForTesting(int cursor)
+{
+	if (cursor < 0 || static_cast<size_t>(cursor) >= std::size(ItemCAnimTbl))
+		return std::nullopt;
+	const int index = ItemCAnimTbl[cursor];
+	if (index < 0 || static_cast<size_t>(index) >= std::size(ItemAnimLs))
+		return std::nullopt;
+	return ItemAnimLs[index];
+}
+#endif
+
 void SetupItem(Item &item)
 {
 	item.setNewAnimation(MyPlayer != nullptr && MyPlayer->pLvlLoad == 0);
