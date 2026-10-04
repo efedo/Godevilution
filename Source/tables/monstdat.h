@@ -353,7 +353,7 @@ struct UniqueMonsterData {
 
 extern DVL_API_FOR_TEST std::vector<MonsterData> MonstersData;
 extern const _monster_id MonstConvTbl[];
-extern std::vector<UniqueMonsterData> UniqueMonstersData;
+extern DVL_API_FOR_TEST std::vector<UniqueMonsterData> UniqueMonstersData;
 
 // ---------------------------------------------------------------------------
 // AI registry — replaces AiProc[] hardcoded function-pointer table.

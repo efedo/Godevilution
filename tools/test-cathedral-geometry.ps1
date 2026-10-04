@@ -13,13 +13,16 @@
     monsters, bestiary, player context, and RNG boundaries without managed parity.
     -CathedralPopulationParity additionally captures independent phase inputs
     and compares the managed initial-object algorithm with all sixteen cases.
+    -CathedralEncounters extends that composed comparison through InitMonsters,
+    retaining a separate full-state pre/post sidecar and raw unique metadata.
 #>
 [CmdletBinding()]
 param(
     [switch]$CathedralDepths,
     [switch]$CathedralDoors,
     [switch]$CathedralPopulation,
-    [switch]$CathedralPopulationParity)
+    [switch]$CathedralPopulationParity,
+    [switch]$CathedralEncounters)
 
 $ErrorActionPreference = 'Stop'
 $repositoryRoot = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot '..')).Path
@@ -820,6 +823,16 @@ function Quote-CathedralNativeArgument([string]$Value) {
     [void]$builder.Append('"'); return $builder.ToString()
 }
 
+function Restore-CathedralOracleEnvironmentVariable([string]$Name, $PreviousValue) {
+    # Preserve absent versus empty values on PowerShell 7/.NET 9+; binding a
+    # normal $null to SetEnvironmentVariable's string parameter makes it empty.
+    if ($null -eq $PreviousValue) {
+        [Environment]::SetEnvironmentVariable($Name, [NullString]::Value, 'Process')
+    } else {
+        [Environment]::SetEnvironmentVariable($Name, $PreviousValue, 'Process')
+    }
+}
+
 function Add-CathedralPopulationCleanupError([System.Collections.IDictionary]$Outcome, [string]$Message) {
     if ([string]::IsNullOrWhiteSpace($Message)) { return }
     if ([string]::IsNullOrWhiteSpace([string]$Outcome.CleanupError)) { $Outcome.CleanupError = $Message }
@@ -956,6 +969,38 @@ function Get-CathedralPopulationInputArtifact([string]$EvidenceRoot, [switch]$Re
     }
 }
 
+function Get-CathedralEncounterInputArtifact([string]$EvidenceRoot) {
+    $root = Get-Item -LiteralPath $EvidenceRoot -Force -ErrorAction Stop
+    if (-not $root.PSIsContainer -or ($root.Attributes -band [IO.FileAttributes]::ReparsePoint) -ne 0) {
+        throw 'The encounter input root must be a regular directory.'
+    }
+    $children = @(Get-ChildItem -LiteralPath $EvidenceRoot -Force)
+    if ($children.Count -ne 1 -or $children[0].Name -cne 'native-encounter-inputs.json' -or
+        $children[0].PSIsContainer -or ($children[0].Attributes -band [IO.FileAttributes]::ReparsePoint) -ne 0 -or
+        $children[0].Length -le 0 -or $children[0].Length -gt 33554432) {
+        throw 'Encounter parity requires exactly one nonempty regular native-encounter-inputs.json artifact.'
+    }
+    $metadata = [IO.File]::ReadAllText($children[0].FullName) | ConvertFrom-Json -ErrorAction Stop
+    Assert-CathedralPopulationExactProperties $metadata @('format','version','policy','caseCount','uniqueDefinitions','cases') 'encounter metadata'
+    Assert-CathedralPopulationString $metadata.format 'godevilution-cathedral-l1-encounters' 'encounter format'
+    Assert-CathedralPopulationInteger $metadata.version 1 1 'encounter version'
+    Assert-CathedralPopulationString $metadata.policy 'ordinary-original-diablo-post-initial-objects-initmonsters' 'encounter policy'
+    Assert-CathedralPopulationInteger $metadata.caseCount 16 16 'encounter case count'
+    Assert-CathedralPopulationArray $metadata.uniqueDefinitions 100 'encounter unique definitions'
+    Assert-CathedralPopulationArray $metadata.cases 16 'encounter cases'
+    $hasher = [Security.Cryptography.SHA256]::Create(); $stream = $null
+    try { $stream = [IO.File]::OpenRead($children[0].FullName); $hash = [BitConverter]::ToString($hasher.ComputeHash($stream)).Replace('-', '').ToLowerInvariant() }
+    finally { if ($null -ne $stream) { $stream.Dispose() }; $hasher.Dispose() }
+    [pscustomobject]@{ Name = $children[0].Name; Bytes = $children[0].Length; Sha256 = $hash }
+}
+
+if ($CathedralEncounters) {
+    if ($CathedralPopulationParity -or $CathedralPopulation -or $CathedralDoors -or $CathedralDepths) {
+        throw '-CathedralEncounters and all other Cathedral modes are mutually exclusive.'
+    }
+    $CathedralPopulationParity = $true
+}
+
 if ($CathedralPopulationParity) {
     if ($CathedralPopulation -or $CathedralDoors -or $CathedralDepths) {
         throw '-CathedralPopulationParity and all other Cathedral modes are mutually exclusive.'
@@ -974,6 +1019,7 @@ if ($CathedralDoors -and $CathedralDepths) {
 if ($CathedralPopulation) {
     $oracleDirectoryVariable = 'GODEVILUTION_CATHEDRAL_POPULATION_ORACLE_DIRECTORY'
     $inputDirectoryVariable = 'GODEVILUTION_CATHEDRAL_POPULATION_INPUT_DIRECTORY'
+    $encounterDirectoryVariable = 'GODEVILUTION_CATHEDRAL_ENCOUNTER_ORACLE_DIRECTORY'
     $nativeBuild = Find-CathedralOracleBuild $repositoryRoot
     $evidenceRoot = Join-Path ([IO.Path]::GetTempPath()) ('Godevilution-Cathedral-Population-Oracle-' + [guid]::NewGuid().ToString('N'))
     if (Test-Path -LiteralPath $evidenceRoot) { throw 'Cathedral population verification requires a fresh evidence directory.' }
@@ -984,12 +1030,13 @@ if ($CathedralPopulation) {
     New-Item -ItemType Directory -Path $evidenceRoot | Out-Null
     $previousOracleDirectory = [Environment]::GetEnvironmentVariable($oracleDirectoryVariable, 'Process')
     $previousInputDirectory = [Environment]::GetEnvironmentVariable($inputDirectoryVariable, 'Process')
+    $previousEncounterDirectory = [Environment]::GetEnvironmentVariable($encounterDirectoryVariable, 'Process')
     $record = [ordered]@{
         Passed = $false
         StartedUtc = [DateTime]::UtcNow.ToString('O')
         EndedUtc = $null
         NativeBuild = $nativeBuild.Directory
-        Scope = if ($CathedralPopulationParity) { 'native-cathedral-l1-prerequisites-initial-objects' } else { 'native-cathedral-l1-object-population' }
+        Scope = if ($CathedralEncounters) { 'native-cathedral-l1-composed-initmonsters' } elseif ($CathedralPopulationParity) { 'native-cathedral-l1-prerequisites-initial-objects' } else { 'native-cathedral-l1-object-population' }
         NativeTestName = 'NativeObjectPopulationLocalAssetOracle'
         Deterministic = $false
         Captures = @()
@@ -997,6 +1044,8 @@ if ($CathedralPopulation) {
         CleanupError = $null
         ManagedParity = [bool]$CathedralPopulationParity
         PrerequisitesParity = [bool]$CathedralPopulationParity
+        EncounterParity = [bool]$CathedralEncounters
+        EncounterManagedOutcome = $null
         ManagedOutcome = $null
         Stage = 'native-build'
     }
@@ -1035,9 +1084,14 @@ if ($CathedralPopulation) {
             $artifactRoot = Join-Path $captureRoot 'artifacts'
             New-Item -ItemType Directory -Path $artifactRoot | Out-Null
             $inputRoot = $null
+            $encounterRoot = $null
             if ($CathedralPopulationParity) {
                 $inputRoot = Join-Path $captureRoot 'inputs'
                 New-Item -ItemType Directory -Path $inputRoot | Out-Null
+            }
+            if ($CathedralEncounters) {
+                $encounterRoot = Join-Path $captureRoot 'encounters'
+                New-Item -ItemType Directory -Path $encounterRoot | Out-Null
             }
             $reportPath = Join-Path $captureRoot 'native-tests.json'
             $logPath = Join-Path $captureRoot 'native-tests.log'
@@ -1047,6 +1101,8 @@ if ($CathedralPopulation) {
                 ArtifactDirectory = $artifactRoot
                 InputDirectory = $inputRoot
                 InputArtifact = $null
+                EncounterDirectory = $encounterRoot
+                EncounterArtifact = $null
                 Report = $reportPath
                 Log = $logPath
                 NativePid = $null
@@ -1061,6 +1117,7 @@ if ($CathedralPopulation) {
             }
             [Environment]::SetEnvironmentVariable($oracleDirectoryVariable, $artifactRoot, 'Process')
             [Environment]::SetEnvironmentVariable($inputDirectoryVariable, $inputRoot, 'Process')
+            [Environment]::SetEnvironmentVariable($encounterDirectoryVariable, $encounterRoot, 'Process')
             $record.Stage = 'native-capture'
             $outcome = Invoke-CathedralPopulationNativeOracle $nativeExecutable $reportPath $logPath
             $record.Captures[$captureIndex].NativePid = $outcome.Pid
@@ -1082,6 +1139,9 @@ if ($CathedralPopulation) {
             if ($CathedralPopulationParity) {
                 $record.Captures[$captureIndex].InputArtifact = Get-CathedralPopulationInputArtifact $inputRoot -RequirePrerequisites
             }
+            if ($CathedralEncounters) {
+                $record.Captures[$captureIndex].EncounterArtifact = Get-CathedralEncounterInputArtifact $encounterRoot
+            }
         }
         $record.Stage = 'repeat-validation'
         Assert-CathedralRepeatArtifacts $record.Captures[0].Artifacts $record.Captures[1].Artifacts 17
@@ -1097,6 +1157,16 @@ if ($CathedralPopulation) {
             if ($record.ManagedOutcome.ExitCode -ne 0) { throw "The managed initial-object oracle failed with exit code $($record.ManagedOutcome.ExitCode)." }
             Assert-CathedralManagedReport $managedLog 16
         }
+        if ($CathedralEncounters) {
+            Assert-CathedralRepeatArtifacts @($record.Captures[0].EncounterArtifact) @($record.Captures[1].EncounterArtifact) 1
+            [Environment]::SetEnvironmentVariable($encounterDirectoryVariable, $record.Captures[0].EncounterDirectory, 'Process')
+            $record.Stage = 'managed-encounter-comparison'
+            $encounterLog = Join-Path $evidenceRoot 'managed-encounter-tests.log'
+            $record.EncounterManagedOutcome = Invoke-CathedralPopulationOwnedProcess $managedExecutable '--no-ansi --filter-method *AuthoritativeCathedralEncounterNativeOracleTests.EncounterMatchesNativeOracle --explicit only --fail-skips on' $encounterLog 180000
+            if ($null -ne $record.EncounterManagedOutcome.Error) { throw $record.EncounterManagedOutcome.Error }
+            if ($record.EncounterManagedOutcome.ExitCode -ne 0) { throw "The managed encounter oracle failed with exit code $($record.EncounterManagedOutcome.ExitCode)." }
+            Assert-CathedralManagedReport $encounterLog 16
+        }
         $record.Deterministic = $true
         $record.Passed = $true
         $record.Stage = 'completed'
@@ -1105,10 +1175,12 @@ if ($CathedralPopulation) {
         $record.Error = $_.Exception.Message
         if ($record.Stage -eq 'native-capture' -and $record.Captures.Count -gt 0) { $record.Captures[-1].Error = $record.Error }
     } finally {
-        try { [Environment]::SetEnvironmentVariable($oracleDirectoryVariable, $previousOracleDirectory, 'Process') }
+        try { Restore-CathedralOracleEnvironmentVariable $oracleDirectoryVariable $previousOracleDirectory }
         catch { Add-CathedralPopulationCleanupError $record "Could not restore population output environment: $($_.Exception.Message)" }
-        try { [Environment]::SetEnvironmentVariable($inputDirectoryVariable, $previousInputDirectory, 'Process') }
+        try { Restore-CathedralOracleEnvironmentVariable $inputDirectoryVariable $previousInputDirectory }
         catch { Add-CathedralPopulationCleanupError $record "Could not restore population input environment: $($_.Exception.Message)" }
+        try { Restore-CathedralOracleEnvironmentVariable $encounterDirectoryVariable $previousEncounterDirectory }
+        catch { Add-CathedralPopulationCleanupError $record "Could not restore encounter input environment: $($_.Exception.Message)" }
         try { if ($locationPushed) { Pop-Location } }
         catch { Add-CathedralPopulationCleanupError $record "Could not restore population working directory: $($_.Exception.Message)" }
         $record.EndedUtc = [DateTime]::UtcNow.ToString('O')
@@ -1124,6 +1196,10 @@ if ($CathedralPopulation) {
         Write-Warning "Could not retain the Cathedral population result record: $($_.Exception.Message)"
     }
     if ($null -ne $primaryError) { throw $primaryError }
+    if ($CathedralEncounters) {
+        Write-Host "PASS: sixteen composed native/managed Cathedral InitMonsters comparisons and repeated 17+1+1 captures. Evidence: $evidenceRoot"
+        return
+    }
     if ($CathedralPopulationParity) {
         Write-Host "PASS: sixteen native/managed Cathedral prerequisite and initial-object comparisons and repeated native captures. Evidence: $evidenceRoot"
         return
@@ -1215,7 +1291,7 @@ if ($CathedralDoors) {
         }
     } finally {
         try {
-            [Environment]::SetEnvironmentVariable($oracleDirectoryVariable, $previousOracleDirectory, 'Process')
+            Restore-CathedralOracleEnvironmentVariable $oracleDirectoryVariable $previousOracleDirectory
         } finally {
             if ($locationPushed) { Pop-Location }
         }
@@ -1295,7 +1371,7 @@ try {
     $primaryError = $_
     $record.Error = $_.Exception.Message
 } finally {
-    [Environment]::SetEnvironmentVariable($oracleDirectoryVariable, $previousOracleDirectory, 'Process')
+    Restore-CathedralOracleEnvironmentVariable $oracleDirectoryVariable $previousOracleDirectory
     Pop-Location
     $record.EndedUtc = [DateTime]::UtcNow.ToString('O')
 }

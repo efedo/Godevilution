@@ -1,6 +1,6 @@
 # Godevilution Completion Plan
 
-Plan date: 2026-10-03. Semantic player presentation follows client-pack baseline
+Plan date: 2026-10-04. Semantic player presentation follows client-pack baseline
 `d0f748305`; results and retained failures are in migration status.
 
 This is the active delivery plan. The [architecture](csharp-authoritative-server-migration.md)
@@ -470,13 +470,19 @@ this evidence. A sample art pack does not satisfy M4's full presentation gate.
    `InitThemes` and `HoldThemeRooms`, using actual pre-theme inputs and managed
    selected types/reservations rather than native expected selections. Preserve
    the earlier version-1 initial-object comparison and successful wall traps,
-   exact pool/RNG checks and population-stream reseed. Next port final
-   encounters/theme objects and compile the validated external prerequisites
-   before activating a separately identified opt-in
-   populated server profile. Never use expected final state as production input. Do not
-   substitute this phase for final encounter
-   placement or the later `CreateThemeRooms` phase, and require ordinary Godot
-   interaction plus cold restore before claiming playable native population.
+   exact pool/RNG checks and population-stream reseed. The separate
+   `-CathedralEncounters` route extends the composed comparison through ordinary
+   depths 1-4 `InitMonsters`: complete active/unused 200-slot state, target count,
+   signed refs, RNG, trigger visibility/transparency and indexed light history.
+   Fresh pool clearing uses its recorded pre-clear seed, not the population
+   reseed or native expected inactive records. A strict external raw
+   monster/object TSV catalog loader is available; it is not a complete pack
+   compiler. Next port `InitItems` and `CreateThemeRooms`, compile unique metadata
+   and the validated external prerequisites, then activate a separately
+   identified opt-in populated server profile. Never use expected final state
+   as production input. Preserve the narrower earlier oracles and require
+   ordinary Godot interaction plus cold restore before claiming playable native
+   population.
    Static light collision is a separate live object channel, not a new SOL,
    missile or vision wall. Full light animation, rendering and RNG population,
    quest-dependent map replacement and campaign activation remain unqualified.

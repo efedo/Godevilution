@@ -3596,6 +3596,13 @@ tl::expected<void, std::string> InitMonsters()
 	return InitAllMonsterGFX();
 }
 
+#ifdef BUILD_TESTING
+size_t MonsterPopulationTargetForTesting()
+{
+	return totalmonsters;
+}
+#endif
+
 tl::expected<void, std::string> SetMapMonsters(const uint16_t *dunData, Point startPosition)
 {
 	RETURN_IF_ERROR(AddMonsterType(MT_GOLEM, PLACE_SPECIAL));

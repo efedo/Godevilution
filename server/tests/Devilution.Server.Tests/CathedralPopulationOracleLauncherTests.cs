@@ -8,6 +8,53 @@ namespace Devilution.Server.Tests;
 
 public sealed class CathedralPopulationOracleLauncherTests
 {
+    public static bool HasPowerShellCore => OperatingSystem.IsWindows() && FindPowerShellCore() is not null;
+
+    [Fact]
+    public void RestoresAbsentEmptyAndPopulatedEnvironmentInWindowsPowerShell()
+    {
+        if (OperatingSystem.IsWindows())
+            VerifyEnvironmentRestoration("powershell.exe");
+    }
+
+    [Fact(SkipUnless = nameof(HasPowerShellCore), Skip = "Requires an available Windows PowerShell 7 runtime.")]
+    public void RestoresAbsentEmptyAndPopulatedEnvironmentInPowerShellCore()
+        => VerifyEnvironmentRestoration(FindPowerShellCore()!);
+
+    private static string? FindPowerShellCore()
+        => (Environment.GetEnvironmentVariable("PATH") ?? "")
+            .Split(Path.PathSeparator, StringSplitOptions.RemoveEmptyEntries)
+            .Select(directory => Path.Combine(directory.Trim('"'), "pwsh.exe"))
+            .FirstOrDefault(File.Exists);
+
+    private static void VerifyEnvironmentRestoration(string executable)
+    {
+        var launcher = File.ReadAllText(Path.Combine(FindRepositoryRoot(), "tools", "test-cathedral-geometry.ps1"));
+        Assert.Contains("Restore-CathedralOracleEnvironmentVariable $oracleDirectoryVariable $previousOracleDirectory", launcher, StringComparison.Ordinal);
+        Assert.Contains("Restore-CathedralOracleEnvironmentVariable $inputDirectoryVariable $previousInputDirectory", launcher, StringComparison.Ordinal);
+        Assert.Contains("Restore-CathedralOracleEnvironmentVariable $encounterDirectoryVariable $previousEncounterDirectory", launcher, StringComparison.Ordinal);
+        var script = BuildPowerShellHarness(["Restore-CathedralOracleEnvironmentVariable"],
+            """
+            $probeName = 'GODEVILUTION_ORACLE_RESTORE_TEST_' + [guid]::NewGuid().ToString('N')
+            try {
+                foreach ($original in @($null, '', 'retained-value')) {
+                    if ($null -eq $original) {
+                        [Environment]::SetEnvironmentVariable($probeName, [NullString]::Value, 'Process')
+                    } else {
+                        [Environment]::SetEnvironmentVariable($probeName, $original, 'Process')
+                    }
+                    $before = [Environment]::GetEnvironmentVariable($probeName, 'Process')
+                    if ($null -eq $original -and $null -ne $before) { throw 'An absent variable was made empty.' }
+                    [Environment]::SetEnvironmentVariable($probeName, 'mutated-value', 'Process')
+                    Restore-CathedralOracleEnvironmentVariable $probeName $before
+                    if ([Environment]::GetEnvironmentVariable($probeName, 'Process') -cne $before) { throw 'Original environment state was not restored exactly.' }
+                }
+                Write-Output 'PASS'
+            } finally { Restore-CathedralOracleEnvironmentVariable $probeName $null }
+            """);
+        Assert.Contains("PASS", RunPowerShell(script, executable), StringComparison.Ordinal);
+    }
+
     [Fact]
     public void PopulationModeIsExclusiveAndKeepsExistingModes()
     {
@@ -19,6 +66,10 @@ public sealed class CathedralPopulationOracleLauncherTests
         Assert.Contains("[switch]$CathedralDoors", launcher, StringComparison.Ordinal);
         Assert.Contains("[switch]$CathedralPopulation", launcher, StringComparison.Ordinal);
         Assert.Contains("[switch]$CathedralPopulationParity", launcher, StringComparison.Ordinal);
+        Assert.Contains("[switch]$CathedralEncounters", launcher, StringComparison.Ordinal);
+        Assert.Contains("--filter-method *AuthoritativeCathedralEncounterNativeOracleTests.EncounterMatchesNativeOracle --explicit only --fail-skips on", launcher, StringComparison.Ordinal);
+        Assert.Contains("$previousEncounterDirectory", launcher, StringComparison.Ordinal);
+        Assert.Contains("Assert-CathedralManagedReport $encounterLog 16", launcher, StringComparison.Ordinal);
         Assert.Contains("$CathedralPopulation -or $CathedralDoors -or $CathedralDepths", launcher, StringComparison.Ordinal);
         Assert.Contains("--filter-class *AuthoritativeCathedralInitialObjectNativeOracleTests --explicit only --fail-skips on", launcher, StringComparison.Ordinal);
         Assert.Contains("$CathedralPopulation -and ($CathedralDoors -or $CathedralDepths)", launcher, StringComparison.Ordinal);
@@ -44,9 +95,70 @@ public sealed class CathedralPopulationOracleLauncherTests
                 try { $incompatibleOutput = (& powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass -File $launcherPath -CathedralPopulationParity $incompatibleFlag 2>&1 | Out-String) } finally { $ErrorActionPreference = $savedErrorActionPreference }
                 if ($LASTEXITCODE -eq 0 -or $incompatibleOutput -notmatch 'mutually exclusive') { throw 'Population parity accepted an incompatible mode.' }
             }
+            foreach ($incompatibleFlag in @('-CathedralPopulationParity','-CathedralPopulation','-CathedralDoors','-CathedralDepths')) {
+                $ErrorActionPreference = 'Continue'
+                try { $incompatibleOutput = (& powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass -File $launcherPath -CathedralEncounters $incompatibleFlag 2>&1 | Out-String) } finally { $ErrorActionPreference = $savedErrorActionPreference }
+                if ($LASTEXITCODE -eq 0 -or $incompatibleOutput -notmatch 'mutually exclusive') { throw 'Encounter parity accepted an incompatible mode.' }
+            }
             Write-Output 'PASS'
             """);
 
+        Assert.Contains("PASS", RunPowerShell(script), StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void EncounterArtifactHeaderRejectsCoercionsExtraFilesAndIncompleteScopes()
+    {
+        if (!OperatingSystem.IsWindows())
+            return;
+
+        var script = BuildPowerShellHarness(
+            ["Assert-CathedralPopulationRequiredProperty", "Assert-CathedralPopulationExactProperties",
+             "Assert-CathedralPopulationInteger", "Assert-CathedralPopulationString",
+             "Assert-CathedralPopulationArray", "Get-CathedralEncounterInputArtifact"],
+            """
+            $work = Join-Path ([IO.Path]::GetTempPath()) ('Godevilution-PopulationValidator-' + [guid]::NewGuid().ToString('N'))
+            New-Item -ItemType Directory -Path $work | Out-Null
+            $primaryFailure = $null
+            $path = Join-Path $work 'native-encounter-inputs.json'
+            function Write-Header($value) { [IO.File]::WriteAllText($path, ($value | ConvertTo-Json -Depth 5)) }
+            function Expect-Rejected([scriptblock]$action) {
+                $rejected = $false; try { & $action | Out-Null } catch { $rejected = $true }
+                if (-not $rejected) { throw 'Malformed encounter artifact header was accepted.' }
+            }
+            try {
+                $valid = [ordered]@{ format = 'godevilution-cathedral-l1-encounters'; version = 1;
+                    policy = 'ordinary-original-diablo-post-initial-objects-initmonsters'; caseCount = 16;
+                    uniqueDefinitions = @(1..100 | ForEach-Object { @{} }); cases = @(1..16 | ForEach-Object { @{} }) }
+                Write-Header $valid
+                $artifact = Get-CathedralEncounterInputArtifact $work
+                if ($artifact.Name -cne 'native-encounter-inputs.json' -or $artifact.Bytes -le 0 -or $artifact.Sha256 -notmatch '^[0-9a-f]{64}$') { throw 'Invalid encounter artifact identity.' }
+                foreach ($mutation in @('stringVersion','floatCount','shortUnique','shortCases','extraProperty','wrongPolicy')) {
+                    $bad = [ordered]@{}; foreach ($entry in $valid.GetEnumerator()) { $bad[$entry.Key] = $entry.Value }
+                    switch ($mutation) {
+                        'stringVersion' { $bad.version = '1' }
+                        'floatCount' { $bad.caseCount = 16.0 }
+                        'shortUnique' { $bad.uniqueDefinitions = @($valid.uniqueDefinitions | Select-Object -First 99) }
+                        'shortCases' { $bad.cases = @($valid.cases | Select-Object -First 15) }
+                        'extraProperty' { $bad['extra'] = 1 }
+                        'wrongPolicy' { $bad.policy = 'final-population' }
+                    }
+                    if ($mutation -eq 'floatCount') {
+                        [IO.File]::WriteAllText($path, (($bad | ConvertTo-Json -Depth 5) -replace '"caseCount":\s*16(?:\.0)?,', '"caseCount":16.0,'))
+                    } else { Write-Header $bad }
+                    Expect-Rejected { Get-CathedralEncounterInputArtifact $work }
+                }
+                Write-Header $valid
+                $extraPath = Join-Path $work 'unexpected.json'
+                [IO.File]::WriteAllText($extraPath, '{}')
+                Expect-Rejected { Get-CathedralEncounterInputArtifact $work }
+                Remove-Item -LiteralPath $extraPath
+                [IO.File]::WriteAllText($path, '')
+                Expect-Rejected { Get-CathedralEncounterInputArtifact $work }
+                Write-Output 'PASS'
+            } catch { $primaryFailure = $_; throw }
+            finally { Remove-PopulationTestDirectory $work $primaryFailure }
+            """);
         Assert.Contains("PASS", RunPowerShell(script), StringComparison.Ordinal);
     }
 
@@ -357,7 +469,7 @@ public sealed class CathedralPopulationOracleLauncherTests
         return string.Join("\r\n", lines) + "\r\n";
     }
 
-    private static string RunPowerShell(string script)
+    private static string RunPowerShell(string script, string executable = "powershell.exe")
     {
         var scriptPath = Path.Combine(Path.GetTempPath(), $"godevilution-population-test-{Guid.NewGuid():N}.ps1");
         File.WriteAllText(scriptPath, script, new UTF8Encoding(encoderShouldEmitUTF8Identifier: false));
@@ -371,7 +483,7 @@ public sealed class CathedralPopulationOracleLauncherTests
         {
             var startInfo = new ProcessStartInfo
             {
-                FileName = "powershell.exe",
+                FileName = executable,
                 Arguments = $"-NoProfile -NonInteractive -ExecutionPolicy Bypass -File \"{scriptPath}\"",
                 UseShellExecute = false,
                 RedirectStandardOutput = true,

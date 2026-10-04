@@ -50,6 +50,9 @@ namespace {
 
 constexpr char PopulationOracleDirectoryVariable[] = "GODEVILUTION_CATHEDRAL_POPULATION_ORACLE_DIRECTORY";
 constexpr char PopulationInputDirectoryVariable[] = "GODEVILUTION_CATHEDRAL_POPULATION_INPUT_DIRECTORY";
+constexpr char EncounterInputDirectoryVariable[] = "GODEVILUTION_CATHEDRAL_ENCOUNTER_ORACLE_DIRECTORY";
+constexpr char EncounterInputFormat[] = "godevilution-cathedral-l1-encounters";
+constexpr char EncounterInputPolicy[] = "ordinary-original-diablo-post-initial-objects-initmonsters";
 constexpr char PopulationOracleFormat[] = "godevilution-cathedral-l1-population-oracle";
 constexpr uint32_t PopulationOracleVersion = 1;
 constexpr char PopulationOraclePolicy[] = "no-quest-original-diablo-initgolems-initobjects";
@@ -226,6 +229,37 @@ struct PopulationCapture {
 	std::vector<uint16_t> finalPieces;
 	std::vector<uint8_t> finalSpecial;
 	std::vector<uint8_t> finalTransparency;
+};
+
+// This separate opt-in phase preserves the legacy reference and V2 input bytes.
+struct NativeEncounterState {
+	size_t totalMonsters = 0;
+	uint32_t randomState = 0;
+	int activeMonsterCount = 0;
+	std::vector<int> activeMonsterIds;
+	std::vector<NativeMonsterCapture> monsters;
+	std::vector<int> monsterTileRefs;
+	std::vector<int> playerTileRefs;
+	std::vector<int> objectTileRefs;
+	std::vector<uint8_t> tileFlags;
+	std::vector<bool> visibleTransparencyRegions;
+	std::vector<int> activeLightSlots;
+	int activeLightCount = 0;
+	bool updateLighting = false;
+	bool disableLighting = false;
+	std::array<Light, MAXLIGHTS> lights {};
+};
+
+struct NativeEncounterCapture {
+	uint32_t preClearRandomState = 0;
+	uint32_t postClearRandomState = 0;
+	int depth = 0;
+	uint32_t inputSeed = 0;
+	lvl_entry entry = ENTRY_MAIN;
+	int densityDivisor = 0;
+	std::vector<uint8_t> preThemeTileFlags;
+	NativeEncounterState preState;
+	NativeEncounterState expectedState;
 };
 
 struct NativeStateGuard {
@@ -542,6 +576,47 @@ NativeMonsterCapture CaptureMonster(int slot, const Monster &monster)
 	};
 }
 
+std::vector<uint8_t> CaptureTileFlags()
+{
+	std::vector<uint8_t> flags;
+	flags.reserve(MAXDUNX * MAXDUNY);
+	for (int y = 0; y < MAXDUNY; y++)
+		for (int x = 0; x < MAXDUNX; x++)
+			flags.push_back(static_cast<uint8_t>(tileAt(x, y).flags()));
+	return flags;
+}
+
+NativeEncounterState CaptureEncounterState()
+{
+	NativeEncounterState state;
+	state.totalMonsters = MonsterPopulationTargetForTesting();
+	state.randomState = GetLCGEngineState();
+	state.activeMonsterCount = static_cast<int>(MonsterPoolAdapter::ActiveMonsterCountValue());
+	for (const unsigned id : MonsterPoolAdapter::ActiveMonsterIds())
+		state.activeMonsterIds.push_back(static_cast<int>(id));
+	for (int slot = 0; slot < MaxMonsters; slot++)
+		state.monsters.push_back(CaptureMonster(slot, Monsters[slot]));
+	for (int y = 0; y < MAXDUNY; y++) {
+		for (int x = 0; x < MAXDUNX; x++) {
+			state.monsterTileRefs.push_back(tileAt(x, y).monster());
+			state.playerTileRefs.push_back(tileAt(x, y).player());
+			state.objectTileRefs.push_back(tileAt(x, y).object());
+		}
+	}
+	state.tileFlags = CaptureTileFlags();
+	for (const bool visible : visibleTransparencyRegions())
+		state.visibleTransparencyRegions.push_back(visible);
+	for (const uint8_t slot : CurrentLightManager.activeLights_)
+		state.activeLightSlots.push_back(slot);
+	state.activeLightCount = CurrentLightManager.activeLightCount_;
+	state.updateLighting = CurrentLightManager.updateLighting_;
+#ifdef _DEBUG
+	state.disableLighting = CurrentLightManager.disableLighting_;
+#endif
+	std::copy(std::begin(CurrentLightManager.lights_), std::end(CurrentLightManager.lights_), state.lights.begin());
+	return state;
+}
+
 std::vector<uint32_t> CapturePopulatedCells()
 {
 	std::vector<uint32_t> cells;
@@ -795,7 +870,8 @@ void PrepareGameAssets(std::string &error)
 	}
 }
 
-PopulationCapture CapturePopulation(int depth, uint32_t seed, lvl_entry entry, bool captureInitialInputs)
+PopulationCapture CapturePopulation(int depth, uint32_t seed, lvl_entry entry, bool captureInitialInputs,
+    NativeEncounterCapture *encounter = nullptr)
 {
 	ResetNativePools();
 	currentLevel().setId(Level::create(LevelId { .levelNum = static_cast<uint8_t>(depth), .type = DTYPE_CATHEDRAL }).id());
@@ -864,9 +940,20 @@ PopulationCapture CapturePopulation(int depth, uint32_t seed, lvl_entry entry, b
 		capture.solProperties.push_back(static_cast<uint8_t>(tileProperties()[piece]));
 
 	InitializeMonsterPool();
+	if (encounter != nullptr)
+		encounter->preClearRandomState = GetLCGEngineState();
 	InitLevelMonsters();
+	if (encounter != nullptr)
+		encounter->postClearRandomState = GetLCGEngineState();
 	DungeonSeeds[depth] = seed;
 	SetRndSeed(DungeonSeeds[depth]);
+	if (encounter != nullptr) {
+		encounter->depth = depth;
+		encounter->inputSeed = seed;
+		encounter->entry = entry;
+		encounter->densityDivisor = GetMonsterDensityDivisor(depth);
+		encounter->preThemeTileFlags = CaptureTileFlags();
+	}
 	if (captureInitialInputs) {
 		capture.preThemeNextTransparency = static_cast<int>(nextTransparencyValue());
 		capture.preThemePopulatedCells = CapturePopulatedFlags();
@@ -986,7 +1073,139 @@ PopulationCapture CapturePopulation(int depth, uint32_t seed, lvl_entry entry, b
 	for (int y = 0; y < MAXDUNY; y++)
 		for (int x = 0; x < MAXDUNX; x++)
 			capture.tileObjectRefs.push_back(tileAt(x, y).object());
+	if (encounter != nullptr) {
+		encounter->preState = CaptureEncounterState();
+		if (auto result = InitMonsters(); !result.has_value())
+			throw std::runtime_error(result.error());
+		encounter->expectedState = CaptureEncounterState();
+		if (encounter->expectedState.objectTileRefs != encounter->preState.objectTileRefs
+		    || encounter->expectedState.playerTileRefs != encounter->preState.playerTileRefs)
+			throw std::runtime_error("native InitMonsters mutated unrelated occupancy channels");
+	}
 	return capture;
+}
+
+void WriteCompleteEncounterMonster(std::ostream &stream, const NativeMonsterCapture &monster)
+{
+	std::ostringstream original;
+	WriteMonster(original, monster);
+	const std::string fields = original.str();
+	stream << fields.substr(0, fields.size() - 1) << ",\"temp\":";
+	WritePoint(stream, monster.temp);
+	stream << ",\"golemToHit\":" << monster.golemToHit
+	       << ",\"reducePlayerStrength\":" << monster.reducePlayerStrength
+	       << ",\"reducePlayerMagic\":" << monster.reducePlayerMagic
+	       << ",\"reducePlayerDexterity\":" << monster.reducePlayerDexterity
+	       << ",\"reducePlayerVitality\":" << monster.reducePlayerVitality
+	       << ",\"reducePlayerMaxHP\":" << monster.reducePlayerMaxHP
+	       << ",\"reducePlayerMaxMana\":" << monster.reducePlayerMaxMana << '}';
+}
+
+void WriteEncounterState(std::ostream &stream, const NativeEncounterState &state)
+{
+	stream << "{\"randomState\":" << state.randomState
+	       << ",\"totalMonsters\":" << state.totalMonsters
+	       << ",\"activeMonsterCount\":" << state.activeMonsterCount
+	       << ",\"activeMonsterIds\":";
+	WriteArray(stream, state.activeMonsterIds);
+	stream << ",\"monsters\":[";
+	for (size_t slot = 0; slot < state.monsters.size(); slot++) {
+		if (slot != 0)
+			stream << ',';
+		WriteCompleteEncounterMonster(stream, state.monsters[slot]);
+	}
+	stream << "],\"monsterTileRefs\":";
+	WriteArray(stream, state.monsterTileRefs);
+	stream << ",\"playerTileRefs\":";
+	WriteArray(stream, state.playerTileRefs);
+	stream << ",\"objectTileRefs\":";
+	WriteArray(stream, state.objectTileRefs);
+	stream << ",\"tileFlags\":";
+	WriteArray(stream, state.tileFlags);
+	stream << ",\"visibleTransparencyRegions\":";
+	WriteBoolArray(stream, state.visibleTransparencyRegions);
+	stream << ",\"lightAllocator\":{\"activeLightSlots\":";
+	WriteArray(stream, state.activeLightSlots);
+	stream << ",\"activeLightCount\":" << state.activeLightCount
+	       << ",\"updateLighting\":" << (state.updateLighting ? "true" : "false")
+	       << ",\"disableLighting\":" << (state.disableLighting ? "true" : "false")
+	       << ",\"lights\":[";
+	for (size_t slot = 0; slot < state.lights.size(); slot++) {
+		if (slot != 0)
+			stream << ',';
+		const Light &light = state.lights[slot];
+		stream << "{\"slot\":" << slot << ",\"tile\":";
+		WritePoint(stream, { light.position.tile.x, light.position.tile.y });
+		stream << ",\"offset\":";
+		WritePoint(stream, { light.position.offset.deltaX, light.position.offset.deltaY });
+		stream << ",\"old\":";
+		WritePoint(stream, { light.position.old.x, light.position.old.y });
+		stream << ",\"radius\":" << static_cast<int>(light.radius)
+		       << ",\"oldRadius\":" << static_cast<int>(light.oldRadius)
+		       << ",\"invalid\":" << (light.isInvalid ? "true" : "false")
+		       << ",\"changed\":" << (light.hasChanged ? "true" : "false") << '}';
+	}
+	stream << "]}}";
+}
+
+void WriteEncounterInputs(const std::filesystem::path &path, const std::vector<NativeEncounterCapture> &captures)
+{
+	if (UniqueMonstersData.size() != 100)
+		throw std::runtime_error("the ordinary encounter oracle requires the complete 100-row native unique catalog");
+	std::ofstream stream(path, std::ios::binary | std::ios::trunc);
+	if (!stream.good())
+		throw std::runtime_error("unable to open native encounter input sidecar");
+	stream << "{\n\"format\":\"" << EncounterInputFormat << "\",\n\"version\":1,\n\"policy\":\""
+	       << EncounterInputPolicy << "\",\n\"caseCount\":" << PopulationCaseCount << ",\n\"uniqueDefinitions\":[";
+	for (size_t id = 0; id < UniqueMonstersData.size(); id++) {
+		if (id != 0)
+			stream << ',';
+		const UniqueMonsterData &row = UniqueMonstersData[id];
+		const bool questOnly = id == 0 || id == 2 || id == 3 || id == 7 || id == 8;
+		stream << "{\"nativeUniqueId\":" << id
+		       << ",\"monsterType\":" << static_cast<int>(row.mtype)
+		       << ",\"dungeonLevel\":" << static_cast<int>(row.mlevel)
+		       << ",\"maximumHitPoints\":" << row.mmaxhp
+		       << ",\"ai\":" << static_cast<int>(row.mAi)
+		       << ",\"intelligence\":" << static_cast<int>(row.mint)
+		       << ",\"minDamage\":" << static_cast<int>(row.mMinDamage)
+		       << ",\"maxDamage\":" << static_cast<int>(row.mMaxDamage)
+		       << ",\"resistance\":" << row.mMagicRes
+		       << ",\"reducePlayerStrength\":" << static_cast<int>(row.reducePlayerStrength)
+		       << ",\"reducePlayerMagic\":" << static_cast<int>(row.reducePlayerMagic)
+		       << ",\"reducePlayerDexterity\":" << static_cast<int>(row.reducePlayerDexterity)
+		       << ",\"reducePlayerVitality\":" << static_cast<int>(row.reducePlayerVitality)
+		       << ",\"reducePlayerMaxHP\":" << static_cast<int>(row.reducePlayerMaxHP)
+		       << ",\"reducePlayerMaxMana\":" << static_cast<int>(row.reducePlayerMaxMana)
+		       << ",\"monsterPack\":" << static_cast<int>(row.monsterPack)
+		       << ",\"customToHit\":" << static_cast<int>(row.customToHit)
+		       << ",\"customArmorClass\":" << static_cast<int>(row.customArmorClass)
+		       << ",\"talkMessage\":" << static_cast<int>(row.mtalkmsg)
+		       << ",\"questOnly\":" << (questOnly ? "true" : "false") << '}';
+	}
+	stream << "],\n\"cases\":[";
+	for (size_t index = 0; index < captures.size(); index++) {
+		if (index != 0)
+			stream << ',';
+		const NativeEncounterCapture &capture = captures[index];
+		stream << "{\"snapshot\":\"cathedral-population-depth-" << capture.depth << '-' << capture.inputSeed
+		       << '-' << EntryName(capture.entry) << ".json\",\"depth\":" << capture.depth
+		       << ",\"inputSeed\":" << capture.inputSeed << ",\"entry\":\"" << EntryName(capture.entry)
+		       << "\",\"densityDivisor\":" << capture.densityDivisor
+		       << ",\"preClearRandomState\":" << capture.preClearRandomState
+		       << ",\"postClearRandomState\":" << capture.postClearRandomState
+		       << ",\"preThemeTileFlags\":";
+		WriteArray(stream, capture.preThemeTileFlags);
+		stream << ",\"preState\":";
+		WriteEncounterState(stream, capture.preState);
+		stream << ",\"expectedState\":";
+		WriteEncounterState(stream, capture.expectedState);
+		stream << '}';
+	}
+	stream << "]}\n";
+	stream.flush();
+	if (!stream.good())
+		throw std::runtime_error("unable to finish native encounter input sidecar");
 }
 
 void WritePopulationCase(const std::filesystem::path &path, const PopulationCapture &capture)
@@ -1442,6 +1661,16 @@ TEST(CathedralPopulation, NativeObjectPopulationLocalAssetOracle)
 		ASSERT_FALSE(std::filesystem::equivalent(outputPath, inputPath))
 		    << "population artifacts and phase inputs require separate directories";
 	}
+	const char *encounterDirectory = std::getenv(EncounterInputDirectoryVariable);
+	const bool captureEncounters = encounterDirectory != nullptr && encounterDirectory[0] != '\0';
+	std::filesystem::path encounterPath;
+	if (captureEncounters) {
+		ASSERT_TRUE(captureInputs) << "encounter capture requires the independent version-2 initial inputs";
+		encounterPath = std::filesystem::path(encounterDirectory);
+		ASSERT_TRUE(ValidateOutputPath(encounterPath, outputError)) << outputError;
+		ASSERT_FALSE(std::filesystem::equivalent(outputPath, encounterPath));
+		ASSERT_FALSE(std::filesystem::equivalent(inputPath, encounterPath));
+	}
 	ASSERT_TRUE(HeadlessMode) << "population oracle requires the headless GTest runner";
 
 	NativeStateGuard stateGuard;
@@ -1460,14 +1689,18 @@ TEST(CathedralPopulation, NativeObjectPopulationLocalAssetOracle)
 	const std::array<lvl_entry, 2> entries { ENTRY_MAIN, ENTRY_PREV };
 	std::vector<PopulationCapture> captures;
 	captures.reserve(PopulationCaseCount);
+	std::vector<NativeEncounterCapture> encounters;
+	encounters.reserve(PopulationCaseCount);
 	for (int depth = CathedralFirstDepth; depth <= CathedralLastDepth; depth++) {
 		for (const uint32_t seed : seeds) {
 			for (const lvl_entry entry : entries) {
 				PopulationCapture capture;
 				PopulationCapture repeated;
+				NativeEncounterCapture encounter;
+				NativeEncounterCapture repeatedEncounter;
 				try {
-					capture = CapturePopulation(depth, seed, entry, captureInputs);
-					repeated = CapturePopulation(depth, seed, entry, captureInputs);
+					capture = CapturePopulation(depth, seed, entry, captureInputs, captureEncounters ? &encounter : nullptr);
+					repeated = CapturePopulation(depth, seed, entry, captureInputs, captureEncounters ? &repeatedEncounter : nullptr);
 				} catch (const std::exception &exception) {
 					FAIL() << "Native Cathedral population capture failed at depth " << depth
 					       << ", seed " << seed << ", entry " << EntryName(entry)
@@ -1476,6 +1709,13 @@ TEST(CathedralPopulation, NativeObjectPopulationLocalAssetOracle)
 				ASSERT_EQ(capture.rngAfterInitObjects, repeated.rngAfterInitObjects);
 				ASSERT_EQ(capture.activeObjectCount, repeated.activeObjectCount);
 				ASSERT_EQ(capture.activeMonsterCount, repeated.activeMonsterCount);
+				if (captureEncounters) {
+					ASSERT_EQ(encounter.expectedState.randomState, repeatedEncounter.expectedState.randomState);
+					ASSERT_EQ(encounter.expectedState.activeMonsterCount, repeatedEncounter.expectedState.activeMonsterCount);
+					ASSERT_EQ(encounter.preState.activeMonsterIds.size(), MaxMonsters);
+					ASSERT_EQ(encounter.expectedState.monsters.size(), MaxMonsters);
+					encounters.push_back(std::move(encounter));
+				}
 				captures.push_back(std::move(capture));
 			}
 		}
@@ -1491,6 +1731,10 @@ TEST(CathedralPopulation, NativeObjectPopulationLocalAssetOracle)
 		WriteNativeInputs(inputPath / "native-population-inputs.json", captures);
 		std::string inputError;
 		ASSERT_TRUE(ValidateNativeInputArtifact(inputPath, inputError)) << inputError;
+	}
+	if (captureEncounters) {
+		ASSERT_EQ(encounters.size(), PopulationCaseCount);
+		WriteEncounterInputs(encounterPath / "native-encounter-inputs.json", encounters);
 	}
 }
 

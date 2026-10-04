@@ -18,7 +18,7 @@ struct LevelGenerationRow {
 extern DVL_API_FOR_TEST std::vector<LevelGenerationRow> LevelGenerationData;
 
 DVL_API_FOR_TEST void LoadLevelGenerationData();
-int GetMonsterDensityDivisor(int level);
+DVL_API_FOR_TEST int GetMonsterDensityDivisor(int level);
 int GetMpMonsterMultiplierPercent(int level);
 DVL_API_FOR_TEST int GetTrapPercent(int level);
 

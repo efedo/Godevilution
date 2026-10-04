@@ -355,11 +355,46 @@ state to the composed generator. Retained version-1 sidecars remain readable for
 the earlier, narrower initial-object-only comparison; the wrapper requires
 version 2 and cannot report upstream parity from old evidence.
 Builds and stages are bounded, failed stages stop, owned children are cleaned up,
-and both opt-in environment variables are restored. Licensed evidence stays
+and all opt-in environment variables are restored. Licensed evidence stays
 outside the repository. This does not supply final encounters/theme objects,
 physical lighting, a production content loader or playable
 population/restore acceptance. Existing oracle modes and runtime defaults remain
 unchanged.
+
+For the composed prerequisites, initial objects and ordinary monster encounters,
+select this mode alone:
+
+```powershell
+./tools/test-cathedral-geometry.ps1 -CathedralEncounters
+```
+
+It requires the version-2 prerequisites and a separate version-1 encounter
+sidecar containing sixteen depths 1-4 cases (seeds 2588/743271966, MAIN/PREV,
+quest-disabled original Diablo, fresh single-player Normal). Two fresh native
+captures must be byte-identical across the original seventeen artifacts, the
+pre-theme sidecar and the encounter sidecar. All earlier artifact bytes and
+oracle modes are preserved. The runner selects exactly sixteen explicit
+initial-object comparisons and sixteen explicit encounter-method comparisons,
+with no exclusions; ordinary parser guards run separately.
+
+The managed path derives fresh 200-slot clearing from the recorded pre-clear
+seed and verifies its separate post-clear RNG boundary before the population
+reseed. It compares all active/unused monster records, active IDs and target
+count, signed occupancy, RNG, tile flags, transparency visibility and all 32
+indexed light records/allocator history against native `InitMonsters`. Native
+expected inactive slots, selections and final state are not generation inputs.
+The raw `cathedral_population_monsters.tsv` and
+`cathedral_population_objects.tsv` loader validates detached external tables
+and a canonical fingerprint; it does not compile unique metadata or complete
+runtime packs. Builds/captures/comparisons have parent-owned deadlines and
+failure/cleanup checks; all three opt-in environment variables are restored
+exactly, including absent versus empty values on PowerShell 7. The same helper
+preserves earlier modes' caller state; regressions exercise Windows PowerShell
+and available PowerShell 7 without starting an engine.
+Keep the evidence and licensed source data outside the repository. This does
+not cover `InitItems`, `CreateThemeRooms`, physical light intensity, campaign
+seed selection, a populated runtime profile or ordinary Godot interaction/cold
+restore acceptance. Runtime defaults and server MPQ independence are unchanged.
 
 The C# xUnit project is an executable Microsoft Testing Platform runner. Run
 it directly when `dotnet test` selects a machine-wide VSTest host whose

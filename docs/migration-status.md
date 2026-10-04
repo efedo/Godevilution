@@ -1,6 +1,6 @@
 # Godevilution Migration Status
 
-Status date: 2026-10-03. Estimate baseline: `8c03b365d`; semantic player presentation
+Status date: 2026-10-04. Estimate baseline: `8c03b365d`; semantic player presentation
 follows client-pack baseline `d0f748305`. Interrupted first-publication
 and Windows staging acceptance follows Godot cohort baseline `60f60c8a1` below. M0 session reliability
 landed in `819b73936`, integration remediation in `818f63f32`, and application
@@ -147,6 +147,71 @@ open. Their scope, dependencies, and exit checks are defined only in the
   this edge case, but the corrected Flash fixtures cover off-player cursors.
 
 ## Recent implementation evidence
+
+### M2 ordinary Cathedral monster encounters (2026-10-04)
+
+The independent managed `InitMonsters` port now follows the composed
+`GetLevelMTypes`/`InitThemes`/`HoldThemeRooms` and `InitGolems`/`InitObjects`
+phases for quest-disabled original-Diablo depths 1-4, single-player Normal.
+It preserves complete active/unused monster slots, ordered active IDs and target
+count, signed occupancy, placement RNG, trigger visibility/transparency and
+indexed light allocator history. The fresh 200-slot pool is derived independently
+from the pre-clear seed and its 400 draws, not copied from native inactive
+expected records or reconstructed from the later population reseed. Reused
+slots preserve native untouched fields and reset only actual native assignments.
+
+The detached raw monster/object TSV catalog validates exact ordered external
+tables and their canonical SHA-256 fingerprint. It is not a complete runtime
+pack compiler. A separate `-CathedralEncounters` route adds the private encounter
+sidecar and exact method selection while preserving earlier oracle modes and
+artifact boundaries. Deadlines, child-only dialog suppression, stage failure
+and owned cleanup remain enforced; licensed evidence stays outside the repository.
+
+Current verification:
+
+- Zero-warning/error managed module build and 109 focused portable/parser/
+  documentation checks pass without skips (581ms). Cases cover both depth-group
+  branches, ten-attempt partial packs, rollback occupancy/RNG, touched/untouched
+  slot fields, retained light history, strict corpus controls and canonical
+  catalog fingerprints. Six literal signed-RNG boundary regressions cover native
+  retries after invalid X/Y candidates, including depth-specific scatter draws.
+  Draft compile/fixture errors were corrected before
+  acceptance; failed logs are retained, not counted as passes.
+- Freshly rebuilt affected native tests pass 44 with twelve unchanged opt-in
+  exclusions (3.30s). These exclusions are not original-asset passes.
+- The final bounded wrapper passes sixteen prerequisites/initial-object and
+  sixteen encounter comparisons with no exclusions. Two fresh native processes
+  produce byte-identical 17+1+1 captures; the earlier seventeen artifacts and
+  version-2 sidecar also retain exact bytes. Native and managed children exit
+  normally with confirmed cleanup and no timeout. Private evidence remains at
+  `%TEMP%/Godevilution-Cathedral-Population-Oracle-14b3eb0aea494277a3908a834a220c1e`.
+  Exact caller-state restoration also passes. A preceding successful wrapper run
+  retained at `%TEMP%/Godevilution-Cathedral-Population-Oracle-569c1b27ebfd4a3ea66dc89d56a23cb5`
+  confirms exact absent/empty/populated environment restoration on PowerShell 7.
+  An earlier comparison run passed but failed that cleanup assertion; its evidence
+  is retained, not substituted for the final run. The shared restoration helper
+  now distinguishes null from empty in all oracle modes, with regressions for
+  both PowerShell hosts.
+- Latest launcher/schema checks pass seven without skips in the full server
+  suite, including independently arranged restoration checks on Windows
+  PowerShell and PowerShell 7. Full server passes 1,563 with four unchanged
+  exclusions and no failures (51.782s).
+  Its focused rebuild uses verified dependency outputs and retains three
+  existing `NU1900` audit-feed warnings; this is not a vulnerability-audit pass.
+- Full game-module suite passes 2,835 with the same four baseline-confirmed
+  Hork Demon RNG failures and unchanged expected/actual values, plus 111
+  explicit/private exclusions (32.584s). Sixteen new encounter oracle cases
+  account for the increased exclusions in default runs; the opt-in wrapper
+  executes those separately with no exclusions. This is not a green full module
+  suite. Final logs remain in `.local/m2-encounter-signed-full-module.log` and
+  `.local/m2-encounter-signed-full-server.log`.
+
+No runtime/content/save schema or default profile is activated by this phase.
+Unique metadata compilation, `InitItems`/`CreateThemeRooms`, physical lighting,
+quest/campaign behavior and ordinary populated Godot interaction/cold restore
+remain open. No Godot application was launched, no test/crash-reporter processes
+remain, and user save/config hashes are unchanged. M0/M2 and the approximately
+35% overall estimate remain open.
 
 ### M0 explicit visible automation and inherited crash mode (2026-10-03)
 

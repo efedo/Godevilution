@@ -46,8 +46,18 @@ before Golem/object creation. Native selected types, held cells and theme output
 are comparison evidence, not composed-generator inputs. These APIs require fresh
 storage and ordinary quest-disabled original Diablo; persistent native theme
 scratch is not exposed. The private oracle reader is test tooling, not a shipped
-content loader; external-pack compilation, final encounters/theme objects and
-live activation remain required.
+content loader. A separate ordinary depths 1-4 encounter generator now runs
+`InitMonsters` after those managed prerequisites and initial objects. It
+preserves the complete 200-slot monster pool, active IDs, signed occupancy,
+placement RNG, trigger visibility, transparency regions and indexed light
+history. Fresh pool clearing consumes its own seed stream before the population
+reseed. Retained/revisited pool lifecycle generation is not established by this
+fresh gate.
+The raw monster/object TSV catalog loader validates detached external tables
+and their canonical fingerprint, not complete runtime packs. Unique metadata
+compilation, `InitItems`/`CreateThemeRooms`, physical lighting and populated
+profile activation/restore remain required. Neither generator accepts native
+expected final state as production input or introduces server MPQ access.
 
 ## Components
 

@@ -354,7 +354,11 @@ tl::expected<void, std::string> InitMonsterGFX(CMonster &monsterType, MonsterSpr
 tl::expected<void, std::string> InitAllMonsterGFX();
 void WeakenNaKrul();
 void InitGolems();
-tl::expected<void, std::string> InitMonsters();
+DVL_API_FOR_TEST tl::expected<void, std::string> InitMonsters();
+#ifdef BUILD_TESTING
+/** Test-only observation of the native InitMonsters density target. */
+DVL_API_FOR_TEST size_t MonsterPopulationTargetForTesting();
+#endif
 tl::expected<void, std::string> SetMapMonsters(const uint16_t *dunData, Point startPosition);
 Monster *AddMonster(Point position, Direction dir, size_t typeIndex, bool inMap);
 [[nodiscard]] std::optional<size_t> FindNativeMonsterTypeIndex(uint32_t monsterId);

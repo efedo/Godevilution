@@ -2,6 +2,22 @@
 
 Notable changes to this fork are recorded below.
 
+- 2026-10-04: Port ordinary Cathedral depths 1-4 `InitMonsters` after managed
+  prerequisites/initial objects, preserving full monster pools, native slot
+  assignments, signed occupancy, RNG, vision/transparency and light history.
+  Add independently seeded fresh pool clearing, strict raw monster/object TSV
+  loading and a bounded full-state oracle. Preserve native retry behavior for
+  signed-RNG invalid placement candidates. Verify 109 focused checks, sixteen
+  initial-object plus sixteen encounter comparisons, byte-identical 17+1+1
+  captures and unchanged legacy bytes. Correct PowerShell absent/empty
+  environment restoration with independent checks on both PowerShell hosts.
+  Full server passes 1,563 with four exclusions; affected native checks pass 44
+  with twelve existing exclusions. Full module passes 2,835 with four unchanged
+  Hork RNG failures and 111 explicit exclusions, not a green suite. Update
+  existing architecture/plan/build/status guidance. Preserve runtime profiles,
+  server MPQ independence and user save/config bytes; items/theme population,
+  compiled content and populated Godot acceptance remain open. No Godot launch.
+
 - 2026-10-03: Close the unattended-visible-launch safety gap with explicit
   `-Automated` mode, isolated session selection, shared child-dialog suppression
   and real-seconds scene/parent deadlines. Preserve interactive defaults and
