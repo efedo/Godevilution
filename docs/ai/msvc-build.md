@@ -2,6 +2,36 @@
 
 ## Sprite-free animation timing proof
 
+For the separate player-context metadata prerequisite, run:
+
+```powershell
+.\tools\test-player-animation-context.ps1
+```
+
+This zero-argument bounded command initializes/checks the matching MSVC x64
+environment and builds the registered `player_animation_context_test`. Four
+native fixtures and an independent capture repeat must pass, followed by the
+exact existing-module xUnit v3 context family, including the explicit comparison.
+Both bounded regular artifacts must be byte-identical; reports, stage exits,
+logs, cleanup and reparse-point ancestors are checked. No retry follows failure.
+The prior opt-in environment value and working directory are restored.
+
+The native matrix contains 648 prepared class/weapon/armor context sequences,
+1,944 town/dungeon transitions, all nine cached fields and all nine native timing
+pairs per transition. Cold zeroes and signed town-retained values remain inputs;
+managed continuation never receives native expected state. Actual spell dispatch
+compares all 37 base and 52 Hellfire rows, including Null. The strict reader pins
+the pre-input-only fingerprint. Native cursor/RNG remain unchanged. Public spell,
+RNG, path and level settings are restored; hidden class caches are owned by the
+dedicated test process. Configured bundle assets are respected with a source
+text-resource fallback; no archives, server, client or Godot are opened.
+
+Evidence remains under `%TEMP%/Godevilution-Player-Animation-Context-*`. This is
+prepared effective graphics and metadata application, not actual equipment
+admission, native initialization/death/RNG callers, command phases, cursor
+persistence/protocol, asset availability or rendered Godot acceptance. Production
+profiles, legacy save bytes/hashes and the server MPQ boundary are unchanged.
+
 ```powershell
 .\tools\test-animation-timing.ps1
 ```

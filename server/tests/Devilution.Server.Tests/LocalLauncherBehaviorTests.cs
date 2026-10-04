@@ -7,6 +7,134 @@ namespace Devilution.Server.Tests;
 public sealed class LocalLauncherBehaviorTests
 {
     [Fact]
+    public void PlayerAnimationContextProofRejectsIncompleteOrReplacedReports()
+    {
+        if (!OperatingSystem.IsWindows())
+            return;
+        var script = BuildPowerShellHarness(
+            ["Assert-PlayerAnimationContextNativeReport", "Get-PlayerAnimationContextManagedCases", "Assert-PlayerAnimationContextManagedReport"],
+            """
+            function Require-Rejection([scriptblock]$action) {
+                $rejected = $false; try { & $action | Out-Null } catch { $rejected = $true }
+                if (-not $rejected) { throw 'Incomplete or replaced context evidence was accepted.' }
+            }
+            $work = Join-Path ([IO.Path]::GetTempPath()) ('Godevilution-ContextReport-' + [guid]::NewGuid().ToString('N'))
+            New-Item -ItemType Directory -Path $work | Out-Null
+            try {
+                $path = Join-Path $work 'native.json'
+                foreach ($captureOnly in @($true, $false)) {
+                    $names = @('CaptureContextOracle')
+                    if (-not $captureOnly) { $names += @('TownPreservesIncomingCombatFrames',
+                        'DungeonReplacesAllFramesWithoutAdvancingCursorOrRng', 'SpellGraphicsUseRawMagicTypeIncludingNull') }
+                    $valid = @{ tests = $names.Count; failures = 0; disabled = 0; errors = 0
+                        testsuites = @(@{ testsuite = @(foreach ($name in $names) {
+                            @{ name = $name; classname = 'NativePlayerAnimationContext'; status = 'RUN'; result = 'COMPLETED' }
+                        }) }) } | ConvertTo-Json -Depth 6
+                    [IO.File]::WriteAllText($path, $valid); Assert-PlayerAnimationContextNativeReport $path $captureOnly
+                    foreach ($field in @('tests', 'failures', 'disabled', 'errors')) {
+                        $changed = $valid | ConvertFrom-Json; $changed.$field = '0'
+                        [IO.File]::WriteAllText($path, ($changed | ConvertTo-Json -Depth 6))
+                        Require-Rejection { Assert-PlayerAnimationContextNativeReport $path $captureOnly }
+                    }
+                    foreach ($field in @('name', 'classname', 'status', 'result')) {
+                        $changed = $valid | ConvertFrom-Json; $changed.testsuites[0].testsuite[0].$field = 'replaced'
+                        [IO.File]::WriteAllText($path, ($changed | ConvertTo-Json -Depth 6))
+                        Require-Rejection { Assert-PlayerAnimationContextNativeReport $path $captureOnly }
+                    }
+                }
+                $path = Join-Path $work 'managed.xml'
+                $required = @(Get-PlayerAnimationContextManagedCases); $count = $required.Count
+                $tests = @(foreach ($case in $required) {
+                    '<test type="' + $case.Type + '" method="' + $case.Method + '" name="' + $case.Name + '" result="Pass" />'
+                }) -join ''
+                $valid = '<assemblies><assembly total="' + $count + '" passed="' + $count +
+                    '" failed="0" skipped="0" errors="0" not-run="0"><collection>' + $tests + '</collection></assembly></assemblies>'
+                [IO.File]::WriteAllText($path, $valid)
+                if ((Assert-PlayerAnimationContextManagedReport $path) -ne $count) { throw 'Wrong context count.' }
+                foreach ($attribute in @('type', 'method', 'name', 'result')) {
+                    [xml]$changed = $valid; $changed.SelectSingleNode('//test').SetAttribute($attribute, 'replaced')
+                    $changed.Save($path); Require-Rejection { Assert-PlayerAnimationContextManagedReport $path }
+                }
+                foreach ($field in @('total', 'passed', 'failed', 'skipped', 'errors', 'not-run')) {
+                    [xml]$changed = $valid; $changed.SelectSingleNode('//assembly').SetAttribute($field, '01')
+                    $changed.Save($path); Require-Rejection { Assert-PlayerAnimationContextManagedReport $path }
+                }
+                foreach ($case in $required) {
+                    [xml]$changed = $valid
+                    $target = @($changed.SelectNodes('//test') | Where-Object method -ceq $case.Method)[0]
+                    $target.ParentNode.RemoveChild($target) | Out-Null
+                    $assembly = $changed.SelectSingleNode('//assembly')
+                    $assembly.SetAttribute('total', [string]($count - 1)); $assembly.SetAttribute('passed', [string]($count - 1))
+                    $changed.Save($path); Require-Rejection { Assert-PlayerAnimationContextManagedReport $path }
+                }
+                Write-Output 'PASS'
+            } finally {
+                $resolved = [IO.Path]::GetFullPath($work); $temp = [IO.Path]::GetFullPath([IO.Path]::GetTempPath()).TrimEnd('\')
+                if ($resolved.StartsWith($temp + '\', [StringComparison]::OrdinalIgnoreCase) -and
+                    [IO.Path]::GetFileName($resolved) -match '^Godevilution-ContextReport-[0-9a-f]{32}$') {
+                    Remove-Item -LiteralPath $resolved -Recurse -Force
+                }
+            }
+            """, "tools/test-player-animation-context.ps1");
+        Assert.Contains("PASS", RunPowerShell(script), StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void PlayerAnimationContextProofRequiresBoundedRepeatableArtifacts()
+    {
+        if (!OperatingSystem.IsWindows())
+            return;
+        var script = BuildPowerShellHarness(
+            ["Get-PlayerAnimationContextArtifact", "Assert-PlayerAnimationContextRepeatability"],
+            """
+            $tokens = $null; $errors = $null
+            $shared = [Management.Automation.Language.Parser]::ParseFile(
+                (Join-Path (Split-Path $launcherPath -Parent) 'test-animation-timing.ps1'), [ref]$tokens, [ref]$errors)
+            if ($errors.Count) { throw 'Shared path declaration did not parse.' }
+            $definitions = @($shared.FindAll({param($node) $node -is [Management.Automation.Language.FunctionDefinitionAst] -and
+                $node.Name -ceq 'Assert-AnimationTimingRegularPath'}, $true))
+            if ($definitions.Count -ne 1) { throw 'Shared path ambiguity.' }
+            . ([scriptblock]::Create($definitions[0].Extent.Text))
+            function Require-Rejection([scriptblock]$action) {
+                $rejected = $false; try { & $action | Out-Null } catch { $rejected = $true }
+                if (-not $rejected) { throw 'Incomplete context artifact was accepted.' }
+            }
+            $work = Join-Path ([IO.Path]::GetTempPath()) ('Godevilution-ContextArtifact-' + [guid]::NewGuid().ToString('N'))
+            New-Item -ItemType Directory -Path $work | Out-Null
+            try {
+                $path = Join-Path $work 'player-animation-context.json'
+                [IO.File]::WriteAllText($path, 'literal artifact')
+                $artifact = Get-PlayerAnimationContextArtifact $work
+                Assert-PlayerAnimationContextRepeatability $artifact $artifact
+                Require-Rejection { Assert-PlayerAnimationContextRepeatability $artifact $null }
+                Require-Rejection { Assert-PlayerAnimationContextRepeatability @($artifact, $artifact) $artifact }
+                foreach ($field in @('Name', 'Length', 'Sha256')) {
+                    $changed = $artifact | Select-Object Name,Length,Sha256
+                    $changed.$field = if ($field -eq 'Length') { 0 } else { 'bad' }
+                    Require-Rejection { Assert-PlayerAnimationContextRepeatability $artifact $changed }
+                }
+                $changed = $artifact | Select-Object Name,Length,Sha256; $changed.Length++
+                Require-Rejection { Assert-PlayerAnimationContextRepeatability $artifact $changed }
+                [IO.File]::WriteAllText($path, '')
+                Require-Rejection { Get-PlayerAnimationContextArtifact $work }
+                [IO.File]::WriteAllText($path, [string]::new('x',1000001))
+                Require-Rejection { Get-PlayerAnimationContextArtifact $work }
+                [IO.File]::WriteAllText($path, 'literal artifact'); [IO.File]::WriteAllText((Join-Path $work 'extra'), 'extra')
+                Require-Rejection { Get-PlayerAnimationContextArtifact $work }
+                Require-Rejection { Get-PlayerAnimationContextArtifact 'relative' }
+                Write-Output 'PASS'
+            } finally {
+                $resolved = [IO.Path]::GetFullPath($work); $temp = [IO.Path]::GetFullPath([IO.Path]::GetTempPath()).TrimEnd('\')
+                if ($resolved.StartsWith($temp + '\', [StringComparison]::OrdinalIgnoreCase) -and
+                    [IO.Path]::GetFileName($resolved) -match '^Godevilution-ContextArtifact-[0-9a-f]{32}$') {
+                    Remove-Item -LiteralPath $resolved -Recurse -Force
+                }
+            }
+            """, "tools/test-player-animation-context.ps1");
+        Assert.Contains("PASS", RunPowerShell(script), StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void AnimationTimingOracleRequiresExactCompletedNativeFixtures()
     {
         if (!OperatingSystem.IsWindows()) return;

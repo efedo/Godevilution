@@ -525,6 +525,24 @@ the full cursor, not reconstruct it from action age; client projection may add
 only a bounded render fraction. Legacy absent-state formats/hashes and default
 profiles remain unchanged. Acceptance order belongs to the completion plan.
 
+The module's separate `AuthoritativePlayerAnimationContextCatalog` supplies the
+prepared-effective-graphics metadata prerequisite. It combines validated base
+class timings with explicit per-level town identity, class/context frame
+exceptions and stable/native spell MagicType bindings. Applying metadata retains
+incoming attack/action/hit/block fields in town, including cold zeroes and signed
+values; dungeon application replaces them. Spell school uses native MagicType
+ordinals, not damage type or the different spell-book enum. Its detached,
+input-only fingerprint is order-independent. It consumes no RNG or cursor state
+and does not activate a policy, content profile or new persistence format.
+
+Actual equipment eligibility/graphics, sprite remapping and availability remain
+caller gates. Resolve the command-phase contract before wiring cursor starts:
+the server advances actors before applying commands, while native Pending assumes
+processing later in the same tick. Publishing an unprocessed negative phase or
+processing every command twice is not native post-tick parity. Preserve gameplay
+effect boundaries, exactly-once actor order, repeated carry, duplicate/rejected
+command purity and exact phase/anchor capture through restore.
+
 The same lifecycle now owns terminal player actions. Lethal monster and
 Charged Bolt damage cancel the prior action and start an already-applied Death
 action whose duration is twice the activated class `death_frames`, matching the

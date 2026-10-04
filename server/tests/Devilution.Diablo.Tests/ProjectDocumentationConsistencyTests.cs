@@ -8,6 +8,26 @@ namespace Devilution.Diablo.Tests;
 public sealed class ProjectDocumentationConsistencyTests
 {
     [Fact]
+    public void NativePlayerContextDocumentationKeepsCallerAndPhaseGatesOpen()
+    {
+        var root = FindRepositoryRoot();
+        var architecture = Read(root, "docs", "csharp-authoritative-server-migration.md");
+        Assert.Contains("AuthoritativePlayerAnimationContextCatalog", architecture, StringComparison.Ordinal);
+        Assert.Contains("incoming attack/action/hit/block fields in town", architecture, StringComparison.Ordinal);
+        Assert.Contains("does not activate a policy", architecture, StringComparison.Ordinal);
+        Assert.Contains("server advances actors before applying commands", architecture, StringComparison.Ordinal);
+        var plan = Read(root, "docs", "completion-plan.md");
+        Assert.Contains("persisted command-phase/anchor contract", plan, StringComparison.Ordinal);
+        Assert.Contains("metadata qualification, not equipment eligibility", plan, StringComparison.Ordinal);
+        Assert.Contains("compatibility, restore/reconnect and actual draw acceptance", plan, StringComparison.Ordinal);
+        var guidance = Read(root, "docs", "ai", "msvc-build.md");
+        Assert.Contains("test-player-animation-context.ps1", guidance, StringComparison.Ordinal);
+        Assert.Contains("37 base and 52 Hellfire", guidance, StringComparison.Ordinal);
+        Assert.Contains("prepared effective graphics and metadata application", guidance, StringComparison.Ordinal);
+        Assert.Contains("dedicated test process", guidance, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void NativeAnimationTimingDocumentationRetainsLiveIntegrationGates()
     {
         var root = FindRepositoryRoot();

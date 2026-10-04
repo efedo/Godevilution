@@ -2,6 +2,14 @@
 
 Notable changes to this fork are recorded below.
 
+- 2026-10-04: Add a detached prepared-graphics player-animation context catalog
+  with explicit class/town/spell metadata, exact town-retained frame fields,
+  strict native-width inputs and order-independent metadata identity. Register a
+  headless native context oracle and bounded two-capture/module proof with exact
+  report/artifact guards. Record command-phase and caller prerequisites before
+  runtime wiring. No policy/profile, protocol, persistence, gameplay, RNG, user
+  save or MPQ-boundary activation is introduced.
+
 - 2026-10-04: Port sprite-free native animation timing into the generic C# Domain,
   retaining all nine cursor scalars, native narrow arithmetic and distribution
   continuation. Add input-bound native differential proof, 50 traces/1,369

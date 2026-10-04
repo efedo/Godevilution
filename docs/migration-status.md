@@ -157,6 +157,57 @@ open. Their scope, dependencies, and exit checks are defined only in the
 
 ## Recent implementation evidence
 
+### M1 prepared player-animation context prerequisite (2026-10-04)
+
+The separate module `AuthoritativePlayerAnimationContextCatalog` now resolves
+prepared weapon/armor graphics with explicit class exceptions, level/town
+identity and native MagicType bindings. Town preserves incoming attack/action/
+hit/block fields, including signed and cold-zero values; dungeon replaces them.
+Stable and native spell identities remain separate. Detached inputs, strict
+text/native widths and an order-independent fingerprint are validated. No
+equipment admission, player controller, RNG, live cursor, protocol, persistence
+or shipped profile is activated; legacy saves/hashes and user configuration are
+unchanged. M1 and the approximately 35% overall estimate remain open.
+
+The final reviewed zero-argument `tools/test-player-animation-context.ps1` passes
+four native fixtures, an independent capture repeat and all sixteen managed
+context facts without failures/errors/skips/NotRun. The strict comparison binds
+the pre-call inputs before reading expected results: 648 sequences, 1,944
+town/dungeon transitions, nine fields and nine timing pairs at each transition,
+plus all 37 base and 52 Hellfire spell graphics, including Null. Managed
+continuation never receives native expected state; native cursor/RNG do not move.
+All five owned stages exit cleanly with retained logs and no timeout/cleanup
+errors. Both 287,847-byte captures have SHA-256
+`414A9A176CEEF856CBA6BA0B4290F6156A8AA4AC1DE523331A949F94BC6B198A`.
+Evidence remains in
+`%TEMP%/Godevilution-Player-Animation-Context-bcab2e6aae534eb581dff29454c35b54`
+and `.local/m1-animation-context-proof-reviewed.log`.
+
+The refreshed server regressions pass 219 cases without exclusions: 95 cohort
+codec, 92 canonical-hash and 32 launcher behavior checks, including both new
+context report/artifact guards and the existing harmless crash-dialog safeguards.
+All ten documentation consistency checks pass. Evidence remains under
+`.local/m1-animation-context-server-regression*` and
+`.local/m1-animation-context-documentation*`; each owned run exits cleanly.
+
+The registered CTest context family separately passes four fixtures without
+exclusions (`.local/m1-animation-context-ctest*`). The initial native draft's
+wrong base/Hellfire table-count expectation and the first wrapper's unsupported
+test-filter option are retained failures, not crashes or accepted passes. The
+final wrapper uses the runner's documented class filter and exact fact inventory.
+Independent review corrected the native-school comment and required real input/
+getter detachment and distinct spell-namespace regressions. The module proof
+build has zero warnings/errors; the refreshed server test build retains three
+NU1900 audit-feed warnings, with no errors or security-audit claim.
+
+Before live animation wiring, settle the persisted command-phase/anchor contract:
+commands currently follow actor advancement, while native Pending expects later
+processing in the same tick. Preserve existing effect boundaries, exactly-once
+actor order, duplicate/rejected command purity and same-tick continuation. Actual
+equipment graphics, initialization/death/RNG callers, versioned cursor projection
+and per-actor rendered restore/reconnect remain acceptance gates. No Godot or
+MPQ is opened by this proof; normal cohort-profile adoption still requires approval.
+
 ### M1 sprite-free native animation timing prerequisite (2026-10-04)
 
 The generic Domain now contains immutable `NativeAnimationState`, preserving

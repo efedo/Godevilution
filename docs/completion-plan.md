@@ -376,8 +376,17 @@ deliberately does not claim native generated-world parity, which belongs to M2.
    missing-selected-art fallback. The clock remains global and visual-only.
    The sprite-free `NativeAnimationState` prerequisite now has an independent
    native proof for all nine cursor scalars; it is not yet wired into players,
-   protocol, saves or Godot. Next implement module-owned class/gear/context
-   transitions and exactly-once actor-order tick processing, including pending,
+   protocol, saves or Godot. A separate prepared-graphics context catalog now
+   provides explicit class exceptions, per-level town identity and native spell
+   school bindings; town application retains incoming combat frame fields.
+   This is metadata qualification, not equipment eligibility, sprite availability
+   or runtime activation. First settle the persisted command-phase/anchor contract:
+   authoritative commands currently follow actor advancement, but native Pending
+   assumes processing later in the same tick. Neither publishing negative phase
+   until the next tick nor blindly processing every accepted command again proves
+   native post-tick parity. Keep duplicate/rejected and same-tick command tests.
+   Then implement module-owned class/gear/context transitions, effective graphics
+   and exactly-once actor-order tick processing, including pending,
    repeated, hit/block/death and metadata-change behavior. Preserve existing
    gameplay-effect boundaries and RNG order. Carry the complete cursor through
    versioned persistence/protocol and project each actor using only a bounded

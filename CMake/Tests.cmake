@@ -43,6 +43,7 @@ set(tests
   phase4a_lighting_test
   phase4b_entity_test
   player_test
+  player_animation_context_test
   portal_test
   quests_test
   world_renderer_test
@@ -151,6 +152,9 @@ endforeach()
 foreach(test_target ${tests})
   target_link_libraries(${test_target} PRIVATE test_main)
 endforeach()
+
+target_include_directories(player_animation_context_test PRIVATE "${PROJECT_SOURCE_DIR}/3rdParty/PicoSHA2")
+target_compile_definitions(player_animation_context_test PRIVATE "GODEVILUTION_CONTEXT_SOURCE_ROOT=\"${PROJECT_SOURCE_DIR}\"")
 
 foreach(test_target ${standalone_tests})
   target_link_libraries(${test_target} PRIVATE GTest::gtest_main)
