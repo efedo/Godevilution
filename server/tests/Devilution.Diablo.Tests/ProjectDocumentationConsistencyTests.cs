@@ -8,6 +8,24 @@ namespace Devilution.Diablo.Tests;
 public sealed class ProjectDocumentationConsistencyTests
 {
     [Fact]
+    public void CompletePopulationMetadataDocumentationDoesNotClaimRuntimeActivation()
+    {
+        var root = FindRepositoryRoot();
+        var architecture = Read(root, "docs", "csharp-authoritative-server-migration.md");
+        Assert.Contains(AuthoritativeCathedralPopulationMetadata.SchemaId, architecture, StringComparison.Ordinal);
+        Assert.Contains("version 1.0.0 requires nineteen", architecture, StringComparison.Ordinal);
+        Assert.Contains("does not silently activate a runtime profile", architecture, StringComparison.Ordinal);
+        var plan = Read(root, "docs", "completion-plan.md");
+        Assert.Contains("metadata compilation alone is not playable profile acceptance", plan, StringComparison.Ordinal);
+        Assert.Contains("Next activate these validated inputs", plan, StringComparison.Ordinal);
+        var guidance = Read(root, "docs", "ai", "msvc-build.md");
+        Assert.Contains("test-cathedral-population-metadata.ps1", guidance, StringComparison.Ordinal);
+        Assert.Contains("-FullPopulationEvidenceDirectory", guidance, StringComparison.Ordinal);
+        Assert.Contains("--compile-population-metadata", guidance, StringComparison.Ordinal);
+        Assert.Contains("expected intermediate/final state is comparison-only", guidance, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void ActiveProjectDocumentationUsesCurrentIdentityAndSchema()
     {
         var root = FindRepositoryRoot();
@@ -221,7 +239,7 @@ public sealed class ProjectDocumentationConsistencyTests
         Assert.Contains("./tools/test-theme-room-generation.ps1", guide, StringComparison.Ordinal);
         Assert.Contains("Unsafe reached native reads/writes", guide, StringComparison.Ordinal);
         Assert.DoesNotContain("Next port `CreateThemeRooms`", plan, StringComparison.Ordinal);
-        Assert.Contains("compile the validated external prerequisites", plan, StringComparison.Ordinal);
+        Assert.Contains("complete nineteen-table population metadata schema", plan, StringComparison.Ordinal);
         Assert.Contains("tools/test-theme-item-placement.ps1", plan, StringComparison.Ordinal);
         Assert.Contains("./tools/test-theme-item-placement.ps1", guide, StringComparison.Ordinal);
         Assert.Contains("unreferenced allocations", plan, StringComparison.Ordinal);

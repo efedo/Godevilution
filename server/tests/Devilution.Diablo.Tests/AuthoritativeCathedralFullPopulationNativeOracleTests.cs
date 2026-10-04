@@ -1,5 +1,8 @@
 using System.Text.Json;
 using System.Text.Json.Nodes;
+using System.Text;
+using Devilution.Data;
+using Godevilution.Tools;
 using Xunit;
 using static Devilution.Diablo.Tests.AuthoritativeCathedralThemeItemNativeOracleTests;
 using static Devilution.Diablo.Tests.AuthoritativeCathedralThemeRoomNativeOracleTests;
@@ -18,6 +21,14 @@ public sealed class AuthoritativeCathedralFullPopulationNativeOracleTests
     [Theory(Explicit = true)]
     [MemberData(nameof(Cases))]
     public void FullPopulationMatchesNative(int depth, uint seed, string entry)
+        => CompareFullPopulation(depth, seed, entry, useCompiledMetadata: false);
+
+    [Theory(Explicit = true)]
+    [MemberData(nameof(Cases))]
+    public void CompiledMetadataPopulationMatchesNative(int depth, uint seed, string entry)
+        => CompareFullPopulation(depth, seed, entry, useCompiledMetadata: true);
+
+    private static void CompareFullPopulation(int depth, uint seed, string entry, bool useCompiledMetadata)
     {
         var directory = AuthoritativeCathedralEncounterNativeOracleTests.RequiredExternalDirectory(
             "GODEVILUTION_CATHEDRAL_FULL_POPULATION_ORACLE_DIRECTORY");
@@ -25,6 +36,30 @@ public sealed class AuthoritativeCathedralFullPopulationNativeOracleTests
         var corpus = ReadCorpus(AuthoritativeCathedralEncounterNativeOracleTests.ParseFile(Path.Combine(directory, FileName), 128 * 1024 * 1024));
         var row = corpus.Cases.Single(row => row.Depth == depth && row.Seed == seed && row.Entry == entry);
         var independent = AuthoritativeCathedralEncounterNativeOracleTests.LoadIndependentPopulationCase(depth, seed, entry);
+        var metadata = useCompiledMetadata ? CathedralPopulationMetadataCompiler.LoadDirectory(
+            AuthoritativeCathedralEncounterNativeOracleTests.RequiredExternalDirectory("GODEVILUTION_CATHEDRAL_POPULATION_METADATA_PACK_DIRECTORY")) : null;
+        var itemCatalog = metadata?.Items.Catalog ?? corpus.ItemCatalog;
+        var preThemeGeometry = independent.Parameters.PreThemeGeometry;
+        if (metadata is not null) {
+            var coarse = AuthoritativeCathedralDepthGenerator.Generate(depth, seed,
+                entry == "main" ? AuthoritativeCathedralEntry.Main : AuthoritativeCathedralEntry.Previous);
+            var fine = AuthoritativeCathedralDepthGeometryMaterializer.Materialize((uint)depth,
+                coarse, metadata.Geometry.Pieces, metadata.Geometry.TileProperties, "cathedral-metadata-proof", false, false).Level;
+            Assert.Equal(preThemeGeometry.Pieces, fine.NativePieceLayer);
+            Assert.Equal(preThemeGeometry.Transparency.Select(value => (ushort)value), fine.NativeTransparency);
+            preThemeGeometry = new(fine.NativePieceLayer, preThemeGeometry.Special,
+                fine.NativeTransparency.Select(value => checked((byte)value)).ToArray(), metadata.EffectivePieceProperties,
+                preThemeGeometry.Populated, preThemeGeometry.PlayerOccupied, preThemeGeometry.MonsterOccupied);
+        }
+        var initialPopulation = metadata?.CreateInitialPopulationParameters(depth,
+            independent.Parameters.PopulationSeed, independent.Parameters.StorySeed, preThemeGeometry,
+            independent.Parameters.ObjectTemplate.Player, independent.Parameters.ThemeTemplate.NextTransparencyValue,
+            independent.Parameters.ThemeTemplate.TriggerPositions) ?? independent.Parameters;
+        if (metadata is not null) {
+            Assert.Equal(independent.DensityDivisor, metadata.RuleForDepth(depth).MonsterDensityDivisor);
+            Assert.Equal(independent.Parameters.ObjectTemplate.TrapPercent, metadata.RuleForDepth(depth).TrapPercent);
+            Assert.Equal(row.SelectedRoomCatalog.ShrineAvailable, metadata.ShrineAvailable);
+        }
         var geometry = independent.Parameters.PreThemeGeometry;
         var baseline = row.Baseline.State;
         Assert.Equal(independent.PreClearRandomState, row.PreClearRandomState);
@@ -60,22 +95,23 @@ public sealed class AuthoritativeCathedralFullPopulationNativeOracleTests
             independent.PlayerRefs[index], independent.MonsterRefs[index], 0, 0,
             (independent.PreThemeTileFlags[index] & 8) != 0,
             (geometry.PieceProperties[geometry.Pieces[index]] & 1) != 0)).ToArray();
-        var potions = corpus.ItemCatalog.Items.Where(value => value.NativeItemIndex is 24 or 25)
+        var potions = itemCatalog.Items.Where(value => value.NativeItemIndex is 24 or 25)
             .Select(value => new AuthoritativeCathedralInitialItemDefinition(value.NativeItemIndex,
                 value.ItemType, value.CursorGraphic, value.Name, value.Name, value.EquipLocation, value.ItemClass,
                 value.MinimumDamage, value.MaximumDamage, value.MinimumArmorClass, value.MaximumArmorClass,
                 value.Flags, value.MiscId, value.SpellId, value.Value, value.Durability,
                 value.MinimumStrength, value.MinimumMagic, value.MinimumDexterity,
                 value.AnimationFrameCount, value.AnimationTicksPerFrame)).ToArray();
-        var request = new AuthoritativeCathedralFullPopulationRequest(independent.Parameters, row.PreClearRandomState,
+        var request = new AuthoritativeCathedralFullPopulationRequest(initialPopulation, independent.PreClearRandomState,
             independent.MonsterRefs, independent.PlayerRefs, independent.PreThemeTileFlags, baseline.Corpses,
             baseline.Light, baseline.PreLight,
             new(baseline.ActiveLightIds, baseline.ActiveLightCount, baseline.LightRecords,
                 baseline.UpdateLighting, baseline.DisableLighting),
-            independent.Parameters.ThemeTemplate.TriggerPositions, independent.UniqueDefinitions,
-            independent.DensityDivisor, row.SelectedRoomCatalog.ShrineAvailable, corpus.ItemCatalog,
+            initialPopulation.ThemeTemplate.TriggerPositions, metadata?.UniqueMonsters.Definitions ?? independent.UniqueDefinitions,
+            metadata?.RuleForDepth(depth).MonsterDensityDivisor ?? independent.DensityDivisor,
+            metadata?.ShrineAvailable ?? row.SelectedRoomCatalog.ShrineAvailable, itemCatalog,
             new(depth), new(MaximumLifeBase: 64, MaximumManaBase: 0), freshItems,
-            Enumerable.Range(0, 127).ToArray(), 0, new HashSet<int>(), initialTiles, potions);
+            Enumerable.Range(0, 127).ToArray(), 0, new HashSet<int>(), initialTiles, metadata?.PotionDefinitions ?? potions);
 
         var actual = AuthoritativeCathedralFullPopulationGenerator.Generate(request);
 
@@ -103,6 +139,61 @@ public sealed class AuthoritativeCathedralFullPopulationNativeOracleTests
         Assert.Equal(row.ShowUniqueInfo, actual.InitialItems.ShowUniqueItemInfoBox);
         Assert.Equal(row.ItemRecordCount, actual.InitialItems.ItemGetRecordCount);
         Assert.Equal(row.ItemRecords, actual.InitialItems.ItemGetRecords);
+    }
+
+    /** Test-only adapter exports raw catalog inputs, never selected/expected world records. */
+    [Fact(Explicit = true)]
+    public void ExportCompleteMetadataInputs()
+    {
+        var directory = AuthoritativeCathedralEncounterNativeOracleTests.RequiredExternalDirectory(
+            "GODEVILUTION_CATHEDRAL_FULL_POPULATION_ORACLE_DIRECTORY");
+        var corpus = ReadCorpus(AuthoritativeCathedralEncounterNativeOracleTests.ParseFile(Path.Combine(directory, FileName), 128 * 1024 * 1024));
+        var geometryDirectory = AuthoritativeCathedralEncounterNativeOracleTests.RequiredExternalDirectory(
+            "GODEVILUTION_CATHEDRAL_METADATA_GEOMETRY_DIRECTORY");
+        var sourceDirectory = AuthoritativeCathedralEncounterNativeOracleTests.RequiredExternalDirectory(
+            "GODEVILUTION_CATHEDRAL_METADATA_SOURCE_DIRECTORY");
+        Assert.Empty(Directory.EnumerateFileSystemEntries(sourceDirectory));
+        var geometryPack = ContentPackLoader.LoadDirectory("explicit-geometry", "1.0.0", geometryDirectory);
+        Assert.Equal(new[] { AuthoritativeNativeDunGeometryCatalog.PieceDefinitionsTablePath,
+            AuthoritativeNativeDunGeometryCatalog.TilePropertiesTablePath }.Order(StringComparer.Ordinal),
+            geometryPack.Tables.Select(table => table.SourcePath).Order(StringComparer.Ordinal));
+        var geometry = AuthoritativeNativeDunGeometryCatalog.LoadTsv(
+            AuthoritativeNativeDunGeometryCatalog.PieceDefinitionsTablePath,
+            geometryPack.Tables.Single(table => table.SourcePath == AuthoritativeNativeDunGeometryCatalog.PieceDefinitionsTablePath).ToCanonicalTsv(),
+            AuthoritativeNativeDunGeometryCatalog.TilePropertiesTablePath,
+            geometryPack.Tables.Single(table => table.SourcePath == AuthoritativeNativeDunGeometryCatalog.TilePropertiesTablePath).ToCanonicalTsv());
+        var inputs = Enumerable.Range(1, 4).Select(depth =>
+            AuthoritativeCathedralEncounterNativeOracleTests.LoadIndependentPopulationCase(depth, 2588, "main")).ToArray();
+        var first = inputs[0].Parameters;
+        // The test-only offline adapter proves semantic SOL corrections against
+        // independent native effective inputs, then publishes effective values.
+        // Production loaders never guess or reinterpret these properties.
+        var firstFine = AuthoritativeCathedralDepthGeometryMaterializer.Materialize(1,
+            AuthoritativeCathedralDepthGenerator.Generate(1, 2588, AuthoritativeCathedralEntry.Main),
+            geometry.Pieces, geometry.TileProperties, "cathedral-metadata-proof", false, false).Level;
+        Assert.Equal(first.PreThemeGeometry.PieceProperties.Select(value => (AuthoritativeDunTileFlags)(value & ~0x40)),
+            firstFine.NativePieceProperties.OrderBy(row => row.Key).Select(row => row.Value));
+        geometry = new(geometry.Pieces, new AuthoritativeDunTilePropertyCatalog(
+            first.PreThemeGeometry.PieceProperties.Select((value, index) =>
+                new AuthoritativeDunTileProperty((uint)index, (AuthoritativeDunTileFlags)(value & ~0x40)))));
+        var rules = inputs.Select(row => new AuthoritativeCathedralPopulationDepthRule(row.Parameters.Depth,
+            row.DensityDivisor, row.Parameters.ObjectTemplate.TrapPercent, 190)).ToArray();
+        var shrines = corpus.Cases[0].SelectedRoomCatalog.ShrineAvailable;
+        Assert.All(corpus.Cases, row => Assert.Equal(shrines, row.SelectedRoomCatalog.ShrineAvailable));
+        var tables = AuthoritativeCathedralPopulationMetadata.CreateTables(geometry, first.PreThemeGeometry.PieceProperties,
+            first.BestiaryParameters.Catalog, first.ObjectTemplate.Objects, inputs[0].UniqueDefinitions,
+            corpus.ItemCatalog, rules, first.ObjectTemplate.StoryMessages, shrines);
+        foreach (var row in inputs.Skip(1)) {
+            var other = AuthoritativeCathedralPopulationMetadata.CreateTables(geometry, row.Parameters.PreThemeGeometry.PieceProperties,
+                row.Parameters.BestiaryParameters.Catalog, row.Parameters.ObjectTemplate.Objects, row.UniqueDefinitions,
+                corpus.ItemCatalog, rules, row.Parameters.ObjectTemplate.StoryMessages, shrines);
+            Assert.Equal(tables.Select(table => table.ToCanonicalTsv()), other.Select(table => table.ToCanonicalTsv()));
+        }
+        foreach (var table in tables)
+            File.WriteAllText(Path.Combine(sourceDirectory, table.SourcePath),
+                table.ToCanonicalTsv().Replace("\n", "\r\n", StringComparison.Ordinal), new UTF8Encoding(false, true));
+        Assert.Equal(AuthoritativeCathedralPopulationMetadata.TableNames,
+            Directory.EnumerateFiles(sourceDirectory).Select(Path.GetFileName).Order(StringComparer.Ordinal));
     }
 
     private sealed record Case(string Snapshot, int Depth, uint Seed, string Entry,

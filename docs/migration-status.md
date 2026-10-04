@@ -123,7 +123,8 @@ open. Their scope, dependencies, and exit checks are defined only in the
 - Controlled Cathedral depths 1-4 population now composes managed prerequisites,
   objects, encounters, initial items and theme rooms against independent native
   evidence, including full pools, scratch/RNG and initial-object static lighting.
-  Campaign/application-order lifecycle, external pack compilation, populated-profile activation
+  Complete external population metadata now compiles and reloads with native
+  comparison evidence. Campaign/application-order lifecycle, populated-profile activation
   and ordinary Godot interaction/cold restore remain M2 work; default packs and
   launch/save profiles are unchanged.
 - Native-compatible generated maps, collision/set-piece placement, remaining
@@ -153,6 +154,70 @@ open. Their scope, dependencies, and exit checks are defined only in the
   this edge case, but the corrected Flash fixtures cover off-player cursors.
 
 ## Recent implementation evidence
+
+### M2 complete external Cathedral population metadata (2026-10-04)
+
+This batch follows `0838fbda5`. A distinct standalone version-1 metadata schema
+requires nineteen complete semantic tables: effective geometry/SOL, 138 raw
+monsters, 109 objects, 100 unique monsters, 168 base items, 83 prefixes, 95
+suffixes, 90 unique items, 37 ordinary spells, all 229 cursor animations,
+complete supplied glyph pages and explicit cursor/item/depth/story/shrine rules.
+The full SOL byte channel preserves the otherwise unnamed 0x40 bit. Initial
+potions derive from shared item rows. Ordered source identities and numeric
+widths are retained; unavailable Hellfire spell bindings and unmatched defined
+Lightforge base identity remain raw metadata, never ordinary selection inputs.
+Native names remain UTF-8 strings until assignment-time copy/narrowing.
+
+The production offline compiler has no installation discovery or MPQ access.
+It validates all tables before output creation, refuses missing/extra files,
+assets, dependencies, overlays, schema drift and reparse ancestry, then publishes
+only to a fresh path after reload/fingerprint validation. Metadata/manifest and
+file-tree identities bind geometry, raw catalogs, font metrics and policy.
+Unsupported reached power parameters fail before publication. Existing authored
+runtime schemas, defaults, profiles and save identities are unchanged.
+
+Actual proof reuses the preceding completed, hash-checked native captures; it
+does not claim new native recapture. The bounded wrapper passes at
+`%TEMP%/Godevilution-Population-Metadata-6a94f69e09bc43aca35e6506e5ff7d3c`:
+one exact raw-export test, two byte-identical complete compilations, sixteen
+reloaded-pack comparisons and sixteen original comparisons, with zero exclusions.
+The reloaded geometry and raw metadata feed the managed compositor; selected
+themes and after-items/final native worlds remain comparison-only. All six
+child stage records report exit zero with retained logs, confirmed cleanup and
+no errors. Metadata fingerprint is
+`53dbe0f0f771533dcbc42265cd878498680a3d502bd812a10b789628df3219a2`;
+manifest hash is
+`27fa9d623c00cc7ed24f030b687fd58484d4a95aea1b387df99b522ee3891c08`.
+Licensed geometry, names, font widths and expected fixtures remain private.
+
+Focused metadata tests pass 68 cases; the one directory-link test is skipped
+because this Windows filesystem does not permit link creation. Full module and
+server suites pass 3,157/1,595 with zero failures/errors: the module retains
+173 explicit NotRun cases plus that link Skip; the server retains three NotRun
+and its existing link-privilege Skip. All 41 launcher/report checks and six
+documentation checks pass. Builds, suite logs and XML are retained under
+`.local/cathedral-metadata-*`; the server build retains three NU1900 audit-feed
+warnings. No successful vulnerability audit or privilege change is claimed.
+
+Retained failures include initially invalid synthetic spell fixtures, two
+over-strict raw metadata assumptions (unavailable Hellfire spells and unmatched
+Lightforge), and a proof receipt parser that assumed uppercase manifest hashes.
+These were corrected from native source/actual data, not by dropping rows or
+weakening active-reference validation. Earlier failed runs are retained in
+private directories `7f9d8a8c68b54b13a0c9d0c6d2cfc42f`,
+`d63511de7f954281b0af399b0d4846fd` and
+`b6915640091142298f3bd7df88cfaa66` with the same metadata-evidence prefix.
+Each child reached a confirmed terminal state before another run.
+The first broad module run also retained an obsolete planning-text assertion;
+its guard now checks the completed metadata gate and still requires the separate
+runtime-activation boundary. The passing broad rerun follows that correction.
+
+Accepted scope is complete metadata for the controlled ordinary original-Diablo
+SP Normal Cathedral compositor, not populated runtime activation or full level
+loading. Application-order clear-before-geometry, campaign seeds, hero/store/
+quest lifecycle, retained pools, later lighting, ordinary Godot interaction and
+cold restore remain open. No Godot launch or server MPQ requirement is added;
+user save/config bytes remain unchanged. Overall estimate remains about 35%.
 
 ### M2 controlled Cathedral population through theme rooms (2026-10-04)
 

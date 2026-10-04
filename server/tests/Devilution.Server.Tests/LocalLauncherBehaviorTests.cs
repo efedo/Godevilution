@@ -7,6 +7,104 @@ namespace Devilution.Server.Tests;
 public sealed class LocalLauncherBehaviorTests
 {
     [Fact]
+    public void CompleteMetadataProofRejectsExcludedAndReplacedReports()
+    {
+        if (!OperatingSystem.IsWindows()) return;
+        var script = BuildPowerShellHarness(["Assert-CathedralMetadataManagedReport", "Get-CathedralMetadataCompilerReceipt"], """
+            $work=Join-Path ([IO.Path]::GetTempPath()) ('Godevilution-MetadataReportTest-'+[guid]::NewGuid().ToString('N'))
+            New-Item -ItemType Directory -Path $work | Out-Null
+            $path=Join-Path $work 'report.xml'
+            function Expect-Rejected([scriptblock]$action) {
+                $rejected=$false; try { & $action } catch { $rejected=$true }
+                if (-not $rejected) { throw 'Invalid metadata proof report was accepted.' }
+            }
+            try {
+                $receipt='Metadata: '+('A'*64)+'; manifest: '+('b'*64)
+                $parsed=Get-CathedralMetadataCompilerReceipt ($receipt+"`r`n")
+                if ($parsed.MetadataFingerprint -cne ('A'*64) -or $parsed.ManifestHash -cne ('b'*64)) { throw 'Receipt identity changed.' }
+                foreach ($badReceipt in @('',($receipt+"`n"+$receipt),$receipt.Replace('b','g'),$receipt.Replace('manifest:','replacement:'))) {
+                    Expect-Rejected { Get-CathedralMetadataCompilerReceipt $badReceipt }
+                }
+                $type='Devilution.Diablo.Tests.AuthoritativeCathedralFullPopulationNativeOracleTests'
+                foreach ($method in @('ExportCompleteMetadataInputs','CompiledMetadataPopulationMatchesNative')) {
+                    $names=@($type+'.'+$method)
+                    if ($method -ceq 'CompiledMetadataPopulationMatchesNative') {
+                        $names=@(foreach ($depth in 1..4) { foreach ($seed in @(2588,743271966)) { foreach ($entry in @('main','previous')) {
+                            $type+'.'+$method+'(depth: '+$depth+', seed: '+$seed+', entry: \"'+$entry+'\")'
+                        } } })
+                    }
+                    $nodes=@($names | ForEach-Object { '<test type="'+$type+'" method="'+$method+'" name="'+
+                        [Security.SecurityElement]::Escape($_)+'" result="Pass" />' })
+                    $valid='<assemblies><assembly total="'+$names.Count+'" passed="'+$names.Count+
+                        '" failed="0" skipped="0" errors="0" not-run="0"><collection>'+($nodes -join '')+'</collection></assembly></assemblies>'
+                    [IO.File]::WriteAllText($path,$valid); Assert-CathedralMetadataManagedReport $path $method
+                    foreach ($bad in @(
+                        $valid.Replace('result="Pass"','result="Skip"'), $valid.Replace('method="'+$method+'"','method="replacement"'),
+                        $valid.Replace($nodes[0],''), $valid.Replace('errors="0"','errors="1"'),
+                        $valid.Replace(' errors="0"',''), $valid.Replace('not-run="0"','not-run="1"'),
+                        $valid.Replace('</collection>','</collection><errors><error /></errors>'))) {
+                        [IO.File]::WriteAllText($path,$bad)
+                        Expect-Rejected { Assert-CathedralMetadataManagedReport $path $method }
+                    }
+                    if ($names.Count -eq 16) {
+                        [IO.File]::WriteAllText($path,$valid.Replace('depth: 4','depth: 3'))
+                        Expect-Rejected { Assert-CathedralMetadataManagedReport $path $method }
+                    }
+                }
+                Expect-Rejected { Assert-CathedralMetadataManagedReport $path 'replacement' }
+                Write-Output 'PASS'
+            } finally {
+                $resolved=[IO.Path]::GetFullPath($work)
+                if ([IO.Path]::GetDirectoryName($resolved) -eq [IO.Path]::GetTempPath().TrimEnd('\') -and
+                    [IO.Path]::GetFileName($resolved) -match '^Godevilution-MetadataReportTest-[0-9a-f]{32}$') {
+                    Remove-Item -LiteralPath $resolved -Recurse -Force
+                }
+            }
+            """, "tools/test-cathedral-population-metadata.ps1");
+        Assert.Contains("PASS", RunPowerShell(script), StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void CompleteMetadataProofRejectsChangedAndIncompleteFileEvidence()
+    {
+        if (!OperatingSystem.IsWindows()) return;
+        var script = BuildPowerShellHarness(["Assert-CathedralMetadataRegularPath", "Get-CathedralMetadataFileHash", "Assert-CathedralMetadataFileRecord", "Get-CathedralMetadataPackFiles"], """
+            $work=Join-Path ([IO.Path]::GetTempPath()) ('Godevilution-MetadataFileTest-'+[guid]::NewGuid().ToString('N'))
+            New-Item -ItemType Directory -Path $work | Out-Null
+            function Expect-Rejected([scriptblock]$action) {
+                $rejected=$false; try { & $action } catch { $rejected=$true }
+                if (-not $rejected) { throw 'Changed or incomplete metadata file evidence was accepted.' }
+            }
+            try {
+                $file=Join-Path $work 'content-pack.json'; [IO.File]::WriteAllText($file,'abc',[Text.UTF8Encoding]::new($false))
+                $hash='BA7816BF8F01CFEA414140DE5DAE2223B00361A396177A9CB410FF61F20015AD'
+                Assert-CathedralMetadataFileRecord $file 3 $hash
+                Expect-Rejected { Assert-CathedralMetadataFileRecord $file 2 $hash }
+                Expect-Rejected { Assert-CathedralMetadataFileRecord $file 3 ('A'*64) }
+                Expect-Rejected { Get-CathedralMetadataPackFiles $work }
+                foreach ($id in 1..19) { [IO.File]::WriteAllText((Join-Path $work ('table-'+$id+'.tsv')),'data') }
+                if (@(Get-CathedralMetadataPackFiles $work).Count -ne 20) { throw 'Complete file receipt missing.' }
+                [IO.File]::WriteAllText($file,'xyz',[Text.UTF8Encoding]::new($false))
+                Expect-Rejected { Assert-CathedralMetadataFileRecord $file 3 $hash }
+                [IO.File]::WriteAllText($file,'abc',[Text.UTF8Encoding]::new($false))
+                if ((Get-CathedralMetadataFileHash $file) -cne 'BA7816BF8F01CFEA414140DE5DAE2223B00361A396177A9CB410FF61F20015AD') {
+                    throw 'Metadata hash did not match literal UTF-8 bytes.'
+                }
+                New-Item -ItemType Directory -Path (Join-Path $work 'unexpected') | Out-Null
+                Expect-Rejected { Get-CathedralMetadataPackFiles $work }
+                Write-Output 'PASS'
+            } finally {
+                $resolved=[IO.Path]::GetFullPath($work)
+                if ([IO.Path]::GetDirectoryName($resolved) -eq [IO.Path]::GetTempPath().TrimEnd('\') -and
+                    [IO.Path]::GetFileName($resolved) -match '^Godevilution-MetadataFileTest-[0-9a-f]{32}$') {
+                    Remove-Item -LiteralPath $resolved -Recurse -Force
+                }
+            }
+            """, "tools/test-cathedral-population-metadata.ps1");
+        Assert.Contains("PASS", RunPowerShell(script), StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void FullPopulationOracleRefusesExcludedReplacedAndIncompleteReports()
     {
         if (!OperatingSystem.IsWindows()) return;

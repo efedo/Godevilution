@@ -2,6 +2,17 @@
 
 Notable changes to this fork are recorded below.
 
+- 2026-10-04: Compile complete external Cathedral population metadata into a
+  separate nineteen-table schema with raw catalog/geometry/policy validation,
+  preserved opaque SOL flags and native names, shared potion derivation,
+  deterministic identities and fresh atomic publication/reload. Add bounded
+  private proof with two byte-identical compiled packs, sixteen reloaded native
+  comparisons and sixteen original compatibility comparisons. Preserve unavailable
+  source rows, validate native power/reference domains, and retain strict evidence
+  gates. Update architecture, plan, status and build guidance. Runtime activation,
+  application-order lifecycle and populated Godot interaction/restore remain open;
+  no client launch, server MPQ access or default-profile/save changes.
+
 - 2026-10-04: Compose controlled ordinary Cathedral population through initial
   items and theme rooms using managed preceding-phase state, full pools, scratch
   XY/variant, native RNG and initial-object static lighting. Add a separate

@@ -549,12 +549,45 @@ inactive light records remain inputs, matching native lighting initialization.
 This is the controlled post-CreateLevel pre-clear seam, not full normal level
 loading: the application clears monsters before geometry creation. Campaign
 seeds, hero/store/quest lifecycle, retained pools and later SavePreLighting/
-ProcessLightList remain outside acceptance. Complete pack compilation and a
-separately identified populated profile still require ordinary Godot interaction
+ProcessLightList remain outside acceptance. A separately identified populated
+runtime profile still requires ordinary Godot interaction
 and cold restore. Earlier oracle modes, default profiles and user saves are
 unchanged. Shared owned-process deadlines, inherited crash-dialog suppression,
 terminal exit/log/cleanup gates and exact environment restoration apply. Failed
 stages stop immediately; uncertain cleanup must be resolved before retrying.
+
+To verify complete external population metadata against a completed private
+full-population capture, without rebuilding or recapturing native fixtures:
+
+```powershell
+./tools/test-cathedral-population-metadata.ps1 `
+  -FullPopulationEvidenceDirectory "<completed private full-population evidence>" `
+  -GeometryDirectory "<directory containing explicit geometry TSVs>"
+```
+
+This separate bounded wrapper checks clean retained provenance and reference
+hashes, copies only the two explicit geometry TSVs into private evidence, and
+exports raw metadata through a test-only adapter. It compiles all nineteen
+required tables plus the schema manifest twice with the production CLI, requires
+identical file bytes/metadata/manifest identities, then runs sixteen exact
+explicit comparisons through reloaded packs and the sixteen original comparisons.
+Geometry and all population catalogs/policies come from the loaded pack; native
+expected intermediate/final state is comparison-only. No skips are accepted.
+Licensed names, font metrics and geometry remain outside version control.
+
+The compiler can also consume already prepared semantic metadata directly:
+
+```powershell
+dotnet run --project tools/Cathedral.Playtest --no-restore -- `
+  --compile-population-metadata --metadata-directory "<nineteen semantic TSVs>" `
+  --output-directory "<new pack directory>"
+```
+
+Version 1.0.0 is a distinct standalone metadata schema, not the gameplay schema
+or a playable profile. Every table family is mandatory; no installation/MPQ
+access, seed mapping, selected-population replay or runtime activation is added.
+Separate populated-profile interaction/restore and application-order lifecycle
+acceptance remain. Existing launchers and earlier native corpora are unchanged.
 
 The C# xUnit project is an executable Microsoft Testing Platform runner. Run
 it directly when `dotnet test` selects a machine-wide VSTest host whose

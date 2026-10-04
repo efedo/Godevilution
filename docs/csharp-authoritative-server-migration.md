@@ -89,8 +89,21 @@ lifecycle. Unique lights retain allocator history; their later physical
 processing and `SavePreLighting` are not run early. Actual pre-phase inactive
 light records remain valid inputs because native lighting initialization does
 not clear them.
-Complete external content compilation, campaign/application-order lifecycle
-and populated profile activation/restore remain required. The accepted ordinary
+A separate complete metadata boundary now supplies this controlled compositor:
+`godevilution.cathedral-population-metadata` version 1.0.0 requires nineteen
+standalone semantic tables, no assets, dependencies or overlays. It binds
+effective TIL/SOL (including the opaque SOL bit), ordered monster/object/unique
+catalogs, base items/affixes/uniques/spells, cursor animations/font widths and
+explicit depth/story/shrine/item rules into detached, fingerprinted data.
+Initial potions derive from the same item rows. Unavailable Hellfire item rows
+are preserved as raw metadata, not activated by the ordinary policy.
+The explicit offline compiler validates before fresh publication, reloads its
+output and refuses extra files, overlapping paths and reparse ancestry. It
+neither discovers installations nor stores seeds, selected populations or
+expected worlds. This metadata schema is distinct from the active gameplay-pack
+schema and does not silently activate a runtime profile.
+Campaign/application-order lifecycle and populated profile activation/restore
+remain required. The accepted ordinary
 SP Normal scope does not certify retained pools, wider modes, quests or campaigns.
 No generator accepts native expected final state as production input or
 introduces server MPQ access.

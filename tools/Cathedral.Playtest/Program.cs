@@ -10,6 +10,7 @@ internal static class Program
     private const string Usage = "Cathedral.Playtest --base-directory <pack> --geometry-directory <semantic TSVs> --output-directory <new directory> [--seed <uint32>]";
     private const string DepthUsage = "Cathedral.Playtest --base-directory <pack> --geometry-directory <semantic TSVs> --output-directory <new directory> --depth-seeds <seed1,seed2,seed3,seed4> [--placement-policy <none|authored-diagnostic>]";
     private const string DoorUsage = "Cathedral.Playtest --base-directory <pack> --geometry-directory <semantic TSVs> --output-directory <new directory> --depth-seeds <seed1,seed2,seed3,seed4> --cathedral-doors [--placement-policy <none|authored-diagnostic>]";
+    private const string PopulationMetadataUsage = "Cathedral.Playtest --compile-population-metadata --metadata-directory <complete semantic TSVs> --output-directory <new directory>";
 
     public static int Main(string[] args)
     {
@@ -18,8 +19,11 @@ internal static class Program
                 Console.WriteLine(Usage);
                 Console.WriteLine(DepthUsage);
                 Console.WriteLine(DoorUsage);
+                Console.WriteLine(PopulationMetadataUsage);
                 return 0;
             }
+            if (args.Contains("--compile-population-metadata", StringComparer.Ordinal))
+                return CompilePopulationMetadata(args);
             if (args.Contains("--cathedral-doors", StringComparer.Ordinal))
                 return CompileDoors(args);
             if (args.Contains("--depth-seeds", StringComparer.Ordinal))
@@ -56,6 +60,30 @@ internal static class Program
             Console.Error.WriteLine($"Cathedral profile compilation failed: {exception.Message}");
             return 1;
         }
+    }
+
+    private static int CompilePopulationMetadata(string[] args)
+    {
+        var values = new Dictionary<string, string>(StringComparer.Ordinal);
+        var flag = false;
+        for (var index = 0; index < args.Length; index++) {
+            if (args[index] == "--compile-population-metadata") {
+                if (flag) throw new ArgumentException(PopulationMetadataUsage);
+                flag = true;
+            } else if (args[index] is not ("--metadata-directory" or "--output-directory")
+                || index + 1 >= args.Length || string.IsNullOrWhiteSpace(args[index + 1])
+                || !values.TryAdd(args[index], args[++index])) {
+                throw new ArgumentException(PopulationMetadataUsage);
+            }
+        }
+        if (!flag || !values.TryGetValue("--metadata-directory", out var input)
+            || !values.TryGetValue("--output-directory", out var output))
+            throw new ArgumentException(PopulationMetadataUsage);
+        var receipt = CathedralPopulationMetadataCompiler.CompileDirectory(input, output);
+        Console.WriteLine($"Compiled complete Cathedral population metadata: {receipt.OutputDirectory}");
+        Console.WriteLine($"Metadata: {receipt.MetadataFingerprint}; manifest: {receipt.ManifestHash}");
+        Console.WriteLine("MPQ-free metadata only; no runtime activation or playable population claim.");
+        return 0;
     }
 
     private static int CompileDepths(string[] args)
