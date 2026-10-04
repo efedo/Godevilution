@@ -361,6 +361,78 @@ public sealed class LocalLauncherBehaviorTests
             """, "tools/test-cathedral-fresh-population.ps1");
         Assert.Contains("PASS", RunPowerShell(script), StringComparison.Ordinal);
     }
+    [Fact]
+    public void LevelReadyOracleGuardsRequireExactMatrixAndTwoArtifacts()
+    {
+        if (!OperatingSystem.IsWindows()) return;
+        var script = BuildPowerShellHarness(
+            ["Assert-CathedralReadyNativeReport", "Assert-CathedralReadyManagedReport", "Get-CathedralReadyArtifacts", "Assert-CathedralReadyRepeatability"],
+            """
+            $work = Join-Path ([IO.Path]::GetTempPath()) ('Godevilution-LevelReadyGuard-' + [guid]::NewGuid().ToString('N'))
+            New-Item -ItemType Directory -Path $work | Out-Null
+            try {
+                function Require-Rejection([scriptblock]$Action) {
+                    $rejected = $false
+                    try { & $Action } catch { $rejected = $true }
+                    if (-not $rejected) { throw 'Unsafe fresh proof was accepted.' }
+                }
+                $nativePath = Join-Path $work 'native.json'
+                $native = @{ tests = 1; failures = 0; disabled = 0; errors = 0;
+                    testsuites = @(@{ testsuite = @(@{ classname = 'ThemeRoomGenerationTest';
+                        name = 'CaptureFreshLevelReady'; status = 'RUN'; result = 'COMPLETED' }) }) }
+                [IO.File]::WriteAllText($nativePath, ($native | ConvertTo-Json -Depth 8))
+                Assert-CathedralReadyNativeReport $nativePath
+                $native.testsuites[0].testsuite[0].name = 'CaptureComposedOrdinaryPopulation'
+                [IO.File]::WriteAllText($nativePath, ($native | ConvertTo-Json -Depth 8))
+                Require-Rejection { Assert-CathedralReadyNativeReport $nativePath }
+                $native.testsuites[0].testsuite[0].name = 'CaptureFreshLevelReady'
+                $native.testsuites[0].testsuite[0].result = 'SKIPPED'
+                [IO.File]::WriteAllText($nativePath, ($native | ConvertTo-Json -Depth 8))
+                Require-Rejection { Assert-CathedralReadyNativeReport $nativePath }
+                $managedPath = Join-Path $work 'managed.xml'
+                $type = 'Devilution.Diablo.Tests.AuthoritativeCathedralLevelReadyNativeOracleTests'
+                $tests = @(foreach ($depth in 1..4) { foreach ($seed in @(2588, 743271966)) { foreach ($entry in @('main', 'previous')) {
+                    $name = $type + '.LevelReadyMatchesNative(depth: ' + $depth + ', seed: ' + $seed + ', entry: \"' + $entry + '\")'
+                    '<test name="' + [Security.SecurityElement]::Escape($name) + '" type="' + $type + '" method="LevelReadyMatchesNative" result="Pass" />'
+                } } })
+                $xml = '<assemblies><assembly total="16" passed="16" failed="0" skipped="0" errors="0" not-run="0"><collection>' + ($tests -join '') + '</collection></assembly></assemblies>'
+                [IO.File]::WriteAllText($managedPath, $xml)
+                Assert-CathedralReadyManagedReport $managedPath
+                [IO.File]::WriteAllText($managedPath, $xml.Replace('seed: 2588', 'seed: 7'))
+                Require-Rejection { Assert-CathedralReadyManagedReport $managedPath }
+                [IO.File]::WriteAllText($managedPath, $xml.Replace('result="Pass"', 'result="Skip"'))
+                Require-Rejection { Assert-CathedralReadyManagedReport $managedPath }
+                [IO.File]::WriteAllText($managedPath, $xml.Replace('not-run="0"', 'not-run="1"'))
+                Require-Rejection { Assert-CathedralReadyManagedReport $managedPath }
+                $artifactDirectory = Join-Path $work 'capture'
+                New-Item -ItemType Directory -Path $artifactDirectory | Out-Null
+                $corpusPath = Join-Path $artifactDirectory 'native-level-ready.json'
+                $tablePath = Join-Path $artifactDirectory 'cathedral_automap.tsv'
+                [IO.File]::WriteAllText($corpusPath, 'corpus')
+                [IO.File]::WriteAllText($tablePath, 'table')
+                $artifacts = @(Get-CathedralReadyArtifacts $artifactDirectory)
+                Assert-CathedralReadyRepeatability $artifacts $artifacts
+                Require-Rejection { Assert-CathedralReadyRepeatability $artifacts @($artifacts[0]) }
+                $mutated = @($artifacts[0].PSObject.Copy(), $artifacts[1].PSObject.Copy())
+                $mutated[0].Sha256 = ('B' * 64)
+                Require-Rejection { Assert-CathedralReadyRepeatability $artifacts $mutated }
+                $extra = Join-Path $artifactDirectory 'extra'
+                [IO.File]::WriteAllText($extra, 'extra')
+                Require-Rejection { Get-CathedralReadyArtifacts $artifactDirectory }
+                Remove-Item -LiteralPath $extra -Force
+                [IO.File]::WriteAllText($tablePath, '')
+                Require-Rejection { Get-CathedralReadyArtifacts $artifactDirectory }
+                Write-Output 'PASS'
+            } finally {
+                $resolved = [IO.Path]::GetFullPath($work)
+                if ((Split-Path $resolved -Parent) -eq [IO.Path]::GetFullPath([IO.Path]::GetTempPath()).TrimEnd('\') -and
+                    (Split-Path $resolved -Leaf) -match '^Godevilution-LevelReadyGuard-[0-9a-f]{32}$') {
+                    Remove-Item -LiteralPath $resolved -Recurse -Force
+                }
+            }
+            """, "tools/test-cathedral-level-ready.ps1");
+        Assert.Contains("PASS", RunPowerShell(script), StringComparison.Ordinal);
+    }
 
     [Fact]
     public void GodotAutomationPolicyBoundsVisibleClientsWithoutChangingInteractiveDefaults()

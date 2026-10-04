@@ -6,6 +6,7 @@
 #pragma once
 
 #include <cstdint>
+#include <array>
 
 #include "engine/math/displacement.hpp"
 #include "engine/math/point.hpp"
@@ -14,6 +15,12 @@
 #include "utils/attributes.h"
 
 namespace devilution {
+
+#ifdef BUILD_TESTING
+// Packed type/flags preserve the complete lookup table, including cold tails.
+DVL_API_FOR_TEST std::array<uint16_t, 256> CaptureAutomapDefinitionsForTesting();
+DVL_API_FOR_TEST void RestoreAutomapDefinitionsForTesting(const std::array<uint16_t, 256> &definitions);
+#endif
 
 enum MapExplorationType : uint8_t {
 	/** unexplored map tile */

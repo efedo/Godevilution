@@ -2,6 +2,18 @@
 
 Notable changes to this fork are recorded below.
 
+- 2026-10-04: Continue fresh Cathedral population through the cold post-theme
+  pre-join loader handoff: missile/corpse initialization, player occupancy,
+  prelighting, monster light/charge cleanup and physical light/vision. Externalize
+  automap semantics in a separate validated catalog; preserve complete pool,
+  corpse/light/vision tails, signed grids, bookkeeping and RNG. Add strict
+  sixteen-case native proof, repeated byte-identical artifacts, portable edge
+  checks and old-corpus compatibility gates. Broad module/server suites pass
+  3,232/1,597 with exclusions recorded in status. Update existing architecture,
+  plan, status and verification guidance. Live populated checkpoint/profile,
+  join/campaign loading and Godot interaction/restore remain open; default packs,
+  user saves and the server MPQ boundary are unchanged.
+
 - 2026-10-04: Add fresh cold-storage Cathedral generation from compiled metadata,
   seeds and explicit hero context in native loading order. Preserve transparency
   counters, full pools/signed channels, player light/animation/pending vision and

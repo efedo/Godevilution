@@ -92,6 +92,8 @@ void FreeGameMem();
 #ifdef BUILD_TESTING
 // Calls the actual native pre-population level boundary for isolated oracles.
 DVL_API_FOR_TEST void CreateLevelForTesting(lvl_entry entry);
+// Actual cold post-theme loader handoff, stopping before the join message.
+DVL_API_FOR_TEST void CompleteFreshLevelForTesting(lvl_entry entry);
 #endif
 bool StartGame(bool bNewGame, bool bSinglePlayer);
 [[noreturn]] void diablo_quit(int exitStatus);

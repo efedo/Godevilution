@@ -25,15 +25,18 @@
 #include "engine/render/text_render.hpp"
 #include "game/items/items.hpp"
 #include "game/items/item_pool.hpp"
+#include "game/missiles/missiles.hpp"
 #include "game/levels/dungeon_common.h"
 #include "game/levels/level.hpp"
 #include "game/levels/tile_properties.hpp"
 #include "game/levels/themes.h"
 #include "game/levels/triggers.h"
 #include "game/monsters/monster_pool.hpp"
+#include "game/monsters/monster_corpses.hpp"
 #include "game/objects/objects.hpp"
 #include "game/objects/object_pool.hpp"
 #include "game/players/players.hpp"
+#include "game/portals/portal.hpp"
 #include "game/quests/quests.hpp"
 #include "persistence/options.h"
 #include "persistence/loadsave.h"
@@ -1242,7 +1245,7 @@ struct NativeThemeRoomGuard {
 
 class ThemeRoomGenerationTest : public ThemeItemPlacementTest {
 protected:
-	void CapturePopulationOracle(const char *directory, bool freshLoadOrder);
+	void CapturePopulationOracle(const char *directory, bool freshLoadOrder, bool levelReady = false);
 
 	void SetUp() override
 	{
@@ -1565,7 +1568,79 @@ struct NativeComposedPopulationGuard {
 // Extends the existing controlled upstream oracle, not the complete campaign
 // LoadGameLevel lifecycle. Geometry comes from original local assets; this
 // fixture alone opens MPQs and only when explicitly selected.
-void ThemeRoomGenerationTest::CapturePopulationOracle(const char *directory, bool freshLoadOrder)
+// Own the extra global channels used only by the cold loader continuation.
+struct NativeLevelReadyGuard {
+	AutomapManager oldAutomap = CurrentAutomapManager;
+	std::array<uint16_t, 256> oldDefinitions = CaptureAutomapDefinitionsForTesting();
+	std::list<Missile> oldMissiles = std::move(Missiles);
+	bool oldMissilePreFlag = MissilePreFlag;
+	std::array<Corpse, MaxCorpses> oldCorpses;
+	int8_t oldStone = stonendx;
+	std::array<Portal, MAXPORTAL> oldPortals;
+	NativeLevelReadyGuard()
+	{
+		for (size_t index = 0; index < MaxCorpses; ++index) oldCorpses[index] = std::move(Corpses[index]);
+		std::copy_n(Portals, MAXPORTAL, oldPortals.begin());
+	}
+	~NativeLevelReadyGuard()
+	{
+		CurrentAutomapManager = oldAutomap;
+		RestoreAutomapDefinitionsForTesting(oldDefinitions);
+		Missiles = std::move(oldMissiles); MissilePreFlag = oldMissilePreFlag;
+		for (size_t index = 0; index < MaxCorpses; ++index) Corpses[index] = std::move(oldCorpses[index]);
+		stonendx = oldStone;
+		std::copy(oldPortals.begin(), oldPortals.end(), Portals);
+	}
+};
+
+void WriteLevelReadyState(std::ostream &out)
+{
+	JsonObject ready(out); ready.Key("world"); WriteRoomWorld(out);
+	ready.Key("corpses"); WriteArray(out, Corpses, [&](const Corpse &corpse) {
+		out << '[' << corpse.frame << ',' << corpse.width << ',' << static_cast<int>(corpse.translationPaletteIndex) << ']';
+	});
+	ready.Number("stoneCorpseId", stonendx);
+	ready.Key("bestiaryCorpseIds"); WriteArray(out, LevelBestiary, [&](const CMonster &type) { out << static_cast<int>(type.corpseId); });
+	ready.Key("deathAnimations"); WriteArray(out, LevelBestiary, [&](const CMonster &type) {
+		const AnimStruct &death = type.getAnimData(MonsterGraphic::Death);
+		out << '[' << static_cast<int>(death.frames) << ',' << death.width << ']';
+	});
+	ready.Key("player"); {
+		const Player &player = *MyPlayer; JsonObject value(out);
+		value.Key("tile"); WriteRoomPoint(out, { player.position.tile.x, player.position.tile.y });
+		value.Key("future"); WriteRoomPoint(out, { player.position.future.x, player.position.future.y });
+		value.Key("old"); WriteRoomPoint(out, { player.position.old.x, player.position.old.y });
+		value.Key("last"); WriteRoomPoint(out, { player.position.last.x, player.position.last.y });
+		value.Key("temp"); WriteRoomPoint(out, { player.position.temp.x, player.position.temp.y });
+		value.Key("view"); WriteRoomPoint(out, { viewPosition().x, viewPosition().y });
+		value.Number("id", MyPlayerId); value.Number("level", player.plrlevel);
+		value.Number("currentLife", player.life.current); value.Number("lightId", player.lightId); value.Number("lightRadius", player._pLightRad);
+		value.Boolean("active", player.plractive); value.Boolean("levelChanging", player._pLvlChanging);
+	}
+	ready.Number("spellFlags", MyPlayer->_pSpellFlags); ready.Boolean("infravision", MyPlayer->_pInfraFlag);
+	ready.Boolean("autoMapShowItems", CurrentAutomapManager.GetAutoMapShowItems());
+	ready.Number("missileCount", Missiles.size()); ready.Boolean("missilePreFlag", MissilePreFlag);
+	ready.Key("automapExploration"); out << '[';
+	for (int y = 0; y < DMAXY; ++y) for (int x = 0; x < DMAXX; ++x) {
+		if (x != 0 || y != 0) out << ',';
+		out << static_cast<int>(CurrentAutomapManager.GetAutomapView()[x][y]);
+	}
+	out << ']';
+	ready.Key("visibleTransparencyRegions"); WriteArray(out, visibleTransparencyRegions(), [&](bool value) { out << (value ? "true" : "false"); });
+	ready.Boolean("updateVision", CurrentLightManager.VisionUpdatePendingForTesting());
+	ready.Key("visionActive"); WriteArray(out, CurrentLightManager.visionActive_, [&](bool value) { out << (value ? "true" : "false"); });
+	ready.Key("visionRecords"); int id = 0;
+	WriteArray(out, CurrentLightManager.visionList_, [&](const Light &vision) {
+		JsonObject value(out); value.Number("lightId", id++);
+		value.Key("tile"); WriteRoomPoint(out, { vision.position.tile.x, vision.position.tile.y });
+		value.Key("oldTile"); WriteRoomPoint(out, { vision.position.old.x, vision.position.old.y });
+		value.Number("offsetX", vision.position.offset.deltaX); value.Number("offsetY", vision.position.offset.deltaY);
+		value.Number("radius", vision.radius); value.Number("oldRadius", vision.oldRadius);
+		value.Boolean("isInvalid", vision.isInvalid); value.Boolean("hasChanged", vision.hasChanged);
+	});
+}
+
+void ThemeRoomGenerationTest::CapturePopulationOracle(const char *directory, bool freshLoadOrder, bool levelReady)
 {
 	if (directory == nullptr || !*directory) GTEST_SKIP() << "Select private upstream Cathedral population explicitly.";
 	const auto root = std::filesystem::weakly_canonical(directory);
@@ -1575,6 +1650,8 @@ void ThemeRoomGenerationTest::CapturePopulationOracle(const char *directory, boo
 	// Use the same original-asset discovery and controlled hero context as the
 	// earlier population fixture. No server or client runtime loads archives.
 	NativeComposedPopulationGuard composedGuard;
+	std::unique_ptr<NativeLevelReadyGuard> readyGuard;
+	if (levelReady) readyGuard = std::make_unique<NativeLevelReadyGuard>();
 	// The inherited fixture already owns and initializes the player and tables.
 	// Avoid TestInitGame/InitQuests: quests are explicitly disabled below, and
 	// their extra quest-dialog/UI state is not part of this population seam.
@@ -1590,6 +1667,10 @@ void ThemeRoomGenerationTest::CapturePopulationOracle(const char *directory, boo
 		const AssetRef asset = FindAsset(path);
 		ASSERT_TRUE(asset.ok()); ASSERT_EQ(asset.archive, &mainArchive);
 	}
+	if (levelReady) {
+		const AssetRef automapAsset = FindAsset("levels\\l1data\\l1.amp");
+		ASSERT_TRUE(automapAsset.ok()); ASSERT_EQ(automapAsset.archive, &mainArchive);
+	}
 #endif
 	size_t tileCount = 0;
 	auto definitions = LoadFileInMemWithStatus<MegaTile>("levels\\l1data\\l1.til", &tileCount);
@@ -1599,16 +1680,26 @@ void ThemeRoomGenerationTest::CapturePopulationOracle(const char *directory, boo
 	ASSERT_TRUE(LoadLevelSOLData().has_value()); ASSERT_TRUE(CurrentLightManager.LoadTrns().has_value());
 	CurrentLightManager.MakeLightTable(); LoadLevelGenerationData();
 	if (freshLoadOrder) LoadPlayerDataFiles();
-	std::ofstream stream(root / (freshLoadOrder ? "native-fresh-population.json" : "native-full-population.json"), std::ios::binary | std::ios::trunc); ASSERT_TRUE(stream.good());
+	const char *fileName = levelReady ? "native-level-ready.json" : (freshLoadOrder ? "native-fresh-population.json" : "native-full-population.json");
+	std::ofstream stream(root / fileName, std::ios::binary | std::ios::trunc); ASSERT_TRUE(stream.good());
 	int cases = 0, multiRoomCases = 0;
 	{
-		JsonObject document(stream); document.String("format", freshLoadOrder ? "godevilution-cathedral-fresh-population" : "godevilution-cathedral-full-population"); document.Number("version", 1);
-		document.String("policy", freshLoadOrder ? "fresh-cold-original-diablo-single-player-normal-clear-before-createlevel-through-createthemerooms" : "controlled-original-diablo-single-player-normal-post-createlevel-through-createthemerooms");
+		JsonObject document(stream); document.String("format", levelReady ? "godevilution-cathedral-level-ready" : (freshLoadOrder ? "godevilution-cathedral-fresh-population" : "godevilution-cathedral-full-population")); document.Number("version", 1);
+		document.String("policy", levelReady ? "fresh-cold-original-diablo-single-player-normal-post-theme-through-light-vision-before-join" : (freshLoadOrder ? "fresh-cold-original-diablo-single-player-normal-clear-before-createlevel-through-createthemerooms" : "controlled-original-diablo-single-player-normal-post-createlevel-through-createthemerooms"));
 		document.Number("playerMaximumLife", freshLoadOrder ? 6400 : 64); document.Number("playerMaximumMana", freshLoadOrder ? 3200 : 0);
 		if (freshLoadOrder) {
 			document.Number("playerLightRadius", 8); document.Number("storySeed", UINT32_C(0x13579BDF));
 			document.Key("playerFuture"); WriteRoomPoint(stream, { 75, 68 });
 			document.Boolean("playerLevelChanging", true);
+		}
+		if (levelReady) {
+			document.Key("coldPlayer"); JsonObject context(stream);
+			context.Number("spellFlags", 255); context.Boolean("infravision", true);
+			context.Boolean("autoMapShowItems", true); context.Boolean("missilePreFlag", true);
+			context.Number("currentLife", 6400); context.Boolean("priorMissilesEmpty", true); context.Boolean("portalsAbsent", true);
+			context.Key("last"); WriteRoomPoint(stream, { 13, 17 });
+			// InitPlayer's ClearStateVariables clears the pre-load Temp (19,23).
+			context.Key("temp"); WriteRoomPoint(stream, { 0, 0 });
 		}
 		document.Key("itemCatalog"); WriteCatalog(stream);
 		document.Key("cases"); stream << '[';
@@ -1650,10 +1741,27 @@ void ThemeRoomGenerationTest::CapturePopulationOracle(const char *directory, boo
 					SetRndSeed(seed); preClearState = GetLCGEngineState();
 					InitLevelMonsters(); postClearState = GetLCGEngineState();
 				}
+				if (levelReady) {
+					Missiles.clear(); MissilePreFlag = true;
+					std::fill(std::begin(Corpses), std::end(Corpses), Corpse {}); stonendx = 0;
+					std::fill(std::begin(Portals), std::end(Portals), Portal {});
+					RestoreAutomapDefinitionsForTesting({}); CurrentAutomapManager.InitAutomap();
+					CurrentAutomapManager.SetAutoMapShowItems(true);
+					MyPlayer->_pSpellFlags = static_cast<SpellFlag>(255); MyPlayer->_pInfraFlag = true;
+					if (cases == 0) {
+						std::ofstream metadata(root / "cathedral_automap.tsv", std::ios::binary | std::ios::trunc);
+						ASSERT_TRUE(metadata.good()); metadata << "id\ttype\tflags\r\n";
+						const auto mapping = CaptureAutomapDefinitionsForTesting();
+						for (size_t index = 0; index < mapping.size(); ++index)
+							metadata << index << '\t' << (mapping[index] & 0xFF) << '\t' << (mapping[index] >> 8) << "\r\n";
+						metadata.flush(); ASSERT_TRUE(metadata.good());
+					}
+				}
 				CreateLevelForTesting(entry);
 				MyPlayer->position.tile = viewPosition();
 				if (!freshLoadOrder) MyPlayer->position.future = viewPosition();
 				MyPlayer->position.old = viewPosition(); MyPlayer->position.last = viewPosition();
+				if (levelReady) { MyPlayer->position.last = { 13, 17 }; MyPlayer->position.temp = { 19, 23 }; }
 				if (cases++ != 0) stream << ',';
 				JsonObject row(stream); row.Number("depth", depth); row.Number("seed", seed);
 				row.String("entry", entry == ENTRY_MAIN ? "main" : "previous");
@@ -1715,11 +1823,15 @@ void ThemeRoomGenerationTest::CapturePopulationOracle(const char *directory, boo
 				}
 				row.Key("visibleTransparencyRegions"); WriteArray(stream, visibleTransparencyRegions(), [&](bool visible) { stream << (visible ? "true" : "false"); });
 				CreateThemeRooms(); row.Key("expected"); WriteRoomWorld(stream);
+				if (levelReady) {
+					const uint32_t before = GetLCGEngineState(); CompleteFreshLevelForTesting(entry);
+					ASSERT_EQ(GetLCGEngineState(), before); row.Key("ready"); WriteLevelReadyState(stream);
+				}
 			}
 		stream << ']'; document.Number("caseCount", cases); document.Number("multiRoomCases", multiRoomCases);
 	}
 	stream.flush(); ASSERT_TRUE(stream.good()); stream.close(); EXPECT_EQ(cases, 16); EXPECT_GT(multiRoomCases, 0);
-	EXPECT_LE(std::filesystem::file_size(root / (freshLoadOrder ? "native-fresh-population.json" : "native-full-population.json")), 128U * 1024U * 1024U);
+	EXPECT_LE(std::filesystem::file_size(root / fileName), 128U * 1024U * 1024U);
 }
 
 TEST_F(ThemeRoomGenerationTest, CaptureComposedOrdinaryPopulation)
@@ -1730,6 +1842,11 @@ TEST_F(ThemeRoomGenerationTest, CaptureComposedOrdinaryPopulation)
 TEST_F(ThemeRoomGenerationTest, CaptureFreshOrdinaryPopulation)
 {
 	CapturePopulationOracle(std::getenv("GODEVILUTION_CATHEDRAL_FRESH_POPULATION_ORACLE_DIRECTORY"), true);
+}
+
+TEST_F(ThemeRoomGenerationTest, CaptureFreshLevelReady)
+{
+	CapturePopulationOracle(std::getenv("GODEVILUTION_CATHEDRAL_LEVEL_READY_ORACLE_DIRECTORY"), true, true);
 }
 
 } // namespace

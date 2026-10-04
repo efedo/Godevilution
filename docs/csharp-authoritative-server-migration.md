@@ -113,6 +113,18 @@ The bestiary/theme and population streams retain their independent reseeds.
 This boundary deliberately owns cold-zero storage, not retained level state.
 It ends at `CreateThemeRooms`: missile/corpse initialization, prelighting, entry
 occupancy, join completion and physical light/vision processing are not run early.
+The separate `AuthoritativeCathedralLevelReadyGenerator` continues that cold
+output through actual missile-status/tile resets, all 31 corpse definitions,
+prelighting, local-player placement, monster light/charge cleanup and physical
+light/vision processing, stopping before network join. Its explicit player
+scalars describe the post-InitPlayer/post-theme boundary; earlier Temp is reset
+by InitPlayer, not preserved as a pre-load input. A separate validated 256-row
+automap semantic catalog supplies exploration rules without changing the
+nineteen-table population schema. Full light/vision allocator tails, signed
+player occupancy, transparency and 40x40 exploration are retained with input
+provenance. This result is not a standalone lossless live checkpoint or an
+installed/tick-ready runtime. Retained portals/missiles, nonzero light offsets,
+wider loading policies and join/campaign lifecycle remain outside this boundary.
 The public controlled-compositor constructor and earlier generation/save
 identities are preserved; player-light admission belongs only to the new factory.
 Campaign/application-order lifecycle and populated profile activation/restore

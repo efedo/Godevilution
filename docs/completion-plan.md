@@ -73,7 +73,7 @@ isolated spell or table rows while the playable route stays unchanged.
 | --- | --- | --- | --- |
 | M0 | Reproducible launch and honest acceptance evidence | Existing implementation | Dedicated-root cohort host passes TCP recovery, scoped faults, production CLI participant/item recovery and lease refusal, isolated Godot create/resume/outage and surviving-client committed-but-unobserved replay; managed first-publication interruption and a scoped Windows metadata profile pass; approval-gated normal-launch adoption and broader fault/filesystem/platform acceptance remain; legacy cold imports, native GUI and release-budget gaps remain |
 | M1 | Usable Godot town-to-dungeon loop | M0 launch/acceptance harness | Authored combat/loot/equipment, NPC/service approach, purchased-scroll portal and isolated Sorcerer quest/cast/Recharge/death/restart/restore journeys pass; full loop remains |
-| M2 | Native-compatible generated world | M0 geometry/parity baseline | Ordinary Cathedral depths 1-4 coarse/fine oracle covers six seeds and MAIN/PREV; controlled population through initial items and theme rooms has independent native comparisons, including complete compiled/reloaded generation metadata; separate opt-in depth and mutable-door profiles exist; headless and a fresh rendered door cold restore pass, with an earlier rendered TooLate retained and causally unclassified; populated runtime-pack/profile activation, campaign/application-order lifecycle, native art, wider topology and remaining families remain |
+| M2 | Native-compatible generated world | M0 geometry/parity baseline | Ordinary Cathedral depths 1-4 coarse/fine oracle covers six seeds and MAIN/PREV; controlled population and compiled metadata have native comparisons; fresh-cold generation now continues through pre-join player occupancy and physical light/vision with a separate automap catalog; opt-in depth/door profiles pass scoped restore, with an earlier rendered TooLate retained and unclassified; live populated checkpoint/profile activation, join/campaign lifecycle, native art, wider topology and remaining families remain |
 | M3 | Complete base and Hellfire gameplay routes | M1 plus the relevant M2 world slices | Many rules exist; campaign and remaining behavioral coverage remain |
 | M4 | Release-quality client, recovery, and packaging | M3; preparation begins during M1/M2 | Recovery and adapter packaging foundations exist; product acceptance remains |
 | M5 | Production legacy-runtime retirement | M4 and capability replacement gates | Authoritative mode is Lua-free; compatibility runtime remains |
@@ -527,8 +527,13 @@ this evidence. A sample art pack does not satisfy M4's full presentation gate.
    public idle-animation scalars and pending vision. Preserve the independently
    supplied pre-entry future and changing flag: native synchronization/join
    happens after population. This is not retained-state campaign loading or a
-   ready-to-tick level. Complete the later missile/corpse, SavePreLighting,
-   entry/join and physical light/vision handoff before runtime acceptance.
+   ready-to-tick level. A separate cold continuation now covers missile/corpse
+   initialization, SavePreLighting, local-player occupancy, monster light/charge
+   cleanup and physical light/vision through the pre-join boundary. Preserve its
+   explicit post-InitPlayer context, complete corpse/allocator/vision tails,
+   signed grids and independently validated 256-row automap metadata. The old
+   nineteen-table pack and earlier native corpora remain unchanged. Join,
+   retained-level/campaign lifecycle and runtime acceptance remain open.
    Next install these validated inputs in a separately identified opt-in
    populated server profile, with a lossless game-owned checkpoint and explicit
    native-slot/type/unique-to-stable mappings. Add required live monster combat,
@@ -553,7 +558,8 @@ this evidence. A sample art pack does not satisfy M4's full presentation gate.
    one successful diagnostic route is not M0 or Cathedral-family acceptance.
    Quest fragments/set pieces, wider topology and native population remain open;
    do not silently apply the base prototype's different-family quest fragment to L1.
-   The shared vision contract remains conservative, not exact native light parity.
+   The generic shared runtime vision contract remains conservative; the detached
+   cold loader's native rays and physical lighting do not qualify that live contract.
    Integrate validated external pattern data; do not invent campaign seed mapping
    or add server MPQ loading. Keep licensed oracle inputs outside the repository.
 3. Compare seed-for-seed native and managed generation: RNG consumption,

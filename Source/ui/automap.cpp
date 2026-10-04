@@ -1562,6 +1562,25 @@ std::unique_ptr<AutomapTile[]> LoadAutomapData(size_t &tileCount)
 
 AutomapManager CurrentAutomapManager;
 
+#ifdef BUILD_TESTING
+std::array<uint16_t, 256> CaptureAutomapDefinitionsForTesting()
+{
+	std::array<uint16_t, 256> result {};
+	for (size_t index = 0; index < result.size(); ++index)
+		result[index] = static_cast<uint8_t>(AutomapTypeTiles[index].type)
+		    | (static_cast<uint16_t>(AutomapTypeTiles[index].flags) << 8);
+	return result;
+}
+
+void RestoreAutomapDefinitionsForTesting(const std::array<uint16_t, 256> &definitions)
+{
+	for (size_t index = 0; index < definitions.size(); ++index) {
+		AutomapTypeTiles[index].type = static_cast<AutomapTile::Types>(definitions[index] & 0xFF);
+		AutomapTypeTiles[index].flags = static_cast<AutomapTile::Flags>(definitions[index] >> 8);
+	}
+}
+#endif
+
 void AutomapManager::InitAutomapOnce()
 {
 	automapActive_ = false;

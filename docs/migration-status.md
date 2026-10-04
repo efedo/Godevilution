@@ -126,7 +126,7 @@ open. Their scope, dependencies, and exit checks are defined only in the
   Complete external population metadata now compiles and reloads with native
   comparison evidence. Fresh cold-storage generation now also derives geometry,
   reservations and player initialization in native loading order. Retained-state
-  campaign loading, level-ready processing, populated-profile activation
+  campaign loading, join completion, live populated checkpoint/profile activation
   and ordinary Godot interaction/cold restore remain M2 work; default packs and
   launch/save profiles are unchanged.
 - Native-compatible generated maps, collision/set-piece placement, remaining
@@ -156,6 +156,67 @@ open. Their scope, dependencies, and exit checks are defined only in the
   this edge case, but the corrected Flash fixtures cover off-player cursors.
 
 ## Recent implementation evidence
+
+### M2 cold Cathedral post-theme loader handoff (2026-10-04)
+
+This batch follows `bbbd8b928`. The additive detached continuation processes
+missile tile/status resets, 31 corpse definitions (including the unused blood
+gap and stone/unique palette slots), prelighting, native local-player placement,
+monster light/charge cleanup and physical light/vision, stopping before join.
+It retains full pools, signed player occupancy, light/vision records and tails,
+visible transparency, 1600 automap bytes, player bookkeeping, provenance and RNG.
+Automap semantics load from a distinct validated 256-row external table; the
+nineteen-table pack, existing controlled admission and save identities are unchanged.
+Encounter and loader vision share the unchanged source-exact native ray traversal.
+
+The strict bounded wrapper passes sixteen independent native comparisons and
+requires two byte-identical corpus/automap captures, exact fixture/matrix binding,
+clean owned exits and retained logs. Proof is retained under
+`%TEMP%/Godevilution-Level-Ready-Oracle-1395d714272d44a0b49eeaacb763dfbf`.
+The corpus is 47,397,158 bytes, SHA256
+`da16f15189171582b179308d33f4056e4585fc2934e9122d13b1088e2ad04083`;
+the table is 2,243 bytes, SHA256
+`7f869d0db51c4ebd94e3558cd02e27f7dc6d527f7173feb74a20444ad480de04`.
+Native expected worlds remain comparison-only; managed generation receives
+compiled metadata, explicit seeds/hero scalars and the external automap table.
+
+Independent older controlled/fresh native recaptures retain their original
+35,376,908/35,406,998 bytes and hashes recorded below. Compatibility evidence
+is under `%TEMP%/Godevilution-Level-Ready-Legacy-32daccafcb334fe1be1ec854658d8ddf`
+and `%TEMP%/Godevilution-Level-Ready-Fresh-Compatibility-8640ca081c7d4098b8f910c9312ad05a`.
+Eleven registered portable native cases pass without exclusions. Native builds
+retain the pre-existing C4834 warning; no warning-free native build is claimed.
+
+Portable loader/automap/vision checks pass 31/16/7, and the focused factory
+checks pass nine. The fresh, original controlled and reloaded-metadata controlled
+comparisons each pass sixteen; the final ready comparison also passes sixteen.
+All focused gates have no exclusions. Broad module/server suites pass
+3,232/1,597 with zero failures/errors. Module exclusions are 209 explicit NotRun
+and the existing link-privilege Skip; server exclusions are three NotRun and its
+existing link Skip. The new exact report/artifact guard passes separately.
+The module build has no warnings/errors; the server build retains three NU1900
+audit-feed warnings, not a successful vulnerability audit. Managed logs/XML are
+under `.local/cathedral-ready-*` and `.local/m2-level-ready-managed-*`.
+Seven final documentation checks pass without exclusions. Independent review
+approved the bounded package after inspecting final source, reports, hashes,
+compatibility evidence and documentation; no GUI/campaign acceptance is implied.
+
+Retained failed proofs include a missing bestiary path, numeric test assertion,
+one-file receipt assumption and pre-InitPlayer Temp policy. Native
+ClearStateVariables resets Temp; the independent fixture now retains a nonzero
+pre-init value and declares the resulting post-init zero input. Production does
+not copy expected state. Initial portable test fixtures also lacked trigger
+pieces and valid initial-potion/unique policy; failures are retained separately.
+
+Accepted scope remains cold ordinary original-Diablo Cathedral depths 1-4,
+quests disabled, single-player Normal, through the pre-join loader handoff with
+empty retained missiles/portals and zero active light offsets. This is neither
+retained-state campaign loading nor a tick-ready installed level. Next implement
+the live-updated lossless raw checkpoint and native-to-stable mappings, missing
+combat/drop/experience metadata, atomic raw/projection mutation, runtime/profile
+installation and ordinary Godot interaction/cold restore. No server MPQ access,
+Godot launch, default-profile or user-save change is introduced. M0/M2 remain
+open; the approximately 35% overall estimate is unchanged.
 
 ### M2 fresh cold-storage Cathedral generation in native loading order (2026-10-04)
 

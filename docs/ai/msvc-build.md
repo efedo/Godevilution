@@ -616,6 +616,32 @@ remain separate and must retain their bytes. This is not campaign seed selection
 retained-level loading, post-theme level-ready processing, runtime installation,
 Godot interaction or cold-restore acceptance.
 
+To verify the additive cold post-theme loader handoff:
+
+```powershell
+./tools/test-cathedral-level-ready.ps1 `
+  -MetadataPackDirectory "<private compiled population metadata pack>"
+```
+
+This separate bounded wrapper builds the same registered native target, selects
+`CaptureFreshLevelReady` twice, requires exactly the byte-identical corpus and
+256-row automap TSV, then builds/runs sixteen exact managed comparisons. It
+restores both opt-in environment variables and retains failed evidence. Only
+the native test fixture discovers archives; production consumes explicit
+MPQ-free metadata. Run the portable `AuthoritativeCathedralLevelReadyGeneratorTests`,
+`AuthoritativeCathedralAutomapMetadataTests` and `AuthoritativeCathedralNativeVisionTests`
+separately, plus old fresh/controlled parity and unchanged-corpus checks.
+These checks do not launch Godot or the server.
+
+Scope extends the earlier ordinary cold policy through InitMissiles/InitCorpses,
+SavePreLighting, player occupancy, monster lights/charge cleanup and actual
+physical light/vision, stopping before join. Extra player scalars are supplied
+after InitPlayer and themes, not before their resets. Full corpus state,
+31 corpse definitions, all light/vision records/tails, automap exploration and
+visible transparency are compared. Retained missiles/portals, nonzero active
+light offsets, wider policies, live checkpoint/profile activation and campaign
+loading remain separate gates. Preserve older capture bytes and save identities.
+
 The C# xUnit project is an executable Microsoft Testing Platform runner. Run
 it directly when `dotnet test` selects a machine-wide VSTest host whose
 `testhost` package is unavailable:

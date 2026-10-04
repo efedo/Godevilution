@@ -26,7 +26,7 @@ namespace devilution {
 constexpr WorldTilePosition GolemHoldingCell = Point { 1, 0 };
 
 struct MissilePosition {
-	
+
 	Displacement offset; // Sprite's pixel offset from tile.
 	Displacement velocity; // Pixel velocity while moving
 	Displacement traveled; // Pixels traveled as a numerator of 65,536.
@@ -227,7 +227,7 @@ public:
 };
 
 extern DVL_API_FOR_TEST std::list<Missile> Missiles;
-extern bool MissilePreFlag;
+extern DVL_API_FOR_TEST bool MissilePreFlag;
 
 DamageRange GetDamageAmt(SpellID spell, int spellLevel);
 

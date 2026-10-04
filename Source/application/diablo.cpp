@@ -3947,6 +3947,20 @@ void LoadGameLevelLightVision()
 	}
 }
 
+#ifdef BUILD_TESTING
+void CompleteFreshLevelForTesting(lvl_entry entry)
+{
+	InitMissiles();
+	InitCorpses();
+	CurrentLightManager.SavePreLighting();
+	SyncPortals();
+	LoadGameLevelSyncPlayerEntry(entry);
+	UpdateMonsterLights();
+	UnstuckChargers();
+	LoadGameLevelLightVision();
+}
+#endif
+
 void LoadGameLevelReturn()
 {
 	if (!LegacyLevelLoadMutationAllowed())
