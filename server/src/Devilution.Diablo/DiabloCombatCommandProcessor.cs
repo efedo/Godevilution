@@ -6,6 +6,14 @@ namespace Devilution.Diablo;
 /** Applies combat intents and autonomous combat ticks without host dependencies. */
 public sealed class DiabloCombatCommandProcessor
 {
+    /** The caller phase that is scoped to one ExecuteTick participant callback. */
+    private enum NativeCallerTimingPhase
+    {
+        None,
+        ReadyRepeat,
+        CompletionLoopStart,
+    }
+
     private enum PlayerDeathReason
     {
         MonsterOrTrap,
@@ -38,6 +46,8 @@ public sealed class DiabloCombatCommandProcessor
     private readonly DeterministicEntityIdAllocator worldItemEntityIds = new(0x40000000);
     private readonly DeterministicEntityIdAllocator monsterEntityIds = new(0x10000000);
     private readonly DeterministicEntityIdAllocator projectileEntityIds = new(0x80000000);
+    private NativeCallerTimingPhase nativeCallerTimingPhase;
+    private AuthoritativePlayerState? nativeCallerPlayer;
 
     private const uint FastHitRecoveryFlag = 1U << 21;
     private const uint FasterHitRecoveryFlag = 1U << 22;
@@ -396,15 +406,18 @@ public sealed class DiabloCombatCommandProcessor
     }
 
     /** Applies native block/hit recovery durability rolls before mode expiry. */
-    private void AdvanceCombatModeWithEquipmentDamage(
+    private bool AdvanceCombatModeWithEquipmentDamage(
         AuthoritativePlayerState player,
         ulong tick)
     {
         if (player.CurrentAction is not null
             || player.CombatModeEndTick == 0
             || tick < player.CombatModeEndTick) {
-            return;
+            return false;
         }
+
+        var completed = player.CombatMode is DiabloPlayerCombatMode.Block
+            or DiabloPlayerCombatMode.GotHit;
 
         if (player.CombatMode == DiabloPlayerCombatMode.Block) {
             if (HasNativeParryDurabilityTarget(player)
@@ -417,6 +430,7 @@ public sealed class DiabloCombatCommandProcessor
         }
 
         AdvanceCombatMode(player, tick);
+        return completed;
     }
 
     /** Applies one deterministic autonomous world tick in caller-provided player order. */
@@ -441,6 +455,81 @@ public sealed class DiabloCombatCommandProcessor
         AdvanceMonsters(tick, players, events);
         AdvanceProjectiles(tick, players, events);
         return events;
+    }
+
+    /**
+     * Advances one tick while exposing an ordered command callback at each
+     * player's primary-action scheduling point. Legacy AdvanceTick remains
+     * unchanged; this seam is used only by the Engine ExecuteTick path.
+     */
+    public IReadOnlyList<DiabloDirectedGameplayEvent> AdvanceTickWithCommands(
+        ulong tick,
+        IReadOnlyList<AuthoritativePlayerState> players,
+        Func<AuthoritativePlayerState, IReadOnlyList<DiabloDirectedGameplayEvent>> executeCommands)
+    {
+        ArgumentNullException.ThrowIfNull(players);
+        ArgumentNullException.ThrowIfNull(executeCommands);
+        if (players.Any(player => player is null))
+            throw new ArgumentException("Combat tick players cannot contain null state.", nameof(players));
+
+        activePlayers = players;
+
+        world.AdvancePortals(tick);
+        var events = new List<DiabloDirectedGameplayEvent>();
+        foreach (var player in players) {
+            AdvancePlayerEquipmentDamage(player, tick, players, events);
+            var completedPriorMode = AdvancePlayerAction(player, tick, players, events)
+                || AdvanceCombatModeWithEquipmentDamage(player, tick);
+            nativeCallerTimingPhase = completedPriorMode
+                ? NativeCallerTimingPhase.CompletionLoopStart
+                : IsReadyRepeat(player, tick)
+                    ? NativeCallerTimingPhase.ReadyRepeat
+                    : NativeCallerTimingPhase.None;
+            nativeCallerPlayer = player;
+            try {
+                var callbackEvents = executeCommands(player)
+                    ?? throw new InvalidOperationException(
+                        "A command callback returned a null event collection.");
+                events.AddRange(callbackEvents);
+            } finally {
+                nativeCallerPlayer = null;
+                nativeCallerTimingPhase = NativeCallerTimingPhase.None;
+            }
+
+            // Native completes the old mode before the callback. If that
+            // callback started a replacement action with an effect due now,
+            // resolve that immediate work before the next actor is visited.
+            if (completedPriorMode)
+                AdvancePlayerAction(player, tick, players, events);
+        }
+        AdvanceMonsters(tick, players, events);
+        AdvanceProjectiles(tick, players, events);
+        return events;
+    }
+
+    private static bool IsReadyRepeat(AuthoritativePlayerState player, ulong tick)
+    {
+        var action = player.CurrentAction;
+        return action is not null
+            && tick >= action.ReadyTick
+            && (player.CombatMode is DiabloPlayerCombatMode.Attack
+                or DiabloPlayerCombatMode.RangedAttack);
+    }
+
+    private bool GetIncludesFirstFrame(AuthoritativePlayerState player)
+    {
+        if (ReferenceEquals(nativeCallerPlayer, player)) {
+            return nativeCallerTimingPhase switch {
+                NativeCallerTimingPhase.ReadyRepeat => false,
+                NativeCallerTimingPhase.CompletionLoopStart => true,
+                _ => false,
+            };
+        }
+
+        return player.CurrentAction is not null
+            && player.CurrentAction.EffectApplied
+            && player.CombatMode is DiabloPlayerCombatMode.Attack
+                or DiabloPlayerCombatMode.RangedAttack;
     }
 
     /** Applies native item damage that occurs once per active non-town tick. */
@@ -480,7 +569,8 @@ public sealed class DiabloCombatCommandProcessor
                 PlayerDeathReason.Environment);
     }
 
-    private void AdvancePlayerAction(
+    /** Returns true only when a modeled primary action actually reaches completion. */
+    private bool AdvancePlayerAction(
         AuthoritativePlayerState player,
         ulong tick,
         IReadOnlyList<AuthoritativePlayerState> players,
@@ -488,7 +578,7 @@ public sealed class DiabloCombatCommandProcessor
     {
         var action = player.CurrentAction;
         if (action is null)
-            return;
+            return false;
 
         if (!action.EffectApplied && tick >= action.EffectTick) {
             switch (action.Kind) {
@@ -556,6 +646,9 @@ public sealed class DiabloCombatCommandProcessor
         }
 
         if (ReferenceEquals(player.CurrentAction, action) && tick >= action.EndTick) {
+            var completed = action.Kind is DiabloPlayerActionKind.Move
+                or DiabloPlayerActionKind.Attack
+                or DiabloPlayerActionKind.Cast;
             DiabloPlayerActionLifecycle.Cancel(player);
             if (player.CombatMode == DiabloPlayerCombatMode.Death) {
                 player.CombatModeEndTick = 0;
@@ -563,7 +656,9 @@ public sealed class DiabloCombatCommandProcessor
                 player.CombatMode = DiabloPlayerCombatMode.Stand;
                 player.CombatModeEndTick = 0;
             }
+            return completed;
         }
+        return false;
     }
 
     private static void AddDirectedEvents(
@@ -620,10 +715,7 @@ public sealed class DiabloCombatCommandProcessor
         var targetX = target?.PositionX ?? playerTarget!.PositionX;
         var targetY = target?.PositionY ?? playerTarget!.PositionY;
         UpdateFacingToward(player, targetX, targetY);
-        var includesFirstFrame = player.CurrentAction is not null
-            && player.CurrentAction.EffectApplied
-            && player.CombatMode is DiabloPlayerCombatMode.Attack
-                or DiabloPlayerCombatMode.RangedAttack;
+        var includesFirstFrame = GetIncludesFirstFrame(player);
         var skippedFrames = GetAttackSkippedFrames(
             player,
             ranged,
@@ -676,10 +768,7 @@ public sealed class DiabloCombatCommandProcessor
         var profile = GetAttackAnimationProfile(player);
         var timing = animation.GetAttack(profile);
         var ranged = profile == DiabloPlayerAttackAnimationProfile.Bow;
-        var includesFirstFrame = player.CurrentAction is not null
-            && player.CurrentAction.EffectApplied
-            && player.CombatMode is DiabloPlayerCombatMode.Attack
-                or DiabloPlayerCombatMode.RangedAttack;
+        var includesFirstFrame = GetIncludesFirstFrame(player);
         var skippedFrames = GetAttackSkippedFrames(player, ranged, includesFirstFrame);
         var effectTick = checked(
             appliedTick + (ulong)(timing.ActionFrame - 1 - skippedFrames));

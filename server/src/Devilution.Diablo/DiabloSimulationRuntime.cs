@@ -715,7 +715,7 @@ public sealed partial class DiabloSimulation
     }
 
     private sealed class Lifecycle
-        : IAuthoritativeSimulationLifecycle<AuthoritativePlayerState, DiabloGameplayEvent>
+        : IAuthoritativeSimulationTickLifecycle<AuthoritativePlayerState, DiabloGameplayEvent>
     {
         private readonly DiabloSimulation simulation;
         private readonly DiabloPlayerTemplate playerTemplate;
@@ -753,10 +753,35 @@ public sealed partial class DiabloSimulation
                         delivery.Event))
                 .ToArray();
         }
+
+        public IReadOnlyList<DirectedSimulationEvent<AuthoritativePlayerState, DiabloGameplayEvent>>
+            AdvanceTickWithCommands(
+                ulong tick,
+                IReadOnlyList<AuthoritativePlayerState> participants,
+                Func<AuthoritativePlayerState,
+                    IReadOnlyList<DirectedSimulationEvent<AuthoritativePlayerState, DiabloGameplayEvent>>>
+                    executeCommands)
+        {
+            ArgumentNullException.ThrowIfNull(executeCommands);
+            return simulation.AdvanceTickWithCommands(
+                    tick,
+                    participants,
+                    participant => executeCommands(participant)
+                        ?.Select(delivery => new DiabloDirectedGameplayEvent(
+                            delivery.Recipient,
+                            delivery.Event))
+                        .ToArray()
+                        ?? throw new InvalidOperationException(
+                            "A command callback returned a null event collection."))
+                .Select(delivery => new DirectedSimulationEvent<AuthoritativePlayerState, DiabloGameplayEvent>(
+                    delivery.Recipient,
+                    delivery.Event))
+                .ToArray();
+        }
     }
 
     private sealed class CohortLifecycle
-        : IAuthoritativeSimulationLifecycle<AuthoritativePlayerState, DiabloGameplayEvent>
+        : IAuthoritativeSimulationTickLifecycle<AuthoritativePlayerState, DiabloGameplayEvent>
     {
         private readonly DiabloSimulation simulation;
 
@@ -780,6 +805,31 @@ public sealed partial class DiabloSimulation
                     new DirectedSimulationEvent<AuthoritativePlayerState, DiabloGameplayEvent>(
                         delivery.Recipient,
                         delivery.Event))
+                .ToArray();
+        }
+
+        public IReadOnlyList<DirectedSimulationEvent<AuthoritativePlayerState, DiabloGameplayEvent>>
+            AdvanceTickWithCommands(
+                ulong tick,
+                IReadOnlyList<AuthoritativePlayerState> participants,
+                Func<AuthoritativePlayerState,
+                    IReadOnlyList<DirectedSimulationEvent<AuthoritativePlayerState, DiabloGameplayEvent>>>
+                    executeCommands)
+        {
+            ArgumentNullException.ThrowIfNull(executeCommands);
+            return simulation.AdvanceTickWithCommands(
+                    tick,
+                    participants,
+                    participant => executeCommands(participant)
+                        ?.Select(delivery => new DiabloDirectedGameplayEvent(
+                            delivery.Recipient,
+                            delivery.Event))
+                        .ToArray()
+                        ?? throw new InvalidOperationException(
+                            "A command callback returned a null event collection."))
+                .Select(delivery => new DirectedSimulationEvent<AuthoritativePlayerState, DiabloGameplayEvent>(
+                    delivery.Recipient,
+                    delivery.Event))
                 .ToArray();
         }
     }

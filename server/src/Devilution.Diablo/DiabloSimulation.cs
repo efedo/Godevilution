@@ -1327,6 +1327,40 @@ public sealed partial class DiabloSimulation
         return events;
     }
 
+    /**
+     * Advances one command-bearing tick through the module's ordered actor
+     * boundary. The ordinary AdvanceTick path remains the compatibility path;
+     * this method is called only by Engine's ExecuteTick lifecycle.
+     */
+    internal IReadOnlyList<DiabloDirectedGameplayEvent> AdvanceTickWithCommands(
+        ulong tick,
+        IReadOnlyList<AuthoritativePlayerState> players,
+        Func<AuthoritativePlayerState, IReadOnlyList<DiabloDirectedGameplayEvent>> executeCommands)
+    {
+        ArgumentNullException.ThrowIfNull(players);
+        ArgumentNullException.ThrowIfNull(executeCommands);
+        if (WorldState.VictoryTriggered) {
+            var victoryEvents = new List<DiabloDirectedGameplayEvent>();
+            foreach (var participant in players) {
+                var callbackEvents = executeCommands(participant)
+                    ?? throw new InvalidOperationException(
+                        "A command callback returned a null event collection.");
+                victoryEvents.AddRange(callbackEvents);
+            }
+            return victoryEvents;
+        }
+        foreach (var participant in players) {
+            ConfigurePlayer(participant);
+            worldCommands.EnsureLevelEntryState(participant.LevelId);
+        }
+        var events = combatCommands.AdvanceTickWithCommands(
+            tick,
+            players,
+            executeCommands);
+        WorldState.UpdateCathedralDoorOccupancy(players);
+        return events;
+    }
+
     private void ConfigurePlayer(AuthoritativePlayerState player)
     {
         ArgumentNullException.ThrowIfNull(player);

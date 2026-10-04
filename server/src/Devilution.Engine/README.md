@@ -81,6 +81,24 @@ allocation high-water marks, including zero exhaustion; modules must validate
 restored cursors against their complete identity graph. These primitives alone
 do not implement host checkpoint publication or multiplayer recovery.
 
+`ExecuteTick` is an explicit ordered-command API, not a change to legacy
+`Execute`/`AdvanceTo`. Its lifecycle capability supplies one synchronous command
+slot per actor in ordinal session order. Commands retain per-actor input order;
+results retain whole-batch input order. The module merges callback events at
+their actual slot into one chronological directed-event stream. Semantic
+deduplication and routing input preparation versus primary actions belong to
+the host/module, not delegates or session IDs.
+
+The API validates/detaches the batch before mutable hooks, catches up through
+tick-1 using existing hooks, then creates new actors in first input appearance
+order. Tick zero and closed ticks refuse commands. Participant lists are
+read-only; foreign/repeated/omitted/out-of-order, cross-thread or expired
+callbacks are refused. Nested runtime access is forbidden during execution.
+A potentially mutating hook fault or caught contract violation poisons the
+runtime: execution, capture and event publication then refuse reuse. This is
+fail-stop behavior, not state/RNG rollback; only the clock diagnostic remains
+readable. Rebuild from a known checkpoint. Default hosts do not select this API.
+
 Hosts provide the trusted candidate set. `GameplayModuleRegistry.Inspect`
 returns the deterministic load order and actionable diagnostics for duplicate
 IDs, missing dependencies, dependency cycles, and incompatible Engine API

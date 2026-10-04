@@ -380,11 +380,18 @@ deliberately does not claim native generated-world parity, which belongs to M2.
    provides explicit class exceptions, per-level town identity and native spell
    school bindings; town application retains incoming combat frame fields.
    This is metadata qualification, not equipment eligibility, sprite availability
-   or runtime activation. First settle the persisted command-phase/anchor contract:
-   authoritative commands currently follow actor advancement, but native Pending
+   or runtime activation. The explicit Engine `ExecuteTick` prerequisite now
+   integrates ordered actor command slots into ordinary/cohort Diablo lifecycles,
+   with chronological events and fail-stop faults, without default host adoption.
+   Ordinary attack ready/completion caller skips have independent native tests;
+   this is not whole native mode processing or cursor integration.
+   Next settle the persisted command-phase/anchor contract:
+   production authoritative commands currently follow actor advancement, but native Pending
    assumes processing later in the same tick. Neither publishing negative phase
    until the next tick nor blindly processing every accepted command again proves
    native post-tick parity. Keep duplicate/rejected and same-tick command tests.
+   Before host adoption, qualify typed input/equipment preparation, native player
+   slot order, early weapon-break completion and queued intent/receipt handling.
    Then implement module-owned class/gear/context transitions, effective graphics
    and exactly-once actor-order tick processing, including pending,
    repeated, hit/block/death and metadata-change behavior. Preserve existing

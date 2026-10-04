@@ -8,6 +8,25 @@ namespace Devilution.Diablo.Tests;
 public sealed class ProjectDocumentationConsistencyTests
 {
     [Fact]
+    public void OrderedCommandTickDocumentationKeepsHostAndCursorAdoptionSeparate()
+    {
+        var root = FindRepositoryRoot();
+        var engine = Read(root, "server", "src", "Devilution.Engine", "README.md");
+        Assert.Contains("`ExecuteTick` is an explicit ordered-command API", engine, StringComparison.Ordinal);
+        Assert.Contains("fail-stop behavior, not state/RNG rollback", engine, StringComparison.Ordinal);
+        Assert.Contains("Default hosts do not select this API", engine, StringComparison.Ordinal);
+        var architecture = Read(root, "docs", "csharp-authoritative-server-migration.md");
+        Assert.Contains("ordinary and cohort lifecycles integrate it", architecture, StringComparison.Ordinal);
+        Assert.Contains("not full native player processing", architecture, StringComparison.Ordinal);
+        var plan = Read(root, "docs", "completion-plan.md");
+        Assert.Contains("without default host adoption", plan, StringComparison.Ordinal);
+        Assert.Contains("persisted command-phase/anchor contract", plan, StringComparison.Ordinal);
+        var guidance = Read(root, "docs", "ai", "msvc-build.md");
+        Assert.Contains("player_command_phase_test", guidance, StringComparison.Ordinal);
+        Assert.Contains("not whole `ProcessPlayers`", guidance, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void NativePlayerContextDocumentationKeepsCallerAndPhaseGatesOpen()
     {
         var root = FindRepositoryRoot();

@@ -4254,6 +4254,15 @@ void TestPlayerCheckNewPath(Player &player)
 	CheckNewPath(player, false);
 }
 
+// Characterize the actual completion signal passed to the command caller,
+// without processing animation or entering the rest of the world tick.
+bool TestPlayerProcessAttackCommand(Player &player, bool ranged)
+{
+	const bool completed = ranged ? DoRangeAttack(player) : DoAttack(player);
+	CheckNewPath(player, completed);
+	return completed;
+}
+
 bool TestPlayerDoGotHit(Player &player)
 {
 	return DoGotHit(player);

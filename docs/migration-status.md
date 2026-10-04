@@ -157,6 +157,52 @@ open. Their scope, dependencies, and exit checks are defined only in the
 
 ## Recent implementation evidence
 
+### M1 ordered authoritative command-tick prerequisite (2026-10-04)
+
+The additive Engine `ExecuteTick` API now gives each participant an ordered,
+module-owned command slot. It validates and detaches input before mutable hooks,
+catches up through tick-1 before admitting new actors in first-input order, and
+preserves per-actor command order, whole-batch result order and chronological
+directed events. Invalid, nested, cross-thread or expired callbacks are refused.
+Potentially mutating faults and swallowed contract violations fail-stop the
+runtime; they do not roll back state/RNG or permit unsafe capture/retry.
+
+Ordinary and cohort Diablo lifecycles now implement this explicit path. Existing
+mode effects precede the actor's commands; immediate replacement work after
+actual completion precedes later actors. Ready-repeat versus completion-loop
+attack timing is scoped to the bound actor and cleared even after rejection or
+exceptions. Terminal transition/death cleanup is not treated as mode completion.
+Production hosts still use the legacy API: defaults, saves, snapshots, protocol,
+content profiles and MPQ boundaries are unchanged. This is a scheduling
+prerequisite, not live animation cursors or full native player processing.
+
+Fresh verification passes all 198 Engine tests, 36 focused module tick cases and
+11 documentation consistency checks without failures/errors/skips/NotRun. The
+broader module run passes 3,349 tests with no failures/errors; 211 explicit cases
+are excluded, and one existing metadata-compiler directory-link test skips
+because the fixture filesystem lacks symlink privilege. These exclusions are
+not native-asset or filesystem acceptance. Four native GTest fixtures cover 32
+MPQ-free literal melee/Diablo-ranged/Hellfire-ranged caller cases, including
+pending/repeated fields, one subsequent animation step and unchanged RNG. The
+registered CTest family independently passes all four fixtures. Native builds
+initialize and verify the matching MSVC toolchain; no Godot process is launched.
+Reports and retained bounded-process logs are under `.local/ordered-tick-*`.
+
+The freshly rebuilt server regression suite passes 1,624 tests with no
+failures/errors; three explicit cases are excluded and one directory-link
+publication test skips for the same privilege restriction. All owned runs have
+terminal zero exits, confirmed cleanup and no timeout/cleanup errors. The module
+build has zero warnings/errors; Engine/server builds retain one/three NU1900
+audit-feed warnings, respectively, with no security-audit pass claimed. The
+initial module test-helper compilation failure is retained separately in
+`.local/ordered-tick-module-build.log`; the corrected build and runs pass.
+
+Typed input/equipment preparation, native player-slot order, weapon-break early
+completion, initialization/death holds, queued intent/receipt handling and the
+versioned phase/anchor contract remain prerequisites for host/cursor adoption.
+M1 and the approximately 35% overall estimate remain open. Normal cohort-profile
+adoption still requires approval; user saves and configuration remain untouched.
+
 ### M1 prepared player-animation context prerequisite (2026-10-04)
 
 The separate module `AuthoritativePlayerAnimationContextCatalog` now resolves

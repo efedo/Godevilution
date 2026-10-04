@@ -2,6 +2,19 @@
 
 ## Sprite-free animation timing proof
 
+The additive registered `player_command_phase_test` characterizes the actual
+native attack/ranged handler completion signal passed to `CheckNewPath`.
+Build it with the matching checked MSVC environment as described below, then
+run its four `NativePlayerCommandPhase` fixtures. Thirty-two MPQ-free headless
+cases check literal melee/Diablo-ranged/Hellfire-ranged ready/completion skips,
+pending/repeated cursor fields, one subsequent animation step and unchanged RNG.
+The `BUILD_TESTING`-only wrapper calls the existing native handlers; it does not
+simulate their return values or modify production behavior. Pair this with the
+existing Engine `OrderedSimulationTickTests` and module
+`DiabloSimulationTickCommandTests` after rebuilding their xUnit executables.
+This proves ordinary callers, not whole `ProcessPlayers`, weapon-break completion,
+typed input phases, live cursor restore/protocol or rendered client acceptance.
+
 For the separate player-context metadata prerequisite, run:
 
 ```powershell

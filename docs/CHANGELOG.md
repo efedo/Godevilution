@@ -2,6 +2,15 @@
 
 Notable changes to this fork are recorded below.
 
+- 2026-10-04: Add explicit ordered authoritative command ticks and integrate the
+  actor slot into ordinary/cohort Diablo lifecycles. Preserve result/event
+  chronology, catch-up-before-join RNG order and legacy APIs; poison mutable
+  failures and caught callback/reentrancy violations. Scope attack caller timing
+  to the bound actor and continue immediate completion work before later actors.
+  Add native caller characterization and comprehensive managed regressions.
+  Default hosts, profiles, saves, protocol and MPQ boundaries remain unchanged;
+  live animation cursors and full native input/phase adoption remain open.
+
 - 2026-10-04: Add a detached prepared-graphics player-animation context catalog
   with explicit class/town/spell metadata, exact town-retained frame fields,
   strict native-width inputs and order-independent metadata identity. Register a

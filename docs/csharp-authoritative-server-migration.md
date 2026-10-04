@@ -536,12 +536,22 @@ input-only fingerprint is order-independent. It consumes no RNG or cursor state
 and does not activate a policy, content profile or new persistence format.
 
 Actual equipment eligibility/graphics, sprite remapping and availability remain
-caller gates. Resolve the command-phase contract before wiring cursor starts:
-the server advances actors before applying commands, while native Pending assumes
+caller gates. The production server advances actors before applying commands,
+while native Pending assumes
 processing later in the same tick. Publishing an unprocessed negative phase or
 processing every command twice is not native post-tick parity. Preserve gameplay
 effect boundaries, exactly-once actor order, repeated carry, duplicate/rejected
 command purity and exact phase/anchor capture through restore.
+
+The explicit Engine `ExecuteTick` scheduling prerequisite now supplies a
+module-owned actor command slot with ordered results/events and fail-stop
+contract checks; see the [Engine contract](../server/src/Devilution.Engine/README.md).
+Diablo's ordinary and cohort lifecycles integrate it after existing mode work,
+with actor-bound ready-repeat/completion-loop timing and immediate replacement
+work before the next actor. Existing APIs and default hosts remain unchanged.
+This is not full native player processing: typed input/equipment preparation,
+native slot order, weapon-break early completion, initialization/death holds,
+live cursors and versioned phase/anchor restore still require qualification.
 
 The same lifecycle now owns terminal player actions. Lethal monster and
 Charged Bolt damage cancel the prior action and start an already-applied Death
