@@ -208,8 +208,10 @@ public sealed class ProjectDocumentationConsistencyTests
         Assert.Contains("wrapper requires", guide, StringComparison.Ordinal);
         Assert.Contains("version 2 and cannot report upstream parity from old evidence", guide, StringComparison.Ordinal);
         Assert.Contains("`-CathedralEncounters`", plan, StringComparison.Ordinal);
-        Assert.Contains("Next port `InitItems` and `CreateThemeRooms`", plan, StringComparison.Ordinal);
-        Assert.Contains("compile unique metadata", plan, StringComparison.Ordinal);
+        Assert.Contains("Next port `CreateThemeRooms`", plan, StringComparison.Ordinal);
+        Assert.Contains("compile the validated external prerequisites", plan, StringComparison.Ordinal);
+        Assert.Contains("`-CathedralInitialItems`", guide, StringComparison.Ordinal);
+        Assert.Contains(AuthoritativeCathedralUniqueMonsterCatalog.TableName, guide, StringComparison.Ordinal);
         Assert.Contains("complete 200-slot monster pool", contract, StringComparison.Ordinal);
         Assert.Contains("`cathedral_population_monsters.tsv`", guide, StringComparison.Ordinal);
         Assert.Contains("`cathedral_population_objects.tsv`", guide, StringComparison.Ordinal);

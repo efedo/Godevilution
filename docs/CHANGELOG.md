@@ -2,6 +2,23 @@
 
 Notable changes to this fork are recorded below.
 
+- 2026-10-04: Port ordinary Cathedral `InitItems`/`AddInitItems` after independent
+  managed encounters, preserving full item pools, scratch, active IDs, signed
+  occupancy, native partial clear/allocation and absolute-seed reseeding. Add
+  strict detached 100-row unique metadata loading, native-width/UTF-8/C-string
+  guards and an optional bounded item sidecar without embedding captured data.
+  Verify 159 focused managed checks, sixteen item plus thirty-two prerequisite/
+  encounter comparisons, repeated byte-identical 17+1+1+1 captures and unchanged
+  earlier nineteen artifacts. Correct review-found byte conversions, animation
+  scope, NUL/cursor/prior-slot handling and native cleanup/JSON escaping; three
+  portable native checks pass; affected native checks pass 46 with twelve opt-in
+  exclusions. Launcher checks pass 49 without exclusions; full server passes
+  1,564 with four existing exclusions. Full module passes 2,885 with four
+  unchanged Hork RNG failures and 127 explicit exclusions, not a green suite. Update existing
+  architecture/plan/build/status guidance. Preserve runtime profiles, server MPQ
+  independence and user saves; `CreateThemeRooms`, complete external packs and
+  populated Godot interaction/restore remain open. No Godot launch.
+
 - 2026-10-04: Port ordinary Cathedral depths 1-4 `InitMonsters` after managed
   prerequisites/initial objects, preserving full monster pools, native slot
   assignments, signed occupancy, RNG, vision/transparency and light history.

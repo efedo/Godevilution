@@ -396,6 +396,42 @@ not cover `InitItems`, `CreateThemeRooms`, physical light intensity, campaign
 seed selection, a populated runtime profile or ordinary Godot interaction/cold
 restore acceptance. Runtime defaults and server MPQ independence are unchanged.
 
+For the additional ordinary initial-item phase, select `-CathedralInitialItems` alone:
+
+```powershell
+./tools/test-cathedral-geometry.ps1 -CathedralInitialItems
+```
+
+It composes the same managed prerequisites, objects and encounters, then compares
+sixteen explicit `InitItems` cases. Two fresh captures must retain byte-identical
+17+1+1+1 artifacts; earlier modes and bytes remain separate and unchanged. The
+additional `native-initial-items.json` contains external HEAL/MANA metadata and
+complete pre/post 128-slot item pools, 127 active IDs, signed item refs, RNG and
+unchanged world channels. The reader derives fresh item storage independently
+and supplies actual managed upstream results, never native expected final state,
+to the item generator. Native names and licensed geometry remain private.
+
+Every public item scalar/string field and five public animation scalars are
+compared. Sprite handles and private visual distribution internals are excluded;
+portable tests cover the managed reset projection separately. Native partial
+clearing, complete allocation, absolute item-seed reseeding, placement and the
+limit-one AC draw remain distinct. A safe signed count-roll corner produces one
+item; out-of-bounds signed placement candidates are explicitly rejected because
+native `ItemPlace` has no corresponding safe retry contract. Raw byte strength
+and dexterity requirements retain their native signed-byte conversion. Prior
+slot fields must fit native widths and C-string capacity; invalid cursor array
+indices fail closed. Names use UTF-8 truncation and first-NUL projection.
+
+The separate `cathedral_population_uniques.tsv` loader validates all 100 source
+rows and a canonical fingerprint, deriving quest suppression from source IDs.
+The encounter reader exercises it without embedding captured tables in runtime
+code. These loaders are not a complete pack compiler or profile activation.
+All four opt-in environment variables are restored exactly, including absent
+versus empty state. Existing owned-process deadlines, dialog suppression and
+failure/cleanup checks apply. `CreateThemeRooms`, quest/campaign generation,
+physical lighting and populated Godot interaction/cold restore remain open.
+No server MPQ requirement, runtime default or user save is changed.
+
 The C# xUnit project is an executable Microsoft Testing Platform runner. Run
 it directly when `dotnet test` selects a machine-wide VSTest host whose
 `testhost` package is unavailable:

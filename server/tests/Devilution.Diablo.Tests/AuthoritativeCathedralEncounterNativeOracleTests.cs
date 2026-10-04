@@ -48,6 +48,10 @@ public sealed class AuthoritativeCathedralEncounterNativeOracleTests
 	[Theory(Explicit = true)]
 	[MemberData(nameof(Cases))]
 	public void EncounterMatchesNativeOracle(int depth, uint inputSeed, string entry)
+		=> _ = GenerateManagedCase(depth, inputSeed, entry);
+
+	/** Composes real managed upstream phases for the later item comparison. */
+	internal static ManagedEncounterCase GenerateManagedCase(int depth, uint inputSeed, string entry)
 	{
 		var encounterDirectory = RequiredExternalDirectory(EncounterDirectoryVariable);
 		var populationDirectory = RequiredExternalDirectory(PopulationDirectoryVariable);
@@ -103,7 +107,14 @@ public sealed class AuthoritativeCathedralEncounterNativeOracleTests
 			composedBestiary: composed.Bestiary);
 		var actual = AuthoritativeCathedralEncounterGenerator.Generate(encounterParameters);
 		CompareState(actual, encounterCase.ExpectedState);
+		return new(actual, composed.Population, populationParameters.Geometry.PieceProperties, pre.PlayerTileRefs);
 	}
+
+	internal sealed record ManagedEncounterCase(
+		AuthoritativeCathedralEncounterResult Encounter,
+		AuthoritativeCathedralPopulationResult Population,
+		IReadOnlyList<byte> PieceProperties,
+		IReadOnlyList<int> PlayerTileRefs);
 
 	private static byte[] BuildInitialTileFlags(int[] preThemeTileFlags, IReadOnlyList<bool> heldPopulatedCells)
 	{
@@ -206,6 +217,17 @@ public sealed class AuthoritativeCathedralEncounterNativeOracleTests
 		return builder.ToString();
 	}
 
+	private static string BuildUniqueTsv(IReadOnlyList<AuthoritativeCathedralUniqueDefinition> values)
+	{
+		var builder = new StringBuilder()
+			.AppendLine(string.Join('\t', AuthoritativeCathedralUniqueMonsterCatalog.Columns));
+		foreach (var value in values) {
+			var fields = new int[] { value.NativeUniqueId, value.MonsterType, value.DungeonLevel, value.MaximumHitPoints, value.Ai, value.Intelligence, value.MinDamage, value.MaxDamage, value.Resistance, value.ReducePlayerStrength, value.ReducePlayerMagic, value.ReducePlayerDexterity, value.ReducePlayerVitality, value.ReducePlayerMaxHP, value.ReducePlayerMaxMana, (int)value.MonsterPack, value.CustomToHit, value.CustomArmorClass, value.TalkMessage };
+			builder.AppendLine(string.Join('\t', fields.Select(number => number.ToString(CultureInfo.InvariantCulture))));
+		}
+		return builder.ToString();
+	}
+
 	private static string BuildObjectTsv(IReadOnlyList<ObjectMetadata> values)
 	{
 		var builder = new StringBuilder().AppendLine(string.Join('\t', AuthoritativeCathedralPopulationCatalog.ObjectColumns));
@@ -220,7 +242,7 @@ public sealed class AuthoritativeCathedralEncounterNativeOracleTests
 	private static bool IsSkeleton(int type)
 		=> type is 8 or 9 or 10 or 11 or 20 or 21 or 22 or 23 or 24 or 25 or 26 or 27;
 
-	private static JsonElement ParseFile(string path, int maxBytes)
+	internal static JsonElement ParseFile(string path, int maxBytes)
 		=> JsonDocument.Parse(ReadBoundedRegularFile(path, maxBytes), new JsonDocumentOptions {
 			CommentHandling = JsonCommentHandling.Disallow, MaxDepth = MaxDepth,
 		}).RootElement.Clone();
@@ -239,7 +261,7 @@ public sealed class AuthoritativeCathedralEncounterNativeOracleTests
 		return File.ReadAllBytes(fullPath);
 	}
 
-	private static string RequiredExternalDirectory(string variable)
+	internal static string RequiredExternalDirectory(string variable)
 	{
 		var value = Environment.GetEnvironmentVariable(variable);
 		if (string.IsNullOrWhiteSpace(value))
@@ -266,7 +288,7 @@ public sealed class AuthoritativeCathedralEncounterNativeOracleTests
 		throw new InvalidDataException("Unable to discover the repository root for oracle path validation.");
 	}
 
-	private static IReadOnlyList<string> RegularEntries(string directory)
+	internal static IReadOnlyList<string> RegularEntries(string directory)
 	{
 		var entries = Directory.EnumerateFileSystemEntries(directory, "*", SearchOption.TopDirectoryOnly).ToArray();
 		foreach (var entry in entries)
@@ -520,6 +542,8 @@ public sealed class AuthoritativeCathedralEncounterNativeOracleTests
 			var uniqueDefinitions = Array(encounterRoot, "uniqueDefinitions").EnumerateArray().Select(ParseUnique).ToArray();
 			if (uniqueDefinitions.Length != 100 || !uniqueDefinitions.Select(value => value.NativeUniqueId).SequenceEqual(Enumerable.Range(0, 100)))
 				throw new InvalidDataException("Encounter unique definitions must be complete ordered native rows.");
+			var uniqueCatalog = AuthoritativeCathedralUniqueMonsterCatalog.Load(BuildUniqueTsv(uniqueDefinitions));
+			Assert.Equal(uniqueDefinitions, uniqueCatalog.Definitions);
 			var cases = Array(encounterRoot, "cases").EnumerateArray().Select(ParseEncounterCase).ToArray();
 			RequireCompleteCaseNames(cases.Select(value => value.Snapshot).ToArray());
 			var population = LoadPopulation(populationDirectory, oracleDirectory);
@@ -530,7 +554,7 @@ public sealed class AuthoritativeCathedralEncounterNativeOracleTests
 				if (populationCase.Input.Depth != encounterCase.Depth || populationCase.Input.PopulationSeed != encounterCase.InputSeed)
 					throw new InvalidDataException("Encounter and population case depth/seed metadata disagree.");
 			}
-			return new(uniqueDefinitions, cases, population.Cases, population.RawMonsters, population.Objects, population.StoryMessages);
+			return new(uniqueCatalog.Definitions, cases, population.Cases, population.RawMonsters, population.Objects, population.StoryMessages);
 		}
 
 		private static EncounterCase ParseEncounterCase(JsonElement value)

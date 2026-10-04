@@ -32,6 +32,7 @@
 #include "game/levels/themes.h"
 #include "game/levels/triggers.h"
 #include "game/missiles/missiles.hpp"
+#include "game/items/item_pool.hpp"
 #include "game/monsters/monster_pool.hpp"
 #include "game/monsters/monsters.hpp"
 #include "game/objects/object_pool.hpp"
@@ -39,6 +40,7 @@
 #include "tables/monstdat.h"
 #include "tables/objdat.h"
 #include "tables/leveldat.h"
+#include "tables/itemdat.h"
 #include "persistence/loadsave.h"
 #include "level_test.hpp"
 
@@ -53,6 +55,9 @@ constexpr char PopulationInputDirectoryVariable[] = "GODEVILUTION_CATHEDRAL_POPU
 constexpr char EncounterInputDirectoryVariable[] = "GODEVILUTION_CATHEDRAL_ENCOUNTER_ORACLE_DIRECTORY";
 constexpr char EncounterInputFormat[] = "godevilution-cathedral-l1-encounters";
 constexpr char EncounterInputPolicy[] = "ordinary-original-diablo-post-initial-objects-initmonsters";
+constexpr char InitialItemDirectoryVariable[] = "GODEVILUTION_CATHEDRAL_INITIAL_ITEM_ORACLE_DIRECTORY";
+constexpr char InitialItemFormat[] = "godevilution-cathedral-initial-items";
+constexpr char InitialItemPolicy[] = "ordinary-original-diablo-post-initmonsters-inititems";
 constexpr char PopulationOracleFormat[] = "godevilution-cathedral-l1-population-oracle";
 constexpr uint32_t PopulationOracleVersion = 1;
 constexpr char PopulationOraclePolicy[] = "no-quest-original-diablo-initgolems-initobjects";
@@ -262,8 +267,31 @@ struct NativeEncounterCapture {
 	NativeEncounterState expectedState;
 };
 
+// Scalar/string item state excludes engine sprite handles and private visual
+// animation distribution internals. No archive or capture is a server input.
+struct NativeInitialItemState {
+	uint32_t randomState = 0;
+	int activeItemCount = 0;
+	std::vector<int> activeItemIds;
+	std::vector<Item> items;
+	std::vector<int> itemTileRefs;
+	std::vector<uint16_t> pieces;
+	std::vector<uint8_t> tileFlags;
+	std::vector<int> monsterTileRefs;
+	std::vector<int> playerTileRefs;
+	std::vector<int> objectTileRefs;
+};
+
+struct NativeInitialItemCapture {
+	int depth = 0;
+	uint32_t inputSeed = 0;
+	lvl_entry entry = ENTRY_MAIN;
+	NativeInitialItemState preState;
+	NativeInitialItemState expectedState;
+};
+
 struct NativeStateGuard {
-	NativeStateGuard()
+	explicit NativeStateGuard(bool resetInitialItems = false)
 		: oldMultiplayer(gbIsMultiplayer)
 		, oldSpawn(gbIsSpawn)
 		, oldHellfire(gbIsHellfire)
@@ -275,6 +303,7 @@ struct NativeStateGuard {
 		, oldLoadingMapObjects(LoadingMapObjects)
 		, oldSound(gbSndInited)
 		, oldLevelGenerationData(LevelGenerationData)
+		, resetInitialItems(resetInitialItems)
 	{
 	}
 
@@ -301,9 +330,17 @@ struct NativeStateGuard {
 			Objects[i] = {};
 		ObjectPoolAdapter::ResetLegacyObjectPools();
 		InitializeMonsterPool();
+		if (resetInitialItems) {
+			InitializeItemPool();
+			for (int i = 0; i <= MAXITEMS; i++)
+				Items[i] = {};
+			ItemPoolAdapter::ResetLegacyItemPools();
+		}
 		for (Tile &tile : tiles().columnMajor()) {
 			tile.setObject(0);
 			tile.setMonster(0);
+			if (resetInitialItems)
+				tile.setItem(0);
 		}
 		CurrentLightManager.Init();
 	}
@@ -319,6 +356,7 @@ struct NativeStateGuard {
 	bool oldLoadingMapObjects;
 	bool oldSound;
 	std::vector<LevelGenerationRow> oldLevelGenerationData;
+	bool resetInitialItems;
 };
 
 std::string EntryName(lvl_entry entry)
@@ -353,6 +391,23 @@ void WriteJsonString(std::ostream &stream, std::string_view value)
 		if (character == '\\' || character == '"')
 			stream << '\\';
 		stream << character;
+	}
+	stream << '"';
+}
+
+// Only the new item sidecar uses complete JSON escaping; legacy bytes stay frozen.
+void WriteInitialItemJsonString(std::ostream &stream, std::string_view value)
+{
+	constexpr std::string_view Hex = "0123456789abcdef";
+	stream << '"';
+	for (const unsigned char character : value) {
+		if (character == '\\' || character == '"') {
+			stream << '\\' << character;
+		} else if (character < 0x20) {
+			stream << "\\u00" << Hex[character >> 4] << Hex[character & 0xF];
+		} else {
+			stream << character;
+		}
 	}
 	stream << '"';
 }
@@ -629,6 +684,29 @@ std::vector<uint32_t> CapturePopulatedCells()
 	return cells;
 }
 
+NativeInitialItemState CaptureInitialItemState()
+{
+	NativeInitialItemState state;
+	state.randomState = GetLCGEngineState();
+	state.activeItemCount = ActiveItemCount;
+	for (const uint8_t slot : ActiveItems)
+		state.activeItemIds.push_back(slot);
+	for (int slot = 0; slot <= MAXITEMS; slot++)
+		state.items.push_back(Items[slot]);
+	for (int y = 0; y < MAXDUNY; y++) {
+		for (int x = 0; x < MAXDUNX; x++) {
+			const Tile &tile = tileAt(x, y);
+			state.itemTileRefs.push_back(tile.item());
+			state.pieces.push_back(tile.piece());
+			state.tileFlags.push_back(static_cast<uint8_t>(tile.flags()));
+			state.monsterTileRefs.push_back(tile.monster());
+			state.playerTileRefs.push_back(tile.player());
+			state.objectTileRefs.push_back(tile.object());
+		}
+	}
+	return state;
+}
+
 std::vector<uint16_t> CapturePieces()
 {
 	std::vector<uint16_t> pieces;
@@ -871,7 +949,7 @@ void PrepareGameAssets(std::string &error)
 }
 
 PopulationCapture CapturePopulation(int depth, uint32_t seed, lvl_entry entry, bool captureInitialInputs,
-    NativeEncounterCapture *encounter = nullptr)
+    NativeEncounterCapture *encounter = nullptr, NativeInitialItemCapture *initialItems = nullptr)
 {
 	ResetNativePools();
 	currentLevel().setId(Level::create(LevelId { .levelNum = static_cast<uint8_t>(depth), .type = DTYPE_CATHEDRAL }).id());
@@ -1082,6 +1160,30 @@ PopulationCapture CapturePopulation(int depth, uint32_t seed, lvl_entry entry, b
 		    || encounter->expectedState.playerTileRefs != encounter->preState.playerTileRefs)
 			throw std::runtime_error("native InitMonsters mutated unrelated occupancy channels");
 	}
+	if (initialItems != nullptr) {
+		if (encounter == nullptr)
+			throw std::runtime_error("initial items require the composed monster encounter phase");
+		// Derive fresh prior storage independently of native expected output. Keep
+		// this reset after the frozen earlier captures so their bytes do not change.
+		InitializeItemPool();
+		for (int slot = 0; slot <= MAXITEMS; slot++)
+			Items[slot] = {};
+		ItemPoolAdapter::ResetLegacyItemPools();
+		for (Tile &tile : tiles().columnMajor())
+			tile.setItem(0);
+		initialItems->depth = depth;
+		initialItems->inputSeed = seed;
+		initialItems->entry = entry;
+		initialItems->preState = CaptureInitialItemState();
+		InitItems();
+		initialItems->expectedState = CaptureInitialItemState();
+		const auto &pre = initialItems->preState;
+		const auto &post = initialItems->expectedState;
+		if (pre.pieces != post.pieces || pre.tileFlags != post.tileFlags
+		    || pre.monsterTileRefs != post.monsterTileRefs
+		    || pre.playerTileRefs != post.playerTileRefs || pre.objectTileRefs != post.objectTileRefs)
+			throw std::runtime_error("native InitItems mutated unrelated world channels");
+	}
 	return capture;
 }
 
@@ -1146,6 +1248,247 @@ void WriteEncounterState(std::ostream &stream, const NativeEncounterState &state
 		       << ",\"changed\":" << (light.hasChanged ? "true" : "false") << '}';
 	}
 	stream << "]}}";
+}
+
+void WriteInitialItem(std::ostream &stream, const Item &item)
+{
+	stream << '{';
+	stream << "\"seed\":";
+	stream << static_cast<int64_t>(item._iSeed);
+	stream << ",\"createInfo\":";
+	stream << static_cast<int64_t>(item._iCreateInfo);
+	stream << ",\"itemType\":";
+	stream << static_cast<int64_t>(item._itype);
+	stream << ",\"animFlag\":";
+	stream << (item._iAnimFlag ? "true" : "false");
+	stream << ",\"positionX\":";
+	stream << static_cast<int64_t>(item.position.x);
+	stream << ",\"positionY\":";
+	stream << static_cast<int64_t>(item.position.y);
+	stream << ",\"deleted\":";
+	stream << (item._iDelFlag ? "true" : "false");
+	stream << ",\"selectionRegion\":";
+	stream << static_cast<int64_t>(item.selectionRegion);
+	stream << ",\"postDraw\":";
+	stream << (item._iPostDraw ? "true" : "false");
+	stream << ",\"identified\":";
+	stream << (item._iIdentified ? "true" : "false");
+	stream << ",\"magical\":";
+	stream << static_cast<int64_t>(item._iMagical);
+	stream << ",\"baseName\":";
+	WriteInitialItemJsonString(stream, item._iName);
+	stream << ",\"identifiedName\":";
+	WriteInitialItemJsonString(stream, item._iIName);
+	stream << ",\"equipLocation\":";
+	stream << static_cast<int64_t>(item._iLoc);
+	stream << ",\"itemClass\":";
+	stream << static_cast<int64_t>(item._iClass);
+	stream << ",\"cursorGraphic\":";
+	stream << static_cast<int64_t>(item._iCurs);
+	stream << ",\"value\":";
+	stream << static_cast<int64_t>(item._ivalue);
+	stream << ",\"identifiedValue\":";
+	stream << static_cast<int64_t>(item._iIvalue);
+	stream << ",\"minDamage\":";
+	stream << static_cast<int64_t>(item._iMinDam);
+	stream << ",\"maxDamage\":";
+	stream << static_cast<int64_t>(item._iMaxDam);
+	stream << ",\"armorClass\":";
+	stream << static_cast<int64_t>(item._iAC);
+	stream << ",\"flags\":";
+	stream << static_cast<uint32_t>(item._iFlags);
+	stream << ",\"miscId\":";
+	stream << static_cast<int64_t>(item._iMiscId);
+	stream << ",\"spellId\":";
+	stream << static_cast<int64_t>(item._iSpell);
+	stream << ",\"itemIndex\":";
+	stream << static_cast<int64_t>(item.IDidx);
+	stream << ",\"charges\":";
+	stream << static_cast<int64_t>(item._iCharges);
+	stream << ",\"maxCharges\":";
+	stream << static_cast<int64_t>(item._iMaxCharges);
+	stream << ",\"durability\":";
+	stream << static_cast<int64_t>(item._iDurability);
+	stream << ",\"maxDurability\":";
+	stream << static_cast<int64_t>(item._iMaxDur);
+	stream << ",\"plusDamage\":";
+	stream << static_cast<int64_t>(item._iPLDam);
+	stream << ",\"plusToHit\":";
+	stream << static_cast<int64_t>(item._iPLToHit);
+	stream << ",\"plusArmorClass\":";
+	stream << static_cast<int64_t>(item._iPLAC);
+	stream << ",\"plusStrength\":";
+	stream << static_cast<int64_t>(item._iPLStr);
+	stream << ",\"plusMagic\":";
+	stream << static_cast<int64_t>(item._iPLMag);
+	stream << ",\"plusDexterity\":";
+	stream << static_cast<int64_t>(item._iPLDex);
+	stream << ",\"plusVitality\":";
+	stream << static_cast<int64_t>(item._iPLVit);
+	stream << ",\"plusFireResistance\":";
+	stream << static_cast<int64_t>(item._iPLFR);
+	stream << ",\"plusLightningResistance\":";
+	stream << static_cast<int64_t>(item._iPLLR);
+	stream << ",\"plusMagicResistance\":";
+	stream << static_cast<int64_t>(item._iPLMR);
+	stream << ",\"plusMana\":";
+	stream << static_cast<int64_t>(item._iPLMana);
+	stream << ",\"plusHitPoints\":";
+	stream << static_cast<int64_t>(item._iPLHP);
+	stream << ",\"plusDamageModifier\":";
+	stream << static_cast<int64_t>(item._iPLDamMod);
+	stream << ",\"plusGetHit\":";
+	stream << static_cast<int64_t>(item._iPLGetHit);
+	stream << ",\"plusLight\":";
+	stream << static_cast<int64_t>(item._iPLLight);
+	stream << ",\"spellLevelAdd\":";
+	stream << static_cast<int64_t>(item._iSplLvlAdd);
+	stream << ",\"uniqueId\":";
+	stream << static_cast<int64_t>(item._iUid);
+	stream << ",\"fireMinDamage\":";
+	stream << static_cast<int64_t>(item._iFMinDam);
+	stream << ",\"fireMaxDamage\":";
+	stream << static_cast<int64_t>(item._iFMaxDam);
+	stream << ",\"lightningMinDamage\":";
+	stream << static_cast<int64_t>(item._iLMinDam);
+	stream << ",\"lightningMaxDamage\":";
+	stream << static_cast<int64_t>(item._iLMaxDam);
+	stream << ",\"plusEnemyArmorClass\":";
+	stream << static_cast<int64_t>(item._iPLEnAc);
+	stream << ",\"prefixPower\":";
+	stream << static_cast<int64_t>(item._iPrePower);
+	stream << ",\"suffixPower\":";
+	stream << static_cast<int64_t>(item._iSufPower);
+	stream << ",\"valueAdd1\":";
+	stream << static_cast<int64_t>(item._iVAdd1);
+	stream << ",\"valueMultiply1\":";
+	stream << static_cast<int64_t>(item._iVMult1);
+	stream << ",\"valueAdd2\":";
+	stream << static_cast<int64_t>(item._iVAdd2);
+	stream << ",\"valueMultiply2\":";
+	stream << static_cast<int64_t>(item._iVMult2);
+	stream << ",\"minimumStrength\":";
+	stream << static_cast<int64_t>(item._iMinStr);
+	stream << ",\"minimumMagic\":";
+	stream << static_cast<int64_t>(item._iMinMag);
+	stream << ",\"minimumDexterity\":";
+	stream << static_cast<int64_t>(item._iMinDex);
+	stream << ",\"statFlag\":";
+	stream << (item._iStatFlag ? "true" : "false");
+	stream << ",\"request\":";
+	stream << (item._iRequest ? "true" : "false");
+	stream << ",\"hellfireDamageArmorFlags\":";
+	stream << static_cast<uint32_t>(item._iDamAcFlags);
+	stream << ",\"buff\":";
+	stream << static_cast<uint32_t>(item.dwBuff);
+	stream << ",\"animation\":{\"ticksPerFrame\":" << static_cast<int>(item.animInfo.ticksPerFrame)
+	       << ",\"tickCounterOfCurrentFrame\":" << static_cast<int>(item.animInfo.tickCounterOfCurrentFrame)
+	       << ",\"numberOfFrames\":" << static_cast<int>(item.animInfo.numberOfFrames)
+	       << ",\"currentFrame\":" << static_cast<int>(item.animInfo.currentFrame)
+	       << ",\"isPetrified\":" << (item.animInfo.isPetrified ? "true" : "false") << "}}";
+}
+
+void WriteInitialItemState(std::ostream &stream, const NativeInitialItemState &state)
+{
+	stream << "{\"randomState\":" << state.randomState << ",\"activeItemCount\":" << state.activeItemCount
+	       << ",\"activeItemIds\":";
+	WriteArray(stream, state.activeItemIds);
+	stream << ",\"items\":[";
+	for (size_t slot = 0; slot < state.items.size(); slot++) {
+		if (slot != 0) stream << ',';
+		WriteInitialItem(stream, state.items[slot]);
+	}
+	stream << "],\"itemTileRefs\":";
+	WriteArray(stream, state.itemTileRefs);
+	stream << ",\"pieces\":";
+	WriteArray(stream, state.pieces);
+	stream << ",\"tileFlags\":";
+	WriteArray(stream, state.tileFlags);
+	stream << ",\"monsterTileRefs\":";
+	WriteArray(stream, state.monsterTileRefs);
+	stream << ",\"playerTileRefs\":";
+	WriteArray(stream, state.playerTileRefs);
+	stream << ",\"objectTileRefs\":";
+	WriteArray(stream, state.objectTileRefs);
+	stream << '}';
+}
+
+void WriteInitialItemInputs(const std::filesystem::path &path, const std::vector<NativeInitialItemCapture> &captures)
+{
+	std::ofstream stream(path, std::ios::binary | std::ios::trunc);
+	if (!stream.good()) throw std::runtime_error("unable to open native initial-item sidecar");
+	stream << "{\"format\":\"" << InitialItemFormat << "\",\"version\":1,\"policy\":\""
+	       << InitialItemPolicy << "\",\"caseCount\":" << PopulationCaseCount << ",\"potionDefinitions\":[";
+	const std::array<_item_indexes, 2> potionIds { IDI_MANA, IDI_HEAL };
+	for (size_t index = 0; index < potionIds.size(); index++) {
+		if (index != 0) stream << ',';
+		const auto id = potionIds[index];
+		const ItemData &row = AllItemsList.at(static_cast<size_t>(id));
+		Item probe {};
+		probe._iCurs = row.iCurs;
+		probe.setNewAnimation(false);
+		stream << '{';
+		stream << "\"nativeItemId\":";
+		stream << static_cast<int>(id);
+		stream << ",\"itemType\":";
+		stream << static_cast<int>(row.itype);
+		stream << ",\"cursorGraphic\":";
+		stream << static_cast<int>(row.iCurs);
+		stream << ",\"name\":";
+		WriteInitialItemJsonString(stream, row.iName);
+		stream << ",\"identifiedName\":";
+		WriteInitialItemJsonString(stream, row.iName);
+		stream << ",\"equipLocation\":";
+		stream << static_cast<int>(row.iLoc);
+		stream << ",\"itemClass\":";
+		stream << static_cast<int>(row.iClass);
+		stream << ",\"minDamage\":";
+		stream << static_cast<int>(row.iMinDam);
+		stream << ",\"maxDamage\":";
+		stream << static_cast<int>(row.iMaxDam);
+		stream << ",\"minArmorClass\":";
+		stream << static_cast<int>(row.iMinAC);
+		stream << ",\"maxArmorClass\":";
+		stream << static_cast<int>(row.iMaxAC);
+		stream << ",\"flags\":";
+		stream << static_cast<uint32_t>(row.iFlags);
+		stream << ",\"miscId\":";
+		stream << static_cast<int>(row.iMiscId);
+		stream << ",\"spellId\":";
+		stream << static_cast<int>(row.iSpell);
+		stream << ",\"value\":";
+		stream << row.iValue;
+		stream << ",\"durability\":";
+		stream << static_cast<int>(row.iDurability);
+		stream << ",\"minimumStrength\":";
+		stream << static_cast<int>(row.iMinStr);
+		stream << ",\"minimumMagic\":";
+		stream << static_cast<int>(row.iMinMag);
+		stream << ",\"minimumDexterity\":";
+		stream << static_cast<int>(row.iMinDex);
+		stream << ",\"animationFrameCount\":";
+		stream << static_cast<int>(probe.animInfo.numberOfFrames);
+		stream << ",\"animationTicksPerFrame\":";
+		stream << static_cast<int>(probe.animInfo.ticksPerFrame);
+		stream << ",\"buff\":";
+		stream << 0;
+		stream << '}';
+	}
+	stream << "],\"cases\":[";
+	for (size_t index = 0; index < captures.size(); index++) {
+		if (index != 0) stream << ',';
+		const auto &capture = captures[index];
+		stream << "{\"snapshot\":\"cathedral-population-depth-" << capture.depth << '-' << capture.inputSeed
+		       << '-' << EntryName(capture.entry) << ".json\",\"depth\":" << capture.depth
+		       << ",\"inputSeed\":" << capture.inputSeed << ",\"entry\":\"" << EntryName(capture.entry)
+		       << "\",\"preState\":";
+		WriteInitialItemState(stream, capture.preState);
+		stream << ",\"expectedState\":";
+		WriteInitialItemState(stream, capture.expectedState);
+		stream << '}';
+	}
+	stream << "]}\n";
+	if (!stream.good()) throw std::runtime_error("native initial-item sidecar write failed");
 }
 
 void WriteEncounterInputs(const std::filesystem::path &path, const std::vector<NativeEncounterCapture> &captures)
@@ -1640,6 +1983,47 @@ TEST(CathedralPopulation, RejectRepositoryOutput)
 #endif
 }
 
+TEST(CathedralPopulation, InitialItemSidecarEscapesAllJsonControlBytes)
+{
+	std::string controls;
+	std::string expected = "\"";
+	constexpr std::string_view Hex = "0123456789abcdef";
+	for (unsigned char value = 0; value < 0x20; value++) {
+		controls.push_back(static_cast<char>(value));
+		expected += "\\u00";
+		expected.push_back(Hex[value >> 4]);
+		expected.push_back(Hex[value & 0xF]);
+	}
+	expected += "\"";
+	std::ostringstream stream;
+	WriteInitialItemJsonString(stream, controls);
+	EXPECT_EQ(stream.str(), expected);
+	std::ostringstream ordinary;
+	WriteInitialItemJsonString(ordinary, "é\\\"");
+	EXPECT_EQ(ordinary.str(), "\"é\\\\\\\"\"");
+}
+
+TEST(CathedralPopulation, InitialItemOptInGuardClearsFullPoolAndReferences)
+{
+	InitializeItemPool();
+	ItemPoolAdapter::ResetLegacyItemPools();
+	{
+		NativeStateGuard guard(true);
+		Items[0]._itype = ItemType::Misc;
+		Items[MAXITEMS]._iPLDam = 777;
+		ActiveItemCount = 1;
+		ActiveItems[0] = 9;
+		tiles().columnMajor().begin()->setItem(1);
+	}
+	EXPECT_EQ(ActiveItemCount, 0);
+	for (int slot = 0; slot < MAXITEMS; slot++)
+		EXPECT_EQ(ActiveItems[slot], slot);
+	EXPECT_EQ(Items[0]._itype, ItemType::None);
+	EXPECT_EQ(Items[MAXITEMS]._iPLDam, 0);
+	for (const Tile &tile : tiles().columnMajor())
+		EXPECT_EQ(tile.item(), 0);
+}
+
 } // namespace
 
 TEST(CathedralPopulation, NativeObjectPopulationLocalAssetOracle)
@@ -1671,9 +2055,20 @@ TEST(CathedralPopulation, NativeObjectPopulationLocalAssetOracle)
 		ASSERT_FALSE(std::filesystem::equivalent(outputPath, encounterPath));
 		ASSERT_FALSE(std::filesystem::equivalent(inputPath, encounterPath));
 	}
+	const char *itemDirectory = std::getenv(InitialItemDirectoryVariable);
+	const bool captureInitialItems = itemDirectory != nullptr && itemDirectory[0] != '\0';
+	std::filesystem::path itemPath;
+	if (captureInitialItems) {
+		ASSERT_TRUE(captureEncounters) << "initial items require the composed encounter inputs";
+		itemPath = std::filesystem::path(itemDirectory);
+		ASSERT_TRUE(ValidateOutputPath(itemPath, outputError)) << outputError;
+		ASSERT_FALSE(std::filesystem::equivalent(outputPath, itemPath));
+		ASSERT_FALSE(std::filesystem::equivalent(inputPath, itemPath));
+		ASSERT_FALSE(std::filesystem::equivalent(encounterPath, itemPath));
+	}
 	ASSERT_TRUE(HeadlessMode) << "population oracle requires the headless GTest runner";
 
-	NativeStateGuard stateGuard;
+	NativeStateGuard stateGuard(captureInitialItems);
 	std::string assetError;
 	PrepareGameAssets(assetError);
 	if (!assetError.empty())
@@ -1684,6 +2079,8 @@ TEST(CathedralPopulation, NativeObjectPopulationLocalAssetOracle)
 			ASSERT_EQ(GetTrapPercent(depth), depth == 1 ? 10 : 15)
 			    << "population parity requires the shipped level-generation trap metadata";
 	}
+	if (captureInitialItems)
+		LoadItemData();
 
 	const std::array<uint32_t, 2> seeds { UINT32_C(2588), UINT32_C(743271966) };
 	const std::array<lvl_entry, 2> entries { ENTRY_MAIN, ENTRY_PREV };
@@ -1691,6 +2088,8 @@ TEST(CathedralPopulation, NativeObjectPopulationLocalAssetOracle)
 	captures.reserve(PopulationCaseCount);
 	std::vector<NativeEncounterCapture> encounters;
 	encounters.reserve(PopulationCaseCount);
+	std::vector<NativeInitialItemCapture> initialItemCaptures;
+	initialItemCaptures.reserve(PopulationCaseCount);
 	for (int depth = CathedralFirstDepth; depth <= CathedralLastDepth; depth++) {
 		for (const uint32_t seed : seeds) {
 			for (const lvl_entry entry : entries) {
@@ -1698,9 +2097,13 @@ TEST(CathedralPopulation, NativeObjectPopulationLocalAssetOracle)
 				PopulationCapture repeated;
 				NativeEncounterCapture encounter;
 				NativeEncounterCapture repeatedEncounter;
+				NativeInitialItemCapture initialItems;
+				NativeInitialItemCapture repeatedItems;
 				try {
-					capture = CapturePopulation(depth, seed, entry, captureInputs, captureEncounters ? &encounter : nullptr);
-					repeated = CapturePopulation(depth, seed, entry, captureInputs, captureEncounters ? &repeatedEncounter : nullptr);
+					capture = CapturePopulation(depth, seed, entry, captureInputs, captureEncounters ? &encounter : nullptr,
+					    captureInitialItems ? &initialItems : nullptr);
+					repeated = CapturePopulation(depth, seed, entry, captureInputs, captureEncounters ? &repeatedEncounter : nullptr,
+					    captureInitialItems ? &repeatedItems : nullptr);
 				} catch (const std::exception &exception) {
 					FAIL() << "Native Cathedral population capture failed at depth " << depth
 					       << ", seed " << seed << ", entry " << EntryName(entry)
@@ -1715,6 +2118,13 @@ TEST(CathedralPopulation, NativeObjectPopulationLocalAssetOracle)
 					ASSERT_EQ(encounter.preState.activeMonsterIds.size(), MaxMonsters);
 					ASSERT_EQ(encounter.expectedState.monsters.size(), MaxMonsters);
 					encounters.push_back(std::move(encounter));
+				}
+				if (captureInitialItems) {
+					ASSERT_EQ(initialItems.expectedState.randomState, repeatedItems.expectedState.randomState);
+					ASSERT_EQ(initialItems.expectedState.activeItemCount, repeatedItems.expectedState.activeItemCount);
+					ASSERT_EQ(initialItems.preState.items.size(), MAXITEMS + 1);
+					ASSERT_EQ(initialItems.expectedState.items.size(), MAXITEMS + 1);
+					initialItemCaptures.push_back(std::move(initialItems));
 				}
 				captures.push_back(std::move(capture));
 			}
@@ -1735,6 +2145,10 @@ TEST(CathedralPopulation, NativeObjectPopulationLocalAssetOracle)
 	if (captureEncounters) {
 		ASSERT_EQ(encounters.size(), PopulationCaseCount);
 		WriteEncounterInputs(encounterPath / "native-encounter-inputs.json", encounters);
+	}
+	if (captureInitialItems) {
+		ASSERT_EQ(initialItemCaptures.size(), PopulationCaseCount);
+		WriteInitialItemInputs(itemPath / "native-initial-items.json", initialItemCaptures);
 	}
 }
 

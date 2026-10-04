@@ -148,7 +148,86 @@ open. Their scope, dependencies, and exit checks are defined only in the
 
 ## Recent implementation evidence
 
+### M2 ordinary Cathedral initial items and unique catalog (2026-10-04)
+
+The independent ordinary `InitItems`/`AddInitItems` port now follows the
+managed prerequisites, initial objects and encounters for original-Diablo
+depths 1-4, quests disabled, fresh single-player Normal. It preserves all 128
+item slots including scratch, ordered active IDs, signed item occupancy and
+RNG. Partial clearing preserves native untouched fields; allocation resets the
+selected slot completely. External potion and animation metadata supply names
+and values, with native absolute-seed reseeding, potion selection and the
+limit-one armor-class draw. Raw byte requirements use signed item-field
+conversion; names retain 63-byte UTF-8/C-string projection.
+
+The detached prior-slot contract validates native widths and name capacity.
+Unsafe signed placement candidates and cursor array indices fail closed rather
+than inventing native retries. One safe signed count-roll corner produces one
+item. The oracle compares every public item scalar/string field and five public
+animation scalars, not sprites or private visual-distribution state. Item-get
+record/UI resets have portable source-based tests, not native sidecar capture.
+
+A separate strict `cathedral_population_uniques.tsv` loader validates all 100
+ordered unique rows and canonical SHA-256 identity, deriving source quest-only
+IDs rather than accepting editable quest flags. The encounter reader uses the
+loaded detached definitions. This and the raw monster/object loader are not a
+complete content compiler. No captured names/tables or licensed geometry are
+checked in or supplied to production servers.
+
+The bounded `-CathedralInitialItems` mode selects exactly sixteen item cases
+plus the sixteen initial-object and sixteen encounter comparisons. It derives
+fresh item storage independently and consumes actual managed upstream results,
+never native expected final state. Two fresh captures must preserve byte-identical
+17+1+1+1 artifacts and the earlier nineteen artifact bytes. The opt-in native
+guard cleans full item pools/references, and the new sidecar escapes all JSON
+control bytes without changing the legacy writer. All four environment variables
+retain exact caller state; stage deadlines, child-only dialog suppression and
+owned-process cleanup remain required.
+
+Focused verification passes 159 managed checks without exclusions (771ms) and
+three portable native checks. The final wrapper passes all 48 composed managed
+comparisons without exclusions, two byte-identical 17+1+1+1 captures, and an
+independent comparison of all nineteen earlier artifact bytes against the
+committed encounter baseline. Every owned stage exits zero, with confirmed
+termination and no timeout/cleanup error; all four actual caller environment
+states are independently checked after completion. Private evidence remains in
+`Godevilution-Cathedral-Population-Oracle-f9004c83d3be47f9833bda0a58f10e25`
+under the local temp directory; do not publish it.
+Review-found requirement casts, animation scope, NUL names, cursor/prior-slot
+bounds and native teardown/serialization are corrected. Initial compilation,
+PowerShell test/caller and CTest-filter failures are retained separately, not
+reported as passes. The first wrapper compilation failure preceded any capture.
+The final caller checks PowerShell completion and all four actual environment
+names; the final CTest selection requires the exact nonempty test count.
+
+Launcher verification passes 49 checks without exclusions (38.097s), including
+the item validator, all mode conflicts and existing Godot automation safeguards.
+Full server passes 1,564 with four existing explicit/platform exclusions
+(49.702s). Affected native checks pass 46 with twelve existing opt-in exclusions
+out of 58 (3.46s), separately from the successful private population capture.
+
+The full module suite passes 2,885 with the same four baseline Hork Demon RNG
+failures and identical expected/actual messages, plus 127 explicit exclusions
+(38.016s). Sixteen new item cases account for the increased exclusions; the
+opt-in wrapper executes them separately. This is not a green full module suite.
+The managed build is warning/error-free. The server test rebuild uses verified
+dependency outputs and retains three existing `NU1900` audit-feed warnings;
+this is not a vulnerability-audit pass. Final suite logs remain under `.local`
+as `m2-initial-items-full-module.log`, `m2-initial-items-full-server.log`,
+`m2-initial-items-launchers-focused-final.log` and
+`m2-initial-items-native-affected-final-2.log`.
+
+No runtime/content/save schema or default profile is activated. `CreateThemeRooms`,
+complete external pack compilation, physical lighting, quest/campaign seed
+selection and ordinary populated Godot interaction/cold restore remain open.
+M0/M2 and the approximately 35% overall estimate remain open; no Godot launch is
+claimed for this batch. Final process inspection finds no project/crash-reporting
+processes, and user save/config SHA-256 hashes remain unchanged.
+
 ### M2 ordinary Cathedral monster encounters (2026-10-04)
+
+This is the `34eea62ed` encounter baseline; its initial-item gap is superseded
+by the newer evidence above.
 
 The independent managed `InitMonsters` port now follows the composed
 `GetLevelMTypes`/`InitThemes`/`HoldThemeRooms` and `InitGolems`/`InitObjects`

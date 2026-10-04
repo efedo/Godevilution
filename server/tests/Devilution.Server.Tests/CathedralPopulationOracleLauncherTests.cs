@@ -33,6 +33,7 @@ public sealed class CathedralPopulationOracleLauncherTests
         Assert.Contains("Restore-CathedralOracleEnvironmentVariable $oracleDirectoryVariable $previousOracleDirectory", launcher, StringComparison.Ordinal);
         Assert.Contains("Restore-CathedralOracleEnvironmentVariable $inputDirectoryVariable $previousInputDirectory", launcher, StringComparison.Ordinal);
         Assert.Contains("Restore-CathedralOracleEnvironmentVariable $encounterDirectoryVariable $previousEncounterDirectory", launcher, StringComparison.Ordinal);
+        Assert.Contains("Restore-CathedralOracleEnvironmentVariable $initialItemDirectoryVariable $previousInitialItemDirectory", launcher, StringComparison.Ordinal);
         var script = BuildPowerShellHarness(["Restore-CathedralOracleEnvironmentVariable"],
             """
             $probeName = 'GODEVILUTION_ORACLE_RESTORE_TEST_' + [guid]::NewGuid().ToString('N')
@@ -67,6 +68,9 @@ public sealed class CathedralPopulationOracleLauncherTests
         Assert.Contains("[switch]$CathedralPopulation", launcher, StringComparison.Ordinal);
         Assert.Contains("[switch]$CathedralPopulationParity", launcher, StringComparison.Ordinal);
         Assert.Contains("[switch]$CathedralEncounters", launcher, StringComparison.Ordinal);
+        Assert.Contains("[switch]$CathedralInitialItems", launcher, StringComparison.Ordinal);
+        Assert.Contains("--filter-method *AuthoritativeCathedralInitialItemNativeOracleTests.ItemsMatchNativeOracle --explicit only --fail-skips on", launcher, StringComparison.Ordinal);
+        Assert.Contains("Assert-CathedralManagedReport $itemLog 16", launcher, StringComparison.Ordinal);
         Assert.Contains("--filter-method *AuthoritativeCathedralEncounterNativeOracleTests.EncounterMatchesNativeOracle --explicit only --fail-skips on", launcher, StringComparison.Ordinal);
         Assert.Contains("$previousEncounterDirectory", launcher, StringComparison.Ordinal);
         Assert.Contains("Assert-CathedralManagedReport $encounterLog 16", launcher, StringComparison.Ordinal);
@@ -100,9 +104,66 @@ public sealed class CathedralPopulationOracleLauncherTests
                 try { $incompatibleOutput = (& powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass -File $launcherPath -CathedralEncounters $incompatibleFlag 2>&1 | Out-String) } finally { $ErrorActionPreference = $savedErrorActionPreference }
                 if ($LASTEXITCODE -eq 0 -or $incompatibleOutput -notmatch 'mutually exclusive') { throw 'Encounter parity accepted an incompatible mode.' }
             }
+            foreach ($incompatibleFlag in @('-CathedralEncounters','-CathedralPopulationParity','-CathedralPopulation','-CathedralDoors','-CathedralDepths')) {
+                $ErrorActionPreference = 'Continue'
+                try { $incompatibleOutput = (& powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass -File $launcherPath -CathedralInitialItems $incompatibleFlag 2>&1 | Out-String) } finally { $ErrorActionPreference = $savedErrorActionPreference }
+                if ($LASTEXITCODE -eq 0 -or $incompatibleOutput -notmatch 'mutually exclusive') { throw 'Initial item parity accepted an incompatible mode.' }
+            }
             Write-Output 'PASS'
             """);
 
+        Assert.Contains("PASS", RunPowerShell(script), StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void InitialItemArtifactHeaderRejectsCoercionsExtraFilesAndIncompleteScopes()
+    {
+        if (!OperatingSystem.IsWindows()) return;
+        var script = BuildPowerShellHarness(
+            ["Assert-CathedralPopulationRequiredProperty", "Assert-CathedralPopulationExactProperties",
+             "Assert-CathedralPopulationInteger", "Assert-CathedralPopulationString",
+             "Assert-CathedralPopulationArray", "Get-CathedralInitialItemArtifact"],
+            """
+            $work = Join-Path ([IO.Path]::GetTempPath()) ('Godevilution-PopulationValidator-' + [guid]::NewGuid().ToString('N'))
+            New-Item -ItemType Directory -Path $work | Out-Null
+            $primaryFailure = $null
+            $path = Join-Path $work 'native-initial-items.json'
+            function Write-Header($value) { [IO.File]::WriteAllText($path, ($value | ConvertTo-Json -Depth 5)) }
+            function Expect-Rejected([scriptblock]$action) {
+                $rejected = $false; try { & $action | Out-Null } catch { $rejected = $true }
+                if (-not $rejected) { throw 'Malformed initial item header was accepted.' }
+            }
+            try {
+                $valid = [ordered]@{ format = 'godevilution-cathedral-initial-items'; version = 1;
+                    policy = 'ordinary-original-diablo-post-initmonsters-inititems'; caseCount = 16;
+                    potionDefinitions = @(@{}, @{}); cases = @(1..16 | ForEach-Object { @{} }) }
+                Write-Header $valid
+                $artifact = Get-CathedralInitialItemArtifact $work
+                if ($artifact.Name -cne 'native-initial-items.json' -or $artifact.Bytes -le 0 -or $artifact.Sha256 -notmatch '^[0-9a-f]{64}$') { throw 'Invalid initial item artifact identity.' }
+                foreach ($mutation in @('stringVersion','floatCount','shortPotions','shortCases','extraProperty','wrongPolicy')) {
+                    $bad = [ordered]@{}; foreach ($entry in $valid.GetEnumerator()) { $bad[$entry.Key] = $entry.Value }
+                    switch ($mutation) {
+                        'stringVersion' { $bad.version = '1' }
+                        'floatCount' { $bad.caseCount = 16.0 }
+                        'shortPotions' { $bad.potionDefinitions = @(@{}) }
+                        'shortCases' { $bad.cases = @($valid.cases | Select-Object -First 15) }
+                        'extraProperty' { $bad['extra'] = 1 }
+                        'wrongPolicy' { $bad.policy = 'final-population' }
+                    }
+                    if ($mutation -eq 'floatCount') {
+                        [IO.File]::WriteAllText($path, (($bad | ConvertTo-Json -Depth 5) -replace '"caseCount":\s*16(?:\.0)?,', '"caseCount":16.0,'))
+                    } else { Write-Header $bad }
+                    Expect-Rejected { Get-CathedralInitialItemArtifact $work }
+                }
+                Write-Header $valid
+                $extra = Join-Path $work 'extra.json'
+                [IO.File]::WriteAllText($extra, '{}')
+                Expect-Rejected { Get-CathedralInitialItemArtifact $work }
+                Remove-Item -LiteralPath $extra
+                Write-Output 'PASS'
+            } catch { $primaryFailure = $_; throw }
+            finally { Remove-PopulationTestDirectory $work $primaryFailure }
+            """);
         Assert.Contains("PASS", RunPowerShell(script), StringComparison.Ordinal);
     }
 

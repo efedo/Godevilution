@@ -53,11 +53,23 @@ placement RNG, trigger visibility, transparency regions and indexed light
 history. Fresh pool clearing consumes its own seed stream before the population
 reseed. Retained/revisited pool lifecycle generation is not established by this
 fresh gate.
-The raw monster/object TSV catalog loader validates detached external tables
-and their canonical fingerprint, not complete runtime packs. Unique metadata
-compilation, `InitItems`/`CreateThemeRooms`, physical lighting and populated
-profile activation/restore remain required. Neither generator accepts native
-expected final state as production input or introduces server MPQ access.
+The raw monster/object and unique-monster TSV catalog loaders validate detached
+external tables and canonical fingerprints, not complete runtime packs. Unique
+quest suppression is derived from native source IDs, not editable row flags.
+A separate ordinary `InitItems` generator follows managed encounters. It
+preserves all 128 item slots including the scratch slot, resets active IDs,
+distinguishes partial clearing from complete allocation, and consumes externally
+supplied potion metadata with native seed reseeding, placement and AC draws.
+The bounded comparison covers all public item scalar/string fields and five
+public animation scalars, not sprite handles or private visual distribution.
+Native out-of-bounds signed item candidates and unsafe cursor indices fail
+closed; no unproven retry behavior is substituted. Prior-slot fields are
+validated against native widths, and raw requirements/names retain signed-byte
+conversion and UTF-8/C-string semantics. Complete content compilation,
+`CreateThemeRooms`, physical lighting and populated profile activation/restore
+remain required.
+No generator accepts native expected final state as production input or
+introduces server MPQ access.
 
 ## Components
 

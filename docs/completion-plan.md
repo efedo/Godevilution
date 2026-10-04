@@ -476,9 +476,15 @@ this evidence. A sample art pack does not satisfy M4's full presentation gate.
    signed refs, RNG, trigger visibility/transparency and indexed light history.
    Fresh pool clearing uses its recorded pre-clear seed, not the population
    reseed or native expected inactive records. A strict external raw
-   monster/object TSV catalog loader is available; it is not a complete pack
-   compiler. Next port `InitItems` and `CreateThemeRooms`, compile unique metadata
-   and the validated external prerequisites, then activate a separately
+   monster/object TSV catalog loader is available; a separate 100-row unique
+   catalog derives quest suppression from source IDs. These are not a complete
+   pack compiler. A separate `-CathedralInitialItems` route extends the managed
+   phases through ordinary `InitItems`, preserving all 128 item slots and native
+   item-seed reseeding with externally supplied metadata. Public scalar/string
+   fields and five public animation scalars are compared, not private visual
+   distribution or sprites; unsafe native signed coordinates fail closed.
+   Next port `CreateThemeRooms`, compile the validated external prerequisites
+   and item/unique metadata into complete packs, then activate a separately
    identified opt-in populated server profile. Never use expected final state
    as production input. Preserve the narrower earlier oracles and require
    ordinary Godot interaction plus cold restore before claiming playable native
