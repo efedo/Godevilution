@@ -120,9 +120,10 @@ open. Their scope, dependencies, and exit checks are defined only in the
   Animation remains a global visual clock, not native action-frame timing.
   Complete MPQ-free presentation coverage remains a deliverable. Original-asset
   support is optional client tooling; the server must remain MPQ-independent.
-- Detached Cathedral depths 1-4 item creation now has independent raw-selector
-  and complete pool/placement/setup/unique/ground comparison evidence. Complete
-  theme-room composition, external pack compilation, populated-profile activation
+- Detached Cathedral depths 1-4 item creation and complete selected theme rooms
+  now have independent native comparisons, including all pools, RNG and static
+  light channels. Real upstream full-level composition, external pack compilation,
+  populated-profile activation
   and ordinary Godot interaction/cold restore remain M2 work; default packs and
   launch/save profiles are unchanged.
 - Native-compatible generated maps, collision/set-piece placement, remaining
@@ -152,6 +153,73 @@ open. Their scope, dependencies, and exit checks are defined only in the
   this edge case, but the corrected Flash fixtures cover off-player cursors.
 
 ## Recent implementation evidence
+
+### M2 detached complete Cathedral theme rooms and static lighting (2026-10-04)
+
+This batch follows `91cf56936`. The detached original-Diablo Cathedral SP Normal,
+quest-disabled `CreateThemeRooms` port consumes all fourteen supported theme
+types in supplied source order, including item-producing rooms. It retains all
+127 object, 200 monster and 128 item slots, allocator IDs/history, signed
+occupancy, corpses, target state, private fit scratch/flags, public animation
+scalars and RNG. Skeleton reservations/activation, shrine availability/retries,
+full-pool returns and unconditional `ItemNoFlippy` follow the native order.
+The earlier theme-selection result now exposes placement-variant carry without
+changing content, protocol or save schemas. Normal runtime profiles are not activated.
+
+The separate zero-argument `tools/test-theme-room-generation.ps1` captures actual
+native pre/post state for 88 worlds across depths 1-4: fourteen individual types,
+their ordered sequence, full pools, failed fitting, loading and empty passes.
+Raw tables, loaded bestiary metadata and pre-call state are inputs; expected
+final state is comparison-only. All eleven 112x112 tile channels, full light
+records, pools and scratch are compared. A separate 40-case corpus verifies
+zero-offset static lighting for radii 0-15, corners and loading-copy behavior;
+this is not a generic radial brush, indexed-light/vision or renderer proof.
+
+Two fresh captures are byte-identical. Room corpus: 129,990,416 bytes, SHA256
+`628811e4d3ae8825b19dff8a97aefa46c0db4f968390024401ba70a37340f4ae`.
+Static-light corpus: 6,020,112 bytes, SHA256
+`82bd1a4253349f91eb1550bf8529d3e7c75c33686ba7c1b78d6f0a0c7f5cb629`.
+All eight exact native fixtures pass in both captures; all five explicit managed
+comparisons pass without exclusions or runner errors. The private evidence is
+`%TEMP%/Godevilution-Theme-Room-Oracle-041ea63cf6db4fd299e43a264e376bb5`.
+
+All 104 focused module tests and 51 launcher/evidence checks pass without
+exclusions. CTest discovers exactly fifteen fixtures in the existing registered
+item-oracle target; three existing native metadata/repair/recharge regressions
+pass. The final module build has zero warnings/errors. Test processes have
+bounded deadlines, inherited child-only dialog suppression and retained exit/log
+evidence; all final owned stages confirm clean exit. Logs/XML use
+`.local/m2-theme-room-*`.
+
+The full module rerun passes 3,059 with zero failures/errors and 140 explicit
+NotRun exclusions (3,199 total). Five documentation contracts pass separately.
+The full serial server suite passes 1,591 with zero failures/errors and four
+existing exclusions (three NotRun, one directory-link privilege Skip; 1,595
+total). Server builds retain three NU1900 audit-feed warnings; no clean package
+vulnerability audit or broader filesystem/platform acceptance is claimed.
+Both earlier item wrappers pass again: 3,040 setup/unique cases and 224 selectors/
+40 placement worlds, with their previously recorded corpus bytes unchanged.
+
+Independent review/native comparison corrected level-type frequency indexing,
+isometric directions, fit footprints, MonsterPit scratch carry, Bookstand RNG,
+Petrified/animation state and target preference. Final hardening rejects narrow
+field overflow, unsupported policies and actually reached unsafe native reads,
+while preserving capacity-before-type checks and protected tile probes.
+Earlier compiler, link, focused-test and deadline failures remain retained;
+the 30-second native capture timed out and its owned process was confirmed
+terminated. The first full module run also caught a stale documentation contract;
+its replacement asserts detached scope and the remaining composition gate, and
+the full rerun passes. Compiler fixes and the fresh repeated wrapper were verified after
+the final worker handoff; no expected-state substitution or weakened gate is used.
+
+This remains detached selected-theme proof, not composed upstream population,
+complete external packs or populated Godot interaction/cold restore. Wider modes,
+campaigns, quest behavior and private renderer state remain open. No Godot or
+MPQ is opened; launcher defaults and user save/config bytes remain unchanged.
+The approximately 35% overall estimate and M0/M2 gates remain open. Next compose
+the existing managed upstream phases through this final pass, then compile
+validated complete packs and accept a separate populated profile as specified
+in the completion plan.
 
 ### M2 detached Cathedral item selection and world creation (2026-10-04)
 

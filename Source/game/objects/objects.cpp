@@ -3649,6 +3649,14 @@ void UpdateState(Object &object, int frame)
 } // namespace
 
 #ifdef BUILD_TESTING
+std::array<bool, 26> SinglePlayerShrineAvailabilityForTesting()
+{
+	std::array<bool, 26> available;
+	for (size_t index = 0; index < available.size(); ++index)
+		available[index] = shrineavail[index] != ShrineTypeMulti;
+	return available;
+}
+
 void TestObjSetMicro(Point position, int pn)
 {
 	ObjSetMicro(position, pn);

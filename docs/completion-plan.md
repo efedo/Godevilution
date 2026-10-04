@@ -73,7 +73,7 @@ isolated spell or table rows while the playable route stays unchanged.
 | --- | --- | --- | --- |
 | M0 | Reproducible launch and honest acceptance evidence | Existing implementation | Dedicated-root cohort host passes TCP recovery, scoped faults, production CLI participant/item recovery and lease refusal, isolated Godot create/resume/outage and surviving-client committed-but-unobserved replay; managed first-publication interruption and a scoped Windows metadata profile pass; approval-gated normal-launch adoption and broader fault/filesystem/platform acceptance remain; legacy cold imports, native GUI and release-budget gaps remain |
 | M1 | Usable Godot town-to-dungeon loop | M0 launch/acceptance harness | Authored combat/loot/equipment, NPC/service approach, purchased-scroll portal and isolated Sorcerer quest/cast/Recharge/death/restart/restore journeys pass; full loop remains |
-| M2 | Native-compatible generated world | M0 geometry/parity baseline | Ordinary Cathedral depths 1-4 coarse/fine oracle covers six seeds and MAIN/PREV; separate opt-in depth and mutable-door profiles exist; headless and a fresh rendered door cold restore pass, with an earlier rendered TooLate retained and causally unclassified; native art/population, campaign mapping, wider topology and remaining families remain |
+| M2 | Native-compatible generated world | M0 geometry/parity baseline | Ordinary Cathedral depths 1-4 coarse/fine oracle covers six seeds and MAIN/PREV; initial population phases and detached complete selected theme rooms have independent native comparisons; separate opt-in depth and mutable-door profiles exist; headless and a fresh rendered door cold restore pass, with an earlier rendered TooLate retained and causally unclassified; composed full population, pack/profile activation, native art, campaign mapping, wider topology and remaining families remain |
 | M3 | Complete base and Hellfire gameplay routes | M1 plus the relevant M2 world slices | Many rules exist; campaign and remaining behavioral coverage remain |
 | M4 | Release-quality client, recovery, and packaging | M3; preparation begins during M1/M2 | Recovery and adapter packaging foundations exist; product acceptance remains |
 | M5 | Production legacy-runtime retirement | M4 and capability replacement gates | Authoritative mode is Lua-free; compatibility runtime remains |
@@ -496,19 +496,28 @@ this evidence. A sample art pack does not satisfy M4's full presentation gate.
    128 item slots, 127 IDs, signed grid and 128 history flags, including
    selector-before-capacity RNG, signed overwrites and unreferenced allocations
    after exhausted placement. Unsafe native out-of-bounds writes fail closed.
-   Next port `CreateThemeRooms` in source order using these verified item
-   dependencies. The normalized gameplay item catalog and initial-potion port
-   are not substitutes. Port every selected theme type without stubs
-   or skipping item-producing themes; retain unconditional `ItemNoFlippy`
-   behavior even after full-pool creation returns. Then
-   compile the validated external prerequisites and item/unique metadata into
+   A separate detached `CreateThemeRooms` port now uses these verified item
+   dependencies for all fourteen ordinary Cathedral theme types, in source
+   order. It retains full object/monster/item pools, signed occupancy, corpses,
+   target state, persistent fit scratch/flags, RNG and zero-offset static light;
+   unconditional `ItemNoFlippy` remains even after full-pool creation returns.
+   The separate zero-argument `tools/test-theme-room-generation.ps1` compares
+   88 complete selected-theme worlds and 40 static-light cases, independently
+   capturing actual native pre-call inputs and comparison-only final state.
+   This detached pass is not composed full-level population or a runtime pack.
+   Next extend the existing upstream oracle through `InitItems` and this final
+   pass using managed selections, carry, pools and RNG from the earlier phases;
+   never substitute native expected intermediate or final state. Include safe
+   multi-room source order and ordinary depths 1-4 before profile activation.
+   Then compile the validated external prerequisites and item/unique metadata into
    complete packs, then activate a separately
    identified opt-in populated server profile. Never use expected final state
    as production input. Preserve the narrower earlier oracles and require
    ordinary Godot interaction plus cold restore before claiming playable native
    population.
-   Static light collision is a separate live object channel, not a new SOL,
-   missile or vision wall. Full light animation, rendering and RNG population,
+   Static lighting is independent of live object collision. Live object
+   collision is a separate channel, not a new SOL, missile or vision wall.
+   Full light animation, rendering and RNG population,
    quest-dependent map replacement and campaign activation remain unqualified.
    Do not infer that door placement explains disconnected routes or repair native
    geometry to make a diagnostic path pass.

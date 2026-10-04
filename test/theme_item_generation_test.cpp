@@ -15,8 +15,11 @@
 
 #include "application/diablo.h"
 #include "application/game_mode.hpp"
+#include "application/headless_mode.hpp"
+#include "engine/audio/sound.h"
 #include "engine/assets.hpp"
 #include "engine/load/load_clx.hpp"
+#include "engine/lighting.h"
 #include "engine/random.hpp"
 #include "engine/render/text_render.hpp"
 #include "game/items/items.hpp"
@@ -24,8 +27,12 @@
 #include "game/levels/dungeon_common.h"
 #include "game/levels/level.hpp"
 #include "game/levels/tile_properties.hpp"
+#include "game/levels/themes.h"
+#include "game/monsters/monster_pool.hpp"
 #include "game/objects/objects.hpp"
+#include "game/objects/object_pool.hpp"
 #include "game/players/players.hpp"
+#include "game/quests/quests.hpp"
 #include "persistence/options.h"
 #include "utils/language.h"
 
@@ -932,6 +939,564 @@ TEST_F(ThemeItemPlacementTest, CaptureIndependentSelectorsAndWorldCreation)
 	EXPECT_EQ(fullPools, 4); EXPECT_EQ(exhaustedPlacements, 4); EXPECT_EQ(signedOverwrites, 4);
 	EXPECT_EQ(generatedUniques, 4); EXPECT_EQ(exhaustedHistories, 4);
 	EXPECT_LE(std::filesystem::file_size(root / "native-theme-item-placement.json"), 32U * 1024U * 1024U);
+}
+
+// Static theme-object lighting is an independent zero-offset native dependency.
+// Preserve the manager's private generated tables and indexed slots as well as
+// every tile channel. The algorithm needs no graphics/MPQs; the inherited raw
+// item fixture still checks the bundled test font and TSV resources.
+struct NativeStaticLightGuard {
+	LightManager oldManager = CurrentLightManager;
+	bool oldLoading = LoadingMapObjects;
+	~NativeStaticLightGuard()
+	{
+		CurrentLightManager = oldManager;
+		LoadingMapObjects = oldLoading;
+	}
+};
+
+class ThemeStaticLightingTest : public ThemeItemGenerationTest {
+protected:
+	void SetUp() override
+	{
+		ThemeItemGenerationTest::SetUp();
+		if (HasFatalFailure()) return;
+		worldGuard = std::make_unique<NativeItemWorldGuard>();
+		lightGuard = std::make_unique<NativeStaticLightGuard>();
+		CurrentLightManager.MakeLightTable();
+	}
+
+	void PrepareLighting(bool loading)
+	{
+		LoadingMapObjects = loading;
+		for (Tile &tile : tiles()) {
+			tile.setLight(15);
+			tile.setPreLight(15);
+		}
+		// Independent sentinels prove min-only lighting versus DoUnLight's
+		// unconditional copy, and retain brighter/darker pre-existing state.
+		tileAt(52, 52).setLight(1);
+		tileAt(53, 53).setPreLight(2);
+		tileAt(57, 57).setLight(1);
+	}
+
+	static void WriteLightChannels(std::ostream &out)
+	{
+		JsonObject json(out);
+		json.Key("light");
+		WriteArray(out, tiles(), [&](const Tile &tile) { out << static_cast<int>(tile.light()); });
+		json.Key("preLight");
+		WriteArray(out, tiles(), [&](const Tile &tile) { out << static_cast<int>(tile.preLight()); });
+	}
+
+private:
+	std::unique_ptr<NativeItemWorldGuard> worldGuard;
+	std::unique_ptr<NativeStaticLightGuard> lightGuard;
+};
+
+TEST_F(ThemeStaticLightingTest, RadiusFivePreservesNativeMinimumAndLoadingCopy)
+{
+	PrepareLighting(false);
+	const uint32_t seed = GetLCGEngineState();
+	CurrentLightManager.DoLighting({ 50, 50 }, 5, {});
+	EXPECT_EQ(tileAt(50, 50).light(), 0);
+	EXPECT_EQ(tileAt(51, 51).light(), 3);
+	EXPECT_EQ(tileAt(52, 52).light(), 1);
+	EXPECT_EQ(tileAt(50, 50).preLight(), 15);
+	EXPECT_EQ(GetLCGEngineState(), seed);
+	PrepareLighting(true);
+	CurrentLightManager.DoLighting({ 50, 50 }, 5, {});
+	CurrentLightManager.DoUnLight({ 50, 50 }, 5);
+	EXPECT_EQ(tileAt(51, 51).preLight(), 3);
+	EXPECT_EQ(tileAt(57, 57).light(), 15);
+	EXPECT_EQ(tileAt(53, 53).light(), 2);
+	EXPECT_EQ(GetLCGEngineState(), seed);
+}
+
+TEST_F(ThemeStaticLightingTest, CaptureZeroOffsetNativeStaticLighting)
+{
+	const char *directory = std::getenv("GODEVILUTION_THEME_STATIC_LIGHT_ORACLE_DIRECTORY");
+	if (directory == nullptr || directory[0] == '\0')
+		GTEST_SKIP() << "Set the separate static-light oracle directory for private capture.";
+	const std::filesystem::path root = std::filesystem::weakly_canonical(directory);
+	ASSERT_TRUE(root.is_absolute());
+	const std::filesystem::path repository = std::filesystem::weakly_canonical(
+	    std::filesystem::absolute(__FILE__).parent_path().parent_path());
+	ASSERT_FALSE(std::mismatch(repository.begin(), repository.end(), root.begin(), root.end()).first == repository.end())
+	    << "Derived native evidence must remain outside the repository.";
+	ASSERT_TRUE(std::filesystem::is_directory(root));
+	ASSERT_TRUE(std::filesystem::is_empty(root));
+	std::ofstream stream(root / "native-theme-static-light.json", std::ios::binary | std::ios::trunc);
+	ASSERT_TRUE(stream.good());
+	int caseCount = 0;
+	{
+		JsonObject document(stream);
+		document.String("format", "godevilution-cathedral-theme-static-light");
+		document.Number("version", 1);
+		document.String("policy", "original-diablo-cathedral-zero-offset-static-light");
+		document.Key("cases"); stream << '[';
+		auto capture = [&](Point position, int radius, bool loading) {
+			PrepareLighting(loading);
+			if (caseCount++ != 0) stream << ',';
+			JsonObject row(stream);
+			row.Number("x", position.x); row.Number("y", position.y);
+			row.Number("radius", radius); row.Boolean("loadingMapObjects", loading);
+			row.Key("input"); WriteLightChannels(stream);
+			const uint32_t seed = GetLCGEngineState();
+			const int activeCount = CurrentLightManager.activeLightCount_;
+			const auto activeIds = CurrentLightManager.activeLights_;
+			CurrentLightManager.DoLighting(position, static_cast<uint8_t>(radius), {});
+			if (loading) CurrentLightManager.DoUnLight(position, static_cast<uint8_t>(radius));
+			EXPECT_EQ(GetLCGEngineState(), seed);
+			EXPECT_EQ(CurrentLightManager.activeLightCount_, activeCount);
+			EXPECT_EQ(CurrentLightManager.activeLights_, activeIds);
+			row.Key("expected"); WriteLightChannels(stream);
+		};
+		for (int radius = 0; radius < 16; ++radius)
+			for (bool loading : { false, true }) capture({ 50, 50 }, radius, loading);
+		for (Point position : { Point { 0, 0 }, Point { 111, 0 }, Point { 0, 111 }, Point { 111, 111 } })
+			for (bool loading : { false, true }) capture(position, 5, loading);
+		stream << ']'; document.Number("caseCount", caseCount);
+	}
+	stream.flush(); ASSERT_TRUE(stream.good()); stream.close();
+	EXPECT_EQ(caseCount, 40);
+	EXPECT_LE(std::filesystem::file_size(root / "native-theme-static-light.json"), 8U * 1024U * 1024U);
+}
+
+void WriteRoomPoint(std::ostream &out, Point value)
+{
+	JsonObject point(out); point.Number("x", value.x); point.Number("y", value.y);
+}
+
+void WriteRoomObject(std::ostream &out, int slot, const Object &value)
+{
+	JsonObject json(out); json.Number("slot", slot);
+#define ROOM_OBJECT_N(key, field) json.Number(key, value.field)
+#define ROOM_OBJECT_B(key, field) json.Boolean(key, value.field)
+	ROOM_OBJECT_N("type", _otype); json.Key("position"); WriteRoomPoint(out, value.position);
+	ROOM_OBJECT_B("applyLighting", applyLighting); ROOM_OBJECT_N("animFlag", _oAnimFlag);
+	ROOM_OBJECT_N("animDelay", _oAnimDelay); ROOM_OBJECT_N("animCount", _oAnimCnt);
+	ROOM_OBJECT_N("animLength", _oAnimLen); ROOM_OBJECT_N("animFrame", _oAnimFrame);
+	ROOM_OBJECT_N("animWidth", _oAnimWidth); ROOM_OBJECT_B("deleteFlag", _oDelFlag);
+	ROOM_OBJECT_N("breakFlag", _oBreak); ROOM_OBJECT_B("solidFlag", _oSolidFlag);
+	ROOM_OBJECT_B("missilePassable", _oMissFlag); ROOM_OBJECT_N("selectionRegion", selectionRegion);
+	ROOM_OBJECT_B("preFlag", _oPreFlag); ROOM_OBJECT_B("trapFlag", _oTrapFlag); ROOM_OBJECT_B("doorFlag", _oDoorFlag);
+	ROOM_OBJECT_N("lightId", _olid); ROOM_OBJECT_N("rndSeed", _oRndSeed);
+	ROOM_OBJECT_N("var1", _oVar1); ROOM_OBJECT_N("var2", _oVar2); ROOM_OBJECT_N("var3", _oVar3);
+	ROOM_OBJECT_N("var4", _oVar4); ROOM_OBJECT_N("var5", _oVar5); ROOM_OBJECT_N("var6", _oVar6);
+	ROOM_OBJECT_N("bookMessage", bookMessage); ROOM_OBJECT_N("var8", _oVar8);
+#undef ROOM_OBJECT_N
+#undef ROOM_OBJECT_B
+}
+
+void WriteRoomMonster(std::ostream &out, int slot, const Monster &value)
+{
+	JsonObject json(out); json.Number("slot", slot); json.Number("type", value.type().type);
+#define ROOM_MONSTER_N(key, field) json.Number(key, value.field)
+#define ROOM_MONSTER_P(key, field) json.Key(key); WriteRoomPoint(out, { value.field.x, value.field.y })
+	ROOM_MONSTER_N("levelType", levelType); ROOM_MONSTER_N("mode", mode); ROOM_MONSTER_N("goal", goal);
+	ROOM_MONSTER_N("goalVar1", goalVar1); ROOM_MONSTER_N("goalVar2", goalVar2); ROOM_MONSTER_N("goalVar3", goalVar3);
+	ROOM_MONSTER_N("var1", var1); ROOM_MONSTER_N("var2", var2); ROOM_MONSTER_N("var3", var3);
+	ROOM_MONSTER_N("pathCount", pathCount); ROOM_MONSTER_P("tile", position.tile);
+	ROOM_MONSTER_P("future", position.future); ROOM_MONSTER_P("old", position.old);
+	ROOM_MONSTER_P("last", position.last); ROOM_MONSTER_P("temp", position.temp);
+	ROOM_MONSTER_N("direction", direction); ROOM_MONSTER_N("enemy", enemy); ROOM_MONSTER_P("enemyPosition", enemyPosition);
+	json.Boolean("invalid", value.isInvalid); ROOM_MONSTER_N("ai", ai); ROOM_MONSTER_N("intelligence", intelligence);
+	ROOM_MONSTER_N("activeForTicks", activeForTicks); ROOM_MONSTER_N("uniqueType", uniqueType);
+	ROOM_MONSTER_N("uniqueTranslation", uniqTrans); ROOM_MONSTER_N("corpseId", corpseId); ROOM_MONSTER_N("whoHit", whoHit);
+	ROOM_MONSTER_N("minDamage", minDamage); ROOM_MONSTER_N("maxDamage", maxDamage);
+	ROOM_MONSTER_N("minDamageSpecial", minDamageSpecial); ROOM_MONSTER_N("maxDamageSpecial", maxDamageSpecial);
+	ROOM_MONSTER_N("armorClass", armorClass); ROOM_MONSTER_N("resistance", resistance);
+	ROOM_MONSTER_N("talkMessage", talkMsg); ROOM_MONSTER_N("leader", leader); ROOM_MONSTER_N("leaderRelation", leaderRelation);
+	ROOM_MONSTER_N("packSize", packSize); ROOM_MONSTER_N("flags", flags);
+	ROOM_MONSTER_N("rndItemSeed", rndItemSeed); ROOM_MONSTER_N("aiSeed", aiSeed); ROOM_MONSTER_N("lightId", lightId);
+	ROOM_MONSTER_N("hitPoints", hitPoints); ROOM_MONSTER_N("maxHitPoints", maxHitPoints);
+	ROOM_MONSTER_N("animTicksPerFrame", animInfo.ticksPerFrame); ROOM_MONSTER_N("animTickCounter", animInfo.tickCounterOfCurrentFrame);
+	ROOM_MONSTER_N("animNumberOfFrames", animInfo.numberOfFrames); ROOM_MONSTER_N("animCurrentFrame", animInfo.currentFrame);
+	ROOM_MONSTER_N("golemToHit", golemToHit);
+	ROOM_MONSTER_N("reducePlayerStrength", reducePlayerStrength); ROOM_MONSTER_N("reducePlayerMagic", reducePlayerMagic);
+	ROOM_MONSTER_N("reducePlayerDexterity", reducePlayerDexterity); ROOM_MONSTER_N("reducePlayerVitality", reducePlayerVitality);
+	ROOM_MONSTER_N("reducePlayerMaxHP", reducePlayerMaxHP); ROOM_MONSTER_N("reducePlayerMaxMana", reducePlayerMaxMana);
+#undef ROOM_MONSTER_N
+#undef ROOM_MONSTER_P
+}
+
+void WriteRoomWorld(std::ostream &out)
+{
+	JsonObject json(out);
+	json.Number("randomState", GetLCGEngineState());
+	json.Number("activeObjectCount", ActiveObjectCount);
+	json.Key("activeObjectIds"); WriteArray(out, ObjectPoolAdapter::ActiveObjectIds(), [&](int id) { out << id; });
+	json.Key("availableObjectIds"); WriteArray(out, ObjectPoolAdapter::AvailableObjectIds(), [&](int id) { out << id; });
+	json.Key("objects"); out << '[';
+	for (int slot = 0; slot < MAXOBJECTS; ++slot) { if (slot) out << ','; WriteRoomObject(out, slot, Objects[slot]); }
+	out << ']';
+	json.Number("activeMonsterCount", ActiveMonsterCount); json.Number("monsterTargetCount", MonsterPopulationTargetForTesting());
+	json.Key("activeMonsterIds"); WriteArray(out, MonsterPoolAdapter::ActiveMonsterIds(), [&](unsigned id) { out << id; });
+	json.Key("monsters"); out << '[';
+	for (int slot = 0; slot < MaxMonsters; ++slot) { if (slot) out << ','; WriteRoomMonster(out, slot, Monsters[slot]); }
+	out << ']';
+	json.Key("monsterPetrified"); WriteArray(out, MonsterPoolAdapter::AllMonsters(), [&](const Monster &m) { out << (m.animInfo.isPetrified ? "true" : "false"); });
+	json.Number("activeItemCount", ActiveItemCount);
+	json.Key("activeItemIds"); WriteArray(out, ItemPoolAdapter::ActiveItemIds(), [&](uint8_t id) { out << static_cast<int>(id); });
+	json.Key("items"); out << '[';
+	for (int slot = 0; slot <= MAXITEMS; ++slot) { if (slot) out << ','; WriteItem(out, Items[slot]); }
+	out << ']'; json.Key("uniqueFlags"); WriteFlags(out, CaptureFlags());
+	json.Key("tiles"); WriteArray(out, tiles(), [&](const Tile &tile) {
+		out << '[' << tile.piece() << ',' << static_cast<int>(tile.special()) << ',' << static_cast<int>(tile.transVal()) << ','
+		    << static_cast<int>(tile.flags()) << ',' << static_cast<int>(tile.corpse()) << ',' << static_cast<int>(tile.player()) << ','
+		    << tile.monster() << ',' << static_cast<int>(tile.object()) << ',' << static_cast<int>(tile.item()) << ','
+		    << static_cast<int>(tile.light()) << ',' << static_cast<int>(tile.preLight()) << ']';
+	});
+	json.Key("sol"); WriteArray(out, tileProperties(), [&](TileProperties property) { out << static_cast<int>(property); });
+	const auto scratch = CaptureThemeRoomGlobalsForTesting();
+	json.Number("themeX", scratch.x); json.Number("themeY", scratch.y); json.Number("themeVar1", scratch.variant);
+	json.Key("flags"); {
+		JsonObject flags(out); flags.Boolean("armorAvailable", armorFlag()); flags.Boolean("weaponAvailable", weaponFlag());
+		flags.Boolean("treasureAvailable", scratch.treasure); flags.Boolean("bloodFountainAvailable", scratch.bloodFountain);
+		flags.Boolean("purifyingFountainAvailable", scratch.purifyingFountain); flags.Boolean("murkyFountainAvailable", scratch.murkyFountain);
+		flags.Boolean("tearFountainAvailable", scratch.tearFountain); flags.Boolean("cauldronAvailable", scratch.cauldron);
+	}
+	json.Key("lightAllocator"); {
+		JsonObject lights(out); lights.Number("activeCount", CurrentLightManager.activeLightCount_);
+		lights.Boolean("updateLighting", CurrentLightManager.updateLighting_);
+#ifdef _DEBUG
+		lights.Boolean("disableLighting", CurrentLightManager.disableLighting_);
+#else
+		lights.Boolean("disableLighting", false);
+#endif
+		lights.Key("activeIds"); WriteArray(out, CurrentLightManager.activeLights_, [&](uint8_t id) { out << static_cast<int>(id); });
+		lights.Key("records"); int id = 0;
+		WriteArray(out, CurrentLightManager.lights_, [&](const Light &light) {
+			JsonObject row(out); row.Number("lightId", id++);
+			row.Key("tile"); WriteRoomPoint(out, { light.position.tile.x, light.position.tile.y });
+			row.Number("offsetX", light.position.offset.deltaX); row.Number("offsetY", light.position.offset.deltaY);
+			row.Key("oldTile"); WriteRoomPoint(out, { light.position.old.x, light.position.old.y });
+			row.Number("radius", light.radius); row.Number("oldRadius", light.oldRadius);
+			row.Boolean("isInvalid", light.isInvalid); row.Boolean("hasChanged", light.hasChanged);
+		});
+	}
+}
+
+// The dedicated runner starts with empty table caches and bestiary. Own public
+// tables and every touched gameplay slot; generated loader caches are private
+// to this test process and never become managed production inputs.
+struct NativeThemeRoomGuard {
+	std::array<Monster, MaxMonsters> monsters;
+	std::array<unsigned, MaxMonsters> activeMonsters;
+	size_t monsterCount = ActiveMonsterCount;
+	std::array<int, MAXOBJECTS> activeObjects;
+	std::array<int, MAXOBJECTS> availableObjects;
+	int objectCount = ActiveObjectCount;
+	std::array<ThemeStruct, MAXTHEMES> oldThemes;
+	int oldThemeCount = numThemes();
+	bool oldArmor = armorFlag(), oldWeapon = weaponFlag();
+	ThemeRoomGlobalsForTesting oldScratch = CaptureThemeRoomGlobalsForTesting();
+	std::array<CMonster, MaxLvlMTypes> oldBestiary;
+	std::vector<ObjectData> oldObjectData = AllObjects;
+	std::vector<std::string> oldObjectFiles = ObjMasterLoadList;
+	std::vector<MonsterData> oldMonsterData = MonstersData;
+	std::vector<UniqueMonsterData> oldUniques = UniqueMonstersData;
+	decltype(AiRegistry) oldAi = AiRegistry;
+	std::array<Quest, MAXQUESTS> oldQuests;
+	bool oldSound = gbSndInited, oldHeadless = HeadlessMode;
+	decltype(MyPlayerId) oldPlayerId = MyPlayerId;
+	NativeStaticLightGuard lights;
+	NativeThemeRoomGuard()
+	{
+		for (int i = 0; i < MaxMonsters; ++i) {
+			monsters[i] = std::move(Monsters[i]);
+			Monsters[i] = {};
+		}
+		std::copy_n(ActiveMonsters, MaxMonsters, activeMonsters.begin());
+		std::copy_n(ActiveObjects, MAXOBJECTS, activeObjects.begin());
+		std::copy_n(AvailableObjects, MAXOBJECTS, availableObjects.begin());
+		std::copy_n(themes, MAXTHEMES, oldThemes.begin());
+		std::copy_n(Quests, MAXQUESTS, oldQuests.begin());
+		for (int i = 0; i < MaxLvlMTypes; ++i) {
+			oldBestiary[i] = std::move(LevelBestiary.types[i]);
+			LevelBestiary.types[i] = {};
+		}
+	}
+	~NativeThemeRoomGuard()
+	{
+		LevelBestiary.init();
+		for (int i = 0; i < MaxLvlMTypes; ++i) LevelBestiary.types[i] = std::move(oldBestiary[i]);
+		for (int i = 0; i < MaxMonsters; ++i) Monsters[i] = std::move(monsters[i]);
+		std::copy(activeMonsters.begin(), activeMonsters.end(), ActiveMonsters); ActiveMonsterCount = monsterCount;
+		std::copy(activeObjects.begin(), activeObjects.end(), ActiveObjects);
+		std::copy(availableObjects.begin(), availableObjects.end(), AvailableObjects); ActiveObjectCount = objectCount;
+		std::copy(oldThemes.begin(), oldThemes.end(), themes); numThemes() = oldThemeCount;
+		armorFlag() = oldArmor; weaponFlag() = oldWeapon; RestoreThemeRoomGlobalsForTesting(oldScratch);
+		AllObjects = std::move(oldObjectData); ObjMasterLoadList = std::move(oldObjectFiles);
+		MonstersData = std::move(oldMonsterData); UniqueMonstersData = std::move(oldUniques); AiRegistry = std::move(oldAi);
+		std::copy(oldQuests.begin(), oldQuests.end(), Quests);
+		gbSndInited = oldSound; HeadlessMode = oldHeadless; MyPlayerId = oldPlayerId;
+	}
+};
+
+class ThemeRoomGenerationTest : public ThemeItemPlacementTest {
+protected:
+	void SetUp() override
+	{
+		ThemeItemPlacementTest::SetUp();
+		if (HasFatalFailure()) return;
+		ASSERT_TRUE(LevelBestiary.empty()) << "A dedicated empty bestiary is required.";
+		ASSERT_TRUE(AllObjects.empty()); ASSERT_TRUE(MonstersData.empty());
+		roomGuard = std::make_unique<NativeThemeRoomGuard>();
+		HeadlessMode = true; gbSndInited = false; MyPlayerId = 0;
+		for (const char *asset : { "txtdata\\objects\\objdat.tsv", "txtdata\\monsters\\monstdat.tsv",
+		         "txtdata\\monsters\\unique_monstdat.tsv", "txtdata\\monsters\\monster_missiles.tsv" })
+			ASSERT_TRUE(FindAsset(asset).ok()) << "A bundled theme metadata resource is missing.";
+		LoadObjectData(); LoadMonsterData();
+		for (Quest &quest : Quests) quest._qactive = QUEST_NOTAVAIL;
+		ASSERT_EQ(AllObjects.size(), 109U);
+		for (const int type : { 109, 0, 8, 20, 34, 42 }) {
+			const auto index = LevelBestiary.addType(static_cast<_monster_id>(type), type == 109 ? PLACE_SPECIAL : PLACE_SCATTER);
+			ASSERT_TRUE(index.has_value());
+		}
+		CurrentLightManager.MakeLightTable();
+	}
+
+	void PrepareRoom(int depth, int itemCount = 2, int objectCount = 0, int monsterCount = 4, bool trapWall = true)
+	{
+		PrepareWorld(itemCount);
+		currentLevel().setId(LevelId { .levelNum = static_cast<uint8_t>(depth), .type = DTYPE_CATHEDRAL });
+		CurrentLightManager.MakeLightTable();
+		for (Tile &tile : tiles()) { tile.setPiece(1); tile.setLight(15); tile.setPreLight(15); tile.setCorpse(7); tile.setSpecial(11); }
+		for (int y = 48; y <= 54; ++y)
+			for (int x = 48; x <= 54; ++x) {
+				tileAt(x, y).setPiece(0); tileAt(x, y).setTransVal(1);
+				tileAt(x, y).addFlags(DungeonFlag::Populated);
+			}
+		tileProperties()[2] = TileProperties::Solid | TileProperties::Trap;
+		if (trapWall) tileAt(50, 47).setPiece(2);
+		ActiveObjectCount = objectCount;
+		for (int i = 0; i < MAXOBJECTS; ++i) {
+			ActiveObjects[i] = objectCount == MAXOBJECTS ? MAXOBJECTS - 1 - i : 0;
+			AvailableObjects[i] = MAXOBJECTS - 1 - i;
+			Objects[i] = {}; Objects[i]._otype = OBJ_CANDLE1;
+			Objects[i]._oVar1 = 91; Objects[i]._oVar2 = -17; Objects[i]._oVar3 = 23;
+			Objects[i]._oVar4 = 31; Objects[i]._oVar5 = 41; Objects[i]._oVar6 = 53;
+			Objects[i]._oVar8 = 67; Objects[i]._oRndSeed = 1000 + i; Objects[i]._olid = 13;
+		}
+		ActiveMonsterCount = monsterCount;
+		for (int i = 0; i < MaxMonsters; ++i) {
+			ActiveMonsters[i] = MaxMonsters - 1 - i;
+			Monsters[i] = {}; Monsters[i].position.tile = { 1, 0 };
+			Monsters[i].position.future = { 1, 0 }; Monsters[i].position.old = { 1, 0 };
+			Monsters[i].position.last = { 13, 17 }; Monsters[i].position.temp = { 19, 23 };
+			Monsters[i].var1 = 29; Monsters[i].var2 = 31; Monsters[i].var3 = 37;
+			Monsters[i].uniqTrans = 7; Monsters[i].packSize = 5; Monsters[i].corpseId = 3;
+			Monsters[i].animInfo.isPetrified = true;
+		}
+		for (int i = 0; i < itemCount; ++i) {
+			Items[ActiveItems[i]]._iAnimFlag = true; Items[ActiveItems[i]].selectionRegion = SelectionRegion::None;
+			Items[ActiveItems[i]].animInfo.currentFrame = 0;
+		}
+		tileAt(50, 50).setPlayer(-1); tileAt(51, 50).setMonster(-1);
+		MyPlayer->plractive = true; MyPlayer->plrlevel = static_cast<uint8_t>(depth);
+		MyPlayer->plrIsOnSetLevel = false; MyPlayer->_pLvlChanging = false;
+		MyPlayer->position.tile = { 60, 60 }; MyPlayer->position.future = { 61, 60 };
+		LoadingMapObjects = false; CurrentLightManager.Init();
+		for (int id = 0; id < MAXLIGHTS; ++id) {
+			CurrentLightManager.activeLights_[id] = MAXLIGHTS - 1 - id;
+			CurrentLightManager.lights_[id] = {};
+			CurrentLightManager.lights_[id].position.old = { 9, 7 };
+			CurrentLightManager.lights_[id].oldRadius = 3;
+		}
+		CurrentLightManager.activeLightCount_ = 2;
+		armorFlag() = true; weaponFlag() = true;
+		RestoreThemeRoomGlobalsForTesting({ 29, 31, 2, true, false, true, false, true, false });
+	}
+
+	void WriteRoomCatalog(std::ostream &out)
+	{
+		JsonObject json(out); json.Key("objects"); int id = 0;
+		WriteArray(out, AllObjects, [&](const ObjectData &object) {
+			JsonObject row(out); row.Number("nativeType", id++); row.Number("flags", object.flags);
+			row.Number("animDelay", object.animDelay); row.Number("animLength", object.animLen);
+			row.Number("animWidth", object.animWidth); row.Number("selectionRegion", object.selectionRegion);
+		});
+		json.Key("bestiary");
+		WriteArray(out, LevelBestiary, [&](const CMonster &type) {
+			const auto &data = type.data(); JsonObject row(out);
+			row.Number("nativeType", type.type); row.Boolean("isSkeleton", IsSkel(type.type)); row.Boolean("isGoat", IsGoat(type.type));
+			row.Number("placeFlags", type.placeFlags); row.Number("minimumHitPoints", data.hitPointsMinimum);
+			row.Number("maximumHitPoints", data.hitPointsMaximum); row.Number("ai", data.ai);
+			row.Number("intelligence", data.intelligence); row.Number("abilityFlags", data.abilityFlags);
+#define ROOM_DATA(key, field) row.Number(key, data.field)
+			ROOM_DATA("minDamage", minDamage); ROOM_DATA("maxDamage", maxDamage);
+			ROOM_DATA("minDamageSpecial", minDamageSpecial); ROOM_DATA("maxDamageSpecial", maxDamageSpecial);
+			ROOM_DATA("armorClass", armorClass); ROOM_DATA("resistance", resistance);
+			ROOM_DATA("reducePlayerStrength", reducePlayerStrength); ROOM_DATA("reducePlayerMagic", reducePlayerMagic);
+			ROOM_DATA("reducePlayerDexterity", reducePlayerDexterity); ROOM_DATA("reducePlayerVitality", reducePlayerVitality);
+			ROOM_DATA("reducePlayerMaxHP", reducePlayerMaxHP); ROOM_DATA("reducePlayerMaxMana", reducePlayerMaxMana);
+#undef ROOM_DATA
+			row.Key("frames"); WriteArray(out, type.anims, [&](const AnimStruct &anim) { out << static_cast<int>(anim.frames); });
+			row.Key("rates"); WriteArray(out, type.anims, [&](const AnimStruct &anim) { out << static_cast<int>(anim.rate); });
+		});
+		json.Key("shrineAvailable"); WriteArray(out, SinglePlayerShrineAvailabilityForTesting(), [&](bool available) { out << (available ? "true" : "false"); });
+	}
+
+private:
+	std::unique_ptr<NativeThemeRoomGuard> roomGuard;
+};
+
+TEST_F(ThemeRoomGenerationTest, FullObjectPoolRetainsSlotsAndFailedShrineCarry)
+{
+	PrepareRoom(1, 2, MAXOBJECTS, MaxMonsters, false);
+	numThemes() = 1; themes[0] = { THEME_LIBRARY, 1 };
+	SetRndSeed(2588); const auto before = CaptureThemeRoomGlobalsForTesting();
+	CreateThemeRooms();
+	EXPECT_EQ(ActiveObjectCount, MAXOBJECTS); EXPECT_EQ(ActiveMonsterCount, MaxMonsters);
+	EXPECT_EQ(CaptureThemeRoomGlobalsForTesting().variant, before.variant);
+	EXPECT_EQ(CaptureThemeRoomGlobalsForTesting().x, 0); EXPECT_EQ(CaptureThemeRoomGlobalsForTesting().y, 0);
+	for (int slot = 0; slot < MAXOBJECTS; ++slot) {
+		EXPECT_EQ(Objects[slot]._oVar1, 91); EXPECT_EQ(Objects[slot]._oVar2, -17);
+		EXPECT_EQ(Objects[slot]._oRndSeed, 1000U + slot);
+	}
+}
+
+TEST_F(ThemeRoomGenerationTest, NoSkeletonBarrelRetainsMinusOneWithoutSelectionDraw)
+{
+	LevelBestiary.init();
+	ASSERT_TRUE(LevelBestiary.addType(MT_GOLEM, PLACE_SPECIAL).has_value());
+	ASSERT_TRUE(LevelBestiary.addType(MT_NZOMBIE, PLACE_SCATTER).has_value());
+	uint32_t selectedSeed = 0, expectedState = 0;
+	int expectedVar2 = 0, expectedVar3 = 0;
+	bool found = false;
+	// The actual bundled barrel is not animated. Only seed/var2/var3 draw;
+	// AddSkeleton's empty candidate list consumes no random value.
+	ASSERT_EQ(static_cast<uint8_t>(AllObjects[OBJ_BARREL].flags) & 1U, 0U);
+	for (uint32_t seed = 0; seed < 4096 && !found; ++seed) {
+		SetRndSeed(seed); AdvanceRndSeed();
+		expectedVar2 = GenerateRnd(10); expectedVar3 = GenerateRnd(3);
+		if (expectedVar2 >= 8) { selectedSeed = seed; expectedState = GetLCGEngineState(); found = true; }
+	}
+	ASSERT_TRUE(found);
+	PrepareRoom(1); SetRndSeed(selectedSeed);
+	Object *barrel = AddObject(OBJ_BARREL, { 50, 50 });
+	ASSERT_NE(barrel, nullptr); EXPECT_EQ(barrel->_oVar2, expectedVar2); EXPECT_EQ(barrel->_oVar3, expectedVar3);
+	EXPECT_EQ(barrel->_oVar4, -1); EXPECT_EQ(ActiveMonsterCount, 4U); EXPECT_EQ(GetLCGEngineState(), expectedState);
+	RecordProperty("barrelSeed", std::to_string(selectedSeed));
+}
+
+TEST_F(ThemeRoomGenerationTest, BlockedSkeletonWithNoNeighborRetainsReservationWithoutDraw)
+{
+	PrepareRoom(1); SetRndSeed(2588);
+	Monster *skeleton = PreSpawnSkeleton(); ASSERT_NE(skeleton, nullptr);
+	const auto slot = skeleton->getId(); const auto count = ActiveMonsterCount;
+	const uint32_t randomState = GetLCGEngineState();
+	for (int y = 49; y <= 51; ++y) for (int x = 49; x <= 51; ++x) tileAt(x, y).setPlayer(1);
+	ActivateSkeleton(*skeleton, { 50, 50 });
+	EXPECT_EQ(skeleton->position.tile, (WorldTilePosition { 0, 0 }));
+	EXPECT_EQ(skeleton->position.future, (WorldTilePosition { 0, 0 }));
+	EXPECT_EQ(skeleton->mode, MonsterMode::Stand); EXPECT_EQ(ActiveMonsterCount, count);
+	EXPECT_EQ(ActiveMonsters[count - 1], slot); EXPECT_EQ(GetLCGEngineState(), randomState);
+	EXPECT_FALSE(skeleton->animInfo.isPetrified);
+}
+
+TEST_F(ThemeRoomGenerationTest, SignedSkeletonFallbackUsesNativeUnsignedSizeRemainder)
+{
+	static_assert(sizeof(size_t) == 8, "This signed corner is the frozen x64 oracle contract.");
+	PrepareRoom(1); SetRndSeed(2588);
+	Monster *skeleton = PreSpawnSkeleton(); ASSERT_NE(skeleton, nullptr);
+	for (int y = 49; y <= 51; ++y) for (int x = 49; x <= 51; ++x) tileAt(x, y).setPlayer(1);
+	// Native direction iteration N,NE,E: three choices, not a power of two.
+	for (int x = 49; x <= 51; ++x) tileAt(x, 49).setPlayer(0);
+	SetRndSeed(UINT32_C(1457187811)); ASSERT_EQ(GenerateRnd(15), -8);
+	const uint32_t expectedState = GetLCGEngineState();
+	ASSERT_EQ(static_cast<size_t>(-8) % 3U, 2U);
+	SetRndSeed(UINT32_C(1457187811)); ActivateSkeleton(*skeleton, { 50, 50 });
+	EXPECT_EQ(GetLCGEngineState(), expectedState);
+	EXPECT_EQ(skeleton->position.tile, (WorldTilePosition { 51, 49 }));
+	EXPECT_EQ(skeleton->direction, Direction::West); EXPECT_EQ(skeleton->mode, MonsterMode::SpecialStand);
+	EXPECT_EQ(tileAt(51, 49).monster(), static_cast<int>(skeleton->getId()) + 1);
+	EXPECT_FALSE(skeleton->animInfo.isPetrified);
+}
+
+TEST_F(ThemeRoomGenerationTest, BothMultiplayerOnlyShrineSelectionsRetryBeforeAnimationCoin)
+{
+	const auto availability = SinglePlayerShrineAvailabilityForTesting();
+	ASSERT_EQ(static_cast<uint8_t>(AllObjects[OBJ_SHRINER].flags) & 1U, 0U);
+	for (const int rejected : { 18, 25 }) {
+		ASSERT_FALSE(availability[rejected]);
+		uint32_t selectedSeed = 0, expectedState = 0, expectedObjectSeed = 0;
+		int expectedIndex = 0; bool expectedAlternateAnimation = false, found = false;
+		for (uint32_t seed = 0; seed < 65536 && !found; ++seed) {
+			SetRndSeed(seed); expectedObjectSeed = AdvanceRndSeed();
+			if (GenerateRnd(26) != rejected) continue;
+			do { expectedIndex = GenerateRnd(26); ASSERT_GE(expectedIndex, 0); } while (!availability[expectedIndex]);
+			expectedAlternateAnimation = !FlipCoin(); expectedState = GetLCGEngineState(); selectedSeed = seed; found = true;
+		}
+		ASSERT_TRUE(found); PrepareRoom(1); SetRndSeed(selectedSeed);
+		Object *shrine = AddObject(OBJ_SHRINER, { 50, 50 }); ASSERT_NE(shrine, nullptr);
+		EXPECT_EQ(shrine->_oRndSeed, expectedObjectSeed); EXPECT_EQ(shrine->_oVar1, expectedIndex);
+		EXPECT_EQ(GetLCGEngineState(), expectedState); EXPECT_TRUE(shrine->_oPreFlag);
+		EXPECT_EQ(shrine->_oAnimFrame, expectedAlternateAnimation ? 12U : AllObjects[OBJ_SHRINER].animDelay);
+		EXPECT_EQ(shrine->_oAnimLen, expectedAlternateAnimation ? 22U : AllObjects[OBJ_SHRINER].animLen);
+		RecordProperty("rejected" + std::to_string(rejected) + "Seed", std::to_string(selectedSeed));
+	}
+}
+
+TEST_F(ThemeRoomGenerationTest, CaptureCompleteSelectedThemePass)
+{
+	const char *directory = std::getenv("GODEVILUTION_THEME_ROOM_ORACLE_DIRECTORY");
+	if (directory == nullptr || !*directory) GTEST_SKIP() << "Select the separate private theme-room corpus explicitly.";
+	const auto root = std::filesystem::weakly_canonical(directory);
+	const auto repository = std::filesystem::weakly_canonical(std::filesystem::absolute(__FILE__).parent_path().parent_path());
+	ASSERT_TRUE(root.is_absolute()); ASSERT_TRUE(std::filesystem::is_directory(root)); ASSERT_TRUE(std::filesystem::is_empty(root));
+	ASSERT_FALSE(std::mismatch(repository.begin(), repository.end(), root.begin(), root.end()).first == repository.end());
+	std::ofstream stream(root / "native-theme-rooms.json", std::ios::binary | std::ios::trunc); ASSERT_TRUE(stream.good());
+	constexpr std::array<int, 14> types { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 11, 13, 14, 15 };
+	int cases = 0;
+	{
+		JsonObject document(stream); document.String("format", "godevilution-cathedral-theme-rooms"); document.Number("version", 1);
+		document.String("policy", "original-diablo-single-player-normal-complete-selected-cathedral-themes");
+		document.Number("playerMaximumLife", 6400); document.Number("playerMaximumMana", 3200);
+		document.Key("itemCatalog"); WriteCatalog(stream); document.Key("roomCatalog"); WriteRoomCatalog(stream);
+		document.Key("cases"); stream << '[';
+		for (int depth = 1; depth <= 4; ++depth) {
+			for (int lane = 0; lane < 22; ++lane) {
+				const int itemCount = lane == 17 ? MAXITEMS : 2;
+				const int objectCount = lane == 15 || lane == 16 ? MAXOBJECTS : 0;
+				const int monsterCount = lane == 18 || lane == 19 ? MaxMonsters : 4;
+				PrepareRoom(depth, itemCount, objectCount, monsterCount, lane != 16);
+				const uint32_t seed = lane == 17 ? UINT32_C(1457187811) : UINT32_C(2588) + depth * 17;
+				const std::string name = lane < 14 ? "type-" + std::to_string(types[lane]) : std::array<std::string, 8> {
+					"ordered", "object-full-library", "object-full-failed-fit", "item-full-signed-pit",
+					"monster-full-skeleton", "monster-full-goat", "loading-shrine", "empty" }[lane - 14];
+				numThemes() = lane == 21 ? 0 : lane == 14 ? 14 : 1;
+				if (lane == 14) for (int i = 0; i < 14; ++i) themes[i] = { static_cast<theme_id>(types[i]), 1 };
+				else if (lane != 21) themes[0] = { static_cast<theme_id>(lane < 14 ? types[lane] : lane == 15 || lane == 16 ? 5
+					: lane == 17 ? 2 : lane == 18 ? 3 : lane == 19 ? 11 : 1), 1 };
+				LoadingMapObjects = lane == 20;
+				SetRndSeed(seed);
+				if (cases++ != 0) stream << ',';
+				JsonObject row(stream); row.String("name", name); row.Number("depth", depth); row.Number("seed", seed);
+				row.Boolean("loadingMapObjects", LoadingMapObjects); row.Key("themes");
+				stream << '[';
+				for (int i = 0; i < numThemes(); ++i) { if (i) stream << ','; stream << '[' << static_cast<int>(themes[i].ttype) << ',' << static_cast<int>(themes[i].ttval) << ']'; }
+				stream << ']'; row.Key("player"); {
+					JsonObject player(stream); player.Number("id", 0); player.Number("level", depth); player.Boolean("active", true); player.Boolean("levelChanging", false);
+					player.Key("tile"); WriteRoomPoint(stream, MyPlayer->position.tile); player.Key("future"); WriteRoomPoint(stream, MyPlayer->position.future);
+				}
+				row.Key("input"); WriteRoomWorld(stream);
+				CreateThemeRooms();
+				row.Key("expected"); WriteRoomWorld(stream);
+				if (lane == 17) {
+					EXPECT_EQ(ActiveItemCount, MAXITEMS);
+					const Item &last = Items[ActiveItems[MAXITEMS - 1]];
+					EXPECT_FALSE(last._iAnimFlag); EXPECT_EQ(last.selectionRegion, SelectionRegion::Bottom);
+					EXPECT_EQ(last.animInfo.currentFrame, last.animInfo.numberOfFrames - 1);
+				}
+			}
+		}
+		stream << ']'; document.Number("caseCount", cases);
+	}
+	stream.flush(); ASSERT_TRUE(stream.good()); stream.close(); EXPECT_EQ(cases, 88);
+	EXPECT_LE(std::filesystem::file_size(root / "native-theme-rooms.json"), 128U * 1024U * 1024U);
 }
 
 } // namespace

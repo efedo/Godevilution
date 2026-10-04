@@ -45,7 +45,9 @@ geometry/reservations and triggers, then resets the independent population RNG
 before Golem/object creation. Native selected types, held cells and theme output
 are comparison evidence, not composed-generator inputs. These APIs require fresh
 storage and ordinary quest-disabled original Diablo; persistent native theme
-scratch is not exposed. The private oracle reader is test tooling, not a shipped
+variant carry is now exposed by the theme-selection result's `PlacementVariant`.
+These upstream APIs do not return the later room pass's full fit/pool history.
+The private oracle reader is test tooling, not a shipped
 content loader. A separate ordinary depths 1-4 encounter generator now runs
 `InitMonsters` after those managed prerequisites and initial objects. It
 preserves the complete 200-slot monster pool, active IDs, signed occupancy,
@@ -65,9 +67,19 @@ public animation scalars, not sprite handles or private visual distribution.
 Native out-of-bounds signed item candidates and unsafe cursor indices fail
 closed; no unproven retry behavior is substituted. Prior-slot fields are
 validated against native widths, and raw requirements/names retain signed-byte
-conversion and UTF-8/C-string semantics. Complete content compilation,
-`CreateThemeRooms`, physical lighting and populated profile activation/restore
-remain required.
+conversion and UTF-8/C-string semantics. Separate detached item selection and
+world creation supply the raw setup/unique/ground continuation required by a
+complete selected `CreateThemeRooms` pass in `Devilution.Diablo`. That detached
+pass preserves full object/monster/item pools, signed tile channels, corpses,
+target and public animation state, persistent fit scratch/flags and RNG, using
+only pre-call state and validated raw metadata. Its zero-offset static lighting
+retains native minimum-combine and loading-copy behavior in both light channels;
+it does not replace indexed/pixel-offset lighting, vision or rendering.
+This is detached theme-room proof, not composed full-level population.
+Extending the actual upstream composition through this final pass, complete
+external content compilation and populated profile activation/restore remain
+required. The separately accepted ordinary SP Normal scope does not certify
+wider modes, quests or campaigns.
 No generator accepts native expected final state as production input or
 introduces server MPQ access.
 

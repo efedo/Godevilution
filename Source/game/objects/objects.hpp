@@ -17,6 +17,7 @@
  */
 #pragma once
 
+#include <array>
 #include <cmath>
 #include <cstdint>
 #include <string>
@@ -206,6 +207,8 @@ void GetObjectStr(const Object &object); // Updates the text drawn in the info b
 void SyncNakrulRoom();
 #ifdef BUILD_TESTING
 void TestObjSetMicro(Point position, int pn);
+/** Actual original-Diablo single-player shrine admission metadata, without selection. */
+std::array<bool, 26> SinglePlayerShrineAvailabilityForTesting();
 #endif
 
 } // namespace devilution

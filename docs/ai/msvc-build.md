@@ -481,11 +481,43 @@ The initial setup seed is distinct from the final seed after unique retries.
 The fixture calls actual native functions in single-player Normal mode with
 send-message/spawn disabled; delta/pregen flags still affect item setup.
 
-Complete `CreateThemeRooms`, runtime-pack/profile activation, other game modes
-and Godot interaction/cold restore remain separate gates. Earlier oracles,
+Composed full-level `CreateThemeRooms`, runtime-pack/profile activation, other
+game modes and Godot interaction/cold restore remain separate gates. Earlier oracles,
 runtime defaults, saves and server MPQ independence are unchanged. Keep native
 metadata/captures outside the repository; the world-item wrapper restores its
 own opt-in environment variable exactly and never launches Godot.
+
+For complete detached ordinary Cathedral theme rooms and zero-offset static
+object lighting, run the separate zero-argument wrapper:
+
+```powershell
+./tools/test-theme-room-generation.ps1
+```
+
+It uses the same registered native target, checked MSVC environment and bounded,
+dialog-suppressed owned-process harness. Eight exact native fixtures and five
+explicit managed comparisons must pass without exclusions or runner errors;
+both private corpora must be byte-identical across two fresh captures. Separate
+room/static-light directories enforce one regular bounded artifact each
+(128 MiB/8 MiB), and the process environment is restored exactly.
+
+The room corpus contains 88 worlds: fourteen selected types, their ordered
+sequence, full object/item/monster pools, failed fitting, loading and empty
+passes at each depth 1-4. Compare all 127 object slots, 200 monster slots,
+128 item slots, complete allocator IDs/history, all eleven 112x112 tile channels,
+32 light records, theme scratch/flags and RNG. Actual raw object/item tables,
+loaded bestiary animation metadata and pre-call state are inputs; expected final
+state is never reused. The 40 separate lighting cases cover radii 0-15, corners
+and loading copy behavior. Native edge fixtures characterize no-skeleton barrel
+selection, blocked reservations, signed fallback and both multiplayer-only
+shrine retries. Unsafe reached native reads/writes are rejected by managed
+guards and are never invoked in the native fixture.
+
+This proof remains original Diablo, Cathedral, single-player Normal,
+quest-disabled and detached from real upstream level composition. Indexed
+light allocation, pixel-offset lighting, vision, wider modes/campaigns and
+populated Godot interaction/restore are not certified. No Godot or MPQ is opened;
+earlier item corpora, launcher defaults and user saves remain unchanged.
 
 The C# xUnit project is an executable Microsoft Testing Platform runner. Run
 it directly when `dotnet test` selects a machine-wide VSTest host whose

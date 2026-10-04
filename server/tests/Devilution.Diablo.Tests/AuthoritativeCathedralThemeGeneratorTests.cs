@@ -17,6 +17,7 @@ public sealed class AuthoritativeCathedralThemeGeneratorTests
         var result = AuthoritativeCathedralThemeGenerator.Generate(parameters);
 
         Assert.Equal([new AuthoritativeCathedralThemeEntry(AuthoritativeCathedralThemeGenerator.ThemeShrine, 0)], result.Themes);
+        Assert.Equal(1, result.PlacementVariant);
         Assert.Equal(25, result.HeldPopulatedCells.Count(held => held));
         Assert.All(RegionCells(20, 20, 5), point => Assert.True(result.HeldPopulatedCells[Index(point.X, point.Y)]));
         Assert.False(result.HeldPopulatedCells[Index(19, 19)]);
@@ -36,6 +37,7 @@ public sealed class AuthoritativeCathedralThemeGeneratorTests
         var result = AuthoritativeCathedralThemeGenerator.Generate(CreateParameters(map, seed: 4));
 
         Assert.Equal(AuthoritativeCathedralThemeGenerator.ThemeShrine, result.Themes.Single().ThemeType);
+        Assert.Equal(2, result.PlacementVariant);
     }
 
     [Fact]
@@ -47,6 +49,7 @@ public sealed class AuthoritativeCathedralThemeGeneratorTests
         var result = AuthoritativeCathedralThemeGenerator.Generate(parameters);
 
         Assert.Equal(AuthoritativeCathedralThemeGenerator.ThemeSkeletonRoom, result.Themes.Single().ThemeType);
+        Assert.Equal(0, result.PlacementVariant); // First selected bestiary slot, not a theme ID.
         var expectedRandom = new DeterministicLegacyRandom(988045466);
         Assert.Equal(2, expectedRandom.GenerateRnd(4));
         Assert.Equal(-3, expectedRandom.GenerateRnd(5));

@@ -2,6 +2,19 @@
 
 Notable changes to this fork are recorded below.
 
+- 2026-10-04: Port complete detached ordinary Cathedral theme rooms and native
+  zero-offset static lighting. Preserve full object/monster/item pools, signed
+  channels, corpses, target/animation state, fit carry/flags and RNG. Add independent
+  88-world/40-light proof, eight native fixtures, five explicit comparisons and
+  byte-identical repeated captures. Resolve review/comparison findings and reject
+  unsupported policies, narrow-field overflow and reached unsafe native reads.
+  All 104 focused, 51 launcher and five documentation checks pass; full module/
+  server suites pass 3,059/1,591 with 140/four exclusions. Earlier item
+  corpora and native regressions pass unchanged. Update architecture, plan,
+  status and build guidance in one cohesive batch. Real upstream composition,
+  complete packs and populated Godot interaction/restore remain open. Preserve
+  launch defaults, user saves and server MPQ independence; no Godot launch.
+
 - 2026-10-04: Port detached Cathedral item selection, complete pool allocation
   and native placement through setup/unique/ground continuation. Preserve all
   slots/IDs, signed occupancy, unique history, full-pool RNG, failed-search

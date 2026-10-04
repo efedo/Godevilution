@@ -7,6 +7,100 @@ namespace Devilution.Server.Tests;
 public sealed class LocalLauncherBehaviorTests
 {
     [Fact]
+    public void ThemeRoomOracleRejectsIncompleteSkippedAndReplacedReports()
+    {
+        if (!OperatingSystem.IsWindows()) return;
+        var script = BuildPowerShellHarness(["Assert-ThemeRoomNativeReport", "Assert-ThemeRoomManagedReport"], """
+            $work = Join-Path ([IO.Path]::GetTempPath()) ('Godevilution-ThemeReportTest-' + [guid]::NewGuid().ToString('N'))
+            New-Item -ItemType Directory -Path $work | Out-Null
+            $nativePath = Join-Path $work 'native.json'; $managedPath = Join-Path $work 'managed.xml'
+            function Expect-Rejected([scriptblock]$action) {
+                $rejected = $false; try { & $action } catch { $rejected = $true }
+                if (-not $rejected) { throw 'Incomplete/replaced theme evidence was accepted.' }
+            }
+            try {
+                $nativeNames = @(
+                    'ThemeStaticLightingTest.RadiusFivePreservesNativeMinimumAndLoadingCopy',
+                    'ThemeStaticLightingTest.CaptureZeroOffsetNativeStaticLighting',
+                    'ThemeRoomGenerationTest.FullObjectPoolRetainsSlotsAndFailedShrineCarry',
+                    'ThemeRoomGenerationTest.NoSkeletonBarrelRetainsMinusOneWithoutSelectionDraw',
+                    'ThemeRoomGenerationTest.BlockedSkeletonWithNoNeighborRetainsReservationWithoutDraw',
+                    'ThemeRoomGenerationTest.SignedSkeletonFallbackUsesNativeUnsignedSizeRemainder',
+                    'ThemeRoomGenerationTest.BothMultiplayerOnlyShrineSelectionsRetryBeforeAnimationCoin',
+                    'ThemeRoomGenerationTest.CaptureCompleteSelectedThemePass')
+                $nativeCases = @($nativeNames | ForEach-Object {
+                    $parts = $_.Split('.'); @{ classname=$parts[0]; name=$parts[1]; status='RUN'; result='COMPLETED' }
+                })
+                $native = @{ tests=8; failures=0; disabled=0; errors=0; testsuites=@(@{ testsuite=$nativeCases }) }
+                $nativeJson = $native | ConvertTo-Json -Depth 6
+                [IO.File]::WriteAllText($nativePath,$nativeJson); Assert-ThemeRoomNativeReport $nativePath
+                foreach ($mutate in @(
+                    { param($r) $r.tests = 7 }, { param($r) $r.failures = 1 },
+                    { param($r) $r.testsuites[0].testsuite[0].status='NOTRUN' },
+                    { param($r) $r.testsuites[0].testsuite[0].result='SKIPPED' },
+                    { param($r) $r.testsuites[0].testsuite[0].name='replacement' },
+                    { param($r) $r.testsuites[0].testsuite[0].classname='replacement' })) {
+                    $bad = $nativeJson | ConvertFrom-Json; & $mutate $bad
+                    [IO.File]::WriteAllText($nativePath,($bad | ConvertTo-Json -Depth 6))
+                    Expect-Rejected { Assert-ThemeRoomNativeReport $nativePath }
+                }
+                $type = 'Devilution.Diablo.Tests.AuthoritativeCathedralThemeRoomNativeOracleTests'
+                $light = 'Devilution.Diablo.Tests.AuthoritativeCathedralThemeStaticLightNativeOracleTests'
+                $nodes = @(1..4 | ForEach-Object {
+                    '<test type="' + $type + '" method="CompleteOrderedThemeWorldMatchesNative" name="' +
+                    $type + '.CompleteOrderedThemeWorldMatchesNative(depth: ' + $_ + ')" result="Pass" />'
+                }) + @('<test type="' + $light + '" method="CompleteLightChannelsMatchNative" name="' +
+                    $light + '.CompleteLightChannelsMatchNative" result="Pass" />')
+                $validXml = '<assemblies><assembly total="5" passed="5" failed="0" skipped="0" errors="0" not-run="0"><collection>' +
+                    ($nodes -join '') + '</collection></assembly></assemblies>'
+                [IO.File]::WriteAllText($managedPath,$validXml); Assert-ThemeRoomManagedReport $managedPath
+                foreach ($badXml in @(
+                    $validXml.Replace('result="Pass"','result="Skip"'),
+                    $validXml.Replace('depth: 4','depth: 3'),
+                    $validXml.Replace('method="CompleteOrderedThemeWorldMatchesNative"','method="replacement"'),
+                    $validXml.Replace('failed="0"','failed="1"'),
+                    $validXml.Replace('errors="0"','errors="1"'),
+                    $validXml.Replace(' errors="0"',''),
+                    $validXml.Replace('not-run="0"','not-run="1"'),
+                    $validXml.Replace('</collection>','</collection><errors><error type="fatal" /></errors>'),
+                    $validXml.Replace($nodes[4],''))) {
+                    [IO.File]::WriteAllText($managedPath,$badXml)
+                    Expect-Rejected { Assert-ThemeRoomManagedReport $managedPath }
+                }
+                Write-Output 'PASS'
+            } finally {
+                $resolved = [IO.Path]::GetFullPath($work)
+                if ([IO.Path]::GetDirectoryName($resolved) -eq [IO.Path]::GetTempPath().TrimEnd('\') -and
+                    [IO.Path]::GetFileName($resolved) -match '^Godevilution-ThemeReportTest-[0-9a-f]{32}$') {
+                    Remove-Item -LiteralPath $resolved -Recurse -Force
+                }
+            }
+            """, "tools/test-theme-room-generation.ps1");
+        Assert.Contains("PASS", RunPowerShell(script), StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void ThemeRoomOracleRepeatabilityRequiresBothUnchangedArtifacts()
+    {
+        if (!OperatingSystem.IsWindows()) return;
+        var script = BuildPowerShellHarness(["Assert-ThemeRoomRepeatability"], """
+            $first = @(@{ Name='native-theme-rooms.json'; Length=10; Sha256='A' },
+                @{ Name='native-theme-static-light.json'; Length=20; Sha256='B' })
+            Assert-ThemeRoomRepeatability $first $first
+            foreach ($second in @(
+                @($first[0]),
+                @(@{ Name='replacement'; Length=10; Sha256='A' },$first[1]),
+                @(@{ Name='native-theme-rooms.json'; Length=11; Sha256='A' },$first[1]),
+                @($first[0],@{ Name='native-theme-static-light.json'; Length=20; Sha256='changed' }))) {
+                $rejected=$false; try { Assert-ThemeRoomRepeatability $first $second } catch { $rejected=$true }
+                if (-not $rejected) { throw 'Incomplete or changed native theme capture was accepted.' }
+            }
+            Write-Output 'PASS'
+            """, "tools/test-theme-room-generation.ps1");
+        Assert.Contains("PASS", RunPowerShell(script), StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void GodotAutomationPolicyBoundsVisibleClientsWithoutChangingInteractiveDefaults()
     {
         if (!OperatingSystem.IsWindows())

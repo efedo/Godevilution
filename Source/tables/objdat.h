@@ -255,7 +255,7 @@ constexpr uint16_t DUN_OBJECT_ID_LAST = 146;
 
 extern const _object_id ObjTypeConv[];
 extern DVL_API_FOR_TEST std::vector<ObjectData> AllObjects;
-extern std::vector<std::string> ObjMasterLoadList;
+extern DVL_API_FOR_TEST std::vector<std::string> ObjMasterLoadList;
 
 void LoadObjectData();
 

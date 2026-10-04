@@ -818,6 +818,27 @@ void UpdateL4Trans()
 
 } // namespace
 
+#ifdef BUILD_TESTING
+ThemeRoomGlobalsForTesting CaptureThemeRoomGlobalsForTesting()
+{
+	return { themex, themey, themeVar1, cauldronFlag, bFountainFlag,
+		mFountainFlag, pFountainFlag, tFountainFlag, treasureFlag };
+}
+
+void RestoreThemeRoomGlobalsForTesting(const ThemeRoomGlobalsForTesting &state)
+{
+	themex = state.x;
+	themey = state.y;
+	themeVar1 = state.variant;
+	cauldronFlag = state.cauldron;
+	bFountainFlag = state.bloodFountain;
+	mFountainFlag = state.murkyFountain;
+	pFountainFlag = state.purifyingFountain;
+	tFountainFlag = state.tearFountain;
+	treasureFlag = state.treasure;
+}
+#endif
+
 void InitThemes()
 {
 	zharlib() = -1;
