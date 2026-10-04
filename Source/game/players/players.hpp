@@ -546,7 +546,7 @@ extern Player *InspectPlayer;
 
 // Do we currently inspect a remote player (/inspect was used)? In this case the (remote) players items and stats can't be modified.
 inline bool IsInspectingPlayer() { return MyPlayer != InspectPlayer; }
-extern bool MyPlayerIsDead;
+extern DVL_API_FOR_TEST bool MyPlayerIsDead;
 
 Player *PlayerAtPosition(Point position, bool ignoreMovingPlayers = false);
 

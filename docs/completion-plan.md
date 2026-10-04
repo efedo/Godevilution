@@ -520,8 +520,25 @@ this evidence. A sample art pack does not satisfy M4's full presentation gate.
    compiler now externalize geometry, effective SOL, raw prerequisites, items,
    uniques and policy. Preserve strict publication/reload and native comparison
    gates; metadata compilation alone is not playable profile acceptance.
-   Next activate these validated inputs in a separately
-   identified opt-in populated server profile. Never use expected final state
+   An additive fresh-cold generator now derives pre-phase channels from the
+   compiled metadata and explicit dungeon/story/hero inputs. It uses native
+   clear-before-geometry order, the actual transparency counter, generated
+   special/trigger/stair reservations and the player's pre-population light,
+   public idle-animation scalars and pending vision. Preserve the independently
+   supplied pre-entry future and changing flag: native synchronization/join
+   happens after population. This is not retained-state campaign loading or a
+   ready-to-tick level. Complete the later missile/corpse, SavePreLighting,
+   entry/join and physical light/vision handoff before runtime acceptance.
+   Next install these validated inputs in a separately identified opt-in
+   populated server profile, with a lossless game-owned checkpoint and explicit
+   native-slot/type/unique-to-stable mappings. Add required live monster combat,
+   experience/drop/selection metadata; retain full pools/order/tails and signed
+   footprint grids. Pickup/drop, object/door and combat mutations must update
+   raw state and projections atomically; a pristine copy that becomes stale is
+   not persistence. Bind generated doors directly without a second discovery;
+   preserve valid native zero seeds/item values instead of authored fallbacks.
+   Fence the new capability/checkpoint with metadata and generation identities,
+   leaving existing cohort/generated-world/save schemas unchanged. Never use expected final state
    as production input. Preserve the narrower earlier oracles and require
    ordinary Godot interaction plus cold restore before claiming playable native
    population.

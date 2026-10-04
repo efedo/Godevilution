@@ -58,7 +58,9 @@ public static class AuthoritativeCathedralDepthGeometryMaterializer
 			Array.AsReadOnly(result.NativeTransparency.ToArray()),
 			result.StairsUp,
 			result.StairsDown,
-			result.EntryPosition);
+			result.EntryPosition) {
+			NextTransparencyValue = result.NextTransparencyValue,
+		};
 		var materialized = AuthoritativeCathedralLevel1GeometryMaterializer.Materialize(
 			levelId,
 			legacyResult,
@@ -77,7 +79,9 @@ public static class AuthoritativeCathedralDepthGeometryMaterializer
 			legacyResult.NativeTransparency,
 			legacyResult.StairsUp,
 			legacyResult.StairsDown,
-			legacyResult.EntryPosition);
+			legacyResult.EntryPosition) {
+			NextTransparencyValue = result.NextTransparencyValue,
+		};
 		return new AuthoritativeCathedralDepthGeometry(ownedResult, materialized.Level);
 	}
 }

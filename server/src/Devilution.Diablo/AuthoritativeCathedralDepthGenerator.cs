@@ -19,6 +19,9 @@ public sealed record AuthoritativeCathedralDepthResult(
 	AuthoritativeCathedralPoint StairsDown,
 	AuthoritativeCathedralPoint EntryPosition)
 {
+	/** Exact native TransVal_ after dungeon transparency flooding. */
+	public int NextTransparencyValue { get; init; } = 1;
+
 	public const int MegaWidth = 40;
 	public const int MegaHeight = 40;
 	public const int TransparencyWidth = 80;

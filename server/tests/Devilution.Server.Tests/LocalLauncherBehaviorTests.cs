@@ -283,6 +283,86 @@ public sealed class LocalLauncherBehaviorTests
     }
 
     [Fact]
+    public void FreshPopulationOracleGuardsRequireExactNativeMatrixAndRepeatedCapture()
+    {
+        if (!OperatingSystem.IsWindows()) return;
+        var script = BuildPowerShellHarness(
+            ["Assert-CathedralFreshNativeReport", "Assert-CathedralFreshManagedReport", "Assert-CathedralFreshRepeatability"],
+            """
+            $work = Join-Path ([IO.Path]::GetTempPath()) ('Godevilution-FreshGuard-' + [guid]::NewGuid().ToString('N'))
+            New-Item -ItemType Directory -Path $work | Out-Null
+            try {
+                function Require-Rejection([scriptblock]$Action) {
+                    $rejected = $false
+                    try { & $Action } catch { $rejected = $true }
+                    if (-not $rejected) { throw 'Unsafe fresh proof was accepted.' }
+                }
+                $nativePath = Join-Path $work 'native.json'
+                $native = @{ tests = 1; failures = 0; disabled = 0; errors = 0;
+                    testsuites = @(@{ testsuite = @(@{ classname = 'ThemeRoomGenerationTest';
+                        name = 'CaptureFreshOrdinaryPopulation'; status = 'RUN'; result = 'COMPLETED' }) }) }
+                [IO.File]::WriteAllText($nativePath, ($native | ConvertTo-Json -Depth 8))
+                Assert-CathedralFreshNativeReport $nativePath
+                $native.testsuites[0].testsuite[0].name = 'CaptureComposedOrdinaryPopulation'
+                [IO.File]::WriteAllText($nativePath, ($native | ConvertTo-Json -Depth 8))
+                Require-Rejection { Assert-CathedralFreshNativeReport $nativePath }
+                $native.testsuites[0].testsuite[0].name = 'CaptureFreshOrdinaryPopulation'
+                $native.testsuites[0].testsuite[0].result = 'SKIPPED'
+                [IO.File]::WriteAllText($nativePath, ($native | ConvertTo-Json -Depth 8))
+                Require-Rejection { Assert-CathedralFreshNativeReport $nativePath }
+                $managedPath = Join-Path $work 'managed.xml'
+                $type = 'Devilution.Diablo.Tests.AuthoritativeCathedralFreshLevelNativeOracleTests'
+                $tests = @(foreach ($depth in 1..4) { foreach ($seed in @(2588, 743271966)) { foreach ($entry in @('main', 'previous')) {
+                    $name = $type + '.FreshLevelMatchesNative(depth: ' + $depth + ', seed: ' + $seed + ', entry: \"' + $entry + '\")'
+                    '<test name="' + [Security.SecurityElement]::Escape($name) + '" type="' + $type + '" method="FreshLevelMatchesNative" result="Pass" />'
+                } } })
+                $xml = '<assemblies><assembly total="16" passed="16" failed="0" skipped="0" errors="0" not-run="0"><collection>' + ($tests -join '') + '</collection></assembly></assemblies>'
+                [IO.File]::WriteAllText($managedPath, $xml)
+                Assert-CathedralFreshManagedReport $managedPath
+                [IO.File]::WriteAllText($managedPath, $xml.Replace('seed: 2588', 'seed: 7'))
+                Require-Rejection { Assert-CathedralFreshManagedReport $managedPath }
+                [IO.File]::WriteAllText($managedPath, $xml.Replace('result="Pass"', 'result="Skip"'))
+                Require-Rejection { Assert-CathedralFreshManagedReport $managedPath }
+                [IO.File]::WriteAllText($managedPath, $xml.Replace('not-run="0"', 'not-run="1"'))
+                Require-Rejection { Assert-CathedralFreshManagedReport $managedPath }
+                $factoryType = 'Devilution.Diablo.Tests.AuthoritativeCathedralFreshLevelGeneratorTests'
+                $factoryTests = @(foreach ($method in @('GeneratedDepthCarriesNativeNextTransparencyValue',
+                    'CreateRequestRetainsIndependentDungeonAndStorySeeds', 'InvalidHeroBoundsAreRejectedBeforeFreshGeneration',
+                    'HeroEntryContextIsExplicitAndBoundedWithoutOriginalAssets', 'MaterializersPreserveCounterWithoutAliasingCallerLayers')) {
+                    '<test name="' + $factoryType + '.' + $method + '" type="' + $factoryType + '" method="' + $method + '" result="Pass" />'
+                })
+                $generation = 'FreshGenerationDerivesGeometryTriggersPoolsAndPlayerLight'
+                foreach ($binding in @(@(1, 2588, 'main'), @(2, 743271966, 'previous'), @(3, 2147483648, 'main'), @(4, 0, 'previous'))) {
+                    $name = $factoryType + '.' + $generation + '(depth: ' + $binding[0] + ', seed: ' + $binding[1] + ', entry: \"' + $binding[2] + '\")'
+                    $factoryTests += '<test name="' + [Security.SecurityElement]::Escape($name) + '" type="' + $factoryType + '" method="' + $generation + '" result="Pass" />'
+                }
+                $factoryPrefix = '<assemblies><assembly total="9" passed="9" failed="0" skipped="0" errors="0" not-run="0"><collection>'
+                $factorySuffix = '</collection></assembly></assemblies>'
+                $factoryXml = $factoryPrefix + ($factoryTests -join '') + $factorySuffix
+                [IO.File]::WriteAllText($managedPath, $factoryXml)
+                Assert-CathedralFreshManagedReport $managedPath -Factory
+                [IO.File]::WriteAllText($managedPath, $factoryXml.Replace('seed: 2147483648', 'seed: 80000000'))
+                Require-Rejection { Assert-CathedralFreshManagedReport $managedPath -Factory }
+                [IO.File]::WriteAllText($managedPath, $factoryPrefix.Replace('total="9" passed="9"', 'total="8" passed="8"') + ($factoryTests[0..7] -join '') + $factorySuffix)
+                Require-Rejection { Assert-CathedralFreshManagedReport $managedPath -Factory }
+                $artifact = [pscustomobject]@{ Name = 'native-fresh-population.json'; Length = 123; Sha256 = ('A' * 64) }
+                Assert-CathedralFreshRepeatability $artifact $artifact
+                Require-Rejection { Assert-CathedralFreshRepeatability $artifact ([pscustomobject]@{ Name = $artifact.Name; Length = 123; Sha256 = ('B' * 64) }) }
+                Require-Rejection { Assert-CathedralFreshRepeatability $artifact ([pscustomobject]@{ Name = $artifact.Name; Length = 0; Sha256 = $artifact.Sha256 }) }
+                Require-Rejection { Assert-CathedralFreshRepeatability $artifact ([pscustomobject]@{ Name = 'native-full-population.json'; Length = 123; Sha256 = $artifact.Sha256 }) }
+                Write-Output 'PASS'
+            } finally {
+                $resolved = [IO.Path]::GetFullPath($work)
+                if ((Split-Path $resolved -Parent) -eq [IO.Path]::GetFullPath([IO.Path]::GetTempPath()).TrimEnd('\') -and
+                    (Split-Path $resolved -Leaf) -match '^Godevilution-FreshGuard-[0-9a-f]{32}$') {
+                    Remove-Item -LiteralPath $resolved -Recurse -Force
+                }
+            }
+            """, "tools/test-cathedral-fresh-population.ps1");
+        Assert.Contains("PASS", RunPowerShell(script), StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void GodotAutomationPolicyBoundsVisibleClientsWithoutChangingInteractiveDefaults()
     {
         if (!OperatingSystem.IsWindows())

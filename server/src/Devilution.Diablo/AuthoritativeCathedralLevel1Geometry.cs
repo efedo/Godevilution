@@ -187,7 +187,9 @@ public static class AuthoritativeCathedralLevel1GeometryMaterializer
             Array.AsReadOnly(result.NativeTransparency.ToArray()),
             result.StairsUp,
             result.StairsDown,
-            result.EntryPosition);
+            result.EntryPosition) {
+            NextTransparencyValue = result.NextTransparencyValue,
+        };
 
     private static void ValidateResult(AuthoritativeCathedralLevel1Result result)
     {

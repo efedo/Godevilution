@@ -102,9 +102,30 @@ output and refuses extra files, overlapping paths and reparse ancestry. It
 neither discovers installations nor stores seeds, selected populations or
 expected worlds. This metadata schema is distinct from the active gameplay-pack
 schema and does not silently activate a runtime profile.
+The additive `AuthoritativeCathedralFreshLevelGenerator` now generates its own
+pre-phase state from that metadata, explicit dungeon/story seeds and a living
+local hero's Q6 maxima, resolved idle-frame count, light radius, pre-entry future
+position and level-changing flag. It clears monsters from the dungeon seed before
+geometry, carries the actual transparency counter through all materializers,
+derives special pieces, row-major triggers and stair reservations, and prepares
+the native player light, five public idle-animation scalars and pending vision.
+The bestiary/theme and population streams retain their independent reseeds.
+This boundary deliberately owns cold-zero storage, not retained level state.
+It ends at `CreateThemeRooms`: missile/corpse initialization, prelighting, entry
+occupancy, join completion and physical light/vision processing are not run early.
+The public controlled-compositor constructor and earlier generation/save
+identities are preserved; player-light admission belongs only to the new factory.
 Campaign/application-order lifecycle and populated profile activation/restore
 remain required. The accepted ordinary
 SP Normal scope does not certify retained pools, wider modes, quests or campaigns.
+Before activation, retain a game-owned raw level checkpoint that live commands
+actually update. Preserve all pool slots/order/tails, signed footprint grids,
+native scalars, light/vision state, unique history, RNG and metadata identities.
+Add explicit native-to-stable runtime mappings and missing live monster metadata;
+do not reinitialize generated actors/items or replace valid native zero values
+with authored defaults. Generated doors bind their raw slots/cache state without
+rediscovery. Restore detached state under a separate populated capability/schema
+before admission, preserving existing cohort and generated-world contracts.
 No generator accepts native expected final state as production input or
 introduces server MPQ access.
 

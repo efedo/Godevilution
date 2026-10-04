@@ -150,6 +150,50 @@ public sealed class AuthoritativeCathedralFullPopulationGeneratorTests
         });
     }
 
+    [Fact]
+    public void PublicControlledConstructorStillRejectsActivePlayerLights()
+    {
+        var records = Enumerable.Range(0, 32).Select(index =>
+            new AuthoritativeCathedralEncounterLightState(index, new(0, 0), new(0, 0), 0, 0, 0, 0, false, false)).ToArray();
+        records[0] = new(0, new(40, 40), new(40, 40), 0, 0, 8, 8, false, true);
+        Assert.Throws<InvalidDataException>(() => CreateRequest(lightAllocator:
+            new(Enumerable.Range(0, 32).ToArray(), 1, records, updateLighting: true)));
+    }
+
+    [Fact]
+    public void FreshInternalLightAdmissionRejectsMissingChangedOrBorrowedRecords()
+    {
+        var source = CreateRequest();
+        var records = Enumerable.Range(0, 32).Select(index =>
+            new AuthoritativeCathedralEncounterLightState(index, new(0, 0), new(0, 0), 0, 0, 0, 0, false, false)).ToArray();
+        records[0] = new(0, new(40, 40), new(40, 40), 0, 0, 8, 8, false, true);
+        AuthoritativeCathedralFullPopulationRequest Admit(AuthoritativeCathedralEncounterLightAllocator allocator)
+            => new(source.InitialPopulation, source.MonsterClearRandomState, source.InitialMonsterTileRefs,
+                source.InitialPlayerRefs, source.InitialTileFlags, source.InitialCorpses, source.InitialLight,
+                source.InitialPreLight, allocator, source.TriggerPositions, source.OrderedUniqueDefinitions,
+                source.MonsterDensityDivisor, source.ShrineAvailable, source.ItemCatalog, source.ItemPolicy,
+                new(MaximumLifeBase: 6400, MaximumManaBase: 3200), source.InitialItemSlots,
+                source.InitialActiveItemIds, source.InitialActiveItemCount, source.InitialUniqueItemFlags,
+                source.InitialItemTiles, source.PotionDefinitions, source.MaximumPlacementAttempts,
+                source.MaximumItemPlacementAttempts, source.InitialVisibleTransparencyRegions, playerInitialized: true);
+        var valid = new AuthoritativeCathedralEncounterLightAllocator(Enumerable.Range(0, 32).ToArray(), 1, records, updateLighting: true);
+        Assert.Equal(1, Admit(valid).LightAllocator.ActiveLightCount);
+        Assert.Throws<InvalidDataException>(() => Admit(new(Enumerable.Range(0, 32).ToArray(), 0, records, updateLighting: true)));
+        Assert.Throws<InvalidDataException>(() => Admit(new(Enumerable.Range(0, 32).ToArray(), 2, records, updateLighting: true)));
+        Assert.Throws<InvalidDataException>(() => Admit(new(Enumerable.Range(0, 32).ToArray(), 1, records)));
+        Assert.Throws<InvalidDataException>(() => Admit(new(Enumerable.Range(0, 32).ToArray(), 1, records, true, true)));
+        foreach (var changed in new[] {
+            records[0] with { Tile = new(39, 40) }, records[0] with { OldRadius = 7 },
+            records[0] with { HasChanged = false }, records[0] with { IsInvalid = true },
+            records[0] with { OffsetX = 1 }, records[0] with { Radius = 16, OldRadius = 16 },
+        }) {
+            var corrupt = records.ToArray(); corrupt[0] = changed;
+            Assert.Throws<InvalidDataException>(() => Admit(new(Enumerable.Range(0, 32).ToArray(), 1, corrupt, updateLighting: true)));
+        }
+        records[31] = records[31] with { Radius = 1 };
+        Assert.Throws<InvalidDataException>(() => Admit(new(Enumerable.Range(0, 32).ToArray(), 1, records, updateLighting: true)));
+    }
+
     private static AuthoritativeCathedralFullPopulationRequest CreateRequest(
         AuthoritativeCathedralThemeItemPolicy? policy = null,
         AuthoritativeCathedralInitialPopulationParameters? initialPopulation = null,

@@ -41,6 +41,46 @@ public sealed class AuthoritativeCathedralFullPopulationRequest
         int maximumPlacementAttempts = 1_000_000,
         int maximumItemPlacementAttempts = 1_000_000,
         IReadOnlyList<bool>? initialVisibleTransparencyRegions = null)
+        : this(initialPopulation, monsterClearRandomState, initialMonsterTileRefs,
+            initialPlayerRefs, initialTileFlags, initialCorpses, initialLight,
+            initialPreLight, lightAllocator, triggerPositions, orderedUniqueDefinitions,
+            monsterDensityDivisor, shrineAvailable, itemCatalog, itemPolicy, itemPlayer,
+            initialItemSlots, initialActiveItemIds, initialActiveItemCount,
+            initialUniqueItemFlags, initialItemTiles, potionDefinitions,
+            maximumPlacementAttempts, maximumItemPlacementAttempts,
+            initialVisibleTransparencyRegions, playerInitialized: false)
+    {
+    }
+
+    // Only the fresh-level factory admits the native InitPlayer-owned light.
+    // Keep the public controlled-seam constructor and its zero-light contract.
+    internal AuthoritativeCathedralFullPopulationRequest(
+        AuthoritativeCathedralInitialPopulationParameters initialPopulation,
+        uint monsterClearRandomState,
+        IReadOnlyList<int> initialMonsterTileRefs,
+        IReadOnlyList<int> initialPlayerRefs,
+        IReadOnlyList<byte> initialTileFlags,
+        IReadOnlyList<byte> initialCorpses,
+        IReadOnlyList<byte> initialLight,
+        IReadOnlyList<byte> initialPreLight,
+        AuthoritativeCathedralEncounterLightAllocator lightAllocator,
+        IReadOnlyList<AuthoritativeCathedralPopulationPoint> triggerPositions,
+        IReadOnlyList<AuthoritativeCathedralUniqueDefinition> orderedUniqueDefinitions,
+        int monsterDensityDivisor,
+        IReadOnlyList<bool> shrineAvailable,
+        AuthoritativeCathedralThemeItemCatalog itemCatalog,
+        AuthoritativeCathedralThemeItemPolicy itemPolicy,
+        AuthoritativeCathedralThemeItemPlayerContext? itemPlayer,
+        IReadOnlyList<AuthoritativeCathedralInitialItemState> initialItemSlots,
+        IReadOnlyList<int> initialActiveItemIds,
+        int initialActiveItemCount,
+        IReadOnlySet<int> initialUniqueItemFlags,
+        IReadOnlyList<AuthoritativeCathedralInitialItemTile> initialItemTiles,
+        IReadOnlyList<AuthoritativeCathedralInitialItemDefinition> potionDefinitions,
+        int maximumPlacementAttempts,
+        int maximumItemPlacementAttempts,
+        IReadOnlyList<bool>? initialVisibleTransparencyRegions,
+        bool playerInitialized)
     {
         ArgumentNullException.ThrowIfNull(initialPopulation);
         ArgumentNullException.ThrowIfNull(initialMonsterTileRefs);
@@ -99,7 +139,9 @@ public sealed class AuthoritativeCathedralFullPopulationRequest
             if (((initialTileFlags[index] & TilePopulated) != 0) != preThemeGeometry.Populated[index])
                 throw new InvalidDataException("Pre-theme TileFlags must match the supplied raw populated channel.");
         }
-        if (lightAllocator.ActiveLightCount != 0)
+        if (playerInitialized)
+            ValidatePlayerInitializedLight(initialPopulation.ObjectTemplate.Player, lightAllocator, itemPlayer);
+        else if (lightAllocator.ActiveLightCount != 0)
             throw new InvalidDataException("The full ordinary population requires a fresh inactive light allocator.");
         if (initialItemSlots.Count != ItemCapacity
             || initialActiveItemIds.Count != ActiveItemCapacity
@@ -172,6 +214,28 @@ public sealed class AuthoritativeCathedralFullPopulationRequest
     public int MaximumPlacementAttempts { get; }
     public int MaximumItemPlacementAttempts { get; }
     public IReadOnlyList<bool> InitialVisibleTransparencyRegions { get; }
+
+    private static void ValidatePlayerInitializedLight(
+        AuthoritativeCathedralPopulationPlayer player,
+        AuthoritativeCathedralEncounterLightAllocator allocator,
+        AuthoritativeCathedralThemeItemPlayerContext? itemPlayer)
+    {
+        if (!player.Active || itemPlayer is null
+            || !itemPlayer.PlayerPresent || !itemPlayer.LevelLoading
+            || itemPlayer.MaximumLifeBase <= 0 || itemPlayer.MaximumManaBase < 0
+            || allocator.ActiveLightCount != 1 || !allocator.UpdateLighting || allocator.DisableLighting
+            || !allocator.ActiveLightSlots.SequenceEqual(Enumerable.Range(0, 32)))
+            throw new InvalidDataException("Fresh population requires the initialized living local player's light.");
+        var light = allocator.LightRecords[0];
+        if (light.Tile != player.Tile || light.OldTile != player.Tile
+            || light.OffsetX != 0 || light.OffsetY != 0 || light.Radius is < 2 or > 15
+            || light.OldRadius != light.Radius || light.IsInvalid || !light.HasChanged)
+            throw new InvalidDataException("Fresh player light must retain native AddLight/ChangeLightXY state.");
+        for (var index = 1; index < allocator.LightRecords.Count; index++)
+            if (allocator.LightRecords[index] != new AuthoritativeCathedralEncounterLightState(
+                    index, new(0, 0), new(0, 0), 0, 0, 0, 0, false, false))
+                throw new InvalidDataException("Fresh-cold population cannot borrow retained inactive lights.");
+    }
 
     private static void RequireCount<T>(IReadOnlyList<T> values, int expected, string name)
     {

@@ -17,12 +17,32 @@ public sealed class ProjectDocumentationConsistencyTests
         Assert.Contains("does not silently activate a runtime profile", architecture, StringComparison.Ordinal);
         var plan = Read(root, "docs", "completion-plan.md");
         Assert.Contains("metadata compilation alone is not playable profile acceptance", plan, StringComparison.Ordinal);
-        Assert.Contains("Next activate these validated inputs", plan, StringComparison.Ordinal);
+        Assert.Contains("Next install these validated inputs", plan, StringComparison.Ordinal);
         var guidance = Read(root, "docs", "ai", "msvc-build.md");
         Assert.Contains("test-cathedral-population-metadata.ps1", guidance, StringComparison.Ordinal);
         Assert.Contains("-FullPopulationEvidenceDirectory", guidance, StringComparison.Ordinal);
         Assert.Contains("--compile-population-metadata", guidance, StringComparison.Ordinal);
         Assert.Contains("expected intermediate/final state is comparison-only", guidance, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void FreshPopulationDocumentationRetainsColdOnlyAndRuntimeAcceptanceGates()
+    {
+        var root = FindRepositoryRoot();
+        var architecture = Read(root, "docs", "csharp-authoritative-server-migration.md");
+        Assert.Contains(nameof(AuthoritativeCathedralFreshLevelGenerator), architecture, StringComparison.Ordinal);
+        Assert.Contains("cold-zero storage, not retained level state", architecture, StringComparison.Ordinal);
+        Assert.Contains("It ends at `CreateThemeRooms`", architecture, StringComparison.Ordinal);
+        Assert.Contains("before admission, preserving existing cohort", architecture, StringComparison.Ordinal);
+        var plan = Read(root, "docs", "completion-plan.md");
+        Assert.Contains("not retained-state campaign loading", plan, StringComparison.Ordinal);
+        Assert.Contains("not persistence", plan, StringComparison.Ordinal);
+        Assert.Contains("raw state and projections atomically", plan, StringComparison.Ordinal);
+        var guidance = Read(root, "docs", "ai", "msvc-build.md");
+        Assert.Contains("test-cathedral-fresh-population.ps1", guidance, StringComparison.Ordinal);
+        Assert.Contains("-MetadataPackDirectory", guidance, StringComparison.Ordinal);
+        Assert.Contains("requires byte-identical captures", guidance, StringComparison.Ordinal);
+        Assert.Contains("Godot interaction or cold-restore acceptance", guidance, StringComparison.Ordinal);
     }
 
     [Fact]

@@ -29,6 +29,9 @@ public sealed record AuthoritativeCathedralLevel1Result(
     AuthoritativeCathedralPoint StairsDown,
     AuthoritativeCathedralPoint EntryPosition)
 {
+    /** Exact native TransVal_ after dungeon transparency flooding. */
+    public int NextTransparencyValue { get; init; } = 1;
+
     public const int MegaWidth = 40;
     public const int MegaHeight = 40;
     public const int TransparencyWidth = 80;
@@ -236,7 +239,9 @@ public static class AuthoritativeCathedralLevel1Generator
             generated.NativeTransparency,
             generated.StairsUp,
             generated.StairsDown,
-            generated.EntryPosition);
+            generated.EntryPosition) {
+            NextTransparencyValue = generated.NextTransparencyValue,
+        };
     }
 
     internal static AuthoritativeCathedralDepthResult GenerateDepth(
@@ -257,6 +262,7 @@ public static class AuthoritativeCathedralLevel1Generator
         var protectedTiles = new bool[Width * Height];
         var chamber = new bool[Width * Height];
         var transparency = new byte[WorldWidth * WorldWidth];
+        var nextTransparencyValue = 1;
         var verticalLayout = false;
         var hasChamber1 = false;
         var hasChamber2 = false;
@@ -311,7 +317,9 @@ public static class AuthoritativeCathedralLevel1Generator
             Array.AsReadOnly(ExtractInteriorTransparency()),
             stairsUp,
             stairsDown,
-            entryPosition);
+            entryPosition) {
+            NextTransparencyValue = nextTransparencyValue,
+        };
 
         void FirstRoom()
         {
@@ -738,9 +746,14 @@ public static class AuthoritativeCathedralLevel1Generator
         void FloodTransparencyValues()
         {
             byte next = 1;
+            nextTransparencyValue = next;
             for (var j = 0; j < Height; j++) for (var i = 0; i < Width; i++) {
                 var xx = WorldOffset + i * 2; var yy = WorldOffset + j * 2;
-                if (Get(i, j) == Floor && GetWorld(xx, yy) == 0) { FindTransparencyValues(xx, yy, next); next++; }
+                if (Get(i, j) == Floor && GetWorld(xx, yy) == 0) {
+                    FindTransparencyValues(xx, yy, next);
+                    next = unchecked((byte)(next + 1));
+                    nextTransparencyValue = next;
+                }
             }
         }
 

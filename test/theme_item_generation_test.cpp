@@ -38,6 +38,7 @@
 #include "persistence/options.h"
 #include "persistence/loadsave.h"
 #include "tables/leveldat.h"
+#include "tables/playerdat.hpp"
 #include "utils/language.h"
 
 namespace devilution {
@@ -1241,6 +1242,8 @@ struct NativeThemeRoomGuard {
 
 class ThemeRoomGenerationTest : public ThemeItemPlacementTest {
 protected:
+	void CapturePopulationOracle(const char *directory, bool freshLoadOrder);
+
 	void SetUp() override
 	{
 		ThemeItemPlacementTest::SetUp();
@@ -1511,6 +1514,7 @@ struct NativeComposedPopulationGuard {
 	std::unique_ptr<Level> oldLevel = std::make_unique<Level>(currentLevel().id());
 	decltype(sgGameInitInfo) oldGameInfo = sgGameInitInfo;
 	bool oldHellfireSave = gbIsHellfireSaveGame;
+	bool oldPlayerIsDead = MyPlayerIsDead;
 	std::vector<LevelGenerationRow> oldLevelData = LevelGenerationData;
 	std::array<std::optional<uint32_t>, NUMLEVELS> oldSeeds;
 	std::array<uint32_t, NUMLEVELS> oldDungeonSeeds;
@@ -1531,7 +1535,7 @@ struct NativeComposedPopulationGuard {
 		currentLevel().pMegaTiles_ = std::move(oldLevel->pMegaTiles_);
 		currentLevel().pDungeonCels_ = std::move(oldLevel->pDungeonCels_);
 		currentLevel().pSpecialCels_ = std::move(oldLevel->pSpecialCels_);
-		sgGameInitInfo = oldGameInfo; gbIsHellfireSaveGame = oldHellfireSave;
+		sgGameInitInfo = oldGameInfo; gbIsHellfireSaveGame = oldHellfireSave; MyPlayerIsDead = oldPlayerIsDead;
 		LevelGenerationData = std::move(oldLevelData);
 		std::copy(oldSeeds.begin(), oldSeeds.end(), LevelSeeds);
 		std::copy(oldDungeonSeeds.begin(), oldDungeonSeeds.end(), DungeonSeeds);
@@ -1561,9 +1565,8 @@ struct NativeComposedPopulationGuard {
 // Extends the existing controlled upstream oracle, not the complete campaign
 // LoadGameLevel lifecycle. Geometry comes from original local assets; this
 // fixture alone opens MPQs and only when explicitly selected.
-TEST_F(ThemeRoomGenerationTest, CaptureComposedOrdinaryPopulation)
+void ThemeRoomGenerationTest::CapturePopulationOracle(const char *directory, bool freshLoadOrder)
 {
-	const char *directory = std::getenv("GODEVILUTION_CATHEDRAL_FULL_POPULATION_ORACLE_DIRECTORY");
 	if (directory == nullptr || !*directory) GTEST_SKIP() << "Select private upstream Cathedral population explicitly.";
 	const auto root = std::filesystem::weakly_canonical(directory);
 	const auto repository = std::filesystem::weakly_canonical(std::filesystem::absolute(__FILE__).parent_path().parent_path());
@@ -1595,12 +1598,18 @@ TEST_F(ThemeRoomGenerationTest, CaptureComposedOrdinaryPopulation)
 	for (int piece = 0; piece < MAXTILES; ++piece) tileProperties()[piece] = TileProperties::None;
 	ASSERT_TRUE(LoadLevelSOLData().has_value()); ASSERT_TRUE(CurrentLightManager.LoadTrns().has_value());
 	CurrentLightManager.MakeLightTable(); LoadLevelGenerationData();
-	std::ofstream stream(root / "native-full-population.json", std::ios::binary | std::ios::trunc); ASSERT_TRUE(stream.good());
+	if (freshLoadOrder) LoadPlayerDataFiles();
+	std::ofstream stream(root / (freshLoadOrder ? "native-fresh-population.json" : "native-full-population.json"), std::ios::binary | std::ios::trunc); ASSERT_TRUE(stream.good());
 	int cases = 0, multiRoomCases = 0;
 	{
-		JsonObject document(stream); document.String("format", "godevilution-cathedral-full-population"); document.Number("version", 1);
-		document.String("policy", "controlled-original-diablo-single-player-normal-post-createlevel-through-createthemerooms");
-		document.Number("playerMaximumLife", 64); document.Number("playerMaximumMana", 0);
+		JsonObject document(stream); document.String("format", freshLoadOrder ? "godevilution-cathedral-fresh-population" : "godevilution-cathedral-full-population"); document.Number("version", 1);
+		document.String("policy", freshLoadOrder ? "fresh-cold-original-diablo-single-player-normal-clear-before-createlevel-through-createthemerooms" : "controlled-original-diablo-single-player-normal-post-createlevel-through-createthemerooms");
+		document.Number("playerMaximumLife", freshLoadOrder ? 6400 : 64); document.Number("playerMaximumMana", freshLoadOrder ? 3200 : 0);
+		if (freshLoadOrder) {
+			document.Number("playerLightRadius", 8); document.Number("storySeed", UINT32_C(0x13579BDF));
+			document.Key("playerFuture"); WriteRoomPoint(stream, { 75, 68 });
+			document.Boolean("playerLevelChanging", true);
+		}
 		document.Key("itemCatalog"); WriteCatalog(stream);
 		document.Key("cases"); stream << '[';
 		for (int depth = 1; depth <= 4; ++depth) for (const uint32_t seed : { UINT32_C(2588), UINT32_C(743271966) })
@@ -1616,27 +1625,80 @@ TEST_F(ThemeRoomGenerationTest, CaptureComposedOrdinaryPopulation)
 				InitializeItemPool(); ItemPoolAdapter::ResetLegacyItemPools();
 				for (int slot = 0; slot <= MAXITEMS; ++slot) Items[slot] = {};
 				ClearUniqueItemFlags(); CurrentLightManager.Init();
+				// This new oracle explicitly models cold storage, not retained level
+				// pools. Init() alone intentionally does not clear inactive light records.
+				if (freshLoadOrder) {
+					std::fill(std::begin(CurrentLightManager.lights_), std::end(CurrentLightManager.lights_), Light {});
+					std::fill(std::begin(CurrentLightManager.visionList_), std::end(CurrentLightManager.visionList_), Light {});
+				}
 				for (Tile &tile : tiles()) { tile.setObject(0); tile.setMonster(0); tile.setPlayer(0); tile.setItem(0); }
 				currentLevel().setId(LevelId { .levelNum = static_cast<uint8_t>(depth), .type = DTYPE_CATHEDRAL });
 				LevelSeeds[depth] = std::nullopt; DungeonSeeds[depth] = seed; DungeonSeeds[16] = UINT32_C(0x13579BDF);
 				MyPlayer->pOriginalCathedral = true; MyPlayer->plractive = true; MyPlayer->_pClass = HeroClass::Warrior;
-				MyPlayer->plrlevel = static_cast<uint8_t>(depth); MyPlayer->_pLvlChanging = false; MyPlayer->plrIsOnSetLevel = false;
-				MyPlayer->life = { 64, 64, 64, 64, 100 }; MyPlayer->mana = {}; MyPlayer->pLvlLoad = 1;
+				MyPlayer->plrlevel = static_cast<uint8_t>(depth); MyPlayer->_pLvlChanging = freshLoadOrder; MyPlayer->plrIsOnSetLevel = false;
+				MyPlayer->life = { 64, 64, 64, 64, 100 };
+				if (freshLoadOrder) MyPlayer->life = { 6400, 6400, 6400, 6400, 100 };
+				MyPlayer->mana = {}; if (freshLoadOrder) MyPlayer->mana.maximumBase = 3200;
+				MyPlayer->pLvlLoad = 1; MyPlayer->_pLightRad = 8;
+				if (freshLoadOrder) MyPlayer->position.future = { 75, 68 };
 				gbIsMultiplayer = false; gbIsSpawn = false; gbIsHellfire = false; gbIsHellfireSaveGame = false;
 				LoadingMapObjects = false; sgGameInitInfo.nDifficulty = DIFF_NORMAL;
 				for (Quest &quest : Quests) quest._qactive = QUEST_NOTAVAIL;
 				RestoreThemeRoomGlobalsForTesting({}); armorFlag() = true; weaponFlag() = true;
+				uint32_t preClearState = 0, postClearState = 0;
+				if (freshLoadOrder) {
+					SetRndSeed(seed); preClearState = GetLCGEngineState();
+					InitLevelMonsters(); postClearState = GetLCGEngineState();
+				}
 				CreateLevelForTesting(entry);
-				MyPlayer->position.tile = viewPosition(); MyPlayer->position.future = viewPosition();
+				MyPlayer->position.tile = viewPosition();
+				if (!freshLoadOrder) MyPlayer->position.future = viewPosition();
 				MyPlayer->position.old = viewPosition(); MyPlayer->position.last = viewPosition();
 				if (cases++ != 0) stream << ',';
 				JsonObject row(stream); row.Number("depth", depth); row.Number("seed", seed);
 				row.String("entry", entry == ENTRY_MAIN ? "main" : "previous");
 				row.String("snapshot", "cathedral-population-depth-" + std::to_string(depth) + "-" + std::to_string(seed)
 				    + (entry == ENTRY_MAIN ? "-main.json" : "-previous.json"));
-				row.Number("preClearRandomState", GetLCGEngineState()); row.Key("baseline"); WriteRoomWorld(stream);
-				InitLevelMonsters(); row.Number("postClearRandomState", GetLCGEngineState());
+				if (!freshLoadOrder) {
+					preClearState = GetLCGEngineState(); row.Number("preClearRandomState", preClearState);
+					row.Key("baseline"); WriteRoomWorld(stream);
+					InitLevelMonsters(); postClearState = GetLCGEngineState();
+				} else {
+					row.Number("preClearRandomState", preClearState);
+					row.Number("nextTransparencyValue", nextTransparencyValue());
+					row.Key("triggerPositions"); stream << '[';
+					for (int trigger = 0; trigger < numTriggers(); ++trigger) { if (trigger) stream << ','; WriteRoomPoint(stream, trigs[trigger].position); }
+					stream << ']';
+				}
+				row.Number("postClearRandomState", postClearState);
 				SetRndSeed(seed); ASSERT_TRUE(GetLevelMTypes().has_value()); InitThemes();
+				if (freshLoadOrder) {
+					row.Number("prePlayerRandomState", GetLCGEngineState());
+					// Actual player initialization allocates slot 0 before unique lights.
+					// false avoids first-load hotkey/UI storage, without changing dungeon
+					// placement, animation draws, light allocation or vision activation.
+					InitPlayer(*MyPlayer, false);
+					ASSERT_EQ(MyPlayer->lightId, 0);
+					row.Number("playerIdleFrames", MyPlayer->_pNFrames);
+					row.Number("postPlayerRandomState", GetLCGEngineState());
+					row.Key("playerAnimation"); stream << '[' << static_cast<int>(MyPlayer->animInfo.currentFrame)
+					    << ',' << static_cast<int>(MyPlayer->animInfo.tickCounterOfCurrentFrame)
+					    << ',' << static_cast<int>(MyPlayer->animInfo.numberOfFrames)
+					    << ',' << static_cast<int>(MyPlayer->animInfo.ticksPerFrame)
+					    << ',' << (MyPlayer->animInfo.isPetrified ? "true" : "false") << ']';
+					row.Key("visionActive"); WriteArray(stream, CurrentLightManager.visionActive_, [&](bool active) { stream << (active ? "true" : "false"); });
+					row.Boolean("updateVision", CurrentLightManager.VisionUpdatePendingForTesting());
+					row.Key("visionRecords"); int visionId = 0;
+					WriteArray(stream, CurrentLightManager.visionList_, [&](const Light &vision) {
+						JsonObject record(stream); record.Number("lightId", visionId++);
+						record.Key("tile"); WriteRoomPoint(stream, { vision.position.tile.x, vision.position.tile.y });
+						record.Key("oldTile"); WriteRoomPoint(stream, { vision.position.old.x, vision.position.old.y });
+						record.Number("offsetX", vision.position.offset.deltaX); record.Number("offsetY", vision.position.offset.deltaY);
+						record.Number("radius", vision.radius); record.Number("oldRadius", vision.oldRadius);
+						record.Boolean("isInvalid", vision.isInvalid); record.Boolean("hasChanged", vision.hasChanged);
+					});
+					row.Key("baseline"); WriteRoomWorld(stream);
+				}
 				row.Key("selectedRoomCatalog"); WriteRoomCatalog(stream); row.Key("selectedThemes"); stream << '[';
 				for (int i = 0; i < numThemes(); ++i) { if (i) stream << ','; stream << '[' << static_cast<int>(themes[i].ttype) << ',' << static_cast<int>(themes[i].ttval) << ']'; }
 				stream << ']'; if (numThemes() > 1) ++multiRoomCases;
@@ -1657,7 +1719,17 @@ TEST_F(ThemeRoomGenerationTest, CaptureComposedOrdinaryPopulation)
 		stream << ']'; document.Number("caseCount", cases); document.Number("multiRoomCases", multiRoomCases);
 	}
 	stream.flush(); ASSERT_TRUE(stream.good()); stream.close(); EXPECT_EQ(cases, 16); EXPECT_GT(multiRoomCases, 0);
-	EXPECT_LE(std::filesystem::file_size(root / "native-full-population.json"), 128U * 1024U * 1024U);
+	EXPECT_LE(std::filesystem::file_size(root / (freshLoadOrder ? "native-fresh-population.json" : "native-full-population.json")), 128U * 1024U * 1024U);
+}
+
+TEST_F(ThemeRoomGenerationTest, CaptureComposedOrdinaryPopulation)
+{
+	CapturePopulationOracle(std::getenv("GODEVILUTION_CATHEDRAL_FULL_POPULATION_ORACLE_DIRECTORY"), false);
+}
+
+TEST_F(ThemeRoomGenerationTest, CaptureFreshOrdinaryPopulation)
+{
+	CapturePopulationOracle(std::getenv("GODEVILUTION_CATHEDRAL_FRESH_POPULATION_ORACLE_DIRECTORY"), true);
 }
 
 } // namespace

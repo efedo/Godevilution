@@ -53,6 +53,10 @@ public:
 	void ChangeVisionRadius(size_t id, int r);
 	void ChangeVisionXY(size_t id, Point position);
 	void ProcessVisionList();
+#ifdef BUILD_TESTING
+	/** Read-only pending-vision observation for native load-order parity tests. */
+	bool VisionUpdatePendingForTesting() const { return updateVision_; }
+#endif
 
 	void DoUnLight(Point position, uint8_t radius);
 	void DoLighting(Point position, uint8_t radius, DisplacementOf<int8_t> offset);

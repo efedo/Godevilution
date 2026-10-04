@@ -589,6 +589,33 @@ access, seed mapping, selected-population replay or runtime activation is added.
 Separate populated-profile interaction/restore and application-order lifecycle
 acceptance remain. Existing launchers and earlier native corpora are unchanged.
 
+To verify the additive fresh-cold boundary in native load order:
+
+```powershell
+./tools/test-cathedral-fresh-population.ps1 `
+  -MetadataPackDirectory "<private compiled population metadata pack>"
+```
+
+This bounded wrapper rebuilds the existing registered `theme_item_generation_test`
+with verified MSVC tools, selects `CaptureFreshOrdinaryPopulation` twice into
+fresh private roots, requires byte-identical captures, then builds/runs sixteen
+exact managed comparisons and focused factory checks. The explicit native
+fixture alone discovers original assets; the production factory loads only the
+compiled MPQ-free metadata. Native expected worlds and selections are comparison-only.
+All stages must exit cleanly with logs and confirmed cleanup; failed evidence
+is retained. The wrapper restores its two opt-in environment variables exactly.
+
+Scope is original Diablo, quest-disabled SP Normal, depths 1-4, seeds
+2588/743271966, MAIN/PREV, cold-zero pools and a prepared living local Warrior
+(Q6 life 6400/mana 3200, unarmed idle frames 10, light radius 8, prior future
+75,68, changing=true). Actual `InitPlayer(..., false)` runs after themes, before
+the separate population reseed; it does not load hotkeys. Complete pools,
+signed grids, RNG, metadata/bestiary order, public animation, pending vision,
+lighting and item-get reset state are compared. Existing controlled captures
+remain separate and must retain their bytes. This is not campaign seed selection,
+retained-level loading, post-theme level-ready processing, runtime installation,
+Godot interaction or cold-restore acceptance.
+
 The C# xUnit project is an executable Microsoft Testing Platform runner. Run
 it directly when `dotnet test` selects a machine-wide VSTest host whose
 `testhost` package is unavailable:

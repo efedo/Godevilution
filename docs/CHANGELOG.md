@@ -2,6 +2,17 @@
 
 Notable changes to this fork are recorded below.
 
+- 2026-10-04: Add fresh cold-storage Cathedral generation from compiled metadata,
+  seeds and explicit hero context in native loading order. Preserve transparency
+  counters, full pools/signed channels, player light/animation/pending vision and
+  existing controlled API/save identities. Add independent sixteen-case native
+  proof, repeated byte-identical captures, nine factory checks, strict bounded
+  evidence guards and unchanged-corpus compatibility checks. Full module/server
+  regressions pass 3,178/1,596 with documented explicit/platform exclusions.
+  Update architecture, plan, status and build guidance. Retained campaign pools,
+  level-ready processing and live populated profile/restore remain open; no Godot
+  launch, server MPQ access or default/user-save change.
+
 - 2026-10-04: Compile complete external Cathedral population metadata into a
   separate nineteen-table schema with raw catalog/geometry/policy validation,
   preserved opaque SOL flags and native names, shared potion derivation,
