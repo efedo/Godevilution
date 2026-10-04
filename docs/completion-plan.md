@@ -100,6 +100,12 @@ M4. M5 is the final removal gate, not a reason to postpone replacement work.
    Bound owned-process termination and retain terminal native exits before
    fallible log storage; preserve the engine failure as primary. Child-only
    crash-dialog suppression is mitigation, not proof of every historical cause.
+   Unattended visible diagnostics outside an acceptance phase must opt into
+   `-Automated` with a separate explicit session directory; retain the scene
+   quit timer and parent deadline. Normal launches remain interactive. Reject
+   otherwise successful runs with cleanup/evidence failures and do not retry
+   until owned processes are confirmed stopped. Direct-handle cleanup is not
+   OS process-tree containment or a persistent retry lock.
    Stage current client sources per launch, import/build/run only that copy,
    and retain engine/SDK evidence. Preserve the source SDK pin, local edits,
    upgrade backups and saves; reject unsupported or unexpected migrations.

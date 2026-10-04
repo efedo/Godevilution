@@ -17,10 +17,14 @@ param(
     [string]$CathedralDoorProfileDirectory,
     [ValidateSet(1, 4)] [int]$PerformanceParticipants = 1,
     [ValidateSet('Create', 'Resume', 'Recovery', 'Journey', 'JourneyResume', 'TownLoop', 'TownLoopResume', 'Lifecycle', 'LifecycleResume', 'MultiplayerCreate', 'MultiplayerResume', 'MultiplayerRecovery', 'MultiplayerPendingRecovery', 'Performance', 'CathedralJourney', 'CathedralResume', 'CathedralDepthJourney', 'CathedralDepthResume', 'CathedralDoorJourney', 'CathedralDoorResume')] [string]$AcceptancePhase,
-    [switch]$CommandTimingTrace
+    [switch]$CommandTimingTrace,
+    [switch]$Automated
 )
 
 $ErrorActionPreference = 'Stop'
+if ($Automated -and [string]::IsNullOrWhiteSpace($SessionDirectory)) {
+    throw 'Automated launches require an explicit isolated -SessionDirectory.'
+}
 if ($CommandTimingTrace -and [string]::IsNullOrWhiteSpace($AcceptancePhase)) {
     throw 'Command timing traces require an explicit isolated acceptance phase.'
 }
@@ -1204,6 +1208,26 @@ function Start-GodotChildProcess($StartInfo) {
     return [Diagnostics.Process]::Start($StartInfo)
 }
 
+function Get-GodotClientRunPolicy([bool]$Headless, [bool]$Automated, [string]$AcceptancePhase, [int]$QuitAfterSeconds) {
+    $bounded = $Headless -or $Automated -or -not [string]::IsNullOrWhiteSpace($AcceptancePhase)
+    return [pscustomobject]@{
+        SuppressCrashDialog = $bounded
+        # Acceptance scenes own their completion; ordinary automated scenes use
+        # real seconds, with a separate parent deadline if the scene cannot quit.
+        SceneQuitAfterSeconds = $(if ($bounded -and [string]::IsNullOrWhiteSpace($AcceptancePhase)) { $QuitAfterSeconds } else { $null })
+        TimeoutSeconds = $(if ($bounded) { $QuitAfterSeconds + 15 } else { $null })
+    }
+}
+
+function Assert-LocalLauncherCleanup([bool]$LaunchFailed, [string[]]$CleanupErrors) {
+    # Never accept a launch whose owned-process cleanup could not be confirmed.
+    # An existing launch error remains primary; its finally block already warns
+    # separately about each cleanup failure.
+    if (-not $LaunchFailed -and $CleanupErrors.Count -gt 0) {
+        throw ('Launcher cleanup failed; do not retry until owned processes are confirmed stopped. ' + ($CleanupErrors -join ' | '))
+    }
+}
+
 function Stop-OwnedLocalProcess($Process, [ValidateRange(1, 60000)] [int]$TimeoutMilliseconds = 5000) {
     if ($null -eq $Process -or $Process.HasExited) { return }
     try {
@@ -1431,6 +1455,8 @@ function Stop-GodotProcess($Tracked) {
     Write-GodotRedirectedOutput $Tracked
 }
 
+$clientRunPolicy = Get-GodotClientRunPolicy ([bool]$Headless) ([bool]$Automated) $AcceptancePhase $QuitAfterSeconds
+
 try {
     foreach ($name in $environmentNames) { [Environment]::SetEnvironmentVariable($name, $null, 'Process') }
     $cathedralProfile = if ($cathedralDepths) {
@@ -1632,11 +1658,11 @@ try {
                     if (Test-Path -LiteralPath (Join-Path $clientDirectory $marker)) { throw "MultiplayerRecovery evidence already exists: $marker" }
                 }
             }
-        } elseif ($Headless) {
+        } elseif ($null -ne $clientRunPolicy.SceneQuitAfterSeconds) {
             # Godot --quit-after counts frames, not seconds. The scene owns the timer.
-            $clientEnvironment['GODEVILUTION_QUIT_AFTER_SECONDS'] = [string]$QuitAfterSeconds
+            $clientEnvironment['GODEVILUTION_QUIT_AFTER_SECONDS'] = [string]$clientRunPolicy.SceneQuitAfterSeconds
         }
-        $clientTracked = New-GodotProcess ("client-$Slot") $godotArguments $clientEnvironment ([bool]$Headless) ([bool]($Headless -or $AcceptancePhase))
+        $clientTracked = New-GodotProcess ("client-$Slot") $godotArguments $clientEnvironment ([bool]$Headless) $clientRunPolicy.SuppressCrashDialog
         return [pscustomobject]@{
             Process = $clientTracked.Process
             Tracked = $clientTracked
@@ -1816,7 +1842,7 @@ try {
                 Complete-GodotProcess $startedClient.Tracked 0 'Godot client'
             }
         }
-        if ($clientsRunning -and ($Headless -or $AcceptancePhase) -and $clientWait.Elapsed.TotalSeconds -gt ($QuitAfterSeconds + 15)) {
+        if ($clientsRunning -and $null -ne $clientRunPolicy.TimeoutSeconds -and $clientWait.Elapsed.TotalSeconds -gt $clientRunPolicy.TimeoutSeconds) {
             foreach ($startedClient in $startedClients) {
                 if (-not $startedClient.Process.HasExited) {
                     $startedClient.Tracked.Record.Error = 'Godot did not finish before the launch timeout.'
@@ -1916,6 +1942,7 @@ try {
     $launcherError = $_
     throw
 } finally {
+    $cleanupErrors = [Collections.Generic.List[string]]::new()
     if ($null -ne $staging) {
         try {
             $errorMessage = if ($null -ne $launcherError) { $launcherError.Exception.Message } else { $null }
@@ -1927,16 +1954,25 @@ try {
     foreach ($trackedProcess in @($startedClients | ForEach-Object { $_.Tracked }) + @($importTracked, $versionTracked)) {
         if ($null -ne $trackedProcess) {
             try { Stop-GodotProcess $trackedProcess }
-            catch { Write-Warning "Could not finalize Godot process evidence: $($_.Exception.Message)" }
+            catch {
+                $cleanupErrors.Add("Could not finalize Godot process evidence: $($_.Exception.Message)")
+                Write-Warning $cleanupErrors[$cleanupErrors.Count - 1]
+            }
         }
     }
     foreach ($ownedProcess in @($startedClients | ForEach-Object { $_.Process }) + @($serverProcess, $importProcess, $versionTracked.Process)) {
         if ($null -ne $ownedProcess) {
             try {
                 Stop-OwnedLocalProcess $ownedProcess
-            } catch { Write-Warning "Could not stop owned process $($ownedProcess.Id): $($_.Exception.Message)" }
+            } catch {
+                $cleanupErrors.Add("Could not stop owned process $($ownedProcess.Id): $($_.Exception.Message)")
+                Write-Warning $cleanupErrors[$cleanupErrors.Count - 1]
+            }
             try { $ownedProcess.Dispose() }
-            catch { Write-Warning "Could not dispose owned process: $($_.Exception.Message)" }
+            catch {
+                $cleanupErrors.Add("Could not dispose owned process: $($_.Exception.Message)")
+                Write-Warning $cleanupErrors[$cleanupErrors.Count - 1]
+            }
         }
     }
     if ($null -ne $sessionLock) {
@@ -1946,4 +1982,5 @@ try {
     foreach ($name in $environmentNames) { [Environment]::SetEnvironmentVariable($name, $savedEnvironment[$name], 'Process') }
     Write-Host "Session files: $SessionDirectory"
     Write-Host "Launch logs: $captureRoot"
+    Assert-LocalLauncherCleanup ($null -ne $launcherError) $cleanupErrors.ToArray()
 }

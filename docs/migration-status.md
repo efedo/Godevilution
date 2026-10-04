@@ -148,6 +148,39 @@ open. Their scope, dependencies, and exit checks are defined only in the
 
 ## Recent implementation evidence
 
+### M0 explicit visible automation and inherited crash mode (2026-10-03)
+
+The reported dialogs were already closed; current process inspection finds no
+Godot or Windows crash reporter running. Retained same-engine logs still support
+the original denied-settings/help-cache-write reproduction and isolated clean
+comparison in `32307f45b`, not a newly established cause for every historical
+dialog. The later bounded-cleanup correction is `00d220cf8`.
+
+Independent review identified a remaining usage gap: visible ordinary launches
+were intentionally interactive even when a quit duration was supplied. The inner
+harness now has explicit `-Automated` mode requiring a separate session path.
+One policy controls child-only dialog suppression, the existing real-seconds
+scene quit timer and the parent deadline. Normal zero-argument launch behavior
+and existing headless/acceptance behavior remain unchanged. Cleanup/evidence
+failures now reject an otherwise successful launch without replacing an existing
+engine error. Direct-handle cleanup is not process-tree containment or a persistent
+retry lock; uncertain cleanup requires confirmed process exit before another run.
+
+Focused launcher verification passes 35 tests without skips (37.695s), including
+the three new behavior cases and one wiring contract. A harmless minimal C# child
+reports inherited suppression bits, avoiding PowerShell's startup error-mode
+changes; no application is deliberately crashed. The broader launcher selection
+passes 64 tests without skips (39.628s); five documentation checks also pass. Its
+first run retained one outdated exact-parameter-list failure, corrected to require
+the unchanged legacy prefix and the two explicit appended switches. The focused test-project rebuild
+uses the existing verified dependency outputs with `BuildProjectReferences=false`;
+three existing NuGet audit-feed warnings remain, with no errors. An initial whole
+dependency rebuild encountered two compiler errors in the separate uncommitted M2
+encounter draft; a new raw-string test indentation error was corrected. Neither
+attempt is acceptance evidence. Independent source review finds no remaining
+blocker in this safety follow-up. No new Godot application/GUI acceptance is claimed,
+and user save/config hashes are unchanged. M0 and the overall estimate remain open.
+
 ### M2 composed Cathedral prerequisites and initial objects (2026-10-03)
 
 `AuthoritativeCathedralInitialPopulationGenerator` now composes independent

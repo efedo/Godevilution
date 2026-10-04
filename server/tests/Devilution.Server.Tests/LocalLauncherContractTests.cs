@@ -261,6 +261,22 @@ public sealed class LocalLauncherContractTests
     }
 
     [Fact]
+    public void VisibleAutomationUsesOnePolicyForSceneDeadlineAndCrashDialogs()
+    {
+        var root = FindRepositoryRoot();
+        var launcher = File.ReadAllText(Path.Combine(root, "godot/run-local-client.ps1"));
+        var normal = File.ReadAllText(Path.Combine(root, "run-godot-client.ps1"));
+        Assert.Contains("[switch]$Automated", launcher, StringComparison.Ordinal);
+        Assert.Contains("$clientRunPolicy = Get-GodotClientRunPolicy ([bool]$Headless) ([bool]$Automated) $AcceptancePhase $QuitAfterSeconds", launcher, StringComparison.Ordinal);
+        Assert.Contains("([bool]$Headless) $clientRunPolicy.SuppressCrashDialog", launcher, StringComparison.Ordinal);
+        Assert.Contains("$clientEnvironment['GODEVILUTION_QUIT_AFTER_SECONDS'] = [string]$clientRunPolicy.SceneQuitAfterSeconds", launcher, StringComparison.Ordinal);
+        Assert.Contains("$clientWait.Elapsed.TotalSeconds -gt $clientRunPolicy.TimeoutSeconds", launcher, StringComparison.Ordinal);
+        Assert.Contains("$cleanupErrors.Add(\"Could not stop owned process", launcher, StringComparison.Ordinal);
+        Assert.Contains("Assert-LocalLauncherCleanup ($null -ne $launcherError) $cleanupErrors.ToArray()", launcher, StringComparison.Ordinal);
+        Assert.DoesNotContain("Automated", normal, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void AuthoredGodotPreviewIsOptInWithAnIsolatedSaveDirectory()
     {
         var root = FindRepositoryRoot();

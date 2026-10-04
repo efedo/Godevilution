@@ -226,17 +226,37 @@ The retained comparison establishes the denied-write failure path, not the cause
 of every historical dialog. Never change user-profile permissions or system-wide
 error reporting to run these checks.
 
+For an unattended visible diagnostic outside an acceptance phase, use the inner
+harness's explicit `-Automated` mode with a separate session directory. This
+enables the same child-only suppression, a real-seconds scene quit timer and a
+parent deadline fifteen seconds later. `-QuitAfterSeconds` alone does not turn a
+normal interactive launch into automation. The zero-argument root launcher stays
+interactive. Agents must use `-Automated`, `-Headless` or an acceptance phase for
+unattended runs; do not retry after a crash or uncertain cleanup.
+
+```powershell
+$automatedSession = Join-Path ([IO.Path]::GetTempPath()) ('Godevilution-VisibleCheck-' + [guid]::NewGuid().ToString('N'))
+powershell -NoProfile -ExecutionPolicy Bypass -File godot/run-local-client.ps1 -Automated -SessionDirectory $automatedSession -QuitAfterSeconds 30
+```
+
 Owned-process termination uses a five-second bounded wait per cleanup attempt,
 including importer startup failure and recovery-host shutdown. Failed termination
 is recorded separately without inventing an exit time/code. Terminal native exits
 are recorded before redirected logs are written; diagnostic-storage failures cannot
 replace a nonzero engine exit as the primary error. A zero engine exit with failed
 diagnostic storage still fails verification. These bounds cover direct owned handles,
-not arbitrary OS hangs or independently launched engines/crash reporters.
+not arbitrary OS hangs, descendants or independently launched engines/crash reporters.
+Cleanup/evidence failures reject an otherwise successful launch; an existing engine
+failure remains primary. This is not an OS process-tree containment or persistent
+retry lock. Confirm any reported owned PID has stopped before another run; never
+kill unrelated Godot or Windows error-reporting processes by name.
 
 `LocalLauncherBehaviorTests` in the server test project exercises the actual
 launcher helpers with harmless Windows PowerShell children, including isolated
-storage and rejected process/import outcomes. It does not require Godot or
+storage and rejected process/import outcomes. A minimal non-crashing executable
+also checks inherited suppression bits before host-shell startup can change them.
+Policy tests cover manual, visible automated, headless and acceptance modes, plus
+cleanup-error rejection. These tests do not require Godot or
 deliberately crash an application. Run actual scene acceptance separately to
 verify the installed engine and client/server lifecycle.
 `MultiplayerRecoveryLauncherTests` additionally exercises the actual argument

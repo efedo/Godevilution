@@ -2,6 +2,16 @@
 
 Notable changes to this fork are recorded below.
 
+- 2026-10-03: Close the unattended-visible-launch safety gap with explicit
+  `-Automated` mode, isolated session selection, shared child-dialog suppression
+  and real-seconds scene/parent deadlines. Preserve interactive defaults and
+  reject successful runs with cleanup/evidence failures without masking native
+  errors. Add harmless inherited-mode, policy and cleanup regressions; broader
+  launcher checks pass 64 and documentation checks pass five without skips.
+  Update existing guidance/plan/status,
+  retain the original reproduced crash's causal limits, and leave unrelated M2
+  drafts and user saves untouched. No new Godot application acceptance claimed.
+
 - 2026-10-03: Compose independent managed Cathedral bestiary/theme selection,
   held reservations and initial objects from validated pre-theme inputs, with
   native order/animation/image-budget behavior and a separate population reseed.

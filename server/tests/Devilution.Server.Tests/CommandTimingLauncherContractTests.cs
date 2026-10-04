@@ -7,15 +7,15 @@ namespace Devilution.Server.Tests;
 public sealed class CommandTimingLauncherContractTests
 {
     [Theory]
-    [InlineData("godot/run-local-client.ps1", "GodotExecutable,Port,CharacterClassId,CharacterName,Headless,QuitAfterSeconds,SessionDirectory,PersistenceMode,PreviewContent,PortalPreviewContent,LifecyclePreviewContent,Multiplayer,CathedralProfileDirectory,CathedralDepthProfileDirectory,CathedralDoorProfileDirectory,PerformanceParticipants,AcceptancePhase")]
-    [InlineData("tools/test-godot-session.ps1", "GodotExecutable,PersistenceMode,Visible,Journey,TownLoop,Lifecycle,Multiplayer,MultiplayerRecovery,MultiplayerPendingRecovery,CathedralProfileDirectory,CathedralDepthProfileDirectory,CathedralDoorProfileDirectory,PresentationPackProfile")]
-    public void TraceSwitchPreservesExistingPositionalParameterOrder(string path, string existingParameters)
+    [InlineData("godot/run-local-client.ps1", "GodotExecutable,Port,CharacterClassId,CharacterName,Headless,QuitAfterSeconds,SessionDirectory,PersistenceMode,PreviewContent,PortalPreviewContent,LifecyclePreviewContent,Multiplayer,CathedralProfileDirectory,CathedralDepthProfileDirectory,CathedralDoorProfileDirectory,PerformanceParticipants,AcceptancePhase", "CommandTimingTrace,Automated")]
+    [InlineData("tools/test-godot-session.ps1", "GodotExecutable,PersistenceMode,Visible,Journey,TownLoop,Lifecycle,Multiplayer,MultiplayerRecovery,MultiplayerPendingRecovery,CathedralProfileDirectory,CathedralDepthProfileDirectory,CathedralDoorProfileDirectory,PresentationPackProfile", "CommandTimingTrace")]
+    public void TraceSwitchPreservesExistingPositionalParameterOrder(string path, string existingParameters, string appendedParameters)
     {
         var source = ReadSource(path);
         var parameterBlock = source[..source.IndexOf("$ErrorActionPreference", StringComparison.Ordinal)];
         var actual = Regex.Matches(parameterBlock, @"\$(\w+)")
             .Select(match => match.Groups[1].Value);
-        Assert.Equal(existingParameters.Split(',').Append("CommandTimingTrace"), actual);
+        Assert.Equal(existingParameters.Split(',').Concat(appendedParameters.Split(',')), actual);
     }
 
     [Fact]

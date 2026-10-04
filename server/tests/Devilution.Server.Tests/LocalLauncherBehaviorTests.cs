@@ -7,6 +7,161 @@ namespace Devilution.Server.Tests;
 public sealed class LocalLauncherBehaviorTests
 {
     [Fact]
+    public void GodotAutomationPolicyBoundsVisibleClientsWithoutChangingInteractiveDefaults()
+    {
+        if (!OperatingSystem.IsWindows())
+            return;
+
+        var script = BuildPowerShellHarness(["Get-GodotClientRunPolicy"], """
+            $guardEnd = $launcherText.IndexOf('$repositoryRoot = ', [StringComparison]::Ordinal)
+            if ($guardEnd -le 0) { throw 'Could not isolate the launcher argument guards.' }
+            $guards = [scriptblock]::Create($launcherText.Substring(0, $guardEnd) + "`r`n'GUARDS-PASSED'")
+            foreach ($headless in @($false, $true)) {
+                foreach ($automated in @($false, $true)) {
+                    foreach ($phase in @('', 'Create')) {
+                        foreach ($seconds in @(1, 27, 3600)) {
+                            $policy = Get-GodotClientRunPolicy $headless $automated $phase $seconds
+                            $bounded = $headless -or $automated -or $phase -ne ''
+                            if ($policy.SuppressCrashDialog -ne $bounded) { throw 'Incorrect child suppression policy.' }
+                            if ($bounded) {
+                                if ($policy.TimeoutSeconds -ne ($seconds + 15)) { throw 'Missing parent deadline.' }
+                            } elseif ($null -ne $policy.TimeoutSeconds) { throw 'Manual launch acquired a deadline.' }
+                            if ($bounded -and $phase -eq '') {
+                                if ($policy.SceneQuitAfterSeconds -ne $seconds) { throw 'Missing real-seconds scene timer.' }
+                            } elseif ($null -ne $policy.SceneQuitAfterSeconds) { throw 'Manual/acceptance scene acquired a quit timer.' }
+                        }
+                    }
+                }
+            }
+            $rejected = $false
+            try { & $guards -Automated | Out-Null } catch { $rejected = $_.Exception.Message -match 'isolated -SessionDirectory' }
+            if (-not $rejected) { throw 'Automation silently adopted the normal save profile.' }
+            $output = @(& $guards -Automated -SessionDirectory 'explicit-not-opened' -QuitAfterSeconds 27)
+            if ($output -notcontains 'GUARDS-PASSED') { throw 'Valid visible automation was refused.' }
+            $output = @(& $guards)
+            if ($output -notcontains 'GUARDS-PASSED') { throw 'Normal interactive defaults changed.' }
+            Write-Output 'PASS'
+            """);
+        Assert.Contains("PASS", RunPowerShell(script), StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void GodotCleanupFailureRejectsSuccessWithoutMaskingTheLaunchError()
+    {
+        if (!OperatingSystem.IsWindows())
+            return;
+
+        var script = BuildPowerShellHarness(["Assert-LocalLauncherCleanup"], """
+            Assert-LocalLauncherCleanup $false @()
+            Assert-LocalLauncherCleanup $true @('owned process could not stop')
+            $rejected = $false
+            try { Assert-LocalLauncherCleanup $false @('owned process could not stop', 'evidence could not save') }
+            catch {
+                $rejected = $_.Exception.Message -match 'do not retry' -and
+                    $_.Exception.Message -match 'owned process could not stop' -and
+                    $_.Exception.Message -match 'evidence could not save'
+            }
+            if (-not $rejected) { throw 'Failed cleanup was accepted or lost its diagnostics.' }
+            $observed = $null
+            try {
+                $primary = $null
+                try { throw 'original native engine failure' }
+                catch { $primary = $_; throw }
+                finally { Assert-LocalLauncherCleanup ($null -ne $primary) @('owned process could not stop') }
+            } catch { $observed = $_.Exception.Message }
+            if ($observed -cne 'original native engine failure') { throw 'Cleanup replaced the original launch error.' }
+            Write-Output 'PASS'
+            """);
+        Assert.Contains("PASS", RunPowerShell(script), StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void GodotChildInheritsCrashDialogSuppressionWithoutChangingParentMode()
+    {
+        if (!OperatingSystem.IsWindows())
+            return;
+
+        var script = BuildPowerShellHarness(
+            ["Assert-WritableDirectory", "Write-ProcessEvidence", "Start-GodotChildProcess", "Stop-OwnedLocalProcess",
+             "New-GodotProcess", "Write-GodotRedirectedOutput", "Complete-GodotProcess", "Stop-GodotProcess"],
+            """
+            $work = Join-Path ([IO.Path]::GetTempPath()) ('Godevilution-ModeInheritanceTest-' + [guid]::NewGuid().ToString('N'))
+            New-Item -ItemType Directory -Path $work | Out-Null
+            $trackedChildren = [Collections.Generic.List[object]]::new()
+            $originalErrorMode = $null
+            try {
+                Add-Type -TypeDefinition @'
+using System.Runtime.InteropServices;
+public static class GodevilutionNativeErrorMode
+{
+    [DllImport("kernel32.dll")] public static extern uint GetErrorMode();
+    [DllImport("kernel32.dll")] public static extern uint SetErrorMode(uint mode);
+}
+'@
+                $originalErrorMode = [GodevilutionNativeErrorMode]::GetErrorMode()
+                [void][GodevilutionNativeErrorMode]::SetErrorMode($originalErrorMode -band [uint32]4294967292)
+                $parentErrorMode = [GodevilutionNativeErrorMode]::GetErrorMode()
+                $GodotExecutable = Join-Path $work 'inherited-mode.exe'
+                # PowerShell changes its own error mode at startup. A minimal
+                # non-crashing executable observes inheritance without that reset.
+                Add-Type -OutputAssembly $GodotExecutable -OutputType ConsoleApplication -TypeDefinition @'
+using System;
+using System.Globalization;
+using System.Runtime.InteropServices;
+public static class InheritedModeProbe
+{
+    [DllImport("kernel32.dll")] private static extern uint GetErrorMode();
+    public static int Main()
+    {
+        Console.WriteLine(GetErrorMode().ToString(CultureInfo.InvariantCulture));
+        return 0;
+    }
+}
+'@
+                $captureRoot = $work
+                $processEvidenceRoot = Join-Path $work 'processes'
+                New-Item -ItemType Directory -Path $processEvidenceRoot | Out-Null
+                $repositoryRoot = (Get-Location).Path
+                $PersistenceMode = 'legacy'
+                foreach ($suppress in @($false, $true)) {
+                    $stage = if ($suppress) { 'automated' } else { 'manual' }
+                    $stdout = Join-Path $work ($stage + '.stdout')
+                    $stderr = Join-Path $work ($stage + '.stderr')
+                    $tracked = New-GodotProcess $stage '' @{} $true $suppress $stdout $stderr
+                    $trackedChildren.Add($tracked)
+                    Complete-GodotProcess $tracked 10000 'inherited-mode probe'
+                    $childMode = [uint32]([IO.File]::ReadAllText($stdout).Trim())
+                    if ($suppress -and ($childMode -band [uint32]3) -ne [uint32]3) {
+                        throw "Automated child did not inherit suppression bits: $childMode"
+                    }
+                    if (-not $suppress -and ($childMode -band [uint32]2) -ne [uint32]0) {
+                        throw "Manual child unexpectedly inherited crash-dialog suppression: $childMode"
+                    }
+                    if ([GodevilutionNativeErrorMode]::GetErrorMode() -ne $parentErrorMode) {
+                        throw 'Child launch changed the parent error mode.'
+                    }
+                }
+                Write-Output 'PASS'
+            } finally {
+                $allExited = $true
+                foreach ($tracked in $trackedChildren) {
+                    try { Stop-GodotProcess $tracked } catch { $allExited = $false }
+                    if (-not $tracked.Process.HasExited) { $allExited = $false }
+                    $tracked.Process.Dispose()
+                }
+                if ($null -ne $originalErrorMode) { [void][GodevilutionNativeErrorMode]::SetErrorMode($originalErrorMode) }
+                $resolvedWork = [IO.Path]::GetFullPath($work)
+                $tempParent = [IO.Path]::GetFullPath([IO.Path]::GetTempPath()).TrimEnd('\')
+                if ($allExited -and (Split-Path $resolvedWork -Parent) -eq $tempParent -and
+                    (Split-Path $resolvedWork -Leaf) -match '^Godevilution-ModeInheritanceTest-[0-9a-f]{32}$') {
+                    Remove-Item -LiteralPath $resolvedWork -Recurse -Force
+                }
+            }
+""");
+        Assert.Contains("PASS", RunPowerShell(script), StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void LifecycleGuardsAllowInteractiveAndMatchingPhasesWithoutLaunchingAnEngine()
     {
         if (!OperatingSystem.IsWindows())
