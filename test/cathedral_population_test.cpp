@@ -38,6 +38,7 @@
 #include "game/objects/objects.hpp"
 #include "tables/monstdat.h"
 #include "tables/objdat.h"
+#include "tables/leveldat.h"
 #include "persistence/loadsave.h"
 #include "level_test.hpp"
 
@@ -48,9 +49,13 @@ namespace devilution {
 namespace {
 
 constexpr char PopulationOracleDirectoryVariable[] = "GODEVILUTION_CATHEDRAL_POPULATION_ORACLE_DIRECTORY";
+constexpr char PopulationInputDirectoryVariable[] = "GODEVILUTION_CATHEDRAL_POPULATION_INPUT_DIRECTORY";
 constexpr char PopulationOracleFormat[] = "godevilution-cathedral-l1-population-oracle";
 constexpr uint32_t PopulationOracleVersion = 1;
 constexpr char PopulationOraclePolicy[] = "no-quest-original-diablo-initgolems-initobjects";
+constexpr char PopulationInputFormat[] = "godevilution-cathedral-initial-inputs";
+constexpr uint32_t PopulationInputVersion = 1;
+constexpr char PopulationInputPolicy[] = "ordinary-original-diablo-fresh-initial-objects";
 constexpr uint32_t StoryDungeonSeed = UINT32_C(0x13579BDF);
 constexpr int CathedralFirstDepth = 1;
 constexpr int CathedralLastDepth = 4;
@@ -137,6 +142,14 @@ struct NativeMonsterCapture {
 	int animTickCounter = 0;
 	int animNumberOfFrames = 0;
 	int animCurrentFrame = 0;
+	Point temp;
+	uint16_t golemToHit = 0;
+	int reducePlayerStrength = 0;
+	int reducePlayerMagic = 0;
+	int reducePlayerDexterity = 0;
+	int reducePlayerVitality = 0;
+	int reducePlayerMaxHP = 0;
+	int reducePlayerMaxMana = 0;
 };
 
 struct NativeBestiaryCapture {
@@ -195,6 +208,17 @@ struct PopulationCapture {
 	Point playerTile;
 	Point playerFuture;
 	Point playerOld;
+	std::vector<uint16_t> prePhasePieces;
+	std::vector<uint8_t> prePhaseSpecial;
+	std::vector<uint8_t> prePhaseTransparency;
+	std::vector<uint8_t> prePhaseSolProperties;
+	std::vector<bool> prePhasePopulatedCells;
+	std::vector<int> prePhaseMonsterTileRefs;
+	std::vector<int> prePhasePlayerTileRefs;
+	std::vector<NativeBestiaryCapture> prePhaseBestiary;
+	std::vector<uint16_t> finalPieces;
+	std::vector<uint8_t> finalSpecial;
+	std::vector<uint8_t> finalTransparency;
 };
 
 struct NativeStateGuard {
@@ -209,6 +233,7 @@ struct NativeStateGuard {
 		, oldDifficulty(sgGameInitInfo.nDifficulty)
 		, oldLoadingMapObjects(LoadingMapObjects)
 		, oldSound(gbSndInited)
+		, oldLevelGenerationData(LevelGenerationData)
 	{
 	}
 
@@ -225,6 +250,7 @@ struct NativeStateGuard {
 		sgGameInitInfo.nDifficulty = oldDifficulty;
 		LoadingMapObjects = oldLoadingMapObjects;
 		gbSndInited = oldSound;
+		LevelGenerationData = std::move(oldLevelGenerationData);
 	}
 
 	void ResetPools() const
@@ -251,6 +277,7 @@ struct NativeStateGuard {
 	decltype(sgGameInitInfo.nDifficulty) oldDifficulty;
 	bool oldLoadingMapObjects;
 	bool oldSound;
+	std::vector<LevelGenerationRow> oldLevelGenerationData;
 };
 
 std::string EntryName(lvl_entry entry)
@@ -287,6 +314,17 @@ void WriteJsonString(std::ostream &stream, std::string_view value)
 		stream << character;
 	}
 	stream << '"';
+}
+
+void WriteBoolArray(std::ostream &stream, const std::vector<bool> &values)
+{
+	stream << '[';
+	for (size_t i = 0; i < values.size(); i++) {
+		if (i != 0)
+			stream << ',';
+		stream << (values[i] ? "true" : "false");
+	}
+	stream << ']';
 }
 
 void WriteObject(std::ostream &stream, const NativeObjectCapture &object)
@@ -486,6 +524,14 @@ NativeMonsterCapture CaptureMonster(int slot, const Monster &monster)
 		monster.animInfo.tickCounterOfCurrentFrame,
 		monster.animInfo.numberOfFrames,
 		monster.animInfo.currentFrame,
+		monster.position.temp,
+		monster.golemToHit,
+		monster.reducePlayerStrength,
+		monster.reducePlayerMagic,
+		monster.reducePlayerDexterity,
+		monster.reducePlayerVitality,
+		monster.reducePlayerMaxHP,
+		monster.reducePlayerMaxMana,
 	};
 }
 
@@ -499,6 +545,69 @@ std::vector<uint32_t> CapturePopulatedCells()
 		}
 	}
 	return cells;
+}
+
+std::vector<uint16_t> CapturePieces()
+{
+	std::vector<uint16_t> pieces;
+	for (int y = 0; y < MAXDUNY; y++)
+		for (int x = 0; x < MAXDUNX; x++)
+			pieces.push_back(tileAt(x, y).piece());
+	return pieces;
+}
+
+std::vector<uint8_t> CaptureSpecial()
+{
+	std::vector<uint8_t> special;
+	for (int y = 0; y < MAXDUNY; y++)
+		for (int x = 0; x < MAXDUNX; x++)
+			special.push_back(static_cast<uint8_t>(tileAt(x, y).special()));
+	return special;
+}
+
+std::vector<uint8_t> CaptureTransparency()
+{
+	std::vector<uint8_t> transparency;
+	for (int y = 0; y < MAXDUNY; y++)
+		for (int x = 0; x < MAXDUNX; x++)
+			transparency.push_back(static_cast<uint8_t>(tileAt(x, y).transVal()));
+	return transparency;
+}
+
+std::vector<uint8_t> CaptureSolProperties()
+{
+	std::vector<uint8_t> properties;
+	for (int piece = 0; piece < MAXTILES; piece++)
+		properties.push_back(static_cast<uint8_t>(tileProperties()[piece]));
+	return properties;
+}
+
+std::vector<bool> CapturePopulatedFlags()
+{
+	std::vector<bool> populated;
+	populated.reserve(MAXDUNX * MAXDUNY);
+	for (int y = 0; y < MAXDUNY; y++)
+		for (int x = 0; x < MAXDUNX; x++)
+			populated.push_back(tileAt(x, y).isPopulated());
+	return populated;
+}
+
+std::vector<int> CaptureMonsterTileRefs()
+{
+	std::vector<int> references;
+	for (int y = 0; y < MAXDUNY; y++)
+		for (int x = 0; x < MAXDUNX; x++)
+			references.push_back(tileAt(x, y).monster());
+	return references;
+}
+
+std::vector<int> CapturePlayerTileRefs()
+{
+	std::vector<int> references;
+	for (int y = 0; y < MAXDUNY; y++)
+		for (int x = 0; x < MAXDUNX; x++)
+			references.push_back(tileAt(x, y).player());
+	return references;
 }
 
 std::vector<NativeBestiaryCapture> CaptureBestiary()
@@ -520,6 +629,86 @@ std::vector<NativeBestiaryCapture> CaptureBestiary()
 		entries.push_back(capture);
 	}
 	return entries;
+}
+
+void AssertFreshMonsterSlots()
+{
+	if (MonsterPoolAdapter::ActiveMonsterCountValue() != 0)
+		throw std::runtime_error("fresh Cathedral monster slots were not empty");
+	for (int slot = 0; slot < static_cast<int>(MaxMonsters); slot++) {
+		if (ActiveMonsters[slot] != static_cast<unsigned>(slot))
+			throw std::runtime_error("fresh Cathedral ActiveMonsters identity was not initialized");
+		const Monster &monster = Monsters[slot];
+		if (monster.position.tile != WorldTilePosition { 0, 0 }
+		    || monster.position.future != WorldTilePosition { 0, 0 }
+		    || monster.position.old != Point { 0, 0 }
+		    || monster.position.last != Point { 0, 0 }
+		    || monster.position.temp != Point { 0, 0 }
+		    || monster.enemyPosition != WorldTilePosition { 0, 0 }
+		    || monster.enemy != 0
+		    || monster.goalVar1 != 0
+		    || monster.goalVar2 != 0
+		    || monster.goalVar3 != 0
+		    || monster.var1 != 0
+		    || monster.var2 != 0
+		    || monster.var3 != 0
+		    || monster.goal != MonsterGoal::None
+		    || monster.mode != MonsterMode::Stand
+		    || monster.levelType != 0
+		    || monster.pathCount != 0
+		    || monster.ai != MonsterAIID::Zombie
+		    || monster.intelligence != 0
+		    || monster.uniqueType != UniqueMonsterType::Garbud
+		    || monster.uniqTrans != 0
+		    || monster.corpseId != 0
+		    || monster.talkMsg != 0
+		    || monster.resistance != 0
+		    || monster.leader != 0
+		    || monster.leaderRelation != LeaderRelation::None
+		    || monster.packSize != 0
+		    || monster.golemToHit != 0
+		    || monster.rndItemSeed != 0
+		    || monster.aiSeed != 0
+		    || monster.hitPoints != 0
+		    || monster.maxHitPoints != 0
+		    || monster.activeForTicks != 0
+		    || monster.whoHit != 0
+		    || monster.minDamage != 0
+		    || monster.maxDamage != 0
+		    || monster.minDamageSpecial != 0
+		    || monster.maxDamageSpecial != 0
+		    || monster.armorClass != 0
+		    || monster.reducePlayerStrength != 0
+		    || monster.reducePlayerMagic != 0
+		    || monster.reducePlayerDexterity != 0
+		    || monster.reducePlayerVitality != 0
+		    || monster.reducePlayerMaxHP != 0
+		    || monster.reducePlayerMaxMana != 0
+		    || monster.flags != MFLAG_NO_ENEMY
+		    || monster.isInvalid
+		    || monster.lightId != NO_LIGHT
+		    || monster.animInfo.ticksPerFrame != 0
+		    || monster.animInfo.tickCounterOfCurrentFrame != 0
+		    || monster.animInfo.numberOfFrames != 0
+		    || monster.animInfo.currentFrame != 0
+		    || monster.animInfo.isPetrified)
+			throw std::runtime_error("fresh Cathedral monster slot contains nonzero state");
+	}
+}
+
+void AssertFreshObjectSlots()
+{
+	if (ObjectPoolAdapter::ActiveObjectCountValue() != 0)
+		throw std::runtime_error("fresh Cathedral object slots were not empty");
+	for (int slot = 0; slot < MAXOBJECTS; slot++) {
+		if (ObjectPoolAdapter::ActiveObjectIds()[slot] != 0
+		    || ObjectPoolAdapter::AvailableObjectIds()[slot] != slot)
+			throw std::runtime_error("fresh Cathedral object pool references were not initialized");
+	}
+	for (const Tile &tile : tiles().columnMajor()) {
+		if (tile.object() != 0)
+			throw std::runtime_error("fresh Cathedral object tile references were not empty");
+	}
 }
 
 void ResetNativePools()
@@ -599,7 +788,7 @@ void PrepareGameAssets(std::string &error)
 	}
 }
 
-PopulationCapture CapturePopulation(int depth, uint32_t seed, lvl_entry entry)
+PopulationCapture CapturePopulation(int depth, uint32_t seed, lvl_entry entry, bool captureInitialInputs)
 {
 	ResetNativePools();
 	currentLevel().setId(Level::create(LevelId { .levelNum = static_cast<uint8_t>(depth), .type = DTYPE_CATHEDRAL }).id());
@@ -682,10 +871,31 @@ PopulationCapture CapturePopulation(int depth, uint32_t seed, lvl_entry entry)
 	capture.rngAfterPopulationReset = GetLCGEngineState();
 	HoldThemeRooms();
 	capture.populatedCellsAfterHoldThemeRooms = CapturePopulatedCells();
+	capture.playerId = static_cast<int>(MyPlayer->getId());
+	capture.playerLevel = MyPlayer->plrlevel;
+	capture.playerActive = MyPlayer->plractive;
+	capture.playerLevelChanging = MyPlayer->_pLvlChanging;
+	capture.playerTile = MyPlayer->position.tile;
+	capture.playerFuture = MyPlayer->position.future;
+	capture.prePhasePieces = CapturePieces();
+	capture.prePhaseSpecial = CaptureSpecial();
+	capture.prePhaseTransparency = CaptureTransparency();
+	capture.prePhaseSolProperties = CaptureSolProperties();
+	capture.prePhasePopulatedCells = CapturePopulatedFlags();
+	capture.prePhaseMonsterTileRefs = CaptureMonsterTileRefs();
+	capture.prePhasePlayerTileRefs = CapturePlayerTileRefs();
+	capture.prePhaseBestiary = CaptureBestiary();
+	AssertFreshObjectSlots();
+	AssertFreshMonsterSlots();
 	InitGolems();
 	capture.rngAfterInitGolems = GetLCGEngineState();
 	InitObjects();
 	capture.rngAfterInitObjects = GetLCGEngineState();
+	if (captureInitialInputs) {
+		capture.finalPieces = CapturePieces();
+		capture.finalSpecial = CaptureSpecial();
+		capture.finalTransparency = CaptureTransparency();
+	}
 
 	capture.activeObjectCount = ObjectPoolAdapter::ActiveObjectCountValue();
 	for (const int id : ObjectPoolAdapter::ActiveObjectIds())
@@ -878,6 +1088,165 @@ void WriteMetadata(const std::filesystem::path &path)
 		throw std::runtime_error("unable to write population oracle metadata: " + path.string());
 }
 
+void WriteNativeMonsterCatalog(std::ostream &stream)
+{
+	stream << '[';
+	for (size_t index = 0; index < MonstersData.size(); index++) {
+		if (index != 0)
+			stream << ',';
+		const MonsterData &monster = MonstersData[index];
+		stream << "{\"nativeMonsterId\":" << index << ",\"name\":";
+		WriteJsonString(stream, monster.name);
+		stream << ",\"availability\":" << static_cast<int>(monster.availability)
+		       << ",\"image\":" << monster.image
+		       << ",\"minDungeonLevel\":" << static_cast<int>(monster.minDunLvl)
+		       << ",\"maxDungeonLevel\":" << static_cast<int>(monster.maxDunLvl)
+		       << ",\"level\":" << static_cast<int>(monster.level)
+		       << ",\"minHp\":" << monster.hitPointsMinimum
+		       << ",\"maxHp\":" << monster.hitPointsMaximum
+		       << ",\"ai\":" << static_cast<int>(monster.ai)
+		       << ",\"intelligence\":" << static_cast<int>(monster.intelligence)
+		       << ",\"minDamage\":" << static_cast<int>(monster.minDamage)
+		       << ",\"maxDamage\":" << static_cast<int>(monster.maxDamage)
+		       << ",\"minDamageSpecial\":" << static_cast<int>(monster.minDamageSpecial)
+		       << ",\"maxDamageSpecial\":" << static_cast<int>(monster.maxDamageSpecial)
+		       << ",\"armorClass\":" << static_cast<int>(monster.armorClass)
+		       << ",\"resistance\":" << static_cast<int>(monster.resistance)
+		       << ",\"resistanceHell\":" << static_cast<int>(monster.resistanceHell)
+		       << ",\"abilityFlags\":" << monster.abilityFlags
+		       << ",\"hasSpecial\":" << (monster.hasSpecial ? "true" : "false")
+		       << ",\"width\":" << monster.width
+		       << ",\"frames\":[";
+		for (size_t animation = 0; animation < 6; animation++) {
+			if (animation != 0)
+				stream << ',';
+			stream << static_cast<int>(monster.frames[animation]);
+		}
+		stream << "],\"rates\":[";
+		for (size_t animation = 0; animation < 6; animation++) {
+			if (animation != 0)
+				stream << ',';
+			stream << static_cast<int>(monster.rate[animation]);
+		}
+		stream << "],\"reducePlayerStrength\":" << static_cast<int>(monster.reducePlayerStrength)
+		       << ",\"reducePlayerMagic\":" << static_cast<int>(monster.reducePlayerMagic)
+		       << ",\"reducePlayerDexterity\":" << static_cast<int>(monster.reducePlayerDexterity)
+		       << ",\"reducePlayerVitality\":" << static_cast<int>(monster.reducePlayerVitality)
+		       << ",\"reducePlayerMaxHP\":" << static_cast<int>(monster.reducePlayerMaxHP)
+		       << ",\"reducePlayerMaxMana\":" << static_cast<int>(monster.reducePlayerMaxMana) << '}';
+	}
+	stream << ']';
+}
+
+void WriteMonsterSupplemental(std::ostream &stream, const NativeMonsterCapture &monster)
+{
+	stream << "{\"slot\":" << monster.slot
+	       << ",\"temp\":";
+	WritePoint(stream, monster.temp);
+	stream << ",\"golemToHit\":" << monster.golemToHit
+	       << ",\"reducePlayerStrength\":" << monster.reducePlayerStrength
+	       << ",\"reducePlayerMagic\":" << monster.reducePlayerMagic
+	       << ",\"reducePlayerDexterity\":" << monster.reducePlayerDexterity
+	       << ",\"reducePlayerVitality\":" << monster.reducePlayerVitality
+	       << ",\"reducePlayerMaxHP\":" << monster.reducePlayerMaxHP
+	       << ",\"reducePlayerMaxMana\":" << monster.reducePlayerMaxMana << '}';
+}
+
+void WriteNativeInputs(const std::filesystem::path &path, const std::vector<PopulationCapture> &captures)
+{
+	std::ofstream stream(path, std::ios::binary | std::ios::trunc);
+	if (!stream.good())
+		throw std::runtime_error("unable to open population input sidecar: " + path.string());
+	stream << "{\n\"format\":\"" << PopulationInputFormat
+	       << "\",\n\"version\":" << PopulationInputVersion
+	       << ",\n\"policy\":\"" << PopulationInputPolicy
+	       << "\",\n\"caseCount\":" << PopulationCaseCount
+	       << ",\n\"levelGenerationTableLoaded\":true"
+	       << ",\n\"storyMessages\":[" << static_cast<int>(TEXT_BOOK11)
+	       << ',' << static_cast<int>(TEXT_BOOK21)
+	       << ',' << static_cast<int>(TEXT_BOOK31) << ']'
+	       << ",\n\"constants\":{\"golemNativeType\":" << static_cast<int>(MT_GOLEM)
+	       << ",\"southDirection\":" << static_cast<int>(Direction::South)
+	       << ",\"standMode\":" << static_cast<int>(MonsterMode::Stand)
+	       << ",\"normalGoal\":" << static_cast<int>(MonsterGoal::Normal)
+	       << ",\"specialAttackMode\":" << static_cast<int>(MonsterMode::SpecialMeleeAttack)
+	       << ",\"noUniqueType\":" << static_cast<int>(UniqueMonsterType::None)
+	       << ",\"noLeader\":" << static_cast<int>(Monster::NoLeader)
+	       << ",\"noLight\":" << NO_LIGHT
+	       << ",\"textNone\":" << static_cast<int>(TEXT_NONE)
+	       << ",\"monsterNoEnemyFlag\":" << MFLAG_NO_ENEMY
+	       << ",\"golemFlag\":" << MFLAG_GOLEM
+	       << ",\"berserkFlag\":" << MFLAG_BERSERK
+	       << ",\"targetsMonsterFlag\":" << MFLAG_TARGETS_MONSTER
+	       << ",\"lockAnimationFlag\":" << MFLAG_LOCK_ANIMATION
+	       << ",\"allowSpecialFlag\":" << MFLAG_ALLOW_SPECIAL
+	       << ",\"tileSolidFlag\":" << static_cast<int>(TileProperties::Solid)
+	       << ",\"tileTrapFlag\":" << static_cast<int>(TileProperties::Trap)
+	       << ",\"arrow\":" << static_cast<int>(MissileID::Arrow)
+	       << ",\"firebolt\":" << static_cast<int>(MissileID::Firebolt)
+	       << ",\"lightningControl\":" << static_cast<int>(MissileID::LightningControl)
+	       << ",\"maxObjects\":" << MAXOBJECTS
+	       << ",\"maxMonsters\":" << MaxMonsters << '}'
+	       << ",\n\"monsterData\":";
+	WriteNativeMonsterCatalog(stream);
+	stream << ",\n\"cases\":[";
+	for (size_t index = 0; index < captures.size(); index++) {
+		const PopulationCapture &capture = captures[index];
+		if (index != 0)
+			stream << ',';
+		stream << "{\"snapshot\":\"cathedral-population-depth-" << capture.depth << '-'
+		       << capture.inputSeed << '-' << EntryName(capture.entry) << ".json\",\"input\":{";
+		stream << "\"depth\":" << capture.depth
+		       << ",\"populationSeed\":" << capture.populationSeed
+		       << ",\"storySeed\":" << StoryDungeonSeed
+		       << ",\"pieces\":";
+		WriteArray(stream, capture.prePhasePieces);
+		stream << ",\"special\":";
+		WriteArray(stream, capture.prePhaseSpecial);
+		stream << ",\"transparency\":";
+		WriteArray(stream, capture.prePhaseTransparency);
+		stream << ",\"pieceProperties\":";
+		WriteArray(stream, capture.prePhaseSolProperties);
+		stream << ",\"populatedCells\":";
+		WriteBoolArray(stream, capture.prePhasePopulatedCells);
+		stream << ",\"playerTileRefs\":";
+		WriteArray(stream, capture.prePhasePlayerTileRefs);
+		stream << ",\"monsterTileRefs\":";
+		WriteArray(stream, capture.prePhaseMonsterTileRefs);
+		stream << ",\"freshMonsterSlots\":true,\"player\":{\"id\":" << capture.playerId
+		       << ",\"level\":" << capture.playerLevel
+		       << ",\"active\":" << (capture.playerActive ? "true" : "false")
+		       << ",\"levelChanging\":" << (capture.playerLevelChanging ? "true" : "false")
+		       << ",\"tile\":";
+		WritePoint(stream, capture.playerTile);
+		stream << ",\"future\":";
+		WritePoint(stream, capture.playerFuture);
+		stream << "},\"trapPercent\":" << GetTrapPercent(capture.depth)
+		       << ",\"orderedBestiary\":";
+		WriteBestiary(stream, capture.prePhaseBestiary);
+		stream << "},\"expectedOutput\":{\"pieces\":";
+		WriteArray(stream, capture.finalPieces);
+		stream << ",\"special\":";
+		WriteArray(stream, capture.finalSpecial);
+		stream << ",\"transparency\":";
+		WriteArray(stream, capture.finalTransparency);
+		stream << ",\"monsterSupplemental\":[";
+		for (size_t monsterIndex = 0; monsterIndex < capture.monsters.size(); monsterIndex++) {
+			if (monsterIndex != 0)
+				stream << ',';
+			WriteMonsterSupplemental(stream, capture.monsters[monsterIndex]);
+		}
+		stream << "]}}";
+	}
+	stream << "]\n}\n";
+	stream.flush();
+	if (!stream.good())
+		throw std::runtime_error("unable to flush population input sidecar: " + path.string());
+	stream.close();
+	if (stream.fail())
+		throw std::runtime_error("unable to write population input sidecar: " + path.string());
+}
+
 bool SamePathComponent(const std::filesystem::path &left, const std::filesystem::path &right)
 {
 #ifdef _WIN32
@@ -946,6 +1315,40 @@ bool ValidateOutputPath(const std::filesystem::path &path, std::string &error)
 	}
 }
 
+bool ValidateNativeInputArtifact(const std::filesystem::path &directory, std::string &error)
+{
+	try {
+		const auto absoluteDirectory = std::filesystem::absolute(directory).lexically_normal();
+		if (!std::filesystem::is_directory(absoluteDirectory))
+			throw std::runtime_error("population input root must be an existing directory");
+		const auto artifact = absoluteDirectory / "native-population-inputs.json";
+		if (!std::filesystem::is_regular_file(artifact))
+			throw std::runtime_error("population input artifact must be a regular file");
+#ifdef _WIN32
+		const DWORD attributes = GetFileAttributesW(artifact.c_str());
+		if (attributes == INVALID_FILE_ATTRIBUTES || (attributes & FILE_ATTRIBUTE_REPARSE_POINT) != 0)
+			throw std::runtime_error("population input artifact must not be a reparse point");
+#else
+		if (std::filesystem::is_symlink(std::filesystem::symlink_status(artifact)))
+			throw std::runtime_error("population input artifact must not be a symlink");
+#endif
+		if (std::filesystem::file_size(artifact) == 0)
+			throw std::runtime_error("population input artifact must be nonempty");
+		size_t childCount = 0;
+		for (const auto &child : std::filesystem::directory_iterator(absoluteDirectory)) {
+			childCount++;
+			if (childCount > 1 || child.path().filename() != artifact.filename())
+				throw std::runtime_error("population input root must contain exactly native-population-inputs.json");
+		}
+		if (childCount != 1)
+			throw std::runtime_error("population input root must contain exactly native-population-inputs.json");
+		return true;
+	} catch (const std::exception &exception) {
+		error = exception.what();
+		return false;
+	}
+}
+
 TEST(CathedralPopulation, RejectRepositoryOutput)
 {
 	const auto repository = FindRepositoryRoot();
@@ -974,6 +1377,15 @@ TEST(CathedralPopulation, NativeObjectPopulationLocalAssetOracle)
 	const std::filesystem::path outputPath(outputDirectory);
 	std::string outputError;
 	ASSERT_TRUE(ValidateOutputPath(outputPath, outputError)) << outputError;
+	const char *inputDirectory = std::getenv(PopulationInputDirectoryVariable);
+	const bool captureInputs = inputDirectory != nullptr && inputDirectory[0] != '\0';
+	std::filesystem::path inputPath;
+	if (captureInputs) {
+		inputPath = std::filesystem::path(inputDirectory);
+		ASSERT_TRUE(ValidateOutputPath(inputPath, outputError)) << outputError;
+		ASSERT_FALSE(std::filesystem::equivalent(outputPath, inputPath))
+		    << "population artifacts and phase inputs require separate directories";
+	}
 	ASSERT_TRUE(HeadlessMode) << "population oracle requires the headless GTest runner";
 
 	NativeStateGuard stateGuard;
@@ -981,6 +1393,12 @@ TEST(CathedralPopulation, NativeObjectPopulationLocalAssetOracle)
 	PrepareGameAssets(assetError);
 	if (!assetError.empty())
 		GTEST_SKIP() << assetError;
+	if (captureInputs) {
+		LoadLevelGenerationData();
+		for (int depth = CathedralFirstDepth; depth <= CathedralLastDepth; depth++)
+			ASSERT_EQ(GetTrapPercent(depth), depth == 1 ? 10 : 15)
+			    << "population parity requires the shipped level-generation trap metadata";
+	}
 
 	const std::array<uint32_t, 2> seeds { UINT32_C(2588), UINT32_C(743271966) };
 	const std::array<lvl_entry, 2> entries { ENTRY_MAIN, ENTRY_PREV };
@@ -992,8 +1410,8 @@ TEST(CathedralPopulation, NativeObjectPopulationLocalAssetOracle)
 				PopulationCapture capture;
 				PopulationCapture repeated;
 				try {
-					capture = CapturePopulation(depth, seed, entry);
-					repeated = CapturePopulation(depth, seed, entry);
+					capture = CapturePopulation(depth, seed, entry, captureInputs);
+					repeated = CapturePopulation(depth, seed, entry, captureInputs);
 				} catch (const std::exception &exception) {
 					FAIL() << "Native Cathedral population capture failed at depth " << depth
 					       << ", seed " << seed << ", entry " << EntryName(entry)
@@ -1012,6 +1430,11 @@ TEST(CathedralPopulation, NativeObjectPopulationLocalAssetOracle)
 		const std::string name = "cathedral-population-depth-" + std::to_string(capture.depth)
 		    + "-" + std::to_string(capture.inputSeed) + "-" + EntryName(capture.entry) + ".json";
 		WritePopulationCase(outputPath / name, capture);
+	}
+	if (captureInputs) {
+		WriteNativeInputs(inputPath / "native-population-inputs.json", captures);
+		std::string inputError;
+		ASSERT_TRUE(ValidateNativeInputArtifact(inputPath, inputError)) << inputError;
 	}
 }
 

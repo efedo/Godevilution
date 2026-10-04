@@ -2,6 +2,19 @@
 
 Notable changes to this fork are recorded below.
 
+- 2026-10-03: Port the bounded ordinary Cathedral initial Golem/object phase to
+  independent C# algorithms with validated detached pre-phase inputs, native
+  pools, signed refs, scalar state, RNG and final geometry. Add a corrected
+  private native/managed parity route with loaded trap metadata and separate
+  input sidecars; preserve the legacy reference and runtime defaults. Verify
+  sixteen exact comparisons, two byte-identical native captures, 22 native wall
+  traps, 19 portable/documentation checks, 35 launcher checks and 44 affected
+  native passes with 12 existing opt-in exclusions. Freeze all seventeen legacy
+  artifact bytes. Broader module tests pass 2,745 with four unchanged Hork RNG
+  failures and 95 explicit exclusions; do not claim a green suite. Full server
+  passes 1,556 with four unchanged exclusions. Retain draft failures and private
+  evidence. Upstream/final population, content activation and M0/M2 remain open.
+
 - 2026-10-03: Add an isolated native Cathedral initial-object oracle and bounded
   repeated-capture runner. Include real stair/theme/monster prerequisites,
   separate seed boundaries, native metadata, object pools and skeleton

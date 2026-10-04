@@ -148,6 +148,68 @@ open. Their scope, dependencies, and exit checks are defined only in the
 
 ## Recent implementation evidence
 
+### M2 managed ordinary Cathedral initial-object phase (2026-10-03)
+
+`AuthoritativeCathedralPopulationGenerator` independently implements fresh
+single-player Normal `InitGolems` and `InitObjects` for quest-disabled original
+Diablo depths 1-4. Its detached, validated parameter model receives pre-phase
+pieces/SOL/special/transparency, held reservations, player/monster occupancy,
+ordered bestiary and raw object/monster metadata, population/story seeds and
+trap percentage. It does not read MPQs or replay expected final state.
+
+The result preserves all modeled/captured active scalar object/monster fields,
+both complete 127-slot object-index arrays including unused tails, signed sarcophagus refs,
+Golem/skeleton reservations, RNG boundaries and final mutated geometry. Portable
+tests cover deterministic repeatability, detached inputs/results, malformed and
+blocked inputs, the full native pool and reservation/animation ordering.
+
+The opt-in `-CathedralPopulationParity` wrapper loads the missing native
+level-generation prerequisite, verifies trap percentages 10/15 and records a
+separate pre-phase sidecar. The test-only reader validates the complete metadata
+and actual selected animations, then compares sixteen depth/seed/entry cases.
+No expected output is passed into generation. Successful wall-trap coverage is
+required; this corpus contains 22 wall traps.
+
+Current verification:
+
+- Managed game-module build: zero warnings/errors; portable and documentation
+  checks pass 19/19 with no skips.
+- Sixteen explicit comparisons pass with no skips. A fresh full wrapper run
+  repeats both native captures byte-for-byte (17 reference artifacts plus one
+  sidecar), completes all managed comparisons and records confirmed native
+  exits with no timeout or cleanup error. Private evidence is
+  `%TEMP%/Godevilution-Cathedral-Population-Oracle-f0f2b42d37cc40f3a3c7afe32115cd64`.
+- Matching x64 MSVC build succeeds; affected registered native checks pass
+  44 tests with 12 existing opt-in exclusions, not original-asset passes.
+- Launcher/process-safety checks pass 35/35 without skips or a Godot launch.
+  A fresh legacy-only run repeats its seventeen artifacts; all seventeen also
+  match the earlier retained private corpus byte-for-byte. Its separate report
+  is `%TEMP%/Godevilution-Cathedral-Population-Oracle-040490d2178d4d6c944fe13b13149399`.
+- Full game-module suite: 2,745 passes, the same four baseline-confirmed Hork
+  Demon RNG failures, and 95 explicit/private exclusions (including the sixteen
+  new oracle cases that pass separately). This is not a green full module suite.
+  Output remains in `.local/m2-population-full-diablo-tests.log`; expected Hork
+  values were not changed or exclusions added to conceal the failures.
+- Full server suite passes 1,556 tests with four unchanged explicit/filesystem
+  exclusions and no failures (51.357s). Its build has three existing `NU1900`
+  audit-feed warnings, not a vulnerability-audit pass. Logs remain under
+  `.local/m2-population-final-*.log`.
+
+Retained initial integration failures include corrected portable assertions and
+a test-reader catalog-count error: native `NUM_DEFAULT_MTYPES` is 138, distinct
+from 200 runtime monster slots. The first private managed comparison failed on
+that assertion before comparing the algorithm; its report remains retained.
+Neither that failure nor its passing rerun is a Godot crash reproduction.
+
+This closes a bounded initial-object comparison, not complete population or
+Cathedral-family acceptance. Upstream `GetLevelMTypes`/`InitThemes`/
+`HoldThemeRooms` generation, final `InitMonsters`/`CreateThemeRooms`, compiled
+external prerequisites, live populated activation/interactions/cold restore,
+physical light/vision and campaign/quest policies remain open. Existing
+profiles, save formats, defaults and server MPQ independence are unchanged.
+No Godot application was launched; M0/M2 and the approximately 35% overall
+estimate remain open.
+
 ### M2 complete native initial-object reference (2026-10-03)
 
 The separate opt-in Cathedral population oracle targets native `InitObjects`,
@@ -160,6 +222,13 @@ The corpus covers depths 1-4, seeds 2588/743271966 and MAIN/PREV entry, retainin
 native catalogs, RNG boundaries, reserved cells, signed object occupancy, active
 object state, both complete object-index arrays and Golem/skeleton reservations.
 Raw native state is not a claim of normalized save-byte equivalence.
+
+Subsequent prerequisite review found that this reference did not load
+`LevelGenerationData`: `GetTrapPercent` therefore used the native zero fallback,
+and all 16 retained cases have no wall traps. Its `pieces` and `transparency`
+are captured before `InitObjects`, not final door-mutated geometry. These
+limitations qualify the earlier complete-phase characterization; use the
+separate corrected parity route for loaded trap metadata and final layers.
 
 MSVC test access uses a `BUILD_TESTING`-only forwarder to the existing native
 level initializer and the established DLL test-export annotations. Native

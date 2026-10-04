@@ -455,9 +455,17 @@ this evidence. A sample art pack does not satisfy M4's full presentation gate.
    RNG. The separate `-CathedralPopulation` oracle targets the complete native
    `InitObjects` phase after real trigger/stair reservations, monster-type and
    theme initialization, an independent population seed reset and `InitGolems`.
-   Qualify its repeated corpus before using it to port object placement, native
-   metadata, seeded object state and skeleton reservations into a separately
-   identified opt-in server profile. Do not substitute it for final encounter
+   Its initial corpus omitted the level-generation table and therefore uses
+   zero trap percentages; its piece layer is pre-object initialization. Preserve
+   that legacy reference. The separate `-CathedralPopulationParity` route now
+   compares sixteen cases using loaded trap metadata, explicit pre-phase inputs
+   and final mutated layers against the independent managed initializer. Preserve
+   this limited `InitGolems`/`InitObjects` gate, including successful wall traps
+   and exact pool/RNG checks. Next port upstream bestiary/theme/reservation
+   generation and compile the validated external prerequisites, then final
+   encounters/theme objects, before activating a separately identified opt-in
+   populated server profile. Never use expected final state as production input. Do not
+   substitute this phase for final encounter
    placement or the later `CreateThemeRooms` phase, and require ordinary Godot
    interaction plus cold restore before claiming playable native population.
    Static light collision is a separate live object channel, not a new SOL,

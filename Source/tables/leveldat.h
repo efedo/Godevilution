@@ -3,6 +3,8 @@
 #include <cstdint>
 #include <vector>
 
+#include "utils/attributes.h"
+
 namespace devilution {
 
 struct LevelGenerationRow {
@@ -13,11 +15,11 @@ struct LevelGenerationRow {
 	int trapPercent;
 };
 
-extern std::vector<LevelGenerationRow> LevelGenerationData;
+extern DVL_API_FOR_TEST std::vector<LevelGenerationRow> LevelGenerationData;
 
-void LoadLevelGenerationData();
+DVL_API_FOR_TEST void LoadLevelGenerationData();
 int GetMonsterDensityDivisor(int level);
 int GetMpMonsterMultiplierPercent(int level);
-int GetTrapPercent(int level);
+DVL_API_FOR_TEST int GetTrapPercent(int level);
 
 } // namespace devilution

@@ -330,6 +330,30 @@ save-byte equivalence, final monster placement or the later `CreateThemeRooms`
 phase. It neither activates a populated server profile nor adds server MPQ
 access. Keep the entire printed evidence directory private.
 
+The original mode preserves its version-1 reference: it does not load the
+level-generation table, so trap percentages use the native zero fallback.
+Its piece/transparency arrays are pre-object layers, not final door mutations.
+Do not use this corpus alone to claim parity with the shipped prerequisites.
+
+For the corrected native/managed initial-object comparison, select:
+
+```powershell
+./tools/test-cathedral-geometry.ps1 -CathedralPopulationParity
+```
+
+This mutually exclusive mode loads the native level-generation table (trap
+percentages 10/15), captures a separate pre-phase input sidecar, and compares
+sixteen explicit managed cases with no skips. Both independent native captures
+must have identical seventeen reference artifacts and one input sidecar. The
+reader validates raw metadata and requires successful wall traps; the generator
+receives only pre-phase inputs, never expected object state or final geometry.
+Builds and stages are bounded, failed stages stop, owned children are cleaned up,
+and both opt-in environment variables are restored. Licensed evidence stays
+outside the repository. This does not supply upstream theme/bestiary algorithms,
+final encounters, physical lighting, a production content loader or playable
+population/restore acceptance. Existing oracle modes and runtime defaults remain
+unchanged.
+
 The C# xUnit project is an executable Microsoft Testing Platform runner. Run
 it directly when `dotnet test` selects a machine-wide VSTest host whose
 `testhost` package is unavailable:

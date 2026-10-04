@@ -18,6 +18,9 @@ public sealed class CathedralPopulationOracleLauncherTests
         Assert.Contains("[switch]$CathedralDepths", launcher, StringComparison.Ordinal);
         Assert.Contains("[switch]$CathedralDoors", launcher, StringComparison.Ordinal);
         Assert.Contains("[switch]$CathedralPopulation", launcher, StringComparison.Ordinal);
+        Assert.Contains("[switch]$CathedralPopulationParity", launcher, StringComparison.Ordinal);
+        Assert.Contains("$CathedralPopulation -or $CathedralDoors -or $CathedralDepths", launcher, StringComparison.Ordinal);
+        Assert.Contains("--filter-class *AuthoritativeCathedralInitialObjectNativeOracleTests --explicit only --fail-skips on", launcher, StringComparison.Ordinal);
         Assert.Contains("$CathedralPopulation -and ($CathedralDoors -or $CathedralDepths)", launcher, StringComparison.Ordinal);
         Assert.Contains("if ($CathedralDoors -and $CathedralDepths)", launcher, StringComparison.Ordinal);
         Assert.Contains("if ($CathedralPopulation)", launcher, StringComparison.Ordinal);
@@ -36,6 +39,11 @@ public sealed class CathedralPopulationOracleLauncherTests
             $ErrorActionPreference = 'Continue'
             try { $incompatibleOutput = (& powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass -File $launcherPath -CathedralPopulation -CathedralDoors 2>&1 | Out-String) } finally { $ErrorActionPreference = $savedErrorActionPreference }
             if ($LASTEXITCODE -eq 0 -or $incompatibleOutput -notmatch 'mutually exclusive') { throw 'The incompatible Cathedral population mode did not fail before build selection.' }
+            foreach ($incompatibleFlag in @('-CathedralPopulation','-CathedralDoors','-CathedralDepths')) {
+                $ErrorActionPreference = 'Continue'
+                try { $incompatibleOutput = (& powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass -File $launcherPath -CathedralPopulationParity $incompatibleFlag 2>&1 | Out-String) } finally { $ErrorActionPreference = $savedErrorActionPreference }
+                if ($LASTEXITCODE -eq 0 -or $incompatibleOutput -notmatch 'mutually exclusive') { throw 'Population parity accepted an incompatible mode.' }
+            }
             Write-Output 'PASS'
             """);
 
@@ -54,7 +62,7 @@ public sealed class CathedralPopulationOracleLauncherTests
                 "Assert-CathedralPopulationInteger", "Assert-CathedralPopulationString",
                 "Assert-CathedralPopulationArray", "Assert-CathedralPopulationExactStringArray",
                 "Assert-CathedralPopulationMetadata", "Get-CathedralPopulationOracleArtifactNames",
-                "Get-CathedralPopulationOracleArtifacts", "Assert-CathedralPopulationNativeReport",
+                "Get-CathedralPopulationOracleArtifacts", "Get-CathedralPopulationInputArtifact", "Assert-CathedralPopulationNativeReport", "Assert-CathedralManagedReport",
                 "Add-CathedralPopulationCleanupError", "Stop-CathedralPopulationOwnedProcessTree", "Invoke-CathedralPopulationOwnedProcess"
             ],
             """
@@ -115,14 +123,41 @@ public sealed class CathedralPopulationOracleLauncherTests
                 $hidden = Join-Path $artifactRoot '.hidden-extra'; [IO.File]::WriteAllText($hidden, 'out-of-scope'); [IO.File]::SetAttributes($hidden, [IO.FileAttributes]::Hidden)
                 Expect-Rejected { Get-CathedralPopulationOracleArtifacts $artifactRoot }
                 Remove-Item -LiteralPath $hidden -Force
+                $inputRoot = Join-Path $work 'inputs'; New-Item -ItemType Directory -Path $inputRoot | Out-Null
+                Expect-Rejected { Get-CathedralPopulationInputArtifact $inputRoot }
+                $inputPath = Join-Path $inputRoot 'native-population-inputs.json'
+                [IO.File]::WriteAllText($inputPath, '')
+                Expect-Rejected { Get-CathedralPopulationInputArtifact $inputRoot }
+                [IO.File]::WriteAllText($inputPath, '{}')
+                $inputArtifact = Get-CathedralPopulationInputArtifact $inputRoot
+                if ($inputArtifact.Name -cne 'native-population-inputs.json' -or $inputArtifact.Bytes -ne 2 -or $inputArtifact.Sha256 -notmatch '^[0-9a-f]{64}$') { throw 'Input artifact hash or exact identity was lost.' }
+                $extraInput = Join-Path $inputRoot '.extra-input'; [IO.File]::WriteAllText($extraInput, '{}'); [IO.File]::SetAttributes($extraInput, [IO.FileAttributes]::Hidden)
+                Expect-Rejected { Get-CathedralPopulationInputArtifact $inputRoot }
+                Remove-Item -LiteralPath $extraInput -Force
                 $reparsePath = Join-Path ([IO.Path]::GetTempPath()) ('Godevilution-PopulationAlias-' + [guid]::NewGuid().ToString('N'))
-                $junction = Invoke-CathedralPopulationOwnedProcess -Executable (Join-Path $env:SystemRoot 'System32\cmd.exe') -Arguments ('/d /c mklink /J "{0}" "{1}"' -f $reparsePath, $artifactRoot) -LogPath (Join-Path $work 'junction.log') -TimeoutMilliseconds 10000
+                $junction = Invoke-CathedralPopulationOwnedProcess -Executable (Join-Path $env:SystemRoot 'System32\cmd.exe') -Arguments ('/d /c mklink /J "{0}" "{1}"' -f $reparsePath, $inputRoot) -LogPath (Join-Path $work 'junction.log') -TimeoutMilliseconds 10000
                 if ($junction.ExitCode -ne 0 -or -not $junction.ConfirmedExited -or $null -ne $junction.Error) { throw ('Could not create the bounded reparse-point probe: ' + $junction.Output + $junction.Error) }
                 $reparseItem = Get-Item -LiteralPath $reparsePath -Force
                 if (($reparseItem.Attributes -band [IO.FileAttributes]::ReparsePoint) -eq 0) { throw 'The reparse-point probe is not a junction.' }
                 $reparseRejected = $false
                 try { Get-CathedralPopulationOracleArtifacts $reparsePath | Out-Null } catch { if ($_.Exception.Message -notmatch 'reparse point') { throw }; $reparseRejected = $true }
                 if (-not $reparseRejected) { throw 'A reparse-point artifact root was accepted.' }
+                $inputReparseRejected = $false
+                try { Get-CathedralPopulationInputArtifact $reparsePath | Out-Null } catch { if ($_.Exception.Message -notmatch 'regular directory') { throw }; $inputReparseRejected = $true }
+                if (-not $inputReparseRejected) { throw 'A reparse-point input root was accepted.' }
+                $managedLog = Join-Path $work 'managed-summary.log'
+                $validSummary = 'Test run summary: Passed! total: 16 failed: 0 succeeded: 16 skipped: 0'
+                [IO.File]::WriteAllText($managedLog, $validSummary)
+                Assert-CathedralManagedReport $managedLog 16
+                foreach ($invalidSummary in @(
+                    'Test run summary: Passed! total: 15 failed: 0 succeeded: 15 skipped: 0',
+                    'Test run summary: Passed! total: 17 failed: 0 succeeded: 17 skipped: 0',
+                    'Test run summary: Passed! total: 16 failed: 1 succeeded: 15 skipped: 0',
+                    'Test run summary: Passed! total: 16 failed: 0 succeeded: 15 skipped: 1',
+                    ($validSummary + [Environment]::NewLine + $validSummary))) {
+                    [IO.File]::WriteAllText($managedLog, $invalidSummary)
+                    Expect-Rejected { Assert-CathedralManagedReport $managedLog 16 }
+                }
                 Write-Output 'PASS'
             } catch { $primaryFailure = $_; throw }
             finally {

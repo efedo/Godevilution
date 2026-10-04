@@ -32,6 +32,16 @@ oracle until its consumers have characterized replacements. Retiring C++/SDL
 and Lua from production must not silently remove a supported compatibility
 surface; see the M5 gate in the completion plan.
 
+The ordinary Cathedral initial-object generator belongs to `Devilution.Diablo`.
+It consumes detached, validated pre-phase geometry, SOL flags, held reservations,
+ordered bestiary/object metadata and explicit seeds; it never reads archives or
+uses expected final state as an input. Its result preserves native object pools,
+signed occupancy, scalar object/monster state, RNG and final geometry. This is
+the fresh single-player Normal `InitGolems`/`InitObjects` phase, not upstream
+monster/theme selection, final encounters, physical lighting or a populated
+runtime profile. The private oracle reader is test tooling, not a shipped
+content loader; external-pack compilation and live activation remain required.
+
 ## Components
 
 | Component | Responsibility |
