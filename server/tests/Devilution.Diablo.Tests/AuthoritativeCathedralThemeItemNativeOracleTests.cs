@@ -141,7 +141,7 @@ public sealed class AuthoritativeCathedralThemeItemNativeOracleTests
             ReadItem(value.GetProperty("groundItem")));
     }
 
-    private static AuthoritativeCathedralThemeItemCatalog ReadCatalog(JsonElement value)
+    internal static AuthoritativeCathedralThemeItemCatalog ReadCatalog(JsonElement value)
     {
         Properties(value, "items", "prefixes", "suffixes", "uniques", "spells", "glyphWidths", "glyphRows", "animations", "cursors", "generationRules");
         var animations = A(value, "animations").EnumerateArray().Select(row => {
@@ -231,7 +231,7 @@ public sealed class AuthoritativeCathedralThemeItemNativeOracleTests
         return new(N(value, "type"), N(value, "param1"), N(value, "param2"));
     }
 
-    private static AuthoritativeCathedralInitialItemState ReadItem(JsonElement value)
+    internal static AuthoritativeCathedralInitialItemState ReadItem(JsonElement value)
     {
         TypedProperties<AuthoritativeCathedralInitialItemState>(value);
         TypedProperties<AuthoritativeCathedralInitialItemAnimation>(value.GetProperty("animation"));
@@ -253,7 +253,7 @@ public sealed class AuthoritativeCathedralThemeItemNativeOracleTests
         }
     }
 
-    private static HashSet<int> Flags(JsonElement value, string name)
+    internal static HashSet<int> Flags(JsonElement value, string name)
     {
         var entries = A(value, name).EnumerateArray().ToArray();
         if (entries.Length != 128 || entries.Any(row => row.ValueKind is not (JsonValueKind.True or JsonValueKind.False)))
@@ -261,21 +261,21 @@ public sealed class AuthoritativeCathedralThemeItemNativeOracleTests
         return entries.Select((row, index) => (row, index)).Where(value => value.row.GetBoolean()).Select(value => value.index).ToHashSet();
     }
 
-    private static void Properties(JsonElement value, params string[] expected)
+    internal static void Properties(JsonElement value, params string[] expected)
     {
         if (value.ValueKind != JsonValueKind.Object || !value.EnumerateObject().Select(row => row.Name).Order(StringComparer.Ordinal)
                 .SequenceEqual(expected.Order(StringComparer.Ordinal), StringComparer.Ordinal))
             throw new InvalidDataException("Native corpus object has missing, duplicate, or extra properties.");
     }
 
-    private static JsonElement A(JsonElement value, string name)
+    internal static JsonElement A(JsonElement value, string name)
         => value.GetProperty(name).ValueKind == JsonValueKind.Array ? value.GetProperty(name) : throw new InvalidDataException($"{name} must be an array.");
-    private static int N(JsonElement value, string name) => Integer(value.GetProperty(name));
-    private static int Integer(JsonElement value) { RequireIntegral(value); return value.GetInt32(); }
-    private static uint U(JsonElement value, string name) { var raw = value.GetProperty(name); RequireIntegral(raw); return raw.GetUInt32(); }
-    private static string S(JsonElement value, string name)
+    internal static int N(JsonElement value, string name) => Integer(value.GetProperty(name));
+    internal static int Integer(JsonElement value) { RequireIntegral(value); return value.GetInt32(); }
+    internal static uint U(JsonElement value, string name) { var raw = value.GetProperty(name); RequireIntegral(raw); return raw.GetUInt32(); }
+    internal static string S(JsonElement value, string name)
         => value.GetProperty(name).ValueKind == JsonValueKind.String ? value.GetProperty(name).GetString()! : throw new InvalidDataException($"{name} must be text.");
-    private static bool B(JsonElement value, string name)
+    internal static bool B(JsonElement value, string name)
         => value.GetProperty(name).ValueKind is JsonValueKind.True or JsonValueKind.False ? value.GetProperty(name).GetBoolean() : throw new InvalidDataException($"{name} must be Boolean.");
     private static void RequireIntegral(JsonElement value)
     {

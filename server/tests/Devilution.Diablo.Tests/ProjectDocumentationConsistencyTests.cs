@@ -210,6 +210,10 @@ public sealed class ProjectDocumentationConsistencyTests
         Assert.Contains("`-CathedralEncounters`", plan, StringComparison.Ordinal);
         Assert.Contains("Next port `CreateThemeRooms`", plan, StringComparison.Ordinal);
         Assert.Contains("compile the validated external prerequisites", plan, StringComparison.Ordinal);
+        Assert.Contains("tools/test-theme-item-placement.ps1", plan, StringComparison.Ordinal);
+        Assert.Contains("./tools/test-theme-item-placement.ps1", guide, StringComparison.Ordinal);
+        Assert.Contains("unreferenced allocations", plan, StringComparison.Ordinal);
+        Assert.Contains("`ItemNoFlippy`", plan, StringComparison.Ordinal);
         Assert.Contains("`-CathedralInitialItems`", guide, StringComparison.Ordinal);
         Assert.Contains(AuthoritativeCathedralUniqueMonsterCatalog.TableName, guide, StringComparison.Ordinal);
         Assert.Contains("complete 200-slot monster pool", contract, StringComparison.Ordinal);

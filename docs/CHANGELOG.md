@@ -2,6 +2,20 @@
 
 Notable changes to this fork are recorded below.
 
+- 2026-10-04: Port detached Cathedral item selection, complete pool allocation
+  and native placement through setup/unique/ground continuation. Preserve all
+  slots/IDs, signed occupancy, unique history, full-pool RNG, failed-search
+  allocation and safe signed overwrites; fail closed on unsafe native inputs.
+  Add independent 224-selector/40-world proof, repeated byte-identical captures,
+  strict evidence/launcher guards and portable edge regressions. Preserve the
+  earlier 3,040-case corpus exactly. Resolve independent review and inherited
+  PowerShell hashing findings, and update existing plan/status/build guidance.
+  Full module/server suites pass 2,980/1,589 with 135/four explicit exclusions;
+  focused guards, all seven item-oracle fixtures and three existing native
+  item regressions pass.
+  Theme rooms, complete packs, populated-profile/Godot interaction and restore
+  remain open. Keep saves, default launchers and server MPQ independence intact.
+
 - 2026-10-04: Port detached raw Cathedral item setup, unique-history continuation
   and public ground-animation scalars, preserving native RNG, affixes, books,
   staffs, gold, durability, names and field widths. Add a separate bounded,

@@ -489,15 +489,20 @@ this evidence. A sample art pack does not satisfy M4's full presentation gate.
    The separate zero-argument `tools/test-theme-item-generation.ps1` now compares
    detached `SetupAllItems`, `TryRandomUniqueItem` and public ground-animation
    scalars against raw native metadata for original-Diablo SP Normal depths 1-4.
-   Its 3,040 cases cover affixes, books, gold, staff outcomes and unique history;
-   this does not close item selection, allocation or placement/world RNG.
-   Next port `CreateThemeRooms` in source order: complete its generic
-   `CreateRndItem`/`CreateTypeItem` pool/placement dependencies, including full-pool
-   and signed-coordinate boundaries, and independently verify the detached
-   selectors before composing them. The normalized gameplay item catalog and
-   initial-potion port are not substitutes. Then port every selected theme type without stubs
-   or skipping item-producing themes, compile the validated external prerequisites
-   and item/unique metadata into complete packs, then activate a separately
+   Its 3,040 cases cover affixes, books, gold, staff outcomes and unique history.
+   The separate `tools/test-theme-item-placement.ps1` extends detached proof to
+   raw selectors and complete `CreateRndItem`/`CreateTypeItem` pool, placement,
+   setup/unique/ground and world RNG for the same bounded policy. Preserve all
+   128 item slots, 127 IDs, signed grid and 128 history flags, including
+   selector-before-capacity RNG, signed overwrites and unreferenced allocations
+   after exhausted placement. Unsafe native out-of-bounds writes fail closed.
+   Next port `CreateThemeRooms` in source order using these verified item
+   dependencies. The normalized gameplay item catalog and initial-potion port
+   are not substitutes. Port every selected theme type without stubs
+   or skipping item-producing themes; retain unconditional `ItemNoFlippy`
+   behavior even after full-pool creation returns. Then
+   compile the validated external prerequisites and item/unique metadata into
+   complete packs, then activate a separately
    identified opt-in populated server profile. Never use expected final state
    as production input. Preserve the narrower earlier oracles and require
    ordinary Godot interaction plus cold restore before claiming playable native

@@ -335,6 +335,8 @@ void SetupItem(Item &item);
 #ifdef BUILD_TESTING
 // Detached scalar metadata for independent item-generation fixtures.
 std::optional<int> GetItemAnimationLengthForTesting(int cursor);
+// Calls the actual native selector; no allocation, placement or seed conversion.
+int SelectThemeItemForTesting(bool onlyGood, int itemType = -1, int miscId = -1);
 #endif
 Item *SpawnUnique(_unique_items uid, Point position, std::optional<int> level = std::nullopt, bool sendmsg = true, bool exactPosition = false);
 void GetSuperItemSpace(Point position, int8_t inum);

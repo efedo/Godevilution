@@ -452,9 +452,40 @@ public item scalar/string fields, five animation scalars, unique history and RNG
 after `SetupAllItems`, `TryRandomUniqueItem` and `SetupItem`; expected final state
 is never an input. It requires no Diablo MPQ. Non-dropping cursor-255 placeholders
 retain source ordinals but cannot be selected for ordinary generation. Keep all
-captured names/metadata private. Selector, pool/placement/world RNG, complete
-`CreateThemeRooms`, runtime-pack/profile activation and Godot cold restore remain
-separate gates. Earlier oracle modes, runtime defaults and saves are unchanged.
+captured names/metadata private. Its original four-fixture filter and corpus
+remain separate from the additional world-item proof below.
+
+For detached raw selection and complete world-item creation, run:
+
+```powershell
+./tools/test-theme-item-placement.ps1
+```
+
+This separate zero-argument wrapper rebuilds the same registered native target
+and existing module test project with the same owned-process/MSVC safeguards.
+All three `ThemeItemPlacementTest` fixtures and four exact explicit depth
+comparisons must pass without exclusions; two fresh captures must be
+byte-identical. The private bounded corpus contains 224 selector cases and 40
+world cases across depths 1-4. Managed inputs come only from actual pre-call
+world state, raw metadata and player context; expected selection/position/RNG
+are never generator inputs. The comparison covers all 128 item slots, 127 IDs,
+112x112 signed item refs, 128 history flags, RNG and unchanged other channels.
+
+Native selection precedes capacity checking; full pools retain every item and
+only selector consumption, including zero draws for typed Gold. Placement always
+draws once before full-square k=2..49 fallback. Signed non-positive draws may
+overwrite an in-bounds occupied tile;
+exhaustion keeps an allocated item at (0,0) with no grid reference. Unsafe
+out-of-bounds writes fail closed; those unsafe native calls are never executed.
+The initial setup seed is distinct from the final seed after unique retries.
+The fixture calls actual native functions in single-player Normal mode with
+send-message/spawn disabled; delta/pregen flags still affect item setup.
+
+Complete `CreateThemeRooms`, runtime-pack/profile activation, other game modes
+and Godot interaction/cold restore remain separate gates. Earlier oracles,
+runtime defaults, saves and server MPQ independence are unchanged. Keep native
+metadata/captures outside the repository; the world-item wrapper restores its
+own opt-in environment variable exactly and never launches Godot.
 
 The C# xUnit project is an executable Microsoft Testing Platform runner. Run
 it directly when `dotnet test` selects a machine-wide VSTest host whose

@@ -20,8 +20,11 @@
 #include "engine/random.hpp"
 #include "engine/render/text_render.hpp"
 #include "game/items/items.hpp"
+#include "game/items/item_pool.hpp"
 #include "game/levels/dungeon_common.h"
 #include "game/levels/level.hpp"
+#include "game/levels/tile_properties.hpp"
+#include "game/objects/objects.hpp"
 #include "game/players/players.hpp"
 #include "persistence/options.h"
 #include "utils/language.h"
@@ -615,6 +618,320 @@ TEST_F(ThemeItemGenerationTest, CaptureIndependentRawSetupAndUniqueContinuation)
 	EXPECT_GT(staffPowers, 0);
 	EXPECT_GT(magicalAffixes, 0);
 	EXPECT_GT(ordinaryDurability, 0);
+}
+
+// The world fixture owns tile/SOL/object/item storage in addition to the
+// existing raw-table guard. No client, network message or archive is opened.
+struct NativeItemWorldGuard {
+	std::unique_ptr<TileGrid> oldTiles = std::make_unique<TileGrid>(tiles());
+	std::array<TileProperties, MAXTILES> oldSol;
+	std::array<Item, MAXITEMS + 1> oldItems;
+	std::array<uint8_t, MAXITEMS> oldActive;
+	std::array<Object, MAXOBJECTS> oldObjects;
+	uint8_t oldCount = ActiveItemCount;
+
+	NativeItemWorldGuard()
+	{
+		std::copy(std::begin(tileProperties()), std::end(tileProperties()), oldSol.begin());
+		std::copy_n(Items, oldItems.size(), oldItems.begin());
+		std::copy(std::begin(ActiveItems), std::end(ActiveItems), oldActive.begin());
+		std::copy_n(Objects, oldObjects.size(), oldObjects.begin());
+	}
+	~NativeItemWorldGuard()
+	{
+		tiles() = *oldTiles;
+		std::copy(oldSol.begin(), oldSol.end(), std::begin(tileProperties()));
+		std::copy(oldItems.begin(), oldItems.end(), Items);
+		std::copy(oldActive.begin(), oldActive.end(), std::begin(ActiveItems));
+		std::copy(oldObjects.begin(), oldObjects.end(), Objects);
+		ActiveItemCount = oldCount;
+	}
+};
+
+struct NativeItemWorldState {
+	std::array<Item, MAXITEMS + 1> items;
+	std::array<uint8_t, MAXITEMS> active;
+	std::array<bool, 128> uniqueFlags;
+	std::vector<Tile> worldTiles;
+	std::array<bool, MAXOBJECTS> objectSolid;
+	std::array<int, MAXOBJECTS> objectSelection;
+	uint32_t randomState;
+	int activeCount;
+};
+
+NativeItemWorldState CaptureItemWorld()
+{
+	NativeItemWorldState state;
+	std::copy_n(Items, state.items.size(), state.items.begin());
+	std::copy(std::begin(ActiveItems), std::end(ActiveItems), state.active.begin());
+	state.uniqueFlags = CaptureFlags();
+	state.randomState = GetLCGEngineState();
+	state.activeCount = ActiveItemCount;
+	for (const Tile &tile : tiles()) state.worldTiles.push_back(tile);
+	for (int i = 0; i < MAXOBJECTS; ++i) {
+		state.objectSolid[i] = Objects[i]._oSolidFlag;
+		state.objectSelection[i] = static_cast<int>(Objects[i].selectionRegion);
+	}
+	return state;
+}
+
+void WriteItemWorld(std::ostream &out, const NativeItemWorldState &state, bool inputs)
+{
+	JsonObject json(out);
+	json.Number("randomState", state.randomState);
+	json.Number("activeCount", state.activeCount);
+	json.Key("activeIds"); WriteArray(out, state.active, [&](uint8_t value) { out << static_cast<int>(value); });
+	json.Key("items"); WriteArray(out, state.items, [&](const Item &value) { WriteItem(out, value); });
+	json.Key("uniqueFlags"); WriteFlags(out, state.uniqueFlags);
+	json.Key("itemRefs"); WriteArray(out, state.worldTiles, [&](const Tile &tile) { out << static_cast<int>(tile.item()); });
+	if (!inputs) return;
+	json.Key("tiles");
+	int index = 0;
+	WriteArray(out, state.worldTiles, [&](const Tile &tile) {
+		const Point position { index % MAXDUNX, index / MAXDUNX }; ++index;
+		out << '[' << static_cast<int>(tile.player()) << ',' << tile.monster() << ','
+		    << static_cast<int>(tile.object()) << ',' << static_cast<int>(tile.item()) << ','
+		    << (TileContainsSetPiece(position) ? "true" : "false") << ','
+		    << (IsTileSolid(position) ? "true" : "false") << ']';
+	});
+	json.Key("objects");
+	out << '[';
+	for (int i = 0; i < MAXOBJECTS; ++i) {
+		if (i != 0) out << ',';
+		out << '[' << (state.objectSolid[i] ? "true" : "false") << ',' << state.objectSelection[i] << ']';
+	}
+	out << ']';
+}
+
+class ThemeItemPlacementTest : public ThemeItemGenerationTest {
+protected:
+	void SetUp() override
+	{
+		ThemeItemGenerationTest::SetUp();
+		if (!HasFatalFailure()) worldGuard = std::make_unique<NativeItemWorldGuard>();
+	}
+
+	void PrepareWorld(int count = 2, bool reverse = true)
+	{
+		for (Tile &tile : tiles()) tile = {};
+		std::fill(std::begin(tileProperties()), std::end(tileProperties()), TileProperties::None);
+		tileProperties()[1] = TileProperties::Solid;
+		for (int i = 0; i < MAXOBJECTS; ++i) Objects[i] = {};
+		for (int i = 0; i <= MAXITEMS; ++i) {
+			Items[i] = {};
+			Items[i]._iSeed = 1000 + i;
+			Items[i]._iPLStr = 17;
+			Items[i]._iCharges = 7;
+			Items[i]._iMaxCharges = 9;
+			Items[i]._iIdentified = true;
+			Items[i].dwBuff = 128;
+			Items[i].animInfo.currentFrame = 3;
+			Items[i].animInfo.numberOfFrames = 4;
+		}
+		for (int i = 0; i < MAXITEMS; ++i) ActiveItems[i] = reverse ? MAXITEMS - 1 - i : i;
+		ActiveItemCount = count;
+		for (int i = 0; i < count; ++i) {
+			const int slot = ActiveItems[i];
+			const Point p { 4 + i % 100, 4 + i / 100 };
+			Items[slot]._itype = ItemType::Misc;
+			Items[slot].position = p;
+			tileAt(p).setItem(slot + 1);
+		}
+		ClearUniqueItemFlags();
+		MyPlayer->pLvlLoad = 1;
+	}
+
+	void CheckUntouchedWorld(const NativeItemWorldState &before)
+	{
+		int index = 0;
+		for (const Tile &tile : tiles()) {
+			const Tile &pre = before.worldTiles[index++];
+			EXPECT_EQ(tile.piece(), pre.piece()); EXPECT_EQ(tile.flags(), pre.flags());
+			EXPECT_EQ(tile.player(), pre.player()); EXPECT_EQ(tile.monster(), pre.monster());
+			EXPECT_EQ(tile.object(), pre.object()); EXPECT_EQ(tile.corpse(), pre.corpse());
+			EXPECT_EQ(tile.light(), pre.light()); EXPECT_EQ(tile.preLight(), pre.preLight());
+			EXPECT_EQ(tile.transVal(), pre.transVal()); EXPECT_EQ(tile.special(), pre.special());
+		}
+		for (int i = 0; i < MAXOBJECTS; ++i) {
+			EXPECT_EQ(Objects[i]._oSolidFlag, before.objectSolid[i]);
+			EXPECT_EQ(static_cast<int>(Objects[i].selectionRegion), before.objectSelection[i]);
+		}
+	}
+
+private:
+	std::unique_ptr<NativeItemWorldGuard> worldGuard;
+};
+
+TEST_F(ThemeItemPlacementTest, ItemSpaceUsesSignedOccupancyAndObjectOverlapRules)
+{
+	PrepareWorld(0);
+	constexpr Point p { 50, 50 };
+	tileAt(p).addFlags(DungeonFlag::Populated);
+	EXPECT_TRUE(ItemSpaceOk(p)); // Set-piece protection belongs to ItemPlace, not this path.
+	tileAt(p).setPlayer(-1); EXPECT_FALSE(ItemSpaceOk(p)); tileAt(p).setPlayer(0);
+	tileAt(p).setMonster(-1); EXPECT_FALSE(ItemSpaceOk(p)); tileAt(p).setMonster(0);
+	tileAt(p).setItem(-1); EXPECT_FALSE(ItemSpaceOk(p)); tileAt(p).setItem(0);
+	tileAt(p).setObject(-1); EXPECT_TRUE(ItemSpaceOk(p));
+	Objects[0]._oSolidFlag = true; EXPECT_FALSE(ItemSpaceOk(p));
+	Objects[0]._oSolidFlag = false; tileAt(p).setObject(0);
+	tileAt(p + Direction::South).setObject(-1);
+	Objects[0].selectionRegion = SelectionRegion::Bottom; EXPECT_FALSE(ItemSpaceOk(p));
+	Objects[0].selectionRegion = SelectionRegion::None; EXPECT_TRUE(ItemSpaceOk(p));
+	tileAt(p + Direction::South).setObject(0);
+	Objects[0].selectionRegion = SelectionRegion::Bottom;
+	Objects[1].selectionRegion = SelectionRegion::Bottom;
+	tileAt(p + Direction::SouthEast).setObject(1);
+	tileAt(p + Direction::SouthWest).setObject(2); EXPECT_FALSE(ItemSpaceOk(p));
+	tileAt(p + Direction::SouthWest).setObject(-2); EXPECT_TRUE(ItemSpaceOk(p));
+	tileAt(p + Direction::SouthWest).setObject(2);
+	tileAt(p + Direction::SouthEast).setObject(-1); EXPECT_TRUE(ItemSpaceOk(p));
+	EXPECT_FALSE(ItemSpaceOk({ -1, 0 })); EXPECT_FALSE(ItemSpaceOk({ MAXDUNX, 0 }));
+}
+
+TEST_F(ThemeItemPlacementTest, FullPoolTypedGoldPreservesSeedAndEveryItemSlot)
+{
+	PrepareWorld(MAXITEMS);
+	SetRndSeed(2588);
+	const auto before = CaptureItemWorld();
+	CreateTypeItem({ 50, 50 }, false, ItemType::Gold, IMISC_NONE, false, true);
+	const auto after = CaptureItemWorld();
+	EXPECT_EQ(after.randomState, before.randomState);
+	EXPECT_EQ(after.activeCount, before.activeCount);
+	EXPECT_EQ(after.active, before.active);
+	EXPECT_EQ(after.uniqueFlags, before.uniqueFlags);
+	std::ostringstream first; std::ostringstream second;
+	WriteItemWorld(first, before, false); WriteItemWorld(second, after, false);
+	EXPECT_EQ(first.str(), second.str());
+	CheckUntouchedWorld(before);
+}
+
+TEST_F(ThemeItemPlacementTest, CaptureIndependentSelectorsAndWorldCreation)
+{
+	constexpr char variable[] = "GODEVILUTION_THEME_ITEM_PLACEMENT_ORACLE_DIRECTORY";
+	const char *directory = std::getenv(variable);
+	if (directory == nullptr || *directory == '\0') GTEST_SKIP() << "Select the separate private placement corpus explicitly.";
+	const std::filesystem::path root = std::filesystem::absolute(directory);
+	ASSERT_TRUE(std::filesystem::is_directory(root)); ASSERT_TRUE(std::filesystem::is_empty(root));
+	std::ofstream stream(root / "native-theme-item-placement.json", std::ios::binary | std::ios::trunc);
+	ASSERT_TRUE(stream.good());
+	int selectorCount = 0;
+	int worldCount = 0;
+	int exhaustedPlacements = 0;
+	int fullPools = 0;
+	int signedOverwrites = 0;
+	int generatedUniques = 0;
+	int exhaustedHistories = 0;
+	{
+		JsonObject document(stream);
+		document.String("format", "godevilution-cathedral-theme-item-placement");
+		document.Number("version", 1);
+		document.String("policy", "original-diablo-single-player-normal-world-item-creation");
+		document.Number("playerMaximumLife", MyPlayer->life.maximumBase);
+		document.Number("playerMaximumMana", MyPlayer->mana.maximumBase);
+		document.Key("catalog"); WriteCatalog(stream);
+		document.Key("selectors"); stream << '[';
+		constexpr uint32_t seeds[] = { 0, 1, 2588, 743271966, UINT32_C(0x80000000), UINT32_MAX, 1457187811, 988045466 };
+		for (int depth = 1; depth <= 4; ++depth) {
+			currentLevelNumber() = depth;
+			for (uint32_t seed : seeds) {
+				for (int lane = 0; lane < 7; ++lane) {
+					const bool good = lane == 1;
+					const int type = lane <= 1 ? -1 : lane == 2 ? static_cast<int>(ItemType::Gold)
+					    : lane == 3 || lane == 5 ? static_cast<int>(ItemType::Misc)
+					    : lane == 4 ? static_cast<int>(ItemType::Staff) : static_cast<int>(ItemType::Sword);
+					const int misc = lane == 3 ? IMISC_BOOK : lane == 5 ? IMISC_HEAL : -1;
+					SetRndSeed(seed);
+					const int selected = SelectThemeItemForTesting(good, type, misc);
+					if (selectorCount++ != 0) stream << ',';
+					JsonObject value(stream);
+					value.Number("depth", depth); value.Number("seed", seed);
+					value.Boolean("onlygood", good); value.Number("itemType", type); value.Number("miscId", misc);
+					value.Number("selectedIndex", selected); value.Number("randomState", GetLCGEngineState());
+				}
+			}
+		}
+		stream << ']';
+		document.Key("worldCases"); stream << '[';
+		for (int depth = 1; depth <= 4; ++depth) {
+			currentLevelNumber() = depth;
+			uint32_t uniqueSeed = 0;
+			for (uint32_t seed = 1; seed <= 4096; ++seed) {
+				PrepareWorld(); SetRndSeed(seed);
+				CreateTypeItem({ 50, 50 }, true, ItemType::Sword, -1, false, true);
+				if (Items[ActiveItems[2]]._iMagical != ITEM_QUALITY_UNIQUE) continue;
+				uniqueSeed = seed; break;
+			}
+			ASSERT_NE(uniqueSeed, 0U) << "Bounded unique-world seed discovery must cover this depth.";
+			for (int lane = 0; lane < 10; ++lane) {
+				constexpr std::string_view names[] = { "random-open", "random-good-objects", "typed-gold-fallback",
+				    "typed-book-signed", "typed-staff-last-slot", "random-full-pool", "typed-gold-no-space",
+				    "typed-heal-edge", "typed-sword-unique", "typed-sword-exhausted" };
+				PrepareWorld(lane == 4 ? MAXITEMS - 1 : lane == 5 ? MAXITEMS : 2, lane != 4);
+				const bool random = lane == 0 || lane == 1 || lane == 5;
+				const bool good = lane == 1 || lane >= 8;
+				const bool delta = lane != 0 && lane != 4;
+				const int type = random ? -1 : lane == 2 || lane == 6 ? static_cast<int>(ItemType::Gold)
+				    : lane == 3 || lane == 7 ? static_cast<int>(ItemType::Misc)
+				    : lane == 4 ? static_cast<int>(ItemType::Staff) : static_cast<int>(ItemType::Sword);
+				const int misc = lane == 3 ? IMISC_BOOK : lane == 7 ? IMISC_HEAL : -1;
+				const uint32_t seed = lane >= 8 ? uniqueSeed : lane == 3 ? 988045466 : lane == 1 ? 743271966 : lane == 2 || lane == 7 ? 1 : 2588;
+				const Point p = lane == 7 ? Point { 0, 0 } : Point { 50, 50 };
+				if (lane == 0) MyPlayer->pLvlLoad = 0;
+				if (lane == 1) {
+					for (int y = 49; y <= 51; ++y) for (int x = 49; x <= 51; ++x) tileAt({ x, y }).setPiece(1);
+					tileAt({ 49, 49 }).setPiece(0); tileAt({ 49, 49 }).setObject(-1);
+					tileAt({ 49, 49 }).addFlags(DungeonFlag::Populated);
+					Objects[1]._oSolidFlag = true; tileAt({ 50, 49 }).setObject(-2);
+					Objects[2].selectionRegion = SelectionRegion::Bottom; tileAt({ 51, 51 }).setObject(-3);
+					tileAt({ 49, 50 }).setPlayer(-1); tileAt({ 49, 51 }).setMonster(-2);
+				}
+				if (lane == 2) for (int y = 49; y <= 51; ++y) for (int x = 49; x <= 51; ++x) tileAt({ x, y }).setPiece(1);
+				if (lane == 3) { tileAt({ 49, 49 }).setPiece(1); tileAt({ 49, 49 }).setItem(-3); }
+				if (lane == 6) for (Tile &tile : tiles()) tile.setPiece(1);
+				if (lane == 9) std::fill(std::begin(UniqueItemFlags), std::end(UniqueItemFlags), true);
+				SetRndSeed(seed);
+				const auto before = CaptureItemWorld();
+				const int selected = SelectThemeItemForTesting(good, type, misc);
+				const uint32_t selectionRandom = GetLCGEngineState();
+				SetRndSeed(seed);
+				if (worldCount++ != 0) stream << ',';
+				JsonObject value(stream);
+				value.String("name", names[lane]); value.Number("depth", depth); value.Number("seed", seed);
+				value.Boolean("onlygood", good); value.Boolean("delta", delta); value.Boolean("levelLoading", MyPlayer->pLvlLoad != 0);
+				value.Number("itemType", type); value.Number("miscId", misc); value.Number("x", p.x); value.Number("y", p.y);
+				value.Number("selectedIndex", selected); value.Number("selectionRandomState", selectionRandom);
+				value.Key("input"); WriteItemWorld(stream, before, true);
+				if (random) CreateRndItem(p, good, false, delta);
+				else CreateTypeItem(p, good, static_cast<ItemType>(type), misc, false, delta);
+				const auto after = CaptureItemWorld();
+				value.Key("expected"); WriteItemWorld(stream, after, false);
+				CheckUntouchedWorld(before);
+				if (lane == 5) { ++fullPools; EXPECT_EQ(after.randomState, selectionRandom); EXPECT_EQ(after.activeCount, MAXITEMS); }
+				else {
+					EXPECT_EQ(after.activeCount, before.activeCount + 1);
+					const int slot = before.active[before.activeCount];
+					const Item &item = after.items[slot];
+					if (lane == 1) { EXPECT_EQ(item.position.x, 49); EXPECT_EQ(item.position.y, 49); }
+					if (lane == 2) { EXPECT_EQ(item.position.x, 48); EXPECT_EQ(item.position.y, 48); }
+					if (lane == 3) { ++signedOverwrites; EXPECT_EQ(item.position.x, 49); EXPECT_EQ(item.position.y, 49); EXPECT_EQ(tileAt({ 49, 49 }).item(), slot + 1); }
+					if (lane == 4) EXPECT_EQ(tileAt(item.position).item(), 127);
+					if (lane == 6) { ++exhaustedPlacements; EXPECT_EQ(item.position.x, 0); EXPECT_EQ(item.position.y, 0); EXPECT_EQ(tileAt(item.position).item(), 0); }
+					if (lane == 8) { ++generatedUniques; EXPECT_EQ(item._iMagical, ITEM_QUALITY_UNIQUE); }
+					if (lane == 9) { ++exhaustedHistories; EXPECT_NE(item._iMagical, ITEM_QUALITY_UNIQUE); }
+				}
+			}
+		}
+		stream << ']';
+		document.Number("selectorCount", selectorCount); document.Number("worldCount", worldCount);
+		document.Number("fullPools", fullPools); document.Number("exhaustedPlacements", exhaustedPlacements);
+		document.Number("signedOverwrites", signedOverwrites); document.Number("generatedUniques", generatedUniques);
+		document.Number("exhaustedHistories", exhaustedHistories);
+	}
+	stream.flush(); ASSERT_TRUE(stream.good()); stream.close();
+	EXPECT_EQ(selectorCount, 224); EXPECT_EQ(worldCount, 40);
+	EXPECT_EQ(fullPools, 4); EXPECT_EQ(exhaustedPlacements, 4); EXPECT_EQ(signedOverwrites, 4);
+	EXPECT_EQ(generatedUniques, 4); EXPECT_EQ(exhaustedHistories, 4);
+	EXPECT_LE(std::filesystem::file_size(root / "native-theme-item-placement.json"), 32U * 1024U * 1024U);
 }
 
 } // namespace

@@ -120,6 +120,11 @@ open. Their scope, dependencies, and exit checks are defined only in the
   Animation remains a global visual clock, not native action-frame timing.
   Complete MPQ-free presentation coverage remains a deliverable. Original-asset
   support is optional client tooling; the server must remain MPQ-independent.
+- Detached Cathedral depths 1-4 item creation now has independent raw-selector
+  and complete pool/placement/setup/unique/ground comparison evidence. Complete
+  theme-room composition, external pack compilation, populated-profile activation
+  and ordinary Godot interaction/cold restore remain M2 work; default packs and
+  launch/save profiles are unchanged.
 - Native-compatible generated maps, collision/set-piece placement, remaining
   campaign behavior, integrated Godot presentation, and end-to-end acceptance
   are the main completion constraints. Generic procedural geometry and authored
@@ -147,6 +152,61 @@ open. Their scope, dependencies, and exit checks are defined only in the
   this edge case, but the corrected Flash fixtures cover off-player cursors.
 
 ## Recent implementation evidence
+
+### M2 detached Cathedral item selection and world creation (2026-10-04)
+
+This batch follows `3c54872ee`. Detached original-Diablo single-player Normal
+`CreateRndItem`/`CreateTypeItem` now preserve native selection-before-capacity,
+full-value allocation, exact signed occupancy/object blocking, cyclic 3x3
+placement and full-square k=2..49 fallback, item-seed setup, unique continuation
+and public ground scalars. All 128 slots, 127 active IDs, signed 112x112 item
+grid, 128 unique-history flags and RNG are retained. Full pools consume only
+selector draws (zero for typed Gold); exhausted searches still allocate at
+(0,0) without a grid reference. Signed non-positive placement may overwrite an
+occupied in-bounds tile. Unsafe native out-of-bounds writes fail closed and are
+never executed in the native fixture.
+
+The separate zero-argument `tools/test-theme-item-placement.ps1` independently
+captures 224 raw selector cases and 40 complete pre/post world cases across
+depths 1-4. Inputs come only from pre-call state, raw metadata and player context;
+native expected selections, positions and RNG are comparison-only. Three exact
+native fixtures and four explicit managed depth comparisons pass without skips.
+Two captures are byte-identical: 25,582,494 bytes, SHA256
+`a97aea3daaaa5aa23d6fe740e15a25d57bd473042bd3f9a05bac2e4098525dcf`.
+Derived coverage proves four full pools, exhausted placements, signed overwrites,
+generated uniques and same-seed exhausted-history continuations each. The
+initial setup seed is distinct from the final item's unique-retry seed.
+
+All 85 focused module/parser/documentation tests pass without exclusions,
+including 26 portable world tests and 29 malformed-evidence/history guards.
+The full module suite passes 2,980 with zero failures and 135 explicit/private
+exclusions (3,115 total); the explicit comparisons pass separately. All fourteen
+oracle-launcher regressions pass without exclusions; the final full serial
+server suite passes 1,589 with zero failures and four existing exclusions
+(1,593 total). The exact known-byte artifact SHA256 assertion passes there.
+The earlier 3,040-case setup/unique corpus, four fixtures and four depth comparisons
+pass again with their unchanged 20,408,775-byte SHA256 recorded below. CTest discovers
+exactly four earlier plus three placement fixtures; three existing native
+base-metadata/repair/recharge regressions pass. Module builds have no warnings
+or errors; server builds retain three NU1900 audit-feed warnings.
+
+Independent review corrected typed-None admission, source-fixed Gold row zero,
+only-good book type/level predicates, history slot 127, unsafe-origin validation,
+signed object/placement corner coverage and initial/final seed assertions.
+One new launcher artifact test initially failed because its inherited PowerShell
+environment could not discover `Get-FileHash`; the actual wrapper helper now
+uses a bounded SHA256 file stream instead. Failed verification logs are retained;
+no gate was disabled or expected final state reused as input. Private native
+evidence remains outside the repository, and logs/XML use
+`.local/m2-theme-item-placement-*`. The final repeated capture is
+`%TEMP%/Godevilution-Theme-Item-Placement-Oracle-c8e524437078486d89e8f2b24d2c070f`.
+
+This is a verified item-creation prerequisite, not `CreateThemeRooms`, complete
+runtime packs or populated Godot acceptance. Other variants/modes, sprite and
+private renderer state remain separate gates. No Godot application or MPQ is
+opened, no content/protocol/save schema or launch default changes, and user
+save/config files are preserved. The approximately 35% overall estimate and
+M0/M2 gates remain open; the next composition work is in the completion plan.
 
 ### M2 detached Cathedral theme-item setup and unique continuation (2026-10-04)
 

@@ -9,6 +9,125 @@ namespace Devilution.Server.Tests;
 public sealed class CathedralPopulationOracleLauncherTests
 {
     [Fact]
+    public void ThemeItemPlacementReportsRejectSkippedDuplicateOrWrongScopeResults()
+    {
+        if (!OperatingSystem.IsWindows()) return;
+        var script = BuildPowerShellHarness(["Assert-ThemePlacementNativeReport", "Assert-ThemePlacementManagedReport"],
+            """
+            $work = Join-Path ([IO.Path]::GetTempPath()) ('Godevilution-PopulationValidator-' + [guid]::NewGuid().ToString('N'))
+            New-Item -ItemType Directory -Path $work | Out-Null
+            $primaryFailure=$null
+            try {
+                $nativePath=Join-Path $work 'native.json'; $managedPath=Join-Path $work 'managed.xml'
+                $names=@('ItemSpaceUsesSignedOccupancyAndObjectOverlapRules','FullPoolTypedGoldPreservesSeedAndEveryItemSlot',
+                    'CaptureIndependentSelectorsAndWorldCreation')
+                foreach ($mutation in @('valid','skip','disabled','failure','errors','caseFailure','short','wrongName','duplicate','wrongClass')) {
+                    $cases=@($names | ForEach-Object { [pscustomobject]@{name=$_;classname='ThemeItemPlacementTest';status='RUN';result='COMPLETED'} })
+                    $report=[ordered]@{tests=3;failures=0;disabled=0;errors=0;testsuites=@(@{testsuite=$cases})}
+                    switch ($mutation) {
+                        'skip' { $cases[0].result='SKIPPED' }
+                        'disabled' { $report.disabled=1 }
+                        'failure' { $report.failures=1 }
+                        'errors' { $report.errors=1 }
+                        'caseFailure' { $cases[0] | Add-Member -NotePropertyName failures -NotePropertyValue @(@{failure='failure'}) }
+                        'short' { $report.testsuites=@(@{testsuite=@($cases | Select-Object -First 2)}) }
+                        'wrongName' { $cases[0].name='another-test' }
+                        'duplicate' { $cases[0].name=$cases[1].name }
+                        'wrongClass' { $cases[0].classname='ThemeItemGenerationTest' }
+                    }
+                    [IO.File]::WriteAllText($nativePath,($report | ConvertTo-Json -Depth 6))
+                    $rejected=$false; try { Assert-ThemePlacementNativeReport $nativePath } catch { $rejected=$true }
+                    if (($mutation -eq 'valid') -eq $rejected) { throw "Native placement gate failed for $mutation." }
+                }
+                foreach ($mutation in @('valid','skip','failure','short','duplicate','wrongType','wrongMethod','wrongDepth')) {
+                    $type='Devilution.Diablo.Tests.AuthoritativeCathedralThemeItemWorldNativeOracleTests'; $method='WorldAndSelectorsMatchNative'
+                    [xml]$report='<assemblies><assembly><collection /></assembly></assemblies>'
+                    $collection=$report.SelectSingleNode('/assemblies/assembly/collection')
+                    foreach ($depth in 1..4) {
+                        $test=$report.CreateElement('test')
+                        $test.SetAttribute('name',"${type}.${method}(depth: $depth)")
+                        $test.SetAttribute('type',$type); $test.SetAttribute('method',$method); $test.SetAttribute('result','Pass')
+                        [void]$collection.AppendChild($test)
+                    }
+                    $cases=@($report.SelectNodes('//test'))
+                    switch ($mutation) {
+                        'skip' { $cases[0].SetAttribute('result','Skip') }
+                        'failure' { $cases[0].SetAttribute('result','Fail') }
+                        'short' { [void]$cases[0].ParentNode.RemoveChild($cases[0]) }
+                        'duplicate' { $cases[0].SetAttribute('name',$cases[1].name) }
+                        'wrongType' { $cases[0].SetAttribute('type','another-type') }
+                        'wrongMethod' { $cases[0].SetAttribute('method','another-method') }
+                        'wrongDepth' { $cases[0].SetAttribute('name',"${type}.${method}(depth: 5)") }
+                    }
+                    $report.Save($managedPath)
+                    $rejected=$false; try { Assert-ThemePlacementManagedReport $managedPath } catch { $rejected=$true }
+                    if (($mutation -eq 'valid') -eq $rejected) { throw "Managed placement gate failed for $mutation." }
+                }
+                Write-Output 'PASS'
+            } catch { $primaryFailure=$_; throw }
+            finally { Remove-PopulationTestDirectory $work $primaryFailure }
+            """, "tools/test-theme-item-placement.ps1");
+        Assert.Contains("PASS", RunPowerShell(script), StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void ThemeItemPlacementArtifactRequiresOneBoundedRegularCorpus()
+    {
+        if (!OperatingSystem.IsWindows()) return;
+        var script = BuildPowerShellHarness(["Assert-ThemePlacementArtifact"],
+            """
+            $work=Join-Path ([IO.Path]::GetTempPath()) ('Godevilution-PopulationValidator-' + [guid]::NewGuid().ToString('N'))
+            New-Item -ItemType Directory -Path $work | Out-Null
+            $primaryFailure=$null
+            try {
+                foreach ($mutation in @('valid','empty','missing','extra','wrongName','directory','oversized')) {
+                    $directory=Join-Path $work $mutation
+                    New-Item -ItemType Directory -Path $directory | Out-Null
+                    $path=Join-Path $directory 'native-theme-item-placement.json'
+                    if ($mutation -eq 'directory') { New-Item -ItemType Directory -Path $path | Out-Null }
+                    elseif ($mutation -eq 'wrongName') { [IO.File]::WriteAllText((Join-Path $directory 'another.json'),'{}') }
+                    elseif ($mutation -ne 'missing') { [IO.File]::WriteAllText($path,$(if ($mutation -eq 'empty') { '' } else { '{}' })) }
+                    if ($mutation -eq 'extra') { [IO.File]::WriteAllText((Join-Path $directory 'extra.json'),'{}') }
+                    if ($mutation -eq 'oversized') {
+                        $stream=[IO.File]::OpenWrite($path)
+                        try { $stream.SetLength(32MB + 1) } finally { $stream.Dispose() }
+                    }
+                    $rejected=$false; $artifactFailure=$null
+                    try { $artifact=Assert-ThemePlacementArtifact $directory } catch { $rejected=$true; $artifactFailure=$_ }
+                    if (($mutation -eq 'valid') -eq $rejected) { throw "Placement artifact gate failed for ${mutation}: $artifactFailure" }
+                    if ($mutation -eq 'valid' -and ($artifact.Length -ne 2 -or
+                            $artifact.Sha256 -cne '44136FA355B3678A1146AD16F7E8649E94FB4FC21FE77E8310C060F61CAAFF8A')) {
+                        throw 'Placement artifact did not retain exact length/hash.'
+                    }
+                }
+                Write-Output 'PASS'
+            } catch { $primaryFailure=$_; throw }
+            finally { Remove-PopulationTestDirectory $work $primaryFailure }
+            """, "tools/test-theme-item-placement.ps1");
+        Assert.Contains("PASS", RunPowerShell(script), StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void ThemeItemPlacementRunnerPreservesTheSealedSetupRunnerAndRuntimeProfiles()
+    {
+        var root = FindRepositoryRoot();
+        var source = File.ReadAllText(Path.Combine(root, "tools/test-theme-item-placement.ps1"));
+        var earlier = File.ReadAllText(Path.Combine(root, "tools/test-theme-item-generation.ps1"));
+        Assert.Contains("param()", source, StringComparison.Ordinal);
+        Assert.Contains("Names = @('Assert-ThemeOwnedStage')", source, StringComparison.Ordinal);
+        Assert.Contains("--gtest_filter=ThemeItemPlacementTest.*", source, StringComparison.Ordinal);
+        Assert.Contains("where cl.exe && where rc.exe && where mt.exe", source, StringComparison.Ordinal);
+        Assert.Contains("Independent native placement captures differ", source, StringComparison.Ordinal);
+        Assert.Contains("--explicit only --fail-skips on", source, StringComparison.Ordinal);
+        Assert.Contains("Restore-CathedralOracleEnvironmentVariable 'GODEVILUTION_THEME_ITEM_PLACEMENT_ORACLE_DIRECTORY' $placementPreviousDirectory", source, StringComparison.Ordinal);
+        Assert.Contains("--gtest_filter=ThemeItemGenerationTest.*", earlier, StringComparison.Ordinal);
+        Assert.DoesNotContain("PLACEMENT_ORACLE_DIRECTORY", earlier, StringComparison.Ordinal);
+        Assert.DoesNotContain("run-godot-client", source, StringComparison.Ordinal);
+        Assert.DoesNotContain("run-authoritative-client", source, StringComparison.Ordinal);
+        Assert.DoesNotContain("Start-Process", source, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void ThemeItemStageRejectsEveryIncompleteOwnedProcessOutcome()
     {
         if (!OperatingSystem.IsWindows()) return;

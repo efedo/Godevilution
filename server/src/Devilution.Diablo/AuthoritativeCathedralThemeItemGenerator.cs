@@ -556,6 +556,7 @@ public static class AuthoritativeCathedralThemeItemGenerator
         AuthoritativeCathedralThemeItemPolicy policy)
     {
         ValidateSelectionRequest(request, catalog, policy);
+        ValidateRequestedItemType(request.RequestedItemType);
         var random = new AuthoritativeLegacyRandom(request.RandomState);
         var itemIndex = request.RequestedItemType == ItemTypeGold
             ? FindGoldItem(catalog)
@@ -574,6 +575,43 @@ public static class AuthoritativeCathedralThemeItemGenerator
             Player: request.Player,
             UniqueItemFlags: request.UniqueItemFlags);
         return GenerateSetupAndUniqueContinuation(itemRequest, catalog, policy);
+    }
+
+    // The world wrapper must expose the selector boundary without performing
+    // AdvanceRndSeed, allocation, placement, or item generation. Keep this
+    // accessor beside the native selector implementation so the wrapper does
+    // not duplicate the drop-table predicates or RNG order.
+    internal static AuthoritativeCathedralThemeItemWorldSelectionResult SelectRandomItemForWorld(
+        uint randomState,
+        int currentLevel,
+        bool onlyGood,
+        AuthoritativeCathedralThemeItemCatalog catalog,
+        AuthoritativeCathedralThemeItemPolicy policy)
+    {
+        ValidateSelectionRequest(new AuthoritativeCathedralThemeItemSelectionRequest(
+            randomState, currentLevel, onlyGood), catalog, policy);
+        var random = new AuthoritativeLegacyRandom(randomState);
+        var itemIndex = SelectRandomItem(random, onlyGood, currentLevel, catalog);
+        return new(itemIndex, random.State);
+    }
+
+    internal static AuthoritativeCathedralThemeItemWorldSelectionResult SelectTypeItemForWorld(
+        uint randomState,
+        int currentLevel,
+        bool onlyGood,
+        int itemType,
+        int miscId,
+        AuthoritativeCathedralThemeItemCatalog catalog,
+        AuthoritativeCathedralThemeItemPolicy policy)
+    {
+        ValidateSelectionRequest(new AuthoritativeCathedralThemeItemSelectionRequest(
+            randomState, currentLevel, onlyGood, itemType, miscId), catalog, policy);
+        ValidateRequestedItemType(itemType);
+        var random = new AuthoritativeLegacyRandom(randomState);
+        var itemIndex = itemType == ItemTypeGold
+            ? FindGoldItem(catalog)
+            : SelectTypeItem(random, itemType, miscId, currentLevel, onlyGood, catalog);
+        return new(itemIndex, random.State);
     }
 
     private sealed class GenerationState
@@ -1539,7 +1577,8 @@ public static class AuthoritativeCathedralThemeItemGenerator
     {
         var maximumLevel = checked(currentLevel * 2);
         var candidates = catalog.Items.Where(item => item.Available && item.DropRate > 0
-                && (allowGoodBookBypass && onlyGood && item.MiscId == MiscBook || item.MinimumMonsterLevel <= maximumLevel)
+                && (allowGoodBookBypass && onlyGood && item.ItemType == ItemTypeMisc && item.MiscId == MiscBook
+                    || item.MinimumMonsterLevel <= maximumLevel)
                 && (item.SpellId is not 32 and not 34)
                 && (itemType < 0
                     ? onlyGood
@@ -1558,10 +1597,18 @@ public static class AuthoritativeCathedralThemeItemGenerator
 
     private static int FindGoldItem(AuthoritativeCathedralThemeItemCatalog catalog)
     {
-        var gold = catalog.Items.Where(item => item.ItemType == ItemTypeGold).ToArray();
-        if (gold.Length != 1)
-            throw new InvalidDataException("Native gold selection requires exactly one Gold ItemData row.");
-        return gold[0].NativeItemIndex;
+        var gold = catalog.Items.SingleOrDefault(item => item.NativeItemIndex == 0);
+        if (gold is null || gold.ItemType != ItemTypeGold || !gold.Available
+            || gold.CursorGraphic == byte.MaxValue)
+            throw new InvalidDataException(
+                "Native gold selection requires an available Gold ItemData row at IDI_GOLD index 0.");
+        return 0;
+    }
+
+    private static void ValidateRequestedItemType(int itemType)
+    {
+        if (itemType < 0)
+            throw new InvalidDataException("Native typed item selection cannot use ItemType::None.");
     }
 
     private static string MakeMagicName(

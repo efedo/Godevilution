@@ -3401,6 +3401,15 @@ std::optional<int> GetItemAnimationLengthForTesting(int cursor)
 		return std::nullopt;
 	return ItemAnimLs[index];
 }
+
+int SelectThemeItemForTesting(bool onlyGood, int itemType, int miscId)
+{
+	if (itemType < 0)
+		return static_cast<int>(onlyGood ? RndUItem(nullptr) : RndAllItems());
+	if (static_cast<ItemType>(itemType) == ItemType::Gold)
+		return IDI_GOLD;
+	return static_cast<int>(RndTypeItems(static_cast<ItemType>(itemType), miscId, ItemsGetCurrlevel()));
+}
 #endif
 
 void SetupItem(Item &item)
