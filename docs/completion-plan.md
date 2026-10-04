@@ -374,7 +374,17 @@ deliberately does not claim native generated-world parity, which belongs to M2.
    combat/facing rules and static HUD localization now extend that boundary;
    retain atomic ambiguity/count refusal, exact per-entity draw evidence and
    missing-selected-art fallback. The clock remains global and visual-only.
-   Next integrate native action-frame timing, remaining actor/object/projectile
+   The sprite-free `NativeAnimationState` prerequisite now has an independent
+   native proof for all nine cursor scalars; it is not yet wired into players,
+   protocol, saves or Godot. Next implement module-owned class/gear/context
+   transitions and exactly-once actor-order tick processing, including pending,
+   repeated, hit/block/death and metadata-change behavior. Preserve existing
+   gameplay-effect boundaries and RNG order. Carry the complete cursor through
+   versioned persistence/protocol and project each actor using only a bounded
+   render fraction; do not reconstruct authority from elapsed client time.
+   Keep legacy absent-state bytes/hashes and default profiles unchanged until
+   the new policy has compatibility, restore/reconnect and actual draw acceptance.
+   Then integrate remaining actor/object/projectile
    art, audible feedback and complete usable localized names; this foundation
    does not close M1 or M4. Any original-asset importer remains optional
    client tooling with explicit input/output and a complete MPQ-free alternative.

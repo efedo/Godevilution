@@ -506,6 +506,25 @@ shared fast-Bow fixtures carry hashed initial equipment and prove nonadjacent
 ranged admission plus the base-game/Hellfire frame difference; focused module
 tests retain the wider melee speed-tier matrix.
 
+The generic Domain `NativeAnimationState` is a separate immutable, sprite-free
+port of native `AnimationInfo` scalar timing. It retains all nine cursor scalars,
+including signed frame/counter widths, petrification and private distribution
+continuation. Native fixed-point rendering/progress, pending/repeated flags,
+signed skips and metadata changes have an independent native comparison.
+Supported starts validate frame metadata/flags/fractions; raw restored cursors
+retain defined native narrow arithmetic and byte conversion. Undefined queries
+fail closed rather than crashing an oracle process. The core owns no class,
+gear, RNG, sprite, MPQ, protocol or wall clock.
+
+This core is not yet wired into the player lifecycle, persistence, protocol or
+Godot. Existing gameplay effects remain governed by the action lifecycle above;
+Godot still uses a global visual frame clock. The module must own native caller
+transitions, initialization RNG/order and death holds, with class/gear variants
+supplied by validated external metadata. Future versioned snapshots must carry
+the full cursor, not reconstruct it from action age; client projection may add
+only a bounded render fraction. Legacy absent-state formats/hashes and default
+profiles remain unchanged. Acceptance order belongs to the completion plan.
+
 The same lifecycle now owns terminal player actions. Lethal monster and
 Charged Bolt damage cancel the prior action and start an already-applied Death
 action whose duration is twice the activated class `death_frames`, matching the

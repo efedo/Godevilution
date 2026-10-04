@@ -1,5 +1,35 @@
 # MSVC Build Notes for Agents
 
+## Sprite-free animation timing proof
+
+```powershell
+.\tools\test-animation-timing.ps1
+```
+
+This zero-argument command initializes the matching MSVC x64 environment,
+verifies `cl.exe`/`rc.exe`/`mt.exe`, and builds the existing registered
+`animationinfo_test` target. It runs all eight AnimationInfo fixtures and repeats
+the scalar capture independently, then builds/runs the full existing Domain
+xUnit v3 project through its in-process runner, including the explicit comparison.
+It requires no MPQs and launches no server, client or Godot.
+
+The 50 input-bound traces cover 1,369 transitions. Every transition compares all
+nine cursor scalars and all 129 input fractions for render-frame and raw native
+progress queries. Assertion/division/overflow-invalid native progress queries
+are recorded as refusals and never executed; the managed query must reject them.
+Defined negative native progress intermediates retain their byte conversion.
+This is scoped scalar qualification, not player-controller, initialization RNG,
+gameplay-effect timing, protocol/persistence or Godot acceptance.
+
+Exact completed reports, portable/evidence-guard families, two byte-identical
+bounded regular artifacts, clean owned exits and retained logs are required.
+Stages have deadlines, inherited child-only dialog suppression and bounded
+cleanup attempts; these are not universal process-tree/dialog containment.
+No automatic retry follows a failure. Evidence remains in the printed private
+`%TEMP%/Godevilution-Animation-Timing-Oracle-*` directory; the environment and
+working directory are restored. Existing source/configuration/saves are not
+rewritten by the command.
+
 The supplemental monster-runtime proof takes no arguments:
 
 ```powershell
@@ -209,10 +239,12 @@ relaxing graphics/frame admission or adding a speculative reload. Base entry
 coordinates now have the optional validated contract. Timing/presentation source
 review and affected native tests pass; accepted movement and moved-position GUI
 restore remain required. See migration status for the latest verification.
-For live checkpoint inspection, use read-only `FileStream` handles sharing
-`ReadWrite | Delete`; ordinary no-delete file sharing can block Windows atomic
-checkpoint replacement. The retained first resume phase reported access denied;
-the sharing-safe retry did not. This is not a durability or permissions change.
+Inspect legacy checkpoints only after confirmed owned-publisher exit or a verified
+publication barrier. Delete sharing alone does not permit the Windows
+`File.Move(overwrite:true)` publisher to replace a held canonical reader. The
+qualified cohort POSIX-rename reader contract is separate. The retained earlier
+access-denied phase and passing retry do not establish the historical lock owner
+or a universal sharing-safe live-inspection contract.
 The latest fresh GUI run was stopped behind a test-executable firewall prompt;
 the affected TCP test listeners are now loopback-only and their rerun passes. Never
 automate security prompts or enable public/private network permissions for the

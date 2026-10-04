@@ -8,6 +8,28 @@ namespace Devilution.Diablo.Tests;
 public sealed class ProjectDocumentationConsistencyTests
 {
     [Fact]
+    public void NativeAnimationTimingDocumentationRetainsLiveIntegrationGates()
+    {
+        var root = FindRepositoryRoot();
+        var architecture = Read(root, "docs", "csharp-authoritative-server-migration.md");
+        Assert.Contains(nameof(Devilution.Domain.NativeAnimationState), architecture, StringComparison.Ordinal);
+        Assert.Contains("not yet wired into the player lifecycle", architecture, StringComparison.Ordinal);
+        Assert.Contains("Legacy absent-state formats/hashes and default", architecture, StringComparison.Ordinal);
+        var plan = Read(root, "docs", "completion-plan.md");
+        Assert.Contains("exactly-once actor-order tick processing", plan, StringComparison.Ordinal);
+        Assert.Contains("do not reconstruct authority from elapsed client time", plan, StringComparison.Ordinal);
+        Assert.Contains("compatibility, restore/reconnect and actual draw acceptance", plan, StringComparison.Ordinal);
+        var guidance = Read(root, "docs", "ai", "msvc-build.md");
+        Assert.Contains("test-animation-timing.ps1", guidance, StringComparison.Ordinal);
+        Assert.Contains("not player-controller, initialization RNG", guidance, StringComparison.Ordinal);
+        Assert.Contains("two byte-identical", guidance, StringComparison.Ordinal);
+        Assert.Contains("Delete sharing alone does not permit", guidance, StringComparison.Ordinal);
+        var status = Read(root, "docs", "migration-status.md");
+        Assert.Contains("### M1 sprite-free native animation timing prerequisite", status, StringComparison.Ordinal);
+        Assert.Contains("Godot's visual clock remains global", status, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void CompletePopulationMetadataDocumentationDoesNotClaimRuntimeActivation()
     {
         var root = FindRepositoryRoot();

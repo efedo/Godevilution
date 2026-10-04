@@ -7,6 +7,170 @@ namespace Devilution.Server.Tests;
 public sealed class LocalLauncherBehaviorTests
 {
     [Fact]
+    public void AnimationTimingOracleRequiresExactCompletedNativeFixtures()
+    {
+        if (!OperatingSystem.IsWindows()) return;
+        var script = BuildPowerShellHarness(["Assert-AnimationTimingNativeReport"], """
+            $work = Join-Path ([IO.Path]::GetTempPath()) ('Godevilution-AnimationNativeGuard-' + [guid]::NewGuid().ToString('N'))
+            New-Item -ItemType Directory -Path $work | Out-Null
+            try {
+                function Require-Rejection([scriptblock]$Action) {
+                    $rejected = $false; try { & $Action } catch { $rejected = $true }
+                    if (-not $rejected) { throw 'Incomplete animation evidence was accepted.' }
+                }
+                $path = Join-Path $work 'native.json'
+                $names = @('CaptureTimingOracle', 'AttackSwordWarrior', 'AttackSwordWarriorWithFastestAttack',
+                    'AttackSwordWarriorRepeated', 'BlockingWarriorNormal', 'BlockingSorcererWithFastBlock',
+                    'HitRecoverySorcererHarmony', 'Stand')
+                foreach ($captureOnly in @($false, $true)) {
+                    $selected = if ($captureOnly) { @('CaptureTimingOracle') } else { $names }
+                    $native = @{ tests = @($selected).Count; failures = 0; disabled = 0; errors = 0;
+                        testsuites = @(@{ testsuite = @(foreach ($name in $selected) {
+                            @{ classname = 'AnimationInfo'; name = $name; status = 'RUN'; result = 'COMPLETED' }
+                        }) }) }
+                    $valid = $native | ConvertTo-Json -Depth 8 -Compress
+                    [IO.File]::WriteAllText($path, $valid); Assert-AnimationTimingNativeReport $path $captureOnly
+                    foreach ($bad in @($valid.Replace('"COMPLETED"', '"SKIPPED"'),
+                        $valid.Replace('"RUN"', '"NOTRUN"'), $valid.Replace('"errors":0', '"errors":1'),
+                        $valid.Replace('"errors":0', '"errors":"0"'), $valid.Replace('"errors":0', '"errors":false'),
+                        $valid.Replace('"errors":0', '"errors":0.0'),
+                        $valid.Replace('"disabled":0', '"disabled":1'), $valid.Replace('"failures":0', '"failures":1'),
+                        $valid.Replace('"disabled":0', '"disabled":null'), $valid.Replace('"AnimationInfo"', '"replacement"'),
+                        $valid.Replace('"CaptureTimingOracle"', '"replacement"'))) {
+                        [IO.File]::WriteAllText($path, $bad)
+                        Require-Rejection { Assert-AnimationTimingNativeReport $path $captureOnly }
+                    }
+                    $native.testsuites[0].testsuite[0].failures = @(@{ failure = 'hidden native assertion' })
+                    [IO.File]::WriteAllText($path, ($native | ConvertTo-Json -Depth 8 -Compress))
+                    Require-Rejection { Assert-AnimationTimingNativeReport $path $captureOnly }
+                }
+                [IO.File]::WriteAllText($path, $valid.Replace('"tests":1', '"tests":0'))
+                Require-Rejection { Assert-AnimationTimingNativeReport $path $true }
+                Write-Output 'PASS'
+            } finally {
+                $resolved = [IO.Path]::GetFullPath($work)
+                if ([IO.Path]::GetDirectoryName($resolved) -eq [IO.Path]::GetTempPath().TrimEnd('\') -and
+                    [IO.Path]::GetFileName($resolved) -match '^Godevilution-AnimationNativeGuard-[0-9a-f]{32}$') {
+                    Remove-Item -LiteralPath $resolved -Recurse -Force
+                }
+            }
+            """, "tools/test-animation-timing.ps1");
+        Assert.Contains("PASS", RunPowerShell(script), StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void AnimationTimingOracleRequiresPortableFamilyAndExplicitComparison()
+    {
+        if (!OperatingSystem.IsWindows()) return;
+        var script = BuildPowerShellHarness(["Assert-AnimationTimingManagedReport"], """
+            $work = Join-Path ([IO.Path]::GetTempPath()) ('Godevilution-AnimationManagedGuard-' + [guid]::NewGuid().ToString('N'))
+            New-Item -ItemType Directory -Path $work | Out-Null
+            try {
+                function Require-Rejection([scriptblock]$Action) {
+                    $rejected = $false; try { & $Action } catch { $rejected = $true }
+                    if (-not $rejected) { throw 'Incomplete animation managed report was accepted.' }
+                }
+                $root = Split-Path (Split-Path $launcherPath -Parent) -Parent
+                $source = [IO.File]::ReadAllText((Join-Path $root 'server/tests/Devilution.Domain.Tests/NativeAnimationStateTests.cs'))
+                $methods = @([regex]::Matches($source, 'public void ([A-Za-z0-9_]+)\(') | ForEach-Object { $_.Groups[1].Value })
+                if ($methods.Count -ne 20) { throw 'The frozen portable animation family has changed.' }
+                $coreType = 'Devilution.Domain.Tests.NativeAnimationStateTests'
+                $oracleType = 'Devilution.Domain.Tests.NativeAnimationTimingOracleTests'
+                $nodes = @(foreach ($method in $methods) {
+                    '<test type="' + $coreType + '" method="' + $method + '" name="' + $coreType + '.' + $method + '" result="Pass" />'
+                })
+                foreach ($method in @('MatchesCompleteNativeTimingCorpus', 'InputFingerprintBindsInputsButNotExpectedOutputs')) {
+                    $nodes += '<test type="' + $oracleType + '" method="' + $method + '" name="' + $oracleType + '.' + $method + '" result="Pass" />'
+                }
+                foreach ($inputJson in @('{"Value":1}', '{"Refusal":0,"Value":1,"Extra":false}', '{"Refusal":0,"Value":1,"Value":2}')) {
+                    $method = 'EvidenceShapeRefusesMissingExtraAndDuplicateFields'
+                    $displayName = $oracleType + '.' + $method + '(json: \"' + $inputJson.Replace('"', '\\\"') + '\")'
+                    $nodes += '<test type="' + $oracleType + '" method="' + $method + '" name="' +
+                        [Security.SecurityElement]::Escape($displayName) + '" result="Pass" />'
+                }
+                $valid = '<assemblies><assembly total="25" passed="25" failed="0" skipped="0" errors="0" not-run="0"><collection>' +
+                    ($nodes -join '') + '</collection></assembly></assemblies>'
+                $path = Join-Path $work 'managed.xml'
+                [IO.File]::WriteAllText($path, $valid)
+                if ((Assert-AnimationTimingManagedReport $path) -ne 25) { throw 'Wrong accepted report count.' }
+                foreach ($bad in @($valid.Replace('result="Pass"', 'result="Skip"'), $valid.Replace('not-run="0"', 'not-run="1"'),
+                    $valid.Replace(' errors="0"', ''), $valid.Replace('total="25"', 'total="24"'),
+                    $valid.Replace('passed="25"', 'passed="24"'), $valid.Replace($nodes[0], ''),
+                    $valid.Replace('MatchesCompleteNativeTimingCorpus', 'replacement'),
+                    $valid.Replace('DistributedProgressRetainsNativeStateWhenDelayIsNonpositive', 'replacement'),
+                    $valid.Replace('Value', 'Replacement'),
+                    $valid.Replace('</collection>', '</collection><errors><error /></errors>'),
+                    $valid.Replace($nodes[0], $nodes[1]), $valid.Replace($nodes[24], ''),
+                    $valid.Replace($oracleType, 'replacement'))) {
+                    [IO.File]::WriteAllText($path, $bad)
+                    Require-Rejection { Assert-AnimationTimingManagedReport $path }
+                }
+                Write-Output 'PASS'
+            } finally {
+                $resolved = [IO.Path]::GetFullPath($work)
+                if ([IO.Path]::GetDirectoryName($resolved) -eq [IO.Path]::GetTempPath().TrimEnd('\') -and
+                    [IO.Path]::GetFileName($resolved) -match '^Godevilution-AnimationManagedGuard-[0-9a-f]{32}$') {
+                    Remove-Item -LiteralPath $resolved -Recurse -Force
+                }
+            }
+            """, "tools/test-animation-timing.ps1");
+        Assert.Contains("PASS", RunPowerShell(script), StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void AnimationTimingOracleRequiresBoundedRegularRepeatableArtifacts()
+    {
+        if (!OperatingSystem.IsWindows()) return;
+        var script = BuildPowerShellHarness(["Assert-AnimationTimingRegularPath", "Get-AnimationTimingArtifact", "Assert-AnimationTimingRepeatability"], """
+            $work = Join-Path ([IO.Path]::GetTempPath()) ('Godevilution-AnimationArtifactGuard-' + [guid]::NewGuid().ToString('N'))
+            New-Item -ItemType Directory -Path $work | Out-Null
+            $junction = Join-Path $work 'redirect'
+            try {
+                function Require-Rejection([scriptblock]$Action) {
+                    $rejected = $false; try { & $Action } catch { $rejected = $true }
+                    if (-not $rejected) { throw 'Invalid animation artifacts were accepted.' }
+                }
+                $capture = Join-Path $work 'capture'
+                New-Item -ItemType Directory -Path $capture | Out-Null
+                $path = Join-Path $capture 'animation-timing.json'
+                [IO.File]::WriteAllText($path, 'corpus')
+                $artifact = Get-AnimationTimingArtifact $capture
+                Assert-AnimationTimingRepeatability $artifact $artifact
+                Require-Rejection { Assert-AnimationTimingRepeatability $artifact $null }
+                Require-Rejection { Assert-AnimationTimingRepeatability @($artifact, $artifact) $artifact }
+                foreach ($property in @('Name', 'Length', 'Sha256')) {
+                    $changed = $artifact.PSObject.Copy()
+                    $changed.$property = switch ($property) { 'Name' { 'replacement' }; 'Length' { 10000001 }; 'Sha256' { 'b' * 64 } }
+                    Require-Rejection { Assert-AnimationTimingRepeatability $artifact $changed }
+                }
+                $changed = $artifact.PSObject.Copy(); $changed.Sha256 = if ($artifact.Sha256 -ceq ('B' * 64)) { 'A' * 64 } else { 'B' * 64 }
+                Require-Rejection { Assert-AnimationTimingRepeatability $artifact $changed }
+                [IO.File]::WriteAllText((Join-Path $capture 'extra'), 'extra')
+                Require-Rejection { Get-AnimationTimingArtifact $capture }
+                Remove-Item -LiteralPath (Join-Path $capture 'extra')
+                [IO.File]::WriteAllText($path, '')
+                Require-Rejection { Get-AnimationTimingArtifact $capture }
+                $stream = [IO.File]::OpenWrite($path); try { $stream.SetLength(10000001) } finally { $stream.Dispose() }
+                Require-Rejection { Get-AnimationTimingArtifact $capture }
+                [IO.File]::WriteAllText($path, 'corpus')
+                New-Item -ItemType Junction -Path $junction -Target $work | Out-Null
+                Require-Rejection { Get-AnimationTimingArtifact (Join-Path $junction 'capture') }
+                Require-Rejection { Assert-AnimationTimingRegularPath 'relative' }
+                Write-Output 'PASS'
+            } finally {
+                # Detach the owned junction without recursing through it before deleting the private root.
+                if (Test-Path -LiteralPath $junction) { [IO.Directory]::Delete($junction) }
+                $resolved = [IO.Path]::GetFullPath($work)
+                if ([IO.Path]::GetDirectoryName($resolved) -eq [IO.Path]::GetTempPath().TrimEnd('\') -and
+                    [IO.Path]::GetFileName($resolved) -match '^Godevilution-AnimationArtifactGuard-[0-9a-f]{32}$') {
+                    Remove-Item -LiteralPath $resolved -Recurse -Force
+                }
+            }
+            """, "tools/test-animation-timing.ps1");
+        Assert.Contains("PASS", RunPowerShell(script), StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void CompleteMetadataProofRejectsExcludedAndReplacedReports()
     {
         if (!OperatingSystem.IsWindows()) return;

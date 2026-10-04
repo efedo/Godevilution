@@ -2,6 +2,15 @@
 
 Notable changes to this fork are recorded below.
 
+- 2026-10-04: Port sprite-free native animation timing into the generic C# Domain,
+  retaining all nine cursor scalars, native narrow arithmetic and distribution
+  continuation. Add input-bound native differential proof, 50 traces/1,369
+  transitions, complete fraction queries and a zero-argument bounded two-capture
+  runner with exact report/artifact guards. Correct three reviewed parity edges
+  and legacy checkpoint-inspection guidance. Update existing architecture, plan,
+  status and verification notes. Player/controller, persistence/protocol and
+  Godot wiring remain pending; no default, save, RNG or MPQ-boundary change.
+
 - 2026-10-04: Inspect packaged-adapter checkpoints only after verified abrupt host
   exit, validating exact saved player state and Accepted receipts through the
   production store. Preserve strict decoding/cancellation and primary/cleanup

@@ -157,6 +157,51 @@ open. Their scope, dependencies, and exit checks are defined only in the
 
 ## Recent implementation evidence
 
+### M1 sprite-free native animation timing prerequisite (2026-10-04)
+
+The generic Domain now contains immutable `NativeAnimationState`, preserving
+all nine public/private scalar fields from native `AnimationInfo`. It ports
+fixed-point distribution, pending/repeated flags, signed skips, frame/counter
+narrowing, petrification, metadata changes and raw-byte progress. The core owns
+no class/gear policy, RNG, sprite, global clock or MPQ access. It is not yet wired
+into players, protocol, persistence or Godot; existing effects, hashes, saves and
+profiles are unchanged. Godot's visual clock remains global. M1 acceptance and
+the approximately 35% overall estimate remain unchanged.
+
+Independent review corrected distributed progress with nonpositive rates,
+defined negative-frame progress and reverse signed-byte wrapping. The native
+fixture invokes real timing methods with pre-call inputs, captures all nine
+scalars and queries all 129 fractions per transition. Its 50 traces/1,369
+transitions bind to a pre-input-only SHA-256 before comparison; expected native
+outputs never seed managed continuation. Unsafe assertion/division/overflow
+queries are refused without executing them natively. The direct delay/hold trace
+is caller-like evidence, not execution of player death or initialization RNG.
+
+The final zero-argument `tools/test-animation-timing.ps1` run passes eight native
+fixtures, an independent capture repeat and all 55 Domain tests, with zero
+failures/errors/skips/NotRun. Five owned stages exit cleanly with retained logs
+and no timeout/cleanup errors. Both 5,380,289-byte artifacts have SHA-256
+`CE12822FB8CDAC0F7A89B21FB76D8566554C8F77B02297699D3DFAFAD75982B3`.
+Evidence remains in
+`%TEMP%/Godevilution-Animation-Timing-Oracle-a48b51a08c734dc9a5232da5e7bf56e2`
+and `.local/m1-animation-proof-crlf-confirmation.log`. The final native rebuild
+retains existing generated-Protobuf C4251 warnings; managed builds retain NU1900
+audit-feed warnings. No warning-free or security-audit pass is claimed.
+
+Three proof-helper regressions and nine documentation consistency checks also
+pass without exclusions. The registered CTest animation family passes all eight
+fixtures with a separate fresh capture. Reports/logs are retained under
+`.local/m1-animation-proof-guards-reviewed*`, `.local/m1-animation-documentation*`
+and `.local/m1-animation-ctest*`. The runner rejects malformed native count types,
+replaced theory inputs, missing/duplicate cases, skips/errors, changed artifacts
+and reparse-point ancestors. No unsafe native query or intentional crash is used.
+
+The [completion plan](completion-plan.md#m1-a-usable-godot-gameplay-loop) retains
+module-owned transitions/RNG, exact persisted cursor, versioned projection and
+per-actor rendered restore/reconnect acceptance as the next integration gates.
+M0 normal-profile adoption still requires approval. No Godot process was launched
+for this batch; broad campaign/platform acceptance remains open.
+
 ### M0 abrupt-checkpoint and rendered-session qualification (2026-10-04)
 
 The rendered isolated cohort journey against `96962331d` passes actual Godot

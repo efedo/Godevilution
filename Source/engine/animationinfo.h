@@ -31,6 +31,19 @@ enum AnimationDistributionFlags : uint8_t {
 	RepeatedAction = 1 << 2,
 };
 
+/** Sprite-independent timing state, including distribution continuation. */
+struct AnimationTimingState {
+	int8_t numberOfFrames;
+	int8_t ticksPerFrame;
+	int8_t tickCounterOfCurrentFrame;
+	int8_t currentFrame;
+	bool isPetrified;
+	int8_t relevantFramesForDistributing;
+	int8_t skippedFramesFromPreviousAnimation;
+	uint16_t tickModifier;
+	int16_t ticksSinceSequenceStarted;
+};
+
 /**
  * @brief Contains the core animation information and related logic
  */
@@ -60,6 +73,14 @@ public:
 	 * @brief Is the animation currently petrified and shouldn't advance with gfProgressToNextGameTick
 	 */
 	bool isPetrified;
+
+	/** Captures scalar timing without borrowing sprites or modifying the cursor. */
+	[[nodiscard]] AnimationTimingState captureTimingState() const
+	{
+		return { numberOfFrames, ticksPerFrame, tickCounterOfCurrentFrame,
+			currentFrame, isPetrified, relevantFramesForDistributing_,
+			skippedFramesFromPreviousAnimation_, tickModifier_, ticksSinceSequenceStarted_ };
+	}
 
 	[[nodiscard]] ClxSprite currentSprite() const
 	{
