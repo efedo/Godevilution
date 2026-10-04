@@ -1712,6 +1712,8 @@ public sealed class AuthoritativeClientModel
             || monster.RhinoDelayTicks is < 0 or > MaximumNativeMonsterAiTimerTicks
             || monster.SkeletonKingDelayTicks is < 0 or > MaximumNativeMonsterAiTimerTicks
             || monster.HorkDemonDelayTicks is < 0 or > MaximumNativeMonsterAiTimerTicks
+            || monster.HasHorkDemonMoveTicks && monster.HorkDemonMoveTicks is < -1 or > MaximumNativeMonsterMovementTicks
+            || monster.HorkDemonMoveTurn is < MinimumNativeMonsterMovementTurn or > MaximumNativeMonsterMovementTurn
             || monster.RangedAvoidanceDelayTicks is < 0 or > MaximumNativeMonsterAiTimerTicks
             || monster.SnakeDelayTicks is < 0 or > MaximumNativeMonsterAiTimerTicks
             || monster.CounselorDelayTicks is < 0 or > MaximumNativeMonsterAiTimerTicks

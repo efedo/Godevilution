@@ -2663,6 +2663,10 @@ TEST(ServerBackedPlayerSnapshot, RejectsMalformedMonsterCombatMetadata)
 	expectInvalidAiState([](auto *monster) { monster->set_rhino_delay_ticks(MaximumNativeMonsterAiTimerTicks + 1); });
 	expectInvalidAiState([](auto *monster) { monster->set_skeleton_king_delay_ticks(MaximumNativeMonsterAiTimerTicks + 1); });
 	expectInvalidAiState([](auto *monster) { monster->set_hork_demon_delay_ticks(MaximumNativeMonsterAiTimerTicks + 1); });
+	expectInvalidAiState([](auto *monster) { monster->set_hork_demon_move_ticks(-2); });
+	expectInvalidAiState([](auto *monster) { monster->set_hork_demon_move_ticks(MaximumNativeMonsterMovementTicks + 1); });
+	expectInvalidAiState([](auto *monster) { monster->set_hork_demon_move_turn(-1); });
+	expectInvalidAiState([](auto *monster) { monster->set_hork_demon_move_turn(MaximumNativeMonsterMovementTurn + 1); });
 	expectInvalidAiState([](auto *monster) { monster->set_ranged_avoidance_delay_ticks(MaximumNativeMonsterAiTimerTicks + 1); });
 	expectInvalidAiState([](auto *monster) { monster->set_snake_delay_ticks(MaximumNativeMonsterAiTimerTicks + 1); });
 	expectInvalidAiState([](auto *monster) { monster->set_counselor_delay_ticks(MaximumNativeMonsterAiTimerTicks + 1); });
@@ -2725,6 +2729,25 @@ TEST(ServerBackedPlayerSnapshot, RejectsMalformedMonsterCombatMetadata)
 	protocol::Snapshot stationaryMovementTiming = makeMonster();
 	stationaryMovementTiming.mutable_monsters(0)->set_movement_effect_tick(13);
 	EXPECT_FALSE(ValidateMonsterSnapshots(stationaryMovementTiming).has_value());
+}
+
+TEST(ServerBackedPlayerSnapshot, AcceptsHorkDemonMoveGoalDefaultsAndBoundaries)
+{
+	protocol::Snapshot snapshot;
+	auto *monster = snapshot.add_monsters();
+	monster->set_entity_id(1);
+	monster->set_hit_points(10);
+	monster->set_max_hit_points(10);
+	monster->set_alive(true);
+	EXPECT_TRUE(ValidateMonsterSnapshots(snapshot).has_value());
+	monster->set_hork_demon_move_ticks(-1);
+	monster->set_hork_demon_move_turn(0);
+	EXPECT_TRUE(ValidateMonsterSnapshots(snapshot).has_value());
+	monster->set_hork_demon_move_ticks(0);
+	monster->set_hork_demon_move_turn(1);
+	EXPECT_TRUE(ValidateMonsterSnapshots(snapshot).has_value());
+	monster->set_hork_demon_move_ticks(MaximumNativeMonsterMovementTicks);
+	EXPECT_TRUE(ValidateMonsterSnapshots(snapshot).has_value());
 }
 
 TEST(ServerBackedPlayerSnapshot, AcceptsAuthoredUniqueMonsterPackLeader)

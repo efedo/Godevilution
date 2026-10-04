@@ -360,7 +360,7 @@ extern DVL_API_FOR_TEST std::vector<UniqueMonsterData> UniqueMonstersData;
 // ---------------------------------------------------------------------------
 struct Monster;
 using AiFunc = void (*)(Monster &monster);
-extern std::unordered_map<MonsterAIID, AiFunc> AiRegistry;
+extern DVL_API_FOR_TEST std::unordered_map<MonsterAIID, AiFunc> AiRegistry;
 
 /**
  * @brief Registers all built-in AI functions into AiRegistry.

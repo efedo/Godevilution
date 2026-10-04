@@ -2,6 +2,19 @@
 
 Notable changes to this fork are recorded below.
 
+- 2026-10-04: Correct Hork Demon native decision/RNG ordering and persist active
+  Move counter/turn through clone, snapshots, cohort/protocol saves and hashes.
+  Preserve legacy zero-seed behavior, frozen save/cohort bytes and strict JSON
+  validation; restore previously dropped monster item/AI seeds on save reload.
+  Independently verify the corrected seeded replay action draw and cold-save
+  continuation. Full module passes 2,900 with 127 existing explicit exclusions;
+  full server passes 1,583 with four exclusions after an unchanged timeout case
+  passes in isolation and the full serial rerun. All 170 affected native cases,
+  129 client-model cases and focused checks pass. Retain failed-run evidence,
+  update existing status/plan/replay guidance and clarify full theme-item
+  prerequisites. Preserve launcher defaults and user saves; no Godot launch or
+  full Hork animation/corner/whole-process parity claim.
+
 - 2026-10-04: Port ordinary Cathedral `InitItems`/`AddInitItems` after independent
   managed encounters, preserving full item pools, scratch, active IDs, signed
   occupancy, native partial clear/allocation and absolute-seed reseeding. Add

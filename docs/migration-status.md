@@ -148,6 +148,48 @@ open. Their scope, dependencies, and exit checks are defined only in the
 
 ## Recent implementation evidence
 
+### M3 Hork Demon decision RNG and save continuation (2026-10-04)
+
+The four earlier baseline Hork RNG failures are resolved, not excluded. Native
+registered-controller checks establish action/admission order, both RandomWalk
+coins, persistent Move-goal continuation/expiry/room reset, RoundWalk fallback
+turn mutation, blocked-spawn no-fallthrough and signed delay semantics. The
+seeded multiplayer replay now includes its missing action draw; its test proves
+the old checkpoint differs only in the RNG transcript.
+
+Active Move counter/turn state now survives clone, snapshot, cohort and protocol
+saves. Additive optional fields 98/99 default to Normal (-1,0), omit legacy
+defaults and extend hashing only when nondefault. Strict cohort JSON accepts
+the absent legacy pair but rejects partial state and still requires every other
+field. Cold-save continuation also exposed and fixed missing inbound copies of
+the existing monster item/AI seeds. Independently frozen 1,824-byte protocol-save
+and 15,991-byte cohort baselines remain unchanged; no format version or normal
+launcher profile changes, save imports or MPQ requirements are introduced.
+
+Verification: focused module 26, focused server 40, focused client 6, full client
+model 129, native monster/AI 20 and native snapshot 150 pass without exclusions.
+CTest discovers all 170 affected native cases through existing registered
+targets. Full module passes 2,900 with zero failures and 127 existing explicit
+native/private exclusions (3,027 total). Full server passes 1,583 with zero
+failures and four existing exclusions (1,587 total), with collection concurrency
+disabled. The earlier parallel server run retained one recovery-harness output
+drain timeout; that unchanged class passes all six cases in isolation. The first
+module integration run retained a documentation wording assertion, corrected
+without weakening its phase-boundary test. Logs and XML remain under `.local`
+with the `m2-hork-` prefix. Module build has no warnings; server retains three
+NU1900 audit-feed warnings, client retains four analyzer warnings, and native
+generated Protobuf DLL-interface warnings remain. No vulnerability-audit pass
+is claimed.
+
+Acceptance is bounded to the tested Hork decisions, RNG and save continuation,
+not native animation scheduling, directional-corner admission, the prior-walk
+83% movement branch or whole `ProcessMonsters` parity. Move state is semantic
+active-goal state, not stale native Normal-goal variables. The next ordinary
+population dependency is full theme item generation before `CreateThemeRooms`,
+complete external packs and a separate opt-in populated profile. M0/M2, campaign
+acceptance and the approximately 35% overall estimate remain open. No Godot
+application was launched in this batch.
+
 ### M2 ordinary Cathedral initial items and unique catalog (2026-10-04)
 
 The independent ordinary `InitItems`/`AddInitItems` port now follows the

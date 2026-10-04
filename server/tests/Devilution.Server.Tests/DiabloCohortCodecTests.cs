@@ -20,6 +20,36 @@ public sealed class DiabloCohortCodecTests
             Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(bytes)).ToLowerInvariant());
     }
 
+    [Theory]
+    [InlineData(-1, 0)]
+    [InlineData(0, 0)]
+    [InlineData(3, 1)]
+    public void HorkDemonMoveGoalRoundTripsWithOptionalLegacyDefaults(int ticks, int turn)
+    {
+        var baseline = CreateState();
+        var target = Assert.Single(baseline.CombatTargets);
+        var source = baseline with {
+            CombatTargets = [target with { Monster = target.Monster with {
+                HorkDemonMoveTicks = ticks, HorkDemonMoveTurn = turn,
+            } }],
+        };
+        var encoded = codec.Serialize(source);
+        Assert.Equal(ticks != -1 || turn != 0, encoded.Contains("\"HorkDemonMoveTicks\"", StringComparison.Ordinal));
+        var monster = Assert.Single(codec.Deserialize(encoded).CombatTargets).Monster;
+        Assert.Equal((ticks, turn), (monster.HorkDemonMoveTicks, monster.HorkDemonMoveTurn));
+        Assert.Equal(encoded, codec.Serialize(codec.Deserialize(encoded)));
+    }
+
+    [Theory]
+    [InlineData("HorkDemonMoveTicks")]
+    [InlineData("HorkDemonMoveTurn")]
+    public void HorkDemonMoveGoalRejectsPartialCohortFields(string field)
+    {
+        var document = ParseState();
+        document["CombatTargets"]![0]!["Monster"]![field] = 0;
+        Assert.Throws<InvalidDataException>(() => codec.Deserialize(document.ToJsonString()));
+    }
+
     [Fact]
     public void FullQuestPoliciesRoundTripThroughTheHostCodec()
     {

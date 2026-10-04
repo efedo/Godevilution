@@ -1705,6 +1705,10 @@ tl::expected<void, std::string> ValidateMonsterSnapshots(const protocol::Snapsho
 		    || monster.rhino_delay_ticks() < 0 || monster.rhino_delay_ticks() > MaximumNativeMonsterAiTimerTicks
 		    || monster.skeleton_king_delay_ticks() < 0 || monster.skeleton_king_delay_ticks() > MaximumNativeMonsterAiTimerTicks
 		    || monster.hork_demon_delay_ticks() < 0 || monster.hork_demon_delay_ticks() > MaximumNativeMonsterAiTimerTicks
+		    || (monster.has_hork_demon_move_ticks()
+		        && (monster.hork_demon_move_ticks() < -1 || monster.hork_demon_move_ticks() > MaximumNativeMonsterMovementTicks))
+		    || monster.hork_demon_move_turn() < MinimumNativeMonsterMovementTurn
+		        || monster.hork_demon_move_turn() > MaximumNativeMonsterMovementTurn
 		    || monster.ranged_avoidance_delay_ticks() < 0 || monster.ranged_avoidance_delay_ticks() > MaximumNativeMonsterAiTimerTicks
 		    || monster.snake_delay_ticks() < 0 || monster.snake_delay_ticks() > MaximumNativeMonsterAiTimerTicks
 		    || monster.counselor_delay_ticks() < 0 || monster.counselor_delay_ticks() > MaximumNativeMonsterAiTimerTicks

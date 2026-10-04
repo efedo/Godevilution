@@ -2,6 +2,8 @@ using System.Text.Json;
 using Devilution.Protocol.V1;
 using Devilution.Server.Stores;
 using Devilution.Server.Snapshots;
+using Devilution.Server.Protocol;
+using AuthoritativeProtocolLimits = Devilution.Protocol.AuthoritativeProtocolLimits;
 using Google.Protobuf;
 using Xunit;
 
@@ -773,6 +775,108 @@ public sealed class AuthoritativeSaveCodecTests
             new AuthoritativeSaveCodec().Serialize(source));
 
         Assert.Equal(7, Assert.Single(restored.Monsters).HorkDemonDelayTicks);
+    }
+
+    [Theory]
+    [InlineData(-1, 0)]
+    [InlineData(0, 0)]
+    [InlineData(3, 1)]
+    [InlineData(AuthoritativeProtocolLimits.MaximumNativeMonsterMovementTicks, 1)]
+    public void HorkDemonMoveGoalRoundTripsThroughProtocolSave(int ticks, int turn)
+    {
+        var baseline = CreateSnapshot();
+        var source = baseline with {
+            Monsters = [baseline.Monsters[0] with {
+                NativeAi = "HorkDemon",
+                HorkDemonMoveTicks = ticks,
+                HorkDemonMoveTurn = turn,
+            }],
+        };
+        var wire = DiabloProtocolMapper.ToProtocolSnapshot(source);
+        var monster = Assert.Single(wire.Monsters);
+        Assert.Equal(ticks != -1 || turn != 0, monster.HasHorkDemonMoveTicks);
+        Assert.Equal(ticks != -1 || turn != 0, monster.HasHorkDemonMoveTurn);
+        var codec = new AuthoritativeSaveCodec();
+        var restored = Assert.Single(codec.Deserialize(codec.Serialize(source)).Monsters);
+        Assert.Equal((ticks, turn), (restored.HorkDemonMoveTicks, restored.HorkDemonMoveTurn));
+    }
+
+    [Fact]
+    public void HorkDemonAbsentMoveGoalRestoresLegacyDefaults()
+    {
+        var wire = DiabloProtocolMapper.ToProtocolSnapshot(CreateSnapshot());
+        Assert.All(wire.Monsters, monster => {
+            Assert.False(monster.HasHorkDemonMoveTicks);
+            Assert.False(monster.HasHorkDemonMoveTurn);
+        });
+        var restored = Assert.Single(DiabloProtocolMapper.FromProtocolSnapshot(wire).Monsters);
+        Assert.Equal((-1, 0), (restored.HorkDemonMoveTicks, restored.HorkDemonMoveTurn));
+    }
+
+    [Fact]
+    public void HorkDemonProtocolSaveColdRestorePreservesNextMoveDecisionAndRandomState()
+    {
+        static DiabloSimulation CreateSimulation() => DiabloSimulationFactory.Instance.Create(
+            new DiabloSimulationOptions(new StoreCatalog(), DiabloModule.Instance.Rules) {
+                GameMode = DiabloGameMode.Multiplayer,
+                RandomSeed = 0xCAFEBABE,
+                CombatTargets = [new AuthoritativeCombatTarget(
+                    9, 1, 0, 120, levelId: 1, aggroRange: 8, nativeAi: "HorkDemon",
+                    monsterItemSeed: 7, monsterAiSeed: 7,
+                    horkDemonMoveTicks: 2, horkDemonMoveTurn: 0)],
+                MonsterMissiles = new AuthoritativeMonsterMissileCatalog([
+                    new AuthoritativeMonsterMissileDefinition(
+                        "HorkDemon", "HorkSpawn", AuthoritativeProjectileBehavior.HorkSpawn,
+                        SpawnMonsterId: 119),
+                ]),
+            });
+        static AuthoritativePlayerState CreatePlayer() => new(
+            0, 0, 100, 0, 0, PlayerAttributesState.Zero, [],
+            Enumerable.Repeat(-1, 40).ToArray(), [], positionX: 7, positionY: 0,
+            lifeMaximum: 100, characterLevel: 1, levelId: 1, armorClass: 0) {
+                EntityId = 7,
+            };
+
+        var codec = new AuthoritativeSaveCodec();
+        var uninterrupted = CreateSimulation();
+        var player = CreatePlayer();
+        var saved = codec.Serialize(uninterrupted.CaptureSnapshot(player, 0));
+        var restored = CreateSimulation();
+        var restoredPlayer = CreatePlayer();
+        restored.RestoreSnapshot(restoredPlayer, codec.Deserialize(saved));
+        uninterrupted.AdvanceTick(1, [player]);
+        restored.AdvanceTick(1, [restoredPlayer]);
+        var next = restored.CaptureSnapshot(restoredPlayer, 1);
+        var monster = Assert.Single(next.Monsters);
+        Assert.Equal(158868340U, monster.MonsterAiSeed);
+        // Independently checked against native HorkDemonAi: an existing Move
+        // goal consumes only the multiplayer prefix and action draw here.
+        Assert.Equal(2071244549U, next.RandomState);
+        Assert.Equal((3, 0, 1, 1), (
+            monster.HorkDemonMoveTicks, monster.HorkDemonMoveTurn,
+            monster.FuturePositionX, monster.FuturePositionY));
+        Assert.Equal(codec.Serialize(uninterrupted.CaptureSnapshot(player, 1)), codec.Serialize(next));
+    }
+
+    [Theory]
+    [InlineData(-2, 0)]
+    [InlineData(AuthoritativeProtocolLimits.MaximumNativeMonsterMovementTicks + 1, 0)]
+    [InlineData(0, -1)]
+    [InlineData(0, 2)]
+    public void HorkDemonMoveGoalRejectsInvalidDomainAndSaveState(int ticks, int turn)
+    {
+        var baseline = CreateSnapshot();
+        var source = baseline with {
+            Monsters = [baseline.Monsters[0] with {
+                HorkDemonMoveTicks = ticks,
+                HorkDemonMoveTurn = turn,
+            }],
+        };
+        Assert.Throws<InvalidDataException>(() => DiabloProtocolMapper.ToProtocolSnapshot(source));
+        var wire = DiabloProtocolMapper.ToProtocolSnapshot(baseline);
+        wire.Monsters[0].HorkDemonMoveTicks = ticks;
+        wire.Monsters[0].HorkDemonMoveTurn = turn;
+        Assert.Throws<InvalidDataException>(() => DiabloProtocolMapper.FromProtocolSnapshot(wire));
     }
 
     [Fact]

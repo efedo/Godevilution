@@ -1770,6 +1770,10 @@ public sealed class AuthoritativeSnapshotValidatorTests
             monster => monster.RhinoDelayTicks = AuthoritativeProtocolLimits.MaximumNativeMonsterAiTimerTicks + 1,
             monster => monster.SkeletonKingDelayTicks = AuthoritativeProtocolLimits.MaximumNativeMonsterAiTimerTicks + 1,
             monster => monster.HorkDemonDelayTicks = AuthoritativeProtocolLimits.MaximumNativeMonsterAiTimerTicks + 1,
+            monster => monster.HorkDemonMoveTicks = -2,
+            monster => monster.HorkDemonMoveTicks = AuthoritativeProtocolLimits.MaximumNativeMonsterMovementTicks + 1,
+            monster => monster.HorkDemonMoveTurn = -1,
+            monster => monster.HorkDemonMoveTurn = 2,
             monster => monster.RangedAvoidanceDelayTicks = AuthoritativeProtocolLimits.MaximumNativeMonsterAiTimerTicks + 1,
             monster => monster.SnakeDelayTicks = AuthoritativeProtocolLimits.MaximumNativeMonsterAiTimerTicks + 1,
             monster => monster.CounselorDelayTicks = AuthoritativeProtocolLimits.MaximumNativeMonsterAiTimerTicks + 1,
@@ -1783,6 +1787,19 @@ public sealed class AuthoritativeSnapshotValidatorTests
             Assert.Throws<InvalidDataException>(() =>
                 AuthoritativeSnapshotValidator.Validate(invalid));
         }
+    }
+
+    [Theory]
+    [InlineData(-1, 0)]
+    [InlineData(0, 1)]
+    [InlineData(AuthoritativeProtocolLimits.MaximumNativeMonsterMovementTicks, 1)]
+    public void AcceptsHorkDemonMoveGoalBoundaries(int ticks, int turn)
+    {
+        AuthoritativeSnapshotValidator.Validate(new Snapshot {
+            Monsters = { new MonsterSnapshot {
+                EntityId = 1, HorkDemonMoveTicks = ticks, HorkDemonMoveTurn = turn,
+            } },
+        });
     }
 
     [Fact]

@@ -539,6 +539,13 @@ public static class SnapshotStateHasher
                     hasher.AppendString("godevilution-monster-hork-demon-delay-v1");
                     hasher.AppendInt32(monster.HorkDemonDelayTicks);
                 }
+                var horkMoveTicks = monster.HasHorkDemonMoveTicks ? monster.HorkDemonMoveTicks : -1;
+                var horkMoveTurn = monster.HasHorkDemonMoveTurn ? monster.HorkDemonMoveTurn : 0;
+                if (horkMoveTicks != -1 || horkMoveTurn != 0) {
+                    hasher.AppendString("godevilution-monster-hork-demon-move-v1");
+                    hasher.AppendInt32(horkMoveTicks);
+                    hasher.AppendInt32(horkMoveTurn);
+                }
                 if (monster.RangedAvoidanceDelayTicks != 0) {
                     hasher.AppendString("godevilution-monster-ranged-avoidance-delay-v1");
                     hasher.AppendInt32(monster.RangedAvoidanceDelayTicks);

@@ -104,6 +104,8 @@ public sealed class DiabloCohortCodec
             for (var index = info.Properties.Count - 1; index >= 0; index--) {
                 if (!fields.Contains(info.Properties[index].Name))
                     info.Properties.RemoveAt(index);
+                else if (IsHorkMoveField(info.Type, info.Properties[index].Name))
+                    info.Properties[index].ShouldSerialize = (value, _) => !HasDefaultHorkMoveState(value);
             }
         });
         var options = new JsonSerializerOptions {
@@ -200,6 +202,14 @@ public sealed class DiabloCohortCodec
             || (!field.PropertyType.IsValueType
                 && new NullabilityInfoContext().Create(field).ReadState == NullabilityState.Nullable));
 
+    // This additive pair is absent from legacy cohorts. Other fields remain
+    // required, and partial Move state must not silently acquire defaults.
+    private static bool IsHorkMoveField(Type type, string name) => type == typeof(DiabloMonsterState)
+        && name is nameof(DiabloMonsterState.HorkDemonMoveTicks) or nameof(DiabloMonsterState.HorkDemonMoveTurn);
+
+    private static bool HasDefaultHorkMoveState(object value) => value is DiabloMonsterState monster
+        && monster.HorkDemonMoveTicks == -1 && monster.HorkDemonMoveTurn == 0;
+
     private static Type? FindGenericContract(Type type, Type definition) =>
         type.IsGenericType && type.GetGenericTypeDefinition() == definition
             ? type
@@ -261,7 +271,8 @@ public sealed class DiabloCohortCodec
             ValidateJson(field.Value, property.PropertyType,
                 AllowsNull(property) && !IsRequiredCathedralDoors(type, property, schema), schema);
         }
-        if (present.Count != properties.Count)
+        var missing = properties.Keys.Where(name => !present.Contains(name)).ToArray();
+        if (missing.Length != 0 && !(missing.Length == 2 && missing.All(name => IsHorkMoveField(type, name))))
             throw new InvalidDataException($"The {type.Name} cohort object is missing required fields.");
     }
 
@@ -445,7 +456,11 @@ public sealed class DiabloCohortCodec
             var root = document.RootElement;
             var values = fields.ToDictionary(
                 field => field.Name,
-                field => root.GetProperty(field.Name).Deserialize(field.PropertyType, options),
+                field => root.TryGetProperty(field.Name, out var stored)
+                    ? stored.Deserialize(field.PropertyType, options)
+                    : IsHorkMoveField(typeof(T), field.Name)
+                        ? field.Name == nameof(DiabloMonsterState.HorkDemonMoveTicks) ? -1 : 0
+                        : throw new InvalidDataException($"Missing cohort field '{field.Name}'."),
                 StringComparer.Ordinal);
             var parameters = constructor.GetParameters();
             var bound = parameters.Select(parameter => fields.Single(field =>
@@ -468,6 +483,8 @@ public sealed class DiabloCohortCodec
         {
             writer.WriteStartObject();
             foreach (var field in fields) {
+                if (IsHorkMoveField(typeof(T), field.Name) && HasDefaultHorkMoveState(value))
+                    continue;
                 writer.WritePropertyName(field.Name);
                 JsonSerializer.Serialize(writer, field.GetValue(value), field.PropertyType, options);
             }

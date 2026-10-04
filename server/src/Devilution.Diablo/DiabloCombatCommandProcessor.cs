@@ -6630,6 +6630,35 @@ public sealed class DiabloCombatCommandProcessor
         return null;
     }
 
+    /** Native HorkDemon RoundWalk using its persisted goalVar2 turn state. */
+    private (int X, int Y)? FindNativeHorkRoundWalkStepFromRandom(
+        AuthoritativeCombatTarget monster,
+        AuthoritativePlayerState player,
+        IReadOnlyList<AuthoritativePlayerState> players,
+        int goalTurn)
+    {
+        var direction = GetDirection(
+            monster.PositionX,
+            monster.PositionY,
+            player.PositionX,
+            player.PositionY);
+        var turn = goalTurn == 0 ? 1 : -1;
+        var primaryDirections = DeterministicGridDirections.EnumerateRoundWalkPrimary(
+            direction,
+            turn);
+        foreach (var candidateDirection in primaryDirections) {
+            var step = FindStepInDirection(monster, candidateDirection, players);
+            if (step.HasValue)
+                return step;
+        }
+
+        // RoundWalk calls RandomWalk(Opposite(turn90)); RandomWalk consumes
+        // both native coin draws before testing its five candidates.
+        monster.UpdateHorkDemonMovementTurn(goalTurn == 0 ? 1 : 0);
+        var fallbackDirection = RotateDirection(primaryDirections[0], 4);
+        return FindNativeRandomWalkStepFromRandom(monster, fallbackDirection, players);
+    }
+
     /** Native OverlordAi admits Fat movement through its 20 + 4 * intelligence band. */
     private bool TryAdvanceFatAi(
         AuthoritativeCombatTarget monster,
@@ -6680,6 +6709,71 @@ public sealed class DiabloCombatCommandProcessor
         return true;
     }
 
+    /** Attempts the native Hork Spawn cell admission without consuming RNG. */
+    private bool TryStartHorkDemonSpawn(
+        AuthoritativeCombatTarget monster,
+        AuthoritativePlayerState victim,
+        IReadOnlyList<AuthoritativePlayerState> players,
+        AuthoritativeMonsterMissileDefinition missile)
+    {
+        if (monsterSpawnPlanner is null || world.CombatTargets.Count >= 256)
+            return false;
+
+        // Native HorkDemonAi checks the monster's current direction for the
+        // adjacent admission cell; it does not turn toward the victim before
+        // starting Hork Spawn.
+        var direction = monster.Direction;
+        var displacement = DirectionDisplacements[direction];
+        var positionX = checked(monster.PositionX + displacement.X);
+        var positionY = checked(monster.PositionY + displacement.Y);
+        if (!world.IsWalkable(monster.LevelId, positionX, positionY)
+            || world.IsOccupied(
+                monster.LevelId,
+                positionX,
+                positionY,
+                players,
+                monster.EntityId))
+            return false;
+
+        var projectileSpeed = missile.ProjectileSpeed > 0
+            ? missile.ProjectileSpeed
+            : 8;
+        var projectileLifetime = missile.ProjectileLifetime > 0
+            ? missile.ProjectileLifetime
+            : 9;
+        var velocity = CalculateVelocity(
+            monster.PositionX,
+            monster.PositionY,
+            victim.PositionX,
+            victim.PositionY,
+            projectileSpeed);
+        var projectile = new AuthoritativeProjectile(
+            AllocateProjectileEntityId(),
+            monster.EntityId,
+            victim.EntityId,
+            missile.SpawnMonsterId,
+            monster.LevelId,
+            monster.PositionX,
+            monster.PositionY,
+            victim.PositionX,
+            victim.PositionY,
+            0,
+            AuthoritativeDamageType.Physical,
+            0,
+            checked((uint)projectileLifetime)) {
+            Behavior = missile.ProjectileBehavior,
+            NativeMissileId = missile.ProjectileBehavior == AuthoritativeProjectileBehavior.MonsterMagic ? missile.MissileId : null,
+            VelocityX = velocity.X,
+            VelocityY = velocity.Y,
+            OriginalDirection = direction,
+            Speed = projectileSpeed,
+            ImpactLifetime = ResolveMonsterProjectileImpactLifetime(missile),
+            ResistantDamageDivisor = 1,
+        };
+        world.Projectiles.Add(projectile.EntityId, projectile);
+        return true;
+    }
+
     /** Native HorkDemonAi admission with server-owned Hork Spawn trajectory. */
     private bool TryAdvanceHorkDemonAi(
         AuthoritativeCombatTarget monster,
@@ -6707,12 +6801,15 @@ public sealed class DiabloCombatCommandProcessor
         // Zero-seed fixtures and legacy multiplayer snapshots keep the
         // deterministic compatibility controller.
         var usesNativeAiStream = monster.MonsterAiSeed != 0;
-        // The compact replay HorkDemon controller admits its ranged spawn
-        // branch from the stable tick/entity action seed. The native replay
-        // boundary returns before generic MonsterAttack consumes the per-
-        // monster stream, so this decision must not advance the global RNG.
-        var actionRoll = (int)(actionSeed % 100U);
+        // HorkDemonAi always consumes GenerateRnd(100) before examining its
+        // goal. Initialized targets use the native per-monster stream; the
+        // zero-seed compatibility path remains deterministic and side-effect
+        // free.
+        var actionRoll = usesNativeAiStream
+            ? random.GenerateRnd(100)
+            : (int)(actionSeed % 100U);
         if (distance <= 1) {
+            monster.ClearHorkDemonMovement();
             var attackChance = Math.Min(
                 100,
                 horkDemonTuning.Value.AttackChanceBase
@@ -6721,66 +6818,95 @@ public sealed class DiabloCombatCommandProcessor
             return actionRoll >= attackChance;
         }
 
-        if (distance >= horkDemonTuning.Value.SpawnMinimumDistance
+        var roundWalkChanceModulo = 4;
+        if (monsterTypes?.TryGet(monster.MonsterId, out var horkDefinition) == true
+            && horkDefinition.HorkDemonRoundWalkChanceModulo > 0) {
+            roundWalkChanceModulo = horkDefinition.HorkDemonRoundWalkChanceModulo;
+        }
+        var spawnAdmitted = distance >= horkDemonTuning.Value.SpawnMinimumDistance
             && actionRoll < Math.Min(
-                    100,
-                    horkDemonTuning.Value.SpawnChanceBase
-                        + (horkDemonTuning.Value.SpawnChanceIntelligenceScale
-                            * monster.Intelligence))
-            && monsterSpawnPlanner is not null
-            && world.CombatTargets.Count < 256) {
-            // Native HorkDemonAi checks the monster's current direction for
-            // the adjacent admission cell; it does not turn toward the
-            // victim before starting Hork Spawn.
-            var direction = monster.Direction;
-            var displacement = DirectionDisplacements[direction];
-            var positionX = checked(monster.PositionX + displacement.X);
-            var positionY = checked(monster.PositionY + displacement.Y);
-            if (world.IsWalkable(monster.LevelId, positionX, positionY)
-                && !world.IsOccupied(
-                    monster.LevelId,
-                    positionX,
-                    positionY,
-                    players,
-                    monster.EntityId)) {
-                var projectileSpeed = missile.ProjectileSpeed > 0
-                    ? missile.ProjectileSpeed
-                    : 8;
-                var projectileLifetime = missile.ProjectileLifetime > 0
-                    ? missile.ProjectileLifetime
-                    : 9;
-                var velocity = CalculateVelocity(
-                    monster.PositionX,
-                    monster.PositionY,
-                    victim.PositionX,
-                    victim.PositionY,
-                    projectileSpeed);
-                var projectile = new AuthoritativeProjectile(
-                    AllocateProjectileEntityId(),
-                    monster.EntityId,
-                    victim.EntityId,
-                    missile.SpawnMonsterId,
-                    monster.LevelId,
-                    monster.PositionX,
-                    monster.PositionY,
-                    victim.PositionX,
-                    victim.PositionY,
-                    0,
-                    AuthoritativeDamageType.Physical,
-                    0,
-                    checked((uint)projectileLifetime)) {
-                    Behavior = missile.ProjectileBehavior,
-                    NativeMissileId = missile.ProjectileBehavior == AuthoritativeProjectileBehavior.MonsterMagic ? missile.MissileId : null,
-                    VelocityX = velocity.X,
-                    VelocityY = velocity.Y,
-                    OriginalDirection = direction,
-                    Speed = projectileSpeed,
-                    ImpactLifetime = ResolveMonsterProjectileImpactLifetime(missile),
-                    ResistantDamageDivisor = 1,
-                };
-                world.Projectiles.Add(projectile.EntityId, projectile);
+                100,
+                horkDemonTuning.Value.SpawnChanceBase
+                    + (horkDemonTuning.Value.SpawnChanceIntelligenceScale
+                        * monster.Intelligence));
+        if (!usesNativeAiStream) {
+            // Preserve the legacy zero-seed controller exactly: movement
+            // admission precedes its far-distance RoundWalk choice, and a
+            // failed spawn-cell probe falls through to that controller.
+            if (spawnAdmitted && TryStartHorkDemonSpawn(monster, victim, players, missile))
+                return true;
+
+            var legacyMovementChance = Math.Min(
+                100,
+                horkDemonTuning.Value.MovementChanceBase
+                    + (horkDemonTuning.Value.MovementChanceIntelligenceScale
+                        * monster.Intelligence));
+            if (actionRoll >= legacyMovementChance) {
+                monster.StartHorkDemonDelay(ResolveHorkDemonDelay(missile, actionSeed));
                 return true;
             }
+
+            if (distance >= 5
+                && (actionSeed / 100U) % (uint)roundWalkChanceModulo != 0U) {
+                var roundWalk = FindNativeRoundWalkStep(
+                    monster,
+                    victim,
+                    players,
+                    actionSeed);
+                if (roundWalk.HasValue) {
+                    monster.BeginMovement(roundWalk.Value.X, roundWalk.Value.Y);
+                    return true;
+                }
+            }
+
+            var legacyRandomWalk = FindNativeRandomWalkStep(
+                monster,
+                victim,
+                players,
+                actionSeed);
+            if (legacyRandomWalk.HasValue)
+                monster.BeginMovement(legacyRandomWalk.Value.X, legacyRandomWalk.Value.Y);
+            return true;
+        }
+
+        var hasMoveGoal = monster.HorkDemonMoveTicks >= 0;
+        if (hasMoveGoal) {
+            if (TryAdvanceHorkDemonRoundWalk(
+                monster,
+                victim,
+                players,
+                distance,
+                usesNativeAiStream,
+                actionSeed,
+                missile))
+                return true;
+            // Native goalVar1 reached its limit and changed the goal back to
+            // Normal. The already-consumed action roll is reused below.
+        } else if (distance >= 5
+            && (usesNativeAiStream
+                ? !random.FlipCoin((uint)roundWalkChanceModulo)
+                : (actionSeed / 100U) % (uint)roundWalkChanceModulo != 0U)) {
+            monster.StartHorkDemonMovement(
+                usesNativeAiStream
+                    ? random.GenerateRnd(2)
+                    : (int)((actionSeed / 100U) % 2U));
+            if (TryAdvanceHorkDemonRoundWalk(
+                monster,
+                victim,
+                players,
+                distance,
+                usesNativeAiStream,
+                actionSeed,
+                missile))
+                return true;
+        }
+
+        if (spawnAdmitted) {
+            if (TryStartHorkDemonSpawn(monster, victim, players, missile))
+                return true;
+            // Native's admitted ranged branch does not fall through to
+            // movement when the spawn cell/capacity is unavailable.
+            return true;
         }
 
         var movementChance = Math.Min(
@@ -6789,33 +6915,15 @@ public sealed class DiabloCombatCommandProcessor
                 + (horkDemonTuning.Value.MovementChanceIntelligenceScale
                     * monster.Intelligence));
         var movementRoll = usesNativeAiStream
-            ? random.RandomIntLessThan(100)
+            ? random.GenerateRnd(100)
             : (int)(actionSeed % 100U);
         if (movementRoll >= movementChance) {
-            monster.StartHorkDemonDelay(
-                usesNativeAiStream
-                    ? ResolveHorkDemonDelayFromRandom(missile)
-                    : ResolveHorkDemonDelay(missile, actionSeed));
+            var delay = usesNativeAiStream
+                ? ResolveHorkDemonDelayFromRandom(missile)
+                : ResolveHorkDemonDelay(missile, actionSeed);
+            if (delay > 0)
+                monster.StartHorkDemonDelay(delay);
             return true;
-        }
-
-        var roundWalkChanceModulo = 4;
-        if (monsterTypes?.TryGet(monster.MonsterId, out var horkDefinition) == true
-            && horkDefinition.HorkDemonRoundWalkChanceModulo > 0) {
-            roundWalkChanceModulo = horkDefinition.HorkDemonRoundWalkChanceModulo;
-        }
-        var roundWalkAdmitted = distance >= 5
-            && (usesNativeAiStream
-                ? !random.FlipCoin((uint)roundWalkChanceModulo)
-                : (actionSeed / 100U) % (uint)roundWalkChanceModulo != 0U);
-        if (roundWalkAdmitted) {
-            var roundWalk = usesNativeAiStream
-                ? FindNativeRoundWalkStepFromRandom(monster, victim, players)
-                : FindNativeRoundWalkStep(monster, victim, players, actionSeed);
-            if (roundWalk.HasValue) {
-                monster.BeginMovement(roundWalk.Value.X, roundWalk.Value.Y);
-                return true;
-            }
         }
 
         var randomWalk = usesNativeAiStream
@@ -6826,8 +6934,54 @@ public sealed class DiabloCombatCommandProcessor
             return true;
         }
 
-        // Native HorkDemonAi consumes the admitted movement branch even when
-        // both its RoundWalk and RandomWalk candidates are blocked.
+        // Native HorkDemonAi consumes an admitted movement branch even when
+        // every normal RandomWalk candidate is blocked.
+        return true;
+    }
+
+    /** Executes one native HorkDemon Move-goal RoundWalk, including fallback delay. */
+    private bool TryAdvanceHorkDemonRoundWalk(
+        AuthoritativeCombatTarget monster,
+        AuthoritativePlayerState victim,
+        IReadOnlyList<AuthoritativePlayerState> players,
+        int distance,
+        bool usesNativeAiStream,
+        uint actionSeed,
+        AuthoritativeMonsterMissileDefinition missile)
+    {
+        var sameTransparencyRegion = world.World?.Levels
+            .FirstOrDefault(level => level.LevelId == monster.LevelId)
+            ?.IsSameTransparencyRegion(
+                monster.PositionX,
+                monster.PositionY,
+                victim.PositionX,
+                victim.PositionY)
+            ?? true;
+        if (!monster.AdvanceHorkDemonMovement(distance, sameTransparencyRegion))
+            return false;
+
+        var roundWalk = usesNativeAiStream
+            ? FindNativeHorkRoundWalkStepFromRandom(
+                monster,
+                victim,
+                players,
+                monster.HorkDemonMoveTurn)
+            : FindNativeRoundWalkStep(
+                monster,
+                victim,
+                players,
+                actionSeed,
+                monster.HorkDemonMoveTurn);
+        if (roundWalk.HasValue) {
+            monster.BeginMovement(roundWalk.Value.X, roundWalk.Value.Y);
+            return true;
+        }
+
+        var delay = usesNativeAiStream
+            ? ResolveHorkDemonDelayFromRandom(missile)
+            : ResolveHorkDemonDelay(missile, actionSeed);
+        if (delay > 0)
+            monster.StartHorkDemonDelay(delay);
         return true;
     }
 
@@ -9961,7 +10115,10 @@ public sealed class DiabloCombatCommandProcessor
         var delayBase = missile?.HorkDemonDelayBase > 0
             ? missile.HorkDemonDelayBase
             : 10;
-        return checked(delayBase + random.RandomIntLessThan(randomRange));
+        // GenerateRnd preserves native signed remainder semantics. In
+        // particular, an INT_MIN stream value produces -8 for range 10;
+        // clamping through RandomIntLessThan would silently change AiDelay.
+        return checked(delayBase + random.GenerateRnd(randomRange));
     }
 
     private static int ResolveSnakeDelay(

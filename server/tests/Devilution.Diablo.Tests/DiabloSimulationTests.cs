@@ -745,6 +745,108 @@ public sealed class DiabloSimulationTests
     }
 
     [Fact]
+    public void HorkDemonSnapshotRestoreRetainsMoveGoalAndNextNativeDecision()
+    {
+        const uint aiSeed = 7;
+        var missiles = new AuthoritativeMonsterMissileCatalog([
+            new AuthoritativeMonsterMissileDefinition(
+                "HorkDemon",
+                "HorkSpawn",
+                AuthoritativeProjectileBehavior.HorkSpawn,
+                SpawnMonsterId: 119),
+        ]);
+        var sourceTarget = new AuthoritativeCombatTarget(
+            9,
+            1,
+            0,
+            120,
+            aggroRange: 8,
+            nativeAi: "HorkDemon",
+            monsterItemSeed: aiSeed,
+            monsterAiSeed: aiSeed,
+            horkDemonMoveTicks: 1,
+            horkDemonMoveTurn: 1);
+        var source = DiabloSimulationFactory.Instance.Create(
+            new DiabloSimulationOptions(new StoreCatalog(), DiabloModule.Instance.Rules) {
+                CombatTargets = [sourceTarget],
+                MonsterMissiles = missiles,
+                GameMode = DiabloGameMode.Multiplayer,
+                RandomSeed = 0xCAFEBABE,
+            });
+        var sourcePlayer = CreatePlayer();
+        sourcePlayer.PositionX = 3;
+        var checkpoint = source.CaptureSnapshot(sourcePlayer, 0);
+        var checkpointMonster = Assert.Single(checkpoint.Monsters);
+
+        Assert.Equal((1, 1), (
+            checkpointMonster.HorkDemonMoveTicks,
+            checkpointMonster.HorkDemonMoveTurn));
+
+        var restored = DiabloSimulationFactory.Instance.Create(
+            new DiabloSimulationOptions(new StoreCatalog(), DiabloModule.Instance.Rules) {
+                MonsterMissiles = missiles,
+                GameMode = DiabloGameMode.Multiplayer,
+                RandomSeed = 0xCAFEBABE,
+            });
+        var restoredPlayer = CreatePlayer();
+        restoredPlayer.PositionX = 3;
+        restored.RestoreSnapshot(restoredPlayer, checkpoint);
+        var restoredTarget = Assert.Single(restored.WorldState.CombatTargets.Values);
+        Assert.Equal((1, 1), (
+            restoredTarget.HorkDemonMoveTicks,
+            restoredTarget.HorkDemonMoveTurn));
+
+        source.AdvanceTick(1, [sourcePlayer]);
+        restored.AdvanceTick(1, [restoredPlayer]);
+        var sourceAfter = source.CaptureSnapshot(sourcePlayer, 1);
+        var restoredAfter = restored.CaptureSnapshot(restoredPlayer, 1);
+        var sourceMonster = Assert.Single(sourceAfter.Monsters);
+        var restoredMonster = Assert.Single(restoredAfter.Monsters);
+
+        // The cold-restored controller resumes the same native action roll
+        // and Move-goal RoundWalk without a fresh admission draw.
+        Assert.Equal(sourceAfter.RandomState, restoredAfter.RandomState);
+        Assert.Equal((sourceMonster.MonsterAiSeed, sourceMonster.HorkDemonMoveTicks,
+            sourceMonster.HorkDemonMoveTurn, sourceMonster.Moving,
+            sourceMonster.FuturePositionX, sourceMonster.FuturePositionY),
+            (restoredMonster.MonsterAiSeed, restoredMonster.HorkDemonMoveTicks,
+                restoredMonster.HorkDemonMoveTurn, restoredMonster.Moving,
+                restoredMonster.FuturePositionX, restoredMonster.FuturePositionY));
+        Assert.Equal(158868340U, sourceMonster.MonsterAiSeed);
+        Assert.Equal(2071244549U, sourceAfter.RandomState);
+
+        // A snapshot written before this additive state existed decodes to
+        // native Normal-goal defaults rather than inventing an active goal.
+        var legacySnapshot = checkpoint with {
+            Monsters = [checkpointMonster with {
+                HorkDemonMoveTicks = -1,
+                HorkDemonMoveTurn = 0,
+            }],
+        };
+        var legacyDestination = DiabloSimulationFactory.Instance.Create(
+            new DiabloSimulationOptions(new StoreCatalog(), DiabloModule.Instance.Rules) {
+                MonsterMissiles = missiles,
+                GameMode = DiabloGameMode.Multiplayer,
+                RandomSeed = 0xCAFEBABE,
+            });
+        legacyDestination.RestoreSnapshot(CreatePlayer(), legacySnapshot);
+        var legacyTarget = Assert.Single(legacyDestination.WorldState.CombatTargets.Values);
+        Assert.Equal(-1, legacyTarget.HorkDemonMoveTicks);
+        Assert.Equal(0, legacyTarget.HorkDemonMoveTurn);
+
+        var defaultConstructed = new AuthoritativeCombatTarget(
+            19,
+            1,
+            0,
+            120,
+            nativeAi: "HorkDemon",
+            monsterItemSeed: aiSeed,
+            monsterAiSeed: aiSeed);
+        Assert.Equal(-1, defaultConstructed.HorkDemonMoveTicks);
+        Assert.Equal(0, defaultConstructed.HorkDemonMoveTurn);
+    }
+
+    [Fact]
     public void SimulationProjectsTheCurrentAuthoredDialogueMessageOnInitialTarget()
     {
         var target = new AuthoritativeCombatTarget(

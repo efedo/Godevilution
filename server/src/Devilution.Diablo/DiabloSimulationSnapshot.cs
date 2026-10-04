@@ -226,6 +226,12 @@ public sealed record DiabloMonsterState(
     /** Remaining native HorkDemonAi delay ticks before the next decision. */
     public int HorkDemonDelayTicks { get; init; }
 
+    /** Native HorkDemon goalVar1; -1 means the Normal goal is active. */
+    public int HorkDemonMoveTicks { get; init; } = -1;
+
+    /** Native HorkDemon goalVar2 turn state (0 or 1). */
+    public int HorkDemonMoveTurn { get; init; }
+
     /** Remaining native AiRangedAvoidance delay ticks before the next decision. */
     public int RangedAvoidanceDelayTicks { get; init; }
 
@@ -744,6 +750,8 @@ public sealed partial class DiabloSimulation
                     RhinoDelayTicks = target.RhinoDelayTicks,
                     SkeletonKingDelayTicks = target.SkeletonKingDelayTicks,
                     HorkDemonDelayTicks = target.HorkDemonDelayTicks,
+                    HorkDemonMoveTicks = target.HorkDemonMoveTicks,
+                    HorkDemonMoveTurn = target.HorkDemonMoveTurn,
                     RangedAvoidanceDelayTicks = target.RangedAvoidanceDelayTicks,
                     SnakeDelayTicks = target.SnakeDelayTicks,
                     CounselorDelayTicks = target.CounselorDelayTicks,
@@ -1246,6 +1254,8 @@ public sealed partial class DiabloSimulation
                 || monster.RhinoDelayTicks is < 0 or > NativeCompatibilityLimits.MaximumNativeMonsterAiTimerTicks
                 || monster.SkeletonKingDelayTicks is < 0 or > NativeCompatibilityLimits.MaximumNativeMonsterAiTimerTicks
                 || monster.HorkDemonDelayTicks is < 0 or > NativeCompatibilityLimits.MaximumNativeMonsterAiTimerTicks
+                || monster.HorkDemonMoveTicks is < -1 or > NativeCompatibilityLimits.MaximumNativeMonsterMovementTicks
+                || monster.HorkDemonMoveTurn is < 0 or > 1
                 || monster.RangedAvoidanceDelayTicks is < 0 or > NativeCompatibilityLimits.MaximumNativeMonsterAiTimerTicks
                 || monster.SnakeDelayTicks is < 0 or > NativeCompatibilityLimits.MaximumNativeMonsterAiTimerTicks
                 || monster.CounselorDelayTicks is < 0 or > NativeCompatibilityLimits.MaximumNativeMonsterAiTimerTicks
@@ -2430,6 +2440,9 @@ public sealed partial class DiabloSimulation
                 target.RestoreRhinoDelay(monster.RhinoDelayTicks);
                 target.RestoreSkeletonKingDelay(monster.SkeletonKingDelayTicks);
                 target.RestoreHorkDemonDelay(monster.HorkDemonDelayTicks);
+                target.RestoreHorkDemonMovement(
+                    monster.HorkDemonMoveTicks,
+                    monster.HorkDemonMoveTurn);
                 target.RestoreRangedAvoidanceDelay(monster.RangedAvoidanceDelayTicks);
                 target.RestoreSnakeDelay(monster.SnakeDelayTicks);
                 target.RestoreCounselorDelay(monster.CounselorDelayTicks);
@@ -2534,6 +2547,9 @@ public sealed partial class DiabloSimulation
                 restoredTarget.RestoreRhinoDelay(monster.RhinoDelayTicks);
                 restoredTarget.RestoreSkeletonKingDelay(monster.SkeletonKingDelayTicks);
                 restoredTarget.RestoreHorkDemonDelay(monster.HorkDemonDelayTicks);
+                restoredTarget.RestoreHorkDemonMovement(
+                    monster.HorkDemonMoveTicks,
+                    monster.HorkDemonMoveTurn);
                 restoredTarget.RestoreRangedAvoidanceDelay(monster.RangedAvoidanceDelayTicks);
                 restoredTarget.RestoreSnakeDelay(monster.SnakeDelayTicks);
                 restoredTarget.RestoreCounselorDelay(monster.CounselorDelayTicks);
@@ -2587,6 +2603,9 @@ public sealed partial class DiabloSimulation
                 restoredTarget.RestoreRhinoDelay(monster.RhinoDelayTicks);
                 restoredTarget.RestoreSkeletonKingDelay(monster.SkeletonKingDelayTicks);
                 restoredTarget.RestoreHorkDemonDelay(monster.HorkDemonDelayTicks);
+                restoredTarget.RestoreHorkDemonMovement(
+                    monster.HorkDemonMoveTicks,
+                    monster.HorkDemonMoveTurn);
                 restoredTarget.RestoreRangedAvoidanceDelay(monster.RangedAvoidanceDelayTicks);
                 restoredTarget.RestoreSnakeDelay(monster.SnakeDelayTicks);
                 restoredTarget.RestoreCounselorDelay(monster.CounselorDelayTicks);

@@ -193,6 +193,77 @@ public sealed class DiabloSimulationCohortContinuationTests
     }
 
     [Fact]
+    public void HorkDemonCohortRestoreRetainsMoveGoalAndNextNativeDecision()
+    {
+        const uint aiSeed = 7;
+        var target = new AuthoritativeCombatTarget(
+            801,
+            1,
+            0,
+            120,
+            aggroRange: 8,
+            nativeAi: "HorkDemon",
+            monsterItemSeed: aiSeed,
+            monsterAiSeed: aiSeed,
+            horkDemonMoveTicks: 1,
+            horkDemonMoveTurn: 1);
+        var fixture = CreateFixture(
+            combatTargets: [target],
+            monsterMissiles: CreateHorkDemonMissileCatalog(),
+            gameMode: DiabloGameMode.Multiplayer);
+        fixture.Runtime.Write("hero", player => {
+            player.PositionX = 3;
+            player.PositionY = 0;
+        });
+
+        var checkpoint = fixture.Simulation.CaptureCohortState(fixture.Runtime);
+        var checkpointMonster = Assert.Single(checkpoint.CombatTargets).Monster;
+        Assert.Equal((1, 1), (
+            checkpointMonster.HorkDemonMoveTicks,
+            checkpointMonster.HorkDemonMoveTurn));
+
+        var candidate = DiabloSimulationFactory.Instance.CreateCohortCandidate(
+            fixture.Options,
+            checkpoint);
+        var restored = candidate.CreateRuntime();
+        var restoredMonster = Assert.Single(
+            candidate.Simulation.CaptureCohortState(restored).CombatTargets).Monster;
+        Assert.Equal((1, 1), (
+            restoredMonster.HorkDemonMoveTicks,
+            restoredMonster.HorkDemonMoveTurn));
+
+        fixture.Runtime.AdvanceTo(1);
+        restored.AdvanceTo(1);
+        var sourceAfter = fixture.Simulation.CaptureCohortState(fixture.Runtime);
+        var restoredAfter = candidate.Simulation.CaptureCohortState(restored);
+        AssertExactRecapture(sourceAfter, restoredAfter);
+        var sourceAfterMonster = Assert.Single(sourceAfter.CombatTargets).Monster;
+        Assert.Equal(158868340U, sourceAfterMonster.MonsterAiSeed);
+        Assert.Equal(2071244549U, sourceAfter.RandomState);
+        Assert.Equal(2, sourceAfterMonster.HorkDemonMoveTicks);
+        Assert.Equal(1, sourceAfterMonster.HorkDemonMoveTurn);
+
+        // A cohort record produced by an older writer has the new fields at
+        // their record defaults: Normal goal and the first turn state.
+        var legacy = checkpoint with {
+            CombatTargets = [checkpoint.CombatTargets[0] with {
+                Monster = checkpointMonster with {
+                    HorkDemonMoveTicks = -1,
+                    HorkDemonMoveTurn = 0,
+                },
+            }],
+        };
+        var legacyCandidate = DiabloSimulationFactory.Instance.CreateCohortCandidate(
+            fixture.Options,
+            legacy);
+        var legacyMonster = Assert.Single(
+            legacyCandidate.Simulation.CaptureCohortState(legacyCandidate.CreateRuntime())
+                .CombatTargets).Monster;
+        Assert.Equal(-1, legacyMonster.HorkDemonMoveTicks);
+        Assert.Equal(0, legacyMonster.HorkDemonMoveTurn);
+    }
+
+    [Fact]
     public void VictoryFreezesAnOlderActionAndPortalClockWhileRuntimeContinues()
     {
         var portal = new AuthoritativePortal(900, 0, 0, 0, 0, 6, 6) {
@@ -543,13 +614,15 @@ public sealed class DiabloSimulationCohortContinuationTests
             IReadOnlyList<AuthoritativePortal>? portals = null,
             IReadOnlyList<AuthoritativeWorldItem>? worldItems = null,
             IReadOnlyList<AuthoritativeCorpse>? corpses = null,
-            bool useNativePlayerActionTiming = false,
-            IReadOnlyList<AuthoritativeQuestState>? quests = null,
-            AuthoritativeQuestTypeCatalog? questTypes = null,
-            AuthoritativeQuestRouteMessageCatalog? questRouteMessages = null,
-            AuthoritativePlayerClassCatalog? playerClasses = null,
-            AuthoritativeItemCatalog? items = null,
-            DiabloPlayerTemplate? playerTemplate = null)
+        bool useNativePlayerActionTiming = false,
+        IReadOnlyList<AuthoritativeQuestState>? quests = null,
+        AuthoritativeQuestTypeCatalog? questTypes = null,
+        AuthoritativeQuestRouteMessageCatalog? questRouteMessages = null,
+        AuthoritativePlayerClassCatalog? playerClasses = null,
+        AuthoritativeItemCatalog? items = null,
+        DiabloPlayerTemplate? playerTemplate = null,
+        AuthoritativeMonsterMissileCatalog? monsterMissiles = null,
+        DiabloGameMode gameMode = DiabloGameMode.SinglePlayer)
     {
         AuthoritativePlayerClassCatalog? classes = playerClasses;
         AuthoritativePlayerAnimationCatalog? animations = null;
@@ -573,10 +646,12 @@ public sealed class DiabloSimulationCohortContinuationTests
             QuestTypes = questTypes,
             QuestRouteMessages = questRouteMessages,
             Items = items,
+            MonsterMissiles = monsterMissiles,
             PlayerClasses = classes,
             PlayerAnimations = animations,
             UseNativePlayerActionTiming = useNativePlayerActionTiming,
             RandomSeed = 71,
+            GameMode = gameMode,
         };
         var simulation = DiabloSimulationFactory.Instance.Create(options);
         var template = playerTemplate ?? DiabloPlayerTemplate.CreateDefault(
@@ -605,6 +680,17 @@ public sealed class DiabloSimulationCohortContinuationTests
             player.RecalculateEquipmentArmor();
         });
         return (options, simulation, runtime);
+    }
+
+    private static AuthoritativeMonsterMissileCatalog CreateHorkDemonMissileCatalog()
+    {
+        return new AuthoritativeMonsterMissileCatalog([
+            new AuthoritativeMonsterMissileDefinition(
+                "HorkDemon",
+                "HorkSpawn",
+                AuthoritativeProjectileBehavior.HorkSpawn,
+                SpawnMonsterId: 119),
+        ]);
     }
 
     private static AuthoritativeItemCatalog CreatePolicyItems()

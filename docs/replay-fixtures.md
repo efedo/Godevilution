@@ -1632,7 +1632,11 @@ Notable shared fixtures include:
   MonsterMagic alias, including alias-specific canonical checkpoints;
 - `gameplay-hork-spawn-autonomous-multiplayer.json` for seeded autonomous
   HorkDemon admission, restored monster seeds, nearest-secondary routing, and
-  the shared projectile checkpoint;
+  the shared projectile checkpoint. Its corrected transcript consumes the
+  native action draw after the multiplayer prefix: AI seed `1788971303`, final
+  RNG `1443805422`. A portable native registered-controller test independently
+  verifies that draw; the managed test proves the old checkpoint differs only
+  by its missing action-draw RNG state;
 - `gameplay-hork-spawn-primary-monk-block.json` for Hellfire Monk
   FlexibleBlock admission during Hork Spawn impact without equipment; the
   Hork replay executor loads the shared class catalog and fixture Dexterity;

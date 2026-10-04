@@ -6065,6 +6065,51 @@ public sealed class DiabloCombatCommandProcessorTests
     }
 
     [Fact]
+    public void MultiplayerHorkDemonTreatsNegativeNativeDelayAsNoOp()
+    {
+        const uint aiSeed = 2557708932;
+        var hork = new AuthoritativeCombatTarget(
+            9,
+            1,
+            0,
+            120,
+            aggroRange: 8,
+            nativeAi: "HorkDemon",
+            monsterItemSeed: aiSeed,
+            monsterAiSeed: aiSeed);
+        var world = new DiabloWorldState(combatTargets: [hork]);
+        var random = new DiabloRandom(0xCAFEBABE);
+        var processor = CreateProcessor(
+            world,
+            random: random,
+            gameMode: DiabloGameMode.Multiplayer,
+            monsterMissiles: new AuthoritativeMonsterMissileCatalog([
+                new AuthoritativeMonsterMissileDefinition(
+                    "HorkDemon",
+                    "HorkSpawn",
+                    AuthoritativeProjectileBehavior.HorkSpawn,
+                    SpawnMonsterId: 119,
+                    HorkDemonDelayBase: 1,
+                    HorkDemonDelayRandomRange: 10),
+            ]));
+        var player = CreatePlayer(
+            entityId: 7,
+            positionX: 3,
+            positionY: 0,
+            life: 100,
+            lifeMaximum: 100);
+
+        processor.AdvanceTick(1, [player]);
+
+        // The native stream reaches INT_MIN for the delay roll: GenerateRnd
+        // (10) is -8, so this custom base produces -7 and AiDelay is a no-op.
+        Assert.Equal(0, hork.HorkDemonDelayTicks);
+        Assert.False(hork.IsMoving);
+        Assert.Equal(0x80000000U, random.State);
+        Assert.Empty(world.Projectiles);
+    }
+
+    [Fact]
     public void MultiplayerHorkDemonConsumesItsNativeRoundWalkRolls()
     {
         const uint aiSeed = 7;
@@ -6093,7 +6138,6 @@ public sealed class DiabloCombatCommandProcessorTests
         var expected = new DiabloRandom(aiSeed);
         var expectedAiSeed = unchecked((uint)expected.AdvanceRndSeed());
         Assert.Equal(4, expected.RandomIntLessThan(100));
-        Assert.Equal(10, expected.RandomIntLessThan(100));
         if (!expected.FlipCoin(4))
             _ = expected.RandomIntLessThan(2);
         else {
@@ -6112,6 +6156,365 @@ public sealed class DiabloCombatCommandProcessorTests
         Assert.Equal(expectedAiSeed, hork.MonsterAiSeed);
         Assert.Equal(expected.State, random.State);
         Assert.True(hork.IsMoving);
+        Assert.Empty(world.Projectiles);
+    }
+
+    [Fact]
+    public void MultiplayerHorkDemonFarRoundWalkPreservesTheNativeFutureTile()
+    {
+        const uint aiSeed = 7;
+        var hork = new AuthoritativeCombatTarget(
+            9,
+            1,
+            0,
+            120,
+            aggroRange: 8,
+            nativeAi: "HorkDemon",
+            monsterItemSeed: aiSeed,
+            monsterAiSeed: aiSeed);
+        var world = new DiabloWorldState(combatTargets: [hork]);
+        var random = new DiabloRandom(0xCAFEBABE);
+        var processor = CreateProcessor(
+            world,
+            random: random,
+            gameMode: DiabloGameMode.Multiplayer,
+            monsterMissiles: CreateHorkDemonMissileCatalog());
+        var player = CreatePlayer(
+            entityId: 7,
+            positionX: 7,
+            positionY: 0,
+            life: 100,
+            lifeMaximum: 100);
+
+        // Native InitMonster/ProcessMonsters source vector:
+        // seed 7 -> 158868340 (advance), GenerateRnd(100)=4 at
+        // 2071244549, FlipCoin(4) consumes 2839396874, and
+        // GenerateRnd(2) consumes 476854291.  The selected lateral future
+        // tile is the first open RoundWalk candidate, (1, 1).
+        processor.AdvanceTick(1, [player]);
+
+        Assert.Equal(158868340U, hork.MonsterAiSeed);
+        Assert.Equal(476854291U, random.State);
+        Assert.True(hork.IsMoving);
+        Assert.Equal((1, 1), (hork.FuturePositionX, hork.FuturePositionY));
+        Assert.Empty(world.Projectiles);
+    }
+
+    [Fact]
+    public void MultiplayerHorkDemonResumesMoveGoalWithoutAdmissionDraws()
+    {
+        const uint aiSeed = 7;
+        var hork = new AuthoritativeCombatTarget(
+            9,
+            1,
+            0,
+            120,
+            aggroRange: 8,
+            nativeAi: "HorkDemon",
+            monsterItemSeed: aiSeed,
+            monsterAiSeed: aiSeed,
+            horkDemonMoveTicks: 1,
+            horkDemonMoveTurn: 0);
+        var world = new DiabloWorldState(combatTargets: [hork]);
+        var random = new DiabloRandom(0xCAFEBABE);
+        var processor = CreateProcessor(
+            world,
+            random: random,
+            gameMode: DiabloGameMode.Multiplayer,
+            monsterMissiles: CreateHorkDemonMissileCatalog());
+        var player = CreatePlayer(
+            entityId: 7,
+            positionX: 3,
+            positionY: 0,
+            life: 100,
+            lifeMaximum: 100);
+
+        // A continuing Move goal consumes only the action roll.  It must not
+        // redraw the far-distance admission coin or goalVar2.
+        processor.AdvanceTick(1, [player]);
+
+        Assert.Equal(158868340U, hork.MonsterAiSeed);
+        Assert.Equal(2071244549U, random.State);
+        Assert.Equal(2, hork.HorkDemonMoveTicks);
+        Assert.Equal(0, hork.HorkDemonMoveTurn);
+        Assert.True(hork.IsMoving);
+        Assert.Empty(world.Projectiles);
+    }
+
+    [Fact]
+    public void MultiplayerHorkDemonExpiresMoveGoalAtTheNativeTwoDistanceBoundary()
+    {
+        const uint aiSeed = 7;
+        var hork = new AuthoritativeCombatTarget(
+            9,
+            1,
+            0,
+            120,
+            aggroRange: 8,
+            nativeAi: "HorkDemon",
+            monsterItemSeed: aiSeed,
+            monsterAiSeed: aiSeed,
+            horkDemonMoveTicks: 12,
+            horkDemonMoveTurn: 1);
+        var world = new DiabloWorldState(combatTargets: [hork]);
+        var random = new DiabloRandom(0xCAFEBABE);
+        var processor = CreateProcessor(
+            world,
+            random: random,
+            gameMode: DiabloGameMode.Multiplayer,
+            monsterMissiles: CreateHorkDemonMissileCatalog());
+        var player = CreatePlayer(
+            entityId: 7,
+            positionX: 7,
+            positionY: 0,
+            life: 100,
+            lifeMaximum: 100);
+
+        // Native goalVar1 is checked before its post-increment at 2 *
+        // distance.  The expired goal returns to Normal and reuses action
+        // roll 4; the admitted spawn branch has no planner, so no movement
+        // or later roll is invented.
+        processor.AdvanceTick(1, [player]);
+
+        Assert.Equal(158868340U, hork.MonsterAiSeed);
+        Assert.Equal(2071244549U, random.State);
+        Assert.Equal(-1, hork.HorkDemonMoveTicks);
+        Assert.Equal(0, hork.HorkDemonMoveTurn);
+        Assert.False(hork.IsMoving);
+        Assert.Empty(world.Projectiles);
+    }
+
+    [Fact]
+    public void MultiplayerHorkDemonLeavesMoveGoalWhenTransparencyRegionChanges()
+    {
+        const uint aiSeed = 7;
+        var transparency = Enumerable.Repeat((ushort)1, 64).ToArray();
+        transparency[1 * 8 + 3] = 2;
+        var nativeWorld = new AuthoritativeWorld();
+        nativeWorld.AddLevel(new AuthoritativeLevel(
+            18,
+            8,
+            8,
+            blockedCells: [0, 1, 2, 8, 10, 16, 17, 18],
+            nativeTransparency: transparency));
+        var hork = new AuthoritativeCombatTarget(
+            9,
+            1,
+            1,
+            120,
+            levelId: 18,
+            aggroRange: 8,
+            nativeAi: "HorkDemon",
+            monsterItemSeed: aiSeed,
+            monsterAiSeed: aiSeed,
+            activeForTicks: 255,
+            horkDemonMoveTicks: 1,
+            horkDemonMoveTurn: 1);
+        var world = new DiabloWorldState(
+            nativeWorld,
+            combatTargets: [hork]);
+        var random = new DiabloRandom(0xCAFEBABE);
+        var processor = CreateProcessor(
+            world,
+            random: random,
+            gameMode: DiabloGameMode.Multiplayer,
+            monsterMissiles: CreateHorkDemonMissileCatalog());
+        var player = CreatePlayer(
+            entityId: 7,
+            positionX: 3,
+            positionY: 1,
+            levelId: 18,
+            life: 100,
+            lifeMaximum: 100);
+
+        processor.AdvanceTick(1, [player]);
+
+        // Native IsSameTransparencyRegion ends the Move goal, then the
+        // reused action roll admits no spawn at distance 2.  The normal
+        // movement roll and both unconditional RandomWalk coin draws are
+        // still consumed even though every geometry candidate is blocked.
+        Assert.Equal(158868340U, hork.MonsterAiSeed);
+        Assert.Equal(2771084784U, random.State);
+        Assert.Equal(-1, hork.HorkDemonMoveTicks);
+        Assert.Equal(0, hork.HorkDemonMoveTurn);
+        Assert.False(hork.IsMoving);
+        Assert.Empty(world.Projectiles);
+    }
+
+    [Fact]
+    public void MultiplayerHorkDemonResetsMoveGoalBeforeAdjacentAction()
+    {
+        const uint aiSeed = 7;
+        var hork = new AuthoritativeCombatTarget(
+            9,
+            1,
+            0,
+            120,
+            aggroRange: 8,
+            nativeAi: "HorkDemon",
+            monsterItemSeed: aiSeed,
+            monsterAiSeed: aiSeed,
+            horkDemonMoveTicks: 1,
+            horkDemonMoveTurn: 1);
+        var world = new DiabloWorldState(combatTargets: [hork]);
+        var random = new DiabloRandom(0xCAFEBABE);
+        var processor = CreateProcessor(
+            world,
+            random: random,
+            gameMode: DiabloGameMode.Multiplayer,
+            monsterMissiles: CreateHorkDemonMissileCatalog());
+        var player = CreatePlayer(
+            entityId: 7,
+            positionX: 2,
+            positionY: 0,
+            life: 100,
+            lifeMaximum: 100);
+
+        processor.AdvanceTick(1, [player]);
+
+        // HorkDemonAi clears Move, consumes action=4 and admits melee. This
+        // processor integration also consumes the existing same-tick generic
+        // melee damage roll; the native decision-only oracle stops before it.
+        Assert.Equal(158868340U, hork.MonsterAiSeed);
+        Assert.Equal(2839396874U, random.State);
+        Assert.Equal(-1, hork.HorkDemonMoveTicks);
+        Assert.Equal(0, hork.HorkDemonMoveTurn);
+        Assert.False(hork.IsMoving);
+        Assert.Empty(world.Projectiles);
+    }
+
+    [Fact]
+    public void MultiplayerHorkDemonBlockedSpawnDoesNotFallThroughToMovement()
+    {
+        const uint aiSeed = 7;
+        var hork = new AuthoritativeCombatTarget(
+            9,
+            1,
+            0,
+            120,
+            aggroRange: 8,
+            nativeAi: "HorkDemon",
+            monsterItemSeed: aiSeed,
+            monsterAiSeed: aiSeed);
+        var world = new DiabloWorldState(combatTargets: [hork]);
+        var random = new DiabloRandom(0xCAFEBABE);
+        var processor = CreateProcessor(
+            world,
+            random: random,
+            gameMode: DiabloGameMode.Multiplayer,
+            monsterMissiles: CreateHorkDemonMissileCatalog());
+        var player = CreatePlayer(
+            entityId: 7,
+            positionX: 4,
+            positionY: 0,
+            life: 100,
+            lifeMaximum: 100);
+
+        // The native action roll is 4, inside the 43% spawn band at distance
+        // 3.  Without a planner the admitted branch still terminates the
+        // tick; it cannot fall through to a normal movement roll.
+        processor.AdvanceTick(1, [player]);
+
+        Assert.Equal(158868340U, hork.MonsterAiSeed);
+        Assert.Equal(2071244549U, random.State);
+        Assert.False(hork.IsMoving);
+        Assert.Equal((1, 0), (hork.FuturePositionX, hork.FuturePositionY));
+        Assert.Empty(world.Projectiles);
+    }
+
+    [Fact]
+    public void MultiplayerHorkDemonFailedRoundWalkTogglesTurnAndPreservesSignedDelay()
+    {
+        const uint aiSeed = 1272442071;
+        var blocked = new[] { 369, 370, 371, 409, 411, 449, 450, 451 };
+        var hork = new AuthoritativeCombatTarget(
+            9,
+            10,
+            10,
+            120,
+            aggroRange: 8,
+            nativeAi: "HorkDemon",
+            monsterItemSeed: aiSeed,
+            monsterAiSeed: aiSeed,
+            horkDemonMoveTicks: 1,
+            horkDemonMoveTurn: 0);
+        var world = new DiabloWorldState(
+            fallbackBlockedCells: blocked,
+            combatTargets: [hork]);
+        var random = new DiabloRandom(0xCAFEBABE);
+        var processor = CreateProcessor(
+            world,
+            random: random,
+            gameMode: DiabloGameMode.Multiplayer,
+            monsterMissiles: new AuthoritativeMonsterMissileCatalog([
+                new AuthoritativeMonsterMissileDefinition(
+                    "HorkDemon",
+                    "HorkSpawn",
+                    AuthoritativeProjectileBehavior.HorkSpawn,
+                    SpawnMonsterId: 119,
+                    HorkDemonDelayBase: 1,
+                    HorkDemonDelayRandomRange: 10),
+            ]));
+        var player = CreatePlayer(
+            entityId: 7,
+            positionX: 16,
+            positionY: 10,
+            life: 100,
+            lifeMaximum: 100);
+
+        // Independently derived native LCG vector:
+        // 1272442071 -> raw 2557708932 (AdvanceRndSeed returns the stored
+        // absolute value 1737258364), 4203210069 (action),
+        // 988045466 and 1457187811 (RandomWalk coins), INT_MIN (delay).
+        // GenerateRnd(10) is -8, so the custom base produces -7 and AiDelay
+        // is a no-op.  The failed fallback still toggles goalVar2.
+        processor.AdvanceTick(1, [player]);
+
+        Assert.Equal(1737258364U, hork.MonsterAiSeed);
+        Assert.Equal(0x80000000U, random.State);
+        Assert.Equal(2, hork.HorkDemonMoveTicks);
+        Assert.Equal(1, hork.HorkDemonMoveTurn);
+        Assert.Equal(0, hork.HorkDemonDelayTicks);
+        Assert.False(hork.IsMoving);
+        Assert.Empty(world.Projectiles);
+    }
+
+    [Fact]
+    public void MultiplayerHorkDemonMapsNativeIntMinDelayToTheDefaultTwoTicks()
+    {
+        const uint aiSeed = 2557708932;
+        var hork = new AuthoritativeCombatTarget(
+            9,
+            1,
+            0,
+            120,
+            aggroRange: 8,
+            nativeAi: "HorkDemon",
+            monsterItemSeed: aiSeed,
+            monsterAiSeed: aiSeed);
+        var world = new DiabloWorldState(combatTargets: [hork]);
+        var random = new DiabloRandom(0xCAFEBABE);
+        var processor = CreateProcessor(
+            world,
+            random: random,
+            gameMode: DiabloGameMode.Multiplayer,
+            monsterMissiles: CreateHorkDemonMissileCatalog());
+        var player = CreatePlayer(
+            entityId: 7,
+            positionX: 3,
+            positionY: 0,
+            life: 100,
+            lifeMaximum: 100);
+
+        // Native prefix: 4203210069 (action 76), 988045466 (movement 34),
+        // then 1457187811 advances to INT_MIN.  GenerateRnd(10) is -8 and
+        // the default Hork delay base maps it to exactly two ticks.
+        processor.AdvanceTick(1, [player]);
+
+        Assert.Equal(91757227U, hork.MonsterAiSeed);
+        Assert.Equal(0x80000000U, random.State);
+        Assert.Equal(2, hork.HorkDemonDelayTicks);
+        Assert.False(hork.IsMoving);
         Assert.Empty(world.Projectiles);
     }
 
@@ -28077,6 +28480,21 @@ public sealed class DiabloCombatCommandProcessorTests
                 ProjectileSpeed: projectileSpeed,
                 ProjectileLifetime: projectileLifetime,
                 DamageType: damageType),
+        ]);
+    }
+
+    private static AuthoritativeMonsterMissileCatalog CreateHorkDemonMissileCatalog(
+        int delayBase = 0,
+        int delayRandomRange = 0)
+    {
+        return new AuthoritativeMonsterMissileCatalog([
+            new AuthoritativeMonsterMissileDefinition(
+                "HorkDemon",
+                "HorkSpawn",
+                AuthoritativeProjectileBehavior.HorkSpawn,
+                SpawnMonsterId: 119,
+                HorkDemonDelayBase: delayBase,
+                HorkDemonDelayRandomRange: delayRandomRange),
         ]);
     }
 

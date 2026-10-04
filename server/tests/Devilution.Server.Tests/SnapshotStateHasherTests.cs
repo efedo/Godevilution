@@ -1385,6 +1385,25 @@ public sealed class SnapshotStateHasherTests
     }
 
     [Fact]
+    public void HorkDemonMoveGoalHashesDefaultsCompatiblyAndIncludesBothFields()
+    {
+        var legacy = new Snapshot { Monsters = { new MonsterSnapshot { EntityId = 1 } } };
+        var explicitDefaults = legacy.Clone();
+        explicitDefaults.Monsters[0].HorkDemonMoveTicks = -1;
+        explicitDefaults.Monsters[0].HorkDemonMoveTurn = 0;
+        Assert.Equal(SnapshotStateHasher.Compute(legacy), SnapshotStateHasher.Compute(explicitDefaults));
+        var active = legacy.Clone();
+        active.Monsters[0].HorkDemonMoveTicks = 0;
+        Assert.NotEqual(SnapshotStateHasher.Compute(legacy), SnapshotStateHasher.Compute(active));
+        var nextCounter = active.Clone();
+        nextCounter.Monsters[0].HorkDemonMoveTicks = 1;
+        Assert.NotEqual(SnapshotStateHasher.Compute(active), SnapshotStateHasher.Compute(nextCounter));
+        var oppositeTurn = active.Clone();
+        oppositeTurn.Monsters[0].HorkDemonMoveTurn = 1;
+        Assert.NotEqual(SnapshotStateHasher.Compute(active), SnapshotStateHasher.Compute(oppositeTurn));
+    }
+
+    [Fact]
     public void RangedAvoidanceDelayStateExtendsTheStateHash()
     {
         var first = new Snapshot {

@@ -897,6 +897,10 @@ message MonsterSnapshot {
 	optional uint64 movement_started_tick = 95;
 	// First server tick at which the current walk is complete.
 	optional uint64 movement_effect_tick = 96;
+	// Native HorkDemon Move goal counter; absent or -1 means Normal.
+	optional int32 hork_demon_move_ticks = 98;
+	// Native HorkDemon Move goal turning state (0 or 1).
+	optional int32 hork_demon_move_turn = 99;
 }
 
 message WorldItemSnapshot {

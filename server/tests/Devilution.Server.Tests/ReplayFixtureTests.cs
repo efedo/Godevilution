@@ -11342,7 +11342,13 @@ public sealed class ReplayFixtureTests
         Assert.Equal(8U, projectile.RemainingTicks);
         var monster = Assert.Single(result.FinalSnapshot.Monsters);
         Assert.Equal(1788971303U, monster.MonsterAiSeed);
-        Assert.Equal(2505995993U, result.FinalSnapshot.RandomState);
+        // Native HorkDemonAi consumes its action draw after the MP seed prefix;
+        // the independent native SeededMultiplayerReplaySpawn test pins this.
+        Assert.Equal(1443805422U, result.FinalSnapshot.RandomState);
+        var preActionTranscript = result.FinalSnapshot.Clone();
+        preActionTranscript.RandomState = 2505995993U;
+        Assert.Equal("d0787f057e4f5c6aff9fc735a7ad6298a2b00307e26f1aefaad8c6d9875b4361",
+            Devilution.Server.Snapshots.SnapshotStateHasher.Compute(preActionTranscript));
         Assert.Equal(1UL, result.FinalSnapshot.Tick);
         Assert.Equal(
             fixture.Checkpoints.Select(checkpoint => checkpoint.StateSha256),

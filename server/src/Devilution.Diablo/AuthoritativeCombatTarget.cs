@@ -108,7 +108,9 @@ public sealed class AuthoritativeCombatTarget
         AuthoritativeMonsterDialogueState dialogueState = AuthoritativeMonsterDialogueState.Unspecified,
         uint? dropLevelId = null,
         int? dropPositionX = null,
-        int? dropPositionY = null)
+        int? dropPositionY = null,
+        int horkDemonMoveTicks = -1,
+        int horkDemonMoveTurn = 0)
     {
         if (entityId == 0)
             throw new ArgumentOutOfRangeException(nameof(entityId));
@@ -210,6 +212,10 @@ public sealed class AuthoritativeCombatTarget
             throw new ArgumentOutOfRangeException(nameof(skeletonKingDelayTicks));
         if (horkDemonDelayTicks is < 0 or > NativeCompatibilityLimits.MaximumNativeMonsterAiTimerTicks)
             throw new ArgumentOutOfRangeException(nameof(horkDemonDelayTicks));
+        if (horkDemonMoveTicks is < -1 or > NativeCompatibilityLimits.MaximumNativeMonsterMovementTicks)
+            throw new ArgumentOutOfRangeException(nameof(horkDemonMoveTicks));
+        if (horkDemonMoveTurn is < 0 or > 1)
+            throw new ArgumentOutOfRangeException(nameof(horkDemonMoveTurn));
         if (rangedAvoidanceDelayTicks is < 0 or > NativeCompatibilityLimits.MaximumNativeMonsterAiTimerTicks)
             throw new ArgumentOutOfRangeException(nameof(rangedAvoidanceDelayTicks));
         if (snakeDelayTicks is < 0 or > NativeCompatibilityLimits.MaximumNativeMonsterAiTimerTicks)
@@ -335,6 +341,8 @@ public sealed class AuthoritativeCombatTarget
         RhinoDelayTicks = rhinoDelayTicks;
         SkeletonKingDelayTicks = skeletonKingDelayTicks;
         HorkDemonDelayTicks = horkDemonDelayTicks;
+        HorkDemonMoveTicks = horkDemonMoveTicks;
+        HorkDemonMoveTurn = horkDemonMoveTurn;
         RangedAvoidanceDelayTicks = rangedAvoidanceDelayTicks;
         SnakeDelayTicks = snakeDelayTicks;
         CounselorDelayTicks = counselorDelayTicks;
@@ -579,6 +587,12 @@ public sealed class AuthoritativeCombatTarget
     /** Remaining native HorkDemonAi delay ticks before the next decision. */
     public int HorkDemonDelayTicks { get; private set; }
 
+    /** Native HorkDemon goalVar1; -1 means the Normal goal is active. */
+    public int HorkDemonMoveTicks { get; private set; }
+
+    /** Native HorkDemon goalVar2 turn state (0 or 1). */
+    public int HorkDemonMoveTurn { get; private set; }
+
     /** Remaining native AiRangedAvoidance delay ticks before the next decision. */
     public int RangedAvoidanceDelayTicks { get; private set; }
 
@@ -729,6 +743,8 @@ public sealed class AuthoritativeCombatTarget
             RhinoDelayTicks = RhinoDelayTicks,
             SkeletonKingDelayTicks = SkeletonKingDelayTicks,
             HorkDemonDelayTicks = HorkDemonDelayTicks,
+            HorkDemonMoveTicks = HorkDemonMoveTicks,
+            HorkDemonMoveTurn = HorkDemonMoveTurn,
             RangedAvoidanceDelayTicks = RangedAvoidanceDelayTicks,
             SnakeDelayTicks = SnakeDelayTicks,
             CounselorDelayTicks = CounselorDelayTicks,
@@ -1375,6 +1391,56 @@ public sealed class AuthoritativeCombatTarget
         if (ticks is < 0 or > NativeCompatibilityLimits.MaximumNativeMonsterAiTimerTicks)
             throw new ArgumentOutOfRangeException(nameof(ticks));
         HorkDemonDelayTicks = ticks;
+    }
+
+    internal void StartHorkDemonMovement(int turn)
+    {
+        if (turn is < 0 or > 1)
+            throw new ArgumentOutOfRangeException(nameof(turn));
+        HorkDemonMoveTicks = 0;
+        HorkDemonMoveTurn = turn;
+    }
+
+    /** Advances native HorkDemon goalVar1 with its post-increment boundary. */
+    internal bool AdvanceHorkDemonMovement(
+        int distance,
+        bool sameTransparencyRegion = true)
+    {
+        if (distance < 0)
+            throw new ArgumentOutOfRangeException(nameof(distance));
+        if (HorkDemonMoveTicks < 0)
+            return false;
+
+        var continues = HorkDemonMoveTicks < checked(2 * distance)
+            && sameTransparencyRegion;
+        if (HorkDemonMoveTicks < NativeCompatibilityLimits.MaximumNativeMonsterMovementTicks)
+            HorkDemonMoveTicks++;
+        if (!continues)
+            ClearHorkDemonMovement();
+        return continues;
+    }
+
+    internal void RestoreHorkDemonMovement(int moveTicks, int turn)
+    {
+        if (moveTicks is < -1 or > NativeCompatibilityLimits.MaximumNativeMonsterMovementTicks)
+            throw new ArgumentOutOfRangeException(nameof(moveTicks));
+        if (turn is < 0 or > 1)
+            throw new ArgumentOutOfRangeException(nameof(turn));
+        HorkDemonMoveTicks = moveTicks;
+        HorkDemonMoveTurn = turn;
+    }
+
+    internal void UpdateHorkDemonMovementTurn(int turn)
+    {
+        if (turn is < 0 or > 1)
+            throw new ArgumentOutOfRangeException(nameof(turn));
+        HorkDemonMoveTurn = turn;
+    }
+
+    internal void ClearHorkDemonMovement()
+    {
+        HorkDemonMoveTicks = -1;
+        HorkDemonMoveTurn = 0;
     }
 
     internal void StartRangedAvoidanceDelay(int ticks)

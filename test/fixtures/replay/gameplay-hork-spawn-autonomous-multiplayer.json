@@ -56,6 +56,6 @@
     }
   ],
   "checkpoints": [
-    { "tick": 1, "state_sha256": "d0787f057e4f5c6aff9fc735a7ad6298a2b00307e26f1aefaad8c6d9875b4361" }
+    { "tick": 1, "state_sha256": "a2eef612f011541eefa2c4f07c4fe271a447b72a72e8423eec0fbc1d1fa2ce34" }
   ]
 }

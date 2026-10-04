@@ -3200,6 +3200,10 @@ public sealed class ClientModelTests
             monster => monster.RhinoDelayTicks = AuthoritativeProtocolLimits.MaximumNativeMonsterAiTimerTicks + 1,
             monster => monster.SkeletonKingDelayTicks = AuthoritativeProtocolLimits.MaximumNativeMonsterAiTimerTicks + 1,
             monster => monster.HorkDemonDelayTicks = AuthoritativeProtocolLimits.MaximumNativeMonsterAiTimerTicks + 1,
+            monster => monster.HorkDemonMoveTicks = -2,
+            monster => monster.HorkDemonMoveTicks = AuthoritativeProtocolLimits.MaximumNativeMonsterMovementTicks + 1,
+            monster => monster.HorkDemonMoveTurn = -1,
+            monster => monster.HorkDemonMoveTurn = 2,
             monster => monster.RangedAvoidanceDelayTicks = AuthoritativeProtocolLimits.MaximumNativeMonsterAiTimerTicks + 1,
             monster => monster.SnakeDelayTicks = AuthoritativeProtocolLimits.MaximumNativeMonsterAiTimerTicks + 1,
             monster => monster.CounselorDelayTicks = AuthoritativeProtocolLimits.MaximumNativeMonsterAiTimerTicks + 1,
@@ -3213,6 +3217,21 @@ public sealed class ClientModelTests
             Assert.Throws<InvalidDataException>(() =>
                 model.Apply(new AuthoritativeClientMessage(Snapshot: invalid)));
         }
+    }
+
+    [Theory]
+    [InlineData(-1, 0)]
+    [InlineData(0, 1)]
+    [InlineData(AuthoritativeProtocolLimits.MaximumNativeMonsterMovementTicks, 1)]
+    public void AcceptsHorkDemonMoveGoalBoundaries(int ticks, int turn)
+    {
+        var model = new AuthoritativeClientModel();
+        model.Apply(new AuthoritativeClientMessage(Snapshot: new Snapshot {
+            Players = { new PlayerSnapshot { EntityId = 7 } },
+            Monsters = { new MonsterSnapshot {
+                EntityId = 9, HorkDemonMoveTicks = ticks, HorkDemonMoveTurn = turn,
+            } },
+        }));
     }
 
     [Fact]

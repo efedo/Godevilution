@@ -483,7 +483,15 @@ this evidence. A sample art pack does not satisfy M4's full presentation gate.
    item-seed reseeding with externally supplied metadata. Public scalar/string
    fields and five public animation scalars are compared, not private visual
    distribution or sprites; unsafe native signed coordinates fail closed.
-   Next port `CreateThemeRooms`, compile the validated external prerequisites
+   The four prior Hork RNG failures are addressed by the controller/save batch
+   recorded in migration status; this is bounded decision parity, not complete
+   Hork animation, directional-corner or whole-`ProcessMonsters` parity.
+   Next port `CreateThemeRooms` in source order: first its generic
+   `CreateRndItem`/`CreateTypeItem` and `SetupAllItems` dependencies, including
+   affixes, books and gold, against
+   raw external metadata. The normalized gameplay item catalog and initial-potion
+   port are not substitutes. Then port every selected theme type without stubs
+   or skipping item-producing themes, compile the validated external prerequisites
    and item/unique metadata into complete packs, then activate a separately
    identified opt-in populated server profile. Never use expected final state
    as production input. Preserve the narrower earlier oracles and require

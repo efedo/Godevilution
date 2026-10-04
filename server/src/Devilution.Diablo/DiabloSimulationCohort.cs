@@ -444,6 +444,9 @@ public sealed partial class DiabloSimulation
         target.RestoreRhinoDelay(monster.RhinoDelayTicks);
         target.RestoreSkeletonKingDelay(monster.SkeletonKingDelayTicks);
         target.RestoreHorkDemonDelay(monster.HorkDemonDelayTicks);
+        target.RestoreHorkDemonMovement(
+            monster.HorkDemonMoveTicks,
+            monster.HorkDemonMoveTurn);
         target.RestoreRangedAvoidanceDelay(monster.RangedAvoidanceDelayTicks);
         target.RestoreSnakeDelay(monster.SnakeDelayTicks);
         target.RestoreCounselorDelay(monster.CounselorDelayTicks);

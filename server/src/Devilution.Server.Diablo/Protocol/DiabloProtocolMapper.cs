@@ -273,6 +273,11 @@ internal static class DiabloProtocolMapper
             };
             if (monster.MonsterItemSeed != 0)
                 projectedMonster.MonsterItemSeed = monster.MonsterItemSeed;
+            // Omit the additive Normal defaults to preserve legacy save bytes.
+            if (monster.HorkDemonMoveTicks != -1 || monster.HorkDemonMoveTurn != 0) {
+                projectedMonster.HorkDemonMoveTicks = monster.HorkDemonMoveTicks;
+                projectedMonster.HorkDemonMoveTurn = monster.HorkDemonMoveTurn;
+            }
             if (monster.MonsterAiSeed != 0)
                 projectedMonster.MonsterAiSeed = monster.MonsterAiSeed;
             if (monster.LeaderEntityId != 0)
@@ -1331,6 +1336,8 @@ internal static class DiabloProtocolMapper
                 || monster.RhinoDelayTicks is < 0 or > MaximumNativeMonsterAiTimerTicks
                 || monster.SkeletonKingDelayTicks is < 0 or > MaximumNativeMonsterAiTimerTicks
                 || monster.HorkDemonDelayTicks is < 0 or > MaximumNativeMonsterAiTimerTicks
+                || monster.HorkDemonMoveTicks is < -1 or > MaximumNativeMonsterMovementTicks
+                || monster.HorkDemonMoveTurn is < MinimumNativeMonsterMovementTurn or > MaximumNativeMonsterMovementTurn
                 || monster.RangedAvoidanceDelayTicks is < 0 or > MaximumNativeMonsterAiTimerTicks
                 || monster.SnakeDelayTicks is < 0 or > MaximumNativeMonsterAiTimerTicks
                 || monster.CounselorDelayTicks is < 0 or > MaximumNativeMonsterAiTimerTicks
@@ -2224,6 +2231,8 @@ internal static class DiabloProtocolMapper
                 MovementStartedTick = monster.MovementStartedTick,
                 MovementEffectTick = monster.MovementEffectTick,
                 Direction = monster.Direction,
+                MonsterItemSeed = monster.MonsterItemSeed,
+                MonsterAiSeed = monster.MonsterAiSeed,
                 DialogueState = (AuthoritativeMonsterDialogueState)monster.DialogueState,
                 Petrified = monster.Petrified,
                 StoneCurseImmune = monster.StoneCurseImmune,
@@ -2326,6 +2335,12 @@ internal static class DiabloProtocolMapper
                     : 0,
                 HorkDemonDelayTicks = monster.HasHorkDemonDelayTicks
                     ? monster.HorkDemonDelayTicks
+                    : 0,
+                HorkDemonMoveTicks = monster.HasHorkDemonMoveTicks
+                    ? monster.HorkDemonMoveTicks
+                    : -1,
+                HorkDemonMoveTurn = monster.HasHorkDemonMoveTurn
+                    ? monster.HorkDemonMoveTurn
                     : 0,
                 RangedAvoidanceDelayTicks = monster.HasRangedAvoidanceDelayTicks
                     ? monster.RangedAvoidanceDelayTicks
