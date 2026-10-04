@@ -132,6 +132,13 @@ public sealed class AuthoritativeCathedralEncounterNativeOracleTests
 
 	private static ComposedPopulation ComposePopulation(EncounterCorpus corpus, PopulationCase populationCase)
 	{
+		var prepared = PreparePopulation(corpus, populationCase);
+		var result = AuthoritativeCathedralInitialPopulationGenerator.Generate(prepared.Parameters);
+		return new(result, prepared.Catalog, prepared.Player, prepared.Prerequisites);
+	}
+
+	private static PreparedPopulation PreparePopulation(EncounterCorpus corpus, PopulationCase populationCase)
+	{
 		var input = populationCase.Input;
 		var prereq = input.Prerequisites ?? throw new InvalidDataException("Population v2 prerequisites are required.");
 		var catalog = AuthoritativeCathedralPopulationCatalog.Load(
@@ -147,9 +154,32 @@ public sealed class AuthoritativeCathedralEncounterNativeOracleTests
 			input.Depth, input.PopulationSeed, input.StorySeed, preTheme,
 			catalog.Monsters, catalog.Objects, player, input.TrapPercent, corpus.StoryMessages,
 			prereq.NextTransparencyValue, prereq.TriggerPositions);
-		var result = AuthoritativeCathedralInitialPopulationGenerator.Generate(parameters);
-		return new(result, catalog, player, prereq);
+		return new(parameters, catalog, player, prereq);
 	}
+
+	/** Reuses strict raw-table validation without passing any expected phase state. */
+	internal static IndependentPopulationCase LoadIndependentPopulationCase(int depth, uint inputSeed, string entry)
+	{
+		var encounterDirectory = RequiredExternalDirectory(EncounterDirectoryVariable);
+		Assert.Equal(new[] { EncounterFileName }, RegularEntries(encounterDirectory).Select(Path.GetFileName));
+		var corpus = EncounterCorpus.Load(ParseFile(Path.Combine(encounterDirectory, EncounterFileName), MaxInputBytes),
+			RequiredExternalDirectory(PopulationDirectoryVariable), RequiredExternalDirectory(PopulationOracleDirectoryVariable));
+		var snapshot = $"cathedral-population-depth-{depth}-{inputSeed}-{entry}.json";
+		var population = corpus.PopulationCases.Single(row => row.Snapshot == snapshot);
+		var encounter = corpus.Cases.Single(row => row.Snapshot == snapshot);
+		return new(PreparePopulation(corpus, population).Parameters, encounter.PreClearRandomState,
+			encounter.PostClearRandomState, encounter.PreThemeTileFlags.Select(value => checked((byte)value)).ToArray(),
+			population.Input.PlayerTileRefs, population.Input.MonsterTileRefs,
+			corpus.UniqueDefinitions, encounter.DensityDivisor);
+	}
+
+	internal sealed record IndependentPopulationCase(AuthoritativeCathedralInitialPopulationParameters Parameters,
+		uint PreClearRandomState, uint PostClearRandomState, byte[] PreThemeTileFlags, int[] PlayerRefs,
+		int[] MonsterRefs, IReadOnlyList<AuthoritativeCathedralUniqueDefinition> UniqueDefinitions, int DensityDivisor);
+
+	private sealed record PreparedPopulation(AuthoritativeCathedralInitialPopulationParameters Parameters,
+		AuthoritativeCathedralPopulationCatalog Catalog, AuthoritativeCathedralPopulationPlayer Player,
+		Prerequisites Prerequisites);
 
 	private static AuthoritativeCathedralPopulationParameters BuildEncounterPopulationParameters(
 		EncounterCorpus corpus, PopulationCase populationCase, ComposedPopulation composed)

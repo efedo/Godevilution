@@ -358,6 +358,14 @@ DVL_API_FOR_TEST tl::expected<void, std::string> InitMonsters();
 #ifdef BUILD_TESTING
 /** Test-only observation of the native InitMonsters density target. */
 DVL_API_FOR_TEST size_t MonsterPopulationTargetForTesting();
+/** Owned fixture snapshot of hidden counters changed by ordinary initialization. */
+struct MonsterPopulationGlobalsForTesting {
+	size_t totalMonsters;
+	int imageTotal;
+	int uniqueTransparency;
+};
+DVL_API_FOR_TEST MonsterPopulationGlobalsForTesting CaptureMonsterPopulationGlobalsForTesting();
+DVL_API_FOR_TEST void RestoreMonsterPopulationGlobalsForTesting(MonsterPopulationGlobalsForTesting state);
 #endif
 tl::expected<void, std::string> SetMapMonsters(const uint16_t *dunData, Point startPosition);
 Monster *AddMonster(Point position, Direction dir, size_t typeIndex, bool inMap);

@@ -2,6 +2,17 @@
 
 Notable changes to this fork are recorded below.
 
+- 2026-10-04: Compose controlled ordinary Cathedral population through initial
+  items and theme rooms using managed preceding-phase state, full pools, scratch
+  XY/variant, native RNG and initial-object static lighting. Add a separate
+  bounded private native proof for sixteen depth/seed/entry cases, repeated
+  byte-identical captures and 48 upstream comparisons. Harden raw potion/catalog
+  coherence and native fixture state restoration; retain strict evidence gates
+  and compatibility regressions. Update architecture, status, plan and build
+  guidance. Complete packs, campaign/application-order lifecycle and populated
+  Godot interaction/restore remain open; default profiles, user saves and server
+  MPQ independence are unchanged. No Godot launch.
+
 - 2026-10-04: Port complete detached ordinary Cathedral theme rooms and native
   zero-offset static lighting. Preserve full object/monster/item pools, signed
   channels, corpses, target/animation state, fit carry/flags and RNG. Add independent

@@ -3601,6 +3601,18 @@ size_t MonsterPopulationTargetForTesting()
 {
 	return totalmonsters;
 }
+
+MonsterPopulationGlobalsForTesting CaptureMonsterPopulationGlobalsForTesting()
+{
+	return { totalmonsters, monstimgtot, uniquetrans };
+}
+
+void RestoreMonsterPopulationGlobalsForTesting(MonsterPopulationGlobalsForTesting state)
+{
+	totalmonsters = state.totalMonsters;
+	monstimgtot = state.imageTotal;
+	uniquetrans = state.uniqueTransparency;
+}
 #endif
 
 tl::expected<void, std::string> SetMapMonsters(const uint16_t *dunData, Point startPosition)

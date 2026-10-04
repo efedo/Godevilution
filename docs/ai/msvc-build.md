@@ -519,6 +519,43 @@ light allocation, pixel-offset lighting, vision, wider modes/campaigns and
 populated Godot interaction/restore are not certified. No Godot or MPQ is opened;
 earlier item corpora, launcher defaults and user saves remain unchanged.
 
+For controlled upstream population through ordinary theme rooms, run:
+
+```powershell
+./tools/test-cathedral-full-population.ps1
+```
+
+This separate zero-argument wrapper first reruns the earlier InitItems route
+with all 48 upstream comparisons and repeated 17+1+1+1 artifacts. It then builds
+the same registered item-oracle target, captures one exact native full-population
+fixture twice and requires sixteen exact explicit managed comparisons with no
+skips/errors. Each fresh external directory contains one regular corpus bounded
+at 128 MiB; both captures must match by byte length and SHA256. Licensed raw
+metadata/evidence remains private outside the repository. Native original-asset
+discovery opens the local Diablo archive; no server or Godot client is launched.
+The prior eight-fixture detached room filter explicitly excludes this new opt-in
+fixture, preserving earlier corpora and comparison scopes.
+
+The matrix is depths 1-4, seeds 2588/743271966 and MAIN/PREV, quest-disabled
+original Diablo SP Normal. Managed preceding phases supply all selections,
+held flags, pools, scratch XY/variant, physical initial-object light and RNG.
+Native after-items/final worlds are comparison-only. Every complete pool/tile
+channel, light allocator/history, visibility entry and item-get reset record is
+checked; no expected intermediate selection or state is a generator input.
+Initial inactive monster IDs are explicitly prepared with count zero/no draws,
+then independently reset by native pool clearing. Actual pre-phase stale
+inactive light records remain inputs, matching native lighting initialization.
+
+This is the controlled post-CreateLevel pre-clear seam, not full normal level
+loading: the application clears monsters before geometry creation. Campaign
+seeds, hero/store/quest lifecycle, retained pools and later SavePreLighting/
+ProcessLightList remain outside acceptance. Complete pack compilation and a
+separately identified populated profile still require ordinary Godot interaction
+and cold restore. Earlier oracle modes, default profiles and user saves are
+unchanged. Shared owned-process deadlines, inherited crash-dialog suppression,
+terminal exit/log/cleanup gates and exact environment restoration apply. Failed
+stages stop immediately; uncertain cleanup must be resolved before retrying.
+
 The C# xUnit project is an executable Microsoft Testing Platform runner. Run
 it directly when `dotnet test` selects a machine-wide VSTest host whose
 `testhost` package is unavailable:

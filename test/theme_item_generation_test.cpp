@@ -19,6 +19,7 @@
 #include "engine/audio/sound.h"
 #include "engine/assets.hpp"
 #include "engine/load/load_clx.hpp"
+#include "engine/load/load_file.hpp"
 #include "engine/lighting.h"
 #include "engine/random.hpp"
 #include "engine/render/text_render.hpp"
@@ -28,12 +29,15 @@
 #include "game/levels/level.hpp"
 #include "game/levels/tile_properties.hpp"
 #include "game/levels/themes.h"
+#include "game/levels/triggers.h"
 #include "game/monsters/monster_pool.hpp"
 #include "game/objects/objects.hpp"
 #include "game/objects/object_pool.hpp"
 #include "game/players/players.hpp"
 #include "game/quests/quests.hpp"
 #include "persistence/options.h"
+#include "persistence/loadsave.h"
+#include "tables/leveldat.h"
 #include "utils/language.h"
 
 namespace devilution {
@@ -1497,6 +1501,163 @@ TEST_F(ThemeRoomGenerationTest, CaptureCompleteSelectedThemePass)
 	}
 	stream.flush(); ASSERT_TRUE(stream.good()); stream.close(); EXPECT_EQ(cases, 88);
 	EXPECT_LE(std::filesystem::file_size(root / "native-theme-rooms.json"), 128U * 1024U * 1024U);
+}
+
+// Extra public state borrowed only by the real-geometry opt-in. The underlying
+// guards already retain tables, pools, tiles, RNG, player and lighting state.
+struct NativeComposedPopulationGuard {
+	MonsterPopulationGlobalsForTesting oldMonsterGlobals = CaptureMonsterPopulationGlobalsForTesting();
+	ItemInitializationGlobalsForTesting oldItemGlobals = CaptureItemInitializationGlobalsForTesting();
+	std::unique_ptr<Level> oldLevel = std::make_unique<Level>(currentLevel().id());
+	decltype(sgGameInitInfo) oldGameInfo = sgGameInitInfo;
+	bool oldHellfireSave = gbIsHellfireSaveGame;
+	std::vector<LevelGenerationRow> oldLevelData = LevelGenerationData;
+	std::array<std::optional<uint32_t>, NUMLEVELS> oldSeeds;
+	std::array<uint32_t, NUMLEVELS> oldDungeonSeeds;
+	std::array<TriggerStruct, MAXTRIGGERS> oldTriggers;
+	NativeComposedPopulationGuard()
+	{
+		CopyCoarseState(*oldLevel, currentLevel());
+		oldLevel->pMegaTiles_ = std::move(currentLevel().pMegaTiles_);
+		oldLevel->pDungeonCels_ = std::move(currentLevel().pDungeonCels_);
+		oldLevel->pSpecialCels_ = std::move(currentLevel().pSpecialCels_);
+		std::copy_n(LevelSeeds, NUMLEVELS, oldSeeds.begin());
+		std::copy_n(DungeonSeeds, NUMLEVELS, oldDungeonSeeds.begin());
+		std::copy_n(trigs, MAXTRIGGERS, oldTriggers.begin());
+	}
+	~NativeComposedPopulationGuard()
+	{
+		CopyCoarseState(currentLevel(), *oldLevel);
+		currentLevel().pMegaTiles_ = std::move(oldLevel->pMegaTiles_);
+		currentLevel().pDungeonCels_ = std::move(oldLevel->pDungeonCels_);
+		currentLevel().pSpecialCels_ = std::move(oldLevel->pSpecialCels_);
+		sgGameInitInfo = oldGameInfo; gbIsHellfireSaveGame = oldHellfireSave;
+		LevelGenerationData = std::move(oldLevelData);
+		std::copy(oldSeeds.begin(), oldSeeds.end(), LevelSeeds);
+		std::copy(oldDungeonSeeds.begin(), oldDungeonSeeds.end(), DungeonSeeds);
+		std::copy(oldTriggers.begin(), oldTriggers.end(), trigs);
+		RestoreMonsterPopulationGlobalsForTesting(oldMonsterGlobals);
+		RestoreItemInitializationGlobalsForTesting(oldItemGlobals);
+	}
+	static void CopyCoarseState(Level &target, const Level &source)
+	{
+		target.setId(source.id());
+		target.DungeonMask_ = source.DungeonMask_; target.Protected_ = source.Protected_;
+		target.SetPieceRoom_ = source.SetPieceRoom_; target.SetPiece_ = source.SetPiece_;
+		for (int x = 0; x < DMAXX; ++x) std::copy_n(source.megaTiles_[x], DMAXY, target.megaTiles_[x]);
+		std::copy_n(source.DPieceMicros_, MAXTILES, target.DPieceMicros_);
+		target.dminPosition_ = source.dminPosition_; target.dmaxPosition_ = source.dmaxPosition_;
+		target.ViewPosition_ = source.ViewPosition_; target.MicroTileLen_ = source.MicroTileLen_;
+		target.TransVal_ = source.TransVal_; target.TransList_ = source.TransList_;
+		target.themeCount_ = source.themeCount_; std::copy_n(source.themeLoc_, MAXTHEMES, target.themeLoc_);
+		target.numThemes_ = source.numThemes_; target.armorFlag_ = source.armorFlag_; target.weaponFlag_ = source.weaponFlag_;
+		target.zharlib_ = source.zharlib_; target.trigFlag_ = source.trigFlag_; target.numTriggers_ = source.numTriggers_;
+		target.tWarpFrom_ = source.tWarpFrom_; target.uberRow_ = source.uberRow_; target.uberCol_ = source.uberCol_;
+		target.isUberRoomOpened_ = source.isUberRoomOpened_; target.isUberLeverActivated_ = source.isUberLeverActivated_;
+		target.uberDiabloMonsterIndex_ = source.uberDiabloMonsterIndex_;
+	}
+};
+
+// Extends the existing controlled upstream oracle, not the complete campaign
+// LoadGameLevel lifecycle. Geometry comes from original local assets; this
+// fixture alone opens MPQs and only when explicitly selected.
+TEST_F(ThemeRoomGenerationTest, CaptureComposedOrdinaryPopulation)
+{
+	const char *directory = std::getenv("GODEVILUTION_CATHEDRAL_FULL_POPULATION_ORACLE_DIRECTORY");
+	if (directory == nullptr || !*directory) GTEST_SKIP() << "Select private upstream Cathedral population explicitly.";
+	const auto root = std::filesystem::weakly_canonical(directory);
+	const auto repository = std::filesystem::weakly_canonical(std::filesystem::absolute(__FILE__).parent_path().parent_path());
+	ASSERT_TRUE(root.is_absolute()); ASSERT_TRUE(std::filesystem::is_directory(root)); ASSERT_TRUE(std::filesystem::is_empty(root));
+	ASSERT_FALSE(std::mismatch(repository.begin(), repository.end(), root.begin(), root.end()).first == repository.end());
+	// Use the same original-asset discovery and controlled hero context as the
+	// earlier population fixture. No server or client runtime loads archives.
+	NativeComposedPopulationGuard composedGuard;
+	// The inherited fixture already owns and initializes the player and tables.
+	// Avoid TestInitGame/InitQuests: quests are explicitly disabled below, and
+	// their extra quest-dialog/UI state is not part of this population seam.
+	MyPlayerId = 0; sgGameInitInfo.fullQuests = 1;
+	gbIsHellfire = false; gbIsHellfireSaveGame = false; gbSndInited = false;
+	UnloadModArchives(); MpqArchives.erase(MainMpqPriority); gbIsSpawn = false;
+	LoadGameArchives();
+	if (!HaveMainData() || gbIsSpawn) GTEST_SKIP() << "Original DIABDAT.MPQ was not discovered.";
+	currentLevel().setId(LevelId { .levelNum = 1, .type = DTYPE_CATHEDRAL });
+#ifndef UNPACKED_MPQS
+	const auto &mainArchive = MpqArchives.at(MainMpqPriority);
+	for (const std::string_view path : { "levels\\l1data\\l1.til", "levels\\l1data\\l1.sol" }) {
+		const AssetRef asset = FindAsset(path);
+		ASSERT_TRUE(asset.ok()); ASSERT_EQ(asset.archive, &mainArchive);
+	}
+#endif
+	size_t tileCount = 0;
+	auto definitions = LoadFileInMemWithStatus<MegaTile>("levels\\l1data\\l1.til", &tileCount);
+	ASSERT_TRUE(definitions.has_value()); ASSERT_NE(definitions->get(), nullptr); ASSERT_EQ(tileCount, 206U);
+	megaTiles() = std::move(*definitions);
+	for (int piece = 0; piece < MAXTILES; ++piece) tileProperties()[piece] = TileProperties::None;
+	ASSERT_TRUE(LoadLevelSOLData().has_value()); ASSERT_TRUE(CurrentLightManager.LoadTrns().has_value());
+	CurrentLightManager.MakeLightTable(); LoadLevelGenerationData();
+	std::ofstream stream(root / "native-full-population.json", std::ios::binary | std::ios::trunc); ASSERT_TRUE(stream.good());
+	int cases = 0, multiRoomCases = 0;
+	{
+		JsonObject document(stream); document.String("format", "godevilution-cathedral-full-population"); document.Number("version", 1);
+		document.String("policy", "controlled-original-diablo-single-player-normal-post-createlevel-through-createthemerooms");
+		document.Number("playerMaximumLife", 64); document.Number("playerMaximumMana", 0);
+		document.Key("itemCatalog"); WriteCatalog(stream);
+		document.Key("cases"); stream << '[';
+		for (int depth = 1; depth <= 4; ++depth) for (const uint32_t seed : { UINT32_C(2588), UINT32_C(743271966) })
+			for (const lvl_entry entry : { ENTRY_MAIN, ENTRY_PREV }) {
+				FreeMonsters(); InitializeObjectPool(); ObjectPoolAdapter::ResetLegacyObjectPools();
+				for (int slot = 0; slot < MAXOBJECTS; ++slot) Objects[slot] = {};
+				for (auto &type : LevelBestiary.types) type = {};
+				InitializeMonsterPool(); for (Monster &monster : MonsterPoolAdapter::AllMonsters()) monster = {};
+				// InitializeMonsterPool leaves inactive IDs untouched. This controlled
+				// baseline explicitly prepares identity IDs with count zero and no
+				// RNG draws; InitLevelMonsters independently resets them again below.
+				for (unsigned slot = 0; slot < MaxMonsters; ++slot) ActiveMonsters[slot] = slot;
+				InitializeItemPool(); ItemPoolAdapter::ResetLegacyItemPools();
+				for (int slot = 0; slot <= MAXITEMS; ++slot) Items[slot] = {};
+				ClearUniqueItemFlags(); CurrentLightManager.Init();
+				for (Tile &tile : tiles()) { tile.setObject(0); tile.setMonster(0); tile.setPlayer(0); tile.setItem(0); }
+				currentLevel().setId(LevelId { .levelNum = static_cast<uint8_t>(depth), .type = DTYPE_CATHEDRAL });
+				LevelSeeds[depth] = std::nullopt; DungeonSeeds[depth] = seed; DungeonSeeds[16] = UINT32_C(0x13579BDF);
+				MyPlayer->pOriginalCathedral = true; MyPlayer->plractive = true; MyPlayer->_pClass = HeroClass::Warrior;
+				MyPlayer->plrlevel = static_cast<uint8_t>(depth); MyPlayer->_pLvlChanging = false; MyPlayer->plrIsOnSetLevel = false;
+				MyPlayer->life = { 64, 64, 64, 64, 100 }; MyPlayer->mana = {}; MyPlayer->pLvlLoad = 1;
+				gbIsMultiplayer = false; gbIsSpawn = false; gbIsHellfire = false; gbIsHellfireSaveGame = false;
+				LoadingMapObjects = false; sgGameInitInfo.nDifficulty = DIFF_NORMAL;
+				for (Quest &quest : Quests) quest._qactive = QUEST_NOTAVAIL;
+				RestoreThemeRoomGlobalsForTesting({}); armorFlag() = true; weaponFlag() = true;
+				CreateLevelForTesting(entry);
+				MyPlayer->position.tile = viewPosition(); MyPlayer->position.future = viewPosition();
+				MyPlayer->position.old = viewPosition(); MyPlayer->position.last = viewPosition();
+				if (cases++ != 0) stream << ',';
+				JsonObject row(stream); row.Number("depth", depth); row.Number("seed", seed);
+				row.String("entry", entry == ENTRY_MAIN ? "main" : "previous");
+				row.String("snapshot", "cathedral-population-depth-" + std::to_string(depth) + "-" + std::to_string(seed)
+				    + (entry == ENTRY_MAIN ? "-main.json" : "-previous.json"));
+				row.Number("preClearRandomState", GetLCGEngineState()); row.Key("baseline"); WriteRoomWorld(stream);
+				InitLevelMonsters(); row.Number("postClearRandomState", GetLCGEngineState());
+				SetRndSeed(seed); ASSERT_TRUE(GetLevelMTypes().has_value()); InitThemes();
+				row.Key("selectedRoomCatalog"); WriteRoomCatalog(stream); row.Key("selectedThemes"); stream << '[';
+				for (int i = 0; i < numThemes(); ++i) { if (i) stream << ','; stream << '[' << static_cast<int>(themes[i].ttype) << ',' << static_cast<int>(themes[i].ttval) << ']'; }
+				stream << ']'; if (numThemes() > 1) ++multiRoomCases;
+				SetRndSeed(seed); HoldThemeRooms(); InitGolems(); InitObjects();
+				ASSERT_TRUE(InitMonsters().has_value()); InitItems();
+				row.Key("afterItems"); WriteRoomWorld(stream);
+				row.Key("itemInitialization"); {
+					const auto state = CaptureItemInitializationGlobalsForTesting();
+					JsonObject init(stream); init.Boolean("showUniqueInfo", state.showUniqueInfo);
+					init.Number("recordCount", state.count); init.Key("records");
+					WriteArray(stream, state.records, [&](const ItemGetRecordStruct &record) {
+						stream << '[' << record.nSeed << ',' << record.wCI << ',' << record.nIndex << ',' << record.dwTimestamp << ']';
+					});
+				}
+				row.Key("visibleTransparencyRegions"); WriteArray(stream, visibleTransparencyRegions(), [&](bool visible) { stream << (visible ? "true" : "false"); });
+				CreateThemeRooms(); row.Key("expected"); WriteRoomWorld(stream);
+			}
+		stream << ']'; document.Number("caseCount", cases); document.Number("multiRoomCases", multiRoomCases);
+	}
+	stream.flush(); ASSERT_TRUE(stream.good()); stream.close(); EXPECT_EQ(cases, 16); EXPECT_GT(multiRoomCases, 0);
+	EXPECT_LE(std::filesystem::file_size(root / "native-full-population.json"), 128U * 1024U * 1024U);
 }
 
 } // namespace

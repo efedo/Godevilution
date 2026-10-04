@@ -212,7 +212,11 @@ public sealed class ProjectDocumentationConsistencyTests
         Assert.Contains("`-CathedralEncounters`", plan, StringComparison.Ordinal);
         Assert.Contains("A separate detached `CreateThemeRooms` port", plan, StringComparison.Ordinal);
         Assert.Contains("not composed full-level population or a runtime pack", plan, StringComparison.Ordinal);
-        Assert.Contains("Next extend the existing upstream oracle", plan, StringComparison.Ordinal);
+        Assert.Contains("tools/test-cathedral-full-population.ps1", plan, StringComparison.Ordinal);
+        Assert.Contains("./tools/test-cathedral-full-population.ps1", guide, StringComparison.Ordinal);
+        Assert.Contains("`PlacementOrigin`", contract, StringComparison.Ordinal);
+        Assert.Contains("normal level loading clears monsters before geometry creation", plan, StringComparison.Ordinal);
+        Assert.Contains("post-CreateLevel seam", contract, StringComparison.Ordinal);
         Assert.Contains("tools/test-theme-room-generation.ps1", plan, StringComparison.Ordinal);
         Assert.Contains("./tools/test-theme-room-generation.ps1", guide, StringComparison.Ordinal);
         Assert.Contains("Unsafe reached native reads/writes", guide, StringComparison.Ordinal);

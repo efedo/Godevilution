@@ -120,10 +120,10 @@ open. Their scope, dependencies, and exit checks are defined only in the
   Animation remains a global visual clock, not native action-frame timing.
   Complete MPQ-free presentation coverage remains a deliverable. Original-asset
   support is optional client tooling; the server must remain MPQ-independent.
-- Detached Cathedral depths 1-4 item creation and complete selected theme rooms
-  now have independent native comparisons, including all pools, RNG and static
-  light channels. Real upstream full-level composition, external pack compilation,
-  populated-profile activation
+- Controlled Cathedral depths 1-4 population now composes managed prerequisites,
+  objects, encounters, initial items and theme rooms against independent native
+  evidence, including full pools, scratch/RNG and initial-object static lighting.
+  Campaign/application-order lifecycle, external pack compilation, populated-profile activation
   and ordinary Godot interaction/cold restore remain M2 work; default packs and
   launch/save profiles are unchanged.
 - Native-compatible generated maps, collision/set-piece placement, remaining
@@ -153,6 +153,63 @@ open. Their scope, dependencies, and exit checks are defined only in the
   this edge case, but the corrected Flash fixtures cover off-player cursors.
 
 ## Recent implementation evidence
+
+### M2 controlled Cathedral population through theme rooms (2026-10-04)
+
+This batch follows `0e199a85f`. The new detached pure managed compositor connects
+pre-theme geometry/raw metadata through bestiary/theme selection, reservations,
+objects, encounters, initial items and ordered theme rooms. Each phase supplies
+the next one's actual managed pools, flags, signed refs, RNG and persistent
+scratch XY/variant. Initial Cathedral lights and story candles apply their
+native zero-offset radii without modifying pre-light or the indexed allocator.
+Encounter unique-light records are retained, not physically processed early.
+The full intermediate state after items and final world are both compared.
+
+The zero-argument `tools/test-cathedral-full-population.ps1` requires two fresh
+byte-identical native captures and exactly sixteen managed comparisons: depths
+1-4, seeds 2588/743271966, MAIN/PREV, quest-disabled original Diablo SP Normal,
+including actual multi-room layouts. It first reruns all 48 upstream comparisons
+and repeated 17+1+1+1 artifacts. Raw catalogs and actual pre-phase state are
+inputs; expected native selection, intermediate and final state never feed the
+generator. Complete pools/tile channels, RNG, scratch/flags, indexed light
+history, 256 visibility entries and all 127 item-get reset records/UI flags
+are checked. Native counters, public coarse state and initialization bookkeeping
+are restored through scoped guards and BUILD_TESTING-only observation seams.
+
+Fresh native captures contain 35,376,908 bytes, SHA256
+`b81295b6dcc6e48f56c2e8e730fc65fb9996969bfc9969d8a21914e9a4341dd8`.
+All sixteen native comparisons and 39 launcher/report regressions pass without
+exclusions. The full module/server suites pass 3,088/1,593 with zero failures or
+errors and 156/four exclusions: explicit asset cases in the module; three
+NotRun and the existing directory-link privilege Skip in the server. No
+privilege change or successful package vulnerability audit is claimed; server
+build retains three NU1900 audit-feed warnings. Logs/XML use
+`.local/m2-full-population-*`. The final private wrapper passes at
+`%TEMP%/Godevilution-Full-Population-Oracle-4d205e9394664770961c079b7b6b845f`.
+The final rerun follows duplicate fixture-loop cleanup and preserves the same
+corpus bytes. Earlier setup/unique, item-placement, room and static-light wrappers
+also pass with their previously recorded bytes/SHA256 unchanged. Three existing
+native metadata/repair/recharge regressions pass. No excluded asset case is
+counted as a pass; the default suite is separate from explicit native proof.
+
+Independent review addressed raw potion/catalog coherence, raw-byte requirements
+versus assignment-time signed narrowing, current placement flags/SOL, scratch
+origin visibility and native borrowed-state restoration. Verification retained
+compiler failures, an initially uninitialized inactive monster-ID baseline and
+the report gate's missing xUnit string-quote escaping. The fixture now explicitly
+prepares inactive identity IDs with count zero/no RNG; native clearing resets
+them independently. Strict production permutation checks are unchanged.
+Failed stages retain their evidence and confirmed terminal cleanup; no expected
+state substitution or weakened comparison gate is used.
+
+Accepted scope is controlled post-CreateLevel population through CreateThemeRooms,
+with an independent pre-clear RNG stream. Normal application loading clears
+monsters before geometry; campaign seeds, hero/store/quest lifecycle, retained
+pools, later SavePreLighting/ProcessLightList and private rendering are not
+certified. Complete external packs, separate populated-profile activation and
+ordinary Godot interaction/cold restore remain next in the completion plan.
+No Godot is launched; runtime defaults, server MPQ independence and user save/
+config bytes remain unchanged. Overall estimate remains approximately 35%.
 
 ### M2 detached complete Cathedral theme rooms and static lighting (2026-10-04)
 

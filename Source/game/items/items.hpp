@@ -8,6 +8,7 @@
 // Item data, attributes, and floor/inventory management.
 #pragma once
 
+#include <array>
 #include <cstdint>
 #include <optional>
 
@@ -337,6 +338,14 @@ void SetupItem(Item &item);
 std::optional<int> GetItemAnimationLengthForTesting(int cursor);
 // Calls the actual native selector; no allocation, placement or seed conversion.
 int SelectThemeItemForTesting(bool onlyGood, int itemType = -1, int miscId = -1);
+/** Test-only ownership and observation of InitItems' pickup/UI reset state. */
+struct ItemInitializationGlobalsForTesting {
+	std::array<ItemGetRecordStruct, MAXITEMS> records;
+	int count;
+	bool showUniqueInfo;
+};
+ItemInitializationGlobalsForTesting CaptureItemInitializationGlobalsForTesting();
+void RestoreItemInitializationGlobalsForTesting(const ItemInitializationGlobalsForTesting &state);
 #endif
 Item *SpawnUnique(_unique_items uid, Point position, std::optional<int> level = std::nullopt, bool sendmsg = true, bool exactPosition = false);
 void GetSuperItemSpace(Point position, int8_t inum);

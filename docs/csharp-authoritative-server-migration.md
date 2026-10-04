@@ -45,7 +45,8 @@ geometry/reservations and triggers, then resets the independent population RNG
 before Golem/object creation. Native selected types, held cells and theme output
 are comparison evidence, not composed-generator inputs. These APIs require fresh
 storage and ordinary quest-disabled original Diablo; persistent native theme
-variant carry is now exposed by the theme-selection result's `PlacementVariant`.
+variant and XY carry are exposed by the theme-selection result's
+`PlacementVariant` and `PlacementOrigin`.
 These upstream APIs do not return the later room pass's full fit/pool history.
 The private oracle reader is test tooling, not a shipped
 content loader. A separate ordinary depths 1-4 encounter generator now runs
@@ -76,10 +77,21 @@ only pre-call state and validated raw metadata. Its zero-offset static lighting
 retains native minimum-combine and loading-copy behavior in both light channels;
 it does not replace indexed/pixel-offset lighting, vision or rendering.
 This is detached theme-room proof, not composed full-level population.
-Extending the actual upstream composition through this final pass, complete
-external content compilation and populated profile activation/restore remain
-required. The separately accepted ordinary SP Normal scope does not certify
-wider modes, quests or campaigns.
+The separate `AuthoritativeCathedralFullPopulationGenerator` now composes the
+controlled ordinary phases through this final pass. It derives selections,
+scatter types, held flags, current item-placement channels and initial-object
+physical lighting from managed preceding phases; preserves complete pools,
+unique history and XY/variant carry; and accepts only actual pre-phase inputs
+and raw metadata. Its intermediate result exposes the full state after items.
+Fresh pool clearing uses an independent pre-clear seed. This controlled
+post-CreateLevel seam is not the normal application's clear-before-geometry
+lifecycle. Unique lights retain allocator history; their later physical
+processing and `SavePreLighting` are not run early. Actual pre-phase inactive
+light records remain valid inputs because native lighting initialization does
+not clear them.
+Complete external content compilation, campaign/application-order lifecycle
+and populated profile activation/restore remain required. The accepted ordinary
+SP Normal scope does not certify retained pools, wider modes, quests or campaigns.
 No generator accepts native expected final state as production input or
 introduces server MPQ access.
 

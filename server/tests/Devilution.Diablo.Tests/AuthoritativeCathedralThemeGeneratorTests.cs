@@ -18,6 +18,7 @@ public sealed class AuthoritativeCathedralThemeGeneratorTests
 
         Assert.Equal([new AuthoritativeCathedralThemeEntry(AuthoritativeCathedralThemeGenerator.ThemeShrine, 0)], result.Themes);
         Assert.Equal(1, result.PlacementVariant);
+        Assert.Equal(new AuthoritativeCathedralPopulationPoint(21, 21), result.PlacementOrigin);
         Assert.Equal(25, result.HeldPopulatedCells.Count(held => held));
         Assert.All(RegionCells(20, 20, 5), point => Assert.True(result.HeldPopulatedCells[Index(point.X, point.Y)]));
         Assert.False(result.HeldPopulatedCells[Index(19, 19)]);
@@ -38,6 +39,7 @@ public sealed class AuthoritativeCathedralThemeGeneratorTests
 
         Assert.Equal(AuthoritativeCathedralThemeGenerator.ThemeShrine, result.Themes.Single().ThemeType);
         Assert.Equal(2, result.PlacementVariant);
+        Assert.Equal(new AuthoritativeCathedralPopulationPoint(21, 21), result.PlacementOrigin);
     }
 
     [Fact]

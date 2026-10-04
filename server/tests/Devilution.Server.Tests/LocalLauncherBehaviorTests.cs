@@ -7,6 +7,90 @@ namespace Devilution.Server.Tests;
 public sealed class LocalLauncherBehaviorTests
 {
     [Fact]
+    public void FullPopulationOracleRefusesExcludedReplacedAndIncompleteReports()
+    {
+        if (!OperatingSystem.IsWindows()) return;
+        var script = BuildPowerShellHarness(["Assert-CathedralFullNativeReport", "Assert-CathedralFullManagedReport"], """
+            $work = Join-Path ([IO.Path]::GetTempPath()) ('Godevilution-FullReportTest-' + [guid]::NewGuid().ToString('N'))
+            New-Item -ItemType Directory -Path $work | Out-Null
+            $nativePath = Join-Path $work 'native.json'; $managedPath = Join-Path $work 'managed.xml'
+            function Expect-Rejected([scriptblock]$action) {
+                $rejected=$false; try { & $action } catch { $rejected=$true }
+                if (-not $rejected) { throw 'Incomplete or replaced full-population report was accepted.' }
+            }
+            try {
+                $native = @{ tests=1; failures=0; disabled=0; errors=0; testsuites=@(@{ testsuite=@(@{
+                    classname='ThemeRoomGenerationTest'; name='CaptureComposedOrdinaryPopulation'; status='RUN'; result='COMPLETED'
+                }) }) } | ConvertTo-Json -Depth 6
+                [IO.File]::WriteAllText($nativePath,$native); Assert-CathedralFullNativeReport $nativePath
+                foreach ($mutate in @(
+                    { param($r) $r.tests=0 }, { param($r) $r.errors=1 }, { param($r) $r.disabled=1 },
+                    { param($r) $r.testsuites[0].testsuite[0].result='SKIPPED' },
+                    { param($r) $r.testsuites[0].testsuite[0].status='NOTRUN' },
+                    { param($r) $r.testsuites[0].testsuite[0].name='replacement' },
+                    { param($r) $r.testsuites[0].testsuite[0].classname='replacement' },
+                    { param($r) $r.testsuites[0].testsuite[0] | Add-Member failures @(@{ failure='error' }) })) {
+                    $bad=$native | ConvertFrom-Json; & $mutate $bad
+                    [IO.File]::WriteAllText($nativePath,($bad | ConvertTo-Json -Depth 6))
+                    Expect-Rejected { Assert-CathedralFullNativeReport $nativePath }
+                }
+                $type='Devilution.Diablo.Tests.AuthoritativeCathedralFullPopulationNativeOracleTests'
+                $nodes=@(foreach ($depth in 1..4) { foreach ($seed in @(2588,743271966)) { foreach ($entry in @('main','previous')) {
+                    '<test type="' + $type + '" method="FullPopulationMatchesNative" name="' + $type +
+                    '.FullPopulationMatchesNative(depth: ' + $depth + ', seed: ' + $seed + ', entry: \&quot;' + $entry + '\&quot;)" result="Pass" />'
+                } } })
+                $valid='<assemblies><assembly total="16" passed="16" failed="0" skipped="0" errors="0" not-run="0"><collection>' +
+                    ($nodes -join '') + '</collection></assembly></assemblies>'
+                [IO.File]::WriteAllText($managedPath,$valid); Assert-CathedralFullManagedReport $managedPath
+                foreach ($bad in @(
+                    $valid.Replace('result="Pass"','result="Skip"'),
+                    $valid.Replace('method="FullPopulationMatchesNative"','method="replacement"'),
+                    $valid.Replace('depth: 4','depth: 3'), $valid.Replace($nodes[0],''),
+                    $valid.Replace('\&quot;','&quot;'),
+                    $valid.Replace(' errors="0"',''), $valid.Replace('errors="0"','errors="1"'),
+                    $valid.Replace('not-run="0"','not-run="1"'),
+                    $valid.Replace('</collection>','</collection><errors><error type="fatal" /></errors>'))) {
+                    [IO.File]::WriteAllText($managedPath,$bad)
+                    Expect-Rejected { Assert-CathedralFullManagedReport $managedPath }
+                }
+                Write-Output 'PASS'
+            } finally {
+                $resolved=[IO.Path]::GetFullPath($work)
+                if ([IO.Path]::GetDirectoryName($resolved) -eq [IO.Path]::GetTempPath().TrimEnd('\') -and
+                    [IO.Path]::GetFileName($resolved) -match '^Godevilution-FullReportTest-[0-9a-f]{32}$') {
+                    Remove-Item -LiteralPath $resolved -Recurse -Force
+                }
+            }
+            """, "tools/test-cathedral-full-population.ps1");
+        Assert.Contains("PASS", RunPowerShell(script), StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void FullPopulationOracleRequiresByteIdenticalBoundedEvidence()
+    {
+        if (!OperatingSystem.IsWindows()) return;
+        var script = BuildPowerShellHarness(["Assert-CathedralFullRepeatability", "Assert-CathedralFullExternalPath"], """
+            $first=@{ Name='native-full-population.json'; Length=10; Sha256=('A'*64) }
+            Assert-CathedralFullRepeatability $first $first
+            foreach ($second in @(
+                $null, @($first,$first), @{ Name='replacement'; Length=10; Sha256=('A'*64) },
+                @{ Name=$first.Name; Length=11; Sha256=('A'*64) },
+                @{ Name=$first.Name; Length=10; Sha256=('B'*64) },
+                @{ Name=$first.Name; Length=10; Sha256='A' })) {
+                $rejected=$false; try { Assert-CathedralFullRepeatability $first $second } catch { $rejected=$true }
+                if (-not $rejected) { throw 'Incomplete or changed full-population bytes were accepted.' }
+            }
+            $repository=Split-Path -Parent (Split-Path -Parent $launcherPath)
+            foreach ($path in @($repository,(Join-Path $repository 'forbidden-evidence'))) {
+                $rejected=$false; try { Assert-CathedralFullExternalPath $path $repository } catch { $rejected=$true }
+                if (-not $rejected) { throw 'Repository-owned licensed evidence was accepted.' }
+            }
+            Write-Output 'PASS'
+            """, "tools/test-cathedral-full-population.ps1");
+        Assert.Contains("PASS", RunPowerShell(script), StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void ThemeRoomOracleRejectsIncompleteSkippedAndReplacedReports()
     {
         if (!OperatingSystem.IsWindows()) return;

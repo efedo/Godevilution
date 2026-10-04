@@ -3410,6 +3410,22 @@ int SelectThemeItemForTesting(bool onlyGood, int itemType, int miscId)
 		return IDI_GOLD;
 	return static_cast<int>(RndTypeItems(static_cast<ItemType>(itemType), miscId, ItemsGetCurrlevel()));
 }
+
+ItemInitializationGlobalsForTesting CaptureItemInitializationGlobalsForTesting()
+{
+	ItemInitializationGlobalsForTesting state;
+	std::copy_n(itemrecord, MAXITEMS, state.records.begin());
+	state.count = gnNumGetRecords;
+	state.showUniqueInfo = ShowUniqueItemInfoBox;
+	return state;
+}
+
+void RestoreItemInitializationGlobalsForTesting(const ItemInitializationGlobalsForTesting &state)
+{
+	std::copy(state.records.begin(), state.records.end(), itemrecord);
+	gnNumGetRecords = state.count;
+	ShowUniqueItemInfoBox = state.showUniqueInfo;
+}
 #endif
 
 void SetupItem(Item &item)

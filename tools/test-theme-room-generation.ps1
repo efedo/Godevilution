@@ -137,7 +137,7 @@ try {
         [Environment]::SetEnvironmentVariable($roomVariables[0], $roomDirectory, 'Process')
         [Environment]::SetEnvironmentVariable($roomVariables[1], $lightDirectory, 'Process')
         $roomReport = Join-Path $roomEvidenceRoot "native-tests-$roomCaptureIndex.json"
-        $roomArguments = '--gtest_filter=ThemeStaticLightingTest.*:ThemeRoomGenerationTest.* --gtest_output=json:' +
+        $roomArguments = '--gtest_filter=ThemeStaticLightingTest.*:ThemeRoomGenerationTest.*-ThemeRoomGenerationTest.CaptureComposedOrdinaryPopulation --gtest_output=json:' +
             (Quote-CathedralNativeArgument $roomReport)
         $roomOutcome = Invoke-CathedralPopulationOwnedProcess (Join-Path $roomBuild.Directory 'theme_item_generation_test.exe') `
             $roomArguments (Join-Path $roomEvidenceRoot "native-tests-$roomCaptureIndex.log") 120000

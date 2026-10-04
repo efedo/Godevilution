@@ -50,7 +50,7 @@ public sealed class AuthoritativeCathedralThemeRoomNativeOracleTests
         }
     }
 
-    private static void EqualWorld(string name, World expected, World actual)
+    internal static void EqualWorld(string name, World expected, World actual)
     {
         Assert.True(expected.RandomState == actual.RandomState, $"{name}: final RNG expected {expected.RandomState}, actual {actual.RandomState}.");
         Assert.True(expected.Origin == actual.Origin, $"{name}: scratch origin expected {expected.Origin}, actual {actual.Origin}.");
@@ -97,7 +97,7 @@ public sealed class AuthoritativeCathedralThemeRoomNativeOracleTests
                 $"{name}: complete {kind} slot {slot} differs.\nExpected: {JsonSerializer.Serialize(expected[slot], Options)}\nActual: {JsonSerializer.Serialize(actual[slot], Options)}");
     }
 
-    private sealed record World(AuthoritativeCathedralThemeRoomState State, uint RandomState,
+    internal sealed record World(AuthoritativeCathedralThemeRoomState State, uint RandomState,
         AuthoritativeCathedralPopulationPoint Origin, int ThemeVar1);
     private sealed record Case(string Name, int Depth, uint Seed, bool Loading,
         AuthoritativeCathedralThemeEntry[] Themes, AuthoritativeCathedralPopulationPlayer Player,
@@ -156,7 +156,7 @@ public sealed class AuthoritativeCathedralThemeRoomNativeOracleTests
         return new(name, depth, seed, loading, themes, player, input, expected);
     }
 
-    private static AuthoritativeCathedralThemeRoomCatalog ReadRoomCatalog(JsonElement value)
+    internal static AuthoritativeCathedralThemeRoomCatalog ReadRoomCatalog(JsonElement value, bool requireDetachedBestiary = true)
     {
         Properties(value, "objects", "bestiary", "shrineAvailable");
         var objects = A(value, "objects").EnumerateArray().Select(row => {
@@ -181,12 +181,12 @@ public sealed class AuthoritativeCathedralThemeRoomNativeOracleTests
                 N(row, "reducePlayerDexterity"), N(row, "reducePlayerVitality"), N(row, "reducePlayerMaxHP"),
                 N(row, "reducePlayerMaxMana"), frames, rates), U(row, "placeFlags"), B(row, "isGoat"));
         }).ToArray();
-        if (!bestiary.Select(row => row.Definition.NativeType).SequenceEqual(new[] { 109, 0, 8, 20, 34, 42 }))
+        if (requireDetachedBestiary && !bestiary.Select(row => row.Definition.NativeType).SequenceEqual(new[] { 109, 0, 8, 20, 34, 42 }))
             throw new InvalidDataException("The exact six loaded native bestiary rows are required.");
         return new(objects, bestiary, BoolArray(value, "shrineAvailable", 26));
     }
 
-    private static World ReadWorld(JsonElement value)
+    internal static World ReadWorld(JsonElement value)
     {
         Properties(value, "randomState", "activeObjectCount", "activeObjectIds", "availableObjectIds", "objects",
             "activeMonsterCount", "monsterTargetCount", "activeMonsterIds", "monsters", "monsterPetrified",

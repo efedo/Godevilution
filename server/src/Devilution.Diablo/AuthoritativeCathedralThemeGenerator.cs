@@ -112,7 +112,8 @@ public sealed class AuthoritativeCathedralThemeResult
         uint finalRandomState,
         int nextTransparencyValue,
         AuthoritativeCathedralThemeFlags flags,
-        int placementVariant = 0)
+        int placementVariant = 0,
+        AuthoritativeCathedralPopulationPoint placementOrigin = default)
     {
         Themes = Array.AsReadOnly(themes.ToArray());
         HeldPopulatedCells = Array.AsReadOnly(heldPopulatedCells.ToArray());
@@ -120,6 +121,7 @@ public sealed class AuthoritativeCathedralThemeResult
         NextTransparencyValue = nextTransparencyValue;
         Flags = flags ?? throw new ArgumentNullException(nameof(flags));
         PlacementVariant = placementVariant;
+        PlacementOrigin = placementOrigin;
     }
 
     public IReadOnlyList<AuthoritativeCathedralThemeEntry> Themes { get; }
@@ -131,6 +133,8 @@ public sealed class AuthoritativeCathedralThemeResult
     public AuthoritativeCathedralThemeFlags Flags { get; }
     /** Native themeVar1 carry required by a later ordered CreateThemeRooms pass. */
     public int PlacementVariant { get; }
+    /** Native themex/themey carry from the selection phase, before room creation. */
+    public AuthoritativeCathedralPopulationPoint PlacementOrigin { get; }
 }
 
 /** Pure, bounded managed implementation of the ordinary Cathedral theme phase. */
@@ -211,7 +215,8 @@ public static class AuthoritativeCathedralThemeGenerator
                 random.State,
                 input.NextTransparencyValue,
                 flags.ToPublic(),
-                scratch.Variant);
+                scratch.Variant,
+                new(scratch.X, scratch.Y));
         }
 
         private int SelectThemeType(int themeIndex, int region)
