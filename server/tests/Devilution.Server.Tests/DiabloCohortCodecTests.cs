@@ -10,6 +10,81 @@ public sealed class DiabloCohortCodecTests
 {
     private readonly DiabloCohortCodec codec = new();
 
+    [Theory]
+    [InlineData(0U, 1U)]
+    [InlineData(1U, 0U)]
+    [InlineData(0U, 0U)]
+    [InlineData(0x80000000U, 0xFFFFFFFFU)]
+    public void NativeVersionThreeRetainsExplicitPolicyAndExactInitialization(uint itemSeed, uint aiSeed)
+    {
+        var source = NativeState(itemSeed, aiSeed);
+        var encoded = codec.Serialize(source);
+        var decoded = codec.Deserialize(encoded);
+        Assert.Equal(encoded, codec.Serialize(decoded));
+        Assert.Equal(source.CombatTargets, decoded.CombatTargets);
+        Assert.Equal(source.Configuration, decoded.Configuration);
+        Assert.True(Assert.Single(decoded.CombatTargets).Monster.NativeInitializationPresent);
+        Assert.Throws<InvalidDataException>(() => codec.Serialize(source with { FormatVersion = 1 }));
+        var legacy = codec.Serialize(CreateState());
+        Assert.DoesNotContain("NativeInitialization", legacy);
+        Assert.DoesNotContain("NativeMonsterMetadataFingerprint", legacy);
+    }
+
+    [Theory]
+    [InlineData("identity")]
+    [InlineData("policy")]
+    [InlineData("provenance")]
+    [InlineData("raw-slot")]
+    [InlineData("binding")]
+    [InlineData("native-type")]
+    [InlineData("native-unique")]
+    [InlineData("entity")]
+    [InlineData("content")]
+    [InlineData("level")]
+    [InlineData("unique-identity")]
+    public void NativeVersionThreeRejectsIncompleteAndConflictingState(string mutation)
+    {
+        var document = JsonNode.Parse(codec.Serialize(NativeState(0, 1)))!.AsObject();
+        switch (mutation) {
+        case "identity": document["Configuration"]!.AsObject().Remove("NativeMonsterMetadataFingerprint"); break;
+        case "policy": document["CombatTargets"]![0]!["Monster"]!.AsObject().Remove("NativeInitializationPresent"); break;
+        case "provenance": document["CombatTargets"]![0]!["NativeInitialization"] = null; break;
+        case "raw-slot": document["CombatTargets"]![0]!["NativeInitialization"]!["InitialState"]!["Slot"] = 200; break;
+        case "binding": document["CombatTargets"]![0]!["NativeInitialization"]!["Binding"] = null; break;
+        case "native-type": document["CombatTargets"]![0]!["NativeInitialization"]!["InitialState"]!["Type"] = 1; break;
+        case "native-unique": document["CombatTargets"]![0]!["NativeInitialization"]!["InitialState"]!["UniqueType"] = 1; break;
+        case "entity": document["CombatTargets"]![0]!["Monster"]!["EntityId"] = 99; break;
+        case "content": document["CombatTargets"]![0]!["Monster"]!["MonsterId"] = 99; break;
+        case "level": document["CombatTargets"]![0]!["Monster"]!["LevelId"] = 99; break;
+        case "unique-identity": document["CombatTargets"]![0]!["Monster"]!["UniqueIdentity"] = "other"; break;
+        }
+        Assert.Throws<InvalidDataException>(() => codec.Deserialize(document.ToJsonString()));
+    }
+
+    private static DiabloCohortState NativeState(uint itemSeed, uint aiSeed)
+    {
+        var original = CreateState();
+        var target = Assert.Single(original.CombatTargets);
+        var fingerprint = new string('A', 64);
+        var raw = new AuthoritativeCathedralPopulationMonsterState {
+            Slot = 7, Type = 0, LevelType = 1, UniqueType = 255, Leader = 255,
+            Tile = new(3, 3), Future = new(3, 3), Old = new(3, 3),
+            RndItemSeed = itemSeed, AiSeed = aiSeed,
+        };
+        return original with {
+            FormatVersion = DiabloCohortState.NativeMonsterFormatVersion,
+            Configuration = original.Configuration with { NativeMonsterMetadataFingerprint = fingerprint },
+            CombatTargets = [target with {
+                Monster = target.Monster with {
+                    NativeInitializationPresent = true, MonsterItemSeed = itemSeed, MonsterAiSeed = aiSeed,
+                },
+                NativeInitialization = new(fingerprint, raw, ushort.MaxValue, 7, -1, 127,
+                    new(raw.Slot, raw.Type, raw.UniqueType, target.Monster.EntityId,
+                        target.Monster.MonsterId, target.Monster.LevelId, string.Empty), false),
+            }],
+        };
+    }
+
     [Fact]
     public void LegacyVersionOneRetainsFrozenBaselineBytes()
     {
@@ -18,6 +93,31 @@ public sealed class DiabloCohortCodecTests
         Assert.Equal(15991, bytes.Length);
         Assert.Equal("067bdf7e13316b858887c1ffde3364da249dfde4783f4de5c977c81b0a1a3ed0",
             Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(bytes)).ToLowerInvariant());
+    }
+
+    [Fact]
+    public void LegacyVersionTwoRetainsFrozenDoorSchemaAndBytes()
+    {
+        // Independent old v1 bytes plus a literal pre-feature v2 extension.
+        // The expected door JSON is not produced by the serializer under test.
+        var legacy = codec.Serialize(CreateState());
+        Assert.Equal("067bdf7e13316b858887c1ffde3364da249dfde4783f4de5c977c81b0a1a3ed0",
+            Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(
+                System.Text.Encoding.UTF8.GetBytes(legacy))).ToLowerInvariant());
+        var fingerprint = new string('A', 64);
+        var literal = $$"""
+            ,"CathedralDoors":{"FormatVersion":1,"ProfileId":"original-diablo.cathedral-doors","Revision":1,"CatalogFingerprint":"{{fingerprint}}","BackingGeometry":{"Levels":[],"WarpTargets":[]},"EffectiveLevels":[],"DoorLevels":[{"LevelId":1,"BackingSpecial":[],"EffectiveSpecial":[],"Doors":[]}]}
+            """;
+        Assert.StartsWith("{\"FormatVersion\":1,", legacy);
+        var expected = legacy.Insert(legacy.Length - 1, literal)
+            .Replace("{\"FormatVersion\":1,\"Tick\"", "{\"FormatVersion\":2,\"Tick\"", StringComparison.Ordinal);
+        var checkpoint = new DiabloCathedralDoorCheckpoint(1, "original-diablo.cathedral-doors", 1,
+            fingerprint, new DiabloWorldGeometryState([], []), [], [new(1, [], [], [])]);
+        var actual = codec.Serialize(CreateState() with { FormatVersion = 2, CathedralDoors = checkpoint });
+        Assert.Equal(expected, actual);
+        Assert.Equal(actual, codec.Serialize(codec.Deserialize(actual)));
+        Assert.DoesNotContain("NativeInitialization", actual);
+        Assert.DoesNotContain("NativeMonsterMetadataFingerprint", actual);
     }
 
     [Theory]

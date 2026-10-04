@@ -17,7 +17,7 @@ public sealed class ProjectDocumentationConsistencyTests
         Assert.Contains("does not silently activate a runtime profile", architecture, StringComparison.Ordinal);
         var plan = Read(root, "docs", "completion-plan.md");
         Assert.Contains("metadata compilation alone is not playable profile acceptance", plan, StringComparison.Ordinal);
-        Assert.Contains("Next install these validated inputs", plan, StringComparison.Ordinal);
+        Assert.Contains("Next update the raw extension", plan, StringComparison.Ordinal);
         var guidance = Read(root, "docs", "ai", "msvc-build.md");
         Assert.Contains("test-cathedral-population-metadata.ps1", guidance, StringComparison.Ordinal);
         Assert.Contains("-FullPopulationEvidenceDirectory", guidance, StringComparison.Ordinal);
@@ -43,6 +43,24 @@ public sealed class ProjectDocumentationConsistencyTests
         Assert.Contains("-MetadataPackDirectory", guidance, StringComparison.Ordinal);
         Assert.Contains("requires byte-identical captures", guidance, StringComparison.Ordinal);
         Assert.Contains("Godot interaction or cold-restore acceptance", guidance, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void NativeMonsterImportDocumentationPreservesLiveMutationAndLegacyGates()
+    {
+        var root = FindRepositoryRoot();
+        var architecture = Read(root, "docs", "csharp-authoritative-server-migration.md");
+        Assert.Contains(AuthoritativeCathedralMonsterRuntimeCatalog.SchemaId, architecture, StringComparison.Ordinal);
+        Assert.Contains("returned targets are not installed or gameplay-ready", architecture, StringComparison.Ordinal);
+        Assert.Contains("Immutable initial state", architecture, StringComparison.Ordinal);
+        Assert.Contains("is not a live-updated lossless raw checkpoint", architecture, StringComparison.Ordinal);
+        var plan = Read(root, "docs", "completion-plan.md");
+        Assert.Contains("native death-time loot", plan, StringComparison.Ordinal);
+        Assert.Contains("legacy v1/v2 schemas/default bytes remain frozen", plan, StringComparison.Ordinal);
+        var protocol = Read(root, "protocol", "README.md");
+        Assert.Contains("native_initialization_present", protocol, StringComparison.Ordinal);
+        Assert.Contains("No default profile emits it", protocol, StringComparison.Ordinal);
+        Assert.Contains("test-cathedral-monster-runtime.ps1", Read(root, "docs", "ai", "msvc-build.md"), StringComparison.Ordinal);
     }
 
     [Fact]

@@ -5837,5 +5837,20 @@ TEST(ServerBackedPlayerSnapshot, RejectsInvalidFacingDirectionWithoutMutation)
 	EXPECT_EQ(player.direction, Direction::West);
 }
 
+TEST(ServerBackedPlayerSnapshot, ExplicitNativeInitializationPreservesZeroSeeds)
+{
+	for (auto seeds : { std::pair<uint32_t, uint32_t> { 0, 1 }, { 1, 0 }, { 0, 0 }, { 0x80000000U, UINT32_MAX } }) {
+		protocol::Snapshot snapshot;
+		auto *monster = snapshot.add_monsters();
+		monster->set_entity_id(9);
+		monster->set_monster_item_seed(seeds.first);
+		monster->set_monster_ai_seed(seeds.second);
+		monster->set_native_initialization_present(true);
+		EXPECT_TRUE(ValidateMonsterSnapshots(snapshot).has_value());
+		monster->clear_native_initialization_present();
+		EXPECT_EQ(ValidateMonsterSnapshots(snapshot).has_value(), (seeds.first == 0) == (seeds.second == 0));
+	}
+}
+
 } // namespace
 } // namespace devilution::authoritative

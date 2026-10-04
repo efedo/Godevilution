@@ -1643,7 +1643,8 @@ tl::expected<void, std::string> ValidateMonsterSnapshots(const protocol::Snapsho
 		    || monster.death_ticks_remaining() > monster.death_animation_ticks()
 		    || (monster.hit_points_q6() > 0 && monster.death_ticks_remaining() != 0)
 		    || monster.experience_reward() > MaximumNativeMonsterExperienceReward
-		    || (monster.monster_item_seed() == 0) != (monster.monster_ai_seed() == 0)
+		    || (!monster.native_initialization_present()
+		        && (monster.monster_item_seed() == 0) != (monster.monster_ai_seed() == 0))
 		    || monster.native_ai().size() > MaximumIdentityBytes
 		    || monster.native_ai().find('\0') != std::string::npos
 		    || monster.to_hit() < 0 || monster.to_hit() > MaximumNativeMonsterToHit

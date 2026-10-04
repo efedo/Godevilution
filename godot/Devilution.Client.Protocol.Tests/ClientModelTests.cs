@@ -8,6 +8,38 @@ namespace Devilution.Client.Protocol.Tests;
 
 public sealed class ClientModelTests
 {
+    [Theory]
+    [InlineData(0U, 1U)]
+    [InlineData(1U, 0U)]
+    [InlineData(0U, 0U)]
+    public void ExplicitNativeInitializationAcceptsExactZeroSeeds(uint itemSeed, uint aiSeed)
+    {
+        var model = new AuthoritativeClientModel();
+        var snapshot = new Snapshot { Tick = 1, Monsters = { new MonsterSnapshot {
+            EntityId = 9, MonsterItemSeed = itemSeed, MonsterAiSeed = aiSeed,
+            NativeInitializationPresent = true,
+        } } };
+        snapshot.Players.Add(new PlayerSnapshot { EntityId = 1 });
+        model.Apply(new AuthoritativeClientMessage(Snapshot: snapshot));
+        Assert.Equal(itemSeed, model.Snapshot!.Monsters[0].MonsterItemSeed);
+        Assert.Equal(aiSeed, model.Snapshot.Monsters[0].MonsterAiSeed);
+        Assert.True(model.Snapshot.Monsters[0].NativeInitializationPresent);
+        var unmarked = snapshot.Clone();
+        unmarked.Tick = 2;
+        unmarked.Monsters[0].ClearNativeInitializationPresent();
+        if ((itemSeed == 0) != (aiSeed == 0))
+        {
+            Assert.Throws<InvalidDataException>(() => model.Apply(new AuthoritativeClientMessage(Snapshot: unmarked)));
+            Assert.Equal(1UL, model.CurrentTick);
+        }
+        else
+        {
+            model.Apply(new AuthoritativeClientMessage(Snapshot: unmarked));
+            Assert.Equal(2UL, model.CurrentTick);
+            Assert.False(model.Snapshot!.Monsters[0].NativeInitializationPresent);
+        }
+    }
+
     [Fact]
     public void ValidatesMalformedStaleSnapshotsBeforeDiscardingThem()
     {

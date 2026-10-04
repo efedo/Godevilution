@@ -1849,5 +1849,72 @@ TEST_F(ThemeRoomGenerationTest, CaptureFreshLevelReady)
 	CapturePopulationOracle(std::getenv("GODEVILUTION_CATHEDRAL_LEVEL_READY_ORACLE_DIRECTORY"), true, true);
 }
 
+
+// Separate source metadata and actual Monster methods; older corpus bytes stay frozen.
+TEST_F(ThemeRoomGenerationTest, CaptureMonsterRuntimeMetadata)
+{
+	const char *directory = std::getenv("GODEVILUTION_CATHEDRAL_MONSTER_RUNTIME_ORACLE_DIRECTORY");
+	if (directory == nullptr || !*directory) GTEST_SKIP() << "Select a separate private runtime metadata directory.";
+	const auto root = std::filesystem::absolute(directory);
+	ASSERT_TRUE(std::filesystem::is_directory(root));
+	ASSERT_TRUE(std::filesystem::is_empty(root)) << "Never overwrite retained native evidence.";
+	ASSERT_EQ(MonstersData.size(), 138U);
+	ASSERT_EQ(UniqueMonstersData.size(), 100U);
+	std::ofstream table(root / "cathedral_population_monster_runtime.tsv", std::ios::binary);
+	ASSERT_TRUE(table.good());
+	table << "native_monster_id\tstable_symbol\tname\tlevel\tto_hit\tanim_frame_num\tto_hit_special\tanim_frame_num_special\tmonster_class\tselection_region\ttreasure\texperience\tresistance_hell\r\n";
+	for (size_t i = 0; i < MonstersData.size(); ++i) {
+		const auto &data = MonstersData[i];
+		ASSERT_EQ(data.name.find_first_of("\t\r\n"), std::string::npos);
+		table << i << "\tNativeMonster_" << std::setfill('0') << std::setw(3) << i << '\t' << data.name
+		      << '\t' << static_cast<int>(data.level) << '\t' << static_cast<int>(data.toHit)
+		      << '\t' << static_cast<int>(data.animFrameNum) << '\t' << static_cast<int>(data.toHitSpecial)
+		      << '\t' << static_cast<int>(data.animFrameNumSpecial) << '\t' << static_cast<int>(data.monsterClass)
+		      << '\t' << static_cast<int>(data.selectionRegion) << '\t' << data.treasure
+		      << '\t' << data.exp << '\t' << static_cast<int>(data.resistanceHell) << "\r\n";
+	}
+	table.flush(); ASSERT_TRUE(table.good()); table.close();
+	std::ofstream stream(root / "native-monster-runtime.json", std::ios::binary);
+	ASSERT_TRUE(stream.good());
+	int count = 0;
+	{
+		JsonObject document(stream);
+		document.String("format", "godevilution-cathedral-monster-runtime");
+		document.Number("version", 1);
+		document.Key("cases"); stream << '[';
+		auto capture = [&](int nativeId, int uniqueId, _difficulty difficulty, bool golem, bool berserk) {
+			LevelBestiary.types[0].type = static_cast<_monster_id>(nativeId);
+			Monster monster {};
+			monster.levelType = 0;
+			monster.uniqueType = uniqueId < 0 ? UniqueMonsterType::None : static_cast<UniqueMonsterType>(uniqueId);
+			monster.flags = (golem ? MFLAG_GOLEM : 0) | (berserk ? MFLAG_BERSERK : 0);
+			monster.golemToHit = UINT16_MAX;
+			if (count++ != 0) stream << ',';
+			JsonObject row(stream);
+			row.Number("nativeId", nativeId); row.Number("uniqueId", uniqueId);
+			row.Number("difficulty", difficulty); row.Boolean("playerMinion", monster.isPlayerMinion());
+			row.Number("golemToHit", monster.golemToHit);
+			row.Number("uniqueDungeonLevel", uniqueId < 0 ? 0 : UniqueMonstersData[uniqueId].mlevel);
+			row.Number("uniqueCustomToHit", uniqueId < 0 ? 0 : UniqueMonstersData[uniqueId].customToHit);
+			row.Number("level", monster.level(difficulty)); row.Number("experience", monster.exp(difficulty));
+			row.Number("toHit", monster.toHit(difficulty)); row.Number("toHitSpecial", monster.toHitSpecial(difficulty));
+		};
+		for (int i = 0; i < 138; ++i)
+			for (auto difficulty : { DIFF_NORMAL, DIFF_NIGHTMARE, DIFF_HELL }) capture(i, -1, difficulty, false, false);
+		for (int i = 0; i < 100; ++i)
+			for (auto difficulty : { DIFF_NORMAL, DIFF_NIGHTMARE, DIFF_HELL })
+				capture(UniqueMonstersData[i].mtype, i, difficulty, false, false);
+		for (auto difficulty : { DIFF_NORMAL, DIFF_NIGHTMARE, DIFF_HELL }) {
+			capture(MT_GOLEM, -1, difficulty, true, false);
+			capture(MT_GOLEM, -1, difficulty, true, true);
+		}
+		stream << ']'; document.Number("caseCount", count);
+		document.Key("uniqueBaseTypes");
+		WriteArray(stream, UniqueMonstersData, [&](const auto &unique) { stream << static_cast<int>(unique.mtype); });
+	}
+	stream.flush(); ASSERT_TRUE(stream.good()); stream.close();
+	EXPECT_EQ(count, 720);
+}
+
 } // namespace
 } // namespace devilution

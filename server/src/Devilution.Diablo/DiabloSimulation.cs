@@ -41,6 +41,9 @@ public sealed class DiabloSimulationOptions
     /** Separate native depth profile identity; never changes the legacy L1 save contract. */
     public DiabloCathedralDepthWorldIdentity? CathedralDepthWorldIdentity { get; init; }
 
+    /** Explicit opt-in identity for native-initialized actors; no default activation. */
+    public string? NativeMonsterMetadataFingerprint { get; init; }
+
     /** Explicit generated-door capability; legacy authored and depth profiles leave this null. */
     public AuthoritativeCathedralDoorCatalog? CathedralDoors { get; init; }
 
@@ -459,6 +462,7 @@ public sealed class DiabloSimulationFactory : IDiabloCohortSimulationFactory
         worldCommands.SetSetLevelOriginResolver(simulation.ResolveSetLevelObjectOrigin);
         simulation.ConfigureNativeGeneratedWorldIdentity(options.NativeGeneratedWorldIdentity);
         simulation.ConfigureCathedralDepthWorldIdentity(options.CathedralDepthWorldIdentity);
+        simulation.ConfigureNativeMonsterMetadata(options.NativeMonsterMetadataFingerprint);
         return simulation;
     }
 

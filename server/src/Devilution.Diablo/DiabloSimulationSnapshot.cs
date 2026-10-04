@@ -45,6 +45,9 @@ public sealed record DiabloMonsterState(
     /** Native InitMonster seed used for multiplayer AI synchronization. */
     public uint MonsterAiSeed { get; init; }
 
+    /** An explicit native RNG policy; zero seeds are valid when this is true. */
+    public bool NativeInitializationPresent { get; init; }
+
     /** Server-owned dialogue identity currently displayed by a unique encounter. */
     public int DialogueMessageId { get; init; }
 
@@ -530,6 +533,9 @@ public sealed record DiabloSimulationSnapshot(
 {
     public uint RandomState { get; init; }
 
+    /** Cohort-only actor metadata identity, retained even with an empty roster. */
+    public string? NativeMonsterMetadataFingerprint { get; init; }
+
     /** Game-owned generated geometry identity carried only by persistence adapters. */
     public DiabloNativeGeneratedWorldIdentity? NativeGeneratedWorldIdentity { get; init; }
 
@@ -686,6 +692,7 @@ public sealed partial class DiabloSimulation
                     Direction = target.Direction,
                     MonsterItemSeed = target.MonsterItemSeed,
                     MonsterAiSeed = target.MonsterAiSeed,
+                    NativeInitializationPresent = target.NativeInitializationPresent,
                     DialogueMessageId = target.DialogueMessageId,
                     DialogueState = target.DialogueState,
                     Petrified = target.IsPetrified,
@@ -944,6 +951,7 @@ public sealed partial class DiabloSimulation
                 .ToArray(),
             VictoryTriggered = WorldState.VictoryTriggered,
             Difficulty = this.Difficulty,
+            NativeMonsterMetadataFingerprint = this.NativeMonsterMetadataFingerprint,
             NativeGeneratedWorldIdentity = this.NativeGeneratedWorldIdentity,
             CathedralDepthWorldIdentity = this.CathedralDepthWorldIdentity,
             CathedralDoors = includeDoorPersistence ? WorldState.CaptureCathedralDoors() : null,
@@ -982,6 +990,9 @@ public sealed partial class DiabloSimulation
     {
         ArgumentNullException.ThrowIfNull(destination);
         ArgumentNullException.ThrowIfNull(snapshot);
+        if (NativeMonsterMetadataFingerprint is not null || snapshot.NativeMonsterMetadataFingerprint is not null
+            || snapshot.Monsters.Any(monster => monster.NativeInitializationPresent))
+            throw new InvalidDataException("Native-initialized actors require complete cohort restore, not a legacy projection.");
         // Reject a different generation profile before rollback capture or any mutation.
         DiabloNativeGeneratedWorldIdentity.RequireSame(
             NativeGeneratedWorldIdentity, snapshot.NativeGeneratedWorldIdentity);
@@ -1191,7 +1202,8 @@ public sealed partial class DiabloSimulation
                 || monster.HitPoints != DeterministicFixedPointQ6.ToWholeCeiling(monster.HitPointsQ6)
                 || monster.MaxHitPoints != DeterministicFixedPointQ6.ToWholeCeiling(monster.MaxHitPointsQ6)
                 || monster.AttackDamage < 0
-                || (monster.MonsterItemSeed == 0) != (monster.MonsterAiSeed == 0)
+                || (!monster.NativeInitializationPresent
+                    && (monster.MonsterItemSeed == 0) != (monster.MonsterAiSeed == 0))
                 || monster.MinDamage < 0
                 || monster.MaxDamage < 0
                 || monster.MinDamageSpecial < 0

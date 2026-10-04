@@ -27,7 +27,11 @@ public sealed record DiabloCohortConfigurationState(
     uint ProceduralQuestPieceOriginSeed,
     bool AllowMissingNativeDunLayers,
     DiabloNativeGeneratedWorldIdentity? NativeGeneratedWorldIdentity,
-    DiabloCathedralDepthWorldIdentity? CathedralDepthWorldIdentity);
+    DiabloCathedralDepthWorldIdentity? CathedralDepthWorldIdentity)
+{
+    /** Required by native-initialized actor cohorts; absent in legacy schemas. */
+    public string? NativeMonsterMetadataFingerprint { get; init; }
+}
 
 /** Full portal state, including metadata omitted by the legacy save projection. */
 public sealed record DiabloCohortPortalState(
@@ -65,7 +69,10 @@ public sealed record DiabloCohortParticipantState(
 public sealed record DiabloCohortCombatTargetState(
     DiabloMonsterState Monster,
     DiabloWorldItemState? Drop,
-    bool FallenRallyAttackPending);
+    bool FallenRallyAttackPending)
+{
+    public AuthoritativeNativeMonsterInitialization? NativeInitialization { get; init; }
+}
 
 /**
  * Complete module-owned Diablo state for one exact engine tick.  Transport,
@@ -97,20 +104,26 @@ public sealed record DiabloCohortState(
 {
     public const int CurrentFormatVersion = 1;
     public const int CathedralDoorFormatVersion = 2;
+    public const int NativeMonsterFormatVersion = 3;
 
-    /** Required only in the explicit version-two mutable-door cohort schema. */
+    /** Required in v2, optional in native-initialization v3, forbidden in v1. */
     public DiabloCathedralDoorCheckpoint? CathedralDoors { get; init; }
 
     /** Detached records are captured in deterministic identity order. */
     public void ValidateShape()
     {
-        if ((FormatVersion != CurrentFormatVersion && FormatVersion != CathedralDoorFormatVersion)
+        if ((FormatVersion != CurrentFormatVersion && FormatVersion != CathedralDoorFormatVersion
+                && FormatVersion != NativeMonsterFormatVersion)
             || (FormatVersion == CurrentFormatVersion && CathedralDoors is not null)
             || (FormatVersion == CathedralDoorFormatVersion && CathedralDoors is null))
             throw new InvalidDataException(
                 $"Unsupported Diablo cohort format version {FormatVersion}.");
         CathedralDoors?.ValidateShape();
         ArgumentNullException.ThrowIfNull(Configuration);
+        if (FormatVersion == NativeMonsterFormatVersion
+            ? !AuthoritativeNativeMonsterInitialization.IsFingerprint(Configuration.NativeMonsterMetadataFingerprint)
+            : Configuration.NativeMonsterMetadataFingerprint is not null)
+            throw new InvalidDataException("Native monster cohorts require their explicit metadata identity.");
         ArgumentNullException.ThrowIfNull(Participants);
         ArgumentNullException.ThrowIfNull(CombatTargets);
         ArgumentNullException.ThrowIfNull(WorldItems);
@@ -165,6 +178,19 @@ public sealed record DiabloCohortState(
         if (CombatTargets.Any(target => target is null || target.Monster is null
             || target.Drop is not null && target.Drop.State is null))
             throw new InvalidDataException("A Diablo cohort contains an incomplete combat target.");
+        var nativeSlots = new HashSet<(uint Level, int Slot)>();
+        foreach (var target in CombatTargets) {
+            if (target.Monster.NativeInitializationPresent != (target.NativeInitialization is not null))
+                throw new InvalidDataException("Native monster policy is missing its initialization provenance.");
+            if (target.NativeInitialization is not { } native)
+                continue;
+            native.ValidateTarget(target.Monster.EntityId, target.Monster.MonsterId,
+                target.Monster.LevelId, target.Monster.IsUnique, target.Monster.UniqueIdentity);
+            if (FormatVersion != NativeMonsterFormatVersion
+                || native.MetadataFingerprint != Configuration.NativeMonsterMetadataFingerprint
+                || !nativeSlots.Add((target.Monster.LevelId, native.InitialState.Slot)))
+                throw new InvalidDataException("Native monster initialization conflicts with cohort metadata or slots.");
+        }
         if (WorldItems.Any(item => item is null || item.State is null))
             throw new InvalidDataException("A Diablo cohort contains an incomplete world item.");
         if (Objects.Any(@object => @object is null))

@@ -280,6 +280,8 @@ internal static class DiabloProtocolMapper
             }
             if (monster.MonsterAiSeed != 0)
                 projectedMonster.MonsterAiSeed = monster.MonsterAiSeed;
+            if (monster.NativeInitializationPresent)
+                projectedMonster.NativeInitializationPresent = true;
             if (monster.LeaderEntityId != 0)
                 projectedMonster.LeaderEntityId = monster.LeaderEntityId;
             if (monster.LeaderRelation != AuthoritativeMonsterLeaderRelation.None)
@@ -1285,7 +1287,8 @@ internal static class DiabloProtocolMapper
                 || monster.DeathTicksRemaining > monster.DeathAnimationTicks
                 || monster.HitPointsQ6 > 0 && monster.DeathTicksRemaining != 0
                 || monster.ExperienceReward > MaximumNativeMonsterExperienceReward
-                || (monster.MonsterItemSeed == 0) != (monster.MonsterAiSeed == 0)
+                || (!monster.NativeInitializationPresent
+                    && (monster.MonsterItemSeed == 0) != (monster.MonsterAiSeed == 0))
                 || monster.ToHit is < 0 or > byte.MaxValue
                 || monster.ToHitSpecial is < 0 or > byte.MaxValue
                 || monster.Intelligence is < 0 or > byte.MaxValue
@@ -2233,6 +2236,7 @@ internal static class DiabloProtocolMapper
                 Direction = monster.Direction,
                 MonsterItemSeed = monster.MonsterItemSeed,
                 MonsterAiSeed = monster.MonsterAiSeed,
+                NativeInitializationPresent = monster.NativeInitializationPresent,
                 DialogueState = (AuthoritativeMonsterDialogueState)monster.DialogueState,
                 Petrified = monster.Petrified,
                 StoneCurseImmune = monster.StoneCurseImmune,

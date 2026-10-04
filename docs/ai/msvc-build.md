@@ -1,5 +1,21 @@
 # MSVC Build Notes for Agents
 
+The supplemental monster-runtime proof takes no arguments:
+
+```powershell
+.\tools\test-cathedral-monster-runtime.ps1
+```
+
+It initializes the matching MSVC environment, verifies `cl.exe`/`rc.exe`/`mt.exe`,
+builds the registered oracle target, captures the complete 138-row runtime table
+and 720 actual native monster-method cases twice, then runs the explicit managed
+comparison. Reports, hashes, stage exits and cleanup evidence stay in a fresh
+private `%TEMP%/Godevilution-Monster-Runtime-Oracle-*` directory. Excluded,
+replaced or incomplete reports and non-identical captures fail the proof.
+It needs no MPQ files and launches no server, client or Godot. This proves raw
+metadata/calculation parity, not whole-world activation, AI or death-time loot.
+The nineteen-table generation pack and earlier corpus contracts remain unchanged.
+
 Use the Visual Studio developer environment. Plain PowerShell may find `cl.exe`
 or CMake but still miss standard MSVC headers such as `cstdint`, `array`, or
 `Windows.h`.

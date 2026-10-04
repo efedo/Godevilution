@@ -36,6 +36,13 @@ Windows toolchain command.
   required in the `ClientHello` for this version.
 - Existing field numbers and meanings are immutable. Removed fields must be
   reserved, and breaking changes require a new package and schema version.
+- Optional monster field 100 (`native_initialization_present`) distinguishes
+  imported native seed presence from legacy zero-as-absence. Absent/false keeps
+  legacy validation, bytes and hashes; true preserves exact uint seeds, including
+  zero, and enters the canonical hash. It is presentation policy, not gameplay
+  authority or complete loader provenance. No default profile emits it. Native
+  imports require cohort v3 for persistence; activation must negotiate compatible
+  peers before these actors are sent to older clients.
 - Additive fields and `oneof` alternatives must be safe for older peers to
   ignore. Required behavior is negotiated during the handshake.
 - `ClientHello.supports_clock_gated_commands` opts into deliberate future-ACK

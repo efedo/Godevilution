@@ -361,6 +361,10 @@ public static class SnapshotStateHasher
                     hasher.AppendUInt32(monster.MonsterItemSeed);
                     hasher.AppendUInt32(monster.MonsterAiSeed);
                 }
+                if (monster.NativeInitializationPresent) {
+                    hasher.AppendString("godevilution-monster-native-initialization-v1");
+                    hasher.AppendBool(true);
+                }
                 if (monster.LeaderEntityId != 0
                     || monster.LeaderRelation != 0
                     || monster.PackSize != 0

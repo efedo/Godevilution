@@ -284,7 +284,7 @@ public sealed class AuthoritativeCathedralThemeRoomState
             throw new InvalidDataException("Native object scalar state exceeds its field width.");
     }
 
-    private static void ValidateMonsterState(AuthoritativeCathedralPopulationMonsterState value)
+    internal static void ValidateMonsterState(AuthoritativeCathedralPopulationMonsterState value)
     {
         if (value.Type is < short.MinValue or > short.MaxValue
             || value.LevelType is < byte.MinValue or > byte.MaxValue

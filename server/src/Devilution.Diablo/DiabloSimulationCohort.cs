@@ -421,8 +421,8 @@ public sealed partial class DiabloSimulation
             megaDelayTicks: monster.MegaDelayTicks,
             direction: monster.Direction,
             dialogueMessageId: monster.DialogueMessageId,
-            monsterItemSeed: monster.MonsterItemSeed,
-            monsterAiSeed: monster.MonsterAiSeed,
+            monsterItemSeed: monster.NativeInitializationPresent ? 0 : monster.MonsterItemSeed,
+            monsterAiSeed: monster.NativeInitializationPresent ? 0 : monster.MonsterAiSeed,
             initialStandAnimationFrame: monster.FallenStandAnimationFrame,
             initialStandAnimationTick: monster.FallenStandAnimationTick,
              fallenRallyTicks: monster.FallenRallyTicks,
@@ -435,6 +435,11 @@ public sealed partial class DiabloSimulation
              dropPositionX: drop?.PositionX,
              dropPositionY: drop?.PositionY);
 
+        if (monster.NativeInitializationPresent) {
+            target.RestoreNativeInitialization(state.NativeInitialization
+                ?? throw new InvalidDataException("Native monster provenance is missing."),
+                monster.MonsterItemSeed, monster.MonsterAiSeed);
+        }
         target.RestoreSkeletonMeleeDelay(monster.SkeletonMeleeDelayTicks);
         target.RestoreSkeletonRangedMovementState(
             monster.SkeletonRangedMovementIdleTicks,
@@ -494,7 +499,9 @@ public sealed partial class DiabloSimulation
         target.RestoreCohortFallenRallyAttackPending(state.FallenRallyAttackPending);
         RequireExactActor(state,
             new DiabloCohortCombatTargetState(target.CaptureCohortState(),
-                CaptureOptionalWorldItem(target.Drop), target.FallenRallyAttackPending),
+                CaptureOptionalWorldItem(target.Drop), target.FallenRallyAttackPending) {
+                    NativeInitialization = target.NativeInitialization,
+                },
             "combat target");
         return target;
     }
@@ -972,7 +979,8 @@ public sealed partial class DiabloSimulation
         ArgumentNullException.ThrowIfNull(options);
         ArgumentNullException.ThrowIfNull(configuration);
         var activeVariant = options.CombatRules?.GameVariant ?? DiabloGameVariant.Diablo;
-        if (configuration.GameMode != options.GameMode
+        if (configuration.NativeMonsterMetadataFingerprint != options.NativeMonsterMetadataFingerprint
+            || configuration.GameMode != options.GameMode
             || configuration.GameVariant != activeVariant
             || configuration.Difficulty != options.Difficulty
             || configuration.UseNativePlayerActionTiming != options.UseNativePlayerActionTiming
@@ -1016,6 +1024,7 @@ public sealed partial class DiabloSimulation
             World = world,
             NativeGeneratedWorldIdentity = state.Configuration.NativeGeneratedWorldIdentity,
             CathedralDepthWorldIdentity = state.Configuration.CathedralDepthWorldIdentity,
+            NativeMonsterMetadataFingerprint = source.NativeMonsterMetadataFingerprint,
             CathedralDoors = source.CathedralDoors,
             CathedralDoorBackingGeometry = source.CathedralDoorBackingGeometry
                 ?? (source.CathedralDoors is null ? null : source.World?.CaptureGeometryState()),
@@ -1158,7 +1167,8 @@ public sealed partial class DiabloSimulation
         var infrastructure = WorldState.CaptureCohortInfrastructure();
 
         var state = new DiabloCohortState(
-            WorldState.HasCathedralDoors ? DiabloCohortState.CathedralDoorFormatVersion
+            NativeMonsterMetadataFingerprint is not null ? DiabloCohortState.NativeMonsterFormatVersion
+                : WorldState.HasCathedralDoors ? DiabloCohortState.CathedralDoorFormatVersion
                 : DiabloCohortState.CurrentFormatVersion,
             tick,
             new DiabloCohortConfigurationState(
@@ -1172,14 +1182,18 @@ public sealed partial class DiabloSimulation
                 proceduralQuestPieceOriginSeed,
                 nativeDunFragments is not null,
                 NativeGeneratedWorldIdentity,
-                CathedralDepthWorldIdentity),
+                CathedralDepthWorldIdentity) {
+                    NativeMonsterMetadataFingerprint = NativeMonsterMetadataFingerprint,
+                },
             participants,
             WorldState.CombatTargets.Values
                 .OrderBy(target => target.EntityId)
                 .Select(target => new DiabloCohortCombatTargetState(
                     target.CaptureCohortState(),
                     CaptureOptionalWorldItem(target.Drop),
-                    target.FallenRallyAttackPending))
+                    target.FallenRallyAttackPending) {
+                        NativeInitialization = target.NativeInitialization,
+                    })
                 .ToArray(),
             WorldState.WorldItems.Values
                 .OrderBy(item => item.EntityId)

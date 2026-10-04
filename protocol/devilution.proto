@@ -901,6 +901,9 @@ message MonsterSnapshot {
 	optional int32 hork_demon_move_ticks = 98;
 	// Native HorkDemon Move goal turning state (0 or 1).
 	optional int32 hork_demon_move_turn = 99;
+	// Explicit native initialization: RNG seed zero and XP zero are real values.
+	// Absent/false retains the legacy nonzero-seed inference contract.
+	optional bool native_initialization_present = 100;
 }
 
 message WorldItemSnapshot {

@@ -2,6 +2,17 @@
 
 Notable changes to this fork are recorded below.
 
+- 2026-10-04: Add a separate 138-row native monster runtime catalog and detached
+  cold-state binding adapter. Preserve unavailable rows, complete monster and
+  animation-petrification tails, active order, identity/leader bindings, Q6 HP,
+  exact zero seeds and raw XP without precomputing loot. Add explicit native
+  policy across server/client validation and hashing, with additive cohort v3
+  provenance/metadata fences and frozen legacy schemas. Add a bounded two-capture
+  720-case native-method proof, portable edge tests and old-schema byte goldens.
+  Update existing architecture, plan, status and verification guidance. Live raw
+  mutation, native death-time loot, whole-world installation and Godot acceptance
+  remain open; no default-profile, user-save, MPQ-boundary or Godot-launch change.
+
 - 2026-10-04: Continue fresh Cathedral population through the cold post-theme
   pre-join loader handoff: missile/corpse initialization, player occupancy,
   prelighting, monster light/charge cleanup and physical light/vision. Externalize

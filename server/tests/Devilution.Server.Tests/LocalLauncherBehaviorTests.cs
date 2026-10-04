@@ -362,6 +362,79 @@ public sealed class LocalLauncherBehaviorTests
         Assert.Contains("PASS", RunPowerShell(script), StringComparison.Ordinal);
     }
     [Fact]
+    public void MonsterRuntimeOracleGuardsRequireExactMethodAndTwoArtifacts()
+    {
+        if (!OperatingSystem.IsWindows()) return;
+        var script = BuildPowerShellHarness(
+            ["Assert-CathedralRuntimeNativeReport", "Assert-CathedralRuntimeManagedReport", "Get-CathedralRuntimeArtifacts", "Assert-CathedralRuntimeRepeatability"],
+            """
+            $work = Join-Path ([IO.Path]::GetTempPath()) ('Godevilution-MonsterRuntimeGuard-' + [guid]::NewGuid().ToString('N'))
+            New-Item -ItemType Directory -Path $work | Out-Null
+            try {
+                function Require-Rejection([scriptblock]$Action) {
+                    $rejected = $false
+                    try { & $Action } catch { $rejected = $true }
+                    if (-not $rejected) { throw 'Unsafe fresh proof was accepted.' }
+                }
+                $nativePath = Join-Path $work 'native.json'
+                $native = @{ tests = 1; failures = 0; disabled = 0; errors = 0;
+                    testsuites = @(@{ testsuite = @(@{ classname = 'ThemeRoomGenerationTest';
+                        name = 'CaptureMonsterRuntimeMetadata'; status = 'RUN'; result = 'COMPLETED' }) }) }
+                [IO.File]::WriteAllText($nativePath, ($native | ConvertTo-Json -Depth 8))
+                Assert-CathedralRuntimeNativeReport $nativePath
+                $native.testsuites[0].testsuite[0].name = 'CaptureComposedOrdinaryPopulation'
+                [IO.File]::WriteAllText($nativePath, ($native | ConvertTo-Json -Depth 8))
+                Require-Rejection { Assert-CathedralRuntimeNativeReport $nativePath }
+                $native.testsuites[0].testsuite[0].name = 'CaptureMonsterRuntimeMetadata'
+                $native.testsuites[0].testsuite[0].result = 'SKIPPED'
+                [IO.File]::WriteAllText($nativePath, ($native | ConvertTo-Json -Depth 8))
+                Require-Rejection { Assert-CathedralRuntimeNativeReport $nativePath }
+                $managedPath = Join-Path $work 'managed.xml'
+                $type = 'Devilution.Diablo.Tests.AuthoritativeCathedralMonsterRuntimeNativeOracleTests'
+                $method = 'CompleteRuntimeMetadataMatchesNativeMonsterMethods'
+                $name = $type + '.' + $method
+                $xml = '<assemblies><assembly total="1" passed="1" failed="0" skipped="0" errors="0" not-run="0"><collection><test name="' +
+                    $name + '" type="' + $type + '" method="' + $method + '" result="Pass" /></collection></assembly></assemblies>'
+                [IO.File]::WriteAllText($managedPath, $xml)
+                Assert-CathedralRuntimeManagedReport $managedPath
+                [IO.File]::WriteAllText($managedPath, $xml.Replace($method, 'replacement'))
+                Require-Rejection { Assert-CathedralRuntimeManagedReport $managedPath }
+                [IO.File]::WriteAllText($managedPath, $xml.Replace('result="Pass"', 'result="Skip"'))
+                Require-Rejection { Assert-CathedralRuntimeManagedReport $managedPath }
+                [IO.File]::WriteAllText($managedPath, $xml.Replace('not-run="0"', 'not-run="1"'))
+                Require-Rejection { Assert-CathedralRuntimeManagedReport $managedPath }
+                $artifactDirectory = Join-Path $work 'capture'
+                New-Item -ItemType Directory -Path $artifactDirectory | Out-Null
+                $corpusPath = Join-Path $artifactDirectory 'native-monster-runtime.json'
+                $tablePath = Join-Path $artifactDirectory 'cathedral_population_monster_runtime.tsv'
+                [IO.File]::WriteAllText($corpusPath, 'corpus')
+                [IO.File]::WriteAllText($tablePath, 'table')
+                $artifacts = @(Get-CathedralRuntimeArtifacts $artifactDirectory)
+                Assert-CathedralRuntimeRepeatability $artifacts $artifacts
+                Require-Rejection { Assert-CathedralRuntimeRepeatability $artifacts @($artifacts[0]) }
+                $mutated = @($artifacts[0].PSObject.Copy(), $artifacts[1].PSObject.Copy())
+                $mutated[0].Sha256 = ('B' * 64)
+                Require-Rejection { Assert-CathedralRuntimeRepeatability $artifacts $mutated }
+                $extra = Join-Path $artifactDirectory 'extra'
+                [IO.File]::WriteAllText($extra, 'extra')
+                Require-Rejection { Get-CathedralRuntimeArtifacts $artifactDirectory }
+                Remove-Item -LiteralPath $extra -Force
+                [IO.File]::WriteAllText($tablePath, '')
+                Require-Rejection { Get-CathedralRuntimeArtifacts $artifactDirectory }
+                Write-Output 'PASS'
+            } finally {
+                $resolved = [IO.Path]::GetFullPath($work)
+                if ((Split-Path $resolved -Parent) -eq [IO.Path]::GetFullPath([IO.Path]::GetTempPath()).TrimEnd('\') -and
+                    (Split-Path $resolved -Leaf) -match '^Godevilution-MonsterRuntimeGuard-[0-9a-f]{32}$') {
+                    Remove-Item -LiteralPath $resolved -Recurse -Force
+                }
+            }
+            """, "tools/test-cathedral-monster-runtime.ps1");
+        Assert.Contains("PASS", RunPowerShell(script), StringComparison.Ordinal);
+    }
+
+
+    [Fact]
     public void LevelReadyOracleGuardsRequireExactMatrixAndTwoArtifacts()
     {
         if (!OperatingSystem.IsWindows()) return;

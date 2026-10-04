@@ -534,16 +534,23 @@ this evidence. A sample art pack does not satisfy M4's full presentation gate.
    signed grids and independently validated 256-row automap metadata. The old
    nineteen-table pack and earlier native corpora remain unchanged. Join,
    retained-level/campaign lifecycle and runtime acceptance remain open.
-   Next install these validated inputs in a separately identified opt-in
-   populated server profile, with a lossless game-owned checkpoint and explicit
-   native-slot/type/unique-to-stable mappings. Add required live monster combat,
-   experience/drop/selection metadata; retain full pools/order/tails and signed
+   The separate runtime monster catalog and detached binding adapter now supply
+   native combat/experience/selection/treasure metadata and explicit immutable
+   native-slot/type/unique-to-stable provenance. Exact zero seeds and Q6 HP use an
+   explicit policy, with cohort v3 preserving metadata even for an empty roster;
+   legacy v1/v2 schemas/default bytes remain frozen. These are import/checkpoint
+   prerequisites, not live populated acceptance or a lossless raw checkpoint.
+   Next update the raw extension through existing simulation mutations, implement
+   native death-time loot (not generation-time precomputed drops), and install
+   the whole level in a separately identified opt-in populated server profile.
+   Retain full pools/order/tails and signed
    footprint grids. Pickup/drop, object/door and combat mutations must update
    raw state and projections atomically; a pristine copy that becomes stale is
    not persistence. Bind generated doors directly without a second discovery;
    preserve valid native zero seeds/item values instead of authored fallbacks.
    Fence the new capability/checkpoint with metadata and generation identities,
-   leaving existing cohort/generated-world/save schemas unchanged. Never use expected final state
+   leaving legacy cohort/generated-world/save schemas unchanged. Negotiate new
+   actor policy with compatible clients before activation. Never use expected final state
    as production input. Preserve the narrower earlier oracles and require
    ordinary Godot interaction plus cold restore before claiming playable native
    population.

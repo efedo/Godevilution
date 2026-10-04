@@ -304,7 +304,7 @@ public sealed class DiabloCombatCommandProcessor
         AuthoritativeCombatTarget monster)
     {
         ArgumentNullException.ThrowIfNull(monster);
-        var baseReward = monster.ExperienceReward == 0
+        var baseReward = monster.ExperienceReward == 0 && !monster.NativeInitializationPresent
             ? rules.DefeatExperience
             : monster.ExperienceReward;
         var multiplier = rules.DifficultyRules.GetExperienceMultiplier(difficulty);
@@ -5809,7 +5809,7 @@ public sealed class DiabloCombatCommandProcessor
                 // InitMonster AI seed as a marker that their global process
                 // stream is authoritative. Zero-seed fixtures and legacy
                 // multiplayer snapshots keep the compatibility controller.
-                var usesNativeAiStream = target.MonsterAiSeed != 0;
+                var usesNativeAiStream = target.UsesNativeRandomSeeds;
                 var attackRoll = skeletonMeleeAttackTuning.HasValue && usesNativeAiStream
                     ? random.RandomIntLessThan(100)
                     : (int)(attackSeed % 100U);
@@ -5827,7 +5827,7 @@ public sealed class DiabloCombatCommandProcessor
                 }
                 var goatMeleeAttackTuning = GetGoatMeleeAttackTuning(target);
                 var usesGoatNativeAiStream = goatMeleeAttackTuning.HasValue
-                    && target.MonsterAiSeed != 0;
+                    && target.UsesNativeRandomSeeds;
                 var goatAttackRoll = usesGoatNativeAiStream
                     ? random.RandomIntLessThan(100)
                     : (int)(attackSeed % 100U);
@@ -5840,7 +5840,7 @@ public sealed class DiabloCombatCommandProcessor
                     continue;
                 var gargoyleAttackTuning = GetGargoyleAttackTuning(target);
                 var usesGargoyleNativeAiStream = gargoyleAttackTuning.HasValue
-                    && target.MonsterAiSeed != 0;
+                    && target.UsesNativeRandomSeeds;
                 var gargoyleAttackRoll = usesGargoyleNativeAiStream
                     ? random.RandomIntLessThan(100)
                     : (int)(attackSeed % 100U);
@@ -5853,7 +5853,7 @@ public sealed class DiabloCombatCommandProcessor
                     continue;
                 var fatAttackTuning = GetFatAttackTuning(target);
                 var usesFatNativeAiStream = fatAttackTuning.HasValue
-                    && target.MonsterAiSeed != 0;
+                    && target.UsesNativeRandomSeeds;
                 var fatAttackRoll = usesFatNativeAiStream
                     ? random.RandomIntLessThan(100)
                     : (int)(attackSeed % 100U);
@@ -5865,7 +5865,7 @@ public sealed class DiabloCombatCommandProcessor
                     continue;
                 var batAttackTuning = GetBatAttackTuning(target);
                 var usesBatNativeAiStream = batAttackTuning.HasValue
-                    && target.MonsterAiSeed != 0;
+                    && target.UsesNativeRandomSeeds;
                 var batAttackRoll = usesBatNativeAiStream
                     ? random.RandomIntLessThan(100)
                     : (int)(attackSeed % 100U);
@@ -5890,7 +5890,7 @@ public sealed class DiabloCombatCommandProcessor
                             goatMeleeAttackTuning));
                 var usesNativeCombatStream = gameMode == DiabloGameMode.SinglePlayer
                     || gameMode == DiabloGameMode.Multiplayer
-                        && target.MonsterAiSeed != 0;
+                        && target.UsesNativeRandomSeeds;
                 var attackToHit = GetEffectiveMonsterToHit(target, usesSpecialAttack);
                 if (usesNativeCombatStream && attackToHit > 0) {
                     var hitChance = rules.ResolveMonsterAttackHitChance(
@@ -6204,7 +6204,7 @@ public sealed class DiabloCombatCommandProcessor
     /** Native ProcessMonsters advances each monster's multiplayer AI seed once per tick. */
     private void AdvanceNativeMonsterAiSeed(AuthoritativeCombatTarget target)
     {
-        if (gameMode != DiabloGameMode.Multiplayer || target.MonsterAiSeed == 0)
+        if (gameMode != DiabloGameMode.Multiplayer || !target.UsesNativeRandomSeeds)
             return;
 
         random.Restore(target.MonsterAiSeed);
@@ -6220,7 +6220,7 @@ public sealed class DiabloCombatCommandProcessor
             return false;
 
         var usesNativeRandomWalk = gameMode == DiabloGameMode.SinglePlayer
-            || target.MonsterAiSeed != 0;
+            || target.UsesNativeRandomSeeds;
         (int X, int Y)? retreat;
         if (usesNativeRandomWalk) {
             // Native FallenAi uses RandomWalk while fear is active. The
@@ -6273,7 +6273,7 @@ public sealed class DiabloCombatCommandProcessor
             return false;
 
         var usesNativeRandom = gameMode == DiabloGameMode.SinglePlayer
-            || target.MonsterAiSeed != 0;
+            || target.UsesNativeRandomSeeds;
         var rallies = usesNativeRandom
             ? random.FlipCoin(4)
             : (unchecked((uint)tick) ^ target.EntityId) % 4U == 0U;
@@ -6304,7 +6304,7 @@ public sealed class DiabloCombatCommandProcessor
         }
 
         var usesNativeRandom = gameMode == DiabloGameMode.SinglePlayer
-            || target.MonsterAiSeed != 0;
+            || target.UsesNativeRandomSeeds;
         var actionSeed = unchecked((uint)tick ^ target.EntityId ^ victim.EntityId);
         var pursuit = usesNativeRandom
             ? FindNativeRandomWalkStepFromRandom(target, victim, players)
@@ -6344,7 +6344,7 @@ public sealed class DiabloCombatCommandProcessor
         // seed as a marker that their global process stream is authoritative.
         // Zero-seed fixtures and legacy multiplayer snapshots keep the
         // deterministic compatibility controller.
-        var usesNativeAiStream = target.MonsterAiSeed != 0;
+        var usesNativeAiStream = target.UsesNativeRandomSeeds;
         if (usesNativeAiStream) {
             // Native BatAi consumes its action roll before either retreat
             // branch. RandomWalk then consumes two side-order coin draws.
@@ -6396,7 +6396,7 @@ public sealed class DiabloCombatCommandProcessor
             return false;
 
         var actionSeed = unchecked((uint)monster.EntityId ^ victim.EntityId);
-        var randomWalk = monster.MonsterAiSeed != 0
+        var randomWalk = monster.UsesNativeRandomSeeds
             ? FindNativeRandomWalkStepFromRandom(monster, victim, players)
             : FindNativeRandomWalkStep(monster, victim, players, actionSeed);
         if (randomWalk.HasValue) {
@@ -6455,7 +6455,7 @@ public sealed class DiabloCombatCommandProcessor
         // seed as a marker that their global process stream is authoritative.
         // Zero-seed fixtures and legacy multiplayer snapshots keep the
         // deterministic compatibility controller.
-        var usesNativeAiStream = monster.MonsterAiSeed != 0;
+        var usesNativeAiStream = monster.UsesNativeRandomSeeds;
         var actionSeed = unchecked((uint)tick ^ monster.EntityId ^ victim.EntityId);
         var delayBand = Math.Max(
             0,
@@ -6505,7 +6505,7 @@ public sealed class DiabloCombatCommandProcessor
         // seed as a marker that their global process stream is authoritative.
         // Zero-seed fixtures and legacy multiplayer snapshots keep the
         // deterministic compatibility controller.
-        var usesNativeAiStream = monster.MonsterAiSeed != 0;
+        var usesNativeAiStream = monster.UsesNativeRandomSeeds;
         var actionRoll = usesNativeAiStream
             ? random.RandomIntLessThan(100)
             : (int)(actionSeed % 100U);
@@ -6675,7 +6675,7 @@ public sealed class DiabloCombatCommandProcessor
         // seed as a marker that their global process stream is authoritative.
         // Zero-seed fixtures and legacy multiplayer snapshots keep the
         // deterministic compatibility controller.
-        var usesNativeAiStream = monster.MonsterAiSeed != 0;
+        var usesNativeAiStream = monster.UsesNativeRandomSeeds;
         var actionSeed = unchecked((uint)tick ^ monster.EntityId ^ victim.EntityId);
         var movementChance = GetFatMovementChance(
             monster,
@@ -6800,7 +6800,7 @@ public sealed class DiabloCombatCommandProcessor
         // seed as a marker that their global process stream is authoritative.
         // Zero-seed fixtures and legacy multiplayer snapshots keep the
         // deterministic compatibility controller.
-        var usesNativeAiStream = monster.MonsterAiSeed != 0;
+        var usesNativeAiStream = monster.UsesNativeRandomSeeds;
         // HorkDemonAi always consumes GenerateRnd(100) before examining its
         // goal. Initialized targets use the native per-monster stream; the
         // zero-seed compatibility path remains deterministic and side-effect
@@ -7015,7 +7015,7 @@ public sealed class DiabloCombatCommandProcessor
         // seed as a marker that their global process stream is authoritative.
         // Zero-seed fixtures and legacy multiplayer snapshots keep the
         // deterministic compatibility controller.
-        var usesNativeAiStream = monster.MonsterAiSeed != 0;
+        var usesNativeAiStream = monster.UsesNativeRandomSeeds;
         var delayChanceBase = 35;
         var delayChanceIntelligenceScale = 4;
         if (monsterTypes?.TryGet(monster.MonsterId, out var megaDefinition) == true
@@ -7107,7 +7107,7 @@ public sealed class DiabloCombatCommandProcessor
         // seed as a marker that their global process stream is authoritative.
         // Zero-seed fixtures and legacy multiplayer snapshots keep the
         // deterministic compatibility controller.
-        var usesNativeAiStream = monster.MonsterAiSeed != 0;
+        var usesNativeAiStream = monster.UsesNativeRandomSeeds;
         // Native CounselorAi always consumes its initial GenerateRnd(100)
         // before evaluating the current goal. Seeded targets use the restored
         // stream; zero-seed targets retain the compatibility draw.
@@ -7324,7 +7324,7 @@ public sealed class DiabloCombatCommandProcessor
         // seed as a marker that their global process stream is authoritative.
         // Zero-seed fixtures and legacy multiplayer snapshots keep the
         // deterministic compatibility controller.
-        var usesNativeAiStream = target.MonsterAiSeed != 0;
+        var usesNativeAiStream = target.UsesNativeRandomSeeds;
 
         AuthoritativeCorpse? corpse = null;
         if (target.ScavengerCorpseEntityId != 0)
@@ -7495,7 +7495,7 @@ public sealed class DiabloCombatCommandProcessor
         // seed as a marker that their global process stream is authoritative.
         // Zero-seed fixtures and legacy multiplayer snapshots keep the
         // deterministic compatibility controller.
-        var usesNativeAiStream = target.MonsterAiSeed != 0;
+        var usesNativeAiStream = target.UsesNativeRandomSeeds;
         var actionSeed = unchecked((uint)target.EntityId ^ victim.EntityId);
         // Native SneakAi consumes one GenerateRnd(100) before evaluating its
         // fade, retreat, and adjacent-attack branches. Zero-seed targets keep
@@ -7931,7 +7931,7 @@ public sealed class DiabloCombatCommandProcessor
         // seed as a marker that their global process stream is authoritative.
         // Zero-seed fixtures and legacy multiplayer snapshots keep the
         // deterministic compatibility controller.
-        var usesNativeAiStream = target.MonsterAiSeed != 0;
+        var usesNativeAiStream = target.UsesNativeRandomSeeds;
         var usesNativeActionRoll = gameMode == DiabloGameMode.SinglePlayer
             || usesNativeAiStream;
         var actionSeed = unchecked((uint)tick ^ target.EntityId ^ victim.EntityId);
@@ -8162,7 +8162,7 @@ public sealed class DiabloCombatCommandProcessor
         // seed as a marker that their global process stream is authoritative.
         // Zero-seed fixtures and legacy multiplayer snapshots keep the
         // deterministic compatibility controller.
-        var usesNativeAiStream = monster.MonsterAiSeed != 0;
+        var usesNativeAiStream = monster.UsesNativeRandomSeeds;
         var actionSeed = unchecked((uint)tick ^ monster.EntityId ^ player.EntityId);
         var actionChance = Math.Min(
             100,
@@ -8479,7 +8479,7 @@ public sealed class DiabloCombatCommandProcessor
         // seed as a marker that their global process stream is authoritative.
         // Zero-seed fixtures and legacy multiplayer snapshots keep the
         // deterministic compatibility controller.
-        var usesNativeAiStream = monster.MonsterAiSeed != 0;
+        var usesNativeAiStream = monster.UsesNativeRandomSeeds;
         if (monster.GargoyleSpecialActive) {
             if (distance < safeDistance)
                 monster.GargoyleSpecialActive = false;
@@ -8610,7 +8610,7 @@ public sealed class DiabloCombatCommandProcessor
         // seed as a marker that their global process stream is authoritative.
         // Zero-seed fixtures and legacy multiplayer snapshots keep the
         // deterministic compatibility controller.
-        var usesNativeAiStream = monster.MonsterAiSeed != 0;
+        var usesNativeAiStream = monster.UsesNativeRandomSeeds;
         var actionRoll = usesNativeAiStream
             ? random.RandomIntLessThan(100)
             : (int)(actionSeed % 100U);
@@ -8751,7 +8751,7 @@ public sealed class DiabloCombatCommandProcessor
         // seed as a marker that their global process stream is authoritative.
         // Zero-seed fixtures and legacy multiplayer snapshots keep the
         // deterministic compatibility controller.
-        var usesNativeAiStream = monster.MonsterAiSeed != 0;
+        var usesNativeAiStream = monster.UsesNativeRandomSeeds;
         var retreatTuning = ResolveRangedRetreatTuning(missile);
         var retreatChance = checked(
             retreatTuning.ChanceBase
@@ -8886,7 +8886,7 @@ public sealed class DiabloCombatCommandProcessor
         // seed as a marker that their global process stream is authoritative.
         // Zero-seed fixtures and legacy multiplayer snapshots keep the
         // deterministic compatibility controller.
-        var usesNativeAiStream = monster.MonsterAiSeed != 0;
+        var usesNativeAiStream = monster.UsesNativeRandomSeeds;
         var actionRoll = usesNativeAiStream
             ? random.RandomIntLessThan(100)
             : (int)(actionSeed % 100U);
@@ -9352,7 +9352,7 @@ public sealed class DiabloCombatCommandProcessor
         // seed as a marker that their global process stream is authoritative.
         // Zero-seed fixtures and legacy multiplayer snapshots keep the
         // deterministic compatibility controller.
-        var usesNativeAiStream = monster.MonsterAiSeed != 0;
+        var usesNativeAiStream = monster.UsesNativeRandomSeeds;
         var actionRoll = usesNativeAiStream
             ? random.RandomIntLessThan(100)
             : (int)(attackSeed % 100U);
@@ -9460,7 +9460,7 @@ public sealed class DiabloCombatCommandProcessor
         // seed as a marker that their global process stream is authoritative.
         // Zero-seed fixtures and legacy multiplayer snapshots keep the
         // deterministic compatibility controller.
-        var usesNativeAiStream = monster.MonsterAiSeed != 0;
+        var usesNativeAiStream = monster.UsesNativeRandomSeeds;
         var movementRoll = usesNativeAiStream
             ? actionRoll ?? random.RandomIntLessThan(100)
             : (int)(seed % 100U);
@@ -9563,10 +9563,10 @@ public sealed class DiabloCombatCommandProcessor
         var usesNativeAiStream = missile.ProjectileBehavior
                 == AuthoritativeProjectileBehavior.InfernoController
             && UsesNativeAi(monster, "Mega")
-            && monster.MonsterAiSeed != 0;
+            && monster.UsesNativeRandomSeeds;
         var usesNativeRangedAvoidanceAiStream = missile.AttackMode
                 == AuthoritativeMonsterRangedAttackMode.RangedAvoidance
-            && monster.MonsterAiSeed != 0;
+            && monster.UsesNativeRandomSeeds;
         // Zhar and Lazarus use the native Counselor controller even though
         // their runtime identities are distinct aliases. Keep the mapped
         // projectile's delay/RNG branch aligned with that controller.
@@ -9574,9 +9574,9 @@ public sealed class DiabloCombatCommandProcessor
         var usesNativeRangedAiStream = missile.AttackMode
                 == AuthoritativeMonsterRangedAttackMode.Ranged
             && !isCounselor
-            && monster.MonsterAiSeed != 0;
+            && monster.UsesNativeRandomSeeds;
         var usesNativeCounselorAiStream = isCounselor
-            && monster.MonsterAiSeed != 0;
+            && monster.UsesNativeRandomSeeds;
         if (missile.ProjectileBehavior == AuthoritativeProjectileBehavior.InfernoController
             && UsesNativeAi(monster, "Mega")
             && monster.AdvanceMegaDelay())
@@ -10735,7 +10735,7 @@ public sealed class DiabloCombatCommandProcessor
         // seed as a marker that their global process stream is authoritative.
         // Zero-seed fixtures and legacy multiplayer snapshots keep the
         // deterministic compatibility controller.
-        var usesNativeAiStream = monster.MonsterAiSeed != 0;
+        var usesNativeAiStream = monster.UsesNativeRandomSeeds;
         var retreatTuning = ResolveRangedRetreatTuning(missile);
         var retreatChance = checked(
             retreatTuning.ChanceBase
@@ -10945,7 +10945,7 @@ public sealed class DiabloCombatCommandProcessor
         // seed as a marker that their global process stream is authoritative.
         // Zero-seed fixtures and legacy multiplayer snapshots keep the
         // deterministic compatibility controller.
-        var usesNativeAiStream = monster.MonsterAiSeed != 0;
+        var usesNativeAiStream = monster.UsesNativeRandomSeeds;
         var actionSeed = unchecked((uint)tick ^ monster.EntityId ^ player.EntityId);
         var retreatChance = GetSkeletonRangedMovementChance(
             monster,
@@ -11020,7 +11020,7 @@ public sealed class DiabloCombatCommandProcessor
         // seed as a marker that their global process stream is authoritative.
         // Zero-seed fixtures and legacy multiplayer snapshots keep the
         // deterministic compatibility controller.
-        var usesNativeAiStream = monster.MonsterAiSeed != 0;
+        var usesNativeAiStream = monster.UsesNativeRandomSeeds;
         var attackSeed = unchecked((uint)tick ^ monster.EntityId ^ player.EntityId);
         var attackChance = Math.Min(
             100,
@@ -11147,7 +11147,7 @@ public sealed class DiabloCombatCommandProcessor
         // seed as a marker that their global process stream is authoritative.
         // Zero-seed fixtures and legacy multiplayer snapshots keep the
         // deterministic compatibility controller.
-        var usesNativeAiStream = monster.MonsterAiSeed != 0;
+        var usesNativeAiStream = monster.UsesNativeRandomSeeds;
         var actionRoll = usesNativeAiStream
             ? random.RandomIntLessThan(100)
             : (int)(attackSeed % 100U);

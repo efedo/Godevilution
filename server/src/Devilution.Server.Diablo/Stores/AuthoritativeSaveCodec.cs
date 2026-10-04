@@ -45,6 +45,9 @@ public sealed class AuthoritativeSaveCodec
     {
         DiabloCathedralDoorCheckpoint.RequireSnapshotCopies(snapshot);
         ArgumentNullException.ThrowIfNull(snapshot);
+        if (snapshot.NativeMonsterMetadataFingerprint is not null
+            || snapshot.Monsters.Any(monster => monster.NativeInitializationPresent))
+            throw new InvalidDataException("Native-initialized actors require the complete cohort codec.");
         if (snapshot.NativeGeneratedWorldIdentity is not null && snapshot.CathedralDepthWorldIdentity is not null)
             throw new InvalidDataException("A save cannot combine L1 and Cathedral depth generation identities.");
         var protocolSnapshot = DiabloProtocolMapper.ToProtocolSnapshot(
@@ -119,6 +122,8 @@ public sealed class AuthoritativeSaveCodec
                 $"Authoritative save format {document.FormatVersion} is unsupported."),
         };
         DiabloCathedralDoorCheckpoint.RequireSnapshotCopies(restored);
+        if (restored.Monsters.Any(monster => monster.NativeInitializationPresent))
+            throw new InvalidDataException("Native-initialized actors cannot be restored from a legacy save projection.");
         return restored;
     }
 

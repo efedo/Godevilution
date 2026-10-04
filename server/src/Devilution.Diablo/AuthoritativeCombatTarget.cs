@@ -403,6 +403,26 @@ public sealed class AuthoritativeCombatTarget
     /** Native InitMonster seed used for multiplayer AI synchronization. */
     public uint MonsterAiSeed { get; set; }
 
+    /** Explicit native initialization survives a legitimate zero-valued RNG seed. */
+    public AuthoritativeNativeMonsterInitialization? NativeInitialization { get; private set; }
+
+    public bool NativeInitializationPresent => NativeInitialization is not null;
+
+    /** Older callers retain their existing nonzero AI-seed compatibility marker. */
+    public bool UsesNativeRandomSeeds => NativeInitializationPresent || MonsterAiSeed != 0;
+
+    internal void RestoreNativeInitialization(
+        AuthoritativeNativeMonsterInitialization initialization,
+        uint itemSeed,
+        uint aiSeed)
+    {
+        ArgumentNullException.ThrowIfNull(initialization);
+        initialization.ValidateTarget(EntityId, MonsterId, LevelId, IsUnique, UniqueIdentity);
+        NativeInitialization = initialization;
+        MonsterItemSeed = itemSeed;
+        MonsterAiSeed = aiSeed;
+    }
+
     /** Server-owned dialogue identity currently displayed by a unique encounter. */
     public int DialogueMessageId { get; set; }
 
@@ -679,6 +699,7 @@ public sealed class AuthoritativeCombatTarget
             Direction = Direction,
             MonsterItemSeed = MonsterItemSeed,
             MonsterAiSeed = MonsterAiSeed,
+            NativeInitializationPresent = NativeInitializationPresent,
             DialogueMessageId = DialogueMessageId,
             DialogueState = DialogueState,
             Petrified = IsPetrified,

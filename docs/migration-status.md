@@ -157,6 +157,70 @@ open. Their scope, dependencies, and exit checks are defined only in the
 
 ## Recent implementation evidence
 
+### M2 native monster import/checkpoint prerequisite (2026-10-04)
+
+This batch follows `711b7edde`. A distinct 138-row runtime metadata catalog
+retains native level/to-hit/XP, class, effect frames, selection and treasure,
+including unavailable original-Diablo source rows rather than inventing names.
+The nineteen-table generation schema and default content packs are unchanged.
+A detached adapter retains all 200 monster slots, active-ID order and animation
+petrification bits, binds stable entity/type/level/unique identities and leaders,
+and creates only bounded cold Stand candidates. Invalid, low-life, moving,
+petrified, dormant, special-mode and unsupported-goal rows stay raw-only.
+Supplied type/unique metadata fails closed on missing, ambiguous or inconsistent
+bindings. Returned candidates are not installed/gameplay-ready actors.
+
+Explicit initialization preserves exact uint seeds (including zero), fractional
+Q6 HP and native zero XP through the existing simulation and wire policy.
+Cohort v3 retains immutable initialization provenance, native/stable identity
+bindings and metadata identity even when the live roster is empty. Legacy
+cohort v1/v2 bytes and field sets are frozen; legacy saves/restore cannot silently
+discard the capability. Mutable HP, seeds and AI progress remain owned by the
+existing C# simulation, not the immutable loader record.
+
+The zero-argument `tools/test-cathedral-monster-runtime.ps1` passes two independent
+native captures and one strict managed comparison covering 720 actual native
+level/XP/normal-special-to-hit cases: 138 rows and 100 unique identities across
+three difficulties, plus Golem/Berserk branches. Evidence is in
+`%TEMP%/Godevilution-Monster-Runtime-Oracle-6050462667ab4391bafc4b1233297349`.
+The 7,865-byte table SHA256 is
+`E2EE71318001C91560289E2D5BB9319CE6FEA62F175DED14232FAF2651EBF0AC`;
+the 136,474-byte corpus SHA256 is
+`F9A93599606025113C4842BDADFB3EC6CD34147083B9F076D04B89CBCF7B1FF4`.
+Both captures are byte-identical, with exact reports, clean owned exits and
+retained logs. Native expected values remain comparison-only.
+
+Focused server codec/protocol/launcher suites pass 95/5/27 without exclusions;
+registered native snapshot/portable suites pass 151/11.
+Broad module/server suites pass 3,295/1,619 with zero failures/errors. Module
+exclusions are 210 explicit NotRun and the existing link-privilege Skip; server
+exclusions are three NotRun and its existing link Skip. Portable catalog/adapter/
+initialization checks pass 21/19/22; all eight documentation checks pass.
+Client model checks pass 132/132; the broader client run passes 718/718 with
+`LiveAuthoritativeServerTests` explicitly filtered out, not a full-suite pass.
+The first full client run exceeded its four-minute deadline; cleanup confirmed
+exit and retained the log. A later obsolete-assembly run was stopped with exact
+process identity checks and retained evidence. That run exposed a live packaged
+restart fixture's checkpoint-file sharing failure, unrelated to a Godot crash;
+its focused retry passes 1/1, which does not close the intermittent fixture race.
+Full live-client acceptance and that fixture race remain open. The corrected
+local-player test fixture is covered by the passing client runs above.
+Reports are retained under `.local/native-monster-*`. The module build has no
+warnings/errors; server builds retain three NU1900 audit-feed warnings, not a
+successful vulnerability audit. The client build additionally retains an existing
+xUnit2031 warning. Failed-stage diagnostics include duplicate fixture/wire
+declarations, command quoting, draft compilation, test-only clone/identity/version
+and golden-order assumptions, plus initial rejection of unavailable empty native
+names. These failed stages are not acceptance evidence; retained logs are in
+`.local` and earlier private runtime-proof directories.
+
+This is a prerequisite, not populated-runtime acceptance. Next update the live
+raw extension atomically with projections, preserve full pools/order/signed
+references, implement native death-time loot and history, then install the whole
+level under a separate negotiated profile and prove Godot interaction/cold
+restore. No server MPQ access, Godot launch, normal-profile adoption or user-save
+change is introduced. M0/M2 remain open; the approximately 35% estimate is unchanged.
+
 ### M2 cold Cathedral post-theme loader handoff (2026-10-04)
 
 This batch follows `bbbd8b928`. The additive detached continuation processes

@@ -133,13 +133,32 @@ SP Normal scope does not certify retained pools, wider modes, quests or campaign
 Before activation, retain a game-owned raw level checkpoint that live commands
 actually update. Preserve all pool slots/order/tails, signed footprint grids,
 native scalars, light/vision state, unique history, RNG and metadata identities.
-Add explicit native-to-stable runtime mappings and missing live monster metadata;
+Use the detached native-to-stable mappings and supplemental monster metadata
+described below as prerequisites, not as a substitute for live raw mutation;
 do not reinitialize generated actors/items or replace valid native zero values
 with authored defaults. Generated doors bind their raw slots/cache state without
 rediscovery. Restore detached state under a separate populated capability/schema
 before admission, preserving existing cohort and generated-world contracts.
 No generator accepts native expected final state as production input or
 introduces server MPQ access.
+
+The separate `godevilution.cathedral-monster-runtime-metadata` schema (1.0.0),
+with its 138-row runtime catalog, externalizes native level, to-hit,
+experience, class, effect-frame, selection and treasure metadata without changing
+the nineteen-table generation schema. Its detached adapter retains every raw
+slot and active-ID order, assigns explicit stable entity/type/level identities,
+and creates only bounded cold Stand import candidates. Unsupported modes remain
+raw/provenance-only; returned targets are not installed or gameplay-ready.
+Caller-supplied unique definitions/identities and optional type catalogs fail
+closed on missing or conflicting bindings. Difficulty helpers characterize all
+three native difficulties; this import boundary accepts only Normal.
+Explicit native initialization preserves exact zero seeds, Q6 HP and zero XP
+without changing legacy constructor/default behavior. Cohort v3 retains metadata
+identity even with an empty roster, immutable loader provenance and identity
+bindings. Frozen cohort v1/v2 and legacy saves cannot silently down-convert it.
+The existing C# simulation remains the sole live owner. Immutable initial state
+is not a live-updated lossless raw checkpoint; slot/order/signed-reference mutation,
+death-time loot, whole-world installation, join and Godot restore remain gates.
 
 ## Components
 

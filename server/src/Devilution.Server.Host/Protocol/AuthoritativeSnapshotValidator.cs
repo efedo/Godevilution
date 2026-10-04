@@ -1273,7 +1273,8 @@ public static class AuthoritativeSnapshotValidator
                 || monster.DeathTicksRemaining > monster.DeathAnimationTicks
                 || monster.HitPointsQ6 > 0 && monster.DeathTicksRemaining != 0
                 || monster.ExperienceReward > MaximumNativeMonsterExperienceReward
-                || (monster.MonsterItemSeed == 0) != (monster.MonsterAiSeed == 0)
+                || (!monster.NativeInitializationPresent
+                    && (monster.MonsterItemSeed == 0) != (monster.MonsterAiSeed == 0))
                 || !AuthoritativeProtocolLimits.IsIdentityWithinLimit(monster.NativeAi)
                 || monster.NativeAi.Contains('\0')
                 || monster.ToHit is < 0 or > MaximumNativeMonsterToHit
