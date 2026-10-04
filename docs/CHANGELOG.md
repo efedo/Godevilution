@@ -2,6 +2,22 @@
 
 Notable changes to this fork are recorded below.
 
+- 2026-10-03: Compose independent managed Cathedral bestiary/theme selection,
+  held reservations and initial objects from validated pre-theme inputs, with
+  native order/animation/image-budget behavior and a separate population reseed.
+  Extend the private oracle to version 2; retain version-1 reading and all
+  seventeen legacy artifact bytes. Correct review-found goat IDs/Obj3 frequency,
+  remove unmodeled public theme scratch and add bounded/detached edge coverage.
+  Verify 59 focused managed/documentation checks, sixteen fresh composed native
+  comparisons, two byte-identical 17+1 captures, 88 themes and 22 wall traps;
+  retained version-1 comparisons pass sixteen. Launcher checks pass 35 and
+  affected native checks pass 44 with twelve existing opt-in exclusions. Full
+  server passes 1,556 with four exclusions; full module passes 2,785 with four
+  unchanged Hork RNG failures and 95 explicit exclusions, not a green suite.
+  Update existing architecture/build/plan/status documents. Preserve profiles,
+  save/config bytes and server MPQ independence; final encounters, compiled
+  content, live populated acceptance and M0/M2 remain open. No Godot launch.
+
 - 2026-10-03: Port the bounded ordinary Cathedral initial Golem/object phase to
   independent C# algorithms with validated detached pre-phase inputs, native
   pools, signed refs, scalar state, RNG and final geometry. Add a corrected

@@ -39,8 +39,15 @@ uses expected final state as an input. Its result preserves native object pools,
 signed occupancy, scalar object/monster state, RNG and final geometry. This is
 the fresh single-player Normal `InitGolems`/`InitObjects` phase, not upstream
 monster/theme selection, final encounters, physical lighting or a populated
-runtime profile. The private oracle reader is test tooling, not a shipped
-content loader; external-pack compilation and live activation remain required.
+runtime profile. A separate composed initializer supplies managed `GetLevelMTypes`,
+`InitThemes` and `HoldThemeRooms` results from validated raw catalogs, pre-theme
+geometry/reservations and triggers, then resets the independent population RNG
+before Golem/object creation. Native selected types, held cells and theme output
+are comparison evidence, not composed-generator inputs. These APIs require fresh
+storage and ordinary quest-disabled original Diablo; persistent native theme
+scratch is not exposed. The private oracle reader is test tooling, not a shipped
+content loader; external-pack compilation, final encounters/theme objects and
+live activation remain required.
 
 ## Components
 

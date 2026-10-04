@@ -148,6 +148,64 @@ open. Their scope, dependencies, and exit checks are defined only in the
 
 ## Recent implementation evidence
 
+### M2 composed Cathedral prerequisites and initial objects (2026-10-03)
+
+`AuthoritativeCathedralInitialPopulationGenerator` now composes independent
+managed `GetLevelMTypes`, `InitThemes` and `HoldThemeRooms` with the existing
+`InitGolems`/`InitObjects` port for fresh, quest-disabled original-Diablo
+depths 1-4, single-player Normal. It consumes the complete validated 138-type
+raw catalog, object metadata, actual pre-theme geometry/reservations/triggers
+and explicit seeds. Managed selections feed theme fitting and object creation;
+native selected types, themes, held cells and final output are comparison-only.
+The population stream resets to its independent seed after theme selection.
+
+The version-2 private sidecar captures inputs before selection, asserts fresh
+native animation storage and unchanged shared geometry, and retains selected
+themes separately. The wrapper requires this version before reporting upstream
+parity. Its reader still accepts retained version-1 evidence for the earlier,
+narrower object-only comparison. The seventeen legacy reference artifacts and
+normal profiles, content/save schemas and MPQ-independent server stay unchanged.
+Persistent native theme fit scratch is not exposed or claimed as a result.
+
+Current verification:
+
+- Zero-warning/error managed module build; 59 focused portable/documentation
+  tests pass without skips, including all original goat IDs, depth-invariant
+  Obj3 randomness, genuine negative Obj5 fallback, one-use flags, bounded
+  retries, detached catalogs/results and composed reseed behavior.
+- A fresh full version-2 wrapper passes sixteen exact native/managed cases and
+  repeats seventeen reference artifacts plus one sidecar byte-for-byte. It
+  compares 88 selected themes across eleven theme types, held reservations,
+  bestiary animations/order, RNG boundaries, pools/scalars and final geometry,
+  with 22 wall traps. Both native children and the managed comparison exit
+  normally with confirmed cleanup and no timeout. Private evidence remains at
+  `%TEMP%/Godevilution-Cathedral-Population-Oracle-a8893147d0d84b14a24ddd3c0c85073a`.
+- Retained version-1 object-only evidence still passes all sixteen comparisons
+  without skips. A fresh legacy-only wrapper repeats all seventeen artifacts,
+  also identical to the preceding retained corpus. Its private report is
+  `%TEMP%/Godevilution-Cathedral-Population-Oracle-02925fdeca63487a9a01dfc0f3e0e1bf`.
+- Affected native regression checks pass 44 tests with twelve existing opt-in
+  exclusions; these exclusions are not original-asset passes.
+- Launcher/process-safety checks pass 35/35 without skips or a Godot launch.
+  The server test build has three existing `NU1900` audit-feed warnings and no
+  errors; it is not a vulnerability-audit pass.
+- Full server suite: 1,556 passes, four unchanged explicit/filesystem exclusions
+  and no failures (50.133s). Full game-module suite: 2,785 passes, the same four
+  baseline-confirmed Hork Demon RNG failures with unchanged expected/actual
+  values, and 95 explicit/private exclusions (35.943s). This is not a green full
+  module suite. Logs remain in `.local/m2-prerequisites-full-*-tests.log`.
+
+Review corrected shifted goat IDs and a mistaken depth-indexed Obj3 frequency
+before acceptance. Draft portable expected-RNG/theme assertions and an
+intermediate overlapping-edit build failure were repaired; none is a Godot
+crash reproduction. No assertion was relaxed to admit expected final state.
+
+This closes the bounded ordinary prerequisites/initial-object comparison, not
+final `InitMonsters`/`CreateThemeRooms`, compiled external content, a populated
+runtime profile, physical lighting or quest/campaign/GUI acceptance. No Godot
+application was launched, and user saves/config hashes remain unchanged.
+M0/M2 and the approximately 35% overall estimate remain open.
+
 ### M2 managed ordinary Cathedral initial-object phase (2026-10-03)
 
 `AuthoritativeCathedralPopulationGenerator` independently implements fresh
@@ -201,9 +259,10 @@ from 200 runtime monster slots. The first private managed comparison failed on
 that assertion before comparing the algorithm; its report remains retained.
 Neither that failure nor its passing rerun is a Godot crash reproduction.
 
-This closes a bounded initial-object comparison, not complete population or
-Cathedral-family acceptance. Upstream `GetLevelMTypes`/`InitThemes`/
-`HoldThemeRooms` generation, final `InitMonsters`/`CreateThemeRooms`, compiled
+This earlier gate closed a bounded initial-object comparison, not complete
+population or Cathedral-family acceptance. Upstream generation was still open
+at that boundary and is covered by the newer composed gate above; final
+`InitMonsters`/`CreateThemeRooms`, compiled
 external prerequisites, live populated activation/interactions/cold restore,
 physical light/vision and campaign/quest policies remain open. Existing
 profiles, save formats, defaults and server MPQ independence are unchanged.

@@ -195,6 +195,24 @@ public sealed class ProjectDocumentationConsistencyTests
     }
 
     [Fact]
+    public void CathedralInitialPopulationDocumentationPreservesItsPhaseBoundaries()
+    {
+        var root = FindRepositoryRoot();
+        var contract = Read(root, "docs", "csharp-authoritative-server-migration.md");
+        var guide = Read(root, "docs", "ai", "msvc-build.md");
+        var plan = Read(root, "docs", "completion-plan.md");
+        Assert.Contains("`InitThemes` and `HoldThemeRooms`", contract, StringComparison.Ordinal);
+        Assert.Contains("persistent native theme", contract, StringComparison.Ordinal);
+        Assert.Contains("comparison evidence, not composed-generator inputs", contract, StringComparison.Ordinal);
+        Assert.Contains("version-2 pre-theme input sidecar", guide, StringComparison.Ordinal);
+        Assert.Contains("wrapper requires", guide, StringComparison.Ordinal);
+        Assert.Contains("version 2 and cannot report upstream parity from old evidence", guide, StringComparison.Ordinal);
+        Assert.Contains("Next port final", plan, StringComparison.Ordinal);
+        Assert.Contains("encounters/theme objects and compile the validated external prerequisites", plan, StringComparison.Ordinal);
+        Assert.DoesNotContain("Next port upstream bestiary/theme/reservation", plan, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void HistoricalDocumentationExplainsWhyInheritedPoliciesAreNotActive()
     {
         var root = FindRepositoryRoot();

@@ -17,7 +17,7 @@ struct ThemeStruct {
 	int8_t ttval;
 };
 
-extern ThemeStruct themes[MAXTHEMES];
+extern DVL_API_FOR_TEST ThemeStruct themes[MAXTHEMES];
 
 void InitThemes();
 

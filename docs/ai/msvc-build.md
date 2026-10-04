@@ -335,22 +335,29 @@ level-generation table, so trap percentages use the native zero fallback.
 Its piece/transparency arrays are pre-object layers, not final door mutations.
 Do not use this corpus alone to claim parity with the shipped prerequisites.
 
-For the corrected native/managed initial-object comparison, select:
+For the native/managed prerequisites and initial-object comparison, select:
 
 ```powershell
 ./tools/test-cathedral-geometry.ps1 -CathedralPopulationParity
 ```
 
 This mutually exclusive mode loads the native level-generation table (trap
-percentages 10/15), captures a separate pre-phase input sidecar, and compares
-sixteen explicit managed cases with no skips. Both independent native captures
-must have identical seventeen reference artifacts and one input sidecar. The
-reader validates raw metadata and requires successful wall traps; the generator
-receives only pre-phase inputs, never expected object state or final geometry.
+percentages 10/15), captures a version-2 pre-theme input sidecar, and compares
+sixteen explicit managed cases with no skips. Independent managed bestiary and
+theme selection feed held reservations into Golem/object initialization, after
+resetting the separate population stream. Shared input grids are asserted
+unchanged across native selection/reservation, and fresh native animation slots
+are required. Both independent native captures must have identical seventeen
+reference artifacts and one sidecar. The reader compares selected types,
+animations, themes, reservations, RNG boundaries and complete initial objects,
+requires successful wall traps, and never supplies expected selections or final
+state to the composed generator. Retained version-1 sidecars remain readable for
+the earlier, narrower initial-object-only comparison; the wrapper requires
+version 2 and cannot report upstream parity from old evidence.
 Builds and stages are bounded, failed stages stop, owned children are cleaned up,
 and both opt-in environment variables are restored. Licensed evidence stays
-outside the repository. This does not supply upstream theme/bestiary algorithms,
-final encounters, physical lighting, a production content loader or playable
+outside the repository. This does not supply final encounters/theme objects,
+physical lighting, a production content loader or playable
 population/restore acceptance. Existing oracle modes and runtime defaults remain
 unchanged.
 

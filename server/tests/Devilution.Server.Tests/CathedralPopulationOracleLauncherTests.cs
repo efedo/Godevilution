@@ -131,6 +131,20 @@ public sealed class CathedralPopulationOracleLauncherTests
                 [IO.File]::WriteAllText($inputPath, '{}')
                 $inputArtifact = Get-CathedralPopulationInputArtifact $inputRoot
                 if ($inputArtifact.Name -cne 'native-population-inputs.json' -or $inputArtifact.Bytes -ne 2 -or $inputArtifact.Sha256 -notmatch '^[0-9a-f]{64}$') { throw 'Input artifact hash or exact identity was lost.' }
+                Expect-Rejected { Get-CathedralPopulationInputArtifact $inputRoot -RequirePrerequisites }
+                $inputMetadata = [ordered]@{ format = 'godevilution-cathedral-initial-inputs'; version = 2; policy = 'ordinary-original-diablo-fresh-initial-objects'; caseCount = 16; levelGenerationTableLoaded = $true; freshBestiarySlots = $true; storyMessages = @(); constants = @{}; monsterData = @(); cases = @() }
+                Write-Json $inputPath $inputMetadata
+                Get-CathedralPopulationInputArtifact $inputRoot -RequirePrerequisites | Out-Null
+                foreach ($badVersion in @(1,3,'2',2.5)) {
+                    $inputMetadata.version = $badVersion; Write-Json $inputPath $inputMetadata
+                    Expect-Rejected { Get-CathedralPopulationInputArtifact $inputRoot -RequirePrerequisites }
+                }
+                $inputMetadata.version = 2
+                foreach ($badFresh in @($false,'true',1)) {
+                    $inputMetadata.freshBestiarySlots = $badFresh; Write-Json $inputPath $inputMetadata
+                    Expect-Rejected { Get-CathedralPopulationInputArtifact $inputRoot -RequirePrerequisites }
+                }
+                $inputMetadata.freshBestiarySlots = $true; Write-Json $inputPath $inputMetadata
                 $extraInput = Join-Path $inputRoot '.extra-input'; [IO.File]::WriteAllText($extraInput, '{}'); [IO.File]::SetAttributes($extraInput, [IO.FileAttributes]::Hidden)
                 Expect-Rejected { Get-CathedralPopulationInputArtifact $inputRoot }
                 Remove-Item -LiteralPath $extraInput -Force

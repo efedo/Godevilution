@@ -459,11 +459,14 @@ this evidence. A sample art pack does not satisfy M4's full presentation gate.
    zero trap percentages; its piece layer is pre-object initialization. Preserve
    that legacy reference. The separate `-CathedralPopulationParity` route now
    compares sixteen cases using loaded trap metadata, explicit pre-phase inputs
-   and final mutated layers against the independent managed initializer. Preserve
-   this limited `InitGolems`/`InitObjects` gate, including successful wall traps
-   and exact pool/RNG checks. Next port upstream bestiary/theme/reservation
-   generation and compile the validated external prerequisites, then final
-   encounters/theme objects, before activating a separately identified opt-in
+   and final mutated layers against the independent managed initializer. Its
+   version-2 sidecar now extends this gate through independent `GetLevelMTypes`,
+   `InitThemes` and `HoldThemeRooms`, using actual pre-theme inputs and managed
+   selected types/reservations rather than native expected selections. Preserve
+   the earlier version-1 initial-object comparison and successful wall traps,
+   exact pool/RNG checks and population-stream reseed. Next port final
+   encounters/theme objects and compile the validated external prerequisites
+   before activating a separately identified opt-in
    populated server profile. Never use expected final state as production input. Do not
    substitute this phase for final encounter
    placement or the later `CreateThemeRooms` phase, and require ordinary Godot

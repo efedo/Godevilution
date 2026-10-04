@@ -7,7 +7,8 @@ namespace Devilution.Diablo.Tests;
 
 /**
  * Explicit, archive-free managed/native comparisons for ordinary Cathedral
- * InitGolems + InitObjects. The native snapshots and their input sidecar are
+ * GetLevelMTypes/InitThemes/HoldThemeRooms + InitGolems/InitObjects for version 2;
+ * retained version 1 covers only InitGolems/InitObjects. Snapshots and sidecars are
  * deliberately external: they are produced with licensed local game data.
  */
 public sealed class AuthoritativeCathedralInitialObjectNativeOracleTests
@@ -90,7 +91,10 @@ public sealed class AuthoritativeCathedralInitialObjectNativeOracleTests
 		Assert.Equal(Version, RequiredInt(root, "version"));
 		Assert.Equal(SnapshotPolicy, RequiredString(root, "policy"));
 		Assert.Equal(depth, RequiredInt(root, "depth"));
+		Assert.Equal(populationSeed, RequiredUInt(root, "inputSeed"));
+		Assert.Equal(populationSeed, RequiredUInt(root, "geometrySeed"));
 		Assert.Equal(populationSeed, RequiredUInt(root, "populationSeed"));
+		Assert.Equal(populationSeed, RequiredUInt(root, "rngAfterPopulationReset"));
 		Assert.Equal(inputCase.Input.StorySeed, RequiredUInt(root, "storySeed"));
 		Assert.Equal(entry, RequiredString(root, "entry"));
 
@@ -105,8 +109,8 @@ public sealed class AuthoritativeCathedralInitialObjectNativeOracleTests
 		CompareIntArray(RequiredArray(root, "transparency"), inputCase.Input.Transparency, "snapshot pre-phase transparency");
 		CompareIntArray(RequiredArray(root, "solProperties"), inputCase.Input.PieceProperties, "snapshot pre-phase SOL");
 
-		var parameters = BuildParameters(corpus, inputCase);
-		var actual = AuthoritativeCathedralPopulationGenerator.Generate(parameters);
+		var parameters = BuildParameters(corpus, inputCase, root, out var composedPopulation);
+		var actual = composedPopulation ?? AuthoritativeCathedralPopulationGenerator.Generate(parameters);
 
 		Assert.Equal(RequiredUInt(root, "rngAfterInitGolems"), actual.RandomAfterGolems);
 		Assert.Equal(RequiredUInt(root, "rngAfterInitObjects"), actual.FinalRandomState);
@@ -145,17 +149,12 @@ public sealed class AuthoritativeCathedralInitialObjectNativeOracleTests
 		CompareSupplemental(inputCase.ExpectedOutput, actual);
 	}
 
-	private static AuthoritativeCathedralPopulationParameters BuildParameters(Corpus corpus, OracleCase inputCase)
+	private static AuthoritativeCathedralPopulationParameters BuildParameters(Corpus corpus, OracleCase inputCase,
+		JsonElement snapshot, out AuthoritativeCathedralPopulationResult? composedPopulation)
 	{
+		composedPopulation = null;
 		var input = inputCase.Input;
-		var geometry = new AuthoritativeCathedralPopulationGeometry(
-			ToUShortArray(input.Pieces, CellCount, "input.pieces"),
-			ToByteArray(input.Special, CellCount, "input.special"),
-			ToByteArray(input.Transparency, CellCount, "input.transparency"),
-			ToByteArray(input.PieceProperties, PieceCount, "input.pieceProperties"),
-			RequireBoolArray(input.PopulatedCells, CellCount, "input.populatedCells"),
-			ToOccupancy(input.PlayerTileRefs, "input.playerTileRefs"),
-			ToOccupancy(input.MonsterTileRefs, "input.monsterTileRefs"));
+		IReadOnlyList<bool> populationReservations = RequireBoolArray(input.PopulatedCells, CellCount, "input.populatedCells");
 		Assert.True(input.FreshMonsterSlots, "The oracle requires fresh monster slots.");
 
 		var objects = corpus.ObjectCatalog
@@ -186,6 +185,65 @@ public sealed class AuthoritativeCathedralInitialObjectNativeOracleTests
 				raw.ReducePlayerMaxHP, raw.ReducePlayerMaxMana, value.Frames, value.Rates);
 		}).ToArray();
 		Assert.Equal(109, bestiary[0].NativeType);
+		if (corpus.InputVersion == 2) {
+			var prerequisites = input.Prerequisites ?? throw new InvalidDataException("Version 2 requires pre-theme prerequisites.");
+			var preThemeGeometry = new AuthoritativeCathedralPopulationGeometry(
+				ToUShortArray(input.Pieces, CellCount, "input.pieces"), ToByteArray(input.Special, CellCount, "input.special"),
+				ToByteArray(input.Transparency, CellCount, "input.transparency"),
+				ToByteArray(input.PieceProperties, PieceCount, "input.pieceProperties"),
+				RequireBoolArray(prerequisites.PopulatedCells, CellCount, "prerequisites.populatedCells"),
+				ToOccupancy(input.PlayerTileRefs, "input.playerTileRefs"), ToOccupancy(input.MonsterTileRefs, "input.monsterTileRefs"));
+			var composed = AuthoritativeCathedralInitialPopulationGenerator.Generate(new(
+				input.Depth, input.PopulationSeed, input.StorySeed, preThemeGeometry,
+				corpus.RawMonsterData.Select(ToRawDefinition).ToArray(), objects,
+				new(input.Player.Id, input.Player.Level, input.Player.Active, input.Player.LevelChanging,
+					input.Player.Tile, input.Player.Future), input.TrapPercent, corpus.StoryMessages,
+				prerequisites.NextTransparencyValue, prerequisites.TriggerPositions));
+			composedPopulation = composed.Population;
+			var generatedBestiary = composed.Bestiary;
+			Assert.Equal(RequiredUInt(snapshot, "rngAfterGetLevelMTypes"), generatedBestiary.FinalRandomState);
+			Assert.Equal(input.OrderedBestiary.Count, generatedBestiary.Entries.Count);
+			for (var index = 0; index < generatedBestiary.Entries.Count; index++) {
+				var actual = generatedBestiary.Entries[index];
+				var expected = input.OrderedBestiary[index];
+				Assert.Equal(expected.Index, actual.Index);
+				Assert.Equal(expected.Type, actual.NativeType);
+				Assert.Equal(expected.PlaceFlags, actual.PlaceFlags);
+				Assert.Equal(expected.CorpseId, actual.CorpseId);
+				Assert.Equal(expected.Skeleton, actual.PopulationDefinition.IsSkeleton);
+				Assert.Equal(expected.Frames, actual.Frames);
+				Assert.Equal(expected.Rates, actual.Rates);
+				Assert.Equal(expected.Widths, actual.Widths);
+			}
+			// Native ordered output is comparison-only; subsequent generation uses the managed selection.
+			bestiary = generatedBestiary.PopulationDefinitions.ToArray();
+			var expectedTriggers = RequiredArray(snapshot, "triggers").EnumerateArray()
+				.Select(trigger => ParsePoint(RequiredObject(trigger, "position"))).ToArray();
+			Assert.Equal(expectedTriggers, prerequisites.TriggerPositions);
+			var generatedThemes = composed.Themes;
+			Assert.Equal(RequiredUInt(snapshot, "rngAfterInitThemes"), generatedThemes.FinalRandomState);
+			CompareIntArray(RequiredArray(snapshot, "populatedCellsBeforeHoldThemeRooms"),
+				Enumerable.Range(0, CellCount).Where(index => prerequisites.PopulatedCells[index]).ToArray(), "pre-theme populated cells");
+			CompareIntArray(RequiredArray(snapshot, "populatedCellsAfterHoldThemeRooms"),
+				Enumerable.Range(0, CellCount).Where(index => generatedThemes.HeldPopulatedCells[index]).ToArray(), "managed held populated cells");
+			Assert.Equal(input.PopulatedCells, generatedThemes.HeldPopulatedCells);
+			var expectedThemes = RequiredArray(inputCase.ExpectedOutput, "themes");
+			Assert.Equal(expectedThemes.GetArrayLength(), generatedThemes.Themes.Count);
+			for (var index = 0; index < generatedThemes.Themes.Count; index++) {
+				RequireProperties(expectedThemes[index], "selected theme", "type", "region");
+				Assert.Equal(RequiredInt(expectedThemes[index], "type"), generatedThemes.Themes[index].ThemeType);
+				Assert.Equal(RequiredInt(expectedThemes[index], "region"), generatedThemes.Themes[index].RegionId);
+			}
+			populationReservations = generatedThemes.HeldPopulatedCells;
+		}
+		// Population restarts from its independent seed, not the after-theme RNG state.
+		var geometry = new AuthoritativeCathedralPopulationGeometry(
+			ToUShortArray(input.Pieces, CellCount, "input.pieces"),
+			ToByteArray(input.Special, CellCount, "input.special"),
+			ToByteArray(input.Transparency, CellCount, "input.transparency"),
+			ToByteArray(input.PieceProperties, PieceCount, "input.pieceProperties"), populationReservations,
+			ToOccupancy(input.PlayerTileRefs, "input.playerTileRefs"),
+			ToOccupancy(input.MonsterTileRefs, "input.monsterTileRefs"));
 
 		return new AuthoritativeCathedralPopulationParameters(
 			input.Depth, input.PopulationSeed, input.StorySeed, geometry, objects, bestiary,
@@ -193,6 +251,14 @@ public sealed class AuthoritativeCathedralInitialObjectNativeOracleTests
 				input.Player.Id, input.Player.Level, input.Player.Active, input.Player.LevelChanging,
 				input.Player.Tile, input.Player.Future), input.TrapPercent, corpus.StoryMessages);
 	}
+
+	private static AuthoritativeCathedralRawMonsterDefinition ToRawDefinition(RawMonster raw)
+		=> new(raw.NativeMonsterId, (AuthoritativeCathedralMonsterAvailability)raw.Availability,
+			raw.Image, raw.MinimumDungeonLevel, raw.MaximumDungeonLevel, IsNativeSkeleton(raw.NativeMonsterId),
+			raw.MinHp, raw.MaxHp, raw.Ai, raw.Intelligence, raw.AbilityFlags,
+			raw.MinDamage, raw.MaxDamage, raw.MinDamageSpecial, raw.MaxDamageSpecial, raw.ArmorClass, raw.Resistance,
+			raw.ReducePlayerStrength, raw.ReducePlayerMagic, raw.ReducePlayerDexterity, raw.ReducePlayerVitality,
+			raw.ReducePlayerMaxHP, raw.ReducePlayerMaxMana, raw.HasSpecial, raw.Width, raw.Frames, raw.Rates);
 
 	private static bool IsNativeSkeleton(int type)
 		=> type is 8 or 9 or 10 or 11 or 20 or 21 or 22 or 23 or 24 or 25 or 26 or 27;
@@ -475,13 +541,14 @@ public sealed class AuthoritativeCathedralInitialObjectNativeOracleTests
 	private sealed class Corpus
 	{
 		private Corpus(string oracleDirectory, int[] storyMessages, IReadOnlyList<ObjectMetadata> objectCatalog,
-			IReadOnlyList<RawMonster> rawMonsterData, IReadOnlyList<OracleCase> cases)
+			IReadOnlyList<RawMonster> rawMonsterData, IReadOnlyList<OracleCase> cases, int inputVersion)
 		{
 			OracleDirectory = oracleDirectory;
 			StoryMessages = storyMessages;
 			ObjectCatalog = objectCatalog;
 			RawMonsterData = rawMonsterData;
 			Cases = cases;
+			InputVersion = inputVersion;
 		}
 
 		public string OracleDirectory { get; }
@@ -489,6 +556,7 @@ public sealed class AuthoritativeCathedralInitialObjectNativeOracleTests
 		public IReadOnlyList<ObjectMetadata> ObjectCatalog { get; }
 		public IReadOnlyList<RawMonster> RawMonsterData { get; }
 		public IReadOnlyList<OracleCase> Cases { get; }
+		public int InputVersion { get; }
 
 		public static Corpus Load()
 		{
@@ -539,9 +607,13 @@ public sealed class AuthoritativeCathedralInitialObjectNativeOracleTests
 
 		using var sidecar = ParseJson(ReadBoundedRegularFile(inputEntries[0], MaxInputBytes));
 		var sidecarRoot = sidecar.RootElement;
-		RequireProperties(sidecarRoot, "sidecar", "format", "version", "policy", "caseCount", "levelGenerationTableLoaded", "storyMessages", "constants", "monsterData", "cases");
+		var inputVersion = RequiredInt(sidecarRoot, "version");
+		Assert.InRange(inputVersion, 1, 2);
+		var sidecarProperties = new[] { "format", "version", "policy", "caseCount", "levelGenerationTableLoaded", "storyMessages", "constants", "monsterData", "cases" };
+		RequireProperties(sidecarRoot, "sidecar", inputVersion == 2 ? [.. sidecarProperties, "freshBestiarySlots"] : sidecarProperties);
 		Assert.Equal(InputFormat, RequiredString(sidecarRoot, "format"));
-		Assert.Equal(Version, RequiredInt(sidecarRoot, "version"));
+		if (inputVersion == 2)
+			Assert.True(RequiredBool(sidecarRoot, "freshBestiarySlots"));
 		Assert.Equal(InputPolicy, RequiredString(sidecarRoot, "policy"));
 		Assert.Equal(16, RequiredInt(sidecarRoot, "caseCount"));
 		Assert.True(RequiredBool(sidecarRoot, "levelGenerationTableLoaded"));
@@ -549,20 +621,37 @@ public sealed class AuthoritativeCathedralInitialObjectNativeOracleTests
 		Assert.Equal(3, storyMessages.Length);
 		ValidateConstants(RequiredObject(sidecarRoot, "constants"));
 		var rawMonsterData = ParseRawMonsterData(RequiredArray(sidecarRoot, "monsterData"));
-		var cases = ParseCases(RequiredArray(sidecarRoot, "cases"));
+		var cases = ParseCases(RequiredArray(sidecarRoot, "cases"), inputVersion);
 		Assert.Equal(16, cases.Count);
 		var expectedNames = (from depth in Enumerable.Range(1, 4)
 			from seed in new uint[] { 2588, 743271966 }
 			from entry in new[] { "main", "previous" }
 			select $"cathedral-population-depth-{depth}-{seed}-{entry}.json").OrderBy(value => value).ToArray();
 		Assert.Equal(expectedNames, cases.Select(value => value.Snapshot).OrderBy(value => value).ToArray());
+		if (inputVersion == 2) {
+			var themeCount = 0;
+			foreach (var oracleCase in cases) {
+				var themes = RequiredArray(oracleCase.ExpectedOutput, "themes");
+				Assert.InRange(themes.GetArrayLength(), 0, 50);
+				var regions = new HashSet<int>();
+				foreach (var theme in themes.EnumerateArray()) {
+					RequireProperties(theme, "expected theme", "type", "region");
+					Assert.InRange(RequiredInt(theme, "type"), 0, 16);
+					var region = RequiredInt(theme, "region");
+					Assert.InRange(region, 0, 127);
+					Assert.True(regions.Add(region), "Native theme regions must be unique.");
+				}
+				themeCount += themes.GetArrayLength();
+			}
+			Assert.True(themeCount > 0, "Version 2 must exercise native theme selection and reservation.");
+		}
 		// Native NUM_DEFAULT_MTYPES is distinct from the 200 runtime monster slots.
 		Assert.Equal(138, rawMonsterData.Count);
 		Assert.Equal(Enumerable.Range(0, 138), rawMonsterData.Select(value => value.NativeMonsterId));
 		Assert.All(cases, value => Assert.Equal(RequiredUInt(metadataRoot, "storySeed"), value.Input.StorySeed));
 		ValidateSnapshots(oracleDirectory, expectedNames, out var wallTrapCount);
 		Assert.True(wallTrapCount > 0, "The sixteen native expected snapshots must exercise at least one wall trap.");
-		return new(oracleDirectory, storyMessages, objectCatalog, rawMonsterData, cases);
+		return new(oracleDirectory, storyMessages, objectCatalog, rawMonsterData, cases, inputVersion);
 		}
 
 		private static IReadOnlyList<ObjectMetadata> ParseObjectCatalog(JsonElement values)
@@ -596,20 +685,32 @@ public sealed class AuthoritativeCathedralInitialObjectNativeOracleTests
 					RequiredInt(value, "maxDamage"), RequiredInt(value, "minDamageSpecial"), RequiredInt(value, "maxDamageSpecial"),
 					RequiredInt(value, "armorClass"), RequiredInt(value, "resistance"), RequiredInt(value, "reducePlayerStrength"),
 					RequiredInt(value, "reducePlayerMagic"), RequiredInt(value, "reducePlayerDexterity"), RequiredInt(value, "reducePlayerVitality"),
-					RequiredInt(value, "reducePlayerMaxHP"), RequiredInt(value, "reducePlayerMaxMana")));
+					RequiredInt(value, "reducePlayerMaxHP"), RequiredInt(value, "reducePlayerMaxMana"),
+					RequiredInt(value, "availability"), RequiredInt(value, "image"),
+					RequiredInt(value, "minDungeonLevel"), RequiredInt(value, "maxDungeonLevel")));
 			}
 			return result;
 		}
 
-		private static IReadOnlyList<OracleCase> ParseCases(JsonElement values)
+		private static IReadOnlyList<OracleCase> ParseCases(JsonElement values, int inputVersion)
 		{
 			var result = new List<OracleCase>();
 			foreach (var value in values.EnumerateArray()) {
 				RequireProperties(value, "sidecar case", "snapshot", "input", "expectedOutput");
 				var input = RequiredObject(value, "input");
-				RequireProperties(input, "sidecar input", "depth", "populationSeed", "storySeed", "pieces", "special", "transparency", "pieceProperties", "populatedCells", "playerTileRefs", "monsterTileRefs", "freshMonsterSlots", "player", "trapPercent", "orderedBestiary");
+				var inputProperties = new[] { "depth", "populationSeed", "storySeed", "pieces", "special", "transparency", "pieceProperties", "populatedCells", "playerTileRefs", "monsterTileRefs", "freshMonsterSlots", "player", "trapPercent", "orderedBestiary" };
+				RequireProperties(input, "sidecar input", inputVersion == 2 ? [.. inputProperties, "prerequisites"] : inputProperties);
+				PrerequisitesInput? prerequisites = null;
+				if (inputVersion == 2) {
+					var preTheme = RequiredObject(input, "prerequisites");
+					RequireProperties(preTheme, "sidecar prerequisites", "nextTransparencyValue", "populatedCells", "triggerPositions");
+					prerequisites = new(RequiredInt(preTheme, "nextTransparencyValue"),
+						RequiredBoolArray(RequiredArray(preTheme, "populatedCells"), "prerequisites.populatedCells"),
+						RequiredArray(preTheme, "triggerPositions").EnumerateArray().Select(ParsePoint).ToArray());
+				}
 				var expectedOutput = RequiredObject(value, "expectedOutput");
-				RequireProperties(expectedOutput, "sidecar expectedOutput", "pieces", "special", "transparency", "monsterSupplemental");
+				var outputProperties = new[] { "pieces", "special", "transparency", "monsterSupplemental" };
+				RequireProperties(expectedOutput, "sidecar expectedOutput", inputVersion == 2 ? [.. outputProperties, "themes"] : outputProperties);
 				var player = RequiredObject(input, "player");
 				RequireProperties(player, "sidecar input.player", "id", "level", "active", "levelChanging", "tile", "future");
 				var orderedBestiary = new List<BestiaryInput>();
@@ -636,7 +737,7 @@ public sealed class AuthoritativeCathedralInitialObjectNativeOracleTests
 						RequiredIntArray(RequiredArray(input, "monsterTileRefs"), "monsterTileRefs"), RequiredBool(input, "freshMonsterSlots"),
 						new(RequiredInt(player, "id"), RequiredInt(player, "level"), RequiredBool(player, "active"), RequiredBool(player, "levelChanging"),
 							ParsePoint(RequiredObject(player, "tile")), ParsePoint(RequiredObject(player, "future"))),
-						RequiredInt(input, "trapPercent"), orderedBestiary),
+						RequiredInt(input, "trapPercent"), orderedBestiary, prerequisites),
 					expectedOutput.Clone()));
 			}
 			return result;
@@ -653,9 +754,10 @@ public sealed class AuthoritativeCathedralInitialObjectNativeOracleTests
 	}
 
 	private sealed record ObjectMetadata(int NativeObjectId, int Flags, int AnimDelay, int AnimLength, int AnimWidth, int SelectionRegion);
-	private sealed record RawMonster(int NativeMonsterId, int MinHp, int MaxHp, int Ai, int Intelligence, uint AbilityFlags, bool HasSpecial, int Width, int[] Frames, int[] Rates, int MinDamage, int MaxDamage, int MinDamageSpecial, int MaxDamageSpecial, int ArmorClass, int Resistance, int ReducePlayerStrength, int ReducePlayerMagic, int ReducePlayerDexterity, int ReducePlayerVitality, int ReducePlayerMaxHP, int ReducePlayerMaxMana);
+	private sealed record RawMonster(int NativeMonsterId, int MinHp, int MaxHp, int Ai, int Intelligence, uint AbilityFlags, bool HasSpecial, int Width, int[] Frames, int[] Rates, int MinDamage, int MaxDamage, int MinDamageSpecial, int MaxDamageSpecial, int ArmorClass, int Resistance, int ReducePlayerStrength, int ReducePlayerMagic, int ReducePlayerDexterity, int ReducePlayerVitality, int ReducePlayerMaxHP, int ReducePlayerMaxMana, int Availability, int Image, int MinimumDungeonLevel, int MaximumDungeonLevel);
 	private sealed record BestiaryInput(int Index, int Type, bool Skeleton, int PlaceFlags, int CorpseId, int[] Frames, int[] Rates, int[] Widths);
-	private sealed record InputData(int Depth, uint PopulationSeed, uint StorySeed, int[] Pieces, int[] Special, int[] Transparency, int[] PieceProperties, bool[] PopulatedCells, int[] PlayerTileRefs, int[] MonsterTileRefs, bool FreshMonsterSlots, PlayerInput Player, int TrapPercent, IReadOnlyList<BestiaryInput> OrderedBestiary);
+	private sealed record InputData(int Depth, uint PopulationSeed, uint StorySeed, int[] Pieces, int[] Special, int[] Transparency, int[] PieceProperties, bool[] PopulatedCells, int[] PlayerTileRefs, int[] MonsterTileRefs, bool FreshMonsterSlots, PlayerInput Player, int TrapPercent, IReadOnlyList<BestiaryInput> OrderedBestiary, PrerequisitesInput? Prerequisites);
+	private sealed record PrerequisitesInput(int NextTransparencyValue, bool[] PopulatedCells, AuthoritativeCathedralPopulationPoint[] TriggerPositions);
 	private sealed record PlayerInput(int Id, int Level, bool Active, bool LevelChanging, AuthoritativeCathedralPopulationPoint Tile, AuthoritativeCathedralPopulationPoint Future);
 	private sealed record OracleCase(string Snapshot, InputData Input, JsonElement ExpectedOutput);
 }

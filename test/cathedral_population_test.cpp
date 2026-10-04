@@ -54,7 +54,7 @@ constexpr char PopulationOracleFormat[] = "godevilution-cathedral-l1-population-
 constexpr uint32_t PopulationOracleVersion = 1;
 constexpr char PopulationOraclePolicy[] = "no-quest-original-diablo-initgolems-initobjects";
 constexpr char PopulationInputFormat[] = "godevilution-cathedral-initial-inputs";
-constexpr uint32_t PopulationInputVersion = 1;
+constexpr uint32_t PopulationInputVersion = 2;
 constexpr char PopulationInputPolicy[] = "ordinary-original-diablo-fresh-initial-objects";
 constexpr uint32_t StoryDungeonSeed = UINT32_C(0x13579BDF);
 constexpr int CathedralFirstDepth = 1;
@@ -216,6 +216,13 @@ struct PopulationCapture {
 	std::vector<int> prePhaseMonsterTileRefs;
 	std::vector<int> prePhasePlayerTileRefs;
 	std::vector<NativeBestiaryCapture> prePhaseBestiary;
+	int preThemeNextTransparency = 0;
+	std::vector<bool> preThemePopulatedCells;
+	std::vector<uint16_t> preThemePieces;
+	std::vector<uint8_t> preThemeSpecial;
+	std::vector<uint8_t> preThemeTransparency;
+	std::vector<uint8_t> preThemeSolProperties;
+	std::vector<ThemeStruct> selectedThemes;
 	std::vector<uint16_t> finalPieces;
 	std::vector<uint8_t> finalSpecial;
 	std::vector<uint8_t> finalTransparency;
@@ -860,12 +867,37 @@ PopulationCapture CapturePopulation(int depth, uint32_t seed, lvl_entry entry, b
 	InitLevelMonsters();
 	DungeonSeeds[depth] = seed;
 	SetRndSeed(DungeonSeeds[depth]);
+	if (captureInitialInputs) {
+		capture.preThemeNextTransparency = static_cast<int>(nextTransparencyValue());
+		capture.preThemePopulatedCells = CapturePopulatedFlags();
+		capture.preThemePieces = CapturePieces();
+		capture.preThemeSpecial = CaptureSpecial();
+		capture.preThemeTransparency = CaptureTransparency();
+		capture.preThemeSolProperties = CaptureSolProperties();
+		AssertFreshObjectSlots();
+		if (LevelBestiary.size() != 0)
+			throw std::runtime_error("pre-selection Cathedral bestiary was not empty");
+		for (const CMonster &type : LevelBestiary.types) {
+			if (type.corpseId != 0 || type.placeFlags != 0)
+				throw std::runtime_error("pre-selection Cathedral bestiary fields were not fresh");
+			for (const AnimStruct &animation : type.anims) {
+				if (animation.frames != 0 || animation.rate != 0 || animation.width != 0)
+					throw std::runtime_error("pre-selection Cathedral animation slots were not fresh");
+			}
+		}
+	}
 	if (auto levelTypes = GetLevelMTypes(); !levelTypes.has_value())
 		throw std::runtime_error(levelTypes.error());
 	capture.rngAfterGetLevelMTypes = GetLCGEngineState();
 	capture.bestiary = CaptureBestiary();
 	InitThemes();
 	capture.rngAfterInitThemes = GetLCGEngineState();
+	if (captureInitialInputs) {
+		if (numThemes() < 0 || numThemes() > MAXTHEMES)
+			throw std::runtime_error("native selected theme count exceeds its pool");
+		for (int index = 0; index < numThemes(); index++)
+			capture.selectedThemes.push_back(themes[index]);
+	}
 	capture.populatedCellsBeforeHoldThemeRooms = CapturePopulatedCells();
 	SetRndSeed(DungeonSeeds[depth]);
 	capture.rngAfterPopulationReset = GetLCGEngineState();
@@ -885,6 +917,12 @@ PopulationCapture CapturePopulation(int depth, uint32_t seed, lvl_entry entry, b
 	capture.prePhaseMonsterTileRefs = CaptureMonsterTileRefs();
 	capture.prePhasePlayerTileRefs = CapturePlayerTileRefs();
 	capture.prePhaseBestiary = CaptureBestiary();
+	// The shared serialized grids are actual pre-theme inputs, not a post-phase replay.
+	if (captureInitialInputs && (capture.preThemePieces != capture.prePhasePieces
+	    || capture.preThemeSpecial != capture.prePhaseSpecial
+	    || capture.preThemeTransparency != capture.prePhaseTransparency
+	    || capture.preThemeSolProperties != capture.prePhaseSolProperties))
+		throw std::runtime_error("Cathedral prerequisites mutated their shared input geometry");
 	AssertFreshObjectSlots();
 	AssertFreshMonsterSlots();
 	InitGolems();
@@ -1162,6 +1200,7 @@ void WriteNativeInputs(const std::filesystem::path &path, const std::vector<Popu
 	       << ",\n\"policy\":\"" << PopulationInputPolicy
 	       << "\",\n\"caseCount\":" << PopulationCaseCount
 	       << ",\n\"levelGenerationTableLoaded\":true"
+	       << ",\n\"freshBestiarySlots\":true"
 	       << ",\n\"storyMessages\":[" << static_cast<int>(TEXT_BOOK11)
 	       << ',' << static_cast<int>(TEXT_BOOK21)
 	       << ',' << static_cast<int>(TEXT_BOOK31) << ']'
@@ -1224,7 +1263,24 @@ void WriteNativeInputs(const std::filesystem::path &path, const std::vector<Popu
 		stream << "},\"trapPercent\":" << GetTrapPercent(capture.depth)
 		       << ",\"orderedBestiary\":";
 		WriteBestiary(stream, capture.prePhaseBestiary);
-		stream << "},\"expectedOutput\":{\"pieces\":";
+		stream << ",\"prerequisites\":{\"nextTransparencyValue\":" << capture.preThemeNextTransparency
+		       << ",\"populatedCells\":";
+		WriteBoolArray(stream, capture.preThemePopulatedCells);
+		stream << ",\"triggerPositions\":[";
+		for (size_t triggerIndex = 0; triggerIndex < capture.triggers.size(); triggerIndex++) {
+			if (triggerIndex != 0)
+				stream << ',';
+			WritePoint(stream, capture.triggers[triggerIndex].position);
+		}
+		stream << "]}},\"expectedOutput\":{\"themes\":[";
+		for (size_t themeIndex = 0; themeIndex < capture.selectedThemes.size(); themeIndex++) {
+			if (themeIndex != 0)
+				stream << ',';
+			const ThemeStruct &theme = capture.selectedThemes[themeIndex];
+			stream << "{\"type\":" << static_cast<int>(theme.ttype)
+			       << ",\"region\":" << static_cast<int>(theme.ttval) << '}';
+		}
+		stream << "],\"pieces\":";
 		WriteArray(stream, capture.finalPieces);
 		stream << ",\"special\":";
 		WriteArray(stream, capture.finalSpecial);

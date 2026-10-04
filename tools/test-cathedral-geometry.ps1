@@ -924,7 +924,7 @@ function Invoke-CathedralPopulationNativeOracle([string]$Executable, [string]$Re
     return Invoke-CathedralPopulationOwnedProcess $Executable $nativeArguments $LogPath $TimeoutMilliseconds
 }
 
-function Get-CathedralPopulationInputArtifact([string]$EvidenceRoot) {
+function Get-CathedralPopulationInputArtifact([string]$EvidenceRoot, [switch]$RequirePrerequisites) {
     $root = Get-Item -LiteralPath $EvidenceRoot -Force -ErrorAction Stop
     if (-not $root.PSIsContainer -or ($root.Attributes -band [IO.FileAttributes]::ReparsePoint) -ne 0) {
         throw 'The population input root must be a regular directory.'
@@ -932,8 +932,19 @@ function Get-CathedralPopulationInputArtifact([string]$EvidenceRoot) {
     $children = @(Get-ChildItem -LiteralPath $EvidenceRoot -Force)
     if ($children.Count -ne 1 -or $children[0].Name -cne 'native-population-inputs.json' -or
         $children[0].PSIsContainer -or ($children[0].Attributes -band [IO.FileAttributes]::ReparsePoint) -ne 0 -or
-        $children[0].Length -le 0) {
+        $children[0].Length -le 0 -or $children[0].Length -gt 33554432) {
         throw 'Population parity requires exactly one nonempty regular native-population-inputs.json input artifact.'
+    }
+    if ($RequirePrerequisites) {
+        $inputMetadata = [IO.File]::ReadAllText($children[0].FullName) | ConvertFrom-Json -ErrorAction Stop
+        Assert-CathedralPopulationExactProperties $inputMetadata @('format','version','policy','caseCount','levelGenerationTableLoaded','freshBestiarySlots','storyMessages','constants','monsterData','cases') 'population prerequisites metadata'
+        Assert-CathedralPopulationString $inputMetadata.format 'godevilution-cathedral-initial-inputs' 'population input format'
+        Assert-CathedralPopulationInteger $inputMetadata.version 2 2 'population input version'
+        Assert-CathedralPopulationInteger $inputMetadata.caseCount 16 16 'population input case count'
+        Assert-CathedralPopulationString $inputMetadata.policy 'ordinary-original-diablo-fresh-initial-objects' 'population input policy'
+        foreach ($property in @('levelGenerationTableLoaded','freshBestiarySlots')) {
+            if ($inputMetadata.$property -isnot [bool] -or -not $inputMetadata.$property) { throw "Population prerequisite $property must be true." }
+        }
     }
     $hasher = [Security.Cryptography.SHA256]::Create(); $stream = $null
     try { $stream = [IO.File]::OpenRead($children[0].FullName); $hash = [BitConverter]::ToString($hasher.ComputeHash($stream)).Replace('-', '').ToLowerInvariant() }
@@ -978,13 +989,14 @@ if ($CathedralPopulation) {
         StartedUtc = [DateTime]::UtcNow.ToString('O')
         EndedUtc = $null
         NativeBuild = $nativeBuild.Directory
-        Scope = 'native-cathedral-l1-object-population'
+        Scope = if ($CathedralPopulationParity) { 'native-cathedral-l1-prerequisites-initial-objects' } else { 'native-cathedral-l1-object-population' }
         NativeTestName = 'NativeObjectPopulationLocalAssetOracle'
         Deterministic = $false
         Captures = @()
         Error = $null
         CleanupError = $null
         ManagedParity = [bool]$CathedralPopulationParity
+        PrerequisitesParity = [bool]$CathedralPopulationParity
         ManagedOutcome = $null
         Stage = 'native-build'
     }
@@ -1068,7 +1080,7 @@ if ($CathedralPopulation) {
             }
             $record.Captures[$captureIndex].Artifacts = @(Get-CathedralPopulationOracleArtifacts $artifactRoot)
             if ($CathedralPopulationParity) {
-                $record.Captures[$captureIndex].InputArtifact = Get-CathedralPopulationInputArtifact $inputRoot
+                $record.Captures[$captureIndex].InputArtifact = Get-CathedralPopulationInputArtifact $inputRoot -RequirePrerequisites
             }
         }
         $record.Stage = 'repeat-validation'
@@ -1113,7 +1125,7 @@ if ($CathedralPopulation) {
     }
     if ($null -ne $primaryError) { throw $primaryError }
     if ($CathedralPopulationParity) {
-        Write-Host "PASS: sixteen native/managed Cathedral initial-object comparisons and repeated native captures. Evidence: $evidenceRoot"
+        Write-Host "PASS: sixteen native/managed Cathedral prerequisite and initial-object comparisons and repeated native captures. Evidence: $evidenceRoot"
         return
     }
     Write-Host "PASS: native Cathedral object population captures are repeatable. Evidence: $evidenceRoot"
