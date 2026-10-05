@@ -23,6 +23,7 @@ internal static class ClientCommandTimingEvidenceWriter
         if (evidence.Phase is not ("Create" or "Resume" or "Recovery" or "Journey" or "JourneyResume"
             or "TownLoop" or "TownLoopResume" or "Lifecycle" or "LifecycleResume"
             or "MultiplayerCreate" or "MultiplayerResume" or "MultiplayerRecovery" or "MultiplayerPendingRecovery"
+            or "CooperativeJourney" or "CooperativeResume"
             or "CathedralJourney" or "CathedralResume" or "CathedralDepthJourney" or "CathedralDepthResume"
             or "CathedralDoorJourney" or "CathedralDoorResume"))
             throw new ArgumentException("An explicit non-performance acceptance phase is required.", nameof(evidence));

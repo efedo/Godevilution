@@ -493,6 +493,28 @@ finish observing the peer. This town/session check alone does not certify host-l
 recovery, cooperative combat, legacy cross-restart numeric entity IDs or OS focus.
 Keep the entire evidence directory private.
 
+`-Cooperative -PersistenceMode cohort` selects a separate two-client authored
+combat/loot journey, never implicitly selected by ordinary multiplayer. Both
+Rogues use the real setup form, route controls and safe tile input. The peer
+approaches the projected stair in Town, cancels and remains stationary while
+the first player enters and clears the shared landing. Each client must observe
+the other's landed attack, the same defeated monster and drop, and exactly one
+owner's inventory pickup. A fresh host and two fresh clients then resume in
+reverse connection order, preserving both entity IDs/positions, defeated-world
+state and unique loot ownership before new settled movement. The launcher checks
+exact accepted canonical owner receipts, including the actual pickup command,
+not an earlier approach step. Allow 300 seconds for CooperativeJourney and 240
+for CooperativeResume, plus builds. Admission rejection, death, missing evidence,
+nonzero engine exit or uncertain cleanup fails; never weaken gameplay or retry
+to hide such a failure. Normal profiles, resources and legacy saves are unchanged.
+
+The visible cooperative variant retains entry, defeated, loot and final frames
+for each client, plus restored and final frames after restart. Per-entity texture
+bindings are retained resource lookups, not timestamped proof of drawing on each
+frame: inspect the paired PNGs to verify both avatars are actually visible.
+Headless success is not rendering acceptance. This authored encounter does not
+close M1, native animation/world parity, complete campaign or broader recovery.
+
 Scene acceptance treats an accepted receipt or a successful duplicate receipt
 as the same applied outcome. A duplicate retaining a rejection reason still
 fails; command sequences, snapshot ticks, settled positions, and state changes
@@ -518,6 +540,8 @@ powershell -NoProfile -ExecutionPolicy Bypass -File tools/test-godot-session.ps1
 powershell -NoProfile -ExecutionPolicy Bypass -File tools/test-godot-session.ps1 -PersistenceMode cohort -Multiplayer -Visible
 powershell -NoProfile -ExecutionPolicy Bypass -File tools/test-godot-session.ps1 -PersistenceMode cohort -MultiplayerRecovery -Visible
 powershell -NoProfile -ExecutionPolicy Bypass -File tools/test-godot-session.ps1 -PersistenceMode cohort -MultiplayerPendingRecovery -Visible
+powershell -NoProfile -ExecutionPolicy Bypass -File tools/test-godot-session.ps1 -PersistenceMode cohort -Cooperative
+powershell -NoProfile -ExecutionPolicy Bypass -File tools/test-godot-session.ps1 -PersistenceMode cohort -Cooperative -Visible
 ```
 
 `-MultiplayerRecovery` adds a separate town/session host-loss phase after creation

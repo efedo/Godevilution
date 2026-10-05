@@ -16,7 +16,7 @@ param(
     [string]$CathedralDepthProfileDirectory,
     [string]$CathedralDoorProfileDirectory,
     [ValidateSet(1, 4)] [int]$PerformanceParticipants = 1,
-    [ValidateSet('Create', 'Resume', 'Recovery', 'Journey', 'JourneyResume', 'TownLoop', 'TownLoopResume', 'Lifecycle', 'LifecycleResume', 'MultiplayerCreate', 'MultiplayerResume', 'MultiplayerRecovery', 'MultiplayerPendingRecovery', 'Performance', 'CathedralJourney', 'CathedralResume', 'CathedralDepthJourney', 'CathedralDepthResume', 'CathedralDoorJourney', 'CathedralDoorResume')] [string]$AcceptancePhase,
+    [ValidateSet('Create', 'Resume', 'Recovery', 'Journey', 'JourneyResume', 'TownLoop', 'TownLoopResume', 'Lifecycle', 'LifecycleResume', 'MultiplayerCreate', 'MultiplayerResume', 'MultiplayerRecovery', 'MultiplayerPendingRecovery', 'CooperativeJourney', 'CooperativeResume', 'Performance', 'CathedralJourney', 'CathedralResume', 'CathedralDepthJourney', 'CathedralDepthResume', 'CathedralDoorJourney', 'CathedralDoorResume')] [string]$AcceptancePhase,
     [switch]$CommandTimingTrace,
     [switch]$Automated
 )
@@ -34,6 +34,7 @@ if ($CommandTimingTrace -and $performance) {
     throw 'Command timing diagnostics cannot be combined with performance measurement.'
 }
 $multiplayerRecovery = $AcceptancePhase -in @('MultiplayerRecovery', 'MultiplayerPendingRecovery')
+$cooperative = $AcceptancePhase -in @('CooperativeJourney', 'CooperativeResume')
 $pendingRecovery = $AcceptancePhase -eq 'MultiplayerPendingRecovery'
 $lifecyclePhases = @('Lifecycle', 'LifecycleResume')
 $lifecycle = [bool]$LifecyclePreviewContent
@@ -88,8 +89,17 @@ if ($LifecyclePreviewContent -and ($Multiplayer -or $performance)) {
 if ($AcceptancePhase -in @('TownLoop', 'TownLoopResume') -and -not ($PreviewContent -or $PortalPreviewContent)) {
     throw 'Town-loop acceptance requires -PreviewContent or -PortalPreviewContent and its isolated content identity.'
 }
-if ($Multiplayer -and ($PreviewContent -or $PortalPreviewContent)) { throw 'The local multiplayer profile uses base content, not the single-player preview.' }
-if ($AcceptancePhase -and -not $performance -and ($Multiplayer -ne ($AcceptancePhase -in @('MultiplayerCreate', 'MultiplayerResume', 'MultiplayerRecovery', 'MultiplayerPendingRecovery')))) {
+if ($cooperative -and -not $PreviewContent) {
+    throw 'Cooperative acceptance requires the town-loop-preview content overlay.'
+}
+if ($cooperative -and $PersistenceMode -cne 'cohort') {
+    throw 'Cooperative acceptance requires the explicit complete-cohort persistence mode.'
+}
+if ($cooperative -and -not $Multiplayer) {
+    throw 'Cooperative acceptance requires -Multiplayer so two independent clients are launched.'
+}
+if ($Multiplayer -and ($PreviewContent -or $PortalPreviewContent) -and -not $cooperative) { throw 'The local multiplayer profile uses base content, not the single-player preview.' }
+if ($AcceptancePhase -and -not $performance -and ($Multiplayer -ne ($AcceptancePhase -in @('MultiplayerCreate', 'MultiplayerResume', 'MultiplayerRecovery', 'MultiplayerPendingRecovery', 'CooperativeJourney', 'CooperativeResume')))) {
     throw 'Multiplayer acceptance phases require -Multiplayer; single-player phases cannot use it.'
 }
 if ($multiplayerRecovery -and $PersistenceMode -cne 'cohort') {
@@ -999,8 +1009,8 @@ function Assert-CohortCheckpoint(
         $participant = $participants[$index]
         Assert-CohortJsonProperties $participant @('SessionId', 'EntityId', 'CommandReceipts') 'cohort participant'
         if (-not ($participant.CommandReceipts -is [Array])) { throw 'The cohort participant receipt ledger must be an array.' }
-        if ($multiplayerRecovery -and @($participant.CommandReceipts).Count -eq 0) {
-            throw 'MultiplayerRecovery requires a nonempty canonical receipt ledger for every participant.'
+        if (($multiplayerRecovery -or $cooperative) -and @($participant.CommandReceipts).Count -eq 0) {
+            throw 'The complete-cohort multiplayer acceptance requires a nonempty canonical receipt ledger for every participant.'
         }
         if ($null -eq $participant -or [string]$participant.SessionId -notmatch '^[0-9a-f]{64}$') {
             throw 'The cohort participant session identity is not a lowercase SHA-256 ID.'
@@ -1042,7 +1052,7 @@ function Assert-CohortCheckpoint(
         }
     }
 
-    if ($multiplayerRecovery) {
+    if ($multiplayerRecovery -or $cooperative) {
         foreach ($bookmarkPath in $bookmarks) {
             $bookmark = [IO.File]::ReadAllText($bookmarkPath).Trim()
             $sessionId = Get-Sha256Hex ([Text.Encoding]::UTF8.GetBytes($bookmark))
@@ -1054,6 +1064,7 @@ function Assert-CohortCheckpoint(
             $evidence = Get-Content -LiteralPath $evidencePath -Raw | ConvertFrom-Json
             Assert-CohortRecoveryReceipt $participant[0] $evidence
             if ($pendingRecovery) { Assert-CohortPendingReceipt $participant[0] $evidence }
+            if ($cooperative) { Assert-CohortCooperativePickupReceipt $participants $evidence }
         }
     }
 
@@ -1084,6 +1095,17 @@ function Assert-CohortRecoveryReceipt($Participant, $Evidence) {
     if ($matches.Count -ne 1 -or $matches[0].Status -ne 1 -or $matches[0].RejectReason -ne 0) {
         throw 'MultiplayerRecovery final command has no exact accepted canonical receipt.'
     }
+}
+
+function Assert-CohortCooperativePickupReceipt($Participants, $Evidence) {
+    # The terminal pickup is distinct from any preceding approach movement.
+    $owner = @($Participants | Where-Object { $_.EntityId -eq $Evidence.OwnerEntityId })
+    if ($owner.Count -ne 1) { throw 'Cooperative pickup has no unique canonical owner.' }
+    Assert-CohortRecoveryReceipt $owner[0] ([pscustomobject]@{
+        Passed = $Evidence.Passed; EntityId = $Evidence.OwnerEntityId;
+        Sequence = $Evidence.PickupSequence; ReceiptSequence = $Evidence.PickupReceiptSequence;
+        AppliedTick = $Evidence.PickupAppliedTick
+    })
 }
 
 function Assert-CohortPendingReceipt($Participant, $Evidence) {
@@ -1698,6 +1720,11 @@ try {
         $processEvidence = @{ HostProcessId = $serverProcess.Id; HostStartedUtc = $serverProcess.StartTime.ToUniversalTime().ToString('O'); Port = $actualPort;
             PersistenceMode = $PersistenceMode; HostPersistence = $startedServer.Persistence;
             Clients = @($startedClients | ForEach-Object { @{ ProcessId = $_.Process.Id; StartedUtc = $_.Process.StartTime.ToUniversalTime().ToString('O') } }) }
+        if ($cooperative) {
+            # These identities were validated against the actual started host.
+            $processEvidence.ContentHash = $contentHash
+            $processEvidence.RulesetHash = $rulesetHash
+        }
         if ($cathedral -or $cathedralDoors) {
             if ($cathedralDoors) {
                 $processEvidence.ProfileHash = $cathedralDoorProfile.MetadataHash

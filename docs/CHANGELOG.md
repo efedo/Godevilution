@@ -2,6 +2,15 @@
 
 Notable changes to this fork are recorded below.
 
+- 2026-10-04: Add separate opt-in two-Godot authored combat/loot and reverse-order
+  complete-cohort cold-resume acceptance. Use real route/cancel/attack/pickup
+  controls, peer-observed stair staging, post-ACK settled outcomes, exact canonical
+  owner receipts and validated host identities. Preserve failed evidence and
+  existing profiles/resources/saves; headless/rendered acceptance passes with
+  all 12 milestone PNGs inspected. Add malformed-evidence/identity and compatibility
+  regressions, and update existing guidance, status and plan. No gameplay, MPQ
+  boundary, default-profile or native animation-policy change.
+
 - 2026-10-04: Add explicit ordered authoritative command ticks and integrate the
   actor slot into ordinary/cohort Diablo lifecycles. Preserve result/event
   chronology, catch-up-before-join RNG order and legacy APIs; poison mutable

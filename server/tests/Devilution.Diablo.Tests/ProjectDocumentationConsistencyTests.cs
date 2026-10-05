@@ -8,6 +8,24 @@ namespace Devilution.Diablo.Tests;
 public sealed class ProjectDocumentationConsistencyTests
 {
     [Fact]
+    public void CooperativeDocumentationKeepsAuthoredScopeAndNormalProfileApprovalSeparate()
+    {
+        var root = FindRepositoryRoot();
+        var guidance = Read(root, "docs", "ai", "godot-build.md");
+        Assert.Contains("-PersistenceMode cohort -Cooperative", guidance, StringComparison.Ordinal);
+        Assert.Contains("retained resource lookups", guidance, StringComparison.Ordinal);
+        Assert.Contains("not timestamped proof", guidance, StringComparison.Ordinal);
+        Assert.Contains("Headless success is not rendering acceptance", guidance, StringComparison.Ordinal);
+        var status = Read(root, "docs", "migration-status.md");
+        Assert.Contains("### M1 two-client authored combat/loot and cold resume", status, StringComparison.Ordinal);
+        Assert.Contains("normal cohort-profile adoption still requires approval", status, StringComparison.Ordinal);
+        Assert.Contains("approximately 35%", status, StringComparison.Ordinal);
+        var plan = Read(root, "docs", "completion-plan.md");
+        Assert.Contains("two-client authored combat/loot and complete-cohort cold-resume profile", plan, StringComparison.Ordinal);
+        Assert.Contains("These authored previews do not close M1", plan, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void OrderedCommandTickDocumentationKeepsHostAndCursorAdoptionSeparate()
     {
         var root = FindRepositoryRoot();

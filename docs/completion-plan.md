@@ -72,7 +72,7 @@ isolated spell or table rows while the playable route stays unchanged.
 | Gate | Deliverable | Dependencies | Current position |
 | --- | --- | --- | --- |
 | M0 | Reproducible launch and honest acceptance evidence | Existing implementation | Dedicated-root cohort host passes TCP recovery, scoped faults, production CLI participant/item recovery and lease refusal, isolated Godot create/resume/outage and surviving-client committed-but-unobserved replay; managed first-publication interruption and a scoped Windows metadata profile pass; approval-gated normal-launch adoption and broader fault/filesystem/platform acceptance remain; legacy cold imports, native GUI and release-budget gaps remain |
-| M1 | Usable Godot town-to-dungeon loop | M0 launch/acceptance harness | Authored combat/loot/equipment, NPC/service approach, purchased-scroll portal and isolated Sorcerer quest/cast/Recharge/death/restart/restore journeys pass; full loop remains |
+| M1 | Usable Godot town-to-dungeon loop | M0 launch/acceptance harness | Authored combat/loot/equipment, NPC/service approach, purchased-scroll portal and isolated Sorcerer quest/cast/Recharge/death/restart/restore journeys pass; two-client authored combat/loot and complete-cohort cold resume pass headlessly and visibly with inspected milestones; full loop remains |
 | M2 | Native-compatible generated world | M0 geometry/parity baseline | Ordinary Cathedral depths 1-4 coarse/fine oracle covers six seeds and MAIN/PREV; controlled population and compiled metadata have native comparisons; fresh-cold generation now continues through pre-join player occupancy and physical light/vision with a separate automap catalog; opt-in depth/door profiles pass scoped restore, with an earlier rendered TooLate retained and unclassified; live populated checkpoint/profile activation, join/campaign lifecycle, native art, wider topology and remaining families remain |
 | M3 | Complete base and Hellfire gameplay routes | M1 plus the relevant M2 world slices | Many rules exist; campaign and remaining behavioral coverage remain |
 | M4 | Release-quality client, recovery, and packaging | M3; preparation begins during M1/M2 | Recovery and adapter packaging foundations exist; product acceptance remains |
@@ -355,10 +355,14 @@ deliberately does not claim native generated-world parity, which belongs to M2.
    native vendors now close after accepted cross-level entry into a non-town level;
    stash and compatibility-store policies remain unchanged. Close remaining
    native placement exclusions, full service lifecycle/pricing, broader quest,
-   death/class coverage and cooperative gameplay/recovery journeys. Two actual Godot clients now
-   have basic town movement/state visibility and reverse-order fresh-host resume
-   acceptance; retain local-first identity and separate bookmarks when expanding
-   it to combat/world interactions. These authored previews do not close M1.
+   death/class coverage and broader cooperative gameplay/recovery journeys. Two
+   actual Godot clients now extend town/session checks with a separate explicit
+   two-client authored combat/loot and complete-cohort cold-resume profile.
+   Preserve real controls, ordinary resources/AI, stable local-first identities,
+   separate bookmarks, post-receipt settled outcomes and exact canonical owner
+   receipts. Headless/rendered acceptance and paired milestone inspection now
+   pass. Continue inspecting actual frames: cached resource bindings alone are not
+   per-frame draw proof. These authored previews do not close M1.
 3. Give geometry, actors, projectiles, items, and interaction targets readable
    Godot presentation. Split the main scene/script only where this separates
    concrete input, rendering, menus, or HUD responsibilities. Keep placeholder

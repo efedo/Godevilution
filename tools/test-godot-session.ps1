@@ -1,9 +1,14 @@
 [CmdletBinding()]
-param([string]$GodotExecutable, [ValidateSet('legacy', 'cohort')] [string]$PersistenceMode = 'legacy', [switch]$Visible, [switch]$Journey, [switch]$TownLoop, [switch]$Lifecycle, [switch]$Multiplayer, [switch]$MultiplayerRecovery, [switch]$MultiplayerPendingRecovery, [string]$CathedralProfileDirectory, [string]$CathedralDepthProfileDirectory, [string]$CathedralDoorProfileDirectory, [ValidateSet('default', 'atlas', 'semantic', 'missing', 'undersized', 'invalid')] [string]$PresentationPackProfile = 'default', [switch]$CommandTimingTrace)
+param([string]$GodotExecutable, [ValidateSet('legacy', 'cohort')] [string]$PersistenceMode = 'legacy', [switch]$Visible, [switch]$Journey, [switch]$TownLoop, [switch]$Lifecycle, [switch]$Multiplayer, [switch]$MultiplayerRecovery, [switch]$MultiplayerPendingRecovery, [string]$CathedralProfileDirectory, [string]$CathedralDepthProfileDirectory, [string]$CathedralDoorProfileDirectory, [ValidateSet('default', 'atlas', 'semantic', 'missing', 'undersized', 'invalid')] [string]$PresentationPackProfile = 'default', [switch]$CommandTimingTrace, [switch]$Cooperative)
 
 $ErrorActionPreference = 'Stop'
 $PersistenceMode = $PersistenceMode.ToLowerInvariant()
 $PresentationPackProfile = $PresentationPackProfile.ToLowerInvariant()
+$cooperative = [bool]$Cooperative
+if ($cooperative) {
+    if ($Multiplayer) { throw 'Choose -Cooperative or -Multiplayer, not both.' }
+    $Multiplayer = $true
+}
 $MultiplayerRecovery = [bool]$MultiplayerRecovery
 if ($MultiplayerRecovery -and $MultiplayerPendingRecovery) { throw 'Choose settled or pending-command recovery, never both.' }
 if ($MultiplayerRecovery -or $MultiplayerPendingRecovery) { $Multiplayer = $true }
@@ -17,8 +22,14 @@ if ($CathedralDoorProfileDirectory -and ($CathedralProfileDirectory -or $Cathedr
     throw 'Cathedral door acceptance requires its own compiled profile.'
 }
 if ($Journey -and $TownLoop) { throw 'Choose either -Journey or -TownLoop.' }
+if ($cooperative -and ($Journey -or $TownLoop -or $Lifecycle -or $MultiplayerRecovery -or $MultiplayerPendingRecovery)) {
+    throw 'Cooperative acceptance is a separate town-loop-preview journey/resume profile.'
+}
+if ($cooperative -and -not ($PersistenceMode -eq 'cohort' -and $Multiplayer)) {
+    throw 'Cooperative acceptance requires two clients and complete-cohort persistence.'
+}
 if ($Lifecycle -and ($Journey -or $TownLoop -or $Multiplayer)) { throw 'Lifecycle acceptance is a separate Sorcerer preview profile.' }
-if ($Multiplayer -and ($Journey -or $TownLoop -or $Lifecycle)) { throw 'Multiplayer acceptance is a separate base-content profile.' }
+if ($Multiplayer -and ($Journey -or $TownLoop -or $Lifecycle) -and -not $cooperative) { throw 'Multiplayer acceptance is a separate base-content profile.' }
 if ($CathedralProfileDirectory -and ($Journey -or $TownLoop -or $Lifecycle -or $Multiplayer)) {
     throw 'Cathedral acceptance is a separate compiled single-player playtest profile.'
 }
@@ -46,6 +57,11 @@ function Read-ModeProcessEvidence([string]$Phase) {
     $expectedHostPersistence = if ($PersistenceMode -eq 'cohort') { 'complete cohort' } else { 'legacy per-session' }
     if ($evidence.PersistenceMode -cne $PersistenceMode -or $evidence.HostPersistence -cne $expectedHostPersistence) {
         throw "The $Phase process evidence did not preserve persistence mode '$PersistenceMode'."
+    }
+    if ($Phase -in @('CooperativeJourney', 'CooperativeResume') -and
+        ([string]$evidence.ContentHash -cnotmatch '^[0-9a-f]{64}$' -or
+         [string]$evidence.RulesetHash -cnotmatch '^[0-9a-f]{64}$')) {
+        throw "The $Phase process evidence omitted validated host content/ruleset identity."
     }
     if ($Phase -eq 'Recovery') {
         if ($null -eq $evidence.StoppedProcessId -or [string]::IsNullOrWhiteSpace($evidence.StoppedHostStartedUtc) -or
@@ -88,6 +104,95 @@ function Assert-FreshProcessEvidence($Created, $Resumed, [int]$ExpectedClientCou
         if (@($Created.Clients) | Where-Object { $_.ProcessId -eq $resumedClient.ProcessId -and $_.StartedUtc -eq $resumedClient.StartedUtc }) {
             throw 'Ruleset resume reused a client process identity.'
         }
+    }
+}
+function Assert-CooperativeEvidence([string]$SessionDirectory, [string]$ContentHash, [string]$RulesetHash, [bool]$ExpectedVisible = $false) {
+    $created = @()
+    $resumed = @()
+    for ($slot = 1; $slot -le 2; $slot++) {
+        $playerDirectory = Join-Path $SessionDirectory "player-$slot"
+        $journeyPath = Join-Path $playerDirectory 'cooperativejourney.json'
+        $resumePath = Join-Path $playerDirectory 'cooperativeresume.json'
+        if (-not (Test-Path -LiteralPath $journeyPath -PathType Leaf) -or
+            -not (Test-Path -LiteralPath $resumePath -PathType Leaf)) {
+            throw "Cooperative evidence is incomplete for player $slot."
+        }
+        $journey = Get-Content -LiteralPath $journeyPath -Raw | ConvertFrom-Json
+        $resume = Get-Content -LiteralPath $resumePath -Raw | ConvertFrom-Json
+        foreach ($document in @($journey, $resume)) {
+            if (-not ($document.Passed -is [bool]) -or -not $document.Passed -or $document.Mode -ne 'Multiplayer' -or
+                $document.ContentHash -cne $ContentHash -or $document.RulesetHash -cne $RulesetHash -or
+                $document.Slot -ne $slot -or $document.EntityId -lt 1 -or $document.PeerEntityId -lt 1 -or
+                $document.EntityId -eq $document.PeerEntityId -or $document.LevelId -ne 1 -or
+                $document.MonsterId -ne 9 -or
+                -not ($document.MonsterDefeated -is [bool]) -or -not $document.MonsterDefeated -or $document.DropEntityId -ne 1000009 -or
+                $document.DropSeed -ne 6001 -or $document.OwnerEntityId -lt 1 -or
+                $document.OwnerInventoryCount -ne 1 -or $document.PeerInventoryCount -ne 0 -or
+                -not ($document.DropPresent -is [bool]) -or $document.DropPresent -or $document.ReceiptStatus -notin @('Accepted', 'Duplicate') -or
+                $document.PickupStatus -notin @('Accepted', 'Duplicate') -or $document.ReceiptSequence -lt 1 -or
+                $document.AppliedTick -lt 1 -or $document.Sequence -lt 1 -or $document.PickupSequence -lt 1 -or $document.PickupReceiptSequence -lt 1 -or
+                $document.PickupAppliedTick -lt 1 -or $document.PostMoveX -lt 0 -or $document.PostMoveY -lt 0 -or
+                $document.InitialX -lt 0 -or $document.InitialY -lt 0 -or
+                $document.InitialPeerX -lt 0 -or $document.InitialPeerY -lt 0 -or
+                -not ($document.Visible -is [bool]) -or $document.Visible -ne $ExpectedVisible -or
+                -not ($document.DrawObserved -is [bool]) -or ($ExpectedVisible -and -not $document.DrawObserved)) {
+                throw "Invalid cooperative state evidence for player $slot."
+            }
+            if ($document.PostMoveX -ne $document.PositionX -or $document.PostMoveY -ne $document.PositionY) {
+                throw "Cooperative final position contradicts movement evidence for player $slot."
+            }
+        }
+        if ($resume.RestoredEntityId -ne $journey.EntityId -or
+            $resume.RestoredPeerEntityId -ne $journey.PeerEntityId -or
+            $resume.RestoredX -ne $journey.PositionX -or $resume.RestoredY -ne $journey.PositionY -or
+            $resume.RestoredPeerX -ne $journey.PeerPositionX -or $resume.RestoredPeerY -ne $journey.PeerPositionY -or
+            $resume.OwnerEntityId -ne $journey.OwnerEntityId -or $resume.DropEntityId -ne $journey.DropEntityId -or
+            $resume.DropSeed -ne $journey.DropSeed -or $resume.MonsterId -ne $journey.MonsterId) {
+            throw "Fresh-host cooperative resume changed the durable world or roster for player $slot."
+        }
+        if ($resume.InitialX -ne $journey.PositionX -or $resume.InitialY -ne $journey.PositionY -or
+            $resume.InitialPeerX -ne $journey.PeerPositionX -or $resume.InitialPeerY -ne $journey.PeerPositionY -or
+            $resume.PickupSequence -ne $journey.PickupSequence -or
+            $resume.PickupReceiptSequence -ne $journey.PickupReceiptSequence -or
+            $resume.PickupAppliedTick -ne $journey.PickupAppliedTick) {
+            throw "Fresh-host cooperative resume did not begin from the recorded post-journey state for player $slot."
+        }
+        if ($resume.PickupStatus -ne $journey.PickupStatus) {
+            throw "Fresh-host cooperative resume changed the retained pickup receipt status for player $slot."
+        }
+        if ($resume.Sequence -le $journey.Sequence -or $resume.ReceiptSequence -le $journey.ReceiptSequence -or
+            $resume.AppliedTick -lt $journey.AppliedTick -or
+            ($resume.PostMoveX -eq $resume.RestoredX -and $resume.PostMoveY -eq $resume.RestoredY)) {
+            throw "Fresh-host cooperative resume did not advance the durable command ledger and position for player $slot."
+        }
+        $created += $journey
+        $resumed += $resume
+    }
+    if ($created[0].EntityId -ne $created[1].PeerEntityId -or
+        $created[0].PeerEntityId -ne $created[1].EntityId -or
+        $resumed[0].EntityId -ne $resumed[1].PeerEntityId -or
+        $resumed[0].PeerEntityId -ne $resumed[1].EntityId -or
+        $created[0].PositionX -ne $created[1].PeerPositionX -or
+        $created[0].PositionY -ne $created[1].PeerPositionY -or
+        $created[1].PositionX -ne $created[0].PeerPositionX -or
+        $created[1].PositionY -ne $created[0].PeerPositionY -or
+        $resumed[0].PositionX -ne $resumed[1].PeerPositionX -or
+        $resumed[0].PositionY -ne $resumed[1].PeerPositionY -or
+        $resumed[1].PositionX -ne $resumed[0].PeerPositionX -or
+        $resumed[1].PositionY -ne $resumed[0].PeerPositionY -or
+        $created[0].OwnerEntityId -ne $created[1].OwnerEntityId -or
+        $resumed[0].OwnerEntityId -ne $resumed[1].OwnerEntityId -or
+        $created[0].OwnerEntityId -ne $created[0].EntityId -or
+        $created[1].OwnerEntityId -ne $created[0].EntityId -or
+        $resumed[0].OwnerEntityId -ne $resumed[0].EntityId -or
+        $resumed[1].OwnerEntityId -ne $resumed[0].EntityId -or
+        $created[0].PickupReceiptSequence -ne $created[1].PickupReceiptSequence -or
+        $created[0].PickupSequence -ne $created[1].PickupSequence -or
+        $created[0].PickupAppliedTick -ne $created[1].PickupAppliedTick -or
+        $resumed[0].PickupReceiptSequence -ne $resumed[1].PickupReceiptSequence -or
+        $resumed[0].PickupSequence -ne $resumed[1].PickupSequence -or
+        $resumed[0].PickupAppliedTick -ne $resumed[1].PickupAppliedTick) {
+        throw 'Cooperative clients disagree about durable roster or loot ownership.'
     }
 }
 function Assert-MultiplayerRecoveryProcessEvidence($Evidence) {
@@ -263,6 +368,21 @@ try {
         }
         Assert-MultiplayerRecoveryEvidence $sessionDirectory $recovery.ContentHash $recovery.RulesetHash $recoveryPhase.ToLowerInvariant()
         Write-Host "PASS: bounded actual-Godot complete-cohort multiplayer host-loss/reconnect with two retained clients, stable roster, post-reconnect accepted controls, canonical receipts, and clean exits. Evidence: $sessionDirectory"
+        return
+    }
+    if ($cooperative) {
+        $parameters.Multiplayer = $true
+        $parameters.PreviewContent = $true
+        $parameters.PersistenceMode = 'cohort'
+        $parameters.QuitAfterSeconds = 300
+        & $launcher @parameters -AcceptancePhase CooperativeJourney
+        $created = Read-ModeProcessEvidence 'CooperativeJourney'
+        $parameters.QuitAfterSeconds = 240
+        & $launcher @parameters -AcceptancePhase CooperativeResume
+        $resumed = Read-ModeProcessEvidence 'CooperativeResume'
+        Assert-FreshProcessEvidence $created $resumed 2
+        Assert-CooperativeEvidence $sessionDirectory $created.ContentHash $created.RulesetHash ([bool]$Visible)
+        Write-Host "PASS: two actual Godot clients, authored dungeon combat/loot ownership, reverse-order fresh-host complete-cohort resume. Evidence: $sessionDirectory"
         return
     }
     if ($Multiplayer) {

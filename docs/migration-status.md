@@ -108,8 +108,10 @@ open. Their scope, dependencies, and exit checks are defined only in the
   Two-client Godot town movement/state visibility and reverse-order fresh-host
   resume also have application evidence below. Real Smith/Gillian approach and
   native-role service entry now pass. Accepted cross-level entry into a non-town
-  level now closes metadata-bound native vendors; cooperative combat, remaining
-  native portal placement, full service lifecycle/pricing and the complete loop
+  level now closes metadata-bound native vendors. Two-client authored combat/loot
+  and reverse-order complete-cohort cold resume now pass headless/rendered
+  acceptance below; remaining native portal placement, full service
+  lifecycle/pricing and the complete loop
   remain M1 work. Local standalone-host and actual one/four-client measurements
   are below; no campaign, release frame budget, or platform performance pass
   is claimed.
@@ -156,6 +158,71 @@ open. Their scope, dependencies, and exit checks are defined only in the
   this edge case, but the corrected Flash fixtures cover off-player cursors.
 
 ## Recent implementation evidence
+
+### M1 two-client authored combat/loot and cold resume (2026-10-04)
+
+The separate explicit `-Cooperative -PersistenceMode cohort` acceptance profile
+now runs two actual Rogue scenes against the shipped MPQ-free town-loop-preview.
+It follows real setup, route, cancellation, tile, attack and pickup controls.
+The peer parks near the projected stair before the first player enters, proves
+four further stationary ticks with no new queued input, and is observed at its
+actual settled coordinates by the first client. Both must land acknowledged
+ordinary attacks and observe monster 9 defeated, drop 1000009/seed 6001 and
+exactly one owner's inventory item. Accepted misses may be retried only after a
+strictly later post-receipt snapshot settles the action and its projectiles;
+rejection/death remains failure, not permission to weaken gameplay.
+
+Fresh host/client processes resume in reverse connection order. Actual snapshots
+must preserve both entity IDs/positions, defeated-world absence and unique loot
+ownership before new controls. Both new final positions must agree reciprocally,
+each owner's command/server-receipt sequence must advance, and exact canonical
+Accepted receipts must match the final control and the actual pickup command.
+Host identities come from validated startup evidence, not a client document.
+Normal launch profiles, legacy saves, content, server authority and MPQ boundaries
+are unchanged; normal cohort-profile adoption still requires approval.
+
+The complete headless driver passes after `9c2f4921f` with this package integrated.
+Retained root `Godevilution-Scene-Acceptance-e8a5585cb1314d07a0d658119ea5a481`
+has actors 2/3 at `(3,1)`/`(2,1)`, restored before moving to `(3,2)`/`(3,1)`.
+Their own sequences advance 66->67 and 60->61. Both retain owner 2's pickup
+65/server receipt 124/applied tick 2347, with one owner item, no peer duplicate
+and no world drop. The log is `.local/m1-cooperative-headless-qualified.log`.
+The complete visible driver also passes in retained root
+`Godevilution-Scene-Acceptance-f496602facb345e8a2763d08b6b6904e`, with both
+avatars visible in all 12 inspected entry/defeated/loot/final/restored PNGs at
+1280x720. Players' sequences advance 63->64 and 60->61, retaining owner 2's
+pickup 62/server receipt 121/applied tick 2167. All 12 binding records contain
+both actual entity IDs and loaded non-fallback player resources. The log is
+`.local/m1-cooperative-visible-qualified.log`; all Godot children exit zero and
+owned cleanup completes without timeout/error in both qualified runs.
+Per-entity texture bindings are retained resource lookups, not timestamped
+per-frame draw proof. Headless projection alone is not rendering acceptance.
+
+The broad server run passes 1,634 tests with zero failures/errors; three opt-in
+cases are excluded and one directory-link publication fixture skips for missing
+privilege. The later rebuilt focused cooperative class passes all 11 cases,
+including the actual extracted PowerShell helpers: 15 scene-document corruptions,
+nine canonical-receipt negatives, and 28 missing/malformed process-hash cases
+across both phases, plus unchanged existing-profile reads. Source contracts are
+not executable scene-timing proof. Reports/logs use `.local/m1-cooperative-*`.
+The broad run preceded addition of the process-reader regression; its later
+focused execution is separate evidence, not an invented full-suite total.
+All 12 freshly rebuilt documentation consistency checks pass with zero
+failures/errors/skips/NotRun. Owned runs have bounded
+terminal exits and confirmed cleanup. Server builds retain three NU1900 audit-feed
+warnings; staged Godot builds retain two, with no security-audit pass claimed.
+
+Retain the earlier failures: immediate Travel-queue assertion, requiring an
+absent completed-death actor on resume, and missing host hashes in outer process
+evidence. Their distinct corrected code paths now pass; no engine crash or
+admission rejection was observed in those failures. The initial stale draw-helper
+source assertion and duplicate test-declaration compile failure are retained too.
+All qualified staged clients record source hash
+`a5fbe3fb082e56c5553e700f4c5277edb872d4925f5359e409a35cc324dafd72`.
+Selected engine 4.7.2 imports only staged SDK copies; the source pin remains
+4.7.1. This authored encounter does not close M1, native animation/world parity,
+campaign, broader outage, native GUI or release gates. The overall estimate remains
+approximately 35%; historical unclassified TooLate failures remain separate.
 
 ### M1 ordered authoritative command-tick prerequisite (2026-10-04)
 
