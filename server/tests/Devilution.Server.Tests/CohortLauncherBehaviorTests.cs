@@ -82,25 +82,27 @@ public sealed class CohortLauncherBehaviorTests
                 .AppendLine("Expect-Rejected { Assert-FreshProcessEvidence $created $bad 1 }")
                 .AppendLine("$recovery = [pscustomobject]@{")
                 .AppendLine("    PersistenceMode = 'cohort'; HostPersistence = 'complete cohort'")
-                .AppendLine("    HostProcessId = 300; HostStartedUtc = 'recovery-host'")
+                .AppendLine("    HostProcessId = 300; HostStartedUtc = '2026-10-04T12:00:00Z'; Port = 6112")
                 .AppendLine("    Clients = @([pscustomobject]@{ ProcessId = 400; StartedUtc = 'recovery-client' })")
-                .AppendLine("    StoppedProcessId = 300; StoppedHostStartedUtc = 'recovery-host'")
-                .AppendLine("    RestartedProcessId = 301; RestartedHostStartedUtc = 'restarted-host'")
+                .AppendLine("    StoppedProcessId = 300; StoppedHostStartedUtc = '2026-10-04T12:00:00Z'")
+                .AppendLine("    StoppedHostEndedUtc = '2026-10-04T12:00:01Z'; StoppedHostExitCode = -1")
+                .AppendLine("    RestartedProcessId = 301; RestartedHostStartedUtc = '2026-10-04T12:00:02Z'")
                 .AppendLine("    GodotProcessId = 400; GodotStartedUtc = 'recovery-client'")
                 .AppendLine("    ExistingClients = @([pscustomobject]@{ ProcessId = 400; StartedUtc = 'recovery-client' })").AppendLine("}")
-                .AppendLine("Assert-RecoveryProcessEvidence $recovery")
+                .AppendLine("$marker = [pscustomobject]@{ Stopped = $true; ProcessId = 300; StartedUtc = $recovery.StoppedHostStartedUtc; EndedUtc = $recovery.StoppedHostEndedUtc; ExitCode = -1; Port = 6112 }")
+                .AppendLine("Assert-RecoveryProcessEvidence $recovery $marker")
                 .AppendLine("$bad = $recovery | ConvertTo-Json -Depth 8 | ConvertFrom-Json")
-                .AppendLine("$bad.RestartedProcessId = 300; $bad.RestartedHostStartedUtc = 'recovery-host'")
-                .AppendLine("Expect-Rejected { Assert-RecoveryProcessEvidence $bad }")
+                .AppendLine("$bad.RestartedProcessId = 300; $bad.RestartedHostStartedUtc = $recovery.StoppedHostStartedUtc")
+                .AppendLine("Expect-Rejected { Assert-RecoveryProcessEvidence $bad $marker }")
                 .AppendLine("$bad = $recovery | ConvertTo-Json -Depth 8 | ConvertFrom-Json")
                 .AppendLine("$bad.GodotProcessId = 401")
-                .AppendLine("Expect-Rejected { Assert-RecoveryProcessEvidence $bad }")
+                .AppendLine("Expect-Rejected { Assert-RecoveryProcessEvidence $bad $marker }")
                 .AppendLine("$bad = $recovery | ConvertTo-Json -Depth 8 | ConvertFrom-Json")
                 .AppendLine("$bad.GodotStartedUtc = 'other-client'")
-                .AppendLine("Expect-Rejected { Assert-RecoveryProcessEvidence $bad }")
+                .AppendLine("Expect-Rejected { Assert-RecoveryProcessEvidence $bad $marker }")
                 .AppendLine("$bad = $recovery | ConvertTo-Json -Depth 8 | ConvertFrom-Json")
                 .AppendLine("$bad.ExistingClients[0].StartedUtc = 'other-client'")
-                .AppendLine("Expect-Rejected { Assert-RecoveryProcessEvidence $bad }")
+                .AppendLine("Expect-Rejected { Assert-RecoveryProcessEvidence $bad $marker }")
                 .AppendLine("$sessionDirectory = " + QuotePowerShell(root))
                 .AppendLine("$PersistenceMode = 'cohort'")
                 .AppendLine("$recovery | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath (Join-Path $sessionDirectory 'recovery-processes.json') -Encoding UTF8")
@@ -118,6 +120,73 @@ public sealed class CohortLauncherBehaviorTests
         } finally {
             DeleteOwnedTempDirectory(root, "Godevilution-Cohort-Driver-Evidence-");
         }
+    }
+
+    [Fact]
+    public void RecoveryProcessEvidenceRejectsUnconfirmedOrMismatchedTerminalExit()
+    {
+        if (!OperatingSystem.IsWindows())
+            return;
+
+        var body = """
+            $evidenceJson = '{"HostProcessId":300,"HostStartedUtc":"2026-10-04T12:00:00Z",' +
+                '"StoppedProcessId":300,"StoppedHostStartedUtc":"2026-10-04T12:00:00Z",' +
+                '"StoppedHostEndedUtc":"2026-10-04T12:00:01Z","StoppedHostExitCode":-1,' +
+                '"RestartedProcessId":301,"RestartedHostStartedUtc":"2026-10-04T12:00:02Z",' +
+                '"GodotProcessId":400,"GodotStartedUtc":"client-start", "Port":6112,' +
+                '"Clients":[{"ProcessId":400,"StartedUtc":"client-start"}],' +
+                '"ExistingClients":[{"ProcessId":400,"StartedUtc":"client-start"}]}'
+            $markerJson = '{"Stopped":true,"ProcessId":300,"StartedUtc":"2026-10-04T12:00:00Z",' +
+                '"EndedUtc":"2026-10-04T12:00:01Z","ExitCode":-1,"Port":6112}'
+            foreach ($code in @(-1, 0, 23, [int]::MinValue, [int]::MaxValue)) {
+                $e = $evidenceJson | ConvertFrom-Json; $m = $markerJson | ConvertFrom-Json
+                $e.StoppedHostExitCode = $code; $m.ExitCode = $code
+                Assert-RecoveryProcessEvidence $e $m
+            }
+            $changes = @(
+                { param($e, $m) $e.StoppedHostExitCode = $null },
+                { param($e, $m) $e.PSObject.Properties.Remove('StoppedHostExitCode') },
+                { param($e, $m) $e.StoppedHostExitCode = '-1' },
+                { param($e, $m) $e.StoppedHostExitCode = -1.0 },
+                { param($e, $m) $e.StoppedHostExitCode = $true },
+                { param($e, $m) $e.StoppedHostExitCode = [long]::MaxValue },
+                { param($e, $m) $e.StoppedHostEndedUtc = $null },
+                { param($e, $m) $e.StoppedHostEndedUtc = 'bad-date' },
+                { param($e, $m) $e.StoppedHostEndedUtc = '2026-10-04T11:59:59Z'; $m.EndedUtc = $e.StoppedHostEndedUtc },
+                { param($e, $m) $e.RestartedHostStartedUtc = '2026-10-04T12:00:00Z' },
+                { param($e, $m) $e.StoppedProcessId = '300' },
+                { param($e, $m) $e.RestartedProcessId = 0 },
+                { param($e, $m) $e.HostProcessId = 302 },
+                { param($e, $m) $e.HostStartedUtc = 'other-host' },
+                { param($e, $m) $e.Port = 0 },
+                { param($e, $m) $m.Stopped = $false },
+                { param($e, $m) $m.Stopped = 'true' },
+                { param($e, $m) $m.ProcessId = 302 },
+                { param($e, $m) $m.ProcessId = '300' },
+                { param($e, $m) $m.StartedUtc = 'other-host' },
+                { param($e, $m) $m.EndedUtc = '2026-10-04T12:00:02Z' },
+                { param($e, $m) $m.ExitCode = 0 },
+                { param($e, $m) $m.ExitCode = $null },
+                { param($e, $m) $m.ExitCode = '-1' },
+                { param($e, $m) $m.Port = 6113 },
+                { param($e, $m) $m.Port = '6112' }
+            )
+            $case = 0
+            foreach ($change in $changes) {
+                $e = $evidenceJson | ConvertFrom-Json; $m = $markerJson | ConvertFrom-Json
+                & $change $e $m
+                $rejected = $false
+                try { Assert-RecoveryProcessEvidence $e $m } catch { $rejected = $true }
+                if (-not $rejected) { throw "Invalid terminal evidence case $case was accepted." }
+                $case++
+            }
+            $rejected = $false
+            try { Assert-RecoveryProcessEvidence ($evidenceJson | ConvertFrom-Json) $null } catch { $rejected = $true }
+            if (-not $rejected) { throw 'Missing stopped-host marker was accepted.' }
+            'PASS'
+            """;
+        Assert.Contains("PASS", RunPowerShell(BuildDriverFunctionHarness(
+            ["Assert-RecoveryProcessEvidence"], body)), StringComparison.Ordinal);
     }
 
     [Fact]

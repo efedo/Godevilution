@@ -65,6 +65,7 @@ function Read-ModeProcessEvidence([string]$Phase) {
     }
     if ($Phase -eq 'Recovery') {
         if ($null -eq $evidence.StoppedProcessId -or [string]::IsNullOrWhiteSpace($evidence.StoppedHostStartedUtc) -or
+            [string]::IsNullOrWhiteSpace($evidence.StoppedHostEndedUtc) -or $null -eq $evidence.StoppedHostExitCode -or
             $null -eq $evidence.RestartedProcessId -or [string]::IsNullOrWhiteSpace($evidence.RestartedHostStartedUtc) -or
             $null -eq $evidence.GodotProcessId -or [string]::IsNullOrWhiteSpace($evidence.GodotStartedUtc) -or $null -eq $evidence.ExistingClients -or
             $null -eq $evidence.HostProcessId -or [string]::IsNullOrWhiteSpace($evidence.HostStartedUtc) -or
@@ -77,7 +78,35 @@ function Read-ModeProcessEvidence([string]$Phase) {
     }
     return $evidence
 }
-function Assert-RecoveryProcessEvidence($Evidence) {
+function Assert-RecoveryProcessEvidence($Evidence, $StoppedMarker) {
+    # An observed terminal native exit, not a requested Kill, permits replacement.
+    foreach ($identity in @($Evidence.HostProcessId, $Evidence.StoppedProcessId,
+        $Evidence.RestartedProcessId, $Evidence.GodotProcessId)) {
+        if (($identity -isnot [int] -and $identity -isnot [long]) -or $identity -lt 1 -or $identity -gt [int]::MaxValue) {
+            throw 'Recovery process evidence contains an invalid process identity.'
+        }
+    }
+    if (($Evidence.StoppedHostExitCode -isnot [int] -and $Evidence.StoppedHostExitCode -isnot [long]) -or
+        $Evidence.StoppedHostExitCode -lt [int]::MinValue -or $Evidence.StoppedHostExitCode -gt [int]::MaxValue) {
+        throw 'Recovery process evidence omitted a native terminal exit code.'
+    }
+    $started = [DateTime]::Parse($Evidence.StoppedHostStartedUtc).ToUniversalTime()
+    $ended = [DateTime]::Parse($Evidence.StoppedHostEndedUtc).ToUniversalTime()
+    $restarted = [DateTime]::Parse($Evidence.RestartedHostStartedUtc).ToUniversalTime()
+    if ($ended -lt $started -or $restarted -lt $ended) {
+        throw 'Recovery recorded host replacement before confirmed terminal exit.'
+    }
+    if ($null -eq $StoppedMarker -or $StoppedMarker.Stopped -isnot [bool] -or -not $StoppedMarker.Stopped -or
+        ($StoppedMarker.ProcessId -isnot [int] -and $StoppedMarker.ProcessId -isnot [long]) -or
+        ($StoppedMarker.ExitCode -isnot [int] -and $StoppedMarker.ExitCode -isnot [long]) -or
+        ($Evidence.Port -isnot [int] -and $Evidence.Port -isnot [long]) -or $Evidence.Port -lt 1 -or $Evidence.Port -gt 65535 -or
+        ($StoppedMarker.Port -isnot [int] -and $StoppedMarker.Port -isnot [long]) -or
+        $StoppedMarker.ProcessId -ne $Evidence.StoppedProcessId -or
+        $StoppedMarker.StartedUtc -cne $Evidence.StoppedHostStartedUtc -or
+        $StoppedMarker.EndedUtc -cne $Evidence.StoppedHostEndedUtc -or
+        $StoppedMarker.ExitCode -ne $Evidence.StoppedHostExitCode -or $StoppedMarker.Port -ne $Evidence.Port) {
+        throw 'Recovery stopped-host marker does not match confirmed terminal evidence.'
+    }
     if ($Evidence.StoppedProcessId -ne $Evidence.HostProcessId -or
         $Evidence.StoppedHostStartedUtc -ne $Evidence.HostStartedUtc) {
         throw 'Recovery process evidence did not retain the initial recovery host identity.'
@@ -443,7 +472,8 @@ try {
         & $launcher @parameters -AcceptancePhase Recovery
         $recovery = Read-ModeProcessEvidence 'Recovery'
         Assert-FreshProcessEvidence $resumed $recovery 1
-        Assert-RecoveryProcessEvidence $recovery
+        $stoppedMarker = Get-Content -LiteralPath (Join-Path $sessionDirectory 'recovery-server-stopped.json') -Raw | ConvertFrom-Json
+        Assert-RecoveryProcessEvidence $recovery $stoppedMarker
         Write-Host "PASS: actual Godot create/move/checkpoint/fresh-host resume and server-loss/reconnect. Evidence: $sessionDirectory"
 } finally {
     foreach ($name in $presentationEnvironmentNames) {

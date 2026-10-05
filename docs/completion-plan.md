@@ -100,6 +100,8 @@ M4. M5 is the final removal gate, not a reason to postpone replacement work.
    Bound owned-process termination and retain terminal native exits before
    fallible log storage; preserve the engine failure as primary. Child-only
    crash-dialog suppression is mitigation, not proof of every historical cause.
+   Base recovery must retain matching stopped-host identity, terminal native exit
+   and observation-time/port evidence before disposal or host replacement.
    Unattended visible diagnostics outside an acceptance phase must opt into
    `-Automated` with a separate explicit session directory; retain the scene
    quit timer and parent deadline. Normal launches remain interactive. Reject

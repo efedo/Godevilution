@@ -2248,6 +2248,159 @@ public sealed class FakeCompletedProcess
     }
 
     [Fact]
+    public void RecoveryBranchRetainsTerminalMarkerAndNeverRestartsAfterUnconfirmedExit()
+    {
+        if (!OperatingSystem.IsWindows())
+            return;
+
+        var script = BuildPowerShellHarness(
+            ["Get-OwnedTerminalExitCode"],
+            """
+            $branch = @($launcherAst.FindAll({ param($node)
+                $node -is [System.Management.Automation.Language.IfStatementAst] -and
+                $node.Clauses[0].Item1.Extent.Text -ceq '$AcceptancePhase -eq ''Recovery''' -and
+                $node.Clauses[0].Item2.Extent.Text -match 'Get-OwnedTerminalExitCode'
+            }, $true))
+            if ($branch.Count -ne 1) { throw 'Could not isolate the production Recovery branch.' }
+            $branchText = $branch[0].Clauses[0].Item2.Extent.Text
+            $runRecovery = [scriptblock]::Create($branchText.Substring(1, $branchText.Length - 2))
+            $work = Join-Path ([IO.Path]::GetTempPath()) ('Godevilution-RecoveryBranch-' + [guid]::NewGuid().ToString('N'))
+            New-Item -ItemType Directory -Path $work | Out-Null
+            $actualPort = 6112; $PersistenceMode = 'cohort'; $contentHash = 'content'; $rulesetHash = 'rules'
+            $startedServer = [pscustomobject]@{ Persistence = 'complete cohort' }
+            $godotProcess = [pscustomobject]@{ Id = 400; StartTime = [DateTime]::UtcNow.AddSeconds(-5) }
+            $startedClients = @([pscustomobject]@{ Process = $godotProcess })
+            function Stop-OwnedLocalProcess($Process) {
+                $script:events.Add('stop')
+                if ($script:scenario -ne 'still-live') { $Process.HasExited = $true }
+            }
+            function Wait-SceneEvidence($name) {
+                if ($name -eq 'recovery-ready.json') { return [pscustomobject]@{ Ready = $true; Sequence = 1 } }
+                $script:events.Add('offline')
+                $marker = [IO.File]::ReadAllText((Join-Path $SessionDirectory 'recovery-server-stopped.json')) | ConvertFrom-Json
+                if (-not $marker.Stopped -or $marker.ProcessId -ne 300 -or $marker.ExitCode -ne -1 -or
+                    $marker.StartedUtc -cne $oldHost.StartTime.ToUniversalTime().ToString('O') -or
+                    [string]::IsNullOrWhiteSpace($marker.EndedUtc) -or $marker.Port -ne 6112 -or
+                    -not $script:events.Contains('dispose')) { throw 'Terminal marker not retained before disposal/offline wait.' }
+                if ($script:scenario -eq 'offline-failure') { throw 'Harmless offline wait failure.' }
+                return [pscustomobject]@{ Passed = $true; Sequence = 1; OfflineSeconds = 1.5 }
+            }
+            function Start-SessionServer($port, $name) {
+                $script:events.Add('restart')
+                if ($script:scenario -eq 'restart-failure') { throw 'Harmless replacement startup failure.' }
+                return [pscustomobject]@{ Port = $port; ContentHash = $contentHash; RulesetHash = $rulesetHash;
+                    Persistence = 'complete cohort'; Process = [pscustomobject]@{ Id = 301; StartTime = [DateTime]::UtcNow } }
+            }
+            try {
+                foreach ($script:scenario in @('success', 'still-live', 'missing-code', 'terminal-wait-failure',
+                    'marker-write-failure', 'offline-failure', 'restart-failure')) {
+                    $script:events = [Collections.Generic.List[string]]::new()
+                    $SessionDirectory = Join-Path $work $script:scenario
+                    New-Item -ItemType Directory -Path $SessionDirectory | Out-Null
+                    $oldHost = [pscustomobject]@{ Id = 300; HasExited = $false; StartTime = [DateTime]::UtcNow.AddSeconds(-10);
+                        ExitCode = -1; WaitResult = $true }
+                    $oldHost | Add-Member -MemberType ScriptMethod -Name WaitForExit -Value {
+                        param($timeout) $script:events.Add('terminal-wait'); return $this.WaitResult
+                    }
+                    $oldHost | Add-Member -MemberType ScriptMethod -Name Dispose -Value { $script:events.Add('dispose') }
+                    if ($script:scenario -eq 'missing-code') { $oldHost.ExitCode = $null }
+                    if ($script:scenario -eq 'terminal-wait-failure') { $oldHost.WaitResult = $false }
+                    $markerPath = Join-Path $SessionDirectory 'recovery-server-stopped.json'
+                    if ($script:scenario -eq 'marker-write-failure') {
+                        New-Item -ItemType Directory -Path $markerPath | Out-Null
+                    }
+                    $serverProcess = $oldHost; $rejected = $false
+                    try { . $runRecovery } catch { $rejected = $true }
+                    if ($rejected -ne ($script:scenario -ne 'success')) { throw "Unexpected Recovery result: $script:scenario" }
+                    $afterStop = $script:scenario -in @('success', 'offline-failure', 'restart-failure')
+                    if ((Test-Path -LiteralPath $markerPath -PathType Leaf) -ne $afterStop) { throw 'Terminal marker lifetime changed.' }
+                    if ($script:events.Contains('restart') -ne ($script:scenario -in @('success', 'restart-failure'))) {
+                        throw 'Replacement started before reliable termination/offline evidence.'
+                    }
+                    if ($afterStop) {
+                        if (($script:events.GetRange(0, 4) -join ',') -cne 'stop,terminal-wait,dispose,offline') {
+                            throw 'Recovery reordered native terminal observation, disposal or offline wait.'
+                        }
+                    } elseif ($script:events.Contains('dispose') -or $script:events.Contains('offline') -or
+                        $null -eq $serverProcess -or -not [object]::ReferenceEquals($serverProcess, $oldHost)) {
+                        throw 'Unconfirmed termination/evidence lost the host handle needed by outer cleanup.'
+                    }
+                    $aggregatePath = Join-Path $SessionDirectory 'recovery-processes.json'
+                    if ((Test-Path -LiteralPath $aggregatePath -PathType Leaf) -ne ($script:scenario -eq 'success')) {
+                        throw 'Failed Recovery emitted successful replacement evidence.'
+                    }
+                    if ($script:scenario -eq 'success') {
+                        $record = [IO.File]::ReadAllText($aggregatePath) | ConvertFrom-Json
+                        $marker = [IO.File]::ReadAllText($markerPath) | ConvertFrom-Json
+                        if ($record.StoppedHostEndedUtc -cne $marker.EndedUtc -or $record.StoppedHostExitCode -ne $marker.ExitCode) {
+                            throw 'Aggregate Recovery evidence lost the original native exit.'
+                        }
+                    }
+                }
+                'PASS'
+            } finally {
+                $tempRoot = [IO.Path]::GetFullPath([IO.Path]::GetTempPath()).TrimEnd('\')
+                $resolvedWork = [IO.Path]::GetFullPath($work)
+                if ($resolvedWork.StartsWith($tempRoot + '\', [StringComparison]::OrdinalIgnoreCase) -and
+                    [IO.Path]::GetFileName($resolvedWork) -match '^Godevilution-RecoveryBranch-[0-9a-f]{32}$') {
+                    Remove-Item -LiteralPath $resolvedWork -Recurse -Force -ErrorAction SilentlyContinue
+                }
+            }
+            """);
+        Assert.Contains("PASS", RunPowerShell(script), StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void OwnedTerminalExitRequiresConfirmedExitAndPreservesNativeCode()
+    {
+        if (!OperatingSystem.IsWindows())
+            return;
+
+        var script = BuildPowerShellHarness(
+            ["Stop-OwnedLocalProcess", "Get-OwnedTerminalExitCode"],
+            """
+            function Require-Rejection([scriptblock]$action) {
+                $rejected = $false
+                try { & $action | Out-Null } catch { $rejected = $true }
+                if (-not $rejected) { throw 'Unconfirmed native exit was accepted.' }
+            }
+            Require-Rejection { Get-OwnedTerminalExitCode $null }
+            foreach ($command in @('exit 23', 'Start-Sleep -Seconds 30')) {
+                $start = [Diagnostics.ProcessStartInfo]::new()
+                $start.FileName = (Get-Command powershell.exe -CommandType Application).Source
+                $start.Arguments = '-NoProfile -NonInteractive -Command "' + $command + '"'
+                $start.UseShellExecute = $false; $start.CreateNoWindow = $true
+                $child = [Diagnostics.Process]::Start($start)
+                try {
+                    if ($command -eq 'exit 23') {
+                        if (-not $child.WaitForExit(10000)) { throw 'Harmless child did not exit naturally.' }
+                    } else {
+                        Require-Rejection { Get-OwnedTerminalExitCode $child }
+                        Stop-OwnedLocalProcess $child
+                    }
+                    $code = Get-OwnedTerminalExitCode $child
+                    if (-not $child.HasExited -or $code -ne $child.ExitCode -or
+                        ($command -eq 'exit 23' -and $code -ne 23)) {
+                        throw 'Terminal native exit code was lost or changed.'
+                    }
+                    if ((Get-OwnedTerminalExitCode $child) -ne $code) { throw 'Repeated terminal observation changed exit code.' }
+                } finally {
+                    Stop-OwnedLocalProcess $child
+                    $child.Dispose()
+                }
+            }
+            foreach ($fixture in @(
+                [pscustomobject]@{ HasExited = $true; ExitCode = $null; WaitResult = $true },
+                [pscustomobject]@{ HasExited = $true; ExitCode = 23; WaitResult = $false })) {
+                $fixture | Add-Member -MemberType ScriptMethod -Name WaitForExit -Value { param($timeout) return $this.WaitResult }
+                Require-Rejection { Get-OwnedTerminalExitCode $fixture }
+            }
+            'PASS'
+            """);
+        Assert.Contains("PASS", RunPowerShell(script), StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void GodotRedirectedOutputIsRetainedAfterSuccessFailureAndTimeout()
     {
         if (!OperatingSystem.IsWindows())

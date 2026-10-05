@@ -1748,9 +1748,14 @@ try {
             @{ ProcessId = $_.Process.Id; StartedUtc = $_.Process.StartTime.ToUniversalTime().ToString('O') }
         })
         Stop-OwnedLocalProcess $serverProcess
+        $stoppedHostExitCode = Get-OwnedTerminalExitCode $serverProcess
+        $stoppedHostEndedUtc = [DateTime]::UtcNow.ToString('O')
+        # Retain terminal evidence before disposal or any fallible reconnect wait.
+        [IO.File]::WriteAllText((Join-Path $SessionDirectory 'recovery-server-stopped.json'),
+            (@{ Stopped = $true; ProcessId = $stoppedProcessId; StartedUtc = $stoppedHostStartedUtc;
+                EndedUtc = $stoppedHostEndedUtc; ExitCode = $stoppedHostExitCode; Port = $actualPort } | ConvertTo-Json -Compress))
         $serverProcess.Dispose()
         $serverProcess = $null
-        [IO.File]::WriteAllText((Join-Path $SessionDirectory 'recovery-server-stopped.json'), '{"Stopped":true}')
         $offline = Wait-SceneEvidence 'recovery-disconnected.json'
         if (-not $offline.Passed -or $offline.Sequence -ne $ready.Sequence -or $offline.OfflineSeconds -lt 1.5) {
             throw 'Godot did not verify frozen disconnected state and disabled gameplay input.'
@@ -1765,6 +1770,7 @@ try {
             HostProcessId = $stoppedProcessId; HostStartedUtc = $stoppedHostStartedUtc; Clients = $existingClientEvidence;
             InitialHostProcessId = $stoppedProcessId; InitialHostStartedUtc = $stoppedHostStartedUtc; InitialClients = $existingClientEvidence;
             StoppedProcessId = $stoppedProcessId; StoppedHostStartedUtc = $stoppedHostStartedUtc;
+            StoppedHostEndedUtc = $stoppedHostEndedUtc; StoppedHostExitCode = $stoppedHostExitCode;
             RestartedProcessId = $serverProcess.Id; RestartedHostStartedUtc = $serverProcess.StartTime.ToUniversalTime().ToString('O');
             GodotProcessId = $godotProcess.Id; GodotStartedUtc = $godotProcess.StartTime.ToUniversalTime().ToString('O'); ExistingClients = $existingClientEvidence; Port = $actualPort }
         [IO.File]::WriteAllText((Join-Path $SessionDirectory 'recovery-processes.json'), ($restartEvidence | ConvertTo-Json -Depth 4))

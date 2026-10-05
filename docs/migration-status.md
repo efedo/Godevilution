@@ -44,6 +44,29 @@ unsupported behavior is a migration gap, not permission for local simulation.
 
 ## Current delivery position and verification limits
 
+Current M0 shutdown-evidence verification passes: 69 launcher regressions and
+13 documentation checks, no failures/skips, plus an isolated current-build Godot
+create/checkpoint/cold-resume and settled-command host-loss/reconnect run. Base
+recovery now confirms native host exit, retains the stopped marker before
+disposal/waits, and rejects missing
+or mismatched terminal identity/code/time/port evidence before accepting replacement.
+Harmless child and actual Recovery-branch fixtures cover failures without crashing
+an application. Reports: `.local/godot-dialog-terminal-final.xml`,
+`.local/godot-dialog-recovery-branch.xml`, `.local/godot-dialog-terminal-scene.log`,
+`.local/godot-dialog-terminal-docs-qualified.xml`. An initial wrong-project
+documentation filter ran zero tests; its report is not an accepted pass.
+
+The scene root is `Godevilution-Scene-Acceptance-bb83cda6bafc4d349561183c3f60cf15`
+under the local Temp directory. All nine Godot stage records have native exit 0;
+the intentionally stopped host records exit -1 before its replacement starts.
+Engine/staged SDK are 4.7.2; the source SDK remains 4.7.1. Checkpoint generation
+487/tick 361 passes canonical integrity; native item activation remains disabled.
+The first two host logs retain transport-aborted IOException warnings whose exact
+cause is not proven. Builds succeed with unavailable NuGet-audit-feed warnings.
+No project/crash-reporter processes remain; user saves/settings and source SDK
+hashes are unchanged. This is headless launch/recovery proof, not GUI/GPU/campaign,
+graceful host shutdown, normal-profile adoption or every historical dialog's cause.
+
 M0 is the next acceptance gate; M1's playable loop and M2's native world work
 follow its relevant prerequisites and can then progress together. M3-M5 remain
 open. Their scope, dependencies, and exit checks are defined only in the

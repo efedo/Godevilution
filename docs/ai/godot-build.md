@@ -654,10 +654,17 @@ input must leave the authoritative snapshot, rendered position, and command
 ledger unchanged, with explicit reconnect feedback. Only then does the launcher
 restart the host on the same port/save root, revalidate its identity, and require
 a fresh snapshot plus the next accepted movement sequence. Marker/process
-evidence does not contain the resume credential. This checks a settled-command
-outage, not every pending-command, multiplayer, or campaign failure scenario.
+evidence records the owned host's PID/start identity, confirmed native exit code,
+terminal observation time and port before disposal or any reconnect wait. The
+driver requires the stopped marker and replacement record to agree, and rejects
+replacement timestamps before confirmed exit. `EndedUtc` is observed after the
+bounded terminal wait, not the OS exit timestamp; forced host termination need
+not return zero. Evidence does not contain the resume credential. This checks
+a settled-command outage, not every pending-command, multiplayer, or campaign
+failure scenario.
 Missing evidence, wrong identities/mode, absent checkpoints, timeout,
-or nonzero exits fail the run. No MPQs are required. The visible variant also
+or nonzero Godot engine/client stage exits fail the run. No MPQs are required.
+The visible variant also
 captures setup/world PNGs for visual inspection; the private token is not emitted
 in JSON evidence. This is a narrow session journey, not campaign acceptance.
 Managed packaged-restart fixtures inspect legacy checkpoints only after confirmed

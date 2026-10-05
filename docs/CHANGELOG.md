@@ -2,6 +2,14 @@
 
 Notable changes to this fork are recorded below.
 
+- 2026-10-04: Require confirmed native host exit and matching stopped-marker
+  evidence before base Godot recovery can replace its owned server. Preserve
+  terminal evidence across reconnect/startup failures; reject missing/coerced
+  exit codes, identity/port mismatch and impossible replacement ordering. Add
+  harmless child/production-branch regressions and qualify the existing scoped
+  crash safeguards with isolated headless create/save/resume/recovery acceptance.
+  Normal launch/save defaults and interactive error reporting remain unchanged.
+
 - 2026-10-04: Port detached ordinary Cathedral death-time loot from current
   monster seed, raw metadata and item pool/grid/history. Preserve effective
   selection versus raw setup level, minion/Berserk, selector-before-capacity,
