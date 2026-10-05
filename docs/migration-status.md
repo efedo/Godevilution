@@ -411,6 +411,65 @@ cleanup with no secondary error. Its report/log are
 `.local/m0-stopped-checkpoint-client-full-long.xml` and `.log`. The earlier
 10-minute attempt timed out and was cleaned; its distinct log remains retained.
 
+### M2 detached Cathedral death-time loot prerequisite (2026-10-04)
+
+The new module compositor consumes current item pools, signed grids, unique
+history, raw monster/item metadata and the monster's item seed at death. It does
+not precompute drops during generation. Ordinary original-Diablo Cathedral,
+quest-disabled SP Normal is qualified; special treasure, quests and Hellfire
+fail closed. Existing item-world APIs retain their depth-based behavior. Nothing
+is wired into live simulation, profiles, protocol or saves by this prerequisite.
+
+`tools/test-cathedral-monster-loot.ps1` passes two actual native SpawnLoot captures
+and four exact managed depth comparisons: 68 cases/17 lanes across depths 1-4,
+complete raw metadata (138 monsters/100 uniques), 128 item/history slots,
+127 allocator IDs and signed grids. The native bridge runs after an explicit
+rndItemSeed reset; it does not
+execute full MonsterDeath, experience, animation, sound or network effects.
+Derived coverage includes minion/Berserk, no-drop, weighted/gold selection before
+full capacity, final slot 126/reference 127, fallback and unreferenced allocated
+items at (0,0). Signed fallback proves preservation/blocking, not overwrite.
+Bounded native search selects pre-input seed 13: Rotfeast raw 1/effective 4 selects
+an item requiring level 3, initially creates level 1 unique, then matching full
+history regenerates level 5 nonunique. History slot 127 retains its supplied value.
+Expected native state is never a production generator input.
+
+Qualified evidence is private at
+`%TEMP%/Godevilution-Monster-Loot-Oracle-3913e912bff349e9b174f099f00be15d`
+and `.local/cathedral-monster-loot-native-parity-final.log`. Both artifacts
+are 43,394,807 bytes with SHA256
+`1394EF3AF284FD0D0BF0BAC1484604996FA52AE407253A1A5F22211FF604B3D4`.
+All five owned stages exit 0 with retained logs, confirmed cleanup and no timeout,
+primary/cleanup/evidence error. The old unchanged item-world runner also passes
+224 selectors/40 worlds/four comparisons and reproduces its recorded
+25,582,494-byte `a97aea3daaaa5aa23d6fe740e15a25d57bd473042bd3f9a05bac2e4098525dcf`
+corpus under `.local/cathedral-monster-loot-old-world-compatibility.log`.
+
+All 57 focused portable loot/metadata/old-world checks pass without exclusions.
+Broad module/server runs pass 3,382/1,637 with zero failures/errors; exclusions
+are 215/3 explicit NotRun and one existing link-privilege Skip each. Reports are
+`.local/cathedral-monster-loot-module-final-full.xml` and
+`.local/cathedral-monster-loot-server-full.xml`. Initial native build
+retains generated-Protobuf C4251/CMake warnings; managed module builds have no
+warnings/errors, while server builds retain three NU1900 audit-feed warnings.
+No successful vulnerability audit or full campaign/native suite is claimed.
+
+The initial wrapper incorrectly compared a one-artifact array length to file
+size and stopped after two passing byte-identical captures. Its failed receipt
+is retained separately; the corrected guard normalizes the inventory and tests
+scalar/array inputs and symmetric malformed cases. A later portable command
+selected zero tests due to intersecting class/method filters; only the corrected
+57-case report is accepted. These are harness failures, not engine crashes.
+After those corrections all 48 launcher/evidence/Godot safeguards and all 13
+documentation checks pass without exclusions. The broad server run precedes
+the final array-guard regression; the full affected launcher family is freshly
+rebuilt and verified in `.local/cathedral-monster-loot-final-launcher-safety.xml`.
+
+Live raw-state mutation, actual death integration, whole-level installation,
+Godot interaction and cold restore remain M2 gates. The server still never
+requires MPQs; normal cohort adoption remains approval-gated. No Godot is
+launched and user saves/defaults are unchanged. Overall remains approximately 35%.
+
 ### M2 native monster import/checkpoint prerequisite (2026-10-04)
 
 This batch follows `711b7edde`. A distinct 138-row runtime metadata catalog

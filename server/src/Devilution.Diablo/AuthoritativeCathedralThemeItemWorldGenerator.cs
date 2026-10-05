@@ -263,7 +263,8 @@ public static class AuthoritativeCathedralThemeItemWorldGenerator
         ValidateRequest(request);
         var selection = SelectRandomItem(new AuthoritativeCathedralThemeItemWorldSelectionRequest(
             request.RandomState, request.Policy.Depth, request.OnlyGood, request.Catalog, request.Policy));
-        return CreateCore(request, selection);
+        return CreateCore(request, selection, checked(request.Policy.Depth * 2),
+            request.Catalog.Rules.UniqueChanceNormal);
     }
 
     public static AuthoritativeCathedralThemeItemWorldResult CreateTypeItem(
@@ -274,12 +275,39 @@ public static class AuthoritativeCathedralThemeItemWorldGenerator
         var selection = SelectTypeItem(new AuthoritativeCathedralThemeItemWorldSelectionRequest(
             request.RandomState, request.Policy.Depth, request.OnlyGood, request.Catalog, request.Policy,
             request.RequestedItemType, request.RequestedMiscId));
-        return CreateCore(request, selection);
+        return CreateCore(request, selection, checked(request.Policy.Depth * 2),
+            request.Catalog.Rules.UniqueChanceNormal);
+    }
+
+    /**
+     * Allocates and generates one item after an already-consumed native selector.
+     * Death-time monster loot uses this boundary because SpawnItem selects against
+     * the effective monster level but SetupAllItems receives raw MonsterData level.
+     */
+    internal static AuthoritativeCathedralThemeItemWorldResult CreateSelectedItem(
+        AuthoritativeCathedralThemeItemWorldRequest request,
+        int selectedNativeItemIndex,
+        uint selectorRandomState,
+        int generationLevel,
+        int uniqueChance)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        if (generationLevel is < 0 or > 63)
+            throw new InvalidDataException("Native item generation level is outside SetupAllItems bounds.");
+        if (uniqueChance is < 0 or > 100)
+            throw new InvalidDataException("Native item unique chance is outside its byte percentage range.");
+        ValidateRequest(request);
+        if (!request.Catalog.Items.Any(item => item.NativeItemIndex == selectedNativeItemIndex))
+            throw new InvalidDataException("Native selected item index is absent from the raw catalog.");
+        return CreateCore(request, new AuthoritativeCathedralThemeItemWorldSelectionResult(
+            selectedNativeItemIndex, selectorRandomState), generationLevel, uniqueChance);
     }
 
     private static AuthoritativeCathedralThemeItemWorldResult CreateCore(
         AuthoritativeCathedralThemeItemWorldRequest request,
-        AuthoritativeCathedralThemeItemWorldSelectionResult selection)
+        AuthoritativeCathedralThemeItemWorldSelectionResult selection,
+        int generationLevel,
+        int uniqueChance)
     {
         ValidateRequest(request);
         if (request.State.ActiveItemCount >= ActiveCapacity) {
@@ -313,8 +341,8 @@ public static class AuthoritativeCathedralThemeItemWorldGenerator
         var itemRequest = new AuthoritativeCathedralThemeItemRequest(
             itemSeed,
             selection.SelectedNativeItemIndex,
-            checked(request.Policy.Depth * 2),
-            request.Catalog.Rules.UniqueChanceNormal,
+            generationLevel,
+            uniqueChance,
             request.OnlyGood,
             request.PreGenerate,
             InputItem: items[slot],

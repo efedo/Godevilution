@@ -158,7 +158,18 @@ identity even with an empty roster, immutable loader provenance and identity
 bindings. Frozen cohort v1/v2 and legacy saves cannot silently down-convert it.
 The existing C# simulation remains the sole live owner. Immutable initial state
 is not a live-updated lossless raw checkpoint; slot/order/signed-reference mutation,
-death-time loot, whole-world installation, join and Godot restore remain gates.
+live death-time loot wiring, whole-world installation, join and Godot restore
+remain gates.
+
+`AuthoritativeCathedralMonsterLootGenerator` is a detached ordinary original-Diablo
+Cathedral SP Normal compositor. It reseeds from the monster item seed, applies
+minion/no-drop/unique selectors before capacity checks, then consumes current
+pool/grid/history state for allocation, placement, raw-level setup and unique
+continuation. The native SpawnLoot proof covers effective-level selection versus
+raw setup and exhausted-history regeneration; expected outputs are comparison-only.
+Quest, Hellfire and special-treasure branches fail closed. No server MPQ access,
+live simulation, profile, protocol or save activation is introduced. The existing
+item-world APIs retain their depth-based creation behavior.
 
 ## Components
 

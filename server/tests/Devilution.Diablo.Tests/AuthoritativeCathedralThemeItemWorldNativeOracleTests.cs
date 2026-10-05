@@ -84,7 +84,7 @@ public sealed class AuthoritativeCathedralThemeItemWorldNativeOracleTests
         }
     }
 
-    private static State Snapshot(AuthoritativeCathedralThemeItemWorldState state, uint randomState)
+    internal static State Snapshot(AuthoritativeCathedralThemeItemWorldState state, uint randomState)
         => new(randomState, state.ActiveItemCount, state.ActiveItemIds.ToArray(), state.Items.ToArray(),
             state.UniqueItemFlags.ToHashSet(), state.ItemRefs.ToArray());
 
@@ -97,7 +97,7 @@ public sealed class AuthoritativeCathedralThemeItemWorldNativeOracleTests
         return unchecked((uint)(seedState < 0 ? -seedState : seedState));
     }
 
-    private static void EqualState(string name, State expected, State actual)
+    internal static void EqualState(string name, State expected, State actual)
     {
         Assert.Equal(expected.RandomState, actual.RandomState);
         Assert.Equal(expected.Count, actual.Count);
@@ -168,7 +168,7 @@ public sealed class AuthoritativeCathedralThemeItemWorldNativeOracleTests
         return row;
     }
 
-    private static State ReadState(JsonElement value, bool inputs)
+    internal static State ReadState(JsonElement value, bool inputs)
     {
         Properties(value, inputs
             ? ["randomState", "activeCount", "activeIds", "items", "uniqueFlags", "itemRefs", "tiles", "objects"]
@@ -186,7 +186,7 @@ public sealed class AuthoritativeCathedralThemeItemWorldNativeOracleTests
         return new(U(value, "randomState"), count, active, items, flags, refs);
     }
 
-    private static AuthoritativeCathedralThemeItemWorldState ReadInput(JsonElement value)
+    internal static AuthoritativeCathedralThemeItemWorldState ReadInput(JsonElement value)
     {
         var state = ReadState(value, true);
         var tiles = A(value, "tiles").EnumerateArray().ToArray();
@@ -378,7 +378,7 @@ public sealed class AuthoritativeCathedralThemeItemWorldNativeOracleTests
         };
     }
 
-    private sealed record State(uint RandomState, int Count, int[] ActiveIds,
+    internal sealed record State(uint RandomState, int Count, int[] ActiveIds,
         AuthoritativeCathedralInitialItemState[] Items, HashSet<int> Flags, int[] ItemRefs);
     private sealed record Selector(int Depth, uint Seed, bool Good, int Type, int Misc, int SelectedIndex, uint RandomState);
     private sealed record World(string Name, int Depth, uint Seed, bool Good, bool Delta, bool LevelLoading, int Type, int Misc,

@@ -3069,6 +3069,15 @@ void ActivateSpawn(Monster &monster, Point position, Direction dir)
 
 } // namespace
 
+#ifdef BUILD_TESTING
+// Keep the death-loot oracle on the real SpawnLoot branch without exposing
+// the internal gameplay helper to production callers.
+DVL_API_FOR_TEST void TestMonsterSpawnLoot(Monster &monster, bool sendmsg)
+{
+	SpawnLoot(monster, sendmsg);
+}
+#endif
+
 void DeleteMonsterAtActiveIndex(size_t activeIndex)
 {
 	DeleteMonster(activeIndex);

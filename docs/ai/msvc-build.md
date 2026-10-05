@@ -89,6 +89,31 @@ It needs no MPQ files and launches no server, client or Godot. This proves raw
 metadata/calculation parity, not whole-world activation, AI or death-time loot.
 The nineteen-table generation pack and earlier corpus contracts remain unchanged.
 
+For the separate detached death-time loot prerequisite, run:
+
+```powershell
+.\tools\test-cathedral-monster-loot.ps1
+```
+
+This zero-argument bounded runner checks the matching MSVC tools and builds the
+registered `cathedral_monster_loot_test`. It captures 68 cases twice (17 lanes
+across depths 1-4), requires byte-identical complete corpora, then builds/runs
+four exact xUnit v3 depth comparisons. The BUILD_TESTING bridge invokes actual
+SpawnLoot after an explicit monster-item reseed, not full MonsterDeath. No MPQs,
+server, client or Godot are opened. Evidence stays private under
+`%TEMP%/Godevilution-Monster-Loot-Oracle-*`; failures stop without automatic retry,
+retain diagnostics and restore the opt-in environment variable. All owned stage
+exits, logs, bounded cleanup and exact report/artifact inventories are required.
+
+Scope is original Diablo Cathedral, quest-disabled SP Normal. Full item128/
+allocator127/history128 state, signed refs, zero seeds, minion/Berserk, weighted/
+gold selectors before capacity, placement exhaustion and actual paired fresh/
+exhausted unique history are compared. Only native pre-call metadata/state are
+managed inputs. Run the portable loot/metadata and launcher guard families
+separately, plus `test-theme-item-placement.ps1` for unchanged old-world behavior.
+This is not live death handling, multiplayer, quest/Hellfire, populated-profile
+or cold-restore acceptance; default/save/schema identities are unchanged.
+
 Use the Visual Studio developer environment. Plain PowerShell may find `cl.exe`
 or CMake but still miss standard MSVC headers such as `cstdint`, `array`, or
 `Windows.h`.

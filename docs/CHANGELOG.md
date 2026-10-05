@@ -2,6 +2,15 @@
 
 Notable changes to this fork are recorded below.
 
+- 2026-10-04: Port detached ordinary Cathedral death-time loot from current
+  monster seed, raw metadata and item pool/grid/history. Preserve effective
+  selection versus raw setup level, minion/Berserk, selector-before-capacity,
+  slot127 references, placement exhaustion and unique regeneration. Add actual
+  native SpawnLoot proof (68 cases), strict four-depth comparisons, bounded
+  byte-identical captures and malformed-evidence regressions. Preserve existing
+  item-world behavior and document remaining live integration gates. No MPQ,
+  gameplay/profile, protocol, persistence or user-save activation is introduced.
+
 - 2026-10-04: Add separate opt-in two-Godot authored combat/loot and reverse-order
   complete-cohort cold-resume acceptance. Use real route/cancel/attack/pickup
   controls, peer-observed stair staging, post-ACK settled outcomes, exact canonical

@@ -33,6 +33,7 @@ set(tests
   inventory_test
   items_test
   theme_item_generation_test
+  cathedral_monster_loot_test
   math_test
   missiles_test
   monster_test
@@ -135,6 +136,7 @@ else()
     DEPENDS "${DEVILUTIONX_ASSETS_OUTPUT_DIRECTORY}/fonts/12-00.clx")
 endif()
 add_dependencies(theme_item_generation_test theme_item_generation_test_resources)
+add_dependencies(cathedral_monster_loot_test theme_item_generation_test_resources)
 
 if(DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT)
   foreach(server_backed_test server_backed_client_test server_backed_configuration_test server_backed_compatibility_test server_backed_native_presentation_test server_backed_player_snapshot_test server_backed_session_test server_backed_stash_test server_backed_vendor_command_test server_backed_vendor_snapshot_test server_backed_vendor_state_test server_backed_vendor_ui_test)
@@ -156,6 +158,7 @@ endforeach()
 
 target_include_directories(player_animation_context_test PRIVATE "${PROJECT_SOURCE_DIR}/3rdParty/PicoSHA2")
 target_compile_definitions(player_animation_context_test PRIVATE "GODEVILUTION_CONTEXT_SOURCE_ROOT=\"${PROJECT_SOURCE_DIR}\"")
+target_compile_definitions(cathedral_monster_loot_test PRIVATE "GODEVILUTION_MONSTER_LOOT_SOURCE_ROOT=\"${PROJECT_SOURCE_DIR}\"")
 
 foreach(test_target ${standalone_tests})
   target_link_libraries(${test_target} PRIVATE GTest::gtest_main)

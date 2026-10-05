@@ -9,6 +9,139 @@ namespace Devilution.Server.Tests;
 public sealed class CathedralPopulationOracleLauncherTests
 {
     [Fact]
+    public void MonsterLootReportsRequireExactCompletedNativeAndManagedInventories()
+    {
+        if (!OperatingSystem.IsWindows()) return;
+        var script = BuildPowerShellHarness(["Test-MonsterLootInteger", "Assert-MonsterLootNativeReport", "Assert-MonsterLootManagedReport"],
+            """
+            $work=Join-Path ([IO.Path]::GetTempPath()) ('Godevilution-PopulationValidator-' + [guid]::NewGuid().ToString('N'))
+            New-Item -ItemType Directory -Path $work | Out-Null
+            $primaryFailure=$null
+            try {
+                $nativePath=Join-Path $work 'native.json'; $managedPath=Join-Path $work 'managed.xml'
+                $names=@('first','second')
+                foreach($mutation in @('valid','skip','disabled','failure','errors','caseFailure','short','duplicate','wrongName','wrongClass',
+                        'stringCount','fractionalCount','booleanCount','missingCount','missingFailures')) {
+                    $cases=@($names | ForEach-Object { [pscustomobject]@{name=$_;classname='LootFixture';status='RUN';result='COMPLETED'} })
+                    $report=[ordered]@{tests=2;failures=0;disabled=0;errors=0;testsuites=@(@{testsuite=$cases})}
+                    switch($mutation) {
+                        'skip' {$cases[0].result='SKIPPED'}
+                        'disabled' {$report.disabled=1}
+                        'failure' {$report.failures=1}
+                        'errors' {$report.errors=1}
+                        'caseFailure' {$cases[0] | Add-Member -NotePropertyName failures -NotePropertyValue @(@{failure='bad'})}
+                        'short' {$report.testsuites=@(@{testsuite=@($cases[0])})}
+                        'duplicate' {$cases[0].name=$cases[1].name}
+                        'wrongName' {$cases[0].name='other'}
+                        'wrongClass' {$cases[0].classname='OtherFixture'}
+                        'stringCount' {$report.tests='2'}
+                        'fractionalCount' {$report.tests=2.5}
+                        'booleanCount' {$report.tests=$true}
+                        'missingCount' {$report.Remove('tests')}
+                        'missingFailures' {$report.Remove('failures')}
+                    }
+                    [IO.File]::WriteAllText($nativePath,($report | ConvertTo-Json -Depth 6))
+                    $rejected=$false; try {Assert-MonsterLootNativeReport $nativePath 'LootFixture' $names} catch {$rejected=$true}
+                    if(($mutation -eq 'valid') -eq $rejected) {throw "Native loot gate failed for $mutation."}
+                }
+                foreach($mutation in @('valid','skip','failure','short','duplicate','wrongType','wrongMethod','wrongDepth',
+                        'assemblyFailure','assemblySkip','assemblyError','notRun','errorNode','missingPassed','wrongTotal')) {
+                    $type='Devilution.Diablo.Tests.AuthoritativeCathedralMonsterLootNativeOracleTests'; $method='DeathTimeLootMatchesNative'
+                    [xml]$report='<assemblies><assembly total="4" passed="4" failed="0" skipped="0" errors="0" not-run="0"><collection /></assembly></assemblies>'
+                    $assembly=$report.SelectSingleNode('/assemblies/assembly'); $collection=$assembly.SelectSingleNode('collection')
+                    foreach($depth in 1..4) {
+                        $test=$report.CreateElement('test'); $test.SetAttribute('name',"${type}.${method}(depth: $depth)")
+                        $test.SetAttribute('type',$type); $test.SetAttribute('method',$method); $test.SetAttribute('result','Pass')
+                        [void]$collection.AppendChild($test)
+                    }
+                    $cases=@($report.SelectNodes('//test'))
+                    switch($mutation) {
+                        'skip' {$cases[0].SetAttribute('result','Skip')}
+                        'failure' {$cases[0].SetAttribute('result','Fail')}
+                        'short' {[void]$collection.RemoveChild($cases[0])}
+                        'duplicate' {$cases[0].SetAttribute('name',$cases[1].name)}
+                        'wrongType' {$cases[0].SetAttribute('type','other')}
+                        'wrongMethod' {$cases[0].SetAttribute('method','other')}
+                        'wrongDepth' {$cases[0].SetAttribute('name',"${type}.${method}(depth: 5)")}
+                        'assemblyFailure' {$assembly.SetAttribute('failed','1')}
+                        'assemblySkip' {$assembly.SetAttribute('skipped','1')}
+                        'assemblyError' {$assembly.SetAttribute('errors','1')}
+                        'notRun' {$assembly.SetAttribute('not-run','1')}
+                        'errorNode' {$errors=$report.CreateElement('errors'); [void]$errors.AppendChild($report.CreateElement('error')); [void]$assembly.AppendChild($errors)}
+                        'missingPassed' {$assembly.RemoveAttribute('passed')}
+                        'wrongTotal' {$assembly.SetAttribute('total','5')}
+                    }
+                    $report.Save($managedPath)
+                    $rejected=$false; try {Assert-MonsterLootManagedReport $managedPath} catch {$rejected=$true}
+                    if(($mutation -eq 'valid') -eq $rejected) {throw "Managed loot gate failed for $mutation."}
+                }
+                Write-Output 'PASS'
+            } catch {$primaryFailure=$_; throw}
+            finally {
+                if($null -eq $primaryFailure) {Remove-PopulationTestDirectory $work $null}
+                else {Write-Warning -WarningAction Continue "Failed monster-loot report evidence retained at $work"}
+            }
+            """, "tools/test-cathedral-monster-loot.ps1");
+        Assert.Contains("PASS", RunPowerShell(script), StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void MonsterLootArtifactAndRepeatRejectIncompleteOrDivergentCaptures()
+    {
+        if (!OperatingSystem.IsWindows()) return;
+        var script=BuildPowerShellHarness(["Get-MonsterLootArtifact", "Assert-MonsterLootRepeatability"],
+            """
+            $work=Join-Path ([IO.Path]::GetTempPath()) ('Godevilution-PopulationValidator-' + [guid]::NewGuid().ToString('N'))
+            New-Item -ItemType Directory -Path $work | Out-Null
+            $primaryFailure=$null
+            try {
+                foreach($mutation in @('valid','empty','missing','extra','wrongName','directory','oversized')) {
+                    $directory=Join-Path $work $mutation; New-Item -ItemType Directory -Path $directory | Out-Null
+                    $path=Join-Path $directory 'native-cathedral-monster-loot.json'
+                    if($mutation -eq 'directory') {New-Item -ItemType Directory -Path $path | Out-Null}
+                    elseif($mutation -eq 'wrongName') {[IO.File]::WriteAllText((Join-Path $directory 'other.json'),'{}')}
+                    elseif($mutation -ne 'missing') {[IO.File]::WriteAllText($path,$(if($mutation -eq 'empty'){''}else{'{}'}))}
+                    if($mutation -eq 'extra') {[IO.File]::WriteAllText((Join-Path $directory 'extra.json'),'{}')}
+                    if($mutation -eq 'oversized') {$stream=[IO.File]::OpenWrite($path); try {$stream.SetLength(128MB+1)} finally {$stream.Dispose()}}
+                    $rejected=$false; try {$artifact=Get-MonsterLootArtifact $directory} catch {$rejected=$true}
+                    if(($mutation -eq 'valid') -eq $rejected) {throw "Loot artifact gate failed for $mutation."}
+                    if($mutation -eq 'valid') {
+                        if($artifact.Length -ne 2 -or $artifact.Sha256 -cne '44136FA355B3678A1146AD16F7E8649E94FB4FC21FE77E8310C060F61CAAFF8A') {throw 'Wrong artifact hash/length.'}
+                        $valid=$artifact
+                    }
+                }
+                Assert-MonsterLootRepeatability @($valid) $valid
+                Assert-MonsterLootRepeatability $valid @($valid)
+                Assert-MonsterLootRepeatability @($valid) @($valid)
+                foreach($mutation in @('valid','missing','extra','wrongName','wrongLength','stringLength','empty','oversized','wrongHash','malformedHash')) {
+                    $second=[pscustomobject]@{Name=$valid.Name;Length=$valid.Length;Sha256=$valid.Sha256}
+                    switch($mutation) {
+                        'missing' {$second=$null}
+                        'extra' {$second=@($second,$second)}
+                        'wrongName' {$second.Name='other.json'}
+                        'wrongLength' {$second.Length=3}
+                        'stringLength' {$second.Length='2'}
+                        'empty' {$second.Length=0}
+                        'oversized' {$second.Length=128MB+1}
+                        'wrongHash' {$second.Sha256='A'*64}
+                        'malformedHash' {$second.Sha256='X'*64}
+                    }
+                    $rejected=$false; try {Assert-MonsterLootRepeatability $valid $second} catch {$rejected=$true}
+                    if(($mutation -eq 'valid') -eq $rejected) {throw "Loot repetition gate failed for $mutation."}
+                    $rejected=$false; try {Assert-MonsterLootRepeatability $second $valid} catch {$rejected=$true}
+                    if(($mutation -eq 'valid') -eq $rejected) {throw "First loot repetition gate failed for $mutation."}
+                }
+                Write-Output 'PASS'
+            } catch {$primaryFailure=$_; throw}
+            finally {
+                if($null -eq $primaryFailure) {Remove-PopulationTestDirectory $work $null}
+                else {Write-Warning -WarningAction Continue "Failed monster-loot artifact evidence retained at $work"}
+            }
+            """, "tools/test-cathedral-monster-loot.ps1");
+        Assert.Contains("PASS", RunPowerShell(script), StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void ThemeItemPlacementReportsRejectSkippedDuplicateOrWrongScopeResults()
     {
         if (!OperatingSystem.IsWindows()) return;

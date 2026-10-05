@@ -8,6 +8,25 @@ namespace Devilution.Diablo.Tests;
 public sealed class ProjectDocumentationConsistencyTests
 {
     [Fact]
+    public void NativeDeathLootDocumentationKeepsDetachedProofAndLiveIntegrationSeparate()
+    {
+        var root = FindRepositoryRoot();
+        var architecture = Read(root, "docs", "csharp-authoritative-server-migration.md");
+        Assert.Contains(nameof(AuthoritativeCathedralMonsterLootGenerator), architecture, StringComparison.Ordinal);
+        Assert.Contains("live death-time loot wiring", architecture, StringComparison.Ordinal);
+        var plan = Read(root, "docs", "completion-plan.md");
+        Assert.Contains("wire this compositor at actual death", plan, StringComparison.Ordinal);
+        Assert.Contains("never precompute", plan, StringComparison.Ordinal);
+        var guidance = Read(root, "docs", "ai", "msvc-build.md");
+        Assert.Contains("test-cathedral-monster-loot.ps1", guidance, StringComparison.Ordinal);
+        Assert.Contains("not full MonsterDeath", guidance, StringComparison.Ordinal);
+        var status = Read(root, "docs", "migration-status.md");
+        Assert.Contains("Signed fallback proves preservation/blocking, not overwrite", status, StringComparison.Ordinal);
+        Assert.Contains("### M2 detached Cathedral death-time loot prerequisite", status, StringComparison.Ordinal);
+        Assert.Contains("Overall remains approximately 35%", status, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void CooperativeDocumentationKeepsAuthoredScopeAndNormalProfileApprovalSeparate()
     {
         var root = FindRepositoryRoot();

@@ -576,8 +576,13 @@ this evidence. A sample art pack does not satisfy M4's full presentation gate.
    explicit policy, with cohort v3 preserving metadata even for an empty roster;
    legacy v1/v2 schemas/default bytes remain frozen. These are import/checkpoint
    prerequisites, not live populated acceptance or a lossless raw checkpoint.
-   Next update the raw extension through existing simulation mutations, implement
-   native death-time loot (not generation-time precomputed drops), and install
+   Detached native death-time loot now matches actual SpawnLoot across ordinary
+   Cathedral depths 1-4, including effective selection versus raw setup level,
+   current item pools, signed references and unique-history regeneration. It is
+   not live gameplay: wire this compositor at actual death, never precompute
+   drops during generation. Preserve its independent native proof and old item
+   creation behavior. Next update the raw extension through existing simulation
+   mutations, and install
    the whole level in a separately identified opt-in populated server profile.
    Retain full pools/order/tails and signed
    footprint grids. Pickup/drop, object/door and combat mutations must update
