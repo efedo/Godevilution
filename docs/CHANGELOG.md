@@ -2,6 +2,11 @@
 
 Notable changes to this fork are recorded below.
 
+- 2026-10-06: Record independently reviewed one/four-client headless Performance
+  evidence from the source matching `a013ac78e`, excluding preserved uncommitted
+  drafts. All image bindings, workload barriers and owned exits pass. Retain
+  separate dirty-tree measurements and standalone export/rendered/budget gaps.
+
 - 2026-10-06: Bind opt-in Godot Performance captures to independently snapshotted
   client images using loaded identity, MVID, configuration, optimization metadata
   and image/path hashes without publishing absolute paths. Debug/Release helper

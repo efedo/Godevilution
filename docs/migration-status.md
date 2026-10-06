@@ -44,6 +44,33 @@ unsupported behavior is a migration gap, not permission for local simulation.
 
 ## Current delivery position and verification limits
 
+The committed-source one/four-client baseline now passes separately from the
+dirty-tree measurements below. An archive of HEAD `38cbbb61d` plus the exact
+reviewed candidate is bound to all eleven committed `a013ac78e` blobs in
+`.local/runtime-provenance-head-closure-commit.txt` and the candidate hash record;
+it contains no menu/class-skill or approval-held production drafts. Reports are
+`.local/overnight-runtime-provenance-head-performance-1.log` and `-4.log`, with
+matching root pointers. Both captures have source hash
+`5aa347e99fe79cbef8aea02b1183933ea81606dc0d384ffd010d6505f515807b`, Windows
+10.0.26200 x64, .NET 10.0.11, Godot 4.7.2, Debug, headless display,
+`gl_compatibility` and frame cap 60. All five clients retain exact two-role image
+bindings, five warm-up/fifteen measured moves, observer barriers and zero drops.
+All nine engine stages exit zero and all eleven owned processes are absent.
+Single/four-client callback P95 is 2.2843 / 2.4972-2.5778 ms; start-interval P95
+is 29.8058 / 29.8268-29.9817 ms. The single capture contains 1,726 callback and
+1,725 interval samples; four-client captures contain 2,031-2,037 and 2,030-2,036.
+These uncontrolled local runs establish a revision-bound headless baseline,
+not a causal comparison with the dirty run, stable rendered FPS, GPU/whole-frame
+timing, a supported-platform matrix or release budgets.
+
+Read-only local SDK inspection confirms `ExportRelease` defaults optimization
+on and selects the Release Godot API; the installed Mono Windows export-template
+set is missing and the source project has no export preset. The retained direct
+editor lane reports that it cannot instantiate the probe's C# script. A genuine
+standalone probe requires matched templates and a preset in a fresh isolated
+stage, then actual exported-executable image observations. Source SDK 4.7.1,
+private profiles, normal launch behavior and all approval holds remain preserved.
+
 The opt-in Godot Performance provenance package is independently reviewed on
 2026-10-06. It binds exactly `client` and `client-protocol` roles to a manifest
 snapshotted after each fresh staged Debug build and before runtime. Full assembly
