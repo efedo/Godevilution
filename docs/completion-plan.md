@@ -279,9 +279,12 @@ M4. M5 is the final removal gate, not a reason to postpone replacement work.
    commands, configuration, selected tests, outcomes, and any exclusions in
    migration status. Establish the target platform/participant matrix and
    measured tick/frame/memory budgets there before claiming performance gates.
-   The opt-in standalone host workload now measures one/four participants over
-   loopback; it is a preliminary baseline, not a Godot-frame or release-budget
-   pass. Preserve settled authoritative outcomes when extending this workload.
+   The opt-in Release standalone host workload measures Immediate and ClockGated
+   with one/four participants over loopback. Preserve settled observer outcomes,
+   complete metric applicability and clean owned-host exits. Bind ClockGated
+   first-dispatch ticks to actual positive receipts and refuse assembly overrides;
+   synthetic retry checks complement the no-retransmission live workload. This
+   scoped baseline is not a Godot-frame or release-budget pass.
    The separate opt-in actual Godot workload uses fresh one/four-client profiles,
    real controls, all-observer staging/round barriers, bounded callback evidence
    and clean engine exits. Keep callback-body cost separate from start intervals

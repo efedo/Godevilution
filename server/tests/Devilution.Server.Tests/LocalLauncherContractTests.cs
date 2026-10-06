@@ -388,6 +388,38 @@ public sealed class LocalLauncherContractTests
         Assert.Contains("[Environment]::SetEnvironmentVariable($name, $savedEnvironment[$name], 'Process')", launcher);
     }
 
+    [Fact]
+    public void StandaloneHostPerformanceUsesReleaseAssemblyAndBothSchedulingPolicies()
+    {
+        var root = FindRepositoryRoot();
+        var wrapper = File.ReadAllText(Path.Combine(root, "tools/measure-authoritative-host.ps1"));
+        var performance = File.ReadAllText(Path.Combine(root,
+            "godot/Devilution.Client.Protocol.Tests/LiveAuthoritativeServerTests.Performance.cs"));
+        var fixture = File.ReadAllText(Path.Combine(root,
+            "godot/Devilution.Client.Protocol.Tests/LiveAuthoritativeServerTests.cs"));
+
+        var releaseOverrideGuard = wrapper.IndexOf(
+            "GODEVILUTION_SERVER_ASSEMBLY", StringComparison.Ordinal);
+        var releaseInvocation = wrapper.IndexOf("--configuration Release", StringComparison.Ordinal);
+        Assert.True(releaseOverrideGuard >= 0 && releaseOverrideGuard < releaseInvocation);
+        var matrixMethod = performance.IndexOf(
+            "public async Task MeasureStandaloneHostBaseline", StringComparison.Ordinal);
+        Assert.True(matrixMethod >= 0);
+        var fixtureOverrideGuard = performance.IndexOf(
+            "RejectServerAssemblyOverrideForReleaseRun();", matrixMethod, StringComparison.Ordinal);
+        var fixtureAssemblyResolution = performance.IndexOf(
+            "var buildConfiguration = ResolveBuildConfiguration();", matrixMethod, StringComparison.Ordinal);
+        Assert.True(matrixMethod >= 0 && fixtureOverrideGuard > matrixMethod
+            && fixtureOverrideGuard < fixtureAssemblyResolution);
+        Assert.Contains("Environment.GetEnvironmentVariable(\"GODEVILUTION_SERVER_ASSEMBLY\")", performance, StringComparison.Ordinal);
+        Assert.Contains("CommandSchedulingMode.Immediate", performance, StringComparison.Ordinal);
+        Assert.Contains("CommandSchedulingMode.ClockGated", performance, StringComparison.Ordinal);
+        Assert.Contains("ParticipantSchedulingModes", performance, StringComparison.Ordinal);
+        Assert.Contains("ClockGatedTimingProof", performance, StringComparison.Ordinal);
+        Assert.Contains("--command-scheduling", fixture, StringComparison.Ordinal);
+        Assert.Contains("CommandSchedulingMode? commandSchedulingMode = null", fixture, StringComparison.Ordinal);
+    }
+
     private static string FindRepositoryRoot()
     {
         var configuredRoot = Environment.GetEnvironmentVariable(

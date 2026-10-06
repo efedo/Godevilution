@@ -2,6 +2,14 @@
 
 Notable changes to this fork are recorded below.
 
+- 2026-10-06: Extend explicit Release standalone host measurement to Immediate
+  and ClockGated with one/four participants. Bind ClockGated first-dispatch ticks
+  to positive stable server receipts, reject assembly overrides in both entry
+  points, and retain ordinary fixture defaults and metric applicability.
+  Independent review, focused/default-host regressions, 82 launcher checks and
+  all four fresh measurement cases pass. This scoped baseline has recorder
+  overhead and preserved dirty-tree drafts; it does not certify release budgets.
+
 - 2026-10-06: Add an exact-pinned authored Rogue Trap Disarm content prerequisite
   with an armed existing door and isolated Cathedral start, preserving base
   resources/loadout and other entities. Independent review and content tests

@@ -44,6 +44,43 @@ unsupported behavior is a migration gap, not permission for local simulation.
 
 ## Current delivery position and verification limits
 
+The expanded standalone Release host measurement is independently reviewed on
+2026-10-06. Immediate and ClockGated each pass one/four-participant cases (4/4)
+in `.local/overnight-clock-gated-host-receipt-qualified.log`; private evidence
+root `Godevilution-Host-Performance-5063b74046ca4e19900a8137dc2ad04c` retains
+workloads, public host reports and private saves. Every participant negotiates
+the selected policy. Five warm-up and fifteen measured settled moves retain
+observer barriers, exact thirteen-metric applicability and zero dropped samples.
+Both ClockGated cases bind all twenty positive server receipts to successful
+first-dispatch requested ticks with Accepted/Unspecified outcomes. Each command
+has one dispatch/acknowledgment here; frozen retransmission ticks are covered by
+the synthetic regression, not a live retry in this workload. All four hosts quit
+cleanly and are confirmed stopped. Direct explicit invocation and the wrapper
+both reject an assembly override before workload artifacts/host startup.
+
+Focused timing/metrics/no-overwrite/default-adapter restore and reconnect checks
+pass 5/5, receipt-identity validation passes 1/1, and integrated launchers pass
+82/82, without skips. Reports: `.local/overnight-clock-gated-host-receipt-regressions.xml`,
+`.local/overnight-clock-gated-host-receipt-identities.xml` and
+`.local/overnight-trap-clock-gated-launchers.xml`. The direct override probe's
+four expected guard failures are retained in
+`.local/overnight-host-direct-override-refusal-qualified.xml`; they are refusal
+evidence, not a passing workload. The preliminary four-case run and first
+compile/override-probe control failures remain retained.
+
+P95 milliseconds, one/four participants: Immediate periodic advance/checkpoint
+5.8532 / 16.0231, command admission/checkpoint 20.2601 / 30.0813, combined
+publication 3.2175 / 1.8327. ClockGated periodic advance/checkpoint
+6.1847 / 18.4822, queue admission 5.0200 / 14.8106, scheduled checkpoint
+5.5693 / 5.9690, combined publication 2.1319 / 1.8903. These measurements
+overlap and must not be added. This is the integrated dirty tree based on
+HEAD `a44b1a39c`, including preserved approval-held drafts; it is not a clean
+revision comparison. Host metadata records Windows build 26200, x64 .NET 10.0.11
+and twelve logical processors on the same Windows machine. ClockGated adds the
+optional client timing recorder's overhead. The authored-town/seed-0 loopback legacy-checkpoint workload supplies
+no Godot frame, cohort, campaign, native-generation, platform-matrix, durability,
+soak or release-budget acceptance.
+
 The isolated authored Rogue Trap Disarm content prerequisite is independently
 reviewed on 2026-10-06. Exact-pinned `rogue-trap-preview` moves only door entity
 2001 to `(20,22)` and arms it, plus an optional level-1 start row at `(20,20)`;

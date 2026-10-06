@@ -838,9 +838,11 @@ campaign workload or soak is certified by these local measurements.
 
 Run `tools/measure-authoritative-host.ps1` from PowerShell. It rebuilds Release
 artifacts and explicitly selects the otherwise excluded real-time xUnit workload.
-Run it without concurrent builds/tests. The one-player single-player case and
-four-player multiplayer case each use a fresh standalone host, seed 0, authored
-town level 0, real loopback TCP clients, and on-disk checkpoints. One Rogue moves
+Run it without concurrent builds/tests. Immediate and ClockGated scheduling each
+run one-player single-player and four-player multiplayer cases: four fresh
+standalone hosts, seed 0, authored town level 0, real loopback TCP clients, and
+on-disk checkpoints. Both the wrapper and explicit workload refuse a nonempty
+host-assembly override, so Release test configuration cannot select a Debug host. One Rogue moves
 once per settled round (at least one second); all participants poll using the
 normal 250ms snapshot interval and must observe each completed move. Five warm-up
 moves precede `profile-start`; fifteen measured moves follow. The test fails on
@@ -848,16 +850,22 @@ rejection, missing movement, stale observer state, missing metrics, truncated
 samples, bad identities, or nonzero host exit. It does not assert latency budgets.
 
 The printed private evidence directory retains `host.json`, `workload.json`,
-minimal final observations, and server saves. The standalone workload requires
-observed ServerHello scheduling mode `Immediate` from every participant. Its
-thirteen declared metric summaries must be complete: eleven applicable summaries
-have retained samples and zero drops; `CommandQueueAdmissionMilliseconds` and
-`ScheduledCommandCheckpointMilliseconds` must have zero samples and null statistics.
-Synthetic validation also checks the reciprocal ClockGated rule: its immediate-only
-`CommandAdmissionAndCheckpointMilliseconds` stays empty. No real ClockGated
-measurement is supplied by this workload. Missing/unknown metrics, invalid summaries
-or unexpected scheduling fail; successful workload metadata retains the negotiated
-mode, inapplicable metrics and actual owned host PID/clean-quit observation.
+minimal final observations, and server saves. Every participant must negotiate
+the selected ServerHello scheduling mode. All thirteen declared metric summaries
+must be complete with zero drops: Immediate has eleven populated summaries and
+empty queue-admission/scheduled-checkpoint summaries; ClockGated has twelve
+populated summaries and an empty immediate-admission/checkpoint summary. Empty
+summaries require zero samples and null statistics. Missing/unknown metrics,
+invalid summaries or unexpected scheduling fail.
+
+ClockGated additionally records the moving client's scalar dispatch/receipt
+timings. Every accepted sequence requires a successful first dispatch at a
+positive requested tick, stable requested ticks across retransmissions, and an
+Accepted/Unspecified result with a positive server receipt at that exact tick.
+Timing capture must have zero dropped records. This optional recorder adds
+measurement overhead to the ClockGated cases. Workload metadata retains these
+bindings, every participant's negotiated mode, inapplicable metrics and the owned
+host PID/clean-quit observation. It does not emit payloads or session credentials.
 
 Host JSON contains exact metric
 boundaries described in the [host guide](../../server/src/Devilution.Server.Host/README.md#opt-in-performance-evidence),

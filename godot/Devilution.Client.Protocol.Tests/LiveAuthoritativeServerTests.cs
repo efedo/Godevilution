@@ -6016,8 +6016,14 @@ public sealed partial class LiveAuthoritativeServerTests
             bool deleteSaveRootOnDispose = true,
             string? gameAdapterPackageRoot = null,
             string? gameAdapterId = null,
-            string? performanceOutput = null)
+            string? performanceOutput = null,
+            CommandSchedulingMode? commandSchedulingMode = null)
         {
+            if (commandSchedulingMode.HasValue
+                && commandSchedulingMode.Value is not (CommandSchedulingMode.Immediate or CommandSchedulingMode.ClockGated)) {
+                throw new ArgumentOutOfRangeException(nameof(commandSchedulingMode),
+                    "Live host fixtures support only Immediate and ClockGated command scheduling.");
+            }
             var repositoryRoot = LiveAuthoritativeServerTests.FindRepositoryRoot();
             var owner = TestContext.Current.TestClassInstance as LiveAuthoritativeServerTests
                 ?? throw new InvalidOperationException("Live hosts require a per-test cleanup owner.");
@@ -6045,6 +6051,11 @@ public sealed partial class LiveAuthoritativeServerTests
             if (performanceOutput is not null) {
                 startInfo.ArgumentList.Add("--performance-output");
                 startInfo.ArgumentList.Add(performanceOutput);
+            }
+            if (commandSchedulingMode.HasValue) {
+                startInfo.ArgumentList.Add("--command-scheduling");
+                startInfo.ArgumentList.Add(commandSchedulingMode.Value == CommandSchedulingMode.ClockGated
+                    ? "clock-gated" : "immediate");
             }
             if (startingGoldOverride.HasValue) {
                 startInfo.ArgumentList.Add("--starting-gold");
