@@ -2,6 +2,13 @@
 
 Notable changes to this fork are recorded below.
 
+- 2026-10-06: Correct standalone host performance evidence for negotiated command
+  scheduling. Require the complete metric schema, populated applicable summaries
+  and honest empty summaries for metrics from the other scheduling path. Retain
+  real movement, observer, identity, sample/drop and clean-host-exit checks.
+  Independent review, the focused regression and both fresh Release Immediate
+  one/four-player workloads pass. This scoped measurement is not a release gate.
+
 - 2026-10-04: Require confirmed native host exit and matching stopped-marker
   evidence before base Godot recovery can replace its owned server. Preserve
   terminal evidence across reconnect/startup failures; reject missing/coerced

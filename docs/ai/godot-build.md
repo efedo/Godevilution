@@ -848,7 +848,18 @@ rejection, missing movement, stale observer state, missing metrics, truncated
 samples, bad identities, or nonzero host exit. It does not assert latency budgets.
 
 The printed private evidence directory retains `host.json`, `workload.json`,
-minimal final observations, and server saves. Host JSON contains exact metric
+minimal final observations, and server saves. The standalone workload requires
+observed ServerHello scheduling mode `Immediate` from every participant. Its
+thirteen declared metric summaries must be complete: eleven applicable summaries
+have retained samples and zero drops; `CommandQueueAdmissionMilliseconds` and
+`ScheduledCommandCheckpointMilliseconds` must have zero samples and null statistics.
+Synthetic validation also checks the reciprocal ClockGated rule: its immediate-only
+`CommandAdmissionAndCheckpointMilliseconds` stays empty. No real ClockGated
+measurement is supplied by this workload. Missing/unknown metrics, invalid summaries
+or unexpected scheduling fail; successful workload metadata retains the negotiated
+mode, inapplicable metrics and actual owned host PID/clean-quit observation.
+
+Host JSON contains exact metric
 boundaries described in the [host guide](../../server/src/Devilution.Server.Host/README.md#opt-in-performance-evidence),
 OS/runtime/architecture, participant count, and process memory observations.
 Workload JSON records actual duration, command counts, and configuration. No

@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.IO;
 using System.Text.Json;
 using Devilution.Client.Protocol;
 using Devilution.Protocol.V1;
@@ -8,6 +9,34 @@ namespace Devilution.Client.Protocol.Tests;
 
 public sealed partial class LiveAuthoritativeServerTests
 {
+    private static readonly string[] PerformanceMetricNames = {
+        "PeriodicAdvanceAndCheckpointMilliseconds",
+        "CommandAdmissionAndCheckpointMilliseconds",
+        "SnapshotMaterializeMilliseconds",
+        "SnapshotWriteMilliseconds",
+        "SnapshotEnvelopePayloadBytes",
+        "PeriodicAdvanceLockInclusiveMilliseconds",
+        "SessionCheckpointLockWaitMilliseconds",
+        "SessionStateAndLedgerCaptureMilliseconds",
+        "CombinedCheckpointPublishMilliseconds",
+        "CompatibilityStatePublishMilliseconds",
+        "CompatibilityReceiptsPublishMilliseconds",
+        "CommandQueueAdmissionMilliseconds",
+        "ScheduledCommandCheckpointMilliseconds",
+    };
+
+    // These metrics are recorded only by the named scheduler policy.
+    private static readonly HashSet<string> ClockGatedOnlyPerformanceMetrics = new(StringComparer.Ordinal) {
+        "CommandQueueAdmissionMilliseconds",
+        "ScheduledCommandCheckpointMilliseconds",
+    };
+
+    private static readonly HashSet<string> ImmediateOnlyPerformanceMetrics = new(StringComparer.Ordinal) {
+        "CommandAdmissionAndCheckpointMilliseconds",
+    };
+
+    private static readonly string[] PerformanceStatisticNames = { "Mean", "P50", "P95", "Maximum" };
+
     [Fact]
     public async Task PerformanceOutputNeverOverwritesAndUnstartedCaptureIsExplicit()
     {
@@ -30,6 +59,50 @@ public sealed partial class LiveAuthoritativeServerTests
         } finally {
             Directory.Delete(directory, recursive: true);
         }
+    }
+
+    [Fact]
+    public void PerformanceMetricSummariesRequireCompleteApplicableSchema()
+    {
+        using (var immediate = CreateMetricDocument("Immediate"))
+            ValidatePerformanceMetricSummaries(immediate.RootElement, "Immediate");
+        using (var clockGated = CreateMetricDocument("ClockGated"))
+            ValidatePerformanceMetricSummaries(clockGated.RootElement, "ClockGated");
+
+        var missing = CreateValidMetricSummaries("Immediate");
+        missing.Remove(PerformanceMetricNames[0]);
+        Assert.Throws<InvalidDataException>(() => ValidateMetricFixture(missing, "Immediate"));
+
+        var unknown = CreateValidMetricSummaries("Immediate");
+        unknown.Add("UnexpectedMetric", PopulatedMetricSummary());
+        Assert.Throws<InvalidDataException>(() => ValidateMetricFixture(unknown, "Immediate"));
+
+        var immediateClockGatedMetricPopulated = CreateValidMetricSummaries("Immediate");
+        immediateClockGatedMetricPopulated["CommandQueueAdmissionMilliseconds"] = PopulatedMetricSummary();
+        Assert.Throws<InvalidDataException>(() => ValidateMetricFixture(immediateClockGatedMetricPopulated, "Immediate"));
+
+        var immediateRequiredMetricEmpty = CreateValidMetricSummaries("Immediate");
+        immediateRequiredMetricEmpty["SnapshotWriteMilliseconds"] = EmptyMetricSummary();
+        Assert.Throws<InvalidDataException>(() => ValidateMetricFixture(immediateRequiredMetricEmpty, "Immediate"));
+
+        var clockGatedMetricEmpty = CreateValidMetricSummaries("ClockGated");
+        clockGatedMetricEmpty["ScheduledCommandCheckpointMilliseconds"] = EmptyMetricSummary();
+        Assert.Throws<InvalidDataException>(() => ValidateMetricFixture(clockGatedMetricEmpty, "ClockGated"));
+
+        var clockGatedImmediateOnlyMetricPopulated = CreateValidMetricSummaries("ClockGated");
+        clockGatedImmediateOnlyMetricPopulated["CommandAdmissionAndCheckpointMilliseconds"] = PopulatedMetricSummary();
+        Assert.Throws<InvalidDataException>(() => ValidateMetricFixture(clockGatedImmediateOnlyMetricPopulated, "ClockGated"));
+
+        var missingClockGatedDeclaration = CreateValidMetricSummaries("ClockGated");
+        missingClockGatedDeclaration.Remove("CommandAdmissionAndCheckpointMilliseconds");
+        Assert.Throws<InvalidDataException>(() => ValidateMetricFixture(missingClockGatedDeclaration, "ClockGated"));
+
+        var clockGatedApplicableMetricEmpty = CreateValidMetricSummaries("ClockGated");
+        clockGatedApplicableMetricEmpty["SnapshotWriteMilliseconds"] = EmptyMetricSummary();
+        Assert.Throws<InvalidDataException>(() => ValidateMetricFixture(clockGatedApplicableMetricEmpty, "ClockGated"));
+
+        using var unknownMode = CreateMetricDocument("Immediate");
+        Assert.Throws<InvalidDataException>(() => ValidatePerformanceMetricSummaries(unknownMode.RootElement, "Unknown"));
     }
 
     // Explicit: real-time measurement is opt-in and must not compete with the suite.
@@ -62,6 +135,7 @@ public sealed partial class LiveAuthoritativeServerTests
                 clients.Add(client);
                 await client.ConnectAsync(cancellationToken);
                 Assert.Equal(expectedMode, client.ServerGameMode);
+                Assert.Equal(CommandSchedulingMode.Immediate, client.ServerCommandSchedulingMode);
                 snapshots[index] = (await WaitForMessageAsync(client, message => message.Snapshot is not null)).Snapshot;
             }
             // Only the first participant walks. All participants poll and must
@@ -131,6 +205,7 @@ public sealed partial class LiveAuthoritativeServerTests
             await RunRoundsAsync(15, 5);
             // Quit while connected; shutdown emits the completed measurement.
             await server.QuitAsync(cancellationToken);
+            Assert.True(server.HasExited, "The owned host must have exited before workload evidence is accepted.");
             using var evidence = JsonDocument.Parse(await File.ReadAllTextAsync(outputPath, cancellationToken));
             var host = evidence.RootElement;
             Assert.Equal("Completed", host.GetProperty("Status").GetString());
@@ -140,15 +215,16 @@ public sealed partial class LiveAuthoritativeServerTests
             Assert.Equal(server.RulesetHash, host.GetProperty("RulesetHash").GetString());
             var report = host.GetProperty("Report");
             Assert.InRange(report.GetProperty("ElapsedSeconds").GetDouble(), 15, 40);
-            foreach (var metric in report.GetProperty("Metrics").EnumerateObject()) {
-                Assert.True(metric.Value.GetProperty("Samples").GetInt32() > 0, metric.Name);
-                Assert.Equal(0, metric.Value.GetProperty("DroppedSamples").GetInt64());
-                Assert.True(metric.Value.GetProperty("P95").GetDouble() > 0, metric.Name);
-            }
+            var schedulingMode = clients[0].ServerCommandSchedulingMode;
+            Assert.All(clients, client => Assert.Equal(schedulingMode, client.ServerCommandSchedulingMode));
+            ValidatePerformanceMetricSummaries(report.GetProperty("Metrics"), schedulingMode.ToString());
             Assert.Equal(20, accepted.Count);
             Assert.All(snapshotCounts, count => Assert.True(count >= 40));
             await File.WriteAllTextAsync(Path.Combine(directory, "workload.json"), JsonSerializer.Serialize(new {
                 Passed = true, Participants = participants, Mode = mode, BuildConfiguration = ResolveBuildConfiguration(),
+                SchedulingMode = schedulingMode.ToString(), SchedulingModeEvidence = "NegotiatedServerHello",
+                NotApplicableMetrics = GetNotApplicablePerformanceMetrics(schedulingMode.ToString()),
+                OwnedHostProcessId = server.ProcessId, OwnedHostExited = server.HasExited, OwnedHostCleanQuitVerified = true,
                 WarmupSeconds = warmup.Elapsed.TotalSeconds, MeasuredSeconds = measured.Elapsed.TotalSeconds,
                 MeasuredCommands = 15, AcceptedCommandsIncludingWarmup = accepted.Count,
                 SnapshotCountsIncludingWarmup = snapshotCounts, PumpDelayMilliseconds = 25,
@@ -165,5 +241,97 @@ public sealed partial class LiveAuthoritativeServerTests
                     Players = snapshot?.Players.Select(player => new { player.EntityId, player.PositionX, player.PositionY }),
                 }), new JsonSerializerOptions { WriteIndented = true }));
         }
+    }
+
+    private sealed record PerformanceMetricFixture(
+        int Samples, long DroppedSamples, double? Mean, double? P50, double? P95, double? Maximum);
+
+    private static PerformanceMetricFixture PopulatedMetricSummary()
+        => new(4, 0, 1.5, 1, 2, 3);
+
+    private static PerformanceMetricFixture EmptyMetricSummary()
+        => new(0, 0, null, null, null, null);
+
+    private static Dictionary<string, PerformanceMetricFixture> CreateValidMetricSummaries(string schedulingMode)
+    {
+        var summaries = new Dictionary<string, PerformanceMetricFixture>(StringComparer.Ordinal);
+        foreach (var name in PerformanceMetricNames) {
+            summaries.Add(name, IsPerformanceMetricApplicable(schedulingMode, name)
+                ? PopulatedMetricSummary() : EmptyMetricSummary());
+        }
+        return summaries;
+    }
+
+    private static JsonDocument CreateMetricDocument(string schedulingMode)
+        => JsonDocument.Parse(JsonSerializer.Serialize(CreateValidMetricSummaries(schedulingMode)));
+
+    private static void ValidateMetricFixture(
+        Dictionary<string, PerformanceMetricFixture> summaries, string schedulingMode)
+    {
+        using var document = JsonDocument.Parse(JsonSerializer.Serialize(summaries));
+        ValidatePerformanceMetricSummaries(document.RootElement, schedulingMode);
+    }
+
+    private static string[] GetNotApplicablePerformanceMetrics(string schedulingMode)
+        => PerformanceMetricNames.Where(name => !IsPerformanceMetricApplicable(schedulingMode, name)).ToArray();
+
+    private static bool IsPerformanceMetricApplicable(string schedulingMode, string metricName)
+        => schedulingMode switch {
+            "Immediate" => !ClockGatedOnlyPerformanceMetrics.Contains(metricName),
+            "ClockGated" => !ImmediateOnlyPerformanceMetrics.Contains(metricName),
+            _ => throw new InvalidDataException($"Unknown command scheduling mode '{schedulingMode}'."),
+        };
+
+    private static void ValidatePerformanceMetricSummaries(JsonElement metrics, string schedulingMode)
+    {
+        if (schedulingMode is not ("Immediate" or "ClockGated"))
+            throw new InvalidDataException($"Unknown command scheduling mode '{schedulingMode}'.");
+        RequireExactProperties(metrics, PerformanceMetricNames, "Metrics");
+
+        foreach (var name in PerformanceMetricNames) {
+            var summary = metrics.GetProperty(name);
+            RequireExactProperties(summary,
+                new[] { "Samples", "DroppedSamples", "Mean", "P50", "P95", "Maximum" }, name);
+            var samplesValue = summary.GetProperty("Samples");
+            var droppedValue = summary.GetProperty("DroppedSamples");
+            if (samplesValue.ValueKind != JsonValueKind.Number || !samplesValue.TryGetInt32(out var samples) || samples < 0)
+                throw new InvalidDataException($"Metric {name} has an invalid Samples value.");
+            if (droppedValue.ValueKind != JsonValueKind.Number || !droppedValue.TryGetInt64(out var dropped) || dropped != 0)
+                throw new InvalidDataException($"Metric {name} has an invalid or nonzero DroppedSamples value.");
+
+            var statistics = PerformanceStatisticNames.Select(name => summary.GetProperty(name)).ToArray();
+            if (!IsPerformanceMetricApplicable(schedulingMode, name)) {
+                if (samples != 0 || statistics.Any(value => value.ValueKind != JsonValueKind.Null))
+                    throw new InvalidDataException($"{schedulingMode} scheduling must leave inapplicable metric {name} empty.");
+                continue;
+            }
+
+            if (samples == 0)
+                throw new InvalidDataException($"Applicable metric {name} has no samples.");
+            var values = new double[statistics.Length];
+            for (var index = 0; index < statistics.Length; index++) {
+                if (statistics[index].ValueKind != JsonValueKind.Number
+                    || !statistics[index].TryGetDouble(out values[index])
+                    || !double.IsFinite(values[index]) || values[index] < 0) {
+                    throw new InvalidDataException($"Applicable metric {name} has an invalid {PerformanceStatisticNames[index]} value.");
+                }
+            }
+            if (values[2] <= 0 || values[1] > values[2] || values[2] > values[3] || values[0] > values[3])
+                throw new InvalidDataException($"Applicable metric {name} has inconsistent summary statistics.");
+        }
+    }
+
+    private static void RequireExactProperties(JsonElement value, IEnumerable<string> expectedNames, string label)
+    {
+        if (value.ValueKind != JsonValueKind.Object)
+            throw new InvalidDataException($"{label} must be a JSON object.");
+        var expected = expectedNames.ToHashSet(StringComparer.Ordinal);
+        var actual = new HashSet<string>(StringComparer.Ordinal);
+        foreach (var property in value.EnumerateObject()) {
+            if (!actual.Add(property.Name))
+                throw new InvalidDataException($"{label} contains duplicate property {property.Name}.");
+        }
+        if (!actual.SetEquals(expected))
+            throw new InvalidDataException($"{label} has missing or unexpected properties.");
     }
 }
