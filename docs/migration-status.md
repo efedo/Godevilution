@@ -86,13 +86,30 @@ These uncontrolled local runs establish a revision-bound headless baseline,
 not a causal comparison with the dirty run, stable rendered FPS, GPU/whole-frame
 timing, a supported-platform matrix or release budgets.
 
-Read-only local SDK inspection confirms `ExportRelease` defaults optimization
-on and selects the Release Godot API; the installed Mono Windows export-template
-set is missing and the source project has no export preset. The retained direct
-editor lane reports that it cannot instantiate the probe's C# script. A genuine
-standalone probe requires matched templates and a preset in a fresh isolated
-stage, then actual exported-executable image observations. Source SDK 4.7.1,
-private profiles, normal launch behavior and all approval holds remain preserved.
+Real standalone assembly-only exports now pass independent review for preserved
+dirty sources and committed source at `37d7ebffc`. Retained logs are
+`.local/godot-standalone-export-path-digest-qualified.log` and
+`.local/godot-standalone-export-committed-qualified.log`, with evidence roots
+`.local/godot-standalone-export-25a61c79385249b981ac1e44ccd1bf9c` and
+`.local/godot-standalone-export-9d159544b9a343d8809d31dced678d33` respectively.
+The committed repeat verifies all 143 archived build inputs before and after
+export; its client tree remains
+`5aa347e99fe79cbef8aea02b1183933ea81606dc0d384ffd010d6505f515807b`.
+Matched official 4.7.2 Mono Windows x64 templates remain workspace-only; fresh
+staged presets use actual `--export-release` with nonembedded managed outputs.
+
+Both exported executables physically load three optimized `ExportRelease`
+application images and the exact optimized `Release` GodotSharp image. All four
+identities, MVIDs, file/path hashes and locations match independent pre-runtime
+bundle manifests. Actual runtime is Godot 4.7.2, .NET 8.0.30 X64, non-editor,
+non-debug with the Release feature. Each proof has four zero-exit owned stages,
+complete cleanup/drains and all processes absent; export logs have no warning or
+error matches. Earlier denied-read, path-digest and direct-editor failures remain
+retained failures. No Main, connection or save is instantiated: real gameplay,
+frame workload, rendered measurements, native machine-code optimization,
+platform coverage and release budgets remain open. Source SDK 4.7.1, private
+profiles, normal launches, all twenty protected hashes and approval holds remain
+preserved; only isolated stages use SDK 4.7.2. The estimate stays 35%.
 
 The opt-in Godot Performance provenance package is independently reviewed on
 2026-10-06. It binds exactly `client` and `client-protocol` roles to a manifest

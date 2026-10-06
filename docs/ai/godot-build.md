@@ -837,12 +837,19 @@ byte-for-byte integrity of the loaded in-memory image. Missing, extra, mistyped,
 mismatched or optimized assembly evidence rejects this Debug baseline. Ordinary
 profiles clear the new image-directory setting and perform no capture hashing.
 
-Godot's optimized application configuration is `ExportRelease`. The isolated
-editor probe can load those optimized application images after copying their
-output into the editor's Debug layout, but the loaded Godot API remains Debug.
-That adaptation and the retained failed direct-load lane do not certify a fully
-optimized standalone export. Export templates, rendered Release measurements and
-release budgets remain separate acceptance work; see migration status for proof.
+Godot's optimized application configuration is `ExportRelease`. Independently
+reviewed assembly-only probes now execute genuine standalone exports from both
+preserved dirty sources and an archived committed source. Matched official 4.7.2
+Mono Windows x64 templates and export presets exist only in disposable workspace
+stages. The source SDK remains 4.7.1; isolated imports use SDK 4.7.2. Independent
+pre-runtime bundle manifests bind physical runtime locations, identities, MVIDs
+and file/path hashes for three optimized ExportRelease application images and
+the exact optimized Release GodotSharp image. The committed repeat also verifies
+all 143 archived build inputs before and after export. All owned stages exit
+cleanly and are absent. These probes instantiate no Main, connection or save;
+actual exported gameplay/frame workloads, rendered Release measurements, native
+machine-code optimization and release budgets remain separate acceptance work.
+See migration status for the retained evidence and earlier failed probes.
 
 Missing rounds, changed identity, empty/invalid/truncated samples, overwritten
 output, nonzero client exits or missing checkpoints reject the baseline. Recording

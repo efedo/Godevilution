@@ -2,6 +2,12 @@
 
 Notable changes to this fork are recorded below.
 
+- 2026-10-06: Qualify genuine headless standalone assembly loading from preserved
+  dirty and committed Godot sources. Independently verified bundle manifests bind
+  three optimized ExportRelease application images and the Release vendor API;
+  all owned stages exit cleanly. Source SDK and normal profiles remain unchanged.
+  These assembly-only probes do not close gameplay, rendered or budget gates.
+
 - 2026-10-06: Characterize native Trap Disarm through the existing action caller
   with scoped no-op object behaviors and complete pool/player/metadata/vision
   restoration. Add the pool's existing-policy test DLL annotation. Independently
