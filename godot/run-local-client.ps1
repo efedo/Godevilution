@@ -178,6 +178,7 @@ $environmentNames = @('DEVILUTION_SERVER_HOST', 'DEVILUTION_SERVER_PORT', 'DEVIL
     'GODEVILUTION_PERSISTENCE_MODE', 'GODEVILUTION_COMMAND_TIMING_TRACE',
     'GODEVILUTION_LOCAL_PLAYER', 'GODEVILUTION_PORTAL_PREVIEW', 'GODEVILUTION_LIFECYCLE_PREVIEW', 'GODEVILUTION_CATHEDRAL_PROFILE', 'GODEVILUTION_CATHEDRAL_DEPTH_PROFILE', 'GODEVILUTION_CATHEDRAL_DOOR_PROFILE',
     'GODEVILUTION_PERFORMANCE_PARTICIPANTS', 'GODEVILUTION_PERFORMANCE_SHARED_DIRECTORY',
+    'GODEVILUTION_CLIENT_ASSEMBLY_IMAGE_DIRECTORY',
     'GODEVILUTION_CLIENT_PERFORMANCE_OUTPUT', 'GODEVILUTION_CLIENT_PERFORMANCE_WARMUP_SECONDS',
     'GODEVILUTION_CLIENT_PERFORMANCE_DURATION_SECONDS', 'GODEVILUTION_CLIENT_PERFORMANCE_MAX_SAMPLES')
 foreach ($name in $environmentNames) {
@@ -487,12 +488,14 @@ function Assert-GodotPerformanceEvidence($Evidence, [int]$Participants, [string]
         [string]::IsNullOrWhiteSpace($configuration.Device) -or [string]::IsNullOrWhiteSpace($configuration.VsyncMode))) {
         throw 'Rendered Godot performance evidence requires actual renderer/device/pacing metadata.'
     }
-    $publicConfiguration = Select-PerformancePublicFields $configuration @(
+    $publicConfigurationFields = @(
         'ClientBuildId', 'ProtocolSchemaVersion', 'ContentManifestHash', 'RulesetIdentityHash',
         'Renderer', 'Device', 'Viewport', 'VsyncEnabled', 'FrameCap', 'Headless', 'EngineVersion',
         'ParticipantCount', 'RenderingDriver', 'DisplayServer', 'OperatingSystem', 'OperatingSystemVersion',
         'OperatingSystemFeatures', 'VsyncMode', 'Runtime', 'RuntimeOperatingSystem', 'Architecture',
         'BuildConfiguration', 'WindowPosition', 'WindowMode', 'WindowCanDraw', 'WindowFocusedAtStart')
+    if ($null -ne $configuration.PSObject.Properties['RuntimeAssemblies']) { $publicConfigurationFields += 'RuntimeAssemblies' }
+    $publicConfiguration = Select-PerformancePublicFields $configuration $publicConfigurationFields
     $publicIdentity = Select-PerformancePublicFields $identity @(
         'BuildId', 'ProtocolSchemaVersion', 'ContentManifestHash', 'RulesetIdentityHash', 'TickRateHz', 'GameMode')
     $processFields = @('WorkingSetBytes', 'PeakWorkingSetBytes', 'LastGcHeapSizeBytes', 'TotalProcessorTimeMilliseconds')
@@ -632,6 +635,227 @@ function Get-FileSha256([string]$Path) {
         $sha.Dispose()
         $stream.Dispose()
     }
+}
+
+function Get-GodotCanonicalLocationSha256([string]$Path) {
+    if ([string]::IsNullOrWhiteSpace($Path) -or -not [IO.Path]::IsPathRooted($Path)) {
+        throw 'A staged assembly must have an absolute path.'
+    }
+    try { $canonicalPath = [IO.Path]::GetFullPath($Path) }
+    catch { throw 'A staged assembly path could not be normalized.' }
+    $pathRoot = [IO.Path]::GetPathRoot($canonicalPath)
+    $directorySeparator = [IO.Path]::DirectorySeparatorChar.ToString()
+    $alternateSeparator = [IO.Path]::AltDirectorySeparatorChar.ToString()
+    while ($canonicalPath.Length -gt $pathRoot.Length -and
+        ($canonicalPath.EndsWith($directorySeparator, [StringComparison]::Ordinal) -or
+            $canonicalPath.EndsWith($alternateSeparator, [StringComparison]::Ordinal))) {
+        $canonicalPath = $canonicalPath.Substring(0, $canonicalPath.Length - 1)
+    }
+    if ([Environment]::OSVersion.Platform -eq [PlatformID]::Win32NT) {
+        $canonicalPath = $canonicalPath.ToUpperInvariant()
+    }
+    $sha = [Security.Cryptography.SHA256]::Create()
+    try {
+        $bytes = [Text.Encoding]::UTF8.GetBytes($canonicalPath)
+        return ([BitConverter]::ToString($sha.ComputeHash($bytes)).Replace('-', '')).ToLowerInvariant()
+    } finally { $sha.Dispose() }
+}
+
+function Get-GodotRuntimeAssemblyModuleVersionId([byte[]]$ImageBytes) {
+    if ($null -eq $ImageBytes -or $ImageBytes.Length -eq 0) {
+        throw 'A staged managed assembly image is empty.'
+    }
+    try {
+        if ($PSVersionTable.PSEdition -eq 'Desktop') {
+            $assembly = [Reflection.Assembly]::ReflectionOnlyLoad($ImageBytes)
+            $moduleVersionId = $assembly.ManifestModule.ModuleVersionId
+        } elseif ($PSVersionTable.PSEdition -eq 'Core') {
+            $imageStream = [IO.MemoryStream]::new($ImageBytes, $false)
+            $peReader = $null
+            try {
+                $peReader = [System.Reflection.PortableExecutable.PEReader]::new($imageStream)
+                $metadataReader = [System.Reflection.Metadata.PEReaderExtensions]::GetMetadataReader($peReader)
+                $moduleDefinition = $metadataReader.GetModuleDefinition()
+                $moduleVersionId = $metadataReader.GetGuid($moduleDefinition.Mvid)
+            } finally {
+                if ($null -ne $peReader) { $peReader.Dispose() }
+                $imageStream.Dispose()
+            }
+        } else {
+            throw 'The current PowerShell edition cannot read managed assembly metadata.'
+        }
+    } catch {
+        throw 'A staged assembly MVID could not be read from its image.'
+    }
+    if ($moduleVersionId -eq [guid]::Empty) { throw 'A staged assembly has an empty MVID.' }
+    return $moduleVersionId.ToString('D')
+}
+
+function Get-GodotRuntimeAssemblyManifest([string]$ClientProjectDirectory) {
+    if ([string]::IsNullOrWhiteSpace($ClientProjectDirectory)) {
+        throw 'The staged Godot client project path is missing.'
+    }
+    try {
+        $clientRoot = [IO.Path]::GetFullPath($ClientProjectDirectory).TrimEnd([IO.Path]::DirectorySeparatorChar, [IO.Path]::AltDirectorySeparatorChar)
+        $runtimeDirectory = [IO.Path]::GetFullPath((Join-Path $clientRoot '.godot/mono/temp/bin/Debug'))
+    } catch { throw 'The staged Godot Debug output directory could not be resolved.' }
+    $rootPrefix = $clientRoot + [IO.Path]::DirectorySeparatorChar
+    if (-not $runtimeDirectory.StartsWith($rootPrefix, [StringComparison]::OrdinalIgnoreCase) -or
+        -not (Test-Path -LiteralPath $runtimeDirectory -PathType Container)) {
+        throw 'The staged Godot Debug output directory is missing or escaped its project.'
+    }
+
+    $manifest = @()
+    # The independently qualified local Godot 4.7.2 runtime resolves both client roles from memory and binds their staged images by MVID.
+    foreach ($assemblyInput in @(
+        [pscustomobject]@{ Role = 'client'; FileName = 'Devilution.Client.dll' },
+        [pscustomobject]@{ Role = 'client-protocol'; FileName = 'Devilution.Client.Protocol.dll' })) {
+        $assemblyPath = Join-Path $runtimeDirectory $assemblyInput.FileName
+        if (-not (Test-Path -LiteralPath $assemblyPath -PathType Leaf)) {
+            throw 'A required staged Debug client assembly is missing.'
+        }
+        $stream = $null
+        $imageStream = $null
+        try {
+            $stream = [IO.File]::Open($assemblyPath, [IO.FileMode]::Open, [IO.FileAccess]::Read, [IO.FileShare]::Read)
+            $imageStream = New-Object IO.MemoryStream
+            $stream.CopyTo($imageStream)
+            $imageBytes = $imageStream.ToArray()
+            $assemblyName = [Reflection.AssemblyName]::GetAssemblyName($assemblyPath)
+            $moduleVersionId = Get-GodotRuntimeAssemblyModuleVersionId $imageBytes
+            $fileHash = [Security.Cryptography.SHA256]::Create()
+            try { $fileSha256 = ([BitConverter]::ToString($fileHash.ComputeHash($imageBytes)).Replace('-', '')).ToLowerInvariant() }
+            finally { $fileHash.Dispose() }
+            if ($null -eq $assemblyName -or [string]::IsNullOrWhiteSpace($assemblyName.Name) -or
+                $null -eq $assemblyName.Version -or [string]::IsNullOrWhiteSpace($assemblyName.FullName) -or
+                $fileSha256 -notmatch '^[0-9a-f]{64}$') {
+                throw 'A staged Debug client assembly has incomplete identity metadata.'
+            }
+            $manifest += [pscustomobject]@{
+                Role = $assemblyInput.Role
+                AssemblyName = $assemblyName.Name
+                AssemblyVersion = $assemblyName.Version.ToString()
+                FullName = $assemblyName.FullName
+                ModuleVersionId = $moduleVersionId
+                Configuration = 'Debug'
+                Sha256 = $fileSha256
+                FileName = $assemblyInput.FileName
+                CanonicalLocationSha256 = Get-GodotCanonicalLocationSha256 $assemblyPath
+                ImageBindingKind = 'StagedImageWithMatchingMvid'
+                Path = [IO.Path]::GetFullPath($assemblyPath)
+            }
+        } catch {
+            throw 'A staged Debug client assembly manifest could not be derived.'
+        } finally {
+            if ($null -ne $imageStream) { $imageStream.Dispose() }
+            if ($null -ne $stream) { $stream.Dispose() }
+        }
+    }
+    return $manifest
+}
+
+function Assert-GodotRuntimeAssemblyEvidence($Observations, $ExpectedManifest) {
+    $observed = @($Observations)
+    $expected = @($ExpectedManifest)
+    $expectedRoles = @('client', 'client-protocol')
+    if ($observed.Count -ne 2 -or $expected.Count -ne 2) {
+        throw 'Godot runtime assembly evidence must contain exactly the two expected roles.'
+    }
+    $observationFields = @(
+        'Role', 'AssemblyName', 'AssemblyVersion', 'FullName', 'ModuleVersionId',
+        'HasConfigurationAttribute', 'Configuration', 'Sha256', 'FileName',
+        'CanonicalLocationSha256', 'HasDebuggableAttribute', 'DebuggableModes',
+        'OptimizationsDisabled', 'ImageBindingKind')
+    $expectedByRole = @{}
+    foreach ($entry in $expected) {
+        $expectedFileName = if ($null -ne $entry -and $entry.Role -ceq 'client') { 'Devilution.Client.dll' } else { 'Devilution.Client.Protocol.dll' }
+        $expectedMvid = [guid]::Empty
+        if ($null -eq $entry -or $entry.Role -cnotin $expectedRoles -or $expectedByRole.ContainsKey([string]$entry.Role) -or
+            [string]::IsNullOrWhiteSpace([string]$entry.Path) -or
+            -not (Test-Path -LiteralPath $entry.Path -PathType Leaf) -or
+            [string]$entry.Configuration -cne 'Debug' -or
+            [string]$entry.ImageBindingKind -cne 'StagedImageWithMatchingMvid' -or
+            [string]$entry.FileName -cne $expectedFileName -or
+            [IO.Path]::GetFileName([string]$entry.Path) -cne $expectedFileName -or
+            [string]::IsNullOrWhiteSpace([string]$entry.AssemblyName) -or
+            [string]::IsNullOrWhiteSpace([string]$entry.AssemblyVersion) -or
+            [string]::IsNullOrWhiteSpace([string]$entry.FullName) -or
+            [string]$entry.Sha256 -notmatch '^[0-9a-fA-F]{64}$' -or
+            [string]$entry.CanonicalLocationSha256 -notmatch '^[0-9a-fA-F]{64}$' -or
+            -not [guid]::TryParseExact([string]$entry.ModuleVersionId, 'D', [ref]$expectedMvid) -or
+            $expectedMvid -eq [guid]::Empty) {
+            throw 'The expected Godot runtime assembly manifest is invalid.'
+        }
+        $expectedByRole[[string]$entry.Role] = $entry
+    }
+    foreach ($role in $expectedRoles) {
+        if (-not $expectedByRole.ContainsKey($role)) { throw 'The expected Godot runtime assembly manifest is incomplete.' }
+    }
+    $observedRoles = [Collections.Generic.HashSet[string]]::new([StringComparer]::Ordinal)
+    $validated = @()
+    $disableOptimizations = [int][Enum]::Parse([type]'System.Diagnostics.DebuggableAttribute+DebuggingModes', 'DisableOptimizations')
+    foreach ($item in $observed) {
+        if ($null -eq $item -or $item -isnot [pscustomobject]) {
+            throw 'Godot runtime assembly evidence contains an invalid record.'
+        }
+        $actualFields = @($item.PSObject.Properties | ForEach-Object { $_.Name })
+        if ($actualFields.Count -ne $observationFields.Count -or
+            @($observationFields | Where-Object { $_ -cnotin $actualFields }).Count -ne 0 -or
+            @($actualFields | Where-Object { $_ -cnotin $observationFields }).Count -ne 0) {
+            throw 'Godot runtime assembly evidence contains missing or unexpected fields.'
+        }
+        if ($item.Role -isnot [string] -or $item.Role -cnotin $expectedRoles -or -not $observedRoles.Add($item.Role)) {
+            throw 'Godot runtime assembly evidence contains a duplicate or unknown role.'
+        }
+        $entry = $expectedByRole[$item.Role]
+        foreach ($field in @('AssemblyName', 'AssemblyVersion', 'FullName', 'ModuleVersionId', 'Configuration', 'Sha256', 'FileName', 'CanonicalLocationSha256', 'ImageBindingKind')) {
+            if ($item.$field -isnot [string] -or [string]::IsNullOrWhiteSpace($item.$field)) {
+                throw 'Godot runtime assembly evidence contains an invalid string field.'
+            }
+        }
+        foreach ($field in @('HasConfigurationAttribute', 'HasDebuggableAttribute', 'OptimizationsDisabled')) {
+            if ($item.$field -isnot [bool]) { throw 'Godot runtime assembly evidence contains an invalid boolean field.' }
+        }
+        if ($item.DebuggableModes -isnot [int] -and $item.DebuggableModes -isnot [long]) {
+            throw 'Godot runtime assembly DebuggableAttribute flags are not an integer.'
+        }
+        $debuggableModes = [long]$item.DebuggableModes
+        if ($debuggableModes -lt 0 -or $debuggableModes -gt [int]::MaxValue -or
+            $item.OptimizationsDisabled -ne (($debuggableModes -band $disableOptimizations) -ne 0)) {
+            throw 'Godot runtime assembly DebuggableAttribute flags are inconsistent.'
+        }
+        $moduleVersionId = [guid]::Empty
+        if (-not [guid]::TryParseExact($item.ModuleVersionId, 'D', [ref]$moduleVersionId) -or
+            $moduleVersionId -eq [guid]::Empty -or $moduleVersionId.ToString('D') -ine $entry.ModuleVersionId -or
+            -not $item.HasConfigurationAttribute -or $item.Configuration -cne 'Debug' -or
+            -not $item.HasDebuggableAttribute -or -not $item.OptimizationsDisabled -or
+            $item.ImageBindingKind -cne $entry.ImageBindingKind -or
+            $item.AssemblyName -cne $entry.AssemblyName -or $item.AssemblyVersion -cne $entry.AssemblyVersion -or
+            $item.FullName -cne $entry.FullName -or $item.FileName -cne $entry.FileName -or
+            $item.Sha256 -inotmatch '^[0-9a-fA-F]{64}$' -or $item.Sha256 -ine $entry.Sha256 -or
+            $item.CanonicalLocationSha256 -inotmatch '^[0-9a-fA-F]{64}$' -or
+            $item.CanonicalLocationSha256 -ine $entry.CanonicalLocationSha256) {
+            throw 'A loaded Godot runtime assembly does not match its fresh staged Debug image.'
+        }
+        $validated += [pscustomobject]@{
+            Role = $item.Role
+            AssemblyName = $item.AssemblyName
+            AssemblyVersion = $item.AssemblyVersion
+            FullName = $item.FullName
+            ModuleVersionId = $item.ModuleVersionId
+            HasConfigurationAttribute = $item.HasConfigurationAttribute
+            Configuration = $item.Configuration
+            Sha256 = $item.Sha256
+            FileName = $item.FileName
+            CanonicalLocationSha256 = $item.CanonicalLocationSha256
+            HasDebuggableAttribute = $item.HasDebuggableAttribute
+            DebuggableModes = [int]$item.DebuggableModes
+            OptimizationsDisabled = $item.OptimizationsDisabled
+            ImageBindingKind = $item.ImageBindingKind
+        }
+    }
+    if ($observedRoles.Count -ne $expectedRoles.Count) { throw 'Godot runtime assembly evidence is missing a required role.' }
+    return $validated
 }
 
 function Read-ProjectXml([string]$Path) {
@@ -1522,6 +1746,7 @@ try {
     Write-ProjectStageEvidence $staging $engineVersion $projectStageEvidencePath $null
     & dotnet build (Join-Path $clientProject 'Devilution.Client.csproj') --nologo
     if ($LASTEXITCODE -ne 0) { throw 'Could not build the staged Godot client.' }
+    $runtimeAssemblyManifest = if ($performance) { Get-GodotRuntimeAssemblyManifest $clientProject } else { $null }
 
     # Seed 5 keeps Butcher available under both production and native quest-pool
     # orderings. This diagnostic does not certify parity of the complete pools.
@@ -1645,6 +1870,7 @@ try {
             $clientEnvironment['DEVILUTION_CHARACTER_NAME'] = if ($CharacterName) { "$CharacterName $Slot" } else { "Hero $Slot" }
         }
         if ($performance) {
+            $clientEnvironment['GODEVILUTION_CLIENT_ASSEMBLY_IMAGE_DIRECTORY'] = Join-Path $clientProject '.godot/mono/temp/bin/Debug'
             $clientEnvironment['GODEVILUTION_LOCAL_PLAYER'] = [string]$Slot
             $clientEnvironment['GODEVILUTION_PERFORMANCE_PARTICIPANTS'] = [string]$clientCount
             $clientEnvironment['GODEVILUTION_PERFORMANCE_SHARED_DIRECTORY'] = $SessionDirectory
@@ -1916,6 +2142,7 @@ try {
                 }
                 $framePath = Join-Path $startedClient.Directory 'frame-measurement/client-frame-evidence.json'
                 $frames = Get-Content -LiteralPath $framePath -Raw | ConvertFrom-Json
+                $frames.Configuration.RuntimeAssemblies = Assert-GodotRuntimeAssemblyEvidence $frames.Configuration.RuntimeAssemblies $runtimeAssemblyManifest
                 $summary = Assert-GodotPerformanceEvidence $frames $clientCount $expectedGameMode $contentHash $rulesetHash ([bool]$Headless)
                 $summaries += [pscustomobject]@{ Slot = $slot; Metrics = $summary }
             }

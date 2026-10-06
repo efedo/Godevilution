@@ -14,6 +14,8 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Compile Include="../Devilution.Client/ClientRuntimeAssemblyProvenance.cs"
+             Link="Diagnostics/ClientRuntimeAssemblyProvenance.cs" />
     <Compile Include="../Devilution.Client/Diagnostics/ClientFrameEvidenceRecorder.cs"
              Link="Diagnostics/ClientFrameEvidenceRecorder.cs" />
     <Compile Include="../Devilution.Client/Diagnostics/ClientCommandTimingEvidenceWriter.cs"

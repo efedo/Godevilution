@@ -825,6 +825,25 @@ not live allocations; no collection is forced. Peak working set is a lifetime pe
 not leak/soak evidence. Keep the printed directory private: its saved sessions
 and bookmarks contain credentials even though the frame reports do not.
 
+Performance captures bind the `client` and `client-protocol` runtime assemblies
+against an independent file manifest taken after the fresh staged Debug build and
+before client startup. `RuntimeAssemblies` records full identity, MVID, image SHA,
+configuration, explicit `DebuggableAttribute` optimization state, file name and a
+canonical image-path SHA. Absolute image paths stay out of the public report.
+The qualified local Godot 4.7.2 runtime loads these application assemblies from
+memory: `StagedImageWithMatchingMvid` identifies a verified staged image rather
+than inventing an `Assembly.Location`. Identity/MVID matching does not establish
+byte-for-byte integrity of the loaded in-memory image. Missing, extra, mistyped,
+mismatched or optimized assembly evidence rejects this Debug baseline. Ordinary
+profiles clear the new image-directory setting and perform no capture hashing.
+
+Godot's optimized application configuration is `ExportRelease`. The isolated
+editor probe can load those optimized application images after copying their
+output into the editor's Debug layout, but the loaded Godot API remains Debug.
+That adaptation and the retained failed direct-load lane do not certify a fully
+optimized standalone export. Export templates, rendered Release measurements and
+release budgets remain separate acceptance work; see migration status for proof.
+
 Missing rounds, changed identity, empty/invalid/truncated samples, overwritten
 output, nonzero client exits or missing checkpoints reject the baseline. Recording
 is explicitly enabled only for this acceptance phase; inherited capture settings

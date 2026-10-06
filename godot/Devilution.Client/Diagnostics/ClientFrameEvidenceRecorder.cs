@@ -438,7 +438,8 @@ public sealed record ClientFrameEvidenceMetadata(
     string? WindowPosition = null,
     string? WindowMode = null,
     bool? WindowCanDraw = null,
-    bool? WindowFocusedAtStart = null);
+    bool? WindowFocusedAtStart = null,
+    IReadOnlyList<ClientRuntimeAssemblyObservation>? RuntimeAssemblies = null);
 
 public sealed record ClientFrameEvidenceServerIdentity(
     string BuildId,

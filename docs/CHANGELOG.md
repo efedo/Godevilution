@@ -2,6 +2,14 @@
 
 Notable changes to this fork are recorded below.
 
+- 2026-10-06: Bind opt-in Godot Performance captures to independently snapshotted
+  client images using loaded identity, MVID, configuration, optimization metadata
+  and image/path hashes without publishing absolute paths. Debug/Release helper
+  tests, launcher guards and one/four-client headless runs pass. A HEAD-only
+  candidate builds with the unchanged 4.7.1 source SDK. Adapted ExportRelease
+  application images load with a Debug vendor API; standalone export, rendered
+  measurements and release-budget acceptance remain open.
+
 - 2026-10-06: Add exact-pinned authored Warrior Repair content and a registered
   native level-one numeric/RNG fixture. Independent review, focused content/native
   checks and a HEAD-only content archive pass. Integrated headless Repair/cold

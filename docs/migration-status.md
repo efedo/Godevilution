@@ -44,6 +44,66 @@ unsupported behavior is a migration gap, not permission for local simulation.
 
 ## Current delivery position and verification limits
 
+The opt-in Godot Performance provenance package is independently reviewed on
+2026-10-06. It binds exactly `client` and `client-protocol` roles to a manifest
+snapshotted after each fresh staged Debug build and before runtime. Full assembly
+identity, MVID, configuration, explicit optimization metadata, image SHA and
+canonical image-path SHA must match; public observations contain no absolute
+paths. The qualified 4.7.2 engine memory-loads both roles, so evidence explicitly
+uses `StagedImageWithMatchingMvid`. Image/MVID binding is not byte-for-byte loaded
+in-memory integrity. Ordinary profiles clear inherited capture settings and add
+no hashing; the source SDK remains 4.7.1 and staged SDK 4.7.2.
+
+Actual one/four-client headless profiles pass in
+`.local/overnight-runtime-provenance-performance-1.log` and
+`.local/overnight-runtime-provenance-performance-4.log`. All five client captures
+retain two validated Debug/optimization-disabled bindings, five warm-up and
+fifteen measured settled moves, existing observer barriers and zero sample loss.
+All nine engine stages exit zero and all eleven owned processes are confirmed
+absent. One/four-client Main callback P95 is 1.5309 / 2.4681-2.6672 ms; callback
+interval P95 is 16.6883 / 16.6938-16.7163 ms. These dirty-tree, authored-town,
+loopback, headless Debug observations include capture/workload overhead and
+measure neither GPU nor whole-frame completion. Earlier rendered/menu/skill
+proofs predate this opt-in Main capture change; their open gates remain open.
+
+Focused Debug provenance/frame/recorder checks pass 14/1/14, Release
+provenance/frame checks pass 14/1, without skips. Reports are
+`.local/overnight-client-provenance-identity-debug.xml`,
+`.local/overnight-client-frame-assembly-identity-debug.xml`,
+`.local/overnight-client-frame-recorder-identity-debug.xml` and the corresponding
+first two `-release.xml` reports. The actual Windows PowerShell 5.1 guard passes
+1/1 in `.local/overnight-runtime-provenance-launcher-distinct-guard.xml`;
+53 affected existing launcher cases pass in
+`.local/overnight-runtime-provenance-launchers-qualified.xml`. The equivalent
+metadata/tamper harness passes under local PowerShell Core 7.6.5 with bounded
+exit/drains. A HEAD `38cbbb61d` archive plus the isolated eight-source-path
+candidate builds the Godot client with unchanged SDK 4.7.1 (zero warnings/errors),
+passes client checks 14/1 and the launcher guard 1/1; server test build also has
+zero warnings/errors. The archived client-test build retains one existing
+xUnit2031 warning. New source is CRLF; protected held drafts/private state remain
+unchanged. Builds/tests and source hashes are retained under `.local`.
+
+The disposable assembly-only probe in
+`.local/overnight-exportrelease-core-qualified-probe.log` retains root
+`Godevilution-Godot-ExportRelease-Probe-fcb8dae52c354fc39df36e9688c587cb`.
+Debug passes. Direct `ExportRelease` fails without a probe record despite native
+exit zero; that lane remains rejected. Copying optimized `ExportRelease` outputs
+into an isolated editor Debug layout binds all three application images to their
+independent manifest, but the physical GodotSharp API remains Debug with
+optimizations disabled. All ten probe processes exit zero with bounded cleanup
+and completed drains and are absent. No Main scene, connection or save workflow
+was started by this probe. The installed export-template directory is empty.
+This is adapted application-image feasibility, not a standalone optimized
+export, rendered Release/frame baseline, supported-platform result or budget pass.
+
+Retain the genuine 12/13 unsigned-identity failure, duplicate-identity synthetic
+PS5 guard failure, Core parent overload control failure, earlier probe missing
+Assembly.Location/vendor reflection-cache/runtime-version-guard failures and
+rejected filter output. None is accepted as a passing baseline. Native moved-
+position cold resume, rendered checks, optimized standalone packaging, broader
+recovery/campaign/platform/soak and release budgets remain M0/later acceptance
+work. No computer use or push occurred; approval holds and the 35% estimate remain.
+
 The expanded standalone Release host measurement is independently reviewed on
 2026-10-06. Immediate and ClockGated each pass one/four-participant cases (4/4)
 in `.local/overnight-clock-gated-host-receipt-qualified.log`; private evidence

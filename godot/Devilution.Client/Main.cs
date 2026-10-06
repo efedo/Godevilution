@@ -78,6 +78,13 @@ public partial class Main : Node2D
                 "GODEVILUTION_CLIENT_PERFORMANCE_OUTPUT")))
             return false;
 
+        var imageDirectory = Environment.GetEnvironmentVariable(
+            "GODEVILUTION_CLIENT_ASSEMBLY_IMAGE_DIRECTORY");
+        if (string.IsNullOrWhiteSpace(imageDirectory)
+            || !Path.IsPathFullyQualified(imageDirectory)
+            || !Directory.Exists(imageDirectory))
+            return false;
+
         var snapshot = model.Snapshot;
         var serverIdentity = client?.ServerIdentity;
         if (snapshot is null
@@ -116,7 +123,13 @@ public partial class Main : Node2D
             FormatWindowPosition(DisplayServer.WindowGetPosition(0)),
             DisplayServer.WindowGetMode(0).ToString(),
             DisplayServer.WindowCanDraw(0),
-            DisplayServer.WindowIsFocused(0));
+            DisplayServer.WindowIsFocused(0),
+            ClientRuntimeAssemblyProvenance.CaptureStagedImages([
+                new ClientRuntimeAssemblyImageInput("client", typeof(Main).Assembly,
+                    Path.Combine(imageDirectory, "Devilution.Client.dll")),
+                new ClientRuntimeAssemblyImageInput("client-protocol", typeof(AuthoritativeClient).Assembly,
+                    Path.Combine(imageDirectory, "Devilution.Client.Protocol.dll")),
+            ]));
         frameEvidence = ClientFrameEvidenceRecorder.TryStartFromEnvironment(
             metadata,
             warmupSeconds);
