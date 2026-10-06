@@ -46,6 +46,14 @@ Acceptance starts level 1 with seed 0. This exercises the existing
 server-owned authored `TrapArmed` state; it does not establish native Dexterity/RNG,
 linked wall-trap/chest, door-operation ordering or generated trap-population parity.
 
+`warrior-repair-preview` is a separate authored overlay exact-pinned to
+`devilution.base@0.1.0`. It changes only starting Short Sword item 100's durability
+from 24 to 12, retaining maximum durability 24, class loadout, resources and all
+other base rows/assets. Acceptance starts a level-1 Warrior in Town (level 0),
+seed 0, and uses the existing server-owned class Repair rule. The expected
+12/24 -> 16/16 mutation is the scoped native repair-loop reference; this profile
+does not establish native cursor/audio, item destruction or whole-world RNG parity.
+
 The optional `level_start_positions.tsv` table has the strict ordered columns
 `level_id`, `level_symbol`, `start_x`, `start_y`. Numeric IDs and required symbols
 must agree with stable IDs and registered levels; duplicate, malformed,

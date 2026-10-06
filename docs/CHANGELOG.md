@@ -2,6 +2,13 @@
 
 Notable changes to this fork are recorded below.
 
+- 2026-10-06: Add exact-pinned authored Warrior Repair content and a registered
+  native level-one numeric/RNG fixture. Independent review, focused content/native
+  checks and a HEAD-only content archive pass. Integrated headless Repair/cold
+  Resume and shared Trap/menu/pending recovery pass with strict item/resource
+  preservation and clean owned-process exits. Scene/launcher packages remain
+  uncommitted pending rendered verification; full class/campaign parity stays open.
+
 - 2026-10-06: Extend explicit Release standalone host measurement to Immediate
   and ClockGated with one/four participants. Bind ClockGated first-dispatch ticks
   to positive stable server receipts, reject assembly overrides in both entry

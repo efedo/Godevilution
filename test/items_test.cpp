@@ -160,6 +160,20 @@ TEST_F(ItemsTest, WarriorRepairUsesNativeDurabilityLossAndRandomSequence)
 	EXPECT_EQ(GetLCGEngineState(), 22695478U);
 }
 
+TEST_F(ItemsTest, WarriorLevelOneRepairUsesFiveNativeDrawsForDamagedStartingSword)
+{
+	Item item = {};
+	item._iDurability = 12;
+	item._iMaxDur = 24;
+	SetRndSeed(0);
+
+	RepairItem(item, 1);
+
+	EXPECT_EQ(item._iDurability, 16);
+	EXPECT_EQ(item._iMaxDur, 16);
+	EXPECT_EQ(GetLCGEngineState(), 71484141U);
+}
+
 TEST_F(ItemsTest, SorcererStaffRechargeUsesNativeChargeLossAndRandomSequence)
 {
 	Item item = {};

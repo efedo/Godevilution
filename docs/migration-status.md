@@ -81,6 +81,64 @@ optional client timing recorder's overhead. The authored-town/seed-0 loopback le
 no Godot frame, cohort, campaign, native-generation, platform-matrix, durability,
 soak or release-budget acceptance.
 
+The authored Warrior Repair content/native prerequisite is independently reviewed
+on 2026-10-06. Exact-pinned `warrior-repair-preview` changes only catalog item
+100's starting durability 24 -> 12, retaining maximum 24, all other rows/assets,
+loadout, resources and normal profiles. Corrected content tests and a HEAD
+`b26a52f59` archive plus the candidate each pass 2/2; archive build has zero
+warnings/errors. Reports: `.local/overnight-warrior-repair-content-corrected.xml`
+and `.local/overnight-warrior-repair-head-closure.xml`. Registered native Repair
+fixtures pass 2/2 in MSVC x64 Debug's registered `items_test` target after
+VsDevCmd x64 initialization and verified `cl.exe`/`rc.exe`/`mt.exe` resolution.
+The filter is `ItemsTest.Warrior*Repair*`; managed edge cases pass 5/5 in
+`.local/overnight-warrior-repair-native-level-one.xml` and
+`.local/overnight-warrior-repair-managed-qualified.xml`. The direct level-one
+12/24 -> 16/16, seed-0 five-draw reference establishes the numeric repair loop,
+not native inventory/cursor/audio or whole-world RNG continuation.
+
+The Repair scene/launcher draft remains uncommitted pending rendered verification. Frozen source resolves independent
+review's zero-generation, complete item-wrapper digest and initial-to-held item
+preservation findings. Affected client checks pass 237/237 and launchers pass
+85/85 without skips in `.local/overnight-warrior-repair-client-integrated.xml`
+and `.local/overnight-warrior-repair-integrated-launchers-qualified.xml`.
+Retain the restricted-context launcher run's three child-environment failures in
+`.local/overnight-warrior-repair-integrated-launchers.xml`; unchanged source and
+binaries pass both the focused three and complete suite with normal process access.
+Fresh actual headless Repair Create/cold Resume passes in
+`.local/overnight-warrior-repair-control-qualified.log`, private scene root
+`Godevilution-Scene-Acceptance-6bef77ea4673460c901cbdc2af486afa`. The actual
+Items selection/Trade Repair button queues sequence 1; its original raw
+Accepted/Unspecified receipt (server receipt 1, tick 55) stays held 503 ms with
+pending count 1 and unchanged connected model/snapshot/generation/items/grid.
+Release admits only the sword's 12/24 -> 16/16 durability fields. Fresh host/client
+restores the full item-wrapper digest and seed before input, then settles movement
+sequence 2 at `(1,0)`. Life/Mana/Gold/Experience stay 4480/640/100/0 throughout.
+All six engine stages exit 0 and all eight owned processes are confirmed stopped.
+Headless controls do not establish rendered, native cursor/audio, full class,
+campaign, world-generation or M1 acceptance.
+
+The integrated shared profiles also pass current-source headless acceptance:
+Trap Create/cold Resume in `.local/overnight-warrior-integrated-trap.log`,
+menu Create/cold Resume/live event clears/real exit cleanup in
+`.local/overnight-warrior-integrated-menu.log`, and default-relay two-client
+committed-but-unobserved host-loss recovery in
+`.local/overnight-warrior-integrated-pending-recovery.log`. Trap/menu each retain
+six zero engine exits and eight stopped owned processes; pending recovery retains
+twelve zero exits and sixteen stopped processes. Documentation consistency checks pass 16/16 in
+`.local/overnight-warrior-repair-docs-final.xml`. All fourteen frozen Repair
+source hashes still match after these runs; all twenty protected drafts/private
+source files retain their original hashes. The first content fixture failure
+(whole equipment collection instead of slot 4) remains retained in
+`.local/overnight-warrior-repair-content.xml` alongside the corrected reports.
+
+The first actual scene failed before gameplay input because its acceptance helper
+assumes the Repair button belongs to the Equipment tab. Retain
+`.local/overnight-warrior-repair-headless.log`, private scene root
+`Godevilution-Scene-Acceptance-1bc2b8bed6a24560906a86e68c7a0d47`.
+Sword durability stays 12/24, sequence/pending remain zero, version/import exit 0
+and client exit 1; all four owned processes are confirmed stopped. The correction
+is acceptance-only; gameplay/HUD production code and approval-held drafts stay intact.
+
 The isolated authored Rogue Trap Disarm content prerequisite is independently
 reviewed on 2026-10-06. Exact-pinned `rogue-trap-preview` moves only door entity
 2001 to `(20,22)` and arms it, plus an optional level-1 start row at `(20,20)`;
