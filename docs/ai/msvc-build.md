@@ -1,5 +1,38 @@
 # MSVC Build Notes for Agents
 
+## Native Trap Disarm branch oracle
+
+Build the existing registered `objects_test` target using the matching checked
+MSVC environment described below. From the configured build directory, run:
+
+```powershell
+.\objects_test.exe --gtest_filter=TryDisarmTest.*
+.\objects_test.exe
+.\objects_test.exe --gtest_shuffle --gtest_random_seed=417 --gtest_repeat=3
+```
+
+The six MPQ-free fixtures invoke actual `ACTION_DISARM` through the existing
+`TestPlayerCheckNewPath` bridge. Nine armed attempts each consume exactly one
+native LCG draw; an unarmed attempt consumes none. Literal expectations cover
+Dexterity/depth thresholds, equality, values above 100, the signed negative RNG
+edge, both linked wall-trap orientations, unrelated targets, unlinked doors,
+trapped-chest fallback and ordinary chests. The existing predicate tests cover
+all three trapped-chest identities.
+
+Scoped empty object behaviors disable the subsequent `OperateObject` effect.
+The fixture preserves original metadata/player vector storage, player pointers,
+the complete object pool, tile references, level ID, RNG and light manager.
+A genuine nonlocal player avoids cursor/view changes while exercising the
+caller's position/vision bookkeeping. The pool's `DVL_API_FOR_TEST` annotation
+uses the existing test-only DLL import/export policy. No production behavior,
+normal profile, private save or held player/CMake draft is changed.
+
+Qualification requires all six focused tests, the full 22-test object suite
+and three complete shuffled iterations (66 executions), without skips, plus
+clean owned exits and frozen source hashes. This characterizes prepared native
+disarm behavior; managed probability/trap-graph parity, subsequent operation
+effects, generation, projectile suppression and rendered acceptance remain open.
+
 ## Sprite-free animation timing proof
 
 The additive registered `player_command_phase_test` characterizes the actual

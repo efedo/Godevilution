@@ -8,9 +8,16 @@
  *  - AllObjects table bounds vs. OBJ_LAST enum
  *  - AddObjTraps: OBJ_NULL-typed object does not crash (regression for OOB vector access)
  *  - UpdateTrapState: state-machine branch coverage for all trigger types
+ *  - Native ACTION_DISARM path: Dexterity/level rolls and linked trap/chest flags
  */
 
 #include <gtest/gtest.h>
+
+#include <array>
+#include <cstdint>
+#include <optional>
+#include <stdexcept>
+#include <vector>
 
 #include "engine/assets.hpp"
 #include "engine/random.hpp"
@@ -18,11 +25,17 @@
 #include "game/levels/level.hpp"
 #include "game/objects/object_pool.hpp"
 #include "game/objects/objects.hpp"
+#include "game/players/players.hpp"
 #include "engine/cursor.h"
+#include "engine/lighting.h"
 #include "tables/objdat.h"
 #include "utils/paths.h"
 
 using namespace devilution;
+
+namespace devilution {
+void TestPlayerCheckNewPath(Player &player);
+}
 
 namespace {
 
@@ -191,6 +204,298 @@ protected:
 			tile.setObject(0);
 	}
 };
+
+// Exercise ACTION_DISARM through the existing test bridge. No-op object metadata
+// keeps the follow-on OperateObject call from changing the fixture.
+class ScopedTryDisarmState {
+public:
+	ScopedTryDisarmState()
+		: previousLevelId_(currentLevel().id())
+		, previousObjectPool_(gObjectPool)
+		, noOpObjectData_(static_cast<size_t>(OBJ_LAST) + 1, ObjectData {})
+		, fixturePlayers_(2)
+		, previousMyPlayer_(MyPlayer)
+		, previousMyPlayerId_(MyPlayerId)
+		, previousLightManager_(CurrentLightManager)
+		, previousRandomSeed_(GetLCGEngineState())
+	{
+		size_t index = 0;
+		for (const Tile &tile : currentLevel().tiles().columnMajor())
+			previousTileObjectIds_[index++] = tile.object();
+
+		currentLevel().setId(LevelId { .levelNum = 1, .type = DTYPE_CATHEDRAL });
+		InitializeObjectPool();
+		ObjectPoolAdapter::ResetLegacyObjectPools();
+		AllObjects.swap(noOpObjectData_);
+		Players.swap(fixturePlayers_);
+		MyPlayer = &Players[0];
+		MyPlayerId = 0;
+		CurrentLightManager = LightManager {};
+		for (Tile &tile : currentLevel().tiles().columnMajor())
+			tile.setObject(0);
+	}
+
+	ScopedTryDisarmState(const ScopedTryDisarmState &) = delete;
+	ScopedTryDisarmState &operator=(const ScopedTryDisarmState &) = delete;
+
+	~ScopedTryDisarmState()
+	{
+		gObjectPool = previousObjectPool_;
+		AllObjects.swap(noOpObjectData_);
+		currentLevel().setId(previousLevelId_);
+
+		size_t index = 0;
+		for (Tile &tile : currentLevel().tiles().columnMajor())
+			tile.setObject(previousTileObjectIds_[index++]);
+
+		Players.swap(fixturePlayers_);
+		MyPlayer = previousMyPlayer_;
+		MyPlayerId = previousMyPlayerId_;
+		CurrentLightManager = previousLightManager_;
+		SetRndSeed(previousRandomSeed_);
+	}
+
+private:
+	LevelId previousLevelId_;
+	ObjectPool previousObjectPool_;
+	std::vector<ObjectData> noOpObjectData_;
+	std::vector<Player> fixturePlayers_;
+	Player *previousMyPlayer_;
+	uint8_t previousMyPlayerId_;
+	LightManager previousLightManager_;
+	uint32_t previousRandomSeed_;
+	std::array<int8_t, MAXDUNX * MAXDUNY> previousTileObjectIds_ = {};
+};
+
+class TryDisarmTest : public ::testing::Test {
+protected:
+	void SetUp() override
+	{
+		state_.emplace();
+	}
+
+	Object &PlaceObject(_object_id objectType, Point position)
+	{
+		const int objectIndex = ObjectPoolAdapter::ReserveObjectSlot();
+		if (objectIndex < 0 || objectIndex >= MAXOBJECTS)
+			throw std::runtime_error("TryDisarm test object pool unexpectedly exhausted");
+		ObjectPoolAdapter::CommitReservedObjectSlot();
+
+		Object &object = Objects[objectIndex];
+		object = {};
+		object._otype = objectType;
+		object.position = position;
+		currentLevel().tileAt(position).setObject(static_cast<int8_t>(objectIndex + 1));
+		return object;
+	}
+
+	void LinkTrapTo(Object &trap, Point triggerPosition)
+	{
+		trap._oVar1 = triggerPosition.x;
+		trap._oVar2 = triggerPosition.y;
+	}
+
+	void DisarmThroughNativeAction(Player &player, Object &object)
+	{
+		player.lightId = NO_LIGHT;
+		player.clearPath();
+		player._pmode = PM_STAND;
+		const Point adjacentPosition { object.position.x - 1, object.position.y };
+		player.position.tile = adjacentPosition;
+		player.position.future = adjacentPosition;
+		player.position.old = adjacentPosition;
+		player.destAction = ACTION_DISARM;
+		player.destParam1 = static_cast<int>(&object - Objects);
+		player.destParam2 = 0;
+		player.destParam3 = 0;
+		player.destParam4 = 0;
+		TestPlayerCheckNewPath(player);
+	}
+
+	std::optional<ScopedTryDisarmState> state_;
+};
+
+TEST_F(TryDisarmTest, ActivatesOnlyLinkedLeftAndRightTrapsAndConsumesOneDraw)
+{
+	Player &player = Players[1];
+	ASSERT_EQ(&player, &Players[1]);
+	ASSERT_EQ(player.getId(), uint8_t { 1 });
+	ASSERT_NE(&player, MyPlayer);
+	player.attributes.dexterity.current = 26;
+
+	constexpr Point targetPosition { 20, 20 };
+	constexpr Point otherTargetPosition { 30, 30 };
+	Object &target = PlaceObject(OBJ_L1LDOOR, targetPosition);
+	target._oTrapFlag = true;
+	target._oDoorFlag = false;
+	target._oVar4 = 41;
+	Object &otherTarget = PlaceObject(OBJ_L1RDOOR, otherTargetPosition);
+	otherTarget._oTrapFlag = true;
+	otherTarget._oDoorFlag = true;
+	otherTarget._oVar4 = 42;
+
+	Object &leftTrap = PlaceObject(OBJ_TRAPL, { 18, 20 });
+	Object &rightTrap = PlaceObject(OBJ_TRAPR, { 20, 18 });
+	Object &unmatchedTrap = PlaceObject(OBJ_TRAPL, { 28, 30 });
+	LinkTrapTo(leftTrap, targetPosition);
+	LinkTrapTo(rightTrap, targetPosition);
+	LinkTrapTo(unmatchedTrap, otherTargetPosition);
+	unmatchedTrap._oVar4 = 9;
+
+	SetRndSeed(1); // The native LCG's next 100-point draw is 46.
+	DisarmThroughNativeAction(player, target);
+
+	EXPECT_FALSE(target._oTrapFlag);
+	EXPECT_FALSE(target._oDoorFlag);
+	EXPECT_EQ(target._oVar4, 41);
+	EXPECT_EQ(leftTrap._oVar4, 1);
+	EXPECT_EQ(rightTrap._oVar4, 1);
+	EXPECT_EQ(unmatchedTrap._oVar4, 9);
+	EXPECT_TRUE(otherTarget._oTrapFlag);
+	EXPECT_TRUE(otherTarget._oDoorFlag);
+	EXPECT_EQ(otherTarget._oVar4, 42);
+	EXPECT_EQ(GetLCGEngineState(), 0x015A4E36U);
+}
+
+TEST_F(TryDisarmTest, FailedRollPreservesLinkedTriggerAndTrap)
+{
+	Player &player = Players[1];
+	ASSERT_EQ(&player, &Players[1]);
+	ASSERT_EQ(player.getId(), uint8_t { 1 });
+	ASSERT_NE(&player, MyPlayer);
+	player.attributes.dexterity.current = 25; // Level 1 threshold is 45.
+
+	constexpr Point targetPosition { 20, 20 };
+	Object &target = PlaceObject(OBJ_L1LDOOR, targetPosition);
+	target._oTrapFlag = true;
+	target._oVar4 = 51;
+	Object &trap = PlaceObject(OBJ_TRAPR, { 20, 18 });
+	LinkTrapTo(trap, targetPosition);
+
+	SetRndSeed(1); // Draw 46 exceeds the threshold.
+	DisarmThroughNativeAction(player, target);
+
+	EXPECT_TRUE(target._oTrapFlag);
+	EXPECT_EQ(target._oVar4, 51);
+	EXPECT_EQ(trap._oVar4, 0);
+	EXPECT_EQ(GetLCGEngineState(), 0x015A4E36U);
+}
+
+TEST_F(TryDisarmTest, EqualityRollSucceedsAtLevelTwo)
+{
+	currentLevel().setId(LevelId { .levelNum = 2, .type = DTYPE_CATHEDRAL });
+	Player &player = Players[1];
+	ASSERT_EQ(&player, &Players[1]);
+	ASSERT_EQ(player.getId(), uint8_t { 1 });
+	ASSERT_NE(&player, MyPlayer);
+	player.attributes.dexterity.current = 28; // Level 2 threshold is exactly 46.
+
+	constexpr Point targetPosition { 20, 20 };
+	Object &target = PlaceObject(OBJ_L1RDOOR, targetPosition);
+	target._oTrapFlag = true;
+	Object &trap = PlaceObject(OBJ_TRAPL, { 18, 20 });
+	LinkTrapTo(trap, targetPosition);
+
+	SetRndSeed(1);
+	DisarmThroughNativeAction(player, target);
+
+	EXPECT_FALSE(target._oTrapFlag);
+	EXPECT_EQ(trap._oVar4, 1);
+	EXPECT_EQ(GetLCGEngineState(), 0x015A4E36U);
+}
+
+TEST_F(TryDisarmTest, HighThresholdAcceptsAndNegativeThresholdUsesSignedRandomResult)
+{
+	Player &player = Players[1];
+	ASSERT_EQ(&player, &Players[1]);
+	ASSERT_EQ(player.getId(), uint8_t { 1 });
+	ASSERT_NE(&player, MyPlayer);
+	player.attributes.dexterity.current = 53; // Level 1 threshold is 101, without clamping.
+
+	constexpr Point highThresholdPosition { 20, 20 };
+	Object &highThresholdTarget = PlaceObject(OBJ_L1LDOOR, highThresholdPosition);
+	highThresholdTarget._oTrapFlag = true;
+	Object &highThresholdTrap = PlaceObject(OBJ_TRAPL, { 18, 20 });
+	LinkTrapTo(highThresholdTrap, highThresholdPosition);
+	SetRndSeed(1);
+	DisarmThroughNativeAction(player, highThresholdTarget);
+	EXPECT_FALSE(highThresholdTarget._oTrapFlag);
+	EXPECT_EQ(highThresholdTrap._oVar4, 1);
+	EXPECT_EQ(GetLCGEngineState(), 0x015A4E36U);
+
+	player.attributes.dexterity.current = 0; // Level 1 threshold is -5.
+	constexpr Point negativeThresholdPosition { 40, 20 };
+	Object &negativeThresholdTarget = PlaceObject(OBJ_L1LDOOR, negativeThresholdPosition);
+	negativeThresholdTarget._oTrapFlag = true;
+	Object &negativeThresholdTrap = PlaceObject(OBJ_TRAPR, { 40, 18 });
+	LinkTrapTo(negativeThresholdTrap, negativeThresholdPosition);
+	SetRndSeed(0); // Ordinary draw 0 exceeds -5.
+	DisarmThroughNativeAction(player, negativeThresholdTarget);
+	EXPECT_TRUE(negativeThresholdTarget._oTrapFlag);
+	EXPECT_EQ(negativeThresholdTrap._oVar4, 0);
+	EXPECT_EQ(GetLCGEngineState(), 1U);
+
+	SetRndSeed(1457187811U); // Existing RNG coverage pins this seed to the signed -68 result.
+	DisarmThroughNativeAction(player, negativeThresholdTarget);
+	EXPECT_FALSE(negativeThresholdTarget._oTrapFlag);
+	EXPECT_EQ(negativeThresholdTrap._oVar4, 1);
+	EXPECT_EQ(GetLCGEngineState(), 0x80000000U);
+}
+
+TEST_F(TryDisarmTest, UnlinkedDoorStaysArmedWhileTrappedChestFallbackClears)
+{
+	Player &player = Players[1];
+	ASSERT_EQ(&player, &Players[1]);
+	ASSERT_EQ(player.getId(), uint8_t { 1 });
+	ASSERT_NE(&player, MyPlayer);
+	player.attributes.dexterity.current = 53;
+
+	Object &unlinkedDoor = PlaceObject(OBJ_L1LDOOR, { 20, 20 });
+	unlinkedDoor._oTrapFlag = true;
+	unlinkedDoor._oDoorFlag = false;
+	unlinkedDoor._oVar4 = 61;
+	SetRndSeed(1);
+	DisarmThroughNativeAction(player, unlinkedDoor);
+	EXPECT_TRUE(unlinkedDoor._oTrapFlag);
+	EXPECT_FALSE(unlinkedDoor._oDoorFlag);
+	EXPECT_EQ(unlinkedDoor._oVar4, 61);
+	EXPECT_EQ(GetLCGEngineState(), 0x015A4E36U);
+
+	Object &trappedChest = PlaceObject(OBJ_TCHEST1, { 30, 20 });
+	trappedChest._oTrapFlag = true;
+	SetRndSeed(1);
+	DisarmThroughNativeAction(player, trappedChest);
+	EXPECT_FALSE(trappedChest._oTrapFlag);
+	EXPECT_EQ(GetLCGEngineState(), 0x015A4E36U);
+
+	Object &ordinaryChest = PlaceObject(OBJ_CHEST1, { 40, 20 });
+	ordinaryChest._oTrapFlag = true;
+	SetRndSeed(1);
+	DisarmThroughNativeAction(player, ordinaryChest);
+	EXPECT_TRUE(ordinaryChest._oTrapFlag);
+	EXPECT_FALSE(ordinaryChest.IsTrappedChest());
+	EXPECT_EQ(GetLCGEngineState(), 0x015A4E36U);
+}
+
+TEST_F(TryDisarmTest, AlreadyUnarmedObjectDoesNotConsumeRandomness)
+{
+	Player &player = Players[1];
+	ASSERT_EQ(&player, &Players[1]);
+	ASSERT_EQ(player.getId(), uint8_t { 1 });
+	ASSERT_NE(&player, MyPlayer);
+	player.attributes.dexterity.current = 53;
+
+	Object &target = PlaceObject(OBJ_L1LDOOR, { 20, 20 });
+	Object &trap = PlaceObject(OBJ_TRAPL, { 18, 20 });
+	LinkTrapTo(trap, { 20, 20 });
+	SetRndSeed(1);
+
+	DisarmThroughNativeAction(player, target);
+
+	EXPECT_FALSE(target._oTrapFlag);
+	EXPECT_EQ(trap._oVar4, 0);
+	EXPECT_EQ(GetLCGEngineState(), 1U);
+}
 
 TEST_F(ObjectsLevelTest, AddObjTraps_ObjNullDoesNotCrash)
 {

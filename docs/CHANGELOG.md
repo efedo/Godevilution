@@ -2,6 +2,13 @@
 
 Notable changes to this fork are recorded below.
 
+- 2026-10-06: Characterize native Trap Disarm through the existing action caller
+  with scoped no-op object behaviors and complete pool/player/metadata/vision
+  restoration. Add the pool's existing-policy test DLL annotation. Independently
+  reviewed focused 6/6, integrated 22/22 and three shuffled full-suite runs pass
+  with clean owned exits. Native threshold/RNG/link/chest behavior is pinned;
+  managed probability/graph parity and rendered skill acceptance remain open.
+
 - 2026-10-06: Record independently reviewed one/four-client headless Performance
   evidence from the source matching `a013ac78e`, excluding preserved uncommitted
   drafts. All image bindings, workload barriers and owned exits pass. Retain

@@ -44,6 +44,29 @@ unsupported behavior is a migration gap, not permission for local simulation.
 
 ## Current delivery position and verification limits
 
+The native Trap Disarm branch prerequisite now passes independently reviewed
+qualification in `.local/trap-disarm-native-oracle-scoped-player-qualified.log`,
+with evidence root `.local/trap-disarm-native-oracle-208b036cb4dc4d8d8925b473ecb25082`.
+Six focused fixtures, the full 22-test object suite and all three shuffled
+iterations (66 executions) pass without skips. Build plus three runtime stages
+exit zero with complete drains/cleanup and all four owned processes absent;
+the final incremental build has no warnings. The earlier dependency rebuild's
+Protobuf C4251 warnings and failed compile/link/caller attempts remain retained.
+
+The actual existing `ACTION_DISARM` caller reaches native `TryDisarm` with empty
+fixture object behaviors making the follow-on `OperateObject` inert. Nine armed
+attempts each advance one native LCG draw; the unarmed attempt advances none.
+Literal outcomes cover Dexterity/depth thresholds, equality, unclamped high
+values, the existing signed negative RNG result, linked left/right traps and
+unrelated targets, an unlinked door and trapped/ordinary chest differences.
+Original metadata/player vector storage, pointers, full pool, tile references,
+level, RNG and light/vision manager are restored. A test-only pool DLL annotation
+allows the existing test target to snapshot the complete allocator state.
+Protected player/CMake/Gold/item/profile drafts and all twenty baseline hashes
+remain unchanged. This closes this prepared native branch oracle only; managed
+probability/trap-graph parity, subsequent operation effects, generated-world,
+projectile and rendered acceptance remain open. The overall estimate stays 35%.
+
 The committed-source one/four-client baseline now passes separately from the
 dirty-tree measurements below. An archive of HEAD `38cbbb61d` plus the exact
 reviewed candidate is bound to all eleven committed `a013ac78e` blobs in

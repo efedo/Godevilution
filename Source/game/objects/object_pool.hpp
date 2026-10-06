@@ -20,6 +20,7 @@
 #include <span>
 
 #include "game/objects/objects.hpp" // For MAXOBJECTS definition
+#include "utils/attributes.h"
 #include "utils/container/entity_pool.hpp"
 
 namespace devilution {
@@ -30,7 +31,7 @@ struct Object;
 using ObjectPool = DenseEntityPool<Object, MAXOBJECTS, SparseAllocationPolicy>;
 
 // Global pool instance
-extern ObjectPool gObjectPool;
+extern DVL_API_FOR_TEST ObjectPool gObjectPool;
 
 // Initialization hook (called by objects.cpp during InitObjects)
 void InitializeObjectPool();
