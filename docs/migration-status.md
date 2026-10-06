@@ -44,6 +44,32 @@ unsupported behavior is a migration gap, not permission for local simulation.
 
 ## Current delivery position and verification limits
 
+The isolated authored Rogue Trap Disarm content prerequisite is independently
+reviewed on 2026-10-06. Exact-pinned `rogue-trap-preview` moves only door entity
+2001 to `(20,22)` and arms it, plus an optional level-1 start row at `(20,20)`;
+base resources/loadout, geometry, other entities and normal profiles stay intact.
+Current content tests and a HEAD `1e21f7575` archive plus only this content/test
+candidate each pass 2/2. The independent archive build has zero warnings/errors.
+Reports: `.local/overnight-trap-isolated-content.xml` and
+`.local/overnight-trap-isolated-head-closure.xml`.
+
+The integrated scene draft passes headless Create/cold Resume in
+`.local/overnight-trap-isolated-headless.log`, private scene root
+`Godevilution-Scene-Acceptance-c3520ce1733942d296a51e6b5c5bb9b3`.
+Actual distant input approaches `(21,21)` at sequence 1; disarm sequence 2's raw
+Accepted/Unspecified receipt (server receipt 2, tick 68) remains held for 500 ms,
+with pending count 1 and frozen armed projection. Releasing it clears the authored
+flag and derives `Trap` -> `Unspecified`, preserving all other target fields.
+Fresh-host Resume restores the clear closed target before input and settles
+movement sequence 3 at `(21,20)`. Life/Mana/Gold/Experience stay 2880/1440/100/0
+through every comparison. Six engine stages exit 0; all eight owned processes
+are confirmed stopped. This supports the content prerequisite; the full scene,
+launcher and menu packages remain uncommitted pending rendered verification.
+Retain the earlier cold-Life mismatch in
+`.local/overnight-trap-cold-restore-diagnostic.log`; its cause stays unclassified.
+No native Dexterity/RNG, linked-trap/chest, operation-ordering, generated-world,
+campaign or M1 completion is claimed.
+
 Current M0 shutdown-evidence verification passes: 69 launcher regressions and
 13 documentation checks, no failures/skips, plus an isolated current-build Godot
 create/checkpoint/cold-resume and settled-command host-loss/reconnect run. Base

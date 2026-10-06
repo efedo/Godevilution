@@ -37,6 +37,15 @@ defaults, base tables/assets and starting resources remain unchanged. It needs
 the rebuilt module: older binaries do not implement this optional contract.
 This entry profile is not native town collision/population or campaign parity.
 
+`rogue-trap-preview` is a separate authored acceptance overlay, exact-pinned to
+`devilution.base@0.1.0`. It moves existing closed door entity 2001 to Cathedral
+`(20,22)` and arms its trap. A separate level-1 start row places new participants
+at `(20,20)` to isolate the interaction from the base encounter. Rogue loadout,
+starting resources, geometry and every other object/monster remain unchanged.
+Acceptance starts level 1 with seed 0. This exercises the existing
+server-owned authored `TrapArmed` state; it does not establish native Dexterity/RNG,
+linked wall-trap/chest, door-operation ordering or generated trap-population parity.
+
 The optional `level_start_positions.tsv` table has the strict ordered columns
 `level_id`, `level_symbol`, `start_x`, `start_y`. Numeric IDs and required symbols
 must agree with stable IDs and registered levels; duplicate, malformed,

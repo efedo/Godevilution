@@ -2,6 +2,14 @@
 
 Notable changes to this fork are recorded below.
 
+- 2026-10-06: Add an exact-pinned authored Rogue Trap Disarm content prerequisite
+  with an armed existing door and isolated Cathedral start, preserving base
+  resources/loadout and other entities. Independent review and content tests
+  pass in both the working tree and a HEAD-only archive. Integrated headless
+  Create/cold Resume proves the strict held receipt and resource preservation;
+  its scene/launcher package remains uncommitted pending rendered verification.
+  Native trap probability/link behavior and M1 completion remain open.
+
 - 2026-10-06: Correct standalone host performance evidence for negotiated command
   scheduling. Require the complete metric schema, populated applicable summaries
   and honest empty summaries for metrics from the other scheduling path. Retain
