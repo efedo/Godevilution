@@ -44,6 +44,27 @@ unsupported behavior is a migration gap, not permission for local simulation.
 
 ## Current delivery position and verification limits
 
+The prepared native Bard Identify prerequisite passes independent review in
+`.local/bard-identify-native-4d3603c7a7254584a17c1664d3f501ed` on 2026-10-07.
+The existing registered `items_test` target passes focused 1/1, integrated 7/7
+and three shuffled seven-test iterations (21 executions), without skips.
+Matching VS x64 tools resolve before the warning-free incremental build; all
+four owned stages exit zero with complete drains/cleanup and exact identities
+absent. Fixture SHA is `0370218AAB314416D914F1DC80D84F3A5DCA6ECB4515DA8F322854B6F0F59D9E`;
+private driver SHA is `E38B5FBACC6053ECBABB436658A5C5D6383B6EB314B03A3AB008CA4BE8DDA0F2`.
+
+Actual `CheckIdentify` and `CalcPlrInv` run on table-backed ordinary equipment of
+a genuine inactive-level, nonlocal `Players[1]` Bard after a stable recalculated
+baseline. Only the selected sword's identification flag changes; complete item
+semantic/animation fields, equipment/inventory/belt/held item, grid/count,
+attributes, derived values, Life/Mana/Gold/Experience and RNG remain stable.
+Scoped player storage/pointers/ID, lighting/vision manager, options, RNG and
+active headless Health/Mana redraw flags are restored. This excludes other
+registered backbuffers, native character creation, cursor/graphics, magical
+affixes, local stash/Gold bookkeeping and full class/rendered parity. The Godot
+scene/launcher drafts retain their separate rendered gate; all twenty protected
+inputs and approval holds remain unchanged. The overall estimate stays 35%.
+
 The fresh committed-source exported one/four-client Performance pair passes
 independent review in `.local/exported-performance-marker-committed-full-r4.log`,
 root `.local/godot-exported-performance-run-1e9dddc4e7014e84a2f9c5512ac1a9d0`.

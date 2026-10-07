@@ -1,5 +1,27 @@
 # MSVC Build Notes for Agents
 
+## Prepared native Bard Identify prerequisite
+
+Build the existing registered `items_test` target using the checked MSVC x64
+environment below. From that configured build directory, run:
+
+```powershell
+.\items_test.exe --gtest_filter=ItemsTest.BardIdentifyChangesOnlyTheEquippedItemsIdentificationState
+.\items_test.exe
+.\items_test.exe --gtest_shuffle --gtest_random_seed=417 --gtest_repeat=3
+```
+
+Require focused 1/1, integrated 7/7 and all three shuffled seven-test iterations,
+without skips, plus clean bounded owned exits and frozen source hashes. The
+MPQ-free fixture invokes actual `CheckIdentify`/`CalcPlrInv` on a prepared
+table-backed ordinary sword of a genuine nonlocal, inactive-level Bard. Only
+identification changes; all item semantic/animation fields, collections,
+inventory grid/count, attributes, derived values, resources and RNG are checked.
+Scoped player storage/pointers/ID, lighting/vision, options, RNG and the active
+headless Health/Mana redraw flags are restored. Other registered backbuffers,
+native character creation, cursor/graphics, magical affixes, local stash/Gold
+bookkeeping and full class/rendered parity remain outside this prerequisite.
+
 ## Native Trap Disarm branch oracle
 
 Build the existing registered `objects_test` target using the matching checked

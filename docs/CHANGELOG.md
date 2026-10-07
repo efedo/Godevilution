@@ -2,6 +2,12 @@
 
 Notable changes to this fork are recorded below.
 
+- 2026-10-07: Characterize prepared native Bard Identify through actual
+  CheckIdentify/CalcPlrInv, preserving complete surrounding item/player state
+  and RNG. Focused 1/1, integrated 7/7 and three shuffled full-suite runs pass
+  with clean owned exits. Character creation, cursor/graphics, local Gold
+  bookkeeping and rendered class acceptance remain separate gates.
+
 - 2026-10-07: Pin Cathedral raw-route/door-profile compatibility with one explicit
   private-input integration regression. Exact seeds preserve ordinary refusal,
   door-aware acceptance, 44/47 closed doors and nonmutating preparation/discovery.
