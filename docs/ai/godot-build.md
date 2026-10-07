@@ -56,21 +56,25 @@ from a later isolated pass or retry a rejected command to hide the failure.
 The focused `LiveServerRestoresTownPortalLifetimeAfterProcessRestart` fact uses
 the existing explicit `town-loop-preview` and `town-portal-preview` content,
 ordinary Warrior resources, real Smith purchase and a consumed Town Portal scroll.
-Evidence: `.local/town-portal-lifetime-restart-6be9d0a0a219477ca7eb35c77482d9d0`.
-It requires an observed pre-clamp decrease during accepted movement, compares the
-stopped checkpoint and first fresh-host wire portal against authoritative tick
-baselines, and verifies source-to-town retention followed by owner-return removal.
-Portal identity, owner, all endpoints and bidirectionality stay exact; only the
-counter changes by `max(1, R0 - elapsedTicks)`. Canonical receipts and next command
-sequences remain strict. This is an opening counter, not a route expiry deadline.
+Evidence: `.local/town-portal-removal-restart-4c14b6b64d8e4a78a8817507667b9899`.
+It requires observed pre-clamp aging during accepted movement, full tick-derived
+portal equality in the stopped checkpoint and first fresh-host wire snapshot,
+source-to-town retention and owner-return closure. A second forced stop verifies
+the closure and complete canonical portal-use receipts in the saved checkpoint.
+A third fresh host must restore the same settled actor and absent original/owner
+routes before input, then accept exactly the persisted next sequence and settle
+ordinary movement at a safe adjacent cell actually visited earlier.
 
-The new and two existing restart facts pass in clean HEAD-plus-one-test and
-preserved working lanes: six facts, nine zero-exit outer stages, complete
-drains/cleanup and recorded identities absent. All 2,794 archived inputs, 2,812
-working inputs and twenty protected hashes match. Both builds retain the existing
-Dispatch.cs xUnit2031 warning. Fixture hosts are forcibly stopped. Rendered input,
-graceful host shutdown, native cast-pass alignment and full resources/world
-preservation remain separate; selecting this preview does not adopt normal profiles.
+Portal identity, owner, endpoints and bidirectionality stay exact while open;
+only the counter changes by `max(1, R0 - elapsedTicks)`. This is an opening counter,
+not an expiry deadline. The extended fact and two existing restart facts pass in
+clean and preserved working lanes: six executions, nine zero-exit outer stages,
+complete drains/cleanup and recorded identities absent. The clean archive has
+2,795 tracked paths with only this test replaced; its other 2,794 original inputs,
+all 2,812 working inputs and twenty protected hashes match. Both builds retain the
+existing Dispatch.cs xUnit2031 warning. Hosts are forcibly stopped. Rendered input,
+graceful shutdown, native cast-pass alignment and full resources/world preservation
+remain separate; this preview does not adopt normal profiles.
 
 ## Broader headless gameplay integration
 

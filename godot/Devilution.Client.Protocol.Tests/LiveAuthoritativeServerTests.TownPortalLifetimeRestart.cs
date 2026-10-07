@@ -32,8 +32,10 @@ public sealed partial class LiveAuthoritativeServerTests
         var saveRootLease = LiveTestSaveRoot.Register(saveRoot);
         StartedServer? firstServer = null;
         StartedServer? restartedServer = null;
+        StartedServer? returnRestartedServer = null;
         AuthoritativeClient? firstClient = null;
         AuthoritativeClient? resumedClient = null;
+        AuthoritativeClient? returnResumedClient = null;
         Exception? primaryFailure = null;
 
         try {
@@ -193,6 +195,9 @@ public sealed partial class LiveAuthoritativeServerTests
             baselineTick = castSnapshot.Tick;
             baselineRemaining = baselinePortal.RemainingTicks;
             sourceLevelId = baselinePortal.SourceLevelId;
+            var visitedSourceCells = new System.Collections.Generic.List<(int X, int Y)> {
+                (castPlayer.PositionX, castPlayer.PositionY),
+            };
 
             var endpointMoveReceipts = new System.Collections.Generic.List<CommandResult>();
             var previousEndpointMoveAcknowledgement = castAcknowledgement;
@@ -205,6 +210,7 @@ public sealed partial class LiveAuthoritativeServerTests
 
                 var priorTick = model.CurrentTick;
                 var priorPosition = (currentPlayer.PositionX, currentPlayer.PositionY);
+                visitedSourceCells.Add(priorPosition);
                 var sequence = firstClient.Queue(new Command {
                     MoveRequested = new MoveRequested {
                         TargetCell = true,
@@ -229,6 +235,8 @@ public sealed partial class LiveAuthoritativeServerTests
                         && player.CombatMode == PlayerCombatMode.Stand
                         && player.CurrentAction is null);
                 model.Apply(movedMessage);
+                var settledPlayer = model.Snapshot!.Players.Single(player => player.EntityId == playerEntityId);
+                visitedSourceCells.Add((settledPlayer.PositionX, settledPlayer.PositionY));
                 _ = AssertTownPortalAtTick(model.Snapshot!, baselinePortal, baselineTick, baselineRemaining);
             }
 
@@ -378,11 +386,143 @@ public sealed partial class LiveAuthoritativeServerTests
                     && snapshot.Portals.All(portal => portal.PortalId != portalId));
             resumedModel.Apply(ownerReturnedMessage);
             Assert.DoesNotContain(resumedModel.Snapshot!.Portals, portal => portal.PortalId == portalId);
+
+            var returnResumeToken = resumedClient.SessionToken;
+            Assert.False(string.IsNullOrWhiteSpace(returnResumeToken),
+                "The owner-return host did not retain a resume token for the next process.");
+            await resumedClient.DisposeAsync();
+            resumedClient = null;
+            restartedServer.Dispose();
+            Assert.True(restartedServer.HasExited,
+                "The owner-return host must stop before its durable checkpoint is inspected.");
+
+            var ownerReturnCheckpoint = ReadStoppedSessionCheckpoint(restartedServer, cancellationToken);
+            Assert.Equal(rulesetHash, ownerReturnCheckpoint.RulesetIdentityHash);
+            Assert.Equal(sourceUseAcknowledgement,
+                Assert.Single(ownerReturnCheckpoint.CommandReceipts,
+                    receipt => receipt.ClientSequence == sourceUseSequence));
+            Assert.Equal(ownerReturnAcknowledgement,
+                Assert.Single(ownerReturnCheckpoint.CommandReceipts,
+                    receipt => receipt.ClientSequence == ownerReturnSequence));
+            var ownerReturnCheckpointSnapshot = ParseCheckpointSnapshot(ownerReturnCheckpoint);
+            Assert.True(ownerReturnCheckpointSnapshot.Tick >= ownerReturnAcknowledgement.AppliedTick);
+            var ownerReturnCheckpointPlayer = Assert.Single(
+                ownerReturnCheckpointSnapshot.Players,
+                player => player.EntityId == playerEntityId);
+            Assert.Equal(characterName, ownerReturnCheckpointPlayer.CharacterName);
+            Assert.Equal(0U, ownerReturnCheckpointPlayer.CharacterClassId);
+            Assert.Equal(sourceLevelId, ownerReturnCheckpointPlayer.LevelId);
+            Assert.Equal((checkpointPortal.SourcePositionX, checkpointPortal.SourcePositionY),
+                (ownerReturnCheckpointPlayer.PositionX, ownerReturnCheckpointPlayer.PositionY));
+            Assert.Equal(PlayerCombatMode.Stand, ownerReturnCheckpointPlayer.CombatMode);
+            Assert.Null(ownerReturnCheckpointPlayer.CurrentAction);
+            Assert.DoesNotContain(ownerReturnCheckpointSnapshot.Portals, portal => portal.PortalId == portalId);
+            Assert.DoesNotContain(ownerReturnCheckpointSnapshot.Portals,
+                portal => portal.OwnerEntityId == playerEntityId);
+            var lastOwnerReturnSequence = ownerReturnCheckpoint.CommandReceipts
+                .Max(receipt => receipt.ClientSequence);
+            Assert.Equal(ownerReturnSequence, lastOwnerReturnSequence);
+
+            returnRestartedServer = await StartedServer.StartAsync(
+                cancellationToken,
+                contentOverlayRoot: townLoopPreviewRoot,
+                additionalContentOverlayRoot: townPortalPreviewRoot,
+                randomSeed: 1,
+                startingLevelOverride: 0,
+                portOverride: firstPort,
+                saveRootOverride: saveRoot,
+                deleteSaveRootOnDispose: false);
+            Assert.NotEqual(restartedServer.ProcessId, returnRestartedServer.ProcessId);
+            Assert.True(restartedServer.HasExited);
+            Assert.Equal(contentHash, returnRestartedServer.ContentHash);
+            Assert.Equal(rulesetHash, returnRestartedServer.RulesetHash);
+            returnResumedClient = new AuthoritativeClient(
+                CreateOptions(returnRestartedServer, "godot-town-portal-lifetime-return-resume", requestedClassId: 0) with {
+                    RequestedCharacterName = characterName,
+                    ResumeToken = returnResumeToken,
+                });
+            await returnResumedClient.ConnectAsync(cancellationToken);
+            var returnRestoredMessage = await WaitForMessageAsync(
+                returnResumedClient,
+                message => message.Snapshot is not null);
+            var returnRestoredSnapshot = returnRestoredMessage.Snapshot!;
+            Assert.True(returnRestoredSnapshot.Tick >= ownerReturnCheckpointSnapshot.Tick);
+            Assert.Equal(contentHash, returnRestoredSnapshot.ContentManifestHash);
+            Assert.Equal(rulesetHash, returnRestoredSnapshot.RulesetIdentityHash);
+            Assert.Equal(contentHash, returnResumedClient.ServerIdentity!.ContentManifestHash);
+            Assert.Equal(rulesetHash, returnResumedClient.ServerIdentity.RulesetIdentityHash);
+            var returnRestoredPlayer = Assert.Single(
+                returnRestoredSnapshot.Players,
+                player => player.EntityId == playerEntityId);
+            Assert.Equal(characterName, returnRestoredPlayer.CharacterName);
+            Assert.Equal(0U, returnRestoredPlayer.CharacterClassId);
+            Assert.Equal(sourceLevelId, returnRestoredPlayer.LevelId);
+            Assert.Equal((ownerReturnCheckpointPlayer.PositionX, ownerReturnCheckpointPlayer.PositionY),
+                (returnRestoredPlayer.PositionX, returnRestoredPlayer.PositionY));
+            Assert.Equal(PlayerCombatMode.Stand, returnRestoredPlayer.CombatMode);
+            Assert.Null(returnRestoredPlayer.CurrentAction);
+            Assert.DoesNotContain(returnRestoredSnapshot.Portals, portal => portal.PortalId == portalId);
+            Assert.DoesNotContain(returnRestoredSnapshot.Portals,
+                portal => portal.OwnerEntityId == playerEntityId);
+
+            var returnResumedModel = new AuthoritativeClientModel();
+            returnResumedModel.Apply(returnRestoredMessage);
+            var nextSequence = checked(lastOwnerReturnSequence + 1);
+            var moveTarget = SelectVisitedSafeMoveTarget(
+                returnRestoredSnapshot,
+                returnRestoredPlayer,
+                visitedSourceCells);
+            Assert.NotEqual(
+                (returnRestoredPlayer.PositionX, returnRestoredPlayer.PositionY),
+                moveTarget);
+            var returnMoveSequence = returnResumedClient.Queue(new Command {
+                MoveRequested = new MoveRequested {
+                    TargetCell = true,
+                    TargetX = moveTarget.X,
+                    TargetY = moveTarget.Y,
+                },
+            }, returnResumedClient.SuggestedCommandTick(returnResumedModel.CurrentTick));
+            Assert.Equal(nextSequence, returnMoveSequence);
+            await returnResumedClient.PollAsync(cancellationToken);
+            var returnMoveAcknowledgement = await WaitForAcknowledgementAsync(returnResumedClient, returnMoveSequence);
+            AssertTownPortalAcceptedReceipt(returnMoveAcknowledgement, returnMoveSequence);
+            AssertTownPortalReceiptFollows(ownerReturnAcknowledgement, returnMoveAcknowledgement);
+            var returnMoveMessage = await WaitForMessageAsync(
+                returnResumedClient,
+                message => message.Snapshot is { } snapshot
+                    && snapshot.Tick >= returnMoveAcknowledgement.AppliedTick
+                    && snapshot.Tick > returnRestoredSnapshot.Tick
+                    && snapshot.Players.SingleOrDefault(player => player.EntityId == playerEntityId) is { } player
+                    && player.LevelId == sourceLevelId
+                    && (player.PositionX, player.PositionY) == moveTarget
+                    && player.CombatMode == PlayerCombatMode.Stand
+                    && player.CurrentAction is null
+                    && snapshot.Portals.All(portal => portal.PortalId != portalId
+                        && portal.OwnerEntityId != playerEntityId));
+            returnResumedModel.Apply(returnMoveMessage);
+            var returnMovedSnapshot = returnResumedModel.Snapshot!;
+            var returnMovedPlayer = Assert.Single(
+                returnMovedSnapshot.Players,
+                player => player.EntityId == playerEntityId);
+            Assert.True(returnMoveAcknowledgement.ServerReceiptSequence > ownerReturnAcknowledgement.ServerReceiptSequence);
+            Assert.True(returnMoveAcknowledgement.AppliedTick >= ownerReturnAcknowledgement.AppliedTick);
+            Assert.Equal((moveTarget.X, moveTarget.Y), (returnMovedPlayer.PositionX, returnMovedPlayer.PositionY));
+            Assert.Equal(PlayerCombatMode.Stand, returnMovedPlayer.CombatMode);
+            Assert.Null(returnMovedPlayer.CurrentAction);
+            Assert.DoesNotContain(returnMovedSnapshot.Portals, portal => portal.PortalId == portalId);
+            Assert.DoesNotContain(returnMovedSnapshot.Portals, portal => portal.OwnerEntityId == playerEntityId);
             Assert.Empty(cleanupFailures);
         } catch (Exception failure) {
             primaryFailure = failure;
             throw;
         } finally {
+            if (returnResumedClient is not null) {
+                try {
+                    await returnResumedClient.DisposeAsync();
+                } catch (Exception cleanupFailure) {
+                    cleanupFailures.Add(cleanupFailure);
+                }
+            }
             if (resumedClient is not null) {
                 try {
                     await resumedClient.DisposeAsync();
@@ -397,6 +537,7 @@ public sealed partial class LiveAuthoritativeServerTests
                     cleanupFailures.Add(cleanupFailure);
                 }
             }
+            returnRestartedServer?.Dispose();
             restartedServer?.Dispose();
             firstServer?.Dispose();
             if (primaryFailure is null) {
@@ -404,6 +545,57 @@ public sealed partial class LiveAuthoritativeServerTests
                 CleanupLocalRoot(saveRootLease);
             }
         }
+    }
+
+    private static (int X, int Y) SelectVisitedSafeMoveTarget(
+        Snapshot snapshot,
+        PlayerSnapshot player,
+        System.Collections.Generic.IEnumerable<(int X, int Y)> visitedCells)
+    {
+        var geometry = snapshot.LevelGeometry.Single(level => level.LevelId == player.LevelId);
+        bool IsSafeVisitedCell((int X, int Y) cell)
+        {
+            var deltaX = Math.Abs((long)cell.X - player.PositionX);
+            var deltaY = Math.Abs((long)cell.Y - player.PositionY);
+            if (Math.Max(deltaX, deltaY) != 1
+                || AuthoritativeLevelGeometryCellResolver.Resolve(geometry, cell.X, cell.Y)
+                    == AuthoritativeLevelGeometryCell.Blocked)
+                return false;
+
+            var index = checked(cell.Y * geometry.Width + cell.X);
+            if (geometry.StaticObjectBlockedCells.Contains(index)
+                || geometry.WarpTriggers.Any(warp => warp.TriggerX == cell.X && warp.TriggerY == cell.Y)
+                || snapshot.Players.Any(other => other.EntityId != player.EntityId
+                    && other.Life > 0 && other.LevelId == player.LevelId
+                    && (other.PositionX, other.PositionY) == cell)
+                || snapshot.Monsters.Any(monster => monster.Alive && monster.LevelId == player.LevelId
+                    && ((monster.PositionX, monster.PositionY) == cell
+                        || (monster.Moving && (monster.FuturePositionX, monster.FuturePositionY) == cell)))
+                || snapshot.Objects.Any(@object => @object.LevelId == player.LevelId
+                    && !@object.Destroyed && (@object.PositionX, @object.PositionY) == cell)
+                || snapshot.WorldItems.Any(item => item.LevelId == player.LevelId
+                    && (item.PositionX, item.PositionY) == cell)
+                || snapshot.TownerGreetings.Any(greeting => greeting.LevelId == player.LevelId
+                    && (greeting.PositionX, greeting.PositionY) == cell)
+                || snapshot.Portals.Any(portal => (portal.SourceLevelId == player.LevelId
+                        && (portal.SourcePositionX, portal.SourcePositionY) == cell)
+                    || (portal.DestinationLevelId == player.LevelId
+                        && (portal.DestinationPositionX, portal.DestinationPositionY) == cell)))
+                return false;
+
+            return true;
+        }
+
+        var candidates = visitedCells
+            .Distinct()
+            .Where(IsSafeVisitedCell)
+            .OrderBy(cell => Math.Abs((long)cell.X - player.PositionX)
+                + Math.Abs((long)cell.Y - player.PositionY))
+            .ToArray();
+        if (candidates.Length == 0)
+            throw new InvalidOperationException(
+                "No previously occupied source-level cell is currently safe for the post-resume movement.");
+        return candidates[0];
     }
 
     private static void AssertTownPortalAcceptedReceipt(CommandResult acknowledgement, ulong sequence)

@@ -2,6 +2,11 @@
 
 Notable changes to this fork are recorded below.
 
+- 2026-10-07: Extend the TCP Town Portal recovery fact through owner-return
+  closure, a second forced stop and third fresh host. Verify durable route absence,
+  canonical receipts and exact next-sequence movement before accepting recovery.
+  The extended fact and two existing restart facts pass in clean and working lanes.
+
 - 2026-10-07: Verify the actual TCP Town Portal opening counter through real
   scroll purchase/cast, pre-clamp tick aging, forced-stop checkpoint and first
   fresh-host restore, then source-to-town retention and owner-return removal.

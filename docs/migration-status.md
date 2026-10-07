@@ -44,26 +44,32 @@ unsupported behavior is a migration gap, not permission for local simulation.
 
 ## Current delivery position and verification limits
 
-Actual TCP Town Portal opening-counter/cold-restore acceptance passes in
-`.local/town-portal-lifetime-restart-6be9d0a0a219477ca7eb35c77482d9d0`.
-A normal Warrior uses the existing explicit town/portal preview stack to buy and
-consume a scroll. Real endpoint movement proves a tick-derived decrease above
+Actual TCP Town Portal opening-counter and durable-closure acceptance passes in
+`.local/town-portal-removal-restart-4c14b6b64d8e4a78a8817507667b9899`.
+A normal Warrior buys and consumes a scroll using the existing explicit
+town/portal preview stack. Real endpoint movement proves tick-derived aging above
 the clamp. The stopped checkpoint and first fresh-host wire snapshot before input
-preserve complete portal identity, owner, endpoints and bidirectionality, with
-RemainingTicks derived from their observed ticks. Positive canonical receipts
-persist; the next exact sequences enter town while retaining the portal, then
-return its owner to the source and remove it. This counter clamps at one rather
-than expiring the owned route.
+preserve the full portal identity and counter. Exact next accepted commands enter
+town while retaining the route, then return its owner to the source and close it.
+This opening counter clamps at one rather than expiring the owned route.
 
-The new fact and existing Sorcerer Recharge/general packaged-adapter restart facts
-pass in both clean and working lanes (six executions, no failures/skips).
-The clean lane is HEAD `7aa3ebb1d` plus the sole new test partial; 2,794 archived
-inputs and 2,812 preserved working inputs stay hashed, with protected20 unchanged.
-All nine bounded outer stages exit zero with complete drains/cleanup and exact
-identities absent. Both builds retain the existing Dispatch.cs xUnit2031 warning.
-Child hosts are forcibly stopped; this does not qualify graceful shutdown,
-rendered controls, native missile creation-pass parity or complete resource/world
-preservation. The existing TownLoop scene still has its narrower timer assertion.
+A second forced stop now verifies full canonical source-use/owner-return receipts,
+settled actor state and absence of the original ID and every same-owner route in
+the checkpoint. A third fresh host preserves that absence in its first wire
+snapshot before input, with matching actor, position, content and ruleset. The
+exact persisted next sequence accepts ordinary movement to a safe adjacent cell
+actually visited earlier; the player settles there and the route remains absent.
+
+The extended fact and existing Sorcerer Recharge/general packaged-adapter restart
+facts pass in clean and working lanes (six executions, no failures/skips). The
+clean lane replaces only this tracked test in HEAD `af1d9f0ca`: all 2,795 archived
+paths remain, comprising 2,794 unchanged originals and one candidate. All 2,812
+working inputs and twenty protected hashes match. Nine bounded outer stages exit
+zero with complete drains/cleanup and exact identities absent. Both builds retain
+the existing Dispatch.cs xUnit2031 warning. Child hosts are forcibly stopped;
+graceful shutdown, rendered controls, native missile creation-pass parity and
+complete resource/world preservation remain separate. The existing TownLoop
+scene retains its narrower timer assertion.
 
 The existing Journey, TownLoop and Lifecycle legacy profiles, plus explicit-cohort
 two-client Cooperative Create/cold Resume, pass broader headless integration after
