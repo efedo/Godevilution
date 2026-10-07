@@ -2,6 +2,11 @@
 
 Notable changes to this fork are recorded below.
 
+- 2026-10-07: Pin native RechargeItem full-charge no-op, last-capacity exhaustion
+  and invalid-item boundaries, including complete item fields and exact RNG
+  consumption/restoration. Focused 3/3, integrated 10/10 and three shuffled full
+  suites pass. Class admission, native cursor flow and rendered acceptance
+  remain separate; existing Recharge/Repair/Identify cases are retained.
 - 2026-10-07: Characterize native Hellfire Search through actual loose-table
   cast/missile processing: 247-pass lifetime, recast, strict signed-int boundary
   and automap item visibility, with Life/Mana/RNG and original storage restored.

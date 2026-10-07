@@ -99,6 +99,22 @@ remains open alongside rendered automap and application acceptance. Search is no
 native-town-legal or TrapSense. Scene/launcher drafts await rendered acceptance;
 normal-profile adoption and the documented approval holds remain.
 
+The prepared native Recharge edge prerequisite passes independent review in
+`.local/recharge-native-5aa53154361940f1aa08266130e66fe6`: focused 3/3, integrated 10/10 and three shuffled ten-test
+iterations, without skips. Actual `RechargeItem` preserves a fully charged staff
+without an RNG draw; a zero-charge staff with one maximum charge exhausts its
+capacity after exactly one LCG transition. Nonstaff/null-spell inputs preserve
+complete item semantic fields and RNG. All seven older cases, including ordinary
+Recharge, Warrior Repair and Bard Identify, remain in the full target.
+Four owned stages exit zero with complete drains/cleanup and exact identities
+absent; VS x64 tools resolve and the incremental build is warning-free. Eight
+critical working inputs match before/after execution, not a whole clean archive.
+This is the class-independent helper on a prepared level-ten nonlocal stack
+player; Sorcerer class admission, DoRecharge/recalculation/cursor/network/native
+creation and rendered acceptance remain outside its scope. The existing Godot
+lifecycle already proves the Recharge control and post-death staff world-drop
+restore; cold persistence of the still-equipped recharged staff is a separate gap.
+
 The prepared native Bard Identify prerequisite passes independent review in
 `.local/bard-identify-native-4d3603c7a7254584a17c1664d3f501ed` on 2026-10-07.
 The existing registered `items_test` target passes focused 1/1, integrated 7/7

@@ -28,6 +28,31 @@ are checked non-null and behaviorally because DLL import thunks make EXE/DLL
 address equality unreliable. Fresh test processes do not load MPQs/overrides.
 This is a prepared direct-call sequence, not GameLogic/DoSpell execution, native
 character creation, Town admission, shared server tick alignment or rendering.
+
+## Prepared native Recharge edge prerequisites
+
+Build the existing registered `items_test` target using the checked MSVC x64
+environment below. From that configured build directory, run:
+
+```powershell
+.\items_test.exe --gtest_filter=ItemsTest.SorcererStaffRechargeFullyChargedStaffIsNoOpWithoutRandomDraw:ItemsTest.SorcererStaffRechargeCanExhaustItsLastMaximumChargeWithOneRandomDraw:ItemsTest.RechargeItemRejectsNonStaffAndNullSpellWithoutChangingItemOrRandom
+.\items_test.exe
+.\items_test.exe --gtest_shuffle --gtest_random_seed=417 --gtest_repeat=3
+```
+
+Require focused 3/3, integrated 10/10 and three shuffled ten-test iterations,
+without skips, plus frozen critical inputs and bounded owned exits. Actual
+`RechargeItem` leaves fully charged staff untouched without an RNG draw; a staff
+with zero charges/one maximum charge loses that final capacity with exactly one
+LCG transition. Nonstaff and null-spell inputs preserve the complete item's
+semantic fields and RNG. The existing ordinary Recharge, Warrior Repair and
+Bard Identify facts remain in the full target.
+
+These cases use a prepared level-ten stack-local player distinct from MyPlayer;
+the helper is class-independent. RNG is restored even on fatal assertions.
+They do not exercise Sorcerer class admission, `DoRecharge`/inventory recalculation,
+cursor/network behavior, native character creation or rendered acceptance.
+
 ## Prepared native Bard Identify prerequisite
 
 Build the existing registered `items_test` target using the checked MSVC x64
@@ -39,8 +64,9 @@ environment below. From that configured build directory, run:
 .\items_test.exe --gtest_shuffle --gtest_random_seed=417 --gtest_repeat=3
 ```
 
-Require focused 1/1, integrated 7/7 and all three shuffled seven-test iterations,
-without skips, plus clean bounded owned exits and frozen source hashes. The
+Require focused 1/1 and the complete current target (now 10/10, including Recharge
+edges), plus three shuffled full iterations without skips, bounded owned exits
+and frozen source hashes. The earlier Bard-only qualification was 1/7/21. The
 MPQ-free fixture invokes actual `CheckIdentify`/`CalcPlrInv` on a prepared
 table-backed ordinary sword of a genuine nonlocal, inactive-level Bard. Only
 identification changes; all item semantic/animation fields, collections,

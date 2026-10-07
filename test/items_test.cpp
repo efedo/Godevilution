@@ -137,6 +137,42 @@ void ExpectSameItem(const Item &expected, const Item &actual)
 	ExpectSameItemExceptIdentified(expected, actual);
 }
 
+class ScopedRechargeRandomState {
+public:
+	explicit ScopedRechargeRandomState(uint32_t seed)
+	    : previousSeed_(GetLCGEngineState())
+	{
+		SetRndSeed(seed);
+	}
+
+	ScopedRechargeRandomState(const ScopedRechargeRandomState &) = delete;
+	ScopedRechargeRandomState &operator=(const ScopedRechargeRandomState &) = delete;
+
+	~ScopedRechargeRandomState()
+	{
+		SetRndSeed(previousSeed_);
+	}
+
+private:
+	uint32_t previousSeed_;
+};
+
+Item MakeRechargeTestItem(ItemType type, SpellID spell, int charges, int maximumCharges)
+{
+	Item item = {};
+	item._itype = type;
+	item._iSpell = spell;
+	item._iCharges = charges;
+	item._iMaxCharges = maximumCharges;
+	item._iSeed = 0x12345678;
+	item._iCreateInfo = 0x3456;
+	item._ivalue = 314;
+	item._iDurability = 12;
+	item._iMaxDur = 20;
+	item._iIdentified = true;
+	return item;
+}
+
 void GenerateAllUniques(bool hellfire, const size_t expectedUniques)
 {
 	gbIsHellfire = hellfire;
@@ -291,6 +327,70 @@ TEST_F(ItemsTest, SorcererStaffRechargeUsesNativeChargeLossAndRandomSequence)
 	EXPECT_EQ(item._iCharges, 8);
 	EXPECT_EQ(item._iMaxCharges, 8);
 	EXPECT_EQ(GetLCGEngineState(), 22695478U);
+}
+
+TEST_F(ItemsTest, SorcererStaffRechargeFullyChargedStaffIsNoOpWithoutRandomDraw)
+{
+	ScopedRechargeRandomState randomState(0x12345678);
+	Player player = {};
+	player.setCharacterLevel(10);
+	ASSERT_NE(&player, MyPlayer);
+
+	Item staff = MakeRechargeTestItem(ItemType::Staff, SpellID::ChargedBolt, 10, 10);
+	const Item expected = staff;
+	ASSERT_TRUE(IsValidSpell(staff._iSpell));
+	const uint32_t initialRandomState = GetLCGEngineState();
+
+	RechargeItem(staff, player);
+
+	ExpectSameItem(expected, staff);
+	EXPECT_EQ(GetLCGEngineState(), initialRandomState);
+}
+
+TEST_F(ItemsTest, SorcererStaffRechargeCanExhaustItsLastMaximumChargeWithOneRandomDraw)
+{
+	ScopedRechargeRandomState randomState(0);
+	Player player = {};
+	player.setCharacterLevel(10);
+	ASSERT_NE(&player, MyPlayer);
+
+	Item staff = MakeRechargeTestItem(ItemType::Staff, SpellID::ChargedBolt, 0, 1);
+	Item expected = staff;
+	expected._iMaxCharges = 0;
+	ASSERT_TRUE(IsValidSpell(staff._iSpell));
+
+	RechargeItem(staff, player);
+
+	EXPECT_EQ(staff._iCharges, 0);
+	EXPECT_EQ(staff._iMaxCharges, 0);
+	ExpectSameItem(expected, staff);
+	EXPECT_EQ(GetLCGEngineState(), 1U);
+}
+
+TEST_F(ItemsTest, RechargeItemRejectsNonStaffAndNullSpellWithoutChangingItemOrRandom)
+{
+	ScopedRechargeRandomState randomState(0x87654321);
+	Player player = {};
+	player.setCharacterLevel(10);
+	ASSERT_NE(&player, MyPlayer);
+
+	Item nonStaff = MakeRechargeTestItem(ItemType::Sword, SpellID::ChargedBolt, 3, 5);
+	const Item expectedNonStaff = nonStaff;
+	ASSERT_TRUE(IsValidSpell(nonStaff._iSpell));
+
+	RechargeItem(nonStaff, player);
+
+	ExpectSameItem(expectedNonStaff, nonStaff);
+	EXPECT_EQ(GetLCGEngineState(), 0x87654321U);
+
+	Item nullSpell = MakeRechargeTestItem(ItemType::Staff, SpellID::Null, 2, 5);
+	const Item expectedNullSpell = nullSpell;
+	ASSERT_FALSE(IsValidSpell(nullSpell._iSpell));
+
+	RechargeItem(nullSpell, player);
+
+	ExpectSameItem(expectedNullSpell, nullSpell);
+	EXPECT_EQ(GetLCGEngineState(), 0x87654321U);
 }
 
 TEST_F(ItemsTest, BardIdentifyChangesOnlyTheEquippedItemsIdentificationState)
