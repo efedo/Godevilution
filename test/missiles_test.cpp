@@ -3,16 +3,32 @@
 
 #include <ankerl/unordered_dense.h>
 
+#include <array>
+#include <filesystem>
+#include <list>
+#include <limits>
+#include <optional>
+#include <string>
+#include <system_error>
 #include <utility>
 #include <vector>
 
+#include "application/game_mode.hpp"
+#include "application/headless_mode.hpp"
+#include "engine/audio/sound.h"
 #include "engine/lighting.h"
 #include "engine/random.hpp"
+#include "engine/world.hpp"
 #include "game/levels/dungeon_common.h"
 #include "game/levels/triggers.h"
 #include "game/levels/tile.hpp"
 #include "game/missiles/missiles.hpp"
+#include "game/players/players.hpp"
+#include "game/spells/spells.hpp"
 #include "network/storm/storm_net.hpp"
+#include "tables/misdat.h"
+#include "tables/spelldat.h"
+#include "utils/paths.h"
 
 using namespace devilution;
 using ::testing::AllOf;
@@ -22,6 +38,172 @@ using ::testing::Pair;
 using ::testing::UnorderedElementsAre;
 
 namespace {
+
+constexpr Point MonkSearchPosition { 40, 40 };
+
+class ScopedTestAssetsPath {
+public:
+	ScopedTestAssetsPath()
+	    : saved_(paths::AssetsPath())
+	{
+	}
+
+	~ScopedTestAssetsPath()
+	{
+		paths::SetAssetsPath(saved_);
+	}
+
+	ScopedTestAssetsPath(const ScopedTestAssetsPath &) = delete;
+	ScopedTestAssetsPath &operator=(const ScopedTestAssetsPath &) = delete;
+
+private:
+	std::string saved_;
+};
+
+std::optional<std::filesystem::path> FindHellfireAssetsPath()
+{
+	const std::array<std::filesystem::path, 2> starts {
+	    std::filesystem::current_path(),
+	    std::filesystem::path(paths::BasePath()),
+	};
+	for (std::filesystem::path start : starts) {
+		std::error_code error;
+		start = std::filesystem::absolute(start, error);
+		if (error)
+			continue;
+		if (std::filesystem::is_regular_file(start, error))
+			start = start.parent_path();
+		for (std::filesystem::path ancestor = start; !ancestor.empty();) {
+			const std::filesystem::path candidate = ancestor / "mods" / "Hellfire";
+			if (std::filesystem::is_regular_file(candidate / "txtdata" / "spells" / "spelldat.tsv", error)
+			    && std::filesystem::is_regular_file(candidate / "txtdata" / "missiles" / "misdat.tsv", error)) {
+				return candidate;
+			}
+			const std::filesystem::path parent = ancestor.parent_path();
+			if (parent == ancestor)
+				break;
+			ancestor = parent;
+			error.clear();
+		}
+	}
+	return std::nullopt;
+}
+
+class ScopedNativeMonkSearchState {
+public:
+	ScopedNativeMonkSearchState()
+	    : savedSpellsData_()
+	    , savedAssetsPath_(paths::AssetsPath())
+	    , savedPlayers_()
+	    , savedMyPlayer_(MyPlayer)
+	    , savedMyPlayerId_(MyPlayerId)
+	    , savedMissiles_()
+	    , savedMissilePreFlag_(MissilePreFlag)
+	    , savedLevelId_(currentLevel().id())
+	    , savedSearchTile_(tileAt(MonkSearchPosition))
+	    , savedLightManager_(CurrentLightManager)
+	    , savedAutomapManager_(CurrentAutomapManager)
+	    , savedHeadlessMode_(HeadlessMode)
+	    , savedHellfireMode_(gbIsHellfire)
+	    , savedSoundInitialized_(gbSndInited)
+	    , savedRngState_(GetLCGEngineState())
+	{
+		SpellsData.swap(savedSpellsData_);
+		Players.swap(savedPlayers_);
+		Missiles.swap(savedMissiles_);
+		SpellsData.clear();
+		MyPlayer = nullptr;
+		MyPlayerId = 0;
+		MissilePreFlag = false;
+		HeadlessMode = true;
+		gbIsHellfire = true;
+		gbSndInited = false;
+		currentLevel().setId({ 1, DTYPE_CATHEDRAL, false, SL_NONE });
+		tileAt(MonkSearchPosition) = Tile {};
+		CurrentAutomapManager.SetAutoMapShowItems(false);
+		SetRndSeed(0x4D534541);
+	}
+
+	~ScopedNativeMonkSearchState()
+	{
+		SpellsData.swap(savedSpellsData_);
+		paths::SetAssetsPath(savedAssetsPath_);
+		Players.swap(savedPlayers_);
+		MyPlayerId = savedMyPlayerId_;
+		MyPlayer = savedMyPlayer_;
+		Missiles.swap(savedMissiles_);
+		MissilePreFlag = savedMissilePreFlag_;
+		currentLevel().setId(savedLevelId_);
+		tileAt(MonkSearchPosition) = savedSearchTile_;
+		CurrentLightManager = savedLightManager_;
+		CurrentAutomapManager = savedAutomapManager_;
+		HeadlessMode = savedHeadlessMode_;
+		gbIsHellfire = savedHellfireMode_;
+		gbSndInited = savedSoundInitialized_;
+		SetRndSeed(savedRngState_);
+	}
+
+	ScopedNativeMonkSearchState(const ScopedNativeMonkSearchState &) = delete;
+	ScopedNativeMonkSearchState &operator=(const ScopedNativeMonkSearchState &) = delete;
+
+private:
+	ScopedMissileDataForTest savedMissileData_;
+	std::vector<SpellData> savedSpellsData_;
+	std::string savedAssetsPath_;
+	std::vector<Player> savedPlayers_;
+	Player *savedMyPlayer_;
+	uint8_t savedMyPlayerId_;
+	std::list<Missile> savedMissiles_;
+	bool savedMissilePreFlag_;
+	LevelId savedLevelId_;
+	Tile savedSearchTile_;
+	LightManager savedLightManager_;
+	AutomapManager savedAutomapManager_;
+	bool savedHeadlessMode_;
+	bool savedHellfireMode_;
+	bool savedSoundInitialized_;
+	uint32_t savedRngState_;
+};
+
+class NativeMonkSearchTest : public ::testing::Test {
+protected:
+	void SetUp() override
+	{
+		const std::optional<std::filesystem::path> assetsPath = FindHellfireAssetsPath();
+		ASSERT_TRUE(assetsPath.has_value()) << "The checked-in loose Hellfire tables are required for this native test.";
+		paths::SetAssetsPath(assetsPath->string() + "/");
+
+		LoadSpellData();
+		LoadMissileData();
+		ASSERT_GT(SpellsData.size(), static_cast<size_t>(SpellID::Search));
+		ASSERT_TRUE(IsMissileDataAvailable(MissileID::Search));
+		ASSERT_EQ(GetSpellData(SpellID::Search).sMissiles[0], MissileID::Search);
+		ASSERT_EQ(GetSpellData(SpellID::Search).sMissiles[1], MissileID::Null);
+		ASSERT_NE(GetMissileData(MissileID::Search).addFn, nullptr);
+		ASSERT_NE(GetMissileData(MissileID::Search).processFn, nullptr);
+
+		Players.emplace_back(Player {});
+		Player &player = Players.front();
+		player._pClass = HeroClass::Monk;
+		ASSERT_EQ(player.getCharacterLevel(), 1);
+		player.position.tile = MonkSearchPosition;
+		player.position.future = MonkSearchPosition;
+		player.executedSpell = { SpellID::Search, SpellType::Skill, -1, 0 };
+		player.life = { 6400, 6400, 6400, 6400, 100 };
+		player.mana = { 3200, 3200, 3200, 3200, 100 };
+		player._pmode = PM_STAND;
+		MyPlayerId = 0;
+		MyPlayer = &player;
+	}
+
+	void CastSearch()
+	{
+		ASSERT_NE(MyPlayer, nullptr);
+		CastSpell(*MyPlayer, SpellID::Search, MonkSearchPosition, MonkSearchPosition, 0);
+	}
+
+	ScopedNativeMonkSearchState state_;
+};
 
 class ScopedTownPortalState {
 public:
@@ -346,4 +528,172 @@ TEST(Missiles, ProcessTownPortalPrecedesSameTileLevelTrigger)
 	player._pLvlChanging = true;
 	ProcessTownPortal(portal);
 	EXPECT_EQ(player._pmode, PM_STAND);
+}
+
+TEST(MissileData, ScopedTestLoadRestoresOriginalStorage)
+{
+	const bool originalSearchAvailable = IsMissileDataAvailable(MissileID::Search);
+	const MissileData *originalSearch = originalSearchAvailable ? &GetMissileData(MissileID::Search) : nullptr;
+	ScopedTestAssetsPath assetsPathGuard;
+
+	const std::optional<std::filesystem::path> assetsPath = FindHellfireAssetsPath();
+	ASSERT_TRUE(assetsPath.has_value()) << "The checked-in loose Hellfire tables are required for this native test.";
+	{
+		ScopedMissileDataForTest originalDataGuard;
+		EXPECT_FALSE(IsMissileDataAvailable(MissileID::Search));
+		paths::SetAssetsPath(assetsPath->string() + "/");
+		LoadMissileData();
+		ASSERT_TRUE(IsMissileDataAvailable(MissileID::Search));
+		EXPECT_NE(GetMissileData(MissileID::Search).addFn, nullptr);
+		const MissileData *loadedSearch = &GetMissileData(MissileID::Search);
+		const MissileFileData *loadedArrow = &GetMissileSpriteData(MissileGraphicID::Arrow);
+		const uint8_t loadedArrowAnimDelay = loadedArrow->animDelay(0);
+		const uint8_t loadedArrowAnimLength = loadedArrow->animLen(0);
+		{
+			ScopedMissileDataForTest replacementDataGuard;
+			EXPECT_FALSE(IsMissileDataAvailable(MissileID::Search));
+			paths::SetAssetsPath(assetsPath->string() + "/");
+			LoadMissileData();
+			ASSERT_TRUE(IsMissileDataAvailable(MissileID::Search));
+			EXPECT_NE(&GetMissileData(MissileID::Search), loadedSearch);
+			EXPECT_NE(&GetMissileSpriteData(MissileGraphicID::Arrow), loadedArrow);
+		}
+		EXPECT_EQ(&GetMissileData(MissileID::Search), loadedSearch);
+		EXPECT_EQ(&GetMissileSpriteData(MissileGraphicID::Arrow), loadedArrow);
+		EXPECT_EQ(loadedArrow->animDelay(0), loadedArrowAnimDelay);
+		EXPECT_EQ(loadedArrow->animLen(0), loadedArrowAnimLength);
+	}
+
+	EXPECT_EQ(IsMissileDataAvailable(MissileID::Search), originalSearchAvailable);
+	if (originalSearchAvailable) {
+		ASSERT_NE(originalSearch, nullptr);
+		EXPECT_EQ(&GetMissileData(MissileID::Search), originalSearch);
+	}
+}
+
+TEST_F(NativeMonkSearchTest, UsesHellfireRegistrationAndExpiresAfterItsNativeDuration)
+{
+	const SpellData &searchSpell = GetSpellData(SpellID::Search);
+	ASSERT_EQ(searchSpell.sMissiles[0], MissileID::Search);
+	EXPECT_NE(GetMissileData(MissileID::Search).addFn, nullptr);
+	EXPECT_NE(GetMissileData(MissileID::Search).processFn, nullptr);
+	EXPECT_EQ(GetMissileData(MissileID::Search).graphic, MissileGraphicID::None);
+	EXPECT_TRUE(HasAnyOf(GetMissileData(MissileID::Search).flags, MissileDataFlags::Invisible));
+	EXPECT_EQ(GetMissileData(MissileID::Search).movementDistribution, MissileMovementDistribution::Disabled);
+
+	const int initialLife = MyPlayer->life.current;
+	const int initialMana = MyPlayer->mana.current;
+	const uint32_t initialRngState = GetLCGEngineState();
+	// DLL import thunks make callback address equality unreliable; the exact lifecycle below verifies registration behavior.
+	CastSearch();
+
+	ASSERT_EQ(Missiles.size(), 1U);
+	EXPECT_EQ(Missiles.front()._mitype, MissileID::Search);
+	EXPECT_EQ(Missiles.front().duration, 247);
+	EXPECT_FALSE(Missiles.front()._miDelFlag);
+	EXPECT_TRUE(CurrentAutomapManager.GetAutoMapShowItems());
+	EXPECT_EQ(MyPlayer->life.current, initialLife);
+	EXPECT_EQ(MyPlayer->mana.current, initialMana);
+	EXPECT_EQ(GetLCGEngineState(), initialRngState);
+
+	ProcessMissiles();
+	ASSERT_EQ(Missiles.size(), 1U);
+	EXPECT_EQ(Missiles.front().duration, 246);
+	EXPECT_TRUE(CurrentAutomapManager.GetAutoMapShowItems());
+
+	for (int tick = 0; tick < 245; tick++)
+		ProcessMissiles();
+	ASSERT_EQ(Missiles.size(), 1U);
+	EXPECT_EQ(Missiles.front().duration, 1);
+	EXPECT_FALSE(Missiles.front()._miDelFlag);
+	EXPECT_TRUE(CurrentAutomapManager.GetAutoMapShowItems());
+
+	ProcessMissiles();
+	EXPECT_TRUE(Missiles.empty());
+	EXPECT_FALSE(CurrentAutomapManager.GetAutoMapShowItems());
+	EXPECT_EQ(MyPlayer->life.current, initialLife);
+	EXPECT_EQ(MyPlayer->mana.current, initialMana);
+	EXPECT_EQ(GetLCGEngineState(), initialRngState);
+}
+
+TEST_F(NativeMonkSearchTest, RecastAddsDurationForTheSamePlayerSource)
+{
+	const uint32_t initialRngState = GetLCGEngineState();
+	const int initialLife = MyPlayer->life.current;
+	const int initialMana = MyPlayer->mana.current;
+	CastSearch();
+	ASSERT_EQ(Missiles.size(), 1U);
+	Missile &firstSearch = Missiles.front();
+	ASSERT_EQ(firstSearch.duration, 247);
+
+	CastSearch();
+
+	ASSERT_EQ(Missiles.size(), 2U);
+	EXPECT_EQ(firstSearch.duration, 494);
+	EXPECT_EQ(Missiles.back()._mitype, MissileID::Search);
+	EXPECT_TRUE(Missiles.back()._miDelFlag);
+	ProcessMissiles();
+	ASSERT_EQ(Missiles.size(), 1U);
+	EXPECT_EQ(&Missiles.front(), &firstSearch);
+	EXPECT_EQ(firstSearch.duration, 493);
+	EXPECT_FALSE(firstSearch._miDelFlag);
+	EXPECT_TRUE(CurrentAutomapManager.GetAutoMapShowItems());
+	EXPECT_EQ(MyPlayer->life.current, initialLife);
+	EXPECT_EQ(MyPlayer->mana.current, initialMana);
+	EXPECT_EQ(GetLCGEngineState(), initialRngState);
+}
+
+TEST_F(NativeMonkSearchTest, RecastUsesTheStrictSignedIntDurationBoundary)
+{
+	constexpr int NewDuration = 247;
+	const int belowBoundary = std::numeric_limits<int>::max() - NewDuration - 1;
+	const int atBoundary = std::numeric_limits<int>::max() - NewDuration;
+	const int aboveBoundary = std::numeric_limits<int>::max() - NewDuration + 1;
+	struct BoundaryCase {
+		int existingDuration;
+		bool shouldAccumulate;
+	};
+	const std::array<BoundaryCase, 3> cases {{
+	    { belowBoundary, true },
+	    { atBoundary, false },
+	    { aboveBoundary, false },
+	}};
+	const uint32_t initialRngState = GetLCGEngineState();
+	const int initialLife = MyPlayer->life.current;
+	const int initialMana = MyPlayer->mana.current;
+
+	for (const BoundaryCase &testCase : cases) {
+		SCOPED_TRACE(testCase.existingDuration);
+		Missiles.clear();
+		CastSearch();
+		ASSERT_EQ(Missiles.size(), 1U);
+		Missile &existingSearch = Missiles.front();
+		existingSearch.duration = testCase.existingDuration;
+
+		Missile *recast = AddMissile(
+		    MonkSearchPosition,
+		    MonkSearchPosition,
+		    MyPlayer->direction,
+		    MissileID::Search,
+		    TARGET_MONSTERS,
+		    *MyPlayer,
+		    0,
+		    0);
+
+		ASSERT_NE(recast, nullptr);
+		ASSERT_EQ(Missiles.size(), 2U);
+		EXPECT_TRUE(recast->_miDelFlag);
+		const int expectedDuration = testCase.shouldAccumulate ? testCase.existingDuration + NewDuration : testCase.existingDuration;
+		EXPECT_EQ(existingSearch.duration, expectedDuration);
+
+		ProcessMissiles();
+		ASSERT_EQ(Missiles.size(), 1U);
+		EXPECT_EQ(&Missiles.front(), &existingSearch);
+		EXPECT_EQ(existingSearch.duration, expectedDuration - 1);
+		EXPECT_FALSE(existingSearch._miDelFlag);
+		EXPECT_TRUE(CurrentAutomapManager.GetAutoMapShowItems());
+		EXPECT_EQ(MyPlayer->life.current, initialLife);
+		EXPECT_EQ(MyPlayer->mana.current, initialMana);
+		EXPECT_EQ(GetLCGEngineState(), initialRngState);
+	}
 }

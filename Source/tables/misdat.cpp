@@ -14,6 +14,9 @@
 #include <type_traits>
 #include <utility>
 #include <vector>
+#ifdef BUILD_TESTING
+#include <memory>
+#endif
 
 #include <expected.hpp>
 
@@ -410,6 +413,32 @@ void LoadMisdat()
 }
 
 } // namespace
+
+#ifdef BUILD_TESTING
+struct ScopedMissileDataForTest::State {
+	std::vector<MissileFileData> missileSpriteData;
+	std::vector<std::array<uint8_t, 16>> missileAnimDelays;
+	std::vector<std::array<uint8_t, 16>> missileAnimLengths;
+	std::vector<MissileData> missilesData;
+};
+
+ScopedMissileDataForTest::ScopedMissileDataForTest()
+	: state_(std::make_unique<State>())
+{
+	MissileSpriteData.swap(state_->missileSpriteData);
+	MissileAnimDelays.swap(state_->missileAnimDelays);
+	MissileAnimLengths.swap(state_->missileAnimLengths);
+	MissilesData.swap(state_->missilesData);
+}
+
+ScopedMissileDataForTest::~ScopedMissileDataForTest() noexcept
+{
+	MissileSpriteData.swap(state_->missileSpriteData);
+	MissileAnimDelays.swap(state_->missileAnimDelays);
+	MissileAnimLengths.swap(state_->missileAnimLengths);
+	MissilesData.swap(state_->missilesData);
+}
+#endif
 
 uint8_t MissileFileData::animDelay(uint8_t dir) const
 {

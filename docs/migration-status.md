@@ -79,12 +79,25 @@ share one client source hash. This is HEAD `08eabbcbe` plus nineteen frozen work
 candidates, not a pristine committed-source baseline. Host native terminal
 receipts are unavailable; checkpoint metadata does not prove graceful shutdown.
 
-These checks establish managed stepped-versus-catch-up consistency. Native
-Hellfire inserts Search during player processing and processes missiles afterward;
-a creation-pass decrement can change the native tick boundary. Direct native
-same-cycle lifetime parity, automap behavior and rendered acceptance remain open.
-Search is not native-town-legal or TrapSense. Scene/launcher drafts await rendered
-acceptance; normal-profile adoption and the documented approval holds remain.
+These checks establish managed stepped-versus-catch-up consistency. The prepared
+native Search prerequisite now passes independent review in `.local/monk-search-native-1e3041893a3a46f7955938b9fa2433d0`:
+focused 4/4, integrated 9/9 and three shuffled nine-test iterations, without skips.
+Actual loose-table Hellfire registration drives `CastSpell`/`AddMissile` and
+`ProcessMissiles`: level-one/effective-level-zero duration is 247 before processing,
+246 after the first pass, active at one and removed on pass 247. Recast retains
+the original missile and obeys the strict signed-int extension boundary.
+Automap item visibility toggles; Life/Mana/RNG and scoped original storage/state
+are preserved. The test-only guard restores all four missile metadata vectors,
+including original vector storage and owned graphics; nested loads verify it.
+All four owned stages exit zero with complete drains/cleanup and exact identities
+absent; checked VS x64 tools resolve and the final incremental build is warning-free.
+The earlier DLL/EXE import-thunk pointer-comparison failure and build warnings
+remain retained. Nine critical working-tree inputs are frozen, not a whole clean
+source archive. Native GameLogic/DoSpell/creation/Town admission are not exercised.
+A creation-pass decrement can affect shared native/server tick alignment, which
+remains open alongside rendered automap and application acceptance. Search is not
+native-town-legal or TrapSense. Scene/launcher drafts await rendered acceptance;
+normal-profile adoption and the documented approval holds remain.
 
 The prepared native Bard Identify prerequisite passes independent review in
 `.local/bard-identify-native-4d3603c7a7254584a17c1664d3f501ed` on 2026-10-07.

@@ -2,6 +2,12 @@
 
 Notable changes to this fork are recorded below.
 
+- 2026-10-07: Characterize native Hellfire Search through actual loose-table
+  cast/missile processing: 247-pass lifetime, recast, strict signed-int boundary
+  and automap item visibility, with Life/Mana/RNG and original storage restored.
+  Add a scoped test-only missile metadata guard. Focused 4/4, integrated 9/9 and
+  three shuffled full suites pass; shared native/server tick alignment and
+  rendered class acceptance remain open.
 - 2026-10-07: Add an explicit Engine participant-advancement policy while retaining
   the original constructor's coalesced behavior. Ordinary and restored Diablo
   runtimes advance participant state before each catch-up tick, fixing delayed

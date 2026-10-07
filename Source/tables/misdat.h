@@ -7,6 +7,9 @@
 
 #include <cstddef>
 #include <cstdint>
+#ifdef BUILD_TESTING
+#include <memory>
+#endif
 #include <string>
 #include <type_traits>
 
@@ -15,6 +18,7 @@
 #include "engine/audio/effects.h"
 #include "engine/gfx/clx_sprite.hpp"
 #include "tables/spelldat.h"
+#include "utils/attributes.h"
 #include "utils/enum_traits.h"
 
 namespace devilution {
@@ -226,6 +230,27 @@ const MissileData &GetMissileData(MissileID missileId);
 MissileFileData &GetMissileSpriteData(MissileGraphicID graphicId);
 
 void LoadMissileData();
+
+#ifdef BUILD_TESTING
+/**
+ * Temporarily isolates the loaded missile tables for tests that load alternate content.
+ * The original table vectors, including any owned sprite data, are restored on destruction.
+ */
+class ScopedMissileDataForTest {
+public:
+	DVL_API_FOR_TEST ScopedMissileDataForTest();
+	DVL_API_FOR_TEST ~ScopedMissileDataForTest() noexcept;
+
+	ScopedMissileDataForTest(const ScopedMissileDataForTest &) = delete;
+	ScopedMissileDataForTest &operator=(const ScopedMissileDataForTest &) = delete;
+	ScopedMissileDataForTest(ScopedMissileDataForTest &&) = delete;
+	ScopedMissileDataForTest &operator=(ScopedMissileDataForTest &&) = delete;
+
+private:
+	struct State;
+	std::unique_ptr<State> state_;
+};
+#endif
 
 tl::expected<void, std::string> InitMissileGFX();
 void FreeMissileGFX();

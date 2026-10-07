@@ -1,5 +1,33 @@
 # MSVC Build Notes for Agents
 
+## Prepared native Monk Search prerequisite
+
+Build the existing registered `missiles_test` target using the checked MSVC x64
+environment below. From that configured build directory, run:
+
+```powershell
+.\missiles_test.exe --gtest_filter=MissileData.ScopedTestLoadRestoresOriginalStorage:NativeMonkSearchTest.*
+.\missiles_test.exe
+.\missiles_test.exe --gtest_shuffle --gtest_random_seed=417 --gtest_repeat=3
+```
+
+Require focused 4/4, integrated 9/9 and three shuffled nine-test iterations,
+without skips, plus frozen critical inputs and bounded owned exits. Loose
+checked-in Hellfire tables feed actual `CastSpell`/`AddMissile`/`ProcessMissiles`.
+At native default level one/effective spell level zero, Search starts at 247,
+becomes 246 on the first processing pass, remains active at one and disappears
+on the 247th pass. Recast extends the original missile; the strict signed-int
+extension boundary discards the duplicate without overflow. Automap item
+visibility toggles and unchanged Life/Mana/RNG are asserted.
+
+A `BUILD_TESTING`-only metadata guard swaps and restores all four missile data
+vectors, preserving their original storage and owned graphics. The fixture
+restores player/spell/missile storage, asset path, tile/level, managers, audio
+and RNG state; nested loads test metadata storage restoration. Callback pointers
+are checked non-null and behaviorally because DLL import thunks make EXE/DLL
+address equality unreliable. Fresh test processes do not load MPQs/overrides.
+This is a prepared direct-call sequence, not GameLogic/DoSpell execution, native
+character creation, Town admission, shared server tick alignment or rendering.
 ## Prepared native Bard Identify prerequisite
 
 Build the existing registered `items_test` target using the checked MSVC x64

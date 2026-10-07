@@ -816,10 +816,14 @@ removing only `static` corrected the build. The unaffected 236 focused checks
 were explicitly reused for that modifier change, with no claim of fresh execution.
 
 This is managed catch-up consistency and headless current-candidate evidence.
-Native Search may decrement in its creation missile-processing pass; direct
-native same-cycle lifetime parity remains open. Rendering, native automap and
-graceful host exit are unqualified; host checkpoints were checked as metadata.
-Scene/launcher commits await rendered acceptance. Existing approval holds apply.
+The separate prepared native prerequisite in `.local/monk-search-native-1e3041893a3a46f7955938b9fa2433d0` passes actual
+cast/missile processing, exact 247-pass lifetime, recast/overflow boundaries,
+automap item-visibility flags and scoped state restoration (4/9/27 executions).
+See [MSVC build notes](msvc-build.md#prepared-native-monk-search-prerequisite).
+It does not run GameLogic/DoSpell or establish native/server creation-tick
+alignment. Rendered automap/application acceptance and graceful host exit remain
+unqualified; host checkpoints were checked as metadata. Scene/launcher commits
+await rendered acceptance. Existing approval holds apply.
 
 ## Opt-in command-timing diagnostics
 
