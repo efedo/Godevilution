@@ -274,6 +274,39 @@ affixes, local stash/Gold bookkeeping and full class/rendered parity. The Godot
 scene/launcher drafts retain their separate rendered gate; all twenty protected
 inputs and approval holds remain unchanged. The overall estimate stays 35%.
 
+A separate fresh committed-source exported Performance repeat now uses matching
+Release hosts in `.local/godot-exported-performance-run-4e964a7e71bc4dabbd7eda234f9ef2eb`.
+It archives HEAD `8383fc7b4` (2,796 paths), runs genuine exported Main with explicit
+legacy persistence, and preserves all 2,813 working inputs/twenty protected hashes.
+One/four-client profiles each pass five warm-up and fifteen measured rounds.
+All forty round markers, one hundred observer markers and ready/record/finish/
+stop/staging barriers pass. Five stopped frame captures are valid with zero
+drops, invalid or nonmonotonic samples. Each client's manifest plus startup
+witness binds all four physical runtime images: client/client-protocol/protocol
+ExportRelease and GodotSharp Release, optimized and loaded from files.
+
+Each live native host apphost path is bound to its recorded PID/start identity;
+adjacent pre/post DLL metadata is Release with optimization enabled. This checks
+files beside the observed apphost, not loaded managed or in-memory bytes.
+Thirty-eight nonhost processes exit zero, including eleven engine stages; both
+hosts are forcibly stopped with exit -1. All forty exact identities are absent.
+Legacy engine receipts do not independently expose every stream-drain field.
+Stopped checkpoint checks remain metadata only: one/four nonempty canonical
+files, with one temporary save file retained in the four-player profile.
+
+Measured callback P95 is 1.8912 ms (one client) and 2.0543-2.0943 ms (four);
+callback-interval P95 is 29.6561 and 29.7363-29.8312 ms. These instrumented,
+headless local observations establish no causal speedup, rendered/GPU or whole-
+frame timing, native machine-code optimization, soak, platform matrix or release
+budget. The historical Debug-host baseline below remains unchanged. Root proof
+`.local/release-host-integrated-workload-72102c95d19f4a809a06704fb98818c7/root-verification.json`
+is SHA-256 `8706835C56AE993D7C6AC603C588826D65350A74D3D6F63AEE961DC698FA13DB`.
+Retained source-only manifest qualification passes ten real file-based cases;
+its outer bookkeeping failure is separately requalified without rerun. A failed
+freezer attempt before first Git start also remains retained; corrected fresh
+archive, generated-launcher preflight and actual workload were reviewed separately.
+Cold durable restore, fully drained saves and graceful shutdown remain open.
+
 The fresh committed-source exported one/four-client Performance pair passes
 independent review in `.local/exported-performance-marker-committed-full-r4.log`,
 root `.local/godot-exported-performance-run-1e9dddc4e7014e84a2f9c5512ac1a9d0`.

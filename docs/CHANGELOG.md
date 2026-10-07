@@ -2,6 +2,10 @@
 
 Notable changes to this fork are recorded below.
 
+- 2026-10-07: Qualify fresh committed-source exported one/four-client Performance
+  with matching Release hosts and four optimized physical client images.
+  Preserve forced-stop, metadata-only save and retained temporary-file limits.
+
 - 2026-10-07: Add explicit-cohort TCP Town Portal recovery with two real clients,
   nonowner retention, reverse-order first-wire cold rejoin, complete saved receipt
   ledgers and durable owner-return closure. Preserve default legacy fixture calls;

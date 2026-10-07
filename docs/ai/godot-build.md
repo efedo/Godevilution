@@ -1041,6 +1041,23 @@ above or ordinary launch profiles. Rendered Release measurements, native
 machine-code optimization, soak, platform coverage and release budgets remain
 open. See migration status for exact revision/evidence and retained failures.
 
+A reviewed matching-Release-host repeat is retained at
+`.local/godot-exported-performance-run-4e964a7e71bc4dabbd7eda234f9ef2eb`.
+Its ignored private driver freezes fresh committed HEAD `8383fc7b4`, builds a
+Release host, and patches only a disposable generated launcher. Both genuine
+exported one/four-client Main profiles pass with explicit legacy persistence;
+all four optimized physical client runtime images are bound per client.
+Live native apphost path/PID/start and adjacent Release DLL metadata are checked
+before/after each profile; this does not inspect loaded managed/in-memory bytes.
+The normal launcher and historical Debug-host baseline are unchanged.
+
+Five valid zero-drop captures and all round/observer/process barriers pass.
+Both hosts are forcibly stopped; one temporary save remains in the four-player
+profile. Checkpoint inspection is metadata only. Fully drained saves, cold
+restore, graceful shutdown, rendered/GPU or whole-frame timing, soak, platform
+matrix, native machine-code optimization and release budgets remain unqualified.
+Migration status records exact evidence, metrics and retained failed attempts.
+
 Missing rounds, changed identity, empty/invalid/truncated samples, overwritten
 output, nonzero client exits or missing checkpoints reject the baseline. Recording
 is explicitly enabled only for this acceptance phase; inherited capture settings

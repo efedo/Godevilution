@@ -301,6 +301,14 @@ M4. M5 is the final removal gate, not a reason to postpone replacement work.
    not graceful shutdown, cold durable restore, rendered/GPU measurements,
    native machine-code optimization, soak or release budgets. Use status for
    exact revisions, configurations, retained failures and outcomes.
+   A separate fresh exported one/four-client repeat now binds matching Release
+   host apphost paths and adjacent Release DLL metadata, with all four optimized
+   physical client runtime images. Its five valid zero-drop captures and process
+   barriers pass. Hosts still stop forcibly; checkpoints remain metadata only
+   and the four-player profile retains one temporary save. Cold durable restore,
+   fully drained saves, graceful shutdown and rendered/budget/soak/matrix gates
+   remain open. Preserve the historical Debug-host baseline and use status for
+   exact evidence and scope.
    Godot now reuses installed geometry between model-accepted snapshot generations.
    Preserve full replacement, same-tick/epoch admission and eager legacy behavior;
    do not treat ownership as public protobuf immutability. Measure remaining
