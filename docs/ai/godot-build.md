@@ -838,8 +838,12 @@ The separate prepared native prerequisite in `.local/monk-search-native-1e304189
 cast/missile processing, exact 247-pass lifetime, recast/overflow boundaries,
 automap item-visibility flags and scoped state restoration (4/9/27 executions).
 See [MSVC build notes](msvc-build.md#prepared-native-monk-search-prerequisite).
-It does not run GameLogic/DoSpell or establish native/server creation-tick
-alignment. Rendered automap/application acceptance and graceful host exit remain
+A separate expanded-input caller qualification passes 5/10/30 executions:
+canonical Monk loadout/animation data feeds actual StartSpell/ProcessPlayers/
+DoSpell, observing 247 before the paired missile pass and 246 afterward.
+Canonical player tables stay loaded per process; other scoped state is restored.
+It does not run full GameLogic/CheckPlrSpell/Town admission or establish native/
+server phase alignment. Rendered automap/application acceptance and graceful host exit remain
 unqualified; host checkpoints were checked as metadata. Scene/launcher commits
 await rendered acceptance. Existing approval holds apply.
 

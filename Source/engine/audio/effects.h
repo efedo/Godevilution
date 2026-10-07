@@ -13,6 +13,7 @@
 
 #include "engine/audio/sound.h"
 #include "engine/audio/sound_effect_enums.h"
+#include "utils/attributes.h"
 
 namespace devilution {
 
@@ -22,8 +23,8 @@ struct TSFX {
 	std::unique_ptr<TSnd> pSnd;
 };
 
-extern int sfxdelay;
-extern SfxID sfxdnum;
+extern DVL_API_FOR_TEST int sfxdelay;
+extern DVL_API_FOR_TEST SfxID sfxdnum;
 
 bool effect_is_playing(SfxID nSFX);
 void stream_stop();

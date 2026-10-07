@@ -15,6 +15,7 @@
 
 #include "application/game_mode.hpp"
 #include "application/headless_mode.hpp"
+#include "engine/audio/effects.h"
 #include "engine/audio/sound.h"
 #include "engine/lighting.h"
 #include "engine/random.hpp"
@@ -27,8 +28,13 @@
 #include "game/spells/spells.hpp"
 #include "network/storm/storm_net.hpp"
 #include "tables/misdat.h"
+#include "tables/playerdat.hpp"
 #include "tables/spelldat.h"
 #include "utils/paths.h"
+
+namespace devilution {
+void TestPlayerCheckNewPath(Player &player);
+}
 
 using namespace devilution;
 using ::testing::AllOf;
@@ -101,11 +107,14 @@ public:
 	    , savedMissilePreFlag_(MissilePreFlag)
 	    , savedLevelId_(currentLevel().id())
 	    , savedSearchTile_(tileAt(MonkSearchPosition))
+	    , savedViewPosition_(viewPosition())
 	    , savedLightManager_(CurrentLightManager)
 	    , savedAutomapManager_(CurrentAutomapManager)
 	    , savedHeadlessMode_(HeadlessMode)
 	    , savedHellfireMode_(gbIsHellfire)
 	    , savedSoundInitialized_(gbSndInited)
+	    , savedSfxDelay_(sfxdelay)
+	    , savedSfxId_(sfxdnum)
 	    , savedRngState_(GetLCGEngineState())
 	{
 		SpellsData.swap(savedSpellsData_);
@@ -118,6 +127,8 @@ public:
 		HeadlessMode = true;
 		gbIsHellfire = true;
 		gbSndInited = false;
+		sfxdelay = 0;
+		sfxdnum = SfxID::None;
 		currentLevel().setId({ 1, DTYPE_CATHEDRAL, false, SL_NONE });
 		tileAt(MonkSearchPosition) = Tile {};
 		CurrentAutomapManager.SetAutoMapShowItems(false);
@@ -135,11 +146,14 @@ public:
 		MissilePreFlag = savedMissilePreFlag_;
 		currentLevel().setId(savedLevelId_);
 		tileAt(MonkSearchPosition) = savedSearchTile_;
+		viewPosition() = savedViewPosition_;
 		CurrentLightManager = savedLightManager_;
 		CurrentAutomapManager = savedAutomapManager_;
 		HeadlessMode = savedHeadlessMode_;
 		gbIsHellfire = savedHellfireMode_;
 		gbSndInited = savedSoundInitialized_;
+		sfxdelay = savedSfxDelay_;
+		sfxdnum = savedSfxId_;
 		SetRndSeed(savedRngState_);
 	}
 
@@ -157,11 +171,14 @@ private:
 	bool savedMissilePreFlag_;
 	LevelId savedLevelId_;
 	Tile savedSearchTile_;
+	Point savedViewPosition_;
 	LightManager savedLightManager_;
 	AutomapManager savedAutomapManager_;
 	bool savedHeadlessMode_;
 	bool savedHellfireMode_;
 	bool savedSoundInitialized_;
+	int savedSfxDelay_;
+	SfxID savedSfxId_;
 	uint32_t savedRngState_;
 };
 
@@ -614,6 +631,104 @@ TEST_F(NativeMonkSearchTest, UsesHellfireRegistrationAndExpiresAfterItsNativeDur
 	EXPECT_EQ(MyPlayer->life.current, initialLife);
 	EXPECT_EQ(MyPlayer->mana.current, initialMana);
 	EXPECT_EQ(GetLCGEngineState(), initialRngState);
+}
+
+TEST_F(NativeMonkSearchTest, PlayerCastCreatesSearchBeforeThePairedMissilePass)
+{
+	const std::optional<std::filesystem::path> hellfireAssets = FindHellfireAssetsPath();
+	ASSERT_TRUE(hellfireAssets.has_value());
+	const std::filesystem::path canonicalAssets = hellfireAssets->parent_path().parent_path() / "assets";
+	ASSERT_TRUE(std::filesystem::is_regular_file(canonicalAssets / "txtdata" / "Experience.tsv"));
+	ASSERT_TRUE(std::filesystem::is_regular_file(canonicalAssets / "txtdata" / "classes" / "classdat.tsv"));
+
+	// Player/class tables are process-lifetime canonical data in the existing table-test convention;
+	// only the spell and missile tables below are switched back to Hellfire.
+	paths::SetAssetsPath(canonicalAssets.string() + "/");
+	LoadPlayerDataFiles();
+	paths::SetAssetsPath(hellfireAssets->string() + "/");
+	const PlayerStartingLoadoutData &monkStartingLoadout = GetPlayerStartingLoadoutForClass(HeroClass::Monk);
+	ASSERT_EQ(monkStartingLoadout.skill, SpellID::Search);
+
+	Player &player = *MyPlayer;
+	player._pClass = HeroClass::Monk;
+	player.plractive = true;
+	player.plrlevel = 1;
+	player.lightId = NO_LIGHT;
+	player.position.tile = MonkSearchPosition;
+	player.position.future = MonkSearchPosition;
+	player.position.old = MonkSearchPosition;
+	player.direction = Direction::South;
+	player._pgfxnum = static_cast<uint8_t>(PlayerWeaponGraphic::Unarmed);
+	player.clearPath();
+	player.setAnimations();
+	player._pAblSpells = GetSpellBitmask(monkStartingLoadout.skill);
+	player.life = { 6400, 6400, 6400, 6400, 100 };
+	player.mana = { 3200, 3200, 3200, 3200, 100 };
+	player._pmode = PM_STAND;
+	player.queuedSpell = { SpellID::Search, SpellType::Skill, -1, 0 };
+	player.destAction = ACTION_SPELL;
+	player.destParam1 = MonkSearchPosition.x;
+	player.destParam2 = MonkSearchPosition.y;
+
+	ASSERT_EQ(player.getCharacterLevel(), 1);
+	ASSERT_EQ(player.plrlevel, currentLevelNumber());
+	ASSERT_TRUE(player.plractive);
+	ASSERT_NE(player._pAblSpells & GetSpellBitmask(SpellID::Search), 0U);
+	const PlayerAnimData &monkAnimationData = GetPlayerAnimDataForClass(HeroClass::Monk);
+	ASSERT_EQ(player._pSFrames, monkAnimationData.castingFrames);
+	ASSERT_EQ(player._pSFNum, monkAnimationData.castingActionFrame);
+	ASSERT_GT(player._pSFrames, 1);
+	ASSERT_GE(player._pSFNum, 0);
+	ASSERT_LT(player._pSFNum, player._pSFrames - 1);
+
+	const int initialLife = player.life.current;
+	const int initialMana = player.mana.current;
+	const uint32_t initialRngState = GetLCGEngineState();
+	TestPlayerCheckNewPath(player);
+	ASSERT_EQ(player._pmode, PM_SPELL);
+	ASSERT_EQ(player.executedSpell.spellId, SpellID::Search);
+	ASSERT_EQ(player.executedSpell.spellType, SpellType::Skill);
+	ASSERT_EQ(player.executedSpell.spellLevel, 0);
+	EXPECT_EQ(viewPosition(), MonkSearchPosition);
+
+	bool castFrameVisited = false;
+	bool createdOnCastFrame = false;
+	ASSERT_GT(player.animInfo.numberOfFrames, 0);
+	ASSERT_GT(player.animInfo.ticksPerFrame, 0);
+	const int maximumCastPasses = static_cast<int>(player.animInfo.numberOfFrames) * player.animInfo.ticksPerFrame + 1;
+	for (int pass = 0; pass < maximumCastPasses && Missiles.empty(); ++pass) {
+		const bool onCastFrame = player._pmode == PM_SPELL && player.animInfo.currentFrame == player._pSFNum;
+		if (onCastFrame) {
+			ASSERT_FALSE(player.animInfo.isLastFrame());
+			castFrameVisited = true;
+		}
+		ProcessPlayers();
+		if (!Missiles.empty()) {
+			createdOnCastFrame = onCastFrame;
+			break;
+		}
+	}
+
+	ASSERT_TRUE(castFrameVisited);
+	ASSERT_TRUE(createdOnCastFrame);
+	ASSERT_EQ(Missiles.size(), 1U);
+	EXPECT_EQ(Missiles.front()._mitype, MissileID::Search);
+	EXPECT_EQ(Missiles.front().duration, 247);
+	EXPECT_FALSE(Missiles.front()._miDelFlag);
+	EXPECT_EQ(player.life.current, initialLife);
+	EXPECT_EQ(player.mana.current, initialMana);
+	EXPECT_EQ(GetLCGEngineState(), initialRngState);
+
+	// The ordinary caller order processes player actions before the paired missile update.
+	ProcessMissiles();
+	ASSERT_EQ(Missiles.size(), 1U);
+	EXPECT_EQ(Missiles.front().duration, 246);
+	EXPECT_FALSE(Missiles.front()._miDelFlag);
+	EXPECT_TRUE(CurrentAutomapManager.GetAutoMapShowItems());
+	EXPECT_EQ(player.life.current, initialLife);
+	EXPECT_EQ(player.mana.current, initialMana);
+	EXPECT_EQ(GetLCGEngineState(), initialRngState);
+	EXPECT_EQ(sfxdelay, 0);
 }
 
 TEST_F(NativeMonkSearchTest, RecastAddsDurationForTheSamePlayerSource)

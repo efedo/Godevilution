@@ -2,6 +2,12 @@
 
 Notable changes to this fork are recorded below.
 
+- 2026-10-07: Exercise native Monk Search creation through the real player cast
+  frame before its paired missile decrement. Canonical animation/loadout inputs,
+  scoped state restoration and test-only sound DATA exports are verified by
+  focused 5/5, integrated 10/10 and three shuffled full runs. Server phase
+  alignment and rendered acceptance remain separate.
+
 - 2026-10-07: Verify actual TCP Sorcerer cast/Recharge cold restore of the complete
   equipped starting staff and four resources, including canonical receipts and
   the next ordinary move. The new and two existing facts pass in clean and working

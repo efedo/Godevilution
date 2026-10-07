@@ -93,11 +93,37 @@ All four owned stages exit zero with complete drains/cleanup and exact identitie
 absent; checked VS x64 tools resolve and the final incremental build is warning-free.
 The earlier DLL/EXE import-thunk pointer-comparison failure and build warnings
 remain retained. Nine critical working-tree inputs are frozen, not a whole clean
-source archive. Native GameLogic/DoSpell/creation/Town admission are not exercised.
+source archive. That direct-call qualification did not exercise native
+GameLogic/DoSpell/creation/Town admission.
 A creation-pass decrement can affect shared native/server tick alignment, which
 remains open alongside rendered automap and application acceptance. Search is not
 native-town-legal or TrapSense. Scene/launcher drafts await rendered acceptance;
 normal-profile adoption and the documented approval holds remain.
+
+The added native Search caller phase passes independent review in
+`.local/monk-search-caller-native-86316973eb8847b18893cdc5d7f07ce6`:
+focused 5/5, integrated 10/10 and three shuffled ten-test iterations, without skips.
+Actual `TestPlayerCheckNewPath`/`StartSpell` then `ProcessPlayers`/`DoSpell`
+create Search at the loaded Monk cast frame, effective skill level zero, with
+duration 247 before the paired `ProcessMissiles` call leaves 246. Canonical
+starting-loadout/animation fields and the finite frame/tick bound are asserted.
+Life/Mana/RNG remain unchanged; original view/delayed-sound/player/spell/missile,
+tile/manager storage and state are restored. Canonical class/Experience tables
+remain loaded for the process, following existing tests rather than claiming
+restoration of their private storage. Two existing audio DATA globals gain only
+test-build DLL annotations.
+
+All 55 critical working inputs, including 31 class TSVs and Experience, match
+before/after; twenty protected hashes remain unchanged. Four bounded owned stages
+exit zero with complete drains/cleanup and exact identities absent. Matching VS
+x64 tools resolve before successful build/link. The rebuild retains 3,444 generated
+protobuf C4251 warnings and one each C4244/C4018 in unchanged spell-list/player-
+snapshot sources; it is not warning-free. This ran in the preserved working tree
+based on HEAD `81b04170a` with two reviewed native candidates; all 55 critical
+inputs were frozen, not a whole clean-source archive. The fixture starts from a
+prepared actor and explicit action dispatch; full GameLogic, CheckPlrSpell/Town
+admission, native character creation, server phase alignment and rendering remain
+open. This observation does not authorize a managed creation-tick adjustment.
 
 The actual TCP Sorcerer Recharge cold-restore prerequisite passes independent
 review in `.local/sorcerer-recharge-restart-d547984aa34b4d9fa812ab818ad4e896`:

@@ -11,7 +11,7 @@ environment below. From that configured build directory, run:
 .\missiles_test.exe --gtest_shuffle --gtest_random_seed=417 --gtest_repeat=3
 ```
 
-Require focused 4/4, integrated 9/9 and three shuffled nine-test iterations,
+Require focused 5/5, integrated 10/10 and three shuffled ten-test iterations,
 without skips, plus frozen critical inputs and bounded owned exits. Loose
 checked-in Hellfire tables feed actual `CastSpell`/`AddMissile`/`ProcessMissiles`.
 At native default level one/effective spell level zero, Search starts at 247,
@@ -26,8 +26,19 @@ restores player/spell/missile storage, asset path, tile/level, managers, audio
 and RNG state; nested loads test metadata storage restoration. Callback pointers
 are checked non-null and behaviorally because DLL import thunks make EXE/DLL
 address equality unreliable. Fresh test processes do not load MPQs/overrides.
-This is a prepared direct-call sequence, not GameLogic/DoSpell execution, native
-character creation, Town admission, shared server tick alignment or rendering.
+The added caller case loads all canonical class/Experience tables, checks the
+Monk loadout and animation fields, then executes actual
+`TestPlayerCheckNewPath` -> `StartSpell` -> `ProcessPlayers`/`DoSpell`.
+The real effective-level-zero cast frame creates duration 247 before the paired
+missile pass decrements it to 246. Its finite bound derives from loaded animation
+frames/ticks; view position and delayed-sound globals are restored. Only those two
+audio DATA declarations gain test-only DLL visibility, without runtime changes.
+Canonical player tables remain loaded for the process under existing table-test
+conventions; the fixture does not claim to restore their previous private storage.
+Freeze all 31 class TSVs, Experience and the player/animation/audio dependencies
+alongside original Search inputs. This prepared caller sequence does not run full
+GameLogic, CheckPlrSpell/Town admission, native character creation, shared server
+tick alignment or rendering.
 
 ## Prepared native Recharge edge prerequisites
 
