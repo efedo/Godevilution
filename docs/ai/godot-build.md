@@ -789,10 +789,37 @@ It adds no actors, grants, catalog overrides or normal-profile adoption.
 in both verified HEAD-derived source with the candidate overlay and the existing
 working tree; evidence is
 `.local/monk-search-prerequisite-72f3ed434ff14b2aa37b280fbc2983ec`.
-This qualifies content only. Shared-runtime catch-up currently delays Search
-expiry when a timed effect is created inside skipped ticks. Actual Godot control,
-cold-status restore, rendered and native automap acceptance remain separate.
-Native Hellfire Search is illegal in Town and does not reveal Rogue traps.
+This qualifies content only; the retained timing counterexample below was found
+while preparing the actual-control journey. Native Hellfire Search is illegal
+in Town and does not reveal Rogue traps.
+
+## Timed-effect catch-up qualification
+
+`AuthoritativeSimulationRuntime` keeps the original constructor's coalesced
+`ParticipantAdvancePolicy.OncePerAdvance` contract. The additive policy constructor
+allows `BeforeEachTick`: ordinal participant-local state advances before each
+replayed world tick. Ordinary and restored Diablo adapters select it so effects
+created inside catch-up age as they do during single-step advancement. No save
+schema or host profile selection changes.
+
+Clean and working Engine/module/server checks pass without failures/skips in
+`.local/search-timing-fix-092f15ef838b4d4b9aef4e4b6e91a662` (1,070 executions,
+including repeated focused checks; thirty clean owned terminal receipts).
+`.local/search-shared-integrated-ce408ab9bec14c02a8597a6ef7e49198` records eight current-source hidden headless profiles:
+Search, Bard Identify, session menu, Trap Disarm, Warrior Repair, default legacy,
+default cohort and pending-command recovery. Sixty engine stages exit zero;
+ninety exact recorded identities are absent; nineteen isolated project stages
+share one client source hash with source SDK 4.7.1/staged SDK 4.7.2. The real Search
+control, fresh-host residual status, next movement and observed expiry pass.
+The initial diagnostic-helper compile failure and its source are retained;
+removing only `static` corrected the build. The unaffected 236 focused checks
+were explicitly reused for that modifier change, with no claim of fresh execution.
+
+This is managed catch-up consistency and headless current-candidate evidence.
+Native Search may decrement in its creation missile-processing pass; direct
+native same-cycle lifetime parity remains open. Rendering, native automap and
+graceful host exit are unqualified; host checkpoints were checked as metadata.
+Scene/launcher commits await rendered acceptance. Existing approval holds apply.
 
 ## Opt-in command-timing diagnostics
 

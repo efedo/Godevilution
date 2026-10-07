@@ -53,12 +53,38 @@ Loaded effective Search level is zero, and (21,20) is a safe adjacent next step.
 All 2,788 committed archive inputs and twenty protected working hashes match;
 five owned stages exit zero with complete drains/cleanup and identities absent.
 
-A separate actual shared-runtime characterization in that root exposes a timing
-gap: effect tick 21 has 247 Search ticks, but jumping to 24 retains 247 instead of
-stepwise 244. This uses legacy runtime Execute/AdvanceTo, not a complete ClockGated
-host journey or native parity proof. An explicit compatible timing correction
-and actual Godot cast/status/cold-resume acceptance remain open. Search is not
-native-town-legal or TrapSense; default profiles and approval holds are unchanged.
+The retained pre-fix shared-runtime characterization exposes delayed aging:
+effect tick 21 has 247 Search ticks, but a jump to 24 retained 247 instead of
+stepwise 244. The Engine now offers explicit `ParticipantAdvancePolicy.BeforeEachTick`;
+the original constructor retains `OncePerAdvance` compatibility. Both ordinary
+and restored Diablo runtimes select the per-tick policy, so timed effects created
+inside catch-up age on later replayed ticks. Checkpoint schemas and host profile
+selection are unchanged. Independent review and clean/working tests pass in
+`.local/search-timing-fix-092f15ef838b4d4b9aef4e4b6e91a662`: Engine 206 plus eight
+repeated focused checks, module 184 and server 137 per environment (1,070 test
+executions total, no failures/skips). All thirty stages exit zero with complete
+drains/cleanup; exact recorded identities are absent and protected hashes match.
+
+The current Godot Search draft passes headless actual-control Create/cold Resume:
+sequence 1 applies at tick 53, effect tick 66 yields expiry 313, and snapshot
+68/remaining 245 preserves that lifetime. A fresh host/client restores at
+101/remaining 212 before input; sequence 2 settles at (21,20) while active,
+then Search is absent at the first expiry sample, tick 317, without extra commands.
+Normalized player/items/attributes/resources and static-world projections are
+preserved; autonomous actors, RNG and whole-world invariance are outside that
+projection. Eight serial integrated profiles, including legacy/cohort recovery
+and pending-command recovery, pass in `.local/search-shared-integrated-ce408ab9bec14c02a8597a6ef7e49198`: sixty engine exits are
+zero, ninety unique recorded identities are absent, and nineteen project stages
+share one client source hash. This is HEAD `08eabbcbe` plus nineteen frozen working
+candidates, not a pristine committed-source baseline. Host native terminal
+receipts are unavailable; checkpoint metadata does not prove graceful shutdown.
+
+These checks establish managed stepped-versus-catch-up consistency. Native
+Hellfire inserts Search during player processing and processes missiles afterward;
+a creation-pass decrement can change the native tick boundary. Direct native
+same-cycle lifetime parity, automap behavior and rendered acceptance remain open.
+Search is not native-town-legal or TrapSense. Scene/launcher drafts await rendered
+acceptance; normal-profile adoption and the documented approval holds remain.
 
 The prepared native Bard Identify prerequisite passes independent review in
 `.local/bard-identify-native-4d3603c7a7254584a17c1664d3f501ed` on 2026-10-07.

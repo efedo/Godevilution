@@ -81,6 +81,16 @@ allocation high-water marks, including zero exhaustion; modules must validate
 restored cursors against their complete identity graph. These primitives alone
 do not implement host checkpoint publication or multiplayer recovery.
 
+The original runtime constructor retains `ParticipantAdvancePolicy.OncePerAdvance`:
+catch-up advances participant-local state once to the requested target before
+replaying world ticks. The additive two-argument constructor accepts
+`BeforeEachTick`, which advances all ordinal participants before each replayed
+world tick. Timed effects created during catch-up then age on subsequent ticks
+as they do during single-step advancement. Undefined policies are refused.
+The Diablo adapter selects this policy for both ordinary and restored runtimes;
+checkpoint schemas and host profile selection are unchanged. Existing ordered
+fault fences, event publication order, same-tick access and final-tick overflow handling remain.
+
 `ExecuteTick` is an explicit ordered-command API, not a change to legacy
 `Execute`/`AdvanceTo`. Its lifecycle capability supplies one synchronous command
 slot per actor in ordinal session order. Commands retain per-actor input order;

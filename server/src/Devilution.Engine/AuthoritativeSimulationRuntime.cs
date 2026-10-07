@@ -45,6 +45,16 @@ public interface IAuthoritativeSimulationTickLifecycle<TState, TEvent>
         Func<TState, IReadOnlyList<DirectedSimulationEvent<TState, TEvent>>> executeCommands);
 }
 
+/**
+ * Controls participant-local advancement during a multi-tick catch-up. The
+ * one-argument runtime constructor preserves the historical coalesced policy.
+ */
+public enum ParticipantAdvancePolicy
+{
+    OncePerAdvance,
+    BeforeEachTick,
+}
+
 /** One operation for an actor's tick slot; semantic deduplication belongs to the host. */
 public sealed record SimulationTickCommand<TState, TEvent, TResult>(
     string SessionId,
@@ -61,6 +71,7 @@ public sealed class AuthoritativeSimulationRuntime<TState, TEvent>
     private readonly object synchronization = new();
     private readonly IAuthoritativeSimulationLifecycle<TState, TEvent> lifecycle;
     private readonly SimulationSessionCoordinator<TState, TEvent> sessions;
+    private readonly ParticipantAdvancePolicy participantAdvancePolicy;
     private ulong lastAdvancedTick;
     private bool cohortInitialized;
     private bool tickExecutionOpen;
@@ -68,8 +79,19 @@ public sealed class AuthoritativeSimulationRuntime<TState, TEvent>
 
     public AuthoritativeSimulationRuntime(
         IAuthoritativeSimulationLifecycle<TState, TEvent> lifecycle)
+        : this(lifecycle, ParticipantAdvancePolicy.OncePerAdvance)
     {
-        this.lifecycle = lifecycle ?? throw new ArgumentNullException(nameof(lifecycle));
+    }
+
+    public AuthoritativeSimulationRuntime(
+        IAuthoritativeSimulationLifecycle<TState, TEvent> lifecycle,
+        ParticipantAdvancePolicy participantAdvancePolicy)
+    {
+        ArgumentNullException.ThrowIfNull(lifecycle);
+        if (!Enum.IsDefined(participantAdvancePolicy))
+            throw new ArgumentOutOfRangeException(nameof(participantAdvancePolicy));
+        this.lifecycle = lifecycle;
+        this.participantAdvancePolicy = participantAdvancePolicy;
         sessions = new(lifecycle.CreateParticipant);
     }
 
@@ -437,12 +459,21 @@ public sealed class AuthoritativeSimulationRuntime<TState, TEvent>
             return;
 
         var participants = GetOrderedStates();
-        foreach (var participant in participants) {
-            lifecycle.AdvanceParticipant(participant, tick);
-            if (tickExecutionOpen)
-                EnsureTickHealthy();
+        if (participantAdvancePolicy == ParticipantAdvancePolicy.OncePerAdvance) {
+            foreach (var participant in participants) {
+                lifecycle.AdvanceParticipant(participant, tick);
+                if (tickExecutionOpen)
+                    EnsureTickHealthy();
+            }
         }
         for (var simulationTick = lastAdvancedTick + 1; ; simulationTick++) {
+            if (participantAdvancePolicy == ParticipantAdvancePolicy.BeforeEachTick) {
+                foreach (var participant in participants) {
+                    lifecycle.AdvanceParticipant(participant, simulationTick);
+                    if (tickExecutionOpen)
+                        EnsureTickHealthy();
+                }
+            }
             var deliveries = lifecycle.AdvanceTick(simulationTick, participants)
                 ?? throw new InvalidOperationException(
                     "The simulation lifecycle returned a null event collection.");

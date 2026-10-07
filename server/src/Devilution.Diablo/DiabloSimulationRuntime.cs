@@ -595,7 +595,8 @@ public sealed partial class DiabloSimulation
             System.Threading.Interlocked.Increment(ref ordinaryRuntimeCount);
             try {
                 var runtime = new AuthoritativeSimulationRuntime<AuthoritativePlayerState, DiabloGameplayEvent>(
-                    new Lifecycle(this, playerTemplate));
+                    new Lifecycle(this, playerTemplate),
+                    ParticipantAdvancePolicy.BeforeEachTick);
                 RuntimeOwners.Add(runtime, this);
                 return runtime;
             } catch {
@@ -630,7 +631,8 @@ public sealed partial class DiabloSimulation
                     "A Diablo cohort candidate can only bind one restored runtime.");
             try {
                 var runtime = new AuthoritativeSimulationRuntime<AuthoritativePlayerState, DiabloGameplayEvent>(
-                    new CohortLifecycle(this));
+                    new CohortLifecycle(this),
+                    ParticipantAdvancePolicy.BeforeEachTick);
                 runtime.InitializeCohort(tick, participants);
                 RuntimeOwners.Add(runtime, this);
                 return runtime;

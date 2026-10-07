@@ -2,11 +2,18 @@
 
 Notable changes to this fork are recorded below.
 
+- 2026-10-07: Add an explicit Engine participant-advancement policy while retaining
+  the original constructor's coalesced behavior. Ordinary and restored Diablo
+  runtimes advance participant state before each catch-up tick, fixing delayed
+  aging of effects created during replay. Clean/working unit checks and eight
+  integrated headless profiles pass. Native Search creation-tick parity and
+  rendered acceptance remain open; save schemas and profile selection are unchanged.
+
 - 2026-10-07: Add an isolated exact-base Monk Search start overlay at (20,20),
   preserving normal loadout/resources/catalogs and proving safe next movement.
-  Clean and working content checks pass 2/2 each. Characterize delayed timed
-  Search expiry during shared-runtime catch-up; correction and scene acceptance
-  remain open, with normal profiles and approval holds unchanged.
+  Clean and working content checks pass 2/2 each. Retain the pre-fix delayed-aging
+  characterization; the separate correction above addresses managed catch-up.
+  Native/rendered scene acceptance and the existing approval holds remain open.
 
 - 2026-10-07: Characterize prepared native Bard Identify through actual
   CheckIdentify/CalcPlrInv, preserving complete surrounding item/player state
