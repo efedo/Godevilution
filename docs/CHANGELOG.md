@@ -2,6 +2,10 @@
 
 Notable changes to this fork are recorded below.
 
+- 2026-10-07: Verify actual TCP Sorcerer cast/Recharge cold restore of the complete
+  equipped starting staff and four resources, including canonical receipts and
+  the next ordinary move. The new and two existing facts pass in clean and working
+  builds; rendered controls and complete inventory/world recovery remain separate.
 - 2026-10-07: Pin native RechargeItem full-charge no-op, last-capacity exhaustion
   and invalid-item boundaries, including complete item fields and exact RNG
   consumption/restoration. Focused 3/3, integrated 10/10 and three shuffled full

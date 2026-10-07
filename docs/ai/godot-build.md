@@ -655,6 +655,24 @@ Process-kill verification does not certify hardware power-loss/filesystem durabi
 or repair older unmarked failed roots. Preserve unexpected temporary files for
 diagnosis; the launcher does not select, promote or delete them to repair a save.
 
+The separate TCP equipped-staff cold-restore regression can be run from the
+workspace after building `godot/Devilution.Client.Protocol.Tests` in Debug:
+
+```powershell
+.\godot\Devilution.Client.Protocol.Tests\bin\Debug\net8.0\Devilution.Client.Protocol.Tests.exe --filter-method Devilution.Client.Protocol.Tests.LiveAuthoritativeServerTests.LiveServerRestoresSorcererRechargeAfterProcessRestart --parallel none --fail-skips on --no-ansi
+```
+
+Require one passing fact without skips. Actual Sorcerer creation, Charged Bolt
+and typed class Recharge use positive canonical receipts; the full equipped
+staff changes 40/40 -> 39/40 -> 39/39. Stop the owned first host before reading
+its checkpoint, then require a fresh host/client to restore the staff and four
+resources before input and preserve them after the next accepted movement.
+The canonical save omits two catalog-derived spell presentation annotations;
+fresh wire snapshots restore them. Tokens stay in memory and failed test roots
+are retained privately. Hosts are forcibly stopped by the existing harness.
+This protocol regression complements Lifecycle's rendered controls/death-drop
+journey; it does not replace that gate or qualify full inventory/world recovery.
+
 `Lifecycle` uses real equipment/spell controls, mouse reselection and Q/E cycling,
 itemless quest activation, staff casting, native-style class Recharge, a
 mana-consuming Firebolt, observed monster-caused player death and Hero /

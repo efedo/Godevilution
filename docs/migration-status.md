@@ -99,6 +99,31 @@ remains open alongside rendered automap and application acceptance. Search is no
 native-town-legal or TrapSense. Scene/launcher drafts await rendered acceptance;
 normal-profile adoption and the documented approval holds remain.
 
+The actual TCP Sorcerer Recharge cold-restore prerequisite passes independent
+review in `.local/sorcerer-recharge-restart-d547984aa34b4d9fa812ab818ad4e896`:
+the new fact and two existing Recharge/packaged-restart facts each pass against
+clean HEAD `0e7fe38e0` plus the sole new test, and the working tree (six executions,
+no failures/skips). Genuine class-2 creation supplies the equipped starting staff;
+Charged Bolt sequence 1 changes 40/40 to 39/40, and typed ClassAbility Recharge
+sequence 2 changes only charges/capacity to 39/39. Positive canonical receipts
+progress through sequence 3's settled ordinary move after cold resume.
+The complete equipped staff, identity/class/position and Life/Mana/Gold/Experience
+match the stopped checkpoint and first fresh-host wire snapshot before new input.
+The staff and four resources remain stable through the exact next settled move. The durable envelope retains its ruleset
+identity; live handshakes/snapshots bind content and rules. Only the canonical
+checkpoint expectation clears the two catalog-derived spell presentation fields;
+actual wire comparisons retain them. Resume credentials stay in memory.
+
+All 2,793 committed archive inputs and 2,811 working inputs match through the run,
+alongside twenty protected hashes. Nine outer stages exit zero with complete
+drains/cleanup and exact identities absent. Both builds retain the pre-existing
+Dispatch test xUnit2031 warning. The first two failed clean runs remain retained:
+their fixture incorrectly expected live content identity and spell annotations
+inside the portable save snapshot. Neither reached fresh-host startup.
+Child hosts are deliberately force-stopped; outer exits do not certify graceful
+host shutdown. This is a TCP equipped-item/four-resource prerequisite, not a
+rendered HUD click, complete inventory/world preservation or full M1 acceptance.
+
 The prepared native Recharge edge prerequisite passes independent review in
 `.local/recharge-native-5aa53154361940f1aa08266130e66fe6`: focused 3/3, integrated 10/10 and three shuffled ten-test
 iterations, without skips. Actual `RechargeItem` preserves a fully charged staff
@@ -113,7 +138,7 @@ This is the class-independent helper on a prepared level-ten nonlocal stack
 player; Sorcerer class admission, DoRecharge/recalculation/cursor/network/native
 creation and rendered acceptance remain outside its scope. The existing Godot
 lifecycle already proves the Recharge control and post-death staff world-drop
-restore; cold persistence of the still-equipped recharged staff is a separate gap.
+restore; the separate TCP equipped-staff cold-restore prerequisite is qualified above.
 
 The prepared native Bard Identify prerequisite passes independent review in
 `.local/bard-identify-native-4d3603c7a7254584a17c1664d3f501ed` on 2026-10-07.

@@ -359,6 +359,10 @@ deliberately does not claim native generated-world parity, which belongs to M2.
    charged staff/class Recharge, mana-consuming Firebolt and observed
    monster-caused player death,
    Town restart and exact off-level dropped-staff restore through actual controls.
+   A separate actual TCP prerequisite now preserves the complete still-equipped
+   39/39 recharged starting staff and four resources through a stopped checkpoint,
+   fresh-host pre-input resume and the next accepted movement. Its clean/working
+   checks do not replace rendered controls or full inventory/world acceptance.
    Normal resources and original profile identities remain unchanged.
    Preserve original and new profile identities/saves. Declared local-level NPC
    and portal destinations now support cancellable, acknowledged approach through
