@@ -8,6 +8,7 @@ Notable changes to this fork are recorded below.
   image bindings; all nineteen recorded process identities are absent. Debug
   hosts are forcibly stopped; durable cold restore, rendered and release-budget
   acceptance remain open. Preserve earlier failed runs and private save artifacts.
+  Align the delivery plan with this scope and the six portable compiler boundaries.
 
 - 2026-10-07: Permit delete sharing when reading Godot Performance markers.
   Preserve atomic publication, legacy decoding and strict barriers; add five

@@ -292,7 +292,15 @@ M4. M5 is the final removal gate, not a reason to postpone replacement work.
    live allocation or soak evidence. Preserve failed captures and reject invalid
    metrics. Ordinary launches and two-client create/resume remain unchanged.
    Local Debug town measurements do not establish a release budget or full
-   platform/campaign matrix; use status for exact configurations and outcomes.
+   platform/campaign matrix. Separate committed-source standalone exports now
+   pass the actual Main one/four-client headless workload, with independent
+   manifests/startup witnesses binding four physical optimized runtime images.
+   Preserve its Debug-host, instrumented legacy-persistence scope: host stops
+   are forced and checkpoint verification is metadata only, with a temporary
+   save artifact retained. This closes the scoped exported workload baseline,
+   not graceful shutdown, cold durable restore, rendered/GPU measurements,
+   native machine-code optimization, soak or release budgets. Use status for
+   exact revisions, configurations, retained failures and outcomes.
    Godot now reuses installed geometry between model-accepted snapshot generations.
    Preserve full replacement, same-tick/epoch admission and eager legacy behavior;
    do not treat ownership as public protobuf immutability. Measure remaining
@@ -490,9 +498,13 @@ this evidence. A sample art pack does not satisfy M4's full presentation gate.
    Portable synthetic fixtures now cover actual four-depth None-policy compiler
    publication/activation, deterministic hashes, overwrite refusal, light-only
    pool overflow and a corrupted-pack authored/scanner-door activation refusal.
-   Preserve their diagnostic-only scope. Add genuine compiler-level adjacent
-   authored-footprint and exact mixed door/light 127-slot boundary fixtures;
-   light-only massive overflow and activation refusal do not close those gaps.
+   Preserve their diagnostic-only scope. Actual compiler-level tests now cover
+   safe adjacent versus blocked authored item footprints and mixed door/light
+   scans at exactly 127 slots, with refusal at 128. Independent production
+   materialization checks all four candidate depths; refusal preserves base
+   inputs and publishes no output/staging. These six portable synthetic facts
+   close those compiler prerequisites, not native generated-layout, broader
+   door traversal or the Cathedral-family exit gate.
    Captures are independent expected fixtures, not seed-specific production
    transition tables. Port native-compatible discovery/transition logic for
    arbitrary seeds using validated external catalogs, preserving mutable geometry
