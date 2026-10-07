@@ -44,6 +44,44 @@ unsupported behavior is a migration gap, not permission for local simulation.
 
 ## Current delivery position and verification limits
 
+Explicit-cohort TCP Town Portal recovery passes in
+`.local/cohort-town-portal-restart-79bb820d5c71458799cf60c5b8289754`.
+Two real clients use ordinary Warrior/Rogue resources and existing town/portal
+previews. A purchased scroll creates one owner route. Source-to-town use and
+nonowner town return retain it; both endpoint cells are vacated before restart.
+Stopped canonical checkpoints preserve two envelope/module participant bindings,
+all accepted per-owner/global receipts, exact next receipt cursor, settled actor
+positions, full projected portal identity/counter and the exact portal-aging tick.
+
+The guest resumes first, then the owner. Each first wire snapshot before input
+must contain both saved actors with exact positions/classes/names, settled modes,
+content/ruleset stamps and the elapsed-tick portal counter. Serialized accepted
+owner reposition, guest movement and owner portal return use each persisted next
+client sequence and consecutive global receipts. Owner return closes the route;
+a second forced stop preserves both complete ledgers and original/owner-route
+absence. This is the native owner-only closure rule, not timed route expiry.
+
+The new fact and existing two-participant/legacy portal restart controls pass in
+clean and working lanes: six exact executions, nine zero-exit bounded outer
+stages, complete drains/cleanup and exact recorded identities absent. The clean
+lane archives HEAD `afeada4ac` (2,795 tracked paths), adds only the new partial and
+replaces only the private fixture seam; 2,794 original inputs remain unchanged.
+All 2,813 working inputs and twenty protected hashes match. The seam's trailing
+optional persistence mode preserves existing callers/default legacy behavior.
+Both builds retain the existing Dispatch.cs xUnit2031 warning. The initial r2
+attempt built successfully but failed before gameplay on a null protobuf resume
+token; that source/XML/process evidence is retained in
+`.local/cohort-town-portal-restart-c80a664c794a44d9a1b93419178bcaf5`.
+The r3 attempt then rejected a dead owner after unnecessary guest Town navigation;
+its original evidence remains in
+`.local/cohort-town-portal-restart-9def8554f90b46ca8efa09307a615a7b`.
+Fresh r5 qualification returns the owner immediately and checkpoints both actors
+alive and settled in Town. Each portal use checks the actor alive/settled at its
+endpoint; no resources, AI, authority or retry policy changes. Creation uses an
+empty token and supplied resume credentials remain unchanged.
+Hosts are forcibly stopped. Rendered controls, graceful shutdown, full resources/
+world/RNG preservation and normal cohort-profile adoption remain separate.
+
 Actual TCP Town Portal opening-counter and durable-closure acceptance passes in
 `.local/town-portal-removal-restart-4c14b6b64d8e4a78a8817507667b9899`.
 A normal Warrior buys and consumes a scroll using the existing explicit

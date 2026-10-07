@@ -6017,12 +6017,17 @@ public sealed partial class LiveAuthoritativeServerTests
             string? gameAdapterPackageRoot = null,
             string? gameAdapterId = null,
             string? performanceOutput = null,
-            CommandSchedulingMode? commandSchedulingMode = null)
+            CommandSchedulingMode? commandSchedulingMode = null,
+            string? persistenceMode = null)
         {
             if (commandSchedulingMode.HasValue
                 && commandSchedulingMode.Value is not (CommandSchedulingMode.Immediate or CommandSchedulingMode.ClockGated)) {
                 throw new ArgumentOutOfRangeException(nameof(commandSchedulingMode),
                     "Live host fixtures support only Immediate and ClockGated command scheduling.");
+            }
+            if (persistenceMode is not null && persistenceMode is not ("legacy" or "cohort")) {
+                throw new ArgumentOutOfRangeException(nameof(persistenceMode),
+                    "Live host fixtures support only legacy and cohort persistence.");
             }
             var repositoryRoot = LiveAuthoritativeServerTests.FindRepositoryRoot();
             var owner = TestContext.Current.TestClassInstance as LiveAuthoritativeServerTests
@@ -6056,6 +6061,10 @@ public sealed partial class LiveAuthoritativeServerTests
                 startInfo.ArgumentList.Add("--command-scheduling");
                 startInfo.ArgumentList.Add(commandSchedulingMode.Value == CommandSchedulingMode.ClockGated
                     ? "clock-gated" : "immediate");
+            }
+            if (persistenceMode is not null) {
+                startInfo.ArgumentList.Add("--persistence-mode");
+                startInfo.ArgumentList.Add(persistenceMode);
             }
             if (startingGoldOverride.HasValue) {
                 startInfo.ArgumentList.Add("--starting-gold");

@@ -51,6 +51,37 @@ Retain complete runner output when investigating them. The observed model state
 is not proof of server state at admission; do not assign a timing/action cause
 from a later isolated pass or retry a rejected command to hide the failure.
 
+## TCP cohort portal recovery
+
+`LiveCohortRestoresOwnedTownPortalAndNonOwnerUseAfterProcessRestart` uses two real
+protocol clients, explicit `cohort`/multiplayer/ClockGated hosting and the existing
+town/portal preview stack. Evidence: `.local/cohort-town-portal-restart-79bb820d5c71458799cf60c5b8289754`.
+An ordinary Warrior buys and consumes one scroll; owner source-to-town and guest
+source-to-town/town-to-source use retain its route. Both actors remain alive and
+settle in Town off both endpoints before a forced stop. Validated cohort loading
+and module decoding check full projected portal fields, tick-derived opening
+counter, exact last portal tick, two participant bindings and complete canonical
+accepted ledgers/cursors.
+
+Reverse-order cold rejoin checks each first wire snapshot before input: exact two
+saved actors/positions/classes/names, settled actions, content/ruleset identity and
+portal counter. Owner endpoint reposition, guest adjacent movement and owner
+return then require persisted next client sequences and consecutive global
+receipts. Owner return closes the route. A second stopped checkpoint retains
+complete updated ledgers and no original or same-owner route.
+
+The new fact plus existing two-participant and legacy portal restart controls pass
+in clean and working lanes (six executions/nine zero-exit outer stages).
+HEAD `afeada4ac` has 2,795 tracked paths; the clean lane adds only this partial and
+replaces only the private fixture, retaining 2,794 original inputs. All 2,813
+working inputs/protected20 match; drains/cleanup finish and exact outer identities
+are absent. The fixture's optional persistence mode preserves default legacy
+callers. Both builds retain the existing Dispatch.cs xUnit2031 warning. Failed r2
+null-token and r3 dead-owner attempts remain retained. Fresh r5 qualifies the empty
+creation token and corrected journey ordering. Hosts are forcibly stopped.
+Rendered interaction, graceful shutdown, full world/resources/RNG and normal
+profile adoption remain separate.
+
 ## TCP portal counter and cold restore
 
 The focused `LiveServerRestoresTownPortalLifetimeAfterProcessRestart` fact uses

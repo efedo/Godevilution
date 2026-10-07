@@ -2,6 +2,11 @@
 
 Notable changes to this fork are recorded below.
 
+- 2026-10-07: Add explicit-cohort TCP Town Portal recovery with two real clients,
+  nonowner retention, reverse-order first-wire cold rejoin, complete saved receipt
+  ledgers and durable owner-return closure. Preserve default legacy fixture calls;
+  clean/working recovery controls pass.
+
 - 2026-10-07: Extend the TCP Town Portal recovery fact through owner-return
   closure, a second forced stop and third fresh host. Verify durable route absence,
   canonical receipts and exact next-sequence movement before accepting recovery.
