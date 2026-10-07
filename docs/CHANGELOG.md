@@ -2,6 +2,11 @@
 
 Notable changes to this fork are recorded below.
 
+- 2026-10-07: Permit delete sharing when reading Godot Performance markers.
+  Preserve atomic publication, legacy decoding and strict barriers; add five
+  focused reader regressions including a deterministic Windows sharing conflict.
+  The failed four-client export remains retained pending fresh workload acceptance.
+
 - 2026-10-07: Add independently materialized Cathedral-door compiler boundary
   tests for exact 127-slot mixed door/light capacity, 128-slot refusal and
   adjacent authored item footprints. All six portable facts pass; refusals

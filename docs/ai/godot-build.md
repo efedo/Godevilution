@@ -804,6 +804,14 @@ its saves/bookmarks still contain credentials.
 
 ## Actual Godot client performance baseline
 
+Performance markers are published by closing a temporary file then moving it
+to the final name. Readers permit shared read/write/delete access so the Windows
+rename handle can coexist with a read; they retain legacy UTF8/BOM decoding and
+strict JSON/marker validation without IO retries. The portable marker-reader
+tests include a Windows DELETE-handle counterexample and explicitly skip that
+case on other systems. This scoped regression does not replace a complete
+one/four-client exported workload or rendered acceptance.
+
 From the root, run the zero-argument `tools/measure-godot-client.ps1`. It builds
 current Debug sources and runs separate rendered one-client single-player and
 four-client multiplayer profiles against clock-gated hosts. Do not run concurrent

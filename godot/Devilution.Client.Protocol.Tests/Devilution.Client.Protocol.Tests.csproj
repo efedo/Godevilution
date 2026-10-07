@@ -22,6 +22,8 @@
              Link="Diagnostics/ClientCommandTimingEvidenceWriter.cs" />
     <Compile Include="../Devilution.Client/Acceptance/PerformanceWorkloadObservations.cs"
              Link="Acceptance/PerformanceWorkloadObservations.cs" />
+    <Compile Include="../Devilution.Client/Acceptance/PerformanceMarkerFileReader.cs"
+             Link="Acceptance/PerformanceMarkerFileReader.cs" />
     <Compile Include="../Devilution.Client/Acceptance/AcceptanceAckLossRelay.cs"
              Link="Acceptance/AcceptanceAckLossRelay.cs" />
     <Compile Include="../Devilution.Client/PresentationAssets/PresentationAssetManifest.cs"

@@ -44,6 +44,19 @@ unsupported behavior is a migration gap, not permission for local simulation.
 
 ## Current delivery position and verification limits
 
+A real four-client exported Performance run retained a Windows sharing failure
+while reading an atomically published round marker in
+`.local/godot-exported-performance-run-c4ecb2acf9f64ae18e7a0aa8cd523ad9`.
+Its one-player profile passes scoped headless workload/image checks; the
+four-player profile fails at round 19 and establishes no completed baseline.
+All twenty recorded process identities are absent. The conflicting handle's
+owner is not established by the trace. The marker reader now permits delete
+sharing, preserving legacy decoding, JSON validation, barriers and deadlines.
+Five focused reader facts and seven workload observation facts pass in
+`.local/performance-marker-reader-validation-3ff70c677fee4d1987ca74b9ec2c9a30`;
+the Windows control reproduces the old sharing violation with a real DELETE
+handle. A fresh exported one/four-client pair remains required after this fix.
+
 Portable Cathedral-door compiler boundary coverage now passes all six facts in
 `.local/cathedral-compiler-boundary-validation-r2-407f07b54dcc4dc9a78343e9cec7cbce`.
 Production materialization independently checks mixed door/light scans at exactly

@@ -463,8 +463,7 @@ public partial class SessionAcceptance
         await PerformanceUntil(() => {
             if (!System.IO.File.Exists(path))
                 return false;
-            marker = JsonSerializer.Deserialize<PerformanceMarker>(
-                System.IO.File.ReadAllText(path));
+            marker = PerformanceMarkerFileReader.ReadJson<PerformanceMarker>(path);
             Require(marker is not null, $"Performance marker is empty: {path}.");
             return true;
         }, failure);
