@@ -1926,8 +1926,9 @@ and protocol/snapshot persistence.
 
 Schema 0.44 adds Town Portal (stable spell ID `39`, native `SpellID` `7`). The
 server owns native five-cell placement, one active portal per caster, the fixed
-town endpoint, bidirectional use, 100-tick expiry, and portal persistence in
-snapshots, saves, hashes, and the shared protocol.
+town endpoint, bidirectional use, and a 100-tick opening counter that clamps at
+one while the owned route remains open. Owner return removes that route. Portal
+state persists in snapshots, saves, hashes, and the shared protocol.
 
 Schema 0.43 adds Telekinesis (stable and native spell ID `33`). The server
 resolves the target through the shared cast intent, then authoritatively applies

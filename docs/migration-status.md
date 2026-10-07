@@ -44,6 +44,27 @@ unsupported behavior is a migration gap, not permission for local simulation.
 
 ## Current delivery position and verification limits
 
+Actual TCP Town Portal opening-counter/cold-restore acceptance passes in
+`.local/town-portal-lifetime-restart-6be9d0a0a219477ca7eb35c77482d9d0`.
+A normal Warrior uses the existing explicit town/portal preview stack to buy and
+consume a scroll. Real endpoint movement proves a tick-derived decrease above
+the clamp. The stopped checkpoint and first fresh-host wire snapshot before input
+preserve complete portal identity, owner, endpoints and bidirectionality, with
+RemainingTicks derived from their observed ticks. Positive canonical receipts
+persist; the next exact sequences enter town while retaining the portal, then
+return its owner to the source and remove it. This counter clamps at one rather
+than expiring the owned route.
+
+The new fact and existing Sorcerer Recharge/general packaged-adapter restart facts
+pass in both clean and working lanes (six executions, no failures/skips).
+The clean lane is HEAD `7aa3ebb1d` plus the sole new test partial; 2,794 archived
+inputs and 2,812 preserved working inputs stay hashed, with protected20 unchanged.
+All nine bounded outer stages exit zero with complete drains/cleanup and exact
+identities absent. Both builds retain the existing Dispatch.cs xUnit2031 warning.
+Child hosts are forcibly stopped; this does not qualify graceful shutdown,
+rendered controls, native missile creation-pass parity or complete resource/world
+preservation. The existing TownLoop scene still has its narrower timer assertion.
+
 The existing Journey, TownLoop and Lifecycle legacy profiles, plus explicit-cohort
 two-client Cooperative Create/cold Resume, pass broader headless integration after
 the per-tick runtime change in `.local/m1-broader-headless-integrated-0d770258058d4edea14f6f2876d440d3`.

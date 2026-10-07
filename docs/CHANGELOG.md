@@ -2,6 +2,13 @@
 
 Notable changes to this fork are recorded below.
 
+- 2026-10-07: Verify the actual TCP Town Portal opening counter through real
+  scroll purchase/cast, pre-clamp tick aging, forced-stop checkpoint and first
+  fresh-host restore, then source-to-town retention and owner-return removal.
+  The new and two existing restart facts pass in clean and working lanes.
+  Correct the old automatic-expiry wording; native cast-pass and rendered
+  acceptance remain separate.
+
 - 2026-10-07: Qualify four broader headless gameplay profiles after per-tick
   participant advancement: Journey, TownLoop, Lifecycle and two-client Cooperative
   Create/cold Resume. All 26 engine exits are zero and 38 identities are absent.
