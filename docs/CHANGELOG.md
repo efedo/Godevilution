@@ -2,6 +2,12 @@
 
 Notable changes to this fork are recorded below.
 
+- 2026-10-07: Add an isolated exact-base Monk Search start overlay at (20,20),
+  preserving normal loadout/resources/catalogs and proving safe next movement.
+  Clean and working content checks pass 2/2 each. Characterize delayed timed
+  Search expiry during shared-runtime catch-up; correction and scene acceptance
+  remain open, with normal profiles and approval holds unchanged.
+
 - 2026-10-07: Characterize prepared native Bard Identify through actual
   CheckIdentify/CalcPlrInv, preserving complete surrounding item/player state
   and RNG. Focused 1/1, integrated 7/7 and three shuffled full-suite runs pass

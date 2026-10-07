@@ -777,6 +777,23 @@ but not stock/pricing, complete open-service lifecycle handling,
 every placement exclusion,
 portal animation/art, a complete M1 loop or campaign parity.
 
+## Monk Search content prerequisite
+
+`server/content/monk-search-preview` is an exact-base optional overlay containing
+only Level 1 start (20,20). It keeps the normal Hellfire Monk class 3 Search 46
+loadout, effective spell level 0, resources and items. The adjacent (21,20) cell
+is walkable, empty, outside authored monster aggro and not a warp trigger.
+It adds no actors, grants, catalog overrides or normal-profile adoption.
+
+`Devilution.Diablo.Tests.MonkSearchPreviewContentTests` passes 2/2 without skips
+in both verified HEAD-derived source with the candidate overlay and the existing
+working tree; evidence is
+`.local/monk-search-prerequisite-72f3ed434ff14b2aa37b280fbc2983ec`.
+This qualifies content only. Shared-runtime catch-up currently delays Search
+expiry when a timed effect is created inside skipped ticks. Actual Godot control,
+cold-status restore, rendered and native automap acceptance remain separate.
+Native Hellfire Search is illegal in Town and does not reveal Rogue traps.
+
 ## Opt-in command-timing diagnostics
 
 Add `-CommandTimingTrace` to `tools/test-godot-session.ps1` for a fresh isolated

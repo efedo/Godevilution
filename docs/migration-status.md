@@ -44,6 +44,22 @@ unsupported behavior is a migration gap, not permission for local simulation.
 
 ## Current delivery position and verification limits
 
+The isolated Monk Search content prerequisite passes independent source review
+and clean/working module checks (2/2 each, no skips) in
+`.local/monk-search-prerequisite-72f3ed434ff14b2aa37b280fbc2983ec`.
+Exact-base `monk-search-preview` adds only Level 1 start (20,20); canonical base
+catalogs, assets, resources, items and Hellfire Monk class 3/ability 46 stay intact.
+Loaded effective Search level is zero, and (21,20) is a safe adjacent next step.
+All 2,788 committed archive inputs and twenty protected working hashes match;
+five owned stages exit zero with complete drains/cleanup and identities absent.
+
+A separate actual shared-runtime characterization in that root exposes a timing
+gap: effect tick 21 has 247 Search ticks, but jumping to 24 retains 247 instead of
+stepwise 244. This uses legacy runtime Execute/AdvanceTo, not a complete ClockGated
+host journey or native parity proof. An explicit compatible timing correction
+and actual Godot cast/status/cold-resume acceptance remain open. Search is not
+native-town-legal or TrapSense; default profiles and approval holds are unchanged.
+
 The prepared native Bard Identify prerequisite passes independent review in
 `.local/bard-identify-native-4d3603c7a7254584a17c1664d3f501ed` on 2026-10-07.
 The existing registered `items_test` target passes focused 1/1, integrated 7/7

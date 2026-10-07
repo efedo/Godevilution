@@ -1,0 +1,13 @@
+{
+  "formatVersion": 1,
+  "id": "godevilution.monk-search-preview",
+  "version": "0.1.0",
+  "dependencies": ["devilution.base"],
+  "schema": { "id": "devilution.diablo", "version": "1.502.0" },
+  "dependencyConstraints": [
+    { "id": "devilution.base", "minimumVersion": "0.1.0", "maximumVersion": "0.1.0" }
+  ],
+  "overlays": [
+    { "table": "level_start_positions.tsv", "keys": ["level_id"], "mode": "upsert" }
+  ]
+}
