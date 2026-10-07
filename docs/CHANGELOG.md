@@ -2,10 +2,17 @@
 
 Notable changes to this fork are recorded below.
 
+- 2026-10-07: Qualify the committed-source standalone exported one/four-client
+  headless Performance workload after the marker-reader fix. All five clients
+  complete settled moves/barriers with zero sample loss and physical optimized
+  image bindings; all nineteen recorded process identities are absent. Debug
+  hosts are forcibly stopped; durable cold restore, rendered and release-budget
+  acceptance remain open. Preserve earlier failed runs and private save artifacts.
+
 - 2026-10-07: Permit delete sharing when reading Godot Performance markers.
   Preserve atomic publication, legacy decoding and strict barriers; add five
   focused reader regressions including a deterministic Windows sharing conflict.
-  The failed four-client export remains retained pending fresh workload acceptance.
+  The failed four-client export remains retained alongside the fresh qualification.
 
 - 2026-10-07: Add independently materialized Cathedral-door compiler boundary
   tests for exact 127-slot mixed door/light capacity, 128-slot refusal and

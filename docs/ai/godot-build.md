@@ -862,10 +862,21 @@ pre-runtime bundle manifests bind physical runtime locations, identities, MVIDs
 and file/path hashes for three optimized ExportRelease application images and
 the exact optimized Release GodotSharp image. The committed repeat also verifies
 all 143 archived build inputs before and after export. All owned stages exit
-cleanly and are absent. These probes instantiate no Main, connection or save;
-actual exported gameplay/frame workloads, rendered Release measurements, native
-machine-code optimization and release budgets remain separate acceptance work.
-See migration status for the retained evidence and earlier failed probes.
+cleanly and are absent. These assembly-only probes instantiate no Main,
+connection or save.
+
+A separate disposable committed-source qualification now launches the actual
+standalone exports through Main's new-character/input path and the same
+one/four-participant Performance workload. Independent pre-runtime manifests
+and private startup witnesses bind all four physical optimized images; all
+rounds, observer barriers, terminal proofs and zero-loss frame captures pass.
+The hosts are Debug and forcibly stopped, with direct PID/start-bound terminal
+receipts. Checkpoint verification is metadata only; a retained temporary save
+file prevents any claim of fully drained writes or cold durable restore.
+This exported headless baseline does not change the Debug measurement command
+above or ordinary launch profiles. Rendered Release measurements, native
+machine-code optimization, soak, platform coverage and release budgets remain
+open. See migration status for exact revision/evidence and retained failures.
 
 Missing rounds, changed identity, empty/invalid/truncated samples, overwritten
 output, nonzero client exits or missing checkpoints reject the baseline. Recording

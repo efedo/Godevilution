@@ -44,6 +44,33 @@ unsupported behavior is a migration gap, not permission for local simulation.
 
 ## Current delivery position and verification limits
 
+The fresh committed-source exported one/four-client Performance pair passes
+independent review in `.local/exported-performance-marker-committed-full-r4.log`,
+root `.local/godot-exported-performance-run-1e9dddc4e7014e84a2f9c5512ac1a9d0`.
+All 2,787 archived inputs bind HEAD `3ce67c4f7`; separate disposable stages use
+Godot/SDK 4.7.2 while source SDK 4.7.1 remains unchanged. Actual standalone
+exports instantiate Main, create participants through the form/input path and
+complete five warm-up/fifteen measured settled moves, every observer barrier,
+terminal proof and checkpoint metadata check. All five stopped frame captures
+are valid with zero dropped, invalid or nonmonotonic samples. Private startup
+witnesses and independently rehashed bundle manifests bind all four physical
+runtime images: three optimized ExportRelease application assemblies and the
+optimized Release GodotSharp assembly, on Godot 4.7.2/.NET 8.0.30 Windows X64.
+
+Seventeen nonhost stages exit zero; aggregate completion/drain evidence and
+exact PID/start audits confirm all nineteen recorded identities are absent.
+Both Debug hosts have matching direct terminal receipts with forced exit -1.
+The four-player private save directory retains a nonempty temporary file;
+checkpoint verification is metadata only, not drained durable writes, graceful
+host shutdown or cold restore. One/four-client Main callback P95 is
+1.5308 / 2.3446-2.4186 ms; callback-start interval P95 is
+29.8389 / 29.7237-29.9835 ms. Sample counts are 1,724 / 1,885-1,891 callbacks
+and 1,723 / 1,884-1,890 intervals. These instrumented, legacy-persistence,
+headless local observations establish a revision-bound exported workload
+baseline, not rendered/GPU timing, native machine-code optimization, a causal
+speed comparison, soak, platform coverage or release budgets. Earlier failures
+remain retained; protected work and approval holds remain unchanged at 35%.
+
 A real four-client exported Performance run retained a Windows sharing failure
 while reading an atomically published round marker in
 `.local/godot-exported-performance-run-c4ecb2acf9f64ae18e7a0aa8cd523ad9`.
@@ -55,7 +82,7 @@ sharing, preserving legacy decoding, JSON validation, barriers and deadlines.
 Five focused reader facts and seven workload observation facts pass in
 `.local/performance-marker-reader-validation-3ff70c677fee4d1987ca74b9ec2c9a30`;
 the Windows control reproduces the old sharing violation with a real DELETE
-handle. A fresh exported one/four-client pair remains required after this fix.
+handle. The fresh pair above qualifies the completed headless workload.
 
 Portable Cathedral-door compiler boundary coverage now passes all six facts in
 `.local/cathedral-compiler-boundary-validation-r2-407f07b54dcc4dc9a78343e9cec7cbce`.
