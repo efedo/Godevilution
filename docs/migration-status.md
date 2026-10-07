@@ -44,6 +44,15 @@ unsupported behavior is a migration gap, not permission for local simulation.
 
 ## Current delivery position and verification limits
 
+Portable Cathedral-door compiler boundary coverage now passes all six facts in
+`.local/cathedral-compiler-boundary-validation-r2-407f07b54dcc4dc9a78343e9cec7cbce`.
+Production materialization independently checks mixed door/light scans at exactly
+127 slots and the rejected 128-slot case, plus safe adjacent versus blocked
+authored item footprints. Rejections leave no output or staging publication;
+base tables remain unchanged. The initial fixture indexing failures are retained.
+These synthetic fixtures do not establish native generated-layout or rendered
+acceptance, and no compiler behavior or profile default changes.
+
 The native Trap Disarm branch prerequisite now passes independently reviewed
 qualification in `.local/trap-disarm-native-oracle-scoped-player-qualified.log`,
 with evidence root `.local/trap-disarm-native-oracle-208b036cb4dc4d8d8925b473ecb25082`.

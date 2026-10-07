@@ -2,6 +2,11 @@
 
 Notable changes to this fork are recorded below.
 
+- 2026-10-07: Add independently materialized Cathedral-door compiler boundary
+  tests for exact 127-slot mixed door/light capacity, 128-slot refusal and
+  adjacent authored item footprints. All six portable facts pass; refusals
+  preserve base tables and publish no output. Synthetic geometry remains diagnostic.
+
 - 2026-10-06: Qualify genuine headless standalone assembly loading from preserved
   dirty and committed Godot sources. Independently verified bundle manifests bind
   three optimized ExportRelease application images and the Release vendor API;

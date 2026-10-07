@@ -449,6 +449,14 @@ still has closed doors. `none` is the default; `authored-diagnostic` is explicit
 optional and must pass final production occupancy/pool validation. This is not
 complete native object/light/monster population, population RNG or campaign mapping.
 
+The portable `CathedralDoorCompilerPortableTests` class checks exact mixed
+door/light capacity (127 accepted, 128 rejected) and safe adjacent versus blocked
+authored item footprints through the actual compiler. Its synthetic candidates
+are independently materialized before compilation; failed compilation must leave
+no destination or staging publication and preserve the base tables. Run all six
+facts through the existing module xUnit v3 runner after rebuilding. This is
+diagnostic compiler coverage, not native layout or rendered acceptance.
+
 Godot displays schematic CLOSED, OPEN and BLOCKED cues from validated typed server
 state. Left-click operates a door; Ctrl-click walks through an open doorway.
 Occupied closing must retain the open frame/geometry until the occupant leaves.

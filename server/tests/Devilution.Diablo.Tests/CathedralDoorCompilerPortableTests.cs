@@ -189,6 +189,451 @@ public sealed class CathedralDoorCompilerPortableTests
     }
 
     [Fact]
+    public void CompilesExactMixedNativeScannerCapacityAndRejectsOneOverWithoutPublication()
+    {
+        var basePack = LoadBasePack();
+        var seeds = new uint[] { 17, 2588, 1, uint.MaxValue };
+        var before = SnapshotTables(basePack);
+        var exact = CreateScannerBoundaryFixture(seeds, 127);
+        AssertMaterializedScannerFixture(exact);
+        var exactOutput = NewOutput();
+        Exception? primary = null;
+        try
+        {
+            var profile = CathedralDoorPlaytestCompiler.Compile(new CathedralDoorPlaytestCompilerOptions(
+                basePack,
+                exactOutput,
+                exact.PieceDefinitionsTsv,
+                CreateProperties(),
+                seeds) {
+                PlacementPolicy = CathedralDepthPlaytestPlacementPolicy.None,
+            });
+            var generated = ContentPackLoader.LoadManifestDirectory(
+                Path.Combine(exactOutput, CathedralDoorPlaytestCompiler.ContentDirectoryName));
+            var content = ComposedContent.Compose(new ContentManifest(generated.Id, generated.Version, [generated]));
+            var activation = DiabloModule.Instance.CathedralDoorContentBootstrap.ActivateDoors(content);
+            var doors = activation.Simulation.WorldState.CaptureCathedralDoorObjects();
+            var targetLevelId = checked((uint)(exact.TargetDepth + 1));
+            var targetGeometry = activation.Simulation.WorldState.LevelGeometry
+                .Single(level => level.LevelId == targetLevelId);
+            var targetDoorCount = doors.Count(door => door.LevelId == targetLevelId);
+            var targetLightCount = targetGeometry.NativePieceLayer.Count(piece => piece == 269);
+
+            Assert.Equal("none", profile.PlacementPolicy);
+            Assert.True(targetDoorCount > 0);
+            Assert.True(targetLightCount > 0);
+            Assert.Equal(127, targetDoorCount + targetLightCount);
+            for (var depthIndex = 0; depthIndex < 4; depthIndex++)
+            {
+                var levelId = checked((uint)(depthIndex + 1));
+                var geometry = activation.Simulation.WorldState.LevelGeometry
+                    .Single(level => level.LevelId == levelId);
+                var scannerCount = doors.Count(door => door.LevelId == levelId)
+                    + geometry.NativePieceLayer.Count(piece => piece == 269);
+                Assert.Equal(exact.ExpectedScannerCounts[depthIndex], scannerCount);
+                Assert.InRange(scannerCount, 0, 127);
+            }
+            Assert.Equal(before, SnapshotTables(basePack));
+            AssertNoStagingSiblings(exactOutput);
+        }
+        catch (Exception error)
+        {
+            primary = error;
+            throw;
+        }
+        finally
+        {
+            CleanupOutput(exactOutput, primary);
+        }
+
+        var overflow = CreateScannerBoundaryFixture(seeds, 128);
+        AssertMaterializedScannerFixture(overflow);
+        var overflowOutput = NewOutput();
+        primary = null;
+        try
+        {
+            var error = Assert.Throws<InvalidDataException>(() => CathedralDoorPlaytestCompiler.Compile(
+                new CathedralDoorPlaytestCompilerOptions(
+                    basePack,
+                    overflowOutput,
+                    overflow.PieceDefinitionsTsv,
+                    CreateProperties(),
+                    seeds) {
+                    PlacementPolicy = CathedralDepthPlaytestPlacementPolicy.None,
+                }));
+
+            Assert.Equal("Cathedral door/light scan exceeds the native object pool.", error.Message);
+            Assert.Equal(128, overflow.ExpectedScannerCounts[overflow.TargetDepth]);
+            Assert.False(Directory.Exists(overflowOutput));
+            AssertNoStagingSiblings(overflowOutput);
+            Assert.Equal(before, SnapshotTables(basePack));
+        }
+        catch (Exception error)
+        {
+            primary = error;
+            throw;
+        }
+        finally
+        {
+            CleanupOutput(overflowOutput, primary);
+        }
+    }
+
+    [Fact]
+    public void CompilesAnAdjacentAuthoredFootprintButRejectsTheExactDoorItemFootprintBeforePublication()
+    {
+        var basePack = LoadBasePack();
+        var seeds = new uint[] { 17, 2588, 1, uint.MaxValue };
+        var pieces = CreateDoorPieces();
+        var baselineOutput = NewOutput();
+        CathedralDepthPlaytestLevelProfile firstLevel;
+        Exception? primary = null;
+        try
+        {
+            var baseline = CathedralDoorPlaytestCompiler.Compile(new CathedralDoorPlaytestCompilerOptions(
+                basePack,
+                baselineOutput,
+                pieces,
+                CreateProperties(),
+                seeds) {
+                PlacementPolicy = CathedralDepthPlaytestPlacementPolicy.AuthoredDiagnostic,
+            });
+            firstLevel = baseline.Levels[0];
+        }
+        catch (Exception error)
+        {
+            primary = error;
+            throw;
+        }
+        finally
+        {
+            CleanupOutput(baselineOutput, primary);
+        }
+
+        var authoredObject = Assert.IsType<CathedralDepthPlaytestPoint>(firstLevel.ObjectPosition);
+        var generated = AuthoritativeCathedralDepthGenerator.Generate(
+            firstLevel.Depth, firstLevel.DungeonSeed, AuthoritativeCathedralEntry.Main);
+        var safeDoorPosition = (X: authoredObject.X - 1, Y: authoredObject.Y);
+        var safePieces = SetScannerPieceAt(pieces, generated, safeDoorPosition.X, safeDoorPosition.Y, 45);
+        Assert.NotNull(safePieces);
+        Assert.Equal((ushort)45, MaterializeGeneratedLevel(safePieces!, generated)
+            .NativePieceLayer[safeDoorPosition.Y * AuthoritativeCathedralDepthGeometryMaterializer.NativeWidth
+                + safeDoorPosition.X]);
+
+        var safeOutput = NewOutput();
+        primary = null;
+        try
+        {
+            var safeProfile = CathedralDoorPlaytestCompiler.Compile(new CathedralDoorPlaytestCompilerOptions(
+                basePack,
+                safeOutput,
+                safePieces!,
+                CreateProperties(),
+                seeds) {
+                PlacementPolicy = CathedralDepthPlaytestPlacementPolicy.AuthoredDiagnostic,
+            });
+            var generatedPack = ContentPackLoader.LoadManifestDirectory(
+                Path.Combine(safeOutput, CathedralDoorPlaytestCompiler.ContentDirectoryName));
+            var content = ComposedContent.Compose(
+                new ContentManifest(generatedPack.Id, generatedPack.Version, [generatedPack]));
+            var activation = DiabloModule.Instance.CathedralDoorContentBootstrap.ActivateDoors(content);
+            var doors = activation.Simulation.WorldState.CaptureCathedralDoorObjects();
+
+            Assert.Equal(authoredObject, safeProfile.Levels[0].ObjectPosition!.Value);
+            Assert.Contains(doors, door => door.LevelId == 1
+                && door.PositionX == safeDoorPosition.X && door.PositionY == safeDoorPosition.Y);
+            Assert.False(activation.Simulation.WorldState.IsCathedralDoorItemBlocked(
+                1, authoredObject.X, authoredObject.Y));
+            AssertNoStagingSiblings(safeOutput);
+        }
+        catch (Exception error)
+        {
+            primary = error;
+            throw;
+        }
+        finally
+        {
+            CleanupOutput(safeOutput, primary);
+        }
+
+        var unsafeDoorPosition = (X: authoredObject.X + 1, Y: authoredObject.Y + 1);
+        var unsafePieces = SetScannerPieceAt(pieces, generated,
+            unsafeDoorPosition.X, unsafeDoorPosition.Y, 45);
+        Assert.NotNull(unsafePieces);
+        Assert.Equal((ushort)45, MaterializeGeneratedLevel(unsafePieces!, generated)
+            .NativePieceLayer[unsafeDoorPosition.Y * AuthoritativeCathedralDepthGeometryMaterializer.NativeWidth
+                + unsafeDoorPosition.X]);
+        var unsafeOutput = NewOutput();
+        primary = null;
+        try
+        {
+            var error = Assert.Throws<InvalidDataException>(() => CathedralDoorPlaytestCompiler.Compile(
+                new CathedralDoorPlaytestCompilerOptions(
+                    basePack,
+                    unsafeOutput,
+                    unsafePieces!,
+                    CreateProperties(),
+                    seeds) {
+                    PlacementPolicy = CathedralDepthPlaytestPlacementPolicy.AuthoredDiagnostic,
+                }));
+
+            Assert.Equal("Authored Cathedral population occupies a native door/light item footprint.", error.Message);
+            Assert.False(Directory.Exists(unsafeOutput));
+            AssertNoStagingSiblings(unsafeOutput);
+        }
+        catch (Exception error)
+        {
+            primary = error;
+            throw;
+        }
+        finally
+        {
+            CleanupOutput(unsafeOutput, primary);
+        }
+    }
+
+    private sealed record ScannerBoundaryFixture(
+        string PieceDefinitionsTsv,
+        int TargetDepth,
+        int TargetScannerCount,
+        IReadOnlyList<int> ExpectedScannerCounts,
+        IReadOnlyList<AuthoritativeCathedralDepthResult> GeneratedLevels);
+
+    private sealed record LightSelectionState(
+        int TargetAdded,
+        int[] AddedByDepth,
+        LightSelectionState? Previous,
+        int MegaTileId,
+        int QuadrantCount);
+
+    private static ScannerBoundaryFixture CreateScannerBoundaryFixture(
+        IReadOnlyList<uint> seeds,
+        int targetScannerCount)
+    {
+        if (targetScannerCount is not 127 and not 128)
+            throw new ArgumentOutOfRangeException(nameof(targetScannerCount));
+
+        var rows = CreateDoorPieces().Split('\n', StringSplitOptions.RemoveEmptyEntries)
+            .Select(line => line.Split('\t')).ToArray();
+        var rowIndexes = rows.Skip(1).Select((row, index) => (row, index: index + 1))
+            .ToDictionary(value => int.Parse(value.row[0], CultureInfo.InvariantCulture), value => value.index);
+        var tileFrequencies = Enumerable.Range(0, 4)
+            .Select(_ => new int[AuthoritativeDunTilePropertyCatalog.NativeTileCount]).ToArray();
+        var generatedLevels = new AuthoritativeCathedralDepthResult[4];
+        for (var depth = 0; depth < 4; depth++)
+        {
+            var generated = AuthoritativeCathedralDepthGenerator.Generate(
+                depth + 1, seeds[depth], AuthoritativeCathedralEntry.Main);
+            generatedLevels[depth] = generated;
+            foreach (var tileId in generated.MegaTiles)
+                tileFrequencies[depth][tileId]++;
+        }
+
+        var scannerCounts = new int[4];
+        var doorCounts = new int[4];
+        for (var depth = 0; depth < 4; depth++)
+        {
+            foreach (var (tileId, frequency) in tileFrequencies[depth].Select((count, id) => (id, count)))
+            {
+                if (frequency == 0)
+                    continue;
+                var row = rows[rowIndexes[tileId - 1]];
+                var pieces = row.Skip(1).Select(value => int.Parse(value, CultureInfo.InvariantCulture)).ToArray();
+                scannerCounts[depth] += frequency * pieces.Count(IsNativeScannerPiece);
+                doorCounts[depth] += frequency * pieces.Count(IsNativeDoorPiece);
+            }
+        }
+
+        var targetDepth = Array.FindIndex(doorCounts, count => count > 0);
+        if (targetDepth < 0)
+            throw new InvalidOperationException("The deterministic boundary fixture has no generated native door.");
+        if (scannerCounts.Any(count => count > 127) || scannerCounts[targetDepth] >= targetScannerCount)
+            throw new InvalidOperationException("The deterministic boundary fixture cannot reach the requested scanner capacity.");
+
+        var needed = targetScannerCount - scannerCounts[targetDepth];
+        var states = new LightSelectionState?[needed + 1];
+        states[0] = new LightSelectionState(0, new int[4], null, -1, 0);
+        for (var tileId = 0; tileId < tileFrequencies[targetDepth].Length; tileId++)
+        {
+            var targetFrequency = tileFrequencies[targetDepth][tileId];
+            if (targetFrequency == 0)
+                continue;
+            var rowIndex = rowIndexes[tileId - 1];
+            var rowPieces = rows[rowIndex].Skip(1)
+                .Select(value => int.Parse(value, CultureInfo.InvariantCulture)).ToArray();
+            // Only untouched floor rows are candidates; stairs, existing doors,
+            // lights, and their authored frames retain their exact mapping.
+            if (rowPieces.Any(piece => piece != 2))
+                continue;
+
+            var next = (LightSelectionState?[])states.Clone();
+            for (var added = 0; added <= needed; added++)
+            {
+                var state = states[added];
+                if (state is null)
+                    continue;
+                for (var quadrants = 1; quadrants <= 4; quadrants++)
+                {
+                    var targetIncrease = targetFrequency * quadrants;
+                    if (targetIncrease > needed - added)
+                        break;
+                    var newAdded = added + targetIncrease;
+                    var totals = (int[])state.AddedByDepth.Clone();
+                    var acceptable = true;
+                    for (var depth = 0; depth < 4; depth++)
+                    {
+                        totals[depth] += tileFrequencies[depth][tileId] * quadrants;
+                        var depthLimit = depth == targetDepth ? targetScannerCount : 127;
+                        if (scannerCounts[depth] + totals[depth] > depthLimit)
+                            acceptable = false;
+                    }
+                    if (!acceptable)
+                        continue;
+                    var candidate = new LightSelectionState(newAdded, totals, state, tileId, quadrants);
+                    if (next[newAdded] is null || IsBetterLightSelection(candidate, next[newAdded]!, targetDepth))
+                        next[newAdded] = candidate;
+                }
+            }
+            states = next;
+        }
+
+        var selected = states[needed]
+            ?? throw new InvalidOperationException(
+                $"No bounded floor-row mapping reaches the exact {targetScannerCount}-slot scanner boundary.");
+        var selectedQuadrants = new Dictionary<int, int>();
+        for (var state = selected; state.Previous is not null; state = state.Previous)
+            selectedQuadrants.Add(state.MegaTileId, state.QuadrantCount);
+        foreach (var (tileId, count) in selectedQuadrants)
+        {
+            var row = rows[rowIndexes[tileId - 1]];
+            for (var quadrant = 1; quadrant <= count; quadrant++)
+                row[quadrant] = "269";
+        }
+
+        var expected = scannerCounts.Select((count, depth) => count + selected.AddedByDepth[depth]).ToArray();
+        if (expected[targetDepth] != targetScannerCount
+            || expected.Where((_, depth) => depth != targetDepth).Any(count => count > 127))
+            throw new InvalidOperationException("The bounded scanner fixture selection is inconsistent.");
+        return new ScannerBoundaryFixture(
+            string.Join('\n', rows.Select(row => string.Join('\t', row))) + "\n",
+            targetDepth,
+            targetScannerCount,
+            Array.AsReadOnly(expected),
+            Array.AsReadOnly(generatedLevels));
+    }
+
+    private static void AssertMaterializedScannerFixture(ScannerBoundaryFixture fixture)
+    {
+        var geometry = LoadDiagnosticGeometry(fixture.PieceDefinitionsTsv);
+        for (var depth = 0; depth < fixture.GeneratedLevels.Count; depth++)
+        {
+            var materialized = AuthoritativeCathedralDepthGeometryMaterializer.Materialize(
+                checked((uint)(depth + 1)),
+                fixture.GeneratedLevels[depth],
+                geometry.Pieces,
+                geometry.TileProperties,
+                $"cathedral_depth_{depth + 1}",
+                isDefaultStart: false);
+            var level = materialized.Level;
+            var scannerPieceCount = level.NativePieceLayer.Count(piece => IsNativeScannerPiece(piece));
+            Assert.Equal(fixture.ExpectedScannerCounts[depth], scannerPieceCount);
+            if (scannerPieceCount <= 127)
+            {
+                var discovered = AuthoritativeCathedralDoors.Discover(level);
+                var doorCount = discovered.Doors.Count;
+                var lightCount = level.NativePieceLayer.Count(piece => piece == 269);
+                Assert.Equal(scannerPieceCount, doorCount + lightCount);
+            }
+            if (depth == fixture.TargetDepth)
+            {
+                Assert.Equal(fixture.TargetScannerCount, scannerPieceCount);
+                Assert.Contains((ushort)269, level.NativePieceLayer);
+                Assert.Contains(level.NativePieceLayer, piece => IsNativeDoorPiece(piece));
+            }
+        }
+    }
+
+    private static AuthoritativeLevel MaterializeGeneratedLevel(
+        string pieceDefinitions,
+        AuthoritativeCathedralDepthResult generated)
+    {
+        var geometry = LoadDiagnosticGeometry(pieceDefinitions);
+        return AuthoritativeCathedralDepthGeometryMaterializer.Materialize(
+            checked((uint)generated.Depth),
+            generated,
+            geometry.Pieces,
+            geometry.TileProperties,
+            $"cathedral_depth_{generated.Depth}",
+            isDefaultStart: false).Level;
+    }
+
+    private static AuthoritativeNativeDunGeometryCatalog LoadDiagnosticGeometry(string pieceDefinitions)
+        => AuthoritativeNativeDunGeometryCatalog.LoadTsv(
+            AuthoritativeNativeDunGeometryCatalog.PieceDefinitionsTablePath,
+            pieceDefinitions,
+            AuthoritativeNativeDunGeometryCatalog.TilePropertiesTablePath,
+            CreateProperties());
+
+    private static bool IsBetterLightSelection(
+        LightSelectionState candidate,
+        LightSelectionState current,
+        int targetDepth)
+    {
+        var candidateMaximum = candidate.AddedByDepth.Where((_, depth) => depth != targetDepth).Max();
+        var currentMaximum = current.AddedByDepth.Where((_, depth) => depth != targetDepth).Max();
+        if (candidateMaximum != currentMaximum)
+            return candidateMaximum < currentMaximum;
+        var candidateTotal = candidate.AddedByDepth.Where((_, depth) => depth != targetDepth).Sum();
+        var currentTotal = current.AddedByDepth.Where((_, depth) => depth != targetDepth).Sum();
+        if (candidateTotal != currentTotal)
+            return candidateTotal < currentTotal;
+        for (var depth = 0; depth < candidate.AddedByDepth.Length; depth++)
+        {
+            if (depth == targetDepth || candidate.AddedByDepth[depth] == current.AddedByDepth[depth])
+                continue;
+            return candidate.AddedByDepth[depth] < current.AddedByDepth[depth];
+        }
+        return false;
+    }
+
+    private static bool IsNativeDoorPiece(int piece)
+        => piece is 43 or 45 or 50 or 55 or 213;
+
+    private static bool IsNativeScannerPiece(int piece)
+        => piece == 269 || IsNativeDoorPiece(piece);
+
+    private static string? SetScannerPieceAt(
+        string pieceDefinitions,
+        AuthoritativeCathedralDepthResult generated,
+        int x,
+        int y,
+        int scannerPiece)
+    {
+        var coarseX = x - AuthoritativeCathedralLevel1GeometryMaterializer.InteriorOffset;
+        var coarseY = y - AuthoritativeCathedralLevel1GeometryMaterializer.InteriorOffset;
+        if (coarseX < 0 || coarseX >= AuthoritativeCathedralDepthResult.MegaWidth * 2
+            || coarseY < 0 || coarseY >= AuthoritativeCathedralDepthResult.MegaHeight * 2)
+            return null;
+        var megaX = coarseX / 2;
+        var megaY = coarseY / 2;
+        var megaTileId = generated.GetMegaTile(megaX, megaY);
+        if (megaTileId == 0)
+            return null;
+        var rows = pieceDefinitions.Split('\n', StringSplitOptions.RemoveEmptyEntries)
+            .Select(line => line.Split('\t')).ToArray();
+        var catalogMegaTileId = megaTileId - 1;
+        var index = Array.FindIndex(rows, 1,
+            row => int.Parse(row[0], CultureInfo.InvariantCulture) == catalogMegaTileId);
+        if (index < 0)
+            return null;
+        var quadrant = (coarseY % 2) * 2 + coarseX % 2;
+        if (int.Parse(rows[index][quadrant + 1], CultureInfo.InvariantCulture) != 2)
+            return null;
+        rows[index][quadrant + 1] = scannerPiece.ToString(CultureInfo.InvariantCulture);
+        return string.Join('\n', rows.Select(row => string.Join('\t', row))) + "\n";
+    }
+
+    [Fact]
     public void RejectsAuthoredObjectOnScannerDoorBeforeUsingCorruptedPack()
     {
         var basePack = LoadBasePack();
