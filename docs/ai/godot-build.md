@@ -457,6 +457,21 @@ no destination or staging publication and preserve the base tables. Run all six
 facts through the existing module xUnit v3 runner after rebuilding. This is
 diagnostic compiler coverage, not native layout or rendered acceptance.
 
+The explicit `CathedralDoorRouteCompatibilityTests` fact uses private semantic
+catalogs to pin baseline closed routes and the depth-2 seed `743271966` pair:
+raw preparation remains nonmutating, ordinary compilation refuses the disconnected
+route, and door compilation accepts the same seeds with all doors initially closed.
+It compares initialized channels/caches and preserves raw discovery inputs; this
+is integration coverage, not an independent native oracle. After rebuilding:
+
+```powershell
+$env:GODEVILUTION_CATHEDRAL_DOOR_PLAYTEST_GEOMETRY = 'D:\Private\cathedral-geometry'
+.\server\tests\Devilution.Diablo.Tests\bin\Debug\net8.0\Devilution.Diablo.Tests.exe --filter-class Devilution.Diablo.Tests.CathedralDoorRouteCompatibilityTests --explicit only --fail-skips on
+```
+
+Absent private inputs produce an honest skip; `--fail-skips on` makes that
+absence fail qualification. No licensed fixture is included in the repository.
+
 Godot displays schematic CLOSED, OPEN and BLOCKED cues from validated typed server
 state. Left-click operates a door; Ctrl-click walks through an open doorway.
 Occupied closing must retain the open frame/geometry until the occupant leaves.

@@ -2,6 +2,12 @@
 
 Notable changes to this fork are recorded below.
 
+- 2026-10-07: Pin Cathedral raw-route/door-profile compatibility with one explicit
+  private-input integration regression. Exact seeds preserve ordinary refusal,
+  door-aware acceptance, 44/47 closed doors and nonmutating preparation/discovery.
+  Clean and working facts plus six portable compiler checks pass; production
+  route policy, defaults and broader native/rendered acceptance remain unchanged.
+
 - 2026-10-07: Qualify the committed-source standalone exported one/four-client
   headless Performance workload after the marker-reader fix. All five clients
   complete settled moves/barriers with zero sample loss and physical optimized

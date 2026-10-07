@@ -84,6 +84,22 @@ Five focused reader facts and seven workload observation facts pass in
 the Windows control reproduces the old sharing violation with a real DELETE
 handle. The fresh pair above qualifies the completed headless workload.
 
+An explicit private-semantic-input Cathedral route regression now pins the
+baseline seeds `[2588,2588,1,0xFFFFFFFF]` and depth-2 variant `743271966`.
+Direct preparation preserves its input world and returns the variant's two
+disconnected raw closed routes; the ordinary compiler refuses that exact path,
+while the door-aware compiler accepts the same seeds without repair or reseeding.
+Fresh activation retains all 44/47 closed doors and matches every initialized
+geometry channel/cache against discovery, which also leaves raw candidates intact.
+The final fact passes against clean HEAD `4ac9ea8f0` plus the reviewed test and
+the working tree in
+`.local/cathedral-door-route-regression-clean-96dbe30317bd42858f1ef3156c7a9a10/regression-check-9db442d96a3d4ac988efa8b05fdb981b`.
+Four owned stages exit zero with complete drains/cleanup and absent identities;
+all 2,787 clean inputs, twenty protected files and borrowed private catalogs remain
+unchanged. The six portable compiler facts also pass. This is a shared-scanner
+integration regression, not an independent native oracle or wider topology gate;
+production policy and profile defaults remain unchanged.
+
 Portable Cathedral-door compiler boundary coverage now passes all six facts in
 `.local/cathedral-compiler-boundary-validation-r2-407f07b54dcc4dc9a78343e9cec7cbce`.
 Production materialization independently checks mixed door/light scans at exactly
