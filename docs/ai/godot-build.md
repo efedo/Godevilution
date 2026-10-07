@@ -51,6 +51,28 @@ Retain complete runner output when investigating them. The observed model state
 is not proof of server state at admission; do not assign a timing/action cause
 from a later isolated pass or retry a rejected command to hide the failure.
 
+## Broader headless gameplay integration
+
+The post-timing-change regression covers existing Journey, TownLoop and Lifecycle
+Create/Resume in legacy mode, and two-client Cooperative in explicit cohort mode.
+Evidence: `.local/m1-broader-headless-integrated-0d770258058d4edea14f6f2876d440d3`.
+The reviewed preserved-tree run freezes all 1,019 runtime/content inputs, keeps
+twenty protected hashes, and binds eight staged projects to client source hash
+`c3afc5a213d7c286dfb6ffdc5fdc4dea5f2c5a5d2924205b110140b1095e24c7`.
+All 26 engine exits are zero and 38 exact PID/start identities are absent.
+Source SDK 4.7.1 remains unchanged; isolated SDK/engine are 4.7.2.
+
+The first Journey verifier failed on duplicate reporting of the same session root
+after its application wrapper passed. Retain that failure and original logs;
+the corrected audit qualifies the completed run separately, while the other
+three profiles are fresh. The 236 focused client/server unit executions are
+reused evidence, not newly run. This is preserved working-tree integration, not
+a pristine committed-source, rendered or native-parity qualification.
+Scene assertions remain scoped: Journey does not compare complete inventory and
+resources; TownLoop's positive/nonincreasing portal check does not prove elapsed
+aging or expiry. Checkpoint metadata and zero outer exits do not establish
+graceful host shutdown; host native terminal receipts are unavailable.
+
 ## Client presentation packs
 
 `res://assets/presentation-pack.json` is the default client-only manifest. It

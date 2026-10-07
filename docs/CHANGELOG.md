@@ -2,6 +2,13 @@
 
 Notable changes to this fork are recorded below.
 
+- 2026-10-07: Qualify four broader headless gameplay profiles after per-tick
+  participant advancement: Journey, TownLoop, Lifecycle and two-client Cooperative
+  Create/cold Resume. All 26 engine exits are zero and 38 identities are absent.
+  Preserve Journey's verifier-only failure and separately audited completed run;
+  focused unit results are reused. Rendered, native phase and portal-aging
+  acceptance remain separate.
+
 - 2026-10-07: Exercise native Monk Search creation through the real player cast
   frame before its paired missile decrement. Canonical animation/loadout inputs,
   scoped state restoration and test-only sound DATA exports are verified by

@@ -44,6 +44,28 @@ unsupported behavior is a migration gap, not permission for local simulation.
 
 ## Current delivery position and verification limits
 
+The existing Journey, TownLoop and Lifecycle legacy profiles, plus explicit-cohort
+two-client Cooperative Create/cold Resume, pass broader headless integration after
+the per-tick runtime change in `.local/m1-broader-headless-integrated-0d770258058d4edea14f6f2876d440d3`.
+All 1,019 runtime/content inputs (998 tracked plus 21 scoped nonignored untracked)
+and twenty protected hashes match. This is the preserved working tree based on
+HEAD `ded1b29cb`, not a clean committed-source baseline. All 26 engine stages exit
+zero; 38 unique recorded process identities are absent, and eight isolated project
+stages share client source hash `c3afc5a213d7c286dfb6ffdc5fdc4dea5f2c5a5d2924205b110140b1095e24c7`.
+Source SDK 4.7.1 and staged SDK/engine 4.7.2 remain distinct.
+
+Journey's application wrapper passed before the first verifier falsely rejected
+its twice-reported shared session path. Ownership/input checks preceded the parser
+correction; the failed verifier and original logs remain retained. Separate
+requalification audited that completed run without launching gameplay again;
+the other three profiles ran freshly. The aggregate reuses 183 client and 53
+server focused test executions once, with zero fresh unit-test executions.
+Existing scene assertions qualify their own gameplay/restore projections; they
+do not establish full Journey inventory/resources or elapsed portal-tick aging.
+Host native terminal receipts are unavailable and outer checkpoint checks are
+metadata only. Native phase alignment, rendered acceptance and approval holds
+remain open.
+
 The isolated Monk Search content prerequisite passes independent source review
 and clean/working module checks (2/2 each, no skips) in
 `.local/monk-search-prerequisite-72f3ed434ff14b2aa37b280fbc2983ec`.
