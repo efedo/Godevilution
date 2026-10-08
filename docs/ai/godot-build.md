@@ -1095,6 +1095,25 @@ source. This scoped pass leaves rendered/native moved-position Resume, full
 world/RNG/inventory parity, normal cohort adoption and release/platform/soak
 gates open. Migration status retains exact evidence and earlier failed attempts.
 
+The later graceful Performance pair is retained at
+`.local/godot-exported-performance-graceful-run-81b34372856e46959ff99255529df9d3`.
+It archives committed HEAD `8944c6242` and runs genuine headless ExportRelease
+Main at one/four participants with explicit Legacy persistence and Release
+hosts. Source-only factory/terminal qualifications pass 10/67 cases, followed
+by actual no-engine preflight and the bounded 900-second workload. Each profile
+keeps five warm-up/fifteen measured rounds, all observer barriers, valid zero-drop
+frame captures and four optimized physical runtime images per client.
+
+Both hosts accept `quit` after every client exits, retain their native handles
+through natural exit 0, and join/drain/flush output within the strict bounds.
+All forty recorded identities are absent. Final private save metadata, read
+only after publisher absence, contains one/four combined checkpoints with zero
+temporary or unexpected entries. Preserve historical forced-stop attempts.
+This lane does not test cold restore of those profiles or qualify rendered/GPU,
+whole-frame, native optimization, release budgets, platforms, soaks or normal
+cohort adoption. Future repeats require fresh archive/dependency pins and
+reviewed generated source; migration status records original proofs and limits.
+
 Missing rounds, changed identity, empty/invalid/truncated samples, overwritten
 output, nonzero client exits or missing checkpoints reject the baseline. Recording
 is explicitly enabled only for this acceptance phase; inherited capture settings

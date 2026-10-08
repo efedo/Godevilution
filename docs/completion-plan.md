@@ -327,6 +327,16 @@ M4. M5 is the final removal gate, not a reason to postpone replacement work.
    keep rendered/native moved-position Resume, full-world/RNG/inventory parity,
    normal cohort adoption, budgets, platforms and soaks open. See status for
    exact committed revision, source qualifiers and original runtime evidence.
+   A later committed-source exported Legacy one/four-client Performance pair now
+   passes with natural Release-host exit 0, quit after every client exit, joined
+   output pumps and flushed sinks. All full rounds/observer barriers and five
+   zero-drop captures retain optimized physical runtime-image bindings. Forty
+   recorded identities are absent; post-absence save metadata has one/four
+   combined checkpoints and no temporary or unexpected entries. This closes
+   scoped graceful Performance shutdown/save-file cleanup, not cold restore of
+   those profiles, rendered/GPU or whole-frame measurements, full-world parity,
+   budgets, platforms or soaks. Preserve historical forced-stop evidence and
+   approval-gated normal cohort adoption; see status for exact scope and results.
 
    Godot now reuses installed geometry between model-accepted snapshot generations.
    Preserve full replacement, same-tick/epoch admission and eager legacy behavior;

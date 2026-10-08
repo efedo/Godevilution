@@ -2,6 +2,11 @@
 
 Notable changes to this fork are recorded below.
 
+- 2026-10-08: Qualify headless exported one/four-client Performance with natural
+  Release-host exit 0, joined/drained output and no retained temporary saves.
+  Verify all settled rounds, five zero-drop captures, optimized physical client
+  images and forty absent process identities; keep restore and release limits open.
+
 - 2026-10-07: Add explicit native TSV-row quest-pool selection with unchanged
   legacy overloads/defaults and sorted public views. Verify literal native and
   legacy vectors plus catalog/activation boundaries in 223 fresh passing cases;

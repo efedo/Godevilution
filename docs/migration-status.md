@@ -44,6 +44,50 @@ unsupported behavior is a migration gap, not permission for local simulation.
 
 ## Current delivery position and verification limits
 
+A fresh committed-source exported Performance pair passes headlessly in
+`.local/godot-exported-performance-graceful-run-81b34372856e46959ff99255529df9d3`.
+It archives HEAD `8944c6242` (2,796 inputs), runs genuine ExportRelease Main
+with explicit Legacy persistence and matching Release hosts, and preserves
+five warm-up/fifteen measured rounds at one/four participants. All forty round,
+one hundred observer and thirty ready/staging/record/finish/stop/exit markers
+validate. All five stopped frame captures are valid with zero dropped, invalid
+or nonmonotonic samples. Each client startup witness and independently rehashed
+bundle binds four optimized physical runtime images: client/client-protocol/
+protocol ExportRelease and GodotSharp Release.
+
+Both hosts retain their native handles, receive `quit` only after every client
+has exited, and exit naturally with code 0 within the 30-second bound (20/16 ms).
+Strict 26-field graceful and seven-field terminal receipts agree on identities,
+Release apphost paths and adjacent DLL hashes; output pumps join and sinks
+flush without forced termination. These file observations do not inspect loaded
+server managed or in-memory bytes. Fresh post-absence save metadata contains
+one/four combined checkpoints and no temporary or unexpected entries. This
+is metadata/hash qualification, not cold restore of these Performance profiles.
+
+All forty recorded PID/start identities are freshly absent, unknown 0; all
+2,813 working inputs and twenty protected hashes remain unchanged. Version/
+import/client engine receipts lack separate drain fields; export-release and
+outer native commands expose explicit drain/cleanup fields. Measured callback
+P95 is 2.4655 ms (one client) and 2.0791-2.2015 ms (four); callback-interval P95
+is 16.7036 and 16.6837-16.6932 ms. These instrumented local observations establish
+no causal speedup, rendered/GPU or whole-frame timing, native machine-code
+optimization, declared release budget, platform matrix or soak acceptance.
+
+Original root proof is
+`.local/exported-performance-graceful-integrated-workload-0e557896eb8a4b1f8c789d14a80c55bd/root-verification.json`,
+SHA `91D1D98B03C5FC63FCA1332346A01FE10FC5537CE863FADE31EA2853A98C03EE`;
+driver summary is `C4BB88D2A35086335484022DEE962C476856534F71190586D20AA87B6BA92AB4`.
+Independent root audit `.local/exported-performance-graceful-runtime-497-audit.json`
+is `9317B08E57E719DC434D8DCB52E4B33FF9AD375EE021453A082AB23CADFAA5E1`.
+Reviewed source-only factory qualification passes 10 cases and terminal
+composition qualification passes 67 before actual generated-launcher preflight
+and this workload. The first root frame audit used the wrong manifest projection;
+its failure remains retained, and only the audit was corrected without rerunning
+the workload. Historical forced-stop/temporary-save Performance evidence remains.
+This closes scoped graceful one/four-client Performance shutdown and save-file
+cleanup only; normal cohort adoption, full world/RNG/inventory parity, rendered/
+native moved-position Resume and broader release gates remain open. Overall 35%.
+
 A fresh committed-source exported graceful Legacy Create/Resume passes in
 `.local/godot-exported-recovery-graceful-run-44dac60a5d644d01989813f5a2cbe153`.
 It archives HEAD `be8118de7` (2,796 inputs), runs genuine headless ExportRelease
