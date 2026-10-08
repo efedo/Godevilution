@@ -2,6 +2,10 @@
 
 Notable changes to this fork are recorded below.
 
+- 2026-10-08: Verify generated Cathedral L1 quest-policy forwarding and unchanged
+  quest-disabled depth/door activation under both module policies. All nine
+  focused facts pass; native geometry and profile adoption remain separate.
+
 - 2026-10-08: Expose explicit native quest-pool module selection with distinct
   ruleset identity and unchanged legacy constructors/defaults. Validate every
   quest-sequence draw before mutation; all 257 focused integration cases pass.

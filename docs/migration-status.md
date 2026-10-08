@@ -245,9 +245,30 @@ absent; twenty protected hashes are stable. Only the prior held-test xUnit2013
 warning remains. Original proof is
 `.local/native-quest-module-verification-c3251ecd4191407886e835c1965dfdcd/root-verification.json`,
 SHA `A70C2F1DF165652E06F1ACEB264C601A03B3C7CA4D2E83FA5308A1FEABF47976`.
-The earlier compile and signed-sequence failures are retained. Generated/depth/
-door bootstrap references share the common implementation, but those activation
-paths were not executed. Host/save/root adoption and full world parity stay open.
+The earlier compile and signed-sequence failures are retained. A subsequent
+fresh Debug build and two exact class filters pass all nine module/bootstrap
+facts: the six unchanged regressions plus three public generated/depth/door
+activation tests. L1 forwards both policies into nonempty shipped quest selection.
+Depth and door compilers intentionally disable quests; their tests assert
+header-only quests.tsv, seven omitted quest tables, null pools and empty runtime
+quests under both policies. They also retain actual profile world witnesses,
+unchanged compiler manifest/table hashes and stable distinct ruleset identities.
+Synthetic TIL/SOL semantics make no native geometry or population claim.
+
+Original nine-case proof is
+`.local/cathedral-bootstrap-test-verification-ee90ba7657c243749c301683c7b584b1/root-verification.json`,
+SHA `3904E780DF3BFB123BD7A9B93A9EA7BE541A6811779DE1AF03F14C606AE49B57`.
+Seven recorded commands are absent and twenty protected hashes are stable.
+Only the existing held-test xUnit2013 warning remains. The first attempt's
+successful build, old six passes, L1 pass and two depth/door fixture failures
+remain retained; its preservation audit is SHA
+`1401DFBF1F33A96166A9672EAD22AAAEE0E869F9F21ABD750C2D9CB586D9FAF5`.
+
+The signed-edge seeds above characterize isolated consumer draws. Native
+AddNakrulLever consumes variable earlier RNG draws, so this does not establish
+the corresponding level-24 world-seed outcome. Nonempty depth/door quest support,
+native no-tome object presence, host/save/root adoption and full world parity
+remain open.
 
 Explicit-cohort TCP Town Portal recovery passes in
 `.local/cohort-town-portal-restart-79bb820d5c71458799cf60c5b8289754`.
