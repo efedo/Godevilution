@@ -705,11 +705,15 @@ equivalence. Add exact comparable-state assertions/native characterization and
 multi-actor scenarios as needed. A fixture that omits a resistance, block,
 geometry, or second participant branch does not certify that branch.
 
-Native quest-pool TSV order and eight literal seeded selections are now
-characterized by the registered `quests_test`, including zero, signed RNG edges
-and the loaded special-seed skip. The managed catalog still sorts entries within
-each pool by quest ID. Complete managed seeded parity and save/ruleset world
-reconstruction compatibility without changing the optional preview's base identity.
+Native quest-pool TSV order and eight literal seeded selections are characterized
+by the registered `quests_test`, including zero, signed RNG edges and the loaded
+special-seed skip. The managed catalog now exposes explicit `NativeTsvRowsV1`
+selection, with the same eight literal vectors verified through shipped TSV and
+direct construction. Existing overloads/defaults retain `LegacyQuestIdSortedV1`
+and public views stay sorted; 223 focused catalog/legacy-activation cases pass.
+Complete versioned runtime adoption and old-save/ruleset world reconstruction
+compatibility without changing the optional preview's base identity. Catalog
+vectors do not certify full generated-world parity or a new default policy.
 
 Exit: supported base and Hellfire campaign routes complete in Godot, and the
 coverage ledger has no unsupported required gameplay/world behavior. Each

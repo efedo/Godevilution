@@ -3445,6 +3445,16 @@ when supplied by a current-schema pack.
 The optional `set_level_names.tsv`, `quest_types.tsv`, and `quest_pools.tsv`
 tables must likewise use their complete ordered schemas when supplied by a
 current-schema pack.
+
+`AuthoritativeQuestPoolCatalog` keeps legacy quest-ID-sorted selection for its
+existing constructor and `LoadTsv` overloads. Required-policy overloads accept
+`AuthoritativeQuestPoolSelectionOrder.NativeTsvRowsV1` to select in validated
+input-row order within each pool while processing pool IDs in ascending order.
+`Definitions` and `GetPool` remain sorted under both policies; the input is
+materialized once and the historical special-seed discard is unchanged.
+Production bootstrap/default profiles retain `LegacyQuestIdSortedV1`. Adopting
+native order requires separate versioned ruleset/save/world compatibility work.
+
 Manifests without compatibility metadata retain their legacy identity and
 remain loadable during migration.
 

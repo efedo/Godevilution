@@ -2,6 +2,11 @@
 
 Notable changes to this fork are recorded below.
 
+- 2026-10-07: Add explicit native TSV-row quest-pool selection with unchanged
+  legacy overloads/defaults and sorted public views. Verify literal native and
+  legacy vectors plus catalog/activation boundaries in 223 fresh passing cases;
+  runtime adoption and save/ruleset world reconstruction remain separate.
+
 - 2026-10-07: Qualify headless exported Legacy Create/fresh Release-host Resume
   with natural host exit 0, bounded quit, joined/drained output and retained
   canonical receipts 3 to 4. Verify optimized client images and all 42 recorded

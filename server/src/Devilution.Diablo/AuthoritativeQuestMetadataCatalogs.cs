@@ -92,6 +92,13 @@ public sealed record AuthoritativeQuestPoolEntry(
     int PoolId,
     uint QuestId);
 
+/** Selects which validated row order seeds single-player quest selection. */
+public enum AuthoritativeQuestPoolSelectionOrder
+{
+    LegacyQuestIdSortedV1 = 0,
+    NativeTsvRowsV1 = 1,
+}
+
 /** Validated quest pools that preserve native stable quest identities. */
 public sealed class AuthoritativeQuestPoolCatalog
 {
@@ -102,12 +109,24 @@ public sealed class AuthoritativeQuestPoolCatalog
     ];
 
     private readonly IReadOnlyList<AuthoritativeQuestPoolEntry> definitions;
+    private readonly IReadOnlyList<AuthoritativeQuestPoolEntry> selectionDefinitions;
 
     public AuthoritativeQuestPoolCatalog(
         IEnumerable<AuthoritativeQuestPoolEntry> definitions,
         AuthoritativeQuestTypeCatalog? questTypes = null)
+        : this(definitions, questTypes, AuthoritativeQuestPoolSelectionOrder.LegacyQuestIdSortedV1)
+    {
+    }
+
+    public AuthoritativeQuestPoolCatalog(
+        IEnumerable<AuthoritativeQuestPoolEntry> definitions,
+        AuthoritativeQuestTypeCatalog? questTypes,
+        AuthoritativeQuestPoolSelectionOrder selectionOrder)
     {
         ArgumentNullException.ThrowIfNull(definitions);
+        if (!Enum.IsDefined(typeof(AuthoritativeQuestPoolSelectionOrder), selectionOrder))
+            throw new ArgumentOutOfRangeException(nameof(selectionOrder));
+
         var entries = definitions.ToArray();
         if (entries.Length == 0
             || entries.Any(entry => entry.PoolId <= 0 || entry.QuestId == 0)
@@ -121,6 +140,9 @@ public sealed class AuthoritativeQuestPoolCatalog
             .OrderBy(entry => entry.PoolId)
             .ThenBy(entry => entry.QuestId)
             .ToArray();
+        this.selectionDefinitions = selectionOrder == AuthoritativeQuestPoolSelectionOrder.NativeTsvRowsV1
+            ? entries
+            : this.definitions;
     }
 
     public IReadOnlyList<AuthoritativeQuestPoolEntry> Definitions => definitions;
@@ -133,7 +155,7 @@ public sealed class AuthoritativeQuestPoolCatalog
     {
         var random = new DeterministicLegacyRandom(seed);
         var unavailable = new List<uint>();
-        foreach (var pool in definitions.GroupBy(entry => entry.PoolId).OrderBy(group => group.Key)) {
+        foreach (var pool in selectionDefinitions.GroupBy(entry => entry.PoolId).OrderBy(group => group.Key)) {
             // Vanilla compatibility: QuestGroup1[-2] skips pool 1 after one
             // discarded RNG draw for this historical seed.
             if (seed == 988045466U && pool.Key == 1) {
@@ -164,11 +186,25 @@ public sealed class AuthoritativeQuestPoolCatalog
         string contents,
         AuthoritativeQuestTypeCatalog? questTypes = null,
         StableContentIdCatalog? stableIds = null)
+        => LoadTsv(
+            sourcePath,
+            contents,
+            questTypes,
+            stableIds,
+            AuthoritativeQuestPoolSelectionOrder.LegacyQuestIdSortedV1);
+
+    public static AuthoritativeQuestPoolCatalog LoadTsv(
+        string sourcePath,
+        string contents,
+        AuthoritativeQuestTypeCatalog? questTypes,
+        StableContentIdCatalog? stableIds,
+        AuthoritativeQuestPoolSelectionOrder selectionOrder)
     {
         var table = TsvTable.Parse(sourcePath, contents);
-        return new AuthoritativeQuestPoolCatalog(table.Rows.Select(row =>
+        var entries = table.Rows.Select(row =>
             new AuthoritativeQuestPoolEntry(
                 row.RequiredInt32("pool_id"),
-                AuthoritativeQuestIdentity.Resolve(row, stableIds))), questTypes);
+                AuthoritativeQuestIdentity.Resolve(row, stableIds)));
+        return new AuthoritativeQuestPoolCatalog(entries, questTypes, selectionOrder);
     }
 }

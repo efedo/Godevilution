@@ -111,9 +111,31 @@ Root proof SHA-256 is
 `BA22DE51F56C16FAB6AA18F2D36277EF26280F54466AB2259C5BF230EB144C8A`;
 independent `.local/loaded-quest-pools-native-result-audit.json` is
 `CA1B2741CE0864720A9C5E63E781BF725300635E31C9826936184A1B6897ADEC`.
-The managed catalog still sorts entries by quest ID. Versioned native-order
-selection and old-save/world reconstruction compatibility remain M3 work;
-no managed behavior, module/content/ruleset identity or default profile changed.
+The managed quest-pool catalog now supports explicit `NativeTsvRowsV1` selection.
+Existing constructor/LoadTsv signatures and defaults retain
+`LegacyQuestIdSortedV1`; public `Definitions`/`GetPool` stay sorted by quest ID.
+The opt-in selector preserves input row order within ascending pool IDs,
+materializes caller input once, and retains validation and the special-seed
+988045466 discarded draw. No bootstrap, module/content/ruleset identity, save
+format, default profile or normal runtime policy adopts the new order.
+
+A fresh Debug build and the exact reviewed six-class inventory pass:
+16 metadata, 160 shipped-content, 35 quest catalog and 4/2/6 metadata/state/
+dialogue activation cases, 223 total with zero failures/skips. Tests cover eight
+literal native vectors through actual shipped TSV loading and direct construction,
+literal native-to-stable IDs, legacy vectors/default overloads, interleaved rows,
+detached caller input and invalid policies/data. All fifteen recorded native/Git
+PID/start identities are freshly absent; 2,813 working inputs and twenty protected
+hashes remain stable. One existing held-file xUnit2013 warning remains.
+Original proof is
+`.local/managed-quest-order-verification-667775960fb5429985b3f10302c187a6/root-verification.json`,
+SHA `F7B18EDE10EBDDFE28606A99C6757D01ED2397405806F706696FF55D267E37F8`;
+root audit `.local/managed-quest-order-fresh-integrated-audit.json` is
+`72FAA02E18D00001ACD1492AA817C70D24CA6E6151EBC00DFD996DD22C7FF5A2`.
+The earlier absolute-path test-helper failure remains retained; only its four
+logical TSV identifiers changed before this fresh passing run.
+Catalog-vector coverage leaves versioned gameplay adoption, old-save/ruleset
+world reconstruction and full generated-world parity open. Overall stays 35%.
 
 Explicit-cohort TCP Town Portal recovery passes in
 `.local/cohort-town-portal-restart-79bb820d5c71458799cf60c5b8289754`.
