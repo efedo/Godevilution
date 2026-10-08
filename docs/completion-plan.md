@@ -728,10 +728,13 @@ Three further managed facts apply the native vectors to shipped state rows,
 checking unavailable/active/logged transitions and completed/non-pool preservation.
 A fresh 19 metadata plus 35 quest catalog cases pass. This test-only evidence
 does not close bootstrap adoption or old-save/ruleset reconstruction compatibility.
-The explicit strict checkpoint loader is available and passes 12 new plus 18
-existing persistence cases. Before exposing a new runtime policy, complete all
-host restore paths, identityless-sidecar refusal and leased world-seed root
-binding; the library guard alone does not close old-save reconstruction.
+The strict checkpoint loader and explicit CurrentRulesetOnly host policy now
+pass 120 focused cases. Non-cohort admission rejects identityless sidecars and
+captures checkpoint restore, hello and first snapshot coherently across reload.
+Failed preparation fences that token; it does not roll back provider mutations.
+Compatibility remains the default. Complete production restore/profile adoption,
+cohort policy and leased world-seed root binding before exposing a new runtime
+policy; the opt-in library path does not close old-save reconstruction.
 Explicit module policy preserves legacy identity/defaults and assigns the native
 selector distinct identity 0.2.0. The 257-case integration passes base/Hellfire
 activation and all-draw sequence validation. Nine subsequent focused facts pass

@@ -43,6 +43,9 @@ public sealed partial class AuthoritativeTcpServer : IAsyncDisposable
     private readonly ConcurrentDictionary<TcpClient, byte> clients = new();
     private readonly ConcurrentDictionary<TcpClient, Task> clientHandlers = new();
     private readonly ConcurrentDictionary<string, SessionState> sessionsByToken = new(StringComparer.Ordinal);
+    // This fences only the token's admission; it cannot roll back shared-world mutations by a provider.
+    // Recovery requires a fresh host or explicit operator repair; never delete the durable checkpoint.
+    private readonly HashSet<string> poisonedSessionTokens = new(StringComparer.Ordinal);
     private readonly object sessionCreationSynchronization = new();
     private readonly object lifecycleSynchronization = new();
     private readonly TaskCompletionSource completion = new(TaskCreationOptions.RunContinuationsAsynchronously);
@@ -56,6 +59,8 @@ public sealed partial class AuthoritativeTcpServer : IAsyncDisposable
     private ulong lastSimulationTick;
     private long nextConnectionOrdinal;
     private long nextTimingOrdinal;
+    private AuthoritativeSessionRestorePolicy sessionRestorePolicy =
+        AuthoritativeSessionRestorePolicy.Compatibility;
 
     public AuthoritativeTcpServer(
         AuthoritativeCommandServer commandServer,
@@ -172,6 +177,17 @@ public sealed partial class AuthoritativeTcpServer : IAsyncDisposable
 
     /** Explicit complete-cohort mode; this host owns the store's lifetime lease. */
     public AuthoritativeCohortStore? CohortStore { get; init; }
+
+    /** Defaults to legacy sidecar fallback; strict restore is an explicit host opt-in. */
+    public AuthoritativeSessionRestorePolicy SessionRestorePolicy
+    {
+        get => sessionRestorePolicy;
+        init {
+            if (!Enum.IsDefined(value))
+                throw new ArgumentOutOfRangeException(nameof(SessionRestorePolicy));
+            sessionRestorePolicy = value;
+        }
+    }
 
     /** Null by default. Diagnostics never alter authoritative ticks or protocol state. */
     public HostPerformanceRecorder? PerformanceRecorder { get; init; }
@@ -296,6 +312,8 @@ public sealed partial class AuthoritativeTcpServer : IAsyncDisposable
         if (cancellation is not null)
             throw new InvalidOperationException("The server has already started.");
 
+        ValidateSessionRestorePolicyForStart();
+
         var startupCancellation = new CancellationTokenSource();
         try {
             WithCohortBarrier(InitializeCohortHostCore);
@@ -320,6 +338,23 @@ public sealed partial class AuthoritativeTcpServer : IAsyncDisposable
             simulationLoop = null;
             throw;
         }
+    }
+
+    private void ValidateSessionRestorePolicyForStart()
+    {
+        if (!Enum.IsDefined(SessionRestorePolicy))
+            throw new ArgumentOutOfRangeException(nameof(SessionRestorePolicy));
+        if (SessionRestorePolicy != AuthoritativeSessionRestorePolicy.CurrentRulesetOnly)
+            return;
+        if (CohortStore is not null)
+            throw new NotSupportedException(
+                "Ruleset-bound session restore is not supported with complete-cohort persistence.");
+        if (sessionStore is null || saveProvider is null)
+            throw new InvalidOperationException(
+                "Ruleset-bound session restore requires a combined session store and save provider.");
+        if (string.IsNullOrWhiteSpace(handshake.Identity.RulesetIdentityHash))
+            throw new InvalidOperationException(
+                "Ruleset-bound session restore requires an active ruleset identity.");
     }
 
     public ValueTask DisposeAsync()
@@ -556,39 +591,72 @@ public sealed partial class AuthoritativeTcpServer : IAsyncDisposable
                 if (admission.Snapshot is not null)
                     await WriteAuthoritativeEnvelopeAsync(stream, new Envelope { Snapshot = admission.Snapshot }, cancellationToken);
             } else {
-                var existingSession = FindExistingSession(helloEnvelope.ClientHello.ResumeToken);
-                var persistedSessionMatchesActiveIdentity = existingSession is null
-                    && HasPersistedSessionForActiveIdentity(helloEnvelope.ClientHello.ResumeToken);
-                var handshakeResult = handshake.Validate(
-                    helloEnvelope.ClientHello,
-                    allowResumedIdentityRefresh: existingSession is not null
-                        || persistedSessionMatchesActiveIdentity);
-                if (!handshakeResult.Accepted) {
-                    await EnvelopeCodec.WriteAsync(stream, new Envelope { Error = handshakeResult.Error! }, cancellationToken);
-                    return;
+                if (SessionRestorePolicy == AuthoritativeSessionRestorePolicy.CurrentRulesetOnly) {
+                    StrictSessionAdmission admission;
+                    try {
+                        admission = commandServer.WithSynchronizedState(
+                            () => AdmitRulesetBoundSession(helloEnvelope.ClientHello, connectionOrdinal));
+                    } catch (StrictSessionRestoreRejectedException) {
+                        await SendErrorAsync(
+                            stream,
+                            ProtocolErrorCode.InvalidMessage,
+                            "The saved session cannot be resumed under the configured restore policy.",
+                            cancellationToken);
+                        return;
+                    } finally {
+                        // Strict admission may record a snapshot-start event while holding the
+                        // authority boundary; observer callbacks are always drained after release.
+                        EmitCommandTimingOutsideAuthorityLock();
+                    }
+                    if (!admission.HandshakeResult.Accepted) {
+                        await EnvelopeCodec.WriteAsync(
+                            stream,
+                            new Envelope { Error = admission.HandshakeResult.Error! },
+                            cancellationToken);
+                        return;
+                    }
+                    session = admission.Session!;
+                    currentTick = admission.Tick;
+                    await EnvelopeCodec.WriteAsync(
+                        stream,
+                        new Envelope { ServerHello = admission.Hello! },
+                        cancellationToken);
+                    if (admission.Snapshot is not null)
+                        await WriteCapturedStrictSnapshotAsync(stream, admission, connectionOrdinal, cancellationToken);
+                } else {
+                    var existingSession = FindExistingSession(helloEnvelope.ClientHello.ResumeToken);
+                    var persistedSessionMatchesActiveIdentity = existingSession is null
+                        && HasPersistedSessionForActiveIdentity(helloEnvelope.ClientHello.ResumeToken);
+                    var handshakeResult = handshake.Validate(
+                        helloEnvelope.ClientHello,
+                        allowResumedIdentityRefresh: existingSession is not null
+                            || persistedSessionMatchesActiveIdentity);
+                    if (!handshakeResult.Accepted) {
+                        await EnvelopeCodec.WriteAsync(stream, new Envelope { Error = handshakeResult.Error! }, cancellationToken);
+                        return;
+                    }
+                    session = existingSession
+                        ?? GetOrCreateSession(helloEnvelope.ClientHello.ResumeToken);
+                    PrepareSession(session, helloEnvelope.ClientHello);
+                    var serverHello = handshakeResult.ServerHello!.Clone();
+                    serverHello.SessionToken = session.Token;
+                    serverHello.LastClientSequence = commandServer.WithSynchronizedSession(session.Id, () =>
+                        commandScheduler?.LastAdmittedClientSequence(session.Id)
+                        ?? commandServer.LastClientSequence(session.Id));
+                    serverHello.CommandSchedulingMode = UseClockGatedCommandScheduling
+                        ? CommandSchedulingMode.ClockGated : CommandSchedulingMode.Immediate;
+                    await EnvelopeCodec.WriteAsync(stream, new Envelope { ServerHello = serverHello }, cancellationToken);
+                    currentTick = commandServer.WithSynchronizedState(() => AdvanceCurrentTickCore());
+                    SaveSession(session);
+                    await SendSnapshotIfAvailableAsync(
+                        stream,
+                        session.Id,
+                        session.EntityId,
+                        currentTick,
+                        connectionOrdinal,
+                        null,
+                        cancellationToken);
                 }
-
-                session = existingSession
-                    ?? GetOrCreateSession(helloEnvelope.ClientHello.ResumeToken);
-                PrepareSession(session, helloEnvelope.ClientHello);
-                var serverHello = handshakeResult.ServerHello!.Clone();
-                serverHello.SessionToken = session.Token;
-                serverHello.LastClientSequence = commandServer.WithSynchronizedSession(session.Id, () =>
-                    commandScheduler?.LastAdmittedClientSequence(session.Id)
-                    ?? commandServer.LastClientSequence(session.Id));
-                serverHello.CommandSchedulingMode = UseClockGatedCommandScheduling
-                    ? CommandSchedulingMode.ClockGated : CommandSchedulingMode.Immediate;
-                await EnvelopeCodec.WriteAsync(stream, new Envelope { ServerHello = serverHello }, cancellationToken);
-                currentTick = commandServer.WithSynchronizedState(() => AdvanceCurrentTickCore());
-                SaveSession(session);
-                await SendSnapshotIfAvailableAsync(
-                    stream,
-                    session.Id,
-                    session.EntityId,
-                    currentTick,
-                    connectionOrdinal,
-                    null,
-                    cancellationToken);
             }
             var sessionId = session.Id;
             var entityId = session.EntityId;
@@ -778,24 +846,165 @@ public sealed partial class AuthoritativeTcpServer : IAsyncDisposable
         }
     }
 
-    private void PrepareSession(SessionState session, ClientHello hello)
+    private StrictSessionAdmission AdmitRulesetBoundSession(ClientHello hello, int connectionOrdinal)
+    {
+        var activeIdentity = handshake.Identity;
+        if (!string.IsNullOrWhiteSpace(hello.ResumeToken)
+            && poisonedSessionTokens.Contains(hello.ResumeToken))
+            throw new StrictSessionRestoreRejectedException();
+
+        var existingSession = FindExistingSession(hello.ResumeToken);
+        AuthoritativeSessionDocument? document = null;
+        if (existingSession is null && !string.IsNullOrWhiteSpace(hello.ResumeToken))
+            document = LoadRulesetBoundSessionForAdmission(
+                hello.ResumeToken,
+                activeIdentity.RulesetIdentityHash);
+
+        var handshakeResult = handshake.Validate(
+            hello,
+            allowResumedIdentityRefresh: existingSession is not null || document is not null);
+        if (!ReferenceEquals(handshake.Identity, activeIdentity))
+            throw new InvalidOperationException("The active ruleset identity changed during session admission.");
+        if (!handshakeResult.Accepted)
+            return new StrictSessionAdmission(null, handshakeResult);
+
+        // Reject a cold restore before allocating a session or advancing queued
+        // work. The document remains local to this admission and is not cached.
+        if (existingSession is null
+            && document is not null
+            && commandScheduler is not null
+            && commandScheduler.PendingCommandCount != 0)
+            throw new StrictSessionRestoreRejectedException();
+
+        var session = existingSession ?? GetOrCreateSession(hello.ResumeToken);
+        if (existingSession is null) {
+            try {
+                PrepareSession(session, hello, document);
+            } catch (Exception) {
+                // Receipt import and provider import can mutate different shared state. A failed
+                // cold preparation therefore fences this token instead of attempting a partial retry.
+                poisonedSessionTokens.Add(session.Token);
+                throw new StrictSessionRestoreRejectedException();
+            }
+        } else {
+            PrepareSession(session, hello, document);
+        }
+
+        var serverHello = handshakeResult.ServerHello!.Clone();
+        serverHello.ContentManifestHash = activeIdentity.ContentManifestHash;
+        serverHello.RulesetIdentityHash = activeIdentity.RulesetIdentityHash;
+        serverHello.SessionToken = session.Token;
+        serverHello.LastClientSequence = commandScheduler?.LastAdmittedClientSequence(session.Id)
+            ?? commandServer.LastClientSequence(session.Id);
+        serverHello.CommandSchedulingMode = UseClockGatedCommandScheduling
+            ? CommandSchedulingMode.ClockGated : CommandSchedulingMode.Immediate;
+
+        // Keep the handshake cursor, authoritative tick, and initial projection in the same
+        // ruleset generation. Network writes happen only after this authority lock is released.
+        var tick = AdvanceCurrentTickCore();
+        SaveSession(session);
+        Snapshot? snapshot = null;
+        StrictSnapshotCapture? snapshotCapture = null;
+        if (snapshotProvider is not null) {
+            var materialization = PerformanceRecorder?.Begin() ?? 0;
+            var materializeStartTimestamp = CommandTimingRecorder is null
+                ? (long?)null
+                : Stopwatch.GetTimestamp();
+            var snapshotTraceOrdinal = CommandTimingRecorder is null
+                ? 0L
+                : Interlocked.Increment(ref nextTimingOrdinal);
+            CommandTimingRecorder?.Record(new HostCommandTimingRecord {
+                Kind = "snapshot-start",
+                ConnectionOrdinal = connectionOrdinal,
+                TraceOrdinal = snapshotTraceOrdinal,
+                EntityId = session.EntityId,
+                SnapshotMaterializeStartTimestamp = materializeStartTimestamp,
+                TimingReplyEmitted = null,
+            });
+            snapshot = commandServer.WithSynchronizedSession(session.Id, () => {
+                RequireCohortHealthy();
+                try {
+                    tick = AdvanceCurrentTickCore(tick);
+                    var result = snapshotProvider.CreateSnapshot(session.Id, session.EntityId, tick).Clone();
+                    result.ContentManifestHash = activeIdentity.ContentManifestHash;
+                    result.RulesetIdentityHash = activeIdentity.RulesetIdentityHash;
+                    AuthoritativeSnapshotValidator.Validate(result);
+                    PublishCohortCore();
+                    return result;
+                } catch (Exception failure) {
+                    FenceCohort(failure);
+                    throw;
+                }
+            });
+            tick = snapshot.Tick;
+            var materializeEndTimestamp = CommandTimingRecorder is null
+                ? (long?)null
+                : Stopwatch.GetTimestamp();
+            snapshotCapture = new StrictSnapshotCapture(
+                materialization,
+                materializeStartTimestamp,
+                materializeEndTimestamp,
+                snapshotTraceOrdinal);
+        }
+        return new StrictSessionAdmission(session, handshakeResult, serverHello, snapshot, tick, snapshotCapture);
+    }
+
+    private AuthoritativeSessionDocument? LoadRulesetBoundSessionForAdmission(
+        string resumeToken,
+        string activeRulesetIdentityHash)
+    {
+        var sessionId = SessionIdForToken(resumeToken);
+        try {
+            var document = sessionStore!.LoadForRuleset(
+                sessionId,
+                activeRulesetIdentityHash);
+            if (document is null
+                && (saveStore?.Exists(sessionId) == true
+                    || commandReceiptStore?.Exists(sessionId) == true))
+                throw new StrictSessionRestoreRejectedException();
+            return document;
+        } catch (StrictSessionRestoreRejectedException) {
+            throw;
+        } catch (Exception exception) when (
+            exception is InvalidDataException or IOException or UnauthorizedAccessException) {
+            throw new StrictSessionRestoreRejectedException();
+        }
+    }
+
+    private void PrepareSession(
+        SessionState session,
+        ClientHello hello,
+        AuthoritativeSessionDocument? rulesetBoundDocument = null)
     {
         lock (session) {
             commandServer.WithSynchronizedSession(session.Id, () => {
                 if (commandScheduler is not null) {
+                    if (SessionRestorePolicy == AuthoritativeSessionRestorePolicy.CurrentRulesetOnly
+                        && !session.SaveLoaded
+                        && rulesetBoundDocument is not null
+                        && commandScheduler.PendingCommandCount != 0)
+                        throw new InvalidDataException("Cold session restore is unavailable while commands are queued.");
                     AdvanceCurrentTickCore();
                     // Import may replace shared world state, not just this player.
                     // Fence before ledger import, initialization or provider mutation.
                     if (!session.SaveLoaded && saveProvider is not null
-                        && commandScheduler.PendingCommandCount != 0
-                        // A refused session must not cache an old-generation save
-                        // that could bypass validation after a later ruleset reload.
-                        && (sessionStore?.Load(session.Id, handshake.Identity.RulesetIdentityHash)?.SerializedState
-                            ?? saveStore?.Load(session.Id)) is not null)
-                        throw new InvalidDataException("Cold session restore is unavailable while commands are queued.");
+                        && commandScheduler.PendingCommandCount != 0) {
+                        var hasRestorableState = SessionRestorePolicy
+                            == AuthoritativeSessionRestorePolicy.CurrentRulesetOnly
+                            ? rulesetBoundDocument is not null
+                            : (sessionStore?.Load(session.Id, handshake.Identity.RulesetIdentityHash)?.SerializedState
+                                ?? saveStore?.Load(session.Id)) is not null;
+                        if (hasRestorableState)
+                            throw new InvalidDataException("Cold session restore is unavailable while commands are queued.");
+                    }
+                }
+                if (SessionRestorePolicy == AuthoritativeSessionRestorePolicy.CurrentRulesetOnly
+                    && !session.SessionDocumentLoaded) {
+                    session.SessionDocument = rulesetBoundDocument;
+                    session.SessionDocumentLoaded = true;
                 }
                 EnsureCommandReceiptsLoaded(session);
-                if (!RestoreSessionIfAvailable(session))
+                if (!RestoreSessionIfAvailable(session, rulesetBoundDocument))
                     InitializeParticipantIfNeeded(session, hello);
             });
         }
@@ -840,13 +1049,16 @@ public sealed partial class AuthoritativeTcpServer : IAsyncDisposable
         }
     }
 
-    private bool RestoreSessionIfAvailable(SessionState session)
+    private bool RestoreSessionIfAvailable(
+        SessionState session,
+        AuthoritativeSessionDocument? rulesetBoundDocument = null)
     {
         lock (session) {
             if (session.SaveLoaded || saveProvider is null)
                 return false;
-            var serializedSave = LoadSessionDocument(session)?.SerializedState
-                ?? saveStore?.Load(session.Id);
+            var serializedSave = SessionRestorePolicy == AuthoritativeSessionRestorePolicy.CurrentRulesetOnly
+                ? rulesetBoundDocument?.SerializedState
+                : LoadSessionDocument(session)?.SerializedState ?? saveStore?.Load(session.Id);
             if (serializedSave is null) {
                 session.SaveLoaded = true;
                 return false;
@@ -943,9 +1155,11 @@ public sealed partial class AuthoritativeTcpServer : IAsyncDisposable
             if (session.CommandReceiptsLoaded)
                 return;
             var document = LoadSessionDocument(session);
-            var receipts = document is not null
-                ? document.CommandReceipts
-                : commandReceiptStore?.Load(session.Id) ?? [];
+            var receipts = SessionRestorePolicy == AuthoritativeSessionRestorePolicy.CurrentRulesetOnly
+                ? document?.CommandReceipts ?? []
+                : document is not null
+                    ? document.CommandReceipts
+                    : commandReceiptStore?.Load(session.Id) ?? [];
             commandServer.ImportCompletedCommands(session.Id, receipts);
             session.CommandReceiptsLoaded = true;
         }
@@ -955,6 +1169,9 @@ public sealed partial class AuthoritativeTcpServer : IAsyncDisposable
     {
         if (session.SessionDocumentLoaded)
             return session.SessionDocument;
+        if (SessionRestorePolicy == AuthoritativeSessionRestorePolicy.CurrentRulesetOnly)
+            throw new InvalidOperationException(
+                "Ruleset-bound session loading must complete before session preparation.");
         session.SessionDocument = sessionStore?.Load(
             session.Id,
             handshake.Identity.RulesetIdentityHash);
@@ -985,6 +1202,80 @@ public sealed partial class AuthoritativeTcpServer : IAsyncDisposable
             get => Volatile.Read(ref participantInitialized) != 0;
             set => Volatile.Write(ref participantInitialized, value ? 1 : 0);
         }
+    }
+
+    private readonly record struct StrictSessionAdmission(
+        SessionState? Session,
+        HandshakeResult HandshakeResult,
+        ServerHello? Hello = null,
+        Snapshot? Snapshot = null,
+        ulong Tick = 0,
+        StrictSnapshotCapture? SnapshotCapture = null);
+
+    private readonly record struct StrictSnapshotCapture(
+        long Materialization,
+        long? MaterializeStartTimestamp,
+        long? MaterializeEndTimestamp,
+        long TraceOrdinal);
+
+    private async ValueTask WriteCapturedStrictSnapshotAsync(
+        Stream stream,
+        StrictSessionAdmission admission,
+        int connectionOrdinal,
+        CancellationToken cancellationToken)
+    {
+        var snapshot = admission.Snapshot!;
+        var session = admission.Session!;
+        var capture = admission.SnapshotCapture!.Value;
+        PerformanceRecorder?.Complete(
+            HostPerformanceMetric.SnapshotMaterializeMilliseconds,
+            capture.Materialization);
+        var envelope = new Envelope { Snapshot = snapshot };
+        var publication = PerformanceRecorder?.Begin() ?? 0;
+        var writeStartTimestamp = CommandTimingRecorder is null
+            ? (long?)null
+            : Stopwatch.GetTimestamp();
+        if (CommandTimingRecorder is not null) {
+            CommandTimingRecorder.Record(new HostCommandTimingRecord {
+                Kind = "snapshot-write-start",
+                ConnectionOrdinal = connectionOrdinal,
+                TraceOrdinal = capture.TraceOrdinal,
+                EntityId = session.EntityId,
+                SnapshotMaterializeStartTimestamp = capture.MaterializeStartTimestamp,
+                SnapshotMaterializeEndTimestamp = capture.MaterializeEndTimestamp,
+                SnapshotWriteStartTimestamp = writeStartTimestamp,
+                SnapshotTick = snapshot.Tick,
+                TimingReplyEmitted = null,
+            });
+            EmitCommandTimingOutsideAuthorityLock();
+        }
+
+        await WriteAuthoritativeEnvelopeAsync(stream, envelope, cancellationToken);
+        var writeEndTimestamp = CommandTimingRecorder is null
+            ? (long?)null
+            : Stopwatch.GetTimestamp();
+        PerformanceRecorder?.Complete(HostPerformanceMetric.SnapshotWriteMilliseconds, publication);
+        if (publication != 0)
+            PerformanceRecorder!.Record(HostPerformanceMetric.SnapshotEnvelopePayloadBytes, envelope.CalculateSize());
+        if (CommandTimingRecorder is not null) {
+            CommandTimingRecorder.Record(new HostCommandTimingRecord {
+                Kind = "snapshot",
+                ConnectionOrdinal = connectionOrdinal,
+                TraceOrdinal = capture.TraceOrdinal,
+                EntityId = session.EntityId,
+                SnapshotMaterializeStartTimestamp = capture.MaterializeStartTimestamp,
+                SnapshotMaterializeEndTimestamp = capture.MaterializeEndTimestamp,
+                SnapshotWriteStartTimestamp = writeStartTimestamp,
+                SnapshotWriteEndTimestamp = writeEndTimestamp,
+                SnapshotTick = snapshot.Tick,
+                TimingReplyEmitted = null,
+            });
+            EmitCommandTimingOutsideAuthorityLock();
+        }
+    }
+
+    private sealed class StrictSessionRestoreRejectedException : Exception
+    {
     }
 
     /**

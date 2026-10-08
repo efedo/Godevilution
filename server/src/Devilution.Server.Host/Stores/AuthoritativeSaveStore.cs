@@ -56,6 +56,15 @@ public sealed class AuthoritativeSaveStore
                 : null;
     }
 
+    /** Returns whether an identityless compatibility save sidecar exists. */
+    public bool Exists(string sessionId)
+    {
+        var path = GetPath(sessionId);
+        var pathLock = PathLocks.GetOrAdd(path, static _ => new object());
+        lock (pathLock)
+            return File.Exists(path);
+    }
+
     /** Removes one compatibility save when a multi-session write rolls back. */
     public bool Delete(string sessionId)
     {

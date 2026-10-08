@@ -2,6 +2,11 @@
 
 Notable changes to this fork are recorded below.
 
+- 2026-10-08: Add an opt-in ruleset-bound host restore policy with legacy defaults,
+  sidecar refusal, failed-token fencing and coherent initial responses across
+  reload. All 120 focused host/persistence cases pass; provider rollback remains
+  outside the policy guarantee.
+
 - 2026-10-08: Verify generated Cathedral L1 quest-policy forwarding and unchanged
   quest-disabled depth/door activation under both module policies. All nine
   focused facts pass; native geometry and profile adoption remain separate.

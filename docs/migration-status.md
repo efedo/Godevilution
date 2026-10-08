@@ -220,6 +220,41 @@ freshly absent, including a creation-time-verified reused PID. This library API
 does not wire host restore paths, fence legacy sidecars, bind world-seed roots
 or authorize normal cohort adoption. Those compatibility boundaries stay open.
 
+The host library now offers init-only CurrentRulesetOnly restore alongside the
+unchanged default Compatibility behavior. Strict startup rejects unsupported
+cohort combinations or missing effective session-store/save-provider dependencies
+before listening or cohort initialization. Cold admission requires a current-v4
+checkpoint with exact active ruleset identity; missing combined state plus any
+legacy save/receipt sidecar, including an empty ledger, refuses generically
+before allocating a session or importing/initializing state. Genuinely absent
+persistence permits a fresh session.
+
+Strict admission serializes identity validation, one private checkpoint's ledger
+and state, hello/cursor, publication and cloned first snapshot under the authority
+lock. Network writes follow outside it. Queued cold-restore rejection precedes
+allocation and client-induced advancement and caches no checkpoint. Initialized
+sessions retain hot-reload migration and reconnect behavior.
+
+If preparation fails after partial work, that token is fenced for the host's
+remaining lifetime, including after checkpoint replacement or ruleset reload.
+The checkpoint and imported ledger are retained. This protects admission
+consistency; it neither rolls back a provider's partial shared-world mutation
+nor guarantees unaffected other sessions. No token-unpoison API is supplied.
+Recovery requires a fresh host after the underlying provider/state issue is fixed.
+
+A fresh Server.Tests Debug build has zero warnings/errors. Six exact class
+filters pass 19 new policy cases and 101 existing TCP, clock, lease and persistence
+cases: 120 total, zero failures/skips. Tests include actual persisted-import/reload
+racing, coherent initial identities/cursor/state, same-identity and post-reload
+poison refusal, queued retries, sidecar presence without decoding corrupt UTF-8
+and default legacy restore. Eleven command identities are absent; twenty
+protected hashes are stable. Original proof is
+`.local/strict-host-policy-verification-b38131b2de4947a3af085ed45bf9f37c/root-verification.json`,
+SHA `CD96D00728477B73F5C2B7D9F8723B1E1FFB305CBCEBA213DB7A45770C06D569`.
+This is opt-in library integration. CLI/factories, normal profiles and defaults
+are unchanged; cohort adoption, leased root/world-seed compatibility and broader
+cold-world/campaign acceptance remain open.
+
 The module library now accepts explicit `NativeTsvRowsV1` policy through a
 required policy-and-pricing constructor. Existing constructors, default literals,
 null pricing and `Instance` retain legacy ordering and identity 0.1.0. Explicit
