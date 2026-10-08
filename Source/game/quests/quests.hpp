@@ -147,7 +147,7 @@ extern std::vector<QuestData> QuestsData;
 extern std::array<std::string, SL_LAST + 1> SetLevelNames;
 
 /** Quest pools for single-player randomization. */
-extern std::vector<std::vector<quest_id>> QuestPools;
+extern DVL_API_FOR_TEST std::vector<std::vector<quest_id>> QuestPools;
 
 void LoadQuestData();
 void LoadSetLevelNames();

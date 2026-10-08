@@ -15,6 +15,7 @@
 #include <span>
 #include <string>
 #include <string_view>
+#include <vector>
 
 #ifdef USE_SDL3
 #include <SDL3/SDL_error.h>
@@ -30,6 +31,7 @@
 #include "application/fatal_error.h"
 #include "application/game_mode.hpp"
 #include "application/headless_mode.hpp"
+#include "utils/attributes.h"
 #include "utils/file/file_util.h"
 #include "utils/language.h"
 #include "utils/sdl/sdl_compat.h"
@@ -305,6 +307,10 @@ tl::expected<AssetData, std::string> LoadAsset(std::string_view path);
 using MpqArchiveT = std::string;
 #else
 using MpqArchiveT = MpqArchive;
+#endif
+
+#ifdef BUILD_TESTING
+extern DVL_API_FOR_TEST std::vector<std::string> OverridePaths;
 #endif
 
 extern DVL_API_FOR_TEST std::map<int, MpqArchiveT, std::greater<>> MpqArchives;

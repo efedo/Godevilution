@@ -2,6 +2,11 @@
 
 Notable changes to this fork are recorded below.
 
+- 2026-10-07: Characterize actual native quest-pool TSV order and eight literal
+  seeded exclusions, with complete state restoration and unchanged fallback
+  behavior. Focused/full/shuffled GTests pass; managed selection and save/ruleset
+  reconstruction compatibility remain separate.
+
 - 2026-10-07: Qualify exported Legacy Create/fresh Release-host Resume with
   independently inspected canonical checkpoints, retained-copy hashes,
   first-wire restoration and exact next receipt. Preserve forced-stop,

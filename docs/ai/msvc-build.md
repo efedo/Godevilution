@@ -1,5 +1,28 @@
 # MSVC Build Notes for Agents
 
+## Native loaded quest pools
+
+Build the existing registered `quests_test` target using the matching MSVC x64
+environment below. From that configured build directory, run:
+
+```powershell
+.\quests_test.exe --gtest_filter=QuestTest.LoadedPoolsPreserveCanonicalTsvOrder:QuestTest.LoadedPoolsMatchLiteralSeededSelection
+.\quests_test.exe
+.\quests_test.exe --gtest_shuffle --gtest_random_seed=417 --gtest_repeat=3
+```
+
+Require focused 2/2, integrated 4/4 and three shuffled four-test iterations,
+without skips, plus frozen source hashes and bounded owned exits. The fixture
+validates the complete loose build TSV before `LoadQuestPools`, then makes its
+directory the sole asset override so it wins before archive lookup. It asserts
+six pool slots, row order, eight literal seed exclusions, all 24 quest flags
+and unchanged global RNG. Full quest/pool/override/assets-path/RNG state is
+restored; the two existing empty-table fallback tests remain order-independent.
+Loaded special seed 988045466 skips pool 1, while the fallback skips its second
+hardcoded group. Canonical test DLL data annotations expose only the required
+globals. This is native characterization; managed policy, save/ruleset
+compatibility, world reconstruction and rendered acceptance remain separate.
+
 ## Prepared native Monk Search prerequisite
 
 Build the existing registered `missiles_test` target using the checked MSVC x64

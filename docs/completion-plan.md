@@ -694,10 +694,11 @@ equivalence. Add exact comparable-state assertions/native characterization and
 multi-actor scenarios as needed. A fixture that omits a resistance, block,
 geometry, or second participant branch does not certify that branch.
 
-Quest selection also needs native-order characterization: the managed catalog
-currently sorts entries within each pool by quest ID, while native loading
-retains TSV order. Correct this with explicit seeded parity and save/ruleset
-compatibility evidence, not by changing the optional preview's base identity.
+Native quest-pool TSV order and eight literal seeded selections are now
+characterized by the registered `quests_test`, including zero, signed RNG edges
+and the loaded special-seed skip. The managed catalog still sorts entries within
+each pool by quest ID. Complete managed seeded parity and save/ruleset world
+reconstruction compatibility without changing the optional preview's base identity.
 
 Exit: supported base and Hellfire campaign routes complete in Godot, and the
 coverage ledger has no unsupported required gameplay/world behavior. Each

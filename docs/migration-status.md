@@ -44,6 +44,33 @@ unsupported behavior is a migration gap, not permission for local simulation.
 
 ## Current delivery position and verification limits
 
+Native loaded quest-pool characterization passes in
+`.local/loaded-quest-pools-native-ccde1194aed1400da8404b771f65437e`.
+The actual loader reads the validated loose build TSV before any MPQ lookup.
+Tests assert all six vector slots, including empty pool 0, and preserve row
+order. Eight literal seed expectations cover every selectable pool position,
+zero and the historical signed RNG edges. Loaded seed 988045466 skips pool 1
+and discards one draw; the existing empty-table fallback skips its second
+hardcoded group instead. Both behaviors remain unchanged.
+
+Matching MSVC x64 Debug verification passes focused 2/2, the full 4/4 target
+and three shuffled four-test iterations without skips. Complete quest records,
+pools, override paths, assets path and global RNG are restored. Four native
+stages and eight inventory Git commands exit zero with complete drains/cleanup;
+all twelve recorded PID/start identities are freshly absent. All 2,813 working
+inputs remain stable through verification, including twenty protected files.
+The source integration changes only three reviewed native files; 2,810 other
+inputs retain their prior hashes. Existing C4018/C4244 and generated protobuf
+C4251 warnings remain; this is not warning-free build acceptance.
+
+Root proof SHA-256 is
+`BA22DE51F56C16FAB6AA18F2D36277EF26280F54466AB2259C5BF230EB144C8A`;
+independent `.local/loaded-quest-pools-native-result-audit.json` is
+`CA1B2741CE0864720A9C5E63E781BF725300635E31C9826936184A1B6897ADEC`.
+The managed catalog still sorts entries by quest ID. Versioned native-order
+selection and old-save/world reconstruction compatibility remain M3 work;
+no managed behavior, module/content/ruleset identity or default profile changed.
+
 Explicit-cohort TCP Town Portal recovery passes in
 `.local/cohort-town-portal-restart-79bb820d5c71458799cf60c5b8289754`.
 Two real clients use ordinary Warrior/Rogue resources and existing town/portal
