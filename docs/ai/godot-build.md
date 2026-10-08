@@ -1058,6 +1058,21 @@ restore, graceful shutdown, rendered/GPU or whole-frame timing, soak, platform
 matrix, native machine-code optimization and release budgets remain unqualified.
 Migration status records exact evidence, metrics and retained failed attempts.
 
+A separately reviewed exported single-client cold-recovery diagnostic is retained
+at `.local/godot-exported-recovery-run-89c6bf748ab34f878146bdb8ddefbcea`.
+It freezes committed HEAD `884193c6d` and instruments only disposable sources.
+Genuine ExportRelease Main runs explicit Legacy Create and fresh Release-host
+Resume. A first-wire observer precedes validation/model application; actual
+Store.Load/codec inspection and byte-identical retained checkpoint copies bind
+the settled player scalars and full accepted receipt ledger. Create ends at
+cursor 3/(0,1); Resume restores it before input and accepts cursor 4/(0,2).
+All 42 owned identities are absent, and this lane has no temporary canonical
+save. Keep save bodies and credentials private; only scalar reports and hashes
+are public evidence. Hosts still stop forcibly. Full-world/RNG/inventory parity,
+rendered/native cold Resume, graceful shutdown, normal cohort adoption and
+release/platform/soak acceptance remain open. See migration status for exact
+evidence, retained failures and the narrower historical Performance scope.
+
 Missing rounds, changed identity, empty/invalid/truncated samples, overwritten
 output, nonzero client exits or missing checkpoints reject the baseline. Recording
 is explicitly enabled only for this acceptance phase; inherited capture settings

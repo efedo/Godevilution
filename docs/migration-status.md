@@ -274,6 +274,52 @@ affixes, local stash/Gold bookkeeping and full class/rendered parity. The Godot
 scene/launcher drafts retain their separate rendered gate; all twenty protected
 inputs and approval holds remain unchanged. The overall estimate stays 35%.
 
+A separate committed-source exported Legacy Create/fresh-host Resume now passes in
+`.local/godot-exported-recovery-run-89c6bf748ab34f878146bdb8ddefbcea`.
+It archives HEAD `884193c6d` (2,796 paths), runs genuine ExportRelease Main with
+one Rogue in base Town/seed 0, and binds each launched Release host apphost to
+adjacent optimized Release DLL metadata. Four optimized physical client runtime
+images per phase match prelaunch manifests and in-process startup witnesses;
+these file observations do not inspect loaded server managed/in-memory bytes.
+
+The first decoded wire snapshot is captured before initial-snapshot validation
+and Main model application. Create starts at cursor 0; two hostile-mode inputs
+queued before one frame retain Accepted/Unspecified receipts 1 and 2 at tick 145.
+Ordinary Down movement is receipt 3 at tick 165, ending at (0,1). After every
+owned publisher stops, actual Store.Load and authoritative codec deserialization
+validate the format-4 canonical checkpoint at tick 190. Original and retained
+private-copy reports agree byte-for-byte, including all three durable receipts.
+The first fresh-host Resume wire snapshot restores that tick, actor, position,
+resources, attributes, identity and hostile mode, with ServerHello cursor 3,
+zero queued/pending commands and no prior result. Its next ordinary Down command
+is receipt 4 at tick 207, ending at (0,2); the tick-231 checkpoint preserves the
+first three receipts exactly and adds the next global receipt.
+
+Forty nonhost processes exit zero: eight Git inventory commands, twenty-four
+tracked native commands and eight engine stages. Both hosts stop forcibly with
+exit -1. All 42 exact PID/start identities are freshly absent. Version/import/
+client engine receipts lack separate drain fields; only export-release has its
+two explicit drain/cleanup fields. Both retained canonical copies and the final
+Resume canonical file rehash correctly; no temporary save exists in this lane.
+All 2,813 working inputs and twenty protected hashes remain unchanged.
+Root proof `.local/exported-recovery-integrated-workload-bd6abccd3d47400da0e4ebe4ca1a6726/root-verification.json`
+is SHA-256 `D30E0A7F691095CBF9C96A3E22FDB55CCC34FE9F38014A1F71EFCCB5541D3C06`;
+independent post-exit audit is `.local/exported-recovery-integrated-post-exit-audit.json`,
+SHA-256 `60613BB7B4D2DE3AA9AEB4750202E8B9E464DE48499F31A5113C513D43AD72EE`.
+
+Four failed attempts remain retained: automatic PowerShell Matches-variable
+clobber, case-sensitive witness hex comparison, an over-strict export receipt
+schema, and a wire-zero assumption for canonical nullable ActiveStoreId. Narrow
+diagnostic corrections and actual negative qualifiers were reviewed before the
+passing repeat; no production save/protocol behavior changed. The last failure's
+qualified fresh-identity audit remains historical, including one unreadable
+read-only Git identity in its later supplement and original termination receipt.
+The equal diagnostic canonical digests normalize tick/player position/facing/
+action; they do not establish full world, RNG or inventory parity. This separate
+single-client recovery lane does not repair the historical Performance lane's
+retained temporary file. Graceful shutdown, rendered/native moved-position cold
+Resume, platform/soak/budget acceptance and normal cohort adoption remain open.
+
 A separate fresh committed-source exported Performance repeat now uses matching
 Release hosts in `.local/godot-exported-performance-run-4e964a7e71bc4dabbd7eda234f9ef2eb`.
 It archives HEAD `8383fc7b4` (2,796 paths), runs genuine exported Main with explicit

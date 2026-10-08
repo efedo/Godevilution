@@ -2,6 +2,11 @@
 
 Notable changes to this fork are recorded below.
 
+- 2026-10-07: Qualify exported Legacy Create/fresh Release-host Resume with
+  independently inspected canonical checkpoints, retained-copy hashes,
+  first-wire restoration and exact next receipt. Preserve forced-stop,
+  rendered/native and full-world parity limits.
+
 - 2026-10-07: Qualify fresh committed-source exported one/four-client Performance
   with matching Release hosts and four optimized physical client images.
   Preserve forced-stop, metadata-only save and retained temporary-file limits.

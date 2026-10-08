@@ -309,6 +309,14 @@ M4. M5 is the final removal gate, not a reason to postpone replacement work.
    fully drained saves, graceful shutdown and rendered/budget/soak/matrix gates
    remain open. Preserve the historical Debug-host baseline and use status for
    exact evidence and scope.
+   A separate exported single-client Legacy Create/fresh Release-host Resume
+   now validates actual canonical Store/codec state, retained private-copy
+   hashes, first decoded wire restore before model application, complete saved
+   receipts and exact next sequence 4. Its 42 owned identities are absent and
+   no temporary canonical save remains in that lane. Hosts still stop forcibly;
+   full-world/RNG/inventory parity, rendered/native moved-position Resume and
+   broader release gates remain open. Keep historical Performance limits and
+   approval-gated normal cohort adoption unchanged; use status for exact scope.
    Godot now reuses installed geometry between model-accepted snapshot generations.
    Preserve full replacement, same-tick/epoch admission and eager legacy behavior;
    do not treat ownership as public protobuf immutability. Measure remaining
