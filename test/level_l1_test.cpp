@@ -18,14 +18,17 @@
 #include <utility>
 #include <vector>
 
+#include "application/headless_mode.hpp"
 #include "application/game_mode.hpp"
 #include "engine/lighting.h"
 #include "engine/random.hpp"
 #include "game/levels/dungeon_common.h"
+#include "game/levels/level.hpp"
 #include "game/levels/tile_properties.hpp"
 #include "game/objects/object_pool.hpp"
 #include "game/objects/objects.hpp"
 #include "network/protocol/msg.h"
+#include "tables/objdat.h"
 #include "level_test.hpp"
 
 using namespace devilution;
@@ -2103,6 +2106,336 @@ TEST(Drlg_l1, CreateL5Dungeon_crypt_4_1324803725)
 
 	TestCreateDungeon(24, 1324803725, ENTRY_MAIN);
 	EXPECT_EQ(viewPosition(), Point(79, 47));
+}
+
+struct NativeL1CapacityTileState {
+	uint16_t piece;
+	int8_t transparency;
+	uint8_t light;
+	uint8_t preLight;
+	DungeonFlag flags;
+	int8_t player;
+	int16_t monster;
+	int8_t corpse;
+	int8_t object;
+	int8_t special;
+	int8_t item;
+
+	bool operator==(const NativeL1CapacityTileState &) const = default;
+};
+
+struct NativeL1CapacityRestoreTileState {
+	uint16_t piece;
+	uint8_t light;
+	uint8_t preLight;
+};
+
+struct NativeL1CapacityObjectState {
+	int type;
+	Point position;
+	bool applyLighting;
+	bool trapFlag;
+	bool doorFlag;
+	uint32_t animationFlag;
+	bool animationDataPresent;
+	int animationDelay;
+	int animationCount;
+	uint32_t animationLength;
+	uint32_t animationFrame;
+	uint16_t animationWidth;
+	bool deleted;
+	int breakState;
+	bool solid;
+	bool missilesPassThrough;
+	SelectionRegion selectionRegion;
+	bool preFlag;
+	int lightId;
+	uint32_t randomSeed;
+	int var1;
+	int var2;
+	int var3;
+	int var4;
+	int var5;
+	uint32_t var6;
+	int var8;
+	int bookMessage;
+
+	bool operator==(const NativeL1CapacityObjectState &) const = default;
+};
+
+struct NativeL1CapacitySnapshot {
+	int activeObjectCount;
+	std::array<int, MAXOBJECTS> activeObjectIds;
+	std::array<int, MAXOBJECTS> availableObjectIds;
+	std::array<NativeL1CapacityObjectState, MAXOBJECTS> objects;
+	std::vector<NativeL1CapacityTileState> tiles;
+	uint32_t randomState;
+	bool loadingMapObjects;
+	int activeLightCount;
+	std::array<uint8_t, MAXLIGHTS> activeLightIds;
+	bool lightUpdatePending;
+
+	bool operator==(const NativeL1CapacitySnapshot &) const = default;
+};
+
+NativeL1CapacityObjectState CaptureNativeL1CapacityObject(const Object &object)
+{
+	return {
+		static_cast<int>(object._otype),
+		object.position,
+		object.applyLighting,
+		object._oTrapFlag,
+		object._oDoorFlag,
+		object._oAnimFlag,
+		object._oAnimData.has_value(),
+		object._oAnimDelay,
+		object._oAnimCnt,
+		object._oAnimLen,
+		object._oAnimFrame,
+		object._oAnimWidth,
+		object._oDelFlag,
+		object._oBreak,
+		object._oSolidFlag,
+		object._oMissFlag,
+		object.selectionRegion,
+		object._oPreFlag,
+		object._olid,
+		object._oRndSeed,
+		object._oVar1,
+		object._oVar2,
+		object._oVar3,
+		object._oVar4,
+		object._oVar5,
+		object._oVar6,
+		object._oVar8,
+		static_cast<int>(object.bookMessage),
+	};
+}
+
+NativeL1CapacitySnapshot CaptureNativeL1CapacitySnapshot()
+{
+	NativeL1CapacitySnapshot snapshot {};
+	snapshot.activeObjectCount = ObjectPoolAdapter::ActiveObjectCountValue();
+	for (int index = 0; index < MAXOBJECTS; index++) {
+		snapshot.activeObjectIds[index] = ObjectPoolAdapter::ActiveObjectIds()[index];
+		snapshot.availableObjectIds[index] = ObjectPoolAdapter::AvailableObjectIds()[index];
+		snapshot.objects[index] = CaptureNativeL1CapacityObject(Objects[index]);
+	}
+	snapshot.tiles.reserve(MAXDUNX * MAXDUNY);
+	for (const Tile &tile : tiles().columnMajor())
+		snapshot.tiles.push_back({
+			tile.piece(), tile.transVal(), tile.light(), tile.preLight(), tile.flags(),
+			tile.player(), tile.monster(), tile.corpse(), tile.object(), tile.special(), tile.item(),
+		});
+	snapshot.randomState = GetLCGEngineState();
+	snapshot.loadingMapObjects = LoadingMapObjects;
+	snapshot.activeLightCount = CurrentLightManager.activeLightCount_;
+	snapshot.activeLightIds = CurrentLightManager.activeLights_;
+	snapshot.lightUpdatePending = CurrentLightManager.updateLighting_;
+	return snapshot;
+}
+
+class NativeL1CapacityScopeGuard {
+public:
+	NativeL1CapacityScopeGuard()
+		: assetsPath_(paths::AssetsPath())
+		, levelId_(currentLevel().id())
+		, lightManager_(CurrentLightManager)
+		, visibleTransparencyRegions_(visibleTransparencyRegions())
+		, randomState_(GetLCGEngineState())
+		, loadingMapObjects_(LoadingMapObjects)
+	{
+		tileState_.reserve(MAXDUNX * MAXDUNY);
+		for (const Tile &tile : tiles().columnMajor())
+			tileState_.push_back({ tile.piece(), tile.light(), tile.preLight() });
+		// Finish fallible snapshots before moving aside metadata tables.
+		AllObjects.swap(allObjects_);
+		ObjMasterLoadList.swap(objMasterLoadList_);
+	}
+
+	~NativeL1CapacityScopeGuard()
+	{
+		ResetCathedralDoorOracleNativeObjectsAndLights();
+		auto savedTile = tileState_.begin();
+		for (Tile &tile : tiles().columnMajor()) {
+			tile.setPiece(savedTile->piece);
+			tile.setLight(savedTile->light);
+			tile.setPreLight(savedTile->preLight);
+			++savedTile;
+		}
+		CurrentLightManager = lightManager_;
+		SetRndSeed(randomState_);
+		LoadingMapObjects = loadingMapObjects_;
+		paths::SetAssetsPath(assetsPath_);
+		currentLevel().setId(levelId_);
+		visibleTransparencyRegions() = visibleTransparencyRegions_;
+		AllObjects.swap(allObjects_);
+		ObjMasterLoadList.swap(objMasterLoadList_);
+	}
+
+	NativeL1CapacityScopeGuard(const NativeL1CapacityScopeGuard &) = delete;
+	NativeL1CapacityScopeGuard &operator=(const NativeL1CapacityScopeGuard &) = delete;
+
+private:
+	std::string assetsPath_;
+	LevelId levelId_;
+	LightManager lightManager_;
+	std::array<bool, 256> visibleTransparencyRegions_;
+	uint32_t randomState_;
+	bool loadingMapObjects_;
+	std::vector<NativeL1CapacityRestoreTileState> tileState_;
+	std::vector<ObjectData> allObjects_;
+	std::vector<std::string> objMasterLoadList_;
+};
+
+bool NativeL1CapacityScopeGuardRestoresVisibleTransparencySentinel()
+{
+	constexpr size_t SentinelIndex = 255;
+	const std::array<bool, 256> originalVisibility = visibleTransparencyRegions();
+	const ObjectData *const originalAllObjectsStorage = AllObjects.data();
+	const size_t originalAllObjectsSize = AllObjects.size();
+	const std::string *const originalLoadListStorage = ObjMasterLoadList.data();
+	const size_t originalLoadListSize = ObjMasterLoadList.size();
+	visibleTransparencyRegions()[SentinelIndex] = true;
+
+	bool sentinelWasClearedByReset = false;
+	{
+		NativeL1CapacityScopeGuard guard;
+		ResetCathedralDoorOracleNativeObjectsAndLights();
+		sentinelWasClearedByReset = !visibleTransparencyRegions()[SentinelIndex];
+	}
+
+	const bool sentinelWasRestored = visibleTransparencyRegions()[SentinelIndex];
+	const bool allObjectsStorageWasRestored = AllObjects.data() == originalAllObjectsStorage
+		&& AllObjects.size() == originalAllObjectsSize;
+	const bool loadListStorageWasRestored = ObjMasterLoadList.data() == originalLoadListStorage
+		&& ObjMasterLoadList.size() == originalLoadListSize;
+	visibleTransparencyRegions() = originalVisibility;
+	return sentinelWasClearedByReset && sentinelWasRestored
+		&& allObjectsStorageWasRestored && loadListStorageWasRestored;
+}
+
+// These synthetic tiles isolate the real native AddL1Objs scanner and object
+// pool boundary. They characterize allocation behavior, not generated-level parity.
+class NativeL1ObjectCapacityTest : public ::testing::Test {
+protected:
+	void SetUp() override
+	{
+		ASSERT_TRUE(HeadlessMode);
+		paths::SetAssetsPath(paths::BasePath() + "/assets/");
+		currentLevel().setId(LevelId { .levelNum = 1, .type = DTYPE_CATHEDRAL });
+		LoadObjectData();
+		ASSERT_GT(AllObjects.size(), static_cast<size_t>(OBJ_WATER));
+		ASSERT_GT(AllObjects.size(), static_cast<size_t>(OBJ_L1LIGHT));
+		ASSERT_GT(AllObjects.size(), static_cast<size_t>(OBJ_L1LDOOR));
+		ASSERT_GT(AllObjects.size(), static_cast<size_t>(OBJ_L1RDOOR));
+		ASSERT_TRUE(AllObjects[OBJ_WATER].isAnimated());
+		ASSERT_TRUE(AllObjects[OBJ_L1LIGHT].isAnimated());
+		ASSERT_TRUE(NativeL1CapacityScopeGuardRestoresVisibleTransparencySentinel())
+		    << "Scope guard must restore visible regions and loaded object metadata storage";
+		ResetScenario();
+	}
+
+	void ResetScenario()
+	{
+		ResetCathedralDoorOracleNativeObjectsAndLights();
+		for (Tile &tile : tiles().columnMajor()) {
+			tile.setPiece(0);
+			tile.setLight(0);
+			tile.setPreLight(0);
+		}
+		LoadingMapObjects = false;
+		SetRndSeed(NativeSeed);
+	}
+
+	bool FillWithWaterObjects(int count)
+	{
+		// Use real water objects so their authored animation setup consumes the
+		// same RNG draws as the native map-object loading path.
+		for (int index = 0; index < count; index++) {
+			const Point position { 1 + index % 9, 1 + index / 9 };
+			Object *water = AddObject(OBJ_WATER, position);
+			if (water == nullptr || water->_otype != OBJ_WATER || water->position != position)
+				return false;
+		}
+		return ObjectPoolAdapter::ActiveObjectCountValue() == count;
+	}
+
+	void SetCandidatePieces(Point light, Point leftDoor, std::optional<Point> rightDoor = std::nullopt)
+	{
+		tileAt(light).setPiece(269);
+		tileAt(leftDoor).setPiece(43);
+		if (rightDoor.has_value())
+			tileAt(*rightDoor).setPiece(45);
+	}
+
+	static constexpr uint32_t NativeSeed = UINT32_C(0x13579BDF);
+	NativeL1CapacityScopeGuard stateGuard;
+};
+
+TEST_F(NativeL1ObjectCapacityTest, AddL1ObjectsUsesFinalAvailableSlotThenSkipsDoorWithoutAdditionalMutation)
+{
+	constexpr Point LightPosition { 12, 9 };
+	constexpr Point LeftDoorPosition { 10, 10 };
+	constexpr int WaterObjectCount = MAXOBJECTS - 1;
+
+	ResetScenario();
+	ASSERT_TRUE(FillWithWaterObjects(WaterObjectCount));
+	SetCandidatePieces(LightPosition, LeftDoorPosition);
+	const uint32_t randomStateAfterWaterFill = GetLCGEngineState();
+	const NativeL1CapacitySnapshot directBefore = CaptureNativeL1CapacitySnapshot();
+	Object *const expectedLight = AddObject(OBJ_L1LIGHT, LightPosition);
+	ASSERT_NE(expectedLight, nullptr);
+	ASSERT_EQ(ObjectPoolAdapter::ActiveObjectCountValue(), MAXOBJECTS);
+	const NativeL1CapacitySnapshot directAfter = CaptureNativeL1CapacitySnapshot();
+	ASSERT_NE(tileAt(LightPosition).object(), 0);
+	const int expectedLightSlot = static_cast<int>(tileAt(LightPosition).object()) - 1;
+	ASSERT_EQ(expectedLightSlot, ObjectPoolAdapter::ActiveObjectIndexAt(MAXOBJECTS - 1));
+	ASSERT_EQ(Objects[expectedLightSlot]._otype, OBJ_L1LIGHT);
+	ASSERT_EQ(Objects[expectedLightSlot].position, LightPosition);
+	ASSERT_EQ(tileAt(LeftDoorPosition).object(), 0);
+
+	ResetScenario();
+	ASSERT_TRUE(FillWithWaterObjects(WaterObjectCount));
+	SetCandidatePieces(LightPosition, LeftDoorPosition);
+	ASSERT_EQ(GetLCGEngineState(), randomStateAfterWaterFill);
+	const NativeL1CapacitySnapshot scanBefore = CaptureNativeL1CapacitySnapshot();
+	ASSERT_TRUE(directBefore == scanBefore) << "Matched AddL1Objs control did not start from identical native state";
+
+	AddL1Objs(0, 0, MAXDUNX, MAXDUNY);
+
+	const NativeL1CapacitySnapshot scanAfter = CaptureNativeL1CapacitySnapshot();
+	EXPECT_TRUE(directAfter == scanAfter)
+		<< "After the light used slot 127, the following full-pool door scan changed RNG, geometry, tile references, or pool state";
+	EXPECT_EQ(ObjectPoolAdapter::ActiveObjectCountValue(), MAXOBJECTS);
+	ASSERT_NE(tileAt(LightPosition).object(), 0);
+	const int scannedLightSlot = static_cast<int>(tileAt(LightPosition).object()) - 1;
+	EXPECT_EQ(scannedLightSlot, ObjectPoolAdapter::ActiveObjectIndexAt(MAXOBJECTS - 1));
+	EXPECT_EQ(Objects[scannedLightSlot]._otype, OBJ_L1LIGHT);
+	EXPECT_EQ(tileAt(LeftDoorPosition).object(), 0);
+}
+
+TEST_F(NativeL1ObjectCapacityTest, AddL1ObjectsSkipsAllCandidatesWhenPoolAlreadyContains127Objects)
+{
+	constexpr Point LightPosition { 12, 9 };
+	constexpr Point LeftDoorPosition { 10, 10 };
+	constexpr Point RightDoorPosition { 11, 10 };
+
+	ResetScenario();
+	ASSERT_TRUE(FillWithWaterObjects(MAXOBJECTS));
+	SetCandidatePieces(LightPosition, LeftDoorPosition, RightDoorPosition);
+	const NativeL1CapacitySnapshot before = CaptureNativeL1CapacitySnapshot();
+	ASSERT_EQ(before.activeObjectCount, MAXOBJECTS);
+
+	AddL1Objs(0, 0, MAXDUNX, MAXDUNY);
+
+	const NativeL1CapacitySnapshot after = CaptureNativeL1CapacitySnapshot();
+	EXPECT_TRUE(before == after)
+		<< "With 127 existing objects, recognized L1 candidates must leave geometry, references, pool, lights, and RNG untouched";
+	EXPECT_EQ(ObjectPoolAdapter::ActiveObjectCountValue(), MAXOBJECTS);
+	EXPECT_EQ(tileAt(LightPosition).object(), 0);
+	EXPECT_EQ(tileAt(LeftDoorPosition).object(), 0);
+	EXPECT_EQ(tileAt(RightDoorPosition).object(), 0);
 }
 
 } // namespace

@@ -2,6 +2,11 @@
 
 Notable changes to this fork are recorded below.
 
+- 2026-10-08: Add explicit Cathedral object-pool prefix discovery with unchanged
+  strict scanner/compiler behavior. Verify 75 focused managed cases and native
+  capacity boundaries plus full/shuffled L1 regressions; preserve lighting,
+  population and profile-adoption limits.
+
 - 2026-10-08: Add an opt-in ruleset-bound host restore policy with legacy defaults,
   sidecar refusal, failed-token fencing and coherent initial responses across
   reload. All 120 focused host/persistence cases pass; provider rollback remains

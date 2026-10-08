@@ -12,6 +12,15 @@ public sealed record AuthoritativeCathedralDoorState(
 
 public sealed record AuthoritativeCathedralDoorDiscovery(
     AuthoritativeLevel Level, IReadOnlyList<AuthoritativeCathedralDoorState> Doors);
+public enum AuthoritativeCathedralNativePoolCandidateKind { Light = 1, LeftDoor = 2, RightDoor = 3 }
+
+public sealed record AuthoritativeCathedralNativePoolCandidate(
+    AuthoritativeCathedralNativePoolCandidateKind Kind, int PositionX, int PositionY,
+    ushort TilePiece, bool Allocated, AuthoritativeCathedralDoorState? Door);
+
+public sealed record AuthoritativeCathedralNativePoolPrefixDiscovery(
+    AuthoritativeLevel Level, IReadOnlyList<AuthoritativeCathedralNativePoolCandidate> Candidates,
+    int AllocatedPrefixCount, int SkippedSuffixCount);
 public sealed record AuthoritativeCathedralDoorTransition(
     AuthoritativeLevel Level, AuthoritativeCathedralDoorState Door);
 
@@ -61,6 +70,74 @@ public static class AuthoritativeCathedralDoors
             }
         }
         return new AuthoritativeCathedralDoorDiscovery(current, doors.AsReadOnly());
+    }
+
+    /**
+     * Captures the native AddL1Objs light/door candidate prefix under the 127-object pool limit.
+     * This requires the fully initialized native special layer. Allocated doors close immediately;
+     * skipped candidates do not validate door neighbors or mutate geometry. Light initialization and
+     * native pool slot assignment are intentionally not modeled by this result.
+     */
+    public static AuthoritativeCathedralNativePoolPrefixDiscovery DiscoverNativePoolPrefix(
+        AuthoritativeLevel level, int existingObjectCount = 0)
+    {
+        RequireGeometry(level);
+        if (existingObjectCount is < 0 or > AuthoritativeLevel.NativeMaximumObjectCount)
+            throw new InvalidDataException("Cathedral scan starts outside the native object pool.");
+        if (level.NativeSpecialLayer.Count != checked(level.Width * level.Height))
+            throw new InvalidDataException("Cathedral native pool prefix requires a complete special layer.");
+
+        var current = level;
+        var candidates = new List<AuthoritativeCathedralNativePoolCandidate>();
+        var availableSlots = AuthoritativeLevel.NativeMaximumObjectCount - existingObjectCount;
+        var allocatedPrefixCount = 0;
+        var skippedSuffixCount = 0;
+
+        // AddL1Objs visits y then x. Only the allocated prefix has AddObject side effects.
+        for (var y = 0; y < level.Height; y++) {
+            for (var x = 0; x < level.Width; x++) {
+                var piece = current.NativePieceLayer[y * level.Width + x];
+                var kind = piece switch {
+                    269 => AuthoritativeCathedralNativePoolCandidateKind.Light,
+                    43 or 50 or 213 => AuthoritativeCathedralNativePoolCandidateKind.LeftDoor,
+                    45 or 55 => AuthoritativeCathedralNativePoolCandidateKind.RightDoor,
+                    _ => (AuthoritativeCathedralNativePoolCandidateKind?)null,
+                };
+                if (kind is null)
+                    continue;
+
+                var candidateKind = kind.Value;
+                AuthoritativeCathedralDoorState? allocatedDoor = null;
+                var allocated = allocatedPrefixCount < availableSlots;
+                if (allocated) {
+                    if (candidateKind != AuthoritativeCathedralNativePoolCandidateKind.Light) {
+                        var doorKind = candidateKind == AuthoritativeCathedralNativePoolCandidateKind.LeftDoor
+                            ? AuthoritativeCathedralDoorKind.Left
+                            : AuthoritativeCathedralDoorKind.Right;
+                        var (nx, ny) = Neighbor(doorKind, x, y);
+                        if (!current.ContainsPosition(nx, ny))
+                            throw new InvalidDataException("A Cathedral door frame lies outside the level.");
+                        var door = new AuthoritativeCathedralDoorState(
+                            doorKind, x, y, AuthoritativeCathedralDoorStatus.Closed,
+                            piece + 1, current.NativePieceLayer[ny * level.Width + nx] + 1,
+                            doorKind == AuthoritativeCathedralDoorKind.Left ? 1 : 2,
+                            3, false, false);
+                        var closed = SetState(current, door, open: false);
+                        current = closed.Level;
+                        allocatedDoor = closed.Door;
+                    }
+                    allocatedPrefixCount++;
+                } else {
+                    skippedSuffixCount++;
+                }
+
+                candidates.Add(new AuthoritativeCathedralNativePoolCandidate(
+                    candidateKind, x, y, piece, allocated, allocatedDoor));
+            }
+        }
+
+        return new AuthoritativeCathedralNativePoolPrefixDiscovery(
+            current, candidates.AsReadOnly(), allocatedPrefixCount, skippedSuffixCount);
     }
 
     public static AuthoritativeCathedralDoorTransition Operate(

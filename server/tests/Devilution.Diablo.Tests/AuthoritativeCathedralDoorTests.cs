@@ -323,6 +323,216 @@ public sealed class AuthoritativeCathedralDoorTests
         Assert.Equal(253, AuthoritativeCathedralDoors.Operate(opened.Level, maximum, false).Door.AnimationFrame);
     }
 
+    [Fact]
+    public void NativePoolPrefixUsesYMajorOrderAndSaturatesAtAvailableSlots()
+    {
+        var special = Enumerable.Repeat((ushort)9, 64).ToArray();
+        var level = CreateLevel([
+            (AuthoritativeCathedralDoorKind.Left, 3, 2, (ushort)43, (ushort)44),
+            (AuthoritativeCathedralDoorKind.Right, 5, 3, (ushort)45, (ushort)42),
+        ], nativeSpecialLayer: special, extraPieces: [(0, 0, (ushort)269), (7, 7, (ushort)269)]);
+
+        var twoSlots = AuthoritativeCathedralDoors.DiscoverNativePoolPrefix(level, existingObjectCount: 125);
+        Assert.Equal(2, twoSlots.AllocatedPrefixCount);
+        Assert.Equal(2, twoSlots.SkippedSuffixCount);
+        Assert.Equal(
+            [(AuthoritativeCathedralNativePoolCandidateKind.Light, 0, 0, (ushort)269, true),
+             (AuthoritativeCathedralNativePoolCandidateKind.LeftDoor, 3, 2, (ushort)43, true),
+             (AuthoritativeCathedralNativePoolCandidateKind.RightDoor, 5, 3, (ushort)45, false),
+             (AuthoritativeCathedralNativePoolCandidateKind.Light, 7, 7, (ushort)269, false)],
+            twoSlots.Candidates.Select(candidate =>
+                (candidate.Kind, candidate.PositionX, candidate.PositionY, candidate.TilePiece, candidate.Allocated)));
+        Assert.Null(twoSlots.Candidates[0].Door);
+        Assert.NotNull(twoSlots.Candidates[1].Door);
+        Assert.Null(twoSlots.Candidates[2].Door);
+        Assert.Equal(AuthoritativeCathedralDoorStatus.Closed, twoSlots.Candidates[1].Door!.Status);
+
+        var oneSlot = AuthoritativeCathedralDoors.DiscoverNativePoolPrefix(level, existingObjectCount: 126);
+        Assert.Equal(1, oneSlot.AllocatedPrefixCount);
+        Assert.Equal(3, oneSlot.SkippedSuffixCount);
+        Assert.All(oneSlot.Candidates.Skip(1), candidate => Assert.False(candidate.Allocated));
+        Assert.Null(oneSlot.Candidates[1].Door);
+        Assert.Same(level, oneSlot.Level);
+        Assert.Equal(special, oneSlot.Level.NativeSpecialLayer);
+
+        var noSlots = AuthoritativeCathedralDoors.DiscoverNativePoolPrefix(level, existingObjectCount: 127);
+        Assert.Equal(0, noSlots.AllocatedPrefixCount);
+        Assert.Equal(4, noSlots.SkippedSuffixCount);
+        Assert.All(noSlots.Candidates, candidate => Assert.False(candidate.Allocated));
+        Assert.Same(level, noSlots.Level);
+        Assert.Equal(special, noSlots.Level.NativeSpecialLayer);
+
+        var noCandidates = CreateLevel([], nativeSpecialLayer: special);
+        foreach (var existingObjectCount in new[] { 0, AuthoritativeLevel.NativeMaximumObjectCount }) {
+            var empty = AuthoritativeCathedralDoors.DiscoverNativePoolPrefix(
+                noCandidates, existingObjectCount);
+            Assert.Empty(empty.Candidates);
+            Assert.Equal(0, empty.AllocatedPrefixCount);
+            Assert.Equal(0, empty.SkippedSuffixCount);
+            Assert.Same(noCandidates, empty.Level);
+            Assert.Equal(special, empty.Level.NativeSpecialLayer);
+        }
+    }
+
+    [Fact]
+    public void NativePoolPrefixClassifiesAllDoorPiecesAndLightsWithoutMutatingInput()
+    {
+        var special = Enumerable.Repeat((ushort)9, 64).ToArray();
+        var level = CreateLevel([
+            (AuthoritativeCathedralDoorKind.Left, 3, 2, (ushort)43, (ushort)42),
+            (AuthoritativeCathedralDoorKind.Left, 5, 2, (ushort)50, (ushort)44),
+            (AuthoritativeCathedralDoorKind.Left, 7, 4, (ushort)213, (ushort)53),
+            (AuthoritativeCathedralDoorKind.Right, 2, 5, (ushort)45, (ushort)42),
+            (AuthoritativeCathedralDoorKind.Right, 4, 5, (ushort)55, (ushort)44),
+        ], nativeSpecialLayer: special, extraPieces: [(0, 0, (ushort)269), (1, 2, (ushort)269), (7, 7, (ushort)269)]);
+        var before = new {
+            level.LevelId,
+            level.Width,
+            level.Height,
+            level.IsDefaultStart,
+            level.SuppressMultiplayerDeathDrops,
+            level.HasExplicitNativeVisionBlockedCells,
+            Pieces = level.NativePieceLayer.ToArray(),
+            Special = level.NativeSpecialLayer.ToArray(),
+            Transparency = level.NativeTransparency.ToArray(),
+            Monsters = level.NativeMonsterLayer.ToArray(),
+            Objects = level.NativeObjectLayer.ToArray(),
+            MegaTiles = level.NativeMegaTileLayer.ToArray(),
+            Blocked = level.BlockedCells.ToArray(),
+            StaticObjectBlocked = level.StaticObjectBlockedCells.ToArray(),
+            MissileBlocked = level.MissileBlockedCells.ToArray(),
+            PieceCollision = level.NativePieceCollisionCells.ToArray(),
+            VisionBlocked = level.NativeVisionBlockedCells.ToArray(),
+            PieceMissileBlocked = level.NativePieceMissileBlockedCells.ToArray(),
+            PieceProperties = level.NativePieceProperties.OrderBy(pair => pair.Key).ToArray(),
+        };
+
+        var discovered = AuthoritativeCathedralDoors.DiscoverNativePoolPrefix(level, existingObjectCount: 119);
+
+        Assert.Equal(8, discovered.AllocatedPrefixCount);
+        Assert.Equal(0, discovered.SkippedSuffixCount);
+        Assert.Equal(
+            [(AuthoritativeCathedralNativePoolCandidateKind.Light, 0, 0, (ushort)269),
+             (AuthoritativeCathedralNativePoolCandidateKind.Light, 1, 2, (ushort)269),
+             (AuthoritativeCathedralNativePoolCandidateKind.LeftDoor, 3, 2, (ushort)43),
+             (AuthoritativeCathedralNativePoolCandidateKind.LeftDoor, 5, 2, (ushort)50),
+             (AuthoritativeCathedralNativePoolCandidateKind.LeftDoor, 7, 4, (ushort)213),
+             (AuthoritativeCathedralNativePoolCandidateKind.RightDoor, 2, 5, (ushort)45),
+             (AuthoritativeCathedralNativePoolCandidateKind.RightDoor, 4, 5, (ushort)55),
+             (AuthoritativeCathedralNativePoolCandidateKind.Light, 7, 7, (ushort)269)],
+            discovered.Candidates.Select(candidate =>
+                (candidate.Kind, candidate.PositionX, candidate.PositionY, candidate.TilePiece)));
+        Assert.All(discovered.Candidates, candidate => Assert.True(candidate.Allocated));
+        Assert.Null(discovered.Candidates[0].Door);
+        Assert.Null(discovered.Candidates[7].Door);
+        var doors = discovered.Candidates.Where(candidate => candidate.Door is not null)
+            .Select(candidate => candidate.Door!).ToArray();
+        Assert.Equal(5, doors.Length);
+        Assert.Equal(3, doors.Count(door => door.Kind == AuthoritativeCathedralDoorKind.Left));
+        Assert.Equal(2, doors.Count(door => door.Kind == AuthoritativeCathedralDoorKind.Right));
+        Assert.Equal(new[] { 44, 51, 214, 46, 56 }, doors.Select(door => door.Var1));
+        Assert.Equal(new[] { 43, 45, 54, 43, 45 }, doors.Select(door => door.Var2));
+        Assert.Equal(new[] { 1, 1, 1, 2, 2 }, doors.Select(door => door.AnimationFrame));
+        Assert.All(doors, door => {
+            Assert.Equal(AuthoritativeCathedralDoorStatus.Closed, door.Status);
+            Assert.Equal(3, door.SelectionRegion);
+            Assert.False(door.PreFlag);
+            Assert.False(door.MissFlag);
+            Assert.False(door.SolidFlag);
+            var cell = door.PositionY * level.Width + door.PositionX;
+            Assert.Equal((ushort)(door.Var1 - 1), discovered.Level.NativePieceLayer[cell]);
+            Assert.Equal((ushort)0, discovered.Level.NativeSpecialLayer[cell]);
+        });
+        Assert.Equal((ushort)9, discovered.Level.NativeSpecialLayer[0]);
+        Assert.Equal((ushort)9, discovered.Level.NativeSpecialLayer[7 * level.Width + 7]);
+        Assert.NotSame(level, discovered.Level);
+        Assert.Equal(before.LevelId, level.LevelId);
+        Assert.Equal(before.Width, level.Width);
+        Assert.Equal(before.Height, level.Height);
+        Assert.Equal(before.IsDefaultStart, level.IsDefaultStart);
+        Assert.Equal(before.SuppressMultiplayerDeathDrops, level.SuppressMultiplayerDeathDrops);
+        Assert.Equal(before.HasExplicitNativeVisionBlockedCells, level.HasExplicitNativeVisionBlockedCells);
+        Assert.Equal(before.Pieces, level.NativePieceLayer);
+        Assert.Equal(before.Special, level.NativeSpecialLayer);
+        Assert.Equal(before.Transparency, level.NativeTransparency);
+        Assert.Equal(before.Monsters, level.NativeMonsterLayer);
+        Assert.Equal(before.Objects, level.NativeObjectLayer);
+        Assert.Equal(before.MegaTiles, level.NativeMegaTileLayer);
+        Assert.Equal(before.Blocked, level.BlockedCells);
+        Assert.Equal(before.StaticObjectBlocked, level.StaticObjectBlockedCells);
+        Assert.Equal(before.MissileBlocked, level.MissileBlockedCells);
+        Assert.Equal(before.PieceCollision, level.NativePieceCollisionCells);
+        Assert.Equal(before.VisionBlocked, level.NativeVisionBlockedCells);
+        Assert.Equal(before.PieceMissileBlocked, level.NativePieceMissileBlockedCells);
+        Assert.Equal(before.PieceProperties, level.NativePieceProperties.OrderBy(pair => pair.Key).ToArray());
+        Assert.Equal(special, level.NativeSpecialLayer);
+    }
+
+    [Fact]
+    public void NativePoolPrefixSkipsMalformedDoorSuffixButRejectsItWhenAllocated()
+    {
+        var special = Enumerable.Repeat((ushort)6, 64).ToArray();
+        var malformedAfterLight = CreateLevel(
+            [(AuthoritativeCathedralDoorKind.Left, 3, 0, (ushort)43, (ushort)42)],
+            nativeSpecialLayer: special,
+            extraPieces: [(0, 0, (ushort)269)]);
+
+        var skipped = AuthoritativeCathedralDoors.DiscoverNativePoolPrefix(
+            malformedAfterLight, existingObjectCount: 126);
+
+        Assert.Equal(1, skipped.AllocatedPrefixCount);
+        Assert.Equal(1, skipped.SkippedSuffixCount);
+        Assert.Equal(
+            [AuthoritativeCathedralNativePoolCandidateKind.Light, AuthoritativeCathedralNativePoolCandidateKind.LeftDoor],
+            skipped.Candidates.Select(candidate => candidate.Kind));
+        Assert.True(skipped.Candidates[0].Allocated);
+        Assert.False(skipped.Candidates[1].Allocated);
+        Assert.Null(skipped.Candidates[1].Door);
+        Assert.Same(malformedAfterLight, skipped.Level);
+        Assert.Equal(special, skipped.Level.NativeSpecialLayer);
+
+        var malformedAllocated = CreateLevel(
+            [(AuthoritativeCathedralDoorKind.Left, 3, 0, (ushort)43, (ushort)42)],
+            nativeSpecialLayer: special);
+        Assert.Throws<InvalidDataException>(() =>
+            AuthoritativeCathedralDoors.DiscoverNativePoolPrefix(malformedAllocated, existingObjectCount: 126));
+        Assert.Equal((ushort)43, malformedAllocated.NativePieceLayer[3]);
+        Assert.Equal(special, malformedAllocated.NativeSpecialLayer);
+    }
+
+    [Fact]
+    public void NativePoolPrefixRequiresCompleteGeometryAndValidPoolCount()
+    {
+        Assert.Throws<ArgumentNullException>(() =>
+            AuthoritativeCathedralDoors.DiscoverNativePoolPrefix(null!));
+
+        var complete = CreateLevel(
+            [(AuthoritativeCathedralDoorKind.Left, 3, 2, (ushort)43, (ushort)42)],
+            nativeSpecialLayer: Enumerable.Repeat((ushort)0, 64).ToArray());
+        Assert.Throws<InvalidDataException>(() =>
+            AuthoritativeCathedralDoors.DiscoverNativePoolPrefix(complete, existingObjectCount: -1));
+        Assert.Throws<InvalidDataException>(() =>
+            AuthoritativeCathedralDoors.DiscoverNativePoolPrefix(
+                complete, existingObjectCount: AuthoritativeLevel.NativeMaximumObjectCount + 1));
+
+        var absentSpecial = CreateLevel(
+            [(AuthoritativeCathedralDoorKind.Left, 3, 2, (ushort)43, (ushort)42)],
+            nativeSpecialLayer: null);
+        Assert.Throws<InvalidDataException>(() =>
+            AuthoritativeCathedralDoors.DiscoverNativePoolPrefix(absentSpecial));
+
+        var missingGeometry = new AuthoritativeLevel(0, 8, 8);
+        Assert.Throws<InvalidDataException>(() =>
+            AuthoritativeCathedralDoors.DiscoverNativePoolPrefix(missingGeometry));
+
+        var missingSol = new AuthoritativeLevel(
+            complete.LevelId, complete.Width, complete.Height,
+            nativePieceLayer: complete.NativePieceLayer,
+            nativeSpecialLayer: complete.NativeSpecialLayer);
+        Assert.Throws<InvalidDataException>(() =>
+            AuthoritativeCathedralDoors.DiscoverNativePoolPrefix(missingSol));
+    }
+
     private static AuthoritativeLevel CreateLevel(
         IReadOnlyList<(AuthoritativeCathedralDoorKind Kind, int X, int Y, ushort Main, ushort Neighbor)> doors,
         IReadOnlyList<int>? blockedCells = null,

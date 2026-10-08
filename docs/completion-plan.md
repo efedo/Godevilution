@@ -551,6 +551,12 @@ this evidence. A sample art pack does not satisfy M4's full presentation gate.
    arbitrary seeds using validated external catalogs, preserving mutable geometry
    and operation order through restore rather than rebuilding only from closed
    base layers and open/closed flags.
+   An explicit DiscoverNativePoolPrefix scanner now reports the y-major/x-major
+   allocation prefix and skipped suffix at the native 127-slot limit, preserving
+   strict Discover and compiler overflow refusal. A complete native special layer
+   is required; missing geometry is not initialized. Managed ordering/capacity checks
+   and native AddL1Objs boundary tests pass; lighting initialization, slot identity,
+   population RNG and profile adoption remain separate.
    Scanner RNG, including L1 lights, is not production `InitObjects`/population
    RNG. The separate `-CathedralPopulation` oracle targets the complete native
    `InitObjects` phase after real trigger/stair reservations, monster-type and

@@ -44,6 +44,15 @@ unsupported behavior is a migration gap, not permission for local simulation.
 
 ## Current delivery position and verification limits
 
+The optional Cathedral DiscoverNativePoolPrefix scanner reports native scan order,
+allocated prefix and skipped suffix without changing strict Discover or compiler
+overflow refusal. A complete native special layer is required; missing geometry
+is not initialized. All 75 focused managed cases pass. The native AddL1Objs capacity
+facts pass 2/2; full L1 and three independently checked shuffled iterations each
+pass 23 cases with exactly 11 existing optional-oracle skips. These checks cover
+pool saturation and ordering; they do not qualify lighting setup, native slot IDs,
+population RNG, full world parity or profile adoption.
+
 A fresh committed-source exported Performance pair passes headlessly in
 `.local/godot-exported-performance-graceful-run-81b34372856e46959ff99255529df9d3`.
 It archives HEAD `8944c6242` (2,796 inputs), runs genuine ExportRelease Main
