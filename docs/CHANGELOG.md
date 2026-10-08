@@ -2,6 +2,10 @@
 
 Notable changes to this fork are recorded below.
 
+- 2026-10-08: Add explicit ruleset-bound checkpoint loading that rejects legacy
+  formats and mismatched current identities, retaining the compatibility loader.
+  All 30 focused persistence cases pass; host adoption remains separate.
+
 - 2026-10-08: Verify native TSV quest-pool vectors against shipped managed quest
   states, including excluded flag clearing and completed/non-pool preservation.
   All 54 focused cases pass; bootstrap adoption and save compatibility remain open.

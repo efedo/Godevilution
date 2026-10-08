@@ -201,6 +201,25 @@ The earlier 18-pass/one-fail fixture run remains retained; it failed before
 selection because the fixture assumed an initially active quest. No production,
 bootstrap, module identity, default policy, save format or profile changed.
 
+A separate library API, `AuthoritativeSessionStore.LoadForRuleset`, now requires
+current-format checkpoints with an exact ordinal, nonempty ruleset identity.
+It returns null only for an absent combined checkpoint and reuses the existing
+single-read integrity validation. Existing `Load` signatures and legacy format
+1-3 behavior remain unchanged. The source's mixed line endings are normalized
+to CRLF; its original bytes are retained separately.
+
+A fresh Debug server-test build has zero warnings/errors; 12 strict-load and
+18 existing persistence cases pass without skips. Tests cover a nonempty receipt,
+legacy refusal alongside compatibility acceptance, missing/mismatched/case-only
+identity, invalid required identity and tampered state. Corrected root proof is
+`.local/strict-store-api-original-run-completion-cc8308e1adef49679d149a7a09d053cc/corrected-root-verification.json`,
+SHA `102F0B7E2D41CBE3EE48660FC1015B99293B3E571FEC3599A39A509DEC77E0E9`.
+Original name-audit and receipt-projection failures remain retained; passing
+tests were not repeated to correct those reports. Nine recorded identities are
+freshly absent, including a creation-time-verified reused PID. This library API
+does not wire host restore paths, fence legacy sidecars, bind world-seed roots
+or authorize normal cohort adoption. Those compatibility boundaries stay open.
+
 Explicit-cohort TCP Town Portal recovery passes in
 `.local/cohort-town-portal-restart-79bb820d5c71458799cf60c5b8289754`.
 Two real clients use ordinary Warrior/Rogue resources and existing town/portal

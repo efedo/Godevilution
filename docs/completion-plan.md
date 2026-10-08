@@ -728,6 +728,10 @@ Three further managed facts apply the native vectors to shipped state rows,
 checking unavailable/active/logged transitions and completed/non-pool preservation.
 A fresh 19 metadata plus 35 quest catalog cases pass. This test-only evidence
 does not close bootstrap adoption or old-save/ruleset reconstruction compatibility.
+The explicit strict checkpoint loader is available and passes 12 new plus 18
+existing persistence cases. Before exposing a new runtime policy, complete all
+host restore paths, identityless-sidecar refusal and leased world-seed root
+binding; the library guard alone does not close old-save reconstruction.
 
 Exit: supported base and Hellfire campaign routes complete in Godot, and the
 coverage ledger has no unsupported required gameplay/world behavior. Each

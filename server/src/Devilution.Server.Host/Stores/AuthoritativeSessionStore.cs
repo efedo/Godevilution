@@ -155,6 +155,32 @@ public sealed class AuthoritativeSessionStore
         }
     }
 
+    /**
+     * Loads a checkpoint only when it is bound to the required current ruleset.
+     * The compatibility Load overload intentionally continues to accept legacy formats.
+     */
+    public AuthoritativeSessionDocument? LoadForRuleset(
+        string sessionId,
+        string requiredRulesetIdentityHash)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(sessionId);
+        ArgumentException.ThrowIfNullOrWhiteSpace(requiredRulesetIdentityHash);
+
+        // Reuse the existing single-read parser, integrity checks, and current-format identity check.
+        var document = Load(sessionId, requiredRulesetIdentityHash);
+        if (document is null)
+            return null;
+        if (document.FormatVersion != CurrentFormatVersion)
+            throw new InvalidDataException(
+                "Ruleset-bound session loading requires the current authoritative session checkpoint format.");
+        if (!string.Equals(
+                document.RulesetIdentityHash,
+                requiredRulesetIdentityHash,
+                StringComparison.Ordinal))
+            throw new InvalidDataException(
+                "The authoritative session checkpoint ruleset identity does not match the required ruleset.");
+        return document;
+    }
     /** Removes one combined checkpoint when a multi-session write rolls back. */
     public bool Delete(string sessionId)
     {
