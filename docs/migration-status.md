@@ -44,6 +44,50 @@ unsupported behavior is a migration gap, not permission for local simulation.
 
 ## Current delivery position and verification limits
 
+A fresh committed-source exported graceful Legacy Create/Resume passes in
+`.local/godot-exported-recovery-graceful-run-44dac60a5d644d01989813f5a2cbe153`.
+It archives HEAD `be8118de7` (2,796 inputs), runs genuine headless ExportRelease
+Main with one Rogue in base Town/seed 0, and uses fresh Release hosts. Both
+hosts retain their owned handles through `quit`, natural native exit 0, joined
+output tasks and flushed stream hashes. The strict 26-field graceful receipts
+and unchanged seven-field terminal receipts agree on identity and image;
+quit-to-exit is 25.190 ms for Create and 23.035 ms for Resume, within 30 seconds.
+No forced termination occurs in this passing lane.
+
+Create queues two hostile-mode inputs before one frame, preserving receipts
+1/2 at tick 144, then Down receipt 3 at tick 164 to (0,1). Actual stopped Store
+and codec inspection validates the tick-188 canonical checkpoint and its
+retained copy. Resume's first decoded wire restores the saved actor and cursor
+3 before model application/input; Down receipt 4 at tick 205 reaches (0,2).
+Its tick-229 checkpoint preserves the first three receipts and appends 4.
+Original/retained reports and checkpoint hashes agree. Canonical comparison
+normalizes tick/position/facing/action; it does not prove full world/RNG/inventory
+parity. Four optimized physical client images per phase match loaded startup
+witnesses; Release apphost/adjacent DLL observations do not inspect loaded server
+managed or in-memory bytes.
+
+Both ordered phases, eight engine stages and all recorded native commands exit
+zero. All 42 recorded PID/start identities are freshly absent, unknown 0; all
+2,813 working inputs and twenty protected hashes remain stable. Version/import/
+client engine records lack separate drain fields; export-release records have
+explicit drain/cleanup fields. Host receipts prove both output pumps joined and
+flushed. Root runtime proof is
+`.local/exported-recovery-graceful-integrated-workload-a98584ac6fb040b3be41381f0ec7af3e/root-verification.json`,
+SHA-256 `BE502A355D8D7FDFDDC699BC0BDC42286219CE9E89564DD24136F77549386D57`;
+independent root audit `.local/graceful-recovery-runtime-actual-audit.json` is
+`2E61540FF48EE9BE06F83E6BEB9F27603CFDCD016FEC3FC01FE5C55B51C246FC`.
+The same independent reviewer accepted the bounded runtime evidence.
+
+Earlier antivirus, task-output and disposed-fixture failures remain retained.
+The local diagnostic repair suppresses incidental Task results and verifies
+expected startup cleanup using terminal/state/stream/timestamp/ownership proof
+plus fresh captured PID/start absence. Its 21 pure guards, 13 synthetic lifecycle
+cases and 32 terminal-validator cases pass before actual runtime qualification.
+This closes the scoped exported single-client graceful cold-recovery check;
+rendered/native moved-position Resume, normal cohort adoption, full world parity,
+release budgets, platforms and soaks remain open. Historical forced-stop and
+Performance temporary-file limitations remain historical. Overall stays 35%.
+
 Native loaded quest-pool characterization passes in
 `.local/loaded-quest-pools-native-ccde1194aed1400da8404b771f65437e`.
 The actual loader reads the validated loose build TSV before any MPQ lookup.

@@ -317,6 +317,17 @@ M4. M5 is the final removal gate, not a reason to postpone replacement work.
    full-world/RNG/inventory parity, rendered/native moved-position Resume and
    broader release gates remain open. Keep historical Performance limits and
    approval-gated normal cohort adoption unchanged; use status for exact scope.
+   A separate committed-source exported Legacy Create/fresh Release-host Resume
+   now passes headlessly with natural host exit 0, retained native handles,
+   bounded quit, joined output pumps and flushed stream hashes. Original and
+   retained canonical Store/codec reports preserve receipts 1..3 then append 4;
+   Resume restores the first wire before input and moves (0,1) to (0,2). All 42
+   recorded identities are absent. This closes that scoped graceful recovery
+   check only. Preserve historical forced-stop failures/Performance limits and
+   keep rendered/native moved-position Resume, full-world/RNG/inventory parity,
+   normal cohort adoption, budgets, platforms and soaks open. See status for
+   exact committed revision, source qualifiers and original runtime evidence.
+
    Godot now reuses installed geometry between model-accepted snapshot generations.
    Preserve full replacement, same-tick/epoch admission and eager legacy behavior;
    do not treat ownership as public protobuf immutability. Measure remaining

@@ -2,6 +2,11 @@
 
 Notable changes to this fork are recorded below.
 
+- 2026-10-07: Qualify headless exported Legacy Create/fresh Release-host Resume
+  with natural host exit 0, bounded quit, joined/drained output and retained
+  canonical receipts 3 to 4. Verify optimized client images and all 42 recorded
+  identities absent; preserve rendered/native, full-world and release limits.
+
 - 2026-10-07: Characterize actual native quest-pool TSV order and eight literal
   seeded exclusions, with complete state restoration and unchanged fallback
   behavior. Focused/full/shuffled GTests pass; managed selection and save/ruleset

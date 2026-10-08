@@ -1073,6 +1073,28 @@ rendered/native cold Resume, graceful shutdown, normal cohort adoption and
 release/platform/soak acceptance remain open. See migration status for exact
 evidence, retained failures and the narrower historical Performance scope.
 
+The separate graceful exported recovery lane is retained at
+`.local/godot-exported-recovery-graceful-run-44dac60a5d644d01989813f5a2cbe153`.
+It freezes committed HEAD `be8118de7`, instruments disposable sources, and runs
+headless ExportRelease Legacy Create followed by a fresh Release-host Resume.
+The source-pinned driver performs no-engine generated-launcher preflight first.
+The reviewed outer wrapper rejects evidence-root collisions and bounds preflight
+to 120 seconds and the full run to 900 seconds. The host retains its native
+handle, writes/flushes `quit` only after client exit, joins both output pumps,
+flushes sinks and records actual native exit before disposal. A shared 30-second
+quit deadline and strict 26-field receipt reject forced stops, task/drain faults,
+changed streams, missing identities and terminal evidence collisions.
+
+Both hosts exit naturally with code 0; original and retained canonical Store/
+codec reports preserve receipts 1..3 then append 4 after cold Resume's first wire.
+All 42 recorded identities are absent. Keep private saves and tokens withheld;
+publish scalar reports/hashes only. Local helper/driver qualifications comprise
+21 pure guards, 13 synthetic lifecycle cases and 32 terminal-validator cases.
+A future run needs fresh source/archive/dependency pins and reviewed generated
+source. This scoped pass leaves rendered/native moved-position Resume, full
+world/RNG/inventory parity, normal cohort adoption and release/platform/soak
+gates open. Migration status retains exact evidence and earlier failed attempts.
+
 Missing rounds, changed identity, empty/invalid/truncated samples, overwritten
 output, nonzero client exits or missing checkpoints reject the baseline. Recording
 is explicitly enabled only for this acceptance phase; inherited capture settings
