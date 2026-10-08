@@ -2,6 +2,10 @@
 
 Notable changes to this fork are recorded below.
 
+- 2026-10-08: Expose explicit native quest-pool module selection with distinct
+  ruleset identity and unchanged legacy constructors/defaults. Validate every
+  quest-sequence draw before mutation; all 257 focused integration cases pass.
+
 - 2026-10-08: Add explicit ruleset-bound checkpoint loading that rejects legacy
   formats and mismatched current identities, retaining the compatibility loader.
   All 30 focused persistence cases pass; host adoption remains separate.

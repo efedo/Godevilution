@@ -10,10 +10,37 @@ public sealed class DiabloModule : IGameplayModule
     private readonly DiabloContentBootstrap contentBootstrap;
 
     public DiabloModule(StoreServicePricing? pricing = null)
+        : this(AuthoritativeQuestPoolSelectionOrder.LegacyQuestIdSortedV1, pricing)
     {
-        rules = new DiabloStoreRules(pricing);
-        contentBootstrap = new DiabloContentBootstrap(DiabloSimulationFactory.Instance);
     }
+
+    public DiabloModule(
+        AuthoritativeQuestPoolSelectionOrder questPoolSelectionOrder,
+        StoreServicePricing? pricing)
+    {
+        if (!Enum.IsDefined(typeof(AuthoritativeQuestPoolSelectionOrder), questPoolSelectionOrder))
+            throw new ArgumentOutOfRangeException(nameof(questPoolSelectionOrder));
+
+        QuestPoolSelectionOrder = questPoolSelectionOrder;
+        rules = new DiabloStoreRules(pricing);
+        contentBootstrap = new DiabloContentBootstrap(
+            DiabloSimulationFactory.Instance,
+            questPoolSelectionOrder);
+        var version = questPoolSelectionOrder == AuthoritativeQuestPoolSelectionOrder.NativeTsvRowsV1
+            ? "0.2.0"
+            : "0.1.0";
+        // Quest selection changes generated state, so the opt-in policy has a distinct identity.
+        Identity = new GameplayModuleIdentity(
+            "devilution.diablo",
+            version,
+            GameplayModuleIdentity.BuiltInAssemblyHash("devilution.diablo", version),
+            [],
+            new GameplayModuleCompatibility(
+                GameplayEngineApiVersion.Current,
+                GameplayEngineApiVersion.Current));
+    }
+
+    public AuthoritativeQuestPoolSelectionOrder QuestPoolSelectionOrder { get; }
 
     public StoreServicePricing Pricing => rules.Pricing;
 
@@ -27,14 +54,7 @@ public sealed class DiabloModule : IGameplayModule
 
     public IDiabloCathedralDoorContentBootstrap CathedralDoorContentBootstrap => contentBootstrap;
 
-    public GameplayModuleIdentity Identity { get; } = new(
-        "devilution.diablo",
-        "0.1.0",
-        GameplayModuleIdentity.BuiltInAssemblyHash("devilution.diablo", "0.1.0"),
-        [],
-        new GameplayModuleCompatibility(
-            GameplayEngineApiVersion.Current,
-            GameplayEngineApiVersion.Current));
+    public GameplayModuleIdentity Identity { get; }
 
     public void Register(GameplayModuleRegistry registry, GameplayModuleContext context)
     {

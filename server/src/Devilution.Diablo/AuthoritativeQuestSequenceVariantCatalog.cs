@@ -147,13 +147,20 @@ public sealed class AuthoritativeQuestSequenceVariantCatalog
         ValidateReferences(objects, quests);
         var objectsById = objects.ToDictionary(@object => @object.EntityId);
         var random = new DeterministicLegacyRandom(randomSeed);
-        var updates = new List<(AuthoritativeWorldObject Object, int Step)>();
+        var selectedVariants = new List<(uint QuestId, AuthoritativeQuestSequenceVariantStep[] Steps)>();
         foreach (var questGroup in definitions.GroupBy(step => step.QuestId).OrderBy(group => group.Key)) {
             var variants = questGroup
                 .GroupBy(step => step.VariantId)
                 .OrderBy(group => group.Key)
                 .ToArray();
-            var selected = variants[random.GenerateRnd(variants.Length)];
+            var selectionIndex = random.GenerateRnd(variants.Length);
+            if (selectionIndex < 0 || selectionIndex >= variants.Length)
+                throw new InvalidDataException(
+                    $"Quest {questGroup.Key} quest-sequence selection index {selectionIndex} is outside the valid range [0, {variants.Length}).");
+            selectedVariants.Add((questGroup.Key, variants[selectionIndex].ToArray()));
+        }
+        var updates = new List<(AuthoritativeWorldObject Object, int Step)>();
+        foreach (var (questId, selected) in selectedVariants) {
             updates.AddRange(selected.Select(step => (objectsById[step.ObjectEntityId], step.Step)));
 
             var variantObjects = selected
@@ -181,7 +188,7 @@ public sealed class AuthoritativeQuestSequenceVariantCatalog
                     : 0;
                 if (followUpOffsetX is < -32 or > 32 || followUpOffsetY is < -32 or > 32)
                     throw new InvalidDataException(
-                        $"Quest {questGroup.Key} terminal follow-up target is outside native offset bounds.");
+                        $"Quest {questId} terminal follow-up target is outside native offset bounds.");
                 terminalObject.QuestSequenceFollowUpKind = authoredFollowUp.QuestSequenceFollowUpKind;
                 terminalObject.QuestSequenceFollowUpAmount = authoredFollowUp.QuestSequenceFollowUpAmount;
                 terminalObject.QuestSequenceFollowUpOffsetX = followUpOffsetX;

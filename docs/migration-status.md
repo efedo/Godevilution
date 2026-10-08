@@ -220,6 +220,35 @@ freshly absent, including a creation-time-verified reused PID. This library API
 does not wire host restore paths, fence legacy sidecars, bind world-seed roots
 or authorize normal cohort adoption. Those compatibility boundaries stay open.
 
+The module library now accepts explicit `NativeTsvRowsV1` policy through a
+required policy-and-pricing constructor. Existing constructors, default literals,
+null pricing and `Instance` retain legacy ordering and identity 0.1.0. Explicit
+native ordering uses identity 0.2.0, producing a stable distinct combined ruleset
+hash with identical content. Its built-in assembly hash is a logical identity
+token, not a measurement of physical DLL bytes. The common content bootstrap
+receives the policy; host factories, CLI and normal profiles still select legacy.
+
+Quest-sequence selection now validates all draws before mutating object fields.
+The native signed RNG remains unchanged: seed 1457187811 draws -2 for six
+variants. Managed Hellfire activation rejects this unsupported selection with
+InvalidDataException. Native AddNakrulGate creates no tomes for that draw;
+matching its object-presence behavior remains open. A later-group regression
+also verifies no partial mutation when seed 988045466 yields indices 4 then -2.
+
+Two fresh Debug builds and exact 6 module, 7 sequence, 226 quest/content and
+18 existing persistence cases pass: 257 total, no failures/skips. Tests exercise
+all eight literal vectors under both policies on intact base content, seven
+successful composed Hellfire seeds and explicit edge refusal under both policies,
+constructor/pricing/combined identity stability and multiplayer state. Authored
+and composed tables are unchanged. Fifteen recorded command identities are
+absent; twenty protected hashes are stable. Only the prior held-test xUnit2013
+warning remains. Original proof is
+`.local/native-quest-module-verification-c3251ecd4191407886e835c1965dfdcd/root-verification.json`,
+SHA `A70C2F1DF165652E06F1ACEB264C601A03B3C7CA4D2E83FA5308A1FEABF47976`.
+The earlier compile and signed-sequence failures are retained. Generated/depth/
+door bootstrap references share the common implementation, but those activation
+paths were not executed. Host/save/root adoption and full world parity stay open.
+
 Explicit-cohort TCP Town Portal recovery passes in
 `.local/cohort-town-portal-restart-79bb820d5c71458799cf60c5b8289754`.
 Two real clients use ordinary Warrior/Rogue resources and existing town/portal

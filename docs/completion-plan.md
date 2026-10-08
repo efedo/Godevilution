@@ -732,6 +732,11 @@ The explicit strict checkpoint loader is available and passes 12 new plus 18
 existing persistence cases. Before exposing a new runtime policy, complete all
 host restore paths, identityless-sidecar refusal and leased world-seed root
 binding; the library guard alone does not close old-save reconstruction.
+Explicit module policy now preserves legacy identity/defaults and assigns the
+native selector distinct identity 0.2.0. A fresh 257-case integration passes
+base/Hellfire activation and all-draw sequence validation. Complete native
+signed-edge no-tome object presence, generated/depth/door activation and the
+host/save/root compatibility boundaries before exposing runtime adoption.
 
 Exit: supported base and Hellfire campaign routes complete in Godot, and the
 coverage ledger has no unsupported required gameplay/world behavior. Each

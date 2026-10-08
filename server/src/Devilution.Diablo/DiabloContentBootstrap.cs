@@ -268,12 +268,24 @@ public interface IDiabloCathedralDoorContentBootstrap
 internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap, IDiabloNativeGeneratedContentBootstrap, IDiabloCathedralDepthContentBootstrap, IDiabloCathedralDoorContentBootstrap
 {
     private readonly IDiabloSimulationFactory simulationFactory;
+    private readonly AuthoritativeQuestPoolSelectionOrder questPoolSelectionOrder;
 
     public DiabloContentBootstrap(
         IDiabloSimulationFactory simulationFactory)
+        : this(simulationFactory, AuthoritativeQuestPoolSelectionOrder.LegacyQuestIdSortedV1)
     {
+    }
+
+    public DiabloContentBootstrap(
+        IDiabloSimulationFactory simulationFactory,
+        AuthoritativeQuestPoolSelectionOrder questPoolSelectionOrder)
+    {
+        if (!Enum.IsDefined(typeof(AuthoritativeQuestPoolSelectionOrder), questPoolSelectionOrder))
+            throw new ArgumentOutOfRangeException(nameof(questPoolSelectionOrder));
+
         this.simulationFactory = simulationFactory
             ?? throw new ArgumentNullException(nameof(simulationFactory));
+        this.questPoolSelectionOrder = questPoolSelectionOrder;
     }
 
     public ContentSchemaIdentity Schema => DiabloContentSchema.Current;
@@ -1010,7 +1022,7 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap, IDiabloN
         if (questTypes is not null)
             stableIds.ValidateReferences("quest", questId => questTypes.TryGet(questId, out _));
         var questPools = content.TryGetTable("quest_pools.tsv", out var questPoolsTable)
-            ? LoadQuestPools(content, questPoolsTable, questTypes, stableIds)
+            ? LoadQuestPools(content, questPoolsTable, questTypes, stableIds, questPoolSelectionOrder)
             : null;
         var quests = content.TryGetTable("quests.tsv", out var questsTable)
             ? LoadQuests(content, questsTable, questTypes, stableIds)
@@ -1763,7 +1775,8 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap, IDiabloN
         ComposedContent content,
         TsvTable table,
         AuthoritativeQuestTypeCatalog? questTypes,
-        StableContentIdCatalog stableIds)
+        StableContentIdCatalog stableIds,
+        AuthoritativeQuestPoolSelectionOrder questPoolSelectionOrder)
     {
         if (content.Manifest.Schema == DiabloContentSchema.Current)
             AuthoritativeQuestPoolCatalog.ValidateExternalizedProduction(table);
@@ -1771,7 +1784,8 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap, IDiabloN
             table.SourcePath,
             table.ToCanonicalTsv(),
             questTypes,
-            stableIds);
+            stableIds,
+            questPoolSelectionOrder);
     }
 
     private static AuthoritativeWorldMutationCatalog LoadWorldMutations(
