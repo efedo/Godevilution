@@ -456,6 +456,137 @@ public sealed class AuthoritativeQuestMetadataCatalogTests
             selectionOrder: undefinedOrder));
     }
 
+    [Fact]
+    public void AppliesNativeTsvPoolVectorsToShippedQuestStates()
+    {
+        var shipped = ReadShippedQuestMetadata();
+        var pools = AuthoritativeQuestPoolCatalog.LoadTsv(
+            shipped.QuestPoolsPath,
+            shipped.QuestPoolsText,
+            shipped.QuestTypes,
+            shipped.StableIds,
+            AuthoritativeQuestPoolSelectionOrder.NativeTsvRowsV1);
+        var contentRoot = FindBaseContentDirectory();
+        var stateText = File.ReadAllText(Path.Combine(contentRoot, "quest_states.tsv"));
+        var poolQuestIds = pools.Definitions.Select(entry => entry.QuestId).ToHashSet();
+        // Literal native vectors pin selected IDs and ordering; assertions below cover managed state application.
+        Assert.DoesNotContain(3006U, poolQuestIds);
+        Assert.DoesNotContain(3016U, poolQuestIds);
+
+        foreach (var vector in NativeSeedVectors) {
+            var quests = AuthoritativeQuestCatalog.LoadTsv(
+                "quest_states.tsv",
+                stateText,
+                shipped.QuestTypes,
+                shipped.StableIds);
+            Assert.Equal(
+                new uint[] { 3003U, 3004U, 3006U, 3007U, 3008U, 3012U, 3013U, 3014U, 3016U },
+                quests.Select(quest => quest.QuestId).OrderBy(questId => questId));
+            var initial = quests.ToDictionary(
+                quest => quest.QuestId,
+                quest => (Completed: quest.Completed, Active: quest.Active, Logged: quest.Logged));
+            var stateQuestIds = quests.Select(quest => quest.QuestId).ToHashSet();
+            var expectedUnavailableStateIds = vector.QuestIds
+                .Where(stateQuestIds.Contains)
+                .OrderBy(questId => questId)
+                .ToArray();
+
+            AuthoritativeQuestCatalog.ApplySinglePlayerPoolSelection(quests, pools, vector.Seed);
+
+            Assert.Equal(
+                expectedUnavailableStateIds,
+                quests.Where(quest => quest.Unavailable).Select(quest => quest.QuestId).OrderBy(questId => questId));
+            foreach (var quest in quests) {
+                var before = initial[quest.QuestId];
+                Assert.Equal(before.Completed, quest.Completed);
+                var expectedUnavailable = !before.Completed && vector.QuestIds.Contains(quest.QuestId);
+                Assert.Equal(expectedUnavailable, quest.Unavailable);
+                if (expectedUnavailable) {
+                    Assert.False(quest.Active);
+                    Assert.False(quest.Logged);
+                } else {
+                    Assert.Equal(before.Active, quest.Active);
+                    Assert.Equal(before.Logged, quest.Logged);
+                }
+            }
+
+            Assert.Contains(quests, quest => !poolQuestIds.Contains(quest.QuestId));
+            foreach (var nonPoolQuest in quests.Where(quest => !poolQuestIds.Contains(quest.QuestId))) {
+                var before = initial[nonPoolQuest.QuestId];
+                Assert.False(nonPoolQuest.Unavailable);
+                Assert.Equal(before.Active, nonPoolQuest.Active);
+                Assert.Equal(before.Logged, nonPoolQuest.Logged);
+            }
+        }
+    }
+
+    [Fact]
+    public void ClearsActiveAndLoggedFlagsForExcludedShippedQuest()
+    {
+        var shipped = ReadShippedQuestMetadata();
+        var pools = AuthoritativeQuestPoolCatalog.LoadTsv(
+            shipped.QuestPoolsPath,
+            shipped.QuestPoolsText,
+            shipped.QuestTypes,
+            shipped.StableIds,
+            AuthoritativeQuestPoolSelectionOrder.NativeTsvRowsV1);
+        var contentRoot = FindBaseContentDirectory();
+        var quests = AuthoritativeQuestCatalog.LoadTsv(
+            "quest_states.tsv",
+            File.ReadAllText(Path.Combine(contentRoot, "quest_states.tsv")),
+            shipped.QuestTypes,
+            shipped.StableIds);
+        var excludedQuest = Assert.Single(quests, quest => quest.QuestId == 3013U);
+        var nativeVector = NativeSeedVectors.Single(vector => vector.Seed == 0);
+
+        // The literal native vector pins the selected quest; this setup exercises managed flag clearing.
+        Assert.Contains(excludedQuest.QuestId, nativeVector.QuestIds);
+        Assert.False(excludedQuest.Completed);
+        Assert.False(excludedQuest.Active);
+        // The shipped initial row loads inactive; setters exercise clearing both flags.
+        excludedQuest.Active = true;
+        excludedQuest.Logged = true;
+
+        AuthoritativeQuestCatalog.ApplySinglePlayerPoolSelection(quests, pools, nativeVector.Seed);
+
+        Assert.True(excludedQuest.Unavailable);
+        Assert.False(excludedQuest.Active);
+        Assert.False(excludedQuest.Logged);
+    }
+    [Fact]
+    public void CompletedSelectedShippedQuestRetainsAvailabilityAndActivityFlags()
+    {
+        var shipped = ReadShippedQuestMetadata();
+        var pools = AuthoritativeQuestPoolCatalog.LoadTsv(
+            shipped.QuestPoolsPath,
+            shipped.QuestPoolsText,
+            shipped.QuestTypes,
+            shipped.StableIds,
+            AuthoritativeQuestPoolSelectionOrder.NativeTsvRowsV1);
+        var contentRoot = FindBaseContentDirectory();
+        var quests = AuthoritativeQuestCatalog.LoadTsv(
+            "quest_states.tsv",
+            File.ReadAllText(Path.Combine(contentRoot, "quest_states.tsv")),
+            shipped.QuestTypes,
+            shipped.StableIds);
+        var completedQuest = Assert.Single(quests, quest => quest.QuestId == 3013U);
+
+        Assert.Contains(3013U, NativeSeedVectors.Single(vector => vector.Seed == 0).QuestIds);
+        Assert.False(completedQuest.Completed);
+        // The constructor normalizes Active=false for completed quests.
+        // These setters deliberately exercise the managed completed=true, Active=true edge.
+        completedQuest.Completed = true;
+        completedQuest.Active = true;
+        completedQuest.Logged = true;
+
+        AuthoritativeQuestCatalog.ApplySinglePlayerPoolSelection(quests, pools, 0);
+
+        Assert.True(completedQuest.Completed);
+        Assert.False(completedQuest.Unavailable);
+        Assert.True(completedQuest.Active);
+        Assert.True(completedQuest.Logged);
+    }
+
     private static readonly SeedVector[] NativeSeedVectors = [
         new(0, [3013, 3008, 3009, 3011, 3005]),
         new(1, [3013, 3007, 3010, 3004, 3012]),

@@ -2,6 +2,10 @@
 
 Notable changes to this fork are recorded below.
 
+- 2026-10-08: Verify native TSV quest-pool vectors against shipped managed quest
+  states, including excluded flag clearing and completed/non-pool preservation.
+  All 54 focused cases pass; bootstrap adoption and save compatibility remain open.
+
 - 2026-10-08: Qualify headless exported one/four-client Performance with natural
   Release-host exit 0, joined/drained output and no retained temporary saves.
   Verify all settled rounds, five zero-drop captures, optimized physical client

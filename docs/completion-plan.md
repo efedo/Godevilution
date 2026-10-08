@@ -724,6 +724,10 @@ and public views stay sorted; 223 focused catalog/legacy-activation cases pass.
 Complete versioned runtime adoption and old-save/ruleset world reconstruction
 compatibility without changing the optional preview's base identity. Catalog
 vectors do not certify full generated-world parity or a new default policy.
+Three further managed facts apply the native vectors to shipped state rows,
+checking unavailable/active/logged transitions and completed/non-pool preservation.
+A fresh 19 metadata plus 35 quest catalog cases pass. This test-only evidence
+does not close bootstrap adoption or old-save/ruleset reconstruction compatibility.
 
 Exit: supported base and Hellfire campaign routes complete in Godot, and the
 coverage ledger has no unsupported required gameplay/world behavior. Each

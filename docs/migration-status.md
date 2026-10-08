@@ -181,6 +181,26 @@ logical TSV identifiers changed before this fresh passing run.
 Catalog-vector coverage leaves versioned gameplay adoption, old-save/ruleset
 world reconstruction and full generated-world parity open. Overall stays 35%.
 
+Three additional facts now apply the eight literal native vectors to actual
+shipped managed quest-state rows. They pin the nine authored state IDs, preserve
+non-pool quests and completed state, and verify that excluded incomplete quests
+become unavailable with active/logged flags cleared. The flag setup explicitly
+activates the shipped initially inactive quest; completed-state coverage uses
+public setters to exercise the managed exemption. Native vectors establish
+selection order, not native state/world or save reconstruction parity.
+
+A fresh Debug rebuild passes exactly 19 metadata and 35 quest catalog cases,
+54 total with no failures/skips. Seven recorded command identities are absent;
+2,813 working inputs are accounted for and twenty protected hashes are stable.
+Only the existing held-file xUnit2013 warning remains. Original proof is
+`.local/managed-quest-state-application-verification-a5ca136d6b7b4b04b43a50c01e2d64b2/root-verification.json`,
+SHA `BC8110C6B7F88EAEB151FFCDE7CF0A59E3AA869FCFCA8C1E7226959F28C55517`;
+root audit `.local/quest-state-r4-original-run-audit.json` is
+`36487C1A9572DB17278F698BE6632D915F1449EF0A37743D5A571C631EF89CF6`.
+The earlier 18-pass/one-fail fixture run remains retained; it failed before
+selection because the fixture assumed an initially active quest. No production,
+bootstrap, module identity, default policy, save format or profile changed.
+
 Explicit-cohort TCP Town Portal recovery passes in
 `.local/cohort-town-portal-restart-79bb820d5c71458799cf60c5b8289754`.
 Two real clients use ordinary Warrior/Rogue resources and existing town/portal
