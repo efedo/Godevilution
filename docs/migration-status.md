@@ -97,6 +97,13 @@ This closes scoped graceful one/four-client Performance shutdown and save-file
 cleanup only; normal cohort adoption, full world/RNG/inventory parity, rendered/
 native moved-position Resume and broader release gates remain open. Overall 35%.
 
+The connection-observation API retains credential-free ServerHello fields and
+a defensive clone of the first decoded wire snapshot for the latest attempt,
+before initial snapshot admission. The 48 focused transport/reconnect cases and
+headless Godot compile pass after integration. AdmissionCompleted records past
+handshake success; consumers must also bind the current attempt and connection
+state. This does not qualify a cold restore or close the M0 acceptance gate.
+
 A fresh committed-source exported graceful Legacy Create/Resume passes in
 `.local/godot-exported-recovery-graceful-run-44dac60a5d644d01989813f5a2cbe153`.
 It archives HEAD `be8118de7` (2,796 inputs), runs genuine headless ExportRelease

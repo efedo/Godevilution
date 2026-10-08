@@ -2,6 +2,10 @@
 
 Notable changes to this fork are recorded below.
 
+- 2026-10-08: Add credential-free first-wire connection observations with defensive
+  snapshot copies and per-attempt admission state. Verify transport/reconnect
+  behavior and the Godot bridge; cold-restore acceptance remains open.
+
 - 2026-10-08: Add explicit Cathedral object-pool prefix discovery with unchanged
   strict scanner/compiler behavior. Verify 75 focused managed cases and native
   capacity boundaries plus full/shuffled L1 regressions; preserve lighting,

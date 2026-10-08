@@ -20,6 +20,9 @@ public sealed class AuthoritativeClient : IAsyncDisposable
     private readonly SemaphoreSlim writeLock = new(1, 1);
     private readonly SemaphoreSlim pollLock = new(1, 1);
     private readonly object pendingLock = new();
+    private readonly object initialConnectionObservationLock = new();
+    private long initialConnectionAttemptEpoch;
+    private AuthoritativeInitialConnectionObservation? initialConnectionObservation;
     private readonly CancellationTokenSource lifetime = new();
     private readonly Stopwatch clock = Stopwatch.StartNew();
     private readonly AuthoritativeCommandClock commandClock = new();
@@ -51,6 +54,16 @@ public sealed class AuthoritativeClient : IAsyncDisposable
     private const int MaximumCalibrationProbeAttempts = 3;
 
     public string SessionToken { get; private set; } = string.Empty;
+
+    /** Credential-free handshake and first decoded wire snapshot for the current attempt. */
+    public AuthoritativeInitialConnectionObservation? InitialConnectionObservation
+    {
+        get
+        {
+            lock (initialConnectionObservationLock)
+                return initialConnectionObservation;
+        }
+    }
 
     /** Optional bounded, read-only diagnostic capture; null keeps tracing inert. */
     public AuthoritativeClientCommandTimingRecorder? CommandTimingRecorder { get; init; }
@@ -105,6 +118,7 @@ public sealed class AuthoritativeClient : IAsyncDisposable
     {
         if (IsConnected)
             throw new InvalidOperationException("The authoritative client is already connected.");
+        var observationEpoch = BeginInitialConnectionObservation();
         if (!ClientConnectionOptions.TryValidateEndpoint(options.Host, options.Port, out var endpointError))
             throw new InvalidOperationException(endpointError);
         if (string.IsNullOrWhiteSpace(effectiveContentManifestHash))
@@ -158,6 +172,7 @@ public sealed class AuthoritativeClient : IAsyncDisposable
                 throw new InvalidDataException("The first server response must be ServerHello.");
             var identityRefreshForResumedSession = !string.IsNullOrWhiteSpace(requestedResumeToken)
                 && hello.ServerHello.SessionToken == requestedResumeToken;
+            CaptureInitialServerHello(observationEpoch, hello.ServerHello, identityRefreshForResumedSession);
             if (hello.ServerHello.ProtocolSchemaVersion != options.ProtocolSchemaVersion
                 || (!identityRefreshForResumedSession
                     && hello.ServerHello.ContentManifestHash != effectiveContentManifestHash)
@@ -193,6 +208,7 @@ public sealed class AuthoritativeClient : IAsyncDisposable
                 throw new InvalidDataException(initialSnapshot.Error.Detail);
             if (initialSnapshot.PayloadCase != Envelope.PayloadOneofCase.Snapshot)
                 throw new InvalidDataException("The second server response must be an authoritative snapshot.");
+            CaptureFirstWireSnapshot(observationEpoch, initialSnapshot.Snapshot);
             ValidateInitialSnapshotIdentity(initialSnapshot.Snapshot);
             // Do not renumber pending retries. Only new intents advance beyond
             // the authoritative ledger restored by a fresh host/client process.
@@ -214,7 +230,9 @@ public sealed class AuthoritativeClient : IAsyncDisposable
             receiveTask = Task.Run(
                 () => ReceiveLoopAsync(connectedStream, connectionLifetime.Token, connectionGeneration),
                 CancellationToken.None);
+            CompleteInitialConnectionAdmission(observationEpoch, admitted: true);
         } catch {
+            CompleteInitialConnectionAdmission(observationEpoch, admitted: false);
             await CloseTransportAsync();
             throw;
         }
@@ -710,6 +728,62 @@ public sealed class AuthoritativeClient : IAsyncDisposable
         effectiveContentManifestHash = snapshot.ContentManifestHash;
         effectiveRulesetIdentityHash = snapshot.RulesetIdentityHash;
         return true;
+    }
+
+    private long BeginInitialConnectionObservation()
+    {
+        lock (initialConnectionObservationLock) {
+            var epoch = checked(initialConnectionAttemptEpoch + 1);
+            initialConnectionAttemptEpoch = epoch;
+            initialConnectionObservation = new AuthoritativeInitialConnectionObservation(epoch);
+            return epoch;
+        }
+    }
+
+    private void CaptureInitialServerHello(
+        long epoch,
+        ServerHello hello,
+        bool resumedSessionMatched)
+    {
+        lock (initialConnectionObservationLock) {
+            if (initialConnectionAttemptEpoch != epoch
+                || initialConnectionObservation is not { ServerHello: null } observation)
+                return;
+
+            initialConnectionObservation = observation.WithServerHello(
+                new AuthoritativeServerHelloObservation(
+                    hello.ServerBuildId,
+                    hello.ProtocolSchemaVersion,
+                    hello.ContentManifestHash,
+                    hello.RulesetIdentityHash,
+                    hello.TickRateHz,
+                    hello.GameMode,
+                    hello.CommandSchedulingMode,
+                    hello.LastClientSequence,
+                    resumedSessionMatched));
+        }
+    }
+
+    private void CaptureFirstWireSnapshot(long epoch, Snapshot snapshot)
+    {
+        lock (initialConnectionObservationLock) {
+            if (initialConnectionAttemptEpoch != epoch
+                || initialConnectionObservation is not { HasFirstWireSnapshot: false } observation)
+                return;
+
+            initialConnectionObservation = observation.WithFirstWireSnapshot(snapshot);
+        }
+    }
+
+    private void CompleteInitialConnectionAdmission(long epoch, bool admitted)
+    {
+        lock (initialConnectionObservationLock) {
+            if (initialConnectionAttemptEpoch != epoch
+                || initialConnectionObservation is not { } observation)
+                return;
+
+            initialConnectionObservation = observation.WithAdmissionCompleted(admitted);
+        }
     }
 
     /**

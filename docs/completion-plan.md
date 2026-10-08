@@ -86,6 +86,12 @@ M4. M5 is the final removal gate, not a reason to postpone replacement work.
 
 ## M0: Reproducible launch and acceptance baseline
 
+The client retains credential-free ServerHello fields and a defensive clone of
+the first decoded wire snapshot for the latest connection attempt. Admission is
+recorded separately; consumers must bind the current attempt and connection state.
+Focused transport/reconnect checks and the headless Godot compile verify this
+observation API only. Actual cold restore and broader M0 acceptance remain open.
+
 1. Preserve the zero-argument native and base Godot launchers, plus the isolated
    optional Godot preview and two-client multiplayer launchers. Make Godot's launcher build the
    current server and client assembly, validate handshake mode and identities,
