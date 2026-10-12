@@ -20,7 +20,8 @@ public partial class SessionAcceptance
         if (captureResumeBaseline) {
             Require(participants == 1 && slot == 1,
                 "PerformanceCreate requires one single-player participant in slot one.");
-            Require(System.Environment.GetEnvironmentVariable("GODEVILUTION_COMMAND_TIMING_TRACE") is null,
+            Require(!PerformanceResumeStateContract.IsCommandTimingTraceEnabled(
+                    System.Environment.GetEnvironmentVariable("GODEVILUTION_COMMAND_TIMING_TRACE")),
                 "PerformanceCreate requires command timing tracing to remain disabled.");
         }
         var sharedDirectory = System.Environment.GetEnvironmentVariable(

@@ -337,6 +337,17 @@ public sealed class PerformanceResumeStateContractTests
         }
     }
 
+    [Theory]
+    [InlineData(null, false)]
+    [InlineData("", false)]
+    [InlineData("0", false)]
+    [InlineData("true", false)]
+    [InlineData("01", false)]
+    [InlineData("1", true)]
+    public void CommandTimingTraceIsEnabledOnlyByLiteralOne(string? value, bool expected)
+    {
+        Assert.Equal(expected, PerformanceResumeStateContract.IsCommandTimingTraceEnabled(value));
+    }
     private static PerformanceResumeBaseline CreateBaseline()
         => new(
             2,

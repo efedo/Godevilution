@@ -11,7 +11,8 @@ public partial class SessionAcceptance
     {
         Require(System.Environment.GetEnvironmentVariable("GODEVILUTION_ACCEPTANCE_PHASE") == "PerformanceResume",
             "The Performance resume handler requires its explicit acceptance phase.");
-        Require(System.Environment.GetEnvironmentVariable("GODEVILUTION_COMMAND_TIMING_TRACE") is null,
+        Require(!PerformanceResumeStateContract.IsCommandTimingTraceEnabled(
+                System.Environment.GetEnvironmentVariable("GODEVILUTION_COMMAND_TIMING_TRACE")),
             "PerformanceResume requires command timing tracing to remain disabled.");
         Require(ReadPerformanceParticipants() == 1 && ReadPerformanceSlot(1) == 1,
             "PerformanceResume requires one single-player participant in slot one.");

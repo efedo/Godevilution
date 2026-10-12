@@ -70,6 +70,30 @@ public sealed class CommandTimingLauncherContractTests
             Assert.DoesNotContain("CommandTimingTrace", ReadSource(normal), StringComparison.Ordinal);
     }
 
+    [Fact]
+    public void PerformanceHandlersShareTheExactCommandTimingOptInPredicate()
+    {
+        var create = ReadSource("godot/Devilution.Client/Acceptance/SessionAcceptance.Performance.cs");
+        var resume = ReadSource("godot/Devilution.Client/Acceptance/SessionAcceptance.PerformanceResume.cs");
+        var contract = ReadSource("godot/Devilution.Client/Acceptance/PerformanceResumeStateContract.cs");
+        var timing = ReadSource("godot/Devilution.Client/Acceptance/SessionAcceptance.CommandTiming.cs");
+
+        const string predicate = "PerformanceResumeStateContract.IsCommandTimingTraceEnabled(";
+        Assert.Contains(predicate, create, StringComparison.Ordinal);
+        Assert.Contains(predicate, resume, StringComparison.Ordinal);
+        Assert.Contains(
+            "string.Equals(value, \"1\", StringComparison.Ordinal)",
+            contract,
+            StringComparison.Ordinal);
+        Assert.Contains(
+            "GetEnvironmentVariable(\"GODEVILUTION_COMMAND_TIMING_TRACE\") != \"1\"",
+            timing,
+            StringComparison.Ordinal);
+        Assert.DoesNotContain(
+            "GetEnvironmentVariable(\"GODEVILUTION_COMMAND_TIMING_TRACE\") is null",
+            create + resume,
+            StringComparison.Ordinal);
+    }
     private static string ReadSource(string relativePath)
     {
         var configured = Environment.GetEnvironmentVariable("GODEVILUTION_REPOSITORY_ROOT");

@@ -92,6 +92,8 @@ internal sealed record PerformanceResumeLegalControl(
 /** Closed scalar schema and independent admission/command checks for fresh resume. */
 internal static class PerformanceResumeStateContract
 {
+    public static bool IsCommandTimingTraceEnabled(string? value)
+        => string.Equals(value, "1", StringComparison.Ordinal);
     private static readonly JsonSerializerOptions JsonOptions = new() {
         PropertyNameCaseInsensitive = false,
         UnmappedMemberHandling = JsonUnmappedMemberHandling.Disallow,

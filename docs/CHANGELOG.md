@@ -2,6 +2,10 @@
 
 Notable changes to this fork are recorded below.
 
+- 2026-10-11: Match PerformanceCreate/PerformanceResume trace guards to the existing
+  literal-1 opt-in, allowing cleared and disabled values. Cover both handlers and
+  enabled-trace refusal with regression tests.
+
 - 2026-10-11: Include the admitted server identity in PerformanceResume evidence
   so the launcher can verify its mode, content and ruleset after cold resume.
 

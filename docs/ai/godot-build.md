@@ -981,6 +981,8 @@ Resume evidence includes the admitted server's mode, content and ruleset hashes;
 the launcher compares them with the staged session identity.
 The baseline-path option is Resume-only. These phases require one Legacy
 single-player participant, with command timing trace and preview overrides disabled.
+Command timing tracing is enabled only by the exact value "1"; cleared, empty
+and other values remain disabled for both phases.
 Focused contract/transport and launcher tests pass; the fresh exported pair remains
 an application acceptance gate. The existing `Performance` phase and default
 launch profiles retain their behavior.
