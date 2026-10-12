@@ -7,7 +7,7 @@ namespace Devilution.Server.Tests;
 public sealed class CommandTimingLauncherContractTests
 {
     [Theory]
-    [InlineData("godot/run-local-client.ps1", "GodotExecutable,Port,CharacterClassId,CharacterName,Headless,QuitAfterSeconds,SessionDirectory,PersistenceMode,PreviewContent,PortalPreviewContent,LifecyclePreviewContent,Multiplayer,CathedralProfileDirectory,CathedralDepthProfileDirectory,CathedralDoorProfileDirectory,PerformanceParticipants,AcceptancePhase", "CommandTimingTrace,Automated")]
+    [InlineData("godot/run-local-client.ps1", "GodotExecutable,Port,CharacterClassId,CharacterName,Headless,QuitAfterSeconds,SessionDirectory,PersistenceMode,PreviewContent,PortalPreviewContent,LifecyclePreviewContent,Multiplayer,CathedralProfileDirectory,CathedralDepthProfileDirectory,CathedralDoorProfileDirectory,PerformanceParticipants,AcceptancePhase", "CommandTimingTrace,Automated,PerformanceResumeBaselinePath")]
     [InlineData("tools/test-godot-session.ps1", "GodotExecutable,PersistenceMode,Visible,Journey,TownLoop,Lifecycle,Multiplayer,MultiplayerRecovery,MultiplayerPendingRecovery,CathedralProfileDirectory,CathedralDepthProfileDirectory,CathedralDoorProfileDirectory,PresentationPackProfile", "CommandTimingTrace,Cooperative")]
     public void TraceSwitchPreservesExistingPositionalParameterOrder(string path, string existingParameters, string appendedParameters)
     {

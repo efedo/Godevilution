@@ -86,6 +86,13 @@ M4. M5 is the final removal gate, not a reason to postpone replacement work.
 
 ## M0: Reproducible launch and acceptance baseline
 
+Dedicated single-client `PerformanceCreate`/`PerformanceResume` routes now preserve
+the established five-warm-up/fifteen-measured workload, capture a stopped baseline,
+validate the current admitted first wire before resumed input, and require exact
+next-sequence adjacent movement settlement. Focused contracts and launcher tests
+verify this route. Actual fresh exported Create/fresh-host Resume acceptance remains
+open; default profiles, broader restore/world parity and GUI gates are unchanged.
+
 The client retains credential-free ServerHello fields and a defensive clone of
 the first decoded wire snapshot for the latest connection attempt. Admission is
 recorded separately; consumers must bind the current attempt and connection state.

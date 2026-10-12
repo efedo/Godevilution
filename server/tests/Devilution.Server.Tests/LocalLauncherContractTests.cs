@@ -369,6 +369,41 @@ public sealed class LocalLauncherContractTests
     }
 
     [Fact]
+    public void PerformanceCreateAndResumeUseDedicatedSinglePlayerRoutes()
+    {
+        var root = FindRepositoryRoot();
+        var launcher = File.ReadAllText(Path.Combine(root, "godot/run-local-client.ps1"));
+
+        Assert.Contains("'PerformanceCreate', 'PerformanceResume'", launcher, StringComparison.Ordinal);
+        Assert.Contains("$performanceCreate = $AcceptancePhase -eq 'PerformanceCreate'", launcher, StringComparison.Ordinal);
+        Assert.Contains("$performanceResume = $AcceptancePhase -eq 'PerformanceResume'", launcher, StringComparison.Ordinal);
+        Assert.Contains("$performance = $AcceptancePhase -in @('Performance', 'PerformanceCreate')", launcher, StringComparison.Ordinal);
+        Assert.Contains("PerformanceCreate and PerformanceResume require one Legacy single-player participant in slot one, base content, and no command timing trace.", launcher, StringComparison.Ordinal);
+        Assert.Contains("$clientEnvironment['GODEVILUTION_PERFORMANCE_SHARED_DIRECTORY'] = $SessionDirectory", launcher, StringComparison.Ordinal);
+        Assert.Contains("$clientEnvironment['GODEVILUTION_PERFORMANCE_RESUME_BASELINE_PATH'] = $PerformanceResumeBaselinePath", launcher, StringComparison.Ordinal);
+        Assert.Contains("if ($performanceResume)", launcher, StringComparison.Ordinal);
+        Assert.Contains("$clientEnvironment['GODEVILUTION_PERFORMANCE_PARTICIPANTS'] = '1'", launcher, StringComparison.Ordinal);
+        Assert.Contains("$clientEnvironment['GODEVILUTION_LOCAL_PLAYER'] = '1'", launcher, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void PerformanceResumeBaselineIsResumeOnlyAndEvidenceMatchesHandlers()
+    {
+        var root = FindRepositoryRoot();
+        var launcher = File.ReadAllText(Path.Combine(root, "godot/run-local-client.ps1"));
+
+        Assert.Contains("[string]$PerformanceResumeBaselinePath", launcher, StringComparison.Ordinal);
+        Assert.Contains("[IO.Path]::IsPathFullyQualified($PerformanceResumeBaselinePath)", launcher, StringComparison.Ordinal);
+        Assert.Contains("PerformanceResumeBaselinePath is only valid for PerformanceResume.", launcher, StringComparison.Ordinal);
+        Assert.Contains("'GODEVILUTION_PERFORMANCE_PARTICIPANTS', 'GODEVILUTION_PERFORMANCE_SHARED_DIRECTORY', 'GODEVILUTION_PERFORMANCE_RESUME_BASELINE_PATH',", launcher, StringComparison.Ordinal);
+        Assert.Contains("'PerformanceCreate' { 'performance.json' }", launcher, StringComparison.Ordinal);
+        Assert.Contains("'PerformanceResume' { 'performance-resume.json' }", launcher, StringComparison.Ordinal);
+        Assert.Contains("$expectedPerformancePhase = if ($performanceCreate) { 'PerformanceCreate' } else { 'Performance' }", launcher, StringComparison.Ordinal);
+        Assert.Contains("$workload.Phase -ne $expectedPerformancePhase", launcher, StringComparison.Ordinal);
+        Assert.Contains("Performance acceptance requires a fresh empty session directory.", launcher, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void GodotPerformanceWorkloadIsOptInAndPreservesOrdinaryProfiles()
     {
         var root = FindRepositoryRoot();

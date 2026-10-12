@@ -967,6 +967,22 @@ its saves/bookmarks still contain credentials.
 
 ## Actual Godot client performance baseline
 
+Use `godot/run-local-client.ps1` for the explicit single-client phases. Pass `-Headless -Automated
+-PersistenceMode legacy -PerformanceParticipants 1 -AcceptancePhase PerformanceCreate`
+with a fresh absolute `-SessionDirectory`. It keeps five warm-up/fifteen measured
+moves and writes `performance-resume-baseline.json` after recording stops.
+Then launch `PerformanceResume` with the same session and the absolute baseline
+as `-PerformanceResumeBaselinePath`. The ordinary persisted Resume form must bind
+the current admitted connection and match its first raw wire snapshot before input;
+one safe adjacent keyboard move must receive the exact next client sequence and
+settle without changing restored identity, resources or attributes. Its result is
+`performance-resume.json`; Resume performs no Performance frame capture.
+The baseline-path option is Resume-only. These phases require one Legacy
+single-player participant, with command timing trace and preview overrides disabled.
+Focused contract/transport and launcher tests pass; the fresh exported pair remains
+an application acceptance gate. The existing `Performance` phase and default
+launch profiles retain their behavior.
+
 Performance markers are published by closing a temporary file then moving it
 to the final name. Readers permit shared read/write/delete access so the Windows
 rename handle can coexist with a read; they retain legacy UTF8/BOM decoding and

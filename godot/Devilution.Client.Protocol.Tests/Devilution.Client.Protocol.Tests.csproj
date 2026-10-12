@@ -24,6 +24,8 @@
              Link="Acceptance/PerformanceWorkloadObservations.cs" />
     <Compile Include="../Devilution.Client/Acceptance/PerformanceMarkerFileReader.cs"
              Link="Acceptance/PerformanceMarkerFileReader.cs" />
+    <Compile Include="../Devilution.Client/Acceptance/PerformanceResumeStateContract.cs"
+             Link="Acceptance/PerformanceResumeStateContract.cs" />
     <Compile Include="../Devilution.Client/Acceptance/AcceptanceAckLossRelay.cs"
              Link="Acceptance/AcceptanceAckLossRelay.cs" />
     <Compile Include="../Devilution.Client/PresentationAssets/PresentationAssetManifest.cs"

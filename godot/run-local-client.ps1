@@ -16,9 +16,10 @@ param(
     [string]$CathedralDepthProfileDirectory,
     [string]$CathedralDoorProfileDirectory,
     [ValidateSet(1, 4)] [int]$PerformanceParticipants = 1,
-    [ValidateSet('Create', 'Resume', 'Recovery', 'Journey', 'JourneyResume', 'TownLoop', 'TownLoopResume', 'Lifecycle', 'LifecycleResume', 'MultiplayerCreate', 'MultiplayerResume', 'MultiplayerRecovery', 'MultiplayerPendingRecovery', 'CooperativeJourney', 'CooperativeResume', 'Performance', 'CathedralJourney', 'CathedralResume', 'CathedralDepthJourney', 'CathedralDepthResume', 'CathedralDoorJourney', 'CathedralDoorResume')] [string]$AcceptancePhase,
+    [ValidateSet('Create', 'Resume', 'Recovery', 'Journey', 'JourneyResume', 'TownLoop', 'TownLoopResume', 'Lifecycle', 'LifecycleResume', 'MultiplayerCreate', 'MultiplayerResume', 'MultiplayerRecovery', 'MultiplayerPendingRecovery', 'CooperativeJourney', 'CooperativeResume', 'Performance', 'PerformanceCreate', 'PerformanceResume', 'CathedralJourney', 'CathedralResume', 'CathedralDepthJourney', 'CathedralDepthResume', 'CathedralDoorJourney', 'CathedralDoorResume')] [string]$AcceptancePhase,
     [switch]$CommandTimingTrace,
-    [switch]$Automated
+    [switch]$Automated,
+    [string]$PerformanceResumeBaselinePath
 )
 
 $ErrorActionPreference = 'Stop'
@@ -29,7 +30,28 @@ if ($CommandTimingTrace -and [string]::IsNullOrWhiteSpace($AcceptancePhase)) {
     throw 'Command timing traces require an explicit isolated acceptance phase.'
 }
 $PersistenceMode = $PersistenceMode.ToLowerInvariant()
-$performance = $AcceptancePhase -eq 'Performance'
+$performanceCreate = $AcceptancePhase -eq 'PerformanceCreate'
+$performanceResume = $AcceptancePhase -eq 'PerformanceResume'
+$performance = $AcceptancePhase -in @('Performance', 'PerformanceCreate')
+if ($performanceCreate -or $performanceResume) {
+    if ($PerformanceParticipants -ne 1 -or $Multiplayer -or $CommandTimingTrace -or $PersistenceMode -cne 'legacy' -or
+        $PreviewContent -or $PortalPreviewContent -or $LifecyclePreviewContent -or
+        $CharacterClassId -ge 0 -or -not [string]::IsNullOrWhiteSpace($CharacterName)) {
+        throw 'PerformanceCreate and PerformanceResume require one Legacy single-player participant in slot one, base content, and no command timing trace.'
+    }
+}
+if ($performanceResume) {
+    if ([string]::IsNullOrWhiteSpace($PerformanceResumeBaselinePath) -or
+        -not [IO.Path]::IsPathFullyQualified($PerformanceResumeBaselinePath)) {
+        throw 'PerformanceResume requires an explicit absolute PerformanceCreate baseline path.'
+    }
+    if (-not (Test-Path -LiteralPath $PerformanceResumeBaselinePath -PathType Leaf)) {
+        throw 'PerformanceResume requires an existing PerformanceCreate baseline file.'
+    }
+    $PerformanceResumeBaselinePath = (Resolve-Path -LiteralPath $PerformanceResumeBaselinePath -ErrorAction Stop).ProviderPath
+} elseif (-not [string]::IsNullOrWhiteSpace($PerformanceResumeBaselinePath)) {
+    throw 'PerformanceResumeBaselinePath is only valid for PerformanceResume.'
+}
 if ($CommandTimingTrace -and $performance) {
     throw 'Command timing diagnostics cannot be combined with performance measurement.'
 }
@@ -177,7 +199,7 @@ $environmentNames = @('DEVILUTION_SERVER_HOST', 'DEVILUTION_SERVER_PORT', 'DEVIL
     'GODEVILUTION_ACCEPTANCE_PHASE', 'GODEVILUTION_ACCEPTANCE_DIRECTORY', 'GODEVILUTION_QUIT_AFTER_SECONDS',
     'GODEVILUTION_PERSISTENCE_MODE', 'GODEVILUTION_COMMAND_TIMING_TRACE',
     'GODEVILUTION_LOCAL_PLAYER', 'GODEVILUTION_PORTAL_PREVIEW', 'GODEVILUTION_LIFECYCLE_PREVIEW', 'GODEVILUTION_CATHEDRAL_PROFILE', 'GODEVILUTION_CATHEDRAL_DEPTH_PROFILE', 'GODEVILUTION_CATHEDRAL_DOOR_PROFILE',
-    'GODEVILUTION_PERFORMANCE_PARTICIPANTS', 'GODEVILUTION_PERFORMANCE_SHARED_DIRECTORY',
+    'GODEVILUTION_PERFORMANCE_PARTICIPANTS', 'GODEVILUTION_PERFORMANCE_SHARED_DIRECTORY', 'GODEVILUTION_PERFORMANCE_RESUME_BASELINE_PATH',
     'GODEVILUTION_CLIENT_ASSEMBLY_IMAGE_DIRECTORY',
     'GODEVILUTION_CLIENT_PERFORMANCE_OUTPUT', 'GODEVILUTION_CLIENT_PERFORMANCE_WARMUP_SECONDS',
     'GODEVILUTION_CLIENT_PERFORMANCE_DURATION_SECONDS', 'GODEVILUTION_CLIENT_PERFORMANCE_MAX_SAMPLES')
@@ -1879,6 +1901,11 @@ try {
             $clientEnvironment['GODEVILUTION_CLIENT_PERFORMANCE_DURATION_SECONDS'] = '60'
             $clientEnvironment['GODEVILUTION_CLIENT_PERFORMANCE_MAX_SAMPLES'] = '4096'
         }
+        if ($performanceResume) {
+            $clientEnvironment['GODEVILUTION_LOCAL_PLAYER'] = '1'
+            $clientEnvironment['GODEVILUTION_PERFORMANCE_PARTICIPANTS'] = '1'
+            $clientEnvironment['GODEVILUTION_PERFORMANCE_RESUME_BASELINE_PATH'] = $PerformanceResumeBaselinePath
+        }
         $godotArguments = '--path "{0}" --log-file "{1}"' -f $clientProject, $clientLog
         if ($Headless) { $godotArguments += ' --headless' }
         if ($performance) { $godotArguments += ' --max-fps 60' }
@@ -1887,7 +1914,12 @@ try {
             $clientEnvironment['GODEVILUTION_ACCEPTANCE_PHASE'] = $AcceptancePhase
             $clientEnvironment['GODEVILUTION_ACCEPTANCE_DIRECTORY'] = $clientDirectory
             $godotArguments += ' --scene res://Acceptance/SessionAcceptance.tscn'
-            $clientEvidence = Join-Path $clientDirectory ($AcceptancePhase.ToLowerInvariant() + '.json')
+            $evidenceFileName = switch ($AcceptancePhase) {
+                'PerformanceCreate' { 'performance.json' }
+                'PerformanceResume' { 'performance-resume.json' }
+                default { $AcceptancePhase.ToLowerInvariant() + '.json' }
+            }
+            $clientEvidence = Join-Path $clientDirectory $evidenceFileName
             if (Test-Path -LiteralPath $clientEvidence) { throw "Use a fresh acceptance directory; evidence already exists at $clientEvidence" }
             if ($Multiplayer -and (Get-ChildItem -LiteralPath $clientDirectory -Filter ($AcceptancePhase.ToLowerInvariant() + '-*.json') -File)) {
                 throw 'Multiplayer acceptance requires fresh phase markers, not a partially completed run.'
@@ -2131,12 +2163,13 @@ try {
             }
         }
         if ($performance) {
+            $expectedPerformancePhase = if ($performanceCreate) { 'PerformanceCreate' } else { 'Performance' }
             $summaries = @()
             $slot = 0
             foreach ($startedClient in $startedClients) {
                 $slot++
                 $workload = Get-Content -LiteralPath $startedClient.Evidence -Raw | ConvertFrom-Json
-                if ($workload.Phase -ne 'Performance' -or $workload.ParticipantCount -ne $clientCount -or
+                if ($workload.Phase -ne $expectedPerformancePhase -or $workload.ParticipantCount -ne $clientCount -or
                     $workload.Slot -ne $slot -or $workload.WarmupRounds -ne 5 -or $workload.MeasuredRounds -ne 15) {
                     throw 'The Godot performance workload did not complete all settled movement rounds.'
                 }

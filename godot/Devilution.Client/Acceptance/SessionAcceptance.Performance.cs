@@ -13,10 +13,16 @@ public partial class SessionAcceptance
     private static readonly TimeSpan PerformanceMeasurementTail = TimeSpan.FromSeconds(1.25);
     private static readonly TimeSpan PerformanceDeadline = TimeSpan.FromSeconds(120);
 
-    private async Task RunPerformanceAsync(string directory)
+    private async Task RunPerformanceAsync(string directory, bool captureResumeBaseline = false)
     {
         var participants = ReadPerformanceParticipants();
         var slot = ReadPerformanceSlot(participants);
+        if (captureResumeBaseline) {
+            Require(participants == 1 && slot == 1,
+                "PerformanceCreate requires one single-player participant in slot one.");
+            Require(System.Environment.GetEnvironmentVariable("GODEVILUTION_COMMAND_TIMING_TRACE") is null,
+                "PerformanceCreate requires command timing tracing to remain disabled.");
+        }
         var sharedDirectory = System.Environment.GetEnvironmentVariable(
             "GODEVILUTION_PERFORMANCE_SHARED_DIRECTORY")
             ?? throw new InvalidOperationException("A shared performance directory is required.");
@@ -186,7 +192,7 @@ public partial class SessionAcceptance
                 "performance.json",
                 new PerformanceEvidence(
                     true,
-                    "Performance",
+                    captureResumeBaseline ? "PerformanceCreate" : "Performance",
                     publicIdentity.Mode,
                     publicIdentity.ContentHash,
                     publicIdentity.RulesetHash,
@@ -213,6 +219,8 @@ public partial class SessionAcceptance
                 participants,
                 publicIdentity,
                 expectedSlot: null);
+            if (captureResumeBaseline)
+                WritePerformanceResumeBaseline(main, directory, playerName, publicIdentity);
             if (!string.Equals(DisplayServer.GetName(), "headless", StringComparison.OrdinalIgnoreCase))
                 await Capture(System.IO.Path.Combine(directory, "performance-view.png"));
             var completionPrefix = string.Equals(DisplayServer.GetName(), "headless", StringComparison.OrdinalIgnoreCase)
@@ -266,6 +274,104 @@ public partial class SessionAcceptance
                 player.PositionX + (key == Key.Right ? 1 : 0),
                 player.PositionY + (key == Key.Down ? 1 : 0));
         }
+    }
+
+    private static void WritePerformanceResumeBaseline(
+        Main main,
+        string directory,
+        string playerName,
+        PerformanceIdentity expectedIdentity)
+    {
+        Require(main.TransportConnected && main.ObservedPendingCommandCount == 0,
+            "PerformanceCreate must finish on a connected session with no pending command.");
+        RequirePerformanceIdentityStable(main, expectedIdentity, GameMode.SinglePlayer);
+
+        var connection = main.ObservedInitialConnection
+            ?? throw new InvalidDataException("PerformanceCreate has no current connection observation.");
+        var hello = connection.ServerHello
+            ?? throw new InvalidDataException("PerformanceCreate has no public ServerHello observation.");
+        Require(connection.AttemptEpoch > 0
+            && connection.AdmissionCompleted
+            && ReferenceEquals(main.ObservedInitialConnection, connection)
+            && main.TransportConnected
+            && connection.FirstWireSnapshot is not null,
+            "PerformanceCreate must bind its baseline to the current admitted connection attempt.");
+        var helloIdentity = new PerformanceResumeServerIdentity(
+            hello.ServerBuildId,
+            hello.ProtocolSchemaVersion,
+            hello.ContentManifestHash,
+            hello.RulesetIdentityHash,
+            hello.TickRateHz,
+            hello.GameMode.ToString(),
+            hello.CommandSchedulingMode.ToString());
+        var expectedHelloIdentity = new PerformanceResumeServerIdentity(
+            expectedIdentity.BuildId,
+            expectedIdentity.ProtocolSchemaVersion,
+            expectedIdentity.ContentHash,
+            expectedIdentity.RulesetHash,
+            expectedIdentity.TickRateHz,
+            expectedIdentity.Mode,
+            CommandSchedulingMode.ClockGated.ToString());
+        Require(helloIdentity == expectedHelloIdentity
+            && hello.GameMode == GameMode.SinglePlayer
+            && hello.CommandSchedulingMode == CommandSchedulingMode.ClockGated
+            && !hello.ResumedSessionMatched,
+            "PerformanceCreate public ServerHello identity or scheduling mode changed.");
+
+        var snapshot = main.ObservedSnapshot
+            ?? throw new InvalidDataException("PerformanceCreate has no final authoritative snapshot.");
+        Require(snapshot.Players.Count == 1,
+            "PerformanceCreate must finish with exactly one authoritative participant.");
+        var player = FindPerformancePlayer(snapshot, playerName);
+        var result = main.ObservedCommandResult
+            ?? throw new InvalidDataException("PerformanceCreate has no final accepted command receipt.");
+        Require(main.ObservedLastQueuedSequence > 0
+            && result.ClientSequence == main.ObservedLastQueuedSequence
+            && result.Status == CommandStatus.Accepted
+            && result.RejectReason == CommandRejectReason.Unspecified
+            && result.ServerReceiptSequence > 0
+            && result.AppliedTick > 0
+            && result.AppliedTick <= snapshot.Tick,
+            "PerformanceCreate did not finish at its final accepted command cursor.");
+
+        var baseline = new PerformanceResumeBaseline(
+            SchemaVersion: 2,
+            Passed: true,
+            Phase: "PerformanceCreate",
+            Identity: helloIdentity,
+            SnapshotTick: snapshot.Tick,
+            Connection: new PerformanceResumeConnectionProvenance(
+                connection.AttemptEpoch,
+                connection.AdmissionCompleted,
+                main.TransportConnected),
+            LastCommand: new PerformanceResumeCommandReceipt(
+                result.ClientSequence,
+                result.ServerReceiptSequence,
+                result.AppliedTick,
+                result.Status.ToString(),
+                result.RejectReason.ToString()),
+            Player: PerformanceResumeStateContract.Project(player));
+        PerformanceResumeStateContract.ValidateBaseline(baseline);
+        var finalResult = main.ObservedCommandResult
+            ?? throw new InvalidDataException("PerformanceCreate final receipt disappeared before baseline evidence capture.");
+        var currentConnection = main.ObservedInitialConnection;
+        Require(main.TransportConnected
+            && currentConnection is not null
+            && ReferenceEquals(currentConnection, connection)
+            && currentConnection.AttemptEpoch == connection.AttemptEpoch
+            && currentConnection.AdmissionCompleted
+            && baseline.Connection.AttemptEpoch == connection.AttemptEpoch
+            && baseline.Connection.AdmissionCompleted
+            && baseline.Connection.TransportConnected
+            && main.ObservedPendingCommandCount == 0
+            && main.ObservedLastQueuedSequence == baseline.LastCommand.ClientSequence
+            && finalResult.ClientSequence == baseline.LastCommand.ClientSequence
+            && finalResult.ServerReceiptSequence == baseline.LastCommand.ServerReceiptSequence
+            && finalResult.AppliedTick == baseline.LastCommand.AppliedTick
+            && finalResult.Status.ToString() == baseline.LastCommand.Status
+            && finalResult.RejectReason.ToString() == baseline.LastCommand.RejectReason,
+            "PerformanceCreate connection or final receipt changed before baseline evidence capture.");
+        WriteEvidence(directory, "performance-resume-baseline.json", baseline);
     }
 
     private async Task RunPerformanceRound(

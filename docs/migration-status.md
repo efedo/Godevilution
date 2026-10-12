@@ -44,6 +44,14 @@ unsupported behavior is a migration gap, not permission for local simulation.
 
 ## Current delivery position and verification limits
 
+The opt-in Legacy single-client PerformanceCreate/PerformanceResume handlers and
+launcher routes are integrated. Create captures the settled post-workload baseline
+after frame recording stops; Resume checks the current admitted first raw snapshot
+before sending one safe adjacent keyboard move at the exact next client sequence.
+The final actor must preserve identity, resources and attributes. Contract,
+transport/reconnect and launcher checks qualify the implementation; a fresh
+committed-source exported Create/fresh-host Resume run remains required.
+
 Native offline join characterization passes through the real legacy packet parser.
 The two new GTests cover first-free placement, occupancy, light/vision and unchanged
 RNG, and reject invalid level/coordinates before player presentation changes.

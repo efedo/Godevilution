@@ -2,6 +2,10 @@
 
 Notable changes to this fork are recorded below.
 
+- 2026-10-11: Add explicit single-client PerformanceCreate/PerformanceResume routes,
+  a stopped-workload restore baseline, first-wire validation and exact next-sequence
+  movement settlement. Preserve existing Performance and normal launcher defaults.
+
 - 2026-10-11: Characterize native offline join placement, occupancy, light/vision,
   RNG preservation and invalid-input refusal through the real packet parser.
   Focused, full eight-case and three shuffled GTest runs pass.
