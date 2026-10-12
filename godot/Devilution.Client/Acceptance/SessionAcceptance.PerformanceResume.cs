@@ -97,10 +97,11 @@ public partial class SessionAcceptance
 
             RequirePerformanceResumeAttemptCurrent(activeMain, observation, attemptEpoch);
             RequirePerformanceIdentityStable(activeMain, expectedIdentity, GameMode.SinglePlayer);
-            Require(activeMain.ObservedPendingCommandCount == 0
-                && activeMain.ObservedLastQueuedSequence == baseline.LastCommand.ClientSequence
-                && activeMain.ObservedCommandResult is null,
-                $"PerformanceResume pre-input state mismatch: expectedSavedServerCursor={baseline.LastCommand.ClientSequence}, observedLastQueuedSequence={activeMain.ObservedLastQueuedSequence}, pendingCommandCount={activeMain.ObservedPendingCommandCount}, commandResultPresent={activeMain.ObservedCommandResult is not null}.");
+            Require(PerformanceResumeStateContract.IsFreshResumeClientQueueIdle(
+                activeMain.ObservedLastQueuedSequence,
+                activeMain.ObservedPendingCommandCount,
+                activeMain.ObservedCommandResult is not null),
+                $"PerformanceResume current client queue must be idle before input: savedServerCursor={baseline.LastCommand.ClientSequence}, expectedLocalQueuedSequence=0, observedLastQueuedSequence={activeMain.ObservedLastQueuedSequence}, pendingCommandCount={activeMain.ObservedPendingCommandCount}, commandResultPresent={activeMain.ObservedCommandResult is not null}.");
 
             var currentSnapshot = activeMain.ObservedSnapshot!.Clone();
             var legalControl = PerformanceResumeStateContract.SelectLegalControl(
@@ -109,10 +110,11 @@ public partial class SessionAcceptance
                     "PerformanceResume has no adjacent destination proven safe by first-wire and current geometry.");
             RequirePerformanceResumeAttemptCurrent(activeMain, observation, attemptEpoch);
             RequirePerformanceIdentityStable(activeMain, expectedIdentity, GameMode.SinglePlayer);
-            Require(activeMain.ObservedPendingCommandCount == 0
-                && activeMain.ObservedLastQueuedSequence == baseline.LastCommand.ClientSequence
-                && activeMain.ObservedCommandResult is null,
-                $"PerformanceResume pre-dispatch state mismatch: expectedSavedServerCursor={baseline.LastCommand.ClientSequence}, observedLastQueuedSequence={activeMain.ObservedLastQueuedSequence}, pendingCommandCount={activeMain.ObservedPendingCommandCount}, commandResultPresent={activeMain.ObservedCommandResult is not null}.");
+            Require(PerformanceResumeStateContract.IsFreshResumeClientQueueIdle(
+                activeMain.ObservedLastQueuedSequence,
+                activeMain.ObservedPendingCommandCount,
+                activeMain.ObservedCommandResult is not null),
+                $"PerformanceResume current client queue must remain idle before dispatch: savedServerCursor={baseline.LastCommand.ClientSequence}, expectedLocalQueuedSequence=0, observedLastQueuedSequence={activeMain.ObservedLastQueuedSequence}, pendingCommandCount={activeMain.ObservedPendingCommandCount}, commandResultPresent={activeMain.ObservedCommandResult is not null}.");
 
             var latestSnapshot = activeMain.ObservedSnapshot?.Clone()
                 ?? throw new InvalidDataException("PerformanceResume lost its current snapshot before input.");

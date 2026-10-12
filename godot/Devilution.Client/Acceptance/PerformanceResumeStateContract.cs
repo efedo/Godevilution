@@ -94,6 +94,16 @@ internal static class PerformanceResumeStateContract
 {
     public static bool IsCommandTimingTraceEnabled(string? value)
         => string.Equals(value, "1", StringComparison.Ordinal);
+
+    /** The saved cursor is validated from ServerHello; this checks only this client's fresh local queue. */
+    public static bool IsFreshResumeClientQueueIdle(
+        ulong observedLastQueuedSequence,
+        int observedPendingCommandCount,
+        bool commandResultPresent)
+        => observedLastQueuedSequence == 0
+            && observedPendingCommandCount == 0
+            && !commandResultPresent;
+
     private static readonly JsonSerializerOptions JsonOptions = new() {
         PropertyNameCaseInsensitive = false,
         UnmappedMemberHandling = JsonUnmappedMemberHandling.Disallow,

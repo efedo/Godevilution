@@ -436,6 +436,28 @@ public sealed class LocalLauncherContractTests
             "if (-not $evidence.Passed -or $evidence.Mode -ne $expectedGameMode -or $evidence.ContentHash -ne $contentHash -or $evidence.RulesetHash -ne $rulesetHash)",
             launcher,
             StringComparison.Ordinal);
+
+        var idleGuardText = "PerformanceResumeStateContract.IsFreshResumeClientQueueIdle(";
+        var firstIdleGuard = handshakeValidation < 0 ? -1 : handler.IndexOf(idleGuardText, handshakeValidation, StringComparison.Ordinal);
+        var secondIdleGuard = firstIdleGuard < 0 ? -1 : handler.IndexOf(idleGuardText, firstIdleGuard + idleGuardText.Length, StringComparison.Ordinal);
+        var thirdIdleGuard = secondIdleGuard < 0 ? -1 : handler.IndexOf(idleGuardText, secondIdleGuard + idleGuardText.Length, StringComparison.Ordinal);
+        var expectedNextSequence = secondIdleGuard < 0 ? -1 : handler.IndexOf(
+            "var expectedSequence = checked(baseline.LastCommand.ClientSequence + 1);",
+            secondIdleGuard,
+            StringComparison.Ordinal);
+        var inputDispatch = expectedNextSequence < 0 ? -1 : handler.IndexOf(
+            "Input.ParseInputEvent(new InputEventKey",
+            expectedNextSequence,
+            StringComparison.Ordinal);
+        var nextReceiptValidation = inputDispatch < 0 ? -1 : handler.IndexOf(
+            "PerformanceResumeStateContract.ValidateNextCommandReceipt(",
+            inputDispatch,
+            StringComparison.Ordinal);
+        Assert.True(firstIdleGuard > handshakeValidation && secondIdleGuard > firstIdleGuard && thirdIdleGuard < 0);
+        Assert.True(expectedNextSequence > secondIdleGuard && inputDispatch > expectedNextSequence);
+        Assert.True(nextReceiptValidation > inputDispatch);
+        Assert.Contains("expectedLocalQueuedSequence=0", handler, StringComparison.Ordinal);
+        Assert.Contains("activeMain.ObservedLastQueuedSequence != expectedSequence", handler, StringComparison.Ordinal);
     }
     [Fact]
     public void GodotPerformanceWorkloadIsOptInAndPreservesOrdinaryProfiles()

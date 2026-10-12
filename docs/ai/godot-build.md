@@ -983,8 +983,10 @@ The baseline-path option is Resume-only. These phases require one Legacy
 single-player participant, with command timing trace and preview overrides disabled.
 Command timing tracing is enabled only by the exact value "1"; cleared, empty
 and other values remain disabled for both phases.
-Pre-input failures report the saved server cursor and current queued/pending/result
-state to diagnose cursor mismatches without changing the acceptance assertions.
+Before input, the fresh client's local queued sequence and pending count must be
+zero with no command result. ServerHello separately validates the saved server
+cursor; the next keyboard command must receive exactly that cursor plus one.
+Pre-input failures report both the saved cursor and current local input state.
 Focused contract/transport and launcher tests pass; the fresh exported pair remains
 an application acceptance gate. The existing `Performance` phase and default
 launch profiles retain their behavior.

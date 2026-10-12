@@ -348,6 +348,39 @@ public sealed class PerformanceResumeStateContractTests
     {
         Assert.Equal(expected, PerformanceResumeStateContract.IsCommandTimingTraceEnabled(value));
     }
+
+    [Theory]
+    [InlineData(1UL)]
+    [InlineData(23UL)]
+    public void FreshResumeQueueIsIdleIndependentlyOfSavedServerCursor(ulong savedServerCursor)
+    {
+        var baseline = CreateBaseline();
+        baseline = baseline with {
+            LastCommand = baseline.LastCommand with { ClientSequence = savedServerCursor },
+        };
+
+        PerformanceResumeStateContract.ValidateResumeHandshakeAndFirstWire(
+            baseline, CreateHello(baseline), CreateSnapshot(baseline));
+        Assert.True(PerformanceResumeStateContract.IsFreshResumeClientQueueIdle(
+            observedLastQueuedSequence: 0, observedPendingCommandCount: 0, commandResultPresent: false));
+    }
+
+    [Theory]
+    [InlineData(23UL, 0, false)]
+    [InlineData(ulong.MaxValue, 0, false)]
+    [InlineData(0UL, 1, false)]
+    [InlineData(0UL, -1, false)]
+    [InlineData(0UL, int.MaxValue, false)]
+    [InlineData(0UL, 0, true)]
+    public void RejectsResumeClientQueueWithPriorInput(
+        ulong observedLastQueuedSequence,
+        int observedPendingCommandCount,
+        bool commandResultPresent)
+    {
+        Assert.False(PerformanceResumeStateContract.IsFreshResumeClientQueueIdle(
+            observedLastQueuedSequence, observedPendingCommandCount, commandResultPresent));
+    }
+
     private static PerformanceResumeBaseline CreateBaseline()
         => new(
             2,

@@ -2,6 +2,10 @@
 
 Notable changes to this fork are recorded below.
 
+- 2026-10-12: Require an empty current-client input queue before PerformanceResume
+  dispatch while validating the saved server cursor separately. Cover local-state
+  edge cases and retain exact next-command receipt and settlement checks.
+
 - 2026-10-12: Report the saved server cursor, queued sequence, pending count and
   result presence when PerformanceResume fails its pre-input checks, retaining
   the existing assertions and exact next-command validation.
