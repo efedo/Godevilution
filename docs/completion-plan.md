@@ -90,14 +90,18 @@ Dedicated single-client `PerformanceCreate`/`PerformanceResume` routes now prese
 the established five-warm-up/fifteen-measured workload, capture a stopped baseline,
 validate the current admitted first wire before resumed input, and require exact
 next-sequence adjacent movement settlement. Focused contracts and launcher tests
-verify this route. Actual fresh exported Create/fresh-host Resume acceptance remains
-open; default profiles, broader restore/world parity and GUI gates are unchanged.
+verify this route. The actual committed-source headless exported pair passes at
+`c6c7f543b`: Create stops at (0,3)/cursor 23; fresh-host Resume validates the first
+wire and settles accepted command 24 at (0,2). One release export is reused and
+both hosts quit naturally. Evidence:
+.local/performance-create-resume-pair-58968f2a2268434688701a254009aace.
+Default profiles and broader restore/world, rendered and campaign gates remain open.
 
 The client retains credential-free ServerHello fields and a defensive clone of
 the first decoded wire snapshot for the latest connection attempt. Admission is
 recorded separately; consumers must bind the current attempt and connection state.
-Focused transport/reconnect checks and the headless Godot compile verify this
-observation API only. Actual cold restore and broader M0 acceptance remain open.
+Focused transport/reconnect checks and the exported single-client cold-resume
+journey verify this observation API. Broader M0 restore acceptance remains open.
 
 1. Preserve the zero-argument native and base Godot launchers, plus the isolated
    optional Godot preview and two-client multiplayer launchers. Make Godot's launcher build the

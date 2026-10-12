@@ -2,6 +2,11 @@
 
 Notable changes to this fork are recorded below.
 
+- 2026-10-12: Qualify the headless exported Legacy single-player Create/save/fresh-
+  host Resume journey at c6c7f543b: twenty Create moves, restored cursor 23 and
+  accepted adjacent move 24, one reused release export, and natural host shutdown
+  in both phases. Broader restore, rendering and release gates remain open.
+
 - 2026-10-12: Require an empty current-client input queue before PerformanceResume
   dispatch while validating the saved server cursor separately. Cover local-state
   edge cases and retain exact next-command receipt and settlement checks.

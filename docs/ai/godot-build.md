@@ -987,9 +987,16 @@ Before input, the fresh client's local queued sequence and pending count must be
 zero with no command result. ServerHello separately validates the saved server
 cursor; the next keyboard command must receive exactly that cursor plus one.
 Pre-input failures report both the saved cursor and current local input state.
-Focused contract/transport and launcher tests pass; the fresh exported pair remains
-an application acceptance gate. The existing `Performance` phase and default
-launch profiles retain their behavior.
+The committed-source headless exported pair passes at `c6c7f543b`: Create completes
+five warm-up/fifteen measured moves and stops at (0,3), cursor 23. Fresh-host
+Resume validates the admitted Hello/first wire, accepts move 24 and settles at
+(0,2). Both Release hosts quit naturally with drained/joined output. Resume
+reuses the same release executable and four physically loaded managed images,
+with no second export or frame capture. Evidence:
+.local/performance-create-resume-pair-58968f2a2268434688701a254009aace.
+This qualifies one explicit Legacy single-player journey; broader restore/world,
+rendered, campaign and release-budget gates remain open. Existing `Performance`
+and default launch profiles retain their behavior.
 
 Performance markers are published by closing a temporary file then moving it
 to the final name. Readers permit shared read/write/delete access so the Windows

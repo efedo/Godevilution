@@ -48,9 +48,16 @@ The opt-in Legacy single-client PerformanceCreate/PerformanceResume handlers and
 launcher routes are integrated. Create captures the settled post-workload baseline
 after frame recording stops; Resume checks the current admitted first raw snapshot
 before sending one safe adjacent keyboard move at the exact next client sequence.
-The final actor must preserve identity, resources and attributes. Contract,
-transport/reconnect and launcher checks qualify the implementation; a fresh
-committed-source exported Create/fresh-host Resume run remains required.
+The committed-source headless exported pair passes at `c6c7f543b` in
+.local/performance-create-resume-pair-58968f2a2268434688701a254009aace.
+Create completes five warm-up/fifteen measured moves and stops at (0,3), cursor 23.
+Resume validates the admitted Hello/first wire and preserved identity, resources
+and attributes, then accepts command 24 and settles at (0,2). It reuses the same
+release executable and four physically loaded managed image identities; both
+Release hosts quit naturally with drained/joined output. Original/Create/Resume
+source bindings and all fourteen stopped process identities were independently
+verified. This closes one explicit Legacy single-player journey; broader restore,
+world, rendered, campaign and release-budget gates remain open.
 
 Native offline join characterization passes through the real legacy packet parser.
 The two new GTests cover first-free placement, occupancy, light/vision and unchanged
