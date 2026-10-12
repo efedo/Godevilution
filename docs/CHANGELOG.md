@@ -2,6 +2,10 @@
 
 Notable changes to this fork are recorded below.
 
+- 2026-10-12: Report the saved server cursor, queued sequence, pending count and
+  result presence when PerformanceResume fails its pre-input checks, retaining
+  the existing assertions and exact next-command validation.
+
 - 2026-10-11: Match PerformanceCreate/PerformanceResume trace guards to the existing
   literal-1 opt-in, allowing cleared and disabled values. Cover both handlers and
   enabled-trace refusal with regression tests.

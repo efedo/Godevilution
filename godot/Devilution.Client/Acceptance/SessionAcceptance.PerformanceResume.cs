@@ -100,7 +100,7 @@ public partial class SessionAcceptance
             Require(activeMain.ObservedPendingCommandCount == 0
                 && activeMain.ObservedLastQueuedSequence == baseline.LastCommand.ClientSequence
                 && activeMain.ObservedCommandResult is null,
-                "PerformanceResume must expose the saved cursor before any new client command.");
+                $"PerformanceResume pre-input state mismatch: expectedSavedServerCursor={baseline.LastCommand.ClientSequence}, observedLastQueuedSequence={activeMain.ObservedLastQueuedSequence}, pendingCommandCount={activeMain.ObservedPendingCommandCount}, commandResultPresent={activeMain.ObservedCommandResult is not null}.");
 
             var currentSnapshot = activeMain.ObservedSnapshot!.Clone();
             var legalControl = PerformanceResumeStateContract.SelectLegalControl(
@@ -112,7 +112,7 @@ public partial class SessionAcceptance
             Require(activeMain.ObservedPendingCommandCount == 0
                 && activeMain.ObservedLastQueuedSequence == baseline.LastCommand.ClientSequence
                 && activeMain.ObservedCommandResult is null,
-                "PerformanceResume changed its saved cursor before dispatching the first new input.");
+                $"PerformanceResume pre-dispatch state mismatch: expectedSavedServerCursor={baseline.LastCommand.ClientSequence}, observedLastQueuedSequence={activeMain.ObservedLastQueuedSequence}, pendingCommandCount={activeMain.ObservedPendingCommandCount}, commandResultPresent={activeMain.ObservedCommandResult is not null}.");
 
             var latestSnapshot = activeMain.ObservedSnapshot?.Clone()
                 ?? throw new InvalidDataException("PerformanceResume lost its current snapshot before input.");
