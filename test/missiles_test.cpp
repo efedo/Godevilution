@@ -18,6 +18,7 @@
 #include "engine/audio/effects.h"
 #include "engine/audio/sound.h"
 #include "engine/lighting.h"
+#include "engine/path.h"
 #include "engine/random.hpp"
 #include "engine/world.hpp"
 #include "game/levels/dungeon_common.h"
@@ -214,6 +215,41 @@ public:
 private:
 	std::array<Point, 9> positions_ {};
 	std::array<Tile, 9> savedTiles_ {};
+	TileProperties savedFloorProperties_;
+};
+
+class ScopedNativeWalkArrivalWorld {
+public:
+	explicit ScopedNativeWalkArrivalWorld(Point center)
+	    : savedFloorProperties_(tileProperties()[0])
+	{
+		std::size_t index = 0;
+		for (int y = -2; y <= 2; ++y) {
+			for (int x = -2; x <= 2; ++x) {
+				const Point position { center.x + x, center.y + y };
+				positions_[index] = position;
+				savedTiles_[index] = tileAt(position);
+				tileAt(position).clear();
+				tileAt(position).setPiece(0);
+				++index;
+			}
+		}
+		tileProperties()[0] = TileProperties::None;
+	}
+
+	~ScopedNativeWalkArrivalWorld()
+	{
+		tileProperties()[0] = savedFloorProperties_;
+		for (std::size_t index = 0; index < positions_.size(); ++index)
+			tileAt(positions_[index]) = savedTiles_[index];
+	}
+
+	ScopedNativeWalkArrivalWorld(const ScopedNativeWalkArrivalWorld &) = delete;
+	ScopedNativeWalkArrivalWorld &operator=(const ScopedNativeWalkArrivalWorld &) = delete;
+
+private:
+	std::array<Point, 25> positions_ {};
+	std::array<Tile, 25> savedTiles_ {};
 	TileProperties savedFloorProperties_;
 };
 
@@ -955,6 +991,101 @@ TEST_F(NativeMonkSearchTest, ProcessPlayersAdmitsNorthWalkAndCapturesItsFirstTwo
 		EXPECT_EQ(tileAt(destination).player(), -1);
 	}
 }
+TEST_F(NativeMonkSearchTest, ProcessPlayersCompletesNorthWalkAndCapturesArrivalBoundary)
+{
+	const std::optional<std::filesystem::path> hellfireAssets = FindHellfireAssetsPath();
+	ASSERT_TRUE(hellfireAssets.has_value());
+	const std::filesystem::path canonicalAssets = hellfireAssets->parent_path().parent_path() / "assets";
+	ASSERT_TRUE(std::filesystem::is_regular_file(canonicalAssets / "txtdata" / "Experience.tsv"));
+	ASSERT_TRUE(std::filesystem::is_regular_file(canonicalAssets / "txtdata" / "classes" / "classdat.tsv"));
+	paths::SetAssetsPath(canonicalAssets.string() + "/");
+	LoadPlayerDataFiles();
+	paths::SetAssetsPath(hellfireAssets->string() + "/");
+
+	ScopedNativeWalkArrivalWorld walkWorld(MonkSearchPosition);
+	Player &player = *MyPlayer;
+	const Point destination = MonkSearchPosition + Direction::North;
+	const Point clearedTemp {};
+
+	player.plractive = true;
+	player.plrlevel = currentLevelNumber();
+	player.plrIsOnSetLevel = false;
+	player.pLvlLoad = 0;
+	player.lightId = NO_LIGHT;
+	player.position.tile = MonkSearchPosition;
+	player.position.future = MonkSearchPosition;
+	player.position.temp = MonkSearchPosition;
+	player.position.old = MonkSearchPosition;
+	player.direction = Direction::South;
+	player.tempDirection = Direction::South;
+	player._pgfxnum = static_cast<uint8_t>(PlayerWeaponGraphic::Unarmed);
+	player.clearPath();
+	player.setAnimations();
+	player._pWFrames = 8;
+	player._pmode = PM_STAND;
+	player.destAction = ACTION_NONE;
+	player.occupyTile(MonkSearchPosition, false);
+	tileAt(destination).setPlayer(0);
+	player.walkpath[0] = WALK_N;
+	viewPosition() = MonkSearchPosition;
+
+	ASSERT_TRUE(player.plractive);
+	ASSERT_EQ(viewPosition(), MonkSearchPosition);
+	ASSERT_TRUE(player.positionIsAvailable(destination));
+	ASSERT_EQ(player.walkpath[0], WALK_N);
+	for (const Displacement pathDir : PathDirs)
+		ASSERT_EQ(tileAt(destination + pathDir).item(), 0);
+
+	const std::array<NativeAnimationTimingRow, 10> expectedRows {{
+		{ 8, 1, 0, -1, 0, 8, 0, 113, 0 },
+		{ 8, 1, 0, 0, 0, 8, 0, 113, 128 },
+		{ 8, 1, 0, 1, 0, 8, 0, 113, 256 },
+		{ 8, 1, 0, 2, 0, 8, 0, 113, 384 },
+		{ 8, 1, 0, 3, 0, 8, 0, 113, 512 },
+		{ 8, 1, 0, 4, 0, 8, 0, 113, 640 },
+		{ 8, 1, 0, 5, 0, 8, 0, 113, 768 },
+		{ 8, 1, 0, 6, 0, 8, 0, 113, 896 },
+		{ 8, 1, 0, 7, 0, 8, 0, 113, 1024 },
+		{ 8, 4, 1, 0, 0, 0, 0, 0, 128 },
+	}};
+
+	for (std::size_t index = 0; index < expectedRows.size(); ++index) {
+		const int logicalTick = 100 + static_cast<int>(index);
+		ProcessPlayers();
+		EXPECT_EQ(CaptureNativeAnimationTiming(player), expectedRows[index])
+		    << "logicalTick=" << logicalTick << " (label only; no production tick value is changed)";
+		EXPECT_EQ(player.walkpath[0], WALK_NONE);
+
+		if (index < 9) {
+			EXPECT_EQ(player._pmode, PM_WALK_NORTHWARDS) << "logicalTick=" << logicalTick;
+			EXPECT_EQ(player.position.tile, MonkSearchPosition) << "logicalTick=" << logicalTick;
+			EXPECT_EQ(player.position.future, destination) << "logicalTick=" << logicalTick;
+			EXPECT_EQ(player.position.temp, destination) << "logicalTick=" << logicalTick;
+			EXPECT_EQ(player.position.old, MonkSearchPosition) << "logicalTick=" << logicalTick;
+			EXPECT_EQ(player.direction, Direction::North) << "logicalTick=" << logicalTick;
+			EXPECT_EQ(player.tempDirection, Direction::North) << "logicalTick=" << logicalTick;
+			EXPECT_EQ(viewPosition(), MonkSearchPosition) << "logicalTick=" << logicalTick;
+			EXPECT_EQ(tileAt(MonkSearchPosition).player(), 1) << "logicalTick=" << logicalTick;
+			EXPECT_EQ(tileAt(destination).player(), -1) << "logicalTick=" << logicalTick;
+			continue;
+		}
+
+		EXPECT_EQ(player._pmode, PM_STAND) << "logicalTick=" << logicalTick;
+		EXPECT_EQ(player.position.tile, destination) << "logicalTick=" << logicalTick;
+		EXPECT_EQ(player.position.future, destination) << "logicalTick=" << logicalTick;
+		EXPECT_EQ(player.position.temp, clearedTemp) << "logicalTick=" << logicalTick;
+		EXPECT_EQ(player.position.old, destination) << "logicalTick=" << logicalTick;
+		EXPECT_EQ(player.direction, Direction::North) << "logicalTick=" << logicalTick;
+		EXPECT_EQ(player.tempDirection, Direction::South) << "logicalTick=" << logicalTick;
+		EXPECT_EQ(player.destAction, ACTION_NONE) << "logicalTick=" << logicalTick;
+		EXPECT_EQ(viewPosition(), destination) << "logicalTick=" << logicalTick;
+		EXPECT_EQ(tileAt(MonkSearchPosition).player(), 0) << "logicalTick=" << logicalTick;
+		EXPECT_EQ(tileAt(destination).player(), 1) << "logicalTick=" << logicalTick;
+		for (const Displacement pathDir : PathDirs)
+			EXPECT_EQ(tileAt(destination + pathDir).item(), 0) << "logicalTick=" << logicalTick;
+	}
+}
+
 TEST_F(NativeMonkSearchTest, RecastAddsDurationForTheSamePlayerSource)
 {
 	const uint32_t initialRngState = GetLCGEngineState();

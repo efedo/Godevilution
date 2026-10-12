@@ -2,6 +2,10 @@
 
 Notable changes to this fork are recorded below.
 
+- 2026-10-12: Trace a complete North walk through native player updates and
+  managed ExecuteTick. Prepared eight-frame movement arrives at native label 109
+  and managed tick 108 after admission at 100; retain the phase difference.
+
 - 2026-10-12: Trace full native player updates through prepared Search admission,
   real effect creation and Stand completion, plus two walking updates. Pair the
   8/5 Cast timing with managed post-ExecuteTick observations; focused and shuffled

@@ -467,8 +467,12 @@ deliberately does not claim native generated-world parity, which belongs to M2.
    all nine post-update fields through prepared Search effect/completion and
    the first two walking updates. A matched 8/5 managed Cast trace observes
    actual post-ExecuteTick state; both prepared effect/completion boundaries
-   are 105/107 after admission at 100. Classes/effects differ; full walk arrival,
-   ready-repeat player-loop timing and shipped/world-tick parity remain open.
+   are 105/107 after admission at 100. Classes/effects differ. A further full
+   North-walk trace reaches native arrival/Stand at logical label 109, while
+   the managed eight-frame Move changes position/clears its action at tick 108
+   after admission at 100. The ten post-update rows establish a phase difference,
+   not an adopted parity mapping. Full ready-repeat player-loop timing and
+   shipped/world-tick parity remain open.
    Next settle the persisted command-phase/anchor contract:
    production authoritative commands currently follow actor advancement, but native Pending
    assumes processing later in the same tick. Neither publishing negative phase

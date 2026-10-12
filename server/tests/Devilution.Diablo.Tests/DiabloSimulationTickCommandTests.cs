@@ -700,6 +700,129 @@ public sealed class DiabloSimulationTickCommandTests
     }
 
     [Fact]
+    public void ExecuteTickTracesPreparedMoveEffectAndCompletionAcrossTenTicks()
+    {
+        // This records managed module timing with the authored 8-frame movement metadata.
+        var (simulation, template, target, animation) = CreateNativeMoveCastFixture();
+        Assert.Equal(8, animation.WalkingFrames);
+
+        var runtime = simulation.CreateRuntime(template);
+        runtime.Write("player", state => {
+            state.EntityId = 11;
+            state.PositionX = 4;
+            state.PositionY = 4;
+        });
+        const ulong startTick = 100;
+        const ulong endTick = 109;
+        const ulong effectAndCompletionTick = 108;
+        var initialHitPoints = target.HitPoints;
+        var callbackOrder = new List<(ulong Tick, string Operation)>();
+        var trace = new List<(
+            ulong Tick,
+            int PositionX,
+            int PositionY,
+            int FuturePositionX,
+            int FuturePositionY,
+            DiabloPlayerCombatMode CombatMode,
+            DiabloPlayerActionKind? ActionKind,
+            ulong? StartedAtTick,
+            ulong? EffectTick,
+            ulong? ReadyTick,
+            ulong? EndTick,
+            bool? EffectApplied,
+            ulong LastAdvancedTick,
+            int TargetHitPoints,
+            int Mana)>();
+
+        for (var tick = startTick; tick <= endTick; tick++) {
+            var command = new SimulationTickCommand<
+                AuthoritativePlayerState,
+                DiabloGameplayEvent,
+                DiabloRuleFailure?>(
+                "player",
+                (state, participants) => {
+                    var isMoveTick = tick == startTick;
+                    callbackOrder.Add((tick, isMoveTick ? "Move" : "NoOp"));
+                    if (isMoveTick) {
+                        var move = simulation.Execute(
+                            state,
+                            new DiabloMoveIntent(0, -1),
+                            tick,
+                            participants);
+                        return new SimulationStepResult<DiabloRuleFailure?, DiabloGameplayEvent>(
+                            move.Failure,
+                            move.Events);
+                    }
+
+                    return new SimulationStepResult<DiabloRuleFailure?, DiabloGameplayEvent>(null, []);
+                });
+
+            var results = runtime.ExecuteTick<DiabloRuleFailure?>(tick, [command]);
+            Assert.Equal(new DiabloRuleFailure?[] { null }, results);
+            var row = runtime.Read("player", state => {
+                var action = state.CurrentAction;
+                return (
+                    tick,
+                    state.PositionX,
+                    state.PositionY,
+                    state.FuturePositionX,
+                    state.FuturePositionY,
+                    state.CombatMode,
+                    action?.Kind,
+                    action?.StartedAtTick,
+                    action?.EffectTick,
+                    action?.ReadyTick,
+                    action?.EndTick,
+                    action?.EffectApplied,
+                    runtime.LastAdvancedTick,
+                    target.HitPoints,
+                    state.Mana);
+            });
+            trace.Add(row);
+            Assert.Empty(runtime.DrainEvents("player"));
+        }
+
+        Assert.Equal(10, callbackOrder.Count);
+        Assert.Equal(
+            Enumerable.Range((int)startTick, (int)(endTick - startTick + 1))
+                .Select(tick => ((ulong)tick, tick == (int)startTick ? "Move" : "NoOp")),
+            callbackOrder);
+        Assert.Equal(10, trace.Count);
+        var expected = new (
+            ulong Tick,
+            int PositionX,
+            int PositionY,
+            int FuturePositionX,
+            int FuturePositionY,
+            DiabloPlayerCombatMode CombatMode,
+            DiabloPlayerActionKind? ActionKind,
+            ulong? StartedAtTick,
+            ulong? EffectTick,
+            ulong? ReadyTick,
+            ulong? EndTick,
+            bool? EffectApplied,
+            ulong LastAdvancedTick,
+            int TargetHitPoints,
+            int Mana)[] {
+            (100, 4, 4, 4, 3, DiabloPlayerCombatMode.WalkNorthwards, DiabloPlayerActionKind.Move, 100, 108, 108, 108, false, 100, 20, 10),
+            (101, 4, 4, 4, 3, DiabloPlayerCombatMode.WalkNorthwards, DiabloPlayerActionKind.Move, 100, 108, 108, 108, false, 101, 20, 10),
+            (102, 4, 4, 4, 3, DiabloPlayerCombatMode.WalkNorthwards, DiabloPlayerActionKind.Move, 100, 108, 108, 108, false, 102, 20, 10),
+            (103, 4, 4, 4, 3, DiabloPlayerCombatMode.WalkNorthwards, DiabloPlayerActionKind.Move, 100, 108, 108, 108, false, 103, 20, 10),
+            (104, 4, 4, 4, 3, DiabloPlayerCombatMode.WalkNorthwards, DiabloPlayerActionKind.Move, 100, 108, 108, 108, false, 104, 20, 10),
+            (105, 4, 4, 4, 3, DiabloPlayerCombatMode.WalkNorthwards, DiabloPlayerActionKind.Move, 100, 108, 108, 108, false, 105, 20, 10),
+            (106, 4, 4, 4, 3, DiabloPlayerCombatMode.WalkNorthwards, DiabloPlayerActionKind.Move, 100, 108, 108, 108, false, 106, 20, 10),
+            (107, 4, 4, 4, 3, DiabloPlayerCombatMode.WalkNorthwards, DiabloPlayerActionKind.Move, 100, 108, 108, 108, false, 107, 20, 10),
+            (108, 4, 3, 4, 3, DiabloPlayerCombatMode.Stand, null, null, null, null, null, null, 108, 20, 10),
+            (109, 4, 3, 4, 3, DiabloPlayerCombatMode.Stand, null, null, null, null, null, null, 109, 20, 10),
+        };
+        Assert.Equal(expected, trace);
+        Assert.Equal(effectAndCompletionTick, trace[8].Tick);
+        Assert.Equal(initialHitPoints, trace[0].TargetHitPoints);
+        Assert.Equal(initialHitPoints, trace[^1].TargetHitPoints);
+        Assert.Equal(endTick, runtime.LastAdvancedTick);
+    }
+
+    [Fact]
     public void ExecuteTickTracesPreparedCastStartEffectAndCompletionBoundaries()
     {
         // The test-only 8/5 cast timing matches the prepared native spell fixture;

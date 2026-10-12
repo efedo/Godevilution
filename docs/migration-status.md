@@ -1169,6 +1169,38 @@ Selected engine 4.7.2 imports only staged SDK copies; the source pin remains
 campaign, broader outage, native GUI or release gates. The overall estimate remains
 approximately 35%; historical unclassified TooLate failures remain separate.
 
+### M1 complete North-walk boundary trace (2026-10-12)
+
+One additional `NativeMonkSearchTest` follows real `ProcessPlayers` from queued
+North-walk admission at logical label 100 through arrival and Stand at 109.
+Prepared walking frames 8 produce post-update frames -1 through 7 at labels
+100 through 108. `DoWalk` checks the last frame before the final animation
+advance, so origin occupancy and destination reservation persist through 108;
+arrival at 109 moves occupancy, position, view and vision, then resets the nine
+animation scalars to `8/4/1/0/false/0/0/0/128`. A separate 5x5 guard restores
+full tile values and piece-zero properties, covering the empty destination
+pickup ring. Existing base teardown restores the light/vision manager and view.
+The earlier two-update walk and canonical Search fixtures remain unchanged.
+
+One managed regression records ten literal states after actual `ExecuteTick`
+returns at ticks 100 through 109, for a North move from `(4,4)` to `(4,3)`.
+Authored walking frames 8 set effect/ready/end to 108: origin and active Move
+persist through 107, then position changes and the action clears at 108.
+Tick 109 remains Stand. One Move callback and nine explicit no-op callbacks
+emit no events or HP/mana changes. Existing 40 cases/defaults remain unchanged.
+
+Fresh checked native build, focused 1/1, combined 8/8 and three shuffled
+eight-test runs at seeds 417/418/419 pass, alongside all 41 managed tick cases
+and 16 documentation checks, without failures, errors or skips. Native retains
+the child-local `/Z7` and expected D9025; managed retains one existing xUnit2013.
+Evidence: `.local/full-walk-boundary-integration-2c8544b88e244df3a4d253ddbc5a7023`.
+
+These are player-loop/module lifecycle boundaries, with distinct prepared
+classes and positions, not full world ticks or runtime cursor parity. The
+native 109 versus managed 108 difference leaves command-phase/anchor mapping
+open. No production timing/default, protocol or persistence behavior changes;
+M1 and broader rendered acceptance remain open, overall approximately 35%.
+
 ### M1 prepared full-player-loop Cast trace (2026-10-12)
 
 Two additive `NativeMonkSearchTest` fixtures call real `ProcessPlayers`

@@ -184,29 +184,39 @@ participant order, Move completion before Cast, ready Cast replacement and
 second same-tick admission refusal. The differing metadata does not establish
 native/managed tick parity; refusal is not transport duplicate-ledger coverage.
 
-The registered `missiles_test` adds two full-player-loop fixtures. Run
-`NativeMonkSearchTest.ProcessPlayersAdmitsSpellAndCapturesItsNativeCompletionBoundary:NativeMonkSearchTest.ProcessPlayersAdmitsNorthWalkAndCapturesItsFirstTwoUpdates`
-(2 tests), then `NativeMonkSearchTest.*:MissileData.ScopedTestLoadRestoresOriginalStorage`
-(7 tests), with three shuffled combined runs at seeds 417/418/419. Logical label
-100 is the first complete `ProcessPlayers` admission update, without changing
-a production tick counter. Prepared Search timing 8/5 yields post-update Spell
-frames 1 through 7 at labels 100 through 106, actual Search creation at 105 and
-Stand at 107. Completion resets the cursor to
-`8/4/1/0/false/0/0/0/128` in the nine-field order used by the tests. Search
-duration is 247 before a separate missile pass after completion and 246 after
-it; this fixture does not process missiles on every intervening update.
+The registered `missiles_test` includes three full-player-loop fixtures. Run
+`NativeMonkSearchTest.ProcessPlayersCompletesNorthWalkAndCapturesArrivalBoundary`
+(1 test), then `NativeMonkSearchTest.*:MissileData.ScopedTestLoadRestoresOriginalStorage`
+(8 tests), with three shuffled combined runs at seeds 417/418/419. Logical label
+100 is the first complete `ProcessPlayers` admission update; the fixtures do not
+change a production tick counter.
 
-The prepared north walk captures post-update frames -1 and 0 at labels 100/101
-with unchanged occupied origin and a reserved destination. Its scoped nine-tile
-world, piece-zero properties and initialized view are restored. It stops before
-arrival. Canonical class tables remain loaded under the existing test convention;
-the old canonical Search caller case remains unchanged. The paired managed
-`DiabloSimulationTickCommandTests` class now has 40 cases. The added 8/5 Cast
+Prepared Search timing 8/5 yields post-update Spell frames 1 through 7 at labels
+100 through 106, actual Search creation at 105 and Stand at 107. Completion
+resets the nine timing scalars to `8/4/1/0/false/0/0/0/128`. Duration is 247
+before a separate missile pass after completion and 246 after it; missiles are
+not processed on every intervening update. The earlier walking fixture checks
+two updates, frames -1/0, occupancy and view prestate with a 3x3 scoped guard.
+Canonical class tables remain loaded under the existing test convention; the
+old canonical Search caller case remains unchanged.
+
+The complete North-walk fixture follows labels 100 through 109. Prepared
+walking frames 8 yield post-update frames -1 through 7 at 100 through 108;
+arrival and Stand occur at 109. It checks all nine animation fields, occupancy,
+position and view. A separate 5x5 scoped tile guard covers the destination's
+empty pickup ring and restores full tiles and piece-zero properties before
+base teardown, which restores the light/vision manager and view.
+
+The managed `DiabloSimulationTickCommandTests` class has 41 cases. Its 8/5 Cast
 trace captures 32 observations, including eight actual post-`ExecuteTick` rows,
-and one damage/mana effect at 105 followed by Stand at 107. Native Skill Search
-and managed memorized damage use different classes/effects. These prepared
-boundaries do not prove shipped timing, full world-tick parity or a persisted
-cursor anchor.
+with one damage/mana effect at 105 and Stand at 107. The North-Move trace reads
+ten post-return states at 100 through 109. Authored walking frames 8 yield
+effect/ready/end 108: origin persists through 107, then position changes and
+the action clears to Stand at 108; tick 109 remains Stand. Native Monk and
+managed Warrior fixtures use distinct classes, positions and Cast effects.
+The measured walk difference requires an explicit command-phase/anchor
+contract; these fixtures do not establish shipped timing or full world ticks,
+and no production timing/default policy changes follow.
 
 The local checked MSVC build hit C1902 under `/ZI /FS` even after preserving and
 removing generated symbol artifacts from the selected target. A fresh compiler
