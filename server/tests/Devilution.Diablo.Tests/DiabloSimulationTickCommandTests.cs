@@ -542,6 +542,253 @@ public sealed class DiabloSimulationTickCommandTests
     }
 
     [Fact]
+    public void ExecuteTickStartsIdleMoveAndCastInParticipantOrderAndRejectsSecondMove()
+    {
+        var (simulation, template, target, animation) = CreateNativeMoveCastFixture();
+        Assert.Equal((8, 20, 14), (
+            animation.WalkingFrames,
+            animation.CastingFrames,
+            animation.CastingActionFrame));
+        var runtime = simulation.CreateRuntime(template);
+        runtime.Write("a-caster", state => state.EntityId = 11);
+        runtime.Write("z-mover", state => {
+            state.EntityId = 22;
+            state.PositionY = 4;
+        });
+        Assert.Equal(DiabloPlayerCombatMode.Stand, runtime.Read("a-caster", state => state.CombatMode));
+        Assert.Null(runtime.Read("a-caster", state => state.CurrentAction));
+        Assert.Equal(DiabloPlayerCombatMode.Stand, runtime.Read("z-mover", state => state.CombatMode));
+        Assert.Null(runtime.Read("z-mover", state => state.CurrentAction));
+        var operationOrder = new List<(uint EntityId, string Intent)>();
+        var targetHitPointsBefore = target.HitPoints;
+
+        var results = runtime.ExecuteTick<DiabloRuleFailure?>(
+            1,
+            [
+                CreateMoveTickCommand(
+                    "z-mover",
+                    simulation,
+                    1,
+                    1,
+                    0,
+                    operationOrder),
+                CreateCastTickCommand(
+                    "a-caster",
+                    simulation,
+                    1,
+                    new DiabloCastIntent(7, 99, 2, 0),
+                    operationOrder),
+                CreateMoveTickCommand(
+                    "z-mover",
+                    simulation,
+                    1,
+                    0,
+                    1,
+                    operationOrder),
+            ]);
+
+        Assert.Equal(
+            new (uint EntityId, string Intent)[] {
+                (11, "Cast"),
+                (22, "Move"),
+                (22, "Move"),
+            },
+            operationOrder);
+        Assert.Equal(
+            new DiabloRuleFailure?[] {
+                null,
+                null,
+                DiabloRuleFailure.NotAllowed,
+            },
+            results);
+        Assert.Equal(1UL, runtime.LastAdvancedTick);
+
+        var caster = runtime.Read("a-caster", state => state);
+        var cast = Assert.IsType<AuthoritativePlayerActionState>(caster.CurrentAction);
+        var expectedCastEffectTick = 1UL + (ulong)animation.CastingActionFrame;
+        Assert.Equal(DiabloPlayerActionKind.Cast, cast.Kind);
+        Assert.Equal((1UL, expectedCastEffectTick, expectedCastEffectTick,
+            1UL + (ulong)(animation.CastingFrames - 1)), (
+            cast.StartedAtTick,
+            cast.EffectTick,
+            cast.ReadyTick,
+            cast.EndTick));
+        Assert.Equal(DiabloPlayerCombatMode.Spell, caster.CombatMode);
+        Assert.Equal(10, caster.Mana);
+        Assert.Equal(targetHitPointsBefore, target.HitPoints);
+
+        var mover = runtime.Read("z-mover", state => state);
+        var move = Assert.IsType<AuthoritativePlayerActionState>(mover.CurrentAction);
+        var expectedMoveEndTick = 1UL + (ulong)animation.WalkingFrames;
+        Assert.Equal(DiabloPlayerActionKind.Move, move.Kind);
+        Assert.Equal((1UL, expectedMoveEndTick, expectedMoveEndTick, expectedMoveEndTick), (
+            move.StartedAtTick,
+            move.EffectTick,
+            move.ReadyTick,
+            move.EndTick));
+        Assert.Equal((0, 4), (mover.PositionX, mover.PositionY));
+        Assert.Equal((1, 4), (mover.FuturePositionX, mover.FuturePositionY));
+        Assert.Equal(targetHitPointsBefore, target.HitPoints);
+        Assert.Empty(runtime.DrainEvents("a-caster"));
+        Assert.Empty(runtime.DrainEvents("z-mover"));
+    }
+
+    [Fact]
+    public void ExecuteTickCompletesMoveBeforeAdmittingCastWithNativeFrameTiming()
+    {
+        var (simulation, template, target, animation) = CreateNativeMoveCastFixture();
+        var runtime = simulation.CreateRuntime(template);
+        runtime.Write("player", state => state.EntityId = 11);
+        var targetHitPointsBefore = target.HitPoints;
+
+        var moveResults = runtime.ExecuteTick<DiabloRuleFailure?>(
+            1,
+            [CreateMoveTickCommand("player", simulation, 1, 1, 0)]);
+        Assert.Equal(new DiabloRuleFailure?[] { null }, moveResults);
+        var move = runtime.Read("player", state => state.CurrentAction)!;
+        var moveEndTick = 1UL + (ulong)animation.WalkingFrames;
+        Assert.Equal(DiabloPlayerActionKind.Move, move.Kind);
+        Assert.Equal(moveEndTick, move.EffectTick);
+        Assert.Equal(moveEndTick, move.EndTick);
+
+        var completionObserved = false;
+        var castResults = runtime.ExecuteTick<DiabloRuleFailure?>(
+            moveEndTick,
+            [
+                new SimulationTickCommand<AuthoritativePlayerState, DiabloGameplayEvent, DiabloRuleFailure?>(
+                    "player",
+                    (state, participants) => {
+                        completionObserved = state.PositionX == 1
+                            && state.PositionY == 0
+                            && state.CombatMode == DiabloPlayerCombatMode.Stand
+                            && state.CurrentAction is null;
+                        var result = simulation.Execute(
+                            state,
+                            new DiabloCastIntent(7, 99, 2, 0),
+                            moveEndTick,
+                            participants);
+                        return new SimulationStepResult<DiabloRuleFailure?, DiabloGameplayEvent>(
+                            result.Failure,
+                            result.Events);
+                    }),
+            ]);
+
+        Assert.True(completionObserved);
+        Assert.Equal(new DiabloRuleFailure?[] { null }, castResults);
+        var player = runtime.Read("player", state => state);
+        var cast = Assert.IsType<AuthoritativePlayerActionState>(player.CurrentAction);
+        var expectedEffectTick = moveEndTick + (ulong)animation.CastingActionFrame;
+        var expectedEndTick = moveEndTick + (ulong)(animation.CastingFrames - 1);
+        Assert.Equal(DiabloPlayerActionKind.Cast, cast.Kind);
+        Assert.Equal((moveEndTick, expectedEffectTick, expectedEffectTick, expectedEndTick), (
+            cast.StartedAtTick,
+            cast.EffectTick,
+            cast.ReadyTick,
+            cast.EndTick));
+        Assert.Equal((1, 0), (player.PositionX, player.PositionY));
+        Assert.Equal(10, player.Mana);
+        Assert.Equal(targetHitPointsBefore, target.HitPoints);
+
+        runtime.ExecuteTick<DiabloRuleFailure?>(expectedEffectTick, []);
+        Assert.Equal(targetHitPointsBefore - 6, target.HitPoints);
+        Assert.Equal(6, player.Mana);
+        var damage = Assert.Single(runtime.DrainEvents("player"));
+        Assert.Equal(DiabloGameplayEventKind.Damage, damage.Kind);
+        Assert.Equal(99U, damage.TargetEntityId);
+        Assert.Equal(6, damage.Amount);
+        Assert.True(runtime.Read("player", state => state.CurrentAction!.EffectApplied));
+    }
+
+    [Fact]
+    public void ExecuteTickAdmitsCastAtSpellReadyTickAndRejectsSecondSameTickCast()
+    {
+        var (simulation, template, target, animation) = CreateNativeMoveCastFixture();
+        var runtime = simulation.CreateRuntime(template);
+        runtime.Write("player", state => state.EntityId = 11);
+        var initialHitPoints = target.HitPoints;
+
+        var initialResults = runtime.ExecuteTick<DiabloRuleFailure?>(
+            1,
+            [
+                CreateCastTickCommand(
+                    "player",
+                    simulation,
+                    1,
+                    new DiabloCastIntent(7, 99, 2, 0)),
+                CreateCastTickCommand(
+                    "player",
+                    simulation,
+                    1,
+                    new DiabloCastIntent(7, 99, 2, 0)),
+            ]);
+
+        Assert.Equal(
+            new DiabloRuleFailure?[] { null, DiabloRuleFailure.NotAllowed },
+            initialResults);
+        var firstCast = runtime.Read("player", state => state.CurrentAction)!;
+        var firstEffectTick = 1UL + (ulong)animation.CastingActionFrame;
+        Assert.Equal(DiabloPlayerActionKind.Cast, firstCast.Kind);
+        Assert.False(firstCast.EffectApplied);
+        Assert.Equal(firstEffectTick, firstCast.ReadyTick);
+        Assert.Equal(initialHitPoints, target.HitPoints);
+        Assert.Equal(10, runtime.Read("player", state => state.Mana));
+
+        var actionAfterFirstReadyCommand = (AuthoritativePlayerActionState?)null;
+        var readyObservation = (EffectApplied: false, HitPoints: 0, Mana: 0);
+        var readyResults = runtime.ExecuteTick<DiabloRuleFailure?>(
+            firstCast.ReadyTick,
+            [
+                new SimulationTickCommand<AuthoritativePlayerState, DiabloGameplayEvent, DiabloRuleFailure?>(
+                    "player",
+                    (state, participants) => {
+                        readyObservation = (
+                            state.CurrentAction?.EffectApplied ?? false,
+                            target.HitPoints,
+                            state.Mana);
+                        var result = simulation.Execute(
+                            state,
+                            new DiabloCastIntent(7, 99, 2, 0),
+                            firstCast.ReadyTick,
+                            participants);
+                        actionAfterFirstReadyCommand = state.CurrentAction;
+                        return new SimulationStepResult<DiabloRuleFailure?, DiabloGameplayEvent>(
+                            result.Failure,
+                            result.Events);
+                    }),
+                CreateCastTickCommand(
+                    "player",
+                    simulation,
+                    firstCast.ReadyTick,
+                    new DiabloCastIntent(7, 99, 2, 0)),
+            ]);
+
+        Assert.Equal((true, initialHitPoints - 6, 6), readyObservation);
+        Assert.Equal(
+            new DiabloRuleFailure?[] { null, DiabloRuleFailure.NotAllowed },
+            readyResults);
+        var replacement = runtime.Read("player", state => state.CurrentAction)!;
+        Assert.Same(actionAfterFirstReadyCommand, replacement);
+        Assert.Equal(DiabloPlayerActionKind.Cast, replacement.Kind);
+        Assert.False(replacement.EffectApplied);
+        var expectedReplacementEffectTick = firstCast.ReadyTick
+            + (ulong)animation.CastingActionFrame;
+        var expectedReplacementEndTick = firstCast.ReadyTick
+            + (ulong)(animation.CastingFrames - 1);
+        Assert.Equal((firstCast.ReadyTick, expectedReplacementEffectTick,
+            expectedReplacementEffectTick, expectedReplacementEndTick), (
+            replacement.StartedAtTick,
+            replacement.EffectTick,
+            replacement.ReadyTick,
+            replacement.EndTick));
+        Assert.Equal(initialHitPoints - 6, target.HitPoints);
+        Assert.Equal(6, runtime.Read("player", state => state.Mana));
+        var damage = Assert.Single(runtime.DrainEvents("player"));
+        Assert.Equal(DiabloGameplayEventKind.Damage, damage.Kind);
+        Assert.Equal(99U, damage.TargetEntityId);
+        Assert.Equal(6, damage.Amount);
+        Assert.Equal(firstCast.ReadyTick, runtime.LastAdvancedTick);
+    }
+    [Fact]
     public void CohortRuntimeUsesTheSameOrderedCommandLifecycle()
     {
         var options = CreateOptions();
@@ -793,6 +1040,116 @@ public sealed class DiabloSimulationTickCommandTests
             player.CurrentAction.EndTick));
     }
 
+    private static SimulationTickCommand<
+        AuthoritativePlayerState,
+        DiabloGameplayEvent,
+        DiabloRuleFailure?> CreateMoveTickCommand(
+        string sessionId,
+        DiabloSimulation simulation,
+        ulong tick,
+        int directionX,
+        int directionY,
+        List<(uint EntityId, string Intent)>? operationOrder = null)
+    {
+        return new SimulationTickCommand<
+            AuthoritativePlayerState,
+            DiabloGameplayEvent,
+            DiabloRuleFailure?>(
+            sessionId,
+            (player, participants) => {
+                operationOrder?.Add((player.EntityId, "Move"));
+                var result = simulation.Execute(
+                    player,
+                    new DiabloMoveIntent(directionX, directionY),
+                    tick,
+                    participants);
+                return new SimulationStepResult<DiabloRuleFailure?, DiabloGameplayEvent>(
+                    result.Failure,
+                    result.Events);
+            });
+    }
+
+    private static SimulationTickCommand<
+        AuthoritativePlayerState,
+        DiabloGameplayEvent,
+        DiabloRuleFailure?> CreateCastTickCommand(
+        string sessionId,
+        DiabloSimulation simulation,
+        ulong tick,
+        DiabloCastIntent intent,
+        List<(uint EntityId, string Intent)>? operationOrder = null)
+    {
+        return new SimulationTickCommand<
+            AuthoritativePlayerState,
+            DiabloGameplayEvent,
+            DiabloRuleFailure?>(
+            sessionId,
+            (player, participants) => {
+                operationOrder?.Add((player.EntityId, "Cast"));
+                var result = simulation.Execute(player, intent, tick, participants);
+                return new SimulationStepResult<DiabloRuleFailure?, DiabloGameplayEvent>(
+                    result.Failure,
+                    result.Events);
+            });
+    }
+
+    private static (
+        DiabloSimulation Simulation,
+        DiabloPlayerTemplate Template,
+        AuthoritativeCombatTarget Target,
+        AuthoritativePlayerAnimationDefinition Animation)
+        CreateNativeMoveCastFixture()
+    {
+        var (classes, animations) = LoadShippedPlayerMetadata();
+        var target = new AuthoritativeCombatTarget(
+            99,
+            2,
+            0,
+            20,
+            aggroRange: 0);
+        var options = new DiabloSimulationOptions(
+            new StoreCatalog(),
+            DiabloModule.Instance.Rules) {
+            FallbackWidth = 8,
+            FallbackHeight = 8,
+            FallbackBlockedCells = [],
+            FallbackMissileBlockedCells = [],
+            PlayerClasses = classes,
+            PlayerAnimations = animations,
+            UseNativePlayerActionTiming = true,
+            CombatRules = new AuthoritativeCombatRules(10, 1, 100),
+            Spells = new AuthoritativeSpellCatalog([
+                new AuthoritativeSpellDefinition(7, 4, 0, 0, 0, 0) {
+                    DamageAmount = 6,
+                    Range = 4,
+                },
+            ]),
+            CombatTargets = [target],
+        };
+        var template = new DiabloPlayerTemplate(
+            gold: 0,
+            experience: 0,
+            life: 50,
+            mana: 10,
+            manaMaximum: 10,
+            attributes: PlayerAttributesState.Zero,
+            equipment: [],
+            inventoryGrid: Enumerable.Repeat(-1, 40).ToArray(),
+            belt: [],
+            positionX: 0,
+            positionY: 0,
+            lifeMaximum: 50,
+            characterLevel: 1,
+            levelId: 0,
+            armorClass: 0,
+            characterClassId: 0,
+            memorizedSpells: [new MemorizedSpellState(7, 1)]);
+        return (
+            DiabloSimulationFactory.Instance.Create(options),
+            template,
+            target,
+            animations.GetRequired(0));
+    }
     private static DiabloSimulation CreateSimulation()
         => DiabloSimulationFactory.Instance.Create(CreateOptions());
 

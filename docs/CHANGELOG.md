@@ -2,6 +2,11 @@
 
 Notable changes to this fork are recorded below.
 
+- 2026-10-12: Characterize native Move/Cast admission and pending animation rows
+  with seven focused and combined/shuffled GTests. Add three managed ExecuteTick
+  regressions for participant order, completion, ready Cast and same-tick refusal.
+  Full native player-loop alignment and persisted cursor adoption remain open.
+
 - 2026-10-12: Qualify the headless exported Legacy single-player Create/save/fresh-
   host Resume journey at c6c7f543b: twenty Create moves, restored cursor 23 and
   accepted adjacent move 24, one reused release export, and natural host shutdown

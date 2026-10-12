@@ -1169,6 +1169,44 @@ Selected engine 4.7.2 imports only staged SDK copies; the source pin remains
 campaign, broader outage, native GUI or release gates. The overall estimate remains
 approximately 35%; historical unclassified TooLate failures remain separate.
 
+### M1 Move/Cast action-start characterization (2026-10-12)
+
+Seven new `NativePlayerActionStart` GTests exercise real `CheckNewPath`
+admission for three walk families, town running, idle Spell and ready Spell
+repeat. The completion-walk case runs actual `DoAttack` and passes its true
+completion signal into `CheckNewPath`. All nine animation cursor scalars are
+asserted immediately after admission and after two direct animation steps.
+Prepared 8-frame/5-action-frame rows retain idle walk -2/-1/0, town run 2/3/4,
+completion walk -1/0/1 and Spell 0/1/2, with ready Spell prior-frame carry 2.
+These are observed assertions in the selected native runs; no whole
+`ProcessPlayers` trace or native Spell-effect boundary is claimed.
+
+Three managed tests call actual Engine `ExecuteTick` callbacks and module
+admission using shipped Warrior walk/cast/action-frame values 8/20/14. They
+verify participant order with result-slot preservation, a second same-tick Move
+refusal, Move completion before admitting Cast, and ready Cast replacement after
+exactly one old effect. Cast readiness is tested through Spell admission, not
+the attack-only transient ready-repeat phase. This is module refusal coverage,
+not transport duplicate-ledger coverage. Different native prepared and managed
+shipped metadata do not establish shared post-tick cursor parity.
+
+Fresh integrated verification passes native focused 7/7, combined 11/11 and
+three shuffled 11-test iterations at seeds 417/418/419, plus all 39 managed tick
+tests, without failures/errors/skips. Builds initialize the matching checked
+MSVC environment and use a child-local `_CL_=/Z7` override after `/ZI /FS`
+C1902 failures persisted with fresh generated symbols. The expected D9025
+override warning and one existing managed xUnit2013 warning remain. The initial
+raw-array `.size()` compile failure was corrected to `std::size` with an
+explicit `<iterator>` include before native tests ran. The Root harness's
+malformed first compiler probe timed out separately; its corrected tiny probe
+passed. Original failures and generated-symbol backups remain in
+`.local/action-start-characterization-integration-fb4eafedcf224c829530a6452ad43a25`.
+
+No production behavior changes. Full native player-loop/effect traces with
+matched timing inputs and the persisted command-phase/anchor contract remain
+next gates before cursor, host, protocol or rendering adoption. This bounded
+prerequisite does not close M1 or change the approximately 35% overall estimate.
+
 ### M1 ordered authoritative command-tick prerequisite (2026-10-04)
 
 The additive Engine `ExecuteTick` API now gives each participant an ordered,

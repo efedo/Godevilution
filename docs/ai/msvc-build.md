@@ -158,6 +158,39 @@ existing Engine `OrderedSimulationTickTests` and module
 This proves ordinary callers, not whole `ProcessPlayers`, weapon-break completion,
 typed input phases, live cursor restore/protocol or rendered client acceptance.
 
+Seven additional `NativePlayerActionStart` fixtures cover the three walking
+families, town running, a walk admitted by actual attack completion, idle Spell
+and ready Spell repetition. Run `NativePlayerActionStart.*` (7 tests), then
+`NativePlayerActionStart.*:NativePlayerCommandPhase.*` (11 tests), followed by
+that combined filter with `--gtest_shuffle --gtest_random_seed=417`, 418 and 419.
+The prepared 8-frame/5-action-frame fixture asserts all nine timing fields
+immediately after admission and after two direct `processAnimation` calls:
+
+| Admission | Current frames: start / step 1 / step 2 | Tick modifier | Prior skipped frames |
+| --- | --- | --- | --- |
+| Idle walk | -2 / -1 / 0 | 113 | 0 |
+| Town run | 2 / 3 / 4 | 204 | 0 |
+| Completion walk | -1 / 0 / 1 | 128 | 0 |
+| Idle Spell | 0 / 1 / 2 | 170 | 0 |
+| Ready Spell repeat | 0 / 1 / 2 | 256 | 2 |
+
+All rows use 8 frames, one tick per frame, counter 0 and no petrification;
+sequence ticks are -128/0/128, with 8 relevant walk frames or 4 Spell frames.
+These direct animation steps isolate the end-update boundary; they do not run
+the whole `ProcessPlayers` loop or a Spell effect. The module's three added
+`DiabloSimulationTickCommandTests` use actual Engine callbacks and shipped
+Warrior walking/casting/action-frame values 8/20/14. Their 39-case class covers
+participant order, Move completion before Cast, ready Cast replacement and
+second same-tick admission refusal. The differing metadata does not establish
+native/managed tick parity; refusal is not transport duplicate-ledger coverage.
+
+The local checked MSVC build hit C1902 under `/ZI /FS` even after preserving and
+removing generated symbol artifacts from the selected target. A fresh compiler
+probe passed, and child-process `_CL_=/Z7` allowed the target to build and pass
+the selected runs. Apply that override only after `VsDevCmd.bat` in the child
+environment; keep CMake defaults unchanged. MSVC reports the expected D9025
+debug-format override warning.
+
 For the separate player-context metadata prerequisite, run:
 
 ```powershell
