@@ -1169,6 +1169,43 @@ Selected engine 4.7.2 imports only staged SDK copies; the source pin remains
 campaign, broader outage, native GUI or release gates. The overall estimate remains
 approximately 35%; historical unclassified TooLate failures remain separate.
 
+### M1 prepared full-player-loop Cast trace (2026-10-12)
+
+Two additive `NativeMonkSearchTest` fixtures call real `ProcessPlayers`
+without a start hook. With logical label 100 assigned to the first full
+admission update, prepared Spell frames/action frame 8/5 produce post-update
+frames 1 through 7, actual Search creation at 105 and Stand completion at 107.
+All nine timing scalars are asserted on eight updates, including the Stand
+reset `8/4/1/0/false/0/0/0/128`. The real Search remains duration 247 until a
+separate missile pass after completion reduces it to 246; this is a player-loop
+trace, not every-tick missile processing or full `GameLogic`. Skill life/mana
+and RNG remain unchanged. The walk fixture covers two full updates, pending
+frames -1/0, origin occupancy, destination reservation and view prestate. Its
+nine tiles and piece-zero properties are restored before fixture teardown.
+
+One managed `ExecuteTick` regression uses test-only 8/5 casting metadata while
+retaining shipped defaults for existing tests. It captures 32 observations at
+before-tick, callback-before, callback-after and actual after-tick boundaries,
+with eight literal post-tick rows. It admits at 100, applies exactly one damage
+and mana effect at 105, then clears the action to Stand at 107. Native Monk Skill
+Search and managed Warrior memorized damage remain distinct prepared fixtures.
+
+Fresh native build, focused 2/2, combined 7/7 and three shuffled seven-test runs
+at seeds 417/418/419 pass, alongside all 40 managed tick cases, without failures,
+errors or skips. The native build retains its child-local `_CL_=/Z7` override
+and expected D9025 warning; the managed build retains one existing xUnit2013.
+The first native focus run passed Search and failed only the walk's missing
+initial view setup; its failure is retained. The corrected fixture explicitly
+sets/restores that prestate. A first passing managed run emitted eight new
+xUnit2031 warnings; equivalent predicate-overload assertions removed them before
+the final build/run. Evidence is under
+`.local/player-loop-cast-trace-integration-d883020c615f4e14bcf564c0b8685c34`.
+
+The old canonical Search caller test is preserved. This prepared boundary proof
+does not establish shipped class/effect parity, walk arrival, full ready-repeat
+player-loop behavior, protocol/persistence or rendered acceptance. The persisted
+command-phase/anchor contract and M1 remain open; overall remains approximately 35%.
+
 ### M1 Move/Cast action-start characterization (2026-10-12)
 
 Seven new `NativePlayerActionStart` GTests exercise real `CheckNewPath`

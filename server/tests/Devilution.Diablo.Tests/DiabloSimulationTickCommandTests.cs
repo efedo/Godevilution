@@ -700,6 +700,199 @@ public sealed class DiabloSimulationTickCommandTests
     }
 
     [Fact]
+    public void ExecuteTickTracesPreparedCastStartEffectAndCompletionBoundaries()
+    {
+        // The test-only 8/5 cast timing matches the prepared native spell fixture;
+        // it records module timing without claiming native caller parity.
+        var (simulation, template, target, animation) = CreateNativeMoveCastFixture(
+            (CastingFrames: 8, CastingActionFrame: 5));
+        Assert.Equal((8, 5), (animation.CastingFrames, animation.CastingActionFrame));
+
+        var runtime = simulation.CreateRuntime(template);
+        runtime.Write("player", state => state.EntityId = 11);
+        var initialHitPoints = target.HitPoints;
+        const ulong startTick = 100;
+        const ulong readyTick = 105;
+        const ulong endTick = 107;
+        var callbackCount = 0;
+        var trace = new List<(
+            ulong Tick,
+            string Point,
+            DiabloPlayerCombatMode Mode,
+            DiabloPlayerActionKind? Kind,
+            ulong? StartedAtTick,
+            ulong? EffectTick,
+            ulong? ReadyTick,
+            ulong? EndTick,
+            bool? EffectApplied,
+            int TargetHitPoints,
+            int Mana)>();
+        var eventsByTick = new List<(ulong Tick, int EventCount, int DamageEvents)>();
+
+        void Record(ulong tick, string point, AuthoritativePlayerState state)
+        {
+            var action = state.CurrentAction;
+            trace.Add((
+                tick,
+                point,
+                state.CombatMode,
+                action?.Kind,
+                action?.StartedAtTick,
+                action?.EffectTick,
+                action?.ReadyTick,
+                action?.EndTick,
+                action?.EffectApplied,
+                target.HitPoints,
+                state.Mana));
+        }
+
+        for (var tick = startTick; tick <= endTick; tick++) {
+            _ = runtime.Read("player", state => {
+                Record(tick, "before-tick", state);
+                return 0;
+            });
+
+            var command = new SimulationTickCommand<
+                AuthoritativePlayerState,
+                DiabloGameplayEvent,
+                DiabloRuleFailure?>(
+                "player",
+                (state, participants) => {
+                    callbackCount++;
+                    Record(tick, "callback-before", state);
+                    if (tick == startTick) {
+                        var cast = simulation.Execute(
+                            state,
+                            new DiabloCastIntent(7, 99, 2, 0),
+                            tick,
+                            participants);
+                        Record(tick, "callback-after", state);
+                        return new SimulationStepResult<DiabloRuleFailure?, DiabloGameplayEvent>(
+                            cast.Failure,
+                            cast.Events);
+                    }
+
+                    Record(tick, "callback-after", state);
+                    return new SimulationStepResult<DiabloRuleFailure?, DiabloGameplayEvent>(null, []);
+                });
+
+            var results = runtime.ExecuteTick<DiabloRuleFailure?>(tick, [command]);
+            _ = runtime.Read("player", state => {
+                Record(tick, "after-tick", state);
+                return 0;
+            });
+            Assert.Equal(new DiabloRuleFailure?[] { null }, results);
+            var tickEvents = runtime.DrainEvents("player");
+            eventsByTick.Add((
+                tick,
+                tickEvents.Count,
+                tickEvents.Count(gameEvent => gameEvent.Kind == DiabloGameplayEventKind.Damage)));
+        }
+
+        Assert.Equal(8, callbackCount);
+        Assert.Equal(endTick, runtime.LastAdvancedTick);
+        Assert.Equal(32, trace.Count);
+        Assert.All(
+            trace.GroupBy(row => row.Tick),
+            tickRows => {
+                Assert.Equal(4, tickRows.Count());
+                Assert.Equal(4, tickRows.Select(row => row.Point).Distinct(StringComparer.Ordinal).Count());
+            });
+
+        var expectedAfterTickTrace = new (
+            ulong Tick,
+            DiabloPlayerCombatMode Mode,
+            DiabloPlayerActionKind? Kind,
+            ulong? StartedAtTick,
+            ulong? EffectTick,
+            ulong? ReadyTick,
+            ulong? EndTick,
+            bool? EffectApplied,
+            int TargetHitPoints,
+            int Mana)[] {
+            (100, DiabloPlayerCombatMode.Spell, DiabloPlayerActionKind.Cast, 100, 105, 105, 107, false, initialHitPoints, 10),
+            (101, DiabloPlayerCombatMode.Spell, DiabloPlayerActionKind.Cast, 100, 105, 105, 107, false, initialHitPoints, 10),
+            (102, DiabloPlayerCombatMode.Spell, DiabloPlayerActionKind.Cast, 100, 105, 105, 107, false, initialHitPoints, 10),
+            (103, DiabloPlayerCombatMode.Spell, DiabloPlayerActionKind.Cast, 100, 105, 105, 107, false, initialHitPoints, 10),
+            (104, DiabloPlayerCombatMode.Spell, DiabloPlayerActionKind.Cast, 100, 105, 105, 107, false, initialHitPoints, 10),
+            (105, DiabloPlayerCombatMode.Spell, DiabloPlayerActionKind.Cast, 100, 105, 105, 107, true, initialHitPoints - 6, 6),
+            (106, DiabloPlayerCombatMode.Spell, DiabloPlayerActionKind.Cast, 100, 105, 105, 107, true, initialHitPoints - 6, 6),
+            (107, DiabloPlayerCombatMode.Stand, null, null, null, null, null, null, initialHitPoints - 6, 6),
+        };
+        Assert.Equal(
+            expectedAfterTickTrace,
+            trace.Where(row => row.Point == "after-tick")
+                .Select(row => (
+                    row.Tick,
+                    row.Mode,
+                    row.Kind,
+                    row.StartedAtTick,
+                    row.EffectTick,
+                    row.ReadyTick,
+                    row.EndTick,
+                    row.EffectApplied,
+                    row.TargetHitPoints,
+                    row.Mana))
+                .ToArray());
+
+        var beforeStart = Assert.Single(
+            trace,
+            row => row.Tick == startTick && row.Point == "callback-before");
+        Assert.Equal(DiabloPlayerCombatMode.Stand, beforeStart.Mode);
+        Assert.Null(beforeStart.Kind);
+        Assert.Equal(initialHitPoints, beforeStart.TargetHitPoints);
+        Assert.Equal(10, beforeStart.Mana);
+
+        var afterStart = Assert.Single(
+            trace,
+            row => row.Tick == startTick && row.Point == "callback-after");
+        Assert.Equal(DiabloPlayerCombatMode.Spell, afterStart.Mode);
+        Assert.Equal(DiabloPlayerActionKind.Cast, afterStart.Kind);
+        Assert.Equal(startTick, afterStart.StartedAtTick);
+        Assert.Equal(readyTick, afterStart.EffectTick);
+        Assert.Equal(readyTick, afterStart.ReadyTick);
+        Assert.Equal(endTick, afterStart.EndTick);
+        Assert.Equal(false, afterStart.EffectApplied);
+        Assert.Equal(initialHitPoints, afterStart.TargetHitPoints);
+        Assert.Equal(10, afterStart.Mana);
+
+        var beforeReady = Assert.Single(
+            trace,
+            row => row.Tick == readyTick && row.Point == "before-tick");
+        Assert.Equal(false, beforeReady.EffectApplied);
+        Assert.Equal(initialHitPoints, beforeReady.TargetHitPoints);
+        var afterReadyAdvance = Assert.Single(
+            trace,
+            row => row.Tick == readyTick && row.Point == "callback-before");
+        Assert.Equal(DiabloPlayerCombatMode.Spell, afterReadyAdvance.Mode);
+        Assert.Equal(DiabloPlayerActionKind.Cast, afterReadyAdvance.Kind);
+        Assert.Equal(true, afterReadyAdvance.EffectApplied);
+        Assert.Equal(initialHitPoints - 6, afterReadyAdvance.TargetHitPoints);
+        Assert.Equal(6, afterReadyAdvance.Mana);
+
+        var beforeCompletion = Assert.Single(
+            trace,
+            row => row.Tick == endTick && row.Point == "before-tick");
+        Assert.Equal(DiabloPlayerActionKind.Cast, beforeCompletion.Kind);
+        var afterCompletionAdvance = Assert.Single(
+            trace,
+            row => row.Tick == endTick && row.Point == "callback-before");
+        Assert.Equal(DiabloPlayerCombatMode.Stand, afterCompletionAdvance.Mode);
+        Assert.Null(afterCompletionAdvance.Kind);
+        Assert.Equal(initialHitPoints - 6, afterCompletionAdvance.TargetHitPoints);
+        Assert.Equal(6, afterCompletionAdvance.Mana);
+
+        Assert.Equal(1, eventsByTick.Count(row => row.EventCount == 1));
+        Assert.Equal((1, 1), (
+            Assert.Single(eventsByTick, row => row.Tick == readyTick).EventCount,
+            Assert.Single(eventsByTick, row => row.Tick == readyTick).DamageEvents));
+        Assert.All(
+            eventsByTick.Where(row => row.Tick != readyTick),
+            row => Assert.Equal((0, 0), (row.EventCount, row.DamageEvents)));
+        Assert.Equal(initialHitPoints - 6, target.HitPoints);
+    }
+
+    [Fact]
     public void ExecuteTickAdmitsCastAtSpellReadyTickAndRejectsSecondSameTickCast()
     {
         var (simulation, template, target, animation) = CreateNativeMoveCastFixture();
@@ -1098,9 +1291,21 @@ public sealed class DiabloSimulationTickCommandTests
         DiabloPlayerTemplate Template,
         AuthoritativeCombatTarget Target,
         AuthoritativePlayerAnimationDefinition Animation)
-        CreateNativeMoveCastFixture()
+        CreateNativeMoveCastFixture(
+            (int CastingFrames, int CastingActionFrame)? castTimingOverride = null)
     {
         var (classes, animations) = LoadShippedPlayerMetadata();
+        if (castTimingOverride is { } castTiming) {
+            var prepared = animations.GetRequired(0) with {
+                CastingFrames = castTiming.CastingFrames,
+                CastingActionFrame = castTiming.CastingActionFrame,
+            };
+            animations = new AuthoritativePlayerAnimationCatalog(
+                animations.Definitions.Select(definition => definition.ClassId == prepared.ClassId
+                    ? prepared
+                    : definition),
+                classes);
+        }
         var target = new AuthoritativeCombatTarget(
             99,
             2,

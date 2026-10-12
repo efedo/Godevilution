@@ -182,6 +182,59 @@ private:
 	uint32_t savedRngState_;
 };
 
+class ScopedNativeWalkWorld {
+public:
+	explicit ScopedNativeWalkWorld(Point center)
+	    : savedFloorProperties_(tileProperties()[0])
+	{
+		std::size_t index = 0;
+		for (int y = -1; y <= 1; ++y) {
+			for (int x = -1; x <= 1; ++x) {
+				const Point position { center.x + x, center.y + y };
+				positions_[index] = position;
+				savedTiles_[index] = tileAt(position);
+				tileAt(position).clear();
+				tileAt(position).setPiece(0);
+				++index;
+			}
+		}
+		tileProperties()[0] = TileProperties::None;
+	}
+
+	~ScopedNativeWalkWorld()
+	{
+		tileProperties()[0] = savedFloorProperties_;
+		for (std::size_t index = 0; index < positions_.size(); ++index)
+			tileAt(positions_[index]) = savedTiles_[index];
+	}
+
+	ScopedNativeWalkWorld(const ScopedNativeWalkWorld &) = delete;
+	ScopedNativeWalkWorld &operator=(const ScopedNativeWalkWorld &) = delete;
+
+private:
+	std::array<Point, 9> positions_ {};
+	std::array<Tile, 9> savedTiles_ {};
+	TileProperties savedFloorProperties_;
+};
+
+using NativeAnimationTimingRow = std::array<int, 9>;
+
+NativeAnimationTimingRow CaptureNativeAnimationTiming(const Player &player)
+{
+	const AnimationTimingState timing = player.animInfo.captureTimingState();
+	return {
+		timing.numberOfFrames,
+		timing.ticksPerFrame,
+		timing.tickCounterOfCurrentFrame,
+		timing.currentFrame,
+		timing.isPetrified ? 1 : 0,
+		timing.relevantFramesForDistributing,
+		timing.skippedFramesFromPreviousAnimation,
+		timing.tickModifier,
+		timing.ticksSinceSequenceStarted,
+	};
+}
+
 class NativeMonkSearchTest : public ::testing::Test {
 protected:
 	void SetUp() override
@@ -731,6 +784,177 @@ TEST_F(NativeMonkSearchTest, PlayerCastCreatesSearchBeforeThePairedMissilePass)
 	EXPECT_EQ(sfxdelay, 0);
 }
 
+TEST_F(NativeMonkSearchTest, ProcessPlayersAdmitsSpellAndCapturesItsNativeCompletionBoundary)
+{
+	const std::optional<std::filesystem::path> hellfireAssets = FindHellfireAssetsPath();
+	ASSERT_TRUE(hellfireAssets.has_value());
+	const std::filesystem::path canonicalAssets = hellfireAssets->parent_path().parent_path() / "assets";
+	ASSERT_TRUE(std::filesystem::is_regular_file(canonicalAssets / "txtdata" / "Experience.tsv"));
+	ASSERT_TRUE(std::filesystem::is_regular_file(canonicalAssets / "txtdata" / "classes" / "classdat.tsv"));
+
+	// Player/class tables follow the process-lifetime canonical-table convention used by the existing test.
+	paths::SetAssetsPath(canonicalAssets.string() + "/");
+	LoadPlayerDataFiles();
+	paths::SetAssetsPath(hellfireAssets->string() + "/");
+	const PlayerStartingLoadoutData &loadout = GetPlayerStartingLoadoutForClass(HeroClass::Monk);
+	ASSERT_EQ(loadout.skill, SpellID::Search);
+
+	Player &player = *MyPlayer;
+	player.plractive = true;
+	player.plrlevel = currentLevelNumber();
+	player.plrIsOnSetLevel = false;
+	player.pLvlLoad = 0;
+	player.lightId = NO_LIGHT;
+	player.position.tile = MonkSearchPosition;
+	player.position.future = MonkSearchPosition;
+	player.position.temp = MonkSearchPosition;
+	player.position.old = MonkSearchPosition;
+	player.direction = Direction::South;
+	player._pgfxnum = static_cast<uint8_t>(PlayerWeaponGraphic::Unarmed);
+	player.clearPath();
+	player.setAnimations();
+	player._pSFrames = 8;
+	player._pSFNum = 5;
+	player._pAblSpells = GetSpellBitmask(loadout.skill);
+	player.life = { 6400, 6400, 6400, 6400, 100 };
+	player.mana = { 3200, 3200, 3200, 3200, 100 };
+	player._pmode = PM_STAND;
+	player.queuedSpell = { SpellID::Search, SpellType::Skill, -1, 0 };
+	player.destAction = ACTION_SPELL;
+	player.destParam1 = MonkSearchPosition.x;
+	player.destParam2 = MonkSearchPosition.y;
+	player.destParam3 = 0;
+	player.occupyTile(MonkSearchPosition, false);
+
+	ASSERT_TRUE(player.plractive);
+	ASSERT_EQ(player.plrlevel, currentLevelNumber());
+	ASSERT_NE(player._pAblSpells & GetSpellBitmask(SpellID::Search), 0U);
+	ASSERT_EQ(player._pSFrames, 8);
+	ASSERT_EQ(player._pSFNum, 5);
+	ASSERT_TRUE(Missiles.empty());
+
+	const std::array<NativeAnimationTimingRow, 8> expectedRows {{
+		{ 8, 1, 0, 1, 0, 4, 0, 170, 0 },
+		{ 8, 1, 0, 2, 0, 4, 0, 170, 128 },
+		{ 8, 1, 0, 3, 0, 4, 0, 170, 256 },
+		{ 8, 1, 0, 4, 0, 4, 0, 170, 384 },
+		{ 8, 1, 0, 5, 0, 4, 0, 170, 512 },
+		{ 8, 1, 0, 6, 0, 4, 0, 170, 640 },
+		{ 8, 1, 0, 7, 0, 4, 0, 170, 768 },
+		{ 8, 4, 1, 0, 0, 0, 0, 0, 128 },
+	}};
+	const int initialLife = player.life.current;
+	const int initialMana = player.mana.current;
+	const uint32_t initialRngState = GetLCGEngineState();
+
+	for (std::size_t index = 0; index < expectedRows.size(); ++index) {
+		ProcessPlayers();
+		EXPECT_EQ(CaptureNativeAnimationTiming(player), expectedRows[index])
+		    << "logicalTick=" << (100 + index) << " (label only; no production tick value is changed)";
+		if (index < 5) {
+			EXPECT_TRUE(Missiles.empty()) << "logicalTick=" << (100 + index);
+		} else {
+			ASSERT_EQ(Missiles.size(), 1U) << "logicalTick=" << (100 + index);
+			const Missile &search = Missiles.front();
+			EXPECT_EQ(search._mitype, MissileID::Search) << "logicalTick=" << (100 + index);
+			EXPECT_EQ(search._misource, player.getId()) << "logicalTick=" << (100 + index);
+			EXPECT_EQ(search.duration, 247) << "logicalTick=" << (100 + index);
+			EXPECT_FALSE(search._miDelFlag) << "logicalTick=" << (100 + index);
+		}
+		if (index == 0) {
+			EXPECT_EQ(player.executedSpell.spellId, SpellID::Search);
+			EXPECT_EQ(player.executedSpell.spellType, SpellType::Skill);
+			EXPECT_EQ(player.destAction, ACTION_NONE) << "logicalTick=100 after ProcessPlayers admitted the queued skill";
+		}
+		if (index < 7)
+			EXPECT_EQ(player._pmode, PM_SPELL) << "logicalTick=" << (100 + index);
+	}
+
+	EXPECT_EQ(player._pmode, PM_STAND);
+	EXPECT_EQ(player.destAction, ACTION_NONE);
+	EXPECT_EQ(player.position.tile, MonkSearchPosition);
+	EXPECT_EQ(player.life.current, initialLife);
+	EXPECT_EQ(player.mana.current, initialMana);
+	EXPECT_EQ(GetLCGEngineState(), initialRngState);
+	ASSERT_EQ(Missiles.size(), 1U);
+	EXPECT_EQ(Missiles.front().duration, 247);
+
+	// The paired missile pass follows the completed player update and decrements the real Search effect once.
+	ProcessMissiles();
+	ASSERT_EQ(Missiles.size(), 1U);
+	EXPECT_EQ(Missiles.front()._mitype, MissileID::Search);
+	EXPECT_EQ(Missiles.front()._misource, player.getId());
+	EXPECT_EQ(Missiles.front().duration, 246);
+	EXPECT_FALSE(Missiles.front()._miDelFlag);
+	EXPECT_EQ(player.life.current, initialLife);
+	EXPECT_EQ(player.mana.current, initialMana);
+	EXPECT_EQ(GetLCGEngineState(), initialRngState);
+}
+
+TEST_F(NativeMonkSearchTest, ProcessPlayersAdmitsNorthWalkAndCapturesItsFirstTwoUpdates)
+{
+	const std::optional<std::filesystem::path> hellfireAssets = FindHellfireAssetsPath();
+	ASSERT_TRUE(hellfireAssets.has_value());
+	const std::filesystem::path canonicalAssets = hellfireAssets->parent_path().parent_path() / "assets";
+	ASSERT_TRUE(std::filesystem::is_regular_file(canonicalAssets / "txtdata" / "Experience.tsv"));
+	ASSERT_TRUE(std::filesystem::is_regular_file(canonicalAssets / "txtdata" / "classes" / "classdat.tsv"));
+	paths::SetAssetsPath(canonicalAssets.string() + "/");
+	LoadPlayerDataFiles();
+	paths::SetAssetsPath(hellfireAssets->string() + "/");
+
+	ScopedNativeWalkWorld walkWorld(MonkSearchPosition);
+	Player &player = *MyPlayer;
+	const Point destination = MonkSearchPosition + Direction::North;
+
+	player.plractive = true;
+	player.plrlevel = currentLevelNumber();
+	player.plrIsOnSetLevel = false;
+	player.pLvlLoad = 0;
+	player.lightId = NO_LIGHT;
+	player.position.tile = MonkSearchPosition;
+	player.position.future = MonkSearchPosition;
+	player.position.temp = MonkSearchPosition;
+	player.position.old = MonkSearchPosition;
+	player.direction = Direction::South;
+	player.tempDirection = Direction::South;
+	player._pgfxnum = static_cast<uint8_t>(PlayerWeaponGraphic::Unarmed);
+	player.clearPath();
+	player.setAnimations();
+	player._pWFrames = 8;
+	player._pmode = PM_STAND;
+	player.destAction = ACTION_NONE;
+	player.occupyTile(MonkSearchPosition, false);
+	tileAt(destination).setPlayer(0);
+	player.walkpath[0] = WALK_N;
+	viewPosition() = MonkSearchPosition;
+	ASSERT_EQ(viewPosition(), MonkSearchPosition);
+
+	ASSERT_TRUE(player.plractive);
+	ASSERT_TRUE(player.positionIsAvailable(destination));
+	ASSERT_EQ(player.walkpath[0], WALK_N);
+
+	const std::array<NativeAnimationTimingRow, 2> expectedRows {{
+		{ 8, 1, 0, -1, 0, 8, 0, 113, 0 },
+		{ 8, 1, 0, 0, 0, 8, 0, 113, 128 },
+	}};
+	for (std::size_t index = 0; index < expectedRows.size(); ++index) {
+		ProcessPlayers();
+		EXPECT_EQ(CaptureNativeAnimationTiming(player), expectedRows[index])
+		    << "logicalTick=" << (100 + index) << " (label only; no production tick value is changed)";
+		EXPECT_EQ(player._pmode, PM_WALK_NORTHWARDS);
+		EXPECT_EQ(player.position.tile, MonkSearchPosition);
+		EXPECT_EQ(player.position.future, destination);
+		EXPECT_EQ(player.position.temp, destination);
+		EXPECT_EQ(player.position.old, MonkSearchPosition);
+		EXPECT_EQ(player.direction, Direction::North);
+		EXPECT_EQ(player.tempDirection, Direction::North);
+		EXPECT_EQ(player.destAction, ACTION_NONE);
+		EXPECT_EQ(player.walkpath[0], WALK_NONE);
+		EXPECT_EQ(viewPosition(), MonkSearchPosition);
+		EXPECT_EQ(tileAt(MonkSearchPosition).player(), 1);
+		EXPECT_EQ(tileAt(destination).player(), -1);
+	}
+}
 TEST_F(NativeMonkSearchTest, RecastAddsDurationForTheSamePlayerSource)
 {
 	const uint32_t initialRngState = GetLCGEngineState();

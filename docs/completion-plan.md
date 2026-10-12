@@ -460,12 +460,15 @@ deliberately does not claim native generated-world parity, which belongs to M2.
    with chronological events and fail-stop faults, without default host adoption.
    Ordinary attack ready/completion caller skips have independent native tests;
    this is not whole native mode processing or cursor integration.
-   Seven prepared native Move/Cast fixtures now verify admission and two direct
+   Seven prepared native Move/Cast fixtures verify admission and two direct
    animation steps, including town run, actual attack-completion walk and ready
-   Spell carry. Three additional managed ExecuteTick cases verify actor order,
-   Move completion before Cast and ready Cast/same-tick admission refusal.
-   These different prepared/shipped timing values do not prove post-tick parity;
-   next trace the real ProcessPlayers loop and effect boundary with matched inputs.
+   Spell carry. Managed cases verify actor order, Move completion before Cast
+   and ready Cast/same-tick refusal. Two full ProcessPlayers tests now capture
+   all nine post-update fields through prepared Search effect/completion and
+   the first two walking updates. A matched 8/5 managed Cast trace observes
+   actual post-ExecuteTick state; both prepared effect/completion boundaries
+   are 105/107 after admission at 100. Classes/effects differ; full walk arrival,
+   ready-repeat player-loop timing and shipped/world-tick parity remain open.
    Next settle the persisted command-phase/anchor contract:
    production authoritative commands currently follow actor advancement, but native Pending
    assumes processing later in the same tick. Neither publishing negative phase

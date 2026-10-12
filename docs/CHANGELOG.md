@@ -2,6 +2,11 @@
 
 Notable changes to this fork are recorded below.
 
+- 2026-10-12: Trace full native player updates through prepared Search admission,
+  real effect creation and Stand completion, plus two walking updates. Pair the
+  8/5 Cast timing with managed post-ExecuteTick observations; focused and shuffled
+  native tests and all 40 managed tick cases pass.
+
 - 2026-10-12: Characterize native Move/Cast admission and pending animation rows
   with seven focused and combined/shuffled GTests. Add three managed ExecuteTick
   regressions for participant order, completion, ready Cast and same-tick refusal.
