@@ -477,6 +477,13 @@ this evidence. A sample art pack does not satisfy M4's full presentation gate.
 
 ## M2: Native-compatible world generation and placement
 
+The native offline join characterization now sends the real `CMD_PLAYER_JOINLEVEL`
+packet through `ParseCmd`: it verifies first-free placement, player occupancy,
+light/vision activation and unchanged RNG, plus invalid-level/out-of-bounds refusal
+before presentation mutation. The two new cases, full eight-case player set and
+three shuffled iterations pass. This scopes the legacy join baseline; generated
+world integration and campaign join/restore acceptance remain open.
+
 1. Inventory the native generators, seed streams, level/quest selection,
    geometry layers, stairs/warps, set pieces, objects, and encounter placement.
    Extend the existing world-gap record in migration status with a row per

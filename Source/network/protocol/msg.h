@@ -7,6 +7,8 @@
 
 #include <cstdint>
 
+#include "utils/attributes.h"
+
 #include "network/transport/leaveinfo.hpp"
 #include "engine/math/point.hpp"
 #include "game/items/items.hpp"
@@ -714,7 +716,11 @@ struct TPkt {
 };
 #pragma pack(pop)
 
-extern uint8_t gbBufferMsgs;
+extern DVL_API_FOR_TEST uint8_t gbBufferMsgs;
+#if defined(BUILD_TESTING)
+DVL_API_FOR_TEST uint8_t TestGetLastParsedCommand() noexcept;
+DVL_API_FOR_TEST void TestSetLastParsedCommand(uint8_t command) noexcept;
+#endif
 extern int dwRecCount;
 
 void PrepareItemForNetwork(const Item &item, TItem &messageItem);

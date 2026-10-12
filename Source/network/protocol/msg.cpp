@@ -3002,6 +3002,18 @@ size_t HandleCmd(size_t (*handler)(const TCmdImpl &, const Player &), const Play
 
 } // namespace
 
+#if defined(BUILD_TESTING)
+uint8_t TestGetLastParsedCommand() noexcept
+{
+	return sbLastCmd;
+}
+
+void TestSetLastParsedCommand(uint8_t command) noexcept
+{
+	sbLastCmd = command;
+}
+#endif
+
 void PrepareItemForNetwork(const Item &item, TItem &messageItem)
 {
 	messageItem.bId = item._iIdentified ? 1 : 0;

@@ -2,6 +2,10 @@
 
 Notable changes to this fork are recorded below.
 
+- 2026-10-11: Characterize native offline join placement, occupancy, light/vision,
+  RNG preservation and invalid-input refusal through the real packet parser.
+  Focused, full eight-case and three shuffled GTest runs pass.
+
 - 2026-10-08: Add credential-free first-wire connection observations with defensive
   snapshot copies and per-attempt admission state. Verify transport/reconnect
   behavior and the Godot bridge; cold-restore acceptance remains open.

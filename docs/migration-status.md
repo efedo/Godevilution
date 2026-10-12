@@ -44,6 +44,14 @@ unsupported behavior is a migration gap, not permission for local simulation.
 
 ## Current delivery position and verification limits
 
+Native offline join characterization passes through the real legacy packet parser.
+The two new GTests cover first-free placement, occupancy, light/vision and unchanged
+RNG, and reject invalid level/coordinates before player presentation changes.
+The full eight-case player set and three shuffled iterations pass without skips;
+the isolated runtime includes the existing cursor-width asset needed by
+`CreatePlayer`. Test-only accessors preserve the parser's private last-command state.
+These checks do not close generated-world, campaign join/restore or GUI acceptance.
+
 The optional Cathedral DiscoverNativePoolPrefix scanner reports native scan order,
 allocated prefix and skipped suffix without changing strict Discover or compiler
 overflow refusal. A complete native special layer is required; missing geometry
