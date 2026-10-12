@@ -404,6 +404,40 @@ public sealed class LocalLauncherContractTests
     }
 
     [Fact]
+    public void PerformanceResumeEvidenceBindsAdmittedServerIdentity()
+    {
+        var root = FindRepositoryRoot();
+        var handler = File.ReadAllText(Path.Combine(root, "godot/Devilution.Client/Acceptance/SessionAcceptance.PerformanceResume.cs"));
+        var launcher = File.ReadAllText(Path.Combine(root, "godot/run-local-client.ps1"));
+
+        var handshakeValidation = handler.IndexOf(
+            "PerformanceResumeStateContract.ValidateResumeHandshakeAndFirstWire(",
+            StringComparison.Ordinal);
+        var evidenceStart = handler.IndexOf(
+            "WriteEvidence(directory, \"performance-resume.json\", new {",
+            StringComparison.Ordinal);
+        var finalIdentityCheck = evidenceStart < 0 ? -1 : handler.LastIndexOf(
+            "RequirePerformanceIdentityStable(activeMain, expectedIdentity, GameMode.SinglePlayer);",
+            evidenceStart,
+            StringComparison.Ordinal);
+        Assert.True(handshakeValidation >= 0 && handshakeValidation < evidenceStart);
+        Assert.True(finalIdentityCheck > handshakeValidation && finalIdentityCheck < evidenceStart);
+
+        var evidenceEnd = evidenceStart < 0 ? -1 : handler.IndexOf("\n            });", evidenceStart, StringComparison.Ordinal);
+        Assert.True(evidenceEnd > evidenceStart);
+        var evidence = handler[evidenceStart..evidenceEnd];
+        Assert.Contains("Mode = observedHello.Identity.GameMode,", evidence, StringComparison.Ordinal);
+        Assert.Contains("ContentHash = observedHello.Identity.ContentManifestHash,", evidence, StringComparison.Ordinal);
+        Assert.Contains("RulesetHash = observedHello.Identity.RulesetIdentityHash,", evidence, StringComparison.Ordinal);
+        Assert.Contains("hello.GameMode.ToString(),", handler[..evidenceStart], StringComparison.Ordinal);
+        Assert.Contains("hello.ContentManifestHash,", handler[..evidenceStart], StringComparison.Ordinal);
+        Assert.Contains("hello.RulesetIdentityHash,", handler[..evidenceStart], StringComparison.Ordinal);
+        Assert.Contains(
+            "if (-not $evidence.Passed -or $evidence.Mode -ne $expectedGameMode -or $evidence.ContentHash -ne $contentHash -or $evidence.RulesetHash -ne $rulesetHash)",
+            launcher,
+            StringComparison.Ordinal);
+    }
+    [Fact]
     public void GodotPerformanceWorkloadIsOptInAndPreservesOrdinaryProfiles()
     {
         var root = FindRepositoryRoot();

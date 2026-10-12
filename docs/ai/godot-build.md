@@ -977,6 +977,8 @@ the current admitted connection and match its first raw wire snapshot before inp
 one safe adjacent keyboard move must receive the exact next client sequence and
 settle without changing restored identity, resources or attributes. Its result is
 `performance-resume.json`; Resume performs no Performance frame capture.
+Resume evidence includes the admitted server's mode, content and ruleset hashes;
+the launcher compares them with the staged session identity.
 The baseline-path option is Resume-only. These phases require one Legacy
 single-player participant, with command timing trace and preview overrides disabled.
 Focused contract/transport and launcher tests pass; the fresh exported pair remains

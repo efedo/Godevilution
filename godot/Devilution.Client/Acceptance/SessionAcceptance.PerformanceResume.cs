@@ -222,6 +222,9 @@ public partial class SessionAcceptance
             WriteEvidence(directory, "performance-resume.json", new {
                 Passed = true,
                 Phase = "PerformanceResume",
+                Mode = observedHello.Identity.GameMode,
+                ContentHash = observedHello.Identity.ContentManifestHash,
+                RulesetHash = observedHello.Identity.RulesetIdentityHash,
                 BaselineSchemaVersion = baseline.SchemaVersion,
                 BaselineSnapshotTick = baseline.SnapshotTick,
                 BaselineClientSequence = baseline.LastCommand.ClientSequence,

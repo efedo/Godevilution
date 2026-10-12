@@ -2,6 +2,9 @@
 
 Notable changes to this fork are recorded below.
 
+- 2026-10-11: Include the admitted server identity in PerformanceResume evidence
+  so the launcher can verify its mode, content and ruleset after cold resume.
+
 - 2026-10-11: Add explicit single-client PerformanceCreate/PerformanceResume routes,
   a stopped-workload restore baseline, first-wire validation and exact next-sequence
   movement settlement. Preserve existing Performance and normal launcher defaults.
