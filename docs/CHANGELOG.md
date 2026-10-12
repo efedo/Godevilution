@@ -2,6 +2,11 @@
 
 Notable changes to this fork are recorded below.
 
+- 2026-10-12: Trace prepared Spell re-admission through two real effects and
+  completion in native ProcessPlayers and managed ExecuteTick. Capture native
+  animation carry and the first effect before managed replacement; defaults stay
+  unchanged.
+
 - 2026-10-12: Trace a complete North walk through native player updates and
   managed ExecuteTick. Prepared eight-frame movement arrives at native label 109
   and managed tick 108 after admission at 100; retain the phase difference.

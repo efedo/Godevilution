@@ -184,10 +184,10 @@ participant order, Move completion before Cast, ready Cast replacement and
 second same-tick admission refusal. The differing metadata does not establish
 native/managed tick parity; refusal is not transport duplicate-ledger coverage.
 
-The registered `missiles_test` includes three full-player-loop fixtures. Run
-`NativeMonkSearchTest.ProcessPlayersCompletesNorthWalkAndCapturesArrivalBoundary`
+The registered `missiles_test` includes four full-player-loop fixtures. Run
+`NativeMonkSearchTest.ProcessPlayersReadmitsQueuedSearchAndCapturesNativeTiming`
 (1 test), then `NativeMonkSearchTest.*:MissileData.ScopedTestLoadRestoresOriginalStorage`
-(8 tests), with three shuffled combined runs at seeds 417/418/419. Logical label
+(9 tests), with three shuffled combined runs at seeds 417/418/419. Logical label
 100 is the first complete `ProcessPlayers` admission update; the fixtures do not
 change a production tick counter.
 
@@ -207,13 +207,25 @@ position and view. A separate 5x5 scoped tile guard covers the destination's
 empty pickup ring and restores full tiles and piece-zero properties before
 base teardown, which restores the light/vision manager and view.
 
-The managed `DiabloSimulationTickCommandTests` class has 41 cases. Its 8/5 Cast
+The prepared Search re-admission fixture adds thirteen post-update rows through
+label 112. First creation and successor admission share label 105; the successor
+uses repeated carry 2/modifier 256 instead of initial carry 0/modifier 170.
+Second creation at 110 extends the active duration 247 to 494 and flags the new
+entry for deletion. Stand is observed at 112, followed by one separate terminal
+missile pass that removes the duplicate and decrements duration to 493.
+
+The managed `DiabloSimulationTickCommandTests` class has 42 cases. Its 8/5 Cast
 trace captures 32 observations, including eight actual post-`ExecuteTick` rows,
 with one damage/mana effect at 105 and Stand at 107. The North-Move trace reads
 ten post-return states at 100 through 109. Authored walking frames 8 yield
 effect/ready/end 108: origin persists through 107, then position changes and
 the action clears to Stand at 108; tick 109 remains Stand. Native Monk and
 managed Warrior fixtures use distinct classes, positions and Cast effects.
+The managed re-admission trace captures thirteen post-return rows and callback
+state before/after replacement at 105. The first effect is already applied
+before that callback; the successor applies at 110 and completes to Stand at
+112, with exactly two damage events and mana 10/6/2. Original end 107 is stored
+metadata that becomes counterfactual after replacement; actual 107 stays Spell.
 The measured walk difference requires an explicit command-phase/anchor
 contract; these fixtures do not establish shipped timing or full world ticks,
 and no production timing/default policy changes follow.

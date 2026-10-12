@@ -1169,6 +1169,40 @@ Selected engine 4.7.2 imports only staged SDK copies; the source pin remains
 campaign, broader outage, native GUI or release gates. The overall estimate remains
 approximately 35%; historical unclassified TooLate failures remain separate.
 
+### M1 prepared Spell re-admission trace (2026-10-12)
+
+One additional native fixture queues Search Skill with frames/action frame
+8/5 at logical label 100, then queues exactly one successor before 105.
+Real `DoSpell` creates the first Search before `CheckNewPath` re-admits the
+successor in that call. Thirteen actual post-`ProcessPlayers` rows assert all
+nine cursor fields: initial rows carry zero frames with modifier 170, repeated
+rows carry two with modifier 256. The second effect at 110 extends the active
+Search from 247 to 494 and flags the new recast entry for deletion; Stand is
+observed at 112. One separate terminal `ProcessMissiles` pass removes that
+entry and decrements the survivor to 493. Life, mana and RNG remain unchanged.
+This fixture does not run missiles on every label or the whole world loop.
+
+The added managed regression follows actual `ExecuteTick` at 100 through 112
+with the same test-only 8/5 timing. Callback-before 105 sees the original
+effect already applied; callback-after sees the new action started at 105.
+Thirteen literal post-return rows show replacement effect at 110 and Stand
+at 112, exactly two six-damage events, target HP 20/14/8 and mana 10/6/2.
+Actual 107 remains the replacement Spell: the original stored end 107 becomes
+counterfactual after re-admission. No original Stand at 107 is claimed.
+
+Matching checked native build, focused 1/1, combined 9/9 and three shuffled
+nine-test runs at seeds 417/418/419 pass, alongside all 42 managed tick cases
+and 16 documentation checks, without failures, errors or skips. Builds retain
+only expected native D9025 and one existing managed xUnit2013 warning. An unused
+managed constant was removed before building; its source-only predecessor is
+retained. Evidence:
+`.local/search-readmission-boundary-integration-7c118176342c4db7b09915836d67ef14`.
+
+Matching prepared event labels do not prove cursor, shipped-class/effect or
+world-tick parity. Spell re-admission does not exercise the Attack/RangedAttack
+`NativeCallerTimingPhase.ReadyRepeat` contract. Phase-anchor/runtime adoption,
+protocol, persistence and rendered gates remain open; overall approximately 35%.
+
 ### M1 complete North-walk boundary trace (2026-10-12)
 
 One additional `NativeMonkSearchTest` follows real `ProcessPlayers` from queued

@@ -1016,6 +1016,192 @@ public sealed class DiabloSimulationTickCommandTests
     }
 
     [Fact]
+    public void ExecuteTickTracesPreparedCastReadmissionThroughSecondEffectAndCompletion()
+    {
+        // The prepared 8/5 timing isolates the ready-boundary re-admission sequence.
+        var (simulation, template, target, animation) = CreateNativeMoveCastFixture(
+            (CastingFrames: 8, CastingActionFrame: 5));
+        Assert.Equal((8, 5), (animation.CastingFrames, animation.CastingActionFrame));
+
+        var runtime = simulation.CreateRuntime(template);
+        runtime.Write("player", state => state.EntityId = 11);
+        const ulong startTick = 100;
+        const ulong firstReadyTick = 105;
+        const ulong secondEndTick = 112;
+        var initialHitPoints = target.HitPoints;
+        var callbackOrder = new List<(ulong Tick, string Operation)>();
+        var postTickRows = new List<(
+            ulong Tick,
+            DiabloPlayerCombatMode Mode,
+            DiabloPlayerActionKind? Kind,
+            ulong? StartedAtTick,
+            ulong? EffectTick,
+            ulong? ReadyTick,
+            ulong? EndTick,
+            bool? EffectApplied,
+            ulong LastAdvancedTick,
+            int HitPoints,
+            int Mana)>();
+        var readyBoundaryRows = new List<(
+            string Point,
+            DiabloPlayerCombatMode Mode,
+            DiabloPlayerActionKind? Kind,
+            ulong? StartedAtTick,
+            ulong? EffectTick,
+            ulong? ReadyTick,
+            ulong? EndTick,
+            bool? EffectApplied,
+            int HitPoints,
+            int Mana)>();
+        var eventRows = new List<(ulong Tick, int EventCount)>();
+        var damageRows = new List<(ulong Tick, DiabloGameplayEventKind Kind, uint TargetEntityId, int Amount)>();
+        var callbackCount = 0;
+
+        for (var tick = startTick; tick <= secondEndTick; tick++) {
+            var command = new SimulationTickCommand<
+                AuthoritativePlayerState,
+                DiabloGameplayEvent,
+                DiabloRuleFailure?>(
+                "player",
+                (state, participants) => {
+                    callbackCount++;
+                    var isInitialCast = tick == startTick;
+                    var isReadyCast = tick == firstReadyTick;
+                    callbackOrder.Add((
+                        tick,
+                        isInitialCast ? "InitialCast" : isReadyCast ? "ReadyCast" : "NoOp"));
+
+                    if (isReadyCast)
+                        RecordReadyBoundary("callback-before", state);
+                    if (isInitialCast || isReadyCast) {
+                        var cast = simulation.Execute(
+                            state,
+                            new DiabloCastIntent(7, 99, 2, 0),
+                            tick,
+                            participants);
+                        if (isReadyCast)
+                            RecordReadyBoundary("callback-after", state);
+                        return new SimulationStepResult<DiabloRuleFailure?, DiabloGameplayEvent>(
+                            cast.Failure,
+                            cast.Events);
+                    }
+
+                    return new SimulationStepResult<DiabloRuleFailure?, DiabloGameplayEvent>(null, []);
+                });
+
+            var results = runtime.ExecuteTick<DiabloRuleFailure?>(tick, [command]);
+            Assert.Equal(new DiabloRuleFailure?[] { null }, results);
+            var row = runtime.Read("player", state => {
+                var action = state.CurrentAction;
+                return (
+                    tick,
+                    state.CombatMode,
+                    action?.Kind,
+                    action?.StartedAtTick,
+                    action?.EffectTick,
+                    action?.ReadyTick,
+                    action?.EndTick,
+                    action?.EffectApplied,
+                    runtime.LastAdvancedTick,
+                    target.HitPoints,
+                    state.Mana);
+            });
+            postTickRows.Add(row);
+
+            var tickEvents = runtime.DrainEvents("player");
+            eventRows.Add((tick, tickEvents.Count));
+            damageRows.AddRange(tickEvents
+                .Where(gameEvent => gameEvent.Kind == DiabloGameplayEventKind.Damage)
+                .Select(gameEvent => (
+                    tick,
+                    gameEvent.Kind,
+                    gameEvent.TargetEntityId,
+                    gameEvent.Amount)));
+        }
+
+        void RecordReadyBoundary(string point, AuthoritativePlayerState state)
+        {
+            var action = state.CurrentAction;
+            readyBoundaryRows.Add((
+                point,
+                state.CombatMode,
+                action?.Kind,
+                action?.StartedAtTick,
+                action?.EffectTick,
+                action?.ReadyTick,
+                action?.EndTick,
+                action?.EffectApplied,
+                target.HitPoints,
+                state.Mana));
+        }
+
+        Assert.Equal(13, callbackCount);
+        Assert.Equal(
+            Enumerable.Range((int)startTick, (int)(secondEndTick - startTick + 1))
+                .Select(tick => (
+                    (ulong)tick,
+                    tick == (int)startTick ? "InitialCast"
+                    : tick == (int)firstReadyTick ? "ReadyCast"
+                    : "NoOp")),
+            callbackOrder);
+        Assert.Equal(13, postTickRows.Count);
+        var expectedPostTickRows = new (
+            ulong Tick,
+            DiabloPlayerCombatMode Mode,
+            DiabloPlayerActionKind? Kind,
+            ulong? StartedAtTick,
+            ulong? EffectTick,
+            ulong? ReadyTick,
+            ulong? EndTick,
+            bool? EffectApplied,
+            ulong LastAdvancedTick,
+            int HitPoints,
+            int Mana)[] {
+            (100, DiabloPlayerCombatMode.Spell, DiabloPlayerActionKind.Cast, 100, 105, 105, 107, false, 100, 20, 10),
+            (101, DiabloPlayerCombatMode.Spell, DiabloPlayerActionKind.Cast, 100, 105, 105, 107, false, 101, 20, 10),
+            (102, DiabloPlayerCombatMode.Spell, DiabloPlayerActionKind.Cast, 100, 105, 105, 107, false, 102, 20, 10),
+            (103, DiabloPlayerCombatMode.Spell, DiabloPlayerActionKind.Cast, 100, 105, 105, 107, false, 103, 20, 10),
+            (104, DiabloPlayerCombatMode.Spell, DiabloPlayerActionKind.Cast, 100, 105, 105, 107, false, 104, 20, 10),
+            (105, DiabloPlayerCombatMode.Spell, DiabloPlayerActionKind.Cast, 105, 110, 110, 112, false, 105, 14, 6),
+            (106, DiabloPlayerCombatMode.Spell, DiabloPlayerActionKind.Cast, 105, 110, 110, 112, false, 106, 14, 6),
+            (107, DiabloPlayerCombatMode.Spell, DiabloPlayerActionKind.Cast, 105, 110, 110, 112, false, 107, 14, 6),
+            (108, DiabloPlayerCombatMode.Spell, DiabloPlayerActionKind.Cast, 105, 110, 110, 112, false, 108, 14, 6),
+            (109, DiabloPlayerCombatMode.Spell, DiabloPlayerActionKind.Cast, 105, 110, 110, 112, false, 109, 14, 6),
+            (110, DiabloPlayerCombatMode.Spell, DiabloPlayerActionKind.Cast, 105, 110, 110, 112, true, 110, 8, 2),
+            (111, DiabloPlayerCombatMode.Spell, DiabloPlayerActionKind.Cast, 105, 110, 110, 112, true, 111, 8, 2),
+            (112, DiabloPlayerCombatMode.Stand, null, null, null, null, null, null, 112, 8, 2),
+        };
+        Assert.Equal(expectedPostTickRows, postTickRows);
+        Assert.Equal(
+            new (
+                string Point,
+                DiabloPlayerCombatMode Mode,
+                DiabloPlayerActionKind? Kind,
+                ulong? StartedAtTick,
+                ulong? EffectTick,
+                ulong? ReadyTick,
+                ulong? EndTick,
+                bool? EffectApplied,
+                int HitPoints,
+                int Mana)[] {
+                ("callback-before", DiabloPlayerCombatMode.Spell, DiabloPlayerActionKind.Cast, 100, 105, 105, 107, true, 14, 6),
+                ("callback-after", DiabloPlayerCombatMode.Spell, DiabloPlayerActionKind.Cast, 105, 110, 110, 112, false, 14, 6),
+            },
+            readyBoundaryRows);
+        Assert.Equal(13, eventRows.Count);
+        Assert.Equal(2, eventRows.Sum(row => row.EventCount));
+        Assert.Equal(
+            new (ulong Tick, DiabloGameplayEventKind Kind, uint TargetEntityId, int Amount)[] {
+                (105, DiabloGameplayEventKind.Damage, 99, 6),
+                (110, DiabloGameplayEventKind.Damage, 99, 6),
+            },
+            damageRows);
+        Assert.Equal(initialHitPoints, postTickRows[0].HitPoints);
+        Assert.Equal(2, postTickRows[^1].Mana);
+        Assert.Equal(secondEndTick, runtime.LastAdvancedTick);
+    }
+
+    [Fact]
     public void ExecuteTickAdmitsCastAtSpellReadyTickAndRejectsSecondSameTickCast()
     {
         var (simulation, template, target, animation) = CreateNativeMoveCastFixture();

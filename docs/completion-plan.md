@@ -471,8 +471,11 @@ deliberately does not claim native generated-world parity, which belongs to M2.
    North-walk trace reaches native arrival/Stand at logical label 109, while
    the managed eight-frame Move changes position/clears its action at tick 108
    after admission at 100. The ten post-update rows establish a phase difference,
-   not an adopted parity mapping. Full ready-repeat player-loop timing and
-   shipped/world-tick parity remain open.
+   not an adopted parity mapping. Prepared Spell re-admission now has full-loop
+   traces: first effect before replacement at 105, second effect at 110 and
+   observed Stand at 112. Native repeated rows carry two frames with modifier
+   256; the initial rows carry none with modifier 170. Full Attack/Ranged ready
+   repetition, shipped/world-tick parity and cursor adoption remain open.
    Next settle the persisted command-phase/anchor contract:
    production authoritative commands currently follow actor advancement, but native Pending
    assumes processing later in the same tick. Neither publishing negative phase

@@ -927,6 +927,140 @@ TEST_F(NativeMonkSearchTest, ProcessPlayersAdmitsSpellAndCapturesItsNativeComple
 	EXPECT_EQ(GetLCGEngineState(), initialRngState);
 }
 
+TEST_F(NativeMonkSearchTest, ProcessPlayersReadmitsQueuedSearchAndCapturesNativeTiming)
+{
+	const std::optional<std::filesystem::path> hellfireAssets = FindHellfireAssetsPath();
+	ASSERT_TRUE(hellfireAssets.has_value());
+	const std::filesystem::path canonicalAssets = hellfireAssets->parent_path().parent_path() / "assets";
+	ASSERT_TRUE(std::filesystem::is_regular_file(canonicalAssets / "txtdata" / "Experience.tsv"));
+	ASSERT_TRUE(std::filesystem::is_regular_file(canonicalAssets / "txtdata" / "classes" / "classdat.tsv"));
+	paths::SetAssetsPath(canonicalAssets.string() + "/");
+	LoadPlayerDataFiles();
+	paths::SetAssetsPath(hellfireAssets->string() + "/");
+
+	const PlayerStartingLoadoutData &loadout = GetPlayerStartingLoadoutForClass(HeroClass::Monk);
+	ASSERT_EQ(loadout.skill, SpellID::Search);
+	Player &player = *MyPlayer;
+	player.plractive = true;
+	player.plrlevel = currentLevelNumber();
+	player.plrIsOnSetLevel = false;
+	player.pLvlLoad = 0;
+	player.lightId = NO_LIGHT;
+	player.position.tile = MonkSearchPosition;
+	player.position.future = MonkSearchPosition;
+	player.position.temp = MonkSearchPosition;
+	player.position.old = MonkSearchPosition;
+	player.direction = Direction::South;
+	player._pgfxnum = static_cast<uint8_t>(PlayerWeaponGraphic::Unarmed);
+	player.clearPath();
+	player.setAnimations();
+	player._pSFrames = 8;
+	player._pSFNum = 5;
+	player._pAblSpells = GetSpellBitmask(loadout.skill);
+	player.life = { 6400, 6400, 6400, 6400, 100 };
+	player.mana = { 3200, 3200, 3200, 3200, 100 };
+	player._pmode = PM_STAND;
+	player.queuedSpell = { SpellID::Search, SpellType::Skill, -1, 0 };
+	player.destAction = ACTION_SPELL;
+	player.destParam1 = MonkSearchPosition.x;
+	player.destParam2 = MonkSearchPosition.y;
+	player.destParam3 = 0;
+	player.occupyTile(MonkSearchPosition, false);
+
+	ASSERT_TRUE(player.plractive);
+	ASSERT_EQ(player.plrlevel, currentLevelNumber());
+	ASSERT_NE(player._pAblSpells & GetSpellBitmask(SpellID::Search), 0U);
+	ASSERT_EQ(player._pSFrames, 8);
+	ASSERT_EQ(player._pSFNum, 5);
+	ASSERT_TRUE(Missiles.empty());
+
+	const std::array<NativeAnimationTimingRow, 13> expectedRows {{
+		{ 8, 1, 0, 1, 0, 4, 0, 170, 0 },
+		{ 8, 1, 0, 2, 0, 4, 0, 170, 128 },
+		{ 8, 1, 0, 3, 0, 4, 0, 170, 256 },
+		{ 8, 1, 0, 4, 0, 4, 0, 170, 384 },
+		{ 8, 1, 0, 5, 0, 4, 0, 170, 512 },
+		{ 8, 1, 0, 1, 0, 4, 2, 256, 0 },
+		{ 8, 1, 0, 2, 0, 4, 2, 256, 128 },
+		{ 8, 1, 0, 3, 0, 4, 2, 256, 256 },
+		{ 8, 1, 0, 4, 0, 4, 2, 256, 384 },
+		{ 8, 1, 0, 5, 0, 4, 2, 256, 512 },
+		{ 8, 1, 0, 6, 0, 4, 2, 256, 640 },
+		{ 8, 1, 0, 7, 0, 4, 2, 256, 768 },
+		{ 8, 4, 1, 0, 0, 0, 0, 0, 128 },
+	}};
+	const int initialLife = player.life.current;
+	const int initialMana = player.mana.current;
+	const uint32_t initialRngState = GetLCGEngineState();
+
+	for (std::size_t index = 0; index < expectedRows.size(); ++index) {
+		const int logicalTick = 100 + static_cast<int>(index);
+		if (logicalTick == 105) {
+			ASSERT_EQ(player._pmode, PM_SPELL);
+			ASSERT_EQ(player.animInfo.currentFrame, 5);
+			ASSERT_EQ(player.destAction, ACTION_NONE);
+			ASSERT_TRUE(Missiles.empty());
+			player.queuedSpell = { SpellID::Search, SpellType::Skill, -1, 0 };
+			player.destAction = ACTION_SPELL;
+			player.destParam1 = MonkSearchPosition.x;
+			player.destParam2 = MonkSearchPosition.y;
+			player.destParam3 = 0;
+		}
+
+		ProcessPlayers();
+		EXPECT_EQ(CaptureNativeAnimationTiming(player), expectedRows[index])
+		    << "logicalTick=" << logicalTick << " (label only; no production tick value is changed)";
+		EXPECT_EQ(player.destAction, ACTION_NONE) << "logicalTick=" << logicalTick;
+		if (index < 5) {
+			EXPECT_TRUE(Missiles.empty()) << "logicalTick=" << logicalTick;
+		} else if (index < 10) {
+			ASSERT_EQ(Missiles.size(), 1U) << "logicalTick=" << logicalTick;
+			const Missile &search = Missiles.front();
+			EXPECT_EQ(search._mitype, MissileID::Search) << "logicalTick=" << logicalTick;
+			EXPECT_EQ(search._misource, player.getId()) << "logicalTick=" << logicalTick;
+			EXPECT_EQ(search.duration, 247) << "logicalTick=" << logicalTick;
+			EXPECT_FALSE(search._miDelFlag) << "logicalTick=" << logicalTick;
+		} else {
+			ASSERT_EQ(Missiles.size(), 2U) << "logicalTick=" << logicalTick;
+			const Missile &firstSearch = Missiles.front();
+			const Missile &recastSearch = Missiles.back();
+			EXPECT_EQ(firstSearch._mitype, MissileID::Search) << "logicalTick=" << logicalTick;
+			EXPECT_EQ(firstSearch._misource, player.getId()) << "logicalTick=" << logicalTick;
+			EXPECT_EQ(firstSearch.duration, 494) << "logicalTick=" << logicalTick;
+			EXPECT_FALSE(firstSearch._miDelFlag) << "logicalTick=" << logicalTick;
+			EXPECT_EQ(recastSearch._mitype, MissileID::Search) << "logicalTick=" << logicalTick;
+			EXPECT_EQ(recastSearch._misource, player.getId()) << "logicalTick=" << logicalTick;
+			EXPECT_EQ(recastSearch.duration, 247) << "logicalTick=" << logicalTick;
+			EXPECT_TRUE(recastSearch._miDelFlag) << "logicalTick=" << logicalTick;
+		}
+		if (logicalTick == 100 || logicalTick == 105) {
+			EXPECT_EQ(player.executedSpell.spellId, SpellID::Search) << "logicalTick=" << logicalTick;
+			EXPECT_EQ(player.executedSpell.spellType, SpellType::Skill) << "logicalTick=" << logicalTick;
+		}
+		if (index < 12)
+			EXPECT_EQ(player._pmode, PM_SPELL) << "logicalTick=" << logicalTick;
+		else
+			EXPECT_EQ(player._pmode, PM_STAND) << "logicalTick=" << logicalTick;
+	}
+
+	EXPECT_EQ(player.position.tile, MonkSearchPosition);
+	EXPECT_EQ(player.life.current, initialLife);
+	EXPECT_EQ(player.mana.current, initialMana);
+	EXPECT_EQ(GetLCGEngineState(), initialRngState);
+	ASSERT_EQ(Missiles.size(), 2U);
+
+	// The paired missile update runs once after the completed player trace and removes the deferred duplicate.
+	ProcessMissiles();
+	ASSERT_EQ(Missiles.size(), 1U);
+	EXPECT_EQ(Missiles.front()._mitype, MissileID::Search);
+	EXPECT_EQ(Missiles.front()._misource, player.getId());
+	EXPECT_EQ(Missiles.front().duration, 493);
+	EXPECT_FALSE(Missiles.front()._miDelFlag);
+	EXPECT_EQ(player.life.current, initialLife);
+	EXPECT_EQ(player.mana.current, initialMana);
+	EXPECT_EQ(GetLCGEngineState(), initialRngState);
+}
+
 TEST_F(NativeMonkSearchTest, ProcessPlayersAdmitsNorthWalkAndCapturesItsFirstTwoUpdates)
 {
 	const std::optional<std::filesystem::path> hellfireAssets = FindHellfireAssetsPath();
