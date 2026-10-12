@@ -1361,6 +1361,10 @@ public sealed partial class DiabloSimulation
         return events;
     }
 
+    internal DiabloCommandCallbackPhase? GetCurrentCommandCallbackPhase(
+        AuthoritativePlayerState player)
+        => combatCommands.GetCurrentCommandCallbackPhase(player);
+
     private void ConfigurePlayer(AuthoritativePlayerState player)
     {
         ArgumentNullException.ThrowIfNull(player);

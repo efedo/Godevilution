@@ -1301,3 +1301,125 @@ TEST_F(NativeMonkSearchTest, RecastUsesTheStrictSignedIntDurationBoundary)
 		EXPECT_EQ(GetLCGEngineState(), initialRngState);
 	}
 }
+
+// BEGIN native completion-start walk trace
+TEST_F(NativeMonkSearchTest, ProcessPlayersCompletesUnarmedAttackAndImmediatelyStartsNorthWalk)
+{
+	const std::optional<std::filesystem::path> hellfireAssets = FindHellfireAssetsPath();
+	ASSERT_TRUE(hellfireAssets.has_value());
+	const std::filesystem::path canonicalAssets = hellfireAssets->parent_path().parent_path() / "assets";
+	ASSERT_TRUE(std::filesystem::is_regular_file(canonicalAssets / "txtdata" / "Experience.tsv"));
+	ASSERT_TRUE(std::filesystem::is_regular_file(canonicalAssets / "txtdata" / "classes" / "classdat.tsv"));
+	paths::SetAssetsPath(canonicalAssets.string() + "/");
+	LoadPlayerDataFiles();
+	paths::SetAssetsPath(hellfireAssets->string() + "/");
+
+	ScopedNativeWalkArrivalWorld walkWorld(MonkSearchPosition);
+	Player &player = *MyPlayer;
+	const Point destination = MonkSearchPosition + Direction::North;
+	const Point clearedTemp {};
+
+	player.plractive = true;
+	player.plrlevel = currentLevelNumber();
+	player.plrIsOnSetLevel = false;
+	player.pLvlLoad = 0;
+	player.lightId = NO_LIGHT;
+	player.position.tile = MonkSearchPosition;
+	player.position.future = MonkSearchPosition;
+	player.position.temp = MonkSearchPosition;
+	player.position.old = MonkSearchPosition;
+	player.direction = Direction::North;
+	player.tempDirection = Direction::North;
+	player._pgfxnum = static_cast<uint8_t>(PlayerWeaponGraphic::Unarmed);
+	player._pIFlags = ItemSpecialEffect::None;
+	player.clearPath();
+	player.setAnimations();
+	player._pWFrames = 8;
+	player._pmode = PM_STAND;
+	player.destAction = ACTION_NONE;
+	player.occupyTile(MonkSearchPosition, false);
+	tileAt(destination).setPlayer(0);
+	player.setAnimation(player_graphic::Attack, Direction::North);
+	player._pmode = PM_ATTACK;
+	player.animInfo.currentFrame = player.animInfo.numberOfFrames - 1;
+	player.animInfo.tickCounterOfCurrentFrame = 0;
+	player.walkpath[0] = WALK_N;
+	viewPosition() = MonkSearchPosition;
+
+	ASSERT_EQ(player._pgfxnum, static_cast<uint8_t>(PlayerWeaponGraphic::Unarmed));
+	ASSERT_TRUE(player.InvBody[INVLOC_HAND_LEFT].isEmpty());
+	ASSERT_TRUE(player.InvBody[INVLOC_HAND_RIGHT].isEmpty());
+	ASSERT_EQ(player._pmode, PM_ATTACK);
+	ASSERT_GT(player.animInfo.numberOfFrames, 0);
+	ASSERT_EQ(player.animInfo.currentFrame, player.animInfo.numberOfFrames - 1);
+	ASSERT_TRUE(player.animInfo.isLastFrame());
+	ASSERT_LT(player._pAFNum - 1, player.animInfo.currentFrame)
+	    << "The unarmed action frame must precede the terminal frame.";
+	ASSERT_EQ(player._pIFlags, ItemSpecialEffect::None);
+	ASSERT_TRUE(player.plractive);
+	ASSERT_TRUE(player.positionIsAvailable(destination));
+	ASSERT_EQ(player.walkpath[0], WALK_N);
+	ASSERT_EQ(viewPosition(), MonkSearchPosition);
+	ASSERT_TRUE(Missiles.empty());
+	for (const Displacement pathDir : PathDirs)
+		ASSERT_EQ(tileAt(destination + pathDir).item(), 0);
+
+	const std::array<NativeAnimationTimingRow, 9> expectedRows {{
+		{ 8, 1, 0, 0, 0, 8, 0, 128, 0 },
+		{ 8, 1, 0, 1, 0, 8, 0, 128, 128 },
+		{ 8, 1, 0, 2, 0, 8, 0, 128, 256 },
+		{ 8, 1, 0, 3, 0, 8, 0, 128, 384 },
+		{ 8, 1, 0, 4, 0, 8, 0, 128, 512 },
+		{ 8, 1, 0, 5, 0, 8, 0, 128, 640 },
+		{ 8, 1, 0, 6, 0, 8, 0, 128, 768 },
+		{ 8, 1, 0, 7, 0, 8, 0, 128, 896 },
+		{ 8, 4, 1, 0, 0, 0, 0, 0, 128 },
+	}};
+	const int initialLife = player.life.current;
+	const int initialMana = player.mana.current;
+	const uint32_t initialRngState = GetLCGEngineState();
+
+	for (std::size_t index = 0; index < expectedRows.size(); ++index) {
+		const int logicalTick = 100 + static_cast<int>(index);
+		ProcessPlayers();
+		EXPECT_EQ(CaptureNativeAnimationTiming(player), expectedRows[index])
+		    << "logicalTick=" << logicalTick << " (label only; no production tick value is changed)";
+		EXPECT_EQ(player.walkpath[0], WALK_NONE) << "logicalTick=" << logicalTick;
+		EXPECT_EQ(player.destAction, ACTION_NONE) << "logicalTick=" << logicalTick;
+
+		if (index < 8) {
+			EXPECT_EQ(player._pmode, PM_WALK_NORTHWARDS) << "logicalTick=" << logicalTick;
+			EXPECT_EQ(player.position.tile, MonkSearchPosition) << "logicalTick=" << logicalTick;
+			EXPECT_EQ(player.position.future, destination) << "logicalTick=" << logicalTick;
+			EXPECT_EQ(player.position.temp, destination) << "logicalTick=" << logicalTick;
+			EXPECT_EQ(player.position.old, MonkSearchPosition) << "logicalTick=" << logicalTick;
+			EXPECT_EQ(player.direction, Direction::North) << "logicalTick=" << logicalTick;
+			EXPECT_EQ(player.tempDirection, Direction::North) << "logicalTick=" << logicalTick;
+			EXPECT_EQ(viewPosition(), MonkSearchPosition) << "logicalTick=" << logicalTick;
+			EXPECT_EQ(tileAt(MonkSearchPosition).player(), 1) << "logicalTick=" << logicalTick;
+			EXPECT_EQ(tileAt(destination).player(), -1) << "logicalTick=" << logicalTick;
+			continue;
+		}
+
+		EXPECT_EQ(player._pmode, PM_STAND) << "logicalTick=" << logicalTick;
+		EXPECT_EQ(player.position.tile, destination) << "logicalTick=" << logicalTick;
+		EXPECT_EQ(player.position.future, destination) << "logicalTick=" << logicalTick;
+		EXPECT_EQ(player.position.temp, clearedTemp) << "logicalTick=" << logicalTick;
+		EXPECT_EQ(player.position.old, destination) << "logicalTick=" << logicalTick;
+		EXPECT_EQ(player.direction, Direction::North) << "logicalTick=" << logicalTick;
+		EXPECT_EQ(player.tempDirection, Direction::South) << "logicalTick=" << logicalTick;
+		EXPECT_EQ(viewPosition(), destination) << "logicalTick=" << logicalTick;
+		EXPECT_EQ(tileAt(MonkSearchPosition).player(), 0) << "logicalTick=" << logicalTick;
+		EXPECT_EQ(tileAt(destination).player(), 1) << "logicalTick=" << logicalTick;
+		for (const Displacement pathDir : PathDirs)
+			EXPECT_EQ(tileAt(destination + pathDir).item(), 0) << "logicalTick=" << logicalTick;
+	}
+
+	EXPECT_EQ(player.life.current, initialLife);
+	EXPECT_EQ(player.mana.current, initialMana);
+	EXPECT_EQ(GetLCGEngineState(), initialRngState);
+	EXPECT_TRUE(player.InvBody[INVLOC_HAND_LEFT].isEmpty());
+	EXPECT_TRUE(player.InvBody[INVLOC_HAND_RIGHT].isEmpty());
+	EXPECT_TRUE(Missiles.empty());
+}
+// END native completion-start walk trace

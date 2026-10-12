@@ -6,14 +6,6 @@ namespace Devilution.Diablo;
 /** Applies combat intents and autonomous combat ticks without host dependencies. */
 public sealed class DiabloCombatCommandProcessor
 {
-    /** The caller phase that is scoped to one ExecuteTick participant callback. */
-    private enum NativeCallerTimingPhase
-    {
-        None,
-        ReadyRepeat,
-        CompletionLoopStart,
-    }
-
     private enum PlayerDeathReason
     {
         MonsterOrTrap,
@@ -46,8 +38,8 @@ public sealed class DiabloCombatCommandProcessor
     private readonly DeterministicEntityIdAllocator worldItemEntityIds = new(0x40000000);
     private readonly DeterministicEntityIdAllocator monsterEntityIds = new(0x10000000);
     private readonly DeterministicEntityIdAllocator projectileEntityIds = new(0x80000000);
-    private NativeCallerTimingPhase nativeCallerTimingPhase;
-    private AuthoritativePlayerState? nativeCallerPlayer;
+    private DiabloCommandCallbackPhase currentCommandCallbackPhase;
+    private AuthoritativePlayerState? commandCallbackPlayer;
 
     private const uint FastHitRecoveryFlag = 1U << 21;
     private const uint FasterHitRecoveryFlag = 1U << 22;
@@ -480,20 +472,22 @@ public sealed class DiabloCombatCommandProcessor
             AdvancePlayerEquipmentDamage(player, tick, players, events);
             var completedPriorMode = AdvancePlayerAction(player, tick, players, events)
                 || AdvanceCombatModeWithEquipmentDamage(player, tick);
-            nativeCallerTimingPhase = completedPriorMode
-                ? NativeCallerTimingPhase.CompletionLoopStart
+            currentCommandCallbackPhase = completedPriorMode
+                ? DiabloCommandCallbackPhase.CompletionLoopStart
                 : IsReadyRepeat(player, tick)
-                    ? NativeCallerTimingPhase.ReadyRepeat
-                    : NativeCallerTimingPhase.None;
-            nativeCallerPlayer = player;
+                    ? DiabloCommandCallbackPhase.AttackOrRangedReadyRepeat
+                    : IsSpellReadmission(player, tick)
+                        ? DiabloCommandCallbackPhase.SpellReadmission
+                        : DiabloCommandCallbackPhase.OrdinaryCommandSlot;
+            commandCallbackPlayer = player;
             try {
                 var callbackEvents = executeCommands(player)
                     ?? throw new InvalidOperationException(
                         "A command callback returned a null event collection.");
                 events.AddRange(callbackEvents);
             } finally {
-                nativeCallerPlayer = null;
-                nativeCallerTimingPhase = NativeCallerTimingPhase.None;
+                commandCallbackPlayer = null;
+                currentCommandCallbackPhase = DiabloCommandCallbackPhase.OrdinaryCommandSlot;
             }
 
             // Native completes the old mode before the callback. If that
@@ -516,12 +510,32 @@ public sealed class DiabloCombatCommandProcessor
                 or DiabloPlayerCombatMode.RangedAttack);
     }
 
+    internal DiabloCommandCallbackPhase? GetCurrentCommandCallbackPhase(
+        AuthoritativePlayerState player)
+    {
+        ArgumentNullException.ThrowIfNull(player);
+        return useNativePlayerActionTiming
+            && ReferenceEquals(commandCallbackPlayer, player)
+                ? currentCommandCallbackPhase
+                : null;
+    }
+
+    private static bool IsSpellReadmission(AuthoritativePlayerState player, ulong tick)
+    {
+        var action = player.CurrentAction;
+        return action is not null
+            && action.Kind == DiabloPlayerActionKind.Cast
+            && player.CombatMode == DiabloPlayerCombatMode.Spell
+            && action.EffectApplied
+            && tick >= action.ReadyTick;
+    }
+
     private bool GetIncludesFirstFrame(AuthoritativePlayerState player)
     {
-        if (ReferenceEquals(nativeCallerPlayer, player)) {
-            return nativeCallerTimingPhase switch {
-                NativeCallerTimingPhase.ReadyRepeat => false,
-                NativeCallerTimingPhase.CompletionLoopStart => true,
+        if (ReferenceEquals(commandCallbackPlayer, player)) {
+            return currentCommandCallbackPhase switch {
+                DiabloCommandCallbackPhase.AttackOrRangedReadyRepeat => false,
+                DiabloCommandCallbackPhase.CompletionLoopStart => true,
                 _ => false,
             };
         }

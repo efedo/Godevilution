@@ -1169,6 +1169,38 @@ Selected engine 4.7.2 imports only staged SDK copies; the source pin remains
 campaign, broader outage, native GUI or release gates. The overall estimate remains
 approximately 35%; historical unclassified TooLate failures remain separate.
 
+### M1 transient command callback phases (2026-10-12)
+
+An internal phase contract distinguishes ordinary command slots, Attack/Ranged
+ready repetition, Spell re-admission and completion-loop starts. Classification
+occurs after actor advancement and stays stable during that actor's callback;
+the getter requires native timing and the same actor reference. Finally cleanup
+removes the context after success, rejection, exceptions or null event results.
+Existing ready-repeat predicates, first-frame decisions and outside-callback
+fallback remain unchanged. The phase is neither serialized nor an action anchor.
+
+One native fixture traces an unarmed terminal attack into a queued North walk
+through nine actual `ProcessPlayers` calls at labels 100-108. Completion-loop
+admission executes `DoWalk` in the first call, producing frames 0-7/modifier 128
+before arrival/Stand at 108. Idle admission instead began at -1 and arrived at
+109. The attack action frame precedes its terminal frame, excluding hit and
+weapon-damage branches; life, mana, RNG, items and missiles remain unchanged.
+
+Checked native build, focused 1/1, combined 10/10 and three shuffled ten-test
+runs at seeds 417/418/419 pass. All 49 tick-command cases, seven existing
+lifecycle/cohort regressions and 16 documentation checks pass. The seven Facts
+are MovementReservesItsDestinationUntilTheNativeWalkCompletes,
+MeleeDamageResolvesAtTheNativeActionFrameAndCanChainAfterward,
+SpellResourcesAndEffectsResolveAtTheNativeCastingFrame,
+NativeQuickAttackAddsItsFirstFrameSkipOnlyToChainedMeleeAttacks,
+NativeQuickAttackAddsItsFirstFrameSkipToChainedBaseGameBowAttacks,
+BowTimingUsesExternalRangedFrameTiming and
+PendingMoveDoesNotEnterADestinationBlockedAfterAdmission. Evidence:
+`.local/command-callback-phase-integration-57a2ebf5e9144773be21c51d8650617b`.
+
+Persisted command-phase/anchor mapping, full Attack/Ranged native repetition,
+world-tick parity and live cursor adoption remain open; overall approximately 35%.
+
 ### M1 prepared Spell re-admission trace (2026-10-12)
 
 One additional native fixture queues Search Skill with frames/action frame

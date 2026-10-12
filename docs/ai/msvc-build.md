@@ -184,10 +184,10 @@ participant order, Move completion before Cast, ready Cast replacement and
 second same-tick admission refusal. The differing metadata does not establish
 native/managed tick parity; refusal is not transport duplicate-ledger coverage.
 
-The registered `missiles_test` includes four full-player-loop fixtures. Run
-`NativeMonkSearchTest.ProcessPlayersReadmitsQueuedSearchAndCapturesNativeTiming`
+The registered `missiles_test` includes five full-player-loop fixtures. Run
+`NativeMonkSearchTest.ProcessPlayersCompletesUnarmedAttackAndImmediatelyStartsNorthWalk`
 (1 test), then `NativeMonkSearchTest.*:MissileData.ScopedTestLoadRestoresOriginalStorage`
-(9 tests), with three shuffled combined runs at seeds 417/418/419. Logical label
+(10 tests), with three shuffled combined runs at seeds 417/418/419. Logical label
 100 is the first complete `ProcessPlayers` admission update; the fixtures do not
 change a production tick counter.
 
@@ -214,7 +214,7 @@ Second creation at 110 extends the active duration 247 to 494 and flags the new
 entry for deletion. Stand is observed at 112, followed by one separate terminal
 missile pass that removes the duplicate and decrements duration to 493.
 
-The managed `DiabloSimulationTickCommandTests` class has 42 cases. Its 8/5 Cast
+The managed `DiabloSimulationTickCommandTests` class has 49 cases. Its 8/5 Cast
 trace captures 32 observations, including eight actual post-`ExecuteTick` rows,
 with one damage/mana effect at 105 and Stand at 107. The North-Move trace reads
 ten post-return states at 100 through 109. Authored walking frames 8 yield
@@ -226,9 +226,18 @@ state before/after replacement at 105. The first effect is already applied
 before that callback; the successor applies at 110 and completes to Stand at
 112, with exactly two damage events and mana 10/6/2. Original end 107 is stored
 metadata that becomes counterfactual after replacement; actual 107 stays Spell.
-The measured walk difference requires an explicit command-phase/anchor
-contract; these fixtures do not establish shipped timing or full world ticks,
-and no production timing/default policy changes follow.
+The unarmed attack-completion fixture follows nine actual updates at 100-108:
+its queued North walk receives a same-call `DoWalk` update, giving frames 0-7
+and modifier 128 before Stand/arrival at 108. Its terminal attack frame follows
+the action frame, with empty hands and no speed or elemental flags. The existing
+5x5 guard and base teardown restore tiles, lighting and view.
+
+The internal `DiabloCommandCallbackPhase` is transient and actor-reference-matched
+under native timing. Added tests cover stable phase identity through rejection
+and replacement, opt-out/outside/wrong-actor absence and exception/null-event
+cleanup. Run the tick-command class and the seven selected lifecycle/cohort
+regressions recorded in migration status. Persisted anchor and cursor adoption
+remain open; prepared traces do not establish full world-tick parity.
 
 The local checked MSVC build hit C1902 under `/ZI /FS` even after preserving and
 removing generated symbol artifacts from the selected target. A fresh compiler

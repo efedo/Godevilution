@@ -2,6 +2,10 @@
 
 Notable changes to this fork are recorded below.
 
+- 2026-10-12: Expose transient command callback phases for native timing while
+  retaining first-frame decisions and serialized state. Test phase identity and
+  cleanup, and trace a North walk through unarmed attack completion.
+
 - 2026-10-12: Trace prepared Spell re-admission through two real effects and
   completion in native ProcessPlayers and managed ExecuteTick. Capture native
   animation carry and the first effect before managed replacement; defaults stay

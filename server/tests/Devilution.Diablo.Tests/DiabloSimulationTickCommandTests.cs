@@ -1542,6 +1542,344 @@ public sealed class DiabloSimulationTickCommandTests
             player.CurrentAction.EndTick));
     }
 
+    [Fact]
+    public void ExecuteTickExposesOrdinaryPhaseOnlyToMatchingNativeCallbackActor()
+    {
+        var (simulation, template, _, _) = CreateNativeMoveCastFixture();
+        var runtime = simulation.CreateRuntime(template);
+        AuthoritativePlayerState? owner = null;
+        runtime.Write("a-owner", state => {
+            state.EntityId = 11;
+            owner = state;
+        });
+        runtime.Write("z-other", state => state.EntityId = 22);
+
+        Assert.Null(simulation.GetCurrentCommandCallbackPhase(owner!));
+        var observedPhases = new List<DiabloCommandCallbackPhase?>();
+        var results = runtime.ExecuteTick<int>(
+            1,
+            [
+                new SimulationTickCommand<
+                    AuthoritativePlayerState,
+                    DiabloGameplayEvent,
+                    int>(
+                    "a-owner",
+                    (state, participants) => {
+                        observedPhases.Add(simulation.GetCurrentCommandCallbackPhase(state));
+                        var other = Assert.Single(
+                            participants,
+                            participant => !ReferenceEquals(participant, state));
+                        Assert.Null(simulation.GetCurrentCommandCallbackPhase(other));
+                        var sameEntityIdOtherReference = template.CreatePlayer();
+                        sameEntityIdOtherReference.EntityId = state.EntityId;
+                        Assert.NotSame(state, sameEntityIdOtherReference);
+                        Assert.Equal(state.EntityId, sameEntityIdOtherReference.EntityId);
+                        Assert.Null(simulation.GetCurrentCommandCallbackPhase(sameEntityIdOtherReference));
+                        return new SimulationStepResult<int, DiabloGameplayEvent>(11);
+                    }),
+            ]);
+
+        Assert.Equal([11], results);
+        Assert.Equal(
+            [DiabloCommandCallbackPhase.OrdinaryCommandSlot],
+            observedPhases);
+        Assert.Null(simulation.GetCurrentCommandCallbackPhase(owner!));
+
+        var defaultSimulation = CreateSimulation();
+        var defaultRuntime = defaultSimulation.CreateRuntime(
+            DiabloPlayerTemplate.CreateDefault(0, 50, 0, 0));
+        AuthoritativePlayerState? defaultPlayer = null;
+        defaultRuntime.Write("default-player", state => {
+            state.EntityId = 33;
+            defaultPlayer = state;
+        });
+        Assert.Null(defaultSimulation.GetCurrentCommandCallbackPhase(defaultPlayer!));
+        var defaultPhases = defaultRuntime.ExecuteTick<DiabloRuleFailure?>(
+            1,
+            [
+                new SimulationTickCommand<
+                    AuthoritativePlayerState,
+                    DiabloGameplayEvent,
+                    DiabloRuleFailure?>(
+                    "default-player",
+                    (state, _) => {
+                        Assert.Null(defaultSimulation.GetCurrentCommandCallbackPhase(state));
+                        return new SimulationStepResult<DiabloRuleFailure?, DiabloGameplayEvent>(null);
+                    }),
+            ]);
+        Assert.Equal(new DiabloRuleFailure?[] { null }, defaultPhases);
+        Assert.Null(defaultSimulation.GetCurrentCommandCallbackPhase(defaultPlayer!));
+    }
+
+    [Theory]
+    [InlineData(false, DiabloPlayerCombatMode.Attack)]
+    [InlineData(true, DiabloPlayerCombatMode.RangedAttack)]
+    public void ExecuteTickExposesAttackOrRangedReadyRepeatPhase(
+        bool ranged,
+        DiabloPlayerCombatMode expectedMode)
+    {
+        var simulation = CreateNativeTimingSimulation(
+            0,
+            ranged,
+            out var template);
+        var runtime = simulation.CreateRuntime(template);
+        AuthoritativePlayerState? playerState = null;
+        ulong readyTick = 0;
+        runtime.Write("player", player => {
+            player.EntityId = 11;
+            playerState = player;
+            var started = simulation.Execute(
+                player,
+                new DiabloAttackIntent(99),
+                10,
+                [player]);
+            Assert.True(started.Succeeded);
+            readyTick = player.CurrentAction!.ReadyTick;
+        });
+
+        Assert.True(readyTick > 0);
+        var preReadyPhases = new List<DiabloCommandCallbackPhase?>();
+        var preReadyResults = runtime.ExecuteTick<DiabloRuleFailure?>(
+            readyTick - 1,
+            [
+                new SimulationTickCommand<
+                    AuthoritativePlayerState,
+                    DiabloGameplayEvent,
+                    DiabloRuleFailure?>(
+                    "player",
+                    (player, _) => {
+                        preReadyPhases.Add(simulation.GetCurrentCommandCallbackPhase(player));
+                        return new SimulationStepResult<DiabloRuleFailure?, DiabloGameplayEvent>(null);
+                    }),
+            ]);
+        Assert.Equal(new DiabloRuleFailure?[] { null }, preReadyResults);
+        Assert.Equal(
+            new DiabloCommandCallbackPhase?[] { DiabloCommandCallbackPhase.OrdinaryCommandSlot },
+            preReadyPhases);
+
+        var observedPhases = new List<DiabloCommandCallbackPhase?>();
+        var results = runtime.ExecuteTick<DiabloRuleFailure?>(
+            readyTick,
+            [
+                new SimulationTickCommand<
+                    AuthoritativePlayerState,
+                    DiabloGameplayEvent,
+                    DiabloRuleFailure?>(
+                    "player",
+                    (player, participants) => {
+                        observedPhases.Add(simulation.GetCurrentCommandCallbackPhase(player));
+                        var rejected = simulation.Execute(
+                            player,
+                            new DiabloAttackIntent(404),
+                            readyTick,
+                            participants);
+                        return new SimulationStepResult<DiabloRuleFailure?, DiabloGameplayEvent>(
+                            rejected.Failure,
+                            rejected.Events);
+                    }),
+                new SimulationTickCommand<
+                    AuthoritativePlayerState,
+                    DiabloGameplayEvent,
+                    DiabloRuleFailure?>(
+                    "player",
+                    (player, participants) => {
+                        observedPhases.Add(simulation.GetCurrentCommandCallbackPhase(player));
+                        var accepted = simulation.Execute(
+                            player,
+                            new DiabloAttackIntent(99),
+                            readyTick,
+                            participants);
+                        return new SimulationStepResult<DiabloRuleFailure?, DiabloGameplayEvent>(
+                            accepted.Failure,
+                            accepted.Events);
+                    }),
+            ]);
+
+        Assert.Equal(
+            new DiabloRuleFailure?[] { DiabloRuleFailure.InvalidTarget, null },
+            results);
+        Assert.Equal(
+            new DiabloCommandCallbackPhase?[] {
+                DiabloCommandCallbackPhase.AttackOrRangedReadyRepeat,
+                DiabloCommandCallbackPhase.AttackOrRangedReadyRepeat,
+            },
+            observedPhases);
+        Assert.Equal(expectedMode, playerState!.CombatMode);
+        Assert.Equal(readyTick, playerState.CurrentAction!.StartedAtTick);
+        Assert.Null(simulation.GetCurrentCommandCallbackPhase(playerState));
+    }
+
+    [Fact]
+    public void ExecuteTickExposesSpellReadmissionPhaseWithoutChangingSameTickRefusal()
+    {
+        var (simulation, template, target, _) = CreateNativeMoveCastFixture();
+        var initialHitPoints = target.HitPoints;
+        var runtime = simulation.CreateRuntime(template);
+        runtime.Write("player", state => state.EntityId = 11);
+        var firstResults = runtime.ExecuteTick<DiabloRuleFailure?>(
+            1,
+            [
+                CreateCastTickCommand(
+                    "player",
+                    simulation,
+                    1,
+                    new DiabloCastIntent(7, 99, 2, 0)),
+            ]);
+        Assert.Equal(new DiabloRuleFailure?[] { null }, firstResults);
+
+        var firstCast = runtime.Read("player", state => state.CurrentAction)!;
+        var readyTick = firstCast.ReadyTick;
+        var observedPhases = new List<DiabloCommandCallbackPhase?>();
+        (bool EffectApplied, int HitPoints, int Mana)? stateBeforeReadmission = null;
+
+        SimulationTickCommand<
+            AuthoritativePlayerState,
+            DiabloGameplayEvent,
+            DiabloRuleFailure?> CreateReadmissionCommand()
+            => new(
+                "player",
+                (state, participants) => {
+                    observedPhases.Add(simulation.GetCurrentCommandCallbackPhase(state));
+                    if (observedPhases.Count == 1) {
+                        stateBeforeReadmission = (
+                            state.CurrentAction?.EffectApplied ?? false,
+                            target.HitPoints,
+                            state.Mana);
+                    }
+                    var result = simulation.Execute(
+                        state,
+                        new DiabloCastIntent(7, 99, 2, 0),
+                        readyTick,
+                        participants);
+                    return new SimulationStepResult<DiabloRuleFailure?, DiabloGameplayEvent>(
+                        result.Failure,
+                        result.Events);
+                });
+
+        var readyResults = runtime.ExecuteTick<DiabloRuleFailure?>(
+            readyTick,
+            [
+                CreateReadmissionCommand(),
+                CreateReadmissionCommand(),
+            ]);
+
+        Assert.NotNull(stateBeforeReadmission);
+        Assert.Equal((true, initialHitPoints - 6, 6), stateBeforeReadmission.Value);
+        Assert.Equal(
+            new DiabloRuleFailure?[] { null, DiabloRuleFailure.NotAllowed },
+            readyResults);
+        Assert.Equal(
+            new DiabloCommandCallbackPhase?[] {
+                DiabloCommandCallbackPhase.SpellReadmission,
+                DiabloCommandCallbackPhase.SpellReadmission,
+            },
+            observedPhases);
+        var replacement = runtime.Read("player", state => state.CurrentAction)!;
+        Assert.Equal(readyTick, replacement.StartedAtTick);
+        Assert.False(replacement.EffectApplied);
+        Assert.Equal(6, runtime.Read("player", state => state.Mana));
+        Assert.Null(simulation.GetCurrentCommandCallbackPhase(
+            runtime.Read("player", state => state)));
+    }
+
+    [Fact]
+    public void ExecuteTickExposesCompletionLoopStartAfterMoveCompletes()
+    {
+        var (simulation, template, _, _) = CreateNativeMoveCastFixture();
+        var runtime = simulation.CreateRuntime(template);
+        runtime.Write("player", state => state.EntityId = 11);
+        var moveResults = runtime.ExecuteTick<DiabloRuleFailure?>(
+            1,
+            [CreateMoveTickCommand("player", simulation, 1, 1, 0)]);
+        Assert.Equal(new DiabloRuleFailure?[] { null }, moveResults);
+        var moveEndTick = runtime.Read("player", state => state.CurrentAction!.EndTick);
+
+        AuthoritativePlayerState? observedPlayer = null;
+        DiabloCommandCallbackPhase? observedPhase = null;
+        var completionSeen = false;
+        var castResults = runtime.ExecuteTick<DiabloRuleFailure?>(
+            moveEndTick,
+            [
+                new SimulationTickCommand<
+                    AuthoritativePlayerState,
+                    DiabloGameplayEvent,
+                    DiabloRuleFailure?>(
+                    "player",
+                    (player, participants) => {
+                        observedPlayer = player;
+                        observedPhase = simulation.GetCurrentCommandCallbackPhase(player);
+                        completionSeen = player.PositionX == 1
+                            && player.PositionY == 0
+                            && player.CombatMode == DiabloPlayerCombatMode.Stand
+                            && player.CurrentAction is null;
+                        var result = simulation.Execute(
+                            player,
+                            new DiabloCastIntent(7, 99, 2, 0),
+                            moveEndTick,
+                            participants);
+                        return new SimulationStepResult<DiabloRuleFailure?, DiabloGameplayEvent>(
+                            result.Failure,
+                            result.Events);
+                    }),
+            ]);
+
+        Assert.True(completionSeen);
+        Assert.Equal(new DiabloRuleFailure?[] { null }, castResults);
+        Assert.Equal(
+            DiabloCommandCallbackPhase.CompletionLoopStart,
+            observedPhase);
+        Assert.Null(simulation.GetCurrentCommandCallbackPhase(observedPlayer!));
+    }
+
+    [Fact]
+    public void ExecuteTickClearsCommandPhaseAfterCallbackException()
+    {
+        var (simulation, template, _, _) = CreateNativeMoveCastFixture();
+        var runtime = simulation.CreateRuntime(template);
+        AuthoritativePlayerState? playerState = null;
+        runtime.Write("player", state => {
+            state.EntityId = 11;
+            playerState = state;
+        });
+        DiabloCommandCallbackPhase? observedPhase = null;
+
+        Assert.Throws<InvalidOperationException>(() => runtime.ExecuteTick<int>(
+            1,
+            [
+                new SimulationTickCommand<
+                    AuthoritativePlayerState,
+                    DiabloGameplayEvent,
+                    int>(
+                    "player",
+                    (player, _) => {
+                        observedPhase = simulation.GetCurrentCommandCallbackPhase(player);
+                        throw new InvalidOperationException("callback failure");
+                    }),
+            ]));
+
+        Assert.Equal(DiabloCommandCallbackPhase.OrdinaryCommandSlot, observedPhase);
+        Assert.Null(simulation.GetCurrentCommandCallbackPhase(playerState!));
+    }
+
+    [Fact]
+    public void ExecuteTickClearsCommandPhaseWhenCallbackReturnsNullEvents()
+    {
+        var (simulation, template, _, _) = CreateNativeMoveCastFixture();
+        var player = template.CreatePlayer();
+        player.EntityId = 11;
+        DiabloCommandCallbackPhase? observedPhase = null;
+
+        Assert.Throws<InvalidOperationException>(() => simulation.AdvanceTickWithCommands(
+            1,
+            [player],
+            state => {
+                observedPhase = simulation.GetCurrentCommandCallbackPhase(state);
+                return null!;
+            }));
+
+        Assert.Equal(DiabloCommandCallbackPhase.OrdinaryCommandSlot, observedPhase);
+        Assert.Null(simulation.GetCurrentCommandCallbackPhase(player));
+    }
     private static SimulationTickCommand<
         AuthoritativePlayerState,
         DiabloGameplayEvent,

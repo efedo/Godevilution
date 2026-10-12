@@ -476,6 +476,12 @@ deliberately does not claim native generated-world parity, which belongs to M2.
    observed Stand at 112. Native repeated rows carry two frames with modifier
    256; the initial rows carry none with modifier 170. Full Attack/Ranged ready
    repetition, shipped/world-tick parity and cursor adoption remain open.
+   An internal callback phase contract now distinguishes ordinary slots, attack
+   ready repetition, Spell re-admission and completion-loop starts. It is visible
+   only for the active actor reference under native timing, captured before the
+   callback and cleared on success or fault. Existing timing stays unchanged.
+   A full native unarmed attack-completion walk starts at frame 0 on label 100
+   and arrives at 108, compared with idle admission at frame -1/arrival 109.
    Next settle the persisted command-phase/anchor contract:
    production authoritative commands currently follow actor advancement, but native Pending
    assumes processing later in the same tick. Neither publishing negative phase
