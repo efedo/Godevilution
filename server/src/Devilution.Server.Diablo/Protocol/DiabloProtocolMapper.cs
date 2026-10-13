@@ -571,6 +571,14 @@ internal static class DiabloProtocolMapper
                     State = ToProtocolItemState(item.ItemSeed, item.State, spells, spellBooks, items),
                 });
             }
+            if (source.ActiveStore.Services is { } services) {
+                store.Services = new StoreServicesSnapshot {
+                    Repair = services.Repair,
+                    Recharge = services.Recharge,
+                    Identify = services.Identify,
+                    RefillMana = services.RefillMana,
+                };
+            }
             snapshot.ActiveStore = store;
         }
 

@@ -500,8 +500,19 @@ public sealed record DiabloProjectileState(
     public int DamageMaximum { get; init; }
 }
 
-/** Remaining stock for the store visible to the projected player. */
-public sealed record DiabloStoreState(uint StoreId, IReadOnlyList<StoreItem> Items);
+/** Informational availability of the native services for one active store. */
+public sealed record DiabloStoreServices(
+    bool Repair,
+    bool Recharge,
+    bool Identify,
+    bool RefillMana);
+
+/** Remaining stock and live-only service hints for the store visible to the player. */
+public sealed record DiabloStoreState(uint StoreId, IReadOnlyList<StoreItem> Items)
+{
+    /** Recomputed presentation hint; omitted from persistence snapshots. */
+    public DiabloStoreServices? Services { get; init; }
+}
 
 /** Persisted origin for one runtime-generated set-piece object group. */
 public sealed record DiabloSetLevelObjectOriginState(
@@ -659,7 +670,11 @@ public sealed partial class DiabloSimulation
                     .Select(item => item with {
                         State = ResolveItemState(item.State, item.ItemSeed),
                     })
-                    .ToArray())
+                    .ToArray()) {
+                    Services = includeDoorPersistence
+                        ? null
+                        : storeCommands.CaptureStoreServices(player),
+                }
             : null;
         foreach (var target in WorldState.CombatTargets.Values)
             target.EnsureMovementTiming(tick);

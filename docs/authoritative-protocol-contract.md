@@ -103,6 +103,15 @@ snapshot rather than clearing vendor state optimistically. Store open and close
 commands are non-critical for late-command scheduling, but all purchases and
 paid item services still require the matching authoritative active store.
 
+Live Diablo snapshots may include `active_store.services`, an optional message
+with Repair, Recharge, Identify and mana-refill support from the existing server
+rules. It describes vendor support, not item eligibility, prices or affordability.
+Present all-false disables all four vendor services; absence preserves the older
+HUD behavior. Godot retains class/scroll service choices when no store is open.
+These informational hints are excluded from the authoritative state hash and
+save export, discarded on authoritative import and recomputed for live snapshots.
+Commands remain subject to the server's existing validation.
+
 `OpenStashRequested` and `CloseStashRequested` establish the equivalent
 server-owned stash session. They are idempotent and mutually exclusive with an
 active vendor store. `PlayerSnapshot.stash_open` is the authoritative session

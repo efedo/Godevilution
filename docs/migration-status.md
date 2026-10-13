@@ -44,6 +44,13 @@ unsupported behavior is a migration gap, not permission for local simulation.
 
 ## Current delivery position and verification limits
 
+Godot paid-service availability now follows optional live hints derived from
+existing authoritative vendor rules: Smith repair, Witch recharge, Cain Identify
+and Adria mana refill, with Generic-store compatibility. This changes four HUD
+buttons, preserves class/scroll fallback when no store is open and keeps absent
+hints compatible with older peers. Hints do not affect state hashes or save export.
+Full service pricing/presentation, rendered interaction and the M1 loop remain open.
+
 The opt-in Legacy single-client PerformanceCreate/PerformanceResume handlers and
 launcher routes are integrated. Create captures the settled post-workload baseline
 after frame recording stops; Resume checks the current admitted first raw snapshot

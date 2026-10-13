@@ -434,6 +434,14 @@ public partial class HudPresentation : CanvasLayer
         var hasRepairAbility = player?.AbilityKind == PlayerAbilityKind.Repair;
         var hasRechargeAbility = player?.AbilityKind == PlayerAbilityKind.Recharge;
         var hasTrapDisarmAbility = player?.AbilityKind == PlayerAbilityKind.TrapDisarm;
+        var serviceAvailability = AuthoritativeStoreServicePresentation.Evaluate(
+            connected,
+            activeStore,
+            hasSelectedServiceItem,
+            hasRepairAbility,
+            hasRechargeAbility,
+            hasIdentifyAbility,
+            hasIdentifyScroll);
         var selectedItemAction = hasSelectedInventory
             ? player!.Inventory[selectedInventoryIndex].State?.ItemActionKind ?? ItemActionKind.Unspecified
             : hasSelectedBelt
@@ -461,23 +469,17 @@ public partial class HudPresentation : CanvasLayer
         repairSelected.Text = activeStore is null && hasRepairAbility
             ? "Repair selected (Warrior)"
             : "Repair selected";
-        repairSelected.Disabled = !connected
-            || !hasSelectedServiceItem
-            || (activeStore is null && !hasRepairAbility);
+        repairSelected.Disabled = !serviceAvailability.CanRepair;
         rechargeSelected.Text = activeStore is null && hasRechargeAbility
             ? "Recharge selected (Sorcerer)"
             : "Recharge selected";
-        rechargeSelected.Disabled = !connected
-            || !hasSelectedServiceItem
-            || (activeStore is null && !hasRechargeAbility);
+        rechargeSelected.Disabled = !serviceAvailability.CanRecharge;
         identifySelected.Text = activeStore is null && hasIdentifyAbility
             ? "Identify selected (Bard)"
             : activeStore is null && hasIdentifyScroll
                 ? "Identify selected (Scroll)"
             : "Identify selected";
-        identifySelected.Disabled = !connected
-            || !hasSelectedServiceItem
-            || (activeStore is null && !hasIdentifyAbility && !hasIdentifyScroll);
+        identifySelected.Disabled = !serviceAvailability.CanIdentify;
         readBookSelected.Disabled = !connected || selectedItemAction != ItemActionKind.ReadBook;
         useConsumableSelected.Disabled = !connected || !hasTargetlessConsumable;
         applyOilSelected.Disabled = !connected || !hasTargetedConsumable || selectedOilTarget is null;
@@ -488,7 +490,7 @@ public partial class HudPresentation : CanvasLayer
         questTownerInteraction.Text = availableQuestTownerInteraction is null
             ? "Use quest/towner"
             : $"Use quest/towner ({availableQuestTownerInteraction.TownerId})";
-        refillMana.Disabled = !connected;
+        refillMana.Disabled = !serviceAvailability.CanRefillMana;
         dropHeld.Disabled = !connected || player?.HeldItem is null;
         clearEvents.Disabled = model.RecentEvents.Count == 0;
         beltItems.MouseFilter = !connected || player?.Belt.Count is not > 0

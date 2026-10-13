@@ -568,9 +568,17 @@ message PortalSnapshot {
 	bool bidirectional = 10;
 }
 
+message StoreServicesSnapshot {
+	bool repair = 1;
+	bool recharge = 2;
+	bool identify = 3;
+	bool refill_mana = 4;
+}
+
 message StoreSnapshot {
 	uint32 store_id = 1;
 	repeated StoreItemSnapshot items = 2;
+	StoreServicesSnapshot services = 3;
 }
 
 message StoreItemSnapshot {

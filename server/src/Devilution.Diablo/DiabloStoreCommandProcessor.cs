@@ -721,6 +721,17 @@ public sealed class DiabloStoreCommandProcessor
     private bool IsStaff(AuthoritativeItemState state)
         => AuthoritativeItemClassification.IsStaff(state, items);
 
+    /** Captures informational service availability without evaluating transaction affordability. */
+    internal DiabloStoreServices CaptureStoreServices(AuthoritativePlayerState player)
+    {
+        ArgumentNullException.ThrowIfNull(player);
+        return new DiabloStoreServices(
+            AllowsVendorService(player, AuthoritativeStoreRole.Smith),
+            AllowsVendorService(player, AuthoritativeStoreRole.Witch),
+            AllowsPaidIdentification(player),
+            player.ActiveStoreId == adriaStoreId && player.LevelId == townLevelId);
+    }
+
     /** Allows legacy generic catalogs while constraining declared native vendors. */
     private bool AllowsVendorService(
         AuthoritativePlayerState player,

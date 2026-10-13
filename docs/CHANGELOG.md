@@ -2,6 +2,10 @@
 
 Notable changes to this fork are recorded below.
 
+- 2026-10-12: Show only the active vendor's supported paid item services in
+  Godot. Server-derived presentation hints preserve legacy peers, class/scroll
+  fallback, authoritative transaction rules, state hashes and saves.
+
 - 2026-10-12: Expose transient command callback phases for native timing while
   retaining first-frame decisions and serialized state. Test phase identity and
   cleanup, and trace a North walk through unarmed attack completion.

@@ -424,7 +424,12 @@ deliberately does not claim native generated-world parity, which belongs to M2.
    adjacency and empty cursor; metadata-free/custom-store compatibility remains.
    Owned portals take priority over coincident automatic stairs. Metadata-bound
    native vendors now close after accepted cross-level entry into a non-town level;
-   stash and compatibility-store policies remain unchanged. Close remaining
+   stash and compatibility-store policies remain unchanged. Optional live store
+   service hints now gate Godot Repair, Recharge, Identify and mana-refill buttons
+   by existing vendor permissions. Legacy peers and no-store class/scroll choices
+   retain their behavior; item eligibility, prices, transaction rules and saves
+   remain server-owned. Rendered shop interaction remains an acceptance gap.
+   Close remaining
    native placement exclusions, full service lifecycle/pricing, broader quest,
    death/class coverage and broader cooperative gameplay/recovery journeys. Two
    actual Godot clients now extend town/session checks with a separate explicit
