@@ -78,6 +78,7 @@ public sealed class DiabloStoreServiceCapabilitiesTests
 
         var saved = simulation.CaptureSnapshot(player, 0);
         Assert.Null(saved.ActiveStore!.Services);
+        Assert.Null(saved.ActiveStore.Quotes);
 
         var restoredPlayer = CreatePlayer(levelId: saved.Player.LevelId);
         simulation.RestoreSnapshot(restoredPlayer, saved);
@@ -85,6 +86,7 @@ public sealed class DiabloStoreServiceCapabilitiesTests
         Assert.Equal(
             new DiabloStoreServices(false, false, true, false),
             live.ActiveStore!.Services);
+        Assert.NotNull(live.ActiveStore.Quotes);
 
         restoredPlayer.LevelId = AuthoritativePortalRules.TownLevelId + 1;
         var outsideTown = simulation.CapturePresentationSnapshot(
@@ -93,6 +95,17 @@ public sealed class DiabloStoreServiceCapabilitiesTests
         Assert.Equal(
             new DiabloStoreServices(false, false, false, false),
             outsideTown.ActiveStore!.Services);
+        Assert.NotNull(outsideTown.ActiveStore.Quotes);
+    }
+
+    [Fact]
+    public void NoActiveStoreAndOpenStashHaveNoPaidStoreQuoteSurface()
+    {
+        var processor = new DiabloStoreCommandProcessor(new StoreCatalog());
+        var player = CreatePlayer(levelId: AuthoritativePortalRules.TownLevelId);
+        player.StashOpen = true;
+
+        Assert.Null(processor.CaptureStoreQuotes(player));
     }
 
     private static AuthoritativePlayerState CreatePlayer(uint levelId)

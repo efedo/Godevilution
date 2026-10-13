@@ -49,7 +49,10 @@ existing authoritative vendor rules: Smith repair, Witch recharge, Cain Identify
 and Adria mana refill, with Generic-store compatibility. This changes four HUD
 buttons, preserves class/scroll fallback when no store is open and keeps absent
 hints compatible with older peers. Hints do not affect state hashes or save export.
-Full service pricing/presentation, rendered interaction and the M1 loop remain open.
+Optional live service quotes now add costs and rule refusals for selected inventory,
+belt or equipped items and mana refill. Commands revalidate current targets and
+resources; custom legacy rules omit quotes. Full native pricing/lifecycle coverage,
+rendered shop interaction and the M1 loop remain open.
 
 The opt-in Legacy single-client PerformanceCreate/PerformanceResume handlers and
 launcher routes are integrated. Create captures the settled post-workload baseline

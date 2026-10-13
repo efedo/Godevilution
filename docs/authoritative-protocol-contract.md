@@ -112,6 +112,16 @@ These informational hints are excluded from the authoritative state hash and
 save export, discarded on authoritative import and recomputed for live snapshots.
 Commands remain subject to the server's existing validation.
 
+Optional live `active_store.quotes` adds server-authored service costs and rule
+refusals. Item rows use the exact inventory, belt or equipment reference; mana
+refill has one store-level quote. A present quote with `reject_reason` Unspecified
+is available, including zero cost. InsufficientResources retains the required
+price; other refusals carry no usable price. Missing quotes preserve legacy
+presentation when the container is absent. Custom rules without the optional
+quote provider omit it. Quotes are pure hints, omitted from save export, discarded
+on import and excluded from state hashes. Every command revalidates its current
+target and resources; quotes do not reserve a price or guarantee admission.
+
 `OpenStashRequested` and `CloseStashRequested` establish the equivalent
 server-owned stash session. They are idempotent and mutually exclusive with an
 active vendor store. `PlayerSnapshot.stash_open` is the authoritative session

@@ -507,11 +507,26 @@ public sealed record DiabloStoreServices(
     bool Identify,
     bool RefillMana);
 
+/** One player-owned target's currently offered paid service quotes. */
+public sealed record DiabloStoreItemServiceQuotes(
+    DiabloPlayerItemReference Item,
+    DiabloStoreServiceQuote? Repair,
+    DiabloStoreServiceQuote? Recharge,
+    DiabloStoreServiceQuote? Identify);
+
+/** Live-only paid service quotes for one active store. */
+public sealed record DiabloStoreQuotes(
+    IReadOnlyList<DiabloStoreItemServiceQuotes> Items,
+    DiabloStoreServiceQuote? RefillMana);
+
 /** Remaining stock and live-only service hints for the store visible to the player. */
 public sealed record DiabloStoreState(uint StoreId, IReadOnlyList<StoreItem> Items)
 {
     /** Recomputed presentation hint; omitted from persistence snapshots. */
     public DiabloStoreServices? Services { get; init; }
+
+    /** Recomputed presentation hint; omitted from persistence snapshots. */
+    public DiabloStoreQuotes? Quotes { get; init; }
 }
 
 /** Persisted origin for one runtime-generated set-piece object group. */
@@ -674,6 +689,9 @@ public sealed partial class DiabloSimulation
                     Services = includeDoorPersistence
                         ? null
                         : storeCommands.CaptureStoreServices(player),
+                    Quotes = includeDoorPersistence
+                        ? null
+                        : storeCommands.CaptureStoreQuotes(player),
                 }
             : null;
         foreach (var target in WorldState.CombatTargets.Values)

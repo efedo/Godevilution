@@ -442,6 +442,18 @@ public partial class HudPresentation : CanvasLayer
             hasRechargeAbility,
             hasIdentifyAbility,
             hasIdentifyScroll);
+        var quoteTargetIsCurrent = connected && hasSelectedServiceItem;
+        var repairQuote = AuthoritativeStoreServiceQuotePresentation.ResolveItem(
+            activeStore, selectedItemReference, StoreServiceQuoteAction.Repair,
+            quoteTargetIsCurrent, serviceAvailability.CanRepair);
+        var rechargeQuote = AuthoritativeStoreServiceQuotePresentation.ResolveItem(
+            activeStore, selectedItemReference, StoreServiceQuoteAction.Recharge,
+            quoteTargetIsCurrent, serviceAvailability.CanRecharge);
+        var identifyQuote = AuthoritativeStoreServiceQuotePresentation.ResolveItem(
+            activeStore, selectedItemReference, StoreServiceQuoteAction.Identify,
+            quoteTargetIsCurrent, serviceAvailability.CanIdentify);
+        var refillManaQuote = AuthoritativeStoreServiceQuotePresentation.ResolveRefillMana(
+            activeStore, connected, serviceAvailability.CanRefillMana);
         var selectedItemAction = hasSelectedInventory
             ? player!.Inventory[selectedInventoryIndex].State?.ItemActionKind ?? ItemActionKind.Unspecified
             : hasSelectedBelt
@@ -466,20 +478,20 @@ public partial class HudPresentation : CanvasLayer
         allocateVitality.Disabled = !hasStatPoints;
         buySelected.Disabled = !connected || activeStore is null || selectedStoreSlot is null;
         sellSelected.Disabled = !connected || !hasSelectedItem;
-        repairSelected.Text = activeStore is null && hasRepairAbility
+        repairSelected.Text = repairQuote.ButtonText ?? (activeStore is null && hasRepairAbility
             ? "Repair selected (Warrior)"
-            : "Repair selected";
-        repairSelected.Disabled = !serviceAvailability.CanRepair;
-        rechargeSelected.Text = activeStore is null && hasRechargeAbility
+            : "Repair selected");
+        repairSelected.Disabled = !repairQuote.CanInvoke;
+        rechargeSelected.Text = rechargeQuote.ButtonText ?? (activeStore is null && hasRechargeAbility
             ? "Recharge selected (Sorcerer)"
-            : "Recharge selected";
-        rechargeSelected.Disabled = !serviceAvailability.CanRecharge;
-        identifySelected.Text = activeStore is null && hasIdentifyAbility
+            : "Recharge selected");
+        rechargeSelected.Disabled = !rechargeQuote.CanInvoke;
+        identifySelected.Text = identifyQuote.ButtonText ?? (activeStore is null && hasIdentifyAbility
             ? "Identify selected (Bard)"
             : activeStore is null && hasIdentifyScroll
                 ? "Identify selected (Scroll)"
-            : "Identify selected";
-        identifySelected.Disabled = !serviceAvailability.CanIdentify;
+                : "Identify selected");
+        identifySelected.Disabled = !identifyQuote.CanInvoke;
         readBookSelected.Disabled = !connected || selectedItemAction != ItemActionKind.ReadBook;
         useConsumableSelected.Disabled = !connected || !hasTargetlessConsumable;
         applyOilSelected.Disabled = !connected || !hasTargetedConsumable || selectedOilTarget is null;
@@ -490,7 +502,8 @@ public partial class HudPresentation : CanvasLayer
         questTownerInteraction.Text = availableQuestTownerInteraction is null
             ? "Use quest/towner"
             : $"Use quest/towner ({availableQuestTownerInteraction.TownerId})";
-        refillMana.Disabled = !serviceAvailability.CanRefillMana;
+        refillMana.Text = refillManaQuote.ButtonText ?? "Refill mana";
+        refillMana.Disabled = !refillManaQuote.CanInvoke;
         dropHeld.Disabled = !connected || player?.HeldItem is null;
         clearEvents.Disabled = model.RecentEvents.Count == 0;
         beltItems.MouseFilter = !connected || player?.Belt.Count is not > 0

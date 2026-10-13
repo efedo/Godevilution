@@ -10,6 +10,24 @@ public enum DiabloRuleFailure
     TooLate,
 }
 
+/** Read-only service quote with an optional transaction rejection reason. */
+public sealed record DiabloStoreServiceQuote(uint Price, DiabloRuleFailure? RejectReason);
+
+/** Optional quote surface; legacy/custom rule providers need not implement it. */
+public interface IDiabloStoreQuoteRules
+{
+    DiabloStoreServiceQuote GetRepairQuote(OwnedStoreItem item, uint playerGold);
+
+    DiabloStoreServiceQuote GetRechargeQuote(OwnedStoreItem item, uint playerGold);
+
+    DiabloStoreServiceQuote GetIdentificationQuote(OwnedStoreItem item, uint playerGold);
+
+    DiabloStoreServiceQuote GetManaRefillQuote(
+        int currentMana,
+        int maximumMana,
+        uint playerGold);
+}
+
 /** Replaceable, protocol-independent rules consumed by store transitions. */
 public interface IDiabloStoreRules
 {
@@ -37,7 +55,7 @@ public interface IDiabloStoreRules
 }
 
 /** Deterministic Diablo store validation and pricing rules. */
-public sealed class DiabloStoreRules : IDiabloStoreRules
+public sealed class DiabloStoreRules : IDiabloStoreRules, IDiabloStoreQuoteRules
 {
     private readonly AuthoritativeItemCatalog? items;
 
@@ -50,6 +68,48 @@ public sealed class DiabloStoreRules : IDiabloStoreRules
     }
 
     public StoreServicePricing Pricing { get; }
+
+    public DiabloStoreServiceQuote GetRepairQuote(OwnedStoreItem item, uint playerGold)
+    {
+        ArgumentNullException.ThrowIfNull(item);
+        var failure = ValidateRepair(item, playerGold);
+        return CreateServiceQuote(failure, () => GetRepairPrice(item));
+    }
+
+    public DiabloStoreServiceQuote GetRechargeQuote(OwnedStoreItem item, uint playerGold)
+    {
+        ArgumentNullException.ThrowIfNull(item);
+        var failure = ValidateRecharge(item, playerGold);
+        return CreateServiceQuote(failure, () => GetRechargePrice(item));
+    }
+
+    public DiabloStoreServiceQuote GetIdentificationQuote(OwnedStoreItem item, uint playerGold)
+    {
+        ArgumentNullException.ThrowIfNull(item);
+        var failure = ValidateIdentification(item, playerGold);
+        return CreateServiceQuote(failure, () => GetIdentificationPrice(item));
+    }
+
+    public DiabloStoreServiceQuote GetManaRefillQuote(
+        int currentMana,
+        int maximumMana,
+        uint playerGold)
+    {
+        var failure = ValidateManaRefill(currentMana, maximumMana, playerGold);
+        return CreateServiceQuote(
+            failure,
+            () => GetManaRefillPrice(currentMana, maximumMana));
+    }
+
+    private static DiabloStoreServiceQuote CreateServiceQuote(
+        DiabloRuleFailure? failure,
+        Func<uint> getPrice)
+    {
+        var price = failure is null or DiabloRuleFailure.InsufficientResources
+            ? getPrice()
+            : 0;
+        return new DiabloStoreServiceQuote(price, failure);
+    }
 
     public DiabloRuleFailure? ValidatePurchase(StoreItem item, uint playerGold)
     {

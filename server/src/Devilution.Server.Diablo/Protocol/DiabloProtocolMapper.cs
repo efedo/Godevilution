@@ -579,12 +579,70 @@ internal static class DiabloProtocolMapper
                     RefillMana = services.RefillMana,
                 };
             }
+            if (source.ActiveStore.Quotes is { } quotes) {
+                var projectedQuotes = new StoreServiceQuotesSnapshot {
+                    RefillMana = quotes.RefillMana is null
+                        ? null
+                        : ToProtocolStoreServiceQuote(quotes.RefillMana),
+                };
+                foreach (var item in quotes.Items) {
+                    projectedQuotes.Items.Add(new StoreItemServiceQuotes {
+                        Item = ToProtocolItemReference(item.Item),
+                        Repair = item.Repair is null
+                            ? null
+                            : ToProtocolStoreServiceQuote(item.Repair),
+                        Recharge = item.Recharge is null
+                            ? null
+                            : ToProtocolStoreServiceQuote(item.Recharge),
+                        Identify = item.Identify is null
+                            ? null
+                            : ToProtocolStoreServiceQuote(item.Identify),
+                    });
+                }
+                store.Quotes = projectedQuotes;
+            }
             snapshot.ActiveStore = store;
         }
 
         ValidateEntityIds(snapshot, allowZeroPlayerEntityId);
         snapshot.StateSha256 = SnapshotStateHasher.Compute(snapshot);
         return snapshot;
+    }
+
+    private static PlayerItemReference ToProtocolItemReference(
+        DiabloPlayerItemReference reference)
+    {
+        var location = reference.Location switch {
+            DiabloPlayerItemLocation.Inventory => PlayerItemLocation.Inventory,
+            DiabloPlayerItemLocation.Belt => PlayerItemLocation.Belt,
+            DiabloPlayerItemLocation.Equipment => PlayerItemLocation.Equipment,
+            DiabloPlayerItemLocation.Stash => PlayerItemLocation.Stash,
+            _ => throw new ArgumentOutOfRangeException(nameof(reference)),
+        };
+        return new PlayerItemReference {
+            Location = location,
+            Slot = reference.Slot,
+            StableItemId = reference.StableItemId,
+            Page = reference.Page,
+        };
+    }
+
+    private static Devilution.Protocol.V1.StoreServicePriceQuote ToProtocolStoreServiceQuote(
+        DiabloStoreServiceQuote quote)
+    {
+        var rejectReason = quote.RejectReason switch {
+            null => CommandRejectReason.Unspecified,
+            DiabloRuleFailure.InvalidTarget => CommandRejectReason.InvalidTarget,
+            DiabloRuleFailure.NotAllowed => CommandRejectReason.NotAllowed,
+            DiabloRuleFailure.InsufficientResources => CommandRejectReason.InsufficientResources,
+            DiabloRuleFailure.Malformed => CommandRejectReason.Malformed,
+            DiabloRuleFailure.TooLate => CommandRejectReason.TooLate,
+            _ => throw new ArgumentOutOfRangeException(nameof(quote)),
+        };
+        return new Devilution.Protocol.V1.StoreServicePriceQuote {
+            Price = quote.Price,
+            RejectReason = rejectReason,
+        };
     }
 
     private static void ValidateProjectedStoreState(DiabloSimulationSnapshot source)

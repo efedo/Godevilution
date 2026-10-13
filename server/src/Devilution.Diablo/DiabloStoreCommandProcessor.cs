@@ -732,6 +732,64 @@ public sealed class DiabloStoreCommandProcessor
             player.ActiveStoreId == adriaStoreId && player.LevelId == townLevelId);
     }
 
+    /** Captures paid service quotes without hydrating, mutating, or rolling player state. */
+    internal DiabloStoreQuotes? CaptureStoreQuotes(AuthoritativePlayerState player)
+    {
+        ArgumentNullException.ThrowIfNull(player);
+        if (player.ActiveStoreId is null || rules is not IDiabloStoreQuoteRules quoteRules)
+            return null;
+
+        var services = CaptureStoreServices(player);
+        var itemQuotes = new List<DiabloStoreItemServiceQuotes>();
+
+        void AddItem(DiabloPlayerItemReference reference, OwnedStoreItem item)
+        {
+            var quotes = new DiabloStoreItemServiceQuotes(
+                reference,
+                services.Repair ? quoteRules.GetRepairQuote(item, player.Gold) : null,
+                services.Recharge ? quoteRules.GetRechargeQuote(item, player.Gold) : null,
+                services.Identify ? quoteRules.GetIdentificationQuote(item, player.Gold) : null);
+            if (quotes.Repair is not null
+                || quotes.Recharge is not null
+                || quotes.Identify is not null) {
+                itemQuotes.Add(quotes);
+            }
+        }
+
+        for (var index = 0; index < player.Inventory.Count; index++) {
+            var item = player.Inventory[index];
+            AddItem(
+                new DiabloPlayerItemReference(
+                    DiabloPlayerItemLocation.Inventory,
+                    checked((uint)index),
+                    item.State.StableItemId),
+                item);
+        }
+
+        foreach (var item in player.Belt) {
+            AddItem(
+                new DiabloPlayerItemReference(
+                    DiabloPlayerItemLocation.Belt,
+                    item.Slot,
+                    item.State.StableItemId),
+                new OwnedStoreItem(0, item.Slot, item.ItemSeed, 0, 0, item.State));
+        }
+
+        foreach (var item in player.Equipment) {
+            AddItem(
+                new DiabloPlayerItemReference(
+                    DiabloPlayerItemLocation.Equipment,
+                    item.Slot,
+                    item.State.StableItemId),
+                new OwnedStoreItem(0, item.Slot, item.ItemSeed, 0, 0, item.State));
+        }
+
+        var refillMana = services.RefillMana
+            ? quoteRules.GetManaRefillQuote(player.Mana, player.ManaMaximum, player.Gold)
+            : null;
+        return new DiabloStoreQuotes(itemQuotes, refillMana);
+    }
+
     /** Allows legacy generic catalogs while constraining declared native vendors. */
     private bool AllowsVendorService(
         AuthoritativePlayerState player,

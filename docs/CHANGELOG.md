@@ -2,6 +2,10 @@
 
 Notable changes to this fork are recorded below.
 
+- 2026-10-12: Preview authoritative paid-service costs and rule refusals in Godot
+  before repair, recharge, identification or mana refill. Preserve legacy/custom
+  rules, class/scroll choices, transactions, state hashes and save exports.
+
 - 2026-10-12: Show only the active vendor's supported paid item services in
   Godot. Server-derived presentation hints preserve legacy peers, class/scroll
   fallback, authoritative transaction rules, state hashes and saves.
