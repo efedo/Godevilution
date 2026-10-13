@@ -1114,11 +1114,21 @@ public sealed class DiabloWorldCommandProcessor
         AuthoritativeWorldItem item)
     {
         var state = items?.ResolveAuthoredMetadata(item.State, item.ItemSeed) ?? item.State;
-        if (item.Price <= int.MaxValue
-            && DiabloGoldInventory.HasGoldIdentity(
-                state,
-                combatRules,
-                player.Items ?? items)) {
+        var isGold = DiabloGoldInventory.HasGoldIdentity(
+            state,
+            combatRules,
+            player.Items ?? items);
+        if (!isGold
+            && state.StableItemId != 0
+            && items?.TryGet(state.StableItemId, out _) == true) {
+            state = state with {
+                // Known authored items need the same current-stat flag as native pickups.
+                StatFlag = player.Attributes.Strength.Current >= state.MinimumStrength
+                    && player.Attributes.Magic.Current >= state.MinimumMagic
+                    && player.Attributes.Dexterity.Current >= state.MinimumDexterity,
+            };
+        }
+        if (item.Price <= int.MaxValue && isGold) {
             state = state with {
                 Value = state.Value == 0 ? checked((int)item.Price) : state.Value,
                 IdentifiedValue = state.IdentifiedValue == 0

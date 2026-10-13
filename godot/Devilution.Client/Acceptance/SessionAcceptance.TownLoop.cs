@@ -444,12 +444,15 @@ public partial class SessionAcceptance
     }
 
     /** Uses real destination controls; the ordinary server owns every approach step. */
-    private async Task ApproachDeclaredDestination(Main main, string key, bool verifyCancellation = false)
+    private async Task ApproachDeclaredDestination(Main main, string key, bool verifyCancellation = false, bool distanceBoundedApproachDeadline = false)
     {
         var targetList = AuthoritativeWorldDestinationSelector.GetDestinations(main.ObservedSnapshot);
         var index = targetList.ToList().FindIndex(destination => destination.Key == key);
         Require(index >= 0, $"The server did not declare destination {key}.");
         var target = targetList[index];
+        var initialPlayer = main.ObservedSnapshot!.Players.Single();
+        var deadlineSeconds = DestinationApproachDeadlineSeconds(initialPlayer.PositionX, initialPlayer.PositionY,
+            target.X, target.Y, distanceBoundedApproachDeadline);
         var sections = (TabContainer)main.FindChild("HudSections", true, false);
         var destinations = (OptionButton)main.FindChild("WorldDestinations", true, false);
         await RevealControl(sections, 4, destinations);
@@ -484,15 +487,24 @@ public partial class SessionAcceptance
             return arrived && Settled(main) && main.ObservedPendingCommandCount == 0
                 && ((Button)main.FindChild("CancelTravel", true, false)).Disabled
                 && result is not null && result.ClientSequence > sequence && IsAcceptedOrSuccessfulDuplicate(result);
-        }, $"Server-controlled approach and interaction failed for {key}.", 80);
+        }, $"Server-controlled approach and interaction failed for {key}.", deadlineSeconds);
         var arrivedPlayer = main.ObservedSnapshot!.Players.Single();
         WriteEvidence(System.Environment.GetEnvironmentVariable("GODEVILUTION_ACCEPTANCE_DIRECTORY")!,
             $"destination-approach-{main.ObservedCommandResult!.ClientSequence}.json", new {
                 Passed = true, target.Key, target.LevelId, target.X, target.Y,
+                DeadlineSeconds = deadlineSeconds,
                 InitialSequence = sequence, FinalSequence = main.ObservedCommandResult.ClientSequence,
                 ArrivedLevel = arrivedPlayer.LevelId, ArrivedX = arrivedPlayer.PositionX, ArrivedY = arrivedPlayer.PositionY,
                 VerifiedCancellation = verifyCancellation,
             });
+    }
+
+    private static int DestinationApproachDeadlineSeconds(int startX, int startY, int targetX, int targetY, bool distanceBounded)
+    {
+        if (!distanceBounded)
+            return 80;
+        var distance = Math.Max(Math.Abs((long)startX - targetX), Math.Abs((long)startY - targetY));
+        return (int)Math.Clamp((distance + 2) * 5, 80, 240);
     }
 
     private async Task ClickGridCell(Main main, TabContainer sections, int page, string name, int cell)

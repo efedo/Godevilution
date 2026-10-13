@@ -2,6 +2,12 @@
 
 Notable changes to this fork are recorded below.
 
+- 2026-10-13: Fix authored loot eligibility from current player requirements and
+  add an explicit generated Cathedral combat/loot/equipment route. Headless Godot
+  saves on floor two, cold-resumes the character and off-level mutations, returns
+  to Town and verifies the Smith's full-durability refusal. Existing profiles
+  retain their prior behavior.
+
 - 2026-10-12: Preview authoritative paid-service costs and rule refusals in Godot
   before repair, recharge, identification or mana refill. Preserve legacy/custom
   rules, class/scroll choices, transactions, state hashes and save exports.

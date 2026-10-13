@@ -43,6 +43,8 @@ public sealed record CathedralDepthPlaytestCompilerOptions(
     public AuthoritativeCathedralEntry Entry { get; init; } = AuthoritativeCathedralEntry.Main;
     public CathedralDepthPlaytestPlacementPolicy PlacementPolicy { get; init; }
         = CathedralDepthPlaytestPlacementPolicy.AuthoredDiagnostic;
+    /** Optional base-content drop identity for the authored diagnostic monster. */
+    public string? DiagnosticDropItemSymbol { get; init; }
     /** When enabled, route and diagnostic placement may operate native-scanned doors. */
     internal bool DoorAwareConnectivity { get; init; }
     public uint Depth1Seed => DepthSeeds.Count > 0 ? DepthSeeds[0] : 0;
@@ -115,6 +117,10 @@ public sealed record CathedralDepthPlaytestProfile(
     IReadOnlyList<CathedralDepthPlaytestLevelProfile> Levels,
     IReadOnlyList<CathedralDepthPlaytestRouteProfile> Routes)
 {
+    /** Optional authored diagnostic drop identity; absent profiles retain the legacy template. */
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? DiagnosticDropItemSymbol { get; init; }
+
     [JsonIgnore]
     public IReadOnlyList<CathedralDepthPlaytestLevelProfile> ReadonlyLevels => Levels;
 }
@@ -180,6 +186,15 @@ public static class CathedralDepthPlaytestCompiler
             throw new ArgumentOutOfRangeException(nameof(options.Entry));
         if (!Enum.IsDefined(options.PlacementPolicy))
             throw new ArgumentOutOfRangeException(nameof(options.PlacementPolicy));
+        if (options.DiagnosticDropItemSymbol is not null
+            && options.PlacementPolicy != CathedralDepthPlaytestPlacementPolicy.AuthoredDiagnostic)
+            throw new ArgumentException(
+                "A diagnostic drop item requires the authored-diagnostic placement policy.",
+                nameof(options.DiagnosticDropItemSymbol));
+        if (options.DiagnosticDropItemSymbol is not null
+            && string.IsNullOrWhiteSpace(options.DiagnosticDropItemSymbol))
+            throw new ArgumentException("A diagnostic drop item symbol cannot be blank.",
+                nameof(options.DiagnosticDropItemSymbol));
 
         var pieceTable = TsvTable.Parse(
             AuthoritativeNativeDunGeometryCatalog.PieceDefinitionsTablePath,
@@ -237,6 +252,8 @@ public static class CathedralDepthPlaytestCompiler
         RemoveGeneratedLevelStartOverrides(tables);
 
         var stableIds = LoadStableIds(tables["content_ids.tsv"]);
+        var diagnosticDropItem = ResolveDiagnosticDropItem(
+            options.DiagnosticDropItemSymbol, tables["items.tsv"], stableIds);
         var world = BuildWorld(tables["levels.tsv"]);
         var catalog = AuthoritativeCathedralDepthRuntimeCatalog.Load(
             tables[AuthoritativeCathedralDepthRuntimeCatalog.TableName].ToCanonicalTsv(),
@@ -251,7 +268,7 @@ public static class CathedralDepthPlaytestCompiler
         tables["objects.tsv"] = BuildObjects(
             RequireTable(tables, "objects.tsv"), placements, options.PlacementPolicy);
         tables["monsters.tsv"] = BuildMonsters(
-            RequireTable(tables, "monsters.tsv"), placements, options.PlacementPolicy);
+            RequireTable(tables, "monsters.tsv"), placements, options.PlacementPolicy, diagnosticDropItem);
 
         var outputPack = new ContentPack(
             options.PackId,
@@ -296,7 +313,9 @@ public static class CathedralDepthPlaytestCompiler
                 PlacementPolicyText(options.PlacementPolicy),
                 false,
                 profileLevels,
-                profileRoutes);
+                profileRoutes) {
+                DiagnosticDropItemSymbol = options.DiagnosticDropItemSymbol,
+            };
             WriteProfile(Path.Combine(stagingRoot, ProfileFileName), profile);
             Directory.Move(stagingRoot, outputRoot);
             return profile;
@@ -796,7 +815,8 @@ public static class CathedralDepthPlaytestCompiler
     private static TsvTable BuildMonsters(
         TsvTable source,
         IReadOnlyList<Placement> placements,
-        CathedralDepthPlaytestPlacementPolicy policy)
+        CathedralDepthPlaytestPlacementPolicy policy,
+        DiagnosticDropItem? diagnosticDropItem)
     {
         if (policy == CathedralDepthPlaytestPlacementPolicy.None)
             return CreateTable(source, []);
@@ -816,10 +836,36 @@ public static class CathedralDepthPlaytestCompiler
             values["aggro_range"] = "0";
             values["drop_item_entity_id"] = (FirstDiagnosticDropEntityId + (uint)index).ToString(CultureInfo.InvariantCulture);
             values["drop_item_seed"] = (6001U + (uint)index).ToString(CultureInfo.InvariantCulture);
+            if (diagnosticDropItem is { } dropItem) {
+                values["drop_item_id"] = dropItem.Id.ToString(CultureInfo.InvariantCulture);
+                values["drop_item_symbol"] = dropItem.Symbol;
+            }
             rows.Add(values);
         }
         return CreateTable(source, rows);
     }
+
+    private static DiagnosticDropItem? ResolveDiagnosticDropItem(
+        string? symbol,
+        TsvTable itemTable,
+        StableContentIdCatalog stableIds)
+    {
+        if (symbol is null)
+            return null;
+        var matchingRows = itemTable.Rows.Where(row =>
+            string.Equals(row.Required("item_symbol"), symbol, StringComparison.Ordinal)).ToArray();
+        if (matchingRows.Length != 1)
+            throw new InvalidDataException(
+                $"Diagnostic drop item symbol '{symbol}' must identify exactly one base item.");
+
+        if (!stableIds.TryResolve("item", symbol, out var itemId)
+            || itemId != matchingRows[0].RequiredUInt32("item_id"))
+            throw new InvalidDataException(
+                $"Diagnostic drop item symbol '{symbol}' has no matching stable base item ID.");
+        return new DiagnosticDropItem(itemId, symbol);
+    }
+
+    private sealed record DiagnosticDropItem(uint Id, string Symbol);
 
     private static IReadOnlyDictionary<string, string> BaseTemplate(TsvRow template)
     {

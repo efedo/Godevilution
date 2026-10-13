@@ -8,7 +8,11 @@ namespace Devilution.Client.Acceptance;
 
 public partial class SessionAcceptance
 {
-    private static void VerifyCombatLootRestored(Main main, string directory, string prefix = "journey")
+    private static void VerifyCombatLootRestored(
+        Main main,
+        string directory,
+        string prefix = "journey",
+        bool allowEquippedLoot = false)
     {
         using var evidence = JsonDocument.Parse(System.IO.File.ReadAllText(
             System.IO.Path.Combine(directory, prefix + "-combat-loot.json")));
@@ -20,16 +24,22 @@ public partial class SessionAcceptance
         Require(player.Experience == fields.GetProperty("Experience").GetUInt32(),
             "Fresh-host resume lost combat experience.");
         var expectedLootCount = fields.GetProperty("LootInventoryCount").GetInt32();
+        var itemSeed = fields.GetProperty("ItemSeed").GetUInt32();
+        var inventoryLootCount = player.Inventory.Count(item => item.ItemSeed == itemSeed);
+        var equipmentLootCount = player.Equipment.Count(item => item.ItemSeed == itemSeed);
         Require(expectedLootCount == 1
-            && player.Inventory.Count(item => item.ItemSeed == fields.GetProperty("ItemSeed").GetUInt32()) == expectedLootCount,
-            "Fresh-host resume lost or duplicated the looted inventory item.");
+            && (allowEquippedLoot
+                ? inventoryLootCount + equipmentLootCount == expectedLootCount
+                : inventoryLootCount == expectedLootCount),
+            "Fresh-host resume lost or duplicated the looted inventory/equipment item.");
         Require(!snapshot.Monsters.Any(monster => monster.EntityId == fields.GetProperty("MonsterId").GetUInt32() && monster.Alive),
             "Fresh-host resume revived the defeated encounter.");
         Require(!snapshot.WorldItems.Any(item => item.EntityId == fields.GetProperty("DropEntityId").GetUInt32()),
             "Fresh-host resume duplicated the picked-up loot.");
     }
 
-    private async Task VerifyCombatAndLoot(Main main, string directory, bool visible, bool generated = false)
+    private async Task VerifyCombatAndLoot(Main main, string directory, bool visible, bool generated = false,
+        bool distanceBoundedPickupDeadline = false)
     {
         var prefix = generated ? "cathedral" : "journey";
         await Until(() => Settled(main), "Dungeon entry did not settle.");
@@ -112,6 +122,16 @@ public partial class SessionAcceptance
             visited.Add((previous.PositionX + offset.X, previous.PositionY + offset.Y));
         }
         var pickupSequence = main.ObservedCommandResult!.ClientSequence;
+        Require(!distanceBoundedPickupDeadline || generated,
+            "A distance-bounded pickup deadline is reserved for generated Cathedral routes.");
+        var pickupPlayer = main.ObservedSnapshot!.Players.Single();
+        var pickupDistance = Math.Max(Math.Abs((long)pickupPlayer.PositionX - drop.PositionX),
+            Math.Abs((long)pickupPlayer.PositionY - drop.PositionY));
+        // A clock-gated ordinary tile can take about 49 ticks (~2.45s); allow five seconds per
+        // distance cell plus one interaction window, with a finite two-minute ceiling.
+        var pickupStageSeconds = distanceBoundedPickupDeadline
+            ? (int)Math.Clamp((pickupDistance + 1) * 5, 10L, 120L)
+            : 10;
         var pickupTrace = new List<object>();
         ulong? pickupTick = null;
         try {
@@ -132,7 +152,7 @@ public partial class SessionAcceptance
                 }
                 return snapshot.WorldItems.All(item => item.EntityId != drop.EntityId)
                     && player.Inventory.Any(item => item.ItemSeed == drop.ItemSeed);
-            }, "Clicking distant loot did not complete the server-owned approach and pickup.", stageSeconds: 10);
+            }, "Clicking distant loot did not complete the server-owned approach and pickup.", stageSeconds: pickupStageSeconds);
         } finally { WriteEvidence(directory, prefix + "-pickup-trace.json", pickupTrace); }
         Require(main.ObservedCommandResult is { } result && IsAcceptedOrSuccessfulDuplicate(result)
             && result.ClientSequence >= pickupSequence + 4,

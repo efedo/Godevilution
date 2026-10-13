@@ -1,3 +1,4 @@
+using System.Text.Json;
 using Devilution.Data;
 using Godevilution.Tools;
 using Xunit;
@@ -67,6 +68,15 @@ public sealed class CathedralDepthPlaytestCompilerTests
             Assert.DoesNotContain(warps.Rows, row => row.Required("target_level_symbol") is
                 "catacombs" or "caves" or "hell" or "cathedral_depth_5");
             Assert.Empty(pack.Tables.Single(table => table.SourcePath == "native_dun_fragments.tsv").Rows);
+            var defaultDrops = pack.Tables.Single(table => table.SourcePath == "monsters.tsv").Rows;
+            Assert.Equal(4, defaultDrops.Count);
+            Assert.All(defaultDrops, row => {
+                Assert.Equal(1U, row.RequiredUInt32("drop_item_id"));
+                Assert.Equal("short_sword", row.Required("drop_item_symbol"));
+            });
+            using (var profileJson = JsonDocument.Parse(File.ReadAllText(
+                       Path.Combine(output, CathedralDepthPlaytestCompiler.ProfileFileName))))
+                Assert.False(profileJson.RootElement.TryGetProperty("diagnosticDropItemSymbol", out _));
             Assert.DoesNotContain(pack.Tables, table => table.SourcePath == "procedural_levels.tsv");
             Assert.DoesNotContain(pack.Tables, table => table.SourcePath is
                 "quest_types.tsv" or "unique_monsters.tsv" or "unique_monster_placements.tsv"
@@ -82,6 +92,85 @@ public sealed class CathedralDepthPlaytestCompilerTests
                 ids.Rows.Where(row => row.Required("kind") == "warp")
                     .Select(row => row.Required("symbol")).Order());
             Assert.True(File.Exists(Path.Combine(output, CathedralDepthPlaytestCompiler.ProfileFileName)));
+        }
+        finally
+        {
+            DeleteOutput(output);
+        }
+    }
+
+    [Fact]
+    public void AuthoredDiagnosticDropItemUsesValidatedStableBaseItemIdentity()
+    {
+        var output = NewOutput();
+        try
+        {
+            var profile = CathedralDepthPlaytestCompiler.Compile(
+                new CathedralDepthPlaytestCompilerOptions(
+                    LoadBasePack(),
+                    output,
+                    CreatePieces([1, 2, 3, 4]),
+                    CreateProperties(),
+                    [1U, 2U, 3U, 4U]) {
+                    PlacementPolicy = CathedralDepthPlaytestPlacementPolicy.AuthoredDiagnostic,
+                    DiagnosticDropItemSymbol = "short_sword_standard",
+                });
+
+            Assert.Equal("short_sword_standard", profile.DiagnosticDropItemSymbol);
+            var pack = ContentPackLoader.LoadManifestDirectory(
+                Path.Combine(output, CathedralDepthPlaytestCompiler.ContentDirectoryName));
+            var drops = pack.Tables.Single(table => table.SourcePath == "monsters.tsv").Rows;
+            Assert.Equal(4, drops.Count);
+            Assert.All(drops, row => {
+                Assert.Equal(2160U, row.RequiredUInt32("drop_item_id"));
+                Assert.Equal("short_sword_standard", row.Required("drop_item_symbol"));
+            });
+            using var profileJson = JsonDocument.Parse(File.ReadAllText(
+                Path.Combine(output, CathedralDepthPlaytestCompiler.ProfileFileName)));
+            Assert.Equal("short_sword_standard",
+                profileJson.RootElement.GetProperty("diagnosticDropItemSymbol").GetString());
+        }
+        finally
+        {
+            DeleteOutput(output);
+        }
+    }
+
+    [Fact]
+    public void RejectsDiagnosticDropItemForNonePolicyBeforePublishing()
+    {
+        var output = NewOutput();
+        try
+        {
+            Assert.Throws<ArgumentException>(() => CathedralDepthPlaytestCompiler.Compile(
+                new CathedralDepthPlaytestCompilerOptions(
+                    LoadBasePack(), output, CreatePieces([1, 2, 3, 4]), CreateProperties(),
+                    [1U, 2U, 3U, 4U]) {
+                    PlacementPolicy = CathedralDepthPlaytestPlacementPolicy.None,
+                    DiagnosticDropItemSymbol = "short_sword_standard",
+                }));
+            Assert.False(Directory.Exists(output));
+        }
+        finally
+        {
+            DeleteOutput(output);
+        }
+    }
+
+    [Fact]
+    public void RejectsUnknownDiagnosticDropItemBeforePublishing()
+    {
+        var output = NewOutput();
+        try
+        {
+            Assert.Throws<InvalidDataException>(() => CathedralDepthPlaytestCompiler.Compile(
+                new CathedralDepthPlaytestCompilerOptions(
+                    LoadBasePack(), output, CreatePieces([1, 2, 3, 4]), CreateProperties(),
+                    [1U, 2U, 3U, 4U]) {
+                    PlacementPolicy = CathedralDepthPlaytestPlacementPolicy.AuthoredDiagnostic,
+                    DiagnosticDropItemSymbol = "not_a_base_item",
+                }));
+            Assert.False(Directory.Exists(output));
         }
         finally
         {

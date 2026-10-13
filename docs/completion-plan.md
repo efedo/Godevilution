@@ -441,6 +441,13 @@ deliberately does not claim native generated-world parity, which belongs to M2.
    receipts. Headless/rendered acceptance and paired milestone inspection now
    pass. Continue inspecting actual frames: cached resource bindings alone are not
    per-frame draw proof. These authored previews do not close M1.
+   The explicit authored generated-depth route now joins Town entry, L1 object
+   activation, ordinary combat, earned sword pickup/equipment, an L2 checkpoint,
+   fresh-host/client resume at the exact next accepted command, retained L1 corpse
+   and object, and Town Smith refusal through actual headless controls. Ordinary
+   character resources are used; claimed loot does not respawn. This closes that
+   route's save/resume integration, while native population, portal/stash
+   composition, rendered controls and the broader M1 loop remain open.
 3. Give geometry, actors, projectiles, items, and interaction targets readable
    Godot presentation. Split the main scene/script only where this separates
    concrete input, rendering, menus, or HUD responsibilities. Keep placeholder

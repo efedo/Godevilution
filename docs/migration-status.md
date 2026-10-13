@@ -44,6 +44,17 @@ unsupported behavior is a migration gap, not permission for local simulation.
 
 ## Current delivery position and verification limits
 
+The explicit authored generated-Cathedral route passes real headless Godot
+Town entry, L1 object activation, combat, earned sword pickup/equipment and an L2
+save. Fresh host/client processes restore the complete character baseline and
+accept the exact next command; returning through L1 retains its corpse, activated
+object and claimed loot state. Town Smith selection shows the full-durability
+repair refusal without a queued repair or changed Gold/sword state. All 205 focused
+compiler, world-command and depth-host tests pass. Evidence:
+`.local/town-cathedral-route-20261012/profile-playable/sessions/acceptance-bf1bcd75af51497db15dfe0f45fcc8af`.
+This uses generated geometry with authored diagnostic encounters; native
+population, portal/stash composition, rendering and full M1 remain open.
+
 Godot paid-service availability now follows optional live hints derived from
 existing authoritative vendor rules: Smith repair, Witch recharge, Cain Identify
 and Adria mana refill, with Generic-store compatibility. This changes four HUD

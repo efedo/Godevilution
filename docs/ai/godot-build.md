@@ -500,6 +500,26 @@ to create a new pair rather than reusing a failed phase's evidence directory.
 This verifies diagnostic traversal/restore, not native population, quests,
 campaign mapping, broader topology, exact light parity, full art or M2 completion.
 
+### Authored equipment and cold-resume route
+
+Compile a separate fresh profile with the explicit diagnostic drop item. This
+example reuses the semantic geometry tables from the depth profile above:
+
+```powershell
+dotnet run --project tools/Cathedral.Playtest/Cathedral.Playtest.csproj -- --base-directory server/content/base --geometry-directory .local/cathedral-depths-playtest/content --output-directory .local/cathedral-depths-authored-equipment --depth-seeds '2588,2588,1,4294967295' --placement-policy authored-diagnostic --diagnostic-drop-item short_sword_standard
+powershell -NoProfile -ExecutionPolicy Bypass -File tools/test-godot-session.ps1 -CathedralDepthProfileDirectory .local/cathedral-depths-authored-equipment -PersistenceMode cohort
+```
+
+Omitting `-Visible` keeps acceptance headless. The actual route passes Town entry,
+L1 object activation, combat, earned `short_sword_standard` pickup/equipment, an L2
+checkpoint, fresh-host/client resume at the exact next accepted command, retained
+L1 corpse/object/claimed-loot state, and Town Smith refusal for the full-durability
+sword. It uses ordinary resources, grants no Gold and queues no refused repair.
+Journey and Resume records are separate; long approaches use bounded distances.
+The compiler's default drop remains unchanged. Older `authored-diagnostic` profiles
+without `diagnosticDropItemSymbol` keep the geometry-only path. This authored route
+does not qualify native population, rendered controls or the complete M1 loop.
+
 ## Generated Cathedral door playtest
 
 Door mode is a separate offline compiler/profile, not an upgrade of existing L1,

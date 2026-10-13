@@ -1535,6 +1535,82 @@ public sealed class DiabloWorldCommandProcessorTests
         Assert.Equal(0, player.InventoryGrid[1]);
     }
 
+    [Theory]
+    [InlineData(30, 10, 20, true)]
+    [InlineData(20, 15, 30, true)]
+    [InlineData(18, 7, 5, true)]
+    [InlineData(17, 7, 5, false)]
+    [InlineData(18, 6, 5, false)]
+    [InlineData(18, 7, 4, false)]
+    public void AuthoredPickupComputesStatFlagFromResolvedPlayerRequirements(
+        int strength,
+        int magic,
+        int dexterity,
+        bool expectedStatFlag)
+    {
+        const uint itemId = 501;
+        const int minimumStrength = 18;
+        const int minimumMagic = 7;
+        const int minimumDexterity = 5;
+        var items = new AuthoritativeItemCatalog([
+            new AuthoritativeItemDefinition(
+                itemId,
+                1,
+                100,
+                150,
+                3,
+                7,
+                0,
+                20,
+                40,
+                1,
+                1,
+                true) {
+                NativeItemIndex = 101,
+                EquipLocation = 1,
+                ItemClass = 1,
+                MinimumStrength = minimumStrength,
+                MinimumMagic = minimumMagic,
+                MinimumDexterity = minimumDexterity,
+                Name = "Requirement Test Sword",
+            },
+        ]);
+        var worldItem = new AuthoritativeWorldItem(
+            20,
+            0,
+            1,
+            0,
+            42,
+            0,
+            AuthoritativeItemState.Empty with {
+                StableItemId = itemId,
+                ItemIndex = 101,
+                ItemType = 1,
+                EquipLocation = 1,
+            });
+        var world = new DiabloWorldState(worldItems: [worldItem]);
+        var processor = new DiabloWorldCommandProcessor(world, items: items);
+        var player = CreatePlayer(entityId: 1);
+        player.Attributes = new PlayerAttributesState(
+            new PlayerAttributeState(strength, strength),
+            new PlayerAttributeState(magic, magic),
+            new PlayerAttributeState(dexterity, dexterity),
+            new PlayerAttributeState(25, 25));
+
+        var result = processor.Execute(
+            player,
+            new DiabloPickupWorldItemIntent(worldItem.EntityId),
+            27,
+            [player]);
+
+        Assert.True(result.Succeeded);
+        var pickedUp = Assert.Single(player.Inventory);
+        Assert.Equal(minimumStrength, pickedUp.State.MinimumStrength);
+        Assert.Equal(minimumMagic, pickedUp.State.MinimumMagic);
+        Assert.Equal(minimumDexterity, pickedUp.State.MinimumDexterity);
+        Assert.Equal(expectedStatFlag, pickedUp.State.StatFlag);
+    }
+
     [Fact]
     public void PickupGoldBypassesInventorySpaceAndRestoresServerOwnedBalance()
     {

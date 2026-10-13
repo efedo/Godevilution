@@ -1,4 +1,6 @@
 using Devilution.Data;
+using Devilution.Diablo;
+using Devilution.Domain.Inventory;
 using Devilution.Engine;
 using Devilution.Protocol.V1;
 using Devilution.Server.Commands;
@@ -59,6 +61,191 @@ public sealed class CathedralDepthContentActivationTests
         Assert.Equal((0U, 25, 31), (host.GetPlayerState("player").LevelId,
             host.GetPlayerState("player").PositionX, host.GetPlayerState("player").PositionY));
         Assert.DoesNotContain(world.WarpTargets, warp => warp.SourceLevelId == 4 && warp.TargetLevelId == 5);
+    }
+
+    [Fact]
+    public void AuthoredCathedralLootAndMutationsSurviveFreshHostRestoreAndTownReturn()
+    {
+        using var fixture = new Fixture(CathedralDepthPlaytestPlacementPolicy.AuthoredDiagnostic,
+            diagnosticDropItemSymbol: "short_sword_standard");
+        Assert.Equal("authored-diagnostic", fixture.Profile.PlacementPolicy);
+        Assert.Equal("short_sword_standard", fixture.Profile.DiagnosticDropItemSymbol);
+        var levelOne = Assert.Single(fixture.Profile.Levels, level => level.Depth == 1);
+        Assert.True(levelOne.EncounterPosition.HasValue);
+        Assert.True(levelOne.EncounterEntityId.HasValue);
+        Assert.True(levelOne.ObjectPosition.HasValue);
+        Assert.True(levelOne.ObjectEntityId.HasValue);
+        var monster = fixture.Pack.Tables.Single(table => table.SourcePath == "monsters.tsv")
+            .Rows.Single(row => row.RequiredUInt32("entity_id") == levelOne.EncounterEntityId.Value);
+        Assert.Equal("short_sword_standard", monster.Values["drop_item_symbol"]);
+        Assert.Equal(2160U, monster.RequiredUInt32("drop_item_id"));
+        var dropEntityId = monster.RequiredUInt32("drop_item_entity_id");
+        var dropSeed = monster.RequiredUInt32("drop_item_seed");
+        var world = Activate(fixture.Content).Simulation.WorldState.World!;
+        var host = CreateHost(fixture.Content);
+        host.InitializeParticipant("player", new AuthoritativeParticipantSelection(0));
+        host.CreateSnapshot("player", 1, 0);
+        var server = new AuthoritativeCommandServer(host);
+        ulong tick = 0;
+        ulong sequence = 0;
+
+        var entrance = Assert.Single(world.WarpTargets, warp => warp.SourceLevelId == 0 && warp.TargetLevelId == 1);
+        WalkOntoWarp(host, server, world, entrance, ref tick, ref sequence);
+        Assert.Equal(1U, host.GetPlayerState("player").LevelId);
+
+        var beforeObject = host.CreateSnapshot("player", 1, tick);
+        Assert.False(Assert.Single(beforeObject.Objects, item => item.EntityId == levelOne.ObjectEntityId.Value).Activated);
+        Assert.Contains(beforeObject.Monsters, item => item.EntityId == levelOne.EncounterEntityId.Value && item.Alive);
+        Assert.DoesNotContain(beforeObject.WorldItems, item => item.EntityId == dropEntityId);
+        WalkToAdjacent(host, server, world, levelOne.LevelId,
+            levelOne.ObjectPosition.Value.X, levelOne.ObjectPosition.Value.Y, ref tick, ref sequence);
+        var activated = SendIntent(host, server, ref tick, ref sequence, new Command {
+            OperateObjectRequested = new OperateObjectRequested { ObjectEntityId = levelOne.ObjectEntityId.Value },
+        });
+        Assert.Equal(CommandStatus.Accepted, activated.Status);
+        Assert.True(Assert.Single(host.CreateSnapshot("player", 1, tick).Objects,
+            item => item.EntityId == levelOne.ObjectEntityId.Value).Activated);
+
+        WalkToAdjacent(host, server, world, levelOne.LevelId,
+            levelOne.EncounterPosition.Value.X, levelOne.EncounterPosition.Value.Y, ref tick, ref sequence);
+        var attackCount = 0;
+        while (host.CreateSnapshot("player", 1, tick).Monsters.Any(
+                   item => item.EntityId == levelOne.EncounterEntityId.Value && item.Alive)) {
+            Assert.True(attackCount < 24, "The authored encounter did not die after 24 ordinary attack intents.");
+            var attack = SendIntent(host, server, ref tick, ref sequence, new Command {
+                AttackRequested = new AttackRequested { TargetEntityId = levelOne.EncounterEntityId.Value },
+            }, settleTicks: 100);
+            Assert.Equal(CommandStatus.Accepted, attack.Status);
+            attackCount++;
+        }
+
+        var defeated = host.CreateSnapshot("player", 1, tick);
+        Assert.DoesNotContain(defeated.Monsters,
+            item => item.EntityId == levelOne.EncounterEntityId.Value && item.Alive);
+        Assert.Contains(defeated.Corpses, corpse => corpse.EntityId == levelOne.EncounterEntityId.Value);
+        var droppedSword = Assert.Single(defeated.WorldItems, item => item.EntityId == dropEntityId);
+        Assert.Equal(dropSeed, droppedSword.ItemSeed);
+        WalkToAdjacent(host, server, world, levelOne.LevelId,
+            droppedSword.PositionX, droppedSword.PositionY, ref tick, ref sequence);
+        var pickup = SendIntent(host, server, ref tick, ref sequence, new Command {
+            PickupWorldItemRequested = new PickupWorldItemRequested { ItemEntityId = dropEntityId },
+        });
+        Assert.Equal(CommandStatus.Accepted, pickup.Status);
+        var afterPickup = host.CreateSnapshot("player", 1, tick);
+        Assert.DoesNotContain(afterPickup.WorldItems, item => item.EntityId == dropEntityId);
+        var earnedItem = Assert.Single(afterPickup.Players.Single().Inventory,
+            item => item.ItemSeed == dropSeed);
+        Assert.Equal(2160U, earnedItem.State.StableItemId);
+        Assert.Equal(1, earnedItem.State.EquipLocation);
+        var pickupAttributes = afterPickup.Players.Single().Attributes;
+        Assert.True(pickupAttributes.Strength.Current >= earnedItem.State.MinimumStrength);
+        Assert.True(pickupAttributes.Magic.Current >= earnedItem.State.MinimumMagic);
+        Assert.True(pickupAttributes.Dexterity.Current >= earnedItem.State.MinimumDexterity);
+        Assert.True(earnedItem.State.StatFlag);
+        var startingBow = Assert.Single(afterPickup.Players.Single().Equipment, item => item.Slot == 4);
+        var inventoryCell = InventoryGridLayout.FindNativePlacement(afterPickup.Players.Single().InventoryGrid,
+            checked((int)startingBow.State.InventoryWidth), checked((int)startingBow.State.InventoryHeight));
+        Assert.True(inventoryCell >= 0, "The starting bow has no valid inventory cell for unequipping.");
+        var unequip = SendIntent(host, server, ref tick, ref sequence, new Command {
+            MoveItemRequested = new MoveItemRequested {
+                Item = new PlayerItemReference {
+                    Location = PlayerItemLocation.Equipment,
+                    Slot = startingBow.Slot,
+                },
+                Destination = new PlayerItemReference {
+                    Location = PlayerItemLocation.Inventory,
+                    Slot = checked((uint)inventoryCell),
+                },
+            },
+        });
+        Assert.True(unequip.Status == CommandStatus.Accepted,
+            $"Expected to move the starting bow into inventory, got {unequip.Status} ({unequip.RejectReason}).");
+        var afterUnequip = host.CreateSnapshot("player", 1, tick).Players.Single();
+        Assert.DoesNotContain(afterUnequip.Equipment,
+            item => item.ItemSeed == startingBow.ItemSeed);
+        Assert.Contains(afterUnequip.Inventory, item => item.ItemSeed == startingBow.ItemSeed);
+        var equipInventory = afterUnequip.Inventory;
+        var equipSwordIndex = Array.FindIndex(equipInventory.ToArray(), item => item.ItemSeed == dropSeed);
+        Assert.True(equipSwordIndex >= 0, "The earned short sword was lost while unequipping the starting bow.");
+        var equip = SendIntent(host, server, ref tick, ref sequence, new Command {
+            AutoEquipItemRequested = new AutoEquipItemRequested {
+                Item = new PlayerItemReference {
+                    Location = PlayerItemLocation.Inventory,
+                    Slot = checked((uint)equipSwordIndex),
+                },
+            },
+        });
+        Assert.True(equip.Status == CommandStatus.Accepted,
+            $"Expected to equip the earned short sword, got {equip.Status} ({equip.RejectReason}).");
+        Assert.Contains(host.CreateSnapshot("player", 1, tick).Players.Single().Equipment,
+            item => item.ItemSeed == dropSeed);
+
+        var down = Assert.Single(world.WarpTargets, warp => warp.SourceLevelId == 1 && warp.TargetLevelId == 2);
+        WalkOntoWarp(host, server, world, down, ref tick, ref sequence);
+        Assert.Equal(2U, host.GetPlayerState("player").LevelId);
+        var saved = host.ExportPlayerSave("player");
+        var decoded = new AuthoritativeSaveCodec().Deserialize(saved);
+        Assert.Equal(2U, decoded.Player.LevelId);
+        Assert.Contains(decoded.Corpses, corpse => corpse.EntityId == levelOne.EncounterEntityId.Value);
+        Assert.Contains(decoded.Objects, item => item.EntityId == levelOne.ObjectEntityId.Value && item.Activated);
+
+        var replacement = CreateHost(fixture.Content);
+        replacement.ImportPlayerSave("player", saved);
+        Assert.Equal(saved, replacement.ExportPlayerSave("player"));
+        host = replacement;
+        server = new AuthoritativeCommandServer(host);
+        tick = host.GetSessionStateTick("player");
+        sequence = 0;
+        var restored = host.CreateSnapshot("player", 1, tick);
+        Assert.Equal(2U, restored.Players.Single().LevelId);
+        Assert.Contains(restored.Corpses, corpse => corpse.EntityId == levelOne.EncounterEntityId.Value);
+        Assert.Contains(restored.Objects, item => item.EntityId == levelOne.ObjectEntityId.Value && item.Activated);
+        Assert.DoesNotContain(restored.WorldItems, item => item.EntityId == dropEntityId);
+        Assert.Contains(restored.Players.Single().Equipment, item => item.ItemSeed == dropSeed);
+
+        var returnToOne = Assert.Single(world.WarpTargets, warp => warp.SourceLevelId == 2 && warp.TargetLevelId == 1);
+        WalkOntoWarp(host, server, world, returnToOne, ref tick, ref sequence);
+        var revisited = host.CreateSnapshot("player", 1, tick);
+        Assert.Equal(1U, revisited.Players.Single().LevelId);
+        Assert.Contains(revisited.Corpses, corpse => corpse.EntityId == levelOne.EncounterEntityId.Value);
+        Assert.Contains(revisited.Objects, item => item.EntityId == levelOne.ObjectEntityId.Value && item.Activated);
+        Assert.DoesNotContain(revisited.Monsters, item => item.EntityId == levelOne.EncounterEntityId.Value && item.Alive);
+        Assert.DoesNotContain(revisited.WorldItems, item => item.EntityId == dropEntityId);
+        Assert.Contains(revisited.Players.Single().Equipment, item => item.ItemSeed == dropSeed);
+
+        var returnToTown = Assert.Single(world.WarpTargets, warp => warp.SourceLevelId == 1 && warp.TargetLevelId == 0);
+        WalkOntoWarp(host, server, world, returnToTown, ref tick, ref sequence);
+        var greeting = fixture.Pack.Tables.Single(table => table.SourcePath == "towner_greetings.tsv")
+            .Rows.Single(row => row.RequiredInt32("towner_id") == 0 && row.RequiredUInt32("level_id") == 0);
+        WalkToAdjacent(host, server, world, 0,
+            greeting.RequiredInt32("position_x"), greeting.RequiredInt32("position_y"), ref tick, ref sequence);
+        var smith = fixture.Pack.Tables.Single(table => table.SourcePath == "stores.tsv")
+            .Rows.First(row => row.Values["store_role"] == "Smith");
+        var smithStoreId = smith.RequiredUInt32("store_id");
+        var openStore = SendIntent(host, server, ref tick, ref sequence, new Command {
+            OpenStoreRequested = new OpenStoreRequested { StoreId = smithStoreId },
+        });
+        Assert.Equal(CommandStatus.Accepted, openStore.Status);
+        var beforeRepair = host.CreateSnapshot("player", 1, tick).Players.Single();
+        Assert.Equal(smithStoreId, beforeRepair.ActiveStoreId);
+        var equippedSword = Assert.Single(beforeRepair.Equipment, item => item.ItemSeed == dropSeed);
+        Assert.True(equippedSword.State.MaxDurability > 0);
+        Assert.Equal(equippedSword.State.MaxDurability, equippedSword.State.Durability);
+        var repair = SendIntent(host, server, ref tick, ref sequence, new Command {
+            RepairItemRequested = new RepairItemRequested {
+                Item = new PlayerItemReference {
+                    Location = PlayerItemLocation.Equipment,
+                    Slot = equippedSword.Slot,
+                },
+            },
+        });
+        Assert.Equal(CommandStatus.Rejected, repair.Status);
+        Assert.Equal(CommandRejectReason.NotAllowed, repair.RejectReason);
+        var afterRepair = host.CreateSnapshot("player", 1, tick).Players.Single();
+        var retainedSword = Assert.Single(afterRepair.Equipment, item => item.ItemSeed == dropSeed);
+        Assert.Equal(beforeRepair.Gold, afterRepair.Gold);
+        Assert.Equal(equippedSword.State.Durability, retainedSword.State.Durability);
+        Assert.Equal(0U, afterRepair.LevelId);
     }
 
     [Theory]
@@ -177,6 +364,153 @@ public sealed class CathedralDepthContentActivationTests
         host.AdvanceTo(tick);
     }
 
+    private static CommandResult SendIntent(
+        StoreSimulationExecutor host,
+        AuthoritativeCommandServer server,
+        ref ulong tick,
+        ref ulong sequence,
+        Command command,
+        ulong settleTicks = 0)
+    {
+        var requestedTick = checked(tick + 1);
+        command.ClientSequence = checked(++sequence);
+        command.RequestedTick = requestedTick;
+        var result = server.Process("player", command, requestedTick);
+        tick = checked(requestedTick + settleTicks);
+        host.AdvanceTo(tick);
+        return result;
+    }
+
+    private static void WalkOntoWarp(
+        StoreSimulationExecutor host,
+        AuthoritativeCommandServer server,
+        AuthoritativeWorld world,
+        AuthoritativeWarpTarget warp,
+        ref ulong tick,
+        ref ulong sequence)
+    {
+        WalkToAdjacent(host, server, world, warp.SourceLevelId, warp.TriggerX, warp.TriggerY,
+            ref tick, ref sequence);
+        var player = host.GetPlayerState("player");
+        var directionX = warp.TriggerX - player.PositionX;
+        var directionY = warp.TriggerY - player.PositionY;
+        Assert.InRange(directionX, -1, 1);
+        Assert.InRange(directionY, -1, 1);
+        Assert.NotEqual((0, 0), (directionX, directionY));
+        var result = SendIntent(host, server, ref tick, ref sequence, new Command {
+            MoveRequested = new MoveRequested { DirectionX = directionX, DirectionY = directionY },
+        }, settleTicks: 100);
+        Assert.Equal(CommandStatus.Accepted, result.Status);
+        var arrived = host.GetPlayerState("player");
+        Assert.Equal((warp.TargetLevelId, warp.TargetX, warp.TargetY),
+            (arrived.LevelId, arrived.PositionX, arrived.PositionY));
+    }
+
+    private static void WalkToAdjacent(
+        StoreSimulationExecutor host,
+        AuthoritativeCommandServer server,
+        AuthoritativeWorld world,
+        uint levelId,
+        int targetX,
+        int targetY,
+        ref ulong tick,
+        ref ulong sequence)
+    {
+        var player = host.GetPlayerState("player");
+        Assert.Equal(levelId, player.LevelId);
+        var snapshot = host.CreateSnapshot("player", 1, tick);
+        var path = FindWalkPath(world, snapshot, player.EntityId, levelId,
+            player.PositionX, player.PositionY,
+            (x, y) => Math.Max(Math.Abs(targetX - x), Math.Abs(targetY - y)) <= 1);
+        foreach (var next in path) {
+            player = host.GetPlayerState("player");
+            var directionX = next.X - player.PositionX;
+            var directionY = next.Y - player.PositionY;
+            Assert.InRange(directionX, -1, 1);
+            Assert.InRange(directionY, -1, 1);
+            Assert.NotEqual((0, 0), (directionX, directionY));
+            var result = SendIntent(host, server, ref tick, ref sequence, new Command {
+                MoveRequested = new MoveRequested { DirectionX = directionX, DirectionY = directionY },
+            }, settleTicks: 100);
+            Assert.Equal(CommandStatus.Accepted, result.Status);
+            var arrived = host.GetPlayerState("player");
+            Assert.Equal((levelId, next.X, next.Y), (arrived.LevelId, arrived.PositionX, arrived.PositionY));
+        }
+        player = host.GetPlayerState("player");
+        Assert.InRange(Math.Max(Math.Abs(targetX - player.PositionX), Math.Abs(targetY - player.PositionY)), 0, 1);
+    }
+
+    private static IReadOnlyList<(int X, int Y)> FindWalkPath(
+        AuthoritativeWorld world,
+        Snapshot snapshot,
+        uint playerEntityId,
+        uint levelId,
+        int startX,
+        int startY,
+        Func<int, int, bool> isGoal)
+    {
+        var level = world.Levels.Single(candidate => candidate.LevelId == levelId);
+        var blocked = snapshot.Monsters
+            .Where(monster => monster.LevelId == levelId && monster.Alive)
+            .Select(monster => (monster.PositionX, monster.PositionY))
+            .Concat(snapshot.Objects
+                .Where(@object => @object.LevelId == levelId && !@object.Activated && !@object.Destroyed)
+                .Select(@object => (@object.PositionX, @object.PositionY)))
+            .Concat(snapshot.Corpses
+                .Where(corpse => corpse.LevelId == levelId)
+                .Select(corpse => (corpse.PositionX, corpse.PositionY)))
+            .Concat(snapshot.Players
+                .Where(other => other.EntityId != playerEntityId && other.LevelId == levelId)
+                .Select(other => (other.PositionX, other.PositionY)))
+            .ToHashSet();
+        var warpTriggers = world.WarpTargets
+            .Where(warp => warp.SourceLevelId == levelId)
+            .Select(warp => (warp.TriggerX, warp.TriggerY))
+            .ToHashSet();
+        var start = (X: startX, Y: startY);
+        if (isGoal(startX, startY))
+            return Array.Empty<(int X, int Y)>();
+
+        var parents = new Dictionary<(int X, int Y), (int X, int Y)>();
+        var visited = new HashSet<(int X, int Y)> { start };
+        var queue = new Queue<(int X, int Y)>();
+        queue.Enqueue(start);
+        (int X, int Y)? destination = null;
+        var directions = new[] {
+            (X: 0, Y: -1), (X: 1, Y: 0), (X: 0, Y: 1), (X: -1, Y: 0),
+            (X: 1, Y: -1), (X: 1, Y: 1), (X: -1, Y: 1), (X: -1, Y: -1),
+        };
+        while (queue.Count > 0 && !destination.HasValue) {
+            var current = queue.Dequeue();
+            foreach (var direction in directions) {
+                var next = (X: current.X + direction.X, Y: current.Y + direction.Y);
+                if (!level.IsWalkable(next.X, next.Y)
+                    || blocked.Contains(next)
+                    || warpTriggers.Contains(next)
+                    || !visited.Add(next)) {
+                    continue;
+                }
+                parents[next] = current;
+                if (isGoal(next.X, next.Y)) {
+                    destination = next;
+                    break;
+                }
+                queue.Enqueue(next);
+            }
+        }
+
+        Assert.True(destination.HasValue,
+            $"No walkable path satisfies the requested destination on level {levelId}.");
+        var path = new List<(int X, int Y)>();
+        var cursor = destination.GetValueOrDefault();
+        while (cursor != start) {
+            path.Add(cursor);
+            cursor = parents[cursor];
+        }
+        path.Reverse();
+        return path;
+    }
+
     private static DiabloContentActivation Activate(ComposedContent content, uint randomSeed = 42)
         => DiabloModule.Instance.CathedralDepthContentBootstrap.ActivateDepths(content, randomSeed);
 
@@ -212,7 +546,11 @@ public sealed class CathedralDepthContentActivationTests
         public ContentPack Pack { get; }
         public ComposedContent Content { get; }
 
-        public Fixture()
+        public CathedralDepthPlaytestProfile Profile { get; }
+
+        public Fixture(
+            CathedralDepthPlaytestPlacementPolicy placementPolicy = CathedralDepthPlaytestPlacementPolicy.None,
+            string? diagnosticDropItemSymbol = null)
         {
             var pieces = "mega_tile_id\tpiece_north_west\tpiece_north_east\tpiece_south_west\tpiece_south_east\n"
                 + string.Join('\n', Enumerable.Range(0, AuthoritativeDunTilePropertyCatalog.NativeTileCount)
@@ -220,9 +558,10 @@ public sealed class CathedralDepthContentActivationTests
             var properties = "piece_id\tsolid\tblock_light\tblock_missile\ttransparent\ttransparent_left\ttransparent_right\ttrap\n"
                 + string.Join('\n', Enumerable.Range(0, AuthoritativeDunTilePropertyCatalog.NativeTileCount)
                     .Select(id => $"{id}\t{id == 1}\tfalse\tfalse\tfalse\tfalse\tfalse\tfalse")) + "\n";
-            CathedralDepthPlaytestCompiler.Compile(new CathedralDepthPlaytestCompilerOptions(
+            Profile = CathedralDepthPlaytestCompiler.Compile(new CathedralDepthPlaytestCompilerOptions(
                 LoadBasePack(), output, pieces, properties, [17, 17, 17, 17]) {
-                PlacementPolicy = CathedralDepthPlaytestPlacementPolicy.None,
+                PlacementPolicy = placementPolicy,
+                DiagnosticDropItemSymbol = diagnosticDropItemSymbol,
             });
             Pack = ContentPackLoader.LoadManifestDirectory(Path.Combine(output, "content"));
             Content = ComposedContent.Compose(new ContentManifest(Pack.Id, Pack.Version, [Pack]));

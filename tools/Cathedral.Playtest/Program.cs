@@ -8,7 +8,7 @@ namespace Godevilution.Tools;
 internal static class Program
 {
     private const string Usage = "Cathedral.Playtest --base-directory <pack> --geometry-directory <semantic TSVs> --output-directory <new directory> [--seed <uint32>]";
-    private const string DepthUsage = "Cathedral.Playtest --base-directory <pack> --geometry-directory <semantic TSVs> --output-directory <new directory> --depth-seeds <seed1,seed2,seed3,seed4> [--placement-policy <none|authored-diagnostic>]";
+    private const string DepthUsage = "Cathedral.Playtest --base-directory <pack> --geometry-directory <semantic TSVs> --output-directory <new directory> --depth-seeds <seed1,seed2,seed3,seed4> [--placement-policy <none|authored-diagnostic>] [--diagnostic-drop-item <item_symbol>]";
     private const string DoorUsage = "Cathedral.Playtest --base-directory <pack> --geometry-directory <semantic TSVs> --output-directory <new directory> --depth-seeds <seed1,seed2,seed3,seed4> --cathedral-doors [--placement-policy <none|authored-diagnostic>]";
     private const string PopulationMetadataUsage = "Cathedral.Playtest --compile-population-metadata --metadata-directory <complete semantic TSVs> --output-directory <new directory>";
 
@@ -92,7 +92,8 @@ internal static class Program
         for (var index = 0; index < args.Length; index += 2) {
             if (index + 1 >= args.Length
                 || args[index] is not ("--base-directory" or "--geometry-directory"
-                    or "--output-directory" or "--depth-seeds" or "--placement-policy")
+                    or "--output-directory" or "--depth-seeds" or "--placement-policy"
+                    or "--diagnostic-drop-item")
                 || string.IsNullOrWhiteSpace(args[index + 1])
                 || !values.TryAdd(args[index], args[index + 1]))
                 throw new ArgumentException(DepthUsage);
@@ -117,6 +118,9 @@ internal static class Program
                 "authored-diagnostic" => CathedralDepthPlaytestPlacementPolicy.AuthoredDiagnostic,
                 _ => throw new ArgumentException("The placement policy must be 'none' or 'authored-diagnostic'."),
             };
+        if (values.ContainsKey("--diagnostic-drop-item")
+            && placementPolicy != CathedralDepthPlaytestPlacementPolicy.AuthoredDiagnostic)
+            throw new ArgumentException("--diagnostic-drop-item requires --placement-policy authored-diagnostic.");
 
         var basePack = ContentPackLoader.LoadManifestDirectory(baseDirectory);
         var geometry = ContentPackLoader.LoadDirectory("explicit-cathedral-geometry", "1", geometryDirectory);
@@ -134,6 +138,7 @@ internal static class Program
                 properties.ToCanonicalTsv(),
                 seeds) {
                 PlacementPolicy = placementPolicy,
+                DiagnosticDropItemSymbol = values.GetValueOrDefault("--diagnostic-drop-item"),
             });
         Console.WriteLine($"Compiled Cathedral depths 1-4 profile: {Path.GetFullPath(outputDirectory)}");
         Console.WriteLine($"Content manifest: {profile.ContentManifestHash}");

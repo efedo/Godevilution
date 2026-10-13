@@ -358,7 +358,25 @@ try {
             $created.ProfileHash -cne $resumed.ProfileHash -or $created.ContentTreeHash -cne $resumed.ContentTreeHash) {
             throw 'Cathedral depth resume requires fresh host/client processes and the same isolated profile.'
         }
-        Write-Host "PASS: actual Godot Cathedral depths 1-4 descent/ascent, middle-floor fresh-host restore and native Town return. Evidence: $sessionDirectory"
+        $depthState = Get-Content -LiteralPath (Join-Path $sessionDirectory 'cathedral-depth-state.json') -Raw | ConvertFrom-Json
+        if ($depthState.AuthoredDiagnostic) {
+            $depthResumeState = Get-Content -LiteralPath (Join-Path $sessionDirectory 'cathedral-depth-resume-state.json') -Raw | ConvertFrom-Json
+            if (-not $depthResumeState.Passed -or $depthResumeState.SavedDepth -ne 2 -or
+                -not $depthResumeState.AuthoredDiagnostic -or [string]::IsNullOrWhiteSpace($depthResumeState.GeometryHash) -or
+                $depthResumeState.GeometryHash -cne $depthState.GeometryHash) {
+                throw 'The authored Cathedral resume record is missing or changed its saved geometry.'
+            }
+            $gameplay = $depthResumeState.AuthoredDiagnostic
+            if (-not $gameplay.ReturnedToTown -or -not $gameplay.RepairButtonDisabled -or
+                $gameplay.RepairCommandQueued -or $gameplay.RepairQuoteReason -cne 'NotAllowed' -or
+                $gameplay.RepairQuotePrice -ne 0 -or $gameplay.GoldAfterSmith -ne $gameplay.Gold -or
+                $gameplay.SwordDurabilityAfterSmith -ne $gameplay.SwordDurability) {
+                throw 'The authored Cathedral route did not retain its earned equipment and finish the Town service inspection.'
+            }
+            Write-Host "PASS: actual Godot Cathedral combat/loot/equipment, off-level fresh-host restore and Town service inspection. Evidence: $sessionDirectory"
+        } else {
+            Write-Host "PASS: actual Godot Cathedral depths 1-4 descent/ascent, middle-floor fresh-host restore and native Town return. Evidence: $sessionDirectory"
+        }
         return
     }
     if ($CathedralProfileDirectory) {
