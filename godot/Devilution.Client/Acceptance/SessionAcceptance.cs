@@ -353,7 +353,7 @@ public partial class SessionAcceptance : Node
         while (!condition()) {
             var seconds = Environment.GetEnvironmentVariable("GODEVILUTION_ACCEPTANCE_PHASE") switch {
                 "CathedralJourney" => 300, "CathedralResume" => 180,
-                "CathedralDepthJourney" => 885, "CathedralDepthResume" => 435,
+                "CathedralDepthJourney" => 885, "CathedralDepthResume" => IsTownPortalPreviewResumeProfile() ? 885 : 435,
                 "CathedralDoorJourney" => 300, "CathedralDoorResume" => 180,
                 "Lifecycle" => 345, "LifecycleResume" => 70,
                 "TownLoop" => 225, "Journey" => 150, "MultiplayerCreate" or "MultiplayerResume" => 70,
@@ -363,6 +363,16 @@ public partial class SessionAcceptance : Node
             Require(stageSeconds is null || stage.Elapsed.TotalSeconds < stageSeconds, failure);
             await Frame();
         }
+    }
+
+    private static bool IsTownPortalPreviewResumeProfile()
+    {
+        var path = Environment.GetEnvironmentVariable("GODEVILUTION_CATHEDRAL_DEPTH_PROFILE");
+        if (string.IsNullOrWhiteSpace(path) || !System.IO.File.Exists(path))
+            return false;
+        using var profile = JsonDocument.Parse(System.IO.File.ReadAllText(path));
+        return IsAuthoredDiagnosticDepthProfile(profile.RootElement)
+            && IsTownPortalPreviewDepthProfile(profile.RootElement);
     }
 
     private async Task Frame() => await ToSignal(GetTree(), SceneTree.SignalName.ProcessFrame);

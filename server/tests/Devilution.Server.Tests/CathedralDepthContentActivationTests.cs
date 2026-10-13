@@ -67,9 +67,12 @@ public sealed class CathedralDepthContentActivationTests
     public void AuthoredCathedralLootAndMutationsSurviveFreshHostRestoreAndTownReturn()
     {
         using var fixture = new Fixture(CathedralDepthPlaytestPlacementPolicy.AuthoredDiagnostic,
-            diagnosticDropItemSymbol: "short_sword_standard");
+            diagnosticDropItemSymbol: "short_sword_standard",
+            townPortalRoute: true);
         Assert.Equal("authored-diagnostic", fixture.Profile.PlacementPolicy);
         Assert.Equal("short_sword_standard", fixture.Profile.DiagnosticDropItemSymbol);
+        Assert.Equal(CathedralDepthPlaytestCompiler.TownPortalRouteMarker, fixture.Profile.TownPortalRoute);
+        Assert.False(string.IsNullOrWhiteSpace(fixture.Profile.EffectiveInputManifestHash));
         var levelOne = Assert.Single(fixture.Profile.Levels, level => level.Depth == 1);
         Assert.True(levelOne.EncounterPosition.HasValue);
         Assert.True(levelOne.EncounterEntityId.HasValue);
@@ -88,6 +91,38 @@ public sealed class CathedralDepthContentActivationTests
         var server = new AuthoritativeCommandServer(host);
         ulong tick = 0;
         ulong sequence = 0;
+
+        var smithGreeting = fixture.Pack.Tables.Single(table => table.SourcePath == "towner_greetings.tsv")
+            .Rows.Single(row => row.RequiredInt32("towner_id") == 0 && row.RequiredUInt32("level_id") == 0);
+        WalkToAdjacent(host, server, world, 0,
+            smithGreeting.RequiredInt32("position_x"), smithGreeting.RequiredInt32("position_y"),
+            ref tick, ref sequence);
+        var startingTown = host.CreateSnapshot("player", 1, tick).Players.Single();
+        Assert.Equal(100U, startingTown.Gold);
+        var portalStock = fixture.Pack.Tables.Single(table => table.SourcePath == "stores.tsv")
+            .Rows.Single(row => row.Required("item_symbol") == "scroll_of_town_portal");
+        var smithStoreId = portalStock.RequiredUInt32("store_id");
+        var openedSmith = SendIntent(host, server, ref tick, ref sequence, new Command {
+            OpenStoreRequested = new OpenStoreRequested { StoreId = smithStoreId },
+        });
+        Assert.Equal(CommandStatus.Accepted, openedSmith.Status);
+        var purchasedPortal = SendIntent(host, server, ref tick, ref sequence, new Command {
+            PurchaseRequested = new PurchaseRequested {
+                StoreId = smithStoreId,
+                StoreSlot = portalStock.RequiredUInt32("store_slot"),
+            },
+        });
+        Assert.Equal(CommandStatus.Accepted, purchasedPortal.Status);
+        var afterPortalPurchase = host.CreateSnapshot("player", 1, tick).Players.Single();
+        Assert.Equal(50U, afterPortalPurchase.Gold);
+        var portalScroll = Assert.Single(afterPortalPurchase.Inventory,
+            item => item.ItemSeed == portalStock.RequiredUInt32("item_seed"));
+        Assert.Equal(2119U, portalScroll.State.StableItemId);
+        Assert.Equal(39, portalScroll.State.SpellId);
+        var closedSmith = SendIntent(host, server, ref tick, ref sequence, new Command {
+            CloseStoreRequested = new CloseStoreRequested(),
+        });
+        Assert.Equal(CommandStatus.Accepted, closedSmith.Status);
 
         var entrance = Assert.Single(world.WarpTargets, warp => warp.SourceLevelId == 0 && warp.TargetLevelId == 1);
         WalkOntoWarp(host, server, world, entrance, ref tick, ref sequence);
@@ -202,6 +237,7 @@ public sealed class CathedralDepthContentActivationTests
         Assert.Contains(restored.Objects, item => item.EntityId == levelOne.ObjectEntityId.Value && item.Activated);
         Assert.DoesNotContain(restored.WorldItems, item => item.EntityId == dropEntityId);
         Assert.Contains(restored.Players.Single().Equipment, item => item.ItemSeed == dropSeed);
+        Assert.Contains(restored.Players.Single().Inventory, item => item.ItemSeed == portalStock.RequiredUInt32("item_seed"));
 
         var returnToOne = Assert.Single(world.WarpTargets, warp => warp.SourceLevelId == 2 && warp.TargetLevelId == 1);
         WalkOntoWarp(host, server, world, returnToOne, ref tick, ref sequence);
@@ -213,15 +249,157 @@ public sealed class CathedralDepthContentActivationTests
         Assert.DoesNotContain(revisited.WorldItems, item => item.EntityId == dropEntityId);
         Assert.Contains(revisited.Players.Single().Equipment, item => item.ItemSeed == dropSeed);
 
-        var returnToTown = Assert.Single(world.WarpTargets, warp => warp.SourceLevelId == 1 && warp.TargetLevelId == 0);
-        WalkOntoWarp(host, server, world, returnToTown, ref tick, ref sequence);
+        var portalPlayer = host.GetPlayerState("player");
+        var portalScrollIndex = Array.FindIndex(portalPlayer.Inventory.ToArray(),
+            item => item.ItemSeed == portalStock.RequiredUInt32("item_seed"));
+        Assert.True(portalScrollIndex >= 0, "The purchased Town Portal scroll did not survive the depth restore.");
+        var castPortal = SendIntent(host, server, ref tick, ref sequence, new Command {
+            CastRequested = new CastRequested {
+                SpellId = 39,
+                Source = CastSourceKind.ConsumableItem,
+                SourceItem = new PlayerItemReference {
+                    Location = PlayerItemLocation.Inventory,
+                    Slot = checked((uint)portalScrollIndex),
+                    StableItemId = 2119,
+                },
+                TargetX = portalPlayer.PositionX,
+                TargetY = portalPlayer.PositionY,
+            },
+        });
+        Assert.True(castPortal.Status == CommandStatus.Accepted,
+            $"Expected to cast the purchased Town Portal scroll, got {castPortal.Status} ({castPortal.RejectReason}).");
+        var castAction = Assert.IsType<AuthoritativePlayerActionState>(host.GetPlayerState("player").CurrentAction);
+        Assert.True(castAction.EndTick > tick);
+        tick = castAction.EndTick;
+        host.AdvanceTo(tick);
+        var portal = Assert.Single(host.CreateSnapshot("player", 1, tick).Portals,
+            item => item.OwnerEntityId == host.GetPlayerState("player").EntityId
+                && item.SourceLevelId == 1 && item.DestinationLevelId == 0);
+        Assert.DoesNotContain(host.GetPlayerState("player").Inventory,
+            item => item.ItemSeed == portalStock.RequiredUInt32("item_seed"));
+
+        var portalWorld = host.CreateSnapshot("player", 1, tick);
+        var portalPath = FindWalkPath(world, portalWorld, portalWorld.Players.Single().EntityId, 1,
+            portalWorld.Players.Single().PositionX, portalWorld.Players.Single().PositionY,
+            (x, y) => x == portal.SourcePositionX && y == portal.SourcePositionY);
+        foreach (var next in portalPath) {
+            var player = host.GetPlayerState("player");
+            var move = SendIntent(host, server, ref tick, ref sequence, new Command {
+                MoveRequested = new MoveRequested {
+                    DirectionX = next.X - player.PositionX,
+                    DirectionY = next.Y - player.PositionY,
+                },
+            });
+            Assert.Equal(CommandStatus.Accepted, move.Status);
+            var action = Assert.IsType<AuthoritativePlayerActionState>(host.GetPlayerState("player").CurrentAction);
+            Assert.True(action.EndTick > tick);
+            tick = action.EndTick;
+            host.AdvanceTo(tick);
+        }
+        var atPortal = host.GetPlayerState("player");
+        Assert.Equal((portal.SourcePositionX, portal.SourcePositionY), (atPortal.PositionX, atPortal.PositionY));
+        var portalReturn = SendIntent(host, server, ref tick, ref sequence, new Command {
+            UsePortalRequested = new UsePortalRequested { PortalId = portal.PortalId },
+        });
+        Assert.True(portalReturn.Status == CommandStatus.Accepted,
+            $"Expected to use the Town Portal, got {portalReturn.Status} ({portalReturn.RejectReason}).");
+        var townReturn = host.CreateSnapshot("player", 1, tick);
+        Assert.Equal(0U, townReturn.Players.Single().LevelId);
+        Assert.Equal(portal.DestinationPositionX, townReturn.Players.Single().PositionX);
+        Assert.Equal(portal.DestinationPositionY, townReturn.Players.Single().PositionY);
+
+        var barmaidGreeting = fixture.Pack.Tables.Single(table => table.SourcePath == "towner_greetings.tsv")
+            .Rows.Single(row => row.RequiredInt32("towner_id") == 7 && row.RequiredUInt32("level_id") == 0);
+        WalkToAdjacent(host, server, world, 0,
+            barmaidGreeting.RequiredInt32("position_x"), barmaidGreeting.RequiredInt32("position_y"),
+            ref tick, ref sequence);
+        var openStash = SendIntent(host, server, ref tick, ref sequence, new Command {
+            OpenStashRequested = new OpenStashRequested(),
+        });
+        Assert.Equal(CommandStatus.Accepted, openStash.Status);
+        var swordBeforeStash = host.GetPlayerState("player");
+        var equippedBeforeStash = Assert.Single(swordBeforeStash.Equipment, item => item.ItemSeed == dropSeed);
+        Assert.Equal(50U, swordBeforeStash.Gold);
+        Assert.Equal(0U, swordBeforeStash.StashGold);
+        var stashDeposit = SendIntent(host, server, ref tick, ref sequence, new Command {
+            MoveItemRequested = new MoveItemRequested {
+                Item = new PlayerItemReference {
+                    Location = PlayerItemLocation.Equipment,
+                    Slot = equippedBeforeStash.Slot,
+                    StableItemId = equippedBeforeStash.State.StableItemId,
+                },
+                Destination = new PlayerItemReference {
+                    Location = PlayerItemLocation.Stash,
+                    Page = 0,
+                    Slot = 0,
+                    StableItemId = equippedBeforeStash.State.StableItemId,
+                },
+            },
+        });
+        Assert.Equal(CommandStatus.Accepted, stashDeposit.Status);
+        var stashed = host.GetPlayerState("player");
+        var stashedSword = Assert.Single(stashed.Stash, item => item.ItemSeed == dropSeed);
+        Assert.Equal(swordBeforeStash.Gold, stashed.Gold);
+        Assert.Equal(swordBeforeStash.StashGold, stashed.StashGold);
+        Assert.Equal(equippedBeforeStash.State, stashedSword.State);
+        Assert.DoesNotContain(stashed.Equipment, item => item.ItemSeed == dropSeed);
+
+        var stashInventoryCell = InventoryGridLayout.FindNativePlacement(stashed.InventoryGrid,
+            checked((int)stashedSword.State.InventoryWidth), checked((int)stashedSword.State.InventoryHeight));
+        Assert.True(stashInventoryCell >= 0, "The stash cannot return the earned sword to the inventory.");
+        var withdrawSword = SendIntent(host, server, ref tick, ref sequence, new Command {
+            MoveItemRequested = new MoveItemRequested {
+                Item = new PlayerItemReference {
+                    Location = PlayerItemLocation.Stash,
+                    Page = stashedSword.Page,
+                    Slot = stashedSword.Cell,
+                    StableItemId = stashedSword.State.StableItemId,
+                },
+                Destination = new PlayerItemReference {
+                    Location = PlayerItemLocation.Inventory,
+                    Slot = checked((uint)stashInventoryCell),
+                    StableItemId = stashedSword.State.StableItemId,
+                },
+            },
+        });
+        Assert.Equal(CommandStatus.Accepted, withdrawSword.Status);
+        var afterWithdraw = host.GetPlayerState("player");
+        Assert.Equal(swordBeforeStash.Gold, afterWithdraw.Gold);
+        Assert.Equal(swordBeforeStash.StashGold, afterWithdraw.StashGold);
+        Assert.DoesNotContain(afterWithdraw.Stash, item => item.ItemSeed == dropSeed);
+        var withdrawnItemIndex = Array.FindIndex(afterWithdraw.Inventory.ToArray(), item => item.ItemSeed == dropSeed);
+        Assert.True(withdrawnItemIndex >= 0);
+        var reEquipSword = SendIntent(host, server, ref tick, ref sequence, new Command {
+            AutoEquipItemRequested = new AutoEquipItemRequested {
+                Item = new PlayerItemReference {
+                    Location = PlayerItemLocation.Inventory,
+                    Slot = checked((uint)withdrawnItemIndex),
+                    StableItemId = stashedSword.State.StableItemId,
+                },
+            },
+        });
+        Assert.Equal(CommandStatus.Accepted, reEquipSword.Status);
+        var afterReEquip = host.GetPlayerState("player");
+        Assert.Equal(swordBeforeStash.Gold, afterReEquip.Gold);
+        Assert.Equal(swordBeforeStash.StashGold, afterReEquip.StashGold);
+        var returnedSword = Assert.Single(afterReEquip.Equipment, item => item.ItemSeed == dropSeed);
+        Assert.Equal(equippedBeforeStash.State, returnedSword.State);
+        Assert.Equal(1, afterReEquip.Inventory.Count(item => item.ItemSeed == dropSeed)
+            + afterReEquip.Equipment.Count(item => item.ItemSeed == dropSeed)
+            + afterReEquip.Belt.Count(item => item.ItemSeed == dropSeed)
+            + afterReEquip.Stash.Count(item => item.ItemSeed == dropSeed));
+        Assert.Equal(CommandStatus.Accepted,
+            SendIntent(host, server, ref tick, ref sequence, new Command {
+                CloseStashRequested = new CloseStashRequested(),
+            }).Status);
+
         var greeting = fixture.Pack.Tables.Single(table => table.SourcePath == "towner_greetings.tsv")
             .Rows.Single(row => row.RequiredInt32("towner_id") == 0 && row.RequiredUInt32("level_id") == 0);
         WalkToAdjacent(host, server, world, 0,
             greeting.RequiredInt32("position_x"), greeting.RequiredInt32("position_y"), ref tick, ref sequence);
         var smith = fixture.Pack.Tables.Single(table => table.SourcePath == "stores.tsv")
             .Rows.First(row => row.Values["store_role"] == "Smith");
-        var smithStoreId = smith.RequiredUInt32("store_id");
+        Assert.Equal(smithStoreId, smith.RequiredUInt32("store_id"));
         var openStore = SendIntent(host, server, ref tick, ref sequence, new Command {
             OpenStoreRequested = new OpenStoreRequested { StoreId = smithStoreId },
         });
@@ -540,6 +718,18 @@ public sealed class CathedralDepthContentActivationTests
         throw new DirectoryNotFoundException("Could not locate the repository root.");
     }
 
+    private static (ContentPack TownLoopPreview, ContentPack TownPortalPreview) LoadTownPreviewPacks()
+    {
+        for (var directory = new DirectoryInfo(AppContext.BaseDirectory); directory is not null; directory = directory.Parent)
+            if (File.Exists(Path.Combine(directory.FullName, "AGENTS.md"))) {
+                var contentRoot = Path.Combine(directory.FullName, "server", "content");
+                return (
+                    ContentPackLoader.LoadManifestDirectory(Path.Combine(contentRoot, "town-loop-preview")),
+                    ContentPackLoader.LoadManifestDirectory(Path.Combine(contentRoot, "town-portal-preview")));
+            }
+        throw new DirectoryNotFoundException("Could not locate the repository root.");
+    }
+
     private sealed class Fixture : IDisposable
     {
         private readonly string output = Path.Combine(Path.GetTempPath(), "godevilution-depth-host-" + Guid.NewGuid().ToString("N"));
@@ -550,7 +740,8 @@ public sealed class CathedralDepthContentActivationTests
 
         public Fixture(
             CathedralDepthPlaytestPlacementPolicy placementPolicy = CathedralDepthPlaytestPlacementPolicy.None,
-            string? diagnosticDropItemSymbol = null)
+            string? diagnosticDropItemSymbol = null,
+            bool townPortalRoute = false)
         {
             var pieces = "mega_tile_id\tpiece_north_west\tpiece_north_east\tpiece_south_west\tpiece_south_east\n"
                 + string.Join('\n', Enumerable.Range(0, AuthoritativeDunTilePropertyCatalog.NativeTileCount)
@@ -558,10 +749,17 @@ public sealed class CathedralDepthContentActivationTests
             var properties = "piece_id\tsolid\tblock_light\tblock_missile\ttransparent\ttransparent_left\ttransparent_right\ttrap\n"
                 + string.Join('\n', Enumerable.Range(0, AuthoritativeDunTilePropertyCatalog.NativeTileCount)
                     .Select(id => $"{id}\t{id == 1}\tfalse\tfalse\tfalse\tfalse\tfalse\tfalse")) + "\n";
+            ContentPack? townLoopPreviewPack = null;
+            ContentPack? townPortalPreviewPack = null;
+            if (townPortalRoute)
+                (townLoopPreviewPack, townPortalPreviewPack) = LoadTownPreviewPacks();
             Profile = CathedralDepthPlaytestCompiler.Compile(new CathedralDepthPlaytestCompilerOptions(
                 LoadBasePack(), output, pieces, properties, [17, 17, 17, 17]) {
                 PlacementPolicy = placementPolicy,
                 DiagnosticDropItemSymbol = diagnosticDropItemSymbol,
+                TownPortalRoute = townPortalRoute ? CathedralDepthPlaytestCompiler.TownPortalRouteMarker : null,
+                TownLoopPreviewPack = townLoopPreviewPack,
+                TownPortalPreviewPack = townPortalPreviewPack,
             });
             Pack = ContentPackLoader.LoadManifestDirectory(Path.Combine(output, "content"));
             Content = ComposedContent.Compose(new ContentManifest(Pack.Id, Pack.Version, [Pack]));

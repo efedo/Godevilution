@@ -346,10 +346,12 @@ try {
         return
     }
     if ($CathedralDepthProfileDirectory) {
+        $depthProfile = Get-Content -LiteralPath (Join-Path $CathedralDepthProfileDirectory 'cathedral-depths-playtest.json') -Raw | ConvertFrom-Json
+        $depthPortalRoute = $depthProfile.townPortalRoute -ceq 'town-portal-preview'
         $parameters.CathedralDepthProfileDirectory = $CathedralDepthProfileDirectory
         $parameters.QuitAfterSeconds = 900
         & $launcher @parameters -AcceptancePhase CathedralDepthJourney
-        $parameters.QuitAfterSeconds = 450
+        $parameters.QuitAfterSeconds = if ($depthPortalRoute) { 900 } else { 450 }
         & $launcher @parameters -AcceptancePhase CathedralDepthResume
         $created = Get-Content -LiteralPath (Join-Path $sessionDirectory 'cathedraldepthjourney-processes.json') -Raw | ConvertFrom-Json
         $resumed = Get-Content -LiteralPath (Join-Path $sessionDirectory 'cathedraldepthresume-processes.json') -Raw | ConvertFrom-Json
@@ -373,7 +375,33 @@ try {
                 $gameplay.SwordDurabilityAfterSmith -ne $gameplay.SwordDurability) {
                 throw 'The authored Cathedral route did not retain its earned equipment and finish the Town service inspection.'
             }
-            Write-Host "PASS: actual Godot Cathedral combat/loot/equipment, off-level fresh-host restore and Town service inspection. Evidence: $sessionDirectory"
+            if ($depthPortalRoute) {
+                $purchase = $depthState.AuthoredDiagnostic.TownPortalRoute
+                $portal = $gameplay.TownPortalRoute
+                if (-not $purchase -or -not $portal -or -not $portal.Passed -or
+                    $purchase.ScrollStableItemId -ne 2119 -or $purchase.ScrollSeed -ne 9100 -or
+                    $purchase.ScrollSpellId -ne 39 -or $purchase.ScrollPrice -ne 50 -or
+                    $purchase.GoldAfterPurchase -ne 50 -or
+                    $portal.ScrollStableItemId -ne $purchase.ScrollStableItemId -or
+                    $portal.ScrollSeed -ne $purchase.ScrollSeed -or $portal.ScrollSpellId -ne $purchase.ScrollSpellId -or
+                    $portal.ScrollPrice -ne $purchase.ScrollPrice -or $portal.GoldAfterPurchase -ne $purchase.GoldAfterPurchase -or
+                    -not $portal.ScrollPreservedAtResume -or -not $portal.ScrollConsumedAfterCast -or
+                    $portal.PortalId -le 0 -or $portal.PortalSourceLevelId -ne 1 -or $portal.PortalDestinationLevelId -ne 0 -or
+                    -not $portal.ReturnedToTown -or -not $portal.SwordRoundTripComplete -or
+                    $portal.SwordStableItemId -ne $gameplay.SwordStableItemId -or
+                    [string]::IsNullOrWhiteSpace($portal.SwordStateSha256) -or
+                    $portal.SwordStateSha256 -cne $gameplay.SwordStateSha256 -or
+                    $null -eq $portal.SwordStashCell -or $portal.SwordStashCell -lt 0 -or
+                    $portal.GoldAfterRoundTrip -ne $purchase.GoldAfterPurchase -or
+                    $gameplay.GoldAfterSmith -ne $purchase.GoldAfterPurchase -or
+                    $null -eq $portal.StashGoldBeforeRoundTrip -or $null -eq $portal.StashGoldAfterRoundTrip -or
+                    $portal.StashGoldAfterRoundTrip -ne $portal.StashGoldBeforeRoundTrip) {
+                    throw 'The composed Cathedral route did not preserve its purchased scroll, return through its portal and retain the earned sword through stash transfer.'
+                }
+                Write-Host "PASS: actual Godot Cathedral combat/equipment, cold save/resume, purchased portal return and earned-sword stash round trip. Evidence: $sessionDirectory"
+            } else {
+                Write-Host "PASS: actual Godot Cathedral combat/loot/equipment, off-level fresh-host restore and Town service inspection. Evidence: $sessionDirectory"
+            }
         } else {
             Write-Host "PASS: actual Godot Cathedral depths 1-4 descent/ascent, middle-floor fresh-host restore and native Town return. Evidence: $sessionDirectory"
         }

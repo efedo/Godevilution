@@ -9,10 +9,14 @@ namespace Devilution.Client.Acceptance;
 public partial class SessionAcceptance
 {
     /** Acquires the validated base Town Portal scroll through the preview Smith stock. */
-    private async Task<TownPortalPurchaseEvidence> VerifyTownPortalAcquisition(Main main)
+    private async Task<TownPortalPurchaseEvidence> VerifyTownPortalAcquisition(
+        Main main,
+        bool distanceBoundedApproachDeadline = false,
+        bool verifyCancellation = true)
     {
         var sections = (TabContainer)main.FindChild("HudSections", true, false);
-        await ApproachDeclaredDestination(main, "towner:0", verifyCancellation: true);
+        await ApproachDeclaredDestination(main, "towner:0", verifyCancellation: verifyCancellation,
+            distanceBoundedApproachDeadline: distanceBoundedApproachDeadline);
         var sequence = main.ObservedCommandResult?.ClientSequence ?? 0;
         await ClickControl(main, sections, 2, "OpenSmith");
         await AcceptedAndSettled(main, sequence, "Open Smith for Town Portal scroll");

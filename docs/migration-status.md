@@ -45,15 +45,21 @@ unsupported behavior is a migration gap, not permission for local simulation.
 ## Current delivery position and verification limits
 
 The explicit authored generated-Cathedral route passes real headless Godot
-Town entry, L1 object activation, combat, earned sword pickup/equipment and an L2
-save. Fresh host/client processes restore the complete character baseline and
-accept the exact next command; returning through L1 retains its corpse, activated
-object and claimed loot state. Town Smith selection shows the full-durability
-repair refusal without a queued repair or changed Gold/sword state. All 205 focused
-compiler, world-command and depth-host tests pass. Evidence:
-`.local/town-cathedral-route-20261012/profile-playable/sessions/acceptance-bf1bcd75af51497db15dfe0f45fcc8af`.
-This uses generated geometry with authored diagnostic encounters; native
-population, portal/stash composition, rendering and full M1 remain open.
+Smith scroll purchase from ordinary 100 Gold, L1 object/combat/earned-sword
+pickup and equipment, and an L2 save with the unconsumed scroll. Fresh host/client
+processes restore the complete baseline and accept the exact next command. L1
+corpse/object/claimed-loot state remains; casting consumes the purchased scroll
+and its owned portal returns to Town. Actual stash controls deposit, withdraw and
+re-equip the same sword, retaining its state, 50 Gold and zero stash Gold. The Smith
+shows full-durability repair refusal with no queued repair or changed sword/Gold.
+All 68 focused compiler/depth-host tests pass in working and selected-source trees;
+the selected client builds. The complete actual wrapper exits zero. Evidence:
+`.local/town-cathedral-route-20261012/profile-portal-stash/sessions/acceptance-5c32d0ccc77b46bdb38fbf6980574fc6`.
+The first attempt stopped at an inherited cancellation assertion before purchase;
+that failure remains unclassified. This route exercises uninterrupted travel and
+records `VerifiedCancellation=false`; legacy cancellation checks remain enabled.
+Generated geometry uses authored diagnostic encounters; native population,
+rendering, normal profile adoption and full M1/campaign acceptance remain open.
 
 Godot paid-service availability now follows optional live hints derived from
 existing authoritative vendor rules: Smith repair, Witch recharge, Cain Identify

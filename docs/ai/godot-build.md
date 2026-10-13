@@ -520,6 +520,29 @@ The compiler's default drop remains unchanged. Older `authored-diagnostic` profi
 without `diagnosticDropItemSymbol` keep the geometry-only path. This authored route
 does not qualify native population, rendered controls or the complete M1 loop.
 
+### Portal return and stash route
+
+The combined route explicitly composes the existing Town preview packs before
+compiling generated stairs and authored encounters. It requires the canonical
+diagnostic sword; profiles without the marker keep their existing route.
+
+```powershell
+dotnet run --project tools/Cathedral.Playtest/Cathedral.Playtest.csproj -- --base-directory server/content/base --geometry-directory .local/cathedral-depths-playtest/content --output-directory .local/cathedral-depths-portal-stash --depth-seeds '2588,2588,1,4294967295' --placement-policy authored-diagnostic --diagnostic-drop-item short_sword_standard --town-portal-route town-portal-preview --town-loop-preview-directory server/content/town-loop-preview --town-portal-preview-directory server/content/town-portal-preview
+powershell -NoProfile -ExecutionPolicy Bypass -File tools/test-godot-session.ps1 -CathedralDepthProfileDirectory .local/cathedral-depths-portal-stash -PersistenceMode cohort
+```
+
+This route buys the Smith's Town Portal scroll for 50 of the starting 100 Gold,
+saves it unconsumed on L2, and verifies it before the first fresh-host Resume
+command. After checking retained L1 mutations, ordinary casting consumes the
+scroll and publishes the owned portal used to return to Town. Actual stash
+controls deposit, withdraw and re-equip the earned sword with its state and both
+Gold balances unchanged, then the Smith refusal completes the route. The profile
+records `townPortalRoute` and `effectiveInputManifestHash`; separate Journey and
+Resume evidence records carry the purchase, portal and stash results. The combined
+Resume limits are 885 seconds in the client and 900 in the launcher; older profiles
+retain 435/450 seconds. This remains authored encounter acceptance on generated
+geometry, with native population, rendering and full campaign acceptance open.
+
 ## Generated Cathedral door playtest
 
 Door mode is a separate offline compiler/profile, not an upgrade of existing L1,

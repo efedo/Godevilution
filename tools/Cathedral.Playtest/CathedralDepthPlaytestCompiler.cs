@@ -45,6 +45,12 @@ public sealed record CathedralDepthPlaytestCompilerOptions(
         = CathedralDepthPlaytestPlacementPolicy.AuthoredDiagnostic;
     /** Optional base-content drop identity for the authored diagnostic monster. */
     public string? DiagnosticDropItemSymbol { get; init; }
+    /** Enables the explicitly composed Town portal route preview packs. */
+    public string? TownPortalRoute { get; init; }
+    /** Explicit town-loop preview pack; required with TownPortalRoute. */
+    public ContentPack? TownLoopPreviewPack { get; init; }
+    /** Explicit town-portal preview pack; required with TownPortalRoute. */
+    public ContentPack? TownPortalPreviewPack { get; init; }
     /** When enabled, route and diagnostic placement may operate native-scanned doors. */
     internal bool DoorAwareConnectivity { get; init; }
     public uint Depth1Seed => DepthSeeds.Count > 0 ? DepthSeeds[0] : 0;
@@ -121,6 +127,14 @@ public sealed record CathedralDepthPlaytestProfile(
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public string? DiagnosticDropItemSymbol { get; init; }
 
+    /** Identifies the opt-in Town portal route; omitted from legacy profiles. */
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? TownPortalRoute { get; init; }
+
+    /** Hash of the validated ordered source pack manifest; omitted unless opted in. */
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? EffectiveInputManifestHash { get; init; }
+
     [JsonIgnore]
     public IReadOnlyList<CathedralDepthPlaytestLevelProfile> ReadonlyLevels => Levels;
 }
@@ -139,6 +153,12 @@ public static class CathedralDepthPlaytestCompiler
     public const int GeneratorRevision = 1;
     public const string CatalogId = "native-cathedral-depths";
     public const string Policy = "quest-disabled-original-diablo";
+    public const string TownPortalRouteMarker = "town-portal-preview";
+
+    private const string BasePackId = "devilution.base";
+    private const string TownLoopPreviewPackId = "godevilution.town-loop-preview";
+    private const string TownPortalPreviewPackId = "godevilution.town-portal-preview";
+    private const string PreviewPackVersion = "0.1.0";
 
     private const uint ReturnToTownRouteId = 1099;
     private const uint FirstMiddleUpRouteId = 1100;
@@ -196,6 +216,8 @@ public static class CathedralDepthPlaytestCompiler
             throw new ArgumentException("A diagnostic drop item symbol cannot be blank.",
                 nameof(options.DiagnosticDropItemSymbol));
 
+        var inputContent = ResolveInputContent(options);
+
         var pieceTable = TsvTable.Parse(
             AuthoritativeNativeDunGeometryCatalog.PieceDefinitionsTablePath,
             options.PieceDefinitionsTsv);
@@ -210,7 +232,7 @@ public static class CathedralDepthPlaytestCompiler
             propertyTable.SourcePath,
             propertyTable.ToCanonicalTsv());
 
-        var tables = options.BasePack.Tables
+        var tables = inputContent.Tables
             .Select(NormalizeTable)
             .ToDictionary(table => table.SourcePath, StringComparer.OrdinalIgnoreCase);
         tables["levels.tsv"] = BuildLevels(RequireTable(tables, "levels.tsv"));
@@ -275,7 +297,7 @@ public static class CathedralDepthPlaytestCompiler
             options.PackVersion,
             tables.Values.OrderBy(table => table.SourcePath, StringComparer.Ordinal).ToArray(),
             schema: options.BasePack.Schema,
-            assets: []);
+            assets: inputContent.Assets);
         var prevalidatedManifest = ValidatePack(outputPack);
         var profileLevels = BuildProfileLevels(plan.Candidates, placements, options);
         var profileRoutes = RouteDefinitions.Select(route => new CathedralDepthPlaytestRouteProfile(
@@ -315,6 +337,8 @@ public static class CathedralDepthPlaytestCompiler
                 profileLevels,
                 profileRoutes) {
                 DiagnosticDropItemSymbol = options.DiagnosticDropItemSymbol,
+                TownPortalRoute = options.TownPortalRoute,
+                EffectiveInputManifestHash = inputContent.ManifestHash,
             };
             WriteProfile(Path.Combine(stagingRoot, ProfileFileName), profile);
             Directory.Move(stagingRoot, outputRoot);
@@ -326,6 +350,137 @@ public static class CathedralDepthPlaytestCompiler
                 Directory.Delete(stagingRoot, recursive: true);
             throw;
         }
+    }
+
+    private sealed record EffectiveInputContent(
+        IReadOnlyList<TsvTable> Tables,
+        IReadOnlyList<ContentAsset> Assets,
+        string? ManifestHash);
+
+    private static EffectiveInputContent ResolveInputContent(
+        CathedralDepthPlaytestCompilerOptions options)
+    {
+        var townLoopPreview = options.TownLoopPreviewPack;
+        var townPortalPreview = options.TownPortalPreviewPack;
+        if (options.TownPortalRoute is null) {
+            if (townLoopPreview is not null || townPortalPreview is not null)
+                throw new ArgumentException(
+                    "Town preview packs require the explicit town-portal route marker.",
+                    nameof(options.TownPortalRoute));
+            return new EffectiveInputContent(options.BasePack.Tables, [], null);
+        }
+
+        if (!string.Equals(options.TownPortalRoute, TownPortalRouteMarker, StringComparison.Ordinal))
+            throw new ArgumentException(
+                $"The town-portal route marker must be '{TownPortalRouteMarker}'.",
+                nameof(options.TownPortalRoute));
+        if (options.PlacementPolicy != CathedralDepthPlaytestPlacementPolicy.AuthoredDiagnostic
+            || options.DiagnosticDropItemSymbol != "short_sword_standard")
+            throw new ArgumentException(
+                "The Town portal route requires authored-diagnostic placement with short_sword_standard drops.",
+                nameof(options.DiagnosticDropItemSymbol));
+        if (townLoopPreview is null || townPortalPreview is null)
+            throw new ArgumentException(
+                "The town-portal route requires both explicit Town preview packs.",
+                nameof(options.TownLoopPreviewPack));
+
+        ValidateTownPortalPackChain(options.BasePack, townLoopPreview, townPortalPreview);
+        var manifest = new ContentManifest(
+            options.BasePack.Id,
+            options.BasePack.Version,
+            [options.BasePack, townLoopPreview, townPortalPreview]);
+        var composed = ComposedContent.Compose(manifest);
+        ValidateTownPortalStock(composed);
+        return new EffectiveInputContent(composed.Tables, composed.Assets, manifest.Sha256);
+    }
+
+    private static void ValidateTownPortalPackChain(
+        ContentPack basePack,
+        ContentPack townLoopPreview,
+        ContentPack townPortalPreview)
+    {
+        if (basePack.Id != BasePackId || basePack.Version != PreviewPackVersion
+            || basePack.Dependencies.Count != 0)
+            throw new InvalidDataException(
+                "The Town portal route requires the exact devilution.base 0.1.0 root pack.");
+        if (townLoopPreview.Id != TownLoopPreviewPackId
+            || townLoopPreview.Version != PreviewPackVersion
+            || !townLoopPreview.Dependencies.SequenceEqual([BasePackId], StringComparer.Ordinal))
+            throw new InvalidDataException(
+                "The Town portal route requires town-loop-preview directly after devilution.base.");
+        if (townPortalPreview.Id != TownPortalPreviewPackId
+            || townPortalPreview.Version != PreviewPackVersion
+            || !townPortalPreview.Dependencies.SequenceEqual(
+                [BasePackId, TownLoopPreviewPackId], StringComparer.Ordinal))
+            throw new InvalidDataException(
+                "The Town portal route requires town-portal-preview after town-loop-preview.");
+
+        if (basePack.Schema is null
+            || townLoopPreview.Schema != basePack.Schema
+            || townPortalPreview.Schema != basePack.Schema)
+            throw new InvalidDataException(
+                "The Town portal preview packs must use the base pack's exact content schema.");
+
+        var exactVersion = new ContentSemanticVersion(0, 1, 0);
+        if (!HasExactDependencyConstraints(townLoopPreview, [BasePackId], exactVersion)
+            || !HasExactDependencyConstraints(
+                townPortalPreview,
+                [BasePackId, TownLoopPreviewPackId],
+                exactVersion))
+            throw new InvalidDataException(
+                "The Town portal preview packs must constrain the complete ordered 0.1.0 chain.");
+    }
+
+    private static bool HasExactDependencyConstraints(
+        ContentPack pack,
+        IReadOnlyList<string> expectedDependencies,
+        ContentSemanticVersion exactVersion)
+    {
+        if (pack.DependencyConstraints.Count != expectedDependencies.Count)
+            return false;
+        for (var index = 0; index < expectedDependencies.Count; index++) {
+            var constraint = pack.DependencyConstraints[index];
+            if (constraint.DependencyId != expectedDependencies[index]
+                || constraint.Minimum != exactVersion
+                || constraint.Maximum != exactVersion)
+                return false;
+        }
+        return true;
+    }
+
+    private static void ValidateTownPortalStock(ComposedContent content)
+    {
+        var stockRows = content.GetRequiredTable("stores.tsv").Rows
+            .Where(row => row.RequiredUInt32("store_id") == 1
+                && row.RequiredUInt32("store_slot") == 2)
+            .ToArray();
+        if (stockRows.Length != 1
+            || stockRows[0].Required("store_symbol") != "smith"
+            || stockRows[0].Required("store_role") != "Smith"
+            || stockRows[0].RequiredUInt32("item_seed") != 9100
+            || stockRows[0].RequiredUInt32("price") != 50
+            || stockRows[0].RequiredUInt32("item_id") != 2119
+            || stockRows[0].Required("item_symbol") != "scroll_of_town_portal")
+            throw new InvalidDataException(
+                "The Town portal route requires the validated Smith stock row for item 2119, seed 9100, price 50.");
+
+        var portalItem = content.GetRequiredTable("items.tsv").Rows.SingleOrDefault(row =>
+            row.RequiredUInt32("item_id") == 2119
+            && row.Required("item_symbol") == "scroll_of_town_portal");
+        var portalIdentity = content.GetRequiredTable("content_ids.tsv").Rows.SingleOrDefault(row =>
+            row.Required("kind") == "item"
+            && row.Required("symbol") == "scroll_of_town_portal"
+            && row.RequiredUInt32("numeric_id") == 2119);
+        if (portalItem is null
+            || portalItem.RequiredUInt32("misc_id") != 21
+            || portalItem.RequiredUInt32("spell_id") != 39
+            || portalItem.Required("spell_symbol") != "town_portal"
+            || portalItem.Required("spell_source_kind") != "ConsumableItem"
+            || !portalItem.RequiredBoolean("usable")
+            || portalItem.Required("item_action_kind") != "None"
+            || portalIdentity is null)
+            throw new InvalidDataException(
+                "The Town portal stock row must resolve to the usable consumable Town Portal spell item and stable content ID.");
     }
 
     private static CathedralDepthPlaytestLevelProfile[] BuildProfileLevels(

@@ -8,7 +8,7 @@ namespace Godevilution.Tools;
 internal static class Program
 {
     private const string Usage = "Cathedral.Playtest --base-directory <pack> --geometry-directory <semantic TSVs> --output-directory <new directory> [--seed <uint32>]";
-    private const string DepthUsage = "Cathedral.Playtest --base-directory <pack> --geometry-directory <semantic TSVs> --output-directory <new directory> --depth-seeds <seed1,seed2,seed3,seed4> [--placement-policy <none|authored-diagnostic>] [--diagnostic-drop-item <item_symbol>]";
+    private const string DepthUsage = "Cathedral.Playtest --base-directory <pack> --geometry-directory <semantic TSVs> --output-directory <new directory> --depth-seeds <seed1,seed2,seed3,seed4> [--placement-policy <none|authored-diagnostic>] [--diagnostic-drop-item <item_symbol>] [--town-portal-route town-portal-preview --town-loop-preview-directory <pack> --town-portal-preview-directory <pack>]";
     private const string DoorUsage = "Cathedral.Playtest --base-directory <pack> --geometry-directory <semantic TSVs> --output-directory <new directory> --depth-seeds <seed1,seed2,seed3,seed4> --cathedral-doors [--placement-policy <none|authored-diagnostic>]";
     private const string PopulationMetadataUsage = "Cathedral.Playtest --compile-population-metadata --metadata-directory <complete semantic TSVs> --output-directory <new directory>";
 
@@ -93,7 +93,8 @@ internal static class Program
             if (index + 1 >= args.Length
                 || args[index] is not ("--base-directory" or "--geometry-directory"
                     or "--output-directory" or "--depth-seeds" or "--placement-policy"
-                    or "--diagnostic-drop-item")
+                    or "--diagnostic-drop-item" or "--town-portal-route"
+                    or "--town-loop-preview-directory" or "--town-portal-preview-directory")
                 || string.IsNullOrWhiteSpace(args[index + 1])
                 || !values.TryAdd(args[index], args[index + 1]))
                 throw new ArgumentException(DepthUsage);
@@ -122,6 +123,19 @@ internal static class Program
             && placementPolicy != CathedralDepthPlaytestPlacementPolicy.AuthoredDiagnostic)
             throw new ArgumentException("--diagnostic-drop-item requires --placement-policy authored-diagnostic.");
 
+        var townPortalRoute = values.GetValueOrDefault("--town-portal-route");
+        var hasTownLoopDirectory = values.TryGetValue("--town-loop-preview-directory", out var townLoopDirectory);
+        var hasTownPortalDirectory = values.TryGetValue("--town-portal-preview-directory", out var townPortalDirectory);
+        if (townPortalRoute is null) {
+            if (hasTownLoopDirectory || hasTownPortalDirectory)
+                throw new ArgumentException(
+                    "Town preview directories require --town-portal-route town-portal-preview.");
+        } else if (townPortalRoute != CathedralDepthPlaytestCompiler.TownPortalRouteMarker
+            || !hasTownLoopDirectory || !hasTownPortalDirectory) {
+            throw new ArgumentException(
+                "--town-portal-route town-portal-preview requires both explicit Town preview directories.");
+        }
+
         var basePack = ContentPackLoader.LoadManifestDirectory(baseDirectory);
         var geometry = ContentPackLoader.LoadDirectory("explicit-cathedral-geometry", "1", geometryDirectory);
         var pieces = geometry.Tables.SingleOrDefault(table =>
@@ -130,6 +144,12 @@ internal static class Program
         var properties = geometry.Tables.SingleOrDefault(table =>
                 table.SourcePath == AuthoritativeNativeDunGeometryCatalog.TilePropertiesTablePath)
             ?? throw new InvalidDataException("Missing explicit native_dun_tile_properties.tsv.");
+        var townLoopPreviewPack = townPortalRoute is null
+            ? null
+            : ContentPackLoader.LoadManifestDirectory(townLoopDirectory!);
+        var townPortalPreviewPack = townPortalRoute is null
+            ? null
+            : ContentPackLoader.LoadManifestDirectory(townPortalDirectory!);
         var profile = CathedralDepthPlaytestCompiler.Compile(
             new CathedralDepthPlaytestCompilerOptions(
                 basePack,
@@ -139,6 +159,9 @@ internal static class Program
                 seeds) {
                 PlacementPolicy = placementPolicy,
                 DiagnosticDropItemSymbol = values.GetValueOrDefault("--diagnostic-drop-item"),
+                TownPortalRoute = townPortalRoute,
+                TownLoopPreviewPack = townLoopPreviewPack,
+                TownPortalPreviewPack = townPortalPreviewPack,
             });
         Console.WriteLine($"Compiled Cathedral depths 1-4 profile: {Path.GetFullPath(outputDirectory)}");
         Console.WriteLine($"Content manifest: {profile.ContentManifestHash}");

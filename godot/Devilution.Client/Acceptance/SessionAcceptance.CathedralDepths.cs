@@ -20,9 +20,19 @@ public partial class SessionAcceptance
             "The supplied profile is not the separate depth adapter.");
         VerifyDepthGeometry(main, profile.RootElement);
         var authoredDiagnostic = IsAuthoredDiagnosticDepthProfile(profile.RootElement);
+        var townPortalRoute = IsTownPortalPreviewDepthProfile(profile.RootElement);
+        Require(!townPortalRoute || authoredDiagnostic,
+            "The Town Portal route requires the authored diagnostic Cathedral content.");
         if (phase == "CathedralDepthJourney") {
             Require(main.ObservedSnapshot!.Players.Single().LevelId == 0, "Depth journey must begin in Town through the new-character form.");
+            TownPortalPurchaseEvidence? portalPurchase = null;
             if (authoredDiagnostic) {
+                if (townPortalRoute) {
+                    Require(main.ObservedSnapshot!.Players.Single().Gold == 100,
+                        "The Town Portal preview route must begin with the ordinary 100-gold balance.");
+                    portalPurchase = await VerifyTownPortalAcquisition(main,
+                        distanceBoundedApproachDeadline: true, verifyCancellation: false);
+                }
                 await TravelDepthRoute(main, directory, 1, profile.RootElement);
                 await ActivateAuthoredDepthObject(main, profile.RootElement);
                 await VerifyCombatAndLoot(main, directory, visible, generated: true, distanceBoundedPickupDeadline: true);
@@ -58,7 +68,7 @@ public partial class SessionAcceptance
                 WriteEvidence(directory, "cathedral-depth-state.json", new {
                     Passed = true, GeometryHash = DepthGeometryHash(main),
                     SavedDepth = 2,
-                    AuthoredDiagnostic = CaptureAuthoredDepthCheckpoint(main, profile.RootElement),
+                    AuthoredDiagnostic = CaptureAuthoredDepthCheckpoint(main, profile.RootElement, portalPurchase),
                 });
             } else {
                 WriteEvidence(directory, "cathedral-depth-state.json", new {
@@ -75,7 +85,7 @@ public partial class SessionAcceptance
             if (authoredDiagnostic) {
                 var expected = saved.RootElement.GetProperty("AuthoredDiagnostic").Deserialize<AuthoredDepthCheckpoint>()
                     ?? throw new InvalidDataException("The authored Cathedral checkpoint is missing.");
-                VerifyAuthoredDepthCheckpoint(main, profile.RootElement, expected);
+                VerifyAuthoredDepthCheckpoint(main, profile.RootElement, expected, townPortalRoute);
             }
             if (visible)
                 await Capture(System.IO.Path.Combine(directory, "cathedral-depth-middle-restored.png"));
@@ -98,8 +108,50 @@ public partial class SessionAcceptance
                 VerifyCombatLootRestored(main, directory, "cathedral", allowEquippedLoot: true);
                 var expected = saved.RootElement.GetProperty("AuthoredDiagnostic").Deserialize<AuthoredDepthCheckpoint>()!;
                 VerifyAuthoredDepthRetention(main, profile.RootElement, expected);
-                await TravelDepthRoute(main, directory, 0, profile.RootElement);
-                await VerifyAuthoredSmithRefusal(main, directory, expected);
+                if (townPortalRoute) {
+                    var routeEvidence = expected.TownPortalRoute
+                        ?? throw new InvalidDataException("The Town Portal purchase identity is missing from the saved checkpoint.");
+                    Require(routeEvidence.ScrollPreservedAtResume == false && !routeEvidence.ScrollConsumedAfterCast,
+                        "The Town Portal evidence was already marked complete before the fresh-host route ran.");
+                    var purchase = new TownPortalPurchaseEvidence(routeEvidence.ScrollStableItemId,
+                        routeEvidence.ScrollSeed, routeEvidence.ScrollPrice);
+                    var resumedPlayer = main.ObservedSnapshot!.Players.Single();
+                    Require(CountAuthoredItemOccurrences(main, resumedPlayer, routeEvidence.ScrollStableItemId) == 1
+                        && resumedPlayer.Inventory.Any(item => item.State.StableItemId == routeEvidence.ScrollStableItemId),
+                        "The purchased Town Portal source was not present exactly once in resumed inventory.");
+                    routeEvidence = routeEvidence with { ScrollPreservedAtResume = true };
+                    var sections = (TabContainer)main.FindChild("HudSections", true, false);
+                    var portal = await CastAndUseTownPortal(main, sections, purchase, visible);
+                    AssertPortalState(main.ObservedSnapshot!, main.ObservedSnapshot!.Players.Single(), portal, requireTownReturn: true);
+                    var portalPlayer = main.ObservedSnapshot!.Players.Single();
+                    var scrollConsumed = CountAuthoredItemOccurrences(main, portalPlayer, routeEvidence.ScrollStableItemId) == 0;
+                    Require(scrollConsumed, "The Town Portal scroll remained in a player or world container after casting.");
+                    routeEvidence = routeEvidence with {
+                        ScrollConsumedAfterCast = true,
+                        PortalId = portal.PortalId,
+                        PortalSourceLevelId = portal.PortalSourceLevelId,
+                        PortalDestinationLevelId = portal.PortalDestinationLevelId,
+                        PortalDestinationPositionX = portal.PortalDestinationPositionX,
+                        PortalDestinationPositionY = portal.PortalDestinationPositionY,
+                        ReturnedToTown = portalPlayer.LevelId == portal.PortalDestinationLevelId,
+                    };
+                    Require(routeEvidence.ReturnedToTown && portalPlayer.LevelId == 0,
+                        "The Town Portal did not return the resumed character to Town.");
+                    var stash = await VerifyAuthoredSwordStashRoundTrip(main, expected);
+                    routeEvidence = routeEvidence with {
+                        SwordStableItemId = stash.StableItemId,
+                        SwordStashCell = stash.StashCell,
+                        SwordStateSha256 = stash.StateSha256,
+                        SwordRoundTripComplete = stash.Completed,
+                        GoldAfterRoundTrip = stash.GoldAfter,
+                        StashGoldBeforeRoundTrip = stash.StashGoldBefore,
+                        StashGoldAfterRoundTrip = stash.StashGoldAfter,
+                    };
+                    await VerifyAuthoredSmithRefusal(main, directory, expected, routeEvidence);
+                } else {
+                    await TravelDepthRoute(main, directory, 0, profile.RootElement);
+                    await VerifyAuthoredSmithRefusal(main, directory, expected);
+                }
             } else {
                 await TravelDepthRoute(main, directory, 0, profile.RootElement);
             }
@@ -121,6 +173,15 @@ public partial class SessionAcceptance
             && profile.TryGetProperty("diagnosticDropItemSymbol", out var dropItemSymbol)
             && dropItemSymbol.ValueKind == JsonValueKind.String
             && dropItemSymbol.GetString() == "short_sword_standard";
+
+    private static bool IsTownPortalPreviewDepthProfile(JsonElement profile)
+    {
+        if (!profile.TryGetProperty("townPortalRoute", out var route) || route.ValueKind == JsonValueKind.Null)
+            return false;
+        Require(route.ValueKind == JsonValueKind.String && route.GetString() == "town-portal-preview",
+            "The compiled Cathedral profile contains an unsupported Town Portal route marker.");
+        return true;
+    }
 
     private async Task ActivateAuthoredDepthObject(Main main, JsonElement profile)
     {
@@ -164,29 +225,44 @@ public partial class SessionAcceptance
         return equipped;
     }
 
-    private AuthoredDepthCheckpoint CaptureAuthoredDepthCheckpoint(Main main, JsonElement profile)
+    private AuthoredDepthCheckpoint CaptureAuthoredDepthCheckpoint(
+        Main main,
+        JsonElement profile,
+        TownPortalPurchaseEvidence? portalPurchase = null)
     {
         var player = main.ObservedSnapshot!.Players.Single();
         Require(player.LevelId == 2 && Settled(main) && main.ObservedPendingCommandCount == 0,
             "The authored off-level checkpoint must be settled on Cathedral depth 2.");
         var sword = player.Equipment.Single(item => item.Slot == 4 && item.ItemSeed == 6001);
         var identity = main.ObservedIdentity!;
+        AuthoredTownPortalRouteEvidence? townPortalRoute = null;
+        if (portalPurchase is not null) {
+            Require(portalPurchase.StableItemId != 0 && portalPurchase.ItemSeed == 9100
+                && portalPurchase.Price == 50 && player.Gold == 50,
+                "The Town Portal purchase did not preserve its expected identity or 50-gold balance at checkpoint.");
+            townPortalRoute = new AuthoredTownPortalRouteEvidence(
+                portalPurchase.StableItemId, portalPurchase.ItemSeed, 39, portalPurchase.Price, player.Gold);
+        }
         return new AuthoredDepthCheckpoint(
             identity.GameMode.ToString(), identity.ContentManifestHash, identity.RulesetIdentityHash,
             player.EntityId, player.CharacterName, player.CharacterClassId, player.CharacterLevel,
             player.LevelId, player.PositionX, player.PositionY, player.Life, player.LifeMaximum,
             player.BaseLifeMaximum, player.Mana, player.ManaMaximum, player.BaseManaMaximum,
-            player.Gold, player.Experience,
+            player.Gold, player.StashGold, player.Experience,
             HashProtoCollection(player.Inventory.OrderBy(item => item.ItemSeed).ThenBy(item => item.State.StableItemId)
                 .Select(item => item.ToByteArray())),
             HashProto(player.Attributes), HashProtoCollection(player.Belt.OrderBy(item => item.Slot).Select(item => item.ToByteArray())),
             HashProtoCollection(player.Equipment.OrderBy(item => item.Slot).Select(item => item.ToByteArray())),
             sword.ItemSeed, sword.State.StableItemId, sword.State.Durability, HashProto(sword.State),
             ProfileDepthUInt(profile, 1, "encounterEntityId"), ProfileDepthUInt(profile, 1, "objectEntityId"),
-            1_000_009, 6001);
+            1_000_009, 6001, TownPortalRoute: townPortalRoute);
     }
 
-    private static void VerifyAuthoredDepthCheckpoint(Main main, JsonElement profile, AuthoredDepthCheckpoint expected)
+    private static void VerifyAuthoredDepthCheckpoint(
+        Main main,
+        JsonElement profile,
+        AuthoredDepthCheckpoint expected,
+        bool townPortalRoute)
     {
         var player = main.ObservedSnapshot!.Players.Single();
         var identity = main.ObservedIdentity!;
@@ -201,7 +277,8 @@ public partial class SessionAcceptance
             && player.BaseLifeMaximum == expected.BaseLifeMaximum
             && player.Mana == expected.Mana && player.ManaMaximum == expected.ManaMaximum
             && player.BaseManaMaximum == expected.BaseManaMaximum
-            && player.Gold == expected.Gold && player.Experience == expected.Experience
+            && player.Gold == expected.Gold && player.StashGold == expected.StashGold
+            && player.Experience == expected.Experience
             && HashProtoCollection(player.Inventory.OrderBy(item => item.ItemSeed).ThenBy(item => item.State.StableItemId)
                 .Select(item => item.ToByteArray())) == expected.InventorySha256
             && HashProto(player.Attributes) == expected.AttributesSha256
@@ -212,6 +289,21 @@ public partial class SessionAcceptance
             && expected.ObjectEntityId == ProfileDepthUInt(profile, 1, "objectEntityId")
             && expected.DropEntityId == 1_000_009 && expected.DropSeed == 6001,
             "The authored Cathedral checkpoint no longer matches its compiled profile identities.");
+        Require((expected.TownPortalRoute is not null) == townPortalRoute,
+            "The saved Town Portal purchase does not match the compiled route marker.");
+        if (townPortalRoute) {
+            var route = expected.TownPortalRoute!;
+            var scroll = player.Inventory.SingleOrDefault(item => item.State.StableItemId == route.ScrollStableItemId);
+            Require(route.ScrollStableItemId != 0 && route.ScrollSeed == 9100 && route.ScrollSpellId == 39
+                && route.ScrollPrice == 50 && route.GoldAfterPurchase == 50 && expected.Gold == 50
+                && route.PortalId == 0 && !route.ScrollPreservedAtResume && !route.ScrollConsumedAfterCast
+                && !route.ReturnedToTown && !route.SwordRoundTripComplete && !route.Passed
+                && scroll is not null && scroll.ItemSeed == route.ScrollSeed
+                && scroll.State.SpellId == route.ScrollSpellId
+                && scroll.State.SpellSourceKind == ItemSpellSourceKind.ConsumableItem
+                && CountAuthoredItemOccurrences(main, player, route.ScrollStableItemId) == 1,
+                "Fresh-host resume did not preserve the purchased Town Portal source and 50-gold balance.");
+        }
         var sword = player.Equipment.Single(item => item.Slot == 4 && item.ItemSeed == expected.SwordSeed);
         Require(sword.State.StableItemId == expected.SwordStableItemId
             && sword.State.Durability == expected.SwordDurability
@@ -244,7 +336,11 @@ public partial class SessionAcceptance
             "The earned short sword did not remain equipped after the fresh host returned to L1.");
     }
 
-    private async Task VerifyAuthoredSmithRefusal(Main main, string directory, AuthoredDepthCheckpoint expected)
+    private async Task VerifyAuthoredSmithRefusal(
+        Main main,
+        string directory,
+        AuthoredDepthCheckpoint expected,
+        AuthoredTownPortalRouteEvidence? townPortalRoute = null)
     {
         var sections = (TabContainer)main.FindChild("HudSections", true, false);
         await ApproachAuthoredTownForSmithWithTrace(main, directory);
@@ -300,11 +396,25 @@ public partial class SessionAcceptance
             "Closing the Smith changed the retained sword/gold or did not leave the character in Town.");
         using var saved = JsonDocument.Parse(System.IO.File.ReadAllText(System.IO.Path.Combine(directory, "cathedral-depth-state.json")));
         var checkpoint = saved.RootElement.GetProperty("AuthoredDiagnostic").Deserialize<AuthoredDepthCheckpoint>()!;
+        if (townPortalRoute is not null) {
+            Require(townPortalRoute.ScrollPreservedAtResume && townPortalRoute.ScrollConsumedAfterCast
+                && townPortalRoute.ReturnedToTown && townPortalRoute.PortalId != 0
+                && townPortalRoute.PortalSourceLevelId == 1 && townPortalRoute.PortalDestinationLevelId == 0
+                && townPortalRoute.SwordRoundTripComplete
+                && townPortalRoute.SwordStableItemId == expected.SwordStableItemId
+                && townPortalRoute.SwordStateSha256 == expected.SwordStateSha256
+                && townPortalRoute.GoldAfterRoundTrip == expected.Gold
+                && townPortalRoute.StashGoldBeforeRoundTrip == expected.StashGold
+                && townPortalRoute.StashGoldAfterRoundTrip == expected.StashGold,
+                "The Town Portal route evidence is incomplete or changed the sword/gold stash baseline.");
+            townPortalRoute = townPortalRoute with { Passed = true };
+        }
         WriteEvidence(directory, "cathedral-depth-resume-state.json", new {
             Passed = true,
             GeometryHash = DepthGeometryHash(main),
             SavedDepth = 2,
             AuthoredDiagnostic = checkpoint with {
+                TownPortalRoute = townPortalRoute,
                 SmithStoreId = 1,
                 RepairQuoteReason = quote.RejectReason.ToString(),
                 RepairQuotePrice = quote.Price,
@@ -315,6 +425,111 @@ public partial class SessionAcceptance
                 ReturnedToTown = townPlayer.LevelId == 0,
             },
         });
+    }
+
+    private async Task<AuthoredSwordStashEvidence> VerifyAuthoredSwordStashRoundTrip(
+        Main main,
+        AuthoredDepthCheckpoint expected)
+    {
+        var sections = (TabContainer)main.FindChild("HudSections", true, false);
+        var equipment = (ItemList)main.FindChild("EquipmentItems", true, false);
+        var player = main.ObservedSnapshot!.Players.Single();
+        var equipped = player.Equipment.Single(item => item.Slot == 4 && item.ItemSeed == expected.SwordSeed).Clone();
+        var goldBefore = player.Gold;
+        var stashGoldBefore = player.StashGold;
+        Require(player.LevelId == 0 && !player.StashOpen && player.ActiveStoreId == 0
+            && equipped.State.StableItemId == expected.SwordStableItemId
+            && HashProto(equipped.State) == expected.SwordStateSha256
+            && goldBefore == expected.Gold && stashGoldBefore == expected.StashGold,
+            "The returned Town baseline changed before the sword stash round trip.");
+
+        await ClickListItem(sections, 1, equipment, 4);
+        var sequence = main.ObservedCommandResult!.ClientSequence;
+        var inventoryCell = FindInventorySpace(player, equipped.State);
+        await ClickGridCell(main, sections, 1, "InventoryGrid", inventoryCell);
+        await AcceptedAndSettled(main, sequence, "Unequip earned sword for stash round trip");
+        await Until(() => main.ObservedSnapshot!.Players.Single().Inventory.Any(item =>
+            item.State.StableItemId == equipped.State.StableItemId)
+            && main.ObservedSnapshot.Players.Single().Equipment.All(item => item.State.StableItemId != equipped.State.StableItemId),
+            "The earned sword did not move from equipment to inventory.", 5);
+
+        await ApproachDeclaredDestination(main, "towner:7", distanceBoundedApproachDeadline: true);
+        sequence = main.ObservedCommandResult!.ClientSequence;
+        await ClickControl(main, sections, 3, "OpenStash");
+        await AcceptedAndSettled(main, sequence, "Open Town stash for earned sword");
+        await Until(() => main.ObservedSnapshot!.Players.Single().StashOpen,
+            "The Town stash did not open for the earned sword.", 5);
+
+        player = main.ObservedSnapshot!.Players.Single();
+        var stashGrid = (GridContainer)main.FindChild("StashGrid", true, false);
+        var stashCell = Enumerable.Range(0, stashGrid.GetChildCount()).FirstOrDefault(cell =>
+            player.Stash.All(item => item.Page != 0 || item.Cell != cell), -1);
+        Require(stashCell >= 0, "No empty first-page stash cell is available for the earned sword.");
+        var carriedSword = player.Inventory.Single(item => item.State.StableItemId == equipped.State.StableItemId);
+        Require(HashProto(carriedSword.State) == expected.SwordStateSha256
+            && player.Gold == goldBefore && player.StashGold == stashGoldBefore,
+            "The sword or gold changed before depositing it into the stash.");
+        await StashInventoryItem(main, sections, equipped.State.StableItemId, stashCell);
+        await Until(() => main.ObservedSnapshot!.Players.Single().Stash.Any(item => item.Page == 0
+            && item.Cell == stashCell && item.Item.State.StableItemId == equipped.State.StableItemId),
+            "The earned sword did not reach its selected stash cell.", 5);
+        player = main.ObservedSnapshot!.Players.Single();
+        var stashed = player.Stash.Single(item => item.Page == 0 && item.Cell == stashCell);
+        Require(stashed.Item.State.StableItemId == expected.SwordStableItemId
+            && HashProto(stashed.Item.State) == expected.SwordStateSha256
+            && player.Inventory.All(item => item.State.StableItemId != expected.SwordStableItemId)
+            && CountAuthoredItemOccurrences(main, player, expected.SwordStableItemId) == 1
+            && player.Gold == goldBefore && player.StashGold == stashGoldBefore,
+            "Stashing the earned sword changed its exact state, duplicated it or changed either gold balance.");
+
+        await ClickGridCell(main, sections, 3, "StashGrid", stashCell);
+        var selectionTick = main.ObservedSnapshot!.Tick;
+        await Until(() => main.ObservedSnapshot!.Tick > selectionTick + 2 && Settled(main)
+            && main.ObservedPendingCommandCount == 0,
+            "The selected earned sword did not remain stable in the open stash.", 5);
+        sequence = main.ObservedCommandResult!.ClientSequence;
+        var withdrawnCell = FindInventorySpace(main.ObservedSnapshot!.Players.Single(), stashed.Item.State);
+        await ClickGridCell(main, sections, 1, "InventoryGrid", withdrawnCell);
+        await AcceptedAndSettled(main, sequence, "Withdraw earned sword from stash");
+        await Until(() => main.ObservedSnapshot!.Players.Single().Inventory.Any(item =>
+            item.State.StableItemId == expected.SwordStableItemId)
+            && main.ObservedSnapshot.Players.Single().Stash.All(item => item.Item.State.StableItemId != expected.SwordStableItemId),
+            "The selected earned sword did not return from stash to inventory.", 5);
+        var withdrawn = main.ObservedSnapshot!.Players.Single().Inventory.Single(item =>
+            item.State.StableItemId == expected.SwordStableItemId);
+        Require(HashProto(withdrawn.State) == expected.SwordStateSha256,
+            "Withdrawing the earned sword changed its authoritative item state.");
+
+        sequence = main.ObservedCommandResult!.ClientSequence;
+        await ClickControl(main, sections, 3, "CloseStash");
+        await AcceptedAndSettled(main, sequence, "Close stash after sword withdrawal");
+        await SelectInventoryItem(main, sections, expected.SwordStableItemId);
+        sequence = main.ObservedCommandResult!.ClientSequence;
+        await ClickListItem(sections, 1, equipment, 4);
+        await AcceptedAndSettled(main, sequence, "Re-equip earned sword after stash round trip");
+        await Until(() => main.ObservedSnapshot!.Players.Single().Equipment.Any(item =>
+            item.Slot == 4 && item.State.StableItemId == expected.SwordStableItemId),
+            "The earned sword did not return to its original equipment slot.", 5);
+        player = main.ObservedSnapshot!.Players.Single();
+        var restored = player.Equipment.Single(item => item.Slot == 4);
+        Require(HashProto(restored.State) == expected.SwordStateSha256
+            && CountAuthoredItemOccurrences(main, player, expected.SwordStableItemId) == 1
+            && player.LevelId == 0 && !player.StashOpen && player.ActiveStoreId == 0
+            && player.Gold == goldBefore && player.StashGold == stashGoldBefore,
+            "The sword was not re-equipped exactly once or the Town/stash gold baseline changed.");
+        return new AuthoredSwordStashEvidence(expected.SwordStableItemId, stashCell,
+            HashProto(restored.State), true, player.Gold, stashGoldBefore, player.StashGold);
+    }
+
+    private static int CountAuthoredItemOccurrences(Main main, PlayerSnapshot player, uint stableItemId)
+    {
+        bool Matches(ItemStateSnapshot? state) => state is not null && state.StableItemId == stableItemId;
+        return player.Inventory.Count(item => Matches(item.State))
+            + player.Belt.Count(item => Matches(item.State))
+            + player.Equipment.Count(item => Matches(item.State))
+            + player.Stash.Count(item => item.Item is not null && Matches(item.Item.State))
+            + (player.HeldItem is not null && Matches(player.HeldItem.State) ? 1 : 0)
+            + main.ObservedSnapshot!.WorldItems.Count(item => Matches(item.State));
     }
 
     private async Task ApproachAuthoredTownForSmithWithTrace(Main main, string directory)
@@ -452,12 +667,46 @@ public partial class SessionAcceptance
         uint EntityId, string CharacterName, uint CharacterClassId, uint CharacterLevel,
         uint LevelId, int PositionX, int PositionY, int Life, int LifeMaximum, int BaseLifeMaximum,
         int Mana, int ManaMaximum, int BaseManaMaximum,
-        uint Gold, uint Experience, string InventorySha256, string AttributesSha256, string BeltSha256, string EquipmentSha256,
+        uint Gold, uint StashGold, uint Experience,
+        string InventorySha256, string AttributesSha256, string BeltSha256, string EquipmentSha256,
         uint SwordSeed, uint SwordStableItemId, int SwordDurability, string SwordStateSha256,
         uint EncounterEntityId, uint ObjectEntityId, uint DropEntityId, uint DropSeed,
+        AuthoredTownPortalRouteEvidence? TownPortalRoute = null,
         uint SmithStoreId = 0, string RepairQuoteReason = "", uint RepairQuotePrice = 0,
         bool RepairButtonDisabled = false, bool RepairCommandQueued = false,
         uint GoldAfterSmith = 0, int SwordDurabilityAfterSmith = 0, bool ReturnedToTown = false);
+
+    private sealed record AuthoredTownPortalRouteEvidence(
+        uint ScrollStableItemId,
+        uint ScrollSeed,
+        uint ScrollSpellId,
+        uint ScrollPrice,
+        uint GoldAfterPurchase,
+        bool ScrollPreservedAtResume = false,
+        bool ScrollConsumedAfterCast = false,
+        uint PortalId = 0,
+        uint PortalSourceLevelId = 0,
+        uint PortalDestinationLevelId = 0,
+        int PortalDestinationPositionX = 0,
+        int PortalDestinationPositionY = 0,
+        bool ReturnedToTown = false,
+        uint SwordStableItemId = 0,
+        int SwordStashCell = -1,
+        string SwordStateSha256 = "",
+        bool SwordRoundTripComplete = false,
+        uint GoldAfterRoundTrip = 0,
+        uint StashGoldBeforeRoundTrip = 0,
+        uint StashGoldAfterRoundTrip = 0,
+        bool Passed = false);
+
+    private sealed record AuthoredSwordStashEvidence(
+        uint StableItemId,
+        int StashCell,
+        string StateSha256,
+        bool Completed,
+        uint GoldAfter,
+        uint StashGoldBefore,
+        uint StashGoldAfter);
 
     private async Task TravelDepthRoute(Main main, string directory, uint destination, JsonElement profile)
     {

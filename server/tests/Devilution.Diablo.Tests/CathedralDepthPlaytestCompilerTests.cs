@@ -76,7 +76,11 @@ public sealed class CathedralDepthPlaytestCompilerTests
             });
             using (var profileJson = JsonDocument.Parse(File.ReadAllText(
                        Path.Combine(output, CathedralDepthPlaytestCompiler.ProfileFileName))))
+            {
                 Assert.False(profileJson.RootElement.TryGetProperty("diagnosticDropItemSymbol", out _));
+                Assert.False(profileJson.RootElement.TryGetProperty("townPortalRoute", out _));
+                Assert.False(profileJson.RootElement.TryGetProperty("effectiveInputManifestHash", out _));
+            }
             Assert.DoesNotContain(pack.Tables, table => table.SourcePath == "procedural_levels.tsv");
             Assert.DoesNotContain(pack.Tables, table => table.SourcePath is
                 "quest_types.tsv" or "unique_monsters.tsv" or "unique_monster_placements.tsv"
@@ -129,6 +133,194 @@ public sealed class CathedralDepthPlaytestCompilerTests
                 Path.Combine(output, CathedralDepthPlaytestCompiler.ProfileFileName)));
             Assert.Equal("short_sword_standard",
                 profileJson.RootElement.GetProperty("diagnosticDropItemSymbol").GetString());
+        }
+        finally
+        {
+            DeleteOutput(output);
+        }
+    }
+
+    [Fact]
+    public void TownPortalRouteComposesTheExplicitPreviewChainAndPreservesAuthoredStock()
+    {
+        var basePack = LoadBasePack();
+        var (townLoopPreview, townPortalPreview) = LoadTownPreviewPacks();
+        var inputManifest = new ContentManifest(
+            basePack.Id,
+            basePack.Version,
+            [basePack, townLoopPreview, townPortalPreview]);
+        var output = NewOutput();
+        try
+        {
+            var profile = CathedralDepthPlaytestCompiler.Compile(
+                new CathedralDepthPlaytestCompilerOptions(
+                    basePack,
+                    output,
+                    CreatePieces([1, 2, 3, 4]),
+                    CreateProperties(),
+                    [1U, 2U, 3U, 4U]) {
+                    PlacementPolicy = CathedralDepthPlaytestPlacementPolicy.AuthoredDiagnostic,
+                    DiagnosticDropItemSymbol = "short_sword_standard",
+                    TownPortalRoute = CathedralDepthPlaytestCompiler.TownPortalRouteMarker,
+                    TownLoopPreviewPack = townLoopPreview,
+                    TownPortalPreviewPack = townPortalPreview,
+                });
+
+            Assert.Equal(CathedralDepthPlaytestCompiler.TownPortalRouteMarker, profile.TownPortalRoute);
+            Assert.Equal(inputManifest.Sha256, profile.EffectiveInputManifestHash);
+            var compiled = ContentPackLoader.LoadManifestDirectory(
+                Path.Combine(output, CathedralDepthPlaytestCompiler.ContentDirectoryName));
+            var stores = compiled.Tables.Single(table => table.SourcePath == "stores.tsv");
+            var portalStock = Assert.Single(stores.Rows, row =>
+                row.RequiredUInt32("store_id") == 1 && row.RequiredUInt32("store_slot") == 2);
+            Assert.Equal("smith", portalStock.Required("store_symbol"));
+            Assert.Equal("Smith", portalStock.Required("store_role"));
+            Assert.Equal(9100U, portalStock.RequiredUInt32("item_seed"));
+            Assert.Equal(50U, portalStock.RequiredUInt32("price"));
+            Assert.Equal(2119U, portalStock.RequiredUInt32("item_id"));
+            Assert.Equal("scroll_of_town_portal", portalStock.Required("item_symbol"));
+
+            var originalLoadouts = basePack.Tables.Single(table => table.SourcePath == "class_loadouts.tsv");
+            Assert.Equal(originalLoadouts.ToCanonicalTsv(),
+                compiled.Tables.Single(table => table.SourcePath == "class_loadouts.tsv").ToCanonicalTsv());
+            Assert.Equal("100", originalLoadouts.Rows.Single(row => row.Required("class_symbol") == "warrior")
+                .Required("starting_gold"));
+            Assert.All(compiled.Tables.Single(table => table.SourcePath == "monsters.tsv").Rows,
+                row => Assert.Equal("short_sword_standard", row.Required("drop_item_symbol")));
+            Assert.Equal(8, compiled.Tables.Single(table => table.SourcePath == "warps.tsv").Rows.Count);
+            Assert.Empty(compiled.Tables.Single(table => table.SourcePath == "portals.tsv").Rows);
+
+            using var profileJson = JsonDocument.Parse(File.ReadAllText(
+                Path.Combine(output, CathedralDepthPlaytestCompiler.ProfileFileName)));
+            Assert.Equal(CathedralDepthPlaytestCompiler.TownPortalRouteMarker,
+                profileJson.RootElement.GetProperty("townPortalRoute").GetString());
+            Assert.Equal(inputManifest.Sha256,
+                profileJson.RootElement.GetProperty("effectiveInputManifestHash").GetString());
+        }
+        finally
+        {
+            DeleteOutput(output);
+        }
+    }
+
+    [Fact]
+    public void TownPortalRouteRequiresItsMarkerAndBothExplicitPreviewPacks()
+    {
+        var basePack = LoadBasePack();
+        var (townLoopPreview, townPortalPreview) = LoadTownPreviewPacks();
+        var output = NewOutput();
+        try
+        {
+            Assert.Throws<ArgumentException>(() => CathedralDepthPlaytestCompiler.Compile(
+                Options(basePack, output) with {
+                    TownPortalRoute = CathedralDepthPlaytestCompiler.TownPortalRouteMarker,
+                    TownLoopPreviewPack = townLoopPreview,
+                    TownPortalPreviewPack = townPortalPreview,
+                }));
+            Assert.False(Directory.Exists(output));
+
+            Assert.Throws<ArgumentException>(() => CathedralDepthPlaytestCompiler.Compile(
+                Options(basePack, output) with {
+                    PlacementPolicy = CathedralDepthPlaytestPlacementPolicy.AuthoredDiagnostic,
+                    DiagnosticDropItemSymbol = "short_sword",
+                    TownPortalRoute = CathedralDepthPlaytestCompiler.TownPortalRouteMarker,
+                    TownLoopPreviewPack = townLoopPreview,
+                    TownPortalPreviewPack = townPortalPreview,
+                }));
+            Assert.False(Directory.Exists(output));
+
+            Assert.Throws<ArgumentException>(() => CathedralDepthPlaytestCompiler.Compile(
+                Options(basePack, output) with {
+                    PlacementPolicy = CathedralDepthPlaytestPlacementPolicy.AuthoredDiagnostic,
+                    DiagnosticDropItemSymbol = "short_sword_standard",
+                    TownPortalRoute = CathedralDepthPlaytestCompiler.TownPortalRouteMarker,
+                }));
+            Assert.False(Directory.Exists(output));
+
+            Assert.Throws<ArgumentException>(() => CathedralDepthPlaytestCompiler.Compile(
+                Options(basePack, output) with {
+                    PlacementPolicy = CathedralDepthPlaytestPlacementPolicy.AuthoredDiagnostic,
+                    DiagnosticDropItemSymbol = "short_sword_standard",
+                    TownPortalRoute = CathedralDepthPlaytestCompiler.TownPortalRouteMarker,
+                    TownLoopPreviewPack = townLoopPreview,
+                }));
+            Assert.False(Directory.Exists(output));
+
+            Assert.Throws<ArgumentException>(() => CathedralDepthPlaytestCompiler.Compile(
+                Options(basePack, output) with {
+                    PlacementPolicy = CathedralDepthPlaytestPlacementPolicy.AuthoredDiagnostic,
+                    DiagnosticDropItemSymbol = "short_sword_standard",
+                    TownLoopPreviewPack = townLoopPreview,
+                    TownPortalPreviewPack = townPortalPreview,
+                }));
+            Assert.False(Directory.Exists(output));
+        }
+        finally
+        {
+            DeleteOutput(output);
+        }
+    }
+
+    [Fact]
+    public void TownPortalRouteRejectsWrongOverlayOrderAndMissingAuthoredStockBeforePublishing()
+    {
+        var basePack = LoadBasePack();
+        var (townLoopPreview, townPortalPreview) = LoadTownPreviewPacks();
+        var output = NewOutput();
+        try
+        {
+            var wrongOrder = Options(basePack, output) with {
+                PlacementPolicy = CathedralDepthPlaytestPlacementPolicy.AuthoredDiagnostic,
+                DiagnosticDropItemSymbol = "short_sword_standard",
+                TownPortalRoute = CathedralDepthPlaytestCompiler.TownPortalRouteMarker,
+                TownLoopPreviewPack = townPortalPreview,
+                TownPortalPreviewPack = townLoopPreview,
+            };
+            Assert.Throws<InvalidDataException>(() => CathedralDepthPlaytestCompiler.Compile(wrongOrder));
+            Assert.False(Directory.Exists(output));
+
+            var portalStores = townPortalPreview.Tables.Single(table => table.SourcePath == "stores.tsv");
+            var emptyStores = TsvTable.Parse(portalStores.SourcePath,
+                string.Join('\t', portalStores.Columns) + "\n");
+            var missingStockPack = new ContentPack(
+                townPortalPreview.Id,
+                townPortalPreview.Version,
+                townPortalPreview.Tables.Select(table => table.SourcePath == "stores.tsv" ? emptyStores : table).ToArray(),
+                townPortalPreview.Dependencies,
+                townPortalPreview.Overlays,
+                townPortalPreview.Schema,
+                townPortalPreview.DependencyConstraints,
+                townPortalPreview.Assets);
+            var missingStock = Options(basePack, output) with {
+                PlacementPolicy = CathedralDepthPlaytestPlacementPolicy.AuthoredDiagnostic,
+                DiagnosticDropItemSymbol = "short_sword_standard",
+                TownPortalRoute = CathedralDepthPlaytestCompiler.TownPortalRouteMarker,
+                TownLoopPreviewPack = townLoopPreview,
+                TownPortalPreviewPack = missingStockPack,
+            };
+            Assert.Throws<InvalidDataException>(() => CathedralDepthPlaytestCompiler.Compile(missingStock));
+            Assert.False(Directory.Exists(output));
+
+            var baseItems = basePack.Tables.Single(table => table.SourcePath == "items.tsv");
+            var wrongPortalSpell = TsvTable.Parse(baseItems.SourcePath,
+                string.Join('\t', baseItems.Columns) + "\n"
+                + string.Join('\n', baseItems.Rows.Select(row => string.Join('\t', baseItems.Columns.Select(column =>
+                    row.RequiredUInt32("item_id") == 2119 && column == "spell_id"
+                        ? "38"
+                        : row.Values[column])))) + "\n");
+            var wrongSpellBase = new ContentPack(basePack.Id, basePack.Version,
+                basePack.Tables.Select(table => table.SourcePath == "items.tsv" ? wrongPortalSpell : table).ToArray(),
+                schema: basePack.Schema,
+                assets: basePack.Assets);
+            var wrongSpell = Options(wrongSpellBase, output) with {
+                PlacementPolicy = CathedralDepthPlaytestPlacementPolicy.AuthoredDiagnostic,
+                DiagnosticDropItemSymbol = "short_sword_standard",
+                TownPortalRoute = CathedralDepthPlaytestCompiler.TownPortalRouteMarker,
+                TownLoopPreviewPack = townLoopPreview,
+                TownPortalPreviewPack = townPortalPreview,
+            };
+            Assert.Throws<InvalidDataException>(() => CathedralDepthPlaytestCompiler.Compile(wrongSpell));
+            Assert.False(Directory.Exists(output));
         }
         finally
         {
@@ -408,6 +600,22 @@ public sealed class CathedralDepthPlaytestCompilerTests
             if (File.Exists(Path.Combine(directory.FullName, "AGENTS.md")))
                 return ContentPackLoader.LoadManifestDirectory(
                     Path.Combine(directory.FullName, "server", "content", "base"));
+        }
+        throw new DirectoryNotFoundException("Could not locate the repository root.");
+    }
+
+    private static (ContentPack TownLoopPreview, ContentPack TownPortalPreview) LoadTownPreviewPacks()
+    {
+        for (var directory = new DirectoryInfo(AppContext.BaseDirectory);
+             directory is not null;
+             directory = directory.Parent)
+        {
+            if (File.Exists(Path.Combine(directory.FullName, "AGENTS.md"))) {
+                var contentRoot = Path.Combine(directory.FullName, "server", "content");
+                return (
+                    ContentPackLoader.LoadManifestDirectory(Path.Combine(contentRoot, "town-loop-preview")),
+                    ContentPackLoader.LoadManifestDirectory(Path.Combine(contentRoot, "town-portal-preview")));
+            }
         }
         throw new DirectoryNotFoundException("Could not locate the repository root.");
     }

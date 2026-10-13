@@ -2,6 +2,11 @@
 
 Notable changes to this fork are recorded below.
 
+- 2026-10-13: Compose the generated Cathedral route with explicit Town preview
+  stock. Buy a portal scroll, retain it through floor-two cold resume, cast it for
+  Town return, then stash, withdraw and re-equip the earned sword with exact item
+  state and Gold. Keep existing profiles and cancellation checks compatible.
+
 - 2026-10-13: Fix authored loot eligibility from current player requirements and
   add an explicit generated Cathedral combat/loot/equipment route. Headless Godot
   saves on floor two, cold-resumes the character and off-level mutations, returns
