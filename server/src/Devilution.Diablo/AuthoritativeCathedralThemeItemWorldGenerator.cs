@@ -267,6 +267,72 @@ public static class AuthoritativeCathedralThemeItemWorldGenerator
             request.Catalog.Rules.UniqueChanceNormal);
     }
 
+    /** Allocates the ordinary L1 CreateRndUseful item used by chest Var2 == 0. */
+    internal static AuthoritativeCathedralThemeItemWorldResult CreateUsefulItem(
+        AuthoritativeCathedralThemeItemWorldRequest request,
+        int currentLevel)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        ValidateRequest(request);
+        if (currentLevel != 1 || currentLevel != request.Policy.Depth
+            || request.Policy.Hellfire || request.Policy.SetLevel)
+            throw new InvalidDataException("Native chest useful placement is supported only on ordinary Cathedral level 1.");
+
+        // CreateRndUseful returns immediately when AllocateItem cannot proceed;
+        // unlike CreateRndItem, it consumes no selector RNG first.
+        if (request.State.ActiveItemCount >= ActiveCapacity)
+            return new AuthoritativeCathedralThemeItemWorldResult(
+                request.State,
+                -1,
+                -1,
+                request.RandomState,
+                request.RandomState,
+                0,
+                null,
+                new(false, false, 0, 0));
+
+        var items = request.State.Items.Select(CloneItem).ToArray();
+        var activeItemIds = request.State.ActiveItemIds.ToArray();
+        var itemRefs = request.State.ItemRefs.ToArray();
+        var slot = activeItemIds[request.State.ActiveItemCount];
+        if (slot is < 0 or >= ActiveCapacity)
+            throw new InvalidDataException("ActiveItems selected an unsafe allocation slot.");
+
+        items[slot] = new AuthoritativeCathedralInitialItemState();
+        var placementRandom = new AuthoritativeLegacyRandom(request.RandomState);
+        var placement = PlaceItem(request.State, request.PositionX, request.PositionY,
+            slot, placementRandom, itemRefs);
+        items[slot] = items[slot] with { PositionX = placement.X, PositionY = placement.Y };
+        var itemSeed = unchecked((uint)placementRandom.AdvanceRndSeed());
+        var generated = AuthoritativeCathedralThemeItemGenerator.GenerateUseful(
+            items[slot], itemSeed, currentLevel, request.Catalog, request.Policy,
+            request.Player, request.State.UniqueItemFlags);
+        items[slot] = generated.Item;
+
+        var nextState = new AuthoritativeCathedralThemeItemWorldState(
+            items,
+            activeItemIds,
+            checked(request.State.ActiveItemCount + 1),
+            itemRefs,
+            request.State.PlayerRefs,
+            request.State.MonsterRefs,
+            request.State.ObjectRefs,
+            request.State.SolidTiles,
+            request.State.SetPieceTiles,
+            request.State.ObjectSolid,
+            request.State.ObjectCanInteract,
+            generated.UniqueItemFlags);
+        return new AuthoritativeCathedralThemeItemWorldResult(
+            nextState,
+            generated.SelectedNativeItemIndex,
+            slot,
+            placementRandom.State,
+            generated.FinalRandomState,
+            generated.ItemSeed,
+            generated.Item,
+            placement);
+    }
+
     public static AuthoritativeCathedralThemeItemWorldResult CreateTypeItem(
         AuthoritativeCathedralThemeItemWorldRequest request)
     {

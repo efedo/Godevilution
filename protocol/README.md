@@ -575,6 +575,12 @@ Windows toolchain command.
   native identity fallback; zero keeps the existing numeric presentation path.
   Nonzero families are included in the server's versioned canonical snapshot
   hash so presentation state cannot diverge silently across reconnects.
+- `ObjectSnapshot.native_chest_interactable` field 42 is a transient,
+  server-derived capability for a supported unopened native Cathedral chest.
+  It defaults false and clears after opening. Clients require this flag and
+  consistent closed-chest state before offering ordinary interaction; they
+  must not infer permission from `native_object_id`. It is excluded from
+  persisted gameplay state and discarded on reverse protocol mapping.
 - `MonsterSnapshot` fields 18-21 carry native-compatible moving occupancy:
   movement state, the adjacent future tile, and petrification. Native
   projection marks the current tile as positive occupancy and the future tile

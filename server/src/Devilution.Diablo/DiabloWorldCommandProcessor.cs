@@ -1447,9 +1447,11 @@ public sealed class DiabloWorldCommandProcessor
     {
         if (!participants.Contains(player))
             participants = participants.Append(player).ToArray();
-        if (!world.Objects.TryGetValue(objectEntityId, out var @object)
-            || @object.Activated
-            || !@object.HasAuthoritativeInteraction
+        if (!world.Objects.TryGetValue(objectEntityId, out var @object))
+            return DiabloWorldIntentResult.Rejected(DiabloRuleFailure.InvalidTarget);
+        var nativeChest = world.CanOperateNativeChest(@object);
+        if (@object.Activated
+            || !@object.HasAuthoritativeInteraction && !nativeChest
             || @object.LevelId != player.LevelId
             || (requireAdjacent
                 && DeterministicGridMetrics.ChebyshevDistance(
@@ -1464,12 +1466,22 @@ public sealed class DiabloWorldCommandProcessor
             && linkedQuest.Unavailable) {
             return DiabloWorldIntentResult.Rejected(DiabloRuleFailure.InvalidTarget);
         }
-        if (!world.CanOperateNativeObject(@object))
+        if (!world.CanOperateNativeObject(@object) && !nativeChest)
             return DiabloWorldIntentResult.Rejected(DiabloRuleFailure.NotAllowed);
         if (@object.CathedralDoor is not null)
             return !applyEffects || world.TryOperateCathedralDoor(objectEntityId, participants)
                 ? DiabloWorldIntentResult.Accepted
                 : DiabloWorldIntentResult.Rejected(DiabloRuleFailure.InvalidTarget);
+        if (nativeChest) {
+            if (!applyEffects)
+                return DiabloWorldIntentResult.Accepted;
+            var mutation = world.TryOperateNativeCathedralChest(
+                @object, player, participants, () => AllocateWorldItemEntityId(participants));
+            if (mutation is null)
+                return DiabloWorldIntentResult.Rejected(DiabloRuleFailure.NotAllowed);
+            random.Restore(mutation.FinalRandomState);
+            return DiabloWorldIntentResult.Accepted;
+        }
         if (@object.QuestTransitionKind != AuthoritativeObjectQuestTransitionKind.None
             && (!world.Quests.TryGetValue(@object.QuestId, out var transitionQuest)
                 || transitionQuest.Unavailable

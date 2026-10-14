@@ -375,6 +375,8 @@ public static class AuthoritativeCathedralThemeItemGenerator
     // item_misc_id values from tables/itemdat.h: IMISC_BOOK=24, IMISC_RING=25,
     // IMISC_AMULET=26, and IMISC_UNIQUE=27.
     private const int MiscBook = 24;
+    private const int MiscHeal = 3;
+    private const int MiscMana = 6;
     private const int MiscUnique = 27;
     private const int EquipUnequipable = 7;
     private const int QualityNormal = 0;
@@ -385,6 +387,7 @@ public static class AuthoritativeCathedralThemeItemGenerator
     private const ushort CreateInfoOnlyGood = 1 << 6;
     private const ushort CreateInfoUper15 = 1 << 7;
     private const ushort CreateInfoUper1 = 1 << 8;
+    private const ushort CreateInfoUseful = CreateInfoUper15 | CreateInfoUper1;
     private const ushort CreateInfoUnique = 1 << 9;
     private const ushort CreateInfoPregen = 1 << 15;
     private const int AffixMisc = 1;
@@ -398,6 +401,8 @@ public static class AuthoritativeCathedralThemeItemGenerator
     private const int GoeGood = 2;
     private const int GoldSmallLimit = 1000;
     private const int GoldMediumLimit = 2500;
+    private const int NativeHealingPotionCursor = 32; // Canonical IDI_HEAL ItemData row.
+    private const int NativeManaPotionCursor = 39; // Canonical IDI_MANA ItemData row.
     private const int GoldMaxLimit = 5000;
     private const int ItemNameBytes = 64;
     private const int ZeroWidthSpace = 0x200B;
@@ -490,6 +495,59 @@ public static class AuthoritativeCathedralThemeItemGenerator
         AuthoritativeCathedralThemeItemCatalog catalog,
         AuthoritativeCathedralThemeItemPolicy policy)
         => GenerateCore(request, catalog, policy, true);
+
+    /** Generates the ordinary L1 SetupAllUseful path used by chest Var2 == 0. */
+    internal static AuthoritativeCathedralThemeItemResult GenerateUseful(
+        AuthoritativeCathedralInitialItemState inputItem,
+        uint itemSeed,
+        int currentLevel,
+        AuthoritativeCathedralThemeItemCatalog catalog,
+        AuthoritativeCathedralThemeItemPolicy policy,
+        AuthoritativeCathedralThemeItemPlayerContext? player,
+        IReadOnlySet<int>? uniqueItemFlags)
+    {
+        ArgumentNullException.ThrowIfNull(inputItem);
+        ArgumentNullException.ThrowIfNull(catalog);
+        ArgumentNullException.ThrowIfNull(policy);
+        ValidatePolicy(policy);
+        if (currentLevel != 1 || currentLevel != policy.Depth || policy.SetLevel)
+            throw new InvalidDataException("Native chest useful contents are supported only on ordinary Cathedral level 1.");
+        ValidateInputState(inputItem);
+        ValidateUniqueFlags(uniqueItemFlags);
+
+        // Native SetupAllUseful chooses IDI_MANA/IDI_HEAL by canonical item
+        // index; later droppable rows duplicate their misc/name/cursor fields.
+        var mana = FindUsefulItem(
+            catalog,
+            AuthoritativeCathedralInitialItemGenerator.NativeManaPotionId,
+            "Potion of Mana",
+            MiscMana,
+            NativeManaPotionCursor);
+        var healing = FindUsefulItem(
+            catalog,
+            AuthoritativeCathedralInitialItemGenerator.NativeHealingPotionId,
+            "Potion of Healing",
+            MiscHeal,
+            NativeHealingPotionCursor);
+        var flags = CopyFlags(uniqueItemFlags);
+        var random = new AuthoritativeLegacyRandom(itemSeed);
+
+        // Native PickRandomlyAmong({ IDI_MANA, IDI_HEAL }) clamps a negative
+        // GenerateRnd result to the first entry, Mana.
+        var selection = Math.Max(random.GenerateRnd(2), 0) == 0 ? mana : healing;
+        var item = GetItemAttrs(CloneItem(inputItem with { Seed = itemSeed }),
+            selection.NativeItemIndex, currentLevel, random, catalog, policy) with {
+                Seed = itemSeed,
+                CreateInfo = checked((ushort)(currentLevel | CreateInfoUseful)),
+            };
+        item = SetupItem(item, selection.NativeItemIndex, catalog, player, policy);
+        return ToResult(new GenerationState {
+            Item = item,
+            ItemSeed = itemSeed,
+            RandomState = random.State,
+            ItemIndex = selection.NativeItemIndex,
+        }, flags);
+    }
 
     /** Generates SetupAllItems followed by TryRandomUniqueItem, without ground-scalar mutation. */
     public static AuthoritativeCathedralThemeItemResult GenerateSetupAndUniqueContinuation(
@@ -1603,6 +1661,30 @@ public static class AuthoritativeCathedralThemeItemGenerator
             throw new InvalidDataException(
                 "Native gold selection requires an available Gold ItemData row at IDI_GOLD index 0.");
         return 0;
+    }
+
+    private static AuthoritativeCathedralNativeItemDefinition FindUsefulItem(
+        AuthoritativeCathedralThemeItemCatalog catalog,
+        int nativeItemIndex,
+        string expectedName,
+        int expectedMiscId,
+        int cursorGraphic)
+    {
+        var item = catalog.Items.SingleOrDefault(value => value.NativeItemIndex == nativeItemIndex);
+        if (item is null
+            || item.NativeItemId != 0
+            || item.ItemType != ItemTypeMisc
+            || item.MiscId != expectedMiscId
+            || item.CursorGraphic != cursorGraphic
+            || !string.Equals(item.Name, expectedName, StringComparison.Ordinal)
+            || !string.IsNullOrEmpty(item.ShortName)
+            || !item.Available
+            || !item.Usable
+            || item.DropRate != 0
+            || item.MinimumMonsterLevel != 0)
+            throw new InvalidDataException(
+                $"Native chest useful contents require the canonical available item row at IDI index {nativeItemIndex}.");
+        return item;
     }
 
     private static void ValidateRequestedItemType(int itemType)

@@ -2,6 +2,7 @@ using Devilution.Domain.Protocol;
 using Devilution.Domain.Inventory;
 using Devilution.Engine;
 using Devilution.Shared;
+using System.Text.Json.Serialization;
 
 namespace Devilution.Diablo;
 
@@ -578,6 +579,10 @@ public sealed record DiabloSimulationSnapshot(
     /** Exact mutable-door projection owned by explicit save version four. */
     public DiabloCathedralDoorCheckpoint? CathedralDoors { get; init; }
 
+    /** Transient server-policy capability; it is re-derived and never persisted. */
+    [JsonIgnore]
+    public IReadOnlySet<uint> NativeChestInteractableEntityIds { get; internal init; } = DiabloNativeChestInteractableEntitySet.Empty;
+
     /** Bounded presentation fields; clients never replay native door operations. */
     public IReadOnlyList<DiabloCathedralDoorObjectState> CathedralDoorObjects { get; init; } = [];
 
@@ -999,6 +1004,7 @@ public sealed partial class DiabloSimulation
             CathedralDepthWorldIdentity = this.CathedralDepthWorldIdentity,
             CathedralDoors = includeDoorPersistence ? WorldState.CaptureCathedralDoors() : null,
             CathedralDoorObjects = WorldState.CaptureCathedralDoorObjects(),
+            NativeChestInteractableEntityIds = WorldState.CaptureNativeChestInteractableEntityIds(),
             QuestTownerInteractions = QuestTownerInteractions?.Definitions ?? [],
             TownerGreetings = TownerGreetings?.Definitions.ToArray() ?? [],
             ActiveWorldMutationIds = WorldState.ActiveWorldMutationIds

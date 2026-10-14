@@ -29,6 +29,7 @@ public enum AuthoritativeCathedralItemObjectMutationPolicy
     BarrelDestroy,
     CruxDestroy,
     ExplicitlyRefused,
+    NativeChest,
 }
 
 /**
@@ -207,6 +208,39 @@ public sealed class AuthoritativeCathedralItemDeathTransaction
         => new(LevelId, ExpectedVersion, Loot, projection, entityId,
             RuntimeIdentity, ExpectedUniqueVersion);
 }
+
+/** Prepared native chest mutation; it never changes the live item pool. */
+internal sealed class AuthoritativeCathedralItemChestTransaction
+{
+    internal AuthoritativeCathedralItemChestTransaction(
+        uint levelId,
+        int expectedVersion,
+        AuthoritativeCathedralChestLootResult loot,
+        IReadOnlyList<AuthoritativeCathedralNativeItemProjection?> projections,
+        Guid runtimeIdentity,
+        int expectedUniqueVersion)
+    {
+        LevelId = levelId;
+        ExpectedVersion = expectedVersion;
+        Loot = loot;
+        Projections = projections.ToArray();
+        RuntimeIdentity = runtimeIdentity;
+        ExpectedUniqueVersion = expectedUniqueVersion;
+    }
+
+    public uint LevelId { get; }
+    public AuthoritativeCathedralChestLootResult Loot { get; }
+    internal int ExpectedVersion { get; }
+    internal IReadOnlyList<AuthoritativeCathedralNativeItemProjection?> Projections { get; }
+    internal Guid RuntimeIdentity { get; }
+    internal int ExpectedUniqueVersion { get; }
+}
+
+/** Visible item results from one committed native chest operation. */
+internal sealed record AuthoritativeCathedralItemChestMutationResult(
+    uint LevelId,
+    uint FinalRandomState,
+    IReadOnlyList<AuthoritativeCathedralNativeItemProjection> Projections);
 
 /** Result of a committed live item mutation. */
 public sealed record AuthoritativeCathedralItemMutationResult(
@@ -573,6 +607,154 @@ public class AuthoritativeCathedralItemRuntime
         return prepared.Projection is null || entityId == 0
             ? prepared
             : prepared.WithEntity(entityId, prepared.Projection with { EntityId = entityId });
+    }
+
+    /** Prepare the native chest's ordered item attempts against a versioned pool clone. */
+    internal AuthoritativeCathedralItemChestTransaction PrepareChestLoot(
+        uint levelId,
+        AuthoritativeCathedralChestLootRequest request)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        var level = GetLevel(levelId);
+        var levelProfile = GetLevelProfile(levelId);
+        if (levelProfile.Depth != 1 || request.Policy.Depth != 1
+            || request.Policy.GameMode != DiabloGameMode.SinglePlayer)
+            throw new InvalidDataException("Native chest item transactions are limited to the owned single-player L1 pool.");
+        if (!levelProfile.ObjectBindings.Any(binding =>
+                binding.NativeObjectSlot == request.ChestObjectSlot
+                && binding.MutationPolicy == AuthoritativeCathedralItemObjectMutationPolicy.NativeChest
+                && binding.PositionX == request.PositionX
+                && binding.PositionY == request.PositionY))
+            throw new InvalidDataException("Native chest request does not match its explicit object binding.");
+        if (request.WorldState.ActiveItemCount != level.ActiveItemCount
+            || !request.WorldState.ActiveItemIds.SequenceEqual(level.ActiveItemIds)
+            || !request.WorldState.Items.SequenceEqual(level.Items)
+            || !request.WorldState.ItemRefs.SequenceEqual(level.SignedItemRefs)
+            || !request.WorldState.UniqueItemFlags.SetEquals(uniqueItemFlags))
+            throw new InvalidOperationException("Native chest loot was prepared from stale or altered item-pool state.");
+
+        var loot = AuthoritativeCathedralChestLootGenerator.Generate(request);
+        var projections = new AuthoritativeCathedralNativeItemProjection?[loot.Entries.Count];
+        for (var index = 0; index < loot.Entries.Count; index++) {
+            var entry = loot.Entries[index];
+            if (!entry.Allocated || !entry.Visible || entry.Item is null)
+                continue;
+            var binding = GetBinding(entry.Item.ItemIndex);
+            projections[index] = ProjectNativeItem(
+                entry.Slot,
+                0,
+                entry.Item.Seed,
+                PriceFor(entry.Item),
+                entry.Item,
+                binding,
+                profile.ContentInventoryDimensions);
+        }
+        return new(levelId, level.Version, loot, projections, runtimeIdentity, uniqueHistoryVersion);
+    }
+
+    /**
+     * Commit a prepared chest operation only after every projection and entity
+     * identity is validated, then perform the single object-open transition.
+     */
+    internal AuthoritativeCathedralItemChestMutationResult? CommitChestLoot(
+        AuthoritativeCathedralItemChestTransaction transaction,
+        Func<uint> allocateEntityId,
+        Func<uint, bool> isEntityIdOccupied,
+        Func<bool> canCommitChestOpen,
+        Action commitChestOpen)
+    {
+        ArgumentNullException.ThrowIfNull(transaction);
+        ArgumentNullException.ThrowIfNull(allocateEntityId);
+        ArgumentNullException.ThrowIfNull(isEntityIdOccupied);
+        ArgumentNullException.ThrowIfNull(canCommitChestOpen);
+        ArgumentNullException.ThrowIfNull(commitChestOpen);
+        var level = GetLevel(transaction.LevelId);
+        if (transaction.RuntimeIdentity != runtimeIdentity
+            || level.Version != transaction.ExpectedVersion
+            || transaction.ExpectedUniqueVersion != uniqueHistoryVersion)
+            throw new InvalidOperationException("The Cathedral chest transaction was prepared from stale raw item state.");
+
+        var loot = transaction.Loot;
+        if (loot.Entries.Count != transaction.Projections.Count
+            || loot.WorldState.Items.Count != PoolCapacity
+            || loot.WorldState.ActiveItemIds.Count != ActiveCapacity
+            || loot.WorldState.ActiveItemCount < level.ActiveItemCount
+            || loot.WorldState.ActiveItemCount > ActiveCapacity
+            || !loot.WorldState.ActiveItemIds.SequenceEqual(level.ActiveItemIds))
+            throw new InvalidDataException("Native chest result does not preserve the configured item-pool shape.");
+
+        // Refuse before consuming allocator identities. The commit callback is
+        // an action because this synchronous command path has already validated
+        // the same chest and cannot legitimately fail between these steps.
+        if (!canCommitChestOpen())
+            return null;
+
+        var bindings = level.Bindings.ToArray();
+        var projections = new List<AuthoritativeCathedralNativeItemProjection>();
+        var allocatedCount = 0;
+        var entityIds = new HashSet<uint>();
+        for (var index = 0; index < loot.Entries.Count; index++) {
+            var entry = loot.Entries[index];
+            var projection = transaction.Projections[index];
+            if (!entry.Allocated) {
+                if (projection is not null)
+                    throw new InvalidDataException("A full native chest pool produced an item projection without an allocation.");
+                continue;
+            }
+            var expectedSlotIndex = level.ActiveItemCount + allocatedCount;
+            if (expectedSlotIndex >= ActiveCapacity
+                || entry.Slot != level.ActiveItemIds[expectedSlotIndex]
+                || bindings[entry.Slot] != 0)
+                throw new InvalidDataException("Native chest allocation does not use the next inactive slot.");
+            allocatedCount++;
+
+            if (!entry.Visible) {
+                if (projection is not null)
+                    throw new InvalidDataException("An invisible native chest item unexpectedly has a live projection.");
+                continue;
+            }
+            if (projection is null || entry.Item is null
+                || projection.Slot != entry.Slot
+                || projection.Raw != entry.Item
+                || projection.EntityId != 0)
+                throw new InvalidDataException("A visible native chest item has no matching prepared projection.");
+
+            var entityId = allocateEntityId();
+            if (entityId == 0 || !entityIds.Add(entityId)
+                || isEntityIdOccupied(entityId) || IsBound(entityId))
+                throw new InvalidDataException("Native chest item allocation collided with an existing entity identity.");
+            projection = projection with { EntityId = entityId };
+            ValidateProjection(projection, allowSlotMismatch: false);
+            bindings[entry.Slot] = entityId;
+            projections.Add(projection);
+        }
+        if (loot.WorldState.ActiveItemCount != level.ActiveItemCount + allocatedCount)
+            throw new InvalidDataException("Native chest active-item count disagrees with its allocation attempts.");
+
+        var candidateLevel = new DiabloCathedralItemLevelCheckpoint(
+            level.LevelId,
+            level.Depth,
+            loot.WorldState.Items.Select(CloneItem).ToArray(),
+            loot.WorldState.ActiveItemIds.ToArray(),
+            loot.WorldState.ActiveItemCount,
+            loot.WorldState.ItemRefs.ToArray(),
+            bindings.Select((entityId, slot) => new DiabloCathedralItemSlotEntityBinding(slot, entityId)).ToArray(),
+            level.RandomState,
+            level.GenerationIdentity);
+        ValidateLevelShape(candidateLevel);
+        var candidateCheckpoint = new DiabloCathedralItemCheckpoint(
+            profile.MetadataFingerprint,
+            profile.GenerationFingerprint,
+            loot.WorldState.UniqueItemFlags.OrderBy(flag => flag).ToArray(),
+            levels.Values.Select(value => value.LevelId == level.LevelId ? candidateLevel : value.Checkpoint)
+                .OrderBy(value => value.LevelId)
+                .ToArray());
+        ValidateCheckpoint(candidateCheckpoint, profile);
+
+        commitChestOpen();
+
+        ApplyChestLootState(level, loot, bindings);
+        return new(transaction.LevelId, loot.FinalRandomState, projections);
     }
 
     /**
@@ -996,6 +1178,32 @@ public class AuthoritativeCathedralItemRuntime
         }
         if (loot.SelectedSlot >= 0 && loot.SelectedSlot < PoolCapacity)
             level.Bindings[loot.SelectedSlot] = entityId;
+        level.Version++;
+    }
+
+    private void ApplyChestLootState(
+        MutableLevel level,
+        AuthoritativeCathedralChestLootResult loot,
+        IReadOnlyList<uint> bindings)
+    {
+        if (loot.WorldState.Items.Count != PoolCapacity
+            || loot.WorldState.ActiveItemIds.Count != ActiveCapacity
+            || bindings.Count != PoolCapacity)
+            throw new InvalidDataException("Native chest result does not contain a complete item-pool projection.");
+        for (var i = 0; i < PoolCapacity; i++) {
+            level.Items[i] = CloneItem(loot.WorldState.Items[i]);
+            level.Bindings[i] = bindings[i];
+        }
+        for (var i = 0; i < ActiveCapacity; i++)
+            level.ActiveItemIds[i] = loot.WorldState.ActiveItemIds[i];
+        for (var i = 0; i < CellCount; i++)
+            level.SignedItemRefs[i] = loot.WorldState.ItemRefs[i];
+        level.ActiveItemCount = loot.WorldState.ActiveItemCount;
+        if (!uniqueItemFlags.SetEquals(loot.WorldState.UniqueItemFlags)) {
+            uniqueItemFlags = loot.WorldState.UniqueItemFlags.ToHashSet();
+            uniqueHistoryVersion++;
+        }
+        // The chest transition is a mutation even when it creates no items.
         level.Version++;
     }
 

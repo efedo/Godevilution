@@ -1,10 +1,25 @@
 [CmdletBinding()]
-param([string]$GodotExecutable, [ValidateSet('legacy', 'cohort')] [string]$PersistenceMode = 'legacy', [switch]$Visible, [switch]$Journey, [switch]$TownLoop, [switch]$Lifecycle, [switch]$Multiplayer, [switch]$MultiplayerRecovery, [switch]$MultiplayerPendingRecovery, [string]$CathedralProfileDirectory, [string]$CathedralDepthProfileDirectory, [string]$CathedralDoorProfileDirectory, [string]$CathedralNativeProfileDirectory, [ValidateSet('default', 'atlas', 'semantic', 'missing', 'undersized', 'invalid')] [string]$PresentationPackProfile = 'default', [switch]$CommandTimingTrace, [switch]$Cooperative)
+param([string]$GodotExecutable, [ValidateSet('legacy', 'cohort')] [string]$PersistenceMode = 'legacy', [switch]$Visible, [switch]$Journey, [switch]$TownLoop, [switch]$Lifecycle, [switch]$Multiplayer, [switch]$MultiplayerRecovery, [switch]$MultiplayerPendingRecovery, [string]$CathedralProfileDirectory, [string]$CathedralDepthProfileDirectory, [string]$CathedralDoorProfileDirectory, [string]$CathedralNativeProfileDirectory, [ValidateSet('default', 'atlas', 'semantic', 'missing', 'undersized', 'invalid')] [string]$PresentationPackProfile = 'default', [switch]$CommandTimingTrace, [switch]$Cooperative, [switch]$CathedralNativeChest, [string]$CathedralNativeChestSessionDirectory)
 
 $ErrorActionPreference = 'Stop'
 $PersistenceMode = $PersistenceMode.ToLowerInvariant()
 $PresentationPackProfile = $PresentationPackProfile.ToLowerInvariant()
 $cathedralNativeProfile = -not [string]::IsNullOrWhiteSpace($CathedralNativeProfileDirectory)
+$cathedralNativeChest = [bool]$CathedralNativeChest
+if ($cathedralNativeChest) {
+    if (-not $cathedralNativeProfile -or $PersistenceMode -cne 'cohort' -or $Visible -or
+        $Journey -or $TownLoop -or $Lifecycle -or $Multiplayer -or $MultiplayerRecovery -or $MultiplayerPendingRecovery -or
+        $Cooperative -or
+        $CathedralProfileDirectory -or $CathedralDepthProfileDirectory -or $CathedralDoorProfileDirectory -or
+        $PresentationPackProfile -ne 'default' -or $CommandTimingTrace -or
+        [string]::IsNullOrWhiteSpace($CathedralNativeChestSessionDirectory) -or
+        -not [IO.Path]::IsPathFullyQualified($CathedralNativeChestSessionDirectory)) {
+        throw 'Native chest acceptance requires the pinned profile, a copied absolute cohort session, and headless single-player mode.'
+    }
+    $CathedralNativeChestSessionDirectory = [IO.Path]::GetFullPath($CathedralNativeChestSessionDirectory)
+} elseif (-not [string]::IsNullOrWhiteSpace($CathedralNativeChestSessionDirectory)) {
+    throw 'CathedralNativeChestSessionDirectory is only valid with -CathedralNativeChest.'
+}
 if ($cathedralNativeProfile -and ($PersistenceMode -cne 'cohort' -or $Visible -or
     $Journey -or $TownLoop -or $Lifecycle -or $Multiplayer -or $MultiplayerRecovery -or $MultiplayerPendingRecovery -or
     $Cooperative -or $CathedralProfileDirectory -or $CathedralDepthProfileDirectory -or $CathedralDoorProfileDirectory -or
@@ -47,7 +62,20 @@ if ($PresentationPackProfile -ne 'default' -and ($Journey -or $TownLoop -or $Lif
     throw 'Presentation pack fixtures require the separate base single-player acceptance path.'
 }
 $repositoryRoot = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot '..')).Path
-$sessionDirectory = if ($CathedralProfileDirectory -or $CathedralDepthProfileDirectory -or $CathedralDoorProfileDirectory -or $CathedralNativeProfileDirectory) {
+$sessionDirectory = if ($cathedralNativeChest) {
+    $nativeProfileRoot = [IO.Path]::GetFullPath($CathedralNativeProfileDirectory).TrimEnd('\', '/')
+    $nativeSessionsRoot = Join-Path $nativeProfileRoot 'sessions'
+    $nativeChestSessionRoot = [IO.Path]::GetFullPath($CathedralNativeChestSessionDirectory)
+    $sessionsPrefix = $nativeSessionsRoot.TrimEnd('\', '/') + [IO.Path]::DirectorySeparatorChar
+    if (-not $nativeChestSessionRoot.StartsWith($sessionsPrefix, [StringComparison]::OrdinalIgnoreCase) -or
+        -not (Test-Path -LiteralPath (Join-Path $nativeChestSessionRoot 'resume-token.txt') -PathType Leaf) -or
+        -not (Test-Path -LiteralPath (Join-Path $nativeChestSessionRoot 'cathedral-native-population-session.json') -PathType Leaf) -or
+        -not (Test-Path -LiteralPath (Join-Path $nativeChestSessionRoot 'save/authoritative-cohort.json') -PathType Leaf) -or
+        -not (Test-Path -LiteralPath (Join-Path $nativeChestSessionRoot 'cathedralnativeresume.json') -PathType Leaf)) {
+        throw 'Native chest acceptance requires the supplied copied Town cohort, its native profile marker, and the passed final R3 resume evidence.'
+    }
+    $nativeChestSessionRoot
+} elseif ($CathedralProfileDirectory -or $CathedralDepthProfileDirectory -or $CathedralDoorProfileDirectory -or $CathedralNativeProfileDirectory) {
     $profileDirectory = if ($CathedralNativeProfileDirectory) { $CathedralNativeProfileDirectory } elseif ($CathedralDepthProfileDirectory) { $CathedralDepthProfileDirectory } elseif ($CathedralDoorProfileDirectory) { $CathedralDoorProfileDirectory } else { $CathedralProfileDirectory }
     Join-Path ([IO.Path]::GetFullPath($profileDirectory)) ('sessions/acceptance-' + [guid]::NewGuid().ToString('N'))
 } else { Join-Path ([System.IO.Path]::GetTempPath()) ('Godevilution-Scene-Acceptance-' + [guid]::NewGuid().ToString('N')) }
@@ -66,7 +94,7 @@ function Read-ModeProcessEvidence([string]$Phase) {
     if ($evidence.PersistenceMode -cne $PersistenceMode -or $evidence.HostPersistence -cne $expectedHostPersistence) {
         throw "The $Phase process evidence did not preserve persistence mode '$PersistenceMode'."
     }
-    if ($Phase -in @('CooperativeJourney', 'CooperativeResume', 'CathedralNativeJourney', 'CathedralNativeResume') -and
+    if ($Phase -in @('CooperativeJourney', 'CooperativeResume', 'CathedralNativeJourney', 'CathedralNativeResume', 'CathedralNativeChestJourney', 'CathedralNativeChestResume') -and
         ([string]$evidence.ContentHash -cnotmatch '^[0-9a-f]{64}$' -or
          [string]$evidence.RulesetHash -cnotmatch '^[0-9a-f]{64}$')) {
         throw "The $Phase process evidence omitted validated host content/ruleset identity."
@@ -346,6 +374,160 @@ try {
     [Environment]::SetEnvironmentVariable('GODEVILUTION_PRESENTATION_PACK', $null, 'Process')
     if ($PresentationPackProfile -ne 'default') {
         $env:GODEVILUTION_PRESENTATION_PACK = "res://assets/presentation-acceptance-$PresentationPackProfile.json"
+    }
+    if ($CathedralNativeChest) {
+        $parameters.QuitAfterSeconds = 900
+        & $launcher @parameters -AcceptancePhase CathedralNativeChestJourney
+        $createdProcess = Read-ModeProcessEvidence 'CathedralNativeChestJourney'
+        $parameters.QuitAfterSeconds = 600
+        & $launcher @parameters -AcceptancePhase CathedralNativeChestResume
+        $resumedProcess = Read-ModeProcessEvidence 'CathedralNativeChestResume'
+        Assert-FreshProcessEvidence $createdProcess $resumedProcess 1
+        foreach ($field in @('ContentHash', 'RulesetHash', 'ProfileHash', 'ContentTreeHash',
+            'PopulationTreeHash', 'RuntimeTreeHash', 'ProfileKind', 'AdapterId')) {
+            if ($createdProcess.$field -cne $resumedProcess.$field) {
+                throw "Native chest resume changed its pinned $field identity."
+            }
+        }
+        $profileMetadataPath = Join-Path $CathedralNativeProfileDirectory 'cathedral-native-population-playtest.json'
+        $profileMetadataHash = (Get-FileHash -LiteralPath $profileMetadataPath -Algorithm SHA256).Hash.ToUpperInvariant()
+        $profileMetadata = Get-Content -LiteralPath $profileMetadataPath -Raw -ErrorAction Stop | ConvertFrom-Json -ErrorAction Stop
+        if ($profileMetadataHash -cne 'A992857810C51CE2A802588D8F3386D94D4C6AA44127394553D1E797B9F82FC1' -or
+            $createdProcess.ProfileKind -cne 'cathedral-native-population-playtest' -or
+            $createdProcess.AdapterId -cne 'devilution.diablo.cathedral-native-population.v1' -or
+            $createdProcess.ProfileHash -cne $profileMetadataHash -or
+            $profileMetadata.nativePopulation -isnot [bool] -or -not $profileMetadata.nativePopulation -or
+            $profileMetadata.nativePopulationClaim -isnot [bool] -or $profileMetadata.nativePopulationClaim -or
+            $profileMetadata.populationPolicy -cne 'original-diablo-single-player-normal-rogue-l1-main' -or
+            $profileMetadata.contentManifestHash -cne $createdProcess.ContentHash -or
+            $profileMetadata.packFileHash -cne $createdProcess.ContentTreeHash -or
+            $profileMetadata.populationPackFileHash -cne $createdProcess.PopulationTreeHash -or
+            $profileMetadata.runtimePackFileHash -cne $createdProcess.RuntimeTreeHash -or
+            $profileMetadata.populationMetadataFingerprint -notmatch '^[0-9A-Fa-f]{64}$') {
+            throw 'Native chest process identity does not match the pinned unclaimed population profile.'
+        }
+        $journeyPath = Join-Path $sessionDirectory 'cathedralnativechestjourney.json'
+        $resumePath = Join-Path $sessionDirectory 'cathedralnativechestresume.json'
+        $priorResumePath = Join-Path $sessionDirectory 'cathedralnativeresume.json'
+        foreach ($path in @($journeyPath, $resumePath, $priorResumePath)) {
+            if (-not (Test-Path -LiteralPath $path -PathType Leaf)) {
+                throw "Native chest acceptance did not retain required checkpoint evidence: $path"
+            }
+        }
+        $journeyEvidence = Get-Content -LiteralPath $journeyPath -Raw -ErrorAction Stop | ConvertFrom-Json -ErrorAction Stop
+        $resumeEvidence = Get-Content -LiteralPath $resumePath -Raw -ErrorAction Stop | ConvertFrom-Json -ErrorAction Stop
+        $priorResume = Get-Content -LiteralPath $priorResumePath -Raw -ErrorAction Stop | ConvertFrom-Json -ErrorAction Stop
+        $journeyChest = $journeyEvidence.NativeChest
+        $resumeChest = $resumeEvidence.NativeChest
+        if ($journeyEvidence.Passed -isnot [bool] -or -not $journeyEvidence.Passed -or
+            $resumeEvidence.Passed -isnot [bool] -or -not $resumeEvidence.Passed -or
+            $resumeChest.Passed -isnot [bool] -or -not $resumeChest.Passed -or
+            $journeyEvidence.Mode -cne 'SinglePlayer' -or $resumeEvidence.Mode -cne 'SinglePlayer' -or
+            $journeyEvidence.Visible -isnot [bool] -or $journeyEvidence.Visible -or
+            $resumeEvidence.Visible -isnot [bool] -or $resumeEvidence.Visible -or
+            $journeyEvidence.ContentHash -cne $createdProcess.ContentHash -or
+            $resumeEvidence.ContentHash -cne $createdProcess.ContentHash -or
+            $journeyEvidence.RulesetHash -cne $createdProcess.RulesetHash -or
+            $resumeEvidence.RulesetHash -cne $createdProcess.RulesetHash -or
+            $journeyEvidence.LevelId -ne 0 -or $resumeEvidence.LevelId -ne 0 -or
+            $journeyEvidence.JourneyReturnedToTown -isnot [bool] -or -not $journeyEvidence.JourneyReturnedToTown) {
+            throw 'Native chest phase evidence did not pass at the Town save boundary under the pinned headless host.'
+        }
+        foreach ($hashField in @('ContentHash', 'RulesetHash')) {
+            Assert-NativeEvidenceHash $journeyEvidence.$hashField "chest journey $hashField"
+            Assert-NativeEvidenceHash $resumeEvidence.$hashField "chest resume $hashField"
+        }
+        foreach ($document in @($journeyEvidence, $resumeEvidence)) {
+            Assert-NativeEvidenceInteger $document.EntityId 'chest player entity ID' 1 ([long]::MaxValue)
+            Assert-NativeEvidenceInteger $document.ClassId 'chest player class ID' 1 ([long]::MaxValue)
+            Assert-NativeEvidenceInteger $document.X 'chest player X coordinate' 0 111
+            Assert-NativeEvidenceInteger $document.Y 'chest player Y coordinate' 0 111
+            Assert-NativeEvidenceInteger $document.Sequence 'chest phase sequence' 1 ([long]::MaxValue)
+        }
+        $expectedPriorSequence = [uint64]$priorResume.NativePopulation.FinalSequence
+        if ($priorResume.Passed -isnot [bool] -or -not $priorResume.Passed -or
+            $journeyChest.AdapterId -cne $createdProcess.AdapterId -or
+            $journeyChest.PopulationPolicy -cne $profileMetadata.populationPolicy -or
+            $journeyChest.PopulationMetadataFingerprint -cne $profileMetadata.populationMetadataFingerprint -or
+            $journeyChest.ContentHash -cne $createdProcess.ContentHash -or
+            $journeyChest.RulesetHash -cne $createdProcess.RulesetHash -or
+            [uint64]$journeyChest.PriorTownSequence -ne $expectedPriorSequence -or
+            [uint64]$journeyChest.Sequence -ne [uint64]$journeyEvidence.Sequence -or
+            [uint64]$journeyChest.Sequence -le $expectedPriorSequence -or
+            $journeyChest.LevelId -ne 0 -or $journeyChest.EntityId -ne $journeyEvidence.EntityId -or
+            $journeyChest.ClassId -ne 1 -or $journeyChest.X -ne $journeyEvidence.X -or $journeyChest.Y -ne $journeyEvidence.Y -or
+            $journeyChest.EquipmentSeed -ne $priorResume.NativePopulation.RepairItemSeed -or
+            $journeyChest.EquipmentStableItemId -ne $priorResume.NativePopulation.StableItemId -or
+            $journeyChest.EquipmentStateSha256 -cne $priorResume.NativePopulation.FinalItemStateSha256 -or
+            $journeyChest.Gold -ne $priorResume.NativePopulation.Gold -or
+            $journeyChest.StashGold -ne $priorResume.NativePopulation.StashGold) {
+            throw 'The native chest journey did not start from the passed final R3 Town checkpoint.'
+        }
+        Assert-NativeEvidenceInteger $journeyChest.PriorTownSequence 'prior Town sequence' 1 ([long]::MaxValue)
+        Assert-NativeEvidenceInteger $journeyChest.Sequence 'chest Town sequence' 1 ([long]::MaxValue)
+        Assert-NativeEvidenceHash $journeyChest.L1GeometrySha256 'chest L1 geometry hash'
+        Assert-NativeEvidenceHash $journeyChest.L1WorldItemsSha256 'chest L1 item projection hash'
+        $openedChests = @($journeyChest.OpenedChests)
+        $chestLoot = @($openedChests | ForEach-Object { @($_.Loot) })
+        $lootEntityIds = @($chestLoot | ForEach-Object { $_.EntityId })
+        if ($openedChests.Count -lt 1 -or $chestLoot.Count -lt 1 -or
+            $lootEntityIds.Count -ne (@($lootEntityIds | Select-Object -Unique).Count)) {
+            throw 'Native chest acceptance did not prove a visible generated item with unique world identity.'
+        }
+        foreach ($chest in $openedChests) {
+            Assert-NativeEvidenceInteger $chest.EntityId 'native chest entity ID' 1 ([long]::MaxValue)
+            Assert-NativeEvidenceInteger $chest.NativeObjectId 'native chest object type' 5 7
+            Assert-NativeEvidenceInteger $chest.Sequence 'chest-open sequence' ($expectedPriorSequence + 1) ([long]::MaxValue)
+            if ($chest.AnimationFrameAfter -ne ($chest.AnimationFrameBefore + 2)) {
+                throw 'A native chest did not preserve the ordinary one-way animation transition.'
+            }
+            foreach ($loot in @($chest.Loot)) {
+                Assert-NativeEvidenceInteger $loot.EntityId 'generated item entity ID' 1 ([long]::MaxValue)
+                Assert-NativeEvidenceInteger $loot.ItemSeed 'generated item seed' 0 ([long]::MaxValue)
+                Assert-NativeEvidenceInteger $loot.StableItemId 'generated stable item ID' 1 ([long]::MaxValue)
+                Assert-NativeEvidenceInteger $loot.NativeItemIndex 'generated native item index' 0 ([long]::MaxValue)
+                Assert-NativeEvidenceHash $loot.ItemStateSha256 'generated item state hash'
+                Assert-NativeEvidenceHash $loot.WorldItemSha256 'generated world item hash'
+            }
+        }
+        if ($resumeChest.ResumedSessionMatched -isnot [bool] -or -not $resumeChest.ResumedSessionMatched -or
+            [uint64]$resumeChest.SavedSequence -ne [uint64]$journeyEvidence.Sequence -or
+            $resumeChest.OpenedChestsRetained -ne $openedChests.Count -or
+            $resumeChest.VisibleLootRetainedExactlyOnce -ne $chestLoot.Count -or
+            $resumeChest.L1RetentionVerified -isnot [bool] -or -not $resumeChest.L1RetentionVerified -or
+            $resumeChest.L1GeometrySha256 -cne $journeyChest.L1GeometrySha256 -or
+            $resumeChest.L1WorldItemsSha256 -cne $journeyChest.L1WorldItemsSha256 -or
+            $resumeChest.RepeatClickDidNotReopen -isnot [bool] -or -not $resumeChest.RepeatClickDidNotReopen -or
+            $resumeChest.RepeatRandomStateCheckPassed -isnot [bool] -or
+            -not $resumeChest.RepeatRandomStateCheckPassed -or
+            $resumeChest.RepeatWorldItemsSha256 -cne $journeyChest.L1WorldItemsSha256 -or
+            $resumeChest.RepeatDisposition -notin @('QueuedOrdinaryClick', 'ClientDidNotQueueOpenedChest') -or
+            $resumeChest.RepeatClickStatus -notin @('NotQueued', 'Accepted', 'Duplicate', 'Rejected') -or
+            $resumeChest.RepeatClickRejectReason -notin @('Unspecified', 'NotAllowed', 'InvalidTarget') -or
+            $resumeChest.TownReturned -isnot [bool] -or -not $resumeChest.TownReturned -or
+            [uint64]$resumeChest.FinalSequence -ne [uint64]$resumeEvidence.Sequence -or
+            $resumeEvidence.EntityId -ne $journeyEvidence.EntityId -or
+            $resumeEvidence.ClassId -ne $journeyEvidence.ClassId -or
+            [uint64]$resumeEvidence.Sequence -le [uint64]$resumeChest.SavedSequence -or
+            $resumeChest.FinalGold -ne $journeyChest.Gold -or
+            $resumeChest.FinalStashGold -ne $journeyChest.StashGold -or
+            $resumeChest.FinalLife -ne $journeyChest.Life -or
+            $resumeChest.FinalMana -ne $journeyChest.Mana -or
+            $resumeChest.FinalExperience -ne $journeyChest.Experience -or
+            $resumeChest.FinalInventorySha256 -cne $journeyChest.InventorySha256 -or
+            $resumeChest.FinalBeltSha256 -cne $journeyChest.BeltSha256 -or
+            $resumeChest.FinalEquipmentSha256 -cne $journeyChest.EquipmentSha256 -or
+            $resumeChest.FinalEquipmentStateSha256 -cne $journeyChest.EquipmentStateSha256 -or
+            $resumeChest.FinalL1WorldItemsSha256 -cne $journeyChest.L1WorldItemsSha256) {
+            throw 'The chest fresh-host resume did not retain the Town save, L1 object/loot state, or no-duplicate repeat result.'
+        }
+        foreach ($hashField in @('L1GeometrySha256', 'L1WorldItemsSha256', 'RepeatWorldItemsSha256',
+            'FinalInventorySha256', 'FinalBeltSha256', 'FinalEquipmentSha256',
+            'FinalEquipmentStateSha256', 'FinalL1WorldItemsSha256')) {
+            Assert-NativeEvidenceHash $resumeChest.$hashField "chest resume $hashField"
+        }
+        Write-Host "PASS: Native Cathedral ordinary chest loot, Town checkpoint, fresh-host L1 retention, and no duplicate loot from repeat clicks. Evidence: $sessionDirectory"
+        return
     }
     if ($CathedralNativeProfileDirectory) {
         $parameters.QuitAfterSeconds = 900

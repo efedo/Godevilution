@@ -38,7 +38,7 @@ public partial class SessionAcceptance : Node
     private async Task RunAsync()
     {
         var phase = Environment.GetEnvironmentVariable("GODEVILUTION_ACCEPTANCE_PHASE");
-        if (phase is not ("Create" or "Resume" or "Recovery" or "Journey" or "JourneyResume" or "TownLoop" or "TownLoopResume" or "Lifecycle" or "LifecycleResume" or "MultiplayerCreate" or "MultiplayerResume" or "MultiplayerRecovery" or "MultiplayerPendingRecovery" or "CooperativeJourney" or "CooperativeResume" or "Performance" or "PerformanceCreate" or "PerformanceResume" or "CathedralJourney" or "CathedralResume" or "CathedralDepthJourney" or "CathedralDepthResume" or "CathedralDoorJourney" or "CathedralDoorResume" or "CathedralNativeJourney" or "CathedralNativeResume"))
+        if (phase is not ("Create" or "Resume" or "Recovery" or "Journey" or "JourneyResume" or "TownLoop" or "TownLoopResume" or "Lifecycle" or "LifecycleResume" or "MultiplayerCreate" or "MultiplayerResume" or "MultiplayerRecovery" or "MultiplayerPendingRecovery" or "CooperativeJourney" or "CooperativeResume" or "Performance" or "PerformanceCreate" or "PerformanceResume" or "CathedralJourney" or "CathedralResume" or "CathedralDepthJourney" or "CathedralDepthResume" or "CathedralDoorJourney" or "CathedralDoorResume" or "CathedralNativeJourney" or "CathedralNativeResume" or "CathedralNativeChestJourney" or "CathedralNativeChestResume"))
             throw new InvalidOperationException("Explicit acceptance phase is required.");
         var portalPreview = Environment.GetEnvironmentVariable("GODEVILUTION_PORTAL_PREVIEW") == "1";
         var directory = Environment.GetEnvironmentVariable("GODEVILUTION_ACCEPTANCE_DIRECTORY")
@@ -92,6 +92,8 @@ public partial class SessionAcceptance : Node
                     "TownLoopResume" => "townloop.json", "CathedralResume" => "cathedraljourney.json",
                     "CathedralDepthResume" => "cathedraldepthjourney.json", "CathedralDoorResume" => "cathedraldoorjourney.json",
                     "CathedralNativeResume" => "cathedralnativejourney.json",
+                    "CathedralNativeChestJourney" => "cathedralnativeresume.json",
+                    "CathedralNativeChestResume" => "cathedralnativechestjourney.json",
                     "LifecycleResume" => "lifecycle.json", _ => "create.json",
                 })))
                 ?? throw new InvalidDataException("The creation evidence is empty.");
@@ -112,7 +114,7 @@ public partial class SessionAcceptance : Node
             : null;
         var center = connect.GetGlobalRect().GetCenter();
         Require(GetViewport().GetVisibleRect().HasPoint(center), $"The Connect button {connect.GetGlobalRect()} is outside viewport {GetViewport().GetVisibleRect()}.");
-        var nativeAdmissionPhase = phase is "CathedralNativeJourney" or "CathedralNativeResume";
+        var nativeAdmissionPhase = phase is "CathedralNativeJourney" or "CathedralNativeResume" or "CathedralNativeChestJourney" or "CathedralNativeChestResume";
         var nativeSubmissionCount = 0;
         var nativeJourneySubmittedExpectedIdentity = false;
         var nativeResumeSubmittedExpectedForm = false;
@@ -197,6 +199,10 @@ public partial class SessionAcceptance : Node
         }
         if (phase is "CathedralDoorJourney" or "CathedralDoorResume") {
             await VerifyCathedralDoorsAsync(main, directory, phase, visible);
+            return;
+        }
+        if (phase is "CathedralNativeChestJourney" or "CathedralNativeChestResume") {
+            await VerifyCathedralNativeChestsAsync(main, directory, phase, visible, previous);
             return;
         }
         if (phase is "CathedralNativeJourney" or "CathedralNativeResume") {
@@ -388,7 +394,7 @@ public partial class SessionAcceptance : Node
                 "CathedralJourney" => 300, "CathedralResume" => 180,
                 "CathedralDepthJourney" => 885, "CathedralDepthResume" => IsTownPortalPreviewResumeProfile() ? 885 : 435,
                 "CathedralDoorJourney" => 300, "CathedralDoorResume" => 180,
-                "CathedralNativeJourney" or "CathedralNativeResume" => 885,
+                "CathedralNativeJourney" or "CathedralNativeResume" or "CathedralNativeChestJourney" or "CathedralNativeChestResume" => 885,
                 "Lifecycle" => 345, "LifecycleResume" => 70,
                 "TownLoop" => 225, "Journey" => 150, "MultiplayerCreate" or "MultiplayerResume" => 70,
                 "MultiplayerRecovery" => 180, "CooperativeJourney" => 285, "CooperativeResume" => 225, _ => 40,

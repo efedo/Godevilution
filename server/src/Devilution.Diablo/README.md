@@ -149,7 +149,20 @@ seeds are `[2588,2588,1,4294967295]`; it generates item semantics and selects ex
 native stock identities in the output. Existing profiles keep their catalogs.
 The profile requests native population with `nativePopulationClaim=false`.
 Canonical TSV digests cover LF content; pack digests cover published CRLF bytes.
-Live activation remains subject to the item/codec gates in the completion plan.
+The scoped native Town/combat/earned-gear/fresh-host/Town-service route passes
+headlessly; normal-profile adoption remains held.
+
+The opt-in L1 policy permits unopened, untrapped ordinary `OBJ_CHEST1` through
+`OBJ_CHEST3`. Native seed/count/branch fields drive the two loot branches,
+including their distinct full-pool RNG behavior. Opening is one-way
+(activated, animation frame +2); raw provenance, item pools and opened state
+survive cold restore. Initial generation identity remains compatible with
+existing native cohorts. Trapped and unsupported variants remain refused.
+`ThemeItemPlacementTest.CaptureNativeChestOperations` writes the 36-case
+`native-chest-operations.json` corpus (six live-animation, 30 loading cases).
+Set `GODEVILUTION_CATHEDRAL_CHEST_ORACLE_DIRECTORY` to a new capture directory
+for that native test, then use it for
+`AuthoritativeCathedralChestLootNativeOracleTests.OrdinaryChestLootMatchesNative`.
 The native overlay completes newly created active Gold stacks from its admitted
 raw identity and denomination cursor. Revaluation validates the original stack
 before changing its value/cursor; ordinary catalogs retain their existing state.
@@ -165,8 +178,8 @@ terminal frame; visible native actors use their active window instead of legacy
 aggro radius. Older schemas keep their prior bytes and require trusted timing
 hydration; existing legacy moves complete on their original next update.
 The managed native Town/combat/earned-gear/cold-resume/stash journey and in-flight
-arrow, melee and walk continuation pass. Actual Godot native-profile application
-verification, full native AI/world-loop parity and normal adoption remain open.
+arrow, melee and walk continuation pass, as does the scoped Godot native-profile
+route. Full native AI/world-loop parity and normal adoption remain open.
 
 Timed casts consume their source at the native effect frame, before the animation
 ends. Save/restore retains a bounded historical consumable reference afterward,

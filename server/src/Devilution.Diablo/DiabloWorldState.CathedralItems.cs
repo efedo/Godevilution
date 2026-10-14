@@ -313,6 +313,12 @@ public sealed partial class DiabloWorldState
                     throw new InvalidDataException("Native door placement requires live door state.");
                 isSolid = door.SolidFlag; isInteractive = door.SelectionRegion != 0;
                 break;
+            case AuthoritativeCathedralItemObjectMutationPolicy.NativeChest:
+                ValidateNativePopulationObject(value);
+                if (value.Destroyed || value.Breakable || value.CathedralDoor is not null)
+                    throw new InvalidDataException("A native chest has unsupported object behavior.");
+                isInteractive = binding.InitialSelectionRegion != 0 && !value.Activated;
+                break;
             case AuthoritativeCathedralItemObjectMutationPolicy.Immutable:
                 if (value.Activated || value.Destroyed || value.Breakable || value.HasAuthoritativeInteraction)
                     throw new InvalidDataException("An immutable native object acquired unsupported gameplay state.");

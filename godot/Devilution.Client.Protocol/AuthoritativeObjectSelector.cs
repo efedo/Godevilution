@@ -1,5 +1,6 @@
 using Devilution.Protocol;
 using Devilution.Protocol.V1;
+using ProtocolObjectPresentationKind = Devilution.Protocol.V1.ObjectPresentationKind;
 
 namespace Devilution.Client.Protocol;
 
@@ -59,6 +60,8 @@ public static class AuthoritativeObjectSelector
     public static bool HasAuthoritativeInteraction(ObjectSnapshot @object)
     {
         ArgumentNullException.ThrowIfNull(@object);
+        if (@object.NativeChestInteractable)
+            return IsValidNativeChestInteraction(@object);
         if (@object.CathedralDoor is not null)
             return IsValidCathedralDoorInteraction(@object);
         return @object.EffectKind != 0
@@ -68,6 +71,47 @@ public static class AuthoritativeObjectSelector
             || @object.QuestSequenceFollowUpKind != 0
             || @object.DialogueMessageId != 0
             || @object.TrapArmed;
+    }
+
+    /** Validates the additive capability without inferring chest authority from an ID. */
+    public static bool IsValidNativeChestInteraction(ObjectSnapshot @object)
+    {
+        ArgumentNullException.ThrowIfNull(@object);
+        return @object.NativeChestInteractable
+            && @object.LevelId != 0
+            && @object.NativeObjectId is >= 5 and <= 7
+            && !@object.Activated
+            && !@object.Destroyed
+            && !@object.TrapArmed
+            && !@object.Breakable
+            && !@object.IsShrine
+            && !@object.ActivateOnOccupancy
+            && @object.CathedralDoor is null
+            && @object.EffectKind == 0
+            && @object.EffectAmount == 0
+            && @object.QuestId == 0
+            && @object.QuestTransitionKind == 0
+            && @object.QuestTransitionAmount == 0
+            && @object.QuestTransitionRequiredVariable1 is -1 or 0
+            && @object.QuestTransitionRequiredVariable2 is -1 or 0
+            && @object.RewardKind == 0
+            && @object.RewardId == 0
+            && @object.RewardItemLevel == 0
+            && @object.RewardOffsetX == 0
+            && @object.RewardOffsetY == 0
+            && @object.RewardOriginKind == 0
+            && @object.RewardSetLevelId == 0
+            && @object.ProjectileTargetOffsetX == 0
+            && @object.ProjectileTargetOffsetY == 0
+            && @object.QuestSequenceFollowUpKind == 0
+            && @object.QuestSequenceFollowUpAmount == 0
+            && @object.QuestSequenceFollowUpOffsetX == 0
+            && @object.QuestSequenceFollowUpOffsetY == 0
+            && @object.ProjectileSourceKind == 0
+            && @object.DialogueMessageId == 0
+            && @object.ActivatedAnimationFrame == 0
+            && @object.PresentationKind is ProtocolObjectPresentationKind.Unspecified
+                or ProtocolObjectPresentationKind.Generic;
     }
 
     private static bool IsValidCathedralDoorInteraction(ObjectSnapshot @object)

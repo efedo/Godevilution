@@ -99,6 +99,90 @@ public sealed class CathedralDepthContentActivationTests
             "native-cathedral-population-profile", rogue.ClassId,
             goldOverride: null, lifeOverride: null, manaOverride: null, startingLevelId: 1,
             startingPositionX: 57, startingPositionY: 40);
+        var nativeChest = l1Objects.Where(worldState.CanOperateNativeChest)
+            .OrderBy(value => value.EntityId)
+            .First();
+        Assert.True(worldState.TryGetNativeChestLootParameters(nativeChest,
+            out var nativeChestType, out var nativeChestSeed, out var nativeChestItemCount,
+            out var nativeChestItemBranch));
+        Assert.InRange(nativeChestType, 5, 7);
+        Assert.Equal((int)nativeChest.NativeObjectId, nativeChestType);
+        Assert.InRange(nativeChestItemCount, 0, nativeChestType - 4);
+        Assert.InRange(nativeChestItemBranch, 0, 7);
+        Assert.True(worldState.TryGetNativeChestLootParameters(nativeChest,
+            out var repeatedChestType, out var repeatedChestSeed, out var repeatedChestItemCount,
+            out var repeatedChestItemBranch));
+        Assert.Equal((nativeChestType, nativeChestSeed, nativeChestItemCount, nativeChestItemBranch),
+            (repeatedChestType, repeatedChestSeed, repeatedChestItemCount, repeatedChestItemBranch));
+        var chestPlacementCandidates = (from y in new[] { nativeChest.PositionY - 1, nativeChest.PositionY }
+            from x in new[] { nativeChest.PositionX - 1, nativeChest.PositionX }
+            where (uint)x < 112 && (uint)y < 112
+            select (X: x, Y: y)).ToArray();
+        var blockedChestPlacementCandidates = chestPlacementCandidates
+            .Where(position => !worldState.CanPutNativeItem(1, position.X, position.Y)).ToArray();
+        Assert.NotEmpty(blockedChestPlacementCandidates);
+        var chestItemLevelBeforeOpen = Assert.Single(worldState.CaptureCathedralItems()!.Levels);
+        var chestObjectBeforeOpen = DiabloSimulation.CaptureObject(nativeChest);
+        var chestRuntime = activation.Simulation.CreateRuntime(hero);
+        const string chestSessionId = "native-chest-cohort";
+        chestRuntime.Write(chestSessionId, player => player.EntityId = 0x70000075);
+        var chestPlayer = chestRuntime.Read(chestSessionId, player => player);
+        var closedChestModuleSnapshot = activation.Simulation.CaptureSnapshot(chestPlayer, 0);
+        var closedChestWireSnapshot = DiabloProtocolMapper.ToProtocolSnapshot(
+            closedChestModuleSnapshot, levelGeometry: worldState.World!.Levels);
+        AuthoritativeSnapshotValidator.Validate(closedChestWireSnapshot);
+        var closedChestProjection = Assert.Single(closedChestWireSnapshot.Objects,
+            value => value.EntityId == nativeChest.EntityId);
+        Assert.True(closedChestProjection.NativeChestInteractable);
+        Assert.False(closedChestProjection.Activated);
+        Assert.True(worldState.TryCommitNativeChestOpen(nativeChest));
+        var chestObjectOpened = chestObjectBeforeOpen with {
+            Activated = true,
+            AnimationFrame = chestObjectBeforeOpen.AnimationFrame + 2,
+        };
+        Assert.Equal(chestObjectOpened, DiabloSimulation.CaptureObject(nativeChest));
+        var openedChestModuleSnapshot = activation.Simulation.CaptureSnapshot(chestPlayer, 0);
+        var openedChestWireSnapshot = DiabloProtocolMapper.ToProtocolSnapshot(
+            openedChestModuleSnapshot, levelGeometry: worldState.World!.Levels);
+        AuthoritativeSnapshotValidator.Validate(openedChestWireSnapshot);
+        var openedChestProjection = Assert.Single(openedChestWireSnapshot.Objects,
+            value => value.EntityId == nativeChest.EntityId);
+        Assert.False(openedChestProjection.NativeChestInteractable);
+        Assert.True(openedChestProjection.Activated);
+        Assert.False(worldState.CanOperateNativeChest(nativeChest));
+        Assert.False(worldState.TryGetNativeChestLootParameters(nativeChest,
+            out var openedType, out var openedSeed, out var openedCount, out var openedBranch));
+        Assert.Equal((0, 0U, 0, 0), (openedType, openedSeed, openedCount, openedBranch));
+        Assert.False(worldState.TryCommitNativeChestOpen(nativeChest));
+        var newlyAvailablePlacements = blockedChestPlacementCandidates
+            .Where(position => worldState.CanPutNativeItem(1, position.X, position.Y)).ToArray();
+        Assert.NotEmpty(newlyAvailablePlacements);
+        var newlyAvailablePlacement = newlyAvailablePlacements[0];
+        var chestItemLevelAfterOpen = Assert.Single(worldState.CaptureCathedralItems()!.Levels);
+        Assert.Equal(chestItemLevelBeforeOpen.Items, chestItemLevelAfterOpen.Items);
+        Assert.Equal(chestItemLevelBeforeOpen.ActiveItemIds, chestItemLevelAfterOpen.ActiveItemIds);
+        Assert.Equal(chestItemLevelBeforeOpen.SignedItemRefs, chestItemLevelAfterOpen.SignedItemRefs);
+        Assert.Equal(chestItemLevelBeforeOpen.RandomState, chestItemLevelAfterOpen.RandomState);
+
+        var chestCodec = new DiabloCohortCodec();
+        var encodedChestCohort = chestCodec.Serialize(
+            activation.Simulation.CaptureCohortState(chestRuntime));
+        var candidateFactory = Assert.IsAssignableFrom<
+            Func<DiabloCohortState, DiabloCohortCandidate>>(activation.CohortCandidateFactory);
+        var chestCandidate = candidateFactory(chestCodec.Deserialize(encodedChestCohort));
+        var restoredChestRuntime = chestCandidate.CreateRuntime();
+        var restoredChestWorld = chestCandidate.Simulation.WorldState;
+        var restoredChest = restoredChestWorld.Objects[nativeChest.EntityId];
+        Assert.Equal(chestObjectOpened, DiabloSimulation.CaptureObject(restoredChest));
+        Assert.False(restoredChestWorld.CanOperateNativeChest(restoredChest));
+        Assert.False(restoredChestWorld.TryGetNativeChestLootParameters(restoredChest,
+            out _, out _, out _, out _));
+        Assert.False(restoredChestWorld.TryCommitNativeChestOpen(restoredChest));
+        Assert.True(restoredChestWorld.CanPutNativeItem(1,
+            newlyAvailablePlacement.X, newlyAvailablePlacement.Y));
+        Assert.Equal(encodedChestCohort, chestCodec.Serialize(
+            chestCandidate.Simulation.CaptureCohortState(restoredChestRuntime)));
+
         var trappedDoor = trappedNativeDoors[0];
         var trapTestTemplate = activation.PlayerLoadouts.CreateTemplate(
             "native-trapped-door-policy", rogue.ClassId,
@@ -189,6 +273,11 @@ public sealed class CathedralDepthContentActivationTests
             throw new InvalidOperationException(
                 "The first native host snapshot failed protocol validation.", exception);
         }
+        var hostNativeChest = Assert.Single(nativeSnapshot.Objects,
+            value => value.EntityId == nativeChest.EntityId);
+        Assert.True(hostNativeChest.NativeChestInteractable);
+        Assert.False(hostNativeChest.Activated);
+
         var expectedTrappedDoorIds = trappedNativeDoors.Select(value => value.EntityId).ToArray();
         var projectedTrappedDoorIds = nativeSnapshot.Objects
             .Where(value => value.CathedralDoor is not null && value.TrapArmed)

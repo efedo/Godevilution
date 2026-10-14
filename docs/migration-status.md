@@ -44,6 +44,20 @@ unsupported behavior is a migration gap, not permission for local simulation.
 
 ## Current delivery position and verification limits
 
+Ordinary untrapped native L1 chests now use both native loot branches,
+one-way opened-state mutation and strict item-pool/cold-restore validation.
+Existing native cohort generation identity is retained. The native oracle
+passes 36 cases (six live-animation, 30 loading); 22 focused managed cases
+pass across the retained runs. The complete headless Godot pair passes from
+a copy of the old Town cohort at sequence 196: two chests open, one yields
+loot, and Town saves at 272. Fresh host/client resume matches 272, revisits
+L1 with exact opened/loot state, and returns to Town at 313 with Life 2880,
+892 XP and 98 Gold. Repeat clicking leaves the chest unselectable and loot
+unchanged; its ordinary fallback receipt is Rejected/InvalidTarget, not a
+second chest operation. Explicit native/module tests establish duplicate
+operation refusal. Evidence: `.local/native-chests-20261014/headless-chests-r6.log`.
+Normal adoption, rendered/full-world and campaign gates remain open.
+
 The opt-in native Rogue L1 work carries collision-time bow arrows, melee/recovery
 and native walk phases through cohort v5. Bow actions retain the clicked actor
 identity and freeze its future tile; hit and damage resolve only on collision.

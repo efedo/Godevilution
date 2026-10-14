@@ -1010,6 +1010,8 @@ message ObjectSnapshot {
 	// Optional exact native Cathedral door state. Presence marks this object as a
 	// repeatable typed door; absence preserves legacy object wire bytes.
 	CathedralDoorSnapshot cathedral_door = 41;
+	// Server-validated capability for an unopened, untrapped native L1 chest.
+	bool native_chest_interactable = 42;
 }
 
 // Exact native door presentation and cached geometry. The enclosing object

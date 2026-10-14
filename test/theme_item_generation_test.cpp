@@ -38,6 +38,7 @@
 #include "game/players/players.hpp"
 #include "game/portals/portal.hpp"
 #include "game/quests/quests.hpp"
+#include "network/protocol/msg.h"
 #include "persistence/options.h"
 #include "persistence/loadsave.h"
 #include "tables/leveldat.h"
@@ -1095,6 +1096,100 @@ void WriteRoomObject(std::ostream &out, int slot, const Object &value)
 	ROOM_OBJECT_N("bookMessage", bookMessage); ROOM_OBJECT_N("var8", _oVar8);
 #undef ROOM_OBJECT_N
 #undef ROOM_OBJECT_B
+}
+
+// SyncOpObject dispatches straight to native OperateChest without table/registry setup.
+// Characterize actual native chest calls against complete item pools, including
+// retained inactive slots and the ambient RNG. Expected rows are comparison-only.
+TEST_F(ThemeItemPlacementTest, CaptureNativeChestOperations)
+{
+	const char *directory = std::getenv("GODEVILUTION_CATHEDRAL_CHEST_ORACLE_DIRECTORY");
+	if (directory == nullptr || *directory == '\0') GTEST_SKIP() << "Set the chest operation capture directory.";
+	const std::filesystem::path root = std::filesystem::absolute(directory);
+	ASSERT_TRUE(std::filesystem::is_directory(root));
+	ASSERT_TRUE(std::filesystem::is_empty(root));
+	struct ExecutionGuard {
+		bool sound = gbSndInited, headless = HeadlessMode;
+		~ExecutionGuard() { gbSndInited = sound; HeadlessMode = headless; }
+	} executionGuard;
+	gbSndInited = false; HeadlessMode = true;
+	Player remotePlayer; // Avoid the local-player network notification.
+	std::ofstream stream(root / "native-chest-operations.json", std::ios::binary | std::ios::trunc);
+	ASSERT_TRUE(stream.good());
+	int caseCount = 0;
+	{
+		JsonObject document(stream);
+		document.String("format", "godevilution-cathedral-chest-operations");
+		document.Number("version", 1);
+		document.Number("playerMaximumLife", MyPlayer->life.maximumBase);
+		document.Number("playerMaximumMana", MyPlayer->mana.maximumBase);
+		document.Key("catalog"); WriteCatalog(stream);
+		document.Key("cases"); stream << '[';
+		constexpr std::string_view names[] = { "zero-content", "ordinary-open", "full-pool", "partial-pool", "local-fallback", "signed-occupancy" };
+		constexpr uint32_t seeds[] = { 0, 1, 2588, UINT32_C(0x80000000), UINT32_MAX, 743271966 };
+		for (int type = OBJ_CHEST1; type <= OBJ_CHEST3; ++type) {
+			for (int branch = 0; branch < 2; ++branch) {
+				for (int lane = 0; lane < 6; ++lane) {
+					PrepareWorld(lane == 2 ? MAXITEMS : lane == 3 ? MAXITEMS - 1 : 2, lane != 3);
+					MyPlayer->pLvlLoad = lane == 1 ? 0 : 1; // Live drop animation and loader placement are distinct inputs.
+					Object &chest = Objects[0];
+					chest._otype = static_cast<_object_id>(type); chest.position = { 50, 50 };
+					chest._oSolidFlag = true; chest._oMissFlag = true;
+					chest.selectionRegion = SelectionRegion::Bottom;
+					chest._oAnimFrame = 1; chest._oAnimLen = 3; chest._oAnimDelay = 1; chest._oAnimWidth = 96;
+					chest._oRndSeed = seeds[lane]; chest._oVar1 = lane == 0 ? 0 : type - OBJ_CHEST1 + 1;
+					chest._oVar2 = branch;
+					tileAt(chest.position).setObject(1);
+					if (lane == 4) for (int y = 49; y <= 51; ++y) for (int x = 49; x <= 51; ++x) tileAt(x, y).setPiece(1);
+					if (lane == 5) {
+						tileAt(49, 49).setItem(-3); tileAt(49, 50).setPlayer(-1); tileAt(50, 49).setMonster(-1);
+						tileAt(51, 51).setObject(-2); Objects[1].selectionRegion = SelectionRegion::Bottom;
+					}
+					SetRndSeed(UINT32_C(0x12345678));
+					const auto before = CaptureItemWorld();
+					if (caseCount++ != 0) stream << ',';
+					JsonObject row(stream); row.String("name", names[lane]); row.Number("depth", 1); row.Number("slot", 0);
+					row.Boolean("levelLoading", MyPlayer->pLvlLoad != 0);
+					row.Key("inputChest"); WriteRoomObject(stream, 0, chest);
+					row.Key("input"); WriteItemWorld(stream, before, true);
+					SyncOpObject(remotePlayer, CMD_OPERATEOBJ, chest);
+					const auto after = CaptureItemWorld();
+					row.Key("expectedChest"); WriteRoomObject(stream, 0, chest);
+					row.Key("expected"); WriteItemWorld(stream, after, false);
+					EXPECT_EQ(chest.selectionRegion, SelectionRegion::None); EXPECT_EQ(chest._oAnimFrame, 3U);
+					EXPECT_TRUE(chest._oSolidFlag); EXPECT_TRUE(chest._oMissFlag); EXPECT_FALSE(chest._oTrapFlag);
+					EXPECT_EQ(chest._oRndSeed, seeds[lane]); EXPECT_EQ(chest._oVar2, branch);
+					EXPECT_EQ(after.activeCount, before.activeCount + std::min(chest._oVar1, MAXITEMS - before.activeCount));
+					EXPECT_EQ(after.active, before.active);
+					if (lane == 0 || (lane == 2 && branch == 0)) EXPECT_EQ(after.randomState, seeds[lane]);
+					SyncOpObject(remotePlayer, CMD_OPERATEOBJ, chest);
+					const auto repeated = CaptureItemWorld();
+					row.Key("repeatedChest"); WriteRoomObject(stream, 0, chest);
+					row.Key("repeated"); WriteItemWorld(stream, repeated, false);
+					std::ostringstream first, second;
+					WriteItemWorld(first, after, false); WriteItemWorld(second, repeated, false);
+					EXPECT_EQ(first.str(), second.str()); EXPECT_EQ(chest._oAnimFrame, 3U);
+					for (int slot = 1; slot < MAXOBJECTS; ++slot) {
+						EXPECT_EQ(Objects[slot]._oSolidFlag, before.objectSolid[slot]);
+						EXPECT_EQ(static_cast<int>(Objects[slot].selectionRegion), before.objectSelection[slot]);
+					}
+					int index = 0;
+					for (const Tile &tile : tiles()) {
+						const Tile &pre = before.worldTiles[index++];
+						EXPECT_EQ(tile.piece(), pre.piece()); EXPECT_EQ(tile.flags(), pre.flags());
+						EXPECT_EQ(tile.player(), pre.player()); EXPECT_EQ(tile.monster(), pre.monster());
+						EXPECT_EQ(tile.object(), pre.object()); EXPECT_EQ(tile.corpse(), pre.corpse());
+						EXPECT_EQ(tile.light(), pre.light()); EXPECT_EQ(tile.preLight(), pre.preLight());
+						EXPECT_EQ(tile.transVal(), pre.transVal()); EXPECT_EQ(tile.special(), pre.special());
+					}
+				}
+			}
+		}
+		stream << ']'; document.Number("caseCount", caseCount);
+	}
+	stream.flush(); ASSERT_TRUE(stream.good()); stream.close();
+	EXPECT_EQ(caseCount, 36);
+	EXPECT_LE(std::filesystem::file_size(root / "native-chest-operations.json"), 32U * 1024U * 1024U);
 }
 
 void WriteRoomMonster(std::ostream &out, int slot, const Monster &value)

@@ -2,6 +2,14 @@
 
 Notable changes to this fork are recorded below.
 
+- 2026-10-14: Integrate ordinary untrapped native Cathedral chest interaction
+  and both native loot branches through Godot, one-way raw object mutation,
+  atomic item-pool updates and cold restore. Preserve existing native cohort
+  generation identity; publish a default-false chest interaction capability.
+  Verify 36 native cases, 22 focused managed cases and the complete headless
+  Godot pair: old Town save 196, chest checkpoint 272, fresh-host L1 retention
+  and Town return at 313 without duplicate loot.
+
 - 2026-10-14: Reuse a detached prior cohort document only after each save rereads
   and exactly matches the full canonical bytes from the last successful publish.
   Changed or post-rename uncertain bytes still take full parsing and validation.

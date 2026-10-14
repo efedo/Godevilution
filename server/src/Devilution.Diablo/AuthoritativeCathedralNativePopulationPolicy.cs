@@ -6,7 +6,10 @@ namespace Devilution.Diablo;
 /** Immutable generation provenance for the explicit native L1 route. */
 public sealed class AuthoritativeCathedralNativePopulationPolicy
 {
+    // Keep the saved generation identity stable; the chest capability is an
+    // additive runtime rule over the same immutable native population.
     public const string PolicyId = "native-cathedral-l1-doors-only-v1";
+    private const int Chest1 = 5, Chest2 = 6, Chest3 = 7, LeftTrap = 53, RightTrap = 54;
     private readonly Dictionary<uint, DiabloObjectState> objectSnapshots = [];
     private readonly Dictionary<uint, AuthoritativeCathedralPopulationObjectState> objectRows = [];
     private readonly Dictionary<int, uint> objectEntitiesBySlot = [];
@@ -223,6 +226,16 @@ public sealed class AuthoritativeCathedralNativePopulationPolicy
                 AnimationFrame = expected.AnimationFrame,
             };
         }
+        if (current == expected)
+            return;
+        if (IsSupportedNativeChest(raw)) {
+            var opened = expected with {
+                Activated = true,
+                AnimationFrame = GetOpenedChestAnimationFrame(raw),
+            };
+            if (current == opened)
+                return;
+        }
         if (current != expected)
             throw new InvalidDataException("An unsupported native object mutation changed retained state.");
     }
@@ -231,8 +244,75 @@ public sealed class AuthoritativeCathedralNativePopulationPolicy
     {
         ValidateObject(value);
         var raw = objectRows[value.EntityId];
-        return raw.DoorFlag && !raw.TrapFlag && value.CathedralDoor is not null;
+        return raw.DoorFlag && !raw.TrapFlag && value.CathedralDoor is not null
+            || CanOperateNativeChest(value);
     }
+
+    internal bool CanOperateNativeChest(AuthoritativeWorldObject value)
+    {
+        ValidateObject(value);
+        return objectRows.TryGetValue(value.EntityId, out var raw)
+            && IsSupportedNativeChest(raw)
+            && !value.Activated;
+    }
+
+    internal bool TryGetNativeChestLootParameters(
+        AuthoritativeWorldObject value,
+        out int nativeType,
+        out uint randomSeed,
+        out int itemCount,
+        out int itemBranch)
+    {
+        nativeType = 0;
+        randomSeed = 0;
+        itemCount = 0;
+        itemBranch = 0;
+        ValidateObject(value);
+        if (!objectRows.TryGetValue(value.EntityId, out var raw)
+            || !IsSupportedNativeChest(raw)
+            || value.Activated)
+            return false;
+
+        nativeType = raw.Type;
+        randomSeed = raw.RndSeed;
+        itemCount = raw.Var1;
+        itemBranch = raw.Var2;
+        return true;
+    }
+
+    internal bool TryCommitNativeChestOpen(AuthoritativeWorldObject value)
+    {
+        if (!CanOperateNativeChest(value))
+            return false;
+        var raw = objectRows[value.EntityId];
+        value.Activated = true;
+        value.AnimationFrame = GetOpenedChestAnimationFrame(raw);
+        ValidateObject(value);
+        return true;
+    }
+
+    internal static bool IsSupportedNativeChest(
+        AuthoritativeCathedralThemeRoomState state,
+        AuthoritativeCathedralPopulationObjectState raw)
+    {
+        if (raw.Type is not (Chest1 or Chest2 or Chest3) || raw.TrapFlag
+            || raw.SelectionRegion == 0 || raw.AnimFrame > byte.MaxValue - 2
+            || raw.Var1 < 0 || raw.Var1 > raw.Type - Chest1 + 1
+            || raw.Var2 is < 0 or >= 8)
+            return false;
+        return !state.ActiveObjectIds.Take(state.ActiveObjectCount).Any(slot => {
+            var candidate = state.ObjectSlots[slot];
+            return candidate.Type is LeftTrap or RightTrap
+                && candidate.Var1 == raw.Position.X
+                && candidate.Var2 == raw.Position.Y;
+        });
+    }
+
+    private bool IsSupportedNativeChest(AuthoritativeCathedralPopulationObjectState raw)
+        => IsSupportedNativeChest(InitialState, raw);
+
+    private static int GetOpenedChestAnimationFrame(AuthoritativeCathedralPopulationObjectState raw)
+        => checked((int)raw.AnimFrame + 2);
 
     internal void ValidateWorld(DiabloWorldState world)
     {
@@ -284,6 +364,24 @@ public sealed class AuthoritativeCathedralNativePopulationPolicy
     {
         if (itemBindingFingerprint is null || ComputeItemBindingFingerprint(items) != itemBindingFingerprint)
             throw new InvalidDataException("The native population profile changed its item, spell, catalog or placement bindings.");
+        var level = items.LevelProfiles.SingleOrDefault(value => value.LevelId == LevelId)
+            ?? throw new InvalidDataException("Native item bindings omit their owned population level.");
+        foreach (var binding in level.ObjectBindings) {
+            if (!objectRows.TryGetValue(binding.EntityId, out var raw))
+                throw new InvalidDataException("A native item object binding has no population row.");
+            var expectedPolicy = raw.DoorFlag
+                ? AuthoritativeCathedralItemObjectMutationPolicy.CathedralDoor
+                : IsSupportedNativeChest(raw)
+                    ? AuthoritativeCathedralItemObjectMutationPolicy.NativeChest
+                    : AuthoritativeCathedralItemObjectMutationPolicy.ExplicitlyRefused;
+            if (binding.NativeObjectSlot != raw.Slot || binding.ObjectType != raw.Type
+                || binding.PositionX != raw.Position.X || binding.PositionY != raw.Position.Y
+                || binding.InitialSolid != raw.SolidFlag || binding.InitialSelectionRegion != raw.SelectionRegion
+                || binding.MutationPolicy != expectedPolicy)
+                throw new InvalidDataException("Native item placement object policy disagrees with its exact generated population row.");
+        }
+        if (level.ObjectBindings.Count != objectRows.Count)
+            throw new InvalidDataException("Native item placement must bind every generated object exactly once.");
     }
 
     private static string ComputeItemBindingFingerprint(AuthoritativeCathedralItemRuntimeProfile items)
@@ -306,7 +404,19 @@ public sealed class AuthoritativeCathedralNativePopulationPolicy
             ItemBindings = items.ItemBindings.OrderBy(row => row.Key).ToArray(),
             items.ContentInventoryDimensions,
             LevelProfiles = items.LevelProfiles.OrderBy(row => row.LevelId)
-                .Select(level => level with { ObjectBindings = level.ObjectBindings.OrderBy(row => row.NativeObjectSlot).ToArray() }).ToArray(),
+                .Select(level => level with {
+                    // NativeChest only adds an interaction for objects that the old
+                    // generation profile already retained as explicitly refused.
+                    // Normalize that one capability-only distinction so closed v5
+                    // checkpoints keep their established generation fingerprint.
+                    ObjectBindings = level.ObjectBindings.Select(binding =>
+                        binding.MutationPolicy == AuthoritativeCathedralItemObjectMutationPolicy.NativeChest
+                            ? binding with {
+                                MutationPolicy = AuthoritativeCathedralItemObjectMutationPolicy.ExplicitlyRefused,
+                            }
+                            : binding)
+                        .OrderBy(row => row.NativeObjectSlot).ToArray(),
+                }).ToArray(),
             NativeSpellBindings = items.NativeSpellBindings?.OrderBy(row => row.Key).ToArray(),
         };
         return Convert.ToHexString(SHA256.HashData(JsonSerializer.SerializeToUtf8Bytes(identity)));

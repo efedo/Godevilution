@@ -1164,6 +1164,8 @@ public sealed class AuthoritativeClientModel
             || @object.ProjectileSourceKind is < 0 or > MaximumObjectProjectileSourceKind
             || !producesProjectile && @object.ProjectileSourceKind != 0
             || @object.NativeObjectId > NativeMaximumObjectId
+            || @object.NativeChestInteractable
+                && !AuthoritativeObjectSelector.IsValidNativeChestInteraction(@object)
             || @object.DialogueMessageId is < 0 or > short.MaxValue
             || @object.AnimationFrame > byte.MaxValue
             || @object.ActivatedAnimationFrame > byte.MaxValue

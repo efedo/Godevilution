@@ -228,6 +228,16 @@ its copied checkpoint. Normal-profile adoption and broader native campaign
 acceptance remain open.
 The profile does not enable native population in normal sessions.
 
+For the focused native chest journey, run `tools/test-godot-session.ps1` with
+`-PersistenceMode cohort -CathedralNativeProfileDirectory <pinned-profile>`
+and `-CathedralNativeChest -CathedralNativeChestSessionDirectory <copied-session>`.
+The supplied session must be a copy of the passed final native Town cohort
+under that profile's `sessions/` directory. The headless pair opens an ordinary
+chest, saves in Town, then starts fresh host/client processes to verify retained
+L1 loot/open state, no duplicate loot from repeat clicks and Town return.
+The scoped pair passes from Town sequence 196 through checkpoint 272 and
+fresh-host Town return 313, retaining two opened chests and one exact loot item.
+
 The client reports server loss, blocks new gameplay input while disconnected,
 and automatically reconnects when the same endpoint returns. Application
 acceptance covers creation, fresh-process resume, and host termination/restart

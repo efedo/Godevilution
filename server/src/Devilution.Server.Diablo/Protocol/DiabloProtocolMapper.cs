@@ -341,6 +341,7 @@ internal static class DiabloProtocolMapper
                 QuestSequenceFollowUpOffsetY = @object.QuestSequenceFollowUpOffsetY,
                 ProjectileSourceKind = (int)@object.ProjectileSourceKind,
                 NativeObjectId = @object.NativeObjectId,
+                NativeChestInteractable = source.NativeChestInteractableEntityIds.Contains(@object.EntityId),
                 KeepVisibleAfterActivation = !@object.HideWhenActivated,
                 AnimationFrame = checked((uint)@object.AnimationFrame),
                 ActivatedAnimationFrame = checked((uint)@object.ActivatedAnimationFrame),

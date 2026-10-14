@@ -74,6 +74,45 @@ public sealed class AuthoritativeObjectSelectorTests
     }
 
     [Fact]
+    public void SelectsNativeChestOnlyWhenServerCapabilityIsPresent()
+    {
+        var chest = new ObjectSnapshot {
+            EntityId = 21,
+            ObjectId = 5,
+            LevelId = 42,
+            PositionX = 3,
+            PositionY = 4,
+            NativeObjectId = 5,
+            NativeChestInteractable = true,
+            QuestTransitionRequiredVariable1 = -1,
+            QuestTransitionRequiredVariable2 = -1,
+        };
+        var snapshot = new Snapshot {
+            Players = { new PlayerSnapshot { EntityId = 1, LevelId = 42 } },
+            Objects = { chest },
+        };
+
+        Assert.Equal(21U, AuthoritativeObjectSelector.SelectAt(snapshot, 3, 4)?.EntityId);
+
+        chest.NativeChestInteractable = false;
+        Assert.Null(AuthoritativeObjectSelector.SelectAt(snapshot, 3, 4));
+    }
+
+    [Fact]
+    public void DoesNotSelectMalformedNativeChestCapability()
+    {
+        var snapshot = SnapshotWithObject(new ObjectSnapshot {
+            EntityId = 21,
+            ObjectId = 5,
+            NativeObjectId = 5,
+            NativeChestInteractable = true,
+            TrapArmed = true,
+        });
+
+        Assert.Null(AuthoritativeObjectSelector.SelectAt(snapshot, 3, 4));
+    }
+
+    [Fact]
     public void RejectsInactiveOrMisplacedObjects()
     {
         var snapshot = new Snapshot {
