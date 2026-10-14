@@ -65,7 +65,11 @@ participants/receipts; zero exhaustion remains exact. Default identity changes
 reject. A trusted, explicitly fenced reload publication can change content,
 ruleset and module format only after matching the previous identity, while
 preserving module ID, protocol, mode and tick rate. Caller-owned module/owner
-validation is still required before publication.
+validation is still required before publication. Each save rereads the canonical
+file.
+Only a full-byte match with this store's last successfully published checkpoint
+reuses its private detached prior document; changed bytes take the existing full
+parse and validation path.
 
 The standalone executable explicitly selects this mode with
 `--persistence-mode cohort --save-root <dedicated-directory>`. Legacy remains
@@ -90,6 +94,11 @@ Clock-gated cohort snapshot polls advance, drain events and validate the snapsho
 under one authority boundary, then publish once before sending events, the snapshot
 and its timing reply. Scheduled-command and periodic tick checkpoints remain
 unchanged; failed capture or publication fences the host before response exposure.
+
+Clock-gated cohort command responses retain the scheduler receipt checkpoint.
+Capture and validate one response, then publish it once before sending the ack,
+events and snapshot. The generic path, checkpoint format and timing policy remain
+unchanged.
 
 Healthy shutdown quiesces owned work, publishes settled state, then releases
 adapters and the root lease. Complete-candidate reload publishes the new identity

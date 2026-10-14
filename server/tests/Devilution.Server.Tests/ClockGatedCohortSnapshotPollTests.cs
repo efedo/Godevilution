@@ -110,6 +110,128 @@ public sealed class ClockGatedCohortSnapshotPollTests
         }
     }
 
+    [Fact]
+    public async Task CohortCommandResponsePublishesOneCapturedBoundaryAfterAckCheckpoint()
+    {
+        var root = NewRoot();
+        var adapter = new SnapshotPollAdapter { EmitNextEvent = true };
+        var clock = new FixedClock(FixedTick);
+        var store = new AuthoritativeCohortStore(root);
+        var server = CreateServer(adapter, clock, store);
+        try {
+            server.Start();
+            using var timeout = CreateTimeout();
+            using var client = new TcpClient();
+            await client.ConnectAsync(IPAddress.Loopback, server.Port, timeout.Token);
+            await using var stream = client.GetStream();
+            await ReadHandshakeAsync(stream, hasSnapshot: true, timeout.Token);
+
+            var before = store.Load()!;
+            var capturesBefore = adapter.CaptureCount;
+            var eventsBefore = adapter.EventDrainCount;
+            var snapshotsBefore = adapter.SnapshotCount;
+            await SendCommandAsync(stream, timeout.Token);
+
+            var acknowledgementEnvelope = await ReadRequiredEnvelopeAsync(stream, timeout.Token);
+            Assert.Equal(Envelope.PayloadOneofCase.CommandAck, acknowledgementEnvelope.PayloadCase);
+            var acknowledgement = Assert.Single(acknowledgementEnvelope.CommandAck.Results);
+            Assert.Equal(1UL, acknowledgement.ClientSequence);
+            Assert.Equal(CommandStatus.Accepted, acknowledgement.Status);
+            Assert.Equal(FixedTick, acknowledgement.AppliedTick);
+
+            var eventEnvelope = await ReadRequiredEnvelopeAsync(stream, timeout.Token);
+            Assert.Equal(Envelope.PayloadOneofCase.EventBatch, eventEnvelope.PayloadCase);
+            var snapshotEnvelope = await ReadRequiredEnvelopeAsync(stream, timeout.Token);
+            Assert.Equal(Envelope.PayloadOneofCase.Snapshot, snapshotEnvelope.PayloadCase);
+
+            var after = store.Load()!;
+            Assert.Equal(before.Generation + 2, after.Generation);
+            Assert.Equal(capturesBefore + 2, adapter.CaptureCount);
+            Assert.Equal(eventsBefore + 1, adapter.EventDrainCount);
+            Assert.Equal(snapshotsBefore + 1, adapter.SnapshotCount);
+            Assert.Equal(FixedTick, eventEnvelope.EventBatch.Tick);
+            Assert.Single(eventEnvelope.EventBatch.Events);
+            Assert.Equal(FixedTick, snapshotEnvelope.Snapshot.Tick);
+            Assert.Equal(snapshotEnvelope.Snapshot.Tick, after.Tick);
+            Assert.Equal(adapter.SerializeCurrentState(), after.SerializedModuleState);
+            Assert.Equal(adapter.LastCapturedSerializedState, after.SerializedModuleState);
+            var durableReceipt = Assert.Single(Assert.Single(after.Participants).CommandReceipts);
+            Assert.Equal(1UL, durableReceipt.ClientSequence);
+            Assert.Equal(CommandStatus.Accepted, durableReceipt.Status);
+        } finally {
+            await DisposeServerAsync(server, expectedFailure: null);
+            DeleteRoot(root);
+        }
+    }
+
+    [Theory]
+    [InlineData(PollFailure.InvalidEventBatch)]
+    [InlineData(PollFailure.InvalidSnapshot)]
+    [InlineData(PollFailure.Publication)]
+    public async Task CohortCommandCaptureFailureClosesBeforeAnyResponse(PollFailure failure)
+    {
+        var root = NewRoot();
+        var adapter = new SnapshotPollAdapter();
+        var clock = new FixedClock(FixedTick);
+        var store = new AuthoritativeCohortStore(root);
+        var server = CreateServer(adapter, clock, store);
+        Exception? injectedPublicationFailure = null;
+        try {
+            server.Start();
+            using var timeout = CreateTimeout();
+            using var client = new TcpClient();
+            await client.ConnectAsync(IPAddress.Loopback, server.Port, timeout.Token);
+            await using var stream = client.GetStream();
+            await ReadHandshakeAsync(stream, hasSnapshot: true, timeout.Token);
+
+            var before = store.Load()!;
+            var capturesBefore = adapter.CaptureCount;
+            var eventsBefore = adapter.EventDrainCount;
+            var snapshotsBefore = adapter.SnapshotCount;
+            switch (failure) {
+            case PollFailure.InvalidEventBatch:
+                adapter.ReturnInvalidEventBatch = true;
+                break;
+            case PollFailure.InvalidSnapshot:
+                adapter.ReturnInvalidSnapshot = true;
+                break;
+            case PollFailure.Publication:
+                var publicationFailure = new IOException("Injected clock-gated command capture publication failure.");
+                injectedPublicationFailure = publicationFailure;
+                var stageWriteCount = 0;
+                store.PublicationObserver = (phase, _) => {
+                    if (phase == AuthoritativePublicationPhase.BeforeStageWrite
+                        && Interlocked.Increment(ref stageWriteCount) == 2)
+                        throw publicationFailure;
+                };
+                break;
+            default:
+                throw new ArgumentOutOfRangeException(nameof(failure));
+            }
+
+            await SendCommandAsync(stream, timeout.Token);
+            await AssertConnectionClosesWithoutResponseAsync(stream, timeout.Token);
+            var hostFailure = await Record.ExceptionAsync(async () =>
+                await server.Completion.WaitAsync(timeout.Token));
+            Assert.NotNull(hostFailure);
+            Assert.Same(hostFailure, server.LastClientFailure);
+
+            var after = store.Load()!;
+            Assert.Equal(before.Generation + 1, after.Generation);
+            Assert.Equal(capturesBefore + (failure == PollFailure.Publication ? 2 : 1), adapter.CaptureCount);
+            Assert.Equal(eventsBefore + 1, adapter.EventDrainCount);
+            Assert.Equal(snapshotsBefore + (failure == PollFailure.InvalidEventBatch ? 0 : 1), adapter.SnapshotCount);
+            var durableReceipt = Assert.Single(Assert.Single(after.Participants).CommandReceipts);
+            Assert.Equal(1UL, durableReceipt.ClientSequence);
+            Assert.Equal(CommandStatus.Accepted, durableReceipt.Status);
+            if (injectedPublicationFailure is not null)
+                Assert.Same(injectedPublicationFailure, server.LastClientFailure);
+        } finally {
+            await DisposeServerAsync(server, server.LastClientFailure);
+            DeleteRoot(root);
+        }
+    }
+
     [Theory]
     [InlineData(PollFailure.InvalidEventBatch)]
     [InlineData(PollFailure.InvalidSnapshot)]
@@ -243,6 +365,19 @@ public sealed class ClockGatedCohortSnapshotPollTests
         => EnvelopeCodec.WriteAsync(stream, new Envelope {
             SnapshotRequest = new Envelope.Types.SnapshotRequest {
                 TimingRequestId = timingRequestId,
+            },
+        }, cancellationToken);
+
+    private static ValueTask SendCommandAsync(Stream stream, CancellationToken cancellationToken)
+        => EnvelopeCodec.WriteAsync(stream, new Envelope {
+            CommandBatch = new CommandBatch {
+                Commands = {
+                    new Command {
+                        ClientSequence = 1,
+                        RequestedTick = FixedTick,
+                        AttackRequested = new AttackRequested { TargetEntityId = 1 },
+                    },
+                },
             },
         }, cancellationToken);
 

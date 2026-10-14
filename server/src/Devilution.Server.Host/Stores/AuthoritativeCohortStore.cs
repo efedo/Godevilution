@@ -32,6 +32,9 @@ public sealed class AuthoritativeCohortStore : IDisposable
     private AuthoritativeCohortPublicationLayout? publicationLayout;
     private bool hostPublicationRequested;
     private bool disposed;
+    // SaveCore reuses this detached prior only after rereading exact canonical bytes.
+    private byte[]? cachedCheckpointBytes;
+    private AuthoritativeCohortDocument? cachedCheckpointDocument;
 
     public AuthoritativeCohortStore(string rootDirectory)
     {
@@ -179,9 +182,15 @@ public sealed class AuthoritativeCohortStore : IDisposable
             else if (hostPublicationRequested)
                 throw new InvalidOperationException("Host publication preparation has not succeeded; generic publication is not allowed.");
             var normalized = Normalize(document);
-            var previous = ValidateCheckpointPathTarget()
-                ? ReadDocument(File.ReadAllBytes(CheckpointPath))
-                : null;
+            var checkpointExists = ValidateCheckpointPathTarget();
+            var previousBytes = checkpointExists ? File.ReadAllBytes(CheckpointPath) : null;
+            AuthoritativeCohortDocument? previous = null;
+            if (previousBytes is not null)
+                previous = cachedCheckpointBytes is not null
+                    && cachedCheckpointDocument is not null
+                    && previousBytes.AsSpan().SequenceEqual(cachedCheckpointBytes)
+                    ? cachedCheckpointDocument
+                    : ReadDocument(previousBytes);
             var expectedGeneration = previous is null
                 ? 1UL
                 : previous.Generation == ulong.MaxValue
@@ -216,7 +225,11 @@ public sealed class AuthoritativeCohortStore : IDisposable
                 payload.SerializedModuleState,
                 integrity);
             var bytes = StrictUtf8.GetBytes(JsonSerializer.Serialize(persisted, JsonOptions));
+            var nextCachedBytes = bytes.ToArray();
+            var nextCachedDocument = normalized;
             PublishAtomically(bytes);
+            cachedCheckpointBytes = nextCachedBytes;
+            cachedCheckpointDocument = nextCachedDocument;
         }
     }
 

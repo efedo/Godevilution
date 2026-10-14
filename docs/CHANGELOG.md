@@ -2,10 +2,19 @@
 
 Notable changes to this fork are recorded below.
 
+- 2026-10-14: Reuse a detached prior cohort document only after each save rereads
+  and exactly matches the full canonical bytes from the last successful publish.
+  Changed or post-rename uncertain bytes still take full parsing and validation.
+
 - 2026-10-14: Coalesce clock-gated cohort snapshot polls into one durable
   publication after scheduler advancement and event/snapshot validation, before
   response exposure. Preserve scheduled-command and periodic tick checkpoints,
   legacy transport behavior and failure fencing.
+
+- 2026-10-14: Coalesce clock-gated cohort command responses while retaining the
+  scheduler receipt checkpoint. Capture and validate one response, then publish
+  once before sending the ack, events and snapshot. The generic path, checkpoint
+  format and timing policy remain unchanged.
 
 - 2026-10-13: Compose the generated Cathedral route with explicit Town preview
   stock. Buy a portal scroll, retain it through floor-two cold resume, cast it for

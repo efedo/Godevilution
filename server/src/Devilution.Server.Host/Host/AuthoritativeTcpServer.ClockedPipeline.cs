@@ -477,10 +477,25 @@ public sealed partial class AuthoritativeTcpServer
         }
 
         try {
-            currentTick = commandServer.WithSynchronizedState(() => {
-                RequireClockedTransportActive(true, pipelineCancellationToken);
-                return AdvanceAndPublishCohortCore();
-            });
+            ClockedCohortSnapshotPoll? cohortCapture = null;
+            if (CohortStore is null) {
+                currentTick = commandServer.WithSynchronizedState(() => {
+                    RequireClockedTransportActive(true, pipelineCancellationToken);
+                    return AdvanceAndPublishCohortCore();
+                });
+            } else {
+                // The scheduler has already persisted this receipt. Capture the
+                // command response projection as one cohort boundary before writing it.
+                cohortCapture = CaptureClockedCohortSnapshotPoll(
+                    sessionId,
+                    entityId,
+                    connectionOrdinal,
+                    null,
+                    work.EnvelopeReadCompletedTimestamp,
+                    pipelineCancellationToken,
+                    currentTick);
+                currentTick = cohortCapture.Tick;
+            }
             var commandTraceOrdinals = RecordCommandTiming(
                 connectionOrdinal,
                 entityId,
@@ -518,25 +533,51 @@ public sealed partial class AuthoritativeTcpServer
                     ackWriteCompleted);
                 EmitCommandTimingOutsideAuthorityLock();
             }
-            await SendEventsIfAvailable(
-                stream,
-                sessionId,
-                entityId,
-                currentTick,
-                pipelineCancellationToken,
-                classifyClockedTransportFailure: true,
-                hostCancellationToken: hostCancellationToken);
-            await SendSnapshotIfAvailableAsync(
-                stream,
-                sessionId,
-                entityId,
-                currentTick,
-                connectionOrdinal,
-                work.EnvelopeReadCompletedTimestamp,
-                null,
-                pipelineCancellationToken,
-                classifyClockedTransportFailure: true,
-                hostCancellationToken: hostCancellationToken);
+            if (cohortCapture is null) {
+                await SendEventsIfAvailable(
+                    stream,
+                    sessionId,
+                    entityId,
+                    currentTick,
+                    pipelineCancellationToken,
+                    classifyClockedTransportFailure: true,
+                    hostCancellationToken: hostCancellationToken);
+                await SendSnapshotIfAvailableAsync(
+                    stream,
+                    sessionId,
+                    entityId,
+                    currentTick,
+                    connectionOrdinal,
+                    work.EnvelopeReadCompletedTimestamp,
+                    null,
+                    pipelineCancellationToken,
+                    classifyClockedTransportFailure: true,
+                    hostCancellationToken: hostCancellationToken);
+            } else {
+                if (cohortCapture.Events is { Events.Count: > 0 } events) {
+                    await WriteEventBatchAsync(
+                        stream,
+                        events,
+                        currentTick,
+                        pipelineCancellationToken,
+                        classifyClockedTransportFailure: true,
+                        hostCancellationToken: hostCancellationToken);
+                }
+                if (cohortCapture.Snapshot is not null) {
+                    await WriteSnapshotEnvelopeAsync(
+                        stream,
+                        cohortCapture.Snapshot,
+                        connectionOrdinal,
+                        entityId,
+                        work.EnvelopeReadCompletedTimestamp,
+                        null,
+                        cohortCapture.MaterializeStartTimestamp,
+                        cohortCapture.MaterializeEndTimestamp,
+                        cohortCapture.SnapshotTraceOrdinal,
+                        pipelineCancellationToken,
+                        classifyClockedTransportFailure: true);
+                }
+            }
             return currentTick;
         } catch (ClockGatedTransportException) {
             throw;

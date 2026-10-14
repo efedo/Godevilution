@@ -68,6 +68,84 @@ public sealed class AuthoritativeCohortStoreTests
     }
 
     [Fact]
+    public void SaveRereadsAndRejectsSameLengthCanonicalCorruptionBeforeUsingTheCache()
+    {
+        var root = CreateRoot();
+        try {
+            using var store = new AuthoritativeCohortStore(root);
+            store.Save(CreateDocument(1));
+
+            var original = File.ReadAllBytes(store.CheckpointPath);
+            var text = Encoding.UTF8.GetString(original);
+            const string integrityMarker = "\"IntegritySha256\":\"";
+            var integrityOffset = text.IndexOf(integrityMarker, StringComparison.Ordinal);
+            Assert.True(integrityOffset >= 0);
+            integrityOffset += integrityMarker.Length;
+            var changed = text[integrityOffset] == '0' ? '1' : '0';
+            var corrupted = Encoding.UTF8.GetBytes(
+                text[..integrityOffset] + changed + text[(integrityOffset + 1)..]);
+            Assert.Equal(original.Length, corrupted.Length);
+            File.WriteAllBytes(store.CheckpointPath, corrupted);
+
+            Assert.Throws<InvalidDataException>(() => store.Save(CreateDocument(2)));
+            Assert.Equal(corrupted, File.ReadAllBytes(store.CheckpointPath));
+        } finally {
+            DeleteRoot(root);
+        }
+    }
+
+    [Fact]
+    public void SaveCacheDoesNotShareCallerOrLoadedReceiptInstances()
+    {
+        var root = CreateRoot();
+        try {
+            using var store = new AuthoritativeCohortStore(root);
+            var first = CreateDocument(1);
+            store.Save(first);
+
+            first.Participants[0].CommandReceipts[0].ClientSequence = 99;
+            var loaded = store.Load();
+            Assert.NotNull(loaded);
+            loaded!.Participants[0].CommandReceipts[0].ServerReceiptSequence = 99;
+
+            store.Save(CreateDocument(2) with { Tick = 21 });
+            var persisted = store.Load();
+            Assert.NotNull(persisted);
+            Assert.Equal(2UL, persisted!.Generation);
+            Assert.Equal(1UL, persisted.Participants[0].CommandReceipts[0].ClientSequence);
+            Assert.Equal(3UL, persisted.Participants[0].CommandReceipts[0].ServerReceiptSequence);
+        } finally {
+            DeleteRoot(root);
+        }
+    }
+
+    [Fact]
+    public void SaveRetryAfterPostRenameObserverFailureReadsThePublishedGeneration()
+    {
+        var root = CreateRoot();
+        try {
+            using var store = new AuthoritativeCohortStore(root);
+            store.Save(CreateDocument(1));
+            store.PublicationObserver = (phase, _) => {
+                if (phase == AuthoritativePublicationPhase.AfterCanonicalRename)
+                    throw new IOException("post-rename observer failure");
+            };
+
+            Assert.Throws<IOException>(() => store.Save(CreateDocument(2) with { Tick = 21 }));
+            store.PublicationObserver = null;
+            Assert.Equal(2UL, store.Load()!.Generation);
+
+            store.Save(CreateDocument(3) with { Tick = 22 });
+            var retried = store.Load();
+            Assert.NotNull(retried);
+            Assert.Equal(3UL, retried!.Generation);
+            Assert.Equal(22UL, retried.Tick);
+        } finally {
+            DeleteRoot(root);
+        }
+    }
+
+    [Fact]
     public void SaveRequiresTheExactNextGenerationAndPreservesThePreviousDocument()
     {
         var root = CreateRoot();
