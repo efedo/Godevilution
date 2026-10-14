@@ -4,7 +4,7 @@ using Devilution.Shared;
 namespace Devilution.Diablo;
 
 /** Applies combat intents and autonomous combat ticks without host dependencies. */
-public sealed class DiabloCombatCommandProcessor
+public sealed partial class DiabloCombatCommandProcessor
 {
     private enum PlayerDeathReason
     {
@@ -632,13 +632,22 @@ public sealed class DiabloCombatCommandProcessor
                             player.CombatMode == DiabloPlayerCombatMode.RangedAttack,
                             players,
                             effectTick: tick)
-                        : ResolveAttack(
-                            player,
-                            action.TargetEntityId,
-                            action.StartedAtTick,
-                            player.CombatMode == DiabloPlayerCombatMode.RangedAttack,
-                            players,
-                            effectTick: tick),
+                        : player.CombatMode == DiabloPlayerCombatMode.RangedAttack
+                            && world.OwnsNativePopulationLevel(player.LevelId)
+                            && (action.TargetX != 0 || action.TargetY != 0)
+                            ? ResolveNativeWeaponArrowVolley(
+                                player,
+                                action.TargetEntityId,
+                                action.TargetX,
+                                action.TargetY,
+                                tick)
+                            : ResolveAttack(
+                                player,
+                                action.TargetEntityId,
+                                action.StartedAtTick,
+                                player.CombatMode == DiabloPlayerCombatMode.RangedAttack,
+                                players,
+                                effectTick: tick),
                     events);
                 break;
             case DiabloPlayerActionKind.Cast:
@@ -716,9 +725,16 @@ public sealed class DiabloCombatCommandProcessor
         var profile = GetAttackAnimationProfile(player);
         var timing = animation.GetAttack(profile);
         var ranged = profile == DiabloPlayerAttackAnimationProfile.Bow;
+        var nativePopulationBow = ranged
+            && world.OwnsNativePopulationLevel(player.LevelId);
         AuthoritativeCombatTarget? target = null;
         AuthoritativePlayerState? playerTarget = null;
-        if (!TryGetAttackTarget(player, targetEntityId, ranged, out target)
+        if (!TryGetAttackTarget(
+                player,
+                targetEntityId,
+                ranged,
+                out target,
+                requireMissileLineOfSight: !nativePopulationBow)
             && !TryGetPlayerAttackTarget(
                 player,
                 targetEntityId,
@@ -726,8 +742,13 @@ public sealed class DiabloCombatCommandProcessor
                 players,
                 out playerTarget))
             return DiabloCombatIntentResult.Rejected(DiabloRuleFailure.InvalidTarget);
-        var targetX = target?.PositionX ?? playerTarget!.PositionX;
-        var targetY = target?.PositionY ?? playerTarget!.PositionY;
+        var hasNativeAim = nativePopulationBow && target is not null;
+        var targetX = hasNativeAim
+            ? target!.FuturePositionX
+            : target?.PositionX ?? playerTarget!.PositionX;
+        var targetY = hasNativeAim
+            ? target!.FuturePositionY
+            : target?.PositionY ?? playerTarget!.PositionY;
         UpdateFacingToward(player, targetX, targetY);
         var includesFirstFrame = GetIncludesFirstFrame(player);
         var skippedFrames = GetAttackSkippedFrames(
@@ -749,6 +770,8 @@ public sealed class DiabloCombatCommandProcessor
                 readyTick,
                 endTick) {
                 TargetEntityId = targetEntityId,
+                TargetX = hasNativeAim ? targetX : 0,
+                TargetY = hasNativeAim ? targetY : 0,
             },
             ranged
                 ? DiabloPlayerCombatMode.RangedAttack
@@ -1182,7 +1205,7 @@ public sealed class DiabloCombatCommandProcessor
             .Where(@object => @object.LevelId == player.LevelId
                 && @object.PositionX == positionX
                 && @object.PositionY == positionY
-                && @object.Breakable
+                && world.CanBreakWorldObject(@object)
                 && !@object.Activated
                 && !@object.Destroyed)
             .OrderBy(@object => @object.EntityId)
@@ -1420,35 +1443,90 @@ public sealed class DiabloCombatCommandProcessor
         ulong appliedTick,
         int arrowCount)
     {
+        return ResolveWeaponArrowVolley(
+            player,
+            target,
+            target.EntityId,
+            target.PositionX,
+            target.PositionY,
+            appliedTick,
+            arrowCount);
+    }
+
+    private DiabloCombatIntentResult ResolveNativeWeaponArrowVolley(
+        AuthoritativePlayerState player,
+        uint targetEntityId,
+        int targetX,
+        int targetY,
+        ulong appliedTick)
+    {
+        if (!world.OwnsNativePopulationLevel(player.LevelId))
+            throw new InvalidOperationException(
+                "A frozen native weapon-aim attack requires a native-owned level.");
+        var arrowCount = HasUsableEquipmentFlag(
+            player,
+            AuthoritativeEquipmentAttackEffectRules.MultipleArrowsFlag)
+            ? rules.MultipleArrowsCount
+            : 1;
+        return ResolveWeaponArrowVolley(
+            player,
+            null,
+            targetEntityId,
+            targetX,
+            targetY,
+            appliedTick,
+            arrowCount);
+    }
+
+    private DiabloCombatIntentResult ResolveWeaponArrowVolley(
+        AuthoritativePlayerState player,
+        AuthoritativeCombatTarget? target,
+        uint targetEntityId,
+        int targetX,
+        int targetY,
+        ulong appliedTick,
+        int arrowCount)
+    {
         if (arrowCount is < 1 or > 3)
             throw new ArgumentOutOfRangeException(nameof(arrowCount));
         var targetDistance = checked((int)DeterministicGridMetrics.ChebyshevDistance(
-            target.PositionX,
-            target.PositionY,
+            targetX,
+            targetY,
             player.PositionX,
             player.PositionY));
         var direction = (DiabloPlayerDirection)DeterministicGridDirections.Toward(
             player.PositionX,
             player.PositionY,
-            target.PositionX,
-            target.PositionY);
+            targetX,
+            targetY);
         var directionDisplacement = DeterministicGridDirections.GetDisplacement(
             (DeterministicGridDirection)direction);
         var perpendicular = (-directionDisplacement.Y, directionDisplacement.X);
+        var nativePopulationArrow = world.OwnsNativePopulationLevel(player.LevelId);
         for (var arrowIndex = 0; arrowIndex < arrowCount; arrowIndex++) {
-            var damageQ6 = ResolvePlayerAttackDamageQ6(
-                player,
-                target,
-                monsterTarget: true,
-                ranged: true,
-                deferGargoyleWake: true,
-                targetDistance: targetDistance,
-                adjacentDamage: false,
-                seed: unchecked((uint)appliedTick ^ target.EntityId ^ player.EntityId ^ (uint)arrowIndex),
-                out var perilSelfDamageQ6,
-                out var perilActive,
-                out var doppelgangerProc,
-                out var attackHit);
+            var damageQ6 = 0;
+            var perilSelfDamageQ6 = 0;
+            var perilActive = false;
+            var doppelgangerProc = false;
+            var attackHit = false;
+            if (!nativePopulationArrow) {
+                var damageTarget = target
+                    ?? throw new InvalidOperationException(
+                        "A non-native weapon arrow requires a live combat target.");
+                damageQ6 = ResolvePlayerAttackDamageQ6(
+                    player,
+                    damageTarget,
+                    monsterTarget: true,
+                    ranged: true,
+                    deferGargoyleWake: true,
+                    targetDistance: targetDistance,
+                    adjacentDamage: false,
+                    seed: unchecked((uint)appliedTick ^ damageTarget.EntityId ^ player.EntityId ^ (uint)arrowIndex),
+                    out perilSelfDamageQ6,
+                    out perilActive,
+                    out doppelgangerProc,
+                    out attackHit);
+            }
             var elemental = attackHit
                 ? AuthoritativeEquipmentElementalDamageRules.Resolve(
                     player.Equipment,
@@ -1474,20 +1552,42 @@ public sealed class DiabloCombatCommandProcessor
             var (arrowSpeed, arrowLifetime) = ResolveWeaponArrowTravelTiming(
                 player,
                 targetDistance);
+            var arrowRemainingTicks = arrowLifetime;
+            var arrowVelocityX = 0;
+            var arrowVelocityY = 0;
+            var arrowDirection = 0;
+            if (nativePopulationArrow) {
+                var nativeSpeed = arrowSpeed == 0 ? 32 : arrowSpeed;
+                var nativeTargetX = targetX;
+                var nativeTargetY = targetY;
+                if (nativeTargetX == arrowPositionX && nativeTargetY == arrowPositionY) {
+                    nativeTargetX += directionDisplacement.X;
+                    nativeTargetY += directionDisplacement.Y;
+                }
+                (arrowVelocityX, arrowVelocityY) = CalculateVelocity(
+                    arrowPositionX,
+                    arrowPositionY,
+                    nativeTargetX,
+                    nativeTargetY,
+                    nativeSpeed);
+                arrowRemainingTicks = 256;
+                arrowSpeed = nativeSpeed;
+                arrowDirection = (int)direction;
+            }
             var projectile = new AuthoritativeProjectile(
                 AllocateProjectileEntityId(),
                 player.EntityId == 0 ? 1U : player.EntityId,
-                target.EntityId,
+                targetEntityId,
                 0,
                 player.LevelId,
                 arrowPositionX,
                 arrowPositionY,
-                target.PositionX,
-                target.PositionY,
+                targetX,
+                targetY,
                 DeterministicFixedPointQ6.ToWholeTruncated(Math.Max(0, damageQ6)),
                 AuthoritativeDamageType.Physical,
                 0,
-                arrowLifetime,
+                arrowRemainingTicks,
                 allowZeroSpellId: true) {
                 Behavior = AuthoritativeProjectileBehavior.WeaponArrow,
                 DamageQ6 = Math.Max(0, damageQ6),
@@ -1496,6 +1596,12 @@ public sealed class DiabloCombatCommandProcessor
                 AttackHit = attackHit,
                 PerilSelfDamageQ6 = perilActive ? perilSelfDamageQ6 : 0,
                 DoppelgangerProc = doppelgangerProc,
+                NativeWeaponArrow = nativePopulationArrow
+                    ? new AuthoritativeNativeWeaponArrowState(0)
+                    : null,
+                VelocityX = arrowVelocityX,
+                VelocityY = arrowVelocityY,
+                OriginalDirection = arrowDirection,
                 ActivationDelayTicks = arrowIndex == 0
                     ? 0U
                     : checked((uint)rules.MultipleArrowsDelayTicks),
@@ -2094,7 +2200,8 @@ public sealed class DiabloCombatCommandProcessor
         out int perilSelfDamageQ6,
         out bool perilActive,
         out bool doppelgangerProc,
-        out bool attackHit)
+        out bool attackHit,
+        bool nativeImpactRoll = false)
     {
         perilSelfDamageQ6 = 0;
         perilActive = false;
@@ -2102,6 +2209,7 @@ public sealed class DiabloCombatCommandProcessor
         attackHit = false;
         if (monsterTarget
             && !deferGargoyleWake
+            && !nativeImpactRoll
             && string.Equals(target.NativeAi, "Gargoyle", StringComparison.Ordinal)
             && target.GargoyleSpecialActive) {
             // Native PlrHitMonst/MonsterMHit calls tryLiftGargoyle before
@@ -2130,6 +2238,9 @@ public sealed class DiabloCombatCommandProcessor
         var usesNativeClassProfile = playerClass is not null
             && player.Attributes.Strength.Current > 0
             && player.Attributes.Dexterity.Current > 0;
+        if (nativeImpactRoll && (!ranged || !usesNativeClassProfile))
+            throw new InvalidDataException(
+                "Native population arrows require a ranged attack with complete class attributes.");
         var damageProfile = usesNativeClassProfile
             ? AuthoritativeEquipmentDamageRules.Calculate(
                 player.CharacterLevel,
@@ -2152,12 +2263,12 @@ public sealed class DiabloCombatCommandProcessor
                 rules.BaseAttackDamage,
                 rules.BaseAttackDamage,
                 0);
-        // Native replay consumes the weapon-damage stream before resolving
-        // hit admission, so misses retain the range draw in the shared LCG.
         var rolledBaseDamage = usesNativeClassProfile
-            ? random.RandomIntBetween(
-                damageProfile.MinimumDamage,
-                damageProfile.MaximumDamage)
+            ? nativeImpactRoll
+                ? 0
+                : random.RandomIntBetween(
+                    damageProfile.MinimumDamage,
+                    damageProfile.MaximumDamage)
             : rules.BaseAttackDamage;
         var damageBeforeFlat = checked(
             rolledBaseDamage
@@ -2202,6 +2313,9 @@ public sealed class DiabloCombatCommandProcessor
         var targetArmorClass = monsterTarget
             ? GetEffectiveMonsterArmorClass(target)
             : target.ArmorClass;
+        var rangedDistancePenalty = nativeImpactRoll
+            ? GetNativeArrowDistancePenalty(targetDistance)
+            : targetDistance * targetDistance / 2;
         var effectiveHitChance = usesNativeClassToHit
             ? monsterTarget
                 ? rules.ResolvePhysicalHitChance(
@@ -2214,7 +2328,7 @@ public sealed class DiabloCombatCommandProcessor
                                 : checked((35 - (int)player.CharacterLevel) * 2)
                             : 0)
                         - (ranged
-                            ? targetDistance * targetDistance / 2
+                            ? rangedDistancePenalty
                             : 0)),
                     targetArmorClass,
                     armorPiercingBonus,
@@ -2231,7 +2345,7 @@ public sealed class DiabloCombatCommandProcessor
                                 : checked((35 - (int)player.CharacterLevel) * 2)
                             : 0)
                         - (ranged
-                            ? targetDistance * targetDistance / 2
+                            ? rangedDistancePenalty
                             : 0)
                         - targetArmorClass),
                     5,
@@ -2251,11 +2365,45 @@ public sealed class DiabloCombatCommandProcessor
         // petrified monster, making Stone Curse a guaranteed-hit boundary.
         if (monsterTarget && target.IsPetrified)
             effectiveHitChance = 100;
-        attackHit = rules.ResolveAttackHit(effectiveHitChance, seed);
+        var nativeHitRoll = nativeImpactRoll
+            ? random.RandomIntLessThan(100)
+            : 0;
+        if (nativeImpactRoll
+            && monsterTarget
+            && string.Equals(target.NativeAi, "Gargoyle", StringComparison.Ordinal)
+            && target.GargoyleSpecialActive) {
+            // Native MonsterMHit consumes the collision roll, then tries the
+            // Gargoyle lift before comparing that roll with hit chance.
+            target.GargoyleSpecialActive = false;
+            attackHit = true;
+            return 0;
+        }
+        attackHit = nativeImpactRoll
+            ? nativeHitRoll < effectiveHitChance
+            : rules.ResolveAttackHit(effectiveHitChance, seed);
         if (!attackHit) {
             perilActive = false;
             perilSelfDamageQ6 = 0;
             return 0;
+        }
+        if (nativeImpactRoll) {
+            // MonsterMHit draws weapon damage only after the hit check passes.
+            rolledBaseDamage = random.RandomIntBetween(
+                damageProfile.MinimumDamage,
+                damageProfile.MaximumDamage);
+            damageBeforeFlat = checked(
+                rolledBaseDamage
+                + rolledBaseDamage * damagePercent / 100);
+            damage = checked(damageBeforeFlat + damageFlat + classDamageModifier);
+            if (perilActive) {
+                perilSelfDamageQ6 = checked(
+                    DeterministicFixedPointQ6.FromWhole(
+                        checked(damageBeforeFlat + damageFlat))
+                    + DeterministicFixedPointQ6.FromWhole(
+                        AuthoritativeEquipmentIncomingDamageRules.ResolveGetHitBonus(
+                            player.Equipment)));
+                perilSelfDamageQ6 = Math.Max(0, perilSelfDamageQ6);
+            }
         }
         var criticalDamage = damage;
         if (playerClass?.Flags.HasFlag(DiabloPlayerClassFlags.CriticalStrike) == true
@@ -2273,14 +2421,18 @@ public sealed class DiabloCombatCommandProcessor
             player.Equipment,
             target.IsAnimal,
             items);
-        var resolvedDamage = rules.ResolveAttackDamage(
-            criticalDamage,
-            // Fully initialized class profiles use native admission-only
-            // monster armor. Legacy compatibility templates have no class
-            // damage profile and retain the historical armor reduction.
-            !usesNativeClassProfile && monsterTarget ? targetArmorClass : 0,
-            effectiveHitChance,
-            seed);
+        var resolvedDamage = nativeImpactRoll
+            ? criticalDamage <= 0
+                ? 0
+                : Math.Max(rules.MinimumDamage, criticalDamage)
+            : rules.ResolveAttackDamage(
+                criticalDamage,
+                // Fully initialized class profiles use native admission-only
+                // monster armor. Legacy compatibility templates have no class
+                // damage profile and retain the historical armor reduction.
+                !usesNativeClassProfile && monsterTarget ? targetArmorClass : 0,
+                effectiveHitChance,
+                seed);
         if (target.IsDemon
             && (GetUsableEquipmentFlags(player)
                 & AuthoritativeEquipmentAttackEffectRules.TripleDemonDamageFlag) != 0) {
@@ -2325,6 +2477,15 @@ public sealed class DiabloCombatCommandProcessor
         if (perilActive)
             resolvedDamageQ6 = checked(resolvedDamageQ6 * rules.HellfirePerilDamageMultiplier);
         return resolvedDamageQ6;
+    }
+
+    private static int GetNativeArrowDistancePenalty(int missileDistance)
+    {
+        if (missileDistance < 0)
+            throw new ArgumentOutOfRangeException(nameof(missileDistance));
+        return checked((int)Math.Min(
+            int.MaxValue,
+            (long)missileDistance * missileDistance / 2));
     }
 
     /** Spawns the native full-health, non-unique Doppelganger copy. */
@@ -2404,7 +2565,8 @@ public sealed class DiabloCombatCommandProcessor
         AuthoritativePlayerState player,
         uint targetEntityId,
         bool ranged,
-        out AuthoritativeCombatTarget target)
+        out AuthoritativeCombatTarget target,
+        bool requireMissileLineOfSight = true)
     {
         if (!world.CombatTargets.TryGetValue(targetEntityId, out target!)
             || target.HitPoints <= 0
@@ -2420,14 +2582,15 @@ public sealed class DiabloCombatCommandProcessor
             target.PositionY,
             player.PositionX,
             player.PositionY);
-        return ranged
-            ? distance > 0 && world.HasMissileLineOfSight(
+        if (!ranged)
+            return distance <= 1;
+        return distance > 0
+            && (!requireMissileLineOfSight || world.HasMissileLineOfSight(
                 player.LevelId,
                 player.PositionX,
                 player.PositionY,
                 target.PositionX,
-                target.PositionY)
-            : distance <= 1;
+                target.PositionY));
     }
 
     /**
@@ -2591,6 +2754,9 @@ public sealed class DiabloCombatCommandProcessor
         intent = NormalizeVisiblePlayerTarget(player, intent, players);
         if (!spells.TryGet(intent.SpellId, out var spell))
             return DiabloCombatIntentResult.Rejected(DiabloRuleFailure.InvalidTarget);
+        if (spell.ProjectileBehavior == AuthoritativeProjectileBehavior.Golem
+            && !world.AllowsNativeMonsterActivation(player.LevelId))
+            return DiabloCombatIntentResult.Rejected(DiabloRuleFailure.NotAllowed);
         ResolvedCastSource source = default!;
         if (!skipSourceValidation
             && !TryResolveCastSource(player, intent, out source, out var sourceFailure))
@@ -5732,11 +5898,15 @@ public sealed class DiabloCombatCommandProcessor
         foreach (var target in world.CombatTargets.Values
                      .OrderBy(target => target.EntityId)
                      .ToArray()) {
+            // Native inactive levels do not process their monster or RNG state.
+            if (world.OwnsNativePopulationLevel(target.LevelId)
+                && !players.Any(player => player.LevelId == target.LevelId))
+                continue;
             AuthoritativeMonsterGroupUnity.ApplyFollowTheLeader(
                 target,
                 world.CombatTargets);
             target.ClearFallenRallyAttack();
-            if (target.IsMoving && !target.IsPetrified)
+            if (target.IsMoving && !target.IsPetrified && !world.OwnsNativePopulationLevel(target.LevelId))
                 target.CompleteMovement();
             AuthoritativeMonsterGroupUnity.Apply(
                 target,
@@ -5779,6 +5949,25 @@ public sealed class DiabloCombatCommandProcessor
                 // active window before dispatching their AI.
                 target.RestoreActiveForTicks(byte.MaxValue);
             }
+            if (world.OwnsNativePopulationLevel(target.LevelId) && target.IsMoving
+                && !AdvanceNativeWalk(target, tick))
+                continue;
+            if (world.OwnsNativePopulationLevel(target.LevelId) && target.NativeMeleeCursor is not null) {
+                var currentEnemy = players.Where(player => player.Life > 0 && player.LevelId == target.LevelId)
+                    .OrderBy(player => player.EntityId).FirstOrDefault();
+                var animation = AdvanceNativeMelee(target);
+                if (animation.EffectFrame && currentEnemy is not null
+                    && DeterministicGridMetrics.ChebyshevDistance(target.PositionX, target.PositionY,
+                        currentEnemy.PositionX, currentEnemy.PositionY) <= 1
+                    && !IsPlayerProtectedByFlash(currentEnemy) && !IsPlayerEtherealized(currentEnemy))
+                    ResolveMonsterMeleeEffect(target, currentEnemy, players, tick, events,
+                        currentEnemy.ArmorClass, unchecked((uint)tick ^ target.EntityId ^ currentEnemy.EntityId),
+                        usesSpecialAttack: false);
+                if (!animation.Completed || target.HitPointsQ6 <= 0)
+                    continue;
+                // Native UpdateModeStance repeats AI in the same update after entering Stand.
+                target.RestoreFallenAnimation(0, 0);
+            }
             if (IsQuestDialogueTarget(target))
                 continue;
             if (IsLazarusMinionCombatSuppressed(target))
@@ -5798,7 +5987,9 @@ public sealed class DiabloCombatCommandProcessor
             if (TryAdvanceBatRetreat(target, players, tick))
                 continue;
             var fallenRallyActive = target.FallenRallyTicks > 0;
-            if (target.AggroRange <= 0 && !fallenRallyActive)
+            // Native actors use the visibility/active window above, not a legacy aggro radius.
+            var nativePopulationTarget = world.OwnsNativePopulationLevel(target.LevelId);
+            if (!nativePopulationTarget && target.AggroRange <= 0 && !fallenRallyActive)
                 continue;
 
             var victim = players
@@ -5806,7 +5997,7 @@ public sealed class DiabloCombatCommandProcessor
                     && player.CombatMode is not (DiabloPlayerCombatMode.NewLevel
                         or DiabloPlayerCombatMode.Quit)
                     && player.LevelId == target.LevelId
-                    && (fallenRallyActive
+                    && (nativePopulationTarget || fallenRallyActive
                         || DeterministicGridMetrics.ChebyshevDistance(
                             player.PositionX,
                             player.PositionY,
@@ -5890,8 +6081,8 @@ public sealed class DiabloCombatCommandProcessor
                     || HasValidatedArrowMapping(target)))
                 continue;
             if (distance <= 1) {
-                if (IsPlayerProtectedByFlash(victim)
-                    || IsPlayerEtherealized(victim))
+                if (!world.OwnsNativePopulationLevel(target.LevelId)
+                    && (IsPlayerProtectedByFlash(victim) || IsPlayerEtherealized(victim)))
                     continue;
                 var armorClass = victim.ArmorClass;
                 if (rules.GameVariant == DiabloGameVariant.Hellfire) {
@@ -5991,204 +6182,16 @@ public sealed class DiabloCombatCommandProcessor
                             target,
                             attackSeed,
                             goatMeleeAttackTuning));
-                var usesNativeCombatStream = gameMode == DiabloGameMode.SinglePlayer
-                    || gameMode == DiabloGameMode.Multiplayer
-                        && target.UsesNativeRandomSeeds;
-                var attackToHit = GetEffectiveMonsterToHit(target, usesSpecialAttack);
-                if (usesNativeCombatStream && attackToHit > 0) {
-                    var hitChance = rules.ResolveMonsterAttackHitChance(
-                        attackToHit,
-                        GetEffectiveMonsterLevel(target),
-                        victim.CharacterLevel,
-                        target.LevelId,
-                        armorClass);
-                    if (random.RandomIntLessThan(100) >= hitChance)
-                        continue;
-
-                    var victimClass = GetPlayerClass(victim);
-                    var canBlock = (victim.CombatMode is DiabloPlayerCombatMode.Stand
-                            or DiabloPlayerCombatMode.Attack)
-                        && CanBlock(victim);
-                    var blockRoll = canBlock
-                        ? random.RandomIntLessThan(100)
-                        : 100;
-                    var blockChance = Math.Clamp(
-                        victim.Attributes.Dexterity.Current
-                            + (victimClass?.BaseBlockChance ?? 0)
-                            + checked((int)victim.CharacterLevel
-                                * rules.MonsterPlayerBlockLevelScale)
-                            - (rules.MonsterPlayerBlockLevelScale
-                                * GetEffectiveMonsterLevel(target)),
-                        0,
-                        100);
-                    if (blockRoll < blockChance) {
-                        StartBlock(victim, victimClass, tick);
-                        // Native MonsterAttackPlayer still resolves Reflect on
-                        // a blocked hit. The blocked player takes no damage,
-                        // but the monster receives a percentage of the rolled
-                        // Q6 damage and one charge is consumed.
-                        if (victim.ReflectCharges > 0) {
-                            victim.ReflectCharges--;
-                            var reflectedBaseQ6 = AuthoritativeEquipmentIncomingDamageRules
-                                .ApplyGetHitQ6(
-                                    RollEffectiveMonsterDamageQ6(target, usesSpecialAttack),
-                                    DeterministicFixedPointQ6.Scale,
-                                    victim.Equipment);
-                            var reflectMinimum = reflectSpell?.ReflectDamagePercentMinimum > 0
-                                ? reflectSpell.ReflectDamagePercentMinimum
-                                : NativeReflectDamagePercentMinimum;
-                            var reflectMaximum = reflectSpell?.ReflectDamagePercentMaximum > 0
-                                ? reflectSpell.ReflectDamagePercentMaximum
-                                : NativeReflectDamagePercentMaximum;
-                            var reflectedDamageQ6 = checked(
-                                reflectedBaseQ6
-                                * random.RandomIntBetween(reflectMinimum, reflectMaximum)
-                                / 100);
-                            if (reflectedDamageQ6 > 0) {
-                                var reflectedEvents = new List<DiabloGameplayEvent>();
-                                ApplyResolvedDamageQ6(
-                                    victim,
-                                    target,
-                                    reflectedDamageQ6,
-                                    reflectedEvents);
-                                foreach (var reflectedEvent in reflectedEvents)
-                                    events.Add(new DiabloDirectedGameplayEvent(
-                                        victim,
-                                        reflectedEvent));
-                            }
-                        }
-                        continue;
-                    }
+                if (world.OwnsNativePopulationLevel(target.LevelId)) {
+                    BeginNativeMelee(target);
+                    var animation = AdvanceNativeMelee(target);
+                    if (animation.EffectFrame && !IsPlayerProtectedByFlash(victim) && !IsPlayerEtherealized(victim))
+                        ResolveMonsterMeleeEffect(target, victim, players, tick, events,
+                            armorClass, attackSeed, usesSpecialAttack: false);
+                    continue;
                 }
-
-                var usesNativeFixedPointDamage = usesNativeCombatStream
-                    && attackToHit > 0;
-                int damageQ6;
-                if (usesNativeFixedPointDamage) {
-                    damageQ6 = AuthoritativeEquipmentIncomingDamageRules.ApplyGetHitQ6(
-                        RollEffectiveMonsterDamageQ6(target, usesSpecialAttack),
-                        DeterministicFixedPointQ6.Scale,
-                        victim.Equipment);
-                } else {
-                    var attackDamage = usesSpecialAttack
-                        ? usesNativeCombatStream
-                            ? RollEffectiveMonsterDamage(target, special: true)
-                            : SelectNativeSpecialDamage(target, attackSeed)
-                        : usesNativeCombatStream
-                            ? RollEffectiveMonsterDamage(target, special: false)
-                            : difficulty == DiabloDifficulty.Normal
-                                ? target.AttackDamage
-                                : SelectEffectiveMonsterDamage(
-                                    target,
-                                    special: false,
-                                    seed: attackSeed);
-                    var resolvedDamage = attackToHit == 0
-                        ? rules.ResolveAttackDamage(
-                            attackDamage,
-                            armorClass,
-                            attackSeed)
-                        : rules.ResolveMonsterAttackDamage(
-                            attackDamage,
-                            attackToHit,
-                            GetEffectiveMonsterLevel(target),
-                            victim.CharacterLevel,
-                            target.LevelId,
-                            armorClass,
-                            attackSeed);
-                    damageQ6 = DeterministicFixedPointQ6.FromWhole(
-                        AuthoritativeEquipmentIncomingDamageRules.ApplyGetHit(
-                            resolvedDamage,
-                            rules.MinimumDamage,
-                            victim.Equipment));
-                }
-                var damage = DeterministicFixedPointQ6.ToWholeTruncated(damageQ6);
-                var reflectedDamage = 0;
-                if (damage > 0 && victim.ReflectCharges > 0) {
-                    victim.ReflectCharges--;
-                    var reflectMinimum = reflectSpell?.ReflectDamagePercentMinimum > 0
-                        ? reflectSpell.ReflectDamagePercentMinimum
-                        : NativeReflectDamagePercentMinimum;
-                    var reflectMaximum = reflectSpell?.ReflectDamagePercentMaximum > 0
-                        ? reflectSpell.ReflectDamagePercentMaximum
-                        : NativeReflectDamagePercentMaximum;
-                    reflectedDamage = checked(
-                        damage * random.RandomIntBetween(reflectMinimum, reflectMaximum) / 100);
-                    if (reflectedDamage > 0) {
-                        var reflectedEvents = new List<DiabloGameplayEvent>();
-                        ApplyResolvedDamageQ6(
-                            victim,
-                            target,
-                            DeterministicFixedPointQ6.FromWhole(reflectedDamage),
-                            reflectedEvents);
-                        foreach (var reflectedEvent in reflectedEvents)
-                            events.Add(new DiabloDirectedGameplayEvent(victim, reflectedEvent));
-                    }
-                }
-                var incomingDamageQ6 = Math.Max(
-                    0,
-                    damageQ6 - DeterministicFixedPointQ6.FromWhole(reflectedDamage));
-                // Direct compatibility fixtures historically store whole life
-                // points, while authoritative class-backed players store Q6.
-                var usesLegacyWholeLife = victim.LifeMaximum % DeterministicFixedPointQ6.Scale != 0;
-                var appliedDamageQ6 = usesLegacyWholeLife
-                    ? DeterministicFixedPointQ6.ToWholeTruncated(incomingDamageQ6)
-                    : incomingDamageQ6;
-                var damageResult = playerDamage.Apply(victim, appliedDamageQ6);
-                if (damageResult.IncomingDamageQ6 > 0) {
-                    var eventDamageQ6 = usesLegacyWholeLife
-                        ? incomingDamageQ6
-                        : damageResult.IncomingDamageQ6;
-                    events.Add(new DiabloDirectedGameplayEvent(
-                        victim,
-                        new DiabloGameplayEvent(
-                            DiabloGameplayEventKind.Damage,
-                            target.EntityId,
-                            victim.EntityId,
-                            DeterministicFixedPointQ6.ToWholeTruncated(
-                                eventDamageQ6)) {
-                            AmountQ6 = eventDamageQ6,
-                        }));
-                }
-                // Native thorns retaliates after a successful monster hit,
-                // before the player death check, using one content-owned Q6 roll.
-                if (damage > 0
-                    && target.HitPointsQ6 > 0
-                    && HasUsableEquipmentFlag(
-                        victim,
-                        AuthoritativeEquipmentIncomingDamageRules.ThornsFlag)) {
-                    var thornsEvents = new List<DiabloGameplayEvent>();
-                    ApplyResolvedDamageQ6(
-                        victim,
-                        target,
-                        DeterministicFixedPointQ6.FromWhole(random.RandomIntBetween(
-                            rules.ThornsDamageMinimum,
-                            rules.ThornsDamageMaximum)),
-                        thornsEvents);
-                    foreach (var thornsEvent in thornsEvents)
-                        events.Add(new DiabloDirectedGameplayEvent(victim, thornsEvent));
-                }
-                if (victim.Life == 0)
-                    StartPlayerDeath(
-                        victim,
-                        target.EntityId,
-                        tick,
-                        players,
-                        PlayerDeathReason.MonsterOrTrap);
-                else if (damage > 0 && target.HitPointsQ6 > 0)
-                    ApplyMonsterKnockback(target, victim, players);
-                var batTuning = GetBatAttackTuning(target);
-                if (target.HitPointsQ6 > 0 && batTuning.HasValue)
-                    target.StartBatRetreat(
-                        GetDirection(
-                            target.PositionX,
-                            target.PositionY,
-                            victim.PositionX,
-                            victim.PositionY),
-                        batTuning.Value.RetreatDurationTicks);
-                if (target.HitPointsQ6 > 0
-                    && TryGetMonsterMissile(target, out var postMeleeMissile)
-                    && IsFamiliarLightningMissile(postMeleeMissile))
-                    CreateFamiliarLightningProjectile(target, victim, postMeleeMissile);
+                ResolveMonsterMeleeEffect(target, victim, players, tick, events,
+                    armorClass, attackSeed, usesSpecialAttack);
                 continue;
             }
 
@@ -6243,6 +6246,12 @@ public sealed class DiabloCombatCommandProcessor
                     target.BeginMovement(fallback.Value.X, fallback.Value.Y);
             }
         }
+        // Newly admitted walks receive this update's native processAnimation step.
+        foreach (var walker in world.CombatTargets.Values.Where(target => target.IsMoving
+            && target.HitPointsQ6 > 0 && target.NativeWalkCursor is null
+            && world.OwnsNativePopulationLevel(target.LevelId)
+            && players.Any(player => player.LevelId == target.LevelId)))
+            BeginNativeWalk(walker, tick);
         foreach (var leader in world.CombatTargets.Values
                      .Where(target => target.IsMoving && target.PackSize > 0)
                      .OrderBy(target => target.EntityId)) {
@@ -12171,7 +12180,7 @@ public sealed class DiabloCombatCommandProcessor
                 positionX,
                 positionY,
                 out var blockingObject)
-            && blockingObject!.Breakable) {
+            && world.CanBreakWorldObject(blockingObject)) {
             blockingObject.Destroyed = true;
         }
     }
@@ -12182,6 +12191,10 @@ public sealed class DiabloCombatCommandProcessor
         IReadOnlyList<AuthoritativePlayerState> players,
         ICollection<DiabloDirectedGameplayEvent> events)
     {
+        if (projectile.NativeWeaponArrow is not null) {
+            AdvanceNativeWeaponArrow(tick, projectile, players, events);
+            return;
+        }
         if (projectile.Phase == AuthoritativeProjectilePhase.Impact) {
             projectile.RemainingTicks--;
             if (projectile.RemainingTicks == 0)
@@ -12296,6 +12309,89 @@ public sealed class DiabloCombatCommandProcessor
             && target.FuturePositionY == projectile.TargetY;
     }
 
+    private void AdvanceNativeWeaponArrow(
+        ulong tick,
+        AuthoritativeProjectile projectile,
+        IReadOnlyList<AuthoritativePlayerState> players,
+        ICollection<DiabloDirectedGameplayEvent> events)
+    {
+        if (!world.OwnsNativePopulationLevel(projectile.LevelId))
+            throw new InvalidDataException(
+                "A pending native arrow is outside its owned population level.");
+        if (!players.Any(player => player.LevelId == projectile.LevelId))
+            return;
+        if (projectile.Phase != AuthoritativeProjectilePhase.Travel)
+            throw new InvalidDataException(
+                "A pending native arrow cannot already be in its impact phase.");
+        if (projectile.NativeWeaponArrow is not { } nativeState
+            || nativeState.MissileDistance > int.MaxValue)
+            throw new InvalidDataException(
+                "A pending native arrow has an invalid missile distance.");
+        if (projectile.ActivationDelayTicks > 0) {
+            projectile.ActivationDelayTicks--;
+            return;
+        }
+        if (projectile.RemainingTicks == 0)
+            throw new InvalidDataException(
+                "A pending native arrow has no remaining native lifetime.");
+        if (nativeState.MissileDistance == int.MaxValue)
+            throw new InvalidDataException(
+                "A pending native arrow exceeded the native missile-distance range.");
+        projectile.RemainingTicks--;
+        projectile.NativeWeaponArrow = nativeState with {
+            MissileDistance = nativeState.MissileDistance + 1,
+        };
+
+        var visitedTiles = MoveNativeProjectile(projectile);
+        if (visitedTiles.Count == 0) {
+            // Native MoveMissile still checks the current tile when its pixel
+            // movement does not cross a tile boundary, but suppresses repeats
+            // against the same occupant until the tile contents change.
+            if (TryResolveWeaponArrowTileCollision(tick, projectile, players, events)) {
+                world.Projectiles.Remove(projectile.EntityId);
+                return;
+            }
+            if (world.IsMissileBlocked(
+                    projectile.LevelId,
+                    projectile.PositionX,
+                    projectile.PositionY)) {
+                BreakMissileBlockingObject(
+                    projectile.LevelId,
+                    projectile.PositionX,
+                    projectile.PositionY);
+                world.Projectiles.Remove(projectile.EntityId);
+                return;
+            }
+        }
+
+        foreach (var tile in visitedTiles) {
+            projectile.PositionX = tile.X;
+            projectile.PositionY = tile.Y;
+            projectile.TraveledX = tile.TraveledX;
+            projectile.TraveledY = tile.TraveledY;
+            if (!world.ContainsPosition(projectile.LevelId, tile.X, tile.Y)) {
+                world.Projectiles.Remove(projectile.EntityId);
+                return;
+            }
+            // Changed cells always collide; only stationary cells suppress repeats.
+            projectile.LastCollisionTargetEntityId = 0;
+            // Native collision runs on every traversed tile before missile
+            // blocking. A missed target keeps moving along the fixed velocity.
+            if (TryResolveWeaponArrowTileCollision(tick, projectile, players, events)) {
+                world.Projectiles.Remove(projectile.EntityId);
+                return;
+            }
+            if (!world.IsMissileBlocked(projectile.LevelId, tile.X, tile.Y))
+                continue;
+            BreakMissileBlockingObject(projectile.LevelId, tile.X, tile.Y);
+            world.Projectiles.Remove(projectile.EntityId);
+            return;
+        }
+
+        if (projectile.RemainingTicks == 0)
+            world.Projectiles.Remove(projectile.EntityId);
+    }
+
     /** Native ProcessArrow collision check for each traversed tile. */
     private bool TryResolveWeaponArrowTileCollision(
         ulong tick,
@@ -12308,8 +12404,15 @@ public sealed class DiabloCombatCommandProcessor
             projectile.PositionX,
             projectile.PositionY);
         if (target is not null) {
-            ResolveWeaponArrowImpact(tick, projectile, target, players, events);
-            return true;
+            if (projectile.NativeWeaponArrow is null) {
+                _ = ResolveWeaponArrowImpact(tick, projectile, target, players, events);
+                return true;
+            }
+            if (projectile.LastCollisionTargetEntityId == target.EntityId)
+                return false;
+            var stops = ResolveWeaponArrowImpact(tick, projectile, target, players, events);
+            projectile.LastCollisionTargetEntityId = target.EntityId;
+            return stops;
         }
 
         var playerTarget = FindProjectilePlayer(
@@ -12317,8 +12420,24 @@ public sealed class DiabloCombatCommandProcessor
             players,
             projectile.PositionX,
             projectile.PositionY);
-        if (playerTarget is null)
+        if (playerTarget is null) {
+            if (projectile.NativeWeaponArrow is not null)
+                projectile.LastCollisionTargetEntityId = 0;
             return false;
+        }
+
+        if (projectile.NativeWeaponArrow is not null) {
+            if (projectile.LastCollisionTargetEntityId == playerTarget.EntityId)
+                return false;
+            var stops = ResolveNativePlayerWeaponArrowImpact(
+                tick,
+                projectile,
+                playerTarget,
+                players,
+                events);
+            projectile.LastCollisionTargetEntityId = playerTarget.EntityId;
+            return stops;
+        }
 
         return ResolvePlayerWeaponArrowImpact(
             tick,
@@ -12575,7 +12694,94 @@ public sealed class DiabloCombatCommandProcessor
         return true;
     }
 
-    private void ResolveWeaponArrowImpact(
+    private bool ResolveNativePlayerWeaponArrowImpact(
+        ulong tick,
+        AuthoritativeProjectile projectile,
+        AuthoritativePlayerState target,
+        IReadOnlyList<AuthoritativePlayerState> players,
+        ICollection<DiabloDirectedGameplayEvent> events)
+    {
+        var owner = players.FirstOrDefault(player =>
+            player.EntityId == projectile.SourceEntityId
+            || (projectile.SourceEntityId == 1 && player.EntityId == 0));
+        if (owner is null)
+            return true;
+        if (!world.OwnsNativePopulationLevel(projectile.LevelId)
+            || owner.LevelId != projectile.LevelId
+            || projectile.NativeWeaponArrow is not { } nativeState
+            || nativeState.MissileDistance > int.MaxValue)
+            throw new InvalidDataException(
+                "A pending native arrow has an invalid player collision owner or distance.");
+
+        // Native Plr2PlrMHit rechecks friendly-fire and temporary protection at
+        // collision; a rejected player collision leaves the arrow in flight.
+        if ((!rules.FriendlyFire && owner.FriendlyMode)
+            || IsPlayerProtectedByFlash(target)
+            || IsPlayerEtherealized(target))
+            return false;
+
+        var targetProxy = CreatePlayerCombatTargetProxy(target);
+        var nativeDamageQ6 = ResolvePlayerAttackDamageQ6(
+            owner,
+            targetProxy,
+            monsterTarget: false,
+            ranged: true,
+            deferGargoyleWake: true,
+            targetDistance: checked((int)nativeState.MissileDistance),
+            adjacentDamage: false,
+            seed: 0,
+            out _,
+            out _,
+            out _,
+            out var attackHit,
+            nativeImpactRoll: true);
+        if (!attackHit)
+            return false;
+        if (TryResolvePlayerBlock(owner, target, tick))
+            return true;
+
+        var nativeEvents = new List<DiabloGameplayEvent>();
+        var damageResult = playerDamage.Apply(target, Math.Max(0, nativeDamageQ6));
+        if (damageResult.IncomingDamageQ6 > 0) {
+            nativeEvents.Add(new DiabloGameplayEvent(
+                DiabloGameplayEventKind.Damage,
+                owner.EntityId,
+                target.EntityId,
+                DeterministicFixedPointQ6.ToWholeTruncated(
+                    damageResult.IncomingDamageQ6)) {
+                AmountQ6 = damageResult.IncomingDamageQ6,
+            });
+        }
+        if (target.Life == 0) {
+            StartPlayerDeath(
+                target,
+                owner.EntityId,
+                tick,
+                players,
+                PlayerDeathReason.Player);
+        } else {
+            var elemental = AuthoritativeEquipmentElementalDamageRules.Resolve(
+                owner.Equipment,
+                random.GenerateRnd,
+                ranged: true);
+            ApplyPlayerElementalChannels(
+                owner,
+                target,
+                targetProxy,
+                elemental,
+                tick,
+                players,
+                nativeEvents);
+        }
+        ApplyPlayerKnockback(owner, target, nativeDamageQ6, players);
+        if (nativeDamageQ6 > 0)
+            ApplyPlayerAttackEffects(owner, nativeDamageQ6, nativeEvents);
+        foreach (var gameplayEvent in nativeEvents)
+            events.Add(new DiabloDirectedGameplayEvent(owner, gameplayEvent));
+        return true;
+    }
+
+    private bool ResolveWeaponArrowImpact(
         ulong tick,
         AuthoritativeProjectile projectile,
         AuthoritativeCombatTarget target,
@@ -12586,7 +12792,92 @@ public sealed class DiabloCombatCommandProcessor
             player.EntityId == projectile.SourceEntityId
             || (projectile.SourceEntityId == 1 && player.EntityId == 0));
         if (owner is null)
-            return;
+            return true;
+
+        if (projectile.NativeWeaponArrow is { } nativeState) {
+            if (!world.OwnsNativePopulationLevel(projectile.LevelId)
+                || owner.LevelId != projectile.LevelId)
+                throw new InvalidDataException(
+                    "A pending native arrow has no current owner on its population level.");
+            if (nativeState.MissileDistance > int.MaxValue)
+                throw new InvalidDataException(
+                    "A pending native arrow has an invalid missile distance.");
+            // MonsterMHit's isPossibleToHit guards precede its first RNG draw.
+            // Physical arrows have no elemental-immunity channel in native isImmune.
+            if (target.HitPointsQ6 <= 0 || target.LevelId != projectile.LevelId
+                || target.DialogueMessageId != 0
+                || target.DialogueState == AuthoritativeMonsterDialogueState.Inquiring
+                || IsQuestDialogueTarget(target) || IsNativeRetreatTarget(target))
+                return false;
+
+            var gargoyleWasSpecial = string.Equals(
+                    target.NativeAi,
+                    "Gargoyle",
+                    StringComparison.Ordinal)
+                && target.GargoyleSpecialActive;
+            var nativeDamageQ6 = ResolvePlayerAttackDamageQ6(
+                owner,
+                target,
+                monsterTarget: true,
+                ranged: true,
+                deferGargoyleWake: true,
+                targetDistance: checked((int)nativeState.MissileDistance),
+                adjacentDamage: false,
+                seed: 0,
+                out var perilSelfDamageQ6,
+                out var perilActive,
+                out var doppelgangerProc,
+                out var attackHit,
+                nativeImpactRoll: true);
+            if (gargoyleWasSpecial && !target.GargoyleSpecialActive)
+                return true;
+            if (!attackHit)
+                return false;
+
+            var nativeEvents = new List<DiabloGameplayEvent>();
+            if (doppelgangerProc)
+                SpawnDoppelganger(target, players);
+            if (perilActive && perilSelfDamageQ6 > 0) {
+                var selfDamage = playerDamage.Apply(owner, perilSelfDamageQ6);
+                if (selfDamage.IncomingDamageQ6 > 0) {
+                    nativeEvents.Add(new DiabloGameplayEvent(
+                        DiabloGameplayEventKind.Damage,
+                        owner.EntityId,
+                        owner.EntityId,
+                        DeterministicFixedPointQ6.ToWholeTruncated(
+                            selfDamage.IncomingDamageQ6)) {
+                        AmountQ6 = selfDamage.IncomingDamageQ6,
+                    });
+                }
+                if (owner.Life == 0) {
+                    StartPlayerDeath(
+                        owner,
+                        owner.EntityId,
+                        tick,
+                        players,
+                        PlayerDeathReason.MonsterOrTrap);
+                }
+            }
+            ApplyResolvedDamageQ6(owner, target, nativeDamageQ6, nativeEvents);
+            var elemental = AuthoritativeEquipmentElementalDamageRules.Resolve(
+                owner.Equipment,
+                random.GenerateRnd,
+                ranged: true);
+            if (target.HitPointsQ6 > 0) {
+                ApplyWeaponArrowElementalDamage(
+                    owner,
+                    target,
+                    elemental.Fire,
+                    elemental.Lightning,
+                    nativeEvents);
+            }
+            ApplyEquipmentKnockback(owner, target, nativeDamageQ6, players);
+            if (nativeDamageQ6 > 0)
+                ApplyEquipmentAttackEffects(owner, nativeDamageQ6, nativeEvents);
+            foreach (var gameplayEvent in nativeEvents)
+                events.Add(new DiabloDirectedGameplayEvent(owner, gameplayEvent));
+            return true;
+        }
 
         var gameplayEvents = new List<DiabloGameplayEvent>();
         if (string.Equals(target.NativeAi, "Gargoyle", StringComparison.Ordinal)
@@ -12594,7 +12885,7 @@ public sealed class DiabloCombatCommandProcessor
             // Native MonsterMHit consumes the Gargoyle wake-up flag at arrow
             // impact, before damage or any Hellfire equipment effect.
             target.GargoyleSpecialActive = false;
-            return;
+            return true;
         }
         if (projectile.DoppelgangerProc)
             SpawnDoppelganger(target, players);
@@ -12636,6 +12927,7 @@ public sealed class DiabloCombatCommandProcessor
             ApplyEquipmentAttackEffects(owner, projectile.DamageQ6, gameplayEvents);
         foreach (var gameplayEvent in gameplayEvents)
             events.Add(new DiabloDirectedGameplayEvent(owner, gameplayEvent));
+        return true;
     }
 
     private void ApplyWeaponArrowElementalDamage(
@@ -12643,18 +12935,31 @@ public sealed class DiabloCombatCommandProcessor
         AuthoritativeCombatTarget target,
         AuthoritativeProjectile projectile,
         ICollection<DiabloGameplayEvent> events)
+        => ApplyWeaponArrowElementalDamage(
+            player,
+            target,
+            projectile.ElementalFireDamage,
+            projectile.ElementalLightningDamage,
+            events);
+
+    private void ApplyWeaponArrowElementalDamage(
+        AuthoritativePlayerState player,
+        AuthoritativeCombatTarget target,
+        int fireChannelDamage,
+        int lightningChannelDamage,
+        ICollection<DiabloGameplayEvent> events)
     {
-        if (projectile.ElementalFireDamage > 0) {
+        if (fireChannelDamage > 0) {
             var fireDamage = rules.ResolveDamage(
-                projectile.ElementalFireDamage,
+                fireChannelDamage,
                 GetEffectiveMonsterArmorClass(target),
                 AuthoritativeDamageType.Fire,
                 target);
             ApplyResolvedDamage(player, target, fireDamage, events);
         }
-        if (projectile.ElementalLightningDamage > 0 && target.HitPointsQ6 > 0) {
+        if (lightningChannelDamage > 0 && target.HitPointsQ6 > 0) {
             var lightningDamage = rules.ResolveDamage(
-                projectile.ElementalLightningDamage,
+                lightningChannelDamage,
                 GetEffectiveMonsterArmorClass(target),
                 AuthoritativeDamageType.Lightning,
                 target);
@@ -13015,7 +13320,7 @@ public sealed class DiabloCombatCommandProcessor
                 projectile.PositionX,
                 projectile.PositionY,
                 out var @object)
-            && @object!.Breakable) {
+            && world.CanBreakWorldObject(@object)) {
             @object.Destroyed = true;
         }
         SpawnAcidSplat(projectile);
@@ -14044,7 +14349,7 @@ public sealed class DiabloCombatCommandProcessor
                     tile.X,
                     tile.Y,
                     out var @object)
-                && @object!.Breakable) {
+                && world.CanBreakWorldObject(@object)) {
                 @object.Destroyed = true;
             }
             world.Projectiles.Remove(projectile.EntityId);
@@ -14150,7 +14455,7 @@ public sealed class DiabloCombatCommandProcessor
                 projectile.PositionX,
                 projectile.PositionY,
                 out var @object)
-            && @object!.Breakable) {
+            && world.CanBreakWorldObject(@object)) {
             @object.Destroyed = true;
         }
     }
@@ -14386,7 +14691,7 @@ public sealed class DiabloCombatCommandProcessor
                 projectile.PositionX,
                 projectile.PositionY,
                 out var blockingObject)
-            && blockingObject!.Breakable) {
+            && world.CanBreakWorldObject(blockingObject)) {
             blockingObject.Destroyed = true;
         }
         EnterFireballImpact(tick, projectile, players, events);
@@ -14451,7 +14756,7 @@ public sealed class DiabloCombatCommandProcessor
                     positionX,
                     positionY,
                     out var @object)
-                && @object!.Breakable) {
+                && world.CanBreakWorldObject(@object)) {
                 @object.Destroyed = true;
             }
         }
@@ -15286,7 +15591,7 @@ public sealed class DiabloCombatCommandProcessor
                     positionX,
                     positionY,
                     out var @object)
-                && @object!.Breakable) {
+                && world.CanBreakWorldObject(@object)) {
                 @object.Destroyed = true;
             }
         }
@@ -15423,7 +15728,7 @@ public sealed class DiabloCombatCommandProcessor
                     projectile.PositionX,
                     projectile.PositionY,
                     out var @object)
-                && @object!.Breakable) {
+                && world.CanBreakWorldObject(@object)) {
                 @object.Destroyed = true;
             }
             world.Projectiles.Remove(projectile.EntityId);
@@ -15484,7 +15789,7 @@ public sealed class DiabloCombatCommandProcessor
                     positionX,
                     positionY,
                     out var @object)
-                && @object!.Breakable) {
+                && world.CanBreakWorldObject(@object)) {
                 @object.Destroyed = true;
             }
         }
@@ -15845,7 +16150,7 @@ public sealed class DiabloCombatCommandProcessor
                 projectile.PositionX,
                 projectile.PositionY,
                 out var @object)
-            && @object!.Breakable) {
+            && world.CanBreakWorldObject(@object)) {
             @object.Destroyed = true;
         }
         // Hellfire blocks retain the projectile, but still terminate travel in impact.
@@ -15873,7 +16178,7 @@ public sealed class DiabloCombatCommandProcessor
                     projectile.PositionX,
                     projectile.PositionY,
                     out var @object)
-            && @object!.Breakable) {
+            && world.CanBreakWorldObject(@object)) {
             @object.Destroyed = true;
         }
         return blocked || hitTarget;
@@ -16183,7 +16488,7 @@ public sealed class DiabloCombatCommandProcessor
                     projectile.PositionX,
                     projectile.PositionY,
                     out var @object)
-            && @object!.Breakable) {
+            && world.CanBreakWorldObject(@object)) {
             @object.Destroyed = true;
         }
         return blocked || hitTarget || playerHit;
@@ -16742,7 +17047,7 @@ public sealed class DiabloCombatCommandProcessor
                     projectile.PositionX,
                     projectile.PositionY,
                     out var @object)
-                && @object!.Breakable) {
+                && world.CanBreakWorldObject(@object)) {
                 @object.Destroyed = true;
             }
             world.Projectiles.Remove(projectile.EntityId);
@@ -16887,7 +17192,7 @@ public sealed class DiabloCombatCommandProcessor
         if (!position.HasValue)
             return;
         var entityId = AllocateWorldItemEntityId(players);
-        world.WorldItems.Add(entityId, new AuthoritativeWorldItem(
+        world.AddWorldItem(new AuthoritativeWorldItem(
             entityId,
             player.LevelId,
             position.Value.X,
@@ -16957,7 +17262,7 @@ public sealed class DiabloCombatCommandProcessor
             if (!position.HasValue)
                 continue;
             var entityId = AllocateWorldItemEntityId(players);
-            world.WorldItems.Add(entityId, new AuthoritativeWorldItem(
+            world.AddWorldItem(new AuthoritativeWorldItem(
                 entityId,
                 player.LevelId,
                 position.Value.X,
@@ -17000,7 +17305,7 @@ public sealed class DiabloCombatCommandProcessor
             NativeCursorGraphic = playerClass.PvpEarCursorGraphic,
         };
         var entityId = AllocateWorldItemEntityId(players);
-        world.WorldItems.Add(entityId, new AuthoritativeWorldItem(
+        world.AddWorldItem(new AuthoritativeWorldItem(
             entityId,
             player.LevelId,
             position.Value.X,
@@ -17068,7 +17373,7 @@ public sealed class DiabloCombatCommandProcessor
         if (!position.HasValue)
             return;
         var entityId = AllocateWorldItemEntityId(players);
-        world.WorldItems.Add(entityId, new AuthoritativeWorldItem(
+        world.AddWorldItem(new AuthoritativeWorldItem(
             entityId,
             player.LevelId,
             position.Value.X,
@@ -17109,6 +17414,8 @@ public sealed class DiabloCombatCommandProcessor
         int positionX,
         int positionY)
     {
+        if (world.HasNativeItemLevel(player.LevelId))
+            return world.CanPutNativeItem(player.LevelId, positionX, positionY);
         return world.IsWalkable(player.LevelId, positionX, positionY)
             && !world.IsCathedralDoorItemBlocked(player.LevelId, positionX, positionY)
             && !world.IsOccupied(player.LevelId, positionX, positionY, players)
@@ -17591,7 +17898,29 @@ public sealed class DiabloCombatCommandProcessor
         ICollection<DiabloGameplayEvent> events)
     {
         var wasAlive = target.HitPointsQ6 > 0;
+        var lootPlayers = activePlayers.Count == 0 ? new[] { player } : activePlayers;
+        AuthoritativeCathedralItemDeathTransaction? nativeLoot = null;
+        uint? nativeExperienceReward = null;
+        if (wasAlive && damageQ6 >= target.HitPointsQ6 && world.HasNativeItemLevel(target.LevelId)) {
+            nativeExperienceReward = target.IsPlayerMinion ? 0 : GetEffectiveMonsterExperienceReward(target);
+            var resources = DiabloPlayerProgression.PreviewExperienceResources(player, nativeExperienceReward.Value, experience);
+            nativeLoot = world.PrepareCathedralDeathLoot(target, player, lootPlayers,
+                new(true, false, resources.Mana, resources.Life));
+            // Native MonsterDeath grants experience before HP0, reseed and SpawnLoot.
+            // The prepared context previews level-up resources while validation remains non-mutating.
+            DiabloPlayerProgression.GrantExperience(player, nativeExperienceReward.Value, experience);
+        }
         target.ApplyDamageQ6(damageQ6);
+        if (world.OwnsNativePopulationLevel(target.LevelId)) {
+            if (target.HitPointsQ6 <= 0)
+                InterruptNativeMelee(target);
+            else if (damageQ6 > 0 && !target.IsPetrified
+                && (DeterministicFixedPointQ6.ToWholeTruncated(damageQ6) >= GetEffectiveMonsterLevel(target) + 3
+                    || target.NativeAi is "Sneak" or "Stalker" or "Unseen" or "IllWeav")) {
+                target.CancelMovement();
+                BeginNativeHitRecovery(target);
+            }
+        }
         if (damageQ6 > 0) {
             events.Add(new DiabloGameplayEvent(
                 DiabloGameplayEventKind.Damage,
@@ -17610,6 +17939,12 @@ public sealed class DiabloCombatCommandProcessor
         if (!wasAlive || target.HitPointsQ6 != 0)
             return;
 
+        // Native MonsterDeath restores rndItemSeed and spawns loot before
+        // clearing moving reservations or changing the monster's tile.
+        if (nativeLoot is not null)
+            random.Restore(world.CommitCathedralDeathLoot(nativeLoot,
+                () => AllocateWorldItemEntityId(lootPlayers)));
+
         target.CancelMovement();
         target.BeginDeathAnimation();
         TriggerFallenFear(target);
@@ -17624,27 +17959,28 @@ public sealed class DiabloCombatCommandProcessor
                 checked((int)player.DiabloKillLevel)));
         }
 
-        var experienceReward = GetEffectiveMonsterExperienceReward(target);
-        DiabloPlayerProgression.GrantExperience(player, experienceReward, experience);
+        var experienceReward = nativeExperienceReward ?? GetEffectiveMonsterExperienceReward(target);
+        if (nativeExperienceReward is null)
+            DiabloPlayerProgression.GrantExperience(player, experienceReward, experience);
         events.Add(new DiabloGameplayEvent(
             DiabloGameplayEventKind.Experience,
             player.EntityId,
             player.EntityId,
             checked((int)experienceReward)));
-        if (target.Drop is not null
+        if (nativeLoot is null && target.Drop is not null
             && FindAvailableWorldItemPosition(
                 target.LevelId,
                 target.PositionX,
                 target.PositionY,
                 target.EntityId) is { } dropPosition) {
-            world.WorldItems[target.Drop.EntityId] = new AuthoritativeWorldItem(
+            world.SetWorldItem(new AuthoritativeWorldItem(
                 target.Drop.EntityId,
                 target.LevelId,
                 dropPosition.X,
                 dropPosition.Y,
                 target.Drop.ItemSeed,
                 target.Drop.Price,
-                target.Drop.State);
+                target.Drop.State));
         }
         if (!target.IsPlayerMinion && target.DeathAnimationTicks == 0)
             ReplaceDeadMonsterWithCorpse(target);
@@ -17800,14 +18136,14 @@ public sealed class DiabloCombatCommandProcessor
                 itemSeed,
                 quest.CompletionRewardItemLevel);
         var entityId = AllocateWorldItemEntityId(activePlayers);
-        world.WorldItems[entityId] = new AuthoritativeWorldItem(
+        world.SetWorldItem(new AuthoritativeWorldItem(
             entityId,
             target.LevelId,
             position.Value.X,
             position.Value.Y,
             itemSeed,
             checked((uint)Math.Max(0, state.IdentifiedValue)),
-            state);
+            state));
     }
 
     /** Finds a deterministic open tile for a monster-origin world item. */
@@ -17817,6 +18153,8 @@ public sealed class DiabloCombatCommandProcessor
         int originY,
         uint excludedEntityId)
     {
+        if (!world.HasWorldItemCapacity(levelId))
+            return null;
         return DeterministicGridCrawl.FindClosestValidPosition(
             originX,
             originY,

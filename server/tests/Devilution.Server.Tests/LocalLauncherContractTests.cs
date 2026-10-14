@@ -7,6 +7,60 @@ namespace Devilution.Server.Tests;
 public sealed class LocalLauncherContractTests
 {
     [Fact]
+    public void NativeCathedralJourneyAndResumeUseOnlyThePinnedHeadlessCohortProfile()
+    {
+        var root = FindRepositoryRoot();
+        var launcher = File.ReadAllText(Path.Combine(root, "godot/run-local-client.ps1"));
+        var driver = File.ReadAllText(Path.Combine(root, "tools/test-godot-session.ps1"));
+
+        Assert.Contains("[string]$CathedralNativeProfileDirectory", launcher, StringComparison.Ordinal);
+        Assert.Contains("'CathedralNativeJourney', 'CathedralNativeResume'", launcher, StringComparison.Ordinal);
+        Assert.Contains("Get-CathedralNativePopulationProfile $CathedralNativeProfileDirectory $SessionDirectory", launcher, StringComparison.Ordinal);
+        Assert.Contains(".local/native-item-route-integrated-20261013/native-profile-r3", launcher, StringComparison.Ordinal);
+        Assert.Contains("$cathedralNativePhase -and (-not $Headless -or $PersistenceMode -cne 'cohort'", launcher, StringComparison.Ordinal);
+        Assert.Contains("$clientEnvironment['GODEVILUTION_CATHEDRAL_NATIVE_PROFILE'] = $cathedralNativeProfile.MetadataPath", launcher, StringComparison.Ordinal);
+        Assert.Contains("'GODEVILUTION_CATHEDRAL_NATIVE_PROFILE'", launcher, StringComparison.Ordinal);
+        Assert.Contains("$processEvidence.ProfileKind = 'cathedral-native-population-playtest'", launcher, StringComparison.Ordinal);
+        Assert.Contains("$processEvidence.AdapterId = $cathedralNativeProfile.Metadata.adapterId", launcher, StringComparison.Ordinal);
+
+        Assert.Contains("[string]$CathedralNativeProfileDirectory", driver, StringComparison.Ordinal);
+        Assert.Contains("Native Cathedral journey/resume requires its pinned profile, headless cohort persistence", driver, StringComparison.Ordinal);
+        Assert.Contains("('sessions/acceptance-' + [guid]::NewGuid().ToString('N'))", driver, StringComparison.Ordinal);
+        Assert.Contains("-AcceptancePhase CathedralNativeJourney", driver, StringComparison.Ordinal);
+        Assert.Contains("-AcceptancePhase CathedralNativeResume", driver, StringComparison.Ordinal);
+        Assert.Contains("Assert-FreshProcessEvidence $createdProcess $resumedProcess 1", driver, StringComparison.Ordinal);
+        Assert.Contains("@('ContentHash', 'RulesetHash', 'ProfileHash', 'ContentTreeHash',", driver, StringComparison.Ordinal);
+        Assert.Contains("'cathedralnativejourney.json'", driver, StringComparison.Ordinal);
+        Assert.Contains("'cathedralnativeresume.json'", driver, StringComparison.Ordinal);
+        Assert.Contains("if ($journeyEvidence.Passed -isnot [bool] -or -not $journeyEvidence.Passed", driver, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void RogueTrapPreviewIsAnExclusiveLevelOneOverlayProfile()
+    {
+        var root = FindRepositoryRoot();
+        var wrapper = File.ReadAllText(Path.Combine(root, "run-godot-trap-disarm-preview.ps1"));
+        var launcher = File.ReadAllText(Path.Combine(root, "godot/run-local-client.ps1"));
+        var driver = File.ReadAllText(Path.Combine(root, "tools/test-godot-session.ps1"));
+
+        Assert.Contains("param()", wrapper, StringComparison.Ordinal);
+        Assert.Contains("& $godotLauncher -TrapDisarmPreviewContent", wrapper, StringComparison.Ordinal);
+        Assert.Contains("[switch]$TrapDisarmPreviewContent", launcher, StringComparison.Ordinal);
+        Assert.Contains("[switch]$TrapDisarm", driver, StringComparison.Ordinal);
+        Assert.Contains("TrapDisarm", launcher, StringComparison.Ordinal);
+        Assert.Contains("TrapDisarmResume", launcher, StringComparison.Ordinal);
+        Assert.Contains("'.local/godot-trap-disarm-preview'", launcher, StringComparison.Ordinal);
+        Assert.Contains("server/content/rogue-trap-preview", launcher, StringComparison.Ordinal);
+        Assert.Contains("'--starting-level 1 --random-seed 0'", launcher, StringComparison.Ordinal);
+        Assert.Contains("requires explicit -PersistenceMode cohort", launcher, StringComparison.Ordinal);
+        Assert.Contains("requires explicit -PersistenceMode cohort", driver, StringComparison.Ordinal);
+        Assert.Contains("Assert-FreshProcessEvidence $createdProcess $resumedProcess 1", driver, StringComparison.Ordinal);
+        Assert.Contains("TrapDisarmPreviewContent", driver, StringComparison.Ordinal);
+        Assert.DoesNotContain("TrapDisarmPreviewContent", File.ReadAllText(Path.Combine(root, "run-godot-client.ps1")), StringComparison.Ordinal);
+        Assert.DoesNotContain("TrapDisarmPreviewContent", File.ReadAllText(Path.Combine(root, "run-godot-preview.ps1")), StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void LifecyclePreviewHasAnExplicitZeroArgumentLauncherAndSeparateProfile()
     {
         var root = FindRepositoryRoot();
@@ -289,7 +343,7 @@ public sealed class LocalLauncherContractTests
         Assert.Contains("& $godotLauncher -PreviewContent", preview);
         Assert.Contains("Test-Path -LiteralPath $godotLauncher -PathType Leaf", preview);
         Assert.Contains("if ($PreviewContent) { '.local/godot-preview' } else { '.local/godot' }", harness);
-        Assert.Contains("$overlayArguments = if ($PreviewContent -or $PortalPreviewContent)", harness);
+        Assert.Contains("elseif ($PreviewContent -or $PortalPreviewContent)", harness);
         Assert.Contains("--content-overlay", harness);
         Assert.Contains("server/content/town-loop-preview", harness);
         Assert.Contains("Town-loop acceptance requires -PreviewContent", harness);

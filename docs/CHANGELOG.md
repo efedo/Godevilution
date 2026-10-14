@@ -5,7 +5,6 @@ Notable changes to this fork are recorded below.
 - 2026-10-14: Reuse a detached prior cohort document only after each save rereads
   and exactly matches the full canonical bytes from the last successful publish.
   Changed or post-rename uncertain bytes still take full parsing and validation.
-
 - 2026-10-14: Coalesce clock-gated cohort snapshot polls into one durable
   publication after scheduler advancement and event/snapshot validation, before
   response exposure. Preserve scheduled-command and periodic tick checkpoints,
@@ -15,6 +14,22 @@ Notable changes to this fork are recorded below.
   scheduler receipt checkpoint. Capture and validate one response, then publish
   once before sending the ack, events and snapshot. The generic path, checkpoint
   format and timing policy remain unchanged.
+- 2026-10-14: Add the opt-in native Rogue L1 continuation with cohort v5. Bow
+  actions freeze the selected actor's future tile and resolve hit/damage at
+  collision; native melee/recovery and walking phases persist, raw door trap
+  markers are retained, unsupported door operations refuse atomically, and combat
+  belt quick-use supports keys 1-8. Public L1 collision geometry includes solid
+  raw object-reference footprints. The journey checkpoints in Town, then a fresh
+  host revisits L1 to check retained state before returning to Town.
+
+- 2026-10-14: Pass the scoped opt-in native Rogue L1 headless Journey and
+  fresh-host Resume R3. The journey kills 13 actors (892 XP), equips Cape stable
+  item 163/seed 306134381, returns to Town and saves at sequence 103. Resume
+  restores sequence 103, accepts command 104, revisits L1 to verify retained
+  geometry/doors/corpse/claimed loot, then returns to Town. Healer restores life
+  2817→2880; Smith repair costs 2 Gold (100→98), Cape durability rises 5→12/12,
+  and final sequence is 196. Resume reused the passed Journey checkpoint in a
+  controlled copy; normal-profile adoption remains held.
 
 - 2026-10-13: Compose the generated Cathedral route with explicit Town preview
   stock. Buy a portal scroll, retain it through floor-two cold resume, cast it for

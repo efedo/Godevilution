@@ -163,12 +163,13 @@ public static class AuthoritativeCathedralMonsterRuntimeAdapter
 		IReadOnlyList<AuthoritativeCathedralUniqueDefinition>? uniqueDefinitions = null,
 		uint levelId = 0,
 		AuthoritativeMonsterTypeCatalog? monsterTypeCatalog = null,
-		IReadOnlyDictionary<int, string>? uniqueIdentities = null)
+		IReadOnlyDictionary<int, string>? uniqueIdentities = null,
+		IReadOnlyList<AuthoritativeCathedralRawMonsterDefinition>? populationMonsters = null)
 	{
 		ArgumentNullException.ThrowIfNull(state);
 		ArgumentNullException.ThrowIfNull(runtimeCatalog);
 		var bindings = BuildDeterministicBindings(state, entityIdBase, contentMonsterIdBase, levelId);
-		return AdaptCore(state, runtimeCatalog, metadataFingerprint, bindings, difficulty, uniqueDefinitions, monsterTypeCatalog, uniqueIdentities);
+		return AdaptCore(state, runtimeCatalog, metadataFingerprint, bindings, difficulty, uniqueDefinitions, monsterTypeCatalog, uniqueIdentities, populationMonsters);
 	}
 
 	public static AuthoritativeCathedralMonsterRuntimeAdapterResult AdaptWithBindings(
@@ -179,12 +180,13 @@ public static class AuthoritativeCathedralMonsterRuntimeAdapter
 		DiabloDifficulty difficulty = DiabloDifficulty.Normal,
 		IReadOnlyList<AuthoritativeCathedralUniqueDefinition>? uniqueDefinitions = null,
 		AuthoritativeMonsterTypeCatalog? monsterTypeCatalog = null,
-		IReadOnlyDictionary<int, string>? uniqueIdentities = null)
+		IReadOnlyDictionary<int, string>? uniqueIdentities = null,
+		IReadOnlyList<AuthoritativeCathedralRawMonsterDefinition>? populationMonsters = null)
 	{
 		ArgumentNullException.ThrowIfNull(state);
 		ArgumentNullException.ThrowIfNull(runtimeCatalog);
 		ArgumentNullException.ThrowIfNull(bindings);
-		return AdaptCore(state, runtimeCatalog, metadataFingerprint, bindings, difficulty, uniqueDefinitions, monsterTypeCatalog, uniqueIdentities);
+		return AdaptCore(state, runtimeCatalog, metadataFingerprint, bindings, difficulty, uniqueDefinitions, monsterTypeCatalog, uniqueIdentities, populationMonsters);
 	}
 
 	private static AuthoritativeCathedralMonsterRuntimeAdapterResult AdaptCore(
@@ -195,7 +197,8 @@ public static class AuthoritativeCathedralMonsterRuntimeAdapter
 		DiabloDifficulty difficulty,
 		IReadOnlyList<AuthoritativeCathedralUniqueDefinition>? uniqueDefinitions,
 		AuthoritativeMonsterTypeCatalog? monsterTypeCatalog,
-		IReadOnlyDictionary<int, string>? uniqueIdentities)
+		IReadOnlyDictionary<int, string>? uniqueIdentities,
+		IReadOnlyList<AuthoritativeCathedralRawMonsterDefinition>? populationMonsters)
 	{
 		ValidateFingerprint(metadataFingerprint, nameof(metadataFingerprint));
 		if (difficulty != DiabloDifficulty.Normal)
@@ -204,6 +207,10 @@ public static class AuthoritativeCathedralMonsterRuntimeAdapter
 			throw new InvalidDataException("The active monster count exceeds the active-ID array.");
 		if (bindings.Count != state.ActiveMonsterCount)
 			throw new InvalidDataException("One identity binding is required for every active native monster slot.");
+		if (populationMonsters is not null
+			&& (populationMonsters.Count != AuthoritativeCathedralRawMonsterDefinition.RawCatalogCount
+				|| populationMonsters.Where((monster, index) => monster is null || monster.NativeMonsterId != index).Any()))
+			throw new InvalidDataException("Native attack animation metadata requires the complete ordered bestiary.");
 
 		var orderedSlots = state.ActiveMonsterIds.Take(state.ActiveMonsterCount).ToArray();
 		ValidateGroupReferences(state, orderedSlots);
@@ -239,6 +246,12 @@ public static class AuthoritativeCathedralMonsterRuntimeAdapter
 		{
 			var stateRow = state.MonsterSlots[nativeSlot] with { };
 			var definition = runtimeCatalog.Get(stateRow.Type);
+			var nativeAttackFrameCount = populationMonsters is null ? 0 : populationMonsters[stateRow.Type].Frames[2];
+			var nativeAttackTicksPerFrame = populationMonsters is null ? 0 : populationMonsters[stateRow.Type].Rates[2];
+			var nativeHitRecoveryFrameCount = populationMonsters is null ? 0 : populationMonsters[stateRow.Type].Frames[3];
+			var nativeHitRecoveryTicksPerFrame = populationMonsters is null ? 0 : populationMonsters[stateRow.Type].Rates[3];
+			var nativeWalkFrameCount = populationMonsters is null ? 0 : populationMonsters[stateRow.Type].Frames[1];
+			var nativeWalkTicksPerFrame = populationMonsters is null ? 0 : populationMonsters[stateRow.Type].Rates[1];
 			var binding = bindingBySlot[nativeSlot];
 			uniqueById.TryGetValue(stateRow.UniqueType, out var unique);
 			var uniqueIdentity = unique is not null && uniqueIdentityById.TryGetValue(stateRow.UniqueType, out var suppliedIdentity)
@@ -260,7 +273,14 @@ public static class AuthoritativeCathedralMonsterRuntimeAdapter
 				definition.AnimationFrameNum,
 				definition.AnimationFrameNumSpecial,
 				initializationBinding,
-				state.MonsterPetrified[nativeSlot]);
+				state.MonsterPetrified[nativeSlot]) {
+				NativeAttackFrameCount = nativeAttackFrameCount,
+				NativeAttackTicksPerFrame = nativeAttackTicksPerFrame,
+				NativeHitRecoveryFrameCount = nativeHitRecoveryFrameCount,
+				NativeHitRecoveryTicksPerFrame = nativeHitRecoveryTicksPerFrame,
+				NativeWalkFrameCount = nativeWalkFrameCount,
+				NativeWalkTicksPerFrame = nativeWalkTicksPerFrame,
+			};
 			initialization.Validate();
 			initialization.ValidateTarget(
 				binding.EntityId,

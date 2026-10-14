@@ -1032,8 +1032,9 @@ public static class AuthoritativeSnapshotValidator
                         ? action.TargetEntityId == 0
                             && IsProjectedActionTarget(snapshot, player, action)
                         : action.TargetEntityId != 0
-                            && action.TargetX == 0
-                            && action.TargetY == 0)
+                            && (action.TargetX == 0 && action.TargetY == 0
+                                || player.CombatMode == PlayerCombatMode.RangedAttack
+                                    && IsProjectedActionTarget(snapshot, player, action)))
                     && action.Cast is null,
                 PlayerActionKind.Cast =>
                     player.CombatMode == PlayerCombatMode.Spell

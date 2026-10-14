@@ -164,6 +164,16 @@ public static class SnapshotStateHasher
                 hasher.AppendInt32(action.DirectionX);
                 hasher.AppendInt32(action.DirectionY);
                 hasher.AppendUInt32(action.TargetEntityId);
+                if (action.Kind == PlayerActionKind.Attack
+                    && player.CombatMode == PlayerCombatMode.RangedAttack
+                    && action.TargetEntityId != 0
+                    && !action.TargetCell
+                    && action.Cast is null
+                    && (action.TargetX != 0 || action.TargetY != 0)) {
+                    hasher.AppendString("godevilution-player-native-ranged-aim-v1");
+                    hasher.AppendInt32(action.TargetX);
+                    hasher.AppendInt32(action.TargetY);
+                }
                 hasher.AppendBool(action.Cast is not null);
                 if (action.Cast is not null) {
                     hasher.AppendUInt32(action.Cast.SpellId);

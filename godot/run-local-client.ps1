@@ -15,8 +15,9 @@ param(
     [string]$CathedralProfileDirectory,
     [string]$CathedralDepthProfileDirectory,
     [string]$CathedralDoorProfileDirectory,
+    [string]$CathedralNativeProfileDirectory,
     [ValidateSet(1, 4)] [int]$PerformanceParticipants = 1,
-    [ValidateSet('Create', 'Resume', 'Recovery', 'Journey', 'JourneyResume', 'TownLoop', 'TownLoopResume', 'Lifecycle', 'LifecycleResume', 'MultiplayerCreate', 'MultiplayerResume', 'MultiplayerRecovery', 'MultiplayerPendingRecovery', 'CooperativeJourney', 'CooperativeResume', 'Performance', 'PerformanceCreate', 'PerformanceResume', 'CathedralJourney', 'CathedralResume', 'CathedralDepthJourney', 'CathedralDepthResume', 'CathedralDoorJourney', 'CathedralDoorResume')] [string]$AcceptancePhase,
+    [ValidateSet('Create', 'Resume', 'Recovery', 'Journey', 'JourneyResume', 'TownLoop', 'TownLoopResume', 'Lifecycle', 'LifecycleResume', 'MultiplayerCreate', 'MultiplayerResume', 'MultiplayerRecovery', 'MultiplayerPendingRecovery', 'CooperativeJourney', 'CooperativeResume', 'Performance', 'PerformanceCreate', 'PerformanceResume', 'CathedralJourney', 'CathedralResume', 'CathedralDepthJourney', 'CathedralDepthResume', 'CathedralDoorJourney', 'CathedralDoorResume', 'CathedralNativeJourney', 'CathedralNativeResume')] [string]$AcceptancePhase,
     [switch]$CommandTimingTrace,
     [switch]$Automated,
     [string]$PerformanceResumeBaselinePath
@@ -30,6 +31,7 @@ if ($CommandTimingTrace -and [string]::IsNullOrWhiteSpace($AcceptancePhase)) {
     throw 'Command timing traces require an explicit isolated acceptance phase.'
 }
 $PersistenceMode = $PersistenceMode.ToLowerInvariant()
+$cathedralNative = -not [string]::IsNullOrWhiteSpace($CathedralNativeProfileDirectory)
 $performanceCreate = $AcceptancePhase -eq 'PerformanceCreate'
 $performanceResume = $AcceptancePhase -eq 'PerformanceResume'
 $performance = $AcceptancePhase -in @('Performance', 'PerformanceCreate')
@@ -72,12 +74,13 @@ $cathedralDoors = -not [string]::IsNullOrWhiteSpace($CathedralDoorProfileDirecto
 $cathedralProfileModes = @(
     $cathedralDepths,
     -not [string]::IsNullOrWhiteSpace($CathedralProfileDirectory),
-    $cathedralDoors) | Where-Object { $_ }
+    $cathedralDoors,
+    $cathedralNative) | Where-Object { $_ }
 if ($cathedralProfileModes.Count -gt 1) {
-    throw 'Choose exactly one Cathedral profile mode: L1, depths 1-4, or mutable doors.'
+    throw 'Choose exactly one Cathedral profile mode: L1, depths 1-4, mutable doors, or the pinned native population profile.'
 }
 $cathedral = $cathedralDepths -or -not [string]::IsNullOrWhiteSpace($CathedralProfileDirectory)
-if (($cathedral -or $cathedralDoors) -and ($PreviewContent -or $PortalPreviewContent -or $LifecyclePreviewContent -or $Multiplayer -or $performance)) {
+if (($cathedral -or $cathedralDoors -or $cathedralNative) -and ($PreviewContent -or $PortalPreviewContent -or $LifecyclePreviewContent -or $Multiplayer -or $performance)) {
     throw 'Cathedral playtests require their own single-player content and save profile.'
 }
 if (($AcceptancePhase -in @('CathedralJourney', 'CathedralResume')) -and (-not $cathedral -or $cathedralDepths)) {
@@ -89,8 +92,26 @@ if (($AcceptancePhase -in @('CathedralDepthJourney', 'CathedralDepthResume')) -a
 if (($AcceptancePhase -in @('CathedralDoorJourney', 'CathedralDoorResume')) -and -not $cathedralDoors) {
     throw 'Cathedral door acceptance requires an explicit compiled -CathedralDoorProfileDirectory.'
 }
+$cathedralNativePhases = @('CathedralNativeJourney', 'CathedralNativeResume')
+$cathedralNativePhase = $AcceptancePhase -in $cathedralNativePhases
+if ($cathedralNative -and (($AcceptancePhase -and -not $cathedralNativePhase) -or $CommandTimingTrace -or
+    $PersistenceMode -cne 'cohort' -or ($CharacterClassId -ge 0 -and $CharacterClassId -ne 1))) {
+    throw 'The native Cathedral profile requires its own single-player Rogue cohort session.'
+}
+if ($cathedralNativePhase -and -not $cathedralNative) {
+    throw 'Native Cathedral acceptance requires the pinned -CathedralNativeProfileDirectory.'
+}
+if ($cathedralNativePhase -and (-not $Headless -or $PersistenceMode -cne 'cohort' -or
+    [string]::IsNullOrWhiteSpace($SessionDirectory) -or $CommandTimingTrace -or $Multiplayer -or
+    ($CharacterClassId -ge 0 -and $CharacterClassId -ne 1) -or
+    -not [string]::IsNullOrWhiteSpace($CharacterName))) {
+    throw 'Native Cathedral journey/resume requires a headless, isolated single-player Rogue cohort session.'
+}
 $cathedralPhases = if ($cathedralDepths) { @('CathedralDepthJourney', 'CathedralDepthResume') } else { @('CathedralJourney', 'CathedralResume') }
 if ($cathedralDoors) { $cathedralPhases = @('CathedralDoorJourney', 'CathedralDoorResume') }
+if ($cathedralNative -and $AcceptancePhase -and -not $cathedralNativePhase) {
+    throw 'The pinned native Cathedral profile only supports CathedralNativeJourney and CathedralNativeResume acceptance phases.'
+}
 if (($cathedral -or $cathedralDoors) -and $AcceptancePhase -and $AcceptancePhase -notin $cathedralPhases) {
     throw 'Compiled Cathedral content only supports its own acceptance phases.'
 }
@@ -138,8 +159,8 @@ $serverExecutable = Join-Path $repositoryRoot 'server/src/Devilution.Server/bin/
 $clientSourceProject = Join-Path $repositoryRoot 'godot/Devilution.Client'
 $clientProject = $clientSourceProject
 if ([string]::IsNullOrWhiteSpace($SessionDirectory)) {
-    $SessionDirectory = if ($cathedral -or $cathedralDoors) {
-        $profileDirectory = if ($cathedralDepths) { $CathedralDepthProfileDirectory } elseif ($cathedralDoors) { $CathedralDoorProfileDirectory } else { $CathedralProfileDirectory }
+    $SessionDirectory = if ($cathedral -or $cathedralDoors -or $cathedralNative) {
+        $profileDirectory = if ($cathedralDepths) { $CathedralDepthProfileDirectory } elseif ($cathedralDoors) { $CathedralDoorProfileDirectory } elseif ($cathedralNative) { $CathedralNativeProfileDirectory } else { $CathedralProfileDirectory }
         Join-Path ([IO.Path]::GetFullPath($profileDirectory)) 'sessions/local'
     } else {
         Join-Path $repositoryRoot $(if ($Multiplayer) { '.local/godot-multiplayer' } elseif ($lifecycle) { '.local/godot-lifecycle-preview' } elseif ($PortalPreviewContent) { '.local/godot-portal-preview' } elseif ($PreviewContent) { '.local/godot-preview' } else { '.local/godot' })
@@ -198,7 +219,7 @@ $environmentNames = @('DEVILUTION_SERVER_HOST', 'DEVILUTION_SERVER_PORT', 'DEVIL
     'DEVILUTION_CHARACTER_NAME', 'DEVILUTION_RESUME_TOKEN', 'DEVILUTION_RESUME_TOKEN_PATH',
     'GODEVILUTION_ACCEPTANCE_PHASE', 'GODEVILUTION_ACCEPTANCE_DIRECTORY', 'GODEVILUTION_QUIT_AFTER_SECONDS',
     'GODEVILUTION_PERSISTENCE_MODE', 'GODEVILUTION_COMMAND_TIMING_TRACE',
-    'GODEVILUTION_LOCAL_PLAYER', 'GODEVILUTION_PORTAL_PREVIEW', 'GODEVILUTION_LIFECYCLE_PREVIEW', 'GODEVILUTION_CATHEDRAL_PROFILE', 'GODEVILUTION_CATHEDRAL_DEPTH_PROFILE', 'GODEVILUTION_CATHEDRAL_DOOR_PROFILE',
+    'GODEVILUTION_LOCAL_PLAYER', 'GODEVILUTION_PORTAL_PREVIEW', 'GODEVILUTION_LIFECYCLE_PREVIEW', 'GODEVILUTION_CATHEDRAL_PROFILE', 'GODEVILUTION_CATHEDRAL_DEPTH_PROFILE', 'GODEVILUTION_CATHEDRAL_DOOR_PROFILE', 'GODEVILUTION_CATHEDRAL_NATIVE_PROFILE',
     'GODEVILUTION_PERFORMANCE_PARTICIPANTS', 'GODEVILUTION_PERFORMANCE_SHARED_DIRECTORY', 'GODEVILUTION_PERFORMANCE_RESUME_BASELINE_PATH',
     'GODEVILUTION_CLIENT_ASSEMBLY_IMAGE_DIRECTORY',
     'GODEVILUTION_CLIENT_PERFORMANCE_OUTPUT', 'GODEVILUTION_CLIENT_PERFORMANCE_WARMUP_SECONDS',
@@ -424,6 +445,176 @@ function Initialize-CathedralDoorPlaytestSession($Profile, [string]$Session) {
         $writer = [IO.StreamWriter]::new($stream, [Text.UTF8Encoding]::new($false))
         try {
             $writer.Write(([ordered]@{ FormatVersion = 1; ProfileKind = 'cathedral-doors-playtest'; AdapterId = 'devilution.diablo.cathedral-doors.v1'; MetadataHash = $Profile.MetadataHash; ContentTreeHash = $Profile.ContentTreeHash } | ConvertTo-Json))
+        } finally { $writer.Dispose() }
+    }
+}
+
+function Get-CathedralNativePopulationProfile([string]$Directory, [string]$Session) {
+    # This selector is intentionally pinned to the reviewed offline profile artifact.
+    $root = [IO.Path]::GetFullPath($Directory).TrimEnd('\', '/')
+    $sessionRoot = [IO.Path]::GetFullPath($Session)
+    $expectedRoot = [IO.Path]::GetFullPath((Join-Path $repositoryRoot '.local/native-item-route-integrated-20261013/native-profile-r3')).TrimEnd('\', '/')
+    if ($root.Contains('"') -or $sessionRoot.Contains('"') -or
+        -not [string]::Equals($root, $expectedRoot, [StringComparison]::OrdinalIgnoreCase)) {
+        throw 'The native Cathedral selector accepts only the pinned native-profile-r3 artifact.'
+    }
+    Assert-NoCathedralReparsePoint $root
+    Assert-NoCathedralReparsePoint $sessionRoot
+    $allowedSessions = Join-Path $root 'sessions'
+    if (-not $sessionRoot.StartsWith($allowedSessions.TrimEnd('\', '/') + [IO.Path]::DirectorySeparatorChar, [StringComparison]::OrdinalIgnoreCase)) {
+        throw 'Native Cathedral saves must be in a separate child directory under the pinned profile sessions directory.'
+    }
+    $metadataPath = Join-Path $root 'cathedral-native-population-playtest.json'
+    Assert-NoCathedralReparsePoint $metadataPath
+    if ((Get-FileSha256 $metadataPath).ToUpperInvariant() -cne 'A992857810C51CE2A802588D8F3386D94D4C6AA44127394553D1E797B9F82FC1') {
+        throw 'The native Cathedral profile metadata does not match the reviewed publication.'
+    }
+    $allowedRootEntries = @('cathedral-native-population-playtest.json', 'content', 'native_cathedral_population', 'native_cathedral_runtime', 'sessions')
+    foreach ($entry in Get-ChildItem -LiteralPath $root -Force -ErrorAction Stop) {
+        if ($entry.Name -notin $allowedRootEntries -or $entry.Attributes -band [IO.FileAttributes]::ReparsePoint) {
+            throw 'The pinned native Cathedral profile root contains an unexpected entry.'
+        }
+    }
+    $metadata = Get-Content -LiteralPath $metadataPath -Raw -ErrorAction Stop | ConvertFrom-Json
+    $expectedFields = @(
+        'formatVersion', 'adapterId', 'contentDirectory', 'contentId', 'contentVersion', 'contentManifestHash', 'packFileHash',
+        'depthSeeds', 'entry', 'placementPolicy', 'nativePopulation', 'nativePopulationClaim', 'populationDirectory',
+        'populationPackId', 'populationPackVersion', 'populationPackFileHash', 'runtimeDirectory', 'runtimePackId',
+        'runtimePackVersion', 'runtimePackFileHash', 'populationMetadataFingerprint', 'populationMetadataManifestHash',
+        'monsterRuntimeFingerprint', 'inventoryFootprintCanonicalSha256', 'itemSemanticsCanonicalSha256', 'semanticItemCount',
+        'populationPolicy', 'nativeDepth', 'dungeonSeed', 'storySeed', 'heroClassSymbol', 'heroBaseLifeMaximum',
+        'heroBaseManaMaximum', 'heroLightRadius', 'heroIdleFrames', 'preEntryFutureX', 'preEntryFutureY',
+        'preEntryLevelChanging', 'preEntryLevelLoading', 'levels', 'routes', 'doorProfileId', 'doorProfileRevision',
+        'doorCatalogFingerprint', 'doorMappings')
+    $actualFields = @($metadata.PSObject.Properties | ForEach-Object { $_.Name })
+    if ($actualFields.Count -ne $expectedFields.Count -or
+        [string]::Join("`n", $actualFields) -cne [string]::Join("`n", $expectedFields)) {
+        throw 'The native Cathedral profile metadata fields do not match the closed reviewed schema.'
+    }
+    if (($metadata.formatVersion -isnot [int] -and $metadata.formatVersion -isnot [long]) -or $metadata.formatVersion -ne 1 -or
+        $metadata.adapterId -cne 'devilution.diablo.cathedral-native-population.v1' -or
+        $metadata.contentDirectory -cne 'content' -or $metadata.contentId -cne 'godevilution.cathedral-doors-playtest' -or
+        $metadata.contentVersion -cne '0.1.0' -or $metadata.contentManifestHash -cne 'f669a75956485892092e4d0ad241903d21975629fff886b55881d8660caecffb' -or
+        $metadata.packFileHash -cne '55E6931A6860EE0BBCA81E5F502EC6CE76A76E3758F2EDDF5EAC110F31147078' -or
+        $metadata.nativePopulation -isnot [bool] -or -not $metadata.nativePopulation -or
+        $metadata.nativePopulationClaim -isnot [bool] -or $metadata.nativePopulationClaim -or
+        $metadata.placementPolicy -cne 'none' -or $metadata.entry -cne 'main' -or
+        $metadata.populationDirectory -cne 'native_cathedral_population' -or
+        $metadata.populationPackId -cne 'godevilution.cathedral-native-population-metadata' -or
+        $metadata.populationPackVersion -cne '1.0.0' -or
+        $metadata.populationPackFileHash -cne '64B4C2542DEC7952F5FEDF4B49D80C788C3E1B4891F064BCBF9F0384E435956D' -or
+        $metadata.runtimeDirectory -cne 'native_cathedral_runtime' -or
+        $metadata.runtimePackId -cne 'godevilution.cathedral-native-runtime' -or
+        $metadata.runtimePackVersion -cne '1.0.0' -or
+        $metadata.runtimePackFileHash -cne 'ECF1AA82AA9BF70A19230112E57C1C69D1A40BA0EAE4AD057EA4BF9C6E9066F2' -or
+        $metadata.populationMetadataFingerprint -cne '53DBE0F0F771533DCBC42265CD878498680A3D502BD812A10B789628DF3219A2' -or
+        $metadata.populationMetadataManifestHash -cne '27fa9d623c00cc7ed24f030b687fd58484d4a95aea1b387df99b522ee3891c08' -or
+        $metadata.monsterRuntimeFingerprint -cne 'BBE0451DE5794803A73C32300157D345B75B516D0C3BAD3F61A53CC51B6E30B9' -or
+        $metadata.inventoryFootprintCanonicalSha256 -cne '3B0F0D99908D39AA592DC9B21B3C68BB9D42520CD7530FD4AD3FD9BB92B3B1CD' -or
+        $metadata.itemSemanticsCanonicalSha256 -cne '45A6194CA54BBB16D905B101DB495E08093D3746963B29535E1D8BC38098A2EB' -or
+        ($metadata.semanticItemCount -isnot [int] -and $metadata.semanticItemCount -isnot [long]) -or $metadata.semanticItemCount -ne 110 -or
+        $metadata.populationPolicy -cne 'original-diablo-single-player-normal-rogue-l1-main' -or
+        $metadata.nativeDepth -ne 1 -or $metadata.dungeonSeed -ne 2588 -or $metadata.storySeed -ne 324508639 -or
+        $metadata.heroClassSymbol -cne 'rogue' -or $metadata.heroBaseLifeMaximum -ne 2880 -or $metadata.heroBaseManaMaximum -ne 1440 -or
+        $metadata.heroLightRadius -ne 8 -or $metadata.heroIdleFrames -ne 8 -or
+        $metadata.preEntryFutureX -ne 57 -or $metadata.preEntryFutureY -ne 40 -or
+        $metadata.preEntryLevelChanging -isnot [bool] -or -not $metadata.preEntryLevelChanging -or
+        $metadata.preEntryLevelLoading -isnot [bool] -or -not $metadata.preEntryLevelLoading -or
+        @($metadata.depthSeeds).Count -ne 4 -or @($metadata.levels).Count -ne 4 -or @($metadata.routes).Count -ne 8 -or
+        $metadata.doorProfileId -cne 'original-diablo.cathedral-doors' -or
+        $metadata.doorProfileRevision -ne 1 -or $metadata.doorCatalogFingerprint -cne '09C1F609164A55FCEFBA2722D459F790817B8F4056EF3E57905125F583301E69' -or
+        @($metadata.doorMappings).Count -ne 4) {
+        throw 'The native Cathedral profile does not match the pinned Rogue L1 population contract.'
+    }
+    $expectedSeeds = @(2588, 2588, 1, 4294967295)
+    $expectedLevelSymbols = @('cathedral', 'cathedral_depth_2', 'cathedral_depth_3', 'cathedral_depth_4')
+    for ($index = 0; $index -lt 4; $index++) {
+        $level = $metadata.levels[$index]
+        $seed = $metadata.depthSeeds[$index]
+        if (($seed -isnot [int] -and $seed -isnot [long]) -or $seed -ne $expectedSeeds[$index] -or
+            ($level.depth -isnot [int] -and $level.depth -isnot [long]) -or
+            ($level.levelId -isnot [int] -and $level.levelId -isnot [long]) -or
+            ($level.dungeonSeed -isnot [int] -and $level.dungeonSeed -isnot [long]) -or
+            $level.depth -ne ($index + 1) -or $level.levelId -ne ($index + 1) -or
+            $level.levelSymbol -cne $expectedLevelSymbols[$index] -or $level.entry -cne 'main' -or
+            $level.dungeonSeed -ne $seed) {
+            throw 'Native Cathedral depth rows must match the pinned ordered L1-L4 seed table.'
+        }
+    }
+    $contentRoot = Join-Path $root $metadata.contentDirectory
+    $populationRoot = Join-Path $root $metadata.populationDirectory
+    $runtimeRoot = Join-Path $root $metadata.runtimeDirectory
+    foreach ($packRoot in @($contentRoot, $populationRoot, $runtimeRoot)) {
+        Assert-NoCathedralReparsePoint $packRoot
+        if (-not (Test-Path -LiteralPath $packRoot -PathType Container)) { throw 'A pinned native Cathedral content pack is missing.' }
+        foreach ($entry in Get-ChildItem -LiteralPath $packRoot -Force -Recurse -ErrorAction Stop) {
+            if ($entry.Attributes -band [IO.FileAttributes]::ReparsePoint) { throw 'Native Cathedral content packs cannot contain reparse points.' }
+        }
+    }
+    foreach ($pack in @(
+        @{ Root=$contentRoot; Id=$metadata.contentId; Version=$metadata.contentVersion },
+        @{ Root=$populationRoot; Id=$metadata.populationPackId; Version=$metadata.populationPackVersion },
+        @{ Root=$runtimeRoot; Id=$metadata.runtimePackId; Version=$metadata.runtimePackVersion })) {
+        $manifestPath = Join-Path $pack.Root 'content-pack.json'
+        $manifest = Get-Content -LiteralPath $manifestPath -Raw -ErrorAction Stop | ConvertFrom-Json
+        if (($manifest.formatVersion -isnot [int] -and $manifest.formatVersion -isnot [long]) -or $manifest.formatVersion -ne 1 -or
+            $manifest.id -cne $pack.Id -or $manifest.version -cne $pack.Version) {
+            throw 'A native Cathedral pack manifest does not match the pinned profile.'
+        }
+    }
+    if ((Get-CathedralContentTreeHash $contentRoot) -cne $metadata.packFileHash -or
+        (Get-CathedralContentTreeHash $populationRoot) -cne $metadata.populationPackFileHash -or
+        (Get-CathedralContentTreeHash $runtimeRoot) -cne $metadata.runtimePackFileHash) {
+        throw 'A native Cathedral content, population, or runtime pack hash changed.'
+    }
+    if (Test-Path -LiteralPath $sessionRoot) {
+        foreach ($entry in Get-ChildItem -LiteralPath $sessionRoot -Force -Recurse -ErrorAction Stop) {
+            if ($entry.Attributes -band [IO.FileAttributes]::ReparsePoint) { throw 'Native Cathedral session storage cannot contain reparse points.' }
+        }
+    }
+    return [pscustomobject]@{
+        Metadata = $metadata; MetadataPath = $metadataPath; ContentRoot = $contentRoot
+        PopulationRoot = $populationRoot; RuntimeRoot = $runtimeRoot
+        MetadataHash = (Get-FileSha256 $metadataPath).ToUpperInvariant()
+        ContentTreeHash = (Get-CathedralContentTreeHash $contentRoot)
+        PopulationTreeHash = (Get-CathedralContentTreeHash $populationRoot)
+        RuntimeTreeHash = (Get-CathedralContentTreeHash $runtimeRoot)
+    }
+}
+
+function Initialize-CathedralNativePopulationSession($Profile, [string]$Session) {
+    # A separate marker prevents native content from adopting any earlier Cathedral save.
+    $markerPath = Join-Path $Session 'cathedral-native-population-session.json'
+    foreach ($otherMarker in @('cathedral-session.json', 'cathedral-door-session.json')) {
+        if (Test-Path -LiteralPath (Join-Path $Session $otherMarker)) {
+            throw 'A save marker from another Cathedral profile cannot be reused by the native population profile.'
+        }
+    }
+    if (Test-Path -LiteralPath $markerPath) {
+        $marker = Get-Content -LiteralPath $markerPath -Raw -ErrorAction Stop | ConvertFrom-Json
+        $markerFields = @($marker.PSObject.Properties | ForEach-Object { $_.Name })
+        if ($markerFields.Count -ne 7 -or
+            [string]::Join("`n", $markerFields) -cne "FormatVersion`nProfileKind`nAdapterId`nMetadataHash`nContentTreeHash`nPopulationTreeHash`nRuntimeTreeHash" -or
+            ($marker.FormatVersion -isnot [int] -and $marker.FormatVersion -isnot [long]) -or $marker.FormatVersion -ne 1 -or
+            $marker.ProfileKind -cne 'cathedral-native-population-playtest' -or
+            $marker.AdapterId -cne 'devilution.diablo.cathedral-native-population.v1' -or
+            $marker.MetadataHash -cne $Profile.MetadataHash -or $marker.ContentTreeHash -cne $Profile.ContentTreeHash -or
+            $marker.PopulationTreeHash -cne $Profile.PopulationTreeHash -or $marker.RuntimeTreeHash -cne $Profile.RuntimeTreeHash) {
+            throw 'The pinned native Cathedral profile changed; use a fresh session instead of mixing saves.'
+        }
+    } else {
+        if (Get-ChildItem -LiteralPath $Session -Force | Where-Object Name -ne 'launcher.lock') {
+            throw 'An unmarked existing save profile must never become a native Cathedral session.'
+        }
+        $stream = [IO.File]::Open($markerPath, [IO.FileMode]::CreateNew, [IO.FileAccess]::Write, [IO.FileShare]::Read)
+        $writer = [IO.StreamWriter]::new($stream, [Text.UTF8Encoding]::new($false))
+        try {
+            $writer.Write(([ordered]@{
+                FormatVersion = 1; ProfileKind = 'cathedral-native-population-playtest'
+                AdapterId = 'devilution.diablo.cathedral-native-population.v1'
+                MetadataHash = $Profile.MetadataHash; ContentTreeHash = $Profile.ContentTreeHash
+                PopulationTreeHash = $Profile.PopulationTreeHash; RuntimeTreeHash = $Profile.RuntimeTreeHash
+            } | ConvertTo-Json))
         } finally { $writer.Dispose() }
     }
 }
@@ -1733,6 +1924,9 @@ try {
     $cathedralDoorProfile = if ($cathedralDoors) {
         Get-CathedralDoorPlaytestProfile $CathedralDoorProfileDirectory $SessionDirectory
     } else { $null }
+    $cathedralNativeProfile = if ($cathedralNative) {
+        Get-CathedralNativePopulationProfile $CathedralNativeProfileDirectory $SessionDirectory
+    } else { $null }
     New-Item -ItemType Directory -Path $SessionDirectory -Force | Out-Null
     if ($performance -and (Get-ChildItem -LiteralPath $SessionDirectory -Force)) {
         throw 'Performance acceptance requires a fresh empty session directory.'
@@ -1750,6 +1944,7 @@ try {
     }
     if ($cathedral) { Initialize-CathedralPlaytestSession $cathedralProfile $SessionDirectory }
     if ($cathedralDoors) { Initialize-CathedralDoorPlaytestSession $cathedralDoorProfile $SessionDirectory }
+    if ($cathedralNative) { Initialize-CathedralNativePopulationSession $cathedralNativeProfile $SessionDirectory }
     $staging = New-IsolatedGodotProject $clientSourceProject (Join-Path $captureRoot 'godot/Devilution.Client')
     $clientProject = $staging.DestinationDirectory
     Write-ProjectStageEvidence $staging $null $projectStageEvidencePath $null
@@ -1773,7 +1968,7 @@ try {
     # Seed 5 keeps Butcher available under both production and native quest-pool
     # orderings. This diagnostic does not certify parity of the complete pools.
     # Existing acceptance and preview profiles retain seed 0.
-    $acceptanceArguments = if ($LifecyclePreviewContent) { '--starting-level 0 --random-seed 5' } elseif ($AcceptancePhase -or $PreviewContent -or $PortalPreviewContent -or $Multiplayer -or $cathedral -or $cathedralDoors) { '--starting-level 0 --random-seed 0' } else { '' }
+    $acceptanceArguments = if ($LifecyclePreviewContent) { '--starting-level 0 --random-seed 5' } elseif ($AcceptancePhase -or $PreviewContent -or $PortalPreviewContent -or $Multiplayer -or $cathedral -or $cathedralDoors -or $cathedralNative) { '--starting-level 0 --random-seed 0' } else { '' }
     $overlayArguments = if ($PreviewContent -or $PortalPreviewContent) { '--content-overlay "{0}"' -f (Join-Path $repositoryRoot 'server/content/town-loop-preview') } elseif ($LifecyclePreviewContent) { '--content-overlay "{0}"' -f (Join-Path $repositoryRoot 'server/content/town-lifecycle-preview') } else { '' }
     if ($PortalPreviewContent) {
         $overlayArguments += ' --content-overlay "{0}"' -f (Join-Path $repositoryRoot 'server/content/town-portal-preview')
@@ -1784,7 +1979,11 @@ try {
     if ($cathedralDoors) {
         $overlayArguments = '--content-root "{0}" --content-id {1} --content-version {2} --game-adapter {3}' -f $cathedralDoorProfile.ContentRoot, $cathedralDoorProfile.Metadata.ContentId, $cathedralDoorProfile.Metadata.ContentVersion, $cathedralDoorProfile.Metadata.AdapterId
     }
-    function Start-SessionServer([int]$ListenPort, [string]$LogPrefix) {
+    if ($cathedralNative) {
+        $overlayArguments = '--content-root "{0}" --content-id {1} --content-version {2} --game-adapter {3} --content-overlay "{4}" --content-overlay "{5}"' -f
+            $cathedralNativeProfile.ContentRoot, $cathedralNativeProfile.Metadata.ContentId, $cathedralNativeProfile.Metadata.ContentVersion,
+            $cathedralNativeProfile.Metadata.AdapterId, $cathedralNativeProfile.PopulationRoot, $cathedralNativeProfile.RuntimeRoot
+    }    function Start-SessionServer([int]$ListenPort, [string]$LogPrefix) {
         $commandTimingArguments = if ($CommandTimingTrace) { '--command-timing-trace true' } else { '' }
         $serverArguments = '--port {0} --protocol-version 0.2.0 --game-mode {4} --command-scheduling clock-gated --save-root "{1}/save" {2} {3} --persistence-mode {5} {6}' -f $ListenPort, $SessionDirectory, $acceptanceArguments, $overlayArguments, $serverGameMode, $PersistenceMode, $commandTimingArguments
         $stdoutPath = Join-Path $captureRoot ($LogPrefix + '.stdout.log')
@@ -1822,6 +2021,7 @@ try {
             if ($persistence -cne $expectedPersistence) { throw "Unexpected server persistence mode: $persistence" }
             if ($cathedral -and $contentHash -cne $cathedralProfile.Metadata.ContentManifestHash) { throw 'The Cathedral host loaded a different content identity than the compiled profile.' }
             if ($cathedralDoors -and $contentHash -cne $cathedralDoorProfile.Metadata.ContentManifestHash) { throw 'The Cathedral door host loaded a different content identity than the compiled profile.' }
+            if ($cathedralNative -and $contentHash -cne $cathedralNativeProfile.Metadata.ContentManifestHash) { throw 'The native Cathedral host loaded a different content identity than the pinned profile.' }
             return [pscustomobject]@{ Process = $serverProcess; Port = $actualPort; ContentHash = $contentHash; RulesetHash = $rulesetHash; Mode = $gameMode; Persistence = $persistence }
         } catch {
             if ($null -ne $serverProcess) {
@@ -1885,6 +2085,8 @@ try {
         if ($cathedralDepths) { $clientEnvironment['GODEVILUTION_CATHEDRAL_DEPTH_PROFILE'] = $cathedralProfile.MetadataPath }
         elseif ($cathedral) { $clientEnvironment['GODEVILUTION_CATHEDRAL_PROFILE'] = $cathedralProfile.MetadataPath }
         elseif ($cathedralDoors) { $clientEnvironment['GODEVILUTION_CATHEDRAL_DOOR_PROFILE'] = $cathedralDoorProfile.MetadataPath }
+        if ($cathedralNativePhase) { $clientEnvironment['GODEVILUTION_CATHEDRAL_NATIVE_PROFILE'] = $cathedralNativeProfile.MetadataPath }
+        if ($cathedralNative) { $clientEnvironment['DEVILUTION_CHARACTER_CLASS_ID'] = '1' }
         if ($CharacterClassId -ge 0) { $clientEnvironment['DEVILUTION_CHARACTER_CLASS_ID'] = [string]$CharacterClassId }
         if (-not [string]::IsNullOrEmpty($CharacterName)) { $clientEnvironment['DEVILUTION_CHARACTER_NAME'] = $CharacterName }
         if ($Multiplayer) {
@@ -1978,13 +2180,20 @@ try {
         $processEvidence = @{ HostProcessId = $serverProcess.Id; HostStartedUtc = $serverProcess.StartTime.ToUniversalTime().ToString('O'); Port = $actualPort;
             PersistenceMode = $PersistenceMode; HostPersistence = $startedServer.Persistence;
             Clients = @($startedClients | ForEach-Object { @{ ProcessId = $_.Process.Id; StartedUtc = $_.Process.StartTime.ToUniversalTime().ToString('O') } }) }
-        if ($cooperative) {
+        if ($cooperative -or $cathedralNativePhase) {
             # These identities were validated against the actual started host.
             $processEvidence.ContentHash = $contentHash
             $processEvidence.RulesetHash = $rulesetHash
         }
-        if ($cathedral -or $cathedralDoors) {
-            if ($cathedralDoors) {
+        if ($cathedral -or $cathedralDoors -or $cathedralNative) {
+            if ($cathedralNative) {
+                $processEvidence.ProfileHash = $cathedralNativeProfile.MetadataHash
+                $processEvidence.ContentTreeHash = $cathedralNativeProfile.ContentTreeHash
+                $processEvidence.PopulationTreeHash = $cathedralNativeProfile.PopulationTreeHash
+                $processEvidence.RuntimeTreeHash = $cathedralNativeProfile.RuntimeTreeHash
+                $processEvidence.ProfileKind = 'cathedral-native-population-playtest'
+                $processEvidence.AdapterId = $cathedralNativeProfile.Metadata.adapterId
+            }            elseif ($cathedralDoors) {
                 $processEvidence.ProfileHash = $cathedralDoorProfile.MetadataHash
                 $processEvidence.ContentTreeHash = $cathedralDoorProfile.ContentTreeHash
                 $processEvidence.ProfileKind = 'cathedral-doors-playtest'

@@ -56,7 +56,9 @@ the same authoritative protocol and implementation.
 
 The Godot client requires Godot 4.7.1 Mono. Run
 `powershell -ExecutionPolicy Bypass -File run-godot-client.ps1` for a local
-server/client prototype session. The launcher rebuilds both projects, imports
+server/client prototype session. The combat HUD maps keys `1`–`8` to eligible belt
+consumables; each action remains server-authoritative. The launcher rebuilds both
+projects, imports
 assets, and retains local saves and the resume bookmark under `.local/godot`.
 For the optional authored town/combat/equipment/shop/stash preview, run
 `powershell -ExecutionPolicy Bypass -File run-godot-preview.ps1`. It starts in

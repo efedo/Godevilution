@@ -5,6 +5,12 @@ using Devilution.Shared;
 
 namespace Devilution.Diablo;
 
+/** Mutable native attack or hit-recovery cursor; the current enemy is resolved separately each tick. */
+public sealed record AuthoritativeNativeMeleeCursor(int FrameIndex, int TickCounter)
+{
+    public bool HitRecovery { get; init; }
+}
+
 /** Minimal server-owned combat target used by the initial combat boundary. */
 public sealed class AuthoritativeCombatTarget
 {
@@ -408,6 +414,12 @@ public sealed class AuthoritativeCombatTarget
 
     public bool NativeInitializationPresent => NativeInitialization is not null;
 
+    /** Current native attack/recovery animation cursor; null means no owned animation is active. */
+    public AuthoritativeNativeMeleeCursor? NativeMeleeCursor { get; private set; }
+
+    /** Native walk cursor retains both current and future occupancy until completion. */
+    public AuthoritativeNativeWalkCursor? NativeWalkCursor { get; private set; }
+
     /** Older callers retain their existing nonzero AI-seed compatibility marker. */
     public bool UsesNativeRandomSeeds => NativeInitializationPresent || MonsterAiSeed != 0;
 
@@ -421,6 +433,50 @@ public sealed class AuthoritativeCombatTarget
         NativeInitialization = initialization;
         MonsterItemSeed = itemSeed;
         MonsterAiSeed = aiSeed;
+    }
+
+    /** Restores or clears the separately versioned normal-melee cursor. */
+    internal void RestoreNativeMeleeCursor(AuthoritativeNativeMeleeCursor? cursor)
+    {
+        if (cursor is null) {
+            NativeMeleeCursor = null;
+            return;
+        }
+
+        var initialization = NativeInitialization
+            ?? throw new InvalidDataException("A native melee cursor requires native monster initialization.");
+        var frameCount = cursor.HitRecovery
+            ? initialization.NativeHitRecoveryFrameCount
+            : initialization.NativeAttackFrameCount;
+        var ticksPerFrame = cursor.HitRecovery
+            ? initialization.NativeHitRecoveryTicksPerFrame
+            : initialization.NativeAttackTicksPerFrame;
+        var effectiveTicksPerFrame = Math.Max(1, ticksPerFrame);
+        if (HitPointsQ6 <= 0
+            || frameCount <= 0
+            || cursor.FrameIndex < 0
+            || cursor.FrameIndex >= frameCount
+            || cursor.TickCounter < 0
+            || cursor.TickCounter >= effectiveTicksPerFrame)
+            throw new InvalidDataException("Native melee cursor is outside the initialized attack animation.");
+
+        NativeMeleeCursor = cursor with { };
+    }
+
+    internal void RestoreNativeWalkCursor(AuthoritativeNativeWalkCursor? cursor)
+    {
+        if (cursor is null) {
+            NativeWalkCursor = null;
+            return;
+        }
+        var native = NativeInitialization
+            ?? throw new InvalidDataException("A native walk cursor requires native initialization.");
+        if (!IsMoving || HitPointsQ6 <= 0 || NativeMeleeCursor is not null
+            || native.NativeWalkFrameCount <= 0 || cursor.FrameIndex < -1
+            || cursor.FrameIndex >= native.NativeWalkFrameCount
+            || cursor.TickCounter < 0 || cursor.TickCounter >= Math.Max(1, native.NativeWalkTicksPerFrame))
+            throw new InvalidDataException("A native walk cursor is outside its reserved movement animation.");
+        NativeWalkCursor = cursor with { };
     }
 
     /** Server-owned dialogue identity currently displayed by a unique encounter. */
@@ -700,6 +756,8 @@ public sealed class AuthoritativeCombatTarget
             MonsterItemSeed = MonsterItemSeed,
             MonsterAiSeed = MonsterAiSeed,
             NativeInitializationPresent = NativeInitializationPresent,
+            NativeMeleeCursor = NativeMeleeCursor,
+            NativeWalkCursor = NativeWalkCursor,
             DialogueMessageId = DialogueMessageId,
             DialogueState = DialogueState,
             Petrified = IsPetrified,
@@ -1740,6 +1798,7 @@ public sealed class AuthoritativeCombatTarget
         PositionX = FuturePositionX;
         PositionY = FuturePositionY;
         IsMoving = false;
+        NativeWalkCursor = null;
         MovementStartedTick = 0;
         MovementEffectTick = 0;
     }
@@ -1749,6 +1808,7 @@ public sealed class AuthoritativeCombatTarget
         FuturePositionX = PositionX;
         FuturePositionY = PositionY;
         IsMoving = false;
+        NativeWalkCursor = null;
         MovementStartedTick = 0;
         MovementEffectTick = 0;
     }
@@ -1760,6 +1820,7 @@ public sealed class AuthoritativeCombatTarget
         FuturePositionX = positionX;
         FuturePositionY = positionY;
         IsMoving = false;
+        NativeWalkCursor = null;
         MovementStartedTick = 0;
         MovementEffectTick = 0;
     }

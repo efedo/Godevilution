@@ -48,6 +48,10 @@ public sealed record DiabloMonsterState(
     /** An explicit native RNG policy; zero seeds are valid when this is true. */
     public bool NativeInitializationPresent { get; init; }
 
+    /** Native-owned normal melee animation; absent in legacy snapshots. */
+    public AuthoritativeNativeMeleeCursor? NativeMeleeCursor { get; init; }
+    public AuthoritativeNativeWalkCursor? NativeWalkCursor { get; init; }
+
     /** Server-owned dialogue identity currently displayed by a unique encounter. */
     public int DialogueMessageId { get; init; }
 
@@ -487,6 +491,9 @@ public sealed record DiabloProjectileState(
 
     public bool AttackHit { get; init; }
 
+    /** Presence selects collision-time native bow resolution. */
+    public AuthoritativeNativeWeaponArrowState? NativeWeaponArrow { get; init; }
+
     public int PerilSelfDamageQ6 { get; init; }
 
     public bool DoppelgangerProc { get; init; }
@@ -726,6 +733,8 @@ public sealed partial class DiabloSimulation
                     MonsterItemSeed = target.MonsterItemSeed,
                     MonsterAiSeed = target.MonsterAiSeed,
                     NativeInitializationPresent = target.NativeInitializationPresent,
+                    NativeMeleeCursor = target.NativeMeleeCursor,
+                    NativeWalkCursor = target.NativeWalkCursor,
                     DialogueMessageId = target.DialogueMessageId,
                     DialogueState = target.DialogueState,
                     Petrified = target.IsPetrified,
@@ -950,6 +959,7 @@ public sealed partial class DiabloSimulation
                     ElementalFireDamage = projectile.ElementalFireDamage,
                     ElementalLightningDamage = projectile.ElementalLightningDamage,
                     AttackHit = projectile.AttackHit,
+                    NativeWeaponArrow = projectile.NativeWeaponArrow,
                     PerilSelfDamageQ6 = projectile.PerilSelfDamageQ6,
                     DoppelgangerProc = projectile.DoppelgangerProc,
                     ActivationDelayTicks = projectile.ActivationDelayTicks,
@@ -1414,6 +1424,13 @@ public sealed partial class DiabloSimulation
             return @object;
         }).ToArray();
         var restoredProjectiles = snapshot.Projectiles.Select(projectile => {
+            if (projectile.NativeWeaponArrow is { } nativeArrow
+                && (!WorldState.OwnsNativePopulationLevel(projectile.LevelId)
+                    || projectile.Behavior != AuthoritativeProjectileBehavior.WeaponArrow
+                    || nativeArrow.MissileDistance > int.MaxValue
+                    || projectile.AttackHit || projectile.Damage != 0 || projectile.DamageQ6 != 0
+                    || projectile.PerilSelfDamageQ6 != 0 || projectile.DoppelgangerProc))
+                throw new InvalidDataException("Native arrow state requires its owned level and unresolved payload.");
             var isMonsterArrow = projectile.Behavior == AuthoritativeProjectileBehavior.MonsterArrow
                 && restoredMonsters.Any(monster => monster.EntityId == projectile.SourceEntityId);
             var nativeMissileIdentityValid = projectile.NativeMissileId is null
@@ -1457,9 +1474,11 @@ public sealed partial class DiabloSimulation
                         || projectile.Phase != AuthoritativeProjectilePhase.Travel
                         || projectile.Damage != DeterministicFixedPointQ6.ToWholeTruncated(projectile.DamageQ6)
                         || projectile.ActivationDelayTicks > 2
-                        || projectile.VelocityX != 0
-                        || projectile.VelocityY != 0
-                        || projectile.OriginalDirection != 0
+                        || (projectile.NativeWeaponArrow is null
+                            ? projectile.VelocityX != 0 || projectile.VelocityY != 0 || projectile.OriginalDirection != 0
+                            : projectile.VelocityX == 0 && projectile.VelocityY == 0
+                                || projectile.OriginalDirection is < 0 or > 7
+                                || projectile.RemainingTicks > 256)
                         || projectile.PathIndex != 0
                         || projectile.PathTicks is < 0 or > 31
                         || projectile.Speed == 0 && projectile.PathTicks != 0
@@ -1468,7 +1487,7 @@ public sealed partial class DiabloSimulation
                         || projectile.EffectiveSpellLevel != 0
                         || projectile.DamageMinimum != 0
                         || projectile.DamageMaximum != 0
-                        || projectile.LastCollisionTargetEntityId != 0
+                        || (projectile.NativeWeaponArrow is null && projectile.LastCollisionTargetEntityId != 0)
                         || projectile.WallLeftX != 0
                         || projectile.WallLeftY != 0
                         || projectile.WallRightX != 0
@@ -1945,6 +1964,7 @@ public sealed partial class DiabloSimulation
                 ElementalFireDamage = projectile.ElementalFireDamage,
                 ElementalLightningDamage = projectile.ElementalLightningDamage,
                 AttackHit = projectile.AttackHit,
+                NativeWeaponArrow = projectile.NativeWeaponArrow,
                 PerilSelfDamageQ6 = projectile.PerilSelfDamageQ6,
                 DoppelgangerProc = projectile.DoppelgangerProc,
                 ActivationDelayTicks = projectile.ActivationDelayTicks,
@@ -2982,8 +3002,12 @@ public sealed partial class DiabloSimulation
                             action.TargetX,
                             action.TargetY)
                     : action.TargetEntityId != 0
-                        && action.TargetX == 0
-                        && action.TargetY == 0)
+                        && (action.TargetX == 0 && action.TargetY == 0
+                            || source.CombatMode == DiabloPlayerCombatMode.RangedAttack
+                                && WorldState.ContainsPosition(
+                                    source.LevelId,
+                                    action.TargetX,
+                                    action.TargetY)))
                 && action.CastIntent is null,
             DiabloPlayerActionKind.Cast =>
                 source.CombatMode == DiabloPlayerCombatMode.Spell

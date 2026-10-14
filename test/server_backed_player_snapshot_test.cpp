@@ -2386,6 +2386,54 @@ TEST(ServerBackedPlayerSnapshot, ConsumedCastSourceRemainsValidDuringAnimationTa
 	EXPECT_FALSE(ValidatePlayerActionSnapshots(snapshot).has_value());
 }
 
+TEST(ServerBackedPlayerSnapshot, ValidatesFrozenRangedEntityAimWithoutChangingLegacyAttacks)
+{
+	protocol::Snapshot snapshot;
+	snapshot.set_tick(1);
+	auto *player = snapshot.add_players();
+	player->set_level_id(1);
+	player->set_combat_mode(protocol::PLAYER_COMBAT_MODE_RANGED_ATTACK);
+	player->set_combat_mode_end_tick(4);
+	auto *action = player->mutable_current_action();
+	action->set_kind(protocol::PLAYER_ACTION_KIND_ATTACK);
+	action->set_started_at_tick(1);
+	action->set_effect_tick(2);
+	action->set_ready_tick(3);
+	action->set_end_tick(4);
+	action->set_target_entity_id(9);
+	action->set_target_x(2);
+	action->set_target_y(1);
+	auto *level = snapshot.add_level_geometry();
+	level->set_level_id(1);
+	level->set_width(4);
+	level->set_height(3);
+	EXPECT_TRUE(ValidatePlayerActionSnapshots(snapshot).has_value());
+
+	player->set_combat_mode(protocol::PLAYER_COMBAT_MODE_ATTACK);
+	EXPECT_FALSE(ValidatePlayerActionSnapshots(snapshot).has_value());
+	action->set_target_x(0);
+	action->set_target_y(0);
+	EXPECT_TRUE(ValidatePlayerActionSnapshots(snapshot).has_value());
+	player->set_combat_mode(protocol::PLAYER_COMBAT_MODE_RANGED_ATTACK);
+	EXPECT_TRUE(ValidatePlayerActionSnapshots(snapshot).has_value());
+
+	action->set_target_x(4);
+	action->set_target_y(1);
+	EXPECT_FALSE(ValidatePlayerActionSnapshots(snapshot).has_value());
+	action->set_target_x(2);
+	action->set_target_y(3);
+	EXPECT_FALSE(ValidatePlayerActionSnapshots(snapshot).has_value());
+	action->set_target_x(-1);
+	action->set_target_y(1);
+	EXPECT_FALSE(ValidatePlayerActionSnapshots(snapshot).has_value());
+	action->set_target_x(2);
+	action->set_target_entity_id(0);
+	EXPECT_FALSE(ValidatePlayerActionSnapshots(snapshot).has_value());
+	action->set_target_entity_id(9);
+	action->set_target_cell(true);
+	EXPECT_FALSE(ValidatePlayerActionSnapshots(snapshot).has_value());
+}
+
 TEST(ServerBackedPlayerSnapshot, RejectsMalformedPlayerActions)
 {
 	protocol::Snapshot invalidTiming;

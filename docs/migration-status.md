@@ -1,6 +1,6 @@
 # Godevilution Migration Status
 
-Status date: 2026-10-04. Estimate baseline: `8c03b365d`; semantic player presentation
+Status date: 2026-10-14. Estimate baseline: `8c03b365d`; semantic player presentation
 follows client-pack baseline `d0f748305`. Interrupted first-publication
 and Windows staging acceptance follows Godot cohort baseline `60f60c8a1` below. M0 session reliability
 landed in `819b73936`, integration remediation in `818f63f32`, and application
@@ -43,6 +43,27 @@ No client-side gameplay authority is implied by incomplete server coverage:
 unsupported behavior is a migration gap, not permission for local simulation.
 
 ## Current delivery position and verification limits
+
+The opt-in native Rogue L1 work carries collision-time bow arrows, melee/recovery
+and native walk phases through cohort v5. Bow actions retain the clicked actor
+identity and freeze its future tile; hit and damage resolve only on collision.
+Raw native door trap markers are retained, while unsupported native door actions
+refuse atomically. Public L1 collision geometry includes solid raw object-reference
+footprints, matching authoritative occupancy; the non-native scanner-light
+projection remains unchanged. The connected Godot combat HUD supports eligible
+belt quick-use on keys 1–8.
+
+Scoped native Godot acceptance passes. The Rogue killed 13 L1 actors (892 XP),
+claimed and equipped the Cape (stable item 163, seed 306134381), returned to
+Town and saved cohort sequence 103. Fresh-host Resume R3 reused that passed
+Journey checkpoint after the saved-baseline observation correction: it restored
+sequence 103, accepted command 104, revisited L1 and verified retained geometry,
+door state, defeated corpse and claimed loot, then returned to Town. Healer, stash
+and Smith checks passed; Healer restored life 2817 to 2880, Smith repair cost 2
+Gold (100 to 98), and Cape durability rose from 5 to 12/12. Final sequence was
+196. Verification combines the passed Journey with a fresh host/client Resume from
+its copied checkpoint. Normal-profile adoption
+and broader native world/campaign acceptance remain open.
 
 The explicit authored generated-Cathedral route passes real headless Godot
 Smith scroll purchase from ordinary 100 Gold, L1 object/combat/earned-sword

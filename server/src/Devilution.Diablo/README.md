@@ -45,7 +45,8 @@ The module currently owns:
   entities;
 - transport-independent Diablo store validation and pricing results.
 
-`Devilution.Server` remains the composition and protocol adapter. It translates
+`Devilution.Server` is the composition-only executable. The separate
+`Devilution.Server.Diablo` adapter translates
 Protobuf store, inventory, world, attack, and cast commands into module intents;
 supplies host-ordered players at tick boundaries; maps module failures and
 events into protocol messages; and resolves capabilities from the engine
@@ -89,17 +90,22 @@ one owning runtime, and module-owned class/item policies (or explicit absence).
 Unsupported independent template policies and unbound legacy players are rejected
 only by this new checkpoint path; ordinary runtime APIs remain unchanged.
 The candidate owns one fresh runtime installation and does not implicitly admit
-new participants. The future host must provide explicit trusted admission and
+new participants. The host must provide explicit trusted admission and
 outer content/ruleset identity fences. Transport, JSON, durable publication and
-command ledgers remain outside this module. Production cold multiplayer recovery
-is not yet wired to this API; legacy save/import behavior remains unchanged.
+command ledgers remain outside this module. The opt-in cohort host now uses this
+API for complete-world cold recovery, including scoped two-client acceptance.
+Normal launcher profiles still use legacy persistence; their adoption of cohort
+mode requires approval and broader acceptance. Legacy save/import behavior
+remains unchanged.
 
 When validated towner greetings are supplied, native-role store entry and
 Gillian's stash require the declared NPC level, Chebyshev distance at most one,
 and no held item. Reserved Adria/Cain IDs retain their town-only guard. Rejected
 entry occurs before inventory-dimension hydration; accepted entry and the
 metadata-free compatibility path retain hydration. Custom Generic stores are
-unchanged. Ongoing item actions do not reapply the entry cursor/range check;
+unchanged. A successful greeting to the roster-bound Healer (towner ID 1) restores a
+living player's current life to LifeMaximum without changing mana or maxima. Ongoing
+item actions do not reapply the entry cursor/range check;
 closing services remains possible anywhere. The simulation clears a metadata-bound
 native vendor session after an accepted cross-level warp/portal into a non-town
 level, matching native level-load store cleanup. Rejected/dry-run transitions,
@@ -121,6 +127,46 @@ and remaining families are still separate gaps. Exact shared vision parity is
 not claimed: the existing level
 contract conservatively includes movement blockers in vision blockers. See
 `docs/ai/msvc-build.md` for the isolated local-asset comparison.
+
+The separate native Rogue L1 oracle uses the playable profile's fresh hero tuple
+(Q6 life 2880, mana 1440, idle frames 8, pre-entry future 57,40; MAIN seed 2588).
+It compares complete raw population and preparation state through CreateThemeRooms
+against the native loader. Select `CaptureNativeRogueL1Population` and
+`PlayableRogueL1TupleMatchesNativeLoader` with the dedicated
+`GODEVILUTION_CATHEDRAL_NATIVE_ROGUE_L1_ORACLE_DIRECTORY`; retain outputs outside
+the repository. The accompanying native-rogue-l1-inventory.tsv captures actual
+CEL cursor sizes and inventory cells (pixel dimensions divided by 28, rounded
+down); the opt-in profile must use these dimensions. This proof preserves the
+existing corpus and does not establish live populated gameplay or normal-profile
+adoption.
+
+The offline `Cathedral.Playtest --native-cathedral-population` mode prepares a
+separate Rogue, original-Diablo, single-player Normal L1 profile. It requires the
+complete population metadata pack, native monster-runtime table, captured item
+footprints, and a geometry directory containing only
+`native_dun_piece_definitions.tsv` and `native_dun_tile_properties.tsv`. Its depth
+seeds are `[2588,2588,1,4294967295]`; it generates item semantics and selects exact
+native stock identities in the output. Existing profiles keep their catalogs.
+The profile requests native population with `nativePopulationClaim=false`.
+Canonical TSV digests cover LF content; pack digests cover published CRLF bytes.
+Live activation remains subject to the item/codec gates in the completion plan.
+The native overlay completes newly created active Gold stacks from its admitted
+raw identity and denomination cursor. Revaluation validates the original stack
+before changing its value/cursor; ordinary catalogs retain their existing state.
+This keeps the managed inventory contract `IdentifiedValue == Value`, and does
+not claim native MakeGoldStack scalar parity. Fresh world drops and strict cold
+restore are covered. Approved inactive-slot removal preserves the updated Gold
+value/cursor and refuses malformed metadata before mutation; bound-world
+revaluation now follows the admitted denomination cursor through cold restore.
+The explicit native L1 owner resolves bow hit/damage at collision through the
+shared RNG, and persists arrow distance plus attack, recovery and walk animation
+phases in cohort v5. Walks retain their destination reservation until the native
+terminal frame; visible native actors use their active window instead of legacy
+aggro radius. Older schemas keep their prior bytes and require trusted timing
+hydration; existing legacy moves complete on their original next update.
+The managed native Town/combat/earned-gear/cold-resume/stash journey and in-flight
+arrow, melee and walk continuation pass. Actual Godot native-profile application
+verification, full native AI/world-loop parity and normal adoption remain open.
 
 Timed casts consume their source at the native effect frame, before the animation
 ends. Save/restore retains a bounded historical consumable reference afterward,

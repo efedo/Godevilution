@@ -1,3 +1,5 @@
+using System.Globalization;
+using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using Godevilution.Tools;
@@ -44,10 +46,116 @@ public sealed class AuthoritativeCathedralFreshLevelNativeOracleTests
             entry == "main" ? AuthoritativeCathedralEntry.Main : AuthoritativeCathedralEntry.Previous,
             new(MaximumLifeBase: 6400, MaximumManaBase: 3200, LightRadius: 8, IdleFrames: 10,
                 PreEntryFuture: new(75, 68), LevelChanging: true));
+        VerifyFreshRow(row, metadata, actual, 10);
+    }
+
+    [Fact(Explicit = true)]
+    public void PlayableRogueL1TupleMatchesNativeLoader()
+    {
+        const string fileName = "native-rogue-l1-population.json";
+        const string inventoryFileName = "native-rogue-l1-inventory.tsv";
+        var directory = AuthoritativeCathedralEncounterNativeOracleTests.RequiredExternalDirectory(
+            "GODEVILUTION_CATHEDRAL_NATIVE_ROGUE_L1_ORACLE_DIRECTORY");
+        var expectedEntries = new[] { fileName, inventoryFileName }.OrderBy(value => value, StringComparer.Ordinal).ToArray();
+        Assert.Equal(expectedEntries, AuthoritativeCathedralEncounterNativeOracleTests.RegularEntries(directory)
+            .Select(Path.GetFileName).OrderBy(value => value, StringComparer.Ordinal).ToArray());
+        var corpus = AuthoritativeCathedralEncounterNativeOracleTests.ParseFile(Path.Combine(directory, fileName), 128 * 1024 * 1024);
+        Properties(corpus, "format", "version", "policy", "playerMaximumLife", "playerMaximumMana", "playerLightRadius",
+            "storySeed", "playerFuture", "playerLevelChanging", "itemCatalog", "cases", "caseCount", "multiRoomCases");
+        Assert.Equal("godevilution-cathedral-native-rogue-l1", S(corpus, "format"));
+        Assert.Equal("fresh-cold-original-diablo-rogue-l1-main-seed2588", S(corpus, "policy"));
+        Assert.Equal(1, N(corpus, "version"));
+        Assert.Equal(2880, N(corpus, "playerMaximumLife"));
+        Assert.Equal(1440, N(corpus, "playerMaximumMana"));
+        Assert.Equal(8, N(corpus, "playerLightRadius"));
+        Assert.Equal(0x13579BDFU, U(corpus, "storySeed"));
+        Assert.Equal(new AuthoritativeCathedralPopulationPoint(57, 40), Point(corpus.GetProperty("playerFuture")));
+        Assert.True(B(corpus, "playerLevelChanging"));
+        Assert.Equal(1, N(corpus, "caseCount"));
+        var row = Assert.Single(A(corpus, "cases").EnumerateArray());
+        Assert.Equal((1, 2588U, "main"), (N(row, "depth"), U(row, "seed"), S(row, "entry")));
+        var metadata = CathedralPopulationMetadataCompiler.LoadDirectory(
+            AuthoritativeCathedralEncounterNativeOracleTests.RequiredExternalDirectory(
+                "GODEVILUTION_CATHEDRAL_POPULATION_METADATA_PACK_DIRECTORY"));
+        var nativeItems = ReadCatalog(corpus.GetProperty("itemCatalog"));
+        Assert.Equal(AuthoritativeCathedralThemeItemMetadata.CreateTables(nativeItems).Select(table => table.ToCanonicalTsv()),
+            AuthoritativeCathedralThemeItemMetadata.CreateTables(metadata.Items.Catalog).Select(table => table.ToCanonicalTsv()));
+        var footprints = ReadNativeInventoryFootprints(Path.Combine(directory, inventoryFileName));
+        var selectableItems = nativeItems.Items.Where(item => item.Available && item.ItemType >= 0 && item.CursorGraphic != byte.MaxValue).ToArray();
+        Assert.Equal(selectableItems.Select(item => item.NativeItemIndex), footprints.Select(value => value.NativeItemIndex));
+        for (var index = 0; index < selectableItems.Length; index++) {
+            var item = selectableItems[index];
+            var footprint = footprints[index];
+            Assert.Equal(12 + item.CursorGraphic, footprint.NativeCursorId);
+            Assert.InRange(footprint.PixelWidth, 1, ushort.MaxValue);
+            Assert.InRange(footprint.PixelHeight, 1, ushort.MaxValue);
+            Assert.Equal(footprint.PixelWidth / 28, footprint.InventoryWidth);
+            Assert.Equal(footprint.PixelHeight / 28, footprint.InventoryHeight);
+        }
+        var footprintIndices = footprints.Select(value => value.NativeItemIndex).ToHashSet();
+        var actualGroundItemIndices = A(row.GetProperty("afterItems"), "items").EnumerateArray()
+            .Where(item => N(item, "itemType") != -1).Select(item => N(item, "itemIndex")).Distinct().ToArray();
+        Assert.NotEmpty(actualGroundItemIndices);
+        Assert.All(actualGroundItemIndices, itemIndex => Assert.Contains(itemIndex, footprintIndices));
+        Assert.Equal(N(corpus, "multiRoomCases"), A(row, "selectedThemes").GetArrayLength() > 1 ? 1 : 0);
+        var actual = AuthoritativeCathedralFreshLevelGenerator.Generate(metadata, 1, 2588, 0x13579BDF,
+            AuthoritativeCathedralEntry.Main, new(2880, 1440, 8, 8, new(57, 40), LevelChanging: true));
+        VerifyFreshRow(row, metadata, actual, 8);
+    }
+
+    private static NativeInventoryFootprint[] ReadNativeInventoryFootprints(string path)
+    {
+        var bytes = File.ReadAllBytes(path);
+        if (bytes.Length is <= 0 or > 4 * 1024 * 1024 || bytes.AsSpan().StartsWith(new byte[] { 0xEF, 0xBB, 0xBF }))
+            throw new InvalidDataException("The native inventory footprint sidecar size or encoding is invalid.");
+        var text = new UTF8Encoding(false, true).GetString(bytes);
+        if (!text.EndsWith("\r\n", StringComparison.Ordinal))
+            throw new InvalidDataException("The native inventory footprint sidecar must use CRLF rows.");
+        for (var index = 0; index < text.Length; index++)
+            if (text[index] == '\n' && (index == 0 || text[index - 1] != '\r'))
+                throw new InvalidDataException("The native inventory footprint sidecar contains a non-CRLF line ending.");
+        var lines = text.Split("\r\n", StringSplitOptions.None);
+        if (lines.Length < 3 || lines[^1].Length != 0
+            || lines[0] != "native_item_index\tnative_cursor_id\tpixel_width\tpixel_height\tinventory_width\tinventory_height")
+            throw new InvalidDataException("The native inventory footprint header or row framing is invalid.");
+        var rows = new NativeInventoryFootprint[lines.Length - 2];
+        var priorItemIndex = -1;
+        for (var index = 1; index < lines.Length - 1; index++) {
+            var fields = lines[index].Split('\t');
+            if (fields.Length != 6)
+                throw new InvalidDataException("A native inventory footprint row has the wrong number of fields.");
+            var values = new int[6];
+            for (var field = 0; field < fields.Length; field++)
+                if (!int.TryParse(fields[field], NumberStyles.None, CultureInfo.InvariantCulture, out values[field]))
+                    throw new InvalidDataException("A native inventory footprint field is not a canonical integer.");
+            if (values[0] <= priorItemIndex || values[1] < 1 || values[2] < 1 || values[3] < 1 || values[4] < 1 || values[5] < 1
+                || values[2] > ushort.MaxValue || values[3] > ushort.MaxValue)
+                throw new InvalidDataException("Native inventory footprint rows must be ordered and have valid dimensions.");
+            rows[index - 1] = new(values[0], values[1], values[2], values[3], values[4], values[5]);
+            priorItemIndex = values[0];
+        }
+        return rows;
+    }
+
+    private sealed record NativeInventoryFootprint(
+        int NativeItemIndex,
+        int NativeCursorId,
+        int PixelWidth,
+        int PixelHeight,
+        int InventoryWidth,
+        int InventoryHeight);
+
+    private static void VerifyFreshRow(JsonElement row, AuthoritativeCathedralPopulationMetadata metadata,
+        AuthoritativeCathedralFreshLevelResult actual, int idleFrames)
+    {
+        Properties(row, "depth", "seed", "entry", "snapshot", "preClearRandomState", "postClearRandomState",
+            "nextTransparencyValue", "triggerPositions", "prePlayerRandomState", "playerIdleFrames",
+            "postPlayerRandomState", "playerAnimation", "visionActive", "visionRecords", "updateVision", "baseline",
+            "selectedRoomCatalog", "selectedThemes", "afterItems", "itemInitialization", "visibleTransparencyRegions", "expected");
         var request = actual.FullPopulationRequest;
         var geometry = actual.InitialPopulation.PreThemeGeometry;
         var baseline = ReadWorld(row.GetProperty("baseline")).State;
-        Assert.Equal(seed, U(row, "preClearRandomState"));
+        Assert.Equal(actual.Request.DungeonSeed, U(row, "preClearRandomState"));
         Assert.Equal(U(row, "postClearRandomState"), actual.MonsterClearFinalRandomState);
         Assert.Equal(N(row, "nextTransparencyValue"), actual.NextTransparencyValue);
         Assert.Equal(A(row, "triggerPositions").EnumerateArray().Select(Point), actual.TriggerPositions);
@@ -68,7 +176,7 @@ public sealed class AuthoritativeCathedralFreshLevelNativeOracleTests
         Assert.Equal(baseline.LightRecords, request.LightAllocator.LightRecords);
         Assert.Equal(baseline.UpdateLighting, request.LightAllocator.UpdateLighting);
         Assert.Equal(U(row, "prePlayerRandomState"), actual.Population.InitialPopulation.Themes.FinalRandomState);
-        Assert.Equal(10, N(row, "playerIdleFrames"));
+        Assert.Equal(idleFrames, N(row, "playerIdleFrames"));
         Assert.Equal(U(row, "postPlayerRandomState"), actual.PlayerPreparation.FinalRandomState);
         var animation = A(row, "playerAnimation").EnumerateArray().ToArray();
         Assert.Equal(5, animation.Length);

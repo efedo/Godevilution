@@ -6,7 +6,7 @@ using Xunit;
 
 namespace Devilution.Server.Tests;
 
-public sealed class DiabloCohortCodecTests
+public sealed partial class DiabloCohortCodecTests
 {
     private readonly DiabloCohortCodec codec = new();
 

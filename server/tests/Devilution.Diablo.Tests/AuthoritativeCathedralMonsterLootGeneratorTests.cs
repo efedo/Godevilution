@@ -258,7 +258,7 @@ public sealed class AuthoritativeCathedralMonsterLootGeneratorTests
             uniqueItemFlags);
     }
 
-    private static AuthoritativeCathedralThemeItemCatalog Catalog(
+    internal static AuthoritativeCathedralThemeItemCatalog Catalog(
         IReadOnlyList<AuthoritativeCathedralNativeItemDefinition>? items = null,
         int noDropPercent = 0,
         int goldPercent = 0)
@@ -292,7 +292,7 @@ public sealed class AuthoritativeCathedralMonsterLootGeneratorTests
             type, name, name, minimumLevel, 0, 0, 0, 0, 0, 0, 0, 0, 0,
             misc, 0, true, 10, 4);
 
-    private static AuthoritativeCathedralMonsterRuntimeCatalog RuntimeCatalog(
+    internal static AuthoritativeCathedralMonsterRuntimeCatalog RuntimeCatalog(
         int noDropMonsterId = 1,
         int specialTreasureMonsterId = 2,
         int rawLevel = 1)

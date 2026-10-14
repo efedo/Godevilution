@@ -432,6 +432,28 @@ TEST(ReplayFixtureStateHasher, PlayerActionMatchesCSharpGolden)
 	EXPECT_EQ(ComputeReplayFixtureStateHash(state), "c89460e4f3faa810171be7ff6cfe5e81400c0fe970a41f47616c218de4252388");
 }
 
+TEST(ReplayFixtureStateHasher, NativeRangedAimMatchesCSharpGoldens)
+{
+	ReplayFixtureExecutionState legacy;
+	legacy.combatMode = 5;
+	legacy.combatModeEndTick = 20;
+	legacy.currentAction = {
+		.defined = true,
+		.kind = 2,
+		.startedAtTick = 2,
+		.effectTick = 10,
+		.readyTick = 10,
+		.endTick = 20,
+		.targetEntityId = 9,
+	};
+	EXPECT_EQ(ComputeReplayFixtureStateHash(legacy), "977e2de7e3811f19909a9fec15ac97e40ebdc509a79ae9d575249888ec64c026");
+
+	ReplayFixtureExecutionState aimed = legacy;
+	aimed.currentAction.targetX = 7;
+	aimed.currentAction.targetY = 9;
+	EXPECT_EQ(ComputeReplayFixtureStateHash(aimed), "6ca53b6aeb79de86e755d88b5d3fb849a1435405629e06af1408ae9d3c1fd0d1");
+}
+
 TEST(ReplayCommands, SortsByTargetTickThenServerReceiptSequence)
 {
 	const std::vector<ReplayCommand> sorted = SortReplayCommands({

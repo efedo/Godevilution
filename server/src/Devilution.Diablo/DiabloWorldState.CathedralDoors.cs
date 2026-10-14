@@ -196,6 +196,10 @@ public sealed partial class DiabloWorldState
         RequireCathedralDoorProfile(cathedralDoorCatalog, checkpoint);
         if (checkpoint is null)
             return;
+        if (nativePopulationPolicy is not null) {
+            RestoreNativePopulationDoors(checkpoint, objects);
+            return;
+        }
         if (World is null)
             throw new InvalidDataException("A door checkpoint requires backing world geometry.");
         DiabloCathedralDoorCheckpoint.RequireSameGeometry(
@@ -279,7 +283,7 @@ public sealed partial class DiabloWorldState
     }
 
     /** Checks mutable cells against immutable SOL/layers, retaining shared-frame history. */
-    private static void ValidateCathedralDoorEffectiveGeometry(AuthoritativeLevel baseline,
+    internal static void ValidateCathedralDoorEffectiveGeometry(AuthoritativeLevel baseline,
         AuthoritativeLevel effective, IReadOnlyList<DiabloCathedralDoorObjectState> doors)
     {
         var expected = CaptureCohortLevel(baseline);
@@ -451,9 +455,19 @@ public sealed partial class DiabloWorldState
             && action is { Kind: DiabloPlayerActionKind.Move, EffectApplied: false }
             && IsCathedralLightObjectSolid(levelId, checked(x + action.DirectionX), checked(y + action.DirectionY));
 
-    /** Live collision includes scanner light footprints without changing persisted SOL geometry. */
+    /** Live collision projection adds native solid footprints without changing canonical geometry. */
     public IReadOnlyList<AuthoritativeLevel> CapturePresentationLevelGeometry()
         => LevelGeometry.Select(level => {
+            if (nativePopulationPolicy is not null && nativePopulationPolicy.LevelId == level.LevelId) {
+                var staticObjectCells = level.StaticObjectBlockedCells.ToHashSet();
+                foreach (var position in nativePopulationPolicy.SolidObjectPositions()) {
+                    if (position.LevelId == level.LevelId)
+                        staticObjectCells.Add(checked(position.Y * level.Width + position.X));
+                }
+                return staticObjectCells.Count == level.StaticObjectBlockedCells.Count
+                    ? level
+                    : AuthoritativeCathedralDoors.CopyLevel(level, staticObjectBlocked: staticObjectCells);
+            }
             if (!cathedralDoorLevels.ContainsKey(level.LevelId))
                 return level;
             var lights = level.NativePieceLayer.Select((piece, cell) => (piece, cell))

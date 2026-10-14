@@ -9,6 +9,7 @@ public partial class HudPresentation
 {
     private readonly AssetPalette hudAssets = new();
     private readonly PanelContainer statusPanel = new() { Name = "StatusPanel" };
+    private readonly HBoxContainer combatBeltQuickUseRow = new() { Name = "CombatBeltQuickUse" };
     private readonly TabContainer sections = new() { Name = "HudSections" };
     private readonly OptionButton routes = new() { Name = "Routes", ClipText = true };
     private readonly Button travel = new() { Name = "Travel", Text = "Travel to route" };
@@ -45,6 +46,13 @@ public partial class HudPresentation
         statusBox.AddChild(heading);
         foreach (var label in new[] { sessionWarning, state, statusEffects, commandFeedback })
             statusBox.AddChild(label);
+        var beltCaption = Caption("ui.hud.quick-belt", "Quick use belt (keys 1–8)");
+        beltCaption.AutowrapMode = TextServer.AutowrapMode.Off;
+        beltCaption.SizeFlagsHorizontal = Control.SizeFlags.ShrinkBegin;
+        combatBeltQuickUseRow.AddChild(beltCaption);
+        foreach (var button in combatBeltQuickUseButtons)
+            combatBeltQuickUseRow.AddChild(button);
+        statusBox.AddChild(combatBeltQuickUseRow);
         AddChild(statusPanel);
 
         victory.HorizontalAlignment = HorizontalAlignment.Center;

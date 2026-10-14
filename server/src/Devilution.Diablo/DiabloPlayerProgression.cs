@@ -3,6 +3,23 @@ namespace Devilution.Diablo;
 /** Shared deterministic character progression used by Diablo gameplay transitions. */
 internal static class DiabloPlayerProgression
 {
+    /** Resource inputs seen by native loot after experience, without mutating a failed command. */
+    internal static (int Life, int Mana) PreviewExperienceResources(
+        AuthoritativePlayerState player, uint amount, AuthoritativeExperienceCatalog? experience)
+    {
+        var total = checked(player.Experience + amount);
+        var level = player.CharacterLevel;
+        var life = player.BaseLifeMaximum;
+        var mana = player.BaseManaMaximum;
+        while (level < (experience?.MaximumLevel ?? AuthoritativeExperienceCatalog.MaximumSupportedLevel)
+            && total >= (experience?.GetRequiredExperience(level) ?? checked(level * 1000U))) {
+            level = checked(level + 1);
+            life = checked(life + (player.PlayerClass?.LifePerLevelQ6 ?? 0));
+            mana = checked(mana + (player.PlayerClass?.ManaPerLevelQ6 ?? 0));
+        }
+        return (life, mana);
+    }
+
     public static void GrantExperience(
         AuthoritativePlayerState player,
         uint amount,

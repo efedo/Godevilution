@@ -1549,7 +1549,9 @@ tl::expected<void, std::string> ValidatePlayerActionSnapshots(const protocol::Sn
 		    && (action.target_cell()
 	        ? action.target_entity_id() == 0 && isProjectedActionTarget(player, action)
 	        : action.target_entity_id() != 0
-	            && action.target_x() == 0 && action.target_y() == 0)
+	            && ((action.target_x() == 0 && action.target_y() == 0)
+	                || (combatMode == protocol::PLAYER_COMBAT_MODE_RANGED_ATTACK
+	                    && isProjectedActionTarget(player, action))))
 		    && !action.has_cast();
 		const bool castIsValid = kind == 3
 		    && combatMode == protocol::PLAYER_COMBAT_MODE_SPELL

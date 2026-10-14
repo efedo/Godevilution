@@ -31,6 +31,10 @@ public sealed record DiabloCohortConfigurationState(
 {
     /** Required by native-initialized actor cohorts; absent in legacy schemas. */
     public string? NativeMonsterMetadataFingerprint { get; init; }
+
+    /** Explicit fences for the separately versioned native item-pool owner. */
+    public string? CathedralItemMetadataFingerprint { get; init; }
+    public string? CathedralItemGenerationFingerprint { get; init; }
 }
 
 /** Full portal state, including metadata omitted by the legacy save projection. */
@@ -105,25 +109,41 @@ public sealed record DiabloCohortState(
     public const int CurrentFormatVersion = 1;
     public const int CathedralDoorFormatVersion = 2;
     public const int NativeMonsterFormatVersion = 3;
+    public const int CathedralItemFormatVersion = 4;
+    public const int NativeCombatFormatVersion = 5;
 
     /** Required in v2, optional in native-initialization v3, forbidden in v1. */
     public DiabloCathedralDoorCheckpoint? CathedralDoors { get; init; }
+
+    /** Complete native item pools, not a complete raw native level checkpoint. */
+    public DiabloCathedralItemCheckpoint? CathedralItems { get; init; }
 
     /** Detached records are captured in deterministic identity order. */
     public void ValidateShape()
     {
         if ((FormatVersion != CurrentFormatVersion && FormatVersion != CathedralDoorFormatVersion
-                && FormatVersion != NativeMonsterFormatVersion)
+                && FormatVersion != NativeMonsterFormatVersion && FormatVersion != CathedralItemFormatVersion && FormatVersion != NativeCombatFormatVersion)
             || (FormatVersion == CurrentFormatVersion && CathedralDoors is not null)
             || (FormatVersion == CathedralDoorFormatVersion && CathedralDoors is null))
             throw new InvalidDataException(
                 $"Unsupported Diablo cohort format version {FormatVersion}.");
         CathedralDoors?.ValidateShape();
         ArgumentNullException.ThrowIfNull(Configuration);
-        if (FormatVersion == NativeMonsterFormatVersion
+        if (FormatVersion is NativeMonsterFormatVersion or CathedralItemFormatVersion or NativeCombatFormatVersion
             ? !AuthoritativeNativeMonsterInitialization.IsFingerprint(Configuration.NativeMonsterMetadataFingerprint)
             : Configuration.NativeMonsterMetadataFingerprint is not null)
             throw new InvalidDataException("Native monster cohorts require their explicit metadata identity.");
+        if (FormatVersion is CathedralItemFormatVersion or NativeCombatFormatVersion) {
+            if (CathedralItems is null)
+                throw new InvalidDataException("Native item cohorts require their complete item pools.");
+            CathedralItems.ValidateShape();
+            if (Configuration.CathedralItemMetadataFingerprint != CathedralItems.MetadataFingerprint
+                || Configuration.CathedralItemGenerationFingerprint != CathedralItems.GenerationFingerprint)
+                throw new InvalidDataException("Native item cohorts have conflicting metadata or generation identities.");
+        } else if (CathedralItems is not null || Configuration.CathedralItemMetadataFingerprint is not null
+            || Configuration.CathedralItemGenerationFingerprint is not null) {
+            throw new InvalidDataException("Native item state cannot be down-converted to an older cohort.");
+        }
         ArgumentNullException.ThrowIfNull(Participants);
         ArgumentNullException.ThrowIfNull(CombatTargets);
         ArgumentNullException.ThrowIfNull(WorldItems);
@@ -186,7 +206,7 @@ public sealed record DiabloCohortState(
                 continue;
             native.ValidateTarget(target.Monster.EntityId, target.Monster.MonsterId,
                 target.Monster.LevelId, target.Monster.IsUnique, target.Monster.UniqueIdentity);
-            if (FormatVersion != NativeMonsterFormatVersion
+            if ((FormatVersion != NativeMonsterFormatVersion && FormatVersion != CathedralItemFormatVersion && FormatVersion != NativeCombatFormatVersion)
                 || native.MetadataFingerprint != Configuration.NativeMonsterMetadataFingerprint
                 || !nativeSlots.Add((target.Monster.LevelId, native.InitialState.Slot)))
                 throw new InvalidDataException("Native monster initialization conflicts with cohort metadata or slots.");
@@ -197,6 +217,56 @@ public sealed record DiabloCohortState(
             throw new InvalidDataException("A Diablo cohort contains a null object.");
         if (Projectiles.Any(projectile => projectile is null))
             throw new InvalidDataException("A Diablo cohort contains a null projectile.");
+        if (FormatVersion != NativeCombatFormatVersion
+            && (CombatTargets.Any(target => target.Monster.NativeMeleeCursor is not null || target.Monster.NativeWalkCursor is not null)
+                || Projectiles.Any(projectile => projectile.NativeWeaponArrow is not null)))
+            throw new InvalidDataException("Native combat state cannot be down-converted to an older cohort.");
+        if (FormatVersion == NativeCombatFormatVersion) {
+            if (CathedralItems!.Levels.Count != 1)
+                throw new InvalidDataException("Native combat cohorts require one owned level.");
+            foreach (var target in CombatTargets) {
+                var native = target.NativeInitialization;
+                if (native is null) {
+                    if (target.Monster.NativeMeleeCursor is not null || target.Monster.NativeWalkCursor is not null)
+                        throw new InvalidDataException("A native cursor cannot belong to a nonnative actor.");
+                    continue;
+                }
+                if (native.NativeAttackFrameCount <= 0 || native.NativeAttackTicksPerFrame < 0
+                    || native.NativeHitRecoveryFrameCount <= 0 || native.NativeHitRecoveryTicksPerFrame < 0
+                    || native.NativeWalkFrameCount <= 0 || native.NativeWalkTicksPerFrame < 0)
+                    throw new InvalidDataException("Native combat cohorts require imported attack animation timing.");
+                if (target.Monster.NativeMeleeCursor is { } cursor
+                    && (cursor.FrameIndex < 0 || cursor.FrameIndex >= (cursor.HitRecovery ? native.NativeHitRecoveryFrameCount : native.NativeAttackFrameCount)
+                        || cursor.TickCounter < 0 || cursor.TickCounter >= Math.Max(1, cursor.HitRecovery ? native.NativeHitRecoveryTicksPerFrame : native.NativeAttackTicksPerFrame)
+                        || target.Monster.HitPointsQ6 <= 0 || target.Monster.Moving))
+                    throw new InvalidDataException("A native melee cursor is outside its owned animation.");
+                if (target.Monster.Moving != (target.Monster.NativeWalkCursor is not null))
+                    throw new InvalidDataException("Native movement must retain its walk animation cursor.");
+                if (target.Monster.NativeWalkCursor is { } walk
+                    && (walk.FrameIndex < -1 || walk.FrameIndex >= native.NativeWalkFrameCount
+                        || walk.TickCounter < 0 || walk.TickCounter >= Math.Max(1, native.NativeWalkTicksPerFrame)
+                        || target.Monster.HitPointsQ6 <= 0 || target.Monster.NativeMeleeCursor is not null))
+                    throw new InvalidDataException("A native walk cursor is outside its owned movement animation.");
+                if (target.Monster.NativeWalkCursor is { } timedWalk
+                    && timedWalk.FrameIndex != native.NativeWalkFrameCount - 1) {
+                    var elapsed = (ulong)((timedWalk.FrameIndex + 1) * Math.Max(1, native.NativeWalkTicksPerFrame)
+                        + timedWalk.TickCounter);
+                    if (elapsed > Tick && elapsed - Tick > 1)
+                        throw new InvalidDataException("Native walk elapsed timing exceeds its first possible update.");
+                }
+            }
+            foreach (var projectile in Projectiles) {
+                if (projectile.NativeWeaponArrow is { } arrow
+                    && (arrow.MissileDistance > int.MaxValue
+                        || projectile.Behavior != AuthoritativeProjectileBehavior.WeaponArrow
+                        || projectile.Phase != AuthoritativeProjectilePhase.Travel
+                        || projectile.LevelId != CathedralItems!.Levels.Single().LevelId
+                        || !Participants.Any(player => player.EntityId == projectile.SourceEntityId)
+                        || projectile.AttackHit || projectile.Damage != 0 || projectile.DamageQ6 != 0
+                        || projectile.PerilSelfDamageQ6 != 0 || projectile.DoppelgangerProc))
+                    throw new InvalidDataException("A native arrow has no valid unresolved collision state.");
+            }
+        }
         if (Corpses.Any(corpse => corpse is null))
             throw new InvalidDataException("A Diablo cohort contains a null corpse.");
         if (Portals.Any(portal => portal is null))

@@ -840,7 +840,6 @@ internal static class DiabloProtocolMapper
                 || @object.RewardKind != AuthoritativeObjectRewardKind.None
                 || @object.QuestSequenceFollowUpKind != AuthoritativeQuestSequenceFollowUpKind.None
                 || @object.DialogueMessageId != 0
-                || @object.TrapArmed
                 || @object.Breakable
                 || @object.IsShrine
                 || @object.ActivateOnOccupancy
@@ -2076,8 +2075,13 @@ internal static class DiabloProtocolMapper
                     ? action.TargetEntityId == 0
                         && IsProjectedActionTarget(state.LevelId, action.TargetX, action.TargetY, levels)
                     : action.TargetEntityId != 0
-                        && action.TargetX == 0
-                        && action.TargetY == 0)
+                        && (action.TargetX == 0 && action.TargetY == 0
+                            || state.CombatMode == DiabloPlayerCombatMode.RangedAttack
+                                && IsProjectedActionTarget(
+                                    state.LevelId,
+                                    action.TargetX,
+                                    action.TargetY,
+                                    levels)))
                 && action.CastIntent is null,
             DiabloPlayerActionKind.Cast =>
                 state.CombatMode == DiabloPlayerCombatMode.Spell
@@ -2742,7 +2746,6 @@ internal static class DiabloProtocolMapper
             || @object.RewardKind != (int)AuthoritativeObjectRewardKind.None
             || @object.QuestSequenceFollowUpKind != (int)AuthoritativeQuestSequenceFollowUpKind.None
             || @object.DialogueMessageId != 0
-            || @object.TrapArmed
             || @object.Breakable
             || @object.IsShrine
             || @object.ActivateOnOccupancy

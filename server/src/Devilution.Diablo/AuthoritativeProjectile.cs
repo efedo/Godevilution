@@ -6,6 +6,9 @@ public enum AuthoritativeProjectilePhase
     Impact,
 }
 
+/** Native-owned bow-arrow state retained until a collision resolves the attack. */
+public sealed record AuthoritativeNativeWeaponArrowState(uint MissileDistance);
+
 /** Server-owned in-flight spell or weapon-missile state. Projectiles resolve in stable entity order. */
 public sealed class AuthoritativeProjectile
 {
@@ -77,6 +80,9 @@ public sealed class AuthoritativeProjectile
 
     /** Whether the native physical attack roll hit its target. */
     public bool AttackHit { get; init; }
+
+    /** Present while this native-owned arrow still needs collision-time hit resolution. */
+    public AuthoritativeNativeWeaponArrowState? NativeWeaponArrow { get; set; }
 
     /** Deferred Hellfire Peril self-damage for a weapon arrow. */
     public int PerilSelfDamageQ6 { get; init; }

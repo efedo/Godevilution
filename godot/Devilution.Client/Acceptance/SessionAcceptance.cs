@@ -38,7 +38,7 @@ public partial class SessionAcceptance : Node
     private async Task RunAsync()
     {
         var phase = Environment.GetEnvironmentVariable("GODEVILUTION_ACCEPTANCE_PHASE");
-        if (phase is not ("Create" or "Resume" or "Recovery" or "Journey" or "JourneyResume" or "TownLoop" or "TownLoopResume" or "Lifecycle" or "LifecycleResume" or "MultiplayerCreate" or "MultiplayerResume" or "MultiplayerRecovery" or "MultiplayerPendingRecovery" or "CooperativeJourney" or "CooperativeResume" or "Performance" or "PerformanceCreate" or "PerformanceResume" or "CathedralJourney" or "CathedralResume" or "CathedralDepthJourney" or "CathedralDepthResume" or "CathedralDoorJourney" or "CathedralDoorResume"))
+        if (phase is not ("Create" or "Resume" or "Recovery" or "Journey" or "JourneyResume" or "TownLoop" or "TownLoopResume" or "Lifecycle" or "LifecycleResume" or "MultiplayerCreate" or "MultiplayerResume" or "MultiplayerRecovery" or "MultiplayerPendingRecovery" or "CooperativeJourney" or "CooperativeResume" or "Performance" or "PerformanceCreate" or "PerformanceResume" or "CathedralJourney" or "CathedralResume" or "CathedralDepthJourney" or "CathedralDepthResume" or "CathedralDoorJourney" or "CathedralDoorResume" or "CathedralNativeJourney" or "CathedralNativeResume"))
             throw new InvalidOperationException("Explicit acceptance phase is required.");
         var portalPreview = Environment.GetEnvironmentVariable("GODEVILUTION_PORTAL_PREVIEW") == "1";
         var directory = Environment.GetEnvironmentVariable("GODEVILUTION_ACCEPTANCE_DIRECTORY")
@@ -63,7 +63,7 @@ public partial class SessionAcceptance : Node
             return;
         }
         var bookmarkPath = System.IO.Path.Combine(directory, "resume-token.txt");
-        var creating = phase is "Create" or "Journey" or "TownLoop" or "Lifecycle" or "CathedralJourney" or "CathedralDepthJourney" or "CathedralDoorJourney";
+        var creating = phase is "Create" or "Journey" or "TownLoop" or "Lifecycle" or "CathedralJourney" or "CathedralDepthJourney" or "CathedralDoorJourney" or "CathedralNativeJourney";
         if (creating) {
             Require(!System.IO.File.Exists(bookmarkPath), "Creation requires a fresh isolated bookmark directory.");
             System.IO.File.WriteAllText(bookmarkPath, "invalid token");
@@ -91,6 +91,7 @@ public partial class SessionAcceptance : Node
                     "Recovery" => "resume.json", "JourneyResume" => "journey.json",
                     "TownLoopResume" => "townloop.json", "CathedralResume" => "cathedraljourney.json",
                     "CathedralDepthResume" => "cathedraldepthjourney.json", "CathedralDoorResume" => "cathedraldoorjourney.json",
+                    "CathedralNativeResume" => "cathedralnativejourney.json",
                     "LifecycleResume" => "lifecycle.json", _ => "create.json",
                 })))
                 ?? throw new InvalidDataException("The creation evidence is empty.");
@@ -111,6 +112,24 @@ public partial class SessionAcceptance : Node
             : null;
         var center = connect.GetGlobalRect().GetCenter();
         Require(GetViewport().GetVisibleRect().HasPoint(center), $"The Connect button {connect.GetGlobalRect()} is outside viewport {GetViewport().GetVisibleRect()}.");
+        var nativeAdmissionPhase = phase is "CathedralNativeJourney" or "CathedralNativeResume";
+        var nativeSubmissionCount = 0;
+        var nativeJourneySubmittedExpectedIdentity = false;
+        var nativeResumeSubmittedExpectedForm = false;
+        Action<uint, string, string, int, string>? nativeSubmissionObserver = null;
+        if (nativeAdmissionPhase) {
+            nativeSubmissionObserver = (submittedClassId, submittedName, _, _, _) => {
+                nativeSubmissionCount++;
+                if (phase == "CathedralNativeJourney") {
+                    nativeJourneySubmittedExpectedIdentity = submittedClassId == 1
+                        && submittedName == "M0-Rogue";
+                } else {
+                    nativeResumeSubmittedExpectedForm = submittedClassId == 0
+                        && string.IsNullOrEmpty(submittedName);
+                }
+            };
+            setup.Submitted += nativeSubmissionObserver;
+        }
         Input.ParseInputEvent(new InputEventMouseButton {
             ButtonIndex = MouseButton.Left, Position = center, GlobalPosition = center, Pressed = true,
         });
@@ -118,8 +137,18 @@ public partial class SessionAcceptance : Node
         Input.ParseInputEvent(new InputEventMouseButton {
             ButtonIndex = MouseButton.Left, Position = center, GlobalPosition = center, Pressed = false,
         });
-        await Until(() => main.TransportConnected && main.ObservedSnapshot?.Players.Count == 1,
-            "No authoritative character snapshot arrived after submitting the form.");
+        try {
+            if (nativeAdmissionPhase) {
+                await UntilNativeInitialJoin(main, setup, phase, () => nativeSubmissionCount,
+                    () => nativeJourneySubmittedExpectedIdentity, () => nativeResumeSubmittedExpectedForm);
+            } else {
+                await Until(() => main.TransportConnected && main.ObservedSnapshot?.Players.Count == 1,
+                    "No authoritative character snapshot arrived after submitting the form.");
+            }
+        } finally {
+            if (nativeSubmissionObserver is not null)
+                setup.Submitted -= nativeSubmissionObserver;
+        }
         var initial = main.ObservedSnapshot!.Players.Single();
         var lifecyclePhase = phase is "Lifecycle" or "LifecycleResume";
         var expectedClass = lifecyclePhase ? 2U : 1U;
@@ -168,6 +197,10 @@ public partial class SessionAcceptance : Node
         }
         if (phase is "CathedralDoorJourney" or "CathedralDoorResume") {
             await VerifyCathedralDoorsAsync(main, directory, phase, visible);
+            return;
+        }
+        if (phase is "CathedralNativeJourney" or "CathedralNativeResume") {
+            await VerifyCathedralNativePopulationAsync(main, directory, phase, visible, previous);
             return;
         }
         if (phase == "JourneyResume")
@@ -355,6 +388,7 @@ public partial class SessionAcceptance : Node
                 "CathedralJourney" => 300, "CathedralResume" => 180,
                 "CathedralDepthJourney" => 885, "CathedralDepthResume" => IsTownPortalPreviewResumeProfile() ? 885 : 435,
                 "CathedralDoorJourney" => 300, "CathedralDoorResume" => 180,
+                "CathedralNativeJourney" or "CathedralNativeResume" => 885,
                 "Lifecycle" => 345, "LifecycleResume" => 70,
                 "TownLoop" => 225, "Journey" => 150, "MultiplayerCreate" or "MultiplayerResume" => 70,
                 "MultiplayerRecovery" => 180, "CooperativeJourney" => 285, "CooperativeResume" => 225, _ => 40,
@@ -363,6 +397,45 @@ public partial class SessionAcceptance : Node
             Require(stageSeconds is null || stage.Elapsed.TotalSeconds < stageSeconds, failure);
             await Frame();
         }
+    }
+
+    private async Task UntilNativeInitialJoin(
+        Main main,
+        CharacterSetupPresentation setup,
+        string phase,
+        Func<int> submissionCount,
+        Func<bool> journeySubmittedExpectedIdentity,
+        Func<bool> resumeSubmittedExpectedForm)
+    {
+        var stage = Stopwatch.StartNew();
+        while (!main.TransportConnected || main.ObservedSnapshot?.Players.Count != 1) {
+            if (stage.Elapsed >= TimeSpan.FromSeconds(45)) {
+                var setupValidation = (setup.FindChild("Validation", true, false) as Label)?.Text ?? "<missing>";
+                var connectionStatus = (main.FindChild("ConnectionStatus", true, false) as Label)?.Text ?? "<missing>";
+                var playerCount = main.ObservedSnapshot?.Players.Count ?? 0;
+                throw new InvalidOperationException(
+                    $"Native {phase} did not admit its first participant within 45 seconds: "
+                    + $"submissionCount={submissionCount()}; "
+                    + $"journeySubmittedExpectedRogueIdentity={journeySubmittedExpectedIdentity()}; "
+                    + $"resumeSubmittedExpectedForm={resumeSubmittedExpectedForm()}; "
+                    + $"setupVisible={setup.Visible}; transportConnected={main.TransportConnected}; "
+                    + $"snapshotPresent={main.ObservedSnapshot is not null}; snapshotPlayerCount={playerCount}; "
+                    + $"setupValidation=[{SanitizeNativeStartupText(setupValidation)}]; "
+                    + $"connectionStatus=[{SanitizeNativeStartupText(connectionStatus)}].");
+            }
+            await Frame();
+        }
+    }
+
+    private static string SanitizeNativeStartupText(string value)
+    {
+        if (value.Contains("token", StringComparison.OrdinalIgnoreCase)
+            || value.Contains("credential", StringComparison.OrdinalIgnoreCase))
+            return "[redacted credential-related status]";
+        return System.Text.RegularExpressions.Regex.Replace(
+            value,
+            @"(?i)(?<![A-Za-z0-9])[A-Za-z0-9_=-]{32,}(?![A-Za-z0-9])",
+            "[redacted]");
     }
 
     private static bool IsTownPortalPreviewResumeProfile()

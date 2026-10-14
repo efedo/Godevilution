@@ -496,6 +496,15 @@ void AppendCanonicalState(ReplayStateHasher &hasher, const ReplayFixtureExecutio
 		hasher.AppendInt32(action.directionX);
 		hasher.AppendInt32(action.directionY);
 		hasher.AppendUint32(action.targetEntityId);
+		if (action.kind == 2
+		    && state.combatMode == 5
+		    && action.targetEntityId != 0
+		    && !action.hasCast
+		    && (action.targetX != 0 || action.targetY != 0)) {
+			hasher.AppendString("godevilution-player-native-ranged-aim-v1");
+			hasher.AppendInt32(action.targetX);
+			hasher.AppendInt32(action.targetY);
+		}
 		hasher.AppendBool(action.hasCast);
 		if (action.hasCast) {
 			hasher.AppendUint32(action.spellId);

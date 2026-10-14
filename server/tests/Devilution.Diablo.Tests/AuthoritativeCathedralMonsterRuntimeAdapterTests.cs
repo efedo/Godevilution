@@ -73,6 +73,116 @@ public sealed class AuthoritativeCathedralMonsterRuntimeAdapterTests
 	}
 
 	[Fact]
+	public void NativeAttackTimingUsesBestiaryAttackGraphicWithoutChangingInitializationDeconstruction()
+	{
+		var state = CreateState();
+		var catalog = CreateCatalog();
+		var fingerprint = Fingerprint("generation", "unique", catalog.Fingerprint);
+		var bindings = new[] {
+			new AuthoritativeCathedralMonsterRuntimeBinding(0, 900, 1900),
+			new AuthoritativeCathedralMonsterRuntimeBinding(1, 901, 1901),
+		};
+
+		var legacy = AuthoritativeCathedralMonsterRuntimeAdapter.AdaptWithBindings(
+			state, catalog, fingerprint, bindings);
+		var legacyInitialization = legacy.Records[0].Initialization;
+		legacyInitialization.Deconstruct(out _, out _, out _, out _, out _, out _, out _, out _);
+		Assert.Equal(0, legacyInitialization.NativeAttackFrameCount);
+		Assert.Equal(0, legacyInitialization.NativeAttackTicksPerFrame);
+
+		var native = AuthoritativeCathedralMonsterRuntimeAdapter.AdaptWithBindings(
+			state, catalog, fingerprint, bindings, populationMonsters: CreateAttackPopulationMetadata());
+		var initialization = native.Records[0].Initialization;
+		Assert.Equal(6, initialization.NativeAttackFrameCount);
+		Assert.Equal(2, initialization.NativeAttackTicksPerFrame);
+		Assert.Equal(4, initialization.AttackEffectFrame);
+	}
+
+	[Fact]
+	public void NativeMeleeCursorChecksEffectBeforeAdvancingAndCompletesOnLastFrame()
+	{
+		var target = CreateNativeAttackTarget();
+		DiabloCombatCommandProcessor.BeginNativeMelee(target);
+
+		var observed = new List<AuthoritativeNativeMeleeStep>();
+		for (var tick = 0; tick < 11; tick++)
+			observed.Add(DiabloCombatCommandProcessor.AdvanceNativeMelee(target));
+
+		Assert.Equal(new[] {
+			new AuthoritativeNativeMeleeStep(0, false, false),
+			new AuthoritativeNativeMeleeStep(0, false, false),
+			new AuthoritativeNativeMeleeStep(1, false, false),
+			new AuthoritativeNativeMeleeStep(1, false, false),
+			new AuthoritativeNativeMeleeStep(2, false, false),
+			new AuthoritativeNativeMeleeStep(2, false, false),
+			new AuthoritativeNativeMeleeStep(3, true, false),
+			new AuthoritativeNativeMeleeStep(3, true, false),
+			new AuthoritativeNativeMeleeStep(4, false, false),
+			new AuthoritativeNativeMeleeStep(4, false, false),
+			new AuthoritativeNativeMeleeStep(5, false, true),
+		}, observed);
+		Assert.Null(target.NativeMeleeCursor);
+	}
+
+	[Fact]
+	public void NativeMeleeCursorRestoreResumesTheSameWindupAndRejectsInvalidState()
+	{
+		var source = CreateNativeAttackTarget();
+		DiabloCombatCommandProcessor.BeginNativeMelee(source);
+		for (var tick = 0; tick < 4; tick++)
+			_ = DiabloCombatCommandProcessor.AdvanceNativeMelee(source);
+
+		var snapshot = source.CaptureCohortState();
+		var savedCursor = snapshot.NativeMeleeCursor
+			?? throw new InvalidOperationException("The attack windup must still be active.");
+		var restored = CreateNativeAttackTarget();
+		restored.RestoreNativeMeleeCursor(savedCursor);
+		var sourceTail = new List<AuthoritativeNativeMeleeStep>();
+		var restoredTail = new List<AuthoritativeNativeMeleeStep>();
+		while (source.NativeMeleeCursor is not null)
+			sourceTail.Add(DiabloCombatCommandProcessor.AdvanceNativeMelee(source));
+		while (restored.NativeMeleeCursor is not null)
+			restoredTail.Add(DiabloCombatCommandProcessor.AdvanceNativeMelee(restored));
+		Assert.Equal(sourceTail, restoredTail);
+
+		var afterEffect = CreateNativeAttackTarget();
+		DiabloCombatCommandProcessor.BeginNativeMelee(afterEffect);
+		while (afterEffect.NativeMeleeCursor is { FrameIndex: < 4 })
+			_ = DiabloCombatCommandProcessor.AdvanceNativeMelee(afterEffect);
+		var postEffectSnapshot = afterEffect.CaptureCohortState();
+		var postEffectRestore = CreateNativeAttackTarget();
+		postEffectRestore.RestoreNativeMeleeCursor(postEffectSnapshot.NativeMeleeCursor);
+		var postEffectTail = new List<AuthoritativeNativeMeleeStep>();
+		var postEffectRestoredTail = new List<AuthoritativeNativeMeleeStep>();
+		while (afterEffect.NativeMeleeCursor is not null)
+			postEffectTail.Add(DiabloCombatCommandProcessor.AdvanceNativeMelee(afterEffect));
+		while (postEffectRestore.NativeMeleeCursor is not null)
+			postEffectRestoredTail.Add(DiabloCombatCommandProcessor.AdvanceNativeMelee(postEffectRestore));
+		Assert.Equal(postEffectTail, postEffectRestoredTail);
+		Assert.DoesNotContain(postEffectTail, step => step.EffectFrame);
+
+		Assert.Throws<InvalidDataException>(() => restored.RestoreNativeMeleeCursor(new(6, 0)));
+		Assert.Throws<InvalidDataException>(() => restored.RestoreNativeMeleeCursor(new(0, 2)));
+		Assert.Null(restored.NativeMeleeCursor);
+
+		var legacy = CreateAdapterTarget(populationMonsters: null);
+		Assert.Throws<InvalidDataException>(() => legacy.RestoreNativeMeleeCursor(new(0, 0)));
+	}
+
+	[Fact]
+	public void NativeMeleeInterruptionClearsOnlyTheActiveCursor()
+	{
+		var target = CreateNativeAttackTarget();
+		DiabloCombatCommandProcessor.BeginNativeMelee(target);
+		_ = DiabloCombatCommandProcessor.AdvanceNativeMelee(target);
+
+		DiabloCombatCommandProcessor.InterruptNativeMelee(target);
+
+		Assert.Null(target.NativeMeleeCursor);
+		Assert.Throws<InvalidOperationException>(() => DiabloCombatCommandProcessor.AdvanceNativeMelee(target));
+	}
+
+	[Fact]
 	public void ContentIdentityMayRepeatForSameNativeTypeButNotAcrossTypes()
 	{
 		var catalog = CreateCatalog();
@@ -346,6 +456,56 @@ public sealed class AuthoritativeCathedralMonsterRuntimeAdapterTests
 				index == 0 ? 0xC007 : 0,
 				100,
 				12)));
+
+	private static AuthoritativeCombatTarget CreateNativeAttackTarget()
+		=> CreateAdapterTarget(CreateAttackPopulationMetadata());
+
+	private static AuthoritativeCombatTarget CreateAdapterTarget(
+		IReadOnlyList<AuthoritativeCathedralRawMonsterDefinition>? populationMonsters)
+	{
+		var catalog = CreateCatalog();
+		var result = AuthoritativeCathedralMonsterRuntimeAdapter.AdaptWithBindings(
+			CreateState(), catalog, Fingerprint("generation", "unique", catalog.Fingerprint),
+			new[] {
+				new AuthoritativeCathedralMonsterRuntimeBinding(0, 900, 1900),
+				new AuthoritativeCathedralMonsterRuntimeBinding(1, 901, 1901),
+			},
+			populationMonsters: populationMonsters);
+		return result.Records[0].Target
+			?? throw new InvalidOperationException("The ordinary native monster row must produce a target.");
+	}
+
+	private static IReadOnlyList<AuthoritativeCathedralRawMonsterDefinition> CreateAttackPopulationMetadata()
+		=> Enumerable.Range(0, AuthoritativeCathedralRawMonsterDefinition.RawCatalogCount)
+			.Select(nativeId => new AuthoritativeCathedralRawMonsterDefinition(
+				nativeId,
+				AuthoritativeCathedralMonsterAvailability.Retail,
+				image: 0,
+				minDungeonLevel: 0,
+				maxDungeonLevel: sbyte.MaxValue,
+				isSkeleton: nativeId is >= 8 and <= 11 or >= 20 and <= 27,
+				minimumHitPoints: 1,
+				maximumHitPoints: 2,
+				ai: 0,
+				intelligence: 0,
+				abilityFlags: 0,
+				minDamage: 1,
+				maxDamage: 1,
+				minDamageSpecial: 0,
+				maxDamageSpecial: 0,
+				armorClass: 0,
+				resistance: 0,
+				reducePlayerStrength: 0,
+				reducePlayerMagic: 0,
+				reducePlayerDexterity: 0,
+				reducePlayerVitality: 0,
+				reducePlayerMaxHP: 0,
+				reducePlayerMaxMana: 0,
+				hasSpecial: false,
+				width: 1,
+				frames: [0, 0, 6, 0, 0, 0],
+				rates: [0, 0, 2, 0, 0, 0]))
+			.ToArray();
 
 	private static AuthoritativeCathedralThemeRoomState CreateState(
 		int ordinaryMode = 0,

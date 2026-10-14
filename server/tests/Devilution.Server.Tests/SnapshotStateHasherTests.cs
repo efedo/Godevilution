@@ -510,6 +510,49 @@ public sealed class SnapshotStateHasherTests
     }
 
     [Fact]
+    public void NativeRangedAimExtendsHashWithoutChangingLegacyOrCellTargetHashes()
+    {
+        static Snapshot CreateRangedAttack(int targetX, int targetY, bool targetCell = false)
+            => new() {
+                Players = {
+                    new PlayerSnapshot {
+                        EntityId = 1,
+                        CharacterLevel = 1,
+                        CombatMode = PlayerCombatMode.RangedAttack,
+                        CombatModeEndTick = 20,
+                        CurrentAction = new PlayerActionSnapshot {
+                            Kind = PlayerActionKind.Attack,
+                            StartedAtTick = 2,
+                            EffectTick = 10,
+                            ReadyTick = 10,
+                            EndTick = 20,
+                            TargetEntityId = targetCell ? 0U : 9U,
+                            TargetX = targetX,
+                            TargetY = targetY,
+                            TargetCell = targetCell,
+                        },
+                    },
+                },
+            };
+
+        var legacyHash = SnapshotStateHasher.Compute(CreateRangedAttack(0, 0));
+        var aimedHash = SnapshotStateHasher.Compute(CreateRangedAttack(7, 9));
+        Assert.Equal(
+            "977e2de7e3811f19909a9fec15ac97e40ebdc509a79ae9d575249888ec64c026",
+            legacyHash);
+        Assert.Equal(
+            "6ca53b6aeb79de86e755d88b5d3fb849a1435405629e06af1408ae9d3c1fd0d1",
+            aimedHash);
+        Assert.NotEqual(aimedHash, SnapshotStateHasher.Compute(CreateRangedAttack(8, 9)));
+        Assert.NotEqual(aimedHash, SnapshotStateHasher.Compute(CreateRangedAttack(7, 10)));
+
+        var cellTargetHash = SnapshotStateHasher.Compute(CreateRangedAttack(7, 9, targetCell: true));
+        Assert.Equal(
+            cellTargetHash,
+            SnapshotStateHasher.Compute(CreateRangedAttack(8, 10, targetCell: true)));
+    }
+
+    [Fact]
     public void CurrentCastSourceStableIdentityIsHashVisible()
     {
         var withoutStableIdentity = new Snapshot {

@@ -9,7 +9,23 @@ rejects duplicate or zero entity IDs across the
 server-owned entity collections; identity-neutral version-1 saves retain their
 zero player ID until import rebinds it.
 
-The separate `DiabloCohortCodec` encodes complete format-1 module checkpoints.
+The separate `DiabloCohortCodec` encodes complete format-1 module checkpoints,
+with additive format-2 Cathedral doors, format-3 native monster state, format-4
+native item pools and format-5 native combat continuation. The opt-in native
+profile retains bow flight and collision-time hit/damage resolution, frozen
+future-tile aim, and melee, recovery and walking phases. Older cohort formats
+retain their established encoding and legacy movement behavior.
+
+Raw native door trap markers remain preserved and are projected when visible;
+unsupported native door operations are refused before they can mutate door or
+pool state. For the opt-in native L1, public static collision geometry also
+includes solid raw object-reference footprints, matching authoritative
+occupancy; non-native scanner-light projection is unchanged.
+
+The scoped headless native Rogue L1 Journey and fresh-host Resume R3 pass with
+a Town checkpoint at sequence 103 and first resumed accepted command 104.
+Normal-profile adoption and broader campaign acceptance remain open.
+
 It requires every stored field, rejects unknown/duplicate members and malformed
 Unicode, validates typed graphs and deterministic collection order, and preserves
 nullable fields and raw values without constructor normalization. Fresh module

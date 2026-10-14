@@ -58,7 +58,13 @@ public sealed class DiabloWorldCommandProcessorTests
     [Fact]
     public void TownerGreetingEmitsNativeDialogueEventWhenAdjacent()
     {
-        var player = CreatePlayer(levelId: 0, positionX: 62, positionY: 64, entityId: 7);
+        var player = CreatePlayer(
+            levelId: 0,
+            positionX: 62,
+            positionY: 64,
+            life: 20,
+            lifeMaximum: 50,
+            entityId: 7);
         var greetings = new AuthoritativeTownerGreetingCatalog([
             new AuthoritativeTownerGreetingDefinition(0, 0, 62, 63, 188),
         ]);
@@ -76,6 +82,76 @@ public sealed class DiabloWorldCommandProcessorTests
         Assert.Equal(DiabloGameplayEventKind.Dialogue, dialogue.Kind);
         Assert.Equal(7U, dialogue.SourceEntityId);
         Assert.Equal(188, dialogue.MessageId);
+        Assert.Equal(20, player.Life);
+    }
+
+    [Fact]
+    public void HealerGreetingRestoresLifeAndPreservesLifeBaseAndManaMaxima()
+    {
+        var player = CreatePlayer(
+            levelId: 0,
+            positionX: 55,
+            positionY: 78,
+            life: 24,
+            lifeMaximum: 100,
+            mana: 17,
+            manaMaximum: 80,
+            baseLifeMaximum: 84,
+            baseManaMaximum: 64,
+            entityId: 9);
+        var greetings = new AuthoritativeTownerGreetingCatalog([
+            new AuthoritativeTownerGreetingDefinition(1, 0, 55, 79, 169),
+        ]);
+
+        var result = new DiabloWorldCommandProcessor(
+            new DiabloWorldState(),
+            townerGreetings: greetings).Execute(
+                player,
+                new DiabloTalkToTownerIntent(1),
+                1,
+                [player]);
+
+        var dialogue = Assert.Single(result.Events);
+        Assert.True(result.Succeeded);
+        Assert.Equal(DiabloGameplayEventKind.Dialogue, dialogue.Kind);
+        Assert.Equal(169, dialogue.MessageId);
+        Assert.Equal(100, player.Life);
+        Assert.Equal(100, player.LifeMaximum);
+        Assert.Equal(84, player.BaseLifeMaximum);
+        Assert.Equal(17, player.Mana);
+        Assert.Equal(80, player.ManaMaximum);
+        Assert.Equal(64, player.BaseManaMaximum);
+    }
+
+    [Fact]
+    public void HealerGreetingAtFullLifeIsIdempotent()
+    {
+        var player = CreatePlayer(
+            levelId: 0,
+            positionX: 55,
+            positionY: 78,
+            life: 100,
+            lifeMaximum: 100,
+            baseLifeMaximum: 84,
+            entityId: 9);
+        var greetings = new AuthoritativeTownerGreetingCatalog([
+            new AuthoritativeTownerGreetingDefinition(1, 0, 55, 79, 169),
+        ]);
+        var processor = new DiabloWorldCommandProcessor(
+            new DiabloWorldState(),
+            townerGreetings: greetings);
+
+        var result = processor.Execute(
+            player,
+            new DiabloTalkToTownerIntent(1),
+            1,
+            [player]);
+
+        Assert.True(result.Succeeded);
+        Assert.Equal(100, player.Life);
+        Assert.Equal(100, player.LifeMaximum);
+        Assert.Equal(84, player.BaseLifeMaximum);
+        Assert.Equal(DiabloGameplayEventKind.Dialogue, Assert.Single(result.Events).Kind);
     }
 
     [Fact]
@@ -83,6 +159,7 @@ public sealed class DiabloWorldCommandProcessorTests
     {
         var greetings = new AuthoritativeTownerGreetingCatalog([
             new AuthoritativeTownerGreetingDefinition(0, 0, 62, 63, 188),
+            new AuthoritativeTownerGreetingDefinition(1, 0, 55, 79, 169),
         ]);
         var processor = new DiabloWorldCommandProcessor(
             new DiabloWorldState(),
@@ -107,6 +184,39 @@ public sealed class DiabloWorldCommandProcessorTests
             new DiabloTalkToTownerIntent(0),
             2,
             [distant]).Succeeded);
+
+        var heldHealerPlayer = CreatePlayer(
+            positionX: 55,
+            positionY: 78,
+            life: 12,
+            lifeMaximum: 100,
+            heldItem: new OwnedStoreItem(
+                1,
+                1,
+                1,
+                0,
+                0,
+                AuthoritativeItemState.Empty));
+        var heldHealerResult = processor.Execute(
+            heldHealerPlayer,
+            new DiabloTalkToTownerIntent(1),
+            3,
+            [heldHealerPlayer]);
+        Assert.False(heldHealerResult.Succeeded);
+        Assert.Equal(12, heldHealerPlayer.Life);
+
+        var distantHealerPlayer = CreatePlayer(
+            positionX: 52,
+            positionY: 79,
+            life: 12,
+            lifeMaximum: 100);
+        var distantHealerResult = processor.Execute(
+            distantHealerPlayer,
+            new DiabloTalkToTownerIntent(1),
+            4,
+            [distantHealerPlayer]);
+        Assert.False(distantHealerResult.Succeeded);
+        Assert.Equal(12, distantHealerPlayer.Life);
     }
 
     [Fact]
@@ -5855,14 +5965,18 @@ public sealed class DiabloWorldCommandProcessorTests
         uint gold = 100,
         IReadOnlyList<OwnedStoreItem>? inventory = null,
         OwnedStoreItem? heldItem = null,
-        IReadOnlyList<EquippedStoreItem>? equipment = null)
+        IReadOnlyList<EquippedStoreItem>? equipment = null,
+        int mana = 0,
+        int manaMaximum = 0,
+        int baseLifeMaximum = -1,
+        int baseManaMaximum = -1)
     {
         return new AuthoritativePlayerState(
             gold,
             0,
             life,
-            0,
-            0,
+            mana,
+            manaMaximum,
             PlayerAttributesState.Zero,
             equipment ?? [],
             inventoryGrid ?? Enumerable.Repeat(-1, 40).ToArray(),
@@ -5874,7 +5988,9 @@ public sealed class DiabloWorldCommandProcessorTests
             levelId,
             0,
             inventory: inventory,
-            heldItem: heldItem) {
+            heldItem: heldItem,
+            baseLifeMaximum: baseLifeMaximum,
+            baseManaMaximum: baseManaMaximum) {
             EntityId = entityId,
         };
     }

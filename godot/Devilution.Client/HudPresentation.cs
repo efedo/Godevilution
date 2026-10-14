@@ -36,6 +36,7 @@ public partial class HudPresentation : CanvasLayer
     private readonly GridContainer stashGrid = new() { Name = "StashGrid", Columns = StashLayout.ColumnCount };
     private readonly List<Button> inventoryCells = [];
     private readonly List<Button> stashCells = [];
+    private readonly List<Button> combatBeltQuickUseButtons = [];
     private readonly List<uint> storeSlots = [];
     private readonly List<uint> beltSlots = [];
     private readonly List<uint> equipmentSlots = [];
@@ -97,6 +98,7 @@ public partial class HudPresentation : CanvasLayer
     private PlayerItemReference? selectedItemReference;
     private PlayerItemReference? selectedOilTarget;
     private PlayerSnapshot? currentPlayer;
+    private bool currentClientConnected;
     private string selectedSpellText = "none";
 
     public event Action<uint>? OpenStoreRequested;
@@ -134,6 +136,18 @@ public partial class HudPresentation : CanvasLayer
 
     public override void _Ready()
     {
+        for (var index = 0; index < 8; index++) {
+            var slot = checked((uint)index);
+            var button = new Button {
+                Name = $"QuickUseBelt{index + 1}",
+                Text = (index + 1).ToString(),
+                TooltipText = $"Use belt slot {index + 1}",
+                CustomMinimumSize = new Vector2(28, 24),
+                FocusMode = Control.FocusModeEnum.None,
+            };
+            button.Pressed += () => SubmitCombatBeltConsumable(slot);
+            combatBeltQuickUseButtons.Add(button);
+        }
         BuildLayout();
 
         for (var index = 0; index < InventoryColumns * VisibleInventoryRows; index++) {
@@ -268,6 +282,50 @@ public partial class HudPresentation : CanvasLayer
         diagnostics.Visible = false;
     }
 
+    public override void _UnhandledKeyInput(InputEvent @event)
+    {
+        if (@event is not InputEventKey { Pressed: true, Echo: false } key
+            || key.CtrlPressed || key.AltPressed || key.ShiftPressed || key.MetaPressed
+            || GetViewport().GuiGetFocusOwner() is LineEdit or TextEdit
+            || key.Unicode < (uint)'1' || key.Unicode > (uint)'8')
+            return;
+
+        var slot = checked((uint)(key.Unicode - '1'));
+        if (SubmitCombatBeltConsumable(slot))
+            GetViewport().SetInputAsHandled();
+    }
+
+    private bool SubmitCombatBeltConsumable(uint slot)
+    {
+        if (slot >= (uint)combatBeltQuickUseButtons.Count
+            || !currentClientConnected
+            || !Visible
+            || currentPlayer is not { Life: > 0 } player
+            || player.CombatMode is PlayerCombatMode.NewLevel or PlayerCombatMode.Quit)
+            return false;
+        var button = combatBeltQuickUseButtons[checked((int)slot)];
+        if (button.Disabled || !button.IsVisibleInTree())
+            return false;
+        var reference = AuthoritativeBeltConsumableSelector.Select(player, checked((int)slot));
+        if (reference is null || UseConsumableRequested is not { } requested)
+            return false;
+        requested(reference);
+        return true;
+    }
+
+    private void ApplyCombatBeltQuickUse(PlayerSnapshot? player, bool connected)
+    {
+        for (var index = 0; index < combatBeltQuickUseButtons.Count; index++) {
+            var button = combatBeltQuickUseButtons[index];
+            var reference = AuthoritativeBeltConsumableSelector.Select(player, index);
+            button.Disabled = !connected || UseConsumableRequested is null || player is not { Life: > 0 }
+                || player.CombatMode is PlayerCombatMode.NewLevel or PlayerCombatMode.Quit || reference is null;
+            if (reference is null)
+                button.TooltipText = $"No usable consumable in belt slot {index + 1}";
+            else if (player!.Belt.FirstOrDefault(item => item.Slot == reference.Slot) is { } item)
+                button.TooltipText = $"Use {ItemPresentationStyle.ResolveName(item.State)} (belt slot {index + 1}; key {index + 1})";
+        }
+    }
     public void SetStatus(string value)
     {
         status.Text = value;
@@ -318,6 +376,7 @@ public partial class HudPresentation : CanvasLayer
 
     public void Apply(AuthoritativeClientModel model, AuthoritativeClient? client, Task? connectionTask)
     {
+        currentClientConnected = client?.IsConnected == true;
         clock.Text = ClockPresentation.Format(DateTimeOffset.Now);
         if (client is { IsConnected: false } && model.Snapshot is not null)
             status.Text = "Connection lost - reconnecting. Gameplay input disabled.";
@@ -408,6 +467,7 @@ public partial class HudPresentation : CanvasLayer
         availableQuestTownerInteraction = AuthoritativeQuestTownerInteractionSelector.Select(model.Snapshot);
 
         var connected = client?.IsConnected == true;
+        ApplyCombatBeltQuickUse(player, connected);
         restartTown.Visible = player?.Life == 0;
         restartTown.Disabled = !connected || !AuthoritativeDeathRecoveryRules.CanRequestTownRestart(player);
         ApplyRoutes(model.VisibleWarpTriggers, connected && player is { Life: > 0 });

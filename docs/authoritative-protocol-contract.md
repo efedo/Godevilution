@@ -1313,6 +1313,16 @@ clients expose that reservation as the future or predicted position. Deferred
 casts preserve their spell, source kind, source item, and target so save
 restoration cannot silently substitute a different resource source.
 
+Entity-targeted ranged attacks may retain a frozen aim in the existing action
+`target_x`/`target_y` fields while `target_cell` remains false. The explicit native
+population owner captures the monster's future tile at admission, then fires at
+that saved tile; missile collision determines a hit or obstruction. A nonzero aim
+must be inside the projected level. Legacy zero-coordinate actions retain their
+entity-resolution behavior, and melee entity actions still require zero coordinates.
+Cold cohort restore preserves the aim and windup. Its conditional
+`godevilution-player-native-ranged-aim-v1` hash extension covers both coordinates;
+zero-coordinate legacy actions retain their previous hashes.
+
 Death action kind 4 is already applied at its start tick, requires zero life
 and Death combat mode, records a nonzero killing source as its target, and uses two
 server ticks per activated class death frame. On the current ordinary combat

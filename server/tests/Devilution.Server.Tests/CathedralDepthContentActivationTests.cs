@@ -6,6 +6,7 @@ using Devilution.Protocol.V1;
 using Devilution.Server.Commands;
 using Devilution.Server.Gameplay;
 using Devilution.Server.Host;
+using Devilution.Server.Protocol;
 using Devilution.Server.Stores;
 using Godevilution.Tools;
 using Xunit;
@@ -15,6 +16,298 @@ namespace Devilution.Server.Tests;
 /** Synthetic catalogs test the production depth adapter, not native geometry or continuous GUI traversal. */
 public sealed class CathedralDepthContentActivationTests
 {
+    [Fact(Explicit = true)]
+    public void ExplicitNativePopulationAdapterRetainsCompleteL1PoolsAndReservationBoundary()
+    {
+        var metadataDirectory = Environment.GetEnvironmentVariable("GODEVILUTION_CATHEDRAL_POPULATION_METADATA_PACK_DIRECTORY");
+        var runtimeTablePath = Environment.GetEnvironmentVariable("GODEVILUTION_CATHEDRAL_MONSTER_RUNTIME_TABLE_PATH");
+        var footprintTablePath = Environment.GetEnvironmentVariable(
+            "GODEVILUTION_CATHEDRAL_NATIVE_CURSOR_FOOTPRINT_TABLE_PATH");
+        if (string.IsNullOrWhiteSpace(metadataDirectory) || string.IsNullOrWhiteSpace(runtimeTablePath)
+            || string.IsNullOrWhiteSpace(footprintTablePath))
+            Assert.Skip("The exact external Cathedral metadata, runtime catalog, and cursor footprint paths are required.");
+
+        var metadata = CathedralPopulationMetadataCompiler.LoadDirectory(metadataDirectory);
+        var metadataPack = metadata.ToContentPack();
+        var piecesTsv = metadataPack.Tables.Single(table =>
+            table.SourcePath == AuthoritativeNativeDunGeometryCatalog.PieceDefinitionsTablePath).ToCanonicalTsv();
+        var propertiesTsv = metadataPack.Tables.Single(table =>
+            table.SourcePath == AuthoritativeNativeDunGeometryCatalog.TilePropertiesTablePath).ToCanonicalTsv();
+        var runtimeTable = TsvTable.Parse(AuthoritativeCathedralMonsterRuntimeCatalog.TableName,
+            File.ReadAllText(runtimeTablePath));
+        var runtime = AuthoritativeCathedralMonsterRuntimeCatalog.LoadTable(runtimeTable);
+        using var fixture = new Fixture(dungeonSeeds: [2588, 2588, 1, uint.MaxValue],
+            pieceDefinitionsTsv: piecesTsv, tilePropertiesTsv: propertiesTsv,
+            nativeDoors: true);
+        var runtimePack = runtime.CreateContentPack();
+        var baselineActivation = DiabloModule.Instance.CathedralDoorContentBootstrap
+            .ActivateDoors(fixture.Content);
+        var footprintTable = TsvTable.Parse("native-rogue-l1-inventory.tsv",
+            File.ReadAllText(footprintTablePath));
+        var footprints = AuthoritativeCathedralNativeItemSidecars.LoadFootprints(footprintTable);
+        var semanticsTable = AuthoritativeCathedralNativePopulationBuilder.CreateSemanticTable(
+            metadata.Items.Catalog,
+            baselineActivation.Simulation.Items!,
+            baselineActivation.Simulation.Spells,
+            footprints);
+        var itemSidecars = AuthoritativeCathedralNativeItemSidecars.Load(footprintTable, semanticsTable);
+        var storesTable = fixture.Pack.Tables.Single(table => table.SourcePath == "stores.tsv");
+        var preparedStores = AuthoritativeCathedralNativePopulationBuilder.PrepareNativeProfileStoreTable(
+            storesTable, baselineActivation.Simulation.Items!, itemSidecars);
+        var preparedPack = new ContentPack(fixture.Pack.Id, fixture.Pack.Version, fixture.Pack.Tables.Select(table =>
+            table.SourcePath == storesTable.SourcePath ? preparedStores : table).ToArray(),
+            fixture.Pack.Dependencies, fixture.Pack.Overlays, fixture.Pack.Schema,
+            fixture.Pack.DependencyConstraints, fixture.Pack.Assets);
+        var runtimeTables = runtimePack.Tables.Append(footprintTable).Append(semanticsTable).ToArray();
+        Assert.Equal(3, runtimeTables.Length);
+        var content = ComposedContent.Compose(new ContentManifest(preparedPack.Id, preparedPack.Version,
+            [preparedPack,
+                new ContentPack(metadataPack.Id, metadataPack.Version, metadataPack.Tables.Select(table =>
+                    table with { SourcePath = $"native_cathedral_population/{table.SourcePath}" }).ToArray()),
+                new ContentPack(runtimePack.Id, runtimePack.Version,
+                    runtimeTables.Select(table =>
+                    table with { SourcePath = $"native_cathedral_runtime/{table.SourcePath}" }).ToArray())]));
+
+        var activation = DiabloModule.Instance.CathedralNativePopulationContentBootstrap
+            .ActivateNativePopulation(content);
+        var worldState = activation.Simulation.WorldState;
+        Assert.True(worldState.HasNativeCathedralItems);
+        var itemCheckpoint = Assert.IsType<DiabloCathedralItemCheckpoint>(worldState.CaptureCathedralItems());
+        Assert.Equal(metadata.Items.Fingerprint, itemCheckpoint.MetadataFingerprint);
+        var l1Items = Assert.Single(itemCheckpoint.Levels);
+        Assert.Equal(AuthoritativeCathedralInitialItemGenerator.PoolCapacity, l1Items.Items.Count);
+        Assert.Equal(AuthoritativeCathedralInitialItemGenerator.ActiveCapacity, l1Items.ActiveItemIds.Count);
+        Assert.Equal(AuthoritativeCathedralInitialItemGenerator.PoolCapacity, l1Items.SlotEntityBindings.Count);
+        Assert.All(l1Items.SignedItemRefs, reference => Assert.True(reference >= 0));
+
+        var l1Targets = worldState.CombatTargets.Values.Where(target => target.LevelId == 1).ToArray();
+        Assert.NotEmpty(l1Targets);
+        Assert.DoesNotContain(l1Targets, target => target.IsPlayerMinion);
+        var l1Objects = worldState.Objects.Values.Where(value => value.LevelId == 1).ToArray();
+        Assert.NotEmpty(l1Objects);
+        Assert.NotEmpty(l1Objects.Where(value => value.CathedralDoor is not null));
+        var trappedNativeDoors = l1Objects
+            .Where(value => value.CathedralDoor is not null && value.TrapArmed)
+            .OrderBy(value => value.EntityId)
+            .ToArray();
+        Assert.NotEmpty(trappedNativeDoors);
+        for (var slot = 0; slot < 4; slot++)
+            Assert.DoesNotContain(0x09001000U + (uint)slot, worldState.CombatTargets.Keys);
+
+        var rogue = activation.PlayerClasses.Definitions.Single(definition => definition.Symbol == "rogue");
+        var hero = activation.PlayerLoadouts.CreateTemplate(
+            "native-cathedral-population-profile", rogue.ClassId,
+            goldOverride: null, lifeOverride: null, manaOverride: null, startingLevelId: 1,
+            startingPositionX: 57, startingPositionY: 40);
+        var trappedDoor = trappedNativeDoors[0];
+        var trapTestTemplate = activation.PlayerLoadouts.CreateTemplate(
+            "native-trapped-door-policy", rogue.ClassId,
+            goldOverride: null, lifeOverride: null, manaOverride: null, startingLevelId: 1,
+            startingPositionX: trappedDoor.PositionX, startingPositionY: trappedDoor.PositionY - 1);
+        Assert.Equal(DiabloPlayerAbilityKind.TrapDisarm, trapTestTemplate.AbilityKind);
+        Assert.NotEqual(0U, trapTestTemplate.AbilitySpellId);
+        var trapTestRuntime = activation.Simulation.CreateRuntime(trapTestTemplate);
+        const string trapTestSessionId = "native-trapped-door-policy";
+        trapTestRuntime.Write(trapTestSessionId, player => player.EntityId = 1);
+        var trapTestHero = trapTestRuntime.Read(trapTestSessionId, player => player);
+        var beforeTrapAttempts = activation.Simulation.CaptureSnapshot(trapTestHero, 0);
+        var beforeTrapItems = worldState.CaptureCathedralItems()!;
+        var beforeTrapDoors = worldState.CaptureCathedralDoors()!;
+        var operateTrappedDoor = activation.Simulation.Execute(trapTestHero,
+            new DiabloOperateObjectIntent(trappedDoor.EntityId), 0, [trapTestHero]);
+        Assert.False(operateTrappedDoor.Succeeded);
+        Assert.Equal(DiabloRuleFailure.NotAllowed, operateTrappedDoor.Failure);
+        var disarmTrappedDoor = activation.Simulation.Execute(trapTestHero,
+            new DiabloDisarmTrapIntent(trappedDoor.EntityId), 0, [trapTestHero]);
+        Assert.False(disarmTrappedDoor.Succeeded);
+        Assert.Equal(DiabloRuleFailure.NotAllowed, disarmTrappedDoor.Failure);
+        var afterTrapAttempts = activation.Simulation.CaptureSnapshot(trapTestHero, 0);
+        var afterTrapItems = worldState.CaptureCathedralItems()!;
+        var afterTrapDoors = worldState.CaptureCathedralDoors()!;
+        Assert.Equal(beforeTrapAttempts.RandomState, afterTrapAttempts.RandomState);
+        Assert.Equal(beforeTrapAttempts.CathedralDoorObjects, afterTrapAttempts.CathedralDoorObjects);
+        Assert.Equal(beforeTrapAttempts.Objects, afterTrapAttempts.Objects);
+        DiabloCathedralDoorCheckpoint.RequireSameGeometry(
+            beforeTrapDoors.BackingGeometry, afterTrapDoors.BackingGeometry);
+        DiabloCathedralDoorCheckpoint.RequireSameLevels(
+            beforeTrapDoors.EffectiveLevels, afterTrapDoors.EffectiveLevels);
+        Assert.Equal(beforeTrapDoors.DoorLevels.Single().Doors, afterTrapDoors.DoorLevels.Single().Doors);
+        var beforeTrapItemLevel = beforeTrapItems.Levels.Single();
+        var afterTrapItemLevel = afterTrapItems.Levels.Single();
+        Assert.Equal(beforeTrapItemLevel.Items, afterTrapItemLevel.Items);
+        Assert.Equal(beforeTrapItemLevel.ActiveItemIds, afterTrapItemLevel.ActiveItemIds);
+        Assert.Equal(beforeTrapItemLevel.SignedItemRefs, afterTrapItemLevel.SignedItemRefs);
+        Assert.Equal(beforeTrapItemLevel.SlotEntityBindings, afterTrapItemLevel.SlotEntityBindings);
+        Assert.Equal(beforeTrapItemLevel.RandomState, afterTrapItemLevel.RandomState);
+        var nativeAiCounts = string.Join(",", l1Targets.GroupBy(target => target.NativeAi, StringComparer.Ordinal)
+            .OrderBy(group => group.Key, StringComparer.Ordinal)
+            .Select(group => $"{group.Key}:{group.Count()}"));
+        Console.WriteLine($"native-l1-report hero=rogue baseLife={hero.BaseLifeMaximum} baseMana={hero.BaseManaMaximum} "
+            + $"idleFrames={activation.PlayerAnimations.GetRequired(rogue.ClassId).IdleFrames} "
+            + $"entry=57,40 liveTargets={l1Targets.Length} ai=[{nativeAiCounts}] "
+            + $"playerMinions={l1Targets.Count(target => target.IsPlayerMinion)} "
+            + $"scavengers={l1Targets.Count(target => target.NativeAi == "Scavenger")} objects={l1Objects.Length} "
+            + $"activeItems={l1Items.ActiveItemCount}/{AuthoritativeCathedralInitialItemGenerator.PoolCapacity}");
+
+        Assert.Equal(new uint[] { 0, 1, 2, 3, 4 },
+            activation.Simulation.WorldState.World!.Levels.Select(level => level.LevelId));
+        Assert.Single(activation.Simulation.WorldState.CaptureCathedralDoors()!.DoorLevels);
+        Assert.Throws<NotSupportedException>(() => DiabloModule.Instance.CathedralNativePopulationContentBootstrap
+            .ActivateNativePopulation(content, gameMode: DiabloGameMode.Multiplayer));
+
+        var nativeHost = CreateHost(content, AuthoritativeGameMode.SinglePlayer,
+            DiabloAuthoritativeGameHostAdapterFactory.CathedralNativePopulationId);
+        const string nativeSessionId = "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef";
+        try {
+            nativeHost.InitializeParticipant(nativeSessionId,
+                new AuthoritativeParticipantSelection(rogue.ClassId) {
+                    CharacterName = "Native-Host-Rogue",
+                    EntityId = 1,
+                });
+        } catch (Exception exception) {
+            throw new InvalidOperationException(
+                "Native host-factory participant initialization failed.", exception);
+        }
+
+        try {
+            nativeHost.AdvanceTo(1);
+        } catch (Exception exception) {
+            throw new InvalidOperationException(
+                "The first native host tick failed after participant initialization.", exception);
+        }
+
+        Snapshot nativeSnapshot;
+        try {
+            nativeSnapshot = nativeHost.CreateSnapshot(nativeSessionId, 1, 1);
+        } catch (Exception exception) {
+            throw new InvalidOperationException(
+                "Native host snapshot projection failed after the first tick.", exception);
+        }
+        try {
+            Devilution.Server.Protocol.AuthoritativeSnapshotValidator.Validate(nativeSnapshot);
+        } catch (Exception exception) {
+            throw new InvalidOperationException(
+                "The first native host snapshot failed protocol validation.", exception);
+        }
+        var expectedTrappedDoorIds = trappedNativeDoors.Select(value => value.EntityId).ToArray();
+        var projectedTrappedDoorIds = nativeSnapshot.Objects
+            .Where(value => value.CathedralDoor is not null && value.TrapArmed)
+            .Select(value => value.EntityId)
+            .Order()
+            .ToArray();
+        Assert.Equal(expectedTrappedDoorIds, projectedTrappedDoorIds);
+        var importedNativeSnapshot = DiabloProtocolMapper.FromProtocolSnapshot(nativeSnapshot);
+        var importedTrappedDoorIds = importedNativeSnapshot.Objects
+            .Where(value => value.TrapArmed && importedNativeSnapshot.CathedralDoorObjects
+                .Any(door => door.EntityId == value.EntityId))
+            .Select(value => value.EntityId)
+            .Order()
+            .ToArray();
+        Assert.Equal(expectedTrappedDoorIds, importedTrappedDoorIds);
+
+        var nativeLevelStart = worldState.World!.GetStartPosition(1);
+        var movementWitnessStart = new[] {
+            nativeLevelStart,
+            (X: nativeLevelStart.X, Y: nativeLevelStart.Y - 1),
+            (X: nativeLevelStart.X + 1, Y: nativeLevelStart.Y),
+            (X: nativeLevelStart.X, Y: nativeLevelStart.Y + 1),
+            (X: nativeLevelStart.X - 1, Y: nativeLevelStart.Y),
+            (X: nativeLevelStart.X + 1, Y: nativeLevelStart.Y - 1),
+            (X: nativeLevelStart.X + 1, Y: nativeLevelStart.Y + 1),
+            (X: nativeLevelStart.X - 1, Y: nativeLevelStart.Y + 1),
+            (X: nativeLevelStart.X - 1, Y: nativeLevelStart.Y - 1),
+        }.First(position => worldState.IsWalkable(1, position.X, position.Y)
+            && !worldState.IsOccupied(1, position.X, position.Y,
+                Array.Empty<AuthoritativePlayerState>()));
+        var movementWitnessTemplate = activation.PlayerLoadouts.CreateTemplate(
+            "native-target-movement-witness", rogue.ClassId,
+            goldOverride: null, lifeOverride: null, manaOverride: null,
+            startingLevelId: 1,
+            startingPositionX: movementWitnessStart.X,
+            startingPositionY: movementWitnessStart.Y);
+        var movementWitnessRuntime = activation.Simulation.CreateRuntime(movementWitnessTemplate);
+        const string movementWitnessSessionId = "native-target-movement-witness";
+        movementWitnessRuntime.Write(movementWitnessSessionId,
+            player => player.EntityId = 0x70000074);
+        var movementWitness = movementWitnessRuntime.Read(movementWitnessSessionId, player => player);
+        AuthoritativeCombatTarget? pendingBowTarget = null;
+        ulong targetMovementTick = 0;
+        for (ulong tick = 1; tick <= 32 && pendingBowTarget is null; tick++) {
+            activation.Simulation.AdvanceTick(tick, [movementWitness]);
+            pendingBowTarget = l1Targets
+                .Where(target => target.HitPointsQ6 > 0 && !target.SneakHidden
+                    && !target.IsPetrified && !target.IsPlayerMinion && !target.IsUnique
+                    && target.NativeInitialization is not null && target.IsMoving
+                    && (target.FuturePositionX != target.PositionX
+                        || target.FuturePositionY != target.PositionY)
+                    && worldState.ContainsPosition(1,
+                        target.FuturePositionX, target.FuturePositionY)
+                    && target.FuturePositionX != 0 && target.FuturePositionY != 0)
+                .OrderBy(target => target.EntityId)
+                .FirstOrDefault();
+            if (pendingBowTarget is not null)
+                targetMovementTick = tick;
+        }
+        Assert.NotNull(pendingBowTarget);
+        Assert.NotEqual((pendingBowTarget.PositionX, pendingBowTarget.PositionY),
+            (pendingBowTarget.FuturePositionX, pendingBowTarget.FuturePositionY));
+        var bowStart = new[] {
+            (X: 0, Y: -1), (X: 1, Y: 0), (X: 0, Y: 1), (X: -1, Y: 0),
+            (X: 1, Y: -1), (X: 1, Y: 1), (X: -1, Y: 1), (X: -1, Y: -1),
+        }.Select(offset => (X: pendingBowTarget.PositionX + offset.X,
+            Y: pendingBowTarget.PositionY + offset.Y))
+            .First(position => worldState.IsWalkable(1, position.X, position.Y)
+                && !worldState.IsOccupied(1, position.X, position.Y,
+                    [movementWitness]));
+        var pendingBowTemplate = activation.PlayerLoadouts.CreateTemplate(
+            "native-pending-bow-snapshot",
+            rogue.ClassId,
+            goldOverride: null,
+            lifeOverride: null,
+            manaOverride: null,
+            startingLevelId: 1,
+            startingPositionX: bowStart.X,
+            startingPositionY: bowStart.Y);
+        var pendingBowRuntime = activation.Simulation.CreateRuntime(pendingBowTemplate);
+        const string pendingBowSessionId = "native-pending-bow-snapshot";
+        pendingBowRuntime.Write(pendingBowSessionId, player => player.EntityId = 0x70000073);
+        var pendingBowPlayer = pendingBowRuntime.Read(pendingBowSessionId, player => player);
+        var pendingBowResult = activation.Simulation.Execute(
+            pendingBowPlayer,
+            new DiabloAttackIntent(pendingBowTarget.EntityId),
+            appliedTick: checked(targetMovementTick + 1),
+            [pendingBowPlayer]);
+        Assert.True(pendingBowResult.Succeeded,
+            $"A native entity-targeted bow action could not be prepared for protocol validation: "
+                + $"{pendingBowResult.Failure}.");
+        var pendingBowAction = Assert.IsType<AuthoritativePlayerActionState>(pendingBowPlayer.CurrentAction);
+        Assert.Equal(DiabloPlayerCombatMode.RangedAttack, pendingBowPlayer.CombatMode);
+        Assert.False(pendingBowAction.TargetCell);
+        Assert.Equal(pendingBowTarget.EntityId, pendingBowAction.TargetEntityId);
+        Assert.True(pendingBowAction.EffectTick > checked(targetMovementTick + 1),
+            "The protocol case must capture a pending bow windup before its effect tick.");
+        Assert.NotEqual((pendingBowTarget.PositionX, pendingBowTarget.PositionY),
+            (pendingBowAction.TargetX, pendingBowAction.TargetY));
+        Assert.Equal((pendingBowTarget.FuturePositionX, pendingBowTarget.FuturePositionY),
+            (pendingBowAction.TargetX, pendingBowAction.TargetY));
+
+        var pendingBowModuleSnapshot = activation.Simulation.CaptureSnapshot(
+            pendingBowPlayer, checked(targetMovementTick + 1));
+        var pendingBowWireSnapshot = DiabloProtocolMapper.ToProtocolSnapshot(
+            pendingBowModuleSnapshot,
+            levelGeometry: worldState.World!.Levels);
+        AuthoritativeSnapshotValidator.Validate(pendingBowWireSnapshot);
+        var pendingBowWirePlayer = Assert.Single(pendingBowWireSnapshot.Players,
+            candidate => candidate.EntityId == pendingBowPlayer.EntityId);
+        Assert.NotNull(pendingBowWirePlayer.CurrentAction);
+        Assert.Equal((pendingBowTarget.EntityId, false,
+                pendingBowTarget.FuturePositionX, pendingBowTarget.FuturePositionY),
+            (pendingBowWirePlayer.CurrentAction.TargetEntityId,
+                pendingBowWirePlayer.CurrentAction.TargetCell,
+                pendingBowWirePlayer.CurrentAction.TargetX,
+                pendingBowWirePlayer.CurrentAction.TargetY));
+    }
+
     [Theory]
     [InlineData(AuthoritativeGameMode.SinglePlayer)]
     [InlineData(AuthoritativeGameMode.Multiplayer)]
@@ -692,9 +985,12 @@ public sealed class CathedralDepthContentActivationTests
     private static DiabloContentActivation Activate(ComposedContent content, uint randomSeed = 42)
         => DiabloModule.Instance.CathedralDepthContentBootstrap.ActivateDepths(content, randomSeed);
 
-    private static StoreSimulationExecutor CreateHost(ComposedContent content, AuthoritativeGameMode mode = AuthoritativeGameMode.SinglePlayer)
+    private static StoreSimulationExecutor CreateHost(
+        ComposedContent content,
+        AuthoritativeGameMode mode = AuthoritativeGameMode.SinglePlayer,
+        string adapterId = DiabloAuthoritativeGameHostAdapterFactory.CathedralDepthId)
     {
-        var catalog = BuiltInAuthoritativeGameHostAdapters.Create(DiabloAuthoritativeGameHostAdapterFactory.CathedralDepthId);
+        var catalog = BuiltInAuthoritativeGameHostAdapters.Create(adapterId);
         var registry = new GameplayModuleRegistry();
         registry.Load(catalog.CreateBuiltInModules(), new GameplayModuleContext(content.Manifest, new DelegateAuthoritativeClock(() => 0)));
         return Assert.IsType<StoreSimulationExecutor>(catalog.Activate(registry, content,
@@ -741,7 +1037,11 @@ public sealed class CathedralDepthContentActivationTests
         public Fixture(
             CathedralDepthPlaytestPlacementPolicy placementPolicy = CathedralDepthPlaytestPlacementPolicy.None,
             string? diagnosticDropItemSymbol = null,
-            bool townPortalRoute = false)
+            bool townPortalRoute = false,
+            IReadOnlyList<uint>? dungeonSeeds = null,
+            string? pieceDefinitionsTsv = null,
+            string? tilePropertiesTsv = null,
+            bool nativeDoors = false)
         {
             var pieces = "mega_tile_id\tpiece_north_west\tpiece_north_east\tpiece_south_west\tpiece_south_east\n"
                 + string.Join('\n', Enumerable.Range(0, AuthoritativeDunTilePropertyCatalog.NativeTileCount)
@@ -754,15 +1054,79 @@ public sealed class CathedralDepthContentActivationTests
             if (townPortalRoute)
                 (townLoopPreviewPack, townPortalPreviewPack) = LoadTownPreviewPacks();
             Profile = CathedralDepthPlaytestCompiler.Compile(new CathedralDepthPlaytestCompilerOptions(
-                LoadBasePack(), output, pieces, properties, [17, 17, 17, 17]) {
+                LoadBasePack(), output, pieceDefinitionsTsv ?? pieces, tilePropertiesTsv ?? properties,
+                dungeonSeeds ?? [17, 17, 17, 17]) {
                 PlacementPolicy = placementPolicy,
                 DiagnosticDropItemSymbol = diagnosticDropItemSymbol,
                 TownPortalRoute = townPortalRoute ? CathedralDepthPlaytestCompiler.TownPortalRouteMarker : null,
                 TownLoopPreviewPack = townLoopPreviewPack,
                 TownPortalPreviewPack = townPortalPreviewPack,
             });
-            Pack = ContentPackLoader.LoadManifestDirectory(Path.Combine(output, "content"));
+            var compiledPack = ContentPackLoader.LoadManifestDirectory(Path.Combine(output, "content"));
+            Pack = nativeDoors ? AddNativeDoorCatalog(compiledPack) : compiledPack;
             Content = ComposedContent.Compose(new ContentManifest(Pack.Id, Pack.Version, [Pack]));
+        }
+
+        private static ContentPack AddNativeDoorCatalog(ContentPack pack)
+        {
+            var contentIds = pack.Tables.Single(table => table.SourcePath == "content_ids.tsv");
+            const uint leftObjectId = 1;
+            const uint rightObjectId = 2;
+            const string leftObjectSymbol = "l1_left_door";
+            const string rightObjectSymbol = "l1_right_door";
+            var existingRightIdentity = contentIds.Rows.Where(row => row.Required("kind") == "object"
+                    && (row.Required("symbol") == rightObjectSymbol
+                        || row.Required("numeric_id") == rightObjectId.ToString()))
+                .ToArray();
+            if (existingRightIdentity.Length != 0
+                && (existingRightIdentity.Length != 1
+                    || existingRightIdentity[0].Required("symbol") != rightObjectSymbol
+                    || existingRightIdentity[0].RequiredUInt32("numeric_id") != rightObjectId))
+                throw new InvalidDataException("The native right-door identity conflicts with the fixture stable-ID catalog.");
+            var doorRows = new List<string> {
+                "level_id\tlevel_symbol\tleft_object_id\tleft_object_symbol\tright_object_id\tright_object_symbol",
+            };
+            var levels = new[] {
+                (1U, "cathedral"), (2U, "cathedral_depth_2"),
+                (3U, "cathedral_depth_3"), (4U, "cathedral_depth_4"),
+            };
+            foreach (var (levelId, levelSymbol) in levels) {
+                doorRows.Add($"{levelId}\t{levelSymbol}\t{leftObjectId}\t{leftObjectSymbol}\t{rightObjectId}\t{rightObjectSymbol}");
+            }
+
+            var updatedIds = existingRightIdentity.Length == 1
+                ? contentIds
+                : TsvTable.Parse(contentIds.SourcePath,
+                    contentIds.ToCanonicalTsv().TrimEnd('\r', '\n')
+                    + $"\nobject\t{rightObjectSymbol}\t{rightObjectId}\n");
+            var doors = TsvTable.Parse(AuthoritativeCathedralDoorCatalog.TableName,
+                string.Join('\n', doorRows) + "\n");
+            var objects = pack.Tables.Single(table => table.SourcePath == "objects.tsv");
+            if (objects.Rows.Any(row => row.Required("entity_id") == "2003"))
+                throw new InvalidDataException("The reserved native right-door template entity 2003 is already in use.");
+            var leftTemplate = objects.Rows.SingleOrDefault(row => row.RequiredUInt32("entity_id") == 2001)
+                ?? throw new InvalidDataException("The native left-door template is missing from the fixture pack.");
+            var rightTemplateValues = leftTemplate.Values.ToDictionary(value => value.Key, value => value.Value,
+                StringComparer.Ordinal);
+            rightTemplateValues["entity_id"] = "2003";
+            rightTemplateValues["object_id"] = rightObjectId.ToString();
+            rightTemplateValues["object_symbol"] = rightObjectSymbol;
+            rightTemplateValues["level_id"] = "0";
+            rightTemplateValues["level_symbol"] = "";
+            rightTemplateValues["position_x"] = "0";
+            rightTemplateValues["position_y"] = "0";
+            rightTemplateValues["template_only"] = "1";
+            rightTemplateValues["native_object_id"] = "0";
+            var updatedObjects = TsvTable.Parse(objects.SourcePath,
+                objects.ToCanonicalTsv().TrimEnd('\r', '\n') + "\n"
+                + string.Join('\t', objects.Columns.Select(column => rightTemplateValues[column])) + "\n");
+            var tables = pack.Tables.Select(table => table.SourcePath == contentIds.SourcePath
+                    ? updatedIds
+                    : table.SourcePath == objects.SourcePath ? updatedObjects : table)
+                .Append(doors)
+                .ToArray();
+            return new ContentPack(pack.Id, pack.Version, tables, pack.Dependencies, pack.Overlays,
+                pack.Schema, pack.DependencyConstraints, pack.Assets);
         }
 
         public void Dispose()

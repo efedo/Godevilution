@@ -7,15 +7,25 @@ namespace Devilution.Server.Tests;
 public sealed class CommandTimingLauncherContractTests
 {
     [Theory]
-    [InlineData("godot/run-local-client.ps1", "GodotExecutable,Port,CharacterClassId,CharacterName,Headless,QuitAfterSeconds,SessionDirectory,PersistenceMode,PreviewContent,PortalPreviewContent,LifecyclePreviewContent,Multiplayer,CathedralProfileDirectory,CathedralDepthProfileDirectory,CathedralDoorProfileDirectory,PerformanceParticipants,AcceptancePhase", "CommandTimingTrace,Automated,PerformanceResumeBaselinePath")]
-    [InlineData("tools/test-godot-session.ps1", "GodotExecutable,PersistenceMode,Visible,Journey,TownLoop,Lifecycle,Multiplayer,MultiplayerRecovery,MultiplayerPendingRecovery,CathedralProfileDirectory,CathedralDepthProfileDirectory,CathedralDoorProfileDirectory,PresentationPackProfile", "CommandTimingTrace,Cooperative")]
+    [InlineData("godot/run-local-client.ps1", "GodotExecutable,Port,CharacterClassId,CharacterName,Headless,QuitAfterSeconds,SessionDirectory,PersistenceMode,PreviewContent,PortalPreviewContent,LifecyclePreviewContent,Multiplayer,CathedralProfileDirectory,CathedralDepthProfileDirectory,CathedralDoorProfileDirectory,CathedralNativeProfileDirectory,PerformanceParticipants,AcceptancePhase", "CommandTimingTrace,Automated,TrapDisarmPreviewContent,WarriorRepairPreviewContent,BardIdentifyPreviewContent,MonkSearchPreviewContent,PerformanceResumeBaselinePath")]
+    [InlineData("tools/test-godot-session.ps1", "GodotExecutable,PersistenceMode,Visible,Journey,TownLoop,Lifecycle,Multiplayer,MultiplayerRecovery,MultiplayerPendingRecovery,CathedralProfileDirectory,CathedralDepthProfileDirectory,CathedralDoorProfileDirectory,PresentationPackProfile", "CommandTimingTrace,Cooperative,TrapDisarm,WarriorRepair,BardIdentify,MonkSearch,CathedralNativeProfileDirectory")]
     public void TraceSwitchPreservesExistingPositionalParameterOrder(string path, string existingParameters, string appendedParameters)
     {
         var source = ReadSource(path);
         var parameterBlock = source[..source.IndexOf("$ErrorActionPreference", StringComparison.Ordinal)];
         var actual = Regex.Matches(parameterBlock, @"\$(\w+)")
-            .Select(match => match.Groups[1].Value);
-        Assert.Equal(existingParameters.Split(',').Concat(appendedParameters.Split(',')), actual);
+            .Select(match => match.Groups[1].Value).ToArray();
+        var expected = existingParameters.Split(',').Concat(appendedParameters.Split(',')).ToList();
+        var optionalMenuParameter = path.StartsWith("godot/", StringComparison.Ordinal)
+            ? "SessionMenuAcceptance" : "SessionMenu";
+        if (actual.Contains(optionalMenuParameter, StringComparer.Ordinal)) {
+            var beforeParameter = path.StartsWith("godot/", StringComparison.Ordinal)
+                ? "TrapDisarmPreviewContent" : "TrapDisarm";
+            var insertionIndex = expected.FindIndex(parameter => string.Equals(parameter, beforeParameter, StringComparison.Ordinal));
+            Assert.True(insertionIndex >= 0, $"Could not preserve the optional menu parameter position before {beforeParameter}.");
+            expected.Insert(insertionIndex, optionalMenuParameter);
+        }
+        Assert.Equal(expected, actual);
     }
 
     [Fact]

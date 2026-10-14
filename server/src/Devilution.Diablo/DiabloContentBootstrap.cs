@@ -265,8 +265,27 @@ public interface IDiabloCathedralDoorContentBootstrap
         DiabloDifficulty difficulty = DiabloDifficulty.Normal);
 }
 
-internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap, IDiabloNativeGeneratedContentBootstrap, IDiabloCathedralDepthContentBootstrap, IDiabloCathedralDoorContentBootstrap
+/** Explicit opt-in native-populated L1 route; legacy door/depth profiles are unchanged. */
+public interface IDiabloCathedralNativePopulationBootstrap
 {
+    DiabloContentActivation ActivateNativePopulation(
+        ComposedContent content, uint randomSeed = 0,
+        DiabloGameMode gameMode = DiabloGameMode.SinglePlayer,
+        DiabloMonsterSpawnConfiguration? monsterSpawns = null,
+        DiabloDifficulty difficulty = DiabloDifficulty.Normal);
+}
+
+internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap, IDiabloNativeGeneratedContentBootstrap, IDiabloCathedralDepthContentBootstrap, IDiabloCathedralDoorContentBootstrap, IDiabloCathedralNativePopulationBootstrap
+{
+    private const string NativePopulationSidecarPrefix = "native_cathedral_population/";
+    private const string NativeRuntimeSidecarPrefix = "native_cathedral_runtime/";
+    private const string NativeItemFootprintTablePath = "native-rogue-l1-inventory.tsv";
+    private const string NativeItemSemanticsTablePath = "native_item_semantics.tsv";
+
+    private sealed record NativePopulationSidecarData(
+        AuthoritativeCathedralPopulationMetadata Population,
+        AuthoritativeCathedralMonsterRuntimeCatalog Runtime,
+        AuthoritativeCathedralNativeItemSidecars Items);
     private readonly IDiabloSimulationFactory simulationFactory;
     private readonly AuthoritativeQuestPoolSelectionOrder questPoolSelectionOrder;
 
@@ -322,6 +341,86 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap, IDiabloN
         => ActivateCore(content, randomSeed, gameMode, monsterSpawns, difficulty,
             nativeGenerated: false, cathedralDepths: true, cathedralDoors: true);
 
+    public DiabloContentActivation ActivateNativePopulation(
+        ComposedContent content, uint randomSeed = 0,
+        DiabloGameMode gameMode = DiabloGameMode.SinglePlayer,
+        DiabloMonsterSpawnConfiguration? monsterSpawns = null,
+        DiabloDifficulty difficulty = DiabloDifficulty.Normal)
+        => ActivateCore(content, randomSeed, gameMode, monsterSpawns, difficulty,
+            nativeGenerated: false, cathedralDepths: true, cathedralDoors: true, nativePopulation: true);
+
+    private static NativePopulationSidecarData LoadNativePopulationSidecars(ComposedContent content)
+    {
+        ArgumentNullException.ThrowIfNull(content);
+        var manifest = content.Manifest;
+        var populationPaths = AuthoritativeCathedralPopulationMetadata.TableNames
+            .Select(path => NativePopulationSidecarPrefix + path).ToHashSet(StringComparer.Ordinal);
+        var runtimePath = NativeRuntimeSidecarPrefix + AuthoritativeCathedralMonsterRuntimeCatalog.TableName;
+        var footprintPath = NativeRuntimeSidecarPrefix + NativeItemFootprintTablePath;
+        var semanticsPath = NativeRuntimeSidecarPrefix + NativeItemSemanticsTablePath;
+        var runtimePaths = new[] { runtimePath, footprintPath, semanticsPath };
+
+        var unknownNativeTables = manifest.Packs.SelectMany(pack => pack.Tables)
+            .Where(table => table.SourcePath.StartsWith(NativePopulationSidecarPrefix, StringComparison.Ordinal)
+                    && !populationPaths.Contains(table.SourcePath)
+                || table.SourcePath.StartsWith(NativeRuntimeSidecarPrefix, StringComparison.Ordinal)
+                    && !runtimePaths.Contains(table.SourcePath, StringComparer.Ordinal))
+            .Select(table => table.SourcePath)
+            .Distinct(StringComparer.Ordinal)
+            .Order(StringComparer.Ordinal)
+            .ToArray();
+        if (unknownNativeTables.Length != 0)
+            throw new InvalidDataException("Native Cathedral population sidecars contain unknown table paths.");
+
+        var populationPacks = manifest.Packs.Where(pack =>
+            pack.Tables.Any(table => table.SourcePath.StartsWith(NativePopulationSidecarPrefix, StringComparison.Ordinal))).ToArray();
+        var runtimePacks = manifest.Packs.Where(pack =>
+            pack.Tables.Any(table => table.SourcePath.StartsWith(NativeRuntimeSidecarPrefix, StringComparison.Ordinal))).ToArray();
+        if (populationPacks.Length != 1 || runtimePacks.Length != 1
+            || ReferenceEquals(populationPacks[0], runtimePacks[0]))
+            throw new InvalidDataException("Native Cathedral population requires one complete metadata sidecar and one runtime sidecar.");
+
+        var populationPack = RequireSchemaNeutralSidecar(populationPacks[0], populationPaths,
+            "Cathedral population metadata");
+        var runtimePack = RequireSchemaNeutralSidecar(runtimePacks[0], runtimePaths,
+            "Cathedral native runtime metadata");
+        var population = AuthoritativeCathedralPopulationMetadata.Load(new ContentPack(
+            populationPack.Id, populationPack.Version, populationPack.Tables.Select(table =>
+                table with { SourcePath = table.SourcePath[NativePopulationSidecarPrefix.Length..] }).ToArray(),
+            schema: new ContentSchemaIdentity(
+                AuthoritativeCathedralPopulationMetadata.SchemaId,
+                AuthoritativeCathedralPopulationMetadata.SchemaVersion)));
+        var runtimeTable = runtimePack.Tables.Single(table =>
+            string.Equals(table.SourcePath, runtimePath, StringComparison.Ordinal));
+        var runtime = AuthoritativeCathedralMonsterRuntimeCatalog.Load(new ContentPack(
+            runtimePack.Id, runtimePack.Version,
+            [runtimeTable with { SourcePath = runtimeTable.SourcePath[NativeRuntimeSidecarPrefix.Length..] }],
+            schema: new ContentSchemaIdentity(
+                AuthoritativeCathedralMonsterRuntimeCatalog.SchemaId,
+                AuthoritativeCathedralMonsterRuntimeCatalog.SchemaVersion)));
+        var footprintTable = runtimePack.Tables.Single(table => string.Equals(table.SourcePath, footprintPath, StringComparison.Ordinal))
+            with { SourcePath = NativeItemFootprintTablePath };
+        var semanticsTable = runtimePack.Tables.Single(table => string.Equals(table.SourcePath, semanticsPath, StringComparison.Ordinal))
+            with { SourcePath = NativeItemSemanticsTablePath };
+        return new(population, runtime, AuthoritativeCathedralNativeItemSidecars.Load(footprintTable, semanticsTable));
+    }
+
+    private static ContentPack RequireSchemaNeutralSidecar(
+        ContentPack pack,
+        IReadOnlyCollection<string> expectedPaths,
+        string label)
+    {
+        var actualPaths = pack.Tables.Select(table => table.SourcePath)
+            .Order(StringComparer.Ordinal).ToArray();
+        var requiredPaths = expectedPaths.Order(StringComparer.Ordinal).ToArray();
+        if (pack.Schema is not null || pack.Dependencies.Count != 0
+            || pack.DependencyConstraints.Count != 0 || pack.Overlays.Count != 0
+            || pack.Assets.Count != 0
+            || !actualPaths.SequenceEqual(requiredPaths, StringComparer.Ordinal))
+            throw new InvalidDataException($"{label} must be a schema-neutral sidecar with its exact closed table set.");
+        return pack;
+    }
+
     private DiabloContentActivation ActivateCore(
         ComposedContent content,
         uint randomSeed,
@@ -330,9 +429,15 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap, IDiabloN
         DiabloDifficulty difficulty,
         bool nativeGenerated,
         bool cathedralDepths = false,
-        bool cathedralDoors = false)
+        bool cathedralDoors = false,
+        bool nativePopulation = false)
     {
         ArgumentNullException.ThrowIfNull(content);
+        if (nativePopulation && (!cathedralDepths || !cathedralDoors
+            || gameMode != DiabloGameMode.SinglePlayer || difficulty != DiabloDifficulty.Normal
+            || monsterSpawns is not null))
+            throw new NotSupportedException("Native Cathedral population requires the explicit single-player Normal L1 route without procedural spawn overrides.");
+        var nativePopulationSidecars = nativePopulation ? LoadNativePopulationSidecars(content) : null;
         var hasGeneratedLevels = content.TryGetTable(AuthoritativeCathedralLevel1RuntimeCatalog.TableName, out var generatedLevelsTable);
         var hasDepthLevels = content.TryGetTable(AuthoritativeCathedralDepthRuntimeCatalog.TableName, out var depthLevelsTable);
         var hasGeneratedRoutes = content.TryGetTable(AuthoritativeNativeGeneratedRouteBindings.TableName, out var generatedRoutesTable);
@@ -485,6 +590,12 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap, IDiabloN
             stableIds,
             nativeItemEffects,
             nativeItemHellfireEffects);
+        if (nativePopulationSidecars is not null)
+            itemCatalog = AuthoritativeCathedralNativePopulationBuilder.ApplyItemSidecars(
+                nativePopulationSidecars.Population.Items.Catalog,
+                itemCatalog,
+                spells,
+                nativePopulationSidecars.Items);
         stableIds.ValidateReferences("item", itemId => itemCatalog.TryGet(itemId, out _));
         var spellBooksTable = GetRequiredExternalTable(content, "spell_books.tsv");
         if (content.Manifest.Schema == DiabloContentSchema.Current)
@@ -1380,12 +1491,51 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap, IDiabloN
             throw new InvalidDataException("Generated level entries cannot also have fixed level-start overrides.");
         }
 
+        AuthoritativeCathedralNativePopulationBuild? nativePopulationBuild = null;
+        if (nativePopulation) {
+            if (world is null || depthGenerationPlan is null || cathedralDoorCatalog is null
+                || playerClasses is null || playerAnimations is null || playerLoadouts is null
+                || monsterTypes is null || itemCatalog is null || spells is null)
+                throw new InvalidDataException("Native Cathedral population requires its complete generated world and stable content catalogs.");
+            if (objects?.Any(value => value.LevelId == 1) == true
+                || combatTargets?.Any(value => value.LevelId == 1) == true)
+                throw new InvalidDataException("Native Cathedral population cannot be combined with authored L1 objects or monsters.");
+
+            var sidecars = nativePopulationSidecars
+                ?? throw new InvalidDataException("Native Cathedral sidecars were not loaded before content catalog construction.");
+            var depthCandidate = depthGenerationPlan.Candidates.SingleOrDefault(candidate => candidate.Level.LevelId == 1)
+                ?? throw new InvalidDataException("The native population route has no generated Cathedral L1 candidate.");
+            var doorDefinition = cathedralDoorCatalog.Definitions.SingleOrDefault(definition => definition.LevelId == 1)
+                ?? throw new InvalidDataException("The native population route has no Cathedral L1 door mapping.");
+            nativePopulationBuild = AuthoritativeCathedralNativePopulationBuilder.Build(
+                sidecars.Population, sidecars.Runtime, depthCandidate,
+                playerClasses, playerAnimations, playerLoadouts, monsterTypes, itemCatalog, spells,
+                doorDefinition,
+                stores.CaptureAll().SelectMany(store => store.Items
+                    ?? throw new InvalidDataException("Native population requires complete captured store stock."))
+                    .Select(item => item.State).ToArray(),
+                sidecars.Items);
+            world.ReplaceLevel(nativePopulationBuild.Policy.CreateBackingLevel());
+            combatTargets = (combatTargets ?? Array.Empty<AuthoritativeCombatTarget>())
+                .Concat(nativePopulationBuild.Monsters.Records
+                    .Where(record => record.Target is not null)
+                    .Select(record => record.Target!))
+                .ToArray();
+            objects = (objects ?? Array.Empty<AuthoritativeWorldObject>())
+                .Concat(nativePopulationBuild.Objects)
+                .ToArray();
+            cathedralDoorCatalog = new AuthoritativeCathedralDoorCatalog([doorDefinition]);
+        }
+
         var rules = new DiabloStoreRules(pricing, itemCatalog);
         var simulationOptions = new DiabloSimulationOptions(stores, rules) {
             World = world,
             NativeGeneratedWorldIdentity = nativeGeneratedIdentity,
             CathedralDepthWorldIdentity = cathedralDepthIdentity,
             CathedralDoors = cathedralDoorCatalog,
+            NativeMonsterMetadataFingerprint = nativePopulationBuild?.MonsterMetadataFingerprint,
+            NativeCathedralItems = nativePopulationBuild?.Items,
+            NativePopulationPolicy = nativePopulationBuild?.Policy,
             WorldMutations = worldMutations,
             WorldRules = worldRules,
             CombatTargets = combatTargets,
@@ -1448,16 +1598,72 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap, IDiabloN
             simulation.WorldState.RefreshProjectedGeometry();
         }
         if (generatedGeometry.Count != 0) {
+            var effectiveGeometry = simulation.WorldState.LevelGeometry;
+            var expectedLevelIds = generatedGeometry.Select(candidate => candidate.Level.LevelId).Order().ToArray();
+            var effectiveLevelIds = effectiveGeometry.Select(level => level.LevelId).Order().ToArray();
+            if (effectiveLevelIds.Distinct().Count() != effectiveLevelIds.Length
+                || expectedLevelIds.Any(levelId => !effectiveLevelIds.Contains(levelId)))
+                throw new InvalidDataException("Generated level activation omitted or duplicated effective geometry.");
+
+            var nativeDoorCheckpoint = nativePopulationBuild is null
+                ? null
+                : simulation.WorldState.CaptureCathedralDoors()
+                    ?? throw new InvalidDataException("Native population activation omitted its owned door geometry checkpoint.");
+            if (nativeDoorCheckpoint is not null) {
+                nativeDoorCheckpoint.ValidateShape();
+                DiabloWorldState.RequireCathedralDoorProfile(simulationOptions.CathedralDoors, nativeDoorCheckpoint);
+                if (!nativeDoorCheckpoint.EffectiveLevels.Select(level => level.LevelId).Order()
+                        .SequenceEqual(effectiveLevelIds)
+                    || nativeDoorCheckpoint.DoorLevels.Count != 1
+                    || nativeDoorCheckpoint.DoorLevels[0].LevelId != nativePopulationBuild!.Policy.LevelId)
+                    throw new InvalidDataException("Native door checkpoint changed the complete generated-level or door coverage.");
+            }
+
+            var finalWorld = simulation.WorldState.World
+                ?? throw new InvalidDataException("Generated level activation omitted its complete backing world.");
             foreach (var candidate in generatedGeometry) {
-                var effective = simulation.WorldState.LevelGeometry.SingleOrDefault(level => level.LevelId == candidate.Level.LevelId);
+                var effective = effectiveGeometry.SingleOrDefault(level => level.LevelId == candidate.Level.LevelId);
                 if (effective is null || effective.StartPositionX != candidate.Level.StartPositionX
                     || effective.StartPositionY != candidate.Level.StartPositionY
                     || effective.StableSymbol != candidate.Level.StableSymbol
                     || effective.IsDefaultStart != candidate.Level.IsDefaultStart
                     || effective.SuppressMultiplayerDeathDrops != candidate.Level.SuppressMultiplayerDeathDrops
-                    || effective.NativeMegaTileLayer.Count != 0
-                    || !string.Equals(candidate.FineFingerprint,
-                        AuthoritativeCathedralLevel1RuntimeCatalog.ComputeFineFingerprint(effective), StringComparison.Ordinal)) {
+                    || effective.NativeMegaTileLayer.Count != 0) {
+                    throw new InvalidDataException("Generated level geometry was changed by an incompatible activation fragment or entry override.");
+                }
+
+                if (nativePopulationBuild is not null
+                    && candidate.Level.LevelId == nativePopulationBuild.Policy.LevelId) {
+                    var policy = nativePopulationBuild.Policy;
+                    var backing = finalWorld.Levels.SingleOrDefault(level => level.LevelId == policy.LevelId)
+                        ?? throw new InvalidDataException("Native population activation omitted its trusted backing level.");
+                    policy.ValidateBackingLevel(backing);
+                    DiabloCathedralDoorCheckpoint.RequireSameGeometry(
+                        finalWorld.CaptureGeometryState(), nativeDoorCheckpoint!.BackingGeometry);
+                    var doorLevel = nativeDoorCheckpoint.DoorLevels.Single(level => level.LevelId == policy.LevelId);
+                    if (doorLevel.Doors.Count != policy.InitialDoorCount
+                        || !doorLevel.BackingSpecial.SequenceEqual(policy.InitialState.Special.Select(value => (ushort)value))
+                        || !doorLevel.EffectiveSpecial.SequenceEqual(effective.NativeSpecialLayer))
+                        throw new InvalidDataException("Native population door checkpoint changed its raw or effective special layer.");
+                    foreach (var state in doorLevel.Doors) {
+                        var expectedDoor = policy.GetInitialDoor(state.EntityId);
+                        var actualDoor = new AuthoritativeCathedralDoorState(
+                            (AuthoritativeCathedralDoorKind)state.NativeObjectId,
+                            state.PositionX, state.PositionY, (AuthoritativeCathedralDoorStatus)state.DoorState,
+                            state.CachedPiece, state.CachedNeighborPiece, state.AnimationFrame,
+                            state.SelectionRegion, state.PreDraw, state.MissilePassable, state.Solid);
+                        var expectedObjectId = actualDoor.Kind == AuthoritativeCathedralDoorKind.Left
+                            ? simulationOptions.CathedralDoors!.Definitions.Single().LeftObjectId
+                            : simulationOptions.CathedralDoors!.Definitions.Single().RightObjectId;
+                        if (state.LevelId != policy.LevelId || actualDoor != expectedDoor
+                            || !simulation.WorldState.Objects.TryGetValue(state.EntityId, out var doorObject)
+                            || doorObject.ObjectId != expectedObjectId || doorObject.CathedralDoor != actualDoor)
+                            throw new InvalidDataException("Native door projection differs from its generated raw object binding.");
+                        policy.ValidateObject(doorObject);
+                    }
+                    DiabloWorldState.ValidateCathedralDoorEffectiveGeometry(backing, effective, doorLevel.Doors);
+                } else if (!string.Equals(candidate.FineFingerprint,
+                    AuthoritativeCathedralLevel1RuntimeCatalog.ComputeFineFingerprint(effective), StringComparison.Ordinal)) {
                     throw new InvalidDataException("Generated level geometry was changed by an incompatible activation fragment or entry override.");
                 }
             }

@@ -69,6 +69,9 @@ The responsive HUD separates Hero, Items, Trade, Stash, and World tabs from the
 world view (minimum window 960x600). WASD/arrows move; Ctrl+left click requests a
 step toward a tile without casting. Ordinary left click retains interaction or
 selected-spell casting, and right click attacks a target. Q/E selects spell sources.
+The always-visible Quick use belt row and keys 1–8 use the matching belt slot
+without changing item or spell selection; the server remains authoritative for
+whether use is allowed in the current context.
 Explicit spell selection or Q/E cycling clears pending HUD item selection so
 the next world click casts instead of dropping the previously selected item.
 The authoritative held cursor retains its separate drop priority.
@@ -208,6 +211,22 @@ survive a fresh host/client restart. This stock/price is an authored integration
 sample, not native vendor generation or pricing parity. Starting resources stay
 unchanged; saves/bookmarks use `.local/godot-portal-preview` and the inner flag is
 `-PortalPreviewContent`. Original base/preview identities and saves are unchanged.
+
+The native-population route is opt-in. Run
+`tools/test-godot-session.ps1 -CathedralNativeProfileDirectory <compiled-profile> -PersistenceMode cohort`
+to exercise the `CathedralNativeJourney` and `CathedralNativeResume` phases with
+the pinned profile passed to the client as `GODEVILUTION_CATHEDRAL_NATIVE_PROFILE`.
+The opt-in native Rogue L1 journey and fresh-host resume now pass in the scoped
+headless run. The journey killed 13 actors (892 XP), equipped the earned Cape
+(stable item 163, seed 306134381), returned to Town and saved at sequence 103.
+Resume R3 reused that checkpoint, restored the saved sequence, accepted command
+104, revisited L1 to verify retained geometry, doors, defeated corpse and claimed
+loot, then returned to Town. Healer, stash and Smith checks passed (life 2817 to
+2880; repair 2 Gold, 100 to 98; Cape durability 5 to 12/12); final sequence 196.
+Verification combines the passed Journey with a fresh host/client Resume from
+its copied checkpoint. Normal-profile adoption and broader native campaign
+acceptance remain open.
+The profile does not enable native population in normal sessions.
 
 The client reports server loss, blocks new gameplay input while disconnected,
 and automatically reconnects when the same endpoint returns. Application

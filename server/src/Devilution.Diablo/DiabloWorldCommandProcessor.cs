@@ -6,6 +6,8 @@ namespace Devilution.Diablo;
 /** Applies non-combat world intents without transport or host dependencies. */
 public sealed class DiabloWorldCommandProcessor
 {
+    private const int HealerTownerId = 1;
+
     private readonly DiabloWorldState world;
     private readonly AuthoritativePlayerAnimationCatalog? playerAnimations;
     private readonly bool useNativePlayerActionTiming;
@@ -511,6 +513,9 @@ public sealed class DiabloWorldCommandProcessor
         int searchRadius)
     {
 
+        if (!world.AllowsNativePopulationLevel(warp.SourceLevelId)
+            || !world.AllowsNativePopulationLevel(warp.TargetLevelId))
+            return DiabloWorldIntentResult.Rejected(DiabloRuleFailure.NotAllowed);
         var participants = players.ToArray();
         var destination = DeterministicGridCrawl.FindClosestValidPosition(
             warp.TargetX,
@@ -793,6 +798,10 @@ public sealed class DiabloWorldCommandProcessor
         if (!world.Portals.TryGetValue(portalId, out var portal)) {
             return DiabloWorldIntentResult.Rejected(DiabloRuleFailure.InvalidTarget);
         }
+        if (!world.AllowsNativePopulationLevel(player.LevelId)
+            || !world.AllowsNativePopulationLevel(portal.SourceLevelId)
+            || !world.AllowsNativePopulationLevel(portal.DestinationLevelId))
+            return DiabloWorldIntentResult.Rejected(DiabloRuleFailure.NotAllowed);
         var useSourceEndpoint = player.LevelId == portal.SourceLevelId
             && player.PositionX == portal.SourcePositionX
             && player.PositionY == portal.SourcePositionY;
@@ -957,13 +966,14 @@ public sealed class DiabloWorldCommandProcessor
         var participants = players as IReadOnlyList<AuthoritativePlayerState>
             ?? players.ToArray();
         if (player.HeldItem is not null
-            && !CanDropHeldItemForPickup(player, participants)) {
+            && !CanDropHeldItemForPickup(player, participants, item.EntityId)) {
             return DiabloWorldIntentResult.Rejected(DiabloRuleFailure.NotAllowed);
         }
         if (DiabloGoldInventory.HasGoldIdentity(
                 itemState,
                 combatRules,
                 player.Items)) {
+            uint nativeRemainder = 0;
             if (itemState.Value <= 0
                 || itemState.Value > combatRules.DeathGoldMaximumStack
                 || itemState.IdentifiedValue != itemState.Value
@@ -984,7 +994,7 @@ public sealed class DiabloWorldCommandProcessor
                 if (!applyEffects)
                     return DiabloWorldIntentResult.Accepted;
                 if (player.HeldItem is not null)
-                    DropHeldItemForPickup(player, participants);
+                    DropHeldItemForPickup(player, participants, item, itemState);
                 if (!DiabloGoldInventory.TryAddPartial(
                         player,
                         item.Price,
@@ -996,6 +1006,7 @@ public sealed class DiabloWorldCommandProcessor
                         player.Items)) {
                     return DiabloWorldIntentResult.Rejected(DiabloRuleFailure.Malformed);
                 }
+                nativeRemainder = remainder;
                 if (remainder > 0) {
                     player.HeldItem = new OwnedStoreItem(
                         0,
@@ -1012,10 +1023,10 @@ public sealed class DiabloWorldCommandProcessor
                 if (!applyEffects)
                     return DiabloWorldIntentResult.Accepted;
                 if (player.HeldItem is not null)
-                    DropHeldItemForPickup(player, participants);
+                    DropHeldItemForPickup(player, participants, item, itemState);
                 player.Gold += item.Price;
             }
-            world.WorldItems.Remove(itemEntityId);
+            world.RemoveWorldItem(itemEntityId, world.NativeGoldPickupRemainder(item, itemState, nativeRemainder));
             return DiabloWorldIntentResult.Accepted;
         }
 
@@ -1023,7 +1034,7 @@ public sealed class DiabloWorldCommandProcessor
             return DiabloWorldIntentResult.Accepted;
 
         if (player.HeldItem is not null)
-            DropHeldItemForPickup(player, participants);
+            DropHeldItemForPickup(player, participants, item, itemState);
 
         if (targetCell < 0) {
             player.HeldItem = new OwnedStoreItem(
@@ -1033,7 +1044,7 @@ public sealed class DiabloWorldCommandProcessor
                 item.Price,
                 appliedTick,
                 itemState);
-            world.WorldItems.Remove(itemEntityId);
+            world.RemoveWorldItem(itemEntityId, itemState);
             return DiabloWorldIntentResult.Accepted;
         }
 
@@ -1051,7 +1062,7 @@ public sealed class DiabloWorldCommandProcessor
             inventoryIndex,
             itemState.InventoryWidth,
             itemState.InventoryHeight);
-        world.WorldItems.Remove(itemEntityId);
+        world.RemoveWorldItem(itemEntityId, itemState);
         ApplyItemQuestEffects(itemState);
         ApplyItemCombinations(player, appliedTick);
         return DiabloWorldIntentResult.Accepted;
@@ -1060,12 +1071,26 @@ public sealed class DiabloWorldCommandProcessor
     /** Validates the native pickup origin for a cursor-item replacement. */
     private bool CanDropHeldItemForPickup(
         AuthoritativePlayerState player,
-        IReadOnlyList<AuthoritativePlayerState> players)
+        IReadOnlyList<AuthoritativePlayerState> players,
+        uint pickupEntityId = 0)
     {
         if (player.HeldItem is null)
             return true;
         var targetX = player.FuturePositionX;
         var targetY = player.FuturePositionY;
+        if (world.HasNativeItemLevel(player.LevelId)) {
+            world.ValidateNativeCursorDrop(player);
+            return world.CanPutNativeItem(player.LevelId, targetX, targetY,
+                releasingPickupSlot: world.IsNativeWorldItem(pickupEntityId));
+        }
+        return IsPlayerDropPositionAvailable(player, players, targetX, targetY);
+    }
+
+    private bool IsPlayerDropPositionAvailable(AuthoritativePlayerState player,
+        IReadOnlyList<AuthoritativePlayerState> players, int targetX, int targetY)
+    {
+        if (world.HasNativeItemLevel(player.LevelId))
+            return world.CanPutNativeItem(player.LevelId, targetX, targetY);
         if (!world.IsWalkable(player.LevelId, targetX, targetY)
             || world.IsCathedralDoorItemBlocked(player.LevelId, targetX, targetY)
             || world.IsOccupied(
@@ -1086,14 +1111,21 @@ public sealed class DiabloWorldCommandProcessor
     /** Drops the cursor item at the native pickup origin before replacing it. */
     private void DropHeldItemForPickup(
         AuthoritativePlayerState player,
-        IReadOnlyList<AuthoritativePlayerState> players)
+        IReadOnlyList<AuthoritativePlayerState> players,
+        AuthoritativeWorldItem pickedItem,
+        AuthoritativeItemState pickedState)
     {
         var heldItem = player.HeldItem
             ?? throw new InvalidOperationException("A cursor item is required for pickup replacement.");
-        if (!CanDropHeldItemForPickup(player, players))
+        if (!CanDropHeldItemForPickup(player, players, pickedItem.EntityId))
             throw new InvalidOperationException("The authoritative pickup origin cannot hold a dropped cursor item.");
         var targetX = player.FuturePositionX;
         var targetY = player.FuturePositionY;
+
+        // Native loopback queues the held drop until CleanupItems releases the picked slot.
+        // Apply that pool order synchronously inside this one authoritative command.
+        if (world.IsNativeWorldItem(pickedItem.EntityId))
+            world.RemoveWorldItem(pickedItem.EntityId, pickedState);
 
         var entityId = AllocateWorldItemEntityId(players);
         var droppedItem = new AuthoritativeWorldItem(
@@ -1104,7 +1136,7 @@ public sealed class DiabloWorldCommandProcessor
             heldItem.ItemSeed,
             heldItem.Price,
             heldItem.State);
-        world.WorldItems.Add(entityId, droppedItem);
+        world.AddWorldItem(droppedItem);
         player.HeldItem = null;
         ApplyWorldItemAnchorQuest(droppedItem);
     }
@@ -1113,6 +1145,8 @@ public sealed class DiabloWorldCommandProcessor
         AuthoritativePlayerState player,
         AuthoritativeWorldItem item)
     {
+        if (world.IsNativeWorldItem(item.EntityId))
+            return world.ResolveNativePickupState(item, player);
         var state = items?.ResolveAuthoredMetadata(item.State, item.ItemSeed) ?? item.State;
         var isGold = DiabloGoldInventory.HasGoldIdentity(
             state,
@@ -1142,6 +1176,9 @@ public sealed class DiabloWorldCommandProcessor
     /** Resolves content-owned quest gates on native level triggers. */
     private bool IsWarpAvailable(AuthoritativeWarpTarget warp)
     {
+        if (!world.AllowsNativePopulationLevel(warp.SourceLevelId)
+            || !world.AllowsNativePopulationLevel(warp.TargetLevelId))
+            return false;
         if (warp.RequiredQuestId == 0)
             return true;
         if (!world.Quests.TryGetValue(warp.RequiredQuestId, out var quest)
@@ -1329,18 +1366,7 @@ public sealed class DiabloWorldCommandProcessor
                 targetY,
                 originX,
                 originY) > 1
-            || !world.IsWalkable(player.LevelId, targetX, targetY)
-            || world.IsCathedralDoorItemBlocked(player.LevelId, targetX, targetY)
-            || world.IsOccupied(
-                player.LevelId,
-                targetX,
-                targetY,
-                players,
-                excludedEntityId: player.EntityId)
-            || world.WorldItems.Values.Any(item =>
-                item.LevelId == player.LevelId
-                && item.PositionX == targetX
-                && item.PositionY == targetY)) {
+            || !IsPlayerDropPositionAvailable(player, players, targetX, targetY)) {
             return DiabloWorldIntentResult.Rejected(DiabloRuleFailure.NotAllowed);
         }
 
@@ -1353,7 +1379,7 @@ public sealed class DiabloWorldCommandProcessor
             sourceItem!.ItemSeed,
             sourceItem.Price,
             sourceItem.State);
-        world.WorldItems.Add(entityId, worldItem);
+        world.AddWorldItem(worldItem);
         if (sourceReference is { } source) {
             DiabloPlayerItemAccess.Remove(player, source);
             if (source.Location == DiabloPlayerItemLocation.Equipment)
@@ -1438,6 +1464,8 @@ public sealed class DiabloWorldCommandProcessor
             && linkedQuest.Unavailable) {
             return DiabloWorldIntentResult.Rejected(DiabloRuleFailure.InvalidTarget);
         }
+        if (!world.CanOperateNativeObject(@object))
+            return DiabloWorldIntentResult.Rejected(DiabloRuleFailure.NotAllowed);
         if (@object.CathedralDoor is not null)
             return !applyEffects || world.TryOperateCathedralDoor(objectEntityId, participants)
                 ? DiabloWorldIntentResult.Accepted
@@ -1953,14 +1981,14 @@ public sealed class DiabloWorldCommandProcessor
         if (!TryResolveObjectRewardPosition(@object, out var rewardLevelId, out var rewardX, out var rewardY))
             throw new InvalidDataException("Object reward origin is unavailable.");
         var entityId = AllocateWorldItemEntityId(participants);
-        world.WorldItems[entityId] = new AuthoritativeWorldItem(
+        world.SetWorldItem(new AuthoritativeWorldItem(
             entityId,
             rewardLevelId,
             rewardX,
             rewardY,
             itemSeed,
             checked((uint)Math.Max(0, rewardState.IdentifiedValue)),
-            rewardState);
+            rewardState));
     }
 
     private bool TryResolveObjectRewardPosition(
@@ -2137,6 +2165,8 @@ public sealed class DiabloWorldCommandProcessor
             return DiabloWorldIntentResult.Rejected(DiabloRuleFailure.InvalidTarget);
         }
 
+        if (!world.CanOperateNativeObject(@object))
+            return DiabloWorldIntentResult.Rejected(DiabloRuleFailure.NotAllowed);
         @object.TrapArmed = false;
         return DiabloWorldIntentResult.Accepted;
     }
@@ -2203,6 +2233,9 @@ public sealed class DiabloWorldCommandProcessor
                 player.PositionY) > 1) {
             return DiabloWorldIntentResult.Rejected(DiabloRuleFailure.InvalidTarget);
         }
+
+        if (townerId == HealerTownerId && player.Life > 0)
+            player.Life = player.LifeMaximum;
 
         return DiabloWorldIntentResult.AcceptedWith(
             new DiabloGameplayEvent(
@@ -2490,6 +2523,8 @@ public sealed class DiabloWorldCommandProcessor
         uint excludedEntityId = 0,
         bool requireWalkable = true)
     {
+        if (world.HasNativeItemLevel(levelId))
+            return world.CanPutNativeItem(levelId, positionX, positionY);
         return (!requireWalkable || world.IsWalkable(levelId, positionX, positionY))
             && !world.IsCathedralDoorItemBlocked(levelId, positionX, positionY)
             && !world.IsOccupied(
@@ -2541,14 +2576,14 @@ public sealed class DiabloWorldCommandProcessor
         var rewardX = checked(target.PositionX + stage.RewardOffsetX);
         var rewardY = checked(target.PositionY + stage.RewardOffsetY);
         var entityId = AllocateWorldItemEntityId(participants);
-        world.WorldItems[entityId] = new AuthoritativeWorldItem(
+        world.SetWorldItem(new AuthoritativeWorldItem(
             entityId,
             target.LevelId,
             rewardX,
             rewardY,
             itemSeed,
             checked((uint)Math.Max(0, rewardState.IdentifiedValue)),
-            rewardState);
+            rewardState));
     }
 
     private static uint CreateDialogueRewardSeed(
@@ -2577,14 +2612,14 @@ public sealed class DiabloWorldCommandProcessor
                 itemSeed,
                 quest.DialogueRewardItemLevel);
             var entityId = AllocateWorldItemEntityId(participants);
-            world.WorldItems[entityId] = new AuthoritativeWorldItem(
+            world.SetWorldItem(new AuthoritativeWorldItem(
                 entityId,
                 target.LevelId,
                 rewardX,
                 rewardY,
                 itemSeed,
                 0,
-                rewardState);
+                rewardState));
         }
         if (quest.DialogueRewardItemId != 0) {
             var itemSeed = AllocateGoldStackSeed();
@@ -2601,14 +2636,14 @@ public sealed class DiabloWorldCommandProcessor
                     itemSeed,
                     quest.DialogueRewardItemLevel);
             var entityId = AllocateWorldItemEntityId(participants);
-            world.WorldItems[entityId] = new AuthoritativeWorldItem(
+            world.SetWorldItem(new AuthoritativeWorldItem(
                 entityId,
                 target.LevelId,
                 rewardX,
                 rewardY,
                 itemSeed,
                 checked((uint)Math.Max(0, rewardState.IdentifiedValue)),
-                rewardState);
+                rewardState));
         }
     }
 
@@ -2781,27 +2816,27 @@ public sealed class DiabloWorldCommandProcessor
                 quest.TurnInRewardUniqueId,
                 itemSeed,
                 quest.TurnInRewardItemLevel);
-            world.WorldItems[entityId] = new AuthoritativeWorldItem(
+            world.SetWorldItem(new AuthoritativeWorldItem(
                 entityId,
                 quest.TurnInLevelId,
                 quest.TurnInRewardPositionX,
                 quest.TurnInRewardPositionY,
                 itemSeed,
                 0,
-                rewardState);
+                rewardState));
         } else if (quest.TurnInRewardItemId != 0) {
             var rewardState = items.Generate(
                 quest.TurnInRewardItemId,
                 itemSeed,
                 quest.TurnInRewardItemLevel);
-            world.WorldItems[entityId] = new AuthoritativeWorldItem(
+            world.SetWorldItem(new AuthoritativeWorldItem(
                 entityId,
                 quest.TurnInLevelId,
                 quest.TurnInRewardPositionX,
                 quest.TurnInRewardPositionY,
                 itemSeed,
                 checked((uint)Math.Max(0, rewardState.IdentifiedValue)),
-                rewardState);
+                rewardState));
         }
     }
 
@@ -2822,27 +2857,27 @@ public sealed class DiabloWorldCommandProcessor
                 quest.TurnInCompletionRewardUniqueId,
                 itemSeed,
                 quest.TurnInCompletionRewardItemLevel);
-            world.WorldItems[entityId] = new AuthoritativeWorldItem(
+            world.SetWorldItem(new AuthoritativeWorldItem(
                 entityId,
                 quest.TurnInLevelId,
                 quest.TurnInCompletionRewardPositionX,
                 quest.TurnInCompletionRewardPositionY,
                 itemSeed,
                 0,
-                rewardState);
+                rewardState));
         } else if (quest.TurnInCompletionRewardItemId != 0) {
             var rewardState = items.Generate(
                 quest.TurnInCompletionRewardItemId,
                 itemSeed,
                 quest.TurnInCompletionRewardItemLevel);
-            world.WorldItems[entityId] = new AuthoritativeWorldItem(
+            world.SetWorldItem(new AuthoritativeWorldItem(
                 entityId,
                 quest.TurnInLevelId,
                 quest.TurnInCompletionRewardPositionX,
                 quest.TurnInCompletionRewardPositionY,
                 itemSeed,
                 checked((uint)Math.Max(0, rewardState.IdentifiedValue)),
-                rewardState);
+                rewardState));
         }
     }
 
@@ -3013,14 +3048,14 @@ public sealed class DiabloWorldCommandProcessor
                     itemSeed,
                     quest.TurnInCompletionRewardItemLevel);
                 var entityId = AllocateWorldItemEntityId(participants);
-                world.WorldItems[entityId] = new AuthoritativeWorldItem(
+                world.SetWorldItem(new AuthoritativeWorldItem(
                     entityId,
                     quest.TurnInLevelId,
                     quest.TurnInCompletionRewardPositionX,
                     quest.TurnInCompletionRewardPositionY,
                     itemSeed,
                     0,
-                    rewardState);
+                    rewardState));
             }
             if (quest.TurnInCompletionRewardItemId != 0) {
                 var itemSeed = AllocateGoldStackSeed();
@@ -3029,14 +3064,14 @@ public sealed class DiabloWorldCommandProcessor
                     itemSeed,
                     quest.TurnInCompletionRewardItemLevel);
                 var entityId = AllocateWorldItemEntityId(participants);
-                world.WorldItems[entityId] = new AuthoritativeWorldItem(
+                world.SetWorldItem(new AuthoritativeWorldItem(
                     entityId,
                     quest.TurnInLevelId,
                     quest.TurnInCompletionRewardPositionX,
                     quest.TurnInCompletionRewardPositionY,
                     itemSeed,
                     checked((uint)Math.Max(0, rewardState.IdentifiedValue)),
-                    rewardState);
+                    rewardState));
             }
             return quest.TurnInCompletionMessageId == 0
                 ? DiabloWorldIntentResult.Accepted
@@ -3119,14 +3154,14 @@ public sealed class DiabloWorldCommandProcessor
                     itemSeed,
                     quest.TurnInRewardItemLevel);
                 var entityId = AllocateWorldItemEntityId(participants);
-                world.WorldItems[entityId] = new AuthoritativeWorldItem(
+                world.SetWorldItem(new AuthoritativeWorldItem(
                     entityId,
                     quest.TurnInLevelId,
                     quest.TurnInRewardPositionX,
                     quest.TurnInRewardPositionY,
                     itemSeed,
                     checked((uint)Math.Max(0, rewardState.IdentifiedValue)),
-                    rewardState);
+                    rewardState));
             }
             var activationMessageId = quest.TurnInMessageId != 0
                 ? quest.TurnInMessageId
@@ -3249,14 +3284,14 @@ public sealed class DiabloWorldCommandProcessor
                 itemSeed,
                 quest.TurnInRewardItemLevel);
             var entityId = AllocateWorldItemEntityId(participants);
-            world.WorldItems[entityId] = new AuthoritativeWorldItem(
+            world.SetWorldItem(new AuthoritativeWorldItem(
                 entityId,
                 quest.TurnInLevelId,
                 quest.TurnInRewardPositionX,
                 quest.TurnInRewardPositionY,
                 itemSeed,
                 0,
-                rewardState);
+                rewardState));
         }
         if (quest.TurnInRewardItemId != 0) {
             var itemSeed = AllocateGoldStackSeed();
@@ -3265,14 +3300,14 @@ public sealed class DiabloWorldCommandProcessor
                 itemSeed,
                 quest.TurnInRewardItemLevel);
             var entityId = AllocateWorldItemEntityId(participants);
-            world.WorldItems[entityId] = new AuthoritativeWorldItem(
+            world.SetWorldItem(new AuthoritativeWorldItem(
                 entityId,
                 quest.TurnInLevelId,
                 quest.TurnInRewardPositionX,
                 quest.TurnInRewardPositionY,
                 itemSeed,
                 checked((uint)Math.Max(0, rewardState.IdentifiedValue)),
-                rewardState);
+                rewardState));
         }
 
         return quest.TurnInMessageId == 0

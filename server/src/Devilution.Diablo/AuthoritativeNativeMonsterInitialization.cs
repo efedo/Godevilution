@@ -20,6 +20,24 @@ public sealed record AuthoritativeNativeMonsterInitialization(
     AuthoritativeNativeMonsterBinding Binding,
     bool InitialAnimationPetrified)
 {
+    /** Native Bestiary animation frame count for graphic slot 2 (normal attack). */
+    public int NativeAttackFrameCount { get; init; }
+
+    /** Native Bestiary rate for graphic slot 2; AnimationInfo clamps nonpositive values to one. */
+    public int NativeAttackTicksPerFrame { get; init; }
+
+    /** Native Bestiary frame count for graphic slot 3 (hit recovery). */
+    public int NativeHitRecoveryFrameCount { get; init; }
+
+    /** Native Bestiary rate for graphic slot 3; AnimationInfo clamps nonpositive values to one. */
+    public int NativeHitRecoveryTicksPerFrame { get; init; }
+
+    /** Native Bestiary frame count for graphic slot 1 (walk). */
+    public int NativeWalkFrameCount { get; init; }
+
+    /** Native Bestiary rate for graphic slot 1; AnimationInfo clamps nonpositive values to one. */
+    public int NativeWalkTicksPerFrame { get; init; }
+
     public void Validate()
     {
         if (!IsFingerprint(MetadataFingerprint))
@@ -34,7 +52,13 @@ public sealed record AuthoritativeNativeMonsterInitialization(
             || Treasure is < 0 or > ushort.MaxValue
             || SelectionRegion is < 0 or > 7
             || AttackEffectFrame is < sbyte.MinValue or > sbyte.MaxValue
-            || SpecialAttackEffectFrame is < sbyte.MinValue or > sbyte.MaxValue)
+            || SpecialAttackEffectFrame is < sbyte.MinValue or > sbyte.MaxValue
+            || NativeAttackFrameCount is < 0 or > sbyte.MaxValue
+            || NativeAttackTicksPerFrame is < 0 or > sbyte.MaxValue
+            || NativeHitRecoveryFrameCount is < 0 or > sbyte.MaxValue
+            || NativeHitRecoveryTicksPerFrame is < 0 or > sbyte.MaxValue
+            || NativeWalkFrameCount is < 0 or > sbyte.MaxValue
+            || NativeWalkTicksPerFrame is < 0 or > sbyte.MaxValue)
             throw new InvalidDataException("Native monster initialization provenance is outside native bounds.");
         if (Binding.NativeSlot != InitialState.Slot || Binding.NativeTypeId != InitialState.Type
             || Binding.NativeUniqueId != InitialState.UniqueType || Binding.EntityId == 0

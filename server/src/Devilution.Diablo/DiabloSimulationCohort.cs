@@ -11,7 +11,11 @@ public sealed partial class DiabloSimulation
         DiabloCohortState state)
     {
         state.ValidateShape();
+        if (state.FormatVersion == DiabloCohortState.NativeCombatFormatVersion
+            && sourceOptions.NativePopulationPolicy is null)
+            throw new InvalidDataException("Native combat cohorts require the exact populated level owner.");
         ValidateCohortConfiguration(sourceOptions, state.Configuration);
+        state = RestoreLegacyNativeCombatTiming(sourceOptions, state);
         DiabloWorldState.RequireCathedralDoorProfile(sourceOptions.CathedralDoors, state.CathedralDoors);
         if (state.CathedralDoors is { } doors) {
             DiabloCathedralDoorCheckpoint.RequireSameGeometry(state.Geometry, doors.BackingGeometry);
@@ -109,6 +113,12 @@ public sealed partial class DiabloSimulation
             questPieceOrigins);
         var simulation = DiabloSimulationFactory.Instance.Create(candidateOptions);
         simulation.RestoreCohortDynamicState(state, players);
+        // Restore mutable geometry/doors before validating live item placement provenance.
+        simulation.WorldState.ConfigureNativePopulationPolicy(candidateOptions.NativePopulationPolicy,
+            candidateOptions.NativeCathedralItems, candidateOptions.NativeMonsterMetadataFingerprint);
+        simulation.WorldState.ValidateNativePopulationState(players);
+        simulation.WorldState.ConfigureCathedralItems(candidateOptions.NativeCathedralItems, state.CathedralItems,
+            candidateOptions.NativeMonsterMetadataFingerprint, candidateOptions.Items, simulation.Spells);
         simulation.ValidateCohortActorTopology(players);
         simulation.MarkCohortCandidate();
 
@@ -120,6 +130,44 @@ public sealed partial class DiabloSimulation
                     players[index]))
                 .ToArray(),
             state.Tick);
+    }
+
+    /** Old native cohorts omitted immutable combat timing; only trusted policy may restore it. */
+    private static DiabloCohortState RestoreLegacyNativeCombatTiming(
+        DiabloSimulationOptions options, DiabloCohortState state)
+    {
+        if (state.FormatVersion == DiabloCohortState.NativeCombatFormatVersion
+            || options.NativePopulationPolicy is null)
+            return state;
+        var trusted = (options.CombatTargets
+            ?? throw new InvalidDataException("Legacy native timing requires trusted initial actors."))
+            .ToDictionary(target => target.EntityId);
+        return state with {
+            CombatTargets = state.CombatTargets.Select(target => {
+                if (target.NativeInitialization is not { } prior)
+                    return target;
+                if (!trusted.TryGetValue(target.Monster.EntityId, out var original)
+                    || original.NativeInitialization is not { } expected
+                    || prior != expected with {
+                        NativeAttackFrameCount = 0,
+                        NativeAttackTicksPerFrame = 0,
+                        NativeHitRecoveryFrameCount = 0,
+                        NativeHitRecoveryTicksPerFrame = 0,
+                        NativeWalkFrameCount = 0,
+                        NativeWalkTicksPerFrame = 0,
+                    })
+                    throw new InvalidDataException("Legacy native timing lacks matching immutable provenance.");
+                var monster = target.Monster;
+                if (monster.Moving && monster.NativeWalkCursor is null) {
+                    if (expected.NativeWalkFrameCount <= 0)
+                        throw new InvalidDataException("Legacy moving native actors require imported walk animation timing.");
+                    monster = monster with {
+                        NativeWalkCursor = new AuthoritativeNativeWalkCursor(expected.NativeWalkFrameCount - 1, 0),
+                    };
+                }
+                return target with { NativeInitialization = expected, Monster = monster };
+            }).ToArray(),
+        };
     }
 
     private static AuthoritativeWorld RestoreGeometry(
@@ -497,6 +545,8 @@ public sealed partial class DiabloSimulation
             monster.Petrified);
         target.RestoreMovementTiming(monster.MovementStartedTick, monster.MovementEffectTick);
         target.RestoreCohortFallenRallyAttackPending(state.FallenRallyAttackPending);
+        target.RestoreNativeMeleeCursor(monster.NativeMeleeCursor);
+        target.RestoreNativeWalkCursor(monster.NativeWalkCursor);
         RequireExactActor(state,
             new DiabloCohortCombatTargetState(target.CaptureCohortState(),
                 CaptureOptionalWorldItem(target.Drop), target.FallenRallyAttackPending) {
@@ -661,6 +711,7 @@ public sealed partial class DiabloSimulation
             ElementalFireDamage = state.ElementalFireDamage,
             ElementalLightningDamage = state.ElementalLightningDamage,
             AttackHit = state.AttackHit,
+            NativeWeaponArrow = state.NativeWeaponArrow,
             PerilSelfDamageQ6 = state.PerilSelfDamageQ6,
             DoppelgangerProc = state.DoppelgangerProc,
             ActivationDelayTicks = state.ActivationDelayTicks,
@@ -980,6 +1031,8 @@ public sealed partial class DiabloSimulation
         ArgumentNullException.ThrowIfNull(configuration);
         var activeVariant = options.CombatRules?.GameVariant ?? DiabloGameVariant.Diablo;
         if (configuration.NativeMonsterMetadataFingerprint != options.NativeMonsterMetadataFingerprint
+            || configuration.CathedralItemMetadataFingerprint != options.NativeCathedralItems?.MetadataFingerprint
+            || configuration.CathedralItemGenerationFingerprint != options.NativeCathedralItems?.GenerationFingerprint
             || configuration.GameMode != options.GameMode
             || configuration.GameVariant != activeVariant
             || configuration.Difficulty != options.Difficulty
@@ -1025,6 +1078,9 @@ public sealed partial class DiabloSimulation
             NativeGeneratedWorldIdentity = state.Configuration.NativeGeneratedWorldIdentity,
             CathedralDepthWorldIdentity = state.Configuration.CathedralDepthWorldIdentity,
             NativeMonsterMetadataFingerprint = source.NativeMonsterMetadataFingerprint,
+            NativeCathedralItems = source.NativeCathedralItems,
+            NativePopulationPolicy = source.NativePopulationPolicy,
+            NativeCathedralItemRestore = state.CathedralItems,
             CathedralDoors = source.CathedralDoors,
             CathedralDoorBackingGeometry = source.CathedralDoorBackingGeometry
                 ?? (source.CathedralDoors is null ? null : source.World?.CaptureGeometryState()),
@@ -1164,10 +1220,13 @@ public sealed partial class DiabloSimulation
         var participants = sessions
             .Select(session => CaptureCohortParticipant(session.Id, session.State))
             .ToArray();
+        WorldState.ValidateNativePopulationState(sessions.Select(session => session.State));
         var infrastructure = WorldState.CaptureCohortInfrastructure();
 
         var state = new DiabloCohortState(
-            NativeMonsterMetadataFingerprint is not null ? DiabloCohortState.NativeMonsterFormatVersion
+            WorldState.HasNativePopulation ? DiabloCohortState.NativeCombatFormatVersion
+                : WorldState.HasNativeCathedralItems ? DiabloCohortState.CathedralItemFormatVersion
+                : NativeMonsterMetadataFingerprint is not null ? DiabloCohortState.NativeMonsterFormatVersion
                 : WorldState.HasCathedralDoors ? DiabloCohortState.CathedralDoorFormatVersion
                 : DiabloCohortState.CurrentFormatVersion,
             tick,
@@ -1184,6 +1243,8 @@ public sealed partial class DiabloSimulation
                 NativeGeneratedWorldIdentity,
                 CathedralDepthWorldIdentity) {
                     NativeMonsterMetadataFingerprint = NativeMonsterMetadataFingerprint,
+                    CathedralItemMetadataFingerprint = WorldState.CathedralItemMetadataFingerprint,
+                    CathedralItemGenerationFingerprint = WorldState.CathedralItemGenerationFingerprint,
                 },
             participants,
             WorldState.CombatTargets.Values
@@ -1255,6 +1316,7 @@ public sealed partial class DiabloSimulation
             Geometry: WorldState.World?.CaptureGeometryState(),
             WorldInfrastructure: infrastructure) {
             CathedralDoors = WorldState.CaptureCathedralDoors(),
+            CathedralItems = WorldState.CaptureCathedralItems(),
         };
         state.ValidateShape();
         return state;
@@ -1544,6 +1606,7 @@ public sealed partial class DiabloSimulation
             ElementalFireDamage = projectile.ElementalFireDamage,
             ElementalLightningDamage = projectile.ElementalLightningDamage,
             AttackHit = projectile.AttackHit,
+            NativeWeaponArrow = projectile.NativeWeaponArrow,
             PerilSelfDamageQ6 = projectile.PerilSelfDamageQ6,
             DoppelgangerProc = projectile.DoppelgangerProc,
             ActivationDelayTicks = projectile.ActivationDelayTicks,

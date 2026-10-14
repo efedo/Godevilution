@@ -44,6 +44,15 @@ public sealed class DiabloSimulationOptions
     /** Explicit opt-in identity for native-initialized actors; no default activation. */
     public string? NativeMonsterMetadataFingerprint { get; init; }
 
+    /** Opt-in native item-pool/loot owner; ordinary authored profiles remain unchanged. */
+    public AuthoritativeCathedralItemRuntimeProfile? NativeCathedralItems { get; init; }
+
+    /** Immutable opt-in L1 population provenance and explicit interaction limits. */
+    public AuthoritativeCathedralNativePopulationPolicy? NativePopulationPolicy { get; init; }
+
+    /** Detached complete-cohort item state; never borrowed from a live simulation. */
+    internal DiabloCathedralItemCheckpoint? NativeCathedralItemRestore { get; init; }
+
     /** Explicit generated-door capability; legacy authored and depth profiles leave this null. */
     public AuthoritativeCathedralDoorCatalog? CathedralDoors { get; init; }
 
@@ -294,7 +303,9 @@ public sealed class DiabloSimulationFactory : IDiabloCohortSimulationFactory
         if (options.RequireExternalContentCatalogs && options.NativeMissileSprites is null)
             throw new InvalidDataException(
                 "Production Diablo activation requires an external native-missile sprite catalog.");
-        var worldState = new DiabloWorldState(
+        var worldState = options.NativePopulationPolicy is not null
+            ? new DiabloWorldState(options)
+            : new DiabloWorldState(
             options.World,
             options.FallbackWidth,
             options.FallbackHeight,
@@ -463,6 +474,12 @@ public sealed class DiabloSimulationFactory : IDiabloCohortSimulationFactory
         simulation.ConfigureNativeGeneratedWorldIdentity(options.NativeGeneratedWorldIdentity);
         simulation.ConfigureCathedralDepthWorldIdentity(options.CathedralDepthWorldIdentity);
         simulation.ConfigureNativeMonsterMetadata(options.NativeMonsterMetadataFingerprint);
+        if (!options.DeferCohortInitialization) {
+            worldState.ConfigureNativePopulationPolicy(options.NativePopulationPolicy, options.NativeCathedralItems,
+                options.NativeMonsterMetadataFingerprint);
+            worldState.ConfigureCathedralItems(options.NativeCathedralItems, options.NativeCathedralItemRestore,
+                options.NativeMonsterMetadataFingerprint, options.Items, spells);
+        }
         return simulation;
     }
 
@@ -1298,7 +1315,8 @@ public sealed partial class DiabloSimulation
         worldCommands.EnsureLevelEntryState(player.LevelId);
         foreach (var participant in players)
             worldCommands.EnsureLevelEntryState(participant.LevelId);
-        return combatCommands.Execute(player, intent, appliedTick, players);
+        var result = combatCommands.Execute(player, intent, appliedTick, players);
+        return result;
     }
 
     public void AdvanceStatusEffects(AuthoritativePlayerState player, ulong tick)
@@ -1323,6 +1341,7 @@ public sealed partial class DiabloSimulation
             worldCommands.EnsureLevelEntryState(participant.LevelId);
         }
         var events = combatCommands.AdvanceTick(tick, players);
+        WorldState.AdvanceCathedralItemAnimations(players);
         WorldState.UpdateCathedralDoorOccupancy(players);
         return events;
     }
@@ -1357,6 +1376,7 @@ public sealed partial class DiabloSimulation
             tick,
             players,
             executeCommands);
+        WorldState.AdvanceCathedralItemAnimations(players);
         WorldState.UpdateCathedralDoorOccupancy(players);
         return events;
     }

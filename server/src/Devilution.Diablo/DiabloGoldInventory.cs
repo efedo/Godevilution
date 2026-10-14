@@ -271,6 +271,17 @@ internal static class DiabloGoldInventory
             throw new ArgumentException("The item is not a valid Gold stack.", nameof(item));
         if (value == 0 || value > rules.DeathGoldMaximumStack)
             throw new ArgumentOutOfRangeException(nameof(value));
+        if (items?.NativeGoldStackMetadata is { } nativeGold) {
+            nativeGold.ValidateExistingStack(item.State, item.Price, rules);
+            return item with {
+                Price = value,
+                State = item.State with {
+                    Value = checked((int)value),
+                    IdentifiedValue = checked((int)value),
+                    NativeCursorGraphic = nativeGold.CursorFor(value),
+                },
+            };
+        }
         return item with {
             Price = value,
             State = item.State with {
@@ -290,7 +301,17 @@ internal static class DiabloGoldInventory
         var itemType = rules.DeathGoldItemType;
         var itemIndex = rules.DeathGoldItemIndex;
         AuthoritativeItemDefinition? definition = null;
-        if (items is not null) {
+        var nativeGold = items?.NativeGoldStackMetadata;
+        if (nativeGold is not null) {
+            if (items is null || !items.TryGet(nativeGold.StableItemId, out var nativeDefinition)
+                || nativeDefinition.NativeItemIndex != nativeGold.NativeItemIndex
+                || nativeDefinition.ItemType != nativeGold.NativeItemType
+                || !AuthoritativeItemClassification.IsGold(nativeDefinition))
+                throw new InvalidDataException("Native Gold metadata has no matching admitted item definition.");
+            definition = nativeDefinition;
+            itemType = nativeGold.NativeItemType;
+            itemIndex = nativeGold.NativeItemIndex;
+        } else if (items is not null) {
             definition = items.Definitions.FirstOrDefault(item =>
                 item.GenerationTags.Contains("Gold")
                 || item.GenerationTags.Contains("Currency"));
@@ -299,7 +320,7 @@ internal static class DiabloGoldInventory
                 itemIndex = definition.NativeItemIndex;
             }
         }
-        return AuthoritativeItemState.Empty with {
+        var state = AuthoritativeItemState.Empty with {
             ItemType = itemType,
             StableItemId = definition?.ItemId ?? 0,
             Value = checked((int)value),
@@ -307,6 +328,9 @@ internal static class DiabloGoldInventory
             ItemIndex = itemIndex,
             StatFlag = true,
         };
+        if (nativeGold is not null)
+            state = nativeGold.CompleteNewStack(state, value, rules);
+        return state;
     }
 
     private static void SpendPass(

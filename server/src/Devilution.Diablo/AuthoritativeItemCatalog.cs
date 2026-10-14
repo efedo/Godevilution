@@ -147,6 +147,88 @@ public sealed record AuthoritativeItemDefinition(
         => Generate(itemSeed, (DeterministicLegacyRandom)random);
 }
 
+/** Complete native Gold-stack identity enabled only on an explicit population overlay. */
+internal sealed record AuthoritativeNativeGoldStackMetadata(
+    int NativeItemIndex,
+    uint StableItemId,
+    int NativeItemType,
+    int EquipLocation,
+    int ItemClass,
+    uint Flags,
+    int MiscId,
+    int SpellId,
+    string BaseName,
+    string IdentifiedName,
+    int InventoryWidth,
+    int InventoryHeight,
+    int GoldSmallCursor,
+    int GoldMediumCursor,
+    int GoldLargeCursor)
+{
+    public AuthoritativeItemState CompleteNewStack(
+        AuthoritativeItemState state,
+        uint value,
+        AuthoritativeCombatRules rules)
+    {
+        ArgumentNullException.ThrowIfNull(state);
+        ArgumentNullException.ThrowIfNull(rules);
+        if (value == 0 || value > rules.DeathGoldMaximumStack
+            || rules.DeathGoldItemIndex != NativeItemIndex
+            || rules.DeathGoldItemType != NativeItemType
+            || state.StableItemId != StableItemId
+            || state.ItemIndex != NativeItemIndex
+            || state.ItemType != NativeItemType)
+            throw new InvalidDataException("Native Gold state does not match its admitted item binding.");
+        return state with {
+            EquipLocation = EquipLocation,
+            ItemClass = ItemClass,
+            Flags = Flags,
+            Value = checked((int)value),
+            IdentifiedValue = checked((int)value),
+            MiscId = MiscId,
+            SpellId = SpellId,
+            InventoryWidth = InventoryWidth,
+            InventoryHeight = InventoryHeight,
+            BaseName = BaseName,
+            IdentifiedName = IdentifiedName,
+            NativeCursorGraphic = CursorFor(value),
+        };
+    }
+
+    public void ValidateExistingStack(
+        AuthoritativeItemState state,
+        uint price,
+        AuthoritativeCombatRules rules)
+    {
+        ArgumentNullException.ThrowIfNull(state);
+        ArgumentNullException.ThrowIfNull(rules);
+        if (rules.DeathGoldItemIndex != NativeItemIndex
+            || rules.DeathGoldItemType != NativeItemType
+            || state.StableItemId != StableItemId
+            || state.ItemIndex != NativeItemIndex
+            || state.ItemType != NativeItemType
+            || state.EquipLocation != EquipLocation
+            || state.ItemClass != ItemClass
+            || state.Flags != Flags
+            || state.MiscId != MiscId
+            || state.SpellId != SpellId
+            || state.Value <= 0
+            || state.Value > rules.DeathGoldMaximumStack
+            || state.IdentifiedValue != state.Value
+            || price != checked((uint)state.Value)
+            || !state.StatFlag
+            || state.InventoryWidth != InventoryWidth
+            || state.InventoryHeight != InventoryHeight
+            || !string.Equals(state.BaseName, BaseName, StringComparison.Ordinal)
+            || !string.Equals(state.IdentifiedName, IdentifiedName, StringComparison.Ordinal)
+            || state.NativeCursorGraphic != CursorFor(checked((uint)state.Value)))
+            throw new InvalidDataException("Native Gold stack metadata does not match its admitted representation.");
+    }
+
+    public int CursorFor(uint value)
+        => value >= 2500 ? GoldLargeCursor : value <= 1000 ? GoldSmallCursor : GoldMediumCursor;
+}
+
 /** Validated external item definitions keyed by stable numeric content ID. */
 public sealed class AuthoritativeItemCatalog
 {
@@ -214,6 +296,9 @@ public sealed class AuthoritativeItemCatalog
     private readonly AuthoritativeItemAffixCatalog? affixes;
     private AuthoritativeUniqueItemCatalog? uniqueItems;
     private readonly Dictionary<string, uint> legacySymbols = new(StringComparer.OrdinalIgnoreCase);
+
+    /** Non-null only on the explicit, validated native population overlay. */
+    internal AuthoritativeNativeGoldStackMetadata? NativeGoldStackMetadata { get; private set; }
 
     public AuthoritativeItemCatalog(
         IEnumerable<AuthoritativeItemDefinition> definitions,
@@ -982,6 +1067,46 @@ public sealed class AuthoritativeItemCatalog
     public void AttachUniqueCatalog(AuthoritativeUniqueItemCatalog uniqueCatalog)
     {
         uniqueItems = uniqueCatalog ?? throw new ArgumentNullException(nameof(uniqueCatalog));
+    }
+
+    /** Creates an opt-in native-profile view while retaining the source catalog unchanged. */
+    internal AuthoritativeItemCatalog WithNativePopulationOverlay(
+        IReadOnlyDictionary<uint, AuthoritativeItemDefinition> replacements,
+        AuthoritativeNativeGoldStackMetadata goldStackMetadata)
+    {
+        ArgumentNullException.ThrowIfNull(replacements);
+        ArgumentNullException.ThrowIfNull(goldStackMetadata);
+        if (replacements.Keys.Any(itemId => !definitions.ContainsKey(itemId)))
+            throw new InvalidDataException("Native item overlay references an item outside the canonical catalog.");
+        var result = new AuthoritativeItemCatalog(
+            definitions.Values.Select(definition => replacements.TryGetValue(definition.ItemId, out var replacement)
+                ? replacement
+                : definition),
+            affixes,
+            uniqueItems);
+        foreach (var symbol in legacySymbols)
+            result.legacySymbols.Add(symbol.Key, symbol.Value);
+        if (!result.definitions.TryGetValue(goldStackMetadata.StableItemId, out var goldDefinition)
+            || goldDefinition.NativeItemIndex != goldStackMetadata.NativeItemIndex
+            || goldDefinition.ItemType != goldStackMetadata.NativeItemType
+            || goldDefinition.EquipLocation != goldStackMetadata.EquipLocation
+            || goldDefinition.ItemClass != goldStackMetadata.ItemClass
+            || goldDefinition.Flags != goldStackMetadata.Flags
+            || goldDefinition.MiscId != goldStackMetadata.MiscId
+            || goldDefinition.SpellId != goldStackMetadata.SpellId
+            || goldDefinition.InventoryWidth != goldStackMetadata.InventoryWidth
+            || goldDefinition.InventoryHeight != goldStackMetadata.InventoryHeight
+            || !string.Equals(goldDefinition.Name, goldStackMetadata.BaseName, StringComparison.Ordinal)
+            || !string.Equals(
+                string.IsNullOrWhiteSpace(goldDefinition.IdentifiedName)
+                    ? goldDefinition.Name
+                    : goldDefinition.IdentifiedName,
+                goldStackMetadata.IdentifiedName,
+                StringComparison.Ordinal)
+            || !AuthoritativeItemClassification.IsGold(goldDefinition))
+            throw new InvalidDataException("Native Gold metadata does not match the selected overlay item definition.");
+        result.NativeGoldStackMetadata = goldStackMetadata;
+        return result;
     }
 
     /** Resolves a unique reward through the catalog attached during content activation. */
