@@ -560,29 +560,64 @@ public sealed partial class AuthoritativeTcpServer
         ulong currentTick)
     {
         try {
-            currentTick = commandServer.WithSynchronizedState(() => {
-                RequireClockedTransportActive(true, pipelineCancellationToken);
-                return AdvanceAndPublishCohortCore(currentTick);
-            });
-            await SendEventsIfAvailable(
-                stream,
-                sessionId,
-                entityId,
-                currentTick,
-                pipelineCancellationToken,
-                classifyClockedTransportFailure: true,
-                hostCancellationToken: hostCancellationToken);
-            await SendSnapshotIfAvailableAsync(
-                stream,
-                sessionId,
-                entityId,
-                currentTick,
-                connectionOrdinal,
-                envelopeReadCompletedTimestamp,
-                timingRequestId == 0 ? null : timingRequestId,
-                pipelineCancellationToken,
-                classifyClockedTransportFailure: true,
-                hostCancellationToken: hostCancellationToken);
+            if (CohortStore is null) {
+                currentTick = commandServer.WithSynchronizedState(() => {
+                    RequireClockedTransportActive(true, pipelineCancellationToken);
+                    return AdvanceAndPublishCohortCore(currentTick);
+                });
+                await SendEventsIfAvailable(
+                    stream,
+                    sessionId,
+                    entityId,
+                    currentTick,
+                    pipelineCancellationToken,
+                    classifyClockedTransportFailure: true,
+                    hostCancellationToken: hostCancellationToken);
+                await SendSnapshotIfAvailableAsync(
+                    stream,
+                    sessionId,
+                    entityId,
+                    currentTick,
+                    connectionOrdinal,
+                    envelopeReadCompletedTimestamp,
+                    timingRequestId == 0 ? null : timingRequestId,
+                    pipelineCancellationToken,
+                    classifyClockedTransportFailure: true,
+                    hostCancellationToken: hostCancellationToken);
+            } else {
+                var capture = CaptureClockedCohortSnapshotPoll(
+                    sessionId,
+                    entityId,
+                    connectionOrdinal,
+                    timingRequestId == 0 ? null : timingRequestId,
+                    envelopeReadCompletedTimestamp,
+                    pipelineCancellationToken,
+                    currentTick);
+                currentTick = capture.Tick;
+                if (capture.Events is { Events.Count: > 0 } events) {
+                    await WriteEventBatchAsync(
+                        stream,
+                        events,
+                        currentTick,
+                        pipelineCancellationToken,
+                        classifyClockedTransportFailure: true,
+                        hostCancellationToken: hostCancellationToken);
+                }
+                if (capture.Snapshot is not null) {
+                    await WriteSnapshotEnvelopeAsync(
+                        stream,
+                        capture.Snapshot,
+                        connectionOrdinal,
+                        entityId,
+                        envelopeReadCompletedTimestamp,
+                        timingRequestId == 0 ? null : timingRequestId,
+                        capture.MaterializeStartTimestamp,
+                        capture.MaterializeEndTimestamp,
+                        capture.SnapshotTraceOrdinal,
+                        pipelineCancellationToken,
+                        classifyClockedTransportFailure: true);
+                }
+            }
             if (timingRequestId != 0) {
                 await WriteClockedTransportEnvelopeAsync(
                     stream,
@@ -603,6 +638,89 @@ public sealed partial class AuthoritativeTcpServer
         }
         return currentTick;
     }
+
+    private ClockedCohortSnapshotPoll CaptureClockedCohortSnapshotPoll(
+        string sessionId,
+        uint entityId,
+        int connectionOrdinal,
+        ulong? timingRequestId,
+        long? envelopeReadCompletedTimestamp,
+        CancellationToken cancellationToken,
+        ulong currentTick)
+    {
+        RequireClockedTransportActive(true, cancellationToken);
+        var hasSnapshot = snapshotProvider is not null;
+        var materialization = hasSnapshot ? PerformanceRecorder?.Begin() ?? 0 : 0;
+        var materializeStartTimestamp = hasSnapshot && CommandTimingRecorder is not null
+            ? Stopwatch.GetTimestamp()
+            : (long?)null;
+        var snapshotTraceOrdinal = hasSnapshot && CommandTimingRecorder is not null
+            ? Interlocked.Increment(ref nextTimingOrdinal)
+            : 0L;
+        if (hasSnapshot && CommandTimingRecorder is not null) {
+            CommandTimingRecorder.Record(new HostCommandTimingRecord {
+                Kind = "snapshot-start",
+                ConnectionOrdinal = connectionOrdinal,
+                TraceOrdinal = snapshotTraceOrdinal,
+                EntityId = entityId,
+                EnvelopeReadCompletedTimestamp = envelopeReadCompletedTimestamp,
+                SnapshotMaterializeStartTimestamp = materializeStartTimestamp,
+                TimingRequestId = timingRequestId,
+                TimingReplyEmitted = timingRequestId.HasValue ? false : null,
+            });
+            EmitCommandTimingOutsideAuthorityLock();
+        }
+
+        var capture = commandServer.WithSynchronizedSession(sessionId, () => {
+            RequireClockedTransportActive(true, cancellationToken);
+            RequireCohortHealthy();
+            try {
+                var tick = AdvanceCurrentTickCore(currentTick);
+                var events = eventProvider?.DrainEvents(sessionId, entityId, tick);
+                if (events is not null)
+                    AuthoritativeEventBatchValidator.Validate(events, tick);
+
+                Snapshot? snapshot = null;
+                if (snapshotProvider is not null) {
+                    snapshot = snapshotProvider.CreateSnapshot(sessionId, entityId, tick);
+                    if (snapshot.Tick != tick)
+                        throw new InvalidDataException(
+                            "The clock-gated snapshot tick does not match the captured event boundary.");
+                    var identity = handshake.Identity;
+                    snapshot.ContentManifestHash = identity.ContentManifestHash;
+                    snapshot.RulesetIdentityHash = identity.RulesetIdentityHash;
+                    AuthoritativeSnapshotValidator.Validate(snapshot);
+                }
+
+                PublishCohortCore();
+                return new ClockedCohortSnapshotPoll(tick, events, snapshot);
+            } catch (Exception failure) {
+                FenceCohort(failure);
+                throw;
+            }
+        });
+
+        var materializeEndTimestamp = hasSnapshot && CommandTimingRecorder is not null
+            ? Stopwatch.GetTimestamp()
+            : (long?)null;
+        if (hasSnapshot)
+            PerformanceRecorder?.Complete(HostPerformanceMetric.SnapshotMaterializeMilliseconds, materialization);
+        return new ClockedCohortSnapshotPoll(
+            capture.Tick,
+            capture.Events,
+            capture.Snapshot,
+            materializeStartTimestamp,
+            materializeEndTimestamp,
+            snapshotTraceOrdinal);
+    }
+
+    private sealed record ClockedCohortSnapshotPoll(
+        ulong Tick,
+        EventBatch? Events,
+        Snapshot? Snapshot,
+        long? MaterializeStartTimestamp = null,
+        long? MaterializeEndTimestamp = null,
+        long SnapshotTraceOrdinal = 0);
 
     private async Task EnqueueClockGatedErrorAsync(
         ChannelWriter<ClockGatedResponseWork> workWriter,

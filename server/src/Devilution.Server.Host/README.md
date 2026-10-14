@@ -86,6 +86,11 @@ The optional synchronous scheduler failure callback cancels due peers and final
 advancement before an executor fault can escape; legacy callback behavior and
 constructor signatures remain unchanged.
 
+Clock-gated cohort snapshot polls advance, drain events and validate the snapshot
+under one authority boundary, then publish once before sending events, the snapshot
+and its timing reply. Scheduled-command and periodic tick checkpoints remain
+unchanged; failed capture or publication fences the host before response exposure.
+
 Healthy shutdown quiesces owned work, publishes settled state, then releases
 adapters and the root lease. Complete-candidate reload publishes the new identity
 before activation; changed or uncertain durable outcomes fence the host, while

@@ -2,6 +2,11 @@
 
 Notable changes to this fork are recorded below.
 
+- 2026-10-14: Coalesce clock-gated cohort snapshot polls into one durable
+  publication after scheduler advancement and event/snapshot validation, before
+  response exposure. Preserve scheduled-command and periodic tick checkpoints,
+  legacy transport behavior and failure fencing.
+
 - 2026-10-13: Compose the generated Cathedral route with explicit Town preview
   stock. Buy a portal scroll, retain it through floor-two cold resume, cast it for
   Town return, then stash, withdraw and re-equip the earned sword with exact item

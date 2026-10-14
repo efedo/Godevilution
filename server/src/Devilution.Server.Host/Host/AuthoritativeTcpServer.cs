@@ -1552,6 +1552,33 @@ public sealed partial class AuthoritativeTcpServer : IAsyncDisposable
             ? (long?)null
             : Stopwatch.GetTimestamp();
         PerformanceRecorder?.Complete(HostPerformanceMetric.SnapshotMaterializeMilliseconds, materialization);
+        await WriteSnapshotEnvelopeAsync(
+            stream,
+            snapshot,
+            connectionOrdinal,
+            entityId,
+            envelopeReadCompletedTimestamp,
+            timingRequestId,
+            materializeStartTimestamp,
+            materializeEndTimestamp,
+            snapshotTraceOrdinal,
+            cancellationToken,
+            classifyClockedTransportFailure);
+    }
+
+    private async ValueTask WriteSnapshotEnvelopeAsync(
+        Stream stream,
+        Snapshot snapshot,
+        int connectionOrdinal,
+        uint entityId,
+        long? envelopeReadCompletedTimestamp,
+        ulong? timingRequestId,
+        long? materializeStartTimestamp,
+        long? materializeEndTimestamp,
+        long snapshotTraceOrdinal,
+        CancellationToken cancellationToken,
+        bool classifyClockedTransportFailure)
+    {
         var envelope = new Envelope { Snapshot = snapshot };
         var publication = PerformanceRecorder?.Begin() ?? 0;
         var writeStartTimestamp = CommandTimingRecorder is null
