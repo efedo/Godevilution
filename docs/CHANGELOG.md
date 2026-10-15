@@ -2,6 +2,13 @@
 
 Notable changes to this fork are recorded below.
 
+- 2026-10-14: Integrate ordinary native L1 sarcophagi: source-matched loot/empty
+  outcomes, exact reserved skeleton release, opening/emergence timing and v6
+  cold persistence without changing untouched v1-v5 saves. Publish ordinary
+  Godot interaction; headless loot journey saves in Town at 345 and fresh-host
+  resume retains exact loot/opened state and returns at 377. Native and focused
+  shared-owner tests cover linked and blocked release separately.
+
 - 2026-10-14: Integrate ordinary untrapped native Cathedral chest interaction
   and both native loot branches through Godot, one-way raw object mutation,
   atomic item-pool updates and cold restore. Preserve existing native cohort

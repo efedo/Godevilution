@@ -789,7 +789,9 @@ internal static class AuthoritativeCathedralNativePopulationBuilder
                 raw.DoorFlag ? AuthoritativeCathedralItemObjectMutationPolicy.CathedralDoor
                     : AuthoritativeCathedralNativePopulationPolicy.IsSupportedNativeChest(state, raw)
                         ? AuthoritativeCathedralItemObjectMutationPolicy.NativeChest
-                        : AuthoritativeCathedralItemObjectMutationPolicy.ExplicitlyRefused);
+                        : AuthoritativeCathedralNativePopulationPolicy.IsSupportedNativeSarcophagus(state, raw)
+                            ? AuthoritativeCathedralItemObjectMutationPolicy.NativeSarcophagus
+                            : AuthoritativeCathedralItemObjectMutationPolicy.ExplicitlyRefused);
         }).ToArray();
         var solid = state.Pieces.Select((piece, index) => {
             if (piece >= state.PieceProperties.Count)

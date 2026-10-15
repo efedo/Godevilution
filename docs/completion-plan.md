@@ -754,6 +754,13 @@ M2 closes only when every supported family and required set level meets its gate
 
 ## M3: Gameplay and content closure by playable route
 
+The scoped native Town-to-Cathedral combat/earned-equipment/save-resume/Town
+services route is committed. Ordinary native L1 chests and sarcophagi now have
+shared-owner interaction and cold retention, with a passed headless loot route.
+Linked sarcophagus release is verified separately by native/shared-owner tests
+because the pinned app seed has no linked sarcophagus. Continue the next
+eligible playable family; these slices do not close the campaign milestone.
+
 Use the following work packages as a coverage checklist, not another numeric
 progress scoreboard. For each package, record open behavior and evidence in
 migration status; put detailed fixture semantics in the replay reference.

@@ -347,7 +347,8 @@ public sealed partial class AuthoritativeCathedralNativePopulationIntegrationTes
         var initialDoors = Assert.IsType<DiabloCathedralDoorCheckpoint>(world.CaptureCathedralDoors());
         AssertNativeObjectProjection(world, generatedState, nativeObjects, activeObjectSlots, initialDoors);
 
-        var ordinaryObject = Assert.Single(nativeObjects.Where(value => value.CathedralDoor is null)
+        // Keep refusal coverage on barrels now that plain chests and sarcophagi can open.
+        var ordinaryObject = Assert.Single(nativeObjects.Where(value => value.NativeObjectId == 57)
             .OrderBy(value => value.EntityId).Take(1));
         Assert.False(world.CanOperateNativeObject(ordinaryObject));
         Assert.False(world.CanBreakWorldObject(ordinaryObject));

@@ -1166,6 +1166,8 @@ public sealed class AuthoritativeClientModel
             || @object.NativeObjectId > NativeMaximumObjectId
             || @object.NativeChestInteractable
                 && !AuthoritativeObjectSelector.IsValidNativeChestInteraction(@object)
+            || @object.NativeSarcophagusInteractable
+                && !AuthoritativeObjectSelector.IsValidNativeSarcophagusInteraction(@object)
             || @object.DialogueMessageId is < 0 or > short.MaxValue
             || @object.AnimationFrame > byte.MaxValue
             || @object.ActivatedAnimationFrame > byte.MaxValue

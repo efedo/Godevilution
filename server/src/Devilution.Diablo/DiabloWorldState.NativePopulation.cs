@@ -4,11 +4,14 @@ public sealed partial class DiabloWorldState
 {
     private AuthoritativeCathedralNativePopulationPolicy? nativePopulationPolicy;
     private uint? nativePopulationParticipantClassId;
+    private bool nativePopulationLifecycleConfigured;
 
     internal bool HasNativePopulation => nativePopulationPolicy is not null;
 
     internal void ConfigureNativePopulationPolicy(AuthoritativeCathedralNativePopulationPolicy? policy,
-        AuthoritativeCathedralItemRuntimeProfile? items, string? monsterMetadataFingerprint)
+        AuthoritativeCathedralItemRuntimeProfile? items, string? monsterMetadataFingerprint,
+        int nativeSarcophagusFormatVersion = 0,
+        IReadOnlyList<DiabloNativeSarcophagusState>? nativeSarcophagusStates = null)
     {
         if (policy is null)
             return;
@@ -17,8 +20,14 @@ public sealed partial class DiabloWorldState
             || items.LevelProfiles.Count != 1 || items.LevelProfiles[0].LevelId != policy.LevelId)
             throw new InvalidDataException("The native population owner must bind the exact item and monster generation identities.");
         policy.ValidateItemProfile(items);
+        if (nativePopulationPolicy is not null && !ReferenceEquals(nativePopulationPolicy, policy))
+            throw new InvalidOperationException("A detached native world cannot change its immutable population owner.");
+        if (nativePopulationLifecycleConfigured)
+            throw new InvalidOperationException("Native population lifecycle state is configured once on a detached world.");
+        nativePopulationPolicy ??= policy;
+        ConfigureNativeSarcophagi(policy, nativeSarcophagusFormatVersion, nativeSarcophagusStates);
         policy.ValidateWorld(this);
-        nativePopulationPolicy = policy;
+        nativePopulationLifecycleConfigured = true;
     }
 
     internal void ValidateNativePopulationObject(AuthoritativeWorldObject value)

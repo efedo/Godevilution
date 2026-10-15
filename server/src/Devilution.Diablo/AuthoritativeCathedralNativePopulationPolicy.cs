@@ -4,7 +4,7 @@ using System.Text.Json;
 namespace Devilution.Diablo;
 
 /** Immutable generation provenance for the explicit native L1 route. */
-public sealed class AuthoritativeCathedralNativePopulationPolicy
+public sealed partial class AuthoritativeCathedralNativePopulationPolicy
 {
     // Keep the saved generation identity stable; the chest capability is an
     // additive runtime rule over the same immutable native population.
@@ -16,6 +16,7 @@ public sealed class AuthoritativeCathedralNativePopulationPolicy
     private readonly Dictionary<uint, AuthoritativeNativeMonsterInitialization> liveInitializations = [];
     private readonly Dictionary<uint, string> liveNativeAis = [];
     private readonly HashSet<uint> reservedEntityIds = [];
+    private readonly AuthoritativeCathedralMonsterRuntimeAdapterResult liveMonsterAdapter;
     private readonly string? itemBindingFingerprint;
     private readonly AuthoritativeLevel backingLevel;
     private readonly DiabloWorldGeometryLevelState backingGeometry;
@@ -41,12 +42,16 @@ public sealed class AuthoritativeCathedralNativePopulationPolicy
             || !monsters.MonsterPetrified.SequenceEqual(state.MonsterPetrified)
             || monsters.Records.Count != state.ActiveMonsterCount)
             throw new InvalidDataException("The native actor adapter must retain the entire generated monster pool and order.");
+        liveMonsterAdapter = monsters;
         var levelIds = monsters.Records.Select(row => row.Binding.LevelId).Distinct().ToArray();
         if (levelIds.Length != 1 || levelIds[0] == 0)
             throw new InvalidDataException("The populated Cathedral requires one explicit non-Town level identity.");
         LevelId = levelIds[0];
         MonsterMetadataFingerprint = monsters.MetadataFingerprint;
         InitialState = state;
+        populationMonsterDefinitions = request.Metadata.Population.Monsters
+            .Select(monster => monster.PopulationDefinition)
+            .ToDictionary(definition => definition.NativeType);
         var coarse = AuthoritativeCathedralDepthGenerator.Generate(request.Depth, request.DungeonSeed,
             request.Entry, AuthoritativeCathedralDepthGenerationPolicy.QuestDisabledOriginalDiabloStairs);
         var materialized = AuthoritativeCathedralDepthGeometryMaterializer.Materialize(LevelId, coarse,
@@ -68,6 +73,10 @@ public sealed class AuthoritativeCathedralNativePopulationPolicy
         backingGeometry = backingWorld.CaptureGeometryState().Levels!.Single();
         var identities = new HashSet<uint>();
         var reservations = new List<AuthoritativeNativeMonsterInitialization>();
+        var activeObjectRowsBySlot = state.ActiveObjectIds.Take(state.ActiveObjectCount)
+            .Select(slot => state.ObjectSlots[slot]).ToDictionary(row => row.Slot);
+        foreach (var owner in GetNativePreSpawnOwnerLinks(activeObjectRowsBySlot.Values))
+            linkedPreSpawnOwnerObjectByMonsterSlot.Add(owner.Key, owner.Value);
         for (var index = 0; index < monsters.Records.Count; index++) {
             var row = monsters.Records[index];
             row.Initialization.Validate();
@@ -81,6 +90,8 @@ public sealed class AuthoritativeCathedralNativePopulationPolicy
                 || !identities.Add(row.Binding.EntityId))
                 throw new InvalidDataException("Generated native actor identity or initialization changed during binding.");
             if (row.Target is not null) {
+                if (linkedPreSpawnOwnerObjectByMonsterSlot.ContainsKey(row.Binding.NativeSlot))
+                    throw new InvalidDataException("A native object reservation points at an already-active monster.");
                 if (row.UnsupportedReason != AuthoritativeCathedralMonsterRuntimeUnsupportedReason.None
                     || row.Target.NativeInitialization != row.Initialization)
                     throw new InvalidDataException("A populated actor cannot normalize an unsupported native state.");
@@ -88,6 +99,17 @@ public sealed class AuthoritativeCathedralNativePopulationPolicy
                     throw new NotSupportedException("The populated L1 policy excludes player minions until their reserved slots have a live owner.");
                 liveInitializations.Add(row.Binding.EntityId, row.Initialization);
                 liveNativeAis.Add(row.Binding.EntityId, row.Target.NativeAi);
+                continue;
+            }
+            if (linkedPreSpawnOwnerObjectByMonsterSlot.TryGetValue(row.Binding.NativeSlot, out var ownerObjectSlot)) {
+                var owner = activeObjectRowsBySlot[ownerObjectSlot];
+                if (!IsLinkedPreSpawnSkeleton(row, state)
+                    || (owner.Type == Sarcophagus && (owner.Var1 < 8 || owner.Var2 != row.Binding.NativeSlot))
+                    || (owner.Type == Barrel && (owner.Var2 < 8 || owner.Var4 != row.Binding.NativeSlot)))
+                    throw new InvalidDataException("A native pre-spawn skeleton reservation does not match its exact object owner.");
+                reservedEntityIds.Add(row.Binding.EntityId);
+                if (owner.Type == Sarcophagus)
+                    sarcophagusReservationsByObjectSlot.Add(owner.Slot, row.Initialization);
                 continue;
             }
             if (!IsDormantGolemReservation(row, state))
@@ -122,6 +144,8 @@ public sealed class AuthoritativeCathedralNativePopulationPolicy
             objectEntitiesBySlot.Add(raw.Slot, projection.EntityId);
             objectSnapshots.Add(projection.EntityId, DiabloSimulation.CaptureObject(projection));
         }
+        if (sarcophagusReservationsByObjectSlot.Keys.Any(slot => !objectEntitiesBySlot.ContainsKey(slot)))
+            throw new InvalidDataException("A linked sarcophagus reservation has no retained object projection.");
         itemBindingFingerprint = itemProfile is null ? null : ComputeItemBindingFingerprint(itemProfile);
         var rawIdentity = JsonSerializer.SerializeToNode(InitialState)!.AsObject();
         rawIdentity["UniqueItemFlags"] = JsonSerializer.SerializeToNode(InitialState.UniqueItemFlags.Order().ToArray());
@@ -215,10 +239,16 @@ public sealed class AuthoritativeCathedralNativePopulationPolicy
 
     internal void ValidateObject(AuthoritativeWorldObject value)
     {
-        if (value.LevelId != LevelId || !objectRows.TryGetValue(value.EntityId, out var raw))
+        ArgumentNullException.ThrowIfNull(value);
+        ValidateObjectProjection(DiabloSimulation.CaptureObject(value));
+    }
+
+    internal void ValidateObjectProjection(DiabloObjectState current)
+    {
+        ArgumentNullException.ThrowIfNull(current);
+        if (current.LevelId != LevelId || !objectRows.TryGetValue(current.EntityId, out var raw))
             throw new InvalidDataException("A populated native object has no owned generation binding.");
-        var current = DiabloSimulation.CaptureObject(value);
-        var expected = objectSnapshots[value.EntityId];
+        var expected = objectSnapshots[current.EntityId];
         if (raw.DoorFlag) {
             // The separate door owner validates its state, cached geometry and scalar changes.
             current = current with {
@@ -236,16 +266,20 @@ public sealed class AuthoritativeCathedralNativePopulationPolicy
             if (current == opened)
                 return;
         }
+        if (IsSupportedNativeSarcophagus(InitialState, raw) && current.Activated
+            && current with { Activated = expected.Activated, AnimationFrame = expected.AnimationFrame } == expected
+            && current.AnimationFrame >= raw.AnimFrame && current.AnimationFrame <= raw.AnimLength)
+            return;
         if (current != expected)
             throw new InvalidDataException("An unsupported native object mutation changed retained state.");
     }
-
     internal bool CanOperate(AuthoritativeWorldObject value)
     {
         ValidateObject(value);
         var raw = objectRows[value.EntityId];
         return raw.DoorFlag && !raw.TrapFlag && value.CathedralDoor is not null
-            || CanOperateNativeChest(value);
+            || CanOperateNativeChest(value)
+            || CanOperateNativeSarcophagus(value);
     }
 
     internal bool CanOperateNativeChest(AuthoritativeWorldObject value)
@@ -331,16 +365,21 @@ public sealed class AuthoritativeCathedralNativePopulationPolicy
         if (world.Portals.Values.Any(portal => (portal.SourceLevelId != 0 && portal.SourceLevelId != LevelId)
             || (portal.DestinationLevelId != 0 && portal.DestinationLevelId != LevelId)))
             throw new InvalidDataException("The populated route cannot retain portals outside Town and its owned Cathedral level.");
-        foreach (var entityId in reservedEntityIds)
+        foreach (var entityId in reservedEntityIds) {
+            var record = liveMonsterAdapter.Records.Single(value => value.Binding.EntityId == entityId);
+            if (IsSarcophagusReservationSpawned(record.Binding.NativeSlot, entityId, world))
+                continue;
             if (world.CombatTargets.ContainsKey(entityId) || world.WorldItems.ContainsKey(entityId)
                 || world.Objects.ContainsKey(entityId) || world.Projectiles.ContainsKey(entityId)
                 || world.Portals.ContainsKey(entityId) || world.Corpses.ContainsKey(entityId))
                 throw new InvalidDataException("A dormant native monster reservation was reused or activated.");
+        }
         var currentObjects = world.Objects.Values.Where(value => value.LevelId == LevelId).ToArray();
         if (currentObjects.Length != objectRows.Count)
             throw new InvalidDataException("The populated level lost a retained native object.");
         foreach (var value in currentObjects)
             ValidateObject(value);
+        world.ValidateNativeSarcophagusState(this);
         foreach (var entry in liveInitializations) {
             if (world.CombatTargets.TryGetValue(entry.Key, out var current)) {
                 if (current.LevelId != LevelId || current.NativeInitialization != entry.Value
@@ -352,12 +391,20 @@ public sealed class AuthoritativeCathedralNativePopulationPolicy
                 throw new InvalidDataException("A generated native actor disappeared without a retained death disposition.");
             }
         }
-        foreach (var target in world.CombatTargets.Values.Where(value => value.LevelId == LevelId))
-            if (!liveInitializations.TryGetValue(target.EntityId, out var expected)
-                || target.NativeInitialization != expected
-                || target.IsPlayerMinion
-                || !string.Equals(target.NativeAi, liveNativeAis[target.EntityId], StringComparison.Ordinal))
-                throw new InvalidDataException("The populated level acquired an unsupported actor, initialization or classification.");
+        foreach (var target in world.CombatTargets.Values.Where(value => value.LevelId == LevelId)) {
+            if (liveInitializations.TryGetValue(target.EntityId, out var expected)) {
+                if (target.NativeInitialization != expected || target.IsPlayerMinion
+                    || !string.Equals(target.NativeAi, liveNativeAis[target.EntityId], StringComparison.Ordinal))
+                    throw new InvalidDataException("A generated native actor changed its owned initialization or classification.");
+                continue;
+            }
+            if (target.NativeInitialization is not { } native || target.IsPlayerMinion
+                || !OwnsSarcophagusActor(target.EntityId)
+                || !linkedPreSpawnOwnerObjectByMonsterSlot.TryGetValue(native.Binding.NativeSlot, out var ownerSlot)
+                || native != GetSarcophagusReservation(ownerSlot)
+                || !IsSarcophagusReservationSpawned(native.Binding.NativeSlot, target.EntityId, world))
+                throw new InvalidDataException("The populated level acquired an unsupported or unowned actor.");
+        }
     }
 
     internal void ValidateItemProfile(AuthoritativeCathedralItemRuntimeProfile items)
@@ -373,7 +420,9 @@ public sealed class AuthoritativeCathedralNativePopulationPolicy
                 ? AuthoritativeCathedralItemObjectMutationPolicy.CathedralDoor
                 : IsSupportedNativeChest(raw)
                     ? AuthoritativeCathedralItemObjectMutationPolicy.NativeChest
-                    : AuthoritativeCathedralItemObjectMutationPolicy.ExplicitlyRefused;
+                    : IsSupportedNativeSarcophagus(InitialState, raw)
+                        ? AuthoritativeCathedralItemObjectMutationPolicy.NativeSarcophagus
+                        : AuthoritativeCathedralItemObjectMutationPolicy.ExplicitlyRefused;
             if (binding.NativeObjectSlot != raw.Slot || binding.ObjectType != raw.Type
                 || binding.PositionX != raw.Position.X || binding.PositionY != raw.Position.Y
                 || binding.InitialSolid != raw.SolidFlag || binding.InitialSelectionRegion != raw.SelectionRegion
@@ -410,7 +459,8 @@ public sealed class AuthoritativeCathedralNativePopulationPolicy
                     // Normalize that one capability-only distinction so closed v5
                     // checkpoints keep their established generation fingerprint.
                     ObjectBindings = level.ObjectBindings.Select(binding =>
-                        binding.MutationPolicy == AuthoritativeCathedralItemObjectMutationPolicy.NativeChest
+                        binding.MutationPolicy is AuthoritativeCathedralItemObjectMutationPolicy.NativeChest
+                            or AuthoritativeCathedralItemObjectMutationPolicy.NativeSarcophagus
                             ? binding with {
                                 MutationPolicy = AuthoritativeCathedralItemObjectMutationPolicy.ExplicitlyRefused,
                             }

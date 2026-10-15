@@ -89,7 +89,8 @@ public sealed class AuthoritativeCathedralMonsterRuntimeAdapterResult
 		IReadOnlyList<int> activeMonsterIds,
 		int activeMonsterCount,
 		IReadOnlyList<bool> monsterPetrified,
-		IReadOnlyList<AuthoritativeCathedralMonsterRuntimeRecord> records)
+		IReadOnlyList<AuthoritativeCathedralMonsterRuntimeRecord> records,
+		Func<int, int, int, int, AuthoritativeCombatTarget> createPreSpawnTarget)
 	{
 		MetadataFingerprint = metadataFingerprint;
 		MonsterSlots = Array.AsReadOnly(monsterSlots.Select(monster => monster with { }).ToArray());
@@ -97,7 +98,10 @@ public sealed class AuthoritativeCathedralMonsterRuntimeAdapterResult
 		ActiveMonsterCount = activeMonsterCount;
 		MonsterPetrified = Array.AsReadOnly(monsterPetrified.ToArray());
 		Records = Array.AsReadOnly(records.ToArray());
+		this.createPreSpawnTarget = createPreSpawnTarget ?? throw new ArgumentNullException(nameof(createPreSpawnTarget));
 	}
+
+	private readonly Func<int, int, int, int, AuthoritativeCombatTarget> createPreSpawnTarget;
 
 	public string MetadataFingerprint { get; }
 	public IReadOnlyList<AuthoritativeCathedralPopulationMonsterState> MonsterSlots { get; }
@@ -105,6 +109,9 @@ public sealed class AuthoritativeCathedralMonsterRuntimeAdapterResult
 	public int ActiveMonsterCount { get; }
 	public IReadOnlyList<bool> MonsterPetrified { get; }
 	public IReadOnlyList<AuthoritativeCathedralMonsterRuntimeRecord> Records { get; }
+
+	internal AuthoritativeCombatTarget CreatePreSpawnTarget(int nativeSlot, int positionX, int positionY, int direction)
+		=> createPreSpawnTarget(nativeSlot, positionX, positionY, direction);
 }
 
 public static class AuthoritativeCathedralMonsterRuntimeAdapter
@@ -312,13 +319,43 @@ public static class AuthoritativeCathedralMonsterRuntimeAdapter
 				reason));
 		}
 
+		AuthoritativeCombatTarget CreatePreSpawnTarget(int nativeSlot, int positionX, int positionY, int direction)
+		{
+			var record = records.SingleOrDefault(value => value.Binding.NativeSlot == nativeSlot)
+				?? throw new InvalidDataException("A linked native skeleton slot is outside the retained active pool.");
+			if (record.UnsupportedReason != AuthoritativeCathedralMonsterRuntimeUnsupportedReason.PreSpawnSkeleton
+				|| record.Target is not null || !NativeSkeletonTypes.Contains(record.InitialState.Type)
+				|| record.InitialState.Tile != default || record.InitialState.Future != default
+				|| record.InitialState.Old != default || record.InitialState.Mode != NativeStandMode
+				|| record.InitialState.Goal != 1 || record.InitialState.GoalVar1 != 0
+				|| record.InitialState.GoalVar2 != 0 || record.InitialState.GoalVar3 != 0
+				|| record.InitialState.UniqueType != 255 || state.MonsterRefs.Any(value =>
+					value == nativeSlot + 1 || value == -nativeSlot - 1))
+				throw new InvalidDataException("A native sarcophagus may activate only its exact pre-spawn skeleton reservation.");
+			var linkedState = record.InitialState with {
+				Tile = new(positionX, positionY),
+				Future = new(positionX, positionY),
+				Old = new(positionX, positionY),
+				Direction = direction,
+			};
+			var binding = new AuthoritativeCathedralMonsterRuntimeBinding(
+				nativeSlot, record.Binding.EntityId, record.Binding.ContentMonsterId, record.Binding.LevelId);
+			var leaderEntityId = linkedState.LeaderRelation == 0
+				? 0U
+				: bindingBySlot[linkedState.Leader].EntityId;
+			return CreateTarget(linkedState, runtimeCatalog.Get(linkedState.Type), binding,
+				record.Initialization, runtimeCatalog, difficulty, uniqueById, uniqueIdentityById,
+				monsterTypeCatalog, leaderEntityId);
+		}
+
 		return new AuthoritativeCathedralMonsterRuntimeAdapterResult(
 			metadataFingerprint,
 			state.MonsterSlots,
 			state.ActiveMonsterIds,
 			state.ActiveMonsterCount,
 			state.MonsterPetrified,
-			records);
+			records,
+			CreatePreSpawnTarget);
 	}
 
 	private static IReadOnlyList<AuthoritativeCathedralMonsterRuntimeBinding> BuildDeterministicBindings(

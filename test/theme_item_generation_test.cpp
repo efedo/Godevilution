@@ -1448,6 +1448,217 @@ private:
 	std::unique_ptr<NativeThemeRoomGuard> roomGuard;
 };
 
+// Capture complete ordinary L1 sarcophagus operation state without asking the
+// managed implementation to supply any expected native values.
+TEST_F(ThemeRoomGenerationTest, CaptureNativeSarcophagusOperations)
+{
+	const char *directory = std::getenv("GODEVILUTION_CATHEDRAL_SARCOPHAGUS_ORACLE_DIRECTORY");
+	if (directory == nullptr || *directory == '\0') GTEST_SKIP() << "Set the native sarcophagus capture directory.";
+	const std::filesystem::path root = std::filesystem::absolute(directory);
+	ASSERT_TRUE(std::filesystem::is_directory(root));
+	ASSERT_TRUE(std::filesystem::is_empty(root));
+	struct ExecutionGuard {
+		bool sound = gbSndInited, headless = HeadlessMode;
+		~ExecutionGuard() { gbSndInited = sound; HeadlessMode = headless; }
+	} executionGuard;
+	gbSndInited = false; HeadlessMode = true;
+	Player remotePlayer;
+	std::ofstream stream(root / "native-sarcophagus-operations.json", std::ios::binary | std::ios::trunc);
+	ASSERT_TRUE(stream.good());
+	int caseCount = 0;
+	{
+		JsonObject document(stream);
+		document.String("format", "godevilution-cathedral-sarcophagus-operations");
+		document.Number("version", 1);
+		document.String("policy", "original-diablo-single-player-normal-untrapped-cathedral-level1");
+		document.Number("playerMaximumLife", MyPlayer->life.maximumBase);
+		document.Number("playerMaximumMana", MyPlayer->mana.maximumBase);
+		document.Key("catalog"); WriteCatalog(stream);
+		document.Key("roomCatalog"); WriteRoomCatalog(stream);
+		document.Key("cases"); stream << '[';
+		struct Lane {
+			const char *name;
+			int var1;
+			uint32_t sarcophagusSeed;
+			int itemCount;
+			bool levelLoading;
+			int spawnPattern; // 0 native default availability, 1 clear neighbors/occupied center, 2 three clear neighbors, 3 blocked.
+		};
+		constexpr Lane lanes[] = {
+			{ "loot-var1-0", 0, 1, 2, false, 0 },
+			{ "loot-var1-2-partial-pool", 2, 2588, MAXITEMS - 1, false, 0 },
+			{ "loot-var1-2-full-pool", 2, UINT32_C(0x80000000), MAXITEMS, false, 0 },
+			{ "empty-var1-3", 3, UINT32_MAX, 2, false, 0 },
+			{ "empty-var1-7-loading", 7, 743271966, 2, true, 0 },
+			{ "spawn-var1-8-default-neighbors", 8, 1, 2, false, 0 },
+			{ "spawn-var1-9-default-neighbors", 9, 2588, 2, false, 0 },
+			{ "spawn-var1-8-clear-neighbors-center-occupied", 8, 1, 2, false, 1 },
+			{ "spawn-var1-9-negative-rng", 9, UINT32_C(1457187811), 2, false, 2 },
+			{ "spawn-var1-8-no-space", 8, UINT32_C(0x80000000), 2, false, 3 },
+		};
+		constexpr std::array<Direction, 8> spawnDirections {
+			Direction::North, Direction::NorthEast, Direction::East, Direction::NorthWest,
+			Direction::SouthEast, Direction::West, Direction::SouthWest, Direction::South,
+		};
+		auto isSpawnTileAvailable = [](Point position) {
+			return InDungeonBounds(position) && tileAt(position).player() == 0
+			    && tileAt(position).monster() == 0 && IsTileWalkable(position);
+		};
+		auto writeAvailability = [&](Point center) {
+			stream << '[' << (isSpawnTileAvailable(center) ? "true" : "false");
+			for (Direction direction : spawnDirections)
+				stream << ',' << (isSpawnTileAvailable(center + direction) ? "true" : "false");
+			stream << ']';
+		};
+		auto writeNearbyTiles = [&](Point center) {
+			stream << '[';
+			std::array<Point, 9> positions { center };
+			for (size_t i = 0; i < spawnDirections.size(); ++i)
+				positions[i + 1] = center + spawnDirections[i];
+			for (size_t i = 0; i < positions.size(); ++i) {
+				if (i != 0) stream << ',';
+				const Point position = positions[i];
+				const Tile &tile = tileAt(position);
+				JsonObject row(stream);
+				row.Key("position"); WriteRoomPoint(stream, position);
+				row.Number("piece", tile.piece()); row.Number("special", static_cast<int>(tile.special()));
+				row.Number("transparency", static_cast<int>(tile.transVal()));
+				row.Number("flags", static_cast<int>(tile.flags())); row.Number("corpse", static_cast<int>(tile.corpse()));
+				row.Number("player", static_cast<int>(tile.player())); row.Number("monster", tile.monster());
+				row.Number("object", static_cast<int>(tile.object())); row.Number("item", static_cast<int>(tile.item()));
+				row.Number("light", static_cast<int>(tile.light())); row.Number("preLight", static_cast<int>(tile.preLight()));
+				row.Number("tileProperties", static_cast<int>(tileProperties()[position.y * MAXDUNX + position.x]));
+			}
+			stream << ']';
+		};
+		auto writeActiveMonsters = [&]() {
+			WriteArray(stream, MonsterPoolAdapter::ActiveMonsterIds(), [&](unsigned id) { stream << id; });
+		};
+		auto writeActiveObjects = [&]() {
+			WriteArray(stream, ObjectPoolAdapter::ActiveObjectIds(), [&](int id) { stream << id; });
+		};
+		for (const Lane &lane : lanes) {
+			PrepareRoom(1, lane.itemCount, 0, 0, false);
+			MyPlayer->pLvlLoad = lane.levelLoading ? 1 : 0;
+			MyPlayer->position.tile = { 40, 40 }; MyPlayer->position.future = { 40, 40 };
+			tileAt(50, 50).setPlayer(0); tileAt(51, 50).setMonster(0);
+			tileAt(40, 40).setPlayer(-1);
+			Object *sarcophagus = AddObjectPresentation(OBJ_SARC, { 50, 50 });
+			ASSERT_NE(sarcophagus, nullptr);
+			const int objectSlot = static_cast<int>(sarcophagus->GetId());
+			ASSERT_GE(objectSlot, 0); ASSERT_LT(objectSlot, MAXOBJECTS);
+			ASSERT_NE(sarcophagus->selectionRegion, SelectionRegion::None);
+			tileAt({ 50, 49 }).setObject(-(objectSlot + 1));
+			sarcophagus->_oRndSeed = lane.sarcophagusSeed;
+			sarcophagus->_oVar1 = lane.var1;
+			sarcophagus->_oVar2 = -1;
+			Monster *linked = nullptr;
+			if (lane.var1 >= 8) {
+				linked = PreSpawnSkeleton();
+				ASSERT_NE(linked, nullptr);
+				sarcophagus->_oVar2 = static_cast<int>(linked->getId());
+			}
+			if (lane.spawnPattern != 0) {
+				for (int y = 49; y <= 51; ++y)
+					for (int x = 49; x <= 51; ++x)
+						tileAt(x, y).setPlayer(1);
+				if (lane.spawnPattern == 1) {
+					for (int y = 49; y <= 51; ++y)
+						for (int x = 49; x <= 51; ++x)
+							if (x != 50 || y != 50) tileAt(x, y).setPlayer(0);
+				} else if (lane.spawnPattern == 2) {
+					tileAt(49, 49).setPlayer(0); // North
+					tileAt(51, 49).setPlayer(0); // East
+					tileAt(49, 50).setPlayer(0); // NorthWest
+				} else if (lane.spawnPattern != 3) {
+					FAIL() << "Unknown sarcophagus spawn pattern.";
+				}
+			}
+			EXPECT_FALSE(isSpawnTileAvailable(sarcophagus->position));
+			if (lane.spawnPattern == 2) {
+				std::array<bool, 9> available {};
+				available[0] = isSpawnTileAvailable(sarcophagus->position);
+				for (size_t i = 0; i < spawnDirections.size(); ++i)
+					available[i + 1] = isSpawnTileAvailable(sarcophagus->position + spawnDirections[i]);
+				EXPECT_EQ(std::count(available.begin(), available.end(), true), 3);
+				EXPECT_TRUE(available[1]); // North
+				EXPECT_TRUE(available[3]); // East
+				EXPECT_TRUE(available[4]); // NorthWest
+			}
+			SetRndSeed(UINT32_C(0x12345678));
+			const NativeItemWorldState beforeItems = CaptureItemWorld();
+			const size_t activeMonsterCountBefore = ActiveMonsterCount;
+			const int linkedSlot = linked == nullptr ? -1 : static_cast<int>(linked->getId());
+			const int specialGraphic = static_cast<int>(MonsterGraphic::Special);
+			const int specialFrameCount = linked == nullptr ? 0 : linked->type().anims[specialGraphic].frames;
+			const int specialTicksPerFrame = linked == nullptr ? 0 : linked->type().anims[specialGraphic].rate;
+			if (caseCount++ != 0) stream << ',';
+			JsonObject row(stream);
+			row.String("name", lane.name); row.Number("depth", 1); row.Number("slot", objectSlot);
+			row.Number("var1", lane.var1); row.Number("var2", sarcophagus->_oVar2);
+			row.Number("sarcophagusSeed", sarcophagus->_oRndSeed); row.Boolean("levelLoading", lane.levelLoading);
+			row.Number("linkedMonsterSlot", linkedSlot); row.Number("specialFrameCount", specialFrameCount);
+			row.Number("specialTicksPerFrame", specialTicksPerFrame);
+			row.Key("spawnTilesAvailable"); writeAvailability(sarcophagus->position);
+			row.Key("inputSarcophagus"); WriteRoomObject(stream, objectSlot, *sarcophagus);
+			row.Key("input"); WriteItemWorld(stream, beforeItems, true);
+			row.Number("inputActiveObjectCount", ActiveObjectCount);
+			row.Key("inputActiveObjectIds"); writeActiveObjects();
+			row.Key("inputActiveMonsterIds"); writeActiveMonsters();
+			row.Key("inputLinkedMonster");
+			if (linked != nullptr) WriteRoomMonster(stream, linkedSlot, *linked); else stream << "null";
+			row.Boolean("inputLinkedMonsterPetrified", linked != nullptr && linked->animInfo.isPetrified);
+			SyncOpObject(remotePlayer, CMD_OPERATEOBJ, *sarcophagus);
+			const NativeItemWorldState afterItems = CaptureItemWorld();
+			EXPECT_EQ(sarcophagus->selectionRegion, SelectionRegion::None);
+			EXPECT_TRUE(sarcophagus->_oAnimFlag); EXPECT_EQ(sarcophagus->_oAnimDelay, 3);
+			EXPECT_EQ(sarcophagus->_oRndSeed, lane.sarcophagusSeed);
+			EXPECT_EQ(ActiveMonsterCount, activeMonsterCountBefore);
+			row.Number("expectedRandomState", GetLCGEngineState());
+			row.Key("expectedSarcophagus"); WriteRoomObject(stream, objectSlot, *sarcophagus);
+			row.Key("expected"); WriteItemWorld(stream, afterItems, false);
+			row.Number("expectedActiveObjectCount", ActiveObjectCount);
+			row.Key("expectedActiveObjectIds"); writeActiveObjects();
+			row.Key("expectedActiveMonsterIds"); writeActiveMonsters();
+			row.Key("expectedSpawnTiles"); writeNearbyTiles(sarcophagus->position);
+			row.Key("expectedLinkedMonster");
+			if (linked != nullptr) WriteRoomMonster(stream, linkedSlot, *linked); else stream << "null";
+			row.Boolean("expectedLinkedMonsterPetrified", linked != nullptr && linked->animInfo.isPetrified);
+			std::ostringstream expectedState; WriteItemWorld(expectedState, afterItems, false);
+			std::ostringstream expectedObject; WriteRoomObject(expectedObject, objectSlot, *sarcophagus);
+			std::ostringstream expectedActor;
+			if (linked != nullptr) WriteRoomMonster(expectedActor, linkedSlot, *linked);
+			const auto expectedActiveMonsterIds = std::vector<unsigned>(MonsterPoolAdapter::ActiveMonsterIds().begin(),
+			    MonsterPoolAdapter::ActiveMonsterIds().end());
+			SyncOpObject(remotePlayer, CMD_OPERATEOBJ, *sarcophagus);
+			const NativeItemWorldState repeatedItems = CaptureItemWorld();
+			std::ostringstream repeatedState; WriteItemWorld(repeatedState, repeatedItems, false);
+			std::ostringstream repeatedObject; WriteRoomObject(repeatedObject, objectSlot, *sarcophagus);
+			std::ostringstream repeatedActor;
+			if (linked != nullptr) WriteRoomMonster(repeatedActor, linkedSlot, *linked);
+			const auto repeatedActiveMonsterIds = std::vector<unsigned>(MonsterPoolAdapter::ActiveMonsterIds().begin(),
+			    MonsterPoolAdapter::ActiveMonsterIds().end());
+			row.Key("repeatedSarcophagus"); WriteRoomObject(stream, objectSlot, *sarcophagus);
+			row.Key("repeated"); WriteItemWorld(stream, repeatedItems, false);
+			row.Number("repeatedActiveObjectCount", ActiveObjectCount);
+			row.Key("repeatedActiveObjectIds"); writeActiveObjects();
+			row.Key("repeatedActiveMonsterIds"); writeActiveMonsters();
+			row.Key("repeatedLinkedMonster");
+			if (linked != nullptr) WriteRoomMonster(stream, linkedSlot, *linked); else stream << "null";
+			row.Boolean("repeatedLinkedMonsterPetrified", linked != nullptr && linked->animInfo.isPetrified);
+			EXPECT_EQ(expectedState.str(), repeatedState.str());
+			EXPECT_EQ(expectedObject.str(), repeatedObject.str());
+			EXPECT_EQ(expectedActor.str(), repeatedActor.str());
+			EXPECT_EQ(expectedActiveMonsterIds, repeatedActiveMonsterIds);
+			EXPECT_EQ(ActiveMonsterCount, activeMonsterCountBefore);
+		}
+		stream << ']'; document.Number("caseCount", caseCount);
+	}
+	stream.flush(); ASSERT_TRUE(stream.good()); stream.close();
+	EXPECT_EQ(caseCount, 10);
+	EXPECT_LE(std::filesystem::file_size(root / "native-sarcophagus-operations.json"), 64U * 1024U * 1024U);
+}
+
 TEST_F(ThemeRoomGenerationTest, FullObjectPoolRetainsSlotsAndFailedShrineCarry)
 {
 	PrepareRoom(1, 2, MAXOBJECTS, MaxMonsters, false);

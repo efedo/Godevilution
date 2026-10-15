@@ -11,7 +11,7 @@ public sealed partial class DiabloSimulation
         DiabloCohortState state)
     {
         state.ValidateShape();
-        if (state.FormatVersion == DiabloCohortState.NativeCombatFormatVersion
+        if (state.FormatVersion >= DiabloCohortState.NativeCombatFormatVersion
             && sourceOptions.NativePopulationPolicy is null)
             throw new InvalidDataException("Native combat cohorts require the exact populated level owner.");
         ValidateCohortConfiguration(sourceOptions, state.Configuration);
@@ -115,7 +115,8 @@ public sealed partial class DiabloSimulation
         simulation.RestoreCohortDynamicState(state, players);
         // Restore mutable geometry/doors before validating live item placement provenance.
         simulation.WorldState.ConfigureNativePopulationPolicy(candidateOptions.NativePopulationPolicy,
-            candidateOptions.NativeCathedralItems, candidateOptions.NativeMonsterMetadataFingerprint);
+            candidateOptions.NativeCathedralItems, candidateOptions.NativeMonsterMetadataFingerprint,
+            state.FormatVersion, state.NativeSarcophagi);
         simulation.WorldState.ValidateNativePopulationState(players);
         simulation.WorldState.ConfigureCathedralItems(candidateOptions.NativeCathedralItems, state.CathedralItems,
             candidateOptions.NativeMonsterMetadataFingerprint, candidateOptions.Items, simulation.Spells);
@@ -136,7 +137,7 @@ public sealed partial class DiabloSimulation
     private static DiabloCohortState RestoreLegacyNativeCombatTiming(
         DiabloSimulationOptions options, DiabloCohortState state)
     {
-        if (state.FormatVersion == DiabloCohortState.NativeCombatFormatVersion
+        if (state.FormatVersion >= DiabloCohortState.NativeCombatFormatVersion
             || options.NativePopulationPolicy is null)
             return state;
         var trusted = (options.CombatTargets
@@ -1224,7 +1225,8 @@ public sealed partial class DiabloSimulation
         var infrastructure = WorldState.CaptureCohortInfrastructure();
 
         var state = new DiabloCohortState(
-            WorldState.HasNativePopulation ? DiabloCohortState.NativeCombatFormatVersion
+            WorldState.HasNativeSarcophagusMutations ? DiabloCohortState.NativeSarcophagusFormatVersion
+                : WorldState.HasNativePopulation ? DiabloCohortState.NativeCombatFormatVersion
                 : WorldState.HasNativeCathedralItems ? DiabloCohortState.CathedralItemFormatVersion
                 : NativeMonsterMetadataFingerprint is not null ? DiabloCohortState.NativeMonsterFormatVersion
                 : WorldState.HasCathedralDoors ? DiabloCohortState.CathedralDoorFormatVersion
@@ -1317,6 +1319,9 @@ public sealed partial class DiabloSimulation
             WorldInfrastructure: infrastructure) {
             CathedralDoors = WorldState.CaptureCathedralDoors(),
             CathedralItems = WorldState.CaptureCathedralItems(),
+            NativeSarcophagi = WorldState.HasNativeSarcophagusMutations
+                ? WorldState.CaptureNativeSarcophagi()
+                : null,
         };
         state.ValidateShape();
         return state;

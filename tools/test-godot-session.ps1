@@ -1,10 +1,27 @@
 [CmdletBinding()]
-param([string]$GodotExecutable, [ValidateSet('legacy', 'cohort')] [string]$PersistenceMode = 'legacy', [switch]$Visible, [switch]$Journey, [switch]$TownLoop, [switch]$Lifecycle, [switch]$Multiplayer, [switch]$MultiplayerRecovery, [switch]$MultiplayerPendingRecovery, [string]$CathedralProfileDirectory, [string]$CathedralDepthProfileDirectory, [string]$CathedralDoorProfileDirectory, [string]$CathedralNativeProfileDirectory, [ValidateSet('default', 'atlas', 'semantic', 'missing', 'undersized', 'invalid')] [string]$PresentationPackProfile = 'default', [switch]$CommandTimingTrace, [switch]$Cooperative, [switch]$CathedralNativeChest, [string]$CathedralNativeChestSessionDirectory)
+param([string]$GodotExecutable, [ValidateSet('legacy', 'cohort')] [string]$PersistenceMode = 'legacy', [switch]$Visible, [switch]$Journey, [switch]$TownLoop, [switch]$Lifecycle, [switch]$Multiplayer, [switch]$MultiplayerRecovery, [switch]$MultiplayerPendingRecovery, [string]$CathedralProfileDirectory, [string]$CathedralDepthProfileDirectory, [string]$CathedralDoorProfileDirectory, [string]$CathedralNativeProfileDirectory, [ValidateSet('default', 'atlas', 'semantic', 'missing', 'undersized', 'invalid')] [string]$PresentationPackProfile = 'default', [switch]$CommandTimingTrace, [switch]$Cooperative, [switch]$CathedralNativeChest, [string]$CathedralNativeChestSessionDirectory, [switch]$CathedralNativeSarcophagus, [string]$CathedralNativeSarcophagusSessionDirectory)
 
 $ErrorActionPreference = 'Stop'
 $PersistenceMode = $PersistenceMode.ToLowerInvariant()
 $PresentationPackProfile = $PresentationPackProfile.ToLowerInvariant()
 $cathedralNativeProfile = -not [string]::IsNullOrWhiteSpace($CathedralNativeProfileDirectory)
+$cathedralNativeSarcophagus = [bool]$CathedralNativeSarcophagus
+if ($cathedralNativeSarcophagus) {
+    $sarcophagusConflicts = @('Visible', 'Journey', 'TownLoop', 'Lifecycle', 'Multiplayer',
+        'MultiplayerRecovery', 'MultiplayerPendingRecovery', 'Cooperative', 'SessionMenu',
+        'TrapDisarm', 'WarriorRepair', 'BardIdentify', 'MonkSearch', 'CathedralNativeChest',
+        'CathedralProfileDirectory', 'CathedralDepthProfileDirectory', 'CathedralDoorProfileDirectory', 'CommandTimingTrace')
+    if (-not $cathedralNativeProfile -or $PersistenceMode -cne 'cohort' -or
+        $PresentationPackProfile -ne 'default' -or
+        @($sarcophagusConflicts | Where-Object { $PSBoundParameters.ContainsKey($_) -and $PSBoundParameters[$_] }).Count -ne 0 -or
+        [string]::IsNullOrWhiteSpace($CathedralNativeSarcophagusSessionDirectory) -or
+        -not [IO.Path]::IsPathFullyQualified($CathedralNativeSarcophagusSessionDirectory)) {
+        throw 'Native sarcophagus acceptance requires its pinned profile, copied absolute Town cohort, and headless single-player mode.'
+    }
+    $CathedralNativeSarcophagusSessionDirectory = [IO.Path]::GetFullPath($CathedralNativeSarcophagusSessionDirectory)
+} elseif (-not [string]::IsNullOrWhiteSpace($CathedralNativeSarcophagusSessionDirectory)) {
+    throw 'CathedralNativeSarcophagusSessionDirectory is only valid with -CathedralNativeSarcophagus.'
+}
 $cathedralNativeChest = [bool]$CathedralNativeChest
 if ($cathedralNativeChest) {
     if (-not $cathedralNativeProfile -or $PersistenceMode -cne 'cohort' -or $Visible -or
@@ -62,7 +79,18 @@ if ($PresentationPackProfile -ne 'default' -and ($Journey -or $TownLoop -or $Lif
     throw 'Presentation pack fixtures require the separate base single-player acceptance path.'
 }
 $repositoryRoot = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot '..')).Path
-$sessionDirectory = if ($cathedralNativeChest) {
+$sessionDirectory = if ($cathedralNativeSarcophagus) {
+    $nativeSessionsRoot = Join-Path ([IO.Path]::GetFullPath($CathedralNativeProfileDirectory)) 'sessions'
+    $sarcophagusSessionRoot = [IO.Path]::GetFullPath($CathedralNativeSarcophagusSessionDirectory)
+    if (-not $sarcophagusSessionRoot.StartsWith($nativeSessionsRoot.TrimEnd('\', '/') + [IO.Path]::DirectorySeparatorChar, [StringComparison]::OrdinalIgnoreCase) -or
+        -not (Test-Path -LiteralPath (Join-Path $sarcophagusSessionRoot 'resume-token.txt') -PathType Leaf) -or
+        -not (Test-Path -LiteralPath (Join-Path $sarcophagusSessionRoot 'save/authoritative-cohort.json') -PathType Leaf) -or
+        -not (Test-Path -LiteralPath (Join-Path $sarcophagusSessionRoot 'cathedral-native-population-session.json') -PathType Leaf) -or
+        -not (Test-Path -LiteralPath (Join-Path $sarcophagusSessionRoot 'cathedralnativechestresume.json') -PathType Leaf)) {
+        throw 'Native sarcophagus acceptance requires a copied passed chest Town cohort under its pinned profile sessions directory.'
+    }
+    $sarcophagusSessionRoot
+} elseif ($cathedralNativeChest) {
     $nativeProfileRoot = [IO.Path]::GetFullPath($CathedralNativeProfileDirectory).TrimEnd('\', '/')
     $nativeSessionsRoot = Join-Path $nativeProfileRoot 'sessions'
     $nativeChestSessionRoot = [IO.Path]::GetFullPath($CathedralNativeChestSessionDirectory)
@@ -94,7 +122,7 @@ function Read-ModeProcessEvidence([string]$Phase) {
     if ($evidence.PersistenceMode -cne $PersistenceMode -or $evidence.HostPersistence -cne $expectedHostPersistence) {
         throw "The $Phase process evidence did not preserve persistence mode '$PersistenceMode'."
     }
-    if ($Phase -in @('CooperativeJourney', 'CooperativeResume', 'CathedralNativeJourney', 'CathedralNativeResume', 'CathedralNativeChestJourney', 'CathedralNativeChestResume') -and
+    if ($Phase -in @('CooperativeJourney', 'CooperativeResume', 'CathedralNativeJourney', 'CathedralNativeResume', 'CathedralNativeChestJourney', 'CathedralNativeChestResume', 'CathedralNativeSarcophagusJourney', 'CathedralNativeSarcophagusResume') -and
         ([string]$evidence.ContentHash -cnotmatch '^[0-9a-f]{64}$' -or
          [string]$evidence.RulesetHash -cnotmatch '^[0-9a-f]{64}$')) {
         throw "The $Phase process evidence omitted validated host content/ruleset identity."
@@ -375,6 +403,86 @@ try {
     if ($PresentationPackProfile -ne 'default') {
         $env:GODEVILUTION_PRESENTATION_PACK = "res://assets/presentation-acceptance-$PresentationPackProfile.json"
     }
+    if ($CathedralNativeSarcophagus) {
+        $parameters.QuitAfterSeconds = 900
+        & $launcher @parameters -AcceptancePhase CathedralNativeSarcophagusJourney
+        $createdProcess = Read-ModeProcessEvidence 'CathedralNativeSarcophagusJourney'
+        $parameters.QuitAfterSeconds = 600
+        & $launcher @parameters -AcceptancePhase CathedralNativeSarcophagusResume
+        $resumedProcess = Read-ModeProcessEvidence 'CathedralNativeSarcophagusResume'
+        Assert-FreshProcessEvidence $createdProcess $resumedProcess 1
+        foreach ($field in @('ContentHash', 'RulesetHash', 'ProfileHash', 'ContentTreeHash',
+            'PopulationTreeHash', 'RuntimeTreeHash', 'ProfileKind', 'AdapterId')) {
+            if ($createdProcess.$field -cne $resumedProcess.$field) {
+                throw "Native sarcophagus resume changed its pinned $field identity."
+            }
+        }
+        $profilePath = Join-Path $CathedralNativeProfileDirectory 'cathedral-native-population-playtest.json'
+        $profileHash = (Get-FileHash -LiteralPath $profilePath -Algorithm SHA256).Hash
+        if ($profileHash -cne 'A992857810C51CE2A802588D8F3386D94D4C6AA44127394553D1E797B9F82FC1' -or
+            $createdProcess.ProfileHash -cne $profileHash -or
+            $createdProcess.ProfileKind -cne 'cathedral-native-population-playtest' -or
+            $createdProcess.AdapterId -cne 'devilution.diablo.cathedral-native-population.v1') {
+            throw 'Native sarcophagus acceptance did not use the pinned population profile.'
+        }
+        $prior = Get-Content -LiteralPath (Join-Path $sessionDirectory 'cathedralnativechestresume.json') -Raw | ConvertFrom-Json
+        $sarcJourneyResult = Get-Content -LiteralPath (Join-Path $sessionDirectory 'cathedralnativesarcophagusjourney.json') -Raw | ConvertFrom-Json
+        $sarcResumeResult = Get-Content -LiteralPath (Join-Path $sessionDirectory 'cathedralnativesarcophagusresume.json') -Raw | ConvertFrom-Json
+        foreach ($evidence in @($sarcJourneyResult, $sarcResumeResult)) {
+            if ($evidence.Passed -isnot [bool] -or -not $evidence.Passed -or
+                $evidence.Visible -isnot [bool] -or $evidence.Visible -or
+                $evidence.SpawnBranchExercised -isnot [bool] -or $evidence.SpawnBranchExercised -or
+                $evidence.Mode -cne 'SinglePlayer' -or $evidence.LevelId -ne 0 -or
+                $evidence.ClassId -ne 1 -or $evidence.ContentHash -cne $createdProcess.ContentHash -or
+                $evidence.RulesetHash -cne $createdProcess.RulesetHash) {
+                throw 'Native sarcophagus phase did not pass in Town under the pinned headless host.'
+            }
+            Assert-NativeEvidenceInteger $evidence.EntityId 'sarcophagus player identity' 1 ([uint32]::MaxValue)
+            Assert-NativeEvidenceInteger $evidence.Sequence 'sarcophagus command sequence' 1 ([long]::MaxValue)
+            Assert-NativeEvidenceInteger $evidence.X 'sarcophagus Town X' 0 111
+            Assert-NativeEvidenceInteger $evidence.Y 'sarcophagus Town Y' 0 111
+        }
+        $opened = @($sarcJourneyResult.NativeSarcophagus.Opened)
+        $loot = @($opened | ForEach-Object { @($_.Loot) })
+        $released = @($opened | ForEach-Object { @($_.ReleasedSkeletons) })
+        if ($prior.Passed -isnot [bool] -or -not $prior.Passed -or
+            [uint64]$sarcJourneyResult.NativeSarcophagus.PriorSequence -ne [uint64]$prior.Sequence -or
+            [uint64]$sarcJourneyResult.Sequence -le [uint64]$prior.Sequence -or
+            [uint64]$sarcJourneyResult.NativeSarcophagus.Sequence -ne [uint64]$sarcJourneyResult.Sequence -or
+            [uint64]$sarcResumeResult.NativeSarcophagus.SavedSequence -ne [uint64]$sarcJourneyResult.Sequence -or
+            [uint64]$sarcResumeResult.Sequence -le [uint64]$sarcJourneyResult.Sequence -or
+            [uint64]$sarcResumeResult.NativeSarcophagus.FinalSequence -ne [uint64]$sarcResumeResult.Sequence -or
+            $sarcResumeResult.NativeSarcophagus.ResumedSessionMatched -isnot [bool] -or
+            -not $sarcResumeResult.NativeSarcophagus.ResumedSessionMatched -or
+            $sarcJourneyResult.EntityId -ne $sarcResumeResult.EntityId -or $opened.Count -lt 1 -or
+            ($loot.Count -lt 1 -or $released.Count -ne 0) -or
+            $sarcResumeResult.NativeSarcophagus.OpenedRetained -ne $opened.Count -or
+            $sarcResumeResult.NativeSarcophagus.ExactLootRetained -ne $loot.Count -or
+            $sarcResumeResult.NativeSarcophagus.ReleasedSkeletonCorpsesRetained -ne $released.Count -or
+            $sarcResumeResult.NativeSarcophagus.RepeatClickDidNotReopen -isnot [bool] -or
+            -not $sarcResumeResult.NativeSarcophagus.RepeatClickDidNotReopen -or
+            $sarcResumeResult.NativeSarcophagus.RepeatStatus -notin @('NotQueued', 'Accepted', 'Duplicate', 'Rejected') -or
+            $sarcResumeResult.NativeSarcophagus.RepeatRejectReason -notin @('Unspecified', 'NotAllowed', 'InvalidTarget')) {
+            throw 'Native sarcophagus acceptance lacks exact old-save admission, visible outcome, fresh resume or no-duplicate evidence.'
+        }
+        foreach ($field in @('GeometrySha256', 'WorldItemsSha256')) {
+            Assert-NativeEvidenceHash $sarcJourneyResult.NativeSarcophagus.$field "sarcophagus journey $field"
+            Assert-NativeEvidenceHash $sarcResumeResult.NativeSarcophagus.$field "sarcophagus resume $field"
+            if ($sarcJourneyResult.NativeSarcophagus.$field -cne $sarcResumeResult.NativeSarcophagus.$field) {
+                throw "Native sarcophagus resume changed retained $field."
+            }
+        }
+        foreach ($operation in $opened) {
+            Assert-NativeEvidenceInteger $operation.EntityId 'native sarcophagus identity' 1 ([uint32]::MaxValue)
+            if ($operation.TerminalFrame -le $operation.InitialFrame -or
+                [uint64]$operation.Sequence -le [uint64]$prior.Sequence) {
+                throw 'An ordinary native sarcophagus did not open and advance its animation.'
+            }
+        }
+        Write-Host "PASS: Native sarcophagus interaction, Town checkpoint, fresh-host object/loot/actor retention and no duplicate repeat outcome. Evidence: $sessionDirectory"
+        return
+    }
+
     if ($CathedralNativeChest) {
         $parameters.QuitAfterSeconds = 900
         & $launcher @parameters -AcceptancePhase CathedralNativeChestJourney

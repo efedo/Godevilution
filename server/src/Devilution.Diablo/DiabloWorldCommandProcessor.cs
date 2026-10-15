@@ -1450,8 +1450,9 @@ public sealed class DiabloWorldCommandProcessor
         if (!world.Objects.TryGetValue(objectEntityId, out var @object))
             return DiabloWorldIntentResult.Rejected(DiabloRuleFailure.InvalidTarget);
         var nativeChest = world.CanOperateNativeChest(@object);
+        var nativeSarcophagus = world.CanOperateNativeSarcophagus(@object);
         if (@object.Activated
-            || !@object.HasAuthoritativeInteraction && !nativeChest
+            || !@object.HasAuthoritativeInteraction && !nativeChest && !nativeSarcophagus
             || @object.LevelId != player.LevelId
             || (requireAdjacent
                 && DeterministicGridMetrics.ChebyshevDistance(
@@ -1466,12 +1467,22 @@ public sealed class DiabloWorldCommandProcessor
             && linkedQuest.Unavailable) {
             return DiabloWorldIntentResult.Rejected(DiabloRuleFailure.InvalidTarget);
         }
-        if (!world.CanOperateNativeObject(@object) && !nativeChest)
+        if (!world.CanOperateNativeObject(@object) && !nativeChest && !nativeSarcophagus)
             return DiabloWorldIntentResult.Rejected(DiabloRuleFailure.NotAllowed);
         if (@object.CathedralDoor is not null)
             return !applyEffects || world.TryOperateCathedralDoor(objectEntityId, participants)
                 ? DiabloWorldIntentResult.Accepted
                 : DiabloWorldIntentResult.Rejected(DiabloRuleFailure.InvalidTarget);
+        if (nativeSarcophagus) {
+            if (!applyEffects)
+                return DiabloWorldIntentResult.Accepted;
+            var mutation = world.TryOperateNativeCathedralSarcophagus(
+                @object, player, participants, () => AllocateWorldItemEntityId(participants));
+            if (mutation is null)
+                return DiabloWorldIntentResult.Rejected(DiabloRuleFailure.NotAllowed);
+            random.Restore(mutation.FinalRandomState);
+            return DiabloWorldIntentResult.Accepted;
+        }
         if (nativeChest) {
             if (!applyEffects)
                 return DiabloWorldIntentResult.Accepted;

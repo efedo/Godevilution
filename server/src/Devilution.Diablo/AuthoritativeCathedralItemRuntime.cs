@@ -30,6 +30,7 @@ public enum AuthoritativeCathedralItemObjectMutationPolicy
     CruxDestroy,
     ExplicitlyRefused,
     NativeChest,
+    NativeSarcophagus,
 }
 
 /**
@@ -257,7 +258,7 @@ public sealed record AuthoritativeCathedralItemMutationResult(
  * slot/entity bindings. Player, monster, object, door, and placement views are
  * supplied as synchronous call inputs by the simulation owner.
  */
-public class AuthoritativeCathedralItemRuntime
+public partial class AuthoritativeCathedralItemRuntime
 {
     public const int Width = AuthoritativeCathedralThemeItemWorldState.Width;
     public const int Height = AuthoritativeCathedralThemeItemWorldState.Height;

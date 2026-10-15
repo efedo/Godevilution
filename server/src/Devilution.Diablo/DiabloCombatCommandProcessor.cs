@@ -5917,6 +5917,9 @@ public sealed partial class DiabloCombatCommandProcessor
                 AdvancePlayerMinion(target, tick, players, events);
                 continue;
             }
+            if (world.OwnsNativePopulationLevel(target.LevelId)
+                && world.AdvanceNativeSarcophagusSpecialStand(target))
+                continue;
             if (target.HitPoints <= 0) {
                 // Native Stone Curse keeps a dead target in its petrified
                 // shatter state instead of converting it into a corpse tile.
@@ -7580,8 +7583,11 @@ public sealed partial class DiabloCombatCommandProcessor
 
     private void ReplaceDeadMonsterWithCorpse(AuthoritativeCombatTarget target)
     {
-        if (!world.CombatTargets.Remove(target.EntityId))
+        if (!world.CombatTargets.ContainsKey(target.EntityId))
             return;
+        world.CompleteNativeSarcophagusActorDeath(target.EntityId);
+        if (!world.CombatTargets.Remove(target.EntityId))
+            throw new InvalidOperationException("A validated native corpse target disappeared before replacement.");
         world.Corpses[target.EntityId] = new AuthoritativeCorpse(
             target.EntityId,
             target.LevelId,

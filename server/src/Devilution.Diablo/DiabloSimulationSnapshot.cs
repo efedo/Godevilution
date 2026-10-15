@@ -583,6 +583,10 @@ public sealed record DiabloSimulationSnapshot(
     [JsonIgnore]
     public IReadOnlySet<uint> NativeChestInteractableEntityIds { get; internal init; } = DiabloNativeChestInteractableEntitySet.Empty;
 
+    /** Transient native sarcophagus capability, never imported as gameplay state. */
+    [JsonIgnore]
+    public IReadOnlySet<uint> NativeSarcophagusInteractableEntityIds { get; internal init; } = DiabloNativeChestInteractableEntitySet.Empty;
+
     /** Bounded presentation fields; clients never replay native door operations. */
     public IReadOnlyList<DiabloCathedralDoorObjectState> CathedralDoorObjects { get; init; } = [];
 
@@ -1005,6 +1009,7 @@ public sealed partial class DiabloSimulation
             CathedralDoors = includeDoorPersistence ? WorldState.CaptureCathedralDoors() : null,
             CathedralDoorObjects = WorldState.CaptureCathedralDoorObjects(),
             NativeChestInteractableEntityIds = WorldState.CaptureNativeChestInteractableEntityIds(),
+            NativeSarcophagusInteractableEntityIds = WorldState.CaptureNativeSarcophagusInteractableEntityIds(),
             QuestTownerInteractions = QuestTownerInteractions?.Definitions ?? [],
             TownerGreetings = TownerGreetings?.Definitions.ToArray() ?? [],
             ActiveWorldMutationIds = WorldState.ActiveWorldMutationIds

@@ -100,13 +100,15 @@ public sealed partial class DiabloWorldState
         IReadOnlyList<AuthoritativePlayerState> participants)
     {
         ArgumentNullException.ThrowIfNull(participants);
-        if (cathedralItems is null)
-            return;
-
-        ValidateCathedralItemProjection();
-        foreach (var levelId in participants.Select(player => player.LevelId).Distinct())
-            if (cathedralItems.HasLevel(levelId))
-                cathedralItems.AdvanceGroundAnimations(levelId);
+        if (cathedralItems is not null) {
+            ValidateCathedralItemProjection();
+            foreach (var levelId in participants.Select(player => player.LevelId).Distinct())
+                if (cathedralItems.HasLevel(levelId))
+                    cathedralItems.AdvanceGroundAnimations(levelId);
+        }
+        foreach (var levelId in participants.Select(player => player.LevelId).Distinct()) {
+            AdvanceNativeSarcophagusAnimations(levelId);
+        }
     }
 
     internal bool IsNativeWorldItem(uint entityId) => cathedralItems?.IsBound(entityId) == true;
@@ -314,9 +316,10 @@ public sealed partial class DiabloWorldState
                 isSolid = door.SolidFlag; isInteractive = door.SelectionRegion != 0;
                 break;
             case AuthoritativeCathedralItemObjectMutationPolicy.NativeChest:
+            case AuthoritativeCathedralItemObjectMutationPolicy.NativeSarcophagus:
                 ValidateNativePopulationObject(value);
                 if (value.Destroyed || value.Breakable || value.CathedralDoor is not null)
-                    throw new InvalidDataException("A native chest has unsupported object behavior.");
+                    throw new InvalidDataException("A native loot object has unsupported object behavior.");
                 isInteractive = binding.InitialSelectionRegion != 0 && !value.Activated;
                 break;
             case AuthoritativeCathedralItemObjectMutationPolicy.Immutable:

@@ -24,6 +24,7 @@ public sealed class DiabloCohortCodec
     private const int NativeMonsterFormatVersion = DiabloCohortState.NativeMonsterFormatVersion;
     private const int CathedralItemFormatVersion = DiabloCohortState.CathedralItemFormatVersion;
     private const int NativeCombatFormatVersion = DiabloCohortState.NativeCombatFormatVersion;
+    private const int NativeSarcophagusFormatVersion = DiabloCohortState.NativeSarcophagusFormatVersion;
     private static readonly UTF8Encoding StrictUtf8 = new(false, true);
     private static readonly ConcurrentDictionary<(Type Type, CodecSchema Schema), PropertyInfo[]> Properties = new();
     private static readonly ConcurrentDictionary<PropertyInfo, bool> NullableProperties = new();
@@ -32,6 +33,7 @@ public sealed class DiabloCohortCodec
     private static readonly JsonSerializerOptions NativeMonsterOptions = CreateOptions(CodecSchema.NativeMonsters);
     private static readonly JsonSerializerOptions CathedralItemOptions = CreateOptions(CodecSchema.CathedralItems);
     private static readonly JsonSerializerOptions NativeCombatOptions = CreateOptions(CodecSchema.NativeCombat);
+    private static readonly JsonSerializerOptions NativeSarcophagusOptions = CreateOptions(CodecSchema.NativeSarcophagi);
 
     public string Serialize(DiabloCohortState state)
     {
@@ -132,6 +134,7 @@ public sealed class DiabloCohortCodec
         CodecSchema.NativeMonsters => NativeMonsterOptions,
         CodecSchema.CathedralItems => CathedralItemOptions,
         CodecSchema.NativeCombat => NativeCombatOptions,
+        CodecSchema.NativeSarcophagi => NativeSarcophagusOptions,
         _ => throw new ArgumentOutOfRangeException(nameof(schema)),
     };
 
@@ -144,10 +147,11 @@ public sealed class DiabloCohortCodec
                     || key.Type.GetConstructors().Any(constructor => constructor.GetParameters().Any(parameter =>
                         string.Equals(property.Name, parameter.Name, StringComparison.OrdinalIgnoreCase)
                         && property.PropertyType == parameter.ParameterType)))
-                && (key.Schema is CodecSchema.NativeMonsters or CodecSchema.CathedralItems or CodecSchema.NativeCombat
+                && (key.Schema is CodecSchema.NativeMonsters or CodecSchema.CathedralItems or CodecSchema.NativeCombat or CodecSchema.NativeSarcophagi
                     || !IsNativeMonsterField(key.Type, property.Name))
-                && (key.Schema is CodecSchema.CathedralItems or CodecSchema.NativeCombat || !IsCathedralItemField(key.Type, property.Name))
-                && (key.Schema == CodecSchema.NativeCombat || !IsNativeCombatField(key.Type, property.Name))
+                && (key.Schema is CodecSchema.CathedralItems or CodecSchema.NativeCombat or CodecSchema.NativeSarcophagi || !IsCathedralItemField(key.Type, property.Name))
+                && (key.Schema is CodecSchema.NativeCombat or CodecSchema.NativeSarcophagi || !IsNativeCombatField(key.Type, property.Name))
+                && (key.Schema == CodecSchema.NativeSarcophagi || !IsNativeSarcophagusField(key.Type, property.Name))
                 && (key.Schema != CodecSchema.Legacy
                     || key.Type != typeof(DiabloCohortState)
                     || property.Name != CathedralDoorsPropertyName))
@@ -156,20 +160,24 @@ public sealed class DiabloCohortCodec
 
     private static CodecSchema SelectSerializationSchema(DiabloCohortState state)
     {
-        if ((state.FormatVersion != CathedralItemFormatVersion && state.FormatVersion != NativeCombatFormatVersion)
+        if ((state.FormatVersion != CathedralItemFormatVersion && state.FormatVersion != NativeCombatFormatVersion
+                && state.FormatVersion != NativeSarcophagusFormatVersion)
             && (state.CathedralItems is not null || state.Configuration?.CathedralItemMetadataFingerprint is not null
                 || state.Configuration?.CathedralItemGenerationFingerprint is not null))
             throw new InvalidDataException("Native item state cannot be down-converted to an older cohort.");
-        if (state.FormatVersion != NativeMonsterFormatVersion && state.FormatVersion != CathedralItemFormatVersion && state.FormatVersion != NativeCombatFormatVersion
+        if (state.FormatVersion != NativeMonsterFormatVersion && state.FormatVersion != CathedralItemFormatVersion
+            && state.FormatVersion != NativeCombatFormatVersion && state.FormatVersion != NativeSarcophagusFormatVersion
             && (state.Configuration?.NativeMonsterMetadataFingerprint is not null
                 || state.CombatTargets?.Any(target => target?.NativeInitialization is not null
                     || target?.Monster?.NativeInitializationPresent == true) == true))
             throw new InvalidDataException("Native monster state cannot be down-converted to a legacy cohort.");
-        if (state.FormatVersion != NativeCombatFormatVersion
+        if (state.FormatVersion != NativeCombatFormatVersion && state.FormatVersion != NativeSarcophagusFormatVersion
             && (state.CombatTargets?.Any(target => target?.Monster?.NativeMeleeCursor is not null
                     || target?.Monster?.NativeWalkCursor is not null) == true
                 || state.Projectiles?.Any(projectile => projectile?.NativeWeaponArrow is not null) == true))
             throw new InvalidDataException("Native combat state cannot be down-converted to an older cohort.");
+        if (state.FormatVersion != NativeSarcophagusFormatVersion && state.NativeSarcophagi is not null)
+            throw new InvalidDataException("Native sarcophagus state cannot be down-converted to an older cohort.");
         var hasCathedralDoors = GetCathedralDoors(state) is not null;
         return state.FormatVersion switch {
             LegacyFormatVersion when !hasCathedralDoors => CodecSchema.Legacy,
@@ -183,6 +191,8 @@ public sealed class DiabloCohortCodec
             CathedralItemFormatVersion => throw new InvalidDataException("Native item cohorts require their complete item pools."),
             NativeCombatFormatVersion when state.CathedralItems is not null => CodecSchema.NativeCombat,
             NativeCombatFormatVersion => throw new InvalidDataException("Native combat cohorts require their complete item pools."),
+            NativeSarcophagusFormatVersion when state.CathedralItems is not null && state.NativeSarcophagi is not null => CodecSchema.NativeSarcophagi,
+            NativeSarcophagusFormatVersion => throw new InvalidDataException("Native sarcophagus cohorts require complete item pools and lifecycle state."),
             _ => throw new InvalidDataException(
                 $"Unsupported Diablo cohort format version {state.FormatVersion}."),
         };
@@ -212,6 +222,7 @@ public sealed class DiabloCohortCodec
             NativeMonsterFormatVersion => CodecSchema.NativeMonsters,
             CathedralItemFormatVersion => CodecSchema.CathedralItems,
             NativeCombatFormatVersion => CodecSchema.NativeCombat,
+            NativeSarcophagusFormatVersion => CodecSchema.NativeSarcophagi,
             _ => throw new InvalidDataException(
                 $"Unsupported Diablo cohort format version {version}."),
         };
@@ -223,6 +234,7 @@ public sealed class DiabloCohortCodec
         CodecSchema.NativeMonsters => NativeMonsterFormatVersion,
         CodecSchema.CathedralItems => CathedralItemFormatVersion,
         CodecSchema.NativeCombat => NativeCombatFormatVersion,
+        CodecSchema.NativeSarcophagi => NativeSarcophagusFormatVersion,
         _ => throw new ArgumentOutOfRangeException(nameof(schema)),
     };
 
@@ -255,12 +267,20 @@ public sealed class DiabloCohortCodec
                 or nameof(AuthoritativeNativeMonsterInitialization.NativeWalkFrameCount)
                 or nameof(AuthoritativeNativeMonsterInitialization.NativeWalkTicksPerFrame));
 
+    private static bool IsNativeSarcophagusField(Type type, string name) =>
+        type == typeof(DiabloCohortState) && name == nameof(DiabloCohortState.NativeSarcophagi);
+
     private static bool IsRequiredCathedralDoors(Type type, PropertyInfo property, CodecSchema schema) =>
         type == typeof(DiabloCohortState)
         && ((schema == CodecSchema.CathedralDoors
                 && string.Equals(property.Name, CathedralDoorsPropertyName, StringComparison.Ordinal))
-            || (schema is CodecSchema.CathedralItems or CodecSchema.NativeCombat
+            || (schema is CodecSchema.CathedralItems or CodecSchema.NativeCombat or CodecSchema.NativeSarcophagi
                 && property.Name == nameof(DiabloCohortState.CathedralItems)));
+
+    private static bool IsRequiredNativeSarcophagi(Type type, PropertyInfo property, CodecSchema schema) =>
+        schema == CodecSchema.NativeSarcophagi
+        && type == typeof(DiabloCohortState)
+        && property.Name == nameof(DiabloCohortState.NativeSarcophagi);
 
     private static bool AllowsNull(PropertyInfo property) => NullableProperties.GetOrAdd(
         property,
@@ -335,7 +355,8 @@ public sealed class DiabloCohortCodec
             if (!present.Add(field.Name) || !properties.TryGetValue(field.Name, out var property))
                 throw new InvalidDataException($"Unknown or duplicate cohort field '{field.Name}'.");
             ValidateJson(field.Value, property.PropertyType,
-                AllowsNull(property) && !IsRequiredCathedralDoors(type, property, schema), schema);
+                AllowsNull(property) && !IsRequiredCathedralDoors(type, property, schema)
+                    && !IsRequiredNativeSarcophagi(type, property, schema), schema);
         }
         var missing = properties.Keys.Where(name => !present.Contains(name)).ToArray();
         if (missing.Length != 0 && !(missing.Length == 2 && missing.All(name => IsHorkMoveField(type, name))))
@@ -394,7 +415,8 @@ public sealed class DiabloCohortCodec
         foreach (var property in GetProperties(type, schema)) {
             var item = property.GetValue(value);
             if (item is null) {
-                if (!AllowsNull(property) || IsRequiredCathedralDoors(type, property, schema))
+                if (!AllowsNull(property) || IsRequiredCathedralDoors(type, property, schema)
+                    || IsRequiredNativeSarcophagi(type, property, schema))
                     throw new InvalidDataException($"Cohort field '{property.Name}' cannot be null.");
                 continue;
             }
@@ -451,6 +473,7 @@ public sealed class DiabloCohortCodec
         NativeMonsters,
         CathedralItems,
         NativeCombat,
+        NativeSarcophagi,
     }
 
     private sealed class CheckedEnumConverterFactory : JsonConverterFactory

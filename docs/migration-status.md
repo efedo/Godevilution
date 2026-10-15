@@ -44,6 +44,23 @@ unsupported behavior is a migration gap, not permission for local simulation.
 
 ## Current delivery position and verification limits
 
+Ordinary untrapped native L1 sarcophagi now support native loot/empty outcomes,
+exact preallocated skeleton release and retained object/emergence animation.
+Schema v6 is enabled only after a sarcophagus mutation; untouched v1-v5 bytes
+and the pinned generation identity are preserved. The native operation oracle,
+focused managed operation/owner/projection/codec/client checks and independent
+review pass. Shared-owner tests cover blocked release, exact emergence boundary,
+public actor projection, cold continuation, AI refusal and corpse retention.
+The actual headless Godot loot pair admits Town313, saves Town345 and resumes
+with exact opened/loot/geometry/player retention before returning Town377;
+ordinary repeat fallback is Rejected/InvalidTarget without duplicate loot.
+Seed2588 contains no linked-spawn sarcophagus, so this app pair explicitly has
+SpawnBranchExercised=false. Controlled native/shared-owner evidence supplies
+the spawn branch; its forced death proves corpse lifecycle, not combat rewards.
+Evidence: `.local/native-sarcophagi-20261014` (headless-sarc-r3 log plus unchanged
+post-phase validator, module-live-linked-r4 and retained focused XML reports).
+Normal adoption, rendered/full-world and campaign acceptance remain open.
+
 Ordinary untrapped native L1 chests now use both native loot branches,
 one-way opened-state mutation and strict item-pool/cold-restore validation.
 Existing native cohort generation identity is retained. The native oracle

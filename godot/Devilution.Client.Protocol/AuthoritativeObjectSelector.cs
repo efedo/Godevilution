@@ -62,6 +62,8 @@ public static class AuthoritativeObjectSelector
         ArgumentNullException.ThrowIfNull(@object);
         if (@object.NativeChestInteractable)
             return IsValidNativeChestInteraction(@object);
+        if (@object.NativeSarcophagusInteractable)
+            return IsValidNativeSarcophagusInteraction(@object);
         if (@object.CathedralDoor is not null)
             return IsValidCathedralDoorInteraction(@object);
         return @object.EffectKind != 0
@@ -78,8 +80,23 @@ public static class AuthoritativeObjectSelector
     {
         ArgumentNullException.ThrowIfNull(@object);
         return @object.NativeChestInteractable
-            && @object.LevelId != 0
+            && !@object.NativeSarcophagusInteractable
             && @object.NativeObjectId is >= 5 and <= 7
+            && IsPlainNativeInteraction(@object);
+    }
+
+    /** Requires the explicit sarcophagus capability and a consistent closed native shape. */
+    public static bool IsValidNativeSarcophagusInteraction(ObjectSnapshot @object)
+    {
+        ArgumentNullException.ThrowIfNull(@object);
+        return @object.NativeSarcophagusInteractable
+            && !@object.NativeChestInteractable
+            && @object.NativeObjectId == 48
+            && IsPlainNativeInteraction(@object);
+    }
+
+    private static bool IsPlainNativeInteraction(ObjectSnapshot @object)
+        => @object.LevelId != 0
             && !@object.Activated
             && !@object.Destroyed
             && !@object.TrapArmed
@@ -112,7 +129,6 @@ public static class AuthoritativeObjectSelector
             && @object.ActivatedAnimationFrame == 0
             && @object.PresentationKind is ProtocolObjectPresentationKind.Unspecified
                 or ProtocolObjectPresentationKind.Generic;
-    }
 
     private static bool IsValidCathedralDoorInteraction(ObjectSnapshot @object)
     {

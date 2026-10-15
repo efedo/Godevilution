@@ -4,6 +4,23 @@ The checked-in presentation project pins `Godot.NET.Sdk/4.7.1`. Godot is not ass
 installed on every development machine, and repository tests that do not render
 the client must remain runnable without it.
 
+## Native sarcophagus headless acceptance
+
+The opt-in native sarcophagus pair accepts a copied passed chest Town cohort
+under the selected native profile's sessions directory:
+
+```powershell
+pwsh -NoProfile -File tools/test-godot-session.ps1 -PersistenceMode cohort -CathedralNativeProfileDirectory D:\Programming\native-profile -CathedralNativeSarcophagus -CathedralNativeSarcophagusSessionDirectory D:\Programming\native-profile\sessions\copied-town
+```
+
+Use the qualified engine argument where needed. This headless pair preserves
+normal defaults, verifies old-save admission, ordinary loot interaction, exact
+fresh-host retention and no duplicate outcome. The pinned seed has no linked
+sarcophagus: `SpawnBranchExercised=false` is required, with native/shared-owner
+tests covering release separately. Completed gameplay evidence can be validated
+without replay after a result-summary-only harness repair; retain the failure
+and all original gameplay/process assertions.
+
 ## Protocol and Solution Verification
 
 From the repository root:

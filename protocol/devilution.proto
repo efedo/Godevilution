@@ -1012,6 +1012,8 @@ message ObjectSnapshot {
 	CathedralDoorSnapshot cathedral_door = 41;
 	// Server-validated capability for an unopened, untrapped native L1 chest.
 	bool native_chest_interactable = 42;
+	// Server-validated capability for an unopened native L1 sarcophagus.
+	bool native_sarcophagus_interactable = 43;
 }
 
 // Exact native door presentation and cached geometry. The enclosing object
