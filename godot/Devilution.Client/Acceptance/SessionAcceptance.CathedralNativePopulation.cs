@@ -244,7 +244,7 @@ public partial class SessionAcceptance
         var minimumPositions = Math.Clamp(Math.Max(Math.Abs(player.PositionX - route.TriggerX),
             Math.Abs(player.PositionY - route.TriggerY)), 1, 8);
         await TravelCathedralRoute(main, directory, route.WarpId, destination, stopEarly: false,
-            minimumDistinctPositions: minimumPositions);
+            minimumDistinctPositions: minimumPositions, distanceBoundedApproachDeadline: true);
         Require(main.ObservedSnapshot!.Players.Single().LevelId == destination,
             $"The ordinary route did not reach level {destination}.");
     }

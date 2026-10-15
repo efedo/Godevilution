@@ -1168,6 +1168,8 @@ public sealed class AuthoritativeClientModel
                 && !AuthoritativeObjectSelector.IsValidNativeChestInteraction(@object)
             || @object.NativeSarcophagusInteractable
                 && !AuthoritativeObjectSelector.IsValidNativeSarcophagusInteraction(@object)
+            || @object.NativeBarrelMeleeBreakable
+                && !AuthoritativeObjectSelector.IsValidNativeBarrelMeleeBreakable(@object)
             || @object.DialogueMessageId is < 0 or > short.MaxValue
             || @object.AnimationFrame > byte.MaxValue
             || @object.ActivatedAnimationFrame > byte.MaxValue

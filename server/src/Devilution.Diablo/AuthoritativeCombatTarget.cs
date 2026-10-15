@@ -414,6 +414,23 @@ public sealed class AuthoritativeCombatTarget
 
     public bool NativeInitializationPresent => NativeInitialization is not null;
 
+    /** Successful local-player hit credit for environmental native death; saved only in cohort v7. */
+    internal bool NativePlayerHitRecorded { get; private set; }
+
+    internal void RecordNativePlayerHit()
+    {
+        if (!NativeInitializationPresent)
+            throw new InvalidOperationException("Native hit credit requires retained native actor identity.");
+        NativePlayerHitRecorded = true;
+    }
+
+    internal void RestoreNativePlayerHitRecorded(bool recorded)
+    {
+        if (recorded && !NativeInitializationPresent)
+            throw new InvalidDataException("A non-native actor cannot retain native player hit credit.");
+        NativePlayerHitRecorded = recorded;
+    }
+
     /** Current native attack/recovery animation cursor; null means no owned animation is active. */
     public AuthoritativeNativeMeleeCursor? NativeMeleeCursor { get; private set; }
 

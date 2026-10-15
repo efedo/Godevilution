@@ -39,6 +39,36 @@ public static class AuthoritativeObjectSelector
             .FirstOrDefault();
     }
 
+    /** Selects an explicitly declared native barrel as a melee target at one tile. */
+    public static ObjectSnapshot? SelectNativeMeleeBarrelAt(
+        Snapshot? snapshot, int x, int y, uint? localPlayerEntityId = null)
+    {
+        var player = snapshot?.Players.FirstOrDefault(value => value.EntityId == localPlayerEntityId)
+            ?? snapshot?.Players.FirstOrDefault();
+        if (player is null)
+            return null;
+
+        var geometry = snapshot!.LevelGeometry.FirstOrDefault(level => level.LevelId == player.LevelId);
+        var lightRadius = player.LightRadius is >= 2 and <= 15 ? player.LightRadius : 10;
+        return snapshot!.Objects
+            .Where(@object => @object.NativeBarrelMeleeBreakable
+                && @object.EntityId != 0
+                && IsValidNativeBarrelMeleeBreakable(@object)
+                && AuthoritativeObjectPresentationVisibility.IsVisible(
+                    @object,
+                    player.LevelId,
+                    geometry,
+                    player.PositionX,
+                    player.PositionY,
+                    lightRadius)
+                && !@object.Activated
+                && !@object.Destroyed
+                && @object.PositionX == x
+                && @object.PositionY == y)
+            .OrderBy(@object => @object.EntityId)
+            .FirstOrDefault();
+    }
+
     private static bool IsSelectable(
         ObjectSnapshot @object,
         PlayerSnapshot player,
@@ -60,6 +90,8 @@ public static class AuthoritativeObjectSelector
     public static bool HasAuthoritativeInteraction(ObjectSnapshot @object)
     {
         ArgumentNullException.ThrowIfNull(@object);
+        if (@object.NativeBarrelMeleeBreakable)
+            return false;
         if (@object.NativeChestInteractable)
             return IsValidNativeChestInteraction(@object);
         if (@object.NativeSarcophagusInteractable)
@@ -81,6 +113,7 @@ public static class AuthoritativeObjectSelector
         ArgumentNullException.ThrowIfNull(@object);
         return @object.NativeChestInteractable
             && !@object.NativeSarcophagusInteractable
+            && !@object.NativeBarrelMeleeBreakable
             && @object.NativeObjectId is >= 5 and <= 7
             && IsPlainNativeInteraction(@object);
     }
@@ -91,7 +124,19 @@ public static class AuthoritativeObjectSelector
         ArgumentNullException.ThrowIfNull(@object);
         return @object.NativeSarcophagusInteractable
             && !@object.NativeChestInteractable
+            && !@object.NativeBarrelMeleeBreakable
             && @object.NativeObjectId == 48
+            && IsPlainNativeInteraction(@object);
+    }
+
+    /** Validates the explicit capability without making barrels generic UI interactions. */
+    public static bool IsValidNativeBarrelMeleeBreakable(ObjectSnapshot @object)
+    {
+        ArgumentNullException.ThrowIfNull(@object);
+        return @object.NativeBarrelMeleeBreakable
+            && !@object.NativeChestInteractable
+            && !@object.NativeSarcophagusInteractable
+            && @object.NativeObjectId is 57 or 58
             && IsPlainNativeInteraction(@object);
     }
 

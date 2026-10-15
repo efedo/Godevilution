@@ -234,13 +234,10 @@ public sealed partial class DiabloWorldState
         var entry = nativeSarcophagiBySlot.Values.Single(value => value.LinkedMonsterEntityId == target.EntityId);
         if (entry.ActorState != DiabloNativeSarcophagusActorState.Emerging)
             return false;
-        if (target.HitPointsQ6 <= 0 || target.IsPetrified
-            || target.NativeMeleeCursor is { HitRecovery: true }) {
-            nativeSarcophagiBySlot[entry.ObjectSlot] = entry with {
-                ActorState = DiabloNativeSarcophagusActorState.Active,
-                SpecialFrameIndex = 0,
-                SpecialTickCounter = 0,
-            };
+        if (target.IsPetrified && target.HitPointsQ6 > 0)
+            return true; // Stone Curse pauses and later resumes the source SpecialStand.
+        if (target.HitPointsQ6 <= 0 || target.NativeMeleeCursor is { HitRecovery: true }) {
+            InterruptNativeSarcophagusSpecialStand(target);
             return false;
         }
         var facts = nativePopulationPolicy.GetSarcophagusOperationFacts(entry.ObjectSlot);
@@ -264,6 +261,21 @@ public sealed partial class DiabloWorldState
             SpecialTickCounter = tick,
         };
         return true;
+    }
+
+    internal void InterruptNativeSarcophagusSpecialStand(AuthoritativeCombatTarget target)
+    {
+        ArgumentNullException.ThrowIfNull(target);
+        if (nativePopulationPolicy is null || !nativePopulationPolicy.OwnsSarcophagusActor(target.EntityId))
+            return;
+        var entry = nativeSarcophagiBySlot.Values.Single(value => value.LinkedMonsterEntityId == target.EntityId);
+        if (entry.ActorState != DiabloNativeSarcophagusActorState.Emerging)
+            return;
+        nativeSarcophagiBySlot[entry.ObjectSlot] = entry with {
+            ActorState = DiabloNativeSarcophagusActorState.Active,
+            SpecialFrameIndex = 0,
+            SpecialTickCounter = 0,
+        };
     }
 
     internal void CompleteNativeSarcophagusActorDeath(uint entityId)

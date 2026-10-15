@@ -445,6 +445,66 @@ public sealed partial class AuthoritativeCathedralNativePopulationIntegrationTes
             customOptions, tampered));
         Assert.Equal(midBytes, codec.Serialize(midSimulation.CaptureCohortState(midRuntime)));
 
+        var petrifiedCheckpoint = midState with {
+            CombatTargets = midState.CombatTargets.Select(value => value.Monster.EntityId == linkedEntityId
+                ? value with { Monster = value.Monster with { Petrified = true } }
+                : value).ToArray(),
+        };
+        var petrifiedCandidate = DiabloSimulationFactory.Instance.CreateCohortCandidate(
+            customOptions, petrifiedCheckpoint);
+        var petrifiedRuntime = petrifiedCandidate.CreateRuntime();
+        var petrifiedSimulation = petrifiedCandidate.Simulation;
+        var petrifiedActor = petrifiedSimulation.WorldState.CombatTargets[linkedEntityId];
+        var cursorBeforePetrification = petrifiedSimulation.WorldState.GetNativeSarcophagusState(
+            availableSarcophagus.Slot)!;
+        petrifiedRuntime.AdvanceTo(checked(petrifiedRuntime.LastAdvancedTick + 3));
+        var pausedEmergence = petrifiedSimulation.WorldState.GetNativeSarcophagusState(availableSarcophagus.Slot)!;
+        Assert.Equal(DiabloNativeSarcophagusActorState.Emerging, pausedEmergence.ActorState);
+        Assert.Equal((cursorBeforePetrification.SpecialFrameIndex, cursorBeforePetrification.SpecialTickCounter),
+            (pausedEmergence.SpecialFrameIndex, pausedEmergence.SpecialTickCounter));
+        Assert.True(petrifiedActor.IsPetrified);
+        var pausedBytes = codec.Serialize(petrifiedSimulation.CaptureCohortState(petrifiedRuntime));
+        var pausedCandidate = DiabloSimulationFactory.Instance.CreateCohortCandidate(
+            customOptions, codec.Deserialize(pausedBytes));
+        Assert.Equal(pausedBytes, codec.Serialize(pausedCandidate.Simulation.CaptureCohortState(
+            pausedCandidate.CreateRuntime())));
+
+        var interruptedCandidate = DiabloSimulationFactory.Instance.CreateCohortCandidate(
+            customOptions, codec.Deserialize(midBytes));
+        var interruptedRuntime = interruptedCandidate.CreateRuntime();
+        var interruptedSimulation = interruptedCandidate.Simulation;
+        var interruptedActor = interruptedSimulation.WorldState.CombatTargets[linkedEntityId];
+        interruptedActor.RestoreNativeMeleeCursor(new AuthoritativeNativeMeleeCursor(0, 0) {
+            HitRecovery = true,
+        });
+        interruptedSimulation.WorldState.InterruptNativeSarcophagusSpecialStand(interruptedActor);
+        var interruptedEmergence = interruptedSimulation.WorldState.GetNativeSarcophagusState(
+            availableSarcophagus.Slot)!;
+        Assert.Equal(DiabloNativeSarcophagusActorState.Active, interruptedEmergence.ActorState);
+        Assert.Equal((0, 0), (interruptedEmergence.SpecialFrameIndex, interruptedEmergence.SpecialTickCounter));
+        var interruptedBytes = codec.Serialize(interruptedSimulation.CaptureCohortState(interruptedRuntime));
+        var interruptedRestore = DiabloSimulationFactory.Instance.CreateCohortCandidate(
+            customOptions, codec.Deserialize(interruptedBytes));
+        Assert.Equal(interruptedBytes, codec.Serialize(interruptedRestore.Simulation.CaptureCohortState(
+            interruptedRestore.CreateRuntime())));
+
+        var deathCandidate = DiabloSimulationFactory.Instance.CreateCohortCandidate(
+            customOptions, codec.Deserialize(midBytes));
+        var deathRuntime = deathCandidate.CreateRuntime();
+        var deathSimulation = deathCandidate.Simulation;
+        var deathActor = deathSimulation.WorldState.CombatTargets[linkedEntityId];
+        deathActor.DefeatForDialogue();
+        deathSimulation.WorldState.InterruptNativeSarcophagusSpecialStand(deathActor);
+        var deathInterruption = deathSimulation.WorldState.GetNativeSarcophagusState(
+            availableSarcophagus.Slot)!;
+        Assert.Equal(DiabloNativeSarcophagusActorState.Active, deathInterruption.ActorState);
+        Assert.Equal(0, deathActor.HitPointsQ6);
+        var deathBytes = codec.Serialize(deathSimulation.CaptureCohortState(deathRuntime));
+        var deathRestore = DiabloSimulationFactory.Instance.CreateCohortCandidate(
+            customOptions, codec.Deserialize(deathBytes));
+        Assert.Equal(deathBytes, codec.Serialize(deathRestore.Simulation.CaptureCohortState(
+            deathRestore.CreateRuntime())));
+
         var specialFacts = policy.GetSarcophagusOperationFacts(availableSarcophagus.Slot);
         var effectiveSpecialRate = checked((ulong)Math.Max(1, specialFacts.NativeSpecialTicksPerFrame));
         var framesRemaining = specialFacts.NativeSpecialFrameCount - 1 - emerging.SpecialFrameIndex;

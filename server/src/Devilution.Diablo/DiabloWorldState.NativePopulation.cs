@@ -11,7 +11,8 @@ public sealed partial class DiabloWorldState
     internal void ConfigureNativePopulationPolicy(AuthoritativeCathedralNativePopulationPolicy? policy,
         AuthoritativeCathedralItemRuntimeProfile? items, string? monsterMetadataFingerprint,
         int nativeSarcophagusFormatVersion = 0,
-        IReadOnlyList<DiabloNativeSarcophagusState>? nativeSarcophagusStates = null)
+        IReadOnlyList<DiabloNativeSarcophagusState>? nativeSarcophagusStates = null,
+        IReadOnlyList<DiabloNativeBarrelState>? nativeBarrelStates = null)
     {
         if (policy is null)
             return;
@@ -26,6 +27,7 @@ public sealed partial class DiabloWorldState
             throw new InvalidOperationException("Native population lifecycle state is configured once on a detached world.");
         nativePopulationPolicy ??= policy;
         ConfigureNativeSarcophagi(policy, nativeSarcophagusFormatVersion, nativeSarcophagusStates);
+        ConfigureNativeBarrels(policy, nativeSarcophagusFormatVersion, nativeBarrelStates);
         policy.ValidateWorld(this);
         nativePopulationLifecycleConfigured = true;
     }
@@ -63,7 +65,14 @@ public sealed partial class DiabloWorldState
     private bool IsNativePopulationObjectSolid(uint levelId, int x, int y)
         => nativePopulationPolicy is not null && levelId == nativePopulationPolicy.LevelId
             && nativePopulationPolicy.ObjectEntityAt(x, y) is { } entityId
-            && nativePopulationPolicy.ObjectIsSolid(entityId);
+            && nativePopulationPolicy.ObjectIsSolid(entityId)
+            && !IsNativeBarrelBroken(entityId);
+
+    private bool IsNativeBarrelBroken(uint entityId)
+        => nativePopulationPolicy is not null
+            && nativePopulationPolicy.TryGetNativeBarrelObjectSlot(entityId, out var slot)
+            && nativeBarrelsBySlot.TryGetValue(slot, out var state)
+            && state.Broken;
 
     private bool TryGetNativePopulationMissileObject(uint levelId, int x, int y,
         out AuthoritativeWorldObject? result)

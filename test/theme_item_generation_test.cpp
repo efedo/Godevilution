@@ -11,6 +11,7 @@
 #include <string>
 #include <string_view>
 #include <type_traits>
+#include <utility>
 #include <vector>
 
 #include "application/diablo.h"
@@ -39,9 +40,11 @@
 #include "game/portals/portal.hpp"
 #include "game/quests/quests.hpp"
 #include "network/protocol/msg.h"
+#include "network/storm/storm_net.hpp"
 #include "persistence/options.h"
 #include "persistence/loadsave.h"
 #include "tables/leveldat.h"
+#include "tables/misdat.h"
 #include "tables/playerdat.hpp"
 #include "utils/language.h"
 
@@ -1657,6 +1660,397 @@ TEST_F(ThemeRoomGenerationTest, CaptureNativeSarcophagusOperations)
 	stream.flush(); ASSERT_TRUE(stream.good()); stream.close();
 	EXPECT_EQ(caseCount, 10);
 	EXPECT_LE(std::filesystem::file_size(root / "native-sarcophagus-operations.json"), 64U * 1024U * 1024U);
+}
+
+TEST_F(ThemeRoomGenerationTest, CaptureNativeBarrelOperations)
+{
+	const char *directory = std::getenv("GODEVILUTION_CATHEDRAL_BARREL_ORACLE_DIRECTORY");
+	if (directory == nullptr || *directory == '\0') GTEST_SKIP() << "Set the native barrel capture directory.";
+	const std::filesystem::path root = std::filesystem::absolute(directory);
+	ASSERT_TRUE(std::filesystem::is_directory(root));
+	ASSERT_TRUE(std::filesystem::is_empty(root));
+	struct ExecutionGuard {
+		bool sound = gbSndInited, headless = HeadlessMode;
+		bool networkInitialized = SNetInitializeProvider(SELCONN_LOOPBACK, nullptr);
+		~ExecutionGuard()
+		{
+			if (networkInitialized) SNetDestroy();
+			gbSndInited = sound;
+			HeadlessMode = headless;
+		}
+	} executionGuard;
+	ASSERT_TRUE(executionGuard.networkInitialized);
+	gbSndInited = false;
+	HeadlessMode = true;
+	// Class/experience tables are canonical process-lifetime data in native table tests.
+	LoadPlayerDataFiles();
+	LoadMissileData();
+	ASSERT_GT(GetMaximumCharacterLevel(), 0);
+	std::ofstream stream(root / "native-barrel-operations.json", std::ios::binary | std::ios::trunc);
+	ASSERT_TRUE(stream.good());
+	int caseCount = 0;
+	{
+		JsonObject document(stream);
+		document.String("format", "godevilution-cathedral-barrel-operations");
+		document.Number("version", 1);
+		document.String("policy", "original-diablo-single-player-normal-untrapped-cathedral-level1");
+		document.Number("playerMaximumLife", MyPlayer->life.maximumBase);
+		document.Number("playerMaximumMana", MyPlayer->mana.maximumBase);
+		document.Key("catalog"); WriteCatalog(stream);
+		document.Key("roomCatalog"); WriteRoomCatalog(stream);
+		document.Key("cases"); stream << '[';
+		auto writePlayer = [&](const Player &player) {
+			JsonObject json(stream);
+			json.Number("id", player.getId()); json.Number("level", player.plrlevel);
+			json.Boolean("active", player.plractive); json.Number("mode", static_cast<int>(player._pmode));
+			json.Number("characterLevel", player.getCharacterLevel()); json.Number("experience", player._pExperience);
+			json.Number("strength", player.attributes.strength.current);
+			json.Number("dexterity", player.attributes.dexterity.current);
+			json.Number("magic", player.attributes.magic.current);
+			json.Key("tile"); WriteRoomPoint(stream, player.position.tile);
+			json.Key("future"); WriteRoomPoint(stream, player.position.future);
+			json.Number("life", player.life.current); json.Number("lifeMaximumBase", player.life.maximumBase);
+			json.Number("mana", player.mana.current); json.Number("manaMaximumBase", player.mana.maximumBase);
+			json.Number("armor", player.GetArmor()); json.Number("blockChance", player.GetBlockChance(false));
+			json.Boolean("blockFlag", player._pBlockFlag); json.Boolean("invincible", player._pInvincible);
+			json.Number("fireResistance", player._pFireResist); json.Number("lightningResistance", player._pLghtResist);
+			json.Number("magicResistance", player._pMagResist); json.Number("getHit", player._pIGetHit);
+			json.Number("itemFlags", static_cast<uint32_t>(player._pIFlags));
+		};
+		auto addBarrel = [&](int type, Point position, uint32_t seed, int var2, int var3, int var4) -> Object * {
+			Object *barrel = AddObjectPresentation(static_cast<_object_id>(type), position);
+			if (barrel == nullptr) return nullptr;
+			barrel->_oVar1 = 0;
+			barrel->_oVar2 = var2;
+			barrel->_oVar3 = var3;
+			barrel->_oVar4 = var4;
+			barrel->_oRndSeed = seed;
+			return barrel;
+		};
+		auto prepare = [&](int itemCount = 2, int monsterCount = 0) {
+			PrepareRoom(1, itemCount, 0, monsterCount, false);
+			MyPlayer->pLvlLoad = 0;
+			MyPlayer->setCharacterLevel(1);
+			MyPlayer->life.base = MyPlayer->life.maximumBase;
+			MyPlayer->life.maximum = MyPlayer->life.maximumBase;
+			MyPlayer->life.current = MyPlayer->life.maximumBase;
+			MyPlayer->mana.base = MyPlayer->mana.maximumBase;
+			MyPlayer->mana.maximum = MyPlayer->mana.maximumBase;
+			MyPlayer->mana.current = MyPlayer->mana.maximumBase;
+			MyPlayer->_pExperience = 0;
+			MyPlayer->_pmode = PM_STAND;
+			MyPlayer->_pInvincible = false;
+			MyPlayer->_pBlockFlag = false;
+			MyPlayer->_pFireResist = 0;
+			MyPlayer->_pLghtResist = 0;
+			MyPlayer->_pMagResist = 0;
+			MyPlayer->_pIGetHit = 0;
+			MyPlayer->attributes.dexterity.base = 0;
+			MyPlayer->attributes.dexterity.current = 0;
+			tileAt(50, 50).setPlayer(0);
+			tileAt(51, 50).setPlayer(0);
+			tileAt(51, 50).setMonster(0);
+		};
+		auto setPlayerPosition = [&](Point position) {
+			tileAt(MyPlayer->position.tile).setPlayer(0);
+			MyPlayer->position.tile = position;
+			MyPlayer->position.future = position;
+			MyPlayer->position.old = position;
+			tileAt(position).setPlayer(1); // Positive current occupancy is required by PlayerAtPosition(..., true).
+		};
+		auto capture = [&](const char *name, Object &barrel, uint32_t initialRandomState, const Monster *lootActor = nullptr) {
+			SetRndSeed(initialRandomState);
+			const NativeItemWorldState beforeItems = CaptureItemWorld();
+			const bool originalSolid = barrel._oSolidFlag;
+			barrel._oSolidFlag = false; // BreakBarrel removes solidity before ActivateSkeleton.
+			constexpr std::array<Direction, 8> spawnDirections {
+				Direction::North, Direction::NorthEast, Direction::East, Direction::NorthWest,
+				Direction::SouthEast, Direction::West, Direction::SouthWest, Direction::South,
+			};
+			std::array<bool, 9> spawnTilesAvailable {};
+			auto isSpawnTileAvailable = [](Point position) {
+				return InDungeonBounds(position) && tileAt(position).player() == 0
+				    && tileAt(position).monster() == 0 && IsTileWalkable(position);
+			};
+			spawnTilesAvailable[0] = isSpawnTileAvailable(barrel.position);
+			for (size_t index = 0; index < spawnDirections.size(); ++index)
+				spawnTilesAvailable[index + 1] = isSpawnTileAvailable(barrel.position + spawnDirections[index]);
+			barrel._oSolidFlag = originalSolid;
+			if (caseCount++ != 0) stream << ',';
+			JsonObject row(stream);
+			row.String("name", name); row.Number("depth", 1); row.Number("slot", barrel.GetId());
+			row.Number("initialRandomState", initialRandomState);
+			row.Number("barrelSeed", barrel._oRndSeed); row.Number("nativeType", barrel._otype);
+			row.Number("var1", barrel._oVar1); row.Number("var2", barrel._oVar2);
+			row.Number("var3", barrel._oVar3); row.Number("var4", barrel._oVar4);
+			row.Boolean("levelLoading", MyPlayer->pLvlLoad != 0);
+			row.Key("spawnTilesAvailable");
+			stream << '[';
+			for (size_t index = 0; index < spawnTilesAvailable.size(); ++index) {
+				if (index != 0) stream << ',';
+				stream << (spawnTilesAvailable[index] ? "true" : "false");
+			}
+			stream << ']';
+			const Monster *linked = barrel._oVar4 >= 0 && barrel._oVar4 < MaxMonsters
+			    ? &Monsters[barrel._oVar4]
+			    : nullptr;
+			row.Number("linkedMonsterSlot", linked == nullptr ? -1 : barrel._oVar4);
+			row.Key("inputLinkedMonster");
+			if (linked == nullptr) stream << "null";
+			else WriteRoomMonster(stream, barrel._oVar4, *linked);
+			row.Key("lootActorContext");
+			if (lootActor == nullptr) {
+				stream << "null";
+			} else {
+				JsonObject context(stream);
+				context.Number("slot", lootActor->getId()); context.Number("type", lootActor->type().type);
+				context.Number("level", lootActor->level(DIFF_NORMAL));
+				context.Number("experience", lootActor->exp(DIFF_NORMAL));
+				context.Number("treasure", lootActor->data().treasure);
+				context.Number("whoHit", lootActor->whoHit); context.Number("rndItemSeed", lootActor->rndItemSeed);
+			}
+			row.Boolean("inputLinkedMonsterPetrified", linked != nullptr && linked->animInfo.isPetrified);
+			const int specialGraphic = static_cast<int>(MonsterGraphic::Special);
+			row.Number("specialFrameCount", linked == nullptr ? 0 : linked->type().anims[specialGraphic].frames);
+			row.Number("specialTicksPerFrame", linked == nullptr ? 0 : linked->type().anims[specialGraphic].rate);
+			row.Key("inputBarrel"); WriteRoomObject(stream, barrel.GetId(), barrel);
+			row.Key("inputItems"); WriteItemWorld(stream, beforeItems, true);
+			row.Key("inputPlayer"); writePlayer(*MyPlayer);
+			row.Key("inputWorld"); WriteRoomWorld(stream);
+			BreakObject(*MyPlayer, barrel);
+			const NativeItemWorldState afterItems = CaptureItemWorld();
+			row.Number("expectedRandomState", GetLCGEngineState());
+			row.Key("expectedBarrel"); WriteRoomObject(stream, barrel.GetId(), barrel);
+			row.Key("expectedItems"); WriteItemWorld(stream, afterItems, false);
+			row.Key("expectedPlayer"); writePlayer(*MyPlayer);
+			row.Key("expectedWorld"); WriteRoomWorld(stream);
+			EXPECT_FALSE(barrel.canInteractWith());
+			EXPECT_FALSE(barrel._oSolidFlag);
+			EXPECT_TRUE(barrel._oMissFlag);
+			EXPECT_EQ(barrel._oAnimFrame, 1U);
+			const int lifeAfterFirstBreak = MyPlayer->life.current;
+			const int manaAfterFirstBreak = MyPlayer->mana.current;
+			const Point positionAfterFirstBreak = MyPlayer->position.tile;
+			const auto modeAfterFirstBreak = MyPlayer->_pmode;
+			std::ostringstream firstWorld, firstItems;
+			WriteRoomWorld(firstWorld); WriteItemWorld(firstItems, afterItems, false);
+			BreakObject(*MyPlayer, barrel); // Broken barrels are a native no-op; no second drop or blast.
+			const NativeItemWorldState repeatedItems = CaptureItemWorld();
+			row.Key("repeatedBarrel"); WriteRoomObject(stream, barrel.GetId(), barrel);
+			row.Key("repeatedItems"); WriteItemWorld(stream, repeatedItems, false);
+			row.Key("repeatedPlayer"); writePlayer(*MyPlayer);
+			row.Key("repeatedWorld"); WriteRoomWorld(stream);
+			std::ostringstream repeatedWorld, repeatedItemsJson;
+			WriteRoomWorld(repeatedWorld); WriteItemWorld(repeatedItemsJson, repeatedItems, false);
+			EXPECT_EQ(firstWorld.str(), repeatedWorld.str());
+			EXPECT_EQ(firstItems.str(), repeatedItemsJson.str());
+			EXPECT_EQ(lifeAfterFirstBreak, MyPlayer->life.current);
+			EXPECT_EQ(manaAfterFirstBreak, MyPlayer->mana.current);
+			EXPECT_EQ(positionAfterFirstBreak, MyPlayer->position.tile);
+			EXPECT_EQ(modeAfterFirstBreak, MyPlayer->_pmode);
+		};
+
+		prepare();
+		Object *useful = addBarrel(OBJ_BARREL, { 50, 50 }, 2588, 0, 0, -1);
+		ASSERT_NE(useful, nullptr);
+		capture("ordinary-useful", *useful, UINT32_C(0x12345678));
+
+		prepare();
+		Object *random = addBarrel(OBJ_BARREL, { 50, 50 }, 1, 1, 1, -1);
+		ASSERT_NE(random, nullptr);
+		capture("ordinary-random", *random, UINT32_C(0x80000000));
+
+		prepare();
+		Object *empty = addBarrel(OBJ_BARREL, { 50, 50 }, UINT32_MAX, 2, 2, -1);
+		ASSERT_NE(empty, nullptr);
+		capture("ordinary-empty", *empty, UINT32_C(0x12345678));
+
+		prepare();
+		Object *linkedBarrel = addBarrel(OBJ_BARREL, { 50, 50 }, 743271966, 8, 1, -1);
+		ASSERT_NE(linkedBarrel, nullptr);
+		Monster *linked = PreSpawnSkeleton();
+		ASSERT_NE(linked, nullptr);
+		linkedBarrel->_oVar4 = static_cast<int>(linked->getId());
+		capture("ordinary-linked-skeleton", *linkedBarrel, UINT32_C(0x87654321));
+
+		prepare();
+		for (int y = 49; y <= 51; ++y) {
+			for (int x = 49; x <= 51; ++x) {
+				const bool available = (x == 50 && y == 49) || (x == 51 && y == 49) || (x == 51 && y == 50);
+				if (!available)
+					tileAt(x, y).setPiece(2);
+			}
+		}
+		SetRndSeed(UINT32_C(0xA11CE));
+		Object *neighborBarrel = addBarrel(OBJ_BARREL, { 50, 50 }, 743271966, 8, 1, -1);
+		ASSERT_NE(neighborBarrel, nullptr);
+		Monster *neighborLinked = PreSpawnSkeleton();
+		ASSERT_NE(neighborLinked, nullptr);
+		neighborBarrel->_oVar4 = static_cast<int>(neighborLinked->getId());
+		capture("ordinary-linked-skeleton-signed-neighbor", *neighborBarrel, UINT32_C(1457187811));
+
+		auto findPlayerSeed = [](bool shouldHit) {
+			for (uint32_t candidate = 0; candidate < 65536; ++candidate) {
+				SetRndSeed(candidate);
+				const int roll = GenerateRnd(100);
+				if ((roll < 40) == shouldHit) return candidate;
+			}
+			return UINT32_MAX;
+		};
+		auto findPlayerBlockSeed = [] {
+			for (uint32_t candidate = 0; candidate < 65536; ++candidate) {
+				SetRndSeed(candidate);
+				const int hit = GenerateRnd(100);
+				const int block = GenerateRnd(100);
+				if (hit < 40 && block < std::clamp(MyPlayer->GetBlockChance(false), 0, 100))
+					return candidate;
+			}
+			return UINT32_MAX;
+		};
+		auto addBlastActor = [&](int resistance, int hitPoints, int whoHit) {
+			SetRndSeed(UINT32_C(0xA11CE));
+			Monster *actor = PreSpawnSkeleton();
+			if (actor == nullptr)
+				return actor;
+			ActivateSkeleton(*actor, { 51, 50 });
+			actor->resistance = static_cast<uint16_t>(resistance);
+			actor->hitPoints = hitPoints;
+			actor->maxHitPoints = std::max(hitPoints, 6400);
+			actor->whoHit = static_cast<int8_t>(whoHit);
+			return actor;
+		};
+		auto findMonsterHitSeed = [](const Monster &actor) {
+			const int hitChance = std::clamp(90 - static_cast<int>(actor.armorClass), 5, 95);
+			for (uint32_t candidate = 0; candidate < 65536; ++candidate) {
+				SetRndSeed(candidate);
+				if (GenerateRnd(100) < hitChance)
+					return candidate;
+			}
+			return UINT32_MAX;
+		};
+		auto findMonsterLootSeed = [](const Monster &actor) {
+			for (uint32_t candidate = 0; candidate < 65536; ++candidate) {
+				SetRndSeed(candidate);
+				if (RndItemForMonsterLevel(static_cast<int8_t>(actor.level(DIFF_NORMAL))) != IDI_NONE)
+					return candidate;
+			}
+			return UINT32_MAX;
+		};
+		prepare();
+		Object *hit = addBarrel(OBJ_BARRELEX, { 50, 50 }, 1, 0, 0, -1);
+		ASSERT_NE(hit, nullptr);
+		setPlayerPosition({ 50, 50 });
+		const uint32_t hitSeed = findPlayerSeed(true);
+		ASSERT_NE(hitSeed, UINT32_MAX);
+		capture("explosive-player-hit", *hit, hitSeed);
+
+		prepare();
+		Object *miss = addBarrel(OBJ_BARRELEX, { 50, 50 }, 1, 0, 0, -1);
+		ASSERT_NE(miss, nullptr);
+		setPlayerPosition({ 50, 50 });
+		const uint32_t missSeed = findPlayerSeed(false);
+		ASSERT_NE(missSeed, UINT32_MAX);
+		capture("explosive-player-miss", *miss, missSeed);
+
+		prepare();
+		MyPlayer->attributes.dexterity.base = 100;
+		MyPlayer->attributes.dexterity.current = 100;
+		MyPlayer->_pBlockFlag = true;
+		Object *blocked = addBarrel(OBJ_BARRELEX, { 50, 50 }, 1, 0, 0, -1);
+		ASSERT_NE(blocked, nullptr);
+		setPlayerPosition({ 50, 50 });
+		const uint32_t blockSeed = findPlayerBlockSeed();
+		ASSERT_NE(blockSeed, UINT32_MAX);
+		capture("explosive-player-blocked", *blocked, blockSeed);
+
+		prepare();
+		MyPlayer->_pFireResist = 50;
+		Object *resistedPlayer = addBarrel(OBJ_BARRELEX, { 50, 50 }, 1, 0, 0, -1);
+		ASSERT_NE(resistedPlayer, nullptr);
+		setPlayerPosition({ 50, 50 });
+		capture("explosive-player-fire-resisted", *resistedPlayer, findPlayerSeed(true));
+
+		prepare(2, 0);
+		Monster *resistedActor = addBlastActor(RESIST_FIRE, 6400, 0);
+		ASSERT_NE(resistedActor, nullptr);
+		Object *resistedMonster = addBarrel(OBJ_BARRELEX, { 50, 50 }, 1, 0, 0, -1);
+		ASSERT_NE(resistedMonster, nullptr);
+		capture("explosive-monster-fire-resisted", *resistedMonster, findMonsterHitSeed(*resistedActor), resistedActor);
+
+		prepare(2, 0);
+		Monster *immuneActor = addBlastActor(IMMUNE_FIRE, 6400, 0);
+		ASSERT_NE(immuneActor, nullptr);
+		Object *immuneMonster = addBarrel(OBJ_BARRELEX, { 50, 50 }, 1, 0, 0, -1);
+		ASSERT_NE(immuneMonster, nullptr);
+		capture("explosive-monster-fire-immune", *immuneMonster, UINT32_C(0xC001D00D), immuneActor);
+
+		for (const auto &[name, whoHit] : std::array<std::pair<const char *, int>, 2> {
+		         std::pair { "explosive-monster-lethal-uncredited", 0 },
+		         std::pair { "explosive-monster-lethal-credited", 1 } }) {
+			prepare(2, 0);
+			Monster *lethalActor = addBlastActor(0, 64, whoHit);
+			ASSERT_NE(lethalActor, nullptr);
+			const uint32_t lootSeed = findMonsterLootSeed(*lethalActor);
+			ASSERT_NE(lootSeed, UINT32_MAX);
+			lethalActor->rndItemSeed = lootSeed;
+			Object *lethalMonster = addBarrel(OBJ_BARRELEX, { 50, 50 }, 1, 0, 0, -1);
+			ASSERT_NE(lethalMonster, nullptr);
+			const uint32_t hitSeed = findMonsterHitSeed(*lethalActor);
+			ASSERT_NE(hitSeed, UINT32_MAX);
+			capture(name, *lethalMonster, hitSeed, lethalActor);
+			EXPECT_EQ(lethalActor->hitPoints, 0);
+			EXPECT_EQ(MyPlayer->_pExperience > 0, whoHit != 0);
+		}
+
+		prepare(2, 0);
+		MyPlayer->setCharacterLevel(3);
+		MyPlayer->_pExperience = GetNextExperienceThresholdForLevel(2);
+		Monster *scaledActor = addBlastActor(0, 64, 1);
+		ASSERT_NE(scaledActor, nullptr);
+		scaledActor->rndItemSeed = findMonsterLootSeed(*scaledActor);
+		Object *scaledBarrel = addBarrel(OBJ_BARRELEX, { 50, 50 }, 1, 0, 0, -1);
+		ASSERT_NE(scaledBarrel, nullptr);
+		const uint32_t beforeScaledExperience = MyPlayer->_pExperience;
+		capture("explosive-monster-lethal-credited-level-delta", *scaledBarrel,
+		    findMonsterHitSeed(*scaledActor), scaledActor);
+		EXPECT_EQ(MyPlayer->_pExperience - beforeScaledExperience, 51U);
+
+		prepare(2, 0);
+		Monster *occupant = PreSpawnSkeleton();
+		ASSERT_NE(occupant, nullptr);
+		ActivateSkeleton(*occupant, { 51, 50 });
+		ASSERT_EQ(occupant->position.tile, (WorldTilePosition { 51, 50 }));
+		Object *chainRoot = addBarrel(OBJ_BARRELEX, { 50, 50 }, 1, 0, 0, -1);
+		Object *chainChild = addBarrel(OBJ_BARRELEX, { 51, 50 }, 2, 0, 0, -1);
+		ASSERT_NE(chainRoot, nullptr); ASSERT_NE(chainChild, nullptr);
+		setPlayerPosition({ 51, 50 });
+		capture("explosive-chain-monster-player-order", *chainRoot, UINT32_C(0x5EED1234));
+		EXPECT_FALSE(chainChild->canInteractWith());
+		EXPECT_FALSE(chainChild->_oSolidFlag);
+		prepare(2, 0);
+		Monster *northwestActor = addBlastActor(0, 256, 0);
+		ASSERT_NE(northwestActor, nullptr);
+		tileAt(northwestActor->position.tile).setMonster(0);
+		northwestActor->position.tile = { 48, 48 };
+		northwestActor->position.future = { 48, 48 };
+		northwestActor->position.old = { 48, 48 };
+		tileAt(48, 48).setMonster(northwestActor->getId() + 1);
+		Object *threeRoot = addBarrel(OBJ_BARRELEX, { 50, 50 }, 1, 0, 0, -1);
+		Object *threeNorthwest = addBarrel(OBJ_BARRELEX, { 49, 49 }, 2, 0, 0, -1);
+		Object *threeSouth = addBarrel(OBJ_BARRELEX, { 50, 51 }, 3, 0, 0, -1);
+		ASSERT_NE(threeRoot, nullptr); ASSERT_NE(threeNorthwest, nullptr); ASSERT_NE(threeSouth, nullptr);
+		setPlayerPosition({ 51, 50 });
+		capture("explosive-three-barrel-nw-monster-player-order", *threeRoot, 2588, northwestActor);
+		EXPECT_FALSE(threeNorthwest->canInteractWith());
+		EXPECT_FALSE(threeSouth->canInteractWith());
+		EXPECT_EQ(northwestActor->hitPoints, 128);
+		EXPECT_EQ(MyPlayer->life.current, 5422);
+		EXPECT_EQ(GetLCGEngineState(), UINT32_C(1630774887));
+		stream << ']'; document.Number("caseCount", caseCount);
+	}
+	stream.flush(); ASSERT_TRUE(stream.good()); stream.close();
+	EXPECT_EQ(caseCount, 16);
+	EXPECT_LE(std::filesystem::file_size(root / "native-barrel-operations.json"), 64U * 1024U * 1024U);
 }
 
 TEST_F(ThemeRoomGenerationTest, FullObjectPoolRetainsSlotsAndFailedShrineCarry)

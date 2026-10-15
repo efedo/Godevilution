@@ -110,6 +110,8 @@ public sealed partial class AuthoritativeCathedralNativePopulationPolicy
                 reservedEntityIds.Add(row.Binding.EntityId);
                 if (owner.Type == Sarcophagus)
                     sarcophagusReservationsByObjectSlot.Add(owner.Slot, row.Initialization);
+                else if (owner.Type == Barrel)
+                    barrelReservationsByObjectSlot.Add(owner.Slot, row.Initialization);
                 continue;
             }
             if (!IsDormantGolemReservation(row, state))
@@ -144,7 +146,8 @@ public sealed partial class AuthoritativeCathedralNativePopulationPolicy
             objectEntitiesBySlot.Add(raw.Slot, projection.EntityId);
             objectSnapshots.Add(projection.EntityId, DiabloSimulation.CaptureObject(projection));
         }
-        if (sarcophagusReservationsByObjectSlot.Keys.Any(slot => !objectEntitiesBySlot.ContainsKey(slot)))
+        if (sarcophagusReservationsByObjectSlot.Keys.Any(slot => !objectEntitiesBySlot.ContainsKey(slot))
+            || barrelReservationsByObjectSlot.Keys.Any(slot => !objectEntitiesBySlot.ContainsKey(slot)))
             throw new InvalidDataException("A linked sarcophagus reservation has no retained object projection.");
         itemBindingFingerprint = itemProfile is null ? null : ComputeItemBindingFingerprint(itemProfile);
         var rawIdentity = JsonSerializer.SerializeToNode(InitialState)!.AsObject();
@@ -270,6 +273,15 @@ public sealed partial class AuthoritativeCathedralNativePopulationPolicy
             && current with { Activated = expected.Activated, AnimationFrame = expected.AnimationFrame } == expected
             && current.AnimationFrame >= raw.AnimFrame && current.AnimationFrame <= raw.AnimLength)
             return;
+        if (IsSupportedNativeBarrel(InitialState, raw) && current.Activated
+            && current with {
+                Activated = expected.Activated,
+                AnimationFrame = expected.AnimationFrame,
+                MissilePassable = expected.MissilePassable,
+            } == expected
+            && current.MissilePassable
+            && current.AnimationFrame is >= 1 && current.AnimationFrame <= raw.AnimLength)
+            return;
         if (current != expected)
             throw new InvalidDataException("An unsupported native object mutation changed retained state.");
     }
@@ -367,7 +379,8 @@ public sealed partial class AuthoritativeCathedralNativePopulationPolicy
             throw new InvalidDataException("The populated route cannot retain portals outside Town and its owned Cathedral level.");
         foreach (var entityId in reservedEntityIds) {
             var record = liveMonsterAdapter.Records.Single(value => value.Binding.EntityId == entityId);
-            if (IsSarcophagusReservationSpawned(record.Binding.NativeSlot, entityId, world))
+            if (IsSarcophagusReservationSpawned(record.Binding.NativeSlot, entityId, world)
+                || IsNativeBarrelReservationSpawned(record.Binding.NativeSlot, entityId, world))
                 continue;
             if (world.CombatTargets.ContainsKey(entityId) || world.WorldItems.ContainsKey(entityId)
                 || world.Objects.ContainsKey(entityId) || world.Projectiles.ContainsKey(entityId)
@@ -380,6 +393,7 @@ public sealed partial class AuthoritativeCathedralNativePopulationPolicy
         foreach (var value in currentObjects)
             ValidateObject(value);
         world.ValidateNativeSarcophagusState(this);
+        world.ValidateNativeBarrelState(this);
         foreach (var entry in liveInitializations) {
             if (world.CombatTargets.TryGetValue(entry.Key, out var current)) {
                 if (current.LevelId != LevelId || current.NativeInitialization != entry.Value
@@ -399,10 +413,11 @@ public sealed partial class AuthoritativeCathedralNativePopulationPolicy
                 continue;
             }
             if (target.NativeInitialization is not { } native || target.IsPlayerMinion
-                || !OwnsSarcophagusActor(target.EntityId)
+                || !(OwnsSarcophagusActor(target.EntityId) || OwnsNativeBarrelActor(target.EntityId))
                 || !linkedPreSpawnOwnerObjectByMonsterSlot.TryGetValue(native.Binding.NativeSlot, out var ownerSlot)
-                || native != GetSarcophagusReservation(ownerSlot)
-                || !IsSarcophagusReservationSpawned(native.Binding.NativeSlot, target.EntityId, world))
+                || native != GetPreSpawnReservation(ownerSlot)
+                || !(IsSarcophagusReservationSpawned(native.Binding.NativeSlot, target.EntityId, world)
+                    || IsNativeBarrelReservationSpawned(native.Binding.NativeSlot, target.EntityId, world)))
                 throw new InvalidDataException("The populated level acquired an unsupported or unowned actor.");
         }
     }
@@ -422,6 +437,8 @@ public sealed partial class AuthoritativeCathedralNativePopulationPolicy
                     ? AuthoritativeCathedralItemObjectMutationPolicy.NativeChest
                     : IsSupportedNativeSarcophagus(InitialState, raw)
                         ? AuthoritativeCathedralItemObjectMutationPolicy.NativeSarcophagus
+                        : IsSupportedNativeBarrel(InitialState, raw)
+                            ? AuthoritativeCathedralItemObjectMutationPolicy.NativeBarrel
                         : AuthoritativeCathedralItemObjectMutationPolicy.ExplicitlyRefused;
             if (binding.NativeObjectSlot != raw.Slot || binding.ObjectType != raw.Type
                 || binding.PositionX != raw.Position.X || binding.PositionY != raw.Position.Y
@@ -461,6 +478,7 @@ public sealed partial class AuthoritativeCathedralNativePopulationPolicy
                     ObjectBindings = level.ObjectBindings.Select(binding =>
                         binding.MutationPolicy is AuthoritativeCathedralItemObjectMutationPolicy.NativeChest
                             or AuthoritativeCathedralItemObjectMutationPolicy.NativeSarcophagus
+                            or AuthoritativeCathedralItemObjectMutationPolicy.NativeBarrel
                             ? binding with {
                                 MutationPolicy = AuthoritativeCathedralItemObjectMutationPolicy.ExplicitlyRefused,
                             }

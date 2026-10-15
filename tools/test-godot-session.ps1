@@ -1,10 +1,28 @@
 [CmdletBinding()]
-param([string]$GodotExecutable, [ValidateSet('legacy', 'cohort')] [string]$PersistenceMode = 'legacy', [switch]$Visible, [switch]$Journey, [switch]$TownLoop, [switch]$Lifecycle, [switch]$Multiplayer, [switch]$MultiplayerRecovery, [switch]$MultiplayerPendingRecovery, [string]$CathedralProfileDirectory, [string]$CathedralDepthProfileDirectory, [string]$CathedralDoorProfileDirectory, [string]$CathedralNativeProfileDirectory, [ValidateSet('default', 'atlas', 'semantic', 'missing', 'undersized', 'invalid')] [string]$PresentationPackProfile = 'default', [switch]$CommandTimingTrace, [switch]$Cooperative, [switch]$CathedralNativeChest, [string]$CathedralNativeChestSessionDirectory, [switch]$CathedralNativeSarcophagus, [string]$CathedralNativeSarcophagusSessionDirectory)
+param([string]$GodotExecutable, [ValidateSet('legacy', 'cohort')] [string]$PersistenceMode = 'legacy', [switch]$Visible, [switch]$Journey, [switch]$TownLoop, [switch]$Lifecycle, [switch]$Multiplayer, [switch]$MultiplayerRecovery, [switch]$MultiplayerPendingRecovery, [string]$CathedralProfileDirectory, [string]$CathedralDepthProfileDirectory, [string]$CathedralDoorProfileDirectory, [string]$CathedralNativeProfileDirectory, [ValidateSet('default', 'atlas', 'semantic', 'missing', 'undersized', 'invalid')] [string]$PresentationPackProfile = 'default', [switch]$CommandTimingTrace, [switch]$Cooperative, [switch]$CathedralNativeChest, [string]$CathedralNativeChestSessionDirectory, [switch]$CathedralNativeSarcophagus, [string]$CathedralNativeSarcophagusSessionDirectory, [switch]$CathedralNativeBarrel, [string]$CathedralNativeBarrelSessionDirectory)
 
 $ErrorActionPreference = 'Stop'
 $PersistenceMode = $PersistenceMode.ToLowerInvariant()
 $PresentationPackProfile = $PresentationPackProfile.ToLowerInvariant()
 $cathedralNativeProfile = -not [string]::IsNullOrWhiteSpace($CathedralNativeProfileDirectory)
+$cathedralNativeBarrel = [bool]$CathedralNativeBarrel
+if ($cathedralNativeBarrel) {
+    $barrelConflicts = @('Visible', 'Journey', 'TownLoop', 'Lifecycle', 'Multiplayer',
+        'MultiplayerRecovery', 'MultiplayerPendingRecovery', 'Cooperative', 'SessionMenu',
+        'TrapDisarm', 'WarriorRepair', 'BardIdentify', 'MonkSearch', 'CathedralNativeChest',
+        'CathedralNativeSarcophagus', 'CathedralNativeChestSessionDirectory', 'CathedralNativeSarcophagusSessionDirectory',
+        'CathedralProfileDirectory', 'CathedralDepthProfileDirectory', 'CathedralDoorProfileDirectory', 'CommandTimingTrace')
+    if (-not $cathedralNativeProfile -or $PersistenceMode -cne 'cohort' -or
+        $PresentationPackProfile -ne 'default' -or
+        @($barrelConflicts | Where-Object { $PSBoundParameters.ContainsKey($_) -and $PSBoundParameters[$_] }).Count -ne 0 -or
+        [string]::IsNullOrWhiteSpace($CathedralNativeBarrelSessionDirectory) -or
+        -not [IO.Path]::IsPathFullyQualified($CathedralNativeBarrelSessionDirectory)) {
+        throw 'Native barrel acceptance requires a pinned profile, copied sarcophagus Town cohort and headless single-player mode.'
+    }
+    $CathedralNativeBarrelSessionDirectory = [IO.Path]::GetFullPath($CathedralNativeBarrelSessionDirectory)
+} elseif (-not [string]::IsNullOrWhiteSpace($CathedralNativeBarrelSessionDirectory)) {
+    throw 'CathedralNativeBarrelSessionDirectory is only valid with -CathedralNativeBarrel.'
+}
 $cathedralNativeSarcophagus = [bool]$CathedralNativeSarcophagus
 if ($cathedralNativeSarcophagus) {
     $sarcophagusConflicts = @('Visible', 'Journey', 'TownLoop', 'Lifecycle', 'Multiplayer',
@@ -79,7 +97,19 @@ if ($PresentationPackProfile -ne 'default' -and ($Journey -or $TownLoop -or $Lif
     throw 'Presentation pack fixtures require the separate base single-player acceptance path.'
 }
 $repositoryRoot = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot '..')).Path
-$sessionDirectory = if ($cathedralNativeSarcophagus) {
+$sessionDirectory = if ($cathedralNativeBarrel) {
+    $barrelSessionsRoot = Join-Path ([IO.Path]::GetFullPath($CathedralNativeProfileDirectory)) 'sessions'
+    $barrelSessionRoot = [IO.Path]::GetFullPath($CathedralNativeBarrelSessionDirectory)
+    if (-not $barrelSessionRoot.StartsWith($barrelSessionsRoot.TrimEnd('\', '/') + [IO.Path]::DirectorySeparatorChar, [StringComparison]::OrdinalIgnoreCase) -or
+        -not (Test-Path -LiteralPath (Join-Path $barrelSessionRoot 'resume-token.txt') -PathType Leaf) -or
+        -not (Test-Path -LiteralPath (Join-Path $barrelSessionRoot 'save/authoritative-cohort.json') -PathType Leaf) -or
+        -not (Test-Path -LiteralPath (Join-Path $barrelSessionRoot 'cathedral-native-population-session.json') -PathType Leaf) -or
+        -not (Test-Path -LiteralPath (Join-Path $barrelSessionRoot 'cathedralnativesarcophagusresume.json') -PathType Leaf) -or
+        -not (Test-Path -LiteralPath (Join-Path $barrelSessionRoot 'cathedralnativesarcophagusjourney.json') -PathType Leaf)) {
+        throw 'Native barrel acceptance requires a copied passed sarcophagus Town cohort under the pinned profile.'
+    }
+    $barrelSessionRoot
+} elseif ($cathedralNativeSarcophagus) {
     $nativeSessionsRoot = Join-Path ([IO.Path]::GetFullPath($CathedralNativeProfileDirectory)) 'sessions'
     $sarcophagusSessionRoot = [IO.Path]::GetFullPath($CathedralNativeSarcophagusSessionDirectory)
     if (-not $sarcophagusSessionRoot.StartsWith($nativeSessionsRoot.TrimEnd('\', '/') + [IO.Path]::DirectorySeparatorChar, [StringComparison]::OrdinalIgnoreCase) -or
@@ -122,7 +152,7 @@ function Read-ModeProcessEvidence([string]$Phase) {
     if ($evidence.PersistenceMode -cne $PersistenceMode -or $evidence.HostPersistence -cne $expectedHostPersistence) {
         throw "The $Phase process evidence did not preserve persistence mode '$PersistenceMode'."
     }
-    if ($Phase -in @('CooperativeJourney', 'CooperativeResume', 'CathedralNativeJourney', 'CathedralNativeResume', 'CathedralNativeChestJourney', 'CathedralNativeChestResume', 'CathedralNativeSarcophagusJourney', 'CathedralNativeSarcophagusResume') -and
+    if ($Phase -in @('CooperativeJourney', 'CooperativeResume', 'CathedralNativeJourney', 'CathedralNativeResume', 'CathedralNativeChestJourney', 'CathedralNativeChestResume', 'CathedralNativeSarcophagusJourney', 'CathedralNativeSarcophagusResume', 'CathedralNativeBarrelJourney', 'CathedralNativeBarrelResume') -and
         ([string]$evidence.ContentHash -cnotmatch '^[0-9a-f]{64}$' -or
          [string]$evidence.RulesetHash -cnotmatch '^[0-9a-f]{64}$')) {
         throw "The $Phase process evidence omitted validated host content/ruleset identity."
@@ -403,6 +433,90 @@ try {
     if ($PresentationPackProfile -ne 'default') {
         $env:GODEVILUTION_PRESENTATION_PACK = "res://assets/presentation-acceptance-$PresentationPackProfile.json"
     }
+    if ($CathedralNativeBarrel) {
+        $parameters.QuitAfterSeconds = 1200
+        & $launcher @parameters -AcceptancePhase CathedralNativeBarrelJourney
+        $barrelCreatedProcess = Read-ModeProcessEvidence 'CathedralNativeBarrelJourney'
+        $barrelCheckpointPath = Join-Path (Split-Path -Parent $barrelSessionRoot) ('barrel-town-checkpoint-' + [guid]::NewGuid().ToString('N'))
+        if (Test-Path -LiteralPath $barrelCheckpointPath) { throw 'The unique barrel checkpoint destination already exists.' }
+        New-Item -ItemType Directory -Path $barrelCheckpointPath -ErrorAction Stop | Out-Null
+        foreach ($checkpointEntry in (Get-ChildItem -LiteralPath $barrelSessionRoot -Force)) {
+            if ($checkpointEntry.Name -ceq 'launcher.lock') { continue }
+            Copy-Item -LiteralPath $checkpointEntry.FullName -Destination $barrelCheckpointPath -Recurse
+        }
+        if (-not (Test-Path -LiteralPath (Join-Path $barrelCheckpointPath 'resume-token.txt') -PathType Leaf) -or
+            -not (Test-Path -LiteralPath (Join-Path $barrelCheckpointPath 'save/authoritative-cohort.json') -PathType Leaf)) {
+            throw 'The preserved barrel Town checkpoint is incomplete.'
+        }
+        Write-Host "Preserved barrel Town checkpoint: $barrelCheckpointPath"
+        $parameters.QuitAfterSeconds = 600
+        & $launcher @parameters -AcceptancePhase CathedralNativeBarrelResume
+        $barrelResumedProcess = Read-ModeProcessEvidence 'CathedralNativeBarrelResume'
+        Assert-FreshProcessEvidence $barrelCreatedProcess $barrelResumedProcess 1
+        foreach ($field in @('ContentHash', 'RulesetHash', 'ProfileHash', 'ContentTreeHash',
+            'PopulationTreeHash', 'RuntimeTreeHash', 'ProfileKind', 'AdapterId')) {
+            if ($barrelCreatedProcess.$field -cne $barrelResumedProcess.$field) {
+                throw "Native barrel resume changed its pinned $field identity."
+            }
+        }
+        $barrelProfilePath = Join-Path $CathedralNativeProfileDirectory 'cathedral-native-population-playtest.json'
+        $barrelProfileHash = (Get-FileHash -LiteralPath $barrelProfilePath -Algorithm SHA256).Hash
+        if ($barrelProfileHash -cne 'A992857810C51CE2A802588D8F3386D94D4C6AA44127394553D1E797B9F82FC1' -or
+            $barrelCreatedProcess.ProfileHash -cne $barrelProfileHash -or
+            $barrelCreatedProcess.ProfileKind -cne 'cathedral-native-population-playtest' -or
+            $barrelCreatedProcess.AdapterId -cne 'devilution.diablo.cathedral-native-population.v1') {
+            throw 'Native barrel acceptance did not use the pinned population profile.'
+        }
+        $barrelPriorEvidence = Get-Content -LiteralPath (Join-Path $sessionDirectory 'cathedralnativesarcophagusresume.json') -Raw | ConvertFrom-Json
+        $barrelJourneyEvidence = Get-Content -LiteralPath (Join-Path $sessionDirectory 'cathedralnativebarreljourney.json') -Raw | ConvertFrom-Json
+        $barrelResumeEvidence = Get-Content -LiteralPath (Join-Path $sessionDirectory 'cathedralnativebarrelresume.json') -Raw | ConvertFrom-Json
+        foreach ($barrelPhaseEvidence in @($barrelJourneyEvidence, $barrelResumeEvidence)) {
+            if ($barrelPhaseEvidence.Passed -isnot [bool] -or -not $barrelPhaseEvidence.Passed -or
+                $barrelPhaseEvidence.Visible -isnot [bool] -or $barrelPhaseEvidence.Visible -or
+                $barrelPhaseEvidence.Mode -cne 'SinglePlayer' -or $barrelPhaseEvidence.LevelId -ne 0 -or
+                $barrelPhaseEvidence.ClassId -ne 1 -or $barrelPhaseEvidence.ContentHash -cne $barrelCreatedProcess.ContentHash -or
+                $barrelPhaseEvidence.RulesetHash -cne $barrelCreatedProcess.RulesetHash) {
+                throw 'Native barrel phase did not pass in Town under its pinned headless host.'
+            }
+            Assert-NativeEvidenceInteger $barrelPhaseEvidence.EntityId 'barrel player identity' 1 ([uint32]::MaxValue)
+            Assert-NativeEvidenceInteger $barrelPhaseEvidence.Sequence 'barrel command sequence' 1 ([long]::MaxValue)
+        }
+        $barrelOpenedEvidence = @($barrelJourneyEvidence.NativeBarrel.Opened)
+        $barrelLootEvidence = @($barrelOpenedEvidence | ForEach-Object { @($_.Loot) })
+        $barrelReleasedEvidence = @($barrelOpenedEvidence | ForEach-Object { @($_.ReleasedSkeletons) })
+        if (-not $barrelPriorEvidence.Passed -or
+            [uint64]$barrelJourneyEvidence.NativeBarrel.PriorSequence -ne [uint64]$barrelPriorEvidence.Sequence -or
+            [uint64]$barrelJourneyEvidence.Sequence -le [uint64]$barrelPriorEvidence.Sequence -or
+            [uint64]$barrelJourneyEvidence.NativeBarrel.Sequence -ne [uint64]$barrelJourneyEvidence.Sequence -or
+            [uint64]$barrelResumeEvidence.NativeBarrel.SavedSequence -ne [uint64]$barrelJourneyEvidence.Sequence -or
+            [uint64]$barrelResumeEvidence.Sequence -le [uint64]$barrelJourneyEvidence.Sequence -or
+            [uint64]$barrelResumeEvidence.NativeBarrel.FinalSequence -ne [uint64]$barrelResumeEvidence.Sequence -or
+            $barrelResumeEvidence.NativeBarrel.ResumedSessionMatched -isnot [bool] -or
+            -not $barrelResumeEvidence.NativeBarrel.ResumedSessionMatched -or
+            $barrelJourneyEvidence.EntityId -ne $barrelResumeEvidence.EntityId -or
+            $barrelOpenedEvidence.NativeTypeId -notcontains 57 -or $barrelOpenedEvidence.NativeTypeId -notcontains 58 -or
+            $barrelJourneyEvidence.NativeBarrel.LootBranchExercised -isnot [bool] -or
+            $barrelResumeEvidence.NativeBarrel.LootBranchExercised -isnot [bool] -or
+            $barrelJourneyEvidence.NativeBarrel.LootBranchExercised -ne ($barrelLootEvidence.Count -gt 0) -or
+            $barrelResumeEvidence.NativeBarrel.LootBranchExercised -ne $barrelJourneyEvidence.NativeBarrel.LootBranchExercised -or
+            $barrelResumeEvidence.NativeBarrel.OpenedRetained -ne $barrelOpenedEvidence.Count -or
+            $barrelResumeEvidence.NativeBarrel.ExactLootRetained -ne $barrelLootEvidence.Count -or
+            $barrelResumeEvidence.NativeBarrel.ReleasedSkeletonCorpsesRetained -ne $barrelReleasedEvidence.Count -or
+            $barrelResumeEvidence.NativeBarrel.RepeatDidNotBreakAgain -isnot [bool] -or
+            -not $barrelResumeEvidence.NativeBarrel.RepeatDidNotBreakAgain) {
+            throw 'Native barrel acceptance lacks old-save admission, both family branches, honest loot coverage or exact cold/repeat retention.'
+        }
+        foreach ($field in @('GeometrySha256', 'WorldItemsSha256')) {
+            Assert-NativeEvidenceHash $barrelJourneyEvidence.NativeBarrel.$field "barrel journey $field"
+            Assert-NativeEvidenceHash $barrelResumeEvidence.NativeBarrel.$field "barrel resume $field"
+            if ($barrelJourneyEvidence.NativeBarrel.$field -cne $barrelResumeEvidence.NativeBarrel.$field) {
+                throw "Native barrel resume changed retained $field."
+            }
+        }
+        Write-Host "PASS: Native barrel melee/explosion, Town checkpoint and exact fresh-host collision/item/actor retention. Evidence: $sessionDirectory"
+        return
+    }
+
     if ($CathedralNativeSarcophagus) {
         $parameters.QuitAfterSeconds = 900
         & $launcher @parameters -AcceptancePhase CathedralNativeSarcophagusJourney

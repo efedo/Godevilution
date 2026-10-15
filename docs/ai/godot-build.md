@@ -4,6 +4,27 @@ The checked-in presentation project pins `Godot.NET.Sdk/4.7.1`. Godot is not ass
 installed on every development machine, and repository tests that do not render
 the client must remain runnable without it.
 
+## Native barrel headless acceptance
+
+Use a copied passed sarcophagus Town cohort under the selected native profile:
+
+```powershell
+pwsh -NoProfile -File tools/test-godot-session.ps1 -PersistenceMode cohort -CathedralNativeProfileDirectory D:\Programming\native-profile -CathedralNativeBarrel -CathedralNativeBarrelSessionDirectory D:\Programming\native-profile\sessions\copied-town
+```
+
+Supply the qualified headless engine with `-GodotExecutable` where needed. The
+pair uses ordinary unarmed right-click melee for an ordinary57 and explosive58,
+then verifies exact fresh-host player/RNG/world retention and no duplicate break.
+`LootBranchExercised` reports actual UI loot coverage; an empty ordinary barrel
+is valid here. Mandatory native/owned-runtime checks separately establish loot
+allocation and exact cold restore, linked release and monster/player explosion
+ordering. The app records only branches it actually reaches. Both phases wait
+for a settled queued/ACK boundary across 64 authoritative ticks. Native travel
+uses a distance-derived 80-240 second budget; other route callers retain their
+120-second default. The wrapper preserves a completed Town checkpoint before
+Resume so a later harness fix can reuse it. Source SDK pins and normal-launch
+defaults remain.
+
 ## Native sarcophagus headless acceptance
 
 The opt-in native sarcophagus pair accepts a copied passed chest Town cohort

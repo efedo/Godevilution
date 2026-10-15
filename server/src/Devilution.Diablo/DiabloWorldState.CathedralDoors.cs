@@ -461,7 +461,9 @@ public sealed partial class DiabloWorldState
             if (nativePopulationPolicy is not null && nativePopulationPolicy.LevelId == level.LevelId) {
                 var staticObjectCells = level.StaticObjectBlockedCells.ToHashSet();
                 foreach (var position in nativePopulationPolicy.SolidObjectPositions()) {
-                    if (position.LevelId == level.LevelId)
+                    var entityId = nativePopulationPolicy.ObjectEntityAt(position.X, position.Y);
+                    if (position.LevelId == level.LevelId
+                        && (entityId is null || !IsNativeBarrelBroken(entityId.Value)))
                         staticObjectCells.Add(checked(position.Y * level.Width + position.X));
                 }
                 return staticObjectCells.Count == level.StaticObjectBlockedCells.Count

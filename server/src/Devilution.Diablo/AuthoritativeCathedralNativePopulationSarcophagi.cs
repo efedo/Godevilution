@@ -7,6 +7,7 @@ public sealed partial class AuthoritativeCathedralNativePopulationPolicy
     private static readonly HashSet<int> NativeSkeletonTypes = [8, 9, 10, 11, 20, 21, 22, 23, 24, 25, 26, 27];
     private readonly Dictionary<int, int> linkedPreSpawnOwnerObjectByMonsterSlot = [];
     private readonly Dictionary<int, AuthoritativeNativeMonsterInitialization> sarcophagusReservationsByObjectSlot = [];
+    private readonly Dictionary<int, AuthoritativeNativeMonsterInitialization> barrelReservationsByObjectSlot = [];
     private readonly IReadOnlyDictionary<int, AuthoritativeCathedralPopulationMonsterDefinition> populationMonsterDefinitions;
 
     private static Dictionary<int, int> GetNativePreSpawnOwnerLinks(

@@ -17,7 +17,7 @@ param(
     [string]$CathedralDoorProfileDirectory,
     [string]$CathedralNativeProfileDirectory,
     [ValidateSet(1, 4)] [int]$PerformanceParticipants = 1,
-    [ValidateSet('Create', 'Resume', 'Recovery', 'Journey', 'JourneyResume', 'TownLoop', 'TownLoopResume', 'Lifecycle', 'LifecycleResume', 'MultiplayerCreate', 'MultiplayerResume', 'MultiplayerRecovery', 'MultiplayerPendingRecovery', 'CooperativeJourney', 'CooperativeResume', 'Performance', 'PerformanceCreate', 'PerformanceResume', 'CathedralJourney', 'CathedralResume', 'CathedralDepthJourney', 'CathedralDepthResume', 'CathedralDoorJourney', 'CathedralDoorResume', 'CathedralNativeJourney', 'CathedralNativeResume', 'CathedralNativeChestJourney', 'CathedralNativeChestResume', 'CathedralNativeSarcophagusJourney', 'CathedralNativeSarcophagusResume')] [string]$AcceptancePhase,
+    [ValidateSet('Create', 'Resume', 'Recovery', 'Journey', 'JourneyResume', 'TownLoop', 'TownLoopResume', 'Lifecycle', 'LifecycleResume', 'MultiplayerCreate', 'MultiplayerResume', 'MultiplayerRecovery', 'MultiplayerPendingRecovery', 'CooperativeJourney', 'CooperativeResume', 'Performance', 'PerformanceCreate', 'PerformanceResume', 'CathedralJourney', 'CathedralResume', 'CathedralDepthJourney', 'CathedralDepthResume', 'CathedralDoorJourney', 'CathedralDoorResume', 'CathedralNativeJourney', 'CathedralNativeResume', 'CathedralNativeChestJourney', 'CathedralNativeChestResume', 'CathedralNativeSarcophagusJourney', 'CathedralNativeSarcophagusResume', 'CathedralNativeBarrelJourney', 'CathedralNativeBarrelResume')] [string]$AcceptancePhase,
     [switch]$CommandTimingTrace,
     [switch]$Automated,
     [string]$PerformanceResumeBaselinePath
@@ -92,7 +92,7 @@ if (($AcceptancePhase -in @('CathedralDepthJourney', 'CathedralDepthResume')) -a
 if (($AcceptancePhase -in @('CathedralDoorJourney', 'CathedralDoorResume')) -and -not $cathedralDoors) {
     throw 'Cathedral door acceptance requires an explicit compiled -CathedralDoorProfileDirectory.'
 }
-$cathedralNativePhases = @('CathedralNativeJourney', 'CathedralNativeResume', 'CathedralNativeChestJourney', 'CathedralNativeChestResume', 'CathedralNativeSarcophagusJourney', 'CathedralNativeSarcophagusResume')
+$cathedralNativePhases = @('CathedralNativeJourney', 'CathedralNativeResume', 'CathedralNativeChestJourney', 'CathedralNativeChestResume', 'CathedralNativeSarcophagusJourney', 'CathedralNativeSarcophagusResume', 'CathedralNativeBarrelJourney', 'CathedralNativeBarrelResume')
 $cathedralNativePhase = $AcceptancePhase -in $cathedralNativePhases
 if ($cathedralNative -and (($AcceptancePhase -and -not $cathedralNativePhase) -or $CommandTimingTrace -or
     $PersistenceMode -cne 'cohort' -or ($CharacterClassId -ge 0 -and $CharacterClassId -ne 1))) {

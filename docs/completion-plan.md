@@ -754,6 +754,14 @@ M2 closes only when every supported family and required set level meets its gate
 
 ## M3: Gameplay and content closure by playable route
 
+Native L1 ordinary/explosive barrels now include loot, reserved actor release,
+depth-first blast damage and v7 cold retention. Native comparisons and focused
+owner/codec/client checks pass. The headless R14 pair passes Town377 -> Town464
+checkpoint -> exact fresh-host L1 retention -> Town539, with both barrel types
+and no duplicate break. Its ordinary barrel is empty; native/owned-runtime tests
+supply mandatory loot, linked release and victim branches. Continue the next
+eligible whole playable family with necessary regressions; campaign gates remain open.
+
 The scoped native Town-to-Cathedral combat/earned-equipment/save-resume/Town
 services route is committed. Ordinary native L1 chests and sarcophagi now have
 shared-owner interaction and cold retention, with a passed headless loot route.

@@ -1014,6 +1014,8 @@ message ObjectSnapshot {
 	bool native_chest_interactable = 42;
 	// Server-validated capability for an unopened native L1 sarcophagus.
 	bool native_sarcophagus_interactable = 43;
+	// Server-validated melee target for a closed native L1 barrel.
+	bool native_barrel_melee_breakable = 44;
 }
 
 // Exact native door presentation and cached geometry. The enclosing object

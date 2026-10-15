@@ -108,6 +108,7 @@ public sealed partial class DiabloWorldState
         }
         foreach (var levelId in participants.Select(player => player.LevelId).Distinct()) {
             AdvanceNativeSarcophagusAnimations(levelId);
+            AdvanceNativeBarrelAnimations(levelId);
         }
     }
 
@@ -320,6 +321,13 @@ public sealed partial class DiabloWorldState
                 ValidateNativePopulationObject(value);
                 if (value.Destroyed || value.Breakable || value.CathedralDoor is not null)
                     throw new InvalidDataException("A native loot object has unsupported object behavior.");
+                isInteractive = binding.InitialSelectionRegion != 0 && !value.Activated;
+                break;
+            case AuthoritativeCathedralItemObjectMutationPolicy.NativeBarrel:
+                ValidateNativePopulationObject(value);
+                if (value.Destroyed || value.Breakable || value.CathedralDoor is not null)
+                    throw new InvalidDataException("A native barrel has unsupported object behavior.");
+                isSolid = !value.Activated;
                 isInteractive = binding.InitialSelectionRegion != 0 && !value.Activated;
                 break;
             case AuthoritativeCathedralItemObjectMutationPolicy.Immutable:

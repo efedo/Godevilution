@@ -710,6 +710,16 @@ public sealed partial class DiabloCombatCommandProcessor
         ulong appliedTick,
         IReadOnlyList<AuthoritativePlayerState> players)
     {
+        if (world.Objects.TryGetValue(targetEntityId, out var barrel)
+            && barrel.LevelId == player.LevelId
+            && world.CanBreakNativeBarrel(barrel)
+            && Math.Max(Math.Abs(barrel.PositionX - player.PositionX),
+                Math.Abs(barrel.PositionY - player.PositionY)) == 1
+            && GetAttackAnimationProfile(player) != DiabloPlayerAttackAnimationProfile.Bow) {
+            if (useNativePlayerActionTiming && !DiabloPlayerActionLifecycle.CanStart(player, appliedTick))
+                return DiabloCombatIntentResult.Rejected(DiabloRuleFailure.NotAllowed);
+            return AttackAt(player, barrel.PositionX, barrel.PositionY, appliedTick, players);
+        }
         if (!useNativePlayerActionTiming)
             return ResolveAttack(
                 player,
@@ -1063,6 +1073,9 @@ public sealed partial class DiabloCombatCommandProcessor
             var events = new List<DiabloGameplayEvent>();
             var attackHit = false;
             if (!ranged
+                && TryGetNativeMeleeBarrel(player, targetX, targetY, out var nativeBarrel)) {
+                attackHit = TryBreakNativeMeleeBarrel(player, nativeBarrel!, appliedTick, players, events);
+            } else if (!ranged
                 && TryGetMeleeBreakableObject(
                     player,
                     targetX,
@@ -5918,7 +5931,8 @@ public sealed partial class DiabloCombatCommandProcessor
                 continue;
             }
             if (world.OwnsNativePopulationLevel(target.LevelId)
-                && world.AdvanceNativeSarcophagusSpecialStand(target))
+                && (world.AdvanceNativeSarcophagusSpecialStand(target)
+                    || world.AdvanceNativeBarrelSpecialStand(target)))
                 continue;
             if (target.HitPoints <= 0) {
                 // Native Stone Curse keeps a dead target in its petrified
@@ -7586,6 +7600,7 @@ public sealed partial class DiabloCombatCommandProcessor
         if (!world.CombatTargets.ContainsKey(target.EntityId))
             return;
         world.CompleteNativeSarcophagusActorDeath(target.EntityId);
+        world.CompleteNativeBarrelActorDeath(target.EntityId);
         if (!world.CombatTargets.Remove(target.EntityId))
             throw new InvalidOperationException("A validated native corpse target disappeared before replacement.");
         world.Corpses[target.EntityId] = new AuthoritativeCorpse(
@@ -17901,14 +17916,25 @@ public sealed partial class DiabloCombatCommandProcessor
         AuthoritativePlayerState player,
         AuthoritativeCombatTarget target,
         int damageQ6,
-        ICollection<DiabloGameplayEvent> events)
+        ICollection<DiabloGameplayEvent> events,
+        bool nativeTrap = false,
+        bool nativeTrapResisted = false)
     {
         var wasAlive = target.HitPointsQ6 > 0;
+        // Native startHit(player, damage) tags every admitted hit, including a
+        // zero-damage resisted hit. Trap hits never add the barrel breaker.
+        if (wasAlive && !nativeTrap && world.OwnsNativePopulationLevel(target.LevelId))
+            target.RecordNativePlayerHit();
+        var nativeFatalTrap = nativeTrap && wasAlive && target.HitPointsQ6 - damageQ6 < 64;
         var lootPlayers = activePlayers.Count == 0 ? new[] { player } : activePlayers;
         AuthoritativeCathedralItemDeathTransaction? nativeLoot = null;
         uint? nativeExperienceReward = null;
-        if (wasAlive && damageQ6 >= target.HitPointsQ6 && world.HasNativeItemLevel(target.LevelId)) {
-            nativeExperienceReward = target.IsPlayerMinion ? 0 : GetEffectiveMonsterExperienceReward(target);
+        if (wasAlive && (damageQ6 >= target.HitPointsQ6 || nativeFatalTrap)
+            && world.HasNativeItemLevel(target.LevelId)) {
+            nativeExperienceReward = target.IsPlayerMinion
+                || nativeTrap && (!target.NativePlayerHitRecorded || player.Life < 64)
+                ? 0 : nativeTrap ? GetNativeTrapExperienceReward(player, target)
+                    : GetEffectiveMonsterExperienceReward(target);
             var resources = DiabloPlayerProgression.PreviewExperienceResources(player, nativeExperienceReward.Value, experience);
             nativeLoot = world.PrepareCathedralDeathLoot(target, player, lootPlayers,
                 new(true, false, resources.Mana, resources.Life));
@@ -17917,14 +17943,20 @@ public sealed partial class DiabloCombatCommandProcessor
             DiabloPlayerProgression.GrantExperience(player, nativeExperienceReward.Value, experience);
         }
         target.ApplyDamageQ6(damageQ6);
+        if (nativeFatalTrap && target.HitPointsQ6 > 0)
+            target.ApplyDamageQ6(target.HitPointsQ6);
         if (world.OwnsNativePopulationLevel(target.LevelId)) {
-            if (target.HitPointsQ6 <= 0)
+            if (target.HitPointsQ6 <= 0) {
                 InterruptNativeMelee(target);
-            else if (damageQ6 > 0 && !target.IsPetrified
+                world.InterruptNativeSarcophagusSpecialStand(target);
+                world.InterruptNativeBarrelSpecialStand(target);
+            } else if (!nativeTrapResisted && damageQ6 > 0 && !target.IsPetrified
                 && (DeterministicFixedPointQ6.ToWholeTruncated(damageQ6) >= GetEffectiveMonsterLevel(target) + 3
                     || target.NativeAi is "Sneak" or "Stalker" or "Unseen" or "IllWeav")) {
                 target.CancelMovement();
                 BeginNativeHitRecovery(target);
+                world.InterruptNativeSarcophagusSpecialStand(target);
+                world.InterruptNativeBarrelSpecialStand(target);
             }
         }
         if (damageQ6 > 0) {
@@ -17938,7 +17970,7 @@ public sealed partial class DiabloCombatCommandProcessor
         }
         if (wasAlive
             && target.HitPointsQ6 > 0
-            && damageQ6 > 0
+            && damageQ6 > 0 && !nativeTrapResisted
             && GetSneakTuning(target) is { } sneakTuning) {
             target.StartSneakRetreat(sneakTuning.RetreatTicks);
         }
@@ -17947,9 +17979,13 @@ public sealed partial class DiabloCombatCommandProcessor
 
         // Native MonsterDeath restores rndItemSeed and spawns loot before
         // clearing moving reservations or changing the monster's tile.
-        if (nativeLoot is not null)
+        if (nativeLoot is not null) {
             random.Restore(world.CommitCathedralDeathLoot(nativeLoot,
                 () => AllocateWorldItemEntityId(lootPlayers)));
+            // MonsterDeath randomizes its death sound after SpawnLoot, even muted.
+            if (nativeTrap && !target.IsDiablo)
+                random.AdvanceRndSeed();
+        }
 
         target.CancelMovement();
         target.BeginDeathAnimation();
@@ -17968,11 +18004,12 @@ public sealed partial class DiabloCombatCommandProcessor
         var experienceReward = nativeExperienceReward ?? GetEffectiveMonsterExperienceReward(target);
         if (nativeExperienceReward is null)
             DiabloPlayerProgression.GrantExperience(player, experienceReward, experience);
-        events.Add(new DiabloGameplayEvent(
-            DiabloGameplayEventKind.Experience,
-            player.EntityId,
-            player.EntityId,
-            checked((int)experienceReward)));
+        if (!nativeTrap || experienceReward != 0)
+            events.Add(new DiabloGameplayEvent(
+                DiabloGameplayEventKind.Experience,
+                player.EntityId,
+                player.EntityId,
+                checked((int)experienceReward)));
         if (nativeLoot is null && target.Drop is not null
             && FindAvailableWorldItemPosition(
                 target.LevelId,

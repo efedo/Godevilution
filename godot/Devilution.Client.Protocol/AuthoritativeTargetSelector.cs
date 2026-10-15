@@ -39,7 +39,8 @@ public static class AuthoritativeTargetSelector
             && IsAtPresentationPosition(candidate, targetX, targetY));
         if (remotePlayer is not null)
             return remotePlayer.EntityId;
-        return null;
+        return AuthoritativeObjectSelector.SelectNativeMeleeBarrelAt(
+            snapshot, targetX, targetY, localPlayer.EntityId)?.EntityId;
     }
 
     /** Resolves a visible living monster to its authoritative entity identity. */

@@ -2,6 +2,14 @@
 
 Notable changes to this fork are recorded below.
 
+- 2026-10-15: Add native L1 ordinary and explosive barrels through timed Godot
+  melee, native loot/reserved skeleton release and depth-first explosion chains.
+  Persist broken objects, emerging actors and hit credit in opt-in cohort v7,
+  preserving older saves and generic interaction/projectile restrictions. Native
+  and focused regressions pass; headless Town464/fresh-host/Town539 retains both
+  broken types without a duplicate break. Loot/release branches pass separately
+  in native/shared-owner tests; this live pair reports an empty ordinary barrel.
+
 - 2026-10-14: Integrate ordinary native L1 sarcophagi: source-matched loot/empty
   outcomes, exact reserved skeleton release, opening/emergence timing and v6
   cold persistence without changing untouched v1-v5 saves. Publish ordinary

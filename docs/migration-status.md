@@ -1,6 +1,6 @@
 # Godevilution Migration Status
 
-Status date: 2026-10-14. Estimate baseline: `8c03b365d`; semantic player presentation
+Status date: 2026-10-15. Estimate baseline: `8c03b365d`; semantic player presentation
 follows client-pack baseline `d0f748305`. Interrupted first-publication
 and Windows staging acceptance follows Godot cohort baseline `60f60c8a1` below. M0 session reliability
 landed in `819b73936`, integration remediation in `818f63f32`, and application
@@ -43,6 +43,35 @@ No client-side gameplay authority is implied by incomplete server coverage:
 unsupported behavior is a migration gap, not permission for local simulation.
 
 ## Current delivery position and verification limits
+
+Ordinary57 and explosive58 plain native L1 barrels now use timed melee with a
+transient server-approved client capability in Original Diablo single-player
+Normal mode. Normal barrels retain seeded loot/exact reserved skeleton release;
+explosions retain live RNG, monster/player hit ordering, fire resistance/block,
+credited XP/death loot and depth-first chains. Mutation-only cohort v7 retains
+broken collision, animation, linked emergence and hit credit while preserving
+old-save compatibility. The 16-case native oracle and managed operation comparison
+pass. Focused checks cover actual owned-runtime loot/cold restore, player/monster
+damage, three-barrel ordering, linked lifecycle, duplicate refusal, all 148 codec
+cases across corrected focused runs, and client/protocol targeting.
+
+Headless Godot R14 passes the full pair: copied prior Town377, ordinary57 and
+explosive58 unarmed right-click breaks, Town464, exact fresh-host cursor/player/
+RNG/world retention, L1 revisit and Town539. Both broken objects retain terminal
+animation and nonblocking collision. Repeat queues no command and changes no
+retained state. LootBranchExercised=false and released count=0 in this app run;
+mandatory native/owned-runtime evidence supplies loot, linked release and blast
+victim branches separately. Final Life2880/Mana1440/Gold98/XP892 and earned gear
+remain. The harness drains a stable queued/ACK boundary and budgets native travel
+by distance; it preserves a pre-Resume Town copy for necessary resume-only reruns.
+Evidence: `.local/native-barrels-20261015` (headless-barrels-r14.log, oracle-r7,
+integration-r9/integration-affected-r11 and retained focused reports).
+
+Earlier failures remain retained. R12's extra post-checkpoint command source is
+unclassified; the new drain closes the observed cursor boundary race. R13's
+progressing long Town route exceeded its old fixed deadline. The earlier unqueued
+barrel click and ambient combat refusal remain broader client/combat follow-ups.
+Normal adoption, rendered/full-world and campaign gates remain open.
 
 Ordinary untrapped native L1 sarcophagi now support native loot/empty outcomes,
 exact preallocated skeleton release and retained object/emergence animation.

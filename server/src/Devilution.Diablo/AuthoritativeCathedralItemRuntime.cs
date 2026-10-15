@@ -31,6 +31,7 @@ public enum AuthoritativeCathedralItemObjectMutationPolicy
     ExplicitlyRefused,
     NativeChest,
     NativeSarcophagus,
+    NativeBarrel,
 }
 
 /**

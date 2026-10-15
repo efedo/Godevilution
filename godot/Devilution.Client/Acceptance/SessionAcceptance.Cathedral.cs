@@ -88,7 +88,7 @@ public partial class SessionAcceptance
     }
 
     private async Task TravelCathedralRoute(Main main, string directory, uint warpId, uint destinationLevel, bool stopEarly,
-        int minimumDistinctPositions = 8)
+        int minimumDistinctPositions = 8, bool distanceBoundedApproachDeadline = false)
     {
         await Until(() => Settled(main), "Generated-route start did not settle.");
         var origin = main.ObservedSnapshot!.Players.Single().Clone();
@@ -96,6 +96,10 @@ public partial class SessionAcceptance
             .WarpTriggers.OrderBy(route => route.WarpId).ToArray();
         var index = Array.FindIndex(routes, route => route.WarpId == warpId);
         Require(index >= 0 && routes[index].Available && routes[index].TargetLevelId == destinationLevel, "The server did not publish the requested native route.");
+        var traversalDeadlineSeconds = distanceBoundedApproachDeadline
+            ? DestinationApproachDeadlineSeconds(origin.PositionX, origin.PositionY,
+                routes[index].TriggerX, routes[index].TriggerY, distanceBounded: true)
+            : 120;
         var sections = (TabContainer)main.FindChild("HudSections", true, false);
         await SelectTab(sections, 4);
         await SelectRoute((OptionButton)main.FindChild("Routes", true, false), index);
@@ -135,7 +139,7 @@ public partial class SessionAcceptance
                     return false;
                 boundary = FindAdjacentCathedralWall(main);
                 return boundary is not null;
-            }, "Continuous generated-route movement did not reach its boundary.", 120);
+            }, "Continuous generated-route movement did not reach its boundary.", traversalDeadlineSeconds);
             if (stopEarly) {
                 await ClickControl(main, sections, 4, "CancelTravel");
                 await Until(() => ((Button)main.FindChild("CancelTravel", true, false)).Disabled

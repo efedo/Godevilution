@@ -116,7 +116,7 @@ public sealed partial class DiabloSimulation
         // Restore mutable geometry/doors before validating live item placement provenance.
         simulation.WorldState.ConfigureNativePopulationPolicy(candidateOptions.NativePopulationPolicy,
             candidateOptions.NativeCathedralItems, candidateOptions.NativeMonsterMetadataFingerprint,
-            state.FormatVersion, state.NativeSarcophagi);
+            state.FormatVersion, state.NativeSarcophagi, state.NativeBarrels);
         simulation.WorldState.ValidateNativePopulationState(players);
         simulation.WorldState.ConfigureCathedralItems(candidateOptions.NativeCathedralItems, state.CathedralItems,
             candidateOptions.NativeMonsterMetadataFingerprint, candidateOptions.Items, simulation.Spells);
@@ -489,6 +489,7 @@ public sealed partial class DiabloSimulation
                 ?? throw new InvalidDataException("Native monster provenance is missing."),
                 monster.MonsterItemSeed, monster.MonsterAiSeed);
         }
+        target.RestoreNativePlayerHitRecorded(state.NativePlayerHitRecorded);
         target.RestoreSkeletonMeleeDelay(monster.SkeletonMeleeDelayTicks);
         target.RestoreSkeletonRangedMovementState(
             monster.SkeletonRangedMovementIdleTicks,
@@ -552,6 +553,7 @@ public sealed partial class DiabloSimulation
             new DiabloCohortCombatTargetState(target.CaptureCohortState(),
                 CaptureOptionalWorldItem(target.Drop), target.FallenRallyAttackPending) {
                     NativeInitialization = target.NativeInitialization,
+                    NativePlayerHitRecorded = target.NativePlayerHitRecorded,
                 },
             "combat target");
         return target;
@@ -1224,8 +1226,11 @@ public sealed partial class DiabloSimulation
         WorldState.ValidateNativePopulationState(sessions.Select(session => session.State));
         var infrastructure = WorldState.CaptureCohortInfrastructure();
 
+        var hasNativePlayerHit = WorldState.CombatTargets.Values.Any(target => target.NativePlayerHitRecorded);
+        var hasNativeBarrelState = WorldState.HasNativeBarrelMutations || hasNativePlayerHit;
         var state = new DiabloCohortState(
-            WorldState.HasNativeSarcophagusMutations ? DiabloCohortState.NativeSarcophagusFormatVersion
+            hasNativeBarrelState ? DiabloCohortState.NativeBarrelFormatVersion
+                : WorldState.HasNativeSarcophagusMutations ? DiabloCohortState.NativeSarcophagusFormatVersion
                 : WorldState.HasNativePopulation ? DiabloCohortState.NativeCombatFormatVersion
                 : WorldState.HasNativeCathedralItems ? DiabloCohortState.CathedralItemFormatVersion
                 : NativeMonsterMetadataFingerprint is not null ? DiabloCohortState.NativeMonsterFormatVersion
@@ -1256,6 +1261,7 @@ public sealed partial class DiabloSimulation
                     CaptureOptionalWorldItem(target.Drop),
                     target.FallenRallyAttackPending) {
                         NativeInitialization = target.NativeInitialization,
+                        NativePlayerHitRecorded = target.NativePlayerHitRecorded,
                     })
                 .ToArray(),
             WorldState.WorldItems.Values
@@ -1319,9 +1325,10 @@ public sealed partial class DiabloSimulation
             WorldInfrastructure: infrastructure) {
             CathedralDoors = WorldState.CaptureCathedralDoors(),
             CathedralItems = WorldState.CaptureCathedralItems(),
-            NativeSarcophagi = WorldState.HasNativeSarcophagusMutations
+            NativeSarcophagi = WorldState.HasNativeSarcophagusMutations || hasNativeBarrelState
                 ? WorldState.CaptureNativeSarcophagi()
                 : null,
+            NativeBarrels = hasNativeBarrelState ? WorldState.CaptureNativeBarrels() : null,
         };
         state.ValidateShape();
         return state;
