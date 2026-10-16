@@ -116,7 +116,7 @@ public sealed partial class DiabloSimulation
         // Restore mutable geometry/doors before validating live item placement provenance.
         simulation.WorldState.ConfigureNativePopulationPolicy(candidateOptions.NativePopulationPolicy,
             candidateOptions.NativeCathedralItems, candidateOptions.NativeMonsterMetadataFingerprint,
-            state.FormatVersion, state.NativeSarcophagi, state.NativeBarrels);
+            state.FormatVersion, state.NativeSarcophagi, state.NativeBarrels, state.NativeTraps);
         simulation.WorldState.ValidateNativePopulationState(players);
         simulation.WorldState.ConfigureCathedralItems(candidateOptions.NativeCathedralItems, state.CathedralItems,
             candidateOptions.NativeMonsterMetadataFingerprint, candidateOptions.Items, simulation.Spells);
@@ -715,6 +715,7 @@ public sealed partial class DiabloSimulation
             ElementalLightningDamage = state.ElementalLightningDamage,
             AttackHit = state.AttackHit,
             NativeWeaponArrow = state.NativeWeaponArrow,
+            NativeTrapArrow = state.NativeTrapArrow,
             PerilSelfDamageQ6 = state.PerilSelfDamageQ6,
             DoppelgangerProc = state.DoppelgangerProc,
             ActivationDelayTicks = state.ActivationDelayTicks,
@@ -1227,9 +1228,12 @@ public sealed partial class DiabloSimulation
         var infrastructure = WorldState.CaptureCohortInfrastructure();
 
         var hasNativePlayerHit = WorldState.CombatTargets.Values.Any(target => target.NativePlayerHitRecorded);
-        var hasNativeBarrelState = WorldState.HasNativeBarrelMutations || hasNativePlayerHit;
+        var hasNativeTrapState = WorldState.HasMutatedNativeTraps
+            || WorldState.Projectiles.Values.Any(projectile => projectile.NativeTrapArrow is not null);
+        var hasNativeBarrelState = WorldState.HasNativeBarrelMutations || hasNativePlayerHit || hasNativeTrapState;
         var state = new DiabloCohortState(
-            hasNativeBarrelState ? DiabloCohortState.NativeBarrelFormatVersion
+            hasNativeTrapState ? DiabloCohortState.NativeTrapFormatVersion
+                : hasNativeBarrelState ? DiabloCohortState.NativeBarrelFormatVersion
                 : WorldState.HasNativeSarcophagusMutations ? DiabloCohortState.NativeSarcophagusFormatVersion
                 : WorldState.HasNativePopulation ? DiabloCohortState.NativeCombatFormatVersion
                 : WorldState.HasNativeCathedralItems ? DiabloCohortState.CathedralItemFormatVersion
@@ -1329,6 +1333,7 @@ public sealed partial class DiabloSimulation
                 ? WorldState.CaptureNativeSarcophagi()
                 : null,
             NativeBarrels = hasNativeBarrelState ? WorldState.CaptureNativeBarrels() : null,
+            NativeTraps = hasNativeTrapState ? WorldState.CaptureNativeTraps() : null,
         };
         state.ValidateShape();
         return state;
@@ -1619,6 +1624,7 @@ public sealed partial class DiabloSimulation
             ElementalLightningDamage = projectile.ElementalLightningDamage,
             AttackHit = projectile.AttackHit,
             NativeWeaponArrow = projectile.NativeWeaponArrow,
+            NativeTrapArrow = projectile.NativeTrapArrow,
             PerilSelfDamageQ6 = projectile.PerilSelfDamageQ6,
             DoppelgangerProc = projectile.DoppelgangerProc,
             ActivationDelayTicks = projectile.ActivationDelayTicks,

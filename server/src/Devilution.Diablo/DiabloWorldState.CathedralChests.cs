@@ -52,6 +52,8 @@ public sealed partial class DiabloWorldState
             chest.PositionY,
             itemCount,
             itemBranch,
+            // Linked wall traps belong to the object owner. Raw5..7 has no
+            // intrinsic chest missile; that remains a separate refused family.
             TrapArmed: false,
             Player: new(true, false, player.BaseManaMaximum, player.BaseLifeMaximum)) {
                 ChestObjectSlot = objectBinding.NativeObjectSlot,

@@ -901,6 +901,48 @@ public sealed class AuthoritativeCohortStoreTests
         }
     }
 
+    [Theory(SkipUnless = nameof(IsWindows), Skip = "Windows long-path publication is Windows-specific.")]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void LongManagedCheckpointPublishesAndColdResumesWithAnExistingReader(bool longCanonical)
+    {
+        var root = CreateRoot();
+        var checkpointRoot = root;
+        var targetLength = longCanonical ? 282 : 214;
+        while (checkpointRoot.Length < targetLength - 1)
+            checkpointRoot = Path.Combine(checkpointRoot,
+                new string('x', Math.Min(40, targetLength - checkpointRoot.Length - 1)));
+        try {
+            using (var store = new AuthoritativeCohortStore(checkpointRoot)) {
+                AuthoritativeTcpServer.ValidateCohortRootForStartup(store);
+                Assert.Equal(longCanonical, store.CheckpointPath.Length > 260);
+                store.PublicationObserver = (phase, path) => {
+                    if (phase == AuthoritativePublicationPhase.AfterFlushBeforeRename)
+                        Assert.True(path.Length > 260);
+                };
+                store.Save(CreateDocument(1));
+                var first = File.ReadAllBytes(store.CheckpointPath);
+                using var oldReader = new FileStream(store.CheckpointPath, FileMode.Open,
+                    FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
+                store.Save(CreateDocument(2) with { Tick = 21 });
+                Assert.Equal(2UL, store.Load()!.Generation);
+                using var retained = new MemoryStream();
+                oldReader.CopyTo(retained);
+                Assert.Equal(first, retained.ToArray());
+            }
+            using (var resumed = new AuthoritativeCohortStore(checkpointRoot)) {
+                AuthoritativeTcpServer.ValidateCohortRootForStartup(resumed);
+                Assert.Equal(2UL, resumed.Load()!.Generation);
+                resumed.Save(CreateDocument(3) with { Tick = 22 });
+                Assert.Equal(22UL, resumed.Load()!.Tick);
+                Assert.Empty(Directory.EnumerateFileSystemEntries(Path.Combine(
+                    checkpointRoot, AuthoritativeCohortPublicationLayout.StagingDirectoryName)));
+            }
+        } finally {
+            DeleteRoot(root);
+        }
+    }
+
     private static AuthoritativeCohortDocument CreateDocument(ulong generation)
     {
         return new AuthoritativeCohortDocument(

@@ -90,6 +90,8 @@ public static class AuthoritativeObjectSelector
     public static bool HasAuthoritativeInteraction(ObjectSnapshot @object)
     {
         ArgumentNullException.ThrowIfNull(@object);
+        if (@object.NativeTrapInteractable)
+            return IsValidNativeTrapInteraction(@object);
         if (@object.NativeBarrelMeleeBreakable)
             return false;
         if (@object.NativeChestInteractable)
@@ -107,6 +109,28 @@ public static class AuthoritativeObjectSelector
             || @object.TrapArmed;
     }
 
+    /** Validates the explicit native L1 trap capability without inferring authority from armed state alone. */
+    public static bool IsValidNativeTrapInteraction(ObjectSnapshot @object)
+    {
+        ArgumentNullException.ThrowIfNull(@object);
+        if (!@object.NativeTrapInteractable
+            || !@object.TrapArmed
+            || @object.NativeChestInteractable
+            || @object.NativeSarcophagusInteractable
+            || @object.NativeBarrelMeleeBreakable
+            || @object.NativeObjectId is not (1 or 2 or 5 or 6 or 7)
+            || @object.LevelId == 0
+            || @object.Activated
+            || @object.Destroyed)
+            return false;
+
+        return @object.NativeObjectId is 1 or 2
+            ? @object.CathedralDoor is not null
+                && IsValidCathedralDoorInteraction(@object, allowArmedNativeTrap: true)
+            : @object.CathedralDoor is null
+                && IsPlainNativeInteraction(@object, allowArmedTrap: true);
+    }
+
     /** Validates the additive capability without inferring chest authority from an ID. */
     public static bool IsValidNativeChestInteraction(ObjectSnapshot @object)
     {
@@ -114,6 +138,7 @@ public static class AuthoritativeObjectSelector
         return @object.NativeChestInteractable
             && !@object.NativeSarcophagusInteractable
             && !@object.NativeBarrelMeleeBreakable
+            && !@object.NativeTrapInteractable
             && @object.NativeObjectId is >= 5 and <= 7
             && IsPlainNativeInteraction(@object);
     }
@@ -125,6 +150,7 @@ public static class AuthoritativeObjectSelector
         return @object.NativeSarcophagusInteractable
             && !@object.NativeChestInteractable
             && !@object.NativeBarrelMeleeBreakable
+            && !@object.NativeTrapInteractable
             && @object.NativeObjectId == 48
             && IsPlainNativeInteraction(@object);
     }
@@ -136,15 +162,16 @@ public static class AuthoritativeObjectSelector
         return @object.NativeBarrelMeleeBreakable
             && !@object.NativeChestInteractable
             && !@object.NativeSarcophagusInteractable
+            && !@object.NativeTrapInteractable
             && @object.NativeObjectId is 57 or 58
             && IsPlainNativeInteraction(@object);
     }
 
-    private static bool IsPlainNativeInteraction(ObjectSnapshot @object)
+    private static bool IsPlainNativeInteraction(ObjectSnapshot @object, bool allowArmedTrap = false)
         => @object.LevelId != 0
             && !@object.Activated
             && !@object.Destroyed
-            && !@object.TrapArmed
+            && (allowArmedTrap || !@object.TrapArmed)
             && !@object.Breakable
             && !@object.IsShrine
             && !@object.ActivateOnOccupancy
@@ -172,10 +199,13 @@ public static class AuthoritativeObjectSelector
             && @object.ProjectileSourceKind == 0
             && @object.DialogueMessageId == 0
             && @object.ActivatedAnimationFrame == 0
-            && @object.PresentationKind is ProtocolObjectPresentationKind.Unspecified
-                or ProtocolObjectPresentationKind.Generic;
+            && (@object.PresentationKind is ProtocolObjectPresentationKind.Unspecified
+                    or ProtocolObjectPresentationKind.Generic
+                || allowArmedTrap && @object.PresentationKind == ProtocolObjectPresentationKind.Trap);
 
-    private static bool IsValidCathedralDoorInteraction(ObjectSnapshot @object)
+    private static bool IsValidCathedralDoorInteraction(
+        ObjectSnapshot @object,
+        bool allowArmedNativeTrap = false)
     {
         var door = @object.CathedralDoor!;
         var closed = door.DoorState == 0;
@@ -209,7 +239,7 @@ public static class AuthoritativeObjectSelector
             && @object.RewardKind == 0
             && @object.QuestSequenceFollowUpKind == 0
             && @object.DialogueMessageId == 0
-            && !@object.TrapArmed
+            && (allowArmedNativeTrap || !@object.TrapArmed)
             && !@object.Breakable
             && !@object.IsShrine
             && !@object.ActivateOnOccupancy

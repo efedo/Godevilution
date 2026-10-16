@@ -754,6 +754,14 @@ M2 closes only when every supported family and required set level meets its gate
 
 ## M3: Gameplay and content closure by playable route
 
+Native L1 Arrow wall traps now extend the completed object route through Rogue
+disarm/ordinary operation, one-shot firing/impacts and cohort v8 cold retention.
+Native and focused checks pass. Headless Town539 -> three blocker kills -> actual
+Disarm Trap control -> Town609 -> exact fresh-host restore -> ordinary Healer ->
+L1 retained mutations -> Town709 passes. The public skill action does not prove
+the roll outcome; native/owned-runtime comparisons cover both outcomes. Continue
+the next eligible whole playable family; campaign and rendered gates remain open.
+
 Native L1 ordinary/explosive barrels now include loot, reserved actor release,
 depth-first blast damage and v7 cold retention. Native comparisons and focused
 owner/codec/client checks pass. The headless R14 pair passes Town377 -> Town464

@@ -12,7 +12,8 @@ public sealed partial class DiabloWorldState
         AuthoritativeCathedralItemRuntimeProfile? items, string? monsterMetadataFingerprint,
         int nativeSarcophagusFormatVersion = 0,
         IReadOnlyList<DiabloNativeSarcophagusState>? nativeSarcophagusStates = null,
-        IReadOnlyList<DiabloNativeBarrelState>? nativeBarrelStates = null)
+        IReadOnlyList<DiabloNativeBarrelState>? nativeBarrelStates = null,
+        IReadOnlyList<DiabloNativeTrapState>? nativeTrapStates = null)
     {
         if (policy is null)
             return;
@@ -28,6 +29,7 @@ public sealed partial class DiabloWorldState
         nativePopulationPolicy ??= policy;
         ConfigureNativeSarcophagi(policy, nativeSarcophagusFormatVersion, nativeSarcophagusStates);
         ConfigureNativeBarrels(policy, nativeSarcophagusFormatVersion, nativeBarrelStates);
+        ConfigureNativeTraps(policy, nativeSarcophagusFormatVersion, nativeTrapStates);
         policy.ValidateWorld(this);
         nativePopulationLifecycleConfigured = true;
     }

@@ -84,6 +84,9 @@ public sealed class AuthoritativeProjectile
     /** Present while this native-owned arrow still needs collision-time hit resolution. */
     public AuthoritativeNativeWeaponArrowState? NativeWeaponArrow { get; set; }
 
+    /** Native wall-trap source and flight clock, separate from player bow authority. */
+    public AuthoritativeNativeTrapArrowState? NativeTrapArrow { get; set; }
+
     /** Deferred Hellfire Peril self-damage for a weapon arrow. */
     public int PerilSelfDamageQ6 { get; init; }
 

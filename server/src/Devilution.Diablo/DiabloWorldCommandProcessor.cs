@@ -190,7 +190,7 @@ public sealed class DiabloWorldCommandProcessor
                 player,
                 operation.ObjectEntityId,
                 players.ToArray()),
-            DiabloDisarmTrapIntent disarm => DisarmTrap(player, disarm.ObjectEntityId),
+            DiabloDisarmTrapIntent disarm => DisarmTrap(player, disarm.ObjectEntityId, players.ToArray()),
             DiabloAdvanceQuestIntent quest => AdvanceQuest(player, quest.QuestId),
             DiabloTalkToQuestIntent talk => TalkToQuest(
                 player,
@@ -2170,7 +2170,8 @@ public sealed class DiabloWorldCommandProcessor
 
     private DiabloWorldIntentResult DisarmTrap(
         AuthoritativePlayerState player,
-        uint objectEntityId)
+        uint objectEntityId,
+        IReadOnlyList<AuthoritativePlayerState> participants)
     {
         if (!player.HasAbility(
                 DiabloPlayerAbilityKind.TrapDisarm,
@@ -2178,7 +2179,6 @@ public sealed class DiabloWorldCommandProcessor
             return DiabloWorldIntentResult.Rejected(DiabloRuleFailure.NotAllowed);
         }
         if (!world.Objects.TryGetValue(objectEntityId, out var @object)
-            || !@object.TrapArmed
             || @object.LevelId != player.LevelId
             || DeterministicGridMetrics.ChebyshevDistance(
                 @object.PositionX,
@@ -2188,6 +2188,19 @@ public sealed class DiabloWorldCommandProcessor
             return DiabloWorldIntentResult.Rejected(DiabloRuleFailure.InvalidTarget);
         }
 
+        if (world.IsNativeTrapTrigger(@object)) {
+            // ACTION_DISARM performs TryDisarm then OperateObject, including a failed roll.
+            var admission = OperateObject(player, objectEntityId, participants, applyEffects: false);
+            if (!admission.Succeeded)
+                return admission;
+            if (@object.TrapArmed
+                && world.TryDisarmNativeTrapTrigger(player, @object, random)
+                    == DiabloNativeTrapDisarmResult.NotApplicable)
+                return DiabloWorldIntentResult.Rejected(DiabloRuleFailure.NotAllowed);
+            return OperateObject(player, objectEntityId, participants);
+        }
+        if (!@object.TrapArmed)
+            return DiabloWorldIntentResult.Rejected(DiabloRuleFailure.InvalidTarget);
         if (!world.CanOperateNativeObject(@object))
             return DiabloWorldIntentResult.Rejected(DiabloRuleFailure.NotAllowed);
         @object.TrapArmed = false;

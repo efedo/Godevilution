@@ -2,6 +2,13 @@
 
 Notable changes to this fork are recorded below.
 
+- 2026-10-15: Integrate native L1 Arrow wall traps linked to doors/plain chests,
+  Rogue disarm-then-operate, ordered firing/flight/impacts and opt-in cohort v8
+  cold continuation while preserving older saves. Headless Rogue combat and
+  Disarm Trap controls reach Town609; fresh-host exact restore, ordinary Healer,
+  L1 retained state and Town709 pass without rearming the spent trap. Fix direct
+  Windows checkpoint APIs for long paths, including atomic native rename.
+
 - 2026-10-15: Add native L1 ordinary and explosive barrels through timed Godot
   melee, native loot/reserved skeleton release and depth-first explosion chains.
   Persist broken objects, emerging actors and hit credit in opt-in cohort v7,

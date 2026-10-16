@@ -426,7 +426,7 @@ public sealed class AuthoritativeCohortStore : IDisposable
         const int fileRenameInfoEx = 22;
         const int replaceExistingWithPosixSemantics = 0x3;
         using var handle = CreateFileW(
-            source,
+            WindowsCheckpointPath.ForNativeApi(source),
             deleteAccess,
             FileShare.ReadWrite | FileShare.Delete,
             IntPtr.Zero,
@@ -437,7 +437,7 @@ public sealed class AuthoritativeCohortStore : IDisposable
             throw RenameFailure(Marshal.GetLastPInvokeError());
 
         // Copy raw WCHARs, not an encoder's replacement-fallback spelling.
-        var name = (destination + '\0').ToCharArray();
+        var name = (WindowsCheckpointPath.ForNativeApi(destination) + '\0').ToCharArray();
         // FILE_RENAME_INFO's DWORD flags precede a pointer-aligned HANDLE,
         // DWORD byte length and the variable WCHAR name (no trailing padding).
         var rootOffset = IntPtr.Size == 8 ? 8 : 4;

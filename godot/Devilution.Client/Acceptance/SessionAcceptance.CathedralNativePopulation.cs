@@ -795,7 +795,8 @@ public partial class SessionAcceptance
         Dictionary<uint, int> approachCommands,
         HashSet<uint> operatedDoorIds,
         List<NativeDoorOperationEvidence> doorEvidence,
-        NativeCombatWorkBudget combatWork)
+        NativeCombatWorkBudget combatWork,
+        Func<ObjectSnapshot, bool>? doorFilter = null)
     {
         var snapshot = main.ObservedSnapshot!;
         var player = snapshot.Players.Single();
@@ -803,6 +804,7 @@ public partial class SessionAcceptance
         var doors = snapshot.Objects.Where(@object => @object.LevelId == player.LevelId
                 && @object.CathedralDoor is { DoorState: 0 }
                 && !operatedDoorIds.Contains(@object.EntityId)
+                && (doorFilter?.Invoke(@object) ?? true)
                 && AuthoritativeObjectSelector.HasAuthoritativeInteraction(@object))
             .OrderBy(@object => NativeDistance(player.PositionX, player.PositionY,
                 @object.PositionX, @object.PositionY))
@@ -1622,8 +1624,12 @@ public partial class SessionAcceptance
     private static void VerifyNativeDoorOperationStates(
         Main main,
         IReadOnlyCollection<NativeDoorOperationEvidence> expectedOperations)
+        => VerifyNativeDoorOperationStates(main.ObservedSnapshot!, expectedOperations);
+
+    private static void VerifyNativeDoorOperationStates(
+        Snapshot snapshot,
+        IReadOnlyCollection<NativeDoorOperationEvidence> expectedOperations)
     {
-        var snapshot = main.ObservedSnapshot!;
         foreach (var expected in expectedOperations) {
             var door = snapshot.Objects.SingleOrDefault(item => item.EntityId == expected.EntityId);
             Require(door is { LevelId: 1, CathedralDoor: not null }

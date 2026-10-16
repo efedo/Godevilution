@@ -445,6 +445,7 @@ public sealed partial class DiabloCombatCommandProcessor
         foreach (var player in players)
             AdvanceCombatModeWithEquipmentDamage(player, tick);
         AdvanceMonsters(tick, players, events);
+        AdvanceNativeTraps(players);
         AdvanceProjectiles(tick, players, events);
         return events;
     }
@@ -497,6 +498,7 @@ public sealed partial class DiabloCombatCommandProcessor
                 AdvancePlayerAction(player, tick, players, events);
         }
         AdvanceMonsters(tick, players, events);
+        AdvanceNativeTraps(players);
         AdvanceProjectiles(tick, players, events);
         return events;
     }
@@ -12212,6 +12214,10 @@ public sealed partial class DiabloCombatCommandProcessor
         IReadOnlyList<AuthoritativePlayerState> players,
         ICollection<DiabloDirectedGameplayEvent> events)
     {
+        if (projectile.NativeTrapArrow is not null) {
+            AdvanceNativeTrapArrow(tick, projectile, players, events);
+            return;
+        }
         if (projectile.NativeWeaponArrow is not null) {
             AdvanceNativeWeaponArrow(tick, projectile, players, events);
             return;

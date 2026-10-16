@@ -409,7 +409,8 @@ public partial class SessionAcceptance
         return null;
     }
 
-    private async Task MoveAdjacentToNativeChest(Main main, uint entityId)
+    private async Task MoveAdjacentToNativeChest(Main main, uint entityId,
+        Func<bool, Task<bool>>? resolveObstruction = null)
     {
         while (true) {
             var snapshot = main.ObservedSnapshot!;
@@ -420,6 +421,8 @@ public partial class SessionAcceptance
                 return;
             var geometry = DepthGeometryFromSnapshot(snapshot, chest.LevelId);
             var path = FindNativeChestApproachPath(snapshot, geometry, chest);
+            if (resolveObstruction is not null && await resolveObstruction(path is null))
+                continue;
             Require(path is { Count: > 0 }, $"No ordinary walk path reaches adjacent to native chest {entityId}.");
             var step = path![0];
             var dx = step.X - player.PositionX;
@@ -452,7 +455,10 @@ public partial class SessionAcceptance
             var receipt = main.ObservedCommandResult!;
             Require(receipt.Status == CommandStatus.Accepted
                 && receipt.RejectReason == CommandRejectReason.Unspecified,
-                $"The cardinal native chest approach was rejected: {receipt.Status}/{receipt.RejectReason}.");
+                $"The cardinal native chest approach was rejected: {receipt.Status}/{receipt.RejectReason}; "
+                + $"step=({step.X},{step.Y}); observedTick={snapshot.Tick}; appliedTick={receipt.AppliedTick}; "
+                + $"before[{DescribeNativeAttackSnapshot(snapshot, 0)}]; "
+                + $"after[{DescribeNativeAttackSnapshot(main.ObservedSnapshot!, 0)}].");
             var after = main.ObservedSnapshot!.Players.Single();
             Require(after.LevelId == player.LevelId && after.PositionX == step.X && after.PositionY == step.Y,
                 "The ordinary native chest approach did not reach its requested adjacent path cell.");

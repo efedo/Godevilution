@@ -84,7 +84,7 @@ public sealed record DiabloCohortCombatTargetState(
  * persistence, canonical hashing, and host participant ledgers intentionally
  * remain outside this record.
  */
-public sealed record DiabloCohortState(
+public sealed partial record DiabloCohortState(
     int FormatVersion,
     ulong Tick,
     DiabloCohortConfigurationState Configuration,
@@ -114,6 +114,7 @@ public sealed record DiabloCohortState(
     public const int NativeCombatFormatVersion = 5;
     public const int NativeSarcophagusFormatVersion = 6;
     public const int NativeBarrelFormatVersion = 7;
+    public const int NativeTrapFormatVersion = 8;
 
     /** Required in v2, optional in native-initialization v3, forbidden in v1. */
     public DiabloCathedralDoorCheckpoint? CathedralDoors { get; init; }
@@ -127,13 +128,16 @@ public sealed record DiabloCohortState(
     /** Complete native barrel/object and linked-actor lifecycle for v7. */
     public IReadOnlyList<DiabloNativeBarrelState>? NativeBarrels { get; init; }
 
+    /** Complete native wall-trap linkage and spent/disarmed state for v8. */
+    public IReadOnlyList<DiabloNativeTrapState>? NativeTraps { get; init; }
+
     /** Detached records are captured in deterministic identity order. */
     public void ValidateShape()
     {
         if ((FormatVersion != CurrentFormatVersion && FormatVersion != CathedralDoorFormatVersion
                 && FormatVersion != NativeMonsterFormatVersion && FormatVersion != CathedralItemFormatVersion
                 && FormatVersion != NativeCombatFormatVersion && FormatVersion != NativeSarcophagusFormatVersion
-                && FormatVersion != NativeBarrelFormatVersion)
+                && FormatVersion != NativeBarrelFormatVersion && FormatVersion != NativeTrapFormatVersion)
             || (FormatVersion == CurrentFormatVersion && CathedralDoors is not null)
             || (FormatVersion == CathedralDoorFormatVersion && CathedralDoors is null))
             throw new InvalidDataException(
@@ -141,12 +145,12 @@ public sealed record DiabloCohortState(
         CathedralDoors?.ValidateShape();
         ArgumentNullException.ThrowIfNull(Configuration);
         if (FormatVersion is NativeMonsterFormatVersion or CathedralItemFormatVersion or NativeCombatFormatVersion
-                or NativeSarcophagusFormatVersion or NativeBarrelFormatVersion
+                or NativeSarcophagusFormatVersion or NativeBarrelFormatVersion or NativeTrapFormatVersion
             ? !AuthoritativeNativeMonsterInitialization.IsFingerprint(Configuration.NativeMonsterMetadataFingerprint)
             : Configuration.NativeMonsterMetadataFingerprint is not null)
             throw new InvalidDataException("Native monster cohorts require their explicit metadata identity.");
         if (FormatVersion is CathedralItemFormatVersion or NativeCombatFormatVersion
-            or NativeSarcophagusFormatVersion or NativeBarrelFormatVersion) {
+            or NativeSarcophagusFormatVersion or NativeBarrelFormatVersion or NativeTrapFormatVersion) {
             if (CathedralItems is null)
                 throw new InvalidDataException("Native item cohorts require their complete item pools.");
             CathedralItems.ValidateShape();
@@ -157,13 +161,13 @@ public sealed record DiabloCohortState(
             || Configuration.CathedralItemGenerationFingerprint is not null) {
             throw new InvalidDataException("Native item state cannot be down-converted to an older cohort.");
         }
-        if (FormatVersion is NativeSarcophagusFormatVersion or NativeBarrelFormatVersion) {
+        if (FormatVersion is NativeSarcophagusFormatVersion or NativeBarrelFormatVersion or NativeTrapFormatVersion) {
             if (NativeSarcophagi is null)
                 throw new InvalidDataException("Native sarcophagus cohorts require their complete object lifecycle records.");
         } else if (NativeSarcophagi is not null) {
             throw new InvalidDataException("Native sarcophagus state cannot be down-converted to an older cohort.");
         }
-        if (FormatVersion == NativeBarrelFormatVersion) {
+        if (FormatVersion is NativeBarrelFormatVersion or NativeTrapFormatVersion) {
             if (NativeBarrels is null)
                 throw new InvalidDataException("Native barrel cohorts require their complete object lifecycle records.");
         } else if (NativeBarrels is not null) {
@@ -171,7 +175,7 @@ public sealed record DiabloCohortState(
         }
         ArgumentNullException.ThrowIfNull(Participants);
         ArgumentNullException.ThrowIfNull(CombatTargets);
-        if (FormatVersion != NativeBarrelFormatVersion
+        if (FormatVersion != NativeBarrelFormatVersion && FormatVersion != NativeTrapFormatVersion
             && CombatTargets.Any(target => target?.NativePlayerHitRecorded == true))
             throw new InvalidDataException("Native player-hit credit cannot be down-converted to an older cohort.");
         ArgumentNullException.ThrowIfNull(WorldItems);
@@ -234,11 +238,11 @@ public sealed record DiabloCohortState(
                 continue;
             native.ValidateTarget(target.Monster.EntityId, target.Monster.MonsterId,
                 target.Monster.LevelId, target.Monster.IsUnique, target.Monster.UniqueIdentity);
-            if (target.NativePlayerHitRecorded && FormatVersion != NativeBarrelFormatVersion)
+            if (target.NativePlayerHitRecorded && FormatVersion != NativeBarrelFormatVersion && FormatVersion != NativeTrapFormatVersion)
                 throw new InvalidDataException("Native player-hit credit requires the barrel-state cohort format.");
             if ((FormatVersion != NativeMonsterFormatVersion && FormatVersion != CathedralItemFormatVersion
                     && FormatVersion != NativeCombatFormatVersion && FormatVersion != NativeSarcophagusFormatVersion
-                    && FormatVersion != NativeBarrelFormatVersion)
+                    && FormatVersion != NativeBarrelFormatVersion && FormatVersion != NativeTrapFormatVersion)
                 || native.MetadataFingerprint != Configuration.NativeMonsterMetadataFingerprint
                 || !nativeSlots.Add((target.Monster.LevelId, native.InitialState.Slot)))
                 throw new InvalidDataException("Native monster initialization conflicts with cohort metadata or slots.");
@@ -249,11 +253,12 @@ public sealed record DiabloCohortState(
             throw new InvalidDataException("A Diablo cohort contains a null object.");
         if (Projectiles.Any(projectile => projectile is null))
             throw new InvalidDataException("A Diablo cohort contains a null projectile.");
-        if (FormatVersion is not (NativeCombatFormatVersion or NativeSarcophagusFormatVersion or NativeBarrelFormatVersion)
+        ValidateNativeTrapShape();
+        if (FormatVersion is not (NativeCombatFormatVersion or NativeSarcophagusFormatVersion or NativeBarrelFormatVersion or NativeTrapFormatVersion)
             && (CombatTargets.Any(target => target.Monster.NativeMeleeCursor is not null || target.Monster.NativeWalkCursor is not null)
                 || Projectiles.Any(projectile => projectile.NativeWeaponArrow is not null)))
             throw new InvalidDataException("Native combat state cannot be down-converted to an older cohort.");
-        if (FormatVersion is NativeCombatFormatVersion or NativeSarcophagusFormatVersion or NativeBarrelFormatVersion) {
+        if (FormatVersion is NativeCombatFormatVersion or NativeSarcophagusFormatVersion or NativeBarrelFormatVersion or NativeTrapFormatVersion) {
             if (CathedralItems!.Levels.Count != 1)
                 throw new InvalidDataException("Native combat cohorts require one owned level.");
             foreach (var target in CombatTargets) {
@@ -299,7 +304,7 @@ public sealed record DiabloCohortState(
                     throw new InvalidDataException("A native arrow has no valid unresolved collision state.");
             }
         }
-        if (FormatVersion is NativeSarcophagusFormatVersion or NativeBarrelFormatVersion) {
+        if (FormatVersion is NativeSarcophagusFormatVersion or NativeBarrelFormatVersion or NativeTrapFormatVersion) {
             var nativeSarcophagi = NativeSarcophagi
                 ?? throw new InvalidDataException("Native sarcophagus cohorts require their complete lifecycle records.");
             if (nativeSarcophagi.Any(value => value is null))
@@ -358,7 +363,7 @@ public sealed record DiabloCohortState(
                 }
             }
         }
-        if (FormatVersion == NativeBarrelFormatVersion) {
+        if (FormatVersion is NativeBarrelFormatVersion or NativeTrapFormatVersion) {
             var nativeBarrels = NativeBarrels
                 ?? throw new InvalidDataException("Native barrel cohorts require their complete lifecycle records.");
             if (nativeBarrels.Any(value => value is null))

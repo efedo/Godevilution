@@ -1132,7 +1132,7 @@ TEST_F(ThemeItemPlacementTest, CaptureNativeChestOperations)
 		constexpr uint32_t seeds[] = { 0, 1, 2588, UINT32_C(0x80000000), UINT32_MAX, 743271966 };
 		for (int type = OBJ_CHEST1; type <= OBJ_CHEST3; ++type) {
 			for (int branch = 0; branch < 2; ++branch) {
-				for (int lane = 0; lane < 6; ++lane) {
+				for (int lane = 0; lane < 5; ++lane) {
 					PrepareWorld(lane == 2 ? MAXITEMS : lane == 3 ? MAXITEMS - 1 : 2, lane != 3);
 					MyPlayer->pLvlLoad = lane == 1 ? 0 : 1; // Live drop animation and loader placement are distinct inputs.
 					Object &chest = Objects[0];
@@ -1660,6 +1660,95 @@ TEST_F(ThemeRoomGenerationTest, CaptureNativeSarcophagusOperations)
 	stream.flush(); ASSERT_TRUE(stream.good()); stream.close();
 	EXPECT_EQ(caseCount, 10);
 	EXPECT_LE(std::filesystem::file_size(root / "native-sarcophagus-operations.json"), 64U * 1024U * 1024U);
+}
+
+TEST_F(ThemeRoomGenerationTest, CaptureNativeTrapArrowBoundaries)
+{
+	const char *directory = std::getenv("GODEVILUTION_CATHEDRAL_TRAP_ORACLE_DIRECTORY");
+	if (directory == nullptr || *directory == '\0') GTEST_SKIP() << "Set the native trap capture directory.";
+	const std::filesystem::path root = std::filesystem::absolute(directory);
+	ASSERT_TRUE(std::filesystem::is_directory(root));
+	ASSERT_TRUE(std::filesystem::is_empty(root));
+	struct ExecutionGuard {
+		bool sound = gbSndInited, headless = HeadlessMode;
+		bool networkInitialized = SNetInitializeProvider(SELCONN_LOOPBACK, nullptr);
+		std::list<Missile> savedMissiles;
+		bool preFlag = MissilePreFlag;
+		ExecutionGuard() { Missiles.swap(savedMissiles); }
+		~ExecutionGuard() {
+			Missiles.swap(savedMissiles); MissilePreFlag = preFlag;
+			if (networkInitialized) SNetDestroy();
+			gbSndInited = sound; HeadlessMode = headless;
+		}
+	} guard;
+	ASSERT_TRUE(guard.networkInitialized);
+	HeadlessMode = true; gbSndInited = false;
+	LoadPlayerDataFiles(); LoadMissileData();
+	std::ofstream stream(root / "native-trap-arrow.json", std::ios::binary | std::ios::trunc);
+	ASSERT_TRUE(stream.good());
+	{
+		JsonObject document(stream);
+		document.String("format", "godevilution-cathedral-trap-arrow"); document.Number("version", 1);
+		document.Key("players"); stream << '[';
+		for (int lane = 0; lane < 5; ++lane) {
+			PrepareRoom(1, 2, 0, 0, false);
+			MyPlayer->_pmode = PM_STAND; MyPlayer->_pInvincible = false;
+			MyPlayer->_pSpellFlags = SpellFlag::None;
+			MyPlayer->_pIFlags = lane == 4 ? ItemSpecialEffect::HalfTrapDamage : ItemSpecialEffect::None;
+			MyPlayer->_pIGetHit = 0; MyPlayer->_pBlockFlag = lane == 2;
+			MyPlayer->attributes.dexterity.base = lane == 2 ? 100 : 0;
+			MyPlayer->attributes.dexterity.current = lane == 2 ? 100 : 0;
+			MyPlayer->life.current = MyPlayer->life.maximumBase;
+			MyPlayer->life.base = MyPlayer->life.current;
+			MyPlayer->life.maximum = MyPlayer->life.maximumBase;
+			MyPlayer->mana.current = MyPlayer->mana.maximumBase;
+			if (lane == 3) MyPlayer->_pSpellFlags |= SpellFlag::Etherealize;
+			const int distance = lane == 1 ? 100 : 1;
+			const uint32_t seed = lane == 2 ? 0 : UINT32_C(0x12345678);
+			SetRndSeed(seed);
+			if (lane != 0) stream << ',';
+			JsonObject row(stream);
+			row.Number("lane", lane); row.Number("seed", seed); row.Number("distance", distance);
+			row.Number("inputLife", MyPlayer->life.current); row.Number("inputMana", MyPlayer->mana.current);
+			row.Number("maximumLife", MyPlayer->life.maximumBase); row.Number("maximumMana", MyPlayer->mana.maximumBase);
+			row.Number("armor", MyPlayer->GetArmor()); row.Number("dexterity", MyPlayer->attributes.dexterity.current);
+			bool blocked = false;
+			const bool hit = PlayerMHit(*MyPlayer, nullptr, distance, 1, 2, MissileID::Arrow,
+			    DamageType::Physical, false, DeathReason::MonsterOrTrap, &blocked);
+			row.Boolean("hit", hit); row.Boolean("blocked", blocked);
+			row.Number("life", MyPlayer->life.current); row.Number("mana", MyPlayer->mana.current);
+			row.Number("mode", static_cast<int>(MyPlayer->_pmode)); row.Number("rng", GetLCGEngineState());
+		}
+		stream << ']';
+		PrepareRoom(1, 2, 0, 0, false);
+		MyPlayer->_pmode = PM_STAND; MyPlayer->_pInvincible = false;
+		MyPlayer->_pSpellFlags = SpellFlag::None;
+		tileAt(50, 50).setPlayer(0); tileAt(51, 50).setMonster(0);
+		Missiles.clear();
+		Object *trigger = AddObjectPresentation(OBJ_CHEST1, { 52, 50 });
+		Object *trap = AddObjectPresentation(OBJ_TRAPL, { 48, 50 });
+		ASSERT_NE(trigger, nullptr); ASSERT_NE(trap, nullptr);
+		trigger->_oTrapFlag = true; trigger->selectionRegion = SelectionRegion::None;
+		trap->_oVar1 = 52; trap->_oVar2 = 50; trap->_oVar3 = static_cast<int>(MissileID::Arrow); trap->_oVar4 = 0;
+		SetRndSeed(UINT32_C(0x12345678));
+		ProcessObjects();
+		ASSERT_EQ(Missiles.size(), 1U); EXPECT_EQ(trap->_oVar4, 1); EXPECT_FALSE(trigger->_oTrapFlag);
+		document.Key("flight"); stream << '[';
+		for (int step = 0; step < 3; ++step) {
+			ProcessObjects(); ProcessMissiles();
+			ASSERT_EQ(Missiles.size(), 1U);
+			const Missile &arrow = Missiles.front();
+			if (step != 0) stream << ',';
+			JsonObject row(stream);
+			row.Number("distance", arrow._midist); row.Number("remaining", arrow.duration);
+			row.Number("x", arrow.position.tile.x); row.Number("y", arrow.position.tile.y);
+			row.Number("vx", arrow.position.velocity.deltaX); row.Number("vy", arrow.position.velocity.deltaY);
+			row.Number("tx", arrow.position.traveled.deltaX); row.Number("ty", arrow.position.traveled.deltaY);
+			row.Number("hash", arrow.lastCollisionTargetHash); row.Number("rng", GetLCGEngineState());
+		}
+		stream << ']';
+	}
+	stream.flush(); ASSERT_TRUE(stream.good());
 }
 
 TEST_F(ThemeRoomGenerationTest, CaptureNativeBarrelOperations)

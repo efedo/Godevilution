@@ -4,6 +4,31 @@ The checked-in presentation project pins `Godot.NET.Sdk/4.7.1`. Godot is not ass
 installed on every development machine, and repository tests that do not render
 the client must remain runnable without it.
 
+## Native wall-trap headless acceptance
+
+Use a copied passed R14 barrel-resume Town cohort (cursor 539) under the pinned
+native profile. Supply the qualified engine with `-GodotExecutable` when needed:
+
+```powershell
+pwsh -NoProfile -File tools/test-godot-session.ps1 -PersistenceMode cohort -CathedralNativeProfileDirectory D:\Programming\native-profile -CathedralNativeTrap -CathedralNativeTrapSessionDirectory D:\Programming\native-profile\sessions\copied-town
+```
+
+The pair uses the existing Rogue Disarm Trap control on the armed L1 door,
+checks its accepted same-command operation, saves in Town, and starts a fresh
+host/client from a preserved checkpoint copy before the L1 revisit. It compares
+the exact saved player/RNG and full native world before any resumed input.
+The Rogue then uses the Town Healer and revisits L1; trap/door, geometry, items
+and corpses must remain exact while live actors/projectiles may advance. The
+spent trap must not regain its disarm capability. Approach uses ordinary bow
+combat against reachable blockers and replans each movement. This proves the
+disarm action, not a successful random roll. Native and owned-runtime tests
+separately cover failed and successful rolls, Arrow impacts, same-tick firing
+and in-flight cold resume.
+The two launcher builds use a single MSBuild node without compiler-server reuse.
+Direct Windows checkpoint metadata and rename calls support long stage/canonical
+paths through the extended native namespace; publication semantics remain intact.
+Normal launch/profile defaults and the source SDK pin remain unchanged.
+
 ## Native barrel headless acceptance
 
 Use a copied passed sarcophagus Town cohort under the selected native profile:

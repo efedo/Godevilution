@@ -581,6 +581,13 @@ Windows toolchain command.
   consistent closed-chest state before offering ordinary interaction; they
   must not infer permission from `native_object_id`. It is excluded from
   persisted gameplay state and discarded on reverse protocol mapping.
+- `ObjectSnapshot.native_trap_interactable` field 45 is a transient,
+  server-derived capability for an armed native Cathedral L1 door or chest
+  whose linked arrow trigger is supported. It defaults false and clears when
+  the trap is disarmed or spent; clients require the capability plus a
+  consistent armed object shape before offering the Rogue disarm interaction.
+  The capability is excluded from persisted gameplay state and discarded on
+  reverse protocol mapping.
 - `MonsterSnapshot` fields 18-21 carry native-compatible moving occupancy:
   movement state, the adjacent future tile, and petrification. Native
   projection marks the current tile as positive occupancy and the future tile

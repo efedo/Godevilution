@@ -331,7 +331,7 @@ public sealed class WindowsCheckpointStageTests
                 .GetAccessControl(SecuritySections);
             changed.SetSecurityDescriptorBinaryForm(
                 original.GetSecurityDescriptorBinaryForm(),
-                SecuritySections);
+                AccessControlSections.Access);
             changed.SetAccessRuleProtection(isProtected: true, preserveInheritance: false);
             changed.SetAccessRule(new FileSystemAccessRule(
                 identity,
@@ -507,6 +507,56 @@ public sealed class WindowsCheckpointStageTests
 
     private static string SecurityForm(ObjectSecurity security)
         => security.GetSecurityDescriptorSddlForm(SecuritySections);
+
+    [Theory(SkipUnless = nameof(IsWindows), Skip = "Windows long-path metadata APIs are Windows-specific.")]
+    [InlineData(false, false)]
+    [InlineData(true, false)]
+    [InlineData(true, true)]
+    public void LongCheckpointStagePreservesPayloadSecurityAndNamedStreams(bool replacing, bool longCanonical)
+    {
+        var root = CreateRoot();
+        var checkpointRoot = root;
+        var targetLength = longCanonical ? 282 : 214;
+        while (checkpointRoot.Length < targetLength - 1)
+            checkpointRoot = Path.Combine(checkpointRoot,
+                new string('x', Math.Min(40, targetLength - checkpointRoot.Length - 1)));
+        var stageDirectory = Path.Combine(checkpointRoot, ".authoritative-staging");
+        var canonical = Path.Combine(checkpointRoot, "authoritative-cohort.json");
+        var stage = Path.Combine(stageDirectory, "authoritative-cohort.json." + Guid.NewGuid().ToString("N") + ".tmp");
+        const string streamSuffix = ":checkpoint-meta:$DATA";
+        var original = new byte[] { 9, 8, 7 };
+        var payload = new byte[] { 1, 2, 3, 4 };
+        Assert.True(stage.Length > 260);
+        Assert.Equal(longCanonical, canonical.Length > 260);
+        Assert.StartsWith(Path.GetFullPath(Path.GetTempPath()), Path.GetFullPath(root));
+        try {
+            Directory.CreateDirectory(checkpointRoot);
+            if (replacing) {
+                File.WriteAllBytes(canonical, original);
+                File.WriteAllText(canonical + streamSuffix, "retained metadata");
+            }
+            WindowsCheckpointStage.EnsureStageDirectory(checkpointRoot, stageDirectory);
+            using var checkpoint = WindowsCheckpointStage.Create(stage, canonical, stageDirectory);
+            Assert.Equal(0, new FileInfo(stage).Length);
+            var security = SecurityForm(GetFileSecurity(stage));
+            if (replacing) {
+                Assert.Equal(SecurityForm(GetFileSecurity(canonical)), security);
+                Assert.Equal("retained metadata", File.ReadAllText(stage + streamSuffix));
+            }
+            checkpoint.WriteAndFlush(payload);
+            checkpoint.FinalizeMetadataAndClose();
+            Assert.Equal(payload, File.ReadAllBytes(stage));
+            Assert.Equal(security, SecurityForm(GetFileSecurity(stage)));
+            if (replacing) {
+                Assert.Equal(original, File.ReadAllBytes(canonical));
+                Assert.Equal("retained metadata", File.ReadAllText(stage + streamSuffix));
+            } else {
+                Assert.False(File.Exists(canonical));
+            }
+        } finally {
+            DeleteRoot(root);
+        }
+    }
 
     private static string CreateRoot()
         => Path.Combine(

@@ -252,6 +252,12 @@ public sealed partial class AuthoritativeCathedralNativePopulationPolicy
         if (current.LevelId != LevelId || !objectRows.TryGetValue(current.EntityId, out var raw))
             throw new InvalidDataException("A populated native object has no owned generation binding.");
         var expected = objectSnapshots[current.EntityId];
+        if (expected.TrapArmed && !current.TrapArmed
+            && HasSupportedNativeTrapLink(InitialState, raw)) {
+            // The per-world trap owner validates whether this one-way raw trap-flag
+            // change came from a successful disarm or a completed wall trap.
+            current = current with { TrapArmed = expected.TrapArmed };
+        }
         if (raw.DoorFlag) {
             // The separate door owner validates its state, cached geometry and scalar changes.
             current = current with {
@@ -289,7 +295,8 @@ public sealed partial class AuthoritativeCathedralNativePopulationPolicy
     {
         ValidateObject(value);
         var raw = objectRows[value.EntityId];
-        return raw.DoorFlag && !raw.TrapFlag && value.CathedralDoor is not null
+        var supportedLinkedTrapDoor = raw.TrapFlag && HasSupportedNativeTrapLink(InitialState, raw);
+        return raw.DoorFlag && (!raw.TrapFlag || supportedLinkedTrapDoor) && value.CathedralDoor is not null
             || CanOperateNativeChest(value)
             || CanOperateNativeSarcophagus(value);
     }
@@ -341,17 +348,15 @@ public sealed partial class AuthoritativeCathedralNativePopulationPolicy
         AuthoritativeCathedralThemeRoomState state,
         AuthoritativeCathedralPopulationObjectState raw)
     {
-        if (raw.Type is not (Chest1 or Chest2 or Chest3) || raw.TrapFlag
+        var hasTrap = HasLinkedNativeTrap(state, raw);
+        if (raw.Type is not (Chest1 or Chest2 or Chest3)
+            || raw.TrapFlag != hasTrap
+            || hasTrap && !HasSupportedNativeTrapLink(state, raw)
             || raw.SelectionRegion == 0 || raw.AnimFrame > byte.MaxValue - 2
             || raw.Var1 < 0 || raw.Var1 > raw.Type - Chest1 + 1
             || raw.Var2 is < 0 or >= 8)
             return false;
-        return !state.ActiveObjectIds.Take(state.ActiveObjectCount).Any(slot => {
-            var candidate = state.ObjectSlots[slot];
-            return candidate.Type is LeftTrap or RightTrap
-                && candidate.Var1 == raw.Position.X
-                && candidate.Var2 == raw.Position.Y;
-        });
+        return true;
     }
 
     private bool IsSupportedNativeChest(AuthoritativeCathedralPopulationObjectState raw)
@@ -394,6 +399,7 @@ public sealed partial class AuthoritativeCathedralNativePopulationPolicy
             ValidateObject(value);
         world.ValidateNativeSarcophagusState(this);
         world.ValidateNativeBarrelState(this);
+        world.ValidateNativeTrapState(this);
         foreach (var entry in liveInitializations) {
             if (world.CombatTargets.TryGetValue(entry.Key, out var current)) {
                 if (current.LevelId != LevelId || current.NativeInitialization != entry.Value

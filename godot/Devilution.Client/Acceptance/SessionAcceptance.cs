@@ -38,7 +38,7 @@ public partial class SessionAcceptance : Node
     private async Task RunAsync()
     {
         var phase = Environment.GetEnvironmentVariable("GODEVILUTION_ACCEPTANCE_PHASE");
-        if (phase is not ("Create" or "Resume" or "Recovery" or "Journey" or "JourneyResume" or "TownLoop" or "TownLoopResume" or "Lifecycle" or "LifecycleResume" or "MultiplayerCreate" or "MultiplayerResume" or "MultiplayerRecovery" or "MultiplayerPendingRecovery" or "CooperativeJourney" or "CooperativeResume" or "Performance" or "PerformanceCreate" or "PerformanceResume" or "CathedralJourney" or "CathedralResume" or "CathedralDepthJourney" or "CathedralDepthResume" or "CathedralDoorJourney" or "CathedralDoorResume" or "CathedralNativeJourney" or "CathedralNativeResume" or "CathedralNativeChestJourney" or "CathedralNativeChestResume" or "CathedralNativeSarcophagusJourney" or "CathedralNativeSarcophagusResume" or "CathedralNativeBarrelJourney" or "CathedralNativeBarrelResume"))
+        if (phase is not ("Create" or "Resume" or "Recovery" or "Journey" or "JourneyResume" or "TownLoop" or "TownLoopResume" or "Lifecycle" or "LifecycleResume" or "MultiplayerCreate" or "MultiplayerResume" or "MultiplayerRecovery" or "MultiplayerPendingRecovery" or "CooperativeJourney" or "CooperativeResume" or "Performance" or "PerformanceCreate" or "PerformanceResume" or "CathedralJourney" or "CathedralResume" or "CathedralDepthJourney" or "CathedralDepthResume" or "CathedralDoorJourney" or "CathedralDoorResume" or "CathedralNativeJourney" or "CathedralNativeResume" or "CathedralNativeChestJourney" or "CathedralNativeChestResume" or "CathedralNativeSarcophagusJourney" or "CathedralNativeSarcophagusResume" or "CathedralNativeBarrelJourney" or "CathedralNativeBarrelResume" or "CathedralNativeTrapJourney" or "CathedralNativeTrapResume"))
             throw new InvalidOperationException("Explicit acceptance phase is required.");
         var portalPreview = Environment.GetEnvironmentVariable("GODEVILUTION_PORTAL_PREVIEW") == "1";
         var directory = Environment.GetEnvironmentVariable("GODEVILUTION_ACCEPTANCE_DIRECTORY")
@@ -98,6 +98,8 @@ public partial class SessionAcceptance : Node
                     "CathedralNativeSarcophagusResume" => "cathedralnativesarcophagusjourney.json",
                     "CathedralNativeBarrelJourney" => "cathedralnativesarcophagusresume.json",
                     "CathedralNativeBarrelResume" => "cathedralnativebarreljourney.json",
+                    "CathedralNativeTrapJourney" => "cathedralnativebarrelresume.json",
+                    "CathedralNativeTrapResume" => "cathedralnativetrapjourney.json",
                     "LifecycleResume" => "lifecycle.json", _ => "create.json",
                 })))
                 ?? throw new InvalidDataException("The creation evidence is empty.");
@@ -118,7 +120,7 @@ public partial class SessionAcceptance : Node
             : null;
         var center = connect.GetGlobalRect().GetCenter();
         Require(GetViewport().GetVisibleRect().HasPoint(center), $"The Connect button {connect.GetGlobalRect()} is outside viewport {GetViewport().GetVisibleRect()}.");
-        var nativeAdmissionPhase = phase is "CathedralNativeJourney" or "CathedralNativeResume" or "CathedralNativeChestJourney" or "CathedralNativeChestResume" or "CathedralNativeSarcophagusJourney" or "CathedralNativeSarcophagusResume" or "CathedralNativeBarrelJourney" or "CathedralNativeBarrelResume";
+        var nativeAdmissionPhase = phase is "CathedralNativeJourney" or "CathedralNativeResume" or "CathedralNativeChestJourney" or "CathedralNativeChestResume" or "CathedralNativeSarcophagusJourney" or "CathedralNativeSarcophagusResume" or "CathedralNativeBarrelJourney" or "CathedralNativeBarrelResume" or "CathedralNativeTrapJourney" or "CathedralNativeTrapResume";
         var nativeSubmissionCount = 0;
         var nativeJourneySubmittedExpectedIdentity = false;
         var nativeResumeSubmittedExpectedForm = false;
@@ -207,6 +209,10 @@ public partial class SessionAcceptance : Node
         }
         if (phase is "CathedralNativeBarrelJourney" or "CathedralNativeBarrelResume") {
             await VerifyCathedralNativeBarrelsAsync(main, directory, phase, visible, previous);
+            return;
+        }
+        if (phase is "CathedralNativeTrapJourney" or "CathedralNativeTrapResume") {
+            await VerifyCathedralNativeTrapsAsync(main, directory, phase, visible, previous);
             return;
         }
         if (phase is "CathedralNativeSarcophagusJourney" or "CathedralNativeSarcophagusResume") {
@@ -409,6 +415,8 @@ public partial class SessionAcceptance : Node
                 "CathedralNativeJourney" or "CathedralNativeResume" or "CathedralNativeChestJourney" or "CathedralNativeChestResume" or "CathedralNativeSarcophagusJourney" or "CathedralNativeSarcophagusResume" => 885,
             "CathedralNativeBarrelJourney" => 1185,
             "CathedralNativeBarrelResume" => 585,
+            "CathedralNativeTrapJourney" => 885,
+            "CathedralNativeTrapResume" => 585,
                 "Lifecycle" => 345, "LifecycleResume" => 70,
                 "TownLoop" => 225, "Journey" => 150, "MultiplayerCreate" or "MultiplayerResume" => 70,
                 "MultiplayerRecovery" => 180, "CooperativeJourney" => 285, "CooperativeResume" => 225, _ => 40,

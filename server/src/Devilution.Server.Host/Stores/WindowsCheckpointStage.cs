@@ -491,7 +491,7 @@ internal sealed class WindowsCheckpointStage : IDisposable
                 SecurityDescriptor = descriptorPointer,
                 InheritHandle = 0,
             };
-            if (CreateDirectoryW(path, ref securityAttributes))
+            if (CreateDirectoryW(WindowsCheckpointPath.ForNativeApi(path), ref securityAttributes))
                 return true;
             var error = Marshal.GetLastWin32Error();
             if (error == ErrorAlreadyExists) {
@@ -581,7 +581,7 @@ internal sealed class WindowsCheckpointStage : IDisposable
             "access-affecting security labels, resource attributes, or scopes");
 
         var result = GetNamedSecurityInfoW(
-            path,
+            WindowsCheckpointPath.ForNativeApi(path),
             SeFileObject,
             SaclSecurityInformation,
             IntPtr.Zero,
@@ -609,7 +609,7 @@ internal sealed class WindowsCheckpointStage : IDisposable
         string unsupportedDescription)
     {
         var result = GetNamedSecurityInfoW(
-            path,
+            WindowsCheckpointPath.ForNativeApi(path),
             SeFileObject,
             securityInformation,
             IntPtr.Zero,
@@ -830,7 +830,7 @@ internal sealed class WindowsCheckpointStage : IDisposable
     private static IReadOnlyList<AlternateDataStream> OpenNamedStreams(string path)
     {
         var streams = new List<AlternateDataStream>();
-        var handle = FindFirstStreamW(path, 0, out var data, 0);
+        var handle = FindFirstStreamW(WindowsCheckpointPath.ForNativeApi(path), 0, out var data, 0);
         if (handle == InvalidHandleValue) {
             var error = Marshal.GetLastWin32Error();
             if (error == ErrorHandleEof)

@@ -344,6 +344,8 @@ internal static class DiabloProtocolMapper
                 NativeChestInteractable = source.NativeChestInteractableEntityIds.Contains(@object.EntityId),
                 NativeSarcophagusInteractable = source.NativeSarcophagusInteractableEntityIds.Contains(@object.EntityId),
                 NativeBarrelMeleeBreakable = source.NativeBarrelMeleeBreakableEntityIds.Contains(@object.EntityId),
+                NativeTrapInteractable = revealTraps
+                    && source.NativeTrapInteractableEntityIds.Contains(@object.EntityId),
                 KeepVisibleAfterActivation = !@object.HideWhenActivated,
                 AnimationFrame = checked((uint)@object.AnimationFrame),
                 ActivatedAnimationFrame = checked((uint)@object.ActivatedAnimationFrame),

@@ -44,6 +44,35 @@ unsupported behavior is a migration gap, not permission for local simulation.
 
 ## Current delivery position and verification limits
 
+Native L1 Arrow wall traps linked to doors/plain chests now support exact
+native disarm-then-operate, source-ordered one-shot firing and source-less Arrow
+flight/impacts. Mutation-only cohort v8 retains armed/disarmed/fired ownership,
+pending opens and in-flight continuation; v1-v7 compatibility remains. Protocol
+capability45 exposes only supported armed targets to the Rogue's existing skill.
+Native evidence covers five player-impact branches and three real flight frames;
+focused owner/caller checks cover successful/failed disarm, both same-command
+door operations, object ordering, offlevel pause and cold continuation. All171
+affected codec/protocol and16 client checks pass across the retained focused runs.
+
+Headless Journey R7 admits old Town539, kills three real route blockers through
+bow combat, uses the actual Disarm Trap HUD control on door1778404889 (raw2,
+57,66; accepted588), opens it and saves Town609. Resume R10 from an unchanged
+long-path copy verifies exact player/cursor/RNG/full native world before input,
+heals122->2880 through the ordinary Town Healer, revisits L1 with retained trap/
+door/geometry/items/corpses, and returns alive to Town709. Live actors/projectiles
+may advance after re-entry; exact saved hashes are checked before input. The app
+proves the skill action and spent capability, not the random roll outcome. Native
+and owned-runtime tests supply both roll/impact branches separately.
+
+The copied checkpoint exposed direct Win32 long-path failures in metadata reads
+and native rename. One path adapter fixes those API boundaries without changing
+publication/security semantics. The affected filesystem suite passes70 with
+three existing capability skips; two new full-store rows prove replacement with
+an old reader and cold reopen. Earlier failures remain retained, including R9's
+low-Life re-entry death. Evidence: `.local/native-traps-20261015` (Journey R7,
+Resume R10, unchanged wrapper validator, oracle-r4 and focused reports). Reuse
+accepted evidence; normal adoption, rendered/full-world and campaign gates remain.
+
 Ordinary57 and explosive58 plain native L1 barrels now use timed melee with a
 transient server-approved client capability in Original Diablo single-player
 Normal mode. Normal barrels retain seeded loot/exact reserved skeleton release;

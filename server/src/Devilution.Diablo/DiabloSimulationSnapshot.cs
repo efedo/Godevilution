@@ -495,6 +495,9 @@ public sealed record DiabloProjectileState(
     /** Presence selects collision-time native bow resolution. */
     public AuthoritativeNativeWeaponArrowState? NativeWeaponArrow { get; init; }
 
+    /** Present only for an exact owned L1 wall-trap Arrow. */
+    public AuthoritativeNativeTrapArrowState? NativeTrapArrow { get; init; }
+
     public int PerilSelfDamageQ6 { get; init; }
 
     public bool DoppelgangerProc { get; init; }
@@ -590,6 +593,10 @@ public sealed record DiabloSimulationSnapshot(
     /** Transient native barrel melee capability, never imported as gameplay state. */
     [JsonIgnore]
     public IReadOnlySet<uint> NativeBarrelMeleeBreakableEntityIds { get; internal init; } = DiabloNativeChestInteractableEntitySet.Empty;
+
+    /** Transient native trap capability, never imported as gameplay state. */
+    [JsonIgnore]
+    public IReadOnlySet<uint> NativeTrapInteractableEntityIds { get; internal init; } = DiabloNativeChestInteractableEntitySet.Empty;
 
     /** Bounded presentation fields; clients never replay native door operations. */
     public IReadOnlyList<DiabloCathedralDoorObjectState> CathedralDoorObjects { get; init; } = [];
@@ -973,6 +980,7 @@ public sealed partial class DiabloSimulation
                     ElementalLightningDamage = projectile.ElementalLightningDamage,
                     AttackHit = projectile.AttackHit,
                     NativeWeaponArrow = projectile.NativeWeaponArrow,
+                    NativeTrapArrow = projectile.NativeTrapArrow,
                     PerilSelfDamageQ6 = projectile.PerilSelfDamageQ6,
                     DoppelgangerProc = projectile.DoppelgangerProc,
                     ActivationDelayTicks = projectile.ActivationDelayTicks,
@@ -1015,6 +1023,7 @@ public sealed partial class DiabloSimulation
             NativeChestInteractableEntityIds = WorldState.CaptureNativeChestInteractableEntityIds(),
             NativeSarcophagusInteractableEntityIds = WorldState.CaptureNativeSarcophagusInteractableEntityIds(),
             NativeBarrelMeleeBreakableEntityIds = WorldState.CaptureNativeBarrelMeleeBreakableEntityIds(),
+            NativeTrapInteractableEntityIds = WorldState.CaptureNativeTrapInteractableEntityIds(),
             QuestTownerInteractions = QuestTownerInteractions?.Definitions ?? [],
             TownerGreetings = TownerGreetings?.Definitions.ToArray() ?? [],
             ActiveWorldMutationIds = WorldState.ActiveWorldMutationIds
@@ -1440,6 +1449,7 @@ public sealed partial class DiabloSimulation
             return @object;
         }).ToArray();
         var restoredProjectiles = snapshot.Projectiles.Select(projectile => {
+            projectile.NativeTrapArrow?.ValidateShape(projectile);
             if (projectile.NativeWeaponArrow is { } nativeArrow
                 && (!WorldState.OwnsNativePopulationLevel(projectile.LevelId)
                     || projectile.Behavior != AuthoritativeProjectileBehavior.WeaponArrow
@@ -1490,7 +1500,7 @@ public sealed partial class DiabloSimulation
                         || projectile.Phase != AuthoritativeProjectilePhase.Travel
                         || projectile.Damage != DeterministicFixedPointQ6.ToWholeTruncated(projectile.DamageQ6)
                         || projectile.ActivationDelayTicks > 2
-                        || (projectile.NativeWeaponArrow is null
+                        || (projectile.NativeWeaponArrow is null && projectile.NativeTrapArrow is null
                             ? projectile.VelocityX != 0 || projectile.VelocityY != 0 || projectile.OriginalDirection != 0
                             : projectile.VelocityX == 0 && projectile.VelocityY == 0
                                 || projectile.OriginalDirection is < 0 or > 7
@@ -1981,6 +1991,7 @@ public sealed partial class DiabloSimulation
                 ElementalLightningDamage = projectile.ElementalLightningDamage,
                 AttackHit = projectile.AttackHit,
                 NativeWeaponArrow = projectile.NativeWeaponArrow,
+                NativeTrapArrow = projectile.NativeTrapArrow,
                 PerilSelfDamageQ6 = projectile.PerilSelfDamageQ6,
                 DoppelgangerProc = projectile.DoppelgangerProc,
                 ActivationDelayTicks = projectile.ActivationDelayTicks,

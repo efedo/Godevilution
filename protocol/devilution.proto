@@ -1016,6 +1016,8 @@ message ObjectSnapshot {
 	bool native_sarcophagus_interactable = 43;
 	// Server-validated melee target for a closed native L1 barrel.
 	bool native_barrel_melee_breakable = 44;
+	// Server-validated ordinary Rogue disarm target for a native L1 door or chest.
+	bool native_trap_interactable = 45;
 }
 
 // Exact native door presentation and cached geometry. The enclosing object

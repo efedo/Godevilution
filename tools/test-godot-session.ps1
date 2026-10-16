@@ -1,10 +1,29 @@
 [CmdletBinding()]
-param([string]$GodotExecutable, [ValidateSet('legacy', 'cohort')] [string]$PersistenceMode = 'legacy', [switch]$Visible, [switch]$Journey, [switch]$TownLoop, [switch]$Lifecycle, [switch]$Multiplayer, [switch]$MultiplayerRecovery, [switch]$MultiplayerPendingRecovery, [string]$CathedralProfileDirectory, [string]$CathedralDepthProfileDirectory, [string]$CathedralDoorProfileDirectory, [string]$CathedralNativeProfileDirectory, [ValidateSet('default', 'atlas', 'semantic', 'missing', 'undersized', 'invalid')] [string]$PresentationPackProfile = 'default', [switch]$CommandTimingTrace, [switch]$Cooperative, [switch]$CathedralNativeChest, [string]$CathedralNativeChestSessionDirectory, [switch]$CathedralNativeSarcophagus, [string]$CathedralNativeSarcophagusSessionDirectory, [switch]$CathedralNativeBarrel, [string]$CathedralNativeBarrelSessionDirectory)
+param([string]$GodotExecutable, [ValidateSet('legacy', 'cohort')] [string]$PersistenceMode = 'legacy', [switch]$Visible, [switch]$Journey, [switch]$TownLoop, [switch]$Lifecycle, [switch]$Multiplayer, [switch]$MultiplayerRecovery, [switch]$MultiplayerPendingRecovery, [string]$CathedralProfileDirectory, [string]$CathedralDepthProfileDirectory, [string]$CathedralDoorProfileDirectory, [string]$CathedralNativeProfileDirectory, [ValidateSet('default', 'atlas', 'semantic', 'missing', 'undersized', 'invalid')] [string]$PresentationPackProfile = 'default', [switch]$CommandTimingTrace, [switch]$Cooperative, [switch]$CathedralNativeChest, [string]$CathedralNativeChestSessionDirectory, [switch]$CathedralNativeSarcophagus, [string]$CathedralNativeSarcophagusSessionDirectory, [switch]$CathedralNativeBarrel, [string]$CathedralNativeBarrelSessionDirectory, [switch]$CathedralNativeTrap, [string]$CathedralNativeTrapSessionDirectory)
 
 $ErrorActionPreference = 'Stop'
 $PersistenceMode = $PersistenceMode.ToLowerInvariant()
 $PresentationPackProfile = $PresentationPackProfile.ToLowerInvariant()
 $cathedralNativeProfile = -not [string]::IsNullOrWhiteSpace($CathedralNativeProfileDirectory)
+$cathedralNativeTrap = [bool]$CathedralNativeTrap
+if ($cathedralNativeTrap) {
+    $trapConflicts = @('Visible', 'Journey', 'TownLoop', 'Lifecycle', 'Multiplayer',
+        'MultiplayerRecovery', 'MultiplayerPendingRecovery', 'Cooperative', 'CathedralNativeChest',
+        'CathedralNativeSarcophagus', 'CathedralNativeBarrel', 'CathedralNativeChestSessionDirectory',
+        'CathedralNativeSarcophagusSessionDirectory', 'CathedralNativeBarrelSessionDirectory',
+        'CathedralProfileDirectory', 'CathedralDepthProfileDirectory', 'CathedralDoorProfileDirectory',
+        'CommandTimingTrace')
+    if (-not $cathedralNativeProfile -or $PersistenceMode -cne 'cohort' -or
+        $PresentationPackProfile -ne 'default' -or
+        @($trapConflicts | Where-Object { $PSBoundParameters.ContainsKey($_) -and $PSBoundParameters[$_] }).Count -ne 0 -or
+        [string]::IsNullOrWhiteSpace($CathedralNativeTrapSessionDirectory) -or
+        -not [IO.Path]::IsPathFullyQualified($CathedralNativeTrapSessionDirectory)) {
+        throw 'Native trap acceptance requires the pinned profile, copied Town cohort, and headless single-player mode.'
+    }
+    $CathedralNativeTrapSessionDirectory = [IO.Path]::GetFullPath($CathedralNativeTrapSessionDirectory)
+} elseif (-not [string]::IsNullOrWhiteSpace($CathedralNativeTrapSessionDirectory)) {
+    throw 'CathedralNativeTrapSessionDirectory is only valid with -CathedralNativeTrap.'
+}
 $cathedralNativeBarrel = [bool]$CathedralNativeBarrel
 if ($cathedralNativeBarrel) {
     $barrelConflicts = @('Visible', 'Journey', 'TownLoop', 'Lifecycle', 'Multiplayer',
@@ -97,7 +116,26 @@ if ($PresentationPackProfile -ne 'default' -and ($Journey -or $TownLoop -or $Lif
     throw 'Presentation pack fixtures require the separate base single-player acceptance path.'
 }
 $repositoryRoot = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot '..')).Path
-$sessionDirectory = if ($cathedralNativeBarrel) {
+$sessionDirectory = if ($cathedralNativeTrap) {
+    $nativeSessionsRoot = Join-Path ([IO.Path]::GetFullPath($CathedralNativeProfileDirectory)) 'sessions'
+    $nativeTrapSessionRoot = [IO.Path]::GetFullPath($CathedralNativeTrapSessionDirectory)
+    $sessionsPrefix = $nativeSessionsRoot.TrimEnd('\', '/') + [IO.Path]::DirectorySeparatorChar
+    if (-not $nativeTrapSessionRoot.StartsWith($sessionsPrefix, [StringComparison]::OrdinalIgnoreCase) -or
+        -not (Test-Path -LiteralPath (Join-Path $nativeTrapSessionRoot 'resume-token.txt') -PathType Leaf) -or
+        -not (Test-Path -LiteralPath (Join-Path $nativeTrapSessionRoot 'save/authoritative-cohort.json') -PathType Leaf) -or
+        -not (Test-Path -LiteralPath (Join-Path $nativeTrapSessionRoot 'cathedral-native-population-session.json') -PathType Leaf) -or
+        -not (Test-Path -LiteralPath (Join-Path $nativeTrapSessionRoot 'cathedralnativebarreljourney.json') -PathType Leaf) -or
+        -not (Test-Path -LiteralPath (Join-Path $nativeTrapSessionRoot 'cathedralnativebarrelresume.json') -PathType Leaf)) {
+        throw 'Native trap acceptance requires a copied passed R14 Town checkpoint under the pinned profile sessions directory.'
+    }
+    $r14Resume = Get-Content -LiteralPath (Join-Path $nativeTrapSessionRoot 'cathedralnativebarrelresume.json') -Raw | ConvertFrom-Json
+    if ($r14Resume.Passed -isnot [bool] -or -not $r14Resume.Passed -or
+        $r14Resume.LevelId -ne 0 -or [uint64]$r14Resume.Sequence -ne 539 -or
+        $r14Resume.Visible -isnot [bool] -or $r14Resume.Visible) {
+        throw 'Native trap acceptance requires the exact passed R14 Town cursor-539 checkpoint.'
+    }
+    $nativeTrapSessionRoot
+} elseif ($cathedralNativeBarrel) {
     $barrelSessionsRoot = Join-Path ([IO.Path]::GetFullPath($CathedralNativeProfileDirectory)) 'sessions'
     $barrelSessionRoot = [IO.Path]::GetFullPath($CathedralNativeBarrelSessionDirectory)
     if (-not $barrelSessionRoot.StartsWith($barrelSessionsRoot.TrimEnd('\', '/') + [IO.Path]::DirectorySeparatorChar, [StringComparison]::OrdinalIgnoreCase) -or
@@ -152,7 +190,7 @@ function Read-ModeProcessEvidence([string]$Phase) {
     if ($evidence.PersistenceMode -cne $PersistenceMode -or $evidence.HostPersistence -cne $expectedHostPersistence) {
         throw "The $Phase process evidence did not preserve persistence mode '$PersistenceMode'."
     }
-    if ($Phase -in @('CooperativeJourney', 'CooperativeResume', 'CathedralNativeJourney', 'CathedralNativeResume', 'CathedralNativeChestJourney', 'CathedralNativeChestResume', 'CathedralNativeSarcophagusJourney', 'CathedralNativeSarcophagusResume', 'CathedralNativeBarrelJourney', 'CathedralNativeBarrelResume') -and
+    if ($Phase -in @('CooperativeJourney', 'CooperativeResume', 'CathedralNativeJourney', 'CathedralNativeResume', 'CathedralNativeChestJourney', 'CathedralNativeChestResume', 'CathedralNativeSarcophagusJourney', 'CathedralNativeSarcophagusResume', 'CathedralNativeBarrelJourney', 'CathedralNativeBarrelResume', 'CathedralNativeTrapJourney', 'CathedralNativeTrapResume') -and
         ([string]$evidence.ContentHash -cnotmatch '^[0-9a-f]{64}$' -or
          [string]$evidence.RulesetHash -cnotmatch '^[0-9a-f]{64}$')) {
         throw "The $Phase process evidence omitted validated host content/ruleset identity."
@@ -432,6 +470,109 @@ try {
     [Environment]::SetEnvironmentVariable('GODEVILUTION_PRESENTATION_PACK', $null, 'Process')
     if ($PresentationPackProfile -ne 'default') {
         $env:GODEVILUTION_PRESENTATION_PACK = "res://assets/presentation-acceptance-$PresentationPackProfile.json"
+    }
+    if ($CathedralNativeTrap) {
+        $parameters.QuitAfterSeconds = 1200
+        & $launcher @parameters -AcceptancePhase CathedralNativeTrapJourney
+        $trapJourneyProcess = Read-ModeProcessEvidence 'CathedralNativeTrapJourney'
+        $trapCheckpointPath = Join-Path (Split-Path -Parent $nativeTrapSessionRoot) ('native-trap-town-checkpoint-' + [guid]::NewGuid().ToString('N'))
+        if (Test-Path -LiteralPath $trapCheckpointPath) { throw 'The unique native trap checkpoint destination already exists.' }
+        New-Item -ItemType Directory -Path $trapCheckpointPath -ErrorAction Stop | Out-Null
+        foreach ($checkpointEntry in (Get-ChildItem -LiteralPath $nativeTrapSessionRoot -Force)) {
+            if ($checkpointEntry.Name -ceq 'launcher.lock') { continue }
+            Copy-Item -LiteralPath $checkpointEntry.FullName -Destination $trapCheckpointPath -Recurse
+        }
+        if (-not (Test-Path -LiteralPath (Join-Path $trapCheckpointPath 'resume-token.txt') -PathType Leaf) -or
+            -not (Test-Path -LiteralPath (Join-Path $trapCheckpointPath 'save/authoritative-cohort.json') -PathType Leaf)) {
+            throw 'The preserved native trap Town checkpoint is incomplete.'
+        }
+        Write-Host "Preserved native trap Town checkpoint: $trapCheckpointPath"
+        $sessionDirectory = $trapCheckpointPath
+        $parameters.SessionDirectory = $trapCheckpointPath
+        $parameters.QuitAfterSeconds = 600
+        & $launcher @parameters -AcceptancePhase CathedralNativeTrapResume
+        $trapResumeProcess = Read-ModeProcessEvidence 'CathedralNativeTrapResume'
+        Assert-FreshProcessEvidence $trapJourneyProcess $trapResumeProcess 1
+        foreach ($field in @('ContentHash', 'RulesetHash', 'ProfileHash', 'ContentTreeHash',
+            'PopulationTreeHash', 'RuntimeTreeHash', 'ProfileKind', 'AdapterId')) {
+            if ($trapJourneyProcess.$field -cne $trapResumeProcess.$field) {
+                throw "Native trap resume changed its pinned $field identity."
+            }
+        }
+        $trapProfilePath = Join-Path $CathedralNativeProfileDirectory 'cathedral-native-population-playtest.json'
+        $trapProfileHash = (Get-FileHash -LiteralPath $trapProfilePath -Algorithm SHA256).Hash.ToUpperInvariant()
+        if ($trapProfileHash -cne 'A992857810C51CE2A802588D8F3386D94D4C6AA44127394553D1E797B9F82FC1' -or
+            $trapJourneyProcess.ProfileHash -cne $trapProfileHash -or
+            $trapJourneyProcess.ProfileKind -cne 'cathedral-native-population-playtest' -or
+            $trapJourneyProcess.AdapterId -cne 'devilution.diablo.cathedral-native-population.v1') {
+            throw 'Native trap acceptance did not use the pinned population profile.'
+        }
+        $trapPriorEvidence = Get-Content -LiteralPath (Join-Path $trapCheckpointPath 'cathedralnativebarrelresume.json') -Raw | ConvertFrom-Json
+        $trapJourneyEvidence = Get-Content -LiteralPath (Join-Path $trapCheckpointPath 'cathedralnativetrapjourney.json') -Raw | ConvertFrom-Json
+        $trapResumeEvidence = Get-Content -LiteralPath (Join-Path $trapCheckpointPath 'cathedralnativetrapresume.json') -Raw | ConvertFrom-Json
+        foreach ($evidence in @($trapJourneyEvidence, $trapResumeEvidence)) {
+            if ($evidence.Passed -isnot [bool] -or -not $evidence.Passed -or
+                $evidence.Visible -isnot [bool] -or $evidence.Visible -or
+                $evidence.Mode -cne 'SinglePlayer' -or $evidence.LevelId -ne 0 -or
+                $evidence.ClassId -ne 1 -or $evidence.ContentHash -cne $trapJourneyProcess.ContentHash -or
+                $evidence.RulesetHash -cne $trapJourneyProcess.RulesetHash) {
+                throw 'Native trap phase did not pass from and return to Town under its pinned headless host.'
+            }
+            Assert-NativeEvidenceInteger $evidence.EntityId 'native trap player identity' 1 ([uint32]::MaxValue)
+            Assert-NativeEvidenceInteger $evidence.Sequence 'native trap command sequence' 1 ([long]::MaxValue)
+            Assert-NativeEvidenceInteger $evidence.X 'native trap Town X' 0 111
+            Assert-NativeEvidenceInteger $evidence.Y 'native trap Town Y' 0 111
+        }
+        $trapJourney = $trapJourneyEvidence.NativeTrap
+        $trapResume = $trapResumeEvidence.NativeTrap
+        if (-not $trapPriorEvidence.Passed -or [uint64]$trapPriorEvidence.Sequence -ne 539 -or
+            [uint64]$trapJourney.PriorSequence -ne 539 -or
+            [uint64]$trapJourney.Sequence -ne [uint64]$trapJourneyEvidence.Sequence -or
+            [uint64]$trapJourney.DisarmSequence -le 539 -or
+            [uint64]$trapJourney.DisarmAppliedTick -le 0 -or
+            $trapJourney.DisarmIntent -cne 'DisarmTrapRequested' -or
+            [uint64]$trapJourney.Sequence -le [uint64]$trapJourney.DisarmSequence -or
+            [uint32]$trapJourney.TrapEntityId -ne 1778404889 -or
+            $trapJourney.NativeTrapInteractableBefore -isnot [bool] -or -not $trapJourney.NativeTrapInteractableBefore -or
+            $trapJourney.NativeTrapInteractableAfter -isnot [bool] -or $trapJourney.NativeTrapInteractableAfter -or
+            $trapJourney.NativeObjectId -ne 2 -or $trapJourney.X -ne 57 -or $trapJourney.Y -ne 66 -or
+            $trapJourney.DoorStateBefore -ne 0 -or $trapJourney.DoorStateAfter -notin @(1, 2) -or
+            [uint64]$trapResume.SavedSequence -ne [uint64]$trapJourney.Sequence -or
+            [uint64]$trapResume.FinalSequence -ne [uint64]$trapResumeEvidence.Sequence -or
+            [uint64]$trapResume.FinalSequence -le [uint64]$trapJourney.Sequence -or
+            $trapResume.ResumedSessionMatched -isnot [bool] -or -not $trapResume.ResumedSessionMatched -or
+            $trapResume.L1RetentionVerified -isnot [bool] -or -not $trapResume.L1RetentionVerified -or
+            $trapResume.ExactWorldRestoreCheckedBeforeInput -isnot [bool] -or -not $trapResume.ExactWorldRestoreCheckedBeforeInput -or
+            $trapResume.LiveStateAllowedToAdvanceOnRevisit -isnot [bool] -or -not $trapResume.LiveStateAllowedToAdvanceOnRevisit -or
+            $trapResume.RevisitLevelId -ne 1 -or
+            $trapResume.RepeatDisarmCapabilityUnavailable -isnot [bool] -or -not $trapResume.RepeatDisarmCapabilityUnavailable) {
+            throw 'Native trap evidence lacks the accepted disarm/open transition or exact fresh-host revisit.'
+        }
+        $trapHealer = $trapResume.Healer
+        if ($trapHealer.HealerId -ne 1 -or $trapHealer.Status -cne 'Accepted' -or
+            $trapHealer.RejectReason -cne 'Unspecified' -or $trapHealer.AppliedTick -le 0 -or
+            [uint64]$trapHealer.Sequence -le [uint64]$trapJourney.Sequence -or
+            [uint64]$trapHealer.Sequence -ge [uint64]$trapResume.FinalSequence -or
+            $trapHealer.LifeBefore -le 0 -or $trapHealer.LifeAfter -ne $trapHealer.LifeMaximum -or
+            $trapHealer.ManaBefore -ne $trapHealer.ManaAfter -or
+            $trapHealer.GoldBefore -ne $trapHealer.GoldAfter -or
+            $trapHealer.ExperienceBefore -ne $trapHealer.ExperienceAfter -or
+            $trapHealer.StashGoldBefore -ne $trapHealer.StashGoldAfter -or
+            ($trapHealer.ItemsBefore | ConvertTo-Json -Depth 10 -Compress) -cne
+                ($trapHealer.ItemsAfter | ConvertTo-Json -Depth 10 -Compress) -or
+            $trapResume.FinalLife -le 0) {
+            throw 'Native trap resume did not heal through the Town service before its live revisit.'
+        }
+        foreach ($field in @('TrapObjectSha256', 'L1GeometrySha256', 'ProjectilesSha256',
+            'WorldItemsSha256', 'CorpsesSha256', 'MonstersSha256')) {
+            Assert-NativeEvidenceHash $trapJourney.$field "native trap journey $field"
+            Assert-NativeEvidenceHash $trapResume.$field "native trap resume $field"
+            if ($trapJourney.$field -cne $trapResume.$field) {
+                throw "Native trap resume changed retained $field."
+            }
+        }
+        Write-Host "PASS: Native Rogue DisarmTrap action, ordinary door operation, Town checkpoint and fresh-host L1 retention. Evidence: $trapCheckpointPath"
+        return
     }
     if ($CathedralNativeBarrel) {
         $parameters.QuitAfterSeconds = 1200
