@@ -38,7 +38,7 @@ public static class AuthoritativeNativeVisionVisibility
             || !Contains(geometry, entityX, entityY))
             return false;
 
-        return NativeVision.IsVisible(
+        return NativeVision.IsVisibleOnTargetRays(
             viewerX,
             viewerY,
             entityX,

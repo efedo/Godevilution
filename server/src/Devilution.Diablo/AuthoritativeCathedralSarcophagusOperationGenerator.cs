@@ -24,7 +24,7 @@ public sealed record AuthoritativeCathedralSarcophagusLootEntry(
     public bool Visible => Allocated && Placement.Succeeded;
 }
 
-/** Inputs at the ordinary untrapped native L1 sarcophagus operation boundary. */
+/** Inputs at the ordinary untrapped native Cathedral sarcophagus operation boundary. */
 public sealed record AuthoritativeCathedralSarcophagusOperationRequest(
     AuthoritativeCathedralThemeItemWorldState WorldState,
     AuthoritativeCathedralThemeItemCatalog Catalog,
@@ -59,7 +59,7 @@ public sealed class AuthoritativeCathedralSarcophagusOperationResult
 
 /**
  * Detached ordinary-Diablo OperateSarcophagus behavior for owned Cathedral
- * level 1. Native loot and linked-skeleton placement share the sarcophagus
+ * depths 1 and 2. Native loot and linked-skeleton placement share the sarcophagus
  * seed, while object animation and actor activation are committed by the owner.
  */
 public static class AuthoritativeCathedralSarcophagusOperationGenerator
@@ -171,13 +171,14 @@ public static class AuthoritativeCathedralSarcophagusOperationGenerator
 
     private static void ValidatePolicy(AuthoritativeCathedralThemeItemPolicy policy)
     {
-        if (policy.Depth != 1 || policy.CurrentDungeonLevel is not (0 or 1)
+        if (policy.Depth is < 1 or > 2
+            || policy.CurrentDungeonLevel != 0 && policy.CurrentDungeonLevel != policy.Depth
             || policy.Hellfire || policy.SetLevel
             || policy.GameMode != DiabloGameMode.SinglePlayer
             || policy.Difficulty != DiabloDifficulty.Normal
             || policy.Spawn || policy.QuestEnabled
             || !policy.LegacyLevelItemGenerationAllowed)
-            throw new InvalidDataException("Native sarcophagus operations are limited to ordinary original-Diablo Cathedral level 1.");
+            throw new InvalidDataException("Native sarcophagus operations are limited to ordinary original-Diablo Cathedral depths 1 and 2.");
     }
 
     private static void ValidateFacts(
@@ -191,7 +192,7 @@ public static class AuthoritativeCathedralSarcophagusOperationGenerator
             || (uint)facts.PositionX >= AuthoritativeCathedralThemeItemWorldState.Width
             || facts.PositionY is <= 0 or >= AuthoritativeCathedralThemeItemWorldState.Height
             || !worldState.ObjectCanInteract[facts.ObjectSlot])
-            throw new InvalidDataException("Native sarcophagus facts are outside the supported closed L1 operation boundary.");
+            throw new InvalidDataException("Native sarcophagus facts are outside the supported closed Cathedral operation boundary.");
 
         var referenceIndex = checked((facts.PositionY - 1) * AuthoritativeCathedralThemeItemWorldState.Width
             + facts.PositionX);

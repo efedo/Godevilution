@@ -140,7 +140,7 @@ public sealed partial class AuthoritativeCathedralNativePopulationPolicy
             || !barrelReservationsByObjectSlot.TryGetValue(objectSlot, out var initialization)
             || initialization.Binding.EntityId != entityId)
             return false;
-        return world.GetNativeBarrelState(objectSlot)?.ActorState is DiabloNativeBarrelActorState.Emerging
+        return world.GetNativeBarrelState(LevelId, objectSlot)?.ActorState is DiabloNativeBarrelActorState.Emerging
             or DiabloNativeBarrelActorState.Active or DiabloNativeBarrelActorState.Dead;
     }
 

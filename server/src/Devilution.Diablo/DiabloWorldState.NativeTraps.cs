@@ -4,17 +4,17 @@ namespace Devilution.Diablo;
 
 public sealed partial class DiabloWorldState
 {
-    private Dictionary<int, DiabloNativeTrapState> nativeTrapsBySlot = [];
+    private Dictionary<uint, DiabloNativeTrapState> nativeTrapsByEntityId = [];
 
     internal bool HasMutatedNativeTraps
-        => nativeTrapsBySlot.Values.Any(state => state.Disposition != DiabloNativeTrapDisposition.Armed
+        => nativeTrapsByEntityId.Values.Any(state => state.Disposition != DiabloNativeTrapDisposition.Armed
             || IsNativeTrapTriggerReady(state.Facts));
 
     internal IReadOnlyList<DiabloNativeTrapState>? CaptureNativeTraps()
         => nativePopulationPolicy is null
             ? null
-            : Array.AsReadOnly(nativeTrapsBySlot.Values
-                .OrderBy(value => value.Facts.TrapObjectSlot).ToArray());
+            : Array.AsReadOnly(nativeTrapsByEntityId.Values
+                .OrderBy(value => value.Facts.LevelId).ThenBy(value => value.Facts.TrapObjectSlot).ToArray());
 
     internal void ConfigureNativeTraps(
         AuthoritativeCathedralNativePopulationPolicy policy,
@@ -22,26 +22,28 @@ public sealed partial class DiabloWorldState
         IReadOnlyList<DiabloNativeTrapState>? savedStates)
     {
         ArgumentNullException.ThrowIfNull(policy);
-        if (nativePopulationPolicy != policy)
+        if (!ReferenceEquals(NativePopulationForLevel(policy.LevelId), policy))
             throw new InvalidOperationException("Native trap state requires its configured immutable population owner.");
 
         var initial = policy.CreateInitialNativeTrapStates();
         if (formatVersion >= DiabloCohortState.NativeTrapFormatVersion) {
             if (savedStates is null || savedStates.Count != initial.Count)
                 throw new InvalidDataException("Native trap cohorts require complete generated wall-trap lifecycle state.");
-            var restored = new Dictionary<int, DiabloNativeTrapState>();
+            var restored = new Dictionary<uint, DiabloNativeTrapState>();
             for (var index = 0; index < initial.Count; index++) {
                 var actual = savedStates[index];
                 actual.ValidateShape();
                 if (actual.Facts != initial[index].Facts
-                    || !restored.TryAdd(actual.Facts.TrapObjectSlot, actual))
+                    || !restored.TryAdd(actual.Facts.TrapEntityId, actual))
                     throw new InvalidDataException("Native trap state differs from its exact generated trap/trigger link.");
             }
-            nativeTrapsBySlot = restored;
+            foreach (var entry in restored)
+                nativeTrapsByEntityId.Add(entry.Key, entry.Value);
         } else {
             if (savedStates is not null)
                 throw new InvalidDataException("Older native cohorts cannot carry wall-trap lifecycle state.");
-            nativeTrapsBySlot = initial.ToDictionary(value => value.Facts.TrapObjectSlot);
+            foreach (var entry in initial)
+                nativeTrapsByEntityId.Add(entry.Facts.TrapEntityId, entry);
         }
 
         ValidateNativeTrapState(policy);
@@ -63,6 +65,7 @@ public sealed partial class DiabloWorldState
         out IReadOnlyList<AuthoritativeCathedralNativeTrapFacts> facts)
     {
         ArgumentNullException.ThrowIfNull(trigger);
+        var nativePopulationPolicy = NativePopulationForLevel(trigger.LevelId);
         facts = Array.Empty<AuthoritativeCathedralNativeTrapFacts>();
         if (nativePopulationPolicy is null || trigger.LevelId != nativePopulationPolicy.LevelId
             || !Objects.TryGetValue(trigger.EntityId, out var current) || !ReferenceEquals(current, trigger)
@@ -80,6 +83,7 @@ public sealed partial class DiabloWorldState
     {
         ArgumentNullException.ThrowIfNull(player);
         ArgumentNullException.ThrowIfNull(trigger);
+        var nativePopulationPolicy = NativePopulationForLevel(trigger.LevelId);
         ArgumentNullException.ThrowIfNull(random);
         if (!CanOperateNativeTrapTrigger(trigger) || !trigger.TrapArmed
             || !player.HasAbility(DiabloPlayerAbilityKind.TrapDisarm)
@@ -90,19 +94,19 @@ public sealed partial class DiabloWorldState
 
         if (!TryGetNativeTrapFacts(trigger, out var facts))
             return DiabloNativeTrapDisarmResult.NotApplicable;
-        var linkedStates = facts.Select(value => nativeTrapsBySlot[value.TrapObjectSlot]).ToArray();
+        var linkedStates = facts.Select(value => nativeTrapsByEntityId[value.TrapEntityId]).ToArray();
         if (linkedStates.Length == 0
             || linkedStates.Any(value => value.Disposition != DiabloNativeTrapDisposition.Armed
                 || value.TrapVar4 != value.Facts.InitialTrapVar4 || !value.TriggerTrapArmed))
             return DiabloNativeTrapDisarmResult.NotApplicable;
 
-        var chance = checked(2 * player.Attributes.Dexterity.Current - 5);
+        var chance = checked(2 * player.Attributes.Dexterity.Current - 5 * nativePopulationPolicy!.Depth);
         if (random.GenerateRnd(100) > chance)
             return DiabloNativeTrapDisarmResult.Failed;
 
         // Native TryDisarm consumes every active trap linked to this trigger.
         foreach (var value in linkedStates) {
-            nativeTrapsBySlot[value.Facts.TrapObjectSlot] = value with {
+            nativeTrapsByEntityId[value.Facts.TrapEntityId] = value with {
                 TrapVar4 = 1,
                 TriggerTrapArmed = false,
                 Disposition = DiabloNativeTrapDisposition.Disarmed,
@@ -118,16 +122,16 @@ public sealed partial class DiabloWorldState
         IReadOnlyList<AuthoritativePlayerState> players)
     {
         ArgumentNullException.ThrowIfNull(players);
-        if (nativePopulationPolicy is null)
-            return Array.Empty<DiabloNativeTrapFiringRecord>();
-        if (!players.Any(player => player.LevelId == nativePopulationPolicy.LevelId))
-            return Array.Empty<DiabloNativeTrapFiringRecord>();
-        ValidateNativeTrapState(nativePopulationPolicy);
+        var activeLevels = players.Select(player => player.LevelId).ToHashSet();
+        var activeOwners = NativePopulationOwners.Where(policy => activeLevels.Contains(policy.LevelId)).ToArray();
+        foreach (var policy in activeOwners)
+            ValidateNativeTrapState(policy);
 
-        var ready = nativeTrapsBySlot.Values
-            .Where(state => state.Disposition == DiabloNativeTrapDisposition.Armed
+        var ready = nativeTrapsByEntityId.Values
+            .Where(state => activeLevels.Contains(state.Facts.LevelId)
+                && state.Disposition == DiabloNativeTrapDisposition.Armed
                 && IsNativeTrapTriggerReady(state.Facts))
-            .OrderBy(state => state.Facts.ActiveObjectOrder)
+            .OrderBy(state => state.Facts.LevelId).ThenBy(state => state.Facts.ActiveObjectOrder)
             .ToArray();
         if (ready.Length == 0)
             return Array.Empty<DiabloNativeTrapFiringRecord>();
@@ -148,32 +152,33 @@ public sealed partial class DiabloWorldState
                 || !IsNativeTrapTriggerReady(trigger, state.Facts)))
             throw new InvalidDataException("A pending native wall trap lost its ready trigger before consumption.");
         foreach (var state in ready) {
-            nativeTrapsBySlot[state.Facts.TrapObjectSlot] = state with {
+            nativeTrapsByEntityId[state.Facts.TrapEntityId] = state with {
                 TrapVar4 = 1,
                 TriggerTrapArmed = false,
                 Disposition = DiabloNativeTrapDisposition.Fired,
             };
             Objects[state.Facts.TriggerEntityId].TrapArmed = false;
         }
-        ValidateNativeTrapState(nativePopulationPolicy);
+        foreach (var policy in activeOwners)
+            ValidateNativeTrapState(policy);
         return Array.AsReadOnly(firing);
     }
 
     internal void ValidateNativeTrapState(AuthoritativeCathedralNativePopulationPolicy policy)
     {
         ArgumentNullException.ThrowIfNull(policy);
-        if (nativePopulationPolicy != policy)
+        if (!ReferenceEquals(NativePopulationForLevel(policy.LevelId), policy))
             throw new InvalidDataException("Native trap lifecycle state has no matching immutable population owner.");
 
         var initial = policy.CreateInitialNativeTrapStates();
-        if (nativeTrapsBySlot.Count != initial.Count)
+        if (nativeTrapsByEntityId.Values.Count(value => value.Facts.LevelId == policy.LevelId) != initial.Count)
             throw new InvalidDataException("Native trap lifecycle state omits a supported generated trap.");
-        var states = nativeTrapsBySlot.Values.OrderBy(value => value.Facts.TrapObjectSlot).ToArray();
+        var states = nativeTrapsByEntityId.Values.Where(value => value.Facts.LevelId == policy.LevelId).OrderBy(value => value.Facts.TrapObjectSlot).ToArray();
         for (var index = 0; index < initial.Count; index++) {
             var state = states[index];
             state.ValidateShape();
             if (state.Facts != initial[index].Facts
-                || !nativeTrapsBySlot.TryGetValue(state.Facts.TrapObjectSlot, out var bySlot)
+                || !nativeTrapsByEntityId.TryGetValue(state.Facts.TrapEntityId, out var bySlot)
                 || bySlot != state
                 || !Objects.TryGetValue(state.Facts.TrapEntityId, out var trap)
                 || trap.LevelId != state.Facts.LevelId || trap.NativeObjectId != (uint)state.Facts.TrapNativeTypeId

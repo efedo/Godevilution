@@ -7,16 +7,21 @@ namespace Devilution.Client.Protocol.Tests;
 public sealed class ClientCommandTimingEvidenceWriterTests
 {
     [Theory]
-    [InlineData(true)]
-    [InlineData(false)]
-    public void WritesHonestOutcomeAndDetachedReport(bool passed)
+    [InlineData(true, "CathedralDoorResume")]
+    [InlineData(false, "CathedralDoorResume")]
+    [InlineData(true, "CathedralNativeProgressionJourney")]
+    [InlineData(false, "CathedralNativeProgressionJourney")]
+    [InlineData(true, "CathedralNativeProgressionResume")]
+    [InlineData(false, "CathedralNativeProgressionResume")]
+    public void WritesHonestOutcomeAndDetachedReport(bool passed, string phase)
     {
         using var directory = new EvidenceDirectory();
-        var evidence = CreateEvidence(passed);
+        var evidence = CreateEvidence(passed) with { Phase = phase };
         ClientCommandTimingEvidenceWriter.Write(directory.Path, evidence);
-        using var json = JsonDocument.Parse(File.ReadAllText(directory.Output));
+        var output = System.IO.Path.Combine(directory.Path, phase.ToLowerInvariant() + "-client-command-timing.json");
+        using var json = JsonDocument.Parse(File.ReadAllText(output));
         Assert.Equal(passed, json.RootElement.GetProperty("AcceptancePassed").GetBoolean());
-        Assert.Equal("CathedralDoorResume", json.RootElement.GetProperty("Phase").GetString());
+        Assert.Equal(phase, json.RootElement.GetProperty("Phase").GetString());
         Assert.Equal(0, json.RootElement.GetProperty("Report").GetProperty("DroppedRecordCount").GetInt64());
         Assert.Contains("before scene quit", json.RootElement.GetProperty("CaptureBoundary").GetString());
     }

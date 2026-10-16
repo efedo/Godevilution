@@ -823,10 +823,10 @@ public static class AuthoritativeSnapshotValidator
                 var cellCount = checked((long)level.Width * level.Height);
                 if (!AreValidCells(level.BlockedCells, cellCount)
                     || !AreValidCells(level.MissileBlockedCells, cellCount)
-                    || !AreValidCells(level.NativeVisionBlockedCells, cellCount)
+                    || !AreValidCells(level.NativeVisionBlockedCells, cellCount, out var nativeVisionCells)
                     || level.NativeVisionBlockedCells.Count != 0
                         && level.BlockedCells.Any(cell =>
-                            !level.NativeVisionBlockedCells.Contains(cell))
+                            !nativeVisionCells.Contains(cell))
                     || level.NativeTransparency.Count != 0
                         && level.NativeTransparency.Count != cellCount
                     || level.NativeObjectLayer.Count != 0
@@ -881,11 +881,19 @@ public static class AuthoritativeSnapshotValidator
     }
 
     private static bool AreValidCells(IList<int> cells, long cellCount)
-    {
-        if (cells.Count > cellCount)
-            return false;
+        => AreValidCells(cells, cellCount, out _);
 
-        var uniqueCells = new HashSet<int>();
+    private static bool AreValidCells(
+        IList<int> cells,
+        long cellCount,
+        out HashSet<int> uniqueCells)
+    {
+        if (cells.Count > cellCount) {
+            uniqueCells = [];
+            return false;
+        }
+
+        uniqueCells = new HashSet<int>();
         foreach (var cell in cells) {
             if (cell < 0 || cell >= cellCount || !uniqueCells.Add(cell))
                 return false;

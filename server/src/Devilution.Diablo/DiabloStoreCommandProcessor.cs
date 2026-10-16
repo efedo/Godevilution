@@ -95,6 +95,13 @@ public sealed class DiabloStoreCommandProcessor
                 return preflight.Value;
         }
 
+        // A queued potion can arrive after lethal damage. Consumption is not
+        // resurrection, and refusal must precede even metadata hydration.
+        if (intent is DiabloUseConsumableIntent
+            && (player.Life <= 0 || player.CombatMode == DiabloPlayerCombatMode.Death
+                || player.CurrentAction?.Kind == DiabloPlayerActionKind.Death))
+            return DiabloIntentResult.Rejected(DiabloRuleFailure.NotAllowed);
+
         HydrateInventoryDimensions(player);
 
         return intent switch {
@@ -430,16 +437,63 @@ public sealed class DiabloStoreCommandProcessor
 
         if (!TryResolveGoldTopology(player, out var hasGoldTopology))
             return DiabloIntentResult.Rejected(DiabloRuleFailure.Malformed);
+        var hasPinnedStock = catalog.TryGetNativePinnedStoreItem(intent.StoreId, intent.StoreSlot, out var pinnedItem);
+        var nativeBeltSlot = hasPinnedStock ? FindFreeNativeBeltSlot(player) : null;
         var targetCell = -1;
         // Gold topology controls wallet mutation; it does not determine whether
         // a supplied inventory grid must receive the purchased item.
-        if (player.InventoryGrid.Count > 0) {
+        if (hasPinnedStock && nativeBeltSlot is null) {
+            if (player.Inventory.Count >= 40)
+                return DiabloIntentResult.Rejected(DiabloRuleFailure.NotAllowed);
+            if (player.InventoryGrid.Count > 0) {
+                targetCell = InventoryGridLayout.FindNativePlacement(
+                    player.InventoryGrid,
+                    pinnedItem.State.InventoryWidth,
+                    pinnedItem.State.InventoryHeight);
+                if (targetCell < 0)
+                    return DiabloIntentResult.Rejected(DiabloRuleFailure.NotAllowed);
+            }
+        } else if (!hasPinnedStock && player.InventoryGrid.Count > 0) {
             targetCell = InventoryGridLayout.FindNativePlacement(
                 player.InventoryGrid,
                 item.State.InventoryWidth,
                 item.State.InventoryHeight);
             if (targetCell < 0 || player.Inventory.Count >= 40)
                 return DiabloIntentResult.Rejected(DiabloRuleFailure.NotAllowed);
+        }
+
+        if (hasPinnedStock) {
+            if (!SpendGold(player, pinnedItem.Price, hasGoldTopology))
+                return DiabloIntentResult.Rejected(DiabloRuleFailure.InsufficientResources);
+            var itemSeed = unchecked((uint)random.AdvanceRndSeed());
+            if (!catalog.TryCreateNativePinnedPurchaseItem(
+                    intent.StoreId,
+                    intent.StoreSlot,
+                    itemSeed,
+                    out var purchasedItem))
+                throw new InvalidOperationException("Validated native pinned stock could not be copied for purchase.");
+            if (nativeBeltSlot is { } beltSlot) {
+                player.Belt.Add(new BeltStoreItem(beltSlot, purchasedItem.ItemSeed, purchasedItem.State));
+                return DiabloIntentResult.Accepted;
+            }
+
+            var nativeInventoryIndex = player.Inventory.Count;
+            player.Inventory.Add(new OwnedStoreItem(
+                intent.StoreId,
+                pinnedItem.StoreSlot,
+                purchasedItem.ItemSeed,
+                pinnedItem.Price,
+                appliedTick,
+                purchasedItem.State));
+            if (targetCell >= 0) {
+                InventoryGridLayout.Fill(
+                    player.InventoryGrid,
+                    targetCell,
+                    nativeInventoryIndex,
+                    purchasedItem.State.InventoryWidth,
+                    purchasedItem.State.InventoryHeight);
+            }
+            return DiabloIntentResult.Accepted;
         }
 
         if (!catalog.RemoveItem(intent.StoreId, intent.StoreSlot))
@@ -464,6 +518,15 @@ public sealed class DiabloStoreCommandProcessor
                 item.State.InventoryHeight);
         }
         return DiabloIntentResult.Accepted;
+    }
+
+    private static uint? FindFreeNativeBeltSlot(AuthoritativePlayerState player)
+    {
+        for (uint slot = 0; slot < 8; slot++) {
+            if (player.Belt.All(item => item.Slot != slot))
+                return slot;
+        }
+        return null;
     }
 
     private DiabloIntentResult Sell(

@@ -122,7 +122,8 @@ public sealed partial class DiabloCombatCommandProcessor
         }
         if (hit >= chance && !target.IsPetrified)
             return false;
-        var damage = checked(random.RandomIntBetween(1, 2) * 64);
+        var damage = checked(random.RandomIntBetween(world.NativePopulationDepth(target.LevelId),
+            2 * world.NativePopulationDepth(target.LevelId)) * 64);
         if (resistance > 0)
             damage /= 4;
         ApplyResolvedDamageQ6(observer, target, damage, events,
@@ -133,7 +134,7 @@ public sealed partial class DiabloCombatCommandProcessor
         return true;
     }
 
-    /** PlayerMHit(nullptr, Arrow, L1 1..2, unshifted); no source-monster bonuses. */
+    /** PlayerMHit(nullptr, Arrow, depth..2*depth, unshifted); no source-monster bonuses. */
     internal bool ResolveNativeTrapArrowPlayerHit(uint sourceEntityId, AuthoritativePlayerState target,
         int distance, ulong tick, IReadOnlyList<AuthoritativePlayerState> players,
         ICollection<DiabloGameplayEvent> events)
@@ -146,7 +147,8 @@ public sealed partial class DiabloCombatCommandProcessor
         var block = canBlock ? random.GenerateRnd(100) : 100;
         if (hit >= Math.Max(100 - target.ArmorClass / 2 - distance * 2, 10))
             return false;
-        var damage = random.RandomIntBetween(64, 128);
+        var damage = random.RandomIntBetween(64 * world.NativePopulationDepth(target.LevelId),
+            128 * world.NativePopulationDepth(target.LevelId));
         if (HasUsableEquipmentFlag(target, AuthoritativeEquipmentIncomingDamageRules.HalfTrapDamageFlag))
             damage /= 2;
         damage = Math.Max(64, checked(damage

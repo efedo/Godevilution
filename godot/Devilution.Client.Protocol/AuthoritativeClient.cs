@@ -611,17 +611,42 @@ public sealed class AuthoritativeClient : IAsyncDisposable
         CancellationToken cancellationToken,
         long connectionGeneration)
     {
+        var terminalKind = AuthoritativeClientReceiveTerminalKind.Cancellation;
+        Exception? terminalFailure = null;
         try {
             while (!cancellationToken.IsCancellationRequested) {
                 var envelope = await ReadEnvelopeAsync(networkStream, cancellationToken);
-                if (envelope is null)
+                if (envelope is null) {
+                    terminalKind = AuthoritativeClientReceiveTerminalKind.EndOfStream;
                     break;
+                }
                 Enqueue(envelope, connectionGeneration);
             }
         } catch (Exception exception) when (!cancellationToken.IsCancellationRequested
             && (exception is IOException or SocketException or EndOfStreamException or ObjectDisposedException)) {
+            terminalKind = exception is InvalidProtocolBufferException
+                ? AuthoritativeClientReceiveTerminalKind.ProtocolFailure
+                : AuthoritativeClientReceiveTerminalKind.TransportFailure;
+            terminalFailure = exception;
             EnqueueConnectionClosed(exception.Message);
+        } catch (Exception exception) {
+            terminalFailure = exception;
+            terminalKind = cancellationToken.IsCancellationRequested
+                ? AuthoritativeClientReceiveTerminalKind.Cancellation
+                : exception is InvalidDataException or InvalidProtocolBufferException
+                    ? AuthoritativeClientReceiveTerminalKind.ProtocolFailure
+                    : AuthoritativeClientReceiveTerminalKind.UnexpectedFailure;
+            throw;
         } finally {
+            // Keep the original receive outcome even when the UI reports only connection loss.
+            // Diagnostics must never replace an existing transport/protocol failure.
+            if (CommandTimingRecorder is { } recorder) {
+                try {
+                    recorder.RecordReceiveTerminal(new AuthoritativeClientReceiveTerminalTiming(
+                        connectionGeneration, terminalKind, clock.ElapsedMilliseconds,
+                        Stopwatch.GetTimestamp(), terminalFailure?.GetType().FullName, terminalFailure?.HResult));
+                } catch { }
+            }
             if (Volatile.Read(ref transportGeneration) == connectionGeneration)
                 Volatile.Write(ref transportConnected, 0);
         }

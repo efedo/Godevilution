@@ -267,16 +267,16 @@ public static class AuthoritativeCathedralThemeItemWorldGenerator
             request.Catalog.Rules.UniqueChanceNormal);
     }
 
-    /** Allocates the ordinary L1 CreateRndUseful item used by chest Var2 == 0. */
+    /** Allocates ordinary Cathedral CreateRndUseful contents from the owning depth. */
     internal static AuthoritativeCathedralThemeItemWorldResult CreateUsefulItem(
         AuthoritativeCathedralThemeItemWorldRequest request,
         int currentLevel)
     {
         ArgumentNullException.ThrowIfNull(request);
         ValidateRequest(request);
-        if (currentLevel != 1 || currentLevel != request.Policy.Depth
+        if (currentLevel is < 1 or > 2 || currentLevel != request.Policy.Depth
             || request.Policy.Hellfire || request.Policy.SetLevel)
-            throw new InvalidDataException("Native chest useful placement is supported only on ordinary Cathedral level 1.");
+            throw new InvalidDataException("Native useful placement requires ordinary Cathedral depth 1 or 2.");
 
         // CreateRndUseful returns immediately when AllocateItem cannot proceed;
         // unlike CreateRndItem, it consumes no selector RNG first.

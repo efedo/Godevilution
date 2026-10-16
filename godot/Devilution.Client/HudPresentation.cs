@@ -44,6 +44,7 @@ public partial class HudPresentation : CanvasLayer
     private readonly List<PlayerItemReference> oilTargetReferences = [];
     private readonly Button openSmith = new() { Name = "OpenSmith", Text = "Open Smith" };
     private readonly Button openAdria = new() { Text = "Open Adria" };
+    private readonly Button openPepin = new() { Name = "OpenHealer4", Text = "Open Pepin" };
     private readonly Button closeStore = new() { Name = "CloseStore", Text = "Close store" };
     private readonly Button openStash = new() { Name = "OpenStash", Text = "Open stash" };
     private readonly Button closeStash = new() { Name = "CloseStash", Text = "Close stash" };
@@ -177,6 +178,7 @@ public partial class HudPresentation : CanvasLayer
         storeItems.ItemSelected += index => {
             var itemIndex = checked((int)index);
             selectedStoreSlot = itemIndex >= 0 && itemIndex < storeSlots.Count ? storeSlots[itemIndex] : null;
+            RefreshSelectedStorePurchaseAvailability();
         };
         spellSources.ItemSelected += index => {
             var sourceIndex = checked((int)index);
@@ -200,6 +202,7 @@ public partial class HudPresentation : CanvasLayer
                 ClearSelectedStashItem();
                 selectedItemReference = ResolveSelectedItemReference(currentPlayer);
             }
+            RefreshSelectedConsumableAvailability();
         };
         equipmentItems.ItemSelected += index => {
             var equipmentIndex = checked((int)index);
@@ -221,6 +224,7 @@ public partial class HudPresentation : CanvasLayer
                     });
                 selectedInventoryIndex = -1;
                 selectedItemReference = null;
+                RefreshSelectedConsumableAvailability();
                 return;
             }
             selectedEquipmentSlot = slot;
@@ -228,9 +232,11 @@ public partial class HudPresentation : CanvasLayer
             selectedInventoryIndex = -1;
             ClearSelectedStashItem();
             selectedItemReference = ResolveSelectedItemReference(currentPlayer);
+            RefreshSelectedConsumableAvailability();
         };
         openSmith.Pressed += () => OpenStoreRequested?.Invoke(1);
         openAdria.Pressed += () => OpenStoreRequested?.Invoke(10);
+        openPepin.Pressed += () => OpenStoreRequested?.Invoke(4);
         closeStore.Pressed += () => CloseStoreRequested?.Invoke();
         openStash.Pressed += () => OpenStashRequested?.Invoke();
         closeStash.Pressed += () => CloseStashRequested?.Invoke();
@@ -417,6 +423,7 @@ public partial class HudPresentation : CanvasLayer
             selectedEquipmentSlot = null;
         currentPlayer = player;
         selectedItemReference = ResolveSelectedItemReference(player);
+        RefreshSelectedConsumableAvailability();
         var statusPresentation = player is null
             ? null
             : StatusPresentationStyle.ResolvePlayer(player);
@@ -519,12 +526,11 @@ public partial class HudPresentation : CanvasLayer
             : hasSelectedBelt
                 ? player!.Belt.First(item => item.Slot == selectedBeltSlot).State?.ItemActionKind ?? ItemActionKind.Unspecified
                 : ItemActionKind.Unspecified;
-        var hasTargetlessConsumable = hasSelectedItem
-            && AuthoritativeItemActionRules.IsTargetlessConsumable(selectedItemAction);
         var hasTargetedConsumable = hasSelectedItem
             && AuthoritativeItemActionRules.IsTargetedConsumable(selectedItemAction);
         openSmith.Disabled = !connected || stashOpen;
         openAdria.Disabled = !connected || stashOpen;
+        openPepin.Disabled = !connected || stashOpen;
         closeStore.Disabled = !connected || activeStore is null;
         openStash.Disabled = !connected || stashOpen || activeStore is not null;
         closeStash.Disabled = !connected || !stashOpen;
@@ -536,7 +542,7 @@ public partial class HudPresentation : CanvasLayer
         allocateMagic.Disabled = !hasStatPoints;
         allocateDexterity.Disabled = !hasStatPoints;
         allocateVitality.Disabled = !hasStatPoints;
-        buySelected.Disabled = !connected || activeStore is null || selectedStoreSlot is null;
+        RefreshSelectedStorePurchaseAvailability();
         sellSelected.Disabled = !connected || !hasSelectedItem;
         repairSelected.Text = repairQuote.ButtonText ?? (activeStore is null && hasRepairAbility
             ? "Repair selected (Warrior)"
@@ -553,7 +559,7 @@ public partial class HudPresentation : CanvasLayer
                 : "Identify selected");
         identifySelected.Disabled = !identifyQuote.CanInvoke;
         readBookSelected.Disabled = !connected || selectedItemAction != ItemActionKind.ReadBook;
-        useConsumableSelected.Disabled = !connected || !hasTargetlessConsumable;
+        RefreshSelectedConsumableAvailability();
         applyOilSelected.Disabled = !connected || !hasTargetedConsumable || selectedOilTarget is null;
         disarmTrap.Disabled = !connected || !hasTrapDisarmAbility || availableTrapEntityId is null;
         interactObject.Disabled = !connected || availableObjectEntityId is null;
@@ -783,6 +789,7 @@ public partial class HudPresentation : CanvasLayer
             selectedBeltSlot = null;
             ClearSelectedStashItem();
             selectedItemReference = ResolveSelectedItemReference(currentPlayer);
+            RefreshSelectedConsumableAvailability();
             return;
         }
         if (selectedEquipmentSlot is { } equipmentSlot && currentPlayer is not null) {
@@ -800,6 +807,7 @@ public partial class HudPresentation : CanvasLayer
                     });
                 selectedEquipmentSlot = null;
                 selectedItemReference = null;
+                RefreshSelectedConsumableAvailability();
             }
             return;
         }
@@ -846,6 +854,7 @@ public partial class HudPresentation : CanvasLayer
             selectedEquipmentSlot = null;
             selectedBeltSlot = null;
             selectedItemReference = ResolveSelectedItemReference(currentPlayer);
+            RefreshSelectedConsumableAvailability();
             ApplyStash(currentPlayer);
             return;
         }
@@ -871,6 +880,18 @@ public partial class HudPresentation : CanvasLayer
         selectedStashItemCell = 0;
     }
 
+    private void RefreshSelectedConsumableAvailability()
+    {
+        var selectedItemAction = currentPlayer is not null
+            && selectedInventoryIndex >= 0 && selectedInventoryIndex < currentPlayer.Inventory.Count
+            ? currentPlayer.Inventory[selectedInventoryIndex].State?.ItemActionKind ?? ItemActionKind.Unspecified
+            : currentPlayer is not null && selectedBeltSlot is { } beltSlot
+                ? currentPlayer.Belt.FirstOrDefault(item => item.Slot == beltSlot)?.State?.ItemActionKind ?? ItemActionKind.Unspecified
+                : ItemActionKind.Unspecified;
+        useConsumableSelected.Disabled = !currentClientConnected
+            || !AuthoritativeItemActionRules.IsTargetlessConsumable(selectedItemAction);
+    }
+
     private void ClearSelectedItem()
     {
         selectedInventoryIndex = -1;
@@ -878,6 +899,7 @@ public partial class HudPresentation : CanvasLayer
         selectedEquipmentSlot = null;
         ClearSelectedStashItem();
         selectedItemReference = null;
+        RefreshSelectedConsumableAvailability();
     }
 
     private static int FindStashItemIndex(
@@ -898,6 +920,11 @@ public partial class HudPresentation : CanvasLayer
     {
         if (activeStoreId != 0 && selectedStoreSlot is { } slot)
             PurchaseRequested?.Invoke(activeStoreId, slot);
+    }
+
+    private void RefreshSelectedStorePurchaseAvailability()
+    {
+        buySelected.Disabled = !currentClientConnected || activeStoreId == 0 || selectedStoreSlot is null;
     }
 
     private void ApplyOil()

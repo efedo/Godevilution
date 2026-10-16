@@ -18,7 +18,7 @@ public sealed partial class DiabloWorldState
         ValidateCathedralItemProjection();
 
         var levelProfile = cathedralItems.Profile.LevelProfiles.SingleOrDefault(
-            value => value.LevelId == sarcophagus.LevelId && value.Depth == 1);
+            value => value.LevelId == sarcophagus.LevelId && value.Depth == NativePopulationDepth(sarcophagus.LevelId));
         if (levelProfile is null || !levelProfile.ObjectBindings.Any(value =>
                 value.EntityId == sarcophagus.EntityId
                 && value.NativeObjectSlot == facts.ObjectSlot
@@ -33,8 +33,8 @@ public sealed partial class DiabloWorldState
             cathedralItems.Profile, sarcophagus.LevelId, localParticipants);
         var worldState = cathedralItems.BuildWorldState(sarcophagus.LevelId, occupancy);
         var policy = cathedralItems.Profile.ItemPolicy with {
-            Depth = 1,
-            CurrentDungeonLevel = 1,
+            Depth = NativePopulationDepth(sarcophagus.LevelId),
+            CurrentDungeonLevel = NativePopulationDepth(sarcophagus.LevelId),
             Spawn = false,
             QuestEnabled = false,
             SetLevel = false,

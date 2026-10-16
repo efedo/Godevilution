@@ -16,6 +16,13 @@ profile retains bow flight and collision-time hit/damage resolution, frozen
 future-tile aim, and melee, recovery and walking phases. Older cohort formats
 retain their established encoding and legacy movement behavior.
 
+The separate explicit `devilution.diablo.cathedral-native-progression.v1`
+adapter admits the canonical Rogue Town/L1/L2 profile. Cohort v9 binds its run
+identity, first-entry hero/unique-history contexts and initial skeleton phases.
+Cold activation regenerates trusted floor owners before installing the complete
+saved world, player and RNG. Wrong profiles and schema downconversion refuse;
+legacy adapters and cohort formats keep their existing behavior.
+
 Raw native door trap markers remain preserved and are projected when visible;
 unsupported native door operations are refused before they can mutate door or
 pool state. For the opt-in native L1, public static collision geometry also

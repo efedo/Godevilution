@@ -11,18 +11,20 @@ public sealed partial class DiabloSimulation
         DiabloCohortState state)
     {
         state.ValidateShape();
+        sourceOptions = PrepareNativeProgressionCohortOptions(sourceOptions, state);
         if (state.FormatVersion >= DiabloCohortState.NativeCombatFormatVersion
             && sourceOptions.NativePopulationPolicy is null)
             throw new InvalidDataException("Native combat cohorts require the exact populated level owner.");
         ValidateCohortConfiguration(sourceOptions, state.Configuration);
         state = RestoreLegacyNativeCombatTiming(sourceOptions, state);
-        DiabloWorldState.RequireCathedralDoorProfile(sourceOptions.CathedralDoors, state.CathedralDoors);
+        DiabloWorldState.RequireCathedralDoorProfile(sourceOptions.NativeProgressionRestore?.Doors ?? sourceOptions.CathedralDoors, state.CathedralDoors);
         if (state.CathedralDoors is { } doors) {
             DiabloCathedralDoorCheckpoint.RequireSameGeometry(state.Geometry, doors.BackingGeometry);
             DiabloCathedralDoorCheckpoint.RequireSameLevels(
                 state.WorldInfrastructure.EffectiveLevels, doors.EffectiveLevels);
             DiabloCathedralDoorCheckpoint.RequireSameGeometry(
-                sourceOptions.CathedralDoorBackingGeometry ?? sourceOptions.World?.CaptureGeometryState(),
+                sourceOptions.NativeProgressionRestore?.BackingGeometry
+                    ?? sourceOptions.CathedralDoorBackingGeometry ?? sourceOptions.World?.CaptureGeometryState(),
                 doors.BackingGeometry);
         }
         if (state.WorldInfrastructure.FallbackWidth != sourceOptions.FallbackWidth
@@ -114,9 +116,13 @@ public sealed partial class DiabloSimulation
         var simulation = DiabloSimulationFactory.Instance.Create(candidateOptions);
         simulation.RestoreCohortDynamicState(state, players);
         // Restore mutable geometry/doors before validating live item placement provenance.
-        simulation.WorldState.ConfigureNativePopulationPolicy(candidateOptions.NativePopulationPolicy,
-            candidateOptions.NativeCathedralItems, candidateOptions.NativeMonsterMetadataFingerprint,
-            state.FormatVersion, state.NativeSarcophagi, state.NativeBarrels, state.NativeTraps);
+        if (candidateOptions.NativeProgressionRestore is { } owners) {
+            simulation.WorldState.RestoreNativeProgressionOwners(owners, candidateOptions.NativeProgression!, state);
+        } else {
+            simulation.WorldState.ConfigureNativePopulationPolicy(candidateOptions.NativePopulationPolicy,
+                candidateOptions.NativeCathedralItems, candidateOptions.NativeMonsterMetadataFingerprint,
+                state.FormatVersion, state.NativeSarcophagi, state.NativeBarrels, state.NativeTraps);
+        }
         simulation.WorldState.ValidateNativePopulationState(players);
         simulation.WorldState.ConfigureCathedralItems(candidateOptions.NativeCathedralItems, state.CathedralItems,
             candidateOptions.NativeMonsterMetadataFingerprint, candidateOptions.Items, simulation.Spells);
@@ -216,6 +222,7 @@ public sealed partial class DiabloSimulation
                 definition.StoreId,
                 definition.Items?.Select(CloneStoreItem) ?? [],
                 definition.Role);
+        source.CopyNativePinnedStorePoliciesTo(catalog);
         catalog.RestoreAll(states);
         return catalog;
     }
@@ -1035,8 +1042,8 @@ public sealed partial class DiabloSimulation
         ArgumentNullException.ThrowIfNull(configuration);
         var activeVariant = options.CombatRules?.GameVariant ?? DiabloGameVariant.Diablo;
         if (configuration.NativeMonsterMetadataFingerprint != options.NativeMonsterMetadataFingerprint
-            || configuration.CathedralItemMetadataFingerprint != options.NativeCathedralItems?.MetadataFingerprint
-            || configuration.CathedralItemGenerationFingerprint != options.NativeCathedralItems?.GenerationFingerprint
+            || configuration.CathedralItemMetadataFingerprint != (options.NativeProgressionRestore?.Items ?? options.NativeCathedralItems)?.MetadataFingerprint
+            || configuration.CathedralItemGenerationFingerprint != (options.NativeProgressionRestore?.Items ?? options.NativeCathedralItems)?.GenerationFingerprint
             || configuration.GameMode != options.GameMode
             || configuration.GameVariant != activeVariant
             || configuration.Difficulty != options.Difficulty
@@ -1082,11 +1089,13 @@ public sealed partial class DiabloSimulation
             NativeGeneratedWorldIdentity = state.Configuration.NativeGeneratedWorldIdentity,
             CathedralDepthWorldIdentity = state.Configuration.CathedralDepthWorldIdentity,
             NativeMonsterMetadataFingerprint = source.NativeMonsterMetadataFingerprint,
-            NativeCathedralItems = source.NativeCathedralItems,
+            NativeCathedralItems = source.NativeProgressionRestore?.Items ?? source.NativeCathedralItems,
             NativePopulationPolicy = source.NativePopulationPolicy,
+            NativeProgression = source.NativeProgression,
+            NativeProgressionRestore = source.NativeProgressionRestore,
             NativeCathedralItemRestore = state.CathedralItems,
-            CathedralDoors = source.CathedralDoors,
-            CathedralDoorBackingGeometry = source.CathedralDoorBackingGeometry
+            CathedralDoors = source.NativeProgressionRestore?.Doors ?? source.CathedralDoors,
+            CathedralDoorBackingGeometry = source.NativeProgressionRestore?.BackingGeometry ?? source.CathedralDoorBackingGeometry
                 ?? (source.CathedralDoors is null ? null : source.World?.CaptureGeometryState()),
             WorldMutations = source.WorldMutations,
             WorldRules = source.WorldRules,
@@ -1232,7 +1241,8 @@ public sealed partial class DiabloSimulation
             || WorldState.Projectiles.Values.Any(projectile => projectile.NativeTrapArrow is not null);
         var hasNativeBarrelState = WorldState.HasNativeBarrelMutations || hasNativePlayerHit || hasNativeTrapState;
         var state = new DiabloCohortState(
-            hasNativeTrapState ? DiabloCohortState.NativeTrapFormatVersion
+            WorldState.HasNativeProgression ? DiabloCohortState.NativeProgressionFormatVersion
+                : hasNativeTrapState ? DiabloCohortState.NativeTrapFormatVersion
                 : hasNativeBarrelState ? DiabloCohortState.NativeBarrelFormatVersion
                 : WorldState.HasNativeSarcophagusMutations ? DiabloCohortState.NativeSarcophagusFormatVersion
                 : WorldState.HasNativePopulation ? DiabloCohortState.NativeCombatFormatVersion
@@ -1329,11 +1339,14 @@ public sealed partial class DiabloSimulation
             WorldInfrastructure: infrastructure) {
             CathedralDoors = WorldState.CaptureCathedralDoors(),
             CathedralItems = WorldState.CaptureCathedralItems(),
-            NativeSarcophagi = WorldState.HasNativeSarcophagusMutations || hasNativeBarrelState
+            NativeSarcophagi = WorldState.HasNativeProgression || WorldState.HasNativeSarcophagusMutations || hasNativeBarrelState
                 ? WorldState.CaptureNativeSarcophagi()
                 : null,
-            NativeBarrels = hasNativeBarrelState ? WorldState.CaptureNativeBarrels() : null,
-            NativeTraps = hasNativeTrapState ? WorldState.CaptureNativeTraps() : null,
+            NativeBarrels = WorldState.HasNativeProgression || hasNativeBarrelState ? WorldState.CaptureNativeBarrels() : null,
+            NativeTraps = WorldState.HasNativeProgression || hasNativeTrapState ? WorldState.CaptureNativeTraps() : null,
+            NativeProgression = WorldState.HasNativeProgression ? new(
+                WorldState.NativeProgressionFingerprint!, WorldState.CaptureNativeFloorEntries()!,
+                WorldState.CaptureNativeInitialSpecialStand()) : null,
         };
         state.ValidateShape();
         return state;

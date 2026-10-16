@@ -4,6 +4,91 @@ The checked-in presentation project pins `Godot.NET.Sdk/4.7.1`. Godot is not ass
 installed on every development machine, and repository tests that do not render
 the client must remain runnable without it.
 
+## Native Town/L1/L2 headless acceptance
+
+Compile a separate profile with `Cathedral.Playtest --native-cathedral-progression`
+using the native population compiler's base pack, two geometry TSVs, complete
+metadata, runtime and footprint inputs and depth seeds `2588,2588,1,4294967295`.
+It writes `cathedral-native-progression-playtest.json` (format2). Run:
+
+```powershell
+pwsh -NoProfile -File tools/test-godot-native-progression.ps1 -ProfileDirectory D:\Programming\native-progression -GodotExecutable D:\Programming\Godot\Godot.exe -ServerBuildConfiguration Release
+```
+
+`-ServerBuildConfiguration` selects the server build and executable; it defaults
+to `Debug`. `Release` is available for the real-time native workload. The client
+remains Debug, and performance-baseline phases require a Debug server. Both
+process records must name the selected server configuration.
+
+Native visibility queries on the server and client examine only native ray
+prefixes that reach each target; blocker predicates still read current geometry.
+The original full-ray routine remains the equivalence reference. A frozen actual
+L2 cohort gives identical advanced snapshot, state/RNG and event bytes with the
+new server call; no mutable geometry is cached.
+Snapshot geometry validation also reuses each call's validated vision-cell set
+for blocked-cell membership, preserving range/duplicate/subset refusals without
+quadratic list scans.
+
+The scene first checks that local inventory/belt selection and clearing refresh
+the ordinary Use item button immediately, without a new snapshot or gameplay
+command. Store-row selection and clearing have the same immediate Buy-button
+check after Pepin opens. Actual healing and purchases still require accepted
+server commands and exact item/economy changes during the route.
+Only progression L2 heals proactively at 90% life. Each ordinary bow attempt
+requires its exact receipt, applied snapshot, no pending command and native
+Stand or effect-applied ranged ReadyTick state within an absolute 20-second bound.
+Arrows may remain in flight while the next shot begins. Bounded living refusals
+remain visible and consume the same work budget; death and transport failures
+are fatal. L1 requires an actually picked-up and equipped native item. L2 requires
+its actual corpse and XP gain; any observed encounter-area drops remain optional
+evidence without inventing a unique monster-to-drop link. Accepted healing
+consumes the exact item and requires survival; diagnostics report actual net life
+change under damage.
+Other phases retain their original thresholds and arrow-settlement behavior.
+
+The pair creates an isolated cohort session, walks from Town, earns and equips
+L1 combat loot, and collects actual earned Gold for ordinary Town healing and
+supplies, then makes at least one ordinary Pepin purchase from that earned Gold.
+After returning to L1, it defeats the first eligible native L2 actor with ordinary
+bow controls. The L2 proof requires its actual corpse, an XP gain and accepted
+aimed-shot evidence within the existing 576-work combat ceiling; an L2 item or
+Gold drop is optional. It returns to Town for healing, then resumes a preserved
+copy with fresh host/client processes. Before input, player, RNG, command cursor
+and the full two-floor world must match exactly. Revisit checks retain geometry,
+L1 earned-item ownership and corpses, plus the L2 corpse. The exact cold player
+payload preserves the earned wallet; later ordinary purchases may spend it.
+Stair approach uses ordinary cardinal keys, bow attacks and bounded door
+operations. Gold collection remains limited to at most eight actual earned L1
+drops, with initial candidate paths of at most 40 cells and its existing 576-work
+bound. Pepin sells affordable standard healing potions toward a soft six-item
+target (at most eight purchases); evidence records actual pickups, debits and
+purchased identities.
+Fresh-host reopening compares the complete public pinned stock rows before any
+optional purchase; evidence distinguishes retained stock from an actual resumed
+purchase. Resume cannot open new doors while checking saved geometry.
+
+Only the new progression compiler emits the explicit `native_pinned_stores.tsv`
+capability and Pepin's supported Heal/Full Heal rows at native prices 50/150.
+Accepted purchases retain the stock rows and advance one shared native seed for
+the purchased copy. Potions fill the first free belt slot, then use native
+inventory placement when the belt is full; capacity refusal precedes Gold/RNG
+mutation. Initial row seeds remain explicit content inputs; complete
+SpawnHealer random stock and initial Town RNG parity remain open. Older finite
+profiles and ordinary profile defaults retain their behavior.
+
+The new wrapper accepts `-CommandTimingTrace` for bounded
+request/admission/read/write diagnostics, receive terminal kind/exception class
+(no exception messages), and observed host status before cleanup; keep it off
+for performance measurement. A completed
+Journey is kept in place for Resume-only corrections. Journey/Resume scene
+budgets are 3540/1785 seconds; per-command and combat work bounds remain enforced.
+Monitor the emitted gameplay milestones and stage logs while the host runs.
+Do not open an active canonical checkpoint with a reader that denies delete sharing;
+Windows must refuse that atomic replacement. Inspect/copy saves after host shutdown.
+The host logs bounded primary exception type/HResult/Win32 chains before operator cleanup.
+The wrapper requires matching profile/content identities and terminal owned
+processes. Normal profiles and the source SDK pin retain their current settings.
+
 ## Native wall-trap headless acceptance
 
 Use a copied passed R14 barrel-resume Town cohort (cursor 539) under the pinned

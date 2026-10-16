@@ -90,7 +90,8 @@ public sealed class AuthoritativeCathedralMonsterRuntimeAdapterResult
 		int activeMonsterCount,
 		IReadOnlyList<bool> monsterPetrified,
 		IReadOnlyList<AuthoritativeCathedralMonsterRuntimeRecord> records,
-		Func<int, int, int, int, AuthoritativeCombatTarget> createPreSpawnTarget)
+		Func<int, int, int, int, AuthoritativeCombatTarget> createPreSpawnTarget,
+        IReadOnlyList<AuthoritativeNativeInitialSpecialStand> initialSpecialStandActors)
 	{
 		MetadataFingerprint = metadataFingerprint;
 		MonsterSlots = Array.AsReadOnly(monsterSlots.Select(monster => monster with { }).ToArray());
@@ -98,6 +99,9 @@ public sealed class AuthoritativeCathedralMonsterRuntimeAdapterResult
 		ActiveMonsterCount = activeMonsterCount;
 		MonsterPetrified = Array.AsReadOnly(monsterPetrified.ToArray());
 		Records = Array.AsReadOnly(records.ToArray());
+        InitialSpecialStandActors = Array.AsReadOnly(initialSpecialStandActors.ToArray());
+        foreach (var actor in InitialSpecialStandActors)
+            actor.ValidateShape();
 		this.createPreSpawnTarget = createPreSpawnTarget ?? throw new ArgumentNullException(nameof(createPreSpawnTarget));
 	}
 
@@ -109,6 +113,8 @@ public sealed class AuthoritativeCathedralMonsterRuntimeAdapterResult
 	public int ActiveMonsterCount { get; }
 	public IReadOnlyList<bool> MonsterPetrified { get; }
 	public IReadOnlyList<AuthoritativeCathedralMonsterRuntimeRecord> Records { get; }
+    /** Empty for legacy Stand-only imports; exact mutable cursors for explicit first-entry imports. */
+    public IReadOnlyList<AuthoritativeNativeInitialSpecialStand> InitialSpecialStandActors { get; }
 
 	internal AuthoritativeCombatTarget CreatePreSpawnTarget(int nativeSlot, int positionX, int positionY, int direction)
 		=> createPreSpawnTarget(nativeSlot, positionX, positionY, direction);
@@ -196,6 +202,30 @@ public static class AuthoritativeCathedralMonsterRuntimeAdapter
 		return AdaptCore(state, runtimeCatalog, metadataFingerprint, bindings, difficulty, uniqueDefinitions, monsterTypeCatalog, uniqueIdentities, populationMonsters);
 	}
 
+    /** Explicit first-entry import; all legacy APIs retain their Stand-only admission policy. */
+    public static AuthoritativeCathedralMonsterRuntimeAdapterResult AdaptLevelEntryWithBindings(
+        AuthoritativeCathedralThemeRoomState state,
+        AuthoritativeCathedralMonsterRuntimeCatalog runtimeCatalog,
+        string metadataFingerprint,
+        IReadOnlyList<AuthoritativeCathedralMonsterRuntimeBinding> bindings,
+        IReadOnlyList<AuthoritativeCathedralRawMonsterDefinition> populationMonsters,
+        DiabloDifficulty difficulty = DiabloDifficulty.Normal,
+        IReadOnlyList<AuthoritativeCathedralUniqueDefinition>? uniqueDefinitions = null,
+        AuthoritativeMonsterTypeCatalog? monsterTypeCatalog = null,
+        IReadOnlyDictionary<int, string>? uniqueIdentities = null)
+    {
+        ArgumentNullException.ThrowIfNull(state);
+        ArgumentNullException.ThrowIfNull(runtimeCatalog);
+        ArgumentNullException.ThrowIfNull(bindings);
+        ArgumentNullException.ThrowIfNull(populationMonsters);
+        if (bindings.Any(binding => binding.LevelId == 0)
+            || bindings.Select(binding => binding.LevelId).Distinct().Count() != 1)
+            throw new InvalidDataException("First-entry actor import requires one explicit non-Town level.");
+        return AdaptCore(state, runtimeCatalog, metadataFingerprint, bindings, difficulty,
+            uniqueDefinitions, monsterTypeCatalog, uniqueIdentities, populationMonsters,
+            retainInitialSkeletonEmergence: true);
+    }
+
 	private static AuthoritativeCathedralMonsterRuntimeAdapterResult AdaptCore(
 		AuthoritativeCathedralThemeRoomState state,
 		AuthoritativeCathedralMonsterRuntimeCatalog runtimeCatalog,
@@ -205,7 +235,8 @@ public static class AuthoritativeCathedralMonsterRuntimeAdapter
 		IReadOnlyList<AuthoritativeCathedralUniqueDefinition>? uniqueDefinitions,
 		AuthoritativeMonsterTypeCatalog? monsterTypeCatalog,
 		IReadOnlyDictionary<int, string>? uniqueIdentities,
-		IReadOnlyList<AuthoritativeCathedralRawMonsterDefinition>? populationMonsters)
+		IReadOnlyList<AuthoritativeCathedralRawMonsterDefinition>? populationMonsters,
+        bool retainInitialSkeletonEmergence = false)
 	{
 		ValidateFingerprint(metadataFingerprint, nameof(metadataFingerprint));
 		if (difficulty != DiabloDifficulty.Normal)
@@ -243,11 +274,18 @@ public static class AuthoritativeCathedralMonsterRuntimeAdapter
 		if (monsterTypeCatalog is not null) {
 			foreach (var nativeSlot in orderedSlots) {
 				var nativeType = state.MonsterSlots[nativeSlot].Type;
-				if (!monsterTypeCatalog.TryGetNative((uint)nativeType, out _))
-					throw new InvalidDataException($"Monster type catalog has no unambiguous native row {nativeType}.");
+                if (retainInitialSkeletonEmergence) {
+                    var binding = bindingBySlot[nativeSlot];
+                    if (!monsterTypeCatalog.TryGet(binding.ContentMonsterId, out var exact)
+                        || exact.NativeMonsterId != (uint)nativeType
+                        || monsterTypeCatalog.IsNativeMonsterIdAmbiguous((uint)nativeType)
+                            && exact.NativeAi != GetNativeAi(state.MonsterSlots[nativeSlot].Ai))
+                        throw new InvalidDataException($"First-entry monster slot {nativeSlot} has no exact stable native/AI binding.");
+                } else if (!monsterTypeCatalog.TryGetNative((uint)nativeType, out _))
+                    throw new InvalidDataException($"Monster type catalog has no unambiguous native row {nativeType}.");
 			}
 		}
-		ValidateActiveUniqueInputs(state, orderedSlots, uniqueById, uniqueIdentityById, bindingBySlot, monsterTypeCatalog);
+		ValidateActiveUniqueInputs(state, orderedSlots, uniqueById, uniqueIdentityById, bindingBySlot, monsterTypeCatalog, retainInitialSkeletonEmergence);
 		var records = new List<AuthoritativeCathedralMonsterRuntimeRecord>(orderedSlots.Length);
 		foreach (var nativeSlot in orderedSlots)
 		{
@@ -296,7 +334,8 @@ public static class AuthoritativeCathedralMonsterRuntimeAdapter
 				unique is not null,
 				uniqueIdentity);
 
-			var reason = GetUnsupportedReason(stateRow, definition, state.MonsterPetrified[nativeSlot]);
+			var reason = GetUnsupportedReason(stateRow, definition, state.MonsterPetrified[nativeSlot],
+                retainInitialSkeletonEmergence, populationMonsters?[stateRow.Type]);
 			AuthoritativeCombatTarget? target = null;
 			if (reason == AuthoritativeCathedralMonsterRuntimeUnsupportedReason.None) {
 				try {
@@ -355,7 +394,12 @@ public static class AuthoritativeCathedralMonsterRuntimeAdapter
 			state.ActiveMonsterCount,
 			state.MonsterPetrified,
 			records,
-			CreatePreSpawnTarget);
+			CreatePreSpawnTarget,
+            records.Where(row => row.Target is not null && row.InitialState.Mode == 11)
+                .Select(row => new AuthoritativeNativeInitialSpecialStand(row.Binding.NativeSlot,
+                    row.Binding.EntityId, row.Binding.LevelId, row.InitialState.AnimNumberOfFrames,
+                    row.InitialState.AnimTicksPerFrame, row.InitialState.AnimCurrentFrame,
+                    row.InitialState.AnimTickCounter)).ToArray());
 	}
 
 	private static IReadOnlyList<AuthoritativeCathedralMonsterRuntimeBinding> BuildDeterministicBindings(
@@ -426,13 +470,17 @@ public static class AuthoritativeCathedralMonsterRuntimeAdapter
 		IReadOnlyDictionary<int, AuthoritativeCathedralUniqueDefinition> uniqueDefinitions,
 		IReadOnlyDictionary<int, string> uniqueIdentities,
 		IReadOnlyDictionary<int, AuthoritativeCathedralMonsterRuntimeBinding> bindings,
-		AuthoritativeMonsterTypeCatalog? monsterTypeCatalog)
+		AuthoritativeMonsterTypeCatalog? monsterTypeCatalog,
+        bool levelEntry)
 	{
 		foreach (var nativeSlot in orderedSlots) {
 			var row = state.MonsterSlots[nativeSlot];
 			if (monsterTypeCatalog is not null) {
-				if (!monsterTypeCatalog.TryGetNative((uint)row.Type, out var typeDefinition)
-					|| typeDefinition.MonsterId != bindings[nativeSlot].ContentMonsterId)
+				if (levelEntry
+                    ? !monsterTypeCatalog.TryGet(bindings[nativeSlot].ContentMonsterId, out var exact)
+                        || exact.NativeMonsterId != (uint)row.Type
+                    : !monsterTypeCatalog.TryGetNative((uint)row.Type, out var typeDefinition)
+                        || typeDefinition.MonsterId != bindings[nativeSlot].ContentMonsterId)
 					throw new InvalidDataException("The supplied monster type catalog does not match the bound stable content identity.");
 			}
 			if (row.UniqueType == byte.MaxValue)
@@ -448,7 +496,9 @@ public static class AuthoritativeCathedralMonsterRuntimeAdapter
 	private static AuthoritativeCathedralMonsterRuntimeUnsupportedReason GetUnsupportedReason(
 		AuthoritativeCathedralPopulationMonsterState state,
 		AuthoritativeCathedralMonsterRuntimeDefinition definition,
-		bool initialAnimationPetrified)
+		bool initialAnimationPetrified,
+        bool retainInitialSkeletonEmergence,
+        AuthoritativeCathedralRawMonsterDefinition? nativeDefinition)
 	{
 		if (state.Invalid)
 			return AuthoritativeCathedralMonsterRuntimeUnsupportedReason.InvalidNativeState;
@@ -460,8 +510,20 @@ public static class AuthoritativeCathedralMonsterRuntimeAdapter
 			return AuthoritativeCathedralMonsterRuntimeUnsupportedReason.LowHitPoints;
 		if (state.MaxHitPoints < state.HitPoints)
 			return AuthoritativeCathedralMonsterRuntimeUnsupportedReason.InvalidHitPointRange;
-		if (state.Mode != NativeStandMode)
-			return AuthoritativeCathedralMonsterRuntimeUnsupportedReason.NonStandMode;
+        var supportedEmergence = retainInitialSkeletonEmergence && state.Mode == 11
+            && state.Ai == 2 && NativeSkeletonTypes.Contains(state.Type)
+            && state.UniqueType == byte.MaxValue && state.Tile != default
+            && state.Old == state.Tile && (state.Flags & ((1U << 1) | (1U << 2))) == 0
+            && nativeDefinition is not null
+            && state.AnimNumberOfFrames is >= 1 and <= sbyte.MaxValue
+            && state.AnimNumberOfFrames == nativeDefinition.Frames[5]
+            && state.AnimTicksPerFrame is >= 1 and <= sbyte.MaxValue
+            && definition.AnimationFrameNumSpecial == 0
+            && state.AnimTicksPerFrame == Math.Max(1, nativeDefinition.Rates[5])
+            && state.AnimCurrentFrame >= 0 && state.AnimCurrentFrame < state.AnimNumberOfFrames
+            && state.AnimTickCounter >= 0 && state.AnimTickCounter < state.AnimTicksPerFrame;
+        if (state.Mode != NativeStandMode && !supportedEmergence)
+            return AuthoritativeCathedralMonsterRuntimeUnsupportedReason.NonStandMode;
 		if (state.Future != state.Tile)
 			return AuthoritativeCathedralMonsterRuntimeUnsupportedReason.MovingState;
 		if (initialAnimationPetrified)
@@ -508,10 +570,14 @@ public static class AuthoritativeCathedralMonsterRuntimeAdapter
 			: string.Empty;
 		var fallenStandFrame = nativeAi == "Fallen" ? state.AnimCurrentFrame : 0;
 		var fallenStandTick = nativeAi == "Fallen" ? state.AnimTickCounter : 0;
-		var typeDefinition = monsterTypeCatalog is not null
-			&& monsterTypeCatalog.TryGetNative((uint)state.Type, out var resolvedType)
-			? resolvedType
-			: null;
+        var typeDefinition = monsterTypeCatalog is not null
+            && monsterTypeCatalog.TryGet(binding.ContentMonsterId, out var exactType)
+            && exactType.NativeMonsterId == (uint)state.Type
+            ? exactType
+            : monsterTypeCatalog is not null
+                && monsterTypeCatalog.TryGetNative((uint)state.Type, out var resolvedType)
+                ? resolvedType
+                : null;
 		if (level > int.MaxValue
 			|| experience > NativeCompatibilityLimits.MaximumNativeMonsterExperienceReward
 			|| toHit > NativeCompatibilityLimits.MaximumNativeMonsterToHit
@@ -601,7 +667,7 @@ public static class AuthoritativeCathedralMonsterRuntimeAdapter
 		return AuthoritativeMonsterTypeCatalog.IsValidNativeAi(name);
 	}
 
-	private static string GetNativeAi(int ai)
+	internal static string GetNativeAi(int ai)
 	{
 		if (!TryGetNativeAi(ai, out var name))
 			throw new InvalidDataException($"Native MonsterAIID {ai} has no validated managed identity.");

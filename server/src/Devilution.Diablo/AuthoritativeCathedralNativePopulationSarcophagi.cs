@@ -176,7 +176,7 @@ public sealed partial class AuthoritativeCathedralNativePopulationPolicy
             || !sarcophagusReservationsByObjectSlot.TryGetValue(objectSlot, out var initialization)
             || initialization.Binding.EntityId != entityId)
             return false;
-        var state = world.GetNativeSarcophagusState(objectSlot);
+        var state = world.GetNativeSarcophagusState(LevelId, objectSlot);
         return state?.ActorState is DiabloNativeSarcophagusActorState.Emerging
             or DiabloNativeSarcophagusActorState.Active
             or DiabloNativeSarcophagusActorState.Dead;

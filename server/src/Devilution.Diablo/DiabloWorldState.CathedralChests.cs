@@ -19,7 +19,7 @@ public sealed partial class DiabloWorldState
         ValidateCathedralItemProjection();
 
         var levelProfile = cathedralItems.Profile.LevelProfiles.SingleOrDefault(
-            value => value.LevelId == chest.LevelId && value.Depth == 1);
+            value => value.LevelId == chest.LevelId && value.Depth == NativePopulationDepth(chest.LevelId));
         var objectBinding = levelProfile?.ObjectBindings.SingleOrDefault(
             value => value.EntityId == chest.EntityId
                 && value.NativeObjectSlot >= 0
@@ -36,8 +36,8 @@ public sealed partial class DiabloWorldState
             cathedralItems.Profile, chest.LevelId, localParticipants);
         var worldState = cathedralItems.BuildWorldState(chest.LevelId, occupancy);
         var policy = cathedralItems.Profile.ItemPolicy with {
-            Depth = 1,
-            CurrentDungeonLevel = 1,
+            Depth = NativePopulationDepth(chest.LevelId),
+            CurrentDungeonLevel = NativePopulationDepth(chest.LevelId),
             Spawn = false,
             QuestEnabled = false,
             SetLevel = false,

@@ -557,7 +557,8 @@ public sealed partial class AuthoritativeCathedralNativePopulationIntegrationTes
 
     private static SarcophagusTestSetup? CreateSarcophagusSetup(
         bool captureOptions,
-        bool requireLinkedCorpus = false)
+        bool requireLinkedCorpus = false,
+        bool progressionSemantics = false)
     {
         var metadataDirectory = Environment.GetEnvironmentVariable(
             "GODEVILUTION_CATHEDRAL_POPULATION_METADATA_PACK_DIRECTORY");
@@ -571,7 +572,7 @@ public sealed partial class AuthoritativeCathedralNativePopulationIntegrationTes
             return null;
         }
 
-        var fixture = new NativeFixture(metadataDirectory, runtimePath, footprintPath);
+        var fixture = new NativeFixture(metadataDirectory, runtimePath, footprintPath, progressionSemantics);
         try {
             var factory = captureOptions ? new CapturingSarcophagusFactory() : null;
             var bootstrap = factory is null

@@ -8,7 +8,7 @@ public enum AuthoritativeCathedralOrdinaryChestType
     Chest3 = 7,
 }
 
-/** Inputs at the ordinary untrapped L1 OperateChest -> item creation boundary. */
+/** Inputs at the ordinary untrapped Cathedral OperateChest -> item creation boundary. */
 public sealed record AuthoritativeCathedralChestLootRequest(
     AuthoritativeCathedralThemeItemWorldState WorldState,
     AuthoritativeCathedralThemeItemCatalog Catalog,
@@ -62,7 +62,7 @@ public sealed class AuthoritativeCathedralChestLootResult
 }
 
 /**
- * Native ordinary-Diablo Cathedral chest contents for level 1 only. It models
+ * Native ordinary-Diablo Cathedral chest contents for depths 1 and 2. It models
  * OperateChest's SetRndSeed(_oRndSeed) and per-item call order; object mutation
  * and event/network effects remain with the world command owner.
  */
@@ -78,13 +78,14 @@ public static class AuthoritativeCathedralChestLootGenerator
         ArgumentNullException.ThrowIfNull(request.WorldState);
         ArgumentNullException.ThrowIfNull(request.Catalog);
         ArgumentNullException.ThrowIfNull(request.Policy);
-        if (request.Policy.Depth != 1 || request.Policy.CurrentDungeonLevel is not (0 or 1)
+        if (request.Policy.Depth is < 1 or > 2
+            || request.Policy.CurrentDungeonLevel != 0 && request.Policy.CurrentDungeonLevel != request.Policy.Depth
             || request.Policy.Hellfire || request.Policy.SetLevel
             || request.Policy.GameMode != DiabloGameMode.SinglePlayer
             || request.Policy.Difficulty != DiabloDifficulty.Normal
             || request.Policy.Spawn || request.Policy.QuestEnabled
             || !request.Policy.LegacyLevelItemGenerationAllowed)
-            throw new InvalidDataException("Native chest contents are limited to ordinary original-Diablo Cathedral level 1.");
+            throw new InvalidDataException("Native chest contents are limited to ordinary original-Diablo Cathedral depths 1 and 2.");
         if (request.TrapArmed)
             throw new InvalidDataException("Trapped native chests are outside the ordinary chest contract.");
 
@@ -139,7 +140,7 @@ public static class AuthoritativeCathedralChestLootGenerator
                 OnlyGood: false,
                 Player: request.Player);
             var generated = request.ItemBranch == 0
-                ? AuthoritativeCathedralThemeItemWorldGenerator.CreateUsefulItem(itemRequest, 1)
+                ? AuthoritativeCathedralThemeItemWorldGenerator.CreateUsefulItem(itemRequest, request.Policy.Depth)
                 : AuthoritativeCathedralThemeItemWorldGenerator.CreateRandomItem(itemRequest);
             worldState = generated.WorldState;
             randomState = generated.FinalRandomState;

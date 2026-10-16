@@ -4,8 +4,8 @@ public sealed partial class DiabloWorldState
 {
     public const uint CathedralDoorEntityIdBase = 0x6A00_0000;
     private const int CathedralDoorLevelStride = 112 * 112;
-    private readonly AuthoritativeCathedralDoorCatalog? cathedralDoorCatalog;
-    private readonly DiabloWorldGeometryState? trustedCathedralDoorBackingGeometry;
+    private AuthoritativeCathedralDoorCatalog? cathedralDoorCatalog;
+    private DiabloWorldGeometryState? trustedCathedralDoorBackingGeometry;
     private readonly Dictionary<uint, (uint LevelId, AuthoritativeCathedralDoorState Door)> cathedralDoors = [];
     private readonly Dictionary<uint, AuthoritativeLevel> cathedralDoorLevels = [];
 
@@ -458,7 +458,7 @@ public sealed partial class DiabloWorldState
     /** Live collision projection adds native solid footprints without changing canonical geometry. */
     public IReadOnlyList<AuthoritativeLevel> CapturePresentationLevelGeometry()
         => LevelGeometry.Select(level => {
-            if (nativePopulationPolicy is not null && nativePopulationPolicy.LevelId == level.LevelId) {
+            if (NativePopulationForLevel(level.LevelId) is { } nativePopulationPolicy) {
                 var staticObjectCells = level.StaticObjectBlockedCells.ToHashSet();
                 foreach (var position in nativePopulationPolicy.SolidObjectPositions()) {
                     var entityId = nativePopulationPolicy.ObjectEntityAt(position.X, position.Y);

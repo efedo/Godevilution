@@ -514,18 +514,21 @@ public sealed class DiabloWorldCommandProcessor
     {
 
         if (!world.AllowsNativePopulationLevel(warp.SourceLevelId)
-            || !world.AllowsNativePopulationLevel(warp.TargetLevelId))
+            || !world.CanEnterNativePopulationLevel(warp.TargetLevelId))
             return DiabloWorldIntentResult.Rejected(DiabloRuleFailure.NotAllowed);
         var participants = players.ToArray();
+        var entry = world.PrepareNativeProgressionEntry(player, warp.TargetLevelId, participants,
+            items!, spells!);
+        var destinationWorld = entry?.Admission.Floor ?? world;
         var destination = DeterministicGridCrawl.FindClosestValidPosition(
             warp.TargetX,
             warp.TargetY,
             0,
             searchRadius,
             (candidateX, candidateY) =>
-                world.IsWalkable(warp.TargetLevelId, candidateX, candidateY)
-                && !world.IsMissileBlocked(warp.TargetLevelId, candidateX, candidateY)
-                && !world.IsOccupied(
+                destinationWorld.IsWalkable(warp.TargetLevelId, candidateX, candidateY)
+                && !destinationWorld.IsMissileBlocked(warp.TargetLevelId, candidateX, candidateY)
+                && !destinationWorld.IsOccupied(
                     warp.TargetLevelId,
                     candidateX,
                     candidateY,
@@ -540,6 +543,10 @@ public sealed class DiabloWorldCommandProcessor
         if (!applyEffects)
             return DiabloWorldIntentResult.Accepted;
 
+        if (entry is { } first) {
+            world.CommitNativeProgressionEntry(first.Admission, first.Entry);
+            random.Restore(first.Admission.Build.Generated.Population.FinalRandomState);
+        }
         var sourceLevelId = player.LevelId;
         player.LevelId = warp.TargetLevelId;
         player.MarkLevelVisited(player.LevelId);
@@ -1177,7 +1184,7 @@ public sealed class DiabloWorldCommandProcessor
     private bool IsWarpAvailable(AuthoritativeWarpTarget warp)
     {
         if (!world.AllowsNativePopulationLevel(warp.SourceLevelId)
-            || !world.AllowsNativePopulationLevel(warp.TargetLevelId))
+            || !world.CanEnterNativePopulationLevel(warp.TargetLevelId))
             return false;
         if (warp.RequiredQuestId == 0)
             return true;

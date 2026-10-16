@@ -3,6 +3,20 @@ namespace Devilution.Diablo;
 public sealed partial class DiabloWorldState
 {
     private AuthoritativeCathedralNativePopulationPolicy? nativePopulationPolicy;
+    private readonly Dictionary<uint, AuthoritativeCathedralNativePopulationPolicy> nativePopulationPolicies = [];
+
+    private AuthoritativeCathedralNativePopulationPolicy? NativePopulationForLevel(uint levelId)
+        => nativePopulationPolicies.GetValueOrDefault(levelId)
+            ?? (nativePopulationPolicy?.LevelId == levelId ? nativePopulationPolicy : null);
+
+    private AuthoritativeCathedralNativePopulationPolicy? NativePopulationForEntity(uint entityId)
+        => NativePopulationOwners.SingleOrDefault(policy => policy.BoundEntityIds.Contains(entityId));
+
+    private IEnumerable<AuthoritativeCathedralNativePopulationPolicy> NativePopulationOwners
+        => nativePopulationPolicies.Count == 0
+            ? nativePopulationPolicy is null ? [] : [nativePopulationPolicy]
+            : nativePopulationPolicies.Values;
+
     private uint? nativePopulationParticipantClassId;
     private bool nativePopulationLifecycleConfigured;
 
@@ -27,15 +41,18 @@ public sealed partial class DiabloWorldState
         if (nativePopulationLifecycleConfigured)
             throw new InvalidOperationException("Native population lifecycle state is configured once on a detached world.");
         nativePopulationPolicy ??= policy;
+        nativePopulationPolicies.TryAdd(policy.LevelId, policy);
         ConfigureNativeSarcophagi(policy, nativeSarcophagusFormatVersion, nativeSarcophagusStates);
         ConfigureNativeBarrels(policy, nativeSarcophagusFormatVersion, nativeBarrelStates);
         ConfigureNativeTraps(policy, nativeSarcophagusFormatVersion, nativeTrapStates);
+        ConfigureNativeInitialSpecialStand(policy);
         policy.ValidateWorld(this);
         nativePopulationLifecycleConfigured = true;
     }
 
     internal void ValidateNativePopulationObject(AuthoritativeWorldObject value)
     {
+        var nativePopulationPolicy = NativePopulationForLevel(value.LevelId);
         if (nativePopulationPolicy is null || value.LevelId != nativePopulationPolicy.LevelId)
             throw new InvalidDataException("Explicitly refused native objects require the populated profile owner.");
         nativePopulationPolicy.ValidateObject(value);
@@ -44,11 +61,11 @@ public sealed partial class DiabloWorldState
     }
 
     internal bool CanOperateNativeObject(AuthoritativeWorldObject value)
-        => nativePopulationPolicy is null || value.LevelId != nativePopulationPolicy.LevelId
-            || nativePopulationPolicy.CanOperate(value);
+        => NativePopulationForLevel(value.LevelId)?.CanOperate(value) ?? true;
 
     internal bool CanBreakWorldObject([System.Diagnostics.CodeAnalysis.NotNullWhen(true)] AuthoritativeWorldObject? value)
     {
+        var nativePopulationPolicy = NativePopulationForLevel(value?.LevelId ?? uint.MaxValue);
         if (value is null || !value.Breakable)
             return false;
         if (nativePopulationPolicy is null || value.LevelId != nativePopulationPolicy.LevelId)
@@ -59,26 +76,27 @@ public sealed partial class DiabloWorldState
 
     /** Selects gameplay behavior only for the explicitly owned native level. */
     internal bool OwnsNativePopulationLevel(uint levelId)
-        => nativePopulationPolicy is not null && levelId == nativePopulationPolicy.LevelId;
+        => NativePopulationForLevel(levelId) is not null;
 
     internal bool AllowsNativePopulationLevel(uint levelId)
-        => nativePopulationPolicy is null || levelId == 0 || levelId == nativePopulationPolicy.LevelId;
+        => !HasNativePopulation || levelId == 0 || OwnsNativePopulationLevel(levelId);
 
     private bool IsNativePopulationObjectSolid(uint levelId, int x, int y)
-        => nativePopulationPolicy is not null && levelId == nativePopulationPolicy.LevelId
-            && nativePopulationPolicy.ObjectEntityAt(x, y) is { } entityId
-            && nativePopulationPolicy.ObjectIsSolid(entityId)
+        => NativePopulationForLevel(levelId) is { } policy
+            && policy.ObjectEntityAt(x, y) is { } entityId
+            && policy.ObjectIsSolid(entityId)
             && !IsNativeBarrelBroken(entityId);
 
     private bool IsNativeBarrelBroken(uint entityId)
-        => nativePopulationPolicy is not null
-            && nativePopulationPolicy.TryGetNativeBarrelObjectSlot(entityId, out var slot)
-            && nativeBarrelsBySlot.TryGetValue(slot, out var state)
+        => NativePopulationForEntity(entityId) is { } policy
+            && policy.TryGetNativeBarrelObjectSlot(entityId, out _)
+            && nativeBarrelsByEntityId.TryGetValue(entityId, out var state)
             && state.Broken;
 
     private bool TryGetNativePopulationMissileObject(uint levelId, int x, int y,
         out AuthoritativeWorldObject? result)
     {
+        var nativePopulationPolicy = NativePopulationForLevel(levelId);
         result = null;
         if (nativePopulationPolicy is null || levelId != nativePopulationPolicy.LevelId
             || nativePopulationPolicy.ObjectEntityAt(x, y) is not { } entityId)
@@ -93,17 +111,18 @@ public sealed partial class DiabloWorldState
     }
 
     internal bool AllowsNativeMonsterActivation(uint levelId)
-        => nativePopulationPolicy is null || levelId != nativePopulationPolicy.LevelId;
+        => !OwnsNativePopulationLevel(levelId);
 
     internal void ValidateNativePopulationState(IEnumerable<AuthoritativePlayerState> participants)
     {
         if (nativePopulationPolicy is null)
             return;
-        nativePopulationPolicy.ValidateWorld(this);
+        foreach (var policy in NativePopulationOwners)
+            policy.ValidateWorld(this);
         if (participants.Any(player => !AllowsNativePopulationLevel(player.LevelId)
             || player.CharacterClassId != nativePopulationParticipantClassId))
             throw new InvalidDataException("The native route requires Rogue participants in Town or its owned Cathedral level.");
-        if (participants.Any(player => nativePopulationPolicy.ReservesEntityId(player.EntityId)))
+        if (participants.Any(player => NativePopulationOwners.Any(policy => policy.ReservesEntityId(player.EntityId))))
             throw new InvalidDataException("A participant reused a dormant native monster entity reservation.");
     }
 }

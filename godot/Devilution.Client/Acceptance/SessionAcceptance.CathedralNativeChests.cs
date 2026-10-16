@@ -411,11 +411,15 @@ public partial class SessionAcceptance
 
     private async Task MoveAdjacentToNativeChest(Main main, uint entityId,
         Func<bool, Task<bool>>? resolveObstruction = null)
+        => await MoveAdjacentToNativePosition(main, snapshot => FindNativeChest(snapshot, entityId), resolveObstruction);
+
+    private async Task MoveAdjacentToNativePosition(Main main, Func<Snapshot, ObjectSnapshot> destination,
+        Func<bool, Task<bool>>? resolveObstruction = null)
     {
         while (true) {
             var snapshot = main.ObservedSnapshot!;
             var player = snapshot.Players.Single();
-            var chest = FindNativeChest(snapshot, entityId);
+            var chest = destination(snapshot);
             if (player.LevelId == chest.LevelId
                 && Math.Abs(player.PositionX - chest.PositionX) + Math.Abs(player.PositionY - chest.PositionY) == 1)
                 return;
@@ -423,7 +427,7 @@ public partial class SessionAcceptance
             var path = FindNativeChestApproachPath(snapshot, geometry, chest);
             if (resolveObstruction is not null && await resolveObstruction(path is null))
                 continue;
-            Require(path is { Count: > 0 }, $"No ordinary walk path reaches adjacent to native chest {entityId}.");
+            Require(path is { Count: > 0 }, $"No ordinary walk path reaches native target {chest.PositionX},{chest.PositionY}.");
             var step = path![0];
             var dx = step.X - player.PositionX;
             var dy = step.Y - player.PositionY;

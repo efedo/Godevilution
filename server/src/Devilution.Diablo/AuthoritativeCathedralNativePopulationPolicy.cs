@@ -9,6 +9,7 @@ public sealed partial class AuthoritativeCathedralNativePopulationPolicy
     // Keep the saved generation identity stable; the chest capability is an
     // additive runtime rule over the same immutable native population.
     public const string PolicyId = "native-cathedral-l1-doors-only-v1";
+    private const string LevelEntryPolicyId = "native-cathedral-level-entry-v1";
     private const int Chest1 = 5, Chest2 = 6, Chest3 = 7, LeftTrap = 53, RightTrap = 54;
     private readonly Dictionary<uint, DiabloObjectState> objectSnapshots = [];
     private readonly Dictionary<uint, AuthoritativeCathedralPopulationObjectState> objectRows = [];
@@ -29,13 +30,45 @@ public sealed partial class AuthoritativeCathedralNativePopulationPolicy
         AuthoritativeCathedralItemRuntimeProfile? itemProfile = null,
         bool isDefaultStart = false,
         bool suppressMultiplayerDeathDrops = false)
+        : this(request, state, monsters, objects, itemProfile, isDefaultStart,
+            suppressMultiplayerDeathDrops, levelEntry: false)
+    {
+    }
+
+    /** Separate first-entry owner; the legacy constructor and its generation identity stay unchanged. */
+    internal static AuthoritativeCathedralNativePopulationPolicy CreateLevelEntry(
+        AuthoritativeCathedralFreshLevelRequest request,
+        AuthoritativeCathedralThemeRoomState state,
+        AuthoritativeCathedralMonsterRuntimeAdapterResult monsters,
+        IReadOnlyList<AuthoritativeWorldObject> objects,
+        AuthoritativeCathedralItemRuntimeProfile itemProfile,
+        bool isDefaultStart = false,
+        bool suppressMultiplayerDeathDrops = false)
+        => new(request, state, monsters, objects, itemProfile, isDefaultStart,
+            suppressMultiplayerDeathDrops, levelEntry: true);
+
+    private AuthoritativeCathedralNativePopulationPolicy(
+        AuthoritativeCathedralFreshLevelRequest request,
+        AuthoritativeCathedralThemeRoomState state,
+        AuthoritativeCathedralMonsterRuntimeAdapterResult monsters,
+        IReadOnlyList<AuthoritativeWorldObject> objects,
+        AuthoritativeCathedralItemRuntimeProfile? itemProfile,
+        bool isDefaultStart,
+        bool suppressMultiplayerDeathDrops,
+        bool levelEntry)
     {
         ArgumentNullException.ThrowIfNull(request);
         ArgumentNullException.ThrowIfNull(state);
         ArgumentNullException.ThrowIfNull(monsters);
         ArgumentNullException.ThrowIfNull(objects);
-        if (request.Depth != 1 || request.Entry != AuthoritativeCathedralEntry.Main)
+        if (!levelEntry && (request.Depth != 1 || request.Entry != AuthoritativeCathedralEntry.Main))
             throw new NotSupportedException("The populated runtime policy supports only a fresh main-entry Cathedral L1.");
+        if (levelEntry && (request.Depth is < 1 or > 4 || request.Entry != AuthoritativeCathedralEntry.Main))
+            throw new NotSupportedException("Native population requires a supported main-entry Cathedral floor.");
+        if (!levelEntry && monsters.InitialSpecialStandActors.Count != 0)
+            throw new NotSupportedException("The legacy L1 owner cannot admit first-entry emergence state.");
+        Depth = request.Depth;
+        InitialSpecialStandActors = Array.AsReadOnly(monsters.InitialSpecialStandActors.ToArray());
         if (monsters.ActiveMonsterCount != state.ActiveMonsterCount
             || !monsters.ActiveMonsterIds.SequenceEqual(state.ActiveMonsterIds)
             || !monsters.MonsterSlots.SequenceEqual(state.MonsterSlots)
@@ -153,7 +186,7 @@ public sealed partial class AuthoritativeCathedralNativePopulationPolicy
         var rawIdentity = JsonSerializer.SerializeToNode(InitialState)!.AsObject();
         rawIdentity["UniqueItemFlags"] = JsonSerializer.SerializeToNode(InitialState.UniqueItemFlags.Order().ToArray());
         var identity = new {
-            PolicyId,
+            PolicyId = levelEntry ? LevelEntryPolicyId : PolicyId,
             request.Depth,
             request.DungeonSeed,
             request.StorySeed,
@@ -183,8 +216,19 @@ public sealed partial class AuthoritativeCathedralNativePopulationPolicy
             LiveActorClassifications = liveNativeAis.OrderBy(row => row.Key).ToArray(),
             Objects = objects.Select(DiabloSimulation.CaptureObject).ToArray(),
         };
-        Fingerprint = Convert.ToHexString(SHA256.HashData(JsonSerializer.SerializeToUtf8Bytes(identity)));
+        var identityBytes = levelEntry
+            ? JsonSerializer.SerializeToUtf8Bytes(new {
+                Generation = identity,
+                InitialUniqueHistory = request.InitialUniqueItemFlags.Order().ToArray(),
+            })
+            : JsonSerializer.SerializeToUtf8Bytes(identity);
+        Fingerprint = Convert.ToHexString(SHA256.HashData(identityBytes));
     }
+
+    public int Depth { get; }
+    public IReadOnlyList<AuthoritativeNativeInitialSpecialStand> InitialSpecialStandActors { get; }
+    internal IEnumerable<uint> BoundEntityIds
+        => objectRows.Keys.Concat(liveInitializations.Keys).Concat(reservedEntityIds);
 
     public uint LevelId { get; }
     public string Fingerprint { get; }
@@ -377,10 +421,10 @@ public sealed partial class AuthoritativeCathedralNativePopulationPolicy
             .Concat(world.Objects.Values.Select(value => value.LevelId))
             .Concat(world.Corpses.Values.Select(value => value.LevelId))
             .Concat(world.Projectiles.Values.Select(value => value.LevelId))
-            .Any(levelId => levelId != 0 && levelId != LevelId))
+            .Any(levelId => !world.AllowsNativePopulationLevel(levelId)))
             throw new InvalidDataException("The populated route cannot retain entities outside Town and its owned Cathedral level.");
-        if (world.Portals.Values.Any(portal => (portal.SourceLevelId != 0 && portal.SourceLevelId != LevelId)
-            || (portal.DestinationLevelId != 0 && portal.DestinationLevelId != LevelId)))
+        if (world.Portals.Values.Any(portal => !world.AllowsNativePopulationLevel(portal.SourceLevelId)
+            || !world.AllowsNativePopulationLevel(portal.DestinationLevelId)))
             throw new InvalidDataException("The populated route cannot retain portals outside Town and its owned Cathedral level.");
         foreach (var entityId in reservedEntityIds) {
             var record = liveMonsterAdapter.Records.Single(value => value.Binding.EntityId == entityId);

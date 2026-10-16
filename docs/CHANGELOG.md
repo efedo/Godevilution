@@ -2,6 +2,15 @@
 
 Notable changes to this fork are recorded below.
 
+- 2026-10-16: Integrate an explicit native Town/L1/L2 first-entry route with
+  lazy per-floor native owners and opt-in cohort v9 mutation retention, preserving
+  older saves. Headless L1 earned gear/Gold/Pepin supplies, actual L2 bow combat,
+  Town417, exact fresh-host restore, both-floor revisit and Town538 pass.
+  Add pinned Pepin healing purchases, immediate item/store selection refresh and
+  atomic dead-player consumable refusal. Preserve native visibility and snapshot
+  validation results while avoiding repeated scans. Add bounded transport/host
+  diagnostics and an optional Release server for this workload; defaults remain.
+
 - 2026-10-15: Integrate native L1 Arrow wall traps linked to doors/plain chests,
   Rogue disarm-then-operate, ordered firing/flight/impacts and opt-in cohort v8
   cold continuation while preserving older saves. Headless Rogue combat and

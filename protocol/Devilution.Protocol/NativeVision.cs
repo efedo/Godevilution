@@ -76,4 +76,69 @@ public static class NativeVision
         }
         return false;
     }
+
+    private readonly record struct TargetRay(int QuadrantIndex, int RayIndex, int PointIndex);
+    private static readonly TargetRay[][] TargetRays = BuildTargetRays();
+
+    private static TargetRay[][] BuildTargetRays()
+    {
+        var entries = Enumerable.Range(0, 31 * 31).Select(_ => new List<TargetRay>()).ToArray();
+        for (var quadrantIndex = 0; quadrantIndex < Quadrants.Length; quadrantIndex++) {
+            var quadrant = Quadrants[quadrantIndex];
+            for (var rayIndex = 0; rayIndex < VisionRays.Length; rayIndex++) {
+                var ray = VisionRays[rayIndex];
+                for (var pointIndex = 0; pointIndex < ray.Length; pointIndex++) {
+                    var point = ray[pointIndex];
+                    var x = point.DeltaX * quadrant.DeltaX;
+                    var y = point.DeltaY * quadrant.DeltaY;
+                    entries[(y + 15) * 31 + x + 15].Add(new TargetRay(quadrantIndex, rayIndex, pointIndex));
+                }
+            }
+        }
+        return entries.Select(list => list.ToArray()).ToArray();
+    }
+
+    /**
+     * Same native visibility for pure map predicates, examining only ray prefixes
+     * that can reach the target. Retains no geometry or mutable blocker state.
+     * The original IsVisible API preserves its delegate visitation behavior.
+     */
+    public static bool IsVisibleOnTargetRays(
+        int viewerX, int viewerY, int targetX, int targetY, int radius,
+        Func<int, int, bool> passesLight, Func<int, int, bool> inBounds)
+    {
+        ArgumentNullException.ThrowIfNull(passesLight);
+        ArgumentNullException.ThrowIfNull(inBounds);
+        if (!inBounds(viewerX, viewerY) || !inBounds(targetX, targetY))
+            return false;
+        if (viewerX == targetX && viewerY == targetY)
+            return true;
+        var deltaX = unchecked(targetX - viewerX);
+        var deltaY = unchecked(targetY - viewerY);
+        if (deltaX < -15 || deltaX > 15 || deltaY < -15 || deltaY > 15)
+            return false;
+        var effectiveRadius = Math.Clamp(radius, 0, 15);
+        foreach (var candidate in TargetRays[(deltaY + 15) * 31 + deltaX + 15]) {
+            if (candidate.PointIndex >= effectiveRadius - RayLengthAdjustments[candidate.RayIndex])
+                continue;
+            var quadrant = Quadrants[candidate.QuadrantIndex];
+            var ray = VisionRays[candidate.RayIndex];
+            for (var pointIndex = 0; pointIndex <= candidate.PointIndex; pointIndex++) {
+                var relative = ray[pointIndex];
+                var pointX = viewerX + relative.DeltaX * quadrant.DeltaX;
+                var pointY = viewerY + relative.DeltaY * quadrant.DeltaY;
+                if (!inBounds(pointX, pointY))
+                    break;
+                if (relative.DeltaX > 0 && relative.DeltaY > 0
+                    && !passesLight(pointX - quadrant.DeltaX, pointY)
+                    && !passesLight(pointX, pointY - quadrant.DeltaY))
+                    break;
+                if (pointIndex == candidate.PointIndex)
+                    return true;
+                if (!passesLight(pointX, pointY))
+                    break;
+            }
+        }
+        return false;
+    }
 }

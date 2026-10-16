@@ -2489,7 +2489,8 @@ public sealed partial class AuthoritativeCathedralNativePopulationIntegrationTes
         public CathedralDepthPlaytestProfile Profile { get; }
         public AuthoritativeItemCatalog BaselineItems { get; private set; } = null!;
 
-        public NativeFixture(string metadataDirectory, string runtimeTablePath, string footprintTablePath)
+        public NativeFixture(string metadataDirectory, string runtimeTablePath, string footprintTablePath,
+            bool progressionSemantics = false)
         {
             PopulationMetadata = CathedralPopulationMetadataCompiler.LoadDirectory(metadataDirectory);
             var metadataPack = PopulationMetadata.ToContentPack();
@@ -2520,7 +2521,7 @@ public sealed partial class AuthoritativeCathedralNativePopulationIntegrationTes
                 PopulationMetadata.Items.Catalog,
                 baselineActivation.Simulation.Items!,
                 baselineActivation.Simulation.Spells,
-                footprints);
+                footprints, includeNativeJewelry: progressionSemantics);
             var itemSidecars = AuthoritativeCathedralNativeItemSidecars.Load(footprintTable, semanticsTable);
             var storesTable = generated.Tables.Single(table => table.SourcePath == "stores.tsv");
             var preparedStores = AuthoritativeCathedralNativePopulationBuilder.PrepareNativeProfileStoreTable(

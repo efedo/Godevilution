@@ -18,23 +18,37 @@ public sealed partial class DiabloWorldState
         if (options.GameMode != DiabloGameMode.SinglePlayer || options.Difficulty != DiabloDifficulty.Normal
             || options.CombatRules?.GameVariant != DiabloGameVariant.Diablo
             || options.NativeCathedralItems is null
-            || options.NativeCathedralItems.GenerationFingerprint != nativePopulationPolicy.Fingerprint
+            || options.NativeProgressionRestore is null
+                && options.NativeCathedralItems.GenerationFingerprint != nativePopulationPolicy.Fingerprint
             || options.NativeMonsterMetadataFingerprint != nativePopulationPolicy.MonsterMetadataFingerprint
-            || cathedralDoorCatalog?.Definitions.Count != 1
-            || cathedralDoorCatalog.Definitions[0].LevelId != nativePopulationPolicy.LevelId)
+            || cathedralDoorCatalog is null
+            || options.NativeProgressionRestore is null && (cathedralDoorCatalog.Definitions.Count != 1
+                || cathedralDoorCatalog.Definitions[0].LevelId != nativePopulationPolicy.LevelId))
             throw new InvalidDataException("Direct native population requires the exact single-player L1 item, actor and door profile.");
-        nativePopulationPolicy.ValidateItemProfile(options.NativeCathedralItems);
+        if (options.NativeProgressionRestore is { } restored) {
+            if (options.NativeProgression is null
+                || !restored.Owners.Select(owner => owner.LevelId).SequenceEqual(
+                    cathedralDoorCatalog.Definitions.Select(door => door.LevelId))
+                || options.NativeCathedralItems.GenerationFingerprint != restored.Items.GenerationFingerprint
+                || restored.Owners.Any(owner => owner.MonsterMetadataFingerprint != options.NativeMonsterMetadataFingerprint))
+                throw new InvalidDataException("Native restored floor owners do not match the explicit run and item registry.");
+            foreach (var owner in restored.Owners)
+                nativePopulationPolicies.Add(owner.LevelId, owner);
+        } else {
+            nativePopulationPolicy.ValidateItemProfile(options.NativeCathedralItems);
+        }
         nativePopulationParticipantClassId = options.PlayerClasses?.Definitions.SingleOrDefault(
             definition => string.Equals(definition.Symbol, "rogue", StringComparison.Ordinal))?.ClassId
             ?? throw new InvalidDataException("Native population requires the canonical Rogue participant class.");
         if (World is null)
             throw new InvalidDataException("Native population requires its complete backing world.");
-        var nativeBacking = World.Levels.Single(level => level.LevelId == nativePopulationPolicy.LevelId);
-        nativePopulationPolicy.ValidateBackingLevel(nativeBacking,
-            allowOmittedSpecial: options.DeferCohortInitialization);
-        if (options.DeferCohortInitialization)
-            World.ReplaceLevel(AuthoritativeCathedralDoors.CopyLevel(nativeBacking,
-                special: nativePopulationPolicy.InitialState.Special.Select(number => (ushort)number)));
+        foreach (var owner in NativePopulationOwners) {
+            var nativeBacking = World.Levels.Single(level => level.LevelId == owner.LevelId);
+            owner.ValidateBackingLevel(nativeBacking, allowOmittedSpecial: options.DeferCohortInitialization);
+            if (options.DeferCohortInitialization)
+                World.ReplaceLevel(AuthoritativeCathedralDoors.CopyLevel(nativeBacking,
+                    special: owner.InitialState.Special.Select(number => (ushort)number)));
+        }
         if (!options.DeferCohortInitialization) {
             deferCohortInitialization = false;
             RebuildProjectedGeometry();
@@ -73,67 +87,70 @@ public sealed partial class DiabloWorldState
     private void RestoreNativePopulationDoors(DiabloCathedralDoorCheckpoint checkpoint,
         IReadOnlyList<DiabloObjectState> objects)
     {
-        var policy = nativePopulationPolicy!;
         if (World is null)
             throw new InvalidDataException("Native population doors require backing geometry.");
         DiabloCathedralDoorCheckpoint.RequireSameGeometry(trustedCathedralDoorBackingGeometry, checkpoint.BackingGeometry);
         var backing = new AuthoritativeWorld();
         backing.RestoreGeometryState(checkpoint.BackingGeometry);
-        var baseline = backing.Levels.Single(value => value.LevelId == policy.LevelId);
-        policy.ValidateBackingLevel(baseline, allowOmittedSpecial: true);
-        baseline = AuthoritativeCathedralDoors.CopyLevel(baseline,
-            special: policy.InitialState.Special.Select(number => (ushort)number));
-        backing.ReplaceLevel(baseline);
-        var saved = checkpoint.DoorLevels.Single();
-        if (saved.LevelId != policy.LevelId || saved.Doors.Count != policy.InitialDoorCount
-            || !saved.BackingSpecial.SequenceEqual(baseline.NativeSpecialLayer)
-            || saved.EffectiveSpecial.Count != baseline.Width * baseline.Height)
-            throw new InvalidDataException("Native door checkpoint coverage or raw backing special bytes changed.");
+        var owners = NativePopulationOwners.OrderBy(policy => policy.LevelId).ToArray();
+        if (!checkpoint.DoorLevels.Select(level => level.LevelId).SequenceEqual(owners.Select(owner => owner.LevelId)))
+            throw new InvalidDataException("Native doors require every retained floor owner exactly once.");
         var effective = ValidateCohortEffectiveLevels(checkpoint.EffectiveLevels).ToDictionary();
         var legitimate = BuildProjectedGeometry();
         if (!effective.Keys.Order().SequenceEqual(legitimate.Keys.Order()))
             throw new InvalidDataException("Native door checkpoint changed complete level coverage.");
         foreach (var entry in effective)
-            if (entry.Key != policy.LevelId)
+            if (!owners.Any(owner => owner.LevelId == entry.Key))
                 DiabloCathedralDoorCheckpoint.RequireSameLevels(
                     [CaptureCohortLevel(legitimate[entry.Key])], [CaptureCohortLevel(entry.Value)]);
-        var projected = AuthoritativeCathedralDoors.CopyLevel(effective[policy.LevelId], special: saved.EffectiveSpecial);
-        effective[policy.LevelId] = projected;
         var restored = new Dictionary<uint, (uint LevelId, AuthoritativeCathedralDoorState Door)>();
-        var expectedOrder = saved.Doors.OrderBy(value => value.PositionY).ThenBy(value => value.PositionX).ToArray();
-        if (!saved.Doors.SequenceEqual(expectedOrder))
-            throw new InvalidDataException("Native door checkpoint ordering changed.");
-        foreach (var state in saved.Doors) {
-            var initial = policy.GetInitialDoor(state.EntityId);
-            var door = new AuthoritativeCathedralDoorState((AuthoritativeCathedralDoorKind)state.NativeObjectId,
-                state.PositionX, state.PositionY, (AuthoritativeCathedralDoorStatus)state.DoorState,
-                state.CachedPiece, state.CachedNeighborPiece, state.AnimationFrame,
-                state.SelectionRegion, state.PreDraw, state.MissilePassable, state.Solid);
-            if (door.Kind != initial.Kind || door.PositionX != initial.PositionX || door.PositionY != initial.PositionY
-                || door.Var1 != initial.Var1 || door.Var2 != initial.Var2 || door.SolidFlag != initial.SolidFlag
-                || !Objects.TryGetValue(state.EntityId, out var value)
-                || objects.Count(candidate => candidate.EntityId == state.EntityId) != 1
-                || value.AnimationFrame != door.AnimationFrame || value.MissilePassable != door.MissFlag
-                || !restored.TryAdd(state.EntityId, (policy.LevelId, door)))
-                throw new InvalidDataException("Saved native doors conflict with their raw binding or object projection.");
-            AuthoritativeCathedralDoors.Validate(projected, door);
-            policy.ValidateObject(value);
+        var doorLevels = new Dictionary<uint, AuthoritativeLevel>();
+        foreach (var policy in owners) {
+            var baseline = backing.Levels.Single(value => value.LevelId == policy.LevelId);
+            policy.ValidateBackingLevel(baseline, allowOmittedSpecial: true);
+            baseline = AuthoritativeCathedralDoors.CopyLevel(baseline,
+                special: policy.InitialState.Special.Select(number => (ushort)number));
+            backing.ReplaceLevel(baseline);
+            var saved = checkpoint.DoorLevels.Single(value => value.LevelId == policy.LevelId);
+            if (saved.Doors.Count != policy.InitialDoorCount
+                || !saved.BackingSpecial.SequenceEqual(baseline.NativeSpecialLayer)
+                || saved.EffectiveSpecial.Count != baseline.Width * baseline.Height)
+                throw new InvalidDataException("Native door checkpoint coverage or raw backing special bytes changed.");
+            var projected = AuthoritativeCathedralDoors.CopyLevel(effective[policy.LevelId], special: saved.EffectiveSpecial);
+            effective[policy.LevelId] = projected;
+            if (!saved.Doors.SequenceEqual(saved.Doors.OrderBy(value => value.PositionY).ThenBy(value => value.PositionX)))
+                throw new InvalidDataException("Native door checkpoint ordering changed.");
+            foreach (var state in saved.Doors) {
+                var initial = policy.GetInitialDoor(state.EntityId);
+                var door = new AuthoritativeCathedralDoorState((AuthoritativeCathedralDoorKind)state.NativeObjectId,
+                    state.PositionX, state.PositionY, (AuthoritativeCathedralDoorStatus)state.DoorState,
+                    state.CachedPiece, state.CachedNeighborPiece, state.AnimationFrame,
+                    state.SelectionRegion, state.PreDraw, state.MissilePassable, state.Solid);
+                if (door.Kind != initial.Kind || door.PositionX != initial.PositionX || door.PositionY != initial.PositionY
+                    || door.Var1 != initial.Var1 || door.Var2 != initial.Var2 || door.SolidFlag != initial.SolidFlag
+                    || !Objects.TryGetValue(state.EntityId, out var value)
+                    || objects.Count(candidate => candidate.EntityId == state.EntityId) != 1
+                    || value.AnimationFrame != door.AnimationFrame || value.MissilePassable != door.MissFlag
+                    || !restored.TryAdd(state.EntityId, (policy.LevelId, door)))
+                    throw new InvalidDataException("Saved native doors conflict with their raw binding or object projection.");
+                AuthoritativeCathedralDoors.Validate(projected, door);
+                policy.ValidateObject(value);
+            }
+            ValidateCathedralDoorEffectiveGeometry(baseline, projected, saved.Doors);
+            doorLevels.Add(policy.LevelId, projected);
         }
-        ValidateCathedralDoorEffectiveGeometry(baseline, projected, saved.Doors);
-        // Publish only after all validation succeeds. Shared-frame operation history stays exact.
+        // Publish only after all floors pass. No scanner or operation replay is involved.
         World.RestoreGeometryState(backing.CaptureGeometryState());
-        // The frozen geometry DTO omits Special; restore only the immutable owner's raw layer.
-        World.ReplaceLevel(AuthoritativeCathedralDoors.CopyLevel(
-            World.Levels.Single(level => level.LevelId == policy.LevelId),
-            special: policy.InitialState.Special.Select(number => (ushort)number)));
+        foreach (var owner in owners)
+            World.ReplaceLevel(AuthoritativeCathedralDoors.CopyLevel(
+                World.Levels.Single(level => level.LevelId == owner.LevelId),
+                special: owner.InitialState.Special.Select(number => (ushort)number)));
         projectedLevels.Clear();
-        foreach (var entry in effective)
-            projectedLevels.Add(entry.Key, entry.Value);
+        foreach (var entry in effective) projectedLevels.Add(entry.Key, entry.Value);
         cathedralDoorLevels.Clear();
-        cathedralDoorLevels.Add(policy.LevelId, projected);
+        foreach (var entry in doorLevels) cathedralDoorLevels.Add(entry.Key, entry.Value);
         cathedralDoors.Clear();
-        foreach (var entry in restored)
-            cathedralDoors.Add(entry.Key, entry.Value);
+        foreach (var entry in restored) cathedralDoors.Add(entry.Key, entry.Value);
         PreserveCathedralDoorProjection();
     }
 }

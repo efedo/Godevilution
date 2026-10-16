@@ -107,6 +107,8 @@ public sealed record DiabloContentActivation
 
     public DiabloSimulation Simulation { get; }
 
+    internal DiabloSimulationOptions? TrustedOptions { get; init; }
+
     /** Trusted activated configuration retained without exposing host persistence. */
     public Func<DiabloCohortState, DiabloCohortCandidate>? CohortCandidateFactory { get; init; }
 
@@ -275,7 +277,12 @@ public interface IDiabloCathedralNativePopulationBootstrap
         DiabloDifficulty difficulty = DiabloDifficulty.Normal);
 }
 
-internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap, IDiabloNativeGeneratedContentBootstrap, IDiabloCathedralDepthContentBootstrap, IDiabloCathedralDoorContentBootstrap, IDiabloCathedralNativePopulationBootstrap
+public interface IDiabloCathedralNativeProgressionBootstrap
+{
+    DiabloContentActivation ActivateNativeProgression(ComposedContent content, uint randomSeed = 0);
+}
+
+internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap, IDiabloNativeGeneratedContentBootstrap, IDiabloCathedralDepthContentBootstrap, IDiabloCathedralDoorContentBootstrap, IDiabloCathedralNativePopulationBootstrap, IDiabloCathedralNativeProgressionBootstrap
 {
     private const string NativePopulationSidecarPrefix = "native_cathedral_population/";
     private const string NativeRuntimeSidecarPrefix = "native_cathedral_runtime/";
@@ -348,6 +355,11 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap, IDiabloN
         DiabloDifficulty difficulty = DiabloDifficulty.Normal)
         => ActivateCore(content, randomSeed, gameMode, monsterSpawns, difficulty,
             nativeGenerated: false, cathedralDepths: true, cathedralDoors: true, nativePopulation: true);
+
+    public DiabloContentActivation ActivateNativeProgression(ComposedContent content, uint randomSeed = 0)
+        => ActivateCore(content, randomSeed, DiabloGameMode.SinglePlayer, null, DiabloDifficulty.Normal,
+            nativeGenerated: false, cathedralDepths: true, cathedralDoors: true,
+            nativePopulation: true, nativeProgression: true);
 
     private static NativePopulationSidecarData LoadNativePopulationSidecars(ComposedContent content)
     {
@@ -430,7 +442,8 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap, IDiabloN
         bool nativeGenerated,
         bool cathedralDepths = false,
         bool cathedralDoors = false,
-        bool nativePopulation = false)
+        bool nativePopulation = false,
+        bool nativeProgression = false)
     {
         ArgumentNullException.ThrowIfNull(content);
         if (nativePopulation && (!cathedralDepths || !cathedralDoors
@@ -673,6 +686,9 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap, IDiabloN
             stableIds,
             spellBooks,
             gameMode);
+        var hasNativePinnedStoreCapability = content.TryGetTable("native_pinned_stores.tsv", out var nativePinnedStoresTable);
+        if (nativeProgression && hasNativePinnedStoreCapability)
+            stores.ConfigureNativePepinPinnedHealingStock(itemCatalog, nativePinnedStoresTable);
         stableIds.ValidateReferences(
             "store",
             storeId => stores.ContainsStore(storeId)
@@ -1492,6 +1508,7 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap, IDiabloN
         }
 
         AuthoritativeCathedralNativePopulationBuild? nativePopulationBuild = null;
+        AuthoritativeCathedralNativeProgression? nativeProgressionDefinition = null;
         if (nativePopulation) {
             if (world is null || depthGenerationPlan is null || cathedralDoorCatalog is null
                 || playerClasses is null || playerAnimations is null || playerLoadouts is null
@@ -1524,6 +1541,28 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap, IDiabloN
             objects = (objects ?? Array.Empty<AuthoritativeWorldObject>())
                 .Concat(nativePopulationBuild.Objects)
                 .ToArray();
+            if (nativeProgression) {
+                var next = depthGenerationPlan.Candidates.Single(candidate => candidate.Level.LevelId == 2);
+                var nextDoor = cathedralDoorCatalog.Definitions.Single(definition => definition.LevelId == 2);
+                var stock = stores.CaptureAll().SelectMany(store => store.Items!).Select(item => item.State).ToArray();
+                nativeProgressionDefinition = new AuthoritativeCathedralNativeProgression(
+                    AuthoritativeCathedralNativeProgression.ComputeFingerprint(new {
+                        RunId = "native-cathedral-town-l1-l2-v1", InitialOwner = nativePopulationBuild.Policy.Fingerprint,
+                        Depths = cathedralDepthIdentity, Metadata = sidecars.Population.Fingerprint,
+                        Runtime = sidecars.Runtime.Fingerprint, StorySeed = 0x13579BDFU,
+                    }), playerAnimations, entry => {
+                        var request = AuthoritativeCathedralFreshLevelGenerator.CreateEntryRequest(
+                            sidecars.Population, next.Identity.Depth, next.Identity.DungeonSeed, 0x13579BDF,
+                            next.Identity.Entry, entry.Hero, entry.InitialUniqueItemFlags.ToHashSet(),
+                            next.Level.StableSymbol);
+                        return AuthoritativeCathedralNativePopulationBuilder.Build(sidecars.Population, sidecars.Runtime,
+                            next, playerClasses, playerAnimations, playerLoadouts, monsterTypes, itemCatalog, spells,
+                            nextDoor, stock, sidecars.Items, request, []);
+                    }) {
+                        FreshActivation = () => new DiabloContentBootstrap(DiabloSimulationFactory.Instance)
+                            .ActivateNativeProgression(content, randomSeed),
+                    };
+            }
             cathedralDoorCatalog = new AuthoritativeCathedralDoorCatalog([doorDefinition]);
         }
 
@@ -1536,6 +1575,7 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap, IDiabloN
             NativeMonsterMetadataFingerprint = nativePopulationBuild?.MonsterMetadataFingerprint,
             NativeCathedralItems = nativePopulationBuild?.Items,
             NativePopulationPolicy = nativePopulationBuild?.Policy,
+            NativeProgression = nativeProgressionDefinition,
             WorldMutations = worldMutations,
             WorldRules = worldRules,
             CombatTargets = combatTargets,
@@ -1721,7 +1761,8 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap, IDiabloN
             nativeItemMisc: legacyCompatibility.NativeItemMisc,
             nativeItemTopology: legacyCompatibility.NativeItemTopology,
             nativeItemTags: legacyCompatibility.NativeItemTags) {
-                CohortCandidateFactory = simulationFactory is IDiabloCohortSimulationFactory cohortFactory
+                TrustedOptions = simulationOptions,
+            CohortCandidateFactory = simulationFactory is IDiabloCohortSimulationFactory cohortFactory
                     ? state => cohortFactory.CreateCohortCandidate(simulationOptions, state)
                     : null,
             };

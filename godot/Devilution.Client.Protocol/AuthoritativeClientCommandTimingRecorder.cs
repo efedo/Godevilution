@@ -5,7 +5,7 @@ namespace Devilution.Client.Protocol;
 
 /**
  * Opt-in, in-memory diagnostics for client command dispatch timing. The
- * recorder intentionally contains only numeric and enum metadata; it never
+ * recorder intentionally contains numeric/enum metadata and exception class identifiers; it never
  * retains protocol payloads, session tokens, or gameplay identity.
  */
 public sealed class AuthoritativeClientCommandTimingRecorder
@@ -19,6 +19,7 @@ public sealed class AuthoritativeClientCommandTimingRecorder
     private readonly List<AuthoritativeClientProbeOutcomeTiming> probeOutcomes = [];
     private readonly List<AuthoritativeClientSnapshotTiming> snapshots = [];
     private readonly List<AuthoritativeClientAcknowledgementTiming> acknowledgements = [];
+    private readonly List<AuthoritativeClientReceiveTerminalTiming> receiveTerminals = [];
     private long droppedRecordCount;
     private int recordCount;
 
@@ -40,7 +41,9 @@ public sealed class AuthoritativeClientCommandTimingRecorder
                 Array.AsReadOnly(snapshots.ToArray()),
                 Array.AsReadOnly(acknowledgements.ToArray()),
                 Stopwatch.Frequency,
-                droppedRecordCount);
+                droppedRecordCount) {
+                ReceiveTerminals = Array.AsReadOnly(receiveTerminals.ToArray()),
+            };
         }
     }
 
@@ -89,6 +92,15 @@ public sealed class AuthoritativeClientCommandTimingRecorder
         }
     }
 
+    internal void RecordReceiveTerminal(AuthoritativeClientReceiveTerminalTiming timing)
+    {
+        lock (sync) {
+            if (!ReserveRecord())
+                return;
+            receiveTerminals.Add(timing);
+        }
+    }
+
     private bool ReserveRecord()
     {
         if (recordCount >= capacity) {
@@ -108,7 +120,29 @@ public sealed record AuthoritativeClientTimingCaptureReport(
     IReadOnlyList<AuthoritativeClientSnapshotTiming> Snapshots,
     IReadOnlyList<AuthoritativeClientAcknowledgementTiming> Acknowledgements,
     long StopwatchFrequency,
-    long DroppedRecordCount);
+    long DroppedRecordCount)
+{
+    public IReadOnlyList<AuthoritativeClientReceiveTerminalTiming> ReceiveTerminals { get; init; }
+        = Array.Empty<AuthoritativeClientReceiveTerminalTiming>();
+}
+
+/** No exception messages or protocol payloads are retained. */
+public sealed record AuthoritativeClientReceiveTerminalTiming(
+    long TransportGeneration,
+    AuthoritativeClientReceiveTerminalKind Kind,
+    long ElapsedMilliseconds,
+    long StopwatchTimestamp,
+    string? ExceptionType,
+    int? HResult);
+
+public enum AuthoritativeClientReceiveTerminalKind
+{
+    EndOfStream = 0,
+    Cancellation = 1,
+    TransportFailure = 2,
+    ProtocolFailure = 3,
+    UnexpectedFailure = 4,
+}
 
 public enum AuthoritativeClientCommandDispatchKind
 {

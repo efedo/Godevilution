@@ -108,6 +108,87 @@ public sealed class AuthoritativeCathedralFreshLevelGeneratorTests
         Assert.InRange(result.NextTransparencyValue, 2, 127);
     }
 
+    [Fact]
+    public void FirstEntryRequestDetachesGlobalUniqueHistoryWithoutChangingLegacyFreshRequests()
+    {
+        var metadata = SyntheticMetadata();
+        var history = new HashSet<int> { 0, 127 };
+        var entry = AuthoritativeCathedralFreshLevelGenerator.CreateEntryRequest(
+            metadata, 2, 2588, 0x13579BDF, AuthoritativeCathedralEntry.Main, Hero(), history);
+        history.Clear();
+        history.Add(64);
+        Assert.Equal(new[] { 0, 127 }, entry.InitialUniqueItemFlags.Order());
+        Assert.Empty(AuthoritativeCathedralFreshLevelGenerator.CreateRequest(
+            metadata, 2, 2588, 0x13579BDF, AuthoritativeCathedralEntry.Main, Hero()).InitialUniqueItemFlags);
+    }
+
+    [Theory]
+    [InlineData(-1)]
+    [InlineData(128)]
+    public void FirstEntryRejectsOutOfRangeUniqueHistoryBeforeGenerating(int flag)
+    {
+        Assert.Throws<InvalidDataException>(() => AuthoritativeCathedralFreshLevelGenerator.CreateEntryRequest(
+            SyntheticMetadata(), 2, 2588, 0x13579BDF, AuthoritativeCathedralEntry.Main, Hero(),
+            new HashSet<int> { flag }));
+    }
+
+    [Fact(Explicit = true)]
+    public void FirstL2EntryPreservesAlreadyGeneratedUniqueItemsInTheActualPopulation()
+    {
+        var request = AuthoritativeCathedralFreshLevelGenerator.CreateEntryRequest(
+            LoadMetadata(), 2, 2588, 0x13579BDF, AuthoritativeCathedralEntry.Main,
+            Hero() with { PreEntryFuture = new(49, 48) }, new HashSet<int> { 0, 127 });
+        var generated = AuthoritativeCathedralFreshLevelGenerator.Generate(request);
+        Assert.NotEmpty(generated.Population.State.ActiveMonsterIds
+            .Take(generated.Population.State.ActiveMonsterCount));
+        Assert.Equal(new[] { 0, 127 }, generated.FullPopulationRequest.InitialUniqueItemFlags.Order());
+        Assert.Contains(0, generated.Population.State.UniqueItemFlags);
+        Assert.Contains(127, generated.Population.State.UniqueItemFlags);
+    }
+
+    [Fact(Explicit = true)]
+    public void ActualL2EntryRetainsAllSixEmergingSkeletonsAndItsUniqueMonster()
+    {
+        var metadata = LoadMetadata();
+        var runtime = AuthoritativeCathedralMonsterRuntimeCatalog.LoadTable(TsvTable.Parse(
+            AuthoritativeCathedralMonsterRuntimeCatalog.TableName, File.ReadAllText(
+                Environment.GetEnvironmentVariable("GODEVILUTION_CATHEDRAL_MONSTER_RUNTIME_TABLE_PATH")!)));
+        var request = AuthoritativeCathedralFreshLevelGenerator.CreateEntryRequest(metadata,
+            2, 2588, 0x13579BDF, AuthoritativeCathedralEntry.Main,
+            new(2880, 1440, 8, 8, new(49, 48), true), new HashSet<int>());
+        var state = AuthoritativeCathedralFreshLevelGenerator.Generate(request).Population.State;
+        var bindings = state.ActiveMonsterIds.Take(state.ActiveMonsterCount).Select(slot =>
+            new AuthoritativeCathedralMonsterRuntimeBinding(slot, (uint)(0x09011000 + slot),
+                (uint)(0x10000 + state.MonsterSlots[slot].Type), 2)).ToArray();
+        var fingerprint = AuthoritativeCathedralMonsterRuntimeAdapter.ComputeMetadataFingerprint(
+            metadata.Fingerprint, metadata.UniqueMonsters.Fingerprint, runtime);
+        var imported = AuthoritativeCathedralMonsterRuntimeAdapter.AdaptLevelEntryWithBindings(
+            state, runtime, fingerprint, bindings, metadata.Population.Monsters,
+            uniqueDefinitions: metadata.UniqueMonsters.Definitions,
+            uniqueIdentities: metadata.UniqueMonsters.Definitions.ToDictionary(row => row.NativeUniqueId,
+                row => "native-cathedral-unique-" + row.NativeUniqueId.ToString("D3")));
+        Assert.Equal(152, imported.Records.Count);
+        Assert.Equal(144, imported.Records.Count(row => row.LiveTargetCreated));
+        Assert.Equal(new[] { 122, 123, 124, 125, 126, 127 },
+            imported.InitialSpecialStandActors.Select(row => row.NativeSlot));
+        foreach (var phase in imported.InitialSpecialStandActors) {
+            var original = state.MonsterSlots[phase.NativeSlot];
+            var target = Assert.IsType<AuthoritativeCombatTarget>(imported.Records.Single(
+                row => row.Binding.NativeSlot == phase.NativeSlot).Target);
+            Assert.Equal(original, target.NativeInitialization!.InitialState);
+            Assert.Equal(11, original.Mode);
+            Assert.Equal(original.AnimCurrentFrame, phase.FrameIndex);
+            Assert.Equal(original.AnimTickCounter, phase.TickCounter);
+            Assert.Equal(original.AnimNumberOfFrames, phase.FrameCount);
+            Assert.Equal(original.AnimTicksPerFrame, phase.TicksPerFrame);
+        }
+        Assert.True(imported.Records.Single(row => row.Binding.NativeSlot == 7).Target!.IsUnique);
+        Assert.All(imported.Records.Where(row => !row.LiveTargetCreated), row =>
+            Assert.Contains(row.UnsupportedReason, new[] {
+                AuthoritativeCathedralMonsterRuntimeUnsupportedReason.DormantGolem,
+                AuthoritativeCathedralMonsterRuntimeUnsupportedReason.PreSpawnSkeleton }));
+    }
+
     private static AuthoritativeCathedralFreshLevelHeroContext Hero()
         => new(6400, 3200, 8, 8, new(75, 68), true);
 

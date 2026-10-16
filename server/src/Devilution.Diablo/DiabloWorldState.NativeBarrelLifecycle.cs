@@ -2,17 +2,22 @@ namespace Devilution.Diablo;
 
 public sealed partial class DiabloWorldState
 {
-    private Dictionary<int, DiabloNativeBarrelState> nativeBarrelsBySlot = [];
+    private Dictionary<uint, DiabloNativeBarrelState> nativeBarrelsByEntityId = [];
 
-    internal bool HasNativeBarrelMutations => nativeBarrelsBySlot.Values.Any(value => value.Broken);
+    internal bool HasNativeBarrelMutations => nativeBarrelsByEntityId.Values.Any(value => value.Broken);
 
     internal IReadOnlyList<DiabloNativeBarrelState>? CaptureNativeBarrels()
         => nativePopulationPolicy is null
             ? null
-            : Array.AsReadOnly(nativeBarrelsBySlot.Values.OrderBy(value => value.ObjectSlot).ToArray());
+            : Array.AsReadOnly(nativeBarrelsByEntityId.Values.OrderBy(value => Objects[value.EntityId].LevelId).ThenBy(value => value.ObjectSlot).ToArray());
 
     internal DiabloNativeBarrelState? GetNativeBarrelState(int objectSlot)
-        => nativeBarrelsBySlot.TryGetValue(objectSlot, out var state) ? state : null;
+        => nativePopulationPolicy is null ? null
+            : GetNativeBarrelState(nativePopulationPolicy.LevelId, objectSlot);
+
+    internal DiabloNativeBarrelState? GetNativeBarrelState(uint levelId, int objectSlot)
+        => nativeBarrelsByEntityId.Values.SingleOrDefault(value => value.ObjectSlot == objectSlot
+            && Objects.TryGetValue(value.EntityId, out var owner) && owner.LevelId == levelId);
 
     internal void ConfigureNativeBarrels(
         AuthoritativeCathedralNativePopulationPolicy policy,
@@ -20,7 +25,7 @@ public sealed partial class DiabloWorldState
         IReadOnlyList<DiabloNativeBarrelState>? savedStates)
     {
         ArgumentNullException.ThrowIfNull(policy);
-        if (nativePopulationPolicy != policy)
+        if (!ReferenceEquals(NativePopulationForLevel(policy.LevelId), policy))
             throw new InvalidOperationException("Native barrel state requires its configured immutable population owner.");
 
         var initial = policy.CreateInitialNativeBarrelStates();
@@ -29,19 +34,21 @@ public sealed partial class DiabloWorldState
                 throw new InvalidDataException("Native barrel cohorts require complete object lifecycle records.");
             if (savedStates.Count != initial.Count)
                 throw new InvalidDataException("Native barrel cohort omits a supported generated object.");
-            var restored = new Dictionary<int, DiabloNativeBarrelState>();
+            var restored = new Dictionary<uint, DiabloNativeBarrelState>();
             for (var index = 0; index < initial.Count; index++) {
                 var actual = savedStates[index];
                 actual.ValidateShape();
                 if (!SameNativeBarrelIdentity(actual, initial[index])
-                    || !restored.TryAdd(actual.ObjectSlot, actual))
+                    || !restored.TryAdd(actual.EntityId, actual))
                     throw new InvalidDataException("Native barrel lifecycle identity differs from the exact generated object and reservation.");
             }
-            nativeBarrelsBySlot = restored;
+            foreach (var entry in restored)
+                nativeBarrelsByEntityId.Add(entry.Key, entry.Value);
         } else {
             if (savedStates is not null)
                 throw new InvalidDataException("Older native cohorts cannot carry barrel lifecycle state.");
-            nativeBarrelsBySlot = initial.ToDictionary(value => value.ObjectSlot);
+            foreach (var entry in initial)
+                nativeBarrelsByEntityId.Add(entry.EntityId, entry);
         }
 
         ValidateNativeBarrelState(policy);
@@ -49,11 +56,12 @@ public sealed partial class DiabloWorldState
 
     internal bool CanBreakNativeBarrel(AuthoritativeWorldObject value)
     {
+        var nativePopulationPolicy = NativePopulationForLevel(value.LevelId);
         if (nativePopulationPolicy is null || value.LevelId != nativePopulationPolicy.LevelId
             || !Objects.TryGetValue(value.EntityId, out var current) || !ReferenceEquals(current, value)
             || !nativePopulationPolicy.TryGetNativeBarrelFacts(value, out var facts))
             return false;
-        return nativeBarrelsBySlot.TryGetValue(facts.ObjectSlot, out var state) && !state.Broken;
+        return nativeBarrelsByEntityId.TryGetValue(facts.EntityId, out var state) && !state.Broken;
     }
 
     internal bool TryGetNativeBarrelFacts(
@@ -62,7 +70,7 @@ public sealed partial class DiabloWorldState
     {
         facts = null!;
         return CanBreakNativeBarrel(value)
-            && nativePopulationPolicy!.TryGetNativeBarrelFacts(value, out facts);
+            && NativePopulationForLevel(value.LevelId)!.TryGetNativeBarrelFacts(value, out facts);
     }
 
     internal IReadOnlyList<bool> GetNativeBarrelSpawnAvailability(
@@ -93,6 +101,7 @@ public sealed partial class DiabloWorldState
         AuthoritativeCathedralBarrelOperationResult operation,
         IReadOnlyList<AuthoritativePlayerState> participants)
     {
+        var nativePopulationPolicy = NativePopulationForLevel(value.LevelId);
         ArgumentNullException.ThrowIfNull(operation);
         ArgumentNullException.ThrowIfNull(participants);
         if (!TryGetNativeBarrelFacts(value, out var facts)
@@ -100,7 +109,7 @@ public sealed partial class DiabloWorldState
             || operation.OpenedMutation != AuthoritativeCathedralBarrelOpenedMutation.Native)
             return false;
 
-        var state = nativeBarrelsBySlot[facts.ObjectSlot];
+        var state = nativeBarrelsByEntityId[facts.EntityId];
         if (state.Broken || state.ActorState is not (DiabloNativeBarrelActorState.None
             or DiabloNativeBarrelActorState.Reserved))
             return false;
@@ -153,12 +162,13 @@ public sealed partial class DiabloWorldState
         AuthoritativeCathedralBarrelOperationResult operation,
         IReadOnlyList<AuthoritativePlayerState> participants)
     {
+        var nativePopulationPolicy = NativePopulationForLevel(value.LevelId);
         if (!CanCommitNativeBarrelBreak(value, operation, participants))
             return false;
         var facts = nativePopulationPolicy!.TryGetNativeBarrelFacts(value, out var currentFacts)
             ? currentFacts
             : throw new InvalidOperationException("A prevalidated barrel lost its immutable owner facts.");
-        var current = nativeBarrelsBySlot[facts.ObjectSlot];
+        var current = nativeBarrelsByEntityId[facts.EntityId];
         AuthoritativeCombatTarget? preparedTarget = null;
         var next = current with {
             Broken = true,
@@ -195,7 +205,7 @@ public sealed partial class DiabloWorldState
         nativePopulationPolicy.ValidateObjectProjection(projection);
         if (preparedTarget is not null && !CombatTargets.TryAdd(preparedTarget.EntityId, preparedTarget))
             throw new InvalidOperationException("A prevalidated barrel could not materialize its exact reserved actor.");
-        nativeBarrelsBySlot[facts.ObjectSlot] = next;
+        nativeBarrelsByEntityId[facts.EntityId] = next;
         value.Activated = true;
         value.AnimationFrame = checked((int)next.AnimationFrame);
         value.MissilePassable = next.MissilePassable;
@@ -205,9 +215,10 @@ public sealed partial class DiabloWorldState
 
     internal bool AdvanceNativeBarrelSpecialStand(AuthoritativeCombatTarget target)
     {
+        var nativePopulationPolicy = NativePopulationForLevel(target.LevelId);
         if (nativePopulationPolicy is null || !nativePopulationPolicy.OwnsNativeBarrelActor(target.EntityId))
             return false;
-        var entry = nativeBarrelsBySlot.Values.Single(value => value.LinkedMonsterEntityId == target.EntityId);
+        var entry = nativeBarrelsByEntityId.Values.Single(value => value.LinkedMonsterEntityId == target.EntityId);
         if (entry.ActorState != DiabloNativeBarrelActorState.Emerging)
             return false;
         if (target.IsPetrified && target.HitPointsQ6 > 0)
@@ -218,7 +229,7 @@ public sealed partial class DiabloWorldState
         }
         var facts = nativePopulationPolicy.GetNativeBarrelFacts(entry.ObjectSlot);
         if (entry.SpecialFrameIndex >= facts.NativeSpecialFrameCount - 1) {
-            nativeBarrelsBySlot[entry.ObjectSlot] = entry with {
+            nativeBarrelsByEntityId[entry.EntityId] = entry with {
                 ActorState = DiabloNativeBarrelActorState.Active,
                 SpecialFrameIndex = 0,
                 SpecialTickCounter = 0,
@@ -231,7 +242,7 @@ public sealed partial class DiabloWorldState
             tick = 0;
             frame++;
         }
-        nativeBarrelsBySlot[entry.ObjectSlot] = entry with {
+        nativeBarrelsByEntityId[entry.EntityId] = entry with {
             SpecialFrameIndex = frame,
             SpecialTickCounter = tick,
         };
@@ -242,12 +253,13 @@ public sealed partial class DiabloWorldState
     internal void InterruptNativeBarrelSpecialStand(AuthoritativeCombatTarget target)
     {
         ArgumentNullException.ThrowIfNull(target);
+        var nativePopulationPolicy = NativePopulationForLevel(target.LevelId);
         if (nativePopulationPolicy is null || !nativePopulationPolicy.OwnsNativeBarrelActor(target.EntityId))
             return;
-        var entry = nativeBarrelsBySlot.Values.Single(value => value.LinkedMonsterEntityId == target.EntityId);
+        var entry = nativeBarrelsByEntityId.Values.Single(value => value.LinkedMonsterEntityId == target.EntityId);
         if (entry.ActorState != DiabloNativeBarrelActorState.Emerging)
             return;
-        nativeBarrelsBySlot[entry.ObjectSlot] = entry with {
+        nativeBarrelsByEntityId[entry.EntityId] = entry with {
             ActorState = DiabloNativeBarrelActorState.Active,
             SpecialFrameIndex = 0,
             SpecialTickCounter = 0,
@@ -256,12 +268,13 @@ public sealed partial class DiabloWorldState
 
     internal void CompleteNativeBarrelActorDeath(uint entityId)
     {
+        var nativePopulationPolicy = NativePopulationForEntity(entityId);
         if (nativePopulationPolicy is null || !nativePopulationPolicy.OwnsNativeBarrelActor(entityId))
             return;
-        var entry = nativeBarrelsBySlot.Values.Single(value => value.LinkedMonsterEntityId == entityId);
+        var entry = nativeBarrelsByEntityId.Values.Single(value => value.LinkedMonsterEntityId == entityId);
         if (entry.ActorState is not (DiabloNativeBarrelActorState.Emerging or DiabloNativeBarrelActorState.Active))
             throw new InvalidDataException("A native barrel actor reached corpse conversion from an invalid lifecycle state.");
-        nativeBarrelsBySlot[entry.ObjectSlot] = entry with {
+        nativeBarrelsByEntityId[entry.EntityId] = entry with {
             ActorState = DiabloNativeBarrelActorState.Dead,
             SpecialFrameIndex = 0,
             SpecialTickCounter = 0,
@@ -270,9 +283,10 @@ public sealed partial class DiabloWorldState
 
     internal void AdvanceNativeBarrelAnimations(uint levelId)
     {
+        var nativePopulationPolicy = NativePopulationForLevel(levelId);
         if (nativePopulationPolicy is null || levelId != nativePopulationPolicy.LevelId)
             return;
-        foreach (var initialEntry in nativeBarrelsBySlot.Values.Where(value => value.Broken)
+        foreach (var initialEntry in nativeBarrelsByEntityId.Values.Where(value => value.Broken && Objects[value.EntityId].LevelId == levelId)
                      .OrderBy(value => value.ObjectSlot).ToArray()) {
             var entry = initialEntry;
             if (entry.AnimationFlag == 0)
@@ -290,7 +304,7 @@ public sealed partial class DiabloWorldState
             }
             entry = entry with { AnimationCount = count, AnimationFrame = frame };
             entry.ValidateShape();
-            nativeBarrelsBySlot[entry.ObjectSlot] = entry;
+            nativeBarrelsByEntityId[entry.EntityId] = entry;
             if (!Objects.TryGetValue(entry.EntityId, out var value))
                 throw new InvalidDataException("A broken native barrel lost its object projection.");
             value.AnimationFrame = checked((int)entry.AnimationFrame);
@@ -300,13 +314,14 @@ public sealed partial class DiabloWorldState
 
     internal void ValidateNativeBarrelState(AuthoritativeCathedralNativePopulationPolicy policy)
     {
-        if (nativePopulationPolicy != policy)
+        if (!ReferenceEquals(NativePopulationForLevel(policy.LevelId), policy))
             throw new InvalidOperationException("Native barrel validation requires the owning population policy.");
         var expected = policy.CreateInitialNativeBarrelStates();
-        if (nativeBarrelsBySlot.Count != expected.Count)
+        if (nativeBarrelsByEntityId.Values.Count(state => Objects.TryGetValue(state.EntityId, out var owner)
+                && owner.LevelId == policy.LevelId) != expected.Count)
             throw new InvalidDataException("The native population lost a supported barrel lifecycle record.");
         foreach (var initial in expected) {
-            if (!nativeBarrelsBySlot.TryGetValue(initial.ObjectSlot, out var state)
+            if (!nativeBarrelsByEntityId.TryGetValue(initial.EntityId, out var state)
                 || !SameNativeBarrelIdentity(state, initial))
                 throw new InvalidDataException("The native population lost an exact generated barrel lifecycle identity.");
             state.ValidateShape();
@@ -416,8 +431,8 @@ public sealed partial class DiabloWorldState
             && target.NativeMeleeCursor is null && target.NativeWalkCursor is null;
 
     private int FindNativeObjectSlot(uint entityId)
-        => nativePopulationPolicy is not null
-            && nativePopulationPolicy.TryGetNativeBarrelObjectSlot(entityId, out var slot)
+        => NativePopulationForEntity(entityId) is { } policy
+            && policy.TryGetNativeBarrelObjectSlot(entityId, out var slot)
                 ? slot
                 : throw new InvalidOperationException("A native barrel slot requires its population owner.");
 }

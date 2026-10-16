@@ -496,7 +496,7 @@ public static class AuthoritativeCathedralThemeItemGenerator
         AuthoritativeCathedralThemeItemPolicy policy)
         => GenerateCore(request, catalog, policy, true);
 
-    /** Generates the ordinary L1 SetupAllUseful path used by chest Var2 == 0. */
+    /** Generates ordinary Cathedral SetupAllUseful contents, including L2 portal rolls. */
     internal static AuthoritativeCathedralThemeItemResult GenerateUseful(
         AuthoritativeCathedralInitialItemState inputItem,
         uint itemSeed,
@@ -510,8 +510,8 @@ public static class AuthoritativeCathedralThemeItemGenerator
         ArgumentNullException.ThrowIfNull(catalog);
         ArgumentNullException.ThrowIfNull(policy);
         ValidatePolicy(policy);
-        if (currentLevel != 1 || currentLevel != policy.Depth || policy.SetLevel)
-            throw new InvalidDataException("Native chest useful contents are supported only on ordinary Cathedral level 1.");
+        if (currentLevel is < 1 or > 2 || currentLevel != policy.Depth || policy.SetLevel)
+            throw new InvalidDataException("Native useful contents require ordinary Cathedral depth 1 or 2.");
         ValidateInputState(inputItem);
         ValidateUniqueFlags(uniqueItemFlags);
 
@@ -535,6 +535,10 @@ public static class AuthoritativeCathedralThemeItemGenerator
         // Native PickRandomlyAmong({ IDI_MANA, IDI_HEAL }) clamps a negative
         // GenerateRnd result to the first entry, Mana.
         var selection = Math.Max(random.GenerateRnd(2), 0) == 0 ? mana : healing;
+        // Original Diablo consumes this draw only deeper than L1; negative is not FlipCoin success.
+        if (currentLevel > 1 && random.GenerateRnd(3) == 0)
+            selection = FindUsefulItem(catalog, 27, "Scroll of Town Portal", 21, 1,
+                minimumMonsterLevel: 4, spellId: 7);
         var item = GetItemAttrs(CloneItem(inputItem with { Seed = itemSeed }),
             selection.NativeItemIndex, currentLevel, random, catalog, policy) with {
                 Seed = itemSeed,
@@ -1668,7 +1672,9 @@ public static class AuthoritativeCathedralThemeItemGenerator
         int nativeItemIndex,
         string expectedName,
         int expectedMiscId,
-        int cursorGraphic)
+        int cursorGraphic,
+        int minimumMonsterLevel = 0,
+        int spellId = 0)
     {
         var item = catalog.Items.SingleOrDefault(value => value.NativeItemIndex == nativeItemIndex);
         if (item is null
@@ -1676,12 +1682,13 @@ public static class AuthoritativeCathedralThemeItemGenerator
             || item.ItemType != ItemTypeMisc
             || item.MiscId != expectedMiscId
             || item.CursorGraphic != cursorGraphic
+            || item.SpellId != spellId
             || !string.Equals(item.Name, expectedName, StringComparison.Ordinal)
             || !string.IsNullOrEmpty(item.ShortName)
             || !item.Available
             || !item.Usable
             || item.DropRate != 0
-            || item.MinimumMonsterLevel != 0)
+            || item.MinimumMonsterLevel != minimumMonsterLevel)
             throw new InvalidDataException(
                 $"Native chest useful contents require the canonical available item row at IDI index {nativeItemIndex}.");
         return item;

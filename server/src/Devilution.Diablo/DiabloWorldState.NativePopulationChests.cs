@@ -3,11 +3,10 @@ namespace Devilution.Diablo;
 public sealed partial class DiabloWorldState
 {
     internal bool CanOperateNativeChest(AuthoritativeWorldObject value)
-        => nativePopulationPolicy is not null
-            && value.LevelId == nativePopulationPolicy.LevelId
+        => NativePopulationForLevel(value.LevelId) is { } policy
             && Objects.TryGetValue(value.EntityId, out var current)
             && ReferenceEquals(current, value)
-            && nativePopulationPolicy.CanOperateNativeChest(value);
+            && policy.CanOperateNativeChest(value);
 
     internal bool TryGetNativeChestLootParameters(
         AuthoritativeWorldObject value,
@@ -20,11 +19,10 @@ public sealed partial class DiabloWorldState
         randomSeed = 0;
         itemCount = 0;
         itemBranch = 0;
-        return nativePopulationPolicy is not null
-            && value.LevelId == nativePopulationPolicy.LevelId
+        return NativePopulationForLevel(value.LevelId) is { } policy
             && Objects.TryGetValue(value.EntityId, out var current)
             && ReferenceEquals(current, value)
-            && nativePopulationPolicy.TryGetNativeChestLootParameters(
+            && policy.TryGetNativeChestLootParameters(
                 value, out nativeType, out randomSeed, out itemCount, out itemBranch);
     }
 
@@ -32,6 +30,6 @@ public sealed partial class DiabloWorldState
     {
         if (!CanOperateNativeChest(value))
             return false;
-        return nativePopulationPolicy!.TryCommitNativeChestOpen(value);
+        return NativePopulationForLevel(value.LevelId)!.TryCommitNativeChestOpen(value);
     }
 }

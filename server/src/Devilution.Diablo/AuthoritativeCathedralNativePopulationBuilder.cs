@@ -39,7 +39,9 @@ internal static class AuthoritativeCathedralNativePopulationBuilder
         AuthoritativeSpellCatalog spells,
         AuthoritativeCathedralDoorDefinition doorDefinition,
         IReadOnlyCollection<AuthoritativeItemState> storeItems,
-        AuthoritativeCathedralNativeItemSidecars itemSidecars)
+        AuthoritativeCathedralNativeItemSidecars itemSidecars,
+        AuthoritativeCathedralFreshLevelRequest? entryRequest = null,
+        IReadOnlyCollection<AuthoritativeItemState>? carriedItems = null)
     {
         ArgumentNullException.ThrowIfNull(metadata);
         ArgumentNullException.ThrowIfNull(runtimeCatalog);
@@ -54,11 +56,21 @@ internal static class AuthoritativeCathedralNativePopulationBuilder
         ArgumentNullException.ThrowIfNull(storeItems);
         ArgumentNullException.ThrowIfNull(itemSidecars);
 
-        if (depthCandidate.Level.LevelId != 1 || depthCandidate.Identity.Depth != 1
-            || depthCandidate.Identity.DungeonSeed != 2588
-            || depthCandidate.Identity.Entry != AuthoritativeCathedralEntry.Main
-            || doorDefinition.LevelId != 1)
-            throw new NotSupportedException("The native-populated route supports only its pinned Cathedral L1 main-entry generation.");
+        if (entryRequest is null) {
+            if (depthCandidate.Level.LevelId != 1 || depthCandidate.Identity.Depth != 1
+                || depthCandidate.Identity.DungeonSeed != 2588
+                || depthCandidate.Identity.Entry != AuthoritativeCathedralEntry.Main
+                || doorDefinition.LevelId != 1)
+                throw new NotSupportedException("The native-populated route supports only its pinned Cathedral L1 main-entry generation.");
+        } else if (entryRequest.Depth != depthCandidate.Identity.Depth
+            || entryRequest.DungeonSeed != depthCandidate.Identity.DungeonSeed
+            || entryRequest.Entry != depthCandidate.Identity.Entry
+            || entryRequest.StableLevelSymbol != depthCandidate.Level.StableSymbol
+            || entryRequest.Metadata.Fingerprint != metadata.Fingerprint
+            || doorDefinition.LevelId != depthCandidate.Level.LevelId || carriedItems is null) {
+            throw new InvalidDataException("A native first-entry build must bind the exact floor, hero context and carried items.");
+        }
+        var entityOffset = entryRequest is null ? 0U : checked((uint)(entryRequest.Depth - 1) * 0x10000U);
 
         var rogue = playerClasses.Definitions.SingleOrDefault(
             definition => string.Equals(definition.Symbol, RogueSymbol, StringComparison.Ordinal))
@@ -80,7 +92,7 @@ internal static class AuthoritativeCathedralNativePopulationBuilder
             new(57, 40),
             LevelChanging: true,
             LevelLoading: true);
-        var request = AuthoritativeCathedralFreshLevelGenerator.CreateRequest(
+        var request = entryRequest ?? AuthoritativeCathedralFreshLevelGenerator.CreateRequest(
             metadata,
             depth: 1,
             dungeonSeed: 2588,
@@ -95,7 +107,7 @@ internal static class AuthoritativeCathedralNativePopulationBuilder
             throw new InvalidDataException("Full native population geometry does not match the activated Cathedral depth identity.");
 
         var state = generated.Population.State;
-        if (state.ActiveMonsterIds.Take(state.ActiveMonsterCount)
+        if (entryRequest is null && state.ActiveMonsterIds.Take(state.ActiveMonsterCount)
             .Any(slot => state.MonsterSlots[slot].UniqueType != byte.MaxValue))
             throw new NotSupportedException("Active native unique monsters require stable unique item identities before this route can activate.");
         var monsterMetadataFingerprint = AuthoritativeCathedralMonsterRuntimeAdapter.ComputeMetadataFingerprint(
@@ -108,41 +120,60 @@ internal static class AuthoritativeCathedralNativePopulationBuilder
             if ((uint)slot >= (uint)state.MonsterSlots.Count)
                 throw new InvalidDataException("Native monster order references a slot outside its retained pool.");
             var nativeType = state.MonsterSlots[slot].Type;
-            if (nativeType < 0 || !monsterTypes.TryGetNative(checked((uint)nativeType), out var type))
-                throw new InvalidDataException($"Native monster slot {slot} has no unambiguous stable type binding.");
+            AuthoritativeMonsterTypeDefinition type = null!;
+            var bound = nativeType >= 0 && monsterTypes.TryGetNative(checked((uint)nativeType), out type);
+            if (!bound && entryRequest is not null && nativeType >= 0
+                && monsterTypes.IsNativeMonsterIdAmbiguous(checked((uint)nativeType))) {
+                // Authored quest aliases can share a raw type. First-entry native
+                // provenance selects only a unique existing row with the exact AI.
+                var nativeAi = AuthoritativeCathedralMonsterRuntimeAdapter.GetNativeAi(state.MonsterSlots[slot].Ai);
+                var exact = monsterTypes.Definitions.Where(row => row.NativeMonsterId == (uint)nativeType
+                    && row.NativeAi == nativeAi).ToArray();
+                if (exact.Length == 1) { type = exact[0]; bound = true; }
+            }
+            if (!bound)
+                throw new InvalidDataException($"Native monster slot {slot}, raw type {nativeType}, has no exact stable type binding.");
             monsterBindings.Add(new AuthoritativeCathedralMonsterRuntimeBinding(
                 slot,
-                checked(MonsterEntityIdBase + (uint)slot),
+                checked(MonsterEntityIdBase + entityOffset + (uint)slot),
                 type.MonsterId,
                 depthCandidate.Level.LevelId));
         }
-        var monsters = AuthoritativeCathedralMonsterRuntimeAdapter.AdaptWithBindings(
-            state,
-            runtimeCatalog,
-            monsterMetadataFingerprint,
-            monsterBindings,
-            DiabloDifficulty.Normal,
-            metadata.UniqueMonsters.Definitions,
-            monsterTypes,
-            uniqueIdentities,
-            metadata.Population.Monsters);
+        var monsters = entryRequest is null
+            ? AuthoritativeCathedralMonsterRuntimeAdapter.AdaptWithBindings(
+                state, runtimeCatalog, monsterMetadataFingerprint, monsterBindings,
+                DiabloDifficulty.Normal, metadata.UniqueMonsters.Definitions, monsterTypes,
+                uniqueIdentities, metadata.Population.Monsters)
+            : AuthoritativeCathedralMonsterRuntimeAdapter.AdaptLevelEntryWithBindings(
+                state, runtimeCatalog, monsterMetadataFingerprint, monsterBindings,
+                metadata.Population.Monsters, DiabloDifficulty.Normal,
+                metadata.UniqueMonsters.Definitions, monsterTypes, uniqueIdentities);
 
-        var objects = BuildObjects(state, depthCandidate.Level.LevelId, doorDefinition);
+        var objects = BuildObjects(state, depthCandidate.Level.LevelId, doorDefinition,
+            checked(ObjectEntityIdBase + entityOffset));
+
+        if (entryRequest is not null && monsters.Records.Any(record => record.Target is not null
+            && runtimeCatalog.HasUniqueTreasure(record.InitialState.Type)))
+            throw new NotSupportedException("A native floor with special-treasure actors requires the exact reward compositor.");
+        var hasUniqueLoot = entryRequest is not null && monsters.Records.Any(record => record.Target?.IsUnique == true);
         var supportedLootLevels = monsters.Records
-            .Where(record => record.Target is { IsPlayerMinion: false, IsUnique: false })
+            .Where(record => record.Target is { IsPlayerMinion: false } target
+                && (entryRequest is not null || !target.IsUnique))
             .Select(record => unchecked((sbyte)record.Target!.MonsterLevel))
             .Distinct()
             .ToArray();
-        var initialOwnedItems = template.Inventory.Select(item => item.State)
+        var initialOwnedItems = carriedItems?.ToArray() ?? template.Inventory.Select(item => item.State)
             .Concat(template.Equipment.Select(item => item.State))
             .Concat(template.Belt.Select(item => item.State))
             .ToArray();
         var itemBindings = BuildItemBindings(metadata.Items.Catalog, contentItems, spells, state,
-            supportedLootLevels, initialOwnedItems, storeItems, itemSidecars);
+            supportedLootLevels, initialOwnedItems, storeItems, itemSidecars, hasUniqueLoot,
+            includeCompleteAllowlist: entryRequest is not null);
         var spellBindings = BuildSpellBindings(spells);
         var itemCheckpoint = BuildItemCheckpoint(state, depthCandidate.Level.LevelId,
             generated.FullPopulationRequest.ItemPolicy.Depth, depthCandidate.Identity.FineFingerprint,
-            metadata.Items.Fingerprint, generated.Population.FinalRandomState, itemBindings);
+            metadata.Items.Fingerprint, generated.Population.FinalRandomState, itemBindings,
+            checked(ItemEntityIdBase + entityOffset));
         var itemProfile = new AuthoritativeCathedralItemRuntimeProfile(
             metadata.Items.Fingerprint,
             UnboundGenerationFingerprint,
@@ -153,13 +184,16 @@ internal static class AuthoritativeCathedralNativePopulationBuilder
             metadata.UniqueMonsters.Definitions,
             itemBindings,
             new AuthoritativeCathedralItemInventoryDimensions(),
-            [BuildItemLevelProfile(state, depthCandidate.Level.LevelId, itemCheckpoint.Levels[0].SlotEntityBindings, objects)],
+            [BuildItemLevelProfile(state, depthCandidate.Level.LevelId, request.Depth, itemCheckpoint.Levels[0].SlotEntityBindings, objects)],
             spellBindings);
 
-        var policy = new AuthoritativeCathedralNativePopulationPolicy(
-            request, state, monsters, objects, itemProfile,
-            isDefaultStart: depthCandidate.Level.IsDefaultStart,
-            suppressMultiplayerDeathDrops: depthCandidate.Level.SuppressMultiplayerDeathDrops);
+        var policy = entryRequest is null
+            ? new AuthoritativeCathedralNativePopulationPolicy(request, state, monsters, objects, itemProfile,
+                isDefaultStart: depthCandidate.Level.IsDefaultStart,
+                suppressMultiplayerDeathDrops: depthCandidate.Level.SuppressMultiplayerDeathDrops)
+            : AuthoritativeCathedralNativePopulationPolicy.CreateLevelEntry(request, state, monsters, objects,
+                itemProfile, isDefaultStart: depthCandidate.Level.IsDefaultStart,
+                suppressMultiplayerDeathDrops: depthCandidate.Level.SuppressMultiplayerDeathDrops);
         var boundCheckpoint = itemCheckpoint with { GenerationFingerprint = policy.Fingerprint };
         itemProfile = itemProfile with {
             GenerationFingerprint = policy.Fingerprint,
@@ -181,7 +215,8 @@ internal static class AuthoritativeCathedralNativePopulationBuilder
     private static IReadOnlyList<AuthoritativeWorldObject> BuildObjects(
         AuthoritativeCathedralThemeRoomState state,
         uint levelId,
-        AuthoritativeCathedralDoorDefinition doorDefinition)
+        AuthoritativeCathedralDoorDefinition doorDefinition,
+        uint objectEntityIdBase)
     {
         if (state.ActiveObjectCount is < 0 or > AuthoritativeCathedralThemeRoomState.ObjectCapacity
             || state.ActiveObjectIds.Count < state.ActiveObjectCount)
@@ -200,7 +235,7 @@ internal static class AuthoritativeCathedralNativePopulationBuilder
             var entityId = raw.DoorFlag
                 ? DiabloWorldState.GetCathedralDoorEntityId(levelId, AuthoritativeCathedralThemeRoomState.Width,
                     raw.Position.X, raw.Position.Y)
-                : checked(ObjectEntityIdBase + (uint)slot);
+                : checked(objectEntityIdBase + (uint)slot);
             var objectId = raw.DoorFlag
                 ? raw.Type switch {
                     1 => doorDefinition.LeftObjectId,
@@ -247,14 +282,19 @@ internal static class AuthoritativeCathedralNativePopulationBuilder
         IReadOnlyCollection<sbyte> supportedLootLevels,
         IReadOnlyCollection<AuthoritativeItemState> initialOwnedItems,
         IReadOnlyCollection<AuthoritativeItemState> storeItems,
-        AuthoritativeCathedralNativeItemSidecars itemSidecars)
+        AuthoritativeCathedralNativeItemSidecars itemSidecars,
+        bool includeUniqueLoot = false,
+        bool includeCompleteAllowlist = false)
     {
         var result = new Dictionary<int, AuthoritativeCathedralItemContentBinding>();
         var requiredIndexes = nativeItems.Items
             .Where(item => item.Available && item.DropRate > 0 && item.SpellId is not 32 and not 34
-                && supportedLootLevels.Any(level => item.MinimumMonsterLevel <= level))
+                && (supportedLootLevels.Any(level => item.MinimumMonsterLevel <= level)
+                    || includeUniqueLoot && item.ItemType == 0 && item.MiscId == 24))
             .Select(item => item.NativeItemIndex)
             .ToHashSet();
+        if (includeCompleteAllowlist)
+            requiredIndexes.UnionWith(itemSidecars.Semantics.Keys);
         requiredIndexes.Add(0); // Native gold generation resolves this canonical raw item independently of DropRate.
         foreach (var sourceItem in initialOwnedItems.Concat(storeItems)) {
             if (sourceItem.ItemIndex < 0)
@@ -350,6 +390,8 @@ internal static class AuthoritativeCathedralNativePopulationBuilder
             18 => 19, // Native rejuvenation misc ID is represented by the normalized healing action row.
             23 => 0,  // Staff identity is carried by the stable Staff tag and native item binding.
             24 => 25, // Native books use the shared stable book-template misc ID.
+            25 when native.ItemType == 12 => 26, // Stable jewelry misc IDs follow Book.
+            26 when native.ItemType == 13 => 27,
             _ => native.MiscId,
         };
         var effectiveStaffMiscId = native.MiscId == 23 && native.ItemType == 10
@@ -514,6 +556,8 @@ internal static class AuthoritativeCathedralNativePopulationBuilder
             18 => 19,
             23 when native.ItemType == 10 && selected.GenerationTags.Contains("Staff", StringComparer.OrdinalIgnoreCase) => 23,
             24 => 25,
+            25 when native.ItemType == 12 => 26,
+            26 when native.ItemType == 13 => 27,
             _ => native.MiscId,
         };
 
@@ -522,6 +566,14 @@ internal static class AuthoritativeCathedralNativePopulationBuilder
         AuthoritativeItemCatalog baseItems,
         AuthoritativeSpellCatalog spells,
         IReadOnlyDictionary<int, AuthoritativeCathedralNativeItemFootprint> footprints)
+        => CreateSemanticTable(nativeItems, baseItems, spells, footprints, includeNativeJewelry: false);
+
+    internal static Devilution.Data.TsvTable CreateSemanticTable(
+        AuthoritativeCathedralThemeItemCatalog nativeItems,
+        AuthoritativeItemCatalog baseItems,
+        AuthoritativeSpellCatalog spells,
+        IReadOnlyDictionary<int, AuthoritativeCathedralNativeItemFootprint> footprints,
+        bool includeNativeJewelry)
     {
         ArgumentNullException.ThrowIfNull(nativeItems);
         ArgumentNullException.ThrowIfNull(baseItems);
@@ -534,6 +586,10 @@ internal static class AuthoritativeCathedralNativePopulationBuilder
                 ?? throw new InvalidDataException($"Native item footprint index {nativeIndex} has no canonical raw metadata row.");
             if (footprint.NativeCursorId != checked(native.CursorGraphic + NativeFirstItemCursorOffset))
                 throw new InvalidDataException($"Native item footprint index {nativeIndex} has a cursor ID that conflicts with its raw row.");
+            // Keep the legacy compiler's exact allowlist and content pins.
+            if (!includeNativeJewelry && (native.ItemType == 12 && native.MiscId == 25
+                || native.ItemType == 13 && native.MiscId == 26))
+                continue;
             if (!TryGetStableSpellId(native, spells, out var stableSpellId))
                 continue; // Optional allowlist rows with unsupported spell identities remain unbound.
             var candidates = baseItems.Definitions.Where(definition => definition.NativeItemIndex == nativeIndex
@@ -560,7 +616,8 @@ internal static class AuthoritativeCathedralNativePopulationBuilder
     internal static Devilution.Data.TsvTable PrepareNativeProfileStoreTable(
         Devilution.Data.TsvTable storesTable,
         AuthoritativeItemCatalog items,
-        AuthoritativeCathedralNativeItemSidecars sidecars)
+        AuthoritativeCathedralNativeItemSidecars sidecars,
+        bool nativeProgression = false)
     {
         ArgumentNullException.ThrowIfNull(storesTable);
         ArgumentNullException.ThrowIfNull(items);
@@ -569,6 +626,40 @@ internal static class AuthoritativeCathedralNativePopulationBuilder
             throw new InvalidDataException("Native profile stock preparation requires the exact stores.tsv table.");
         StoreCatalog.ValidateExternalizedProduction(storesTable);
 
+        var healerStoreId = (uint?)null;
+        if (nativeProgression) {
+            var declaredHealerRows = storesTable.Rows.Where(row =>
+                string.Equals(row.Required("store_role"), "Healer", StringComparison.Ordinal)
+                || string.Equals(row.Required("store_symbol"), "healer", StringComparison.Ordinal)).ToArray();
+            if (declaredHealerRows.Length < 2
+                || declaredHealerRows.Any(row =>
+                    !string.Equals(row.Required("store_role"), "Healer", StringComparison.Ordinal)
+                    || !string.Equals(row.Required("store_symbol"), "healer", StringComparison.Ordinal)))
+                throw new InvalidDataException("Native progression stock requires the exact symbolic Healer store.");
+            var healerStoreIds = declaredHealerRows.Select(row => row.RequiredUInt32("store_id")).Distinct().ToArray();
+            if (healerStoreIds.Length != 1 || healerStoreIds[0] != 4
+                || declaredHealerRows.Count(row => row.RequiredUInt32("store_slot") == 0) != 1
+                || declaredHealerRows.Count(row => row.RequiredUInt32("store_slot") == 1) != 1)
+                throw new InvalidDataException("Native progression stock requires Pepin store 4 with unique slots 0 and 1.");
+            healerStoreId = healerStoreIds[0];
+        }
+
+        AuthoritativeItemDefinition ResolvePinnedHealerItem(uint slot)
+        {
+            var expected = slot switch {
+                0 => (Symbol: "potion_healing_standard", ItemId: 2180u, NativeIndex: 77, Price: 50),
+                1 => (Symbol: "potion_full_healing", ItemId: 2181u, NativeIndex: 78, Price: 150),
+                _ => throw new ArgumentOutOfRangeException(nameof(slot)),
+            };
+            var definition = items.Definitions.SingleOrDefault(item =>
+                    string.Equals(item.StableSymbol, expected.Symbol, StringComparison.Ordinal))
+                ?? throw new InvalidDataException($"Native profile stock is missing '{expected.Symbol}'.");
+            if (definition.ItemId != expected.ItemId || definition.NativeItemIndex != expected.NativeIndex
+                || definition.Value != expected.Price)
+                throw new InvalidDataException($"Native profile stock item '{expected.Symbol}' has an unexpected identity or price.");
+            return definition;
+        }
+
         var output = new System.Text.StringBuilder();
         output.AppendJoin('\t', storesTable.Columns);
         foreach (var row in storesTable.Rows) {
@@ -576,20 +667,42 @@ internal static class AuthoritativeCathedralNativePopulationBuilder
             var current = items.GetRequired(currentId);
             if (!string.Equals(current.StableSymbol, row.Required("item_symbol"), StringComparison.Ordinal))
                 throw new InvalidDataException("Native profile stock preparation found a mismatched stable item ID and symbol.");
-            if (!sidecars.Semantics.TryGetValue(current.NativeItemIndex, out var semantic))
-                throw new NotSupportedException(
-                    $"Native profile stock item '{current.StableSymbol}' has no selected raw-item identity.");
-            if (!sidecars.Footprints.TryGetValue(current.NativeItemIndex, out var footprint)
+            var healerSlot = healerStoreId == row.RequiredUInt32("store_id")
+                && row.Required("store_role") == "Healer"
+                && row.Required("store_symbol") == "healer"
+                ? row.RequiredUInt32("store_slot")
+                : uint.MaxValue;
+            AuthoritativeItemDefinition selected;
+            AuthoritativeCathedralNativeItemSemantic semantic;
+            if (healerSlot is 0 or 1) {
+                selected = ResolvePinnedHealerItem(healerSlot);
+                if (!sidecars.Semantics.TryGetValue(selected.NativeItemIndex, out semantic!))
+                    throw new NotSupportedException(
+                        $"Native progression stock item '{selected.StableSymbol}' has no selected raw-item identity.");
+            } else {
+                if (!sidecars.Semantics.TryGetValue(current.NativeItemIndex, out semantic!))
+                    throw new NotSupportedException(
+                        $"Native profile stock item '{current.StableSymbol}' has no selected raw-item identity.");
+                selected = items.Definitions.SingleOrDefault(definition =>
+                        definition.NativeItemIndex == current.NativeItemIndex
+                        && string.Equals(definition.StableSymbol, semantic.StableItemSymbol, StringComparison.Ordinal))
+                    ?? throw new InvalidDataException(
+                        $"Native profile stock selection '{semantic.StableItemSymbol}' is not a catalog identity for raw item {current.NativeItemIndex}.");
+            }
+            if (!sidecars.Semantics.TryGetValue(selected.NativeItemIndex, out var selectedSemantic)
+                || !string.Equals(selectedSemantic.StableItemSymbol, selected.StableSymbol, StringComparison.Ordinal))
+                throw new InvalidDataException(
+                    $"Native profile stock selection '{selected.StableSymbol}' does not match its explicit item semantics.");
+            semantic = selectedSemantic;
+            if (!sidecars.Footprints.TryGetValue(selected.NativeItemIndex, out var footprint)
                 || semantic.NativeCursorId != footprint.NativeCursorId
                 || semantic.InventoryWidth != footprint.InventoryWidth
                 || semantic.InventoryHeight != footprint.InventoryHeight)
                 throw new InvalidDataException(
-                    $"Native profile stock item '{current.StableSymbol}' has no matching captured cursor footprint.");
-            var selected = items.Definitions.SingleOrDefault(definition =>
-                    definition.NativeItemIndex == current.NativeItemIndex
-                    && string.Equals(definition.StableSymbol, semantic.StableItemSymbol, StringComparison.Ordinal))
-                ?? throw new InvalidDataException(
-                    $"Native profile stock selection '{semantic.StableItemSymbol}' is not a catalog identity for raw item {current.NativeItemIndex}.");
+                    $"Native profile stock item '{selected.StableSymbol}' has no matching captured cursor footprint.");
+            if (!string.Equals(semantic.StableItemSymbol, selected.StableSymbol, StringComparison.Ordinal))
+                throw new InvalidDataException(
+                    $"Native profile stock selection '{semantic.StableItemSymbol}' does not match the prepared identity '{selected.StableSymbol}'.");
 
             output.Append('\n');
             foreach (var column in storesTable.Columns) {
@@ -597,6 +710,8 @@ internal static class AuthoritativeCathedralNativePopulationBuilder
                     output.Append(selected.ItemId.ToString(System.Globalization.CultureInfo.InvariantCulture));
                 else if (column == "item_symbol")
                     output.Append(selected.StableSymbol);
+                else if (nativeProgression && column == "price" && (healerSlot is 0 or 1))
+                    output.Append(selected.Value.ToString(System.Globalization.CultureInfo.InvariantCulture));
                 else
                     output.Append(row.Required(column));
                 output.Append('\t');
@@ -605,6 +720,14 @@ internal static class AuthoritativeCathedralNativePopulationBuilder
         }
         return Devilution.Data.TsvTable.Parse(storesTable.SourcePath, output.ToString());
     }
+
+    /** Declares the two pinned healer rows only in the explicit progression content pack. */
+    internal static Devilution.Data.TsvTable CreateNativeProgressionStoreCapabilityTable()
+        => Devilution.Data.TsvTable.Parse(
+            "native_pinned_stores.tsv",
+            "store_id\tstore_symbol\tstore_role\tstore_slot\titem_id\titem_symbol\tnative_item_index\tprice\n"
+                + "4\thealer\tHealer\t0\t2180\tpotion_healing_standard\t77\t50\n"
+                + "4\thealer\tHealer\t1\t2181\tpotion_full_healing\t78\t150\n");
 
     private static DiabloItemSpellSourceKind? ResolveNativeItemSpellSource(
         AuthoritativeCathedralNativeItemDefinition native,
@@ -743,7 +866,8 @@ internal static class AuthoritativeCathedralNativePopulationBuilder
         string generationIdentity,
         string metadataFingerprint,
         uint randomState,
-        IReadOnlyDictionary<int, AuthoritativeCathedralItemContentBinding> itemBindings)
+        IReadOnlyDictionary<int, AuthoritativeCathedralItemContentBinding> itemBindings,
+        uint itemEntityIdBase)
     {
         if (state.ItemSlots.Count != AuthoritativeCathedralInitialItemGenerator.PoolCapacity
             || state.ActiveItemCount is < 0 or > AuthoritativeCathedralInitialItemGenerator.ActiveCapacity
@@ -758,7 +882,7 @@ internal static class AuthoritativeCathedralNativePopulationBuilder
             var visible = references.Any(value => value == slot + 1);
             if (visible && (!activeSlots.Contains(slot) || !itemBindings.ContainsKey(items[slot].ItemIndex)))
                 throw new InvalidDataException("A visible native item has no active slot or stable item binding.");
-            bindings[slot] = new(slot, visible ? checked(ItemEntityIdBase + (uint)slot) : 0);
+            bindings[slot] = new(slot, visible ? checked(itemEntityIdBase + (uint)slot) : 0);
         }
         var level = new DiabloCathedralItemLevelCheckpoint(
             levelId, depth, items, state.ActiveItemIds.ToArray(), state.ActiveItemCount,
@@ -773,6 +897,7 @@ internal static class AuthoritativeCathedralNativePopulationBuilder
     private static AuthoritativeCathedralItemLevelProfile BuildItemLevelProfile(
         AuthoritativeCathedralThemeRoomState state,
         uint levelId,
+        int depth,
         IReadOnlyList<DiabloCathedralItemSlotEntityBinding> itemBindings,
         IReadOnlyList<AuthoritativeWorldObject> objects)
     {
@@ -803,7 +928,7 @@ internal static class AuthoritativeCathedralNativePopulationBuilder
         var setPiece = state.TileFlags.Select(flags => (flags & TilePopulated) != 0).ToArray();
         if (itemBindings.Count != AuthoritativeCathedralInitialItemGenerator.PoolCapacity)
             throw new InvalidDataException("Native item entity bindings must preserve all 128 source slots.");
-        return new(levelId, 1, solid, setPiece, state.ObjectRefs.ToArray(), objectBindings) {
+        return new(levelId, depth, solid, setPiece, state.ObjectRefs.ToArray(), objectBindings) {
             PreserveSparseNativeObjectSlots = true,
         };
     }

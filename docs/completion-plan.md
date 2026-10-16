@@ -754,6 +754,13 @@ M2 closes only when every supported family and required set level meets its gate
 
 ## M3: Gameplay and content closure by playable route
 
+The explicit native Town/L1/L2 first-entry/combat/retention route now passes
+headlessly: L1 earned equipment/Gold/Pepin supplies, actual L2 kill/XP, Town417,
+exact fresh-host player/RNG/cursor/two-floor restore and retained revisit through
+Town538. L2 drops are optional and this run reports none. Cohort v9 retains
+the separate native floor owners while preserving older saves. Advance the next
+eligible playable integration; campaign, rendered and normal-adoption gates remain.
+
 Native L1 Arrow wall traps now extend the completed object route through Rogue
 disarm/ordinary operation, one-shot firing/impacts and cohort v8 cold retention.
 Native and focused checks pass. Headless Town539 -> three blocker kills -> actual

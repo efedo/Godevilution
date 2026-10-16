@@ -22,9 +22,11 @@ internal static class Program
                 Console.WriteLine(DoorUsage);
                 Console.WriteLine(PopulationMetadataUsage);
                 Console.WriteLine(NativePopulationUsage);
+                Console.WriteLine(NativePopulationUsage.Replace("--native-cathedral-population", "--native-cathedral-progression"));
                 return 0;
             }
-            if (args.Contains("--native-cathedral-population", StringComparer.Ordinal))
+            if (args.Contains("--native-cathedral-population", StringComparer.Ordinal)
+                || args.Contains("--native-cathedral-progression", StringComparer.Ordinal))
                 return CompileNativePopulation(args);
             if (args.Contains("--compile-population-metadata", StringComparer.Ordinal))
                 return CompilePopulationMetadata(args);
@@ -94,8 +96,9 @@ internal static class Program
     {
         var values = new Dictionary<string, string>(StringComparer.Ordinal);
         var flag = false;
+        var progression = args.Contains("--native-cathedral-progression", StringComparer.Ordinal);
         for (var index = 0; index < args.Length; index++) {
-            if (args[index] == "--native-cathedral-population") {
+            if (args[index] is "--native-cathedral-population" or "--native-cathedral-progression") {
                 if (flag) throw new ArgumentException(NativePopulationUsage);
                 flag = true;
             } else if (args[index] is not ("--base-directory" or "--geometry-directory"
@@ -146,7 +149,10 @@ internal static class Program
         if (geometry.Tables.Count != 2 || geometry.Assets.Count != 0)
             throw new InvalidDataException("Native population requires exactly the two supported Cathedral geometry tables.");
 
-        var profile = CathedralNativePopulationPlaytestCompiler.Compile(
+        var compile = progression
+            ? (Func<CathedralNativePopulationPlaytestCompilerOptions, CathedralNativePopulationPlaytestCompiler.Profile>)CathedralNativePopulationPlaytestCompiler.CompileProgression
+            : CathedralNativePopulationPlaytestCompiler.Compile;
+        var profile = compile(
             new CathedralNativePopulationPlaytestCompilerOptions(
                 basePack,
                 metadata,
@@ -156,9 +162,9 @@ internal static class Program
                 pieces.ToCanonicalTsv(),
                 properties.ToCanonicalTsv(),
                 seeds));
-        Console.WriteLine($"Compiled explicit native-populated Cathedral L1 profile: {Path.GetFullPath(outputDirectory)}");
+        Console.WriteLine($"Compiled explicit native Cathedral {(progression ? "Town/L1/L2" : "L1")} profile: {Path.GetFullPath(outputDirectory)}");
         Console.WriteLine($"Content manifest: {profile.ContentManifestHash}");
-        Console.WriteLine("This output requests the scoped Rogue/single-player L1 adapter; it is not an acceptance or native-runtime claim.");
+        Console.WriteLine("This output requests the explicit Rogue/single-player adapter; it is not an acceptance or native-runtime claim.");
         return 0;
     }
 

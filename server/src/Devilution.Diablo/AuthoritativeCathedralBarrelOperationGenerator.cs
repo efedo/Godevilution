@@ -46,7 +46,7 @@ public sealed record AuthoritativeCathedralBarrelSpawnPlan(
     int SpecialFrameCount,
     int SpecialTicksPerFrame);
 
-/** Inputs at the supported ordinary untrapped original-Diablo L1 break boundary. */
+/** Inputs at the supported ordinary untrapped original-Diablo Cathedral break boundary. */
 public sealed record AuthoritativeCathedralBarrelOperationRequest(
     AuthoritativeCathedralThemeItemWorldState WorldState,
     AuthoritativeCathedralThemeItemCatalog Catalog,
@@ -151,7 +151,7 @@ public static class AuthoritativeCathedralBarrelOperationGenerator
                 OnlyGood: false,
                 Player: request.Player);
             var generated = facts.Var3 == 0
-                ? AuthoritativeCathedralThemeItemWorldGenerator.CreateUsefulItem(itemRequest, 1)
+                ? AuthoritativeCathedralThemeItemWorldGenerator.CreateUsefulItem(itemRequest, request.Policy.Depth)
                 : AuthoritativeCathedralThemeItemWorldGenerator.CreateRandomItem(itemRequest);
             worldState = generated.WorldState;
             randomState = generated.FinalRandomState;
@@ -202,13 +202,14 @@ public static class AuthoritativeCathedralBarrelOperationGenerator
 
     private static void ValidatePolicy(AuthoritativeCathedralThemeItemPolicy policy)
     {
-        if (policy.Depth != 1 || policy.CurrentDungeonLevel is not (0 or 1)
+        if (policy.Depth is < 1 or > 2
+            || policy.CurrentDungeonLevel != 0 && policy.CurrentDungeonLevel != policy.Depth
             || policy.Hellfire || policy.SetLevel
             || policy.GameMode != DiabloGameMode.SinglePlayer
             || policy.Difficulty != DiabloDifficulty.Normal
             || policy.Spawn || policy.QuestEnabled
             || !policy.LegacyLevelItemGenerationAllowed)
-            throw new InvalidDataException("Native barrel operations are limited to ordinary original-Diablo Cathedral level 1.");
+            throw new InvalidDataException("Native barrel operations are limited to ordinary original-Diablo Cathedral depths 1 and 2.");
     }
 
     private static void ValidateFacts(
@@ -227,7 +228,7 @@ public static class AuthoritativeCathedralBarrelOperationGenerator
             || facts.AnimationFlag != 0 || facts.BreakFlag < 0
             || !worldState.ObjectCanInteract[facts.ObjectSlot]
             || !worldState.ObjectSolid[facts.ObjectSlot])
-            throw new InvalidDataException("Native barrel facts are outside the supported closed L1 melee boundary.");
+            throw new InvalidDataException("Native barrel facts are outside the supported closed Cathedral melee boundary.");
 
         if (facts.IsExplosive) {
             if (facts.Var2 != 0 || facts.LinkedMonster is not null || facts.NativeSpecialFrameCount != 0)

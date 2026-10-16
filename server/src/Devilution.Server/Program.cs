@@ -223,6 +223,16 @@ internal static class Program
         } catch (OperationCanceledException) when (cancellation.IsCancellationRequested) {
         } catch (Exception exception) {
             hostFailure = exception;
+            // Report the primary fence before operator cleanup can wait on stdin.
+            // Keep diagnostics bounded and retain no exception messages/payloads.
+            try {
+                Exception? cause = exception;
+                for (var depth = 0; cause is not null && depth < 8; depth++, cause = cause.InnerException) {
+                    var native = cause is System.ComponentModel.Win32Exception win32
+                        ? $"; win32={win32.NativeErrorCode}" : string.Empty;
+                    Console.Error.WriteLine($"Authoritative host failure: {cause.GetType().FullName}; hresult=0x{cause.HResult:X8}{native}");
+                }
+            } catch { }
         } finally {
             cancellation.Cancel();
             try {

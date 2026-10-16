@@ -19,7 +19,7 @@ public sealed partial class DiabloWorldState
             cathedralItems.BuildWorldState(barrel.LevelId, occupancy),
             cathedralItems.Profile.ItemCatalog,
             cathedralItems.Profile.ItemPolicy with {
-                Depth = 1, CurrentDungeonLevel = 1, Spawn = false, QuestEnabled = false, SetLevel = false,
+                Depth = NativePopulationDepth(barrel.LevelId), CurrentDungeonLevel = NativePopulationDepth(barrel.LevelId), Spawn = false, QuestEnabled = false, SetLevel = false,
             },
             facts, GetNativeBarrelSpawnAvailability(barrel, localPlayers), initialRandomState,
             new(true, false, player.BaseManaMaximum, player.BaseLifeMaximum));

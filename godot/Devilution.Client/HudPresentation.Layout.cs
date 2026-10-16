@@ -85,7 +85,7 @@ public partial class HudPresentation
         items.AddChild(applyOilSelected);
 
         var trade = AddPage("Trade");
-        trade.AddChild(Buttons(openSmith, openAdria, closeStore, buySelected));
+        trade.AddChild(Buttons(openSmith, openAdria, openPepin, closeStore, buySelected));
         AddList(trade, "ui.hud.store-stock", "Store stock", storeItems, 160);
         trade.AddChild(store);
         trade.AddChild(Caption("ui.hud.service-help",

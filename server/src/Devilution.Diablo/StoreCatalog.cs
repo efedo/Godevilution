@@ -159,6 +159,16 @@ public sealed class StoreCatalog
 {
     private readonly Dictionary<uint, Dictionary<uint, StoreItem>> stores = new();
     private readonly Dictionary<uint, AuthoritativeStoreRole> roles = new();
+    private readonly Dictionary<(uint StoreId, uint StoreSlot), NativePinnedStoreSlot> nativePinnedStoreSlots = [];
+
+    private sealed record NativePinnedStoreSlot(
+        uint ItemId,
+        int NativeItemIndex,
+        uint Price,
+        uint ItemSeed,
+        AuthoritativeItemState State);
+
+    private const int NativePinnedHealerCreateInfo = 6;
 
     private static readonly IReadOnlyList<string> SymbolicProductionColumns = [
         "store_id",
@@ -169,6 +179,17 @@ public sealed class StoreCatalog
         "price",
         "item_id",
         "item_symbol",
+    ];
+
+    private static readonly IReadOnlyList<string> NativePinnedStoreColumns = [
+        "store_id",
+        "store_symbol",
+        "store_role",
+        "store_slot",
+        "item_id",
+        "item_symbol",
+        "native_item_index",
+        "price",
     ];
 
     /**
@@ -257,7 +278,104 @@ public sealed class StoreCatalog
 
     public bool RemoveItem(uint storeId, uint storeSlot)
     {
+        if (nativePinnedStoreSlots.ContainsKey((storeId, storeSlot)))
+            return false;
         return stores.TryGetValue(storeId, out var stock) && stock.Remove(storeSlot);
+    }
+
+    /**
+     * Enables Pepin's pinned rows only when the explicit progression content
+     * table and both exact stock identities agree. Unmarked catalogs stay finite.
+     */
+    internal void ConfigureNativePepinPinnedHealingStock(
+        AuthoritativeItemCatalog items,
+        TsvTable capabilityTable)
+    {
+        ArgumentNullException.ThrowIfNull(items);
+        ArgumentNullException.ThrowIfNull(capabilityTable);
+        if (!string.Equals(capabilityTable.SourcePath, "native_pinned_stores.tsv", StringComparison.Ordinal)
+            || !capabilityTable.Columns.SequenceEqual(NativePinnedStoreColumns, StringComparer.Ordinal)
+            || capabilityTable.Rows.Count != 2)
+            throw new InvalidDataException("Native Pepin stock capability must use its exact two-row schema.");
+        var capabilityRows = capabilityTable.Rows.OrderBy(row => row.RequiredUInt32("store_slot")).ToArray();
+        ValidatePinnedHealerCapabilityRow(capabilityRows[0], 0, 2180, "potion_healing_standard", 77, 50);
+        ValidatePinnedHealerCapabilityRow(capabilityRows[1], 1, 2181, "potion_full_healing", 78, 150);
+
+        const uint healerStoreId = 4;
+        if (!roles.TryGetValue(healerStoreId, out var healerRole) || healerRole != AuthoritativeStoreRole.Healer)
+            throw new InvalidDataException("Native Pepin stock capability requires store 4 with the Healer role.");
+        var healing = ResolveNativePinnedHealerDefinition(items, "potion_healing_standard", 2180, 77, 3,
+            DiabloItemActionKind.RestorePartialLife, 50);
+        var fullHealing = ResolveNativePinnedHealerDefinition(items, "potion_full_healing", 2181, 78, 2,
+            DiabloItemActionKind.RestoreFullLife, 150);
+        var stock = stores[healerStoreId];
+        var hasHealing = stock.TryGetValue(0, out var healingStock)
+            && healingStock.State.StableItemId == healing.ItemId;
+        var hasFullHealing = stock.TryGetValue(1, out var fullHealingStock)
+            && fullHealingStock.State.StableItemId == fullHealing.ItemId;
+        if (!hasHealing || !hasFullHealing)
+            throw new InvalidDataException("Native Pepin pinned healing stock must contain both exact slots.");
+        if (nativePinnedStoreSlots.Keys.Any(key => key.StoreId == healerStoreId))
+            throw new InvalidDataException("Native Pepin pinned healing stock is already configured.");
+
+        var configuredHealing = PreparePinnedSlot(0, healing, stock);
+        var configuredFullHealing = PreparePinnedSlot(1, fullHealing, stock);
+        stock[0] = configuredHealing.Stock;
+        stock[1] = configuredFullHealing.Stock;
+        nativePinnedStoreSlots.Add((healerStoreId, 0), configuredHealing.Policy);
+        nativePinnedStoreSlots.Add((healerStoreId, 1), configuredFullHealing.Policy);
+    }
+
+    private static void ValidatePinnedHealerCapabilityRow(
+        TsvRow row,
+        uint expectedSlot,
+        uint expectedItemId,
+        string expectedSymbol,
+        int expectedNativeIndex,
+        uint expectedPrice)
+    {
+        if (row.RequiredUInt32("store_id") != 4
+            || row.Required("store_symbol") != "healer"
+            || row.Required("store_role") != "Healer"
+            || row.RequiredUInt32("store_slot") != expectedSlot
+            || row.RequiredUInt32("item_id") != expectedItemId
+            || row.Required("item_symbol") != expectedSymbol
+            || row.RequiredInt32("native_item_index") != expectedNativeIndex
+            || row.RequiredUInt32("price") != expectedPrice)
+            throw new InvalidDataException("Native Pepin stock capability contains an unsupported pinned row.");
+    }
+
+    internal bool TryGetNativePinnedStoreItem(uint storeId, uint storeSlot, out StoreItem item)
+    {
+        if (nativePinnedStoreSlots.TryGetValue((storeId, storeSlot), out var definition)
+            && stores.TryGetValue(storeId, out var stock)
+            && stock.TryGetValue(storeSlot, out item!)
+            && MatchesNativePinnedStoreItem(item, definition))
+            return true;
+
+        item = null!;
+        return false;
+    }
+
+    /** Returns a purchased copy with its fresh seed without mutating persistent stock. */
+    internal bool TryCreateNativePinnedPurchaseItem(uint storeId, uint storeSlot, uint itemSeed, out StoreItem item)
+    {
+        if (!TryGetNativePinnedStoreItem(storeId, storeSlot, out var current)) {
+            item = null!;
+            return false;
+        }
+
+        item = current with { ItemSeed = itemSeed };
+        return true;
+    }
+
+    internal void CopyNativePinnedStorePoliciesTo(StoreCatalog destination)
+    {
+        ArgumentNullException.ThrowIfNull(destination);
+        foreach (var (key, definition) in nativePinnedStoreSlots) {
+            if (!destination.nativePinnedStoreSlots.TryAdd(key, definition))
+                throw new InvalidDataException("A cohort store catalog contains duplicate native pinned stock policy.");
+        }
     }
 
     /** Validates direct store-stock spell identities against active spells. */
@@ -291,6 +409,7 @@ public sealed class StoreCatalog
                     nameof(items));
             }
         }
+        ValidateNativePinnedStoreItems(storeId, stock);
         stores[storeId] = stock;
     }
 
@@ -401,9 +520,80 @@ public sealed class StoreCatalog
                 "The store catalog checkpoint does not contain the exact registered store set.");
         }
 
+        foreach (var storeId in nativePinnedStoreSlots.Keys.Select(key => key.StoreId).Distinct()) {
+            if (!restoredStocks.TryGetValue(storeId, out var stock))
+                throw new InvalidDataException("The store checkpoint omits native pinned Healer stock.");
+            ValidateNativePinnedStoreItems(storeId, stock);
+        }
+
         foreach (var (storeId, stock) in restoredStocks)
             stores[storeId] = stock;
     }
+
+    private static AuthoritativeItemDefinition ResolveNativePinnedHealerDefinition(
+        AuthoritativeItemCatalog items,
+        string symbol,
+        uint itemId,
+        int nativeItemIndex,
+        int miscId,
+        DiabloItemActionKind action,
+        uint price)
+    {
+        var definition = items.Definitions.SingleOrDefault(value =>
+                string.Equals(value.StableSymbol, symbol, StringComparison.Ordinal))
+            ?? throw new InvalidDataException($"Native Pepin stock is missing stable item '{symbol}'.");
+        if (definition.ItemId != itemId || definition.NativeItemIndex != nativeItemIndex
+            || definition.ItemType != 0 || definition.MiscId != miscId
+            || definition.ItemActionKind != action || definition.Value != price
+            || definition.InventoryWidth != 1 || definition.InventoryHeight != 1
+            || string.IsNullOrWhiteSpace(definition.Name))
+            throw new InvalidDataException($"Native Pepin stock item '{symbol}' does not match its pinned native identity.");
+        return definition;
+    }
+
+    private static (StoreItem Stock, NativePinnedStoreSlot Policy) PreparePinnedSlot(
+        uint slot,
+        AuthoritativeItemDefinition definition,
+        Dictionary<uint, StoreItem> stock)
+    {
+        if (!stock.TryGetValue(slot, out var item)
+            || item.State.StableItemId != definition.ItemId
+            || item.State.ItemIndex != definition.NativeItemIndex
+            || item.Price != definition.Value)
+            throw new InvalidDataException($"Native Pepin stock slot {slot} does not match its pinned item and price.");
+
+        var nativeState = definition.Generate(item.ItemSeed) with {
+            CreateInfo = NativePinnedHealerCreateInfo,
+            Identified = false,
+            StatFlag = true,
+        };
+        return (
+            item with { State = nativeState },
+            new NativePinnedStoreSlot(
+                definition.ItemId,
+                definition.NativeItemIndex,
+                checked((uint)definition.Value),
+                item.ItemSeed,
+                nativeState));
+    }
+
+    private void ValidateNativePinnedStoreItems(uint storeId, Dictionary<uint, StoreItem> stock)
+    {
+        foreach (var ((configuredStoreId, slot), definition) in nativePinnedStoreSlots) {
+            if (configuredStoreId != storeId)
+                continue;
+            if (!stock.TryGetValue(slot, out var item) || !MatchesNativePinnedStoreItem(item, definition))
+                throw new InvalidDataException($"Native Pepin pinned stock slot {slot} is missing or has changed identity.");
+        }
+    }
+
+    private static bool MatchesNativePinnedStoreItem(StoreItem item, NativePinnedStoreSlot definition)
+        => item.State is not null
+            && item.State.StableItemId == definition.ItemId
+            && item.State.ItemIndex == definition.NativeItemIndex
+            && item.Price == definition.Price
+            && item.ItemSeed == definition.ItemSeed
+            && item.State == definition.State;
 
     private static StoreItem CloneStoreItem(StoreItem item)
     {

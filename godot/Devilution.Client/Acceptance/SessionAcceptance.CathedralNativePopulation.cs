@@ -373,16 +373,19 @@ public partial class SessionAcceptance
     private async Task<NativeEquipmentKillEvidence> FightForNativeEquipmentAsync(
         Main main,
         string directory,
-        bool visible)
+        bool visible,
+        bool useCardinalLootApproach = false)
     {
+        var levelId = main.ObservedSnapshot!.Players.Single().LevelId;
         var initialExperience = main.ObservedSnapshot!.Players.Single().Experience;
-        var initialEligibleEntityIds = main.ObservedSnapshot.Monsters.Where(monster => monster.LevelId == 1
+        var initialEligibleEntityIds = main.ObservedSnapshot.Monsters.Where(monster => monster.LevelId == levelId
                 && monster.Alive && !monster.IsPlayerMinion)
             .Select(monster => monster.EntityId).ToHashSet();
         var initialEligibleActorCount = initialEligibleEntityIds.Count;
         var killed = new List<NativeKillEvidence>();
         var visited = new HashSet<uint>();
-        var combatWork = new NativeCombatWorkBudget();
+        var combatWork = new NativeCombatWorkBudget(enforceCumulativeTargetLimit: IsNativeProgressionL2(main));
+        var attackRefusals = combatWork.AttackRefusals;
         var completedTargets = 0;
         var reselectionYields = 0;
         var doorApproachCommands = new Dictionary<uint, int>();
@@ -390,9 +393,14 @@ public partial class SessionAcceptance
         var doorOperationsEvidence = new List<NativeDoorOperationEvidence>();
         while (completedTargets < initialEligibleActorCount
             && combatWork.Used < NativeCombatWorkBudget.MaximumWork) {
+            if (useCardinalLootApproach && await CollectNearbyProgressionHealing(main)) {
+                combatWork.ConsumeExploration("collect native generated healing");
+                await UseNativeHealingPotionIfNeeded(main);
+                continue;
+            }
             var player = main.ObservedSnapshot!.Players.Single();
             var snapshot = main.ObservedSnapshot!;
-            var remainingTargets = snapshot.Monsters.Where(monster => monster.LevelId == 1
+            var remainingTargets = snapshot.Monsters.Where(monster => monster.LevelId == levelId
                     && monster.Alive && !monster.IsPlayerMinion
                     && initialEligibleEntityIds.Contains(monster.EntityId)
                     && !visited.Contains(monster.EntityId))
@@ -424,7 +432,7 @@ public partial class SessionAcceptance
             }
             var found = await DefeatNativeTargetAsync(main, target.EntityId,
                 maximumAttacks: NativeGearHuntMaximumAttacksPerTarget,
-                combatWorkBudget: combatWork);
+                combatWorkBudget: combatWork, collectGeneratedHealing: useCardinalLootApproach);
             if (found is null) {
                 reselectionYields++;
                 Require(reselectionYields <= NativeGearHuntMaximumReselectionYields,
@@ -441,9 +449,13 @@ public partial class SessionAcceptance
             await UseNativeHealingPotionIfNeeded(main);
             var newDropIds = found.DropEntityIds.ToHashSet();
             var gear = main.ObservedSnapshot!.WorldItems.Where(item => newDropIds.Contains(item.EntityId)
-                    && item.LevelId == 1
-                    && NativeDistance(item.PositionX, item.PositionY, found.DeathX, found.DeathY)
-                        <= NativeMonsterDropPlacementRadius
+                    && item.LevelId == levelId
+                    && (found.DropAttribution == "EncounterAreaCandidates"
+                        ? found.EncounterCorpses.Any(corpse => corpse.LevelId == item.LevelId
+                            && NativeDistance(item.PositionX, item.PositionY, corpse.PositionX, corpse.PositionY)
+                                <= NativeMonsterDropPlacementRadius)
+                        : NativeDistance(item.PositionX, item.PositionY, found.DeathX, found.DeathY)
+                            <= NativeMonsterDropPlacementRadius)
                     && IsUsableNativeEquipment(item.State, main.ObservedSnapshot.Players.Single()))
                 .OrderBy(item => item.State.EquipLocation == 3 ? 0 : item.State.EquipLocation)
                 .ThenBy(item => item.EntityId).FirstOrDefault();
@@ -451,23 +463,49 @@ public partial class SessionAcceptance
                 continue;
 
             var currentPlayer = main.ObservedSnapshot!.Players.Single();
-            if (NativeDistance(currentPlayer.PositionX, currentPlayer.PositionY,
+            if (useCardinalLootApproach)
+                await ApproachNativeProgressionLoot(main, gear, visited, killed, combatWork);
+            else if (NativeDistance(currentPlayer.PositionX, currentPlayer.PositionY,
                     gear.PositionX, gear.PositionY) > 1)
                 await ClearImmediateNativeThreats(main, gear.PositionX, gear.PositionY, visited, killed);
             var prePickupPlayer = main.ObservedSnapshot!.Players.Single();
             Require(prePickupPlayer.Life > 0, "The Rogue died before reaching the native earned equipment.");
             var pickupSequence = main.ObservedCommandResult?.ClientSequence ?? 0;
-            await ClickWorld(main, gear.PositionX, gear.PositionY);
-            var distance = NativeDistance(prePickupPlayer.PositionX, prePickupPlayer.PositionY, gear.PositionX, gear.PositionY);
-            var pickupSeconds = (int)Math.Clamp((distance + 2) * 5, 80, 240);
-            await Until(() => {
-                var snapshot = main.ObservedSnapshot!;
-                var current = snapshot.Players.Single();
-                return current.Life > 0
-                    && snapshot.WorldItems.All(item => item.EntityId != gear.EntityId)
-                    && current.Inventory.Any(item => item.ItemSeed == gear.ItemSeed
-                        && item.State.StableItemId == gear.State.StableItemId);
-            }, "The native earned equipment did not reach the Rogue through the ordinary pickup control.", pickupSeconds);
+            try {
+                await ClickWorld(main, gear.PositionX, gear.PositionY);
+                if (useCardinalLootApproach)
+                    await AcceptedAndSettled(main, pickupSequence, "Pick up the adjacent native earned equipment");
+                var distance = NativeDistance(prePickupPlayer.PositionX, prePickupPlayer.PositionY, gear.PositionX, gear.PositionY);
+                var pickupSeconds = (int)Math.Clamp((distance + 2) * 5, 80, 240);
+                await Until(() => {
+                    var snapshot = main.ObservedSnapshot!;
+                    var current = snapshot.Players.Single();
+                    return current.Life > 0
+                        && snapshot.WorldItems.All(item => item.EntityId != gear.EntityId)
+                        && current.Inventory.Any(item => item.ItemSeed == gear.ItemSeed
+                            && item.State.StableItemId == gear.State.StableItemId);
+                }, "The native earned equipment did not reach the Rogue through the ordinary pickup control.", pickupSeconds);
+            } catch (InvalidOperationException exception) {
+                throw new InvalidOperationException($"{exception.Message} Native gear pickup: "
+                    + $"gear={gear.EntityId}/{gear.State.StableItemId}/{gear.ItemSeed}@{gear.PositionX},{gear.PositionY}; "
+                    + $"queued={main.ObservedLastQueuedSequence}, pending={main.ObservedPendingCommandCount}; "
+                    + $"receipt={main.ObservedCommandResult?.ClientSequence}/{main.ObservedCommandResult?.Status}/"
+                    + $"{main.ObservedCommandResult?.RejectReason}; "
+                    + DescribeNativeAttackSnapshot(main.ObservedSnapshot!, 0), exception);
+            } finally {
+                if (useCardinalLootApproach) {
+                    var current = main.ObservedSnapshot!;
+                    var currentHero = current.Players.Single();
+                    WriteEvidence(directory, $"native-earned-pickup-{levelId}-{gear.EntityId}.json", new {
+                        LevelId = levelId, gear.EntityId, gear.ItemSeed, gear.State.StableItemId,
+                        StartSequence = pickupSequence, Queued = main.ObservedLastQueuedSequence,
+                        Receipt = main.ObservedCommandResult, Pending = main.ObservedPendingCommandCount,
+                        currentHero.PositionX, currentHero.PositionY, currentHero.Life,
+                        DropPresent = current.WorldItems.Any(item => item.EntityId == gear.EntityId),
+                        ExactCarriedCount = CountNativeItemOccurrences(main, currentHero, gear.State.StableItemId, gear.ItemSeed),
+                    });
+                }
+            }
             var carried = main.ObservedSnapshot!.Players.Single().Inventory.Single(item =>
                 item.ItemSeed == gear.ItemSeed && item.State.StableItemId == gear.State.StableItemId);
             var pickupResult = main.ObservedCommandResult;
@@ -494,27 +532,54 @@ public partial class SessionAcceptance
                 found.MonsterEntityId, found.MonsterId, found.ExperienceBefore, main.ObservedSnapshot.Players.Single().Experience,
                 gear.EntityId, gear.ItemSeed, gear.State.StableItemId, gear.State.ItemIndex,
                 string.IsNullOrWhiteSpace(equipped.State.BaseName) ? equipped.State.IdentifiedName : equipped.State.BaseName,
-                slot, killed.ToArray(), doorOperationsEvidence.ToArray());
+                slot, killed.ToArray(), doorOperationsEvidence.ToArray(), attackRefusals.ToArray());
         }
         throw new InvalidOperationException(
             $"No profile-generated usable equipment was earned within the native gear-hunt limits: "
             + $"completedTargets={completedTargets}/{initialEligibleActorCount} initial eligible actors, "
             + $"reselectionYields={reselectionYields}/{NativeGearHuntMaximumReselectionYields}, "
             + $"combatWork={combatWork.Used}/{NativeCombatWorkBudget.MaximumWork}, "
-            + $"kills={killed.Count}, initialExperience={initialExperience}.");
+            + $"kills={killed.Count}, refusals={attackRefusals.Count}, initialExperience={initialExperience}; "
+            + $"attackRefusals=[{string.Join(";", attackRefusals)}].");
     }
 
     private async Task<NativeKillEvidence?> DefeatNativeTargetAsync(
         Main main, uint targetId, int maximumAttacks, int? lootX = null, int? lootY = null,
-        NativeCombatWorkBudget? combatWorkBudget = null)
+        NativeCombatWorkBudget? combatWorkBudget = null, bool collectGeneratedHealing = false)
     {
         var initial = main.ObservedSnapshot!.Monsters.Single(monster => monster.EntityId == targetId);
-        var experienceBefore = main.ObservedSnapshot.Players.Single().Experience;
-        var startingItems = main.ObservedSnapshot.WorldItems.Where(item => item.LevelId == initial.LevelId)
-            .Select(item => item.EntityId).ToHashSet();
+        var progressionL2 = IsNativeProgressionL2(main);
+        Require(!progressionL2 || combatWorkBudget is not null,
+            "Progression L2 target combat requires its bounded shared work context.");
+        var initialSnapshot = main.ObservedSnapshot;
+        var baseline = progressionL2
+            ? combatWorkBudget!.GetTargetBaseline(targetId, initial.LevelId, initialSnapshot)
+            : null;
+        var experienceBefore = baseline?.ExperienceBefore ?? initialSnapshot.Players.Single().Experience;
+        var playerAtStart = main.ObservedSnapshot.Players.Single();
+        var intendedBow = progressionL2
+            ? playerAtStart.Equipment.SingleOrDefault(item => item.Slot == 4)
+            : null;
+        Require(!progressionL2 || intendedBow is not null && IsNativeProgressionBowUsable(intendedBow),
+            "Progression L2 native combat requires a usable equipped native bow in slot 4.");
+        var startingItems = baseline?.StartingItems ?? initialSnapshot.WorldItems
+            .Where(item => item.LevelId == initial.LevelId).Select(item => item.EntityId).ToHashSet();
+        var startingCorpses = baseline?.StartingCorpses ?? initialSnapshot.Corpses
+            .Where(corpse => corpse.LevelId == initial.LevelId).Select(corpse => corpse.EntityId).ToHashSet();
+        var acceptedShots = progressionL2
+            ? combatWorkBudget!.AcceptedShotsFor(targetId).ToList()
+            : new List<NativeAcceptedShotEvidence>();
+        var localRefusals = progressionL2
+            ? combatWorkBudget!.RefusalsFor(targetId).ToList()
+            : new List<NativeAttackRefusalEvidence>();
         Require(lootX.HasValue == lootY.HasValue, "Native optional-threat scope requires both loot coordinates.");
         var attacks = 0;
         while (main.ObservedSnapshot!.Monsters.Any(monster => monster.EntityId == targetId && monster.Alive)) {
+            if (collectGeneratedHealing && await CollectNearbyProgressionHealing(main)) {
+                combatWorkBudget?.ConsumeExploration("collect native generated healing during combat");
+                await UseNativeHealingPotionIfNeeded(main);
+                continue;
+            }
             var liveSnapshot = main.ObservedSnapshot!;
             var activeTarget = liveSnapshot.Monsters.SingleOrDefault(monster => monster.EntityId == targetId && monster.Alive);
             if (activeTarget is null)
@@ -526,9 +591,13 @@ public partial class SessionAcceptance
                 return null;
             var targetAttackLimit = Math.Min(maximumAttacks, NativeGearHuntMaximumAttacksPerTarget);
             Require(++attacks <= targetAttackLimit && currentPlayer.Life > 0,
-                $"Native target {targetId} exceeded its {targetAttackLimit}-step ordinary attack budget or the Rogue died.");
+                $"Native target {targetId} exceeded its {targetAttackLimit}-step ordinary attack budget or the Rogue died; "
+                + $"refusals=[{string.Join(";", localRefusals)}].");
             combatWorkBudget?.Consume(targetId, attacks);
             await UseNativeHealingPotionIfNeeded(main);
+            if (progressionL2 && !await WaitForNativeProgressionAttackReadyAsync(
+                    main, targetId, initial.LevelId, intendedBow!, System.Diagnostics.Stopwatch.StartNew()))
+                break;
             var attackTile = await ApproachNativeRangedTargetAsync(main, targetId, lootX, lootY);
             if (attackTile is null) {
                 var remainingTarget = main.ObservedSnapshot!.Monsters.SingleOrDefault(monster => monster.EntityId == targetId && monster.Alive);
@@ -547,6 +616,20 @@ public partial class SessionAcceptance
                 return null;
             if (HasCloserNativeThreat(main, beforeSnapshot, livePlayer, liveTarget, lootX, lootY))
                 return null;
+            if (progressionL2) {
+                var targetTile = ProjectedNativeTargetTile(liveTarget);
+                var attackGeometry = DepthGeometry(main, livePlayer.LevelId);
+                var attackBlockedCells = attackGeometry.MissileBlockedCells.ToHashSet();
+                Require(targetTile == attackTile.Value
+                    && CanSelectNativeRangedTarget(main, beforeSnapshot, livePlayer, liveTarget,
+                        attackGeometry, targetTile)
+                    && HasClearNativeRangedLane(beforeSnapshot, attackGeometry, attackBlockedCells,
+                        livePlayer.LevelId, livePlayer.PositionX, livePlayer.PositionY, liveTarget, targetTile),
+                    $"Native target {targetId} lost its current/future visible missile lane before dispatch: "
+                    + DescribeNativeAttackSnapshot(beforeSnapshot, targetId) + "; "
+                    + DescribeNativeTargetClick(main, attackGeometry, livePlayer.PositionX,
+                        livePlayer.PositionY, targetTile));
+            }
             Require(AuthoritativeTargetSelector.SelectCombatTarget(beforeSnapshot, livePlayer.EntityId,
                     attackTile.Value.X, attackTile.Value.Y) == targetId,
                 $"Native target {targetId} stopped being the selected visible entity before the attack dispatch.");
@@ -557,38 +640,268 @@ public partial class SessionAcceptance
                 + $"player=({livePlayer.PositionX},{livePlayer.PositionY}), target=({attackTile.Value.X},{attackTile.Value.Y}), "
                 + $"screen=({clickProjection.Point.X:F1},{clickProjection.Point.Y:F1}), "
                 + $"worldArea={clickProjection.Bounds}.");
-            await ClickWorld(main, attackTile.Value.X, attackTile.Value.Y, MouseButton.Right);
-            try {
-                await AcceptedAndSettled(main, beforeSequence, "Native Cathedral ranged attack");
-            } catch (InvalidOperationException exception) {
-                var afterSnapshot = main.ObservedSnapshot;
-                var result = main.ObservedCommandResult;
-                throw new InvalidOperationException(
-                    $"{exception.Message} Native attack context: before[{DescribeNativeAttackSnapshot(beforeSnapshot, targetId)}]; "
-                    + $"after[{(afterSnapshot is null ? "missing snapshot" : DescribeNativeAttackSnapshot(afterSnapshot, targetId))}]; "
-                    + $"input=RightClick; selectedSpellSource={DescribeNativeSpellSourceSelection(main)}; "
-                    + $"receipt=(sequence={result?.ClientSequence},appliedTick={result?.AppliedTick},"
-                    + $"status={result?.Status},rejectReason={result?.RejectReason}).",
-                    exception);
+            if (progressionL2) {
+                var previousReceipt = main.ObservedCommandResult;
+                Require(main.ObservedPendingCommandCount == 0
+                    && previousReceipt is not null
+                    && main.ObservedLastQueuedSequence == beforeSequence
+                    && previousReceipt.ClientSequence == beforeSequence
+                    && beforeSnapshot.Tick >= previousReceipt.AppliedTick
+                    && livePlayer.LevelId == initial.LevelId && livePlayer.Life > 0
+                    && IsNativeProgressionBowUnchanged(livePlayer, intendedBow!),
+                    $"Progression L2 attack boundary changed before dispatch: {DescribeNativeAttackSnapshot(beforeSnapshot, targetId)}; "
+                    + $"queued={main.ObservedLastQueuedSequence},pending={main.ObservedPendingCommandCount}, "
+                    + $"receipt={main.ObservedCommandResult?.ClientSequence}/{main.ObservedCommandResult?.AppliedTick}.");
+                if (!IsNativeProgressionAttackReady(livePlayer, beforeSnapshot.Tick))
+                    continue;
             }
-            var playerId = main.ObservedSnapshot!.Players.Single().EntityId;
-            await Until(() => !main.ObservedSnapshot!.Monsters.Any(monster => monster.EntityId == targetId && monster.Alive)
-                || !main.ObservedSnapshot.Projectiles.Any(projectile => projectile.SourceEntityId == playerId
-                    && projectile.TargetEntityId == targetId),
-                $"The native arrow against target {targetId} did not settle.", 20);
+            var expectedSequence = checked(beforeSequence + 1);
+            var attemptClock = progressionL2 ? System.Diagnostics.Stopwatch.StartNew() : null;
+            await ClickWorld(main, attackTile.Value.X, attackTile.Value.Y, MouseButton.Right);
+            if (progressionL2) {
+                if (main.ObservedLastQueuedSequence != expectedSequence
+                    && main.ObservedCommandResult?.ClientSequence != expectedSequence) {
+                    throw new InvalidOperationException(
+                        $"Progression L2 attack did not queue exact sequence {expectedSequence}: "
+                        + $"queued={main.ObservedLastQueuedSequence},pending={main.ObservedPendingCommandCount}, "
+                        + $"receipt={main.ObservedCommandResult?.ClientSequence}; "
+                        + DescribeNativeAttackSnapshot(main.ObservedSnapshot!, targetId));
+                }
+                var receipt = await AwaitNativeProgressionAttackReceiptAsync(
+                    main, targetId, initial.LevelId, intendedBow!, expectedSequence, attemptClock!);
+                if (receipt.Status == CommandStatus.Rejected) {
+                    var rejectedSnapshot = main.ObservedSnapshot!;
+                    var rejectedPlayer = rejectedSnapshot.Players.Single();
+                    var reason = receipt.RejectReason;
+                    var targetDeadWithProof = !rejectedSnapshot.Monsters.Any(monster =>
+                            monster.EntityId == targetId && monster.Alive)
+                        && rejectedSnapshot.Corpses.Any(corpse => corpse.EntityId == targetId
+                            && corpse.LevelId == initial.LevelId)
+                        && rejectedPlayer.Experience > experienceBefore
+                        && acceptedShots.Any(shot => shot.TargetEntityId == targetId);
+                    var classification = targetDeadWithProof
+                        ? "ResolvedByPriorAcceptedShot"
+                        : reason == CommandRejectReason.NotAllowed
+                            && rejectedPlayer.CombatMode == PlayerCombatMode.GotHit
+                                ? "HitRecoveryObserved"
+                                : "Unclassified";
+                    var refusal = new NativeAttackRefusalEvidence(targetId, expectedSequence,
+                        receipt.AppliedTick, reason.ToString(), rejectedSnapshot.Tick, rejectedPlayer.Life,
+                        rejectedPlayer.CombatMode.ToString(), rejectedPlayer.CurrentAction?.Kind.ToString(),
+                        classification);
+                    localRefusals.Add(refusal);
+                    combatWorkBudget!.RecordRefusal(refusal);
+                    if (reason == CommandRejectReason.InvalidTarget && targetDeadWithProof)
+                        break;
+                    var targetStillAlive = rejectedSnapshot.Monsters.Any(monster =>
+                        monster.EntityId == targetId && monster.Alive);
+                    if (reason == CommandRejectReason.NotAllowed && !targetStillAlive) {
+                        if (targetDeadWithProof)
+                            break;
+                        throw new InvalidOperationException(
+                            $"Progression L2 NotAllowed refusal coincided with target loss but lacked prior-shot proof: "
+                            + $"target={targetId},sequence={expectedSequence},classification={classification}; "
+                            + DescribeNativeAttackSnapshot(rejectedSnapshot, targetId));
+                    }
+                    if (reason == CommandRejectReason.NotAllowed && rejectedPlayer.Life > 0
+                        && rejectedPlayer.LevelId == initial.LevelId
+                        && IsNativeProgressionBowUnchanged(rejectedPlayer, intendedBow!)) {
+                        GD.Print($"Native L2 attack refusal reselected: target={targetId},sequence={expectedSequence},"
+                            + $"reason={reason},classification={classification},tick={rejectedSnapshot.Tick},"
+                            + $"life={rejectedPlayer.Life},mode={rejectedPlayer.CombatMode},"
+                            + $"action={rejectedPlayer.CurrentAction?.Kind}; attempts={attacks}/{targetAttackLimit}.");
+                        continue;
+                    }
+                    throw new InvalidOperationException(
+                        $"Progression L2 attack refusal is not safely recoverable: target={targetId}, "
+                        + $"sequence={expectedSequence},reason={reason},classification={classification}; "
+                        + DescribeNativeAttackSnapshot(rejectedSnapshot, targetId)
+                        + $"; recordedRefusals=[{string.Join(";", localRefusals)}].");
+                }
+                Require(IsAcceptedOrSuccessfulDuplicate(receipt),
+                    $"Progression L2 ranged attack returned unexpected {receipt.Status}/{receipt.RejectReason} "
+                    + $"for target {targetId}, sequence {expectedSequence}.");
+                var acceptedShot = new NativeAcceptedShotEvidence(targetId, expectedSequence,
+                    attackTile.Value.X, attackTile.Value.Y, receipt.AppliedTick);
+                acceptedShots.Add(acceptedShot);
+                combatWorkBudget!.RecordAcceptedShot(acceptedShot);
+                if (!await WaitForNativeProgressionAttackReadyAsync(
+                        main, targetId, initial.LevelId, intendedBow!, attemptClock!))
+                    break;
+            } else {
+                try {
+                    await AcceptedAndSettled(main, beforeSequence, "Native Cathedral ranged attack");
+                    var legacyReceipt = main.ObservedCommandResult!;
+                    acceptedShots.Add(new NativeAcceptedShotEvidence(targetId, legacyReceipt.ClientSequence,
+                        attackTile.Value.X, attackTile.Value.Y, legacyReceipt.AppliedTick));
+                } catch (InvalidOperationException exception) {
+                    var afterSnapshot = main.ObservedSnapshot;
+                    var result = main.ObservedCommandResult;
+                    throw new InvalidOperationException(
+                        $"{exception.Message} Native attack context: before[{DescribeNativeAttackSnapshot(beforeSnapshot, targetId)}]; "
+                        + $"after[{(afterSnapshot is null ? "missing snapshot" : DescribeNativeAttackSnapshot(afterSnapshot, targetId))}]; "
+                        + $"input=RightClick; selectedSpellSource={DescribeNativeSpellSourceSelection(main)}; "
+                        + $"receipt=(sequence={result?.ClientSequence},appliedTick={result?.AppliedTick},"
+                        + $"status={result?.Status},rejectReason={result?.RejectReason}).",
+                        exception);
+                }
+                var playerId = main.ObservedSnapshot!.Players.Single().EntityId;
+                await WaitForNativeArrowSettlementAsync(main, targetId, playerId);
+            }
         }
         await Until(() => main.ObservedSnapshot!.Corpses.Any(corpse => corpse.EntityId == targetId)
             && main.ObservedSnapshot.Players.Single().Experience > experienceBefore,
             $"Native target {targetId} did not publish its corpse and ordinary XP reward.", 10);
         var corpse = main.ObservedSnapshot!.Corpses.Single(item => item.EntityId == targetId);
-        var dropEntityIds = main.ObservedSnapshot.WorldItems.Where(item => item.LevelId == corpse.LevelId
-            && NativeDistance(item.PositionX, item.PositionY, corpse.PositionX, corpse.PositionY)
-                <= NativeMonsterDropPlacementRadius
-            && !startingItems.Contains(item.EntityId)).Select(item => item.EntityId).ToArray();
+        Require(!progressionL2 || acceptedShots.Any(shot => shot.TargetEntityId == targetId),
+            $"Native target {targetId} produced a corpse and XP without an accepted ordinary shot aimed at it.");
+        var encounterCorpses = progressionL2
+            ? main.ObservedSnapshot.Corpses.Where(item => item.LevelId == corpse.LevelId
+                    && !startingCorpses.Contains(item.EntityId)
+                    && NativeDistance(item.PositionX, item.PositionY, corpse.PositionX, corpse.PositionY)
+                        <= NativeRangedMinimumThreatSpacing)
+                .Select(item => new NativeEncounterCorpseEvidence(item.EntityId, item.LevelId,
+                    item.PositionX, item.PositionY)).ToArray()
+            : [new NativeEncounterCorpseEvidence(corpse.EntityId, corpse.LevelId,
+                corpse.PositionX, corpse.PositionY)];
+        var dropEntityIds = progressionL2
+            ? main.ObservedSnapshot.WorldItems.Where(item => item.LevelId == corpse.LevelId
+                && !startingItems.Contains(item.EntityId)
+                && encounterCorpses.Any(encounterCorpse => NativeDistance(item.PositionX, item.PositionY,
+                    encounterCorpse.PositionX, encounterCorpse.PositionY) <= NativeMonsterDropPlacementRadius))
+                .Select(item => item.EntityId).ToArray()
+            : main.ObservedSnapshot.WorldItems.Where(item => item.LevelId == corpse.LevelId
+                && NativeDistance(item.PositionX, item.PositionY, corpse.PositionX, corpse.PositionY)
+                    <= NativeMonsterDropPlacementRadius
+                && !startingItems.Contains(item.EntityId)).Select(item => item.EntityId).ToArray();
         return new NativeKillEvidence(targetId, initial.MonsterId, experienceBefore,
             main.ObservedSnapshot!.Players.Single().Experience, corpse.PositionX, corpse.PositionY,
-            main.ObservedCommandResult!.ClientSequence, dropEntityIds);
+            progressionL2 ? acceptedShots[^1].Sequence : main.ObservedCommandResult!.ClientSequence,
+            dropEntityIds, encounterCorpses,
+            acceptedShots.ToArray(), localRefusals.ToArray(),
+            progressionL2 ? "EncounterAreaCandidates" : "TargetCorpse");
     }
+
+    private async Task<CommandResult> AwaitNativeProgressionAttackReceiptAsync(
+        Main main, uint targetId, uint levelId, EquippedItemSnapshot intendedBow,
+        ulong expectedSequence, System.Diagnostics.Stopwatch attemptClock)
+    {
+        const double maximumAttemptSeconds = 20;
+        var failure = $"Progression L2 ranged attack {expectedSequence} for target {targetId} exceeded its 20-second bound.";
+        double RemainingSeconds()
+        {
+            var remaining = maximumAttemptSeconds - attemptClock.Elapsed.TotalSeconds;
+            Require(remaining > 0, $"{failure} {DescribeNativeHealingState(main)}.");
+            return remaining;
+        }
+
+        await Until(() => {
+            Require(main.ObservedLastQueuedSequence <= expectedSequence,
+                $"Unexpected command overtook progression L2 attack {expectedSequence}: "
+                + $"queued={main.ObservedLastQueuedSequence}; {DescribeNativeHealingState(main)}.");
+            var result = main.ObservedCommandResult;
+            if (result is { } observed && observed.ClientSequence > expectedSequence)
+                throw new InvalidOperationException(
+                    $"Progression L2 attack receipt advanced past {expectedSequence}: {observed.ClientSequence}.");
+            return result?.ClientSequence == expectedSequence;
+        }, failure, RemainingSeconds());
+        Require(attemptClock.Elapsed.TotalSeconds <= maximumAttemptSeconds,
+            $"{failure} The exact receipt poll exceeded its bound; {DescribeNativeHealingState(main)}.");
+
+        var receipt = main.ObservedCommandResult!;
+        Require(main.ObservedLastQueuedSequence == expectedSequence,
+            $"Progression L2 attack receipt {expectedSequence} disagrees with queued sequence "
+            + $"{main.ObservedLastQueuedSequence}.");
+        await Until(() => {
+            var snapshot = main.ObservedSnapshot;
+            var player = snapshot?.Players.SingleOrDefault();
+            Require(player is not null && player.Life > 0,
+                $"The Rogue died before progression L2 attack {expectedSequence} became observable; "
+                + $"{DescribeNativeHealingState(main)}.");
+            Require(player!.LevelId == levelId && IsNativeProgressionBowUnchanged(player, intendedBow),
+                $"The progression L2 player level or intended bow changed at attack receipt {expectedSequence}; "
+                + DescribeNativeAttackSnapshot(snapshot!, targetId));
+            return snapshot!.Tick >= receipt.AppliedTick && main.ObservedPendingCommandCount == 0;
+        }, failure, RemainingSeconds());
+        Require(attemptClock.Elapsed.TotalSeconds <= maximumAttemptSeconds,
+            $"{failure} The applied-snapshot poll exceeded its bound; {DescribeNativeHealingState(main)}.");
+        return receipt;
+    }
+
+    private async Task<bool> WaitForNativeProgressionAttackReadyAsync(
+        Main main, uint targetId, uint levelId, EquippedItemSnapshot intendedBow,
+        System.Diagnostics.Stopwatch attemptClock)
+    {
+        const double maximumReadySeconds = 20;
+        var failure = $"Progression L2 ranged action for target {targetId} did not reach its native repeat-ready boundary.";
+        while (true) {
+            Require(attemptClock.Elapsed.TotalSeconds <= maximumReadySeconds,
+                $"{failure} {DescribeNativeHealingState(main)}.");
+            var snapshot = main.ObservedSnapshot!;
+            var player = snapshot.Players.Single();
+            Require(player.Life > 0,
+                $"The Rogue died while awaiting progression L2 ranged readiness; {DescribeNativeHealingState(main)}.");
+            Require(player.LevelId == levelId && IsNativeProgressionBowUnchanged(player, intendedBow),
+                $"The progression L2 level or intended bow changed while awaiting repeat readiness; "
+                + DescribeNativeAttackSnapshot(snapshot, targetId));
+            var result = main.ObservedCommandResult;
+            var fresh = result is not null && snapshot.Tick >= result.AppliedTick;
+            Require(!fresh || main.ObservedPendingCommandCount == 0,
+                $"A progression L2 command remained pending at the attack readiness boundary; "
+                + DescribeNativeHealingState(main));
+            if (fresh && main.ObservedPendingCommandCount == 0) {
+                var targetAlive = snapshot.Monsters.Any(monster => monster.EntityId == targetId && monster.Alive);
+                if (!targetAlive)
+                    return false;
+                if (IsNativeProgressionAttackReady(player, snapshot.Tick))
+                    return true;
+            }
+
+            var remaining = maximumReadySeconds - attemptClock.Elapsed.TotalSeconds;
+            Require(remaining > 0,
+                $"{failure} {DescribeNativeHealingState(main)}; {DescribeNativeAttackSnapshot(snapshot, targetId)}.");
+            if (main.ObservedPendingCommandCount == 0 && NativeHealingIsDue(main)) {
+                await UseNativeHealingPotionIfNeeded(main);
+                Require(attemptClock.Elapsed.TotalSeconds <= maximumReadySeconds,
+                    $"The ordinary healing command exceeded the progression L2 attack bound; "
+                    + $"{DescribeNativeHealingState(main)}.");
+                continue;
+            }
+            await Until(() => {
+                var current = main.ObservedSnapshot!;
+                var currentPlayer = current.Players.Single();
+                Require(currentPlayer.Life > 0,
+                    $"The Rogue died while awaiting progression L2 attack readiness; {DescribeNativeHealingState(main)}.");
+                Require(currentPlayer.LevelId == levelId && IsNativeProgressionBowUnchanged(currentPlayer, intendedBow),
+                    $"The progression L2 level or intended bow changed while awaiting repeat readiness; "
+                    + DescribeNativeAttackSnapshot(current, targetId));
+                if (current.Tick < (main.ObservedCommandResult?.AppliedTick ?? ulong.MaxValue)
+                    || main.ObservedPendingCommandCount != 0)
+                    return false;
+                return !current.Monsters.Any(monster => monster.EntityId == targetId && monster.Alive)
+                    || IsNativeProgressionAttackReady(currentPlayer, current.Tick)
+                    || NativeHealingIsDue(main);
+            }, failure, remaining);
+            Require(attemptClock.Elapsed.TotalSeconds <= maximumReadySeconds,
+                $"{failure} The ready poll exceeded its original bound; {DescribeNativeHealingState(main)}.");
+        }
+    }
+
+    private static bool IsNativeProgressionAttackReady(PlayerSnapshot player, ulong tick)
+        => player.CombatMode == PlayerCombatMode.Stand && player.CurrentAction is null
+            || player.CombatMode == PlayerCombatMode.RangedAttack
+                && player.CurrentAction is { Kind: PlayerActionKind.Attack, EffectApplied: true } action
+                && tick >= action.ReadyTick;
+
+    private static bool IsNativeProgressionBowUnchanged(PlayerSnapshot player, EquippedItemSnapshot intendedBow)
+        => player.Equipment.Any(item => item.Slot == intendedBow.Slot
+            && item.ItemSeed == intendedBow.ItemSeed
+            && item.State.StableItemId == intendedBow.State.StableItemId
+            && IsNativeProgressionBowUsable(item));
+
+    private static bool IsNativeProgressionBowUsable(EquippedItemSnapshot item)
+        => item.Slot == 4 && item.State is { Deleted: false, StableItemId: > 0, ItemType: 3, ItemClass: 1, StatFlag: true }
+            && item.State.EquipLocation == 2;
 
     private async Task<(int X, int Y)?> ApproachNativeRangedTargetAsync(
         Main main, uint targetId, int? lootX = null, int? lootY = null)
@@ -1316,7 +1629,8 @@ public partial class SessionAcceptance
     private async Task UseNativeHealingPotionIfNeeded(Main main)
     {
         var player = main.ObservedSnapshot!.Players.Single();
-        if ((long)player.Life * 3 > (long)player.LifeMaximum * 2)
+        Require(player.Life > 0, $"The Rogue died before a native healing command could be dispatched; {DescribeNativeHealingState(main)}.");
+        if (!NativeHealingThresholdReached(main))
             return;
         var beltPotion = player.Belt.OrderBy(item => item.Slot)
             .FirstOrDefault(item => IsNativeHealingConsumable(item.State));
@@ -1349,6 +1663,9 @@ public partial class SessionAcceptance
         Require(useButton.Visible && !useButton.Disabled,
             $"The ordinary consumable control was unavailable; life={player.Life}/{player.LifeMaximum}.");
         var beforeLife = player.Life;
+        var beforeTick = main.ObservedSnapshot!.Tick;
+        var beforeAction = player.CurrentAction?.Kind;
+        var beforeMode = player.CombatMode;
         var potionSeed = beltPotion?.ItemSeed ?? inventoryPotion.Item!.ItemSeed;
         var potionStableId = beltPotion?.State.StableItemId ?? inventoryPotion.Item!.State.StableItemId;
         var beforeCount = CountNativeHealingItemOccurrences(player, potionStableId, potionSeed);
@@ -1364,19 +1681,87 @@ public partial class SessionAcceptance
             $"The ordinary consumable control did not queue the exact healing item; expected sequence={expectedSequence}, "
             + $"queued={main.ObservedLastQueuedSequence}, pending={main.ObservedPendingCommandCount}, "
             + $"result={main.ObservedCommandResult?.ClientSequence}.");
-        await AcceptedAndSettled(main, sequence, "Use native-route healing consumable");
+        try {
+            await AcceptedAndSettled(main, sequence, "Use native-route healing consumable");
+        } catch (InvalidOperationException exception) {
+            var afterSnapshot = main.ObservedSnapshot;
+            var afterPlayer = afterSnapshot?.Players.SingleOrDefault();
+            var failureReceipt = main.ObservedCommandResult;
+            throw new InvalidOperationException(
+                $"{exception.Message} Native healing context: before[tick={beforeTick},life={beforeLife}/{player.LifeMaximum},"
+                + $"mode={beforeMode},action={beforeAction}]; after[tick={afterSnapshot?.Tick},"
+                + $"life={afterPlayer?.Life}/{afterPlayer?.LifeMaximum},mode={afterPlayer?.CombatMode},"
+                + $"action={afterPlayer?.CurrentAction?.Kind}]; queued={main.ObservedLastQueuedSequence},"
+                + $"pending={main.ObservedPendingCommandCount},itemSeed={potionSeed},stableId={potionStableId},"
+                + $"receipt={failureReceipt?.ClientSequence}/{failureReceipt?.AppliedTick}/{failureReceipt?.Status}/{failureReceipt?.RejectReason}.",
+                exception);
+        }
         var result = main.ObservedCommandResult;
         var after = main.ObservedSnapshot!.Players.Single();
+        var progressionL2 = IsNativeProgressionL2(main);
+        var exactPotionConsumed = CountNativeHealingItemOccurrences(after, potionStableId, potionSeed) == beforeCount - 1;
+        var lifeOutcomeValid = progressionL2
+            ? beforeLife < player.LifeMaximum && after.Life > 0
+            : after.Life > beforeLife;
         Require(result is { ClientSequence: var acknowledgedSequence, Status: CommandStatus.Accepted,
                 RejectReason: CommandRejectReason.Unspecified }
             && acknowledgedSequence == expectedSequence
-            && CountNativeHealingItemOccurrences(after, potionStableId, potionSeed) == beforeCount - 1
-            && after.Life > beforeLife,
-            $"The ordinary consumable command did not consume the exact healing item and restore life; "
+            && exactPotionConsumed && lifeOutcomeValid,
+            $"The ordinary consumable command did not produce its required accepted exact-item healing result; "
             + $"expected sequence={expectedSequence}, result={result?.ClientSequence}/{result?.Status}/{result?.RejectReason}, "
             + $"matchingItems={beforeCount}->{CountNativeHealingItemOccurrences(after, potionStableId, potionSeed)}, "
             + $"life={beforeLife}->{after.Life}, "
-            + $"seed={potionSeed}, stableId={potionStableId}.");
+            + $"seed={potionSeed}, stableId={potionStableId}; {DescribeNativeHealingState(main)}.");
+        if (progressionL2)
+            GD.Print($"Native L2 potion accepted: sequence={result!.ClientSequence}, appliedTick={result.AppliedTick}, "
+                + $"observedTick={main.ObservedSnapshot!.Tick}, life={beforeLife}->{after.Life}, "
+                + $"netLifeDelta={after.Life - beforeLife}, exactSeed={potionSeed}, stableId={potionStableId}.");
+    }
+
+    private static bool IsNativeProgressionL2(Main main)
+    {
+        var phase = System.Environment.GetEnvironmentVariable("GODEVILUTION_ACCEPTANCE_PHASE");
+        return main.ObservedSnapshot?.Players.SingleOrDefault()?.LevelId == 2
+            && (phase == "CathedralNativeProgressionJourney" || phase == "CathedralNativeProgressionResume");
+    }
+
+    private static bool NativeHealingThresholdReached(Main main)
+    {
+        var player = main.ObservedSnapshot!.Players.Single();
+        if (player.Life <= 0 || player.LifeMaximum <= 0)
+            return false;
+        return IsNativeProgressionL2(main)
+            ? (long)player.Life * 100 <= (long)player.LifeMaximum * 90
+            : (long)player.Life * 3 <= (long)player.LifeMaximum * 2;
+    }
+
+    private static bool NativeHealingPotionAvailable(PlayerSnapshot player)
+        => player.Belt.Any(item => IsNativeHealingConsumable(item.State))
+            || player.Inventory.Any(item => IsNativeHealingConsumable(item.State));
+
+    private static bool NativeHealingIsDue(Main main)
+        => main.ObservedSnapshot?.Players.SingleOrDefault() is { } player
+            && NativeHealingThresholdReached(main) && NativeHealingPotionAvailable(player);
+
+    private async Task WaitForNativeArrowSettlementAsync(Main main, uint targetId, uint playerId)
+    {
+        bool ArrowSettled() => !main.ObservedSnapshot!.Monsters.Any(monster => monster.EntityId == targetId && monster.Alive)
+            || !main.ObservedSnapshot.Projectiles.Any(projectile => projectile.SourceEntityId == playerId
+                && projectile.TargetEntityId == targetId);
+
+        var failure = $"The native arrow against target {targetId} did not settle within its existing 20-second bound.";
+        await Until(ArrowSettled, failure, 20);
+    }
+
+    private static string DescribeNativeHealingState(Main main)
+    {
+        var snapshot = main.ObservedSnapshot;
+        var player = snapshot?.Players.SingleOrDefault();
+        var result = main.ObservedCommandResult;
+        return $"tick={snapshot?.Tick},life={player?.Life}/{player?.LifeMaximum},mode={player?.CombatMode},"
+            + $"action={player?.CurrentAction?.Kind},queued={main.ObservedLastQueuedSequence},"
+            + $"pending={main.ObservedPendingCommandCount},receipt={result?.ClientSequence}/{result?.AppliedTick}/"
+            + $"{result?.Status}/{result?.RejectReason}";
     }
 
     private async Task CollectNearbyNativeHealingDropsAsync(Main main, IReadOnlyCollection<uint> earnedDropEntityIds)
@@ -1441,12 +1826,17 @@ public partial class SessionAcceptance
             await Until(() => main.ObservedSnapshot!.Players.Single().Equipment.All(item => item.Slot != slot),
                 "The replaced equipment did not leave its native slot.", 5);
         }
-        await SelectInventoryItem(main, sections, carried.State.StableItemId);
+        player = main.ObservedSnapshot!.Players.Single();
+        var index = player.Inventory.ToList().FindIndex(item => item.State.StableItemId == carried.State.StableItemId
+            && item.ItemSeed == carried.ItemSeed);
+        Require(index >= 0, "The exact earned native item is missing from inventory before equipment selection.");
+        var layout = Devilution.Client.Protocol.InventoryLayout.Build(player.Inventory, player.InventoryGrid);
+        await ClickGridCell(main, sections, 1, "InventoryGrid", layout.Anchors[index]);
         var equipSequence = main.ObservedCommandResult!.ClientSequence;
         await ClickListItem(sections, 1, equipment, checked((int)slot));
         await AcceptedAndSettled(main, equipSequence, "Equip earned native Cathedral item");
         await Until(() => main.ObservedSnapshot!.Players.Single().Equipment.Any(item => item.Slot == slot
-            && item.State.StableItemId == carried.State.StableItemId),
+            && item.State.StableItemId == carried.State.StableItemId && item.ItemSeed == carried.ItemSeed),
             "The actual equipment control did not equip the earned native item.", 5);
     }
 
@@ -1702,36 +2092,108 @@ public partial class SessionAcceptance
     private readonly record struct NativeRangedLaneCandidate(
         int X, int Y, int Steps, long ThreatClearance);
 
-    private sealed class NativeCombatWorkBudget
+    private sealed class NativeCombatWorkBudget(bool enforceCumulativeTargetLimit = false)
     {
         public const int MaximumWork = NativeGearHuntMaximumCombatWork;
 
+        private readonly Dictionary<uint, int> _targetWork = [];
+        private readonly Dictionary<uint, NativeCombatTargetBaseline> _targetBaselines = [];
+        private readonly Dictionary<uint, List<NativeAcceptedShotEvidence>> _acceptedShots = [];
+        private readonly Dictionary<uint, List<NativeAttackRefusalEvidence>> _refusalsByTarget = [];
+
         public int Used { get; private set; }
 
+        public List<NativeAttackRefusalEvidence> AttackRefusals { get; } = [];
+
+        public NativeCombatTargetBaseline GetTargetBaseline(uint targetId, uint levelId, Snapshot snapshot)
+        {
+            if (_targetBaselines.TryGetValue(targetId, out var baseline)) {
+                if (baseline.LevelId != levelId)
+                    throw new InvalidOperationException(
+                        $"Native combat target {targetId} changed levels during its bounded encounter.");
+                return baseline;
+            }
+
+            baseline = new NativeCombatTargetBaseline(levelId, snapshot.Players.Single().Experience,
+                snapshot.WorldItems.Where(item => item.LevelId == levelId).Select(item => item.EntityId).ToHashSet(),
+                snapshot.Corpses.Where(corpse => corpse.LevelId == levelId).Select(corpse => corpse.EntityId).ToHashSet());
+            _targetBaselines.Add(targetId, baseline);
+            return baseline;
+        }
+
+        public IReadOnlyList<NativeAcceptedShotEvidence> AcceptedShotsFor(uint targetId)
+            => _acceptedShots.TryGetValue(targetId, out var shots) ? shots : Array.Empty<NativeAcceptedShotEvidence>();
+
+        public IReadOnlyList<NativeAttackRefusalEvidence> RefusalsFor(uint targetId)
+            => _refusalsByTarget.TryGetValue(targetId, out var refusals)
+                ? refusals : Array.Empty<NativeAttackRefusalEvidence>();
+
+        public void RecordAcceptedShot(NativeAcceptedShotEvidence shot)
+        {
+            if (!_acceptedShots.TryGetValue(shot.TargetEntityId, out var shots))
+                _acceptedShots.Add(shot.TargetEntityId, shots = []);
+            if (shots.Count >= NativeGearHuntMaximumAttacksPerTarget)
+                throw new InvalidOperationException(
+                    $"Native target {shot.TargetEntityId} exceeded its bounded accepted-shot ledger.");
+            shots.Add(shot);
+        }
+
+        public void RecordRefusal(NativeAttackRefusalEvidence refusal)
+        {
+            AttackRefusals.Add(refusal);
+            if (!_refusalsByTarget.TryGetValue(refusal.TargetEntityId, out var refusals))
+                _refusalsByTarget.Add(refusal.TargetEntityId, refusals = []);
+            refusals.Add(refusal);
+        }
+
         public void Consume(uint targetId, int targetWork)
-            => Consume($"attack work on target {targetId} step {targetWork}");
+        {
+            var action = $"attack work on target {targetId} step {targetWork}";
+            EnsureAvailable(action);
+            var targetUsed = _targetWork.GetValueOrDefault(targetId);
+            if (enforceCumulativeTargetLimit && targetUsed >= NativeGearHuntMaximumAttacksPerTarget)
+                throw new InvalidOperationException(
+                    $"The native combat target {targetId} exhausted its shared "
+                    + $"{NativeGearHuntMaximumAttacksPerTarget}-step work limit before {action}.");
+            _targetWork[targetId] = targetUsed + 1;
+            Used++;
+        }
 
         public void ConsumeExploration(string action)
-            => Consume(action);
+        {
+            EnsureAvailable(action);
+            Used++;
+        }
 
-        private void Consume(string action)
+        private void EnsureAvailable(string action)
         {
             if (Used >= MaximumWork) {
                 throw new InvalidOperationException(
                     $"The native gear hunt exhausted its shared {MaximumWork}-step combat-work ceiling "
                     + $"before {action}; no more combat or exploration work is permitted.");
             }
-            Used++;
         }
     }
 
+    private sealed record NativeCombatTargetBaseline(uint LevelId, uint ExperienceBefore,
+        HashSet<uint> StartingItems, HashSet<uint> StartingCorpses);
+
     private sealed record NativeKillEvidence(uint MonsterEntityId, uint MonsterId, uint ExperienceBefore,
-        uint ExperienceAfter, int DeathX, int DeathY, ulong Sequence, uint[] DropEntityIds);
+        uint ExperienceAfter, int DeathX, int DeathY, ulong Sequence, uint[] DropEntityIds,
+        NativeEncounterCorpseEvidence[] EncounterCorpses, NativeAcceptedShotEvidence[] AcceptedShots,
+        NativeAttackRefusalEvidence[] AttackRefusals, string DropAttribution);
+
+    private sealed record NativeEncounterCorpseEvidence(uint EntityId, uint LevelId, int PositionX, int PositionY);
+    private sealed record NativeAcceptedShotEvidence(uint TargetEntityId, ulong Sequence, int AimX, int AimY,
+        ulong AppliedTick);
+    private sealed record NativeAttackRefusalEvidence(uint TargetEntityId, ulong Sequence, ulong AppliedTick,
+        string RejectReason, ulong ObservedTick, int Life, string CombatMode, string? Action, string Classification);
 
     private sealed record NativeEquipmentKillEvidence(uint MonsterEntityId, uint MonsterId,
         uint ExperienceBefore, uint ExperienceAfter, uint DropEntityId, uint ItemSeed,
         uint StableItemId, int NativeItemIndex, string ItemName, uint EquipmentSlot,
-        NativeKillEvidence[] Kills, NativeDoorOperationEvidence[] DoorOperations);
+        NativeKillEvidence[] Kills, NativeDoorOperationEvidence[] DoorOperations,
+        NativeAttackRefusalEvidence[] AttackRefusals);
 
     private sealed record NativeDoorOperationEvidence(uint EntityId, uint NativeObjectId,
         int X, int Y, int DoorStateBefore, int DoorStateAfter, bool Opened,

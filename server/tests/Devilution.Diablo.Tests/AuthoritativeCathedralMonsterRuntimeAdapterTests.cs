@@ -440,6 +440,79 @@ public sealed class AuthoritativeCathedralMonsterRuntimeAdapterTests
 			Expand(generation), Expand(uniques), Expand(runtime));
 	}
 
+    [Fact]
+    public void FirstEntryRetainsNativeSkeletonEmergenceWithoutRelaxingLegacyImports()
+    {
+        var state = CreateStateWithMonster(row => row with {
+            Type = 8, Ai = 2, Mode = 11, Tile = new(4, 4), Future = new(4, 4), Old = new(4, 4),
+            AnimNumberOfFrames = 3, AnimTicksPerFrame = 2, AnimCurrentFrame = 1, AnimTickCounter = 1,
+        });
+        var catalog = CreateInitialEmergenceCatalog();
+        var metadata = CreateAttackPopulationMetadata().Select(row => row with {
+            Frames = new[] { 0, 0, 6, 0, 0, 3 }, Rates = new[] { 0, 0, 2, 0, 0, 2 },
+        }).ToArray();
+        var bindings = new[] { new AuthoritativeCathedralMonsterRuntimeBinding(0, 900, 1900, 2),
+            new AuthoritativeCathedralMonsterRuntimeBinding(1, 901, 1901, 2) };
+        var fingerprint = Fingerprint("generation", "unique", catalog.Fingerprint);
+        var legacy = AuthoritativeCathedralMonsterRuntimeAdapter.AdaptWithBindings(
+            state, catalog, fingerprint, bindings, populationMonsters: metadata);
+        Assert.Equal(AuthoritativeCathedralMonsterRuntimeUnsupportedReason.NonStandMode,
+            legacy.Records[0].UnsupportedReason);
+        Assert.Null(legacy.Records[0].Target);
+        Assert.Empty(legacy.InitialSpecialStandActors);
+        var imported = AuthoritativeCathedralMonsterRuntimeAdapter.AdaptLevelEntryWithBindings(
+            state, catalog, fingerprint, bindings, metadata);
+        var target = Assert.IsType<AuthoritativeCombatTarget>(imported.Records[0].Target);
+        Assert.Equal(state.MonsterSlots[0], target.NativeInitialization!.InitialState);
+        Assert.Equal(6400, target.HitPointsQ6);
+        Assert.Equal(7u, target.MonsterItemSeed);
+        Assert.Equal(8u, target.MonsterAiSeed);
+        var phase = Assert.Single(imported.InitialSpecialStandActors);
+        Assert.Equal(new AuthoritativeNativeInitialSpecialStand(0, 900, 2, 3, 2, 1, 1), phase);
+        phase = phase.Advance();
+        Assert.Equal(2, phase.FrameIndex);
+        Assert.False(phase.Completed); // Last-frame mode check is on the next tick.
+        var saved = System.Text.Json.JsonSerializer.Serialize(phase);
+        var resumed = System.Text.Json.JsonSerializer.Deserialize<AuthoritativeNativeInitialSpecialStand>(saved)!;
+        Assert.Equal(phase.Advance(), resumed.Advance());
+        Assert.True(resumed.Advance().Completed);
+    }
+
+    [Fact]
+    public void FirstEntryStillRefusesMalformedOrOtherNonStandStatesWithoutNormalization()
+    {
+        var catalog = CreateInitialEmergenceCatalog();
+        var fingerprint = Fingerprint("generation", "unique", catalog.Fingerprint);
+        var metadata = CreateAttackPopulationMetadata().Select(row => row with {
+            Frames = new[] { 0, 0, 6, 0, 0, 3 }, Rates = new[] { 0, 0, 2, 0, 0, 2 },
+        }).ToArray();
+        var ordinary = CreateState().MonsterSlots[0] with {
+            Type = 8, Ai = 2, Mode = 11, Tile = new(4, 4), Future = new(4, 4), Old = new(4, 4),
+            AnimNumberOfFrames = 3, AnimTicksPerFrame = 2,
+        };
+        foreach (var row in new[] { ordinary with { Type = 0 }, ordinary with { Ai = 0 },
+            ordinary with { Mode = 1 }, ordinary with { Flags = 2 },
+            ordinary with { Old = new(3, 4) }, ordinary with { Future = new(5, 4) },
+            ordinary with { AnimCurrentFrame = 3 }, ordinary with { AnimTickCounter = 2 },
+            ordinary with { AnimNumberOfFrames = 4 }, ordinary with { GoalVar1 = 1 } }) {
+            var state = CreateStateWithMonster(_ => row);
+            var imported = AuthoritativeCathedralMonsterRuntimeAdapter.AdaptLevelEntryWithBindings(
+                state, catalog, fingerprint,
+                new[] { new AuthoritativeCathedralMonsterRuntimeBinding(0, 900, 1900, 2),
+                    new AuthoritativeCathedralMonsterRuntimeBinding(1, 901, 1901, 2) }, metadata);
+            Assert.Null(imported.Records[0].Target);
+            Assert.Equal(row, imported.Records[0].InitialState);
+            Assert.Empty(imported.InitialSpecialStandActors);
+        }
+    }
+
+    private static AuthoritativeCathedralMonsterRuntimeCatalog CreateInitialEmergenceCatalog()
+        => new(CreateCatalog().Definitions.Select(row => new AuthoritativeCathedralMonsterRuntimeDefinition(
+            row.NativeMonsterId, row.StableSymbol, row.Name, row.Level, row.ToHit,
+            row.AnimationFrameNum, row.ToHitSpecial,
+            row.NativeMonsterId == 8 ? 0 : row.AnimationFrameNumSpecial,
+            row.MonsterClass, row.SelectionRegion, row.Treasure, row.Experience, row.ResistanceHell)));
+
 	private static AuthoritativeCathedralMonsterRuntimeCatalog CreateCatalog()
 		=> new(Enumerable.Range(0, AuthoritativeCathedralMonsterRuntimeCatalog.NativeMonsterCount)
 			.Select(index => new AuthoritativeCathedralMonsterRuntimeDefinition(

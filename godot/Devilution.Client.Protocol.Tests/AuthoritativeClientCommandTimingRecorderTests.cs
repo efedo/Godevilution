@@ -27,6 +27,22 @@ public sealed class AuthoritativeClientCommandTimingRecorderTests
     }
 
     [Fact]
+    public void ReceiveTerminalCaptureSharesTheBoundAndIsDetached()
+    {
+        var recorder = new AuthoritativeClientCommandTimingRecorder(capacity: 1);
+        var first = new AuthoritativeClientReceiveTerminalTiming(1,
+            AuthoritativeClientReceiveTerminalKind.EndOfStream, 2, 3, null, null);
+        recorder.RecordReceiveTerminal(first);
+        var report = recorder.CaptureReport();
+        recorder.RecordReceiveTerminal(first with { TransportGeneration = 2 });
+        Assert.Equal(first, Assert.Single(report.ReceiveTerminals!));
+        Assert.Equal(0, report.DroppedRecordCount);
+        Assert.Equal(1, recorder.CaptureReport().DroppedRecordCount);
+        var terminals = Assert.IsAssignableFrom<IList<AuthoritativeClientReceiveTerminalTiming>>(report.ReceiveTerminals);
+        Assert.Throws<NotSupportedException>(() => terminals.Clear());
+    }
+
+    [Fact]
     public void CaptureReportIsDetachedAndReadOnly()
     {
         var recorder = new AuthoritativeClientCommandTimingRecorder(capacity: 4);
@@ -71,6 +87,7 @@ public sealed class AuthoritativeClientCommandTimingRecorderTests
                      typeof(AuthoritativeClientProbeOutcomeTiming),
                      typeof(AuthoritativeClientSnapshotTiming),
                      typeof(AuthoritativeClientAcknowledgementTiming),
+                     typeof(AuthoritativeClientReceiveTerminalTiming),
                  }) {
             Assert.DoesNotContain(type.GetProperties(), property =>
                 forbidden.Any(word => property.Name.Contains(word, StringComparison.OrdinalIgnoreCase)));

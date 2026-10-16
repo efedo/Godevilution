@@ -1,6 +1,6 @@
 # Godevilution Migration Status
 
-Status date: 2026-10-15. Estimate baseline: `8c03b365d`; semantic player presentation
+Status date: 2026-10-16. Estimate baseline: `8c03b365d`; semantic player presentation
 follows client-pack baseline `d0f748305`. Interrupted first-publication
 and Windows staging acceptance follows Godot cohort baseline `60f60c8a1` below. M0 session reliability
 landed in `819b73936`, integration remediation in `818f63f32`, and application
@@ -43,6 +43,31 @@ No client-side gameplay authority is implied by incomplete server coverage:
 unsupported behavior is a migration gap, not permission for local simulation.
 
 ## Current delivery position and verification limits
+
+Native Town/L1/L2 first-entry, combat and retention now extend the scoped
+playable route through a separate explicit progression adapter/profile. L2 entry
+admits its complete native owner lazily, separates floor identities and retains
+both floors through opt-in cohort v9; older cohort formats remain compatible.
+Pinned Pepin healing rows support ordinary purchases and retained stock without
+claiming full initial native Town-store RNG parity.
+
+Headless R24 earns/equips an L1 Cape, records12 actual kills and7 earned Gold
+pickups totaling58, buys3 standard healing potions at50 each, enters L2 and kills
+actor151064620 with4 accepted bow shots (XP892->982;13 bounded work). L2 produces
+no observed new drop, and no L2 loot claim is made. Town417 is saved; fresh host
+and client restore the exact player, RNG, command cursor and full two-floor world
+before input, then retain geometry, owned L1 gear and recorded L1/L2 corpses on
+revisit and return alive to Town538. The passed Journey is preserved separately.
+
+Focused verification includes169 codec compatibility cases, native L2 object/
+loot and owner/cold checks, pinned-store purchase/refusal/RNG continuation, atomic
+dead-player refusal, native visibility equivalence and affected client/transport
+checks. The final client validator checks pass6/6; Release first-entry/owner tests
+pass2/2, launcher positional contracts2/2 and all3 performance-mode Release guards.
+Qualified client builds and the actual Journey/Resume pair pass. Visibility and
+validator changes preserve current-blocker behavior; no mutable geometry is cached.
+The source SDK pin and normal profile/cohort defaults remain. Rendered acceptance,
+broader campaign progression and full native store initialization remain open.
 
 Native L1 Arrow wall traps linked to doors/plain chests now support exact
 native disarm-then-operate, source-ordered one-shot firing and source-less Arrow

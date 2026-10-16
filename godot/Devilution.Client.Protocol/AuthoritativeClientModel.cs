@@ -1470,6 +1470,12 @@ public sealed class AuthoritativeClientModel
             }
             if (level.Width > 0 && level.Height > 0) {
                 var cellCount = checked((long)level.Width * level.Height);
+                HashSet<int>? nativeVisionCells = null;
+                bool IsNativeVisionCell(int cell)
+                {
+                    nativeVisionCells ??= new HashSet<int>(level.NativeVisionBlockedCells);
+                    return nativeVisionCells.Contains(cell);
+                }
                 if (level.BlockedCells.Count > cellCount
                     || level.StaticObjectBlockedCells.Count > cellCount
                     || level.MissileBlockedCells.Count > cellCount
@@ -1487,7 +1493,7 @@ public sealed class AuthoritativeClientModel
                         != level.NativeVisionBlockedCells.Count
                     || level.NativeVisionBlockedCells.Count != 0
                         && level.BlockedCells.Any(cell =>
-                            !level.NativeVisionBlockedCells.Contains(cell))
+                            !IsNativeVisionCell(cell))
                     || level.NativeTransparency.Count != 0
                         && level.NativeTransparency.Count != cellCount
                     || level.NativeObjectLayer.Count != 0

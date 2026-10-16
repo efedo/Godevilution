@@ -2,18 +2,23 @@ namespace Devilution.Diablo;
 
 public sealed partial class DiabloWorldState
 {
-    private Dictionary<int, DiabloNativeSarcophagusState> nativeSarcophagiBySlot = [];
+    private Dictionary<uint, DiabloNativeSarcophagusState> nativeSarcophagiByEntityId = [];
 
     internal bool HasNativeSarcophagusMutations
-        => nativeSarcophagiBySlot.Values.Any(value => value.Opened);
+        => nativeSarcophagiByEntityId.Values.Any(value => value.Opened);
 
     internal IReadOnlyList<DiabloNativeSarcophagusState>? CaptureNativeSarcophagi()
         => nativePopulationPolicy is null
             ? null
-            : Array.AsReadOnly(nativeSarcophagiBySlot.Values.OrderBy(value => value.ObjectSlot).ToArray());
+            : Array.AsReadOnly(nativeSarcophagiByEntityId.Values.OrderBy(value => Objects[value.EntityId].LevelId).ThenBy(value => value.ObjectSlot).ToArray());
 
     internal DiabloNativeSarcophagusState? GetNativeSarcophagusState(int objectSlot)
-        => nativeSarcophagiBySlot.TryGetValue(objectSlot, out var state) ? state : null;
+        => nativePopulationPolicy is null ? null
+            : GetNativeSarcophagusState(nativePopulationPolicy.LevelId, objectSlot);
+
+    internal DiabloNativeSarcophagusState? GetNativeSarcophagusState(uint levelId, int objectSlot)
+        => nativeSarcophagiByEntityId.Values.SingleOrDefault(value => value.ObjectSlot == objectSlot
+            && Objects.TryGetValue(value.EntityId, out var owner) && owner.LevelId == levelId);
 
     internal void ConfigureNativeSarcophagi(
         AuthoritativeCathedralNativePopulationPolicy policy,
@@ -21,7 +26,7 @@ public sealed partial class DiabloWorldState
         IReadOnlyList<DiabloNativeSarcophagusState>? savedStates)
     {
         ArgumentNullException.ThrowIfNull(policy);
-        if (nativePopulationPolicy != policy)
+        if (!ReferenceEquals(NativePopulationForLevel(policy.LevelId), policy))
             throw new InvalidOperationException("Native sarcophagus state requires its configured immutable population owner.");
 
         var initial = policy.CreateInitialNativeSarcophagusStates();
@@ -30,7 +35,7 @@ public sealed partial class DiabloWorldState
                 throw new InvalidDataException("Native sarcophagus cohorts require their complete object lifecycle records.");
             if (savedStates.Count != initial.Count)
                 throw new InvalidDataException("Native sarcophagus cohort omits a supported generated object.");
-            var restored = new Dictionary<int, DiabloNativeSarcophagusState>();
+            var restored = new Dictionary<uint, DiabloNativeSarcophagusState>();
             for (var index = 0; index < initial.Count; index++) {
                 var actual = savedStates[index];
                 actual.ValidateShape();
@@ -52,14 +57,16 @@ public sealed partial class DiabloWorldState
                     || actual.LinkedMonsterSlot != initial[index].LinkedMonsterSlot
                     || actual.LinkedMonsterEntityId != initial[index].LinkedMonsterEntityId
                     || actual.LinkedMonsterTypeId != initial[index].LinkedMonsterTypeId
-                    || !restored.TryAdd(actual.ObjectSlot, actual))
+                    || !restored.TryAdd(actual.EntityId, actual))
                     throw new InvalidDataException("Native sarcophagus lifecycle identity differs from the exact generated object and reservation.");
             }
-            nativeSarcophagiBySlot = restored;
+            foreach (var entry in restored)
+                nativeSarcophagiByEntityId.Add(entry.Key, entry.Value);
         } else {
             if (savedStates is not null)
                 throw new InvalidDataException("Older native cohorts cannot carry sarcophagus lifecycle state.");
-            nativeSarcophagiBySlot = initial.ToDictionary(value => value.ObjectSlot);
+            foreach (var entry in initial)
+                nativeSarcophagiByEntityId.Add(entry.EntityId, entry);
         }
 
         ValidateNativeSarcophagusState(policy);
@@ -67,11 +74,12 @@ public sealed partial class DiabloWorldState
 
     internal bool CanOperateNativeSarcophagus(AuthoritativeWorldObject value)
     {
+        var nativePopulationPolicy = NativePopulationForLevel(value.LevelId);
         if (nativePopulationPolicy is null || !nativePopulationPolicy.CanOperateNativeSarcophagus(value))
             return false;
         if (!nativePopulationPolicy.TryGetNativeSarcophagusOperationFacts(value, out var facts))
             return false;
-        var state = GetNativeSarcophagusState(facts.ObjectSlot);
+        var state = GetNativeSarcophagusState(facts.LevelId, facts.ObjectSlot);
         return state is { Opened: false, ActorState: not DiabloNativeSarcophagusActorState.Emerging
             and not DiabloNativeSarcophagusActorState.Active and not DiabloNativeSarcophagusActorState.Dead };
     }
@@ -80,6 +88,7 @@ public sealed partial class DiabloWorldState
         AuthoritativeWorldObject value,
         out AuthoritativeCathedralNativeSarcophagusFacts facts)
     {
+        var nativePopulationPolicy = NativePopulationForLevel(value.LevelId);
         facts = null!;
         if (!CanOperateNativeSarcophagus(value))
             return false;
@@ -115,6 +124,7 @@ public sealed partial class DiabloWorldState
         AuthoritativeCathedralSarcophagusOperationResult operation,
         IReadOnlyList<AuthoritativePlayerState> participants)
     {
+        var nativePopulationPolicy = NativePopulationForLevel(value.LevelId);
         ArgumentNullException.ThrowIfNull(operation);
         ArgumentNullException.ThrowIfNull(participants);
         if (!TryGetNativeSarcophagusOperationFacts(value, out var facts)
@@ -128,7 +138,7 @@ public sealed partial class DiabloWorldState
         if (!shouldConsiderSpawn && operation.Spawn is not null)
             return false;
 
-        var currentState = nativeSarcophagiBySlot[facts.ObjectSlot];
+        var currentState = nativeSarcophagiByEntityId[facts.EntityId];
         if (currentState.Opened || currentState.ActorState is not (DiabloNativeSarcophagusActorState.None
             or DiabloNativeSarcophagusActorState.Reserved))
             return false;
@@ -181,12 +191,13 @@ public sealed partial class DiabloWorldState
         AuthoritativeCathedralSarcophagusOperationResult operation,
         IReadOnlyList<AuthoritativePlayerState> participants)
     {
+        var nativePopulationPolicy = NativePopulationForLevel(value.LevelId);
         if (!CanCommitNativeSarcophagusOperation(value, operation, participants))
             return false;
         var facts = nativePopulationPolicy!.TryGetNativeSarcophagusOperationFacts(value, out var resolved)
             ? resolved
             : throw new InvalidOperationException("A prevalidated sarcophagus lost its raw owner facts.");
-        var current = nativeSarcophagiBySlot[facts.ObjectSlot];
+        var current = nativeSarcophagiByEntityId[facts.EntityId];
         var next = current with {
             Opened = true,
             AnimationFlag = 1,
@@ -220,7 +231,7 @@ public sealed partial class DiabloWorldState
             if (preparedTarget is null || !CombatTargets.TryAdd(preparedTarget.EntityId, preparedTarget))
                 throw new InvalidOperationException("A prevalidated sarcophagus could not materialize its reserved actor identity.");
         }
-        nativeSarcophagiBySlot[facts.ObjectSlot] = next;
+        nativeSarcophagiByEntityId[facts.EntityId] = next;
         value.Activated = true;
         value.AnimationFrame = checked((int)next.AnimationFrame);
         ValidateNativeSarcophagusState(nativePopulationPolicy);
@@ -229,9 +240,10 @@ public sealed partial class DiabloWorldState
 
     internal bool AdvanceNativeSarcophagusSpecialStand(AuthoritativeCombatTarget target)
     {
+        var nativePopulationPolicy = NativePopulationForLevel(target.LevelId);
         if (nativePopulationPolicy is null || !nativePopulationPolicy.OwnsSarcophagusActor(target.EntityId))
             return false;
-        var entry = nativeSarcophagiBySlot.Values.Single(value => value.LinkedMonsterEntityId == target.EntityId);
+        var entry = nativeSarcophagiByEntityId.Values.Single(value => value.LinkedMonsterEntityId == target.EntityId);
         if (entry.ActorState != DiabloNativeSarcophagusActorState.Emerging)
             return false;
         if (target.IsPetrified && target.HitPointsQ6 > 0)
@@ -242,7 +254,7 @@ public sealed partial class DiabloWorldState
         }
         var facts = nativePopulationPolicy.GetSarcophagusOperationFacts(entry.ObjectSlot);
         if (entry.SpecialFrameIndex >= facts.NativeSpecialFrameCount - 1) {
-            nativeSarcophagiBySlot[entry.ObjectSlot] = entry with {
+            nativeSarcophagiByEntityId[entry.EntityId] = entry with {
                 ActorState = DiabloNativeSarcophagusActorState.Active,
                 SpecialFrameIndex = 0,
                 SpecialTickCounter = 0,
@@ -256,7 +268,7 @@ public sealed partial class DiabloWorldState
             tick = 0;
             frame++;
         }
-        nativeSarcophagiBySlot[entry.ObjectSlot] = entry with {
+        nativeSarcophagiByEntityId[entry.EntityId] = entry with {
             SpecialFrameIndex = frame,
             SpecialTickCounter = tick,
         };
@@ -266,12 +278,13 @@ public sealed partial class DiabloWorldState
     internal void InterruptNativeSarcophagusSpecialStand(AuthoritativeCombatTarget target)
     {
         ArgumentNullException.ThrowIfNull(target);
+        var nativePopulationPolicy = NativePopulationForLevel(target.LevelId);
         if (nativePopulationPolicy is null || !nativePopulationPolicy.OwnsSarcophagusActor(target.EntityId))
             return;
-        var entry = nativeSarcophagiBySlot.Values.Single(value => value.LinkedMonsterEntityId == target.EntityId);
+        var entry = nativeSarcophagiByEntityId.Values.Single(value => value.LinkedMonsterEntityId == target.EntityId);
         if (entry.ActorState != DiabloNativeSarcophagusActorState.Emerging)
             return;
-        nativeSarcophagiBySlot[entry.ObjectSlot] = entry with {
+        nativeSarcophagiByEntityId[entry.EntityId] = entry with {
             ActorState = DiabloNativeSarcophagusActorState.Active,
             SpecialFrameIndex = 0,
             SpecialTickCounter = 0,
@@ -280,12 +293,13 @@ public sealed partial class DiabloWorldState
 
     internal void CompleteNativeSarcophagusActorDeath(uint entityId)
     {
+        var nativePopulationPolicy = NativePopulationForEntity(entityId);
         if (nativePopulationPolicy is null || !nativePopulationPolicy.OwnsSarcophagusActor(entityId))
             return;
-        var entry = nativeSarcophagiBySlot.Values.Single(value => value.LinkedMonsterEntityId == entityId);
+        var entry = nativeSarcophagiByEntityId.Values.Single(value => value.LinkedMonsterEntityId == entityId);
         if (entry.ActorState is not (DiabloNativeSarcophagusActorState.Emerging or DiabloNativeSarcophagusActorState.Active))
             throw new InvalidDataException("A native sarcophagus actor reached corpse conversion from an invalid lifecycle state.");
-        nativeSarcophagiBySlot[entry.ObjectSlot] = entry with {
+        nativeSarcophagiByEntityId[entry.EntityId] = entry with {
             ActorState = DiabloNativeSarcophagusActorState.Dead,
             SpecialFrameIndex = 0,
             SpecialTickCounter = 0,
@@ -294,9 +308,10 @@ public sealed partial class DiabloWorldState
 
     internal void AdvanceNativeSarcophagusAnimations(uint levelId)
     {
+        var nativePopulationPolicy = NativePopulationForLevel(levelId);
         if (nativePopulationPolicy is null || levelId != nativePopulationPolicy.LevelId)
             return;
-        foreach (var initialEntry in nativeSarcophagiBySlot.Values.Where(value => value.Opened).OrderBy(value => value.ObjectSlot).ToArray()) {
+        foreach (var initialEntry in nativeSarcophagiByEntityId.Values.Where(value => value.Opened && Objects[value.EntityId].LevelId == levelId).OrderBy(value => value.ObjectSlot).ToArray()) {
             var entry = initialEntry;
             if (entry.AnimationFlag == 0)
                 continue;
@@ -313,7 +328,7 @@ public sealed partial class DiabloWorldState
                 }
                 entry = entry with { AnimationCount = count, AnimationFrame = frame };
             }
-            nativeSarcophagiBySlot[entry.ObjectSlot] = entry;
+            nativeSarcophagiByEntityId[entry.EntityId] = entry;
             if (!Objects.TryGetValue(entry.EntityId, out var value))
                 throw new InvalidDataException("An open native sarcophagus lost its object projection.");
             value.AnimationFrame = checked((int)entry.AnimationFrame);
@@ -323,13 +338,14 @@ public sealed partial class DiabloWorldState
 
     internal void ValidateNativeSarcophagusState(AuthoritativeCathedralNativePopulationPolicy policy)
     {
-        if (nativePopulationPolicy != policy)
+        if (!ReferenceEquals(NativePopulationForLevel(policy.LevelId), policy))
             throw new InvalidOperationException("Native sarcophagus validation requires the owning population policy.");
         var expected = policy.CreateInitialNativeSarcophagusStates();
-        if (nativeSarcophagiBySlot.Count != expected.Count)
+        if (nativeSarcophagiByEntityId.Values.Count(state => Objects.TryGetValue(state.EntityId, out var owner)
+                && owner.LevelId == policy.LevelId) != expected.Count)
             throw new InvalidDataException("The native population lost a supported sarcophagus lifecycle record.");
         foreach (var initial in expected) {
-            if (!nativeSarcophagiBySlot.TryGetValue(initial.ObjectSlot, out var state))
+            if (!nativeSarcophagiByEntityId.TryGetValue(initial.EntityId, out var state))
                 throw new InvalidDataException("The native population omitted a supported sarcophagus lifecycle record.");
             state.ValidateShape();
             if (state.EntityId != initial.EntityId || state.NativeTypeId != initial.NativeTypeId

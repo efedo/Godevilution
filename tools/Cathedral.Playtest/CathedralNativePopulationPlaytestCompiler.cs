@@ -25,6 +25,9 @@ public sealed record CathedralNativePopulationPlaytestCompilerOptions(
 public static class CathedralNativePopulationPlaytestCompiler
 {
     public const string AdapterId = "devilution.diablo.cathedral-native-population.v1";
+    public const string ProgressionAdapterId = "devilution.diablo.cathedral-native-progression.v1";
+    public const string ProgressionProfileFileName = "cathedral-native-progression-playtest.json";
+    public const string ProgressionPolicy = "original-diablo-single-player-normal-rogue-town-l1-l2";
     public const string ProfileFileName = "cathedral-native-population-playtest.json";
     public const string PopulationDirectoryName = "native_cathedral_population";
     public const string RuntimeDirectoryName = "native_cathedral_runtime";
@@ -94,6 +97,12 @@ public static class CathedralNativePopulationPlaytestCompiler
         IReadOnlyList<CathedralDoorPlaytestDepthMapping> DoorMappings);
 
     public static Profile Compile(CathedralNativePopulationPlaytestCompilerOptions options)
+        => CompileCore(options, progression: false);
+
+    public static Profile CompileProgression(CathedralNativePopulationPlaytestCompilerOptions options)
+        => CompileCore(options, progression: true);
+
+    private static Profile CompileCore(CathedralNativePopulationPlaytestCompilerOptions options, bool progression)
     {
         ArgumentNullException.ThrowIfNull(options);
         ArgumentNullException.ThrowIfNull(options.BasePack);
@@ -120,7 +129,8 @@ public static class CathedralNativePopulationPlaytestCompiler
         var nativeItems = options.PopulationMetadata.Items.Catalog;
         var semanticsTable = AuthoritativeCathedralNativePopulationBuilder.CreateSemanticTable(
             nativeItems, baseItems, baseActivation.Simulation.Spells,
-            AuthoritativeCathedralNativeItemSidecars.LoadFootprints(options.InventoryFootprints));
+            AuthoritativeCathedralNativeItemSidecars.LoadFootprints(options.InventoryFootprints),
+            includeNativeJewelry: progression);
         var itemSidecars = AuthoritativeCathedralNativeItemSidecars.Load(
             options.InventoryFootprints, semanticsTable);
         var effectiveItems = AuthoritativeCathedralNativePopulationBuilder.ApplyItemSidecars(
@@ -129,8 +139,12 @@ public static class CathedralNativePopulationPlaytestCompiler
             string.Equals(table.SourcePath, "stores.tsv", StringComparison.Ordinal))
             ?? throw new InvalidDataException("Base content is missing stores.tsv.");
         var selectedStock = AuthoritativeCathedralNativePopulationBuilder.PrepareNativeProfileStoreTable(
-            storesTable, effectiveItems, itemSidecars);
+            storesTable, effectiveItems, itemSidecars, nativeProgression: progression);
         var depthBasePack = ReplaceTable(options.BasePack, selectedStock);
+        if (progression)
+            depthBasePack = AddTable(
+                depthBasePack,
+                AuthoritativeCathedralNativePopulationBuilder.CreateNativeProgressionStoreCapabilityTable());
 
         var populationPack = CreatePopulationSidecar(options.PopulationMetadata);
         var runtimeTable = options.MonsterRuntime.CreateTable();
@@ -169,12 +183,15 @@ public static class CathedralNativePopulationPlaytestCompiler
             var effectiveManifest = new ContentManifest(contentPack.Id, contentPack.Version,
                 [contentPack, publishedPopulationPack, publishedRuntimePack]);
             var composed = ComposedContent.Compose(effectiveManifest);
-            _ = module.CathedralNativePopulationContentBootstrap.ActivateNativePopulation(
-                composed, StorySeed, DiabloGameMode.SinglePlayer, difficulty: DiabloDifficulty.Normal);
+            if (progression)
+                _ = module.CathedralNativeProgressionContentBootstrap.ActivateNativeProgression(composed, StorySeed);
+            else
+                _ = module.CathedralNativePopulationContentBootstrap.ActivateNativePopulation(
+                    composed, StorySeed, DiabloGameMode.SinglePlayer, difficulty: DiabloDifficulty.Normal);
 
             var profile = new Profile(
-                FormatVersion,
-                AdapterId,
+                progression ? 2 : FormatVersion,
+                progression ? ProgressionAdapterId : AdapterId,
                 CathedralDoorPlaytestCompiler.ContentDirectoryName,
                 contentPack.Id,
                 contentPack.Version,
@@ -199,8 +216,8 @@ public static class CathedralNativePopulationPlaytestCompiler
                 ComputeCanonicalTextHash(options.InventoryFootprints.ToCanonicalTsv()),
                 ComputeCanonicalTextHash(semanticsTable.ToCanonicalTsv()),
                 semanticsTable.Rows.Count,
-                PopulationPolicy,
-                NativeDepth,
+                progression ? ProgressionPolicy : PopulationPolicy,
+                progression ? 2 : NativeDepth,
                 RequiredDepthSeeds[0],
                 StorySeed,
                 "rogue",
@@ -218,7 +235,7 @@ public static class CathedralNativePopulationPlaytestCompiler
                 doorProfile.DoorProfileRevision,
                 doorProfile.DoorCatalogFingerprint,
                 doorProfile.DoorMappings);
-            WriteProfile(Path.Combine(stagingRoot, ProfileFileName), profile);
+            WriteProfile(Path.Combine(stagingRoot, progression ? ProgressionProfileFileName : ProfileFileName), profile);
             Directory.Move(stagingRoot, outputRoot);
             return profile;
         }
@@ -280,6 +297,14 @@ public static class CathedralNativePopulationPlaytestCompiler
             throw new InvalidDataException("Native profile stock preparation must replace exactly one stores.tsv table.");
         return new ContentPack(source.Id, source.Version, tables, source.Dependencies, source.Overlays,
             source.Schema, source.DependencyConstraints, source.Assets);
+    }
+
+    private static ContentPack AddTable(ContentPack source, TsvTable addition)
+    {
+        if (source.Tables.Any(table => string.Equals(table.SourcePath, addition.SourcePath, StringComparison.Ordinal)))
+            throw new InvalidDataException($"Native progression content already contains '{addition.SourcePath}'.");
+        return new ContentPack(source.Id, source.Version, source.Tables.Append(addition).ToArray(),
+            source.Dependencies, source.Overlays, source.Schema, source.DependencyConstraints, source.Assets);
     }
 
     private static string ValidateFreshOutputPath(string requested)

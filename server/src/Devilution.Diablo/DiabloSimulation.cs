@@ -50,6 +50,9 @@ public sealed class DiabloSimulationOptions
     /** Immutable opt-in L1 population provenance and explicit interaction limits. */
     public AuthoritativeCathedralNativePopulationPolicy? NativePopulationPolicy { get; init; }
 
+    internal AuthoritativeCathedralNativeProgression? NativeProgression { get; init; }
+    internal NativeProgressionRestoreContext? NativeProgressionRestore { get; set; }
+
     /** Detached complete-cohort item state; never borrowed from a live simulation. */
     internal DiabloCathedralItemCheckpoint? NativeCathedralItemRestore { get; init; }
 
@@ -479,6 +482,7 @@ public sealed class DiabloSimulationFactory : IDiabloCohortSimulationFactory
                 options.NativeMonsterMetadataFingerprint);
             worldState.ConfigureCathedralItems(options.NativeCathedralItems, options.NativeCathedralItemRestore,
                 options.NativeMonsterMetadataFingerprint, options.Items, spells);
+            worldState.ConfigureNativeProgression(options.NativeProgression);
         }
         return simulation;
     }

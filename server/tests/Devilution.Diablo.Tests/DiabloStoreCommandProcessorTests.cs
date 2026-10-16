@@ -1587,6 +1587,55 @@ public sealed class DiabloStoreCommandProcessorTests
         Assert.Equal(640, player.Mana);
     }
 
+    [Theory]
+    [InlineData(0, DiabloPlayerCombatMode.Death, true, false)]
+    [InlineData(0, DiabloPlayerCombatMode.Death, true, true)]
+    [InlineData(0, DiabloPlayerCombatMode.Death, false, false)]
+    [InlineData(0, DiabloPlayerCombatMode.Stand, false, true)]
+    [InlineData(64, DiabloPlayerCombatMode.Death, false, false)]
+    [InlineData(64, DiabloPlayerCombatMode.Stand, true, true)]
+    public void DeadConsumableAdmissionRefusesBeforeHydrationOrRandomDraws(
+        int life, DiabloPlayerCombatMode mode, bool deathCursor, bool belt)
+    {
+        var potion = AuthoritativeItemState.Empty with {
+            StableItemId = 701, ItemActionKind = DiabloItemActionKind.RestorePartialLife, StatFlag = true,
+        };
+        var unresolved = new OwnedStoreItem(0, 0, 99, 100, 0,
+            AuthoritativeItemState.Empty with { StableItemId = 999, InventoryWidth = 1, InventoryHeight = 1 });
+        var carried = new OwnedStoreItem(0, 0, 71, 100, 0, potion);
+        var player = CreatePlayer(life: life, mana: 64, manaMaximum: 640,
+            inventory: belt ? [unresolved] : [carried, unresolved],
+            belt: belt ? [new BeltStoreItem(0, 71, potion)] : []);
+        player.CombatMode = mode;
+        player.CombatModeEndTick = 40;
+        player.CurrentAction = deathCursor ? new(DiabloPlayerActionKind.Death, 1, 1, 40, 40) {
+            EffectApplied = true, TargetEntityId = 99,
+        } : null;
+        var action = player.CurrentAction;
+        var inventory = player.Inventory.ToArray();
+        var beltItems = player.Belt.ToArray();
+        var grid = player.InventoryGrid.ToArray();
+        var attributes = player.Attributes;
+        var random = new DiabloRandom(1);
+        var items = new AuthoritativeItemCatalog([
+            new(701, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, true) { ItemActionKind = DiabloItemActionKind.RestorePartialLife },
+            new(999, 0, 0, 0, 0, 0, 0, 0, 0, 2, 3, true),
+        ]);
+        var processor = new DiabloStoreCommandProcessor(new StoreCatalog(), random: random, items: items);
+        var result = processor.Execute(player, new DiabloUseConsumableIntent(new DiabloPlayerItemReference(
+            belt ? DiabloPlayerItemLocation.Belt : DiabloPlayerItemLocation.Inventory, 0, 701)), 2);
+        Assert.False(result.Succeeded);
+        Assert.Equal(DiabloRuleFailure.NotAllowed, result.Failure);
+        Assert.Equal((life, 64, 100U, mode, 40UL),
+            (player.Life, player.Mana, player.Gold, player.CombatMode, player.CombatModeEndTick));
+        Assert.Same(action, player.CurrentAction);
+        Assert.Equal(attributes, player.Attributes);
+        Assert.Equal(inventory, player.Inventory);
+        Assert.Equal(beltItems, player.Belt);
+        Assert.Equal(grid, player.InventoryGrid);
+        Assert.Equal(1U, random.State);
+    }
+
     [Fact]
     public void WarriorPartialHealingUsesNativeQ6RandomAndClassMultiplier()
     {
@@ -1603,7 +1652,7 @@ public sealed class DiabloStoreCommandProcessorTests
         var player = CreatePlayer(
             playerClass: LoadWarriorClass(),
             inventory: [potion]);
-        player.Life = 0;
+        player.Life = 64;
         var random = new DiabloRandom(0);
         var processor = new DiabloStoreCommandProcessor(
             new StoreCatalog(),
@@ -1616,7 +1665,7 @@ public sealed class DiabloStoreCommandProcessorTests
             1);
 
         Assert.True(result.Succeeded);
-        Assert.Equal(128, player.Life);
+        Assert.Equal(192, player.Life);
         Assert.Equal(1U, random.State);
         Assert.Empty(player.Inventory);
     }

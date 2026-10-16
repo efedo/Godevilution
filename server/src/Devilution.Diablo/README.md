@@ -140,6 +140,23 @@ down); the opt-in profile must use these dimensions. This proof preserves the
 existing corpus and does not establish live populated gameplay or normal-profile
 adoption.
 
+The separate `Cathedral.Playtest --native-cathedral-progression` profile selects
+`devilution.diablo.cathedral-native-progression.v1` for Rogue, Original Diablo,
+single-player Normal Town/L1/L2. L2 is generated once at its actual first stair
+entry from the hero tuple and shared unique history. Detached admission checks
+geometry, actors, objects, item bindings and collisions before publication;
+revisits reuse each floor's immutable owner and retained mutations. Native
+initial skeleton SpecialStand phases pause off-level and survive cold restore.
+Depth-owned chest/sarcophagus/barrel loot and Arrow impact scaling include L2;
+useful contents consume the native L2 portal-scroll roll. Legacy compilation
+retains its exact 110-row semantics; progression explicitly adds five jewelry
+rows. Unsupported wall-trap
+variants remain refused. Cohort v9 records first-entry contexts and reconstructs
+both trusted owners before mutable restore; v1-v8 retain their prior schema.
+The profile remains explicit and makes no whole-campaign parity claim.
+Queued consumables that execute after death are refused before hydration, item
+removal or RNG use; potions cannot leave a living player in a Death action.
+
 The offline `Cathedral.Playtest --native-cathedral-population` mode prepares a
 separate Rogue, original-Diablo, single-player Normal L1 profile. It requires the
 complete population metadata pack, native monster-runtime table, captured item

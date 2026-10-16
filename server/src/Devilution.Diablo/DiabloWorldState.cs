@@ -383,7 +383,7 @@ public sealed partial class DiabloWorldState
     /** Returns whether an ID is occupied by any authoritative world entity. */
     public bool IsEntityIdOccupied(uint entityId)
     {
-        return nativePopulationPolicy?.ReservesEntityId(entityId) == true
+        return NativePopulationOwners.Any(policy => policy.ReservesEntityId(entityId))
             || CombatTargets.ContainsKey(entityId)
             || WorldItems.ContainsKey(entityId)
             || Objects.ContainsKey(entityId)
@@ -473,7 +473,7 @@ public sealed partial class DiabloWorldState
         int positionY,
         out AuthoritativeWorldObject? result)
     {
-        if (nativePopulationPolicy is not null && levelId == nativePopulationPolicy.LevelId)
+        if (OwnsNativePopulationLevel(levelId))
             return TryGetNativePopulationMissileObject(levelId, positionX, positionY, out result);
         result = Objects.Values
             .Where(@object => !@object.Activated
@@ -1214,7 +1214,7 @@ public sealed partial class DiabloWorldState
     {
         ArgumentNullException.ThrowIfNull(players);
         return IsNativePopulationObjectSolid(levelId, positionX, positionY)
-            || (nativePopulationPolicy is null || nativePopulationPolicy.LevelId != levelId)
+            || !OwnsNativePopulationLevel(levelId)
                 && IsCathedralLightObjectSolid(levelId, positionX, positionY)
             || CombatTargets.Values.Any(target => target.HitPoints > 0
             && target.EntityId != excludedEntityId
@@ -1233,7 +1233,7 @@ public sealed partial class DiabloWorldState
                     || (player.IsMoving
                         && player.FuturePositionX == positionX
                         && player.FuturePositionY == positionY)))
-            || Objects.Values.Any(@object => (nativePopulationPolicy is null || @object.LevelId != nativePopulationPolicy.LevelId)
+            || Objects.Values.Any(@object => !OwnsNativePopulationLevel(@object.LevelId)
                 && !@object.ActivateOnOccupancy
                 && @object.CathedralDoor is null
                 && !@object.Activated
@@ -1248,7 +1248,7 @@ public sealed partial class DiabloWorldState
     {
         if (!IsWalkable(levelId, positionX, positionY)
             || IsNativePopulationObjectSolid(levelId, positionX, positionY)
-            || (nativePopulationPolicy is null || nativePopulationPolicy.LevelId != levelId)
+            || !OwnsNativePopulationLevel(levelId)
                 && IsCathedralLightObjectSolid(levelId, positionX, positionY)) {
             throw new InvalidDataException(
                 "The starting player position is not walkable in the authoritative world.");
@@ -1291,7 +1291,7 @@ public sealed partial class DiabloWorldState
         foreach (var entry in Objects) {
             ValidateEntityDictionaryKey(entry.Key, entry.Value.EntityId, "object");
             var @object = entry.Value;
-            if (nativePopulationPolicy is not null && @object.LevelId == nativePopulationPolicy.LevelId)
+            if (OwnsNativePopulationLevel(@object.LevelId))
                 ValidateNativePopulationObject(@object);
             else if (!IsCathedralDoorObject(@object.EntityId, @object.LevelId, @object.PositionX, @object.PositionY))
                 ValidatePosition(@object.LevelId, @object.PositionX, @object.PositionY, "object");
@@ -1368,13 +1368,13 @@ public sealed partial class DiabloWorldState
                     : [(target.LevelId, target.PositionX, target.PositionY)]),
             WorldItems.Values.Select(item => (item.LevelId, item.PositionX, item.PositionY)),
             Objects.Values
-                .Where(@object => (nativePopulationPolicy is null || @object.LevelId != nativePopulationPolicy.LevelId)
+                .Where(@object => !OwnsNativePopulationLevel(@object.LevelId)
                     && !@object.Activated
                     && @object.CathedralDoor is null
                     && !@object.Destroyed
                     && !@object.ActivateOnOccupancy)
                 .Select(@object => (@object.LevelId, @object.PositionX, @object.PositionY))
-                .Concat(nativePopulationPolicy?.SolidObjectPositions() ?? []));
+                .Concat(NativePopulationOwners.SelectMany(policy => policy.SolidObjectPositions())));
     }
 
     private static void ValidateNativeMonsterPoolCapacity(

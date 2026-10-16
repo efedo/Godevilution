@@ -5933,7 +5933,8 @@ public sealed partial class DiabloCombatCommandProcessor
                 continue;
             }
             if (world.OwnsNativePopulationLevel(target.LevelId)
-                && (world.AdvanceNativeSarcophagusSpecialStand(target)
+                && (world.AdvanceNativeInitialSpecialStand(target)
+                    || world.AdvanceNativeSarcophagusSpecialStand(target)
                     || world.AdvanceNativeBarrelSpecialStand(target)))
                 continue;
             if (target.HitPoints <= 0) {
@@ -7601,6 +7602,7 @@ public sealed partial class DiabloCombatCommandProcessor
     {
         if (!world.CombatTargets.ContainsKey(target.EntityId))
             return;
+        world.InterruptNativeInitialSpecialStand(target.EntityId);
         world.CompleteNativeSarcophagusActorDeath(target.EntityId);
         world.CompleteNativeBarrelActorDeath(target.EntityId);
         if (!world.CombatTargets.Remove(target.EntityId))
@@ -17954,6 +17956,7 @@ public sealed partial class DiabloCombatCommandProcessor
         if (world.OwnsNativePopulationLevel(target.LevelId)) {
             if (target.HitPointsQ6 <= 0) {
                 InterruptNativeMelee(target);
+                world.InterruptNativeInitialSpecialStand(target.EntityId);
                 world.InterruptNativeSarcophagusSpecialStand(target);
                 world.InterruptNativeBarrelSpecialStand(target);
             } else if (!nativeTrapResisted && damageQ6 > 0 && !target.IsPetrified
@@ -17961,6 +17964,7 @@ public sealed partial class DiabloCombatCommandProcessor
                     || target.NativeAi is "Sneak" or "Stalker" or "Unseen" or "IllWeav")) {
                 target.CancelMovement();
                 BeginNativeHitRecovery(target);
+                world.InterruptNativeInitialSpecialStand(target.EntityId);
                 world.InterruptNativeSarcophagusSpecialStand(target);
                 world.InterruptNativeBarrelSpecialStand(target);
             }

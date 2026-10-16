@@ -1,3 +1,5 @@
+using System.Collections.Frozen;
+
 namespace Devilution.Diablo;
 
 /** Explicit single-player hero values needed while constructing a fresh level. */
@@ -37,7 +39,8 @@ public sealed class AuthoritativeCathedralFreshLevelRequest
         string stableLevelSymbol,
         int maximumPlacementAttempts,
         int maximumItemPlacementAttempts,
-        int maximumThemeSelectionAttempts)
+        int maximumThemeSelectionAttempts,
+        IReadOnlySet<int>? initialUniqueItemFlags = null)
     {
         Metadata = metadata ?? throw new ArgumentNullException(nameof(metadata));
         Hero = hero ?? throw new ArgumentNullException(nameof(hero));
@@ -52,6 +55,9 @@ public sealed class AuthoritativeCathedralFreshLevelRequest
             || maximumThemeSelectionAttempts <= 0)
             throw new InvalidDataException("Fresh Cathedral generation bounds must be positive.");
         ValidateHero(hero);
+        if (initialUniqueItemFlags?.Any(value => value is < 0 or >= 128) == true)
+            throw new InvalidDataException("Fresh Cathedral unique history must contain native item flag indices.");
+        InitialUniqueItemFlags = (initialUniqueItemFlags ?? new HashSet<int>()).ToFrozenSet();
 
         Depth = depth;
         DungeonSeed = dungeonSeed;
@@ -73,6 +79,8 @@ public sealed class AuthoritativeCathedralFreshLevelRequest
     public int MaximumPlacementAttempts { get; }
     public int MaximumItemPlacementAttempts { get; }
     public int MaximumThemeSelectionAttempts { get; }
+    /** Global run history sampled before this floor's first generation, never a borrowed mutable set. */
+    public IReadOnlySet<int> InitialUniqueItemFlags { get; }
 
     private static void ValidateHero(AuthoritativeCathedralFreshLevelHeroContext hero)
     {
@@ -180,6 +188,29 @@ public static class AuthoritativeCathedralFreshLevelGenerator
             maximumThemeSelectionAttempts);
     }
 
+    /** First entry to another floor carries the run's unique history; legacy fresh APIs remain empty-history. */
+    public static AuthoritativeCathedralFreshLevelRequest CreateEntryRequest(
+        AuthoritativeCathedralPopulationMetadata metadata,
+        int depth,
+        uint dungeonSeed,
+        uint storySeed,
+        AuthoritativeCathedralEntry entry,
+        AuthoritativeCathedralFreshLevelHeroContext hero,
+        IReadOnlySet<int> initialUniqueItemFlags,
+        string? stableLevelSymbol = null,
+        int maximumPlacementAttempts = DefaultMaximumAttempts,
+        int maximumItemPlacementAttempts = DefaultMaximumAttempts,
+        int maximumThemeSelectionAttempts = DefaultMaximumAttempts)
+    {
+        ArgumentNullException.ThrowIfNull(metadata);
+        ArgumentNullException.ThrowIfNull(hero);
+        ArgumentNullException.ThrowIfNull(initialUniqueItemFlags);
+        _ = metadata.RuleForDepth(depth);
+        return new(metadata, depth, dungeonSeed, storySeed, entry, hero,
+            stableLevelSymbol ?? $"cathedral{depth}", maximumPlacementAttempts,
+            maximumItemPlacementAttempts, maximumThemeSelectionAttempts, initialUniqueItemFlags);
+    }
+
     public static AuthoritativeCathedralFreshLevelResult Generate(
         AuthoritativeCathedralFreshLevelRequest request)
     {
@@ -253,7 +284,7 @@ public static class AuthoritativeCathedralFreshLevelGenerator
             initialItems,
             activeItemIds,
             0,
-            new HashSet<int>(),
+            request.InitialUniqueItemFlags,
             itemTiles,
             request.Metadata.PotionDefinitions,
             request.MaximumPlacementAttempts,
