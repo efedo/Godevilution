@@ -2,6 +2,10 @@
 
 Notable changes to this fork are recorded below.
 
+- 2026-10-18: Capture eligible native-depth command responses at their durable
+  receipt boundary, avoiding a second cohort projection/save. Preserve FIFO,
+  publication failure fences, disconnected participants and legacy adapters.
+
 - 2026-10-18: Buffer negotiated native-depth Rogue shots during movement, finish
   the current step, and retain the pending target across cold resume. Preserve
   legacy commands and save bytes; fire native cell-targeted arrows into empty

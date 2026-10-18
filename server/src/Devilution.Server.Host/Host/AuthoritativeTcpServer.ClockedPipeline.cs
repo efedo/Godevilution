@@ -366,6 +366,7 @@ public sealed partial class AuthoritativeTcpServer
             var measurement = PerformanceRecorder?.Begin() ?? 0;
             var lockEntered = 0L;
             IDisposable? authorityTurn = null;
+            ClockedCommandBoundaryCapture? commitBoundaryCapture = null;
             Task<CommandAck> pending;
             try {
                 if (UseClockGatedCommandScheduling && CohortStore is not null)
@@ -380,12 +381,34 @@ public sealed partial class AuthoritativeTcpServer
                     actualAdmissionTick = Math.Max(
                         sampledClockCurrentTick,
                         sampledCommandServerCurrentTick);
+                    Func<string, CommandAck, bool>? commitBoundaryPublication = null;
+                    if (batch.Commands.Count == 1
+                        && SupportsCommitBoundaryCommandSnapshots
+                        && CohortStore is not null
+                        && snapshotProvider is not null
+                        && (commandScheduler is not null)) {
+                        var command = batch.Commands[0];
+                        var responseCapture = new ClockedCommandBoundaryCapture(
+                            sessionId,
+                            command.ClientSequence,
+                            handshake.Identity.RulesetIdentityHash,
+                            GetRulesetGenerationToken(),
+                            pipelineCancellationToken);
+                        commitBoundaryCapture = responseCapture;
+                        commitBoundaryPublication = (ownerSessionId, acknowledgement)
+                            => TryPublishCommitBoundaryCommandCapture(
+                                responseCapture,
+                                ownerSessionId,
+                                acknowledgement,
+                                entityId);
+                    }
                     return scheduler.SubmitBatchAsync(
                         sessionId,
                         batch,
                         actualAdmissionTick,
                         pipelineCancellationToken,
-                        lane);
+                        lane,
+                        commitBoundaryPublication);
                 });
             } finally {
                 authorityTurn?.Dispose();
@@ -415,13 +438,124 @@ public sealed partial class AuthoritativeTcpServer
                 sampledClockCurrentTick,
                 sampledCommandServerCurrentTick,
                 actualAdmissionTick,
-                lockWaitStopwatchTicks);
+                lockWaitStopwatchTicks,
+                commitBoundaryCapture);
             retainWeight = false;
             return work;
         } finally {
             if (retainWeight)
                 responseBudget.Release(responseWeight);
         }
+    }
+
+    private bool TryPublishCommitBoundaryCommandCapture(
+        ClockedCommandBoundaryCapture responseCapture,
+        string sessionId,
+        CommandAck acknowledgement,
+        uint entityId)
+    {
+        if (!responseCapture.IsWriterReady
+            || responseCapture.CancellationToken.IsCancellationRequested
+            || !StringComparer.Ordinal.Equals(sessionId, responseCapture.SessionId)
+            || acknowledgement.Results.Count != 1
+            || acknowledgement.Results[0].ClientSequence != responseCapture.ClientSequence
+            || acknowledgement.Results[0].Status != CommandStatus.Accepted
+            || !SupportsCommitBoundaryCommandSnapshots
+            || !StringComparer.Ordinal.Equals(
+                handshake.Identity.RulesetIdentityHash,
+                responseCapture.RulesetIdentityHash)
+            || !ReferenceEquals(GetRulesetGenerationToken(), responseCapture.GenerationToken))
+            return false;
+
+        return commandServer.WithSynchronizedSession(sessionId, () => {
+            RequireCohortHealthy();
+            var appliedTick = acknowledgement.Results[0].AppliedTick;
+            var tick = commandServer.CurrentTick;
+            if (tick != appliedTick
+                || acknowledgement.Results.Any(result => result.AppliedTick > tick)
+                || !StringComparer.Ordinal.Equals(
+                    handshake.Identity.RulesetIdentityHash,
+                    responseCapture.RulesetIdentityHash)
+                || !ReferenceEquals(GetRulesetGenerationToken(), responseCapture.GenerationToken))
+                return false;
+
+            if (responseCapture.CancellationToken.IsCancellationRequested)
+                return false;
+
+            var hasSnapshot = snapshotProvider is not null;
+            var materialization = hasSnapshot ? PerformanceRecorder?.Begin() ?? 0 : 0;
+            var materializeStartTimestamp = hasSnapshot && CommandTimingRecorder is not null
+                ? Stopwatch.GetTimestamp()
+                : (long?)null;
+            var snapshotTraceOrdinal = hasSnapshot && CommandTimingRecorder is not null
+                ? Interlocked.Increment(ref nextTimingOrdinal)
+                : 0L;
+            try {
+                var events = eventProvider?.DrainEvents(sessionId, entityId, tick)?.Clone();
+                if (events is not null)
+                    AuthoritativeEventBatchValidator.Validate(events, tick);
+
+                Snapshot? snapshot = null;
+                if (snapshotProvider is not null) {
+                    snapshot = snapshotProvider.CreateSnapshot(sessionId, entityId, tick).Clone();
+                    if (snapshot.Tick != tick)
+                        throw new InvalidDataException(
+                            "The clock-gated command-boundary snapshot tick does not match the captured event boundary.");
+                    var identity = handshake.Identity;
+                    snapshot.ContentManifestHash = identity.ContentManifestHash;
+                    snapshot.RulesetIdentityHash = identity.RulesetIdentityHash;
+                    AuthoritativeSnapshotValidator.Validate(snapshot);
+                }
+
+                PublishCohortCore();
+                var materializeEndTimestamp = hasSnapshot && CommandTimingRecorder is not null
+                    ? Stopwatch.GetTimestamp()
+                    : (long?)null;
+                var capture = new ClockedCohortSnapshotPoll(
+                    tick,
+                    events,
+                    snapshot,
+                    materializeStartTimestamp,
+                    materializeEndTimestamp,
+                    snapshotTraceOrdinal,
+                    materialization);
+                if (!responseCapture.TryPublish(capture))
+                    throw new InvalidOperationException(
+                        "The clock-gated command response capture was already committed.");
+                return true;
+            } catch (Exception failure) {
+                FenceCohort(failure);
+                throw;
+            }
+        });
+    }
+
+    private object? GetRulesetGenerationToken()
+        => gameAdapter switch {
+            LeasedAuthoritativeGameHostAdapter leasedAdapter => leasedAdapter.ActiveActivationToken,
+            { } adapter => adapter,
+            _ => null,
+        };
+
+    private void RecordCommitBoundarySnapshotStart(
+        int connectionOrdinal,
+        uint entityId,
+        long? envelopeReadCompletedTimestamp,
+        ClockedCohortSnapshotPoll capture)
+    {
+        if (CommandTimingRecorder is null || capture.SnapshotTraceOrdinal == 0)
+            return;
+
+        CommandTimingRecorder.Record(new HostCommandTimingRecord {
+            Kind = "snapshot-start",
+            ConnectionOrdinal = connectionOrdinal,
+            TraceOrdinal = capture.SnapshotTraceOrdinal,
+            EntityId = entityId,
+            EnvelopeReadCompletedTimestamp = envelopeReadCompletedTimestamp,
+            SnapshotMaterializeStartTimestamp = capture.MaterializeStartTimestamp,
+            TimingReplyEmitted = null,
+        });
+        EmitCommandTimingOutsideAuthorityLock();
     }
 
     private async Task WriteClockGatedConnectionAsync(
@@ -525,6 +659,9 @@ public sealed partial class AuthoritativeTcpServer
         ulong currentTick)
     {
         CommandAck acknowledgement;
+        work.CommitBoundaryCapture?.MarkWriterReady();
+        if (work.CommitBoundaryCapture is { } readyCapture)
+            CommitBoundaryResponseReadyObserverForTests?.Invoke(sessionId, readyCapture.ClientSequence);
         try {
             acknowledgement = await work.Acknowledgement!
                 .WaitAsync(pipelineCancellationToken);
@@ -545,16 +682,28 @@ public sealed partial class AuthoritativeTcpServer
                     return AdvanceAndPublishCohortCore();
                 });
             } else {
-                // The scheduler has already persisted this receipt. Capture the
-                // command response projection as one cohort boundary before writing it.
-                cohortCapture = await CaptureClockedCohortSnapshotPollAsync(
-                    sessionId,
-                    entityId,
-                    connectionOrdinal,
-                    null,
-                    work.EnvelopeReadCompletedTimestamp,
-                    pipelineCancellationToken,
-                    currentTick);
+                if (work.CommitBoundaryCapture?.TryGetCapture(out var commitCapture) == true) {
+                    cohortCapture = commitCapture;
+                    RecordCommitBoundarySnapshotStart(
+                        connectionOrdinal,
+                        entityId,
+                        work.EnvelopeReadCompletedTimestamp,
+                        commitCapture);
+                    PerformanceRecorder?.Complete(
+                        HostPerformanceMetric.SnapshotMaterializeMilliseconds,
+                        commitCapture.Materialization);
+                } else {
+                    // Ineligible, late or canceled work keeps the existing latest-tick
+                    // response capture after the scheduler has durably saved its receipt.
+                    cohortCapture = await CaptureClockedCohortSnapshotPollAsync(
+                        sessionId,
+                        entityId,
+                        connectionOrdinal,
+                        null,
+                        work.EnvelopeReadCompletedTimestamp,
+                        pipelineCancellationToken,
+                        currentTick);
+                }
                 currentTick = cohortCapture.Tick;
             }
             var commandTraceOrdinals = RecordCommandTiming(
@@ -894,7 +1043,39 @@ public sealed partial class AuthoritativeTcpServer
         Snapshot? Snapshot,
         long? MaterializeStartTimestamp = null,
         long? MaterializeEndTimestamp = null,
-        long SnapshotTraceOrdinal = 0);
+        long SnapshotTraceOrdinal = 0,
+        long Materialization = 0);
+
+    private sealed class ClockedCommandBoundaryCapture(
+        string sessionId,
+        ulong clientSequence,
+        string rulesetIdentityHash,
+        object? generationToken,
+        CancellationToken cancellationToken)
+    {
+        private ClockedCohortSnapshotPoll? capture;
+        private int writerReady;
+
+        public string SessionId { get; } = sessionId;
+        public ulong ClientSequence { get; } = clientSequence;
+        public string RulesetIdentityHash { get; } = rulesetIdentityHash;
+        public object? GenerationToken { get; } = generationToken;
+        public CancellationToken CancellationToken { get; } = cancellationToken;
+        public bool IsWriterReady => Volatile.Read(ref writerReady) != 0;
+
+        public void MarkWriterReady()
+            => Volatile.Write(ref writerReady, 1);
+
+        public bool TryPublish(ClockedCohortSnapshotPoll value)
+            => Interlocked.CompareExchange(ref capture, value, null) is null;
+
+        public bool TryGetCapture(out ClockedCohortSnapshotPoll value)
+        {
+            var current = Volatile.Read(ref capture);
+            value = current!;
+            return current is not null;
+        }
+    }
 
     private async Task EnqueueClockGatedErrorAsync(
         ChannelWriter<ClockGatedResponseWork> workWriter,
@@ -1065,6 +1246,7 @@ public sealed partial class AuthoritativeTcpServer
         public ulong SampledCommandServerCurrentTick { get; private init; }
         public ulong ActualAdmissionTick { get; private init; }
         public long LockWaitStopwatchTicks { get; private init; }
+        public ClockedCommandBoundaryCapture? CommitBoundaryCapture { get; private init; }
 
         public static ClockGatedResponseWork Command(
             CommandBatch batch,
@@ -1075,7 +1257,8 @@ public sealed partial class AuthoritativeTcpServer
             ulong sampledClockCurrentTick,
             ulong sampledCommandServerCurrentTick,
             ulong actualAdmissionTick,
-            long lockWaitStopwatchTicks)
+            long lockWaitStopwatchTicks,
+            ClockedCommandBoundaryCapture? commitBoundaryCapture)
             => new(ClockGatedResponseKind.Command) {
                 Batch = batch,
                 Acknowledgement = acknowledgement,
@@ -1086,6 +1269,7 @@ public sealed partial class AuthoritativeTcpServer
                 SampledCommandServerCurrentTick = sampledCommandServerCurrentTick,
                 ActualAdmissionTick = actualAdmissionTick,
                 LockWaitStopwatchTicks = lockWaitStopwatchTicks,
+                CommitBoundaryCapture = commitBoundaryCapture,
             };
 
         public static ClockGatedResponseWork ClockProbe(

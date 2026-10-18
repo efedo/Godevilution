@@ -760,8 +760,11 @@ restore that pending intent exactly in a fresh host. Native timing/IAS, L1
 projectile/cold continuation and actual TCP pending-shot continuation pass. The
 Godot driver can interrupt an ordinary approach at a selectable clear lane;
 its existing deadlines, healing thresholds and work budgets remain bounded.
-Use the exact L3-entry continuation to establish the next combat result, then
-require the original full journey and retained-world resume before closing M3.
+Eligible command responses now use their durable receipt boundary, with focused
+host checks covering FIFO, fallback and fresh-host resume. Exact-entry R3 still
+ends in L3 death despite faster observed acknowledgements. Resolve the remaining
+combat/control delay before another continuation; require the original full
+journey and retained-world resume before closing M3.
 
 The next native route extends the explicit profile to L1-L4 with separate lazy
 owners and cohort v10. Destination walking now passes native timing/path tests,

@@ -44,6 +44,23 @@ unsupported behavior is a migration gap, not permission for local simulation.
 
 ## Current delivery position and verification limits
 
+Eligible native-depth commands now capture a detached response projection at
+exact receipt publication, avoiding the second capture/save before ACK. Writer
+readiness preserves per-connection FIFO; duplicate, multi-command, late and
+pre-capture canceled work retain the existing path. Default adapters remain unchanged.
+The 92 unique focused host cases pass without skips, covering durability,
+fallback, cancellation, failure fences, ordering and fresh-host pending shots.
+
+Exact-entry R3 restores the original R18 player/RNG/world/cursor, then again
+ends in L3 death. All five accepted responses use their exact applied tick;
+accepted read-to-ACK median is 660 ms versus R2's 1013 ms. This is an
+observational comparison from the same entry with different later command mix,
+not a matched benchmark or gameplay pass. Rejected command 190 captures a
+fallback snapshot but its write does not complete before scene exit. All four
+owned processes are stopped. Raw traces and comparison are retained under
+`.local/native-cathedral-run-20261016` (`entry-r3-command-capture.json`). The
+L3/L4 combat and original full-route/fresh-host gates remain open.
+
 The native-depth adapter now negotiates queued ranged attacks separately from
 destination walking. A valid moving bow request preserves the active step,
 cancels remaining directions and retains one typed target until native action

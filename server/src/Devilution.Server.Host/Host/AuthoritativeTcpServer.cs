@@ -215,6 +215,9 @@ public sealed partial class AuthoritativeTcpServer : IAsyncDisposable
     /** Internal synchronization seam for deterministic authority-turn host tests. */
     internal CohortAuthorityTurnGate AuthorityTurnGateForTests => cohortAuthorityTurnGate;
 
+    /** Internal readiness signal for deterministic commit-boundary response tests. */
+    internal Action<string, ulong>? CommitBoundaryResponseReadyObserverForTests { get; init; }
+
     /** Background termination/failure, excluding isolated session failures. */
     public Task Completion => completion.Task;
 
@@ -235,6 +238,11 @@ public sealed partial class AuthoritativeTcpServer : IAsyncDisposable
     private bool SupportsQueuedRangedAttacks
         => gameAdapter is { } adapter
             && (adapter.SupportedProtocolFeatures & AuthoritativeProtocolFeatures.QueuedRangedAttacks) != 0;
+
+    private bool SupportsCommitBoundaryCommandSnapshots
+        => gameAdapter is { } adapter
+            && (adapter.SupportedProtocolFeatures
+                & AuthoritativeProtocolFeatures.CommitBoundaryCommandSnapshots) != 0;
 
     /** Replaced generations awaiting host disposal, if live reload is enabled. */
     public int RetiredRulesetCount => gameAdapter is LeasedAuthoritativeGameHostAdapter leasedAdapter

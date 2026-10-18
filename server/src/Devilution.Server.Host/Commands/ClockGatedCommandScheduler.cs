@@ -98,11 +98,33 @@ public sealed class ClockGatedCommandScheduler : IDisposable
         ulong actualAdmissionTick,
         CancellationToken cancellationToken,
         ClockGatedCommandLane? lane)
+        => SubmitBatchAsync(
+            sessionId,
+            batch,
+            actualAdmissionTick,
+            cancellationToken,
+            lane,
+            commitBoundaryPublication: null);
+
+    /** Optional per-wire response publication for one new original command only. */
+    internal Task<CommandAck> SubmitBatchAsync(
+        string sessionId,
+        CommandBatch batch,
+        ulong actualAdmissionTick,
+        CancellationToken cancellationToken,
+        ClockGatedCommandLane? lane,
+        Func<string, CommandAck, bool>? commitBoundaryPublication)
     {
         ArgumentNullException.ThrowIfNull(batch);
         cancellationToken.ThrowIfCancellationRequested();
         return commandServer.WithSynchronizedState(
-            () => SubmitBatchCore(sessionId, batch, actualAdmissionTick, cancellationToken, lane));
+            () => SubmitBatchCore(
+                sessionId,
+                batch,
+                actualAdmissionTick,
+                cancellationToken,
+                lane,
+                commitBoundaryPublication));
     }
 
     /** Poisons a connection lane and fails all of its not-yet-durable work. */
@@ -189,7 +211,8 @@ public sealed class ClockGatedCommandScheduler : IDisposable
         CommandBatch batch,
         ulong actualAdmissionTick,
         CancellationToken cancellationToken,
-        ClockGatedCommandLane? lane)
+        ClockGatedCommandLane? lane,
+        Func<string, CommandAck, bool>? commitBoundaryPublication)
     {
         EnsureActive();
         lane?.ThrowIfPoisoned();
@@ -198,7 +221,13 @@ public sealed class ClockGatedCommandScheduler : IDisposable
                 "Command submission cannot re-enter while scheduler work is in progress.");
         operationInProgress = true;
         try {
-            return SubmitBatchCoreBody(sessionId, batch, actualAdmissionTick, cancellationToken, lane);
+            return SubmitBatchCoreBody(
+                sessionId,
+                batch,
+                actualAdmissionTick,
+                cancellationToken,
+                lane,
+                commitBoundaryPublication);
         } finally {
             operationInProgress = false;
         }
@@ -209,7 +238,8 @@ public sealed class ClockGatedCommandScheduler : IDisposable
         CommandBatch batch,
         ulong actualAdmissionTick,
         CancellationToken cancellationToken,
-        ClockGatedCommandLane? lane)
+        ClockGatedCommandLane? lane,
+        Func<string, CommandAck, bool>? commitBoundaryPublication)
     {
         EnsureActive();
         cancellationToken.ThrowIfCancellationRequested();
@@ -284,6 +314,13 @@ public sealed class ClockGatedCommandScheduler : IDisposable
             slots.Add(CommandSlot.Original(pending));
         }
 
+        var originalSlotPublication = batch.Commands.Count == 1
+            && slots.Count == 1
+            && slots[0].ImmediateResult is null
+            && !slots[0].IsDuplicate
+            && slots[0].PendingOwner is { TracksLedger: true }
+            ? commitBoundaryPublication
+            : null;
         var work = new PendingWork(
             sessionId,
             slots,
@@ -293,7 +330,8 @@ public sealed class ClockGatedCommandScheduler : IDisposable
             arrivalOrder,
             reservationCount,
             lane,
-            lane?.TakePredecessor());
+            lane?.TakePredecessor(),
+            commitBoundaryPublication: originalSlotPublication);
         lane?.SetTail(work.Completion.Task);
         activeWorks.Add(work);
         reservedPendingSlots += reservationCount;
@@ -404,9 +442,9 @@ public sealed class ClockGatedCommandScheduler : IDisposable
             var executionTick = Math.Max(pending.DueTick, commandServer.CurrentTick);
             var result = commandServer.Process(work.SessionId, pending.Command, executionTick);
             pending.Result = result.Clone();
-            PublishDurable(
-                work.SessionId,
-                CreateSingleResultAcknowledgement(result));
+            var acknowledgement = CreateSingleResultAcknowledgement(result);
+            if (!work.TryPublishAtCommitBoundary(acknowledgement))
+                PublishDurable(work.SessionId, acknowledgement);
             if (cancelled)
                 return false;
             pending.Durable = true;
@@ -734,7 +772,8 @@ public sealed class ClockGatedCommandScheduler : IDisposable
         ClockGatedCommandLane? lane,
         Task<CommandAck>? predecessorCompletion,
         CommandBatch? laneBarrierBatch = null,
-        ulong laneBarrierAdmissionTick = 0)
+        ulong laneBarrierAdmissionTick = 0,
+        Func<string, CommandAck, bool>? commitBoundaryPublication = null)
     {
         public string SessionId { get; } = sessionId;
         public IReadOnlyList<CommandSlot> Slots { get; } = slots;
@@ -747,6 +786,7 @@ public sealed class ClockGatedCommandScheduler : IDisposable
         public Task<CommandAck>? PredecessorCompletion { get; } = predecessorCompletion;
         public CommandBatch? LaneBarrierBatch { get; } = laneBarrierBatch;
         public ulong LaneBarrierAdmissionTick { get; } = laneBarrierAdmissionTick;
+        public Func<string, CommandAck, bool>? CommitBoundaryPublication { get; } = commitBoundaryPublication;
         public bool IsLaneBarrier => LaneBarrierBatch is not null;
         public TaskCompletionSource<CommandAck> Completion { get; } =
             new(TaskCreationOptions.RunContinuationsAsynchronously);
@@ -757,6 +797,9 @@ public sealed class ClockGatedCommandScheduler : IDisposable
 
         public bool HasPendingDurablePublication
             => RedurableResults.Count != 0 && !RedurablePublicationComplete;
+
+        public bool TryPublishAtCommitBoundary(CommandAck acknowledgement)
+            => CommitBoundaryPublication?.Invoke(SessionId, acknowledgement) == true;
 
         public bool IsLanePredecessorReady
             => PredecessorCompletion is null || PredecessorCompletion.IsCompleted;

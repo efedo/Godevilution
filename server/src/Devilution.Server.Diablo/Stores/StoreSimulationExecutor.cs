@@ -155,7 +155,8 @@ public sealed class StoreSimulationExecutor
         ArgumentNullException.ThrowIfNull(playerTemplateFactory);
         if ((supportedProtocolFeatures
                 & ~(AuthoritativeProtocolFeatures.TargetCellPathing
-                    | AuthoritativeProtocolFeatures.QueuedRangedAttacks)) != 0)
+                    | AuthoritativeProtocolFeatures.QueuedRangedAttacks
+                    | AuthoritativeProtocolFeatures.CommitBoundaryCommandSnapshots)) != 0)
             throw new ArgumentOutOfRangeException(nameof(supportedProtocolFeatures));
         SupportedProtocolFeatures = supportedProtocolFeatures;
         var simulation = content.Simulation;

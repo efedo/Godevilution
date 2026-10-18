@@ -27,6 +27,7 @@ public enum AuthoritativeProtocolFeatures
     None = 0,
     TargetCellPathing = 1,
     QueuedRangedAttacks = 2,
+    CommitBoundaryCommandSnapshots = 4,
 }
 
 /** Combined game-facing boundary consumed by the generic authoritative host. */

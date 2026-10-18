@@ -31,6 +31,9 @@ public sealed class LeasedAuthoritativeGameHostAdapter
     /** Identity hash of the generation that will serve the next operation. */
     public string ActiveRulesetIdentityHash => rulesets.Active.Identity.CombinedSha256;
 
+    /** Reference identity for bounded host operations that must stay on one activation. */
+    internal object ActiveActivationToken => rulesets.Active;
+
     public AuthoritativeProtocolFeatures SupportedProtocolFeatures
     {
         get {
