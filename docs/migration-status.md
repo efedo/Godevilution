@@ -44,6 +44,13 @@ unsupported behavior is a migration gap, not permission for local simulation.
 
 ## Current delivery position and verification limits
 
+Exact in-flight single-command retries for opted-in native-depth hosts now reuse
+their original detached snapshot after its successful write, with an unchanged
+Duplicate receipt. A changed same-tick snapshot invalidates reuse; events are
+not replayed. Released, mismatched and ineligible work keeps the fresh capture
+path. All 73 focused host and native fresh-host cases pass without skips. The
+four-floor gameplay gate remains open.
+
 Native-depth bow input now retains one follow-up received before the current
 shot is ready, then starts it at the native repeat frame. The current shot keeps
 its original aim; valid replacements update only the pending target. Native

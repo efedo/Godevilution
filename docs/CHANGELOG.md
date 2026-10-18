@@ -2,6 +2,11 @@
 
 Notable changes to this fork are recorded below.
 
+- 2026-10-18: Reuse the original durable snapshot for exact native-depth command
+  retries received while its response is in flight. Preserve duplicate receipts,
+  event ownership, FIFO and fault fences; invalidate reuse after any intervening
+  snapshot, including a changed same-tick snapshot. Keep completed retries fresh.
+
 - 2026-10-18: Buffer negotiated native-depth bow follow-ups during the current
   shot and start them at the native repeat-ready frame. Preserve the original
   arrow, latest valid target and exact fresh-host continuation, including

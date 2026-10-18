@@ -754,6 +754,12 @@ M2 closes only when every supported family and required set level meets its gate
 
 ## M3: Gameplay and content closure by playable route
 
+Exact in-flight retries now reuse their already durable, successfully written
+response snapshot, avoiding the redundant cohort capture traced during L3
+combat. Preserve duplicate receipts, event ownership, FIFO and failure fences;
+any intervening snapshot invalidates reuse. Focused host and fresh-host checks
+pass. The L3/L4 and full retained-world gameplay gate remains open.
+
 Negotiated native-depth bow input now also buffers a follow-up during an active
 shot and consumes it at the native repeat-ready frame. Native timing and focused
 domain/TCP cold-host checks cover both arrow launches and duplicate retries.

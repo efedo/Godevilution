@@ -69,6 +69,14 @@ public sealed partial class AuthoritativeTcpServer
         using var pipelineCancellation = CancellationTokenSource.CreateLinkedTokenSource(
             hostCancellationToken);
         var lane = new ClockGatedCommandLane();
+        var snapshotReuse = SupportsCommitBoundaryCommandSnapshots
+            && CohortStore is not null
+            && snapshotProvider is not null
+                ? new ClockedCommandSnapshotReuseRegistry()
+                : null;
+        var writtenSnapshots = snapshotReuse is null
+            ? null
+            : new ClockedConnectionSnapshotWriteState();
         var workChannel = Channel.CreateBounded<ClockGatedResponseWork>(
             new BoundedChannelOptions(Math.Max(1, MaximumPendingCommands)) {
                 SingleReader = true,
@@ -83,6 +91,7 @@ public sealed partial class AuthoritativeTcpServer
             connectionOrdinal,
             lane,
             scheduler,
+            snapshotReuse,
             responseBudget,
             workChannel.Writer,
             pipelineCancellation,
@@ -95,6 +104,8 @@ public sealed partial class AuthoritativeTcpServer
             connectionOrdinal,
             lane,
             scheduler,
+            snapshotReuse,
+            writtenSnapshots,
             responseBudget,
             workChannel.Reader,
             pipelineCancellation,
@@ -134,6 +145,7 @@ public sealed partial class AuthoritativeTcpServer
         int connectionOrdinal,
         ClockGatedCommandLane lane,
         ClockGatedCommandScheduler scheduler,
+        ClockedCommandSnapshotReuseRegistry? snapshotReuse,
         ClockGatedResponseBudget responseBudget,
         ChannelWriter<ClockGatedResponseWork> workWriter,
         CancellationTokenSource pipelineCancellation,
@@ -190,6 +202,7 @@ public sealed partial class AuthoritativeTcpServer
                             envelope.CommandBatch,
                             lane,
                             scheduler,
+                            snapshotReuse,
                             responseBudget,
                             pipelineCancellation.Token);
                         await EnqueueClockGatedWorkAsync(
@@ -344,6 +357,7 @@ public sealed partial class AuthoritativeTcpServer
         CommandBatch batch,
         ClockGatedCommandLane lane,
         ClockGatedCommandScheduler scheduler,
+        ClockedCommandSnapshotReuseRegistry? snapshotReuse,
         ClockGatedResponseBudget responseBudget,
         CancellationToken pipelineCancellationToken)
     {
@@ -355,7 +369,17 @@ public sealed partial class AuthoritativeTcpServer
             throw new ClockGatedCommandCapacityException(
                 "The clock-gated command response capacity is exhausted.");
         var retainWeight = true;
+        ClockedCommandSnapshotReuseRegistration? reuseRegistration = null;
         try {
+            if (snapshotReuse is not null) {
+                reuseRegistration = snapshotReuse.RegisterOrLink(
+                    sessionId,
+                    entityId,
+                    handshake.Identity.ContentManifestHash,
+                    handshake.Identity.RulesetIdentityHash,
+                    GetRulesetGenerationToken(),
+                    batch);
+            }
             ulong sampledClockCurrentTick = 0;
             ulong sampledCommandServerCurrentTick = 0;
             ulong actualAdmissionTick = 0;
@@ -383,6 +407,7 @@ public sealed partial class AuthoritativeTcpServer
                         sampledCommandServerCurrentTick);
                     Func<string, CommandAck, bool>? commitBoundaryPublication = null;
                     if (batch.Commands.Count == 1
+                        && reuseRegistration?.LinkedCandidate is null
                         && SupportsCommitBoundaryCommandSnapshots
                         && CohortStore is not null
                         && snapshotProvider is not null
@@ -439,10 +464,14 @@ public sealed partial class AuthoritativeTcpServer
                 sampledCommandServerCurrentTick,
                 actualAdmissionTick,
                 lockWaitStopwatchTicks,
-                commitBoundaryCapture);
+                commitBoundaryCapture,
+                reuseRegistration?.OriginalCandidate,
+                reuseRegistration?.LinkedCandidate);
+            reuseRegistration = null;
             retainWeight = false;
             return work;
         } finally {
+            reuseRegistration?.Release();
             if (retainWeight)
                 responseBudget.Release(responseWeight);
         }
@@ -566,6 +595,8 @@ public sealed partial class AuthoritativeTcpServer
         int connectionOrdinal,
         ClockGatedCommandLane lane,
         ClockGatedCommandScheduler scheduler,
+        ClockedCommandSnapshotReuseRegistry? snapshotReuse,
+        ClockedConnectionSnapshotWriteState? writtenSnapshots,
         ClockGatedResponseBudget responseBudget,
         ChannelReader<ClockGatedResponseWork> workReader,
         CancellationTokenSource pipelineCancellation,
@@ -588,7 +619,9 @@ public sealed partial class AuthoritativeTcpServer
                                 scheduler,
                                 pipelineCancellation.Token,
                                 hostCancellationToken,
-                                currentTick);
+                                currentTick,
+                                snapshotReuse,
+                                writtenSnapshots);
                             break;
                         case ClockGatedResponseKind.ClockProbe:
                             currentTick = await WriteClockGatedClockProbeAsync(
@@ -614,7 +647,8 @@ public sealed partial class AuthoritativeTcpServer
                                 scheduler,
                                 pipelineCancellation.Token,
                                 hostCancellationToken,
-                                currentTick);
+                                currentTick,
+                                writtenSnapshots);
                             break;
                         case ClockGatedResponseKind.Error:
                             await WriteClockedTransportEnvelopeAsync(
@@ -656,7 +690,9 @@ public sealed partial class AuthoritativeTcpServer
         ClockGatedCommandScheduler scheduler,
         CancellationToken pipelineCancellationToken,
         CancellationToken hostCancellationToken,
-        ulong currentTick)
+        ulong currentTick,
+        ClockedCommandSnapshotReuseRegistry? snapshotReuse,
+        ClockedConnectionSnapshotWriteState? writtenSnapshots)
     {
         CommandAck acknowledgement;
         work.CommitBoundaryCapture?.MarkWriterReady();
@@ -676,13 +712,30 @@ public sealed partial class AuthoritativeTcpServer
 
         try {
             ClockedCohortSnapshotPoll? cohortCapture = null;
+            ClockedReusableSnapshot? reusedDuplicateSnapshot = null;
             if (CohortStore is null) {
                 currentTick = commandServer.WithSynchronizedState(() => {
                     RequireClockedTransportActive(true, pipelineCancellationToken);
                     return AdvanceAndPublishCohortCore();
                 });
             } else {
-                if (work.CommitBoundaryCapture?.TryGetCapture(out var commitCapture) == true) {
+                if (work.LinkedSnapshotCandidate is { } linkedCandidate
+                    && snapshotReuse is not null
+                    && writtenSnapshots is not null) {
+                    reusedDuplicateSnapshot = await TryGetReusableDuplicateSnapshotAsync(
+                        snapshotReuse,
+                        linkedCandidate,
+                        acknowledgement,
+                        sessionId,
+                        entityId,
+                        currentTick,
+                        writtenSnapshots,
+                        pipelineCancellationToken);
+                }
+
+                if (reusedDuplicateSnapshot is not null) {
+                    currentTick = Math.Max(currentTick, reusedDuplicateSnapshot.Snapshot.Tick);
+                } else if (work.CommitBoundaryCapture?.TryGetCapture(out var commitCapture) == true) {
                     cohortCapture = commitCapture;
                     RecordCommitBoundarySnapshotStart(
                         connectionOrdinal,
@@ -704,7 +757,9 @@ public sealed partial class AuthoritativeTcpServer
                         pipelineCancellationToken,
                         currentTick);
                 }
-                currentTick = cohortCapture.Tick;
+                if (cohortCapture is not null) {
+                    currentTick = cohortCapture.Tick;
+                }
             }
             var commandTraceOrdinals = RecordCommandTiming(
                 connectionOrdinal,
@@ -743,7 +798,24 @@ public sealed partial class AuthoritativeTcpServer
                     ackWriteCompleted);
                 EmitCommandTimingOutsideAuthorityLock();
             }
-            if (cohortCapture is null) {
+            if (reusedDuplicateSnapshot is not null) {
+                var reuseWriteTraceOrdinal = CommandTimingRecorder is null
+                    ? 0L
+                    : Interlocked.Increment(ref nextTimingOrdinal);
+                await WriteSnapshotEnvelopeAsync(
+                    stream,
+                    reusedDuplicateSnapshot.Snapshot,
+                    connectionOrdinal,
+                    entityId,
+                    work.EnvelopeReadCompletedTimestamp,
+                    null,
+                    null,
+                    null,
+                    reuseWriteTraceOrdinal,
+                    pipelineCancellationToken,
+                    classifyClockedTransportFailure: true);
+                writtenSnapshots?.RecordSuccessfulReuse(reusedDuplicateSnapshot.IdentityToken);
+            } else if (cohortCapture is null) {
                 await SendEventsIfAvailable(
                     stream,
                     sessionId,
@@ -786,6 +858,13 @@ public sealed partial class AuthoritativeTcpServer
                         cohortCapture.SnapshotTraceOrdinal,
                         pipelineCancellationToken,
                         classifyClockedTransportFailure: true);
+                    if (writtenSnapshots is { } snapshotWrites) {
+                        var identityToken = snapshotWrites.RecordSuccessfulWrite();
+                        work.OriginalSnapshotCandidate?.PublishReusableSnapshot(
+                            acknowledgement,
+                            cohortCapture.Snapshot,
+                            identityToken);
+                    }
                 }
             }
             return currentTick;
@@ -855,7 +934,8 @@ public sealed partial class AuthoritativeTcpServer
         ClockGatedCommandScheduler scheduler,
         CancellationToken pipelineCancellationToken,
         CancellationToken hostCancellationToken,
-        ulong currentTick)
+        ulong currentTick,
+        ClockedConnectionSnapshotWriteState? writtenSnapshots)
     {
         try {
             if (CohortStore is null) {
@@ -914,6 +994,7 @@ public sealed partial class AuthoritativeTcpServer
                         capture.SnapshotTraceOrdinal,
                         pipelineCancellationToken,
                         classifyClockedTransportFailure: true);
+                    writtenSnapshots?.RecordSuccessfulWrite();
                 }
             }
             if (timingRequestId != 0) {
@@ -987,6 +1068,8 @@ public sealed partial class AuthoritativeTcpServer
                     Snapshot? snapshot = null;
                     if (snapshotProvider is not null) {
                         snapshot = snapshotProvider.CreateSnapshot(sessionId, entityId, tick);
+                        if (SupportsCommitBoundaryCommandSnapshots)
+                            snapshot = snapshot.Clone();
                         if (snapshot.Tick != tick)
                             throw new InvalidDataException(
                                 "The clock-gated snapshot tick does not match the captured event boundary.");
@@ -1247,6 +1330,8 @@ public sealed partial class AuthoritativeTcpServer
         public ulong ActualAdmissionTick { get; private init; }
         public long LockWaitStopwatchTicks { get; private init; }
         public ClockedCommandBoundaryCapture? CommitBoundaryCapture { get; private init; }
+        public ClockedCommandSnapshotReuseCandidate? OriginalSnapshotCandidate { get; private init; }
+        public ClockedCommandSnapshotReuseCandidate? LinkedSnapshotCandidate { get; private init; }
 
         public static ClockGatedResponseWork Command(
             CommandBatch batch,
@@ -1258,7 +1343,9 @@ public sealed partial class AuthoritativeTcpServer
             ulong sampledCommandServerCurrentTick,
             ulong actualAdmissionTick,
             long lockWaitStopwatchTicks,
-            ClockedCommandBoundaryCapture? commitBoundaryCapture)
+            ClockedCommandBoundaryCapture? commitBoundaryCapture,
+            ClockedCommandSnapshotReuseCandidate? originalSnapshotCandidate,
+            ClockedCommandSnapshotReuseCandidate? linkedSnapshotCandidate)
             => new(ClockGatedResponseKind.Command) {
                 Batch = batch,
                 Acknowledgement = acknowledgement,
@@ -1270,6 +1357,8 @@ public sealed partial class AuthoritativeTcpServer
                 ActualAdmissionTick = actualAdmissionTick,
                 LockWaitStopwatchTicks = lockWaitStopwatchTicks,
                 CommitBoundaryCapture = commitBoundaryCapture,
+                OriginalSnapshotCandidate = originalSnapshotCandidate,
+                LinkedSnapshotCandidate = linkedSnapshotCandidate,
             };
 
         public static ClockGatedResponseWork ClockProbe(
@@ -1299,8 +1388,14 @@ public sealed partial class AuthoritativeTcpServer
 
         public void Release(ClockGatedResponseBudget responseBudget)
         {
-            if (Interlocked.Exchange(ref released, 1) == 0)
-                responseBudget.Release(ResponseWeight);
+            if (Interlocked.Exchange(ref released, 1) == 0) {
+                try {
+                    responseBudget.Release(ResponseWeight);
+                } finally {
+                    OriginalSnapshotCandidate?.ReleaseOriginal();
+                    LinkedSnapshotCandidate?.ReleaseLinked();
+                }
+            }
         }
     }
 }
