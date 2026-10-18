@@ -547,7 +547,7 @@ public sealed partial class AuthoritativeTcpServer
             } else {
                 // The scheduler has already persisted this receipt. Capture the
                 // command response projection as one cohort boundary before writing it.
-                cohortCapture = CaptureClockedCohortSnapshotPoll(
+                cohortCapture = await CaptureClockedCohortSnapshotPollAsync(
                     sessionId,
                     entityId,
                     connectionOrdinal,
@@ -662,11 +662,19 @@ public sealed partial class AuthoritativeTcpServer
         try {
             // Serialize the reply with authority publication: wait for any in-flight
             // cohort write, then suppress the response if that publication fenced the host.
-            var schedulingClockTick = commandServer.WithSynchronizedState(() => {
-                RequireClockedTransportActive(true, pipelineCancellationToken);
-                RequireCohortHealthy();
-                return Math.Max(clock.CurrentTick, commandServer.CurrentTick);
-            });
+            ulong schedulingClockTick;
+            IDisposable? authorityTurn = await EnterCohortAuthorityTurnAsync(
+                pipelineCancellationToken,
+                classifyClockedTransportFailure: true);
+            try {
+                schedulingClockTick = commandServer.WithSynchronizedState(() => {
+                    RequireClockedTransportActive(true, pipelineCancellationToken);
+                    RequireCohortHealthy();
+                    return Math.Max(clock.CurrentTick, commandServer.CurrentTick);
+                });
+            } finally {
+                authorityTurn?.Dispose();
+            }
             await WriteClockedTransportEnvelopeAsync(
                 stream,
                 new Envelope {
@@ -726,7 +734,7 @@ public sealed partial class AuthoritativeTcpServer
                     classifyClockedTransportFailure: true,
                     hostCancellationToken: hostCancellationToken);
             } else {
-                var capture = CaptureClockedCohortSnapshotPoll(
+                var capture = await CaptureClockedCohortSnapshotPollAsync(
                     sessionId,
                     entityId,
                     connectionOrdinal,
@@ -780,7 +788,7 @@ public sealed partial class AuthoritativeTcpServer
         return currentTick;
     }
 
-    private ClockedCohortSnapshotPoll CaptureClockedCohortSnapshotPoll(
+    private async ValueTask<ClockedCohortSnapshotPoll> CaptureClockedCohortSnapshotPollAsync(
         string sessionId,
         uint entityId,
         int connectionOrdinal,
@@ -812,38 +820,47 @@ public sealed partial class AuthoritativeTcpServer
             EmitCommandTimingOutsideAuthorityLock();
         }
 
-        var capture = commandServer.WithSynchronizedSession(sessionId, () => {
-            RequireClockedTransportActive(true, cancellationToken);
-            RequireCohortHealthy();
-            try {
-                var tick = AdvanceCurrentTickCore(currentTick);
-                var events = eventProvider?.DrainEvents(sessionId, entityId, tick);
-                if (events is not null)
-                    AuthoritativeEventBatchValidator.Validate(events, tick);
+        ClockedCohortSnapshotPoll capture;
+        long? materializeEndTimestamp;
+        IDisposable? authorityTurn = await EnterCohortAuthorityTurnAsync(
+            cancellationToken,
+            classifyClockedTransportFailure: true);
+        try {
+            capture = commandServer.WithSynchronizedSession(sessionId, () => {
+                RequireClockedTransportActive(true, cancellationToken);
+                RequireCohortHealthy();
+                try {
+                    var tick = AdvanceCurrentTickCore(currentTick);
+                    var events = eventProvider?.DrainEvents(sessionId, entityId, tick);
+                    if (events is not null)
+                        AuthoritativeEventBatchValidator.Validate(events, tick);
 
-                Snapshot? snapshot = null;
-                if (snapshotProvider is not null) {
-                    snapshot = snapshotProvider.CreateSnapshot(sessionId, entityId, tick);
-                    if (snapshot.Tick != tick)
-                        throw new InvalidDataException(
-                            "The clock-gated snapshot tick does not match the captured event boundary.");
-                    var identity = handshake.Identity;
-                    snapshot.ContentManifestHash = identity.ContentManifestHash;
-                    snapshot.RulesetIdentityHash = identity.RulesetIdentityHash;
-                    AuthoritativeSnapshotValidator.Validate(snapshot);
+                    Snapshot? snapshot = null;
+                    if (snapshotProvider is not null) {
+                        snapshot = snapshotProvider.CreateSnapshot(sessionId, entityId, tick);
+                        if (snapshot.Tick != tick)
+                            throw new InvalidDataException(
+                                "The clock-gated snapshot tick does not match the captured event boundary.");
+                        var identity = handshake.Identity;
+                        snapshot.ContentManifestHash = identity.ContentManifestHash;
+                        snapshot.RulesetIdentityHash = identity.RulesetIdentityHash;
+                        AuthoritativeSnapshotValidator.Validate(snapshot);
+                    }
+
+                    PublishCohortCore();
+                    return new ClockedCohortSnapshotPoll(tick, events, snapshot);
+                } catch (Exception failure) {
+                    FenceCohort(failure);
+                    throw;
                 }
+            });
+            materializeEndTimestamp = hasSnapshot && CommandTimingRecorder is not null
+                ? Stopwatch.GetTimestamp()
+                : null;
+        } finally {
+            authorityTurn?.Dispose();
+        }
 
-                PublishCohortCore();
-                return new ClockedCohortSnapshotPoll(tick, events, snapshot);
-            } catch (Exception failure) {
-                FenceCohort(failure);
-                throw;
-            }
-        });
-
-        var materializeEndTimestamp = hasSnapshot && CommandTimingRecorder is not null
-            ? Stopwatch.GetTimestamp()
-            : (long?)null;
         if (hasSnapshot)
             PerformanceRecorder?.Complete(HostPerformanceMetric.SnapshotMaterializeMilliseconds, materialization);
         return new ClockedCohortSnapshotPoll(
@@ -853,6 +870,22 @@ public sealed partial class AuthoritativeTcpServer
             materializeStartTimestamp,
             materializeEndTimestamp,
             snapshotTraceOrdinal);
+    }
+
+    private async ValueTask<IDisposable?> EnterCohortAuthorityTurnAsync(
+        CancellationToken cancellationToken,
+        bool classifyClockedTransportFailure = false)
+    {
+        if (!UseClockGatedCommandScheduling || CohortStore is null)
+            return null;
+
+        try {
+            return await cohortAuthorityTurnGate.EnterAsync(cancellationToken);
+        } catch (OperationCanceledException exception) when (cancellationToken.IsCancellationRequested) {
+            if (classifyClockedTransportFailure)
+                throw new ClockGatedTransportException(exception);
+            throw;
+        }
     }
 
     private sealed record ClockedCohortSnapshotPoll(

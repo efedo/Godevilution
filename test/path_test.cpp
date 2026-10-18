@@ -174,6 +174,43 @@ TEST(PathTest, LongPaths)
 	CheckPath(startingPosition, startingPosition + Displacement { 25, 25 }, {});
 }
 
+TEST(PathTest, CapturedWalkRetainsBlockedEndpoint)
+{
+	int8_t path[24];
+	const Point destination { 10, 8 };
+	const int length = FindPath(
+	    [&](Point, Point next) {
+		    EXPECT_NE(next, destination);
+		    return true;
+	    },
+	    [&](Point next) { return next != destination; },
+	    { 8, 8 }, destination, path, std::size(path));
+	EXPECT_THAT(std::span<const int8_t>(path, length), ElementsAreArray(std::array<int8_t, 2> { 3, 3 }));
+}
+
+TEST(PathTest, CapturedWalkObstacleUsesUpperCoordinateTieBreak)
+{
+	int8_t path[24];
+	const int length = FindPath(
+	    [](Point, Point) { return true; },
+	    [](Point next) { return next != Point { 9, 8 }; },
+	    { 8, 8 }, { 10, 8 }, path, std::size(path));
+	EXPECT_THAT(std::span<const int8_t>(path, length), ElementsAreArray(std::array<int8_t, 2> { 6, 7 }));
+}
+
+TEST(PathTest, CapturedWalkCallerPreventsDiagonalCornerCrossing)
+{
+	int8_t path[24];
+	const auto open = [](Point next) { return next != Point { 9, 8 }; };
+	const int length = FindPath(
+	    [&](Point from, Point to) {
+		    return from.x == to.x || from.y == to.y
+		        || (open({ to.x, from.y }) && open({ from.x, to.y }));
+	    },
+	    open, { 8, 8 }, { 9, 9 }, path, std::size(path));
+	EXPECT_THAT(std::span<const int8_t>(path, length), ElementsAreArray(std::array<int8_t, 2> { 4, 3 }));
+}
+
 TEST(PathTest, FindClosest)
 {
 	{

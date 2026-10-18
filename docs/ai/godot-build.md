@@ -4,6 +4,44 @@ The checked-in presentation project pins `Godot.NET.Sdk/4.7.1`. Godot is not ass
 installed on every development machine, and repository tests that do not render
 the client must remain runnable without it.
 
+## Native Cathedral L1-L4 headless progression
+
+Compile the separate `--native-cathedral-depth-progression` profile using the
+same explicit metadata, runtime, footprint, geometry and four seeds described
+below. Its format3 profile selects
+`devilution.diablo.cathedral-native-depth-progression.v1` and cohort v10;
+the existing L1/L2 profile and v1-v9 save contracts retain their behavior.
+The codec reuses schema metadata and exact geometry JSON after comparing all
+values against private detached copies. Full validation, checkpoint bytes and
+durable publication remain unchanged; the geometry cache applies only to v10.
+
+The adapter negotiates server-owned destination walking. A receipt accepts the
+captured native path; movement starts at the next player scheduling boundary.
+The pending-path projection keeps a Stand acknowledgement from ending the
+acceptance wait before the queued walk has finished.
+Replacement clicks, hit recovery, healing and mid-walk cohort restore retain
+native queue rules. Older adapters and explicit unflagged commands keep their
+existing one-step behavior. `NativeDepthWalkResumeTests` in the existing server
+xUnit project verifies one TCP command across two committed steps and an exact
+fresh-host mid-walk continuation. Set `GODEVILUTION_NATIVE_DEPTH_WALK_PROFILE_ROOT`
+to this compiled profile and explicitly select that test class.
+
+```powershell
+pwsh -NoProfile -File tools/test-godot-native-depth-progression.ps1 -ProfileDirectory D:\Programming\native-depth-progression -GodotExecutable D:\Programming\Godot\Godot.exe -ServerBuildConfiguration Release
+```
+
+The journey requires actual L1 earned equipment/Gold and Pepin supplies, then
+ordinary entry and accepted bow combat with XP and a retained corpse on L2-L4.
+Optional encounter-area drop IDs do not claim a unique source or require a drop.
+Save in Town; a preserved copy resumes with fresh processes and compares the
+exact player, RNG, command cursor and complete four-floor world before input.
+Revisit all four floors and return to Town with retained geometry, claimed gear
+and recorded corpses. Unsupported native population is refused without omitting
+actors. The format3 item sidecar also admits Full Rejuvenation and the native
+spell-scroll requirements/actions while retaining the older profiles' exact
+semantic tables. This route does not close quests, campaign seeds or rendered
+acceptance.
+
 ## Native Town/L1/L2 headless acceptance
 
 Compile a separate profile with `Cathedral.Playtest --native-cathedral-progression`

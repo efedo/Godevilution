@@ -9,9 +9,11 @@ namespace Devilution.Diablo.Tests;
 public sealed partial class AuthoritativeCathedralNativePopulationIntegrationTests
 {
     [Theory(Explicit = true)]
-    [InlineData(false)]
-    [InlineData(true)]
-    public void NativePepinPurchasesSurviveFreshProgressionCohort(bool pinned)
+    [InlineData(false, false)]
+    [InlineData(true, false)]
+    [InlineData(false, true)]
+    [InlineData(true, true)]
+    public void NativePepinPurchasesSurviveFreshProgressionCohort(bool pinned, bool depthProgression)
     {
         using var setup = CreateSarcophagusSetup(captureOptions: false, progressionSemantics: true);
         Assert.NotNull(setup);
@@ -32,8 +34,9 @@ public sealed partial class AuthoritativeCathedralNativePopulationIntegrationTes
             content = Devilution.Data.ComposedContent.Compose(new Devilution.Data.ContentManifest(
                 content.Manifest.Id, content.Manifest.Version, packs));
         }
-        var activation = DiabloModule.Instance.CathedralNativeProgressionContentBootstrap
-            .ActivateNativeProgression(content, 0x13579BDF);
+        var activation = depthProgression
+            ? DiabloModule.Instance.CathedralNativeDepthProgressionContentBootstrap.ActivateNativeDepthProgression(content, 0x13579BDF)
+            : DiabloModule.Instance.CathedralNativeProgressionContentBootstrap.ActivateNativeProgression(content, 0x13579BDF);
         var simulation = activation.Simulation;
         Assert.True(activation.TownerGreetings!.TryGet(1, out var pepin));
         var adjacent = new[] { (X: 1, Y: 0), (X: 0, Y: 1), (X: -1, Y: 0), (X: 0, Y: -1) }

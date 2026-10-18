@@ -13,6 +13,10 @@ public sealed class ClientCommandTimingEvidenceWriterTests
     [InlineData(false, "CathedralNativeProgressionJourney")]
     [InlineData(true, "CathedralNativeProgressionResume")]
     [InlineData(false, "CathedralNativeProgressionResume")]
+    [InlineData(true, "CathedralNativeDepthProgressionJourney")]
+    [InlineData(false, "CathedralNativeDepthProgressionJourney")]
+    [InlineData(true, "CathedralNativeDepthProgressionResume")]
+    [InlineData(false, "CathedralNativeDepthProgressionResume")]
     public void WritesHonestOutcomeAndDetachedReport(bool passed, string phase)
     {
         using var directory = new EvidenceDirectory();

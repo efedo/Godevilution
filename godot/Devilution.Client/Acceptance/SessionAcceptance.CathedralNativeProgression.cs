@@ -12,7 +12,7 @@ public partial class SessionAcceptance
         string L1GeometryHash, string L2GeometryHash,
         NativeEquipmentKillEvidence L1,
         NativeProgressionGoldCollection L1Gold,
-        NativeProgressionL2CombatEvidence L2,
+        NativeProgressionCombatEvidence L2,
         NativeProgressionHealerStock HealerStock);
 
     private sealed record NativeProgressionHealerStock(string[] ItemRowsBase64, string Hash);
@@ -221,7 +221,7 @@ public partial class SessionAcceptance
         var doors = new HashSet<uint>();
         var doorEvidence = new List<NativeDoorOperationEvidence>();
         var doorCommands = new Dictionary<uint, int>();
-        var work = new NativeCombatWorkBudget(enforceCumulativeTargetLimit: IsNativeProgressionL2(main));
+        var work = new NativeCombatWorkBudget(enforceCumulativeTargetLimit: IsNativeProgressionCombatFloor(main));
         await MoveAdjacentToNativePosition(main, _ => new ObjectSnapshot {
             LevelId = initial.LevelId, PositionX = stair.TriggerX, PositionY = stair.TriggerY,
         }, async blocked => {
@@ -233,15 +233,20 @@ public partial class SessionAcceptance
                 await UseNativeHealingPotionIfNeeded(main);
                 return true;
             }
+            var routeBlocker = blocked
+                ? FindNativeDepthProgressionStairBlocker(snapshot, stair.TriggerX, stair.TriggerY) : null;
             var threat = snapshot.Monsters.Where(row => row.LevelId == player.LevelId && row.Alive
                     && !row.IsPlayerMinion && !visited.Contains(row.EntityId)
-                    && NativeMonsterDistance(player, row) <= 5
+                    && (NativeMonsterDistance(player, row) <= 5 || row.EntityId == routeBlocker)
                     && HasNativeRangedLaneWithinApproach(main, snapshot, player, row,
                         NativeMaximumRangedApproachCommands))
                 .OrderBy(row => NativeMonsterDistance(player, row)).ThenBy(row => row.EntityId).FirstOrDefault();
             if (threat is not null) {
+                var distantRouteBlocker = threat.EntityId == routeBlocker && NativeMonsterDistance(player, threat) > 5;
                 var killed = await DefeatNativeTargetAsync(main, threat.EntityId,
-                    NativeGearHuntMaximumAttacksPerTarget, player.PositionX, player.PositionY, work,
+                    NativeGearHuntMaximumAttacksPerTarget,
+                    distantRouteBlocker ? threat.PositionX : player.PositionX,
+                    distantRouteBlocker ? threat.PositionY : player.PositionY, work,
                     collectGeneratedHealing: true);
                 if (killed is not null) {
                     visited.Add(killed.MonsterEntityId);
@@ -249,6 +254,8 @@ public partial class SessionAcceptance
                     await CollectNearbyNativeHealingDropsAsync(main, killed.DropEntityIds);
                     await UseNativeHealingPotionIfNeeded(main);
                 } else work.ConsumeExploration("reselect native stair-route threat");
+                await WaitForNativeDepthProgressionCommandBoundary(main,
+                    $"after stair-route combat or threat reselection for L{destination}");
                 return true;
             }
             work.ConsumeExploration("walk or open native stair route");
@@ -324,7 +331,7 @@ public partial class SessionAcceptance
         var visited = earnedL1.Kills.Select(kill => kill.MonsterEntityId).ToHashSet();
         var approachKills = earnedL1.Kills.ToList();
         var originalKillCount = approachKills.Count;
-        var work = new NativeCombatWorkBudget(enforceCumulativeTargetLimit: IsNativeProgressionL2(main));
+        var work = new NativeCombatWorkBudget(enforceCumulativeTargetLimit: IsNativeProgressionCombatFloor(main));
         var pickups = new List<NativeProgressionGoldPickupEvidence>();
         while (pickups.Count < maximumPickups) {
             var snapshot = main.ObservedSnapshot!;

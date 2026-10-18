@@ -46,6 +46,7 @@ set(tests
   player_test
   player_animation_context_test
   player_command_phase_test
+  player_destination_walk_test
   portal_test
   quests_test
   world_renderer_test

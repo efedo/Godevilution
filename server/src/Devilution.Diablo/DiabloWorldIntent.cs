@@ -5,8 +5,8 @@ public abstract record DiabloWorldIntent;
 
 public sealed record DiabloMoveIntent(int DirectionX, int DirectionY) : DiabloWorldIntent;
 
-/** Finds and applies one deterministic step toward a native walk target. */
-public sealed record DiabloMoveToIntent(int TargetX, int TargetY) : DiabloWorldIntent;
+/** Finds and applies one deterministic step, or captures an opt-in native path queue. */
+public sealed record DiabloMoveToIntent(int TargetX, int TargetY, bool FollowPath = false) : DiabloWorldIntent;
 
 public sealed record DiabloUsePortalIntent(uint PortalId) : DiabloWorldIntent;
 

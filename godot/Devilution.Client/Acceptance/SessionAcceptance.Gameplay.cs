@@ -220,8 +220,8 @@ public partial class SessionAcceptance
     }
 
     private static bool Settled(Main main)
-        => main.ObservedPendingCommandCount == 0
-            && main.ObservedSnapshot?.Players.Single() is { CurrentAction: null, CombatMode: PlayerCombatMode.Stand };
+        => main.ObservedSnapshot?.Players.Single() is { } player
+            && AuthoritativePlayerSettlement.IsSettled(player, main.ObservedPendingCommandCount);
 
     private async Task AcceptedAndSettled(Main main, ulong previousSequence, string action,
         Action<Snapshot>? observe = null)

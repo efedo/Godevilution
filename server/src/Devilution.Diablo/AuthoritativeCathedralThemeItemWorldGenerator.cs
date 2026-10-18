@@ -274,9 +274,9 @@ public static class AuthoritativeCathedralThemeItemWorldGenerator
     {
         ArgumentNullException.ThrowIfNull(request);
         ValidateRequest(request);
-        if (currentLevel is < 1 or > 2 || currentLevel != request.Policy.Depth
+        if (currentLevel is < 1 or > 4 || currentLevel != request.Policy.Depth
             || request.Policy.Hellfire || request.Policy.SetLevel)
-            throw new InvalidDataException("Native useful placement requires ordinary Cathedral depth 1 or 2.");
+            throw new InvalidDataException("Native useful placement requires ordinary Cathedral depths 1 through 4.");
 
         // CreateRndUseful returns immediately when AllocateItem cannot proceed;
         // unlike CreateRndItem, it consumes no selector RNG first.

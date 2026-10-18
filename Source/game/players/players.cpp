@@ -4249,6 +4249,20 @@ void PlayDungMsgs()
 }
 
 #ifdef BUILD_TESTING
+// Runs only the native walking scheduling/animation slice, without world or UI updates.
+void TestPlayerProcessDestinationWalkTick(Player &player)
+{
+	bool completed;
+	do {
+		completed = player._pmode == PM_WALK_NORTHWARDS
+		        || player._pmode == PM_WALK_SOUTHWARDS
+		        || player._pmode == PM_WALK_SIDEWAYS;
+		completed = completed && DoWalk(player);
+		CheckNewPath(player, completed);
+	} while (completed);
+	player.animInfo.processAnimation();
+}
+
 void TestPlayerCheckNewPath(Player &player)
 {
 	CheckNewPath(player, false);

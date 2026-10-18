@@ -2,6 +2,13 @@
 
 Notable changes to this fork are recorded below.
 
+- 2026-10-18: Add opt-in native L1-L4 owners/content and cohort v10, with
+  negotiated native destination walking, replacement/cancellation and exact
+  mid-walk fresh-host continuation. Project queued-path state so a Stand
+  acknowledgement cannot finish the acceptance wait early. Preserve older
+  profiles and absent-extension checkpoint bytes. Native and focused tests pass; the full four-floor Godot
+  combat/retention gate remains open after an L3 combat death.
+
 - 2026-10-17: Add negotiated clock-only probes with physical scheduling samples,
   keeping gameplay snapshots separate from command-clock calibration. Retain
   legacy peers, admission rules, response ordering and publication failure fences.
@@ -11,6 +18,8 @@ Notable changes to this fork are recorded below.
   the authority lock, retaining durable publication and post-lock tick sampling.
   Count delivered full snapshots toward negotiated polling cadence and give
   queued input priority when registering another ordinary snapshot request.
+  Extend cohort FIFO turns to snapshot capture, probes and pre-write health
+  checks; release each turn before diagnostics or network backpressure.
 
 - 2026-10-16: Integrate an explicit native Town/L1/L2 first-entry route with
   lazy per-floor native owners and opt-in cohort v9 mutation retention, preserving

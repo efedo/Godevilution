@@ -315,6 +315,134 @@ public sealed class ClockGatedCohortSnapshotPollTests
         }
     }
 
+    [Fact]
+    public async Task QueuedOrdinarySnapshotCapturePrecedesNextPeriodicPublication()
+    {
+        var root = NewRoot();
+        var adapter = new SnapshotPollAdapter();
+        var clock = new MutableClock(FixedTick);
+        var store = new AuthoritativeCohortStore(root);
+        var server = CreateServer(adapter, clock, store);
+        var periodicPublicationEntered = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+        var nextPublication = new TaskCompletionSource<(int Snapshots, int EventDrains)>(
+            TaskCreationOptions.RunContinuationsAsynchronously);
+        using var releasePeriodicPublication = new ManualResetEventSlim();
+        var publicationNumber = 0;
+        try {
+            server.Start();
+            using var timeout = CreateTimeout();
+            using var client = new TcpClient();
+            await client.ConnectAsync(IPAddress.Loopback, server.Port, timeout.Token);
+            await using var stream = client.GetStream();
+            await ReadHandshakeAsync(stream, hasSnapshot: true, timeout.Token);
+
+            var snapshotsBefore = adapter.SnapshotCount;
+            var eventDrainsBefore = adapter.EventDrainCount;
+            store.PublicationObserver = (phase, _) => {
+                if (phase != AuthoritativePublicationPhase.BeforeStageWrite)
+                    return;
+                var currentPublication = Interlocked.Increment(ref publicationNumber);
+                if (currentPublication == 1) {
+                    periodicPublicationEntered.TrySetResult(true);
+                    if (!releasePeriodicPublication.Wait(TimeSpan.FromSeconds(5)))
+                        throw new TimeoutException("The test did not release the held periodic publication.");
+                } else if (currentPublication == 2) {
+                    nextPublication.TrySetResult((adapter.SnapshotCount, adapter.EventDrainCount));
+                }
+            };
+
+            clock.Set(FixedTick + 1);
+            await periodicPublicationEntered.Task.WaitAsync(timeout.Token);
+            await SendSnapshotRequestAsync(stream, timingRequestId: 81, timeout.Token);
+            await WaitUntilAsync(
+                () => server.AuthorityTurnGateForTests.QueuedWaiterCount == 1,
+                timeout.Token);
+
+            // The ordinary snapshot is already ahead of the next timer turn in the FIFO.
+            clock.Set(FixedTick + 2);
+            releasePeriodicPublication.Set();
+            var capturedAtNextPublication = await nextPublication.Task.WaitAsync(timeout.Token);
+            Assert.Equal(snapshotsBefore + 1, capturedAtNextPublication.Snapshots);
+            Assert.Equal(eventDrainsBefore + 1, capturedAtNextPublication.EventDrains);
+
+            var snapshot = await ReadRequiredEnvelopeAsync(stream, timeout.Token);
+            Assert.Equal(Envelope.PayloadOneofCase.Snapshot, snapshot.PayloadCase);
+            Assert.Equal(FixedTick + 2, snapshot.Snapshot.Tick);
+            var timing = await ReadRequiredEnvelopeAsync(stream, timeout.Token);
+            Assert.Equal(Envelope.PayloadOneofCase.TimingReply, timing.PayloadCase);
+            Assert.Equal(81UL, timing.TimingReply.RequestId);
+        } finally {
+            releasePeriodicPublication.Set();
+            await DisposeServerAsync(server, expectedFailure: null);
+            DeleteRoot(root);
+        }
+    }
+
+    [Fact]
+    public async Task PreWireAuthorityTurnIsReleasedBeforeBlockedSocketWrite()
+    {
+        var root = NewRoot();
+        var adapter = new SnapshotPollAdapter();
+        var clock = new FixedClock(FixedTick);
+        var store = new AuthoritativeCohortStore(root);
+        var slowWriteEntered = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+        var slowWriteCanceled = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+        var releaseSlowWrite = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+        var firstWriteClaimed = 0;
+        var server = CreateServer(
+            adapter,
+            clock,
+            store,
+            clockGatedTransportDecorator: stream => new SignalStream(
+                stream,
+                () => false,
+                () => { },
+                () => Interlocked.CompareExchange(ref firstWriteClaimed, 1, 0) == 0,
+                () => slowWriteEntered.TrySetResult(true),
+                () => slowWriteCanceled.TrySetResult(true),
+                releaseSlowWrite.Task));
+        Task<Envelope?>? slowReplyRead = null;
+        var serverDisposed = false;
+        try {
+            server.Start();
+            using var timeout = CreateTimeout();
+            using var slowClient = new TcpClient();
+            await slowClient.ConnectAsync(IPAddress.Loopback, server.Port, timeout.Token);
+            await using var slowStream = slowClient.GetStream();
+            await ReadHandshakeAsync(slowStream, hasSnapshot: true, timeout.Token, "slow-writer");
+
+            using var fastClient = new TcpClient();
+            await fastClient.ConnectAsync(IPAddress.Loopback, server.Port, timeout.Token);
+            await using var fastStream = fastClient.GetStream();
+            await ReadHandshakeAsync(fastStream, hasSnapshot: true, timeout.Token, "fast-writer");
+
+            await SendClockProbeAsync(slowStream, requestId: 91, timeout.Token);
+            slowReplyRead = EnvelopeCodec.ReadAsync(slowStream, timeout.Token).AsTask();
+            await slowWriteEntered.Task.WaitAsync(timeout.Token);
+
+            // A second lane must pass the same pre-wire barrier while the first lane is
+            // suspended inside Stream.WriteAsync, proving the turn is not held over I/O.
+            await SendClockProbeAsync(fastStream, requestId: 92, timeout.Token);
+            var fastReply = await ReadRequiredEnvelopeAsync(fastStream, timeout.Token);
+            Assert.Equal(Envelope.PayloadOneofCase.TimingReply, fastReply.PayloadCase);
+            Assert.Equal(92UL, fastReply.TimingReply.RequestId);
+            Assert.Equal(FixedTick, fastReply.TimingReply.ServerSchedulingClockTick);
+
+            // A clean client EOF intentionally preserves queued responses. Stop the host
+            // to exercise cancellation of the blocked write through its linked token.
+            await DisposeServerAsync(server, expectedFailure: null);
+            serverDisposed = true;
+            await slowWriteCanceled.Task.WaitAsync(timeout.Token);
+            _ = await Record.ExceptionAsync(async () =>
+                await slowReplyRead!.WaitAsync(timeout.Token));
+        } finally {
+            releaseSlowWrite.TrySetResult(true);
+            if (!serverDisposed)
+                await DisposeServerAsync(server, expectedFailure: null);
+            DeleteRoot(root);
+        }
+    }
+
     [Theory]
     [InlineData(PollFailure.InvalidEventBatch)]
     [InlineData(PollFailure.InvalidSnapshot)]
@@ -396,7 +524,7 @@ public sealed class ClockGatedCohortSnapshotPollTests
             adapter,
             clock,
             store,
-            clockGatedTransportDecorator: stream => new ReadSignalStream(
+            clockGatedTransportDecorator: stream => new SignalStream(
                 stream,
                 () => Volatile.Read(ref observeProbeRead) != 0,
                 () => probeRead.TrySetResult(true)));
@@ -694,10 +822,14 @@ public sealed class ClockGatedCohortSnapshotPollTests
         Publication,
     }
 
-    private sealed class ReadSignalStream(
+    private sealed class SignalStream(
         Stream inner,
         Func<bool> isArmed,
-        Action onRead) : Stream
+        Action onRead,
+        Func<bool>? shouldBlockWrite = null,
+        Action? onWriteBlocked = null,
+        Action? onWriteCanceled = null,
+        Task? releaseWrite = null) : Stream
     {
         public override bool CanRead => inner.CanRead;
         public override bool CanSeek => inner.CanSeek;
@@ -747,13 +879,13 @@ public sealed class ClockGatedCohortSnapshotPollTests
         public override ValueTask WriteAsync(
             ReadOnlyMemory<byte> buffer,
             CancellationToken cancellationToken = default)
-            => inner.WriteAsync(buffer, cancellationToken);
+            => WriteObservedAsync(buffer, cancellationToken);
         public override Task WriteAsync(
             byte[] buffer,
             int offset,
             int count,
             CancellationToken cancellationToken)
-            => inner.WriteAsync(buffer, offset, count, cancellationToken);
+            => WriteObservedAsync(buffer.AsMemory(offset, count), cancellationToken).AsTask();
 
         protected override void Dispose(bool disposing)
         {
@@ -767,7 +899,22 @@ public sealed class ClockGatedCohortSnapshotPollTests
             if (read > 0 && isArmed())
                 onRead();
         }
+
+        private async ValueTask WriteObservedAsync(ReadOnlyMemory<byte> buffer, CancellationToken cancellationToken)
+        {
+            if (shouldBlockWrite?.Invoke() == true) {
+                onWriteBlocked?.Invoke();
+                try {
+                    await (releaseWrite ?? throw new InvalidOperationException("A blocked write needs a release task.")).WaitAsync(cancellationToken);
+                } catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested) {
+                    onWriteCanceled?.Invoke();
+                    throw;
+                }
+            }
+            await inner.WriteAsync(buffer, cancellationToken);
+        }
     }
+
     private sealed class FixedClock(ulong tick) : IAuthoritativeClock
     {
         public ulong CurrentTick => tick;

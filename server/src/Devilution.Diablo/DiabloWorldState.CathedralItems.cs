@@ -430,9 +430,14 @@ public sealed partial class DiabloWorldState
                 && IsLegacySpellTemplate(definition, spellSource)))
             return false;
 
+        // Explicit bound scroll semantics must not inherit the legacy Misc21
+        // Identify fallback when both catalog and native binding select None.
+        var boundSpellAction = binding.ItemActionKind == DiabloItemActionKind.None
+            && definition.ItemActionKind == DiabloItemActionKind.None
+            && definition.MiscId == 21 && definition.SpellId > 0
+            && definition.SpellSourceKind == DiabloItemSpellSourceKind.ConsumableItem;
         DiabloItemActionKind? expectedAction = definition.ItemActionKind != DiabloItemActionKind.None
-            ? definition.ItemActionKind
-            : null;
+            || boundSpellAction ? definition.ItemActionKind : null;
         if (expectedAction is null
             && contentItems.TryGetItemActionMetadataByMiscId(definition.MiscId, out var miscAction, out _))
             expectedAction = miscAction;

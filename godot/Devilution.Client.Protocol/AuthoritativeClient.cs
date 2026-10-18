@@ -52,6 +52,7 @@ public sealed class AuthoritativeClient : IAsyncDisposable
     private long? lastTimingProbeRequestMs;
     private long? lastClockOnlyProbeSentMs;
     private bool supportsClockOnlyProbes;
+    private bool supportsTargetCellPathing;
     private bool timingCalibrationReady;
     private int timingCalibrationProbeAttempts;
     private bool timingCalibrationTimedOut;
@@ -88,6 +89,15 @@ public sealed class AuthoritativeClient : IAsyncDisposable
 
     public bool IsClockGatedCommandScheduling
         => commandSchedulingMode == CommandSchedulingMode.ClockGated;
+
+    /** Native target-cell continuation is opt-in per negotiated server connection. */
+    public bool SupportsTargetCellPathing
+    {
+        get {
+            lock (pendingLock)
+                return supportsTargetCellPathing;
+        }
+    }
 
     /** The most recently accepted server identity; retained across reconnects. */
     public AuthoritativeServerIdentity? ServerIdentity { get; private set; }
@@ -158,6 +168,7 @@ public sealed class AuthoritativeClient : IAsyncDisposable
                 timingCalibrationReady = false;
                 timingCalibrationProbeAttempts = 0;
                 timingCalibrationTimedOut = false;
+                supportsTargetCellPathing = false;
             }
             commandSchedulingMode = CommandSchedulingMode.Unspecified;
             supportsClockOnlyProbes = false;
@@ -206,6 +217,17 @@ public sealed class AuthoritativeClient : IAsyncDisposable
                     or CommandSchedulingMode.Immediate
                     or CommandSchedulingMode.ClockGated))
                 throw new InvalidDataException("The server returned an unknown command scheduling mode.");
+
+            var peerSupportsTargetCellPathing = hello.ServerHello.SupportsTargetCellPathing;
+            lock (pendingLock) {
+                if (!peerSupportsTargetCellPathing
+                    && pending.Values.Any(command =>
+                        command.Command.IntentCase == Command.IntentOneofCase.MoveRequested
+                        && command.Command.MoveRequested.FollowPath))
+                    throw new InvalidDataException(
+                        "The resumed server does not support target-cell pathing required by a pending command.");
+                supportsTargetCellPathing = peerSupportsTargetCellPathing;
+            }
 
             SessionToken = hello.ServerHello.SessionToken;
             ServerTickRateHz = hello.ServerHello.TickRateHz == 0 ? 20 : hello.ServerHello.TickRateHz;
@@ -347,7 +369,13 @@ public sealed class AuthoritativeClient : IAsyncDisposable
             var sequence = checked(++nextClientSequence);
             command.ClientSequence = sequence;
             command.RequestedTick = requestedTick;
-            pending.Add(sequence, new PendingCommand(command.Clone(), observedTick));
+            var queuedCommand = command.Clone();
+            if (observedTick.HasValue
+                && supportsTargetCellPathing
+                && queuedCommand.IntentCase == Command.IntentOneofCase.MoveRequested
+                && queuedCommand.MoveRequested.TargetCell)
+                queuedCommand.MoveRequested.FollowPath = true;
+            pending.Add(sequence, new PendingCommand(queuedCommand, observedTick));
             return sequence;
         }
     }

@@ -312,6 +312,7 @@ public sealed partial class AuthoritativeTcpServer
             serverHello.CommandSchedulingMode = UseClockGatedCommandScheduling
                 ? CommandSchedulingMode.ClockGated : CommandSchedulingMode.Immediate;
             serverHello.SupportsClockOnlyProbes = UseClockGatedCommandScheduling;
+            serverHello.SupportsTargetCellPathing = SupportsTargetCellPathing;
 
             var tick = commandServer.CurrentTick;
             var snapshot = snapshotProvider?.CreateSnapshot(session.Id, session.EntityId, tick);

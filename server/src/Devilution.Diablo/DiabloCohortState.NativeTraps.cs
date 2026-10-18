@@ -4,7 +4,7 @@ public sealed partial record DiabloCohortState
 {
     private void ValidateNativeTrapShape()
     {
-        if (FormatVersion != NativeTrapFormatVersion && FormatVersion != NativeProgressionFormatVersion) {
+        if (FormatVersion is not (NativeTrapFormatVersion or NativeProgressionFormatVersion or NativeDepthProgressionFormatVersion)) {
             if (NativeTraps is not null || Projectiles.Any(value => value?.NativeTrapArrow is not null))
                 throw new InvalidDataException("Native trap state cannot be down-converted to an older cohort.");
             return;
@@ -16,10 +16,11 @@ public sealed partial record DiabloCohortState
                 throw new InvalidDataException("Native trap state is missing its immutable facts.");
             state.ValidateShape();
         }
-        if (FormatVersion != NativeProgressionFormatVersion && CathedralItems?.Levels.Count != 1)
+        if (FormatVersion is not (NativeProgressionFormatVersion or NativeDepthProgressionFormatVersion)
+            && CathedralItems?.Levels.Count != 1)
             throw new InvalidDataException("Native traps require exactly one retained native level.");
-        if (!NativeTraps.SequenceEqual(NativeTraps.OrderBy(value => FormatVersion == NativeProgressionFormatVersion ? value.Facts.LevelId : 0U).ThenBy(value => value.Facts.TrapObjectSlot))
-            || NativeTraps.Select(value => (FormatVersion == NativeProgressionFormatVersion ? value.Facts.LevelId : 0U, value.Facts.TrapObjectSlot)).Distinct().Count() != NativeTraps.Count
+        if (!NativeTraps.SequenceEqual(NativeTraps.OrderBy(value => FormatVersion is NativeProgressionFormatVersion or NativeDepthProgressionFormatVersion ? value.Facts.LevelId : 0U).ThenBy(value => value.Facts.TrapObjectSlot))
+            || NativeTraps.Select(value => (FormatVersion is NativeProgressionFormatVersion or NativeDepthProgressionFormatVersion ? value.Facts.LevelId : 0U, value.Facts.TrapObjectSlot)).Distinct().Count() != NativeTraps.Count
             || NativeTraps.Select(value => value.Facts.TrapEntityId).Distinct().Count() != NativeTraps.Count
             || Objects.Select(value => value.EntityId).Distinct().Count() != Objects.Count)
             throw new InvalidDataException("Native trap identities must be unique and sorted by raw slot.");

@@ -510,8 +510,8 @@ public static class AuthoritativeCathedralThemeItemGenerator
         ArgumentNullException.ThrowIfNull(catalog);
         ArgumentNullException.ThrowIfNull(policy);
         ValidatePolicy(policy);
-        if (currentLevel is < 1 or > 2 || currentLevel != policy.Depth || policy.SetLevel)
-            throw new InvalidDataException("Native useful contents require ordinary Cathedral depth 1 or 2.");
+        if (currentLevel is < 1 or > 4 || currentLevel != policy.Depth || policy.SetLevel)
+            throw new InvalidDataException("Native useful contents require ordinary Cathedral depths 1 through 4.");
         ValidateInputState(inputItem);
         ValidateUniqueFlags(uniqueItemFlags);
 

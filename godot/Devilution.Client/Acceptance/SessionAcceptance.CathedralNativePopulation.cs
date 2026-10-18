@@ -384,7 +384,7 @@ public partial class SessionAcceptance
         var initialEligibleActorCount = initialEligibleEntityIds.Count;
         var killed = new List<NativeKillEvidence>();
         var visited = new HashSet<uint>();
-        var combatWork = new NativeCombatWorkBudget(enforceCumulativeTargetLimit: IsNativeProgressionL2(main));
+        var combatWork = new NativeCombatWorkBudget(enforceCumulativeTargetLimit: IsNativeProgressionCombatFloor(main));
         var attackRefusals = combatWork.AttackRefusals;
         var completedTargets = 0;
         var reselectionYields = 0;
@@ -548,28 +548,28 @@ public partial class SessionAcceptance
         NativeCombatWorkBudget? combatWorkBudget = null, bool collectGeneratedHealing = false)
     {
         var initial = main.ObservedSnapshot!.Monsters.Single(monster => monster.EntityId == targetId);
-        var progressionL2 = IsNativeProgressionL2(main);
-        Require(!progressionL2 || combatWorkBudget is not null,
+        var progressionCombat = IsNativeProgressionCombatFloor(main);
+        Require(!progressionCombat || combatWorkBudget is not null,
             "Progression L2 target combat requires its bounded shared work context.");
         var initialSnapshot = main.ObservedSnapshot;
-        var baseline = progressionL2
+        var baseline = progressionCombat
             ? combatWorkBudget!.GetTargetBaseline(targetId, initial.LevelId, initialSnapshot)
             : null;
         var experienceBefore = baseline?.ExperienceBefore ?? initialSnapshot.Players.Single().Experience;
         var playerAtStart = main.ObservedSnapshot.Players.Single();
-        var intendedBow = progressionL2
+        var intendedBow = progressionCombat
             ? playerAtStart.Equipment.SingleOrDefault(item => item.Slot == 4)
             : null;
-        Require(!progressionL2 || intendedBow is not null && IsNativeProgressionBowUsable(intendedBow),
+        Require(!progressionCombat || intendedBow is not null && IsNativeProgressionBowUsable(intendedBow),
             "Progression L2 native combat requires a usable equipped native bow in slot 4.");
         var startingItems = baseline?.StartingItems ?? initialSnapshot.WorldItems
             .Where(item => item.LevelId == initial.LevelId).Select(item => item.EntityId).ToHashSet();
         var startingCorpses = baseline?.StartingCorpses ?? initialSnapshot.Corpses
             .Where(corpse => corpse.LevelId == initial.LevelId).Select(corpse => corpse.EntityId).ToHashSet();
-        var acceptedShots = progressionL2
+        var acceptedShots = progressionCombat
             ? combatWorkBudget!.AcceptedShotsFor(targetId).ToList()
             : new List<NativeAcceptedShotEvidence>();
-        var localRefusals = progressionL2
+        var localRefusals = progressionCombat
             ? combatWorkBudget!.RefusalsFor(targetId).ToList()
             : new List<NativeAttackRefusalEvidence>();
         Require(lootX.HasValue == lootY.HasValue, "Native optional-threat scope requires both loot coordinates.");
@@ -595,7 +595,7 @@ public partial class SessionAcceptance
                 + $"refusals=[{string.Join(";", localRefusals)}].");
             combatWorkBudget?.Consume(targetId, attacks);
             await UseNativeHealingPotionIfNeeded(main);
-            if (progressionL2 && !await WaitForNativeProgressionAttackReadyAsync(
+            if (progressionCombat && !await WaitForNativeProgressionAttackReadyAsync(
                     main, targetId, initial.LevelId, intendedBow!, System.Diagnostics.Stopwatch.StartNew()))
                 break;
             var attackTile = await ApproachNativeRangedTargetAsync(main, targetId, lootX, lootY);
@@ -616,7 +616,7 @@ public partial class SessionAcceptance
                 return null;
             if (HasCloserNativeThreat(main, beforeSnapshot, livePlayer, liveTarget, lootX, lootY))
                 return null;
-            if (progressionL2) {
+            if (progressionCombat) {
                 var targetTile = ProjectedNativeTargetTile(liveTarget);
                 var attackGeometry = DepthGeometry(main, livePlayer.LevelId);
                 var attackBlockedCells = attackGeometry.MissileBlockedCells.ToHashSet();
@@ -640,7 +640,7 @@ public partial class SessionAcceptance
                 + $"player=({livePlayer.PositionX},{livePlayer.PositionY}), target=({attackTile.Value.X},{attackTile.Value.Y}), "
                 + $"screen=({clickProjection.Point.X:F1},{clickProjection.Point.Y:F1}), "
                 + $"worldArea={clickProjection.Bounds}.");
-            if (progressionL2) {
+            if (progressionCombat) {
                 var previousReceipt = main.ObservedCommandResult;
                 Require(main.ObservedPendingCommandCount == 0
                     && previousReceipt is not null
@@ -656,9 +656,9 @@ public partial class SessionAcceptance
                     continue;
             }
             var expectedSequence = checked(beforeSequence + 1);
-            var attemptClock = progressionL2 ? System.Diagnostics.Stopwatch.StartNew() : null;
+            var attemptClock = progressionCombat ? System.Diagnostics.Stopwatch.StartNew() : null;
             await ClickWorld(main, attackTile.Value.X, attackTile.Value.Y, MouseButton.Right);
-            if (progressionL2) {
+            if (progressionCombat) {
                 if (main.ObservedLastQueuedSequence != expectedSequence
                     && main.ObservedCommandResult?.ClientSequence != expectedSequence) {
                     throw new InvalidOperationException(
@@ -753,9 +753,9 @@ public partial class SessionAcceptance
             && main.ObservedSnapshot.Players.Single().Experience > experienceBefore,
             $"Native target {targetId} did not publish its corpse and ordinary XP reward.", 10);
         var corpse = main.ObservedSnapshot!.Corpses.Single(item => item.EntityId == targetId);
-        Require(!progressionL2 || acceptedShots.Any(shot => shot.TargetEntityId == targetId),
+        Require(!progressionCombat || acceptedShots.Any(shot => shot.TargetEntityId == targetId),
             $"Native target {targetId} produced a corpse and XP without an accepted ordinary shot aimed at it.");
-        var encounterCorpses = progressionL2
+        var encounterCorpses = progressionCombat
             ? main.ObservedSnapshot.Corpses.Where(item => item.LevelId == corpse.LevelId
                     && !startingCorpses.Contains(item.EntityId)
                     && NativeDistance(item.PositionX, item.PositionY, corpse.PositionX, corpse.PositionY)
@@ -764,7 +764,7 @@ public partial class SessionAcceptance
                     item.PositionX, item.PositionY)).ToArray()
             : [new NativeEncounterCorpseEvidence(corpse.EntityId, corpse.LevelId,
                 corpse.PositionX, corpse.PositionY)];
-        var dropEntityIds = progressionL2
+        var dropEntityIds = progressionCombat
             ? main.ObservedSnapshot.WorldItems.Where(item => item.LevelId == corpse.LevelId
                 && !startingItems.Contains(item.EntityId)
                 && encounterCorpses.Any(encounterCorpse => NativeDistance(item.PositionX, item.PositionY,
@@ -776,10 +776,10 @@ public partial class SessionAcceptance
                 && !startingItems.Contains(item.EntityId)).Select(item => item.EntityId).ToArray();
         return new NativeKillEvidence(targetId, initial.MonsterId, experienceBefore,
             main.ObservedSnapshot!.Players.Single().Experience, corpse.PositionX, corpse.PositionY,
-            progressionL2 ? acceptedShots[^1].Sequence : main.ObservedCommandResult!.ClientSequence,
+            progressionCombat ? acceptedShots[^1].Sequence : main.ObservedCommandResult!.ClientSequence,
             dropEntityIds, encounterCorpses,
             acceptedShots.ToArray(), localRefusals.ToArray(),
-            progressionL2 ? "EncounterAreaCandidates" : "TargetCorpse");
+            progressionCombat ? "EncounterAreaCandidates" : "TargetCorpse");
     }
 
     private async Task<CommandResult> AwaitNativeProgressionAttackReceiptAsync(
@@ -936,8 +936,10 @@ public partial class SessionAcceptance
 
             if (movement == maximumMovementCommands)
                 break;
+            var destinationWalk = UsesNativeDestinationWalk(main, player.LevelId);
             var step = FindNativeRangedLaneStep(main, snapshot, player, target, geometry,
-                missileBlockedCells, currentThreatClearance, maximumMovementCommands - movement);
+                missileBlockedCells, currentThreatClearance, maximumMovementCommands - movement,
+                destinationWalk);
             if (step is null && hasClearShot)
                 return targetTile;
             if (step is null)
@@ -961,7 +963,9 @@ public partial class SessionAcceptance
                     $"The next ordinary native movement step ({step.Value.X},{step.Value.Y}) is outside the current viewport. "
                     + DescribeNativeAttackSnapshot(snapshot, targetId));
             await Click(main.ObservedTileScreenPosition(step.Value.X, step.Value.Y), walk: true);
-            await AcceptedAndSettled(main, previousSequence, "Take one ordinary step toward a native ranged lane");
+            await AcceptedAndSettled(main, previousSequence, destinationWalk
+                ? "Walk to the selected native ranged lane"
+                : "Take one ordinary step toward a native ranged lane");
             await UseNativeHealingPotionIfNeeded(main);
             var after = main.ObservedSnapshot!.Players.Single();
             var settledPosition = (after.PositionX, after.PositionY);
@@ -971,6 +975,11 @@ public partial class SessionAcceptance
                     lowHealthEscapeStepUsed = true;
             } else if (settledPosition == previousPosition) {
                 unchangedMoves++;
+            } else if (destinationWalk) {
+                // Native A* may differ from this lane search, and a blocked Stand
+                // snapshot may still carry queued directions. Reassess here; the next
+                // click replaces any remaining queue within the original command bound.
+                unchangedMoves = 0;
             } else {
                 throw new InvalidOperationException(
                     $"An ordinary native approach step settled at ({after.PositionX},{after.PositionY}), "
@@ -1033,7 +1042,8 @@ public partial class SessionAcceptance
         LevelGeometrySnapshot geometry,
         IReadOnlySet<int> missileBlockedCells,
         long currentThreatClearance,
-        int maximumSteps)
+        int maximumSteps,
+        bool destinationWalk = false)
     {
         var start = (X: player.PositionX, Y: player.PositionY);
         var queue = new Queue<(int X, int Y, int Steps)>();
@@ -1100,7 +1110,22 @@ public partial class SessionAcceptance
             pathPosition = parent;
         }
         path.Reverse();
-        return path.Count == 0 ? null : path[0];
+        if (path.Count == 0)
+            return null;
+        if (destinationWalk) {
+            for (var index = path.Count - 1; index >= 0; index--) {
+                if (IsNativeMovementStepInViewport(main, path[index].X, path[index].Y))
+                    return path[index];
+            }
+        }
+        return path[0];
+    }
+
+    private static bool UsesNativeDestinationWalk(Main main, uint levelId)
+    {
+        var phase = System.Environment.GetEnvironmentVariable("GODEVILUTION_ACCEPTANCE_PHASE");
+        return levelId is 3 or 4
+            && phase is "CathedralNativeDepthProgressionJourney" or "CathedralNativeDepthProgressionResume";
     }
 
     private async Task<bool> AdvanceTowardReachableNativeDoor(
@@ -1698,9 +1723,15 @@ public partial class SessionAcceptance
         }
         var result = main.ObservedCommandResult;
         var after = main.ObservedSnapshot!.Players.Single();
-        var progressionL2 = IsNativeProgressionL2(main);
+        var progressionCombat = IsNativeProgressionCombatFloor(main);
+        var phase = System.Environment.GetEnvironmentVariable("GODEVILUTION_ACCEPTANCE_PHASE");
+        var depthProgressionCombat = player.LevelId is >= 1 and <= 4
+            && phase is "CathedralNativeDepthProgressionJourney" or "CathedralNativeDepthProgressionResume";
+        var concurrentCombat = progressionCombat || depthProgressionCombat;
         var exactPotionConsumed = CountNativeHealingItemOccurrences(after, potionStableId, potionSeed) == beforeCount - 1;
-        var lifeOutcomeValid = progressionL2
+        // Damage can arrive between the accepted potion and the settled snapshot.
+        // Combat requires exact accepted consumption and survival, not net life gain.
+        var lifeOutcomeValid = concurrentCombat
             ? beforeLife < player.LifeMaximum && after.Life > 0
             : after.Life > beforeLife;
         Require(result is { ClientSequence: var acknowledgedSequence, Status: CommandStatus.Accepted,
@@ -1712,17 +1743,20 @@ public partial class SessionAcceptance
             + $"matchingItems={beforeCount}->{CountNativeHealingItemOccurrences(after, potionStableId, potionSeed)}, "
             + $"life={beforeLife}->{after.Life}, "
             + $"seed={potionSeed}, stableId={potionStableId}; {DescribeNativeHealingState(main)}.");
-        if (progressionL2)
-            GD.Print($"Native L2 potion accepted: sequence={result!.ClientSequence}, appliedTick={result.AppliedTick}, "
+        if (concurrentCombat)
+            GD.Print($"Native L{player.LevelId} potion accepted: sequence={result!.ClientSequence}, appliedTick={result.AppliedTick}, "
                 + $"observedTick={main.ObservedSnapshot!.Tick}, life={beforeLife}->{after.Life}, "
                 + $"netLifeDelta={after.Life - beforeLife}, exactSeed={potionSeed}, stableId={potionStableId}.");
     }
 
-    private static bool IsNativeProgressionL2(Main main)
+    private static bool IsNativeProgressionCombatFloor(Main main)
     {
         var phase = System.Environment.GetEnvironmentVariable("GODEVILUTION_ACCEPTANCE_PHASE");
-        return main.ObservedSnapshot?.Players.SingleOrDefault()?.LevelId == 2
-            && (phase == "CathedralNativeProgressionJourney" || phase == "CathedralNativeProgressionResume");
+        var level = main.ObservedSnapshot?.Players.SingleOrDefault()?.LevelId;
+        return level == 2
+                && (phase == "CathedralNativeProgressionJourney" || phase == "CathedralNativeProgressionResume")
+            || level is >= 2 and <= 4
+                && (phase == "CathedralNativeDepthProgressionJourney" || phase == "CathedralNativeDepthProgressionResume");
     }
 
     private static bool NativeHealingThresholdReached(Main main)
@@ -1730,7 +1764,7 @@ public partial class SessionAcceptance
         var player = main.ObservedSnapshot!.Players.Single();
         if (player.Life <= 0 || player.LifeMaximum <= 0)
             return false;
-        return IsNativeProgressionL2(main)
+        return IsNativeProgressionCombatFloor(main)
             ? (long)player.Life * 100 <= (long)player.LifeMaximum * 90
             : (long)player.Life * 3 <= (long)player.LifeMaximum * 2;
     }

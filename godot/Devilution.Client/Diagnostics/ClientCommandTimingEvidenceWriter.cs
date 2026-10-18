@@ -26,7 +26,8 @@ internal static class ClientCommandTimingEvidenceWriter
             or "CooperativeJourney" or "CooperativeResume"
             or "CathedralJourney" or "CathedralResume" or "CathedralDepthJourney" or "CathedralDepthResume"
             or "CathedralDoorJourney" or "CathedralDoorResume"
-            or "CathedralNativeProgressionJourney" or "CathedralNativeProgressionResume"))
+            or "CathedralNativeProgressionJourney" or "CathedralNativeProgressionResume"
+            or "CathedralNativeDepthProgressionJourney" or "CathedralNativeDepthProgressionResume"))
             throw new ArgumentException("An explicit non-performance acceptance phase is required.", nameof(evidence));
         if (!Path.IsPathFullyQualified(directory) || !Directory.Exists(directory))
             throw new ArgumentException("An existing absolute evidence directory is required.", nameof(directory));

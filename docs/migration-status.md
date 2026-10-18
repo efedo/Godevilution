@@ -1,6 +1,6 @@
 # Godevilution Migration Status
 
-Status date: 2026-10-16. Estimate baseline: `8c03b365d`; semantic player presentation
+Status date: 2026-10-18. Estimate baseline: `8c03b365d`; semantic player presentation
 follows client-pack baseline `d0f748305`. Interrupted first-publication
 and Windows staging acceptance follows Godot cohort baseline `60f60c8a1` below. M0 session reliability
 landed in `819b73936`, integration remediation in `818f63f32`, and application
@@ -43,6 +43,24 @@ No client-side gameplay authority is implied by incomplete server coverage:
 unsupported behavior is a migration gap, not permission for local simulation.
 
 ## Current delivery position and verification limits
+
+The explicit native L1-L4 candidate has reviewed lazy floor owners, v10 saves,
+and negotiated native destination walking. Native path/timing checks and 255
+focused managed cases pass, including one real TCP command across two committed
+steps, exact mid-walk fresh-host restore and identical uninterrupted/resumed
+continuation without reissuing movement. Older-profile/absent-extension bytes,
+retries, hit recovery and healing/stat commands remain covered. The retained
+fixture failures are corrected; the full four-floor gameplay gate is still open.
+
+Headless R18 repeats L1 earned gear/Gold/Pepin and L2 kill/XP 892->982,
+then dies during the L3 ranged-lane approach at tick 5957 after two accepted
+heals. The new authoritative pending-path projection fixes the demonstrated
+premature Stand-settlement boundary; it does not establish the cause of either
+R17 or R18. No four-floor or fresh-host gameplay-pair pass is claimed. Retain
+both failures and L3-entry copies under `.local/native-cathedral-run-20261016`.
+A matched snapshot probe found no benefit from coalesced framing plus NoDelay
+(338.3/341.2 ms median); that experiment was removed. Establish actual click
+intent/path usage before another combat run; do not tune tactics or grind.
 
 Native Town/L1/L2 first-entry, combat and retention now extend the scoped
 playable route through a separate explicit progression adapter/profile. L2 entry

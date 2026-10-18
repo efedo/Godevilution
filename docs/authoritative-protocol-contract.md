@@ -105,10 +105,12 @@ polling cadence, including handshake and command-response snapshots. Probes
 retain their independent cadence, and an unanswered requested full response
 retains its bounded retry. Queued input takes priority when registering a poll.
 
-Clock-gated cohort hosts arbitrate periodic simulation batches and command
-admission in FIFO order before entering the state lock. Admission samples the
-physical clock after acquiring that lock; scheduled results still cross the
-durable publication barrier before acknowledgement.
+Clock-gated cohort hosts arbitrate periodic simulation batches, command
+admission, snapshot capture, probe sampling and pre-write health checks in FIFO
+order before entering the state lock. Admission samples the physical clock
+after acquiring that lock; scheduled results still cross the durable publication
+barrier before acknowledgement. Each turn ends before external diagnostics or
+network waits, preserving simulation progress under backpressure.
 
 Negotiated `ClockProbeRequest` replies also carry the optional
 `server_scheduling_clock_tick`, sampled from the server's scheduling clock.
@@ -121,6 +123,29 @@ Acknowledgements are authoritative for accepted, rescheduled, rejected, and
 duplicate outcomes. Commands express intent only: clients never supply the
 resulting gold, health, damage, inventory placement, quest state, or world
 mutation.
+
+
+`ServerHello.supports_target_cell_pathing` enables `MoveRequested.follow_path`
+only for the explicit native depth-progression adapter. Godot clones and flags
+new realtime target-cell input before freezing its retry identity; explicit
+commands, directional input and older peers retain their existing behavior.
+A retained flagged command cannot reconnect to a host lacking this capability.
+Malformed non-target flags and unsupported flagged commands fail before mutation.
+
+The server captures the native bounded A* direction queue from the player's
+reserved future tile and advances it at native movement boundaries before
+monsters. A replacement destination replaces the remaining queue while the
+active step finishes. Execution rechecks occupancy and native corner rules;
+blocked directions consume bounded native scheduling attempts without replanning.
+Hit recovery and healing preserve the queue; accepted movement/combat overrides,
+death and level transitions cancel it. Autonomous steps allocate no command
+sequences or receipts. The optional cohort-v10 queue survives an exact fresh-host
+restore, is omitted when absent, and leaves older cohort formats unchanged.
+Accepted movement continues while the host runs, including after peer loss.
+`PlayerSnapshot.native_walk_path_pending` projects whether queued directions
+remain, including Stand and recovery boundaries. False is omitted for older
+snapshots. Acceptance waits for both the current action and queued path to
+finish; a Stand acknowledgement alone does not finish a destination walk.
 
 Before acknowledgement results mutate retry or presentation state, native and
 Godot clients enforce the same admission rules: no more than 256 results;

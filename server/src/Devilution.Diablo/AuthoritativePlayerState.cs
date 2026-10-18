@@ -103,6 +103,9 @@ public sealed record StashStoreItem(
 /** One learned spell and its native-compatible base level. */
 public sealed record MemorizedSpellState(uint SpellId, uint Level);
 
+/** Remaining native A* direction queue for an opted-in destination walk. */
+public sealed record DiabloNativeWalkPathState(uint LevelId, IReadOnlyList<int> Directions);
+
 /** Protocol-independent read-only projection of authoritative player state. */
 public sealed record StorePlayerSnapshot(
     uint Gold,
@@ -173,6 +176,9 @@ public sealed record StorePlayerSnapshot(
 
     /** Complete in-progress authoritative action, when animation timing is enabled. */
     public AuthoritativePlayerActionState? CurrentAction { get; init; }
+
+    /** Optional v10-only remainder of a native destination walk. */
+    public DiabloNativeWalkPathState? NativeWalkPath { get; init; }
 
     public StorePlayerSnapshot(uint gold, uint? activeStoreId, IReadOnlyList<OwnedStoreItem> inventory)
         : this(gold, activeStoreId, inventory, 0, 0, 0, 0, PlayerAttributesState.Zero, [], [], [])
@@ -351,6 +357,9 @@ public sealed class AuthoritativePlayerState(
 
     /** Deferred gameplay action currently driven by the native animation timeline. */
     public AuthoritativePlayerActionState? CurrentAction { get; set; }
+
+    /** Native destination walk directions, captured once and consumed in order. */
+    public DiabloNativeWalkPathState? NativeWalkPath { get; set; }
 
     public bool IsMoving => CurrentAction?.Kind == DiabloPlayerActionKind.Move;
 

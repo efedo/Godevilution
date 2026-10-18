@@ -679,6 +679,7 @@ public sealed partial class DiabloSimulation
             CombatMode = player.CombatMode,
             CombatModeEndTick = player.CombatModeEndTick,
             CurrentAction = ClonePlayerAction(player.CurrentAction),
+            NativeWalkPath = CloneNativeWalkPath(player.NativeWalkPath),
             HeldItem = player.HeldItem,
             Stash = player.Stash.ToArray(),
             StashGold = player.StashGold,
@@ -2330,6 +2331,7 @@ public sealed partial class DiabloSimulation
         destination.CombatMode = source.CombatMode;
         destination.CombatModeEndTick = source.CombatModeEndTick;
         destination.CurrentAction = ClonePlayerAction(source.CurrentAction);
+        destination.NativeWalkPath = CloneNativeWalkPath(source.NativeWalkPath);
         destination.MemorizedSpells.Clear();
         destination.MemorizedSpells.AddRange(source.MemorizedSpells);
         destination.PositionX = source.PositionX;

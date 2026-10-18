@@ -45,7 +45,7 @@ public partial class AuthoritativeCathedralItemRuntime
         var level = GetLevel(levelId);
         var levelProfile = GetLevelProfile(levelId);
         var facts = request.Barrel;
-        if (levelProfile.Depth is < 1 or > 2 || request.Policy.Depth != levelProfile.Depth
+        if (levelProfile.Depth is < 1 or > 4 || request.Policy.Depth != levelProfile.Depth
             || request.Policy.GameMode != DiabloGameMode.SinglePlayer
             || facts.LevelId != levelId)
             throw new InvalidDataException("Native barrel item transactions require the owned single-player Cathedral pool.");

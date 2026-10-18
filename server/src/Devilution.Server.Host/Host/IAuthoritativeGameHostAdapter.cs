@@ -1,3 +1,4 @@
+using System;
 using Devilution.Server.Commands;
 using Devilution.Server.Snapshots;
 using Devilution.Server.Stores;
@@ -19,6 +20,14 @@ public enum AuthoritativeGameDifficulty
     Hell,
 }
 
+/** Optional transport capabilities owned by the active game adapter. */
+[Flags]
+public enum AuthoritativeProtocolFeatures
+{
+    None = 0,
+    TargetCellPathing = 1,
+}
+
 /** Combined game-facing boundary consumed by the generic authoritative host. */
 public interface IAuthoritativeGameHostAdapter
     : IAuthoritativeCommandExecutor,
@@ -28,6 +37,9 @@ public interface IAuthoritativeGameHostAdapter
         IAuthoritativeSaveProvider,
         IAuthoritativeParticipantInitializer
 {
+    /** Additive protocol capabilities; legacy adapters advertise none. */
+    AuthoritativeProtocolFeatures SupportedProtocolFeatures
+        => AuthoritativeProtocolFeatures.None;
 }
 
 /** Game-neutral new-participant selection supplied before initial state access. */

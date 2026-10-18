@@ -804,6 +804,7 @@ public sealed partial class DiabloSimulation
         player.CurrentAction = snapshot.CurrentAction is null
             ? null
             : snapshot.CurrentAction with { };
+        player.NativeWalkPath = CloneNativeWalkPath(snapshot.NativeWalkPath);
         player.LastAppliedTick = participant.LastAppliedTick;
         player.AdoptEquipmentAttributeSnapshot();
         player.RestoreCohortDerivedState(
@@ -934,6 +935,29 @@ public sealed partial class DiabloSimulation
                 throw new InvalidDataException(
                     $"Participant '{participant.SessionId}' has an out-of-bounds move destination.");
         }
+        if (snapshot.NativeWalkPath is { } nativePath) {
+            if (world is null || nativePath.LevelId != snapshot.LevelId
+                || nativePath.Directions is null || nativePath.Directions.Count is < 1 or > AuthoritativeNativePlayerPathfinder.MaximumPathLength)
+                throw new InvalidDataException(
+                    $"Participant '{participant.SessionId}' has an invalid native walk queue.");
+            var pathX = snapshot.PositionX;
+            var pathY = snapshot.PositionY;
+            if (snapshot.CurrentAction is { Kind: DiabloPlayerActionKind.Move } move) {
+                pathX = unchecked((byte)(pathX + move.DirectionX));
+                pathY = unchecked((byte)(pathY + move.DirectionY));
+            }
+            foreach (var direction in nativePath.Directions) {
+                if (direction is < 1 or > 8)
+                    throw new InvalidDataException(
+                        $"Participant '{participant.SessionId}' has an invalid native walk direction.");
+                var displacement = AuthoritativeNativePlayerPathfinder.GetDisplacement(direction);
+                pathX = unchecked((byte)(pathX + displacement.X));
+                pathY = unchecked((byte)(pathY + displacement.Y));
+                if (!world.ContainsPosition(nativePath.LevelId, pathX, pathY))
+                    throw new InvalidDataException(
+                        $"Participant '{participant.SessionId}' has a native walk queue outside its level.");
+            }
+        }
         if (participant.BaseArmorClass < 0 || participant.EffectiveArmorClass < 0)
             throw new InvalidDataException(
                 $"Participant '{participant.SessionId}' has invalid armor state.");
@@ -995,7 +1019,8 @@ public sealed partial class DiabloSimulation
             && SequenceEqual(expected.VisitedLevelIds, actual.VisitedLevelIds)
             && SequenceEqual(expected.StatusEffects, actual.StatusEffects)
             && Equals(expected.HeldItem, actual.HeldItem)
-            && ActionEqual(expected.CurrentAction, actual.CurrentAction);
+            && ActionEqual(expected.CurrentAction, actual.CurrentAction)
+            && WalkPathEqual(expected.NativeWalkPath, actual.NativeWalkPath);
 
         static bool SequenceEqual<T>(IReadOnlyList<T>? left, IReadOnlyList<T>? right)
             => left is not null && right is not null && left.SequenceEqual(right);
@@ -1019,6 +1044,14 @@ public sealed partial class DiabloSimulation
                 && left.TargetY == right.TargetY
                 && left.TargetCell == right.TargetCell
                 && Equals(left.CastIntent, right.CastIntent);
+        }
+
+        static bool WalkPathEqual(DiabloNativeWalkPathState? left, DiabloNativeWalkPathState? right)
+        {
+            if (left is null || right is null)
+                return left is null && right is null;
+            return left.LevelId == right.LevelId
+                && SequenceEqual(left.Directions, right.Directions);
         }
     }
 
@@ -1241,7 +1274,7 @@ public sealed partial class DiabloSimulation
             || WorldState.Projectiles.Values.Any(projectile => projectile.NativeTrapArrow is not null);
         var hasNativeBarrelState = WorldState.HasNativeBarrelMutations || hasNativePlayerHit || hasNativeTrapState;
         var state = new DiabloCohortState(
-            WorldState.HasNativeProgression ? DiabloCohortState.NativeProgressionFormatVersion
+            WorldState.HasNativeProgression ? WorldState.NativeProgressionCohortFormatVersion
                 : hasNativeTrapState ? DiabloCohortState.NativeTrapFormatVersion
                 : hasNativeBarrelState ? DiabloCohortState.NativeBarrelFormatVersion
                 : WorldState.HasNativeSarcophagusMutations ? DiabloCohortState.NativeSarcophagusFormatVersion
@@ -1424,6 +1457,7 @@ public sealed partial class DiabloSimulation
             CurrentAction = player.CurrentAction is null
                 ? null
                 : player.CurrentAction with { },
+            NativeWalkPath = CloneNativeWalkPath(player.NativeWalkPath),
             HeldItem = player.HeldItem is null ? null : CloneOwnedItem(player.HeldItem),
             Stash = player.Stash.Select(CloneStashItem).ToArray(),
             StashGold = player.StashGold,
@@ -1438,6 +1472,9 @@ public sealed partial class DiabloSimulation
             attributes.Magic with { },
             attributes.Dexterity with { },
             attributes.Vitality with { });
+
+    private static DiabloNativeWalkPathState? CloneNativeWalkPath(DiabloNativeWalkPathState? path)
+        => path is null ? null : path with { Directions = path.Directions.ToArray() };
 
     private static DiabloWorldItemState? CaptureOptionalWorldItem(
         AuthoritativeWorldItem? item)

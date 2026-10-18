@@ -4,7 +4,7 @@ namespace Devilution.Client.Acceptance;
 
 public partial class SessionAcceptance
 {
-    private sealed record NativeProgressionL2CombatEvidence(
+    private sealed record NativeProgressionCombatEvidence(
         uint MonsterEntityId,
         uint MonsterId,
         uint ExperienceBefore,
@@ -15,15 +15,19 @@ public partial class SessionAcceptance
         NativeAttackRefusalEvidence[] AttackRefusals,
         int WorkUsed);
 
-    private async Task<NativeProgressionL2CombatEvidence> FightNativeProgressionL2CombatAsync(
+    private Task<NativeProgressionCombatEvidence> FightNativeProgressionL2CombatAsync(Main main, string directory)
+        => FightNativeProgressionCombatAsync(main, directory, 2);
+
+    private async Task<NativeProgressionCombatEvidence> FightNativeProgressionCombatAsync(
         Main main,
-        string directory)
+        string directory,
+        uint levelId)
     {
         var initialSnapshot = main.ObservedSnapshot
-            ?? throw new InvalidOperationException("Native progression L2 combat requires an authoritative snapshot.");
+            ?? throw new InvalidOperationException($"Native progression L{levelId} combat requires an authoritative snapshot.");
         var initialPlayer = initialSnapshot.Players.Single();
-        Require(IsNativeProgressionL2(main) && initialPlayer.LevelId == 2 && initialPlayer.Life > 0,
-            "Native progression L2 combat requires a living Rogue on L2.");
+        Require(IsNativeProgressionCombatFloor(main) && initialPlayer.LevelId == levelId && initialPlayer.Life > 0,
+            $"Native progression L{levelId} combat requires a living Rogue on L{levelId}.");
 
         var experienceBefore = initialPlayer.Experience;
         var entryGroundItemIds = initialSnapshot.WorldItems
@@ -36,7 +40,7 @@ public partial class SessionAcceptance
             .Select(monster => monster.EntityId)
             .ToHashSet();
         Require(initialEligibleActors.Count > 0,
-            "Native progression L2 has no live targets for the bounded combat step.");
+            $"Native progression L{levelId} has no live targets for the bounded combat step.");
 
         var work = new NativeCombatWorkBudget(enforceCumulativeTargetLimit: true);
         var reselectionYields = 0;
@@ -48,7 +52,7 @@ public partial class SessionAcceptance
             var snapshot = main.ObservedSnapshot!;
             var player = snapshot.Players.Single();
             Require(player.LevelId == initialPlayer.LevelId && player.Life > 0,
-                "The Rogue died or left L2 before the first native combat target was defeated.");
+                $"The Rogue died or left L{levelId} before the first native combat target was defeated.");
 
             var remainingTargets = snapshot.Monsters
                 .Where(monster => monster.LevelId == player.LevelId
@@ -67,7 +71,7 @@ public partial class SessionAcceptance
                     continue;
 
                 throw new InvalidOperationException(
-                    "No eligible native L2 target or bounded door route remains before the first defeat: "
+                    $"No eligible native L{levelId} target or bounded door route remains before the first defeat: "
                     + $"initialTargets={initialEligibleActors.Count}, "
                     + $"reselectionYields={reselectionYields}/{NativeGearHuntMaximumReselectionYields}, "
                     + $"combatWork={work.Used}/{NativeCombatWorkBudget.MaximumWork}, "
@@ -83,9 +87,9 @@ public partial class SessionAcceptance
                 combatWorkBudget: work);
             if (defeated is null) {
                 reselectionYields++;
-                work.ConsumeExploration("reselect the first native L2 combat target");
+                work.ConsumeExploration($"reselect the first native L{levelId} combat target");
                 Require(reselectionYields <= NativeGearHuntMaximumReselectionYields,
-                    "Native L2 first-combat selection exceeded its bounded reselection limit: "
+                    $"Native L{levelId} first-combat selection exceeded its bounded reselection limit: "
                     + $"yields={reselectionYields}/{NativeGearHuntMaximumReselectionYields}, "
                     + $"combatWork={work.Used}/{NativeCombatWorkBudget.MaximumWork}, "
                     + $"refusals=[{string.Join(";", work.AttackRefusals)}].");
@@ -93,16 +97,16 @@ public partial class SessionAcceptance
             }
 
             var finalSnapshot = main.ObservedSnapshot
-                ?? throw new InvalidOperationException("Native L2 combat lost its final authoritative snapshot.");
+                ?? throw new InvalidOperationException($"Native L{levelId} combat lost its final authoritative snapshot.");
             var finalPlayer = finalSnapshot.Players.Single();
             Require(defeated.MonsterEntityId == target.EntityId && defeated.MonsterId == target.MonsterId,
-                "The first defeated native L2 target did not match the selected live target identity.");
+                $"The first defeated native L{levelId} target did not match the selected live target identity.");
             var targetCorpses = finalSnapshot.Corpses.Where(corpse =>
                 corpse.EntityId == defeated.MonsterEntityId && corpse.LevelId == initialPlayer.LevelId).ToArray();
             Require(finalPlayer.LevelId == initialPlayer.LevelId && finalPlayer.Life > 0,
-                "The Rogue died or left L2 during the first native target defeat.");
+                $"The Rogue died or left L{levelId} during the first native target defeat.");
             Require(finalPlayer.Experience > experienceBefore && defeated.ExperienceAfter > experienceBefore,
-                "The first native target defeat did not produce an XP increase over the L2 entry baseline.");
+                $"The first native target defeat did not produce an XP increase over the L{levelId} entry baseline.");
             Require(targetCorpses.Length == 1
                 && !finalSnapshot.Monsters.Any(monster => monster.EntityId == defeated.MonsterEntityId && monster.Alive),
                 "The first native target did not resolve to exactly one corpse with no living target remaining.");
@@ -117,7 +121,7 @@ public partial class SessionAcceptance
                 .Distinct()
                 .Order()
                 .ToArray();
-            var evidence = new NativeProgressionL2CombatEvidence(
+            var evidence = new NativeProgressionCombatEvidence(
                 defeated.MonsterEntityId,
                 defeated.MonsterId,
                 experienceBefore,
@@ -127,7 +131,7 @@ public partial class SessionAcceptance
                 [defeated],
                 work.AttackRefusals.ToArray(),
                 work.Used);
-            WriteEvidence(directory, "native-progression-l2-combat.json", new {
+            WriteEvidence(directory, $"native-progression-l{levelId}-combat.json", new {
                 Passed = true,
                 evidence.MonsterEntityId,
                 evidence.MonsterId,
@@ -143,7 +147,7 @@ public partial class SessionAcceptance
         }
 
         throw new InvalidOperationException(
-            "Native progression L2 exhausted the shared combat-work limit before the first target defeat: "
+            $"Native progression L{levelId} exhausted the shared combat-work limit before the first target defeat: "
             + $"combatWork={work.Used}/{NativeCombatWorkBudget.MaximumWork}, "
             + $"reselectionYields={reselectionYields}/{NativeGearHuntMaximumReselectionYields}, "
             + $"doors={operatedDoors.Count}/{NativeMaximumDoorOperations}, "

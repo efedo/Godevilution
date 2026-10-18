@@ -28,6 +28,9 @@ public static class CathedralNativePopulationPlaytestCompiler
     public const string ProgressionAdapterId = "devilution.diablo.cathedral-native-progression.v1";
     public const string ProgressionProfileFileName = "cathedral-native-progression-playtest.json";
     public const string ProgressionPolicy = "original-diablo-single-player-normal-rogue-town-l1-l2";
+    public const string DepthProgressionAdapterId = "devilution.diablo.cathedral-native-depth-progression.v1";
+    public const string DepthProgressionProfileFileName = "cathedral-native-depth-progression-playtest.json";
+    public const string DepthProgressionPolicy = "original-diablo-single-player-normal-rogue-town-l1-l4";
     public const string ProfileFileName = "cathedral-native-population-playtest.json";
     public const string PopulationDirectoryName = "native_cathedral_population";
     public const string RuntimeDirectoryName = "native_cathedral_runtime";
@@ -102,7 +105,13 @@ public static class CathedralNativePopulationPlaytestCompiler
     public static Profile CompileProgression(CathedralNativePopulationPlaytestCompilerOptions options)
         => CompileCore(options, progression: true);
 
-    private static Profile CompileCore(CathedralNativePopulationPlaytestCompilerOptions options, bool progression)
+    public static Profile CompileDepthProgression(CathedralNativePopulationPlaytestCompilerOptions options)
+        => CompileCore(options, progression: true, depthProgression: true);
+
+    private static Profile CompileCore(
+        CathedralNativePopulationPlaytestCompilerOptions options,
+        bool progression,
+        bool depthProgression = false)
     {
         ArgumentNullException.ThrowIfNull(options);
         ArgumentNullException.ThrowIfNull(options.BasePack);
@@ -130,7 +139,8 @@ public static class CathedralNativePopulationPlaytestCompiler
         var semanticsTable = AuthoritativeCathedralNativePopulationBuilder.CreateSemanticTable(
             nativeItems, baseItems, baseActivation.Simulation.Spells,
             AuthoritativeCathedralNativeItemSidecars.LoadFootprints(options.InventoryFootprints),
-            includeNativeJewelry: progression);
+            includeNativeJewelry: progression,
+            includeNativeDepthItems: depthProgression);
         var itemSidecars = AuthoritativeCathedralNativeItemSidecars.Load(
             options.InventoryFootprints, semanticsTable);
         var effectiveItems = AuthoritativeCathedralNativePopulationBuilder.ApplyItemSidecars(
@@ -183,15 +193,18 @@ public static class CathedralNativePopulationPlaytestCompiler
             var effectiveManifest = new ContentManifest(contentPack.Id, contentPack.Version,
                 [contentPack, publishedPopulationPack, publishedRuntimePack]);
             var composed = ComposedContent.Compose(effectiveManifest);
-            if (progression)
+            if (depthProgression)
+                _ = module.CathedralNativeDepthProgressionContentBootstrap.ActivateNativeDepthProgression(
+                    composed, StorySeed);
+            else if (progression)
                 _ = module.CathedralNativeProgressionContentBootstrap.ActivateNativeProgression(composed, StorySeed);
             else
                 _ = module.CathedralNativePopulationContentBootstrap.ActivateNativePopulation(
                     composed, StorySeed, DiabloGameMode.SinglePlayer, difficulty: DiabloDifficulty.Normal);
 
             var profile = new Profile(
-                progression ? 2 : FormatVersion,
-                progression ? ProgressionAdapterId : AdapterId,
+                depthProgression ? 3 : progression ? 2 : FormatVersion,
+                depthProgression ? DepthProgressionAdapterId : progression ? ProgressionAdapterId : AdapterId,
                 CathedralDoorPlaytestCompiler.ContentDirectoryName,
                 contentPack.Id,
                 contentPack.Version,
@@ -216,8 +229,8 @@ public static class CathedralNativePopulationPlaytestCompiler
                 ComputeCanonicalTextHash(options.InventoryFootprints.ToCanonicalTsv()),
                 ComputeCanonicalTextHash(semanticsTable.ToCanonicalTsv()),
                 semanticsTable.Rows.Count,
-                progression ? ProgressionPolicy : PopulationPolicy,
-                progression ? 2 : NativeDepth,
+                depthProgression ? DepthProgressionPolicy : progression ? ProgressionPolicy : PopulationPolicy,
+                depthProgression ? 4 : progression ? 2 : NativeDepth,
                 RequiredDepthSeeds[0],
                 StorySeed,
                 "rogue",
@@ -235,7 +248,9 @@ public static class CathedralNativePopulationPlaytestCompiler
                 doorProfile.DoorProfileRevision,
                 doorProfile.DoorCatalogFingerprint,
                 doorProfile.DoorMappings);
-            WriteProfile(Path.Combine(stagingRoot, progression ? ProgressionProfileFileName : ProfileFileName), profile);
+            var profileFileName = depthProgression ? DepthProgressionProfileFileName
+                : progression ? ProgressionProfileFileName : ProfileFileName;
+            WriteProfile(Path.Combine(stagingRoot, profileFileName), profile);
             Directory.Move(stagingRoot, outputRoot);
             return profile;
         }

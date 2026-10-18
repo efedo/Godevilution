@@ -344,7 +344,7 @@ public sealed partial class DiabloCombatCommandProcessor
 
         activePlayers = players;
 
-        return intent switch {
+        var result = intent switch {
             DiabloAttackIntent attack => Attack(
                 player,
                 attack.TargetEntityId,
@@ -359,6 +359,9 @@ public sealed partial class DiabloCombatCommandProcessor
             DiabloCastIntent cast => Cast(player, cast, appliedTick, players),
             _ => DiabloCombatIntentResult.Rejected(DiabloRuleFailure.Malformed),
         };
+        if (result.Succeeded)
+            player.NativeWalkPath = null;
+        return result;
     }
 
     /** Advances one player's status durations to an applied server tick. */
@@ -438,12 +441,26 @@ public sealed partial class DiabloCombatCommandProcessor
 
         world.AdvancePortals(tick);
         var events = new List<DiabloDirectedGameplayEvent>();
-        foreach (var player in players) {
+        var completedPriorModes = new bool[players.Count];
+        for (var index = 0; index < players.Count; index++) {
+            var player = players[index];
             AdvancePlayerEquipmentDamage(player, tick, players, events);
-            AdvancePlayerAction(player, tick, players, events);
+            completedPriorModes[index] = AdvancePlayerAction(player, tick, players, events);
         }
-        foreach (var player in players)
-            AdvanceCombatModeWithEquipmentDamage(player, tick);
+        for (var index = 0; index < players.Count; index++)
+            completedPriorModes[index] |= AdvanceCombatModeWithEquipmentDamage(players[index], tick);
+        if (worldCommands is not null) {
+            for (var index = 0; index < players.Count; index++) {
+                var player = players[index];
+                AddDirectedEvents(player,
+                    worldCommands.AdvanceNativeWalkContinuation(
+                        player,
+                        tick,
+                        players,
+                        completedPriorModes[index] ? 2 : 1),
+                    events);
+            }
+        }
         AdvanceMonsters(tick, players, events);
         AdvanceNativeTraps(players);
         AdvanceProjectiles(tick, players, events);
@@ -471,7 +488,8 @@ public sealed partial class DiabloCombatCommandProcessor
         var events = new List<DiabloDirectedGameplayEvent>();
         foreach (var player in players) {
             AdvancePlayerEquipmentDamage(player, tick, players, events);
-            var completedPriorMode = AdvancePlayerAction(player, tick, players, events)
+            var completedAction = AdvancePlayerAction(player, tick, players, events);
+            var completedPriorMode = completedAction
                 || AdvanceCombatModeWithEquipmentDamage(player, tick);
             currentCommandCallbackPhase = completedPriorMode
                 ? DiabloCommandCallbackPhase.CompletionLoopStart
@@ -496,6 +514,10 @@ public sealed partial class DiabloCombatCommandProcessor
             // resolve that immediate work before the next actor is visited.
             if (completedPriorMode)
                 AdvancePlayerAction(player, tick, players, events);
+            if (worldCommands is not null)
+                AddDirectedEvents(player,
+                    worldCommands.AdvanceNativeWalkContinuation(
+                        player, tick, players, completedPriorMode ? 2 : 1), events);
         }
         AdvanceMonsters(tick, players, events);
         AdvanceNativeTraps(players);
@@ -17172,6 +17194,7 @@ public sealed partial class DiabloCombatCommandProcessor
         IReadOnlyList<AuthoritativePlayerState> players,
         PlayerDeathReason deathReason)
     {
+        player.NativeWalkPath = null;
         DiabloPlayerActionLifecycle.Cancel(player);
         DropHeldItemOnDeath(player, players);
         if (!SuppressesDeathDrops(player.LevelId)) {

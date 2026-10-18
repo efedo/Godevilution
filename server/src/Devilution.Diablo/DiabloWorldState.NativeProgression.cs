@@ -7,6 +7,11 @@ public sealed partial class DiabloWorldState
 
     internal bool HasNativeProgression => nativeProgression is not null;
     internal string? NativeProgressionFingerprint => nativeProgression?.Fingerprint;
+    internal int NativeProgressionCohortFormatVersion
+        => nativeProgression?.CohortFormatVersion
+            ?? throw new InvalidOperationException("Native progression is not configured.");
+    internal bool SupportsNativeTargetCellPathing
+        => nativeProgression?.CohortFormatVersion == DiabloCohortState.NativeDepthProgressionFormatVersion;
     internal int NativePopulationDepth(uint levelId)
         => NativePopulationForLevel(levelId)?.Depth
             ?? throw new InvalidDataException("Native gameplay requires its exact owned floor depth.");
@@ -38,7 +43,7 @@ public sealed partial class DiabloWorldState
                 || binding.StableItemId != item.StableItemId)
                 throw new InvalidDataException("A native floor entry cannot admit an unbound carried item.");
         }
-        var door = cathedralDoorCatalog!.Definitions.Single(value => value.LevelId == 1) with { LevelId = levelId };
+        var door = nativeProgression.GetDoor(levelId, cathedralDoorCatalog!);
         return (PrepareNativeFloorAdmission(prepared.Build, door, items, spells, players), prepared.Entry);
     }
 

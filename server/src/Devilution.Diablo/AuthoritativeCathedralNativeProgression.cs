@@ -10,31 +10,72 @@ public sealed record DiabloNativeFloorEntry(
     IReadOnlyList<int> InitialUniqueItemFlags,
     string GenerationFingerprint);
 
-/** Explicit two-floor run definition; all mutable owners remain local to a simulation. */
+/** Explicit depth-run definition; all mutable owners remain local to a simulation. */
 internal sealed class AuthoritativeCathedralNativeProgression
 {
     private readonly Func<DiabloNativeFloorEntry, AuthoritativeCathedralNativePopulationBuild> build;
     private readonly AuthoritativePlayerAnimationCatalog animations;
+    private readonly IReadOnlyDictionary<uint, AuthoritativeCathedralDoorDefinition>? doors;
     internal AuthoritativeCathedralNativeProgression(string fingerprint,
         AuthoritativePlayerAnimationCatalog animations,
-        Func<DiabloNativeFloorEntry, AuthoritativeCathedralNativePopulationBuild> build)
+        Func<DiabloNativeFloorEntry, AuthoritativeCathedralNativePopulationBuild> build,
+        int maximumDepth = 2,
+        int cohortFormatVersion = DiabloCohortState.NativeProgressionFormatVersion,
+        IEnumerable<AuthoritativeCathedralDoorDefinition>? doors = null)
     {
         if (!AuthoritativeNativeMonsterInitialization.IsFingerprint(fingerprint))
             throw new InvalidDataException("Native progression requires its complete validated run identity.");
+        var isLegacyProgression = maximumDepth == 2
+            && cohortFormatVersion == DiabloCohortState.NativeProgressionFormatVersion
+            && doors is null;
+        var isDepthProgression = maximumDepth == AuthoritativeCathedralDepthGenerator.MaximumSupportedDepth
+            && cohortFormatVersion == DiabloCohortState.NativeDepthProgressionFormatVersion
+            && doors is not null;
+        if (!isLegacyProgression && !isDepthProgression)
+            throw new InvalidDataException("Native progression requires a supported depth and cohort format.");
         Fingerprint = fingerprint;
         this.animations = animations;
         this.build = build;
+        MaximumDepth = maximumDepth;
+        CohortFormatVersion = cohortFormatVersion;
+        if (cohortFormatVersion == DiabloCohortState.NativeDepthProgressionFormatVersion) {
+            if (doors is null)
+                throw new InvalidDataException("Native depth progression requires its complete ordered door mappings.");
+            var definitions = doors.ToArray();
+            if (definitions.Length != maximumDepth
+                || !definitions.Select(value => value.LevelId).SequenceEqual(
+                    Enumerable.Range(1, maximumDepth).Select(value => (uint)value)))
+                throw new InvalidDataException("Native depth progression requires the exact ordered door definition for each supported floor.");
+            this.doors = definitions.ToDictionary(value => value.LevelId);
+        }
     }
 
     internal Func<DiabloContentActivation>? FreshActivation { get; init; }
     internal string Fingerprint { get; }
-    internal bool Supports(uint levelId) => levelId == 2;
+    internal int MaximumDepth { get; }
+    internal int CohortFormatVersion { get; }
+    internal bool Supports(uint levelId) => levelId > 1 && levelId <= MaximumDepth;
+
+    internal AuthoritativeCathedralDoorDefinition GetDoor(uint levelId,
+        AuthoritativeCathedralDoorCatalog initialDoors)
+    {
+        if (!Supports(levelId))
+            throw new InvalidDataException("A native progression door belongs to an unsupported floor.");
+        if (doors is not null) {
+            if (!doors.TryGetValue(levelId, out var definition))
+                throw new InvalidDataException("A native progression floor has no immutable door mapping.");
+            return definition;
+        }
+        if (levelId != 2 || initialDoors.Definitions.Count != 1 || initialDoors.Definitions[0].LevelId != 1)
+            throw new InvalidDataException("Legacy native progression can synthesize only its original L2 door mapping.");
+        return initialDoors.Definitions[0] with { LevelId = levelId };
+    }
 
     internal (DiabloNativeFloorEntry Entry, AuthoritativeCathedralNativePopulationBuild Build) Prepare(
         uint levelId, AuthoritativePlayerState player, IReadOnlySet<int> uniqueFlags)
     {
-        if (!Supports(levelId) || player.LevelId != 1 || player.Life <= 0)
-            throw new InvalidDataException("First native L2 entry requires a living participant on its L1 stair.");
+        if (!Supports(levelId) || player.LevelId + 1 != levelId || player.Life <= 0)
+            throw new InvalidDataException("Native floor entry requires a living participant on the preceding floor's stair.");
         var entry = new DiabloNativeFloorEntry(levelId,
             new(player.BaseLifeMaximum, player.BaseManaMaximum, player.LightRadius,
                 animations.GetRequired(player.CharacterClassId).IdleFrames,

@@ -1851,6 +1851,8 @@ internal static class DiabloProtocolMapper
         player.StashGold = state.StashGold;
         player.StashOpen = state.StashOpen;
         player.LightRadius = state.LightRadius;
+        player.NativeWalkPathPending = state.NativeWalkPath is not null
+            && state.NativeWalkPath.Directions.Count > 0;
         return player;
     }
 

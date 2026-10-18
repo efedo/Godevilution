@@ -8,19 +8,49 @@ public sealed record DiabloNativeProgressionCheckpoint(
 
 public sealed partial record DiabloCohortState
 {
+    private void ValidateNativeWalkPathShape()
+    {
+        var hasPaths = Participants.Any(participant => participant.Player.NativeWalkPath is not null);
+        if (FormatVersion != NativeDepthProgressionFormatVersion) {
+            if (hasPaths)
+                throw new InvalidDataException("Native destination walks require the depth-progression cohort format.");
+            return;
+        }
+
+        var ownedLevels = new HashSet<uint> { 0, 1 };
+        foreach (var entry in NativeProgression!.Entries)
+            ownedLevels.Add(entry.LevelId);
+        foreach (var participant in Participants) {
+            if (participant.Player.NativeWalkPath is not { } path)
+                continue;
+            if (path.LevelId != participant.Player.LevelId || !ownedLevels.Contains(path.LevelId)
+                || path.Directions is null || path.Directions.Count is < 1 or > AuthoritativeNativePlayerPathfinder.MaximumPathLength
+                || path.Directions.Any(direction => direction is < 1 or > 8)
+                || participant.Player.Life <= 0
+                || participant.Player.CombatMode is DiabloPlayerCombatMode.Death
+                    or DiabloPlayerCombatMode.NewLevel or DiabloPlayerCombatMode.Quit)
+                throw new InvalidDataException("A native destination walk has an invalid owner, queue, or lifecycle.");
+        }
+    }
+
     private void ValidateNativeProgressionShape()
     {
-        if (FormatVersion != NativeProgressionFormatVersion) {
+        var nativeDepthProgression = FormatVersion == NativeDepthProgressionFormatVersion;
+        if (FormatVersion != NativeProgressionFormatVersion && !nativeDepthProgression) {
             if (NativeProgression is not null)
                 throw new InvalidDataException("Native progression cannot be down-converted to an older cohort.");
             return;
         }
         var run = NativeProgression
             ?? throw new InvalidDataException("A native progression cohort requires its explicit run checkpoint.");
+        var allowedEntries = nativeDepthProgression ? 3 : 1;
         if (!AuthoritativeNativeMonsterInitialization.IsFingerprint(run.RunFingerprint)
             || run.Entries is null || run.InitialSpecialStand is null
-            || run.Entries.Count > 1
-            || run.Entries.Any(entry => entry is null || entry.LevelId != 2 || entry.Hero is null
+            || run.Entries.Count > allowedEntries)
+            throw new InvalidDataException("Native first-entry contexts require exact supported floor identities and unique history.");
+        var expectedEntryLevels = Enumerable.Range(2, run.Entries.Count).Select(value => (uint)value).ToArray();
+        if (!run.Entries.Select(entry => entry?.LevelId ?? 0U).SequenceEqual(expectedEntryLevels)
+            || run.Entries.Any(entry => entry is null || entry.LevelId is < 2 or > 4 || entry.Hero is null
                 || !AuthoritativeNativeMonsterInitialization.IsFingerprint(entry.GenerationFingerprint)
                 || entry.InitialUniqueItemFlags is null
                 || entry.InitialUniqueItemFlags.Any(flag => flag is < 0 or >= 128)

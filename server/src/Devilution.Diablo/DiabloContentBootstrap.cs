@@ -282,7 +282,12 @@ public interface IDiabloCathedralNativeProgressionBootstrap
     DiabloContentActivation ActivateNativeProgression(ComposedContent content, uint randomSeed = 0);
 }
 
-internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap, IDiabloNativeGeneratedContentBootstrap, IDiabloCathedralDepthContentBootstrap, IDiabloCathedralDoorContentBootstrap, IDiabloCathedralNativePopulationBootstrap, IDiabloCathedralNativeProgressionBootstrap
+public interface IDiabloCathedralNativeDepthProgressionBootstrap
+{
+    DiabloContentActivation ActivateNativeDepthProgression(ComposedContent content, uint randomSeed = 0);
+}
+
+internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap, IDiabloNativeGeneratedContentBootstrap, IDiabloCathedralDepthContentBootstrap, IDiabloCathedralDoorContentBootstrap, IDiabloCathedralNativePopulationBootstrap, IDiabloCathedralNativeProgressionBootstrap, IDiabloCathedralNativeDepthProgressionBootstrap
 {
     private const string NativePopulationSidecarPrefix = "native_cathedral_population/";
     private const string NativeRuntimeSidecarPrefix = "native_cathedral_runtime/";
@@ -360,6 +365,14 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap, IDiabloN
         => ActivateCore(content, randomSeed, DiabloGameMode.SinglePlayer, null, DiabloDifficulty.Normal,
             nativeGenerated: false, cathedralDepths: true, cathedralDoors: true,
             nativePopulation: true, nativeProgression: true);
+
+    public DiabloContentActivation ActivateNativeDepthProgression(ComposedContent content, uint randomSeed = 0)
+    {
+        return ActivateCore(content, randomSeed, DiabloGameMode.SinglePlayer, null, DiabloDifficulty.Normal,
+            nativeGenerated: false, cathedralDepths: true, cathedralDoors: true,
+            nativePopulation: true, nativeDepthProgression: true,
+            nativeProgressionMaximumDepth: AuthoritativeCathedralDepthGenerator.MaximumSupportedDepth);
+    }
 
     private static NativePopulationSidecarData LoadNativePopulationSidecars(ComposedContent content)
     {
@@ -443,9 +456,16 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap, IDiabloN
         bool cathedralDepths = false,
         bool cathedralDoors = false,
         bool nativePopulation = false,
-        bool nativeProgression = false)
+        bool nativeProgression = false,
+        bool nativeDepthProgression = false,
+        int nativeProgressionMaximumDepth = 2)
     {
         ArgumentNullException.ThrowIfNull(content);
+        if ((nativeProgression || nativeDepthProgression) && !nativePopulation)
+            throw new ArgumentException("Native progression requires native population.", nameof(nativePopulation));
+        if (nativeDepthProgression && (nativeProgression
+            || nativeProgressionMaximumDepth != AuthoritativeCathedralDepthGenerator.MaximumSupportedDepth))
+            throw new ArgumentOutOfRangeException(nameof(nativeProgressionMaximumDepth));
         if (nativePopulation && (!cathedralDepths || !cathedralDoors
             || gameMode != DiabloGameMode.SinglePlayer || difficulty != DiabloDifficulty.Normal
             || monsterSpawns is not null))
@@ -687,7 +707,7 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap, IDiabloN
             spellBooks,
             gameMode);
         var hasNativePinnedStoreCapability = content.TryGetTable("native_pinned_stores.tsv", out var nativePinnedStoresTable);
-        if (nativeProgression && hasNativePinnedStoreCapability)
+        if ((nativeProgression || nativeDepthProgression) && hasNativePinnedStoreCapability)
             stores.ConfigureNativePepinPinnedHealingStock(itemCatalog, nativePinnedStoresTable);
         stableIds.ValidateReferences(
             "store",
@@ -1561,6 +1581,45 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap, IDiabloN
                     }) {
                         FreshActivation = () => new DiabloContentBootstrap(DiabloSimulationFactory.Instance)
                             .ActivateNativeProgression(content, randomSeed),
+                    };
+            } else if (nativeDepthProgression) {
+                var depthCandidates = depthGenerationPlan.Candidates
+                    .Where(candidate => candidate.Level.LevelId <= (uint)nativeProgressionMaximumDepth)
+                    .OrderBy(candidate => candidate.Level.LevelId).ToArray();
+                var depthDoors = cathedralDoorCatalog.Definitions
+                    .Where(definition => definition.LevelId <= (uint)nativeProgressionMaximumDepth)
+                    .OrderBy(definition => definition.LevelId).ToArray();
+                var expectedLevels = Enumerable.Range(1, nativeProgressionMaximumDepth)
+                    .Select(value => (uint)value).ToArray();
+                if (!depthCandidates.Select(candidate => candidate.Level.LevelId).SequenceEqual(expectedLevels)
+                    || !depthDoors.Select(definition => definition.LevelId).SequenceEqual(expectedLevels))
+                    throw new InvalidDataException("Native depth progression requires each exact generated candidate and door mapping through its maximum depth.");
+                var candidatesByLevel = depthCandidates.ToDictionary(candidate => candidate.Level.LevelId);
+                var stock = stores.CaptureAll().SelectMany(store => store.Items!).Select(item => item.State).ToArray();
+                nativeProgressionDefinition = new AuthoritativeCathedralNativeProgression(
+                    AuthoritativeCathedralNativeProgression.ComputeFingerprint(new {
+                        RunId = "native-cathedral-town-l1-l4-v1", MaximumDepth = nativeProgressionMaximumDepth,
+                        InitialOwner = nativePopulationBuild.Policy.Fingerprint,
+                        Depths = depthGenerationPlan.Candidates.OrderBy(candidate => candidate.Level.LevelId)
+                            .Select(candidate => candidate.Identity).ToArray(),
+                        DepthIdentity = cathedralDepthIdentity, Metadata = sidecars.Population.Fingerprint,
+                        Runtime = sidecars.Runtime.Fingerprint, StorySeed = 0x13579BDFU,
+                    }), playerAnimations, entry => {
+                        if (!candidatesByLevel.TryGetValue(entry.LevelId, out var candidate))
+                            throw new InvalidDataException("A native progression entry is outside its immutable depth plan.");
+                        var request = AuthoritativeCathedralFreshLevelGenerator.CreateEntryRequest(
+                            sidecars.Population, candidate.Identity.Depth, candidate.Identity.DungeonSeed,
+                            0x13579BDF, candidate.Identity.Entry, entry.Hero,
+                            entry.InitialUniqueItemFlags.ToHashSet(), candidate.Level.StableSymbol);
+                        return AuthoritativeCathedralNativePopulationBuilder.Build(sidecars.Population,
+                            sidecars.Runtime, candidate, playerClasses, playerAnimations, playerLoadouts,
+                            monsterTypes, itemCatalog, spells,
+                            depthDoors.Single(definition => definition.LevelId == entry.LevelId),
+                            stock, sidecars.Items, request, []);
+                    }, nativeProgressionMaximumDepth,
+                    DiabloCohortState.NativeDepthProgressionFormatVersion, depthDoors) {
+                        FreshActivation = () => new DiabloContentBootstrap(DiabloSimulationFactory.Instance)
+                            .ActivateNativeDepthProgression(content, randomSeed),
                     };
             }
             cathedralDoorCatalog = new AuthoritativeCathedralDoorCatalog([doorDefinition]);

@@ -335,7 +335,7 @@ internal static class AuthoritativeCathedralNativePopulationBuilder
             var candidates = contentItems.Definitions
                 .Where(definition => definition.NativeItemIndex == nativeIndex
                     && string.Equals(definition.StableSymbol, semantic.StableItemSymbol, StringComparison.Ordinal)
-                    && MatchesNativeItemDefinition(native, definition, stableSpellId))
+                    && MatchesNativeItemDefinition(native, definition, stableSpellId, includeNativeDepthItems: true))
                 .ToArray();
             if (candidates.Length != 1)
                 throw new InvalidDataException(
@@ -354,7 +354,8 @@ internal static class AuthoritativeCathedralNativePopulationBuilder
                         $"Native Cathedral item index {nativeIndex} maps to '{definition.StableSymbol}' ({definition.ItemId}), "
                         + $"but an admitted Rogue starter or store row uses stable item {sourceItem.StableItemId}.");
             }
-            var action = ResolveNativeItemAction(native, definition, contentItems);
+            var action = ResolveNativeItemAction(native, definition, contentItems,
+                nativeSpellActions: semantic.ItemActionKind == DiabloItemActionKind.None);
             if (semantic.ItemActionKind != action)
                 throw new InvalidDataException($"Native Cathedral item index {nativeIndex} has an unsupported action mapping.");
             if (definition.InventoryWidth != footprint.InventoryWidth
@@ -372,7 +373,8 @@ internal static class AuthoritativeCathedralNativePopulationBuilder
     internal static bool MatchesNativeItemDefinition(
         AuthoritativeCathedralNativeItemDefinition native,
         AuthoritativeItemDefinition content,
-        int stableSpellId)
+        int stableSpellId,
+        bool includeNativeDepthItems = false)
     {
         if (!TryGetStableItemType(native.ItemType, out var stableItemType, out var requiredTag)
             || (content.ItemType != stableItemType
@@ -387,7 +389,8 @@ internal static class AuthoritativeCathedralNativePopulationBuilder
             ? native.Name
             : native.ShortName;
         var stableMiscId = native.MiscId switch {
-            18 => 19, // Native rejuvenation misc ID is represented by the normalized healing action row.
+            18 => 19, // Native rejuvenation misc IDs map to the stable action rows.
+            19 => 20,
             23 => 0,  // Staff identity is carried by the stable Staff tag and native item binding.
             24 => 25, // Native books use the shared stable book-template misc ID.
             25 when native.ItemType == 12 => 26, // Stable jewelry misc IDs follow Book.
@@ -401,8 +404,8 @@ internal static class AuthoritativeCathedralNativePopulationBuilder
             ? 0
             : stableSpellId;
         var minimumMagicMatches = content.MinimumMagic == native.MinimumMagic
-            || native.MiscId == 22 && native.SpellId != 0 && native.MinimumMagic > 0
-                && content.MinimumMagic == 0;
+            || (native.MiscId == 22 || includeNativeDepthItems && native.MiscId == 21)
+                && native.SpellId != 0 && native.MinimumMagic > 0 && content.MinimumMagic == 0;
         var dropRateMatches = content.DropRate == native.DropRate
             || native.ItemType == 3 && native.DropRate == 2 && content.DropRate == 1;
         var actionMatches = native.MiscId != 21 || native.SpellId != 5
@@ -486,12 +489,13 @@ internal static class AuthoritativeCathedralNativePopulationBuilder
             var candidates = baseItems.Definitions.Where(definition =>
                     definition.NativeItemIndex == native.NativeItemIndex
                     && string.Equals(definition.StableSymbol, semantic.StableItemSymbol, StringComparison.Ordinal)
-                    && MatchesNativeItemDefinition(native, definition, stableSpellId))
+                    && MatchesNativeItemDefinition(native, definition, stableSpellId, includeNativeDepthItems: true))
                 .ToArray();
             if (candidates.Length != 1)
                 throw new InvalidDataException($"Native item semantics must select one exact stable identity for native index {native.NativeItemIndex}.");
             var selected = candidates[0];
-            var expectedAction = ResolveNativeItemAction(native, selected, baseItems);
+            var expectedAction = ResolveNativeItemAction(native, selected, baseItems,
+                nativeSpellActions: semantic.ItemActionKind == DiabloItemActionKind.None);
             if (semantic.ItemActionKind != expectedAction
                 || semantic.MiscId != GetStableMiscId(native, selected))
                 throw new InvalidDataException($"Native item semantics contain an unsupported action or misc mapping for index {native.NativeItemIndex}.");
@@ -510,6 +514,9 @@ internal static class AuthoritativeCathedralNativePopulationBuilder
             replacements.Add(selected.ItemId, selected with {
                 InventoryWidth = footprint.InventoryWidth,
                 InventoryHeight = footprint.InventoryHeight,
+                // The new explicit targetless-scroll rows carry their native
+                // requirement; legacy rows already match or remain unselected.
+                MinimumMagic = native.MiscId == 21 ? native.MinimumMagic : selected.MinimumMagic,
                 MiscId = semantic.MiscId,
                 SpellSourceKind = dynamicStaff ? null : selected.SpellSourceKind,
                 ItemActionKind = semantic.ItemActionKind,
@@ -554,6 +561,7 @@ internal static class AuthoritativeCathedralNativePopulationBuilder
         AuthoritativeItemDefinition selected)
         => native.MiscId switch {
             18 => 19,
+            19 => 20,
             23 when native.ItemType == 10 && selected.GenerationTags.Contains("Staff", StringComparer.OrdinalIgnoreCase) => 23,
             24 => 25,
             25 when native.ItemType == 12 => 26,
@@ -574,6 +582,16 @@ internal static class AuthoritativeCathedralNativePopulationBuilder
         AuthoritativeSpellCatalog spells,
         IReadOnlyDictionary<int, AuthoritativeCathedralNativeItemFootprint> footprints,
         bool includeNativeJewelry)
+        => CreateSemanticTable(nativeItems, baseItems, spells, footprints,
+            includeNativeJewelry, includeNativeDepthItems: false);
+
+    internal static Devilution.Data.TsvTable CreateSemanticTable(
+        AuthoritativeCathedralThemeItemCatalog nativeItems,
+        AuthoritativeItemCatalog baseItems,
+        AuthoritativeSpellCatalog spells,
+        IReadOnlyDictionary<int, AuthoritativeCathedralNativeItemFootprint> footprints,
+        bool includeNativeJewelry,
+        bool includeNativeDepthItems)
     {
         ArgumentNullException.ThrowIfNull(nativeItems);
         ArgumentNullException.ThrowIfNull(baseItems);
@@ -590,10 +608,14 @@ internal static class AuthoritativeCathedralNativePopulationBuilder
             if (!includeNativeJewelry && (native.ItemType == 12 && native.MiscId == 25
                 || native.ItemType == 13 && native.MiscId == 26))
                 continue;
+            // Additional depth items are selected only by the four-floor
+            // compiler; legacy L1/L2 semantic tables retain their exact bytes.
+            if (native.MiscId == 19 && !includeNativeDepthItems)
+                continue;
             if (!TryGetStableSpellId(native, spells, out var stableSpellId))
                 continue; // Optional allowlist rows with unsupported spell identities remain unbound.
             var candidates = baseItems.Definitions.Where(definition => definition.NativeItemIndex == nativeIndex
-                && MatchesNativeItemDefinition(native, definition, stableSpellId)).ToArray();
+                && MatchesNativeItemDefinition(native, definition, stableSpellId, includeNativeDepthItems: includeNativeDepthItems)).ToArray();
             if (candidates.Length != 1)
                 continue; // This table is an explicit allowlist; required rows fail during profile binding.
             var selected = candidates[0];
@@ -608,7 +630,7 @@ internal static class AuthoritativeCathedralNativePopulationBuilder
                 .Append(footprint.InventoryHeight.ToString(System.Globalization.CultureInfo.InvariantCulture)).Append('\t')
                 .Append(GetStableMiscId(native, selected).ToString(System.Globalization.CultureInfo.InvariantCulture)).Append('\t')
                 .Append(sourcePolicy).Append('\t')
-                .Append(ResolveNativeItemAction(native, selected, baseItems).ToString()).Append('\n');
+                .Append(ResolveNativeItemAction(native, selected, baseItems, nativeSpellActions: includeNativeDepthItems).ToString()).Append('\n');
         }
         return Devilution.Data.TsvTable.Parse("native_item_semantics.tsv", output.ToString());
     }
@@ -752,8 +774,13 @@ internal static class AuthoritativeCathedralNativePopulationBuilder
     private static DiabloItemActionKind ResolveNativeItemAction(
         AuthoritativeCathedralNativeItemDefinition native,
         AuthoritativeItemDefinition content,
-        AuthoritativeItemCatalog contentItems)
+        AuthoritativeItemCatalog contentItems,
+        bool nativeSpellActions = false)
     {
+        // Native scrolls dispatch their bound spell. Misc21's legacy Identify
+        // fallback is retained only for older semantic tables.
+        if (nativeSpellActions && native.MiscId == 21 && native.SpellId != 0 && native.SpellId != 5)
+            return DiabloItemActionKind.None;
         if (native.MiscId == 21 && native.SpellId == 5)
             return DiabloItemActionKind.Identify;
         if (native.MiscId == 24

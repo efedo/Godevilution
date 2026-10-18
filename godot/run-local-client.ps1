@@ -17,12 +17,13 @@ param(
     [string]$CathedralDoorProfileDirectory,
     [string]$CathedralNativeProfileDirectory,
     [ValidateSet(1, 4)] [int]$PerformanceParticipants = 1,
-    [ValidateSet('Create', 'Resume', 'Recovery', 'Journey', 'JourneyResume', 'TownLoop', 'TownLoopResume', 'Lifecycle', 'LifecycleResume', 'MultiplayerCreate', 'MultiplayerResume', 'MultiplayerRecovery', 'MultiplayerPendingRecovery', 'CooperativeJourney', 'CooperativeResume', 'Performance', 'PerformanceCreate', 'PerformanceResume', 'CathedralJourney', 'CathedralResume', 'CathedralDepthJourney', 'CathedralDepthResume', 'CathedralDoorJourney', 'CathedralDoorResume', 'CathedralNativeJourney', 'CathedralNativeResume', 'CathedralNativeChestJourney', 'CathedralNativeChestResume', 'CathedralNativeSarcophagusJourney', 'CathedralNativeSarcophagusResume', 'CathedralNativeBarrelJourney', 'CathedralNativeBarrelResume', 'CathedralNativeTrapJourney', 'CathedralNativeTrapResume', 'CathedralNativeProgressionJourney', 'CathedralNativeProgressionResume')] [string]$AcceptancePhase,
+    [ValidateSet('Create', 'Resume', 'Recovery', 'Journey', 'JourneyResume', 'TownLoop', 'TownLoopResume', 'Lifecycle', 'LifecycleResume', 'MultiplayerCreate', 'MultiplayerResume', 'MultiplayerRecovery', 'MultiplayerPendingRecovery', 'CooperativeJourney', 'CooperativeResume', 'Performance', 'PerformanceCreate', 'PerformanceResume', 'CathedralJourney', 'CathedralResume', 'CathedralDepthJourney', 'CathedralDepthResume', 'CathedralDoorJourney', 'CathedralDoorResume', 'CathedralNativeJourney', 'CathedralNativeResume', 'CathedralNativeChestJourney', 'CathedralNativeChestResume', 'CathedralNativeSarcophagusJourney', 'CathedralNativeSarcophagusResume', 'CathedralNativeBarrelJourney', 'CathedralNativeBarrelResume', 'CathedralNativeTrapJourney', 'CathedralNativeTrapResume', 'CathedralNativeProgressionJourney', 'CathedralNativeProgressionResume', 'CathedralNativeDepthProgressionJourney', 'CathedralNativeDepthProgressionResume')] [string]$AcceptancePhase,
     [switch]$CommandTimingTrace,
     [switch]$Automated,
     [string]$PerformanceResumeBaselinePath,
     [string]$CathedralNativeProgressionProfileDirectory,
-    [ValidateSet('Debug', 'Release')] [string]$ServerBuildConfiguration = 'Debug'
+    [ValidateSet('Debug', 'Release')] [string]$ServerBuildConfiguration = 'Debug',
+    [string]$CathedralNativeDepthProgressionProfileDirectory
 )
 
 $ErrorActionPreference = 'Stop'
@@ -34,10 +35,13 @@ if ($CommandTimingTrace -and [string]::IsNullOrWhiteSpace($AcceptancePhase)) {
 }
 $PersistenceMode = $PersistenceMode.ToLowerInvariant()
 $cathedralProgression = -not [string]::IsNullOrWhiteSpace($CathedralNativeProgressionProfileDirectory)
-if ($cathedralProgression -and -not [string]::IsNullOrWhiteSpace($CathedralNativeProfileDirectory)) {
+$cathedralDepthProgression = -not [string]::IsNullOrWhiteSpace($CathedralNativeDepthProgressionProfileDirectory)
+if (($cathedralProgression -and $cathedralDepthProgression) -or
+    (($cathedralProgression -or $cathedralDepthProgression) -and -not [string]::IsNullOrWhiteSpace($CathedralNativeProfileDirectory))) {
     throw 'Choose one explicit native Cathedral profile.'
 }
-$cathedralNative = $cathedralProgression -or -not [string]::IsNullOrWhiteSpace($CathedralNativeProfileDirectory)
+$cathedralNative = $cathedralProgression -or $cathedralDepthProgression -or
+    -not [string]::IsNullOrWhiteSpace($CathedralNativeProfileDirectory)
 $performanceCreate = $AcceptancePhase -eq 'PerformanceCreate'
 $performanceResume = $AcceptancePhase -eq 'PerformanceResume'
 $performance = $AcceptancePhase -in @('Performance', 'PerformanceCreate')
@@ -86,7 +90,7 @@ $cathedralProfileModes = @(
     $cathedralDoors,
     $cathedralNative) | Where-Object { $_ }
 if ($cathedralProfileModes.Count -gt 1) {
-    throw 'Choose exactly one Cathedral profile mode: L1, depths 1-4, mutable doors, or the pinned native population profile.'
+    throw 'Choose exactly one Cathedral profile mode: L1, depths 1-4, mutable doors, or one pinned native population profile.'
 }
 $cathedral = $cathedralDepths -or -not [string]::IsNullOrWhiteSpace($CathedralProfileDirectory)
 if (($cathedral -or $cathedralDoors -or $cathedralNative) -and ($PreviewContent -or $PortalPreviewContent -or $LifecyclePreviewContent -or $Multiplayer -or $performance)) {
@@ -105,11 +109,17 @@ $cathedralNativePhases = @('CathedralNativeJourney', 'CathedralNativeResume', 'C
 if ($AcceptancePhase -in @('CathedralNativeProgressionJourney', 'CathedralNativeProgressionResume') -and -not $cathedralProgression) {
     throw 'Native progression acceptance requires its explicit -CathedralNativeProgressionProfileDirectory.'
 }
+if ($AcceptancePhase -in @('CathedralNativeDepthProgressionJourney', 'CathedralNativeDepthProgressionResume') -and -not $cathedralDepthProgression) {
+    throw 'Native depth progression acceptance requires its explicit -CathedralNativeDepthProgressionProfileDirectory.'
+}
 if ($cathedralProgression) {
     $cathedralNativePhases = @('CathedralNativeProgressionJourney', 'CathedralNativeProgressionResume')
 }
+if ($cathedralDepthProgression) {
+    $cathedralNativePhases = @('CathedralNativeDepthProgressionJourney', 'CathedralNativeDepthProgressionResume')
+}
 $cathedralNativePhase = $AcceptancePhase -in $cathedralNativePhases
-if ($cathedralNative -and (($AcceptancePhase -and -not $cathedralNativePhase) -or ($CommandTimingTrace -and -not $cathedralProgression) -or
+if ($cathedralNative -and (($AcceptancePhase -and -not $cathedralNativePhase) -or ($CommandTimingTrace -and -not ($cathedralProgression -or $cathedralDepthProgression)) -or
     $PersistenceMode -cne 'cohort' -or ($CharacterClassId -ge 0 -and $CharacterClassId -ne 1))) {
     throw 'The native Cathedral profile requires its own single-player Rogue cohort session.'
 }
@@ -117,7 +127,7 @@ if ($cathedralNativePhase -and -not $cathedralNative) {
     throw 'Native Cathedral acceptance requires the pinned -CathedralNativeProfileDirectory.'
 }
 if ($cathedralNativePhase -and (-not $Headless -or $PersistenceMode -cne 'cohort' -or
-    [string]::IsNullOrWhiteSpace($SessionDirectory) -or ($CommandTimingTrace -and -not $cathedralProgression) -or $Multiplayer -or
+    [string]::IsNullOrWhiteSpace($SessionDirectory) -or ($CommandTimingTrace -and -not ($cathedralProgression -or $cathedralDepthProgression)) -or $Multiplayer -or
     ($CharacterClassId -ge 0 -and $CharacterClassId -ne 1) -or
     -not [string]::IsNullOrWhiteSpace($CharacterName))) {
     throw 'Native Cathedral journey/resume requires a headless, isolated single-player Rogue cohort session.'
@@ -175,7 +185,7 @@ $clientSourceProject = Join-Path $repositoryRoot 'godot/Devilution.Client'
 $clientProject = $clientSourceProject
 if ([string]::IsNullOrWhiteSpace($SessionDirectory)) {
     $SessionDirectory = if ($cathedral -or $cathedralDoors -or $cathedralNative) {
-        $profileDirectory = if ($cathedralDepths) { $CathedralDepthProfileDirectory } elseif ($cathedralDoors) { $CathedralDoorProfileDirectory } elseif ($cathedralProgression) { $CathedralNativeProgressionProfileDirectory } elseif ($cathedralNative) { $CathedralNativeProfileDirectory } else { $CathedralProfileDirectory }
+        $profileDirectory = if ($cathedralDepths) { $CathedralDepthProfileDirectory } elseif ($cathedralDoors) { $CathedralDoorProfileDirectory } elseif ($cathedralDepthProgression) { $CathedralNativeDepthProgressionProfileDirectory } elseif ($cathedralProgression) { $CathedralNativeProgressionProfileDirectory } elseif ($cathedralNative) { $CathedralNativeProfileDirectory } else { $CathedralProfileDirectory }
         Join-Path ([IO.Path]::GetFullPath($profileDirectory)) 'sessions/local'
     } else {
         Join-Path $repositoryRoot $(if ($Multiplayer) { '.local/godot-multiplayer' } elseif ($lifecycle) { '.local/godot-lifecycle-preview' } elseif ($PortalPreviewContent) { '.local/godot-portal-preview' } elseif ($PreviewContent) { '.local/godot-preview' } else { '.local/godot' })
@@ -597,13 +607,14 @@ function Get-CathedralNativePopulationProfile([string]$Directory, [string]$Sessi
     }
 }
 
-function Initialize-CathedralNativePopulationSession($Profile, [string]$Session, [bool]$Progression = $false) {
+function Initialize-CathedralNativePopulationSession($Profile, [string]$Session, [bool]$Progression = $false, [bool]$DepthProgression = $false) {
     # A separate marker prevents native content from adopting any earlier Cathedral save.
-    $markerFile = if ($Progression) { 'cathedral-native-progression-session.json' } else { 'cathedral-native-population-session.json' }
-    $profileKind = if ($Progression) { 'cathedral-native-progression-playtest' } else { 'cathedral-native-population-playtest' }
-    $adapterId = if ($Progression) { 'devilution.diablo.cathedral-native-progression.v1' } else { 'devilution.diablo.cathedral-native-population.v1' }
+    if ($Progression -and $DepthProgression) { throw 'A native session cannot select both progression profile generations.' }
+    $markerFile = if ($DepthProgression) { 'cathedral-native-depth-progression-session.json' } elseif ($Progression) { 'cathedral-native-progression-session.json' } else { 'cathedral-native-population-session.json' }
+    $profileKind = if ($DepthProgression) { 'cathedral-native-depth-progression-playtest' } elseif ($Progression) { 'cathedral-native-progression-playtest' } else { 'cathedral-native-population-playtest' }
+    $adapterId = if ($DepthProgression) { 'devilution.diablo.cathedral-native-depth-progression.v1' } elseif ($Progression) { 'devilution.diablo.cathedral-native-progression.v1' } else { 'devilution.diablo.cathedral-native-population.v1' }
     $markerPath = Join-Path $Session $markerFile
-    foreach ($otherMarker in (@('cathedral-session.json', 'cathedral-door-session.json', 'cathedral-native-population-session.json', 'cathedral-native-progression-session.json') | Where-Object { $_ -ne $markerFile })) {
+    foreach ($otherMarker in (@('cathedral-session.json', 'cathedral-door-session.json', 'cathedral-native-population-session.json', 'cathedral-native-progression-session.json', 'cathedral-native-depth-progression-session.json') | Where-Object { $_ -ne $markerFile })) {
         if (Test-Path -LiteralPath (Join-Path $Session $otherMarker)) {
             throw 'A save marker from another Cathedral profile cannot be reused by the native population profile.'
         }
@@ -1942,7 +1953,10 @@ try {
     $cathedralDoorProfile = if ($cathedralDoors) {
         Get-CathedralDoorPlaytestProfile $CathedralDoorProfileDirectory $SessionDirectory
     } else { $null }
-    $cathedralNativeProfile = if ($cathedralProgression) {
+    $cathedralNativeProfile = if ($cathedralDepthProgression) {
+        . (Join-Path $PSScriptRoot 'native-depth-progression-profile.ps1')
+        Get-CathedralNativeDepthProgressionProfile $CathedralNativeDepthProgressionProfileDirectory $SessionDirectory
+    } elseif ($cathedralProgression) {
         . (Join-Path $PSScriptRoot 'native-progression-profile.ps1')
         Get-CathedralNativeProgressionProfile $CathedralNativeProgressionProfileDirectory $SessionDirectory
     } elseif ($cathedralNative) {
@@ -1965,7 +1979,9 @@ try {
     }
     if ($cathedral) { Initialize-CathedralPlaytestSession $cathedralProfile $SessionDirectory }
     if ($cathedralDoors) { Initialize-CathedralDoorPlaytestSession $cathedralDoorProfile $SessionDirectory }
-    if ($cathedralNative) { Initialize-CathedralNativePopulationSession $cathedralNativeProfile $SessionDirectory $cathedralProgression }
+    if ($cathedralNative) {
+        Initialize-CathedralNativePopulationSession $cathedralNativeProfile $SessionDirectory $cathedralProgression $cathedralDepthProgression
+    }
     $staging = New-IsolatedGodotProject $clientSourceProject (Join-Path $captureRoot 'godot/Devilution.Client')
     $clientProject = $staging.DestinationDirectory
     Write-ProjectStageEvidence $staging $null $projectStageEvidencePath $null
@@ -2213,7 +2229,7 @@ try {
                 $processEvidence.ContentTreeHash = $cathedralNativeProfile.ContentTreeHash
                 $processEvidence.PopulationTreeHash = $cathedralNativeProfile.PopulationTreeHash
                 $processEvidence.RuntimeTreeHash = $cathedralNativeProfile.RuntimeTreeHash
-                $processEvidence.ProfileKind = if ($cathedralProgression) { 'cathedral-native-progression-playtest' } else { 'cathedral-native-population-playtest' }
+                $processEvidence.ProfileKind = if ($cathedralDepthProgression) { 'cathedral-native-depth-progression-playtest' } elseif ($cathedralProgression) { 'cathedral-native-progression-playtest' } else { 'cathedral-native-population-playtest' }
                 $processEvidence.AdapterId = $cathedralNativeProfile.Metadata.adapterId
             }            elseif ($cathedralDoors) {
                 $processEvidence.ProfileHash = $cathedralDoorProfile.MetadataHash
@@ -2469,7 +2485,7 @@ try {
     throw
 } finally {
     $cleanupErrors = [Collections.Generic.List[string]]::new()
-    if ($CommandTimingTrace -and $cathedralProgression -and $null -ne $serverProcess) {
+    if ($CommandTimingTrace -and ($cathedralProgression -or $cathedralDepthProgression) -and $null -ne $serverProcess) {
         try {
             $observedHostExited = $serverProcess.HasExited
             [ordered]@{

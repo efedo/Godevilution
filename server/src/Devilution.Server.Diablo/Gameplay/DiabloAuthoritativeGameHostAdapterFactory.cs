@@ -14,6 +14,7 @@ public sealed class DiabloAuthoritativeGameHostAdapterFactory
     public const string CathedralDoorId = "devilution.diablo.cathedral-doors.v1";
     public const string CathedralNativePopulationId = "devilution.diablo.cathedral-native-population.v1";
     public const string CathedralNativeProgressionId = "devilution.diablo.cathedral-native-progression.v1";
+    public const string CathedralNativeDepthProgressionId = "devilution.diablo.cathedral-native-depth-progression.v1";
     private readonly string adapterId;
 
     public DiabloAuthoritativeGameHostAdapterFactory() : this(false) { }
@@ -24,7 +25,8 @@ public sealed class DiabloAuthoritativeGameHostAdapterFactory
     /** Explicit profile selection; the bool constructor retains its original L1 meaning. */
     public DiabloAuthoritativeGameHostAdapterFactory(string adapterId)
     {
-        if (adapterId is not ("devilution.diablo" or NativeGeneratedId or CathedralDepthId or CathedralDoorId or CathedralNativePopulationId or CathedralNativeProgressionId))
+        if (adapterId is not ("devilution.diablo" or NativeGeneratedId or CathedralDepthId or CathedralDoorId
+            or CathedralNativePopulationId or CathedralNativeProgressionId or CathedralNativeDepthProgressionId))
             throw new ArgumentException("Unsupported built-in Diablo adapter profile.", nameof(adapterId));
         this.adapterId = adapterId;
     }
@@ -45,6 +47,7 @@ public sealed class DiabloAuthoritativeGameHostAdapterFactory
             CathedralDoorId => registry.TryGetCapability<IDiabloCathedralDoorContentBootstrap>(out _),
             CathedralNativePopulationId => registry.TryGetCapability<IDiabloCathedralNativePopulationBootstrap>(out _),
             CathedralNativeProgressionId => registry.TryGetCapability<IDiabloCathedralNativeProgressionBootstrap>(out _),
+            CathedralNativeDepthProgressionId => registry.TryGetCapability<IDiabloCathedralNativeDepthProgressionBootstrap>(out _),
             _ => registry.TryGetCapability<IDiabloContentBootstrap>(out _),
         };
     }
@@ -57,7 +60,7 @@ public sealed class DiabloAuthoritativeGameHostAdapterFactory
         ArgumentNullException.ThrowIfNull(registry);
         ArgumentNullException.ThrowIfNull(content);
         ArgumentNullException.ThrowIfNull(playerStart);
-        if ((adapterId is CathedralNativePopulationId or CathedralNativeProgressionId)
+        if ((adapterId is CathedralNativePopulationId or CathedralNativeProgressionId or CathedralNativeDepthProgressionId)
             && (playerStart.GameMode != AuthoritativeGameMode.SinglePlayer
                 || playerStart.Difficulty != AuthoritativeGameDifficulty.Normal
                 || playerStart.ProceduralMonsterLimit is not null
@@ -87,6 +90,8 @@ public sealed class DiabloAuthoritativeGameHostAdapterFactory
                 .ActivateNativePopulation(content, playerStart.RandomSeed, gameMode, monsterSpawns, difficulty),
             CathedralNativeProgressionId => registry.GetRequiredCapability<IDiabloCathedralNativeProgressionBootstrap>()
                 .ActivateNativeProgression(content, playerStart.RandomSeed),
+            CathedralNativeDepthProgressionId => registry.GetRequiredCapability<IDiabloCathedralNativeDepthProgressionBootstrap>()
+                .ActivateNativeDepthProgression(content, playerStart.RandomSeed),
             NativeGeneratedId => registry.GetRequiredCapability<IDiabloNativeGeneratedContentBootstrap>()
                 .ActivateGenerated(content, playerStart.RandomSeed, gameMode, monsterSpawns, difficulty),
             CathedralDepthId => registry.GetRequiredCapability<IDiabloCathedralDepthContentBootstrap>()
@@ -100,7 +105,8 @@ public sealed class DiabloAuthoritativeGameHostAdapterFactory
             || !world.ContainsLevel(startingLevelId))
             throw new InvalidDataException(
                 $"Starting level {startingLevelId} is not defined by the active content world.");
-        if ((adapterId is CathedralNativePopulationId or CathedralNativeProgressionId) && startingLevelId is not (0 or 1))
+        if ((adapterId is CathedralNativePopulationId or CathedralNativeProgressionId or CathedralNativeDepthProgressionId)
+            && startingLevelId is not (0 or 1))
             throw new NotSupportedException(
                 "The native-populated Cathedral profile supports only Town and Cathedral L1 participant starts.");
         var startingPosition = world.GetStartPosition(startingLevelId);
@@ -114,15 +120,15 @@ public sealed class DiabloAuthoritativeGameHostAdapterFactory
                         ? selected
                         : throw new InvalidDataException(
                             $"Requested player class ID {requestedClassId.Value} is not defined by active content.")
-                    : (adapterId is CathedralNativePopulationId or CathedralNativeProgressionId)
+                    : (adapterId is CathedralNativePopulationId or CathedralNativeProgressionId or CathedralNativeDepthProgressionId)
                         ? activatedContent.PlayerClasses.Definitions.Single(definition =>
                             string.Equals(definition.Symbol, "rogue", StringComparison.Ordinal))
                         : activatedContent.PlayerClasses.Default;
-                if ((adapterId is CathedralNativePopulationId or CathedralNativeProgressionId)
+                if ((adapterId is CathedralNativePopulationId or CathedralNativeProgressionId or CathedralNativeDepthProgressionId)
                     && !string.Equals(playerClass.Symbol, "rogue", StringComparison.Ordinal))
                     throw new NotSupportedException(
                         "The native-populated Cathedral profile is generated for the canonical Rogue class.");
-                if ((adapterId is CathedralNativePopulationId or CathedralNativeProgressionId)) {
+                if ((adapterId is CathedralNativePopulationId or CathedralNativeProgressionId or CathedralNativeDepthProgressionId)) {
                     var canonical = activatedContent.PlayerLoadouts.CreateTemplate(
                         "native-cathedral-population-profile",
                         playerClass.ClassId,
@@ -148,7 +154,11 @@ public sealed class DiabloAuthoritativeGameHostAdapterFactory
                     playerStart.StatPoints,
                     startingPosition.X,
                     startingPosition.Y);
-            });
+            },
+            saveCodec: null,
+            supportedProtocolFeatures: adapterId == CathedralNativeDepthProgressionId
+                ? AuthoritativeProtocolFeatures.TargetCellPathing
+                : AuthoritativeProtocolFeatures.None);
     }
 }
 
@@ -165,6 +175,7 @@ public static class BuiltInAuthoritativeGameHostAdapters
                 or DiabloAuthoritativeGameHostAdapterFactory.CathedralDoorId
                 or DiabloAuthoritativeGameHostAdapterFactory.CathedralNativePopulationId
                 or DiabloAuthoritativeGameHostAdapterFactory.CathedralNativeProgressionId
+                or DiabloAuthoritativeGameHostAdapterFactory.CathedralNativeDepthProgressionId
             ? new DiabloAuthoritativeGameHostAdapterFactory(selectedFactoryId)
             : new DiabloAuthoritativeGameHostAdapterFactory(selectedFactoryId == DiabloAuthoritativeGameHostAdapterFactory.NativeGeneratedId)];
     }

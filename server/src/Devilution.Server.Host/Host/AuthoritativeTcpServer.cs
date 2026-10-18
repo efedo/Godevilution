@@ -228,6 +228,10 @@ public sealed partial class AuthoritativeTcpServer : IAsyncDisposable
 
     public string ActiveContentManifestHash => handshake.Identity.ContentManifestHash;
 
+    private bool SupportsTargetCellPathing
+        => gameAdapter is { } adapter
+            && (adapter.SupportedProtocolFeatures & AuthoritativeProtocolFeatures.TargetCellPathing) != 0;
+
     /** Replaced generations awaiting host disposal, if live reload is enabled. */
     public int RetiredRulesetCount => gameAdapter is LeasedAuthoritativeGameHostAdapter leasedAdapter
         ? leasedAdapter.RetiredRulesetCount
@@ -658,6 +662,7 @@ public sealed partial class AuthoritativeTcpServer : IAsyncDisposable
                     serverHello.CommandSchedulingMode = UseClockGatedCommandScheduling
                         ? CommandSchedulingMode.ClockGated : CommandSchedulingMode.Immediate;
                     serverHello.SupportsClockOnlyProbes = UseClockGatedCommandScheduling;
+                    serverHello.SupportsTargetCellPathing = SupportsTargetCellPathing;
 
                     await EnvelopeCodec.WriteAsync(stream, new Envelope { ServerHello = serverHello }, cancellationToken);
                     currentTick = commandServer.WithSynchronizedState(() => AdvanceCurrentTickCore());
@@ -913,6 +918,7 @@ public sealed partial class AuthoritativeTcpServer : IAsyncDisposable
         serverHello.CommandSchedulingMode = UseClockGatedCommandScheduling
             ? CommandSchedulingMode.ClockGated : CommandSchedulingMode.Immediate;
         serverHello.SupportsClockOnlyProbes = UseClockGatedCommandScheduling;
+        serverHello.SupportsTargetCellPathing = SupportsTargetCellPathing;
 
 
         // Keep the handshake cursor, authoritative tick, and initial projection in the same
@@ -1737,10 +1743,17 @@ public sealed partial class AuthoritativeTcpServer : IAsyncDisposable
         }
     }
 
-    private ValueTask WriteAuthoritativeEnvelopeAsync(Stream stream, Envelope envelope, CancellationToken cancellationToken)
+    private async ValueTask WriteAuthoritativeEnvelopeAsync(Stream stream, Envelope envelope, CancellationToken cancellationToken)
     {
-        WithCohortBarrier(RequireCohortHealthy);
-        return EnvelopeCodec.WriteAsync(stream, envelope, cancellationToken);
+        // Order the health fence with cohort publication, but never hold a turn over socket backpressure.
+        IDisposable? authorityTurn = await EnterCohortAuthorityTurnAsync(cancellationToken);
+        try {
+            WithCohortBarrier(RequireCohortHealthy);
+        } finally {
+            authorityTurn?.Dispose();
+        }
+
+        await EnvelopeCodec.WriteAsync(stream, envelope, cancellationToken);
     }
 
     private void WithCohortBarrier(Action operation)

@@ -33,6 +33,8 @@ public sealed class StoreSimulationExecutor
     private ActiveState activeState = null!;
     private long activeStateGeneration;
 
+    public AuthoritativeProtocolFeatures SupportedProtocolFeatures { get; }
+
     private sealed class ActiveState
     {
         public ActiveState(
@@ -139,9 +141,21 @@ public sealed class StoreSimulationExecutor
         DiabloContentActivation content,
         Func<string, uint?, DiabloPlayerTemplate> playerTemplateFactory,
         AuthoritativeSaveCodec? saveCodec = null)
+        : this(content, playerTemplateFactory, saveCodec, AuthoritativeProtocolFeatures.None)
+    {
+    }
+
+    internal StoreSimulationExecutor(
+        DiabloContentActivation content,
+        Func<string, uint?, DiabloPlayerTemplate> playerTemplateFactory,
+        AuthoritativeSaveCodec? saveCodec,
+        AuthoritativeProtocolFeatures supportedProtocolFeatures)
     {
         ArgumentNullException.ThrowIfNull(content);
         ArgumentNullException.ThrowIfNull(playerTemplateFactory);
+        if ((supportedProtocolFeatures & ~AuthoritativeProtocolFeatures.TargetCellPathing) != 0)
+            throw new ArgumentOutOfRangeException(nameof(supportedProtocolFeatures));
+        SupportedProtocolFeatures = supportedProtocolFeatures;
         var simulation = content.Simulation;
         var defaultTemplate = playerTemplateFactory("default", null)
             ?? throw new InvalidOperationException(
@@ -544,6 +558,13 @@ public sealed class StoreSimulationExecutor
         ArgumentNullException.ThrowIfNull(command);
         if (string.IsNullOrWhiteSpace(sessionId))
             return CommandExecutionResult.Rejected(CommandRejectReason.Malformed);
+        if (command.IntentCase == Command.IntentOneofCase.MoveRequested
+            && command.MoveRequested.FollowPath) {
+            if (!command.MoveRequested.TargetCell)
+                return CommandExecutionResult.Rejected(CommandRejectReason.Malformed);
+            if ((SupportedProtocolFeatures & AuthoritativeProtocolFeatures.TargetCellPathing) == 0)
+                return CommandExecutionResult.Rejected(CommandRejectReason.NotAllowed);
+        }
 
         return WithActiveState(_ => runtime.Execute(
             sessionId,
@@ -637,7 +658,8 @@ public sealed class StoreSimulationExecutor
                     command.MoveRequested.TargetCell
                         ? new DiabloMoveToIntent(
                             command.MoveRequested.TargetX,
-                            command.MoveRequested.TargetY)
+                            command.MoveRequested.TargetY,
+                            command.MoveRequested.FollowPath)
                         : new DiabloMoveIntent(
                             command.MoveRequested.DirectionX,
                             command.MoveRequested.DirectionY),

@@ -150,8 +150,12 @@ public sealed class DiabloWorldCommandProcessor
         pendingEntryEvents.Clear();
         EnsureLevelEntryState(player.LevelId, player.EntityId, emitDialogue: true);
 
-        if (intent is DiabloRestartTownIntent)
-            return AttachPendingEntryEvents(RestartTown(player, appliedTick));
+        if (intent is DiabloRestartTownIntent) {
+            var restart = AttachPendingEntryEvents(RestartTown(player, appliedTick));
+            if (restart.Succeeded)
+                player.NativeWalkPath = null;
+            return restart;
+        }
 
         if (useNativePlayerActionTiming
             && (player.Life <= 0
@@ -207,8 +211,21 @@ public sealed class DiabloWorldCommandProcessor
             DiabloAllocateAttributeIntent allocation => AllocateAttribute(player, allocation),
             _ => DiabloWorldIntentResult.Rejected(DiabloRuleFailure.Malformed),
         };
+        if (result.Succeeded && ReplacesNativeWalkPath(intent))
+            player.NativeWalkPath = null;
         return AttachPendingEntryEvents(result);
     }
+
+    private static bool ReplacesNativeWalkPath(DiabloWorldIntent intent)
+        => intent is DiabloMoveIntent
+            or DiabloMoveToIntent { FollowPath: false }
+            or DiabloUsePortalIntent
+            or DiabloPickupWorldItemIntent
+            or DiabloOperateObjectIntent
+            or DiabloDisarmTrapIntent
+            or DiabloTalkToQuestIntent
+            or DiabloTurnInQuestIntent
+            or DiabloTalkToTownerIntent;
 
     private DiabloWorldIntentResult AttachPendingEntryEvents(
         DiabloWorldIntentResult result)
@@ -548,6 +565,7 @@ public sealed class DiabloWorldCommandProcessor
             random.Restore(first.Admission.Build.Generated.Population.FinalRandomState);
         }
         var sourceLevelId = player.LevelId;
+        player.NativeWalkPath = null;
         player.LevelId = warp.TargetLevelId;
         player.MarkLevelVisited(player.LevelId);
         player.PositionX = destination.Value.X;
@@ -661,7 +679,8 @@ public sealed class DiabloWorldCommandProcessor
         AuthoritativePlayerState player,
         DiabloMoveIntent intent,
         ulong appliedTick,
-        IEnumerable<AuthoritativePlayerState> players)
+        IEnumerable<AuthoritativePlayerState> players,
+        bool initialNativeWalkStep = false)
     {
         if (intent.DirectionX is < -1 or > 1 || intent.DirectionY is < -1 or > 1
             || (intent.DirectionX == 0 && intent.DirectionY == 0)) {
@@ -683,7 +702,10 @@ public sealed class DiabloWorldCommandProcessor
                 intent.DirectionX,
                 intent.DirectionY);
             var animation = playerAnimations!.GetRequired(player.CharacterClassId);
-            var endTick = checked(appliedTick + (ulong)animation.WalkingFrames);
+            // A Stand CheckNewPath starts at animation frame -1; a chained
+            // completion-loop StartWalk begins at frame 0 on the same tick.
+            var endTick = checked(appliedTick + (ulong)animation.WalkingFrames
+                + (initialNativeWalkStep ? 1UL : 0UL));
             DiabloPlayerActionLifecycle.Begin(
                 player,
                 new AuthoritativePlayerActionState(
@@ -734,6 +756,9 @@ public sealed class DiabloWorldCommandProcessor
         ulong appliedTick,
         IEnumerable<AuthoritativePlayerState> players)
     {
+        if (intent.FollowPath)
+            return CaptureNativeDestinationPath(player, intent, appliedTick, players);
+
         if (!world.ContainsPosition(player.LevelId, intent.TargetX, intent.TargetY))
             return DiabloWorldIntentResult.Rejected(DiabloRuleFailure.InvalidTarget);
         if (player.PositionX == intent.TargetX && player.PositionY == intent.TargetY)
@@ -784,6 +809,136 @@ public sealed class DiabloWorldCommandProcessor
                 step.Value.Y - player.PositionY),
             appliedTick,
             participants);
+    }
+
+    private DiabloWorldIntentResult CaptureNativeDestinationPath(
+        AuthoritativePlayerState player,
+        DiabloMoveToIntent intent,
+        ulong appliedTick,
+        IEnumerable<AuthoritativePlayerState> players)
+    {
+        if (!world.SupportsNativeTargetCellPathing || !useNativePlayerActionTiming)
+            return DiabloWorldIntentResult.Rejected(DiabloRuleFailure.NotAllowed);
+        if (!world.ContainsPosition(player.LevelId, intent.TargetX, intent.TargetY)
+            || (uint)player.FuturePositionX > byte.MaxValue
+            || (uint)player.FuturePositionY > byte.MaxValue
+            || (uint)intent.TargetX > byte.MaxValue
+            || (uint)intent.TargetY > byte.MaxValue)
+            return DiabloWorldIntentResult.Rejected(DiabloRuleFailure.InvalidTarget);
+        if (player.Life <= 0 || player.CombatMode is DiabloPlayerCombatMode.Death
+                or DiabloPlayerCombatMode.NewLevel or DiabloPlayerCombatMode.Quit)
+            return DiabloWorldIntentResult.Rejected(DiabloRuleFailure.NotAllowed);
+
+        var participants = players as IReadOnlyList<AuthoritativePlayerState>
+            ?? players.ToArray();
+        var startX = player.FuturePositionX;
+        var startY = player.FuturePositionY;
+        if (!world.ContainsPosition(player.LevelId, startX, startY))
+            return DiabloWorldIntentResult.Rejected(DiabloRuleFailure.InvalidTarget);
+        if (startX == intent.TargetX && startY == intent.TargetY) {
+            player.NativeWalkPath = null;
+            return DiabloWorldIntentResult.Accepted;
+        }
+
+        var directions = AuthoritativeNativePlayerPathfinder.FindPath(
+            startX,
+            startY,
+            intent.TargetX,
+            intent.TargetY,
+            AuthoritativeNativePlayerPathfinder.MaximumPathLength,
+            (x, y) => world.ContainsPosition(player.LevelId, x, y)
+                && world.IsWalkable(player.LevelId, x, y)
+                && !world.IsOccupied(player.LevelId, x, y, participants, player.EntityId),
+            (fromX, fromY, toX, toY) => {
+                var dx = toX - fromX;
+                var dy = toY - fromY;
+                if (dx == 0 || dy == 0)
+                    return true;
+                return world.IsWalkable(player.LevelId, fromX + dx, fromY)
+                    && world.IsWalkable(player.LevelId, fromX, fromY + dy);
+            });
+        if (directions.Length == 0)
+            return DiabloWorldIntentResult.Rejected(DiabloRuleFailure.InvalidTarget);
+
+        player.NativeWalkPath = new DiabloNativeWalkPathState(player.LevelId, directions);
+        return DiabloWorldIntentResult.Accepted;
+    }
+
+    /** Starts queued native directions at the normal player scheduling boundary. */
+    internal DiabloWorldIntentResult AdvanceNativeWalkContinuation(
+        AuthoritativePlayerState player,
+        ulong tick,
+        IReadOnlyList<AuthoritativePlayerState> players,
+        int maximumSchedulingAttempts = 1)
+    {
+        ArgumentNullException.ThrowIfNull(player);
+        ArgumentNullException.ThrowIfNull(players);
+        if (maximumSchedulingAttempts is < 1 or > 2)
+            throw new ArgumentOutOfRangeException(nameof(maximumSchedulingAttempts));
+        if (!world.SupportsNativeTargetCellPathing || !useNativePlayerActionTiming)
+            return DiabloWorldIntentResult.Accepted;
+        if (player.NativeWalkPath is not { } path)
+            return DiabloWorldIntentResult.Accepted;
+        if (path.LevelId != player.LevelId || player.Life <= 0
+            || player.CombatMode is DiabloPlayerCombatMode.Death
+                or DiabloPlayerCombatMode.NewLevel or DiabloPlayerCombatMode.Quit) {
+            player.NativeWalkPath = null;
+            return DiabloWorldIntentResult.Accepted;
+        }
+        if (player.CurrentAction is not null || player.CombatMode != DiabloPlayerCombatMode.Stand)
+            return DiabloWorldIntentResult.Accepted;
+
+        var result = DiabloWorldIntentResult.Accepted;
+        for (var attempt = 0; attempt < maximumSchedulingAttempts; attempt++) {
+            if (player.NativeWalkPath is not { } remaining || remaining.Directions.Count == 0)
+                return result;
+
+            var directions = remaining.Directions;
+            var direction = directions[0];
+            var displacement = AuthoritativeNativePlayerPathfinder.GetDisplacement(direction);
+            player.NativeWalkPath = directions.Count == 1
+                ? null
+                : new DiabloNativeWalkPathState(remaining.LevelId, directions.Skip(1).ToArray());
+
+            // Native CheckNewPath consumes a direction even when PlrDirOK blocks
+            // it. The completion do/while may call CheckNewPath once more.
+            if (!NativeWalkCornerAllowsDirection(player, direction)) {
+                result = DiabloWorldIntentResult.Rejected(DiabloRuleFailure.InvalidTarget);
+                continue;
+            }
+
+            result = Move(
+                player,
+                new DiabloMoveIntent(displacement.X, displacement.Y),
+                tick,
+                players,
+                initialNativeWalkStep: maximumSchedulingAttempts == 1 || attempt > 0);
+            if (result.Succeeded)
+                return result;
+        }
+        return result;
+    }
+
+    private bool NativeWalkCornerAllowsDirection(AuthoritativePlayerState player, int direction)
+    {
+        // Player::PlrDirOK has these two additional static-corner checks.
+        // Other directions validate only their destination tile.
+        var x = player.FuturePositionX;
+        var y = player.FuturePositionY;
+        return direction switch {
+            6 => IsNativeWalkCornerTileWalkable(player.LevelId, x, y, 1, 0), // East: test southeast.
+            8 => IsNativeWalkCornerTileWalkable(player.LevelId, x, y, 0, 1), // West: test southwest.
+            _ => true,
+        };
+    }
+
+    private bool IsNativeWalkCornerTileWalkable(uint levelId, int x, int y, int offsetX, int offsetY)
+    {
+        var candidateX = (long)x + offsetX;
+        var candidateY = (long)y + offsetY;
+        return candidateX is >= int.MinValue and <= int.MaxValue
+            && candidateY is >= int.MinValue and <= int.MaxValue
+            && world.IsWalkable(levelId, (int)candidateX, (int)candidateY);
     }
 
     private static DiabloPlayerCombatMode GetWalkMode(int directionX, int directionY)

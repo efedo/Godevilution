@@ -76,6 +76,8 @@ message ServerHello {
 	CommandSchedulingMode command_scheduling_mode = 9;
 	// A negotiated clock-only probe does not perform snapshot publication work.
 	bool supports_clock_only_probes = 10;
+	// Native target-cell auto-pathing is explicitly enabled by opted-in adapters.
+	bool supports_target_cell_pathing = 11;
 }
 
 enum CommandSchedulingMode {
@@ -190,6 +192,8 @@ message MoveRequested {
 	int32 target_x = 3;
 	int32 target_y = 4;
 	bool target_cell = 5;
+	// Requests tick-by-tick continuation of the selected target-cell path.
+	bool follow_path = 6;
 }
 
 message RestartTownRequested {}
@@ -688,6 +692,9 @@ message PlayerSnapshot {
 	// Native-clamped player vision radius derived from identified equipment.
 	// Zero preserves compatibility with snapshots written before this field.
 	int32 light_radius = 41;
+	// True when a negotiated native destination walk has remaining directions.
+	// False preserves snapshots written before this optional projection.
+	bool native_walk_path_pending = 42;
 }
 
 message StashItemSnapshot {

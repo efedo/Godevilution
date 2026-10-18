@@ -202,14 +202,14 @@ public static class AuthoritativeCathedralBarrelOperationGenerator
 
     private static void ValidatePolicy(AuthoritativeCathedralThemeItemPolicy policy)
     {
-        if (policy.Depth is < 1 or > 2
+        if (policy.Depth is < 1 or > 4
             || policy.CurrentDungeonLevel != 0 && policy.CurrentDungeonLevel != policy.Depth
             || policy.Hellfire || policy.SetLevel
             || policy.GameMode != DiabloGameMode.SinglePlayer
             || policy.Difficulty != DiabloDifficulty.Normal
             || policy.Spawn || policy.QuestEnabled
             || !policy.LegacyLevelItemGenerationAllowed)
-            throw new InvalidDataException("Native barrel operations are limited to ordinary original-Diablo Cathedral depths 1 and 2.");
+            throw new InvalidDataException("Native barrel operations are limited to ordinary original-Diablo Cathedral depths 1 through 4.");
     }
 
     private static void ValidateFacts(

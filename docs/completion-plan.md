@@ -754,6 +754,15 @@ M2 closes only when every supported family and required set level meets its gate
 
 ## M3: Gameplay and content closure by playable route
 
+The next native route extends the explicit profile to L1-L4 with separate lazy
+owners and cohort v10. Destination walking now passes native timing/path tests,
+affected compatibility checks and one-command real TCP mid-walk fresh-host
+continuation. Pending-path projection now prevents premature settlement at a
+Stand boundary. The full Godot gate remains open: R18 repeats L1 gear/Gold/Pepin
+and an L2 kill, then dies during the L3 ranged-lane approach. Close L3/L4 combat
+and the full retained-world fresh-host journey before claiming this four-floor
+gate; establish actual click intent/path usage before retrying.
+
 The explicit native Town/L1/L2 first-entry/combat/retention route now passes
 headlessly: L1 earned equipment/Gold/Pepin supplies, actual L2 kill/XP, Town417,
 exact fresh-host player/RNG/cursor/two-floor restore and retained revisit through

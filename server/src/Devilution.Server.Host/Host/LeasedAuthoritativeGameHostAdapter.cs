@@ -31,6 +31,14 @@ public sealed class LeasedAuthoritativeGameHostAdapter
     /** Identity hash of the generation that will serve the next operation. */
     public string ActiveRulesetIdentityHash => rulesets.Active.Identity.CombinedSha256;
 
+    public AuthoritativeProtocolFeatures SupportedProtocolFeatures
+    {
+        get {
+            ThrowIfDisposed();
+            return WithAdapter(adapter => adapter.SupportedProtocolFeatures);
+        }
+    }
+
     /** Replaced generations still awaiting explicit disposal by the host. */
     public int RetiredRulesetCount => rulesets.RetiredActivationCount;
 
