@@ -209,6 +209,112 @@ public sealed class ClockGatedCohortSnapshotPollTests
         }
     }
 
+    [Fact]
+    public async Task QueuedCohortAdmissionPrecedesNextPeriodicTurnAndIsDurableBeforeAck()
+    {
+        var root = NewRoot();
+        var adapter = new SnapshotPollAdapter();
+        var clock = new MutableClock(FixedTick);
+        var store = new AuthoritativeCohortStore(root);
+        var timingRecorder = new HostCommandTimingRecorder();
+        var server = CreateServer(adapter, clock, store, commandTimingRecorder: timingRecorder);
+        var periodicPublicationEntered = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+        var nextPeriodicPublication = new TaskCompletionSource<int>(TaskCreationOptions.RunContinuationsAsynchronously);
+        var commandCheckpointRenamed = new TaskCompletionSource<(bool Durable, bool AckPending, ulong? AppliedTick)>(
+            TaskCreationOptions.RunContinuationsAsynchronously);
+        using var releasePeriodicPublication = new ManualResetEventSlim();
+        using var releaseCommandCheckpoint = new ManualResetEventSlim();
+        var publicationNumber = 0;
+        Task<Envelope?>? acknowledgementRead = null;
+        try {
+            server.Start();
+            using var timeout = CreateTimeout();
+            using var client = new TcpClient();
+            await client.ConnectAsync(IPAddress.Loopback, server.Port, timeout.Token);
+            await using var stream = client.GetStream();
+            await ReadHandshakeAsync(stream, hasSnapshot: true, timeout.Token);
+
+            store.PublicationObserver = (phase, _) => {
+                if (phase == AuthoritativePublicationPhase.BeforeStageWrite) {
+                    var currentPublication = Interlocked.Increment(ref publicationNumber);
+                    if (currentPublication == 1) {
+                        periodicPublicationEntered.TrySetResult(true);
+                        if (!releasePeriodicPublication.Wait(TimeSpan.FromSeconds(5)))
+                            throw new TimeoutException("The test did not release the held periodic publication.");
+                    } else if (currentPublication == 2) {
+                        nextPeriodicPublication.TrySetResult(server.PendingCommandCount);
+                    }
+                } else if (phase == AuthoritativePublicationPhase.AfterCanonicalRename
+                    && Volatile.Read(ref publicationNumber) == 3) {
+                    var receipt = store.Load()?.Participants
+                        .SelectMany(participant => participant.CommandReceipts)
+                        .SingleOrDefault(result => result.ClientSequence == 1);
+                    commandCheckpointRenamed.TrySetResult((
+                        receipt?.Status == CommandStatus.Accepted,
+                        acknowledgementRead is { IsCompleted: false },
+                        receipt?.AppliedTick));
+                    if (!releaseCommandCheckpoint.Wait(TimeSpan.FromSeconds(5)))
+                        throw new TimeoutException("The test did not release the command receipt checkpoint.");
+                }
+            };
+
+            clock.Set(FixedTick + 1);
+            await periodicPublicationEntered.Task.WaitAsync(timeout.Token);
+            await SendCommandAtTickAsync(stream, FixedTick + 3, timeout.Token);
+            await WaitUntilAsync(
+                () => server.AuthorityTurnGateForTests.QueuedWaiterCount == 1,
+                timeout.Token);
+
+            // The ingress is now queued behind the held tick N+1 publication.
+            // Its turn must sample N+2 before the timer can publish another tick.
+            clock.Set(FixedTick + 2);
+            releasePeriodicPublication.Set();
+            Assert.Equal(1, await nextPeriodicPublication.Task.WaitAsync(timeout.Token));
+            var afterAdmissionTurn = store.Load()!;
+            Assert.Equal(FixedTick + 2, afterAdmissionTurn.Tick);
+            Assert.Equal(1, server.PendingCommandCount);
+
+            var acknowledgementTask = EnvelopeCodec.ReadAsync(stream, timeout.Token).AsTask();
+            acknowledgementRead = acknowledgementTask;
+            clock.Set(FixedTick + 3);
+            var durableCheckpoint = await commandCheckpointRenamed.Task.WaitAsync(timeout.Token);
+            Assert.True(durableCheckpoint.Durable);
+            Assert.True(durableCheckpoint.AckPending);
+            Assert.Equal(FixedTick + 3, durableCheckpoint.AppliedTick);
+            releaseCommandCheckpoint.Set();
+
+            var acknowledgementEnvelope = await acknowledgementTask.WaitAsync(timeout.Token);
+            Assert.NotNull(acknowledgementEnvelope);
+            Assert.Equal(Envelope.PayloadOneofCase.CommandAck, acknowledgementEnvelope.PayloadCase);
+            var acknowledgement = Assert.Single(acknowledgementEnvelope.CommandAck.Results);
+            Assert.Equal(1UL, acknowledgement.ClientSequence);
+            Assert.Equal(CommandStatus.Accepted, acknowledgement.Status);
+            Assert.Equal(FixedTick + 3, acknowledgement.AppliedTick);
+            var admissionRecord = Assert.Single(timingRecorder.Drain().Records,
+                record => record.Kind == "command-admission" && record.ClientSequence == 1);
+            Assert.Equal(FixedTick + 2, admissionRecord.SampledClockCurrentTick);
+            Assert.Equal(FixedTick + 1, admissionRecord.SampledCommandServerCurrentTick);
+            Assert.Equal(FixedTick + 2, admissionRecord.ActualAdmissionTick);
+
+            var durableAfterAck = store.Load()!;
+            var persistedReceipt = Assert.Single(Assert.Single(durableAfterAck.Participants).CommandReceipts);
+            Assert.Equal(1UL, persistedReceipt.ClientSequence);
+            Assert.Equal(CommandStatus.Accepted, persistedReceipt.Status);
+            Assert.Equal(FixedTick + 3, persistedReceipt.AppliedTick);
+
+            clock.Set(FixedTick + 4);
+            await WaitUntilAsync(
+                () => store.Load()?.Tick == FixedTick + 4,
+                timeout.Token);
+            Assert.Equal(FixedTick + 4, store.Load()!.Tick);
+        } finally {
+            releasePeriodicPublication.Set();
+            releaseCommandCheckpoint.Set();
+            await DisposeServerAsync(server, server.LastClientFailure);
+            DeleteRoot(root);
+        }
+    }
+
     [Theory]
     [InlineData(PollFailure.InvalidEventBatch)]
     [InlineData(PollFailure.InvalidSnapshot)]
@@ -415,10 +521,11 @@ public sealed class ClockGatedCohortSnapshotPollTests
 
     private static AuthoritativeTcpServer CreateServer(
         SnapshotPollAdapter adapter,
-        FixedClock clock,
+        IAuthoritativeClock clock,
         AuthoritativeCohortStore store,
         bool includeProjectionProviders = true,
-        Func<Stream, Stream>? clockGatedTransportDecorator = null)
+        Func<Stream, Stream>? clockGatedTransportDecorator = null,
+        HostCommandTimingRecorder? commandTimingRecorder = null)
     {
         var handshake = new ProtocolHandshake(new ProtocolServerIdentity(
             "cohort-poll-tests",
@@ -440,6 +547,7 @@ public sealed class ClockGatedCohortSnapshotPollTests
                 CohortStore = store,
                 UseClockGatedCommandScheduling = true,
                 ClockGatedTransportDecorator = clockGatedTransportDecorator,
+                CommandTimingRecorder = commandTimingRecorder,
             }
             : new AuthoritativeTcpServer(
                 commandServer,
@@ -454,6 +562,7 @@ public sealed class ClockGatedCohortSnapshotPollTests
                 CohortStore = store,
                 UseClockGatedCommandScheduling = true,
                 ClockGatedTransportDecorator = clockGatedTransportDecorator,
+                CommandTimingRecorder = commandTimingRecorder,
             };
     }
 
@@ -503,12 +612,18 @@ public sealed class ClockGatedCohortSnapshotPollTests
         }, cancellationToken);
 
     private static ValueTask SendCommandAsync(Stream stream, CancellationToken cancellationToken)
+        => SendCommandAtTickAsync(stream, FixedTick, cancellationToken);
+
+    private static ValueTask SendCommandAtTickAsync(
+        Stream stream,
+        ulong requestedTick,
+        CancellationToken cancellationToken)
         => EnvelopeCodec.WriteAsync(stream, new Envelope {
             CommandBatch = new CommandBatch {
                 Commands = {
                     new Command {
                         ClientSequence = 1,
-                        RequestedTick = FixedTick,
+                        RequestedTick = requestedTick,
                         AttackRequested = new AttackRequested { TargetEntityId = 1 },
                     },
                 },
@@ -555,6 +670,12 @@ public sealed class ClockGatedCohortSnapshotPollTests
             TestContext.Current.CancellationToken);
         timeout.CancelAfter(TimeSpan.FromSeconds(10));
         return timeout;
+    }
+
+    private static async Task WaitUntilAsync(Func<bool> condition, CancellationToken cancellationToken)
+    {
+        while (!condition())
+            await Task.Delay(TimeSpan.FromMilliseconds(1), cancellationToken);
     }
 
     private static string NewRoot()
@@ -650,6 +771,16 @@ public sealed class ClockGatedCohortSnapshotPollTests
     private sealed class FixedClock(ulong tick) : IAuthoritativeClock
     {
         public ulong CurrentTick => tick;
+    }
+
+    private sealed class MutableClock(ulong tick) : IAuthoritativeClock
+    {
+        private long currentTick = checked((long)tick);
+
+        public ulong CurrentTick => checked((ulong)Interlocked.Read(ref currentTick));
+
+        public void Set(ulong value)
+            => Interlocked.Exchange(ref currentTick, checked((long)value));
     }
 
     private sealed class SnapshotPollAdapter :

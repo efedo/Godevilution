@@ -50,6 +50,7 @@ public sealed partial class AuthoritativeTcpServer : IAsyncDisposable
     private readonly object lifecycleSynchronization = new();
     private readonly TaskCompletionSource completion = new(TaskCreationOptions.RunContinuationsAsynchronously);
     private ClockGatedCommandScheduler? commandScheduler;
+    private readonly CohortAuthorityTurnGate cohortAuthorityTurnGate = new();
     private ClockGatedResponseBudget? clockGatedResponseBudget;
     private Exception? lastClientFailure;
     private Task? disposal;
@@ -210,6 +211,9 @@ public sealed partial class AuthoritativeTcpServer : IAsyncDisposable
     public int MaximumPendingCommands { get; init; } = ClockGatedCommandScheduler.DefaultMaximumPendingCommands;
 
     public int PendingCommandCount => commandScheduler?.PendingCommandCount ?? 0;
+
+    /** Internal synchronization seam for deterministic authority-turn host tests. */
+    internal CohortAuthorityTurnGate AuthorityTurnGateForTests => cohortAuthorityTurnGate;
 
     /** Background termination/failure, excluding isolated session failures. */
     public Task Completion => completion.Task;
@@ -500,16 +504,24 @@ public sealed partial class AuthoritativeTcpServer : IAsyncDisposable
         while (await timer.WaitForNextTickAsync(cancellationToken)) {
             var measurement = PerformanceRecorder?.Begin() ?? 0;
             var advancement = PerformanceRecorder?.Begin() ?? 0;
-            var advanced = commandServer.WithSynchronizedState(() => {
-                RequireCohortHealthy();
-                var tick = Math.Max(clock.CurrentTick, commandServer.CurrentTick);
-                if (tick == lastSimulationTick)
-                    return false;
-                AdvanceCurrentTickCore();
-                lastSimulationTick = commandServer.CurrentTick;
-                PublishCohortCore();
-                return true;
-            });
+            bool advanced;
+            IDisposable? authorityTurn = null;
+            try {
+                if (UseClockGatedCommandScheduling && CohortStore is not null)
+                    authorityTurn = await cohortAuthorityTurnGate.EnterAsync(cancellationToken);
+                advanced = commandServer.WithSynchronizedState(() => {
+                    RequireCohortHealthy();
+                    var tick = Math.Max(clock.CurrentTick, commandServer.CurrentTick);
+                    if (tick == lastSimulationTick)
+                        return false;
+                    AdvanceCurrentTickCore();
+                    lastSimulationTick = commandServer.CurrentTick;
+                    PublishCohortCore();
+                    return true;
+                });
+            } finally {
+                authorityTurn?.Dispose();
+            }
             if (!advanced)
                 continue;
             PerformanceRecorder?.Complete(HostPerformanceMetric.PeriodicAdvanceLockInclusiveMilliseconds, advancement);

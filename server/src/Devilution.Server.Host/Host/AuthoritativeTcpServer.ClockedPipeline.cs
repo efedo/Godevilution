@@ -182,7 +182,7 @@ public sealed partial class AuthoritativeTcpServer
                 case Envelope.PayloadOneofCase.CommandBatch:
                     try {
                         AuthoritativeCommandBatchValidator.Validate(envelope.CommandBatch);
-                        var work = AdmitClockGatedBatch(
+                        var work = await AdmitClockGatedBatch(
                             sessionId,
                             entityId,
                             connectionOrdinal,
@@ -336,7 +336,7 @@ public sealed partial class AuthoritativeTcpServer
             ExceptionDispatchInfo.Capture(readFailure).Throw();
     }
 
-    private ClockGatedResponseWork AdmitClockGatedBatch(
+    private async Task<ClockGatedResponseWork> AdmitClockGatedBatch(
         string sessionId,
         uint entityId,
         int connectionOrdinal,
@@ -365,23 +365,31 @@ public sealed partial class AuthoritativeTcpServer
                 : Stopwatch.GetTimestamp();
             var measurement = PerformanceRecorder?.Begin() ?? 0;
             var lockEntered = 0L;
-            var pending = commandServer.WithSynchronizedSession(sessionId, () => {
-                lockEntered = CommandTimingRecorder is null
-                    ? 0L
-                    : Stopwatch.GetTimestamp();
-                RequireCohortHealthy();
-                sampledClockCurrentTick = clock.CurrentTick;
-                sampledCommandServerCurrentTick = commandServer.CurrentTick;
-                actualAdmissionTick = Math.Max(
-                    sampledClockCurrentTick,
-                    sampledCommandServerCurrentTick);
-                return scheduler.SubmitBatchAsync(
-                    sessionId,
-                    batch,
-                    actualAdmissionTick,
-                    pipelineCancellationToken,
-                    lane);
-            });
+            IDisposable? authorityTurn = null;
+            Task<CommandAck> pending;
+            try {
+                if (UseClockGatedCommandScheduling && CohortStore is not null)
+                    authorityTurn = await cohortAuthorityTurnGate.EnterAsync(pipelineCancellationToken);
+                pending = commandServer.WithSynchronizedSession(sessionId, () => {
+                    lockEntered = CommandTimingRecorder is null
+                        ? 0L
+                        : Stopwatch.GetTimestamp();
+                    RequireCohortHealthy();
+                    sampledClockCurrentTick = clock.CurrentTick;
+                    sampledCommandServerCurrentTick = commandServer.CurrentTick;
+                    actualAdmissionTick = Math.Max(
+                        sampledClockCurrentTick,
+                        sampledCommandServerCurrentTick);
+                    return scheduler.SubmitBatchAsync(
+                        sessionId,
+                        batch,
+                        actualAdmissionTick,
+                        pipelineCancellationToken,
+                        lane);
+                });
+            } finally {
+                authorityTurn?.Dispose();
+            }
             PerformanceRecorder?.Complete(
                 HostPerformanceMetric.CommandQueueAdmissionMilliseconds,
                 measurement);

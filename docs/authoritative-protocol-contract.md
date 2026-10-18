@@ -100,6 +100,11 @@ its first dispatch, with the same two-second fallback. The queued command stays
 unfrozen during this wait and calculates its requested tick at dispatch. Explicit
 requested ticks and already transmitted retry identities retain their behavior.
 
+Clock-gated cohort hosts arbitrate periodic simulation batches and command
+admission in FIFO order before entering the state lock. Admission samples the
+physical clock after acquiring that lock; scheduled results still cross the
+durable publication barrier before acknowledgement.
+
 Negotiated `ClockProbeRequest` replies also carry the optional
 `server_scheduling_clock_tick`, sampled from the server's scheduling clock.
 The client uses its presence (including a valid value of zero) only to anchor
