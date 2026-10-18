@@ -8,6 +8,57 @@ namespace Devilution.Diablo.Tests;
 public sealed class ProjectDocumentationConsistencyTests
 {
     [Fact]
+    public void CurrentDocumentationKeepsAuthorityAndStatusPointersCurrent()
+    {
+        var root = FindRepositoryRoot();
+        var docsIndex = Read(root, "docs", "README.md");
+        Assert.Contains("[Working status and memory](migration-status.md)", docsIndex, StringComparison.Ordinal);
+        Assert.Contains("[Numbered feature and gap inventory](feature-gap-inventory.md)", docsIndex, StringComparison.Ordinal);
+        Assert.Contains("[Completion plan and workflow](completion-plan.md)", docsIndex, StringComparison.Ordinal);
+        Assert.Contains("[Implementation history](CHANGELOG.md)", docsIndex, StringComparison.Ordinal);
+        Assert.Contains("[Test history](test-history.md)", docsIndex, StringComparison.Ordinal);
+
+        var readme = Read(root, "README.md");
+        Assert.Contains("same protocol", readme, StringComparison.Ordinal);
+        Assert.Contains("the server owns simulation", readme, StringComparison.Ordinal);
+        Assert.Contains("The C# server requires no MPQ files", readme, StringComparison.Ordinal);
+        Assert.Contains("[current migration status](docs/migration-status.md)", readme, StringComparison.Ordinal);
+        Assert.DoesNotContain("requires Godot 4.7.1 Mono", readme, StringComparison.Ordinal);
+
+        var status = Read(root, "docs", "migration-status.md");
+        Assert.Contains("The migration is incomplete.", status, StringComparison.Ordinal);
+        Assert.Contains("The [numbered inventory](feature-gap-inventory.md)", status, StringComparison.Ordinal);
+        Assert.Contains("There is no calibrated overall percentage.", status, StringComparison.Ordinal);
+
+        var module = Read(root, "server", "src", "Devilution.Diablo", "README.md");
+        Assert.Contains("composition-only executable", module, StringComparison.Ordinal);
+        Assert.Contains("protocol adapter must remain thin", module, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void WorkerDelegationUsesFixedReusablePoolAndIndependentReview()
+    {
+        var root = FindRepositoryRoot();
+        var plan = Read(root, "docs", "completion-plan.md");
+        var policyStart = plan.IndexOf("### Worker delegation", StringComparison.Ordinal);
+        Assert.True(policyStart >= 0);
+        var policyEnd = plan.IndexOf("## Verification policy", policyStart, StringComparison.Ordinal);
+        Assert.True(policyEnd > policyStart);
+        var policy = plan[policyStart..policyEnd];
+        Assert.Contains("two GPT-6 Luna (`gpt-6-luna`) implementation workers", policy, StringComparison.Ordinal);
+        Assert.Contains("`xhigh` reasoning effort", policy, StringComparison.Ordinal);
+        Assert.Contains("reviewer with `medium` reasoning effort", policy, StringComparison.Ordinal);
+        Assert.Contains("reuse the same three workers", policy, StringComparison.Ordinal);
+        Assert.Contains("Do not spawn a new worker per package", policy, StringComparison.Ordinal);
+        Assert.Contains("At most three child workers", policy, StringComparison.Ordinal);
+        Assert.Contains("explicit human approval", policy, StringComparison.Ordinal);
+        Assert.Contains("resolves review findings", policy, StringComparison.Ordinal);
+        Assert.DoesNotContain("gpt-5.6-luna", plan, StringComparison.Ordinal);
+        Assert.DoesNotContain("Allow up to five independent workers", plan, StringComparison.Ordinal);
+        Assert.DoesNotContain("reviewer at extra-high effort", policy, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void NativeDeathLootDocumentationKeepsDetachedProofAndLiveIntegrationSeparate()
     {
         var root = FindRepositoryRoot();
@@ -20,10 +71,6 @@ public sealed class ProjectDocumentationConsistencyTests
         var guidance = Read(root, "docs", "ai", "msvc-build.md");
         Assert.Contains("test-cathedral-monster-loot.ps1", guidance, StringComparison.Ordinal);
         Assert.Contains("not full MonsterDeath", guidance, StringComparison.Ordinal);
-        var status = Read(root, "docs", "migration-status.md");
-        Assert.Contains("Signed fallback proves preservation/blocking, not overwrite", status, StringComparison.Ordinal);
-        Assert.Contains("### M2 detached Cathedral death-time loot prerequisite", status, StringComparison.Ordinal);
-        Assert.Contains("Overall remains approximately 35%", status, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -35,10 +82,6 @@ public sealed class ProjectDocumentationConsistencyTests
         Assert.Contains("retained resource lookups", guidance, StringComparison.Ordinal);
         Assert.Contains("not timestamped proof", guidance, StringComparison.Ordinal);
         Assert.Contains("Headless success is not rendering acceptance", guidance, StringComparison.Ordinal);
-        var status = Read(root, "docs", "migration-status.md");
-        Assert.Contains("### M1 two-client authored combat/loot and cold resume", status, StringComparison.Ordinal);
-        Assert.Contains("normal cohort-profile adoption still requires approval", status, StringComparison.Ordinal);
-        Assert.Contains("approximately 35%", status, StringComparison.Ordinal);
         var plan = Read(root, "docs", "completion-plan.md");
         Assert.Contains("two-client authored combat/loot and complete-cohort cold-resume profile", plan, StringComparison.Ordinal);
         Assert.Contains("These authored previews do not close M1", plan, StringComparison.Ordinal);
@@ -100,9 +143,6 @@ public sealed class ProjectDocumentationConsistencyTests
         Assert.Contains("not player-controller, initialization RNG", guidance, StringComparison.Ordinal);
         Assert.Contains("two byte-identical", guidance, StringComparison.Ordinal);
         Assert.Contains("Delete sharing alone does not permit", guidance, StringComparison.Ordinal);
-        var status = Read(root, "docs", "migration-status.md");
-        Assert.Contains("### M1 sprite-free native animation timing prerequisite", status, StringComparison.Ordinal);
-        Assert.Contains("Godot's visual clock remains global", status, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -115,7 +155,6 @@ public sealed class ProjectDocumentationConsistencyTests
         Assert.Contains("does not silently activate a runtime profile", architecture, StringComparison.Ordinal);
         var plan = Read(root, "docs", "completion-plan.md");
         Assert.Contains("metadata compilation alone is not playable profile acceptance", plan, StringComparison.Ordinal);
-        Assert.Contains("Next update the raw extension", plan, StringComparison.Ordinal);
         var guidance = Read(root, "docs", "ai", "msvc-build.md");
         Assert.Contains("test-cathedral-population-metadata.ps1", guidance, StringComparison.Ordinal);
         Assert.Contains("-FullPopulationEvidenceDirectory", guidance, StringComparison.Ordinal);
@@ -173,40 +212,10 @@ public sealed class ProjectDocumentationConsistencyTests
         Assert.Contains("DevilutionX", readme, StringComparison.Ordinal);
         Assert.DoesNotContain("DevilutionY", readme, StringComparison.OrdinalIgnoreCase);
 
-        var migrationStatus = Read(root, "docs", "migration-status.md");
-        Assert.Contains($"active content schema is now `{currentVersion}`", migrationStatus, StringComparison.Ordinal);
-        Assert.Contains("ordinary_monster_capacity", migrationStatus, StringComparison.Ordinal);
-        Assert.Contains("default 190-slot", migrationStatus, StringComparison.Ordinal);
-        Assert.Contains("coverage_mode=Complete", migrationStatus, StringComparison.Ordinal);
-        // Delivery order belongs to the active plan, not a duplicated status backlog.
-        Assert.Contains("[completion plan](completion-plan.md)", migrationStatus, StringComparison.Ordinal);
         var completionPlan = Read(root, "docs", "completion-plan.md");
         Assert.Contains("## M2: Native-compatible world generation and placement", completionPlan, StringComparison.Ordinal);
         Assert.Contains("## M3: Gameplay and content closure by playable route", completionPlan, StringComparison.Ordinal);
         Assert.Contains("Hellfire world and quests", completionPlan, StringComparison.Ordinal);
-        Assert.Contains(
-            "version-4 canonical SHA-256 state and command-ledger integrity envelope bound to the active ruleset identity",
-            migrationStatus,
-            StringComparison.Ordinal);
-        Assert.Contains(
-            "all-session candidate export preparation before ruleset-reload checkpoint publication, transactional rollback of earlier combined and compatibility files",
-            migrationStatus,
-            StringComparison.Ordinal);
-        Assert.Contains(
-            "transactional rollback of earlier combined and compatibility files",
-            migrationStatus,
-            StringComparison.Ordinal);
-        Assert.DoesNotContain(
-            "an atomic combined per-session checkpoint with a version-3 canonical",
-            migrationStatus,
-            StringComparison.Ordinal);
-        Assert.DoesNotContain("Expand authoritative combat and spell fidelity for the migrated Firebolt", migrationStatus, StringComparison.Ordinal);
-
-        var changelog = Read(root, "docs", "CHANGELOG.md");
-        Assert.Contains($"schema to `{currentVersion}`", changelog, StringComparison.Ordinal);
-        Assert.Contains("documentation/content identity regression guard", changelog, StringComparison.Ordinal);
-        Assert.Contains("distributable ZIP archive", changelog, StringComparison.Ordinal);
-        Assert.Contains("blocked-monster-melee Reflect behavior", changelog, StringComparison.Ordinal);
 
         var replayFixtures = Read(root, "docs", "replay-fixtures.md");
         Assert.Contains("gameplay-reflect-blocked-monster-melee.json", replayFixtures, StringComparison.Ordinal);
@@ -273,7 +282,6 @@ public sealed class ProjectDocumentationConsistencyTests
         Assert.Contains("godevilution-v*", packageWorkflow, StringComparison.Ordinal);
         Assert.Contains("GITHUB_REF_NAME -replace '^godevilution-v', ''", packageWorkflow, StringComparison.Ordinal);
         Assert.Contains("actions/upload-artifact@v4", packageWorkflow, StringComparison.Ordinal);
-        Assert.Contains("only the verified ZIP", migrationStatus, StringComparison.Ordinal);
 
         var contentReadme = Read(root, "server", "content", "README.md");
         Assert.Contains(currentSchema, contentReadme, StringComparison.Ordinal);
@@ -388,17 +396,6 @@ public sealed class ProjectDocumentationConsistencyTests
         Assert.Contains("exactly sixteen explicit", guide, StringComparison.Ordinal);
         Assert.Contains("recorded pre-clear", plan, StringComparison.Ordinal);
         Assert.DoesNotContain("Next port upstream bestiary/theme/reservation", plan, StringComparison.Ordinal);
-    }
-
-    [Fact]
-    public void HistoricalDocumentationExplainsWhyInheritedPoliciesAreNotActive()
-    {
-        var root = FindRepositoryRoot();
-        var historyReadme = Read(root, "docs", "history", "README.md");
-
-        Assert.Contains("historical", historyReadme, StringComparison.OrdinalIgnoreCase);
-        Assert.Contains("Inherited DevilutionX policy", historyReadme, StringComparison.Ordinal);
-        Assert.Contains("removed from the active tree", historyReadme, StringComparison.Ordinal);
     }
 
     private static string Read(string root, params string[] segments)

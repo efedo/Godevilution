@@ -1,20 +1,22 @@
 # Godevilution Documentation
 
-This index separates current project documentation from historical migration
-records. Documents under `docs/history/` are retained for context and are not
-implementation instructions.
+Start with [working status/memory](migration-status.md), the
+[numbered feature and gap inventory](feature-gap-inventory.md) and the
+[completion plan](completion-plan.md). The inventory owns feature statuses;
+the plan owns priorities and acceptance gates. Keep these roles separate.
 
-Read [migration status](migration-status.md#progress-assessment) for the dated
-baseline, then the [completion plan](completion-plan.md) for what to do next.
-The plan owns priorities and acceptance gates; architecture owns invariants;
-specialist guides own contracts and operation. Keep estimates only in migration
-status and chronological completed work in [the changelog](CHANGELOG.md).
+## Current project state
 
-## Current architecture and status
+- [Working status and memory](migration-status.md)
+- [Numbered feature and gap inventory](feature-gap-inventory.md)
+- [Completion plan and workflow](completion-plan.md)
+- [Implementation history](CHANGELOG.md)
+- [Test history](test-history.md)
+- [Clean-session handoff and goal](ai/session-handoff.md)
+
+## Architecture and contracts
 
 - [Authoritative architecture](csharp-authoritative-server-migration.md)
-- [Migration status](migration-status.md)
-- [Completion plan and workflow](completion-plan.md)
 - [Protocol contract](authoritative-protocol-contract.md)
 - [Protocol package](../protocol/README.md)
 - [Authoritative server](../server/README.md)
@@ -24,7 +26,7 @@ status and chronological completed work in [the changelog](CHANGELOG.md).
 - [Diablo gameplay module](../server/src/Devilution.Diablo/README.md)
 - [Godot client](../godot/README.md)
 - [Native compatibility client](native-client.md)
-- [Replay fixtures](replay-fixtures.md)
+- [Replay reference](replay-fixtures.md)
 - [Lua replacement inventory](lua-capability-inventory.md)
 - [Repository organization](source-organization.md)
 - [Entity-pool contract](ENTITY_POOLS.md)
@@ -39,7 +41,5 @@ status and chronological completed work in [the changelog](CHANGELOG.md).
 - [Style guide](STYLE_GUIDE.md)
 - [Authoritative content tables](../server/content/README.md)
 
-## History
-
-Historical plans and completed analyses live under [history](history/README.md).
-They may describe intermediate states that no longer match the repository.
+Past document versions and removed detail belong in Git history. Do not create
+separate historical snapshots, QA archives or copies of obsolete plans.

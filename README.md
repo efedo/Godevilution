@@ -54,7 +54,8 @@ The standalone server defaults to multiplayer. Pass
 `-- --game-mode single-player` for a local single-player session; both modes use
 the same authoritative protocol and implementation.
 
-The Godot client requires Godot 4.7.1 Mono. Run
+The Godot client requires a stable Godot 4.7.x Mono engine. The source SDK stays
+pinned to 4.7.1; isolated launch acceptance has been qualified with 4.7.2. Run
 `powershell -ExecutionPolicy Bypass -File run-godot-client.ps1` for a local
 server/client prototype session. The combat HUD maps keys `1`–`8` to eligible belt
 consumables; each action remains server-authoritative. The launcher rebuilds both

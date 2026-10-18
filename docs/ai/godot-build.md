@@ -443,11 +443,10 @@ The negotiated tick rate remains fixed until reconnect resets that anchor.
 Immediate observation and explicit/frozen command ticks are unchanged. This
 does not establish the cause of retained `TooLate` failures. The separately
 verified native counterpart retains native floor/saturation rules; see
-[MSVC guidance](msvc-build.md) and migration status for its evidence and GUI gap.
+[MSVC guidance](msvc-build.md). Rendered acceptance remains open.
 The paired native launcher also selects clock-gated scheduling; the standalone
 host and default low-level native configuration remain Immediate for compatibility.
-Native acceptance is recorded separately in migration status. This is not a bound
-on arbitrary network/capture stalls or proof
+This is not a bound on arbitrary network/capture stalls or proof
 of campaign/shared-world restart recovery.
 
 Production world presentation installs the full geometry projection once per
@@ -456,8 +455,8 @@ first admitted snapshot after reconnect. Omitted/empty geometry still replaces
 the prior projection. Legacy mutable presentation calls remain eager; null/legacy
 calls invalidate reuse. Camera, interpolation, visibility, prediction and drawing
 continue each frame. This avoids repeated installation between admissions, not
-per-snapshot validation/cloning or full-world drawing; measurements belong in
-migration status.
+per-snapshot validation/cloning or full-world drawing. Detailed historical
+measurements are available in Git history.
 
 Godot's editor may upgrade a C# project's SDK during import. Only the staged
 copy may receive that change; the source project, existing upgrade backups,
@@ -803,7 +802,7 @@ A successful journey establishes L1 door integration and cold restore, not
 four-floor traversal, full native art/population, multiplayer door recovery, a
 campaign or M2 completion. Current headless phases pass; rendered creation and
 restored-open drawing pass, but first resumed movement rejects `TooLate`.
-See [migration status](../migration-status.md#m2-isolated-cathedral-door-playtest-integration-2026-10-03)
+See [test history](../test-history.md#native-cathedral-baselines)
 for the retained failure. Do not relax admission or retry to hide that result.
 
 ## Application acceptance
@@ -1299,7 +1298,7 @@ file prevents any claim of fully drained writes or cold durable restore.
 This exported headless baseline does not change the Debug measurement command
 above or ordinary launch profiles. Rendered Release measurements, native
 machine-code optimization, soak, platform coverage and release budgets remain
-open. See migration status for exact revision/evidence and retained failures.
+open. Git history retains the original measurement details and failed attempts.
 
 A reviewed matching-Release-host repeat is retained at
 `.local/godot-exported-performance-run-4e964a7e71bc4dabbd7eda234f9ef2eb`.
@@ -1330,8 +1329,8 @@ All 42 owned identities are absent, and this lane has no temporary canonical
 save. Keep save bodies and credentials private; only scalar reports and hashes
 are public evidence. Hosts still stop forcibly. Full-world/RNG/inventory parity,
 rendered/native cold Resume, graceful shutdown, normal cohort adoption and
-release/platform/soak acceptance remain open. See migration status for exact
-evidence, retained failures and the narrower historical Performance scope.
+release/platform/soak acceptance remain open. [Test history](../test-history.md)
+summarizes recovery scope; Git retains the earlier detailed evidence.
 
 The separate graceful exported recovery lane is retained at
 `.local/godot-exported-recovery-graceful-run-44dac60a5d644d01989813f5a2cbe153`.
@@ -1372,7 +1371,7 @@ temporary or unexpected entries. Preserve historical forced-stop attempts.
 This lane does not test cold restore of those profiles or qualify rendered/GPU,
 whole-frame, native optimization, release budgets, platforms, soaks or normal
 cohort adoption. Future repeats require fresh archive/dependency pins and
-reviewed generated source; migration status records original proofs and limits.
+reviewed generated source; [test history](../test-history.md) summarizes accepted scope.
 
 Missing rounds, changed identity, empty/invalid/truncated samples, overwritten
 output, nonzero client exits or missing checkpoints reject the baseline. Recording
@@ -1421,8 +1420,8 @@ boundaries described in the [host guide](../../server/src/Devilution.Server.Host
 OS/runtime/architecture, participant count, and process memory observations.
 Workload JSON records actual duration, command counts, and configuration. No
 client session credential is emitted in these reports; keep the save directory
-private. Failed/empty output is not a baseline. Record the verified revision and
-machine in migration status with each accepted measurement.
+private. Failed/empty output is not a baseline. Summarize meaningful accepted
+results and their scope in [test history](../test-history.md).
 Compare checkpoint changes on the same save volume and workload, with the new
 per-session capture/publication phases enabled on both sides. Their timings
 overlap the outer command/cycle measurements; do not add percentiles together.
@@ -1436,5 +1435,5 @@ dotnet run --project godot/Devilution.Client.Protocol.Tests/Devilution.Client.Pr
 
 This measures the standalone server, not Godot frame cost, full combat/campaign
 load, WAN latency, native map generation, supported-platform acceptance, or a
-release performance gate. Current measurements and remaining budgets belong in
-migration status; do not reinterpret a passing workload as a performance pass.
+release performance gate. Current measurement conclusions and remaining budgets
+belong in [working status](../migration-status.md); a passing workload does not close a performance gate.

@@ -1,12 +1,12 @@
 # Godevilution Completion Plan
 
-Plan date: 2026-10-04. Semantic player presentation follows client-pack baseline
-`d0f748305`; results and retained failures are in migration status.
+Plan updated: 2026-10-18. See [working status](migration-status.md) for the
+current baseline and [test history](test-history.md) for accepted verification scope.
 
 This is the active delivery plan. The [architecture](csharp-authoritative-server-migration.md)
-defines the objective and ownership rules; [migration status](migration-status.md)
-owns current estimates, evidence, and unresolved gaps. Historical plans are not
-active backlogs. Milestones below are acceptance gates, not claims of completion
+defines ownership rules; the [numbered inventory](feature-gap-inventory.md) owns
+feature completion and gaps. Working status owns current memory and constraints.
+Historical plans are not active backlogs. Milestones below are acceptance gates, not claims of completion
 or calendar estimates.
 
 ## Objective and completion contract
@@ -20,11 +20,11 @@ state, and persistence. Production gameplay and presentation require neither
 embedded Lua nor the C++/SDL runtime.
 
 Execute this goal through the milestone dependencies and acceptance gates in
-this plan, with current evidence recorded in `migration-status.md`. The primary
+this plan, with accepted verification summarized in `test-history.md`. The primary
 agent owns planning, integration, acceptance, documentation, and cohesive
-commits. Delegate substantial, bounded implementation packages to GPT-5.6 Luna
-workers and independent critical review to a separate GPT-6.1 Sol reviewer,
-both at extra-high reasoning effort,
+commits. Use a fixed pool of two GPT-6 Luna implementation workers at extra-high
+reasoning effort and one independent GPT-6.1 Sol reviewer at medium effort.
+Reuse these same workers for successive bounded packages until completion,
 following the [worker delegation policy](#worker-delegation). Use focused tests
 per commit and broader integration/application acceptance at the relevant gates.
 
@@ -45,6 +45,10 @@ Completion requires all of the following evidence:
   remain explicit gaps until resolved, never silently redefined as parity.
 - Playable Godot menus, input, world rendering, animation, audio, HUD, feedback,
   accessibility, reconnect, and error handling with no client gameplay owner.
+- Full native graphical parity in Godot for supported Diablo/Hellfire scenes
+  and UI, including complete assets, animation, layering/occlusion, palettes,
+  transparency, lighting/vision and automap, demonstrated by rendered reference
+  comparisons. Functional controls and placeholder art do not satisfy this gate.
 - Preserved supported protocol, content, and save compatibility; reliable
   multiplayer/restart recovery and validated deployment artifacts.
 - A production dependency graph free of C++/SDL, embedded Lua, and mandatory
@@ -54,15 +58,50 @@ Completion requires all of the following evidence:
   capabilities have replacements. Disabling it or retaining it in an isolated
   compatibility build does not close this separate removal objective.
 
+## Delivery reset: 2026-10-18
+
+The user requested a step back and selected a **bounded inventory of remaining
+gameplay gaps** as the first deliverable. The [inventory](feature-gap-inventory.md)
+separates implemented capability, incomplete native parity, missing integration
+and unproved application behavior. It replaces the old immediate queue below;
+the full M0-M5 requirements and dependency graph remain unchanged.
+
+1. Review at most eleven gameplay/client areas against representative production entry
+   points and existing evidence. Identify concrete missing playable outcomes,
+   important dependencies and unknowns. Do not run a new blanket test campaign,
+   count methods/fixtures as progress, or start another feature during this pass.
+2. Present three substantial candidate batches with their user-visible outcome,
+   required layers and necessary acceptance checks. Use the inventory to choose
+   priorities with the user before resuming feature work. Reuse existing systems
+   and WIP where appropriate; do not restart architecture extraction.
+3. For the chosen batch, integrate the complete behavior, resolve independent
+   review findings, build the affected projects, run necessary focused checks and
+   one relevant gameplay journey, then commit selectively. Repeat passing evidence
+   only when changes invalidate it. Rendering claims still require rendered proof.
+
+The passing native Town/L1/L2 route is a real baseline. The experimental L3 and
+four-floor bot scenarios remain failed acceptance evidence, not proof of an
+unspecified transport/combat defect and not prerequisites for every unrelated
+capability. Require a concrete counterexample before changing native rules or
+shared timing. Scenario changes may use ordinary native progression and actions;
+do not grant resources, weaken server admission or relabel a narrower result as
+campaign completion. Full four-floor, class/difficulty, quest and campaign gates
+remain open until their actual outcomes are demonstrated.
+
+Ordinary source work, including Main.cs/Main.Session.cs, is authorized. The
+user rejected the agent-written Main hold. Do not create per-patch permission
+requirements or treat historical cautions as new user restrictions. Preserve the
+separate, narrow user-directed holds listed in the current session handoff.
+
 ## Baseline and strategy
 
 The dependency boundaries, host, shared protocol, persistence, content loaders,
 and many gameplay slices already exist. Reuse them. Godot has substantial
 protocol coverage but placeholder presentation. Native dungeon synthesis and
 full campaign integration remain major gaps. See the dated
-[assessment](migration-status.md#progress-assessment) for estimates and their
-limitations; do not infer completion from commits, fixture counts, or schema
-version numbers.
+[working status](migration-status.md) and numbered inventory for the current
+position; do not infer completion from commits, fixture counts, schema versions
+or uncalibrated percentages.
 
 Use playable milestones to select work. Repair a gameplay family and its
 dependent content, restore, protocol, and presentation paths in one coherent
@@ -292,10 +331,10 @@ journey verify this observation API. Broader M0 restore acceptance remains open.
    Windows File.Move path. Cohort POSIX-rename reader support is a separate
    qualified contract. Helper tests and world rendering do not close this gate. Never automate
    security prompts or enable network permissions for loopback tests.
-4. Record a fresh integration baseline for the current revision. Capture exact
-   commands, configuration, selected tests, outcomes, and any exclusions in
-   migration status. Establish the target platform/participant matrix and
-   measured tick/frame/memory budgets there before claiming performance gates.
+4. For an affected integration gate, summarize the verified revision, scope and
+   material exclusions in test history. Keep repeatable commands in the relevant
+   build guide. Establish the target platform/participant matrix and measured
+   tick/frame/memory budgets in working status before claiming performance gates.
    The opt-in Release standalone host workload measures Immediate and ClockGated
    with one/four participants over loopback. Preserve settled observer outcomes,
    complete metric applicability and clean owned-host exits. Bind ClockGated
@@ -324,8 +363,8 @@ journey verify this observation API. Broader M0 restore acceptance remains open.
    barriers pass. Hosts still stop forcibly; checkpoints remain metadata only
    and the four-player profile retains one temporary save. Cold durable restore,
    fully drained saves, graceful shutdown and rendered/budget/soak/matrix gates
-   remain open. Preserve the historical Debug-host baseline and use status for
-   exact evidence and scope.
+   remain open. Git retains the historical Debug-host baseline; test history
+   summarizes accepted scope.
    A separate exported single-client Legacy Create/fresh Release-host Resume
    now validates actual canonical Store/codec state, retained private-copy
    hashes, first decoded wire restore before model application, complete saved
@@ -333,7 +372,7 @@ journey verify this observation API. Broader M0 restore acceptance remains open.
    no temporary canonical save remains in that lane. Hosts still stop forcibly;
    full-world/RNG/inventory parity, rendered/native moved-position Resume and
    broader release gates remain open. Keep historical Performance limits and
-   approval-gated normal cohort adoption unchanged; use status for exact scope.
+   approval-gated normal cohort adoption unchanged; use test history for scope.
    A separate committed-source exported Legacy Create/fresh Release-host Resume
    now passes headlessly with natural host exit 0, retained native handles,
    bounded quit, joined output pumps and flushed stream hashes. Original and
@@ -342,8 +381,8 @@ journey verify this observation API. Broader M0 restore acceptance remains open.
    recorded identities are absent. This closes that scoped graceful recovery
    check only. Preserve historical forced-stop failures/Performance limits and
    keep rendered/native moved-position Resume, full-world/RNG/inventory parity,
-   normal cohort adoption, budgets, platforms and soaks open. See status for
-   exact committed revision, source qualifiers and original runtime evidence.
+   normal cohort adoption, budgets, platforms and soaks open. See test history
+   for accepted scope and Git history for original detailed evidence.
    A later committed-source exported Legacy one/four-client Performance pair now
    passes with natural Release-host exit 0, quit after every client exit, joined
    output pumps and flushed sinks. All full rounds/observer barriers and five
@@ -353,7 +392,7 @@ journey verify this observation API. Broader M0 restore acceptance remains open.
    scoped graceful Performance shutdown/save-file cleanup, not cold restore of
    those profiles, rendered/GPU or whole-frame measurements, full-world parity,
    budgets, platforms or soaks. Preserve historical forced-stop evidence and
-   approval-gated normal cohort adoption; see status for exact scope and results.
+   approval-gated normal cohort adoption; see test history for accepted scope.
 
    Godot now reuses installed geometry between model-accepted snapshot generations.
    Preserve full replacement, same-tick/epoch admission and eager legacy behavior;
@@ -534,8 +573,8 @@ world integration and campaign join/restore acceptance remain open.
 
 1. Inventory the native generators, seed streams, level/quest selection,
    geometry layers, stairs/warps, set pieces, objects, and encounter placement.
-   Extend the existing world-gap record in migration status with a row per
-   family; record source reference, implemented path, and missing oracle/data.
+   Keep family gaps and completion status in the numbered feature inventory;
+   record source references and technical contracts in the existing world guides.
 2. Complete Cathedral as the first generated family integrated with M1, then
    Catacombs, Caves, Hell, Hive, Crypt, and dependent quest/set levels. Treat
    town and transition topology as part of the same world contract. Adjust
@@ -645,7 +684,7 @@ world integration and campaign join/restore acceptance remain open.
    fields and five public animation scalars are compared, not private visual
    distribution or sprites; unsafe native signed coordinates fail closed.
    The four prior Hork RNG failures are addressed by the controller/save batch
-   recorded in migration status; this is bounded decision parity, not complete
+   recorded in implementation history; this is bounded decision parity, not complete
    Hork animation, directional-corner or whole-`ProcessMonsters` parity.
    The separate zero-argument `tools/test-theme-item-generation.ps1` now compares
    detached `SetupAllItems`, `TryRandomUniqueItem` and public ground-animation
@@ -706,9 +745,11 @@ world integration and campaign join/restore acceptance remain open.
    current item pools, signed references and unique-history regeneration. It is
    not live gameplay: wire this compositor at actual death, never precompute
    drops during generation. Preserve its independent native proof and old item
-   creation behavior. Next update the raw extension through existing simulation
-   mutations, and install
-   the whole level in a separately identified opt-in populated server profile.
+   creation behavior. Live item integration and the specifically approved Gold/fixture
+   correction are delivered within the scoped native route; the earlier draft
+   refusal is superseded. Extend remaining item behavior through the existing
+   simulation mutation boundary and explicit populated profiles. Current economy
+   gaps belong in inventory item 4; retained narrow holds are in working status.
    Retain full pools/order/tails and signed
    footprint grids. Pickup/drop, object/door and combat mutations must update
    raw state and projections atomically; a pristine copy that becomes stale is
@@ -754,74 +795,23 @@ M2 closes only when every supported family and required set level meets its gate
 
 ## M3: Gameplay and content closure by playable route
 
-Exact in-flight retries now reuse their already durable, successfully written
-response snapshot, avoiding the redundant cohort capture traced during L3
-combat. Preserve duplicate receipts, event ownership, FIFO and failure fences;
-any intervening snapshot invalidates reuse. Focused host and fresh-host checks
-pass. The L3/L4 and full retained-world gameplay gate remains open.
+Use the bounded inventory and the delivery reset to select the next batch.
+Native Town/L1/L2 combat, earned equipment/Gold, Town services, exact fresh-host
+restore and retained revisit pass. Cathedral L1-L4 generation/owners and several
+native object families are implemented; the complete four-floor gameplay journey
+has not passed. Some experimental runs killed an L3 actor; latest R12 exercised
+held entity attacks but died before a kill or living checkpoint.
 
-Negotiated native-depth bow input now also buffers a follow-up during an active
-shot and consumes it at the native repeat-ready frame. Native timing and focused
-domain/TCP cold-host checks cover both arrow launches and duplicate retries.
-The actual L3 combat failure remains unresolved; retain the four-floor gate below.
+Keep these separate from the full campaign requirements below. A failed bot
+scenario does not establish a native-rule defect. Preserve failures, classify
+concrete implementation/integration/evidence gaps and reuse unchanged parity,
+transport and persistence proof. Current results and limitations belong in
+[migration status](migration-status.md#current-delivery-position-and-verification-limits),
+not another expanding run chronology in this plan.
 
-The explicit v10 route now supports a native ranged destination action during
-movement: finish the active step, replace future walking with one shot, and
-restore that pending intent exactly in a fresh host. Native timing/IAS, L1
-projectile/cold continuation and actual TCP pending-shot continuation pass. The
-Godot driver can interrupt an ordinary approach at a selectable clear lane;
-its existing deadlines, healing thresholds and work budgets remain bounded.
-Eligible command responses now use their durable receipt boundary. Canonical
-checkpoint encoding and immutable presentation projection avoid repeated work;
-focused compatibility, mutation and fresh-host checks pass with identical bytes.
-Exact-entry R4 still ends in L3 death. Resolve the remaining ranged-combat
-behavior before another continuation; require the original full journey and
-retained-world resume before closing M3.
-
-The next native route extends the explicit profile to L1-L4 with separate lazy
-owners and cohort v10. Destination walking now passes native timing/path tests,
-affected compatibility checks and one-command real TCP mid-walk fresh-host
-continuation. Pending-path projection now prevents premature settlement at a
-Stand boundary. The full Godot gate remains open: R18 repeats L1 gear/Gold/Pepin
-and an L2 kill, then dies during the L3 ranged-lane approach. Close L3/L4 combat
-and the full retained-world fresh-host journey before claiming this four-floor
-gate. The exact-entry R2 trace now confirms destination pathing and three
-accepted attacks before another L3 death; resolve that combat failure before
-repeating the original full journey.
-
-The explicit native Town/L1/L2 first-entry/combat/retention route now passes
-headlessly: L1 earned equipment/Gold/Pepin supplies, actual L2 kill/XP, Town417,
-exact fresh-host player/RNG/cursor/two-floor restore and retained revisit through
-Town538. L2 drops are optional and this run reports none. Cohort v9 retains
-the separate native floor owners while preserving older saves. Advance the next
-eligible playable integration; campaign, rendered and normal-adoption gates remain.
-
-Native L1 Arrow wall traps now extend the completed object route through Rogue
-disarm/ordinary operation, one-shot firing/impacts and cohort v8 cold retention.
-Native and focused checks pass. Headless Town539 -> three blocker kills -> actual
-Disarm Trap control -> Town609 -> exact fresh-host restore -> ordinary Healer ->
-L1 retained mutations -> Town709 passes. The public skill action does not prove
-the roll outcome; native/owned-runtime comparisons cover both outcomes. Continue
-the next eligible whole playable family; campaign and rendered gates remain open.
-
-Native L1 ordinary/explosive barrels now include loot, reserved actor release,
-depth-first blast damage and v7 cold retention. Native comparisons and focused
-owner/codec/client checks pass. The headless R14 pair passes Town377 -> Town464
-checkpoint -> exact fresh-host L1 retention -> Town539, with both barrel types
-and no duplicate break. Its ordinary barrel is empty; native/owned-runtime tests
-supply mandatory loot, linked release and victim branches. Continue the next
-eligible whole playable family with necessary regressions; campaign gates remain open.
-
-The scoped native Town-to-Cathedral combat/earned-equipment/save-resume/Town
-services route is committed. Ordinary native L1 chests and sarcophagi now have
-shared-owner interaction and cold retention, with a passed headless loot route.
-Linked sarcophagus release is verified separately by native/shared-owner tests
-because the pinned app seed has no linked sarcophagus. Continue the next
-eligible playable family; these slices do not close the campaign milestone.
-
-Use the following work packages as a coverage checklist, not another numeric
-progress scoreboard. For each package, record open behavior and evidence in
-migration status; put detailed fixture semantics in the replay reference.
+Use the following work packages as a coverage checklist. Record open behavior
+and completion in the numbered inventory, accepted verification in test history,
+and detailed fixture semantics in the replay reference.
 
 | Package | Required closure |
 | --- | --- |
@@ -883,6 +873,12 @@ integration evidence; changes retain existing save, content, and wire behavior.
 
 ## M4: Release-quality presentation and operation
 
+Full graphical parity is a required deliverable, not only improved readability.
+Use the [graphical-parity acceptance contract](feature-gap-inventory.md#godot-graphical-parity-acceptance)
+for matched native/Godot scene and animation comparisons across supported worlds,
+actors and UI. Preserve the complete MPQ-free client-pack route and server MPQ
+independence. Remaining visual differences stay recorded as open gaps.
+
 1. Complete the asset inventory, animation, audio, menus, input/controller
    behavior, accessibility, resolution handling, localization, and feedback.
    Supply a complete usable MPQ-free presentation route. Test optional original
@@ -903,8 +899,8 @@ integration evidence; changes retain existing save, content, and wire behavior.
    adapter or a minimal second test adapter if evidence is missing. A second
    production game or general plugin marketplace is not a completion dependency.
 
-Exit: clean-install acceptance, supported compatibility matrix, complete
-MPQ-free play, soaks, and measured performance pass with documented artifacts.
+Exit: clean-install acceptance, supported compatibility matrix, full graphical
+parity, complete MPQ-free play, soaks, and measured performance pass with documented artifacts.
 Record security/operational failures within the existing host boundaries rather
 than expanding the migration into unrelated infrastructure work.
 
@@ -939,7 +935,7 @@ compatibility build keeps the physical-removal gate open.
 
 ## Execution workflow
 
-1. Select the smallest coherent deliverable that advances the earliest open
+1. Select a substantial, coherent deliverable that advances the earliest open
    gate or unblocks another work package. Write its expected user-visible or
    observable behavior, dependencies, native reference, and acceptance checks
    before editing. No new standalone planning file per spell or schema change.
@@ -959,35 +955,38 @@ compatibility build keeps the physical-removal gate open.
    once against the integrated revision. Record failures as open gaps. Do not
    use a historical green result or a source-text assertion as runtime evidence.
 
-The immediate queue is to obtain approval for separate dedicated cohort profiles,
-then adopt them in normal M0 launchers, with broader operator CLI, failure/reload and filesystem/platform
-checks accompanying application tests. Preserve the passing managed first-publication
-recovery and scoped Windows metadata profile without implying power-loss acceptance.
-Preserve
-the passing isolated Godot cohort/legacy journeys, launch/build freshness and the
-remaining native GUI/platform checks. Then advance M1's end-to-end authored loop
-and M2's Cathedral generation slice. Existing
-parity defects blocking those deliverables take precedence within the relevant
-batch. Do not restart completed engine extraction or package architecture work.
+The current first deliverable is the bounded gameplay-gap inventory and a
+prioritized proposal. Normal cohort/profile adoption remains a separate held
+change; eligible work in existing explicit profiles need not wait for it. Preserve
+working launch/recovery behavior and full migration requirements. Do not restart
+completed extraction work or turn old experimental acceptance scripts into
+universal product gates.
 
 ### Worker delegation
 
-- Use GPT-5.6 Luna (`gpt-5.6-luna`) implementation workers and a separate
-  GPT-6.1 Sol (`gpt-6.1-sol`) reviewer, both with `xhigh` reasoning effort.
-  This supersedes the earlier high-effort and Terra-reviewer instructions.
-  Do not silently substitute another model
-  or effort setting; report unavailability and obtain direction for a change.
+- Use a fixed pool of two GPT-6 Luna (`gpt-6-luna`) implementation workers with
+  `xhigh` reasoning effort and one independent GPT-6.1 Sol (`gpt-6.1-sol`)
+  reviewer with `medium` reasoning effort. This supersedes all earlier worker
+  models, effort settings, and five-worker policies. Do not silently substitute
+  another model or effort setting; report unavailability and obtain direction.
+- Create the pool once and reuse the same three workers through follow-up
+  assignments until the goal is complete. Do not spawn a new worker per package
+  or let workers spawn additional agents. At most three child workers may run,
+  subject to the runtime's actual thread and concurrency limits. Replace an
+  unavailable worker only with explicit human approval; never bypass a limit
+  with extra chats or alternate orchestration.
 - The primary agent selects milestone-aligned work packages, supplies scope,
   file/contract ownership, native references, and acceptance criteria, and owns
   integration, final verification, documentation, and commits.
 - Delegate substantial implementation packages that can proceed independently
-  alongside useful work. Allow up to five independent workers, including
-  reviewers, subject to the runtime's actual concurrency limit. Assign disjoint
-  files/contracts; serialize shared
-  simulation, protocol, fixture-hash, and status edits.
-- Have a separate GPT-6.1 Sol reviewer at extra-high effort critically review each
-  substantial package. The reviewer inspects the actual diff, native behavior,
-  test evidence, compatibility, and plan acceptance criteria, and identifies
+  alongside useful work. Before each assignment, refresh the worker's bounded
+  scope, current checkpoint, file/contract ownership, prerequisites, native
+  references, and acceptance criteria. Require a handoff before reassigning a
+  worker. Assign disjoint files/contracts; serialize shared simulation, protocol,
+  fixture-hash, and status edits.
+- Have the same independent GPT-6.1 Sol reviewer at medium effort critically
+  review each substantial package. The reviewer inspects the actual diff, native
+  behavior, test evidence, compatibility, and plan acceptance criteria, and identifies
   missing branches or regressions instead of relying on the implementer's
   summary. Reviews do not silently expand or rewrite the implementation scope.
 - Implementation workers report changed files, checks performed and results,
@@ -1020,18 +1019,22 @@ acceptance are separate evidence levels and must be reported accurately.
 ## Reporting and document ownership
 
 - `completion-plan.md`: active order, dependencies, acceptance gates, workflow.
-- `migration-status.md`: dated estimate, current gate position, open gaps,
-  coverage/evidence records, exact verification revision and exclusions.
+- `feature-gap-inventory.md`: stable numbered feature items, completion status,
+  implemented scope, remaining gaps and feature acceptance criteria.
+- `migration-status.md`: current working status/memory, milestone position,
+  material blockers, WIP and operating context; revised in place.
 - Architecture and protocol documents: stable ownership and compatibility rules.
 - Server/content/client/Lua/pool/replay guides: specialized contracts and usage;
   link here for priority instead of maintaining another milestone sequence.
-- `CHANGELOG.md`: chronological completed changes; old entries are historical.
-- `history/`: superseded plans; never execute their unchecked tasks as a backlog.
+- `CHANGELOG.md`: concise chronological implementation history and consequential
+  compatibility decisions, without verification transcripts.
+- `test-history.md`: concise dated verification outcomes, scope and open limits;
+  no raw reports, repeated attempts or historical QA dumps.
+- Git history: superseded file versions, obsolete plans and deleted detail. Do
+  not create separate archives or documentation backups.
 
-Advance a milestone only on its exit evidence. Update the overall estimate at
-those gates or when scope/evidence changes materially, not after each commit.
-The present estimate has no calibrated effort denominator; do not average
-subsystem percentages or publish an invented completion date. After M1 and the
-first M2 family, use observed batch throughput and the remaining coverage ledger
-to form an effort range. Keep missing data, unknown parity, implementation,
-presentation, and verification gaps distinguishable in that ledger.
+Advance a milestone only on its exit evidence. Use defined completion states
+and scoped evidence rather than uncalibrated percentages or invented completion
+dates. Keep implementation, native parity, application and graphical acceptance
+distinct in the numbered inventory. Update current summaries in place and leave
+past versions to Git history; do not append run diaries to working status.

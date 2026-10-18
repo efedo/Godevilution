@@ -13,7 +13,7 @@ Godevilution contains three runtime surfaces plus shared contracts and tests.
 | `server/src/Devilution.Server.Diablo/` | .NET 8 Diablo-to-host/Protobuf adapter, compatible saves, and replay support |
 | `server/src/Devilution.Server/` | .NET 10 composition-only authoritative executable |
 | `server/content/` | Validated external authoritative content packs |
-| `godot/Devilution.Client/` | Godot 4.7.1 Mono presentation project |
+| `godot/Devilution.Client/` | Godot 4.7.x Mono presentation project; source SDK pinned to 4.7.1 |
 | `godot/Devilution.Client.Protocol/` | Engine-independent C# protocol transport and client model |
 | `protocol/Devilution.Protocol/` | Single generated .NET 8 Protobuf binding assembly |
 | `protocol/` | Canonical Protobuf schema and language-neutral delivery vectors |
