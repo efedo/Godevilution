@@ -147,6 +147,15 @@ remain, including Stand and recovery boundaries. False is omitted for older
 snapshots. Acceptance waits for both the current action and queued path to
 finish; a Stand acknowledgement alone does not finish a destination walk.
 
+`ServerHello.supports_queued_ranged_attacks` separately enables realtime
+`AttackRequested.queue_during_move` for the explicit native depth-progression
+profile. Clients add the flag only after negotiation and before freezing command
+identity. The server refuses unsupported flagged requests; explicit/unflagged
+commands and older profiles retain their established behavior. The native owner
+finishes the active movement/attack phase and executes an admitted pending
+follow-up at its native readiness boundary. Cohort v10 retains this server-owned
+pending intent across fresh-host restore without allocating another client receipt.
+
 Before acknowledgement results mutate retry or presentation state, native and
 Godot clients enforce the same admission rules: no more than 256 results;
 every status and rejection reason must be a defined protocol value; an

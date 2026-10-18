@@ -236,7 +236,9 @@ The internal `DiabloCommandCallbackPhase` is transient and actor-reference-match
 under native timing. Added tests cover stable phase identity through rejection
 and replacement, opt-out/outside/wrong-actor absence and exception/null-event
 cleanup. Run the tick-command class and the seven selected lifecycle/cohort
-regressions recorded in migration status. Persisted anchor and cursor adoption
+regressions described in this guide; [test history](../test-history.md) summarizes
+accepted scope and [working status](../migration-status.md) owns current limits.
+Persisted anchor and cursor adoption
 remain open; prepared traces do not establish full world-tick parity.
 
 The local checked MSVC build hit C1902 under `/ZI /FS` even after preserving and
@@ -464,7 +466,9 @@ Whole-millisecond truncation, floor projection, saturating arithmetic and the
 negotiated rate are preserved; reconnect clears the old epoch. Immediate raw-tick
 observation and explicit/frozen commands remain unchanged. Nine deterministic
 clock checks share the existing `server_backed_client_test` target; broader
-registered transport/presentation checks are recorded in migration status.
+registered transport/presentation checks have curated scope in
+[test history](../test-history.md); current acceptance limits are in
+[working status](../migration-status.md).
 CTest runs each named fixture in a fresh process, so native presentation fixtures
 must initialize their required player tables themselves. Neither estimator
 tests nor a successful game build prove accepted native GUI movement/restore.
@@ -521,30 +525,34 @@ Earlier version-1 diagnostic profiles remain private and are rejected, not
 migrated or relocated into the new content identity. Negotiated host identities
 and checkpoint integrity remain separate strict checks.
 
-On the verified desktop, a sandbox-launched client did not expose a targetable
-window, while the same rebuilt client launched on the interactive desktop did.
-Agents must request the appropriate launch permission and Computer Use app
-approval; they must not treat a running process as visible UI or bypass denied
-window access. See migration status for current GUI outcomes and the remaining
-native gameplay/timing/presentation gap.
+Earlier C++ native compatibility-client runs showed that a sandbox-launched
+process was not necessarily a targetable desktop window. Current work is
+headless. For a later authorized GUI task, recheck desktop conditions and follow
+the available tool/launch permission policy; process presence is not visible UI
+evidence. See [working status](../migration-status.md) for current constraints.
 
 Pre-adaptation Immediate-mode GUI evidence reaches healthy town entry and fresh-host
 restoration at `(75,68)`, with full-life HUD/state and normal menu exits. Recorded
 movement clicks reject `TooLate`; player rendering is not established by the town
-captures, so native create/move/save/resume acceptance remains open. The earlier
+captures, so C++ native compatibility-client GUI create/move/save/resume
+acceptance remains open. The earlier
 dead-origin Cathedral probe is retained; its missing-art failure remains
 unresolved. Diagnostics identify the exact object/template without
 relaxing graphics/frame admission or adding a speculative reload. Base entry
 coordinates now have the optional validated contract. Timing/presentation source
 review and affected native tests pass; accepted movement and moved-position GUI
-restore remain required. See migration status for the latest verification.
+restore remain required for that C++ client. The passed Godot native-world
+Town/L1/L2 headless route is a separate frontend/scenario; it does not close
+this GUI gate. See [test history](../test-history.md) for accepted scope and
+[working status](../migration-status.md) for current limits.
 Inspect legacy checkpoints only after confirmed owned-publisher exit or a verified
 publication barrier. Delete sharing alone does not permit the Windows
 `File.Move(overwrite:true)` publisher to replace a held canonical reader. The
 qualified cohort POSIX-rename reader contract is separate. The retained earlier
 access-denied phase and passing retry do not establish the historical lock owner
 or a universal sharing-safe live-inspection contract.
-The latest fresh GUI run was stopped behind a test-executable firewall prompt;
+An earlier native compatibility-client GUI run stopped behind a test-executable
+firewall prompt;
 the affected TCP test listeners are now loopback-only and their rerun passes. Never
 automate security prompts or enable public/private network permissions for the
 loopback test. If a prompt appears, ask the user to cancel it before continuing;

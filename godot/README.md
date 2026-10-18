@@ -212,21 +212,13 @@ sample, not native vendor generation or pricing parity. Starting resources stay
 unchanged; saves/bookmarks use `.local/godot-portal-preview` and the inner flag is
 `-PortalPreviewContent`. Original base/preview identities and saves are unchanged.
 
-The native-population route is opt-in. Run
-`tools/test-godot-session.ps1 -CathedralNativeProfileDirectory <compiled-profile> -PersistenceMode cohort`
-to exercise the `CathedralNativeJourney` and `CathedralNativeResume` phases with
-the pinned profile passed to the client as `GODEVILUTION_CATHEDRAL_NATIVE_PROFILE`.
-The opt-in native Rogue L1 journey and fresh-host resume now pass in the scoped
-headless run. The journey killed 13 actors (892 XP), equipped the earned Cape
-(stable item 163, seed 306134381), returned to Town and saved at sequence 103.
-Resume R3 reused that checkpoint, restored the saved sequence, accepted command
-104, revisited L1 to verify retained geometry, doors, defeated corpse and claimed
-loot, then returned to Town. Healer, stash and Smith checks passed (life 2817 to
-2880; repair 2 Gold, 100 to 98; Cape durability 5 to 12/12); final sequence 196.
-Verification combines the passed Journey with a fresh host/client Resume from
-its copied checkpoint. Normal-profile adoption and broader native campaign
-acceptance remain open.
-The profile does not enable native population in normal sessions.
+The accepted native Rogue baseline covers Town, earned L1 equipment/Gold,
+Pepin supplies, L2 combat and Town return, followed by exact fresh-host restore
+and retained two-floor revisit. The earlier L1-only route is a narrower
+historical result. See [test history](../docs/test-history.md#native-cathedral-baselines)
+for accepted scope and [working status](../docs/migration-status.md) for current
+limits. Complete L1-L4 gameplay, other native classes, rendered parity and
+normal-profile adoption remain open.
 
 For the focused native chest journey, run `tools/test-godot-session.ps1` with
 `-PersistenceMode cohort -CathedralNativeProfileDirectory <pinned-profile>`
@@ -247,8 +239,11 @@ the distinction between headless, visible, and full campaign evidence.
 For diagnostics or automated smoke tests, invoke the underlying
 `godot/run-local-client.ps1` harness directly with its optional switches.
 For an automated smoke launch, add `-Headless -QuitAfterSeconds 5`.
-Pass `-CharacterClassId <0..5>` to request one of the shipped classes when
-creating a new session. Omitting it uses the active content default; a resume
+Pass `-CharacterClassId <0..5>` to request a recognized shipped class ID when
+creating a new session. Admission depends on the selected profile: the explicit
+native populated/progression profiles currently admit only canonical Rogue in
+single-player Normal. Other profiles may admit the broader class catalog.
+Omitting the option uses the profile/content default; a resume
 token's existing server state takes precedence. The first snapshot contains
 that class's content-defined wallet, resources, equipment, belt, inventory,
 class skill, and learned spells. Manual launches can set the same optional value

@@ -10,8 +10,9 @@ server-owned entity collections; identity-neutral version-1 saves retain their
 zero player ID until import rebinds it.
 
 The separate `DiabloCohortCodec` encodes complete format-1 module checkpoints,
-with additive format-2 Cathedral doors, format-3 native monster state, format-4
-native item pools and format-5 native combat continuation. The opt-in native
+with additive formats for Cathedral doors (2), native monsters (3), item pools (4),
+combat continuation (5), sarcophagi (6), barrels (7), traps (8), native Town/L1/L2
+progression (9) and native L1-L4 depth progression (10). The opt-in native
 profile retains bow flight and collision-time hit/damage resolution, frozen
 future-tile aim, and melee, recovery and walking phases. Older cohort formats
 retain their established encoding and legacy movement behavior.
@@ -23,17 +24,23 @@ Cold activation regenerates trusted floor owners before installing the complete
 saved world, player and RNG. Wrong profiles and schema downconversion refuse;
 legacy adapters and cohort formats keep their existing behavior.
 
+The separate `devilution.diablo.cathedral-native-depth-progression.v1` profile
+uses cohort v10 for lazy L1-L4 owners, native destination-path continuation and
+pending ranged follow-ups. Backend support is not a completed four-floor
+application journey.
+
 Raw native door trap markers remain preserved and are projected when visible;
 unsupported native door operations are refused before they can mutate door or
-pool state. For the opt-in native L1, public static collision geometry also
-includes solid raw object-reference footprints, matching authoritative
-occupancy; non-native scanner-light projection is unchanged.
+pool state. For opt-in native L1, public static collision geometry includes solid
+raw object-reference footprints, matching authoritative occupancy; non-native
+scanner-light projection is unchanged.
 
-The scoped headless native Rogue L1 Journey and fresh-host Resume R3 pass with
-a Town checkpoint at sequence 103 and first resumed accepted command 104.
-Normal-profile adoption and broader campaign acceptance remain open.
+The scoped Godot native-world Rogue Town/L1/L2 journey, fresh-host restore and
+retained two-floor revisit pass. See [test history](../../../docs/test-history.md#native-cathedral-baselines)
+for accepted scope. Complete L1-L4 play, native compatibility-client GUI acceptance,
+normal-profile adoption and broader campaign acceptance remain open.
 
-It requires every stored field, rejects unknown/duplicate members and malformed
+The cohort codec requires every stored field, rejects unknown/duplicate members and malformed
 Unicode, validates typed graphs and deterministic collection order, and preserves
 nullable fields and raw values without constructor normalization. Fresh module
 candidate validation is still required after decoding. Host integrity envelopes,

@@ -4,6 +4,11 @@ The checked-in presentation project pins `Godot.NET.Sdk/4.7.1`. Godot is not ass
 installed on every development machine, and repository tests that do not render
 the client must remain runnable without it.
 
+Use the [work plan](../work-plan.md) for near-term order and
+[working status](../migration-status.md) for current limits. The complete L1-L4
+application journey below has not passed; do not confuse its procedure with
+the accepted Town/L1/L2 scope in [test history](../test-history.md).
+
 ## Native Cathedral L1-L4 headless progression
 
 Compile the separate `--native-cathedral-depth-progression` profile using the
@@ -241,7 +246,7 @@ from a later isolated pass or retry a rejected command to hide the failure.
 
 `LiveCohortRestoresOwnedTownPortalAndNonOwnerUseAfterProcessRestart` uses two real
 protocol clients, explicit `cohort`/multiplayer/ClockGated hosting and the existing
-town/portal preview stack. Evidence: `.local/cohort-town-portal-restart-79bb820d5c71458799cf60c5b8289754`.
+town/portal preview stack.
 An ordinary Warrior buys and consumes one scroll; owner source-to-town and guest
 source-to-town/town-to-source use retain its route. Both actors remain alive and
 settle in Town off both endpoints before a forced stop. Validated cohort loading
@@ -256,24 +261,16 @@ return then require persisted next client sequences and consecutive global
 receipts. Owner return closes the route. A second stopped checkpoint retains
 complete updated ledgers and no original or same-owner route.
 
-The new fact plus existing two-participant and legacy portal restart controls pass
-in clean and working lanes (six executions/nine zero-exit outer stages).
-HEAD `afeada4ac` has 2,795 tracked paths; the clean lane adds only this partial and
-replaces only the private fixture, retaining 2,794 original inputs. All 2,813
-working inputs/protected20 match; drains/cleanup finish and exact outer identities
-are absent. The fixture's optional persistence mode preserves default legacy
-callers. Both builds retain the existing Dispatch.cs xUnit2031 warning. Failed r2
-null-token and r3 dead-owner attempts remain retained. Fresh r5 qualifies the empty
-creation token and corrected journey ordering. Hosts are forcibly stopped.
-Rendered interaction, graceful shutdown, full world/resources/RNG and normal
-profile adoption remain separate.
+The fixture preserves default legacy callers. Forced host stops exercise the
+recovery boundary; they do not prove graceful shutdown. Rendered interaction,
+full campaign/world parity and normal-profile adoption remain separate. See
+[test history](../test-history.md) for scoped accepted outcomes.
 
 ## TCP portal counter and cold restore
 
 The focused `LiveServerRestoresTownPortalLifetimeAfterProcessRestart` fact uses
 the existing explicit `town-loop-preview` and `town-portal-preview` content,
 ordinary Warrior resources, real Smith purchase and a consumed Town Portal scroll.
-Evidence: `.local/town-portal-removal-restart-4c14b6b64d8e4a78a8817507667b9899`.
 It requires observed pre-clamp aging during accepted movement, full tick-derived
 portal equality in the stopped checkpoint and first fresh-host wire snapshot,
 source-to-town retention and owner-return closure. A second forced stop verifies
@@ -284,36 +281,20 @@ ordinary movement at a safe adjacent cell actually visited earlier.
 
 Portal identity, owner, endpoints and bidirectionality stay exact while open;
 only the counter changes by `max(1, R0 - elapsedTicks)`. This is an opening counter,
-not an expiry deadline. The extended fact and two existing restart facts pass in
-clean and preserved working lanes: six executions, nine zero-exit outer stages,
-complete drains/cleanup and recorded identities absent. The clean archive has
-2,795 tracked paths with only this test replaced; its other 2,794 original inputs,
-all 2,812 working inputs and twenty protected hashes match. Both builds retain the
-existing Dispatch.cs xUnit2031 warning. Hosts are forcibly stopped. Rendered input,
-graceful shutdown, native cast-pass alignment and full resources/world preservation
-remain separate; this preview does not adopt normal profiles.
+not an expiry deadline. This focused TCP regression does not prove rendered
+input, graceful shutdown, native cast-pass alignment or a full campaign.
+[Test history](../test-history.md) owns its accepted verification scope.
 
 ## Broader headless gameplay integration
 
-The post-timing-change regression covers existing Journey, TownLoop and Lifecycle
-Create/Resume in legacy mode, and two-client Cooperative in explicit cohort mode.
-Evidence: `.local/m1-broader-headless-integrated-0d770258058d4edea14f6f2876d440d3`.
-The reviewed preserved-tree run freezes all 1,019 runtime/content inputs, keeps
-twenty protected hashes, and binds eight staged projects to client source hash
-`c3afc5a213d7c286dfb6ffdc5fdc4dea5f2c5a5d2924205b110140b1095e24c7`.
-All 26 engine exits are zero and 38 exact PID/start identities are absent.
-Source SDK 4.7.1 remains unchanged; isolated SDK/engine are 4.7.2.
-
-The first Journey verifier failed on duplicate reporting of the same session root
-after its application wrapper passed. Retain that failure and original logs;
-the corrected audit qualifies the completed run separately, while the other
-three profiles are fresh. The 236 focused client/server unit executions are
-reused evidence, not newly run. This is preserved working-tree integration, not
-a pristine committed-source, rendered or native-parity qualification.
-Scene assertions remain scoped: Journey does not compare complete inventory and
-resources; TownLoop's positive/nonincreasing portal check does not prove elapsed
-aging or expiry. Checkpoint metadata and zero outer exits do not establish
-graceful host shutdown; host native terminal receipts are unavailable.
+The existing harness supports Journey, TownLoop and Lifecycle Create/Resume in
+legacy mode and two-client Cooperative in explicit cohort mode. Select only
+profiles affected by the change, using the application commands below. Scoped
+passes do not establish full inventory/resources/world equality, native parity,
+rendered usability or graceful host shutdown unless those observations are
+actually part of the selected acceptance. Current scope and remaining limits
+belong in [working status](../migration-status.md); concise dated results belong
+in [test history](../test-history.md), not per-run source/PID/hash archives here.
 
 ## Client presentation packs
 
@@ -1109,13 +1090,10 @@ loadout, effective spell level 0, resources and items. The adjacent (21,20) cell
 is walkable, empty, outside authored monster aggro and not a warp trigger.
 It adds no actors, grants, catalog overrides or normal-profile adoption.
 
-`Devilution.Diablo.Tests.MonkSearchPreviewContentTests` passes 2/2 without skips
-in both verified HEAD-derived source with the candidate overlay and the existing
-working tree; evidence is
-`.local/monk-search-prerequisite-72f3ed434ff14b2aa37b280fbc2983ec`.
-This qualifies content only; the retained timing counterexample below was found
-while preparing the actual-control journey. Native Hellfire Search is illegal
-in Town and does not reveal Rogue traps.
+`Devilution.Diablo.Tests.MonkSearchPreviewContentTests` validates the overlay's
+content boundary. Actual-control Search and prepared-native characterization
+have separate scope. Native Hellfire Search is illegal in Town and does not
+reveal Rogue traps.
 
 ## Timed-effect catch-up qualification
 
@@ -1126,32 +1104,17 @@ replayed world tick. Ordinary and restored Diablo adapters select it so effects
 created inside catch-up age as they do during single-step advancement. No save
 schema or host profile selection changes.
 
-Clean and working Engine/module/server checks pass without failures/skips in
-`.local/search-timing-fix-092f15ef838b4d4b9aef4e4b6e91a662` (1,070 executions,
-including repeated focused checks; thirty clean owned terminal receipts).
-`.local/search-shared-integrated-ce408ab9bec14c02a8597a6ef7e49198` records eight current-source hidden headless profiles:
-Search, Bard Identify, session menu, Trap Disarm, Warrior Repair, default legacy,
-default cohort and pending-command recovery. Sixty engine stages exit zero;
-ninety exact recorded identities are absent; nineteen isolated project stages
-share one client source hash with source SDK 4.7.1/staged SDK 4.7.2. The real Search
-control, fresh-host residual status, next movement and observed expiry pass.
-The initial diagnostic-helper compile failure and its source are retained;
-removing only `static` corrected the build. The unaffected 236 focused checks
-were explicitly reused for that modifier change, with no claim of fresh execution.
+Relevant Engine/module/server checks cover coalesced versus per-tick behavior;
+the actual-control Search journey also observes residual status after fresh-host
+resume and subsequent expiry. These are managed catch-up and scoped headless
+claims, not complete native/server phase alignment.
 
-This is managed catch-up consistency and headless current-candidate evidence.
-The separate prepared native prerequisite in `.local/monk-search-native-1e3041893a3a46f7955938b9fa2433d0` passes actual
-cast/missile processing, exact 247-pass lifetime, recast/overflow boundaries,
-automap item-visibility flags and scoped state restoration (4/9/27 executions).
-See [MSVC build notes](msvc-build.md#prepared-native-monk-search-prerequisite).
-A separate expanded-input caller qualification passes 5/10/30 executions:
-canonical Monk loadout/animation data feeds actual StartSpell/ProcessPlayers/
-DoSpell, observing 247 before the paired missile pass and 246 afterward.
-Canonical player tables stay loaded per process; other scoped state is restored.
-It does not run full GameLogic/CheckPlrSpell/Town admission or establish native/
-server phase alignment. Rendered automap/application acceptance and graceful host exit remain
-unqualified; host checkpoints were checked as metadata. Scene/launcher commits
-await rendered acceptance. Existing approval holds apply.
+The [prepared native Search prerequisite](msvc-build.md#prepared-native-monk-search-prerequisite)
+checks cast/missile lifetime, recast/overflow and automap item-visibility flags.
+Its expanded caller scope includes actual StartSpell/ProcessPlayers/DoSpell,
+without claiming full GameLogic, CheckPlrSpell or Town admission. Rendered automap
+acceptance remains open. Scene/launcher work is uncommitted; see
+[working status](../migration-status.md) for exact current constraints and WIP.
 
 ## Opt-in command-timing diagnostics
 
@@ -1215,16 +1178,10 @@ Before input, the fresh client's local queued sequence and pending count must be
 zero with no command result. ServerHello separately validates the saved server
 cursor; the next keyboard command must receive exactly that cursor plus one.
 Pre-input failures report both the saved cursor and current local input state.
-The committed-source headless exported pair passes at `c6c7f543b`: Create completes
-five warm-up/fifteen measured moves and stops at (0,3), cursor 23. Fresh-host
-Resume validates the admitted Hello/first wire, accepts move 24 and settles at
-(0,2). Both Release hosts quit naturally with drained/joined output. Resume
-reuses the same release executable and four physically loaded managed images,
-with no second export or frame capture. Evidence:
-.local/performance-create-resume-pair-58968f2a2268434688701a254009aace.
-This qualifies one explicit Legacy single-player journey; broader restore/world,
-rendered, campaign and release-budget gates remain open. Existing `Performance`
-and default launch profiles retain their behavior.
+The scoped committed-source exported Create/fresh-host Resume pair passes;
+[test history](../test-history.md) records its scope. This does not establish a
+full world/campaign restore, rendered acceptance or release budgets. Existing
+Performance and default launch profiles retain their behavior.
 
 Performance markers are published by closing a temporary file then moving it
 to the final name. Readers permit shared read/write/delete access so the Windows
@@ -1275,103 +1232,19 @@ byte-for-byte integrity of the loaded in-memory image. Missing, extra, mistyped,
 mismatched or optimized assembly evidence rejects this Debug baseline. Ordinary
 profiles clear the new image-directory setting and perform no capture hashing.
 
-Godot's optimized application configuration is `ExportRelease`. Independently
-reviewed assembly-only probes now execute genuine standalone exports from both
-preserved dirty sources and an archived committed source. Matched official 4.7.2
-Mono Windows x64 templates and export presets exist only in disposable workspace
-stages. The source SDK remains 4.7.1; isolated imports use SDK 4.7.2. Independent
-pre-runtime bundle manifests bind physical runtime locations, identities, MVIDs
-and file/path hashes for three optimized ExportRelease application images and
-the exact optimized Release GodotSharp image. The committed repeat also verifies
-all 143 archived build inputs before and after export. All owned stages exit
-cleanly and are absent. These assembly-only probes instantiate no Main,
-connection or save.
+Godot's optimized application configuration is `ExportRelease`. Use matching
+Mono export templates in a disposable workspace stage and a matching Release
+host. Source SDK remains 4.7.1; the qualified isolated engine/SDK is 4.7.2.
+Assembly identity/optimization checks establish only their declared scope;
+in-memory byte identity and native machine-code optimization require separate
+evidence. They do not turn a headless workload into rendered/GPU acceptance.
 
-A separate disposable committed-source qualification now launches the actual
-standalone exports through Main's new-character/input path and the same
-one/four-participant Performance workload. Independent pre-runtime manifests
-and private startup witnesses bind all four physical optimized images; all
-rounds, observer barriers, terminal proofs and zero-loss frame captures pass.
-The hosts are Debug and forcibly stopped, with direct PID/start-bound terminal
-receipts. Checkpoint verification is metadata only; a retained temporary save
-file prevents any claim of fully drained writes or cold durable restore.
-This exported headless baseline does not change the Debug measurement command
-above or ordinary launch profiles. Rendered Release measurements, native
-machine-code optimization, soak, platform coverage and release budgets remain
-open. Git history retains the original measurement details and failed attempts.
-
-A reviewed matching-Release-host repeat is retained at
-`.local/godot-exported-performance-run-4e964a7e71bc4dabbd7eda234f9ef2eb`.
-Its ignored private driver freezes fresh committed HEAD `8383fc7b4`, builds a
-Release host, and patches only a disposable generated launcher. Both genuine
-exported one/four-client Main profiles pass with explicit legacy persistence;
-all four optimized physical client runtime images are bound per client.
-Live native apphost path/PID/start and adjacent Release DLL metadata are checked
-before/after each profile; this does not inspect loaded managed/in-memory bytes.
-The normal launcher and historical Debug-host baseline are unchanged.
-
-Five valid zero-drop captures and all round/observer/process barriers pass.
-Both hosts are forcibly stopped; one temporary save remains in the four-player
-profile. Checkpoint inspection is metadata only. Fully drained saves, cold
-restore, graceful shutdown, rendered/GPU or whole-frame timing, soak, platform
-matrix, native machine-code optimization and release budgets remain unqualified.
-Migration status records exact evidence, metrics and retained failed attempts.
-
-A separately reviewed exported single-client cold-recovery diagnostic is retained
-at `.local/godot-exported-recovery-run-89c6bf748ab34f878146bdb8ddefbcea`.
-It freezes committed HEAD `884193c6d` and instruments only disposable sources.
-Genuine ExportRelease Main runs explicit Legacy Create and fresh Release-host
-Resume. A first-wire observer precedes validation/model application; actual
-Store.Load/codec inspection and byte-identical retained checkpoint copies bind
-the settled player scalars and full accepted receipt ledger. Create ends at
-cursor 3/(0,1); Resume restores it before input and accepts cursor 4/(0,2).
-All 42 owned identities are absent, and this lane has no temporary canonical
-save. Keep save bodies and credentials private; only scalar reports and hashes
-are public evidence. Hosts still stop forcibly. Full-world/RNG/inventory parity,
-rendered/native cold Resume, graceful shutdown, normal cohort adoption and
-release/platform/soak acceptance remain open. [Test history](../test-history.md)
-summarizes recovery scope; Git retains the earlier detailed evidence.
-
-The separate graceful exported recovery lane is retained at
-`.local/godot-exported-recovery-graceful-run-44dac60a5d644d01989813f5a2cbe153`.
-It freezes committed HEAD `be8118de7`, instruments disposable sources, and runs
-headless ExportRelease Legacy Create followed by a fresh Release-host Resume.
-The source-pinned driver performs no-engine generated-launcher preflight first.
-The reviewed outer wrapper rejects evidence-root collisions and bounds preflight
-to 120 seconds and the full run to 900 seconds. The host retains its native
-handle, writes/flushes `quit` only after client exit, joins both output pumps,
-flushes sinks and records actual native exit before disposal. A shared 30-second
-quit deadline and strict 26-field receipt reject forced stops, task/drain faults,
-changed streams, missing identities and terminal evidence collisions.
-
-Both hosts exit naturally with code 0; original and retained canonical Store/
-codec reports preserve receipts 1..3 then append 4 after cold Resume's first wire.
-All 42 recorded identities are absent. Keep private saves and tokens withheld;
-publish scalar reports/hashes only. Local helper/driver qualifications comprise
-21 pure guards, 13 synthetic lifecycle cases and 32 terminal-validator cases.
-A future run needs fresh source/archive/dependency pins and reviewed generated
-source. This scoped pass leaves rendered/native moved-position Resume, full
-world/RNG/inventory parity, normal cohort adoption and release/platform/soak
-gates open. Migration status retains exact evidence and earlier failed attempts.
-
-The later graceful Performance pair is retained at
-`.local/godot-exported-performance-graceful-run-81b34372856e46959ff99255529df9d3`.
-It archives committed HEAD `8944c6242` and runs genuine headless ExportRelease
-Main at one/four participants with explicit Legacy persistence and Release
-hosts. Source-only factory/terminal qualifications pass 10/67 cases, followed
-by actual no-engine preflight and the bounded 900-second workload. Each profile
-keeps five warm-up/fifteen measured rounds, all observer barriers, valid zero-drop
-frame captures and four optimized physical runtime images per client.
-
-Both hosts accept `quit` after every client exits, retain their native handles
-through natural exit 0, and join/drain/flush output within the strict bounds.
-All forty recorded identities are absent. Final private save metadata, read
-only after publisher absence, contains one/four combined checkpoints with zero
-temporary or unexpected entries. Preserve historical forced-stop attempts.
-This lane does not test cold restore of those profiles or qualify rendered/GPU,
-whole-frame, native optimization, release budgets, platforms, soaks or normal
-cohort adoption. Future repeats require fresh archive/dependency pins and
-reviewed generated source; [test history](../test-history.md) summarizes accepted scope.
+Accepted exported single-client recovery and one/four-client Performance lanes
+are summarized in [test history](../test-history.md). Future affected repeats
+must verify their actual source/configuration, workload barriers, valid captures
+and clean host shutdown. Keep procedures and interpretation limits here, with
+scoped results in test history. Current rendered, platform, soak, normal-profile
+adoption and release-budget gaps remain in [working status](../migration-status.md).
 
 Missing rounds, changed identity, empty/invalid/truncated samples, overwritten
 output, nonzero client exits or missing checkpoints reject the baseline. Recording

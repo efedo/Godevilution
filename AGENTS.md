@@ -30,5 +30,6 @@ To ensure that your contributions are effective and align with the project's goa
 - All code changes must include succinct documentation.
 - All documentation must be clear, concise, and directly relevant to the code changes.
 - Avoid repetitive or redundant documentation.
+- Keep docs/work-plan.md, docs/migration-status.md and docs/feature-gap-inventory.md synchronized when priorities, scope, completion, acceptance evidence or blockers change. Update affected entries before committing or handing off a batch.
 - Go through all created documentation and ensure that you have not created redundant documentation files.
 - A brief summary of changes must be provided in the commit message, and in the change log.

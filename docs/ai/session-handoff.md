@@ -1,13 +1,14 @@
 # Clean-session handoff
 
 Prepared 2026-10-18. Use `D:\Programming\Godevilution` and its existing working
-tree; committed baseline `3af2a51cc`. Fresh context does not mean a reset or a
+tree; gameplay source baseline `3af2a51cc`. Fresh context does not mean a reset or a
 replacement checkout.
 
 ## Read first
 
 Read [AGENTS.md](../../AGENTS.md), this handoff and
 [working status/memory](../migration-status.md) completely. Then read the
+[near-term work plan](../work-plan.md),
 [numbered feature inventory](../feature-gap-inventory.md),
 [completion plan](../completion-plan.md), documentation index and relevant build
 guides. Implementation history is in [CHANGELOG.md](../CHANGELOG.md); verification
@@ -16,12 +17,12 @@ to the next decision; do not repeat its tests merely to rebuild context.
 
 ## First task
 
-The user requested a step back and a bounded feature/gap inventory before another
-implementation package. The inventory is prepared with stable item numbers,
-completion statuses and full Godot graphical-parity criteria. Refresh only changed
-or unresolved claims. Present its three substantial candidate batches and agree
-the priority with the user before starting feature implementation. No batch is
-selected yet. Do not treat the failing L3 bot scenario as a universal blocker.
+The detailed numbered inventory and near-term work plan are prepared. Read the
+work plan for the current phase and proposed delivery order, then establish the
+user-selected batch before feature implementation. No gameplay batch is selected
+yet. Refresh only changed claims and keep the work plan, working status and
+affected inventory entries synchronized. Do not treat the failing L3 bot scenario
+as a universal blocker.
 
 ## Session goal
 
@@ -44,7 +45,8 @@ this section when authorized by its opening user request.
 
 Follow the working status for current constraints, WIP and environment. Main.cs
 and Main.Session.cs source work is authorized. Preserve unrelated work and use
-CRLF. Stay headless; no reset, bulk commit, push, security changes or new archives.
+CRLF. Stay headless; no reset, bulk commit, security changes or new archives.
+Push only on explicit user instruction.
 Git history holds past versions; do not create backup documentation or QA dumps.
 
 Use the [fixed worker policy](../completion-plan.md#worker-delegation): two

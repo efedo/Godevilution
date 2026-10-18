@@ -7,6 +7,13 @@ contracts stay in their existing guides.
 
 ## 2026-10-18
 
+- Reconcile contributor, protocol, client, content and build documentation with
+  current profile scope, versioned state and the synchronized plan/status/inventory.
+  Remove superseded run dossiers from guides; keep concise outcomes in test history.
+- Add a brief near-term work plan and require synchronized updates with working
+  status and the numbered feature inventory at meaningful work changes.
+- Expand the feature/gap inventory into stable numbered subitems with individual
+  status, current scope and remaining work, including full graphical and release closure.
 - Separate current working memory, numbered feature gaps, implementation history
   and scoped test history; remove obsolete archives and use Git for past versions.
 - Add opt-in held entity attacks for the native-depth client. Repeats follow

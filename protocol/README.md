@@ -45,6 +45,12 @@ Windows toolchain command.
   peers before these actors are sent to older clients.
 - Additive fields and `oneof` alternatives must be safe for older peers to
   ignore. Required behavior is negotiated during the handshake.
+- `ServerHello.supports_target_cell_pathing` enables realtime
+  `MoveRequested.follow_path` only for the explicit native depth-progression
+  profile. Unsupported flagged commands are refused; unflagged/directional
+  commands retain their existing behavior. The server owns the path and saves
+  its pending state in cohort v10. See the
+  [full protocol contract](../docs/authoritative-protocol-contract.md).
 - `ServerHello.supports_queued_ranged_attacks` enables only opted-in native
   profiles. A realtime `AttackRequested.queue_during_move` is added by clients
   only after negotiation; explicit commands and peers without this capability

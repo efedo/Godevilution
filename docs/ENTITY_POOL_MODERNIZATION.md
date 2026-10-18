@@ -2,8 +2,8 @@
 
 This is a compatibility strategy, not a separate project roadmap. Current
 projection/pool work is recorded in [migration status](migration-status.md);
-further work follows the [completion plan](completion-plan.md), with retirement
-subject to M5. Storage aliases, adapter operations, and snapshot reconciliation
+near-term order follows the [work plan](work-plan.md), with retirement subject
+to the M5 gates in the [completion plan](completion-plan.md). Storage aliases, adapter operations, and snapshot reconciliation
 already exist; audit remaining consumers instead of restarting those steps.
 
 The native client is being migrated from globally indexed arrays toward

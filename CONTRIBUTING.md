@@ -6,9 +6,11 @@ and the protocol/replay contracts while making changes incrementally.
 
 ## Before Changing Code
 
-Read `docs/csharp-authoritative-server-migration.md`,
-`docs/migration-status.md`, and `docs/completion-plan.md`. Select work against
-the active milestone's acceptance gate. Keep gameplay and persistence
+Read the [near-term work plan](docs/work-plan.md),
+[working status](docs/migration-status.md), [feature inventory](docs/feature-gap-inventory.md),
+[architecture](docs/csharp-authoritative-server-migration.md) and
+[completion plan](docs/completion-plan.md). Select a coherent batch against the
+current queue and milestone acceptance gates. Keep gameplay and persistence
 server-owned, the Godot client presentation-only, and the native path backward
 compatible.
 
@@ -42,7 +44,10 @@ commit message.
 Use cohesive commits containing a completed behavior family or playable slice,
 its relevant tests, and documentation. Avoid separate commits for individual
 fixture rows or status sentences. Follow `docs/completion-plan.md` for delivery
-order; update the milestone evidence in status rather than creating another plan.
+requirements and acceptance gates; use `docs/work-plan.md` for the near-term
+order. Keep the work plan, working status and affected inventory entries consistent
+when priorities, scope, completion, evidence or blockers change. Keep dated
+verification in `docs/test-history.md` and use Git for superseded versions.
 
 Do not commit generated build output, local saves, proprietary Diablo game
 data, or temporary agent planning files.

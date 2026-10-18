@@ -1,12 +1,15 @@
 # Godevilution Documentation
 
-Start with [working status/memory](migration-status.md), the
-[numbered feature and gap inventory](feature-gap-inventory.md) and the
-[completion plan](completion-plan.md). The inventory owns feature statuses;
-the plan owns priorities and acceptance gates. Keep these roles separate.
+Start with the [near-term work plan](work-plan.md),
+[working status/memory](migration-status.md) and the
+[numbered feature and gap inventory](feature-gap-inventory.md). The work plan owns
+the short execution order; status owns current facts; the inventory owns feature
+completion. The [completion plan](completion-plan.md) owns milestone requirements
+and acceptance gates.
 
 ## Current project state
 
+- [Near-term work plan](work-plan.md)
 - [Working status and memory](migration-status.md)
 - [Numbered feature and gap inventory](feature-gap-inventory.md)
 - [Completion plan and workflow](completion-plan.md)

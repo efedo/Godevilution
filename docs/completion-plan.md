@@ -3,7 +3,8 @@
 Plan updated: 2026-10-18. See [working status](migration-status.md) for the
 current baseline and [test history](test-history.md) for accepted verification scope.
 
-This is the active delivery plan. The [architecture](csharp-authoritative-server-migration.md)
+This is the full migration roadmap; the [near-term work plan](work-plan.md) owns
+the current short execution order. The [architecture](csharp-authoritative-server-migration.md)
 defines ownership rules; the [numbered inventory](feature-gap-inventory.md) owns
 feature completion and gaps. Working status owns current memory and constraints.
 Historical plans are not active backlogs. Milestones below are acceptance gates, not claims of completion
@@ -63,17 +64,15 @@ Completion requires all of the following evidence:
 The user requested a step back and selected a **bounded inventory of remaining
 gameplay gaps** as the first deliverable. The [inventory](feature-gap-inventory.md)
 separates implemented capability, incomplete native parity, missing integration
-and unproved application behavior. It replaces the old immediate queue below;
-the full M0-M5 requirements and dependency graph remain unchanged.
+and unproved application behavior. It is now prepared; the
+[near-term work plan](work-plan.md) owns the proposed next batches. The full M0-M5
+requirements and dependency graph remain unchanged.
 
-1. Review at most eleven gameplay/client areas against representative production entry
-   points and existing evidence. Identify concrete missing playable outcomes,
-   important dependencies and unknowns. Do not run a new blanket test campaign,
-   count methods/fixtures as progress, or start another feature during this pass.
-2. Present three substantial candidate batches with their user-visible outcome,
-   required layers and necessary acceptance checks. Use the inventory to choose
-   priorities with the user before resuming feature work. Reuse existing systems
-   and WIP where appropriate; do not restart architecture extraction.
+1. Maintain the existing numbered inventory against changed source and evidence;
+   do not repeat its construction or run a blanket test campaign to rebuild context.
+2. Use the near-term work plan to select a substantial batch with the user. Keep
+   its scope tied to inventory IDs and reuse existing systems and WIP. Update the
+   plan, working status and affected inventory entries together as work changes.
 3. For the chosen batch, integrate the complete behavior, resolve independent
    review findings, build the affected projects, run necessary focused checks and
    one relevant gameplay journey, then commit selectively. Repeat passing evidence
@@ -112,7 +111,7 @@ isolated spell or table rows while the playable route stays unchanged.
 | --- | --- | --- | --- |
 | M0 | Reproducible launch and honest acceptance evidence | Existing implementation | Dedicated-root cohort host passes TCP recovery, scoped faults, production CLI participant/item recovery and lease refusal, isolated Godot create/resume/outage and surviving-client committed-but-unobserved replay; managed first-publication interruption and a scoped Windows metadata profile pass; approval-gated normal-launch adoption and broader fault/filesystem/platform acceptance remain; legacy cold imports, native GUI and release-budget gaps remain |
 | M1 | Usable Godot town-to-dungeon loop | M0 launch/acceptance harness | Authored combat/loot/equipment, NPC/service approach, purchased-scroll portal and isolated Sorcerer quest/cast/Recharge/death/restart/restore journeys pass; two-client authored combat/loot and complete-cohort cold resume pass headlessly and visibly with inspected milestones; full loop remains |
-| M2 | Native-compatible generated world | M0 geometry/parity baseline | Ordinary Cathedral depths 1-4 coarse/fine oracle covers six seeds and MAIN/PREV; controlled population and compiled metadata have native comparisons; fresh-cold generation now continues through pre-join player occupancy and physical light/vision with a separate automap catalog; opt-in depth/door profiles pass scoped restore, with an earlier rendered TooLate retained and unclassified; live populated checkpoint/profile activation, join/campaign lifecycle, native art, wider topology and remaining families remain |
+| M2 | Native-compatible generated world | M0 geometry/parity baseline | Ordinary Cathedral L1-L4 geometry/population comparisons, explicit populated profiles and versioned floor owners exist. Native Rogue Town/L1/L2 gameplay and fresh-host retention pass. Complete L1-L4 application play, quest/campaign lifecycle, exact vision, native art and remaining dungeon families are open; a pre-join generator alone is not a ready-to-tick campaign. |
 | M3 | Complete base and Hellfire gameplay routes | M1 plus the relevant M2 world slices | Many rules exist; campaign and remaining behavioral coverage remain |
 | M4 | Release-quality client, recovery, and packaging | M3; preparation begins during M1/M2 | Recovery and adapter packaging foundations exist; product acceptance remains |
 | M5 | Production legacy-runtime retirement | M4 and capability replacement gates | Authoritative mode is Lua-free; compatibility runtime remains |
@@ -125,16 +124,11 @@ M4. M5 is the final removal gate, not a reason to postpone replacement work.
 
 ## M0: Reproducible launch and acceptance baseline
 
-Dedicated single-client `PerformanceCreate`/`PerformanceResume` routes now preserve
-the established five-warm-up/fifteen-measured workload, capture a stopped baseline,
-validate the current admitted first wire before resumed input, and require exact
-next-sequence adjacent movement settlement. Focused contracts and launcher tests
-verify this route. The actual committed-source headless exported pair passes at
-`c6c7f543b`: Create stops at (0,3)/cursor 23; fresh-host Resume validates the first
-wire and settles accepted command 24 at (0,2). One release export is reused and
-both hosts quit naturally. Evidence:
-.local/performance-create-resume-pair-58968f2a2268434688701a254009aace.
-Default profiles and broader restore/world, rendered and campaign gates remain open.
+The explicit single-client PerformanceCreate/Resume route keeps the established
+workload, validates the first admitted wire before input and requires exact
+next-sequence movement. Its accepted exported headless scope and graceful host
+exit are in [test history](test-history.md). Default-profile adoption, broader
+world/campaign restore, rendered acceptance and release budgets remain open.
 
 The client retains credential-free ServerHello fields and a defensive clone of
 the first decoded wire snapshot for the latest connection attempt. Admission is
@@ -348,51 +342,12 @@ journey verify this observation API. Broader M0 restore acceptance remains open.
    live allocation or soak evidence. Preserve failed captures and reject invalid
    metrics. Ordinary launches and two-client create/resume remain unchanged.
    Local Debug town measurements do not establish a release budget or full
-   platform/campaign matrix. Separate committed-source standalone exports now
-   pass the actual Main one/four-client headless workload, with independent
-   manifests/startup witnesses binding four physical optimized runtime images.
-   Preserve its Debug-host, instrumented legacy-persistence scope: host stops
-   are forced and checkpoint verification is metadata only, with a temporary
-   save artifact retained. This closes the scoped exported workload baseline,
-   not graceful shutdown, cold durable restore, rendered/GPU measurements,
-   native machine-code optimization, soak or release budgets. Use status for
-   exact revisions, configurations, retained failures and outcomes.
-   A separate fresh exported one/four-client repeat now binds matching Release
-   host apphost paths and adjacent Release DLL metadata, with all four optimized
-   physical client runtime images. Its five valid zero-drop captures and process
-   barriers pass. Hosts still stop forcibly; checkpoints remain metadata only
-   and the four-player profile retains one temporary save. Cold durable restore,
-   fully drained saves, graceful shutdown and rendered/budget/soak/matrix gates
-   remain open. Git retains the historical Debug-host baseline; test history
-   summarizes accepted scope.
-   A separate exported single-client Legacy Create/fresh Release-host Resume
-   now validates actual canonical Store/codec state, retained private-copy
-   hashes, first decoded wire restore before model application, complete saved
-   receipts and exact next sequence 4. Its 42 owned identities are absent and
-   no temporary canonical save remains in that lane. Hosts still stop forcibly;
-   full-world/RNG/inventory parity, rendered/native moved-position Resume and
-   broader release gates remain open. Keep historical Performance limits and
-   approval-gated normal cohort adoption unchanged; use test history for scope.
-   A separate committed-source exported Legacy Create/fresh Release-host Resume
-   now passes headlessly with natural host exit 0, retained native handles,
-   bounded quit, joined output pumps and flushed stream hashes. Original and
-   retained canonical Store/codec reports preserve receipts 1..3 then append 4;
-   Resume restores the first wire before input and moves (0,1) to (0,2). All 42
-   recorded identities are absent. This closes that scoped graceful recovery
-   check only. Preserve historical forced-stop failures/Performance limits and
-   keep rendered/native moved-position Resume, full-world/RNG/inventory parity,
-   normal cohort adoption, budgets, platforms and soaks open. See test history
-   for accepted scope and Git history for original detailed evidence.
-   A later committed-source exported Legacy one/four-client Performance pair now
-   passes with natural Release-host exit 0, quit after every client exit, joined
-   output pumps and flushed sinks. All full rounds/observer barriers and five
-   zero-drop captures retain optimized physical runtime-image bindings. Forty
-   recorded identities are absent; post-absence save metadata has one/four
-   combined checkpoints and no temporary or unexpected entries. This closes
-   scoped graceful Performance shutdown/save-file cleanup, not cold restore of
-   those profiles, rendered/GPU or whole-frame measurements, full-world parity,
-   budgets, platforms or soaks. Preserve historical forced-stop evidence and
-   approval-gated normal cohort adoption; see test history for accepted scope.
+   platform/campaign matrix. Scoped exported recovery and one/four-client
+   Performance results, including graceful Release-host exits, are summarized
+   in [test history](test-history.md). Preserve their stated profile and workload
+   boundaries; they do not establish full campaign/world restore, rendered/GPU
+   performance, native machine-code optimization, normal cohort adoption or
+   release/platform/soak qualification. Old run dossiers belong in Git history.
 
    Godot now reuses installed geometry between model-accepted snapshot generations.
    Preserve full replacement, same-tick/epoch admission and eager legacy behavior;
@@ -403,8 +358,9 @@ journey verify this observation API. Broader M0 restore acceptance remains open.
    Retain unclassified live store movement rejections alongside later isolated
    or complete passing runs. Exact queued/receipt/model/action diagnostics
    now accompany travel assertions; observed state is not server admission state.
-   Do not infer a cause or timing correction from a later pass. Use status for
-   current compatibility evidence and keep broader M0 gates open.
+   Do not infer a cause or timing correction from a later pass. Use working
+   status for current limits, test history for accepted scope, and keep broader
+   M0 gates open.
    Use the recorded checkpoint-phase timings to target publication costs without
    weakening durability; retain no-ack-on-write-failure and fresh-host duplicate
    recovery coverage. Local Windows receipt-file reuse does not close the wider
@@ -599,7 +555,7 @@ world integration and campaign join/restore acceptance remain open.
    now walk from Town through generated level 1, activate an authored object,
    defeat/pick up an authored encounter, continuously traverse fine cells, reject
    an exact wall input, restore through a fresh host/client and return via native
-   Up stairs. See status for exact evidence and retained failed runs. This proves
+   Up stairs. See test history for scoped outcomes and working status for limits. This proves
    the diagnostic integration, not native population or the family exit gate.
    Preserve it while extending native Cathedral generation/depth and population;
    multiplayer and broader seed/topology checks remain relevant gates.
@@ -614,7 +570,7 @@ world integration and campaign join/restore acceptance remain open.
    families only inside the isolated pack; dependent references are validated before
    publication. Eight reciprocal routes bind Down to next.Main and Up to
    previous.Previous; only L1.Up returns Town. L4.Down has no route until native
-   Catacombs-5 is supported. See status for ordinary-control descent/ascent,
+   Catacombs-5 is supported. See test history for ordinary-control descent/ascent,
    collision, middle-floor fresh-host restore and unchanged default/L1 evidence.
    Next, close native object/door and population placement before widening playable
    topology coverage: some exact generated layouts currently have disconnected SOL
@@ -955,8 +911,8 @@ compatibility build keeps the physical-removal gate open.
    once against the integrated revision. Record failures as open gaps. Do not
    use a historical green result or a source-text assertion as runtime evidence.
 
-The current first deliverable is the bounded gameplay-gap inventory and a
-prioritized proposal. Normal cohort/profile adoption remains a separate held
+The inventory and near-term plan are prepared. Use [work-plan.md](work-plan.md)
+for the current next-batch order. Normal cohort/profile adoption remains a separate held
 change; eligible work in existing explicit profiles need not wait for it. Preserve
 working launch/recovery behavior and full migration requirements. Do not restart
 completed extraction work or turn old experimental acceptance scripts into
@@ -1018,7 +974,9 @@ acceptance are separate evidence levels and must be reported accurately.
 
 ## Reporting and document ownership
 
-- `completion-plan.md`: active order, dependencies, acceptance gates, workflow.
+- `work-plan.md`: short current/proposed execution order, batch scope and exits;
+  kept synchronized with working status and affected inventory entries.
+- `completion-plan.md`: full milestone dependencies, acceptance gates and workflow.
 - `feature-gap-inventory.md`: stable numbered feature items, completion status,
   implemented scope, remaining gaps and feature acceptance criteria.
 - `migration-status.md`: current working status/memory, milestone position,

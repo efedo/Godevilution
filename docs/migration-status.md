@@ -1,6 +1,6 @@
 # Godevilution Working Status and Memory
 
-As of 2026-10-18. Committed baseline: `3af2a51cc`.
+As of 2026-10-18. Gameplay source baseline: `3af2a51cc`.
 The existing working tree contains substantial uncommitted work; it is not a
 clean committed-source baseline. Use `git status` and the actual diff before
 assigning ownership or staging a batch.
@@ -43,7 +43,7 @@ meaningful delivered changes. There is no calibrated overall percentage.
 
 | Gate | Status | Current position / remaining exit requirement |
 | --- | --- | --- |
-| M0: Launch and acceptance | Partial | Scoped launch, transport, cohort recovery and shutdown checks pass. Normal-profile adoption, native moved-position cold resume and broader platform/fault/budget acceptance remain open. |
+| M0: Launch and acceptance | Partial | Scoped launch, transport, cohort recovery and shutdown checks pass. Normal-profile adoption, C++ native compatibility-client moved-position cold resume and broader platform/fault/budget acceptance remain open. |
 | M1: Usable Godot loop | Partial | Scoped authored and native Town/L1/L2 journeys pass. Consolidated session flow, broader class/death/quest/service play and current rendered usability remain incomplete. |
 | M2: Native world | Partial | Ordinary Cathedral L1-L4 generation/owners and several object families exist. Remaining dungeon families, quest-enabled generation and broader placement/population behavior remain open. |
 | M3: Base/Hellfire campaigns | Partial | Many gameplay systems and native comparisons exist. Complete supported campaigns, final encounters, classes/difficulties and campaign-wide multiplayer retention are unproved or incomplete. |
@@ -69,10 +69,11 @@ Passing a scoped test or adding a schema version does not close a milestone.
 - Current menu/session/class-flow work is mixed with other WIP. Review and land
   only a coherent selected batch, with verification affected by that batch.
 
-The requested inventory and documentation split are prepared. No next gameplay
-batch is selected. Review the three candidate batches in the inventory with the
-user before resuming feature implementation. Do not rebuild the inventory or
-restart an unrelated test campaign as the default next task.
+The detailed inventory, documentation split and [near-term work plan](work-plan.md)
+are prepared. No next gameplay batch is selected. The work plan owns the proposed
+execution order; agree the next batch with the user before feature implementation.
+Keep its queue, this status and affected inventory entries synchronized as work
+changes. Do not restart inventory construction or an unrelated test campaign.
 
 ## Existing working-tree packages
 
@@ -101,8 +102,8 @@ before native builds. Serialize shared builds and run commands/write outputs
 under `D:\Programming`.
 
 Continue headlessly. No computer-use tools, GUI, visible applications or renewed
-overnight schedule are requested. Do not reset, bulk commit, push, expose tokens
-or change security settings. Ordinary source work, including Main.cs and
+overnight schedule are requested. Do not reset, bulk commit, expose tokens or
+change security settings. Push only on explicit user instruction. Ordinary source work, including Main.cs and
 Main.Session.cs, is authorized; there is no Main edit hold or per-patch approval
 requirement and no game-save privacy approval check.
 

@@ -91,19 +91,14 @@ ordered headers for `native_spells.tsv`, `native_item_misc.tsv`,
 `native_item_topology.tsv`, and `native_item_tags.tsv`; all four tables are
 required and retained as validated activation catalogs. Previous-schema packs
 may omit these compatibility tables.
-The checked-in `hellfire` pack depends on `base` and overlays the validated
-`combat.tsv` variant selector plus the first content-owned towner turn-in row,
-the native `Crystalline`, `Jester's`, and `Doppelganger's` weapon prefixes and
-Hellfire's staff-capable legacy affix eligibility rows,
-the Hellfire target-accuracy ranges for `piercing`, `puncturing`, and `bashing`,
-plus `devastation`, `decay`, and `peril` weapon/staff/bow suffixes,
-the native `The Grizzly` unique item, and native monster armor and special-
-damage metadata,
-plus the Zombie spawn-policy row needed to keep complete policy coverage when
-the Hellfire variant adds that monster identity,
-so operators can activate the native Hellfire ruleset with
-`--content-overlay server/content/hellfire` while remaining Hellfire tables are
-migrated incrementally.
+The checked-in `hellfire` pack depends on `base` and overlays Hellfire combat,
+item/affix/unique, monster/spawn and native-effect data. It also supplies quest
+types/states, selected authored routes, towner/dialogue data, Hive/Crypt fragment
+and object metadata, and world mutations. Activate the overlay with
+`--content-overlay server/content/hellfire`. Catalog composition and individual
+behavior paths are implemented; native Hive/Crypt generation and a complete
+playable expansion campaign remain open. See [inventory area 8](../../docs/feature-gap-inventory.md#8-hellfire-progression)
+for the distinct metadata, behavior, integration and acceptance gaps.
 
 The base quest/towner table also owns the Lazarus storyteller opening: the
 single-player Staff of Lazarus hand-in and multiplayer unlogged dialogue

@@ -85,13 +85,27 @@ without changing the item or Gold. This is an authored progression slice, not
 native generated population or campaign completion. See
 [authored generated-depth guide](ai/godot-build.md#generated-cathedral-depths-playtest).
 
-### 2026-10-07–12 — exported headless Create/Resume (`265de3665`, `cff967af6`)
+### 2026-10-07–12 — exported headless recovery and Performance (`265de3665`, `cff967af6`)
 
 Committed-source exported Legacy runs verify graceful cold recovery and a
 single-client Create/Resume workload, including the first admitted snapshot and
 next command. They qualify those explicit exported workloads only; rendered
 parity, distribution readiness, and the full platform/performance matrix remain
-open. See [Godot build and export notes](ai/godot-build.md).
+open. The explicit single-client PerformanceCreate/Resume pair at `c6c7f543b`
+restores before input, admits the exact next move and exits both Release hosts
+naturally. A separate exported one/four-client Performance lane has optimized
+runtime-image and graceful Release-host shutdown coverage; it does not establish
+cold restore of those Performance profiles, GPU/whole-frame costs or release
+budgets. See [Godot build and export notes](ai/godot-build.md).
+
+### 2026-10-07 — portal counter/ownership recovery (`afeada4ac`, `8383fc7b4`)
+
+Focused TCP cases preserve tick-derived portal opening counters, canonical
+command receipts, owner/guest use and owner-return closure across fresh hosts.
+The two-client case rejoins in reverse order. Forced stops exercise restart;
+these cases do not establish graceful shutdown, rendered controls or a full
+native campaign. See [counter restart tests](../godot/Devilution.Client.Protocol.Tests/LiveAuthoritativeServerTests.TownPortalLifetimeRestart.cs)
+and [cohort portal tests](../godot/Devilution.Client.Protocol.Tests/LiveAuthoritativeServerTests.CohortTownPortalRestart.cs).
 
 ### 2026-10-04 — two-client authored combat and cohort resume (`5e8389c03`)
 

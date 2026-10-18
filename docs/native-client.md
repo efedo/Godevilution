@@ -90,7 +90,9 @@ framing, acknowledgement and projection; the transport remains synchronous.
 Resume imports the server sequence floor, without wrapping exhausted sequences.
 Fresh connection epochs reset timing and projection boundaries; terminal command
 results remain resolved even if a subsequent player snapshot is invalid.
-See migration status for source review, rebuilt tests and actual GUI evidence.
+See [working status](migration-status.md) for current scope and
+[test history](test-history.md) for curated accepted verification. The native
+compatibility-client GUI gate is separate from Godot native-world route evidence.
 
 The handshake also declares the server-owned game mode. Because native
 `NetInit` has already allocated either the single-player or multiplayer path,
@@ -142,6 +144,10 @@ discarded before they can regress presentation position, action, or level state.
 The same tick boundary now protects the local player projection and native
 feedback from delayed stale snapshots and event batches. Correction buffering
 and remaining legacy interaction parity remain separate migrations.
+
+These equipment-derived sprites belong to the C++/SDL compatibility renderer.
+Godot has a separate presentation path; equipment-dependent Godot appearance
+remains open in [inventory item 11.14](feature-gap-inventory.md#11-full-godot-graphical-parity).
 
 The lower-level authoritative player-state owner enforces the same monotonic
 server-tick rule, so delayed snapshots cannot regress state even when an adapter

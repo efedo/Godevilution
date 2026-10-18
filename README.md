@@ -26,8 +26,9 @@ randomness, world state, inventory, combat, and persistence.
 See the [documentation index](docs/README.md),
 [architecture](docs/csharp-authoritative-server-migration.md), and
 [current migration status](docs/migration-status.md). The
-[completion plan](docs/completion-plan.md) defines delivery order and acceptance
-gates. The backend foundations are established; full gameplay parity and the
+[near-term work plan](docs/work-plan.md) owns the short execution order; the
+[feature inventory](docs/feature-gap-inventory.md) owns completion states, and the
+[completion plan](docs/completion-plan.md) defines milestone requirements and exits. The backend foundations are established; full gameplay parity and the
 complete playable Godot client remain in progress.
 Contributor expectations are in [CONTRIBUTING.md](CONTRIBUTING.md).
 
