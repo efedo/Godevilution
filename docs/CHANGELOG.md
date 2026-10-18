@@ -2,6 +2,10 @@
 
 Notable changes to this fork are recorded below.
 
+- 2026-10-18: Match native TCP transport by disabling Nagle buffering on both
+  authoritative endpoints before protocol traffic. Retain nonfatal socket-option
+  errors, framing, reconnect and cancellation behavior.
+
 - 2026-10-18: Reuse the original durable snapshot for exact native-depth command
   retries received while its response is in flight. Preserve duplicate receipts,
   event ownership, FIFO and fault fences; invalidate reuse after any intervening

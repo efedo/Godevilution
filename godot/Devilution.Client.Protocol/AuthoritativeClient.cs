@@ -185,6 +185,12 @@ public sealed class AuthoritativeClient : IAsyncDisposable
             supportsClockOnlyProbes = false;
             tcpClient = new TcpClient();
             await tcpClient.ConnectAsync(options.Host, options.Port, cancellationToken);
+            // Set TCP_NODELAY before the first framed protocol write, matching the native client.
+            try {
+                tcpClient.NoDelay = true;
+            } catch (SocketException exception) {
+                Trace.TraceError("Client error setting socket option: {0}", exception.Message);
+            }
             stream = tcpClient.GetStream();
             var requestedResumeToken = string.IsNullOrWhiteSpace(SessionToken)
                 ? options.ResumeToken

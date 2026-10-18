@@ -44,6 +44,15 @@ unsupported behavior is a migration gap, not permission for local simulation.
 
 ## Current delivery position and verification limits
 
+Both managed TCP endpoints now set TCP_NODELAY before protocol traffic, matching
+native transport setup and its nonfatal socket-option errors. All 13 affected
+TCP framing, retry, reconnect, cancellation and backpressure checks pass without
+skips. The changed exact-entry run kills its first L3 target, then dies at tick
+6164 before the return to Town. This is transport parity; no latency improvement
+or four-floor save/resume pass is claimed. Evidence:
+`.local/native-cathedral-run-20261016/nodelay-*` and
+`entry-continuation-r10-town-v2.log` (retained failure).
+
 Exact in-flight single-command retries for opted-in native-depth hosts now reuse
 their original detached snapshot after its successful write, with an unchanged
 Duplicate receipt. A changed same-tick snapshot invalidates reuse; events are

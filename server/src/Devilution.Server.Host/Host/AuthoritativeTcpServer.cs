@@ -492,6 +492,12 @@ public sealed partial class AuthoritativeTcpServer : IAsyncDisposable
                 break;
             }
 
+            // Keep small framed protocol messages responsive like the native transport.
+            try {
+                client.NoDelay = true;
+            } catch (SocketException exception) {
+                Trace.TraceError("Server error setting socket option: {0}", exception.Message);
+            }
             clients.TryAdd(client, 0);
             var finished = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
             clientHandlers.TryAdd(client, finished.Task);
