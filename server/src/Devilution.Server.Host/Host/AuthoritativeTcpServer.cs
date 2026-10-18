@@ -645,6 +645,8 @@ public sealed partial class AuthoritativeTcpServer : IAsyncDisposable
                         ?? commandServer.LastClientSequence(session.Id));
                     serverHello.CommandSchedulingMode = UseClockGatedCommandScheduling
                         ? CommandSchedulingMode.ClockGated : CommandSchedulingMode.Immediate;
+                    serverHello.SupportsClockOnlyProbes = UseClockGatedCommandScheduling;
+
                     await EnvelopeCodec.WriteAsync(stream, new Envelope { ServerHello = serverHello }, cancellationToken);
                     currentTick = commandServer.WithSynchronizedState(() => AdvanceCurrentTickCore());
                     SaveSession(session);
@@ -898,6 +900,8 @@ public sealed partial class AuthoritativeTcpServer : IAsyncDisposable
             ?? commandServer.LastClientSequence(session.Id);
         serverHello.CommandSchedulingMode = UseClockGatedCommandScheduling
             ? CommandSchedulingMode.ClockGated : CommandSchedulingMode.Immediate;
+        serverHello.SupportsClockOnlyProbes = UseClockGatedCommandScheduling;
+
 
         // Keep the handshake cursor, authoritative tick, and initial projection in the same
         // ruleset generation. Network writes happen only after this authority lock is released.

@@ -311,6 +311,8 @@ public sealed partial class AuthoritativeTcpServer
                 ?? commandServer.LastClientSequence(session.Id);
             serverHello.CommandSchedulingMode = UseClockGatedCommandScheduling
                 ? CommandSchedulingMode.ClockGated : CommandSchedulingMode.Immediate;
+            serverHello.SupportsClockOnlyProbes = UseClockGatedCommandScheduling;
+
             var tick = commandServer.CurrentTick;
             var snapshot = snapshotProvider?.CreateSnapshot(session.Id, session.EntityId, tick);
             if (snapshot is not null) {

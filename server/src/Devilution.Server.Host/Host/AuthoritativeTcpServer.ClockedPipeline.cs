@@ -231,6 +231,47 @@ public sealed partial class AuthoritativeTcpServer
                         terminal = true;
                     }
                     break;
+                case Envelope.PayloadOneofCase.ClockProbeRequest:
+                    try {
+                        var requestId = envelope.ClockProbeRequest.RequestId;
+                        if (requestId == 0) {
+                            await EnqueueClockGatedErrorAsync(
+                                workWriter,
+                                responseBudget,
+                                ProtocolErrorCode.InvalidMessage,
+                                "A clock probe request requires a nonzero request ID.",
+                                terminal: true,
+                                reserveResponseWeight: false,
+                                pipelineCancellation.Token);
+                            terminal = true;
+                            break;
+                        }
+                        var clockProbeWork = ClockGatedResponseWork.ClockProbe(
+                            requestId,
+                            envelopeReadCompletedTimestamp);
+                        if (!responseBudget.TryReserve(1)) {
+                            await EnqueueClockGatedErrorAsync(
+                                workWriter,
+                                responseBudget,
+                                ProtocolErrorCode.InvalidMessage,
+                                "The clock-gated command response capacity is exhausted.",
+                                terminal: true,
+                                reserveResponseWeight: false,
+                                pipelineCancellation.Token);
+                            terminal = true;
+                            break;
+                        }
+                        clockProbeWork.SetResponseWeight(1);
+                        await EnqueueClockGatedWorkAsync(
+                            workWriter,
+                            responseBudget,
+                            clockProbeWork,
+                            pipelineCancellation.Token);
+                    } catch (OperationCanceledException)
+                        when (pipelineCancellation.IsCancellationRequested) {
+                        return;
+                    }
+                    break;
                 case Envelope.PayloadOneofCase.SnapshotRequest:
                     try {
                         var work = ClockGatedResponseWork.Snapshot(
@@ -407,6 +448,18 @@ public sealed partial class AuthoritativeTcpServer
                                 hostCancellationToken,
                                 currentTick);
                             break;
+                        case ClockGatedResponseKind.ClockProbe:
+                            currentTick = await WriteClockGatedClockProbeAsync(
+                                stream,
+                                entityId,
+                                connectionOrdinal,
+                                work.TimingRequestId,
+                                work.EnvelopeReadCompletedTimestamp,
+                                lane,
+                                scheduler,
+                                pipelineCancellation.Token,
+                                currentTick);
+                            break;
                         case ClockGatedResponseKind.Snapshot:
                             currentTick = await WriteClockGatedSnapshotAsync(
                                 stream,
@@ -578,6 +631,45 @@ public sealed partial class AuthoritativeTcpServer
                         classifyClockedTransportFailure: true);
                 }
             }
+            return currentTick;
+        } catch (ClockGatedTransportException) {
+            throw;
+        } catch (Exception exception) {
+            PoisonClockGatedLane(scheduler, lane, exception);
+            throw;
+        }
+    }
+
+    private async Task<ulong> WriteClockGatedClockProbeAsync(
+        Stream stream,
+        uint entityId,
+        int connectionOrdinal,
+        ulong requestId,
+        long? envelopeReadCompletedTimestamp,
+        ClockGatedCommandLane lane,
+        ClockGatedCommandScheduler scheduler,
+        CancellationToken pipelineCancellationToken,
+        ulong currentTick)
+    {
+        try {
+            // Serialize the reply with authority publication: wait for any in-flight
+            // cohort write, then suppress the response if that publication fenced the host.
+            var schedulingClockTick = commandServer.WithSynchronizedState(() => {
+                RequireClockedTransportActive(true, pipelineCancellationToken);
+                RequireCohortHealthy();
+                return Math.Max(clock.CurrentTick, commandServer.CurrentTick);
+            });
+            await WriteClockedTransportEnvelopeAsync(
+                stream,
+                new Envelope {
+                    TimingReply = new TimingReply {
+                        RequestId = requestId,
+                        ServerSchedulingClockTick = schedulingClockTick,
+                    },
+                },
+                pipelineCancellationToken);
+            RecordTimingReply(connectionOrdinal, entityId, envelopeReadCompletedTimestamp, requestId);
+            EmitCommandTimingOutsideAuthorityLock();
             return currentTick;
         } catch (ClockGatedTransportException) {
             throw;
@@ -905,6 +997,7 @@ public sealed partial class AuthoritativeTcpServer
     private enum ClockGatedResponseKind
     {
         Command,
+        ClockProbe,
         Snapshot,
         Error,
     }
@@ -952,6 +1045,14 @@ public sealed partial class AuthoritativeTcpServer
                 SampledCommandServerCurrentTick = sampledCommandServerCurrentTick,
                 ActualAdmissionTick = actualAdmissionTick,
                 LockWaitStopwatchTicks = lockWaitStopwatchTicks,
+            };
+
+        public static ClockGatedResponseWork ClockProbe(
+            ulong requestId,
+            long? envelopeReadCompletedTimestamp)
+            => new(ClockGatedResponseKind.ClockProbe) {
+                TimingRequestId = requestId,
+                EnvelopeReadCompletedTimestamp = envelopeReadCompletedTimestamp,
             };
 
         public static ClockGatedResponseWork Snapshot(

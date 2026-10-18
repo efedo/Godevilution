@@ -34,6 +34,13 @@ public sealed class AuthoritativeClient : IAsyncDisposable
     private int transportConnected;
     private ulong nextClientSequence;
     private long lastSnapshotRequestMs;
+    private long? negotiatedSnapshotRequestSentMs;
+    private long negotiatedSnapshotRequestGeneration;
+    private long nextNegotiatedSnapshotRequestToken;
+    private long? negotiatedSnapshotRequestToken;
+    private long negotiatedPostAckSnapshotGeneration;
+    private ulong? negotiatedPostAckSnapshotAppliedTick;
+    private long? negotiatedPostAckSnapshotObservedMs;
     private double roundTripMilliseconds = 100;
     private string effectiveContentManifestHash;
     private string effectiveRulesetIdentityHash;
@@ -41,6 +48,8 @@ public sealed class AuthoritativeClient : IAsyncDisposable
     private ulong nextTimingRequestId;
     private long timingEpoch;
     private long? lastTimingProbeRequestMs;
+    private long? lastClockOnlyProbeSentMs;
+    private bool supportsClockOnlyProbes;
     private bool timingCalibrationReady;
     private int timingCalibrationProbeAttempts;
     private bool timingCalibrationTimedOut;
@@ -137,11 +146,19 @@ public sealed class AuthoritativeClient : IAsyncDisposable
                 timingProbe = null;
                 timingEpoch = 0;
                 lastTimingProbeRequestMs = null;
+                lastClockOnlyProbeSentMs = null;
+                negotiatedSnapshotRequestSentMs = null;
+                negotiatedSnapshotRequestGeneration = 0;
+                negotiatedSnapshotRequestToken = null;
+                negotiatedPostAckSnapshotGeneration = 0;
+                negotiatedPostAckSnapshotAppliedTick = null;
+                negotiatedPostAckSnapshotObservedMs = null;
                 timingCalibrationReady = false;
                 timingCalibrationProbeAttempts = 0;
                 timingCalibrationTimedOut = false;
             }
             commandSchedulingMode = CommandSchedulingMode.Unspecified;
+            supportsClockOnlyProbes = false;
             tcpClient = new TcpClient();
             await tcpClient.ConnectAsync(options.Host, options.Port, cancellationToken);
             stream = tcpClient.GetStream();
@@ -192,6 +209,8 @@ public sealed class AuthoritativeClient : IAsyncDisposable
             ServerTickRateHz = hello.ServerHello.TickRateHz == 0 ? 20 : hello.ServerHello.TickRateHz;
             ServerGameMode = hello.ServerHello.GameMode;
             commandSchedulingMode = hello.ServerHello.CommandSchedulingMode;
+            supportsClockOnlyProbes = commandSchedulingMode == CommandSchedulingMode.ClockGated
+                && hello.ServerHello.SupportsClockOnlyProbes;
             effectiveContentManifestHash = hello.ServerHello.ContentManifestHash;
             effectiveRulesetIdentityHash = hello.ServerHello.RulesetIdentityHash;
             ServerIdentity = new AuthoritativeServerIdentity(
@@ -218,8 +237,16 @@ public sealed class AuthoritativeClient : IAsyncDisposable
             var connectedStream = stream;
             var connectionLifetime = CancellationTokenSource.CreateLinkedTokenSource(lifetime.Token);
             var connectionGeneration = Interlocked.Increment(ref transportGeneration);
+            if (supportsClockOnlyProbes)
+                lastSnapshotRequestMs = 0;
             lock (pendingLock) {
                 timingEpoch = connectionGeneration;
+                negotiatedSnapshotRequestGeneration = connectionGeneration;
+                negotiatedSnapshotRequestSentMs = null;
+                negotiatedSnapshotRequestToken = null;
+                negotiatedPostAckSnapshotGeneration = connectionGeneration;
+                negotiatedPostAckSnapshotAppliedTick = null;
+                negotiatedPostAckSnapshotObservedMs = null;
                 timingCalibrationReady = commandSchedulingMode != CommandSchedulingMode.ClockGated;
                 lastTimingProbeRequestMs = null;
                 timingCalibrationProbeAttempts = 0;
@@ -263,6 +290,13 @@ public sealed class AuthoritativeClient : IAsyncDisposable
                 timingProbe = null;
                 timingCalibrationReady = false;
                 lastTimingProbeRequestMs = null;
+                lastClockOnlyProbeSentMs = null;
+                negotiatedSnapshotRequestSentMs = null;
+                negotiatedSnapshotRequestGeneration = 0;
+                negotiatedSnapshotRequestToken = null;
+                negotiatedPostAckSnapshotGeneration = 0;
+                negotiatedPostAckSnapshotAppliedTick = null;
+                negotiatedPostAckSnapshotObservedMs = null;
                 timingCalibrationProbeAttempts = 0;
                 timingCalibrationTimedOut = false;
             }
@@ -382,6 +416,26 @@ public sealed class AuthoritativeClient : IAsyncDisposable
                             if (!pending.ContainsKey(entry.Command.ClientSequence))
                                 return null;
                             if (!entry.TransmissionStarted) {
+                                if (entry.ObservedTick.HasValue
+                                    && supportsClockOnlyProbes
+                                    && IsClockGatedCommandScheduling) {
+                                    var dispatchNow = clock.ElapsedMilliseconds;
+                                    var currentGeneration = Volatile.Read(ref transportGeneration);
+                                    var snapshotRequestBlocksDispatch
+                                        = negotiatedSnapshotRequestSentMs is { } snapshotSentAt
+                                            && negotiatedSnapshotRequestGeneration == currentGeneration
+                                            && dispatchNow - snapshotSentAt
+                                                < TimingProbeTimeout.TotalMilliseconds;
+                                    var acknowledgementSnapshotBlocksDispatch
+                                        = negotiatedPostAckSnapshotAppliedTick.HasValue
+                                            && negotiatedPostAckSnapshotGeneration == currentGeneration
+                                            && negotiatedPostAckSnapshotObservedMs is { } acknowledgementObservedAt
+                                            && dispatchNow - acknowledgementObservedAt
+                                                < TimingProbeTimeout.TotalMilliseconds;
+                                    if (snapshotRequestBlocksDispatch
+                                        || acknowledgementSnapshotBlocksDispatch)
+                                        return null;
+                                }
                                 if (entry.ObservedTick is { } observedTick)
                                     entry.Command.RequestedTick = SuggestedCommandTick(observedTick);
                             }
@@ -447,7 +501,62 @@ public sealed class AuthoritativeClient : IAsyncDisposable
             if (timingCalibrationTimedOut || this.timingCalibrationTimedOut)
                 await FailTimingCalibrationAsync(cancellationToken);
             now = clock.ElapsedMilliseconds;
-            if ((!forceTimingProbe
+            if (supportsClockOnlyProbes && IsClockGatedCommandScheduling) {
+                var currentGeneration = Volatile.Read(ref transportGeneration);
+                var snapshotRetryDue = IsNegotiatedSnapshotRequestRetryDue(now, currentGeneration);
+                var acknowledgementSnapshotPending
+                    = IsNegotiatedPostAckSnapshotPending(now, currentGeneration);
+                var snapshotPollDue = !acknowledgementSnapshotPending
+                    && !forceTimingProbe
+                    && !hasPendingCommands
+                    && (now - lastSnapshotRequestMs >= options.SnapshotPollInterval.TotalMilliseconds
+                        || snapshotRetryDue)
+                    && !attemptedCommandDispatch;
+                if (forceTimingProbe || (!hasPendingCommands && !attemptedCommandDispatch))
+                    await TrySendTimingProbeAsync(forceTimingProbe, cancellationToken);
+
+                // Keep expensive full-snapshot work bounded independently of the
+                // lightweight clock probe; only an admitted snapshot releases this slot.
+                if (snapshotPollDue) {
+                    var requestRegistered = false;
+                    var requestToken = 0L;
+                    try {
+                        await WriteEnvelopeAsync(() => {
+                            lock (pendingLock) {
+                                var sentAt = clock.ElapsedMilliseconds;
+                                if (negotiatedPostAckSnapshotGeneration == currentGeneration
+                                    && negotiatedPostAckSnapshotAppliedTick.HasValue
+                                    && negotiatedPostAckSnapshotObservedMs is { } acknowledgementObservedAt
+                                    && sentAt - acknowledgementObservedAt < TimingProbeTimeout.TotalMilliseconds)
+                                    return null;
+                                if (negotiatedSnapshotRequestSentMs is { } previousSentAt
+                                    && negotiatedSnapshotRequestGeneration == currentGeneration
+                                    && sentAt - previousSentAt < TimingProbeTimeout.TotalMilliseconds)
+                                    return null;
+
+                                var nextToken = unchecked(nextNegotiatedSnapshotRequestToken + 1);
+                                if (nextToken == 0)
+                                    nextToken = 1;
+                                nextNegotiatedSnapshotRequestToken = nextToken;
+                                negotiatedSnapshotRequestToken = nextToken;
+                                negotiatedSnapshotRequestGeneration = currentGeneration;
+                                negotiatedSnapshotRequestSentMs = sentAt;
+                                requestToken = nextToken;
+                                requestRegistered = true;
+                                return new Envelope {
+                                    SnapshotRequest = new Envelope.Types.SnapshotRequest(),
+                                };
+                            }
+                        }, cancellationToken);
+                        if (requestRegistered)
+                            lastSnapshotRequestMs = clock.ElapsedMilliseconds;
+                    } catch {
+                        if (requestRegistered)
+                            CancelNegotiatedSnapshotRequest(requestToken, currentGeneration);
+                        throw;
+                    }
+                }
+            } else if ((!forceTimingProbe
                     && !hasPendingCommands
                     && now - lastSnapshotRequestMs >= options.SnapshotPollInterval.TotalMilliseconds
                     && (!IsClockGatedCommandScheduling || !attemptedCommandDispatch))
@@ -475,6 +584,8 @@ public sealed class AuthoritativeClient : IAsyncDisposable
 
         var timingRequestId = 0UL;
         var probeRegistered = false;
+        var usesClockOnlyProbe = supportsClockOnlyProbes && IsClockGatedCommandScheduling;
+        var probeDispatchElapsedMilliseconds = 0L;
         var probeTimingRecorder = CommandTimingRecorder;
         ProbeSentCapture? probeSent = null;
         Action<WriteAttemptTiming>? probeWriteObserver = null;
@@ -505,18 +616,37 @@ public sealed class AuthoritativeClient : IAsyncDisposable
                         && !timingCalibrationReady
                         && pending.Values.Any(command =>
                             !command.TransmissionStarted && command.ObservedTick.HasValue);
-                    var probeIntervalElapsed = !lastTimingProbeRequestMs.HasValue
-                        || dispatchNow - lastTimingProbeRequestMs.Value
-                            >= (requiresCalibration
-                                ? TimingCalibrationRetryInterval.TotalMilliseconds
-                                : options.SnapshotPollInterval.TotalMilliseconds);
-                    if (timingProbe is not null
-                        || (requiresCalibration
+                    var probeInterval = requiresCalibration
+                        ? TimingCalibrationRetryInterval.TotalMilliseconds
+                        : options.SnapshotPollInterval.TotalMilliseconds;
+                    var probeIntervalElapsed = usesClockOnlyProbe
+                        ? !lastClockOnlyProbeSentMs.HasValue
+                            || dispatchNow - lastClockOnlyProbeSentMs.Value >= probeInterval
+                        : !lastTimingProbeRequestMs.HasValue
+                            || dispatchNow - lastTimingProbeRequestMs.Value >= probeInterval;
+                    var snapshotRequestBlocksProbe = usesClockOnlyProbe
+                        && negotiatedSnapshotRequestSentMs is { } snapshotSentAt
+                        && negotiatedSnapshotRequestGeneration == timingEpoch
+                        && dispatchNow - snapshotSentAt < TimingProbeTimeout.TotalMilliseconds;
+                    var acknowledgementSnapshotBlocksProbe = usesClockOnlyProbe
+                        && negotiatedPostAckSnapshotAppliedTick.HasValue
+                        && negotiatedPostAckSnapshotGeneration == timingEpoch
+                        && negotiatedPostAckSnapshotObservedMs is { } acknowledgementObservedAt
+                        && dispatchNow - acknowledgementObservedAt < TimingProbeTimeout.TotalMilliseconds;
+                    var unresolvedNegotiatedResponse = snapshotRequestBlocksProbe
+                        || acknowledgementSnapshotBlocksProbe;
+                    var probeNotAllowed = usesClockOnlyProbe
+                        ? requiresCalibration
+                            ? !probeIntervalElapsed || unresolvedNegotiatedResponse
+                            : forceCalibration || pending.Count > 0 || !probeIntervalElapsed
+                                || unresolvedNegotiatedResponse
+                        : requiresCalibration
                             ? !probeIntervalElapsed
                             : forceCalibration
                                 || pending.Count > 0
                                 || dispatchNow - lastSnapshotRequestMs
-                                    < options.SnapshotPollInterval.TotalMilliseconds))
+                                    < options.SnapshotPollInterval.TotalMilliseconds;
+                    if (timingProbe is not null || probeNotAllowed)
                         return null;
 
                     timingRequestId = NextTimingRequestId();
@@ -525,10 +655,12 @@ public sealed class AuthoritativeClient : IAsyncDisposable
                         timingRequestId,
                         timingEpoch,
                         requiresCalibration,
+                        usesClockOnlyProbe,
                         dispatchNow,
                         SaturatingAdd(dispatchNow, TimingProbeTimeout.TotalMilliseconds),
                         sentStopwatchTimestamp);
                     lastTimingProbeRequestMs = dispatchNow;
+                    probeDispatchElapsedMilliseconds = dispatchNow;
                     probeRegistered = true;
                     if (probeTimingRecorder is not null)
                         probeSent = new ProbeSentCapture(
@@ -539,15 +671,23 @@ public sealed class AuthoritativeClient : IAsyncDisposable
                             sentStopwatchTimestamp,
                             Volatile.Read(ref roundTripMilliseconds),
                             timingCalibrationReady);
-                    return new Envelope {
-                        SnapshotRequest = new Envelope.Types.SnapshotRequest {
-                            TimingRequestId = timingRequestId,
-                        },
-                    };
+                    return usesClockOnlyProbe
+                        ? new Envelope {
+                            ClockProbeRequest = new ClockProbeRequest { RequestId = timingRequestId },
+                        }
+                        : new Envelope {
+                            SnapshotRequest = new Envelope.Types.SnapshotRequest {
+                                TimingRequestId = timingRequestId,
+                            },
+                        };
                 }
             }, cancellationToken, probeWriteObserver);
-            if (probeRegistered)
-                lastSnapshotRequestMs = clock.ElapsedMilliseconds;
+            if (probeRegistered) {
+                if (usesClockOnlyProbe)
+                    lastClockOnlyProbeSentMs = probeDispatchElapsedMilliseconds;
+                else
+                    lastSnapshotRequestMs = clock.ElapsedMilliseconds;
+            }
             return probeRegistered;
         } catch {
             if (probeRegistered) {
@@ -557,6 +697,63 @@ public sealed class AuthoritativeClient : IAsyncDisposable
                 }
             }
             throw;
+        }
+    }
+
+    private bool IsNegotiatedSnapshotRequestRetryDue(long now, long generation)
+    {
+        lock (pendingLock) {
+            if (negotiatedSnapshotRequestSentMs is not { } sentAt)
+                return false;
+            return negotiatedSnapshotRequestGeneration != generation
+                || now - sentAt >= TimingProbeTimeout.TotalMilliseconds;
+        }
+    }
+
+    private bool IsNegotiatedPostAckSnapshotPending(long now, long generation)
+    {
+        lock (pendingLock) {
+            return negotiatedPostAckSnapshotGeneration == generation
+                && negotiatedPostAckSnapshotAppliedTick.HasValue
+                && negotiatedPostAckSnapshotObservedMs is { } acknowledgementObservedAt
+                && now - acknowledgementObservedAt < TimingProbeTimeout.TotalMilliseconds;
+        }
+    }
+
+    private void CancelNegotiatedSnapshotRequest(long token, long generation)
+    {
+        lock (pendingLock) {
+            if (negotiatedSnapshotRequestGeneration != generation
+                || negotiatedSnapshotRequestToken != token)
+                return;
+            negotiatedSnapshotRequestSentMs = null;
+            negotiatedSnapshotRequestToken = null;
+        }
+    }
+
+    private void CompleteNegotiatedSnapshotRequest(long generation)
+    {
+        if (generation != Volatile.Read(ref transportGeneration))
+            return;
+        lock (pendingLock) {
+            if (negotiatedSnapshotRequestGeneration != generation)
+                return;
+            negotiatedSnapshotRequestSentMs = null;
+            negotiatedSnapshotRequestToken = null;
+        }
+    }
+
+    private void CompleteNegotiatedPostAckSnapshot(long generation, ulong snapshotTick)
+    {
+        if (generation != Volatile.Read(ref transportGeneration))
+            return;
+        lock (pendingLock) {
+            if (negotiatedPostAckSnapshotGeneration != generation
+                || negotiatedPostAckSnapshotAppliedTick is not { } appliedTick
+                || snapshotTick < appliedTick)
+                return;
+            negotiatedPostAckSnapshotAppliedTick = null;
+            negotiatedPostAckSnapshotObservedMs = null;
         }
     }
 
@@ -674,6 +871,10 @@ public sealed class AuthoritativeClient : IAsyncDisposable
             && !ObserveSnapshotIdentity(envelope.Snapshot))
             return;
         if (envelope.PayloadCase == Envelope.PayloadOneofCase.Snapshot) {
+            if (connectionGeneration is { } snapshotGeneration) {
+                CompleteNegotiatedSnapshotRequest(snapshotGeneration);
+                CompleteNegotiatedPostAckSnapshot(snapshotGeneration, envelope.Snapshot.Tick);
+            }
             // Model admission happens later; delayed snapshots must not rewind
             // the clock-gated first-send estimate before that admission.
             if (IsClockGatedCommandScheduling)
@@ -872,6 +1073,14 @@ public sealed class AuthoritativeClient : IAsyncDisposable
                 || timingEpoch != connectionGeneration
                 || now >= probe.ExpiresAtMs)
                 return;
+            if (probe.UsesClockOnlyProbe) {
+                // A negotiated clock-only reply must include its physical
+                // scheduling sample; leave the probe outstanding for the
+                // existing bounded expiry path when an older peer omits it.
+                if (!reply.HasServerSchedulingClockTick)
+                    return;
+                commandClock.ObserveMonotonic(reply.ServerSchedulingClockTick, ServerTickRateHz);
+            }
             timingProbe = null;
             timingCalibrationReady = true;
             timingCalibrationProbeAttempts = 0;
@@ -948,6 +1157,19 @@ public sealed class AuthoritativeClient : IAsyncDisposable
             var wasRetransmitted = false;
             long? commandRoundTripMilliseconds = null;
             lock (pendingLock) {
+                if (supportsClockOnlyProbes
+                    && IsClockGatedCommandScheduling
+                    && transportGenerationForRecord == Volatile.Read(ref transportGeneration)) {
+                    if (negotiatedPostAckSnapshotGeneration != transportGenerationForRecord
+                        || negotiatedPostAckSnapshotAppliedTick is not { } previousAppliedTick
+                        || result.AppliedTick > previousAppliedTick) {
+                        negotiatedPostAckSnapshotGeneration = transportGenerationForRecord;
+                        negotiatedPostAckSnapshotAppliedTick = result.AppliedTick;
+                    }
+                    // Every validated ACK is followed by durable snapshot publication.
+                    // Keep the next clock sample behind that response boundary.
+                    negotiatedPostAckSnapshotObservedMs = now;
+                }
                 if (pending.Remove(result.ClientSequence, out var removedCommand)
                     && removedCommand is not null) {
                     trackedPendingCommand = true;
@@ -1161,6 +1383,7 @@ public sealed class AuthoritativeClient : IAsyncDisposable
         ulong RequestId,
         long Epoch,
         bool RequiresCalibration,
+        bool UsesClockOnlyProbe,
         long SentAtMs,
         long ExpiresAtMs,
         long SentStopwatchTimestamp);

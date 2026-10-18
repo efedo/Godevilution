@@ -15,8 +15,10 @@ namespace Devilution.Server.Tests;
 /** Proves retained response capacity and queued projection cancellation at real writes. */
 public sealed class ClockGatedPipelineBackpressureTests
 {
-    [Fact]
-    public async Task RetainedResponseWeightSurvivesActualStalledAckWrite()
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task RetainedResponseWeightRejectsSnapshotOrClockProbeAtStalledAckWrite(bool clockOnlyProbe)
     {
         ulong physicalTick = 100;
         var executor = new RecordingExecutor();
@@ -52,11 +54,15 @@ public sealed class ClockGatedPipelineBackpressureTests
                 server,
                 cancellationToken,
                 "backpressure-probe");
-            await EnvelopeCodec.WriteAsync(probe.Stream, new Envelope {
-                SnapshotRequest = new Envelope.Types.SnapshotRequest {
-                    TimingRequestId = 77,
-                },
-            }, cancellationToken);
+            if (clockOnlyProbe) {
+                await SendClockProbeAsync(probe.Stream, 77, cancellationToken);
+            } else {
+                await EnvelopeCodec.WriteAsync(probe.Stream, new Envelope {
+                    SnapshotRequest = new Envelope.Types.SnapshotRequest {
+                        TimingRequestId = 77,
+                    },
+                }, cancellationToken);
+            }
             var probeResponse = await ReadAsync(probe.Stream, cancellationToken)
                 .WaitAsync(TimeSpan.FromSeconds(1), cancellationToken);
             Assert.Equal(Envelope.PayloadOneofCase.Error, probeResponse!.PayloadCase);
@@ -109,7 +115,7 @@ public sealed class ClockGatedPipelineBackpressureTests
             admissions,
             decorator,
             snapshotProvider,
-            maximumPendingCommands: 3,
+            maximumPendingCommands: 4,
             clientFailureObserver: failure => clientFailure.TrySetResult(failure));
         Exception? primaryFailure = null;
         try {
@@ -134,6 +140,8 @@ public sealed class ClockGatedPipelineBackpressureTests
             // Seeing frame 42 means the reader completed frame 41 and
             // returned to ingress, so frame 41 has already been enqueued.
             await decorator.OwnerReads.WaitForSnapshotAsync(42, cancellationToken);
+            await SendClockProbeAsync(owner.Stream, 43, cancellationToken);
+            await decorator.OwnerReads.WaitForClockProbeAsync(43, cancellationToken);
 
             owner.ResetWithRst();
             var transportFailure = await clientFailure.Task.WaitAsync(cancellationToken);
@@ -223,6 +231,11 @@ public sealed class ClockGatedPipelineBackpressureTests
         CancellationToken cancellationToken)
         => EnvelopeCodec.WriteAsync(stream, new Envelope {
             CommandBatch = new CommandBatch { Commands = { command } },
+        }, cancellationToken);
+
+    private static ValueTask SendClockProbeAsync(Stream stream, ulong requestId, CancellationToken cancellationToken)
+        => EnvelopeCodec.WriteAsync(stream, new Envelope {
+            ClockProbeRequest = new ClockProbeRequest { RequestId = requestId },
         }, cancellationToken);
 
     private static ValueTask SendSnapshotRequestAsync(
@@ -391,6 +404,7 @@ public sealed class ClockGatedPipelineBackpressureTests
         private readonly object synchronization = new();
         private readonly List<byte> pending = [];
         private readonly ConcurrentDictionary<ulong, TaskCompletionSource<bool>> snapshots = [];
+        private readonly ConcurrentDictionary<ulong, TaskCompletionSource<bool>> clockProbes = [];
         private readonly TaskCompletionSource<bool> commandAck = new(
             TaskCreationOptions.RunContinuationsAsynchronously);
 
@@ -404,6 +418,13 @@ public sealed class ClockGatedPipelineBackpressureTests
             CancellationToken cancellationToken)
             => snapshots.GetOrAdd(
                     timingRequestId,
+                    static _ => new TaskCompletionSource<bool>(
+                        TaskCreationOptions.RunContinuationsAsynchronously))
+                .Task
+                .WaitAsync(cancellationToken);
+
+        public Task WaitForClockProbeAsync(ulong requestId, CancellationToken cancellationToken)
+            => clockProbes.GetOrAdd(requestId,
                     static _ => new TaskCompletionSource<bool>(
                         TaskCreationOptions.RunContinuationsAsynchronously))
                 .Task
@@ -425,6 +446,12 @@ public sealed class ClockGatedPipelineBackpressureTests
                     if (envelope.PayloadCase == Envelope.PayloadOneofCase.SnapshotRequest)
                         snapshots.GetOrAdd(
                                 envelope.SnapshotRequest.TimingRequestId,
+                                static _ => new TaskCompletionSource<bool>(
+                                    TaskCreationOptions.RunContinuationsAsynchronously))
+                            .TrySetResult(true);
+                    else if (envelope.PayloadCase == Envelope.PayloadOneofCase.ClockProbeRequest)
+                        clockProbes.GetOrAdd(
+                                envelope.ClockProbeRequest.RequestId,
                                 static _ => new TaskCompletionSource<bool>(
                                     TaskCreationOptions.RunContinuationsAsynchronously))
                             .TrySetResult(true);

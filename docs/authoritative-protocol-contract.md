@@ -82,6 +82,31 @@ deduplicates by session and client sequence. Clients retain unresolved commands
 and retry after an adaptive acknowledgement deadline. A duplicate returns the
 original receipt and applied tick without mutating state twice.
 
+Clock calibration may correlate a `SnapshotRequest` with a nonzero timing
+request ID. Its `TimingReply` follows successful event and snapshot validation,
+publication, and response writes; a failed snapshot boundary sends no reply.
+When `ServerHello.supports_clock_only_probes` is true, a client may instead send
+`ClockProbeRequest`. Its correlated `TimingReply` follows clocked transport and
+session health checks only; it does not advance or publish state and does not
+indicate snapshot freshness. Clients keep ordinary snapshot polling separate,
+and use authoritative snapshots—not clock replies—to observe simulation ticks.
+Clock-only clients wait for outstanding full responses before probing, with a
+bounded two-second fallback for missing responses. Ordinary polls remain
+independent of an outstanding clock probe. Peers that do not negotiate
+clock-only probes retain the correlated snapshot request behavior.
+
+Negotiated realtime input also waits for an outstanding full response before
+its first dispatch, with the same two-second fallback. The queued command stays
+unfrozen during this wait and calculates its requested tick at dispatch. Explicit
+requested ticks and already transmitted retry identities retain their behavior.
+
+Negotiated `ClockProbeRequest` replies also carry the optional
+`server_scheduling_clock_tick`, sampled from the server's scheduling clock.
+The client uses its presence (including a valid value of zero) only to anchor
+command-clock estimation; it does not update model state, snapshot freshness,
+or authoritative simulation time. Correlated `SnapshotRequest` replies omit
+this field and retain their existing snapshot-boundary behavior.
+
 Acknowledgements are authoritative for accepted, rescheduled, rejected, and
 duplicate outcomes. Commands express intent only: clients never supply the
 resulting gold, health, damage, inventory placement, quest state, or world

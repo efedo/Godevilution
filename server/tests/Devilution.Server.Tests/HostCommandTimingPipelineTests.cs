@@ -154,6 +154,100 @@ public sealed class HostCommandTimingPipelineTests
         Assert.Equal(120UL, command.AppliedTick);
     }
 
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task ClockOnlyProbeCapabilityAndWorkAreLimitedToClockGatedSessions(bool clockGated)
+    {
+        var executor = new TimingExecutor();
+        var commandServer = new AuthoritativeCommandServer(executor);
+        await using var server = new AuthoritativeTcpServer(
+            commandServer,
+            Handshake,
+            () => 123,
+            snapshotProvider: executor) {
+            UseClockGatedCommandScheduling = clockGated,
+        };
+        server.Start();
+        using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+        using var client = new TcpClient();
+        await client.ConnectAsync(IPAddress.Loopback, server.Port, timeout.Token);
+        await using var stream = client.GetStream();
+        await SendHelloAsync(stream, timeout.Token, supportsClockGatedCommands: clockGated);
+        var serverHello = await ReadHandshakeAsync(stream, timeout.Token);
+        Assert.Equal(clockGated, serverHello.SupportsClockOnlyProbes);
+        if (!clockGated)
+            return;
+
+        var snapshotsBefore = executor.SnapshotCount;
+        var tickBefore = commandServer.CurrentTick;
+        await SendClockProbeAsync(stream, 71, timeout.Token);
+        var reply = (await EnvelopeCodec.ReadAsync(stream, timeout.Token))!;
+        Assert.Equal(Envelope.PayloadOneofCase.TimingReply, reply.PayloadCase);
+        Assert.Equal(71UL, reply.TimingReply.RequestId);
+        await Task.Delay(TimeSpan.FromMilliseconds(40), timeout.Token);
+        Assert.Equal(snapshotsBefore, executor.SnapshotCount);
+        Assert.Equal(tickBefore, commandServer.CurrentTick);
+        Assert.Empty(executor.AppliedTicks);
+        Assert.False(stream.DataAvailable);
+    }
+
+    [Fact]
+    public async Task ClockOnlyProbeRemainsFifoAfterQueuedCommandResponse()
+    {
+        ulong physicalTick = 100;
+        var executor = new TimingExecutor();
+        var recorder = new HostCommandTimingRecorder();
+        var drains = new ConcurrentQueue<HostCommandTimingDrain>();
+        var commandServer = new AuthoritativeCommandServer(executor);
+        await using var server = new AuthoritativeTcpServer(
+            commandServer,
+            Handshake,
+            () => Volatile.Read(ref physicalTick),
+            snapshotProvider: executor) {
+            CommandTimingRecorder = recorder,
+            CommandTimingDrainObserver = drains.Enqueue,
+            UseClockGatedCommandScheduling = true,
+        };
+        server.Start();
+        using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+        using var client = new TcpClient();
+        await client.ConnectAsync(IPAddress.Loopback, server.Port, timeout.Token);
+        await using var stream = client.GetStream();
+        await SendHelloAsync(stream, timeout.Token, supportsClockGatedCommands: true);
+        _ = await ReadHandshakeAsync(stream, timeout.Token);
+
+        await EnvelopeCodec.WriteAsync(stream, new Envelope {
+            CommandBatch = new CommandBatch { Commands = { new Command {
+                ClientSequence = 1,
+                RequestedTick = 120,
+                AttackRequested = new AttackRequested { TargetEntityId = 1 },
+            } } },
+        }, timeout.Token);
+        await WaitUntilAsync(
+            () => drains.SelectMany(drain => drain.Records)
+                .Any(record => record.Kind == "command-admission" && record.ClientSequence == 1),
+            timeout.Token);
+        await SendClockProbeAsync(stream, 72, timeout.Token);
+        var replyTask = EnvelopeCodec.ReadAsync(stream, timeout.Token).AsTask();
+        await Task.Delay(TimeSpan.FromMilliseconds(40), timeout.Token);
+        Assert.False(replyTask.IsCompleted);
+        Assert.Empty(executor.AppliedTicks);
+
+        Volatile.Write(ref physicalTick, 120);
+        var acknowledgement = (await replyTask.WaitAsync(timeout.Token))!;
+        Assert.Equal(Envelope.PayloadOneofCase.CommandAck, acknowledgement.PayloadCase);
+        Assert.Equal(CommandStatus.Accepted, acknowledgement.CommandAck.Results.Single().Status);
+        Assert.Equal(Envelope.PayloadOneofCase.Snapshot,
+            (await EnvelopeCodec.ReadAsync(stream, timeout.Token))!.PayloadCase);
+        var reply = (await EnvelopeCodec.ReadAsync(stream, timeout.Token))!;
+        Assert.Equal(Envelope.PayloadOneofCase.TimingReply, reply.PayloadCase);
+        Assert.Equal(72UL, reply.TimingReply.RequestId);
+        Assert.Equal([120UL], executor.AppliedTicks.ToArray());
+        Assert.Equal(2, executor.SnapshotCount);
+        Assert.False(stream.DataAvailable);
+    }
+
     [Fact]
     public async Task SnapshotAndTimingProbeRecordsCorrelateOutsideAuthorityLock()
     {
@@ -245,17 +339,25 @@ public sealed class HostCommandTimingPipelineTests
         }, cancellationToken);
     }
 
-    private static async Task ReadHandshakeAsync(
+    private static async Task<ServerHello> ReadHandshakeAsync(
         NetworkStream stream,
         CancellationToken cancellationToken)
     {
-        Assert.Equal(
-            Envelope.PayloadOneofCase.ServerHello,
-            (await EnvelopeCodec.ReadAsync(stream, cancellationToken))!.PayloadCase);
+        var hello = (await EnvelopeCodec.ReadAsync(stream, cancellationToken))!;
+        Assert.Equal(Envelope.PayloadOneofCase.ServerHello, hello.PayloadCase);
         Assert.Equal(
             Envelope.PayloadOneofCase.Snapshot,
             (await EnvelopeCodec.ReadAsync(stream, cancellationToken))!.PayloadCase);
+        return hello.ServerHello;
     }
+
+    private static ValueTask SendClockProbeAsync(
+        NetworkStream stream,
+        ulong requestId,
+        CancellationToken cancellationToken)
+        => EnvelopeCodec.WriteAsync(stream, new Envelope {
+            ClockProbeRequest = new ClockProbeRequest { RequestId = requestId },
+        }, cancellationToken);
 
     private static async Task<CommandResult> SendCommandAsync(
         NetworkStream stream,
@@ -285,7 +387,11 @@ public sealed class HostCommandTimingPipelineTests
 
     private sealed class TimingExecutor : IAuthoritativeCommandExecutor, IAuthoritativeSnapshotProvider
     {
+        private int snapshotCount;
+
         public ConcurrentQueue<ulong> AppliedTicks { get; } = [];
+
+        public int SnapshotCount => Volatile.Read(ref snapshotCount);
 
         public CommandExecutionResult Execute(string sessionId, Command command, ulong appliedTick)
         {
@@ -294,9 +400,12 @@ public sealed class HostCommandTimingPipelineTests
         }
 
         public Snapshot CreateSnapshot(string sessionId, uint entityId, ulong tick)
-            => new() {
+        {
+            Interlocked.Increment(ref snapshotCount);
+            return new() {
                 Tick = tick,
                 Players = { new PlayerSnapshot { EntityId = entityId } },
             };
+        }
     }
 }

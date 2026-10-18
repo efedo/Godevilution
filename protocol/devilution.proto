@@ -16,6 +16,7 @@ message Envelope {
 		EventBatch event_batch = 31;
 		SnapshotRequest snapshot_request = 32;
 		TimingReply timing_reply = 33;
+		ClockProbeRequest clock_probe_request = 34;
 		ProtocolError error = 40;
 	}
 
@@ -27,9 +28,19 @@ message Envelope {
 	}
 }
 
-// Sent after the correlated snapshot, measuring end-to-end state freshness
-// without including deliberately scheduled future-command acknowledgement waits.
+// A correlated response to SnapshotRequest or ClockProbeRequest. For a
+// SnapshotRequest it follows the validated/published snapshot boundary; for a
+// ClockProbeRequest it confirms clocked transport/session health only and does
+// not indicate snapshot freshness.
 message TimingReply {
+	uint64 request_id = 1;
+	// Present only for negotiated ClockProbeRequest replies. This is the
+	// server scheduling clock, not a published gameplay snapshot tick.
+	optional uint64 server_scheduling_clock_tick = 2;
+}
+
+// Requests a clock-only reply without requesting an authoritative snapshot.
+message ClockProbeRequest {
 	uint64 request_id = 1;
 }
 
@@ -63,6 +74,8 @@ message ServerHello {
 	// queued intents themselves are not durable across host restart.
 	optional uint64 last_client_sequence = 8;
 	CommandSchedulingMode command_scheduling_mode = 9;
+	// A negotiated clock-only probe does not perform snapshot publication work.
+	bool supports_clock_only_probes = 10;
 }
 
 enum CommandSchedulingMode {

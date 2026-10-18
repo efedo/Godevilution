@@ -2,6 +2,12 @@
 
 Notable changes to this fork are recorded below.
 
+- 2026-10-17: Add negotiated clock-only probes with physical scheduling samples,
+  keeping gameplay snapshots separate from command-clock calibration. Retain
+  legacy peers, admission rules, response ordering and publication failure fences.
+  Keep new realtime input unfrozen behind its pending full response, then compute
+  its dispatch tick freshly; retries preserve their original identity.
+
 - 2026-10-16: Integrate an explicit native Town/L1/L2 first-entry route with
   lazy per-floor native owners and opt-in cohort v9 mutation retention, preserving
   older saves. Headless L1 earned gear/Gold/Pepin supplies, actual L2 bow combat,

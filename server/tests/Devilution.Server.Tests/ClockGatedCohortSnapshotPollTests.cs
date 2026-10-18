@@ -53,6 +53,7 @@ public sealed class ClockGatedCohortSnapshotPollTests
             var timingEnvelope = await ReadRequiredEnvelopeAsync(stream, timeout.Token);
             Assert.Equal(Envelope.PayloadOneofCase.TimingReply, timingEnvelope.PayloadCase);
             Assert.Equal(17UL, timingEnvelope.TimingReply.RequestId);
+            Assert.False(timingEnvelope.TimingReply.HasServerSchedulingClockTick);
 
             var snapshot = snapshotEnvelope.Snapshot;
             var after = store.Load()!;
@@ -97,6 +98,7 @@ public sealed class ClockGatedCohortSnapshotPollTests
 
             Assert.Equal(Envelope.PayloadOneofCase.TimingReply, response.PayloadCase);
             Assert.Equal(23UL, response.TimingReply.RequestId);
+            Assert.False(response.TimingReply.HasServerSchedulingClockTick);
             var after = store.Load()!;
             Assert.Equal(before.Generation + 1, after.Generation);
             Assert.Equal(capturesBefore + 1, adapter.CaptureCount);
@@ -104,6 +106,49 @@ public sealed class ClockGatedCohortSnapshotPollTests
             Assert.Equal(adapter.SerializeCurrentState(), after.SerializedModuleState);
             Assert.Equal(0, adapter.EventDrainCount);
             Assert.Equal(0, adapter.SnapshotCount);
+        } finally {
+            await DisposeServerAsync(server, expectedFailure: null);
+            DeleteRoot(root);
+        }
+    }
+
+    [Fact]
+    public async Task ClockOnlyProbeReturnsSchedulingClockSampleWithoutAdvancingOrPublishing()
+    {
+        var root = NewRoot();
+        var adapter = new SnapshotPollAdapter();
+        var clock = new FixedClock(FixedTick);
+        var store = new AuthoritativeCohortStore(root);
+        var server = CreateServer(adapter, clock, store);
+        try {
+            server.Start();
+            using var timeout = CreateTimeout();
+            using var client = new TcpClient();
+            await client.ConnectAsync(IPAddress.Loopback, server.Port, timeout.Token);
+            await using var stream = client.GetStream();
+            await ReadHandshakeAsync(stream, hasSnapshot: true, timeout.Token);
+
+            var before = store.Load()!;
+            var stateBefore = adapter.SerializeCurrentState();
+            var capturesBefore = adapter.CaptureCount;
+            var eventsBefore = adapter.EventDrainCount;
+            var snapshotsBefore = adapter.SnapshotCount;
+            await SendClockProbeAsync(stream, requestId: 37, timeout.Token);
+            var response = await ReadRequiredEnvelopeAsync(stream, timeout.Token);
+
+            Assert.Equal(Envelope.PayloadOneofCase.TimingReply, response.PayloadCase);
+            Assert.Equal(37UL, response.TimingReply.RequestId);
+            Assert.True(response.TimingReply.HasServerSchedulingClockTick);
+            Assert.Equal(FixedTick, response.TimingReply.ServerSchedulingClockTick);
+
+            var after = store.Load()!;
+            Assert.Equal(before.Generation, after.Generation);
+            Assert.Equal(before.Tick, after.Tick);
+            Assert.Equal(before.SerializedModuleState, after.SerializedModuleState);
+            Assert.Equal(stateBefore, adapter.SerializeCurrentState());
+            Assert.Equal(capturesBefore, adapter.CaptureCount);
+            Assert.Equal(eventsBefore, adapter.EventDrainCount);
+            Assert.Equal(snapshotsBefore, adapter.SnapshotCount);
         } finally {
             await DisposeServerAsync(server, expectedFailure: null);
             DeleteRoot(root);
@@ -232,6 +277,82 @@ public sealed class ClockGatedCohortSnapshotPollTests
         }
     }
 
+    [Fact]
+    public async Task ClockOnlyProbeWaitsForInFlightPublicationAndDoesNotReplyAfterFence()
+    {
+        var root = NewRoot();
+        var adapter = new SnapshotPollAdapter();
+        var clock = new FixedClock(FixedTick);
+        var store = new AuthoritativeCohortStore(root);
+        var probeRead = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+        var observeProbeRead = 0;
+        var server = CreateServer(
+            adapter,
+            clock,
+            store,
+            clockGatedTransportDecorator: stream => new ReadSignalStream(
+                stream,
+                () => Volatile.Read(ref observeProbeRead) != 0,
+                () => probeRead.TrySetResult(true)));
+        using var publicationEntered = new ManualResetEventSlim();
+        using var releasePublication = new ManualResetEventSlim();
+        var publicationFailure = new IOException("Injected clock-only probe barrier publication failure.");
+        try {
+            server.Start();
+            using var timeout = CreateTimeout();
+            using var publisherClient = new TcpClient();
+            await publisherClient.ConnectAsync(IPAddress.Loopback, server.Port, timeout.Token);
+            await using var publisherStream = publisherClient.GetStream();
+            await ReadHandshakeAsync(publisherStream, true, timeout.Token, "clock-probe-publisher");
+
+            using var probeClient = new TcpClient();
+            await probeClient.ConnectAsync(IPAddress.Loopback, server.Port, timeout.Token);
+            await using var probeStream = probeClient.GetStream();
+            await ReadHandshakeAsync(probeStream, true, timeout.Token, "clock-probe-requester");
+
+            var before = store.Load()!;
+            store.PublicationObserver = (phase, _) => {
+                if (phase != AuthoritativePublicationPhase.BeforeStageWrite)
+                    return;
+                publicationEntered.Set();
+                if (!releasePublication.Wait(TimeSpan.FromSeconds(5)))
+                    throw new TimeoutException("The test did not release the clock-only probe barrier.");
+                throw publicationFailure;
+            };
+
+            // Publish from another participant so the clock-only response itself reaches
+            // its authority-lock barrier while a real write is already in flight.
+            await SendCommandAsync(publisherStream, timeout.Token);
+            await Task.Run(() => publicationEntered.Wait(timeout.Token), timeout.Token);
+            Volatile.Write(ref observeProbeRead, 1);
+            await SendClockProbeAsync(probeStream, requestId: 42, timeout.Token);
+            await probeRead.Task.WaitAsync(timeout.Token);
+            var probeReplyTask = EnvelopeCodec.ReadAsync(probeStream, timeout.Token).AsTask();
+            await Task.Delay(TimeSpan.FromMilliseconds(40), timeout.Token);
+            Assert.False(probeReplyTask.IsCompleted);
+            releasePublication.Set();
+
+            try {
+                var probeResponse = await probeReplyTask.WaitAsync(TimeSpan.FromSeconds(5), timeout.Token);
+                Assert.Null(probeResponse);
+            } catch (Exception exception) when (
+                exception is IOException or SocketException or ObjectDisposedException) {
+                // The host fences and closes the lane after authoritative failure.
+            }
+            var hostFailure = await Record.ExceptionAsync(async () =>
+                await server.Completion.WaitAsync(timeout.Token));
+            Assert.Same(publicationFailure, hostFailure);
+            Assert.Same(publicationFailure, server.LastClientFailure);
+            var after = store.Load()!;
+            Assert.Equal(before.Generation, after.Generation);
+            Assert.Equal(before.SerializedModuleState, after.SerializedModuleState);
+        } finally {
+            releasePublication.Set();
+            await DisposeServerAsync(server, server.LastClientFailure);
+            DeleteRoot(root);
+        }
+    }
+
     [Theory]
     [InlineData(PollFailure.InvalidEventBatch)]
     [InlineData(PollFailure.InvalidSnapshot)]
@@ -296,7 +417,8 @@ public sealed class ClockGatedCohortSnapshotPollTests
         SnapshotPollAdapter adapter,
         FixedClock clock,
         AuthoritativeCohortStore store,
-        bool includeProjectionProviders = true)
+        bool includeProjectionProviders = true,
+        Func<Stream, Stream>? clockGatedTransportDecorator = null)
     {
         var handshake = new ProtocolHandshake(new ProtocolServerIdentity(
             "cohort-poll-tests",
@@ -317,6 +439,7 @@ public sealed class ClockGatedCohortSnapshotPollTests
                 address: IPAddress.Loopback) {
                 CohortStore = store,
                 UseClockGatedCommandScheduling = true,
+                ClockGatedTransportDecorator = clockGatedTransportDecorator,
             }
             : new AuthoritativeTcpServer(
                 commandServer,
@@ -330,13 +453,15 @@ public sealed class ClockGatedCohortSnapshotPollTests
                 participantInitializer: adapter) {
                 CohortStore = store,
                 UseClockGatedCommandScheduling = true,
+                ClockGatedTransportDecorator = clockGatedTransportDecorator,
             };
     }
 
     private static async Task ReadHandshakeAsync(
         Stream stream,
         bool hasSnapshot,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        string resumeToken = "cohort-poll-session")
     {
         await EnvelopeCodec.WriteAsync(stream, new Envelope {
             ClientHello = new ClientHello {
@@ -344,13 +469,14 @@ public sealed class ClockGatedCohortSnapshotPollTests
                 ProtocolSchemaVersion = "0.1.0",
                 ContentManifestHash = ContentHash,
                 RulesetIdentityHash = RulesetHash,
-                ResumeToken = "cohort-poll-session",
+                ResumeToken = resumeToken,
                 RequestedCharacterName = "PollTester",
                 SupportsClockGatedCommands = true,
             },
         }, cancellationToken);
         var hello = await ReadRequiredEnvelopeAsync(stream, cancellationToken);
         Assert.Equal(Envelope.PayloadOneofCase.ServerHello, hello.PayloadCase);
+        Assert.True(hello.ServerHello.SupportsClockOnlyProbes);
         if (hasSnapshot) {
             var snapshot = await ReadRequiredEnvelopeAsync(stream, cancellationToken);
             Assert.Equal(Envelope.PayloadOneofCase.Snapshot, snapshot.PayloadCase);
@@ -366,6 +492,14 @@ public sealed class ClockGatedCohortSnapshotPollTests
             SnapshotRequest = new Envelope.Types.SnapshotRequest {
                 TimingRequestId = timingRequestId,
             },
+        }, cancellationToken);
+
+    private static ValueTask SendClockProbeAsync(
+        Stream stream,
+        ulong requestId,
+        CancellationToken cancellationToken)
+        => EnvelopeCodec.WriteAsync(stream, new Envelope {
+            ClockProbeRequest = new ClockProbeRequest { RequestId = requestId },
         }, cancellationToken);
 
     private static ValueTask SendCommandAsync(Stream stream, CancellationToken cancellationToken)
@@ -439,6 +573,80 @@ public sealed class ClockGatedCohortSnapshotPollTests
         Publication,
     }
 
+    private sealed class ReadSignalStream(
+        Stream inner,
+        Func<bool> isArmed,
+        Action onRead) : Stream
+    {
+        public override bool CanRead => inner.CanRead;
+        public override bool CanSeek => inner.CanSeek;
+        public override bool CanWrite => inner.CanWrite;
+        public override long Length => inner.Length;
+        public override long Position { get => inner.Position; set => inner.Position = value; }
+
+        public override void Flush() => inner.Flush();
+
+        public override int Read(byte[] buffer, int offset, int count)
+        {
+            var read = inner.Read(buffer, offset, count);
+            Observe(read);
+            return read;
+        }
+
+        public override int Read(Span<byte> buffer)
+        {
+            var read = inner.Read(buffer);
+            Observe(read);
+            return read;
+        }
+
+        public override async ValueTask<int> ReadAsync(
+            Memory<byte> buffer,
+            CancellationToken cancellationToken = default)
+        {
+            var read = await inner.ReadAsync(buffer, cancellationToken);
+            Observe(read);
+            return read;
+        }
+
+        public override async Task<int> ReadAsync(
+            byte[] buffer,
+            int offset,
+            int count,
+            CancellationToken cancellationToken)
+        {
+            var read = await inner.ReadAsync(buffer, offset, count, cancellationToken);
+            Observe(read);
+            return read;
+        }
+
+        public override long Seek(long offset, SeekOrigin origin) => inner.Seek(offset, origin);
+        public override void SetLength(long value) => inner.SetLength(value);
+        public override void Write(byte[] buffer, int offset, int count) => inner.Write(buffer, offset, count);
+        public override ValueTask WriteAsync(
+            ReadOnlyMemory<byte> buffer,
+            CancellationToken cancellationToken = default)
+            => inner.WriteAsync(buffer, cancellationToken);
+        public override Task WriteAsync(
+            byte[] buffer,
+            int offset,
+            int count,
+            CancellationToken cancellationToken)
+            => inner.WriteAsync(buffer, offset, count, cancellationToken);
+
+        protected override void Dispose(bool disposing)
+        {
+            if (disposing)
+                inner.Dispose();
+            base.Dispose(disposing);
+        }
+
+        private void Observe(int read)
+        {
+            if (read > 0 && isArmed())
+                onRead();
+        }
+    }
     private sealed class FixedClock(ulong tick) : IAuthoritativeClock
     {
         public ulong CurrentTick => tick;
