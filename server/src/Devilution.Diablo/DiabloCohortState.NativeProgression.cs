@@ -52,12 +52,15 @@ public sealed partial record DiabloCohortState
             var moving = player.CurrentAction?.Kind == DiabloPlayerActionKind.Move
                 && (player.CombatMode is DiabloPlayerCombatMode.WalkNorthwards
                     or DiabloPlayerCombatMode.WalkSouthwards or DiabloPlayerCombatMode.WalkSideways);
+            var rangedBeforeReady = player.CurrentAction is { Kind: DiabloPlayerActionKind.Attack } rangedAction
+                && player.CombatMode == DiabloPlayerCombatMode.RangedAttack
+                && rangedAction.ReadyTick > Tick;
             var recovery = player.CurrentAction is null
                 && (player.CombatMode is DiabloPlayerCombatMode.Block or DiabloPlayerCombatMode.GotHit)
                 && player.CombatModeEndTick > Tick;
             if (pending.LevelId != player.LevelId || !ownedLevels.Contains(pending.LevelId)
                 || player.Life <= 0 || player.NativeWalkPath is not null
-                || !(moving || recovery)
+                || !(moving || rangedBeforeReady || recovery)
                 || (pending.TargetCell
                     ? pending.TargetEntityId != 0 || pending.TargetX is < 0 or > byte.MaxValue
                         || pending.TargetY is < 0 or > byte.MaxValue

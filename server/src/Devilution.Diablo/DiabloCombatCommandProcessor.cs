@@ -349,7 +349,11 @@ public sealed partial class DiabloCombatCommandProcessor
         if (queueDuringMove) {
             if (!useNativePlayerActionTiming || !world.SupportsNativeTargetCellPathing)
                 return DiabloCombatIntentResult.Rejected(DiabloRuleFailure.NotAllowed);
-            if (player.CurrentAction?.Kind == DiabloPlayerActionKind.Move)
+            if (player.CurrentAction?.Kind == DiabloPlayerActionKind.Move
+                || player.CurrentAction is { Kind: DiabloPlayerActionKind.Attack } rangedAction
+                    && player.CombatMode == DiabloPlayerCombatMode.RangedAttack
+                    && appliedTick >= rangedAction.StartedAtTick
+                    && appliedTick < rangedAction.ReadyTick)
                 return QueueNativeRangedAttack(player, intent, players);
         }
 

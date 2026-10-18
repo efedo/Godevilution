@@ -123,6 +123,56 @@ public sealed partial class AuthoritativeCathedralNativePopulationIntegrationTes
         Assert.Equal(recoveryCellTarget,
             codec.Deserialize(recoveryBytes).Participants.Single().Player.NativeQueuedRangedAttack);
 
+        var rangedPendingTarget = new DiabloNativeQueuedRangedAttackState(
+            0, 0, pepin.PositionX, pepin.PositionY, true);
+        var rangedPending = decoded with {
+            Tick = 2,
+            Participants = [decoded.Participants.Single() with {
+                Player = decoded.Participants.Single().Player with {
+                    CurrentAction = new AuthoritativePlayerActionState(
+                        DiabloPlayerActionKind.Attack, 1, 3, 4, 8) {
+                        TargetCell = true,
+                        TargetX = pepin.PositionX,
+                        TargetY = pepin.PositionY,
+                    },
+                    CombatMode = DiabloPlayerCombatMode.RangedAttack,
+                    CombatModeEndTick = 8,
+                    NativeQueuedRangedAttack = rangedPendingTarget,
+                },
+            }],
+        };
+        var rangedPendingBytes = codec.Serialize(rangedPending);
+        var rangedPendingRoundTrip = codec.Deserialize(rangedPendingBytes);
+        Assert.Equal(rangedPendingTarget,
+            rangedPendingRoundTrip.Participants.Single().Player.NativeQueuedRangedAttack);
+        Assert.Equal(rangedPending.Participants.Single().Player.CurrentAction,
+            rangedPendingRoundTrip.Participants.Single().Player.CurrentAction);
+        Assert.Equal(rangedPendingBytes, codec.Serialize(rangedPendingRoundTrip));
+
+        var readyWithPending = rangedPending with {
+            Tick = 4,
+            Participants = [rangedPending.Participants.Single() with {
+                Player = rangedPending.Participants.Single().Player with {
+                    CurrentAction = rangedPending.Participants.Single().Player.CurrentAction! with {
+                        EffectApplied = true,
+                    },
+                },
+            }],
+        };
+        Assert.Throws<InvalidDataException>(() => codec.Serialize(readyWithPending));
+
+        var legacyRangedPending = legacy with {
+            Participants = [legacy.Participants.Single() with {
+                Player = legacy.Participants.Single().Player with {
+                    CurrentAction = rangedPending.Participants.Single().Player.CurrentAction,
+                    CombatMode = DiabloPlayerCombatMode.RangedAttack,
+                    CombatModeEndTick = 8,
+                    NativeQueuedRangedAttack = rangedPendingTarget,
+                },
+            }],
+        };
+        Assert.Throws<InvalidDataException>(() => codec.Serialize(legacyRangedPending));
+
         Assert.Throws<InvalidDataException>(() => codec.Serialize(decoded with {
             Participants = [decoded.Participants.Single() with {
                 Player = decoded.Participants.Single().Player with {

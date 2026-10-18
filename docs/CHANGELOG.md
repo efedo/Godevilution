@@ -2,6 +2,11 @@
 
 Notable changes to this fork are recorded below.
 
+- 2026-10-18: Buffer negotiated native-depth bow follow-ups during the current
+  shot and start them at the native repeat-ready frame. Preserve the original
+  arrow, latest valid target and exact fresh-host continuation, including
+  duplicate command receipts. Legacy input and absent save fields stay unchanged.
+
 - 2026-10-18: Encode complete cohort checkpoints once and reuse immutable
   presentation geometry while preserving canonical save/protocol bytes. Retain
   door, barrel-break and cold-restore invalidation; reduce live checkpoint and

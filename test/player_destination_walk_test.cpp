@@ -1,4 +1,5 @@
 #include <algorithm>
+#include <array>
 #include <filesystem>
 #include <iterator>
 #include <list>
@@ -19,6 +20,7 @@
 #include "utils/paths.h"
 
 namespace devilution {
+void TestPlayerCheckNewPath(Player &player);
 void TestPlayerProcessDestinationWalkTick(Player &player);
 bool TestPlayerProcessAttackCommand(Player &player, bool ranged);
 }
@@ -364,6 +366,93 @@ TEST_P(NativeDestinationRangedAttack, RogueBowUsesNativeCompletionFramesAndEffec
 	EXPECT_EQ(player._pmode, PM_STAND);
 	EXPECT_EQ(player.destAction, ACTION_NONE);
 	EXPECT_EQ(Missiles.size(), 1U);
+}
+
+TEST_F(NativeDestinationRangedWalk, BufferedRangedFollowupStartsAtReadyAndUsesNewAim)
+{
+	struct IasCase {
+		ItemSpecialEffect flags;
+		int readyRepeatSkip;
+	};
+	constexpr std::array<IasCase, 2> cases {{
+		{ ItemSpecialEffect::None, 0 },
+		{ ItemSpecialEffect::FastAttack, 1 },
+	}};
+
+	for (const IasCase &test : cases) {
+		SCOPED_TRACE(static_cast<uint32_t>(test.flags));
+		Missiles.clear();
+		Player &player = *MyPlayer;
+		player = {};
+		player._pClass = HeroClass::Rogue;
+		player._pgfxnum = static_cast<uint8_t>(PlayerWeaponGraphic::Bow);
+		player._pIFlags = test.flags;
+		player.setAnimations();
+		player._pWFrames = 8;
+		player.life = { 6400, 6400, 6400, 6400, 0 };
+		player.lightId = NO_LIGHT;
+		player.position.tile = { 75, 68 };
+		player.position.future = player.position.tile;
+		player.position.old = player.position.tile;
+		player.position.temp = player.position.tile;
+		player.direction = Direction::South;
+		player._pmode = PM_STAND;
+		player.clearPath();
+
+		const auto &rogue = GetPlayerAnimDataForClass(HeroClass::Rogue);
+		const WorldTilePosition firstAim { 80, 68 };
+		const WorldTilePosition queuedAim { 75, 60 };
+		ASSERT_EQ(player._pAFrames, rogue.bowFrames);
+		ASSERT_EQ(player._pAFNum, rogue.bowActionFrame);
+
+		player.destAction = ACTION_RATTACK;
+		player.destParam1 = firstAim.x;
+		player.destParam2 = firstAim.y;
+		TestPlayerCheckNewPath(player);
+		ASSERT_EQ(player._pmode, PM_RATTACK);
+		ASSERT_EQ(player.position.temp, firstAim);
+		ASSERT_EQ(player.destAction, ACTION_NONE);
+
+		// Native ranged input stores the next target before the current bow
+		// animation reaches its ready frame. The active shot keeps its first aim.
+		player.destAction = ACTION_RATTACK;
+		player.destParam1 = queuedAim.x;
+		player.destParam2 = queuedAim.y;
+		while (player.animInfo.currentFrame < player._pAFNum - 1) {
+			ASSERT_FALSE(TestPlayerProcessAttackCommand(player, true));
+			ASSERT_TRUE(Missiles.empty());
+			ASSERT_EQ(player.destAction, ACTION_RATTACK);
+			player.animInfo.processAnimation();
+		}
+		ASSERT_EQ(player.animInfo.currentFrame, player._pAFNum - 1);
+		ASSERT_FALSE(TestPlayerProcessAttackCommand(player, true));
+		ASSERT_EQ(Missiles.size(), 1U);
+		const int firstArrowDirection = Missiles.front()._miAnimFrame;
+		EXPECT_EQ(player.destAction, ACTION_RATTACK);
+		EXPECT_EQ(player.position.temp, firstAim);
+
+		player.animInfo.processAnimation();
+		ASSERT_EQ(player.animInfo.currentFrame, player._pAFNum);
+		ASSERT_FALSE(TestPlayerProcessAttackCommand(player, true));
+		EXPECT_EQ(Missiles.size(), 1U);
+		EXPECT_EQ(player._pmode, PM_RATTACK);
+		EXPECT_EQ(player.destAction, ACTION_NONE);
+		EXPECT_EQ(player.position.temp, queuedAim);
+		EXPECT_EQ(player.animInfo.currentFrame, test.readyRepeatSkip);
+
+		for (int guard = 0; Missiles.size() == 1 && guard < rogue.bowFrames + 2; ++guard) {
+			if (player.animInfo.currentFrame == player._pAFNum - 1) {
+				ASSERT_FALSE(TestPlayerProcessAttackCommand(player, true));
+				ASSERT_EQ(Missiles.size(), 2U);
+				break;
+			}
+			ASSERT_FALSE(TestPlayerProcessAttackCommand(player, true));
+			ASSERT_EQ(Missiles.size(), 1U);
+			player.animInfo.processAnimation();
+		}
+		ASSERT_EQ(Missiles.size(), 2U);
+		EXPECT_NE(Missiles.back()._miAnimFrame, firstArrowDirection);
+	}
 }
 
 INSTANTIATE_TEST_SUITE_P(

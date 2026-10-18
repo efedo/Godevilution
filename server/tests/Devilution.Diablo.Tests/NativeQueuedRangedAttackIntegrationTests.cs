@@ -154,4 +154,194 @@ public sealed partial class AuthoritativeCathedralNativePopulationIntegrationTes
         Assert.Null(player.NativeQueuedRangedAttack);
         Assert.Same(replacementMove, player.CurrentAction);
     }
+
+    [Fact(Explicit = true)]
+    public void NativeDepthQueuedRangedFollowupColdStartsAtReadyFrame()
+    {
+        using var setup = CreateSarcophagusSetup(captureOptions: false, progressionSemantics: true);
+        Assert.NotNull(setup);
+        var activation = DiabloModule.Instance.CathedralNativeDepthProgressionContentBootstrap
+            .ActivateNativeDepthProgression(setup!.Fixture.Content, 0x13579BDF);
+        var simulation = activation.Simulation;
+        var world = simulation.WorldState;
+        var entry = world.World!.WarpTargets.Single(warp => warp.SourceLevelId == 0 && warp.TargetLevelId == 1);
+        var start = new[] { (X: 1, Y: 0), (X: 0, Y: 1), (X: -1, Y: 0), (X: 0, Y: -1) }
+            .Select(offset => (X: entry.TargetX + offset.X, Y: entry.TargetY + offset.Y))
+            .First(cell => world.IsWalkable(1, cell.X, cell.Y) && !world.IsOccupied(1, cell.X, cell.Y, []));
+        var rogue = activation.PlayerClasses.Definitions.Single(row => row.Symbol == "rogue");
+        const string session = "native-depth-ranged-followup-cold";
+        var runtime = simulation.CreateRuntime(activation.PlayerLoadouts.CreateTemplate(
+            session, rogue.ClassId, null, null, null, startingLevelId: 1,
+            startingPositionX: start.X, startingPositionY: start.Y));
+        runtime.Write(session, player => player.EntityId = 0x70000103);
+        runtime.AdvanceTo(1);
+        var player = runtime.Read(session, value => value);
+        var aimCells = new[] {
+            (X: 4, Y: 0), (X: 0, Y: 4), (X: -4, Y: 0), (X: 0, Y: -4),
+            (X: 3, Y: 2), (X: -3, Y: 2), (X: 3, Y: -2), (X: -3, Y: -2),
+        }
+            .Select(offset => (X: start.X + offset.X, Y: start.Y + offset.Y))
+            .Where(cell => world.ContainsPosition(1, cell.X, cell.Y))
+            .Distinct()
+            .Take(3)
+            .ToArray();
+        Assert.Equal(3, aimCells.Length);
+
+        Assert.True(simulation.Execute(player,
+            new DiabloAttackAtIntent(aimCells[0].X, aimCells[0].Y), 2, [player]).Succeeded);
+        var firstAction = Assert.IsType<AuthoritativePlayerActionState>(player.CurrentAction);
+        Assert.Equal(DiabloPlayerCombatMode.RangedAttack, player.CombatMode);
+        Assert.True(firstAction.ReadyTick > firstAction.StartedAtTick + 1);
+        var queuedTick = firstAction.StartedAtTick + 1;
+        Assert.False(simulation.Execute(player,
+            new DiabloAttackAtIntent(aimCells[0].X, aimCells[0].Y),
+            queuedTick,
+            [player]).Succeeded);
+        Assert.Same(firstAction, player.CurrentAction);
+        Assert.Null(player.NativeQueuedRangedAttack);
+        Assert.True(simulation.Execute(player,
+            new DiabloAttackAtIntent(aimCells[1].X, aimCells[1].Y) { QueueDuringMove = true },
+            queuedTick,
+            [player]).Succeeded);
+        Assert.Same(firstAction, player.CurrentAction);
+        Assert.False(firstAction.EffectApplied);
+        Assert.Equal(new DiabloNativeQueuedRangedAttackState(
+            1, 0, aimCells[1].X, aimCells[1].Y, true), player.NativeQueuedRangedAttack);
+
+        Assert.True(simulation.Execute(player,
+            new DiabloAttackAtIntent(aimCells[2].X, aimCells[2].Y) { QueueDuringMove = true },
+            queuedTick,
+            [player]).Succeeded);
+        var latestTarget = player.NativeQueuedRangedAttack;
+        Assert.Equal(new DiabloNativeQueuedRangedAttackState(
+            1, 0, aimCells[2].X, aimCells[2].Y, true), latestTarget);
+        Assert.False(simulation.Execute(player,
+            new DiabloAttackAtIntent(-1, -1) { QueueDuringMove = true },
+            queuedTick,
+            [player]).Succeeded);
+        Assert.Equal(latestTarget, player.NativeQueuedRangedAttack);
+        Assert.Same(firstAction, player.CurrentAction);
+
+        runtime.AdvanceTo(queuedTick);
+        Assert.Same(firstAction, player.CurrentAction);
+        Assert.False(firstAction.EffectApplied);
+        Assert.Equal(latestTarget, player.NativeQueuedRangedAttack);
+        var codec = new DiabloCohortCodec();
+        var checkpointBytes = codec.Serialize(simulation.CaptureCohortState(runtime));
+        var candidate = activation.CohortCandidateFactory!(codec.Deserialize(checkpointBytes));
+        var restoredRuntime = candidate.CreateRuntime();
+        Assert.Equal(checkpointBytes,
+            codec.Serialize(candidate.Simulation.CaptureCohortState(restoredRuntime)));
+        var restoredPlayer = restoredRuntime.Read(session, value => value);
+
+        for (var tick = queuedTick + 1; tick < firstAction.ReadyTick; tick++) {
+            runtime.AdvanceTo(tick);
+            restoredRuntime.AdvanceTo(tick);
+            Assert.Equal(codec.Serialize(simulation.CaptureCohortState(runtime)),
+                codec.Serialize(candidate.Simulation.CaptureCohortState(restoredRuntime)));
+        }
+        Assert.Same(firstAction, player.CurrentAction);
+        Assert.True(firstAction.EffectApplied);
+        Assert.Equal(latestTarget, player.NativeQueuedRangedAttack);
+        runtime.AdvanceTo(firstAction.ReadyTick);
+        restoredRuntime.AdvanceTo(firstAction.ReadyTick);
+        Assert.Equal(codec.Serialize(simulation.CaptureCohortState(runtime)),
+            codec.Serialize(candidate.Simulation.CaptureCohortState(restoredRuntime)));
+        Assert.Null(player.NativeQueuedRangedAttack);
+        Assert.Null(restoredPlayer.NativeQueuedRangedAttack);
+        var followup = Assert.IsType<AuthoritativePlayerActionState>(player.CurrentAction);
+        Assert.NotSame(firstAction, followup);
+        Assert.Equal(firstAction.ReadyTick, followup.StartedAtTick);
+        Assert.True(followup.TargetCell);
+        Assert.Equal((aimCells[2].X, aimCells[2].Y), (followup.TargetX, followup.TargetY));
+        var timing = activation.PlayerAnimations.GetRequired(rogue.ClassId)
+            .GetAttack(DiabloPlayerAttackAnimationProfile.Bow);
+        Assert.Equal((followup.StartedAtTick + (ulong)timing.ActionFrame - 1,
+                followup.StartedAtTick + (ulong)timing.ActionFrame,
+                followup.StartedAtTick + (ulong)timing.Frames - 1),
+            (followup.EffectTick, followup.ReadyTick, followup.EndTick));
+    }
+
+    [Fact(Explicit = true)]
+    public void NativeDepthQueuedRangedEntityFollowupUsesLiveAimAndDropsLostTarget()
+    {
+        using var setup = CreateSarcophagusSetup(captureOptions: false, progressionSemantics: true);
+        Assert.NotNull(setup);
+        var activation = DiabloModule.Instance.CathedralNativeDepthProgressionContentBootstrap
+            .ActivateNativeDepthProgression(setup!.Fixture.Content, 0x2468ACE0);
+        var simulation = activation.Simulation;
+        var world = simulation.WorldState;
+        var entry = world.World!.WarpTargets.Single(warp => warp.SourceLevelId == 0 && warp.TargetLevelId == 1);
+        var start = new[] { (X: 1, Y: 0), (X: 0, Y: 1), (X: -1, Y: 0), (X: 0, Y: -1) }
+            .Select(offset => (X: entry.TargetX + offset.X, Y: entry.TargetY + offset.Y))
+            .First(cell => world.IsWalkable(1, cell.X, cell.Y) && !world.IsOccupied(1, cell.X, cell.Y, []));
+        var rogue = activation.PlayerClasses.Definitions.Single(row => row.Symbol == "rogue");
+        var player = activation.PlayerLoadouts.CreateTemplate(
+            "native-depth-ranged-entity-followup", rogue.ClassId, null, null, null,
+            startingLevelId: 1, startingPositionX: start.X, startingPositionY: start.Y).CreatePlayer();
+        player.EntityId = 0x70000104;
+        simulation.AdvanceTick(1, [player]);
+        var target = world.CombatTargets.Values
+            .Where(candidate => candidate.LevelId == 1 && candidate.HitPoints > 1)
+            .OrderByDescending(candidate => candidate.HitPoints)
+            .First();
+        var firstAim = new[] { (X: 4, Y: 0), (X: 0, Y: 4), (X: -4, Y: 0), (X: 0, Y: -4) }
+            .Select(offset => (X: start.X + offset.X, Y: start.Y + offset.Y))
+            .Where(cell => world.ContainsPosition(1, cell.X, cell.Y))
+            .OrderBy(cell => (cell.X - start.X) * (target.FuturePositionX - start.X)
+                + (cell.Y - start.Y) * (target.FuturePositionY - start.Y))
+            .First();
+
+        Assert.True(simulation.Execute(player,
+            new DiabloAttackAtIntent(firstAim.X, firstAim.Y), 2, [player]).Succeeded);
+        var firstAction = Assert.IsType<AuthoritativePlayerActionState>(player.CurrentAction);
+        simulation.AdvanceTick(2, [player]);
+        var queuedTick = firstAction.StartedAtTick + 1;
+        Assert.True(queuedTick < firstAction.ReadyTick);
+        simulation.AdvanceTick(queuedTick, [player]);
+        Assert.True(simulation.Execute(player,
+            new DiabloAttackIntent(target.EntityId) { QueueDuringMove = true }, queuedTick, [player]).Succeeded);
+        var queued = new DiabloNativeQueuedRangedAttackState(1, target.EntityId, 0, 0, false);
+        Assert.Equal(queued, player.NativeQueuedRangedAttack);
+        Assert.Same(firstAction, player.CurrentAction);
+
+        var movedTargetPosition = Enumerable.Range(1, 8)
+            .Select(code => AuthoritativeNativePlayerPathfinder.GetDisplacement(code))
+            .Select(offset => (X: target.PositionX + offset.X, Y: target.PositionY + offset.Y))
+            .First(cell => world.ContainsPosition(1, cell.X, cell.Y)
+                && world.IsWalkable(1, cell.X, cell.Y)
+                && !world.IsOccupied(1, cell.X, cell.Y, [player]));
+        target.ApplyKnockback(movedTargetPosition.X, movedTargetPosition.Y);
+        for (var tick = queuedTick + 1; tick < firstAction.ReadyTick; tick++)
+            simulation.AdvanceTick(tick, [player]);
+        var expectedLiveAim = (target.FuturePositionX, target.FuturePositionY);
+        simulation.AdvanceTick(firstAction.ReadyTick, [player]);
+        Assert.Null(player.NativeQueuedRangedAttack);
+        var followup = Assert.IsType<AuthoritativePlayerActionState>(player.CurrentAction);
+        Assert.Equal(target.EntityId, followup.TargetEntityId);
+        Assert.False(followup.TargetCell);
+        Assert.Equal(expectedLiveAim, (followup.TargetX, followup.TargetY));
+
+        // A target removed after an accepted queue cancels only the follow-up;
+        // the already-running native attack action remains intact.
+        for (var tick = followup.StartedAtTick + 1; tick <= followup.EndTick; tick++)
+            simulation.AdvanceTick(tick, [player]);
+        Assert.Null(player.CurrentAction);
+        var secondStartTick = followup.EndTick + 1;
+        Assert.True(simulation.Execute(player,
+            new DiabloAttackAtIntent(firstAim.X, firstAim.Y), secondStartTick, [player]).Succeeded);
+        var secondAction = Assert.IsType<AuthoritativePlayerActionState>(player.CurrentAction);
+        simulation.AdvanceTick(secondStartTick, [player]);
+        var secondQueueTick = secondAction.StartedAtTick + 1;
+        simulation.AdvanceTick(secondQueueTick, [player]);
+        Assert.True(simulation.Execute(player,
+            new DiabloAttackIntent(target.EntityId) { QueueDuringMove = true },
+            secondQueueTick,
+            [player]).Succeeded);
+        target.HitPoints = 0;
+        for (var tick = secondQueueTick + 1; tick <= secondAction.ReadyTick; tick++)
+            simulation.AdvanceTick(tick, [player]);
+        Assert.Null(player.NativeQueuedRangedAttack);
+        Assert.Same(secondAction, player.CurrentAction);
+    }
 }

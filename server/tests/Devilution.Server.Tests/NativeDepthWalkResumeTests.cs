@@ -306,6 +306,221 @@ public sealed class NativeDepthWalkResumeTests
         }
     }
 
+    [Fact(Explicit = true)]
+    public async Task NativeRangedFollowupSurvivesFreshHostAndExactReceiptRetry()
+    {
+        var profile = LoadProfile();
+        if (profile is null) {
+            Assert.Skip("The compiled native-depth progression profile and its three content packs are required.");
+            return;
+        }
+
+        var ownedRoot = Path.Combine(profile.RepositoryRoot, ".local", "native-depth-walk-resume-tests",
+            Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(ownedRoot);
+        HostRun? source = null;
+        HostRun? resumed = null;
+        try {
+            using var timeout = CancellationTokenSource.CreateLinkedTokenSource(TestContext.Current.CancellationToken);
+            timeout.CancelAfter(TimeSpan.FromSeconds(90));
+            var cancellationToken = timeout.Token;
+            var codec = new DiabloCohortCodec();
+            var sourceClock = new ControlledClock(10);
+            source = CreateHost(profile, sourceClock, Path.Combine(ownedRoot, "source"), startingLevelId: 1);
+            source.Server.Start();
+            using var sourceClient = new TcpClient();
+            var sourceConnection = await ConnectAsync(source, sourceClient, string.Empty, cancellationToken);
+            Assert.True(sourceConnection.Hello.SupportsQueuedRangedAttacks,
+                "The v10 depth adapter must negotiate buffered native bow destinations.");
+            Assert.Equal(0UL, sourceConnection.Hello.LastClientSequence);
+
+            var sessionId = SessionIdForToken(sourceConnection.Hello.SessionToken);
+            var player = source.Executor.GetPlayerState(sessionId);
+            Assert.Equal(1U, player.LevelId);
+            Assert.Contains(player.Equipment, item => item.State.StableItemId == 103);
+            var playerEntityId = player.EntityId;
+            var level = Assert.Single(sourceConnection.Snapshot.LevelGeometry,
+                geometry => geometry.LevelId == player.LevelId);
+            var firstAim = FindClearNativeArrowAim(
+                sourceConnection.Snapshot, level, player.PositionX, player.PositionY, horizontal: true);
+            var queuedAim = FindClearNativeArrowAim(
+                sourceConnection.Snapshot, level, player.PositionX, player.PositionY, horizontal: false);
+            var firstTargetX = firstAim.X;
+            var firstTargetY = firstAim.Y;
+            var queuedTargetX = queuedAim.X;
+            var queuedTargetY = queuedAim.Y;
+            Assert.NotEqual((firstTargetX, firstTargetY), (queuedTargetX, queuedTargetY));
+
+            var firstRequestedTick = checked(sourceClock.CurrentTick + 1);
+            var firstAttack = new Command {
+                ClientSequence = 1,
+                RequestedTick = firstRequestedTick,
+                AttackRequested = new AttackRequested {
+                    TargetCell = true,
+                    TargetX = firstTargetX,
+                    TargetY = firstTargetY,
+                },
+            };
+            await EnvelopeCodec.WriteAsync(sourceConnection.Stream, new Envelope {
+                CommandBatch = new CommandBatch { Commands = { firstAttack } },
+            }, cancellationToken);
+            await WaitUntilAsync(() => source.Server.PendingCommandCount == 1, cancellationToken);
+            sourceClock.Set(firstRequestedTick);
+            var firstReply = await ReadCommandReplyAsync(sourceConnection.Stream, cancellationToken);
+            var firstResult = Assert.Single(firstReply.Acknowledgement.Results);
+            Assert.Equal((1UL, CommandStatus.Accepted, firstRequestedTick),
+                (firstResult.ClientSequence, firstResult.Status, firstResult.AppliedTick));
+
+            var initialActionPlayer = source.Executor.GetPlayerState(sessionId);
+            var firstAction = Assert.IsType<AuthoritativePlayerActionState>(initialActionPlayer.CurrentAction);
+            Assert.Equal(DiabloPlayerActionKind.Attack, firstAction.Kind);
+            Assert.Equal(DiabloPlayerCombatMode.RangedAttack, initialActionPlayer.CombatMode);
+            Assert.True(firstAction.TargetCell);
+            Assert.Equal((firstTargetX, firstTargetY), (firstAction.TargetX, firstAction.TargetY));
+            Assert.False(firstAction.EffectApplied);
+            Assert.True(firstAction.EffectTick > firstRequestedTick);
+            Assert.True(firstAction.ReadyTick > firstAction.EffectTick);
+
+            var queuedRequestedTick = firstAction.EffectTick - 1;
+            Assert.True(queuedRequestedTick > sourceClock.CurrentTick);
+            var queuedAttack = new Command {
+                ClientSequence = 2,
+                RequestedTick = queuedRequestedTick,
+                AttackRequested = new AttackRequested {
+                    TargetCell = true,
+                    TargetX = queuedTargetX,
+                    TargetY = queuedTargetY,
+                    QueueDuringMove = true,
+                },
+            };
+            await EnvelopeCodec.WriteAsync(sourceConnection.Stream, new Envelope {
+                CommandBatch = new CommandBatch { Commands = { queuedAttack } },
+            }, cancellationToken);
+            await WaitUntilAsync(() => source.Server.PendingCommandCount == 1, cancellationToken);
+            sourceClock.Set(queuedRequestedTick);
+            var queuedReply = await ReadCommandReplyAsync(sourceConnection.Stream, cancellationToken);
+            var queuedResult = Assert.Single(queuedReply.Acknowledgement.Results);
+            Assert.Equal((2UL, CommandStatus.Accepted, queuedRequestedTick),
+                (queuedResult.ClientSequence, queuedResult.Status, queuedResult.AppliedTick));
+
+            var queuedPlayer = source.Executor.GetPlayerState(sessionId);
+            Assert.Equal(DiabloPlayerCombatMode.RangedAttack, queuedPlayer.CombatMode);
+            Assert.Equal(firstAction.StartedAtTick, queuedPlayer.CurrentAction?.StartedAtTick);
+            Assert.Equal((firstTargetX, firstTargetY),
+                (queuedPlayer.CurrentAction?.TargetX, queuedPlayer.CurrentAction?.TargetY));
+            Assert.False(queuedPlayer.CurrentAction!.EffectApplied);
+            Assert.Equal(new DiabloNativeQueuedRangedAttackState(
+                queuedPlayer.LevelId, 0, queuedTargetX, queuedTargetY, true),
+                queuedPlayer.NativeQueuedRangedAttack);
+
+            var midCheckpoint = await WaitForCheckpointAsync(source.Store, queuedRequestedTick, cancellationToken);
+            Assert.Equal(queuedRequestedTick, midCheckpoint.Tick);
+            var midModule = codec.Deserialize(midCheckpoint.SerializedModuleState);
+            Assert.DoesNotContain(midModule.Projectiles, projectile =>
+                projectile.SourceEntityId == playerEntityId && projectile.NativeWeaponArrow is not null);
+            var midParticipant = Assert.Single(midModule.Participants,
+                participant => participant.SessionId == sessionId);
+            Assert.Equal(playerEntityId, midParticipant.EntityId);
+            Assert.Equal(new DiabloNativeQueuedRangedAttackState(
+                1, 0, queuedTargetX, queuedTargetY, true), midParticipant.Player.NativeQueuedRangedAttack);
+            Assert.Equal((firstTargetX, firstTargetY),
+                (midParticipant.Player.CurrentAction?.TargetX, midParticipant.Player.CurrentAction?.TargetY));
+            Assert.Equal(new ulong[] { 1, 2 }, SessionReceipts(midCheckpoint, sessionId));
+
+            var freshRoot = Path.Combine(ownedRoot, "fresh-resume");
+            var freshStore = new AuthoritativeCohortStore(freshRoot);
+            freshStore.Save(midCheckpoint with { Generation = 1 });
+            var copiedCheckpoint = freshStore.Load()
+                ?? throw new InvalidDataException("The queued ranged checkpoint was not copied to the fresh root.");
+            Assert.Equal(midCheckpoint.SerializedModuleState, copiedCheckpoint.SerializedModuleState);
+            Assert.Equal(midCheckpoint.NextServerReceiptSequence, copiedCheckpoint.NextServerReceiptSequence);
+            Assert.Equal(new ulong[] { 1, 2 }, SessionReceipts(copiedCheckpoint, sessionId));
+
+            var resumedClock = new ControlledClock(0);
+            resumed = CreateHost(profile, resumedClock, freshRoot, freshStore, startingLevelId: 1);
+            resumed.Server.Start();
+            using var resumedClient = new TcpClient();
+            var resumedConnection = await ConnectAsync(
+                resumed, resumedClient, sourceConnection.Hello.SessionToken, cancellationToken);
+            Assert.Equal(2UL, resumedConnection.Hello.LastClientSequence);
+            Assert.True(resumedConnection.Hello.SupportsQueuedRangedAttacks);
+            Assert.Equal(midCheckpoint.Tick, resumedConnection.Snapshot.Tick);
+            Assert.Equal(queuedReply.Snapshot.ToByteArray(), resumedConnection.Snapshot.ToByteArray());
+            Assert.Equal(midCheckpoint.SerializedModuleState,
+                (freshStore.Load() ?? throw new InvalidDataException("Fresh host lost its restored checkpoint."))
+                    .SerializedModuleState);
+
+            // Replaying the exact accepted sequence returns its durable receipt and
+            // leaves the queued target, action, RNG, and projectile allocator intact.
+            await EnvelopeCodec.WriteAsync(resumedConnection.Stream, new Envelope {
+                CommandBatch = new CommandBatch { Commands = { queuedAttack } },
+            }, cancellationToken);
+            var duplicateReply = await ReadCommandReplyAsync(resumedConnection.Stream, cancellationToken);
+            var duplicateResult = Assert.Single(duplicateReply.Acknowledgement.Results);
+            Assert.Equal((2UL, CommandStatus.Duplicate, queuedRequestedTick),
+                (duplicateResult.ClientSequence, duplicateResult.Status, duplicateResult.AppliedTick));
+            Assert.Equal(queuedResult.ServerReceiptSequence, duplicateResult.ServerReceiptSequence);
+            var afterDuplicate = freshStore.Load()
+                ?? throw new InvalidDataException("The duplicate retry removed the durable checkpoint.");
+            Assert.Equal(midCheckpoint.SerializedModuleState, afterDuplicate.SerializedModuleState);
+            Assert.Equal(midCheckpoint.NextServerReceiptSequence, afterDuplicate.NextServerReceiptSequence);
+            Assert.Equal(new ulong[] { 1, 2 }, SessionReceipts(afterDuplicate, sessionId));
+
+            await AdvanceBothHostsToTickAsync(
+                source, resumed, sourceClock, resumedClock, sessionId, firstAction.EffectTick, cancellationToken);
+            var firstShotModule = codec.Deserialize(
+                (await WaitForCheckpointAsync(source.Store, firstAction.EffectTick, cancellationToken)).SerializedModuleState);
+            var firstArrow = Assert.Single(firstShotModule.Projectiles,
+                projectile => projectile.SourceEntityId == playerEntityId
+                    && projectile.NativeWeaponArrow is not null);
+            Assert.Equal((firstTargetX, firstTargetY), (firstArrow.TargetX, firstArrow.TargetY));
+            Assert.Equal(firstArrow.EntityId, Assert.Single(codec.Deserialize(
+                (await WaitForCheckpointAsync(freshStore, firstAction.EffectTick, cancellationToken)).SerializedModuleState)
+                .Projectiles, projectile => projectile.SourceEntityId == playerEntityId
+                    && projectile.NativeWeaponArrow is not null).EntityId);
+
+            await AdvanceBothHostsToTickAsync(
+                source, resumed, sourceClock, resumedClock, sessionId, firstAction.ReadyTick, cancellationToken);
+            var followupPlayer = source.Executor.GetPlayerState(sessionId);
+            var followupAction = Assert.IsType<AuthoritativePlayerActionState>(followupPlayer.CurrentAction);
+            Assert.Equal(DiabloPlayerActionKind.Attack, followupAction.Kind);
+            Assert.Equal(DiabloPlayerCombatMode.RangedAttack, followupPlayer.CombatMode);
+            Assert.Equal(firstAction.ReadyTick, followupAction.StartedAtTick);
+            Assert.Equal((queuedTargetX, queuedTargetY), (followupAction.TargetX, followupAction.TargetY));
+            Assert.False(followupAction.EffectApplied);
+            Assert.Null(followupPlayer.NativeQueuedRangedAttack);
+            Assert.Equal(followupAction, resumed.Executor.GetPlayerState(sessionId).CurrentAction);
+
+            await AdvanceBothHostsToTickAsync(
+                source, resumed, sourceClock, resumedClock, sessionId, followupAction.EffectTick, cancellationToken);
+            var sourceFinal = await WaitForCheckpointAsync(source.Store, followupAction.EffectTick, cancellationToken);
+            var resumedFinal = await WaitForCheckpointAsync(freshStore, followupAction.EffectTick, cancellationToken);
+            Assert.Equal(sourceFinal.Tick, resumedFinal.Tick);
+            Assert.Equal(sourceFinal.SerializedModuleState, resumedFinal.SerializedModuleState);
+            Assert.Equal(sourceFinal.NextServerReceiptSequence, resumedFinal.NextServerReceiptSequence);
+            Assert.Equal(new ulong[] { 1, 2 }, SessionReceipts(resumedFinal, sessionId));
+            var sourceFinalModule = codec.Deserialize(sourceFinal.SerializedModuleState);
+            var resumedFinalModule = codec.Deserialize(resumedFinal.SerializedModuleState);
+            var secondSourceArrow = Assert.Single(sourceFinalModule.Projectiles,
+                projectile => projectile.SourceEntityId == playerEntityId
+                    && projectile.NativeWeaponArrow is not null
+                    && projectile.TargetX == queuedTargetX && projectile.TargetY == queuedTargetY);
+            var secondResumedArrow = Assert.Single(resumedFinalModule.Projectiles,
+                projectile => projectile.SourceEntityId == playerEntityId
+                    && projectile.NativeWeaponArrow is not null
+                    && projectile.TargetX == queuedTargetX && projectile.TargetY == queuedTargetY);
+            Assert.True(secondSourceArrow.EntityId > firstArrow.EntityId,
+                "The queued follow-up must launch a distinct later player arrow.");
+            Assert.Equal(secondSourceArrow.EntityId, secondResumedArrow.EntityId);
+        } finally {
+            if (resumed is not null)
+                await resumed.Server.DisposeAsync();
+            if (source is not null)
+                await source.Server.DisposeAsync();
+            DeleteOwnedTestRoot(ownedRoot, profile.RepositoryRoot);
+        }
+    }
+
     private static LoadedProfile? LoadProfile()
     {
         var repositoryRoot = FindRepositoryRoot();
@@ -343,7 +558,8 @@ public sealed class NativeDepthWalkResumeTests
         LoadedProfile profile,
         ControlledClock clock,
         string storeRoot,
-        AuthoritativeCohortStore? existingStore = null)
+        AuthoritativeCohortStore? existingStore = null,
+        uint startingLevelId = 0)
     {
         var store = existingStore ?? new AuthoritativeCohortStore(storeRoot);
         var factory = new DiabloAuthoritativeGameHostAdapterFactory(profile.AdapterId);
@@ -351,7 +567,7 @@ public sealed class NativeDepthWalkResumeTests
             RandomSeed = profile.StorySeed,
             GameMode = AuthoritativeGameMode.SinglePlayer,
             Difficulty = AuthoritativeGameDifficulty.Normal,
-            StartingLevelId = 0,
+            StartingLevelId = startingLevelId,
         };
         var runtime = new GameplayRulesetRuntime<IAuthoritativeGameHostAdapter>(
             profile.Content.Manifest,
@@ -582,6 +798,73 @@ public sealed class NativeDepthWalkResumeTests
         CancellationToken cancellationToken)
         => await WaitUntilAsync(() => host.Executor.GetSessionStateTick(sessionId) >= tick,
             cancellationToken);
+
+    private static async Task AdvanceBothHostsToTickAsync(
+        HostRun source,
+        HostRun resumed,
+        ControlledClock sourceClock,
+        ControlledClock resumedClock,
+        string sessionId,
+        ulong tick,
+        CancellationToken cancellationToken)
+    {
+        var nextTick = checked(Math.Max(sourceClock.CurrentTick, resumedClock.CurrentTick) + 1);
+        for (; nextTick <= tick; nextTick++) {
+            sourceClock.Set(nextTick);
+            resumedClock.Set(nextTick);
+            await Task.WhenAll(
+                WaitForRuntimeTickAsync(source, sessionId, nextTick, cancellationToken),
+                WaitForRuntimeTickAsync(resumed, sessionId, nextTick, cancellationToken));
+        }
+    }
+
+    private static (int X, int Y) FindClearNativeArrowAim(
+        Snapshot snapshot,
+        LevelGeometrySnapshot geometry,
+        int originX,
+        int originY,
+        bool horizontal)
+    {
+        var blocked = geometry.MissileBlockedCells
+            .Concat(geometry.StaticObjectBlockedCells)
+            .ToHashSet();
+        var occupied = snapshot.Monsters
+            .Where(monster => monster.LevelId == geometry.LevelId && monster.Alive)
+            .SelectMany(monster => new[] {
+                monster.PositionY * geometry.Width + monster.PositionX,
+                monster.FuturePositionY * geometry.Width + monster.FuturePositionX,
+            })
+            .Concat(snapshot.Objects
+                .Where(value => value.LevelId == geometry.LevelId && !value.Destroyed && !value.MissilePassable)
+                .Select(value => value.PositionY * geometry.Width + value.PositionX))
+            .ToHashSet();
+
+        for (var distance = 3; distance <= 16; distance++) {
+            foreach (var sign in new[] { 1, -1 }) {
+                var targetX = originX + (horizontal ? sign * distance : 0);
+                var targetY = originY + (horizontal ? 0 : sign * distance);
+                if (targetX is < 1 || targetX > geometry.Width - 2
+                    || targetY is < 1 || targetY > geometry.Height - 2)
+                    continue;
+
+                var clear = true;
+                for (var offset = 1; offset <= distance; offset++) {
+                    var x = originX + (horizontal ? sign * offset : 0);
+                    var y = originY + (horizontal ? 0 : sign * offset);
+                    var index = y * geometry.Width + x;
+                    if (blocked.Contains(index) || occupied.Contains(index)) {
+                        clear = false;
+                        break;
+                    }
+                }
+                if (clear)
+                    return (targetX, targetY);
+            }
+        }
+
+        throw new InvalidOperationException(
+            $"No unobstructed cardinal arrow lane is available from ({originX},{originY}) on level {geometry.LevelId}.");
+    }
 
     private static async Task<AuthoritativeCohortDocument> WaitForCheckpointAsync(
         AuthoritativeCohortStore store,

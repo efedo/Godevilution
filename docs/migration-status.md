@@ -44,6 +44,15 @@ unsupported behavior is a migration gap, not permission for local simulation.
 
 ## Current delivery position and verification limits
 
+Native-depth bow input now retains one follow-up received before the current
+shot is ready, then starts it at the native repeat frame. The current shot keeps
+its original aim; valid replacements update only the pending target. Native
+normal/Fast timing, focused domain cases and real TCP cold-host continuation
+verify separate arrow launches, retained RNG and duplicate-receipt identity.
+This closes a buffering compatibility gap; it does not establish the cause of
+R4's death or close the four-floor gameplay gate. Main input-path reads remain
+held pending the requested narrow approval.
+
 Complete host checkpoints now encode their payload once, hash those exact bytes
 and append the existing final integrity field. Presentation geometry reuses
 immutable per-level projections until source geometry, policy, door membership

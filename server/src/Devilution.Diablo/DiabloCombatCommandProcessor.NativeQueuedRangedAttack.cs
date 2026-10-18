@@ -2,7 +2,7 @@ namespace Devilution.Diablo;
 
 public sealed partial class DiabloCombatCommandProcessor
 {
-    /** Native ranged destination input preserves the current walk, replacing only future work. */
+    /** Native ranged destination input preserves the current walk or bow action, replacing only future work. */
     private DiabloCombatIntentResult QueueNativeRangedAttack(
         AuthoritativePlayerState player,
         DiabloCombatIntent intent,
@@ -31,7 +31,7 @@ public sealed partial class DiabloCombatCommandProcessor
         return DiabloCombatIntentResult.Accepted;
     }
 
-    /** CheckNewPath runs after the old mode completes, before another walk step or monster turn. */
+    /** CheckNewPath consumes at ranged repeat-ready or mode completion, before the monster turn. */
     private void AdvanceNativeQueuedRangedAttack(
         AuthoritativePlayerState player,
         ulong tick,
@@ -47,7 +47,13 @@ public sealed partial class DiabloCombatCommandProcessor
             player.NativeQueuedRangedAttack = null;
             return;
         }
-        if (player.CurrentAction is not null || player.CombatMode != DiabloPlayerCombatMode.Stand)
+        var readyRangedRepeat = player.CurrentAction is { Kind: DiabloPlayerActionKind.Attack } action
+            && action.EffectApplied
+            && tick >= action.ReadyTick
+            && player.CombatMode == DiabloPlayerCombatMode.RangedAttack;
+        var readyAtStand = player.CurrentAction is null
+            && player.CombatMode == DiabloPlayerCombatMode.Stand;
+        if (!readyRangedRepeat && !readyAtStand)
             return;
 
         // The accepted input is consumed once. A vanished target or changed weapon
@@ -56,9 +62,10 @@ public sealed partial class DiabloCombatCommandProcessor
         if (!useNativePlayerActionTiming || !world.SupportsNativeTargetCellPathing
             || GetAttackAnimationProfile(player) != DiabloPlayerAttackAnimationProfile.Bow)
             return;
+        var includesFirstFrame = readyRangedRepeat ? false : completedPriorMode;
         var result = pending.TargetCell
-            ? AttackAt(player, pending.TargetX, pending.TargetY, tick, players, completedPriorMode)
-            : Attack(player, pending.TargetEntityId, tick, players, completedPriorMode);
+            ? AttackAt(player, pending.TargetX, pending.TargetY, tick, players, includesFirstFrame)
+            : Attack(player, pending.TargetEntityId, tick, players, includesFirstFrame);
         if (result.Succeeded) {
             AddDirectedEvents(player, result, events);
             if (completedPriorMode)
