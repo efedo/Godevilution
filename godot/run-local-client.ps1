@@ -23,7 +23,8 @@ param(
     [string]$PerformanceResumeBaselinePath,
     [string]$CathedralNativeProgressionProfileDirectory,
     [ValidateSet('Debug', 'Release')] [string]$ServerBuildConfiguration = 'Debug',
-    [string]$CathedralNativeDepthProgressionProfileDirectory
+    [string]$CathedralNativeDepthProgressionProfileDirectory,
+    [string]$NativeDepthEntryBaselinePath
 )
 
 $ErrorActionPreference = 'Stop'
@@ -42,6 +43,18 @@ if (($cathedralProgression -and $cathedralDepthProgression) -or
 }
 $cathedralNative = $cathedralProgression -or $cathedralDepthProgression -or
     -not [string]::IsNullOrWhiteSpace($CathedralNativeProfileDirectory)
+$nativeDepthEntryContinuation = -not [string]::IsNullOrWhiteSpace($NativeDepthEntryBaselinePath)
+if ($nativeDepthEntryContinuation) {
+    if ($AcceptancePhase -cne 'CathedralNativeDepthProgressionResume' -or -not $cathedralDepthProgression -or
+        $PersistenceMode -cne 'cohort' -or -not $Automated -or -not $Headless -or
+        -not [IO.Path]::IsPathFullyQualified($NativeDepthEntryBaselinePath)) {
+        throw 'A native depth entry baseline requires an automated headless cohort Resume on the explicit four-floor profile.'
+    }
+    if (-not (Test-Path -LiteralPath $NativeDepthEntryBaselinePath -PathType Leaf)) {
+        throw 'The native depth entry baseline file does not exist.'
+    }
+    $NativeDepthEntryBaselinePath = (Resolve-Path -LiteralPath $NativeDepthEntryBaselinePath -ErrorAction Stop).ProviderPath
+}
 $performanceCreate = $AcceptancePhase -eq 'PerformanceCreate'
 $performanceResume = $AcceptancePhase -eq 'PerformanceResume'
 $performance = $AcceptancePhase -in @('Performance', 'PerformanceCreate')
@@ -246,7 +259,7 @@ $environmentNames = @('DEVILUTION_SERVER_HOST', 'DEVILUTION_SERVER_PORT', 'DEVIL
     'GODEVILUTION_PERSISTENCE_MODE', 'GODEVILUTION_COMMAND_TIMING_TRACE',
     'GODEVILUTION_LOCAL_PLAYER', 'GODEVILUTION_PORTAL_PREVIEW', 'GODEVILUTION_LIFECYCLE_PREVIEW', 'GODEVILUTION_CATHEDRAL_PROFILE', 'GODEVILUTION_CATHEDRAL_DEPTH_PROFILE', 'GODEVILUTION_CATHEDRAL_DOOR_PROFILE', 'GODEVILUTION_CATHEDRAL_NATIVE_PROFILE',
     'GODEVILUTION_PERFORMANCE_PARTICIPANTS', 'GODEVILUTION_PERFORMANCE_SHARED_DIRECTORY', 'GODEVILUTION_PERFORMANCE_RESUME_BASELINE_PATH',
-    'GODEVILUTION_CLIENT_ASSEMBLY_IMAGE_DIRECTORY',
+    'GODEVILUTION_NATIVE_DEPTH_ENTRY_BASELINE', 'GODEVILUTION_CLIENT_ASSEMBLY_IMAGE_DIRECTORY',
     'GODEVILUTION_CLIENT_PERFORMANCE_OUTPUT', 'GODEVILUTION_CLIENT_PERFORMANCE_WARMUP_SECONDS',
     'GODEVILUTION_CLIENT_PERFORMANCE_DURATION_SECONDS', 'GODEVILUTION_CLIENT_PERFORMANCE_MAX_SAMPLES')
 foreach ($name in $environmentNames) {
@@ -2124,6 +2137,9 @@ try {
         elseif ($cathedralDoors) { $clientEnvironment['GODEVILUTION_CATHEDRAL_DOOR_PROFILE'] = $cathedralDoorProfile.MetadataPath }
         if ($cathedralNativePhase) { $clientEnvironment['GODEVILUTION_CATHEDRAL_NATIVE_PROFILE'] = $cathedralNativeProfile.MetadataPath }
         if ($cathedralNative) { $clientEnvironment['DEVILUTION_CHARACTER_CLASS_ID'] = '1' }
+        if ($nativeDepthEntryContinuation) {
+            $clientEnvironment['GODEVILUTION_NATIVE_DEPTH_ENTRY_BASELINE'] = $NativeDepthEntryBaselinePath
+        }
         if ($CharacterClassId -ge 0) { $clientEnvironment['DEVILUTION_CHARACTER_CLASS_ID'] = [string]$CharacterClassId }
         if (-not [string]::IsNullOrEmpty($CharacterName)) { $clientEnvironment['DEVILUTION_CHARACTER_NAME'] = $CharacterName }
         if ($Multiplayer) {

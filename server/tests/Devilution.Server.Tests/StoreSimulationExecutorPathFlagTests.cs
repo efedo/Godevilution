@@ -38,4 +38,31 @@ public sealed class StoreSimulationExecutorPathFlagTests
         Assert.Equal(before.PositionX, after.PositionX);
         Assert.Equal(before.PositionY, after.PositionY);
     }
+
+    [Fact]
+    public void UnsupportedQueuedRangedAttackRefusalDoesNotAdvanceOrMutateParticipant()
+    {
+        var catalog = new StoreCatalog();
+        catalog.AddStore(1, Array.Empty<StoreItem>());
+        var executor = new StoreSimulationExecutor(catalog, startingGold: 0);
+        executor.InitializeParticipant("player", new AuthoritativeParticipantSelection(null));
+        var before = executor.GetPlayerState("player");
+        var tickBefore = executor.GetSessionStateTick("player");
+
+        var result = executor.Execute("player", new Command {
+            AttackRequested = new AttackRequested {
+                TargetEntityId = 0x70000010,
+                QueueDuringMove = true,
+            },
+        }, appliedTick: checked(tickBefore + 1));
+
+        var after = executor.GetPlayerState("player");
+        Assert.False(result.Succeeded);
+        Assert.Equal(CommandRejectReason.NotAllowed, result.RejectReason);
+        Assert.Equal(tickBefore, executor.GetSessionStateTick("player"));
+        Assert.Equal(before.PositionX, after.PositionX);
+        Assert.Equal(before.PositionY, after.PositionY);
+        Assert.Equal(before.Life, after.Life);
+        Assert.Equal(before.Mana, after.Mana);
+    }
 }

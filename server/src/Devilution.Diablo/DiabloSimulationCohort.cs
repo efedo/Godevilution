@@ -805,6 +805,7 @@ public sealed partial class DiabloSimulation
             ? null
             : snapshot.CurrentAction with { };
         player.NativeWalkPath = CloneNativeWalkPath(snapshot.NativeWalkPath);
+        player.NativeQueuedRangedAttack = CloneNativeQueuedRangedAttack(snapshot.NativeQueuedRangedAttack);
         player.LastAppliedTick = participant.LastAppliedTick;
         player.AdoptEquipmentAttributeSnapshot();
         player.RestoreCohortDerivedState(
@@ -958,6 +959,12 @@ public sealed partial class DiabloSimulation
                         $"Participant '{participant.SessionId}' has a native walk queue outside its level.");
             }
         }
+        if (snapshot.NativeQueuedRangedAttack is { TargetCell: true } queuedCell
+            && (world is null
+                || queuedCell.LevelId != snapshot.LevelId
+                || !world.ContainsPosition(queuedCell.LevelId, queuedCell.TargetX, queuedCell.TargetY)))
+            throw new InvalidDataException(
+                $"Participant '{participant.SessionId}' has a queued native cell target outside its level.");
         if (participant.BaseArmorClass < 0 || participant.EffectiveArmorClass < 0)
             throw new InvalidDataException(
                 $"Participant '{participant.SessionId}' has invalid armor state.");
@@ -1020,7 +1027,8 @@ public sealed partial class DiabloSimulation
             && SequenceEqual(expected.StatusEffects, actual.StatusEffects)
             && Equals(expected.HeldItem, actual.HeldItem)
             && ActionEqual(expected.CurrentAction, actual.CurrentAction)
-            && WalkPathEqual(expected.NativeWalkPath, actual.NativeWalkPath);
+            && WalkPathEqual(expected.NativeWalkPath, actual.NativeWalkPath)
+            && Equals(expected.NativeQueuedRangedAttack, actual.NativeQueuedRangedAttack);
 
         static bool SequenceEqual<T>(IReadOnlyList<T>? left, IReadOnlyList<T>? right)
             => left is not null && right is not null && left.SequenceEqual(right);
@@ -1458,6 +1466,7 @@ public sealed partial class DiabloSimulation
                 ? null
                 : player.CurrentAction with { },
             NativeWalkPath = CloneNativeWalkPath(player.NativeWalkPath),
+            NativeQueuedRangedAttack = CloneNativeQueuedRangedAttack(player.NativeQueuedRangedAttack),
             HeldItem = player.HeldItem is null ? null : CloneOwnedItem(player.HeldItem),
             Stash = player.Stash.Select(CloneStashItem).ToArray(),
             StashGold = player.StashGold,
@@ -1475,6 +1484,10 @@ public sealed partial class DiabloSimulation
 
     private static DiabloNativeWalkPathState? CloneNativeWalkPath(DiabloNativeWalkPathState? path)
         => path is null ? null : path with { Directions = path.Directions.ToArray() };
+
+    private static DiabloNativeQueuedRangedAttackState? CloneNativeQueuedRangedAttack(
+        DiabloNativeQueuedRangedAttackState? pending)
+        => pending is null ? null : pending with { };
 
     private static DiabloWorldItemState? CaptureOptionalWorldItem(
         AuthoritativeWorldItem? item)

@@ -36,8 +36,10 @@ public sealed class NativeDepthWalkResumeTests
         Assert.Equal(legacy.ToByteArray(), withFalsePendingPath.ToByteArray());
     }
 
-    [Fact(Explicit = true)]
-    public async Task NativeTownWalkContinuesAcrossFreshHostFromCommittedMidWalkCheckpoint()
+    [Theory(Explicit = true)]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task NativeTownWalkContinuesAcrossFreshHostFromCommittedMidWalkCheckpoint(bool queueRanged)
     {
         var profile = LoadProfile();
         if (profile is null) {
@@ -153,18 +155,53 @@ public sealed class NativeDepthWalkResumeTests
             Assert.Equal(acceptedDirections.Skip(consumedDirections), midWalkPlayer.NativeWalkPath.Directions);
             Assert.NotEqual((target.X, target.Y), (midWalkPlayer.PositionX, midWalkPlayer.PositionY));
 
+            var finalX = target.X;
+            var finalY = target.Y;
+            if (queueRanged) {
+                Assert.True(sourceConnection.Hello.SupportsQueuedRangedAttacks);
+                var activeMove = Assert.IsType<AuthoritativePlayerActionState>(midWalkPlayer.CurrentAction);
+                Assert.Equal(DiabloPlayerActionKind.Move, activeMove.Kind);
+                finalX = midWalkPlayer.PositionX + activeMove.DirectionX;
+                finalY = midWalkPlayer.PositionY + activeMove.DirectionY;
+                var attackTick = checked(midTick + 1);
+                Assert.True(attackTick < activeMove.EndTick);
+                await EnvelopeCodec.WriteAsync(sourceConnection.Stream, new Envelope {
+                    CommandBatch = new CommandBatch { Commands = {
+                        new Command { ClientSequence = 2, RequestedTick = attackTick,
+                            AttackRequested = new AttackRequested { TargetCell = true,
+                                TargetX = target.X, TargetY = target.Y, QueueDuringMove = true } },
+                    } },
+                }, cancellationToken);
+                await WaitUntilAsync(() => source.Server.PendingCommandCount == 1, cancellationToken);
+                sourceClock.Set(attackTick);
+                var attackReply = await ReadCommandReplyAsync(sourceConnection.Stream, cancellationToken);
+                var acceptedAttack = Assert.Single(attackReply.Acknowledgement.Results);
+                Assert.Equal((2UL, CommandStatus.Accepted, attackTick),
+                    (acceptedAttack.ClientSequence, acceptedAttack.Status, acceptedAttack.AppliedTick));
+                midTick = attackTick;
+                var queuedPlayer = source.Executor.GetPlayerState(sessionId);
+                Assert.Equal(activeMove, queuedPlayer.CurrentAction);
+                Assert.Null(queuedPlayer.NativeWalkPath);
+                Assert.NotNull(queuedPlayer.NativeQueuedRangedAttack);
+            }
+            var expectedNextReceipt = queueRanged ? 3UL : 2UL;
             var sourceStore = source.Store;
             var midCheckpoint = await WaitForCheckpointAsync(sourceStore, midTick, cancellationToken);
             Assert.Equal(midTick, midCheckpoint.Tick);
-            Assert.Equal(2UL, midCheckpoint.NextServerReceiptSequence);
+            Assert.Equal(expectedNextReceipt, midCheckpoint.NextServerReceiptSequence);
             var midModule = new DiabloCohortCodec().Deserialize(midCheckpoint.SerializedModuleState);
             Assert.Equal(midTick, midModule.Tick);
             Assert.Equal(initialRandom, midModule.RandomState);
             var midParticipant = Assert.Single(midModule.Participants,
                 participant => participant.SessionId == sessionId);
             Assert.Equal(sourceEntityId, midParticipant.EntityId);
-            Assert.NotNull(midParticipant.Player.NativeWalkPath);
-            Assert.NotEmpty(midParticipant.Player.NativeWalkPath!.Directions);
+            if (queueRanged) {
+                Assert.Null(midParticipant.Player.NativeWalkPath);
+                Assert.NotNull(midParticipant.Player.NativeQueuedRangedAttack);
+            } else {
+                Assert.NotNull(midParticipant.Player.NativeWalkPath);
+                Assert.NotEmpty(midParticipant.Player.NativeWalkPath!.Directions);
+            }
 
             var freshRoot = Path.Combine(ownedRoot, "fresh-resume");
             var freshStore = new AuthoritativeCohortStore(freshRoot);
@@ -195,7 +232,7 @@ public sealed class NativeDepthWalkResumeTests
             var resumedConnection = await ConnectAsync(
                 resumed, resumedClient, sourceConnection.Hello.SessionToken, cancellationToken);
             Assert.True(resumedConnection.Hello.SupportsTargetCellPathing);
-            Assert.Equal(1UL, resumedConnection.Hello.LastClientSequence);
+            Assert.Equal(expectedNextReceipt - 1, resumedConnection.Hello.LastClientSequence);
             Assert.Equal(midCheckpoint.Tick, resumedConnection.Snapshot.Tick);
 
             var resumedDocument = freshStore.Load()
@@ -206,10 +243,12 @@ public sealed class NativeDepthWalkResumeTests
             var resumedParticipant = Assert.Single(resumedModule.Participants,
                 participant => participant.SessionId == sessionId);
             Assert.Equal(midModule.RandomState, resumedModule.RandomState);
-            Assert.Equal(midParticipant.Player.NativeWalkPath!.LevelId,
-                resumedParticipant.Player.NativeWalkPath!.LevelId);
-            Assert.Equal(midParticipant.Player.NativeWalkPath.Directions,
-                resumedParticipant.Player.NativeWalkPath.Directions);
+            Assert.Equal(midParticipant.Player.NativeWalkPath?.LevelId,
+                resumedParticipant.Player.NativeWalkPath?.LevelId);
+            Assert.Equal(midParticipant.Player.NativeWalkPath?.Directions,
+                resumedParticipant.Player.NativeWalkPath?.Directions);
+            Assert.Equal(midParticipant.Player.NativeQueuedRangedAttack,
+                resumedParticipant.Player.NativeQueuedRangedAttack);
             Assert.Equal(midParticipant.Player.PositionX, resumedParticipant.Player.PositionX);
             Assert.Equal(midParticipant.Player.PositionY, resumedParticipant.Player.PositionY);
             Assert.Equal(midParticipant.Player.LevelId, resumedParticipant.Player.LevelId);
@@ -223,33 +262,33 @@ public sealed class NativeDepthWalkResumeTests
             // Direct module projection omits the host's validated wire identity binding.
             sourceMidSnapshot.ContentManifestHash = sourceConnection.Hello.ContentManifestHash;
             sourceMidSnapshot.RulesetIdentityHash = sourceConnection.Hello.RulesetIdentityHash;
-            Assert.True(Assert.Single(sourceMidSnapshot.Players,
+            Assert.Equal(!queueRanged, Assert.Single(sourceMidSnapshot.Players,
                 player => player.EntityId == sourceEntityId).NativeWalkPathPending);
-            Assert.True(Assert.Single(resumedConnection.Snapshot.Players,
-                player => player.EntityId == sourceEntityId).NativeWalkPathPending,
-                "Fresh-host first wire snapshot must retain the pending native path.");
+            Assert.Equal(!queueRanged, Assert.Single(resumedConnection.Snapshot.Players,
+                player => player.EntityId == sourceEntityId).NativeWalkPathPending);
             Assert.True(sourceMidSnapshot.ToByteArray().AsSpan()
                 .SequenceEqual(resumedConnection.Snapshot.ToByteArray()),
                 "Fresh-host initial projection must be the exact saved pre-input player/world snapshot.");
 
             var sourceFinal = await ContinueBothHostsToDestinationAsync(
-                source, resumed, sourceClock, resumedClock, sessionId, target.X, target.Y, cancellationToken);
+                source, resumed, sourceClock, resumedClock, sessionId, finalX, finalY, cancellationToken);
             var resumedFinal = await WaitForCheckpointAsync(freshStore,
                 resumed.Executor.GetSessionStateTick(sessionId), cancellationToken);
             Assert.Equal(sourceFinal.Tick, resumedFinal.Tick);
             Assert.True(StringComparer.Ordinal.Equals(sourceFinal.SerializedModuleState, resumedFinal.SerializedModuleState),
                 "Fresh-host continuation must equal uninterrupted execution from the same committed checkpoint.");
             Assert.Equal(sourceFinal.NextServerReceiptSequence, resumedFinal.NextServerReceiptSequence);
-            Assert.Equal(2UL, resumedFinal.NextServerReceiptSequence);
+            Assert.Equal(expectedNextReceipt, resumedFinal.NextServerReceiptSequence);
 
             var finalModule = new DiabloCohortCodec().Deserialize(resumedFinal.SerializedModuleState);
             Assert.Equal(midModule.RandomState, finalModule.RandomState);
             var finalParticipant = Assert.Single(finalModule.Participants,
                 participant => participant.SessionId == sessionId);
-            Assert.Equal(target.X, finalParticipant.Player.PositionX);
-            Assert.Equal(target.Y, finalParticipant.Player.PositionY);
+            Assert.Equal(finalX, finalParticipant.Player.PositionX);
+            Assert.Equal(finalY, finalParticipant.Player.PositionY);
             Assert.Equal(0U, finalParticipant.Player.LevelId);
             Assert.Null(finalParticipant.Player.NativeWalkPath);
+            Assert.Null(finalParticipant.Player.NativeQueuedRangedAttack);
             Assert.Null(finalParticipant.Player.CurrentAction);
             Assert.Equal(DiabloPlayerCombatMode.Stand, finalParticipant.Player.CombatMode);
             var sourceFinalSnapshot = source.Executor.CreateSnapshot(sessionId, sourceEntityId, sourceFinal.Tick);

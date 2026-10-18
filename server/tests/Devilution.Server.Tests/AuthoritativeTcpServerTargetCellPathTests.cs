@@ -17,11 +17,14 @@ namespace Devilution.Server.Tests;
 public sealed class AuthoritativeTcpServerTargetCellPathTests
 {
     [Theory]
-    [InlineData(AuthoritativeProtocolFeatures.None, false)]
-    [InlineData(AuthoritativeProtocolFeatures.TargetCellPathing, true)]
+    [InlineData(AuthoritativeProtocolFeatures.None, false, false)]
+    [InlineData(AuthoritativeProtocolFeatures.TargetCellPathing, true, false)]
+    [InlineData(AuthoritativeProtocolFeatures.QueuedRangedAttacks, false, true)]
+    [InlineData(AuthoritativeProtocolFeatures.TargetCellPathing | AuthoritativeProtocolFeatures.QueuedRangedAttacks, true, true)]
     public async Task ServerHelloAdvertisesOnlyActiveAdapterFeatures(
         AuthoritativeProtocolFeatures features,
-        bool expectedTargetCellPathing)
+        bool expectedTargetCellPathing,
+        bool expectedQueuedRangedAttacks)
     {
         using var timeout = CancellationTokenSource.CreateLinkedTokenSource(TestContext.Current.CancellationToken);
         timeout.CancelAfter(TimeSpan.FromSeconds(8));
@@ -59,6 +62,7 @@ public sealed class AuthoritativeTcpServerTargetCellPathTests
         Assert.NotNull(hello);
         Assert.Equal(Envelope.PayloadOneofCase.ServerHello, hello!.PayloadCase);
         Assert.Equal(expectedTargetCellPathing, hello.ServerHello.SupportsTargetCellPathing);
+        Assert.Equal(expectedQueuedRangedAttacks, hello.ServerHello.SupportsQueuedRangedAttacks);
         var initialSnapshot = await EnvelopeCodec.ReadAsync(stream, timeout.Token);
         Assert.NotNull(initialSnapshot);
         Assert.Equal(Envelope.PayloadOneofCase.Snapshot, initialSnapshot!.PayloadCase);

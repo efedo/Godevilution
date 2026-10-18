@@ -160,18 +160,30 @@ public sealed class AuthoritativeClientTimingPipelineRegressionTests
         using var listener = new TcpListener(IPAddress.Loopback, 0);
         listener.Start();
         var firstCommandSeen = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        Command original;
         var serverTask = Task.Run(async () => {
             using (var connection = await listener.AcceptTcpClientAsync(timeout.Token)) {
                 await using var stream = connection.GetStream();
-                await SendHandshakeAsync(stream, CommandSchedulingMode.Immediate, 100, timeout.Token);
-                _ = Assert.Single((await ReadEnvelopeAsync(stream, timeout.Token)).CommandBatch.Commands);
+                await SendHandshakeAsync(stream, CommandSchedulingMode.Immediate, 100, timeout.Token,
+                    supportsTargetCellPathing: true);
+                original = Assert.Single((await ReadEnvelopeAsync(stream, timeout.Token)).CommandBatch.Commands);
+                Assert.Equal(Command.IntentOneofCase.MoveRequested, original.IntentCase);
+                Assert.True(original.MoveRequested.TargetCell);
+                Assert.True(original.MoveRequested.FollowPath);
+                Assert.Equal(17, original.MoveRequested.TargetX);
+                Assert.Equal(29, original.MoveRequested.TargetY);
                 firstCommandSeen.SetResult();
             }
 
             using var resumed = await listener.AcceptTcpClientAsync(timeout.Token);
             await using var resumedStream = resumed.GetStream();
-            await SendHandshakeAsync(resumedStream, CommandSchedulingMode.Immediate, 900, timeout.Token);
+            await SendHandshakeAsync(resumedStream, CommandSchedulingMode.Immediate, 900, timeout.Token,
+                supportsTargetCellPathing: true);
             var retry = Assert.Single((await ReadEnvelopeAsync(resumedStream, timeout.Token)).CommandBatch.Commands);
+            Assert.True(retry.MoveRequested.FollowPath);
+            Assert.Equal(17, retry.MoveRequested.TargetX);
+            Assert.Equal(29, retry.MoveRequested.TargetY);
+            Assert.Equal(original.ToByteString(), retry.ToByteString());
             await WriteEnvelopeAsync(resumedStream, new Envelope { CommandAck = new CommandAck {
                 Results = { new CommandResult {
                     ClientSequence = retry.ClientSequence,
@@ -186,9 +198,11 @@ public sealed class AuthoritativeClientTimingPipelineRegressionTests
             CommandTimingRecorder = recorder,
         };
         await client.ConnectAsync(timeout.Token);
-        var sequence = client.Queue(
-            new Command { MoveRequested = new MoveRequested { DirectionY = 1 } },
-            requestedTick: 654);
+        var callerCommand = new Command { MoveRequested = new MoveRequested {
+            TargetCell = true, TargetX = 17, TargetY = 29,
+        } };
+        var sequence = client.QueueRealtime(callerCommand, observedTick: 100);
+        Assert.False(callerCommand.MoveRequested.FollowPath);
         await client.PollAsync(timeout.Token);
         await firstCommandSeen.Task.WaitAsync(timeout.Token);
         await client.ReconnectAsync(timeout.Token);
@@ -199,11 +213,19 @@ public sealed class AuthoritativeClientTimingPipelineRegressionTests
             .Where(command => command.ClientSequence == sequence)
             .ToArray();
         Assert.Equal(2, commands.Length);
-        Assert.Equal(654UL, commands[0].RequestedTick);
         Assert.Equal(commands[0].RequestedTick, commands[1].RequestedTick);
         Assert.Equal(AuthoritativeClientCommandDispatchKind.FirstDispatch, commands[0].DispatchKind);
         Assert.Equal(AuthoritativeClientCommandDispatchKind.Retransmission, commands[1].DispatchKind);
         Assert.NotEqual(commands[0].TransportGeneration, commands[1].TransportGeneration);
+        foreach (var command in commands) {
+            Assert.Equal(Command.IntentOneofCase.MoveRequested, command.IntentKind);
+            Assert.True(command.MoveTargetCell);
+            Assert.True(command.MoveFollowPath);
+            Assert.Equal(17, command.MoveTargetX);
+            Assert.Equal(29, command.MoveTargetY);
+            Assert.Null(command.MoveDirectionX);
+            Assert.Null(command.MoveDirectionY);
+        }
     }
 
     [Fact]
@@ -307,7 +329,8 @@ public sealed class AuthoritativeClientTimingPipelineRegressionTests
         NetworkStream stream,
         CommandSchedulingMode schedulingMode,
         ulong snapshotTick,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        bool supportsTargetCellPathing = false)
     {
         var hello = await ReadEnvelopeAsync(stream, cancellationToken);
         Assert.Equal(Envelope.PayloadOneofCase.ClientHello, hello.PayloadCase);
@@ -318,6 +341,7 @@ public sealed class AuthoritativeClientTimingPipelineRegressionTests
             TickRateHz = 20,
             GameMode = GameMode.SinglePlayer,
             CommandSchedulingMode = schedulingMode,
+            SupportsTargetCellPathing = supportsTargetCellPathing,
         } }, cancellationToken);
         await WriteEnvelopeAsync(stream, new Envelope { Snapshot = new Snapshot { Tick = snapshotTick } }, cancellationToken);
     }

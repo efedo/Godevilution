@@ -78,6 +78,31 @@ public sealed class AuthoritativeClientCommandTimingRecorderTests
     }
 
     [Fact]
+    public void IntentMetadataRemainsInsideTheExistingRecorderBound()
+    {
+        var recorder = new AuthoritativeClientCommandTimingRecorder(capacity: 1);
+        var move = new AuthoritativeClientCommandTiming(
+            7, 2, AuthoritativeClientCommandDispatchKind.FirstDispatch, 1, 50, 54,
+            100, 101, 102, AuthoritativeClientWriteOutcome.Completed, 10, 11, 12, 90, true) {
+            IntentKind = Command.IntentOneofCase.MoveRequested,
+            MoveTargetCell = true,
+            MoveFollowPath = true,
+            MoveTargetX = -12,
+            MoveTargetY = 34,
+        };
+        recorder.RecordCommand(move);
+        recorder.RecordCommand(move with { MoveTargetX = 99 });
+
+        var report = recorder.CaptureReport();
+
+        Assert.Single(report.Commands);
+        Assert.Equal(1, report.DroppedRecordCount);
+        Assert.Equal(Command.IntentOneofCase.MoveRequested, report.Commands[0].IntentKind);
+        Assert.True(report.Commands[0].MoveFollowPath);
+        Assert.Equal(-12, report.Commands[0].MoveTargetX);
+        Assert.Equal(34, report.Commands[0].MoveTargetY);
+    }
+    [Fact]
     public void PublicTimingTypesContainNoPayloadOrIdentityFields()
     {
         var forbidden = new[] { "Token", "Name", "Position", "Payload", "Gameplay" };

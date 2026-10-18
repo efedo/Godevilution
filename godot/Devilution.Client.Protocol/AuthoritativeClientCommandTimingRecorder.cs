@@ -182,7 +182,22 @@ public sealed record AuthoritativeClientCommandTiming(
     long? WriteStartStopwatchTimestamp,
     long? WriteEndStopwatchTimestamp,
     double ObservedRoundTripEstimateMilliseconds,
-    bool TimingCalibrationReady);
+    bool TimingCalibrationReady)
+{
+    /** Sanitized command oneof; no command payload is retained. */
+    public Command.IntentOneofCase IntentKind { get; init; }
+
+    /** Move-only fields copied from the immutable command at dispatch. */
+    public bool MoveTargetCell { get; init; }
+    public bool MoveFollowPath { get; init; }
+    public int? MoveTargetX { get; init; }
+    public int? MoveTargetY { get; init; }
+    public int? MoveDirectionX { get; init; }
+    public int? MoveDirectionY { get; init; }
+
+    /** Indicates the negotiated ranged-attack move-buffer request at dispatch. */
+    public bool AttackQueueDuringMove { get; init; }
+}
 
 public sealed record AuthoritativeClientProbeSentTiming(
     ulong TimingRequestId,

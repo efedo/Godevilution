@@ -344,6 +344,15 @@ public sealed partial class DiabloCombatCommandProcessor
 
         activePlayers = players;
 
+        var queueDuringMove = intent is DiabloAttackIntent { QueueDuringMove: true }
+            or DiabloAttackAtIntent { QueueDuringMove: true };
+        if (queueDuringMove) {
+            if (!useNativePlayerActionTiming || !world.SupportsNativeTargetCellPathing)
+                return DiabloCombatIntentResult.Rejected(DiabloRuleFailure.NotAllowed);
+            if (player.CurrentAction?.Kind == DiabloPlayerActionKind.Move)
+                return QueueNativeRangedAttack(player, intent, players);
+        }
+
         var result = intent switch {
             DiabloAttackIntent attack => Attack(
                 player,
@@ -359,8 +368,10 @@ public sealed partial class DiabloCombatCommandProcessor
             DiabloCastIntent cast => Cast(player, cast, appliedTick, players),
             _ => DiabloCombatIntentResult.Rejected(DiabloRuleFailure.Malformed),
         };
-        if (result.Succeeded)
+        if (result.Succeeded) {
             player.NativeWalkPath = null;
+            player.NativeQueuedRangedAttack = null;
+        }
         return result;
     }
 
@@ -449,9 +460,10 @@ public sealed partial class DiabloCombatCommandProcessor
         }
         for (var index = 0; index < players.Count; index++)
             completedPriorModes[index] |= AdvanceCombatModeWithEquipmentDamage(players[index], tick);
-        if (worldCommands is not null) {
-            for (var index = 0; index < players.Count; index++) {
-                var player = players[index];
+        for (var index = 0; index < players.Count; index++) {
+            var player = players[index];
+            AdvanceNativeQueuedRangedAttack(player, tick, players, completedPriorModes[index], events);
+            if (worldCommands is not null) {
                 AddDirectedEvents(player,
                     worldCommands.AdvanceNativeWalkContinuation(
                         player,
@@ -508,6 +520,8 @@ public sealed partial class DiabloCombatCommandProcessor
                 commandCallbackPlayer = null;
                 currentCommandCallbackPhase = DiabloCommandCallbackPhase.OrdinaryCommandSlot;
             }
+
+            AdvanceNativeQueuedRangedAttack(player, tick, players, completedPriorMode, events);
 
             // Native completes the old mode before the callback. If that
             // callback started a replacement action with an effect due now,
@@ -732,7 +746,8 @@ public sealed partial class DiabloCombatCommandProcessor
         AuthoritativePlayerState player,
         uint targetEntityId,
         ulong appliedTick,
-        IReadOnlyList<AuthoritativePlayerState> players)
+        IReadOnlyList<AuthoritativePlayerState> players,
+        bool? includesFirstFrameOverride = null)
     {
         if (world.Objects.TryGetValue(targetEntityId, out var barrel)
             && barrel.LevelId == player.LevelId
@@ -784,7 +799,7 @@ public sealed partial class DiabloCombatCommandProcessor
             ? target!.FuturePositionY
             : target?.PositionY ?? playerTarget!.PositionY;
         UpdateFacingToward(player, targetX, targetY);
-        var includesFirstFrame = GetIncludesFirstFrame(player);
+        var includesFirstFrame = includesFirstFrameOverride ?? GetIncludesFirstFrame(player);
         var skippedFrames = GetAttackSkippedFrames(
             player,
             ranged,
@@ -819,7 +834,8 @@ public sealed partial class DiabloCombatCommandProcessor
         int targetX,
         int targetY,
         ulong appliedTick,
-        IReadOnlyList<AuthoritativePlayerState> players)
+        IReadOnlyList<AuthoritativePlayerState> players,
+        bool? includesFirstFrameOverride = null)
     {
         if (!world.ContainsPosition(player.LevelId, targetX, targetY))
             return DiabloCombatIntentResult.Rejected(DiabloRuleFailure.InvalidTarget);
@@ -839,7 +855,7 @@ public sealed partial class DiabloCombatCommandProcessor
         var profile = GetAttackAnimationProfile(player);
         var timing = animation.GetAttack(profile);
         var ranged = profile == DiabloPlayerAttackAnimationProfile.Bow;
-        var includesFirstFrame = GetIncludesFirstFrame(player);
+        var includesFirstFrame = includesFirstFrameOverride ?? GetIncludesFirstFrame(player);
         var skippedFrames = GetAttackSkippedFrames(player, ranged, includesFirstFrame);
         var effectTick = checked(
             appliedTick + (ulong)(timing.ActionFrame - 1 - skippedFrames));
@@ -1084,6 +1100,9 @@ public sealed partial class DiabloCombatCommandProcessor
         IReadOnlyList<AuthoritativePlayerState> players,
         ulong? effectTick = null)
     {
+        if (ranged && world.SupportsNativeTargetCellPathing
+            && world.OwnsNativePopulationLevel(player.LevelId))
+            return ResolveNativeWeaponArrowVolley(player, 0, targetX, targetY, effectTick ?? appliedTick);
         var targetEntityId = FindCellAttackTarget(
             player,
             targetX,
@@ -17195,6 +17214,7 @@ public sealed partial class DiabloCombatCommandProcessor
         PlayerDeathReason deathReason)
     {
         player.NativeWalkPath = null;
+        player.NativeQueuedRangedAttack = null;
         DiabloPlayerActionLifecycle.Cancel(player);
         DropHeldItemOnDeath(player, players);
         if (!SuppressesDeathDrops(player.LevelId)) {

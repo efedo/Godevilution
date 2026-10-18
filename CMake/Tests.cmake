@@ -159,6 +159,7 @@ endforeach()
 
 target_include_directories(player_animation_context_test PRIVATE "${PROJECT_SOURCE_DIR}/3rdParty/PicoSHA2")
 target_compile_definitions(player_animation_context_test PRIVATE "GODEVILUTION_CONTEXT_SOURCE_ROOT=\"${PROJECT_SOURCE_DIR}\"")
+target_compile_definitions(player_destination_walk_test PRIVATE "GODEVILUTION_DESTINATION_WALK_SOURCE_ROOT=\"${PROJECT_SOURCE_DIR}\"")
 target_compile_definitions(cathedral_monster_loot_test PRIVATE "GODEVILUTION_MONSTER_LOOT_SOURCE_ROOT=\"${PROJECT_SOURCE_DIR}\"")
 
 foreach(test_target ${standalone_tests})

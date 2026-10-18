@@ -106,6 +106,14 @@ public sealed record MemorizedSpellState(uint SpellId, uint Level);
 /** Remaining native A* direction queue for an opted-in destination walk. */
 public sealed record DiabloNativeWalkPathState(uint LevelId, IReadOnlyList<int> Directions);
 
+/** Native bow target retained while a destination walk or hit recovery is pending. */
+public sealed record DiabloNativeQueuedRangedAttackState(
+    uint LevelId,
+    uint TargetEntityId,
+    int TargetX,
+    int TargetY,
+    bool TargetCell);
+
 /** Protocol-independent read-only projection of authoritative player state. */
 public sealed record StorePlayerSnapshot(
     uint Gold,
@@ -179,6 +187,9 @@ public sealed record StorePlayerSnapshot(
 
     /** Optional v10-only remainder of a native destination walk. */
     public DiabloNativeWalkPathState? NativeWalkPath { get; init; }
+
+    /** Optional v10-only ranged target queued during a native walk. */
+    public DiabloNativeQueuedRangedAttackState? NativeQueuedRangedAttack { get; init; }
 
     public StorePlayerSnapshot(uint gold, uint? activeStoreId, IReadOnlyList<OwnedStoreItem> inventory)
         : this(gold, activeStoreId, inventory, 0, 0, 0, 0, PlayerAttributesState.Zero, [], [], [])
@@ -360,6 +371,9 @@ public sealed class AuthoritativePlayerState(
 
     /** Native destination walk directions, captured once and consumed in order. */
     public DiabloNativeWalkPathState? NativeWalkPath { get; set; }
+
+    /** Native bow target queued while a destination move finishes or recovers. */
+    public DiabloNativeQueuedRangedAttackState? NativeQueuedRangedAttack { get; set; }
 
     public bool IsMoving => CurrentAction?.Kind == DiabloPlayerActionKind.Move;
 

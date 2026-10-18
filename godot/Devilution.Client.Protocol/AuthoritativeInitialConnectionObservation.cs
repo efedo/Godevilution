@@ -12,7 +12,10 @@ public sealed record AuthoritativeServerHelloObservation(
     GameMode GameMode,
     CommandSchedulingMode CommandSchedulingMode,
     ulong LastClientSequence,
-    bool ResumedSessionMatched);
+    bool ResumedSessionMatched)
+{
+    public bool SupportsQueuedRangedAttacks { get; init; }
+}
 
 /**
  * The first decoded handshake snapshot for one transport attempt. It retains

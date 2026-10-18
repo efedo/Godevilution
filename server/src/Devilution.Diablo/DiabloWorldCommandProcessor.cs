@@ -152,8 +152,10 @@ public sealed class DiabloWorldCommandProcessor
 
         if (intent is DiabloRestartTownIntent) {
             var restart = AttachPendingEntryEvents(RestartTown(player, appliedTick));
-            if (restart.Succeeded)
+            if (restart.Succeeded) {
                 player.NativeWalkPath = null;
+                player.NativeQueuedRangedAttack = null;
+            }
             return restart;
         }
 
@@ -213,6 +215,8 @@ public sealed class DiabloWorldCommandProcessor
         };
         if (result.Succeeded && ReplacesNativeWalkPath(intent))
             player.NativeWalkPath = null;
+        if (result.Succeeded && (ReplacesNativeWalkPath(intent) || intent is DiabloMoveToIntent))
+            player.NativeQueuedRangedAttack = null;
         return AttachPendingEntryEvents(result);
     }
 
@@ -566,6 +570,7 @@ public sealed class DiabloWorldCommandProcessor
         }
         var sourceLevelId = player.LevelId;
         player.NativeWalkPath = null;
+        player.NativeQueuedRangedAttack = null;
         player.LevelId = warp.TargetLevelId;
         player.MarkLevelVisited(player.LevelId);
         player.PositionX = destination.Value.X;

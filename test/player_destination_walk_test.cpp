@@ -1,5 +1,8 @@
 #include <algorithm>
+#include <filesystem>
 #include <iterator>
+#include <list>
+#include <string>
 #include <vector>
 
 #include <gtest/gtest.h>
@@ -8,12 +11,16 @@
 #include "engine/lighting.h"
 #include "engine/random.hpp"
 #include "game/levels/dungeon_common.h"
+#include "game/missiles/missiles.hpp"
 #include "game/players/players.hpp"
 #include "network/protocol/multi.h"
 #include "network/storm/storm_net.hpp"
+#include "tables/playerdat.hpp"
+#include "utils/paths.h"
 
 namespace devilution {
 void TestPlayerProcessDestinationWalkTick(Player &player);
+bool TestPlayerProcessAttackCommand(Player &player, bool ranged);
 }
 
 using namespace devilution;
@@ -92,6 +99,53 @@ private:
 	uint8_t oldRun_ = 0;
 	bool oldHeadless_ = false;
 	uint32_t oldRandom_ = 0;
+};
+
+class NativeDestinationRangedWalk : public NativeDestinationWalk {
+protected:
+	void SetUp() override
+	{
+		NativeDestinationWalk::SetUp();
+		previousAssets_ = paths::AssetsPath();
+		previousHellfire_ = gbIsHellfire;
+		previousMultiplayer_ = gbIsMultiplayer;
+		previousMissiles_.swap(Missiles);
+		const auto source = std::filesystem::path(GODEVILUTION_DESTINATION_WALK_SOURCE_ROOT);
+		const auto configuredAssets = std::filesystem::path(previousAssets_);
+		const auto assets = std::filesystem::is_regular_file(configuredAssets / "txtdata/classes/classdat.tsv")
+		        && std::filesystem::is_regular_file(configuredAssets / "txtdata/missiles/misdat.tsv")
+		        && std::filesystem::is_regular_file(configuredAssets / "txtdata/missiles/missile_sprites.tsv")
+		    ? configuredAssets : source / "assets";
+		ASSERT_TRUE(std::filesystem::is_regular_file(assets / "txtdata/classes/classdat.tsv"));
+		ASSERT_TRUE(std::filesystem::is_regular_file(assets / "txtdata/missiles/misdat.tsv"));
+		ASSERT_TRUE(std::filesystem::is_regular_file(assets / "txtdata/missiles/missile_sprites.tsv"));
+		paths::SetAssetsPath(assets.string() + "/");
+		LoadPlayerDataFiles();
+		LoadMissileData();
+		levelType() = DTYPE_CATHEDRAL;
+		gbIsHellfire = false;
+		gbIsMultiplayer = false;
+		networkInitialized_ = SNetInitializeProvider(SELCONN_LOOPBACK, nullptr);
+		ASSERT_TRUE(networkInitialized_);
+	}
+
+	void TearDown() override
+	{
+		if (networkInitialized_)
+			SNetDestroy();
+		Missiles.swap(previousMissiles_);
+		gbIsMultiplayer = previousMultiplayer_;
+		gbIsHellfire = previousHellfire_;
+		paths::SetAssetsPath(previousAssets_);
+		NativeDestinationWalk::TearDown();
+	}
+
+private:
+	std::string previousAssets_;
+	bool previousHellfire_ = false;
+	bool previousMultiplayer_ = false;
+	std::list<Missile> previousMissiles_;
+	bool networkInitialized_ = false;
 };
 
 TEST_F(NativeDestinationWalk, ThreeStepsRetainInitialAndCompletionLoopFrameTiming)
@@ -176,4 +230,148 @@ TEST_F(NativeDestinationWalk, RetryAfterBlockedCompletionStartsWithStandFrameSki
 	TestPlayerProcessDestinationWalkTick(player);
 	EXPECT_EQ(player.position.tile, (Point { 76, 67 }));
 }
+
+TEST_F(NativeDestinationWalk, RangedDestinationCancelsQueuedStepsAfterCurrentWalkCompletes)
+{
+	auto &player = *MyPlayer;
+	player.walkpath[0] = WALK_NE;
+	player.walkpath[1] = WALK_E;
+	player.walkpath[2] = WALK_SE;
+
+	// Begin the first native walk step; later directions remain queued.
+	TestPlayerProcessDestinationWalkTick(player);
+	ASSERT_NE(player._pmode, PM_STAND);
+	const auto movingMode = player._pmode;
+	const Point start = player.position.tile;
+	const Point currentStep = player.position.future;
+	ASSERT_NE(currentStep, start);
+	ASSERT_EQ(player.walkpath[0], WALK_E);
+
+	// OnRangedAttackTile clears future path directions and stores the destination
+	// action without canceling the already-started walk animation.
+	player.clearPath();
+	player.destAction = ACTION_RATTACK;
+	player.destParam1 = 80;
+	player.destParam2 = 68;
+	EXPECT_EQ(player._pmode, movingMode);
+	EXPECT_EQ(player.position.tile, start);
+	EXPECT_EQ(player.position.future, currentStep);
+	EXPECT_EQ(player.walkpath[0], WALK_NONE);
+	EXPECT_EQ(player.destAction, ACTION_RATTACK);
+
+	// The current step completes normally. The ranged action starts at that
+	// completion's Stand scheduling boundary, before any later path step.
+	for (int tick = 1; tick < 9; ++tick) {
+		TestPlayerProcessDestinationWalkTick(player);
+		EXPECT_EQ(player._pmode, movingMode);
+		EXPECT_EQ(player.position.tile, start);
+		EXPECT_EQ(player.position.future, currentStep);
+		EXPECT_EQ(player.destAction, ACTION_RATTACK);
+		EXPECT_EQ(player.walkpath[0], WALK_NONE);
+	}
+	TestPlayerProcessDestinationWalkTick(player);
+	EXPECT_EQ(player.position.tile, currentStep);
+	EXPECT_EQ(player.position.future, currentStep);
+	EXPECT_EQ(player._pmode, PM_RATTACK);
+	EXPECT_EQ(player.destAction, ACTION_NONE);
+	EXPECT_EQ(player.walkpath[0], WALK_NONE);
+	EXPECT_EQ(player.position.temp, (WorldTilePosition { 80, 68 }));
+}
+
+struct NativeRangedIasCase {
+	ItemSpecialEffect flags;
+	int completionSkippedFrames;
+};
+
+class NativeDestinationRangedAttack : public NativeDestinationRangedWalk,
+	                                  public testing::WithParamInterface<NativeRangedIasCase> {
+};
+
+TEST_P(NativeDestinationRangedAttack, RogueBowUsesNativeCompletionFramesAndEffectBoundary)
+{
+	auto &player = *MyPlayer;
+	player._pgfxnum = static_cast<uint8_t>(PlayerWeaponGraphic::Bow);
+	player._pIFlags = GetParam().flags;
+	player.setAnimations();
+	// Keep this fixture's existing eight-tick walk; the attack values come from the
+	// loaded Rogue bow row rather than hard-coded animation metadata.
+	player._pWFrames = 8;
+	const auto &rogue = GetPlayerAnimDataForClass(HeroClass::Rogue);
+	ASSERT_EQ(player._pAFrames, rogue.bowFrames);
+	ASSERT_EQ(player._pAFNum, rogue.bowActionFrame);
+	ASSERT_GT(player._pAFNum, 1);
+	ASSERT_LT(player._pAFNum, player._pAFrames);
+
+	player.walkpath[0] = WALK_NE;
+	player.walkpath[1] = WALK_E;
+	player.walkpath[2] = WALK_SE;
+	TestPlayerProcessDestinationWalkTick(player);
+	ASSERT_NE(player._pmode, PM_STAND);
+	const auto movingMode = player._pmode;
+	const Point start = player.position.tile;
+	const Point currentStep = player.position.future;
+
+	player.clearPath();
+	player.destAction = ACTION_RATTACK;
+	player.destParam1 = 80;
+	player.destParam2 = 68;
+	for (int tick = 1; tick < 9; ++tick)
+		TestPlayerProcessDestinationWalkTick(player);
+	ASSERT_EQ(player.position.tile, start);
+	ASSERT_EQ(player.position.future, currentStep);
+	ASSERT_EQ(player._pmode, movingMode);
+	ASSERT_EQ(player.destAction, ACTION_RATTACK);
+
+	TestPlayerProcessDestinationWalkTick(player);
+	ASSERT_EQ(player.position.tile, currentStep);
+	ASSERT_EQ(player.position.future, currentStep);
+	ASSERT_EQ(player._pmode, PM_RATTACK);
+	ASSERT_EQ(player.destAction, ACTION_NONE);
+	ASSERT_EQ(player.walkpath[0], WALK_NONE);
+	const auto attackStart = player.animInfo.captureTimingState();
+	EXPECT_EQ(attackStart.currentFrame, GetParam().completionSkippedFrames + 1);
+	EXPECT_EQ(attackStart.numberOfFrames, rogue.bowFrames);
+	EXPECT_EQ(attackStart.ticksPerFrame, 1);
+	EXPECT_EQ(attackStart.ticksSinceSequenceStarted, 0);
+	EXPECT_EQ(attackStart.skippedFramesFromPreviousAnimation, 0);
+
+	bool effectObserved = false;
+	bool readyObserved = false;
+	bool attackCompleted = false;
+	int lastAttackFrame = -1;
+	for (int tick = 0; tick < rogue.bowFrames + 2 && !attackCompleted; ++tick) {
+		lastAttackFrame = player.animInfo.currentFrame;
+		const size_t missilesBefore = Missiles.size();
+		attackCompleted = TestPlayerProcessAttackCommand(player, true);
+		if (lastAttackFrame == rogue.bowActionFrame - 1) {
+			EXPECT_EQ(Missiles.size(), missilesBefore + 1);
+			EXPECT_FALSE(attackCompleted);
+			effectObserved = true;
+		} else {
+			EXPECT_EQ(Missiles.size(), missilesBefore);
+		}
+		if (lastAttackFrame == rogue.bowActionFrame) {
+			EXPECT_EQ(player._pmode, PM_RATTACK);
+			readyObserved = true;
+		}
+		if (!attackCompleted)
+			player.animInfo.processAnimation();
+	}
+	EXPECT_TRUE(effectObserved);
+	EXPECT_TRUE(readyObserved);
+	EXPECT_TRUE(attackCompleted);
+	EXPECT_EQ(lastAttackFrame, rogue.bowFrames - 1);
+	EXPECT_EQ(player._pmode, PM_STAND);
+	EXPECT_EQ(player.destAction, ACTION_NONE);
+	EXPECT_EQ(Missiles.size(), 1U);
+}
+
+INSTANTIATE_TEST_SUITE_P(
+	NativeRogueBow,
+	NativeDestinationRangedAttack,
+	testing::Values(
+	    NativeRangedIasCase { ItemSpecialEffect::None, 0 },
+	    NativeRangedIasCase { ItemSpecialEffect::QuickAttack, 1 },
+	    NativeRangedIasCase { ItemSpecialEffect::FastAttack, 2 },
+	    NativeRangedIasCase { ItemSpecialEffect::QuickAttack | ItemSpecialEffect::FastAttack, 2 }));
 } // namespace

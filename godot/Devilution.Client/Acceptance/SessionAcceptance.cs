@@ -40,6 +40,17 @@ public partial class SessionAcceptance : Node
         var phase = Environment.GetEnvironmentVariable("GODEVILUTION_ACCEPTANCE_PHASE");
         if (phase is not ("Create" or "Resume" or "Recovery" or "Journey" or "JourneyResume" or "TownLoop" or "TownLoopResume" or "Lifecycle" or "LifecycleResume" or "MultiplayerCreate" or "MultiplayerResume" or "MultiplayerRecovery" or "MultiplayerPendingRecovery" or "CooperativeJourney" or "CooperativeResume" or "Performance" or "PerformanceCreate" or "PerformanceResume" or "CathedralJourney" or "CathedralResume" or "CathedralDepthJourney" or "CathedralDepthResume" or "CathedralDoorJourney" or "CathedralDoorResume" or "CathedralNativeJourney" or "CathedralNativeResume" or "CathedralNativeChestJourney" or "CathedralNativeChestResume" or "CathedralNativeSarcophagusJourney" or "CathedralNativeSarcophagusResume" or "CathedralNativeBarrelJourney" or "CathedralNativeBarrelResume" or "CathedralNativeTrapJourney" or "CathedralNativeTrapResume" or "CathedralNativeProgressionJourney" or "CathedralNativeProgressionResume" or "CathedralNativeDepthProgressionJourney" or "CathedralNativeDepthProgressionResume"))
             throw new InvalidOperationException("Explicit acceptance phase is required.");
+        var nativeDepthEntryBaselinePath = Environment.GetEnvironmentVariable("GODEVILUTION_NATIVE_DEPTH_ENTRY_BASELINE");
+        var nativeDepthEntryContinuation = !string.IsNullOrWhiteSpace(nativeDepthEntryBaselinePath);
+        Require(!nativeDepthEntryContinuation || phase == "CathedralNativeDepthProgressionResume",
+            "A native depth entry baseline is only valid for the explicit depth-progression Resume phase.");
+        if (nativeDepthEntryContinuation) {
+            Require(System.IO.Path.IsPathFullyQualified(nativeDepthEntryBaselinePath!),
+                "The native depth entry baseline path must be absolute.");
+            nativeDepthEntryBaselinePath = System.IO.Path.GetFullPath(nativeDepthEntryBaselinePath!);
+            Require(System.IO.File.Exists(nativeDepthEntryBaselinePath),
+                "The explicit native depth entry baseline file is missing.");
+        }
         var portalPreview = Environment.GetEnvironmentVariable("GODEVILUTION_PORTAL_PREVIEW") == "1";
         var directory = Environment.GetEnvironmentVariable("GODEVILUTION_ACCEPTANCE_DIRECTORY")
             ?? throw new InvalidOperationException("An isolated evidence directory is required.");
@@ -86,26 +97,29 @@ public partial class SessionAcceptance : Node
                 ? "M1-Sorcerer" : "M0-Rogue";
             ((OptionButton)setup.FindChild("CharacterClass", true, false)).Select(phase == "Lifecycle" ? 2 : 1);
         } else {
-            previous = JsonSerializer.Deserialize<Evidence>(System.IO.File.ReadAllText(
-                System.IO.Path.Combine(directory, phase switch {
-                    "Recovery" => "resume.json", "JourneyResume" => "journey.json",
-                    "TownLoopResume" => "townloop.json", "CathedralResume" => "cathedraljourney.json",
-                    "CathedralDepthResume" => "cathedraldepthjourney.json", "CathedralDoorResume" => "cathedraldoorjourney.json",
-                    "CathedralNativeResume" => "cathedralnativejourney.json",
-                    "CathedralNativeProgressionResume" => "cathedralnativeprogressionjourney.json",
-                    "CathedralNativeDepthProgressionResume" => "cathedralnativedepthprogressionjourney.json",
-                    "CathedralNativeChestJourney" => "cathedralnativeresume.json",
-                    "CathedralNativeChestResume" => "cathedralnativechestjourney.json",
-                    "CathedralNativeSarcophagusJourney" => "cathedralnativechestresume.json",
-                    "CathedralNativeSarcophagusResume" => "cathedralnativesarcophagusjourney.json",
-                    "CathedralNativeBarrelJourney" => "cathedralnativesarcophagusresume.json",
-                    "CathedralNativeBarrelResume" => "cathedralnativebarreljourney.json",
-                    "CathedralNativeTrapJourney" => "cathedralnativebarrelresume.json",
-                    "CathedralNativeTrapResume" => "cathedralnativetrapjourney.json",
-                    "LifecycleResume" => "lifecycle.json", _ => "create.json",
-                })))
-                ?? throw new InvalidDataException("The creation evidence is empty.");
-            Require(previous.Passed && mode.Selected == 1, "Resume must use the persisted form defaults.");
+            if (!nativeDepthEntryContinuation) {
+                previous = JsonSerializer.Deserialize<Evidence>(System.IO.File.ReadAllText(
+                    System.IO.Path.Combine(directory, phase switch {
+                        "Recovery" => "resume.json", "JourneyResume" => "journey.json",
+                        "TownLoopResume" => "townloop.json", "CathedralResume" => "cathedraljourney.json",
+                        "CathedralDepthResume" => "cathedraldepthjourney.json", "CathedralDoorResume" => "cathedraldoorjourney.json",
+                        "CathedralNativeResume" => "cathedralnativejourney.json",
+                        "CathedralNativeProgressionResume" => "cathedralnativeprogressionjourney.json",
+                        "CathedralNativeDepthProgressionResume" => "cathedralnativedepthprogressionjourney.json",
+                        "CathedralNativeChestJourney" => "cathedralnativeresume.json",
+                        "CathedralNativeChestResume" => "cathedralnativechestjourney.json",
+                        "CathedralNativeSarcophagusJourney" => "cathedralnativechestresume.json",
+                        "CathedralNativeSarcophagusResume" => "cathedralnativesarcophagusjourney.json",
+                        "CathedralNativeBarrelJourney" => "cathedralnativesarcophagusresume.json",
+                        "CathedralNativeBarrelResume" => "cathedralnativebarreljourney.json",
+                        "CathedralNativeTrapJourney" => "cathedralnativebarrelresume.json",
+                        "CathedralNativeTrapResume" => "cathedralnativetrapjourney.json",
+                        "LifecycleResume" => "lifecycle.json", _ => "create.json",
+                    })))
+                    ?? throw new InvalidDataException("The creation evidence is empty.");
+                Require(previous.Passed, "Resume requires its passing creation evidence.");
+            }
+            Require(mode.Selected == 1, "Resume must use the persisted form defaults.");
             Require(((LineEdit)setup.FindChild("ResumeToken", true, false)).Text.Length > 0,
                 "The resume credential was not restored to the form.");
         }

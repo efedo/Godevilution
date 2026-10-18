@@ -261,6 +261,7 @@ public sealed partial record DiabloCohortState(
             throw new InvalidDataException("A Diablo cohort contains a null projectile.");
         ValidateNativeProgressionShape();
         ValidateNativeWalkPathShape();
+        ValidateNativeQueuedRangedAttackShape();
         ValidateNativeTrapShape();
         if (FormatVersion is not (NativeCombatFormatVersion or NativeSarcophagusFormatVersion or NativeBarrelFormatVersion or NativeTrapFormatVersion or NativeProgressionFormatVersion or NativeDepthProgressionFormatVersion)
             && (CombatTargets.Any(target => target.Monster.NativeMeleeCursor is not null || target.Monster.NativeWalkCursor is not null)

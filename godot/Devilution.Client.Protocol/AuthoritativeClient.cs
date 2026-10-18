@@ -53,6 +53,7 @@ public sealed class AuthoritativeClient : IAsyncDisposable
     private long? lastClockOnlyProbeSentMs;
     private bool supportsClockOnlyProbes;
     private bool supportsTargetCellPathing;
+    private bool supportsQueuedRangedAttacks;
     private bool timingCalibrationReady;
     private int timingCalibrationProbeAttempts;
     private bool timingCalibrationTimedOut;
@@ -96,6 +97,15 @@ public sealed class AuthoritativeClient : IAsyncDisposable
         get {
             lock (pendingLock)
                 return supportsTargetCellPathing;
+        }
+    }
+
+    /** Native ranged attacks may be buffered through one active move on this connection. */
+    public bool SupportsQueuedRangedAttacks
+    {
+        get {
+            lock (pendingLock)
+                return supportsQueuedRangedAttacks;
         }
     }
 
@@ -169,6 +179,7 @@ public sealed class AuthoritativeClient : IAsyncDisposable
                 timingCalibrationProbeAttempts = 0;
                 timingCalibrationTimedOut = false;
                 supportsTargetCellPathing = false;
+                supportsQueuedRangedAttacks = false;
             }
             commandSchedulingMode = CommandSchedulingMode.Unspecified;
             supportsClockOnlyProbes = false;
@@ -219,6 +230,7 @@ public sealed class AuthoritativeClient : IAsyncDisposable
                 throw new InvalidDataException("The server returned an unknown command scheduling mode.");
 
             var peerSupportsTargetCellPathing = hello.ServerHello.SupportsTargetCellPathing;
+            var peerSupportsQueuedRangedAttacks = hello.ServerHello.SupportsQueuedRangedAttacks;
             lock (pendingLock) {
                 if (!peerSupportsTargetCellPathing
                     && pending.Values.Any(command =>
@@ -226,7 +238,14 @@ public sealed class AuthoritativeClient : IAsyncDisposable
                         && command.Command.MoveRequested.FollowPath))
                     throw new InvalidDataException(
                         "The resumed server does not support target-cell pathing required by a pending command.");
+                if (!peerSupportsQueuedRangedAttacks
+                    && pending.Values.Any(command =>
+                        command.Command.IntentCase == Command.IntentOneofCase.AttackRequested
+                        && command.Command.AttackRequested.QueueDuringMove))
+                    throw new InvalidDataException(
+                        "The resumed server does not support queued ranged attacks required by a pending command.");
                 supportsTargetCellPathing = peerSupportsTargetCellPathing;
+                supportsQueuedRangedAttacks = peerSupportsQueuedRangedAttacks;
             }
 
             SessionToken = hello.ServerHello.SessionToken;
@@ -375,6 +394,10 @@ public sealed class AuthoritativeClient : IAsyncDisposable
                 && queuedCommand.IntentCase == Command.IntentOneofCase.MoveRequested
                 && queuedCommand.MoveRequested.TargetCell)
                 queuedCommand.MoveRequested.FollowPath = true;
+            if (observedTick.HasValue
+                && supportsQueuedRangedAttacks
+                && queuedCommand.IntentCase == Command.IntentOneofCase.AttackRequested)
+                queuedCommand.AttackRequested.QueueDuringMove = true;
             pending.Add(sequence, new PendingCommand(queuedCommand, observedTick));
             return sequence;
         }
@@ -445,7 +468,16 @@ public sealed class AuthoritativeClient : IAsyncDisposable
                             writeTiming.WriteStartStopwatchTimestamp,
                             writeTiming.WriteEndStopwatchTimestamp,
                             dispatch.MeasuredRoundTripMilliseconds,
-                            dispatch.TimingCalibrationReady));
+                            dispatch.TimingCalibrationReady) {
+                            IntentKind = dispatch.Intent.IntentKind,
+                            MoveTargetCell = dispatch.Intent.MoveTargetCell,
+                            MoveFollowPath = dispatch.Intent.MoveFollowPath,
+                            MoveTargetX = dispatch.Intent.MoveTargetX,
+                            MoveTargetY = dispatch.Intent.MoveTargetY,
+                            MoveDirectionX = dispatch.Intent.MoveDirectionX,
+                            MoveDirectionY = dispatch.Intent.MoveDirectionY,
+                            AttackQueueDuringMove = dispatch.Intent.AttackQueueDuringMove,
+                        });
                     };
                 }
                 try {
@@ -505,7 +537,8 @@ public sealed class AuthoritativeClient : IAsyncDisposable
                                     freezeElapsedMilliseconds,
                                     freezeStopwatchTimestamp,
                                     Volatile.Read(ref roundTripMilliseconds),
-                                    timingCalibrationReady);
+                                    timingCalibrationReady,
+                                    CaptureCommandIntent(entry.Command));
                             return new Envelope { CommandBatch = new CommandBatch { Commands = { entry.Command } } };
                         }
                     }, cancellationToken, commandWriteObserver);
@@ -1037,7 +1070,10 @@ public sealed class AuthoritativeClient : IAsyncDisposable
                     hello.GameMode,
                     hello.CommandSchedulingMode,
                     hello.LastClientSequence,
-                    resumedSessionMatched));
+                    resumedSessionMatched)
+                {
+                    SupportsQueuedRangedAttacks = hello.SupportsQueuedRangedAttacks,
+                });
         }
     }
 
@@ -1402,6 +1438,40 @@ public sealed class AuthoritativeClient : IAsyncDisposable
         public long? RetryNotBeforeMs { get; set; }
     }
 
+    private static CommandIntentCapture CaptureCommandIntent(Command command)
+    {
+        var intentKind = command.IntentCase;
+        if (intentKind == Command.IntentOneofCase.AttackRequested)
+            return new CommandIntentCapture(
+                intentKind,
+                false,
+                false,
+                null,
+                null,
+                null,
+                null,
+                command.AttackRequested.QueueDuringMove);
+        if (intentKind != Command.IntentOneofCase.MoveRequested)
+            return new CommandIntentCapture(intentKind, false, false, null, null, null, null, false);
+
+        var move = command.MoveRequested;
+        return move.TargetCell
+            ? new CommandIntentCapture(intentKind, true, move.FollowPath,
+                move.TargetX, move.TargetY, null, null, false)
+            : new CommandIntentCapture(intentKind, false, move.FollowPath,
+                null, null, move.DirectionX, move.DirectionY, false);
+    }
+
+    private readonly record struct CommandIntentCapture(
+        Command.IntentOneofCase IntentKind,
+        bool MoveTargetCell,
+        bool MoveFollowPath,
+        int? MoveTargetX,
+        int? MoveTargetY,
+        int? MoveDirectionX,
+        int? MoveDirectionY,
+        bool AttackQueueDuringMove);
+
     private readonly record struct CommandDispatchCapture(
         ulong ClientSequence,
         long TransportGeneration,
@@ -1412,7 +1482,8 @@ public sealed class AuthoritativeClient : IAsyncDisposable
         long FreezeElapsedMilliseconds,
         long FreezeStopwatchTimestamp,
         double MeasuredRoundTripMilliseconds,
-        bool TimingCalibrationReady);
+        bool TimingCalibrationReady,
+        CommandIntentCapture Intent);
 
     private readonly record struct ProbeSentCapture(
         ulong TimingRequestId,

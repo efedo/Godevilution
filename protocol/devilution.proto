@@ -78,6 +78,9 @@ message ServerHello {
 	bool supports_clock_only_probes = 10;
 	// Native target-cell auto-pathing is explicitly enabled by opted-in adapters.
 	bool supports_target_cell_pathing = 11;
+	// Native ranged attacks may be buffered through the current walk step only
+	// when this capability and the request flag are both present.
+	bool supports_queued_ranged_attacks = 12;
 }
 
 enum CommandSchedulingMode {
@@ -206,6 +209,9 @@ message AttackRequested {
 	int32 target_x = 2;
 	int32 target_y = 3;
 	bool target_cell = 4;
+	// Requests native-style buffering through an active walk, only for peers
+	// that advertise supports_queued_ranged_attacks.
+	bool queue_during_move = 5;
 }
 
 message CastRequested {

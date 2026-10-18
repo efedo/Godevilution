@@ -153,7 +153,9 @@ public sealed class StoreSimulationExecutor
     {
         ArgumentNullException.ThrowIfNull(content);
         ArgumentNullException.ThrowIfNull(playerTemplateFactory);
-        if ((supportedProtocolFeatures & ~AuthoritativeProtocolFeatures.TargetCellPathing) != 0)
+        if ((supportedProtocolFeatures
+                & ~(AuthoritativeProtocolFeatures.TargetCellPathing
+                    | AuthoritativeProtocolFeatures.QueuedRangedAttacks)) != 0)
             throw new ArgumentOutOfRangeException(nameof(supportedProtocolFeatures));
         SupportedProtocolFeatures = supportedProtocolFeatures;
         var simulation = content.Simulation;
@@ -565,6 +567,10 @@ public sealed class StoreSimulationExecutor
             if ((SupportedProtocolFeatures & AuthoritativeProtocolFeatures.TargetCellPathing) == 0)
                 return CommandExecutionResult.Rejected(CommandRejectReason.NotAllowed);
         }
+        if (command.IntentCase == Command.IntentOneofCase.AttackRequested
+            && command.AttackRequested.QueueDuringMove
+            && (SupportedProtocolFeatures & AuthoritativeProtocolFeatures.QueuedRangedAttacks) == 0)
+            return CommandExecutionResult.Rejected(CommandRejectReason.NotAllowed);
 
         return WithActiveState(_ => runtime.Execute(
             sessionId,
@@ -675,8 +681,12 @@ public sealed class StoreSimulationExecutor
                     command.AttackRequested.TargetCell
                         ? new DiabloAttackAtIntent(
                             command.AttackRequested.TargetX,
-                            command.AttackRequested.TargetY)
-                        : new DiabloAttackIntent(command.AttackRequested.TargetEntityId),
+                            command.AttackRequested.TargetY) {
+                            QueueDuringMove = command.AttackRequested.QueueDuringMove,
+                        }
+                        : new DiabloAttackIntent(command.AttackRequested.TargetEntityId) {
+                            QueueDuringMove = command.AttackRequested.QueueDuringMove,
+                        },
                     appliedTick),
                 Command.IntentOneofCase.UsePortalRequested => ExecuteWorldIntent(
                     player,

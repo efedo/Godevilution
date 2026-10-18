@@ -3,10 +3,16 @@ namespace Devilution.Diablo;
 /** Base intent for authoritative combat actions. */
 public abstract record DiabloCombatIntent;
 
-public sealed record DiabloAttackIntent(uint TargetEntityId) : DiabloCombatIntent;
+public sealed record DiabloAttackIntent(uint TargetEntityId) : DiabloCombatIntent
+{
+    public bool QueueDuringMove { get; init; }
+}
 
 /** Native-compatible attack directed at a world cell rather than a stable entity. */
-public sealed record DiabloAttackAtIntent(int TargetX, int TargetY) : DiabloCombatIntent;
+public sealed record DiabloAttackAtIntent(int TargetX, int TargetY) : DiabloCombatIntent
+{
+    public bool QueueDuringMove { get; init; }
+}
 
 /** Authoritative origin of a requested spell cast. */
 public enum DiabloCastSourceKind

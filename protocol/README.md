@@ -45,6 +45,10 @@ Windows toolchain command.
   peers before these actors are sent to older clients.
 - Additive fields and `oneof` alternatives must be safe for older peers to
   ignore. Required behavior is negotiated during the handshake.
+- `ServerHello.supports_queued_ranged_attacks` enables only opted-in native
+  profiles. A realtime `AttackRequested.queue_during_move` is added by clients
+  only after negotiation; explicit commands and peers without this capability
+  retain their existing behavior. The server rejects the flag when unsupported.
 - `ClientHello.supports_clock_gated_commands` opts into deliberate future-ACK
   waits. `ServerHello.command_scheduling_mode` selects one whole-host policy;
   absent/Unspecified means legacy Immediate. Unknown modes fail closed in Godot

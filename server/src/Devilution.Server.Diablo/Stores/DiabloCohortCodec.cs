@@ -172,7 +172,8 @@ public sealed partial class DiabloCohortCodec
                     || key.Type != typeof(DiabloCohortState)
                     || property.Name != nameof(DiabloCohortState.NativeProgression))
                 && (key.Schema == CodecSchema.NativeDepthProgression
-                    || !IsNativeWalkPathField(key.Type, property.Name))
+                    || !IsNativeWalkPathField(key.Type, property.Name)
+                    && !IsNativeQueuedRangedAttackField(key.Type, property.Name))
                 && (key.Schema != CodecSchema.Legacy
                     || key.Type != typeof(DiabloCohortState)
                     || property.Name != CathedralDoorsPropertyName))
@@ -215,6 +216,9 @@ public sealed partial class DiabloCohortCodec
         if (state.FormatVersion != NativeDepthProgressionFormatVersion
             && state.Participants?.Any(participant => participant?.Player?.NativeWalkPath is not null) == true)
             throw new InvalidDataException("Native destination walks cannot be down-converted to an older cohort.");
+        if (state.FormatVersion != NativeDepthProgressionFormatVersion
+            && state.Participants?.Any(participant => participant?.Player?.NativeQueuedRangedAttack is not null) == true)
+            throw new InvalidDataException("Queued native ranged attacks cannot be down-converted to an older cohort.");
         var hasCathedralDoors = GetCathedralDoors(state) is not null;
         return state.FormatVersion switch {
             LegacyFormatVersion when !hasCathedralDoors => CodecSchema.Legacy,
@@ -338,8 +342,14 @@ public sealed partial class DiabloCohortCodec
     private static bool IsNativeWalkPathField(Type type, string name)
         => type == typeof(StorePlayerSnapshot) && name == nameof(StorePlayerSnapshot.NativeWalkPath);
 
+    private static bool IsNativeQueuedRangedAttackField(Type type, string name)
+        => type == typeof(StorePlayerSnapshot) && name == nameof(StorePlayerSnapshot.NativeQueuedRangedAttack);
+
     private static bool IsOptionalNativeWalkPathField(Type type, string name, CodecSchema schema)
         => schema == CodecSchema.NativeDepthProgression && IsNativeWalkPathField(type, name);
+
+    private static bool IsOptionalNativeQueuedRangedAttackField(Type type, string name, CodecSchema schema)
+        => schema == CodecSchema.NativeDepthProgression && IsNativeQueuedRangedAttackField(type, name);
 
     private static bool IsRequiredCathedralDoors(Type type, PropertyInfo property, CodecSchema schema) =>
         type == typeof(DiabloCohortState)
@@ -455,7 +465,8 @@ public sealed partial class DiabloCohortCodec
         var horkCount = missing.Count(name => IsHorkMoveField(type, name));
         return (horkCount is 0 or 2)
             && missing.All(name => IsHorkMoveField(type, name)
-                || IsOptionalNativeWalkPathField(type, name, schema));
+                || IsOptionalNativeWalkPathField(type, name, schema)
+                || IsOptionalNativeQueuedRangedAttackField(type, name, schema));
     }
 
     private static void RequireKind(JsonElement value, JsonValueKind kind, Type type)
@@ -577,6 +588,7 @@ public sealed partial class DiabloCohortCodec
         private readonly Action<Utf8JsonWriter, T, JsonSerializerOptions>[] fieldWriters;
         private readonly bool[] horkMoveFields;
         private readonly bool[] optionalNativeWalkPathFields;
+        private readonly bool[] optionalNativeQueuedRangedAttackFields;
 
         public CompleteRecordConverter(CodecSchema schema)
         {
@@ -599,6 +611,8 @@ public sealed partial class DiabloCohortCodec
             horkMoveFields = fields.Select(field => IsHorkMoveField(typeof(T), field.Name)).ToArray();
             optionalNativeWalkPathFields = fields.Select(field =>
                 IsOptionalNativeWalkPathField(typeof(T), field.Name, schema)).ToArray();
+            optionalNativeQueuedRangedAttackFields = fields.Select(field =>
+                IsOptionalNativeQueuedRangedAttackField(typeof(T), field.Name, schema)).ToArray();
         }
 
         private static Action<Utf8JsonWriter, T, JsonSerializerOptions> CreateTypedFieldWriter<TProperty>(PropertyInfo field)
@@ -624,6 +638,7 @@ public sealed partial class DiabloCohortCodec
                     : IsHorkMoveField(typeof(T), field.Name)
                         ? field.Name == nameof(DiabloMonsterState.HorkDemonMoveTicks) ? -1 : 0
                         : IsOptionalNativeWalkPathField(typeof(T), field.Name, schema) ? null
+                        : IsOptionalNativeQueuedRangedAttackField(typeof(T), field.Name, schema) ? null
                         : throw new InvalidDataException($"Missing cohort field '{field.Name}'."),
                 StringComparer.Ordinal);
             var parameters = constructor.GetParameters();
@@ -651,6 +666,9 @@ public sealed partial class DiabloCohortCodec
                 if (omitDefaultHorkMove && horkMoveFields[index])
                     continue;
                 if (optionalNativeWalkPathFields[index]
+                    && fields[index].GetValue(value) is null)
+                    continue;
+                if (optionalNativeQueuedRangedAttackFields[index]
                     && fields[index].GetValue(value) is null)
                     continue;
                 fieldWriters[index](writer, value, options);

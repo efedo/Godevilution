@@ -158,6 +158,7 @@ public sealed class DiabloAuthoritativeGameHostAdapterFactory
             saveCodec: null,
             supportedProtocolFeatures: adapterId == CathedralNativeDepthProgressionId
                 ? AuthoritativeProtocolFeatures.TargetCellPathing
+                    | AuthoritativeProtocolFeatures.QueuedRangedAttacks
                 : AuthoritativeProtocolFeatures.None);
     }
 }

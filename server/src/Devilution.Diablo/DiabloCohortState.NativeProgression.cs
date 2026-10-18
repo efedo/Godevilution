@@ -33,6 +33,39 @@ public sealed partial record DiabloCohortState
         }
     }
 
+    private void ValidateNativeQueuedRangedAttackShape()
+    {
+        var hasQueuedAttacks = Participants.Any(participant => participant.Player.NativeQueuedRangedAttack is not null);
+        if (FormatVersion != NativeDepthProgressionFormatVersion) {
+            if (hasQueuedAttacks)
+                throw new InvalidDataException("Queued native ranged attacks require the depth-progression cohort format.");
+            return;
+        }
+
+        var ownedLevels = new HashSet<uint> { 0, 1 };
+        foreach (var entry in NativeProgression!.Entries)
+            ownedLevels.Add(entry.LevelId);
+        foreach (var participant in Participants) {
+            var player = participant.Player;
+            if (player.NativeQueuedRangedAttack is not { } pending)
+                continue;
+            var moving = player.CurrentAction?.Kind == DiabloPlayerActionKind.Move
+                && (player.CombatMode is DiabloPlayerCombatMode.WalkNorthwards
+                    or DiabloPlayerCombatMode.WalkSouthwards or DiabloPlayerCombatMode.WalkSideways);
+            var recovery = player.CurrentAction is null
+                && (player.CombatMode is DiabloPlayerCombatMode.Block or DiabloPlayerCombatMode.GotHit)
+                && player.CombatModeEndTick > Tick;
+            if (pending.LevelId != player.LevelId || !ownedLevels.Contains(pending.LevelId)
+                || player.Life <= 0 || player.NativeWalkPath is not null
+                || !(moving || recovery)
+                || (pending.TargetCell
+                    ? pending.TargetEntityId != 0 || pending.TargetX is < 0 or > byte.MaxValue
+                        || pending.TargetY is < 0 or > byte.MaxValue
+                    : pending.TargetEntityId == 0 || pending.TargetX != 0 || pending.TargetY != 0))
+                throw new InvalidDataException("A queued native ranged attack has an invalid owner, target, or lifecycle.");
+        }
+    }
+
     private void ValidateNativeProgressionShape()
     {
         var nativeDepthProgression = FormatVersion == NativeDepthProgressionFormatVersion;

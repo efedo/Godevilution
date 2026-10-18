@@ -44,6 +44,29 @@ unsupported behavior is a migration gap, not permission for local simulation.
 
 ## Current delivery position and verification limits
 
+The native-depth adapter now negotiates queued ranged attacks separately from
+destination walking. A valid moving bow request preserves the active step,
+cancels remaining directions and retains one typed target until native action
+completion. V10 cold restore includes that target; absent bytes and older
+formats remain unchanged. Entity aim is resolved when the attack starts; cell
+aim remains fixed and native empty-lane shots create arrows. Native base5/IAS4,
+focused domain5, host/codec/TCP179 and client24 unique checks pass without skips.
+The pending-shot TCP case preserves the receipt cursor and exact first wire;
+the L1 domain case separately verifies projectile and RNG continuation.
+
+The explicit headless entry-continuation wrapper checks the copied checkpoint
+hash before launch, exact player/RNG/world/cursor before input and stopped-host
+Town saves before a fresh resume. It records FullRouteClaimed=false and does
+not replace the original full-journey gate. Its first run restored the R18 L3
+entry exactly but exposed a zero-command cold-receipt assumption in the driver;
+that assumption is corrected using the admitted Hello cursor until the first
+local command. All failed runs remain under
+`.local/native-cathedral-run-20261016`; the four-floor gameplay gate stays open.
+R2 now records actual target-cell FollowPath movement185 and three accepted
+attack commands186-188, followed by an accepted potion189 and death at6008.
+The final L3 checkpoint has XP982 and no L3 corpse; this run does not close
+L3/L4 combat or the original full-route gate. All owned processes are stopped.
+
 The explicit native L1-L4 candidate has reviewed lazy floor owners, v10 saves,
 and negotiated native destination walking. Native path/timing checks and 255
 focused managed cases pass, including one real TCP command across two committed

@@ -2,6 +2,12 @@
 
 Notable changes to this fork are recorded below.
 
+- 2026-10-18: Buffer negotiated native-depth Rogue shots during movement, finish
+  the current step, and retain the pending target across cold resume. Preserve
+  legacy commands and save bytes; fire native cell-targeted arrows into empty
+  lanes. Add an exact-entry headless continuation for diagnosing the open
+  four-floor gameplay gate without replaying its passing prefix.
+
 - 2026-10-18: Add opt-in native L1-L4 owners/content and cohort v10, with
   negotiated native destination walking, replacement/cancellation and exact
   mid-walk fresh-host continuation. Project queued-path state so a Stand

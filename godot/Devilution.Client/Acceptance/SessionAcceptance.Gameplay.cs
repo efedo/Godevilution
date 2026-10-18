@@ -224,7 +224,7 @@ public partial class SessionAcceptance
             && AuthoritativePlayerSettlement.IsSettled(player, main.ObservedPendingCommandCount);
 
     private async Task AcceptedAndSettled(Main main, ulong previousSequence, string action,
-        Action<Snapshot>? observe = null)
+        Action<Snapshot>? observe = null, double stageSeconds = 10)
     {
         await Until(() => {
             var snapshot = main.ObservedSnapshot!;
@@ -235,6 +235,6 @@ public partial class SessionAcceptance
                 return false;
             Require(IsAcceptedOrSuccessfulDuplicate(result), $"{action}: {result.Status}/{result.RejectReason}.");
             return main.ObservedSnapshot!.Tick >= result.AppliedTick && Settled(main);
-        }, $"{action} did not finish.", stageSeconds: 10);
+        }, $"{action} did not finish.", stageSeconds: stageSeconds);
     }
 }

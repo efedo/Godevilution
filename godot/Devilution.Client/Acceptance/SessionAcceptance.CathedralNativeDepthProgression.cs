@@ -31,6 +31,11 @@ public partial class SessionAcceptance
         Require(identity.ContentManifestHash == profile.GetProperty("contentManifestHash").GetString(),
             "The native depth progression host admitted a different content pack.");
         var journeyPhase = phase == "CathedralNativeDepthProgressionJourney";
+        var entryContinuationPath = System.Environment.GetEnvironmentVariable("GODEVILUTION_NATIVE_DEPTH_ENTRY_BASELINE");
+        var entryContinuation = phase == "CathedralNativeDepthProgressionResume"
+            && !string.IsNullOrWhiteSpace(entryContinuationPath);
+        var entryContinuationTownResume = entryContinuation
+            && IsNativeDepthEntryTownCheckpointBaseline(entryContinuationPath!);
         var leg = 0;
         async Task Travel(uint destination)
         {
@@ -40,7 +45,8 @@ public partial class SessionAcceptance
             if (main.ObservedSnapshot!.Players.Single().LevelId != 0) {
                 await WaitForNativeDepthProgressionCommandBoundary(main,
                     $"before stair approach to L{destination}");
-                await ApproachNativeProgressionStair(main, routeDirectory, destination, allowDoorOperations: journeyPhase);
+                await ApproachNativeProgressionStair(main, routeDirectory, destination,
+                    allowDoorOperations: journeyPhase || (entryContinuation && !entryContinuationTownResume));
             }
             await TravelNativeCathedralRoute(main, routeDirectory, destination);
         }
@@ -49,6 +55,12 @@ public partial class SessionAcceptance
             await DrainNativeBarrelTownCheckpoint(main,
                 (Button)main.FindChild("CancelTravel", true, false),
                 main.FindChild("TravelStatus", true, false) as Label);
+        }
+
+        if (entryContinuation) {
+            await VerifyNativeDepthEntryContinuationAsync(main, directory, entryContinuationPath!, visible,
+                Travel, TownCheckpoint);
+            return;
         }
 
         if (journeyPhase) {

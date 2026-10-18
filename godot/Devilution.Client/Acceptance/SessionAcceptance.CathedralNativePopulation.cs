@@ -606,7 +606,9 @@ public partial class SessionAcceptance
                     return null;
                 continue;
             }
-            var beforeSequence = main.ObservedCommandResult?.ClientSequence ?? 0;
+            var beforeSequence = progressionCombat
+                ? NativeProgressionCommandCursor(main)
+                : main.ObservedCommandResult?.ClientSequence ?? 0;
             var beforeSnapshot = main.ObservedSnapshot;
             var livePlayer = beforeSnapshot.Players.Single();
             var liveTarget = beforeSnapshot.Monsters.SingleOrDefault(monster => monster.EntityId == targetId && monster.Alive);
@@ -640,19 +642,23 @@ public partial class SessionAcceptance
                 + $"player=({livePlayer.PositionX},{livePlayer.PositionY}), target=({attackTile.Value.X},{attackTile.Value.Y}), "
                 + $"screen=({clickProjection.Point.X:F1},{clickProjection.Point.Y:F1}), "
                 + $"worldArea={clickProjection.Bounds}.");
+            var queueCapabilityNegotiated = SupportsNativeQueuedRangedAttacks(main);
+            var playerMovingAtDispatch = IsNativeWalkAction(livePlayer);
+            var queuedDuringMove = queueCapabilityNegotiated && playerMovingAtDispatch;
             if (progressionCombat) {
                 var previousReceipt = main.ObservedCommandResult;
                 Require(main.ObservedPendingCommandCount == 0
-                    && previousReceipt is not null
-                    && main.ObservedLastQueuedSequence == beforeSequence
-                    && previousReceipt.ClientSequence == beforeSequence
-                    && beforeSnapshot.Tick >= previousReceipt.AppliedTick
+                    && (previousReceipt is not null
+                        ? main.ObservedLastQueuedSequence == beforeSequence
+                            && previousReceipt.ClientSequence == beforeSequence
+                            && beforeSnapshot.Tick >= previousReceipt.AppliedTick
+                        : IsNativeProgressionColdCommandBoundary(main))
                     && livePlayer.LevelId == initial.LevelId && livePlayer.Life > 0
                     && IsNativeProgressionBowUnchanged(livePlayer, intendedBow!),
                     $"Progression L2 attack boundary changed before dispatch: {DescribeNativeAttackSnapshot(beforeSnapshot, targetId)}; "
                     + $"queued={main.ObservedLastQueuedSequence},pending={main.ObservedPendingCommandCount}, "
                     + $"receipt={main.ObservedCommandResult?.ClientSequence}/{main.ObservedCommandResult?.AppliedTick}.");
-                if (!IsNativeProgressionAttackReady(livePlayer, beforeSnapshot.Tick))
+                if (!IsNativeProgressionAttackReady(livePlayer, beforeSnapshot.Tick) && !queuedDuringMove)
                     continue;
             }
             var expectedSequence = checked(beforeSequence + 1);
@@ -723,10 +729,21 @@ public partial class SessionAcceptance
                     + $"for target {targetId}, sequence {expectedSequence}.");
                 var acceptedShot = new NativeAcceptedShotEvidence(targetId, expectedSequence,
                     attackTile.Value.X, attackTile.Value.Y, receipt.AppliedTick);
+                var rangedActionStarted = false;
+                var appliedPlayer = main.ObservedSnapshot!.Players.Single();
+                var targetRemainsAlive = await WaitForNativeProgressionAttackReadyAsync(
+                    main, targetId, initial.LevelId, intendedBow!, attemptClock!,
+                    () => rangedActionStarted = true, receipt.AppliedTick);
+                acceptedShot = acceptedShot with {
+                    QueueCapabilityNegotiated = queueCapabilityNegotiated,
+                    PlayerMovingAtDispatch = playerMovingAtDispatch,
+                    PlayerModeAtAppliedReceipt = appliedPlayer.CombatMode.ToString(),
+                    PlayerActionAtAppliedReceipt = appliedPlayer.CurrentAction?.Kind.ToString(),
+                    RangedActionStartedObserved = rangedActionStarted,
+                };
                 acceptedShots.Add(acceptedShot);
                 combatWorkBudget!.RecordAcceptedShot(acceptedShot);
-                if (!await WaitForNativeProgressionAttackReadyAsync(
-                        main, targetId, initial.LevelId, intendedBow!, attemptClock!))
+                if (!targetRemainsAlive)
                     break;
             } else {
                 try {
@@ -830,7 +847,8 @@ public partial class SessionAcceptance
 
     private async Task<bool> WaitForNativeProgressionAttackReadyAsync(
         Main main, uint targetId, uint levelId, EquippedItemSnapshot intendedBow,
-        System.Diagnostics.Stopwatch attemptClock)
+        System.Diagnostics.Stopwatch attemptClock, Action? observeRangedActionStart = null,
+        ulong minimumActionStartTick = 0)
     {
         const double maximumReadySeconds = 20;
         var failure = $"Progression L2 ranged action for target {targetId} did not reach its native repeat-ready boundary.";
@@ -844,8 +862,14 @@ public partial class SessionAcceptance
             Require(player.LevelId == levelId && IsNativeProgressionBowUnchanged(player, intendedBow),
                 $"The progression L2 level or intended bow changed while awaiting repeat readiness; "
                 + DescribeNativeAttackSnapshot(snapshot, targetId));
+            if (player.CombatMode == PlayerCombatMode.RangedAttack
+                && player.CurrentAction is { Kind: PlayerActionKind.Attack } action
+                && action.StartedAtTick >= minimumActionStartTick)
+                observeRangedActionStart?.Invoke();
             var result = main.ObservedCommandResult;
-            var fresh = result is not null && snapshot.Tick >= result.AppliedTick;
+            var fresh = result is not null
+                ? snapshot.Tick >= result.AppliedTick
+                : IsNativeProgressionColdCommandBoundary(main);
             Require(!fresh || main.ObservedPendingCommandCount == 0,
                 $"A progression L2 command remained pending at the attack readiness boundary; "
                 + DescribeNativeHealingState(main));
@@ -875,7 +899,13 @@ public partial class SessionAcceptance
                 Require(currentPlayer.LevelId == levelId && IsNativeProgressionBowUnchanged(currentPlayer, intendedBow),
                     $"The progression L2 level or intended bow changed while awaiting repeat readiness; "
                     + DescribeNativeAttackSnapshot(current, targetId));
-                if (current.Tick < (main.ObservedCommandResult?.AppliedTick ?? ulong.MaxValue)
+                if (currentPlayer.CombatMode == PlayerCombatMode.RangedAttack
+                    && currentPlayer.CurrentAction is { Kind: PlayerActionKind.Attack } currentAction
+                    && currentAction.StartedAtTick >= minimumActionStartTick)
+                    observeRangedActionStart?.Invoke();
+                if ((main.ObservedCommandResult is { } receipt
+                        ? current.Tick < receipt.AppliedTick
+                        : !IsNativeProgressionColdCommandBoundary(main))
                     || main.ObservedPendingCommandCount != 0)
                     return false;
                 return !current.Monsters.Any(monster => monster.EntityId == targetId && monster.Alive)
@@ -887,11 +917,144 @@ public partial class SessionAcceptance
         }
     }
 
+    private static bool SupportsNativeQueuedRangedAttacks(Main main)
+        => main.ObservedInitialConnection?.ServerHello is { SupportsQueuedRangedAttacks: true };
+
+    private static bool IsNativeWalkAction(PlayerSnapshot player)
+        => player.CurrentAction?.Kind == PlayerActionKind.Move
+            && (player.CombatMode is PlayerCombatMode.WalkNorthwards
+                or PlayerCombatMode.WalkSouthwards or PlayerCombatMode.WalkSideways);
+
+    private bool TryGetInterruptibleNativeRangedTarget(
+        Main main, uint targetId, int? lootX, int? lootY, int movement,
+        bool lowHealthEscapeStepUsed, out (int X, int Y) attackTile)
+    {
+        attackTile = default;
+        if (!SupportsNativeQueuedRangedAttacks(main))
+            return false;
+        var snapshot = main.ObservedSnapshot;
+        var player = snapshot?.Players.SingleOrDefault();
+        if (snapshot is null || player is null || !IsNativeWalkAction(player))
+            return false;
+        var target = snapshot.Monsters.SingleOrDefault(monster => monster.EntityId == targetId && monster.Alive);
+        if (target is null || !IsNativeThreatWithinScope(player, target, lootX, lootY)
+            || HasCloserNativeThreat(main, snapshot, player, target, lootX, lootY))
+            return false;
+
+        var geometry = DepthGeometry(main, player.LevelId);
+        var targetTile = ProjectedNativeTargetTile(target);
+        var missileBlockedCells = geometry.MissileBlockedCells.ToHashSet();
+        if (!CanSelectNativeRangedTarget(main, snapshot, player, target, geometry, targetTile)
+            || !HasClearNativeRangedLane(snapshot, geometry, missileBlockedCells, player.LevelId,
+                player.PositionX, player.PositionY, target, targetTile)
+            || AuthoritativeTargetSelector.SelectCombatTarget(snapshot, player.EntityId,
+                targetTile.X, targetTile.Y) != targetId)
+            return false;
+
+        var clearance = NativeThreatClearance(snapshot, player.LevelId, player.PositionX, player.PositionY);
+        var belowHealingThreshold = (long)player.Life * 3 <= (long)player.LifeMaximum * 2;
+        if (clearance < NativeRangedMinimumThreatSpacing && belowHealingThreshold
+            && !lowHealthEscapeStepUsed && movement < NativeMaximumRangedApproachCommands) {
+            var destinationWalk = UsesNativeDestinationWalk(main, player.LevelId);
+            var nextStep = FindNativeRangedLaneStep(main, snapshot, player, target, geometry,
+                missileBlockedCells, clearance, NativeMaximumRangedApproachCommands - movement,
+                destinationWalk);
+            if (nextStep is { } step
+                && NativeThreatClearance(snapshot, player.LevelId, step.X, step.Y) > clearance)
+                return false;
+        }
+        attackTile = targetTile;
+        return true;
+    }
+
+    private async Task<(int X, int Y)?> WaitForNativeApproachOutcomeAsync(
+        Main main, ulong previousSequence, uint targetId, int? lootX, int? lootY,
+        int movement, bool lowHealthEscapeStepUsed, System.Diagnostics.Stopwatch stageClock)
+    {
+        var expectedSequence = checked(previousSequence + 1);
+        (int X, int Y)? interruptTile = null;
+        await Until(() => {
+            var snapshot = main.ObservedSnapshot;
+            if (snapshot is null)
+                return false;
+            Require(main.ObservedLastQueuedSequence <= expectedSequence,
+                $"An unexpected native movement command overtook sequence {expectedSequence}.");
+            var result = main.ObservedCommandResult;
+            if (result is null || result.ClientSequence < expectedSequence)
+                return false;
+            Require(result.ClientSequence == expectedSequence
+                && main.ObservedLastQueuedSequence == expectedSequence,
+                $"Native movement did not produce exact sequence {expectedSequence}; "
+                + $"receipt={result.ClientSequence}, queued={main.ObservedLastQueuedSequence}.");
+            Require(IsAcceptedOrSuccessfulDuplicate(result),
+                $"Native movement {expectedSequence} was {result.Status}/{result.RejectReason}.");
+            if (main.ObservedPendingCommandCount != 0 || snapshot.Tick < result.AppliedTick)
+                return false;
+            var player = snapshot.Players.Single();
+            Require(player.Life > 0,
+                $"The Rogue died while awaiting native movement {expectedSequence}; {DescribeNativeHealingState(main)}.");
+            if (Settled(main))
+                return true;
+            if (TryGetInterruptibleNativeRangedTarget(main, targetId, lootX, lootY,
+                    movement, lowHealthEscapeStepUsed, out var tile)) {
+                interruptTile = tile;
+                return true;
+            }
+            return false;
+        }, $"Native ranged approach movement {expectedSequence} did not settle or expose an eligible shot.",
+            stageSeconds: RemainingNativeApproachSeconds(stageClock));
+        return interruptTile;
+    }
+
+    private static double RemainingNativeApproachSeconds(System.Diagnostics.Stopwatch stageClock)
+    {
+        var remaining = 10 - stageClock.Elapsed.TotalSeconds;
+        Require(remaining > 0, "The original native ranged approach deadline expired.");
+        return remaining;
+    }
+
+    private async Task WaitForNativeCommandAppliedAsync(Main main, ulong previousSequence, string action)
+    {
+        var expectedSequence = checked(previousSequence + 1);
+        await Until(() => {
+            var snapshot = main.ObservedSnapshot;
+            if (snapshot is null)
+                return false;
+            Require(main.ObservedLastQueuedSequence <= expectedSequence,
+                $"An unexpected command overtook {action} sequence {expectedSequence}.");
+            var result = main.ObservedCommandResult;
+            if (result is null || result.ClientSequence < expectedSequence)
+                return false;
+            Require(result.ClientSequence == expectedSequence
+                && main.ObservedLastQueuedSequence == expectedSequence,
+                $"{action} did not produce exact sequence {expectedSequence}; "
+                + $"receipt={result.ClientSequence}, queued={main.ObservedLastQueuedSequence}.");
+            Require(IsAcceptedOrSuccessfulDuplicate(result),
+                $"{action} sequence {expectedSequence} was {result.Status}/{result.RejectReason}.");
+            if (main.ObservedPendingCommandCount != 0 || snapshot.Tick < result.AppliedTick)
+                return false;
+            Require(snapshot.Players.Single().Life > 0,
+                $"The Rogue died before {action} applied; {DescribeNativeHealingState(main)}.");
+            return true;
+        }, $"{action} did not reach its accepted, applied snapshot.", stageSeconds: 10);
+    }
+
     private static bool IsNativeProgressionAttackReady(PlayerSnapshot player, ulong tick)
         => player.CombatMode == PlayerCombatMode.Stand && player.CurrentAction is null
             || player.CombatMode == PlayerCombatMode.RangedAttack
                 && player.CurrentAction is { Kind: PlayerActionKind.Attack, EffectApplied: true } action
                 && tick >= action.ReadyTick;
+
+    private static bool IsNativeProgressionColdCommandBoundary(Main main)
+        => main.ObservedCommandResult is null && main.ObservedLastQueuedSequence == 0
+            && main.ObservedPendingCommandCount == 0
+            && main.ObservedInitialConnection is { AdmissionCompleted: true, ServerHello: { } };
+
+    private static ulong NativeProgressionCommandCursor(Main main)
+        => main.ObservedCommandResult?.ClientSequence
+            ?? (IsNativeProgressionColdCommandBoundary(main)
+                ? main.ObservedInitialConnection!.ServerHello!.LastClientSequence
+                : throw new InvalidOperationException("Native combat has no attested command cursor."));
 
     private static bool IsNativeProgressionBowUnchanged(PlayerSnapshot player, EquippedItemSnapshot intendedBow)
         => player.Equipment.Any(item => item.Slot == intendedBow.Slot
@@ -957,16 +1120,38 @@ public partial class SessionAcceptance
             }
 
             var previousPosition = (X: player.PositionX, Y: player.PositionY);
-            var previousSequence = main.ObservedCommandResult?.ClientSequence ?? 0;
+            var previousSequence = NativeProgressionCommandCursor(main);
             if (!IsNativeMovementStepInViewport(main, step.Value.X, step.Value.Y))
                 throw new InvalidOperationException(
                     $"The next ordinary native movement step ({step.Value.X},{step.Value.Y}) is outside the current viewport. "
                     + DescribeNativeAttackSnapshot(snapshot, targetId));
+            var queueCapabilityNegotiated = SupportsNativeQueuedRangedAttacks(main);
+            var approachClock = queueCapabilityNegotiated
+                ? System.Diagnostics.Stopwatch.StartNew()
+                : null;
             await Click(main.ObservedTileScreenPosition(step.Value.X, step.Value.Y), walk: true);
-            await AcceptedAndSettled(main, previousSequence, destinationWalk
+            var movementDescription = destinationWalk
                 ? "Walk to the selected native ranged lane"
-                : "Take one ordinary step toward a native ranged lane");
+                : "Take one ordinary step toward a native ranged lane";
+            (int X, int Y)? interruptAttackTile = null;
+            if (queueCapabilityNegotiated) {
+                interruptAttackTile = await WaitForNativeApproachOutcomeAsync(main, previousSequence,
+                    targetId, lootX, lootY, movement, lowHealthEscapeStepUsed, approachClock!);
+            } else {
+                await AcceptedAndSettled(main, previousSequence, movementDescription);
+            }
             await UseNativeHealingPotionIfNeeded(main);
+            if (queueCapabilityNegotiated)
+                _ = RemainingNativeApproachSeconds(approachClock!);
+            if (interruptAttackTile is not null
+                && TryGetInterruptibleNativeRangedTarget(main, targetId, lootX, lootY,
+                    movement, lowHealthEscapeStepUsed, out var currentAttackTile))
+                return currentAttackTile;
+            if (interruptAttackTile is not null)
+                await AcceptedAndSettled(main, previousSequence, movementDescription,
+                    stageSeconds: RemainingNativeApproachSeconds(approachClock!));
+            if (queueCapabilityNegotiated)
+                _ = RemainingNativeApproachSeconds(approachClock!);
             var after = main.ObservedSnapshot!.Players.Single();
             var settledPosition = (after.PositionX, after.PositionY);
             if (settledPosition == step.Value) {
@@ -1675,13 +1860,13 @@ public partial class SessionAcceptance
             var potion = inventoryPotion.Item!;
             var index = inventoryPotion.Index;
             var layout = InventoryLayout.Build(player.Inventory, player.InventoryGrid);
-            var selectedSequence = main.ObservedCommandResult?.ClientSequence ?? 0;
+            var selectedSequence = NativeProgressionCommandCursor(main);
             await ClickGridCell(main, sections, 1, "InventoryGrid", layout.Anchors[index]);
             var selected = main.GetChildren().OfType<HudPresentation>().Single().SelectedItemReference;
             Require(selected is { Location: PlayerItemLocation.Inventory } reference
                 && reference.Slot == (uint)index && reference.StableItemId == potion.State.StableItemId
                 && main.ObservedPendingCommandCount == 0
-                && main.ObservedCommandResult?.ClientSequence == selectedSequence,
+                && NativeProgressionCommandCursor(main) == selectedSequence,
                 "The ordinary inventory selection did not retain the exact healing potion reference.");
             useButton = (Button)main.FindChild("UseConsumable", true, false);
         }
@@ -1694,8 +1879,11 @@ public partial class SessionAcceptance
         var potionSeed = beltPotion?.ItemSeed ?? inventoryPotion.Item!.ItemSeed;
         var potionStableId = beltPotion?.State.StableItemId ?? inventoryPotion.Item!.State.StableItemId;
         var beforeCount = CountNativeHealingItemOccurrences(player, potionStableId, potionSeed);
-        var sequence = main.ObservedCommandResult?.ClientSequence ?? 0;
-        Require(main.ObservedLastQueuedSequence == sequence && main.ObservedPendingCommandCount == 0,
+        var preserveActiveNativeWalk = SupportsNativeQueuedRangedAttacks(main)
+            && IsNativeWalkAction(player);
+        var sequence = NativeProgressionCommandCursor(main);
+        Require((main.ObservedLastQueuedSequence == sequence || IsNativeProgressionColdCommandBoundary(main))
+            && main.ObservedPendingCommandCount == 0,
             $"Quick-use began before the previous command settled; result={sequence}, "
             + $"queued={main.ObservedLastQueuedSequence}, pending={main.ObservedPendingCommandCount}.");
         var expectedSequence = checked(sequence + 1);
@@ -1707,7 +1895,10 @@ public partial class SessionAcceptance
             + $"queued={main.ObservedLastQueuedSequence}, pending={main.ObservedPendingCommandCount}, "
             + $"result={main.ObservedCommandResult?.ClientSequence}.");
         try {
-            await AcceptedAndSettled(main, sequence, "Use native-route healing consumable");
+            if (preserveActiveNativeWalk)
+                await WaitForNativeCommandAppliedAsync(main, sequence, "Use native-route healing consumable");
+            else
+                await AcceptedAndSettled(main, sequence, "Use native-route healing consumable");
         } catch (InvalidOperationException exception) {
             var afterSnapshot = main.ObservedSnapshot;
             var afterPlayer = afterSnapshot?.Players.SingleOrDefault();
@@ -2219,7 +2410,9 @@ public partial class SessionAcceptance
 
     private sealed record NativeEncounterCorpseEvidence(uint EntityId, uint LevelId, int PositionX, int PositionY);
     private sealed record NativeAcceptedShotEvidence(uint TargetEntityId, ulong Sequence, int AimX, int AimY,
-        ulong AppliedTick);
+        ulong AppliedTick, bool QueueCapabilityNegotiated = false, bool PlayerMovingAtDispatch = false,
+        string? PlayerModeAtAppliedReceipt = null, string? PlayerActionAtAppliedReceipt = null,
+        bool RangedActionStartedObserved = false);
     private sealed record NativeAttackRefusalEvidence(uint TargetEntityId, ulong Sequence, ulong AppliedTick,
         string RejectReason, ulong ObservedTick, int Life, string CombatMode, string? Action, string Classification);
 

@@ -232,6 +232,10 @@ public sealed partial class AuthoritativeTcpServer : IAsyncDisposable
         => gameAdapter is { } adapter
             && (adapter.SupportedProtocolFeatures & AuthoritativeProtocolFeatures.TargetCellPathing) != 0;
 
+    private bool SupportsQueuedRangedAttacks
+        => gameAdapter is { } adapter
+            && (adapter.SupportedProtocolFeatures & AuthoritativeProtocolFeatures.QueuedRangedAttacks) != 0;
+
     /** Replaced generations awaiting host disposal, if live reload is enabled. */
     public int RetiredRulesetCount => gameAdapter is LeasedAuthoritativeGameHostAdapter leasedAdapter
         ? leasedAdapter.RetiredRulesetCount
@@ -663,6 +667,7 @@ public sealed partial class AuthoritativeTcpServer : IAsyncDisposable
                         ? CommandSchedulingMode.ClockGated : CommandSchedulingMode.Immediate;
                     serverHello.SupportsClockOnlyProbes = UseClockGatedCommandScheduling;
                     serverHello.SupportsTargetCellPathing = SupportsTargetCellPathing;
+                    serverHello.SupportsQueuedRangedAttacks = SupportsQueuedRangedAttacks;
 
                     await EnvelopeCodec.WriteAsync(stream, new Envelope { ServerHello = serverHello }, cancellationToken);
                     currentTick = commandServer.WithSynchronizedState(() => AdvanceCurrentTickCore());
@@ -919,6 +924,7 @@ public sealed partial class AuthoritativeTcpServer : IAsyncDisposable
             ? CommandSchedulingMode.ClockGated : CommandSchedulingMode.Immediate;
         serverHello.SupportsClockOnlyProbes = UseClockGatedCommandScheduling;
         serverHello.SupportsTargetCellPathing = SupportsTargetCellPathing;
+        serverHello.SupportsQueuedRangedAttacks = SupportsQueuedRangedAttacks;
 
 
         // Keep the handshake cursor, authoritative tick, and initial projection in the same
