@@ -44,6 +44,23 @@ unsupported behavior is a migration gap, not permission for local simulation.
 
 ## Current delivery position and verification limits
 
+Complete host checkpoints now encode their payload once, hash those exact bytes
+and append the existing final integrity field. Presentation geometry reuses
+immutable per-level projections until source geometry, policy, door membership
+or broken-barrel state changes. Save validation, ordering and atomic publication
+remain unchanged. All 77 current focused store, TCP cold-resume, door and native
+mutation cases pass without skips. The full 495,634-byte original R18 snapshot
+matches its frozen export exactly after caching.
+
+Two passive hosts from the same exact L3 input report periodic advance/save
+medians of 88.52 ms before and 59.67 ms after one-pass encoding. The runs have
+different durations and are observational; neither requested snapshots. A
+separate stopped-state probe reduces geometry capture from 23-26 ms to below
+1 ms, with unchanged full protocol bytes. Retained measurements and XML are
+under `.local/native-cathedral-run-20261016`. Exact-entry R4 still ends in L3
+death: three bow commands are accepted, then healing command 189 is rejected at
+5966. The four-floor combat and full-journey/fresh-host gates remain open.
+
 Eligible native-depth commands now capture a detached response projection at
 exact receipt publication, avoiding the second capture/save before ACK. Writer
 readiness preserves per-connection FIFO; duplicate, multi-command, late and

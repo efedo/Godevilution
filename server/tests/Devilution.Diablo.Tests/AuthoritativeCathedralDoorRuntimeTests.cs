@@ -1,4 +1,8 @@
+extern alias ServerProtocol;
+
 using Devilution.Engine;
+using Devilution.Server.Protocol;
+using Google.Protobuf;
 using Xunit;
 
 namespace Devilution.Diablo.Tests;
@@ -348,6 +352,54 @@ public sealed class AuthoritativeCathedralDoorRuntimeTests
         Assert.DoesNotContain(28, Assert.Single(simulation.CaptureSnapshot(CreatePlayer(), 0)
             .CathedralDoors!.EffectiveLevels).BlockedCells!);
         Assert.Throws<InvalidDataException>(() => simulation.WorldState.ValidateInitialPlayerPosition(1, 4, 4));
+    }
+
+    [Fact]
+    public void PresentationGeometryCachePreservesWireBytesAcrossDoorAndColdRestoreChanges()
+    {
+        var original = CreateSimulation(out _, includeLight: true);
+        var player = CreatePlayer();
+        var firstGeometry = original.WorldState.CapturePresentationLevelGeometry();
+        var repeatedGeometry = original.WorldState.CapturePresentationLevelGeometry();
+        Assert.NotSame(firstGeometry, repeatedGeometry);
+        var originalLevel = Assert.Single(firstGeometry);
+        Assert.Same(originalLevel, Assert.Single(repeatedGeometry));
+        const int scannerLightCell = 4 * 6 + 4;
+        Assert.Contains(scannerLightCell, originalLevel.StaticObjectBlockedCells);
+
+        var originalWireBytes = CaptureProtocolBytes(original, player, 0, firstGeometry);
+        Assert.Equal(originalWireBytes, CaptureProtocolBytes(original, player, 0, repeatedGeometry));
+
+        Assert.True(original.WorldState.TryOperateCathedralDoor(DoorId(2, 3), [player]));
+        var openedSnapshot = original.CaptureSnapshot(player, 1);
+        var openedGeometry = original.WorldState.CapturePresentationLevelGeometry();
+        var openedLevel = Assert.Single(openedGeometry);
+        Assert.NotSame(originalLevel, openedLevel);
+        Assert.Contains(scannerLightCell, openedLevel.StaticObjectBlockedCells);
+        var openedWireBytes = CaptureProtocolBytes(original, player, 1, openedGeometry);
+        Assert.Equal(openedWireBytes, CaptureProtocolBytes(original, player, 1,
+            original.WorldState.CapturePresentationLevelGeometry()));
+
+        var restored = CreateSimulation(out _, includeLight: true);
+        var destination = CreatePlayer();
+        var staleGeometry = restored.WorldState.CapturePresentationLevelGeometry();
+        Assert.Same(Assert.Single(staleGeometry),
+            Assert.Single(restored.WorldState.CapturePresentationLevelGeometry()));
+        restored.RestoreSnapshot(destination, openedSnapshot);
+        var restoredGeometry = restored.WorldState.CapturePresentationLevelGeometry();
+        var restoredLevel = Assert.Single(restoredGeometry);
+        Assert.NotSame(Assert.Single(staleGeometry), restoredLevel);
+        Assert.Contains(scannerLightCell, restoredLevel.StaticObjectBlockedCells);
+        Assert.Equal(openedWireBytes, CaptureProtocolBytes(restored, destination, 1, restoredGeometry));
+    }
+
+    private static byte[] CaptureProtocolBytes(DiabloSimulation simulation, AuthoritativePlayerState player,
+        ulong tick, IReadOnlyList<AuthoritativeLevel> geometry)
+    {
+        var presentation = simulation.CapturePresentationSnapshot(player, tick);
+        var snapshot = DiabloProtocolMapper.ToProtocolSnapshot(presentation, levelGeometry: geometry,
+            spells: simulation.Spells, spellBooks: simulation.SpellBooks, items: simulation.Items);
+        return snapshot.ToByteArray();
     }
 
     [Fact]

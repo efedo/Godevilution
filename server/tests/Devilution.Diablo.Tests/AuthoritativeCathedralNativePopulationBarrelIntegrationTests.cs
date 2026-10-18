@@ -82,6 +82,16 @@ public sealed partial class AuthoritativeCathedralNativePopulationIntegrationTes
         var restoredRuntime = restored.CreateRuntime();
         var restoredPlayer = restoredRuntime.Read(NativeBarrelSession, value => value);
         var restoredBarrel = restoredSimulation.WorldState.Objects[barrel!.EntityId];
+        var geometryBeforeBreak = restoredSimulation.WorldState.CapturePresentationLevelGeometry();
+        var repeatedGeometryBeforeBreak = restoredSimulation.WorldState.CapturePresentationLevelGeometry();
+        Assert.NotSame(geometryBeforeBreak, repeatedGeometryBeforeBreak);
+        Assert.Equal(geometryBeforeBreak.Count, repeatedGeometryBeforeBreak.Count);
+        for (var index = 0; index < geometryBeforeBreak.Count; index++)
+            Assert.Same(geometryBeforeBreak[index], repeatedGeometryBeforeBreak[index]);
+        var barrelLevelBeforeBreak = Assert.Single(geometryBeforeBreak,
+            value => value.LevelId == restoredBarrel.LevelId);
+        var barrelCell = checked(initialFacts.PositionY * barrelLevelBeforeBreak.Width + initialFacts.PositionX);
+        Assert.Contains(barrelCell, barrelLevelBeforeBreak.StaticObjectBlockedCells);
         var untouchedRestore = restoredSimulation.CaptureCohortState(restoredRuntime);
         Assert.Equal(DiabloCohortState.NativeCombatFormatVersion, untouchedRestore.FormatVersion);
         Assert.Null(untouchedRestore.NativeSarcophagi);
@@ -117,6 +127,20 @@ public sealed partial class AuthoritativeCathedralNativePopulationIntegrationTes
         Assert.True(restoredBarrel.Activated);
         Assert.True(restoredBarrel.MissilePassable);
         Assert.False(restoredSimulation.WorldState.CanBreakNativeBarrel(restoredBarrel));
+        var geometryAfterBreak = restoredSimulation.WorldState.CapturePresentationLevelGeometry();
+        Assert.Equal(geometryBeforeBreak.Count, geometryAfterBreak.Count);
+        var barrelLevelAfterBreak = Assert.Single(geometryAfterBreak,
+            value => value.LevelId == restoredBarrel.LevelId);
+        Assert.NotSame(barrelLevelBeforeBreak, barrelLevelAfterBreak);
+        Assert.DoesNotContain(barrelCell, barrelLevelAfterBreak.StaticObjectBlockedCells);
+        for (var index = 0; index < geometryBeforeBreak.Count; index++) {
+            if (geometryBeforeBreak[index].LevelId != restoredBarrel.LevelId)
+                Assert.Same(geometryBeforeBreak[index], geometryAfterBreak[index]);
+        }
+        var repeatedGeometryAfterBreak = restoredSimulation.WorldState.CapturePresentationLevelGeometry();
+        Assert.NotSame(geometryAfterBreak, repeatedGeometryAfterBreak);
+        for (var index = 0; index < geometryAfterBreak.Count; index++)
+            Assert.Same(geometryAfterBreak[index], repeatedGeometryAfterBreak[index]);
         var dropped = Assert.Single(restoredSimulation.WorldState.WorldItems.Values
             .Where(value => value.LevelId == 1 && !beforeVisibleItems.Contains(value.EntityId)));
         Assert.InRange(Chebyshev(dropped.PositionX, dropped.PositionY,
@@ -133,6 +157,13 @@ public sealed partial class AuthoritativeCathedralNativePopulationIntegrationTes
         var fresh = factory(codec.Deserialize(brokenBytes));
         var freshRuntime = fresh.CreateRuntime();
         Assert.Equal(brokenBytes, codec.Serialize(fresh.Simulation.CaptureCohortState(freshRuntime)));
+        var freshGeometry = fresh.Simulation.WorldState.CapturePresentationLevelGeometry();
+        var freshBarrelLevel = Assert.Single(freshGeometry, value => value.LevelId == restoredBarrel.LevelId);
+        Assert.DoesNotContain(barrelCell, freshBarrelLevel.StaticObjectBlockedCells);
+        var repeatedFreshGeometry = fresh.Simulation.WorldState.CapturePresentationLevelGeometry();
+        Assert.NotSame(freshGeometry, repeatedFreshGeometry);
+        Assert.Same(freshBarrelLevel,
+            Assert.Single(repeatedFreshGeometry, value => value.LevelId == restoredBarrel.LevelId));
         var retainedDrop = fresh.Simulation.WorldState.WorldItems[dropped.EntityId];
         Assert.Equal(dropped.ItemSeed, retainedDrop.ItemSeed);
         Assert.Equal(dropped.State, retainedDrop.State);

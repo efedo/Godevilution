@@ -1,7 +1,9 @@
 using System.Security.Cryptography;
+using System.Reflection;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
+using System.Text.Json.Serialization;
 using Devilution.Protocol.V1;
 using Devilution.Server.Host;
 using Devilution.Server.Stores;
@@ -62,6 +64,85 @@ public sealed class AuthoritativeCohortStoreTests
                     [4UL, 11UL],
                     loaded.Participants[1].CommandReceipts.Select(receipt => receipt.ServerReceiptSequence));
             }
+        } finally {
+            DeleteRoot(root);
+        }
+    }
+
+    [Fact]
+    public void SavePreservesLegacyCanonicalBytesAcrossPayloadShapes()
+    {
+        var root = CreateRoot();
+        try {
+            var baseline = CreateDocument(1);
+            var participantWithUnsortedReceipts = new AuthoritativeCohortParticipantCheckpoint(
+                new string('b', 64),
+                2,
+                [
+                    new CommandResult {
+                        ClientSequence = 9,
+                        ServerReceiptSequence = 11,
+                        AppliedTick = 20,
+                        Status = CommandStatus.Accepted,
+                        RejectReason = CommandRejectReason.Unspecified,
+                    },
+                    new CommandResult {
+                        ClientSequence = 2,
+                        ServerReceiptSequence = 4,
+                        AppliedTick = 19,
+                        Status = CommandStatus.Rejected,
+                        RejectReason = CommandRejectReason.InvalidTarget,
+                    },
+                ]);
+            var states = new[] {
+                "",
+                "a",
+                "ab",
+                "abc",
+                string.Concat(Enumerable.Repeat("module state Ω 漢 🚀 \\\"quoted\\\"\r\n", 4096)),
+            };
+            using var store = new AuthoritativeCohortStore(root);
+            for (var index = 0; index < states.Length; index++) {
+                var source = baseline with {
+                    Generation = (ulong)index + 1,
+                    Identity = baseline.Identity with { ModuleId = "diablo-\"-\\-Ω-🚀" },
+                    Participants = [participantWithUnsortedReceipts, baseline.Participants[0]],
+                    SerializedModuleState = states[index],
+                };
+                var expected = SerializeLegacyCanonicalEnvelope(source);
+                store.Save(source);
+
+                var actual = File.ReadAllBytes(store.CheckpointPath);
+                Assert.Equal(expected, actual);
+                using var parsed = JsonDocument.Parse(actual);
+                Assert.Equal(
+                    [
+                        "FormatVersion", "Generation", "Identity", "Tick", "NextEntityId",
+                        "NextServerReceiptSequence", "Participants", "SerializedModuleState", "IntegritySha256",
+                    ],
+                    parsed.RootElement.EnumerateObject().Select(property => property.Name));
+                Assert.Equal(
+                    source.SerializedModuleState,
+                    Encoding.UTF8.GetString(Convert.FromBase64String(
+                        parsed.RootElement.GetProperty("SerializedModuleState").GetString()!)));
+            }
+
+            var payloadType = typeof(AuthoritativeCohortStore).GetNestedType(
+                "PersistedPayload", BindingFlags.NonPublic);
+            var rootType = typeof(AuthoritativeCohortStore).GetNestedType(
+                "PersistedRoot", BindingFlags.NonPublic);
+            Assert.NotNull(payloadType);
+            Assert.NotNull(rootType);
+            var payloadProperties = PersistedPropertyOrder(payloadType!);
+            var rootProperties = PersistedPropertyOrder(rootType!);
+            Assert.Equal(
+                [
+                    "FormatVersion", "Generation", "Identity", "Tick", "NextEntityId",
+                    "NextServerReceiptSequence", "Participants", "SerializedModuleState",
+                ],
+                payloadProperties);
+            Assert.Equal(payloadProperties, rootProperties[..^1]);
+            Assert.Equal("IntegritySha256", rootProperties[^1]);
         } finally {
             DeleteRoot(root);
         }
@@ -971,6 +1052,107 @@ public sealed class AuthoritativeCohortStoreTests
                 }])],
             "module-state");
     }
+
+    private static byte[] SerializeLegacyCanonicalEnvelope(AuthoritativeCohortDocument source)
+    {
+        var options = new JsonSerializerOptions {
+            PropertyNamingPolicy = null,
+            WriteIndented = false,
+            NumberHandling = JsonNumberHandling.Strict,
+        };
+        var payload = new LegacyPersistedPayload(
+            source.FormatVersion,
+            source.Generation,
+            new LegacyPersistedIdentity(
+                source.Identity.ModuleId,
+                source.Identity.ModuleFormatVersion,
+                source.Identity.ProtocolSchemaVersion,
+                source.Identity.ContentManifestHash,
+                source.Identity.RulesetIdentityHash,
+                source.Identity.TickRateHz,
+                source.Identity.GameMode),
+            source.Tick,
+            source.NextEntityId,
+            source.NextServerReceiptSequence,
+            source.Participants
+                .OrderBy(participant => participant.SessionId, StringComparer.Ordinal)
+                .Select(participant => new LegacyPersistedParticipant(
+                    participant.SessionId,
+                    participant.EntityId,
+                    participant.CommandReceipts
+                        .OrderBy(receipt => receipt.ClientSequence)
+                        .Select(receipt => new LegacyPersistedReceipt(
+                            receipt.ClientSequence,
+                            receipt.ServerReceiptSequence,
+                            receipt.AppliedTick,
+                            receipt.Status,
+                            receipt.RejectReason))
+                        .ToArray()))
+                .ToArray(),
+            Convert.ToBase64String(Encoding.UTF8.GetBytes(source.SerializedModuleState)));
+        var payloadJson = JsonSerializer.Serialize(payload, options);
+        var integrity = Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(payloadJson)))
+            .ToLowerInvariant();
+        var legacyRoot = new LegacyPersistedRoot(
+            payload.FormatVersion,
+            payload.Generation,
+            payload.Identity,
+            payload.Tick,
+            payload.NextEntityId,
+            payload.NextServerReceiptSequence,
+            payload.Participants,
+            payload.SerializedModuleState,
+            integrity);
+        return Encoding.UTF8.GetBytes(JsonSerializer.Serialize(legacyRoot, options));
+    }
+
+    private static string[] PersistedPropertyOrder(Type type)
+        => type.GetProperties(BindingFlags.Instance | BindingFlags.Public | BindingFlags.DeclaredOnly)
+            .OrderBy(property => property.MetadataToken)
+            .Select(property => property.Name)
+            .ToArray();
+
+    private sealed record LegacyPersistedRoot(
+        int FormatVersion,
+        ulong Generation,
+        LegacyPersistedIdentity Identity,
+        ulong Tick,
+        uint NextEntityId,
+        ulong NextServerReceiptSequence,
+        IReadOnlyList<LegacyPersistedParticipant> Participants,
+        string SerializedModuleState,
+        string IntegritySha256);
+
+    private sealed record LegacyPersistedPayload(
+        int FormatVersion,
+        ulong Generation,
+        LegacyPersistedIdentity Identity,
+        ulong Tick,
+        uint NextEntityId,
+        ulong NextServerReceiptSequence,
+        IReadOnlyList<LegacyPersistedParticipant> Participants,
+        string SerializedModuleState);
+
+    private sealed record LegacyPersistedIdentity(
+        string ModuleId,
+        int ModuleFormatVersion,
+        string ProtocolSchemaVersion,
+        string ContentManifestHash,
+        string RulesetIdentityHash,
+        uint TickRateHz,
+        AuthoritativeGameMode GameMode);
+
+    private sealed record LegacyPersistedParticipant(
+        string SessionId,
+        uint EntityId,
+        IReadOnlyList<LegacyPersistedReceipt> CommandReceipts);
+
+    private sealed record LegacyPersistedReceipt(
+        ulong ClientSequence,
+        ulong ServerReceiptSequence,
+        ulong AppliedTick,
+        CommandStatus Status,
+        CommandRejectReason RejectReason);
 
     private static string CreateRoot()
         => Path.Combine(

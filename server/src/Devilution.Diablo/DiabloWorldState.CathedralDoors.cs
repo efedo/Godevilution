@@ -8,6 +8,15 @@ public sealed partial class DiabloWorldState
     private DiabloWorldGeometryState? trustedCathedralDoorBackingGeometry;
     private readonly Dictionary<uint, (uint LevelId, AuthoritativeCathedralDoorState Door)> cathedralDoors = [];
     private readonly Dictionary<uint, AuthoritativeLevel> cathedralDoorLevels = [];
+    /** Cached per-level immutable presentation; the public result remains a fresh ordered array. */
+    private sealed record PresentationLevelGeometryCacheEntry(
+        AuthoritativeLevel Source,
+        AuthoritativeCathedralNativePopulationPolicy? NativePopulationPolicy,
+        bool HasCathedralDoors,
+        uint[] BrokenBarrelEntityIds,
+        AuthoritativeLevel Projection);
+
+    private readonly Dictionary<uint, PresentationLevelGeometryCacheEntry> presentationLevelGeometryCache = [];
 
     public bool HasCathedralDoors => cathedralDoorCatalog is not null;
 
@@ -457,26 +466,70 @@ public sealed partial class DiabloWorldState
 
     /** Live collision projection adds native solid footprints without changing canonical geometry. */
     public IReadOnlyList<AuthoritativeLevel> CapturePresentationLevelGeometry()
-        => LevelGeometry.Select(level => {
-            if (NativePopulationForLevel(level.LevelId) is { } nativePopulationPolicy) {
-                var staticObjectCells = level.StaticObjectBlockedCells.ToHashSet();
-                foreach (var position in nativePopulationPolicy.SolidObjectPositions()) {
-                    var entityId = nativePopulationPolicy.ObjectEntityAt(position.X, position.Y);
-                    if (position.LevelId == level.LevelId
-                        && (entityId is null || !IsNativeBarrelBroken(entityId.Value)))
-                        staticObjectCells.Add(checked(position.Y * level.Width + position.X));
-                }
-                return staticObjectCells.Count == level.StaticObjectBlockedCells.Count
-                    ? level
-                    : AuthoritativeCathedralDoors.CopyLevel(level, staticObjectBlocked: staticObjectCells);
+    {
+        var levels = LevelGeometry;
+        var result = new AuthoritativeLevel[levels.Count];
+        var currentLevelIds = new HashSet<uint>();
+        for (var index = 0; index < levels.Count; index++) {
+            var source = levels[index];
+            currentLevelIds.Add(source.LevelId);
+            var nativePopulationPolicy = NativePopulationForLevel(source.LevelId);
+            var hasCathedralDoors = cathedralDoorLevels.ContainsKey(source.LevelId);
+            var brokenBarrelEntityIds = nativePopulationPolicy is null
+                ? Array.Empty<uint>()
+                : CaptureBrokenBarrelEntityIds(source.LevelId, nativePopulationPolicy);
+            if (presentationLevelGeometryCache.TryGetValue(source.LevelId, out var cached)
+                && ReferenceEquals(cached.Source, source)
+                && ReferenceEquals(cached.NativePopulationPolicy, nativePopulationPolicy)
+                && cached.HasCathedralDoors == hasCathedralDoors
+                && cached.BrokenBarrelEntityIds.SequenceEqual(brokenBarrelEntityIds)) {
+                result[index] = cached.Projection;
+                continue;
             }
-            if (!cathedralDoorLevels.ContainsKey(level.LevelId))
-                return level;
-            var lights = level.NativePieceLayer.Select((piece, cell) => (piece, cell))
-                .Where(value => value.piece == 269).Select(value => value.cell).ToArray();
-            return lights.Length == 0 ? level : AuthoritativeCathedralDoors.CopyLevel(level,
-                staticObjectBlocked: lights);
-        }).ToArray();
+
+            var projection = source;
+            if (nativePopulationPolicy is not null) {
+                var brokenBarrelSet = brokenBarrelEntityIds.ToHashSet();
+                var staticObjectCells = source.StaticObjectBlockedCells.ToHashSet();
+                foreach (var position in nativePopulationPolicy.SolidObjectPositions()) {
+                    if (position.LevelId != source.LevelId)
+                        continue;
+                    var entityId = nativePopulationPolicy.ObjectEntityAt(position.X, position.Y);
+                    if (entityId is null || !brokenBarrelSet.Contains(entityId.Value))
+                        staticObjectCells.Add(checked(position.Y * source.Width + position.X));
+                }
+                if (staticObjectCells.Count != source.StaticObjectBlockedCells.Count)
+                    projection = AuthoritativeCathedralDoors.CopyLevel(source, staticObjectBlocked: staticObjectCells);
+            } else if (hasCathedralDoors) {
+                var lights = source.NativePieceLayer.Select((piece, cell) => (piece, cell))
+                    .Where(value => value.piece == 269).Select(value => value.cell).ToArray();
+                if (lights.Length != 0)
+                    projection = AuthoritativeCathedralDoors.CopyLevel(source, staticObjectBlocked: lights);
+            }
+
+            presentationLevelGeometryCache[source.LevelId] = new(source, nativePopulationPolicy,
+                hasCathedralDoors, brokenBarrelEntityIds, projection);
+            result[index] = projection;
+        }
+
+        foreach (var staleLevelId in presentationLevelGeometryCache.Keys
+                     .Where(levelId => !currentLevelIds.Contains(levelId)).ToArray())
+            presentationLevelGeometryCache.Remove(staleLevelId);
+        return result;
+    }
+
+    private uint[] CaptureBrokenBarrelEntityIds(uint levelId,
+        AuthoritativeCathedralNativePopulationPolicy policy)
+    {
+        var brokenEntityIds = new List<uint>();
+        foreach (var state in nativeBarrelsByEntityId.Values) {
+            if (!state.Broken || !policy.TryGetNativeBarrelObjectSlot(state.EntityId, out _))
+                continue;
+            brokenEntityIds.Add(state.EntityId);
+        }
+        brokenEntityIds.Sort();
+        return brokenEntityIds.ToArray();
+    }
 
     private static DiabloCathedralDoorObjectState CaptureDoor(uint entityId, uint levelId, AuthoritativeCathedralDoorState door)
         => new(entityId, levelId, door.PositionX, door.PositionY, (int)door.Kind, (int)door.Status,

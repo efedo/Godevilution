@@ -2,6 +2,11 @@
 
 Notable changes to this fork are recorded below.
 
+- 2026-10-18: Encode complete cohort checkpoints once and reuse immutable
+  presentation geometry while preserving canonical save/protocol bytes. Retain
+  door, barrel-break and cold-restore invalidation; reduce live checkpoint and
+  snapshot projection costs while the four-floor combat gate remains open.
+
 - 2026-10-18: Capture eligible native-depth command responses at their durable
   receipt boundary, avoiding a second cohort projection/save. Preserve FIFO,
   publication failure fences, disconnected participants and legacy adapters.

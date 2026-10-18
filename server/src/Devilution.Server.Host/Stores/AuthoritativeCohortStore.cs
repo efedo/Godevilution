@@ -21,6 +21,8 @@ public sealed class AuthoritativeCohortStore : IDisposable
     private const string LeaseFileName = "authoritative-cohort.lease";
     private const int Sha256HexLength = 64;
     private static readonly UTF8Encoding StrictUtf8 = new(false, true);
+    private static readonly byte[] IntegrityPropertyPrefix = Encoding.ASCII.GetBytes(",\"IntegritySha256\":\"");
+    private static readonly byte[] IntegrityPropertySuffix = Encoding.ASCII.GetBytes("\"}");
     private static readonly JsonSerializerOptions JsonOptions = new() {
         PropertyNamingPolicy = null,
         WriteIndented = false,
@@ -213,18 +215,9 @@ public sealed class AuthoritativeCohortStore : IDisposable
                     $"The cohort generation must be exactly {expectedGeneration}.");
 
             var payload = ToPayload(normalized);
-            var integrity = ComputeIntegrity(payload);
-            var persisted = new PersistedRoot(
-                payload.FormatVersion,
-                payload.Generation,
-                payload.Identity,
-                payload.Tick,
-                payload.NextEntityId,
-                payload.NextServerReceiptSequence,
-                payload.Participants,
-                payload.SerializedModuleState,
-                integrity);
-            var bytes = StrictUtf8.GetBytes(JsonSerializer.Serialize(persisted, JsonOptions));
+            var payloadBytes = JsonSerializer.SerializeToUtf8Bytes(payload, JsonOptions);
+            var integrity = ComputeIntegrity(payloadBytes);
+            var bytes = AppendIntegrityProperty(payloadBytes, integrity);
             var nextCachedBytes = bytes.ToArray();
             var nextCachedDocument = normalized;
             PublishAtomically(bytes);
@@ -770,9 +763,34 @@ public sealed class AuthoritativeCohortStore : IDisposable
     }
 
     private static string ComputeIntegrity(PersistedPayload payload)
-        => Convert.ToHexString(
-                SHA256.HashData(StrictUtf8.GetBytes(JsonSerializer.Serialize(payload, JsonOptions))))
-            .ToLowerInvariant();
+        => ComputeIntegrity(JsonSerializer.SerializeToUtf8Bytes(payload, JsonOptions));
+
+    private static string ComputeIntegrity(ReadOnlySpan<byte> payloadBytes)
+        => Convert.ToHexString(SHA256.HashData(payloadBytes)).ToLowerInvariant();
+
+    // PersistedPayload matches PersistedRoot's first eight properties in order;
+    // IntegritySha256 stays last so the legacy compact envelope is byte-identical.
+    private static byte[] AppendIntegrityProperty(ReadOnlySpan<byte> payloadBytes, string integrity)
+    {
+        if (payloadBytes.Length < 2 || payloadBytes[0] != (byte)'{' || payloadBytes[^1] != (byte)'}')
+            throw new InvalidOperationException("The persisted cohort payload is not a JSON object.");
+        if (!IsSha256(integrity))
+            throw new InvalidOperationException("The persisted cohort integrity is not canonical lowercase SHA-256.");
+
+        var payloadPrefixLength = payloadBytes.Length - 1;
+        var totalLength = checked(payloadPrefixLength + IntegrityPropertyPrefix.Length
+            + Sha256HexLength + IntegrityPropertySuffix.Length);
+        var result = new byte[totalLength];
+        var destination = result.AsSpan();
+        payloadBytes[..payloadPrefixLength].CopyTo(destination);
+        var offset = payloadPrefixLength;
+        IntegrityPropertyPrefix.AsSpan().CopyTo(destination[offset..]);
+        offset += IntegrityPropertyPrefix.Length;
+        Encoding.ASCII.GetBytes(integrity, destination[offset..]);
+        offset += Sha256HexLength;
+        IntegrityPropertySuffix.AsSpan().CopyTo(destination[offset..]);
+        return result;
+    }
 
     private static PersistedReceipt ToPersistedReceipt(CommandResult receipt)
         => new(
