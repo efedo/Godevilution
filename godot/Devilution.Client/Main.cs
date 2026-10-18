@@ -376,8 +376,11 @@ public partial class Main : Node2D
             foreach (var message in client.DrainMessages()) {
                 try {
                     model.Apply(message);
-                    if (message.Acknowledgement is { } acknowledgement)
+                    if (message.Acknowledgement is { } acknowledgement) {
+                        foreach (var result in acknowledgement.Results)
+                            heldEntityAttack.ObserveResult(result);
                         AcceptanceAcknowledgementObserver?.Invoke(acknowledgement.Clone());
+                    }
                     if (message.Snapshot is not null)
                         snapshotRevision++;
                 } catch (Exception exception) {
@@ -416,6 +419,7 @@ public partial class Main : Node2D
             model.PredictedPlayerPosition,
             client?.ServerTickRateHz ?? AuthoritativePresentationClock.DefaultTickRateHz,
             client?.IsConnected == true);
+        DriveHeldEntityAttack();
         TrySubmitPendingWorldInteraction();
         if (routeTravel.Next(model.Snapshot, model.LastCommandResult,
                 client?.IsConnected == true, client?.PendingCommandCount ?? 0) is { } routeStep) {
@@ -530,12 +534,33 @@ public partial class Main : Node2D
             world?.SetTargetPreview(target);
 
             if (mouse.ButtonIndex == MouseButton.Right) {
+                heldEntityAttack.Reset();
                 if (world?.CombatTargetEntityIdAt(target) is { } targetEntityId) {
-                    Queue(new Command {
+                    var activeClient = client!;
+                    var viewport = GetViewport();
+                    var capturedByGui = IsHeldEntityAttackGuiCaptured(viewport);
+                    var attackPlayer = model.Snapshot?.Players.FirstOrDefault();
+                    var canRepeat = activeClient.SupportsQueuedRangedAttacks
+                        && activeClient.PendingCommandCount == 0
+                        && !capturedByGui
+                        && attackPlayer is { Life: > 0, ActiveStoreId: 0, StashOpen: false };
+                    var beforeClick = model.Snapshot is { } currentSnapshot
+                        ? ObserveHeldEntityAttackState(activeClient, currentSnapshot) with { RightButtonHeld = true }
+                        : default;
+                    var sequence = Queue(new Command {
                         AttackRequested = new AttackRequested {
                             TargetEntityId = targetEntityId,
                         },
                     });
+                    if (canRepeat && beforeClick.PlayerEntityId != 0) {
+                        EnsureHeldEntityAttackFocusMonitor();
+                        heldEntityAttack.Begin(
+                            beforeClick.SessionGeneration,
+                            beforeClick.ConnectionAttemptEpoch,
+                            sequence,
+                            targetEntityId,
+                            beforeClick);
+                    }
                 } else {
                     hud?.SetStatus("No authoritative combat target at that tile.");
                 }
@@ -1004,6 +1029,8 @@ public partial class Main : Node2D
     private ulong Queue(Command command, Vector2I? predictedDirection = null, bool automaticInput = false)
     {
         if (!automaticInput) {
+            if (command.IntentCase != Command.IntentOneofCase.UseConsumableRequested)
+                heldEntityAttack.Release();
             routeTravel.Cancel("Travel cancelled by another action.");
             interactionTravel.Cancel();
         }

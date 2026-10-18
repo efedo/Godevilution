@@ -44,6 +44,16 @@ unsupported behavior is a migration gap, not permission for local simulation.
 
 ## Current delivery position and verification limits
 
+Opted-in native-depth Godot clients now repeat held right-button entity attacks
+with one outstanding action, server-ready gating and current visible targeting.
+Repeat cadence is snapshot/ACK paced; native-local throughput is not claimed.
+All 15 focused input lifecycle cases pass without skips, and the clean committed
+client dependency selection compiles. Actual R12 passes three held attack pairs
+and bounded release checks, then ends in L3 death (stopped6079, XP982). No L3
+kill, living checkpoint or fresh-host pass is claimed. Evidence:
+`.local/native-cathedral-run-20261016/l3-encounter-r12-held.log`. The four-floor
+gameplay gate remains open.
+
 Both managed TCP endpoints now set TCP_NODELAY before protocol traffic, matching
 native transport setup and its nonfatal socket-option errors. All 13 affected
 TCP framing, retry, reconnect, cancellation and backpressure checks pass without

@@ -2,6 +2,11 @@
 
 Notable changes to this fork are recorded below.
 
+- 2026-10-18: Add held right-button entity attacks for opted-in native-depth
+  clients, gated by server receipts and public action readiness. Release, focus
+  loss and session/player changes stop new inputs while preserving queued
+  commands and frozen retries. Other peers retain single-click behavior.
+
 - 2026-10-18: Match native TCP transport by disabling Nagle buffering on both
   authoritative endpoints before protocol traffic. Retain nonfatal socket-option
   errors, framing, reconnect and cancellation behavior.
