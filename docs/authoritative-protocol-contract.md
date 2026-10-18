@@ -100,6 +100,11 @@ its first dispatch, with the same two-second fallback. The queued command stays
 unfrozen during this wait and calculates its requested tick at dispatch. Explicit
 requested ticks and already transmitted retry identities retain their behavior.
 
+An admitted current-generation full snapshot restarts negotiated ordinary
+polling cadence, including handshake and command-response snapshots. Probes
+retain their independent cadence, and an unanswered requested full response
+retains its bounded retry. Queued input takes priority when registering a poll.
+
 Clock-gated cohort hosts arbitrate periodic simulation batches and command
 admission in FIFO order before entering the state lock. Admission samples the
 physical clock after acquiring that lock; scheduled results still cross the

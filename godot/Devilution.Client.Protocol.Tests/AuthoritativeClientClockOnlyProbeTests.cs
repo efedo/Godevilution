@@ -66,7 +66,18 @@ public sealed class AuthoritativeClientClockOnlyProbeTests
                 Snapshot = new Snapshot { Tick = command.RequestedTick },
             }, timeout.Token);
 
-            var snapshotRequest = await ReadEnvelopeAsync(stream, timeout.Token);
+            Envelope snapshotRequest;
+            while (true) {
+                snapshotRequest = await ReadEnvelopeAsync(stream, timeout.Token);
+                if (snapshotRequest.PayloadCase != Envelope.PayloadOneofCase.ClockProbeRequest)
+                    break;
+                await WriteEnvelopeAsync(stream, new Envelope {
+                    TimingReply = new TimingReply {
+                        RequestId = snapshotRequest.ClockProbeRequest.RequestId,
+                        ServerSchedulingClockTick = command.RequestedTick,
+                    },
+                }, timeout.Token);
+            }
             Assert.Equal(Envelope.PayloadOneofCase.SnapshotRequest, snapshotRequest.PayloadCase);
             Assert.Equal(0UL, snapshotRequest.SnapshotRequest.TimingRequestId);
             await WriteEnvelopeAsync(stream, new Envelope {
@@ -187,6 +198,72 @@ public sealed class AuthoritativeClientClockOnlyProbeTests
         await serverTask.WaitAsync(timeout.Token);
     }
 
+    [Fact]
+    public async Task IdentityRejectedSnapshotDoesNotResetSnapshotPollCadence()
+    {
+        using var timeout = CancellationTokenSource.CreateLinkedTokenSource(TestContext.Current.CancellationToken);
+        timeout.CancelAfter(TimeSpan.FromSeconds(8));
+        using var listener = new TcpListener(IPAddress.Loopback, 0);
+        listener.Start();
+        var invalidSnapshotSent = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var nextPollElapsed = new TaskCompletionSource<TimeSpan>(TaskCreationOptions.RunContinuationsAsynchronously);
+        var serverTask = Task.Run(async () => {
+            using var connection = await listener.AcceptTcpClientAsync(timeout.Token);
+            await using var stream = connection.GetStream();
+            await DispatchHandshakeAsync(stream, supportsClockOnlyProbes: true, timeout.Token);
+
+            // The handshake snapshot is the last valid receipt. Send a partial
+            // identity late in its interval; it must not move the poll baseline.
+            await Task.Delay(900, timeout.Token);
+            await WriteEnvelopeAsync(stream, new Envelope {
+                Snapshot = new Snapshot {
+                    Tick = 101,
+                    ContentManifestHash = "content-hash",
+                },
+            }, timeout.Token);
+            var stopwatch = System.Diagnostics.Stopwatch.StartNew();
+            invalidSnapshotSent.TrySetResult();
+
+            while (true) {
+                var envelope = await ReadEnvelopeAsync(stream, timeout.Token);
+                if (envelope.PayloadCase == Envelope.PayloadOneofCase.ClockProbeRequest) {
+                    await WriteEnvelopeAsync(stream, new Envelope {
+                        TimingReply = new TimingReply {
+                            RequestId = envelope.ClockProbeRequest.RequestId,
+                            ServerSchedulingClockTick = 100,
+                        },
+                    }, timeout.Token);
+                    continue;
+                }
+
+                Assert.Equal(Envelope.PayloadOneofCase.SnapshotRequest, envelope.PayloadCase);
+                Assert.Equal(0UL, envelope.SnapshotRequest.TimingRequestId);
+                nextPollElapsed.TrySetResult(stopwatch.Elapsed);
+                return;
+            }
+        }, timeout.Token);
+
+        const int pollIntervalMilliseconds = 1500;
+        await using var client = new AuthoritativeClient(
+            Options(listener, TimeSpan.FromMilliseconds(pollIntervalMilliseconds)));
+        await client.ConnectAsync(timeout.Token);
+        await invalidSnapshotSent.Task.WaitAsync(timeout.Token);
+
+        for (var attempt = 0; attempt < 300 && !serverTask.IsCompleted; attempt++) {
+            await client.PollAsync(timeout.Token);
+            await Task.Delay(10, timeout.Token);
+        }
+
+        await serverTask.WaitAsync(timeout.Token);
+        var elapsedAfterInvalid = await nextPollElapsed.Task;
+        Assert.True(
+            elapsedAfterInvalid < TimeSpan.FromMilliseconds(1200),
+            $"The poll should remain due from the last valid snapshot receipt; it arrived {elapsedAfterInvalid.TotalMilliseconds:F0} ms after the rejected identity snapshot.");
+        Assert.Contains(
+            client.DrainMessages(),
+            message => message.Error is { Code: ProtocolErrorCode.InvalidMessage } error
+                && error.Detail.Contains("incomplete ruleset identity", StringComparison.Ordinal));
+    }
     [Fact]
     public async Task NegotiatedSnapshotPollDoesNotQueueDuplicatesWhileResponseIsDelayed()
     {

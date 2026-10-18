@@ -158,6 +158,162 @@ public sealed class AuthoritativeClientSchedulingClockAdmissionTests
     }
 
     [Fact]
+    public async Task FullSnapshotRefreshRestartsPollIntervalAndAllowsImmediateRealtimeCommand()
+    {
+        using var timeout = CancellationTokenSource.CreateLinkedTokenSource(
+            TestContext.Current.CancellationToken);
+        timeout.CancelAfter(TimeSpan.FromSeconds(12));
+
+        const int pollIntervalMilliseconds = 300;
+        var pollInterval = TimeSpan.FromMilliseconds(pollIntervalMilliseconds);
+        var clock = new ControlledAuthoritativeClock();
+        var adapter = new AdmissionTestAdapter(holdSecondSnapshot: true);
+        var commandServer = new AuthoritativeCommandServer(adapter);
+        var identityHash = new string('d', 64);
+        var identity = new ProtocolServerIdentity(
+            "snapshot-refresh-cadence-test",
+            ProtocolSchemaVersions.IndependentContentAndRulesetIdentity,
+            identityHash,
+            20) {
+            RulesetIdentityHash = identityHash,
+        };
+        await using var server = new AuthoritativeTcpServer(
+            commandServer,
+            new ProtocolHandshake(identity),
+            clock,
+            adapter,
+            address: IPAddress.Loopback) {
+            UseClockGatedCommandScheduling = true,
+        };
+        server.Start();
+
+        var recorder = new AuthoritativeClientCommandTimingRecorder();
+        await using var client = new AuthoritativeClient(new ClientConnectionOptions(
+            "127.0.0.1",
+            server.Port,
+            "snapshot-refresh-cadence-test",
+            identity.ProtocolSchemaVersion,
+            identity.ContentManifestHash,
+            identity.RulesetIdentityHash) {
+            SnapshotPollInterval = pollInterval,
+            MinimumRetryTimeout = TimeSpan.FromSeconds(1),
+            MaximumRetryTimeout = TimeSpan.FromSeconds(2),
+        }) {
+            CommandTimingRecorder = recorder,
+        };
+
+        Task? connectTask = null;
+        try {
+            connectTask = client.ConnectAsync(timeout.Token);
+            await adapter.InitialSnapshotEntered.Task.WaitAsync(timeout.Token);
+            adapter.ReleaseInitialSnapshot();
+            await connectTask;
+            connectTask = null;
+
+            var initial = Assert.Single(client.DrainMessages());
+            var model = new AuthoritativeClientModel();
+            model.Apply(initial);
+            Assert.Equal(0UL, model.CurrentTick);
+
+            await client.PollAsync(timeout.Token);
+            await Task.Delay(TimeSpan.FromMilliseconds(50), timeout.Token);
+            Assert.Equal(1, adapter.SnapshotCallCount);
+
+            // Let the handshake snapshot's ordinary refresh interval expire,
+            // then hold a real server response to the ensuing idle poll.
+            await Task.Delay(pollInterval + TimeSpan.FromMilliseconds(100), timeout.Token);
+            clock.Set(1000);
+            await adapter.AdvancedToPhysicalTick.Task.WaitAsync(timeout.Token);
+            await client.PollAsync(timeout.Token);
+            var capturedRefresh = await adapter.SecondSnapshotEntered.Task.WaitAsync(timeout.Token);
+            Assert.Equal(1000UL, capturedRefresh.Tick);
+            await WaitUntilAsync(
+                () => recorder.CaptureReport().ProbeOutcomes.Any(outcome =>
+                    outcome.Outcome == AuthoritativeClientProbeOutcome.Reply),
+                timeout.Token,
+                "the scheduling-clock sample accompanying the full snapshot refresh");
+
+            // The response arrives after the interval measured from request
+            // transmission. Its receipt must start a fresh ordinary-poll interval.
+            await Task.Delay(pollInterval + TimeSpan.FromMilliseconds(150), timeout.Token);
+            adapter.ReleaseSecondSnapshot();
+            var refreshed = await WaitForSnapshotAsync(client, model, timeout.Token);
+            Assert.Equal(1000UL, refreshed.Tick);
+            Assert.Equal(2, adapter.SnapshotCallCount);
+            var snapshotsAfterRefresh = recorder.CaptureReport().Snapshots.Count;
+            Assert.Equal(2, snapshotsAfterRefresh);
+
+            await client.PollAsync(timeout.Token);
+            await Task.Delay(TimeSpan.FromMilliseconds(50), timeout.Token);
+            Assert.Equal(2, adapter.SnapshotCallCount);
+
+            // A command queued immediately after the refresh is dispatched on
+            // its normal path and is accepted by the live clock-gated host.
+            var sequence = client.QueueRealtime(
+                new Command { MoveRequested = new MoveRequested { DirectionX = 1 } },
+                model.CurrentTick);
+            await client.PollAsync(timeout.Token);
+            AuthoritativeClientCommandTiming? dispatch = null;
+            await WaitUntilAsync(
+                () => {
+                    dispatch = recorder.CaptureReport().Commands.SingleOrDefault(command =>
+                        command.ClientSequence == sequence
+                        && command.DispatchKind == AuthoritativeClientCommandDispatchKind.FirstDispatch);
+                    return dispatch is not null;
+                },
+                timeout.Token,
+                "the realtime command queued after the refreshed snapshot");
+            Assert.NotNull(dispatch);
+            await WaitUntilAsync(
+                () => server.PendingCommandCount == 1,
+                timeout.Token,
+                "the host to queue the immediate realtime command");
+            Assert.Equal(2, adapter.SnapshotCallCount);
+
+            clock.Set(dispatch.RequestedTick);
+            var execution = await adapter.CommandExecuted.Task.WaitAsync(timeout.Token);
+            var acknowledgement = await WaitForAcknowledgementAsync(client, sequence, timeout.Token);
+            Assert.Equal(CommandStatus.Accepted, acknowledgement.Status);
+            Assert.Equal(CommandRejectReason.Unspecified, acknowledgement.RejectReason);
+            Assert.Equal(dispatch.RequestedTick, acknowledgement.AppliedTick);
+            Assert.Equal(dispatch.RequestedTick, execution.AppliedTick);
+            Assert.Equal(sequence, execution.ClientSequence);
+            Assert.Equal(1, adapter.ExecutedCommandCount);
+
+            await WaitUntilAsync(
+                () => adapter.SnapshotCallCount == 3
+                    && recorder.CaptureReport().Snapshots.Count > snapshotsAfterRefresh,
+                timeout.Token,
+                "the full snapshot following the accepted command");
+
+            await client.PollAsync(timeout.Token);
+            await Task.Delay(TimeSpan.FromMilliseconds(50), timeout.Token);
+            Assert.Equal(3, adapter.SnapshotCallCount);
+
+            // Once idle, the client resumes full refreshes after the configured
+            // interval instead of suppressing them indefinitely.
+            await Task.Delay(pollInterval + TimeSpan.FromMilliseconds(100), timeout.Token);
+            var snapshotsBeforeIdleRefresh = recorder.CaptureReport().Snapshots.Count;
+            await client.PollAsync(timeout.Token);
+            await WaitUntilAsync(
+                () => adapter.SnapshotCallCount == 4
+                    && recorder.CaptureReport().Snapshots.Count > snapshotsBeforeIdleRefresh,
+                timeout.Token,
+                "the next idle full snapshot refresh after the configured interval");
+        } finally {
+            adapter.ReleaseInitialSnapshot();
+            adapter.ReleaseSecondSnapshot();
+            if (connectTask is not null) {
+                try {
+                    await connectTask.WaitAsync(TimeSpan.FromSeconds(2));
+                } catch {
+                    // Preserve the assertion or timeout that led to cleanup.
+                }
+            }
+        }
+    }
+
+    [Fact]
     public async Task FirstRealtimeDispatchUsesBoundedFallbackWhenFullSnapshotNeverArrives()
     {
         using var timeout = CancellationTokenSource.CreateLinkedTokenSource(

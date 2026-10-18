@@ -34,6 +34,8 @@ public sealed class AuthoritativeClient : IAsyncDisposable
     private int transportConnected;
     private ulong nextClientSequence;
     private long lastSnapshotRequestMs;
+    private long lastSnapshotReceiptMs;
+    private long lastSnapshotReceiptGeneration;
     private long? negotiatedSnapshotRequestSentMs;
     private long negotiatedSnapshotRequestGeneration;
     private long nextNegotiatedSnapshotRequestToken;
@@ -234,6 +236,7 @@ public sealed class AuthoritativeClient : IAsyncDisposable
             lock (pendingLock)
                 nextClientSequence = Math.Max(nextClientSequence, hello.ServerHello.LastClientSequence);
             Enqueue(initialSnapshot);
+            var initialSnapshotReceiptMs = clock.ElapsedMilliseconds;
             var connectedStream = stream;
             var connectionLifetime = CancellationTokenSource.CreateLinkedTokenSource(lifetime.Token);
             var connectionGeneration = Interlocked.Increment(ref transportGeneration);
@@ -247,6 +250,13 @@ public sealed class AuthoritativeClient : IAsyncDisposable
                 negotiatedPostAckSnapshotGeneration = connectionGeneration;
                 negotiatedPostAckSnapshotAppliedTick = null;
                 negotiatedPostAckSnapshotObservedMs = null;
+                if (supportsClockOnlyProbes && IsClockGatedCommandScheduling) {
+                    lastSnapshotReceiptMs = initialSnapshotReceiptMs;
+                    lastSnapshotReceiptGeneration = connectionGeneration;
+                } else {
+                    lastSnapshotReceiptMs = 0;
+                    lastSnapshotReceiptGeneration = 0;
+                }
                 timingCalibrationReady = commandSchedulingMode != CommandSchedulingMode.ClockGated;
                 lastTimingProbeRequestMs = null;
                 timingCalibrationProbeAttempts = 0;
@@ -503,14 +513,9 @@ public sealed class AuthoritativeClient : IAsyncDisposable
             now = clock.ElapsedMilliseconds;
             if (supportsClockOnlyProbes && IsClockGatedCommandScheduling) {
                 var currentGeneration = Volatile.Read(ref transportGeneration);
-                var snapshotRetryDue = IsNegotiatedSnapshotRequestRetryDue(now, currentGeneration);
-                var acknowledgementSnapshotPending
-                    = IsNegotiatedPostAckSnapshotPending(now, currentGeneration);
-                var snapshotPollDue = !acknowledgementSnapshotPending
-                    && !forceTimingProbe
+                var snapshotPollDue = !forceTimingProbe
                     && !hasPendingCommands
-                    && (now - lastSnapshotRequestMs >= options.SnapshotPollInterval.TotalMilliseconds
-                        || snapshotRetryDue)
+                    && IsNegotiatedSnapshotPollDue(now, currentGeneration)
                     && !attemptedCommandDispatch;
                 if (forceTimingProbe || (!hasPendingCommands && !attemptedCommandDispatch))
                     await TrySendTimingProbeAsync(forceTimingProbe, cancellationToken);
@@ -524,14 +529,7 @@ public sealed class AuthoritativeClient : IAsyncDisposable
                         await WriteEnvelopeAsync(() => {
                             lock (pendingLock) {
                                 var sentAt = clock.ElapsedMilliseconds;
-                                if (negotiatedPostAckSnapshotGeneration == currentGeneration
-                                    && negotiatedPostAckSnapshotAppliedTick.HasValue
-                                    && negotiatedPostAckSnapshotObservedMs is { } acknowledgementObservedAt
-                                    && sentAt - acknowledgementObservedAt < TimingProbeTimeout.TotalMilliseconds)
-                                    return null;
-                                if (negotiatedSnapshotRequestSentMs is { } previousSentAt
-                                    && negotiatedSnapshotRequestGeneration == currentGeneration
-                                    && sentAt - previousSentAt < TimingProbeTimeout.TotalMilliseconds)
+                                if (!IsNegotiatedSnapshotPollDueLocked(sentAt, currentGeneration))
                                     return null;
 
                                 var nextToken = unchecked(nextNegotiatedSnapshotRequestToken + 1);
@@ -700,23 +698,47 @@ public sealed class AuthoritativeClient : IAsyncDisposable
         }
     }
 
-    private bool IsNegotiatedSnapshotRequestRetryDue(long now, long generation)
+    private bool IsNegotiatedSnapshotPollDue(long now, long generation)
     {
-        lock (pendingLock) {
-            if (negotiatedSnapshotRequestSentMs is not { } sentAt)
-                return false;
-            return negotiatedSnapshotRequestGeneration != generation
-                || now - sentAt >= TimingProbeTimeout.TotalMilliseconds;
-        }
+        lock (pendingLock)
+            return IsNegotiatedSnapshotPollDueLocked(now, generation);
     }
 
-    private bool IsNegotiatedPostAckSnapshotPending(long now, long generation)
+    private bool IsNegotiatedSnapshotPollDueLocked(long now, long generation)
     {
+        if (generation != Volatile.Read(ref transportGeneration) || pending.Count > 0)
+            return false;
+        if (negotiatedPostAckSnapshotGeneration == generation
+            && negotiatedPostAckSnapshotAppliedTick.HasValue
+            && negotiatedPostAckSnapshotObservedMs is { } acknowledgementObservedAt
+            && now - acknowledgementObservedAt < TimingProbeTimeout.TotalMilliseconds)
+            return false;
+        if (negotiatedSnapshotRequestSentMs is { } previousSentAt
+            && negotiatedSnapshotRequestGeneration == generation
+            && now - previousSentAt < TimingProbeTimeout.TotalMilliseconds)
+            return false;
+
+        var retryDue = negotiatedSnapshotRequestSentMs is { } sentAt
+            && (negotiatedSnapshotRequestGeneration != generation
+                || now - sentAt >= TimingProbeTimeout.TotalMilliseconds);
+        var cadenceBaseline = lastSnapshotRequestMs;
+        if (lastSnapshotReceiptGeneration == generation)
+            cadenceBaseline = Math.Max(cadenceBaseline, lastSnapshotReceiptMs);
+        return retryDue
+            || now - cadenceBaseline >= options.SnapshotPollInterval.TotalMilliseconds;
+    }
+
+    private void RecordNegotiatedSnapshotReceipt(long generation)
+    {
+        if (!supportsClockOnlyProbes || !IsClockGatedCommandScheduling)
+            return;
+
+        var receivedAt = clock.ElapsedMilliseconds;
         lock (pendingLock) {
-            return negotiatedPostAckSnapshotGeneration == generation
-                && negotiatedPostAckSnapshotAppliedTick.HasValue
-                && negotiatedPostAckSnapshotObservedMs is { } acknowledgementObservedAt
-                && now - acknowledgementObservedAt < TimingProbeTimeout.TotalMilliseconds;
+            if (generation != Volatile.Read(ref transportGeneration))
+                return;
+            lastSnapshotReceiptMs = receivedAt;
+            lastSnapshotReceiptGeneration = generation;
         }
     }
 
@@ -872,6 +894,7 @@ public sealed class AuthoritativeClient : IAsyncDisposable
             return;
         if (envelope.PayloadCase == Envelope.PayloadOneofCase.Snapshot) {
             if (connectionGeneration is { } snapshotGeneration) {
+                RecordNegotiatedSnapshotReceipt(snapshotGeneration);
                 CompleteNegotiatedSnapshotRequest(snapshotGeneration);
                 CompleteNegotiatedPostAckSnapshot(snapshotGeneration, envelope.Snapshot.Tick);
             }

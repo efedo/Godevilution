@@ -9,6 +9,8 @@ Notable changes to this fork are recorded below.
   its dispatch tick freshly; retries preserve their original identity.
   Give periodic cohort batches and queued command admission FIFO turns before
   the authority lock, retaining durable publication and post-lock tick sampling.
+  Count delivered full snapshots toward negotiated polling cadence and give
+  queued input priority when registering another ordinary snapshot request.
 
 - 2026-10-16: Integrate an explicit native Town/L1/L2 first-entry route with
   lazy per-floor native owners and opt-in cohort v9 mutation retention, preserving
