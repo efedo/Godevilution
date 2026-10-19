@@ -101,6 +101,21 @@ isolated engine/stage is 4.7.2. Use the [Godot](ai/godot-build.md) and
 before native builds. Serialize shared builds and run commands/write outputs
 under `D:\Programming`.
 
+The repository trees are `godot-client/` and `legacy-native/` after rename
+commit `aea715e63`; native compatibility work remains active. The rename build
+and its three pre-existing launcher-contract mismatches are recorded in
+[test history](test-history.md#2026-10-18--repository-directory-rename).
+
+Cleanup reclaimed about 17.2 GiB of old runs, exports, reports and generated
+build output. `.managed-test` was removed; `.tmp` retains loose source/script/
+patch files. `.devcontainer`, current profile/environment inputs, reusable
+Godot export templates and unique experimental sources were retained.
+The retained native caches are `build/x64-Debug` and
+`build/x64-Debug-authoritative-vcpkg`. Reconfigure `build/x64-Debug` for the new
+source paths before its next build; the authoritative-vcpkg cache already
+passed the rename build. Historical local run paths may no longer exist; use
+the current input entry points below and existing source-based verification.
+
 Continue headlessly. No computer-use tools, GUI, visible applications or renewed
 overnight schedule are requested. Do not reset, bulk commit, expose tokens or
 change security settings. Push only on explicit user instruction. Ordinary source work, including Main.cs and

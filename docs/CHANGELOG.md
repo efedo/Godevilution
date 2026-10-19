@@ -7,6 +7,9 @@ contracts stay in their existing guides.
 
 ## 2026-10-18
 
+- Refresh the clean-session handoff for the renamed trees and completed local
+  artifact cleanup (about 17.2 GiB); retain current inputs, build caches and
+  unique sources while preserving gameplay WIP.
 - Rename `godot/` to `godot-client/` and `Source/` to `legacy-native/`; update
   build, launcher, CI, test, translation and documentation paths. Keep runtime
   identities, session directories and existing gameplay work unchanged.

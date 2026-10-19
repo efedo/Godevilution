@@ -15,6 +15,19 @@ guides. Implementation history is in [CHANGELOG.md](../CHANGELOG.md); verificati
 history is in [test-history.md](../test-history.md). Read only the history relevant
 to the next decision; do not repeat its tests merely to rebuild context.
 
+## Repository layout and cleanup
+
+The folder rename is committed as `aea715e63`: the Godot tree is now
+`godot-client/` and the C++ compatibility runtime is `legacy-native/`.
+Use these paths in source, build and launcher work; the gameplay baseline above
+is unchanged.
+
+Generated-output cleanup reclaimed about 17.2 GiB. Old local run/export/report
+archives and temporary builds were removed; current inputs, build caches and
+unique sources/scripts/patches remain. Do not assume historical `.local` run
+paths exist. See [working environment](../migration-status.md#working-environment-and-authority)
+for retained caches and input entry points. Gameplay WIP remains uncommitted.
+
 ## First task
 
 The detailed numbered inventory and near-term work plan are prepared. Read the
