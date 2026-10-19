@@ -9,6 +9,28 @@ the referenced test sources. Do not copy raw outputs into historical archives.
 
 ## Client and host verification
 
+### 2026-10-19 — native class admission
+
+Both canonical native class captures repeat byte-for-byte. Their two managed
+full-world/RNG comparisons pass; the compatible Rogue fixture also passes.
+The checked MSVC target, module/server projects and staged Godot client build.
+All 43 focused C# cases pass: parser/factory/CLI, class-bound floor/restore,
+route/settlement and launcher/evidence checks. Both staged positional contracts
+pass. Legacy Rogue compilation matches all 82 retained profile files exactly.
+
+The staged candidate's headless Warrior and Sorcerer Journey/Resume pairs pass
+with Godot 4.7.2, excluding the preserved vision/preview experiments. They prove
+generated kills/XP, natural buckler wear/Repair or staff charge/learned mana use
+and Recharge, then exact pre-input player/items/grid/resources/world/RNG/cursor
+restore, the next accepted receipt, distinct fresh hosts and terminal owned exits.
+Independent review has no remaining findings. Full campaigns/rendering stay open.
+
+Evidence: native `D:\Programming\Godevilution-evidence-native-classes-a0942ed598104a3fa7b39aaf373f743e`;
+class profiles `.local/native-classes-20261019/{warrior,sorcerer}`;
+Warrior session `native-class-warrior-0aeffeac50e54c4887ceafd519c31acf`;
+Sorcerer session `native-class-sorcerer-2da1fdc7f0de433f8bc62dc9517dc986`.
+Earlier working-tree bot diagnostics are not acceptance of the staged candidate.
+
 ### 2026-10-19 — session-flow consolidation
 
 The server test project, protocol-test project and isolated Godot client build.

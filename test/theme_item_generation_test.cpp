@@ -6,7 +6,10 @@
 #include <filesystem>
 #include <fstream>
 #include <iomanip>
+#include <limits>
+#include <list>
 #include <memory>
+#include <optional>
 #include <sstream>
 #include <string>
 #include <string_view>
@@ -19,6 +22,8 @@
 #include "application/headless_mode.hpp"
 #include "engine/audio/sound.h"
 #include "engine/assets.hpp"
+#include "engine/cursor.h"
+#include "engine/load/load_cel.hpp"
 #include "engine/load/load_clx.hpp"
 #include "engine/load/load_file.hpp"
 #include "engine/lighting.h"
@@ -37,6 +42,7 @@
 #include "game/objects/objects.hpp"
 #include "game/objects/object_pool.hpp"
 #include "game/players/players.hpp"
+#include "game/players/inventory.hpp"
 #include "game/portals/portal.hpp"
 #include "game/quests/quests.hpp"
 #include "network/protocol/msg.h"
@@ -46,6 +52,7 @@
 #include "tables/leveldat.h"
 #include "tables/misdat.h"
 #include "tables/playerdat.hpp"
+#include "utils/parse_int.hpp"
 #include "utils/language.h"
 
 namespace devilution {
@@ -1343,7 +1350,7 @@ struct NativeThemeRoomGuard {
 
 class ThemeRoomGenerationTest : public ThemeItemPlacementTest {
 protected:
-	void CapturePopulationOracle(const char *directory, bool freshLoadOrder, bool levelReady = false);
+	void CapturePopulationOracle(const char *directory, bool freshLoadOrder, bool levelReady = false, bool nativeRogueRoute = false, std::optional<HeroClass> nativeClassRoute = std::nullopt);
 
 	void SetUp() override
 	{
@@ -2429,7 +2436,147 @@ void WriteLevelReadyState(std::ostream &out)
 	});
 }
 
-void ThemeRoomGenerationTest::CapturePopulationOracle(const char *directory, bool freshLoadOrder, bool levelReady)
+#ifndef UNPACKED_MPQS
+std::optional<std::vector<uint16_t>> ReadCursorWidthsForNativeOracle(std::string_view path, std::string &error)
+{
+	auto asset = LoadAsset(path);
+	if (!asset.has_value()) {
+		error = asset.error();
+		return std::nullopt;
+	}
+	std::string_view text = static_cast<std::string_view>(asset.value());
+	std::vector<uint16_t> widths;
+	while (!text.empty()) {
+		const char *end;
+		const ParseIntResult<uint16_t> parsed = ParseInt<uint16_t>(text, std::numeric_limits<uint16_t>::min(),
+		    std::numeric_limits<uint16_t>::max(), &end);
+		if (!parsed.has_value() || end == text.data()) {
+			error = "Cursor width asset contains an invalid width.";
+			return std::nullopt;
+		}
+		widths.push_back(parsed.value());
+		text.remove_prefix(static_cast<size_t>(end - text.data()));
+		while (!text.empty() && (text.front() == '\r' || text.front() == '\n'))
+			text.remove_prefix(1);
+	}
+	if (widths.empty()) {
+		error = "Cursor width asset is empty.";
+		return std::nullopt;
+	}
+	return widths;
+}
+#endif
+
+std::optional<std::string> WriteNativeRogueInventoryFootprints(const std::filesystem::path &root)
+{
+	std::optional<OwnedClxSpriteList> primarySpritesStorage;
+	std::optional<OwnedClxSpriteList> secondarySprites;
+#ifdef UNPACKED_MPQS
+	auto primaryResult = LoadClxWithStatus("data\\inv\\objcurs.clx");
+	if (!primaryResult.has_value())
+		return primaryResult.error();
+	primarySpritesStorage.emplace(std::move(primaryResult.value()));
+	if (FindAsset("data\\inv\\objcurs2.clx").ok()) {
+		auto secondaryResult = LoadClxWithStatus("data\\inv\\objcurs2.clx");
+		if (!secondaryResult.has_value())
+			return secondaryResult.error();
+		secondarySprites.emplace(std::move(secondaryResult.value()));
+	}
+#else
+	std::string loadError;
+	auto primaryWidths = ReadCursorWidthsForNativeOracle("data\\inv\\objcurs-widths.txt", loadError);
+	if (!primaryWidths.has_value())
+		return loadError;
+	auto primaryResult = LoadCelWithStatus("data\\inv\\objcurs", primaryWidths->data());
+	if (!primaryResult.has_value())
+		return primaryResult.error();
+	primarySpritesStorage.emplace(std::move(primaryResult.value()));
+	if (FindAsset("data\\inv\\objcurs2-widths.txt").ok()) {
+		auto secondaryWidths = ReadCursorWidthsForNativeOracle("data\\inv\\objcurs2-widths.txt", loadError);
+		if (!secondaryWidths.has_value())
+			return loadError;
+		auto secondaryResult = LoadCelWithStatus("data\\inv\\objcurs2", secondaryWidths->data());
+		if (!secondaryResult.has_value())
+			return secondaryResult.error();
+		secondarySprites.emplace(std::move(secondaryResult.value()));
+	}
+#endif
+	if (!primarySpritesStorage.has_value())
+		return "The primary native item cursor sprite list is unavailable.";
+	const OwnedClxSpriteList &primarySprites = *primarySpritesStorage;
+	const uint32_t primarySpriteCount = primarySprites.numSprites();
+	std::vector<bool> emitted(AllItemsList.size(), false);
+	const std::filesystem::path path = root / "native-rogue-l1-inventory.tsv";
+	std::ofstream table(path, std::ios::binary | std::ios::trunc);
+	if (!table.good())
+		return "Unable to create the native Rogue inventory footprint sidecar.";
+	table << "native_item_index\tnative_cursor_id\tpixel_width\tpixel_height\tinventory_width\tinventory_height\r\n";
+	const int firstItemCursor = static_cast<int>(CURSOR_FIRSTITEM);
+	for (size_t index = 0; index < AllItemsList.size(); ++index) {
+		const ItemData &item = AllItemsList[index];
+		if (!IsItemAvailable(static_cast<int>(index)) || item.itype == ItemType::None || item.iCurs == ICURS_DEFAULT)
+			continue; // Explicit unavailable rows do not have a selectable cursor footprint.
+		const int cursorId = firstItemCursor + static_cast<int>(item.iCurs);
+		uint16_t pixelWidth;
+		uint16_t pixelHeight;
+		if (cursorId <= 0)
+			return "A selectable native item has a non-positive cursor id.";
+		if (static_cast<uint32_t>(cursorId) <= primarySpriteCount) {
+			const ClxSprite sprite = primarySprites[static_cast<size_t>(cursorId - 1)];
+			pixelWidth = sprite.width();
+			pixelHeight = sprite.height();
+		} else if (secondarySprites.has_value()
+		    && static_cast<uint32_t>(cursorId) - primarySpriteCount <= secondarySprites->numSprites()) {
+			const ClxSprite sprite = (*secondarySprites)[static_cast<size_t>(static_cast<uint32_t>(cursorId) - primarySpriteCount - 1)];
+			pixelWidth = sprite.width();
+			pixelHeight = sprite.height();
+		} else {
+			return "A selectable native item cursor has no loaded sprite.";
+		}
+		if (pixelWidth == 0 || pixelHeight == 0)
+			return "A selectable native item cursor has an empty sprite.";
+		const int inventoryWidth = pixelWidth / InventorySlotSizeInPixels.width;
+		const int inventoryHeight = pixelHeight / InventorySlotSizeInPixels.height;
+		if (inventoryWidth <= 0 || inventoryHeight <= 0)
+			return "A selectable native item cursor is smaller than one inventory cell.";
+		table << index << '\t' << cursorId << '\t' << pixelWidth << '\t' << pixelHeight << '\t'
+		      << inventoryWidth << '\t' << inventoryHeight << "\r\n";
+		emitted[index] = true;
+	}
+	if (std::none_of(emitted.begin(), emitted.end(), [](bool value) { return value; }))
+		return "The native Rogue inventory footprint sidecar contains no selectable items.";
+	const auto requireItem = [&](const Item &item, std::string_view source) -> std::optional<std::string> {
+		if (item.isEmpty())
+			return std::nullopt;
+		const int index = static_cast<int>(item.IDidx);
+		if (index < 0 || static_cast<size_t>(index) >= emitted.size() || !emitted[static_cast<size_t>(index)])
+			return std::string("A native Rogue ") + std::string(source) + " item has no selectable cursor footprint.";
+		return std::nullopt;
+	};
+	for (uint8_t itemId : ItemPoolAdapter::ActiveItemIds()) {
+		if (const auto error = requireItem(Items[itemId], "L1 ground"))
+			return error;
+	}
+	if (MyPlayer != nullptr) {
+		for (const Item &item : MyPlayer->InvBody)
+			if (const auto error = requireItem(item, "owned equipment")) return error;
+		if (MyPlayer->_pNumInv < 0 || MyPlayer->_pNumInv > InventoryGridCells)
+			return "The native Rogue inventory count is outside its fixed capacity.";
+		for (int index = 0; index < MyPlayer->_pNumInv; ++index)
+			if (const auto error = requireItem(MyPlayer->InvList[index], "owned inventory")) return error;
+		for (const Item &item : MyPlayer->SpdList)
+			if (const auto error = requireItem(item, "owned belt")) return error;
+		if (const auto error = requireItem(MyPlayer->HoldItem, "owned cursor"))
+			return error;
+	}
+	table.flush();
+	if (!table.good())
+		return "Writing the native Rogue inventory footprint sidecar failed.";
+	table.close();
+	return std::nullopt;
+}
+
+void ThemeRoomGenerationTest::CapturePopulationOracle(const char *directory, bool freshLoadOrder, bool levelReady, bool nativeRogueRoute, std::optional<HeroClass> nativeClassRoute)
 {
 	if (directory == nullptr || !*directory) GTEST_SKIP() << "Select private upstream Cathedral population explicitly.";
 	const auto root = std::filesystem::weakly_canonical(directory);
@@ -2469,16 +2616,28 @@ void ThemeRoomGenerationTest::CapturePopulationOracle(const char *directory, boo
 	ASSERT_TRUE(LoadLevelSOLData().has_value()); ASSERT_TRUE(CurrentLightManager.LoadTrns().has_value());
 	CurrentLightManager.MakeLightTable(); LoadLevelGenerationData();
 	if (freshLoadOrder) LoadPlayerDataFiles();
-	const char *fileName = levelReady ? "native-level-ready.json" : (freshLoadOrder ? "native-fresh-population.json" : "native-full-population.json");
+	// New class tuples use actual native character creation, independently of the
+	// managed profile. The historical prepared Rogue tuple remains unchanged.
+	Player canonicalHero;
+	if (nativeClassRoute.has_value()) {
+		ASSERT_TRUE(*nativeClassRoute == HeroClass::Warrior || *nativeClassRoute == HeroClass::Sorcerer);
+		canonicalHero.create(*nativeClassRoute);
+	}
+	const bool playableRoute = nativeRogueRoute || nativeClassRoute.has_value();
+	const int maximumLife = nativeClassRoute.has_value() ? canonicalHero.life.maximumBase : nativeRogueRoute ? 2880 : freshLoadOrder ? 6400 : 64;
+	const int maximumMana = nativeClassRoute.has_value() ? canonicalHero.mana.maximumBase : nativeRogueRoute ? 1440 : freshLoadOrder ? 3200 : 0;
+	const int lightRadius = nativeClassRoute.has_value() ? canonicalHero._pLightRad : 8;
+	const char *fileName = nativeClassRoute.has_value() ? "native-class-l1-population.json" : nativeRogueRoute ? "native-rogue-l1-population.json" : levelReady ? "native-level-ready.json" : (freshLoadOrder ? "native-fresh-population.json" : "native-full-population.json");
 	std::ofstream stream(root / fileName, std::ios::binary | std::ios::trunc); ASSERT_TRUE(stream.good());
 	int cases = 0, multiRoomCases = 0;
 	{
-		JsonObject document(stream); document.String("format", levelReady ? "godevilution-cathedral-level-ready" : (freshLoadOrder ? "godevilution-cathedral-fresh-population" : "godevilution-cathedral-full-population")); document.Number("version", 1);
-		document.String("policy", levelReady ? "fresh-cold-original-diablo-single-player-normal-post-theme-through-light-vision-before-join" : (freshLoadOrder ? "fresh-cold-original-diablo-single-player-normal-clear-before-createlevel-through-createthemerooms" : "controlled-original-diablo-single-player-normal-post-createlevel-through-createthemerooms"));
-		document.Number("playerMaximumLife", freshLoadOrder ? 6400 : 64); document.Number("playerMaximumMana", freshLoadOrder ? 3200 : 0);
+		JsonObject document(stream); document.String("format", nativeClassRoute.has_value() ? "godevilution-cathedral-native-class-l1" : nativeRogueRoute ? "godevilution-cathedral-native-rogue-l1" : levelReady ? "godevilution-cathedral-level-ready" : (freshLoadOrder ? "godevilution-cathedral-fresh-population" : "godevilution-cathedral-full-population")); document.Number("version", 1);
+		document.String("policy", nativeClassRoute.has_value() ? "fresh-cold-original-diablo-class-l1-main-seed2588" : nativeRogueRoute ? "fresh-cold-original-diablo-rogue-l1-main-seed2588" : levelReady ? "fresh-cold-original-diablo-single-player-normal-post-theme-through-light-vision-before-join" : (freshLoadOrder ? "fresh-cold-original-diablo-single-player-normal-clear-before-createlevel-through-createthemerooms" : "controlled-original-diablo-single-player-normal-post-createlevel-through-createthemerooms"));
+		document.Number("playerMaximumLife", maximumLife); document.Number("playerMaximumMana", maximumMana);
+		if (nativeClassRoute.has_value()) document.Number("playerClassId", static_cast<int>(*nativeClassRoute));
 		if (freshLoadOrder) {
-			document.Number("playerLightRadius", 8); document.Number("storySeed", UINT32_C(0x13579BDF));
-			document.Key("playerFuture"); WriteRoomPoint(stream, { 75, 68 });
+			document.Number("playerLightRadius", lightRadius); document.Number("storySeed", UINT32_C(0x13579BDF));
+			document.Key("playerFuture"); WriteRoomPoint(stream, playableRoute ? Point { 57, 40 } : Point { 75, 68 });
 			document.Boolean("playerLevelChanging", true);
 		}
 		if (levelReady) {
@@ -2494,6 +2653,7 @@ void ThemeRoomGenerationTest::CapturePopulationOracle(const char *directory, boo
 		document.Key("cases"); stream << '[';
 		for (int depth = 1; depth <= 4; ++depth) for (const uint32_t seed : { UINT32_C(2588), UINT32_C(743271966) })
 			for (const lvl_entry entry : { ENTRY_MAIN, ENTRY_PREV }) {
+				if (playableRoute && (depth != 1 || seed != UINT32_C(2588) || entry != ENTRY_MAIN)) continue;
 				FreeMonsters(); InitializeObjectPool(); ObjectPoolAdapter::ResetLegacyObjectPools();
 				for (int slot = 0; slot < MAXOBJECTS; ++slot) Objects[slot] = {};
 				for (auto &type : LevelBestiary.types) type = {};
@@ -2514,13 +2674,14 @@ void ThemeRoomGenerationTest::CapturePopulationOracle(const char *directory, boo
 				for (Tile &tile : tiles()) { tile.setObject(0); tile.setMonster(0); tile.setPlayer(0); tile.setItem(0); }
 				currentLevel().setId(LevelId { .levelNum = static_cast<uint8_t>(depth), .type = DTYPE_CATHEDRAL });
 				LevelSeeds[depth] = std::nullopt; DungeonSeeds[depth] = seed; DungeonSeeds[16] = UINT32_C(0x13579BDF);
-				MyPlayer->pOriginalCathedral = true; MyPlayer->plractive = true; MyPlayer->_pClass = HeroClass::Warrior;
+				if (nativeClassRoute.has_value()) *MyPlayer = std::move(canonicalHero);
+				MyPlayer->pOriginalCathedral = true; MyPlayer->plractive = true; MyPlayer->_pClass = nativeClassRoute.value_or(nativeRogueRoute ? HeroClass::Rogue : HeroClass::Warrior);
 				MyPlayer->plrlevel = static_cast<uint8_t>(depth); MyPlayer->_pLvlChanging = freshLoadOrder; MyPlayer->plrIsOnSetLevel = false;
 				MyPlayer->life = { 64, 64, 64, 64, 100 };
-				if (freshLoadOrder) MyPlayer->life = { 6400, 6400, 6400, 6400, 100 };
-				MyPlayer->mana = {}; if (freshLoadOrder) MyPlayer->mana.maximumBase = 3200;
-				MyPlayer->pLvlLoad = 1; MyPlayer->_pLightRad = 8;
-				if (freshLoadOrder) MyPlayer->position.future = { 75, 68 };
+				if (freshLoadOrder) MyPlayer->life = { maximumLife, maximumLife, maximumLife, maximumLife, 100 };
+				MyPlayer->mana = {}; if (freshLoadOrder) MyPlayer->mana.maximumBase = maximumMana;
+				MyPlayer->pLvlLoad = 1; MyPlayer->_pLightRad = lightRadius;
+				if (freshLoadOrder) MyPlayer->position.future = { static_cast<uint8_t>(playableRoute ? 57 : 75), static_cast<uint8_t>(playableRoute ? 40 : 68) };
 				gbIsMultiplayer = false; gbIsSpawn = false; gbIsHellfire = false; gbIsHellfireSaveGame = false;
 				LoadingMapObjects = false; sgGameInitInfo.nDifficulty = DIFF_NORMAL;
 				for (Quest &quest : Quests) quest._qactive = QUEST_NOTAVAIL;
@@ -2619,8 +2780,13 @@ void ThemeRoomGenerationTest::CapturePopulationOracle(const char *directory, boo
 			}
 		stream << ']'; document.Number("caseCount", cases); document.Number("multiRoomCases", multiRoomCases);
 	}
-	stream.flush(); ASSERT_TRUE(stream.good()); stream.close(); EXPECT_EQ(cases, 16); EXPECT_GT(multiRoomCases, 0);
+	stream.flush(); ASSERT_TRUE(stream.good()); stream.close(); EXPECT_EQ(cases, playableRoute ? 1 : 16); if (!playableRoute) EXPECT_GT(multiRoomCases, 0);
 	EXPECT_LE(std::filesystem::file_size(root / fileName), 128U * 1024U * 1024U);
+	if (nativeRogueRoute) {
+		const auto footprintError = WriteNativeRogueInventoryFootprints(root);
+		ASSERT_FALSE(footprintError.has_value()) << footprintError.value_or("unknown cursor footprint failure");
+		EXPECT_LE(std::filesystem::file_size(root / "native-rogue-l1-inventory.tsv"), 4U * 1024U * 1024U);
+	}
 }
 
 TEST_F(ThemeRoomGenerationTest, CaptureComposedOrdinaryPopulation)
@@ -2631,6 +2797,23 @@ TEST_F(ThemeRoomGenerationTest, CaptureComposedOrdinaryPopulation)
 TEST_F(ThemeRoomGenerationTest, CaptureFreshOrdinaryPopulation)
 {
 	CapturePopulationOracle(std::getenv("GODEVILUTION_CATHEDRAL_FRESH_POPULATION_ORACLE_DIRECTORY"), true);
+}
+
+// Separately selected exact playable-profile tuple; established corpus bytes stay frozen.
+TEST_F(ThemeRoomGenerationTest, CaptureNativeRogueL1Population)
+{
+	CapturePopulationOracle(std::getenv("GODEVILUTION_CATHEDRAL_NATIVE_ROGUE_L1_ORACLE_DIRECTORY"), true, false, true);
+}
+
+// Separate opt-in birth tuples; no widening or recapture of earlier corpora.
+TEST_F(ThemeRoomGenerationTest, CaptureNativeWarriorL1Population)
+{
+	CapturePopulationOracle(std::getenv("GODEVILUTION_CATHEDRAL_NATIVE_WARRIOR_L1_ORACLE_DIRECTORY"), true, false, false, HeroClass::Warrior);
+}
+
+TEST_F(ThemeRoomGenerationTest, CaptureNativeSorcererL1Population)
+{
+	CapturePopulationOracle(std::getenv("GODEVILUTION_CATHEDRAL_NATIVE_SORCERER_L1_ORACLE_DIRECTORY"), true, false, false, HeroClass::Sorcerer);
 }
 
 TEST_F(ThemeRoomGenerationTest, CaptureFreshLevelReady)

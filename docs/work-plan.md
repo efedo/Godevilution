@@ -1,23 +1,33 @@
 # Near-term work plan
 
-Updated 2026-10-19. Current phase: the reviewed session-flow batch is complete
-for headless acceptance. Native Warrior/Sorcerer admission is the next proposed
-primary batch; implementation has not started.
+Updated 2026-10-19. The reviewed native Warrior/Sorcerer admission batch passes
+its headless L1 scope. The next proposed primary batch is the native
+Town/Cathedral visual slice; establish its headless asset/binding scope before
+implementation and leave rendered acceptance open.
 
 The native Rogue Town/L1/L2 route with earned gear, Town services and fresh-host
-resume is the reusable baseline. Later-floor campaign play, other native classes
-and full Godot graphical parity remain open. See [working status](migration-status.md)
+resume remains the broader reusable baseline. Explicit Warrior/Sorcerer profiles
+now pass canonical preparation, L1 combat/abilities and exact cold resume. Later
+campaigns, remaining classes and full Godot graphical parity remain open. See [working status](migration-status.md)
 for current facts, constraints and WIP, and the [feature inventory](feature-gap-inventory.md)
 for individual completion states. The [completion plan](completion-plan.md) keeps
 the full migration requirements and milestone exit criteria.
 
-## Proposed delivery order
+## Current baseline
+
+Class-bound profiles validate canonical native hero facts and starter bindings
+before initial generation/admission, preserve Rogue output/save identities and
+retain class/floor ownership across cold restore. Both new classes pass ordinary
+L1 combat, class ability and fresh-host continuity through actual headless
+controls. See [test history](test-history.md#2026-10-19--native-class-admission)
+for the verified boundary. This does not establish complete class campaigns.
+
+## Delivery order
 
 | Order | Coherent deliverable | Inventory scope | Exit for this batch |
 | --- | --- | --- | --- |
-| 1 | Enable native Warrior and Sorcerer alongside Rogue, reusing existing class rules, loadouts and abilities. | 1.4, 1.6, 1.10, 1.12, 1.22 | Correct native preparation/admission, ordinary combat/ability use and fresh-host continuity for newly admitted classes. This advances class gameplay without claiming full campaigns. |
-| 2 | Deliver a native Town/Cathedral visual slice: asset import/pack, admitted-class sprites and equipment/action selection. | Area 11; begin with 11.2–11.5 and 11.13–11.15 | Implement the asset/binding/rendering slice and perform matched native/Godot scene/animation comparisons when visual testing is permitted. Keep graphical acceptance open until those comparisons pass. |
-| 3 | Extend the native world into Catacombs, beginning with L4/L5 entry and return and building the L5–L8 family coherently. | 5.6, 5.17, 5.22, 9.21 | Native generation/population comparisons for changed behavior, ordinary travel/combat, retained floor state and fresh-host return. |
+| 1 | Deliver a native Town/Cathedral visual slice: asset import/pack, admitted-class sprites and equipment/action selection. | Area 11; begin with 11.2–11.5 and 11.13–11.15 | Implement the asset/binding/rendering slice and perform matched native/Godot scene/animation comparisons when visual testing is permitted. Keep graphical acceptance open until those comparisons pass. |
+| 2 | Extend the native world into Catacombs, beginning with L4/L5 entry and return and building the L5–L8 family coherently. | 5.6, 5.17, 5.22, 9.21 | Native generation/population comparisons for changed behavior, ordinary travel/combat, retained floor state and fresh-host return. |
 
 The session-flow baseline now includes reviewed create/return/rejoin, local
 profile class limits, cancellation/exit cleanup and exact fresh-host resume.

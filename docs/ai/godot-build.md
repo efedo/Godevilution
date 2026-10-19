@@ -9,6 +9,35 @@ Use the [work plan](../work-plan.md) for near-term order and
 application journey below has not passed; do not confuse its procedure with
 the accepted Town/L1/L2 scope in [test history](../test-history.md).
 
+## Native Warrior and Sorcerer profiles
+
+Add `--native-class warrior` or `--native-class sorcerer` to the explicit
+`--native-cathedral-depth-progression` compilation below. Each output must use
+its own new directory. The format4 profile selects
+`devilution.diablo.cathedral-native-class-progression.v1`; its single-row
+`native_cathedral_runtime/native-character-start.tsv` binds the class ID/symbol,
+canonical base HP/mana, equipment-derived light radius and class idle frames.
+Those values are assertions against active catalogs, not gameplay overrides.
+Starter items must have complete native footprint and spell semantics bindings.
+
+Launch with `-CathedralNativeClassProfileDirectory <compiled output>` and
+`-PersistenceMode cohort`. Setup offers the bound class. The launcher isolates
+its session marker from Rogue and other-class profiles and refuses mixed roots.
+Omitting `--native-class` retains the original Rogue output bytes, profile ID
+and save contracts. The new adapter reuses four-floor ownership and cohort v10;
+that backend scope does not certify a complete Warrior/Sorcerer campaign.
+
+Run the bounded ordinary-control Journey/Resume pair for each compiled class:
+
+```powershell
+./tools/test-godot-native-classes.ps1 -ProfileDirectory <class output> -GodotExecutable <Godot mono executable>
+```
+
+The pair exercises generated L1 combat, Warrior Repair on naturally worn starter
+equipment or Sorcerer staff/learned casting and Recharge, then exact fresh-host
+player/items/grid/resources/world/RNG restoration and the next movement receipt.
+It stays headless. Full campaign and graphical acceptance remain separate.
+
 ## Native Cathedral L1-L4 headless progression
 
 Compile the separate `--native-cathedral-depth-progression` profile using the
@@ -535,7 +564,8 @@ keeps the menu closed. Remote endpoint/token defaults remain private in memory;
 confirmed credentials survive cancellation before the first snapshot. HUD callbacks
 resolve the current model after each return.
 
-Local native populated/progression launchers limit new-character setup to Rogue.
+Legacy native populated/progression launchers limit new-character setup to Rogue.
+Class-bound Warrior/Sorcerer launchers offer their compiled class only.
 `GODEVILUTION_SUPPORTED_CHARACTER_CLASS_IDS` is optional client-only metadata for
 the configured endpoint; absent/empty metadata and remote endpoints retain all six
 choices. It does not grant server admission or affect resume identity.

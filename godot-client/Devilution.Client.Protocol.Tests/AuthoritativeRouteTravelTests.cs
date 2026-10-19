@@ -55,6 +55,28 @@ public sealed class AuthoritativeRouteTravelTests
     }
 
     [Fact]
+    public void NativeDestinationPathBetweenAnimationsWaitsWithoutCancellingOrRepeating()
+    {
+        var snapshot = State();
+        var travel = Start(snapshot);
+        snapshot.Players[0].NativeWalkPathPending = true;
+        Assert.Null(travel.Next(snapshot, null, true, 0));
+        snapshot.Players[0].NativeWalkPathPending = false;
+        Assert.NotNull(travel.Next(snapshot, null, true, 0));
+        travel.Submitted(7, snapshot.Players[0]);
+        snapshot.Tick = 11;
+        snapshot.Players[0].NativeWalkPathPending = true;
+        Assert.Null(travel.Next(snapshot, Receipt(7), true, 0));
+        Assert.True(travel.Active); // An accepted path has not advanced its first step yet.
+        snapshot.Players[0].PositionX++;
+        Assert.Null(travel.Next(snapshot, Receipt(7), true, 0));
+        Assert.True(travel.Active);
+        snapshot.Players[0].NativeWalkPathPending = false;
+        Assert.NotNull(travel.Next(snapshot, Receipt(7), true, 0));
+        Assert.True(travel.Active);
+    }
+
+    [Fact]
     public void AcceptedNoOpStopsInsteadOfFloodingTheServer()
     {
         var snapshot = State();

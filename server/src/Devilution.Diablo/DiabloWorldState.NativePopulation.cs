@@ -121,7 +121,7 @@ public sealed partial class DiabloWorldState
             policy.ValidateWorld(this);
         if (participants.Any(player => !AllowsNativePopulationLevel(player.LevelId)
             || player.CharacterClassId != nativePopulationParticipantClassId))
-            throw new InvalidDataException("The native route requires Rogue participants in Town or its owned Cathedral level.");
+            throw new InvalidDataException("The native route requires its bound base-game class in Town or an owned Cathedral level.");
         if (participants.Any(player => NativePopulationOwners.Any(policy => policy.ReservesEntityId(player.EntityId))))
             throw new InvalidDataException("A participant reused a dormant native monster entity reservation.");
     }

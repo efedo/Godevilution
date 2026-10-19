@@ -1132,6 +1132,7 @@ public sealed partial class DiabloSimulation
             NativeMonsterMetadataFingerprint = source.NativeMonsterMetadataFingerprint,
             NativeCathedralItems = source.NativeProgressionRestore?.Items ?? source.NativeCathedralItems,
             NativePopulationPolicy = source.NativePopulationPolicy,
+            NativePopulationClassId = source.NativePopulationClassId,
             NativeProgression = source.NativeProgression,
             NativeProgressionRestore = source.NativeProgressionRestore,
             NativeCathedralItemRestore = state.CathedralItems,

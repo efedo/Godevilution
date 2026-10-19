@@ -7,6 +7,12 @@ contracts stay in their existing guides.
 
 ## 2026-10-19
 
+- Add explicit class-bound native Warrior/Sorcerer profiles, canonical preparation
+  validation, starter-item bindings and class-safe admission/cohort restoration.
+  Preserve legacy Rogue compiler bytes and profile/save identities.
+- Add native birth-tuple comparisons and ordinary-control class journeys with
+  Repair/Recharge, spell sources and exact cold checkpoints. Keep route travel
+  active while a server-owned native walk path remains pending between actions.
 - Consolidate Godot session return/rejoin, joined cancellation/scene cleanup,
   confirmed resume credentials and current-model HUD callbacks. Preserve pending
   command and bookmark refusal before returning to setup.

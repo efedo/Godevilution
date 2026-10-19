@@ -15,7 +15,11 @@ public sealed record CathedralNativePopulationPlaytestCompilerOptions(
     string OutputDirectory,
     string PieceDefinitionsTsv,
     string TilePropertiesTsv,
-    IReadOnlyList<uint> DepthSeeds);
+    IReadOnlyList<uint> DepthSeeds)
+{
+    /** Optional base-game class for the isolated class-bound native progression profile. */
+    public string? NativeClassSymbol { get; init; }
+}
 
 /**
  * Builds the opt-in, native-populated Cathedral route. The ordinary depth and
@@ -31,6 +35,10 @@ public static class CathedralNativePopulationPlaytestCompiler
     public const string DepthProgressionAdapterId = "devilution.diablo.cathedral-native-depth-progression.v1";
     public const string DepthProgressionProfileFileName = "cathedral-native-depth-progression-playtest.json";
     public const string DepthProgressionPolicy = "original-diablo-single-player-normal-rogue-town-l1-l4";
+    public const string ClassProgressionAdapterId = "devilution.diablo.cathedral-native-class-progression.v1";
+    public const string ClassProgressionProfileFileName = "cathedral-native-class-progression-playtest.json";
+    public const string ClassProgressionPolicyPrefix = "original-diablo-single-player-normal-";
+    public const string NativeCharacterStartTablePath = "native-character-start.tsv";
     public const string ProfileFileName = "cathedral-native-population-playtest.json";
     public const string PopulationDirectoryName = "native_cathedral_population";
     public const string RuntimeDirectoryName = "native_cathedral_runtime";
@@ -108,10 +116,15 @@ public static class CathedralNativePopulationPlaytestCompiler
     public static Profile CompileDepthProgression(CathedralNativePopulationPlaytestCompilerOptions options)
         => CompileCore(options, progression: true, depthProgression: true);
 
+    /** Builds an isolated Warrior or Sorcerer variant of the four-floor native route. */
+    public static Profile CompileClassProgression(CathedralNativePopulationPlaytestCompilerOptions options)
+        => CompileCore(options, progression: true, depthProgression: true, classBound: true);
+
     private static Profile CompileCore(
         CathedralNativePopulationPlaytestCompilerOptions options,
         bool progression,
-        bool depthProgression = false)
+        bool depthProgression = false,
+        bool classBound = false)
     {
         ArgumentNullException.ThrowIfNull(options);
         ArgumentNullException.ThrowIfNull(options.BasePack);
@@ -129,6 +142,9 @@ public static class CathedralNativePopulationPlaytestCompiler
         if (!string.Equals(options.BasePack.Id, "devilution.base", StringComparison.Ordinal)
             || options.BasePack.Dependencies.Count != 0 || options.BasePack.Overlays.Count != 0)
             throw new InvalidDataException("Native population requires the standalone devilution.base input pack.");
+        if (classBound && (!progression || !depthProgression))
+            throw new ArgumentException("Class-bound native starts require the four-floor depth progression profile.", nameof(options));
+        var nativeClassSymbol = ResolveNativeClassSymbol(options.NativeClassSymbol, classBound);
 
         var module = DiabloModule.Instance;
         var inputManifest = new ContentManifest(options.BasePack.Id, options.BasePack.Version, [options.BasePack]);
@@ -143,6 +159,11 @@ public static class CathedralNativePopulationPlaytestCompiler
             includeNativeDepthItems: depthProgression);
         var itemSidecars = AuthoritativeCathedralNativeItemSidecars.Load(
             options.InventoryFootprints, semanticsTable);
+        if (classBound) {
+            var classId = nativeClassSymbol == "warrior" ? 0U : 2U;
+            ValidateNativeClassStartingItems(baseItems,
+                baseActivation.PlayerLoadouts.GetRequired(classId), itemSidecars);
+        }
         var effectiveItems = AuthoritativeCathedralNativePopulationBuilder.ApplyItemSidecars(
             nativeItems, baseItems, baseActivation.Simulation.Spells, itemSidecars);
         var storesTable = options.BasePack.Tables.SingleOrDefault(table =>
@@ -158,8 +179,8 @@ public static class CathedralNativePopulationPlaytestCompiler
 
         var populationPack = CreatePopulationSidecar(options.PopulationMetadata);
         var runtimeTable = options.MonsterRuntime.CreateTable();
-        var runtimePack = CreateRuntimeSidecar(runtimeTable, options.InventoryFootprints, semanticsTable);
-        var hero = ResolveHero(baseActivation);
+        var (hero, characterStartTable) = ResolveHero(baseActivation, nativeClassSymbol);
+        var runtimePack = CreateRuntimeSidecar(runtimeTable, options.InventoryFootprints, semanticsTable, characterStartTable);
 
         var outputRoot = ValidateFreshOutputPath(options.OutputDirectory);
         var stagingRoot = outputRoot + ".native-staging-" + Guid.NewGuid().ToString("N");
@@ -203,8 +224,8 @@ public static class CathedralNativePopulationPlaytestCompiler
                     composed, StorySeed, DiabloGameMode.SinglePlayer, difficulty: DiabloDifficulty.Normal);
 
             var profile = new Profile(
-                depthProgression ? 3 : progression ? 2 : FormatVersion,
-                depthProgression ? DepthProgressionAdapterId : progression ? ProgressionAdapterId : AdapterId,
+                classBound ? 4 : depthProgression ? 3 : progression ? 2 : FormatVersion,
+                classBound ? ClassProgressionAdapterId : depthProgression ? DepthProgressionAdapterId : progression ? ProgressionAdapterId : AdapterId,
                 CathedralDoorPlaytestCompiler.ContentDirectoryName,
                 contentPack.Id,
                 contentPack.Version,
@@ -229,11 +250,12 @@ public static class CathedralNativePopulationPlaytestCompiler
                 ComputeCanonicalTextHash(options.InventoryFootprints.ToCanonicalTsv()),
                 ComputeCanonicalTextHash(semanticsTable.ToCanonicalTsv()),
                 semanticsTable.Rows.Count,
-                depthProgression ? DepthProgressionPolicy : progression ? ProgressionPolicy : PopulationPolicy,
+                classBound ? ClassProgressionPolicyPrefix + nativeClassSymbol + "-town-l1-l4"
+                    : depthProgression ? DepthProgressionPolicy : progression ? ProgressionPolicy : PopulationPolicy,
                 depthProgression ? 4 : progression ? 2 : NativeDepth,
                 RequiredDepthSeeds[0],
                 StorySeed,
-                "rogue",
+                hero.ClassSymbol,
                 hero.BaseLifeMaximum,
                 hero.BaseManaMaximum,
                 hero.LightRadius,
@@ -248,7 +270,8 @@ public static class CathedralNativePopulationPlaytestCompiler
                 doorProfile.DoorProfileRevision,
                 doorProfile.DoorCatalogFingerprint,
                 doorProfile.DoorMappings);
-            var profileFileName = depthProgression ? DepthProgressionProfileFileName
+            var profileFileName = classBound ? ClassProgressionProfileFileName
+                : depthProgression ? DepthProgressionProfileFileName
                 : progression ? ProgressionProfileFileName : ProfileFileName;
             WriteProfile(Path.Combine(stagingRoot, profileFileName), profile);
             Directory.Move(stagingRoot, outputRoot);
@@ -262,20 +285,102 @@ public static class CathedralNativePopulationPlaytestCompiler
     }
 
     private sealed record HeroFacts(
-        int BaseLifeMaximum, int BaseManaMaximum, int LightRadius, int IdleFrames, int StartX, int StartY);
+        uint ClassId,
+        string ClassSymbol,
+        int BaseLifeMaximum,
+        int BaseManaMaximum,
+        int LightRadius,
+        int IdleFrames,
+        int StartX,
+        int StartY);
 
-    private static HeroFacts ResolveHero(DiabloContentActivation activation)
+    private static void ValidateNativeClassStartingItems(
+        AuthoritativeItemCatalog items,
+        AuthoritativePlayerLoadoutDefinition loadout,
+        AuthoritativeCathedralNativeItemSidecars sidecars)
     {
-        var rogue = activation.PlayerClasses.Definitions.SingleOrDefault(definition =>
-            string.Equals(definition.Symbol, "rogue", StringComparison.Ordinal))
-            ?? throw new InvalidDataException("Base content does not define the canonical Rogue class.");
+        foreach (var startingItem in loadout.Items) {
+            var item = items.GetRequired(startingItem.ItemId);
+            if (item.NativeItemIndex < 0
+                || !sidecars.Footprints.ContainsKey(item.NativeItemIndex)
+                || !sidecars.Semantics.TryGetValue(item.NativeItemIndex, out var semantic)
+                || !string.Equals(semantic.StableItemSymbol, item.StableSymbol, StringComparison.Ordinal)) {
+                throw new InvalidDataException(
+                    $"Class-bound native progression cannot bind starting item '{item.StableSymbol}' to the captured native item sidecars.");
+            }
+        }
+    }
+
+    private static string ResolveNativeClassSymbol(string? requested, bool classBound)
+    {
+        if (!classBound) {
+            if (requested is not null)
+                throw new ArgumentException("A selected native class requires CompileClassProgression.", nameof(requested));
+            return "rogue";
+        }
+        if (requested is not ("warrior" or "sorcerer"))
+            throw new ArgumentException("Class-bound native progression supports only the base-game Warrior or Sorcerer.", nameof(requested));
+        return requested;
+    }
+
+    private static (HeroFacts Hero, TsvTable? CharacterStartTable) ResolveHero(
+        DiabloContentActivation activation,
+        string classSymbol)
+    {
+        var playerClass = activation.PlayerClasses.Definitions.SingleOrDefault(definition =>
+            string.Equals(definition.Symbol, classSymbol, StringComparison.Ordinal))
+            ?? throw new InvalidDataException($"Base content does not define the canonical {classSymbol} class.");
+        if (playerClass.Availability != DiabloPlayerClassAvailability.BaseGame
+            || (classSymbol == "warrior" && playerClass.ClassId != 0)
+            || (classSymbol == "rogue" && playerClass.ClassId != 1)
+            || (classSymbol == "sorcerer" && playerClass.ClassId != 2))
+            throw new InvalidDataException("Native Cathedral class-bound profiles require canonical base-game class identities.");
         var template = activation.PlayerLoadouts.CreateTemplate(
-            "native-cathedral-population-profile", rogue.ClassId, null, null, null, 1,
+            "native-cathedral-population-profile", playerClass.ClassId, null, null, null, 1,
             startingPositionX: 57, startingPositionY: 40);
-        var idleFrames = activation.PlayerAnimations.GetRequired(rogue.ClassId).IdleFrames;
-        if (template.BaseLifeMaximum <= 0 || template.BaseManaMaximum <= 0 || idleFrames <= 0)
-            throw new InvalidDataException("Canonical Rogue route inputs are incomplete.");
-        return new(template.BaseLifeMaximum, template.BaseManaMaximum, 8, idleFrames, 57, 40);
+        var idleFrames = activation.PlayerAnimations.GetRequired(playerClass.ClassId).IdleFrames;
+        if (template.BaseLifeMaximum <= 0 || template.BaseManaMaximum < 0 || idleFrames <= 0)
+            throw new InvalidDataException($"Canonical {classSymbol} route inputs are incomplete.");
+
+        if (classSymbol == "rogue") {
+            var legacy = AuthoritativeCathedralNativeCharacterStart.Resolve(
+                null, activation.PlayerClasses, activation.PlayerAnimations, activation.PlayerLoadouts);
+            return (new(legacy.ClassId, legacy.ClassSymbol, legacy.Hero.MaximumLifeBase,
+                legacy.Hero.MaximumManaBase, legacy.Hero.LightRadius, legacy.Hero.IdleFrames, 57, 40), null);
+        }
+
+        var lightRadius = template.CreatePlayer().LightRadius;
+        var startTable = CreateNativeCharacterStartTable(new(
+            playerClass.ClassId,
+            classSymbol,
+            template.BaseLifeMaximum,
+            template.BaseManaMaximum,
+            lightRadius,
+            idleFrames,
+            57,
+            40));
+        var resolved = AuthoritativeCathedralNativeCharacterStart.Resolve(
+            startTable, activation.PlayerClasses, activation.PlayerAnimations, activation.PlayerLoadouts);
+        return (new(resolved.ClassId, resolved.ClassSymbol, resolved.Hero.MaximumLifeBase,
+            resolved.Hero.MaximumManaBase, resolved.Hero.LightRadius, resolved.Hero.IdleFrames, 57, 40), startTable);
+    }
+
+    private static TsvTable CreateNativeCharacterStartTable(HeroFacts hero)
+    {
+        var values = new[] {
+            hero.ClassId.ToString(System.Globalization.CultureInfo.InvariantCulture),
+            hero.ClassSymbol,
+            hero.BaseLifeMaximum.ToString(System.Globalization.CultureInfo.InvariantCulture),
+            hero.BaseManaMaximum.ToString(System.Globalization.CultureInfo.InvariantCulture),
+            hero.LightRadius.ToString(System.Globalization.CultureInfo.InvariantCulture),
+            hero.IdleFrames.ToString(System.Globalization.CultureInfo.InvariantCulture),
+        };
+        var contents = string.Join("\r\n", [
+            "class_id\tclass_symbol\thero_base_life_maximum\thero_base_mana_maximum\thero_light_radius\thero_idle_frames",
+            string.Join('\t', values),
+            string.Empty,
+        ]);
+        return TsvTable.Parse(NativeCharacterStartTablePath, contents);
     }
 
     private static ContentPack CreatePopulationSidecar(AuthoritativeCathedralPopulationMetadata metadata)
@@ -289,11 +394,15 @@ public static class CathedralNativePopulationPlaytestCompiler
     private static ContentPack CreateRuntimeSidecar(
         TsvTable runtimeTable,
         TsvTable footprintsTable,
-        TsvTable semanticsTable)
+        TsvTable semanticsTable,
+        TsvTable? characterStartTable = null)
     {
         if (!string.Equals(runtimeTable.SourcePath, AuthoritativeCathedralMonsterRuntimeCatalog.TableName, StringComparison.Ordinal))
             throw new InvalidDataException("Native monster runtime table has an unsupported source path.");
-        var tables = new[] { runtimeTable, footprintsTable, semanticsTable }
+        var sourceTables = new List<TsvTable> { runtimeTable, footprintsTable, semanticsTable };
+        if (characterStartTable is not null)
+            sourceTables.Add(characterStartTable);
+        var tables = sourceTables
             .Select(table => table with { SourcePath = "native_cathedral_runtime/" + table.SourcePath })
             .ToArray();
         return new ContentPack(RuntimePackId, PackVersion, tables);

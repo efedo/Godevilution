@@ -30,13 +30,14 @@ for retained caches and input entry points. Gameplay WIP remains uncommitted.
 
 ## First task
 
-The reviewed session-flow batch now passes headless create/return/rejoin and
-fresh-host resume, including profile-aware setup. Read the work plan for the next
-proposed batch: native Warrior/Sorcerer admission, combat/ability use and resume.
-Establish that batch before feature implementation; it has not started. Refresh
-only changed claims and keep the work plan, working status and affected inventory
-entries synchronized. Rendered flow remains open. Do not treat the failing L3 bot
-scenario as a universal blocker.
+The session-flow and native Warrior/Sorcerer admission batches are reviewed and
+verified for their documented headless scope. Both new class profiles pass
+canonical preparation, L1 combat/abilities and exact fresh-host continuity.
+Read the work plan before the next feature batch: establish the native
+Town/Cathedral headless asset/binding slice and retain rendered comparisons as
+open acceptance. Later class campaigns remain open. Refresh only changed claims;
+keep the work plan, working status and affected inventory entries synchronized.
+Do not treat the failing L3 bot scenario as a universal blocker.
 
 ## Session goal
 

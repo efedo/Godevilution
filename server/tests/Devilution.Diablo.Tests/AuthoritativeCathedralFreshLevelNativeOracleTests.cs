@@ -103,6 +103,43 @@ public sealed class AuthoritativeCathedralFreshLevelNativeOracleTests
         VerifyFreshRow(row, metadata, actual, 8);
     }
 
+    [Theory(Explicit = true)]
+    [InlineData(0, "WARRIOR", 4480, 640, 10)]
+    [InlineData(2, "SORCERER", 1920, 4480, 8)]
+    public void PlayableClassL1TupleMatchesNativeLoader(int classId, string environmentClass,
+        int lifeMaximum, int manaMaximum, int idleFrames)
+    {
+        const string fileName = "native-class-l1-population.json";
+        var directory = AuthoritativeCathedralEncounterNativeOracleTests.RequiredExternalDirectory(
+            $"GODEVILUTION_CATHEDRAL_NATIVE_{environmentClass}_L1_ORACLE_DIRECTORY");
+        Assert.Equal(new[] { fileName }, AuthoritativeCathedralEncounterNativeOracleTests.RegularEntries(directory).Select(Path.GetFileName));
+        var corpus = AuthoritativeCathedralEncounterNativeOracleTests.ParseFile(Path.Combine(directory, fileName), 128 * 1024 * 1024);
+        Properties(corpus, "format", "version", "policy", "playerMaximumLife", "playerMaximumMana", "playerClassId", "playerLightRadius",
+            "storySeed", "playerFuture", "playerLevelChanging", "itemCatalog", "cases", "caseCount", "multiRoomCases");
+        Assert.Equal("godevilution-cathedral-native-class-l1", S(corpus, "format"));
+        Assert.Equal("fresh-cold-original-diablo-class-l1-main-seed2588", S(corpus, "policy"));
+        Assert.Equal(1, N(corpus, "version"));
+        Assert.Equal(classId, N(corpus, "playerClassId"));
+        Assert.Equal(lifeMaximum, N(corpus, "playerMaximumLife"));
+        Assert.Equal(manaMaximum, N(corpus, "playerMaximumMana"));
+        Assert.Equal(10, N(corpus, "playerLightRadius"));
+        Assert.Equal(0x13579BDFU, U(corpus, "storySeed"));
+        Assert.Equal(new AuthoritativeCathedralPopulationPoint(57, 40), Point(corpus.GetProperty("playerFuture")));
+        Assert.True(B(corpus, "playerLevelChanging"));
+        Assert.Equal(1, N(corpus, "caseCount"));
+        var row = Assert.Single(A(corpus, "cases").EnumerateArray());
+        Assert.Equal((1, 2588U, "main"), (N(row, "depth"), U(row, "seed"), S(row, "entry")));
+        var metadata = CathedralPopulationMetadataCompiler.LoadDirectory(
+            Environment.GetEnvironmentVariable("GODEVILUTION_CATHEDRAL_POPULATION_METADATA_PACK_DIRECTORY")
+                ?? throw new InvalidDataException("An explicit validated population metadata pack is required."));
+        var nativeItems = ReadCatalog(corpus.GetProperty("itemCatalog"));
+        Assert.Equal(AuthoritativeCathedralThemeItemMetadata.CreateTables(nativeItems).Select(table => table.ToCanonicalTsv()),
+            AuthoritativeCathedralThemeItemMetadata.CreateTables(metadata.Items.Catalog).Select(table => table.ToCanonicalTsv()));
+        var actual = AuthoritativeCathedralFreshLevelGenerator.Generate(metadata, 1, 2588, 0x13579BDF,
+            AuthoritativeCathedralEntry.Main, new(lifeMaximum, manaMaximum, 10, idleFrames, new(57, 40), LevelChanging: true));
+        VerifyFreshRow(row, metadata, actual, idleFrames);
+    }
+
     private static NativeInventoryFootprint[] ReadNativeInventoryFootprints(string path)
     {
         var bytes = File.ReadAllBytes(path);

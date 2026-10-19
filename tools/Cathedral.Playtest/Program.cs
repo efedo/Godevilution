@@ -13,6 +13,7 @@ internal static class Program
     private const string PopulationMetadataUsage = "Cathedral.Playtest --compile-population-metadata --metadata-directory <complete semantic TSVs> --output-directory <new directory>";
     private const string NativePopulationUsage = "Cathedral.Playtest --native-cathedral-population --base-directory <pack> --geometry-directory <semantic TSVs> --metadata-directory <complete population pack> --monster-runtime-table <TSV> --inventory-footprints <captured TSV> --output-directory <new directory> --depth-seeds 2588,2588,1,4294967295";
     private const string NativeDepthProgressionUsage = "Cathedral.Playtest --native-cathedral-depth-progression --base-directory <pack> --geometry-directory <semantic TSVs> --metadata-directory <complete population pack> --monster-runtime-table <TSV> --inventory-footprints <captured TSV> --output-directory <new directory> --depth-seeds 2588,2588,1,4294967295";
+    private const string NativeClassProgressionUsage = NativeDepthProgressionUsage + " --native-class <warrior|sorcerer>";
 
     public static int Main(string[] args)
     {
@@ -25,6 +26,7 @@ internal static class Program
                 Console.WriteLine(NativePopulationUsage);
                 Console.WriteLine(NativePopulationUsage.Replace("--native-cathedral-population", "--native-cathedral-progression"));
                 Console.WriteLine(NativeDepthProgressionUsage);
+                Console.WriteLine(NativeClassProgressionUsage);
                 return 0;
             }
             if (args.Contains("--native-cathedral-population", StringComparer.Ordinal)
@@ -101,9 +103,10 @@ internal static class Program
         var mode = 0;
         var progression = args.Contains("--native-cathedral-progression", StringComparer.Ordinal);
         var depthProgression = args.Contains("--native-cathedral-depth-progression", StringComparer.Ordinal);
+        var classBound = args.Contains("--native-class", StringComparer.Ordinal);
         var requestedFlag = progression ? "--native-cathedral-progression"
             : depthProgression ? "--native-cathedral-depth-progression" : "--native-cathedral-population";
-        var usage = depthProgression ? NativeDepthProgressionUsage : progression
+        var usage = classBound ? NativeClassProgressionUsage : depthProgression ? NativeDepthProgressionUsage : progression
             ? NativePopulationUsage.Replace("--native-cathedral-population", "--native-cathedral-progression")
             : NativePopulationUsage;
         var progressionMode = progression || depthProgression;
@@ -114,11 +117,19 @@ internal static class Program
                     : args[index] == "--native-cathedral-progression" ? 2 : 1;
             } else if (args[index] is not ("--base-directory" or "--geometry-directory"
                 or "--metadata-directory" or "--monster-runtime-table" or "--inventory-footprints"
-                or "--output-directory" or "--depth-seeds")
+                or "--output-directory" or "--depth-seeds" or "--native-class")
                 || index + 1 >= args.Length || string.IsNullOrWhiteSpace(args[index + 1])
                 || !values.TryAdd(args[index], args[++index])) {
                 throw new ArgumentException(usage);
             }
+        }
+        string? nativeClassSymbol = null;
+        if (values.TryGetValue("--native-class", out var requestedClass)) {
+            if (!depthProgression)
+                throw new ArgumentException("--native-class is supported only with --native-cathedral-depth-progression.");
+            nativeClassSymbol = requestedClass.ToLowerInvariant();
+            if (nativeClassSymbol is not ("warrior" or "sorcerer"))
+                throw new ArgumentException("--native-class accepts only warrior or sorcerer.");
         }
         if (mode == 0
             || !values.TryGetValue("--base-directory", out var baseDirectory)
@@ -128,7 +139,7 @@ internal static class Program
             || !values.TryGetValue("--inventory-footprints", out var footprintsPath)
             || !values.TryGetValue("--output-directory", out var outputDirectory)
             || !values.TryGetValue("--depth-seeds", out var seedText))
-            throw new ArgumentException(NativePopulationUsage);
+            throw new ArgumentException(usage);
 
         var seedParts = seedText.Split(',', StringSplitOptions.TrimEntries);
         if (seedParts.Length != 4
@@ -160,7 +171,9 @@ internal static class Program
         if (geometry.Tables.Count != 2 || geometry.Assets.Count != 0)
             throw new InvalidDataException("Native population requires exactly the two supported Cathedral geometry tables.");
 
-        Func<CathedralNativePopulationPlaytestCompilerOptions, CathedralNativePopulationPlaytestCompiler.Profile> compile = depthProgression
+        Func<CathedralNativePopulationPlaytestCompilerOptions, CathedralNativePopulationPlaytestCompiler.Profile> compile = nativeClassSymbol is not null
+            ? CathedralNativePopulationPlaytestCompiler.CompileClassProgression
+            : depthProgression
             ? CathedralNativePopulationPlaytestCompiler.CompileDepthProgression
             : progressionMode ? CathedralNativePopulationPlaytestCompiler.CompileProgression
             : CathedralNativePopulationPlaytestCompiler.Compile;
@@ -173,10 +186,10 @@ internal static class Program
                 outputDirectory,
                 pieces.ToCanonicalTsv(),
                 properties.ToCanonicalTsv(),
-                seeds));
-        Console.WriteLine($"Compiled explicit native Cathedral {(depthProgression ? "Town/L1-L4" : progression ? "Town/L1/L2" : "L1")} profile: {Path.GetFullPath(outputDirectory)}");
+                seeds) { NativeClassSymbol = nativeClassSymbol });
+        Console.WriteLine($"Compiled explicit native Cathedral {(nativeClassSymbol is not null ? $"{nativeClassSymbol} Town/L1-L4" : depthProgression ? "Town/L1-L4" : progression ? "Town/L1/L2" : "L1")} profile: {Path.GetFullPath(outputDirectory)}");
         Console.WriteLine($"Content manifest: {profile.ContentManifestHash}");
-        Console.WriteLine("This output requests the explicit Rogue/single-player adapter; it is not an acceptance or native-runtime claim.");
+        Console.WriteLine($"This output requests the explicit {profile.HeroClassSymbol}/single-player adapter; it is not an acceptance or native-runtime claim.");
         return 0;
     }
 

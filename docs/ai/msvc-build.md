@@ -23,6 +23,27 @@ hardcoded group. Canonical test DLL data annotations expose only the required
 globals. This is native characterization; managed policy, save/ruleset
 compatibility, world reconstruction and rendered acceptance remain separate.
 
+## Canonical native Warrior/Sorcerer starts
+
+The registered `theme_item_generation_test` has separate opt-in
+`CaptureNativeWarriorL1Population` and `CaptureNativeSorcererL1Population`
+fixtures. Actual native character creation supplies class/resources/light;
+actual `InitPlayer` supplies idle animation and preparation RNG. Each compares
+the L1 MAIN seed2588 cold loader boundary with canonical starting equipment.
+The historical prepared Rogue light-radius8 tuple remains separate.
+
+```powershell
+./tools/test-cathedral-native-classes.ps1 -MetadataPackDirectory <validated population pack> -EvidenceDirectory <new private directory outside the repository>
+```
+
+The wrapper initializes and checks matching MSVC tools, builds the existing
+target, requires two byte-identical captures per class and runs both exact
+managed full-world/RNG comparisons without skips. Native assets are used only
+by the test fixture; runtime/server inputs remain explicit MPQ-free metadata.
+Owned stages have deadlines, retained logs, checked exits and environment
+restoration. This is preparation parity; actual gameplay/resume uses the
+separate Godot class wrapper in [Godot build notes](godot-build.md).
+
 ## Prepared native Monk Search prerequisite
 
 Build the existing registered `missiles_test` target using the checked MSVC x64

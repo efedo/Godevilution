@@ -107,6 +107,9 @@ public sealed record DiabloContentActivation
 
     public DiabloSimulation Simulation { get; }
 
+    /** Canonical class-bound native starting facts; absent outside native population profiles. */
+    public AuthoritativeCathedralNativeCharacterStart? NativeCharacterStart { get; init; }
+
     internal DiabloSimulationOptions? TrustedOptions { get; init; }
 
     /** Trusted activated configuration retained without exposing host persistence. */
@@ -293,11 +296,14 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap, IDiabloN
     private const string NativeRuntimeSidecarPrefix = "native_cathedral_runtime/";
     private const string NativeItemFootprintTablePath = "native-rogue-l1-inventory.tsv";
     private const string NativeItemSemanticsTablePath = "native_item_semantics.tsv";
+    private const string NativeCharacterStartTablePath = NativeRuntimeSidecarPrefix
+        + AuthoritativeCathedralNativeCharacterStart.TableName;
 
     private sealed record NativePopulationSidecarData(
         AuthoritativeCathedralPopulationMetadata Population,
         AuthoritativeCathedralMonsterRuntimeCatalog Runtime,
-        AuthoritativeCathedralNativeItemSidecars Items);
+        AuthoritativeCathedralNativeItemSidecars Items,
+        TsvTable? CharacterStartTable);
     private readonly IDiabloSimulationFactory simulationFactory;
     private readonly AuthoritativeQuestPoolSelectionOrder questPoolSelectionOrder;
 
@@ -383,7 +389,8 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap, IDiabloN
         var runtimePath = NativeRuntimeSidecarPrefix + AuthoritativeCathedralMonsterRuntimeCatalog.TableName;
         var footprintPath = NativeRuntimeSidecarPrefix + NativeItemFootprintTablePath;
         var semanticsPath = NativeRuntimeSidecarPrefix + NativeItemSemanticsTablePath;
-        var runtimePaths = new[] { runtimePath, footprintPath, semanticsPath };
+        var legacyRuntimePaths = new[] { runtimePath, footprintPath, semanticsPath };
+        var runtimePaths = legacyRuntimePaths.Append(NativeCharacterStartTablePath).ToArray();
 
         var unknownNativeTables = manifest.Packs.SelectMany(pack => pack.Tables)
             .Where(table => table.SourcePath.StartsWith(NativePopulationSidecarPrefix, StringComparison.Ordinal)
@@ -407,7 +414,15 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap, IDiabloN
 
         var populationPack = RequireSchemaNeutralSidecar(populationPacks[0], populationPaths,
             "Cathedral population metadata");
-        var runtimePack = RequireSchemaNeutralSidecar(runtimePacks[0], runtimePaths,
+        var actualRuntimePaths = runtimePacks[0].Tables.Select(table => table.SourcePath)
+            .Order(StringComparer.Ordinal).ToArray();
+        var expectedLegacyRuntimePaths = legacyRuntimePaths.Order(StringComparer.Ordinal).ToArray();
+        var actualWithCharacterStart = runtimePaths.Order(StringComparer.Ordinal).ToArray();
+        if (!actualRuntimePaths.SequenceEqual(expectedLegacyRuntimePaths, StringComparer.Ordinal)
+            && !actualRuntimePaths.SequenceEqual(actualWithCharacterStart, StringComparer.Ordinal))
+            throw new InvalidDataException(
+                "Cathedral native runtime metadata must use the legacy sidecar tables and optional character-start table.");
+        var runtimePack = RequireSchemaNeutralSidecar(runtimePacks[0], actualRuntimePaths,
             "Cathedral native runtime metadata");
         var population = AuthoritativeCathedralPopulationMetadata.Load(new ContentPack(
             populationPack.Id, populationPack.Version, populationPack.Tables.Select(table =>
@@ -427,7 +442,13 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap, IDiabloN
             with { SourcePath = NativeItemFootprintTablePath };
         var semanticsTable = runtimePack.Tables.Single(table => string.Equals(table.SourcePath, semanticsPath, StringComparison.Ordinal))
             with { SourcePath = NativeItemSemanticsTablePath };
-        return new(population, runtime, AuthoritativeCathedralNativeItemSidecars.Load(footprintTable, semanticsTable));
+        var characterStartTable = runtimePack.Tables.SingleOrDefault(table =>
+            string.Equals(table.SourcePath, NativeCharacterStartTablePath, StringComparison.Ordinal))
+            is { } table
+                ? table with { SourcePath = AuthoritativeCathedralNativeCharacterStart.TableName }
+                : null;
+        return new(population, runtime,
+            AuthoritativeCathedralNativeItemSidecars.Load(footprintTable, semanticsTable), characterStartTable);
     }
 
     private static ContentPack RequireSchemaNeutralSidecar(
@@ -677,6 +698,13 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap, IDiabloN
             playerLoadoutItemTable.SourcePath,
             playerLoadoutItemTable.ToCanonicalTsv(),
             stableIds);
+        var nativeCharacterStart = nativePopulationSidecars is null
+            ? null
+            : AuthoritativeCathedralNativeCharacterStart.Resolve(
+                nativePopulationSidecars.CharacterStartTable,
+                playerClasses,
+                playerAnimations,
+                playerLoadouts);
 
         var uniqueTable = GetRequiredExternalTable(content, "unique_items.tsv");
         if (content.Manifest.Schema == DiabloContentSchema.Current)
@@ -1551,7 +1579,8 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap, IDiabloN
                 stores.CaptureAll().SelectMany(store => store.Items
                     ?? throw new InvalidDataException("Native population requires complete captured store stock."))
                     .Select(item => item.State).ToArray(),
-                sidecars.Items);
+                sidecars.Items,
+                characterStart: nativeCharacterStart);
             world.ReplaceLevel(nativePopulationBuild.Policy.CreateBackingLevel());
             combatTargets = (combatTargets ?? Array.Empty<AuthoritativeCombatTarget>())
                 .Concat(nativePopulationBuild.Monsters.Records
@@ -1577,7 +1606,7 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap, IDiabloN
                             next.Level.StableSymbol);
                         return AuthoritativeCathedralNativePopulationBuilder.Build(sidecars.Population, sidecars.Runtime,
                             next, playerClasses, playerAnimations, playerLoadouts, monsterTypes, itemCatalog, spells,
-                            nextDoor, stock, sidecars.Items, request, []);
+                            nextDoor, stock, sidecars.Items, request, [], nativeCharacterStart);
                     }) {
                         FreshActivation = () => new DiabloContentBootstrap(DiabloSimulationFactory.Instance)
                             .ActivateNativeProgression(content, randomSeed),
@@ -1596,15 +1625,32 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap, IDiabloN
                     throw new InvalidDataException("Native depth progression requires each exact generated candidate and door mapping through its maximum depth.");
                 var candidatesByLevel = depthCandidates.ToDictionary(candidate => candidate.Level.LevelId);
                 var stock = stores.CaptureAll().SelectMany(store => store.Items!).Select(item => item.State).ToArray();
-                nativeProgressionDefinition = new AuthoritativeCathedralNativeProgression(
-                    AuthoritativeCathedralNativeProgression.ComputeFingerprint(new {
+                var depthRunFingerprint = AuthoritativeCathedralNativeProgression.ComputeFingerprint(new {
                         RunId = "native-cathedral-town-l1-l4-v1", MaximumDepth = nativeProgressionMaximumDepth,
                         InitialOwner = nativePopulationBuild.Policy.Fingerprint,
                         Depths = depthGenerationPlan.Candidates.OrderBy(candidate => candidate.Level.LevelId)
                             .Select(candidate => candidate.Identity).ToArray(),
                         DepthIdentity = cathedralDepthIdentity, Metadata = sidecars.Population.Fingerprint,
                         Runtime = sidecars.Runtime.Fingerprint, StorySeed = 0x13579BDFU,
-                    }), playerAnimations, entry => {
+                    });
+                if (nativeCharacterStart is { HasCompiledTable: true } classBoundStart) {
+                    var classContentFingerprint = AuthoritativeCathedralNativeProgression.ComputeFingerprint(new {
+                        Classes = content.GetRequiredTable("classes.tsv").ToCanonicalTsv(),
+                        Loadouts = content.GetRequiredTable("class_loadouts.tsv").ToCanonicalTsv(),
+                        LoadoutItems = content.GetRequiredTable("class_loadout_items.tsv").ToCanonicalTsv(),
+                        Animations = content.GetRequiredTable("class_animations.tsv").ToCanonicalTsv(),
+                    });
+                    depthRunFingerprint = AuthoritativeCathedralNativeProgression.ComputeFingerprint(new {
+                        RunId = "native-cathedral-town-l1-l4-class-v1",
+                        ClassId = classBoundStart.ClassId,
+                        ClassSymbol = classBoundStart.ClassSymbol,
+                        Hero = classBoundStart.Hero,
+                        ClassContentFingerprint = classContentFingerprint,
+                        LegacyDepthFingerprint = depthRunFingerprint,
+                    });
+                }
+                nativeProgressionDefinition = new AuthoritativeCathedralNativeProgression(
+                    depthRunFingerprint, playerAnimations, entry => {
                         if (!candidatesByLevel.TryGetValue(entry.LevelId, out var candidate))
                             throw new InvalidDataException("A native progression entry is outside its immutable depth plan.");
                         var request = AuthoritativeCathedralFreshLevelGenerator.CreateEntryRequest(
@@ -1615,7 +1661,7 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap, IDiabloN
                             sidecars.Runtime, candidate, playerClasses, playerAnimations, playerLoadouts,
                             monsterTypes, itemCatalog, spells,
                             depthDoors.Single(definition => definition.LevelId == entry.LevelId),
-                            stock, sidecars.Items, request, []);
+                            stock, sidecars.Items, request, [], nativeCharacterStart);
                     }, nativeProgressionMaximumDepth,
                     DiabloCohortState.NativeDepthProgressionFormatVersion, depthDoors) {
                         FreshActivation = () => new DiabloContentBootstrap(DiabloSimulationFactory.Instance)
@@ -1634,6 +1680,7 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap, IDiabloN
             NativeMonsterMetadataFingerprint = nativePopulationBuild?.MonsterMetadataFingerprint,
             NativeCathedralItems = nativePopulationBuild?.Items,
             NativePopulationPolicy = nativePopulationBuild?.Policy,
+            NativePopulationClassId = nativeCharacterStart?.ClassId,
             NativeProgression = nativeProgressionDefinition,
             WorldMutations = worldMutations,
             WorldRules = worldRules,
@@ -1824,6 +1871,7 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap, IDiabloN
             CohortCandidateFactory = simulationFactory is IDiabloCohortSimulationFactory cohortFactory
                     ? state => cohortFactory.CreateCohortCandidate(simulationOptions, state)
                     : null,
+            NativeCharacterStart = nativeCharacterStart,
             };
     }
 

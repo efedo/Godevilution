@@ -50,6 +50,9 @@ public sealed class DiabloSimulationOptions
     /** Immutable opt-in L1 population provenance and explicit interaction limits. */
     public AuthoritativeCathedralNativePopulationPolicy? NativePopulationPolicy { get; init; }
 
+    /** Class identity bound by native Cathedral population, retained across cohort restore. */
+    public uint? NativePopulationClassId { get; init; }
+
     internal AuthoritativeCathedralNativeProgression? NativeProgression { get; init; }
     internal NativeProgressionRestoreContext? NativeProgressionRestore { get; set; }
 

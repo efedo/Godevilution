@@ -95,7 +95,7 @@ public sealed class AuthoritativeRouteTravel
     }
 
     private static bool Settled(PlayerSnapshot player)
-        => player.CombatMode == PlayerCombatMode.Stand && player.CurrentAction is null;
+        => AuthoritativePlayerSettlement.IsSettled(player, pendingCommandCount: 0);
 
     private static WarpTriggerSnapshot? Resolve(Snapshot snapshot, uint level, uint id)
         => snapshot.LevelGeometry.FirstOrDefault(geometry => geometry.LevelId == level)

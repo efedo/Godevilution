@@ -38,7 +38,7 @@ public partial class SessionAcceptance : Node
     private async Task RunAsync()
     {
         var phase = Environment.GetEnvironmentVariable("GODEVILUTION_ACCEPTANCE_PHASE");
-        if (phase is not ("Create" or "Resume" or "Recovery" or "Journey" or "JourneyResume" or "TownLoop" or "TownLoopResume" or "Lifecycle" or "LifecycleResume" or "MultiplayerCreate" or "MultiplayerResume" or "MultiplayerRecovery" or "MultiplayerPendingRecovery" or "CooperativeJourney" or "CooperativeResume" or "Performance" or "PerformanceCreate" or "PerformanceResume" or "CathedralJourney" or "CathedralResume" or "CathedralDepthJourney" or "CathedralDepthResume" or "CathedralDoorJourney" or "CathedralDoorResume" or "CathedralNativeJourney" or "CathedralNativeResume" or "CathedralNativeChestJourney" or "CathedralNativeChestResume" or "CathedralNativeSarcophagusJourney" or "CathedralNativeSarcophagusResume" or "CathedralNativeBarrelJourney" or "CathedralNativeBarrelResume" or "CathedralNativeTrapJourney" or "CathedralNativeTrapResume" or "CathedralNativeProgressionJourney" or "CathedralNativeProgressionResume" or "CathedralNativeDepthProgressionJourney" or "CathedralNativeDepthProgressionResume"))
+        if (phase is not ("Create" or "Resume" or "Recovery" or "Journey" or "JourneyResume" or "TownLoop" or "TownLoopResume" or "Lifecycle" or "LifecycleResume" or "MultiplayerCreate" or "MultiplayerResume" or "MultiplayerRecovery" or "MultiplayerPendingRecovery" or "CooperativeJourney" or "CooperativeResume" or "Performance" or "PerformanceCreate" or "PerformanceResume" or "CathedralJourney" or "CathedralResume" or "CathedralDepthJourney" or "CathedralDepthResume" or "CathedralDoorJourney" or "CathedralDoorResume" or "CathedralNativeJourney" or "CathedralNativeResume" or "CathedralNativeChestJourney" or "CathedralNativeChestResume" or "CathedralNativeSarcophagusJourney" or "CathedralNativeSarcophagusResume" or "CathedralNativeBarrelJourney" or "CathedralNativeBarrelResume" or "CathedralNativeTrapJourney" or "CathedralNativeTrapResume" or "CathedralNativeProgressionJourney" or "CathedralNativeProgressionResume" or "CathedralNativeDepthProgressionJourney" or "CathedralNativeDepthProgressionResume" or "NativeWarriorJourney" or "NativeWarriorResume" or "NativeSorcererJourney" or "NativeSorcererResume"))
             throw new InvalidOperationException("Explicit acceptance phase is required.");
         var sessionMenuAcceptance = Environment.GetEnvironmentVariable("GODEVILUTION_ACCEPTANCE_SESSION_MENU") == "1";
         Require(!sessionMenuAcceptance || phase is "Create" or "Resume",
@@ -77,7 +77,7 @@ public partial class SessionAcceptance : Node
             return;
         }
         var bookmarkPath = System.IO.Path.Combine(directory, "resume-token.txt");
-        var creating = phase is "Create" or "Journey" or "TownLoop" or "Lifecycle" or "CathedralJourney" or "CathedralDepthJourney" or "CathedralDoorJourney" or "CathedralNativeJourney" or "CathedralNativeProgressionJourney" or "CathedralNativeDepthProgressionJourney";
+        var creating = phase is "Create" or "Journey" or "TownLoop" or "Lifecycle" or "CathedralJourney" or "CathedralDepthJourney" or "CathedralDoorJourney" or "CathedralNativeJourney" or "CathedralNativeProgressionJourney" or "CathedralNativeDepthProgressionJourney" or "NativeWarriorJourney" or "NativeSorcererJourney";
         if (creating) {
             Require(!System.IO.File.Exists(bookmarkPath), "Creation requires a fresh isolated bookmark directory.");
             System.IO.File.WriteAllText(bookmarkPath, "invalid token");
@@ -96,14 +96,20 @@ public partial class SessionAcceptance : Node
             Require(mode.Selected == 0, "A corrupt bookmark must leave new-character selection available.");
             Require(((Label)setup.FindChild("Validation", true, false)).Text.Contains("Could not read local resume bookmark"),
                 "The corrupt bookmark was not reported in the setup UI.");
-            ((LineEdit)setup.FindChild("CharacterName", true, false)).Text = phase == "Lifecycle"
-                ? "M1-Sorcerer" : "M0-Rogue";
+            ((LineEdit)setup.FindChild("CharacterName", true, false)).Text = phase switch {
+                "NativeWarriorJourney" => "Native-Warrior", "NativeSorcererJourney" => "Native-Sorcerer",
+                "Lifecycle" => "M1-Sorcerer", _ => "M0-Rogue",
+            };
             var selector = (OptionButton)setup.FindChild("CharacterClass", true, false);
-            selector.Select(selector.GetItemIndex(phase == "Lifecycle" ? 2 : 1));
+            selector.Select(selector.GetItemIndex(phase switch {
+                "NativeWarriorJourney" => 0, "NativeSorcererJourney" or "Lifecycle" => 2, _ => 1,
+            }));
         } else {
             if (!nativeDepthEntryContinuation) {
                 previous = JsonSerializer.Deserialize<Evidence>(System.IO.File.ReadAllText(
                     System.IO.Path.Combine(directory, phase switch {
+                        "NativeWarriorResume" => "nativewarriorjourney.json",
+                        "NativeSorcererResume" => "nativesorcererjourney.json",
                         "Recovery" => "resume.json", "JourneyResume" => "journey.json",
                         "TownLoopResume" => "townloop.json", "CathedralResume" => "cathedraljourney.json",
                         "CathedralDepthResume" => "cathedraldepthjourney.json", "CathedralDoorResume" => "cathedraldoorjourney.json",
@@ -192,8 +198,10 @@ public partial class SessionAcceptance : Node
         }
         var initial = main.ObservedSnapshot!.Players.Single();
         var lifecyclePhase = phase is "Lifecycle" or "LifecycleResume";
-        var expectedClass = lifecyclePhase ? 2U : 1U;
-        var expectedName = lifecyclePhase ? "M1-Sorcerer" : "M0-Rogue";
+        var expectedClass = phase.StartsWith("NativeWarrior", StringComparison.Ordinal) ? 0U
+            : phase.StartsWith("NativeSorcerer", StringComparison.Ordinal) ? 2U : lifecyclePhase ? 2U : 1U;
+        var expectedName = phase.StartsWith("NativeWarrior", StringComparison.Ordinal) ? "Native-Warrior"
+            : phase.StartsWith("NativeSorcerer", StringComparison.Ordinal) ? "Native-Sorcerer" : lifecyclePhase ? "M1-Sorcerer" : "M0-Rogue";
         Require(initial.CharacterClassId == expectedClass && initial.CharacterName == expectedName, "Character creation identity did not reach the host.");
         Require(!setup.Visible, "Setup did not close after submission.");
         await VerifyPresentationPackAsync(main, directory, phase);
@@ -238,6 +246,10 @@ public partial class SessionAcceptance : Node
             Require(initial.EntityId == previous.EntityId && initial.PositionX == previous.X
                 && initial.PositionY == previous.Y && initial.LevelId == previous.LevelId,
                 $"Fresh host/client restore mismatch: expected entity/level/position {previous.EntityId}/{previous.LevelId}/{previous.X},{previous.Y}; observed {initial.EntityId}/{initial.LevelId}/{initial.PositionX},{initial.PositionY}.");
+        }
+        if (phase is "NativeWarriorJourney" or "NativeWarriorResume" or "NativeSorcererJourney" or "NativeSorcererResume") {
+            await VerifyNativeClassAsync(main, directory, phase, previous);
+            return;
         }
         if (phase is "Lifecycle" or "LifecycleResume") {
             await VerifySorcererLifecycleAsync(main, directory, phase, visible, previous);
@@ -502,7 +514,9 @@ public partial class SessionAcceptance : Node
             "CathedralNativeProgressionResume" => 1785,
             "CathedralNativeDepthProgressionJourney" => 3540,
             "CathedralNativeDepthProgressionResume" => 3540,
-                "Lifecycle" => 345, "LifecycleResume" => 70,
+                "NativeWarriorJourney" or "NativeSorcererJourney" => 885,
+            "NativeWarriorResume" or "NativeSorcererResume" => 180,
+            "Lifecycle" => 345, "LifecycleResume" => 70,
                 "TownLoop" => 225, "Journey" => 150, "MultiplayerCreate" or "MultiplayerResume" => 70,
                 "MultiplayerRecovery" => 180, "CooperativeJourney" => 285, "CooperativeResume" => 225, _ => 40,
             };

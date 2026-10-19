@@ -21,6 +21,9 @@ Godot presentation client remain unfinished. The server does not require MPQs.
 - Cathedral L1-L4 generation, lazy floor owners, destination walking and pending
   bow/cold-state support exist behind explicit profiles. Backend proof does not
   establish a completed four-floor application journey.
+- Explicit Warrior/Sorcerer profiles pass canonical native preparation, generated
+  L1 combat, Repair/Recharge and exact fresh-host player/items/world/RNG/cursor
+  continuity. Their later-floor class campaigns remain unqualified.
 - Native chests, sarcophagi, ordinary/explosive barrels and Arrow wall traps have
   scoped operation and retained-mutation evidence. Other required object families
   remain open in the inventory.
@@ -33,8 +36,9 @@ Godot presentation client remain unfinished. The server does not require MPQs.
   generated-world campaigns or all class/difficulty combinations.
 - The reviewed session batch passes headless create/return/rejoin and exact
   fresh-host resume, including current-model event clearing, confirmed-token
-  retention and joined scene cleanup. Local native setup offers Rogue only;
-  remote/default setup retains its existing choices. Rendered flow remains open.
+  retention and joined scene cleanup. Legacy native setup offers Rogue; explicit
+  Warrior/Sorcerer profiles offer their bound class. Remote/default setup retains
+  its existing choices. Rendered flow remains open.
 - The Godot client is still a presentation prototype. Full native graphical
   parity, complete asset coverage and final rendered playability are open.
 
@@ -48,7 +52,7 @@ meaningful delivered changes. There is no calibrated overall percentage.
 | Gate | Status | Current position / remaining exit requirement |
 | --- | --- | --- |
 | M0: Launch and acceptance | Partial | Scoped launch, transport, cohort recovery and shutdown checks pass. Normal-profile adoption, C++ native compatibility-client moved-position cold resume and broader platform/fault/budget acceptance remain open. |
-| M1: Usable Godot loop | Partial | Scoped authored and native Town/L1/L2 journeys pass. Consolidated session flow, broader class/death/quest/service play and current rendered usability remain incomplete. |
+| M1: Usable Godot loop | Partial | Scoped authored/native journeys, headless session flow and Warrior/Sorcerer L1 admission pass. Rendered session usability and broader class/death/quest/service campaigns remain incomplete. |
 | M2: Native world | Partial | Ordinary Cathedral L1-L4 generation/owners and several object families exist. Remaining dungeon families, quest-enabled generation and broader placement/population behavior remain open. |
 | M3: Base/Hellfire campaigns | Partial | Many gameplay systems and native comparisons exist. Complete supported campaigns, final encounters, classes/difficulties and campaign-wide multiplayer retention are unproved or incomplete. |
 | M4: Release client and operation | Partial | Client-pack and packaging foundations exist. Full graphical parity, audio/input/accessibility, clean-install coverage and measured release performance/soaks remain open. |
@@ -59,9 +63,9 @@ Passing a scoped test or adding a schema version does not close a milestone.
 
 ## Material limits and next decision
 
-- The native populated profile accepts the canonical Rogue in single-player
-  Normal mode. Broader class selection in the UI is not proof those classes are
-  admitted by this profile. See inventory item 1.
+- Legacy native profiles retain canonical Rogue admission. Separate class-bound
+  profiles admit canonical Warrior/Sorcerer in single-player Normal; remaining
+  classes, wider modes/difficulties and full campaigns stay open. See item 1.
 - Native generation beyond Cathedral and generated quest/set-level campaign
   integration remain substantial implementation gaps. See items 5, 7 and 8.
 - Legacy per-participant cold import can overwrite shared world/RNG. Explicit
@@ -75,8 +79,9 @@ Passing a scoped test or adding a schema version does not close a milestone.
 
 The detailed inventory, documentation split and [near-term work plan](work-plan.md)
 are prepared. The session-flow batch is complete for headless acceptance. The
-next proposed primary batch is native Warrior/Sorcerer admission and ordinary
-combat/ability/resume; no class expansion is claimed by the setup restriction.
+Warrior/Sorcerer batch is complete for its headless L1 boundary. The next proposed
+primary batch is the native Town/Cathedral visual slice: establish its headless
+asset/binding scope first and retain the rendered comparison gate.
 Keep its queue, this status and affected inventory entries synchronized as work
 changes. Do not restart inventory construction or an unrelated test campaign.
 
@@ -91,7 +96,7 @@ Inspect current diffs; this grouping is working memory, not staging authority.
   L3 encounter/held-pair and ground-input diagnostics, plus wrappers. These are
   separate experimental scenarios, not mandatory production dependencies.
 - ACK-loss/retry changes in protocol-client tests and the acceptance relay.
-- Native player-command/theme fixtures, `CMake/Tests.cmake`,
+- Native player-command fixtures, `CMake/Tests.cmake`,
   `AuthoritativeWorld.cs` and documentation changes.
 
 Preserve unrelated untracked files, including `16`, `Microsoft/`, `diablo.ini`
@@ -148,6 +153,12 @@ The four-floor experimental profile is `.local/nr16-f4b1`; its matching local
 build/oracle environment is
 `.local/native-cathedral-run-20261016/native-walk-environment.ps1`.
 Use the matching profile, engine and guide when an affected verification is needed.
+
+The class-bound profiles are `.local/native-classes-20261019/warrior` and
+`.local/native-classes-20261019/sorcerer`; use
+`tools/test-godot-native-classes.ps1 -ProfileDirectory <class profile>`.
+The accepted pairs used an isolated staged host/client to exclude unrelated
+vision/preview WIP. See test history for the retained class-scoped sessions.
 
 Current reports are linked from test history. Keep historical outputs and old
 file versions out of active documentation; Git is the archive. Technical rules

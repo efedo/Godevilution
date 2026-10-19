@@ -37,9 +37,16 @@ public sealed partial class DiabloWorldState
         } else {
             nativePopulationPolicy.ValidateItemProfile(options.NativeCathedralItems);
         }
-        nativePopulationParticipantClassId = options.PlayerClasses?.Definitions.SingleOrDefault(
-            definition => string.Equals(definition.Symbol, "rogue", StringComparison.Ordinal))?.ClassId
-            ?? throw new InvalidDataException("Native population requires the canonical Rogue participant class.");
+        var participantClassId = options.NativePopulationClassId
+            ?? options.PlayerClasses?.Definitions.SingleOrDefault(
+                definition => string.Equals(definition.Symbol, "rogue", StringComparison.Ordinal))?.ClassId
+            ?? throw new InvalidDataException("Native population requires its canonical participant class.");
+        var participantClass = options.PlayerClasses?.GetRequired(participantClassId)
+            ?? throw new InvalidDataException("Native population requires its active participant class catalog.");
+        if (participantClass.Availability != DiabloPlayerClassAvailability.BaseGame
+            || participantClass.ClassId is not (0U or 1U or 2U))
+            throw new InvalidDataException("Native population supports only the canonical base-game classes.");
+        nativePopulationParticipantClassId = participantClass.ClassId;
         if (World is null)
             throw new InvalidDataException("Native population requires its complete backing world.");
         foreach (var owner in NativePopulationOwners) {

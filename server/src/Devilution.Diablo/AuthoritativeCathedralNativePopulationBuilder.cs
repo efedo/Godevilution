@@ -21,9 +21,7 @@ internal static class AuthoritativeCathedralNativePopulationBuilder
     private const uint ObjectEntityIdBase = 0x09002000;
     private const uint NativeObjectIdBase = 0x09000000;
     private const uint ItemEntityIdBase = 0x0A001000;
-    private const uint RogueLightRadius = 8;
     private const int TilePopulated = 1 << 3;
-    private const string RogueSymbol = "rogue";
     private const string UniqueIdentityPrefix = "native-cathedral-unique-";
     private static readonly string UnboundGenerationFingerprint = new('0', 64);
 
@@ -41,7 +39,8 @@ internal static class AuthoritativeCathedralNativePopulationBuilder
         IReadOnlyCollection<AuthoritativeItemState> storeItems,
         AuthoritativeCathedralNativeItemSidecars itemSidecars,
         AuthoritativeCathedralFreshLevelRequest? entryRequest = null,
-        IReadOnlyCollection<AuthoritativeItemState>? carriedItems = null)
+        IReadOnlyCollection<AuthoritativeItemState>? carriedItems = null,
+        AuthoritativeCathedralNativeCharacterStart? characterStart = null)
     {
         ArgumentNullException.ThrowIfNull(metadata);
         ArgumentNullException.ThrowIfNull(runtimeCatalog);
@@ -72,26 +71,21 @@ internal static class AuthoritativeCathedralNativePopulationBuilder
         }
         var entityOffset = entryRequest is null ? 0U : checked((uint)(entryRequest.Depth - 1) * 0x10000U);
 
-        var rogue = playerClasses.Definitions.SingleOrDefault(
-            definition => string.Equals(definition.Symbol, RogueSymbol, StringComparison.Ordinal))
-            ?? throw new InvalidDataException("Native Cathedral population requires the canonical Rogue class.");
+        var resolvedCharacterStart = characterStart
+            ?? AuthoritativeCathedralNativeCharacterStart.Resolve(null, playerClasses, playerAnimations, playerLoadouts);
+        var playerClass = playerClasses.GetRequired(resolvedCharacterStart.ClassId);
+        if (!string.Equals(playerClass.Symbol, resolvedCharacterStart.ClassSymbol, StringComparison.Ordinal))
+            throw new InvalidDataException("Native Cathedral character start no longer matches the active class catalog.");
         var template = playerLoadouts.CreateTemplate(
             "native-cathedral-population-profile",
-            rogue.ClassId,
+            playerClass.ClassId,
             goldOverride: null,
             lifeOverride: null,
             manaOverride: null,
             startingLevelId: depthCandidate.Level.LevelId,
-            startingPositionX: 57,
-            startingPositionY: 40);
-        var hero = new AuthoritativeCathedralFreshLevelHeroContext(
-            template.BaseLifeMaximum,
-            template.BaseManaMaximum,
-            checked((int)RogueLightRadius),
-            playerAnimations.GetRequired(rogue.ClassId).IdleFrames,
-            new(57, 40),
-            LevelChanging: true,
-            LevelLoading: true);
+            startingPositionX: resolvedCharacterStart.Hero.PreEntryFuture.X,
+            startingPositionY: resolvedCharacterStart.Hero.PreEntryFuture.Y);
+        var hero = resolvedCharacterStart.Hero;
         var request = entryRequest ?? AuthoritativeCathedralFreshLevelGenerator.CreateRequest(
             metadata,
             depth: 1,
@@ -298,7 +292,7 @@ internal static class AuthoritativeCathedralNativePopulationBuilder
         requiredIndexes.Add(0); // Native gold generation resolves this canonical raw item independently of DropRate.
         foreach (var sourceItem in initialOwnedItems.Concat(storeItems)) {
             if (sourceItem.ItemIndex < 0)
-                throw new NotSupportedException("Native Cathedral ownership requires a stable native index for every Rogue loadout and store item.");
+                throw new NotSupportedException("Native Cathedral ownership requires a stable native index for every starting loadout and store item.");
             requiredIndexes.Add(sourceItem.ItemIndex);
         }
         foreach (var reference in state.ItemRefs.Where(value => value != 0)) {
@@ -352,7 +346,7 @@ internal static class AuthoritativeCathedralNativePopulationBuilder
                 if (sourceItem.StableItemId != definition.ItemId)
                     throw new NotSupportedException(
                         $"Native Cathedral item index {nativeIndex} maps to '{definition.StableSymbol}' ({definition.ItemId}), "
-                        + $"but an admitted Rogue starter or store row uses stable item {sourceItem.StableItemId}.");
+                        + $"but an admitted starter or store row uses stable item {sourceItem.StableItemId}.");
             }
             var action = ResolveNativeItemAction(native, definition, contentItems,
                 nativeSpellActions: semantic.ItemActionKind == DiabloItemActionKind.None);
