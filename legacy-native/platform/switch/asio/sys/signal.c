@@ -1,5 +1,5 @@
 /**
- * @file Source/platform/switch/asio/sys/signal.c
+ * @file legacy-native/platform/switch/asio/sys/signal.c
  *
  * signal.
  */

@@ -30,7 +30,7 @@ public sealed class DiabloStoreCommandProcessor
     private readonly AuthoritativeTownerGreetingCatalog? townerGreetings;
     private readonly uint townLevelId;
 
-    // These IDs mirror _talker_id in Source/game/towners/towners.hpp. They are
+    // These IDs mirror _talker_id in legacy-native/game/towners/towners.hpp. They are
     // only used to connect validated greeting locations to native store roles.
     private const int SmithTownerId = 0;
     private const int HealerTownerId = 1;

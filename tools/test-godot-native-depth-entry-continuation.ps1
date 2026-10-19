@@ -95,7 +95,7 @@ function Write-ContinuationInputProof([string]$Session, [string]$ExpectedHash) {
         [System.Text.UTF8Encoding]::new($false))
 }
 
-$launcher = Join-Path $repositoryRoot 'godot/run-local-client.ps1'
+$launcher = Join-Path $repositoryRoot 'godot-client/run-local-client.ps1'
 $entrySession = Copy-CoreContinuationSession $sourceRoot 'entry'
 $arguments = @{
     CathedralNativeDepthProgressionProfileDirectory = $profileRoot

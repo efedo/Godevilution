@@ -160,7 +160,7 @@ enum {
 };
 
 #ifdef __3DS__
-/** Defined in Source/platform/ctr/messagebox.cpp */
+/** Defined in legacy-native/platform/ctr/messagebox.cpp */
 int SDL_ShowSimpleMessageBox(Uint32 flags,
     const char *title,
     const char *message,

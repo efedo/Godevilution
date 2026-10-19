@@ -27,7 +27,7 @@ and acceptance gates.
 - [Validated data runtime](../server/src/Devilution.Data/README.md)
 - [Engine composition runtime](../server/src/Devilution.Engine/README.md)
 - [Diablo gameplay module](../server/src/Devilution.Diablo/README.md)
-- [Godot client](../godot/README.md)
+- [Godot client](../godot-client/README.md)
 - [Native compatibility client](native-client.md)
 - [Replay reference](replay-fixtures.md)
 - [Lua replacement inventory](lua-capability-inventory.md)

@@ -38,7 +38,7 @@ namespace {
 // repositioning logic that is irrelevant in headless mode.
 // ---------------------------------------------------------------------------
 
-/// Mirror of InventoryKeyPressed() (Source/diablo.cpp).
+/// Mirror of InventoryKeyPressed() (legacy-native/diablo.cpp).
 void DoInventoryKeyPress()
 {
 	if (CurrentStoreManager.IsPlayerInStore())
@@ -50,7 +50,7 @@ void DoInventoryKeyPress()
 		CloseVisualStore();
 }
 
-/// Mirror of SpellBookKeyPressed() (Source/diablo.cpp).
+/// Mirror of SpellBookKeyPressed() (legacy-native/diablo.cpp).
 void DoSpellBookKeyPress()
 {
 	if (CurrentStoreManager.IsPlayerInStore())
@@ -59,7 +59,7 @@ void DoSpellBookKeyPress()
 	CloseInventory(); // closes stash, visual store, and sets invflag=false
 }
 
-/// Mirror of CharacterSheetKeyPressed() (Source/diablo.cpp).
+/// Mirror of CharacterSheetKeyPressed() (legacy-native/diablo.cpp).
 void DoCharacterSheetKeyPress()
 {
 	if (CurrentStoreManager.IsPlayerInStore())
@@ -67,7 +67,7 @@ void DoCharacterSheetKeyPress()
 	ToggleCharPanel(); // OpenCharPanel closes quest log, stash, visual store
 }
 
-/// Mirror of QuestLogKeyPressed() (Source/diablo.cpp).
+/// Mirror of QuestLogKeyPressed() (legacy-native/diablo.cpp).
 void DoQuestLogKeyPress()
 {
 	if (CurrentStoreManager.IsPlayerInStore())
@@ -83,7 +83,7 @@ void DoQuestLogKeyPress()
 		CloseVisualStore();
 }
 
-/// Mirror of DisplaySpellsKeyPressed() (Source/diablo.cpp).
+/// Mirror of DisplaySpellsKeyPressed() (legacy-native/diablo.cpp).
 void DoDisplaySpellsKeyPress()
 {
 	if (CurrentStoreManager.IsPlayerInStore())

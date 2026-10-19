@@ -3,7 +3,7 @@ import csv
 import pathlib
 
 root = pathlib.Path(__file__).resolve().parent.parent
-translation_dummy_path = root.joinpath("Source/crypto/translation_dummy.cpp")
+translation_dummy_path = root.joinpath("legacy-native/utils/crypto/translation_dummy.cpp")
 
 base_paths = {
     "classdat": root.joinpath("assets/txtdata/classes/classdat.tsv"),

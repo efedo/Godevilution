@@ -9,6 +9,22 @@ the referenced test sources. Do not copy raw outputs into historical archives.
 
 ## Client and host verification
 
+### 2026-10-18 — repository directory rename
+
+The Godot solution and protocol-test project build under `godot-client/` with
+SDK 4.7.1 unchanged. Native authoritative `devilutionx`, `content_manifest_test`
+and `cathedral_population_test` rebuild under `legacy-native/`; MSVC requires
+the documented child-only `/Z7` workaround for the existing C1902 PDB error.
+Client boundary tests pass 3/3, content-manifest tests 4/4 and the changed
+repository-output path guard 1/1. Focused launcher/assembly checks pass 36/39;
+the three existing positional-parameter/ProfileKind contract mismatches are
+unchanged baseline/WIP drift, confirmed by independent comparison.
+
+All 257 local Markdown links, 56 project references, 36 PowerShell parses and
+three Python parses pass. Independent index comparison excludes gameplay WIP;
+relocated WIP content is preserved. These are rename checks, not new gameplay
+acceptance.
+
 ### 2026-10-18 — held entity attacks (`3af2a51cc`)
 
 Negotiated native-depth clients can repeat ordinary entity attacks through the
@@ -46,8 +62,8 @@ client polling cadence. Focused host/client regressions pass, including live
 admission and retry boundaries. This does not guarantee every full-game command
 will avoid rejection under combat load. See the relevant clock-gated host and
 client protocol test classes: [host poll tests](../server/tests/Devilution.Server.Tests/ClockGatedCohortSnapshotPollTests.cs),
-[clock-only client tests](../godot/Devilution.Client.Protocol.Tests/AuthoritativeClientClockOnlyProbeTests.cs),
-and [client admission tests](../godot/Devilution.Client.Protocol.Tests/AuthoritativeClientSchedulingClockAdmissionTests.cs).
+[clock-only client tests](../godot-client/Devilution.Client.Protocol.Tests/AuthoritativeClientClockOnlyProbeTests.cs),
+and [client admission tests](../godot-client/Devilution.Client.Protocol.Tests/AuthoritativeClientSchedulingClockAdmissionTests.cs).
 
 ## Native Cathedral baselines
 
@@ -104,8 +120,8 @@ Focused TCP cases preserve tick-derived portal opening counters, canonical
 command receipts, owner/guest use and owner-return closure across fresh hosts.
 The two-client case rejoins in reverse order. Forced stops exercise restart;
 these cases do not establish graceful shutdown, rendered controls or a full
-native campaign. See [counter restart tests](../godot/Devilution.Client.Protocol.Tests/LiveAuthoritativeServerTests.TownPortalLifetimeRestart.cs)
-and [cohort portal tests](../godot/Devilution.Client.Protocol.Tests/LiveAuthoritativeServerTests.CohortTownPortalRestart.cs).
+native campaign. See [counter restart tests](../godot-client/Devilution.Client.Protocol.Tests/LiveAuthoritativeServerTests.TownPortalLifetimeRestart.cs)
+and [cohort portal tests](../godot-client/Devilution.Client.Protocol.Tests/LiveAuthoritativeServerTests.CohortTownPortalRestart.cs).
 
 ### 2026-10-04 — two-client authored combat and cohort resume (`5e8389c03`)
 

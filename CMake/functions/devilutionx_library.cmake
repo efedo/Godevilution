@@ -7,7 +7,7 @@ include(functions/object_libraries)
 function(add_devilutionx_library NAME)
   add_library(${NAME} ${ARGN})
 
-  target_include_directories(${NAME} PUBLIC ${PROJECT_SOURCE_DIR}/Source)
+  target_include_directories(${NAME} PUBLIC ${PROJECT_SOURCE_DIR}/legacy-native)
 
   target_compile_definitions(${NAME} PUBLIC ${DEVILUTIONX_PLATFORM_COMPILE_DEFINITIONS})
   target_compile_options(${NAME} PUBLIC ${DEVILUTIONX_PLATFORM_COMPILE_OPTIONS})

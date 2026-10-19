@@ -4,7 +4,7 @@ Godevilution contains three runtime surfaces plus shared contracts and tests.
 
 | Path | Responsibility |
 | --- | --- |
-| `Source/` | Native DevilutionX-derived engine and optional server-backed client adapter |
+| `legacy-native/` | Native DevilutionX-derived engine and optional server-backed client adapter |
 | `server/src/Devilution.Domain/` | Dependency-free .NET 8 deterministic domain kernel |
 | `server/src/Devilution.Data/` | .NET 8 validated content runtime depending only on Domain |
 | `server/src/Devilution.Engine/` | .NET 8 transport-neutral module composition and capability runtime depending only on Domain and Data |
@@ -13,25 +13,28 @@ Godevilution contains three runtime surfaces plus shared contracts and tests.
 | `server/src/Devilution.Server.Diablo/` | .NET 8 Diablo-to-host/Protobuf adapter, compatible saves, and replay support |
 | `server/src/Devilution.Server/` | .NET 10 composition-only authoritative executable |
 | `server/content/` | Validated external authoritative content packs |
-| `godot/Devilution.Client/` | Godot 4.7.x Mono presentation project; source SDK pinned to 4.7.1 |
-| `godot/Devilution.Client.Protocol/` | Engine-independent C# protocol transport and client model |
+| `godot-client/Devilution.Client/` | Godot 4.7.x Mono presentation project; source SDK pinned to 4.7.1 |
+| `godot-client/Devilution.Client.Protocol/` | Engine-independent C# protocol transport and client model |
 | `protocol/Devilution.Protocol/` | Single generated .NET 8 Protobuf binding assembly |
 | `protocol/` | Canonical Protobuf schema and language-neutral delivery vectors |
 | `test/fixtures/replay/` | Shared native/C# deterministic replay fixtures |
 | `test/` | Native GTest suites and support |
 | `docs/` | Current architecture, status, contributor, and migration documentation |
 
-## Native Source
+## Legacy Native Runtime
 
-Native source is organized under `Source/` by architectural domain. Major
+Native source is organized under `legacy-native/` by architectural domain. Major
 directories include `application`, `controls`, `data`, `engine`, `game`, `lua`,
 `network`, `persistence`, `platform`, `qol`, `tables`, `ui`, and `utils`.
-`Source/network/authoritative` contains the opt-in server-backed adapter, while
-`Source/replay` and the domain projection directories support cross-language
-parity. Native gameplay remains the compatibility baseline during migration.
+`legacy-native/network/authoritative` contains the opt-in server-backed adapter, while
+`legacy-native/game/replay` and the domain projection directories support cross-language
+parity. Native gameplay remains the compatibility baseline during migration. The
+`legacy-native/` name marks its retirement direction; this tree still supplies
+the native client and behavioral comparisons. Serialized oracle provenance
+labels retain historical source paths for existing corpus compatibility.
 
-Native gameplay headers under `Source/game` use `.hpp`; most other native
-domains use `.h`. Includes are rooted at `Source`, for example
+Native gameplay headers under `legacy-native/game` use `.hpp`; most other native
+domains use `.h`. Includes are rooted at `legacy-native`, for example
 `#include "game/items/items.hpp"`.
 
 ## C# Server

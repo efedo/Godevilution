@@ -350,7 +350,7 @@ endif()
 # Dependencies must be included after Platforms.
 include(Dependencies)
 
-add_subdirectory(Source)
+add_subdirectory(legacy-native)
 
 set(BIN_TARGET devilutionx)
 if(NINTENDO_3DS)
@@ -362,7 +362,7 @@ endif()
 add_executable(${BIN_TARGET}
   WIN32
   MACOSX_BUNDLE
-  Source/application/main.cpp)
+  legacy-native/application/main.cpp)
 
 if(CMAKE_STRIP AND NOT DEVILUTIONX_DISABLE_STRIP)
   add_custom_command(

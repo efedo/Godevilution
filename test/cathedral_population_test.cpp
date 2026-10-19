@@ -1879,7 +1879,7 @@ std::filesystem::path FindRepositoryRoot()
 	auto candidate = std::filesystem::canonical(paths::BasePath());
 	while (!candidate.empty()) {
 		if (std::filesystem::is_regular_file(candidate / "CMakeLists.txt")
-		    && std::filesystem::is_directory(candidate / "Source")
+		    && std::filesystem::is_directory(candidate / "legacy-native")
 		    && std::filesystem::is_directory(candidate / "test"))
 			return candidate;
 		const auto parent = candidate.parent_path();
@@ -1973,10 +1973,10 @@ TEST(CathedralPopulation, RejectRepositoryOutput)
 	std::string error;
 	EXPECT_FALSE(ValidateOutputPath(repository, error));
 	EXPECT_EQ(error, "population oracle output must be outside the repository");
-	EXPECT_FALSE(ValidateOutputPath(repository / "Source", error));
+	EXPECT_FALSE(ValidateOutputPath(repository / "legacy-native", error));
 	EXPECT_EQ(error, "population oracle output must be outside the repository");
 #ifdef _WIN32
-	std::wstring differentCase = (repository / "Source").native();
+	std::wstring differentCase = (repository / "legacy-native").native();
 	CharUpperBuffW(differentCase.data(), static_cast<DWORD>(differentCase.size()));
 	EXPECT_FALSE(ValidateOutputPath(differentCase, error));
 	EXPECT_EQ(error, "population oracle output must be outside the repository");

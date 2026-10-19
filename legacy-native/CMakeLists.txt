@@ -564,7 +564,7 @@ target_link_dependencies(libdevilutionx_ini PUBLIC
 # because `libdevilutionx_log` does not have any sources.
 add_library(libdevilutionx_log INTERFACE)
 target_include_directories(libdevilutionx_log INTERFACE
-  ${PROJECT_SOURCE_DIR}/Source)
+  ${PROJECT_SOURCE_DIR}/legacy-native)
 target_link_libraries(libdevilutionx_log INTERFACE
   DevilutionX::SDL
   fmt::fmt

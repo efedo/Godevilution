@@ -71,7 +71,7 @@ public sealed class ServerAssemblyBoundaryTests
         var owners = new[] {
             Path.Combine(repositoryRoot, "protocol"),
             Path.Combine(repositoryRoot, "server", "src"),
-            Path.Combine(repositoryRoot, "godot"),
+            Path.Combine(repositoryRoot, "godot-client"),
         }
             .SelectMany(root => Directory.EnumerateFiles(
                 root,
@@ -116,7 +116,7 @@ public sealed class ServerAssemblyBoundaryTests
         var repositoryRoot = FindRepositoryRoot();
         var authoritativeRoots = new[] {
             Path.Combine(repositoryRoot, "server", "src"),
-            Path.Combine(repositoryRoot, "godot"),
+            Path.Combine(repositoryRoot, "godot-client"),
         };
         var forbiddenReferences = authoritativeRoots
             .SelectMany(root => Directory.EnumerateFiles(
@@ -170,7 +170,7 @@ public sealed class ServerAssemblyBoundaryTests
     {
         var source = File.ReadAllText(Path.Combine(
             FindRepositoryRoot(),
-            "Source",
+            "legacy-native",
             "application",
             "diablo.cpp"));
         const string modeGuard =
@@ -207,7 +207,7 @@ public sealed class ServerAssemblyBoundaryTests
     {
         var source = File.ReadAllText(Path.Combine(
             FindRepositoryRoot(),
-            "Source",
+            "legacy-native",
             "ui",
             "panel",
             "control_chat.cpp"));
@@ -228,7 +228,7 @@ public sealed class ServerAssemblyBoundaryTests
     {
         var source = File.ReadAllText(Path.Combine(
             FindRepositoryRoot(),
-            "Source",
+            "legacy-native",
             "persistence",
             "options.cpp"));
 

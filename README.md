@@ -15,10 +15,10 @@ randomness, world state, inventory, combat, and persistence.
 - `server/` - engine-neutral C# domain, data, and composition runtimes; the
   Diablo game module; generic authoritative host; Diablo protocol adapter;
   composition executable; persistence; and tests.
-- `godot/` - Godot presentation client and engine-independent protocol client.
+- `godot-client/` - Godot presentation client and engine-independent protocol client.
 - `protocol/` - shared Protobuf contract, its single generated C# assembly,
   and language-neutral test vectors.
-- `Source/` - inherited native C++ client and its server-backed compatibility
+- `legacy-native/` - inherited native C++ client and its server-backed compatibility
   adapter.
 - `server/content/base/` - current external authoritative content pack.
 - `test/fixtures/replay/` - shared C++/C# deterministic replay fixtures.
@@ -41,8 +41,8 @@ dotnet run --project server/tests/Devilution.Engine.Tests/Devilution.Engine.Test
 dotnet run --project server/tests/Devilution.Diablo.Tests/Devilution.Diablo.Tests.csproj
 dotnet run --project server/tests/Devilution.Server.Tests/Devilution.Server.Tests.csproj
 dotnet build server/src/Devilution.Server/Devilution.Server.csproj
-dotnet run --project godot/Devilution.Client.Protocol.Tests/Devilution.Client.Protocol.Tests.csproj
-dotnet build godot/Devilution.Client/Devilution.Client.sln
+dotnet run --project godot-client/Devilution.Client.Protocol.Tests/Devilution.Client.Protocol.Tests.csproj
+dotnet build godot-client/Devilution.Client/Devilution.Client.sln
 ```
 
 Run the server with:
@@ -74,7 +74,7 @@ For two local Godot windows on one multiplayer host, run
 `powershell -ExecutionPolicy Bypass -File run-godot-multiplayer.ps1`. It uses
 base content with separate player bookmarks under `.local/godot-multiplayer`.
 See [Godot build and application checks](docs/ai/godot-build.md) for acceptance.
-See [godot/README.md](godot/README.md) for details and
+See [godot-client/README.md](godot-client/README.md) for details and
 [docs/native-client.md](docs/native-client.md) for the native compatibility
 client.
 

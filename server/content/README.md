@@ -31,7 +31,7 @@ generation/pricing parity; the underlying cast and portal are server-owned.
 
 `native-start` is a separate opt-in pack, exact-pinned to
 `devilution.base@0.1.0`. It adds only a town entry at `(75,68)`, matching native
-`CreateTown(ENTRY_MAIN)` in `Source/game/levels/town.cpp`. The native paired
+`CreateTown(ENTRY_MAIN)` in `legacy-native/game/levels/town.cpp`. The native paired
 launcher explicitly selects level 0 and this pack; standalone/base/Godot
 defaults, base tables/assets and starting resources remain unchanged. It needs
 the rebuilt module: older binaries do not implement this optional contract.

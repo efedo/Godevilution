@@ -113,7 +113,7 @@ public sealed class MultiplayerRecoveryLauncherTests
         var output = await RunHarness("""
             $tokens = $null; $errors = $null
             $ast = [Management.Automation.Language.Parser]::ParseFile(
-                (Join-Path $repositoryRoot 'godot/run-local-client.ps1'), [ref]$tokens, [ref]$errors)
+                (Join-Path $repositoryRoot 'godot-client/run-local-client.ps1'), [ref]$tokens, [ref]$errors)
             if ($errors.Count) { throw 'The actual launcher did not parse.' }
             foreach ($name in @('Test-CohortJsonInteger', 'Assert-CohortRecoveryReceipt')) {
                 $functions = @($ast.FindAll({ param($node)
@@ -162,7 +162,7 @@ public sealed class MultiplayerRecoveryLauncherTests
         var output = await RunHarness("""
             $tokens = $null; $errors = $null
             $ast = [Management.Automation.Language.Parser]::ParseFile(
-                (Join-Path $repositoryRoot 'godot/run-local-client.ps1'), [ref]$tokens, [ref]$errors)
+                (Join-Path $repositoryRoot 'godot-client/run-local-client.ps1'), [ref]$tokens, [ref]$errors)
             if ($errors.Count) { throw 'The actual launcher did not parse.' }
             foreach ($name in @('Test-CohortJsonInteger', 'Assert-CohortRecoveryReceipt', 'Assert-CohortPendingReceipt', 'Assert-CohortPendingPlayer')) {
                 $functions = @($ast.FindAll({ param($node)
@@ -216,7 +216,7 @@ public sealed class MultiplayerRecoveryLauncherTests
         var output = await RunHarness("""
             $tokens = $null; $errors = $null
             $ast = [Management.Automation.Language.Parser]::ParseFile(
-                (Join-Path $repositoryRoot 'godot/run-local-client.ps1'), [ref]$tokens, [ref]$errors)
+                (Join-Path $repositoryRoot 'godot-client/run-local-client.ps1'), [ref]$tokens, [ref]$errors)
             if ($errors.Count) { throw 'The actual launcher did not parse.' }
             foreach ($name in @('Stop-OwnedLocalProcess', 'Get-OwnedTerminalExitCode')) {
                 $definitions = @($ast.FindAll({ param($node)

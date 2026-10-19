@@ -29,7 +29,7 @@ msgstr ""
 "X-Poedit-SourceCharset: UTF-8\\n"
 "X-Poedit-KeywordsList: ;_;N_;ngettext:1,2;pgettext:1c,2;P_:1c,2\\n"
 "X-Poedit-Basepath: ..\\n"
-"X-Poedit-SearchPath-0: Source\\n"
+"X-Poedit-SearchPath-0: legacy-native\\n"
 
 """
 
@@ -64,7 +64,7 @@ def run_xgettext():
     xgettext_binary, xgettext_version = get_xgettext()
     files = []
     for ext in ["h", "c", "hpp", "cpp"]:
-        files.extend(glob.glob(f"Source/**/*.{ext}", recursive=True))
+        files.extend(glob.glob(f"legacy-native/**/*.{ext}", recursive=True))
     files.sort()
 
     result: subprocess.CompletedProcess = subprocess.run(

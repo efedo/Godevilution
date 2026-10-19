@@ -242,7 +242,7 @@ public sealed class GodotRuntimeAssemblyLauncherTests
 
     private static string BuildPowerShellHarness(string repositoryRoot, string[] functionNames, string body)
     {
-        var launcherPath = Path.Combine(repositoryRoot, "godot", "run-local-client.ps1");
+        var launcherPath = Path.Combine(repositoryRoot, "godot-client", "run-local-client.ps1");
         var lines = new List<string>
         {
             "$ErrorActionPreference = 'Stop'",

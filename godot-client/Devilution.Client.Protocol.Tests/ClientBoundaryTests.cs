@@ -25,7 +25,7 @@ public sealed class ClientBoundaryTests
     {
         var projectPath = Path.Combine(
             FindRepositoryRoot(),
-            "godot",
+            "godot-client",
             "Devilution.Client",
             "Devilution.Client.csproj");
         var project = XDocument.Load(projectPath);

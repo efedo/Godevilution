@@ -7,7 +7,7 @@ namespace Devilution.Server.Tests;
 public sealed class CommandTimingLauncherContractTests
 {
     [Theory]
-    [InlineData("godot/run-local-client.ps1", "GodotExecutable,Port,CharacterClassId,CharacterName,Headless,QuitAfterSeconds,SessionDirectory,PersistenceMode,PreviewContent,PortalPreviewContent,LifecyclePreviewContent,Multiplayer,CathedralProfileDirectory,CathedralDepthProfileDirectory,CathedralDoorProfileDirectory,CathedralNativeProfileDirectory,PerformanceParticipants,AcceptancePhase", "CommandTimingTrace,Automated,PerformanceResumeBaselinePath,CathedralNativeProgressionProfileDirectory,ServerBuildConfiguration,CathedralNativeDepthProgressionProfileDirectory")]
+    [InlineData("godot-client/run-local-client.ps1", "GodotExecutable,Port,CharacterClassId,CharacterName,Headless,QuitAfterSeconds,SessionDirectory,PersistenceMode,PreviewContent,PortalPreviewContent,LifecyclePreviewContent,Multiplayer,CathedralProfileDirectory,CathedralDepthProfileDirectory,CathedralDoorProfileDirectory,CathedralNativeProfileDirectory,PerformanceParticipants,AcceptancePhase", "CommandTimingTrace,Automated,PerformanceResumeBaselinePath,CathedralNativeProgressionProfileDirectory,ServerBuildConfiguration,CathedralNativeDepthProgressionProfileDirectory")]
     [InlineData("tools/test-godot-session.ps1", "GodotExecutable,PersistenceMode,Visible,Journey,TownLoop,Lifecycle,Multiplayer,MultiplayerRecovery,MultiplayerPendingRecovery,CathedralProfileDirectory,CathedralDepthProfileDirectory,CathedralDoorProfileDirectory,CathedralNativeProfileDirectory,PresentationPackProfile,CommandTimingTrace,Cooperative", "CathedralNativeChest,CathedralNativeChestSessionDirectory,CathedralNativeSarcophagus,CathedralNativeSarcophagusSessionDirectory,CathedralNativeBarrel,CathedralNativeBarrelSessionDirectory,CathedralNativeTrap,CathedralNativeTrapSessionDirectory")]
     public void TraceSwitchPreservesExistingPositionalParameterOrder(string path, string existingParameters, string appendedParameters)
     {
@@ -16,10 +16,10 @@ public sealed class CommandTimingLauncherContractTests
         var actual = Regex.Matches(parameterBlock, @"\$(\w+)")
             .Select(match => match.Groups[1].Value).ToArray();
         var expected = existingParameters.Split(',').Concat(appendedParameters.Split(',')).ToList();
-        var optionalMenuParameter = path.StartsWith("godot/", StringComparison.Ordinal)
+        var optionalMenuParameter = path.StartsWith("godot-client/", StringComparison.Ordinal)
             ? "SessionMenuAcceptance" : "SessionMenu";
         if (actual.Contains(optionalMenuParameter, StringComparer.Ordinal)) {
-            var beforeParameter = path.StartsWith("godot/", StringComparison.Ordinal)
+            var beforeParameter = path.StartsWith("godot-client/", StringComparison.Ordinal)
                 ? "TrapDisarmPreviewContent" : "TrapDisarm";
             var insertionIndex = expected.FindIndex(parameter => string.Equals(parameter, beforeParameter, StringComparison.Ordinal));
             Assert.True(insertionIndex >= 0, $"Could not preserve the optional menu parameter position before {beforeParameter}.");
@@ -31,7 +31,7 @@ public sealed class CommandTimingLauncherContractTests
     [Fact]
     public void TimingCaptureIsExplicitAndRequiresAcceptance()
     {
-        var launcher = ReadSource("godot/run-local-client.ps1");
+        var launcher = ReadSource("godot-client/run-local-client.ps1");
         Assert.Contains("[switch]$CommandTimingTrace", launcher, StringComparison.Ordinal);
         Assert.Contains("if ($CommandTimingTrace -and [string]::IsNullOrWhiteSpace($AcceptancePhase))", launcher, StringComparison.Ordinal);
         Assert.Contains("Command timing traces require an explicit isolated acceptance phase.", launcher, StringComparison.Ordinal);
@@ -46,8 +46,8 @@ public sealed class CommandTimingLauncherContractTests
     [Fact]
     public void SceneExportsOnFailureWithoutReplacingPrimaryException()
     {
-        var scene = ReadSource("godot/Devilution.Client/Acceptance/SessionAcceptance.cs");
-        var export = ReadSource("godot/Devilution.Client/Acceptance/SessionAcceptance.CommandTiming.cs");
+        var scene = ReadSource("godot-client/Devilution.Client/Acceptance/SessionAcceptance.cs");
+        var export = ReadSource("godot-client/Devilution.Client/Acceptance/SessionAcceptance.CommandTiming.cs");
         Assert.Contains("primaryFailure = exception;", scene, StringComparison.Ordinal);
         Assert.Contains("WriteCommandTimingEvidence(primaryFailure is null);", scene, StringComparison.Ordinal);
         Assert.Contains("if (primaryFailure is null)", scene, StringComparison.Ordinal);
@@ -60,7 +60,7 @@ public sealed class CommandTimingLauncherContractTests
     [Fact]
     public void InheritedCaptureSettingsAreClearedAndRestored()
     {
-        var launcher = ReadSource("godot/run-local-client.ps1");
+        var launcher = ReadSource("godot-client/run-local-client.ps1");
         Assert.Contains("'GODEVILUTION_PERSISTENCE_MODE', 'GODEVILUTION_COMMAND_TIMING_TRACE'", launcher, StringComparison.Ordinal);
         Assert.Contains("foreach ($name in $environmentNames) { [Environment]::SetEnvironmentVariable($name, $null, 'Process') }", launcher, StringComparison.Ordinal);
         Assert.Contains("foreach ($name in $environmentNames) { [Environment]::SetEnvironmentVariable($name, $savedEnvironment[$name], 'Process') }", launcher, StringComparison.Ordinal);
@@ -83,10 +83,10 @@ public sealed class CommandTimingLauncherContractTests
     [Fact]
     public void PerformanceHandlersShareTheExactCommandTimingOptInPredicate()
     {
-        var create = ReadSource("godot/Devilution.Client/Acceptance/SessionAcceptance.Performance.cs");
-        var resume = ReadSource("godot/Devilution.Client/Acceptance/SessionAcceptance.PerformanceResume.cs");
-        var contract = ReadSource("godot/Devilution.Client/Acceptance/PerformanceResumeStateContract.cs");
-        var timing = ReadSource("godot/Devilution.Client/Acceptance/SessionAcceptance.CommandTiming.cs");
+        var create = ReadSource("godot-client/Devilution.Client/Acceptance/SessionAcceptance.Performance.cs");
+        var resume = ReadSource("godot-client/Devilution.Client/Acceptance/SessionAcceptance.PerformanceResume.cs");
+        var contract = ReadSource("godot-client/Devilution.Client/Acceptance/PerformanceResumeStateContract.cs");
+        var timing = ReadSource("godot-client/Devilution.Client/Acceptance/SessionAcceptance.CommandTiming.cs");
 
         const string predicate = "PerformanceResumeStateContract.IsCommandTimingTraceEnabled(";
         Assert.Contains(predicate, create, StringComparison.Ordinal);

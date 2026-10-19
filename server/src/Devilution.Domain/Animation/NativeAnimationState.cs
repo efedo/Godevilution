@@ -16,7 +16,7 @@ public enum NativeAnimationDistributionFlags : byte
 
 /// <summary>
 /// Pure managed equivalent of the scalar and distribution state in
-/// Source/engine/animationinfo.{h,cpp}. All nine cursor scalars, including private
+/// legacy-native/engine/animationinfo.{h,cpp}. All nine cursor scalars, including private
 /// distribution continuation, are retained. No sprite or global clock is included.
 /// </summary>
 public sealed record NativeAnimationState

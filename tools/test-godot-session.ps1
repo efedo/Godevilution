@@ -175,7 +175,7 @@ $sessionDirectory = if ($cathedralNativeTrap) {
     $profileDirectory = if ($CathedralNativeProfileDirectory) { $CathedralNativeProfileDirectory } elseif ($CathedralDepthProfileDirectory) { $CathedralDepthProfileDirectory } elseif ($CathedralDoorProfileDirectory) { $CathedralDoorProfileDirectory } else { $CathedralProfileDirectory }
     Join-Path ([IO.Path]::GetFullPath($profileDirectory)) ('sessions/acceptance-' + [guid]::NewGuid().ToString('N'))
 } else { Join-Path ([System.IO.Path]::GetTempPath()) ('Godevilution-Scene-Acceptance-' + [guid]::NewGuid().ToString('N')) }
-$launcher = Join-Path $repositoryRoot 'godot/run-local-client.ps1'
+$launcher = Join-Path $repositoryRoot 'godot-client/run-local-client.ps1'
 $parameters = @{ SessionDirectory = $sessionDirectory; PersistenceMode = $PersistenceMode; Headless = -not $Visible; QuitAfterSeconds = 45 }
 if ($CommandTimingTrace) { $parameters.CommandTimingTrace = $true }
 if ($CathedralNativeProfileDirectory) { $parameters.CathedralNativeProfileDirectory = $CathedralNativeProfileDirectory }

@@ -3,7 +3,7 @@ param()
 
 $ErrorActionPreference = 'Stop'
 $repositoryRoot = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot '..')).Path
-$launcher = Join-Path $repositoryRoot 'godot/run-local-client.ps1'
+$launcher = Join-Path $repositoryRoot 'godot-client/run-local-client.ps1'
 $evidenceDirectory = Join-Path ([IO.Path]::GetTempPath()) ('Godevilution-Client-Performance-' + [guid]::NewGuid().ToString('N'))
 New-Item -ItemType Directory -Path $evidenceDirectory | Out-Null
 try {

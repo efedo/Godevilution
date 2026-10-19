@@ -47,7 +47,7 @@ public sealed class CohortLauncherBehaviorTests
         Assert.Contains("Read-ModeProcessEvidence 'Recovery'", driver, StringComparison.Ordinal);
         Assert.Contains("Assert-RecoveryProcessEvidence", driver, StringComparison.Ordinal);
 
-        var launcher = File.ReadAllText(Path.Combine(FindRepositoryRoot(), "godot", "run-local-client.ps1"));
+        var launcher = File.ReadAllText(Path.Combine(FindRepositoryRoot(), "godot-client", "run-local-client.ps1"));
         Assert.Contains("GODEVILUTION_PERSISTENCE_MODE", launcher, StringComparison.Ordinal);
         Assert.Contains("Assert-CohortCheckpoint", launcher, StringComparison.Ordinal);
         Assert.Contains("HostProcessId", launcher, StringComparison.Ordinal);
@@ -585,7 +585,7 @@ public sealed class CohortLauncherBehaviorTests
     private static string BuildPowerShellHarness(
         IReadOnlyList<string> functionNames,
         string body,
-        string relativeScriptPath = "godot/run-local-client.ps1")
+        string relativeScriptPath = "godot-client/run-local-client.ps1")
     {
         var launcherPath = Path.Combine(FindRepositoryRoot(), relativeScriptPath);
         var lines = new List<string> {
@@ -612,7 +612,7 @@ public sealed class CohortLauncherBehaviorTests
 
     private static string BuildLauncherGuardHarness(string body)
     {
-        var launcherPath = Path.Combine(FindRepositoryRoot(), "godot", "run-local-client.ps1");
+        var launcherPath = Path.Combine(FindRepositoryRoot(), "godot-client", "run-local-client.ps1");
         var lines = new[] {
             "$ErrorActionPreference = 'Stop'",
             "$launcherPath = " + QuotePowerShell(launcherPath),

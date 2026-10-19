@@ -56,7 +56,7 @@ Checks: >
   -modernize-avoid-bind,
   -modernize-use-constraints
 
-HeaderFilterRegex: "^(Source|test)\\.h$"
+HeaderFilterRegex: "^(legacy-native|test)\\.h$"
 
 CheckOptions:
   - { key: readability-identifier-naming.NamespaceCase,           value: lower_case }

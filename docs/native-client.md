@@ -405,7 +405,7 @@ rather than converting the stale highlight into a positional attack.
 
 ## Remaining native-only interaction inventory
 
-The following inventory began with a `Source/game` audit on 2026-08-24 and
+The following inventory began with a `legacy-native/game` audit on 2026-08-24 and
 includes subsequent ports. Read each entry's remaining seam separately from its
 implemented authored path; this is not a new full audit of every interaction.
 Absent authoritative content is a migration gap. Connected gameplay must not

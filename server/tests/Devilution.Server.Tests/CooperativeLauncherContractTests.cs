@@ -11,9 +11,9 @@ public sealed class CooperativeLauncherContractTests
     public void CooperativeProfileIsExplicitCohortPreviewAndFreshHostBounded()
     {
         var driver = ReadSource("tools/test-godot-session.ps1");
-        var launcher = ReadSource("godot/run-local-client.ps1");
-        var acceptance = ReadSource("godot/Devilution.Client/Acceptance/SessionAcceptance.cs");
-        var evidence = ReadSource("godot/Devilution.Client/Diagnostics/ClientCommandTimingEvidenceWriter.cs");
+        var launcher = ReadSource("godot-client/run-local-client.ps1");
+        var acceptance = ReadSource("godot-client/Devilution.Client/Acceptance/SessionAcceptance.cs");
+        var evidence = ReadSource("godot-client/Devilution.Client/Diagnostics/ClientCommandTimingEvidenceWriter.cs");
 
         Assert.Contains("[switch]$Cooperative", driver, StringComparison.Ordinal);
         Assert.Contains("$cooperative", driver, StringComparison.Ordinal);
@@ -36,7 +36,7 @@ public sealed class CooperativeLauncherContractTests
     [Fact]
     public void CooperativeAcceptanceUsesAuthoredDropAndChecksOwnershipEvidence()
     {
-        var acceptance = ReadSource("godot/Devilution.Client/Acceptance/SessionAcceptance.Cooperative.cs");
+        var acceptance = ReadSource("godot-client/Devilution.Client/Acceptance/SessionAcceptance.Cooperative.cs");
         var content = ReadSource("server/content/town-loop-preview/monsters.tsv");
         var pack = ReadSource("server/content/town-loop-preview/content-pack.json");
 
@@ -52,7 +52,7 @@ public sealed class CooperativeLauncherContractTests
         Assert.Contains("entry-clear.json", acceptance, StringComparison.Ordinal);
         Assert.Contains("ReceiptStatus", acceptance, StringComparison.Ordinal);
         Assert.Contains("PickupStatus", acceptance, StringComparison.Ordinal);
-        Assert.Contains("Assert-CohortRecoveryReceipt", ReadSource("godot/run-local-client.ps1"), StringComparison.Ordinal);
+        Assert.Contains("Assert-CohortRecoveryReceipt", ReadSource("godot-client/run-local-client.ps1"), StringComparison.Ordinal);
         Assert.Contains("1000009", content, StringComparison.Ordinal);
         Assert.Contains("6001", content, StringComparison.Ordinal);
         Assert.Contains("town-loop-preview", pack, StringComparison.Ordinal);
@@ -62,7 +62,7 @@ public sealed class CooperativeLauncherContractTests
     public void ExistingProfilesDoNotImplicitlySelectCooperativeAcceptance()
     {
         var driver = ReadSource("tools/test-godot-session.ps1");
-        var launcher = ReadSource("godot/run-local-client.ps1");
+        var launcher = ReadSource("godot-client/run-local-client.ps1");
         Assert.Contains("if ($cooperative)", driver, StringComparison.Ordinal);
         Assert.Contains("if ($cooperative -and -not $PreviewContent)", launcher, StringComparison.Ordinal);
         Assert.Contains("if ($Multiplayer -and ($PreviewContent -or $PortalPreviewContent) -and -not $cooperative)", launcher, StringComparison.Ordinal);
@@ -72,7 +72,7 @@ public sealed class CooperativeLauncherContractTests
     [Fact]
     public void CooperativeRouteWaitsForProcessDispatchedIntentBeforeReadingItsSequence()
     {
-        var acceptance = ReadSource("godot/Devilution.Client/Acceptance/SessionAcceptance.Cooperative.cs");
+        var acceptance = ReadSource("godot-client/Devilution.Client/Acceptance/SessionAcceptance.Cooperative.cs");
         var start = acceptance.IndexOf("private async Task TravelCooperativeToDungeonAsync", StringComparison.Ordinal);
         var end = acceptance.IndexOf("private async Task CooperativeAttackOnceAsync", start, StringComparison.Ordinal);
         var route = acceptance[start..end];
@@ -86,7 +86,7 @@ public sealed class CooperativeLauncherContractTests
     [Fact]
     public void CooperativeStairStagingBindsPeerObservationAndKeepsCancellationStable()
     {
-        var acceptance = ReadSource("godot/Devilution.Client/Acceptance/SessionAcceptance.Cooperative.cs");
+        var acceptance = ReadSource("godot-client/Devilution.Client/Acceptance/SessionAcceptance.Cooperative.cs");
         Assert.Contains("stageNearStair: true", acceptance, StringComparison.Ordinal);
         Assert.Contains("staged.EntityId == marker.RootElement.GetProperty(\"EntityId\").GetUInt32()", acceptance, StringComparison.Ordinal);
         Assert.Contains("staged.PositionX == marker.RootElement.GetProperty(\"X\").GetInt32()", acceptance, StringComparison.Ordinal);
@@ -100,7 +100,7 @@ public sealed class CooperativeLauncherContractTests
     [Fact]
     public void CooperativeAttackWaitsForPostReceiptSnapshotBeforeClassifyingMiss()
     {
-        var acceptance = ReadSource("godot/Devilution.Client/Acceptance/SessionAcceptance.Cooperative.cs");
+        var acceptance = ReadSource("godot-client/Devilution.Client/Acceptance/SessionAcceptance.Cooperative.cs");
         Assert.Contains("var snapshotRevisionAtReceipt = main.ObservedSnapshotRevision;", acceptance, StringComparison.Ordinal);
         Assert.Contains("main.ObservedSnapshotRevision > snapshotRevisionAtReceipt", acceptance, StringComparison.Ordinal);
         Assert.Contains("snapshot.Tick >= receipt.AppliedTick", acceptance, StringComparison.Ordinal);
@@ -111,7 +111,7 @@ public sealed class CooperativeLauncherContractTests
     [Fact]
     public void CooperativeResumeRetainsObservedEncounterIdWithoutRequiringDeadActorPresence()
     {
-        var acceptance = ReadSource("godot/Devilution.Client/Acceptance/SessionAcceptance.Cooperative.cs");
+        var acceptance = ReadSource("godot-client/Devilution.Client/Acceptance/SessionAcceptance.Cooperative.cs");
         Assert.Contains("var monsterId = previous is not null ? previous.MonsterId", acceptance, StringComparison.Ordinal);
         Assert.Contains("!snapshot.Monsters.Any(monster => monster.EntityId == previous.MonsterId && monster.Alive)", acceptance, StringComparison.Ordinal);
         Assert.Contains("snapshot.WorldItems.All(item => item.EntityId != previous.DropEntityId)", acceptance, StringComparison.Ordinal);
@@ -279,7 +279,7 @@ foreach ($case in @(
             }
             'EXACT-PICKUP-RECEIPT-PASSED'
             """;
-        var source = Path.Combine(FindRepositoryRoot(), "godot", "run-local-client.ps1");
+        var source = Path.Combine(FindRepositoryRoot(), "godot-client", "run-local-client.ps1");
         var output = RunPowerShell(script.Replace("__SOURCE_PATH__", QuotePowerShell(source), StringComparison.Ordinal));
         Assert.Contains("EXACT-PICKUP-RECEIPT-PASSED", output, StringComparison.Ordinal);
     }

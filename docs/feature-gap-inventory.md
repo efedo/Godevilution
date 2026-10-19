@@ -127,7 +127,7 @@ Basis: [combat execution](../server/src/Devilution.Diablo/DiabloCombatCommandPro
 [combat rules](../server/src/Devilution.Diablo/AuthoritativeCombatRules.cs),
 [spell behaviors](../server/content/base/spells.tsv),
 [action state](../server/src/Devilution.Diablo/AuthoritativePlayerActionState.cs),
-[held input](../godot/Devilution.Client.Protocol/HeldEntityAttackController.cs) and
+[held input](../godot-client/Devilution.Client.Protocol/HeldEntityAttackController.cs) and
 [replay reference](replay-fixtures.md). A failed L3 bot run does not identify a
 missing spell or establish a core combat bug.
 
@@ -291,7 +291,7 @@ Basis: [native owner](../server/src/Devilution.Diablo/AuthoritativeCathedralNati
 [item/object mutation](../server/src/Devilution.Diablo/AuthoritativeCathedralItemRuntime.cs),
 [generic objects](../server/src/Devilution.Diablo/AuthoritativeWorldObject.cs),
 [theme placement](../server/src/Devilution.Diablo/AuthoritativeCathedralThemeGenerator.cs) and
-[native reference operations](../Source/game/objects/objects.cpp).
+[native reference operations](../legacy-native/game/objects/objects.cpp).
 Object art/animation completion is tracked in area 11.
 
 ## 7. Town, quests and set levels
@@ -460,12 +460,12 @@ Godot controls and headless acceptance do not establish native visual usability.
 | 10.24 | Player settings and preferences | Unverified | Launcher and presentation-pack configuration exist. | Assessment/implementation: establish native-equivalent player-facing audio/input/display preferences and persistence. |
 | 10.25 | Exit/cancellation and scene cleanup | Partial | Joined connection cleanup and no-publication-after-exit checks exist, including menu WIP. | Integration/acceptance: complete ordinary scene/session/application exit paths and failure handling. |
 
-Basis: [client scope](../godot/README.md),
-[main scene](../godot/Devilution.Client/Main.cs),
-[HUD](../godot/Devilution.Client/HudPresentation.cs),
-[setup](../godot/Devilution.Client/CharacterSetupPresentation.cs),
-[travel](../godot/Devilution.Client.Protocol/AuthoritativeRouteTravel.cs),
-[feedback](../godot/Devilution.Client/PresentationFeedback.cs) and
+Basis: [client scope](../godot-client/README.md),
+[main scene](../godot-client/Devilution.Client/Main.cs),
+[HUD](../godot-client/Devilution.Client/HudPresentation.cs),
+[setup](../godot-client/Devilution.Client/CharacterSetupPresentation.cs),
+[travel](../godot-client/Devilution.Client.Protocol/AuthoritativeRouteTravel.cs),
+[feedback](../godot-client/Devilution.Client/PresentationFeedback.cs) and
 [build/application guide](ai/godot-build.md). Uncommitted capability is not absent,
 but it is not a finished release deliverable.
 
@@ -516,13 +516,13 @@ itself supply a Godot original-art import pipeline.
 | 11.36 | Matched native/Godot frame and animation evidence | Unverified | Some visible milestones and asset-binding checks exist. | Acceptance: complete reference scene/action/UI matrix with paired frames and animation sequences. |
 | 11.37 | Asset failure and fallback behavior | Partial | Manifest validation, missing-binding fallback and content-pack selection exist. | Acceptance/integration: full production-pack and optional-original-art failure/repair paths. |
 
-Basis: [manifest and selectors](../godot/Devilution.Client/PresentationAssets/PresentationAssetManifest.cs),
-[semantic player selection](../godot/Devilution.Client/PresentationAssets/SemanticPlayerPresentation.cs),
-[asset resolver](../godot/Devilution.Client/PresentationAssets/PresentationAssetResolver.cs),
-[frame clock](../godot/Devilution.Client/PresentationAssets/PresentationFrameClock.cs),
-[world renderer](../godot/Devilution.Client/WorldPresentation.cs),
-[asset palette](../godot/Devilution.Client/AssetPalette.cs),
-[default pack](../godot/Devilution.Client/assets/presentation-pack.json) and
+Basis: [manifest and selectors](../godot-client/Devilution.Client/PresentationAssets/PresentationAssetManifest.cs),
+[semantic player selection](../godot-client/Devilution.Client/PresentationAssets/SemanticPlayerPresentation.cs),
+[asset resolver](../godot-client/Devilution.Client/PresentationAssets/PresentationAssetResolver.cs),
+[frame clock](../godot-client/Devilution.Client/PresentationAssets/PresentationFrameClock.cs),
+[world renderer](../godot-client/Devilution.Client/WorldPresentation.cs),
+[asset palette](../godot-client/Devilution.Client/AssetPalette.cs),
+[default pack](../godot-client/Devilution.Client/assets/presentation-pack.json) and
 [native bundled-asset tooling](../tools/update_bundled_assets.sh).
 
 ### Godot graphical parity acceptance

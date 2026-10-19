@@ -7,6 +7,9 @@ contracts stay in their existing guides.
 
 ## 2026-10-18
 
+- Rename `godot/` to `godot-client/` and `Source/` to `legacy-native/`; update
+  build, launcher, CI, test, translation and documentation paths. Keep runtime
+  identities, session directories and existing gameplay work unchanged.
 - Reconcile contributor, protocol, client, content and build documentation with
   current profile scope, versioned state and the synchronized plan/status/inventory.
   Remove superseded run dossiers from guides; keep concise outcomes in test history.

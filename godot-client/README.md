@@ -147,8 +147,8 @@ stock is not a claim of complete native vendor generation or usable equipment.
 ## Verify Without Godot
 
 ```powershell
-dotnet run --project godot/Devilution.Client.Protocol.Tests/Devilution.Client.Protocol.Tests.csproj
-dotnet build godot/Devilution.Client/Devilution.Client.sln
+dotnet run --project godot-client/Devilution.Client.Protocol.Tests/Devilution.Client.Protocol.Tests.csproj
+dotnet build godot-client/Devilution.Client/Devilution.Client.sln
 ```
 
 The live protocol tests build and launch their own server. A Godot installation
@@ -237,7 +237,7 @@ with one Godot process retained through the outage. See the
 [Godot build and acceptance notes](../docs/ai/godot-build.md) for commands and
 the distinction between headless, visible, and full campaign evidence.
 For diagnostics or automated smoke tests, invoke the underlying
-`godot/run-local-client.ps1` harness directly with its optional switches.
+`godot-client/run-local-client.ps1` harness directly with its optional switches.
 For an automated smoke launch, add `-Headless -QuitAfterSeconds 5`.
 Pass `-CharacterClassId <0..5>` to request a recognized shipped class ID when
 creating a new session. Admission depends on the selected profile: the explicit
@@ -436,7 +436,7 @@ For a manual production launch, use protocol `0.2.0`: set
 `DEVILUTION_PROTOCOL_VERSION` to `0.2.0`, set `DEVILUTION_CONTENT_HASH` to the
 server's printed **content manifest** hash, and set `DEVILUTION_RULESET_HASH`
 to its printed **ruleset identity**, then open
-`godot/Devilution.Client/project.godot`. Protocol `0.1.0` remains an explicit
+`godot-client/Devilution.Client/project.godot`. Protocol `0.1.0` remains an explicit
 compatibility mode that uses the ruleset identity for both hash fields.
 
 When no resume token or character identity is supplied through the environment,

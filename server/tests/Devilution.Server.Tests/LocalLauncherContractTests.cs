@@ -10,7 +10,7 @@ public sealed class LocalLauncherContractTests
     public void NativeCathedralJourneyAndResumeUseOnlyThePinnedHeadlessCohortProfile()
     {
         var root = FindRepositoryRoot();
-        var launcher = File.ReadAllText(Path.Combine(root, "godot/run-local-client.ps1"));
+        var launcher = File.ReadAllText(Path.Combine(root, "godot-client/run-local-client.ps1"));
         var driver = File.ReadAllText(Path.Combine(root, "tools/test-godot-session.ps1"));
 
         Assert.Contains("[string]$CathedralNativeProfileDirectory", launcher, StringComparison.Ordinal);
@@ -40,7 +40,7 @@ public sealed class LocalLauncherContractTests
     {
         var root = FindRepositoryRoot();
         var wrapper = File.ReadAllText(Path.Combine(root, "run-godot-trap-disarm-preview.ps1"));
-        var launcher = File.ReadAllText(Path.Combine(root, "godot/run-local-client.ps1"));
+        var launcher = File.ReadAllText(Path.Combine(root, "godot-client/run-local-client.ps1"));
         var driver = File.ReadAllText(Path.Combine(root, "tools/test-godot-session.ps1"));
 
         Assert.Contains("param()", wrapper, StringComparison.Ordinal);
@@ -65,7 +65,7 @@ public sealed class LocalLauncherContractTests
     {
         var root = FindRepositoryRoot();
         var wrapper = File.ReadAllText(Path.Combine(root, "run-godot-lifecycle-preview.ps1"));
-        var harness = File.ReadAllText(Path.Combine(root, "godot/run-local-client.ps1"));
+        var harness = File.ReadAllText(Path.Combine(root, "godot-client/run-local-client.ps1"));
         var acceptance = File.ReadAllText(Path.Combine(root, "tools/test-godot-session.ps1"));
         Assert.Contains("param()", wrapper);
         Assert.Contains("& $godotLauncher -LifecyclePreviewContent", wrapper);
@@ -107,7 +107,7 @@ public sealed class LocalLauncherContractTests
     public void NativeAuthoritativeBuildCoversIndependentlyCompiledGameplayObjects()
     {
         var root = FindRepositoryRoot();
-        var cmake = File.ReadAllText(Path.Combine(root, "Source/CMakeLists.txt"));
+        var cmake = File.ReadAllText(Path.Combine(root, "legacy-native/CMakeLists.txt"));
         var configuredTargets = Regex.Match(cmake,
             @"set\(DEVILUTIONX_AUTHORITATIVE_OBJECT_TARGETS\s+(?<targets>[^)]+)\)");
         Assert.True(configuredTargets.Success);
@@ -117,7 +117,7 @@ public sealed class LocalLauncherContractTests
         foreach (Match target in Regex.Matches(cmake,
             @"add_devilutionx_object_library\((?<target>\w+)\s+(?<sources>[^)]+)\)")) {
             foreach (Match source in Regex.Matches(target.Groups["sources"].Value, @"[\w/]+\.cpp")) {
-                var sourceText = File.ReadAllText(Path.Combine(root, "Source", source.Value));
+                var sourceText = File.ReadAllText(Path.Combine(root, "legacy-native", source.Value));
                 if (sourceText.Contains("DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT", StringComparison.Ordinal)) {
                     guardedTargets.Add(target.Groups["target"].Value);
                     Assert.Contains(target.Groups["target"].Value, configuredTargetNames);
@@ -138,7 +138,7 @@ public sealed class LocalLauncherContractTests
     public void NativeInitialSnapshotRewardLimitsMatchThePublishedContract(string name, int expected)
     {
         var nativeLimits = File.ReadAllText(Path.Combine(
-            FindRepositoryRoot(), "Source/network/authoritative/protocol_limits.hpp"));
+            FindRepositoryRoot(), "legacy-native/network/authoritative/protocol_limits.hpp"));
         var declaration = Regex.Match(nativeLimits,
             $@"inline constexpr int {Regex.Escape(name)} = (-?\d+);");
         Assert.True(declaration.Success, $"Missing native protocol limit {name}.");
@@ -148,7 +148,7 @@ public sealed class LocalLauncherContractTests
 
     [Theory]
     [InlineData("run-authoritative-client.ps1")]
-    [InlineData("godot/run-local-client.ps1")]
+    [InlineData("godot-client/run-local-client.ps1")]
     public void NewGameLaunchersDefaultToSinglePlayer(string relativePath)
     {
         var repositoryRoot = FindRepositoryRoot();
@@ -172,7 +172,7 @@ public sealed class LocalLauncherContractTests
             RegexOptions.IgnoreCase));
         var normalized = Regex.Replace(expression, "['\",=]+", " ");
         normalized = Regex.Replace(normalized, @"\s+", " ");
-        if (relativePath.StartsWith("godot/", StringComparison.Ordinal)) {
+        if (relativePath.StartsWith("godot-client/", StringComparison.Ordinal)) {
             Assert.Contains("--game-mode {4}", normalized, StringComparison.Ordinal);
             Assert.Contains("$serverGameMode = if ($Multiplayer) { 'multiplayer' } else { 'single-player' }", launcher);
             Assert.Contains("$overlayArguments, $serverGameMode", expression);
@@ -292,7 +292,7 @@ public sealed class LocalLauncherContractTests
     [Fact]
     public void GodotLauncherBuildsBothProjectsAndOwnsOnlyItsProcesses()
     {
-        var launcher = File.ReadAllText(Path.Combine(FindRepositoryRoot(), "godot/run-local-client.ps1"));
+        var launcher = File.ReadAllText(Path.Combine(FindRepositoryRoot(), "godot-client/run-local-client.ps1"));
         Assert.Contains("--command-scheduling clock-gated", launcher, StringComparison.Ordinal);
         Assert.Contains("Unexpected command scheduling:", launcher, StringComparison.Ordinal);
         var launch = launcher.IndexOf("$serverProcess = Start-Process", StringComparison.Ordinal);
@@ -318,7 +318,7 @@ public sealed class LocalLauncherContractTests
     public void VisibleAutomationUsesOnePolicyForSceneDeadlineAndCrashDialogs()
     {
         var root = FindRepositoryRoot();
-        var launcher = File.ReadAllText(Path.Combine(root, "godot/run-local-client.ps1"));
+        var launcher = File.ReadAllText(Path.Combine(root, "godot-client/run-local-client.ps1"));
         var normal = File.ReadAllText(Path.Combine(root, "run-godot-client.ps1"));
         Assert.Contains("[switch]$Automated", launcher, StringComparison.Ordinal);
         Assert.Contains("$clientRunPolicy = Get-GodotClientRunPolicy ([bool]$Headless) ([bool]$Automated) $AcceptancePhase $QuitAfterSeconds", launcher, StringComparison.Ordinal);
@@ -336,7 +336,7 @@ public sealed class LocalLauncherContractTests
         var root = FindRepositoryRoot();
         var normal = File.ReadAllText(Path.Combine(root, "run-godot-client.ps1"));
         var preview = File.ReadAllText(Path.Combine(root, "run-godot-preview.ps1"));
-        var harness = File.ReadAllText(Path.Combine(root, "godot/run-local-client.ps1"));
+        var harness = File.ReadAllText(Path.Combine(root, "godot-client/run-local-client.ps1"));
         var acceptance = File.ReadAllText(Path.Combine(root, "tools/test-godot-session.ps1"));
         Assert.Contains("param()", preview);
         Assert.DoesNotContain("PreviewContent", normal);
@@ -358,7 +358,7 @@ public sealed class LocalLauncherContractTests
         var root = FindRepositoryRoot();
         var original = File.ReadAllText(Path.Combine(root, "run-godot-preview.ps1"));
         var portal = File.ReadAllText(Path.Combine(root, "run-godot-portal-preview.ps1"));
-        var harness = File.ReadAllText(Path.Combine(root, "godot/run-local-client.ps1"));
+        var harness = File.ReadAllText(Path.Combine(root, "godot-client/run-local-client.ps1"));
         Assert.Contains("param()", portal);
         Assert.Contains("& $godotLauncher -PreviewContent", original);
         Assert.DoesNotContain("PortalPreviewContent", original);
@@ -380,7 +380,7 @@ public sealed class LocalLauncherContractTests
     {
         var root = FindRepositoryRoot();
         var wrapper = File.ReadAllText(Path.Combine(root, "run-godot-multiplayer.ps1"));
-        var launcher = File.ReadAllText(Path.Combine(root, "godot/run-local-client.ps1"));
+        var launcher = File.ReadAllText(Path.Combine(root, "godot-client/run-local-client.ps1"));
         var acceptance = File.ReadAllText(Path.Combine(root, "tools/test-godot-session.ps1"));
         Assert.Contains("param()", wrapper);
         Assert.Contains("& $godotLauncher -Multiplayer", wrapper);
@@ -410,7 +410,7 @@ public sealed class LocalLauncherContractTests
     [Fact]
     public void GodotLauncherRecordsProcessOutcomesAndPreservesPrimaryFailures()
     {
-        var launcher = File.ReadAllText(Path.Combine(FindRepositoryRoot(), "godot/run-local-client.ps1"));
+        var launcher = File.ReadAllText(Path.Combine(FindRepositoryRoot(), "godot-client/run-local-client.ps1"));
         Assert.Contains("if ($null -eq $Tracked.Record.EndedUtc)", launcher, StringComparison.Ordinal);
         Assert.Contains("if ($null -eq $Tracked.Record.ExitCode)", launcher, StringComparison.Ordinal);
         Assert.Contains("$Tracked.Record.ExitCode = $Tracked.Process.ExitCode", launcher, StringComparison.Ordinal);
@@ -426,7 +426,7 @@ public sealed class LocalLauncherContractTests
     public void PerformanceCreateAndResumeUseDedicatedSinglePlayerRoutes()
     {
         var root = FindRepositoryRoot();
-        var launcher = File.ReadAllText(Path.Combine(root, "godot/run-local-client.ps1"));
+        var launcher = File.ReadAllText(Path.Combine(root, "godot-client/run-local-client.ps1"));
 
         Assert.Contains("'PerformanceCreate', 'PerformanceResume'", launcher, StringComparison.Ordinal);
         Assert.Contains("$performanceCreate = $AcceptancePhase -eq 'PerformanceCreate'", launcher, StringComparison.Ordinal);
@@ -444,7 +444,7 @@ public sealed class LocalLauncherContractTests
     public void PerformanceResumeBaselineIsResumeOnlyAndEvidenceMatchesHandlers()
     {
         var root = FindRepositoryRoot();
-        var launcher = File.ReadAllText(Path.Combine(root, "godot/run-local-client.ps1"));
+        var launcher = File.ReadAllText(Path.Combine(root, "godot-client/run-local-client.ps1"));
 
         Assert.Contains("[string]$PerformanceResumeBaselinePath", launcher, StringComparison.Ordinal);
         Assert.Contains("[IO.Path]::IsPathFullyQualified($PerformanceResumeBaselinePath)", launcher, StringComparison.Ordinal);
@@ -461,8 +461,8 @@ public sealed class LocalLauncherContractTests
     public void PerformanceResumeEvidenceBindsAdmittedServerIdentity()
     {
         var root = FindRepositoryRoot();
-        var handler = File.ReadAllText(Path.Combine(root, "godot/Devilution.Client/Acceptance/SessionAcceptance.PerformanceResume.cs"));
-        var launcher = File.ReadAllText(Path.Combine(root, "godot/run-local-client.ps1"));
+        var handler = File.ReadAllText(Path.Combine(root, "godot-client/Devilution.Client/Acceptance/SessionAcceptance.PerformanceResume.cs"));
+        var launcher = File.ReadAllText(Path.Combine(root, "godot-client/run-local-client.ps1"));
 
         var handshakeValidation = handler.IndexOf(
             "PerformanceResumeStateContract.ValidateResumeHandshakeAndFirstWire(",
@@ -518,7 +518,7 @@ public sealed class LocalLauncherContractTests
     {
         var root = FindRepositoryRoot();
         var wrapper = File.ReadAllText(Path.Combine(root, "tools/measure-godot-client.ps1"));
-        var launcher = File.ReadAllText(Path.Combine(root, "godot/run-local-client.ps1"));
+        var launcher = File.ReadAllText(Path.Combine(root, "godot-client/run-local-client.ps1"));
         var normal = File.ReadAllText(Path.Combine(root, "run-godot-client.ps1"));
         Assert.Contains("param()", wrapper);
         Assert.Contains("-PerformanceParticipants 1", wrapper);
@@ -539,9 +539,9 @@ public sealed class LocalLauncherContractTests
         var root = FindRepositoryRoot();
         var wrapper = File.ReadAllText(Path.Combine(root, "tools/measure-authoritative-host.ps1"));
         var performance = File.ReadAllText(Path.Combine(root,
-            "godot/Devilution.Client.Protocol.Tests/LiveAuthoritativeServerTests.Performance.cs"));
+            "godot-client/Devilution.Client.Protocol.Tests/LiveAuthoritativeServerTests.Performance.cs"));
         var fixture = File.ReadAllText(Path.Combine(root,
-            "godot/Devilution.Client.Protocol.Tests/LiveAuthoritativeServerTests.cs"));
+            "godot-client/Devilution.Client.Protocol.Tests/LiveAuthoritativeServerTests.cs"));
 
         var releaseOverrideGuard = wrapper.IndexOf(
             "GODEVILUTION_SERVER_ASSEMBLY", StringComparison.Ordinal);

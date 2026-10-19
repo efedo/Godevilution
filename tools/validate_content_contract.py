@@ -12,7 +12,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 SCHEMA_SOURCE = ROOT / "server/src/Devilution.Diablo/DiabloContentSchema.cs"
 CONTENT_ROOT = ROOT / "server/content"
-GODOT_LIVE_TESTS = ROOT / "godot/Devilution.Client.Protocol.Tests/LiveAuthoritativeServerTests.cs"
+GODOT_LIVE_TESTS = ROOT / "godot-client/Devilution.Client.Protocol.Tests/LiveAuthoritativeServerTests.cs"
 
 
 def fail(message: str) -> None:

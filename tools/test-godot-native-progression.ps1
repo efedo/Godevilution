@@ -11,7 +11,7 @@ $ErrorActionPreference = 'Stop'
 $repositoryRoot = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot '..')).ProviderPath
 $profileRoot = (Resolve-Path -LiteralPath $ProfileDirectory).ProviderPath
 $sessionDirectory = Join-Path $profileRoot ('sessions/progression-' + [guid]::NewGuid().ToString('N'))
-$launcher = Join-Path $repositoryRoot 'godot/run-local-client.ps1'
+$launcher = Join-Path $repositoryRoot 'godot-client/run-local-client.ps1'
 $arguments = @{
     CathedralNativeProgressionProfileDirectory = $profileRoot
     PersistenceMode = 'cohort'; Headless = $true; Automated = $true

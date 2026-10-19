@@ -3,7 +3,7 @@ param()
 
 $ErrorActionPreference = 'Stop'
 $repositoryRoot = (Resolve-Path -LiteralPath $PSScriptRoot).Path
-$godotLauncher = Join-Path $repositoryRoot 'godot/run-local-client.ps1'
+$godotLauncher = Join-Path $repositoryRoot 'godot-client/run-local-client.ps1'
 $profileDirectory = Join-Path $repositoryRoot '.local/cathedral-depths-playtest'
 if (-not (Test-Path -LiteralPath (Join-Path $profileDirectory 'cathedral-depths-playtest.json') -PathType Leaf)) {
     throw 'Compile the private .local/cathedral-depths-playtest profile first. See docs/ai/godot-build.md: Generated Cathedral depths playtest.'

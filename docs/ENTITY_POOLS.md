@@ -2,7 +2,7 @@
 
 Godevilution keeps the native fixed-size entity arrays available while the
 server-authoritative runtime replaces their gameplay ownership. The pool types
-in `Source/utils/container/entity_pool.hpp` own storage and expose active
+in `legacy-native/utils/container/entity_pool.hpp` own storage and expose active
 iteration; the game-specific adapters preserve the legacy array names and
 save/network index contracts.
 

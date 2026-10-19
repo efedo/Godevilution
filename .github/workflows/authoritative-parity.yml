@@ -83,10 +83,10 @@ jobs:
       run: dotnet run --project server/tests/Devilution.Server.Tests/Devilution.Server.Tests.csproj --configuration Release --no-build
 
     - name: Restore authoritative protocol client tests
-      run: dotnet restore godot/Devilution.Client.Protocol.Tests/Devilution.Client.Protocol.Tests.csproj
+      run: dotnet restore godot-client/Devilution.Client.Protocol.Tests/Devilution.Client.Protocol.Tests.csproj
 
     - name: Build authoritative protocol client tests
-      run: dotnet build godot/Devilution.Client.Protocol.Tests/Devilution.Client.Protocol.Tests.csproj --configuration Release --no-restore
+      run: dotnet build godot-client/Devilution.Client.Protocol.Tests/Devilution.Client.Protocol.Tests.csproj --configuration Release --no-restore
 
     - name: Run authoritative client/server smoke tests
-      run: dotnet run --project godot/Devilution.Client.Protocol.Tests/Devilution.Client.Protocol.Tests.csproj --configuration Release --no-build
+      run: dotnet run --project godot-client/Devilution.Client.Protocol.Tests/Devilution.Client.Protocol.Tests.csproj --configuration Release --no-build

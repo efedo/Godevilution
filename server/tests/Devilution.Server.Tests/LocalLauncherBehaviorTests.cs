@@ -2089,10 +2089,10 @@ public sealed class FakeCompletedProcess
             """
             $work = Join-Path ([IO.Path]::GetTempPath()) ('Godevilution-ProjectStageTest-' + [guid]::NewGuid().ToString('N'))
             $repositoryRoot = Join-Path $work 'repository with spaces'
-            $source = Join-Path $repositoryRoot 'godot/Devilution.Client'
+            $source = Join-Path $repositoryRoot 'godot-client/Devilution.Client'
             $protocol = Join-Path $repositoryRoot 'protocol/Devilution.Protocol/Devilution.Protocol.csproj'
-            $clientProtocol = Join-Path $repositoryRoot 'godot/Devilution.Client.Protocol/Devilution.Client.Protocol.csproj'
-            $config = Join-Path $repositoryRoot 'godot/NuGet.Config'
+            $clientProtocol = Join-Path $repositoryRoot 'godot-client/Devilution.Client.Protocol/Devilution.Client.Protocol.csproj'
+            $config = Join-Path $repositoryRoot 'godot-client/NuGet.Config'
             New-Item -ItemType Directory -Path $source, (Split-Path $protocol), (Split-Path $clientProtocol) | Out-Null
             function Expect-Rejected([scriptblock]$Action) {
                 $rejected = $false
@@ -2738,7 +2738,7 @@ public sealed class FakeCompletedProcess
     private static string BuildPowerShellHarness(
         string[] functionNames,
         string body,
-        string relativeLauncherPath = "godot/run-local-client.ps1")
+        string relativeLauncherPath = "godot-client/run-local-client.ps1")
     {
         var launcherPath = Path.Combine(FindRepositoryRoot(), relativeLauncherPath);
         var lines = new List<string>

@@ -22,7 +22,7 @@ if ($depthProfileMetadata.formatVersion -ne 3 -or
 }
 
 $sessionDirectory = Join-Path $profileRoot ('sessions/depth-progression-' + [guid]::NewGuid().ToString('N'))
-$launcher = Join-Path $repositoryRoot 'godot/run-local-client.ps1'
+$launcher = Join-Path $repositoryRoot 'godot-client/run-local-client.ps1'
 $arguments = @{
     CathedralNativeDepthProgressionProfileDirectory = $profileRoot
     PersistenceMode = 'cohort'; Headless = $true; Automated = $true

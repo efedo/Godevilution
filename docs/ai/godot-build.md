@@ -200,9 +200,9 @@ and all original gameplay/process assertions.
 From the repository root:
 
 ```powershell
-dotnet run --project godot/Devilution.Client.Protocol.Tests/Devilution.Client.Protocol.Tests.csproj
+dotnet run --project godot-client/Devilution.Client.Protocol.Tests/Devilution.Client.Protocol.Tests.csproj
 dotnet build server/src/Devilution.Server/Devilution.Server.csproj
-dotnet build godot/Devilution.Client/Devilution.Client.sln
+dotnet build godot-client/Devilution.Client/Devilution.Client.sln
 ```
 
 The protocol-test project builds the current server once as an explicit,
@@ -226,7 +226,7 @@ For a focused class or method, invoke the xUnit v3 in-process runner directly.
 This avoids requiring the VSTest testhost package cache:
 
 ```powershell
-dotnet run --project godot/Devilution.Client.Protocol.Tests/Devilution.Client.Protocol.Tests.csproj --no-build -- --filter-class Devilution.Client.Protocol.Tests.AuthoritativeTargetSelectorTests --no-ansi
+dotnet run --project godot-client/Devilution.Client.Protocol.Tests/Devilution.Client.Protocol.Tests.csproj --no-build -- --filter-class Devilution.Client.Protocol.Tests.AuthoritativeTargetSelectorTests --no-ansi
 ```
 
 Replace the class name with the focused test class under investigation. Use
@@ -392,7 +392,7 @@ Use the isolated launcher for headless startup so imports and clients receive
 writable AppData paths:
 
 ```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File godot/run-local-client.ps1 -Headless -QuitAfterSeconds 5
+powershell -NoProfile -ExecutionPolicy Bypass -File godot-client/run-local-client.ps1 -Headless -QuitAfterSeconds 5
 ```
 
 The root launcher is the normal zero-argument entry point:
@@ -401,7 +401,7 @@ The root launcher is the normal zero-argument entry point:
 powershell -ExecutionPolicy Bypass -File run-godot-client.ps1
 ```
 
-It delegates to `godot/run-local-client.ps1`, which also checks the standard
+It delegates to `godot-client/run-local-client.ps1`, which also checks the standard
 per-user WinGet package directory. For headless diagnostics or an explicit
 executable, invoke that underlying harness directly. Every launch builds the
 server, stages the current client sources in its own temporary directory,
@@ -480,7 +480,7 @@ unattended runs; do not retry after a crash or uncertain cleanup.
 
 ```powershell
 $automatedSession = Join-Path ([IO.Path]::GetTempPath()) ('Godevilution-VisibleCheck-' + [guid]::NewGuid().ToString('N'))
-powershell -NoProfile -ExecutionPolicy Bypass -File godot/run-local-client.ps1 -Automated -SessionDirectory $automatedSession -QuitAfterSeconds 30
+powershell -NoProfile -ExecutionPolicy Bypass -File godot-client/run-local-client.ps1 -Automated -SessionDirectory $automatedSession -QuitAfterSeconds 30
 ```
 
 Owned-process termination uses a five-second bounded wait per cleanup attempt,
@@ -943,10 +943,10 @@ or repair older unmarked failed roots. Preserve unexpected temporary files for
 diagnosis; the launcher does not select, promote or delete them to repair a save.
 
 The separate TCP equipped-staff cold-restore regression can be run from the
-workspace after building `godot/Devilution.Client.Protocol.Tests` in Debug:
+workspace after building `godot-client/Devilution.Client.Protocol.Tests` in Debug:
 
 ```powershell
-.\godot\Devilution.Client.Protocol.Tests\bin\Debug\net8.0\Devilution.Client.Protocol.Tests.exe --filter-method Devilution.Client.Protocol.Tests.LiveAuthoritativeServerTests.LiveServerRestoresSorcererRechargeAfterProcessRestart --parallel none --fail-skips on --no-ansi
+.\godot-client\Devilution.Client.Protocol.Tests\bin\Debug\net8.0\Devilution.Client.Protocol.Tests.exe --filter-method Devilution.Client.Protocol.Tests.LiveAuthoritativeServerTests.LiveServerRestoresSorcererRechargeAfterProcessRestart --parallel none --fail-skips on --no-ansi
 ```
 
 Require one passing fact without skips. Actual Sorcerer creation, Charged Bolt
@@ -1158,7 +1158,7 @@ its saves/bookmarks still contain credentials.
 
 ## Actual Godot client performance baseline
 
-Use `godot/run-local-client.ps1` for the explicit single-client phases. Pass `-Headless -Automated
+Use `godot-client/run-local-client.ps1` for the explicit single-client phases. Pass `-Headless -Automated
 -PersistenceMode legacy -PerformanceParticipants 1 -AcceptancePhase PerformanceCreate`
 with a fresh absolute `-SessionDirectory`. It keeps five warm-up/fifteen measured
 moves and writes `performance-resume-baseline.json` after recording stops.
@@ -1303,7 +1303,7 @@ For focused execution after rebuilding, set `GODEVILUTION_PERFORMANCE_DIRECTORY`
 to an evidence parent and run:
 
 ```powershell
-dotnet run --project godot/Devilution.Client.Protocol.Tests/Devilution.Client.Protocol.Tests.csproj --configuration Release --no-build -- --filter-method Devilution.Client.Protocol.Tests.LiveAuthoritativeServerTests.MeasureStandaloneHostBaseline --explicit only --no-ansi
+dotnet run --project godot-client/Devilution.Client.Protocol.Tests/Devilution.Client.Protocol.Tests.csproj --configuration Release --no-build -- --filter-method Devilution.Client.Protocol.Tests.LiveAuthoritativeServerTests.MeasureStandaloneHostBaseline --explicit only --no-ansi
 ```
 
 This measures the standalone server, not Godot frame cost, full combat/campaign

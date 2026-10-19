@@ -705,7 +705,7 @@ extern "C" char *SDL_GetPrefPath(const char *org, const char *app)
 	return retval;
 }
 
-// For Apple, definitions are in Source/platform/macos_sdl1/SDL_filesystem.m
+// For Apple, definitions are in legacy-native/platform/macos_sdl1/SDL_filesystem.m
 #elif !defined(__APPLE__)
 
 namespace {

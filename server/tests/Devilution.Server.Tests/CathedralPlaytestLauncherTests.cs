@@ -17,7 +17,7 @@ public sealed class CathedralPlaytestLauncherTests
             $ErrorActionPreference = 'Stop'
             $tokens = $null
             $errors = $null
-            $ast = [Management.Automation.Language.Parser]::ParseFile((Join-Path $repository 'godot/run-local-client.ps1'), [ref]$tokens, [ref]$errors)
+            $ast = [Management.Automation.Language.Parser]::ParseFile((Join-Path $repository 'godot-client/run-local-client.ps1'), [ref]$tokens, [ref]$errors)
             if ($errors) { throw 'The launcher must parse.' }
             $parameterNames = @($ast.ParamBlock.Parameters | ForEach-Object { $_.Name.VariablePath.UserPath })
             foreach ($name in @('CathedralDoorProfileDirectory', 'AcceptancePhase')) {
@@ -231,7 +231,7 @@ public sealed class CathedralPlaytestLauncherTests
     public async Task DoorProfileArgumentGuardRefusesMixingWithLegacyProfile()
     {
         var root = FindRepositoryRoot();
-        var launcher = Path.Combine(root, "godot", "run-local-client.ps1");
+        var launcher = Path.Combine(root, "godot-client", "run-local-client.ps1");
         using var child = new Process {
             StartInfo = new ProcessStartInfo("powershell.exe") {
                 UseShellExecute = false, CreateNoWindow = true,

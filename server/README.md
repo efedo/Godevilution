@@ -252,7 +252,7 @@ shared native/C# parity coverage.
 ## Clients
 
 - Use the root `run-godot-client.ps1` launcher for a complete local Godot
-  session. The underlying `godot/run-local-client.ps1` harness remains available
+  session. The underlying `godot-client/run-local-client.ps1` harness remains available
   for diagnostic switches.
 - Build the native adapter with
   `DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT=ON`, then run the root

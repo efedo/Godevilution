@@ -194,7 +194,7 @@ if ($PersistenceMode -eq 'cohort' -and [string]::IsNullOrWhiteSpace($SessionDire
 $repositoryRoot = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot '..')).Path
 $serverProject = Join-Path $repositoryRoot 'server/src/Devilution.Server/Devilution.Server.csproj'
 $serverExecutable = Join-Path $repositoryRoot "server/src/Devilution.Server/bin/$ServerBuildConfiguration/net10.0/Devilution.Server.exe"
-$clientSourceProject = Join-Path $repositoryRoot 'godot/Devilution.Client'
+$clientSourceProject = Join-Path $repositoryRoot 'godot-client/Devilution.Client'
 $clientProject = $clientSourceProject
 if ([string]::IsNullOrWhiteSpace($SessionDirectory)) {
     $SessionDirectory = if ($cathedral -or $cathedralDoors -or $cathedralNative) {

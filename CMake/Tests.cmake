@@ -164,12 +164,12 @@ target_compile_definitions(cathedral_monster_loot_test PRIVATE "GODEVILUTION_MON
 
 foreach(test_target ${standalone_tests})
   target_link_libraries(${test_target} PRIVATE GTest::gtest_main)
-  target_include_directories(${test_target} PRIVATE "${PROJECT_SOURCE_DIR}/Source")
+  target_include_directories(${test_target} PRIVATE "${PROJECT_SOURCE_DIR}/legacy-native")
 endforeach()
 
 foreach(target ${benchmarks})
   target_link_libraries(${target} PRIVATE benchmark::benchmark benchmark::benchmark_main)
-  target_include_directories(${target} PRIVATE "${PROJECT_SOURCE_DIR}/Source")
+  target_include_directories(${target} PRIVATE "${PROJECT_SOURCE_DIR}/legacy-native")
 endforeach()
 
 add_library(app_fatal_for_testing OBJECT test/app_fatal_for_testing.cpp)
@@ -179,7 +179,7 @@ add_library(language_for_testing OBJECT test/language_for_testing.cpp)
 target_sources(language_for_testing INTERFACE $<TARGET_OBJECTS:language_for_testing>)
 
 target_link_dependencies(codec_test PRIVATE libdevilutionx_codec app_fatal_for_testing)
-target_sources(content_manifest_test PRIVATE Source/data/content_manifest.cpp)
+target_sources(content_manifest_test PRIVATE legacy-native/data/content_manifest.cpp)
 target_include_directories(content_manifest_test PRIVATE 3rdParty/PicoSHA2)
 target_link_dependencies(clx_render_benchmark
   PRIVATE

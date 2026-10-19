@@ -1,5 +1,5 @@
 /**
- * @file Source/platform/switch/asio/pause.c
+ * @file legacy-native/platform/switch/asio/pause.c
  *
  * pause.
  */

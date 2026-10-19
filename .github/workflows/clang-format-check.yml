@@ -26,11 +26,11 @@ jobs:
       with:
         fetch-depth: 0
 
-    - name: Formatting Check (Source)
+    - name: Formatting Check (legacy-native)
       uses: jidicula/clang-format-action@v4.18.0
       with:
         clang-format-version: '18'
-        check-path: 'Source'
+        check-path: 'legacy-native'
 
     - name: Formatting Check (test)
       uses: jidicula/clang-format-action@v4.18.0

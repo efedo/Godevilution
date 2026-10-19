@@ -3,7 +3,7 @@ param()
 
 $ErrorActionPreference = 'Stop'
 $repositoryRoot = (Resolve-Path -LiteralPath $PSScriptRoot).Path
-$godotLauncher = Join-Path $repositoryRoot 'godot/run-local-client.ps1'
+$godotLauncher = Join-Path $repositoryRoot 'godot-client/run-local-client.ps1'
 $profileDirectory = Join-Path $repositoryRoot '.local/cathedral-doors-playtest'
 $profileMarker = Join-Path $profileDirectory 'cathedral-doors-playtest.json'
 if (-not (Test-Path -LiteralPath $profileMarker -PathType Leaf)) {

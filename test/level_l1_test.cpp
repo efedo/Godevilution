@@ -47,7 +47,7 @@ constexpr uint32_t CathedralDoorOracleVersion = 1;
 constexpr size_t CathedralDoorOracleCaseCount = 16;
 // These values are the private native DOOR_* constants and SelectionRegion
 // flags used by OpenDoor/CloseDoor through SetDoorStateOpen/Closed in
-// Source/game/objects/objects.cpp. The oracle records all other fields rather
+// legacy-native/game/objects/objects.cpp. The oracle records all other fields rather
 // than reproducing native piece-transition logic.
 constexpr int NativeDoorClosedState = 0;
 constexpr int NativeDoorOpenState = 1;
