@@ -24,10 +24,17 @@ param(
     [string]$CathedralNativeProgressionProfileDirectory,
     [ValidateSet('Debug', 'Release')] [string]$ServerBuildConfiguration = 'Debug',
     [string]$CathedralNativeDepthProgressionProfileDirectory,
-    [string]$NativeDepthEntryBaselinePath
+    [string]$NativeDepthEntryBaselinePath,
+    [switch]$SessionMenuAcceptance
 )
 
 $ErrorActionPreference = 'Stop'
+if ($SessionMenuAcceptance -and ([string]::IsNullOrWhiteSpace($SessionDirectory) -or
+    $AcceptancePhase -notin @('Create', 'Resume') -or
+    $PreviewContent -or $PortalPreviewContent -or $LifecyclePreviewContent -or $Multiplayer -or
+    $CathedralProfileDirectory -or $CathedralDepthProfileDirectory -or $CathedralDoorProfileDirectory -or $CathedralNativeProfileDirectory -or $CathedralNativeProgressionProfileDirectory -or $CathedralNativeDepthProgressionProfileDirectory)) {
+    throw 'Session-menu acceptance requires an explicit isolated base single-player Create/Resume profile.'
+}
 if ($Automated -and [string]::IsNullOrWhiteSpace($SessionDirectory)) {
     throw 'Automated launches require an explicit isolated -SessionDirectory.'
 }
@@ -254,8 +261,10 @@ New-Item -ItemType Directory -Path $processEvidenceRoot -Force | Out-Null
 $savedEnvironment = @{}
 $environmentNames = @('DEVILUTION_SERVER_HOST', 'DEVILUTION_SERVER_PORT', 'DEVILUTION_PROTOCOL_VERSION',
     'DEVILUTION_CONTENT_HASH', 'DEVILUTION_RULESET_HASH', 'DEVILUTION_CHARACTER_CLASS_ID',
+    'GODEVILUTION_SUPPORTED_CHARACTER_CLASS_IDS',
     'DEVILUTION_CHARACTER_NAME', 'DEVILUTION_RESUME_TOKEN', 'DEVILUTION_RESUME_TOKEN_PATH',
     'GODEVILUTION_ACCEPTANCE_PHASE', 'GODEVILUTION_ACCEPTANCE_DIRECTORY', 'GODEVILUTION_QUIT_AFTER_SECONDS',
+    'GODEVILUTION_ACCEPTANCE_SESSION_MENU',
     'GODEVILUTION_PERSISTENCE_MODE', 'GODEVILUTION_COMMAND_TIMING_TRACE',
     'GODEVILUTION_LOCAL_PLAYER', 'GODEVILUTION_PORTAL_PREVIEW', 'GODEVILUTION_LIFECYCLE_PREVIEW', 'GODEVILUTION_CATHEDRAL_PROFILE', 'GODEVILUTION_CATHEDRAL_DEPTH_PROFILE', 'GODEVILUTION_CATHEDRAL_DOOR_PROFILE', 'GODEVILUTION_CATHEDRAL_NATIVE_PROFILE',
     'GODEVILUTION_PERFORMANCE_PARTICIPANTS', 'GODEVILUTION_PERFORMANCE_SHARED_DIRECTORY', 'GODEVILUTION_PERFORMANCE_RESUME_BASELINE_PATH',
@@ -2136,7 +2145,10 @@ try {
         elseif ($cathedral) { $clientEnvironment['GODEVILUTION_CATHEDRAL_PROFILE'] = $cathedralProfile.MetadataPath }
         elseif ($cathedralDoors) { $clientEnvironment['GODEVILUTION_CATHEDRAL_DOOR_PROFILE'] = $cathedralDoorProfile.MetadataPath }
         if ($cathedralNativePhase) { $clientEnvironment['GODEVILUTION_CATHEDRAL_NATIVE_PROFILE'] = $cathedralNativeProfile.MetadataPath }
-        if ($cathedralNative) { $clientEnvironment['DEVILUTION_CHARACTER_CLASS_ID'] = '1' }
+        if ($cathedralNative) {
+            $clientEnvironment['DEVILUTION_CHARACTER_CLASS_ID'] = '1'
+            $clientEnvironment['GODEVILUTION_SUPPORTED_CHARACTER_CLASS_IDS'] = '1'
+        }
         if ($nativeDepthEntryContinuation) {
             $clientEnvironment['GODEVILUTION_NATIVE_DEPTH_ENTRY_BASELINE'] = $NativeDepthEntryBaselinePath
         }
@@ -2168,6 +2180,7 @@ try {
         if ($AcceptancePhase) {
             $clientEnvironment['GODEVILUTION_ACCEPTANCE_PHASE'] = $AcceptancePhase
             $clientEnvironment['GODEVILUTION_ACCEPTANCE_DIRECTORY'] = $clientDirectory
+            if ($SessionMenuAcceptance) { $clientEnvironment['GODEVILUTION_ACCEPTANCE_SESSION_MENU'] = '1' }
             $godotArguments += ' --scene res://Acceptance/SessionAcceptance.tscn'
             $evidenceFileName = switch ($AcceptancePhase) {
                 'PerformanceCreate' { 'performance.json' }

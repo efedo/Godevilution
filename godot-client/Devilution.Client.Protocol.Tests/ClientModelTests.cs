@@ -2008,6 +2008,38 @@ public sealed class ClientModelTests
     }
 
     [Fact]
+    public void DeferredClearEventsFollowsRepeatedSessionModelReplacement()
+    {
+        var currentModel = new AuthoritativeClientModel();
+        Action clearEvents = () => currentModel.ClearRecentEvents();
+        for (uint session = 0; session < 3; session++) {
+            var retiredModel = ModelWithEvent(session);
+            currentModel = retiredModel;
+            currentModel = ModelWithEvent(session + 1);
+
+            clearEvents();
+            clearEvents(); // Repeated clicks on an empty current history are harmless.
+
+            Assert.Single(retiredModel.RecentEvents);
+            Assert.Empty(currentModel.RecentEvents);
+            Assert.Equal(1UL, currentModel.RecentEventsStartSequence);
+            Assert.Equal(1UL, currentModel.RecentEventsEndSequence);
+        }
+
+        static AuthoritativeClientModel ModelWithEvent(uint amount)
+        {
+            var model = new AuthoritativeClientModel();
+            model.Apply(new AuthoritativeClientMessage(Events: new EventBatch {
+                Tick = 0,
+                Events = { new GameEvent {
+                    Experience = new ExperienceEvent { PlayerEntityId = 7, Amount = amount },
+                } },
+            }));
+            return model;
+        }
+    }
+
+    [Fact]
     public void RejectsSnapshotsWithoutALocalPlayerOrWithInvalidEntityIds()
     {
         var model = new AuthoritativeClientModel();

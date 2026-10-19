@@ -10,7 +10,7 @@ namespace Devilution.Client;
 
 public partial class Main : Node2D
 {
-    private readonly AuthoritativeClientModel model = new();
+    private AuthoritativeClientModel model = new();
     private readonly CancellationTokenSource lifetime = new();
     private readonly AuthoritativeRouteTravel routeTravel = new();
     private readonly AuthoritativeInteractionTravel interactionTravel = new();
@@ -26,7 +26,7 @@ public partial class Main : Node2D
     private Task? connectionTask;
     private Task? pollTask;
     private Task? reconnectTask;
-    private string? pendingConnectionError;
+    private PendingConnectionError? pendingConnectionError;
     private string? selectedSpellSourceKey;
     private string? resumeTokenPath;
     private bool persistLocalSession;
@@ -38,6 +38,13 @@ public partial class Main : Node2D
     // Read-only copies for the scene acceptance harness; never a gameplay owner.
     internal Snapshot? ObservedSnapshot => model.Snapshot?.Clone();
     internal CommandResult? ObservedCommandResult => model.LastCommandResult?.Clone();
+    internal long ObservedModelGeneration => modelGeneration;
+    internal int ObservedRecentEventCount => model.RecentEvents.Count;
+    internal ulong ObservedRecentEventSequenceStart => model.RecentEventsStartSequence;
+    internal ulong ObservedRecentEventSequenceEnd => model.RecentEventsEndSequence;
+    internal ulong ObservedEventBatchCount => observedEventBatchCount;
+    internal string? ObservedRecentEventKind
+        => model.RecentEvents.Count == 0 ? null : model.RecentEvents[^1].EventCase.ToString();
     // Installed only for a bounded acceptance observation; normal scenes retain nothing.
     internal Action<CommandAck>? AcceptanceAcknowledgementObserver { get; set; }
     internal AuthoritativeServerIdentity? ObservedIdentity => client?.ServerIdentity;
@@ -204,6 +211,7 @@ public partial class Main : Node2D
                     RequestedCharacterName = string.IsNullOrEmpty(resumeToken) ? name : null,
                 });
         };
+        hud.ReturnToSessionMenuRequested += BeginReturnToSessionMenu;
         hud.OpenStoreRequested += storeId => QueueIfConnected(new Command { OpenStoreRequested = new OpenStoreRequested { StoreId = storeId } });
         hud.CloseStoreRequested += () => QueueIfConnected(new Command { CloseStoreRequested = new CloseStoreRequested() });
         hud.RestartTownRequested += () => RequestTownRestart();
@@ -298,7 +306,8 @@ public partial class Main : Node2D
         });
         hud.RefillManaRequested += () => QueueIfConnected(new Command { RefillManaRequested = new RefillManaRequested() });
         hud.DropHeldItemRequested += DropHeldItemAtPlayer;
-        hud.ClearEventsRequested += model.ClearRecentEvents;
+        // Session return replaces the model; resolve it when the button is used.
+        hud.ClearEventsRequested += () => model.ClearRecentEvents();
         hud.SpellSourceSelected += SelectSpellSource;
         hud.TravelRequested += warpId => {
             interactionTravel.Cancel();
@@ -324,7 +333,9 @@ public partial class Main : Node2D
             string? bookmarkError = null;
             if (!string.IsNullOrWhiteSpace(resumeTokenPath)) {
                 try {
-                    defaults = defaults with { ResumeToken = LocalSessionBookmark.Read(resumeTokenPath) ?? string.Empty };
+                    defaults = defaults with {
+                        ResumeToken = LocalSessionBookmark.Read(resumeTokenPath) ?? string.Empty,
+                    };
                 } catch (Exception exception) when (exception is IOException or InvalidDataException or UnauthorizedAccessException) {
                     bookmarkError = $"Could not read local resume bookmark: {exception.Message}";
                 }
@@ -338,18 +349,34 @@ public partial class Main : Node2D
 
     private void StartConnection(ClientConnectionOptions options)
     {
-        if (client is not null)
+        if (client is not null || sessionTransition)
             return;
         characterSetup?.HideSetup();
+        if (hud is not null)
+            hud.Visible = true;
+        sessionStatusOverride = null;
+        if (menuConfirmedTokenOptions is null
+            || !string.Equals(menuConfirmedTokenOptions.Host, options.Host, StringComparison.Ordinal)
+            || menuConfirmedTokenOptions.Port != options.Port
+            || !string.Equals(menuConfirmedSessionToken, options.ResumeToken, StringComparison.Ordinal)) {
+            menuConfirmedSessionToken = null;
+            menuConfirmedTokenOptions = null;
+        }
+        connectionLifetime?.Dispose();
+        connectionLifetime = CancellationTokenSource.CreateLinkedTokenSource(lifetime.Token);
+        var generation = ++sessionGeneration;
         // An edited remote endpoint must not replace the local host's bookmark.
-        persistLocalSession = options.Host == connectionOptions?.Host
-            && options.Port == connectionOptions?.Port && !string.IsNullOrWhiteSpace(resumeTokenPath);
-        client = new AuthoritativeClient(options) {
+        persistLocalSession = connectionOptions is not null
+            && SessionLifecyclePolicy.ShouldPersistLocalBookmark(
+                connectionOptions, options, resumeTokenPath);
+        var newClient = new AuthoritativeClient(options) {
             CommandTimingRecorder = Environment.GetEnvironmentVariable("GODEVILUTION_COMMAND_TIMING_TRACE") == "1"
                 ? new AuthoritativeClientCommandTimingRecorder()
                 : null,
         };
-        connectionTask = ConnectAsync(lifetime.Token);
+        client = newClient;
+        activeConnectionOptions = options;
+        connectionTask = ConnectAsync(newClient, generation, connectionLifetime.Token);
         hud?.SetStatus("Connecting to authoritative server...");
     }
 
@@ -363,19 +390,26 @@ public partial class Main : Node2D
             bookmarkRetrySeconds += delta;
             if (bookmarkRetrySeconds >= 5) {
                 bookmarkRetrySeconds = 0;
-                PersistLocalBookmark();
+                if (client is { } activeClient)
+                    PersistLocalBookmark(activeClient, sessionGeneration);
             }
         }
-        if (client is not null) {
-            if (Interlocked.Exchange(ref pendingConnectionError, null) is { } connectionError)
+        if (client is not null && !sessionTransition) {
+            var activeClient = client;
+            var activeGeneration = sessionGeneration;
+            if (Interlocked.Exchange(ref pendingConnectionError, null) is { } connectionError
+                && ReferenceEquals(activeClient, connectionError.Client)
+                && SessionLifecyclePolicy.IsCurrentGeneration(activeGeneration, connectionError.Generation))
                 model.Apply(new AuthoritativeClientMessage(Error: new ProtocolError {
                     Code = ProtocolErrorCode.NotAuthenticated,
-                    Detail = connectionError,
+                    Detail = connectionError.Detail,
                 }));
 
-            foreach (var message in client.DrainMessages()) {
+            foreach (var message in activeClient.DrainMessages()) {
                 try {
                     model.Apply(message);
+                    if (message.Events is not null)
+                        observedEventBatchCount = checked(observedEventBatchCount + 1);
                     if (message.Acknowledgement is { } acknowledgement) {
                         foreach (var result in acknowledgement.Results)
                             heldEntityAttack.ObserveResult(result);
@@ -388,6 +422,13 @@ public partial class Main : Node2D
                 }
             }
 
+            if (activeClient.PendingCommandCount == 0
+                && string.Equals(
+                    sessionStatusOverride,
+                    SessionLifecyclePolicy.PendingCommandsReturnMessage,
+                    StringComparison.Ordinal))
+                sessionStatusOverride = null;
+
             if (pollTask is { IsCompleted: true }) {
                 var pollFailed = pollTask.IsFaulted;
                 _ = pollTask.Exception;
@@ -396,12 +437,12 @@ public partial class Main : Node2D
                     StartReconnect(force: true);
             }
 
-            if (client.IsConnected
+            if (activeClient.IsConnected
                 && pollTask is null
                 && (reconnectTask is null || reconnectTask.IsCompleted))
-                pollTask = client.PollAsync(lifetime.Token);
+                pollTask = activeClient.PollAsync(connectionLifetime?.Token ?? lifetime.Token);
 
-            if (!client.IsConnected
+            if (!activeClient.IsConnected
                 && (connectionTask?.IsCompleted ?? true)
                 && (reconnectTask is null || reconnectTask.IsCompleted))
                 StartReconnect(force: false);
@@ -438,6 +479,8 @@ public partial class Main : Node2D
         hud?.SetSpellSources(spellSources, selectedSpellSourceKey);
         hud?.Apply(model, client, connectionTask);
         hud?.SetSessionWarning(localSessionWarning);
+        if (sessionStatusOverride is not null)
+            hud?.SetStatus(sessionStatusOverride);
         feedback?.Apply(model, world);
         var evidenceSceneEndTimestamp = frameEvidence is null
             ? 0
@@ -951,25 +994,104 @@ public partial class Main : Node2D
 
     public override async void _ExitTree()
     {
+        var menuPublicationsAtExit = Interlocked.Read(ref sessionMenuPublicationCount);
+        var postExitPublicationAttemptsAtExit = Interlocked.Read(ref postExitMenuPublicationCount);
+        // ReturnToSessionMenuAsync owns the captured client/tasks while this
+        // transition is active; join it instead of racing a second disposal.
+        var sceneReturnTask = sessionTransition ? returnCleanupTask : null;
+        var sceneExitClient = sessionTransition ? null : cleanupClient ?? client;
+        var sceneExitConnectionTask = sessionTransition ? null : connectionTask;
+        var sceneExitPollTask = sessionTransition ? null : pollTask;
+        var sceneExitReconnectTask = sessionTransition ? null : reconnectTask;
+        var failureCount = 0;
+        var returnCleanupJoined = sceneReturnTask is null;
+        var cleanupCompleted = false;
+        if (!sessionTransition) {
+            client = null;
+            cleanupClient = null;
+            connectionTask = null;
+            pollTask = null;
+            reconnectTask = null;
+        }
+        connectionLifetime?.Cancel();
         lifetime.Cancel();
         try {
-            frameEvidence?.Stop("application-exit", succeeded: false);
-        } catch (Exception exception) when (exception is IOException or UnauthorizedAccessException) {
-            GD.PushWarning($"Could not write client frame evidence: {exception.Message}");
+            try {
+                frameEvidence?.Stop("application-exit", succeeded: false);
+            } catch (Exception exception) when (exception is IOException or UnauthorizedAccessException) {
+                GD.PushWarning($"Could not write client frame evidence: {exception.Message}");
+            }
+            if (sceneReturnTask is not null) {
+                var returnFailure = await AwaitFailure(sceneReturnTask, allowCancellation: false);
+                var cleanupOutcome = returnCleanupOutcome;
+                var cleanupFailure = returnFailure ?? cleanupOutcome?.Failure;
+                var cleanupOutcomeSucceeded = SessionLifecyclePolicy.CanCompleteSceneExit(
+                    cleanupOutcome,
+                    returnFailure);
+                if (!cleanupOutcomeSucceeded) {
+                    failureCount++;
+                    GD.PushWarning(SessionLifecyclePolicy.CleanupFailureMessage(
+                        cleanupFailure ?? new InvalidOperationException(
+                            "The return cleanup did not publish a successful disposal outcome.")));
+                }
+                returnCleanupJoined = sceneReturnTask.IsCompleted;
+                cleanupCompleted = returnCleanupJoined && cleanupOutcomeSucceeded;
+                return;
+            }
+            if (!sessionTransition) {
+                var cleanupFailures = new List<Exception>();
+                AddCleanupFailure(cleanupFailures, await AwaitFailure(
+                    sceneExitConnectionTask,
+                    allowCancellation: true));
+                AddCleanupFailure(cleanupFailures, await AwaitFailure(
+                    sceneExitPollTask,
+                    allowCancellation: true));
+                AddCleanupFailure(cleanupFailures, await AwaitFailure(
+                    sceneExitReconnectTask,
+                    allowCancellation: true));
+                Task? disposeTask = null;
+                try {
+                    if (sceneExitClient is not null)
+                        disposeTask = sceneExitClient.DisposeAsync().AsTask();
+                } catch (Exception exception) {
+                    cleanupFailures.Add(exception);
+                }
+                AddCleanupFailure(cleanupFailures, await AwaitFailure(
+                    disposeTask,
+                    allowCancellation: false));
+                connectionLifetime?.Dispose();
+                failureCount = cleanupFailures.Count;
+                if (cleanupFailures.Count > 0)
+                    GD.PushWarning(SessionLifecyclePolicy.CleanupFailureMessage(cleanupFailures[0]));
+            }
+            cleanupCompleted = failureCount == 0;
+        } finally {
+            lifetime.Dispose();
+            var postExitPublicationAttemptCount = Math.Max(0,
+                Interlocked.Read(ref postExitMenuPublicationCount) - postExitPublicationAttemptsAtExit);
+            var noPostExitMenuPublication =
+                Interlocked.Read(ref sessionMenuPublicationCount) == menuPublicationsAtExit;
+            exitCleanupCompletion.TrySetResult(new MainExitCleanupObservation(
+                cleanupCompleted,
+                returnCleanupJoined,
+                failureCount,
+                postExitPublicationAttemptCount,
+                noPostExitMenuPublication));
         }
-        if (client is not null)
-            await client.DisposeAsync();
-        lifetime.Dispose();
     }
 
-    private async Task ConnectAsync(CancellationToken cancellationToken)
+    private async Task ConnectAsync(
+        AuthoritativeClient connectionClient,
+        long generation,
+        CancellationToken cancellationToken)
     {
         try {
-            await client!.ConnectAsync(cancellationToken);
-            PersistLocalBookmark();
+            await connectionClient.ConnectAsync(cancellationToken);
+            if (IsCurrentSession(connectionClient, generation))
+                PersistLocalBookmark(connectionClient, generation);
         } catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested) {
         } catch (Exception exception) {
-            Interlocked.Exchange(ref pendingConnectionError, exception.Message);
+            SetSessionError(connectionClient, generation, exception.Message);
         }
     }
 
@@ -979,44 +1101,62 @@ public partial class Main : Node2D
         interactionTravel.Cancel();
         model.ResetTransientPresentation();
         world?.MarkPresentationEpochPending();
-        if (reconnectTask is null || reconnectTask.IsCompleted)
-            reconnectTask = ReconnectLoopAsync(force);
+        if (client is { } activeClient
+            && !sessionTransition
+            && (reconnectTask is null || reconnectTask.IsCompleted))
+            reconnectTask = ReconnectLoopAsync(
+                activeClient,
+                sessionGeneration,
+                connectionLifetime?.Token ?? lifetime.Token,
+                force);
     }
 
-    private void PersistLocalBookmark()
+    private void PersistLocalBookmark(AuthoritativeClient activeClient, long generation)
     {
-        if (!persistLocalSession || client is null)
+        if (!persistLocalSession || !IsCurrentSession(activeClient, generation))
             return;
         try {
-            LocalSessionBookmark.Write(resumeTokenPath!, client.SessionToken);
+            var previousWarning = localSessionWarning;
+            LocalSessionBookmark.Write(resumeTokenPath!, activeClient.SessionToken);
             localSessionWarning = null;
+            if (previousWarning is not null
+                && string.Equals(
+                    sessionStatusOverride,
+                    $"{previousWarning} Return is disabled until the bookmark is saved.",
+                    StringComparison.Ordinal))
+                sessionStatusOverride = null;
         } catch (Exception exception) when (exception is IOException or InvalidDataException or UnauthorizedAccessException) {
             localSessionWarning = $"Resume bookmark could not be saved. Keep this session open and fix access to {resumeTokenPath}. Retrying every 5 seconds. {exception.Message}";
         }
     }
 
-    private async Task ReconnectLoopAsync(bool force)
+    private async Task ReconnectLoopAsync(
+        AuthoritativeClient reconnectClient,
+        long generation,
+        CancellationToken cancellationToken,
+        bool force)
     {
         var firstAttempt = true;
         var delay = TimeSpan.Zero;
-        while (!lifetime.IsCancellationRequested && client is not null) {
-            if (!force && !firstAttempt && client.IsConnected)
+        while (!cancellationToken.IsCancellationRequested
+            && IsCurrentSession(reconnectClient, generation)) {
+            if (!force && !firstAttempt && reconnectClient.IsConnected)
                 return;
             if (delay > TimeSpan.Zero) {
                 try {
-                    await Task.Delay(delay, lifetime.Token);
-                } catch (OperationCanceledException) when (lifetime.IsCancellationRequested) {
+                    await Task.Delay(delay, cancellationToken);
+                } catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested) {
                     return;
                 }
             }
 
             try {
-                await client.ReconnectAsync(lifetime.Token);
+                await reconnectClient.ReconnectAsync(cancellationToken);
                 return;
-            } catch (OperationCanceledException) when (lifetime.IsCancellationRequested) {
+            } catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested) {
                 return;
             } catch (Exception exception) {
-                Interlocked.Exchange(ref pendingConnectionError, exception.Message);
+                SetSessionError(reconnectClient, generation, exception.Message);
                 delay = delay == TimeSpan.Zero
                     ? TimeSpan.FromMilliseconds(250)
                     : TimeSpan.FromMilliseconds(Math.Min(delay.TotalMilliseconds * 2, 5000));

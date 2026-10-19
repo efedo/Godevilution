@@ -71,6 +71,7 @@ public partial class HudPresentation
         hero.AddChild(Buttons(allocateStrength, allocateMagic, allocateDexterity, allocateVitality));
         AddList(hero, "ui.hud.spell-sources", "Spell sources (select here, or use Q/E)", spellSources, 140);
         hero.AddChild(restartTown);
+        hero.AddChild(returnToSessionMenu);
         hero.AddChild(highContrastToggle);
 
         var items = AddPage("Items");

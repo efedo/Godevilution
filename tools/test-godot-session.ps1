@@ -1,5 +1,5 @@
 [CmdletBinding()]
-param([string]$GodotExecutable, [ValidateSet('legacy', 'cohort')] [string]$PersistenceMode = 'legacy', [switch]$Visible, [switch]$Journey, [switch]$TownLoop, [switch]$Lifecycle, [switch]$Multiplayer, [switch]$MultiplayerRecovery, [switch]$MultiplayerPendingRecovery, [string]$CathedralProfileDirectory, [string]$CathedralDepthProfileDirectory, [string]$CathedralDoorProfileDirectory, [string]$CathedralNativeProfileDirectory, [ValidateSet('default', 'atlas', 'semantic', 'missing', 'undersized', 'invalid')] [string]$PresentationPackProfile = 'default', [switch]$CommandTimingTrace, [switch]$Cooperative, [switch]$CathedralNativeChest, [string]$CathedralNativeChestSessionDirectory, [switch]$CathedralNativeSarcophagus, [string]$CathedralNativeSarcophagusSessionDirectory, [switch]$CathedralNativeBarrel, [string]$CathedralNativeBarrelSessionDirectory, [switch]$CathedralNativeTrap, [string]$CathedralNativeTrapSessionDirectory)
+param([string]$GodotExecutable, [ValidateSet('legacy', 'cohort')] [string]$PersistenceMode = 'legacy', [switch]$Visible, [switch]$Journey, [switch]$TownLoop, [switch]$Lifecycle, [switch]$Multiplayer, [switch]$MultiplayerRecovery, [switch]$MultiplayerPendingRecovery, [string]$CathedralProfileDirectory, [string]$CathedralDepthProfileDirectory, [string]$CathedralDoorProfileDirectory, [string]$CathedralNativeProfileDirectory, [ValidateSet('default', 'atlas', 'semantic', 'missing', 'undersized', 'invalid')] [string]$PresentationPackProfile = 'default', [switch]$CommandTimingTrace, [switch]$Cooperative, [switch]$CathedralNativeChest, [string]$CathedralNativeChestSessionDirectory, [switch]$CathedralNativeSarcophagus, [string]$CathedralNativeSarcophagusSessionDirectory, [switch]$CathedralNativeBarrel, [string]$CathedralNativeBarrelSessionDirectory, [switch]$CathedralNativeTrap, [string]$CathedralNativeTrapSessionDirectory, [switch]$SessionMenu)
 
 $ErrorActionPreference = 'Stop'
 $PersistenceMode = $PersistenceMode.ToLowerInvariant()
@@ -115,6 +115,17 @@ if ($CathedralDoorProfileDirectory -and $PresentationPackProfile -ne 'default') 
 if ($PresentationPackProfile -ne 'default' -and ($Journey -or $TownLoop -or $Lifecycle -or $Multiplayer -or $CathedralProfileDirectory -or $CathedralDepthProfileDirectory -or $CathedralDoorProfileDirectory)) {
     throw 'Presentation pack fixtures require the separate base single-player acceptance path.'
 }
+if ($SessionMenu -and ($Journey -or $TownLoop -or $Lifecycle -or $Multiplayer -or
+    $MultiplayerRecovery -or $MultiplayerPendingRecovery -or $Cooperative -or
+    $CathedralProfileDirectory -or $CathedralDepthProfileDirectory -or
+    $CathedralDoorProfileDirectory -or $PresentationPackProfile -ne 'default' -or
+    $CathedralNativeProfileDirectory -or $CathedralNativeChest -or
+    $CathedralNativeChestSessionDirectory -or $CathedralNativeSarcophagus -or
+    $CathedralNativeSarcophagusSessionDirectory -or $CathedralNativeBarrel -or
+    $CathedralNativeBarrelSessionDirectory -or $CathedralNativeTrap -or
+    $CathedralNativeTrapSessionDirectory)) {
+    throw 'Session-menu acceptance requires its own base single-player profile.'
+}
 $repositoryRoot = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot '..')).Path
 $sessionDirectory = if ($cathedralNativeTrap) {
     $nativeSessionsRoot = Join-Path ([IO.Path]::GetFullPath($CathedralNativeProfileDirectory)) 'sessions'
@@ -180,6 +191,293 @@ $parameters = @{ SessionDirectory = $sessionDirectory; PersistenceMode = $Persis
 if ($CommandTimingTrace) { $parameters.CommandTimingTrace = $true }
 if ($CathedralNativeProfileDirectory) { $parameters.CathedralNativeProfileDirectory = $CathedralNativeProfileDirectory }
 if ($GodotExecutable) { $parameters.GodotExecutable = $GodotExecutable }
+function Assert-SessionMenuEvidence([string]$Directory, [ValidateSet('Create', 'Resume')] [string]$Phase) {
+    $prefix = $Phase.ToLowerInvariant()
+    $menu = Get-Content -LiteralPath (Join-Path $Directory ($prefix + '-menu-return.json')) -Raw | ConvertFrom-Json
+    $terminal = Get-Content -LiteralPath (Join-Path $Directory ($prefix + '.json')) -Raw | ConvertFrom-Json
+    $events = Get-Content -LiteralPath (Join-Path $Directory ($prefix + '-menu-events.json')) -Raw | ConvertFrom-Json
+    $exit = Get-Content -LiteralPath (Join-Path $Directory ($prefix + '-menu-exit.json')) -Raw | ConvertFrom-Json
+    foreach ($flag in @('Passed', 'ReturnedToSetup', 'BookmarkPreserved', 'OldWorldCleared',
+        'Rejoined', 'ResumeDefaultsPreserved', 'SettledReturnConfirmed',
+        'ConnectCancellationConfirmed', 'RemoteDefaultsPreserved', 'LocalConfirmedTokenPreserved',
+        'LocalTokenDurableWhenWritable', 'InMemoryTokenWarningWhenBlocked')) {
+        if ($menu.$flag -isnot [bool] -or -not $menu.$flag) {
+            throw "Session-menu evidence did not confirm $flag."
+        }
+    }
+    foreach ($flag in @('PendingReturnRejected', 'BookmarkReturnRejected')) {
+        if ($menu.$flag -isnot [bool] -or ($Phase -eq 'Create' -and -not $menu.$flag)) {
+            throw "Session-menu evidence omitted the $flag refusal boundary."
+        }
+    }
+    foreach ($field in @('EntityId', 'ClassId', 'LevelId', 'InitialSequence', 'FinalSequence',
+        'InitialX', 'InitialY', 'RejoinedX', 'RejoinedY', 'FinalX', 'FinalY',
+        'InitialGeneration', 'ReturnedGeneration', 'RejoinedGeneration', 'PendingCountAtRefusal',
+        'InitialModelGeneration', 'RejoinedModelGeneration')) {
+        if ($menu.$field -isnot [int] -and $menu.$field -isnot [long] -and
+            $menu.$field -isnot [uint32] -and $menu.$field -isnot [uint64]) {
+            throw "Session-menu evidence contains a missing or non-integer $field."
+        }
+    }
+    foreach ($field in @('EntityId', 'ClassId', 'LevelId', 'Sequence', 'X', 'Y')) {
+        if ($terminal.$field -isnot [int] -and $terminal.$field -isnot [long] -and
+            $terminal.$field -isnot [uint32] -and $terminal.$field -isnot [uint64]) {
+            throw "Terminal scene evidence contains a missing or non-integer $field."
+        }
+    }
+    $eventIntegerFields = @(
+        'EntityId', 'InitialSequence', 'InitialX', 'InitialY',
+        'PriorMenuReturnSequence', 'PriorMenuReturnX', 'PriorMenuReturnY',
+        'InitialGeneration', 'InitialModelGeneration', 'FirstApproachInitialSequence',
+        'FirstApproachFinalSequence', 'FirstClearDialogueSequence', 'FirstClearGeneration',
+        'FirstClearModelGeneration', 'FirstClearEventBatchCount', 'FirstClearEventCount',
+        'FirstClearStartSequence', 'FirstClearEndSequence', 'FirstClearRemainingCount',
+        'FirstClearRemainingStartSequence', 'FirstClearRemainingEndSequence',
+        'FirstPostClearDialogueSequence', 'FirstPostClearEventBatchCount', 'FirstPostClearEventBatchDelta',
+        'FirstPostClearEventCount',
+        'SecondReturnedGeneration', 'SecondReturnedModelGeneration', 'SecondRejoinedGeneration',
+        'SecondRejoinedModelGeneration', 'SecondModelDialogueSequence', 'SecondClearGeneration',
+        'SecondClearModelGeneration', 'SecondClearEventBatchCount', 'SecondClearEventBatchDelta',
+        'SecondClearEventCount',
+        'SecondClearStartSequence', 'SecondClearEndSequence', 'SecondClearRemainingCount',
+        'SecondClearRemainingStartSequence', 'SecondClearRemainingEndSequence',
+        'FinalMovementSequence', 'FinalCommandSequence', 'FinalX', 'FinalY')
+    foreach ($field in $eventIntegerFields) {
+        if ($events.$field -isnot [int] -and $events.$field -isnot [long] -and
+            $events.$field -isnot [uint32] -and $events.$field -isnot [uint64]) {
+            throw "Session-menu event evidence contains a missing or non-integer $field."
+        }
+    }
+    $eventFlags = @('Passed', 'FirstApproachAccepted', 'FirstClearButtonEnabled',
+        'FirstClearButtonClicked', 'BookmarkBytesPreserved', 'IdentityPreserved',
+        'SecondClearButtonEnabled', 'SecondClearButtonClicked', 'FinalMovementAccepted')
+    foreach ($flag in $eventFlags) {
+        if ($events.$flag -isnot [bool] -or -not $events.$flag) {
+            throw "Session-menu event evidence did not confirm $flag."
+        }
+    }
+    $exitFlags = @('Passed', 'ExitDuringHandshakeVerified', 'HandshakeExitPendingObserved',
+        'HandshakeExitMainFreed', 'HandshakeExitPeerClosed', 'HandshakeExitCleanupCompleted',
+        'HandshakeExitReturnCleanupJoined', 'HandshakeExitNoPostExitMenuPublication',
+        'ExitDuringReturnVerified', 'ReturnExitPendingObserved', 'ReturnExitCleanupGateObserved',
+        'ReturnExitStillPendingWhileGated', 'ReturnExitMainFreed', 'ReturnExitPeerClosed',
+        'ReturnExitCleanupCompleted', 'ReturnExitReturnCleanupJoined',
+        'ReturnExitNoPostExitMenuPublication')
+    foreach ($flag in $exitFlags) {
+        if ($exit.$flag -isnot [bool] -or -not $exit.$flag) {
+            throw "Session-menu exit evidence did not confirm $flag."
+        }
+    }
+    foreach ($field in @('HandshakeExitCleanupFailureCount', 'HandshakeExitPostExitMenuPublicationAttemptCount',
+        'ReturnExitCleanupFailureCount', 'ReturnExitPostExitMenuPublicationAttemptCount')) {
+        if ($exit.$field -isnot [int] -and $exit.$field -isnot [long] -and
+            $exit.$field -isnot [uint32] -and $exit.$field -isnot [uint64]) {
+            throw "Session-menu exit evidence contains a missing or non-integer $field."
+        }
+    }
+    foreach ($field in @('HandshakeExitCleanupFailureCount', 'ReturnExitCleanupFailureCount')) {
+        if ($exit.$field -lt 0 -or $exit.$field -gt [int]::MaxValue) {
+            throw "Session-menu exit evidence contains an invalid cleanup failure count in $field."
+        }
+    }
+    foreach ($field in @('HandshakeExitPostExitMenuPublicationAttemptCount',
+        'ReturnExitPostExitMenuPublicationAttemptCount')) {
+        if ($exit.$field -lt 0 -or $exit.$field -gt [long]::MaxValue) {
+            throw "Session-menu exit evidence contains an invalid publication attempt count in $field."
+        }
+    }
+    if ($exit.HandshakeExitCleanupFailureCount -ne 0 -or
+        $exit.ReturnExitCleanupFailureCount -ne 0 -or
+        $exit.HandshakeExitPostExitMenuPublicationAttemptCount -ne 0 -or
+        $exit.ReturnExitPostExitMenuPublicationAttemptCount -ne 0) {
+        throw 'Session-menu exit cleanup reported failures or post-exit menu publication attempts.'
+    }
+    foreach ($artifact in @(
+        @{ Name = 'menu-return'; Value = $menu },
+        @{ Name = 'menu-events'; Value = $events },
+        @{ Name = 'menu-exit'; Value = $exit })) {
+        if ($artifact.Value.Phase -isnot [string] -or $artifact.Value.Phase -cne $Phase) {
+            throw "Session-menu $($artifact.Name) evidence has an invalid phase."
+        }
+    }
+    foreach ($field in @('InitialX', 'InitialY', 'RejoinedX', 'RejoinedY', 'FinalX', 'FinalY')) {
+        if ($menu.$field -lt [int]::MinValue -or $menu.$field -gt [int]::MaxValue) {
+            throw "Session-menu evidence contains an out-of-range coordinate $field."
+        }
+    }
+    foreach ($field in @('X', 'Y')) {
+        if ($terminal.$field -lt [int]::MinValue -or $terminal.$field -gt [int]::MaxValue) {
+            throw "Terminal scene evidence contains an out-of-range coordinate $field."
+        }
+    }
+    foreach ($field in @('InitialX', 'InitialY', 'PriorMenuReturnX', 'PriorMenuReturnY', 'FinalX', 'FinalY')) {
+        if ($events.$field -lt [int]::MinValue -or $events.$field -gt [int]::MaxValue) {
+            throw "Session-menu event evidence contains an out-of-range coordinate $field."
+        }
+    }
+    foreach ($field in @('EntityId')) {
+        if ($menu.$field -lt 1 -or $menu.$field -gt [uint32]::MaxValue) {
+            throw "Session-menu evidence contains an out-of-range $field."
+        }
+    }
+    if ($terminal.EntityId -lt 1 -or $terminal.EntityId -gt [uint32]::MaxValue -or
+        $events.EntityId -lt 1 -or $events.EntityId -gt [uint32]::MaxValue) {
+        throw 'Session-menu evidence contains an out-of-range entity identity.'
+    }
+    foreach ($field in @('InitialSequence', 'FinalSequence')) {
+        if ($menu.$field -lt 1 -or $menu.$field -ge [long]::MaxValue) {
+            throw "Session-menu evidence contains an out-of-range command sequence $field."
+        }
+    }
+    if ($terminal.Sequence -lt 1 -or $terminal.Sequence -ge [long]::MaxValue) {
+        throw 'Terminal scene evidence contains an out-of-range command sequence.'
+    }
+    foreach ($field in @('InitialSequence', 'PriorMenuReturnSequence', 'FirstApproachInitialSequence',
+        'FirstApproachFinalSequence',
+        'FirstClearDialogueSequence', 'FirstPostClearDialogueSequence', 'SecondModelDialogueSequence',
+        'FinalMovementSequence', 'FinalCommandSequence', 'FirstClearEndSequence',
+        'FirstClearRemainingStartSequence', 'FirstClearRemainingEndSequence',
+        'SecondClearEndSequence',
+        'SecondClearRemainingStartSequence', 'SecondClearRemainingEndSequence')) {
+        if ($events.$field -lt 1 -or $events.$field -ge [long]::MaxValue) {
+            throw "Session-menu event evidence contains an out-of-range sequence $field."
+        }
+    }
+    foreach ($field in @('FirstClearStartSequence', 'SecondClearStartSequence')) {
+        if ($events.$field -lt 0 -or $events.$field -ge [long]::MaxValue) {
+            throw "Session-menu event evidence contains an out-of-range sequence $field."
+        }
+    }
+    foreach ($field in @('InitialModelGeneration', 'RejoinedModelGeneration')) {
+        if ($menu.$field -lt 0 -or $menu.$field -ge [long]::MaxValue) {
+            throw "Session-menu evidence contains an out-of-range model generation $field."
+        }
+    }
+    foreach ($field in @('InitialModelGeneration', 'FirstClearModelGeneration',
+        'SecondReturnedModelGeneration', 'SecondRejoinedModelGeneration',
+        'SecondClearModelGeneration')) {
+        if ($events.$field -lt 0 -or $events.$field -ge [long]::MaxValue) {
+            throw "Session-menu event evidence contains an out-of-range model generation $field."
+        }
+    }
+    foreach ($field in @('InitialGeneration', 'FirstClearGeneration',
+        'SecondReturnedGeneration', 'SecondRejoinedGeneration', 'SecondClearGeneration')) {
+        if ($events.$field -lt 1 -or $events.$field -gt [long]::MaxValue) {
+            throw "Session-menu event evidence contains an out-of-range session generation $field."
+        }
+    }
+    foreach ($field in @('FirstClearEventBatchCount', 'FirstClearEventCount',
+        'FirstPostClearEventBatchCount', 'FirstPostClearEventBatchDelta', 'FirstPostClearEventCount',
+        'SecondClearEventBatchCount', 'SecondClearEventBatchDelta', 'SecondClearEventCount')) {
+        if ($events.$field -lt 1 -or $events.$field -gt [int]::MaxValue) {
+            throw "Session-menu event evidence contains no live event/batch provenance in $field."
+        }
+    }
+    if ([long]$events.FirstPostClearEventBatchCount -lt
+        ([long]$events.FirstClearEventBatchCount + [long]$events.FirstPostClearEventBatchDelta) -or
+        $events.FirstPostClearEventBatchDelta -gt $events.FirstPostClearEventBatchCount -or
+        $events.SecondClearEventBatchDelta -gt $events.SecondClearEventBatchCount) {
+        throw 'Session-menu post-clear batch deltas exceed or contradict their absolute model counters.'
+    }
+    foreach ($field in @('FirstClearEventKind', 'FirstPostClearEventKind', 'SecondClearEventKind')) {
+        if ($events.$field -isnot [string] -or $events.$field -cne 'Dialogue') {
+            throw "Session-menu event evidence did not prove the live dialogue kind in $field."
+        }
+    }
+    foreach ($field in @('FirstClearRemainingCount', 'SecondClearRemainingCount')) {
+        if ($events.$field -lt [int]::MinValue -or $events.$field -gt [int]::MaxValue) {
+            throw "Session-menu event evidence contains an out-of-range clear count $field."
+        }
+    }
+    foreach ($field in @('FirstClearRemainingCount', 'SecondClearRemainingCount')) {
+        if ($events.$field -ne 0) {
+            throw "Session-menu event history was not empty after $field."
+        }
+    }
+    foreach ($field in @('ContentHash', 'RulesetHash')) {
+        if ($menu.$field -isnot [string] -or $menu.$field -cnotmatch '^[0-9a-f]{64}$' -or
+            $terminal.$field -isnot [string] -or $terminal.$field -cnotmatch '^[0-9a-f]{64}$' -or
+            $events.$field -isnot [string] -or $events.$field -cnotmatch '^[0-9a-f]{64}$') {
+            throw "Session-menu evidence contains an invalid $field identity."
+        }
+    }
+    if ($terminal.Passed -isnot [bool] -or -not $terminal.Passed -or
+        $menu.Mode -cne 'SinglePlayer' -or $terminal.Mode -cne 'SinglePlayer' -or
+        $menu.ContentHash -cne $terminal.ContentHash -or $menu.RulesetHash -cne $terminal.RulesetHash -or
+        $events.ContentHash -cne $menu.ContentHash -or $events.RulesetHash -cne $menu.RulesetHash -or
+        $menu.EntityId -ne $terminal.EntityId -or $events.EntityId -ne $menu.EntityId -or
+        $menu.ClassId -ne 1 -or $menu.ClassId -ne $terminal.ClassId -or
+        $menu.LevelId -lt 0 -or $menu.LevelId -gt [uint32]::MaxValue -or $menu.LevelId -ne $terminal.LevelId -or
+        $menu.FinalSequence -ne $menu.InitialSequence + 1 -or
+        $menu.RejoinedX -ne $menu.InitialX -or $menu.RejoinedY -ne $menu.InitialY -or
+        $menu.FinalX -ne $menu.InitialX -or $menu.FinalY -ne $menu.InitialY + 1 -or
+        $menu.FinalX -ne $events.PriorMenuReturnX -or $menu.FinalY -ne $events.PriorMenuReturnY -or
+        $events.PriorMenuReturnSequence -ne $menu.FinalSequence -or
+        $events.InitialSequence -ne $menu.InitialSequence -or
+        $events.InitialX -ne $menu.InitialX -or $events.InitialY -ne $menu.InitialY -or
+        $events.PriorMenuReturnSequence -ne $events.InitialSequence + 1 -or
+        $events.FirstApproachInitialSequence -ne $events.PriorMenuReturnSequence -or
+        $events.FirstApproachFinalSequence -lt $events.PriorMenuReturnSequence -or
+        $events.FirstClearDialogueSequence -ne $events.FirstApproachFinalSequence + 1 -or
+        $events.FirstPostClearDialogueSequence -ne $events.FirstClearDialogueSequence + 1 -or
+        $events.SecondModelDialogueSequence -ne $events.FirstPostClearDialogueSequence + 1 -or
+        $events.FinalMovementSequence -ne $events.SecondModelDialogueSequence + 1 -or
+        $events.FinalCommandSequence -ne $events.FinalMovementSequence -or
+        $events.InitialGeneration -ne $menu.InitialGeneration -or
+        $events.InitialModelGeneration -ne $menu.InitialModelGeneration -or
+        $events.FirstClearGeneration -ne $menu.RejoinedGeneration -or
+        $events.FirstClearModelGeneration -ne $menu.RejoinedModelGeneration -or
+        $menu.RejoinedModelGeneration -le $menu.InitialModelGeneration -or
+        $events.FirstClearModelGeneration -le $events.InitialModelGeneration -or
+        $events.SecondReturnedGeneration -le $events.FirstClearGeneration -or
+        $events.SecondRejoinedGeneration -le $events.SecondReturnedGeneration -or
+        $events.SecondClearGeneration -ne $events.SecondRejoinedGeneration -or
+        $events.SecondReturnedModelGeneration -le $events.FirstClearModelGeneration -or
+        $events.SecondRejoinedModelGeneration -ne $events.SecondReturnedModelGeneration -or
+        $events.SecondClearModelGeneration -ne $events.SecondReturnedModelGeneration -or
+        $events.FinalCommandSequence -le $events.PriorMenuReturnSequence -or
+        $events.FinalCommandSequence -ne $terminal.Sequence -or
+        $events.FinalX -ne $terminal.X -or $events.FinalY -ne $terminal.Y -or
+        $events.FirstClearEndSequence -le $events.FirstClearStartSequence -or
+        $events.FirstClearEndSequence - $events.FirstClearStartSequence -ne $events.FirstClearEventCount -or
+        $events.FirstClearRemainingStartSequence -ne $events.FirstClearEndSequence -or
+        $events.FirstClearRemainingEndSequence -ne $events.FirstClearEndSequence -or
+        $events.SecondClearEndSequence -le $events.SecondClearStartSequence -or
+        $events.SecondClearEndSequence - $events.SecondClearStartSequence -ne $events.SecondClearEventCount -or
+        $events.SecondClearRemainingStartSequence -ne $events.SecondClearEndSequence -or
+        $events.SecondClearRemainingEndSequence -ne $events.SecondClearEndSequence -or
+        $events.FirstClearGeneration -le $events.InitialGeneration -or
+        $events.SecondReturnedGeneration -le $events.FirstClearGeneration -or
+        $events.SecondRejoinedGeneration -le $events.SecondReturnedGeneration -or
+        $menu.InitialModelGeneration -ge $menu.RejoinedModelGeneration -or
+        $menu.InitialGeneration -lt 1 -or $menu.ReturnedGeneration -le $menu.InitialGeneration -or
+        $menu.RejoinedGeneration -le $menu.ReturnedGeneration -or
+        ($Phase -eq 'Create' -and $menu.PendingCountAtRefusal -ne 1) -or
+        ($Phase -eq 'Resume' -and $menu.PendingCountAtRefusal -ne 0)) {
+        throw 'Session-menu identity, ledger, generation, restored position or next-sequence evidence is inconsistent.'
+    }
+    return [pscustomobject]@{ Menu = $menu; Events = $events; Exit = $exit }
+}
+function Assert-SessionMenuColdResumeEvidence($CreatedEvidence, $ResumedEvidence) {
+    $created = $CreatedEvidence.Menu
+    $createdEvents = $CreatedEvidence.Events
+    $resumed = $ResumedEvidence.Menu
+    $resumedEvents = $ResumedEvidence.Events
+    if ($createdEvents.FinalCommandSequence -ge [long]::MaxValue - 1 -or
+        $createdEvents.FinalY -eq [int]::MaxValue -or
+        $resumed.EntityId -ne $created.EntityId -or
+        $resumed.ClassId -ne $created.ClassId -or
+        $resumed.LevelId -ne $created.LevelId -or
+        $resumed.ContentHash -cne $created.ContentHash -or
+        $resumed.RulesetHash -cne $created.RulesetHash -or
+        $resumed.InitialSequence -ne $createdEvents.FinalCommandSequence + 1 -or
+        $resumedEvents.InitialSequence -ne $createdEvents.FinalCommandSequence + 1 -or
+        $resumed.InitialSequence -ne $resumedEvents.InitialSequence -or
+        $resumed.InitialX -ne $createdEvents.FinalX -or
+        $resumed.InitialY -ne $createdEvents.FinalY + 1) {
+        throw 'Cold-resume session-menu acceptance did not continue the same authoritative character, position and exact next command sequence.'
+    }
+}
 function Read-ModeProcessEvidence([string]$Phase) {
     $path = Join-Path $sessionDirectory ($Phase.ToLowerInvariant() + '-processes.json')
     if (-not (Test-Path -LiteralPath $path -PathType Leaf)) {
@@ -470,6 +768,20 @@ try {
     [Environment]::SetEnvironmentVariable('GODEVILUTION_PRESENTATION_PACK', $null, 'Process')
     if ($PresentationPackProfile -ne 'default') {
         $env:GODEVILUTION_PRESENTATION_PACK = "res://assets/presentation-acceptance-$PresentationPackProfile.json"
+    }
+    if ($SessionMenu) {
+        $parameters.SessionMenuAcceptance = $true
+        $parameters.QuitAfterSeconds = 180
+        & $launcher @parameters -AcceptancePhase Create
+        $createdProcess = Read-ModeProcessEvidence 'Create'
+        $createdSession = Assert-SessionMenuEvidence $sessionDirectory 'Create'
+        & $launcher @parameters -AcceptancePhase Resume
+        $resumedProcess = Read-ModeProcessEvidence 'Resume'
+        Assert-FreshProcessEvidence $createdProcess $resumedProcess 1
+        $resumedSession = Assert-SessionMenuEvidence $sessionDirectory 'Resume'
+        Assert-SessionMenuColdResumeEvidence $createdSession $resumedSession
+        Write-Host "PASS: actual Godot session-menu return, live event-history clears, rejoin exit cleanup and fresh-host cold resume. Evidence: $sessionDirectory"
+        return
     }
     if ($CathedralNativeTrap) {
         $parameters.QuitAfterSeconds = 1200

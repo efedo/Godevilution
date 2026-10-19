@@ -75,9 +75,13 @@ public partial class HudPresentation : CanvasLayer
         Name = "RestartTown", Text = "Restart in Town (Esc)", Visible = false,
         TooltipText = "Available after the server confirms that death has settled.",
     };
+    private readonly Button returnToSessionMenu = new() {
+        Name = "ReturnToSessionMenu", Text = "Return to session menu",
+        TooltipText = "Close this connection and return after all commands settle.",
+    };
     private readonly Button refillMana = new() { Text = "Refill mana" };
     private readonly Button dropHeld = new() { Text = "Drop held (X)" };
-    private readonly Button clearEvents = new() { Text = "Clear events" };
+    private readonly Button clearEvents = new() { Name = "ClearEvents", Text = "Clear events" };
     private readonly CheckButton diagnosticsToggle = new() { Text = "Diagnostics (F3)" };
     private readonly CheckButton highContrastToggle = new() { Text = "High contrast (F4)" };
     private PanelContainer? sidePanel;
@@ -100,6 +104,8 @@ public partial class HudPresentation : CanvasLayer
     private PlayerItemReference? selectedOilTarget;
     private PlayerSnapshot? currentPlayer;
     private bool currentClientConnected;
+    private AuthoritativeClient? currentClient;
+    private bool sessionMenuTransition;
     private string selectedSpellText = "none";
 
     public event Action<uint>? OpenStoreRequested;
@@ -124,6 +130,7 @@ public partial class HudPresentation : CanvasLayer
     public event Action<uint>? AdvanceQuestRequested;
     public event Action<uint, uint>? QuestTownerInteractionRequested;
     public event Action? RestartTownRequested;
+    public event Action? ReturnToSessionMenuRequested;
     public event Action? RefillManaRequested;
     public event Action? DropHeldItemRequested;
     public event Action? ClearEventsRequested;
@@ -271,6 +278,7 @@ public partial class HudPresentation : CanvasLayer
                 QuestTownerInteractionRequested?.Invoke(interaction.QuestId, checked((uint)interaction.TownerId));
         };
         restartTown.Pressed += () => RestartTownRequested?.Invoke();
+        returnToSessionMenu.Pressed += () => ReturnToSessionMenuRequested?.Invoke();
         refillMana.Pressed += () => RefillManaRequested?.Invoke();
         dropHeld.Pressed += () => DropHeldItemRequested?.Invoke();
         clearEvents.Pressed += () => ClearEventsRequested?.Invoke();
@@ -304,7 +312,8 @@ public partial class HudPresentation : CanvasLayer
     private bool SubmitCombatBeltConsumable(uint slot)
     {
         if (slot >= (uint)combatBeltQuickUseButtons.Count
-            || !currentClientConnected
+            || currentClient?.IsConnected != true
+            || sessionMenuTransition
             || !Visible
             || currentPlayer is not { Life: > 0 } player
             || player.CombatMode is PlayerCombatMode.NewLevel or PlayerCombatMode.Quit)
@@ -324,7 +333,8 @@ public partial class HudPresentation : CanvasLayer
         for (var index = 0; index < combatBeltQuickUseButtons.Count; index++) {
             var button = combatBeltQuickUseButtons[index];
             var reference = AuthoritativeBeltConsumableSelector.Select(player, index);
-            button.Disabled = !connected || UseConsumableRequested is null || player is not { Life: > 0 }
+            button.Disabled = !connected || sessionMenuTransition || UseConsumableRequested is null
+                || player is not { Life: > 0 }
                 || player.CombatMode is PlayerCombatMode.NewLevel or PlayerCombatMode.Quit || reference is null;
             if (reference is null)
                 button.TooltipText = $"No usable consumable in belt slot {index + 1}";
@@ -332,9 +342,21 @@ public partial class HudPresentation : CanvasLayer
                 button.TooltipText = $"Use {ItemPresentationStyle.ResolveName(item.State)} (belt slot {index + 1}; key {index + 1})";
         }
     }
+
     public void SetStatus(string value)
     {
         status.Text = value;
+    }
+
+    /** Prevents repeated return requests while the previous connection is being disposed. */
+    public void SetSessionMenuTransition(bool active)
+    {
+        sessionMenuTransition = active;
+        returnToSessionMenu.Disabled = active;
+        returnToSessionMenu.Text = active
+            ? "Returning to session menu..."
+            : "Return to session menu";
+        ApplyCombatBeltQuickUse(currentPlayer, currentClient?.IsConnected == true);
     }
 
     public void SetSpellSources(
@@ -383,6 +405,7 @@ public partial class HudPresentation : CanvasLayer
     public void Apply(AuthoritativeClientModel model, AuthoritativeClient? client, Task? connectionTask)
     {
         currentClientConnected = client?.IsConnected == true;
+        currentClient = client;
         clock.Text = ClockPresentation.Format(DateTimeOffset.Now);
         if (client is { IsConnected: false } && model.Snapshot is not null)
             status.Text = "Connection lost - reconnecting. Gameplay input disabled.";

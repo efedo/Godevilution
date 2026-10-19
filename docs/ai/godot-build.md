@@ -526,6 +526,35 @@ lock prevents simultaneous local writers. Logs are retained in the printed temp
 directory. `-SessionDirectory` on the inner harness isolates diagnostic runs.
 `-Headless -QuitAfterSeconds N` now measures real seconds, not Godot iterations.
 
+### Session menu
+
+The Hero-tab `Return to session menu` button refuses unacknowledged commands or
+unhealthy local bookmark persistence. It clears presentation, then cancels/joins
+connection work and disposes the transport before showing setup. Cleanup failure
+keeps the menu closed. Remote endpoint/token defaults remain private in memory;
+confirmed credentials survive cancellation before the first snapshot. HUD callbacks
+resolve the current model after each return.
+
+Local native populated/progression launchers limit new-character setup to Rogue.
+`GODEVILUTION_SUPPORTED_CHARACTER_CLASS_IDS` is optional client-only metadata for
+the configured endpoint; absent/empty metadata and remote endpoints retain all six
+choices. It does not grant server admission or affect resume identity.
+
+Use fresh isolated saves for the headless application journey:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File tools/test-godot-session.ps1 -PersistenceMode cohort -SessionMenu
+```
+
+This checks pending/bookmark refusal, local/remote setup choices, joined return,
+same-host rejoin, confirmed-token retention, current-model event clearing, scene
+exit during connection/return and fresh-host resume at the exact next command.
+The inner harness requires explicit `-SessionMenuAcceptance`, Create/Resume and
+an isolated session directory. Menu phases allow 170 scene seconds and 180
+client-budget seconds (plus the existing 15-second parent deadline margin).
+Evidence validators reject incomplete or inconsistent results.
+Headless success leaves rendered usability and broader M1 acceptance open.
+
 The additional zero-argument `run-godot-preview.ps1` selects the authored
 `town-loop-preview` overlay, town start, and seed 0. Its separate
 `.local/godot-preview` save/bookmark directory must not be mixed with the normal

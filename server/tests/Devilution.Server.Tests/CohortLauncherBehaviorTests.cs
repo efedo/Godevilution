@@ -190,6 +190,479 @@ public sealed class CohortLauncherBehaviorTests
     }
 
     [Fact]
+    public void SessionMenuEvidenceRequiresTypedRefusalCleanupIdentityAndExactSequenceProof()
+    {
+        if (!OperatingSystem.IsWindows())
+            return;
+
+        var root = NewRoot("Godevilution-Session-Menu-Evidence-");
+        Directory.CreateDirectory(root);
+        try {
+            var body = """
+                function Save-Evidence($menu, $terminal, $events, $exit) {
+                    # The expected phase is independent of a tampered menu label.
+                    $prefix = $phase.ToLowerInvariant()
+                    [IO.File]::WriteAllText((Join-Path $work ($prefix + '-menu-return.json')), ($menu | ConvertTo-Json -Depth 5))
+                    [IO.File]::WriteAllText((Join-Path $work ($prefix + '.json')), ($terminal | ConvertTo-Json -Depth 5))
+                    [IO.File]::WriteAllText((Join-Path $work ($prefix + '-menu-events.json')), ($events | ConvertTo-Json -Depth 5))
+                    [IO.File]::WriteAllText((Join-Path $work ($prefix + '-menu-exit.json')), ($exit | ConvertTo-Json -Depth 5))
+                }
+                function Expect-Rejected($menu, $terminal, $events, $exit, [string]$case) {
+                    Save-Evidence $menu $terminal $events $exit
+                    $rejected = $false
+                    try { Assert-SessionMenuEvidence $work $phase | Out-Null } catch { $rejected = $true }
+                    if (-not $rejected) {
+                        if ([string]::IsNullOrWhiteSpace($case)) {
+                            $case = 'unlabeled fixture case'
+                        }
+                        throw "Invalid session-menu evidence was accepted for phase '$phase' ($case)."
+                    }
+                }
+                foreach ($phase in @('Create', 'Resume')) {
+                    $creating = $phase -eq 'Create'
+                    $menu = [pscustomobject]@{
+                        Passed = $true; Phase = $phase; Mode = 'SinglePlayer'
+                        ContentHash = ('a' * 64); RulesetHash = ('b' * 64)
+                        EntityId = 2; ClassId = 1; LevelId = 0
+                        ReturnedToSetup = $true; BookmarkPreserved = $true; OldWorldCleared = $true
+                        Rejoined = $true; ResumeDefaultsPreserved = $true; SettledReturnConfirmed = $true
+                        ConnectCancellationConfirmed = $true; RemoteDefaultsPreserved = $true
+                        LocalConfirmedTokenPreserved = $true; LocalTokenDurableWhenWritable = $true
+                        InMemoryTokenWarningWhenBlocked = $true
+                        PendingReturnRejected = $creating; BookmarkReturnRejected = $creating
+                        PendingCountAtRefusal = $(if ($creating) { 1 } else { 0 })
+                        InitialSequence = 3; FinalSequence = 4
+                        InitialX = 0; InitialY = 1; RejoinedX = 0; RejoinedY = 1; FinalX = 0; FinalY = 2
+                        InitialGeneration = 1; ReturnedGeneration = 2; RejoinedGeneration = 3
+                        InitialModelGeneration = 0; RejoinedModelGeneration = 1
+                    }
+                    $terminal = [pscustomobject]@{
+                        Passed = $true; Mode = 'SinglePlayer'; ContentHash = ('a' * 64); RulesetHash = ('b' * 64)
+                        EntityId = 2; ClassId = 1; LevelId = 0; Sequence = 8; X = 0; Y = 3
+                    }
+                    $events = [pscustomobject]@{
+                        Passed = $true; Phase = $phase; ContentHash = ('a' * 64); RulesetHash = ('b' * 64)
+                        EntityId = 2; InitialSequence = 3; InitialX = 0; InitialY = 1
+                        PriorMenuReturnSequence = 4; PriorMenuReturnX = 0; PriorMenuReturnY = 2
+                        InitialGeneration = [long]1; InitialModelGeneration = 0
+                        FirstApproachInitialSequence = 4; FirstApproachFinalSequence = 4; FirstApproachAccepted = $true
+                        FirstClearGeneration = [long]3; FirstClearModelGeneration = 1
+                        FirstClearDialogueSequence = 5; FirstPostClearDialogueSequence = 6
+                        SecondReturnedGeneration = [long]4; SecondReturnedModelGeneration = 2
+                        SecondRejoinedGeneration = [long]5; SecondRejoinedModelGeneration = 2
+                        SecondModelDialogueSequence = 7; SecondClearGeneration = [long]5; SecondClearModelGeneration = 2
+                        FinalMovementSequence = 8
+                        FirstClearEventBatchCount = 1; FirstClearEventCount = 2; FirstClearEventKind = 'Dialogue'
+                        FirstClearButtonEnabled = $true; FirstClearButtonClicked = $true; FirstClearRemainingCount = 0
+                        FirstClearStartSequence = 10; FirstClearEndSequence = 12
+                        FirstClearRemainingStartSequence = 12; FirstClearRemainingEndSequence = 12
+                        FirstPostClearEventBatchCount = 2; FirstPostClearEventBatchDelta = 1
+                        FirstPostClearEventCount = 1; FirstPostClearEventKind = 'Dialogue'
+                        SecondClearEventBatchCount = 1; SecondClearEventBatchDelta = 1
+                        SecondClearEventCount = 1; SecondClearEventKind = 'Dialogue'
+                        SecondClearButtonEnabled = $true; SecondClearButtonClicked = $true; SecondClearRemainingCount = 0
+                        SecondClearStartSequence = 20; SecondClearEndSequence = 21
+                        SecondClearRemainingStartSequence = 21; SecondClearRemainingEndSequence = 21
+                        FinalCommandSequence = 8; FinalX = 0; FinalY = 3
+                        BookmarkBytesPreserved = $true; IdentityPreserved = $true
+                        FinalMovementAccepted = $true
+                    }
+                    $exit = [pscustomobject]@{
+                        Passed = $true; Phase = $phase; ExitDuringHandshakeVerified = $true
+                        HandshakeExitPendingObserved = $true; HandshakeExitMainFreed = $true
+                        HandshakeExitPeerClosed = $true; HandshakeExitCleanupCompleted = $true
+                        HandshakeExitCleanupFailureCount = 0; HandshakeExitReturnCleanupJoined = $true
+                        HandshakeExitPostExitMenuPublicationAttemptCount = [long]0
+                        HandshakeExitNoPostExitMenuPublication = $true
+                        ExitDuringReturnVerified = $true; ReturnExitPendingObserved = $true
+                        ReturnExitCleanupGateObserved = $true; ReturnExitStillPendingWhileGated = $true
+                        ReturnExitMainFreed = $true; ReturnExitPeerClosed = $true
+                        ReturnExitCleanupCompleted = $true; ReturnExitCleanupFailureCount = 0
+                        ReturnExitReturnCleanupJoined = $true
+                        ReturnExitPostExitMenuPublicationAttemptCount = [long]0
+                        ReturnExitNoPostExitMenuPublication = $true
+                    }
+                    Save-Evidence $menu $terminal $events $exit
+                    $accepted = Assert-SessionMenuEvidence $work $phase
+                    $menuJson = $menu | ConvertTo-Json -Depth 5
+                    $terminalJson = $terminal | ConvertTo-Json -Depth 5
+                    $eventsJson = $events | ConvertTo-Json -Depth 5
+                    $exitJson = $exit | ConvertTo-Json -Depth 5
+                    if ($accepted.Events.FinalCommandSequence -ne $terminal.Sequence -or
+                        $accepted.Events.PriorMenuReturnSequence -ne $menu.FinalSequence -or
+                        $accepted.Events.FinalX -ne $terminal.X -or $accepted.Events.FinalY -ne $terminal.Y) {
+                        throw 'Valid supplementary evidence did not bind the menu and terminal sequence endpoints.'
+                    }
+                    $zeroBasedEvents = $eventsJson | ConvertFrom-Json
+                    $zeroBasedEvents.FirstClearStartSequence = 0
+                    $zeroBasedEvents.FirstClearEndSequence = 2
+                    $zeroBasedEvents.FirstClearRemainingStartSequence = 2
+                    $zeroBasedEvents.FirstClearRemainingEndSequence = 2
+                    $zeroBasedEvents.SecondClearStartSequence = 0
+                    $zeroBasedEvents.SecondClearEndSequence = 1
+                    $zeroBasedEvents.SecondClearRemainingStartSequence = 1
+                    $zeroBasedEvents.SecondClearRemainingEndSequence = 1
+                    Save-Evidence $menu $terminal $zeroBasedEvents $exit
+                    $zeroBasedAccepted = Assert-SessionMenuEvidence $work $phase
+                    if ($zeroBasedAccepted.Events.FirstClearStartSequence -ne 0 -or
+                        $zeroBasedAccepted.Events.FirstClearEndSequence -ne 2 -or
+                        $zeroBasedAccepted.Events.FirstClearEndSequence - $zeroBasedAccepted.Events.FirstClearStartSequence -ne $zeroBasedAccepted.Events.FirstClearEventCount -or
+                        $zeroBasedAccepted.Events.FirstClearRemainingStartSequence -ne 2 -or
+                        $zeroBasedAccepted.Events.FirstClearRemainingEndSequence -ne 2 -or
+                        $zeroBasedAccepted.Events.SecondClearStartSequence -ne 0 -or
+                        $zeroBasedAccepted.Events.SecondClearEndSequence -ne 1 -or
+                        $zeroBasedAccepted.Events.SecondClearEndSequence - $zeroBasedAccepted.Events.SecondClearStartSequence -ne $zeroBasedAccepted.Events.SecondClearEventCount -or
+                        $zeroBasedAccepted.Events.SecondClearRemainingStartSequence -ne 1 -or
+                        $zeroBasedAccepted.Events.SecondClearRemainingEndSequence -ne 1) {
+                        throw "Valid zero-based event-history boundaries were not preserved for phase '$phase'."
+                    }
+                    Save-Evidence $menu $terminal $events $exit
+                    foreach ($flag in @('Passed', 'FirstClearButtonEnabled', 'FirstClearButtonClicked',
+                        'SecondClearButtonEnabled', 'SecondClearButtonClicked', 'BookmarkBytesPreserved',
+                        'IdentityPreserved', 'FirstApproachAccepted', 'FinalMovementAccepted')) {
+                        foreach ($invalid in @($false, 'true', $null)) {
+                            $bad = $eventsJson | ConvertFrom-Json
+                            $bad.$flag = $invalid
+                            Expect-Rejected $menu $terminal $bad $exit "event flag $flag with coerced/false value"
+                        }
+                        $bad = $eventsJson | ConvertFrom-Json
+                        $bad.PSObject.Properties.Remove($flag)
+                        Expect-Rejected $menu $terminal $bad $exit "missing event flag $flag"
+                    }
+                    foreach ($flag in @('Passed', 'ExitDuringHandshakeVerified', 'HandshakeExitPendingObserved',
+                        'HandshakeExitMainFreed', 'HandshakeExitPeerClosed', 'HandshakeExitCleanupCompleted',
+                        'HandshakeExitReturnCleanupJoined', 'HandshakeExitNoPostExitMenuPublication',
+                        'ExitDuringReturnVerified', 'ReturnExitPendingObserved', 'ReturnExitCleanupGateObserved',
+                        'ReturnExitStillPendingWhileGated', 'ReturnExitMainFreed', 'ReturnExitPeerClosed',
+                        'ReturnExitCleanupCompleted', 'ReturnExitReturnCleanupJoined',
+                        'ReturnExitNoPostExitMenuPublication')) {
+                        foreach ($invalid in @($false, 'true', $null)) {
+                            $bad = $exitJson | ConvertFrom-Json
+                            $bad.$flag = $invalid
+                            Expect-Rejected $menu $terminal $events $bad "exit flag $flag with coerced/false value"
+                        }
+                        $bad = $exitJson | ConvertFrom-Json
+                        $bad.PSObject.Properties.Remove($flag)
+                        Expect-Rejected $menu $terminal $events $bad "missing exit flag $flag"
+                    }
+                    foreach ($field in @('InitialSequence', 'InitialX', 'InitialY', 'PriorMenuReturnSequence',
+                        'PriorMenuReturnX', 'PriorMenuReturnY', 'EntityId', 'InitialGeneration',
+                        'InitialModelGeneration', 'FirstApproachInitialSequence', 'FirstApproachFinalSequence',
+                        'FirstClearGeneration', 'FirstClearModelGeneration', 'FirstClearDialogueSequence',
+                        'FirstPostClearDialogueSequence', 'SecondReturnedGeneration', 'SecondReturnedModelGeneration',
+                        'SecondRejoinedGeneration', 'SecondRejoinedModelGeneration',
+                        'SecondModelDialogueSequence', 'FinalMovementSequence',
+                        'FirstClearEventBatchCount', 'FirstClearEventCount', 'FirstClearRemainingCount',
+                        'FirstClearStartSequence', 'FirstClearEndSequence',
+                        'FirstClearRemainingStartSequence', 'FirstClearRemainingEndSequence',
+                        'FirstPostClearEventBatchCount', 'FirstPostClearEventBatchDelta',
+                        'FirstPostClearEventCount', 'SecondClearEventBatchCount', 'SecondClearEventCount',
+                        'SecondClearEventBatchDelta', 'SecondClearGeneration', 'SecondClearModelGeneration',
+                        'SecondClearRemainingCount',
+                        'SecondClearStartSequence', 'SecondClearEndSequence',
+                        'SecondClearRemainingStartSequence', 'SecondClearRemainingEndSequence',
+                        'FinalCommandSequence', 'FinalX', 'FinalY')) {
+                        foreach ($invalid in @('1', $true, $null, 1.5)) {
+                            $bad = $eventsJson | ConvertFrom-Json
+                            $bad.$field = $invalid
+                            Expect-Rejected $menu $terminal $bad $exit "event numeric field $field with coerced value"
+                        }
+                        $bad = $eventsJson | ConvertFrom-Json
+                        $bad.PSObject.Properties.Remove($field)
+                        Expect-Rejected $menu $terminal $bad $exit "missing event numeric field $field"
+                    }
+                    foreach ($field in @('Phase', 'ContentHash', 'RulesetHash', 'FirstClearEventKind',
+                        'FirstPostClearEventKind', 'SecondClearEventKind')) {
+                        $bad = $eventsJson | ConvertFrom-Json
+                        $bad.$field = $null
+                        Expect-Rejected $menu $terminal $bad $exit "event string field $field with null value"
+                        $bad = $eventsJson | ConvertFrom-Json
+                        $bad.$field = 1
+                        Expect-Rejected $menu $terminal $bad $exit "event string field $field with wrong type"
+                        $bad = $eventsJson | ConvertFrom-Json
+                        $bad.PSObject.Properties.Remove($field)
+                        Expect-Rejected $menu $terminal $bad $exit "missing event string field $field"
+                    }
+                    foreach ($field in @('Passed', 'Phase')) {
+                        $bad = $exitJson | ConvertFrom-Json
+                        if ($field -eq 'Passed') { $bad.$field = $false } else { $bad.$field = 'Recovery' }
+                        Expect-Rejected $menu $terminal $events $bad "exit field $field with inconsistent value"
+                        $bad = $exitJson | ConvertFrom-Json
+                        $bad.PSObject.Properties.Remove($field)
+                        Expect-Rejected $menu $terminal $events $bad "missing exit field $field"
+                    }
+                    foreach ($field in @('HandshakeExitCleanupFailureCount',
+                        'HandshakeExitPostExitMenuPublicationAttemptCount',
+                        'ReturnExitCleanupFailureCount', 'ReturnExitPostExitMenuPublicationAttemptCount')) {
+                        foreach ($invalid in @('0', $true, $null, 0.5)) {
+                            $bad = $exitJson | ConvertFrom-Json
+                            $bad.$field = $invalid
+                            Expect-Rejected $menu $terminal $events $bad "exit numeric field $field with coerced value"
+                        }
+                        $bad = $exitJson | ConvertFrom-Json
+                        $bad.PSObject.Properties.Remove($field)
+                        Expect-Rejected $menu $terminal $events $bad "missing exit numeric field $field"
+                    }
+                    foreach ($missing in @('menu-events', 'menu-exit')) {
+                        Save-Evidence $menu $terminal $events $exit
+                        $missingPath = Join-Path $work ($phase.ToLowerInvariant() + '-' + $missing + '.json')
+                        if (-not (Test-Path -LiteralPath $missingPath -PathType Leaf)) {
+                            throw "Missing-artifact fixture did not write $missing evidence before deletion."
+                        }
+                        [IO.File]::Delete($missingPath)
+                        if (Test-Path -LiteralPath $missingPath) {
+                            throw "Missing-artifact fixture failed to delete $missing evidence."
+                        }
+                        $rejected = $false
+                        try { Assert-SessionMenuEvidence $work $phase | Out-Null } catch { $rejected = $true }
+                        if (-not $rejected) { throw "Missing $missing evidence was accepted for phase '$phase'." }
+                    }
+                    foreach ($flag in @('Passed', 'ReturnedToSetup', 'BookmarkPreserved', 'OldWorldCleared',
+                        'Rejoined', 'ResumeDefaultsPreserved', 'SettledReturnConfirmed',
+                        'ConnectCancellationConfirmed', 'RemoteDefaultsPreserved', 'LocalConfirmedTokenPreserved',
+                        'LocalTokenDurableWhenWritable', 'InMemoryTokenWarningWhenBlocked')) {
+                        foreach ($invalid in @($false, 'true', $null)) {
+                            $bad = $menuJson | ConvertFrom-Json
+                            $bad.$flag = $invalid
+                            Expect-Rejected $bad $terminal $events $exit "menu flag $flag with coerced/false value"
+                        }
+                        $bad = $menuJson | ConvertFrom-Json
+                        $bad.PSObject.Properties.Remove($flag)
+                        Expect-Rejected $bad $terminal $events $exit "missing menu flag $flag"
+                    }
+                    foreach ($field in @('EntityId', 'ClassId', 'LevelId', 'InitialSequence', 'FinalSequence',
+                        'InitialX', 'InitialY', 'RejoinedX', 'RejoinedY', 'FinalX', 'FinalY',
+                        'InitialGeneration', 'ReturnedGeneration', 'RejoinedGeneration', 'PendingCountAtRefusal',
+                        'InitialModelGeneration', 'RejoinedModelGeneration')) {
+                        foreach ($invalid in @('1', $true, $null, 1.5)) {
+                            $bad = $menuJson | ConvertFrom-Json
+                            $bad.$field = $invalid
+                            Expect-Rejected $bad $terminal $events $exit "menu numeric field $field with coerced value"
+                        }
+                        $bad = $menuJson | ConvertFrom-Json
+                        $bad.PSObject.Properties.Remove($field)
+                        Expect-Rejected $bad $terminal $events $exit "missing menu numeric field $field"
+                    }
+                    $eventChanges = @(
+                        { param($m, $t, $e, $x) $m.InitialModelGeneration = 2 },
+                        { param($m, $t, $e, $x) $m.RejoinedModelGeneration = 4 },
+                        { param($m, $t, $e, $x) $m.FinalSequence = 5 },
+                        { param($m, $t, $e, $x) $t.Sequence = 6 },
+                        { param($m, $t, $e, $x) $t.X = 1 },
+                        { param($m, $t, $e, $x) $t.Y = 4 },
+                        { param($m, $t, $e, $x) $e.Phase = 'Recovery' },
+                        { param($m, $t, $e, $x) $e.PriorMenuReturnSequence = 3 },
+                        { param($m, $t, $e, $x) $e.PriorMenuReturnX = 1 },
+                        { param($m, $t, $e, $x) $e.PriorMenuReturnY = 3 },
+                        { param($m, $t, $e, $x) $e.EntityId = 3 },
+                        { param($m, $t, $e, $x) $e.ContentHash = ('c' * 64) },
+                        { param($m, $t, $e, $x) $e.RulesetHash = ('c' * 64) },
+                        { param($m, $t, $e, $x) $e.InitialModelGeneration = 2 },
+                        { param($m, $t, $e, $x) $e.InitialGeneration = 2 },
+                        { param($m, $t, $e, $x) $e.InitialX = 1 },
+                        { param($m, $t, $e, $x) $e.InitialY = 2 },
+                        { param($m, $t, $e, $x) $e.FirstClearModelGeneration = 2 },
+                        { param($m, $t, $e, $x) $e.SecondReturnedModelGeneration = 1 },
+                        { param($m, $t, $e, $x) $e.SecondRejoinedModelGeneration = 3 },
+                        { param($m, $t, $e, $x) $e.SecondClearModelGeneration = 3 },
+                        { param($m, $t, $e, $x) $e.FirstClearGeneration = 1 },
+                        { param($m, $t, $e, $x) $e.SecondReturnedGeneration = 2 },
+                        { param($m, $t, $e, $x) $e.SecondRejoinedGeneration = 3 },
+                        { param($m, $t, $e, $x) $e.SecondClearGeneration = 3 },
+                        { param($m, $t, $e, $x) $e.InitialSequence = 2 },
+                        { param($m, $t, $e, $x) $e.FirstApproachAccepted = $false },
+                        { param($m, $t, $e, $x) $e.FirstApproachInitialSequence = 3 },
+                        { param($m, $t, $e, $x) $e.FirstApproachFinalSequence = 5 },
+                        { param($m, $t, $e, $x) $e.FirstClearDialogueSequence = 4 },
+                        { param($m, $t, $e, $x) $e.FirstPostClearDialogueSequence = 7 },
+                        { param($m, $t, $e, $x) $e.SecondModelDialogueSequence = 8 },
+                        { param($m, $t, $e, $x) $e.FinalMovementSequence = 9 },
+                        { param($m, $t, $e, $x) $e.FirstClearEventBatchCount = 0 },
+                        { param($m, $t, $e, $x) $e.FirstClearEventCount = 0 },
+                        { param($m, $t, $e, $x) $e.FirstClearEventKind = ' ' },
+                        { param($m, $t, $e, $x) $e.FirstClearEventKind = 'Damage' },
+                        { param($m, $t, $e, $x) $e.FirstClearRemainingCount = 1 },
+                        { param($m, $t, $e, $x) $e.FirstClearStartSequence = -1; $e.FirstClearEndSequence = 1; $e.FirstClearRemainingStartSequence = 1; $e.FirstClearRemainingEndSequence = 1 },
+                        { param($m, $t, $e, $x) $e.FirstClearStartSequence = [long]::MaxValue },
+                        { param($m, $t, $e, $x) $e.FirstClearEndSequence = 13 },
+                        { param($m, $t, $e, $x) $e.FirstClearRemainingStartSequence = 11 },
+                        { param($m, $t, $e, $x) $e.FirstPostClearEventBatchCount = 0 },
+                        { param($m, $t, $e, $x) $e.FirstPostClearEventBatchCount = 1 },
+                        { param($m, $t, $e, $x) $e.FirstClearEventBatchCount = 3 },
+                        { param($m, $t, $e, $x) $e.FirstPostClearEventBatchDelta = 0 },
+                        { param($m, $t, $e, $x) $e.FirstPostClearEventBatchDelta = -1 },
+                        { param($m, $t, $e, $x) $e.FirstPostClearEventBatchDelta = 3 },
+                        { param($m, $t, $e, $x) $e.FirstPostClearEventCount = 0 },
+                        { param($m, $t, $e, $x) $e.FirstPostClearEventKind = ' ' },
+                        { param($m, $t, $e, $x) $e.FirstPostClearEventKind = 'Damage' },
+                        { param($m, $t, $e, $x) $e.SecondClearEventBatchCount = 0 },
+                        { param($m, $t, $e, $x) $e.SecondClearEventCount = 0 },
+                        { param($m, $t, $e, $x) $e.SecondClearEventBatchDelta = 0 },
+                        { param($m, $t, $e, $x) $e.SecondClearEventBatchDelta = -1 },
+                        { param($m, $t, $e, $x) $e.SecondClearEventBatchDelta = 2 },
+                        { param($m, $t, $e, $x) $e.SecondClearEventKind = 'Damage' },
+                        { param($m, $t, $e, $x) $e.SecondClearRemainingCount = 1 },
+                        { param($m, $t, $e, $x) $e.SecondClearStartSequence = -1; $e.SecondClearEndSequence = 1; $e.SecondClearEventCount = 2; $e.SecondClearRemainingStartSequence = 1; $e.SecondClearRemainingEndSequence = 1 },
+                        { param($m, $t, $e, $x) $e.SecondClearStartSequence = [long]::MaxValue },
+                        { param($m, $t, $e, $x) $e.SecondClearEndSequence = 22 },
+                        { param($m, $t, $e, $x) $e.SecondClearRemainingEndSequence = 22 },
+                        { param($m, $t, $e, $x) $e.FinalCommandSequence = 7 },
+                        { param($m, $t, $e, $x) $e.FinalX = 1 },
+                        { param($m, $t, $e, $x) $e.FinalY = 4 },
+                        { param($m, $t, $e, $x) $e.EntityId = 3 },
+                        { param($m, $t, $e, $x) $e.BookmarkBytesPreserved = $false },
+                        { param($m, $t, $e, $x) $e.IdentityPreserved = $false },
+                        { param($m, $t, $e, $x) $e.FinalMovementAccepted = $false },
+                        { param($m, $t, $e, $x) $x.HandshakeExitCleanupFailureCount = 1 },
+                        { param($m, $t, $e, $x) $x.HandshakeExitPostExitMenuPublicationAttemptCount = 1 },
+                        { param($m, $t, $e, $x) $x.HandshakeExitPostExitMenuPublicationAttemptCount = -1 },
+                        { param($m, $t, $e, $x) $x.ReturnExitCleanupFailureCount = -1 },
+                        { param($m, $t, $e, $x) $x.ReturnExitPostExitMenuPublicationAttemptCount = 1 },
+                        { param($m, $t, $e, $x) $x.ReturnExitCleanupGateObserved = $false },
+                        { param($m, $t, $e, $x) $x.ReturnExitStillPendingWhileGated = $false },
+                        { param($m, $t, $e, $x) $x.Phase = 'Recovery' }
+                    )
+                    foreach ($change in $eventChanges) {
+                        $badMenu = $menuJson | ConvertFrom-Json
+                        $badTerminal = $terminalJson | ConvertFrom-Json
+                        $badEvents = $eventsJson | ConvertFrom-Json
+                        $badExit = $exitJson | ConvertFrom-Json
+                        & $change $badMenu $badTerminal $badEvents $badExit
+                        $mutation = [regex]::Match($change.ToString(), '\$(?:m|t|e|x)\.([A-Za-z][A-Za-z0-9_]*)')
+                        $case = if ($mutation.Success) { 'mutation field ' + $mutation.Groups[1].Value } else { 'event evidence mutation' }
+                        Expect-Rejected $badMenu $badTerminal $badEvents $badExit $case
+                    }
+                    $changes = @(
+                        { param($m, $t) $m.Phase = 'Recovery' },
+                        { param($m, $t) $m.Mode = 'Multiplayer' },
+                        { param($m, $t) $m.ContentHash = 'bad' },
+                        { param($m, $t) $m.RulesetHash = ('c' * 64) },
+                        { param($m, $t) $m.EntityId = 0 },
+                        { param($m, $t) $m.ClassId = 0 },
+                        { param($m, $t) $m.LevelId = -1 },
+                        { param($m, $t) $m.InitialSequence = 0 },
+                        { param($m, $t) $m.FinalSequence = 5 },
+                        { param($m, $t) $m.RejoinedX = 1 },
+                        { param($m, $t) $m.RejoinedY = 2 },
+                        { param($m, $t) $m.FinalX = 1 },
+                        { param($m, $t) $m.FinalY = 3 },
+                        { param($m, $t) $m.InitialY = [long]::MaxValue },
+                        { param($m, $t) $m.ContentHash = @(('a' * 64), ('b' * 64)) },
+                        { param($m, $t) $m.InitialGeneration = 0 },
+                        { param($m, $t) $m.ReturnedGeneration = 1 },
+                        { param($m, $t) $m.RejoinedGeneration = 2 },
+                        { param($m, $t) $m.PendingCountAtRefusal = 4 },
+                        { param($m, $t) $m.PendingReturnRejected = 'true' },
+                        { param($m, $t) $m.BookmarkReturnRejected = $null },
+                        { param($m, $t) $t.Passed = $false },
+                        { param($m, $t) $t.ContentHash = ('c' * 64) },
+                        { param($m, $t) $t.Sequence = 5 },
+                        { param($m, $t) $t.Sequence = '4' },
+                        { param($m, $t) $t.X = 1 },
+                        { param($m, $t) $t.Y = 4 },
+                        { param($m, $t) $t.LevelId = 1 }
+                    )
+                    foreach ($change in $changes) {
+                        $badMenu = $menuJson | ConvertFrom-Json
+                        $badTerminal = $terminalJson | ConvertFrom-Json
+                        & $change $badMenu $badTerminal
+                        $mutation = [regex]::Match($change.ToString(), '\$(?:m|t)\.([A-Za-z][A-Za-z0-9_]*)')
+                        $case = if ($mutation.Success) { 'mutation field ' + $mutation.Groups[1].Value } else { 'menu/terminal mutation' }
+                        Expect-Rejected $badMenu $badTerminal $events $exit $case
+                    }
+                    if ($creating) {
+                        foreach ($flag in @('PendingReturnRejected', 'BookmarkReturnRejected')) {
+                            $bad = $menuJson | ConvertFrom-Json; $bad.$flag = $false
+                            Expect-Rejected $bad $terminal $events $exit "creation refusal flag $flag set false"
+                        }
+                    }
+                    $createdEvidence = [pscustomobject]@{ Menu = $accepted.Menu; Events = $accepted.Events }
+                    $resumedMenu = $menuJson | ConvertFrom-Json
+                    $resumedMenu.InitialSequence = 9; $resumedMenu.InitialX = 0; $resumedMenu.InitialY = 4
+                    $resumedEvidence = [pscustomobject]@{
+                        Menu = $resumedMenu
+                        Events = [pscustomobject]@{ InitialSequence = 9 }
+                    }
+                    Assert-SessionMenuColdResumeEvidence $createdEvidence $resumedEvidence
+                    foreach ($change in @(
+                        { param($m, $e) $m.InitialSequence = 10 },
+                        { param($m, $e) $m.InitialX = 1 },
+                        { param($m, $e) $m.InitialY = 5 },
+                        { param($m, $e) $m.EntityId = 3 },
+                        { param($m, $e) $m.ClassId = 2 },
+                        { param($m, $e) $m.LevelId = 1 },
+                        { param($m, $e) $m.ContentHash = ('c' * 64) },
+                        { param($m, $e) $m.RulesetHash = ('c' * 64) },
+                        { param($m, $e) $e.InitialSequence = 10 }
+                    )) {
+                        $badResumeMenu = $resumedMenu | ConvertTo-Json -Depth 5 | ConvertFrom-Json
+                        $badResumeEvents = [pscustomobject]@{ InitialSequence = 9 }
+                        & $change $badResumeMenu $badResumeEvents
+                        $rejected = $false
+                        try {
+                            Assert-SessionMenuColdResumeEvidence $createdEvidence ([pscustomobject]@{
+                                Menu = $badResumeMenu; Events = $badResumeEvents
+                            })
+                        } catch { $rejected = $true }
+                        if (-not $rejected) {
+                            $mutation = [regex]::Match($change.ToString(), '\$(?:m|e)\.([A-Za-z][A-Za-z0-9_]*)')
+                            $case = if ($mutation.Success) { 'mutation field ' + $mutation.Groups[1].Value } else { 'cold-resume mutation' }
+                            throw "Inconsistent cold-resume evidence was accepted for phase '$phase' ($case)."
+                        }
+                    }
+                }
+                'PASS'
+                """;
+            Assert.Contains("PASS", RunPowerShell(BuildDriverFunctionHarness(
+                ["Assert-SessionMenuEvidence", "Assert-SessionMenuColdResumeEvidence"],
+                "$work = " + QuotePowerShell(root) + "\r\n" + body), root),
+                StringComparison.Ordinal);
+        } finally {
+            DeleteOwnedTempDirectory(root, "Godevilution-Session-Menu-Evidence-");
+        }
+    }
+
+    [Theory]
+    [InlineData("godot-client/run-local-client.ps1", "SessionMenuAcceptance")]
+    [InlineData("tools/test-godot-session.ps1", "SessionMenu")]
+    public void SessionMenuAcceptanceGuardsRefuseOtherProfilesBeforeAnyLaunch(string script, string option)
+    {
+        if (!OperatingSystem.IsWindows())
+            return;
+
+        var body = option == "SessionMenuAcceptance" ? """
+            & $guards -SessionMenuAcceptance -SessionDirectory 'fixture' -AcceptancePhase Create | Out-Null
+            & $guards -SessionMenuAcceptance -SessionDirectory 'fixture' -AcceptancePhase Resume | Out-Null
+            $badArguments = @(
+                @{ SessionMenuAcceptance = $true },
+                @{ SessionMenuAcceptance = $true; AcceptancePhase = 'Create' },
+                @{ SessionMenuAcceptance = $true; SessionDirectory = 'fixture'; AcceptancePhase = 'Recovery' },
+                @{ SessionMenuAcceptance = $true; SessionDirectory = 'fixture'; AcceptancePhase = 'Create'; PreviewContent = $true },
+                @{ SessionMenuAcceptance = $true; SessionDirectory = 'fixture'; AcceptancePhase = 'Create'; Multiplayer = $true },
+                @{ SessionMenuAcceptance = $true; SessionDirectory = 'fixture'; AcceptancePhase = 'Create'; CathedralProfileDirectory = 'fixture' })
+            """ : """
+            & $guards -SessionMenu | Out-Null
+            $badArguments = @(
+                @{ SessionMenu = $true; Journey = $true },
+                @{ SessionMenu = $true; Lifecycle = $true },
+                @{ SessionMenu = $true; MultiplayerRecovery = $true },
+                @{ SessionMenu = $true; Cooperative = $true },
+                @{ SessionMenu = $true; PresentationPackProfile = 'atlas' },
+                @{ SessionMenu = $true; CathedralDepthProfileDirectory = 'fixture' })
+            """;
+        body += """
+
+            foreach ($arguments in $badArguments) {
+                $rejected = $false
+                try { & $guards @arguments | Out-Null } catch { $rejected = $true }
+                if (-not $rejected) { throw 'An incompatible session-menu profile reached launch.' }
+            }
+            'PASS'
+            """;
+        Assert.Contains("PASS", RunPowerShell(BuildLauncherGuardHarness(body, script)), StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void LauncherModeGuardRequiresKnownModeAndExplicitCohortSessionDirectory()
     {
         if (!OperatingSystem.IsWindows())
@@ -610,9 +1083,9 @@ public sealed class CohortLauncherBehaviorTests
     private static string BuildDriverFunctionHarness(IReadOnlyList<string> functionNames, string body)
         => BuildPowerShellHarness(functionNames, body, "tools/test-godot-session.ps1");
 
-    private static string BuildLauncherGuardHarness(string body)
+    private static string BuildLauncherGuardHarness(string body, string script = "godot-client/run-local-client.ps1")
     {
-        var launcherPath = Path.Combine(FindRepositoryRoot(), "godot-client", "run-local-client.ps1");
+        var launcherPath = Path.Combine(FindRepositoryRoot(), script);
         var lines = new[] {
             "$ErrorActionPreference = 'Stop'",
             "$launcherPath = " + QuotePowerShell(launcherPath),

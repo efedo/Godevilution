@@ -1,6 +1,6 @@
 # Clean-session handoff
 
-Prepared 2026-10-18. Use `D:\Programming\Godevilution` and its existing working
+Prepared 2026-10-19. Use `D:\Programming\Godevilution` and its existing working
 tree; gameplay source baseline `3af2a51cc`. Fresh context does not mean a reset or a
 replacement checkout.
 
@@ -30,12 +30,13 @@ for retained caches and input entry points. Gameplay WIP remains uncommitted.
 
 ## First task
 
-The detailed numbered inventory and near-term work plan are prepared. Read the
-work plan for the current phase and proposed delivery order, then establish the
-user-selected batch before feature implementation. No gameplay batch is selected
-yet. Refresh only changed claims and keep the work plan, working status and
-affected inventory entries synchronized. Do not treat the failing L3 bot scenario
-as a universal blocker.
+The reviewed session-flow batch now passes headless create/return/rejoin and
+fresh-host resume, including profile-aware setup. Read the work plan for the next
+proposed batch: native Warrior/Sorcerer admission, combat/ability use and resume.
+Establish that batch before feature implementation; it has not started. Refresh
+only changed claims and keep the work plan, working status and affected inventory
+entries synchronized. Rendered flow remains open. Do not treat the failing L3 bot
+scenario as a universal blocker.
 
 ## Session goal
 

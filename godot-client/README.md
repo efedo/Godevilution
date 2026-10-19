@@ -56,6 +56,15 @@ only.
 
 ## Prototype controls and routes
 
+The session menu adds a Hero-tab `ReturnToSessionMenu`
+button. It refuses unacknowledged commands, including offline, or unhealthy local
+bookmark persistence; it clears presentation, then cancels/joins old connection
+work and disposes the transport before showing setup. Confirmed tokens are preserved without overwriting a different
+durable bookmark. Local native profile setup offers Rogue; other endpoints retain
+their existing choices. Headless menu/rejoin acceptance
+does not close M1. See [session-menu checks](../docs/ai/godot-build.md#session-menu)
+and [current evidence](../docs/migration-status.md#current-delivery-position-and-verification-limits).
+
 The zero-argument root `run-godot-multiplayer.ps1` starts one authoritative
 multiplayer host and two independently named Godot windows. Each window has its
 own setup form and private resume bookmark in `.local/godot-multiplayer/player-1`

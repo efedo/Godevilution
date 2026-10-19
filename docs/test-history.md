@@ -9,6 +9,27 @@ the referenced test sources. Do not copy raw outputs into historical archives.
 
 ## Client and host verification
 
+### 2026-10-19 — session-flow consolidation
+
+The server test project, protocol-test project and isolated Godot client build.
+All 56 focused lifecycle/setup/boundary/model/launcher cases pass; the final
+16-case setup run includes empty launcher-cleared hints, malformed metadata,
+local/remote endpoint selection and resume bypass. Independent review has no
+remaining static findings.
+
+The actual headless `-PersistenceMode cohort -SessionMenu` Create/Resume pair
+passes with Godot 4.7.2: ordinary controls, pending/bookmark refusal, profile-aware
+setup, confirmed-token cancellation, joined scene exit, repeated current-model
+event clearing, same-host rejoin and exact next-command fresh-host continuity.
+Owned engine/client/host exits and typed parent evidence checks pass. The sandbox
+blocked loopback sockets before identity; the approved unsandboxed run supplies
+application evidence. The real form also exposed and corrected empty-hint refusal.
+
+This is scoped session-flow acceptance in the existing working tree, not rendered
+usability, a full campaign or normal cohort adoption. See the
+[menu procedure](ai/godot-build.md#session-menu) and
+[actual-control fixture](../godot-client/Devilution.Client/Acceptance/SessionAcceptance.Menu.cs).
+
 ### 2026-10-18 — repository directory rename
 
 The Godot solution and protocol-test project build under `godot-client/` with

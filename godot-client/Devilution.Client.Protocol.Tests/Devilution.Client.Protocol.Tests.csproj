@@ -38,6 +38,10 @@
              Link="PresentationAssets/PresentationFrameClock.cs" />
     <Compile Include="../Devilution.Client/PresentationAssets/PresentationLocalization.cs"
              Link="PresentationAssets/PresentationLocalization.cs" />
+    <Compile Include="../Devilution.Client/SessionLifecyclePolicy.cs"
+             Link="SessionLifecyclePolicy.cs" />
+    <Compile Include="../Devilution.Client/ClientCharacterSetupPolicy.cs"
+             Link="ClientCharacterSetupPolicy.cs" />
     <ProjectReference Include="../../protocol/Devilution.Protocol/Devilution.Protocol.csproj" />
     <ProjectReference Include="../Devilution.Client.Protocol/Devilution.Client.Protocol.csproj" />
     <ProjectReference Include="../../server/src/Devilution.Server/Devilution.Server.csproj"

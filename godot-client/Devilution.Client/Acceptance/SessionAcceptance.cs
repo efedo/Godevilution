@@ -40,6 +40,9 @@ public partial class SessionAcceptance : Node
         var phase = Environment.GetEnvironmentVariable("GODEVILUTION_ACCEPTANCE_PHASE");
         if (phase is not ("Create" or "Resume" or "Recovery" or "Journey" or "JourneyResume" or "TownLoop" or "TownLoopResume" or "Lifecycle" or "LifecycleResume" or "MultiplayerCreate" or "MultiplayerResume" or "MultiplayerRecovery" or "MultiplayerPendingRecovery" or "CooperativeJourney" or "CooperativeResume" or "Performance" or "PerformanceCreate" or "PerformanceResume" or "CathedralJourney" or "CathedralResume" or "CathedralDepthJourney" or "CathedralDepthResume" or "CathedralDoorJourney" or "CathedralDoorResume" or "CathedralNativeJourney" or "CathedralNativeResume" or "CathedralNativeChestJourney" or "CathedralNativeChestResume" or "CathedralNativeSarcophagusJourney" or "CathedralNativeSarcophagusResume" or "CathedralNativeBarrelJourney" or "CathedralNativeBarrelResume" or "CathedralNativeTrapJourney" or "CathedralNativeTrapResume" or "CathedralNativeProgressionJourney" or "CathedralNativeProgressionResume" or "CathedralNativeDepthProgressionJourney" or "CathedralNativeDepthProgressionResume"))
             throw new InvalidOperationException("Explicit acceptance phase is required.");
+        var sessionMenuAcceptance = Environment.GetEnvironmentVariable("GODEVILUTION_ACCEPTANCE_SESSION_MENU") == "1";
+        Require(!sessionMenuAcceptance || phase is "Create" or "Resume",
+            "Session-menu acceptance only supports isolated base Create/Resume phases.");
         var nativeDepthEntryBaselinePath = Environment.GetEnvironmentVariable("GODEVILUTION_NATIVE_DEPTH_ENTRY_BASELINE");
         var nativeDepthEntryContinuation = !string.IsNullOrWhiteSpace(nativeDepthEntryBaselinePath);
         Require(!nativeDepthEntryContinuation || phase == "CathedralNativeDepthProgressionResume",
@@ -95,7 +98,8 @@ public partial class SessionAcceptance : Node
                 "The corrupt bookmark was not reported in the setup UI.");
             ((LineEdit)setup.FindChild("CharacterName", true, false)).Text = phase == "Lifecycle"
                 ? "M1-Sorcerer" : "M0-Rogue";
-            ((OptionButton)setup.FindChild("CharacterClass", true, false)).Select(phase == "Lifecycle" ? 2 : 1);
+            var selector = (OptionButton)setup.FindChild("CharacterClass", true, false);
+            selector.Select(selector.GetItemIndex(phase == "Lifecycle" ? 2 : 1));
         } else {
             if (!nativeDepthEntryContinuation) {
                 previous = JsonSerializer.Deserialize<Evidence>(System.IO.File.ReadAllText(
@@ -168,8 +172,19 @@ public partial class SessionAcceptance : Node
                 await UntilNativeInitialJoin(main, setup, phase, () => nativeSubmissionCount,
                     () => nativeJourneySubmittedExpectedIdentity, () => nativeResumeSubmittedExpectedForm);
             } else {
-                await Until(() => main.TransportConnected && main.ObservedSnapshot?.Players.Count == 1,
-                    "No authoritative character snapshot arrived after submitting the form.");
+                await Frame();
+                Require(!setup.Visible,
+                    $"Connect input left setup open; class={((OptionButton)setup.FindChild("CharacterClass", true, false)).GetSelectedId()}, "
+                    + $"validation={((Label)setup.FindChild("Validation", true, false)).Text}.");
+                try {
+                    await Until(() => main.TransportConnected && main.ObservedSnapshot?.Players.Count == 1,
+                        "No authoritative character snapshot arrived after submitting the form.");
+                } catch (InvalidOperationException exception) {
+                    throw new InvalidOperationException(
+                        $"{exception.Message} Connected={main.TransportConnected}; "
+                        + $"identity={main.ObservedIdentity is not null}; "
+                        + $"status={((Label)main.FindChild("ConnectionStatus", true, false)).Text}", exception);
+                }
             }
         } finally {
             if (nativeSubmissionObserver is not null)
@@ -182,6 +197,7 @@ public partial class SessionAcceptance : Node
         Require(initial.CharacterClassId == expectedClass && initial.CharacterName == expectedName, "Character creation identity did not reach the host.");
         Require(!setup.Visible, "Setup did not close after submission.");
         await VerifyPresentationPackAsync(main, directory, phase);
+        var bookmarkReturnRejected = false;
         if (phase == "Create") {
             var warning = (Label)main.FindChild("SessionWarning", true, false);
             await Until(() => warning.Visible, "Bookmark write failure was not shown persistently.");
@@ -189,9 +205,23 @@ public partial class SessionAcceptance : Node
             await Until(() => main.ObservedSnapshot!.Tick > observedTick + 2,
                 "No later authoritative snapshot arrived during the bookmark failure.");
             Require(warning.Visible, "A later snapshot cleared the bookmark failure warning.");
+            if (sessionMenuAcceptance) {
+                await SelectTab((TabContainer)main.FindChild("HudSections", true, false), 0);
+                var beforeReturnGeneration = main.ObservedSessionGeneration;
+                await Click(((Button)main.FindChild("ReturnToSessionMenu", true, false)).GetGlobalRect().GetCenter());
+                Require(main.TransportConnected && !setup.Visible && !main.ObservedSessionTransition
+                    && main.ObservedSessionGeneration == beforeReturnGeneration && warning.Visible,
+                    "Return discarded a session whose resume bookmark was not durably saved.");
+                Require(((Label)main.FindChild("ConnectionStatus", true, false)).Text.Contains("bookmark", StringComparison.OrdinalIgnoreCase),
+                    "Bookmark return refusal did not explain why the session must remain open.");
+                bookmarkReturnRejected = true;
+            }
             bookmarkWriteBlock!.Dispose();
             await Until(() => !warning.Visible && System.IO.File.ReadAllText(bookmarkPath) != "invalid token",
                 "Bookmark persistence did not recover after file access was restored.");
+            if (sessionMenuAcceptance)
+                Require(main.ObservedSessionStatus is null,
+                    "Recovered bookmark persistence left stale return-refusal feedback.");
         }
         Require(LocalSessionBookmark.Read(bookmarkPath) is not null,
             "No durable local resume bookmark was written.");
@@ -260,6 +290,8 @@ public partial class SessionAcceptance : Node
         if (phase == "TownLoopResume" && portalPreview)
             initial = main.ObservedSnapshot!.Players.Single().Clone();
 
+        if (sessionMenuAcceptance)
+            await SelectTab((TabContainer)main.FindChild("HudSections", true, false), 0);
         GetViewport().GuiReleaseFocus();
         if (phase == "Create")
             await VerifyInputBurstAsync(main, directory);
@@ -269,9 +301,23 @@ public partial class SessionAcceptance : Node
         var moveKey = phase == "TownLoopResume" ? Key.Left : Key.Down;
         Input.ParseInputEvent(new InputEventKey { Keycode = moveKey, PhysicalKeycode = moveKey, Pressed = true });
         double? inputStallMilliseconds = null;
+        var pendingReturnRejected = false;
+        var pendingCountAtRefusal = 0;
         if (creating) {
             Input.FlushBufferedEvents();
             Require(main.ObservedPendingCommandCount == 1, "The actual input handler did not queue movement before the frame stall.");
+            if (sessionMenuAcceptance) {
+                pendingCountAtRefusal = main.ObservedPendingCommandCount;
+                var beforeReturnGeneration = main.ObservedSessionGeneration;
+                ClickControlWithoutFrame((Button)main.FindChild("ReturnToSessionMenu", true, false));
+                Require(main.ObservedPendingCommandCount == pendingCountAtRefusal && main.TransportConnected
+                    && !setup.Visible && !main.ObservedSessionTransition
+                    && main.ObservedSessionGeneration == beforeReturnGeneration,
+                    "Return discarded an unacknowledged gameplay command before the transport poll.");
+                Require(((Label)main.FindChild("ConnectionStatus", true, false)).Text.Contains("acknowledged", StringComparison.OrdinalIgnoreCase),
+                    "Pending-command return refusal did not give actionable feedback.");
+                pendingReturnRejected = true;
+            }
             // Model a busy frame after real input but before the next transport poll.
             // Only the client pauses; the separate authoritative host keeps running.
             var stall = Stopwatch.StartNew();
@@ -314,6 +360,12 @@ public partial class SessionAcceptance : Node
             await VerifyCombatAndLoot(main, directory, visible);
             if (phase == "TownLoop")
                 await VerifyEquipmentAndTownLoop(main, directory, visible, portalPurchase);
+            moved = main.ObservedSnapshot!.Players.Single();
+            result = main.ObservedCommandResult!;
+        }
+        if (sessionMenuAcceptance) {
+            await VerifySessionMenuAsync(main, directory, phase, visible,
+                pendingReturnRejected, bookmarkReturnRejected, pendingCountAtRefusal);
             moved = main.ObservedSnapshot!.Players.Single();
             result = main.ObservedCommandResult!;
         }
@@ -434,7 +486,10 @@ public partial class SessionAcceptance : Node
     {
         var stage = Stopwatch.StartNew();
         while (!condition()) {
-            var seconds = Environment.GetEnvironmentVariable("GODEVILUTION_ACCEPTANCE_PHASE") switch {
+            var phase = Environment.GetEnvironmentVariable("GODEVILUTION_ACCEPTANCE_PHASE");
+            var sessionMenuPhase = Environment.GetEnvironmentVariable("GODEVILUTION_ACCEPTANCE_SESSION_MENU") == "1"
+                && phase is "Create" or "Resume";
+            var seconds = phase switch {
                 "CathedralJourney" => 300, "CathedralResume" => 180,
                 "CathedralDepthJourney" => 885, "CathedralDepthResume" => IsTownPortalPreviewResumeProfile() ? 885 : 435,
                 "CathedralDoorJourney" => 300, "CathedralDoorResume" => 180,
@@ -451,6 +506,8 @@ public partial class SessionAcceptance : Node
                 "TownLoop" => 225, "Journey" => 150, "MultiplayerCreate" or "MultiplayerResume" => 70,
                 "MultiplayerRecovery" => 180, "CooperativeJourney" => 285, "CooperativeResume" => 225, _ => 40,
             };
+            if (sessionMenuPhase)
+                seconds = 170;
             Require(deadline.Elapsed < TimeSpan.FromSeconds(seconds), failure);
             Require(stageSeconds is null || stage.Elapsed.TotalSeconds < stageSeconds, failure);
             await Frame();

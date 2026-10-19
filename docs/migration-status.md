@@ -1,6 +1,6 @@
 # Godevilution Working Status and Memory
 
-As of 2026-10-18. Gameplay source baseline: `3af2a51cc`.
+As of 2026-10-19. Gameplay source baseline: `3af2a51cc`.
 The existing working tree contains substantial uncommitted work; it is not a
 clean committed-source baseline. Use `git status` and the actual diff before
 assigning ownership or staging a batch.
@@ -31,6 +31,10 @@ Godot presentation client remain unfinished. The server does not require MPQs.
 - Authored Godot combat, equipment, services, portals and scoped multiplayer/
   recovery journeys have evidence. They do not establish equivalent native
   generated-world campaigns or all class/difficulty combinations.
+- The reviewed session batch passes headless create/return/rejoin and exact
+  fresh-host resume, including current-model event clearing, confirmed-token
+  retention and joined scene cleanup. Local native setup offers Rogue only;
+  remote/default setup retains its existing choices. Rendered flow remains open.
 - The Godot client is still a presentation prototype. Full native graphical
   parity, complete asset coverage and final rendered playability are open.
 
@@ -66,12 +70,13 @@ Passing a scoped test or adding a schema version does not close a milestone.
   Do not rerun it unchanged or change native rules merely to make a bot pass.
 - Current source has broader backend coverage than application evidence. Keep
   implementation, native parity, headless play and rendered play distinct.
-- Current menu/session/class-flow work is mixed with other WIP. Review and land
-  only a coherent selected batch, with verification affected by that batch.
+- The session lifecycle/setup batch is reviewed and verified for headless flow.
+  Class-preview and experimental acceptance packages remain separate WIP.
 
 The detailed inventory, documentation split and [near-term work plan](work-plan.md)
-are prepared. No next gameplay batch is selected. The work plan owns the proposed
-execution order; agree the next batch with the user before feature implementation.
+are prepared. The session-flow batch is complete for headless acceptance. The
+next proposed primary batch is native Warrior/Sorcerer admission and ordinary
+combat/ability/resume; no class expansion is claimed by the setup restriction.
 Keep its queue, this status and affected inventory entries synchronized as work
 changes. Do not restart inventory construction or an unrelated test campaign.
 
@@ -79,9 +84,9 @@ changes. Do not restart inventory construction or an unrelated test campaign.
 
 Inspect current diffs; this grouping is working memory, not staging authority.
 
-- Session/menu/HUD and class-flow work: `Main.cs`, `Main.Session.cs`,
-  `SessionLifecyclePolicy.cs`, character/HUD presentation, menu/skill acceptance
-  partials, launcher scripts and associated tests.
+- Class-control preview acceptance partials, launcher wrappers/shared script
+  hunks and associated tests remain uncommitted. Session lifecycle, menu/HUD
+  integration and profile-aware setup are now a separate reviewed batch.
 - Experimental four-floor acceptance: entry continuation, Town itinerary v2,
   L3 encounter/held-pair and ground-input diagnostics, plus wrappers. These are
   separate experimental scenarios, not mandatory production dependencies.

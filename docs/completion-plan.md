@@ -393,6 +393,12 @@ deliberately does not claim native generated-world parity, which belongs to M2.
    saves remain on the server; launching again must not accidentally discard
    access to the previous session's persistent save directory. Local bookmarks
    are implemented; expand the complete menu/recovery journey from that base.
+   The reviewed session batch now passes focused checks and actual headless
+   create/return/rejoin/fresh-host resume. It retains pending-command/bookmark
+   refusal, private credentials, generation fences and joined cancellation/exit
+   cleanup. HUD callbacks follow the current model; local setup matches profile
+   class admission. Rendered usability and broader campaign/multiplayer flow
+   remain open; see test history for scope.
 2. Build a coherent town -> dungeon -> combat -> loot -> inventory/equipment ->
    portal -> vendor/stash -> save/resume journey. Add one quest interaction,
    death/restart, class skill, and resource-consuming cast to expose integration

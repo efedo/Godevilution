@@ -13,22 +13,16 @@ public partial class CharacterSetupPresentation : CanvasLayer
         ResumeSession,
     }
 
-    private static readonly (uint Id, string Name)[] Classes = [
-        (0, "Warrior"),
-        (1, "Rogue"),
-        (2, "Sorcerer"),
-        (3, "Monk"),
-        (4, "Bard"),
-        (5, "Barbarian"),
-    ];
-
     private readonly OptionButton classSelector = new() { Name = "CharacterClass" };
     private readonly OptionButton sessionModeSelector = new() { Name = "SessionMode" };
+    private readonly Button connectButton = new() { Name = "Connect", Text = "Connect" };
     private readonly LineEdit hostField = new() {
+        Name = "ServerHost",
         PlaceholderText = "Server host",
         CustomMinimumSize = new Vector2(240, 0),
     };
     private readonly SpinBox portField = new() {
+        Name = "ServerPort",
         MinValue = 1,
         MaxValue = 65535,
         Step = 1,
@@ -47,11 +41,20 @@ public partial class CharacterSetupPresentation : CanvasLayer
     private readonly Label validation = new() {
         Name = "Validation", AutowrapMode = TextServer.AutowrapMode.WordSmart,
     };
+    private string configuredHost = "127.0.0.1";
+    private int configuredPort = 6113;
+    private ClientConnectionOptions? setupOptions;
+    private bool classChoicesInitialized;
+    private string? classConfigurationError;
 
     public event Action<uint, string, string, int, string>? Submitted;
 
     public override void _Ready()
     {
+        var configuredEndpoint = ClientConnectionOptions.FromEnvironment();
+        configuredHost = configuredEndpoint.Host;
+        configuredPort = configuredEndpoint.Port;
+
         var panel = new PanelContainer {
             CustomMinimumSize = new Vector2(420, 320),
         };
@@ -85,14 +88,16 @@ public partial class CharacterSetupPresentation : CanvasLayer
         sessionModeSelector.ItemSelected += _ => RefreshSessionMode();
         layout.AddChild(sessionModeSelector);
 
-        foreach (var (id, name) in Classes)
-            classSelector.AddItem(name, (int)id);
+        foreach (var choice in ClientCharacterSetupPolicy.AllClasses)
+            classSelector.AddItem(choice.Name, (int)choice.Id);
         classSelector.Selected = 0;
         layout.AddChild(classLabel);
         layout.AddChild(classSelector);
 
         layout.AddChild(new Label { Text = "Authoritative server" });
         var endpoint = new HBoxContainer();
+        hostField.TextChanged += _ => RefreshClassChoicesForCurrentMode();
+        portField.ValueChanged += _ => RefreshClassChoicesForCurrentMode();
         endpoint.AddChild(hostField);
         endpoint.AddChild(portField);
         layout.AddChild(endpoint);
@@ -106,11 +111,10 @@ public partial class CharacterSetupPresentation : CanvasLayer
         layout.AddChild(resumeTokenLabel);
         layout.AddChild(resumeTokenField);
 
-        var submit = new Button { Name = "Connect", Text = "Connect" };
-        submit.Pressed += SubmitSelection;
+        connectButton.Pressed += SubmitSelection;
         nameField.TextSubmitted += _ => SubmitSelection();
         resumeTokenField.TextSubmitted += _ => SubmitSelection();
-        layout.AddChild(submit);
+        layout.AddChild(connectButton);
 
         validation.Modulate = new Color("ff9b9b");
         layout.AddChild(validation);
@@ -120,20 +124,18 @@ public partial class CharacterSetupPresentation : CanvasLayer
     /** Shows the setup form, using environment values as defaults when present. */
     public void ShowSetup(ClientConnectionOptions options)
     {
+        setupOptions = null;
+        classChoicesInitialized = false;
         Visible = true;
         resumeTokenField.Text = options.ResumeToken;
         sessionModeSelector.Selected = string.IsNullOrWhiteSpace(options.ResumeToken)
             ? (int)SessionMode.NewCharacter
             : (int)SessionMode.ResumeSession;
-        if (options.RequestedCharacterClassId is { } classId) {
-            var selectedIndex = Array.FindIndex(Classes, entry => entry.Id == classId);
-            if (selectedIndex >= 0)
-                classSelector.Selected = selectedIndex;
-        }
         if (!string.IsNullOrWhiteSpace(options.RequestedCharacterName))
             nameField.Text = options.RequestedCharacterName;
         hostField.Text = options.Host;
         portField.Value = options.Port;
+        setupOptions = options;
         RefreshSessionMode();
         if (CurrentSessionMode() == SessionMode.ResumeSession)
             resumeTokenField.GrabFocus();
@@ -166,6 +168,11 @@ public partial class CharacterSetupPresentation : CanvasLayer
             return;
         }
 
+        if (classConfigurationError is not null) {
+            validation.Text = classConfigurationError;
+            return;
+        }
+
         var name = nameField.Text.Trim();
         if (string.IsNullOrEmpty(name)
             || !AuthoritativePlayerNameRules.IsValidShape(name)) {
@@ -191,7 +198,58 @@ public partial class CharacterSetupPresentation : CanvasLayer
         nameField.Visible = !resume;
         resumeTokenLabel.Visible = resume;
         resumeTokenField.Visible = resume;
-        if (resume)
+        if (resume) {
+            var previousError = classConfigurationError;
+            classConfigurationError = null;
+            if (previousError is not null && string.Equals(validation.Text, previousError, StringComparison.Ordinal))
+                validation.Text = string.Empty;
+            RefreshClassChoices(preserveSelection: classChoicesInitialized, resumeSession: true);
             resumeTokenField.GrabFocus();
+        } else {
+            RefreshClassChoices(preserveSelection: classChoicesInitialized, resumeSession: false);
+        }
+    }
+
+    private void RefreshClassChoicesForCurrentMode()
+    {
+        if (setupOptions is not null && CurrentSessionMode() != SessionMode.ResumeSession)
+            RefreshClassChoices(preserveSelection: classChoicesInitialized, resumeSession: false);
+    }
+
+    private void RefreshClassChoices(bool preserveSelection, bool resumeSession)
+    {
+        if (setupOptions is null)
+            return;
+
+        var previousError = classConfigurationError;
+        var preferredClassId = preserveSelection && classSelector.Selected >= 0
+            ? (uint?)classSelector.GetSelectedId()
+            : setupOptions.RequestedCharacterClassId;
+        try {
+            var choices = ClientCharacterSetupPolicy.GetAvailableClasses(
+                hostField.Text,
+                (int)portField.Value,
+                configuredHost,
+                configuredPort,
+                System.Environment.GetEnvironmentVariable(
+                    ClientCharacterSetupPolicy.SupportedClassIdsEnvironmentVariable),
+                resumeSession);
+            classSelector.Clear();
+            foreach (var choice in choices)
+                classSelector.AddItem(choice.Name, (int)choice.Id);
+            var selectedClassId = ClientCharacterSetupPolicy.SelectClassId(choices, preferredClassId);
+            classSelector.Selected = choices.ToList().FindIndex(choice => choice.Id == selectedClassId);
+            classSelector.Disabled = choices.Count == 1;
+            classChoicesInitialized = true;
+            classConfigurationError = null;
+            if (previousError is not null && string.Equals(validation.Text, previousError, StringComparison.Ordinal))
+                validation.Text = string.Empty;
+        } catch (InvalidDataException exception) {
+            classSelector.Clear();
+            classSelector.Disabled = true;
+            classChoicesInitialized = false;
+            classConfigurationError = exception.Message;
+            validation.Text = exception.Message;
+        }
     }
 }

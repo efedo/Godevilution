@@ -1,6 +1,6 @@
 # Godevilution Feature and Gap Inventory
 
-Updated 2026-10-18 against documentation commit `1234efc6e`, gameplay baseline
+Updated 2026-10-19 against documentation commit `1234efc6e`, gameplay baseline
 `3af2a51cc` and the existing working tree. Uncommitted session/menu, class-flow
 and experimental acceptance work is identified in [working memory](migration-status.md#existing-working-tree-packages).
 This inventory covers the supported Diablo/Hellfire replacement, including full
@@ -428,15 +428,16 @@ Basis: [cohort store](../server/src/Devilution.Server.Host/Stores/AuthoritativeC
 
 ## 10. Client playability and flow
 
-The client remains a prototype. Session-menu and several class-control previews
-are present in the working tree but are not a committed release flow. Functional
-Godot controls and headless acceptance do not establish native visual usability.
+The client remains a prototype. The reviewed session-menu batch has headless
+create/return/rejoin and fresh-host-resume evidence; several class-control
+previews remain WIP. Functional controls and headless acceptance do not establish
+native visual usability or a complete campaign/multiplayer release flow.
 
 | ID | Feature | Status | Existing scope | Remaining completion work |
 | --- | --- | --- | --- | --- |
-| 10.1 | Launch and connection | Partial | Local launchers, Godot scene, handshake and identity validation exist. | Integration/acceptance: reliable packaged create/play/return/resume across supported platforms. |
-| 10.2 | Session/character setup | Partial | Name, class and session choices are presented. | Integration: offer choices actually admitted by each profile, with correct class/mode/resources. |
-| 10.3 | Return to menu and rejoin | Partial | Uncommitted lifecycle/menu work joins connection cleanup, replaces presentation and preserves resume state. | Integration/acceptance: land the coherent flow and qualify ordinary return, rejoin, cancellation and scene exit. |
+| 10.1 | Launch and connection | Partial | Local launchers, handshake/identity checks and reviewed headless menu create/rejoin/fresh-host resume pass. | Integration/acceptance: reliable packaged create/play/return/resume across supported platforms. |
+| 10.2 | Session/character setup | Partial | Local native profiles offer Rogue only; optional endpoint-scoped hints preserve generic/remote choices and bypass class selection for resume. Empty cleared hints retain defaults. | Integration/acceptance: maintain supported class/mode/resource choices as profile admission expands and qualify rendered setup. |
+| 10.3 | Return to menu and rejoin | Partial | Reviewed lifecycle/menu flow passes pending/bookmark refusal, joined cleanup, model replacement, private credentials, cancellation and scene exit through headless controls. | Acceptance: rendered usability and broader campaign/multiplayer return/rejoin. |
 | 10.4 | Ordinary world movement | Partial | World clicks submit movement and server positions drive presentation. | Acceptance: supported routes, obstacles, interruptions and ordinary play across classes/profiles. |
 | 10.5 | Automatic approach and route cancellation | Partial | Snapshot-derived stairs/interaction travel, cancellation and endpoints exist. | Integration/acceptance: campaign-wide travel and approach/target-change edge cases. |
 | 10.6 | Combat/object/item target selection | Partial | Helpers select visible actors, objects, portals and items with authoritative identities. | Acceptance: all supported target families, overlap, invalidation and ordinary mouse/keyboard use. |
@@ -447,10 +448,10 @@ Godot controls and headless acceptance do not establish native visual usability.
 | 10.11 | Town service controls | Partial | Purchase/sale/repair/recharge/identify/healing/stash paths have scoped controls and journeys. | Integration/acceptance: all native stock/service lifecycles and ordinary full-playthrough use. |
 | 10.12 | Dialogue and quest journal flow | Partial | Dialogue/quest state and some towner interactions are presented. | Integration/acceptance: all generated quest conversations, journal updates, rewards and completion feedback. |
 | 10.13 | Portals, stairs and depth transitions | Partial | Actual portal use and selected Cathedral transitions have live-control evidence. | Integration/acceptance: every supported dungeon/set-level transition and return path. |
-| 10.14 | Player-facing save and resume | Partial | Bookmarks, resume identity and exact first/next-command recovery exist in scoped journeys. | Integration/acceptance: consistent save/exit/resume flow through complete campaigns and supported profiles. |
-| 10.15 | Disconnect and error recovery UX | Partial | Host-loss reporting, input blocking and reconnect have scoped evidence. | Acceptance: clear recovery for broader outages, corrupt/mismatched inputs, cancellation and retry choices. |
+| 10.14 | Player-facing save and resume | Partial | Reviewed menu flow preserves confirmed credentials and bookmarks through cancellation/rejoin and fresh-host resume at the exact next command. | Integration/acceptance: consistent save/exit/resume flow through complete campaigns and supported profiles. |
+| 10.15 | Disconnect and error recovery UX | Partial | Host-loss/input blocking/reconnect have scoped evidence; reviewed menu flow covers canceled handshakes and cleanup/bookmark refusal. | Acceptance: clear recovery for broader outages, corrupt/mismatched inputs, cancellation and retry choices. |
 | 10.16 | Multiplayer creation and lifecycle UX | Partial | Local two-window launch and selected play/recovery journeys exist. | Integration/acceptance: complete creation/join/leave/reconnect/restore flow during general multiplayer play. |
-| 10.17 | HUD, status and combat feedback | Partial | Life/mana, equipment/items, statuses and event-driven feedback exist. | Integration/acceptance: complete information hierarchy, readable action/error states and native gameplay usability. |
+| 10.17 | HUD, status and combat feedback | Partial | Life/mana, equipment/items, statuses and feedback exist; live Clear events follows the current model across repeated menu replacement. | Integration/acceptance: complete information hierarchy, readable action/error states and native gameplay usability. |
 | 10.18 | Damage/healing/rejection audio hooks | Partial | Optional pack-bound feedback cues can play. | Integration/acceptance: production assets, event coverage, audibility and settings behavior. |
 | 10.19 | Full music, environment, combat and speech coverage | Partial | Audio pack/feedback infrastructure exists; the complete native sound set is not supplied/qualified. | Implementation/acceptance: supported music, ambient, actor/spell/object sounds and dialogue/quest speech. |
 | 10.20 | Mouse/keyboard/controller input coverage | Partial | Prototype mouse/keyboard controls exist. | Implementation/acceptance assessment: complete supported controller navigation, rebinding, focus and input-mode behavior. |
@@ -458,7 +459,7 @@ Godot controls and headless acceptance do not establish native visual usability.
 | 10.22 | Localization | Partial | Pack-bound localized presentation strings and fallback support exist. | Implementation/acceptance: complete text/quest/service coverage, layout and supported language behavior. |
 | 10.23 | Resolution, scaling and window behavior | Partial | Godot layouts, camera/viewport and isolated visible checks exist. | Acceptance/parity: supported resolutions, aspect ratios, DPI/fullscreen and input alignment. |
 | 10.24 | Player settings and preferences | Unverified | Launcher and presentation-pack configuration exist. | Assessment/implementation: establish native-equivalent player-facing audio/input/display preferences and persistence. |
-| 10.25 | Exit/cancellation and scene cleanup | Partial | Joined connection cleanup and no-publication-after-exit checks exist, including menu WIP. | Integration/acceptance: complete ordinary scene/session/application exit paths and failure handling. |
+| 10.25 | Exit/cancellation and scene cleanup | Partial | Reviewed joined cleanup passes scene exit during handshake and active return, preserving disposal outcomes and preventing post-exit publication. | Acceptance: broader campaign/multiplayer/application failure paths and rendered flow. |
 
 Basis: [client scope](../godot-client/README.md),
 [main scene](../godot-client/Devilution.Client/Main.cs),

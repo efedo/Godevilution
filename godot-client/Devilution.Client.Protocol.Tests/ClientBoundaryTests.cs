@@ -1,4 +1,5 @@
 using System.Xml.Linq;
+using System.Text.RegularExpressions;
 using Devilution.Client.Protocol;
 using Xunit;
 
@@ -6,6 +7,18 @@ namespace Devilution.Client.Protocol.Tests;
 
 public sealed class ClientBoundaryTests
 {
+    [Fact]
+    public void GodotSessionCallbacksMustNotCaptureRetiredPresentationModel()
+    {
+        var root = FindRepositoryRoot();
+        var main = File.ReadAllText(Path.Combine(root, "godot-client", "Devilution.Client", "Main.cs"));
+        var session = File.ReadAllText(Path.Combine(root, "godot-client", "Devilution.Client", "Main.Session.cs"));
+
+        Assert.Contains("model = new AuthoritativeClientModel()", session, StringComparison.Ordinal);
+        Assert.False(Regex.IsMatch(main, @"hud\.\w+\s*\+=\s*model\."),
+            "A HUD callback captures a model that session return replaces; resolve the current model when invoked.");
+    }
+
     [Fact]
     public void ProtocolClientReferencesOnlyTheSharedProtocolAssembly()
     {

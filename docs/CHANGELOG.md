@@ -5,6 +5,15 @@ acceptance gates are tracked in [working status](migration-status.md); verificat
 is summarized in [test history](test-history.md). Protocol and architecture
 contracts stay in their existing guides.
 
+## 2026-10-19
+
+- Consolidate Godot session return/rejoin, joined cancellation/scene cleanup,
+  confirmed resume credentials and current-model HUD callbacks. Preserve pending
+  command and bookmark refusal before returning to setup.
+- Scope local native setup to admitted Rogue identity using client-only endpoint
+  class hints; preserve remote/default choices, empty launcher-cleared hints and
+  resume identity. Add focused regressions and headless menu/cold-resume checks.
+
 ## 2026-10-18
 
 - Refresh the clean-session handoff for the renamed trees and completed local
