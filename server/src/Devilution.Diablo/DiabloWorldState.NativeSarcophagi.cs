@@ -21,7 +21,7 @@ public sealed partial class DiabloWorldState
             && Objects.TryGetValue(value.EntityId, out var owner) && owner.LevelId == levelId);
 
     internal void ConfigureNativeSarcophagi(
-        AuthoritativeCathedralNativePopulationPolicy policy,
+        AuthoritativeNativePopulationBindings policy,
         int formatVersion,
         IReadOnlyList<DiabloNativeSarcophagusState>? savedStates)
     {
@@ -336,7 +336,7 @@ public sealed partial class DiabloWorldState
         }
     }
 
-    internal void ValidateNativeSarcophagusState(AuthoritativeCathedralNativePopulationPolicy policy)
+    internal void ValidateNativeSarcophagusState(AuthoritativeNativePopulationBindings policy)
     {
         if (!ReferenceEquals(NativePopulationForLevel(policy.LevelId), policy))
             throw new InvalidOperationException("Native sarcophagus validation requires the owning population policy.");

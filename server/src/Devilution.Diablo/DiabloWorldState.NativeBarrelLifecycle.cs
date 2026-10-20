@@ -20,7 +20,7 @@ public sealed partial class DiabloWorldState
             && Objects.TryGetValue(value.EntityId, out var owner) && owner.LevelId == levelId);
 
     internal void ConfigureNativeBarrels(
-        AuthoritativeCathedralNativePopulationPolicy policy,
+        AuthoritativeNativePopulationBindings policy,
         int formatVersion,
         IReadOnlyList<DiabloNativeBarrelState>? savedStates)
     {
@@ -312,7 +312,7 @@ public sealed partial class DiabloWorldState
         }
     }
 
-    internal void ValidateNativeBarrelState(AuthoritativeCathedralNativePopulationPolicy policy)
+    internal void ValidateNativeBarrelState(AuthoritativeNativePopulationBindings policy)
     {
         if (!ReferenceEquals(NativePopulationForLevel(policy.LevelId), policy))
             throw new InvalidOperationException("Native barrel validation requires the owning population policy.");

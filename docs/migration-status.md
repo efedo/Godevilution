@@ -154,6 +154,9 @@ clocks, wake order, blocked close and sync geometry.
 Existing cohort formats refuse C2 fields; no playable Catacombs profile is active.
 Ranged timing/controller retention, TCHEST operations, per-floor ownership,
 profile/travel integration and detached cold restore remain required family gates.
+The immutable population binding core is shared behind the unchanged Cathedral
+API; 25 focused C1 lifecycle, retained-floor and class restore checks pass. This
+prepares C2 ownership without activating a family profile.
 See [verification](test-history.md#2026-10-20--catacombs-actor-admission-and-l2-door-operations).
 Keep the queue, this status and affected inventory entries synchronized. Do not
 restart inventory construction or an unrelated test campaign.

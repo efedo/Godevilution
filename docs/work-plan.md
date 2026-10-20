@@ -93,7 +93,9 @@ controlled native actor/pack traces cover Fat Special clocks and wake order. L2
 door operation traces cover blocked close, synchronization and geometry. Existing saves refuse C2 fields until an additive
 format is implemented. Next integrate ranged spawn/controller retention, TCHEST
 operations, per-floor owners, routes and detached cold restore. These remain
-required family gates before playable profile qualification. See
+required family gates before playable profile qualification. The shared immutable
+population binding core is extracted behind the unchanged C1 API; 25 focused C1
+lifecycle, retained-floor and class restore cases pass. C2 owners are still open. See
 [verification](test-history.md#2026-10-20--catacombs-actor-admission-and-l2-door-operations).
 
 ## Delivery order

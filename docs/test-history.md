@@ -9,6 +9,21 @@ the referenced test sources. Do not copy raw outputs into historical archives.
 
 ## Client and host verification
 
+### 2026-10-20 — Shared native population bindings
+
+The Cathedral policy now delegates immutable pool, footprint, identity and object
+lifecycle validation to one stable internal binding core. Independent source review
+confirms unchanged generation fingerprint payloads and lifecycle bodies. Twenty-five
+focused integration cases pass: sparse slot refusal, L1 object/actor/door retention,
+Gold, linked and ordinary sarcophagi/barrels, traps, Town purchases, two/four-floor
+retention, later-floor object mutations and Warrior/Sorcerer cold continuation.
+The bounded managed build passes with 21 existing warnings. Two fixture setup
+refusals were rerun successfully after supplying the retained sarcophagus corpus;
+no selected case remains skipped or failed. Existing gameplay WIP is unchanged.
+
+This is a compatibility refactor. C2 item/door ownership, family profile activation,
+travel and additive cold persistence remain open.
+
 ### 2026-10-20 — Catacombs actor admission and L2 door operations
 
 Seventy-six focused cases pass: fourteen native prepared class/Fat/Gargoyle

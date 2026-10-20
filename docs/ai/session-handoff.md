@@ -57,7 +57,9 @@ pass. Cathedral compatibility has 183 passes with six explicit fixtures unselect
 Distinct actor admission, Gargoyle/Fat Special clocks and controlled L2 door
 operations are implemented; next integrate ranged controllers, TCHEST, per-floor
 owners, additive persistence, travel and cold restore. Existing saves refuse C2
-fields until that additive format exists.
+fields until that additive format exists. Shared immutable population bindings are
+now extracted behind the C1 API; 25 focused lifecycle/floor/class restore checks
+pass. Distinct C2 owners and family integration remain next.
 Read the work plan and scoped verification; retain valid references.
 The observed Town authority-lock lateness remains unresolved. Normal cohort/profile adoption stays held. Later class
 campaigns and full rendered qualification remain open. Reuse valid evidence and

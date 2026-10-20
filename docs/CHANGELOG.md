@@ -7,6 +7,10 @@ contracts stay in their existing guides.
 
 ## 2026-10-20
 
+- Extract immutable native population bindings behind the existing Cathedral API.
+  Preserve C1 generation fingerprints, object lifecycles and retained-floor restore
+  while preparing separate Catacombs owners; 25 focused C1 integration cases pass.
+
 - Add distinct Catacombs actor admission, frozen Gargoyle wake/animation phases,
   active-order pack wake, bounded ranged-skeleton emergence admission and native
   Fat Special cursors. Preserve effective unique

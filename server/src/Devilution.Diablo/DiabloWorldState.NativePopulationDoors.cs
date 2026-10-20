@@ -13,7 +13,7 @@ public sealed partial class DiabloWorldState
             deferCohortInitialization: true, cathedralDoors: options.CathedralDoors,
             cathedralDoorBackingGeometry: options.CathedralDoorBackingGeometry)
     {
-        nativePopulationPolicy = options.NativePopulationPolicy
+        nativePopulationPolicy = options.NativePopulationPolicy?.Bindings
             ?? throw new InvalidDataException("Direct native population construction requires its immutable owner.");
         if (options.GameMode != DiabloGameMode.SinglePlayer || options.Difficulty != DiabloDifficulty.Normal
             || options.CombatRules?.GameVariant != DiabloGameVariant.Diablo
@@ -33,7 +33,7 @@ public sealed partial class DiabloWorldState
                 || restored.Owners.Any(owner => owner.MonsterMetadataFingerprint != options.NativeMonsterMetadataFingerprint))
                 throw new InvalidDataException("Native restored floor owners do not match the explicit run and item registry.");
             foreach (var owner in restored.Owners)
-                nativePopulationPolicies.Add(owner.LevelId, owner);
+                nativePopulationPolicies.Add(owner.LevelId, owner.Bindings);
         } else {
             nativePopulationPolicy.ValidateItemProfile(options.NativeCathedralItems);
         }

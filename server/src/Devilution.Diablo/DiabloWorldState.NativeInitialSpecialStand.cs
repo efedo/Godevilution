@@ -8,7 +8,7 @@ public sealed partial class DiabloWorldState
         => nativeInitialSpecialStand.Values.OrderBy(value => value.LevelId)
             .ThenBy(value => value.NativeSlot).ToArray();
 
-    private void ConfigureNativeInitialSpecialStand(AuthoritativeCathedralNativePopulationPolicy policy,
+    private void ConfigureNativeInitialSpecialStand(AuthoritativeNativePopulationBindings policy,
         IReadOnlyList<AuthoritativeNativeInitialSpecialStand>? saved = null)
     {
         var expected = policy.InitialSpecialStandActors;

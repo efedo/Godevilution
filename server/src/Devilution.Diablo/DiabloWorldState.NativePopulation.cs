@@ -2,17 +2,17 @@ namespace Devilution.Diablo;
 
 public sealed partial class DiabloWorldState
 {
-    private AuthoritativeCathedralNativePopulationPolicy? nativePopulationPolicy;
-    private readonly Dictionary<uint, AuthoritativeCathedralNativePopulationPolicy> nativePopulationPolicies = [];
+    private AuthoritativeNativePopulationBindings? nativePopulationPolicy;
+    private readonly Dictionary<uint, AuthoritativeNativePopulationBindings> nativePopulationPolicies = [];
 
-    private AuthoritativeCathedralNativePopulationPolicy? NativePopulationForLevel(uint levelId)
+    private AuthoritativeNativePopulationBindings? NativePopulationForLevel(uint levelId)
         => nativePopulationPolicies.GetValueOrDefault(levelId)
             ?? (nativePopulationPolicy?.LevelId == levelId ? nativePopulationPolicy : null);
 
-    private AuthoritativeCathedralNativePopulationPolicy? NativePopulationForEntity(uint entityId)
+    private AuthoritativeNativePopulationBindings? NativePopulationForEntity(uint entityId)
         => NativePopulationOwners.SingleOrDefault(policy => policy.BoundEntityIds.Contains(entityId));
 
-    private IEnumerable<AuthoritativeCathedralNativePopulationPolicy> NativePopulationOwners
+    private IEnumerable<AuthoritativeNativePopulationBindings> NativePopulationOwners
         => nativePopulationPolicies.Count == 0
             ? nativePopulationPolicy is null ? [] : [nativePopulationPolicy]
             : nativePopulationPolicies.Values;
@@ -23,6 +23,15 @@ public sealed partial class DiabloWorldState
     internal bool HasNativePopulation => nativePopulationPolicy is not null;
 
     internal void ConfigureNativePopulationPolicy(AuthoritativeCathedralNativePopulationPolicy? policy,
+        AuthoritativeCathedralItemRuntimeProfile? items, string? monsterMetadataFingerprint,
+        int nativeSarcophagusFormatVersion = 0,
+        IReadOnlyList<DiabloNativeSarcophagusState>? nativeSarcophagusStates = null,
+        IReadOnlyList<DiabloNativeBarrelState>? nativeBarrelStates = null,
+        IReadOnlyList<DiabloNativeTrapState>? nativeTrapStates = null)
+        => ConfigureNativePopulationBindings(policy?.Bindings, items, monsterMetadataFingerprint,
+            nativeSarcophagusFormatVersion, nativeSarcophagusStates, nativeBarrelStates, nativeTrapStates);
+
+    internal void ConfigureNativePopulationBindings(AuthoritativeNativePopulationBindings? policy,
         AuthoritativeCathedralItemRuntimeProfile? items, string? monsterMetadataFingerprint,
         int nativeSarcophagusFormatVersion = 0,
         IReadOnlyList<DiabloNativeSarcophagusState>? nativeSarcophagusStates = null,

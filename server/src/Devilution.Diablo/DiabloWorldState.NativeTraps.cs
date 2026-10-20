@@ -17,7 +17,7 @@ public sealed partial class DiabloWorldState
                 .OrderBy(value => value.Facts.LevelId).ThenBy(value => value.Facts.TrapObjectSlot).ToArray());
 
     internal void ConfigureNativeTraps(
-        AuthoritativeCathedralNativePopulationPolicy policy,
+        AuthoritativeNativePopulationBindings policy,
         int formatVersion,
         IReadOnlyList<DiabloNativeTrapState>? savedStates)
     {
@@ -164,7 +164,7 @@ public sealed partial class DiabloWorldState
         return Array.AsReadOnly(firing);
     }
 
-    internal void ValidateNativeTrapState(AuthoritativeCathedralNativePopulationPolicy policy)
+    internal void ValidateNativeTrapState(AuthoritativeNativePopulationBindings policy)
     {
         ArgumentNullException.ThrowIfNull(policy);
         if (!ReferenceEquals(NativePopulationForLevel(policy.LevelId), policy))

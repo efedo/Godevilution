@@ -45,7 +45,7 @@ public sealed partial class DiabloWorldState
                 .Select(row => row.Target!).ToArray(), objects: build.Objects,
             deferCohortInitialization: true,
             cathedralDoors: new AuthoritativeCathedralDoorCatalog([door])) {
-            nativePopulationPolicy = build.Policy,
+            nativePopulationPolicy = build.Policy.Bindings,
             nativePopulationParticipantClassId = nativePopulationParticipantClassId,
         };
         floor.deferCohortInitialization = false;
@@ -71,7 +71,7 @@ public sealed partial class DiabloWorldState
             bindings[entry.Key] = entry.Value;
         }
         var fingerprint = Convert.ToHexString(SHA256.HashData(JsonSerializer.SerializeToUtf8Bytes(
-            NativePopulationOwners.Append(build.Policy).OrderBy(policy => policy.LevelId)
+            NativePopulationOwners.Append(build.Policy.Bindings).OrderBy(policy => policy.LevelId)
                 .Select(policy => new { policy.LevelId, policy.Fingerprint }).ToArray())));
         var initial = oldProfile.InitialCheckpoint with {
             GenerationFingerprint = fingerprint,
@@ -147,7 +147,7 @@ public sealed partial class DiabloWorldState
         foreach (var entry in floor.nativeInitialSpecialStand) nativeInitialSpecialStand.Add(entry.Key, entry.Value);
         foreach (var entry in floor.cathedralDoors) cathedralDoors.Add(entry.Key, entry.Value);
         cathedralDoorLevels.Add(policy.LevelId, floor.cathedralDoorLevels[policy.LevelId]);
-        nativePopulationPolicies.Add(policy.LevelId, policy);
+        nativePopulationPolicies.Add(policy.LevelId, policy.Bindings);
         cathedralItems = admission.Items;
         cathedralDoorCatalog = admission.Doors;
         trustedCathedralDoorBackingGeometry = World.CaptureGeometryState();

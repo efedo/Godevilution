@@ -58,20 +58,22 @@ public sealed partial class DiabloWorldState
     }
 
     internal NativeProgressionRestoreContext CaptureNativeProgressionOwners()
-        => new(NativePopulationOwners.OrderBy(policy => policy.LevelId).ToArray(), cathedralItems!.Profile,
+        => new(NativePopulationOwners.Select(owner => owner.CathedralPolicy
+                ?? throw new InvalidDataException("Legacy progression cannot capture a different native family."))
+                .OrderBy(policy => policy.LevelId).ToArray(), cathedralItems!.Profile,
             cathedralDoorCatalog!, World!.CaptureGeometryState());
 
     internal void RestoreNativeProgressionOwners(NativeProgressionRestoreContext owners,
         AuthoritativeCathedralNativeProgression definition, DiabloCohortState state)
     {
         foreach (var policy in owners.Owners) {
-            ConfigureNativeSarcophagi(policy, state.FormatVersion,
+            ConfigureNativeSarcophagi(policy.Bindings, state.FormatVersion,
                 state.NativeSarcophagi!.Where(value => Objects[value.EntityId].LevelId == policy.LevelId).ToArray());
-            ConfigureNativeBarrels(policy, state.FormatVersion,
+            ConfigureNativeBarrels(policy.Bindings, state.FormatVersion,
                 state.NativeBarrels!.Where(value => Objects[value.EntityId].LevelId == policy.LevelId).ToArray());
-            ConfigureNativeTraps(policy, state.FormatVersion,
+            ConfigureNativeTraps(policy.Bindings, state.FormatVersion,
                 state.NativeTraps!.Where(value => value.Facts.LevelId == policy.LevelId).ToArray());
-            ConfigureNativeInitialSpecialStand(policy,
+            ConfigureNativeInitialSpecialStand(policy.Bindings,
                 state.NativeProgression!.InitialSpecialStand.Where(value => value.LevelId == policy.LevelId).ToArray());
         }
         nativePopulationLifecycleConfigured = true;

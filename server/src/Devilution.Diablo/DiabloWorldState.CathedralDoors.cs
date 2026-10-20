@@ -11,7 +11,7 @@ public sealed partial class DiabloWorldState
     /** Cached per-level immutable presentation; the public result remains a fresh ordered array. */
     private sealed record PresentationLevelGeometryCacheEntry(
         AuthoritativeLevel Source,
-        AuthoritativeCathedralNativePopulationPolicy? NativePopulationPolicy,
+        AuthoritativeNativePopulationBindings? NativePopulationPolicy,
         bool HasCathedralDoors,
         uint[] BrokenBarrelEntityIds,
         AuthoritativeLevel Projection);
@@ -528,7 +528,7 @@ public sealed partial class DiabloWorldState
     }
 
     private uint[] CaptureBrokenBarrelEntityIds(uint levelId,
-        AuthoritativeCathedralNativePopulationPolicy policy)
+        AuthoritativeNativePopulationBindings policy)
     {
         var brokenEntityIds = new List<uint>();
         foreach (var state in nativeBarrelsByEntityId.Values) {
