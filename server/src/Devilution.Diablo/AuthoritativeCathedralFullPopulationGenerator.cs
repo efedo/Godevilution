@@ -215,7 +215,7 @@ public sealed class AuthoritativeCathedralFullPopulationRequest
     public int MaximumItemPlacementAttempts { get; }
     public IReadOnlyList<bool> InitialVisibleTransparencyRegions { get; }
 
-    private static void ValidatePlayerInitializedLight(
+    internal static void ValidatePlayerInitializedLight(
         AuthoritativeCathedralPopulationPlayer player,
         AuthoritativeCathedralEncounterLightAllocator allocator,
         AuthoritativeCathedralThemeItemPlayerContext? itemPlayer)
@@ -243,7 +243,7 @@ public sealed class AuthoritativeCathedralFullPopulationRequest
             throw new InvalidDataException($"Native {name} requires exactly {expected} entries.");
     }
 
-    private static void ValidatePotionRows(
+    internal static void ValidatePotionRows(
         AuthoritativeCathedralThemeItemCatalog itemCatalog,
         IReadOnlyList<AuthoritativeCathedralInitialItemDefinition> potionDefinitions)
     {
@@ -339,6 +339,24 @@ public static class AuthoritativeCathedralFullPopulationGenerator
         ArgumentNullException.ThrowIfNull(request);
 
         var initial = AuthoritativeCathedralInitialPopulationGenerator.Generate(request.InitialPopulation);
+        var output = GenerateAfterInitial(
+            AuthoritativeNativeFullPopulationInputView.FromCathedral(request),
+            AuthoritativeNativeInitialPopulationView.FromCathedral(request.InitialPopulation, initial));
+        return new(initial, output.ClearedMonsterPool, output.Encounters,
+            output.InitialItems, output.BeforeThemeRooms, output.ThemeRooms);
+    }
+
+    /** Shared composition after family-specific bestiary/theme/object initialization. */
+    internal static AuthoritativeNativeFullPopulationOutput GenerateAfterInitial(
+        AuthoritativeNativeFullPopulationInputView request,
+        AuthoritativeNativeInitialPopulationView initial)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        ArgumentNullException.ThrowIfNull(initial);
+        request.FamilyContext.RequireMatch(initial.Depth);
+        if (request.FamilyContext != initial.FamilyContext || initial.Depth != request.ItemPolicy.Depth)
+            throw new InvalidDataException("Full population family inputs do not describe the same admitted dungeon.");
+
         var bestiary = initial.Bestiary;
         var derivedScatter = bestiary.Entries
             .Where(entry => (entry.PlaceFlags & AuthoritativeCathedralBestiaryGenerator.PlaceScatter) != 0)
@@ -346,19 +364,18 @@ public static class AuthoritativeCathedralFullPopulationGenerator
             .ToArray();
 
         var heldGeometry = new AuthoritativeCathedralPopulationGeometry(
-            request.InitialPopulation.PreThemeGeometry.Pieces,
-            request.InitialPopulation.PreThemeGeometry.Special,
-            request.InitialPopulation.PreThemeGeometry.Transparency,
-            request.InitialPopulation.PreThemeGeometry.PieceProperties,
+            initial.Geometry.Pieces,
+            initial.Geometry.Special,
+            initial.Geometry.Transparency,
+            initial.Geometry.PieceProperties,
             initial.Themes.HeldPopulatedCells,
-            request.InitialPopulation.PreThemeGeometry.PlayerOccupied,
-            request.InitialPopulation.PreThemeGeometry.MonsterOccupied);
-        var objectTemplate = request.InitialPopulation.ObjectTemplate;
+            initial.Geometry.PlayerOccupied,
+            initial.Geometry.MonsterOccupied);
         var encounterPopulation = new AuthoritativeCathedralPopulationParameters(
-            objectTemplate.Depth, objectTemplate.PopulationSeed, objectTemplate.StorySeed,
-            heldGeometry, objectTemplate.Objects, bestiary.PopulationDefinitions,
-            objectTemplate.Player, objectTemplate.TrapPercent, objectTemplate.StoryMessages,
-            objectTemplate.MaximumPlacementAttempts);
+            initial.Depth, initial.PopulationSeed, initial.StorySeed,
+            heldGeometry, initial.Objects, bestiary.PopulationDefinitions,
+            initial.Player, initial.TrapPercent, initial.StoryMessages,
+            initial.MaximumPlacementAttempts, request.FamilyContext);
 
         var clearedMonsterPool = AuthoritativeCathedralMonsterPoolInitializer.CreateFresh(
             request.MonsterClearRandomState);
@@ -380,7 +397,10 @@ public static class AuthoritativeCathedralFullPopulationGenerator
 
         var light = request.InitialLight.ToArray();
         var preLight = request.InitialPreLight.ToArray();
-        AuthoritativeCathedralInitialObjectLighting.Apply(light, preLight, initial.Population);
+        if (request.FamilyContext.IsCatacombs)
+            AuthoritativeCathedralInitialObjectLighting.ApplyCatacombs(light, preLight, initial.Population);
+        else
+            AuthoritativeCathedralInitialObjectLighting.Apply(light, preLight, initial.Population);
 
         var encounters = AuthoritativeCathedralEncounterGenerator.Generate(
             new AuthoritativeCathedralEncounterParameters(
@@ -413,23 +433,25 @@ public static class AuthoritativeCathedralFullPopulationGenerator
                 // caller's convenience booleans are deliberately not used
                 // as a second, stale geometry source.
                 SetPiece = (encounters.TileFlags[index] & TilePopulated) != 0,
-                Solid = (request.InitialPopulation.PreThemeGeometry.PieceProperties[
+                Solid = (initial.Geometry.PieceProperties[
                     initial.Population.Pieces[index]] & 1) != 0,
             })
             .ToArray();
         var initialItems = AuthoritativeCathedralInitialItemGenerator.Generate(
             new AuthoritativeCathedralInitialItemParameters(
-                request.InitialPopulation.Depth,
+                initial.Depth,
                 encounters.FinalRandomState,
                 itemTiles,
                 request.InitialItemSlots,
                 request.InitialActiveItemIds,
                 request.InitialActiveItemCount,
                 request.PotionDefinitions,
-                request.MaximumItemPlacementAttempts));
+                request.MaximumItemPlacementAttempts,
+                request.FamilyContext),
+            request.FamilyContext);
 
         var roomCatalog = new AuthoritativeCathedralThemeRoomCatalog(
-            objectTemplate.Objects,
+            initial.Objects,
             bestiary.Entries.Select(entry => new AuthoritativeCathedralThemeRoomMonsterDefinition(
                 entry.PopulationDefinition,
                 checked((uint)entry.PlaceFlags),
@@ -454,7 +476,7 @@ public static class AuthoritativeCathedralFullPopulationGenerator
             initial.Population.Pieces,
             initial.Population.Transparency.Select(value => unchecked((sbyte)value)).ToArray(),
             initial.Population.Special,
-            request.InitialPopulation.PreThemeGeometry.PieceProperties,
+            initial.Geometry.PieceProperties,
             encounters.TileFlags,
             initial.Population.TileObjectRefs,
             light,
@@ -483,13 +505,14 @@ public static class AuthoritativeCathedralFullPopulationGenerator
                 request.ItemPolicy,
                 initial.Themes.Themes,
                 initialItems.FinalRandomState,
-                objectTemplate.Player,
+                initial.Player,
                 request.ItemPlayer,
                 false,
                 initial.Themes.PlacementVariant,
                 request.MaximumPlacementAttempts,
-                initial.Themes.PlacementOrigin));
+                initial.Themes.PlacementOrigin),
+            request.FamilyContext);
 
-        return new(initial, clearedMonsterPool, encounters, initialItems, roomState, themeRooms);
+        return new(clearedMonsterPool, encounters, initialItems, roomState, themeRooms);
     }
 }

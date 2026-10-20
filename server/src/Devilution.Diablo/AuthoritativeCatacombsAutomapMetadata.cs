@@ -44,6 +44,7 @@ public sealed class AuthoritativeCatacombsAutomapMetadata
     private readonly ReadOnlyCollection<AuthoritativeCatacombsAutomapDefinition> definitions;
     private readonly ReadOnlyCollection<AuthoritativeCatacombsAutomapSourceWord> sourceWords;
     private readonly ReadOnlyCollection<TsvTable> tables;
+    private readonly AuthoritativeNativeAutomapExploration explorationProjector;
 
     private AuthoritativeCatacombsAutomapMetadata(
         ContentPack pack,
@@ -53,6 +54,9 @@ public sealed class AuthoritativeCatacombsAutomapMetadata
         PackId = pack.Id;
         PackVersion = pack.Version;
         this.definitions = Array.AsReadOnly(definitions.ToArray());
+        explorationProjector = new(this.definitions.Select(value =>
+            new AuthoritativeCathedralAutomapTileDefinition(value.Id, value.Type, value.Flags)),
+            MaximumGeneratedTileId, "Catacombs");
         this.sourceWords = Array.AsReadOnly(sourceWords.ToArray());
         tables = Array.AsReadOnly(pack.Tables.OrderBy(table => table.SourcePath, StringComparer.Ordinal)
             .Select(CloneTable).ToArray());
@@ -136,6 +140,39 @@ public sealed class AuthoritativeCatacombsAutomapMetadata
         if (tileId > MaximumGeneratedTileId)
             throw new InvalidDataException("Catacombs automap IDs must be implicit cold ID 0 or generated ID 1..160.");
         return definitions[tileId];
+    }
+
+    /** Applies native exploration to an independently validated generated L2 coarse map. */
+    public void ProjectExploration(IReadOnlyList<ushort> coarseTiles,
+        int positionX, int positionY, byte explorer, Span<byte> exploration)
+        => explorationProjector.Project(coarseTiles, positionX, positionY, explorer, exploration);
+
+    public void ProjectExploration(IReadOnlyList<ushort> coarseTiles,
+        int positionX, int positionY, byte explorer, byte[] exploration)
+    {
+        ArgumentNullException.ThrowIfNull(exploration);
+        ProjectExploration(coarseTiles, positionX, positionY, explorer, exploration.AsSpan());
+    }
+
+    public IReadOnlyList<byte> ProjectExploration(IReadOnlyList<ushort> coarseTiles,
+        int positionX, int positionY, byte explorer)
+    {
+        var result = new byte[1600];
+        ProjectExploration(coarseTiles, positionX, positionY, explorer, result);
+        return Array.AsReadOnly(result);
+    }
+
+    /** Coarse-coordinate counterpart for native automap consumers and qualification. */
+    public void ProjectExplorationAtMap(IReadOnlyList<ushort> coarseTiles,
+        int mapX, int mapY, byte explorer, Span<byte> exploration)
+        => explorationProjector.ProjectAtMap(coarseTiles, mapX, mapY, explorer, exploration);
+
+    public IReadOnlyList<byte> ProjectExplorationAtMap(IReadOnlyList<ushort> coarseTiles,
+        int mapX, int mapY, byte explorer)
+    {
+        var result = new byte[1600];
+        ProjectExplorationAtMap(coarseTiles, mapX, mapY, explorer, result.AsSpan());
+        return Array.AsReadOnly(result);
     }
 
     private static AuthoritativeCatacombsAutomapDefinition[] ParseDefinitions(TsvTable table)

@@ -47,6 +47,23 @@ It adds complete post-InitObjects, post-InitMonsters and post-InitItems worlds;
 version-1 output remains separate. Two captures must match byte-for-byte.
 The managed initial-phase comparison must derive the CreateLevel `Freeupstairs`
 5×5 reservations from generated trigger positions, never from captured flags.
+`AuthoritativeCatacombsFreshLevelNativeOracleTests` consumes those same staged
+worlds through complete fresh/ready composition. Set the explicit population
+reference directory, `GODEVILUTION_NATIVE_CATACOMBS_SOURCE_METADATA`,
+`GODEVILUTION_NATIVE_CATACOMBS_GLOBAL_METADATA_DIRECTORY` and
+`GODEVILUTION_NATIVE_CATACOMBS_STORY_SOURCE_TABLE` to qualified source inputs.
+Hero values come from the fixed class policy; retained history must be generated
+through earlier managed floors, never copied from expected worlds.
+
+For controlled L2 theme branches, set
+`GODEVILUTION_CATACOMBS_THEME_ROOM_ORACLE_DIRECTORY` to an empty private directory
+and run `ThemeRoomGenerationTest.CaptureCompleteCatacombsThemePass` on the same
+registered target. It needs canonical loose semantic tables but no MPQ. The
+44-case output covers all16 admitted themes at L5/L8, repeated racks, exhausted
+object pools and saturated Gold/non-Gold item pools. Run
+`AuthoritativeCatacombsThemeRoomNativeOracleTests` with that same directory and
+`--explicit on --fail-skips on`. Its controlled pre-call states are leaf inputs;
+this does not establish native generated theme selection beyond the32-case corpus.
 
 The offline semantic compiler accepts only complete TSV inputs:
 

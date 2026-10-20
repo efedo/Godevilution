@@ -22,6 +22,15 @@ public static class AuthoritativeCathedralInitialItemGenerator
         AuthoritativeCathedralInitialItemParameters parameters)
     {
         ArgumentNullException.ThrowIfNull(parameters);
+        return Generate(parameters, CathedralContextForDepth(parameters.Depth));
+    }
+
+    internal static AuthoritativeCathedralInitialItemResult Generate(
+        AuthoritativeCathedralInitialItemParameters parameters,
+        AuthoritativeNativeDungeonFamilyContext familyContext)
+    {
+        ArgumentNullException.ThrowIfNull(parameters);
+        ValidateParameters(parameters, familyContext);
 
         var items = parameters.Items.Select(CloneItem).ToArray();
         var activeItemIds = parameters.ActiveItemIds.ToArray();
@@ -309,8 +318,25 @@ public static class AuthoritativeCathedralInitialItemGenerator
 
     internal static void ValidateParameters(AuthoritativeCathedralInitialItemParameters parameters)
     {
-        if (parameters.Depth is < 1 or > 4)
+        ArgumentNullException.ThrowIfNull(parameters);
+        ValidateParameters(parameters, CathedralContextForDepth(parameters.Depth));
+    }
+
+    internal static AuthoritativeNativeDungeonFamilyContext CathedralContextForDepth(int depth)
+    {
+        if (depth is < 1 or > 4)
             throw new InvalidDataException("Ordinary Cathedral InitItems requires a depth from 1 through 4.");
+        return AuthoritativeNativeDungeonFamilyContext.Cathedral(depth);
+    }
+
+    internal static void ValidateParameters(
+        AuthoritativeCathedralInitialItemParameters parameters,
+        AuthoritativeNativeDungeonFamilyContext familyContext)
+    {
+        ArgumentNullException.ThrowIfNull(parameters);
+        familyContext.RequireMatch(parameters.Depth);
+        if (parameters.FamilyContext != familyContext)
+            throw new InvalidDataException("Initial item parameters have a mismatched native dungeon family context.");
         if (parameters.MaximumPlacementAttempts <= 0)
             throw new ArgumentOutOfRangeException(nameof(parameters.MaximumPlacementAttempts));
         if (parameters.Tiles.Count != NativeTileCount)
@@ -350,6 +376,21 @@ public sealed class AuthoritativeCathedralInitialItemParameters
         int activeItemCount,
         IReadOnlyList<AuthoritativeCathedralInitialItemDefinition> potionDefinitions,
         int maximumPlacementAttempts = 1_000_000)
+        : this(depth, randomState, tiles, items, activeItemIds, activeItemCount, potionDefinitions,
+            maximumPlacementAttempts, AuthoritativeCathedralInitialItemGenerator.CathedralContextForDepth(depth))
+    {
+    }
+
+    internal AuthoritativeCathedralInitialItemParameters(
+        int depth,
+        uint randomState,
+        IReadOnlyList<AuthoritativeCathedralInitialItemTile> tiles,
+        IReadOnlyList<AuthoritativeCathedralInitialItemState> items,
+        IReadOnlyList<int> activeItemIds,
+        int activeItemCount,
+        IReadOnlyList<AuthoritativeCathedralInitialItemDefinition> potionDefinitions,
+        int maximumPlacementAttempts,
+        AuthoritativeNativeDungeonFamilyContext familyContext)
     {
         ArgumentNullException.ThrowIfNull(tiles);
         ArgumentNullException.ThrowIfNull(items);
@@ -363,7 +404,8 @@ public sealed class AuthoritativeCathedralInitialItemParameters
         ActiveItemCount = activeItemCount;
         PotionDefinitions = new ReadOnlyCollection<AuthoritativeCathedralInitialItemDefinition>(potionDefinitions.ToArray());
         MaximumPlacementAttempts = maximumPlacementAttempts;
-        AuthoritativeCathedralInitialItemGenerator.ValidateParameters(this);
+        FamilyContext = familyContext;
+        AuthoritativeCathedralInitialItemGenerator.ValidateParameters(this, familyContext);
     }
 
     public int Depth { get; }
@@ -374,6 +416,7 @@ public sealed class AuthoritativeCathedralInitialItemParameters
     public int ActiveItemCount { get; }
     public IReadOnlyList<AuthoritativeCathedralInitialItemDefinition> PotionDefinitions { get; }
     public int MaximumPlacementAttempts { get; }
+    internal AuthoritativeNativeDungeonFamilyContext FamilyContext { get; }
 }
 
 /** Detached copy of one native Tile's occupancy and placement inputs. */

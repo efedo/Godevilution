@@ -162,6 +162,117 @@ public sealed class AuthoritativeCathedralLevelReadyResult
 	public AuthoritativeCathedralLevelReadyStage Stage { get; }
 }
 
+/** Explicit C2 input for the same bounded pre-join ready boundary. */
+public sealed class AuthoritativeCatacombsLevelReadyRequest
+{
+	public AuthoritativeCatacombsLevelReadyRequest(
+		AuthoritativeCatacombsFreshLevelResult freshLevel,
+		AuthoritativeCathedralLevelReadyPlayerContext player,
+		AuthoritativeCatacombsAutomapMetadata automap,
+		bool portalsAbsent)
+	{
+		ArgumentNullException.ThrowIfNull(freshLevel);
+		ArgumentNullException.ThrowIfNull(player);
+		ArgumentNullException.ThrowIfNull(automap);
+		if (player.SpellFlags is < 0 or > byte.MaxValue)
+			throw new InvalidDataException("Native player spell flags must fit uint8.");
+		if (player.LifeCurrentQ6 <= 0)
+			throw new InvalidDataException("The cold ready boundary requires a living local player.");
+		if (player.Last.X is < 0 or > 255 || player.Last.Y is < 0 or > 255
+			|| player.Temp.X is < 0 or > 255 || player.Temp.Y is < 0 or > 255)
+			throw new InvalidDataException("Unused native player Last and Temp coordinates must fit uint8.");
+		if (!player.PriorMissilesEmpty)
+			throw new InvalidDataException("The cold level-ready boundary requires an empty missile list.");
+		if (!freshLevel.Request.Hero.LevelChanging)
+			throw new InvalidDataException("The supported pre-join cold handoff requires level-changing state.");
+		if (!portalsAbsent)
+			throw new InvalidDataException("Retained portal state is outside the cold ordinary Catacombs boundary.");
+		if (freshLevel.VisionRecords.Count != 4 || freshLevel.VisionActive.Count != 4)
+			throw new InvalidDataException("Native fresh level vision requires all four player records.");
+		var state = freshLevel.Population.State;
+		if (state.ActiveLightCount <= 0 || !state.ActiveLightIds.Take(state.ActiveLightCount).Contains(0))
+			throw new InvalidDataException("The cold level-ready boundary requires the local player light.");
+		_ = AuthoritativeNativeFreshLevelView.FromCatacombs(freshLevel);
+
+		FreshLevel = freshLevel;
+		Player = player;
+		Automap = automap;
+		PortalsAbsent = portalsAbsent;
+	}
+
+	public AuthoritativeCatacombsFreshLevelResult FreshLevel { get; }
+	public AuthoritativeCathedralLevelReadyPlayerContext Player { get; }
+	public AuthoritativeCatacombsAutomapMetadata Automap { get; }
+	public bool PortalsAbsent { get; }
+}
+
+/** Detached C2 ready output; it never acquires C1 request or profile identity. */
+public sealed class AuthoritativeCatacombsLevelReadyResult
+{
+	internal AuthoritativeCatacombsLevelReadyResult(
+		AuthoritativeCatacombsLevelReadyRequest request,
+		AuthoritativeNativeLevelReadyOutput output)
+	{
+		Request = request ?? throw new ArgumentNullException(nameof(request));
+		State = output.State;
+		Player = output.Player;
+		Corpses = Array.AsReadOnly(output.Corpses.ToArray());
+		BestiaryCorpseIds = Array.AsReadOnly(output.BestiaryCorpseIds.ToArray());
+		BloodSpatterSlot = output.BloodSpatterSlot;
+		StoneCorpseId = output.StoneCorpseId;
+		VisionRecords = Array.AsReadOnly(output.VisionRecords.Select(value => value with { }).ToArray());
+		VisionActive = Array.AsReadOnly(output.VisionActive.ToArray());
+		UpdateVision = output.UpdateVision;
+		VisibleTransparencyRegions = Array.AsReadOnly(output.VisibleTransparencyRegions.ToArray());
+		AutomapExploration = Array.AsReadOnly(output.AutomapExploration.ToArray());
+		SpellFlags = output.PlayerContext.SpellFlags & ~7;
+		Infravision = output.PlayerContext.Infravision;
+		MissilePreFlag = output.PlayerContext.MissilePreFlag;
+		AutoMapShowItems = false;
+		MissilesCleared = true;
+		FinalRandomState = output.FinalRandomState;
+		MonsterClearRandomState = output.MonsterClearRandomState;
+		Stage = AuthoritativeCathedralLevelReadyStage.PreparedBeforeJoin;
+	}
+
+	public AuthoritativeCatacombsLevelReadyRequest Request { get; }
+	public AuthoritativeCathedralThemeRoomState State { get; }
+	public AuthoritativeCathedralLevelReadyPlayerState Player { get; }
+	public IReadOnlyList<AuthoritativeCathedralLevelReadyCorpseState> Corpses { get; }
+	public IReadOnlyList<int> BestiaryCorpseIds { get; }
+	public int BloodSpatterSlot { get; }
+	public int StoneCorpseId { get; }
+	public IReadOnlyList<AuthoritativeCathedralEncounterLightState> VisionRecords { get; }
+	public IReadOnlyList<bool> VisionActive { get; }
+	public bool UpdateVision { get; }
+	public IReadOnlyList<bool> VisibleTransparencyRegions { get; }
+	public IReadOnlyList<byte> AutomapExploration { get; }
+	public int SpellFlags { get; }
+	public bool Infravision { get; }
+	public bool MissilePreFlag { get; }
+	public bool AutoMapShowItems { get; }
+	public bool MissilesCleared { get; }
+	public uint FinalRandomState { get; }
+	public uint MonsterClearRandomState { get; }
+	public AuthoritativeCathedralLevelReadyStage Stage { get; }
+}
+
+internal sealed record AuthoritativeNativeLevelReadyOutput(
+	AuthoritativeCathedralThemeRoomState State,
+	AuthoritativeCathedralLevelReadyPlayerState Player,
+	IReadOnlyList<AuthoritativeCathedralLevelReadyCorpseState> Corpses,
+	IReadOnlyList<int> BestiaryCorpseIds,
+	int BloodSpatterSlot,
+	int StoneCorpseId,
+	IReadOnlyList<AuthoritativeCathedralEncounterLightState> VisionRecords,
+	IReadOnlyList<bool> VisionActive,
+	bool UpdateVision,
+	IReadOnlyList<bool> VisibleTransparencyRegions,
+	IReadOnlyList<byte> AutomapExploration,
+	AuthoritativeCathedralLevelReadyPlayerContext PlayerContext,
+	uint FinalRandomState,
+	uint MonsterClearRandomState);
+
 /** Bounded ordinary Cathedral loader continuation after the fresh compositor. */
 public static class AuthoritativeCathedralLevelReadyGenerator
 {
@@ -187,8 +298,32 @@ public static class AuthoritativeCathedralLevelReadyGenerator
 		AuthoritativeCathedralLevelReadyRequest request)
 	{
 		ArgumentNullException.ThrowIfNull(request);
-		var fresh = request.FreshLevel;
-		var source = fresh.Population.State;
+		var fresh = AuthoritativeNativeFreshLevelView.FromCathedral(request.FreshLevel);
+		var output = GenerateCore(fresh, request.Player, request.PortalsAbsent,
+			request.Automap.ProjectExploration);
+		return new(request, output.State, output.Player, output.Corpses, output.BestiaryCorpseIds,
+			output.BloodSpatterSlot, output.StoneCorpseId, output.VisionRecords, output.VisionActive,
+			output.UpdateVision, output.VisibleTransparencyRegions, output.AutomapExploration,
+			output.PlayerContext, output.FinalRandomState, output.MonsterClearRandomState);
+	}
+
+	internal static AuthoritativeCatacombsLevelReadyResult GenerateCatacombs(
+		AuthoritativeCatacombsLevelReadyRequest request)
+	{
+		ArgumentNullException.ThrowIfNull(request);
+		var fresh = AuthoritativeNativeFreshLevelView.FromCatacombs(request.FreshLevel);
+		var output = GenerateCore(fresh, request.Player, request.PortalsAbsent,
+			request.Automap.ProjectExploration);
+		return new(request, output);
+	}
+
+	private static AuthoritativeNativeLevelReadyOutput GenerateCore(
+		AuthoritativeNativeFreshLevelView fresh,
+		AuthoritativeCathedralLevelReadyPlayerContext playerContext,
+		bool portalsAbsent,
+		Action<IReadOnlyList<ushort>, int, int, byte, byte[]> projectExploration)
+	{
+		var source = fresh.State;
 		var monsterSlots = source.MonsterSlots.Select(value => value with { }).ToArray();
 		var monsterRefs = source.MonsterRefs.ToArray();
 		var playerRefs = source.PlayerRefs.ToArray();
@@ -200,13 +335,13 @@ public static class AuthoritativeCathedralLevelReadyGenerator
 		var activeLightCount = source.ActiveLightCount;
 
 		ValidateColdState(source, fresh);
-		var sourcePlayer = fresh.InitialPopulation.ObjectTemplate.Player;
+		var sourcePlayer = fresh.Player;
 		var readyPlayer = new AuthoritativeCathedralLevelReadyPlayerState(
 			sourcePlayer.Id, sourcePlayer.Level, sourcePlayer.Active,
 			sourcePlayer.LevelChanging, sourcePlayer.Tile, sourcePlayer.Future,
-			sourcePlayer.Tile, request.Player.Last, request.Player.Temp,
-			request.Player.LifeCurrentQ6, request.Player.MissilePreFlag, 0,
-			fresh.Request.Hero.LightRadius);
+			sourcePlayer.Tile, playerContext.Last, playerContext.Temp,
+			playerContext.LifeCurrentQ6, playerContext.MissilePreFlag, 0,
+			fresh.LightRadius);
 
 		// InitMissiles runs before SavePreLighting.  It has no RNG effects in
 		// this cold contract and only clears the represented tile/status fields.
@@ -218,7 +353,7 @@ public static class AuthoritativeCathedralLevelReadyGenerator
 		// channel before any player/monster light is moved or added.
 		preLight = light.ToArray();
 		var synced = SyncInitialPosition(
-			fresh, source, playerRefs, readyPlayer, request.PortalsAbsent);
+			fresh, source, playerRefs, readyPlayer, portalsAbsent);
 		readyPlayer = synced.Player;
 
 		UpdateMonsterLights(monsterSlots, activeLightIds, ref activeLightCount,
@@ -241,7 +376,7 @@ public static class AuthoritativeCathedralLevelReadyGenerator
 		}
 
 		var vision = ProcessVision(
-			fresh, source, tileFlags, request.Automap, request.PortalsAbsent);
+			fresh, source, tileFlags, projectExploration, portalsAbsent);
 		var state = new AuthoritativeCathedralThemeRoomState(
 			source.ObjectSlots, source.ActiveObjectIds, source.AvailableObjectIds,
 			source.ActiveObjectCount, monsterSlots, source.ActiveMonsterIds,
@@ -254,16 +389,16 @@ public static class AuthoritativeCathedralLevelReadyGenerator
 			source.DisableLighting, source.Flags, source.Corpses,
 			source.MonsterPetrified);
 
-		return new(request, state, readyPlayer, corpseOutput.Corpses, corpseOutput.BestiaryCorpseIds,
+		return new(state, readyPlayer, corpseOutput.Corpses, corpseOutput.BestiaryCorpseIds,
 			corpseOutput.BloodSpatterSlot, corpseOutput.StoneCorpseId,
-			vision.VisionRecords, fresh.VisionActive, updateVision: false,
-			vision.VisibleTransparencyRegions, vision.AutomapExploration, request.Player,
-			fresh.Population.FinalRandomState, fresh.MonsterClearFinalRandomState);
+			vision.VisionRecords, fresh.VisionActive, UpdateVision: false,
+			vision.VisibleTransparencyRegions, vision.AutomapExploration, playerContext,
+			fresh.FinalRandomState, fresh.MonsterClearRandomState);
 	}
 
 	private static void ValidateColdState(
 		AuthoritativeCathedralThemeRoomState state,
-		AuthoritativeCathedralFreshLevelResult fresh)
+		AuthoritativeNativeFreshLevelView fresh)
 	{
 		if (state.Pieces.Count != CellCount || state.TileFlags.Count != CellCount
 			|| state.Transparency.Count != CellCount || state.PieceProperties.Count != 1379)
@@ -289,7 +424,7 @@ public static class AuthoritativeCathedralLevelReadyGenerator
 	}
 
 	private static (AuthoritativeCathedralLevelReadyPlayerState Player, int[] PlayerRefs) SyncInitialPosition(
-		AuthoritativeCathedralFreshLevelResult fresh,
+		AuthoritativeNativeFreshLevelView fresh,
 		AuthoritativeCathedralThemeRoomState state,
 		int[] playerRefs,
 		AuthoritativeCathedralLevelReadyPlayerState player,
@@ -317,7 +452,7 @@ public static class AuthoritativeCathedralLevelReadyGenerator
 	}
 
 	private static AuthoritativeCathedralPopulationPoint? FindClosestValidPosition(
-		AuthoritativeCathedralFreshLevelResult fresh,
+		AuthoritativeNativeFreshLevelView fresh,
 		AuthoritativeCathedralThemeRoomState state,
 		AuthoritativeCathedralPopulationPoint origin,
 		int playerId)
@@ -510,10 +645,10 @@ public static class AuthoritativeCathedralLevelReadyGenerator
 	private static (IReadOnlyList<AuthoritativeCathedralEncounterLightState> VisionRecords,
 		IReadOnlyList<bool> VisibleTransparencyRegions,
 		IReadOnlyList<byte> AutomapExploration) ProcessVision(
-		AuthoritativeCathedralFreshLevelResult fresh,
+		AuthoritativeNativeFreshLevelView fresh,
 		AuthoritativeCathedralThemeRoomState state,
 		byte[] tileFlags,
-		AuthoritativeCathedralAutomapMetadata automap,
+		Action<IReadOnlyList<ushort>, int, int, byte, byte[]> projectExploration,
 		bool portalsAbsent)
 	{
 		if (!portalsAbsent)
@@ -538,8 +673,7 @@ public static class AuthoritativeCathedralLevelReadyGenerator
 				point => {
 					var index = Index(point);
 					if (tileFlags[index] != 0)
-						automap.ProjectExploration(fresh.Geometry.GenerationResult.MegaTiles,
-							point.X, point.Y, 4, automapExploration);
+						projectExploration(fresh.MegaTiles, point.X, point.Y, 4, automapExploration);
 					tileFlags[index] |= Visible | Lit | Explored;
 				},
 				point => {
@@ -570,17 +704,17 @@ public static class AuthoritativeCathedralLevelReadyGenerator
 
 	private static (IReadOnlyList<AuthoritativeCathedralLevelReadyCorpseState> Corpses,
 		IReadOnlyList<int> BestiaryCorpseIds, int BloodSpatterSlot, int StoneCorpseId) InitializeCorpses(
-		AuthoritativeCathedralFreshLevelResult fresh,
+		AuthoritativeNativeFreshLevelView fresh,
 		AuthoritativeCathedralPopulationMonsterState[] monsters)
 	{
 		var corpses = Enumerable.Range(0, 31)
 			.Select(slot => new AuthoritativeCathedralLevelReadyCorpseState(slot, 0, 0, 0))
 			.ToArray();
-		var ids = new int[fresh.Population.InitialPopulation.Bestiary.Entries.Count];
+		var ids = new int[fresh.Bestiary.Entries.Count];
 		var seenTypes = new HashSet<int>();
 		var next = 0;
-		for (var index = 0; index < fresh.Population.InitialPopulation.Bestiary.Entries.Count; index++) {
-			var entry = fresh.Population.InitialPopulation.Bestiary.Entries[index];
+		for (var index = 0; index < fresh.Bestiary.Entries.Count; index++) {
+			var entry = fresh.Bestiary.Entries[index];
 			if (!seenTypes.Add(entry.NativeType))
 				continue;
 			if (next >= corpses.Length - 2)
@@ -598,12 +732,12 @@ public static class AuthoritativeCathedralLevelReadyGenerator
 		corpses[next] = new(next, 11, 128, 0);
 		var stoneCorpseId = next + 1;
 		next++;
-		for (var activeIndex = 0; activeIndex < fresh.Population.State.ActiveMonsterCount; activeIndex++) {
-			var slot = fresh.Population.State.ActiveMonsterIds[activeIndex];
+		for (var activeIndex = 0; activeIndex < fresh.State.ActiveMonsterCount; activeIndex++) {
+			var slot = fresh.State.ActiveMonsterIds[activeIndex];
 			var monster = monsters[slot];
 			if (monster.UniqueType == byte.MaxValue)
 				continue;
-			var entry = fresh.Population.InitialPopulation.Bestiary.Entries
+			var entry = fresh.Bestiary.Entries
 				.SingleOrDefault(value => value.NativeType == monster.Type);
 			if (entry is null || next >= corpses.Length)
 				throw new InvalidDataException("A unique monster corpse cannot be resolved from the selected bestiary.");

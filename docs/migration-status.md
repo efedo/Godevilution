@@ -140,10 +140,13 @@ Gargoyle, Magma and Acid actors. Starter-item identity seeds and pre-entry hero
 coordinates are explicit prepared inputs; birth-clock seed parity and preceding-
 floor gameplay are outside this proof. Distinct semantic metadata, L2 automap
 and initial population phases pass 55 focused cases and all 32 exact staged
-native comparisons. Complete encounters/items/themes/ready composition is next.
-Cathedral compatibility
-has 124 passes; one unchanged symbolic-link case is unavailable under sandbox
-privileges. No playable Catacombs profile is activated. Generated
+native comparisons. Complete fresh encounters/items/themes and level-ready state
+now match all 32 actual native cases, including both classes and managed retained-
+history chains. Separate controlled L5/L8 theme seams pass all 44 cases; 16 focused
+contracts and 183 Cathedral compatibility cases pass, with six explicit fixtures
+intentionally not selected. The earlier metadata compatibility proof retains its
+124 passes and unavailable symbolic-link case under sandbox privileges.
+No playable Catacombs profile is activated. Generated
 Gargoyle statue mode/cursor, native-owned Fat special attack and ranged timing/
 controller retention remain required integration gates before family qualification.
 See [verification](test-history.md#2026-10-20--native-catacombs-generation-and-population-reference).

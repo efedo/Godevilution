@@ -53,6 +53,21 @@ public sealed class AuthoritativeCathedralThemeItemWorldGeneratorTests
     }
 
     [Fact]
+    public void FamilyAwareWorldItemCreationThreadsCatacombsContextIntoItemSetup()
+    {
+        var request = Request(EmptyWorld(), requestedItemType: 1,
+            policy: new AuthoritativeCathedralThemeItemPolicy(5));
+        var context = AuthoritativeNativeDungeonFamilyContext.Catacombs(5);
+
+        var result = AuthoritativeCathedralThemeItemWorldGenerator.CreateTypeItem(request, context);
+
+        Assert.Equal(1, result.ActiveItemCount);
+        Assert.Equal(1, result.Items[result.SelectedSlot].ItemIndex);
+        Assert.Throws<InvalidDataException>(() => AuthoritativeCathedralThemeItemWorldGenerator.CreateTypeItem(
+            request, AuthoritativeNativeDungeonFamilyContext.Catacombs(6)));
+    }
+
+    [Fact]
     public void AllocationZerosSelectedSlotButPreservesInactiveAndScratchSentinels()
     {
         var items = Enumerable.Range(0, 128)

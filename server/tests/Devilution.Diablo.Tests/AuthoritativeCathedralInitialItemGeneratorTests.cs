@@ -29,6 +29,20 @@ public sealed class AuthoritativeCathedralInitialItemGeneratorTests
     }
 
     [Fact]
+    public void FamilyAwareInitialItemsRequireAnExplicitMatchingCatacombsContext()
+    {
+        var context = AuthoritativeNativeDungeonFamilyContext.Catacombs(5);
+        var parameters = CreateParameters(2588, depth: 5, familyContext: context);
+
+        var result = AuthoritativeCathedralInitialItemGenerator.Generate(parameters, context);
+
+        Assert.True(result.ActiveItemCount > 0);
+        Assert.Throws<InvalidDataException>(() => AuthoritativeCathedralInitialItemGenerator.Generate(parameters));
+        Assert.Throws<InvalidDataException>(() => AuthoritativeCathedralInitialItemGenerator.Generate(
+            parameters, AuthoritativeNativeDungeonFamilyContext.Catacombs(6)));
+    }
+
+    [Fact]
     public void GetItemAttrsCopiesRawPotionMetadataAndConsumesLimitOneAcDraw()
     {
         var healing = Definition(AuthoritativeCathedralInitialItemGenerator.NativeHealingPotionId,
@@ -351,23 +365,26 @@ public sealed class AuthoritativeCathedralInitialItemGeneratorTests
         IReadOnlyList<int>? activeItemIds = null,
         int activeItemCount = 0,
         IReadOnlyList<AuthoritativeCathedralInitialItemDefinition>? definitions = null,
-        int maximumPlacementAttempts = 1_000_000)
+        int maximumPlacementAttempts = 1_000_000,
+        int depth = 1,
+        AuthoritativeNativeDungeonFamilyContext? familyContext = null)
     {
-        return new(
-            depth: 1,
-            randomState: seed,
-            tiles: tiles ?? EmptyTiles(),
-            items: items ?? Enumerable.Range(0, AuthoritativeCathedralInitialItemGenerator.PoolCapacity)
-                .Select(_ => new AuthoritativeCathedralInitialItemState()).ToArray(),
-            activeItemIds: activeItemIds ?? Enumerable.Range(0, AuthoritativeCathedralInitialItemGenerator.ActiveCapacity).ToArray(),
-            activeItemCount: activeItemCount,
-            potionDefinitions: definitions ?? [
-                Definition(AuthoritativeCathedralInitialItemGenerator.NativeHealingPotionId,
-                    "Potion of Healing", "Potion of Healing", 32, 9, 0, 0),
-                Definition(AuthoritativeCathedralInitialItemGenerator.NativeManaPotionId,
-                    "Potion of Mana", "Potion of Mana", 39, 10, 0, 0),
-            ],
-            maximumPlacementAttempts: maximumPlacementAttempts);
+        var resolvedTiles = tiles ?? EmptyTiles();
+        var resolvedItems = items ?? Enumerable.Range(0, AuthoritativeCathedralInitialItemGenerator.PoolCapacity)
+            .Select(_ => new AuthoritativeCathedralInitialItemState()).ToArray();
+        var resolvedActiveItemIds = activeItemIds
+            ?? Enumerable.Range(0, AuthoritativeCathedralInitialItemGenerator.ActiveCapacity).ToArray();
+        var resolvedDefinitions = definitions ?? [
+            Definition(AuthoritativeCathedralInitialItemGenerator.NativeHealingPotionId,
+                "Potion of Healing", "Potion of Healing", 32, 9, 0, 0),
+            Definition(AuthoritativeCathedralInitialItemGenerator.NativeManaPotionId,
+                "Potion of Mana", "Potion of Mana", 39, 10, 0, 0),
+        ];
+        if (familyContext is { } context)
+            return new(depth, seed, resolvedTiles, resolvedItems, resolvedActiveItemIds, activeItemCount,
+                resolvedDefinitions, maximumPlacementAttempts, context);
+        return new(depth, seed, resolvedTiles, resolvedItems, resolvedActiveItemIds, activeItemCount,
+            resolvedDefinitions, maximumPlacementAttempts);
     }
 
     private static AuthoritativeCathedralInitialItemTile[] EmptyTiles()

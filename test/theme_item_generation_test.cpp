@@ -2326,6 +2326,87 @@ TEST_F(ThemeRoomGenerationTest, CaptureCompleteSelectedThemePass)
 	EXPECT_LE(std::filesystem::file_size(root / "native-theme-rooms.json"), 128U * 1024U * 1024U);
 }
 
+// Controlled L2 theme seams complement the separately captured generated maps.
+TEST_F(ThemeRoomGenerationTest, CaptureCompleteCatacombsThemePass)
+{
+	const char *directory = std::getenv("GODEVILUTION_CATACOMBS_THEME_ROOM_ORACLE_DIRECTORY");
+	if (directory == nullptr || !*directory)
+		GTEST_SKIP() << "Select the separate private Catacombs theme-room corpus explicitly.";
+	const auto root = std::filesystem::weakly_canonical(directory);
+	ASSERT_TRUE(root.is_absolute()); ASSERT_TRUE(std::filesystem::is_directory(root));
+	ASSERT_TRUE(std::filesystem::is_empty(root));
+	std::ofstream stream(root / "native-catacombs-theme-rooms.json", std::ios::binary | std::ios::trunc);
+	ASSERT_TRUE(stream.good());
+	constexpr std::array<int, 16> types { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 13, 14, 15, 16 };
+	constexpr std::array<const char *, 6> edges {
+		"ordered-racks", "object-full-armor", "object-full-weapon", "item-full-gold", "item-full-minimum-gold", "item-full-nongold"
+	};
+	int cases = 0;
+	{
+		JsonObject document(stream);
+		document.String("format", "godevilution-catacombs-theme-rooms"); document.Number("version", 1);
+		document.String("policy", "controlled-original-diablo-single-player-normal-catacombs-theme-branches");
+		document.Number("playerMaximumLife", 6400); document.Number("playerMaximumMana", 3200);
+		document.Key("itemCatalog"); WriteCatalog(stream);
+		document.Key("roomCatalog"); WriteRoomCatalog(stream);
+		document.Key("cases"); stream << '[';
+		for (const int depth : { 5, 8 }) {
+			for (int lane = 0; lane < 22; ++lane) {
+				const bool fullItems = lane >= 19;
+				PrepareRoom(depth, fullItems ? MAXITEMS : 2, lane == 17 || lane == 18 ? MAXOBJECTS : 0);
+				currentLevel().setId(LevelId { .levelNum = static_cast<uint8_t>(depth), .type = DTYPE_CATACOMBS });
+				CurrentLightManager.MakeLightTable();
+				const uint32_t seed = UINT32_C(2588) + depth * 17;
+				const std::string name = lane < 16 ? "type-" + std::to_string(types[lane]) : edges[lane - 16];
+				numThemes() = lane == 16 ? 4 : 1;
+				if (lane == 16) {
+					for (int i = 0; i < 4; ++i) themes[i] = { static_cast<theme_id>(i % 2 == 0 ? 10 : 16), 1 };
+				} else {
+					themes[0] = { static_cast<theme_id>(lane < 16 ? types[lane] : lane == 17 ? 10 : lane == 18 ? 16 : 4), 1 };
+				}
+				if (fullItems) {
+					Item &last = Items[ActiveItems[MAXITEMS - 1]];
+					last._itype = lane == 21 ? ItemType::Misc : ItemType::Gold;
+					last.IDidx = lane == 21 ? IDI_HEAL : IDI_GOLD;
+					last._ivalue = lane == 20 ? 1 : 99;
+				}
+				SetRndSeed(seed);
+				if (cases++ != 0) stream << ',';
+				JsonObject row(stream);
+				row.String("name", name); row.Number("depth", depth); row.Number("seed", seed);
+				row.Key("themes"); stream << '[';
+				for (int i = 0; i < numThemes(); ++i) {
+					if (i != 0) stream << ',';
+					stream << '[' << static_cast<int>(themes[i].ttype) << ',' << static_cast<int>(themes[i].ttval) << ']';
+				}
+				stream << ']';
+				row.Key("player"); {
+					JsonObject player(stream); player.Number("id", 0); player.Number("level", depth);
+					player.Boolean("active", true); player.Boolean("levelChanging", false);
+					player.Key("tile"); WriteRoomPoint(stream, MyPlayer->position.tile);
+					player.Key("future"); WriteRoomPoint(stream, MyPlayer->position.future);
+				}
+				row.Key("input"); WriteRoomWorld(stream);
+				CreateThemeRooms();
+				row.Key("expected"); WriteRoomWorld(stream);
+				if (fullItems) {
+					const Item &last = Items[ActiveItems[MAXITEMS - 1]];
+					EXPECT_EQ(last._ivalue, lane == 21 ? 99 : 1);
+					EXPECT_EQ(last._iSeed, 1000U);
+					EXPECT_EQ(last._iPLStr, 17);
+					EXPECT_EQ(last._iCharges, 7);
+					EXPECT_EQ(last._iMaxCharges, 9);
+					EXPECT_EQ(last.dwBuff, 128U);
+				}
+			}
+		}
+		stream << ']'; document.Number("caseCount", cases);
+	}
+	stream.flush(); ASSERT_TRUE(stream.good()); stream.close();
+	EXPECT_EQ(cases, 44);
+	EXPECT_LE(std::filesystem::file_size(root / "native-catacombs-theme-rooms.json"), 128U * 1024U * 1024U);
+}
+
 // Extra public state borrowed only by the real-geometry opt-in. The underlying
 // guards already retain tables, pools, tiles, RNG, player and lighting state.
 struct NativeComposedPopulationGuard {

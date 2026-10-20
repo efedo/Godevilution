@@ -73,6 +73,131 @@ public sealed class AuthoritativeCathedralThemeRoomGeneratorTests
     }
 
     [Fact]
+    public void CatacombsContextAdmitsArmorAndWeaponRacksAndConsumesTheirAvailabilityFlags()
+    {
+        var armorRequest = Request(CatacombsRegionState(), [new AuthoritativeCathedralThemeEntry(10, 1)],
+            Catalog(includeScatter: true)) with { ItemPolicy = new(5) };
+        var armor = AuthoritativeCathedralThemeRoomGenerator.Generate(armorRequest,
+            AuthoritativeNativeDungeonFamilyContext.Catacombs(5));
+
+        var armorStand = Assert.Single(armor.State.ObjectSlots, value => value.Type == 77);
+        Assert.NotEqual(0U, armorStand.RndSeed);
+        Assert.False(armor.State.Flags.ArmorAvailable);
+
+        var weaponRequest = Request(CatacombsRegionState(), [new AuthoritativeCathedralThemeEntry(16, 1)],
+            Catalog(includeScatter: true)) with { ItemPolicy = new(5) };
+        var weapon = AuthoritativeCathedralThemeRoomGenerator.Generate(weaponRequest,
+            AuthoritativeNativeDungeonFamilyContext.Catacombs(5));
+
+        var weaponRack = Assert.Single(weapon.State.ObjectSlots, value => value.Type == 92);
+        Assert.NotEqual(0U, weaponRack.RndSeed);
+        Assert.False(weapon.State.Flags.WeaponAvailable);
+    }
+
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public void ArmorStandObjectInitializationConsumesExactlyOneSeed(bool armorAvailable)
+    {
+        var input = new AuthoritativeCathedralPopulationObjectState {
+            Slot = 4,
+            Type = 77,
+            AnimFlag = 7,
+            SelectionRegion = 12,
+            RndSeed = 99,
+            Var1 = 23,
+        };
+        const uint seed = 0x13579BDF;
+        var actualRandom = new AuthoritativeLegacyRandom(seed);
+        var expectedRandom = new AuthoritativeLegacyRandom(seed);
+
+        var actual = AuthoritativeCathedralThemeRoomGenerator.InitializeArmorStand(
+            input, armorAvailable, actualRandom);
+
+        Assert.Equal(expectedRandom.AdvanceSeed(), actual.RndSeed);
+        Assert.Equal(expectedRandom.State, actualRandom.State);
+        Assert.Equal(armorAvailable ? 7U : 1U, actual.AnimFlag);
+        Assert.Equal(armorAvailable ? 12 : 0, actual.SelectionRegion);
+        Assert.Equal(23, actual.Var1);
+    }
+
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public void WeaponRackObjectInitializationConsumesExactlyOneSeed(bool weaponAvailable)
+    {
+        var input = new AuthoritativeCathedralPopulationObjectState {
+            Slot = 5,
+            Type = 92,
+            AnimFlag = 9,
+            SelectionRegion = 13,
+            RndSeed = 101,
+            Var2 = 29,
+        };
+        const uint seed = 0x2468ACE0;
+        var actualRandom = new AuthoritativeLegacyRandom(seed);
+        var expectedRandom = new AuthoritativeLegacyRandom(seed);
+
+        var actual = AuthoritativeCathedralThemeRoomGenerator.InitializeWeaponRack(
+            input, weaponAvailable, actualRandom);
+
+        Assert.Equal(expectedRandom.AdvanceSeed(), actual.RndSeed);
+        Assert.Equal(expectedRandom.State, actualRandom.State);
+        Assert.Equal(weaponAvailable ? 9U : 1U, actual.AnimFlag);
+        Assert.Equal(weaponAvailable ? 13 : 0, actual.SelectionRegion);
+        Assert.Equal(29, actual.Var2);
+    }
+
+    [Fact]
+    public void CatacombsThemeAdmissionIsBoundToFamilyAndStillRejectsCauldron()
+    {
+        var catalog = Catalog(includeScatter: true);
+        var rackRequest = Request(CatacombsRegionState(), [new AuthoritativeCathedralThemeEntry(16, 1)], catalog)
+            with { ItemPolicy = new(5) };
+        Assert.Throws<InvalidDataException>(() => AuthoritativeCathedralThemeRoomGenerator.Generate(
+            rackRequest, AuthoritativeNativeDungeonFamilyContext.Catacombs(6)));
+
+        var cathedralRequest = Request(State(), [new AuthoritativeCathedralThemeEntry(0, 0)], catalog);
+        Assert.Throws<InvalidDataException>(() => AuthoritativeCathedralThemeRoomGenerator.Generate(
+            cathedralRequest, AuthoritativeNativeDungeonFamilyContext.Cathedral(2)));
+
+        var cauldronRequest = Request(CatacombsRegionState(), [new AuthoritativeCathedralThemeEntry(12, 1)], catalog)
+            with { ItemPolicy = new(5) };
+        Assert.Throws<InvalidDataException>(() => AuthoritativeCathedralThemeRoomGenerator.Generate(
+            cauldronRequest, AuthoritativeNativeDungeonFamilyContext.Catacombs(5)));
+    }
+
+    [Fact]
+    public void CatacombsTreasureHalvesThePreviouslyLastActiveGoldAndCathedralDoesNot()
+    {
+        var transparency = new sbyte[112 * 112];
+        transparency[50 * 112 + 50] = 1;
+        var items = Enumerable.Repeat(new AuthoritativeCathedralInitialItemState(), 128).ToArray();
+        items[126] = items[126] with { ItemIndex = 0, ItemType = 11, Value = 101 };
+        var activeItems = Enumerable.Range(0, 127).ToArray();
+
+        var catacombs = AuthoritativeCathedralThemeRoomGenerator.Generate(Request(
+            State(transparency: transparency, itemSlots: items, activeItemIds: activeItems, activeItemCount: 127),
+            [new AuthoritativeCathedralThemeEntry(4, 1)], Catalog(includeScatter: true), randomState: 11)
+            with { ItemPolicy = new(5) }, AuthoritativeNativeDungeonFamilyContext.Catacombs(5));
+        var cathedral = AuthoritativeCathedralThemeRoomGenerator.Generate(Request(
+            State(transparency: transparency, itemSlots: items, activeItemIds: activeItems, activeItemCount: 127),
+            [new AuthoritativeCathedralThemeEntry(4, 1)], Catalog(includeScatter: true), randomState: 11));
+
+        Assert.Equal(50, catacombs.State.ItemSlots[126].Value);
+        Assert.Equal(101, cathedral.State.ItemSlots[126].Value);
+    }
+
+    private static AuthoritativeCathedralThemeRoomState CatacombsRegionState()
+    {
+        var transparency = new sbyte[112 * 112];
+        for (var y = 30; y < 43; y++)
+            for (var x = 30; x < 43; x++)
+                transparency[y * 112 + x] = 1;
+        return State(transparency: transparency);
+    }
+
+    [Fact]
     public void ActiveAndAvailableObjectPrefixesAreValidatedWithoutNormalizingTails()
     {
         var active = Enumerable.Range(0, 127).ToArray();
@@ -467,7 +592,11 @@ public sealed class AuthoritativeCathedralThemeRoomGeneratorTests
         IReadOnlyList<sbyte>? transparency = null,
         int activeObjectCount = 0,
         bool shrineFit = false,
-        bool solidBoundary = false)
+        bool solidBoundary = false,
+        IReadOnlyList<AuthoritativeCathedralInitialItemState>? itemSlots = null,
+        IReadOnlyList<int>? activeItemIds = null,
+        int activeItemCount = 0,
+        IReadOnlyList<int>? itemRefs = null)
     {
         var objects = Enumerable.Range(0, 127).Select(index => new AuthoritativeCathedralPopulationObjectState {
             Slot = index,
@@ -514,10 +643,10 @@ public sealed class AuthoritativeCathedralThemeRoomGeneratorTests
             0,
             monsterRefs ?? new int[cells],
             playerRefs ?? new int[cells],
-            Enumerable.Repeat(new AuthoritativeCathedralInitialItemState(), 128).ToArray(),
-            Enumerable.Range(0, 127).ToArray(),
-            0,
-            new int[cells],
+            itemSlots ?? Enumerable.Repeat(new AuthoritativeCathedralInitialItemState(), 128).ToArray(),
+            activeItemIds ?? Enumerable.Range(0, 127).ToArray(),
+            activeItemCount,
+            itemRefs ?? new int[cells],
             new HashSet<int>(),
             pieces,
             transparencyValues,

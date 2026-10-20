@@ -126,6 +126,24 @@ public sealed class AuthoritativeCathedralThemeItemGeneratorTests
     }
 
     [Fact]
+    public void FamilyAwareItemSetupAcceptsOnlyTheExplicitMatchingCatacombsDepth()
+    {
+        var catalog = Catalog();
+        var policy = new AuthoritativeCathedralThemeItemPolicy(5);
+        var request = new AuthoritativeCathedralThemeItemRequest(2588, 1, 10, 0, false, false);
+
+        var result = AuthoritativeCathedralThemeItemGenerator.GenerateSetupAndUniqueContinuation(
+            request, catalog, policy, AuthoritativeNativeDungeonFamilyContext.Catacombs(5));
+
+        Assert.Equal(1, result.Item.ItemIndex);
+        Assert.Throws<InvalidDataException>(() => AuthoritativeCathedralThemeItemGenerator
+            .GenerateSetupAndUniqueContinuation(request, catalog, policy));
+        Assert.Throws<InvalidDataException>(() => AuthoritativeCathedralThemeItemGenerator
+            .GenerateSetupAndUniqueContinuation(request, catalog, policy,
+                AuthoritativeNativeDungeonFamilyContext.Catacombs(6)));
+    }
+
+    [Fact]
     public void BookAndStaffGenerationUseExternallySuppliedSpellRows()
     {
         var catalog = Catalog(new AuthoritativeItemGenerationRules(100, 0, 1, 15, 4, 0, 0, 0, 59, 0));

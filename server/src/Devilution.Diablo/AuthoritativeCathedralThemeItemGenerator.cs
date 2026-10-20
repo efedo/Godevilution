@@ -494,7 +494,19 @@ public static class AuthoritativeCathedralThemeItemGenerator
         AuthoritativeCathedralThemeItemRequest request,
         AuthoritativeCathedralThemeItemCatalog catalog,
         AuthoritativeCathedralThemeItemPolicy policy)
-        => GenerateCore(request, catalog, policy, true);
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        ArgumentNullException.ThrowIfNull(catalog);
+        ValidatePolicy(policy);
+        return Generate(request, catalog, policy, AuthoritativeNativeDungeonFamilyContext.Cathedral(policy.Depth));
+    }
+
+    internal static AuthoritativeCathedralThemeItemResult Generate(
+        AuthoritativeCathedralThemeItemRequest request,
+        AuthoritativeCathedralThemeItemCatalog catalog,
+        AuthoritativeCathedralThemeItemPolicy policy,
+        AuthoritativeNativeDungeonFamilyContext familyContext)
+        => GenerateCore(request, catalog, policy, true, familyContext);
 
     /** Generates ordinary Cathedral SetupAllUseful contents, including L2 portal rolls. */
     internal static AuthoritativeCathedralThemeItemResult GenerateUseful(
@@ -510,8 +522,26 @@ public static class AuthoritativeCathedralThemeItemGenerator
         ArgumentNullException.ThrowIfNull(catalog);
         ArgumentNullException.ThrowIfNull(policy);
         ValidatePolicy(policy);
-        if (currentLevel is < 1 or > 4 || currentLevel != policy.Depth || policy.SetLevel)
-            throw new InvalidDataException("Native useful contents require ordinary Cathedral depths 1 through 4.");
+        return GenerateUseful(inputItem, itemSeed, currentLevel, catalog, policy, player,
+            uniqueItemFlags, AuthoritativeNativeDungeonFamilyContext.Cathedral(policy.Depth));
+    }
+
+    internal static AuthoritativeCathedralThemeItemResult GenerateUseful(
+        AuthoritativeCathedralInitialItemState inputItem,
+        uint itemSeed,
+        int currentLevel,
+        AuthoritativeCathedralThemeItemCatalog catalog,
+        AuthoritativeCathedralThemeItemPolicy policy,
+        AuthoritativeCathedralThemeItemPlayerContext? player,
+        IReadOnlySet<int>? uniqueItemFlags,
+        AuthoritativeNativeDungeonFamilyContext familyContext)
+    {
+        ArgumentNullException.ThrowIfNull(inputItem);
+        ArgumentNullException.ThrowIfNull(catalog);
+        ArgumentNullException.ThrowIfNull(policy);
+        ValidatePolicy(policy, familyContext);
+        if (currentLevel != policy.Depth || policy.SetLevel)
+            throw new InvalidDataException("Native useful contents require the matching ordinary dungeon depth.");
         ValidateInputState(inputItem);
         ValidateUniqueFlags(uniqueItemFlags);
 
@@ -558,19 +588,33 @@ public static class AuthoritativeCathedralThemeItemGenerator
         AuthoritativeCathedralThemeItemRequest request,
         AuthoritativeCathedralThemeItemCatalog catalog,
         AuthoritativeCathedralThemeItemPolicy policy)
-        => GenerateCore(request, catalog, policy, false);
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        ArgumentNullException.ThrowIfNull(catalog);
+        ValidatePolicy(policy);
+        return GenerateSetupAndUniqueContinuation(request, catalog, policy,
+            AuthoritativeNativeDungeonFamilyContext.Cathedral(policy.Depth));
+    }
+
+    internal static AuthoritativeCathedralThemeItemResult GenerateSetupAndUniqueContinuation(
+        AuthoritativeCathedralThemeItemRequest request,
+        AuthoritativeCathedralThemeItemCatalog catalog,
+        AuthoritativeCathedralThemeItemPolicy policy,
+        AuthoritativeNativeDungeonFamilyContext familyContext)
+        => GenerateCore(request, catalog, policy, false, familyContext);
 
     private static AuthoritativeCathedralThemeItemResult GenerateCore(
         AuthoritativeCathedralThemeItemRequest request,
         AuthoritativeCathedralThemeItemCatalog catalog,
         AuthoritativeCathedralThemeItemPolicy policy,
-        bool applyGroundAnimation)
+        bool applyGroundAnimation,
+        AuthoritativeNativeDungeonFamilyContext familyContext)
     {
-        ValidateRequest(request, catalog, policy);
+        ValidateRequest(request, catalog, policy, familyContext);
         var flags = CopyFlags(request.UniqueItemFlags);
-        var generation = SetupCore(request, catalog, policy);
+        var generation = SetupCore(request, catalog, policy, familyContext);
         if (!generation.Cleared)
-            generation = TryRandomUnique(generation, request, catalog, policy, flags);
+            generation = TryRandomUnique(generation, request, catalog, policy, flags, familyContext);
         if (applyGroundAnimation)
             generation.Item = SetupItem(generation.Item, generation.ItemIndex, catalog, request.Player, policy);
         return ToResult(generation, flags);
@@ -582,8 +626,21 @@ public static class AuthoritativeCathedralThemeItemGenerator
         AuthoritativeCathedralThemeItemCatalog catalog,
         AuthoritativeCathedralThemeItemPolicy policy)
     {
-        ValidateRequest(request, catalog, policy);
-        return ToResult(SetupCore(request, catalog, policy), CopyFlags(request.UniqueItemFlags));
+        ArgumentNullException.ThrowIfNull(request);
+        ArgumentNullException.ThrowIfNull(catalog);
+        ValidatePolicy(policy);
+        return SetupAllItems(request, catalog, policy,
+            AuthoritativeNativeDungeonFamilyContext.Cathedral(policy.Depth));
+    }
+
+    internal static AuthoritativeCathedralThemeItemResult SetupAllItems(
+        AuthoritativeCathedralThemeItemRequest request,
+        AuthoritativeCathedralThemeItemCatalog catalog,
+        AuthoritativeCathedralThemeItemPolicy policy,
+        AuthoritativeNativeDungeonFamilyContext familyContext)
+    {
+        ValidateRequest(request, catalog, policy, familyContext);
+        return ToResult(SetupCore(request, catalog, policy, familyContext), CopyFlags(request.UniqueItemFlags));
     }
 
     /** Selects and generates preparatory state without pool allocation or placement; selector parity is not independently validated. */
@@ -592,7 +649,20 @@ public static class AuthoritativeCathedralThemeItemGenerator
         AuthoritativeCathedralThemeItemCatalog catalog,
         AuthoritativeCathedralThemeItemPolicy policy)
     {
-        ValidateSelectionRequest(request, catalog, policy);
+        ArgumentNullException.ThrowIfNull(request);
+        ArgumentNullException.ThrowIfNull(catalog);
+        ValidatePolicy(policy);
+        return CreateRandomItem(request, catalog, policy,
+            AuthoritativeNativeDungeonFamilyContext.Cathedral(policy.Depth));
+    }
+
+    internal static AuthoritativeCathedralThemeItemResult CreateRandomItem(
+        AuthoritativeCathedralThemeItemSelectionRequest request,
+        AuthoritativeCathedralThemeItemCatalog catalog,
+        AuthoritativeCathedralThemeItemPolicy policy,
+        AuthoritativeNativeDungeonFamilyContext familyContext)
+    {
+        ValidateSelectionRequest(request, catalog, policy, familyContext);
         var random = new AuthoritativeLegacyRandom(request.RandomState);
         var itemIndex = SelectRandomItem(random, request.OnlyGood, request.CurrentLevel, catalog);
         var itemSeed = unchecked((uint)random.AdvanceRndSeed());
@@ -607,7 +677,7 @@ public static class AuthoritativeCathedralThemeItemGenerator
             ResetBeforeGetItemAttrs: request.ResetBeforeGetItemAttrs,
             Player: request.Player,
             UniqueItemFlags: request.UniqueItemFlags);
-        var result = GenerateSetupAndUniqueContinuation(itemRequest, catalog, policy);
+        var result = GenerateSetupAndUniqueContinuation(itemRequest, catalog, policy, familyContext);
         return result;
     }
 
@@ -617,7 +687,20 @@ public static class AuthoritativeCathedralThemeItemGenerator
         AuthoritativeCathedralThemeItemCatalog catalog,
         AuthoritativeCathedralThemeItemPolicy policy)
     {
-        ValidateSelectionRequest(request, catalog, policy);
+        ArgumentNullException.ThrowIfNull(request);
+        ArgumentNullException.ThrowIfNull(catalog);
+        ValidatePolicy(policy);
+        return CreateTypeItem(request, catalog, policy,
+            AuthoritativeNativeDungeonFamilyContext.Cathedral(policy.Depth));
+    }
+
+    internal static AuthoritativeCathedralThemeItemResult CreateTypeItem(
+        AuthoritativeCathedralThemeItemSelectionRequest request,
+        AuthoritativeCathedralThemeItemCatalog catalog,
+        AuthoritativeCathedralThemeItemPolicy policy,
+        AuthoritativeNativeDungeonFamilyContext familyContext)
+    {
+        ValidateSelectionRequest(request, catalog, policy, familyContext);
         ValidateRequestedItemType(request.RequestedItemType);
         var random = new AuthoritativeLegacyRandom(request.RandomState);
         var itemIndex = request.RequestedItemType == ItemTypeGold
@@ -636,7 +719,7 @@ public static class AuthoritativeCathedralThemeItemGenerator
             ResetBeforeGetItemAttrs: request.ResetBeforeGetItemAttrs,
             Player: request.Player,
             UniqueItemFlags: request.UniqueItemFlags);
-        return GenerateSetupAndUniqueContinuation(itemRequest, catalog, policy);
+        return GenerateSetupAndUniqueContinuation(itemRequest, catalog, policy, familyContext);
     }
 
     // The world wrapper must expose the selector boundary without performing
@@ -650,8 +733,22 @@ public static class AuthoritativeCathedralThemeItemGenerator
         AuthoritativeCathedralThemeItemCatalog catalog,
         AuthoritativeCathedralThemeItemPolicy policy)
     {
+        ArgumentNullException.ThrowIfNull(catalog);
+        ValidatePolicy(policy);
+        return SelectRandomItemForWorld(randomState, currentLevel, onlyGood, catalog, policy,
+            AuthoritativeNativeDungeonFamilyContext.Cathedral(policy.Depth));
+    }
+
+    internal static AuthoritativeCathedralThemeItemWorldSelectionResult SelectRandomItemForWorld(
+        uint randomState,
+        int currentLevel,
+        bool onlyGood,
+        AuthoritativeCathedralThemeItemCatalog catalog,
+        AuthoritativeCathedralThemeItemPolicy policy,
+        AuthoritativeNativeDungeonFamilyContext familyContext)
+    {
         ValidateSelectionRequest(new AuthoritativeCathedralThemeItemSelectionRequest(
-            randomState, currentLevel, onlyGood), catalog, policy);
+            randomState, currentLevel, onlyGood), catalog, policy, familyContext);
         var random = new AuthoritativeLegacyRandom(randomState);
         var itemIndex = SelectRandomItem(random, onlyGood, currentLevel, catalog);
         return new(itemIndex, random.State);
@@ -666,8 +763,24 @@ public static class AuthoritativeCathedralThemeItemGenerator
         AuthoritativeCathedralThemeItemCatalog catalog,
         AuthoritativeCathedralThemeItemPolicy policy)
     {
+        ArgumentNullException.ThrowIfNull(catalog);
+        ValidatePolicy(policy);
+        return SelectTypeItemForWorld(randomState, currentLevel, onlyGood, itemType, miscId, catalog, policy,
+            AuthoritativeNativeDungeonFamilyContext.Cathedral(policy.Depth));
+    }
+
+    internal static AuthoritativeCathedralThemeItemWorldSelectionResult SelectTypeItemForWorld(
+        uint randomState,
+        int currentLevel,
+        bool onlyGood,
+        int itemType,
+        int miscId,
+        AuthoritativeCathedralThemeItemCatalog catalog,
+        AuthoritativeCathedralThemeItemPolicy policy,
+        AuthoritativeNativeDungeonFamilyContext familyContext)
+    {
         ValidateSelectionRequest(new AuthoritativeCathedralThemeItemSelectionRequest(
-            randomState, currentLevel, onlyGood, itemType, miscId), catalog, policy);
+            randomState, currentLevel, onlyGood, itemType, miscId), catalog, policy, familyContext);
         ValidateRequestedItemType(itemType);
         var random = new AuthoritativeLegacyRandom(randomState);
         var itemIndex = itemType == ItemTypeGold
@@ -688,8 +801,10 @@ public static class AuthoritativeCathedralThemeItemGenerator
     private static GenerationState SetupCore(
         AuthoritativeCathedralThemeItemRequest request,
         AuthoritativeCathedralThemeItemCatalog catalog,
-        AuthoritativeCathedralThemeItemPolicy policy)
+        AuthoritativeCathedralThemeItemPolicy policy,
+        AuthoritativeNativeDungeonFamilyContext familyContext)
     {
+        familyContext.RequireMatch(policy.Depth);
         var item = request.ResetBeforeGetItemAttrs
             ? new AuthoritativeCathedralInitialItemState()
             : CloneItem(request.InputItem ?? new AuthoritativeCathedralInitialItemState());
@@ -1465,7 +1580,8 @@ public static class AuthoritativeCathedralThemeItemGenerator
         AuthoritativeCathedralThemeItemRequest request,
         AuthoritativeCathedralThemeItemCatalog catalog,
         AuthoritativeCathedralThemeItemPolicy policy,
-        HashSet<int> uniqueFlags)
+        HashSet<int> uniqueFlags,
+        AuthoritativeNativeDungeonFamilyContext familyContext)
     {
         if ((generation.Item.CreateInfo & CreateInfoUnique) == 0 || generation.Item.MiscId == MiscUnique)
             return generation;
@@ -1485,7 +1601,8 @@ public static class AuthoritativeCathedralThemeItemGenerator
             if (request.UniqueChance == catalog.Rules.UniqueChanceUnique) {
                 level = checked(level + catalog.Rules.BonusLevelsUnique);
             }
-            return RegenerateUntilNonUnique(generation, request, catalog, policy, level, chance, uniqueFlags);
+            return RegenerateUntilNonUnique(generation, request, catalog, policy, level, chance, uniqueFlags,
+                familyContext);
         }
         var selectedIndex = Math.Max(GenerateRnd(random, available.Length, "TryRandomUniqueItem unique"), 0);
         if (selectedIndex >= available.Length)
@@ -1515,12 +1632,12 @@ public static class AuthoritativeCathedralThemeItemGenerator
                 targetLevel = selected.MinimumLevel;
             }
             generation = RegenerateUntilUnique(generation, request, catalog, policy, selected.NativeUniqueId,
-                targetLevel, chance, uniqueFlags);
+                targetLevel, chance, uniqueFlags, familyContext);
         } else {
             var oldPositionX = generation.Item.PositionX;
             var oldPositionY = generation.Item.PositionY;
             var newRequest = request with { UniqueOffset = uidOffset, ResetBeforeGetItemAttrs = true };
-            generation = SetupCore(newRequest, catalog, policy);
+            generation = SetupCore(newRequest, catalog, policy, familyContext);
             generation.Item = generation.Item with { PositionX = oldPositionX, PositionY = oldPositionY };
             generation.Item = generation.Item with { Buff = generation.Item.Buff | ((uint)(uidOffset << 1) & 0x1EU) };
         }
@@ -1536,7 +1653,8 @@ public static class AuthoritativeCathedralThemeItemGenerator
         AuthoritativeCathedralThemeItemPolicy policy,
         int level,
         int chance,
-        HashSet<int> flags)
+        HashSet<int> flags,
+        AuthoritativeNativeDungeonFamilyContext familyContext)
     {
         var itemGenerator = new AuthoritativeLegacyRandom(generation.ItemSeed);
         for (var attempt = 0; attempt < 10000; attempt++) {
@@ -1546,7 +1664,7 @@ public static class AuthoritativeCathedralThemeItemGenerator
             var regenerated = request with { ItemSeed = seed, Level = level, UniqueChance = chance,
                 UniqueOffset = 0, ForceNotUnique = false, ResetBeforeGetItemAttrs = true,
                 UniqueItemFlags = flags };
-            generation = SetupCore(regenerated, catalog, policy);
+            generation = SetupCore(regenerated, catalog, policy, familyContext);
             generation.Item = generation.Item with { PositionX = oldPositionX, PositionY = oldPositionY };
             if (generation.Item.Magical != QualityUnique)
                 return generation;
@@ -1562,7 +1680,8 @@ public static class AuthoritativeCathedralThemeItemGenerator
         int uniqueId,
         int level,
         int chance,
-        HashSet<int> flags)
+        HashSet<int> flags,
+        AuthoritativeNativeDungeonFamilyContext familyContext)
     {
         var itemGenerator = new AuthoritativeLegacyRandom(generation.ItemSeed);
         for (var attempt = 0; attempt < 10000; attempt++) {
@@ -1572,7 +1691,7 @@ public static class AuthoritativeCathedralThemeItemGenerator
             var regenerated = request with { ItemSeed = seed, Level = level, UniqueChance = chance,
                 UniqueOffset = 0, ForceNotUnique = false, OnlyGood = true,
                 ResetBeforeGetItemAttrs = true, UniqueItemFlags = flags };
-            generation = SetupCore(regenerated, catalog, policy);
+            generation = SetupCore(regenerated, catalog, policy, familyContext);
             generation.Item = generation.Item with { PositionX = oldPositionX, PositionY = oldPositionY };
             if (generation.Item.UniqueId == uniqueId)
                 return generation;
@@ -1809,11 +1928,12 @@ public static class AuthoritativeCathedralThemeItemGenerator
     private static void ValidateRequest(
         AuthoritativeCathedralThemeItemRequest request,
         AuthoritativeCathedralThemeItemCatalog catalog,
-        AuthoritativeCathedralThemeItemPolicy policy)
+        AuthoritativeCathedralThemeItemPolicy policy,
+        AuthoritativeNativeDungeonFamilyContext familyContext)
     {
         ArgumentNullException.ThrowIfNull(request);
         ArgumentNullException.ThrowIfNull(catalog);
-        ValidatePolicy(policy);
+        ValidatePolicy(policy, familyContext);
         if (request.NativeItemIndex < 0 || !catalog.Items.Any(item => item.NativeItemIndex == request.NativeItemIndex))
             throw new InvalidDataException("The requested native item index is absent from the raw catalog.");
         if (FindItem(catalog, request.NativeItemIndex).CursorGraphic == byte.MaxValue)
@@ -1827,13 +1947,16 @@ public static class AuthoritativeCathedralThemeItemGenerator
     private static void ValidateSelectionRequest(
         AuthoritativeCathedralThemeItemSelectionRequest request,
         AuthoritativeCathedralThemeItemCatalog catalog,
-        AuthoritativeCathedralThemeItemPolicy policy)
+        AuthoritativeCathedralThemeItemPolicy policy,
+        AuthoritativeNativeDungeonFamilyContext familyContext)
     {
         ArgumentNullException.ThrowIfNull(request);
         ArgumentNullException.ThrowIfNull(catalog);
-        ValidatePolicy(policy);
-        if (request.CurrentLevel is < 1 or > 4 || request.CurrentLevel != policy.Depth)
-            throw new InvalidDataException("Cathedral item selection requires current level 1 through 4.");
+        ValidatePolicy(policy, familyContext);
+        if (request.CurrentLevel != policy.Depth)
+            throw new InvalidDataException(familyContext.IsCatacombs
+                ? "Catacombs item selection requires the matching current depth."
+                : "Cathedral item selection requires current level 1 through 4.");
         ValidateInputState(request.InputItem);
         ValidateUniqueFlags(request.UniqueItemFlags);
     }
@@ -1848,6 +1971,28 @@ public static class AuthoritativeCathedralThemeItemGenerator
             throw new InvalidDataException("Only ordinary original-Diablo Cathedral SP Normal generation is supported.");
         if (policy.CurrentDungeonLevel != 0 && policy.CurrentDungeonLevel != policy.Depth)
             throw new InvalidDataException("Current dungeon level must match the requested Cathedral depth.");
+    }
+
+    private static void ValidatePolicy(
+        AuthoritativeCathedralThemeItemPolicy policy,
+        AuthoritativeNativeDungeonFamilyContext familyContext)
+    {
+        ArgumentNullException.ThrowIfNull(policy);
+        familyContext.RequireMatch(policy.Depth);
+        var maximumDepth = familyContext.IsCatacombs ? 8 : 4;
+        var minimumDepth = familyContext.IsCatacombs ? 5 : 1;
+        if (policy.Depth < minimumDepth || policy.Depth > maximumDepth
+            || policy.CurrentDungeonLevel < 0 || policy.CurrentDungeonLevel > maximumDepth
+            || policy.GameMode != DiabloGameMode.SinglePlayer || policy.Difficulty != DiabloDifficulty.Normal
+            || policy.Hellfire || policy.Spawn || policy.QuestEnabled || policy.SetLevel
+            || !policy.LegacyLevelItemGenerationAllowed)
+            throw new InvalidDataException(familyContext.IsCatacombs
+                ? "Only ordinary original-Diablo Catacombs SP Normal generation is supported."
+                : "Only ordinary original-Diablo Cathedral SP Normal generation is supported.");
+        if (policy.CurrentDungeonLevel != 0 && policy.CurrentDungeonLevel != policy.Depth)
+            throw new InvalidDataException(familyContext.IsCatacombs
+                ? "Current dungeon level must match the requested Catacombs depth."
+                : "Current dungeon level must match the requested Cathedral depth.");
     }
 
     private static HashSet<int> CopyFlags(IReadOnlySet<int>? flags)

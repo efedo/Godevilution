@@ -128,6 +128,22 @@ public sealed class AuthoritativeCatacombsInitialPopulationNativeOracleTests
 		CompareObjectStage(root, worldBefore, actual, corpus.Metadata, clearedMonsterPool.Monsters);
 	}
 
+	/** Shared corpus qualification for complete-phase tests; native worlds remain comparison-only. */
+	internal static (string Directory, AuthoritativeCatacombsPopulationMetadata Metadata) QualifiedInputs()
+		=> (LoadedCorpus.Value.ReferenceDirectory, LoadedCorpus.Value.Metadata);
+
+	internal static JsonDocument OpenQualifiedCase(string file)
+	{
+		if (!CaseMatrix.Any(row => row.File == file))
+			throw new InvalidDataException("A fixed Catacombs oracle matrix filename is required.");
+		return JsonDocument.Parse(ReadBoundedRegularFile(
+			Path.Combine(LoadedCorpus.Value.ReferenceDirectory, file), MaximumCaseBytes));
+	}
+
+	internal static JsonDocument OpenQualifiedSource()
+		=> JsonDocument.Parse(ReadBoundedRegularFile(
+			RequiredFile(SourceMetadataVariable, 2 * 1024 * 1024), 2 * 1024 * 1024));
+
 	private static void CompareMaterializedGeometry(
 		JsonElement worldBefore,
 		AuthoritativeCatacombsGeometry materialized,

@@ -7,6 +7,12 @@ contracts stay in their existing guides.
 
 ## 2026-10-20
 
+- Compose complete native Catacombs fresh encounters, items, themes and level-ready
+  light/vision/automap state through shared internal phases and distinct C2 APIs.
+- Preserve Cathedral contracts and derive class inputs/history independently;
+  compare all 32 native cases, 44 controlled theme branches and saturated pools.
+  Keep playable actor behavior, profile/travel integration and cold restore open.
+
 - Add distinct Catacombs population/automap metadata and offline compilation,
   verified semantic-source hashes, L8 story bindings and unchanged Cathedral schemas.
 - Extend shared initial phases through explicit internal family contexts: generated

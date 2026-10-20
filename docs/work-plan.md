@@ -82,9 +82,12 @@ using explicit prepared Warrior/Sorcerer hero inputs and retained unique history
 Actual Catacombs actors include Fat, Rhino, Gargoyle, Magma and Acid; existing AI
 proofs remain reusable within scope. Distinct semantic metadata, L2 automap and
 initial population phases now pass 55 focused and 32 exact native comparisons.
-Complete encounters/items/theme creation and level-ready composition come next.
-Generated Gargoyle statue cursors, native-owned
-Fat special attacks and ranged spawn/controller retention remain required
+Complete fresh encounters/items/theme creation and level-ready composition now
+match all 32 native cases. A separate controlled 44-case L5/L8 comparison covers
+all 16 admitted themes, repeated racks and saturated pools; 16 focused contracts
+and 183 Cathedral compatibility cases pass (six explicit fixtures not selected).
+Next integrate generated Gargoyle statue cursors, native-owned Fat special
+attacks and ranged spawn/controller retention. These remain required
 family integration gates, alongside routes, ownership and cold restore. See
 [verification](test-history.md#2026-10-20--native-catacombs-generation-and-population-reference).
 

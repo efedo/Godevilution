@@ -9,6 +9,42 @@ the referenced test sources. Do not copy raw outputs into historical archives.
 
 ## Client and host verification
 
+### 2026-10-20 — complete Catacombs fresh population and ready state
+
+All 32 explicit prepared-class native comparisons pass through encounters,
+InitItems, CreateThemeRooms and the pre-join level-ready seam. Sixteen focused
+contracts pass. Cathedral compatibility has 183 passes and six explicit external-
+fixture cases intentionally not run, with no failures. Checked headless x64 MSVC
+and bounded managed builds/tests exit with confirmed cleanup; the managed build
+retains 21 existing analyzer warnings and isolates unrelated vision WIP.
+
+Distinct C2 full/fresh/ready contracts use shared internal phases and family
+contexts. The factory derives exact depth-specific stair cardinality, 5×5 trigger
+reservations, cleared monster pools, player animation/light/vision and independent
+population reseeding. Retained unique history starts with the prepared flag7 and
+uses actual earlier managed floors' outputs; captured worlds remain comparison-
+only. Complete post-item/theme/ready worlds compare all pools and eleven tile
+channels, scratch/flags/RNG, lighting allocators, corpse/bestiary state, player
+coordinates, vision and native L2 automap exploration. Existing public Cathedral
+APIs, positional records, metadata identities and save/profile formats are unchanged.
+
+A separate MPQ-free native controlled fixture and 44 managed comparisons cover
+all 16 admitted theme types at L5/L8, repeated armor/weapon racks, exhausted object
+pools and saturated item pools. Usable rack IDs77/92 consume their native seed and
+availability state; decorative IDs78/93 retain generic initialization. Treasure
+preserves the native unrelated previous-last-item Gold halving, minimum1 clamp
+and non-Gold preservation. Native gold lanes bind IDI_GOLD explicitly and verify
+99→1 plus unchanged identity/charges/buff. These are controlled theme seams, not
+additional generated-map selection or preceding-floor campaign qualification.
+
+Independent review found and closed the missing rack initializer, controlled
+Gold identity and distinct ready-facade issues before approval. Shared automap
+projection preserves native rounding/neighbor correction and C1 identity while
+C2 refuses hot-tail IDs above160 before writes. Original tracked/untracked WIP is
+unchanged. Generated actor mode/special/ranged behavior, L2 object operations,
+profile activation, travel and cold restore remain open; no playable Catacombs
+family or full rendered parity is claimed.
+
 ### 2026-10-20 — Catacombs metadata and initial population
 
 Fifty-five focused managed cases and all 32 explicit native initial-phase

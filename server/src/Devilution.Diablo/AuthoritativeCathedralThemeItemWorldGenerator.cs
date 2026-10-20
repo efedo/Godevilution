@@ -247,6 +247,16 @@ public static class AuthoritativeCathedralThemeItemWorldGenerator
             request.RandomState, request.CurrentLevel, request.OnlyGood, request.Catalog, request.Policy);
     }
 
+    internal static AuthoritativeCathedralThemeItemWorldSelectionResult SelectRandomItem(
+        AuthoritativeCathedralThemeItemWorldSelectionRequest request,
+        AuthoritativeNativeDungeonFamilyContext familyContext)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        return AuthoritativeCathedralThemeItemGenerator.SelectRandomItemForWorld(
+            request.RandomState, request.CurrentLevel, request.OnlyGood, request.Catalog, request.Policy,
+            familyContext);
+    }
+
     public static AuthoritativeCathedralThemeItemWorldSelectionResult SelectTypeItem(
         AuthoritativeCathedralThemeItemWorldSelectionRequest request)
     {
@@ -256,15 +266,36 @@ public static class AuthoritativeCathedralThemeItemWorldGenerator
             request.RequestedItemType, request.RequestedMiscId, request.Catalog, request.Policy);
     }
 
+    internal static AuthoritativeCathedralThemeItemWorldSelectionResult SelectTypeItem(
+        AuthoritativeCathedralThemeItemWorldSelectionRequest request,
+        AuthoritativeNativeDungeonFamilyContext familyContext)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        return AuthoritativeCathedralThemeItemGenerator.SelectTypeItemForWorld(
+            request.RandomState, request.CurrentLevel, request.OnlyGood,
+            request.RequestedItemType, request.RequestedMiscId, request.Catalog, request.Policy, familyContext);
+    }
+
     public static AuthoritativeCathedralThemeItemWorldResult CreateRandomItem(
         AuthoritativeCathedralThemeItemWorldRequest request)
     {
         ArgumentNullException.ThrowIfNull(request);
         ValidateRequest(request);
+        return CreateRandomItem(request, AuthoritativeCathedralInitialItemGenerator.CathedralContextForDepth(
+            request.Policy.Depth));
+    }
+
+    internal static AuthoritativeCathedralThemeItemWorldResult CreateRandomItem(
+        AuthoritativeCathedralThemeItemWorldRequest request,
+        AuthoritativeNativeDungeonFamilyContext familyContext)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        ValidateRequest(request, familyContext);
         var selection = SelectRandomItem(new AuthoritativeCathedralThemeItemWorldSelectionRequest(
-            request.RandomState, request.Policy.Depth, request.OnlyGood, request.Catalog, request.Policy));
+            request.RandomState, request.Policy.Depth, request.OnlyGood, request.Catalog, request.Policy),
+            familyContext);
         return CreateCore(request, selection, checked(request.Policy.Depth * 2),
-            request.Catalog.Rules.UniqueChanceNormal);
+            request.Catalog.Rules.UniqueChanceNormal, familyContext);
     }
 
     /** Allocates ordinary Cathedral CreateRndUseful contents from the owning depth. */
@@ -274,9 +305,20 @@ public static class AuthoritativeCathedralThemeItemWorldGenerator
     {
         ArgumentNullException.ThrowIfNull(request);
         ValidateRequest(request);
-        if (currentLevel is < 1 or > 4 || currentLevel != request.Policy.Depth
+        return CreateUsefulItem(request, currentLevel,
+            AuthoritativeCathedralInitialItemGenerator.CathedralContextForDepth(request.Policy.Depth));
+    }
+
+    internal static AuthoritativeCathedralThemeItemWorldResult CreateUsefulItem(
+        AuthoritativeCathedralThemeItemWorldRequest request,
+        int currentLevel,
+        AuthoritativeNativeDungeonFamilyContext familyContext)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        ValidateRequest(request, familyContext);
+        if (currentLevel != request.Policy.Depth
             || request.Policy.Hellfire || request.Policy.SetLevel)
-            throw new InvalidDataException("Native useful placement requires ordinary Cathedral depths 1 through 4.");
+            throw new InvalidDataException("Native useful placement requires its matching ordinary dungeon depth.");
 
         // CreateRndUseful returns immediately when AllocateItem cannot proceed;
         // unlike CreateRndItem, it consumes no selector RNG first.
@@ -306,7 +348,7 @@ public static class AuthoritativeCathedralThemeItemWorldGenerator
         var itemSeed = unchecked((uint)placementRandom.AdvanceRndSeed());
         var generated = AuthoritativeCathedralThemeItemGenerator.GenerateUseful(
             items[slot], itemSeed, currentLevel, request.Catalog, request.Policy,
-            request.Player, request.State.UniqueItemFlags);
+            request.Player, request.State.UniqueItemFlags, familyContext);
         items[slot] = generated.Item;
 
         var nextState = new AuthoritativeCathedralThemeItemWorldState(
@@ -338,11 +380,21 @@ public static class AuthoritativeCathedralThemeItemWorldGenerator
     {
         ArgumentNullException.ThrowIfNull(request);
         ValidateRequest(request);
+        return CreateTypeItem(request, AuthoritativeCathedralInitialItemGenerator.CathedralContextForDepth(
+            request.Policy.Depth));
+    }
+
+    internal static AuthoritativeCathedralThemeItemWorldResult CreateTypeItem(
+        AuthoritativeCathedralThemeItemWorldRequest request,
+        AuthoritativeNativeDungeonFamilyContext familyContext)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        ValidateRequest(request, familyContext);
         var selection = SelectTypeItem(new AuthoritativeCathedralThemeItemWorldSelectionRequest(
             request.RandomState, request.Policy.Depth, request.OnlyGood, request.Catalog, request.Policy,
-            request.RequestedItemType, request.RequestedMiscId));
+            request.RequestedItemType, request.RequestedMiscId), familyContext);
         return CreateCore(request, selection, checked(request.Policy.Depth * 2),
-            request.Catalog.Rules.UniqueChanceNormal);
+            request.Catalog.Rules.UniqueChanceNormal, familyContext);
     }
 
     /**
@@ -358,24 +410,39 @@ public static class AuthoritativeCathedralThemeItemWorldGenerator
         int uniqueChance)
     {
         ArgumentNullException.ThrowIfNull(request);
+        ValidateRequest(request);
+        return CreateSelectedItem(request, selectedNativeItemIndex, selectorRandomState, generationLevel, uniqueChance,
+            AuthoritativeCathedralInitialItemGenerator.CathedralContextForDepth(request.Policy.Depth));
+    }
+
+    internal static AuthoritativeCathedralThemeItemWorldResult CreateSelectedItem(
+        AuthoritativeCathedralThemeItemWorldRequest request,
+        int selectedNativeItemIndex,
+        uint selectorRandomState,
+        int generationLevel,
+        int uniqueChance,
+        AuthoritativeNativeDungeonFamilyContext familyContext)
+    {
+        ArgumentNullException.ThrowIfNull(request);
         if (generationLevel is < 0 or > 63)
             throw new InvalidDataException("Native item generation level is outside SetupAllItems bounds.");
         if (uniqueChance is < 0 or > 100)
             throw new InvalidDataException("Native item unique chance is outside its byte percentage range.");
-        ValidateRequest(request);
+        ValidateRequest(request, familyContext);
         if (!request.Catalog.Items.Any(item => item.NativeItemIndex == selectedNativeItemIndex))
             throw new InvalidDataException("Native selected item index is absent from the raw catalog.");
         return CreateCore(request, new AuthoritativeCathedralThemeItemWorldSelectionResult(
-            selectedNativeItemIndex, selectorRandomState), generationLevel, uniqueChance);
+            selectedNativeItemIndex, selectorRandomState), generationLevel, uniqueChance, familyContext);
     }
 
     private static AuthoritativeCathedralThemeItemWorldResult CreateCore(
         AuthoritativeCathedralThemeItemWorldRequest request,
         AuthoritativeCathedralThemeItemWorldSelectionResult selection,
         int generationLevel,
-        int uniqueChance)
+        int uniqueChance,
+        AuthoritativeNativeDungeonFamilyContext familyContext)
     {
-        ValidateRequest(request);
+        ValidateRequest(request, familyContext);
         if (request.State.ActiveItemCount >= ActiveCapacity) {
             return new AuthoritativeCathedralThemeItemWorldResult(
                 request.State,
@@ -416,7 +483,7 @@ public static class AuthoritativeCathedralThemeItemWorldGenerator
             Player: request.Player,
             UniqueItemFlags: request.State.UniqueItemFlags);
         var generated = AuthoritativeCathedralThemeItemGenerator.Generate(
-            itemRequest, request.Catalog, request.Policy);
+            itemRequest, request.Catalog, request.Policy, familyContext);
         items[slot] = generated.Item;
         var nextState = new AuthoritativeCathedralThemeItemWorldState(
             items,
@@ -596,6 +663,14 @@ public static class AuthoritativeCathedralThemeItemWorldGenerator
             throw new InvalidDataException("Native item placement requires an in-bounds origin tile.");
         if (request.RequestedItemType < -1 || request.RequestedMiscId < -1)
             throw new InvalidDataException("Native typed item selectors require non-negative type/misc IDs.");
+    }
+
+    private static void ValidateRequest(
+        AuthoritativeCathedralThemeItemWorldRequest request,
+        AuthoritativeNativeDungeonFamilyContext familyContext)
+    {
+        ValidateRequest(request);
+        familyContext.RequireMatch(request.Policy.Depth);
     }
 
     private static AuthoritativeCathedralInitialItemState CloneItem(

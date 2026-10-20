@@ -422,6 +422,8 @@ public static class AuthoritativeCathedralThemeRoomGenerator
     private const int MurkyFountain = 13;
     private const int TearFountain = 14;
     private const int BurningCross = 15;
+    private const int ArmorStand = 10;
+    private const int WeaponRack = 16;
     private const int ObjSkFire = 3;
     private const int ObjCandle2 = 9;
     private const int ObjBannerL = 11;
@@ -444,6 +446,10 @@ public static class AuthoritativeCathedralThemeRoomGenerator
     private const int ObjMurkyFountain = 81;
     private const int ObjTearFountain = 82;
     private const int ObjBurningCross = 91;
+    private const int ObjArmorStand = 77;
+    private const int ObjArmorStandDecorative = 78;
+    private const int ObjWeaponRack = 92;
+    private const int ObjWeaponRackDecorative = 93;
     private const int ItemTypeGold = 11;
     private const int MiscNone = -1;
     private const uint Animated = 1;
@@ -468,16 +474,60 @@ public static class AuthoritativeCathedralThemeRoomGenerator
     internal static bool IsNativeGoat(int nativeType)
         => nativeType is >= 34 and <= 37 or >= 42 and <= 45;
 
+    /** Mirrors AddArmorStand/AddWeaponRack's object-init seed and unavailable flag behavior. */
+    internal static AuthoritativeCathedralPopulationObjectState InitializeArmorStand(
+        AuthoritativeCathedralPopulationObjectState value,
+        bool armorAvailable,
+        Devilution.Engine.DeterministicLegacyRandom random)
+    {
+        ArgumentNullException.ThrowIfNull(value);
+        ArgumentNullException.ThrowIfNull(random);
+        if (!armorAvailable)
+            value = value with { AnimFlag = 1, SelectionRegion = 0 };
+        return value with { RndSeed = random.AdvanceSeed() };
+    }
+
+    internal static AuthoritativeCathedralPopulationObjectState InitializeWeaponRack(
+        AuthoritativeCathedralPopulationObjectState value,
+        bool weaponAvailable,
+        Devilution.Engine.DeterministicLegacyRandom random)
+    {
+        ArgumentNullException.ThrowIfNull(value);
+        ArgumentNullException.ThrowIfNull(random);
+        if (!weaponAvailable)
+            value = value with { AnimFlag = 1, SelectionRegion = 0 };
+        return value with { RndSeed = random.AdvanceSeed() };
+    }
+
     public static AuthoritativeCathedralThemeRoomResult Generate(AuthoritativeCathedralThemeRoomRequest request)
     {
         ArgumentNullException.ThrowIfNull(request);
-        var engine = new Engine(request);
+        ArgumentNullException.ThrowIfNull(request.State);
+        ArgumentNullException.ThrowIfNull(request.Catalog);
+        ArgumentNullException.ThrowIfNull(request.ItemCatalog);
+        ArgumentNullException.ThrowIfNull(request.ItemPolicy);
+        ArgumentNullException.ThrowIfNull(request.Themes);
+        ArgumentNullException.ThrowIfNull(request.TargetPlayer);
+        if (request.ItemPolicy.Depth is < 1 or > 4)
+            throw new InvalidDataException("Only ordinary original-Diablo Cathedral SP Normal generation is supported.");
+        var engine = new Engine(request,
+            AuthoritativeCathedralInitialItemGenerator.CathedralContextForDepth(request.ItemPolicy.Depth));
+        return engine.Generate();
+    }
+
+    internal static AuthoritativeCathedralThemeRoomResult Generate(
+        AuthoritativeCathedralThemeRoomRequest request,
+        AuthoritativeNativeDungeonFamilyContext familyContext)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        var engine = new Engine(request, familyContext);
         return engine.Generate();
     }
 
     private sealed class Engine
     {
         private readonly AuthoritativeCathedralThemeRoomRequest input;
+        private readonly AuthoritativeNativeDungeonFamilyContext familyContext;
         private readonly IReadOnlyList<AuthoritativeCathedralPopulationPlayer> players;
         private readonly DeterministicLegacyRandom random;
         private AuthoritativeCathedralPopulationObjectState[] objects;
@@ -520,11 +570,14 @@ public static class AuthoritativeCathedralThemeRoomGenerator
         private readonly List<int> vars = [];
         private readonly List<int> noFlippy = [];
 
-        public Engine(AuthoritativeCathedralThemeRoomRequest input)
+        public Engine(
+            AuthoritativeCathedralThemeRoomRequest input,
+            AuthoritativeNativeDungeonFamilyContext familyContext)
         {
             this.input = input;
+            this.familyContext = familyContext;
             random = new(input.RandomState);
-            ValidateRequest(input);
+            ValidateRequest(input, familyContext);
             players = (input.PlayerContexts ?? new[] { input.TargetPlayer }).OrderBy(player => player.Id).ToArray();
             var state = input.State;
             objects = state.ObjectSlots.Select(value => value with { }).ToArray();
@@ -602,6 +655,8 @@ public static class AuthoritativeCathedralThemeRoomGenerator
             case MurkyFountain: ThemeMurkyFountain((sbyte)entry.RegionId); break;
             case TearFountain: ThemeTearFountain((sbyte)entry.RegionId); break;
             case BurningCross: ThemeBurningCross((sbyte)entry.RegionId); break;
+            case ArmorStand: ThemeArmorStand((sbyte)entry.RegionId); break;
+            case WeaponRack: ThemeWeaponRack((sbyte)entry.RegionId); break;
             default: throw new InvalidDataException("Theme is not an ordinary Cathedral theme.");
             }
         }
@@ -657,14 +712,15 @@ public static class AuthoritativeCathedralThemeRoomGenerator
             }
             var x = themex; var y = themey;
             AddObject(ObjSkFire, new(x, y));
-            SpawnObjectOrSkeleton(6, ObjBannerL, new(x - 1, y - 1));
+            var skeletonFrequency = MonsterFrequency(SkeletonRoom);
+            SpawnObjectOrSkeleton(skeletonFrequency, ObjBannerL, new(x - 1, y - 1));
             ActivatePreSpawnSkeleton(new(x, y - 1));
-            SpawnObjectOrSkeleton(6, ObjBannerR, new(x + 1, y - 1));
-            SpawnObjectOrSkeleton(6, ObjBannerM, new(x - 1, y));
-            SpawnObjectOrSkeleton(6, ObjBannerM, new(x + 1, y));
-            SpawnObjectOrSkeleton(6, ObjBannerR, new(x - 1, y + 1));
+            SpawnObjectOrSkeleton(skeletonFrequency, ObjBannerR, new(x + 1, y - 1));
+            SpawnObjectOrSkeleton(skeletonFrequency, ObjBannerM, new(x - 1, y));
+            SpawnObjectOrSkeleton(skeletonFrequency, ObjBannerM, new(x + 1, y));
+            SpawnObjectOrSkeleton(skeletonFrequency, ObjBannerR, new(x - 1, y + 1));
             ActivatePreSpawnSkeleton(new(x, y + 1));
-            SpawnObjectOrSkeleton(6, ObjBannerL, new(x + 1, y + 1));
+            SpawnObjectOrSkeleton(skeletonFrequency, ObjBannerL, new(x + 1, y + 1));
             if (!IsObjectAt(x, y - 3)) AddObject(ObjSkeletonBook, new(x, y - 2));
             if (!IsObjectAt(x, y + 3)) AddObject(ObjSkeletonBook, new(x, y + 2));
         }
@@ -684,8 +740,19 @@ public static class AuthoritativeCathedralThemeRoomGenerator
                     CreateRandomItem(new(x, y), false);
                     ItemNoFlippy();
                 }
+                if (familyContext.IsCatacombs && rv >= chance - 2)
+                    HalveLastActiveGoldValue();
             }
             PlaceThemeMonsters(region, MonsterFrequency(4));
+        }
+
+        private void HalveLastActiveGoldValue()
+        {
+            if (activeItemCount == 0)
+                return;
+            var slot = activeItems[activeItemCount - 1];
+            if (items[slot].ItemIndex == 0)
+                items[slot] = items[slot] with { Value = Math.Max(items[slot].Value / 2, 1) };
         }
 
         private void ThemeLibrary(sbyte region)
@@ -700,7 +767,7 @@ public static class AuthoritativeCathedralThemeRoomGenerator
             for (var y = 1; y < Width - 1; y++) for (var x = 1; x < Width - 1; x++) {
                 if (!CheckObj3(new(x, y), region, 0) || MonsterAt(x, y) || !random.FlipCoin((uint)chance)) continue;
                 var slot = AddObject(ObjBookstand, new(x, y));
-                if (!random.FlipCoin(2) && slot >= 0)
+                if (!random.FlipCoin(checked((uint)(2 * chance))) && slot >= 0)
                     objects[slot] = objects[slot] with { SelectionRegion = 0, AnimFrame = objects[slot].AnimFrame + 2 };
             }
             PlaceThemeMonsters(region, MonsterFrequency(5));
@@ -751,6 +818,49 @@ public static class AuthoritativeCathedralThemeRoomGenerator
                 if (IsRegion(x, y, region) && NotSolid(x, y) && CheckObj3(new(x, y), region, 0) && random.FlipCoin((uint)chance))
                     AddObject(ObjBurningCross, new(x, y));
             PlaceThemeMonsters(region, MonsterFrequency(15));
+        }
+
+        private void ThemeArmorStand(sbyte region)
+        {
+            if (flags.ArmorAvailable) {
+                FitObj3(region);
+                AddObject(ObjArmorStand, new(themex, themey));
+            }
+            var frequency = familyContext.IsCatacombs ? 8 : 6;
+            for (var y = 0; y < Width; y++) for (var x = 0; x < Width; x++) {
+                if (IsRegion(x, y, region) && NotSolid(x, y) && CheckObj3(new(x, y), region, 0)
+                    && random.FlipCoin((uint)frequency))
+                    AddObject(ObjArmorStandDecorative, new(x, y));
+            }
+            PlaceThemeMonsters(region, MonsterFrequency(ArmorStand));
+            flags = flags with { ArmorAvailable = false };
+        }
+
+        private void ThemeWeaponRack(sbyte region)
+        {
+            if (flags.WeaponAvailable) {
+                FitObj3(region);
+                AddObject(ObjWeaponRack, new(themex, themey));
+            }
+            var frequency = familyContext.IsCatacombs ? 8 : 6;
+            for (var y = 0; y < Width; y++) for (var x = 0; x < Width; x++) {
+                if (IsRegion(x, y, region) && NotSolid(x, y) && CheckObj3(new(x, y), region, 0)
+                    && random.FlipCoin((uint)frequency))
+                    AddObject(ObjWeaponRackDecorative, new(x, y));
+            }
+            PlaceThemeMonsters(region, MonsterFrequency(WeaponRack));
+            flags = flags with { WeaponAvailable = false };
+        }
+
+        private bool FitObj3(sbyte region)
+        {
+            for (var y = 1; y < Width - 1; y++) for (var x = 1; x < Width - 1; x++)
+                if (CheckObj3(new(x, y), region, 4)) {
+                    themex = x;
+                    themey = y;
+                    return true;
+                }
+            return false;
         }
 
         private void PlaceThemeMonsters(sbyte region, int frequency)
@@ -933,14 +1043,16 @@ public static class AuthoritativeCathedralThemeRoomGenerator
         private void CreateRandomItem(Point position, bool onlyGood)
         {
             var result = AuthoritativeCathedralThemeItemWorldGenerator.CreateRandomItem(new(
-                ToItemWorldState(), input.ItemCatalog, input.ItemPolicy, random.State, position.X, position.Y, onlyGood, true, -1, -1, input.ItemPlayer));
+                ToItemWorldState(), input.ItemCatalog, input.ItemPolicy, random.State, position.X, position.Y, onlyGood, true, -1, -1, input.ItemPlayer),
+                familyContext);
             ApplyItemWorld(result);
         }
 
         private void CreateTypeItem(Point position, int type, int misc, bool onlyGood)
         {
             var result = AuthoritativeCathedralThemeItemWorldGenerator.CreateTypeItem(new(
-                ToItemWorldState(), input.ItemCatalog, input.ItemPolicy, random.State, position.X, position.Y, onlyGood, true, type, misc, input.ItemPlayer));
+                ToItemWorldState(), input.ItemCatalog, input.ItemPolicy, random.State, position.X, position.Y, onlyGood, true, type, misc, input.ItemPlayer),
+                familyContext);
             ApplyItemWorld(result);
         }
 
@@ -1018,6 +1130,14 @@ public static class AuthoritativeCathedralThemeRoomGenerator
                 break;
             case ObjBurningCross:
                 obj = obj with { RndSeed = random.AdvanceSeed() };
+                break;
+            // Native has dedicated initializers for the base stand/rack IDs;
+            // decorative variants 78 and 93 keep the generic object state.
+            case ObjArmorStand:
+                obj = InitializeArmorStand(obj, flags.ArmorAvailable, random);
+                break;
+            case ObjWeaponRack:
+                obj = InitializeWeaponRack(obj, flags.WeaponAvailable, random);
                 break;
             }
             objects[slot] = obj;
@@ -1145,22 +1265,30 @@ public static class AuthoritativeCathedralThemeRoomGenerator
             return false;
         }
 
-        // CreateThemeRooms receives Cathedral's level type, not the dungeon
-        // depth used by item generation. All ordinary Cathedral rows therefore
-        // use the first entry of each native frequency table.
-        private static int BarrelFrequency() => 2;
-        private static int TreasureFrequency() => 4;
-        private static int LibraryFrequency() => 1;
-        private static int TortureFrequency() => 6;
-        private static int BurningCrossFrequency() => 5;
-        private int MonsterFrequency(int theme) => theme switch {
-            0 => 5,
-            1 => 6,
-            2 => 6,
-            4 => 6,
-            5 => 5,
-            6 or 7 or 8 or 9 or 13 or 14 or 15 => 6,
-            _ => throw new InvalidDataException("Theme has no Cathedral monster frequency."),
+        // Native themes.cpp indexes these tables from the selected dungeon
+        // family: the first entry remains Cathedral and Catacombs uses index 1.
+        private int BarrelFrequency() => familyContext.IsCatacombs ? 6 : 2;
+        private int TreasureFrequency() => familyContext.IsCatacombs ? 9 : 4;
+        private int LibraryFrequency() => familyContext.IsCatacombs ? 2 : 1;
+        private int TortureFrequency() => familyContext.IsCatacombs ? 8 : 6;
+        private int BurningCrossFrequency() => familyContext.IsCatacombs ? 7 : 5;
+        private int MonsterFrequency(int theme) => (theme, familyContext.IsCatacombs) switch {
+            (0, false) => 5, (0, true) => 7,
+            (1, false) => 6, (1, true) => 6,
+            (2, false) => 6, (2, true) => 7,
+            (3, false) => 6, (3, true) => 7,
+            (4, false) => 6, (4, true) => 8,
+            (5, false) => 5, (5, true) => 7,
+            (6, false) => 6, (6, true) => 8,
+            (7, false) => 6, (7, true) => 8,
+            (8, false) => 6, (8, true) => 8,
+            (9, false) => 6, (9, true) => 7,
+            (10, false) => 6, (10, true) => 7,
+            (13, false) => 6, (13, true) => 7,
+            (14, false) => 6, (14, true) => 7,
+            (15, false) => 6, (15, true) => 8,
+            (16, false) => 6, (16, true) => 7,
+            _ => throw new InvalidDataException("Theme has no native monster frequency."),
         };
 
         private bool SameRegion(Point a, Point b)
@@ -1209,7 +1337,9 @@ public static class AuthoritativeCathedralThemeRoomGenerator
         private static int Dy(int direction) => direction switch { 0 => 1, 1 => 1, 2 => 1, 3 => 0, 4 => -1, 5 => -1, 6 => -1, 7 => 0, _ => 0 };
         private static int Opposite(int direction) => (direction + 4) % 8;
 
-        private static void ValidateRequest(AuthoritativeCathedralThemeRoomRequest value)
+        private static void ValidateRequest(
+            AuthoritativeCathedralThemeRoomRequest value,
+            AuthoritativeNativeDungeonFamilyContext familyContext)
         {
             ArgumentNullException.ThrowIfNull(value.State);
             ArgumentNullException.ThrowIfNull(value.Catalog);
@@ -1217,7 +1347,7 @@ public static class AuthoritativeCathedralThemeRoomGenerator
             ArgumentNullException.ThrowIfNull(value.ItemPolicy);
             ArgumentNullException.ThrowIfNull(value.Themes);
             ArgumentNullException.ThrowIfNull(value.TargetPlayer);
-            ValidatePolicy(value.ItemPolicy);
+            ValidatePolicy(value.ItemPolicy, familyContext);
             if (value.PlayerContexts is not null) {
                 if (value.PlayerContexts.Count is < 1 or > 4
                     || value.PlayerContexts.Any(player => player is null))
@@ -1229,10 +1359,14 @@ public static class AuthoritativeCathedralThemeRoomGenerator
                     throw new InvalidDataException("Player contexts must contain at most four distinct in-range players.");
             }
             if (value.Themes.Count > MaxThemes
-                || value.Themes.Any(theme => theme is null || theme.ThemeType is 10 or 12 or 16 || theme.ThemeType is < 0 or > 16 || theme.RegionId is < sbyte.MinValue or > sbyte.MaxValue))
-                throw new InvalidDataException("Only the fourteen ordinary Cathedral theme IDs are supported.");
-            if (value.MaximumPlacementAttempts <= 0 || value.ItemPolicy.Depth is < 1 or > 4)
-                throw new InvalidDataException("Theme placement bounds or Cathedral depth are invalid.");
+                || value.Themes.Any(theme => theme is null || theme.ThemeType == 12
+                    || (!familyContext.IsCatacombs && (theme.ThemeType is 10 or 16))
+                    || theme.ThemeType is < 0 or > 16 || theme.RegionId is < sbyte.MinValue or > sbyte.MaxValue))
+                throw new InvalidDataException(familyContext.IsCatacombs
+                    ? "Catacombs theme IDs are outside the ordinary supported theme set."
+                    : "Only the fourteen ordinary Cathedral theme IDs are supported.");
+            if (value.MaximumPlacementAttempts <= 0)
+                throw new InvalidDataException("Theme placement bounds or native dungeon depth are invalid.");
             if (value.InitialThemeVar1 is < 0 or > 23)
                 throw new InvalidDataException("Initial theme scratch Var1 is outside the native theme range.");
             if (!Contains(value.InitialThemeOrigin))
@@ -1243,15 +1377,23 @@ public static class AuthoritativeCathedralThemeRoomGenerator
                 throw new InvalidDataException("Target player state is outside dungeon bounds.");
         }
 
-        // Room objects and item callbacks share the ordinary SP Normal policy boundary.
-        private static void ValidatePolicy(AuthoritativeCathedralThemeItemPolicy policy)
+        private static void ValidatePolicy(
+            AuthoritativeCathedralThemeItemPolicy policy,
+            AuthoritativeNativeDungeonFamilyContext familyContext)
         {
-            if (policy.Depth is < 1 or > 4 || policy.CurrentDungeonLevel is < 0 or > 4
+            ArgumentNullException.ThrowIfNull(policy);
+            familyContext.RequireMatch(policy.Depth);
+            var minimumDepth = familyContext.IsCatacombs ? 5 : 1;
+            var maximumDepth = familyContext.IsCatacombs ? 8 : 4;
+            if (policy.Depth < minimumDepth || policy.Depth > maximumDepth
+                || policy.CurrentDungeonLevel < 0 || policy.CurrentDungeonLevel > maximumDepth
                 || policy.GameMode != DiabloGameMode.SinglePlayer || policy.Difficulty != DiabloDifficulty.Normal
                 || policy.Hellfire || policy.Spawn || policy.QuestEnabled || policy.SetLevel
                 || !policy.LegacyLevelItemGenerationAllowed
                 || (policy.CurrentDungeonLevel != 0 && policy.CurrentDungeonLevel != policy.Depth))
-                throw new InvalidDataException("Only ordinary original-Diablo Cathedral SP Normal generation is supported.");
+                throw new InvalidDataException(familyContext.IsCatacombs
+                    ? "Only ordinary original-Diablo Catacombs SP Normal generation is supported."
+                    : "Only ordinary original-Diablo Cathedral SP Normal generation is supported.");
         }
     }
 }
