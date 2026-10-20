@@ -9,6 +9,41 @@ the referenced test sources. Do not copy raw outputs into historical archives.
 
 ## Client and host verification
 
+### 2026-10-19 — native scene drawing and input
+
+All eight scene-catalog/placement cases and thirteen viewport cases pass without
+skips. They cover identity/atlas/slot/layer refusal, native diagonal traversal,
+Town's delayed special lookup, Cathedral special anchors, inclusive raster bounds,
+edge culling, fractional positions, inverse mapping, camera clamps and candidate
+camera visibility. The isolated SDK4.7.1 client builds with six existing warnings
+and no errors. Actual headless Godot missing/hash-mismatch atlas probes both exit
+zero after refusing family activation with a stable diagnostic and matched
+catalog identity. These probes exercise asset preflight, not `_Draw`.
+
+Both final Warrior/Sorcerer Journey/Resume pairs pass with the qualified native
+player/scene packs. Journeys record 19/15 distinct active Cathedral draw samples,
+actual floor/content/actor/texture calls, loaded atlas paths, zero missing assets
+and pointer round trips. The existing generated kill/XP, Repair/Recharge,
+player/world/RNG/cursor equality before resumed input, exact next receipt,
+profile/hash and fresh-process lifecycle checks remain required. Town restores
+use the explicit generic fallback because these profiles have no native Town
+layers; this does not prove native Town scene restoration.
+
+The first Sorcerer scene run exposed an offscreen ranged target in the harness.
+The reviewed fix approaches a camera-visible target without changing gameplay
+rules or the guarded click; the final full Sorcerer pair passes. Unchanged Warrior
+melee/render behavior reuses its passing pair. Earlier interrupted/failed runs
+are not acceptance evidence. Actor/wall phase order remains approximate; native
+lighting, palette cycling, wall transparency, full Town profile integration and
+matched rendered parity remain open.
+
+Evidence: `.local/native-scene-20261019/runtime-verified.log`,
+`target-verified.log`, `candidate-target-build.log`, `probe-*.stdout.log`,
+`preflight-processes.json`, `warrior-scene-final-app.log` and
+`sorcerer-scene-target-app.log`. Final class sessions end in
+`warrior-a83a50dfd24947febc2550443fb8d117` and
+`sorcerer-49515ba77acb4475ae8200c22dcc5e14` beneath the retained class profiles.
+
 ### 2026-10-19 — optional native scene art import
 
 The offline scene importer builds without warnings. All 15 focused importer

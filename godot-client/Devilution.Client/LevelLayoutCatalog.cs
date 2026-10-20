@@ -52,6 +52,8 @@ public sealed class LevelLayoutCatalog
                 definition.NativeTransparency.ToArray()) {
                 NativeObjectLayer = definition.NativeObjectLayer.ToArray(),
                 NativePieceLayer = definition.NativePieceLayer.ToArray(),
+                NativeMegaTileLayer = definition.NativeMegaTileLayer.ToArray(),
+                NativeSpecialLayer = definition.NativeSpecialLayer.ToArray(),
             };
             warpTriggers[definition.LevelId] = definition.WarpTriggers.ToArray();
         }
@@ -117,6 +119,12 @@ public sealed record LevelLayout(
 {
     /** Raw server-authored d-piece IDs used by the diagnostic geometry overlay. */
     public IReadOnlyList<uint> NativePieceLayer { get; init; } = [];
+
+    /** Raw authoritative mega-tile IDs used by the native scene catalog. */
+    public IReadOnlyList<uint> NativeMegaTileLayer { get; init; } = [];
+
+    /** Raw authoritative special sprite IDs used by the native scene catalog. */
+    public IReadOnlyList<uint> NativeSpecialLayer { get; init; } = [];
 
     /** Raw server-authored native object IDs used by the diagnostic overlay. */
     public IReadOnlyList<uint> NativeObjectLayer { get; init; } = [];

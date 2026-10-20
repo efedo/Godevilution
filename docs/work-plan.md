@@ -7,10 +7,11 @@ class/equipment/direction/action selection pass full native pixel/atlas comparis
 both headless class draw/restore pairs pass. Generic packs remain compatible
 and original assets stay client-only. The pure Town composition prerequisite now
 passes all 191 native cases. The optional Town/Cathedral CEL/MIN/TIL/SOL importer
-now matches every native piece/special and published atlas pixel. Continue with
-explicit Town profile/backing-state integration and shared isometric scene/input
-qualification. Complete scene coverage and matched rendered comparisons remain
-open within this visual slice.
+now matches every native piece/special and published atlas pixel. Shared isometric
+Cathedral drawing/input passes both headless class journey/restore pairs; Town
+retains its explicit empty-geometry fallback. Continue with explicit Town
+profile/backing-state integration. Complete scene coverage and matched rendered
+comparisons remain open within this visual slice.
 
 The native Rogue Town/L1/L2 route with earned gear, Town services and fresh-host
 resume remains the broader reusable baseline. Explicit Warrior/Sorcerer profiles
@@ -39,8 +40,19 @@ Integrate its 40x40 coarse and 112x112 fine backing state explicitly before
 binding the Town scene. Native scene import covers 1,711 pieces, 4,666 referenced
 frames and 26 specials with explicit palettes and exact content/level bindings;
 see [test history](test-history.md#2026-10-19--optional-native-scene-art-import).
-Client draw/input acceptance is still pending. Normal cohort/profile adoption
-remains separately held.
+Both class journeys issue actual Cathedral floor/content/actor draws through the
+shared camera/pointer transform; their Town cold restores retain explicit
+fallback. See [test history](test-history.md#2026-10-19--native-scene-drawing-and-input).
+Normal cohort/profile adoption remains separately held.
+
+The next cohesive stage is a distinct Town-enabled profile and checkpoint:
+compile bounded semantic Town inputs, retain 112x112 fine/special and 40x40
+coarse/protected state separately, and validate restore against trusted inputs
+without consuming generation RNG again. Bind canonical towner occupancy from
+native roster data; preserve the solid Smith cell and reachable adjacent service
+position. Keep old profile bytes/save schemas and arbitrary-unmapped-special
+refusal intact. Qualify ordinary Town/Cathedral travel, services, native Town art
+binding and exact fresh-host retention before closing that stage.
 
 ## Delivery order
 

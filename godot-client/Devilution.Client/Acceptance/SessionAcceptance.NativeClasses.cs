@@ -18,6 +18,7 @@ public partial class SessionAcceptance
     private async Task VerifyNativeClassAsync(Main main, string directory, string phase, Evidence? previous)
     {
         StartNativePlayerArtCapture(main);
+        StartNativeSceneArtCapture(main);
         var classId = phase.StartsWith("NativeWarrior", StringComparison.Ordinal) ? 0U : 2U;
         var journeyName = classId == 0 ? "nativewarriorjourney.json" : "nativesorcererjourney.json";
         var identity = main.ObservedIdentity!;
@@ -205,6 +206,7 @@ public partial class SessionAcceptance
             LevelId = player.LevelId, X = player.PositionX, Y = player.PositionY, Sequence = main.ObservedLastQueuedSequence,
             Visible = false, ExactColdBaseline = exactColdBaseline, NativeClass = checkpoint,
             NativePlayerArt = VerifyNativePlayerArtCapture(main, exactColdBaseline),
+            NativeSceneArt = VerifyNativeSceneArtCapture(main, exactColdBaseline),
             FirstAcceptedSequence = exactColdBaseline ? main.ObservedCommandResult!.ClientSequence : 0,
             FirstAcceptedAppliedTick = exactColdBaseline ? main.ObservedCommandResult!.AppliedTick : 0,
         });
@@ -231,6 +233,7 @@ public partial class SessionAcceptance
             Require(player.Life > 0 && player.LevelId == 1, "Native class combat left its living L1 context.");
             var geometry = DepthGeometry(main, 1);
             var blocked = geometry.MissileBlockedCells.ToHashSet();
+            var nativeRangedViewport = ranged && IsNativeSceneViewportActive(main, player.LevelId);
             var targets = snapshot.Monsters.Where(monster => monster.Alive && !monster.IsPlayerMinion && monster.LevelId == 1)
                 .OrderBy(monster => NativeMonsterDistance(player, monster)).ThenBy(monster => monster.EntityId).Take(12);
             foreach (var target in targets) {
@@ -239,10 +242,14 @@ public partial class SessionAcceptance
                         && CanSeeNativeRangedLane(player, target, geometry, x, y, (target.PositionX, target.PositionY))
                         && HasClearNativeRangedLane(snapshot, geometry, blocked, 1, x, y, target, (target.PositionX, target.PositionY))
                     : NativeDistance(x, y, target.PositionX, target.PositionY) <= 1;
+                bool AttackGoal(int x, int y) => AttackCell(x, y)
+                    && (!nativeRangedViewport || IsNativeSceneTileVisibleFromCamera(main, geometry, target, x, y));
                 if (AttackCell(player.PositionX, player.PositionY)
+                    && (!nativeRangedViewport || IsRenderedWorldTileVisible(main, target.PositionX, target.PositionY))
                     && AuthoritativeTargetSelector.SelectCombatTarget(snapshot, player.EntityId, target.PositionX, target.PositionY) == target.EntityId)
                     return target;
-                var firstStep = FindNativeClassApproachStep(main, snapshot, player, geometry, AttackCell);
+                var firstStep = FindNativeClassApproachStep(main, snapshot, player, geometry, AttackGoal,
+                    nativeRangedViewport ? (x, y) => IsRenderedWorldTileVisible(main, x, y) : null);
                 if (firstStep is null) continue;
                 var sequence = main.ObservedLastQueuedSequence;
                 await Click(main.ObservedTileScreenPosition(firstStep.Value.X, firstStep.Value.Y), walk: true);
@@ -255,7 +262,7 @@ public partial class SessionAcceptance
     }
 
     private static (int X, int Y)? FindNativeClassApproachStep(Main main, Snapshot snapshot, PlayerSnapshot player,
-        LevelGeometrySnapshot geometry, Func<int, int, bool> goal)
+        LevelGeometrySnapshot geometry, Func<int, int, bool> goal, Func<int, int, bool>? firstStepVisible = null)
     {
         var start = (X: player.PositionX, Y: player.PositionY);
         var queue = new Queue<((int X, int Y) Cell, (int X, int Y) First)>();
@@ -268,10 +275,40 @@ public partial class SessionAcceptance
                 if (visited.Contains(next) || !IsNativeApproachCellOpen(main, snapshot, player, geometry, next.X, next.Y)) continue;
                 if (dx != 0 && dy != 0 && (!IsNativeApproachCellOpen(main, snapshot, player, geometry, current.Cell.X + dx, current.Cell.Y)
                     || !IsNativeApproachCellOpen(main, snapshot, player, geometry, current.Cell.X, current.Cell.Y + dy))) continue;
+                if (current.Cell == start && firstStepVisible is not null && !firstStepVisible(next.X, next.Y)) continue;
                 visited.Add(next);
                 queue.Enqueue((next, current.Cell == start ? next : current.First));
             }
         }
         return null;
+    }
+
+    private static bool IsNativeSceneViewportActive(Main main, uint levelId)
+    {
+        var observation = main.ObservedNativeSceneDrawing;
+        return observation is { NativeSceneActive: true } && observation.LevelId == levelId;
+    }
+
+    private static bool IsRenderedWorldTileVisible(Main main, int x, int y)
+    {
+        var worldArea = (Control)main.FindChild("WorldArea", true, false);
+        return worldArea.GetGlobalRect().HasPoint(main.ObservedTileScreenPosition(x, y));
+    }
+
+    private static bool IsNativeSceneTileVisibleFromCamera(Main main, LevelGeometrySnapshot geometry,
+        MonsterSnapshot target, int cameraX, int cameraY)
+    {
+        var worldArea = (Control)main.FindChild("WorldArea", true, false);
+        var world = worldArea.GetChildren().OfType<WorldPresentation>().Single();
+        var frame = world.GetParent() as Control ?? worldArea;
+        var viewport = NativeSceneViewport.Create(
+            Math.Max(1, Mathf.RoundToInt(frame.Size.X)),
+            Math.Max(1, Mathf.RoundToInt(frame.Size.Y)),
+            geometry.Width,
+            geometry.Height,
+            cameraX,
+            cameraY);
+        var targetScreen = viewport.WorldToScreen(target.PositionX, target.PositionY);
+        return viewport.ContainsViewportPoint(targetScreen.X, targetScreen.Y);
     }
 }

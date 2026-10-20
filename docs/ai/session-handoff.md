@@ -37,9 +37,11 @@ The optional native player-art stage also passes full native frame/atlas
 comparisons and headless class draw/restore pairs. Read the work plan before the
 next scene batch: the pure MPQ-free Town builder passes all 191 native cases.
 Native CEL/MIN scene import also passes full piece/special/published-atlas pixel
-comparisons. Integrate Town fine/coarse backing and restore into explicit profiles
-and qualify shared isometric drawing/input. Cathedral final d-pieces
-exist; current profile Town geometry is empty. Retain the normal cohort/profile
+comparisons. Shared isometric Cathedral drawing/input now passes both class
+journey/restore pairs, including actual raster draws and pointer checks. Integrate
+Town fine/coarse/special backing and canonical roster into distinct explicit
+profiles/checkpoints; current Town geometry is empty and cold restore uses its
+explicit fallback. Retain the normal cohort/profile
 adoption hold and open rendered acceptance.
 Later class campaigns remain open. Refresh only changed claims;
 keep the work plan, working status and affected inventory entries synchronized.

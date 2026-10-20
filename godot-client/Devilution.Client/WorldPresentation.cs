@@ -93,6 +93,7 @@ public partial class WorldPresentation : Node2D
     /** Binds class-specific art to the exact content identity admitted by the server. */
     internal void SetNativePlayerContentIdentity(string? contentManifestHash)
     {
+        BindNativeSceneIdentity(contentManifestHash);
         if (!assets.SetNativePlayerContentIdentity(contentManifestHash))
             return;
         nativePlayerPresentationTick = null;
@@ -148,6 +149,8 @@ public partial class WorldPresentation : Node2D
             playerTextureBindingHistory.Clear();
             nativePlayerDrawObservations.Clear();
             nativePlayerDrawHistory.Clear();
+            nativeSceneFamily = null;
+            nativeSceneViewport = null;
             displayedMonsterSnapshots.Clear();
             displayedProjectileSnapshots.Clear();
             presentationClock.Reset();
@@ -194,6 +197,7 @@ public partial class WorldPresentation : Node2D
             levels.ApplyAuthoritative(snapshot.LevelGeometry);
         }
         currentLevel = levels.Resolve(localPlayer?.LevelId ?? 0);
+        ResolveNativeScene(localPlayer);
         var nextViewport = CreateViewportTransform(currentLevel, localPlayer);
         if (nextViewport.ViewportWidth != viewport.ViewportWidth || nextViewport.ViewportHeight != viewport.ViewportHeight) {
             displayedPositions.Clear();
@@ -366,6 +370,10 @@ public partial class WorldPresentation : Node2D
     public Vector2I ScreenToTile(Vector2 screenPosition)
     {
         var local = ToLocal(screenPosition);
+        if (nativeSceneViewport is { } sceneViewport) {
+            var nativeTile = sceneViewport.ScreenToTile(local.X, local.Y);
+            return new Vector2I(nativeTile.X, nativeTile.Y);
+        }
         var tile = viewport.ScreenToTile(local.X, local.Y);
         return new Vector2I(
             tile.X,
@@ -373,7 +381,14 @@ public partial class WorldPresentation : Node2D
     }
 
     /** Read-only tile projection shared with scene acceptance. */
-    internal Vector2 ScreenPositionForTile(int x, int y) => ToGlobal(ToScreen(x, y));
+    internal Vector2 ScreenPositionForTile(int x, int y)
+    {
+        if (nativeSceneViewport is { } sceneViewport) {
+            var center = sceneViewport.WorldToScreen(x, y);
+            return ToGlobal(new Vector2((float)center.X, (float)center.Y));
+        }
+        return ToGlobal(ToScreen(x, y));
+    }
 
     public Vector2? ScreenPositionForEntity(uint entityId)
     {
@@ -458,6 +473,8 @@ public partial class WorldPresentation : Node2D
     public override void _Draw()
     {
         doorDrawObservations.Clear();
+        if (DrawNativeSceneWorld())
+            return;
         DrawGrid();
         if (snapshot is null || snapshot.Players.Count == 0)
             return;
@@ -1261,12 +1278,20 @@ public partial class WorldPresentation : Node2D
 
     private Vector2 ToScreen(int x, int y)
     {
+        if (nativeSceneViewport is { } sceneViewport) {
+            var anchor = sceneViewport.CellBottomAnchor(x, y);
+            return new Vector2((float)anchor.X, (float)anchor.Y);
+        }
         var screen = viewport.WorldToScreen(x, y);
         return new Vector2((float)screen.X, (float)screen.Y);
     }
 
     private Vector2 ToScreen(double x, double y)
     {
+        if (nativeSceneViewport is { } sceneViewport) {
+            var anchor = sceneViewport.CellBottomAnchor(x, y);
+            return new Vector2((float)anchor.X, (float)anchor.Y);
+        }
         var screen = viewport.WorldToScreen(x, y);
         return new Vector2((float)screen.X, (float)screen.Y);
     }

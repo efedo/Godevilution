@@ -12,6 +12,7 @@ public partial class SessionAcceptance
 
     public override void _Process(double delta)
     {
+        CaptureNativeSceneArtDraws();
         if (nativePlayerArtMain is not { } main)
             return;
         CaptureNativePlayerArtDraws(main);

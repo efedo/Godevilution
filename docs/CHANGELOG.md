@@ -7,6 +7,12 @@ contracts stay in their existing guides.
 
 ## 2026-10-19
 
+- Draw optional identity-bound native scenes with one isometric camera/pointer
+  transform, native diagonal traversal and special placement, bounded textures
+  and whole-family atlas preflight. Keep explicit fallback and parity limits.
+- Record actual Cathedral raster/entity draws in class journeys and explicit
+  Town fallback on cold restore. Walk toward ranged targets until they are visible
+  before ordinary clicks; retain combat, resource and exact-resume gates.
 - Add a bounded optional client-only Town/Cathedral CEL/MIN/TIL/SOL importer,
   explicit palettes, content/level bindings and hashed PNG atlases. Preserve native
   MIN remapping, first-use frame types, floor/foliage masks and special anchors;

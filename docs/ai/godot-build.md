@@ -29,6 +29,29 @@ bits, effective frame types, separate floor/content masks and special anchors.
 Static palette conversion is qualified; client placement, lighting, palette
 cycling and wall transparency remain separate acceptance gates.
 
+Set `GODEVILUTION_NATIVE_SCENE_PACK` to the generated catalog before launching:
+
+```powershell
+$env:GODEVILUTION_NATIVE_SCENE_PACK = 'res://assets/native-scenes/local/native-scene-catalog.json'
+```
+
+Exact admitted content/level bindings and complete fine/special layers are
+required. All atlases in the selected family are preflighted for hash, resource
+type and dimensions before native viewport activation; failures retain the
+generic path with diagnostics. Current class profiles activate Cathedral art;
+Town has no native layer and retains explicit fallback, including cold resume.
+Class acceptance records actual draw calls and shared pointer round trips. Ranged
+encounter approach requires a clickable target under the same camera transform.
+
+`NativeSceneAssetPreflightProbe.tscn` runs headlessly against valid catalog copies
+with the first bound-family atlas absent or corrupted. Configure the
+`GODEVILUTION_NATIVE_SCENE_PREFLIGHT_CONTENT_HASH`,
+`GODEVILUTION_NATIVE_SCENE_PREFLIGHT_LEVEL_ID` and
+`GODEVILUTION_NATIVE_SCENE_PREFLIGHT_EXPECT`
+(`missing` or `hash-mismatch`) variables. Keep these private negative fixtures
+under a `.gdignore` directory so healthy editor imports skip the broken PNG.
+The probe proves asset refusal; ordinary class journeys qualify actual drawing.
+
 The two explicit `NativeSceneArtImporterTests` compare every captured native
 slot/piece/special and every published PNG pixel, including padding. Set
 `GODEVILUTION_NATIVE_SCENE_REFERENCE_DIRECTORY` to the complete native scene

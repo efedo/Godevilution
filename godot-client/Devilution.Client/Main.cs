@@ -72,6 +72,17 @@ public partial class Main : Node2D
             ?? Array.Empty<PresentationPlayerTextureBindingObservation>();
 
     internal NativePlayerPackObservation? ObservedNativePlayerPack => world?.ObserveNativePlayerPack();
+    internal NativeScenePackObservation? ObservedNativeScenePack => world?.ObserveNativeScenePack();
+    internal NativeSceneDrawingObservation? ObservedNativeSceneDrawing => world?.ObserveNativeSceneDrawing();
+    internal bool ObservedNativeScenePointerRoundTrip
+    {
+        get {
+            var player = ObservedSnapshot?.Players.FirstOrDefault();
+            return world is not null && player is not null
+                && world.ScreenToTile(world.ScreenPositionForTile(player.PositionX, player.PositionY))
+                    == new Vector2I(player.PositionX, player.PositionY);
+        }
+    }
     internal NativePlayerDrawObservation? ObservedNativePlayerDrawing
         => world?.ObserveNativePlayerDrawing(model.PlayerEntityId);
     internal IReadOnlyList<NativePlayerDrawObservation> ObservedNativePlayerDrawingHistory
