@@ -37,7 +37,30 @@ items only; the exact hero state is exported before generation. Native InitPlaye
 consumes that prepared state. Birth-clock item-seed parity, preceding-floor
 gameplay and profile activation remain outside this proof. Prepared pre-entry
 coordinates and the seeded history flag are also explicit inputs. Run `ThemeRoomGenerationTest.NativeThemeRoomGuardRestoresBestiarySizeAndEntries`
-for its MPQ-free Bestiary count/entry restoration regression.
+for its MPQ-free Bestiary count/entry restoration regression. The separate
+`ThemeRoomGenerationTest.CatacombsStoryBooksUseNativeSecondMessageColumn` checks
+all three actual native L8 book messages and object fields without an MPQ.
+
+`ThemeRoomGenerationTest.CaptureNativeCatacombsFreshPopulationStages` is an
+additive version-2 mode using the same explicit population variables and matrix.
+It adds complete post-InitObjects, post-InitMonsters and post-InitItems worlds;
+version-1 output remains separate. Two captures must match byte-for-byte.
+The managed initial-phase comparison must derive the CreateLevel `Freeupstairs`
+5×5 reservations from generated trigger positions, never from captured flags.
+
+The offline semantic compiler accepts only complete TSV inputs:
+
+```powershell
+dotnet run --project tools/Cathedral.Playtest --no-restore -- --compile-catacombs-population-metadata --metadata-directory <semantic TSVs> --output-directory <new directory>
+```
+
+The distinct Catacombs schema retains 160 TIL records, 1379 effective SOL rows,
+explicit depths 5–8 and L8 story messages 250/253/256. TIL/SOL hashes are verified
+against reconstructed bytes; the complete text-table hash is declared provenance.
+The separate L2 automap catalog validates 160 source words and their SHA256,
+overrides source row 41 at effective ID 42 and bounds generated IDs to 1–160.
+Compiled tail defaults do not claim native hot-session tail parity. No server
+archive loading or playable-profile activation is added.
 
 ## Native Cathedral object art reference
 

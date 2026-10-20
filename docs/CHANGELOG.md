@@ -7,6 +7,12 @@ contracts stay in their existing guides.
 
 ## 2026-10-20
 
+- Add distinct Catacombs population/automap metadata and offline compilation,
+  verified semantic-source hashes, L8 story bindings and unchanged Cathedral schemas.
+- Extend shared initial phases through explicit internal family contexts: generated
+  theme ordering/reservations, L2 doors/torches, L8 books, barrels and trapped chests.
+  Compare all 32 native initial stages; retain separate version-1 reference bytes.
+
 - Add pure seeded Catacombs L5–L8 generation and semantic TIL/SOL materialization,
   preserving retained retry seeds, theme ordering, entries and generated L8 stairs.
 - Add repeated native geometry and complete prepared-class population references,

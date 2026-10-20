@@ -87,9 +87,23 @@ public sealed class AuthoritativeCathedralPopulationParameters
         IReadOnlyList<AuthoritativeCathedralPopulationMonsterDefinition> orderedBestiary,
         AuthoritativeCathedralPopulationPlayer player, int trapPercent,
         IReadOnlyList<int> storyMessages, int maximumPlacementAttempts = 1_000_000)
+        : this(depth, populationSeed, storySeed, geometry, objects, orderedBestiary,
+            player, trapPercent, storyMessages, maximumPlacementAttempts,
+            AuthoritativeNativeDungeonFamilyContext.Cathedral(depth))
     {
-        if (depth is < 1 or > 4 || trapPercent is < 0 or > 100
-            || maximumPlacementAttempts <= 0)
+    }
+
+    internal AuthoritativeCathedralPopulationParameters(
+        int depth, uint populationSeed, uint storySeed,
+        AuthoritativeCathedralPopulationGeometry geometry,
+        IReadOnlyList<AuthoritativeCathedralPopulationObjectDefinition> objects,
+        IReadOnlyList<AuthoritativeCathedralPopulationMonsterDefinition> orderedBestiary,
+        AuthoritativeCathedralPopulationPlayer player, int trapPercent,
+        IReadOnlyList<int> storyMessages, int maximumPlacementAttempts,
+        AuthoritativeNativeDungeonFamilyContext familyContext)
+    {
+        familyContext.RequireMatch(depth);
+        if (trapPercent is < 0 or > 100 || maximumPlacementAttempts <= 0)
             throw new InvalidDataException("Invalid ordinary Cathedral phase bounds.");
         ArgumentNullException.ThrowIfNull(geometry);
         ArgumentNullException.ThrowIfNull(objects);
@@ -132,6 +146,7 @@ public sealed class AuthoritativeCathedralPopulationParameters
         if (messages.Any(value => value < 0))
             throw new InvalidDataException("All three Cathedral story speech identities are required.");
         Depth = depth;
+        FamilyContext = familyContext;
         PopulationSeed = populationSeed;
         StorySeed = storySeed;
         Geometry = geometry;
@@ -144,6 +159,7 @@ public sealed class AuthoritativeCathedralPopulationParameters
     }
 
     public int Depth { get; }
+    internal AuthoritativeNativeDungeonFamilyContext FamilyContext { get; }
     public uint PopulationSeed { get; }
     public uint StorySeed { get; }
     public AuthoritativeCathedralPopulationGeometry Geometry { get; }

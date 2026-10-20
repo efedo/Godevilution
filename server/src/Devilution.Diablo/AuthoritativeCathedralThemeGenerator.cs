@@ -38,10 +38,31 @@ public sealed class AuthoritativeCathedralThemeParameters
         IReadOnlyList<int> selectedBestiaryNativeIds,
         uint startingRandomState,
         int maximumThemeSelectionAttempts = 1_000_000)
+        : this(depth, pieces, transparency, pieceProperties, initialPopulated, objectOccupied,
+            nextTransparencyValue, triggerPositions, selectedBestiaryNativeIds, startingRandomState,
+            maximumThemeSelectionAttempts, AuthoritativeNativeDungeonFamilyContext.Cathedral(depth))
     {
-        if (depth is < 1 or > 4)
-            throw new InvalidDataException("Cathedral theme generation requires depth 1 through 4.");
-        if (nextTransparencyValue is < -128 or > 126)
+    }
+
+    internal AuthoritativeCathedralThemeParameters(
+        int depth,
+        IReadOnlyList<ushort> pieces,
+        IReadOnlyList<byte> transparency,
+        IReadOnlyList<byte> pieceProperties,
+        IReadOnlyList<bool> initialPopulated,
+        IReadOnlyList<bool> objectOccupied,
+        int nextTransparencyValue,
+        IReadOnlyList<AuthoritativeCathedralPopulationPoint> triggerPositions,
+        IReadOnlyList<int> selectedBestiaryNativeIds,
+        uint startingRandomState,
+        int maximumThemeSelectionAttempts,
+        AuthoritativeNativeDungeonFamilyContext familyContext)
+    {
+        familyContext.RequireMatch(depth);
+        if (familyContext.IsCatacombs != (depth is >= 5 and <= 8))
+            throw new InvalidDataException("Native theme depth does not match its explicit dungeon family.");
+        if (nextTransparencyValue is < -128
+            || (familyContext.IsCatacombs ? nextTransparencyValue > sbyte.MaxValue : nextTransparencyValue > 126))
             throw new InvalidDataException("The native int8 next transparency value is outside the safe theme-loop range.");
         if (maximumThemeSelectionAttempts <= 0)
             throw new ArgumentOutOfRangeException(nameof(maximumThemeSelectionAttempts));
@@ -73,12 +94,14 @@ public sealed class AuthoritativeCathedralThemeParameters
         SelectedBestiaryNativeIds = Array.AsReadOnly(bestiary);
 
         Depth = depth;
+        FamilyContext = familyContext;
         NextTransparencyValue = nextTransparencyValue;
         StartingRandomState = startingRandomState;
         MaximumThemeSelectionAttempts = maximumThemeSelectionAttempts;
     }
 
     public int Depth { get; }
+    internal AuthoritativeNativeDungeonFamilyContext FamilyContext { get; }
     public IReadOnlyList<ushort> Pieces { get; }
     public IReadOnlyList<byte> Transparency { get; }
     public IReadOnlyList<byte> PieceProperties { get; }
@@ -171,29 +194,71 @@ public static class AuthoritativeCathedralThemeGenerator
     public static AuthoritativeCathedralThemeResult Generate(AuthoritativeCathedralThemeParameters parameters)
     {
         ArgumentNullException.ThrowIfNull(parameters);
-        return new ThemePhase(parameters).Generate();
+        return Generate(parameters, AuthoritativeNativeDungeonFamilyContext.Cathedral(parameters.Depth));
+    }
+
+    internal static AuthoritativeCathedralThemeResult Generate(
+        AuthoritativeCathedralThemeParameters parameters,
+        AuthoritativeNativeDungeonFamilyContext familyContext)
+    {
+        ArgumentNullException.ThrowIfNull(parameters);
+        familyContext.RequireMatch(parameters.Depth);
+        if (parameters.FamilyContext != familyContext)
+            throw new InvalidDataException("Native theme parameters were created for a different dungeon family.");
+        return new ThemePhase(parameters, familyContext, null, null).Generate();
+    }
+
+    internal static (AuthoritativeCathedralThemeResult Themes, IReadOnlyList<AuthoritativeCatacombsSelectedTheme> Selections)
+        GenerateCatacombs(
+            AuthoritativeCathedralThemeParameters parameters,
+            AuthoritativeNativeDungeonFamilyContext familyContext,
+            IReadOnlyList<AuthoritativeCatacombsThemeRoom> generatedRooms,
+            IReadOnlyList<int> selectedBestiaryNativeIds,
+            uint startingRandomState)
+    {
+        ArgumentNullException.ThrowIfNull(parameters);
+        ArgumentNullException.ThrowIfNull(generatedRooms);
+        ArgumentNullException.ThrowIfNull(selectedBestiaryNativeIds);
+        familyContext.RequireMatch(parameters.Depth);
+        if (!familyContext.IsCatacombs || parameters.FamilyContext != familyContext)
+            throw new InvalidDataException("Generated L2 themes require explicit Catacombs parameters.");
+        return new ThemePhase(parameters, familyContext, generatedRooms, selectedBestiaryNativeIds, startingRandomState).GenerateCatacombs();
     }
 
     private sealed class ThemePhase
     {
         private readonly AuthoritativeCathedralThemeParameters input;
+        private readonly AuthoritativeNativeDungeonFamilyContext familyContext;
+        private readonly IReadOnlyList<AuthoritativeCatacombsThemeRoom>? generatedRooms;
+        private readonly IReadOnlyList<int> selectedBestiaryNativeIds;
         private readonly DeterministicLegacyRandom random;
         private readonly sbyte[] transparency;
         private readonly bool[] heldPopulated;
         private readonly ThemeFlags flags = new();
         private readonly ThemeScratch scratch = new();
         private readonly List<AuthoritativeCathedralThemeEntry> themes = [];
+        private readonly List<AuthoritativeCatacombsSelectedTheme> catacombsSelections = [];
 
-        public ThemePhase(AuthoritativeCathedralThemeParameters input)
+        public ThemePhase(
+            AuthoritativeCathedralThemeParameters input,
+            AuthoritativeNativeDungeonFamilyContext familyContext,
+            IReadOnlyList<AuthoritativeCatacombsThemeRoom>? generatedRooms,
+            IReadOnlyList<int>? selectedBestiaryNativeIds,
+            uint? startingRandomState = null)
         {
             this.input = input;
-            random = new DeterministicLegacyRandom(input.StartingRandomState);
+            this.familyContext = familyContext;
+            this.generatedRooms = generatedRooms;
+            this.selectedBestiaryNativeIds = selectedBestiaryNativeIds ?? input.SelectedBestiaryNativeIds;
+            random = new DeterministicLegacyRandom(startingRandomState ?? input.StartingRandomState);
             transparency = input.Transparency.Select(value => unchecked((sbyte)value)).ToArray();
             heldPopulated = input.InitialPopulated.ToArray();
         }
 
         public AuthoritativeCathedralThemeResult Generate()
         {
+            if (familyContext.IsCatacombs)
+                throw new InvalidOperationException("Catacombs theme selection requires the ordered generated rooms.");
             // The native int8 loop checks a region, then breaks only when the current
             // region is greater than nextTransparencyValue; therefore next+1 is visited.
             var lastRegion = Math.Max(0, input.NextTransparencyValue + 1);
@@ -217,6 +282,34 @@ public static class AuthoritativeCathedralThemeGenerator
                 flags.ToPublic(),
                 scratch.Variant,
                 new(scratch.X, scratch.Y));
+        }
+
+        public (AuthoritativeCathedralThemeResult Themes, IReadOnlyList<AuthoritativeCatacombsSelectedTheme> Selections)
+            GenerateCatacombs()
+        {
+            if (!familyContext.IsCatacombs || generatedRooms is null)
+                throw new InvalidOperationException("Catacombs theme selection requires the explicit generated-room list.");
+            if (generatedRooms.Count > AuthoritativeCathedralThemeParameters.MaxThemes)
+                throw new InvalidDataException("Catacombs generated theme rooms exceed the native theme limit.");
+            foreach (var room in generatedRooms) {
+                if (room is null || room.Transparency is < sbyte.MinValue or > sbyte.MaxValue)
+					throw new InvalidDataException("Catacombs theme rooms require signed native transparency IDs.");
+                var themeType = SelectThemeType(themes.Count, room.Transparency);
+                themes.Add(new AuthoritativeCathedralThemeEntry(themeType, room.Transparency));
+                catacombsSelections.Add(new(themeType, room with { }, scratch.X, scratch.Y, scratch.Variant));
+                for (var y = room.Y; y < room.Y + room.Height - 1; y++) {
+                    for (var x = room.X; x < room.X + room.Width - 1; x++) {
+                        var fineX = 16 + 2 * x;
+                        var fineY = 16 + 2 * y;
+                        for (var dy = 0; dy <= 1; dy++)
+                            for (var dx = 0; dx <= 1; dx++)
+                                heldPopulated[Index(fineX + dx, fineY + dy)] = true;
+                    }
+                }
+            }
+            var result = new AuthoritativeCathedralThemeResult(themes, heldPopulated, random.State,
+                input.NextTransparencyValue, flags.ToPublic(), scratch.Variant, new(scratch.X, scratch.Y));
+            return (result, Array.AsReadOnly(catacombsSelections.ToArray()));
         }
 
         private int SelectThemeType(int themeIndex, int region)
@@ -276,14 +369,14 @@ public static class AuthoritativeCathedralThemeGenerator
             case ThemeLibrary:
                 return FitShrine(region);
             case ThemeSkeletonRoom:
-                if (!input.SelectedBestiaryNativeIds.Any(IsSkeleton))
+                if (!selectedBestiaryNativeIds.Any(IsSkeleton))
                     return false;
-                scratch.Variant = Array.FindIndex(input.SelectedBestiaryNativeIds.ToArray(), IsSkeleton);
+                scratch.Variant = Array.FindIndex(selectedBestiaryNativeIds.ToArray(), IsSkeleton);
                 return FitObj5(region);
             case ThemeGoatShrine:
-                if (!input.SelectedBestiaryNativeIds.Any(IsGoat))
+                if (!selectedBestiaryNativeIds.Any(IsGoat))
                     return false;
-                scratch.Variant = Array.FindIndex(input.SelectedBestiaryNativeIds.ToArray(), IsGoat);
+                scratch.Variant = Array.FindIndex(selectedBestiaryNativeIds.ToArray(), IsGoat);
                 return FitObj5(region);
             case ThemeBloodFountain:
                 if (!FitObj5(region)) return false;
@@ -328,6 +421,7 @@ public static class AuthoritativeCathedralThemeGenerator
                 return true;
             case ThemeArmorStand:
             case ThemeWeaponRack:
+                return familyContext.IsCatacombs;
             case ThemeCauldron:
                 return false;
             case ThemeBloodFountain:

@@ -39,6 +39,55 @@ public sealed class AuthoritativeCathedralInitialObjectLightingTests
         Assert.All(preLight, value => Assert.Equal(15, value));
     }
 
+    [Theory]
+    [InlineData(44)]
+    [InlineData(45)]
+    [InlineData(46)]
+    [InlineData(47)]
+    public void CatacombsTorchesUseEightRadiusOnLiveGridOnly(int type)
+    {
+        var population = Population(type);
+        var light = Enumerable.Repeat((byte)15, Cells).ToArray();
+        var preLight = Enumerable.Repeat((byte)7, Cells).ToArray();
+        var expected = light.ToArray();
+        AuthoritativeCathedralThemeStaticLighting.Apply(expected, preLight.ToArray(), new(50, 50), 8, false);
+
+        AuthoritativeCathedralInitialObjectLighting.ApplyCatacombs(light, preLight, population);
+
+        Assert.Equal(expected, light);
+        Assert.NotEqual((byte)15, light[50 + 50 * 112]);
+        Assert.All(preLight, value => Assert.Equal((byte)7, value));
+        Assert.False(population.Objects[126].ApplyLighting);
+        Assert.Equal(2588U, population.FinalRandomState);
+        var cathedral = Enumerable.Repeat((byte)15, Cells).ToArray();
+        AuthoritativeCathedralInitialObjectLighting.Apply(cathedral, preLight, population);
+        Assert.All(cathedral, value => Assert.Equal((byte)15, value));
+    }
+
+    [Fact]
+    public void CatacombsLightsRespectActivePrefixAndKeepStoryCandleRadius()
+    {
+        var light = Enumerable.Repeat((byte)15, Cells).ToArray();
+        var preLight = light.ToArray();
+        AuthoritativeCathedralInitialObjectLighting.ApplyCatacombs(light, preLight, Population(44, active: false));
+        AuthoritativeCathedralInitialObjectLighting.ApplyCatacombs(light, preLight, Population(57));
+        Assert.All(light, value => Assert.Equal((byte)15, value));
+        var expected = light.ToArray();
+        AuthoritativeCathedralThemeStaticLighting.Apply(expected, preLight.ToArray(), new(50, 50), 3, false);
+        AuthoritativeCathedralInitialObjectLighting.ApplyCatacombs(light, preLight, Population(87));
+        Assert.Equal(expected, light);
+        Assert.All(preLight, value => Assert.Equal((byte)15, value));
+    }
+
+    [Fact]
+    public void CatacombsIncompleteChannelsRejectBeforeChangingInput()
+    {
+        var light = Enumerable.Repeat((byte)15, Cells).ToArray();
+        Assert.Throws<InvalidDataException>(() =>
+            AuthoritativeCathedralInitialObjectLighting.ApplyCatacombs(light, new byte[1], Population(44)));
+        Assert.All(light, value => Assert.Equal((byte)15, value));
+    }
+
     [Fact]
     public void IncompleteChannelsRejectBeforeChangingInput()
     {

@@ -9,6 +9,43 @@ the referenced test sources. Do not copy raw outputs into historical archives.
 
 ## Client and host verification
 
+### 2026-10-20 — Catacombs metadata and initial population
+
+Fifty-five focused managed cases and all 32 explicit native initial-phase
+comparisons pass without skips. The source-qualified metadata also compiles
+through the actual offline CLI into a standalone 20-table pack. Cathedral
+compatibility has 124 passes; its unchanged symbolic-link privilege test is
+unavailable in the sandbox. A workspace junction probe is likewise denied before
+creation. No link-refusal runtime qualification is added from those attempts.
+
+The distinct metadata validates 160 TIL rows, 1379 raw/named SOL rows including
+opaque 0x40 and the 559-byte source prefix/zero tail, source-derived depth rules,
+canonical global catalogs and the separate L8 story column. TIL, SOL and L2 AMP
+hashes must match reconstructed bytes. The complete text-table hash is declared
+provenance. All three actual native L8 storybook branches pass the MPQ-free
+regression, including IDs 250/253/256, frames/vars and unchanged RNG. L2 automap
+checks source row 41→effective ID 42, clears its flags and preserves the bounded
+cold-tail contract; generated family IDs cannot reach stale native tail slots.
+
+Two version-2 native captures pass all 32 cases and repeat byte-identically
+across 35 artifacts. They add exact post-InitObjects, post-InitMonsters and
+post-InitItems worlds. A separate version-1 capture retains all 35 original
+artifact bytes, and stripping the staged additions reproduces every original
+case. The managed comparison derives geometry, Freeupstairs trigger reservations,
+cleared monster slots and prepared hero inputs independently. It compares full
+127-slot object pools, all 200 monster slots/IDs, all eleven tile channels,
+bestiary order/animations, ordered themes, flags/scratch, physical torch lighting
+and RNG through initial objects. Native before/after item/history/allocator checks
+are preservation checks, not managed later-phase parity.
+
+Independent review passes after correcting source-hash validation and fixture
+reader/build issues. Checked x64 MSVC and bounded managed builds/captures exit
+cleanly; managed builds isolate the unrelated preserved vision WIP. Current
+compiler/analyzer warnings remain. Complete managed encounters, items, theme
+creation and level-ready parity are pending, followed by generated actor behavior,
+profile activation, travel and cold restore. No playable Catacombs family or
+preceding-floor campaign qualification is claimed.
+
 ### 2026-10-20 — native Catacombs generation and population reference
 
 The MPQ-free Catacombs generator/materializer passes 75 focused managed cases

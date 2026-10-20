@@ -52,6 +52,7 @@
 #include "tables/leveldat.h"
 #include "tables/misdat.h"
 #include "tables/playerdat.hpp"
+#include "tables/textdat.h"
 #include "utils/paths.h"
 #include "utils/parse_int.hpp"
 #include "utils/language.h"
@@ -1356,7 +1357,7 @@ struct NativeThemeRoomGuard {
 class ThemeRoomGenerationTest : public ThemeItemPlacementTest {
 protected:
 	void CapturePopulationOracle(const char *directory, bool freshLoadOrder, bool levelReady = false, bool nativeRogueRoute = false, std::optional<HeroClass> nativeClassRoute = std::nullopt);
-	void CaptureNativeCatacombsPopulationOracle(const char *archivePath, const char *directory);
+	void CaptureNativeCatacombsPopulationOracle(const char *archivePath, const char *directory, bool captureStages = false);
 
 	void SetUp() override
 	{
@@ -2381,6 +2382,34 @@ struct NativeComposedPopulationGuard {
 	}
 };
 
+// Bind semantic L8 speech inputs to actual native object initialization; no MPQ is opened.
+TEST_F(ThemeRoomGenerationTest, CatacombsStoryBooksUseNativeSecondMessageColumn)
+{
+	NativeComposedPopulationGuard guard;
+	constexpr std::array<_speech_id, 3> messages { TEXT_BOOK12, TEXT_BOOK22, TEXT_BOOK32 };
+	constexpr std::array<int, 3> nativeIds { 250, 253, 256 };
+	ASSERT_FALSE(AllObjects[OBJ_STORYBOOK].isAnimated());
+	for (size_t row = 0; row < messages.size(); ++row) {
+		SCOPED_TRACE(row);
+		PrepareRoom(8, 0, 0, 0, false);
+		currentLevel().setId(LevelId { .levelNum = 8, .type = DTYPE_CATACOMBS });
+		currentLevelNumber() = 8;
+		levelType() = DTYPE_CATACOMBS;
+		DungeonSeeds[16] = static_cast<uint32_t>(row) << 16;
+		SetRndSeed(UINT32_C(0x13579BDF));
+		const uint32_t before = GetLCGEngineState();
+		Object *book = AddObject(OBJ_STORYBOOK, { 50, 50 });
+		ASSERT_NE(book, nullptr);
+		EXPECT_EQ(static_cast<int>(messages[row]), nativeIds[row]);
+		EXPECT_EQ(book->_oVar1, static_cast<int>(row));
+		EXPECT_EQ(book->_oVar2, messages[row]);
+		EXPECT_EQ(book->_oVar3, 1 + 3 * static_cast<int>(row));
+		EXPECT_EQ(book->_oAnimFrame, 5U - 2U * static_cast<unsigned>(row));
+		EXPECT_EQ(book->_oVar4, 6 - 2 * static_cast<int>(row));
+		EXPECT_EQ(GetLCGEngineState(), before);
+	}
+}
+
 // Extends the existing controlled upstream oracle, not the complete campaign
 // LoadGameLevel lifecycle. Geometry comes from original local assets; this
 // fixture alone opens MPQs and only when explicitly selected.
@@ -3057,7 +3086,7 @@ void WriteCatacombsRngBoundary(std::ostream &out, bool &first, std::string_view 
 }
 #endif
 
-void ThemeRoomGenerationTest::CaptureNativeCatacombsPopulationOracle(const char *archivePath, const char *directory)
+void ThemeRoomGenerationTest::CaptureNativeCatacombsPopulationOracle(const char *archivePath, const char *directory, bool captureStages)
 {
 	if (archivePath == nullptr || archivePath[0] == '\0' || directory == nullptr || directory[0] == '\0')
 		GTEST_SKIP() << "Set both explicit Catacombs population archive and new reference directory variables.";
@@ -3366,7 +3395,7 @@ void ThemeRoomGenerationTest::CaptureNativeCatacombsPopulationOracle(const char 
 		{
 			JsonObject document(caseOutput);
 			document.String("format", "godevilution-catacombs-population-case");
-			document.Number("version", 1);
+			document.Number("version", captureStages ? 2 : 1);
 			document.String("policy", "quest-disabled-original-diablo-single-player-normal");
 			document.String("characterClass", CatacombsClassSymbol(spec.heroClass));
 			document.Number("characterClassId", spec.heroClass);
@@ -3374,6 +3403,7 @@ void ThemeRoomGenerationTest::CaptureNativeCatacombsPopulationOracle(const char 
 			document.Number("levelId", spec.depth);
 			document.String("entry", CatacombsEntrySymbol(spec.entry));
 			document.Number("inputSeed", spec.seed);
+			if (captureStages) document.Number("storySeed", DungeonSeeds[16]);
 			if (spec.aiEligibilityCoverage)
 				document.String("casePurpose", "native-ai-eligibility-coverage");
 			document.Number("attemptSeed", attemptSeed);
@@ -3426,8 +3456,11 @@ void ThemeRoomGenerationTest::CaptureNativeCatacombsPopulationOracle(const char 
 			HoldThemeRooms(); afterHoldThemeRooms = GetLCGEngineState();
 			InitGolems(); afterInitGolems = GetLCGEngineState();
 			InitObjects(); afterInitObjects = GetLCGEngineState();
+			if (captureStages) { document.Key("worldAfterInitialObjects"); WriteRoomWorld(caseOutput); }
 			ASSERT_TRUE(InitMonsters().has_value()); afterInitMonsters = GetLCGEngineState();
+			if (captureStages) { document.Key("worldAfterInitMonsters"); WriteRoomWorld(caseOutput); }
 			InitItems(); afterInitItems = GetLCGEngineState();
+			if (captureStages) { document.Key("worldAfterInitItems"); WriteRoomWorld(caseOutput); }
 			const std::array<bool, 128> outputUniqueFlagsAfterItems = CaptureFlags();
 			if (spec.retainedUniqueHistory)
 				ASSERT_TRUE(outputUniqueFlagsAfterItems[PreparedCatacombsUniqueHistoryId]);
@@ -3477,9 +3510,11 @@ void ThemeRoomGenerationTest::CaptureNativeCatacombsPopulationOracle(const char 
 		{
 			JsonObject document(manifest);
 			document.String("format", "godevilution-native-catacombs-population");
-			document.Number("version", 1);
+			document.Number("version", captureStages ? 2 : 1);
 			document.String("policy", "quest-disabled-original-diablo-single-player-normal");
 			document.Number("caseCount", indexRows.size());
+			if (captureStages)
+				document.String("capturedStages", "post-InitObjects,post-InitMonsters,post-InitItems");
 			document.Number("catacombsFirstLevel", 5);
 			document.Number("catacombsLastLevel", 8);
 			document.Number("nativeSolSourceBytes", sourceSolByteCount);
@@ -3533,6 +3568,14 @@ void ThemeRoomGenerationTest::CaptureNativeCatacombsPopulationOracle(const char 
 	ASSERT_TRUE(outputGuard.WriteStatus("complete")) << "Could not finalize the capture status marker.";
 	outputGuard.complete = true;
 #endif
+}
+
+// Additive staged reference; the earlier fixture retains its exact version-1 bytes.
+TEST_F(ThemeRoomGenerationTest, CaptureNativeCatacombsFreshPopulationStages)
+{
+	CaptureNativeCatacombsPopulationOracle(
+	    std::getenv("GODEVILUTION_NATIVE_CATACOMBS_POPULATION_ARCHIVE"),
+	    std::getenv("GODEVILUTION_NATIVE_CATACOMBS_POPULATION_REFERENCE_DIRECTORY"), true);
 }
 
 TEST_F(ThemeRoomGenerationTest, CaptureNativeCatacombsFreshPopulation)

@@ -138,8 +138,12 @@ The 32-case actual-class native population reference repeats byte-identically
 across 35 artifacts, including retained unique history and actual Fat, Rhino,
 Gargoyle, Magma and Acid actors. Starter-item identity seeds and pre-entry hero
 coordinates are explicit prepared inputs; birth-clock seed parity and preceding-
-floor gameplay are outside this proof. Shared population/semantic metadata
-implementation is next; no playable Catacombs profile is activated. Generated
+floor gameplay are outside this proof. Distinct semantic metadata, L2 automap
+and initial population phases pass 55 focused cases and all 32 exact staged
+native comparisons. Complete encounters/items/themes/ready composition is next.
+Cathedral compatibility
+has 124 passes; one unchanged symbolic-link case is unavailable under sandbox
+privileges. No playable Catacombs profile is activated. Generated
 Gargoyle statue mode/cursor, native-owned Fat special attack and ranged timing/
 controller retention remain required integration gates before family qualification.
 See [verification](test-history.md#2026-10-20--native-catacombs-generation-and-population-reference).

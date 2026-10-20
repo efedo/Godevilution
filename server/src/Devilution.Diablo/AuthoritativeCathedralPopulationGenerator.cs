@@ -11,7 +11,18 @@ public static class AuthoritativeCathedralPopulationGenerator
     public static AuthoritativeCathedralPopulationResult Generate(AuthoritativeCathedralPopulationParameters parameters)
     {
         ArgumentNullException.ThrowIfNull(parameters);
-        return new Population(parameters).Generate();
+        return Generate(parameters, AuthoritativeNativeDungeonFamilyContext.Cathedral(parameters.Depth));
+    }
+
+    internal static AuthoritativeCathedralPopulationResult Generate(
+        AuthoritativeCathedralPopulationParameters parameters,
+        AuthoritativeNativeDungeonFamilyContext familyContext)
+    {
+        ArgumentNullException.ThrowIfNull(parameters);
+        familyContext.RequireMatch(parameters.Depth);
+        if (parameters.FamilyContext != familyContext)
+            throw new InvalidDataException("Native population parameters were created for a different dungeon family.");
+        return new Population(parameters, familyContext).Generate();
     }
 
     private sealed class Population
@@ -19,6 +30,9 @@ public static class AuthoritativeCathedralPopulationGenerator
         private const int Width = 112, Capacity = 127;
         private const int Light = 0, LeftDoor = 1, RightDoor = 2, Chest1 = 5, Chest2 = 6, Chest3 = 7;
         private const int Sarcophagus = 48, LeftTrap = 53, RightTrap = 54, Barrel = 57, ExplosiveBarrel = 58;
+        private const int CatacombsLeftDoor = 42, CatacombsRightDoor = 43;
+        private const int TorchLeft = 44, TorchRight = 45, TorchLeft2 = 46, TorchRight2 = 47;
+        private const int TrappedChest1 = 68, TrappedChest2 = 69, TrappedChest3 = 70;
         private const int StoryBook = 86, StoryCandle = 87;
         private const byte Solid = 1, Trap = 128;
         private const uint LockAnimation = 2, AllowSpecial = 4, TargetsMonster = 16;
@@ -26,6 +40,7 @@ public static class AuthoritativeCathedralPopulationGenerator
         private static readonly int[] BarrelDx = [-1, 0, 1, -1, 1, -1, 0, 1];
         private static readonly int[] BarrelDy = [-1, -1, -1, 0, 0, 1, 1, 1];
         private readonly AuthoritativeCathedralPopulationParameters input;
+        private readonly AuthoritativeNativeDungeonFamilyContext familyContext;
         private readonly DeterministicLegacyRandom random;
         private readonly ObjectState[] objects = Enumerable.Range(0, Capacity).Select(slot => new ObjectState { Slot = slot }).ToArray();
         private readonly int[] active = new int[Capacity];
@@ -37,9 +52,12 @@ public static class AuthoritativeCathedralPopulationGenerator
         private readonly byte[] transparency;
         private int objectCount;
 
-        public Population(AuthoritativeCathedralPopulationParameters input)
+        public Population(
+            AuthoritativeCathedralPopulationParameters input,
+            AuthoritativeNativeDungeonFamilyContext familyContext)
         {
             this.input = input;
+            this.familyContext = familyContext;
             random = new(input.PopulationSeed);
             pieces = input.Geometry.Pieces.ToArray();
             special = input.Geometry.Special.ToArray();
@@ -51,14 +69,26 @@ public static class AuthoritativeCathedralPopulationGenerator
             for (var index = 0; index < 4; index++) AddMonster(0, new(1, 0));
             var afterGolems = random.State;
             random.Discard(1);
-            if (input.Depth == 4) AddStoryBooks();
-            AddRandomObjects(10, 15, Sarcophagus, -1, 1, -2, 1);
-            AddCathedralObjects();
-            AddBarrelGroups();
-            AddRandomObjects(5, 10, Chest1, -1, 1, -1, 1);
-            AddRandomObjects(3, 6, Chest2, -1, 1, -1, 1);
-            AddRandomObjects(1, 5, Chest3, -1, 1, -1, 1);
-            AddObjectTraps();
+            if (familyContext.IsCatacombs) {
+                if (input.Depth == 8) AddStoryBooks();
+                AddCatacombsDoors();
+                AddCatacombsTorches();
+                AddBarrelGroups();
+                AddRandomObjects(5, 10, Chest1, -1, 1, -1, 1);
+                AddRandomObjects(3, 6, Chest2, -1, 1, -1, 1);
+                AddRandomObjects(1, 5, Chest3, -1, 1, -1, 1);
+                AddObjectTraps();
+                AddCatacombsChestTraps();
+            } else {
+                if (input.Depth == 4) AddStoryBooks();
+                AddRandomObjects(10, 15, Sarcophagus, -1, 1, -2, 1);
+                AddCathedralObjects();
+                AddBarrelGroups();
+                AddRandomObjects(5, 10, Chest1, -1, 1, -1, 1);
+                AddRandomObjects(3, 6, Chest2, -1, 1, -1, 1);
+                AddRandomObjects(1, 5, Chest3, -1, 1, -1, 1);
+                AddObjectTraps();
+            }
             return new(objects, objectCount, active, available, objectRefs, monsters.ToArray(),
                 pieces, special, transparency, afterGolems, random.State);
         }
@@ -75,7 +105,7 @@ public static class AuthoritativeCathedralPopulationGenerator
             var index = Index(position);
             if (input.Geometry.MonsterOccupied[index] || input.Geometry.PlayerOccupied[index]
                 || objectRefs[index] != 0 || input.Geometry.Populated[index] || IsSolid(position)) return false;
-            return pieces[index] <= 125 || pieces[index] >= 143;
+            return familyContext.IsCatacombs || pieces[index] <= 125 || pieces[index] >= 143;
         }
         private bool AreaAllowed(Point position, int minX, int maxX, int minY, int maxY)
         {
@@ -124,6 +154,68 @@ public static class AuthoritativeCathedralPopulationGenerator
                 }
             }
         }
+
+        private void AddCatacombsDoors()
+        {
+            for (var y = 0; y < Width; y++) {
+                for (var x = 0; x < Width; x++) {
+                    var position = new Point(x, y);
+                    var piece = pieces[Index(position)];
+                    if (piece is 12 or 540) AddObject(CatacombsLeftDoor, position);
+                    if (piece is 16 or 541) AddObject(CatacombsRightDoor, position);
+                }
+            }
+        }
+
+        private void AddCatacombsTorches()
+        {
+            for (var y = 0; y < Width; y++) {
+                for (var x = 0; x < Width; x++) {
+                    var position = new Point(x, y);
+                    var index = Index(position);
+                    if (input.Geometry.Populated[index]) continue;
+                    var piece = pieces[index];
+                    if (piece == 0 && random.FlipCoin(3))
+                        AddObject(TorchLeft2, position);
+                    if (piece == 4 && random.FlipCoin(3))
+                        AddObject(TorchRight2, position);
+                    if (piece == 36 && random.FlipCoin(10)
+                        && objectRefs[Index(new(x - 1, y))] == 0)
+                        AddObject(TorchLeft, new(x - 1, y));
+                    if (piece == 40 && random.FlipCoin(10)
+                        && objectRefs[Index(new(x, y - 1))] == 0)
+                        AddObject(TorchRight, new(x, y - 1));
+                }
+            }
+        }
+
+        private void AddCatacombsChestTraps()
+        {
+            for (var y = 0; y < Width; y++) {
+                for (var x = 0; x < Width; x++) {
+                    var reference = objectRefs[x + y * Width];
+                    if (reference <= 0) continue;
+                    var slot = reference - 1;
+                    var chest = objects[slot];
+                    if (chest.Type is not (Chest1 or Chest2 or Chest3) || chest.TrapFlag)
+                        continue;
+                    if (random.GenerateRnd(100) >= 10)
+                        continue;
+                    var trappedType = chest.Type switch {
+                        Chest1 => TrappedChest1,
+                        Chest2 => TrappedChest2,
+                        Chest3 => TrappedChest3,
+                        _ => throw new InvalidDataException("Unexpected Catacombs chest type."),
+                    };
+                    objects[slot] = chest with {
+                        Type = trappedType,
+                        TrapFlag = true,
+                        Var4 = random.GenerateRnd(2),
+                    };
+                }
+            }
+        }
+
         private void AddBarrelGroups()
         {
             var groups = random.GenerateRnd(5) + 3;
@@ -187,6 +279,14 @@ public static class AuthoritativeCathedralPopulationGenerator
                     ? (ushort)(type == LeftDoor ? 411 : 410) : (ushort)(item.Var2 - 1);
                 break;
             }
+            case CatacombsLeftDoor:
+            case CatacombsRightDoor: {
+                var positionIndex = Index(position);
+                item = item with { DoorFlag = true, MissilePassable = false, SelectionRegion = 3 };
+                special[positionIndex] = 0;
+                pieces[positionIndex] = (ushort)(type == CatacombsLeftDoor ? 537 : 539);
+                break;
+            }
             case Chest1:
             case Chest2:
             case Chest3:
@@ -214,7 +314,8 @@ public static class AuthoritativeCathedralPopulationGenerator
                 item = item with { Var3 = missile switch { 0 => 0, 1 => 1, 2 => 7, _ => 0 } };
                 break;
             }
-            if (type is Light or StoryCandle) item = item with { Var1 = -1 };
+            if (type is Light or StoryCandle or TorchLeft or TorchRight or TorchLeft2 or TorchRight2)
+                item = item with { Var1 = -1 };
             objects[slot] = item;
             objectCount++;
             return slot;

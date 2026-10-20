@@ -11,6 +11,7 @@ internal static class Program
     private const string DepthUsage = "Cathedral.Playtest --base-directory <pack> --geometry-directory <semantic TSVs> --output-directory <new directory> --depth-seeds <seed1,seed2,seed3,seed4> [--placement-policy <none|authored-diagnostic>] [--diagnostic-drop-item <item_symbol>] [--town-portal-route town-portal-preview --town-loop-preview-directory <pack> --town-portal-preview-directory <pack>]";
     private const string DoorUsage = "Cathedral.Playtest --base-directory <pack> --geometry-directory <semantic TSVs> --output-directory <new directory> --depth-seeds <seed1,seed2,seed3,seed4> --cathedral-doors [--placement-policy <none|authored-diagnostic>]";
     private const string PopulationMetadataUsage = "Cathedral.Playtest --compile-population-metadata --metadata-directory <complete semantic TSVs> --output-directory <new directory>";
+    private const string CatacombsPopulationMetadataUsage = "Cathedral.Playtest --compile-catacombs-population-metadata --metadata-directory <complete semantic TSVs> --output-directory <new directory>";
     private const string NativePopulationUsage = "Cathedral.Playtest --native-cathedral-population --base-directory <pack> --geometry-directory <semantic TSVs> --metadata-directory <complete population pack> --monster-runtime-table <TSV> --inventory-footprints <captured TSV> --output-directory <new directory> --depth-seeds 2588,2588,1,4294967295";
     private const string NativeDepthProgressionUsage = "Cathedral.Playtest --native-cathedral-depth-progression --base-directory <pack> --geometry-directory <semantic TSVs> --metadata-directory <complete population pack> --monster-runtime-table <TSV> --inventory-footprints <captured TSV> --output-directory <new directory> --depth-seeds 2588,2588,1,4294967295";
     private const string NativeClassProgressionUsage = NativeDepthProgressionUsage + " --native-class <warrior|sorcerer>";
@@ -24,6 +25,7 @@ internal static class Program
                 Console.WriteLine(DepthUsage);
                 Console.WriteLine(DoorUsage);
                 Console.WriteLine(PopulationMetadataUsage);
+                Console.WriteLine(CatacombsPopulationMetadataUsage);
                 Console.WriteLine(NativePopulationUsage);
                 Console.WriteLine(NativePopulationUsage.Replace("--native-cathedral-population", "--native-cathedral-progression"));
                 Console.WriteLine(NativeDepthProgressionUsage);
@@ -37,6 +39,8 @@ internal static class Program
                 || args.Contains("--native-cathedral-progression", StringComparer.Ordinal)
                 || args.Contains("--native-cathedral-depth-progression", StringComparer.Ordinal))
                 return CompileNativePopulation(args);
+            if (args.Contains("--compile-catacombs-population-metadata", StringComparer.Ordinal))
+                return CompilePopulationMetadata(args, catacombs: true);
             if (args.Contains("--compile-population-metadata", StringComparer.Ordinal))
                 return CompilePopulationMetadata(args);
             if (args.Contains("--cathedral-doors", StringComparer.Ordinal))
@@ -113,26 +117,34 @@ internal static class Program
         return 0;
     }
 
-    private static int CompilePopulationMetadata(string[] args)
+    private static int CompilePopulationMetadata(string[] args, bool catacombs = false)
     {
+        var mode = catacombs ? "--compile-catacombs-population-metadata" : "--compile-population-metadata";
+        var usage = catacombs ? CatacombsPopulationMetadataUsage : PopulationMetadataUsage;
         var values = new Dictionary<string, string>(StringComparer.Ordinal);
         var flag = false;
         for (var index = 0; index < args.Length; index++) {
-            if (args[index] == "--compile-population-metadata") {
-                if (flag) throw new ArgumentException(PopulationMetadataUsage);
+            if (args[index] == mode) {
+                if (flag) throw new ArgumentException(usage);
                 flag = true;
             } else if (args[index] is not ("--metadata-directory" or "--output-directory")
                 || index + 1 >= args.Length || string.IsNullOrWhiteSpace(args[index + 1])
                 || !values.TryAdd(args[index], args[++index])) {
-                throw new ArgumentException(PopulationMetadataUsage);
+                throw new ArgumentException(usage);
             }
         }
         if (!flag || !values.TryGetValue("--metadata-directory", out var input)
             || !values.TryGetValue("--output-directory", out var output))
-            throw new ArgumentException(PopulationMetadataUsage);
-        var receipt = CathedralPopulationMetadataCompiler.CompileDirectory(input, output);
-        Console.WriteLine($"Compiled complete Cathedral population metadata: {receipt.OutputDirectory}");
-        Console.WriteLine($"Metadata: {receipt.MetadataFingerprint}; manifest: {receipt.ManifestHash}");
+            throw new ArgumentException(usage);
+        if (catacombs) {
+            var receipt = CatacombsPopulationMetadataCompiler.CompileDirectory(input, output);
+            Console.WriteLine($"Compiled complete Catacombs population metadata: {receipt.OutputDirectory}");
+            Console.WriteLine($"Metadata: {receipt.MetadataFingerprint}; manifest: {receipt.ManifestHash}");
+        } else {
+            var receipt = CathedralPopulationMetadataCompiler.CompileDirectory(input, output);
+            Console.WriteLine($"Compiled complete Cathedral population metadata: {receipt.OutputDirectory}");
+            Console.WriteLine($"Metadata: {receipt.MetadataFingerprint}; manifest: {receipt.ManifestHash}");
+        }
         Console.WriteLine("MPQ-free metadata only; no runtime activation or playable population claim.");
         return 0;
     }

@@ -50,8 +50,10 @@ remain open, alongside native lighting, scene phases, missiles and rendered pari
 Continue the established Catacombs L4/L5 entry/return and L5–L8 family batch.
 Pure generation/materialization now passes 75 focused managed cases; repeated
 native references cover 75 geometry and 32 prepared-class population cases.
-Shared population phases and distinct semantic metadata are next. Read the work
-plan and scoped verification before implementation; retain these valid references.
+Distinct semantic metadata, L2 automap and initial population now pass 55 focused
+and 32 exact native comparisons. Next compose complete encounters/items/themes
+and level-ready state, then integrate family behavior, owners, travel and cold
+restore. Read the work plan and scoped verification; retain valid references.
 The observed Town authority-lock lateness remains unresolved. Normal cohort/profile adoption stays held. Later class
 campaigns and full rendered qualification remain open. Reuse valid evidence and
 keep the work plan, status and inventory synchronized; L3 bot failure is not a

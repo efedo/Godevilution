@@ -80,8 +80,10 @@ state contracts. Both 75-case native generation captures repeat byte-identically
 The complete 32-case native population reference also repeats byte-identically,
 using explicit prepared Warrior/Sorcerer hero inputs and retained unique history.
 Actual Catacombs actors include Fat, Rhino, Gargoyle, Magma and Acid; existing AI
-proofs remain reusable within scope. Shared population phases and distinct
-semantic metadata come next. Generated Gargoyle statue cursors, native-owned
+proofs remain reusable within scope. Distinct semantic metadata, L2 automap and
+initial population phases now pass 55 focused and 32 exact native comparisons.
+Complete encounters/items/theme creation and level-ready composition come next.
+Generated Gargoyle statue cursors, native-owned
 Fat special attacks and ranged spawn/controller retention remain required
 family integration gates, alongside routes, ownership and cold restore. See
 [verification](test-history.md#2026-10-20--native-catacombs-generation-and-population-reference).

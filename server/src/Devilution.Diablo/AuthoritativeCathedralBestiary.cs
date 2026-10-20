@@ -175,9 +175,19 @@ public sealed class AuthoritativeCathedralBestiaryParameters
 		int depth,
 		uint populationSeed,
 		IReadOnlyList<AuthoritativeCathedralRawMonsterDefinition> catalog)
+		: this(depth, populationSeed, catalog, AuthoritativeNativeDungeonFamilyContext.Cathedral(depth))
 	{
-		if (depth is < 1 or > 4)
-			throw new InvalidDataException("Cathedral bestiary selection requires depth 1..4.");
+	}
+
+	internal AuthoritativeCathedralBestiaryParameters(
+		int depth,
+		uint populationSeed,
+		IReadOnlyList<AuthoritativeCathedralRawMonsterDefinition> catalog,
+		AuthoritativeNativeDungeonFamilyContext familyContext)
+	{
+		familyContext.RequireMatch(depth);
+		if (familyContext.IsCatacombs != (depth is >= 5 and <= 8))
+			throw new InvalidDataException("Native bestiary depth does not match its explicit dungeon family.");
 		ArgumentNullException.ThrowIfNull(catalog);
 		if (catalog.Count != AuthoritativeCathedralRawMonsterDefinition.RawCatalogCount)
 			throw new InvalidDataException("The complete native 0..137 monster catalog in source order is required.");
@@ -189,11 +199,13 @@ public sealed class AuthoritativeCathedralBestiaryParameters
 		Depth = depth;
 		PopulationSeed = populationSeed;
 		Catalog = Array.AsReadOnly(detached);
+		FamilyContext = familyContext;
 	}
 
 	public int Depth { get; }
 	public uint PopulationSeed { get; }
 	public IReadOnlyList<AuthoritativeCathedralRawMonsterDefinition> Catalog { get; }
+	internal AuthoritativeNativeDungeonFamilyContext FamilyContext { get; }
 
 	private static AuthoritativeCathedralRawMonsterDefinition CloneValidated(AuthoritativeCathedralRawMonsterDefinition value)
 		=> new(
@@ -289,6 +301,17 @@ public static class AuthoritativeCathedralBestiaryGenerator
 	public static AuthoritativeCathedralBestiaryResult Generate(AuthoritativeCathedralBestiaryParameters parameters)
 	{
 		ArgumentNullException.ThrowIfNull(parameters);
+		return Generate(parameters, AuthoritativeNativeDungeonFamilyContext.Cathedral(parameters.Depth));
+	}
+
+	internal static AuthoritativeCathedralBestiaryResult Generate(
+		AuthoritativeCathedralBestiaryParameters parameters,
+		AuthoritativeNativeDungeonFamilyContext familyContext)
+	{
+		ArgumentNullException.ThrowIfNull(parameters);
+		familyContext.RequireMatch(parameters.Depth);
+		if (parameters.FamilyContext != familyContext)
+			throw new InvalidDataException("Native bestiary parameters were created for a different dungeon family.");
 		var random = new DeterministicLegacyRandom(parameters.PopulationSeed);
 		var selected = new List<AuthoritativeCathedralSelectedMonster>(MaxLevelMonsterTypes);
 		var byNativeType = new Dictionary<int, int>();
