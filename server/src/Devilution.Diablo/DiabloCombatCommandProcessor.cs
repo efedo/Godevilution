@@ -975,7 +975,7 @@ public sealed partial class DiabloCombatCommandProcessor
                 target.NativeAi,
                 "Gargoyle",
                 StringComparison.Ordinal)
-            && target.GargoyleSpecialActive;
+            && IsNativeGargoyleWakePending(target);
         var damageQ6 = ResolvePlayerAttackDamageQ6(
             player,
             target,
@@ -2271,11 +2271,11 @@ public sealed partial class DiabloCombatCommandProcessor
             && !deferGargoyleWake
             && !nativeImpactRoll
             && string.Equals(target.NativeAi, "Gargoyle", StringComparison.Ordinal)
-            && target.GargoyleSpecialActive) {
+            && IsNativeGargoyleWakePending(target)) {
             // Native PlrHitMonst/MonsterMHit calls tryLiftGargoyle before
             // applying damage. The waking hit is admitted but deals neither
             // physical nor equipment elemental damage.
-            target.GargoyleSpecialActive = false;
+            _ = ConsumeNativeGargoyleWake(target);
             return 0;
         }
         var damagePercent = 0;
@@ -2431,10 +2431,10 @@ public sealed partial class DiabloCombatCommandProcessor
         if (nativeImpactRoll
             && monsterTarget
             && string.Equals(target.NativeAi, "Gargoyle", StringComparison.Ordinal)
-            && target.GargoyleSpecialActive) {
+            && IsNativeGargoyleWakePending(target)) {
             // Native MonsterMHit consumes the collision roll, then tries the
             // Gargoyle lift before comparing that roll with hit chance.
-            target.GargoyleSpecialActive = false;
+            _ = ConsumeNativeGargoyleWake(target);
             attackHit = true;
             return 0;
         }
@@ -5959,19 +5959,21 @@ public sealed partial class DiabloCombatCommandProcessor
                      .OrderBy(target => target.EntityId)
                      .ToArray()) {
             // Native inactive levels do not process their monster or RNG state.
-            if (world.OwnsNativePopulationLevel(target.LevelId)
+            if (OwnsNativeMonsterTiming(target)
                 && !players.Any(player => player.LevelId == target.LevelId))
                 continue;
             AuthoritativeMonsterGroupUnity.ApplyFollowTheLeader(
                 target,
                 world.CombatTargets);
+            world.ApplyNativeCatacombsGargoyleFollowerWakeBeforeAi(target);
             target.ClearFallenRallyAttack();
-            if (target.IsMoving && !target.IsPetrified && !world.OwnsNativePopulationLevel(target.LevelId))
+            if (target.IsMoving && !target.IsPetrified && !OwnsNativeMonsterTiming(target))
                 target.CompleteMovement();
-            AuthoritativeMonsterGroupUnity.Apply(
-                target,
-                world.CombatTargets,
-                world.HasAiLineOfSight);
+            if (target.NativeInitialization is not { CatacombsDepth: >= 5 and <= 8 })
+                AuthoritativeMonsterGroupUnity.Apply(
+                    target,
+                    world.CombatTargets,
+                    world.HasAiLineOfSight);
             AdvanceNativeMonsterAiSeed(target);
             if (target.IsPlayerMinion) {
                 AdvancePlayerMinion(target, tick, players, events);
@@ -6007,17 +6009,24 @@ public sealed partial class DiabloCombatCommandProcessor
                 && !IsMonsterVisibleToAnyPlayer(target, players)) {
                 if (target.ActiveForTicks > 0 && !target.IsDiablo)
                     target.RestoreActiveForTicks(target.ActiveForTicks - 1);
-                if (target.ActiveForTicks == 0)
+                if (target.ActiveForTicks == 0
+                    && !world.HasNativeCatacombsMonsterPhase(target.EntityId)
+                    && !(target.NativeInitialization is { CatacombsDepth: >= 5 and <= 8 }
+                        && target.NativeMeleeCursor is not null))
                     continue;
             } else if (world.World is not null && players.Count > 0) {
                 // Native ProcessMonsters wakes visible monsters for the full
                 // active window before dispatching their AI.
                 target.RestoreActiveForTicks(byte.MaxValue);
             }
-            if (world.OwnsNativePopulationLevel(target.LevelId) && target.IsMoving
-                && !AdvanceNativeWalk(target, tick))
+            if (AdvanceNativeCatacombsGargoyle(target, players))
                 continue;
-            if (world.OwnsNativePopulationLevel(target.LevelId) && target.NativeMeleeCursor is not null) {
+            if (OwnsNativeMonsterTiming(target) && target.IsMoving) {
+                if (!AdvanceNativeWalk(target, tick))
+                    continue;
+                ApplyNativeCatacombsGroupUnityAfterModeCompletion(target);
+            }
+            if (OwnsNativeMonsterTiming(target) && target.NativeMeleeCursor is not null) {
                 var currentEnemy = players.Where(player => player.Life > 0 && player.LevelId == target.LevelId)
                     .OrderBy(player => player.EntityId).FirstOrDefault();
                 var animation = AdvanceNativeMelee(target);
@@ -6027,8 +6036,12 @@ public sealed partial class DiabloCombatCommandProcessor
                     && !IsPlayerProtectedByFlash(currentEnemy) && !IsPlayerEtherealized(currentEnemy))
                     ResolveMonsterMeleeEffect(target, currentEnemy, players, tick, events,
                         currentEnemy.ArmorClass, unchecked((uint)tick ^ target.EntityId ^ currentEnemy.EntityId),
-                        usesSpecialAttack: false);
+                        usesSpecialAttack: animation.UsesSpecialAttack);
                 if (!animation.Completed || target.HitPointsQ6 <= 0)
+                    continue;
+                ApplyNativeCatacombsGroupUnityAfterModeCompletion(target);
+                if (target.NativeInitialization is { CatacombsDepth: >= 5 and <= 8 }
+                    && target.ActiveForTicks == 0)
                     continue;
                 // Native UpdateModeStance repeats AI in the same update after entering Stand.
                 target.RestoreFallenAnimation(0, 0);
@@ -6053,7 +6066,7 @@ public sealed partial class DiabloCombatCommandProcessor
                 continue;
             var fallenRallyActive = target.FallenRallyTicks > 0;
             // Native actors use the visibility/active window above, not a legacy aggro radius.
-            var nativePopulationTarget = world.OwnsNativePopulationLevel(target.LevelId);
+            var nativePopulationTarget = OwnsNativeMonsterTiming(target);
             if (!nativePopulationTarget && target.AggroRange <= 0 && !fallenRallyActive)
                 continue;
 
@@ -6247,12 +6260,16 @@ public sealed partial class DiabloCombatCommandProcessor
                             target,
                             attackSeed,
                             goatMeleeAttackTuning));
-                if (world.OwnsNativePopulationLevel(target.LevelId)) {
-                    BeginNativeMelee(target);
+                if (OwnsNativeMonsterTiming(target)) {
+                    // Legacy C1 initialization has no Special graphic metadata. New
+                    // family admission binds it explicitly before enabling that cursor.
+                    var nativeSpecial = usesSpecialAttack
+                        && target.NativeInitialization is { CatacombsDepth: >= 5 and <= 8 };
+                    BeginNativeMelee(target, nativeSpecial);
                     var animation = AdvanceNativeMelee(target);
                     if (animation.EffectFrame && !IsPlayerProtectedByFlash(victim) && !IsPlayerEtherealized(victim))
                         ResolveMonsterMeleeEffect(target, victim, players, tick, events,
-                            armorClass, attackSeed, usesSpecialAttack: false);
+                            armorClass, attackSeed, usesSpecialAttack: animation.UsesSpecialAttack);
                     continue;
                 }
                 ResolveMonsterMeleeEffect(target, victim, players, tick, events,
@@ -6314,7 +6331,7 @@ public sealed partial class DiabloCombatCommandProcessor
         // Newly admitted walks receive this update's native processAnimation step.
         foreach (var walker in world.CombatTargets.Values.Where(target => target.IsMoving
             && target.HitPointsQ6 > 0 && target.NativeWalkCursor is null
-            && world.OwnsNativePopulationLevel(target.LevelId)
+            && OwnsNativeMonsterTiming(target)
             && players.Any(player => player.LevelId == target.LevelId)))
             BeginNativeWalk(walker, tick);
         foreach (var leader in world.CombatTargets.Values
@@ -8730,6 +8747,8 @@ public sealed partial class DiabloCombatCommandProcessor
         int HealDivisorRandomOffset)? GetGargoyleTuning(
         AuthoritativeCombatTarget target)
     {
+        if (HasDifferentCatacombsEffectiveAi(target, "Gargoyle"))
+            return null;
         if (monsterTypes?.TryGet(target.MonsterId, out var definition) == true) {
             var hasSafetyTuning = definition.GargoyleSafeDistanceBase > 0
                 && definition.GargoyleSafeDistanceIntelligenceScale > 0;
@@ -8764,6 +8783,8 @@ public sealed partial class DiabloCombatCommandProcessor
     private (int ChanceBase, int IntelligenceScale)? GetGargoyleAttackTuning(
         AuthoritativeCombatTarget target)
     {
+        if (HasDifferentCatacombsEffectiveAi(target, "Gargoyle"))
+            return null;
         if (monsterTypes?.TryGet(target.MonsterId, out var definition) == true
             && definition.GargoyleAttackChanceBase > 0
             && definition.GargoyleAttackChanceIntelligenceScale > 0) {
@@ -8839,13 +8860,16 @@ public sealed partial class DiabloCombatCommandProcessor
     }
 
     private bool HasGargoyleAi(AuthoritativeCombatTarget target)
-        => target.NativeAi == "Gargoyle"
+        => !HasDifferentCatacombsEffectiveAi(target, "Gargoyle")
+            && (target.NativeAi == "Gargoyle"
             || monsterTypes?.TryGet(target.MonsterId, out var definition) == true
-            && definition.NativeAi == "Gargoyle";
+            && definition.NativeAi == "Gargoyle");
 
     private (int ChanceBase, int IntelligenceScale)? GetGargoyleMovementTuning(
         AuthoritativeCombatTarget target)
     {
+        if (HasDifferentCatacombsEffectiveAi(target, "Gargoyle"))
+            return null;
         if (monsterTypes?.TryGet(target.MonsterId, out var definition) == true
             && definition.GargoyleMovementChanceBase > 0
             && definition.GargoyleMovementChanceIntelligenceScale > 0) {
@@ -11731,8 +11755,12 @@ public sealed partial class DiabloCombatCommandProcessor
             int SpecialChanceIntelligenceScale)? tuning)
     {
         return tuning.HasValue
-            && GetEffectiveMonsterToHit(target, special: true) > 0
-            && GetEffectiveMonsterDamageRange(target, special: true).Maximum > 0
+            // Native Fat AI admits its Special band even when that graphic has
+            // no damage/action frame. Preserve older authored/C1 admission.
+            && (target.NativeInitialization is { CatacombsDepth: >= 5 and <= 8,
+                    NativeSpecialAttackFrameCount: > 0 }
+                || GetEffectiveMonsterToHit(target, special: true) > 0
+                    && GetEffectiveMonsterDamageRange(target, special: true).Maximum > 0)
             && attackRoll >= Math.Min(
                 100,
                 tuning.Value.SpecialChanceBase
@@ -12888,7 +12916,7 @@ public sealed partial class DiabloCombatCommandProcessor
                     target.NativeAi,
                     "Gargoyle",
                     StringComparison.Ordinal)
-                && target.GargoyleSpecialActive;
+                && IsNativeGargoyleWakePending(target);
             var nativeDamageQ6 = ResolvePlayerAttackDamageQ6(
                 owner,
                 target,
@@ -12955,10 +12983,10 @@ public sealed partial class DiabloCombatCommandProcessor
 
         var gameplayEvents = new List<DiabloGameplayEvent>();
         if (string.Equals(target.NativeAi, "Gargoyle", StringComparison.Ordinal)
-            && target.GargoyleSpecialActive) {
+            && IsNativeGargoyleWakePending(target)) {
             // Native MonsterMHit consumes the Gargoyle wake-up flag at arrow
             // impact, before damage or any Hellfire equipment effect.
-            target.GargoyleSpecialActive = false;
+            _ = ConsumeNativeGargoyleWake(target);
             return true;
         }
         if (projectile.DoppelgangerProc)
@@ -16735,11 +16763,11 @@ public sealed partial class DiabloCombatCommandProcessor
             minimumHitChance,
             maximumHitChance);
         var hitRoll = random.RandomIntLessThan(100);
-        if (UsesNativeAi(target, "Gargoyle") && target.GargoyleSpecialActive) {
+        if (UsesNativeAi(target, "Gargoyle") && IsNativeGargoyleWakePending(target)) {
             // MonsterMHit consumes the hit roll, then tryLiftGargoyle clears
             // MFLAG_ALLOW_SPECIAL and reports a collision before hit testing
             // or the fixed Apocalypse damage roll.
-            target.GargoyleSpecialActive = false;
+            _ = ConsumeNativeGargoyleWake(target);
             return true;
         }
         if (!target.IsPetrified && hitRoll >= hitChance)
@@ -18000,10 +18028,11 @@ public sealed partial class DiabloCombatCommandProcessor
         target.ApplyDamageQ6(damageQ6);
         if (nativeFatalTrap && target.HitPointsQ6 > 0)
             target.ApplyDamageQ6(target.HitPointsQ6);
-        if (world.OwnsNativePopulationLevel(target.LevelId)) {
+        if (OwnsNativeMonsterTiming(target)) {
             if (target.HitPointsQ6 <= 0) {
                 InterruptNativeMelee(target);
                 world.InterruptNativeInitialSpecialStand(target.EntityId);
+                world.InterruptNativeCatacombsGargoyle(target.EntityId);
                 world.InterruptNativeSarcophagusSpecialStand(target);
                 world.InterruptNativeBarrelSpecialStand(target);
             } else if (!nativeTrapResisted && damageQ6 > 0 && !target.IsPetrified
@@ -18012,6 +18041,7 @@ public sealed partial class DiabloCombatCommandProcessor
                 target.CancelMovement();
                 BeginNativeHitRecovery(target);
                 world.InterruptNativeInitialSpecialStand(target.EntityId);
+                world.InterruptNativeCatacombsGargoyle(target.EntityId);
                 world.InterruptNativeSarcophagusSpecialStand(target);
                 world.InterruptNativeBarrelSpecialStand(target);
             }

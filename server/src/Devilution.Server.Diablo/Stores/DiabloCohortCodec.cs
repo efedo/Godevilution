@@ -183,11 +183,16 @@ public sealed partial class DiabloCohortCodec
                 && (key.Schema != CodecSchema.Legacy
                     || key.Type != typeof(DiabloCohortState)
                     || property.Name != CathedralDoorsPropertyName))
+            .Where(property => !IsCatacombsActorField(key.Type, property.Name))
             .OrderBy(property => property.Name, StringComparer.Ordinal)
             .ToArray());
 
     private static CodecSchema SelectSerializationSchema(DiabloCohortState state)
     {
+        if (state.CombatTargets?.Any(target => target?.NativeInitialization is { CatacombsDepth: not 0 }
+                or { NativeSpecialAttackFrameCount: not 0 } or { NativeSpecialAttackTicksPerFrame: not 0 }
+            || target?.Monster?.NativeMeleeCursor is { UsesSpecialAttack: true }) == true)
+            throw new InvalidDataException("Catacombs actor state requires its additive cohort format.");
         if (state.FormatVersion == NativeTownProgressionFormatVersion) {
             if (state.NativeTown is null
                 || SelectSerializationSchema(state with { FormatVersion = NativeDepthProgressionFormatVersion, NativeTown = null })
@@ -331,6 +336,14 @@ public sealed partial class DiabloCohortCodec
         || (type == typeof(DiabloCohortConfigurationState)
             && name is nameof(DiabloCohortConfigurationState.CathedralItemMetadataFingerprint)
                 or nameof(DiabloCohortConfigurationState.CathedralItemGenerationFingerprint));
+
+    /** Older schemas refuse even explicitly written default C2 fields. */
+    private static bool IsCatacombsActorField(Type type, string name) =>
+        type == typeof(AuthoritativeNativeMeleeCursor) && name == nameof(AuthoritativeNativeMeleeCursor.UsesSpecialAttack)
+        || type == typeof(AuthoritativeNativeMonsterInitialization)
+            && name is nameof(AuthoritativeNativeMonsterInitialization.CatacombsDepth)
+                or nameof(AuthoritativeNativeMonsterInitialization.NativeSpecialAttackFrameCount)
+                or nameof(AuthoritativeNativeMonsterInitialization.NativeSpecialAttackTicksPerFrame);
 
     private static bool IsNativeCombatField(Type type, string name) =>
         (type == typeof(DiabloProjectileState) && name == nameof(DiabloProjectileState.NativeWeaponArrow))

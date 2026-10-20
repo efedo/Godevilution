@@ -1,3 +1,5 @@
+using System.Text.Json.Serialization;
+
 namespace Devilution.Diablo;
 
 /** Immutable native-slot/type to runtime identity binding, independent of mutable state. */
@@ -25,6 +27,17 @@ public sealed record AuthoritativeNativeMonsterInitialization(
 
     /** Native Bestiary rate for graphic slot 2; AnimationInfo clamps nonpositive values to one. */
     public int NativeAttackTicksPerFrame { get; init; }
+
+    /** Explicit additive family admission; legacy Cathedral initialization retains zero. */
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
+    public int CatacombsDepth { get; init; }
+
+    /** C2-only Special graphic metadata; absent from legacy serialized initialization. */
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
+    public int NativeSpecialAttackFrameCount { get; init; }
+
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
+    public int NativeSpecialAttackTicksPerFrame { get; init; }
 
     /** Native Bestiary frame count for graphic slot 3 (hit recovery). */
     public int NativeHitRecoveryFrameCount { get; init; }
@@ -55,6 +68,10 @@ public sealed record AuthoritativeNativeMonsterInitialization(
             || SpecialAttackEffectFrame is < sbyte.MinValue or > sbyte.MaxValue
             || NativeAttackFrameCount is < 0 or > sbyte.MaxValue
             || NativeAttackTicksPerFrame is < 0 or > sbyte.MaxValue
+            || (CatacombsDepth != 0 && CatacombsDepth is < 5 or > 8)
+            || CatacombsDepth == 0 && (NativeSpecialAttackFrameCount != 0 || NativeSpecialAttackTicksPerFrame != 0)
+            || NativeSpecialAttackFrameCount is < 0 or > sbyte.MaxValue
+            || NativeSpecialAttackTicksPerFrame is < 0 or > sbyte.MaxValue
             || NativeHitRecoveryFrameCount is < 0 or > sbyte.MaxValue
             || NativeHitRecoveryTicksPerFrame is < 0 or > sbyte.MaxValue
             || NativeWalkFrameCount is < 0 or > sbyte.MaxValue

@@ -128,6 +128,51 @@ public sealed class AuthoritativeCatacombsFreshLevelNativeOracleTests
         Assert.Equal(expected.GetProperty("visionRecords").EnumerateArray().Select(value =>
             value.Deserialize<AuthoritativeCathedralEncounterLightState>(JsonOptions)!), ready.VisionRecords);
         Assert.Equal(AuthoritativeCathedralLevelReadyStage.PreparedBeforeJoin, ready.Stage);
+        CompareRuntimeAdmission(metadata, depth, ready.State);
+
+    }
+
+    private static void CompareRuntimeAdmission(AuthoritativeCatacombsPopulationMetadata metadata,
+        int depth, AuthoritativeCathedralThemeRoomState state)
+    {
+        var runtimePath = Environment.GetEnvironmentVariable("GODEVILUTION_CATHEDRAL_MONSTER_RUNTIME_TABLE_PATH");
+        if (string.IsNullOrWhiteSpace(runtimePath))
+            throw new InvalidDataException("An explicit native monster runtime source table is required.");
+        var runtime = AuthoritativeCathedralMonsterRuntimeCatalog.LoadTable(TsvTable.Parse(
+            AuthoritativeCathedralMonsterRuntimeCatalog.TableName, File.ReadAllText(runtimePath)));
+        var bindings = state.ActiveMonsterIds.Take(state.ActiveMonsterCount).Select(slot =>
+            new AuthoritativeCathedralMonsterRuntimeBinding(slot, checked((uint)(0x0C000000 + depth * 256 + slot)),
+                checked((uint)(0x10000 + state.MonsterSlots[slot].Type)), (uint)depth)).ToArray();
+        var fingerprint = AuthoritativeCathedralMonsterRuntimeAdapter.ComputeMetadataFingerprint(
+            metadata.Fingerprint, metadata.UniqueMonsters.Fingerprint, runtime);
+        var result = AuthoritativeCatacombsMonsterRuntimeAdapter.AdaptWithBindings(depth, (uint)depth,
+            state, runtime, fingerprint, bindings, metadata.Population.Monsters,
+            uniqueDefinitions: metadata.UniqueMonsters.Definitions,
+            uniqueIdentities: metadata.UniqueMonsters.Definitions.ToDictionary(row => row.NativeUniqueId,
+                row => $"native-catacombs-unique-{row.NativeUniqueId:D3}"));
+        Assert.Equal(state.ActiveMonsterCount, result.SharedRuntime.Records.Count);
+        Assert.Equal(bindings, result.SharedRuntime.Records.Select(row => row.Binding));
+        foreach (var record in result.SharedRuntime.Records) {
+            Assert.Equal(state.MonsterSlots[record.Binding.NativeSlot], record.InitialState);
+            Assert.Equal(record.InitialState, record.Initialization.InitialState);
+            Assert.Equal(depth, record.Initialization.CatacombsDepth);
+            if (record.Target is not null) {
+                Assert.Equal(AuthoritativeCathedralMonsterRuntimeUnsupportedReason.None, record.UnsupportedReason);
+                Assert.Equal(record.Initialization, record.Target.NativeInitialization);
+                Assert.Equal(record.InitialState.AiSeed, record.Target.MonsterAiSeed);
+                Assert.Equal(record.InitialState.RndItemSeed, record.Target.MonsterItemSeed);
+            } else {
+                Assert.Contains(record.UnsupportedReason, new[] {
+                    AuthoritativeCathedralMonsterRuntimeUnsupportedReason.DormantGolem,
+                    AuthoritativeCathedralMonsterRuntimeUnsupportedReason.PreSpawnSkeleton,
+                });
+            }
+        }
+        Assert.Equal(state.ActiveMonsterIds.Take(state.ActiveMonsterCount)
+            .Where(slot => state.MonsterSlots[slot].Ai == 12), result.GargoylePhases.Select(phase => phase.NativeSlot));
+        Assert.Equal(state.ActiveMonsterIds.Take(state.ActiveMonsterCount)
+            .Where(slot => state.MonsterSlots[slot].Mode == 11),
+            result.SharedRuntime.InitialSpecialStandActors.Select(phase => phase.NativeSlot));
     }
 
     private static void CompareEncounterStage(JsonElement expectedWorld, AuthoritativeCathedralEncounterResult actual)

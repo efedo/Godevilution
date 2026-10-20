@@ -9,6 +9,52 @@ the referenced test sources. Do not copy raw outputs into historical archives.
 
 ## Client and host verification
 
+### 2026-10-20 — Catacombs actor admission and L2 door operations
+
+Seventy-six focused cases pass: fourteen native prepared class/Fat/Gargoyle
+traces, two native pack-order comparisons, 32 native L2 door operation cases and
+28 portable boundary regressions. All 32 fresh/ready native cases also pass
+complete ordered actor admission, including explicit Golem/pre-spawn reservations,
+Gargoyle phases and melee/ranged skeleton SpecialStand records. Forty-one Cathedral
+adapter/group cases, 36 existing Fat/Gargoyle cases and 175 cohort codec cases pass
+without skips. Checked headless x64 MSVC and bounded managed builds/tests exit
+with confirmed cleanup; unrelated vision WIP remains isolated in verification.
+
+C2 admission is separate from existing public Cathedral policies. It preserves
+raw initialization, stable entity/floor bindings and effective unique AI; exact
+AI3 skeleton emergence is admitted only with trusted source frame/rate metadata.
+Gargoyle statues retain an independent frozen/playing/terminal cursor. Native
+per-follower wake observes current leader mode in active order; converse GroupUnity
+wake runs after mode completion. The prepared native pack trace checks both orders
+through actual production ticks. Hard-hit/death interruption and detached cursor/
+corpse validation have focused regressions; these are not cohort12 cold proofs.
+
+All four native Fat types52–55 use their Special graphic/rate and native roll
+band. The first production AI admission, RNG and animation step match for both
+prepared class scalars. Their canonical special action frame is zero, so these
+sequences cause no damage; constructed nonzero-frame tests cover cursor mechanics
+only. Ordinary attack damage is outside this new native trace. Unique Bat overrides
+retain ordinary regeneration and do not inherit base Gargoyle healing/attack/move
+tuning. Existing C1/authored special admission remains unchanged.
+
+Actual native AddObject/SyncOpObject/ProcessObjects/SyncObjectAnim/DeltaSyncOpObject
+calls cover L5–L8, both hands and corpse/player/monster/item occupancy, thirteen
+states each. Managed comparisons preserve all25 nearby piece/special/transparency/
+SOL cells, animation/selection/passability and RNG. Static object setup uses delay
+1000 despite table delays1/2. Repeated delta-open advances frames; ordinary sync
+normalizes blocked to open without advancing frames. Opening retains an independent
+same-cell static blocker. SOL and occupancy are controlled seam inputs; deriving
+live occupancy and owning complete generated-floor geometry remain open.
+
+Independent review closed missing follower dispatch/order, terminal frame timing,
+effective unique AI, zero-action Fat admission, ranged-skeleton initial admission,
+static door delay and overlapping collision ownership findings. Existing cohort
+formats1–11 reject nondefault C2 state and explicitly written new default fields;
+legacy bytes retain their frozen compatibility checks. No C2 save format is enabled.
+Original tracked/untracked WIP is preserved.
+Per-floor phase/door owners, TCHEST operations, ranged controllers, additive profile/
+persistence, travel and full headless family acceptance remain open.
+
 ### 2026-10-20 — complete Catacombs fresh population and ready state
 
 All 32 explicit prepared-class native comparisons pass through encounters,

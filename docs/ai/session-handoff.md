@@ -54,7 +54,10 @@ Distinct semantic metadata, L2 automap and initial population now pass 55 focuse
 and 32 exact native comparisons. Complete fresh population/ready state now also
 matches all 32 native cases; 44 controlled theme seams and 16 focused contracts
 pass. Cathedral compatibility has 183 passes with six explicit fixtures unselected.
-Next integrate generated actor/object behavior, owners, travel and cold restore.
+Distinct actor admission, Gargoyle/Fat Special clocks and controlled L2 door
+operations are implemented; next integrate ranged controllers, TCHEST, per-floor
+owners, additive persistence, travel and cold restore. Existing saves refuse C2
+fields until that additive format exists.
 Read the work plan and scoped verification; retain valid references.
 The observed Town authority-lock lateness remains unresolved. Normal cohort/profile adoption stays held. Later class
 campaigns and full rendered qualification remain open. Reuse valid evidence and

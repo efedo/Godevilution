@@ -122,6 +122,13 @@ public sealed class AuthoritativeCathedralMonsterRuntimeAdapterResult
 
 public static class AuthoritativeCathedralMonsterRuntimeAdapter
 {
+	internal enum AdmissionPolicy
+	{
+		LegacyCathedral,
+		CathedralFirstEntry,
+		Catacombs,
+	}
+
 	private const string FingerprintDomain = "godevilution.cathedral-monster-runtime-adapter";
 	private const string FingerprintVersion = "1.0.0";
 	private const int NativeStandMode = 0;
@@ -182,7 +189,7 @@ public static class AuthoritativeCathedralMonsterRuntimeAdapter
 		ArgumentNullException.ThrowIfNull(state);
 		ArgumentNullException.ThrowIfNull(runtimeCatalog);
 		var bindings = BuildDeterministicBindings(state, entityIdBase, contentMonsterIdBase, levelId);
-		return AdaptCore(state, runtimeCatalog, metadataFingerprint, bindings, difficulty, uniqueDefinitions, monsterTypeCatalog, uniqueIdentities, populationMonsters);
+		return AdaptCore(state, runtimeCatalog, metadataFingerprint, bindings, difficulty, uniqueDefinitions, monsterTypeCatalog, uniqueIdentities, populationMonsters, AdmissionPolicy.LegacyCathedral);
 	}
 
 	public static AuthoritativeCathedralMonsterRuntimeAdapterResult AdaptWithBindings(
@@ -199,7 +206,7 @@ public static class AuthoritativeCathedralMonsterRuntimeAdapter
 		ArgumentNullException.ThrowIfNull(state);
 		ArgumentNullException.ThrowIfNull(runtimeCatalog);
 		ArgumentNullException.ThrowIfNull(bindings);
-		return AdaptCore(state, runtimeCatalog, metadataFingerprint, bindings, difficulty, uniqueDefinitions, monsterTypeCatalog, uniqueIdentities, populationMonsters);
+		return AdaptCore(state, runtimeCatalog, metadataFingerprint, bindings, difficulty, uniqueDefinitions, monsterTypeCatalog, uniqueIdentities, populationMonsters, AdmissionPolicy.LegacyCathedral);
 	}
 
     /** Explicit first-entry import; all legacy APIs retain their Stand-only admission policy. */
@@ -223,8 +230,31 @@ public static class AuthoritativeCathedralMonsterRuntimeAdapter
             throw new InvalidDataException("First-entry actor import requires one explicit non-Town level.");
         return AdaptCore(state, runtimeCatalog, metadataFingerprint, bindings, difficulty,
             uniqueDefinitions, monsterTypeCatalog, uniqueIdentities, populationMonsters,
-            retainInitialSkeletonEmergence: true);
+            AdmissionPolicy.CathedralFirstEntry);
     }
+
+	internal static AuthoritativeCathedralMonsterRuntimeAdapterResult AdaptCatacombsWithBindings(
+		int catacombsDepth,
+		AuthoritativeCathedralThemeRoomState state,
+		AuthoritativeCathedralMonsterRuntimeCatalog runtimeCatalog,
+		string metadataFingerprint,
+		IReadOnlyList<AuthoritativeCathedralMonsterRuntimeBinding> bindings,
+		IReadOnlyList<AuthoritativeCathedralRawMonsterDefinition> populationMonsters,
+		DiabloDifficulty difficulty = DiabloDifficulty.Normal,
+		IReadOnlyList<AuthoritativeCathedralUniqueDefinition>? uniqueDefinitions = null,
+		AuthoritativeMonsterTypeCatalog? monsterTypeCatalog = null,
+		IReadOnlyDictionary<int, string>? uniqueIdentities = null)
+	{
+		if (catacombsDepth is < 5 or > 8)
+			throw new ArgumentOutOfRangeException(nameof(catacombsDepth));
+		ArgumentNullException.ThrowIfNull(state);
+		ArgumentNullException.ThrowIfNull(runtimeCatalog);
+		ArgumentNullException.ThrowIfNull(bindings);
+		ArgumentNullException.ThrowIfNull(populationMonsters);
+		return AdaptCore(state, runtimeCatalog, metadataFingerprint, bindings, difficulty,
+			uniqueDefinitions, monsterTypeCatalog, uniqueIdentities, populationMonsters,
+			AdmissionPolicy.Catacombs, catacombsDepth);
+	}
 
 	private static AuthoritativeCathedralMonsterRuntimeAdapterResult AdaptCore(
 		AuthoritativeCathedralThemeRoomState state,
@@ -236,7 +266,8 @@ public static class AuthoritativeCathedralMonsterRuntimeAdapter
 		AuthoritativeMonsterTypeCatalog? monsterTypeCatalog,
 		IReadOnlyDictionary<int, string>? uniqueIdentities,
 		IReadOnlyList<AuthoritativeCathedralRawMonsterDefinition>? populationMonsters,
-        bool retainInitialSkeletonEmergence = false)
+		AdmissionPolicy admissionPolicy,
+		int catacombsDepth = 0)
 	{
 		ValidateFingerprint(metadataFingerprint, nameof(metadataFingerprint));
 		if (difficulty != DiabloDifficulty.Normal)
@@ -274,7 +305,7 @@ public static class AuthoritativeCathedralMonsterRuntimeAdapter
 		if (monsterTypeCatalog is not null) {
 			foreach (var nativeSlot in orderedSlots) {
 				var nativeType = state.MonsterSlots[nativeSlot].Type;
-                if (retainInitialSkeletonEmergence) {
+				if (admissionPolicy != AdmissionPolicy.LegacyCathedral) {
                     var binding = bindingBySlot[nativeSlot];
                     if (!monsterTypeCatalog.TryGet(binding.ContentMonsterId, out var exact)
                         || exact.NativeMonsterId != (uint)nativeType
@@ -285,7 +316,7 @@ public static class AuthoritativeCathedralMonsterRuntimeAdapter
                     throw new InvalidDataException($"Monster type catalog has no unambiguous native row {nativeType}.");
 			}
 		}
-		ValidateActiveUniqueInputs(state, orderedSlots, uniqueById, uniqueIdentityById, bindingBySlot, monsterTypeCatalog, retainInitialSkeletonEmergence);
+		ValidateActiveUniqueInputs(state, orderedSlots, uniqueById, uniqueIdentityById, bindingBySlot, monsterTypeCatalog, admissionPolicy != AdmissionPolicy.LegacyCathedral);
 		var records = new List<AuthoritativeCathedralMonsterRuntimeRecord>(orderedSlots.Length);
 		foreach (var nativeSlot in orderedSlots)
 		{
@@ -297,6 +328,12 @@ public static class AuthoritativeCathedralMonsterRuntimeAdapter
 			var nativeHitRecoveryTicksPerFrame = populationMonsters is null ? 0 : populationMonsters[stateRow.Type].Rates[3];
 			var nativeWalkFrameCount = populationMonsters is null ? 0 : populationMonsters[stateRow.Type].Frames[1];
 			var nativeWalkTicksPerFrame = populationMonsters is null ? 0 : populationMonsters[stateRow.Type].Rates[1];
+			var nativeSpecialAttackFrameCount = admissionPolicy == AdmissionPolicy.Catacombs && populationMonsters is not null
+				? populationMonsters[stateRow.Type].Frames[5]
+				: 0;
+			var nativeSpecialAttackTicksPerFrame = admissionPolicy == AdmissionPolicy.Catacombs && populationMonsters is not null
+				? populationMonsters[stateRow.Type].Rates[5]
+				: 0;
 			var binding = bindingBySlot[nativeSlot];
 			uniqueById.TryGetValue(stateRow.UniqueType, out var unique);
 			var uniqueIdentity = unique is not null && uniqueIdentityById.TryGetValue(stateRow.UniqueType, out var suppliedIdentity)
@@ -321,10 +358,13 @@ public static class AuthoritativeCathedralMonsterRuntimeAdapter
 				state.MonsterPetrified[nativeSlot]) {
 				NativeAttackFrameCount = nativeAttackFrameCount,
 				NativeAttackTicksPerFrame = nativeAttackTicksPerFrame,
+				CatacombsDepth = catacombsDepth,
 				NativeHitRecoveryFrameCount = nativeHitRecoveryFrameCount,
 				NativeHitRecoveryTicksPerFrame = nativeHitRecoveryTicksPerFrame,
 				NativeWalkFrameCount = nativeWalkFrameCount,
 				NativeWalkTicksPerFrame = nativeWalkTicksPerFrame,
+				NativeSpecialAttackFrameCount = nativeSpecialAttackFrameCount,
+				NativeSpecialAttackTicksPerFrame = nativeSpecialAttackTicksPerFrame,
 			};
 			initialization.Validate();
 			initialization.ValidateTarget(
@@ -335,7 +375,7 @@ public static class AuthoritativeCathedralMonsterRuntimeAdapter
 				uniqueIdentity);
 
 			var reason = GetUnsupportedReason(stateRow, definition, state.MonsterPetrified[nativeSlot],
-                retainInitialSkeletonEmergence, populationMonsters?[stateRow.Type]);
+				admissionPolicy, populationMonsters?[stateRow.Type], unique, uniqueIdentity);
 			AuthoritativeCombatTarget? target = null;
 			if (reason == AuthoritativeCathedralMonsterRuntimeUnsupportedReason.None) {
 				try {
@@ -471,7 +511,7 @@ public static class AuthoritativeCathedralMonsterRuntimeAdapter
 		IReadOnlyDictionary<int, string> uniqueIdentities,
 		IReadOnlyDictionary<int, AuthoritativeCathedralMonsterRuntimeBinding> bindings,
 		AuthoritativeMonsterTypeCatalog? monsterTypeCatalog,
-        bool levelEntry)
+		bool levelEntry)
 	{
 		foreach (var nativeSlot in orderedSlots) {
 			var row = state.MonsterSlots[nativeSlot];
@@ -497,8 +537,10 @@ public static class AuthoritativeCathedralMonsterRuntimeAdapter
 		AuthoritativeCathedralPopulationMonsterState state,
 		AuthoritativeCathedralMonsterRuntimeDefinition definition,
 		bool initialAnimationPetrified,
-        bool retainInitialSkeletonEmergence,
-        AuthoritativeCathedralRawMonsterDefinition? nativeDefinition)
+		AdmissionPolicy admissionPolicy,
+        AuthoritativeCathedralRawMonsterDefinition? nativeDefinition,
+		AuthoritativeCathedralUniqueDefinition? unique,
+		string uniqueIdentity)
 	{
 		if (state.Invalid)
 			return AuthoritativeCathedralMonsterRuntimeUnsupportedReason.InvalidNativeState;
@@ -510,7 +552,7 @@ public static class AuthoritativeCathedralMonsterRuntimeAdapter
 			return AuthoritativeCathedralMonsterRuntimeUnsupportedReason.LowHitPoints;
 		if (state.MaxHitPoints < state.HitPoints)
 			return AuthoritativeCathedralMonsterRuntimeUnsupportedReason.InvalidHitPointRange;
-        var supportedEmergence = retainInitialSkeletonEmergence && state.Mode == 11
+		var supportedEmergence = admissionPolicy != AdmissionPolicy.LegacyCathedral && state.Mode == 11
             && state.Ai == 2 && NativeSkeletonTypes.Contains(state.Type)
             && state.UniqueType == byte.MaxValue && state.Tile != default
             && state.Old == state.Tile && (state.Flags & ((1U << 1) | (1U << 2))) == 0
@@ -522,7 +564,34 @@ public static class AuthoritativeCathedralMonsterRuntimeAdapter
             && state.AnimTicksPerFrame == Math.Max(1, nativeDefinition.Rates[5])
             && state.AnimCurrentFrame >= 0 && state.AnimCurrentFrame < state.AnimNumberOfFrames
             && state.AnimTickCounter >= 0 && state.AnimTickCounter < state.AnimTicksPerFrame;
-        if (state.Mode != NativeStandMode && !supportedEmergence)
+		var supportedCatacombsRangedSkeletonStand = admissionPolicy == AdmissionPolicy.Catacombs
+			&& state.Mode == 11 && state.Ai == 3 && NativeSkeletonTypes.Contains(state.Type)
+			&& state.UniqueType == byte.MaxValue && state.Tile != default
+			&& state.Future == state.Tile && state.Old == state.Tile
+			&& (state.Flags & ((1U << 1) | (1U << 2))) == 0
+			&& state.Goal == 1 && state.GoalVar1 == 0 && state.GoalVar2 == 0 && state.GoalVar3 == 0
+			&& !initialAnimationPetrified && nativeDefinition is not null && nativeDefinition.Ai == 3
+			&& nativeDefinition.Frames[5] is >= 1 and <= sbyte.MaxValue
+			&& nativeDefinition.Rates[5] is >= 1 and <= sbyte.MaxValue
+			&& definition.AnimationFrameNumSpecial == 0
+			&& state.AnimNumberOfFrames == nativeDefinition.Frames[5]
+			&& state.AnimTicksPerFrame == nativeDefinition.Rates[5]
+			&& state.AnimCurrentFrame >= 0 && state.AnimCurrentFrame < state.AnimNumberOfFrames
+			&& state.AnimTickCounter >= 0 && state.AnimTickCounter < state.AnimTicksPerFrame;
+		var supportedCatacombsGargoyle = admissionPolicy == AdmissionPolicy.Catacombs
+			&& state.Mode == 7 && state.Ai == 12 && state.UniqueType == byte.MaxValue
+			&& (state.Flags & (1U << 2)) != 0
+			&& (state.Flags & ~(1U << 2 | 1U << 9)) == 0
+			&& state.Tile != default && state.Future == state.Tile && state.Old == state.Tile
+			&& state.Goal == 1 && state.GoalVar1 == 0 && state.GoalVar2 == 0 && state.GoalVar3 == 0
+			&& !initialAnimationPetrified && nativeDefinition is not null && nativeDefinition.Ai == 12
+			&& nativeDefinition.Frames[5] is >= 1 and <= sbyte.MaxValue
+			&& nativeDefinition.Rates[5] is >= 1 and <= sbyte.MaxValue
+			&& state.AnimNumberOfFrames == nativeDefinition.Frames[5]
+			&& state.AnimTicksPerFrame == nativeDefinition.Rates[5]
+			&& state.AnimCurrentFrame == 0 && state.AnimTickCounter == 0;
+		if (state.Mode != NativeStandMode && !supportedEmergence
+			&& !supportedCatacombsRangedSkeletonStand && !supportedCatacombsGargoyle)
             return AuthoritativeCathedralMonsterRuntimeUnsupportedReason.NonStandMode;
 		if (state.Future != state.Tile)
 			return AuthoritativeCathedralMonsterRuntimeUnsupportedReason.MovingState;
@@ -538,12 +607,29 @@ public static class AuthoritativeCathedralMonsterRuntimeAdapter
 			return AuthoritativeCathedralMonsterRuntimeUnsupportedReason.DormantGolem;
 		if (state.Tile == default && NativeSkeletonTypes.Contains(state.Type))
 			return AuthoritativeCathedralMonsterRuntimeUnsupportedReason.PreSpawnSkeleton;
-		if ((TryGetNativeAi(state.Ai, out var nativeAi) && nativeAi == "Gargoyle")
-			|| definition.StableSymbol.Contains("Gargoyle", StringComparison.OrdinalIgnoreCase)
-			|| definition.Name.Contains("Gargoyle", StringComparison.OrdinalIgnoreCase))
+		var trustedCatacombsUniqueAiOverride = HasTrustedCatacombsUniqueAiOverride(
+			state, unique, uniqueIdentity, admissionPolicy);
+		if (!supportedCatacombsGargoyle
+			&& ((TryGetNativeAi(state.Ai, out var nativeAi) && nativeAi == "Gargoyle")
+				|| !trustedCatacombsUniqueAiOverride
+					&& (definition.StableSymbol.Contains("Gargoyle", StringComparison.OrdinalIgnoreCase)
+						|| definition.Name.Contains("Gargoyle", StringComparison.OrdinalIgnoreCase))))
 			return AuthoritativeCathedralMonsterRuntimeUnsupportedReason.GargoyleSpecial;
 		return AuthoritativeCathedralMonsterRuntimeUnsupportedReason.None;
 	}
+
+	private static bool HasTrustedCatacombsUniqueAiOverride(
+		AuthoritativeCathedralPopulationMonsterState state,
+		AuthoritativeCathedralUniqueDefinition? unique,
+		string uniqueIdentity,
+		AdmissionPolicy admissionPolicy)
+		=> admissionPolicy == AdmissionPolicy.Catacombs
+			&& unique is not null
+			&& !string.IsNullOrWhiteSpace(uniqueIdentity)
+			&& unique.MonsterType == state.Type
+			&& unique.Ai == state.Ai
+			&& TryGetNativeAi(unique.Ai, out var uniqueAi)
+			&& uniqueAi != "Gargoyle";
 
 	private static AuthoritativeCombatTarget CreateTarget(
 		AuthoritativeCathedralPopulationMonsterState state,

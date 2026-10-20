@@ -65,6 +65,21 @@ object pools and saturated Gold/non-Gold item pools. Run
 `--explicit on --fail-skips on`. Its controlled pre-call states are leaf inputs;
 this does not establish native generated theme selection beyond the32-case corpus.
 
+The registered `theme_item_generation_test` target also exposes three MPQ-free
+Catacombs operation references. Select an empty private directory with
+`GODEVILUTION_CATACOMBS_ACTOR_ORACLE_DIRECTORY` for
+`ThemeRoomGenerationTest.CaptureNativeCatacombsActorPhases` (version2, fourteen
+prepared class/Fat/Gargoyle traces), `GODEVILUTION_CATACOMBS_PACK_ORACLE_DIRECTORY`
+for `ThemeRoomGenerationTest.CaptureNativeCatacombsGargoylePackOrder` (two native
+active orders), and `GODEVILUTION_CATACOMBS_DOOR_ORACLE_DIRECTORY` for
+`ThemeRoomGenerationTest.CaptureNativeCatacombsDoorOperations` (32 controlled
+L5–L8/hand/occupancy cases, thirteen states each). Managed actor/door oracle
+classes use the same explicit directories, qualified C2 metadata inputs above,
+and `--explicit on --fail-skips on`. Actor class scalars, SOL and occupancy are
+prepared seam inputs; these fixtures do not establish generated-floor ownership.
+The fresh/ready comparison additionally requires
+`GODEVILUTION_CATHEDRAL_MONSTER_RUNTIME_TABLE_PATH` for ordered C2 admission.
+
 The offline semantic compiler accepts only complete TSV inputs:
 
 ```powershell

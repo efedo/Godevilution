@@ -146,10 +146,15 @@ history chains. Separate controlled L5/L8 theme seams pass all 44 cases; 16 focu
 contracts and 183 Cathedral compatibility cases pass, with six explicit fixtures
 intentionally not selected. The earlier metadata compatibility proof retains its
 124 passes and unavailable symbolic-link case under sandbox privileges.
-No playable Catacombs profile is activated. Generated
-Gargoyle statue mode/cursor, native-owned Fat special attack and ranged timing/
-controller retention remain required integration gates before family qualification.
-See [verification](test-history.md#2026-10-20--native-catacombs-generation-and-population-reference).
+Distinct C2 actor admission preserves generated active order/reservations,
+ranged-skeleton emergence records and separate frozen Gargoyle phases.
+Seventy-six focused cases and all 32 generated admission comparisons pass.
+Controlled native actor/pack and L2 door operation traces now cover Special
+clocks, wake order, blocked close and sync geometry.
+Existing cohort formats refuse C2 fields; no playable Catacombs profile is active.
+Ranged timing/controller retention, TCHEST operations, per-floor ownership,
+profile/travel integration and detached cold restore remain required family gates.
+See [verification](test-history.md#2026-10-20--catacombs-actor-admission-and-l2-door-operations).
 Keep the queue, this status and affected inventory entries synchronized. Do not
 restart inventory construction or an unrelated test campaign.
 

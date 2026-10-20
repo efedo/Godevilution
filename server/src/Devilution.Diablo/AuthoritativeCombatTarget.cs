@@ -1,4 +1,5 @@
 
+using System.Text.Json.Serialization;
 using Devilution.Domain.Protocol;
 using Devilution.Engine;
 using Devilution.Shared;
@@ -9,6 +10,10 @@ namespace Devilution.Diablo;
 public sealed record AuthoritativeNativeMeleeCursor(int FrameIndex, int TickCounter)
 {
     public bool HitRecovery { get; init; }
+
+    /** Special attacks are admitted only by the additive family runtime. */
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
+    public bool UsesSpecialAttack { get; init; }
 }
 
 /** Minimal server-owned combat target used by the initial combat boundary. */
@@ -452,7 +457,7 @@ public sealed class AuthoritativeCombatTarget
         MonsterAiSeed = aiSeed;
     }
 
-    /** Restores or clears the separately versioned normal-melee cursor. */
+    /** Restores or clears the selected attack or hit-recovery cursor. */
     internal void RestoreNativeMeleeCursor(AuthoritativeNativeMeleeCursor? cursor)
     {
         if (cursor is null) {
@@ -464,12 +469,15 @@ public sealed class AuthoritativeCombatTarget
             ?? throw new InvalidDataException("A native melee cursor requires native monster initialization.");
         var frameCount = cursor.HitRecovery
             ? initialization.NativeHitRecoveryFrameCount
+            : cursor.UsesSpecialAttack ? initialization.NativeSpecialAttackFrameCount
             : initialization.NativeAttackFrameCount;
         var ticksPerFrame = cursor.HitRecovery
             ? initialization.NativeHitRecoveryTicksPerFrame
+            : cursor.UsesSpecialAttack ? initialization.NativeSpecialAttackTicksPerFrame
             : initialization.NativeAttackTicksPerFrame;
         var effectiveTicksPerFrame = Math.Max(1, ticksPerFrame);
         if (HitPointsQ6 <= 0
+            || cursor.HitRecovery && cursor.UsesSpecialAttack
             || frameCount <= 0
             || cursor.FrameIndex < 0
             || cursor.FrameIndex >= frameCount

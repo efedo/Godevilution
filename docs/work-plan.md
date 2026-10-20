@@ -86,10 +86,15 @@ Complete fresh encounters/items/theme creation and level-ready composition now
 match all 32 native cases. A separate controlled 44-case L5/L8 comparison covers
 all 16 admitted themes, repeated racks and saturated pools; 16 focused contracts
 and 183 Cathedral compatibility cases pass (six explicit fixtures not selected).
-Next integrate generated Gargoyle statue cursors, native-owned Fat special
-attacks and ranged spawn/controller retention. These remain required
-family integration gates, alongside routes, ownership and cold restore. See
-[verification](test-history.md#2026-10-20--native-catacombs-generation-and-population-reference).
+Distinct C2 actor admission now retains the complete active prefix, explicit
+reservations, ranged-skeleton emergence records and frozen Gargoyle phases.
+Seventy-six focused cases and all 32 generated admission comparisons pass;
+controlled native actor/pack traces cover Fat Special clocks and wake order. L2
+door operation traces cover blocked close, synchronization and geometry. Existing saves refuse C2 fields until an additive
+format is implemented. Next integrate ranged spawn/controller retention, TCHEST
+operations, per-floor owners, routes and detached cold restore. These remain
+required family gates before playable profile qualification. See
+[verification](test-history.md#2026-10-20--catacombs-actor-admission-and-l2-door-operations).
 
 ## Delivery order
 

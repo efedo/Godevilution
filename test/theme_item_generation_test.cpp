@@ -38,6 +38,7 @@
 #include "game/levels/themes.h"
 #include "game/levels/triggers.h"
 #include "game/monsters/monster_pool.hpp"
+#include "game/monsters/monsters.hpp"
 #include "game/monsters/monster_corpses.hpp"
 #include "game/objects/objects.hpp"
 #include "game/objects/object_pool.hpp"
@@ -3699,7 +3700,241 @@ TEST_F(ThemeRoomGenerationTest, CaptureFreshLevelReady)
 }
 
 
+// Actual L2 object operations on controlled SOL/occupancy inputs. No MPQ is required.
+TEST_F(ThemeRoomGenerationTest, CaptureNativeCatacombsDoorOperations)
+{
+	const char *directory = std::getenv("GODEVILUTION_CATACOMBS_DOOR_ORACLE_DIRECTORY");
+	if (directory == nullptr || !*directory)
+		GTEST_SKIP() << "Select a private Catacombs door corpus explicitly.";
+	const auto root = std::filesystem::weakly_canonical(directory);
+	ASSERT_TRUE(root.is_absolute()); ASSERT_TRUE(std::filesystem::is_directory(root)); ASSERT_TRUE(std::filesystem::is_empty(root));
+	std::ofstream stream(root / "native-catacombs-door-operations.json", std::ios::binary | std::ios::trunc);
+	ASSERT_TRUE(stream.good());
+	int count = 0;
+	{
+		JsonObject document(stream);
+		document.String("format", "godevilution-catacombs-door-operations"); document.Number("version", 1);
+		document.String("policy", "controlled-original-diablo-catacombs-l2-door-sol-and-occupancy");
+		document.Key("cases"); stream << '[';
+		for (int depth = 5; depth <= 8; ++depth) {
+			for (const auto type : { OBJ_L2LDOOR, OBJ_L2RDOOR }) {
+				for (int occupancy = 0; occupancy < 4; ++occupancy) {
+					PrepareRoom(depth, 0, 0, 0, false);
+					currentLevel().setId(LevelId { .levelNum = static_cast<uint8_t>(depth), .type = DTYPE_CATACOMBS });
+					for (Tile &tile : tiles()) { tile.setPlayer(0); tile.setMonster(0); tile.setItem(0); tile.setCorpse(0); }
+					for (int y = 48; y <= 52; ++y) {
+						for (int x = 48; x <= 52; ++x) {
+							tileAt(x, y).setPiece(100 + (y - 48) * 5 + x - 48);
+							tileAt(x, y).setSpecial(11); tileAt(x, y).setTransVal(23);
+						}
+					}
+					tileProperties()[537] = tileProperties()[539] = TileProperties::Solid | TileProperties::BlockLight | TileProperties::BlockMissile;
+					tileProperties()[12] = tileProperties()[16] = TileProperties::None;
+					SetRndSeed(2588);
+					Object *door = AddObject(type, { 50, 50 }); ASSERT_NE(door, nullptr);
+					Player remotePlayer;
+					if (count++ != 0) stream << ',';
+					JsonObject row(stream); row.Number("depth", depth); row.Number("nativeType", type); row.Number("occupancy", occupancy);
+					row.Key("initialObject"); WriteRoomObject(stream, door->GetId(), *door);
+					row.Key("states"); stream << '[';
+					bool first = true;
+					auto capture = [&](std::string_view operation) {
+						if (!first) stream << ','; first = false;
+						JsonObject state(stream); state.String("operation", operation); state.Number("random", GetLCGEngineState());
+						state.Key("object"); WriteRoomObject(stream, door->GetId(), *door);
+						state.Key("cells"); stream << '[';
+						bool firstCell = true;
+						for (int y = 48; y <= 52; ++y) {
+							for (int x = 48; x <= 52; ++x) {
+								if (!firstCell) stream << ','; firstCell = false;
+								const Tile &tile = tileAt(x, y);
+								stream << '[' << tile.piece() << ',' << static_cast<int>(tile.special()) << ',' << static_cast<int>(tile.transVal())
+								       << ',' << static_cast<int>(tileProperties()[tile.piece()]) << ']';
+							}
+						}
+						stream << ']';
+					};
+					capture("initial");
+					SyncOpObject(remotePlayer, 0, *door); capture("open");
+					auto &center = tileAt(50, 50);
+					if (occupancy == 0) center.setCorpse(1);
+					if (occupancy == 1) center.setPlayer(-1);
+					if (occupancy == 2) center.setMonster(-1);
+					if (occupancy == 3) center.setItem(1);
+					SyncOpObject(remotePlayer, 0, *door); capture("blocked-close");
+					ProcessObjects(); capture("occupied-update");
+					SyncObjectAnim(*door); capture("occupied-sync");
+					ProcessObjects(); capture("occupied-update-after-sync");
+					center.setCorpse(0); center.setPlayer(0); center.setMonster(0); center.setItem(0);
+					ProcessObjects(); capture("clear-update");
+					SyncOpObject(remotePlayer, 0, *door); capture("close");
+					DeltaSyncOpObject(*door); capture("delta-open");
+					DeltaSyncOpObject(*door); capture("repeat-delta-open");
+					SyncObjectAnim(*door); capture("open-sync");
+					SyncOpObject(remotePlayer, 0, *door); capture("close-after-delta");
+					SyncObjectAnim(*door); capture("closed-sync");
+					stream << ']';
+				}
+			}
+		}
+		stream << ']'; document.Number("caseCount", count);
+	}
+	stream.flush(); ASSERT_TRUE(stream.good()); stream.close(); EXPECT_EQ(count, 32);
+}
+
+// The follower observes its leader at its own active-list turn, before AI.
+TEST_F(ThemeRoomGenerationTest, CaptureNativeCatacombsGargoylePackOrder)
+{
+	const char *directory = std::getenv("GODEVILUTION_CATACOMBS_PACK_ORACLE_DIRECTORY");
+	if (directory == nullptr || !*directory)
+		GTEST_SKIP() << "Select a private Gargoyle pack reference directory.";
+	const auto root = std::filesystem::weakly_canonical(directory);
+	ASSERT_TRUE(root.is_absolute()); ASSERT_TRUE(std::filesystem::is_directory(root)); ASSERT_TRUE(std::filesystem::is_empty(root));
+	std::ofstream stream(root / "native-catacombs-gargoyle-pack-order.json", std::ios::binary | std::ios::trunc);
+	ASSERT_TRUE(stream.good());
+	{
+		JsonObject document(stream); document.String("format", "godevilution-catacombs-gargoyle-pack-order"); document.Number("version", 1);
+		document.String("policy", "prepared-inactive-gargoyle-pack-special-completion-order");
+		document.Key("cases"); stream << '[';
+		for (int followerFirst = 0; followerFirst < 2; ++followerFirst) {
+			PrepareRoom(5, 0, 0, 0, false);
+			currentLevel().setId(LevelId { .levelNum = 5, .type = DTYPE_CATACOMBS });
+			for (Tile &tile : tiles()) { tile.setPiece(0); tile.setPlayer(0); tile.setMonster(0); tile.setFlags(DungeonFlag::None); }
+			MyPlayer->position.tile = { 90, 90 }; MyPlayer->position.future = { 90, 90 }; MyPlayer->position.old = { 90, 90 };
+			MyPlayer->life.current = 6400; tileAt(90, 90).setPlayer(1);
+			LevelBestiary.init(); const auto type = LevelBestiary.addType(MT_GARGOYLE, PLACE_SCATTER); ASSERT_TRUE(type.has_value());
+			SetRndSeed(2588);
+			Monster *leader = AddMonster({ 10, 10 }, Direction::SouthEast, *type, true); ASSERT_NE(leader, nullptr);
+			Monster *follower = AddMonster({ 11, 10 }, Direction::SouthEast, *type, true); ASSERT_NE(follower, nullptr);
+			leader->packSize = 1; follower->setLeader(leader); follower->leaderRelation = LeaderRelation::Leashed;
+			for (Monster *actor : { leader, follower }) {
+				actor->activeForTicks = 0; actor->enemy = 0; actor->enemyPosition = { 90, 90 }; actor->position.last = { 90, 90 };
+			}
+			leader->flags &= ~MFLAG_ALLOW_SPECIAL; leader->animInfo.currentFrame = leader->animInfo.numberOfFrames - 1;
+			leader->animInfo.tickCounterOfCurrentFrame = 0;
+			if (followerFirst != 0) std::swap(ActiveMonsters[0], ActiveMonsters[1]);
+			SetRndSeed(2588);
+			if (followerFirst != 0) stream << ',';
+			JsonObject row(stream); row.Boolean("followerFirst", followerFirst != 0);
+			row.Key("initialLeader"); WriteRoomMonster(stream, leader->getId(), *leader);
+			row.Key("initialFollower"); WriteRoomMonster(stream, follower->getId(), *follower);
+			row.Key("ticks"); stream << '[';
+			for (int tick = 0; tick < 3; ++tick) {
+				ProcessMonsters();
+				if (tick != 0) stream << ',';
+				JsonObject state(stream); state.Number("tick", tick); state.Number("random", GetLCGEngineState());
+				state.Key("leader"); WriteRoomMonster(stream, leader->getId(), *leader);
+				state.Key("follower"); WriteRoomMonster(stream, follower->getId(), *follower);
+			}
+			stream << ']';
+		}
+		stream << ']'; document.Number("caseCount", 2);
+	}
+	stream.flush(); ASSERT_TRUE(stream.good());
+}
+
 // Separate source metadata and actual Monster methods; older corpus bytes stay frozen.
+// Actual controller/mode dispatch over a prepared, MPQ-free actor arena.
+TEST_F(ThemeRoomGenerationTest, CaptureNativeCatacombsActorPhases)
+{
+	const char *directory = std::getenv("GODEVILUTION_CATACOMBS_ACTOR_ORACLE_DIRECTORY");
+	if (directory == nullptr || !*directory)
+		GTEST_SKIP() << "Select a private Catacombs actor corpus explicitly.";
+	const auto root = std::filesystem::weakly_canonical(directory);
+	ASSERT_TRUE(root.is_absolute()); ASSERT_TRUE(std::filesystem::is_directory(root)); ASSERT_TRUE(std::filesystem::is_empty(root));
+	LoadPlayerDataFiles();
+	std::ofstream stream(root / "native-catacombs-actor-phases.json", std::ios::binary | std::ios::trunc);
+	ASSERT_TRUE(stream.good());
+	int caseCount = 0;
+	{
+		JsonObject document(stream);
+		document.String("format", "godevilution-catacombs-actor-phases"); document.Number("version", 2);
+		document.String("policy", "prepared-original-diablo-single-player-normal-catacombs-actor-arena");
+		document.Key("cases"); stream << '[';
+		for (const HeroClass heroClass : { HeroClass::Warrior, HeroClass::Sorcerer }) {
+			for (const int lane : { 0, 5, 6, 7, 2, 3, 4 }) {
+				PrepareRoom(5, 0, 0, 0, false);
+				currentLevel().setId(LevelId { .levelNum = 5, .type = DTYPE_CATACOMBS });
+				for (Tile &tile : tiles()) { tile.setPlayer(0); tile.setMonster(0); tile.setFlags(DungeonFlag::None); }
+				LevelBestiary.init();
+				const bool fat = lane == 0 || lane >= 5;
+				const int nativeType = fat ? (lane == 0 ? 52 : lane + 48) : 81;
+				const auto typeIndex = LevelBestiary.addType(static_cast<_monster_id>(nativeType), PLACE_SCATTER);
+				ASSERT_TRUE(typeIndex.has_value());
+				// Character creation requires inventory cursor art. This controller seam
+				// prepares only class combat scalars from the canonical native tables.
+				Player hero; hero._pClass = heroClass; hero.setCharacterLevel(1);
+				const ClassAttributes &attributes = hero.getClassAttributes();
+				hero.attributes.strength.base = hero.attributes.strength.current = attributes.baseStr;
+				hero.attributes.magic.base = hero.attributes.magic.current = attributes.baseMag;
+				hero.attributes.dexterity.base = hero.attributes.dexterity.current = attributes.baseDex;
+				hero.attributes.vitality.base = hero.attributes.vitality.current = attributes.baseVit;
+				const int life = hero.calculateBaseLife(); const int mana = hero.calculateBaseMana();
+				hero.life = { life, life, life, life, 100 }; hero.mana = { mana, mana, mana, mana, 100 };
+				hero.setAnimations(); *MyPlayer = std::move(hero);
+				MyPlayer->plractive = true; MyPlayer->plrlevel = 5; MyPlayer->_pLvlChanging = false;
+				MyPlayer->plrIsOnSetLevel = false; MyPlayer->_pInvincible = false;
+				MyPlayer->_pBlockFlag = false; MyPlayer->_pmode = PM_STAND;
+				const Point playerPosition { static_cast<WorldTileCoord>(fat ? 51 : 60), 50 };
+				MyPlayer->position.tile = playerPosition; MyPlayer->position.future = playerPosition;
+				MyPlayer->position.old = playerPosition; tileAt(playerPosition).setPlayer(1);
+				SetRndSeed(2588);
+				Monster *actor = AddMonster({ 50, 50 }, Direction::SouthEast, *typeIndex, true);
+				ASSERT_NE(actor, nullptr);
+				actor->activeForTicks = 255; actor->enemy = 0; actor->enemyPosition = playerPosition; actor->position.last = playerPosition;
+				uint32_t inputSeed = 2588;
+				if (fat) {
+					for (inputSeed = 0; inputSeed < 10000; ++inputSeed) {
+						SetRndSeed(inputSeed); const int roll = GenerateRnd(100);
+						if (roll >= 4 * actor->intelligence + 15 && roll < 4 * actor->intelligence + 20) break;
+					}
+					ASSERT_LT(inputSeed, 10000U);
+				}
+				SetRndSeed(inputSeed);
+				if (caseCount++ != 0) stream << ',';
+				JsonObject row(stream);
+				row.Number("classId", heroClass); row.Number("nativeType", nativeType); row.Number("lane", lane);
+				row.Number("inputSeed", inputSeed); row.Number("characterLevel", MyPlayer->getCharacterLevel());
+				row.Number("initialPlayerLifeQ6", MyPlayer->life.current); row.Boolean("canBlock", false);
+				row.Number("normalToHit", actor->toHit(DIFF_NORMAL)); row.Number("specialToHit", actor->toHitSpecial(DIFF_NORMAL));
+				row.Number("minimumDamage", actor->minDamage); row.Number("maximumDamage", actor->maxDamage);
+				row.Number("minimumSpecialDamage", actor->minDamageSpecial); row.Number("maximumSpecialDamage", actor->maxDamageSpecial);
+				row.Number("normalEffectFrame", actor->data().animFrameNum); row.Number("specialEffectFrame", actor->data().animFrameNumSpecial);
+				row.Number("intelligence", actor->intelligence); row.Number("monsterLevel", actor->level(DIFF_NORMAL));
+				row.Key("animations"); WriteArray(stream, actor->type().anims, [&](const AnimStruct &anim) {
+					stream << '[' << static_cast<int>(anim.frames) << ',' << static_cast<int>(anim.rate) << ']';
+				});
+				row.Key("ticks"); stream << '[';
+				for (int tick = 0; tick < 45; ++tick) {
+					if (tick != 0) stream << ',';
+					JsonObject state(stream); state.Number("tick", tick);
+					state.Number("beforeMode", actor->mode); state.Number("beforeFlags", actor->flags);
+					state.Number("beforeFrame", actor->animInfo.currentFrame); state.Number("beforeCounter", actor->animInfo.tickCounterOfCurrentFrame);
+					state.Number("beforeRandom", GetLCGEngineState()); state.Number("beforePlayerLifeQ6", MyPlayer->life.current);
+					bool consumedWake = false;
+					if (tick == 3 && lane == 3) {
+						MyPlayer->position.future = { 51, 50 };
+					} else if (tick == 3 && lane == 4) {
+						consumedWake = actor->tryLiftGargoyle();
+					}
+					ProcessMonsters();
+					// Freeze further AI after the admitted sequence; keep native mode/animation dispatch.
+					if (fat || (actor->flags & MFLAG_ALLOW_SPECIAL) == 0)
+						actor->activeForTicks = 0;
+					state.Boolean("consumedWake", consumedWake);
+					state.Number("mode", actor->mode); state.Number("flags", actor->flags);
+					state.Number("frame", actor->animInfo.currentFrame); state.Number("counter", actor->animInfo.tickCounterOfCurrentFrame);
+					state.Number("frameCount", actor->animInfo.numberOfFrames); state.Number("ticksPerFrame", actor->animInfo.ticksPerFrame);
+					state.Number("random", GetLCGEngineState()); state.Number("playerLifeQ6", MyPlayer->life.current);
+				}
+				stream << ']';
+			}
+		}
+		stream << ']'; document.Number("caseCount", caseCount);
+	}
+	stream.flush(); ASSERT_TRUE(stream.good()); stream.close(); EXPECT_EQ(caseCount, 14);
+}
+
 TEST_F(ThemeRoomGenerationTest, CaptureMonsterRuntimeMetadata)
 {
 	const char *directory = std::getenv("GODEVILUTION_CATHEDRAL_MONSTER_RUNTIME_ORACLE_DIRECTORY");

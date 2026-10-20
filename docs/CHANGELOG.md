@@ -7,6 +7,14 @@ contracts stay in their existing guides.
 
 ## 2026-10-20
 
+- Add distinct Catacombs actor admission, frozen Gargoyle wake/animation phases,
+  active-order pack wake, bounded ranged-skeleton emergence admission and native
+  Fat Special cursors. Preserve effective unique
+  AI and refuse the new fields in existing cohort formats.
+- Add source-bound L2 door operations, occupied-close and sync/frame behavior;
+  preserve independent collision blockers. Keep floor owners, trapped-chest
+  operations, ranged timing, family profiles, travel and cold restore open.
+
 - Compose complete native Catacombs fresh encounters, items, themes and level-ready
   light/vision/automap state through shared internal phases and distinct C2 APIs.
 - Preserve Cathedral contracts and derive class inputs/history independently;

@@ -89,8 +89,8 @@ public sealed partial class DiabloCombatCommandProcessor
             return;
         var hit = random.GenerateRnd(100);
         var chance = Math.Clamp(90 - GetEffectiveMonsterArmorClass(target), 5, 95);
-        if (UsesNativeAi(target, "Gargoyle") && target.GargoyleSpecialActive) {
-            target.GargoyleSpecialActive = false;
+        if (UsesNativeAi(target, "Gargoyle") && IsNativeGargoyleWakePending(target)) {
+            _ = ConsumeNativeGargoyleWake(target);
             return;
         }
         if (hit >= chance && !target.IsPetrified)

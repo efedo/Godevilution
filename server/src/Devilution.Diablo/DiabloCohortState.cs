@@ -249,6 +249,10 @@ public sealed partial record DiabloCohortState(
         if (CombatTargets.Any(target => target is null || target.Monster is null
             || target.Drop is not null && target.Drop.State is null))
             throw new InvalidDataException("A Diablo cohort contains an incomplete combat target.");
+        if (CombatTargets.Any(target => target.NativeInitialization is { CatacombsDepth: not 0 }
+                or { NativeSpecialAttackFrameCount: not 0 } or { NativeSpecialAttackTicksPerFrame: not 0 }
+            || target.Monster.NativeMeleeCursor is { UsesSpecialAttack: true }))
+            throw new InvalidDataException("Catacombs actor state requires its additive cohort format.");
         var nativeSlots = new HashSet<(uint Level, int Slot)>();
         foreach (var target in CombatTargets) {
             if (target.Monster.NativeInitializationPresent != (target.NativeInitialization is not null))
