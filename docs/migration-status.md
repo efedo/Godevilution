@@ -123,9 +123,26 @@ cold input with exact sequence 40→41. See
 [object verification](test-history.md#2026-10-20--original-cathedral-object-art).
 Other live object lifecycle art coverage and cold L1 redraw remain open, alongside
 later-level TCHEST aliases, scene phases, native light/palette/transparency and
-matched rendered comparisons. The next primary batch is native Catacombs L4/L5
-entry/return followed by the cohesive L5–L8 family; characterize native generation
-and population before implementation. Normal-profile adoption remains held.
+matched rendered comparisons. The active primary batch is native Catacombs L4/L5
+entry/return and the cohesive L5–L8 family. Native generation/population
+characterization comes first, including retained attempt seeds, distinct L2
+doors/trapped chests, required monster behavior and L5 Town-warp unlock/rebuild.
+Use an additive opt-in family profile; existing Cathedral/save contracts remain
+unchanged. Normal-profile adoption remains held.
+The Catacombs pure generator/materializer passes 75 focused managed cases,
+including all 66 supported native entry comparisons and four existing ordinary
+coarse/transparency goldens. Both 75-case native generation captures repeat
+byte-identically, and both separate same-process guard regressions pass. Source
+L2 SOL is 559 bytes; the native 1379-slot zero tail and opaque flags are retained.
+The 32-case actual-class native population reference repeats byte-identically
+across 35 artifacts, including retained unique history and actual Fat, Rhino,
+Gargoyle, Magma and Acid actors. Starter-item identity seeds and pre-entry hero
+coordinates are explicit prepared inputs; birth-clock seed parity and preceding-
+floor gameplay are outside this proof. Shared population/semantic metadata
+implementation is next; no playable Catacombs profile is activated. Generated
+Gargoyle statue mode/cursor, native-owned Fat special attack and ranged timing/
+controller retention remain required integration gates before family qualification.
+See [verification](test-history.md#2026-10-20--native-catacombs-generation-and-population-reference).
 Keep the queue, this status and affected inventory entries synchronized. Do not
 restart inventory construction or an unrelated test campaign.
 

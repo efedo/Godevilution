@@ -1,7 +1,7 @@
 # Near-term work plan
 
 Updated 2026-10-20. Native Warrior/Sorcerer admission passes its headless L1
-scope. The next primary batch extends the native world into Catacombs.
+scope. The active primary batch extends the native world into Catacombs.
 Optional original-player and scene imports pass full native pixel/atlas
 comparisons. Distinct format-5 Town profiles now retain semantic fine/coarse/
 special/protected state, canonical resident collision and strict v11 cold restore.
@@ -59,9 +59,32 @@ Live door close/refusal, barrel/sarcophagus cadence, linked trap consumption and
 L1 redraw after cold restore still need art-specific application coverage.
 Later-level TCHEST aliases, native lighting, pre/post scene phases, wall lookahead,
 missile art and matched rendered parity remain open. Normal cohort/profile
-adoption remains held. The next primary batch extends the native world into
+adoption remains held. The active primary batch extends the native world into
 Catacombs, beginning with ordinary L4/L5 entry/return and building the L5–L8
 family coherently after native generation/population characterization.
+
+The implementation contract is a distinct runtime-generated Catacombs family,
+not supplied maps or captured-seed replay. Characterization covers native retry
+seeds, coarse/replacement/protected and fine/special/transparency channels,
+themes, trigger order, entry positions and complete population/RNG boundaries.
+Then add validated semantic metadata, L2 doors/trapped-chest and required monster
+behavior, lazy floor owners, reciprocal travel and detached cold restore.
+L5→Town must grant the native warp bit and rebuild the trusted Town gate;
+Town→L5 uses its separate entry. Preserve the generated L8 downstairs while
+refusing unsupported Caves travel. Keep existing Cathedral APIs, profile bytes
+and save contracts unchanged through an additive opt-in family profile.
+
+The pure generator and materializer pass all 66 supported native entry cases;
+75 focused managed cases also cover four existing map goldens and invalid/owned
+state contracts. Both 75-case native generation captures repeat byte-identically.
+The complete 32-case native population reference also repeats byte-identically,
+using explicit prepared Warrior/Sorcerer hero inputs and retained unique history.
+Actual Catacombs actors include Fat, Rhino, Gargoyle, Magma and Acid; existing AI
+proofs remain reusable within scope. Shared population phases and distinct
+semantic metadata come next. Generated Gargoyle statue cursors, native-owned
+Fat special attacks and ranged spawn/controller retention remain required
+family integration gates, alongside routes, ownership and cold restore. See
+[verification](test-history.md#2026-10-20--native-catacombs-generation-and-population-reference).
 
 ## Delivery order
 

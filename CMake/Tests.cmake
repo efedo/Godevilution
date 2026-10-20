@@ -27,6 +27,7 @@ set(tests
   level_l1_test
   cathedral_population_test
   level_l2_test
+  native_catacombs_generation_test
   level_l3_test
   level_l4_test
   effects_test

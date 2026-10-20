@@ -1,5 +1,44 @@
 # MSVC Build Notes for Agents
 
+## Native Catacombs references
+
+Build the registered `native_catacombs_generation_test` target with the checked
+MSVC x64 environment below. Set `GODEVILUTION_NATIVE_CATACOMBS_ARCHIVE` to the
+explicit original DIABDAT archive and
+`GODEVILUTION_NATIVE_CATACOMBS_REFERENCE_DIRECTORY` to a previously absent private
+directory. Run `native_catacombs_generation_test.exe
+--gtest_filter=NativeCatacombsGenerationTest.*` and restore caller environment.
+
+The headless fixture extracts only L2 TIL/SOL and captures 75 post-CreateDungeon,
+pre-CreateThemeRooms cases: L5–L8 Main/Previous, L5 Town-warp entry, retained
+seeds including zero and unsupported-entry view sentinels. Its separate MPQ-free
+guard test verifies same-process restoration. The source SOL is bounded before
+native loading; all 1379 effective slots, including raw opaque flags and the
+zero tail, are retained. References remain private comparison outputs.
+
+The Diablo xUnit `AuthoritativeCatacombsGeometryTests` and
+`AuthoritativeCatacombsGeneratorTests` consume the same explicit reference
+directory with `--explicit on --fail-skips on`. The materializer comparison uses
+native coarse input only inside its test; the generator comparison derives
+every channel from metadata-free seed/policy inputs. Existing Cathedral APIs
+and its reference corpora are separate.
+
+The additive `theme_item_generation_test` fixture
+`ThemeRoomGenerationTest.CaptureNativeCatacombsFreshPopulation` instead requires
+`GODEVILUTION_NATIVE_CATACOMBS_POPULATION_ARCHIVE` and
+`GODEVILUTION_NATIVE_CATACOMBS_POPULATION_REFERENCE_DIRECTORY`. Use a new output
+root. It opens only the selected archive and canonical loose semantic tables,
+retains incomplete evidence, and writes per-case worlds, native class/player
+preparation, pool order, RNG boundaries and item history through the scoped
+fresh level-ready seam. Its 32 cases cover the 30-case class/entry/history
+matrix plus two labeled L8 AI eligibility cases. Actual native player creation
+precedes a versioned class/storage/slot seed assignment for nonempty starter
+items only; the exact hero state is exported before generation. Native InitPlayer
+consumes that prepared state. Birth-clock item-seed parity, preceding-floor
+gameplay and profile activation remain outside this proof. Prepared pre-entry
+coordinates and the seeded history flag are also explicit inputs. Run `ThemeRoomGenerationTest.NativeThemeRoomGuardRestoresBestiarySizeAndEntries`
+for its MPQ-free Bestiary count/entry restoration regression.
+
 ## Native Cathedral object art reference
 
 Build only the registered `native_object_art_test` target using the checked MSVC

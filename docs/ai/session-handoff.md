@@ -47,10 +47,12 @@ draws, then retains all 58 supported L1 objects and collision geometry before
 cold input (40→41). Other live object lifecycle art coverage and cold L1 redraw
 remain open, alongside native lighting, scene phases, missiles and rendered parity.
 
-Read the work plan before establishing the next cohesive native-world batch:
-Catacombs L4/L5 entry/return and the L5–L8 family. Characterize native generation
-and population before implementation. The observed Town authority-lock lateness
-remains unresolved. Normal cohort/profile adoption stays held. Later class
+Continue the established Catacombs L4/L5 entry/return and L5–L8 family batch.
+Pure generation/materialization now passes 75 focused managed cases; repeated
+native references cover 75 geometry and 32 prepared-class population cases.
+Shared population phases and distinct semantic metadata are next. Read the work
+plan and scoped verification before implementation; retain these valid references.
+The observed Town authority-lock lateness remains unresolved. Normal cohort/profile adoption stays held. Later class
 campaigns and full rendered qualification remain open. Reuse valid evidence and
 keep the work plan, status and inventory synchronized; L3 bot failure is not a
 universal gate. Reuse the existing fixed worker pool.

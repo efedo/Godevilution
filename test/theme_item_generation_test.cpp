@@ -52,6 +52,7 @@
 #include "tables/leveldat.h"
 #include "tables/misdat.h"
 #include "tables/playerdat.hpp"
+#include "utils/paths.h"
 #include "utils/parse_int.hpp"
 #include "utils/language.h"
 
@@ -209,6 +210,8 @@ std::array<bool, 128> CaptureFlags()
 	std::copy(std::begin(UniqueItemFlags), std::end(UniqueItemFlags), flags.begin());
 	return flags;
 }
+
+constexpr size_t PreparedCatacombsUniqueHistoryId = 7;
 
 // This dedicated fixture owns every mutated gameplay/table scalar. It never
 // loads Diablo archives, allocates ground pools, or changes a normal profile.
@@ -1306,6 +1309,7 @@ struct NativeThemeRoomGuard {
 	bool oldArmor = armorFlag(), oldWeapon = weaponFlag();
 	ThemeRoomGlobalsForTesting oldScratch = CaptureThemeRoomGlobalsForTesting();
 	std::array<CMonster, MaxLvlMTypes> oldBestiary;
+	size_t oldBestiarySize = LevelBestiary.size();
 	std::vector<ObjectData> oldObjectData = AllObjects;
 	std::vector<std::string> oldObjectFiles = ObjMasterLoadList;
 	std::vector<MonsterData> oldMonsterData = MonstersData;
@@ -1335,6 +1339,7 @@ struct NativeThemeRoomGuard {
 	{
 		LevelBestiary.init();
 		for (int i = 0; i < MaxLvlMTypes; ++i) LevelBestiary.types[i] = std::move(oldBestiary[i]);
+		LevelBestiary.restoreSizeForTesting(oldBestiarySize);
 		for (int i = 0; i < MaxMonsters; ++i) Monsters[i] = std::move(monsters[i]);
 		std::copy(activeMonsters.begin(), activeMonsters.end(), ActiveMonsters); ActiveMonsterCount = monsterCount;
 		std::copy(activeObjects.begin(), activeObjects.end(), ActiveObjects);
@@ -1351,6 +1356,7 @@ struct NativeThemeRoomGuard {
 class ThemeRoomGenerationTest : public ThemeItemPlacementTest {
 protected:
 	void CapturePopulationOracle(const char *directory, bool freshLoadOrder, bool levelReady = false, bool nativeRogueRoute = false, std::optional<HeroClass> nativeClassRoute = std::nullopt);
+	void CaptureNativeCatacombsPopulationOracle(const char *archivePath, const char *directory);
 
 	void SetUp() override
 	{
@@ -1457,6 +1463,20 @@ protected:
 private:
 	std::unique_ptr<NativeThemeRoomGuard> roomGuard;
 };
+
+TEST_F(ThemeRoomGenerationTest, NativeThemeRoomGuardRestoresBestiarySizeAndEntries)
+{
+	const size_t originalSize = LevelBestiary.size();
+	ASSERT_GT(originalSize, 0U);
+	const _monster_id originalFirstType = LevelBestiary[0].type;
+	{
+		NativeThemeRoomGuard nestedGuard;
+		LevelBestiary.init();
+		EXPECT_TRUE(LevelBestiary.empty());
+	}
+	EXPECT_EQ(LevelBestiary.size(), originalSize);
+	EXPECT_EQ(LevelBestiary[0].type, originalFirstType);
+}
 
 // Capture complete ordinary L1 sarcophagus operation state without asking the
 // managed implementation to supply any expected native values.
@@ -2787,6 +2807,739 @@ void ThemeRoomGenerationTest::CapturePopulationOracle(const char *directory, boo
 		ASSERT_FALSE(footprintError.has_value()) << footprintError.value_or("unknown cursor footprint failure");
 		EXPECT_LE(std::filesystem::file_size(root / "native-rogue-l1-inventory.tsv"), 4U * 1024U * 1024U);
 	}
+}
+
+#ifndef UNPACKED_MPQS
+struct NativeCatacombsPopulationAssetGuard {
+	std::string assetsPath = paths::AssetsPath();
+	std::vector<std::string> overrides = std::move(OverridePaths);
+	decltype(MpqArchives) archives = std::move(MpqArchives);
+	~NativeCatacombsPopulationAssetGuard()
+	{
+		MpqArchives.clear();
+		MpqArchives = std::move(archives);
+		OverridePaths = std::move(overrides);
+		paths::SetAssetsPath(assetsPath);
+	}
+};
+
+struct NativeCatacombsPopulationOutputGuard {
+	std::filesystem::path root;
+	bool ownsRoot = false;
+	bool complete = false;
+	bool WriteStatus(std::string_view value) const
+	{
+		std::ofstream status(root / "capture-status.json", std::ios::binary | std::ios::trunc);
+		if (!status.good())
+			return false;
+		{
+			JsonObject document(status);
+			document.String("status", value);
+		}
+		status << "\r\n";
+		status.flush();
+		if (!status.good())
+			return false;
+		status.close();
+		return status.good();
+	}
+	~NativeCatacombsPopulationOutputGuard()
+	{
+		if (ownsRoot && !complete)
+			WriteStatus("incomplete");
+	}
+};
+
+struct NativeCatacombsPopulationCase {
+	HeroClass heroClass;
+	int depth;
+	lvl_entry entry;
+	uint32_t seed;
+	bool retainedUniqueHistory;
+	bool aiEligibilityCoverage = false;
+};
+
+constexpr char NativeCatacombsPreparedInventorySeedPolicy[] = "catacombs-class-storage-slot-v1";
+
+// Pin only starter-item identity seeds; native population uses independent world RNG state.
+void ApplyNativeCatacombsPreparedInventorySeedPolicy(Player &player)
+{
+	const uint32_t classComponent = (static_cast<uint32_t>(player._pClass) & 0xFFU) << 16;
+	auto assignContainer = [&](auto &items, uint32_t container) {
+		uint32_t slot = 0;
+		for (Item &item : items) {
+			if (!item.isEmpty())
+				item._iSeed = 0xC2000000U | classComponent | (container << 8) | slot;
+			++slot;
+		}
+	};
+	assignContainer(player.InvBody, 1);
+	assignContainer(player.InvList, 2);
+	assignContainer(player.SpdList, 3);
+	if (!player.HoldItem.isEmpty())
+		player.HoldItem._iSeed = 0xC2000000U | classComponent | (4U << 8);
+}
+
+std::vector<uint32_t> CaptureNativeCatacombsPlayerItemSeeds(const Player &player)
+{
+	std::vector<uint32_t> seeds;
+	for (const Item &item : player.InvBody)
+		seeds.push_back(item._iSeed);
+	for (const Item &item : player.InvList)
+		seeds.push_back(item._iSeed);
+	for (const Item &item : player.SpdList)
+		seeds.push_back(item._iSeed);
+	seeds.push_back(player.HoldItem._iSeed);
+	return seeds;
+}
+
+const char *CatacombsClassSymbol(HeroClass heroClass)
+{
+	return heroClass == HeroClass::Warrior ? "warrior" : "sorcerer";
+}
+
+const char *CatacombsEntrySymbol(lvl_entry entry)
+{
+	return entry == ENTRY_MAIN ? "main" : entry == ENTRY_PREV ? "previous" : "town-warp-down";
+}
+
+void WriteCatacombsPlayer(std::ostream &out, const Player &player)
+{
+	JsonObject json(out);
+	json.Number("classId", player._pClass);
+	json.Number("characterLevel", player.getCharacterLevel());
+	json.Number("dungeonLevel", player.plrlevel);
+	json.Number("experience", player._pExperience);
+	json.Number("lifeBase", player.life.base);
+	json.Number("lifeCurrent", player.life.current);
+	json.Number("lifeMaximum", player.life.maximum);
+	json.Number("lifeMaximumBase", player.life.maximumBase);
+	json.Number("manaBase", player.mana.base);
+	json.Number("manaCurrent", player.mana.current);
+	json.Number("manaMaximum", player.mana.maximum);
+	json.Number("manaMaximumBase", player.mana.maximumBase);
+	json.Number("strength", player.attributes.strength.base);
+	json.Number("magic", player.attributes.magic.base);
+	json.Number("dexterity", player.attributes.dexterity.base);
+	json.Number("vitality", player.attributes.vitality.base);
+	json.Number("statPoints", player._pStatPts);
+	json.Number("gold", player._pGold);
+	json.Number("lightRadius", player._pLightRad);
+	json.Number("lightId", player.lightId);
+	json.Number("mode", player._pmode);
+	json.Number("direction", player.direction);
+	json.Number("pLvlLoad", player.pLvlLoad);
+	json.Number("spellFlags", player._pSpellFlags);
+	json.Number("townWarps", player.pTownWarps);
+	json.Boolean("active", player.plractive);
+	json.Boolean("levelChanging", player._pLvlChanging);
+	json.Boolean("originalCathedral", player.pOriginalCathedral);
+	json.Key("positionTile"); WriteRoomPoint(out, { player.position.tile.x, player.position.tile.y });
+	json.Key("positionFuture"); WriteRoomPoint(out, { player.position.future.x, player.position.future.y });
+	json.Key("positionOld"); WriteRoomPoint(out, { player.position.old.x, player.position.old.y });
+	json.Key("positionLast"); WriteRoomPoint(out, { player.position.last.x, player.position.last.y });
+	json.Key("positionTemp"); WriteRoomPoint(out, { player.position.temp.x, player.position.temp.y });
+	json.Number("inventoryCount", player._pNumInv);
+	json.Key("bodyItems"); WriteArray(out, player.InvBody, [&](const Item &item) { WriteItem(out, item); });
+	json.Key("inventoryItems"); WriteArray(out, player.InvList, [&](const Item &item) { WriteItem(out, item); });
+	json.Key("beltItems"); WriteArray(out, player.SpdList, [&](const Item &item) { WriteItem(out, item); });
+	json.Key("cursorItem"); WriteItem(out, player.HoldItem);
+	json.Key("inventoryGrid"); WriteArray(out, player.InvGrid, [&](int8_t value) { out << static_cast<int>(value); });
+	json.Key("spellLevels"); WriteArray(out, player._pSplLvl, [&](uint8_t value) { out << static_cast<int>(value); });
+	json.Key("animation"); {
+		JsonObject animation(out);
+		animation.Number("currentFrame", player.animInfo.currentFrame);
+		animation.Number("tickCounterOfCurrentFrame", player.animInfo.tickCounterOfCurrentFrame);
+		animation.Number("frameCount", player.animInfo.numberOfFrames);
+		animation.Number("ticksPerFrame", player.animInfo.ticksPerFrame);
+		animation.Boolean("isPetrified", player.animInfo.isPetrified);
+	}
+}
+
+void WriteCatacombsBestiary(std::ostream &out)
+{
+	out << '[';
+	for (size_t index = 0; index < LevelBestiary.size(); ++index) {
+		if (index != 0)
+			out << ',';
+		const CMonster &entry = LevelBestiary[index];
+		const MonsterData &source = entry.data();
+		JsonObject json(out);
+		json.Number("index", index);
+		json.Number("monsterType", entry.type);
+		json.Number("placeFlags", entry.placeFlags);
+		json.Number("corpseId", entry.corpseId);
+		json.String("name", source.name);
+		json.Number("spriteId", source.spriteId);
+		json.Number("nativeAi", source.ai);
+		json.Number("availability", source.availability);
+		json.Number("imageCost", source.image);
+		json.Number("minimumDungeonLevel", source.minDunLvl);
+		json.Number("maximumDungeonLevel", source.maxDunLvl);
+		json.Number("treasure", source.treasure);
+		const std::optional<MissileID> missile = AiMissileType(source.ai);
+		if (missile.has_value())
+			json.Number("aiMissileId", missile.value());
+		else {
+			json.Key("aiMissileId");
+			out << "null";
+		}
+		json.Key("sourceFrames"); WriteArray(out, source.frames, [&](int8_t value) { out << static_cast<int>(value); });
+		json.Key("sourceRates"); WriteArray(out, source.rate, [&](int8_t value) { out << static_cast<int>(value); });
+		json.Key("animations");
+		out << '[';
+		for (size_t animation = 0; animation < std::size(entry.anims); ++animation) {
+			if (animation != 0)
+				out << ',';
+			const AnimStruct &data = entry.anims[animation];
+			out << '[' << data.width << ',' << static_cast<int>(data.frames) << ',' << static_cast<int>(data.rate) << ']';
+		}
+		out << ']';
+	}
+	out << ']';
+}
+
+void WriteCatacombsThemeState(std::ostream &out)
+{
+	JsonObject json(out);
+	json.Key("selected");
+	out << '[';
+	for (int index = 0; index < numThemes(); ++index) {
+		if (index != 0)
+			out << ',';
+		out << '[' << static_cast<int>(themes[index].ttype) << ',' << static_cast<int>(themes[index].ttval) << ']';
+	}
+	out << ']';
+	json.Number("roomCount", themeCount());
+	json.Key("rooms");
+	out << '[';
+	for (int index = 0; index < themeCount(); ++index) {
+		if (index != 0)
+			out << ',';
+		const THEME_LOC &location = themeLocations()[index];
+		JsonObject room(out);
+		room.Key("position"); WriteRoomPoint(out, { location.room.position.x, location.room.position.y });
+		room.Key("size"); out << '[' << static_cast<int>(location.room.size.width) << ',' << static_cast<int>(location.room.size.height) << ']';
+		room.Number("transparency", location.ttval);
+	}
+	out << ']';
+}
+
+void WriteCatacombsResetRecords(std::ostream &out)
+{
+	const MonsterPopulationGlobalsForTesting monsters = CaptureMonsterPopulationGlobalsForTesting();
+	const ItemInitializationGlobalsForTesting items = CaptureItemInitializationGlobalsForTesting();
+	JsonObject json(out);
+	json.Key("monsterPopulation"); {
+		JsonObject state(out);
+		state.Number("totalMonsters", monsters.totalMonsters);
+		state.Number("imageTotal", monsters.imageTotal);
+		state.Number("uniqueTransparency", monsters.uniqueTransparency);
+	}
+	json.Key("itemInitialization"); {
+		JsonObject state(out);
+		state.Boolean("showUniqueInfo", items.showUniqueInfo);
+		state.Number("recordCount", items.count);
+		state.Key("records");
+		WriteArray(out, items.records, [&](const ItemGetRecordStruct &record) {
+			out << '[' << record.nSeed << ',' << record.wCI << ',' << record.nIndex << ',' << record.dwTimestamp << ']';
+		});
+	}
+}
+
+void WriteCatacombsRngBoundary(std::ostream &out, bool &first, std::string_view name, uint32_t value)
+{
+	if (!first)
+		out << ',';
+	first = false;
+	JsonString(out, name);
+	out << ':' << value;
+}
+#endif
+
+void ThemeRoomGenerationTest::CaptureNativeCatacombsPopulationOracle(const char *archivePath, const char *directory)
+{
+	if (archivePath == nullptr || archivePath[0] == '\0' || directory == nullptr || directory[0] == '\0')
+		GTEST_SKIP() << "Set both explicit Catacombs population archive and new reference directory variables.";
+#ifdef UNPACKED_MPQS
+	GTEST_SKIP() << "The Catacombs population oracle requires the explicit MPQ archive backend.";
+#else
+	const std::filesystem::path explicitArchive = std::filesystem::absolute(archivePath).lexically_normal();
+	ASSERT_TRUE(std::filesystem::is_regular_file(explicitArchive)) << explicitArchive;
+	NativeCatacombsPopulationOutputGuard outputGuard;
+	outputGuard.root = std::filesystem::absolute(directory).lexically_normal();
+	ASSERT_TRUE(outputGuard.root.is_absolute());
+	ASSERT_FALSE(std::filesystem::exists(outputGuard.root)) << "Refusing to overwrite an existing Catacombs population reference directory.";
+	ASSERT_TRUE(std::filesystem::is_directory(outputGuard.root.parent_path()))
+	    << "Create the reference directory parent before opting into native capture.";
+
+	NativeComposedPopulationGuard composedGuard;
+	NativeLevelReadyGuard readyGuard;
+	NativeItemWorldGuard itemWorldGuard;
+	NativeCatacombsPopulationAssetGuard assetGuard;
+	std::error_code createError;
+	outputGuard.ownsRoot = std::filesystem::create_directory(outputGuard.root, createError);
+	ASSERT_TRUE(outputGuard.ownsRoot) << "Could not create a fresh native population reference directory: " << createError.message();
+	ASSERT_TRUE(outputGuard.WriteStatus("capturing")) << "Could not write the capture status marker.";
+	const std::filesystem::path repository = std::filesystem::weakly_canonical(std::filesystem::absolute(__FILE__).parent_path().parent_path());
+	const std::string repositoryAssets = (repository / "assets").string() + "/";
+	paths::SetAssetsPath(repositoryAssets);
+	OverridePaths = { repositoryAssets };
+	MpqArchives.clear();
+	std::int32_t archiveOpenError = 0;
+	auto archive = MpqArchive::Open(explicitArchive.string().c_str(), archiveOpenError);
+	ASSERT_TRUE(archive.has_value()) << "Could not open the explicitly selected original archive: " << MpqArchive::ErrorMessage()
+	                                << " (" << archiveOpenError << ')';
+	const auto [archiveIt, archiveInserted] = MpqArchives.emplace(MainMpqPriority, std::move(archive.value()));
+	ASSERT_TRUE(archiveInserted);
+	MpqArchive &mainArchive = archiveIt->second;
+
+	currentLevel().setId(LevelId { .levelNum = 5, .type = DTYPE_CATACOMBS });
+	ASSERT_TRUE(FindAsset("levels\\l2data\\l2.til").ok());
+	ASSERT_EQ(FindAsset("levels\\l2data\\l2.til").archive, &mainArchive);
+	ASSERT_TRUE(FindAsset("levels\\l2data\\l2.sol").ok());
+	ASSERT_EQ(FindAsset("levels\\l2data\\l2.sol").archive, &mainArchive);
+	for (const char *translationTable : { "plrgfx\\infra.trn", "plrgfx\\stone.trn" }) {
+		const AssetRef translationAsset = FindAsset(translationTable);
+		ASSERT_TRUE(translationAsset.ok()) << translationTable;
+		ASSERT_EQ(translationAsset.archive, &mainArchive) << translationTable;
+	}
+	// Pause is a bundled engine translation table, not an original MPQ asset.
+	// Pin the production lookup to the canonical loose resource bytes.
+	std::array<uint8_t, 256> expectedPause {};
+	std::array<uint8_t, 256> loadedPause {};
+	const auto pausePath = repository / "assets/gendata/pause.trn";
+	ASSERT_EQ(std::filesystem::file_size(pausePath), expectedPause.size());
+	std::ifstream pauseSource(pausePath, std::ios::binary);
+	pauseSource.read(reinterpret_cast<char *>(expectedPause.data()), expectedPause.size());
+	ASSERT_TRUE(pauseSource.good());
+	pauseSource.close();
+	ASSERT_TRUE(pauseSource.good());
+	const auto pauseAsset = FindAsset("gendata\\pause.trn");
+	ASSERT_TRUE(pauseAsset.ok());
+	ASSERT_EQ(pauseAsset.archive, nullptr);
+	ASSERT_EQ(pauseAsset.size(), loadedPause.size());
+	auto pauseHandle = OpenAsset(FindAsset("gendata\\pause.trn"));
+	ASSERT_TRUE(pauseHandle.ok());
+	ASSERT_TRUE(pauseHandle.read(loadedPause.data(), loadedPause.size()));
+	ASSERT_EQ(loadedPause, expectedPause);
+	ASSERT_TRUE(FindAsset("levels\\l2data\\l2.amp").ok());
+	ASSERT_EQ(FindAsset("levels\\l2data\\l2.amp").archive, &mainArchive);
+	const AssetRef automapAsset = FindAsset("levels\\l2data\\l2.amp");
+	ASSERT_EQ(automapAsset.archive, &mainArchive);
+	const size_t sourceAutomapByteCount = automapAsset.size();
+	ASSERT_GT(sourceAutomapByteCount, 0U);
+	ASSERT_LE(sourceAutomapByteCount, 4U * 1024U * 1024U);
+	ASSERT_EQ(sourceAutomapByteCount % sizeof(uint16_t), 0U);
+	AssetHandle automapHandle = OpenAsset(FindAsset("levels\\l2data\\l2.amp"));
+	ASSERT_TRUE(automapHandle.ok());
+	std::vector<uint8_t> sourceAutomap(sourceAutomapByteCount);
+	ASSERT_TRUE(automapHandle.read(sourceAutomap.data(), sourceAutomap.size()));
+	std::vector<uint16_t> sourceAutomapWords(sourceAutomapByteCount / sizeof(uint16_t));
+	for (size_t word = 0; word < sourceAutomapWords.size(); ++word) {
+		sourceAutomapWords[word] = static_cast<uint16_t>(sourceAutomap[word * 2])
+		    | static_cast<uint16_t>(static_cast<uint16_t>(sourceAutomap[word * 2 + 1]) << 8);
+	}
+	const AssetRef solAsset = FindAsset("levels\\l2data\\l2.sol");
+	ASSERT_EQ(solAsset.archive, &mainArchive);
+	const size_t sourceSolByteCount = solAsset.size();
+	ASSERT_EQ(sourceSolByteCount, 559U);
+	AssetHandle solHandle = OpenAsset(FindAsset("levels\\l2data\\l2.sol"));
+	ASSERT_TRUE(solHandle.ok());
+	std::vector<uint8_t> sourceSol(sourceSolByteCount);
+	ASSERT_TRUE(solHandle.read(sourceSol.data(), sourceSol.size()));
+	const size_t reservedSolFlagCount = static_cast<size_t>(std::count_if(sourceSol.begin(), sourceSol.end(), [](uint8_t value) { return (value & 0x40) != 0; }));
+	ASSERT_GT(reservedSolFlagCount, 0U) << "The raw Catacombs SOL should preserve native reserved 0x40 bits.";
+
+	const AssetRef tileAsset = FindAsset("levels\\l2data\\l2.til");
+	ASSERT_EQ(tileAsset.archive, &mainArchive);
+	ASSERT_EQ(tileAsset.size(), 160U * sizeof(MegaTile));
+	size_t megaTileCount = 0;
+	auto tileDefinitions = LoadFileInMemWithStatus<MegaTile>("levels\\l2data\\l2.til", &megaTileCount);
+	ASSERT_TRUE(tileDefinitions.has_value());
+	ASSERT_NE(tileDefinitions->get(), nullptr);
+	ASSERT_EQ(megaTileCount, 160U);
+	std::vector<MegaTile> sourceMegaTiles(megaTileCount);
+	std::copy_n(tileDefinitions->get(), megaTileCount, sourceMegaTiles.begin());
+	megaTiles() = std::move(tileDefinitions.value());
+	std::fill(std::begin(tileProperties()), std::end(tileProperties()), TileProperties::None);
+	ASSERT_TRUE(LoadLevelSOLData().has_value());
+	for (size_t piece = 0; piece < MAXTILES; ++piece) {
+		const uint8_t expected = piece < sourceSol.size() ? sourceSol[piece] : 0;
+		ASSERT_EQ(static_cast<uint8_t>(tileProperties()[piece]), expected) << "SOL piece " << piece;
+	}
+	ASSERT_TRUE(CurrentLightManager.LoadTrns().has_value());
+	CurrentLightManager.MakeLightTable();
+	LoadLevelGenerationData();
+	LoadObjectData();
+	LoadMonsterData();
+	LoadItemData();
+	LoadSpellData();
+	LoadPlayerDataFiles();
+	ASSERT_EQ(AllObjects.size(), 109U);
+	ASSERT_FALSE(MonstersData.empty());
+	ASSERT_FALSE(AllItemsList.empty());
+
+	std::filesystem::create_directories(outputGuard.root / "cases");
+	{
+		std::ofstream source(outputGuard.root / "native-catacombs-sources.json", std::ios::binary | std::ios::trunc);
+		ASSERT_TRUE(source.good());
+		{
+			JsonObject document(source);
+			document.String("format", "godevilution-native-catacombs-population-sources");
+			document.Number("version", 1);
+			document.Number("tileDefinitionCount", megaTileCount);
+			document.Key("tileDefinitions"); WriteArray(source, sourceMegaTiles, [&](const MegaTile &tile) {
+				source << '[' << tile.micro1 << ',' << tile.micro2 << ',' << tile.micro3 << ',' << tile.micro4 << ']';
+			});
+			document.Number("automapSourceByteCount", sourceAutomap.size());
+			document.Number("automapWordCount", sourceAutomapWords.size());
+			document.Key("automapRawWordsLittleEndian"); WriteArray(source, sourceAutomapWords, [&](uint16_t value) { source << value; });
+			document.Number("solSourceByteCount", sourceSol.size());
+			document.Number("solEffectiveSlotCount", MAXTILES);
+			document.Number("solReserved0x40Count", reservedSolFlagCount);
+			document.Key("solRawBytes"); WriteArray(source, sourceSol, [&](uint8_t value) { source << static_cast<unsigned int>(value); });
+			document.Key("solEffectiveProperties"); WriteArray(source, tileProperties(), [&](TileProperties property) { source << static_cast<unsigned int>(property); });
+		}
+		source << "\r\n";
+		source.flush();
+		ASSERT_TRUE(source.good());
+		source.close();
+		ASSERT_TRUE(source.good());
+	}
+
+	std::vector<NativeCatacombsPopulationCase> cases;
+	for (const uint32_t seed : { UINT32_C(2588), UINT32_C(743271966) })
+		for (int depth = 5; depth <= 8; ++depth)
+			for (const lvl_entry entry : { ENTRY_MAIN, ENTRY_PREV })
+				cases.push_back({ HeroClass::Warrior, depth, entry, seed, false });
+	for (int depth = 5; depth <= 8; ++depth)
+		cases.push_back({ HeroClass::Sorcerer, depth, ENTRY_MAIN, UINT32_C(2588), false });
+	for (const HeroClass heroClass : { HeroClass::Warrior, HeroClass::Sorcerer })
+		cases.push_back({ heroClass, 5, ENTRY_TWARPDN, UINT32_C(2588), false });
+	for (const HeroClass heroClass : { HeroClass::Warrior, HeroClass::Sorcerer })
+		for (int depth = 5; depth <= 8; ++depth)
+			cases.push_back({ heroClass, depth, ENTRY_MAIN, UINT32_C(2588), true });
+	cases.push_back({ HeroClass::Warrior, 8, ENTRY_MAIN, UINT32_C(0), false, true });
+	cases.push_back({ HeroClass::Warrior, 8, ENTRY_MAIN, UINT32_C(1), false, true });
+	ASSERT_EQ(cases.size(), 32U);
+	std::array<bool, 128> carriedHistory {};
+	std::vector<NativeCatacombsPopulationCase> indexRows;
+	indexRows.reserve(cases.size());
+	for (const NativeCatacombsPopulationCase &spec : cases) {
+		if (spec.retainedUniqueHistory && spec.depth != 5)
+			std::copy(carriedHistory.begin(), carriedHistory.end(), std::begin(UniqueItemFlags));
+		else {
+			ClearUniqueItemFlags();
+			if (spec.retainedUniqueHistory)
+				UniqueItemFlags[PreparedCatacombsUniqueHistoryId] = true;
+		}
+		const std::array<bool, 128> historyAtCaseStart = CaptureFlags();
+		if (spec.retainedUniqueHistory)
+			ASSERT_TRUE(historyAtCaseStart[PreparedCatacombsUniqueHistoryId]);
+		else
+			ASSERT_EQ(std::count(historyAtCaseStart.begin(), historyAtCaseStart.end(), true), 0);
+		FreeMonsters();
+		InitializeObjectPool();
+		ObjectPoolAdapter::ResetLegacyObjectPools();
+		for (int slot = 0; slot < MAXOBJECTS; ++slot)
+			Objects[slot] = {};
+		for (CMonster &type : LevelBestiary.types)
+			type = {};
+		InitializeMonsterPool();
+		for (Monster &monster : MonsterPoolAdapter::AllMonsters())
+			monster = {};
+		for (unsigned slot = 0; slot < MaxMonsters; ++slot)
+			ActiveMonsters[slot] = slot;
+		InitializeItemPool();
+		ItemPoolAdapter::ResetLegacyItemPools();
+		for (int slot = 0; slot <= MAXITEMS; ++slot)
+			Items[slot] = {};
+		CurrentLightManager.Init();
+		std::fill(std::begin(CurrentLightManager.lights_), std::end(CurrentLightManager.lights_), Light {});
+		std::fill(std::begin(CurrentLightManager.visionList_), std::end(CurrentLightManager.visionList_), Light {});
+		for (Tile &tile : tiles())
+			tile = {};
+		for (Quest &quest : Quests)
+			quest._qactive = QUEST_NOTAVAIL;
+		RestoreThemeRoomGlobalsForTesting({});
+		for (int index = 0; index < MAXTHEMES; ++index)
+			themes[index] = {};
+		numThemes() = 0;
+		RestoreAutomapDefinitionsForTesting({});
+		CurrentAutomapManager.InitAutomap();
+		CurrentAutomapManager.SetAutoMapShowItems(true);
+		Missiles.clear();
+		MissilePreFlag = true;
+		std::fill(std::begin(Corpses), std::end(Corpses), Corpse {});
+		stonendx = 0;
+		std::fill(std::begin(Portals), std::end(Portals), Portal {});
+		MyPlayerId = 0;
+		Players.resize(1);
+		MyPlayer = &Players[0];
+		Player canonicalHero;
+		canonicalHero.create(spec.heroClass);
+		const uint32_t beforePreparedInventorySeedPolicy = GetLCGEngineState();
+		ApplyNativeCatacombsPreparedInventorySeedPolicy(canonicalHero);
+		ASSERT_EQ(GetLCGEngineState(), beforePreparedInventorySeedPolicy);
+		*MyPlayer = std::move(canonicalHero);
+		MyPlayer->pOriginalCathedral = true;
+		MyPlayer->plractive = true;
+		MyPlayer->_pLvlChanging = true;
+		MyPlayer->plrIsOnSetLevel = false;
+		MyPlayer->plrlevel = static_cast<uint8_t>(spec.depth);
+		MyPlayer->pLvlLoad = 1;
+		MyPlayer->position.future = { 75, 68 };
+		MyPlayer->position.last = { 13, 17 };
+		MyPlayer->position.temp = { 19, 23 };
+		const int maximumLife = MyPlayer->life.maximumBase;
+		const int maximumMana = MyPlayer->mana.maximumBase;
+		MyPlayer->life = { maximumLife, maximumLife, maximumLife, maximumLife, 100 };
+		MyPlayer->mana = { maximumMana, maximumMana, maximumMana, maximumMana, 100 };
+		currentLevel().setId(LevelId { .levelNum = static_cast<uint8_t>(spec.depth), .type = DTYPE_CATACOMBS });
+		currentLevelNumber() = spec.depth;
+		levelType() = DTYPE_CATACOMBS;
+		LevelSeeds[spec.depth] = std::nullopt;
+		DungeonSeeds[spec.depth] = spec.seed;
+		DungeonSeeds[16] = UINT32_C(0x13579BDF);
+		gbIsMultiplayer = false;
+		gbIsSpawn = false;
+		gbIsHellfire = false;
+		gbIsHellfireSaveGame = false;
+		gbSndInited = false;
+		LoadingMapObjects = false;
+		HeadlessMode = true;
+		sgGameInitInfo.fullQuests = 1;
+		sgGameInitInfo.nDifficulty = DIFF_NORMAL;
+		armorFlag() = true;
+		weaponFlag() = true;
+		const std::vector<uint32_t> playerGenerationItemSeeds = CaptureNativeCatacombsPlayerItemSeeds(*MyPlayer);
+		std::ostringstream playerGenerationInput;
+		WriteCatacombsPlayer(playerGenerationInput, *MyPlayer);
+		ASSERT_TRUE(playerGenerationInput.good());
+		SetRndSeed(spec.seed);
+		const uint32_t beforePopulationReset = GetLCGEngineState();
+		InitLevelMonsters();
+		const uint32_t afterPopulationReset = GetLCGEngineState();
+		const uint32_t beforeCreateLevel = GetLCGEngineState();
+		CreateLevelForTesting(spec.entry);
+		ASSERT_TRUE(LevelSeeds[spec.depth].has_value());
+		const uint32_t attemptSeed = *LevelSeeds[spec.depth];
+		const uint32_t afterCreateLevel = GetLCGEngineState();
+		SetRndSeed(spec.seed);
+		ASSERT_TRUE(GetLevelMTypes().has_value());
+		const uint32_t afterGetLevelMTypes = GetLCGEngineState();
+		InitThemes();
+		const uint32_t afterInitThemes = GetLCGEngineState();
+		const uint32_t beforeInitPlayer = GetLCGEngineState();
+		const Point preEntryTile = MyPlayer->position.tile;
+		const Point preEntryFuture = MyPlayer->position.future;
+		const Point preEntryOld = MyPlayer->position.old;
+		const Point preEntryLast = MyPlayer->position.last;
+		const Point preEntryTemp = MyPlayer->position.temp;
+		InitPlayer(*MyPlayer, false);
+		ASSERT_EQ(MyPlayer->lightId, 0);
+		ASSERT_EQ(CaptureNativeCatacombsPlayerItemSeeds(*MyPlayer), playerGenerationItemSeeds)
+		    << "Native InitPlayer should receive and preserve the prepared starter-item identities.";
+		const uint32_t afterInitPlayer = GetLCGEngineState();
+		const std::array<bool, 128> inputUniqueFlags = CaptureFlags();
+		ASSERT_EQ(inputUniqueFlags, historyAtCaseStart) << "Level setup unexpectedly changed retained unique-item history.";
+		if (spec.retainedUniqueHistory)
+			ASSERT_TRUE(inputUniqueFlags[PreparedCatacombsUniqueHistoryId]);
+		SetRndSeed(spec.seed);
+		const uint32_t afterPopulationSeedReset = GetLCGEngineState();
+		const std::string file = std::string(CatacombsClassSymbol(spec.heroClass))
+		    + (spec.aiEligibilityCoverage ? "-ai-eligibility-coverage" : spec.retainedUniqueHistory ? "-retained-history" : spec.entry == ENTRY_TWARPDN ? "-town-warp-down" : "-cold")
+		    + "-l" + std::to_string(spec.depth) + "-" + CatacombsEntrySymbol(spec.entry) + "-" + std::to_string(spec.seed) + ".json";
+		const std::filesystem::path casePath = outputGuard.root / "cases" / file;
+		std::ofstream caseOutput(casePath, std::ios::binary | std::ios::trunc);
+		ASSERT_TRUE(caseOutput.good());
+		uint32_t afterHoldThemeRooms = 0;
+		uint32_t afterInitGolems = 0;
+		uint32_t afterInitObjects = 0;
+		uint32_t afterInitMonsters = 0;
+		uint32_t afterInitItems = 0;
+		uint32_t afterCreateThemeRooms = 0;
+		uint32_t beforeReady = 0;
+		uint32_t afterReady = 0;
+		std::array<bool, 128> outputUniqueFlags {};
+		{
+			JsonObject document(caseOutput);
+			document.String("format", "godevilution-catacombs-population-case");
+			document.Number("version", 1);
+			document.String("policy", "quest-disabled-original-diablo-single-player-normal");
+			document.String("characterClass", CatacombsClassSymbol(spec.heroClass));
+			document.Number("characterClassId", spec.heroClass);
+			document.Number("characterLevel", MyPlayer->getCharacterLevel());
+			document.Number("levelId", spec.depth);
+			document.String("entry", CatacombsEntrySymbol(spec.entry));
+			document.Number("inputSeed", spec.seed);
+			if (spec.aiEligibilityCoverage)
+				document.String("casePurpose", "native-ai-eligibility-coverage");
+			document.Number("attemptSeed", attemptSeed);
+			document.Number("solSourceByteCount", sourceSolByteCount);
+			document.Number("solEffectiveSlotCount", MAXTILES);
+			document.Boolean("retainedUniqueHistory", spec.retainedUniqueHistory);
+			document.Key("rngBoundaries");
+			caseOutput << '{';
+			bool firstBoundary = true;
+			WriteCatacombsRngBoundary(caseOutput, firstBoundary, "beforePopulationReset", beforePopulationReset);
+			WriteCatacombsRngBoundary(caseOutput, firstBoundary, "afterPopulationReset", afterPopulationReset);
+			WriteCatacombsRngBoundary(caseOutput, firstBoundary, "beforeCreateLevel", beforeCreateLevel);
+			WriteCatacombsRngBoundary(caseOutput, firstBoundary, "afterCreateLevel", afterCreateLevel);
+			WriteCatacombsRngBoundary(caseOutput, firstBoundary, "afterGetLevelMTypes", afterGetLevelMTypes);
+			WriteCatacombsRngBoundary(caseOutput, firstBoundary, "afterInitThemes", afterInitThemes);
+			WriteCatacombsRngBoundary(caseOutput, firstBoundary, "beforeInitPlayer", beforeInitPlayer);
+			WriteCatacombsRngBoundary(caseOutput, firstBoundary, "afterInitPlayer", afterInitPlayer);
+			WriteCatacombsRngBoundary(caseOutput, firstBoundary, "afterPopulationSeedReset", afterPopulationSeedReset);
+			caseOutput << '}';
+			document.Key("uniqueItemHistory"); {
+				JsonObject history(caseOutput);
+				history.String("kind", spec.retainedUniqueHistory ? "retained-chain" : "cold");
+				if (spec.retainedUniqueHistory && spec.depth > 5)
+					history.Number("previousDepth", spec.depth - 1);
+				if (spec.retainedUniqueHistory) {
+					history.Number("preparedUniqueItemFlagId", PreparedCatacombsUniqueHistoryId);
+					history.Boolean("preparedFlagSeededThisCase", spec.depth == 5);
+					history.Boolean("preparedFlagPresentAtInput", historyAtCaseStart[PreparedCatacombsUniqueHistoryId]);
+				}
+				history.Key("inputFlags"); WriteFlags(caseOutput, inputUniqueFlags);
+			}
+			document.Key("playerPreEntryContext"); {
+				JsonObject context(caseOutput);
+				context.String("kind", "prepared-catacombs-entry-context");
+				context.Boolean("precedingFloorGameplayInput", false);
+				context.String("preparedInventorySeedPolicy", NativeCatacombsPreparedInventorySeedPolicy);
+				context.Number("level", MyPlayer->plrlevel);
+				context.Key("tile"); WriteRoomPoint(caseOutput, preEntryTile);
+				context.Key("future"); WriteRoomPoint(caseOutput, preEntryFuture);
+				context.Key("old"); WriteRoomPoint(caseOutput, preEntryOld);
+				context.Key("last"); WriteRoomPoint(caseOutput, preEntryLast);
+				context.Key("temp"); WriteRoomPoint(caseOutput, preEntryTemp);
+			}
+			document.Key("playerGenerationInput"); caseOutput << playerGenerationInput.str();
+			document.Key("playerBeforePopulation"); WriteCatacombsPlayer(caseOutput, *MyPlayer);
+			document.Key("bestiary"); WriteCatacombsBestiary(caseOutput);
+			document.Key("worldBeforePopulation"); WriteRoomWorld(caseOutput);
+			document.Key("themesBeforePopulation"); WriteCatacombsThemeState(caseOutput);
+			SetRndSeed(spec.seed);
+			HoldThemeRooms(); afterHoldThemeRooms = GetLCGEngineState();
+			InitGolems(); afterInitGolems = GetLCGEngineState();
+			InitObjects(); afterInitObjects = GetLCGEngineState();
+			ASSERT_TRUE(InitMonsters().has_value()); afterInitMonsters = GetLCGEngineState();
+			InitItems(); afterInitItems = GetLCGEngineState();
+			const std::array<bool, 128> outputUniqueFlagsAfterItems = CaptureFlags();
+			if (spec.retainedUniqueHistory)
+				ASSERT_TRUE(outputUniqueFlagsAfterItems[PreparedCatacombsUniqueHistoryId]);
+			CreateThemeRooms(); afterCreateThemeRooms = GetLCGEngineState();
+			outputUniqueFlags = CaptureFlags();
+			if (spec.retainedUniqueHistory)
+				ASSERT_TRUE(outputUniqueFlags[PreparedCatacombsUniqueHistoryId]);
+			document.Key("rngAfterPopulationStages"); {
+				JsonObject boundaries(caseOutput);
+				boundaries.Number("afterHoldThemeRooms", afterHoldThemeRooms);
+				boundaries.Number("afterInitGolems", afterInitGolems);
+				boundaries.Number("afterInitObjects", afterInitObjects);
+				boundaries.Number("afterInitMonsters", afterInitMonsters);
+				boundaries.Number("afterInitItems", afterInitItems);
+				boundaries.Number("afterCreateThemeRooms", afterCreateThemeRooms);
+			}
+			document.Key("uniqueItemHistoryAfterItems"); WriteFlags(caseOutput, outputUniqueFlagsAfterItems);
+			document.Key("uniqueItemHistoryOutput"); WriteFlags(caseOutput, outputUniqueFlags);
+			document.Key("populationResetRecords"); WriteCatacombsResetRecords(caseOutput);
+			document.Key("worldAfterThemeCreation"); WriteRoomWorld(caseOutput);
+			document.Key("themesAfterCreation"); WriteCatacombsThemeState(caseOutput);
+			beforeReady = GetLCGEngineState();
+			CompleteFreshLevelForTesting(spec.entry);
+			afterReady = GetLCGEngineState();
+			document.Key("rngAfterLevelReady"); {
+				JsonObject boundaries(caseOutput);
+				boundaries.Number("beforeReadySequence", beforeReady);
+				boundaries.Number("afterReadySequence", afterReady);
+				boundaries.String("sequence", "InitMissiles,InitCorpses,SavePreLighting,SyncPortals,SyncPlayerEntry,UpdateMonsterLights,UnstuckChargers,LoadGameLevelLightVision");
+			}
+			document.Key("ready"); WriteLevelReadyState(caseOutput);
+			document.Key("playerReady"); WriteCatacombsPlayer(caseOutput, *MyPlayer);
+		}
+		caseOutput << "\r\n";
+		caseOutput.flush();
+		caseOutput.close();
+		ASSERT_TRUE(caseOutput.good());
+		ASSERT_LE(std::filesystem::file_size(casePath), 128U * 1024U * 1024U) << casePath;
+		EXPECT_EQ(beforeReady, afterReady) << "The native fresh level-ready tail should not consume gameplay RNG.";
+		if (spec.retainedUniqueHistory)
+			carriedHistory = outputUniqueFlags;
+		indexRows.push_back(spec);
+	}
+	{
+		std::ofstream manifest(outputGuard.root / "manifest.json", std::ios::binary | std::ios::trunc);
+		ASSERT_TRUE(manifest.good());
+		{
+			JsonObject document(manifest);
+			document.String("format", "godevilution-native-catacombs-population");
+			document.Number("version", 1);
+			document.String("policy", "quest-disabled-original-diablo-single-player-normal");
+			document.Number("caseCount", indexRows.size());
+			document.Number("catacombsFirstLevel", 5);
+			document.Number("catacombsLastLevel", 8);
+			document.Number("nativeSolSourceBytes", sourceSolByteCount);
+			document.Number("nativeSolEffectiveSlots", MAXTILES);
+			document.Number("nativeSolReserved0x40Bytes", reservedSolFlagCount);
+			document.Number("nativeMegaTileCount", megaTileCount);
+			document.Number("populationMatrixCaseCount", 30);
+			document.Number("aiEligibilityCoverageCaseCount", 2);
+			document.String("aiEligibilityCoverageCases", "appended after the 30-case matrix: Warrior L8 Main seed 0 for Rhino eligibility and seed 1 for Magma/Fat eligibility");
+			document.String("preparedInventorySeedPolicy", NativeCatacombsPreparedInventorySeedPolicy);
+			document.String("coldWarriorCases", "seeds 2588 and 743271966; levels 5 through 8; Main and Previous");
+			document.String("sorcererCases", "seed 2588; levels 5 through 8; Main");
+			document.String("townWarpDownCases", "seed 2588; Warrior and Sorcerer; level 5");
+			document.String("retainedUniqueHistoryCases", "seed 2588; Warrior and Sorcerer; level 5 seeds unique-item flag 7, then final flags carry through levels 6 to 8");
+			document.Number("preparedUniqueItemFlagId", PreparedCatacombsUniqueHistoryId);
+			document.String("playerPreEntryContext", "prepared context without preceding-floor gameplay; future 75,68; last 13,17; temp 19,23; InitPlayer supplies tile/old and ready sync supplies future");
+			document.Key("readyTail"); JsonString(manifest, "InitMissiles,InitCorpses,SavePreLighting,SyncPortals,SyncPlayerEntry,UpdateMonsterLights,UnstuckChargers,LoadGameLevelLightVision");
+			document.Key("cases");
+			manifest << '[';
+			for (size_t index = 0; index < indexRows.size(); ++index) {
+				if (index != 0)
+					manifest << ',';
+				const NativeCatacombsPopulationCase &spec = indexRows[index];
+				JsonObject row(manifest);
+				row.String("file", "cases/" + std::string(CatacombsClassSymbol(spec.heroClass))
+				    + (spec.aiEligibilityCoverage ? "-ai-eligibility-coverage" : spec.retainedUniqueHistory ? "-retained-history" : spec.entry == ENTRY_TWARPDN ? "-town-warp-down" : "-cold")
+				    + "-l" + std::to_string(spec.depth) + "-" + CatacombsEntrySymbol(spec.entry) + "-" + std::to_string(spec.seed) + ".json");
+				row.String("characterClass", CatacombsClassSymbol(spec.heroClass));
+				row.Number("characterClassId", spec.heroClass);
+				row.Number("levelId", spec.depth);
+				row.String("entry", CatacombsEntrySymbol(spec.entry));
+				row.Number("inputSeed", spec.seed);
+				if (spec.aiEligibilityCoverage)
+					row.String("casePurpose", "native-ai-eligibility-coverage");
+				row.Boolean("retainedUniqueHistory", spec.retainedUniqueHistory);
+				if (spec.retainedUniqueHistory) {
+					row.Number("preparedUniqueItemFlagId", PreparedCatacombsUniqueHistoryId);
+					row.Boolean("preparedUniqueItemFlagSeeded", spec.depth == 5);
+				}
+			}
+			manifest << ']';
+		}
+		manifest << "\r\n";
+		manifest.flush();
+		ASSERT_TRUE(manifest.good());
+		manifest.close();
+		ASSERT_TRUE(manifest.good());
+	}
+	ASSERT_LE(std::filesystem::file_size(outputGuard.root / "manifest.json"), 4U * 1024U * 1024U);
+	ASSERT_LE(std::filesystem::file_size(outputGuard.root / "native-catacombs-sources.json"), 4U * 1024U * 1024U);
+	ASSERT_TRUE(outputGuard.WriteStatus("complete")) << "Could not finalize the capture status marker.";
+	outputGuard.complete = true;
+#endif
+}
+
+TEST_F(ThemeRoomGenerationTest, CaptureNativeCatacombsFreshPopulation)
+{
+	CaptureNativeCatacombsPopulationOracle(
+	    std::getenv("GODEVILUTION_NATIVE_CATACOMBS_POPULATION_ARCHIVE"),
+	    std::getenv("GODEVILUTION_NATIVE_CATACOMBS_POPULATION_REFERENCE_DIRECTORY"));
 }
 
 TEST_F(ThemeRoomGenerationTest, CaptureComposedOrdinaryPopulation)

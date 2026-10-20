@@ -9,6 +9,46 @@ the referenced test sources. Do not copy raw outputs into historical archives.
 
 ## Client and host verification
 
+### 2026-10-20 — native Catacombs generation and population reference
+
+The MPQ-free Catacombs generator/materializer passes 75 focused managed cases
+without skips: 66 full native entry comparisons, four existing ordinary DUN
+coarse/transparency goldens and five validation/ownership/materializer cases.
+Each comparison checks coarse/replacement/protected, fine/special/transparency,
+theme order, bounds, triggers, view, retained attempt seeds and final RNG. The
+66 comparisons include retained-zero cases; nine unsupported-entry view sentinel
+cases are native-only.
+Both 75-case native captures repeat byte-identically across all 78 artifacts.
+The new generation guard and shared Bestiary count/entry guard each pass their
+MPQ-free same-process restoration regression.
+
+The new native population fixture passes twice; all 35 artifacts are byte-
+identical across 32 cases. The matrix covers Warrior L5–L8 Main/Previous at two
+seeds, Sorcerer Main, both L5 Town-warp entries, two nonempty retained unique-
+history chains and two labeled L8 Rhino/Magma eligibility cases. Actual selected
+actors include Fat, Rhino, Gargoyle, Magma and Acid, alongside earlier families;
+Storm is outside ordinary quest-disabled Catacombs eligibility. Complete object,
+monster and item pools, allocator tails, eleven signed tile channels, light/vision,
+raw SOL, L2 TIL/AMP semantics, theme scratch and RNG boundaries are retained.
+Independent validation checks prepared hero inputs, history chaining and pool
+structure; generated population remains native comparison output only.
+
+Canonical native hero creation uses clock-derived starter-item identity seeds.
+The fixture assigns a versioned class/storage/slot seed only to nonempty hero
+items before generation, asserts no RNG consumption and exports the full prepared
+hero input. Native InitPlayer runs unchanged and preserves these item states.
+Birth-clock seed parity and preceding-floor gameplay are not qualified. Native
+builds resolve cl/rc/mt in the x64 developer environment and retain the child-only
+/Z7 workaround. Focused builds and all owned captures exit with confirmed cleanup.
+Independent source review passes. Licensed references remain private under
+`.local/native-catacombs-20261020`; existing gameplay WIP remains excluded.
+
+This prerequisite adds runtime seeded geometry and native characterization.
+Complete managed population, generated actor cursor/special/ranged behavior,
+L2 object operation, semantic profile activation, travel and cold restore remain
+open within the active playable Catacombs batch. No server MPQ dependency or
+Cathedral/profile/save contract changes are introduced.
+
 ### 2026-10-20 — original Cathedral object art
 
 Thirteen focused importer/catalog/current-frame/placement cases, three explicit

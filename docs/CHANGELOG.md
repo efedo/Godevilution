@@ -7,6 +7,12 @@ contracts stay in their existing guides.
 
 ## 2026-10-20
 
+- Add pure seeded Catacombs L5–L8 generation and semantic TIL/SOL materialization,
+  preserving retained retry seeds, theme ordering, entries and generated L8 stairs.
+- Add repeated native geometry and complete prepared-class population references,
+  with explicit hero/history inputs and test-only same-process restoration guards.
+  Keep managed population, playable family activation, travel and cold restore open.
+
 - Add the optional original Cathedral L1 object family: eight CEL sheets and ten
   native IDs, complete atlas preflight and exact current authoritative frames.
   Preserve generic controls, native centering and visible broken-barrel residue.

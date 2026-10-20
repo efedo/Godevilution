@@ -16,6 +16,9 @@
 #include <cstdint>
 
 #include <array>
+#ifdef BUILD_TESTING
+#include <cassert>
+#endif
 #include <memory>
 #include <string>
 
@@ -145,6 +148,15 @@ public:
 	{
 		if (typeCount > 0) --typeCount;
 	}
+
+#ifdef BUILD_TESTING
+	/** @brief Restores a previously saved count after test-owned entries are restored. */
+	void restoreSizeForTesting(size_t size)
+	{
+		assert(size <= MaxLvlMTypes);
+		typeCount = size;
+	}
+#endif
 
 	/** @brief Indexed access (unchecked). */
 	CMonster &operator[](size_t index) { return types[index]; }
