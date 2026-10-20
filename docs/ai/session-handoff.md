@@ -33,9 +33,13 @@ for retained caches and input entry points. Gameplay WIP remains uncommitted.
 The session-flow and native Warrior/Sorcerer admission batches are reviewed and
 verified for their documented headless scope. Both new class profiles pass
 canonical preparation, L1 combat/abilities and exact fresh-host continuity.
-Read the work plan before the next feature batch: establish the native
-Town/Cathedral headless asset/binding slice and retain rendered comparisons as
-open acceptance. Later class campaigns remain open. Refresh only changed claims;
+The optional native player-art stage also passes full native frame/atlas
+comparisons and headless class draw/restore pairs. Read the work plan before the
+next scene batch: prepare MPQ-free Town geometry, native CEL/MIN scene art and
+shared isometric drawing/input. Cathedral final d-pieces exist; current Town
+geometry is empty. Retain the normal cohort/profile adoption hold and open
+rendered acceptance.
+Later class campaigns remain open. Refresh only changed claims;
 keep the work plan, working status and affected inventory entries synchronized.
 Do not treat the failing L3 bot scenario as a universal blocker.
 

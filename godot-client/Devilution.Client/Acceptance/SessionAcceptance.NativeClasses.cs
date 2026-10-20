@@ -17,6 +17,7 @@ public partial class SessionAcceptance
 
     private async Task VerifyNativeClassAsync(Main main, string directory, string phase, Evidence? previous)
     {
+        StartNativePlayerArtCapture(main);
         var classId = phase.StartsWith("NativeWarrior", StringComparison.Ordinal) ? 0U : 2U;
         var journeyName = classId == 0 ? "nativewarriorjourney.json" : "nativesorcererjourney.json";
         var identity = main.ObservedIdentity!;
@@ -203,6 +204,7 @@ public partial class SessionAcceptance
             RulesetHash = main.ObservedIdentity.RulesetIdentityHash, EntityId = player.EntityId, ClassId = player.CharacterClassId,
             LevelId = player.LevelId, X = player.PositionX, Y = player.PositionY, Sequence = main.ObservedLastQueuedSequence,
             Visible = false, ExactColdBaseline = exactColdBaseline, NativeClass = checkpoint,
+            NativePlayerArt = VerifyNativePlayerArtCapture(main, exactColdBaseline),
             FirstAcceptedSequence = exactColdBaseline ? main.ObservedCommandResult!.ClientSequence : 0,
             FirstAcceptedAppliedTick = exactColdBaseline ? main.ObservedCommandResult!.AppliedTick : 0,
         });

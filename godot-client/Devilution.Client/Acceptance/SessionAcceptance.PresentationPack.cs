@@ -10,9 +10,12 @@ public partial class SessionAcceptance
     {
         var profile = Environment.GetEnvironmentVariable("GODEVILUTION_ACCEPTANCE_PRESENTATION_PACK") ?? "default";
         Require(profile is "default" or "atlas" or "semantic" or "missing" or "undersized" or "invalid", "Unknown presentation acceptance profile.");
-        await Until(() => profile == "semantic"
-                ? main.ObservedPlayerActorTextureBinding?.Binding is { IsLoaded: true } or { UsedFallback: true }
-                : main.ObservedPlayerTextureBinding is { IsLoaded: true } or { UsedFallback: true },
+        var nativePlayerConfigured = !string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable("GODEVILUTION_NATIVE_PLAYER_PACK"));
+        await Until(() => nativePlayerConfigured
+                ? main.ObservedNativePlayerDrawing is { IsLoaded: true } or { UsedFallback: true }
+                : profile == "semantic"
+                    ? main.ObservedPlayerActorTextureBinding?.Binding is { IsLoaded: true } or { UsedFallback: true }
+                    : main.ObservedPlayerTextureBinding is { IsLoaded: true } or { UsedFallback: true },
             "The real world draw never observed its player binding.", 5);
         var pack = main.ObservedPresentationPack
             ?? throw new InvalidOperationException("Presentation pack observation is missing.");
@@ -25,6 +28,25 @@ public partial class SessionAcceptance
         foreach (var key in new[] { "damage", "healing", "command_rejected" })
             Require(feedbackPack.LoadedAudioKeys.Contains(key) || feedbackPack.MissingAudioKeys.Contains(key),
                 "The real feedback node did not resolve its optional audio binding.");
+        if (nativePlayerConfigured) {
+            var nativePack = main.ObservedNativePlayerPack;
+            var nativePlayer = main.ObservedNativePlayerDrawing;
+            Require(profile == "default" && nativePack is { IsLoaded: true, ContentIdentityMatched: true }
+                && nativePack.ContentManifestHash == main.ObservedIdentity!.ContentManifestHash
+                && nativePlayer is { IsLoaded: true, UsedFallback: false },
+                "The native player draw did not bind its admitted content and loaded resource.");
+            Require(pack.IsActive && pack.PackId == "sample-default"
+                && pack.ManifestPath == "res://assets/presentation-pack.json"
+                && pack.SchemaVersion == PresentationAssetCatalog.CurrentSchemaVersion
+                && pack.LoadedTextureKeys.Contains("floor"),
+                "Native player art changed the shared default floor/presentation pack.");
+            VerifyHudLocalization(main, directory, phase, profile);
+            WriteEvidence(directory, phase.ToLowerInvariant() + "-presentation-pack.json", new {
+                Passed = true, Profile = "native-player", Pack = pack, NativePack = nativePack,
+                Player = nativePlayer, FeedbackPack = feedbackPack,
+            });
+            return;
+        }
         if (profile == "semantic") {
             var actor = main.ObservedPlayerActorTextureBinding
                 ?? throw new InvalidOperationException("The semantic actor draw observation is missing.");

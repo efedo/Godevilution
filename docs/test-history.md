@@ -9,6 +9,35 @@ the referenced test sources. Do not copy raw outputs into historical archives.
 
 ## Client and host verification
 
+### 2026-10-19 — optional native player art
+
+The checked MSVC native fixture passes 3/3, including opaque index zero and a
+cross-row opaque-run regression. All 765 original base-class CL2 files (255 per
+class; 78,016 directional frames) match native converted/blitted indices and
+opacity. All 909 published Town/Cathedral atlas clips (96,672 cells) match native
+pixels through the selected static palettes, including every padding pixel.
+Both explicit comparisons pass without skips. Seven extra-source-frame cases
+retain native animation-cycle metadata; 44 clips retain a wider native footprint.
+
+The importer, existing protocol-test project and isolated SDK4.7.1 client build.
+All 144 focused importer/catalog/selection/generic-pack cases pass without skips.
+Synthetic atomic-publication checks use workspace-local TEMP because the sandbox
+refuses directory rename in its default package temp directory. Original data and
+generated art remain private. Both final native-pack Warrior/Sorcerer Journey/
+Resume pairs pass with actual identity-bound Town/Cathedral standing, walking,
+attack or lightning/fire clips, frame advance and unscaled bottom anchoring.
+Repair/Recharge, exact pre-input cold state and next receipt/fresh host checks
+also pass. Rendered scenes, complete native animation cursors and lighting parity
+remain open. Independent review has no remaining findings.
+
+Evidence: `.local/native-presentation-20261019/original-reference-footprint`,
+`native-managed-pixel-comparison-final.log` and `focused-tests-final.log` under
+that batch's `.local` root. Qualified sessions under the class profile roots:
+Warrior `native-class-warrior-2e7ec8d2c70c40bd91768bf5dc3ff6ae`;
+Sorcerer `native-class-sorcerer-c26b11b825a24677b82e148cda15c7f7`.
+The isolated candidate excludes the preserved visibility/preview experiments;
+headless draw evidence explicitly retains `RenderedParity=false`.
+
 ### 2026-10-19 — native class admission
 
 Both canonical native class captures repeat byte-for-byte. Their two managed

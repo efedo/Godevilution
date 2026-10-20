@@ -45,6 +45,7 @@ set(tests
   phase4b_entity_test
   player_test
   player_animation_context_test
+  native_player_art_test
   player_command_phase_test
   player_destination_walk_test
   portal_test

@@ -26,6 +26,8 @@ public partial class WorldPresentation : Node2D
     private readonly Dictionary<uint, PlayerSnapshot> displayedPlayerSnapshots = [];
     private readonly Dictionary<uint, PresentationPlayerTextureBindingObservation> playerTextureBindings = [];
     private readonly Dictionary<uint, List<PresentationPlayerTextureBindingObservation>> playerTextureBindingHistory = [];
+    private readonly Dictionary<uint, NativePlayerDrawObservation> nativePlayerDrawObservations = [];
+    private readonly Dictionary<uint, List<NativePlayerDrawObservation>> nativePlayerDrawHistory = [];
     private readonly Dictionary<uint, MonsterSnapshot> displayedMonsterSnapshots = [];
     private readonly Dictionary<uint, ProjectileSnapshot> displayedProjectileSnapshots = [];
     private readonly Dictionary<uint, CathedralDoorDrawObservation> doorDrawObservations = [];
@@ -33,6 +35,7 @@ public partial class WorldPresentation : Node2D
     private readonly LevelLayoutCatalog levels = new();
     private readonly AuthoritativeGeometryInstallationGate geometryInstallation = new();
     private readonly AuthoritativePresentationClock presentationClock = new();
+    private double? nativePlayerPresentationTick;
     private ulong lastAcceptedSnapshotRevision;
     private ulong pendingPresentationEpochRevision;
     private bool presentationEpochPending;
@@ -74,6 +77,31 @@ public partial class WorldPresentation : Node2D
     internal PresentationPackObservation ObservePresentationPack()
         => assets.ObservePack();
 
+    internal NativePlayerPackObservation ObserveNativePlayerPack()
+        => assets.ObserveNativePlayerPack();
+
+    /** Returns the latest native player draw result, including explicit atlas fallback state. */
+    internal NativePlayerDrawObservation? ObserveNativePlayerDrawing(uint entityId)
+        => nativePlayerDrawObservations.TryGetValue(entityId, out var observation) ? observation : null;
+
+    /** Returns bounded distinct frame observations made by the actual renderer. */
+    internal IReadOnlyList<NativePlayerDrawObservation> ObserveNativePlayerDrawingHistory(uint entityId)
+        => nativePlayerDrawHistory.TryGetValue(entityId, out var history)
+            ? history.ToArray()
+            : Array.Empty<NativePlayerDrawObservation>();
+
+    /** Binds class-specific art to the exact content identity admitted by the server. */
+    internal void SetNativePlayerContentIdentity(string? contentManifestHash)
+    {
+        if (!assets.SetNativePlayerContentIdentity(contentManifestHash))
+            return;
+        nativePlayerPresentationTick = null;
+        playerTextureBindings.Clear();
+        playerTextureBindingHistory.Clear();
+        nativePlayerDrawObservations.Clear();
+        nativePlayerDrawHistory.Clear();
+    }
+
     /** Records from actual drawing, not from a snapshot-derived observation getter. */
     internal CathedralDoorDrawObservation? ObserveCathedralDoorDrawing(uint entityId)
         => doorDrawObservations.TryGetValue(entityId, out var observation) ? observation : null;
@@ -106,6 +134,7 @@ public partial class WorldPresentation : Node2D
             && acceptedSnapshotRevision is { } epochRevision
             && epochRevision != pendingPresentationEpochRevision) {
             presentationEpochPending = false;
+            nativePlayerPresentationTick = null;
             assets.ResetAnimation();
             PresentationEpochResetCount++;
         }
@@ -117,9 +146,12 @@ public partial class WorldPresentation : Node2D
             displayedPlayerSnapshots.Clear();
             playerTextureBindings.Clear();
             playerTextureBindingHistory.Clear();
+            nativePlayerDrawObservations.Clear();
+            nativePlayerDrawHistory.Clear();
             displayedMonsterSnapshots.Clear();
             displayedProjectileSnapshots.Clear();
             presentationClock.Reset();
+            nativePlayerPresentationTick = null;
             assets.ResetAnimation();
             presentationLevelId = null;
             geometryInstallation.Invalidate();
@@ -133,6 +165,7 @@ public partial class WorldPresentation : Node2D
         var localPlayer = snapshot.Players.FirstOrDefault();
         if (presentationLevelId != localPlayer?.LevelId) {
             presentationClock.Reset();
+            nativePlayerPresentationTick = null;
             assets.ResetAnimation();
             presentationLevelId = localPlayer?.LevelId;
         }
@@ -141,6 +174,10 @@ public partial class WorldPresentation : Node2D
             delta,
             serverTickRateHz);
         var snapshotRewound = presentationClock.LastAdvanceRewound;
+        if (nativePlayerPresentationTick is null || snapshotRewound)
+            nativePlayerPresentationTick = snapshot.Tick;
+        else if (transportConnected && !presentationEpochPending)
+            nativePlayerPresentationTick = presentationTick;
         if (snapshotRewound)
             assets.ResetAnimation();
         else if (transportConnected && !presentationEpochPending)
@@ -300,6 +337,10 @@ public partial class WorldPresentation : Node2D
             playerTextureBindings.Remove(entityId);
         foreach (var entityId in playerTextureBindingHistory.Keys.Where(id => !activeEntityIds.Contains(id)).ToArray())
             playerTextureBindingHistory.Remove(entityId);
+        foreach (var entityId in nativePlayerDrawObservations.Keys.Where(id => !activeEntityIds.Contains(id)).ToArray())
+            nativePlayerDrawObservations.Remove(entityId);
+        foreach (var entityId in nativePlayerDrawHistory.Keys.Where(id => !activeEntityIds.Contains(id)).ToArray())
+            nativePlayerDrawHistory.Remove(entityId);
         foreach (var entityId in displayedMonsterSnapshots.Keys.Where(id => !activeEntityIds.Contains(id)).ToArray())
             displayedMonsterSnapshots.Remove(entityId);
         foreach (var entityId in displayedProjectileSnapshots.Keys.Where(id => !activeEntityIds.Contains(id)).ToArray())
@@ -656,34 +697,44 @@ public partial class WorldPresentation : Node2D
             etherealized
                 ? "dce3eb"
                 : isLocal ? "4da6ff" : "6dd47e");
-        var actorFrame = assets.GetPlayerTextureFrame(player, out var actorSelection, out var actorAssetId);
-        var actorObservation = new PresentationPlayerTextureBindingObservation(
-            player.EntityId,
-            actorSelection is not null,
-            actorSelection?.RuleId,
-            actorAssetId,
-            assets.ObserveTexture(actorAssetId));
-        playerTextureBindings[player.EntityId] = actorObservation;
-        if (!playerTextureBindingHistory.TryGetValue(player.EntityId, out var history))
-            playerTextureBindingHistory[player.EntityId] = history = [];
-        var last = history.LastOrDefault();
-        if (last is null
-            || last.RuleId != actorObservation.RuleId
-            || last.AssetId != actorObservation.AssetId
-            || last.Binding?.IsLoaded != actorObservation.Binding?.IsLoaded
-            || last.Binding?.UsedFallback != actorObservation.Binding?.UsedFallback) {
-            history.Add(actorObservation);
-            if (history.Count > 32)
-                history.RemoveAt(0);
+        var nativePackConfigured = assets.TryGetNativePlayerTextureFrame(
+            player,
+            nativePlayerPresentationTick ?? snapshot?.Tick ?? 0,
+            out var nativeBinding);
+        if (nativePackConfigured && nativeBinding.IdentityMatched && nativeBinding.Selection is not null) {
+            DrawNativePlayer(player, center, color, nativeBinding);
+        } else {
+            var actorFrame = assets.GetPlayerTextureFrame(player, out var actorSelection, out var actorAssetId);
+            var actorObservation = new PresentationPlayerTextureBindingObservation(
+                player.EntityId,
+                actorSelection is not null,
+                actorSelection?.RuleId,
+                actorAssetId,
+                assets.ObserveTexture(actorAssetId));
+            playerTextureBindings[player.EntityId] = actorObservation;
+            if (!playerTextureBindingHistory.TryGetValue(player.EntityId, out var history))
+                playerTextureBindingHistory[player.EntityId] = history = [];
+            var last = history.LastOrDefault();
+            if (last is null
+                || last.RuleId != actorObservation.RuleId
+                || last.AssetId != actorObservation.AssetId
+                || last.Binding?.IsLoaded != actorObservation.Binding?.IsLoaded
+                || last.Binding?.UsedFallback != actorObservation.Binding?.UsedFallback) {
+                history.Add(actorObservation);
+                if (history.Count > 32)
+                    history.RemoveAt(0);
+            }
+            if (actorFrame is { } semanticFrame)
+                DrawTextureFrame(semanticFrame, new Rect2(center - new Vector2(13, 13), new Vector2(26, 26)), color);
+            else if (actorSelection is not null)
+                // A declared semantic resource must remain a procedural fallback;
+                // do not silently substitute the legacy/default player texture.
+                DrawCircle(center, 11, color);
+            else
+                DrawTextureOrCircle("player", center, new Vector2(26, 26), color, 11);
+            if (nativePackConfigured)
+                RecordNativePlayerFallback(player, center, nativeBinding, actorObservation);
         }
-        if (actorFrame is { } semanticFrame)
-            DrawTextureFrame(semanticFrame, new Rect2(center - new Vector2(13, 13), new Vector2(26, 26)), color);
-        else if (actorSelection is not null)
-            // A declared semantic resource must remain a procedural fallback;
-            // do not silently substitute the legacy/default player texture.
-            DrawCircle(center, 11, color);
-        else
-            DrawTextureOrCircle("player", center, new Vector2(26, 26), color, 11);
         var resources = PlayerResourceBarProjection.Resolve(player);
         if (resources.LifeVisible || resources.ManaVisible) {
             var bar = new Rect2(center.X - 13, center.Y - 21, 26, 3);
@@ -724,6 +775,127 @@ public partial class WorldPresentation : Node2D
             localViewerX,
             localViewerY,
             localLightRadius);
+    }
+
+    private void DrawNativePlayer(
+        PlayerSnapshot player,
+        Vector2 anchor,
+        Color fallbackColor,
+        NativePlayerTextureBinding binding)
+    {
+        playerTextureBindings.Remove(player.EntityId);
+        playerTextureBindingHistory.Remove(player.EntityId);
+        var selection = binding.Selection;
+        var fallbackDestination = new NativePlayerDestinationRect(
+            anchor.X - 11,
+            anchor.Y - 11,
+            22,
+            22);
+        NativePlayerDestinationRect destination = fallbackDestination;
+        NativePlayerClip? clip = null;
+        if (selection?.ClipKey is { } clipKey)
+            binding.Catalog.TryGetClip(clipKey, out clip!);
+        if (clip is not null) {
+            destination = NativePlayerPresentation.CalculateDestinationRect(
+                anchor.X,
+                anchor.Y,
+                clip.FrameWidth,
+                clip.FrameHeight,
+                anchorWidth: clip.EffectiveAnchorWidth);
+        }
+
+        if (binding.Frame is { } nativeFrame) {
+            var rect = new Rect2(
+                (float)destination.X,
+                (float)destination.Y,
+                (float)destination.Width,
+                (float)destination.Height);
+            DrawTextureFrame(nativeFrame, rect, Colors.White);
+        } else {
+            DrawCircle(anchor, 11, fallbackColor);
+            destination = fallbackDestination;
+        }
+
+        var clipText = selection?.ClipKey is { } selectedKey
+            ? NativePlayerCatalog.FormatKey(selectedKey)
+            : null;
+        RecordNativePlayerDrawing(new NativePlayerDrawObservation(
+            player.EntityId,
+            binding.Catalog.PackId,
+            binding.ContentManifestHash ?? string.Empty,
+            clipText,
+            binding.ResourcePath,
+            binding.IsLoaded,
+            !binding.IsLoaded,
+            selection?.DirectionIndex ?? -1,
+            selection?.FrameIndex,
+            selection?.ActionFrame,
+            selection?.TimingSource ?? NativePlayerPresentationTimingSource.Unresolved,
+            binding.Region?.X,
+            binding.Region?.Y,
+            binding.Region?.Width,
+            binding.Region?.Height,
+            destination.X,
+            destination.Y,
+            destination.Width,
+            destination.Height,
+            anchor.X,
+            anchor.Y,
+            binding.Diagnostic ?? selection?.Diagnostic,
+            clip?.EffectiveAnchorWidth));
+    }
+
+    private void RecordNativePlayerFallback(
+        PlayerSnapshot player,
+        Vector2 anchor,
+        NativePlayerTextureBinding binding,
+        PresentationPlayerTextureBindingObservation actorObservation)
+    {
+        var frameRegion = actorObservation.Binding?.FrameRegion;
+        var destinationSize = actorObservation.Binding?.IsLoaded == true ? 26 : 22;
+        var destination = new NativePlayerDestinationRect(
+            anchor.X - destinationSize / 2d,
+            anchor.Y - destinationSize / 2d,
+            destinationSize,
+            destinationSize);
+        var direction = Enum.IsDefined(player.FacingDirection)
+            ? (int)player.FacingDirection
+            : -1;
+        RecordNativePlayerDrawing(new NativePlayerDrawObservation(
+            player.EntityId,
+            binding.Catalog.PackId,
+            binding.ContentManifestHash ?? string.Empty,
+            null,
+            actorObservation.Binding?.ResourcePath,
+            actorObservation.Binding?.IsLoaded == true,
+            true,
+            direction,
+            null,
+            null,
+            NativePlayerPresentationTimingSource.Unresolved,
+            frameRegion?.X,
+            frameRegion?.Y,
+            frameRegion?.Width,
+            frameRegion?.Height,
+            destination.X,
+            destination.Y,
+            destination.Width,
+            destination.Height,
+            anchor.X,
+            anchor.Y,
+            binding.Diagnostic ?? actorObservation.Binding?.Diagnostic));
+    }
+
+    private void RecordNativePlayerDrawing(NativePlayerDrawObservation observation)
+    {
+        nativePlayerDrawObservations[observation.EntityId] = observation;
+        if (!nativePlayerDrawHistory.TryGetValue(observation.EntityId, out var history))
+            nativePlayerDrawHistory[observation.EntityId] = history = [];
+        if (history.LastOrDefault() == observation)
+            return;
+        history.Add(observation);
+        if (history.Count > 128)
+            history.RemoveAt(0);
     }
 
     /** Renders server-owned action timing without advancing or predicting it. */

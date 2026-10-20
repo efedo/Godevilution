@@ -6,11 +6,28 @@ using FileAccess = Godot.FileAccess;
 
 namespace Devilution.Client;
 
+/** Result of resolving a native player selection through Godot resources. */
+internal readonly record struct NativePlayerTextureBinding(
+    NativePlayerCatalog Catalog,
+    string? ContentManifestHash,
+    bool IdentityMatched,
+    NativePlayerPresentationSelection? Selection,
+    AssetPalette.TextureFrame? Frame,
+    string? ResourcePath,
+    PresentationFrameRegion? Region,
+    string? Diagnostic)
+{
+    public bool IsLoaded => Frame is not null;
+}
+
 /** Loads an optional client-only presentation pack while retaining legacy and procedural fallbacks. */
 public sealed class AssetPalette
 {
     public const string DefaultManifestPath = "res://assets/presentation-pack.json";
     public const string ManifestEnvironmentVariable = "GODEVILUTION_PRESENTATION_PACK";
+    public const string NativePlayerManifestEnvironmentVariable = "GODEVILUTION_NATIVE_PLAYER_PACK";
+    private const int MaximumNativePlayerManifestBytes = NativePlayerCatalog.MaximumDocumentCharacters;
+    private const int NativePlayerTextureCacheCapacity = 12;
 
     private readonly Dictionary<string, Texture2D?> textures = [];
     private readonly Dictionary<string, AudioStream?> audio = [];
@@ -20,8 +37,16 @@ public sealed class AssetPalette
     private readonly HashSet<string> missingAudioKeys = new(StringComparer.Ordinal);
     private readonly Dictionary<string, PresentationFrameRegion?> lastDrawnTextureRegions = new(StringComparer.Ordinal);
     private readonly Dictionary<string, string?> lastDrawnTexturePaths = new(StringComparer.Ordinal);
+    private readonly Dictionary<string, NativePlayerTextureCacheEntry> nativePlayerTextureCache = new(StringComparer.Ordinal);
+    private readonly LinkedList<string> nativePlayerTextureLru = [];
+    private readonly HashSet<string> loadedNativePlayerAtlasPaths = new(StringComparer.Ordinal);
+    private readonly HashSet<string> missingNativePlayerAtlasPaths = new(StringComparer.Ordinal);
     private readonly PresentationFrameClock frameClock = new();
     private readonly string manifestPath;
+    private string? nativePlayerManifestPath;
+    private NativePlayerCatalog? nativePlayerCatalog;
+    private string? nativePlayerDiagnostic;
+    private string? nativePlayerContentManifestHash;
     private readonly PresentationAssetCatalog? catalog;
     private readonly PresentationAssetResolver? resolver;
     private readonly PresentationLocalization? localization;
@@ -29,6 +54,7 @@ public sealed class AssetPalette
 
     public AssetPalette()
     {
+        LoadNativePlayerCatalog();
         var configuredPath = Environment.GetEnvironmentVariable(ManifestEnvironmentVariable);
         manifestPath = string.IsNullOrWhiteSpace(configuredPath)
             ? DefaultManifestPath
@@ -58,6 +84,182 @@ public sealed class AssetPalette
         }
         resolver = new PresentationAssetResolver(catalog, manifestPath);
         localization = new PresentationLocalization(catalog);
+    }
+
+    /** Sets the admitted server content identity required to activate class-specific art. */
+    internal bool SetNativePlayerContentIdentity(string? contentManifestHash)
+    {
+        var normalized = string.IsNullOrWhiteSpace(contentManifestHash) ? null : contentManifestHash;
+        if (string.Equals(nativePlayerContentManifestHash, normalized, StringComparison.Ordinal))
+            return false;
+        nativePlayerContentManifestHash = normalized;
+        return true;
+    }
+
+    /** Resolves native player art only when the admitted content hash is explicitly catalog-bound. */
+    internal bool TryGetNativePlayerTextureFrame(
+        PlayerSnapshot player,
+        double currentTick,
+        out NativePlayerTextureBinding binding)
+    {
+        if (nativePlayerCatalog is null) {
+            binding = default;
+            return false;
+        }
+
+        var identityMatched = nativePlayerCatalog.SupportsContentManifestHash(nativePlayerContentManifestHash);
+        if (!identityMatched) {
+            binding = new NativePlayerTextureBinding(
+                nativePlayerCatalog,
+                nativePlayerContentManifestHash,
+                false,
+                null,
+                null,
+                null,
+                null,
+                nativePlayerContentManifestHash is null
+                    ? "Native player pack is inactive because no admitted content manifest identity was supplied."
+                    : $"Native player pack does not include content manifest '{nativePlayerContentManifestHash}'.");
+            return true;
+        }
+
+        if (!nativePlayerCatalog.TryResolveLocation(
+                nativePlayerContentManifestHash,
+                player.LevelId,
+                out var location)) {
+            binding = new NativePlayerTextureBinding(
+                nativePlayerCatalog,
+                nativePlayerContentManifestHash,
+                true,
+                null,
+                null,
+                null,
+                null,
+                $"Native player pack has no location binding for content manifest '{nativePlayerContentManifestHash}' level {player.LevelId}.");
+            return true;
+        }
+
+        if (!NativePlayerPresentation.TryResolve(player, nativePlayerCatalog, location, currentTick, out var selection)) {
+            binding = new NativePlayerTextureBinding(
+                nativePlayerCatalog,
+                nativePlayerContentManifestHash,
+                true,
+                null,
+                null,
+                null,
+                null,
+                $"Native player pack does not support class id {player.CharacterClassId}.");
+            return true;
+        }
+
+        if (selection.ClipKey is not { } clipKey
+            || !nativePlayerCatalog.TryGetClip(clipKey, out var clip)) {
+            binding = new NativePlayerTextureBinding(
+                nativePlayerCatalog,
+                nativePlayerContentManifestHash,
+                true,
+                selection,
+                null,
+                null,
+                null,
+                selection.Diagnostic ?? "No native player clip was selected.");
+            return true;
+        }
+        if (selection.FrameIndex is not { } frameIndex || selection.DirectionIndex is < 0 or >= NativePlayerPresentation.NativeDirectionCount) {
+            binding = new NativePlayerTextureBinding(
+                nativePlayerCatalog,
+                nativePlayerContentManifestHash,
+                true,
+                selection,
+                null,
+                null,
+                null,
+                selection.Diagnostic ?? "The native player frame or direction is unresolved.");
+            return true;
+        }
+        if (!PresentationAssetPath.TryCombineResourcePath(
+                nativePlayerManifestPath!,
+                clip.Path,
+                out var resourcePath,
+                out var pathError)) {
+            binding = new NativePlayerTextureBinding(
+                nativePlayerCatalog,
+                nativePlayerContentManifestHash,
+                true,
+                selection,
+                null,
+                null,
+                null,
+                $"Native player atlas path was refused: {pathError}.");
+            return true;
+        }
+
+        var texture = LoadNativePlayerAtlas(resourcePath, out var loadDiagnostic);
+        if (texture is null) {
+            binding = new NativePlayerTextureBinding(
+                nativePlayerCatalog,
+                nativePlayerContentManifestHash,
+                true,
+                selection,
+                null,
+                null,
+                null,
+                selection.Diagnostic ?? loadDiagnostic);
+            return true;
+        }
+        if (texture.GetWidth() < clip.FrameWidth * clip.FramesPerDirection
+            || texture.GetHeight() < clip.FrameHeight * NativePlayerPresentation.NativeDirectionCount) {
+            missingNativePlayerAtlasPaths.Add(resourcePath);
+            binding = new NativePlayerTextureBinding(
+                nativePlayerCatalog,
+                nativePlayerContentManifestHash,
+                true,
+                selection,
+                null,
+                null,
+                null,
+                $"Native player atlas '{resourcePath}' is smaller than its declared frame grid.");
+            return true;
+        }
+
+        var region = new PresentationFrameRegion(
+            frameIndex * clip.FrameWidth,
+            selection.DirectionIndex * clip.FrameHeight,
+            clip.FrameWidth,
+            clip.FrameHeight);
+        binding = new NativePlayerTextureBinding(
+            nativePlayerCatalog,
+            nativePlayerContentManifestHash,
+            true,
+            selection,
+            new TextureFrame(texture, region),
+            resourcePath,
+            region,
+            selection.Diagnostic);
+        return true;
+    }
+
+    internal NativePlayerPackObservation ObserveNativePlayerPack()
+    {
+        var identityMatched = nativePlayerCatalog?.SupportsContentManifestHash(nativePlayerContentManifestHash) == true;
+        var diagnostic = nativePlayerCatalog is null
+            ? nativePlayerDiagnostic
+            : identityMatched
+                ? null
+                : nativePlayerContentManifestHash is null
+                    ? "No admitted content manifest identity was supplied; native player art is inactive."
+                    : $"The admitted content manifest '{nativePlayerContentManifestHash}' is not bound to this native player pack.";
+        return new NativePlayerPackObservation(
+            nativePlayerManifestPath,
+            nativePlayerCatalog is not null,
+            nativePlayerCatalog?.PackId,
+            nativePlayerContentManifestHash,
+            identityMatched,
+            nativePlayerCatalog?.ContentManifestHashes.OrderBy(hash => hash, StringComparer.Ordinal).ToArray()
+                ?? Array.Empty<string>(),
+            diagnostic,
+            loadedNativePlayerAtlasPaths.OrderBy(path => path, StringComparer.Ordinal).ToArray(),
+            missingNativePlayerAtlasPaths.OrderBy(path => path, StringComparer.Ordinal).ToArray());
     }
 
     public Texture2D? Get(string assetName)
@@ -249,6 +451,88 @@ public sealed class AssetPalette
                 : null,
             missing ? "Texture resource is unavailable or has the wrong declared kind; procedural fallback is active." : null);
     }
+
+    private void LoadNativePlayerCatalog()
+    {
+        var configuredPath = Environment.GetEnvironmentVariable(NativePlayerManifestEnvironmentVariable);
+        if (string.IsNullOrWhiteSpace(configuredPath)) {
+            nativePlayerDiagnostic = "Native player pack is disabled; using the existing player presentation path.";
+            return;
+        }
+        if (!PresentationAssetPath.TryNormalizeResourcePath(configuredPath.Trim(), out var normalizedPath, out var pathError)) {
+            nativePlayerDiagnostic = $"Native player pack refused: {pathError}.";
+            return;
+        }
+        nativePlayerManifestPath = normalizedPath;
+        if (!FileAccess.FileExists(normalizedPath)) {
+            nativePlayerDiagnostic = "Native player catalog was not found; using the existing player presentation path.";
+            return;
+        }
+
+        using var file = FileAccess.Open(normalizedPath, FileAccess.ModeFlags.Read);
+        if (file is null) {
+            nativePlayerDiagnostic = "Native player catalog could not be opened; using the existing player presentation path.";
+            return;
+        }
+        if (file.GetLength() > MaximumNativePlayerManifestBytes) {
+            nativePlayerDiagnostic = "Native player catalog exceeds the 8 MiB size limit.";
+            return;
+        }
+        if (!NativePlayerCatalog.TryParse(file.GetAsText(), out nativePlayerCatalog, out var diagnostics))
+            nativePlayerDiagnostic = string.Join(" ", diagnostics);
+        else
+            nativePlayerDiagnostic = null;
+    }
+
+    private Texture2D? LoadNativePlayerAtlas(string resourcePath, out string? diagnostic)
+    {
+        if (nativePlayerTextureCache.TryGetValue(resourcePath, out var cached)) {
+            nativePlayerTextureLru.Remove(cached.Node);
+            nativePlayerTextureLru.AddFirst(cached.Node);
+            diagnostic = cached.Diagnostic;
+            return cached.Texture;
+        }
+
+        Texture2D? texture = null;
+        diagnostic = null;
+        if (!ResourceLoader.Exists(resourcePath, "Texture2D")) {
+            diagnostic = $"Native player atlas '{resourcePath}' is unavailable.";
+        } else {
+            try {
+                texture = ResourceLoader.Load<Texture2D>(resourcePath);
+            } catch (Exception exception) {
+                diagnostic = $"Native player atlas '{resourcePath}' could not be loaded: {exception.Message}";
+            }
+            if (texture is null) {
+                diagnostic ??= $"Native player atlas '{resourcePath}' is unavailable.";
+            } else if (texture.GetWidth() > NativePlayerCatalog.MaximumAtlasDimension
+                || texture.GetHeight() > NativePlayerCatalog.MaximumAtlasDimension
+                || (long)texture.GetWidth() * texture.GetHeight() > NativePlayerCatalog.MaximumAtlasPixels) {
+                texture = null;
+                diagnostic = $"Native player atlas '{resourcePath}' exceeds the bounded texture dimensions.";
+            }
+        }
+
+        if (texture is null)
+            missingNativePlayerAtlasPaths.Add(resourcePath);
+        else
+            loadedNativePlayerAtlasPaths.Add(resourcePath);
+        var node = nativePlayerTextureLru.AddFirst(resourcePath);
+        nativePlayerTextureCache.Add(resourcePath, new NativePlayerTextureCacheEntry(texture, diagnostic, node));
+        while (nativePlayerTextureCache.Count > NativePlayerTextureCacheCapacity) {
+            var leastRecent = nativePlayerTextureLru.Last;
+            if (leastRecent is null)
+                break;
+            nativePlayerTextureCache.Remove(leastRecent.Value);
+            nativePlayerTextureLru.RemoveLast();
+        }
+        return texture;
+    }
+
+    private sealed record NativePlayerTextureCacheEntry(
+        Texture2D? Texture,
+        string? Diagnostic,
+        LinkedListNode<string> Node);
 
     private PresentationFrameRegion? ResolveRegion(string assetName)
     {

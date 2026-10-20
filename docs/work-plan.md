@@ -1,9 +1,14 @@
 # Near-term work plan
 
 Updated 2026-10-19. The reviewed native Warrior/Sorcerer admission batch passes
-its headless L1 scope. The next proposed primary batch is the native
-Town/Cathedral visual slice; establish its headless asset/binding scope before
-implementation and leave rendered acceptance open.
+its headless L1 scope. The active primary batch is the native Town/Cathedral
+presentation slice. Optional original-player CL2/PAL/TRN import and snapshot-driven
+class/equipment/direction/action selection pass full native pixel/atlas comparisons;
+both headless class draw/restore pairs pass. Generic packs remain compatible
+and original assets stay client-only. The next implementation stage adds native
+d-piece/CEL scene art and a shared isometric transform for cells, actors, camera and
+pointer mapping. Complete scene coverage and matched rendered comparisons remain
+open within this visual slice.
 
 The native Rogue Town/L1/L2 route with earned gear, Town services and fresh-host
 resume remains the broader reusable baseline. Explicit Warrior/Sorcerer profiles
@@ -22,11 +27,18 @@ L1 combat, class ability and fresh-host continuity through actual headless
 controls. See [test history](test-history.md#2026-10-19--native-class-admission)
 for the verified boundary. This does not establish complete class campaigns.
 
+The original-player stage passes native indices/masks, published RGBA/padding and
+actual class draw/restore checks; see [test history](test-history.md#2026-10-19--optional-native-player-art).
+The qualified profiles already supply Cathedral final d-pieces, while Town's
+112x112 geometry layers are empty. Prepare Town's four sectors, automap overlay
+and conditional mutations as explicit MPQ-free geometry inputs before binding its
+native scene. Normal cohort/profile adoption remains separately held.
+
 ## Delivery order
 
 | Order | Coherent deliverable | Inventory scope | Exit for this batch |
 | --- | --- | --- | --- |
-| 1 | Deliver a native Town/Cathedral visual slice: asset import/pack, admitted-class sprites and equipment/action selection. | Area 11; begin with 11.2–11.5 and 11.13–11.15 | Implement the asset/binding/rendering slice and perform matched native/Godot scene/animation comparisons when visual testing is permitted. Keep graphical acceptance open until those comparisons pass. |
+| 1 | Continue the native Town/Cathedral visual slice with MPQ-free Town geometry preparation, CEL/MIN scene art and shared isometric cell/actor/camera/pointer mapping. | 11.2–11.5, 11.12, 11.23–11.26, 11.35–11.36 | Native composition/pixel comparisons, inverse transform/input checks and a headless journey/restore with actual scene bindings. Retain the normal cohort/profile adoption hold and open rendered acceptance. |
 | 2 | Extend the native world into Catacombs, beginning with L4/L5 entry and return and building the L5–L8 family coherently. | 5.6, 5.17, 5.22, 9.21 | Native generation/population comparisons for changed behavior, ordinary travel/combat, retained floor state and fresh-host return. |
 
 The session-flow baseline now includes reviewed create/return/rejoin, local

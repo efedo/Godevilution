@@ -7,6 +7,12 @@ contracts stay in their existing guides.
 
 ## 2026-10-19
 
+- Add an optional client-only original-player CL2/PAL/TRN importer and validated
+  native catalog. Preserve native run spill, opaque palette zero, original anchors
+  and source-frame/playback-cycle differences in ordinary PNG atlases.
+- Bind native class/equipment/facing/action art to admitted content and explicit
+  Town/Cathedral levels, with bounded texture residency and observable fallback.
+  Retain generic packs and add native pixel/atlas comparisons and class draw checks.
 - Add explicit class-bound native Warrior/Sorcerer profiles, canonical preparation
   validation, starter-item bindings and class-safe admission/cohort restoration.
   Preserve legacy Rogue compiler bytes and profile/save identities.

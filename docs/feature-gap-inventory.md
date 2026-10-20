@@ -473,16 +473,19 @@ but it is not a finished release deliverable.
 ## 11. Full Godot graphical parity
 
 The checked-in pack contains SVG stand-ins and fallbacks. Semantic player
-bindings and a visual frame clock are rendering foundations, not native scene
-coverage. Native asset conversion elsewhere in the repository does not by
-itself supply a Godot original-art import pipeline.
+bindings and a visual frame clock remain rendering foundations. Optional
+client-only original-player CL2/PAL/TRN import and native class/equipment/facing/
+action bindings now pass full pixel/atlas comparisons and Warrior/Sorcerer
+headless draw/restore pairs. Tile/scene coverage and matched rendered comparisons
+remain required. Qualified profiles contain Cathedral final d-pieces but empty
+Town geometry; Town composition is a prerequisite for its native scene.
 
 | ID | Feature | Status | Existing scope | Remaining completion work |
 | --- | --- | --- | --- | --- |
 | 11.1 | Client presentation-pack validation | Complete | Supported manifests validate texture/audio/localization entries, atlases and semantic selectors. | None for the current manifest contract; production coverage and additional selection dimensions remain below. |
-| 11.2 | Godot import of optional original assets | Not started | Native bundled-asset tooling exists, but the Godot prototype does not import original MPQ art. | Implementation: client-only discovery/conversion/binding and clear absent/corrupt-asset handling. |
+| 11.2 | Godot import of optional original assets | Partial | Client-only base-class CL2/PAL/TRN import produces validated PNG catalogs; full native frame/published-atlas comparisons pass. | Implementation/acceptance: remaining world/actor/UI/audio families, complete optional-original discovery and rendered qualification. |
 | 11.3 | Complete MPQ-free presentation pack | Partial | Pack schema, asset resolution, SVG sample assets and fallbacks exist. | Implementation/acceptance: complete supported world/actor/effect/UI/audio coverage with the required native parity. |
-| 11.4 | Town scene rendering | Partial | Generic layout/geometry and projected NPCs/objects can be drawn. | Implementation/parity: native Town tile/art coverage, placement, layering and animation. |
+| 11.4 | Town scene rendering | Partial | Generic layout and projected NPCs/objects/player art can be drawn; qualified profiles have empty Town geometry layers. | Implementation/parity: MPQ-free four-sector/overlay/conditional Town geometry, native tile/art coverage, placement, layering and animation. |
 | 11.5 | Cathedral scene rendering | Partial | Fine geometry, schematic objects and limited visible scene checks exist. | Implementation/parity: complete native tiles, walls, theme variants and actor/environment presentation. |
 | 11.6 | Catacombs scene rendering | Partial | Generic geometry/presentation foundations exist. | Implementation/parity: native Catacombs tile sets, walls, objects, palettes and matched scenes. |
 | 11.7 | Caves scene rendering | Partial | Generic geometry/presentation foundations exist. | Implementation/parity: native Caves terrain, transitions, occlusion, lighting and actor placement. |
@@ -491,9 +494,9 @@ itself supply a Godot original-art import pipeline.
 | 11.10 | Crypt scene rendering | Partial | Generic renderer and Crypt/fragment metadata exist. | Implementation/parity: complete native Crypt, Cornerstone/Uber Room and mutation presentation. |
 | 11.11 | Quest/set-level scene rendering | Partial | Supplied geometry and projected objects can use the renderer. | Implementation/parity: every supported quest/set map, native scene variant and irreversible visual change. |
 | 11.12 | Native tile pieces, walls and transparency masks | Partial | Projected geometry/layers are drawn schematically. | Implementation/parity: native piece placement, wall/front masks, transitions and visual collision boundaries. |
-| 11.13 | Player class/facing sprite selection | Partial | Semantic rules select by class, action, combat mode and facing when bindings exist. | Implementation/parity: complete supported class/direction/state sprite assets and binding coverage. |
-| 11.14 | Equipment-dependent player appearance | Not started | Equipment state exists, but current semantic selectors do not select armor/weapon/shield appearance variants. | Implementation/parity: equipment-derived native sprite-set selection and correct class/action/facing combinations. |
-| 11.15 | Player action animation | Partial | Visual frame timing and action indicators exist. | Implementation/parity: native walk/stand/attack/cast/hit/block/death frames and transition synchronization. |
+| 11.13 | Player class/facing sprite selection | Partial | Generic selectors remain supported; optional native base-class catalogs select all eight directions with explicit content/level bindings. | Implementation/acceptance: remaining classes and complete state/scene coverage with matched rendered evidence. |
+| 11.14 | Equipment-dependent player appearance | Partial | Snapshot class, usable armor/weapon/shield and native Town/death remaps select optional original-art variants. | Acceptance/parity: full class/equipment/state matrix and matched rendered combinations. |
+| 11.15 | Player action animation | Partial | Native source atlases retain every frame; snapshot-driven selection separates playback cycles, native anchors and padded footprints. | Implementation/parity: complete authoritative native animation cursors, action scheduling/interruptions and rendered transition synchronization. |
 | 11.16 | Monster family art and animation | Partial | Actor state/styles and visibility feed generic drawing. | Implementation/parity: all native families/uniques, directions, actions, special states and animations. |
 | 11.17 | Towners and NPC art/animation | Partial | Actor identity and dialogue state can be projected. | Implementation/parity: native NPC assets, idle/talk states, placement and quest-specific changes. |
 | 11.18 | Object art, variants and mutation frames | Partial | Generic objects and scoped door/trap drawing exist. | Implementation/parity: all native object families, opened/broken/disarmed states and animated effects. |
@@ -502,7 +505,7 @@ itself supply a Godot original-art import pipeline.
 | 11.21 | Corpses and death presentation | Partial | Corpse snapshots can be drawn and retained in the world. | Implementation/parity: native corpse variants, death frames, placement and visibility transitions. |
 | 11.22 | Animation cadence and effect synchronization | Partial | A presentation-only clock advances frames independently of server decisions. | Native parity/acceptance: align visible frames/effects with authoritative phase and native reference playback. |
 | 11.23 | Depth sorting and occlusion | Unverified | Rendering has an explicit draw order for projected geometry/entities. | Native parity/acceptance: matched actor/wall/object overlaps, foreground hiding and transparency transitions. |
-| 11.24 | Palettes, transparency and color cycling | Partial | Texture/palette helpers and basic Godot presentation exist. | Implementation/parity: native palette transforms, masks, blending and scene-specific cycling. |
+| 11.24 | Palettes, transparency and color cycling | Partial | Original-player PAL conversion, ordered graphic/class TRNs and separate opaque-zero masks match native unoccluded reference pixels. | Implementation/parity: scene palette selection/cycling, light transforms, blending and complete world/effect coverage. |
 | 11.25 | Static and dynamic light shading | Partial | Native light metadata and projected world foundations exist. | Implementation/parity: native falloff, animated/object/missile lights and correct tile/sprite shading. |
 | 11.26 | Vision, exploration and fog appearance | Partial | Visibility state and exploration foundations affect projected content. | Native parity/acceptance: native visible/explored boundaries, darkness and scene/transition behavior. |
 | 11.27 | Visible automap | Partial | Backend automap semantics and exploration metadata exist. | Implementation/parity: native map drawing, markers, discovery/update behavior and user controls. |
@@ -519,6 +522,8 @@ itself supply a Godot original-art import pipeline.
 
 Basis: [manifest and selectors](../godot-client/Devilution.Client/PresentationAssets/PresentationAssetManifest.cs),
 [semantic player selection](../godot-client/Devilution.Client/PresentationAssets/SemanticPlayerPresentation.cs),
+[native player selection](../godot-client/Devilution.Client/PresentationAssets/NativePlayerPresentation.cs),
+[original-player importer](../tools/Native.PlayerArt/NativePlayerArtCompiler.cs),
 [asset resolver](../godot-client/Devilution.Client/PresentationAssets/PresentationAssetResolver.cs),
 [frame clock](../godot-client/Devilution.Client/PresentationAssets/PresentationFrameClock.cs),
 [world renderer](../godot-client/Devilution.Client/WorldPresentation.cs),

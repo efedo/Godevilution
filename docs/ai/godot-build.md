@@ -9,6 +9,65 @@ Use the [work plan](../work-plan.md) for near-term order and
 application journey below has not passed; do not confuse its procedure with
 the accepted Town/L1/L2 scope in [test history](../test-history.md).
 
+## Optional native player art
+
+The optional native-player catalog is separate from presentation-pack schema 1.
+It converts explicit client-owned CL2/PAL/TRN inputs to ordinary transparent PNG
+atlases. Neither server packs nor the runtime need an archive or native library.
+The original files and generated pack are private inputs, never repository assets.
+
+The registered `native_player_art_test` can extract the three base-class sprite
+families from an explicitly supplied original archive and record reference pixels
+using native `Cl2ToClx`/`ClxDraw`. Build it with the checked MSVC environment in
+[MSVC notes](msvc-build.md), then use a new private output directory:
+
+```powershell
+$env:GODEVILUTION_NATIVE_PLAYER_ART_ARCHIVE = '<original DIABDAT.MPQ>'
+$env:GODEVILUTION_NATIVE_PLAYER_ART_REFERENCE_DIRECTORY = '<new extracted/reference directory>'
+./build/x64-Debug-authoritative-vcpkg/native_player_art_test.exe --gtest_filter=NativePlayerArtTest.*
+```
+
+Restore these process environment variables after use. The reference exporter
+never opens a window and requires an existing original archive; the managed
+importer also accepts an explicitly extracted tree without native tooling.
+
+```powershell
+dotnet run --project tools/Native.PlayerArt -- --source-root <extracted directory> --metadata-root assets/txtdata --game-content-directory server/content/base --output-root godot-client/Devilution.Client/assets/native-players --town-palette levels/towndata/town.pal --cathedral-palette levels/l1data/l1_1.pal --profile-directory <qualified compiled native profile>
+$env:GODEVILUTION_NATIVE_PLAYER_PACK = 'res://assets/native-players/native-player-catalog.json'
+```
+
+The output directory must be new. Repeat `--profile-directory` for each qualified profile. The compiler validates
+its content identity and derives explicit Town/Cathedral level bindings; unknown
+content or unmapped levels retain the normal presentation path. Selection uses authoritative class/equipment/action/facing,
+with native Town cast remaps and unarmed death art. Unknown spell bindings and
+missing selected clips remain explicit fallbacks. The importer joins stable spell
+IDs through native spell symbols/flags, independently of gameplay damage type.
+
+The generated `assets/native-players/` directory is ignored by Git and copied
+with the client by the existing isolated launcher. Pack selection is opt-in;
+existing generic manifests and their default appearance remain supported.
+Native drawing uses eight direction rows, per-frame atlas columns, unscaled
+sprite dimensions and bottom anchors. Optional `anchorWidth` preserves native
+positioning when the atlas includes opaque runs that spill past nominal width.
+Conversion reproduces native CL2-to-CLX run merging before translation; the
+reference uses a padded canvas to retain the full unoccluded footprint without
+tight-pitch row wrapping. Optional `animationFrames` separates the native playback
+cycle from additional unused source frames retained in `framesPerDirection` atlas
+columns; older catalogs default to all columns. Atlas residency is bounded.
+
+To compare all original frame indices/masks and all published atlas pixels, set
+`GODEVILUTION_NATIVE_PLAYER_ART_REFERENCE_DIRECTORY` to the completed native
+capture and `GODEVILUTION_NATIVE_PLAYER_ART_PACK_DIRECTORY` to the imported pack.
+Run the protocol-test executable with `--explicit only --fail-skips on` and
+`--filter-method '*OptionallyMatchesEveryExportedNativePlayerFrameReference' '*OptionallyMatchesPublishedAtlasesToEveryNativeReferencePixel'`.
+The latter uses the explicit Town and Cathedral `l1_1.pal` choices above and
+checks every cell including bottom/right padding. Restore both variables after use.
+
+This is static palette conversion and bounded snapshot-driven frame selection.
+The wire has no complete native animation cursor. Native action-frame scheduling,
+scene palette cycling/light/vision, isometric scene placement, tiles and matched
+rendered scenes remain open. Headless draw observations do not certify those gates.
+
 ## Native Warrior and Sorcerer profiles
 
 Add `--native-class warrior` or `--native-class sorcerer` to the explicit

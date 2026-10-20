@@ -71,6 +71,13 @@ public partial class Main : Node2D
         => world?.ObservePlayerTextureBindingHistory(model.PlayerEntityId)
             ?? Array.Empty<PresentationPlayerTextureBindingObservation>();
 
+    internal NativePlayerPackObservation? ObservedNativePlayerPack => world?.ObserveNativePlayerPack();
+    internal NativePlayerDrawObservation? ObservedNativePlayerDrawing
+        => world?.ObserveNativePlayerDrawing(model.PlayerEntityId);
+    internal IReadOnlyList<NativePlayerDrawObservation> ObservedNativePlayerDrawingHistory
+        => world?.ObserveNativePlayerDrawingHistory(model.PlayerEntityId)
+            ?? Array.Empty<NativePlayerDrawObservation>();
+
     internal string? ClientFrameEvidencePath => frameEvidence?.EvidenceFilePath;
 
     /** Starts an explicitly requested bounded capture; participant count is caller-supplied. */
@@ -453,6 +460,8 @@ public partial class Main : Node2D
             worldFrame.Position = hud.PlayArea.Position;
             worldFrame.Size = hud.PlayArea.Size;
         }
+        world?.SetNativePlayerContentIdentity(ObservedInitialConnection is { AdmissionCompleted: true }
+            ? client?.ServerIdentity?.ContentManifestHash : null);
         world?.ApplyAccepted(
             model.Snapshot,
             model.AcceptedSnapshotRevision,

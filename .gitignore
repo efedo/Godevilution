@@ -486,3 +486,8 @@ Testing/
 # Offline diagnostic content compiler outputs.
 /tools/Cathedral.Playtest/bin/
 /tools/Cathedral.Playtest/obj/
+
+# Client-local original-art imports and offline importer build outputs.
+/godot-client/Devilution.Client/assets/native-players/
+/tools/Native.PlayerArt/bin/
+/tools/Native.PlayerArt/obj/
