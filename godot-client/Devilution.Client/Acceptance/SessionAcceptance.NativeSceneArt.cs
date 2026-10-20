@@ -21,6 +21,7 @@ public partial class SessionAcceptance
     /** Samples observations emitted by _Draw; snapshot counts cannot satisfy this gate. */
     private void CaptureNativeSceneArtDraws()
     {
+        CaptureNativeTownerDraws();
         if (nativeSceneArtMain is not { } main || main.ObservedNativeSceneDrawing is not { } draw)
             return;
         var player = main.ObservedSnapshot?.Players.FirstOrDefault();

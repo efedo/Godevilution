@@ -515,6 +515,10 @@ message Snapshot {
 	repeated TownerGreetingSnapshot towner_greetings = 22;
 	// Runtime-generated ordinary-level quest-piece origins persisted by the server.
 	repeated ProceduralQuestPieceOriginSnapshot procedural_quest_piece_origins = 23;
+	// Original Town residents are a content-bound presentation projection, not gameplay state.
+	repeated NativeTownResidentSnapshot native_town_residents = 24;
+	// Fingerprint of the semantic Town catalog that owns the resident projection.
+	string native_town_catalog_fingerprint = 25;
 }
 
 message SetLevelObjectOriginSnapshot {
@@ -1461,6 +1465,16 @@ message TownerGreetingSnapshot {
 	int32 position_x = 3;
 	int32 position_y = 4;
 	int32 message_id = 5;
+}
+
+/** Immutable presentation identity and placement of one original Diablo Town resident. */
+message NativeTownResidentSnapshot {
+	int32 resident_slot = 1;
+	int32 towner_id = 2;
+	uint32 level_id = 3;
+	int32 position_x = 4;
+	int32 position_y = 5;
+	int32 native_direction = 6;
 }
 
 message DamageEvent {

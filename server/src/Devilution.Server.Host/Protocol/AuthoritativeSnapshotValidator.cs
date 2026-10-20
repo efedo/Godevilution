@@ -111,6 +111,7 @@ public static class AuthoritativeSnapshotValidator
         ValidateQuestTownerInteractions(snapshot);
         ValidateTownerGreetings(snapshot);
         ValidateLevelGeometry(snapshot);
+        ValidateNativeTownResidents(snapshot);
         ValidateSetLevelObjectOrigins(snapshot);
         ValidateProceduralQuestPieceOrigins(snapshot);
         ValidateMaterializedProceduralLevels(snapshot);
@@ -683,6 +684,84 @@ public static class AuthoritativeSnapshotValidator
                     "The authoritative snapshot contains an invalid towner greeting.");
             }
         }
+    }
+
+    private static void ValidateNativeTownResidents(Snapshot snapshot)
+    {
+        if (snapshot.NativeTownCatalogFingerprint.Length == 0
+            && snapshot.NativeTownResidents.Count == 0)
+            return;
+        if (!IsLowerSha256Hex(snapshot.NativeTownCatalogFingerprint)
+            || snapshot.NativeTownResidents.Count != 11) {
+            throw new InvalidDataException(
+                "The authoritative snapshot contains an incomplete native Town resident projection.");
+        }
+
+        var expected = new (int TownerId, int X, int Y, int Direction)[] {
+            (0, 62, 63, 1),
+            (1, 55, 79, 7),
+            (3, 55, 62, 1),
+            (4, 62, 71, 0),
+            (5, 71, 84, 0),
+            (6, 80, 20, 0),
+            (7, 43, 66, 0),
+            (8, 11, 53, 0),
+            (9, 58, 16, 1),
+            (9, 56, 14, 3),
+            (9, 59, 20, 4),
+        };
+        for (var slot = 0; slot < expected.Length; slot++) {
+            var resident = snapshot.NativeTownResidents[slot];
+            var canonical = expected[slot];
+            if (resident.ResidentSlot != slot
+                || resident.TownerId != canonical.TownerId
+                || resident.LevelId != 0
+                || resident.PositionX != canonical.X
+                || resident.PositionY != canonical.Y
+                || resident.NativeDirection != canonical.Direction) {
+                throw new InvalidDataException(
+                    $"The authoritative snapshot contains an invalid native Town resident at slot {slot}.");
+            }
+        }
+
+        if (snapshot.TownerGreetings.Count != 8) {
+            throw new InvalidDataException(
+                "The authoritative snapshot requires eight greetings for native Town human residents.");
+        }
+        for (var slot = 0; slot < 8; slot++) {
+            var resident = expected[slot];
+            if (!snapshot.TownerGreetings.Any(greeting => greeting.TownerId == resident.TownerId
+                    && greeting.LevelId == 0
+                    && greeting.PositionX == resident.X
+                    && greeting.PositionY == resident.Y)) {
+                throw new InvalidDataException(
+                    $"The authoritative snapshot greeting for native Town resident slot {slot} is mismatched.");
+            }
+        }
+
+        if (snapshot.LevelGeometry.Count == 0)
+            return;
+        var town = snapshot.LevelGeometry.SingleOrDefault(level => level.LevelId == 0);
+        if (town is null || town.Width != 112 || town.Height != 112) {
+            throw new InvalidDataException(
+                "The authoritative snapshot requires available 112 by 112 Town geometry for its resident roster.");
+        }
+        var occupied = new HashSet<int>();
+        foreach (var resident in expected) {
+            Add(resident.X, resident.Y);
+            if (resident.TownerId == 9) {
+                Add(resident.X - 1, resident.Y);
+                Add(resident.X, resident.Y - 1);
+                Add(resident.X - 1, resident.Y - 1);
+            }
+        }
+        if (occupied.Count != 20
+            || occupied.Any(cell => !town.StaticObjectBlockedCells.Contains(cell))) {
+            throw new InvalidDataException(
+                "The authoritative snapshot Town geometry is missing canonical resident occupancy cells.");
+        }
+
+        void Add(int x, int y) => occupied.Add(y * 112 + x);
     }
 
     private static void ValidateObjects(Snapshot snapshot)
@@ -1644,6 +1723,18 @@ public static class AuthoritativeSnapshotValidator
             if (!((character >= '0' && character <= '9')
                   || (character >= 'a' && character <= 'f')
                   || (character >= 'A' && character <= 'F')))
+                return false;
+        }
+        return true;
+    }
+
+    private static bool IsLowerSha256Hex(string value)
+    {
+        if (value.Length != Sha256HexLength)
+            return false;
+        foreach (var character in value) {
+            if (!((character >= '0' && character <= '9')
+                  || (character >= 'a' && character <= 'f')))
                 return false;
         }
         return true;

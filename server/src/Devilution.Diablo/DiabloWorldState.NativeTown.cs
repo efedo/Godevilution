@@ -9,6 +9,9 @@ public sealed partial class DiabloWorldState
 
     public bool HasNativeTown => nativeTownCatalog is not null;
 
+    /** Read-only semantic owner used to derive presentation projections from the active profile. */
+    public AuthoritativeNativeTownCatalog? NativeTownCatalog => nativeTownCatalog;
+
     private void InitializeNativeTown(AuthoritativeNativeTownCatalog? catalog,
         DiabloNativeTownCheckpoint? checkpoint, bool deferred)
     {

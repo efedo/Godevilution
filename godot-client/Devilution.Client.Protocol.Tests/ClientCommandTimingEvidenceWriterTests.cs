@@ -17,6 +17,14 @@ public sealed class ClientCommandTimingEvidenceWriterTests
     [InlineData(false, "CathedralNativeDepthProgressionJourney")]
     [InlineData(true, "CathedralNativeDepthProgressionResume")]
     [InlineData(false, "CathedralNativeDepthProgressionResume")]
+    [InlineData(true, "NativeWarriorJourney")]
+    [InlineData(false, "NativeWarriorJourney")]
+    [InlineData(true, "NativeWarriorResume")]
+    [InlineData(false, "NativeWarriorResume")]
+    [InlineData(true, "NativeSorcererJourney")]
+    [InlineData(false, "NativeSorcererJourney")]
+    [InlineData(true, "NativeSorcererResume")]
+    [InlineData(false, "NativeSorcererResume")]
     public void WritesHonestOutcomeAndDetachedReport(bool passed, string phase)
     {
         using var directory = new EvidenceDirectory();
@@ -52,6 +60,7 @@ public sealed class ClientCommandTimingEvidenceWriterTests
 
     [Theory]
     [InlineData("../outside")]
+    [InlineData("NativeWarriorJourney/../outside")]
     [InlineData("Performance")]
     [InlineData("")]
     [InlineData("cathedraldoorresume")]

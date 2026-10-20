@@ -554,6 +554,15 @@ public sealed record DiabloProceduralQuestPieceOriginState(
     int PositionX,
     int PositionY);
 
+/** Content-bound original Town resident projection for native presentation clients. */
+public sealed record DiabloNativeTownResidentState(
+    int ResidentSlot,
+    int TownerId,
+    uint LevelId,
+    int PositionX,
+    int PositionY,
+    int NativeDirection);
+
 /**
  * Transport-independent snapshot used by protocol and persistence adapters.
  * Collections are captured in stable identity order.
@@ -618,6 +627,12 @@ public sealed record DiabloSimulationSnapshot(
 
     /** Content-owned general towner greeting definitions. */
     public IReadOnlyList<AuthoritativeTownerGreetingDefinition> TownerGreetings { get; init; } = [];
+
+    /** Fingerprint of the active semantic Town catalog; empty for legacy profiles. */
+    public string NativeTownCatalogFingerprint { get; init; } = "";
+
+    /** Stable original Town roster projection; empty unless the explicit Town owner is active. */
+    public IReadOnlyList<DiabloNativeTownResidentState> NativeTownResidents { get; init; } = [];
 
     /** Active content world-cell mutations persisted with the session. */
     public IReadOnlyList<uint> ActiveWorldMutationIds { get; init; } = [];
@@ -725,6 +740,7 @@ public sealed partial class DiabloSimulation
             : null;
         foreach (var target in WorldState.CombatTargets.Values)
             target.EnsureMovementTiming(tick);
+        var nativeTownCatalog = WorldState.NativeTownCatalog;
         return new DiabloSimulationSnapshot(
             tick,
             CapturePlayerState(player),
@@ -1028,6 +1044,18 @@ public sealed partial class DiabloSimulation
             NativeTrapInteractableEntityIds = WorldState.CaptureNativeTrapInteractableEntityIds(),
             QuestTownerInteractions = QuestTownerInteractions?.Definitions ?? [],
             TownerGreetings = TownerGreetings?.Definitions.ToArray() ?? [],
+            NativeTownCatalogFingerprint = nativeTownCatalog?.Fingerprint ?? "",
+            NativeTownResidents = nativeTownCatalog is null
+                ? Array.Empty<DiabloNativeTownResidentState>()
+                : Array.AsReadOnly(nativeTownCatalog.Roster.Residents
+                    .Select((resident, slot) => new DiabloNativeTownResidentState(
+                        slot,
+                        resident.TownerId,
+                        nativeTownCatalog.LevelId,
+                        resident.PositionX,
+                        resident.PositionY,
+                        NativeTownDirectionIndex(resident.Direction)))
+                    .ToArray()),
             ActiveWorldMutationIds = WorldState.ActiveWorldMutationIds
                 .OrderBy(mutationId => mutationId)
                 .ToArray(),
@@ -3361,6 +3389,20 @@ public sealed partial class DiabloSimulation
     }
 
     private static bool IsNativeItemPrice(uint price) => price <= int.MaxValue;
+
+    private static int NativeTownDirectionIndex(string direction)
+        => direction switch {
+            "south" => 0,
+            "south_west" => 1,
+            "west" => 2,
+            "north_west" => 3,
+            "north" => 4,
+            "north_east" => 5,
+            "east" => 6,
+            "south_east" => 7,
+            _ => throw new InvalidDataException(
+                $"Native Town roster has unsupported direction '{direction}'."),
+        };
 
     private bool HasKnownStableItemIdentity(AuthoritativeItemState state)
     {

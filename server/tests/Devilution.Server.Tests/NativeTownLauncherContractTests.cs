@@ -71,6 +71,81 @@ public sealed class NativeTownLauncherContractTests
         Assert.Contains("PASS", RunPowerShell(script), StringComparison.Ordinal);
     }
 
+    [Fact(SkipUnless = nameof(IsWindows), Skip = "Uses the Windows PowerShell launcher runtime.")]
+    public void ResidentArtAcceptanceRequiresWholeRosterDrawsAndHonestParityLimits()
+    {
+        var wrapper = Path.Combine(FindRepositoryRoot(), "tools/test-godot-native-classes.ps1");
+        var script = "$ErrorActionPreference = 'Stop'\r\n$wrapperPath = " + QuotePowerShell(wrapper) + "\r\n" + """
+            $tokens = $null; $errors = $null
+            $ast = [System.Management.Automation.Language.Parser]::ParseInput([IO.File]::ReadAllText($wrapperPath), [ref]$tokens, [ref]$errors)
+            if ($errors.Count -ne 0) { throw ($errors | Out-String) }
+            $function = $ast.FindAll({ param($node) $node -is [System.Management.Automation.Language.FunctionDefinitionAst] -and $node.Name -eq 'Assert-NativeTownerEvidence' }, $true) | Select-Object -First 1
+            . ([scriptblock]::Create($function.Extent.Text))
+            $env:GODEVILUTION_NATIVE_TOWNER_PACK = 'requested'
+            $scene = [pscustomobject]@{
+                ContentHash = 'a' * 64; NativeTown = [pscustomobject]@{ CatalogFingerprint = 'b' * 64 }
+                NativeTowners = [pscustomobject]@{
+                    Passed = $true; CosmeticAnimation = $true; NativeInitializationAndColdPhaseParity = $false
+                    RenderedParity = $false; CompleteRosterRoaming = $true
+                    ColdReadiness = [pscustomobject]@{ Passed = $true; StartTimestamp = 100; StopwatchFrequency = 1000
+                        StartRevision = 1; EndRevision = 3; StartTick = 10; EndTick = 12
+                        Probe = [pscustomobject]@{ TimingRequestId = 1; TransportGeneration = 1; SentStopwatchTimestamp = 101
+                            WriteStartStopwatchTimestamp = 102; WriteEndStopwatchTimestamp = 103; WriteOutcome = 1 }
+                        Reply = [pscustomobject]@{ TimingRequestId = 1; TransportGeneration = 1; Outcome = 0
+                            OutcomeStopwatchTimestamp = 104; TimingCalibrationReady = $true }
+                        Snapshots = @([pscustomobject]@{ TransportGeneration = 1; SnapshotTick = 11; ReceivedStopwatchTimestamp = 105 },
+                            [pscustomobject]@{ TransportGeneration = 1; SnapshotTick = 12; ReceivedStopwatchTimestamp = 106 }) }
+                    Pack = [pscustomobject]@{ IsLoaded = $true; IdentityMatched = $true; AtlasesReady = $true
+                        ContentManifestHash = 'a' * 64; TownCatalogFingerprint = 'b' * 64
+                        MissingAtlasPaths = @(); LoadedAtlasPaths = @('atlas.png') }
+                    Samples = @(foreach ($slot in 0..10) { foreach ($frame in 0..1) {
+                        [pscustomobject]@{ ResidentSlot = $slot; FrameIndex = $frame; NativeArt = $true
+                            GenericFallback = $false; AtlasPath = 'atlas.png'; AnchorInsideViewport = $true }
+                    } })
+                }
+            }
+            Assert-NativeTownerEvidence $scene $false
+            Assert-NativeTownerEvidence $scene $true
+            foreach ($mutation in @('cow', 'frame', 'fallback', 'anchor', 'content', 'fingerprint', 'atlas', 'phase', 'rendered', 'roam')) {
+                $bad = $scene | ConvertTo-Json -Depth 32 | ConvertFrom-Json
+                switch ($mutation) {
+                    cow { $bad.NativeTowners.Samples = @($bad.NativeTowners.Samples | Where-Object ResidentSlot -ne 10) }
+                    frame { $bad.NativeTowners.Samples = @($bad.NativeTowners.Samples | Where-Object { $_.ResidentSlot -ne 0 -or $_.FrameIndex -eq 0 }) }
+                    fallback { $bad.NativeTowners.Samples[0].GenericFallback = $true }
+                    anchor { $bad.NativeTowners.Samples[0].AnchorInsideViewport = $false }
+                    content { $bad.NativeTowners.Pack.ContentManifestHash = 'c' * 64 }
+                    fingerprint { $bad.NativeTowners.Pack.TownCatalogFingerprint = 'c' * 64 }
+                    atlas { $bad.NativeTowners.Pack.AtlasesReady = $false }
+                    phase { $bad.NativeTowners.NativeInitializationAndColdPhaseParity = $true }
+                    rendered { $bad.NativeTowners.RenderedParity = $true }
+                    roam { $bad.NativeTowners.CompleteRosterRoaming = $false }
+                }
+                $rejected = $false
+                try { Assert-NativeTownerEvidence $bad $false } catch { $rejected = $true }
+                if (-not $rejected) { throw "Resident art gate accepted invalid $mutation evidence." }
+            }
+            foreach ($mutation in @('missing', 'backlog', 'probe', 'reply', 'calibration', 'generation', 'snapshots', 'tick', 'revision')) {
+                $bad = $scene | ConvertTo-Json -Depth 32 | ConvertFrom-Json
+                switch ($mutation) {
+                    missing { $bad.NativeTowners.ColdReadiness = $null }
+                    backlog { $bad.NativeTowners.ColdReadiness.Snapshots[0].ReceivedStopwatchTimestamp = 99 }
+                    probe { $bad.NativeTowners.ColdReadiness.Probe.SentStopwatchTimestamp = 99 }
+                    reply { $bad.NativeTowners.ColdReadiness.Reply.Outcome = 1 }
+                    calibration { $bad.NativeTowners.ColdReadiness.Reply.TimingCalibrationReady = $false }
+                    generation { $bad.NativeTowners.ColdReadiness.Snapshots[0].TransportGeneration = 2 }
+                    snapshots { $bad.NativeTowners.ColdReadiness.Snapshots = @($bad.NativeTowners.ColdReadiness.Snapshots[0]) }
+                    tick { $bad.NativeTowners.ColdReadiness.Snapshots[1].SnapshotTick = 11 }
+                    revision { $bad.NativeTowners.ColdReadiness.EndRevision = 2 }
+                }
+                $rejected = $false
+                try { Assert-NativeTownerEvidence $bad $true } catch { $rejected = $true }
+                if (-not $rejected) { throw "Resident cold gate accepted invalid $mutation evidence." }
+            }
+            Write-Output 'PASS'
+            """;
+        Assert.Contains("PASS", RunPowerShell(script), StringComparison.Ordinal);
+    }
+
     private static string RunPowerShell(string script)
     {
         var scriptPath = Path.Combine(Path.GetTempPath(), $"godevilution-native-town-test-{Guid.NewGuid():N}.ps1");

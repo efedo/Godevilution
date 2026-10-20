@@ -9,6 +9,58 @@ the referenced test sources. Do not copy raw outputs into historical archives.
 
 ## Client and host verification
 
+### 2026-10-20 — original Town resident art
+
+Twenty focused managed resident cases, 160 snapshot/protocol cases, one detached
+resident cold-restore case, one acceptance-wrapper mutation case, 26 timing-writer
+cases, two native fixtures and six real Godot texture preflights pass without skips
+(216 checks). The three
+explicit native-reference comparisons cover every indexed/opacity pixel of all
+248 human/cow frames, every published RGBA/padding pixel, and all 11 prepared
+frame/counter/order cursors through 852 actual `ProcessTowners` updates.
+The explicit oversized-family import test proves refusal leaves no published or
+staging output. The preflights cover healthy, missing/corrupt atlas, content,
+Town fingerprint and wrong-level bindings. Legacy-known wire bytes and unknown
+field preservation pass; resident capture/restore consumes no gameplay RNG.
+
+The optional catalog binds each format-5 class content identity to its matching
+semantic Town catalog fingerprint. Native drawing uses eight human lists and one shared
+eight-direction cow sheet, unlit bottom anchors and one sprite per cow instance.
+A bounded relative cosmetic clock freezes offline and resets on Town/connection
+entry, identity changes or rewind. No simulation cursor or checkpoint version is
+added. Existing player/scene/geometry and codec evidence is reused.
+
+Both isolated SDK4.7.1/Godot4.7.2 headless Warrior/Sorcerer Journey/Resume pairs
+pass generated L1 combat, Repair/Recharge, Smith/Pepin controls and all 11 resident
+anchors with at least two distinct actual native frames each. Journeys record
+173 and 171 resident samples; every sampled anchor is inside the viewport.
+Fresh hosts preserve the exact player/items/world/RNG/hello/cursor baseline and
+complete Town checkpoint, then accept the first movement at sequence 37→38 in
+both cases. Each Resume records six actual native resident draws. The bounded
+readiness gate observes a post-draw-start calibrated probe reply and two subsequent
+received/consumed snapshots without sending input; exact baseline and receipt
+checks remain unchanged. Both timing captures have no drops.
+
+The initial clipped-anchor pair and rejected `TooLate` attempts remain diagnostics.
+A per-cell cow-roaming trial waited about 640 ms for the authority lock, becoming
+late before admission. The final harness uses ordinary visible destination-walk
+waypoints, with exact receipt/arrival and bounded route/leg checks. This reduces
+the artificial per-cell command/checkpoint workload; it does not repair or qualify
+host scheduling/load latency. `TooLate` remains fatal and failed checkpoints were
+not retried or rewritten.
+
+Private evidence is under `.local/native-towners-20261019`; final sessions are
+`native-class-warrior-90b2f4168330434596dbbdf3ac24754d` and
+`native-class-sorcerer-a567a01abc7f4df7863351f4b4dd489f` beneath each class's
+`.local/native-town-20261019/profiles/<class>/sessions` directory.
+
+Builds retain existing warnings. The checked native environment needed the
+already documented child `_CL_=/Z7` override after C1902; CMake defaults remain
+unchanged. Source qualification excludes unrelated vision/preview/ACK/L3 WIP.
+Native NPC initialization RNG, persisted/cold animation phase, quest-dependent
+residents, native scene phases/lighting/palette/transparency and matched rendered
+qualification remain open. Normal cohort/profile adoption stays held.
+
 ### 2026-10-19 — explicit native Town integration
 
 Sixteen focused catalog/construction/compiler cases, four explicit compiled-

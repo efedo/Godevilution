@@ -83,6 +83,51 @@ function Assert-NativeTownSceneEvidence($Scene) {
     if ($townDraws.Count -eq 0) { throw 'Native Town did not emit actual floor, content and actor draws with pointer mapping.' }
 }
 
+function Assert-NativeTownerEvidence($Scene, [bool]$Resumed) {
+    if ([string]::IsNullOrWhiteSpace($env:GODEVILUTION_NATIVE_TOWNER_PACK)) { return }
+    $resident = $Scene.NativeTowners
+    if ($resident.Passed -isnot [bool] -or -not $resident.Passed -or
+        $resident.CosmeticAnimation -isnot [bool] -or -not $resident.CosmeticAnimation -or
+        $resident.NativeInitializationAndColdPhaseParity -isnot [bool] -or $resident.NativeInitializationAndColdPhaseParity -or
+        $resident.RenderedParity -isnot [bool] -or $resident.RenderedParity -or
+        $resident.Pack.IsLoaded -isnot [bool] -or -not $resident.Pack.IsLoaded -or
+        $resident.Pack.IdentityMatched -isnot [bool] -or -not $resident.Pack.IdentityMatched -or
+        $resident.Pack.AtlasesReady -isnot [bool] -or -not $resident.Pack.AtlasesReady -or
+        $resident.Pack.ContentManifestHash -cne $Scene.ContentHash -or
+        $resident.Pack.TownCatalogFingerprint -cne $Scene.NativeTown.CatalogFingerprint -or
+        @($resident.Pack.MissingAtlasPaths).Count -ne 0 -or @($resident.Pack.LoadedAtlasPaths).Count -eq 0 -or
+        @($resident.Samples).Count -eq 0 -or
+        @($resident.Samples | Where-Object { -not $_.NativeArt -or $_.GenericFallback -or -not $_.AnchorInsideViewport -or [string]::IsNullOrWhiteSpace($_.AtlasPath) }).Count -gt 0) {
+        throw 'Native resident evidence omitted complete content/roster/atlas binding or actual draws.'
+    }
+    if ($Resumed) {
+        $ready = $resident.ColdReadiness
+        $probe = $ready.Probe; $reply = $ready.Reply; $snapshots = @($ready.Snapshots)
+        if ($ready.Passed -isnot [bool] -or -not $ready.Passed -or $ready.StartTimestamp -le 0 -or
+            $ready.StopwatchFrequency -le 0 -or $ready.EndRevision -lt ($ready.StartRevision + 2) -or
+            $ready.EndTick -le $ready.StartTick -or $probe.TimingRequestId -le 0 -or
+            $probe.SentStopwatchTimestamp -le $ready.StartTimestamp -or
+            $probe.WriteStartStopwatchTimestamp -le $ready.StartTimestamp -or
+            $probe.WriteEndStopwatchTimestamp -lt $probe.WriteStartStopwatchTimestamp -or $probe.WriteOutcome -ne 1 -or
+            $reply.TimingRequestId -ne $probe.TimingRequestId -or $reply.TransportGeneration -ne $probe.TransportGeneration -or
+            $reply.Outcome -ne 0 -or $reply.TimingCalibrationReady -isnot [bool] -or -not $reply.TimingCalibrationReady -or
+            $reply.OutcomeStopwatchTimestamp -le $probe.WriteEndStopwatchTimestamp -or $snapshots.Count -ne 2 -or
+            @($snapshots | Where-Object { $_.TransportGeneration -ne $probe.TransportGeneration -or
+                $_.ReceivedStopwatchTimestamp -le $reply.OutcomeStopwatchTimestamp }).Count -ne 0 -or
+            $snapshots[0].SnapshotTick -le $ready.StartTick -or $snapshots[1].SnapshotTick -le $snapshots[0].SnapshotTick -or
+            $ready.EndTick -lt $snapshots[1].SnapshotTick) {
+            throw 'Native resident cold evidence omitted a post-draw probe reply and two fresh consumed snapshots.'
+        }
+    } else {
+        if ($resident.CompleteRosterRoaming -isnot [bool] -or -not $resident.CompleteRosterRoaming) {
+            throw 'Native resident journey did not complete actual roster roaming.'
+        }
+        foreach ($slot in 0..10) {
+            $frames = @($resident.Samples | Where-Object { $_.ResidentSlot -eq $slot } | Select-Object -ExpandProperty FrameIndex -Unique)
+            if ($frames.Count -lt 2) { throw "Native resident slot $slot did not draw two distinct native frames." }
+        }
+    }
+}
 function Read-NativeTownCheckpointHash([string]$Session, [string]$Fingerprint) {
     $document = Get-Content -LiteralPath (Join-Path $Session 'save/authoritative-cohort.json') -Raw | ConvertFrom-Json
     $state = [Text.Encoding]::UTF8.GetString([Convert]::FromBase64String($document.SerializedModuleState)) | ConvertFrom-Json
@@ -167,6 +212,7 @@ if ($NativeTown) {
     $arguments.CathedralNativeTownProfileDirectory = $profileRoot
 }
 if (-not [string]::IsNullOrWhiteSpace($GodotExecutable)) { $arguments.GodotExecutable = $GodotExecutable }
+if (-not [string]::IsNullOrWhiteSpace($env:GODEVILUTION_NATIVE_TOWNER_PACK)) { $arguments.CommandTimingTrace = $true }
 
 Write-Output "Native $classSymbol Journey session: $sessionDirectory"
 & $launcher @arguments -AcceptancePhase $journeyPhase
@@ -213,6 +259,7 @@ if ($NativeTown) {
         $services.FinalSequence -le $services.SmithSequence) { throw 'Native Town Smith and Pepin service controls were not verified.' }
     $townCheckpointHash = Read-NativeTownCheckpointHash $sessionDirectory $townMetadata.townCatalogFingerprint
     Assert-NativeTownSceneEvidence $journey
+    Assert-NativeTownerEvidence $journey $false
 }
 Write-Output "Native $classSymbol Resume session: $sessionDirectory"
 & $launcher @arguments -AcceptancePhase $resumePhase
@@ -236,6 +283,7 @@ if ($resume.Passed -isnot [bool] -or -not $resume.Passed -or $resume.Mode -cne '
 
 if ($NativeTown) {
     Assert-NativeTownSceneEvidence $resume
+    Assert-NativeTownerEvidence $resume $true
     if ($resume.NativeTown.GeometryHash -cne $journey.NativeTown.GeometryHash -or
         (Read-NativeTownCheckpointHash $sessionDirectory $townMetadata.townCatalogFingerprint) -cne $townCheckpointHash) {
         throw 'Native Town wire geometry or full fine/coarse/special/protected/RNG checkpoint changed across cold restore.'

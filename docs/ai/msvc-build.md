@@ -1,5 +1,23 @@
 # MSVC Build Notes for Agents
 
+## Native Town resident art reference
+
+Build only the registered `native_towner_art_test` target with the checked MSVC
+x64 environment below. Set `GODEVILUTION_NATIVE_TOWNER_ART_ARCHIVE` to the explicit
+original DIABDAT archive and `GODEVILUTION_NATIVE_TOWNER_ART_REFERENCE_DIRECTORY`
+to a new private directory. Run `native_towner_art_test.exe
+--gtest_filter=NativeTownerArtTest.*` and restore caller environment afterward.
+The headless exporter refuses existing output, extracts only the selected CEL/PAL
+files, and captures every human frame and cow direction through actual
+`LoadCel`/`LoadCelSheet` and two-background `ClxDraw` opacity detection.
+A prepared frame/counter/order-zero roster also runs actual `ProcessTowners`
+through complete cycles and delay edges; its timeline covers all 11 residents.
+The zero cow start is a prepared cosmetic cursor, not native RNG initialization.
+
+This qualifies source pixels and native alignment widths, not NPC initialization
+RNG or live animation phase. The corresponding managed import and published PNG
+comparisons are in [Godot notes](godot-build.md#optional-original-town-resident-art).
+
 ## Native Town and scene reference
 
 Build the registered `native_scene_art_test` with the matching checked MSVC x64

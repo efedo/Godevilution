@@ -1,6 +1,6 @@
 # Godevilution Working Status and Memory
 
-As of 2026-10-19. Gameplay source baseline: `3af2a51cc`.
+As of 2026-10-20. Gameplay source baseline: `3af2a51cc`.
 The existing working tree contains substantial uncommitted work; it is not a
 clean committed-source baseline. Use `git status` and the actual diff before
 assigning ownership or staging a batch.
@@ -49,8 +49,13 @@ Godot presentation client remain unfinished. The server does not require MPQs.
   residents, retain separate 112x112 fine/special and 40x40 coarse/protected
   channels in v11, and validate detached mutation replay without advancing shared
   RNG. Both headless pairs pass Smith/Pepin controls and full checkpoint retention.
-  This is Original Diablo single-player Normal with quests disabled; NPC
-  initialization/animation, complete vendor stock and quest-enabled Town remain open.
+  This is Original Diablo single-player Normal with quests disabled; exact NPC
+  initialization/animation phase, complete vendor stock and quest-enabled Town remain open.
+- Original Town residents now have immutable 11-instance projection, optional
+  native CEL/PAL import and isometric drawing. All 248 frames and prepared native
+  frame-order/delay traces compare exactly; both headless class pairs cover all
+  anchors and exact cold retention. Live animation remains cosmetic, with native
+  initialization RNG and persisted/cold animation phase still open.
 - The Godot client is still a presentation prototype. Full native graphical
   parity, complete asset coverage and final rendered playability are open.
 
@@ -86,6 +91,9 @@ Passing a scoped test or adding a schema version does not close a milestone.
   Do not rerun it unchanged or change native rules merely to make a bot pass.
 - Current source has broader backend coverage than application evidence. Keep
   implementation, native parity, headless play and rendered play distinct.
+- A per-cell Town roaming trial reached `TooLate` after about 640 ms waiting for
+  the authority lock. Host admission latency remains unresolved; ordinary
+  destination-waypoint acceptance does not qualify load or repair that stall.
 - The session lifecycle/setup batch is reviewed and verified for headless flow.
   Class-preview and experimental acceptance packages remain separate WIP.
 
@@ -98,8 +106,16 @@ activation before pointer projection changes. Existing profile bytes and save
 schemas retain their contracts; normal cohort/profile adoption remains held.
 See [Town verification](test-history.md#2026-10-19--explicit-native-town-integration).
 
-Continue the Town/Cathedral visual slice with a cohesive native actor/object/
-effect or scene-phase family from the work plan. Complete coverage, native light/
+The original Town resident visual family passes its scoped native comparisons,
+whole-family failure probes and both class journey/restore pairs. See
+[resident verification](test-history.md#2026-10-20--original-town-resident-art).
+Exact NPC initialization RNG and persisted animation phase remain open.
+The next cohesive visual family is Cathedral interactable-object art for
+existing doors, ordinary/trapped chests, sarcophagi, barrels and wall traps. First
+characterize native source/operation frames and owner/offset anchors; render the
+authoritative frame without inventing lifecycle timing. See the work plan for
+pixel/fallback, ordinary interaction and retained-state acceptance. Complete
+coverage, native light/
 palette/transparency behavior and matched rendered comparisons remain open.
 Keep the queue, this status and affected inventory entries synchronized. Do not
 restart inventory construction or an unrelated test campaign.

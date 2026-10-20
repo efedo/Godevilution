@@ -1,6 +1,6 @@
 # Clean-session handoff
 
-Prepared 2026-10-19. Use `D:\Programming\Godevilution` and its existing working
+Prepared 2026-10-20. Use `D:\Programming\Godevilution` and its existing working
 tree; gameplay source baseline `3af2a51cc`. Fresh context does not mean a reset or a
 replacement checkout.
 
@@ -30,23 +30,24 @@ for retained caches and input entry points. Gameplay WIP remains uncommitted.
 
 ## First task
 
-The session-flow and native Warrior/Sorcerer admission batches are reviewed and
-verified for their documented headless scope. Both new class profiles pass
-canonical preparation, L1 combat/abilities and exact fresh-host continuity.
-The optional native player-art stage also passes full native frame/atlas
-comparisons and headless class draw/restore pairs. Read the work plan before the
-next scene batch: the pure MPQ-free Town builder passes all 191 native cases.
-Native CEL/MIN scene import also passes full piece/special/published-atlas pixel
-comparisons. Shared isometric Town/Cathedral drawing/input and distinct format-5
-Town profiles
-now pass both class journey/restore pairs, including actual native Town specials,
-Smith/Pepin controls and exact v11 backing/checkpoint retention. Earlier profiles
-retain their contracts. Read the work plan to establish the next cohesive native
-actor/object/effect or scene-phase family before implementation. Keep normal
-cohort/profile adoption held and rendered acceptance open.
-Later class campaigns remain open. Refresh only changed claims;
-keep the work plan, working status and affected inventory entries synchronized.
-Do not treat the failing L3 bot scenario as a universal blocker.
+Session flow and explicit Warrior/Sorcerer admission pass canonical preparation,
+L1 combat/abilities and exact fresh-host continuity. Optional player/scene art and
+the 191-case MPQ-free Town builder retain their native comparisons. Format-5 Town
+profiles pass isometric drawing/input, Smith/Pepin controls and strict v11 retention.
+The original resident family now also passes all 248 source-frame/atlas pixels,
+prepared native frame-order/delay traces, full-roster anchor roaming and both
+headless class restore pairs. Live NPC time remains cosmetic; initialization RNG,
+authoritative/persisted phase and rendered parity remain open.
+
+Read the work plan before implementation of the next cohesive family: native
+Cathedral object art for existing L1 doors, ordinary/trapped chests, sarcophagi,
+barrels and wall traps. Characterize source/operation frames and owner/offset
+anchors first; use current authoritative frames without inventing lifecycle time.
+Keep native lighting, scene phases and missile art separate. The observed Town
+authority-lock lateness remains an unresolved host latency issue, not an art
+acceptance fix. Normal cohort/profile adoption stays held. Later class campaigns
+and full rendered qualification remain open. Reuse valid evidence and keep the
+work plan, status and inventory synchronized; L3 bot failure is not a universal gate.
 
 ## Session goal
 

@@ -51,6 +51,19 @@ internal static class DiabloProtocolMapper
     private const uint MaximumNativeCharacterLevel = AuthoritativeProtocolLimits.MaximumNativeCharacterLevel;
     private const int MinimumNativeLightRadius = AuthoritativeProtocolLimits.MinimumNativeLightRadius;
     private const int MaximumNativeLightRadius = AuthoritativeProtocolLimits.MaximumNativeLightRadius;
+    private static readonly (int TownerId, int X, int Y, int Direction)[] CanonicalNativeTownResidents = [
+        (0, 62, 63, 1),
+        (1, 55, 79, 7),
+        (3, 55, 62, 1),
+        (4, 62, 71, 0),
+        (5, 71, 84, 0),
+        (6, 80, 20, 0),
+        (7, 43, 66, 0),
+        (8, 11, 53, 0),
+        (9, 58, 16, 1),
+        (9, 56, 14, 3),
+        (9, 59, 20, 4),
+    ];
     private const int MaximumNativeVisitedLevelCount = AuthoritativeProtocolLimits.MaximumNativeVisitedLevelCount;
 
     public static Snapshot ToProtocolSnapshot(
@@ -91,6 +104,11 @@ internal static class DiabloProtocolMapper
             source.Quests,
             projectedLevels);
         ValidateProjectedTownerGreetings(source.TownerGreetings, projectedLevels);
+        ValidateProjectedNativeTownResidents(
+            source.NativeTownCatalogFingerprint,
+            source.NativeTownResidents,
+            source.TownerGreetings,
+            projectedLevels);
         ValidateProjectedWorldMutationIds(source.ActiveWorldMutationIds);
         ValidateProjectedMaterializedProceduralLevelIds(
             source.MaterializedProceduralLevelIds);
@@ -148,6 +166,7 @@ internal static class DiabloProtocolMapper
             RandomState = source.RandomState,
             VictoryTriggered = source.VictoryTriggered,
             Difficulty = ToProtocolDifficulty(source.Difficulty),
+            NativeTownCatalogFingerprint = source.NativeTownCatalogFingerprint,
         };
         snapshot.ActiveWorldMutationIds.Add(source.ActiveWorldMutationIds);
         snapshot.MaterializedProceduralLevelIds.Add(source.MaterializedProceduralLevelIds);
@@ -441,6 +460,16 @@ internal static class DiabloProtocolMapper
                 PositionX = greeting.PositionX,
                 PositionY = greeting.PositionY,
                 MessageId = greeting.MessageId,
+            });
+        }
+        foreach (var resident in source.NativeTownResidents) {
+            snapshot.NativeTownResidents.Add(new NativeTownResidentSnapshot {
+                ResidentSlot = resident.ResidentSlot,
+                TownerId = resident.TownerId,
+                LevelId = resident.LevelId,
+                PositionX = resident.PositionX,
+                PositionY = resident.PositionY,
+                NativeDirection = resident.NativeDirection,
             });
         }
         foreach (var projectile in source.Projectiles) {
@@ -1613,6 +1642,96 @@ internal static class DiabloProtocolMapper
         }
     }
 
+    private static void ValidateProjectedNativeTownResidents(
+        string? fingerprint,
+        IReadOnlyList<DiabloNativeTownResidentState>? residents,
+        IReadOnlyList<AuthoritativeTownerGreetingDefinition> greetings,
+        IReadOnlyDictionary<uint, AuthoritativeLevel> levels)
+    {
+        if (fingerprint is null || residents is null)
+            throw new InvalidDataException("Native Town resident projection is missing required data.");
+        if (fingerprint.Length == 0 && residents.Count == 0)
+            return;
+        if (!IsLowerSha256Hex(fingerprint)
+            || residents.Count != CanonicalNativeTownResidents.Length) {
+            throw new InvalidDataException(
+                "Native Town resident projection must include its catalog fingerprint and complete canonical roster.");
+        }
+
+        for (var slot = 0; slot < CanonicalNativeTownResidents.Length; slot++) {
+            var expected = CanonicalNativeTownResidents[slot];
+            var resident = residents[slot];
+            if (resident.ResidentSlot != slot
+                || resident.TownerId != expected.TownerId
+                || resident.LevelId != 0
+                || resident.PositionX != expected.X
+                || resident.PositionY != expected.Y
+                || resident.NativeDirection != expected.Direction) {
+                throw new InvalidDataException(
+                    $"Native Town resident slot {slot} does not match the canonical original Diablo roster.");
+            }
+        }
+
+        if (greetings.Count != 8) {
+            throw new InvalidDataException(
+                "Native Town resident projection requires exactly eight matching human greetings.");
+        }
+        for (var slot = 0; slot < 8; slot++) {
+            var expected = CanonicalNativeTownResidents[slot];
+            if (!greetings.Any(greeting => greeting.TownerId == expected.TownerId
+                    && greeting.LevelId == 0
+                    && greeting.PositionX == expected.X
+                    && greeting.PositionY == expected.Y)) {
+                throw new InvalidDataException(
+                    $"Native Town greeting for human resident slot {slot} does not match the canonical roster.");
+            }
+        }
+
+        if (levels.Count == 0)
+            return;
+        if (!levels.TryGetValue(0, out var town)
+            || town.Width != 112
+            || town.Height != 112) {
+            throw new InvalidDataException(
+                "Native Town resident projection requires available 112 by 112 Town geometry.");
+        }
+        var expectedOccupancy = CanonicalNativeTownOccupancy();
+        if (expectedOccupancy.Count != 20
+            || expectedOccupancy.Any(cell => !town.StaticObjectBlockedCells.Contains(cell))) {
+            throw new InvalidDataException(
+                "Native Town presentation geometry is missing canonical resident occupancy cells.");
+        }
+    }
+
+    private static HashSet<int> CanonicalNativeTownOccupancy()
+    {
+        var cells = new HashSet<int>();
+        for (var slot = 0; slot < CanonicalNativeTownResidents.Length; slot++) {
+            var resident = CanonicalNativeTownResidents[slot];
+            Add(resident.X, resident.Y);
+            if (resident.TownerId == 9) {
+                Add(resident.X - 1, resident.Y);
+                Add(resident.X, resident.Y - 1);
+                Add(resident.X - 1, resident.Y - 1);
+            }
+        }
+        return cells;
+
+        void Add(int x, int y) => cells.Add(y * 112 + x);
+    }
+
+    private static bool IsLowerSha256Hex(string value)
+    {
+        if (value.Length != 64)
+            return false;
+        foreach (var character in value) {
+            if (!((character >= '0' && character <= '9')
+                  || (character >= 'a' && character <= 'f')))
+                return false;
+        }
+        return true;
+    }
+
     private static void ValidateProjectedMonsterPoolCapacity(
         IReadOnlyList<DiabloMonsterState> monsters)
     {
@@ -2246,6 +2365,9 @@ internal static class DiabloProtocolMapper
     {
         ArgumentNullException.ThrowIfNull(source);
         ValidateProtocolSnapshotHash(source);
+        if (source.NativeTownCatalogFingerprint.Length != 0
+            || source.NativeTownResidents.Count != 0)
+            AuthoritativeSnapshotValidator.Validate(source);
         ValidateEntityIds(source, allowZeroPlayerEntityId: true);
         ValidateProjectedWorldMutationIds(source.ActiveWorldMutationIds);
         ValidateProjectedMaterializedProceduralLevelIds(

@@ -11,7 +11,20 @@ public readonly record struct NativePlayerArtLevelBinding(string ContentManifest
 
 public sealed record NativePlayerArtProfileSet(
     IReadOnlyList<string> ContentManifestHashes,
-    IReadOnlyList<NativePlayerArtLevelBinding> LevelBindings);
+    IReadOnlyList<NativePlayerArtLevelBinding> LevelBindings)
+{
+    public NativePlayerArtProfileSet(
+        IReadOnlyList<string> contentManifestHashes,
+        IReadOnlyList<NativePlayerArtLevelBinding> levelBindings,
+        IReadOnlyDictionary<string, string> townCatalogFingerprints)
+        : this(contentManifestHashes, levelBindings)
+    {
+        TownCatalogFingerprints = townCatalogFingerprints;
+    }
+
+    public IReadOnlyDictionary<string, string> TownCatalogFingerprints { get; init; }
+        = new Dictionary<string, string>(StringComparer.Ordinal);
+}
 
 /** Resolves only compiler-produced native Cathedral profiles and derives their content identities. */
 public static class NativePlayerArtProfiles
@@ -34,6 +47,7 @@ public static class NativePlayerArtProfiles
 
         var hashes = new SortedSet<string>(StringComparer.Ordinal);
         var bindings = new Dictionary<(string Hash, uint LevelId), string>();
+        var townCatalogFingerprints = new Dictionary<string, string>(StringComparer.Ordinal);
         foreach (var profileDirectory in profileDirectories) {
             if (string.IsNullOrWhiteSpace(profileDirectory))
                 throw new InvalidDataException("Native Cathedral profile directories must be nonempty.");
@@ -62,6 +76,11 @@ public static class NativePlayerArtProfiles
                 var baseProfile = ValidateBaseProfile(root, classDocument, classPath, classBound: true);
                 var townProfile = ValidateTownProfile(root, townDocument, townPath, baseProfile);
                 hashes.Add(townProfile.ContentManifestHash);
+                var normalizedFingerprint = townProfile.CatalogFingerprint.ToLowerInvariant();
+                if (townCatalogFingerprints.TryGetValue(townProfile.ContentManifestHash, out var existingFingerprint)
+                    && !string.Equals(existingFingerprint, normalizedFingerprint, StringComparison.Ordinal))
+                    throw new InvalidDataException("Repeated native Town profiles disagree on their catalog fingerprint.");
+                townCatalogFingerprints[townProfile.ContentManifestHash] = normalizedFingerprint;
                 foreach (var binding in ReadLevelBindings(baseProfile.ContentPack,
                     townProfile.ContentManifestHash, townPath)) {
                     var key = (binding.ContentManifestHash, binding.LevelId);
@@ -93,7 +112,7 @@ public static class NativePlayerArtProfiles
             .ThenBy(entry => entry.Key.LevelId)
             .Select(entry => new NativePlayerArtLevelBinding(entry.Key.Hash, entry.Key.LevelId, entry.Value))
             .ToArray();
-        return new NativePlayerArtProfileSet(hashes.ToArray(), orderedBindings);
+        return new NativePlayerArtProfileSet(hashes.ToArray(), orderedBindings, townCatalogFingerprints);
     }
 
     private sealed record VerifiedBaseProfile(
@@ -102,7 +121,7 @@ public static class NativePlayerArtProfiles
         ContentPack PopulationPack,
         ContentPack RuntimePack);
 
-    private sealed record VerifiedTownProfile(string ContentManifestHash);
+    private sealed record VerifiedTownProfile(string ContentManifestHash, string CatalogFingerprint);
 
     private static VerifiedBaseProfile ValidateBaseProfile(
         string root,
@@ -195,7 +214,7 @@ public static class NativePlayerArtProfiles
         var catalog = AuthoritativeNativeTownCatalog.Load(ComposedContent.Compose(manifest));
         if (!string.Equals(catalog.Fingerprint, catalogFingerprint, StringComparison.Ordinal))
             throw new InvalidDataException($"Town profile '{profilePath}' catalog fingerprint does not match its compiled Town semantics.");
-        return new VerifiedTownProfile(declaredHash);
+        return new VerifiedTownProfile(declaredHash, catalogFingerprint);
     }
 
     private static JsonDocument ReadProfile(string path)

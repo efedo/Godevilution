@@ -19,6 +19,7 @@ public partial class SessionAcceptance
     {
         StartNativePlayerArtCapture(main);
         StartNativeSceneArtCapture(main);
+        StartNativeTownerCapture(main);
         var classId = phase.StartsWith("NativeWarrior", StringComparison.Ordinal) ? 0U : 2U;
         var journeyName = classId == 0 ? "nativewarriorjourney.json" : "nativesorcererjourney.json";
         var identity = main.ObservedIdentity!;
@@ -31,6 +32,7 @@ public partial class SessionAcceptance
             Require(previous is { Passed: true }, "Native class resume requires passing creation evidence.");
             using var saved = JsonDocument.Parse(System.IO.File.ReadAllText(System.IO.Path.Combine(directory, journeyName)));
             var checkpoint = saved.RootElement.GetProperty("NativeClass").Deserialize<NativeClassCheckpoint>()!;
+            await AwaitNativeTownerColdReadinessAsync(main);
             var snapshot = main.ObservedSnapshot!;
             var hello = main.ObservedInitialConnection?.ServerHello;
             Require(checkpoint.ClassId == classId
@@ -183,6 +185,7 @@ public partial class SessionAcceptance
         chargesAfterRecharge = classId == 2 ? afterAbility.Charges : 0;
         if (nativeTownClassProfile)
             await VerifyNativeTownServicesAsync(main, directory);
+        await VerifyNativeTownerRoamingAsync(main);
         var snapshotAfter = main.ObservedSnapshot!;
         Require(Settled(main) && snapshotAfter.Players.Single() is { LevelId: 0, Life: > 0 },
             "The native class checkpoint did not finish alive and settled in Town.");
@@ -206,6 +209,7 @@ public partial class SessionAcceptance
             NativePlayerArt = VerifyNativePlayerArtCapture(main, exactColdBaseline),
             NativeSceneArt = VerifyNativeSceneArtCapture(main, exactColdBaseline),
             NativeTown = CaptureNativeTownPresentation(main),
+            NativeTowners = VerifyNativeTownerCapture(main, exactColdBaseline),
             FirstAcceptedSequence = exactColdBaseline ? main.ObservedCommandResult!.ClientSequence : 0,
             FirstAcceptedAppliedTick = exactColdBaseline ? main.ObservedCommandResult!.AppliedTick : 0,
         });

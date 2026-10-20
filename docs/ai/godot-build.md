@@ -38,6 +38,56 @@ continuity and an unchanged full persisted Town checkpoint. Earlier profile/save
 formats remain supported. Complete native NPC/object/effect art, scene phases,
 lighting/palette/transparency and matched rendered qualification remain open.
 
+## Optional original Town resident art
+
+`tools/Native.TownerArt` imports eight original human CELs, all eight cow
+CEL directions, the Town PAL and roster animation metadata into nine hashed PNG
+atlases. Supply explicitly extracted files and qualified format-5 Town profiles;
+repeat `--profile-directory` for both classes. The server receives no art:
+
+```powershell
+dotnet run --project tools/Native.TownerArt -- --source-root D:\Games\ExtractedDiablo --text-data-root assets/txtdata --profile-directory D:\Profiles\NativeTownWarrior --output-root godot-client/Devilution.Client/assets/native-towners/local
+$env:GODEVILUTION_NATIVE_TOWNER_PACK = 'res://assets/native-towners/local/native-towner-catalog.json'
+```
+
+The complete art family requires the admitted content hash, snapshot Town catalog
+fingerprint, all 11 authoritative resident rows and every atlas hash/dimension.
+Failure retains resident markers and existing scene/player rendering. Human art
+uses one CEL list; cows use the native direction group and draw once at their
+anchor rather than at each occupied cell. Original Town drawing is unlit and
+preserves opaque palette zero and native bottom alignment.
+
+Frame order/delay use a bounded cosmetic active-Town clock starting at frame zero.
+Town entry, content/connection epoch changes and rewinds reset it; disconnected
+or pending epochs freeze it. Dungeon time does not advance it. Native NPC
+initialization RNG, authoritative animation cursors and cold phase equality remain
+open. Existing profiles omit this projection and keep their earlier contracts.
+
+With this optional pack set, the existing `-NativeTown` class pair also requires
+actual clipped draws and frame advancement for all eight humans and three cows,
+then native draws after cold restore. Each resident must have two drawn frames
+with its anchor inside the active viewport. The wrapper enables the existing
+timing trace for this optional family. Cold acceptance waits at most ten seconds
+per stage for an actual native draw, then a new calibrated probe reply and two
+subsequent received/consumed snapshots, before the unchanged exact saved-state
+and next-command checks. It sends no input while waiting and never retries a
+rejected first command. Cow viewing uses collision-valid visible destination
+waypoints through ordinary pointer controls, with exact receipt and arrival
+checks. It does not certify host load/latency. `NativeTownerAssetPreflightProbe.tscn`
+checks actual PNG/texture preflight headlessly using
+`GODEVILUTION_TOWNER_PROBE_CONTENT`, `GODEVILUTION_TOWNER_PROBE_FINGERPRINT`,
+`GODEVILUTION_TOWNER_PROBE_EXPECT_ACTIVE` (`1` or `0`) and optional output path
+`GODEVILUTION_TOWNER_PROBE_OUTPUT`.
+
+The native exporter is documented in [MSVC notes](msvc-build.md). Its indexed
+frames and the published RGBA atlases, including transparent padding, are compared
+by explicit `NativeTownerNativeReferenceTests` using
+`GODEVILUTION_NATIVE_TOWNER_ART_REFERENCE_DIRECTORY` and
+`GODEVILUTION_NATIVE_TOWNER_ART_PACK_DIRECTORY`. The explicit atomic-refusal
+import test additionally uses `GODEVILUTION_NATIVE_TOWN_PROFILE_ROOT` with a
+qualified `warrior` child profile. Full scene phases, lighting,
+palette cycling, transparency and matched rendered qualification remain open.
+
 ## Optional native scene art
 
 `tools/Native.SceneArt` imports explicitly extracted original Town/Cathedral

@@ -15,6 +15,11 @@ public readonly record struct NativeScenePixelBounds(double X, double Y, int Wid
 /** Native dSpecial lookup and screen placement used by the scene renderer. */
 public static class NativeScenePlacement
 {
+    /** Native resident widths align to the tile center; raster bottoms are inclusive. */
+    public static NativeScenePixelBounds ResolveResidentBounds(double bottomX, double bottomY,
+        int alignmentWidth, int rasterWidth, int rasterHeight)
+        => new(bottomX - (alignmentWidth - 64) / 2d, bottomY - rasterHeight + 1, rasterWidth, rasterHeight);
+
     /**
      * Resolves the special shown while drawing a cell. Town looks one cell back on both axes;
      * Cathedral reads the current cell. This mirrors DrawTileContent in world_renderer.cpp.

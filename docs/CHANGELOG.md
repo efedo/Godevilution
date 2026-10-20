@@ -5,6 +5,18 @@ acceptance gates are tracked in [working status](migration-status.md); verificat
 is summarized in [test history](test-history.md). Protocol and architecture
 contracts stay in their existing guides.
 
+## 2026-10-20
+
+- Project all 11 original Town residents from the active authoritative catalog,
+  with stable cow instances, strict wire validation and unchanged save/hash contracts.
+- Import optional original human/cow CEL art into a content/Town-bound catalog;
+  preserve every native pixel, direction, anchor and prepared frame-order/delay edge.
+  Draw residents with whole-family atlas preflight and bounded cosmetic Town time.
+- Verify complete resident anchor roaming through actual class controls, retain
+  explicit fallback and keep native initialization RNG/cold animation phase open.
+  Use ordinary destination waypoints and bounded post-draw clock/snapshot readiness
+  before unchanged cold-state/receipt checks; export native-class timing diagnostics.
+
 ## 2026-10-19
 
 - Add distinct format-5 Warrior/Sorcerer Town profiles and a strict v11 owner for

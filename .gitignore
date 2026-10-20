@@ -492,5 +492,6 @@ Testing/
 /tools/Native.PlayerArt/bin/
 /tools/Native.PlayerArt/obj/
 /godot-client/Devilution.Client/assets/native-scenes/
+/godot-client/Devilution.Client/assets/native-towners/
 /tools/Native.SceneArt/bin/
 /tools/Native.SceneArt/obj/

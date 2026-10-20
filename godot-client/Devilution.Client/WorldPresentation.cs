@@ -94,6 +94,7 @@ public partial class WorldPresentation : Node2D
     internal void SetNativePlayerContentIdentity(string? contentManifestHash)
     {
         BindNativeSceneIdentity(contentManifestHash);
+        BindNativeTownerIdentity(contentManifestHash);
         if (!assets.SetNativePlayerContentIdentity(contentManifestHash))
             return;
         nativePlayerPresentationTick = null;
@@ -137,11 +138,16 @@ public partial class WorldPresentation : Node2D
             presentationEpochPending = false;
             nativePlayerPresentationTick = null;
             assets.ResetAnimation();
+            nativeTownerClock.Reset();
             PresentationEpochResetCount++;
         }
         snapshot = next;
         predictedPlayerPosition = predicted;
         if (snapshot is null) {
+            nativeTownerClock.Reset();
+            nativeTownerDraws.Clear();
+            nativeTownerArtReady = false;
+            nativeTownerAssets.Bind(null, string.Empty, Array.Empty<NativeTownResidentSnapshot>());
             displayedPositions.Clear();
             displayedPositionLevels.Clear();
             displayedPlayerSnapshots.Clear();
@@ -198,6 +204,7 @@ public partial class WorldPresentation : Node2D
         }
         currentLevel = levels.Resolve(localPlayer?.LevelId ?? 0);
         ResolveNativeScene(localPlayer);
+        AdvanceNativeTowners(delta, serverTickRateHz, transportConnected, snapshotRewound);
         var nextViewport = CreateViewportTransform(currentLevel, localPlayer);
         if (nextViewport.ViewportWidth != viewport.ViewportWidth || nextViewport.ViewportHeight != viewport.ViewportHeight) {
             displayedPositions.Clear();
@@ -473,6 +480,7 @@ public partial class WorldPresentation : Node2D
     public override void _Draw()
     {
         doorDrawObservations.Clear();
+        nativeTownerDraws.Clear();
         if (DrawNativeSceneWorld())
             return;
         DrawGrid();
@@ -519,6 +527,7 @@ public partial class WorldPresentation : Node2D
                          localPlayer.PositionY,
                          localLightRadius)))
             DrawMonster(monster);
+        DrawGenericTowners();
         foreach (var item in snapshot.WorldItems.Where(item =>
                      AuthoritativeWorldItemPresentationVisibility.IsVisible(
                          item,

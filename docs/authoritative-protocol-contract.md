@@ -1524,6 +1524,24 @@ class hints and host defaults cannot replace persisted class state.
 Server-backed clients do not load or save legacy client state. The server is
 the sole persistence owner for an authenticated session.
 
+### Original Town resident presentation
+
+`Snapshot.native_town_residents` (tag 24) and
+`native_town_catalog_fingerprint` (tag 25) are additive immutable presentation
+metadata derived only from the explicit native Town catalog. They travel together:
+either both are empty for older profiles, or the fingerprint and all 11 canonical
+resident rows are present. Slots 0–10 distinguish the eight humans and three cows;
+all cows share native towner type 9. Rows carry level, position and source native
+direction, separate from human dialogue greetings and combat entity IDs.
+
+The server mapper and snapshot validator reject partial or noncanonical rosters,
+mismatched human greetings and missing resident collision cells in available Town geometry.
+These derived fields do not become imported gameplay state or alter the existing
+snapshot state hash. Cohort restore re-derives them from the retained Town owner;
+no checkpoint version or simulation RNG change is required. Optional client art
+must bind the admitted content identity, catalog fingerprint and canonical resident
+rows/levels before drawing. This art binding does not validate dialogue/collision
+projection. Animation playback is cosmetic; no native NPC cursor is transmitted.
 ## Compatibility Gate
 
 A protocol change is complete only when the schema, generated clients, server,

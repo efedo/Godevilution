@@ -73,7 +73,7 @@ struct Towner : Actor {
 	}
 };
 
-extern std::vector<Towner> Towners;
+extern DVL_API_FOR_TEST std::vector<Towner> Towners;
 
 size_t GetNumTownerTypes(); // Number of unique towner types in TSV data
 size_t GetNumTowners(); // Number of spawned towner instances

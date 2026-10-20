@@ -424,6 +424,7 @@ public partial class WorldPresentation
                 sceneViewport,
                 () => DrawProjectile(projectile));
         }
+        AddNativeTownerCommands(commands, sceneViewport);
         foreach (var actors in commands.Values)
             actors.Sort(NativeSceneActorCommand.Compare);
         return commands;

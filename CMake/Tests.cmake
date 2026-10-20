@@ -47,6 +47,7 @@ set(tests
   player_animation_context_test
   native_player_art_test
   native_scene_art_test
+  native_towner_art_test
   player_command_phase_test
   player_destination_walk_test
   portal_test

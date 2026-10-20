@@ -72,6 +72,9 @@ public partial class Main : Node2D
             ?? Array.Empty<PresentationPlayerTextureBindingObservation>();
 
     internal NativePlayerPackObservation? ObservedNativePlayerPack => world?.ObserveNativePlayerPack();
+    internal NativeTownerPackObservation? ObservedNativeTownerPack => world?.ObserveNativeTownerPack();
+    internal IReadOnlyList<NativeTownerDrawObservation> ObservedNativeTownerDrawing
+        => world?.ObserveNativeTownerDrawing() ?? Array.Empty<NativeTownerDrawObservation>();
     internal NativeScenePackObservation? ObservedNativeScenePack => world?.ObserveNativeScenePack();
     internal NativeSceneDrawingObservation? ObservedNativeSceneDrawing => world?.ObserveNativeSceneDrawing();
     internal bool ObservedNativeScenePointerRoundTrip
