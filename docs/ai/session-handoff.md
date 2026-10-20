@@ -36,8 +36,9 @@ canonical preparation, L1 combat/abilities and exact fresh-host continuity.
 The optional native player-art stage also passes full native frame/atlas
 comparisons and headless class draw/restore pairs. Read the work plan before the
 next scene batch: the pure MPQ-free Town builder passes all 191 native cases.
-Integrate its fine/coarse backing and restore into explicit profiles, finish native
-CEL/MIN scene art and shared isometric drawing/input. Cathedral final d-pieces
+Native CEL/MIN scene import also passes full piece/special/published-atlas pixel
+comparisons. Integrate Town fine/coarse backing and restore into explicit profiles
+and qualify shared isometric drawing/input. Cathedral final d-pieces
 exist; current profile Town geometry is empty. Retain the normal cohort/profile
 adoption hold and open rendered acceptance.
 Later class campaigns remain open. Refresh only changed claims;

@@ -9,6 +9,32 @@ the referenced test sources. Do not copy raw outputs into historical archives.
 
 ## Client and host verification
 
+### 2026-10-19 — optional native scene art import
+
+The offline scene importer builds without warnings. All 15 focused importer
+cases pass without skips, including both explicit original-data comparisons.
+Every Town/Cathedral source slot, remapped word, effective first-use frame type,
+SOL role and TIL binding matches the native export. All 1,711 d-pieces, 24,658
+MIN slots, 4,666 referenced frames and 26 special sprites match native unlit
+indices/opacity and the selected static-palette PNG pixels, including all atlas
+padding. Ten atlases and ten exact content/level bindings are checked. A native
+foliage transition regression preserves the production pointer-copy behavior,
+including opaque literal zero after encoding.
+
+Publication validates bounded source/group/frame dimensions, all source/PNG
+hashes and atomic new-directory output. Malformed, truncated and oversized
+sources reject without partial output. Inputs and generated packs remain private;
+the server and existing profiles have no new asset dependency. Independent
+review has no remaining importer findings. Client placement/input, Town profile
+integration, lighting/cycling/transparency blending and rendered parity remain
+open; these pixel comparisons do not establish scene composition.
+
+Evidence: `.local/native-scene-20261019/scene-build.log`, `scene-import-v2.log`
+and `scene-verified-v2.log`; use the `original-reference-v2` capture and private
+`assets/native-scenes/v2` pack (`native-scene-d0614a50c80dabf656c62c98`). All
+importer cases in that combined run passed. Do not reuse the earlier pack or
+failed captures as acceptance evidence.
+
 ### 2026-10-19 — native Town geometry prerequisite
 
 The checked MSVC x64 `native_scene_art_test` passes 2/2 without skips. Its actual

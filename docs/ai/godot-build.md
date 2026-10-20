@@ -9,6 +9,33 @@ Use the [work plan](../work-plan.md) for near-term order and
 application journey below has not passed; do not confuse its procedure with
 the accepted Town/L1/L2 scope in [test history](../test-history.md).
 
+## Optional native scene art
+
+`tools/Native.SceneArt` imports explicitly extracted original Town/Cathedral
+CEL/MIN/TIL/SOL, special CEL and selected PAL files. It reuses the native-player
+profile validator to bind exact admitted content hashes and explicit levels.
+The server never reads these assets. Use a new output directory:
+
+```powershell
+dotnet run --project tools/Native.SceneArt -- --source-root D:\Games\ExtractedDiablo --output-root godot-client/Devilution.Client/assets/native-scenes/local --town-palette levels/towndata/town.pal --cathedral-palette levels/l1data/l1_1.pal --profile-directory D:\Profiles\NativeWarrior
+```
+
+Repeat `--profile-directory` for other qualified profiles. Town CEL/MIN/TIL/SOL
+prefer `nlevels/towndata` independently when present, otherwise `levels/towndata`;
+Cathedral uses `levels/l1data`. Special CELs use `levels/towndata/towns.cel` and
+`levels/l1data/l1s.cel`. Inputs, generated PNGs/catalogs and tool outputs are
+ignored. The catalog preserves source/PNG hashes, native slot remapping, all SOL
+bits, effective frame types, separate floor/content masks and special anchors.
+Static palette conversion is qualified; client placement, lighting, palette
+cycling and wall transparency remain separate acceptance gates.
+
+The two explicit `NativeSceneArtImporterTests` compare every captured native
+slot/piece/special and every published PNG pixel, including padding. Set
+`GODEVILUTION_NATIVE_SCENE_REFERENCE_DIRECTORY` to the complete native scene
+capture and `GODEVILUTION_NATIVE_SCENE_PACK_DIRECTORY` to the imported output,
+then run the protocol-test executable with `--filter-class '*NativeSceneArtImporterTests'
+--explicit on --fail-skips on`. Restore both environment variables afterward.
+
 ## Optional native player art
 
 The optional native-player catalog is separate from presentation-pack schema 1.

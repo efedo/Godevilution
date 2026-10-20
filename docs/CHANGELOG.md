@@ -7,6 +7,10 @@ contracts stay in their existing guides.
 
 ## 2026-10-19
 
+- Add a bounded optional client-only Town/Cathedral CEL/MIN/TIL/SOL importer,
+  explicit palettes, content/level bindings and hashed PNG atlases. Preserve native
+  MIN remapping, first-use frame types, floor/foliage masks and special anchors;
+  compare every native piece/special and published pixel before client adoption.
 - Add an MPQ-free Town geometry builder with separate fine/coarse channels,
   native warp policy, conditional Hive/Grave/fountain changes and exact generation
   RNG. Keep general DUN validation and existing runtime profiles unchanged.

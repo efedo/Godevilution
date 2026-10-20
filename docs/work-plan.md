@@ -6,10 +6,11 @@ presentation slice. Optional original-player CL2/PAL/TRN import and snapshot-dri
 class/equipment/direction/action selection pass full native pixel/atlas comparisons;
 both headless class draw/restore pairs pass. Generic packs remain compatible
 and original assets stay client-only. The pure Town composition prerequisite now
-passes all 191 native cases. Continue with its explicit profile/backing-state
-integration, native d-piece/CEL scene art and one isometric transform for cells,
-actors, camera and pointer mapping. Complete scene coverage and matched rendered
-comparisons remain open within this visual slice.
+passes all 191 native cases. The optional Town/Cathedral CEL/MIN/TIL/SOL importer
+now matches every native piece/special and published atlas pixel. Continue with
+explicit Town profile/backing-state integration and shared isometric scene/input
+qualification. Complete scene coverage and matched rendered comparisons remain
+open within this visual slice.
 
 The native Rogue Town/L1/L2 route with earned gear, Town services and fresh-host
 resume remains the broader reusable baseline. Explicit Warrior/Sorcerer profiles
@@ -35,7 +36,11 @@ The qualified profiles already supply Cathedral final d-pieces, while Town's
 Town's four sectors, automap, conditional mutations, retained channels, entry view
 and RNG; see [test history](test-history.md#2026-10-19--native-town-geometry-prerequisite).
 Integrate its 40x40 coarse and 112x112 fine backing state explicitly before
-binding the Town scene. Normal cohort/profile adoption remains separately held.
+binding the Town scene. Native scene import covers 1,711 pieces, 4,666 referenced
+frames and 26 specials with explicit palettes and exact content/level bindings;
+see [test history](test-history.md#2026-10-19--optional-native-scene-art-import).
+Client draw/input acceptance is still pending. Normal cohort/profile adoption
+remains separately held.
 
 ## Delivery order
 

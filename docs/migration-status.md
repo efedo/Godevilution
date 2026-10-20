@@ -41,7 +41,9 @@ Godot presentation client remain unfinished. The server does not require MPQs.
   its existing choices. Rendered flow remains open.
 - Optional original-player import now passes all native indexed/mask and published
   RGBA atlas comparisons, preserving native spill, anchors and animation cycles.
-  Warrior/Sorcerer native-art Journey/Resume pairs pass; scene art, complete native
+  Warrior/Sorcerer native-player-art Journey/Resume pairs pass. Optional native
+  Town/Cathedral scene import also matches every captured piece/special and
+  published atlas pixel; scene drawing/input qualification, complete native
   animation cursors and rendered graphical parity remain open.
 - The pure MPQ-free Town geometry family matches all 191 native composition,
   entry, retained-state and mutation cases. Explicit 112x112 fine and 40x40 coarse
@@ -92,8 +94,9 @@ Town/Cathedral presentation batch has a reviewed player-art stage: client-only
 CL2/PAL/TRN import, snapshot-driven equipment/action selection and actual headless
 class draw/restore checks. Generic packs remain compatible. The pure Town geometry
 prerequisite passes 191 native cases; integrate it into explicit profile/backing
-state because current Town layers remain empty. Native CEL/MIN scene art and
-shared isometric drawing/input follow. Cathedral final d-pieces already exist.
+state because current Town layers remain empty. Native CEL/MIN scene import now
+passes full piece/special and published-atlas comparisons. Shared isometric
+drawing/input qualification follows. Cathedral final d-pieces already exist.
 Complete scene coverage, lighting and rendered comparisons remain open.
 Keep its queue, this status and affected inventory entries synchronized as work
 changes. Do not restart inventory construction or an unrelated test campaign.
