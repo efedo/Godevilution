@@ -91,12 +91,14 @@ reservations, ranged-skeleton emergence records and frozen Gargoyle phases.
 Seventy-six focused cases and all 32 generated admission comparisons pass;
 controlled native actor/pack traces cover Fat Special clocks and wake order. L2
 door operation traces cover blocked close, synchronization and geometry. Existing saves refuse C2 fields until an additive
-format is implemented. Next integrate ranged spawn/controller retention, TCHEST
-operations, per-floor owners, routes and detached cold restore. These remain
-required family gates before playable profile qualification. The shared immutable
-population binding core is extracted behind the unchanged C1 API; 25 focused C1
-lifecycle, retained-floor and class restore cases pass. C2 owners are still open. See
-[verification](test-history.md#2026-10-20--catacombs-actor-admission-and-l2-door-operations).
+format is implemented. The shared immutable population binding core is extracted
+behind the unchanged C1 API; 25 focused lifecycle, retained-floor and class restore
+checks pass. Explicit internal C2 item-family contexts and prepared chest operations
+now pass 114 unique managed cases, including all 30 controlled native comparisons.
+Next integrate ranged controllers, live object/trap ownership, per-floor owners,
+routes and detached cold restore. These remain required family gates before
+playable profile qualification. See
+[verification](test-history.md#2026-10-20--catacombs-item-families-and-prepared-chest-operations).
 
 ## Delivery order
 

@@ -106,7 +106,29 @@ public static class AuthoritativeCathedralBarrelOperationGenerator
         ArgumentNullException.ThrowIfNull(request.Barrel);
         ArgumentNullException.ThrowIfNull(request.SpawnTilesAvailable);
         ValidatePolicy(request.Policy);
+        return GenerateCore(request, AuthoritativeNativeDungeonFamilyContext.Cathedral(
+            request.Policy.Depth));
+    }
 
+    /** Explicit family-aware barrel entry used by Catacombs composition. */
+    internal static AuthoritativeCathedralBarrelOperationResult Generate(
+        AuthoritativeCathedralBarrelOperationRequest request,
+        AuthoritativeNativeDungeonFamilyContext familyContext)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        ArgumentNullException.ThrowIfNull(request.WorldState);
+        ArgumentNullException.ThrowIfNull(request.Catalog);
+        ArgumentNullException.ThrowIfNull(request.Policy);
+        ArgumentNullException.ThrowIfNull(request.Barrel);
+        ArgumentNullException.ThrowIfNull(request.SpawnTilesAvailable);
+        ValidatePolicy(request.Policy, familyContext);
+        return GenerateCore(request, familyContext);
+    }
+
+    private static AuthoritativeCathedralBarrelOperationResult GenerateCore(
+        AuthoritativeCathedralBarrelOperationRequest request,
+        AuthoritativeNativeDungeonFamilyContext familyContext)
+    {
         var facts = request.Barrel;
         ValidateFacts(facts, request.WorldState);
         if (request.SpawnTilesAvailable.Count != 9)
@@ -151,8 +173,10 @@ public static class AuthoritativeCathedralBarrelOperationGenerator
                 OnlyGood: false,
                 Player: request.Player);
             var generated = facts.Var3 == 0
-                ? AuthoritativeCathedralThemeItemWorldGenerator.CreateUsefulItem(itemRequest, request.Policy.Depth)
-                : AuthoritativeCathedralThemeItemWorldGenerator.CreateRandomItem(itemRequest);
+                ? AuthoritativeCathedralThemeItemWorldGenerator.CreateUsefulItem(
+                    itemRequest, request.Policy.Depth, familyContext)
+                : AuthoritativeCathedralThemeItemWorldGenerator.CreateRandomItem(
+                    itemRequest, familyContext);
             worldState = generated.WorldState;
             randomState = generated.FinalRandomState;
             loot = new(generated.SelectedNativeItemIndex, generated.SelectedSlot,
@@ -210,6 +234,22 @@ public static class AuthoritativeCathedralBarrelOperationGenerator
             || policy.Spawn || policy.QuestEnabled
             || !policy.LegacyLevelItemGenerationAllowed)
             throw new InvalidDataException("Native barrel operations are limited to ordinary original-Diablo Cathedral depths 1 through 4.");
+    }
+
+    private static void ValidatePolicy(
+        AuthoritativeCathedralThemeItemPolicy policy,
+        AuthoritativeNativeDungeonFamilyContext familyContext)
+    {
+        familyContext.RequireMatch(policy.Depth);
+        if (!familyContext.IsCatacombs
+            || policy.Depth is < 5 or > 8
+            || policy.CurrentDungeonLevel != 0 && policy.CurrentDungeonLevel != policy.Depth
+            || policy.Hellfire || policy.SetLevel
+            || policy.GameMode != DiabloGameMode.SinglePlayer
+            || policy.Difficulty != DiabloDifficulty.Normal
+            || policy.Spawn || policy.QuestEnabled
+            || !policy.LegacyLevelItemGenerationAllowed)
+            throw new InvalidDataException("Native barrel operations are limited to ordinary original-Diablo Catacombs depths 5 through 8.");
     }
 
     private static void ValidateFacts(

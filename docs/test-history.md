@@ -9,6 +9,35 @@ the referenced test sources. Do not copy raw outputs into historical archives.
 
 ## Client and host verification
 
+### 2026-10-20 — Catacombs item families and prepared chest operations
+
+An explicit internal per-floor family/depth map admits C2 item pools while public
+Cathedral constructors and DTO shape checks retain depths 1–4. Mixed-floor checks
+cover complete pool tails, global unique history, exact context coverage, detached
+restore, contextual death/chest/barrel/sarcophagus transactions and stale refusal.
+Public C1 generation entry points retain their guards; only explicit internal C2
+paths receive depths 5–8. No existing cohort/profile format admits C2 state.
+
+All 114 unique selected managed cases pass without skips. The scope includes
+49 C2 object-policy
+checks, four depth comparisons covering 30 actual native chest operations, three
+retained Cathedral operation corpora and six retained-floor/class restore checks.
+The checked x64 MSVC capture and bounded managed builds/tests exit cleanly; the
+managed build retains 21 existing warnings. Source and native fixture review pass.
+
+The MPQ-free 30-case corpus covers all 24 depth/type pairs, three disarmed TCHEST
+identities, zero seed/count, full pool and failed placement; every row repeats the
+native operation to prove no second mutation. One ordinary chest retains its linked
+wall-trap flag. Comparison includes every item slot, pool order, references, unique
+history, RNG and raw object mutation. Intrinsic Arrow/FireArrow plans match native
+source/target/direction arguments, target kind, owner and damage. Native graphic
+direction is captured separately; retained missile flight/impact is not qualified.
+
+This is prepared-operation and item-runtime evidence. Live C2 chest/trap ownership,
+per-floor admission, ranged controllers, travel, additive persistence and headless
+class journeys remain required before playable family qualification. Decorative
+classification does not qualify dynamic object lighting or animation.
+
 ### 2026-10-20 — Shared native population bindings
 
 The Cathedral policy now delegates immutable pool, footprint, identity and object

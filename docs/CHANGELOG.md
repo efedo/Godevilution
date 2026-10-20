@@ -7,6 +7,12 @@ contracts stay in their existing guides.
 
 ## 2026-10-20
 
+- Add explicit internal item-family ownership for Catacombs pools and operation
+  generation while preserving public Cathedral guards and existing save formats.
+- Add C2 ordinary/TCHEST loot and intrinsic trap plans, disarmed-chest behavior,
+  linked-wall flag preservation and complete native object classification. Compare
+  30 prepared native operations; live floor/effect ownership and cold restore stay open.
+
 - Extract immutable native population bindings behind the existing Cathedral API.
   Preserve C1 generation fingerprints, object lifecycles and retained-floor restore
   while preparing separate Catacombs owners; 25 focused C1 integration cases pass.

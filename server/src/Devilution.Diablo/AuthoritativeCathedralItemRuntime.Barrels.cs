@@ -44,8 +44,9 @@ public partial class AuthoritativeCathedralItemRuntime
         ArgumentNullException.ThrowIfNull(request);
         var level = GetLevel(levelId);
         var levelProfile = GetLevelProfile(levelId);
+        var family = NativeItemFamily(levelId);
         var facts = request.Barrel;
-        if (levelProfile.Depth is < 1 or > 4 || request.Policy.Depth != levelProfile.Depth
+        if (request.Policy.Depth != levelProfile.Depth
             || request.Policy.GameMode != DiabloGameMode.SinglePlayer
             || facts.LevelId != levelId)
             throw new InvalidDataException("Native barrel item transactions require the owned single-player Cathedral pool.");
@@ -64,7 +65,9 @@ public partial class AuthoritativeCathedralItemRuntime
             || !request.WorldState.UniqueItemFlags.SetEquals(uniqueItemFlags))
             throw new InvalidOperationException("Native barrel operation was prepared from stale or altered item-pool state.");
 
-        var operation = AuthoritativeCathedralBarrelOperationGenerator.Generate(request);
+        var operation = family.IsCatacombs
+            ? AuthoritativeCathedralBarrelOperationGenerator.Generate(request, family)
+            : AuthoritativeCathedralBarrelOperationGenerator.Generate(request);
         AuthoritativeCathedralNativeItemProjection? projection = null;
         if (operation.Loot is { Allocated: true, Visible: true, Item: { } item } loot) {
             projection = ProjectNativeItem(
@@ -147,7 +150,7 @@ public partial class AuthoritativeCathedralItemRuntime
         }
 
         var candidateCheckpoint = BuildCandidateCheckpoint(bindings);
-        ValidateCheckpoint(candidateCheckpoint, profile);
+        ValidateCheckpoint(candidateCheckpoint, profile, nativeFamilyContexts);
         if (!canCommitOwner())
             return null;
 
@@ -160,7 +163,7 @@ public partial class AuthoritativeCathedralItemRuntime
             bindings[loot.Slot] = entityId;
             projections.Add(projection);
             candidateCheckpoint = BuildCandidateCheckpoint(bindings);
-            ValidateCheckpoint(candidateCheckpoint, profile);
+            ValidateCheckpoint(candidateCheckpoint, profile, nativeFamilyContexts);
         }
 
         commitOwner();
@@ -182,7 +185,7 @@ public partial class AuthoritativeCathedralItemRuntime
         DiabloCathedralItemCheckpoint BuildCandidateCheckpoint(IReadOnlyList<uint> candidateBindings)
         {
             var candidateLevel = BuildCandidateLevel(candidateBindings);
-            ValidateLevelShape(candidateLevel);
+            ValidateLevelShape(candidateLevel, nativeFamilyContexts);
             return new(
                 profile.MetadataFingerprint,
                 profile.GenerationFingerprint,

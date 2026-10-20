@@ -271,6 +271,7 @@ public partial class AuthoritativeCathedralItemRuntime
     private readonly Dictionary<uint, MutableLevel> levels;
     private readonly Guid runtimeIdentity = Guid.NewGuid();
     private readonly AuthoritativeNativeGoldStackMetadata? nativeGoldStackMetadata;
+    private readonly IReadOnlyDictionary<uint, AuthoritativeNativeDungeonFamilyContext>? nativeFamilyContexts;
     private HashSet<int> uniqueItemFlags;
     private int uniqueHistoryVersion;
 
@@ -290,9 +291,25 @@ public partial class AuthoritativeCathedralItemRuntime
         AuthoritativeCathedralItemRuntimeProfile profile,
         DiabloCathedralItemCheckpoint? checkpoint,
         AuthoritativeNativeGoldStackMetadata? nativeGoldStackMetadata)
+        : this(profile, checkpoint, nativeGoldStackMetadata, null)
+    {
+    }
+
+    /** Explicit per-floor family ownership is available only to the native family admission path. */
+    internal AuthoritativeCathedralItemRuntime(
+        AuthoritativeCathedralItemRuntimeProfile profile,
+        DiabloCathedralItemCheckpoint? checkpoint,
+        AuthoritativeNativeGoldStackMetadata? nativeGoldStackMetadata,
+        IReadOnlyDictionary<uint, AuthoritativeNativeDungeonFamilyContext>? nativeFamilyContexts)
     {
         this.profile = CloneProfile(profile ?? throw new ArgumentNullException(nameof(profile)));
-        ValidateProfile(this.profile);
+        this.nativeFamilyContexts = nativeFamilyContexts is null ? null
+            : new ReadOnlyDictionary<uint, AuthoritativeNativeDungeonFamilyContext>(nativeFamilyContexts.ToDictionary());
+        ValidateNativeFamilyCoverage(this.profile.LevelProfiles.Select(level => (level.LevelId, level.Depth)),
+            this.nativeFamilyContexts);
+        ValidateProfile(this.profile, this.nativeFamilyContexts);
+        if (this.nativeFamilyContexts is not null)
+            ValidateCheckpoint(this.profile.InitialCheckpoint, this.profile, this.nativeFamilyContexts);
         if (nativeGoldStackMetadata is not null
             && (!this.profile.ItemBindings.TryGetValue(nativeGoldStackMetadata.NativeItemIndex, out var goldBinding)
                 || goldBinding.StableItemId != nativeGoldStackMetadata.StableItemId
@@ -301,7 +318,7 @@ public partial class AuthoritativeCathedralItemRuntime
             throw new InvalidDataException("Native Gold cursor metadata does not match the runtime item binding.");
         this.nativeGoldStackMetadata = nativeGoldStackMetadata;
         var source = checkpoint ?? this.profile.InitialCheckpoint;
-        ValidateCheckpoint(source, this.profile);
+        ValidateCheckpoint(source, this.profile, this.nativeFamilyContexts);
         uniqueItemFlags = source.UniqueItemFlags.ToHashSet();
         levels = source.Levels.ToDictionary(
             level => level.LevelId,
@@ -566,8 +583,7 @@ public partial class AuthoritativeCathedralItemRuntime
             throw new ArgumentOutOfRangeException(nameof(request.PositionX));
 
         var worldState = BuildWorldState(request.LevelId, request.Occupancy);
-        var loot = AuthoritativeCathedralMonsterLootGenerator.SpawnLoot(
-            new AuthoritativeCathedralMonsterLootRequest(
+        var lootRequest = new AuthoritativeCathedralMonsterLootRequest(
                 worldState,
                 profile.ItemCatalog,
                 profile.ItemPolicy with {
@@ -582,7 +598,11 @@ public partial class AuthoritativeCathedralItemRuntime
                 request.IsUnique,
                 request.IsPlayerMinion,
                 request.Unique,
-                request.Player));
+                request.Player);
+        var family = NativeItemFamily(request.LevelId);
+        var loot = family.IsCatacombs
+            ? AuthoritativeCathedralMonsterLootGenerator.SpawnLoot(lootRequest, family)
+            : AuthoritativeCathedralMonsterLootGenerator.SpawnLoot(lootRequest);
 
         AuthoritativeCathedralNativeItemProjection? projection = null;
         if (loot.Dropped && loot.Item is not null && loot.SelectedSlot >= 0 && loot.PlacementSucceeded) {
@@ -636,6 +656,12 @@ public partial class AuthoritativeCathedralItemRuntime
             throw new InvalidOperationException("Native chest loot was prepared from stale or altered item-pool state.");
 
         var loot = AuthoritativeCathedralChestLootGenerator.Generate(request);
+        return BuildChestTransaction(level, loot);
+    }
+
+    private AuthoritativeCathedralItemChestTransaction BuildChestTransaction(
+        MutableLevel level, AuthoritativeCathedralChestLootResult loot)
+    {
         var projections = new AuthoritativeCathedralNativeItemProjection?[loot.Entries.Count];
         for (var index = 0; index < loot.Entries.Count; index++) {
             var entry = loot.Entries[index];
@@ -651,7 +677,7 @@ public partial class AuthoritativeCathedralItemRuntime
                 binding,
                 profile.ContentInventoryDimensions);
         }
-        return new(levelId, level.Version, loot, projections, runtimeIdentity, uniqueHistoryVersion);
+        return new(level.LevelId, level.Version, loot, projections, runtimeIdentity, uniqueHistoryVersion);
     }
 
     /**
@@ -743,7 +769,7 @@ public partial class AuthoritativeCathedralItemRuntime
             bindings.Select((entityId, slot) => new DiabloCathedralItemSlotEntityBinding(slot, entityId)).ToArray(),
             level.RandomState,
             level.GenerationIdentity);
-        ValidateLevelShape(candidateLevel);
+        ValidateLevelShape(candidateLevel, nativeFamilyContexts);
         var candidateCheckpoint = new DiabloCathedralItemCheckpoint(
             profile.MetadataFingerprint,
             profile.GenerationFingerprint,
@@ -751,7 +777,7 @@ public partial class AuthoritativeCathedralItemRuntime
             levels.Values.Select(value => value.LevelId == level.LevelId ? candidateLevel : value.Checkpoint)
                 .OrderBy(value => value.LevelId)
                 .ToArray());
-        ValidateCheckpoint(candidateCheckpoint, profile);
+        ValidateCheckpoint(candidateCheckpoint, profile, nativeFamilyContexts);
 
         commitChestOpen();
 
@@ -1335,7 +1361,8 @@ public partial class AuthoritativeCathedralItemRuntime
             source.UniqueItemFlags.ToArray(),
             source.Levels.Select(CloneLevel).ToArray());
 
-    private static void ValidateProfile(AuthoritativeCathedralItemRuntimeProfile profile)
+    private static void ValidateProfile(AuthoritativeCathedralItemRuntimeProfile profile,
+        IReadOnlyDictionary<uint, AuthoritativeNativeDungeonFamilyContext>? familyContexts = null)
     {
         RequireFingerprint(profile.MetadataFingerprint, nameof(profile.MetadataFingerprint));
         RequireFingerprint(profile.GenerationFingerprint, nameof(profile.GenerationFingerprint));
@@ -1359,15 +1386,16 @@ public partial class AuthoritativeCathedralItemRuntime
         if (profile.NativeSpellBindings.Keys.Any(nativeId => nativeId is < 0 or > sbyte.MaxValue))
             throw new InvalidDataException("Native spell bindings contain an unsafe native ordinal.");
         foreach (var level in profile.LevelProfiles)
-            ValidateLevelProfile(level);
+            ValidateLevelProfile(level, familyContexts);
     }
 
     private static void ValidateCheckpoint(
         DiabloCathedralItemCheckpoint checkpoint,
-        AuthoritativeCathedralItemRuntimeProfile profile)
+        AuthoritativeCathedralItemRuntimeProfile profile,
+        IReadOnlyDictionary<uint, AuthoritativeNativeDungeonFamilyContext>? familyContexts = null)
     {
         ArgumentNullException.ThrowIfNull(checkpoint);
-        checkpoint.ValidateShape();
+        ValidateCheckpointShapeCore(checkpoint, familyContexts);
         if (!string.Equals(checkpoint.MetadataFingerprint, profile.MetadataFingerprint, StringComparison.Ordinal)
             || !string.Equals(checkpoint.GenerationFingerprint, profile.GenerationFingerprint, StringComparison.Ordinal))
             throw new InvalidDataException("Native Cathedral item checkpoint identity does not match the active profile.");
@@ -1384,8 +1412,9 @@ public partial class AuthoritativeCathedralItemRuntime
             throw new InvalidDataException("Native Cathedral item checkpoint must contain a level.");
         if (checkpoint.Levels.Select(level => level.LevelId).Distinct().Count() != checkpoint.Levels.Count)
             throw new InvalidDataException("Native Cathedral item checkpoint contains duplicate levels.");
+        ValidateNativeFamilyCoverage(checkpoint.Levels.Select(level => (level.LevelId, level.Depth)), familyContexts);
         foreach (var level in checkpoint.Levels)
-            ValidateLevelShape(level);
+            ValidateLevelShape(level, familyContexts);
         foreach (var level in checkpoint.Levels) {
             var profileLevel = profile.LevelProfiles.FirstOrDefault(candidate => candidate.LevelId == level.LevelId);
             if (profileLevel is null || profileLevel.Depth != level.Depth)
@@ -1394,6 +1423,17 @@ public partial class AuthoritativeCathedralItemRuntime
     }
 
     internal static void ValidateCheckpointShape(DiabloCathedralItemCheckpoint checkpoint)
+        => ValidateCheckpointShapeCore(checkpoint, null);
+
+    internal static void ValidateCheckpointShape(DiabloCathedralItemCheckpoint checkpoint,
+        IReadOnlyDictionary<uint, AuthoritativeNativeDungeonFamilyContext> familyContexts)
+    {
+        ArgumentNullException.ThrowIfNull(familyContexts);
+        ValidateCheckpointShapeCore(checkpoint, familyContexts);
+    }
+
+    private static void ValidateCheckpointShapeCore(DiabloCathedralItemCheckpoint checkpoint,
+        IReadOnlyDictionary<uint, AuthoritativeNativeDungeonFamilyContext>? familyContexts)
     {
         ArgumentNullException.ThrowIfNull(checkpoint);
         if (!IsCanonicalFingerprint(checkpoint.MetadataFingerprint)
@@ -1408,15 +1448,16 @@ public partial class AuthoritativeCathedralItemRuntime
             || !checkpoint.Levels.Select(level => level.LevelId)
                 .SequenceEqual(checkpoint.Levels.Select(level => level.LevelId).OrderBy(levelId => levelId)))
             throw new InvalidDataException("Native Cathedral item checkpoint levels are not unique.");
+        ValidateNativeFamilyCoverage(checkpoint.Levels.Select(level => (level.LevelId, level.Depth)), familyContexts);
         foreach (var level in checkpoint.Levels)
-            ValidateLevelShape(level);
+            ValidateLevelShape(level, familyContexts);
     }
 
-    private static void ValidateLevelProfile(AuthoritativeCathedralItemLevelProfile profile)
+    private static void ValidateLevelProfile(AuthoritativeCathedralItemLevelProfile profile,
+        IReadOnlyDictionary<uint, AuthoritativeNativeDungeonFamilyContext>? familyContexts)
     {
         ArgumentNullException.ThrowIfNull(profile);
-        if (profile.Depth is < 1 or > 4)
-            throw new InvalidDataException("Native Cathedral item level depth is outside the supported range.");
+        ValidateNativeFamilyDepth(profile.LevelId, profile.Depth, familyContexts);
         ValidateCells(profile.SolidTiles, nameof(profile.SolidTiles));
         ValidateCells(profile.SetPieceTiles, nameof(profile.SetPieceTiles));
         ValidateCells(profile.InitialObjectRefs, nameof(profile.InitialObjectRefs));
@@ -1462,10 +1503,13 @@ public partial class AuthoritativeCathedralItemRuntime
     }
 
     internal static void ValidateLevelShape(DiabloCathedralItemLevelCheckpoint level)
+        => ValidateLevelShape(level, null);
+
+    private static void ValidateLevelShape(DiabloCathedralItemLevelCheckpoint level,
+        IReadOnlyDictionary<uint, AuthoritativeNativeDungeonFamilyContext>? familyContexts)
     {
         ArgumentNullException.ThrowIfNull(level);
-        if (level.Depth is < 1 or > 4)
-            throw new InvalidDataException("Native Cathedral item level depth is outside the supported range.");
+        ValidateNativeFamilyDepth(level.LevelId, level.Depth, familyContexts);
         ArgumentNullException.ThrowIfNull(level.Items);
         ArgumentNullException.ThrowIfNull(level.ActiveItemIds);
         ArgumentNullException.ThrowIfNull(level.SignedItemRefs);

@@ -110,6 +110,59 @@ public static class AuthoritativeCathedralChestLootGenerator
                 + request.PositionX]) != request.ChestObjectSlot + 1)
             throw new InvalidDataException("Native chest must be the selected object at its captured origin.");
 
+        return GenerateItems(request, AuthoritativeNativeDungeonFamilyContext.Cathedral(request.Policy.Depth));
+    }
+
+    /** Family-aware item placement used by the separately admitted Catacombs chest wrapper. */
+    internal static AuthoritativeCathedralChestLootResult Generate(
+        AuthoritativeCathedralChestLootRequest request,
+        AuthoritativeNativeDungeonFamilyContext familyContext)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        ArgumentNullException.ThrowIfNull(request.WorldState);
+        ArgumentNullException.ThrowIfNull(request.Catalog);
+        ArgumentNullException.ThrowIfNull(request.Policy);
+        familyContext.RequireMatch(request.Policy.Depth);
+        if (!familyContext.IsCatacombs)
+            throw new InvalidDataException("The family-aware chest path is reserved for Catacombs objects.");
+        if (request.Policy.Depth is < 5 or > 8
+            || request.Policy.CurrentDungeonLevel != 0 && request.Policy.CurrentDungeonLevel != request.Policy.Depth
+            || request.Policy.Hellfire || request.Policy.SetLevel
+            || request.Policy.GameMode != DiabloGameMode.SinglePlayer
+            || request.Policy.Difficulty != DiabloDifficulty.Normal
+            || request.Policy.Spawn || request.Policy.QuestEnabled
+            || !request.Policy.LegacyLevelItemGenerationAllowed)
+            throw new InvalidDataException("Native chest contents require ordinary original-Diablo Catacombs depths 5 through 8.");
+
+        var nativeType = (int)request.ChestType;
+        var lootTier = AuthoritativeCatacombsNativeObjectPolicy.LootTierForChestType(nativeType);
+        ValidateLootRequest(request, lootTier);
+        return GenerateItems(request, familyContext);
+    }
+
+    private static void ValidateLootRequest(
+        AuthoritativeCathedralChestLootRequest request,
+        int lootTier)
+    {
+        if (request.ItemCount < 0 || request.ItemCount > lootTier - Chest1 + 1)
+            throw new InvalidDataException("Native chest item count is outside AddChest's variant range.");
+        if (request.ItemBranch is < 0 or > 7)
+            throw new InvalidDataException("Native chest item branch is outside Var2's generated range.");
+        if ((uint)request.PositionX >= AuthoritativeCathedralThemeItemWorldState.Width
+            || (uint)request.PositionY >= AuthoritativeCathedralThemeItemWorldState.Height)
+            throw new InvalidDataException("Native chest origin is outside the item world.");
+        if (request.ChestObjectSlot < 0
+            || request.ChestObjectSlot >= request.WorldState.ObjectCanInteract.Count
+            || !request.WorldState.ObjectCanInteract[request.ChestObjectSlot]
+            || Math.Abs(request.WorldState.ObjectRefs[request.PositionY * AuthoritativeCathedralThemeItemWorldState.Width
+                + request.PositionX]) != request.ChestObjectSlot + 1)
+            throw new InvalidDataException("Native chest must be the selected object at its captured origin.");
+    }
+
+    private static AuthoritativeCathedralChestLootResult GenerateItems(
+        AuthoritativeCathedralChestLootRequest request,
+        AuthoritativeNativeDungeonFamilyContext familyContext)
+    {
         // Native OperateChest clears SelectionRegion before it calls either
         // CreateRndUseful or CreateRndItem, which changes placement at the chest.
         var objectCanInteract = request.WorldState.ObjectCanInteract.ToArray();
@@ -140,8 +193,9 @@ public static class AuthoritativeCathedralChestLootGenerator
                 OnlyGood: false,
                 Player: request.Player);
             var generated = request.ItemBranch == 0
-                ? AuthoritativeCathedralThemeItemWorldGenerator.CreateUsefulItem(itemRequest, request.Policy.Depth)
-                : AuthoritativeCathedralThemeItemWorldGenerator.CreateRandomItem(itemRequest);
+                ? AuthoritativeCathedralThemeItemWorldGenerator.CreateUsefulItem(
+                    itemRequest, request.Policy.Depth, familyContext)
+                : AuthoritativeCathedralThemeItemWorldGenerator.CreateRandomItem(itemRequest, familyContext);
             worldState = generated.WorldState;
             randomState = generated.FinalRandomState;
             entries[i] = new(

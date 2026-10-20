@@ -154,6 +154,10 @@ clocks, wake order, blocked close and sync geometry.
 Existing cohort formats refuse C2 fields; no playable Catacombs profile is active.
 Ranged timing/controller retention, TCHEST operations, per-floor ownership,
 profile/travel integration and detached cold restore remain required family gates.
+Explicit internal C2 item-family contexts and prepared ordinary/TCHEST operation
+plans now pass 114 unique managed cases, including 30 native chest comparisons.
+Disarmed TCHEST loots without firing; linked ordinary chests preserve the wall
+trigger flag. Live C2 effect/floor ownership and old-format refusal stay in force.
 The immutable population binding core is shared behind the unchanged Cathedral
 API; 25 focused C1 lifecycle, retained-floor and class restore checks pass. This
 prepares C2 ownership without activating a family profile.

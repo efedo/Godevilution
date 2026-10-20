@@ -1466,6 +1466,246 @@ private:
 	std::unique_ptr<NativeThemeRoomGuard> roomGuard;
 };
 
+void WriteChestMissiles(std::ostream &out, WorldTilePosition operationTarget);
+
+TEST_F(ThemeRoomGenerationTest, CaptureNativeCatacombsChestOperations)
+{
+	const char *directory = std::getenv("GODEVILUTION_CATACOMBS_CHEST_ORACLE_DIRECTORY");
+	if (directory == nullptr || *directory == '\0')
+		GTEST_SKIP() << "Set the explicit Catacombs chest oracle directory.";
+	const std::filesystem::path root = std::filesystem::absolute(directory);
+	ASSERT_TRUE(std::filesystem::is_directory(root));
+	ASSERT_TRUE(std::filesystem::is_empty(root)) << "Never overwrite retained native evidence.";
+	struct ExecutionGuard {
+		bool sound = gbSndInited;
+		bool headless = HeadlessMode;
+		bool missilePreFlag = MissilePreFlag;
+		std::list<Missile> savedMissiles = std::move(Missiles);
+		ScopedMissileDataForTest missileData;
+		~ExecutionGuard()
+		{
+			Missiles = std::move(savedMissiles);
+			MissilePreFlag = missilePreFlag;
+			gbSndInited = sound;
+			HeadlessMode = headless;
+		}
+	} guard;
+	HeadlessMode = true;
+	gbSndInited = false;
+	LoadMissileData();
+	ASSERT_TRUE(IsMissileDataAvailable(MissileID::Arrow));
+	ASSERT_TRUE(IsMissileDataAvailable(MissileID::FireArrow));
+	Player remotePlayer;
+	remotePlayer.position.tile = { 46, 50 };
+	std::ofstream stream(root / "native-catacombs-chest-operations.json", std::ios::binary | std::ios::trunc);
+	ASSERT_TRUE(stream.good());
+	int caseCount = 0;
+	{
+		JsonObject document(stream);
+		document.String("format", "godevilution-catacombs-chest-operations");
+		document.Number("version", 1);
+		document.Number("playerMaximumLife", MyPlayer->life.maximumBase);
+		document.Number("playerMaximumMana", MyPlayer->mana.maximumBase);
+		document.Key("catalog"); WriteCatalog(stream);
+		document.Key("roomCatalog"); WriteRoomCatalog(stream);
+		document.Key("cases"); stream << '[';
+		struct Lane {
+			std::string name;
+			int depth;
+			int rawType;
+			int itemCount;
+			int branch;
+			bool trapFlag;
+			int trapKind;
+			uint32_t seed;
+			int activeItems;
+			bool blockPlacement;
+			bool linkedWallTrap;
+		};
+		std::vector<Lane> lanes;
+		constexpr std::array<int, 6> rawTypes { 5, 6, 7, 68, 69, 70 };
+		constexpr std::array<uint32_t, 6> seeds { 0, 1, 2588, UINT32_C(0x80000000), UINT32_MAX, 743271966 };
+		for (int depth = 5; depth <= 8; ++depth) {
+			for (size_t index = 0; index < rawTypes.size(); ++index) {
+				const int rawType = rawTypes[index];
+				const bool intrinsic = rawType >= 68;
+				const bool linkedWallTrap = depth == 8 && rawType == 6;
+				std::ostringstream name;
+				name << "depth-" << depth << "-type-" << rawType;
+				lanes.push_back({ name.str(), depth, rawType, 1, static_cast<int>(index % 2),
+					intrinsic || linkedWallTrap,
+					static_cast<int>((depth + static_cast<int>(index)) % 2),
+					seeds[(static_cast<size_t>(depth) + index) % seeds.size()],
+					2, false, linkedWallTrap });
+			}
+		}
+		for (int rawType = 68; rawType <= 70; ++rawType) {
+			std::ostringstream name;
+			name << "disarmed-type-" << rawType;
+			lanes.push_back({ name.str(), 5, rawType, 1, rawType % 2, false, 1, 2588, 2, false, false });
+		}
+		lanes.push_back({ "zero-count-zero-seed", 5, 5, 0, 0, false, 0, 0, 2, false, false });
+		lanes.push_back({ "full-item-pool", 8, 7, 1, 1, false, 0, UINT32_C(0x80000000), MAXITEMS, false, false });
+		lanes.push_back({ "blocked-item-placement", 6, 5, 1, 0, false, 0, 2588, 2, true, false });
+		for (const Lane &lane : lanes) {
+			PrepareRoom(lane.depth, lane.activeItems, lane.linkedWallTrap ? 2 : 1, 0, false);
+			currentLevel().setId(LevelId { .levelNum = static_cast<uint8_t>(lane.depth), .type = DTYPE_CATACOMBS });
+			MyPlayer->plrlevel = static_cast<uint8_t>(lane.depth);
+			MyPlayer->plrIsOnSetLevel = false;
+			MyPlayer->_pLvlChanging = false;
+			MyPlayer->pLvlLoad = 1;
+			MyPlayer->position.tile = { 60, 60 };
+			tileAt(50, 50).setPlayer(0);
+			tileAt(50, 50).setMonster(0);
+			if (lane.blockPlacement)
+				std::fill(std::begin(tileProperties()), std::end(tileProperties()), TileProperties::Solid);
+			Object &chest = Objects[0];
+			chest._otype = static_cast<_object_id>(lane.rawType);
+			chest.position = { 50, 50 };
+			chest._oSolidFlag = true;
+			chest._oMissFlag = true;
+			chest.selectionRegion = SelectionRegion::Bottom;
+			chest._oAnimFrame = 1;
+			chest._oAnimLen = 3;
+			chest._oAnimDelay = 1;
+			chest._oAnimWidth = 96;
+			chest._oRndSeed = lane.seed;
+			chest._oVar1 = lane.itemCount;
+			chest._oVar2 = lane.branch;
+			chest._oVar4 = lane.trapKind;
+			chest._oTrapFlag = lane.trapFlag;
+			tileAt(chest.position).setObject(1);
+			if (lane.linkedWallTrap) {
+				Object &wallTrap = Objects[1];
+				wallTrap._otype = static_cast<_object_id>(53);
+				wallTrap.position = { 50, 49 };
+				wallTrap._oVar1 = 50;
+				wallTrap._oVar2 = 50;
+				wallTrap._oVar3 = static_cast<int>(MissileID::Arrow);
+				wallTrap._oVar4 = 0;
+				tileAt(wallTrap.position).setObject(2);
+			}
+			Missiles.clear();
+			MissilePreFlag = false;
+			SetRndSeed(UINT32_C(0x12345678));
+			const NativeItemWorldState before = CaptureItemWorld();
+			if (caseCount++ != 0) stream << ',';
+			JsonObject row(stream);
+			row.String("name", lane.name);
+			row.Number("depth", lane.depth);
+			row.Number("levelType", levelType());
+			row.Number("rawType", lane.rawType);
+			row.Number("itemCount", lane.itemCount);
+			row.Number("branch", lane.branch);
+			row.Boolean("trapFlag", lane.trapFlag);
+			row.Number("trapKind", lane.trapKind);
+			row.Number("seed", lane.seed);
+			row.Number("remotePlayerX", remotePlayer.position.tile.x);
+			row.Number("remotePlayerY", remotePlayer.position.tile.y);
+			row.Number("trapDirectionArgument", GetDirection(chest.position, remotePlayer.position.tile));
+			row.Boolean("blockPlacement", lane.blockPlacement);
+			row.Boolean("linkedWallTrap", lane.linkedWallTrap);
+			auto writeLinkedWallTrap = [&]() {
+				if (lane.linkedWallTrap) WriteRoomObject(stream, 1, Objects[1]);
+				else stream << "null";
+			};
+			row.Key("inputChest"); WriteRoomObject(stream, 0, chest);
+			row.Key("inputLinkedWallTrap"); writeLinkedWallTrap();
+			row.Key("inputActiveObjectIds"); WriteArray(stream, ObjectPoolAdapter::ActiveObjectIds(), [&](int id) { stream << id; });
+			row.Key("input"); WriteItemWorld(stream, before, true);
+			row.Key("inputMissiles"); WriteChestMissiles(stream, remotePlayer.position.tile);
+			row.Boolean("inputMissilePreFlag", MissilePreFlag);
+			SyncOpObject(remotePlayer, CMD_OPERATEOBJ, chest);
+			const NativeItemWorldState after = CaptureItemWorld();
+			row.Key("expectedChest"); WriteRoomObject(stream, 0, chest);
+			row.Key("expectedLinkedWallTrap"); writeLinkedWallTrap();
+			row.Key("expected"); WriteItemWorld(stream, after, false);
+			row.Key("expectedMissiles"); WriteChestMissiles(stream, remotePlayer.position.tile);
+			row.Boolean("expectedMissilePreFlag", MissilePreFlag);
+			EXPECT_EQ(chest.selectionRegion, SelectionRegion::None);
+			EXPECT_EQ(chest._oAnimFrame, 3U);
+			EXPECT_EQ(chest._oRndSeed, lane.seed);
+			if (lane.rawType >= 68 && lane.trapFlag) {
+				EXPECT_FALSE(chest._oTrapFlag);
+				EXPECT_EQ(Missiles.size(), 1U);
+				ASSERT_FALSE(Missiles.empty());
+				const Missile &missile = Missiles.front();
+				EXPECT_EQ(missile._mitype, lane.trapKind == 0 ? MissileID::Arrow : MissileID::FireArrow);
+
+				EXPECT_EQ(missile.position.start.x, chest.position.x);
+				EXPECT_EQ(missile.position.start.y, chest.position.y);
+				EXPECT_EQ(missile.position.tile.x, chest.position.x);
+				EXPECT_EQ(missile.position.tile.y, chest.position.y);
+				EXPECT_TRUE(missile.position.velocity.deltaX != 0 || missile.position.velocity.deltaY != 0);
+				EXPECT_EQ(missile._misource, -1);
+				EXPECT_EQ(missile._micaster, TARGET_PLAYERS);
+				EXPECT_EQ(missile._midam, 0);
+			} else {
+				EXPECT_EQ(chest._oTrapFlag, lane.trapFlag);
+				EXPECT_TRUE(Missiles.empty());
+			}
+			if (lane.itemCount == 0)
+				EXPECT_EQ(after.activeCount, before.activeCount);
+			if (lane.activeItems == MAXITEMS)
+				EXPECT_EQ(after.activeCount, before.activeCount);
+			if (lane.blockPlacement)
+				EXPECT_EQ(after.activeCount, before.activeCount + 1);
+			std::ostringstream firstState, firstChest, firstMissiles;
+			WriteItemWorld(firstState, after, false);
+			WriteRoomObject(firstChest, 0, chest);
+			WriteChestMissiles(firstMissiles, remotePlayer.position.tile);
+			SyncOpObject(remotePlayer, CMD_OPERATEOBJ, chest);
+			const NativeItemWorldState repeated = CaptureItemWorld();
+			row.Key("repeatedChest"); WriteRoomObject(stream, 0, chest);
+			row.Key("repeatedLinkedWallTrap"); writeLinkedWallTrap();
+			row.Key("repeatedActiveObjectIds"); WriteArray(stream, ObjectPoolAdapter::ActiveObjectIds(), [&](int id) { stream << id; });
+			row.Key("repeated"); WriteItemWorld(stream, repeated, false);
+			row.Key("repeatedMissiles"); WriteChestMissiles(stream, remotePlayer.position.tile);
+			row.Boolean("repeatedMissilePreFlag", MissilePreFlag);
+			std::ostringstream repeatedState, repeatedChest, repeatedMissiles;
+			WriteItemWorld(repeatedState, repeated, false);
+			WriteRoomObject(repeatedChest, 0, chest);
+			WriteChestMissiles(repeatedMissiles, remotePlayer.position.tile);
+			EXPECT_EQ(firstState.str(), repeatedState.str());
+			EXPECT_EQ(firstChest.str(), repeatedChest.str());
+			EXPECT_EQ(firstMissiles.str(), repeatedMissiles.str());
+		}
+		stream << ']';
+		document.Number("caseCount", caseCount);
+	}
+	stream.flush(); ASSERT_TRUE(stream.good()); stream.close();
+	EXPECT_EQ(caseCount, 30);
+	EXPECT_LE(std::filesystem::file_size(root / "native-catacombs-chest-operations.json"), 64U * 1024U * 1024U);
+}
+
+void WriteChestMissiles(std::ostream &out, WorldTilePosition operationTarget)
+{
+	// AddArrow stores velocity derived from AddMissile's destination, but does not persist that destination in the projectile union.
+	out << '[';
+	bool first = true;
+	for (const Missile &missile : Missiles) {
+		if (!first) out << ',';
+		first = false;
+		JsonObject row(out);
+		row.Number("type", missile._mitype);
+		row.Number("direction", missile.getDirection());
+		row.Number("frameGroup", missile.getFrameGroupRaw());
+		row.Number("startX", missile.position.start.x);
+		row.Number("startY", missile.position.start.y);
+		row.Number("tileX", missile.position.tile.x);
+		row.Number("tileY", missile.position.tile.y);
+		row.Number("velocityX", missile.position.velocity.deltaX);
+		row.Number("velocityY", missile.position.velocity.deltaY);
+		row.Number("destinationArgumentX", operationTarget.x);
+		row.Number("destinationArgumentY", operationTarget.y);
+		row.Number("source", missile._misource);
+		row.Number("ownerKind", missile._micaster);
+		row.Number("damage", missile._midam);
+		row.Number("spellLevel", missile._mispllvl);
+	}
+	out << ']';
+}
+
 TEST_F(ThemeRoomGenerationTest, NativeThemeRoomGuardRestoresBestiarySizeAndEntries)
 {
 	const size_t originalSize = LevelBestiary.size();

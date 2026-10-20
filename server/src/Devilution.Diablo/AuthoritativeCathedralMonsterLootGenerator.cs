@@ -99,6 +99,24 @@ public static class AuthoritativeCathedralMonsterLootGenerator
     {
         ArgumentNullException.ThrowIfNull(request);
         ValidateRequest(request);
+        return SpawnLootCore(request, AuthoritativeNativeDungeonFamilyContext.Cathedral(
+            request.Policy.Depth));
+    }
+
+    /** Explicit family-aware death loot entry used by Catacombs composition. */
+    internal static AuthoritativeCathedralMonsterLootResult SpawnLoot(
+        AuthoritativeCathedralMonsterLootRequest request,
+        AuthoritativeNativeDungeonFamilyContext familyContext)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        ValidateRequest(request, familyContext);
+        return SpawnLootCore(request, familyContext);
+    }
+
+    private static AuthoritativeCathedralMonsterLootResult SpawnLootCore(
+        AuthoritativeCathedralMonsterLootRequest request,
+        AuthoritativeNativeDungeonFamilyContext familyContext)
+    {
 
         var monster = request.MonsterCatalog.Get(request.MonsterId);
         var rawDataLevel = monster.Level;
@@ -165,7 +183,8 @@ public static class AuthoritativeCathedralMonsterLootGenerator
             rawDataLevel,
             request.IsUnique
                 ? request.Catalog.Rules.UniqueChanceUnique
-                : request.Catalog.Rules.UniqueChanceNormal);
+                : request.Catalog.Rules.UniqueChanceNormal,
+            familyContext);
         return new AuthoritativeCathedralMonsterLootResult(
             worldResult.WorldState,
             AuthoritativeCathedralMonsterLootOutcome.DroppedItem,
@@ -277,6 +296,35 @@ public static class AuthoritativeCathedralMonsterLootGenerator
                 && request.Policy.CurrentDungeonLevel != request.Policy.Depth)
             throw new InvalidDataException(
                 "Only ordinary original-Diablo Cathedral SP Normal monster loot is supported.");
+        ValidateRemainingRequest(request);
+    }
+
+    private static void ValidateRequest(
+        AuthoritativeCathedralMonsterLootRequest request,
+        AuthoritativeNativeDungeonFamilyContext familyContext)
+    {
+        ArgumentNullException.ThrowIfNull(request.WorldState);
+        ArgumentNullException.ThrowIfNull(request.Catalog);
+        ArgumentNullException.ThrowIfNull(request.Policy);
+        ArgumentNullException.ThrowIfNull(request.MonsterCatalog);
+        familyContext.RequireMatch(request.Policy.Depth);
+        if (!familyContext.IsCatacombs
+            || request.Policy.Depth is < 5 or > 8
+            || request.Policy.CurrentDungeonLevel is < 0 or > 8
+            || request.Policy.GameMode != DiabloGameMode.SinglePlayer
+            || request.Policy.Difficulty != DiabloDifficulty.Normal
+            || request.Policy.Hellfire || request.Policy.Spawn
+            || request.Policy.QuestEnabled || request.Policy.SetLevel
+            || !request.Policy.LegacyLevelItemGenerationAllowed
+            || request.Policy.CurrentDungeonLevel != 0
+                && request.Policy.CurrentDungeonLevel != request.Policy.Depth)
+            throw new InvalidDataException(
+                "Only ordinary original-Diablo Catacombs SP Normal monster loot is supported.");
+        ValidateRemainingRequest(request);
+    }
+
+    private static void ValidateRemainingRequest(AuthoritativeCathedralMonsterLootRequest request)
+    {
         if (request.MonsterId < 0 || request.MonsterId >= AuthoritativeCathedralMonsterRuntimeCatalog.NativeMonsterCount)
             throw new InvalidDataException("Native monster loot requires a valid runtime monster ID.");
         if (request.MonsterId >= FirstHellfireMonsterId)

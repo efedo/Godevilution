@@ -81,6 +81,29 @@ public static class AuthoritativeCathedralSarcophagusOperationGenerator
         ArgumentNullException.ThrowIfNull(request.SpawnTilesAvailable);
 
         ValidatePolicy(request.Policy);
+        return GenerateCore(request, AuthoritativeNativeDungeonFamilyContext.Cathedral(
+            request.Policy.Depth));
+    }
+
+    /** Explicit family-aware sarcophagus entry used by Catacombs composition. */
+    internal static AuthoritativeCathedralSarcophagusOperationResult Generate(
+        AuthoritativeCathedralSarcophagusOperationRequest request,
+        AuthoritativeNativeDungeonFamilyContext familyContext)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        ArgumentNullException.ThrowIfNull(request.WorldState);
+        ArgumentNullException.ThrowIfNull(request.Catalog);
+        ArgumentNullException.ThrowIfNull(request.Policy);
+        ArgumentNullException.ThrowIfNull(request.Sarcophagus);
+        ArgumentNullException.ThrowIfNull(request.SpawnTilesAvailable);
+        ValidatePolicy(request.Policy, familyContext);
+        return GenerateCore(request, familyContext);
+    }
+
+    private static AuthoritativeCathedralSarcophagusOperationResult GenerateCore(
+        AuthoritativeCathedralSarcophagusOperationRequest request,
+        AuthoritativeNativeDungeonFamilyContext familyContext)
+    {
         var facts = request.Sarcophagus;
         ValidateFacts(facts, request.WorldState);
         if (request.SpawnTilesAvailable.Count != 9)
@@ -116,7 +139,8 @@ public static class AuthoritativeCathedralSarcophagusOperationGenerator
                     facts.PositionX,
                     facts.PositionY,
                     OnlyGood: false,
-                    Player: request.Player));
+                    Player: request.Player),
+                familyContext);
             worldState = generated.WorldState;
             randomState = generated.FinalRandomState;
             loot = new(
@@ -179,6 +203,22 @@ public static class AuthoritativeCathedralSarcophagusOperationGenerator
             || policy.Spawn || policy.QuestEnabled
             || !policy.LegacyLevelItemGenerationAllowed)
             throw new InvalidDataException("Native sarcophagus operations are limited to ordinary original-Diablo Cathedral depths 1 through 4.");
+    }
+
+    private static void ValidatePolicy(
+        AuthoritativeCathedralThemeItemPolicy policy,
+        AuthoritativeNativeDungeonFamilyContext familyContext)
+    {
+        familyContext.RequireMatch(policy.Depth);
+        if (!familyContext.IsCatacombs
+            || policy.Depth is < 5 or > 8
+            || policy.CurrentDungeonLevel != 0 && policy.CurrentDungeonLevel != policy.Depth
+            || policy.Hellfire || policy.SetLevel
+            || policy.GameMode != DiabloGameMode.SinglePlayer
+            || policy.Difficulty != DiabloDifficulty.Normal
+            || policy.Spawn || policy.QuestEnabled
+            || !policy.LegacyLevelItemGenerationAllowed)
+            throw new InvalidDataException("Native sarcophagus operations are limited to ordinary original-Diablo Catacombs depths 5 through 8.");
     }
 
     private static void ValidateFacts(

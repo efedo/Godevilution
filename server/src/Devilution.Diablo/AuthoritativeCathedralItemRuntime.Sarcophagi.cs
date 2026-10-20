@@ -44,8 +44,9 @@ public partial class AuthoritativeCathedralItemRuntime
         ArgumentNullException.ThrowIfNull(request);
         var level = GetLevel(levelId);
         var levelProfile = GetLevelProfile(levelId);
+        var family = NativeItemFamily(levelId);
         var facts = request.Sarcophagus;
-        if (levelProfile.Depth is < 1 or > 4 || request.Policy.Depth != levelProfile.Depth
+        if (request.Policy.Depth != levelProfile.Depth
             || request.Policy.GameMode != DiabloGameMode.SinglePlayer
             || facts.LevelId != levelId)
             throw new InvalidDataException("Native sarcophagus item transactions require the owned single-player Cathedral pool.");
@@ -64,7 +65,9 @@ public partial class AuthoritativeCathedralItemRuntime
             || !request.WorldState.UniqueItemFlags.SetEquals(uniqueItemFlags))
             throw new InvalidOperationException("Native sarcophagus operation was prepared from stale or altered item-pool state.");
 
-        var operation = AuthoritativeCathedralSarcophagusOperationGenerator.Generate(request);
+        var operation = family.IsCatacombs
+            ? AuthoritativeCathedralSarcophagusOperationGenerator.Generate(request, family)
+            : AuthoritativeCathedralSarcophagusOperationGenerator.Generate(request);
         AuthoritativeCathedralNativeItemProjection? projection = null;
         if (operation.Loot is { Allocated: true, Visible: true, Item: { } item } entry) {
             var binding = GetBinding(item.ItemIndex);
@@ -147,7 +150,7 @@ public partial class AuthoritativeCathedralItemRuntime
         }
 
         var candidateCheckpoint = BuildCandidateCheckpoint(bindings);
-        ValidateCheckpoint(candidateCheckpoint, profile);
+        ValidateCheckpoint(candidateCheckpoint, profile, nativeFamilyContexts);
 
         // Refuse before consuming an entity identity. This validation is paired
         // with the owner’s same-thread commit callback, which must not fail after
@@ -164,7 +167,7 @@ public partial class AuthoritativeCathedralItemRuntime
             bindings[loot.Slot] = entityId;
             projections.Add(projection);
             candidateCheckpoint = BuildCandidateCheckpoint(bindings);
-            ValidateCheckpoint(candidateCheckpoint, profile);
+            ValidateCheckpoint(candidateCheckpoint, profile, nativeFamilyContexts);
         }
 
         commitOwner();
@@ -183,7 +186,7 @@ public partial class AuthoritativeCathedralItemRuntime
                 candidateBindings.Select((entityId, slot) => new DiabloCathedralItemSlotEntityBinding(slot, entityId)).ToArray(),
                 level.RandomState,
                 level.GenerationIdentity);
-            ValidateLevelShape(candidateLevel);
+            ValidateLevelShape(candidateLevel, nativeFamilyContexts);
             return new(
                 profile.MetadataFingerprint,
                 profile.GenerationFingerprint,
