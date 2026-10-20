@@ -1134,6 +1134,8 @@ public sealed partial class DiabloSimulation
             NativePopulationPolicy = source.NativePopulationPolicy,
             NativePopulationClassId = source.NativePopulationClassId,
             NativeProgression = source.NativeProgression,
+            NativeTown = source.NativeTown,
+            NativeTownRestore = state.NativeTown,
             NativeProgressionRestore = source.NativeProgressionRestore,
             NativeCathedralItemRestore = state.CathedralItems,
             CathedralDoors = source.NativeProgressionRestore?.Doors ?? source.CathedralDoors,
@@ -1241,6 +1243,7 @@ public sealed partial class DiabloSimulation
         nextGeneratedMonsterEntityId = state.Allocators.NextGeneratedMonsterEntityId;
         WorldState.VictoryTriggered = state.VictoryTriggered;
         WorldState.RestoreCohortInfrastructure(state.WorldInfrastructure);
+        WorldState.RestoreNativeTown(state.NativeTown);
         WorldState.RestoreCathedralDoors(state.CathedralDoors, state.Objects);
 
         // The candidate was built with all dynamic dictionaries detached from
@@ -1379,6 +1382,7 @@ public sealed partial class DiabloSimulation
             VictoryTriggered: WorldState.VictoryTriggered,
             Geometry: WorldState.World?.CaptureGeometryState(),
             WorldInfrastructure: infrastructure) {
+            NativeTown = WorldState.CaptureNativeTown(),
             CathedralDoors = WorldState.CaptureCathedralDoors(),
             CathedralItems = WorldState.CaptureCathedralItems(),
             NativeSarcophagi = WorldState.HasNativeProgression || WorldState.HasNativeSarcophagusMutations || hasNativeBarrelState

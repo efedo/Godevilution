@@ -39,17 +39,18 @@ Godot presentation client remain unfinished. The server does not require MPQs.
   retention and joined scene cleanup. Legacy native setup offers Rogue; explicit
   Warrior/Sorcerer profiles offer their bound class. Remote/default setup retains
   its existing choices. Rendered flow remains open.
-- Optional original-player import now passes all native indexed/mask and published
-  RGBA atlas comparisons, preserving native spill, anchors and animation cycles.
-  Warrior/Sorcerer native-player-art Journey/Resume pairs pass. Optional native
-  Town/Cathedral scene import also matches every captured piece/special and
-  published atlas pixel. Both class journeys now issue native Cathedral scene
-  draws with shared isometric input; Town cold restore retains explicit fallback.
-  Complete native animation cursors and rendered graphical parity remain open.
-- The pure MPQ-free Town geometry family matches all 191 native composition,
-  entry, retained-state and mutation cases. Explicit 112x112 fine and 40x40 coarse
-  channels retain generation provenance and separate SOL projections. Runtime
-  profile/backing-state integration and actual Town scene binding remain open.
+- Optional original-player and Town/Cathedral scene imports pass full native
+  frame/piece/special and published-atlas comparisons. Both class pairs issue
+  actual native Town/Cathedral draws through shared isometric input, including
+  native Town specials and exact cold restore. Native animation cursors, complete
+  actor/object/effect coverage and rendered graphical parity remain open.
+- The pure MPQ-free Town family matches all 191 native cases. Additive format-5
+  Warrior/Sorcerer profiles now compile semantic Town inputs and canonical
+  residents, retain separate 112x112 fine/special and 40x40 coarse/protected
+  channels in v11, and validate detached mutation replay without advancing shared
+  RNG. Both headless pairs pass Smith/Pepin controls and full checkpoint retention.
+  This is Original Diablo single-player Normal with quests disabled; NPC
+  initialization/animation, complete vendor stock and quest-enabled Town remain open.
 - The Godot client is still a presentation prototype. Full native graphical
   parity, complete asset coverage and final rendered playability are open.
 
@@ -89,22 +90,19 @@ Passing a scoped test or adding a schema version does not close a milestone.
   Class-preview and experimental acceptance packages remain separate WIP.
 
 The detailed inventory, documentation split and [near-term work plan](work-plan.md)
-are prepared. The session-flow batch is complete for headless acceptance. The
-Warrior/Sorcerer batch is complete for its headless L1 boundary. The active
-Town/Cathedral presentation batch has a reviewed player-art stage: client-only
-CL2/PAL/TRN import, snapshot-driven equipment/action selection and actual headless
-class draw/restore checks. Generic packs remain compatible. The pure Town geometry
-prerequisite passes 191 native cases; integrate it into explicit profile/backing
-state because current Town layers remain empty. Native CEL/MIN scene import now
-passes full piece/special and published-atlas comparisons. Shared isometric
-Cathedral drawing/input and both class journey/restore pairs pass. Missing or
-corrupt atlases refuse native activation before pointer projection changes.
-Town's 40x40 coarse owner, full special backing and canonical roster need a new
-explicit profile/checkpoint; existing profiles and arbitrary-special refusal
-retain their boundaries.
-Complete scene coverage, lighting and rendered comparisons remain open.
-Keep its queue, this status and affected inventory entries synchronized as work
-changes. Do not restart inventory construction or an unrelated test campaign.
+are prepared. Session flow and Warrior/Sorcerer L1 admission are complete for their
+headless boundaries. Optional player/scene art, shared isometric input and the
+explicit native Town profile/checkpoint stage pass their scoped comparisons and
+both class journey/restore pairs. Missing or corrupt atlases still refuse native
+activation before pointer projection changes. Existing profile bytes and save
+schemas retain their contracts; normal cohort/profile adoption remains held.
+See [Town verification](test-history.md#2026-10-19--explicit-native-town-integration).
+
+Continue the Town/Cathedral visual slice with a cohesive native actor/object/
+effect or scene-phase family from the work plan. Complete coverage, native light/
+palette/transparency behavior and matched rendered comparisons remain open.
+Keep the queue, this status and affected inventory entries synchronized. Do not
+restart inventory construction or an unrelated test campaign.
 
 ## Existing working-tree packages
 

@@ -6,7 +6,7 @@ public sealed partial class DiabloSimulation
         DiabloSimulationOptions options, DiabloCohortState state)
     {
         if (state.FormatVersion is not (DiabloCohortState.NativeProgressionFormatVersion
-                or DiabloCohortState.NativeDepthProgressionFormatVersion)) {
+                or DiabloCohortState.NativeDepthProgressionFormatVersion or DiabloCohortState.NativeTownProgressionFormatVersion)) {
             if (options.NativeProgression is not null)
                 throw new InvalidDataException("The native progression profile requires its separate cohort schema.");
             return options;
@@ -36,6 +36,8 @@ public sealed partial class DiabloSimulation
                 trusted.Items!, trusted.Spells!, []);
             fresh.Simulation.WorldState.CommitNativeProgressionEntry(admission, entry);
         }
+        fresh.Simulation.WorldState.RegenerateNativeTownForCohort(state.NativeTown);
+        trusted.NativeTownRestore = state.NativeTown;
         trusted.NativeProgressionRestore = fresh.Simulation.WorldState.CaptureNativeProgressionOwners();
         return trusted;
     }

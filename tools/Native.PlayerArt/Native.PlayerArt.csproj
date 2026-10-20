@@ -8,5 +8,6 @@
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="../../server/src/Devilution.Data/Devilution.Data.csproj" />
+    <ProjectReference Include="../../server/src/Devilution.Diablo/Devilution.Diablo.csproj" />
   </ItemGroup>
 </Project>

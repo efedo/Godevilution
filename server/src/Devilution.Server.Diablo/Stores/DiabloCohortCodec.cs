@@ -29,6 +29,7 @@ public sealed partial class DiabloCohortCodec
     private const int NativeTrapFormatVersion = DiabloCohortState.NativeTrapFormatVersion;
     private const int NativeProgressionFormatVersion = DiabloCohortState.NativeProgressionFormatVersion;
     private const int NativeDepthProgressionFormatVersion = DiabloCohortState.NativeDepthProgressionFormatVersion;
+    private const int NativeTownProgressionFormatVersion = DiabloCohortState.NativeTownProgressionFormatVersion;
     private static readonly UTF8Encoding StrictUtf8 = new(false, true);
     private static readonly ConcurrentDictionary<(Type Type, CodecSchema Schema), PropertyInfo[]> Properties = new();
     private static readonly ConcurrentDictionary<PropertyInfo, bool> NullableProperties = new();
@@ -42,6 +43,7 @@ public sealed partial class DiabloCohortCodec
     private static readonly JsonSerializerOptions NativeTrapOptions = CreateOptions(CodecSchema.NativeTraps);
     private static readonly JsonSerializerOptions NativeProgressionOptions = CreateOptions(CodecSchema.NativeProgression);
     private static readonly JsonSerializerOptions NativeDepthProgressionOptions = CreateOptions(CodecSchema.NativeDepthProgression);
+    private static readonly JsonSerializerOptions NativeTownProgressionOptions = CreateOptions(CodecSchema.NativeTownProgression);
 
     public string Serialize(DiabloCohortState state)
     {
@@ -133,7 +135,7 @@ public sealed partial class DiabloCohortCodec
         // constructors. Adapt those here, without JSON attributes in the module.
         options.Converters.Add(new CompleteRecordConverterFactory(schema));
         options.Converters.Add(new CheckedEnumConverterFactory());
-        if (cacheGeometry && schema == CodecSchema.NativeDepthProgression)
+        if (cacheGeometry && schema is CodecSchema.NativeDepthProgression or CodecSchema.NativeTownProgression)
             options.Converters.Add(new DiabloCohortGeometryConverter(CreateOptions(schema, cacheGeometry: false)));
         return options;
     }
@@ -149,6 +151,7 @@ public sealed partial class DiabloCohortCodec
         CodecSchema.NativeTraps => NativeTrapOptions,
         CodecSchema.NativeProgression => NativeProgressionOptions,
         CodecSchema.NativeDepthProgression => NativeDepthProgressionOptions,
+        CodecSchema.NativeTownProgression => NativeTownProgressionOptions,
         _ => throw new ArgumentOutOfRangeException(nameof(schema)),
     };
 
@@ -161,19 +164,22 @@ public sealed partial class DiabloCohortCodec
                     || key.Type.GetConstructors().Any(constructor => constructor.GetParameters().Any(parameter =>
                         string.Equals(property.Name, parameter.Name, StringComparison.OrdinalIgnoreCase)
                         && property.PropertyType == parameter.ParameterType)))
-                && (key.Schema is CodecSchema.NativeMonsters or CodecSchema.CathedralItems or CodecSchema.NativeCombat or CodecSchema.NativeSarcophagi or CodecSchema.NativeBarrels or CodecSchema.NativeTraps or CodecSchema.NativeProgression or CodecSchema.NativeDepthProgression
+                && (key.Schema is CodecSchema.NativeMonsters or CodecSchema.CathedralItems or CodecSchema.NativeCombat or CodecSchema.NativeSarcophagi or CodecSchema.NativeBarrels or CodecSchema.NativeTraps or CodecSchema.NativeProgression or CodecSchema.NativeDepthProgression or CodecSchema.NativeTownProgression
                     || !IsNativeMonsterField(key.Type, property.Name))
-                && (key.Schema is CodecSchema.CathedralItems or CodecSchema.NativeCombat or CodecSchema.NativeSarcophagi or CodecSchema.NativeBarrels or CodecSchema.NativeTraps or CodecSchema.NativeProgression or CodecSchema.NativeDepthProgression || !IsCathedralItemField(key.Type, property.Name))
-                && (key.Schema is CodecSchema.NativeCombat or CodecSchema.NativeSarcophagi or CodecSchema.NativeBarrels or CodecSchema.NativeTraps or CodecSchema.NativeProgression or CodecSchema.NativeDepthProgression || !IsNativeCombatField(key.Type, property.Name))
-                && (key.Schema is CodecSchema.NativeSarcophagi or CodecSchema.NativeBarrels or CodecSchema.NativeTraps or CodecSchema.NativeProgression or CodecSchema.NativeDepthProgression || !IsNativeSarcophagusField(key.Type, property.Name))
-                && (key.Schema is CodecSchema.NativeBarrels or CodecSchema.NativeTraps or CodecSchema.NativeProgression or CodecSchema.NativeDepthProgression || !IsNativeBarrelField(key.Type, property.Name))
-                && (key.Schema is CodecSchema.NativeTraps or CodecSchema.NativeProgression or CodecSchema.NativeDepthProgression || !IsNativeTrapField(key.Type, property.Name))
-                && (key.Schema is CodecSchema.NativeProgression or CodecSchema.NativeDepthProgression
+                && (key.Schema is CodecSchema.CathedralItems or CodecSchema.NativeCombat or CodecSchema.NativeSarcophagi or CodecSchema.NativeBarrels or CodecSchema.NativeTraps or CodecSchema.NativeProgression or CodecSchema.NativeDepthProgression or CodecSchema.NativeTownProgression || !IsCathedralItemField(key.Type, property.Name))
+                && (key.Schema is CodecSchema.NativeCombat or CodecSchema.NativeSarcophagi or CodecSchema.NativeBarrels or CodecSchema.NativeTraps or CodecSchema.NativeProgression or CodecSchema.NativeDepthProgression or CodecSchema.NativeTownProgression || !IsNativeCombatField(key.Type, property.Name))
+                && (key.Schema is CodecSchema.NativeSarcophagi or CodecSchema.NativeBarrels or CodecSchema.NativeTraps or CodecSchema.NativeProgression or CodecSchema.NativeDepthProgression or CodecSchema.NativeTownProgression || !IsNativeSarcophagusField(key.Type, property.Name))
+                && (key.Schema is CodecSchema.NativeBarrels or CodecSchema.NativeTraps or CodecSchema.NativeProgression or CodecSchema.NativeDepthProgression or CodecSchema.NativeTownProgression || !IsNativeBarrelField(key.Type, property.Name))
+                && (key.Schema is CodecSchema.NativeTraps or CodecSchema.NativeProgression or CodecSchema.NativeDepthProgression or CodecSchema.NativeTownProgression || !IsNativeTrapField(key.Type, property.Name))
+                && (key.Schema is CodecSchema.NativeProgression or CodecSchema.NativeDepthProgression or CodecSchema.NativeTownProgression
                     || key.Type != typeof(DiabloCohortState)
                     || property.Name != nameof(DiabloCohortState.NativeProgression))
-                && (key.Schema == CodecSchema.NativeDepthProgression
+                && (key.Schema is CodecSchema.NativeDepthProgression or CodecSchema.NativeTownProgression
                     || !IsNativeWalkPathField(key.Type, property.Name)
                     && !IsNativeQueuedRangedAttackField(key.Type, property.Name))
+                && (key.Schema == CodecSchema.NativeTownProgression
+                    || key.Type != typeof(DiabloCohortState)
+                    || property.Name != nameof(DiabloCohortState.NativeTown))
                 && (key.Schema != CodecSchema.Legacy
                     || key.Type != typeof(DiabloCohortState)
                     || property.Name != CathedralDoorsPropertyName))
@@ -182,6 +188,15 @@ public sealed partial class DiabloCohortCodec
 
     private static CodecSchema SelectSerializationSchema(DiabloCohortState state)
     {
+        if (state.FormatVersion == NativeTownProgressionFormatVersion) {
+            if (state.NativeTown is null
+                || SelectSerializationSchema(state with { FormatVersion = NativeDepthProgressionFormatVersion, NativeTown = null })
+                    != CodecSchema.NativeDepthProgression)
+                throw new InvalidDataException("Native Town cohorts require complete native depth and Town owners.");
+            return CodecSchema.NativeTownProgression;
+        }
+        if (state.NativeTown is not null)
+            throw new InvalidDataException("Native Town backing cannot be down-converted to an older cohort.");
         if ((state.FormatVersion != CathedralItemFormatVersion && state.FormatVersion != NativeCombatFormatVersion
                 && state.FormatVersion != NativeSarcophagusFormatVersion && state.FormatVersion != NativeBarrelFormatVersion && state.FormatVersion != NativeTrapFormatVersion && state.FormatVersion != NativeProgressionFormatVersion && state.FormatVersion != NativeDepthProgressionFormatVersion)
             && (state.CathedralItems is not null || state.Configuration?.CathedralItemMetadataFingerprint is not null
@@ -279,6 +294,7 @@ public sealed partial class DiabloCohortCodec
             NativeTrapFormatVersion => CodecSchema.NativeTraps,
             NativeProgressionFormatVersion => CodecSchema.NativeProgression,
             NativeDepthProgressionFormatVersion => CodecSchema.NativeDepthProgression,
+            NativeTownProgressionFormatVersion => CodecSchema.NativeTownProgression,
             _ => throw new InvalidDataException(
                 $"Unsupported Diablo cohort format version {version}."),
         };
@@ -295,6 +311,7 @@ public sealed partial class DiabloCohortCodec
         CodecSchema.NativeTraps => NativeTrapFormatVersion,
         CodecSchema.NativeProgression => NativeProgressionFormatVersion,
         CodecSchema.NativeDepthProgression => NativeDepthProgressionFormatVersion,
+        CodecSchema.NativeTownProgression => NativeTownProgressionFormatVersion,
         _ => throw new ArgumentOutOfRangeException(nameof(schema)),
     };
 
@@ -346,31 +363,35 @@ public sealed partial class DiabloCohortCodec
         => type == typeof(StorePlayerSnapshot) && name == nameof(StorePlayerSnapshot.NativeQueuedRangedAttack);
 
     private static bool IsOptionalNativeWalkPathField(Type type, string name, CodecSchema schema)
-        => schema == CodecSchema.NativeDepthProgression && IsNativeWalkPathField(type, name);
+        => schema is CodecSchema.NativeDepthProgression or CodecSchema.NativeTownProgression && IsNativeWalkPathField(type, name);
 
     private static bool IsOptionalNativeQueuedRangedAttackField(Type type, string name, CodecSchema schema)
-        => schema == CodecSchema.NativeDepthProgression && IsNativeQueuedRangedAttackField(type, name);
+        => schema is CodecSchema.NativeDepthProgression or CodecSchema.NativeTownProgression && IsNativeQueuedRangedAttackField(type, name);
 
     private static bool IsRequiredCathedralDoors(Type type, PropertyInfo property, CodecSchema schema) =>
         type == typeof(DiabloCohortState)
         && ((schema == CodecSchema.CathedralDoors
                 && string.Equals(property.Name, CathedralDoorsPropertyName, StringComparison.Ordinal))
-            || (schema is CodecSchema.CathedralItems or CodecSchema.NativeCombat or CodecSchema.NativeSarcophagi or CodecSchema.NativeBarrels or CodecSchema.NativeTraps or CodecSchema.NativeProgression or CodecSchema.NativeDepthProgression
+            || (schema is CodecSchema.CathedralItems or CodecSchema.NativeCombat or CodecSchema.NativeSarcophagi or CodecSchema.NativeBarrels or CodecSchema.NativeTraps or CodecSchema.NativeProgression or CodecSchema.NativeDepthProgression or CodecSchema.NativeTownProgression
                 && property.Name == nameof(DiabloCohortState.CathedralItems)));
 
     private static bool IsRequiredNativeSarcophagi(Type type, PropertyInfo property, CodecSchema schema) =>
-        schema is CodecSchema.NativeSarcophagi or CodecSchema.NativeBarrels or CodecSchema.NativeTraps or CodecSchema.NativeProgression or CodecSchema.NativeDepthProgression
+        schema is CodecSchema.NativeSarcophagi or CodecSchema.NativeBarrels or CodecSchema.NativeTraps or CodecSchema.NativeProgression or CodecSchema.NativeDepthProgression or CodecSchema.NativeTownProgression
         && type == typeof(DiabloCohortState)
         && property.Name == nameof(DiabloCohortState.NativeSarcophagi);
 
     private static bool IsRequiredNativeBarrels(Type type, PropertyInfo property, CodecSchema schema) =>
-        schema is CodecSchema.NativeBarrels or CodecSchema.NativeTraps or CodecSchema.NativeProgression or CodecSchema.NativeDepthProgression
+        schema is CodecSchema.NativeBarrels or CodecSchema.NativeTraps or CodecSchema.NativeProgression or CodecSchema.NativeDepthProgression or CodecSchema.NativeTownProgression
         && type == typeof(DiabloCohortState)
         && property.Name == nameof(DiabloCohortState.NativeBarrels);
 
     private static bool IsRequiredNativeTraps(Type type, PropertyInfo property, CodecSchema schema) =>
-        (schema is CodecSchema.NativeTraps or CodecSchema.NativeProgression or CodecSchema.NativeDepthProgression) && type == typeof(DiabloCohortState)
+        (schema is CodecSchema.NativeTraps or CodecSchema.NativeProgression or CodecSchema.NativeDepthProgression or CodecSchema.NativeTownProgression) && type == typeof(DiabloCohortState)
         && property.Name == nameof(DiabloCohortState.NativeTraps);
+
+    private static bool IsRequiredNativeTown(Type type, PropertyInfo property, CodecSchema schema)
+        => schema == CodecSchema.NativeTownProgression && type == typeof(DiabloCohortState)
+            && property.Name == nameof(DiabloCohortState.NativeTown);
 
     private static bool AllowsNull(PropertyInfo property) => NullableProperties.GetOrAdd(
         property,
@@ -448,7 +469,8 @@ public sealed partial class DiabloCohortCodec
                 AllowsNull(property) && !IsRequiredCathedralDoors(type, property, schema)
                     && !IsRequiredNativeSarcophagi(type, property, schema)
                     && !IsRequiredNativeBarrels(type, property, schema)
-                    && !IsRequiredNativeTraps(type, property, schema), schema);
+                    && !IsRequiredNativeTraps(type, property, schema)
+                    && !IsRequiredNativeTown(type, property, schema), schema);
         }
         var missing = properties.Keys.Where(name => !present.Contains(name)).ToArray();
         if (!HasOnlyOptionalMissingProperties(missing, type, schema))
@@ -529,6 +551,7 @@ public sealed partial class DiabloCohortCodec
         NativeTraps,
         NativeProgression,
         NativeDepthProgression,
+        NativeTownProgression,
     }
 
     private sealed class CheckedEnumConverterFactory : JsonConverterFactory

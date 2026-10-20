@@ -9,6 +9,35 @@ Use the [work plan](../work-plan.md) for near-term order and
 application journey below has not passed; do not confuse its procedure with
 the accepted Town/L1/L2 scope in [test history](../test-history.md).
 
+## Explicit native Town profiles
+
+Compile an additive format-5 profile from a qualified format-4 Warrior/Sorcerer
+profile and explicitly extracted original Town files. The server receives only
+semantic tables. Use a fresh output directory:
+
+```powershell
+dotnet run --project tools/Cathedral.Playtest -- --native-cathedral-town-progression --class-profile-directory D:\Profiles\NativeWarrior --town-source-directory D:\Games\ExtractedDiablo\levels\towndata --roster-table assets/txtdata/towners/towners.tsv --output-directory D:\Profiles\NativeTownWarrior --town-seed 2588
+```
+
+The v11 checkpoint keeps native 40x40 coarse/protected state separate from the
+112x112 fine/special layers, binds the canonical resident footprint and verifies
+detached mutation replay. Current scope is Original Diablo single-player Normal
+with quests disabled. Use `-CathedralNativeTownProfileDirectory` with the local
+launcher and a dedicated child of that profile's `sessions` directory.
+
+Reimport both optional player and scene catalogs using the new profile directory
+to bind its four-pack content hash. With both pack environment variables set as
+below, run the headless class pair:
+
+```powershell
+.\tools\test-godot-native-classes.ps1 -ProfileDirectory D:\Profiles\NativeTownWarrior -NativeTown -GodotExecutable D:\Tools\Godot\Godot_mono.exe
+```
+
+The pair requires native Town/Cathedral draws, Smith/Pepin controls, exact wire
+continuity and an unchanged full persisted Town checkpoint. Earlier profile/save
+formats remain supported. Complete native NPC/object/effect art, scene phases,
+lighting/palette/transparency and matched rendered qualification remain open.
+
 ## Optional native scene art
 
 `tools/Native.SceneArt` imports explicitly extracted original Town/Cathedral
@@ -38,8 +67,8 @@ $env:GODEVILUTION_NATIVE_SCENE_PACK = 'res://assets/native-scenes/local/native-s
 Exact admitted content/level bindings and complete fine/special layers are
 required. All atlases in the selected family are preflighted for hash, resource
 type and dimensions before native viewport activation; failures retain the
-generic path with diagnostics. Current class profiles activate Cathedral art;
-Town has no native layer and retains explicit fallback, including cold resume.
+generic path with diagnostics. Format-4 class profiles retain their Town fallback.
+Explicit format-5 Town profiles activate both scene families, including cold resume.
 Class acceptance records actual draw calls and shared pointer round trips. Ranged
 encounter approach requires a clickable target under the same camera transform.
 

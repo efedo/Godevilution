@@ -7,7 +7,7 @@ namespace Devilution.Server.Tests;
 public sealed class CommandTimingLauncherContractTests
 {
     [Theory]
-    [InlineData("godot-client/run-local-client.ps1", "GodotExecutable,Port,CharacterClassId,CharacterName,Headless,QuitAfterSeconds,SessionDirectory,PersistenceMode,PreviewContent,PortalPreviewContent,LifecyclePreviewContent,Multiplayer,CathedralProfileDirectory,CathedralDepthProfileDirectory,CathedralDoorProfileDirectory,CathedralNativeProfileDirectory,PerformanceParticipants,AcceptancePhase", "CommandTimingTrace,Automated,PerformanceResumeBaselinePath,CathedralNativeProgressionProfileDirectory,ServerBuildConfiguration,CathedralNativeDepthProgressionProfileDirectory,NativeDepthEntryBaselinePath,SessionMenuAcceptance,CathedralNativeClassProfileDirectory")]
+    [InlineData("godot-client/run-local-client.ps1", "GodotExecutable,Port,CharacterClassId,CharacterName,Headless,QuitAfterSeconds,SessionDirectory,PersistenceMode,PreviewContent,PortalPreviewContent,LifecyclePreviewContent,Multiplayer,CathedralProfileDirectory,CathedralDepthProfileDirectory,CathedralDoorProfileDirectory,CathedralNativeProfileDirectory,PerformanceParticipants,AcceptancePhase", "CommandTimingTrace,Automated,PerformanceResumeBaselinePath,CathedralNativeProgressionProfileDirectory,ServerBuildConfiguration,CathedralNativeDepthProgressionProfileDirectory,NativeDepthEntryBaselinePath,SessionMenuAcceptance,CathedralNativeClassProfileDirectory,CathedralNativeTownProfileDirectory")]
     [InlineData("tools/test-godot-session.ps1", "GodotExecutable,PersistenceMode,Visible,Journey,TownLoop,Lifecycle,Multiplayer,MultiplayerRecovery,MultiplayerPendingRecovery,CathedralProfileDirectory,CathedralDepthProfileDirectory,CathedralDoorProfileDirectory,CathedralNativeProfileDirectory,PresentationPackProfile,CommandTimingTrace,Cooperative", "CathedralNativeChest,CathedralNativeChestSessionDirectory,CathedralNativeSarcophagus,CathedralNativeSarcophagusSessionDirectory,CathedralNativeBarrel,CathedralNativeBarrelSessionDirectory,CathedralNativeTrap,CathedralNativeTrapSessionDirectory,SessionMenu")]
     public void TraceSwitchPreservesExistingPositionalParameterOrder(string path, string existingParameters, string appendedParameters)
     {
@@ -18,7 +18,8 @@ public sealed class CommandTimingLauncherContractTests
         var expected = existingParameters.Split(',').Concat(appendedParameters.Split(',')).ToList();
         var optionalMenuParameter = path.StartsWith("godot-client/", StringComparison.Ordinal)
             ? "SessionMenuAcceptance" : "SessionMenu";
-        if (actual.Contains(optionalMenuParameter, StringComparer.Ordinal)) {
+        if (actual.Contains(optionalMenuParameter, StringComparer.Ordinal)
+            && !expected.Contains(optionalMenuParameter, StringComparer.Ordinal)) {
             var beforeParameter = path.StartsWith("godot-client/", StringComparison.Ordinal)
                 ? "TrapDisarmPreviewContent" : "TrapDisarm";
             var insertionIndex = expected.FindIndex(parameter => string.Equals(parameter, beforeParameter, StringComparison.Ordinal));

@@ -11,7 +11,7 @@ public sealed partial class DiabloWorldState
         => nativeProgression?.CohortFormatVersion
             ?? throw new InvalidOperationException("Native progression is not configured.");
     internal bool SupportsNativeTargetCellPathing
-        => nativeProgression?.CohortFormatVersion == DiabloCohortState.NativeDepthProgressionFormatVersion;
+        => nativeProgression?.CohortFormatVersion is DiabloCohortState.NativeDepthProgressionFormatVersion or DiabloCohortState.NativeTownProgressionFormatVersion;
     internal int NativePopulationDepth(uint levelId)
         => NativePopulationForLevel(levelId)?.Depth
             ?? throw new InvalidDataException("Native gameplay requires its exact owned floor depth.");

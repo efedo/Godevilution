@@ -86,7 +86,8 @@ public sealed partial class DiabloCohortCodec
                     || IsRequiredCathedralDoors(type, property, schema)
                     || IsRequiredNativeSarcophagi(type, property, schema)
                     || IsRequiredNativeBarrels(type, property, schema)
-                    || IsRequiredNativeTraps(type, property, schema)))
+                    || IsRequiredNativeTraps(type, property, schema)
+                    || IsRequiredNativeTown(type, property, schema)))
             .ToArray();
         return new GraphContractPlan(GraphContractKind.Object, null, null, null, properties);
     }

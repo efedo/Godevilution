@@ -7,6 +7,12 @@ contracts stay in their existing guides.
 
 ## 2026-10-19
 
+- Add distinct format-5 Warrior/Sorcerer Town profiles and a strict v11 owner for
+  semantic fine/coarse/special/protected geometry, native provenance and typed
+  mutation replay. Preserve older profile/save bytes and shared simulation RNG.
+- Bind canonical human/cow collision without changing Smith scenery, and qualify
+  Town/Cathedral drawing, Smith/Pepin controls and exact cold retention through
+  both headless class journeys. Keep default adoption and full rendered parity open.
 - Draw optional identity-bound native scenes with one isometric camera/pointer
   transform, native diagonal traversal and special placement, bounded textures
   and whole-family atlas preflight. Keep explicit fallback and parity limits.

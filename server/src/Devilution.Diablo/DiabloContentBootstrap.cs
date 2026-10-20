@@ -290,7 +290,13 @@ public interface IDiabloCathedralNativeDepthProgressionBootstrap
     DiabloContentActivation ActivateNativeDepthProgression(ComposedContent content, uint randomSeed = 0);
 }
 
-internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap, IDiabloNativeGeneratedContentBootstrap, IDiabloCathedralDepthContentBootstrap, IDiabloCathedralDoorContentBootstrap, IDiabloCathedralNativePopulationBootstrap, IDiabloCathedralNativeProgressionBootstrap, IDiabloCathedralNativeDepthProgressionBootstrap
+/** Explicit Town backing and native depth progression; earlier profiles never opt in. */
+public interface IDiabloCathedralNativeTownProgressionBootstrap
+{
+    DiabloContentActivation ActivateNativeTownProgression(ComposedContent content, uint randomSeed = 0);
+}
+
+internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap, IDiabloNativeGeneratedContentBootstrap, IDiabloCathedralDepthContentBootstrap, IDiabloCathedralDoorContentBootstrap, IDiabloCathedralNativePopulationBootstrap, IDiabloCathedralNativeProgressionBootstrap, IDiabloCathedralNativeDepthProgressionBootstrap, IDiabloCathedralNativeTownProgressionBootstrap
 {
     private const string NativePopulationSidecarPrefix = "native_cathedral_population/";
     private const string NativeRuntimeSidecarPrefix = "native_cathedral_runtime/";
@@ -379,6 +385,13 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap, IDiabloN
             nativePopulation: true, nativeDepthProgression: true,
             nativeProgressionMaximumDepth: AuthoritativeCathedralDepthGenerator.MaximumSupportedDepth);
     }
+
+    public DiabloContentActivation ActivateNativeTownProgression(ComposedContent content, uint randomSeed = 0)
+        => ActivateCore(content, randomSeed, DiabloGameMode.SinglePlayer, null, DiabloDifficulty.Normal,
+            nativeGenerated: false, cathedralDepths: true, cathedralDoors: true,
+            nativePopulation: true, nativeDepthProgression: true,
+            nativeProgressionMaximumDepth: AuthoritativeCathedralDepthGenerator.MaximumSupportedDepth,
+            nativeTown: true);
 
     private static NativePopulationSidecarData LoadNativePopulationSidecars(ComposedContent content)
     {
@@ -479,7 +492,8 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap, IDiabloN
         bool nativePopulation = false,
         bool nativeProgression = false,
         bool nativeDepthProgression = false,
-        int nativeProgressionMaximumDepth = 2)
+        int nativeProgressionMaximumDepth = 2,
+        bool nativeTown = false)
     {
         ArgumentNullException.ThrowIfNull(content);
         if ((nativeProgression || nativeDepthProgression) && !nativePopulation)
@@ -491,6 +505,22 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap, IDiabloN
             || gameMode != DiabloGameMode.SinglePlayer || difficulty != DiabloDifficulty.Normal
             || monsterSpawns is not null))
             throw new NotSupportedException("Native Cathedral population requires the explicit single-player Normal L1 route without procedural spawn overrides.");
+        var hasNativeTownTables = content.Manifest.Packs.SelectMany(pack => pack.Tables)
+            .Any(table => table.SourcePath.StartsWith("native_town_geometry/", StringComparison.Ordinal));
+        if (hasNativeTownTables && !nativeTown)
+            throw new InvalidDataException("Native Town geometry requires its explicit Town-enabled progression profile.");
+        if (nativeTown && !nativeDepthProgression)
+            throw new InvalidDataException("Native Town geometry requires complete native depth progression.");
+        var nativeTownCatalog = nativeTown ? AuthoritativeNativeTownCatalog.Load(content) : null;
+        var nativeTownGeometry = nativeTownCatalog?.CreateInitialGeometry();
+        if (nativeTownCatalog is not null && nativeTownCatalog.Settings is not {
+                IsSpawn: false, IsMultiplayer: false, IsHellfire: false, CharacterLevel: 1,
+                WarpUnlocks: AuthoritativeTownWarpUnlocks.None,
+                FarmerQuestState: AuthoritativeTownFarmerQuestState.Other,
+                GraveQuestState: AuthoritativeTownGraveQuestState.Other,
+                Entry: AuthoritativeTownEntry.Main, TownWarpFrom: 0,
+                WaterQuestState: AuthoritativeTownWaterQuestState.NotAvailable })
+            throw new NotSupportedException("The explicit Town profile requires its original single-player quest-disabled initial context.");
         var nativePopulationSidecars = nativePopulation ? LoadNativePopulationSidecars(content) : null;
         var hasGeneratedLevels = content.TryGetTable(AuthoritativeCathedralLevel1RuntimeCatalog.TableName, out var generatedLevelsTable);
         var hasDepthLevels = content.TryGetTable(AuthoritativeCathedralDepthRuntimeCatalog.TableName, out var depthLevelsTable);
@@ -705,6 +735,8 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap, IDiabloN
                 playerClasses,
                 playerAnimations,
                 playerLoadouts);
+        if (nativeTown && nativeCharacterStart is not { HasCompiledTable: true, ClassId: 0 or 2 })
+            throw new NotSupportedException("Native Town progression requires an explicit Warrior or Sorcerer class profile.");
 
         var uniqueTable = GetRequiredExternalTable(content, "unique_items.tsv");
         if (content.Manifest.Schema == DiabloContentSchema.Current)
@@ -1262,8 +1294,20 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap, IDiabloN
             throw new InvalidDataException(
                 "Quest-gated warps and objects require an active quest catalog.");
         }
-        if (world is not null && townerGreetings is not null)
-            townerGreetings.ValidateWorld(world);
+        if (nativeTownCatalog is not null) {
+            if (world is null || nativeTownGeometry is null)
+                throw new InvalidDataException("Native Town geometry requires an active world.");
+            var prototype = world.Levels.SingleOrDefault(level => level.LevelId == nativeTownCatalog.LevelId)
+                ?? throw new InvalidDataException("The native Town level is missing from the world.");
+            world.ReplaceLevel(nativeTownCatalog.CreateBackingLevel(nativeTownGeometry, prototype)
+                .WithStartPosition(nativeTownGeometry.ViewPositionX, nativeTownGeometry.ViewPositionY));
+        }
+        if (world is not null && townerGreetings is not null) {
+            if (nativeTownCatalog is null)
+                townerGreetings.ValidateWorld(world);
+            else
+                nativeTownCatalog.Roster.ValidateGreetings(townerGreetings, nativeTownGeometry!);
+        }
         if (quests is not null) {
             AuthoritativeQuestCatalog.ValidateActivationTargets(quests);
             questRouteMessages?.ValidateQuests(quests);
@@ -1649,6 +1693,13 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap, IDiabloN
                         LegacyDepthFingerprint = depthRunFingerprint,
                     });
                 }
+                if (nativeTownCatalog is not null) {
+                    depthRunFingerprint = AuthoritativeCathedralNativeProgression.ComputeFingerprint(new {
+                        RunId = "native-cathedral-town-l1-l4-class-town-v1",
+                        ClassDepthFingerprint = depthRunFingerprint,
+                        TownCatalogFingerprint = nativeTownCatalog.Fingerprint,
+                    });
+                }
                 nativeProgressionDefinition = new AuthoritativeCathedralNativeProgression(
                     depthRunFingerprint, playerAnimations, entry => {
                         if (!candidatesByLevel.TryGetValue(entry.LevelId, out var candidate))
@@ -1663,9 +1714,11 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap, IDiabloN
                             depthDoors.Single(definition => definition.LevelId == entry.LevelId),
                             stock, sidecars.Items, request, [], nativeCharacterStart);
                     }, nativeProgressionMaximumDepth,
-                    DiabloCohortState.NativeDepthProgressionFormatVersion, depthDoors) {
-                        FreshActivation = () => new DiabloContentBootstrap(DiabloSimulationFactory.Instance)
-                            .ActivateNativeDepthProgression(content, randomSeed),
+                    nativeTown ? DiabloCohortState.NativeTownProgressionFormatVersion
+                        : DiabloCohortState.NativeDepthProgressionFormatVersion, depthDoors) {
+                        FreshActivation = () => nativeTown
+                            ? new DiabloContentBootstrap(DiabloSimulationFactory.Instance).ActivateNativeTownProgression(content, randomSeed)
+                            : new DiabloContentBootstrap(DiabloSimulationFactory.Instance).ActivateNativeDepthProgression(content, randomSeed),
                     };
             }
             cathedralDoorCatalog = new AuthoritativeCathedralDoorCatalog([doorDefinition]);
@@ -1682,6 +1735,7 @@ internal sealed class DiabloContentBootstrap : IDiabloContentBootstrap, IDiabloN
             NativePopulationPolicy = nativePopulationBuild?.Policy,
             NativePopulationClassId = nativeCharacterStart?.ClassId,
             NativeProgression = nativeProgressionDefinition,
+            NativeTown = nativeTownCatalog,
             WorldMutations = worldMutations,
             WorldRules = worldRules,
             CombatTargets = combatTargets,

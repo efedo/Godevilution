@@ -4,7 +4,7 @@ public sealed partial class DiabloWorldState
 {
     /** Keeps the public legacy constructors and their scanner path unchanged. */
     internal DiabloWorldState(DiabloSimulationOptions options)
-        : this(options.World, options.FallbackWidth, options.FallbackHeight,
+        : this(options.NativeTown, options.NativeTownRestore, options.World, options.FallbackWidth, options.FallbackHeight,
             options.FallbackBlockedCells, options.CombatTargets, options.Portals,
             options.WorldItems, options.Objects, options.Quests, options.Projectiles,
             options.FallbackMissileBlockedCells, options.Corpses, options.WorldMutations,
@@ -159,5 +159,6 @@ public sealed partial class DiabloWorldState
         cathedralDoors.Clear();
         foreach (var entry in restored) cathedralDoors.Add(entry.Key, entry.Value);
         PreserveCathedralDoorProjection();
+        PreserveNativeTownProjection();
     }
 }

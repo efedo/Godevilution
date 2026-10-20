@@ -60,6 +60,37 @@ public sealed partial class DiabloWorldState
         bool deferCohortInitialization = false,
         AuthoritativeCathedralDoorCatalog? cathedralDoors = null,
         DiabloWorldGeometryState? cathedralDoorBackingGeometry = null)
+        : this(null, null, world, fallbackWidth, fallbackHeight, fallbackBlockedCells,
+            combatTargets, portals, worldItems, objects, quests, projectiles,
+            fallbackMissileBlockedCells, corpses, worldMutations, activeWorldMutationIds,
+            nativeDunObjects, nativeObjectTemplates, allowMissingNativeDunLayers,
+            deferCohortInitialization, cathedralDoors, cathedralDoorBackingGeometry)
+    {
+    }
+
+    private DiabloWorldState(
+        AuthoritativeNativeTownCatalog? nativeTown,
+        DiabloNativeTownCheckpoint? nativeTownCheckpoint,
+        AuthoritativeWorld? world = null,
+        int fallbackWidth = 40,
+        int fallbackHeight = 40,
+        IEnumerable<int>? fallbackBlockedCells = null,
+        IReadOnlyList<AuthoritativeCombatTarget>? combatTargets = null,
+        IReadOnlyList<AuthoritativePortal>? portals = null,
+        IReadOnlyList<AuthoritativeWorldItem>? worldItems = null,
+        IReadOnlyList<AuthoritativeWorldObject>? objects = null,
+        IReadOnlyList<AuthoritativeQuestState>? quests = null,
+        IReadOnlyList<AuthoritativeProjectile>? projectiles = null,
+        IEnumerable<int>? fallbackMissileBlockedCells = null,
+        IReadOnlyList<AuthoritativeCorpse>? corpses = null,
+        AuthoritativeWorldMutationCatalog? worldMutations = null,
+        IEnumerable<uint>? activeWorldMutationIds = null,
+        AuthoritativeNativeDunObjectCatalog? nativeDunObjects = null,
+        IReadOnlyList<AuthoritativeWorldObject>? nativeObjectTemplates = null,
+        bool allowMissingNativeDunLayers = false,
+        bool deferCohortInitialization = false,
+        AuthoritativeCathedralDoorCatalog? cathedralDoors = null,
+        DiabloWorldGeometryState? cathedralDoorBackingGeometry = null)
     {
         ValidateEntryCount(combatTargets, "combat target");
         ValidateEntryCount(
@@ -77,9 +108,11 @@ public sealed partial class DiabloWorldState
         this.allowMissingNativeDunLayers = allowMissingNativeDunLayers;
         this.deferCohortInitialization = deferCohortInitialization;
         cathedralDoorCatalog = cathedralDoors;
+        InitializeNativeTown(nativeTown, nativeTownCheckpoint, deferCohortInitialization);
         if (cathedralDoors is not null && world?.Levels.Any(level =>
                 level.NativeSpecialLayer.Count != 0
-                    && !cathedralDoors.Definitions.Any(value => value.LevelId == level.LevelId)) == true)
+                    && !cathedralDoors.Definitions.Any(value => value.LevelId == level.LevelId)
+                    && !IsOwnedNativeTownLevel(level)) == true)
             throw new InvalidDataException("The Cathedral door profile cannot persist unmapped special layers.");
         trustedCathedralDoorBackingGeometry = cathedralDoors is null ? null
             : cathedralDoorBackingGeometry ?? world?.CaptureGeometryState()
@@ -577,6 +610,7 @@ public sealed partial class DiabloWorldState
         if (materializeNativeDunObjects)
             ReconcileNativeDunObjects(allowMissingNativeDunLayers);
         PreserveCathedralDoorProjection();
+        PreserveNativeTownProjection();
     }
 
     /** Detached projections also validate unmapped checkpoint levels without publication. */
@@ -1213,7 +1247,8 @@ public sealed partial class DiabloWorldState
         uint excludedEntityId = 0)
     {
         ArgumentNullException.ThrowIfNull(players);
-        return IsNativePopulationObjectSolid(levelId, positionX, positionY)
+        return IsNativeTownOccupied(levelId, positionX, positionY)
+            || IsNativePopulationObjectSolid(levelId, positionX, positionY)
             || !OwnsNativePopulationLevel(levelId)
                 && IsCathedralLightObjectSolid(levelId, positionX, positionY)
             || CombatTargets.Values.Any(target => target.HitPoints > 0
@@ -1247,6 +1282,7 @@ public sealed partial class DiabloWorldState
     public void ValidateInitialPlayerPosition(uint levelId, int positionX, int positionY)
     {
         if (!IsWalkable(levelId, positionX, positionY)
+            || IsNativeTownOccupied(levelId, positionX, positionY)
             || IsNativePopulationObjectSolid(levelId, positionX, positionY)
             || !OwnsNativePopulationLevel(levelId)
                 && IsCathedralLightObjectSolid(levelId, positionX, positionY)) {

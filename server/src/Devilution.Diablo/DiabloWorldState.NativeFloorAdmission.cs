@@ -40,7 +40,7 @@ public sealed partial class DiabloWorldState
         foreach (var level in World.Levels.Where(value => value.LevelId == 0))
             backing.AddLevel(level);
         backing.AddLevel(build.Policy.CreateBackingLevel());
-        var floor = new DiabloWorldState(backing,
+        var floor = new DiabloWorldState(nativeTownCatalog, CaptureNativeTown(), backing,
             combatTargets: build.Monsters.Records.Where(row => row.Target is not null)
                 .Select(row => row.Target!).ToArray(), objects: build.Objects,
             deferCohortInitialization: true,

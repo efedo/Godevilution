@@ -7,5 +7,6 @@
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="../../server/src/Devilution.Diablo/Devilution.Diablo.csproj" />
+    <ProjectReference Include="../Native.PlayerArt/Native.PlayerArt.csproj" />
   </ItemGroup>
 </Project>

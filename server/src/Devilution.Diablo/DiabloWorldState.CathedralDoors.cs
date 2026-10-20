@@ -142,6 +142,9 @@ public sealed partial class DiabloWorldState
     /** The current quest-disabled profile cannot accept uncharacterized map replacements. */
     private void ValidateCathedralDoorMutation(uint mutationId)
     {
+        if (nativeTownCatalog is not null && WorldMutations?.TryGet(mutationId, out var townMutation) == true
+            && townMutation.LevelId == nativeTownCatalog.LevelId)
+            throw new InvalidDataException("Native Town mutations require their dedicated checkpoint owner.");
         if (cathedralDoorCatalog is not null && WorldMutations?.TryGet(mutationId, out var mutation) == true
             && cathedralDoorCatalog.Definitions.Any(value => value.LevelId == mutation.LevelId))
             throw new InvalidDataException("Cathedral door map resynchronization requires native-qualified replacement support.");
@@ -180,7 +183,8 @@ public sealed partial class DiabloWorldState
             throw new InvalidDataException("Live static-object collision must not be stored as canonical geometry.");
         if ((World?.Levels ?? []).Concat(projectedLevels.Values).Any(level =>
             level.NativeSpecialLayer.Count != 0
-                && cathedralDoorCatalog?.Definitions.Any(value => value.LevelId == level.LevelId) != true))
+                && cathedralDoorCatalog?.Definitions.Any(value => value.LevelId == level.LevelId) != true
+                && !IsOwnedNativeTownLevel(level)))
             throw new InvalidDataException("Special-layer persistence requires a mapped versioned capability.");
     }
 
@@ -505,6 +509,11 @@ public sealed partial class DiabloWorldState
                     .Where(value => value.piece == 269).Select(value => value.cell).ToArray();
                 if (lights.Length != 0)
                     projection = AuthoritativeCathedralDoors.CopyLevel(source, staticObjectBlocked: lights);
+            }
+
+            if (nativeTownCatalog is { } town && source.LevelId == town.LevelId) {
+                var occupied = projection.StaticObjectBlockedCells.Concat(town.Roster.OccupiedCells).ToHashSet();
+                projection = AuthoritativeCathedralDoors.CopyLevel(projection, staticObjectBlocked: occupied);
             }
 
             presentationLevelGeometryCache[source.LevelId] = new(source, nativePopulationPolicy,

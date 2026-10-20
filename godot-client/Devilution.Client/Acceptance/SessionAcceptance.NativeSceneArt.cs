@@ -52,7 +52,14 @@ public partial class SessionAcceptance
                     && sample.Drawing.LoadedAtlasPaths.Count > 0
                     && sample.PointerRoundTrip),
                 "The ordinary class journey did not issue identity-bound native Cathedral floor/content/actor draws with shared pointer input.");
-        } else {
+        }
+        if (nativeTownClassProfile) {
+            Require(active.Any(sample => sample.Drawing.Location == "town" && sample.Drawing.LevelId == 0
+                    && sample.Drawing.FloorRasterDrawCount > 0 && sample.Drawing.ContentRasterDrawCount > 0
+                    && sample.Drawing.ActorDrawCount > 0 && sample.Drawing.TextureDrawCount > 0
+                    && sample.Drawing.LoadedAtlasPaths.Count > 0 && sample.PointerRoundTrip),
+                "The native Town journey did not issue native floor/content/actor draws with shared pointer input.");
+        } else if (resumed) {
             // Existing profiles restore in Town, whose native layers are still absent.
             Require(nativeSceneArtSamples.Any(sample => sample.Drawing.GenericFallback
                     && sample.Drawing.LevelId == main.ObservedSnapshot!.Players.Single().LevelId
@@ -70,7 +77,7 @@ public partial class SessionAcceptance
             Passed = true,
             Pack = pack,
             Samples = nativeSceneArtSamples.ToArray(),
-            TownProfileIntegration = false,
+            TownProfileIntegration = nativeTownClassProfile,
             RenderedParity = false,
         };
     }

@@ -3,7 +3,8 @@ param(
     [Parameter(Mandatory)] [string]$ProfileDirectory,
     [string]$GodotExecutable,
     [ValidateSet('Debug', 'Release')] [string]$ServerBuildConfiguration = 'Debug',
-    [ValidateRange(1, 3600)] [int]$QuitAfterSeconds = 900
+    [ValidateRange(1, 3600)] [int]$QuitAfterSeconds = 900,
+    [switch]$NativeTown
 )
 
 $ErrorActionPreference = 'Stop'
@@ -66,6 +67,37 @@ function Assert-NativeClassEvidence($Scene, $ProcessEvidence, [int]$ExpectedClas
     }
 }
 
+function Assert-NativeTownSceneEvidence($Scene) {
+    if ($Scene.NativeTown.Passed -isnot [bool] -or -not $Scene.NativeTown.Passed -or
+        $Scene.NativeTown.FineCells -ne 12544 -or $Scene.NativeTown.SpecialCells -ne 12544 -or
+        $Scene.NativeTown.OccupiedCells -ne 20 -or $Scene.NativeTown.GeometryHash -cnotmatch '^[0-9a-f]{64}$' -or
+        $Scene.NativeSceneArt.Passed -isnot [bool] -or -not $Scene.NativeSceneArt.Passed -or
+        $Scene.NativeSceneArt.TownProfileIntegration -isnot [bool] -or -not $Scene.NativeSceneArt.TownProfileIntegration) {
+        throw 'Native Town scene evidence omitted its complete geometry, resident collision, or native drawing.'
+    }
+    $townDraws = @($Scene.NativeSceneArt.Samples | Where-Object {
+        $_.Drawing.NativeSceneActive -and $_.Drawing.Location -ceq 'town' -and $_.Drawing.LevelId -eq 0 -and
+        $_.Drawing.FloorRasterDrawCount -gt 0 -and $_.Drawing.ContentRasterDrawCount -gt 0 -and
+        $_.Drawing.ActorDrawCount -gt 0 -and $_.Drawing.TextureDrawCount -gt 0 -and $_.PointerRoundTrip
+    })
+    if ($townDraws.Count -eq 0) { throw 'Native Town did not emit actual floor, content and actor draws with pointer mapping.' }
+}
+
+function Read-NativeTownCheckpointHash([string]$Session, [string]$Fingerprint) {
+    $document = Get-Content -LiteralPath (Join-Path $Session 'save/authoritative-cohort.json') -Raw | ConvertFrom-Json
+    $state = [Text.Encoding]::UTF8.GetString([Convert]::FromBase64String($document.SerializedModuleState)) | ConvertFrom-Json
+    $town = $state.NativeTown
+    if ($state.FormatVersion -ne 11 -or $null -eq $town -or $town.CatalogFingerprint -cne $Fingerprint -or
+        @($town.NativePieceLayer).Count -ne 12544 -or @($town.NativeSpecialLayer).Count -ne 12544 -or
+        @($town.NativeMegaTileLayer).Count -ne 1600 -or @($town.NativeSolPropertyLayer).Count -ne 12544 -or
+        @($town.NativeTransparencyLayer).Count -ne 12544 -or @($town.ClosedHellTileChoices).Count -ne 10) {
+        throw 'Native Town persistence omitted the complete version-11 checkpoint.'
+    }
+    $text = $town | ConvertTo-Json -Depth 64 -Compress
+    $sha = [Security.Cryptography.SHA256]::Create()
+    try { return [BitConverter]::ToString($sha.ComputeHash([Text.Encoding]::UTF8.GetBytes($text))).Replace('-', '').ToLowerInvariant() }
+    finally { $sha.Dispose() }
+}
 $repositoryRoot = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot '..')).ProviderPath
 $profileRoot = (Resolve-Path -LiteralPath $ProfileDirectory).ProviderPath
 $metadataPath = Join-Path $profileRoot 'cathedral-native-class-progression-playtest.json'
@@ -73,6 +105,28 @@ if (-not (Test-Path -LiteralPath $metadataPath -PathType Leaf)) {
     throw 'The compiled class-bound native profile metadata is missing.'
 }
 $metadata = Get-Content -LiteralPath $metadataPath -Raw -ErrorAction Stop | ConvertFrom-Json
+$townMetadata = $null
+$evidenceMetadataPath = $metadataPath
+$contentManifestHash = [string]$metadata.contentManifestHash
+$profileKind = 'cathedral-native-class-progression-playtest'
+$adapterId = 'devilution.diablo.cathedral-native-class-progression.v1'
+if ($NativeTown) {
+    $evidenceMetadataPath = Join-Path $profileRoot 'cathedral-native-town-progression-playtest.json'
+    $townMetadata = Get-Content -LiteralPath $evidenceMetadataPath -Raw -ErrorAction Stop | ConvertFrom-Json
+    if ($townMetadata.formatVersion -ne 5 -or
+        $townMetadata.adapterId -cne 'devilution.diablo.cathedral-native-town-progression.v1' -or
+        ($townMetadata.classProfile | ConvertTo-Json -Depth 64 -Compress) -cne
+            ($metadata | ConvertTo-Json -Depth 64 -Compress)) {
+        throw 'The supplied Town profile does not retain the exact format-4 class identity.'
+    }
+    $contentManifestHash = [string]$townMetadata.contentManifestHash
+    $profileKind = 'cathedral-native-town-progression-playtest'
+    $adapterId = [string]$townMetadata.adapterId
+    if ([string]::IsNullOrWhiteSpace($env:GODEVILUTION_NATIVE_SCENE_PACK) -or
+        [string]::IsNullOrWhiteSpace($env:GODEVILUTION_NATIVE_PLAYER_PACK)) {
+        throw 'Native Town graphical acceptance requires explicit native scene and player packs.'
+    }
+}
 if (($metadata.formatVersion -isnot [int] -and $metadata.formatVersion -isnot [long]) -or
     $metadata.formatVersion -ne 4 -or
     $metadata.adapterId -cne 'devilution.diablo.cathedral-native-class-progression.v1') {
@@ -108,6 +162,10 @@ $arguments = @{
     QuitAfterSeconds = $QuitAfterSeconds
     ServerBuildConfiguration = $ServerBuildConfiguration
 }
+if ($NativeTown) {
+    $arguments.Remove('CathedralNativeClassProfileDirectory')
+    $arguments.CathedralNativeTownProfileDirectory = $profileRoot
+}
 if (-not [string]::IsNullOrWhiteSpace($GodotExecutable)) { $arguments.GodotExecutable = $GodotExecutable }
 
 Write-Output "Native $classSymbol Journey session: $sessionDirectory"
@@ -124,7 +182,7 @@ $defeatedAttacks = @($attacks.Attacks | Where-Object {
 })
 if ($journey.Passed -isnot [bool] -or -not $journey.Passed -or $journey.Mode -cne 'SinglePlayer' -or
     $journey.ClassId -ne $classId -or $journey.LevelId -ne 0 -or $journey.ExactColdBaseline -ne $false -or
-    $journey.ContentHash -cne $metadata.contentManifestHash -or
+    $journey.ContentHash -cne $contentManifestHash -or
     [string]$journey.RulesetHash -cnotmatch '^[0-9a-fA-F]{64}$' -or
     $null -eq $nativeClass -or $nativeClass.ClassId -ne $classId -or $nativeClass.DefeatedMonster -le 0 -or
     $nativeClass.ExperienceAfter -le $nativeClass.ExperienceBefore -or
@@ -148,6 +206,14 @@ if ($classId -eq 0) {
     throw 'The Sorcerer Journey did not prove a charged-staff cast, Mana use and authoritative Recharge mutation.'
 }
 
+$townCheckpointHash = $null
+if ($NativeTown) {
+    $services = Get-Content -LiteralPath (Join-Path $sessionDirectory 'native-town-services.json') -Raw | ConvertFrom-Json
+    if ($services.Passed -isnot [bool] -or -not $services.Passed -or $services.SmithSequence -le 0 -or
+        $services.FinalSequence -le $services.SmithSequence) { throw 'Native Town Smith and Pepin service controls were not verified.' }
+    $townCheckpointHash = Read-NativeTownCheckpointHash $sessionDirectory $townMetadata.townCatalogFingerprint
+    Assert-NativeTownSceneEvidence $journey
+}
 Write-Output "Native $classSymbol Resume session: $sessionDirectory"
 & $launcher @arguments -AcceptancePhase $resumePhase
 $resumeExitCode = $LASTEXITCODE
@@ -157,7 +223,7 @@ $resume = Get-Content -LiteralPath $resumePath -Raw -ErrorAction Stop | ConvertF
 $resumedClass = $resume.NativeClass
 if ($resume.Passed -isnot [bool] -or -not $resume.Passed -or $resume.Mode -cne 'SinglePlayer' -or
     $resume.ClassId -ne $classId -or $resume.LevelId -ne 0 -or $resume.ExactColdBaseline -isnot [bool] -or
-    $resume.ContentHash -cne $metadata.contentManifestHash -or
+    $resume.ContentHash -cne $contentManifestHash -or
     [string]$resume.RulesetHash -cnotmatch '^[0-9a-fA-F]{64}$' -or
     -not $resume.ExactColdBaseline -or $null -eq $resumedClass -or $resumedClass.ClassId -ne $classId -or
     $resumedClass.PlayerPayload -cne $nativeClass.PlayerPayload -or
@@ -168,11 +234,19 @@ if ($resume.Passed -isnot [bool] -or -not $resume.Passed -or $resume.Mode -cne '
     throw 'The class Resume did not prove an exact cold baseline and the exact next accepted receipt.'
 }
 
-$markerPath = Join-Path $sessionDirectory 'cathedral-native-class-progression-session.json'
+if ($NativeTown) {
+    Assert-NativeTownSceneEvidence $resume
+    if ($resume.NativeTown.GeometryHash -cne $journey.NativeTown.GeometryHash -or
+        (Read-NativeTownCheckpointHash $sessionDirectory $townMetadata.townCatalogFingerprint) -cne $townCheckpointHash) {
+        throw 'Native Town wire geometry or full fine/coarse/special/protected/RNG checkpoint changed across cold restore.'
+    }
+}
+$markerFile = if ($NativeTown) { 'cathedral-native-town-progression-session.json' } else { 'cathedral-native-class-progression-session.json' }
+$markerPath = Join-Path $sessionDirectory $markerFile
 $marker = Get-Content -LiteralPath $markerPath -Raw -ErrorAction Stop | ConvertFrom-Json
-$metadataHash = (Get-FileHash -LiteralPath $metadataPath -Algorithm SHA256).Hash.ToUpperInvariant()
-if ($marker.FormatVersion -ne 1 -or $marker.ProfileKind -cne 'cathedral-native-class-progression-playtest' -or
-    $marker.AdapterId -cne 'devilution.diablo.cathedral-native-class-progression.v1' -or
+$metadataHash = (Get-FileHash -LiteralPath $evidenceMetadataPath -Algorithm SHA256).Hash.ToUpperInvariant()
+if ($marker.FormatVersion -ne 1 -or $marker.ProfileKind -cne $profileKind -or
+    $marker.AdapterId -cne $adapterId -or
     $marker.MetadataHash -cne $metadataHash -or $marker.ContentTreeHash -cne $metadata.packFileHash -or
     $marker.PopulationTreeHash -cne $metadata.populationPackFileHash -or
     $marker.RuntimeTreeHash -cne $metadata.runtimePackFileHash -or
@@ -199,16 +273,25 @@ Assert-FreshProcessEvidence $journeyProcess $resumeProcess 1
 Assert-NativeClassEvidence $journey $journeyProcess $classId 'Journey'
 Assert-NativeClassEvidence $resume $resumeProcess $classId 'Resume'
 $expectedHashes = @{
-    ContentHash = [string]$metadata.contentManifestHash
+    ContentHash = $contentManifestHash
     ProfileHash = $metadataHash
     ContentTreeHash = [string]$metadata.packFileHash
     PopulationTreeHash = [string]$metadata.populationPackFileHash
     RuntimeTreeHash = [string]$metadata.runtimePackFileHash
 }
+if ($NativeTown) {
+    $expectedHashes.TownTreeHash = [string]$townMetadata.townPackTreeHash
+    $expectedHashes.TownCatalogFingerprint = [string]$townMetadata.townCatalogFingerprint
+    if ($marker.TownTreeHash -cne $townMetadata.townPackTreeHash -or
+        $marker.TownCatalogFingerprint -cne $townMetadata.townCatalogFingerprint -or
+        $marker.ContentManifestHash -cne $contentManifestHash -or $marker.TownInitialSeed -ne $townMetadata.townInitialSeed) {
+        throw 'The Town session marker does not bind its final content, semantic pack, catalog, and seed.'
+    }
+}
 foreach ($evidence in @($journeyProcess, $resumeProcess)) {
     if ($evidence.ServerBuildConfiguration -cne $ServerBuildConfiguration -or
-        $evidence.ProfileKind -cne 'cathedral-native-class-progression-playtest' -or
-        $evidence.AdapterId -cne 'devilution.diablo.cathedral-native-class-progression.v1' -or
+        $evidence.ProfileKind -cne $profileKind -or
+        $evidence.AdapterId -cne $adapterId -or
         $evidence.ClassId -ne $classId -or
         [string]$evidence.RulesetHash -cnotmatch '^[0-9a-fA-F]{64}$') {
         throw 'Native class process evidence changed its build, adapter, class, or ruleset identity.'

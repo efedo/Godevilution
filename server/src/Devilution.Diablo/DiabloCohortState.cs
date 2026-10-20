@@ -117,6 +117,10 @@ public sealed partial record DiabloCohortState(
     public const int NativeTrapFormatVersion = 8;
     public const int NativeProgressionFormatVersion = 9;
     public const int NativeDepthProgressionFormatVersion = 10;
+    public const int NativeTownProgressionFormatVersion = 11;
+
+    /** Explicit native Town backing; absent from every earlier cohort schema. */
+    public DiabloNativeTownCheckpoint? NativeTown { get; init; }
 
     public DiabloNativeProgressionCheckpoint? NativeProgression { get; init; }
 
@@ -138,6 +142,16 @@ public sealed partial record DiabloCohortState(
     /** Detached records are captured in deterministic identity order. */
     public void ValidateShape()
     {
+        if (FormatVersion == NativeTownProgressionFormatVersion) {
+            (NativeTown ?? throw new InvalidDataException("Native Town cohorts require their complete backing checkpoint."))
+                .ValidateShape();
+            // v11 adds one owner; inherited v10 state retains exactly its existing rules.
+            (this with { FormatVersion = NativeDepthProgressionFormatVersion, NativeTown = null }).ValidateShape();
+            ValidateNativeTownCopies();
+            return;
+        }
+        if (NativeTown is not null)
+            throw new InvalidDataException("Native Town backing cannot be down-converted to an older cohort.");
         if ((FormatVersion != CurrentFormatVersion && FormatVersion != CathedralDoorFormatVersion
                 && FormatVersion != NativeMonsterFormatVersion && FormatVersion != CathedralItemFormatVersion
                 && FormatVersion != NativeCombatFormatVersion && FormatVersion != NativeSarcophagusFormatVersion

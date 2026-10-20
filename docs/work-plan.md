@@ -1,17 +1,14 @@
 # Near-term work plan
 
-Updated 2026-10-19. The reviewed native Warrior/Sorcerer admission batch passes
-its headless L1 scope. The active primary batch is the native Town/Cathedral
-presentation slice. Optional original-player CL2/PAL/TRN import and snapshot-driven
-class/equipment/direction/action selection pass full native pixel/atlas comparisons;
-both headless class draw/restore pairs pass. Generic packs remain compatible
-and original assets stay client-only. The pure Town composition prerequisite now
-passes all 191 native cases. The optional Town/Cathedral CEL/MIN/TIL/SOL importer
-now matches every native piece/special and published atlas pixel. Shared isometric
-Cathedral drawing/input passes both headless class journey/restore pairs; Town
-retains its explicit empty-geometry fallback. Continue with explicit Town
-profile/backing-state integration. Complete scene coverage and matched rendered
-comparisons remain open within this visual slice.
+Updated 2026-10-19. Native Warrior/Sorcerer admission passes its headless L1
+scope. The active primary batch remains native Town/Cathedral presentation.
+Optional original-player and scene imports pass full native pixel/atlas
+comparisons. Distinct format-5 Town profiles now retain semantic fine/coarse/
+special/protected state, canonical resident collision and strict v11 cold restore.
+Both classes pass native Town/Cathedral drawing/input, Smith/Pepin controls and
+exact fresh-host continuity. Generic packs and earlier profiles retain their
+contracts. Complete actor/object/effect coverage, native scene phases, lighting,
+palette cycling, wall transparency and matched rendered comparisons remain open.
 
 The native Rogue Town/L1/L2 route with earned gear, Town services and fresh-host
 resume remains the broader reusable baseline. Explicit Warrior/Sorcerer profiles
@@ -30,35 +27,34 @@ L1 combat, class ability and fresh-host continuity through actual headless
 controls. See [test history](test-history.md#2026-10-19--native-class-admission)
 for the verified boundary. This does not establish complete class campaigns.
 
-The original-player stage passes native indices/masks, published RGBA/padding and
-actual class draw/restore checks; see [test history](test-history.md#2026-10-19--optional-native-player-art).
-The qualified profiles already supply Cathedral final d-pieces, while Town's
-112x112 geometry layers are empty. The separate MPQ-free builder now matches
-Town's four sectors, automap, conditional mutations, retained channels, entry view
-and RNG; see [test history](test-history.md#2026-10-19--native-town-geometry-prerequisite).
-Integrate its 40x40 coarse and 112x112 fine backing state explicitly before
-binding the Town scene. Native scene import covers 1,711 pieces, 4,666 referenced
-frames and 26 specials with explicit palettes and exact content/level bindings;
-see [test history](test-history.md#2026-10-19--optional-native-scene-art-import).
-Both class journeys issue actual Cathedral floor/content/actor draws through the
-shared camera/pointer transform; their Town cold restores retain explicit
-fallback. See [test history](test-history.md#2026-10-19--native-scene-drawing-and-input).
+The optional original-player and scene stages retain their full native pixel
+qualification; see [test history](test-history.md#2026-10-19--optional-native-player-art)
+and [scene import](test-history.md#2026-10-19--optional-native-scene-art-import).
+The pure MPQ-free Town builder passes all 191 native cases. The additive format-5
+profile compiles original Town map prefixes, TIL/SOL and the canonical roster
+into semantic tables. Its v11 owner keeps 112x112 fine/special and 40x40 coarse/
+protected channels separate, validates detached replay and preserves simulation
+RNG. Native occupancy includes eight human residents and three four-cell cows;
+the Smith remains solid with a reachable service position.
+
+Both headless class pairs now prove generated L1 combat/abilities, ordinary Town
+travel, Smith/Pepin controls, native Town/Cathedral raster draws and exact cold
+retention. The backend also restores typed Town mutations and a newly visited
+floor. Earlier format-4 profiles retain their empty Town layers and explicit
+fallback. See [Town integration evidence](test-history.md#2026-10-19--explicit-native-town-integration).
 Normal cohort/profile adoption remains separately held.
 
-The next cohesive stage is a distinct Town-enabled profile and checkpoint:
-compile bounded semantic Town inputs, retain 112x112 fine/special and 40x40
-coarse/protected state separately, and validate restore against trusted inputs
-without consuming generation RNG again. Bind canonical towner occupancy from
-native roster data; preserve the solid Smith cell and reachable adjacent service
-position. Keep old profile bytes/save schemas and arbitrary-unmapped-special
-refusal intact. Qualify ordinary Town/Cathedral travel, services, native Town art
-binding and exact fresh-host retention before closing that stage.
+The Town profile/backing stage is complete for that headless boundary. Next,
+establish one cohesive native scene behavior family from inventory 11.16–11.25:
+actor/object/effect coverage and native draw phases remain eligible work, with
+native comparisons followed by actual class journeys and retained checkpoints.
+Keep rendered qualification and the full graphical-parity requirement open.
 
 ## Delivery order
 
 | Order | Coherent deliverable | Inventory scope | Exit for this batch |
 | --- | --- | --- | --- |
-| 1 | Continue the native Town/Cathedral visual slice with MPQ-free Town geometry preparation, CEL/MIN scene art and shared isometric cell/actor/camera/pointer mapping. | 11.2–11.5, 11.12, 11.23–11.26, 11.35–11.36 | Native composition/pixel comparisons, inverse transform/input checks and a headless journey/restore with actual scene bindings. Retain the normal cohort/profile adoption hold and open rendered acceptance. |
+| 1 | Continue the native Town/Cathedral visual slice with cohesive actor/object/effect coverage and native scene phases over the qualified geometry/import/input foundation. | 11.4–11.5, 11.12, 11.16–11.26, 11.35–11.36 | Native comparisons and headless class travel/combat/service/restore with actual scene bindings. Keep lighting/palette/transparency and rendered qualification open until proved; retain normal-profile adoption hold. |
 | 2 | Extend the native world into Catacombs, beginning with L4/L5 entry and return and building the L5–L8 family coherently. | 5.6, 5.17, 5.22, 9.21 | Native generation/population comparisons for changed behavior, ordinary travel/combat, retained floor state and fresh-host return. |
 
 The session-flow baseline now includes reviewed create/return/rejoin, local

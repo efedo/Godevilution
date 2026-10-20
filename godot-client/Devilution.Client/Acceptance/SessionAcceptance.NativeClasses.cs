@@ -26,11 +26,7 @@ public partial class SessionAcceptance
         using var profileDocument = JsonDocument.Parse(System.IO.File.ReadAllText(profilePath
             ?? throw new InvalidDataException("An explicit native class profile is required.")));
         var profile = profileDocument.RootElement;
-        Require(profile.GetProperty("adapterId").GetString() == "devilution.diablo.cathedral-native-class-progression.v1"
-            && profile.GetProperty("formatVersion").GetInt32() == 4
-            && profile.GetProperty("heroClassSymbol").GetString() == (classId == 0 ? "warrior" : "sorcerer")
-            && profile.GetProperty("contentManifestHash").GetString() == identity.ContentManifestHash,
-            "The native class journey does not match its class-bound profile.");
+        ValidateNativeTownClassProfile(profile, identity.ContentManifestHash, classId);
         if (phase.EndsWith("Resume", StringComparison.Ordinal)) {
             Require(previous is { Passed: true }, "Native class resume requires passing creation evidence.");
             using var saved = JsonDocument.Parse(System.IO.File.ReadAllText(System.IO.Path.Combine(directory, journeyName)));
@@ -185,6 +181,8 @@ public partial class SessionAcceptance
             && afterAbilityPlayer.Equipment.Single(item => item.Slot == abilitySlot).Equals(expectedWeapon),
             "Class ability changed paid-service state, Gold, item identity or unrelated carried items/grid.");
         chargesAfterRecharge = classId == 2 ? afterAbility.Charges : 0;
+        if (nativeTownClassProfile)
+            await VerifyNativeTownServicesAsync(main, directory);
         var snapshotAfter = main.ObservedSnapshot!;
         Require(Settled(main) && snapshotAfter.Players.Single() is { LevelId: 0, Life: > 0 },
             "The native class checkpoint did not finish alive and settled in Town.");
@@ -207,6 +205,7 @@ public partial class SessionAcceptance
             Visible = false, ExactColdBaseline = exactColdBaseline, NativeClass = checkpoint,
             NativePlayerArt = VerifyNativePlayerArtCapture(main, exactColdBaseline),
             NativeSceneArt = VerifyNativeSceneArtCapture(main, exactColdBaseline),
+            NativeTown = CaptureNativeTownPresentation(main),
             FirstAcceptedSequence = exactColdBaseline ? main.ObservedCommandResult!.ClientSequence : 0,
             FirstAcceptedAppliedTick = exactColdBaseline ? main.ObservedCommandResult!.AppliedTick : 0,
         });

@@ -29,7 +29,7 @@ internal sealed class AuthoritativeCathedralNativeProgression
             && cohortFormatVersion == DiabloCohortState.NativeProgressionFormatVersion
             && doors is null;
         var isDepthProgression = maximumDepth == AuthoritativeCathedralDepthGenerator.MaximumSupportedDepth
-            && cohortFormatVersion == DiabloCohortState.NativeDepthProgressionFormatVersion
+            && cohortFormatVersion is DiabloCohortState.NativeDepthProgressionFormatVersion or DiabloCohortState.NativeTownProgressionFormatVersion
             && doors is not null;
         if (!isLegacyProgression && !isDepthProgression)
             throw new InvalidDataException("Native progression requires a supported depth and cohort format.");
@@ -38,7 +38,7 @@ internal sealed class AuthoritativeCathedralNativeProgression
         this.build = build;
         MaximumDepth = maximumDepth;
         CohortFormatVersion = cohortFormatVersion;
-        if (cohortFormatVersion == DiabloCohortState.NativeDepthProgressionFormatVersion) {
+        if (cohortFormatVersion is DiabloCohortState.NativeDepthProgressionFormatVersion or DiabloCohortState.NativeTownProgressionFormatVersion) {
             if (doors is null)
                 throw new InvalidDataException("Native depth progression requires its complete ordered door mappings.");
             var definitions = doors.ToArray();

@@ -14,6 +14,7 @@ internal static class Program
     private const string NativePopulationUsage = "Cathedral.Playtest --native-cathedral-population --base-directory <pack> --geometry-directory <semantic TSVs> --metadata-directory <complete population pack> --monster-runtime-table <TSV> --inventory-footprints <captured TSV> --output-directory <new directory> --depth-seeds 2588,2588,1,4294967295";
     private const string NativeDepthProgressionUsage = "Cathedral.Playtest --native-cathedral-depth-progression --base-directory <pack> --geometry-directory <semantic TSVs> --metadata-directory <complete population pack> --monster-runtime-table <TSV> --inventory-footprints <captured TSV> --output-directory <new directory> --depth-seeds 2588,2588,1,4294967295";
     private const string NativeClassProgressionUsage = NativeDepthProgressionUsage + " --native-class <warrior|sorcerer>";
+    private const string NativeTownProgressionUsage = "Cathedral.Playtest --native-cathedral-town-progression --class-profile-directory <compiled format-4 profile> --town-source-directory <extracted Town source> --roster-table <towners.tsv> --output-directory <new directory> --town-seed <uint32>";
 
     public static int Main(string[] args)
     {
@@ -27,8 +28,11 @@ internal static class Program
                 Console.WriteLine(NativePopulationUsage.Replace("--native-cathedral-population", "--native-cathedral-progression"));
                 Console.WriteLine(NativeDepthProgressionUsage);
                 Console.WriteLine(NativeClassProgressionUsage);
+                Console.WriteLine(NativeTownProgressionUsage);
                 return 0;
             }
+            if (args.Contains("--native-cathedral-town-progression", StringComparer.Ordinal))
+                return CompileNativeTownProgression(args);
             if (args.Contains("--native-cathedral-population", StringComparer.Ordinal)
                 || args.Contains("--native-cathedral-progression", StringComparer.Ordinal)
                 || args.Contains("--native-cathedral-depth-progression", StringComparer.Ordinal))
@@ -71,6 +75,42 @@ internal static class Program
             Console.Error.WriteLine($"Cathedral profile compilation failed: {exception.Message}");
             return 1;
         }
+    }
+
+    private static int CompileNativeTownProgression(string[] args)
+    {
+        var values = new Dictionary<string, string>(StringComparer.Ordinal);
+        var selected = false;
+        for (var index = 0; index < args.Length; index++) {
+            if (args[index] == "--native-cathedral-town-progression") {
+                if (selected)
+                    throw new ArgumentException(NativeTownProgressionUsage);
+                selected = true;
+            } else if (args[index] is not ("--class-profile-directory" or "--town-source-directory"
+                or "--roster-table" or "--output-directory" or "--town-seed")
+                || index + 1 >= args.Length || string.IsNullOrWhiteSpace(args[index + 1])
+                || !values.TryAdd(args[index], args[++index])) {
+                throw new ArgumentException(NativeTownProgressionUsage);
+            }
+        }
+        if (!selected
+            || !values.TryGetValue("--class-profile-directory", out var classProfileDirectory)
+            || !values.TryGetValue("--town-source-directory", out var townSourceDirectory)
+            || !values.TryGetValue("--roster-table", out var rosterTablePath)
+            || !values.TryGetValue("--output-directory", out var outputDirectory)
+            || !values.TryGetValue("--town-seed", out var seedText)
+            || !uint.TryParse(seedText, NumberStyles.None, CultureInfo.InvariantCulture, out var seed))
+            throw new ArgumentException(NativeTownProgressionUsage);
+
+        RejectNativeOutputInputOverlap(outputDirectory,
+            [classProfileDirectory, townSourceDirectory, rosterTablePath]);
+        var profile = CathedralNativeTownPlaytestCompiler.Compile(
+            new CathedralNativeTownPlaytestCompilerOptions(
+                classProfileDirectory, townSourceDirectory, rosterTablePath, outputDirectory, seed));
+        Console.WriteLine($"Compiled explicit native Town profile: {Path.GetFullPath(outputDirectory)}");
+        Console.WriteLine($"Town seed: {profile.TownInitialSeed}; content manifest: {profile.ContentManifestHash}");
+        Console.WriteLine("Format 5 adds semantic Town geometry to a qualified class-progression profile; it does not change format-4 profiles.");
+        return 0;
     }
 
     private static int CompilePopulationMetadata(string[] args)

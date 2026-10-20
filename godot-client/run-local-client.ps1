@@ -26,14 +26,15 @@ param(
     [string]$CathedralNativeDepthProgressionProfileDirectory,
     [string]$NativeDepthEntryBaselinePath,
     [switch]$SessionMenuAcceptance,
-    [string]$CathedralNativeClassProfileDirectory
+    [string]$CathedralNativeClassProfileDirectory,
+    [string]$CathedralNativeTownProfileDirectory
 )
 
 $ErrorActionPreference = 'Stop'
 if ($SessionMenuAcceptance -and ([string]::IsNullOrWhiteSpace($SessionDirectory) -or
     $AcceptancePhase -notin @('Create', 'Resume') -or
     $PreviewContent -or $PortalPreviewContent -or $LifecyclePreviewContent -or $Multiplayer -or
-    $CathedralProfileDirectory -or $CathedralDepthProfileDirectory -or $CathedralDoorProfileDirectory -or $CathedralNativeProfileDirectory -or $CathedralNativeClassProfileDirectory -or $CathedralNativeProgressionProfileDirectory -or $CathedralNativeDepthProgressionProfileDirectory)) {
+    $CathedralProfileDirectory -or $CathedralDepthProfileDirectory -or $CathedralDoorProfileDirectory -or $CathedralNativeProfileDirectory -or $CathedralNativeClassProfileDirectory -or $CathedralNativeTownProfileDirectory -or $CathedralNativeProgressionProfileDirectory -or $CathedralNativeDepthProgressionProfileDirectory)) {
     throw 'Session-menu acceptance requires an explicit isolated base single-player Create/Resume profile.'
 }
 if ($Automated -and [string]::IsNullOrWhiteSpace($SessionDirectory)) {
@@ -46,10 +47,12 @@ $PersistenceMode = $PersistenceMode.ToLowerInvariant()
 $cathedralProgression = -not [string]::IsNullOrWhiteSpace($CathedralNativeProgressionProfileDirectory)
 $cathedralDepthProgression = -not [string]::IsNullOrWhiteSpace($CathedralNativeDepthProgressionProfileDirectory)
 $cathedralClassNative = -not [string]::IsNullOrWhiteSpace($CathedralNativeClassProfileDirectory)
+$cathedralNativeTown = -not [string]::IsNullOrWhiteSpace($CathedralNativeTownProfileDirectory)
 if (($cathedralProgression -and $cathedralDepthProgression) -or
     (($cathedralProgression -or $cathedralDepthProgression) -and
-        (-not [string]::IsNullOrWhiteSpace($CathedralNativeProfileDirectory) -or $cathedralClassNative)) -or
-    ($cathedralClassNative -and -not [string]::IsNullOrWhiteSpace($CathedralNativeProfileDirectory))) {
+        (-not [string]::IsNullOrWhiteSpace($CathedralNativeProfileDirectory) -or $cathedralClassNative -or $cathedralNativeTown)) -or
+    ($cathedralClassNative -and (-not [string]::IsNullOrWhiteSpace($CathedralNativeProfileDirectory) -or $cathedralNativeTown)) -or
+    ($cathedralNativeTown -and -not [string]::IsNullOrWhiteSpace($CathedralNativeProfileDirectory))) {
     throw 'Choose one explicit native Cathedral profile.'
 }
 $cathedralNative = $cathedralProgression -or $cathedralDepthProgression -or
@@ -113,12 +116,13 @@ $cathedralProfileModes = @(
     -not [string]::IsNullOrWhiteSpace($CathedralProfileDirectory),
     $cathedralDoors,
     $cathedralNative,
-    $cathedralClassNative) | Where-Object { $_ }
+    $cathedralClassNative,
+    $cathedralNativeTown) | Where-Object { $_ }
 if ($cathedralProfileModes.Count -gt 1) {
     throw 'Choose exactly one Cathedral profile mode: L1, depths 1-4, mutable doors, or one pinned native population profile.'
 }
 $cathedral = $cathedralDepths -or -not [string]::IsNullOrWhiteSpace($CathedralProfileDirectory)
-if (($cathedral -or $cathedralDoors -or $cathedralNative -or $cathedralClassNative) -and ($PreviewContent -or $PortalPreviewContent -or $LifecyclePreviewContent -or $Multiplayer -or $performance)) {
+if (($cathedral -or $cathedralDoors -or $cathedralNative -or $cathedralClassNative -or $cathedralNativeTown) -and ($PreviewContent -or $PortalPreviewContent -or $LifecyclePreviewContent -or $Multiplayer -or $performance)) {
     throw 'Cathedral playtests require their own single-player content and save profile.'
 }
 if (($AcceptancePhase -in @('CathedralJourney', 'CathedralResume')) -and (-not $cathedral -or $cathedralDepths)) {
@@ -132,11 +136,17 @@ if (($AcceptancePhase -in @('CathedralDoorJourney', 'CathedralDoorResume')) -and
 }
 $nativeClassPhases = @('NativeWarriorJourney', 'NativeWarriorResume', 'NativeSorcererJourney', 'NativeSorcererResume')
 $nativeClassPhase = $AcceptancePhase -in $nativeClassPhases
-if ($nativeClassPhase -and (-not $cathedralClassNative -or -not $Headless -or -not $Automated -or
-    $CharacterClassId -ge 0 -or -not [string]::IsNullOrWhiteSpace($CharacterName))) {
+if ($nativeClassPhase -and -not ($cathedralClassNative -or $cathedralNativeTown)) {
     throw 'Native class acceptance requires its explicit class profile and automated headless cohort session.'
 }
-if ($cathedralClassNative -and (($AcceptancePhase -and -not $nativeClassPhase) -or $SessionMenuAcceptance -or $PersistenceMode -cne 'cohort' -or
+if ($nativeClassPhase -and (-not $Headless -or -not $Automated -or $CharacterClassId -ge 0 -or
+    -not [string]::IsNullOrWhiteSpace($CharacterName))) {
+    if ($cathedralNativeTown) {
+        throw 'Native Town class acceptance requires an automated headless cohort launch without class or name overrides.'
+    }
+    throw 'Native class acceptance requires its explicit class profile and automated headless cohort session.'
+}
+if (($cathedralClassNative -or $cathedralNativeTown) -and (($AcceptancePhase -and -not $nativeClassPhase) -or $SessionMenuAcceptance -or $PersistenceMode -cne 'cohort' -or
     ($CharacterClassId -ge 0 -and $CharacterClassId -notin @(0, 2)))) {
     throw 'Class-bound native profiles require a direct single-player Warrior or Sorcerer cohort launch or their explicit acceptance phases.'
 }
@@ -219,8 +229,8 @@ $serverExecutable = Join-Path $repositoryRoot "server/src/Devilution.Server/bin/
 $clientSourceProject = Join-Path $repositoryRoot 'godot-client/Devilution.Client'
 $clientProject = $clientSourceProject
 if ([string]::IsNullOrWhiteSpace($SessionDirectory)) {
-    $SessionDirectory = if ($cathedral -or $cathedralDoors -or $cathedralNative -or $cathedralClassNative) {
-        $profileDirectory = if ($cathedralClassNative) { $CathedralNativeClassProfileDirectory } elseif ($cathedralDepths) { $CathedralDepthProfileDirectory } elseif ($cathedralDoors) { $CathedralDoorProfileDirectory } elseif ($cathedralDepthProgression) { $CathedralNativeDepthProgressionProfileDirectory } elseif ($cathedralProgression) { $CathedralNativeProgressionProfileDirectory } elseif ($cathedralNative) { $CathedralNativeProfileDirectory } else { $CathedralProfileDirectory }
+    $SessionDirectory = if ($cathedral -or $cathedralDoors -or $cathedralNative -or $cathedralClassNative -or $cathedralNativeTown) {
+        $profileDirectory = if ($cathedralNativeTown) { $CathedralNativeTownProfileDirectory } elseif ($cathedralClassNative) { $CathedralNativeClassProfileDirectory } elseif ($cathedralDepths) { $CathedralDepthProfileDirectory } elseif ($cathedralDoors) { $CathedralDoorProfileDirectory } elseif ($cathedralDepthProgression) { $CathedralNativeDepthProgressionProfileDirectory } elseif ($cathedralProgression) { $CathedralNativeProgressionProfileDirectory } elseif ($cathedralNative) { $CathedralNativeProfileDirectory } else { $CathedralProfileDirectory }
         Join-Path ([IO.Path]::GetFullPath($profileDirectory)) 'sessions/local'
     } else {
         Join-Path $repositoryRoot $(if ($Multiplayer) { '.local/godot-multiplayer' } elseif ($lifecycle) { '.local/godot-lifecycle-preview' } elseif ($PortalPreviewContent) { '.local/godot-portal-preview' } elseif ($PreviewContent) { '.local/godot-preview' } else { '.local/godot' })
@@ -281,7 +291,7 @@ $environmentNames = @('DEVILUTION_SERVER_HOST', 'DEVILUTION_SERVER_PORT', 'DEVIL
     'GODEVILUTION_ACCEPTANCE_PHASE', 'GODEVILUTION_ACCEPTANCE_DIRECTORY', 'GODEVILUTION_QUIT_AFTER_SECONDS',
     'GODEVILUTION_ACCEPTANCE_SESSION_MENU',
     'GODEVILUTION_PERSISTENCE_MODE', 'GODEVILUTION_COMMAND_TIMING_TRACE',
-    'GODEVILUTION_LOCAL_PLAYER', 'GODEVILUTION_PORTAL_PREVIEW', 'GODEVILUTION_LIFECYCLE_PREVIEW', 'GODEVILUTION_CATHEDRAL_PROFILE', 'GODEVILUTION_CATHEDRAL_DEPTH_PROFILE', 'GODEVILUTION_CATHEDRAL_DOOR_PROFILE', 'GODEVILUTION_CATHEDRAL_NATIVE_PROFILE',
+    'GODEVILUTION_LOCAL_PLAYER', 'GODEVILUTION_PORTAL_PREVIEW', 'GODEVILUTION_LIFECYCLE_PREVIEW', 'GODEVILUTION_CATHEDRAL_PROFILE', 'GODEVILUTION_CATHEDRAL_DEPTH_PROFILE', 'GODEVILUTION_CATHEDRAL_DOOR_PROFILE', 'GODEVILUTION_CATHEDRAL_NATIVE_PROFILE', 'GODEVILUTION_CATHEDRAL_NATIVE_TOWN_PROFILE',
     'GODEVILUTION_PERFORMANCE_PARTICIPANTS', 'GODEVILUTION_PERFORMANCE_SHARED_DIRECTORY', 'GODEVILUTION_PERFORMANCE_RESUME_BASELINE_PATH',
     'GODEVILUTION_NATIVE_DEPTH_ENTRY_BASELINE', 'GODEVILUTION_CLIENT_ASSEMBLY_IMAGE_DIRECTORY',
     'GODEVILUTION_CLIENT_PERFORMANCE_OUTPUT', 'GODEVILUTION_CLIENT_PERFORMANCE_WARMUP_SECONDS',
@@ -2003,10 +2013,15 @@ try {
         . (Join-Path $PSScriptRoot 'native-class-profile.ps1')
         Get-CathedralNativeClassProfile $CathedralNativeClassProfileDirectory $SessionDirectory
     } else { $null }
-    if ($cathedralClassNative -and $CharacterClassId -ge 0 -and $CharacterClassId -ne $cathedralNativeClassProfile.ClassId) {
+    $cathedralNativeTownProfile = if ($cathedralNativeTown) {
+        . (Join-Path $repositoryRoot 'tools/NativeTownProfile.ps1')
+        Get-CathedralNativeTownProfile $CathedralNativeTownProfileDirectory $SessionDirectory
+    } else { $null }
+    $boundNativeClassId = if ($cathedralNativeTown) { $cathedralNativeTownProfile.ClassId } else { $cathedralNativeClassProfile.ClassId }
+    if (($cathedralClassNative -or $cathedralNativeTown) -and $CharacterClassId -ge 0 -and $CharacterClassId -ne $boundNativeClassId) {
         throw 'The requested character class ID does not match the class-bound native profile.'
     }
-    if ($nativeClassPhase -and (($AcceptancePhase -like 'NativeWarrior*') -ne ($cathedralNativeClassProfile.ClassId -eq 0))) {
+    if ($nativeClassPhase -and (($AcceptancePhase -like 'NativeWarrior*') -ne ($boundNativeClassId -eq 0))) {
         throw 'The native class acceptance phase does not match the compiled class profile.'
     }
     New-Item -ItemType Directory -Path $SessionDirectory -Force | Out-Null
@@ -2030,6 +2045,7 @@ try {
         Initialize-CathedralNativePopulationSession $cathedralNativeProfile $SessionDirectory $cathedralProgression $cathedralDepthProgression
     }
     if ($cathedralClassNative) { Initialize-CathedralNativeClassSession $cathedralNativeClassProfile $SessionDirectory }
+    if ($cathedralNativeTown) { Initialize-CathedralNativeTownSession $cathedralNativeTownProfile $SessionDirectory }
     $staging = New-IsolatedGodotProject $clientSourceProject (Join-Path $captureRoot 'godot/Devilution.Client')
     $clientProject = $staging.DestinationDirectory
     Write-ProjectStageEvidence $staging $null $projectStageEvidencePath $null
@@ -2053,7 +2069,7 @@ try {
     # Seed 5 keeps Butcher available under both production and native quest-pool
     # orderings. This diagnostic does not certify parity of the complete pools.
     # Existing acceptance and preview profiles retain seed 0.
-    $acceptanceArguments = if ($LifecyclePreviewContent) { '--starting-level 0 --random-seed 5' } elseif ($AcceptancePhase -or $PreviewContent -or $PortalPreviewContent -or $Multiplayer -or $cathedral -or $cathedralDoors -or $cathedralNative -or $cathedralClassNative) { '--starting-level 0 --random-seed 0' } else { '' }
+    $acceptanceArguments = if ($LifecyclePreviewContent) { '--starting-level 0 --random-seed 5' } elseif ($AcceptancePhase -or $PreviewContent -or $PortalPreviewContent -or $Multiplayer -or $cathedral -or $cathedralDoors -or $cathedralNative -or $cathedralClassNative -or $cathedralNativeTown) { '--starting-level 0 --random-seed 0' } else { '' }
     $overlayArguments = if ($PreviewContent -or $PortalPreviewContent) { '--content-overlay "{0}"' -f (Join-Path $repositoryRoot 'server/content/town-loop-preview') } elseif ($LifecyclePreviewContent) { '--content-overlay "{0}"' -f (Join-Path $repositoryRoot 'server/content/town-lifecycle-preview') } else { '' }
     if ($PortalPreviewContent) {
         $overlayArguments += ' --content-overlay "{0}"' -f (Join-Path $repositoryRoot 'server/content/town-portal-preview')
@@ -2073,6 +2089,12 @@ try {
         $overlayArguments = '--content-root "{0}" --content-id {1} --content-version {2} --game-adapter {3} --content-overlay "{4}" --content-overlay "{5}"' -f
             $cathedralNativeClassProfile.ContentRoot, $cathedralNativeClassProfile.Metadata.ContentId, $cathedralNativeClassProfile.Metadata.ContentVersion,
             $cathedralNativeClassProfile.Metadata.AdapterId, $cathedralNativeClassProfile.PopulationRoot, $cathedralNativeClassProfile.RuntimeRoot
+    }
+    if ($cathedralNativeTown) {
+        $overlayArguments = '--content-root "{0}" --content-id {1} --content-version {2} --game-adapter {3} --content-overlay "{4}" --content-overlay "{5}" --content-overlay "{6}"' -f
+            $cathedralNativeTownProfile.ContentRoot, $cathedralNativeTownProfile.Metadata.classProfile.contentId,
+            $cathedralNativeTownProfile.Metadata.classProfile.contentVersion, $cathedralNativeTownProfile.Metadata.adapterId,
+            $cathedralNativeTownProfile.PopulationRoot, $cathedralNativeTownProfile.RuntimeRoot, $cathedralNativeTownProfile.TownRoot
     }
     function Start-SessionServer([int]$ListenPort, [string]$LogPrefix) {
         $commandTimingArguments = if ($CommandTimingTrace) { '--command-timing-trace true' } else { '' }
@@ -2114,6 +2136,7 @@ try {
             if ($cathedralDoors -and $contentHash -cne $cathedralDoorProfile.Metadata.ContentManifestHash) { throw 'The Cathedral door host loaded a different content identity than the compiled profile.' }
             if ($cathedralNative -and $contentHash -cne $cathedralNativeProfile.Metadata.ContentManifestHash) { throw 'The native Cathedral host loaded a different content identity than the pinned profile.' }
             if ($cathedralClassNative -and $contentHash -cne $cathedralNativeClassProfile.Metadata.ContentManifestHash) { throw 'The native class host loaded a different content identity than the compiled class-bound profile.' }
+            if ($cathedralNativeTown -and $contentHash -cne $cathedralNativeTownProfile.Metadata.contentManifestHash) { throw 'The native Town host loaded a different content identity than the compiled Town-enabled profile.' }
             return [pscustomobject]@{ Process = $serverProcess; Port = $actualPort; ContentHash = $contentHash; RulesetHash = $rulesetHash; Mode = $gameMode; Persistence = $persistence }
         } catch {
             if ($null -ne $serverProcess) {
@@ -2186,6 +2209,12 @@ try {
             $clientEnvironment['GODEVILUTION_CATHEDRAL_NATIVE_PROFILE'] = $cathedralNativeClassProfile.MetadataPath
             $clientEnvironment['DEVILUTION_CHARACTER_CLASS_ID'] = [string]$cathedralNativeClassProfile.ClassId
             $clientEnvironment['GODEVILUTION_SUPPORTED_CHARACTER_CLASS_IDS'] = [string]$cathedralNativeClassProfile.ClassId
+        }
+        if ($cathedralNativeTown) {
+            $clientEnvironment['GODEVILUTION_CATHEDRAL_NATIVE_PROFILE'] = $cathedralNativeTownProfile.ClassMetadataPath
+            $clientEnvironment['GODEVILUTION_CATHEDRAL_NATIVE_TOWN_PROFILE'] = $cathedralNativeTownProfile.MetadataPath
+            $clientEnvironment['DEVILUTION_CHARACTER_CLASS_ID'] = [string]$cathedralNativeTownProfile.ClassId
+            $clientEnvironment['GODEVILUTION_SUPPORTED_CHARACTER_CLASS_IDS'] = [string]$cathedralNativeTownProfile.ClassId
         }
         if ($nativeDepthEntryContinuation) {
             $clientEnvironment['GODEVILUTION_NATIVE_DEPTH_ENTRY_BASELINE'] = $NativeDepthEntryBaselinePath
@@ -2290,8 +2319,20 @@ try {
             $processEvidence.ContentHash = $contentHash
             $processEvidence.RulesetHash = $rulesetHash
         }
-        if ($cathedral -or $cathedralDoors -or $cathedralNative -or $cathedralClassNative) {
-            if ($cathedralClassNative) {
+        if ($cathedral -or $cathedralDoors -or $cathedralNative -or $cathedralClassNative -or $cathedralNativeTown) {
+            if ($cathedralNativeTown) {
+                $processEvidence.ProfileHash = $cathedralNativeTownProfile.MetadataHash
+                $processEvidence.ContentTreeHash = $cathedralNativeTownProfile.ContentTreeHash
+                $processEvidence.PopulationTreeHash = $cathedralNativeTownProfile.PopulationTreeHash
+                $processEvidence.RuntimeTreeHash = $cathedralNativeTownProfile.RuntimeTreeHash
+                $processEvidence.TownTreeHash = $cathedralNativeTownProfile.TownTreeHash
+                $processEvidence.TownCatalogFingerprint = $cathedralNativeTownProfile.Metadata.townCatalogFingerprint
+                $processEvidence.TownInitialSeed = $cathedralNativeTownProfile.Metadata.townInitialSeed
+                $processEvidence.ProfileKind = 'cathedral-native-town-progression-playtest'
+                $processEvidence.AdapterId = $cathedralNativeTownProfile.Metadata.adapterId
+                $processEvidence.ClassId = $cathedralNativeTownProfile.ClassId
+                $processEvidence.ClassSymbol = $cathedralNativeTownProfile.ClassSymbol
+            } elseif ($cathedralClassNative) {
                 $processEvidence.ProfileHash = $cathedralNativeClassProfile.MetadataHash
                 $processEvidence.ContentTreeHash = $cathedralNativeClassProfile.ContentTreeHash
                 $processEvidence.PopulationTreeHash = $cathedralNativeClassProfile.PopulationTreeHash

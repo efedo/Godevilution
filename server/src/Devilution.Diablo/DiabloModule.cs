@@ -60,6 +60,8 @@ public sealed class DiabloModule : IGameplayModule
 
     public IDiabloCathedralNativeDepthProgressionBootstrap CathedralNativeDepthProgressionContentBootstrap => contentBootstrap;
 
+    public IDiabloCathedralNativeTownProgressionBootstrap CathedralNativeTownProgressionContentBootstrap => contentBootstrap;
+
     public GameplayModuleIdentity Identity { get; }
 
     public void Register(GameplayModuleRegistry registry, GameplayModuleContext context)
@@ -75,5 +77,6 @@ public sealed class DiabloModule : IGameplayModule
         registry.RegisterCapability<IDiabloCathedralNativePopulationBootstrap>(contentBootstrap);
         registry.RegisterCapability<IDiabloCathedralNativeProgressionBootstrap>(contentBootstrap);
         registry.RegisterCapability<IDiabloCathedralNativeDepthProgressionBootstrap>(contentBootstrap);
+        registry.RegisterCapability<IDiabloCathedralNativeTownProgressionBootstrap>(contentBootstrap);
     }
 }

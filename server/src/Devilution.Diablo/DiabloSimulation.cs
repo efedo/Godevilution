@@ -35,6 +35,10 @@ public sealed class DiabloSimulationOptions
 
     public AuthoritativeWorld? World { get; init; }
 
+    /** Immutable opt-in Town inputs; coarse/special state has its own checkpoint owner. */
+    public AuthoritativeNativeTownCatalog? NativeTown { get; init; }
+    internal DiabloNativeTownCheckpoint? NativeTownRestore { get; set; }
+
     /** Validated eagerly generated world identity, independent of gameplay RNG. */
     public DiabloNativeGeneratedWorldIdentity? NativeGeneratedWorldIdentity { get; init; }
 
@@ -309,6 +313,11 @@ public sealed class DiabloSimulationFactory : IDiabloCohortSimulationFactory
         if (options.RequireExternalContentCatalogs && options.NativeMissileSprites is null)
             throw new InvalidDataException(
                 "Production Diablo activation requires an external native-missile sprite catalog.");
+        if ((options.NativeTown is not null) != (options.NativeProgression?.CohortFormatVersion
+                == DiabloCohortState.NativeTownProgressionFormatVersion)
+            || options.NativeTown is not null && options.NativePopulationPolicy is null
+            || options.NativeTownRestore is not null && options.NativeTown is null)
+            throw new InvalidDataException("Native Town requires the complete explicit version-11 progression capability.");
         var worldState = options.NativePopulationPolicy is not null
             ? new DiabloWorldState(options)
             : new DiabloWorldState(

@@ -9,6 +9,38 @@ the referenced test sources. Do not copy raw outputs into historical archives.
 
 ## Client and host verification
 
+### 2026-10-19 — explicit native Town integration
+
+Sixteen focused catalog/construction/compiler cases, four explicit compiled-
+profile/native/codec/restore cases and 181 codec/launcher cases pass without skips.
+The compiled original-SP Town matches the retained native capture in every fine,
+special, SOL, transparency, coarse/protected and final-RNG value. Changed Hive/
+Grave/fountain history survives detached restore plus fresh Cathedral floor
+admission. Pending native Town destination walks retain exact path/action state
+through codec/cold restore and settle identically. Forged state refuses without
+changing the live cohort. An independently
+qualified 5,803,388-byte v10 payload remains byte-identical, with older schemas
+rejecting the new Town field. All 83 retained class files per new profile and
+909 player/10 scene PNGs remain byte-identical after identity rebinding.
+
+Both isolated SDK4.7.1/Godot4.7.2 headless Warrior and Sorcerer Journey/Resume pairs
+pass generated L1 combat, Repair/Recharge, ordinary native Town travel, solid-Smith
+adjacent service approach, Smith/Pepin controls and actual Town/Cathedral draws.
+Each Journey records 66 Town draw samples, including native specials; Cathedral
+samples number 17 and 7 respectively. Fresh hosts preserve exact player/world/
+RNG/cursor baselines, the entire persisted Town object and its wire geometry,
+then accept sequences 20→21 and 13→14. Both Resume legs draw native Town.
+The host/client builds retain existing warnings. The first duplicate-pack import
+exceeded the existing 60-second limit and was discarded; selected-pack staging
+passed with that limit unchanged.
+
+Qualification excludes unrelated gameplay WIP and uses the reviewed launcher/
+contract sources. Native geometry/pixel oracles are reused; no C++ changes or
+native rebuild were needed. This admits only explicit Original Diablo single-
+player Normal, quest-disabled Town profiles. NPC art/initialization, full vendor
+stock, native draw phases/lighting/palette cycling/wall transparency, matched
+rendered play and full campaigns remain open. Normal cohort adoption remains held.
+
 ### 2026-10-19 — native scene drawing and input
 
 All eight scene-catalog/placement cases and thirteen viewport cases pass without
