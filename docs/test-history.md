@@ -9,6 +9,36 @@ the referenced test sources. Do not copy raw outputs into historical archives.
 
 ## Client and host verification
 
+### 2026-10-20 — C2 initial owners and detached floor admission
+
+Distinct class-bound C2 owners bind complete prepared pools, raw object variants,
+source/door identities, dormant reservations and per-floor Gargoyle phases. All 32
+qualified Warrior/Sorcerer input cases build and admit without normalizing native
+state. Four attribute elixirs use an explicit C2 semantic bridge; the existing
+Cathedral semantic table and default binding path remain unchanged.
+
+All 63 selected managed cases pass without skips: three builder/semantic checks
+(including the 32-case matrix), three live door/command checks, ten detached
+admission checks, 41 portable item/phase/door checks and six retained C1 floor/class
+continuations. The bounded final build passes with 21 existing warnings. The
+portable report is reused from the preceding build because its tested item,
+phase and door sources remain unchanged; the final C2 bridge and C1 wrapper run
+through the later builder/admission/continuation checks. The candidate excludes
+the frozen ranged package and unrelated world-vision WIP. Native references are
+reused; this batch changes no native source and requires no new capture.
+
+Admission checks cover mixed C1/C2 owners, a second C2 floor, earned hero resources,
+exact prior unique history, carried item identities and stale participant/object/
+actor refusal before publication. Door checks cover raw entity binding, actual
+world commands, frame/piece/special changes, living/moving/death/corpse/item
+occupancy, inactive-floor status retention and tampered state refusal. Armed door
+links retain their raw flag and refuse both typed and generic operation.
+
+This qualifies initial ownership and detached publication. Live C2 chest/wall
+missiles, ranged controllers, mixed-run lazy entry, family activation, reciprocal
+travel, additive persistence and headless class journeys remain open. Existing
+save formats continue refusing C2 state; normal profile adoption remains held.
+
 ### 2026-10-20 — Catacombs item families and prepared chest operations
 
 An explicit internal per-floor family/depth map admits C2 item pools while public

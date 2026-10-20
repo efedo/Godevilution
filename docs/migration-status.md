@@ -161,7 +161,12 @@ trigger flag. Live C2 effect/floor ownership and old-format refusal stay in forc
 The immutable population binding core is shared behind the unchanged Cathedral
 API; 25 focused C1 lifecycle, retained-floor and class restore checks pass. This
 prepares C2 ownership without activating a family profile.
-See [verification](test-history.md#2026-10-20--catacombs-actor-admission-and-l2-door-operations).
+Distinct C2 initial owners and atomic detached admission now pass 63 focused checks,
+including all 32 qualified class inputs, mixed C1/C2 and second-C2 retention, actual
+C2 door commands and six C1 continuation checks. Armed door links remain retained
+and refused; four elixir identities use a C2-only semantic bridge. Mixed-run lazy
+entry, ranged/live chest/wall effects, travel and additive cold restore remain open.
+See [verification](test-history.md#2026-10-20--c2-initial-owners-and-detached-floor-admission).
 Keep the queue, this status and affected inventory entries synchronized. Do not
 restart inventory construction or an unrelated test campaign.
 

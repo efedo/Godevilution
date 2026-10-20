@@ -70,7 +70,20 @@ public sealed partial class DiabloWorldState
     }
 
     internal bool CanOperateNativeObject(AuthoritativeWorldObject value)
-        => NativePopulationForLevel(value.LevelId)?.CanOperate(value) ?? true;
+    {
+        var owner = NativePopulationForLevel(value.LevelId);
+        if (owner is null)
+            return true;
+        owner.ValidateObject(value);
+        if (owner.Family == AuthoritativeNativePopulationFamily.Catacombs) {
+            if (TryGetNativeCatacombsDoorState(value.EntityId, out _))
+                return !value.TrapArmed;
+            // Prepared chest loot does not yet own the live intrinsic trap effect.
+            if (value.NativeObjectId is 5 or 6 or 7 or 68 or 69 or 70)
+                return false;
+        }
+        return owner.CanOperate(value);
+    }
 
     internal bool CanBreakWorldObject([System.Diagnostics.CodeAnalysis.NotNullWhen(true)] AuthoritativeWorldObject? value)
     {

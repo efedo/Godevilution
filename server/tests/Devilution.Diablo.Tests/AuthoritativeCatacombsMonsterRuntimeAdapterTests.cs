@@ -387,6 +387,56 @@ public sealed class AuthoritativeCatacombsMonsterRuntimeAdapterTests
         Assert.Throws<InvalidDataException>(() => (phase with { State = (AuthoritativeNativeCatacombsMonsterPhaseState)99 }).ValidateShape());
     }
 
+    [Fact]
+    public void GargoylePhaseRegistriesRetainIndependentFloorsAndRefuseDuplicateConfiguration()
+    {
+        var (catalog, bestiary) = CreateMetadata();
+        var first = AuthoritativeCatacombsMonsterRuntimeAdapter.AdaptWithBindings(5, 7,
+            CreateState(CreateFrozenGargoyle()), catalog, Fingerprint, [new(0, 501, 801, 7)], bestiary);
+        var second = AuthoritativeCatacombsMonsterRuntimeAdapter.AdaptWithBindings(6, 8,
+            CreateState(CreateFrozenGargoyle()), catalog, Fingerprint, [new(0, 502, 801, 8)], bestiary);
+        var world = new DiabloWorldState(combatTargets: [first.SharedRuntime.Records[0].Target!,
+            second.SharedRuntime.Records[0].Target!]);
+        world.ConfigureNativeCatacombsMonsterPhases(second);
+        world.ConfigureNativeCatacombsMonsterPhases(first);
+        Assert.Equal(new uint[] { 501, 502 }, world.CaptureNativeCatacombsMonsterPhases().Select(phase => phase.EntityId));
+        Assert.Equal(first.GargoylePhases, world.CaptureNativeCatacombsMonsterPhases(7));
+        Assert.Equal(second.GargoylePhases, world.CaptureNativeCatacombsMonsterPhases(8));
+        Assert.Throws<InvalidOperationException>(() => world.ConfigureNativeCatacombsMonsterPhases(first));
+        Assert.Equal(2, world.CaptureNativeCatacombsMonsterPhases().Count);
+    }
+
+    [Fact]
+    public void LaterPhaseIdentityCollisionCannotPublishAnEarlierValidRow()
+    {
+        var (catalog, bestiary) = CreateMetadata();
+        var first = AuthoritativeCatacombsMonsterRuntimeAdapter.AdaptWithBindings(5, 7,
+            CreateState(CreateFrozenGargoyle()), catalog, Fingerprint, [new(0, 501, 801, 7)], bestiary);
+        var incoming = AuthoritativeCatacombsMonsterRuntimeAdapter.AdaptWithBindings(6, 8,
+            CreateState(CreateFrozenGargoyle(), CreateFrozenGargoyle() with {
+                Slot = 1, Tile = new(11, 10), Future = new(11, 10), Old = new(11, 10),
+            }),
+            catalog, Fingerprint, [new(0, 502, 801, 8), new(1, 501, 801, 8)], bestiary);
+        var world = new DiabloWorldState(combatTargets: [first.SharedRuntime.Records[0].Target!,
+            incoming.SharedRuntime.Records[0].Target!]);
+        world.ConfigureNativeCatacombsMonsterPhases(first);
+        Assert.Throws<InvalidDataException>(() => world.ConfigureNativeCatacombsMonsterPhases(incoming));
+        Assert.Equal(first.GargoylePhases, world.CaptureNativeCatacombsMonsterPhases());
+        Assert.Empty(world.CaptureNativeCatacombsMonsterPhases(8));
+    }
+
+    [Fact]
+    public void AConfiguredFloorWithNoGargoylesStillRefusesDuplicateConfiguration()
+    {
+        var (catalog, bestiary) = CreateMetadata();
+        var admission = AuthoritativeCatacombsMonsterRuntimeAdapter.AdaptWithBindings(5, 7,
+            CreateState(CreateRangedSkeletonSpecialStand()), catalog, Fingerprint, Bindings(7), bestiary);
+        var world = new DiabloWorldState(combatTargets: [admission.SharedRuntime.Records[0].Target!]);
+        world.ConfigureNativeCatacombsMonsterPhases(admission);
+        Assert.Empty(world.CaptureNativeCatacombsMonsterPhases());
+        Assert.Throws<InvalidOperationException>(() => world.ConfigureNativeCatacombsMonsterPhases(admission));
+    }
+
     private static (AuthoritativeCatacombsMonsterRuntimeAdapterResult Admission, DiabloWorldState World,
         AuthoritativeCombatTarget Target) CreateWorld(int activeForTicks = 0)
     {

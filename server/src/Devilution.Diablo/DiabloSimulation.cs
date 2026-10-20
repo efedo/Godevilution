@@ -1359,6 +1359,7 @@ public sealed partial class DiabloSimulation
         var events = combatCommands.AdvanceTick(tick, players);
         WorldState.AdvanceCathedralItemAnimations(players);
         WorldState.UpdateCathedralDoorOccupancy(players);
+        WorldState.UpdateNativeCatacombsDoorOccupancy(players);
         return events;
     }
 
@@ -1394,6 +1395,7 @@ public sealed partial class DiabloSimulation
             executeCommands);
         WorldState.AdvanceCathedralItemAnimations(players);
         WorldState.UpdateCathedralDoorOccupancy(players);
+        WorldState.UpdateNativeCatacombsDoorOccupancy(players);
         return events;
     }
 

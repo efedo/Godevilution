@@ -60,8 +60,11 @@ owners, additive persistence, travel and cold restore. Existing saves refuse C2
 fields until that additive format exists. Shared immutable population bindings are
 now extracted behind the C1 API; 25 focused lifecycle/floor/class restore checks
 pass. Explicit internal item-family contexts and prepared ordinary/TCHEST operation
-plans now pass 114 unique managed cases, including 30 native comparisons. Keep live
-chest/trap effects, ranged controllers, distinct C2 owners and family integration next.
+plans now pass 114 unique managed cases, including 30 native comparisons. Distinct
+C2 initial owners, typed doors and detached floor admission now pass 63 focused
+checks and all 32 qualified class inputs. Armed door links remain retained/refused;
+four elixirs use an explicit C2 bridge. Keep live chest/wall effects, ranged
+controllers, mixed-run lazy entry, travel and additive cold restore next.
 Read the work plan and scoped verification; retain valid references.
 The observed Town authority-lock lateness remains unresolved. Normal cohort/profile adoption stays held. Later class
 campaigns and full rendered qualification remain open. Reuse valid evidence and

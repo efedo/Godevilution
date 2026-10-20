@@ -3,22 +3,28 @@ namespace Devilution.Diablo;
 public sealed partial class DiabloWorldState
 {
     private readonly Dictionary<uint, AuthoritativeNativeCatacombsMonsterPhase> nativeCatacombsMonsterPhases = [];
-    private IReadOnlyList<uint> nativeCatacombsMonsterPhaseOrder = Array.Empty<uint>();
-    private bool nativeCatacombsMonsterPhasesConfigured;
+    private readonly Dictionary<uint, IReadOnlyList<uint>> nativeCatacombsMonsterPhaseOrders = [];
+    private readonly HashSet<uint> nativeCatacombsMonsterPhaseLevels = [];
+    private readonly Dictionary<uint, IReadOnlyList<AuthoritativeNativeCatacombsMonsterPhase>> nativeCatacombsMonsterPhaseBindings = [];
 
     internal IReadOnlyList<AuthoritativeNativeCatacombsMonsterPhase> CaptureNativeCatacombsMonsterPhases()
-        => Array.AsReadOnly(nativeCatacombsMonsterPhaseOrder
+        => Array.AsReadOnly(nativeCatacombsMonsterPhaseOrders.OrderBy(entry => entry.Key)
+            .SelectMany(entry => entry.Value)
             .Where(nativeCatacombsMonsterPhases.ContainsKey)
-            .Select(entityId => nativeCatacombsMonsterPhases[entityId] with { })
-            .ToArray());
+            .Select(entityId => nativeCatacombsMonsterPhases[entityId] with { }).ToArray());
+
+    internal IReadOnlyList<AuthoritativeNativeCatacombsMonsterPhase> CaptureNativeCatacombsMonsterPhases(uint levelId)
+        => Array.AsReadOnly(nativeCatacombsMonsterPhaseOrders.GetValueOrDefault(levelId, Array.Empty<uint>())
+            .Where(nativeCatacombsMonsterPhases.ContainsKey)
+            .Select(entityId => nativeCatacombsMonsterPhases[entityId] with { }).ToArray());
 
     internal void ConfigureNativeCatacombsMonsterPhases(
         AuthoritativeCatacombsMonsterRuntimeAdapterResult admission,
         IReadOnlyList<AuthoritativeNativeCatacombsMonsterPhase>? saved = null)
     {
         ArgumentNullException.ThrowIfNull(admission);
-        if (nativeCatacombsMonsterPhasesConfigured)
-            throw new InvalidOperationException("Catacombs monster phases are configured once on a detached world.");
+        if (nativeCatacombsMonsterPhaseLevels.Contains(admission.LevelId))
+            throw new InvalidOperationException("Catacombs monster phases are configured once per owned floor.");
 
         var expected = admission.GargoylePhases;
         var actual = saved ?? expected;
@@ -38,6 +44,7 @@ public sealed partial class DiabloWorldState
                     State = bound.State,
                 } != bound
                 || phase.LevelId != admission.LevelId
+                || nativeCatacombsMonsterPhases.ContainsKey(phase.EntityId)
                 || !detached.TryAdd(phase.EntityId, phase with { }))
                 throw new InvalidDataException("Catacombs phase order or immutable monster binding changed.");
 
@@ -76,8 +83,48 @@ public sealed partial class DiabloWorldState
 
         foreach (var phase in actual)
             nativeCatacombsMonsterPhases.Add(phase.EntityId, phase with { });
-        nativeCatacombsMonsterPhaseOrder = Array.AsReadOnly(ordered);
-        nativeCatacombsMonsterPhasesConfigured = true;
+        nativeCatacombsMonsterPhaseOrders.Add(admission.LevelId, Array.AsReadOnly(ordered));
+        nativeCatacombsMonsterPhaseLevels.Add(admission.LevelId);
+        nativeCatacombsMonsterPhaseBindings.Add(admission.LevelId,
+            Array.AsReadOnly(expected.Select(phase => phase with { }).ToArray()));
+    }
+
+    /** Validates mutable phase clocks against the complete immutable per-floor admission. */
+    internal void ValidateNativeCatacombsMonsterPhases(AuthoritativeNativePopulationBindings owner)
+    {
+        if (owner.Family != AuthoritativeNativePopulationFamily.Catacombs
+            || !ReferenceEquals(NativePopulationForLevel(owner.LevelId), owner)
+            || !nativeCatacombsMonsterPhaseLevels.Contains(owner.LevelId)
+            || !nativeCatacombsMonsterPhaseOrders.TryGetValue(owner.LevelId, out var order)
+            || !nativeCatacombsMonsterPhaseBindings.TryGetValue(owner.LevelId, out var bindings)
+            || !order.SequenceEqual(bindings.Select(phase => phase.EntityId))
+            || nativeCatacombsMonsterPhases.Values.Count(phase => phase.LevelId == owner.LevelId) != bindings.Count)
+            throw new InvalidDataException("Catacombs phase coverage lost its exact per-floor population owner.");
+        foreach (var bound in bindings) {
+            if (!nativeCatacombsMonsterPhases.TryGetValue(bound.EntityId, out var phase))
+                throw new InvalidDataException("A Catacombs Gargoyle lost its retained phase clock.");
+            phase.ValidateShape();
+            if (phase with {
+                    FrameIndex = bound.FrameIndex, TickCounter = bound.TickCounter, State = bound.State,
+                } != bound
+                || phase.MetadataFingerprint != owner.MonsterMetadataFingerprint)
+                throw new InvalidDataException("A Catacombs phase changed its immutable native identity.");
+            if (CombatTargets.TryGetValue(phase.EntityId, out var target)) {
+                ValidateNativeCatacombsPhaseTarget(target, phase);
+                if (phase.State is AuthoritativeNativeCatacombsMonsterPhaseState.Frozen
+                        or AuthoritativeNativeCatacombsMonsterPhaseState.Playing
+                    && (target.HitPointsQ6 <= 0 || target.IsMoving
+                        || target.PositionX != target.NativeInitialization!.InitialState.Tile.X
+                        || target.PositionY != target.NativeInitialization.InitialState.Tile.Y
+                        || target.FuturePositionX != target.PositionX || target.FuturePositionY != target.PositionY))
+                    throw new InvalidDataException("An active Catacombs Gargoyle phase moved or died without interruption.");
+            } else if (phase.State is not (AuthoritativeNativeCatacombsMonsterPhaseState.Completed
+                        or AuthoritativeNativeCatacombsMonsterPhaseState.Interrupted)
+                || !Corpses.TryGetValue(phase.EntityId, out var corpse) || corpse.LevelId != owner.LevelId
+                || !ContainsPosition(corpse.LevelId, corpse.PositionX, corpse.PositionY)) {
+                throw new InvalidDataException("A Catacombs Gargoyle phase lost its live actor or terminal corpse.");
+            }
+        }
     }
 
     /** A frozen Gargoyle consumes the waking player hit without applying damage. */

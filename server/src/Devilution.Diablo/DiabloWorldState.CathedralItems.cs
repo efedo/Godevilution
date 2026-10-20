@@ -13,13 +13,40 @@ public sealed partial class DiabloWorldState
     internal void ConfigureCathedralItems(AuthoritativeCathedralItemRuntimeProfile? profile,
         DiabloCathedralItemCheckpoint? checkpoint, string? monsterMetadataFingerprint,
         AuthoritativeItemCatalog? contentItems, AuthoritativeSpellCatalog spells)
+        => ConfigureCathedralItemsCore(profile, checkpoint, monsterMetadataFingerprint, contentItems, spells, null, null);
+
+    /** Mixed-family admission supplies the exact immutable owner for every item level. */
+    internal void ConfigureNativeFamilyItems(AuthoritativeCathedralItemRuntimeProfile profile,
+        DiabloCathedralItemCheckpoint? checkpoint, IReadOnlyList<AuthoritativeNativePopulationBindings> owners,
+        AuthoritativeItemCatalog contentItems, AuthoritativeSpellCatalog spells)
+    {
+        ArgumentNullException.ThrowIfNull(profile);
+        ArgumentNullException.ThrowIfNull(owners);
+        if (owners.Count == 0 || owners.Select(owner => owner.LevelId).Distinct().Count() != owners.Count
+            || !owners.Select(owner => owner.LevelId).Order()
+                .SequenceEqual(profile.LevelProfiles.Select(level => level.LevelId).Order())
+            || owners.Any(owner => !ReferenceEquals(NativePopulationForLevel(owner.LevelId), owner))
+            || profile.GenerationFingerprint != AuthoritativeNativePopulationBindings.ComputeFamilyItemGenerationFingerprint(owners))
+            throw new InvalidDataException("Native family items require every exact registered floor owner.");
+        var contexts = owners.ToDictionary(owner => owner.LevelId, owner => owner.ItemFamilyContext);
+        var metadata = owners.ToDictionary(owner => owner.LevelId, owner => owner.MonsterMetadataFingerprint);
+        ConfigureCathedralItemsCore(profile, checkpoint, null, contentItems, spells, contexts, metadata);
+    }
+
+    private void ConfigureCathedralItemsCore(AuthoritativeCathedralItemRuntimeProfile? profile,
+        DiabloCathedralItemCheckpoint? checkpoint, string? monsterMetadataFingerprint,
+        AuthoritativeItemCatalog? contentItems, AuthoritativeSpellCatalog spells,
+        IReadOnlyDictionary<uint, AuthoritativeNativeDungeonFamilyContext>? familyContexts,
+        IReadOnlyDictionary<uint, string>? monsterMetadataByLevel)
     {
         if (profile is null) {
             if (checkpoint is not null)
                 throw new InvalidDataException("Native item restore requires its explicit profile.");
             return;
         }
-        if (!AuthoritativeNativeMonsterInitialization.IsFingerprint(monsterMetadataFingerprint))
+        if (monsterMetadataByLevel is null
+            ? !AuthoritativeNativeMonsterInitialization.IsFingerprint(monsterMetadataFingerprint)
+            : monsterMetadataByLevel.Values.Any(value => !AuthoritativeNativeMonsterInitialization.IsFingerprint(value)))
             throw new InvalidDataException("Native item ownership requires native monster metadata even with an empty roster.");
         if (cathedralItems is not null)
             throw new InvalidOperationException("Native item ownership is configured once on a detached world.");
@@ -49,7 +76,7 @@ public sealed partial class DiabloWorldState
                 throw new InvalidDataException("Native item spell bindings disagree with the active spell catalog.");
         }
         var candidate = new AuthoritativeCathedralItemRuntime(
-            profile, checkpoint, contentItems.NativeGoldStackMetadata);
+            profile, checkpoint, contentItems.NativeGoldStackMetadata, familyContexts);
         var projected = new Dictionary<uint, AuthoritativeWorldItem>();
         foreach (var level in candidate.CaptureCheckpoint().Levels) {
             foreach (var binding in level.SlotEntityBindings.Where(value => value.EntityId != 0)) {
@@ -76,7 +103,9 @@ public sealed partial class DiabloWorldState
         foreach (var level in profile.LevelProfiles)
             BuildCathedralItemOccupancy(profile, level.LevelId, []);
         foreach (var target in CombatTargets.Values.Where(value => candidate.HasLevel(value.LevelId))) {
-            if (target.NativeInitialization is not { } native || native.MetadataFingerprint != monsterMetadataFingerprint
+            var expectedMetadata = monsterMetadataByLevel is null
+                ? monsterMetadataFingerprint : monsterMetadataByLevel[target.LevelId];
+            if (target.NativeInitialization is not { } native || native.MetadataFingerprint != expectedMetadata
                 || target.Drop is not null)
                 throw new InvalidDataException("Native item levels require initialized actors without authored drops.");
         }
@@ -315,6 +344,12 @@ public sealed partial class DiabloWorldState
                 if (value.CathedralDoor is not { } door)
                     throw new InvalidDataException("Native door placement requires live door state.");
                 isSolid = door.SolidFlag; isInteractive = door.SelectionRegion != 0;
+                break;
+            case AuthoritativeCathedralItemObjectMutationPolicy.CatacombsDoor:
+                ValidateNativePopulationObject(value);
+                if (!TryGetNativeCatacombsDoorState(value.EntityId, out var catacombsDoor))
+                    throw new InvalidDataException("Native C2 door placement requires its exact live door owner.");
+                isSolid = catacombsDoor.SolidFlag; isInteractive = catacombsDoor.SelectionRegion != 0;
                 break;
             case AuthoritativeCathedralItemObjectMutationPolicy.NativeChest:
             case AuthoritativeCathedralItemObjectMutationPolicy.NativeSarcophagus:

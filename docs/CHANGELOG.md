@@ -7,6 +7,13 @@ contracts stay in their existing guides.
 
 ## 2026-10-20
 
+- Add class-bound C2 initial owners, source-bound door registries and detached
+  multi-floor admission. Admit all 32 qualified Warrior/Sorcerer inputs and pass
+  63 focused owner, command, item, phase and Cathedral continuation checks.
+- Retain armed C2 door links and bridge four native elixir identities explicitly.
+  Preserve old Cathedral semantics and refuse live C2 chest/armed-door effects
+  until their owners exist; family profiles, travel and cold restore remain open.
+
 - Add explicit internal item-family ownership for Catacombs pools and operation
   generation while preserving public Cathedral guards and existing save formats.
 - Add C2 ordinary/TCHEST loot and intrinsic trap plans, disarmed-chest behavior,

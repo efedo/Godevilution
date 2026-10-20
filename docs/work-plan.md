@@ -95,10 +95,14 @@ format is implemented. The shared immutable population binding core is extracted
 behind the unchanged C1 API; 25 focused lifecycle, retained-floor and class restore
 checks pass. Explicit internal C2 item-family contexts and prepared chest operations
 now pass 114 unique managed cases, including all 30 controlled native comparisons.
-Next integrate ranged controllers, live object/trap ownership, per-floor owners,
+Distinct C2 initial owners and atomic detached floor admission now pass 63 focused
+checks, including all 32 qualified class inputs, mixed C1/C2 and second-C2 item/door/
+phase retention, actual door commands and six C1 continuation checks. Armed C2 door
+links remain retained and refused; four elixir mappings use an explicit C2 bridge.
+Next integrate ranged controllers, live chest/wall effects, mixed-run lazy entry,
 routes and detached cold restore. These remain required family gates before
 playable profile qualification. See
-[verification](test-history.md#2026-10-20--catacombs-item-families-and-prepared-chest-operations).
+[verification](test-history.md#2026-10-20--c2-initial-owners-and-detached-floor-admission).
 
 ## Delivery order
 

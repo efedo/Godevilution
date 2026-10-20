@@ -43,6 +43,43 @@ public static class AuthoritativeCatacombsDoors
         AuthoritativeCatacombsDoorCatalog catalog,
         AuthoritativeCathedralPopulationObjectState raw,
         AuthoritativeWorldObject value)
+        => BindCore(level, depth, catalog, raw, value, retainLinkedTrapFlag: false);
+
+    /** Retains an armed generated door; its wall effect remains a separate live capability. */
+    internal static AuthoritativeCatacombsDoorState BindRetained(
+        AuthoritativeLevel level,
+        uint depth,
+        AuthoritativeCatacombsDoorCatalog catalog,
+        AuthoritativeCathedralThemeRoomState source,
+        AuthoritativeCathedralPopulationObjectState raw,
+        AuthoritativeWorldObject value)
+    {
+        ArgumentNullException.ThrowIfNull(source);
+        ArgumentNullException.ThrowIfNull(raw);
+        if (raw.Slot < 0 || raw.Slot >= source.ObjectSlots.Count
+            || source.ObjectSlots[raw.Slot] != raw
+            || !source.ActiveObjectIds.Take(source.ActiveObjectCount).Contains(raw.Slot)
+            || (uint)raw.Position.X >= AuthoritativeCathedralThemeRoomState.Width
+            || (uint)raw.Position.Y >= AuthoritativeCathedralThemeRoomState.Width
+            || source.ObjectRefs[raw.Position.Y * AuthoritativeCathedralThemeRoomState.Width + raw.Position.X] != raw.Slot + 1)
+            throw new InvalidDataException("A retained Catacombs door must bind its exact active native origin.");
+        var links = source.ActiveObjectIds.Take(source.ActiveObjectCount)
+            .Select(slot => source.ObjectSlots[slot])
+            .Where(trap => trap.Type is 53 or 54 && trap.Var1 == raw.Position.X && trap.Var2 == raw.Position.Y)
+            .ToArray();
+        if (raw.TrapFlag != (links.Length != 0) || links.Any(trap =>
+                trap.Var3 is not (0 or 1 or 7) || trap.Var4 != 0
+                || (uint)trap.Position.X >= AuthoritativeCathedralThemeRoomState.Width
+                || (uint)trap.Position.Y >= AuthoritativeCathedralThemeRoomState.Width
+                || source.ObjectRefs[trap.Position.Y * AuthoritativeCathedralThemeRoomState.Width + trap.Position.X] != trap.Slot + 1))
+            throw new InvalidDataException("A retained Catacombs door trap flag requires its exact generated wall link.");
+        return BindCore(level, depth, catalog, raw, value, retainLinkedTrapFlag: true);
+    }
+
+    private static AuthoritativeCatacombsDoorState BindCore(
+        AuthoritativeLevel level, uint depth, AuthoritativeCatacombsDoorCatalog catalog,
+        AuthoritativeCathedralPopulationObjectState raw, AuthoritativeWorldObject value,
+        bool retainLinkedTrapFlag)
     {
         ArgumentNullException.ThrowIfNull(level);
         ArgumentNullException.ThrowIfNull(catalog);
@@ -66,7 +103,7 @@ public static class AuthoritativeCatacombsDoors
             raw.Position.X, raw.Position.Y,
             ParseStatus(raw.Var4), checked((int)raw.AnimFrame),
             raw.SelectionRegion, raw.PreFlag, raw.MissilePassable, raw.SolidFlag);
-        Validate(level, depth, catalog, door, raw, value);
+        ValidateCore(level, depth, catalog, door, raw, value, retainLinkedTrapFlag);
         return door;
     }
 
@@ -129,10 +166,18 @@ public static class AuthoritativeCatacombsDoors
         AuthoritativeCatacombsDoorState door,
         AuthoritativeCathedralPopulationObjectState? raw = null,
         AuthoritativeWorldObject? value = null)
+        => ValidateCore(level, depth, catalog, door, raw, value, retainLinkedTrapFlag: false);
+
+    private static void ValidateCore(AuthoritativeLevel level, uint depth,
+        AuthoritativeCatacombsDoorCatalog catalog, AuthoritativeCatacombsDoorState door,
+        AuthoritativeCathedralPopulationObjectState? raw, AuthoritativeWorldObject? value,
+        bool retainLinkedTrapFlag)
     {
         RequireGeometry(level);
         ArgumentNullException.ThrowIfNull(catalog);
         ArgumentNullException.ThrowIfNull(door);
+        if (retainLinkedTrapFlag && raw is not null && value is not null && raw.TrapFlag != value.TrapArmed)
+            throw new InvalidDataException("A retained Catacombs door changed its generated trap flag.");
         var definition = catalog.ForDepth(depth);
         var isLeft = door.Kind == AuthoritativeCatacombsDoorKind.Left;
         var expectedObjectId = isLeft ? definition.LeftNativeObjectId : definition.RightNativeObjectId;
@@ -159,7 +204,7 @@ public static class AuthoritativeCatacombsDoors
             if (raw.Slot is < 0 or >= AuthoritativeLevel.NativeMaximumObjectCount
                 || raw.Type != (int)expectedObjectId
                 || raw.Position.X != door.PositionX || raw.Position.Y != door.PositionY
-                || !raw.DoorFlag || raw.TrapFlag || raw.SolidFlag
+                || !raw.DoorFlag || raw.TrapFlag && !retainLinkedTrapFlag || raw.SolidFlag
                 || raw.AnimDelay != 1000 || raw.AnimLength != 0 || raw.AnimWidth != 64
                 || raw.Var4 != (int)door.Status || raw.AnimFrame != (uint)door.AnimationFrame
                 || raw.SelectionRegion != door.SelectionRegion || raw.PreFlag != door.PreFlag
@@ -170,7 +215,7 @@ public static class AuthoritativeCatacombsDoors
             if (value.EntityId != door.EntityId || value.LevelId != level.LevelId
                 || value.NativeObjectId != expectedObjectId
                 || value.PositionX != door.PositionX || value.PositionY != door.PositionY
-                || value.Activated || value.Breakable || value.Destroyed || value.TrapArmed
+                || value.Activated || value.Breakable || value.Destroyed || value.TrapArmed && !retainLinkedTrapFlag
                 || value.MissilePassable != door.MissFlag
                 || value.AnimationFrame != door.AnimationFrame)
                 throw new InvalidDataException("Catacombs door does not match its retained server entity.");

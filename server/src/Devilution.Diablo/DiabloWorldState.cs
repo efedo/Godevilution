@@ -610,6 +610,7 @@ public sealed partial class DiabloWorldState
         if (materializeNativeDunObjects)
             ReconcileNativeDunObjects(allowMissingNativeDunLayers);
         PreserveCathedralDoorProjection();
+        PreserveNativeCatacombsDoorProjection();
         PreserveNativeTownProjection();
     }
 

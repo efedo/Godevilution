@@ -268,7 +268,7 @@ internal static class AuthoritativeCathedralNativePopulationBuilder
         return Array.AsReadOnly(result.ToArray());
     }
 
-    private static IReadOnlyDictionary<int, AuthoritativeCathedralItemContentBinding> BuildItemBindings(
+    internal static IReadOnlyDictionary<int, AuthoritativeCathedralItemContentBinding> BuildItemBindings(
         AuthoritativeCathedralThemeItemCatalog nativeItems,
         AuthoritativeItemCatalog contentItems,
         AuthoritativeSpellCatalog spells,
@@ -279,6 +279,41 @@ internal static class AuthoritativeCathedralNativePopulationBuilder
         AuthoritativeCathedralNativeItemSidecars itemSidecars,
         bool includeUniqueLoot = false,
         bool includeCompleteAllowlist = false)
+        => BuildItemBindingsCore(nativeItems, contentItems, spells, state, supportedLootLevels,
+            initialOwnedItems, storeItems, itemSidecars, includeUniqueLoot, includeCompleteAllowlist,
+            familyContext: null);
+
+    internal static IReadOnlyDictionary<int, AuthoritativeCathedralItemContentBinding> BuildItemBindings(
+        AuthoritativeCathedralThemeItemCatalog nativeItems,
+        AuthoritativeItemCatalog contentItems,
+        AuthoritativeSpellCatalog spells,
+        AuthoritativeCathedralThemeRoomState state,
+        IReadOnlyCollection<sbyte> supportedLootLevels,
+        IReadOnlyCollection<AuthoritativeItemState> initialOwnedItems,
+        IReadOnlyCollection<AuthoritativeItemState> storeItems,
+        AuthoritativeCathedralNativeItemSidecars itemSidecars,
+        bool includeUniqueLoot,
+        bool includeCompleteAllowlist,
+        AuthoritativeNativeDungeonFamilyContext familyContext)
+    {
+        familyContext.RequireMatch(familyContext.Depth);
+        return BuildItemBindingsCore(nativeItems, contentItems, spells, state, supportedLootLevels,
+            initialOwnedItems, storeItems, itemSidecars, includeUniqueLoot, includeCompleteAllowlist,
+            familyContext);
+    }
+
+    private static IReadOnlyDictionary<int, AuthoritativeCathedralItemContentBinding> BuildItemBindingsCore(
+        AuthoritativeCathedralThemeItemCatalog nativeItems,
+        AuthoritativeItemCatalog contentItems,
+        AuthoritativeSpellCatalog spells,
+        AuthoritativeCathedralThemeRoomState state,
+        IReadOnlyCollection<sbyte> supportedLootLevels,
+        IReadOnlyCollection<AuthoritativeItemState> initialOwnedItems,
+        IReadOnlyCollection<AuthoritativeItemState> storeItems,
+        AuthoritativeCathedralNativeItemSidecars itemSidecars,
+        bool includeUniqueLoot,
+        bool includeCompleteAllowlist,
+        AuthoritativeNativeDungeonFamilyContext? familyContext)
     {
         var result = new Dictionary<int, AuthoritativeCathedralItemContentBinding>();
         var requiredIndexes = nativeItems.Items
@@ -329,7 +364,9 @@ internal static class AuthoritativeCathedralNativePopulationBuilder
             var candidates = contentItems.Definitions
                 .Where(definition => definition.NativeItemIndex == nativeIndex
                     && string.Equals(definition.StableSymbol, semantic.StableItemSymbol, StringComparison.Ordinal)
-                    && MatchesNativeItemDefinition(native, definition, stableSpellId, includeNativeDepthItems: true))
+                    && (familyContext is { IsCatacombs: true }
+                        && AuthoritativeCatacombsNativeItemBindings.MatchesElixir(native, definition, stableSpellId)
+                        || MatchesNativeItemDefinition(native, definition, stableSpellId, includeNativeDepthItems: true)))
                 .ToArray();
             if (candidates.Length != 1)
                 throw new InvalidDataException(
@@ -869,7 +906,7 @@ internal static class AuthoritativeCathedralNativePopulationBuilder
         }
     }
 
-    private static IReadOnlyDictionary<int, int> BuildSpellBindings(
+    internal static IReadOnlyDictionary<int, int> BuildSpellBindings(
         AuthoritativeSpellCatalog spells)
     {
         var result = new Dictionary<int, int> { [0] = 0 };
@@ -880,7 +917,7 @@ internal static class AuthoritativeCathedralNativePopulationBuilder
         return result;
     }
 
-    private static DiabloCathedralItemCheckpoint BuildItemCheckpoint(
+    internal static DiabloCathedralItemCheckpoint BuildItemCheckpoint(
         AuthoritativeCathedralThemeRoomState state,
         uint levelId,
         int depth,

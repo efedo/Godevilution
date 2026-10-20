@@ -1618,8 +1618,9 @@ public sealed class DiabloWorldCommandProcessor
             return DiabloWorldIntentResult.Rejected(DiabloRuleFailure.InvalidTarget);
         var nativeChest = world.CanOperateNativeChest(@object);
         var nativeSarcophagus = world.CanOperateNativeSarcophagus(@object);
+        var nativeCatacombsDoor = world.TryGetNativeCatacombsDoorState(objectEntityId, out _);
         if (@object.Activated
-            || !@object.HasAuthoritativeInteraction && !nativeChest && !nativeSarcophagus
+            || !@object.HasAuthoritativeInteraction && !nativeChest && !nativeSarcophagus && !nativeCatacombsDoor
             || @object.LevelId != player.LevelId
             || (requireAdjacent
                 && DeterministicGridMetrics.ChebyshevDistance(
@@ -1638,6 +1639,10 @@ public sealed class DiabloWorldCommandProcessor
             return DiabloWorldIntentResult.Rejected(DiabloRuleFailure.NotAllowed);
         if (@object.CathedralDoor is not null)
             return !applyEffects || world.TryOperateCathedralDoor(objectEntityId, participants)
+                ? DiabloWorldIntentResult.Accepted
+                : DiabloWorldIntentResult.Rejected(DiabloRuleFailure.InvalidTarget);
+        if (nativeCatacombsDoor)
+            return !applyEffects || world.TryOperateNativeCatacombsDoor(objectEntityId, participants)
                 ? DiabloWorldIntentResult.Accepted
                 : DiabloWorldIntentResult.Rejected(DiabloRuleFailure.InvalidTarget);
         if (nativeSarcophagus) {

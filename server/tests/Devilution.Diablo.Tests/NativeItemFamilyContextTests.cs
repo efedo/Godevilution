@@ -31,6 +31,30 @@ public sealed class NativeItemFamilyContextTests
         Assert.Throws<InvalidDataException>(() => checkpoint.Levels.Single().ValidateShape());
     }
 
+    [Theory]
+    [InlineData(AuthoritativeCathedralItemObjectMutationPolicy.CatacombsDoor, false)]
+    [InlineData(AuthoritativeCathedralItemObjectMutationPolicy.CathedralDoor, true)]
+    public void DoorMutationPoliciesRequireTheirExplicitFamily(
+        AuthoritativeCathedralItemObjectMutationPolicy mutation, bool catacombs)
+    {
+        var profile = Profile(41, catacombs ? 5 : 1);
+        var level = profile.LevelProfiles.Single();
+        var references = level.InitialObjectRefs.ToArray();
+        references[4 * 112 + 4] = 1;
+        profile = profile with { LevelProfiles = [level with {
+            InitialObjectRefs = references,
+            ObjectBindings = [new(0, 701, catacombs ? 1 : 42, 4, 4, false, 3,
+                MutationPolicy: mutation)],
+        }] };
+        var contexts = catacombs ? Contexts(41, 5)
+            : new Dictionary<uint, AuthoritativeNativeDungeonFamilyContext> {
+                [41] = AuthoritativeNativeDungeonFamilyContext.Cathedral(1),
+            };
+        Assert.Throws<InvalidDataException>(() => new AuthoritativeCathedralItemRuntime(profile, null, null, contexts));
+        if (!catacombs)
+            Assert.Throws<InvalidDataException>(() => new AuthoritativeCathedralItemRuntime(profile));
+    }
+
     [Fact]
     public void MixedFamiliesRetainIndependentFloorsAndOneUniqueHistory()
     {

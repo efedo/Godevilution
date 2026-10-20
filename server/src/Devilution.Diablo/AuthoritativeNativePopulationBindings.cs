@@ -28,7 +28,8 @@ internal sealed partial class AuthoritativeNativePopulationBindings
         AuthoritativeLevel preparedBacking,
         IReadOnlyList<AuthoritativeCathedralPopulationMonsterDefinition> monsterDefinitions,
         AuthoritativeCathedralItemRuntimeProfile? itemProfile,
-        AuthoritativeCathedralNativePopulationPolicy? cathedralPolicy = null)
+        AuthoritativeCathedralNativePopulationPolicy? cathedralPolicy = null,
+        string? catacombsDoorCatalogFingerprint = null)
     {
         ArgumentNullException.ThrowIfNull(state);
         ArgumentNullException.ThrowIfNull(monsters);
@@ -39,6 +40,11 @@ internal sealed partial class AuthoritativeNativePopulationBindings
             || (family == AuthoritativeNativePopulationFamily.Cathedral ? depth is < 1 or > 4 : depth is < 5 or > 8)
             || (family == AuthoritativeNativePopulationFamily.Cathedral) != (cathedralPolicy is not null))
             throw new InvalidDataException("Native population bindings require an explicit family and depth.");
+        if (family == AuthoritativeNativePopulationFamily.Catacombs
+            ? !AuthoritativeNativeMonsterInitialization.IsFingerprint(catacombsDoorCatalogFingerprint)
+            : catacombsDoorCatalogFingerprint is not null)
+            throw new InvalidDataException("Native door catalog identity must match its explicit population family.");
+        CatacombsDoorCatalogFingerprint = catacombsDoorCatalogFingerprint;
         Family = family;
         CathedralPolicy = cathedralPolicy;
         Depth = depth;
@@ -145,6 +151,7 @@ internal sealed partial class AuthoritativeNativePopulationBindings
     }
 
     internal AuthoritativeNativePopulationFamily Family { get; }
+    internal string? CatacombsDoorCatalogFingerprint { get; }
     internal AuthoritativeCathedralNativePopulationPolicy? CathedralPolicy { get; }
     internal int Depth { get; }
     internal uint LevelId { get; }
@@ -335,7 +342,9 @@ internal sealed partial class AuthoritativeNativePopulationBindings
     }
 
     private bool IsSupportedNativeChest(AuthoritativeCathedralPopulationObjectState raw)
-        => IsSupportedNativeChest(InitialState, raw);
+        => Family == AuthoritativeNativePopulationFamily.Catacombs
+            ? IsSupportedNativeCatacombsChest(InitialState, raw)
+            : IsSupportedNativeChest(InitialState, raw);
 
     private static int GetOpenedChestAnimationFrame(AuthoritativeCathedralPopulationObjectState raw)
         => checked((int)raw.AnimFrame + 2);
@@ -375,6 +384,10 @@ internal sealed partial class AuthoritativeNativePopulationBindings
         world.ValidateNativeSarcophagusState(this);
         world.ValidateNativeBarrelState(this);
         world.ValidateNativeTrapState(this);
+        if (Family == AuthoritativeNativePopulationFamily.Catacombs) {
+            world.ValidateNativeCatacombsDoors(this);
+            world.ValidateNativeCatacombsMonsterPhases(this);
+        }
         foreach (var entry in liveInitializations) {
             if (world.CombatTargets.TryGetValue(entry.Key, out var current)) {
                 if (current.LevelId != LevelId || current.NativeInitialization != entry.Value
@@ -413,7 +426,9 @@ internal sealed partial class AuthoritativeNativePopulationBindings
             if (!objectRows.TryGetValue(binding.EntityId, out var raw))
                 throw new InvalidDataException("A native item object binding has no population row.");
             var expectedPolicy = raw.DoorFlag
-                ? AuthoritativeCathedralItemObjectMutationPolicy.CathedralDoor
+                ? Family == AuthoritativeNativePopulationFamily.Catacombs
+                    ? AuthoritativeCathedralItemObjectMutationPolicy.CatacombsDoor
+                    : AuthoritativeCathedralItemObjectMutationPolicy.CathedralDoor
                 : IsSupportedNativeChest(raw)
                     ? AuthoritativeCathedralItemObjectMutationPolicy.NativeChest
                     : IsSupportedNativeSarcophagus(InitialState, raw)

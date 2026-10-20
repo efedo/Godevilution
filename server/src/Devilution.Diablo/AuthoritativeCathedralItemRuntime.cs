@@ -32,6 +32,7 @@ public enum AuthoritativeCathedralItemObjectMutationPolicy
     NativeChest,
     NativeSarcophagus,
     NativeBarrel,
+    CatacombsDoor,
 }
 
 /**
@@ -1463,6 +1464,11 @@ public partial class AuthoritativeCathedralItemRuntime
         ValidateCells(profile.InitialObjectRefs, nameof(profile.InitialObjectRefs));
         ArgumentNullException.ThrowIfNull(profile.ObjectBindings);
         var bindings = profile.ObjectBindings.ToArray();
+        var catacombs = familyContexts is not null && familyContexts[profile.LevelId].IsCatacombs;
+        if (bindings.Any(binding => binding is not null
+            && (binding.MutationPolicy == AuthoritativeCathedralItemObjectMutationPolicy.CatacombsDoor && !catacombs
+                || binding.MutationPolicy == AuthoritativeCathedralItemObjectMutationPolicy.CathedralDoor && catacombs)))
+            throw new InvalidDataException("Native item door provenance requires its explicit dungeon family.");
         if (bindings.Length > ActiveCapacity
             || bindings.Any(binding => binding is null || binding.NativeObjectSlot < 0
                 || binding.NativeObjectSlot >= ActiveCapacity
