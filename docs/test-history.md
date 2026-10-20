@@ -9,6 +9,36 @@ the referenced test sources. Do not copy raw outputs into historical archives.
 
 ## Client and host verification
 
+### 2026-10-19 — native Town geometry prerequisite
+
+The checked MSVC x64 `native_scene_art_test` passes 2/2 without skips. Its actual
+native warp predicate covers 8,960 mode/bit/level/quest contexts. An isolated
+private export runs production `CreateDungeon`/`CreateTown` over 191 cases:
+160 gate/water/Hellfire combinations at two seeds, all eight entry kinds with
+fresh/dirty channels, remaining warp entries, retained mutations and all four
+water states. Every fine piece, special, SOL flag, transparency byte, coarse
+mega/protected cell, bound, view and final RNG matches the managed builder.
+All 22 focused xUnit cases pass without skips, including the explicit oracle,
+exact fine-grid boundary, malformed inputs and detached state.
+
+Native inputs are original base DIABDAT assets plus the bundled Town automap.
+SOL loads into an explicitly zeroed 1,379-entry table; Town's partial sector4
+DUN tail is ignored only by the bounded Town channel reader. General DUN/SOL
+validation is unchanged. The fixture restores generator, lookup and blitter
+state; canonical player tables remain loaded under the native table-test
+convention. Original sources and captures stay private.
+
+The same export captures every original Town/Cathedral MIN slot and full-piece
+floor/content pass through production conversion/blitters, plus special CEL
+sprites. Managed scene pixels and client binding are subsequent gates. Existing
+profiles still have empty Town layers; profile/persistence integration, Hellfire
+art, shared isometric client input and rendered parity remain open. Independent
+review has no remaining findings for this prerequisite.
+
+Evidence: `.local/native-scene-20261019/original-reference-v2`,
+`native-capture-v2.log`, `native-capture-v2.xml` and `town-verified.log` under that
+batch's `.local` root. Earlier failed captures are not acceptance evidence.
+
 ### 2026-10-19 — optional native player art
 
 The checked MSVC native fixture passes 3/3, including opaque index zero and a

@@ -7,6 +7,11 @@ contracts stay in their existing guides.
 
 ## 2026-10-19
 
+- Add an MPQ-free Town geometry builder with separate fine/coarse channels,
+  native warp policy, conditional Hive/Grave/fountain changes and exact generation
+  RNG. Keep general DUN validation and existing runtime profiles unchanged.
+- Add an isolated headless native Town/scene oracle and a 191-case managed
+  composition comparison, including retained state and all native entry kinds.
 - Add an optional client-only original-player CL2/PAL/TRN importer and validated
   native catalog. Preserve native run spill, opaque palette zero, original anchors
   and source-frame/playback-cycle differences in ordinary PNG atlases.

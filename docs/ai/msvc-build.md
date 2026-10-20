@@ -1,5 +1,23 @@
 # MSVC Build Notes for Agents
 
+## Native Town and scene reference
+
+Build the registered `native_scene_art_test` with the matching checked MSVC x64
+environment below. Set `GODEVILUTION_NATIVE_SCENE_ARCHIVE` to the explicit original
+DIABDAT archive and `GODEVILUTION_NATIVE_SCENE_REFERENCE_DIRECTORY` to a new private
+directory, then run `native_scene_art_test.exe --gtest_filter=NativeSceneArtTest.*`.
+Restore caller environment afterward. The fixture refuses existing output and
+stays headless. It extracts base Town/Cathedral inputs, uses the bundled automap,
+isolates native lookup and verifies every loaded byte before capture.
+
+Run the existing Diablo xUnit executable with `--no-ansi --parallel none
+--explicit on --fail-skips on --filter-class *AuthoritativeTownGeometryTests`
+and the same reference-directory environment. Require 2/2 native and 22/22 managed
+passes without skips. The comparison asserts all 191 cases; ordinary focused runs
+exclude that explicit external-input test. The scene raster export uses actual
+production conversion and floor/content blitters with two backgrounds to retain
+opaque palette zero. It does not establish managed pixels or rendered parity.
+
 ## Native loaded quest pools
 
 Build the existing registered `quests_test` target using the matching MSVC x64

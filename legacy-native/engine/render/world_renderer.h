@@ -94,4 +94,10 @@ void DrawAndBlit();
 /** Renders one player sprite using authoritative or legacy presentation state. */
 void DrawPlayer(const Surface &out, const Player &player, Point tilePosition, Point targetBufferPosition, int lightTableIndex);
 
+#ifdef BUILD_TESTING
+class Lightmap;
+/** Native scene oracle: production floor/content passes, without a window or entities. */
+void TestDrawNativeScenePiece(const Surface &out, const Lightmap &lightmap, Point tilePosition, Point targetBufferPosition, bool floorPass);
+#endif
+
 } // namespace devilution

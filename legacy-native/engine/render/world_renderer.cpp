@@ -1678,6 +1678,18 @@ const auto OptionChangeHandlerShowFPS = (GetOptions().Graphics.showFPS.SetValueC
 
 } // namespace
 
+#ifdef BUILD_TESTING
+void TestDrawNativeScenePiece(const Surface &out, const Lightmap &lightmap, Point tilePosition, Point targetBufferPosition, bool floorPass)
+{
+	if (floorPass) {
+		if (!HasAnyOf(tileProperties()[tileAt(tilePosition).piece()], TileProperties::Solid | TileProperties::BlockMissile))
+			DrawFloorTile(out, lightmap, tilePosition, targetBufferPosition);
+	} else {
+		DrawCell(out, lightmap, tilePosition, targetBufferPosition, 0);
+	}
+}
+#endif
+
 void DrawPlayer(const Surface &out, const Player &player, Point tilePosition, Point targetBufferPosition, int lightTableIndex)
 {
 	DrawPlayerSprite(out, player, tilePosition, targetBufferPosition, lightTableIndex);

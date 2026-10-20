@@ -43,6 +43,10 @@ Godot presentation client remain unfinished. The server does not require MPQs.
   RGBA atlas comparisons, preserving native spill, anchors and animation cycles.
   Warrior/Sorcerer native-art Journey/Resume pairs pass; scene art, complete native
   animation cursors and rendered graphical parity remain open.
+- The pure MPQ-free Town geometry family matches all 191 native composition,
+  entry, retained-state and mutation cases. Explicit 112x112 fine and 40x40 coarse
+  channels retain generation provenance and separate SOL projections. Runtime
+  profile/backing-state integration and actual Town scene binding remain open.
 - The Godot client is still a presentation prototype. Full native graphical
   parity, complete asset coverage and final rendered playability are open.
 
@@ -86,10 +90,11 @@ are prepared. The session-flow batch is complete for headless acceptance. The
 Warrior/Sorcerer batch is complete for its headless L1 boundary. The active
 Town/Cathedral presentation batch has a reviewed player-art stage: client-only
 CL2/PAL/TRN import, snapshot-driven equipment/action selection and actual headless
-class draw/restore checks. Generic packs remain compatible. The next stage needs
-MPQ-free Town geometry composition (its current layers are empty), native CEL/MIN
-scene art and shared isometric drawing/input. Cathedral final d-pieces already
-exist. Complete scene coverage, lighting and rendered comparisons remain open.
+class draw/restore checks. Generic packs remain compatible. The pure Town geometry
+prerequisite passes 191 native cases; integrate it into explicit profile/backing
+state because current Town layers remain empty. Native CEL/MIN scene art and
+shared isometric drawing/input follow. Cathedral final d-pieces already exist.
+Complete scene coverage, lighting and rendered comparisons remain open.
 Keep its queue, this status and affected inventory entries synchronized as work
 changes. Do not restart inventory construction or an unrelated test campaign.
 

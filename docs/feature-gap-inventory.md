@@ -478,14 +478,16 @@ client-only original-player CL2/PAL/TRN import and native class/equipment/facing
 action bindings now pass full pixel/atlas comparisons and Warrior/Sorcerer
 headless draw/restore pairs. Tile/scene coverage and matched rendered comparisons
 remain required. Qualified profiles contain Cathedral final d-pieces but empty
-Town geometry; Town composition is a prerequisite for its native scene.
+Town geometry. A separate MPQ-free Town builder passes 191 native composition,
+entry, retained-state and mutation cases; profile/backing-state integration is
+still a prerequisite for its native scene.
 
 | ID | Feature | Status | Existing scope | Remaining completion work |
 | --- | --- | --- | --- | --- |
 | 11.1 | Client presentation-pack validation | Complete | Supported manifests validate texture/audio/localization entries, atlases and semantic selectors. | None for the current manifest contract; production coverage and additional selection dimensions remain below. |
 | 11.2 | Godot import of optional original assets | Partial | Client-only base-class CL2/PAL/TRN import produces validated PNG catalogs; full native frame/published-atlas comparisons pass. | Implementation/acceptance: remaining world/actor/UI/audio families, complete optional-original discovery and rendered qualification. |
 | 11.3 | Complete MPQ-free presentation pack | Partial | Pack schema, asset resolution, SVG sample assets and fallbacks exist. | Implementation/acceptance: complete supported world/actor/effect/UI/audio coverage with the required native parity. |
-| 11.4 | Town scene rendering | Partial | Generic layout and projected NPCs/objects/player art can be drawn; qualified profiles have empty Town geometry layers. | Implementation/parity: MPQ-free four-sector/overlay/conditional Town geometry, native tile/art coverage, placement, layering and animation. |
+| 11.4 | Town scene rendering | Partial | Generic layout and player art can be drawn; pure four-sector/automap/conditional geometry matches 191 native cases. Existing profiles still have empty Town layers. | Integration/parity: explicit fine/coarse backing and restore, profile binding, native tile/art coverage, placement, layering and animation. |
 | 11.5 | Cathedral scene rendering | Partial | Fine geometry, schematic objects and limited visible scene checks exist. | Implementation/parity: complete native tiles, walls, theme variants and actor/environment presentation. |
 | 11.6 | Catacombs scene rendering | Partial | Generic geometry/presentation foundations exist. | Implementation/parity: native Catacombs tile sets, walls, objects, palettes and matched scenes. |
 | 11.7 | Caves scene rendering | Partial | Generic geometry/presentation foundations exist. | Implementation/parity: native Caves terrain, transitions, occlusion, lighting and actor placement. |

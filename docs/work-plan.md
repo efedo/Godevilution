@@ -5,10 +5,11 @@ its headless L1 scope. The active primary batch is the native Town/Cathedral
 presentation slice. Optional original-player CL2/PAL/TRN import and snapshot-driven
 class/equipment/direction/action selection pass full native pixel/atlas comparisons;
 both headless class draw/restore pairs pass. Generic packs remain compatible
-and original assets stay client-only. The next implementation stage adds native
-d-piece/CEL scene art and a shared isometric transform for cells, actors, camera and
-pointer mapping. Complete scene coverage and matched rendered comparisons remain
-open within this visual slice.
+and original assets stay client-only. The pure Town composition prerequisite now
+passes all 191 native cases. Continue with its explicit profile/backing-state
+integration, native d-piece/CEL scene art and one isometric transform for cells,
+actors, camera and pointer mapping. Complete scene coverage and matched rendered
+comparisons remain open within this visual slice.
 
 The native Rogue Town/L1/L2 route with earned gear, Town services and fresh-host
 resume remains the broader reusable baseline. Explicit Warrior/Sorcerer profiles
@@ -30,9 +31,11 @@ for the verified boundary. This does not establish complete class campaigns.
 The original-player stage passes native indices/masks, published RGBA/padding and
 actual class draw/restore checks; see [test history](test-history.md#2026-10-19--optional-native-player-art).
 The qualified profiles already supply Cathedral final d-pieces, while Town's
-112x112 geometry layers are empty. Prepare Town's four sectors, automap overlay
-and conditional mutations as explicit MPQ-free geometry inputs before binding its
-native scene. Normal cohort/profile adoption remains separately held.
+112x112 geometry layers are empty. The separate MPQ-free builder now matches
+Town's four sectors, automap, conditional mutations, retained channels, entry view
+and RNG; see [test history](test-history.md#2026-10-19--native-town-geometry-prerequisite).
+Integrate its 40x40 coarse and 112x112 fine backing state explicitly before
+binding the Town scene. Normal cohort/profile adoption remains separately held.
 
 ## Delivery order
 
