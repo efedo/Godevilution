@@ -22,6 +22,7 @@ public partial class SessionAcceptance
     private void CaptureNativeSceneArtDraws()
     {
         CaptureNativeTownerDraws();
+        CaptureNativeObjectDraws();
         if (nativeSceneArtMain is not { } main || main.ObservedNativeSceneDrawing is not { } draw)
             return;
         var player = main.ObservedSnapshot?.Players.FirstOrDefault();

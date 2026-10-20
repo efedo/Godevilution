@@ -38,6 +38,57 @@ continuity and an unchanged full persisted Town checkpoint. Earlier profile/save
 formats remain supported. Complete native NPC/object/effect art, scene phases,
 lighting/palette/transparency and matched rendered qualification remain open.
 
+## Optional original Cathedral object art
+
+`tools/Native.ObjectArt` imports the original eight CEL files under `objects/`
+(`l1doors`, `chest1`–`chest3`, `sarc`, `traphole`, `barrel`, `barrelex`),
+`levels/l1data/l1_1.pal` and canonical `assets/txtdata/objects/objdat.tsv`.
+Supply extracted files and verified class/Town profiles; repeat the profile
+argument for Warrior and Sorcerer. The server receives no art:
+
+```powershell
+dotnet run --project tools/Native.ObjectArt -- --source-root D:\Games\ExtractedDiablo --text-data-root assets/txtdata --profile-directory D:\Profiles\NativeTownWarrior --profile-directory D:\Profiles\NativeTownSorcerer --output-root godot-client/Devilution.Client/assets/native-objects/local
+$env:GODEVILUTION_NATIVE_OBJECT_PACK = 'res://assets/native-objects/local/native-object-catalog.json'
+```
+
+The catalog binds exact admitted content hashes at Cathedral L1. It covers raw
+native IDs 1, 2, 5, 6, 7, 48, 53, 54, 57 and 58. Ordinary chest IDs 5–7 can
+have linked wall traps; later-level `TCHEST` IDs 68–70 remain outside this family.
+Every source frame is retained, including all door/chest variants. An incomplete
+lifecycle sheet refuses import and catalog admission. All eight atlas hashes,
+bounded dimensions, PNG decoding and textures must pass before any native object
+art activates. Refusal preserves existing object presentation and controls.
+
+Drawing uses the current authoritative `AnimationFrame`; there is no object
+animation clock in the client. Typed doors also require consistent inner/outer
+identity, coordinates, frames and the existing interaction contract. Native CEL
+width centers the sprite; the full raster footprint controls clipping and the
+bottom pixel is inclusive. Objects draw once at the owner tile. Existing broken
+barrel residue remains visible through its projected keep-visible state.
+
+With scene art and this pack enabled, the existing native class pair additionally
+requires actual per-object draws and an ordinary untrapped chest open, observing
+its native before/after frames. The Town checkpoint records all supported L1
+object protobufs and collision geometry. Resume compares those exact bytes before
+the first input, alongside the existing full-world/RNG/player/command checks.
+This proves retained inactive L1 state; it does not redraw L1 after cold restore
+or replay live door/barrel/sarcophagus/trap lifecycles.
+
+`NativeObjectAssetPreflightProbe.tscn` exercises real PNG/texture loading headlessly.
+Set `GODEVILUTION_OBJECT_PROBE_CONTENT`, optional `GODEVILUTION_OBJECT_PROBE_LEVEL`
+(default `1`), `GODEVILUTION_OBJECT_PROBE_EXPECT_ACTIVE` (`1` or `0`) and optional
+`GODEVILUTION_OBJECT_PROBE_OUTPUT`. It checks zero accessible textures on refusal,
+all eight on success and access across L1/Town/L1 binding changes.
+
+The [native exporter](msvc-build.md#native-cathedral-object-art-reference) supplies
+all indexed/opacity frames, native table metadata and actual unlit `DrawObject`
+owner/offset probes. Explicit `NativeObjectNativeReferenceTests` compare those
+inputs and every published RGBA/padding pixel using
+`GODEVILUTION_NATIVE_OBJECT_ART_REFERENCE_DIRECTORY` and
+`GODEVILUTION_NATIVE_OBJECT_ART_PACK_DIRECTORY`. Manual source-frame/operation
+probes do not establish live native lifecycle scheduling. Lighting, scene pre/post
+phases, wall lookahead, missile art and matched rendered parity remain open.
+
 ## Optional original Town resident art
 
 `tools/Native.TownerArt` imports eight original human CELs, all eight cow

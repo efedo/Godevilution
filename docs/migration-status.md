@@ -56,6 +56,10 @@ Godot presentation client remain unfinished. The server does not require MPQs.
   frame-order/delay traces compare exactly; both headless class pairs cover all
   anchors and exact cold retention. Live animation remains cosmetic, with native
   initialization RNG and persisted/cold animation phase still open.
+- Optional Cathedral L1 object art now covers eight CEL sheets and ten native
+  IDs using current authoritative frames. Source/atlas/anchor comparisons, an
+  ordinary Warrior chest opening and exact inactive L1 object/collision retention
+  pass. Other live lifecycle art checks and cold L1 redraw remain open.
 - The Godot client is still a presentation prototype. Full native graphical
   parity, complete asset coverage and final rendered playability are open.
 
@@ -110,13 +114,18 @@ The original Town resident visual family passes its scoped native comparisons,
 whole-family failure probes and both class journey/restore pairs. See
 [resident verification](test-history.md#2026-10-20--original-town-resident-art).
 Exact NPC initialization RNG and persisted animation phase remain open.
-The next cohesive visual family is Cathedral interactable-object art for
-existing doors, ordinary/trapped chests, sarcophagi, barrels and wall traps. First
-characterize native source/operation frames and owner/offset anchors; render the
-authoritative frame without inventing lifecycle timing. See the work plan for
-pixel/fallback, ordinary interaction and retained-state acceptance. Complete
-coverage, native light/
-palette/transparency behavior and matched rendered comparisons remain open.
+The optional Cathedral L1 object family now imports eight original CEL sheets
+for ten native IDs, preflights all textures and draws the current authoritative
+frame. Native source/atlas/metadata/owner-offset comparisons pass; the ordinary
+Warrior pair observes a chest 4→6 transition and incidental sarcophagus/barrel
+art, retaining all 58 supported L1 object protobufs and collision geometry before
+cold input with exact sequence 40→41. See
+[object verification](test-history.md#2026-10-20--original-cathedral-object-art).
+Other live object lifecycle art coverage and cold L1 redraw remain open, alongside
+later-level TCHEST aliases, scene phases, native light/palette/transparency and
+matched rendered comparisons. The next primary batch is native Catacombs L4/L5
+entry/return followed by the cohesive L5–L8 family; characterize native generation
+and population before implementation. Normal-profile adoption remains held.
 Keep the queue, this status and affected inventory entries synchronized. Do not
 restart inventory construction or an unrelated test campaign.
 

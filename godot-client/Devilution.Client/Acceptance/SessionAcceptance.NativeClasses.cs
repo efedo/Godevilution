@@ -20,6 +20,7 @@ public partial class SessionAcceptance
         StartNativePlayerArtCapture(main);
         StartNativeSceneArtCapture(main);
         StartNativeTownerCapture(main);
+        StartNativeObjectCapture(main);
         var classId = phase.StartsWith("NativeWarrior", StringComparison.Ordinal) ? 0U : 2U;
         var journeyName = classId == 0 ? "nativewarriorjourney.json" : "nativesorcererjourney.json";
         var identity = main.ObservedIdentity!;
@@ -42,6 +43,7 @@ public partial class SessionAcceptance
                 && hello is { ResumedSessionMatched: true } && hello.LastClientSequence == checkpoint.Sequence
                 && main.ObservedLastQueuedSequence == 0 && main.ObservedPendingCommandCount == 0 && Settled(main),
                 "Fresh-host class resume changed the exact player/items/grid/resources, world, RNG or command cursor before input.");
+            VerifyNativeObjectColdBaseline(main, directory);
             var first = await RecordFirstNativeReturnMovement(main, checkpoint.Sequence, 1);
             Require(first.Sequence == checkpoint.Sequence + 1 && first.AppliedTick > 0,
                 "The resumed class did not accept the exact next ordinary movement receipt.");
@@ -131,6 +133,7 @@ public partial class SessionAcceptance
         Require(defeated != 0 && combatPlayer.Experience > experienceBefore
             && (classId == 0 || manaAfter < manaBefore),
             "The native class did not earn a generated kill/XP with its ordinary attack source.");
+        await VerifyNativeObjectInteractionAsync(main);
         await TravelNativeClassRouteAsync(main, directory, 0);
         var equipment = (ItemList)main.FindChild("EquipmentItems", true, false);
         await RevealControl(sections, 1, equipment);
@@ -195,6 +198,7 @@ public partial class SessionAcceptance
             classId == 0 ? beforeAbility.Durability : 0, classId == 0 ? afterAbility.Durability : 0,
             initialDurabilities[abilitySlot], abilitySlot, abilityItem.State.StableItemId, beforeAbility.MaxDurability, afterAbility.MaxDurability, beforeAbility.MaxCharges, afterAbility.MaxCharges);
         WriteEvidence(directory, "native-class-attacks.json", new { Passed = true, Attacks = attacks, Refusals = refusals });
+        SaveNativeObjectCheckpoint(main, directory);
         WriteNativeClassEvidence(main, directory, phase, checkpointAfter, exactColdBaseline: false);
     }
 
@@ -210,6 +214,7 @@ public partial class SessionAcceptance
             NativeSceneArt = VerifyNativeSceneArtCapture(main, exactColdBaseline),
             NativeTown = CaptureNativeTownPresentation(main),
             NativeTowners = VerifyNativeTownerCapture(main, exactColdBaseline),
+            NativeObjects = VerifyNativeObjectCapture(main, exactColdBaseline),
             FirstAcceptedSequence = exactColdBaseline ? main.ObservedCommandResult!.ClientSequence : 0,
             FirstAcceptedAppliedTick = exactColdBaseline ? main.ObservedCommandResult!.AppliedTick : 0,
         });

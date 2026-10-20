@@ -1,7 +1,7 @@
 # Near-term work plan
 
 Updated 2026-10-20. Native Warrior/Sorcerer admission passes its headless L1
-scope. The active primary batch remains native Town/Cathedral presentation.
+scope. The next primary batch extends the native world into Catacombs.
 Optional original-player and scene imports pass full native pixel/atlas
 comparisons. Distinct format-5 Town profiles now retain semantic fine/coarse/
 special/protected state, canonical resident collision and strict v11 cold restore.
@@ -44,30 +44,30 @@ floor. Earlier format-4 profiles retain their empty Town layers and explicit
 fallback. See [Town integration evidence](test-history.md#2026-10-19--explicit-native-town-integration).
 Normal cohort/profile adoption remains separately held.
 
-The Town profile/backing and original resident-art stages are complete for their
-headless boundaries. Immutable projection covers all eight humans and three cows;
-optional CEL/PAL art retains native pixels, directions, anchors and prepared
-frame order/delay. Both class journeys observe every resident at an in-viewport
-anchor and retain exact cold continuity. See [resident verification](test-history.md#2026-10-20--original-town-resident-art).
-Live animation remains cosmetic; exact initialization RNG, authoritative cursors
-and cold phase continuity stay open. The next cohesive family is
-native Cathedral interactable-object art: L1 doors, ordinary/trapped chest types
-1–3, sarcophagi, ordinary/explosive barrels and left/right wall traps (11.18).
-Before runtime implementation, characterize every source frame, per-type initial/
-operation frame and native anchor, including offset draw tiles. Use authoritative
-current frames and typed door states; do not infer lifecycle timing from table
-animation lengths or add a client gameplay clock. Qualify all imported pixels and
-fallbacks, then ordinary interactions and retained frame/state/collision across
-cold restore. Native lighting, pre/post phases, wall lookahead and missile art stay
-separate.
-Keep rendered qualification and the full graphical-parity requirement open.
+The Town profile/backing and original resident-art stages pass their scoped
+headless boundaries; live NPC initialization RNG and persisted phase remain open.
+The optional Cathedral object family now imports eight CEL sheets for ten native
+L1 IDs and draws current authoritative frames with strict content/level binding.
+All 48 unique source frames, all published atlas pixels and 208 actual native
+owner/offset draw probes pass. One ordinary Warrior journey observes a chest
+4→6 transition plus incidental sarcophagus/barrel draws, then retains all 58
+supported L1 object payloads and collision geometry before cold input. See
+[object verification](test-history.md#2026-10-20--original-cathedral-object-art).
+
+This is source/current-frame and scoped headless application qualification.
+Live door close/refusal, barrel/sarcophagus cadence, linked trap consumption and
+L1 redraw after cold restore still need art-specific application coverage.
+Later-level TCHEST aliases, native lighting, pre/post scene phases, wall lookahead,
+missile art and matched rendered parity remain open. Normal cohort/profile
+adoption remains held. The next primary batch extends the native world into
+Catacombs, beginning with ordinary L4/L5 entry/return and building the L5–L8
+family coherently after native generation/population characterization.
 
 ## Delivery order
 
 | Order | Coherent deliverable | Inventory scope | Exit for this batch |
 | --- | --- | --- | --- |
-| 1 | Native Cathedral interactable-object art for existing L1 doors, ordinary/trapped chests, sarcophagi, barrels and wall traps. | 11.5, 11.18, 11.22, 11.37 | Characterize source/operation frames and native anchors first; compare all imported pixels, validate fallback, then ordinary interaction and retained frame/state/collision through cold restore. Keep lighting, scene phases, missile art, rendered parity and normal-profile adoption open. |
-| 2 | Extend the native world into Catacombs, beginning with L4/L5 entry and return and building the L5–L8 family coherently. | 5.6, 5.17, 5.22, 9.21 | Native generation/population comparisons for changed behavior, ordinary travel/combat, retained floor state and fresh-host return. |
+| 1 | Extend the native world into Catacombs, beginning with L4/L5 entry and return and building the L5–L8 family coherently. | 5.6, 5.17, 5.22, 9.21 | Characterize native generation/population first; compare changed behavior, then ordinary travel/combat, retained floor state and fresh-host return. Keep normal-profile adoption and rendered parity separate. |
 
 The session-flow baseline now includes reviewed create/return/rejoin, local
 profile class limits, cancellation/exit cleanup and exact fresh-host resume.

@@ -1688,6 +1688,21 @@ void TestDrawNativeScenePiece(const Surface &out, const Lightmap &lightmap, Poin
 		DrawCell(out, lightmap, tilePosition, targetBufferPosition, 0);
 	}
 }
+
+NativeObjectDrawObservationForTesting TestDrawObject(const Surface &out, const Object &object, Point tilePosition, Point targetBufferPosition)
+{
+	const ClxSprite sprite = object.currentSprite();
+	const Point bottomAnchor = targetBufferPosition + object.getRenderingOffset(sprite, tilePosition);
+	struct RestoreObjectUnderCursor {
+		Object *saved;
+		~RestoreObjectUnderCursor() { ObjectUnderCursor = saved; }
+	} restoreCursor { ObjectUnderCursor };
+	ObjectUnderCursor = nullptr;
+	Object unlitObject = object;
+	unlitObject.applyLighting = false;
+	DrawObject(out, unlitObject, tilePosition, targetBufferPosition, 0);
+	return { bottomAnchor, sprite.width(), sprite.height(), object._oAnimFrame };
+}
 #endif
 
 void DrawPlayer(const Surface &out, const Player &player, Point tilePosition, Point targetBufferPosition, int lightTableIndex)

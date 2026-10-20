@@ -7,6 +7,12 @@ contracts stay in their existing guides.
 
 ## 2026-10-20
 
+- Add the optional original Cathedral L1 object family: eight CEL sheets and ten
+  native IDs, complete atlas preflight and exact current authoritative frames.
+  Preserve generic controls, native centering and visible broken-barrel residue.
+- Qualify all 48 source frames, published atlas pixels and production native draw
+  anchors. Add ordinary Warrior chest before/after draw evidence and exact cold
+  object/collision retention; keep other live lifecycle art and rendered parity open.
 - Project all 11 original Town residents from the active authoritative catalog,
   with stable cow instances, strict wire validation and unchanged save/hash contracts.
 - Import optional original human/cow CEL art into a content/Town-bound catalog;

@@ -1,5 +1,29 @@
 # MSVC Build Notes for Agents
 
+## Native Cathedral object art reference
+
+Build only the registered `native_object_art_test` target using the checked MSVC
+x64 environment below. Set `GODEVILUTION_NATIVE_OBJECT_ART_ARCHIVE` to the explicit
+original DIABDAT archive and `GODEVILUTION_NATIVE_OBJECT_ART_REFERENCE_DIRECTORY`
+to a previously absent private directory, then run `native_object_art_test.exe
+--gtest_filter=NativeObjectArtTest.*`. Restore caller environment afterward.
+The headless fixture refuses existing output, isolates native asset lookup and
+extracts only the eight selected `objects/*.cel` files and L1 palette.
+
+Production `LoadCelWithStatus`, two-background `ClxDraw` and actual unlit
+`DrawObject` capture every palette index/opacity pair, including opaque index zero.
+The ten native IDs are checked against loaded `ObjMasterLoadList` bindings and
+object table metadata. Owner and native NorthEast offset probes retain native
+centering and inclusive bottoms. Door open/blocked-close/reclose and chest open
+operations run actual native functions; prepared sarcophagus/barrel frame probes,
+static trap states and synchronized barrel final states retain their narrower
+scope. All touched assets, RNG, cursor, door tiles and light state are restored.
+
+The export qualifies source pixels, metadata and isolated placement, not live
+`ProcessObjects` scheduling, lighting, scene phases or rendered parity. See
+[Godot object-art notes](godot-build.md#optional-original-cathedral-object-art)
+for import, published-atlas comparisons and optional ordinary-control acceptance.
+
 ## Native Town resident art reference
 
 Build only the registered `native_towner_art_test` target with the checked MSVC

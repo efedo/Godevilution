@@ -95,6 +95,7 @@ public partial class WorldPresentation : Node2D
     {
         BindNativeSceneIdentity(contentManifestHash);
         BindNativeTownerIdentity(contentManifestHash);
+        BindNativeObjectIdentity(contentManifestHash);
         if (!assets.SetNativePlayerContentIdentity(contentManifestHash))
             return;
         nativePlayerPresentationTick = null;
@@ -147,6 +148,9 @@ public partial class WorldPresentation : Node2D
             nativeTownerClock.Reset();
             nativeTownerDraws.Clear();
             nativeTownerArtReady = false;
+            nativeObjectArtReady = false;
+            nativeObjectDraws.Clear();
+            nativeObjectAssets.Bind(null, 0);
             nativeTownerAssets.Bind(null, string.Empty, Array.Empty<NativeTownResidentSnapshot>());
             displayedPositions.Clear();
             displayedPositionLevels.Clear();
@@ -204,6 +208,7 @@ public partial class WorldPresentation : Node2D
         }
         currentLevel = levels.Resolve(localPlayer?.LevelId ?? 0);
         ResolveNativeScene(localPlayer);
+        nativeObjectArtReady = nativeObjectAssets.Bind(nativeObjectContentIdentity, localPlayer?.LevelId ?? 0);
         AdvanceNativeTowners(delta, serverTickRateHz, transportConnected, snapshotRewound);
         var nextViewport = CreateViewportTransform(currentLevel, localPlayer);
         if (nextViewport.ViewportWidth != viewport.ViewportWidth || nextViewport.ViewportHeight != viewport.ViewportHeight) {
@@ -481,6 +486,7 @@ public partial class WorldPresentation : Node2D
     {
         doorDrawObservations.Clear();
         nativeTownerDraws.Clear();
+        nativeObjectDraws.Clear();
         if (DrawNativeSceneWorld())
             return;
         DrawGrid();
@@ -1036,6 +1042,8 @@ public partial class WorldPresentation : Node2D
 
     private void DrawObject(ObjectSnapshot @object)
     {
+        if (TryDrawNativeObject(@object))
+            return;
         var kind = ObjectPresentationStyle.Resolve(@object);
         var frame = ObjectPresentationStyle.ResolveFrame(@object);
         if (kind == ObjectPresentationKind.CathedralDoor) {

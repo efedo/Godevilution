@@ -39,6 +39,9 @@
     <Compile Include="../../tools/Native.TownerArt/*.cs"
              Exclude="../../tools/Native.TownerArt/Program.cs"
              Link="NativeTownerArt/%(Filename)%(Extension)" />
+    <Compile Include="../../tools/Native.ObjectArt/*.cs"
+             Exclude="../../tools/Native.ObjectArt/Program.cs"
+             Link="NativeObjectArt/%(Filename)%(Extension)" />
     <Compile Include="../Devilution.Client/PresentationAssets/PresentationAssetManifest.cs"
              Link="PresentationAssets/PresentationAssetManifest.cs" />
     <Compile Include="../Devilution.Client/PresentationAssets/SemanticPlayerPresentation.cs"

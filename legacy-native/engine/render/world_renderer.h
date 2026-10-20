@@ -5,11 +5,14 @@
  */
 #pragma once
 
+#include <cstdint>
+
 #include "engine/animationinfo.h"
 #include "engine/math/direction.hpp"
 #include "engine/math/displacement.hpp"
 #include "engine/math/point.hpp"
 #include "engine/gfx/surface.hpp"
+#include "utils/attributes.h"
 
 namespace devilution {
 
@@ -96,8 +99,17 @@ void DrawPlayer(const Surface &out, const Player &player, Point tilePosition, Po
 
 #ifdef BUILD_TESTING
 class Lightmap;
+struct Object;
 /** Native scene oracle: production floor/content passes, without a window or entities. */
 void TestDrawNativeScenePiece(const Surface &out, const Lightmap &lightmap, Point tilePosition, Point targetBufferPosition, bool floorPass);
+/** Actual object blit and native frame anchor for isolated, unlit reference probes. */
+struct NativeObjectDrawObservationForTesting {
+	Point bottomAnchor;
+	uint16_t spriteWidth;
+	uint16_t spriteHeight;
+	uint32_t frameIndex;
+};
+DVL_API_FOR_TEST NativeObjectDrawObservationForTesting TestDrawObject(const Surface &out, const Object &object, Point tilePosition, Point targetBufferPosition);
 #endif
 
 } // namespace devilution

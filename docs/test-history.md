@@ -9,6 +9,50 @@ the referenced test sources. Do not copy raw outputs into historical archives.
 
 ## Client and host verification
 
+### 2026-10-20 — original Cathedral object art
+
+Thirteen focused importer/catalog/current-frame/placement cases, three explicit
+object reference comparisons, three affected resident reference cases, two
+existing object-layer compatibility cases, one actual PowerShell validator
+mutation case, one native fixture and eight real Godot preflights pass without
+skips. The MSVC x64 environment resolves cl/rc/mt; the
+existing child-only `/Z7` workaround remains unchanged. Isolated client and managed
+builds pass with existing package-audit/nullability warnings.
+
+The original eight CEL sheets contain 48 unique frames, shared across ten native
+IDs (54 ID/frame combinations). Every native indexed/opacity pixel and published
+RGBA atlas/padding pixel matches; palette zero remains opaque. Loaded native table
+bindings/widths and all 208 production unlit `DrawObject` owner/NorthEast offset
+probes match, including 108 complete source-frame probes. Actual door/chest
+operations and prepared sarcophagus/barrel/trap probes retain their documented
+scope; they do not qualify `ProcessObjects` scheduling or lighting.
+
+Both class content bindings pass real texture loading. Missing, corrupt and
+undecodable final atlases refuse after seven loads with zero textures accessible.
+Wrong content, level and disabled-pack cases refuse, and healthy L1/Town/L1
+rebinding hides/restores all eight textures. Review findings for incomplete sheets,
+native door-neighbor restoration, ID/source binding and evidence cross-fields
+were resolved; the synthetic fixture expectations were corrected without relaxing
+production validation.
+
+The ordinary headless Warrior pair uses native player/scene/resident/object art
+with the existing format-5 profile. It passes generated L1 combat, Repair, Town
+services/roaming and fresh-host continuity. Six object samples cover native IDs
+5, 48 and 57; chest 151003204 opens frame 4→6 with receipt 16 at tick1467,
+with actual draws at ticks1458/1467. All 58 supported L1 object protobufs and L1
+collision geometry match before cold input; exact next receipt is 40→41. The
+unchanged full-world/player/RNG/cursor checks pass, both timing reports record
+AcceptancePassed with zero dropped records, and owned host/client processes exit.
+
+Operational evidence is `.local/native-objects-20261020`; the class session is
+`.local/native-town-20261019/profiles/warrior/sessions/native-class-warrior-368bedc18af748b595be6afe5c4ed553`.
+Gameplay WIP remains separate. This run proves an untrapped chest transition and
+incidental art plus retained inactive L1 state. Live door close/refusal,
+sarcophagus/barrel cadence, linked trap consumption and L1 redraw after cold
+restore remain open, as do later-level TCHEST admission, native scene phases,
+lighting/palette/transparency, missiles and matched rendered parity. The prior
+Town authority-lock lateness remains unresolved; normal-profile adoption is held.
+
 ### 2026-10-20 — original Town resident art
 
 Twenty focused managed resident cases, 160 snapshot/protocol cases, one detached

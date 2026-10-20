@@ -67,6 +67,65 @@ function Assert-NativeClassEvidence($Scene, $ProcessEvidence, [int]$ExpectedClas
     }
 }
 
+function Assert-NativeObjectArtEvidence($Scene, [bool]$Resumed) {
+    if ([string]::IsNullOrWhiteSpace($env:GODEVILUTION_NATIVE_OBJECT_PACK)) { return }
+    $objects = $Scene.NativeObjects
+    if ($objects.Passed -isnot [bool] -or -not $objects.Passed -or
+        $objects.CurrentSnapshotFramesOnly -isnot [bool] -or -not $objects.CurrentSnapshotFramesOnly -or
+        $objects.NativeLifecycleTimingParity -isnot [bool] -or $objects.NativeLifecycleTimingParity -or
+        $objects.NativeLightingAndScenePhaseParity -isnot [bool] -or $objects.NativeLightingAndScenePhaseParity -or
+        $objects.RenderedParity -isnot [bool] -or $objects.RenderedParity -or
+        $objects.ColdL1RedrawVerified -isnot [bool] -or $objects.ColdL1RedrawVerified -or
+        $objects.Pack.IsLoaded -isnot [bool] -or -not $objects.Pack.IsLoaded -or
+        $objects.Pack.PackId -cnotmatch '^native-object-[0-9a-f]{24}$' -or
+        $objects.Pack.ContentManifestHash -cne $Scene.ContentHash -or
+        $objects.Checkpoint.ContentHash -cne $Scene.ContentHash -or
+        @($objects.Checkpoint.Objects).Count -eq 0 -or
+        $objects.Checkpoint.GeometryHash -cnotmatch '^[0-9a-fA-F]{64}$' -or
+        $objects.ColdObjectFrameStateCollisionRetained -isnot [bool] -or
+        $objects.ColdObjectFrameStateCollisionRetained -ne $Resumed) {
+        throw 'Native object art evidence omitted its scoped current-frame or exact cold state contract.'
+    }
+    $interaction = $objects.Checkpoint.Interaction
+    if ($interaction.NativeObjectId -notin @(5, 6, 7) -or $interaction.EntityId -le 0 -or
+        $interaction.BeforeFrame -notin @(1, 4) -or $interaction.AfterFrame -ne ($interaction.BeforeFrame + 2) -or
+        $interaction.Sequence -le 0 -or $interaction.AppliedTick -le 0) {
+        throw 'Native object art evidence omitted its ordinary chest frame transition.'
+    }
+    foreach ($draw in @($interaction.BeforeDraw, $interaction.AfterDraw)) {
+        if ($null -eq $draw -or $draw.NativeArt -isnot [bool] -or -not $draw.NativeArt -or
+            $draw.GenericFallback -isnot [bool] -or $draw.GenericFallback -or
+            $draw.AnchorInsideViewport -isnot [bool] -or -not $draw.AnchorInsideViewport -or
+            $draw.EntityId -ne $interaction.EntityId -or $draw.NativeObjectId -ne $interaction.NativeObjectId -or
+            $draw.LevelId -ne 1 -or $draw.SnapshotTick -le 0 -or $draw.NativeWidth -ne 96 -or
+            $draw.PackId -cne $objects.Pack.PackId -or
+            $draw.Destroyed -isnot [bool] -or $draw.Destroyed -or $draw.TrapArmed -isnot [bool] -or $draw.TrapArmed -or
+            [string]::IsNullOrWhiteSpace($draw.AtlasPath) -or $draw.Width -le 0 -or $draw.Height -le 0 -or
+            $draw.DrawX -ne ($draw.AnchorX - 16) -or $draw.DrawY -ne ($draw.AnchorY - $draw.Height + 1)) {
+            throw 'Native object art evidence omitted an actual correctly placed chest draw.'
+        }
+    }
+    if ($interaction.BeforeDraw.NativeFrame -ne $interaction.BeforeFrame -or
+        $interaction.AfterDraw.NativeFrame -ne $interaction.AfterFrame -or
+        $interaction.BeforeDraw.PositionX -ne $interaction.AfterDraw.PositionX -or
+        $interaction.BeforeDraw.PositionY -ne $interaction.AfterDraw.PositionY -or
+        $interaction.BeforeDraw.SnapshotTick -gt $interaction.AppliedTick -or
+        $interaction.AfterDraw.SnapshotTick -lt $interaction.AppliedTick -or
+        $interaction.BeforeDraw.Activated -isnot [bool] -or $interaction.BeforeDraw.Activated -or
+        $interaction.AfterDraw.Activated -isnot [bool] -or -not $interaction.AfterDraw.Activated) {
+        throw 'Native object art evidence drew a frame other than the ordinary authoritative chest state.'
+    }
+    if (-not $Resumed -and ($objects.Pack.AtlasesReady -isnot [bool] -or -not $objects.Pack.AtlasesReady -or
+        @($objects.Pack.LoadedAtlasPaths).Count -ne 8 -or @($objects.Pack.MissingAtlasPaths).Count -ne 0 -or
+        @($objects.Samples).Count -eq 0 -or @($objects.Samples | Where-Object {
+            $_.NativeArt -isnot [bool] -or -not $_.NativeArt -or
+            $_.GenericFallback -isnot [bool] -or $_.GenericFallback -or
+            $_.AnchorInsideViewport -isnot [bool] -or -not $_.AnchorInsideViewport
+        }).Count -ne 0)) {
+        throw 'Native object art evidence omitted its complete texture family or actual object samples.'
+    }
+}
+
 function Assert-NativeTownSceneEvidence($Scene) {
     if ($Scene.NativeTown.Passed -isnot [bool] -or -not $Scene.NativeTown.Passed -or
         $Scene.NativeTown.FineCells -ne 12544 -or $Scene.NativeTown.SpecialCells -ne 12544 -or
@@ -252,6 +311,7 @@ if ($classId -eq 0) {
     throw 'The Sorcerer Journey did not prove a charged-staff cast, Mana use and authoritative Recharge mutation.'
 }
 
+Assert-NativeObjectArtEvidence $journey $false
 $townCheckpointHash = $null
 if ($NativeTown) {
     $services = Get-Content -LiteralPath (Join-Path $sessionDirectory 'native-town-services.json') -Raw | ConvertFrom-Json
@@ -281,6 +341,12 @@ if ($resume.Passed -isnot [bool] -or -not $resume.Passed -or $resume.Mode -cne '
     throw 'The class Resume did not prove an exact cold baseline and the exact next accepted receipt.'
 }
 
+Assert-NativeObjectArtEvidence $resume $true
+if (-not [string]::IsNullOrWhiteSpace($env:GODEVILUTION_NATIVE_OBJECT_PACK) -and
+    ([string]::Join('|', @($journey.NativeObjects.Checkpoint.Objects)) -cne [string]::Join('|', @($resume.NativeObjects.Checkpoint.Objects)) -or
+    $journey.NativeObjects.Checkpoint.GeometryHash -cne $resume.NativeObjects.Checkpoint.GeometryHash)) {
+    throw 'Native object art cold evidence changed its saved object payloads or collision geometry.'
+}
 if ($NativeTown) {
     Assert-NativeTownSceneEvidence $resume
     Assert-NativeTownerEvidence $resume $true

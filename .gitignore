@@ -493,5 +493,8 @@ Testing/
 /tools/Native.PlayerArt/obj/
 /godot-client/Devilution.Client/assets/native-scenes/
 /godot-client/Devilution.Client/assets/native-towners/
+/godot-client/Devilution.Client/assets/native-objects/
+/tools/Native.ObjectArt/bin/
+/tools/Native.ObjectArt/obj/
 /tools/Native.SceneArt/bin/
 /tools/Native.SceneArt/obj/

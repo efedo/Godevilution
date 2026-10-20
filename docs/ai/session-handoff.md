@@ -39,15 +39,21 @@ prepared native frame-order/delay traces, full-roster anchor roaming and both
 headless class restore pairs. Live NPC time remains cosmetic; initialization RNG,
 authoritative/persisted phase and rendered parity remain open.
 
-Read the work plan before implementation of the next cohesive family: native
-Cathedral object art for existing L1 doors, ordinary/trapped chests, sarcophagi,
-barrels and wall traps. Characterize source/operation frames and owner/offset
-anchors first; use current authoritative frames without inventing lifecycle time.
-Keep native lighting, scene phases and missile art separate. The observed Town
-authority-lock lateness remains an unresolved host latency issue, not an art
-acceptance fix. Normal cohort/profile adoption stays held. Later class campaigns
-and full rendered qualification remain open. Reuse valid evidence and keep the
-work plan, status and inventory synchronized; L3 bot failure is not a universal gate.
+The optional L1 interactable-object family now imports eight original CEL sheets
+for ten native IDs and uses current authoritative frames. All 48 unique source
+frames, atlas pixels and 208 native owner/offset draw probes pass. One ordinary
+Warrior pair observes the chest 4→6 transition and incidental sarcophagus/barrel
+draws, then retains all 58 supported L1 objects and collision geometry before
+cold input (40→41). Other live object lifecycle art coverage and cold L1 redraw
+remain open, alongside native lighting, scene phases, missiles and rendered parity.
+
+Read the work plan before establishing the next cohesive native-world batch:
+Catacombs L4/L5 entry/return and the L5–L8 family. Characterize native generation
+and population before implementation. The observed Town authority-lock lateness
+remains unresolved. Normal cohort/profile adoption stays held. Later class
+campaigns and full rendered qualification remain open. Reuse valid evidence and
+keep the work plan, status and inventory synchronized; L3 bot failure is not a
+universal gate. Reuse the existing fixed worker pool.
 
 ## Session goal
 
