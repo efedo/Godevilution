@@ -83,7 +83,7 @@ public sealed partial class AuthoritativeCathedralNativePopulationIntegrationTes
 			Assert.Equal(build.Policy.InitialDoorCount,
 				build.Objects.Count(value => value.NativeObjectId is 42 or 43));
 
-			var floor = DiabloWorldState.CreateNativeCatacombsFloor(build, fixture.Items, fixture.Spells);
+			var floor = DiabloWorldState.CreateNativeCatacombsFloor(build, fixture.Items, fixture.Spells, fixture.Activation.MonsterMissiles!);
 			Assert.True(floor.OwnsNativePopulationLevel(checked((uint)row.Depth)));
 			floor.ValidateNativePopulationState([]);
 			Assert.Equal(build.Policy.InitialDoorCount,

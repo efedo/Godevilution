@@ -4175,6 +4175,312 @@ TEST_F(ThemeRoomGenerationTest, CaptureNativeCatacombsActorPhases)
 	stream.flush(); ASSERT_TRUE(stream.good()); stream.close(); EXPECT_EQ(caseCount, 14);
 }
 
+void WriteRangedPlayer(std::ostream &out, const Player &player)
+{
+	JsonObject json(out);
+	json.Number("level", player.plrlevel);
+	json.Number("characterLevel", player.getCharacterLevel());
+	json.Number("mode", player._pmode);
+	json.Boolean("active", player.plractive);
+	json.Boolean("levelLoading", player.pLvlLoad != 0);
+	json.Key("tile"); WriteRoomPoint(out, { player.position.tile.x, player.position.tile.y });
+	json.Key("future"); WriteRoomPoint(out, { player.position.future.x, player.position.future.y });
+	json.Key("old"); WriteRoomPoint(out, { player.position.old.x, player.position.old.y });
+}
+
+void WriteRangedMissile(std::ostream &out, const Missile &missile)
+{
+	JsonObject json(out);
+	json.Number("type", missile._mitype);
+	json.Number("source", missile._misource);
+	json.Number("caster", missile._micaster);
+	json.Number("damage", missile._midam);
+	json.Number("spellLevel", missile._mispllvl);
+	json.Number("graphic", missile._miAnimType);
+	json.Number("graphicDirection", missile.getFrameGroupRaw());
+	json.Number("animationFrame", missile._miAnimFrame);
+	json.Number("animationLength", missile._miAnimLen);
+	json.Number("animationDelay", missile._miAnimDelay);
+	json.Number("duration", missile.duration);
+	json.Boolean("delete", missile._miDelFlag);
+	json.Key("start"); WriteRoomPoint(out, { missile.position.start.x, missile.position.start.y });
+	json.Key("tile"); WriteRoomPoint(out, { missile.position.tile.x, missile.position.tile.y });
+	json.Key("velocity"); WriteRoomPoint(out, { missile.position.velocity.deltaX, missile.position.velocity.deltaY });
+	json.Key("traveled"); WriteRoomPoint(out, { missile.position.traveled.deltaX, missile.position.traveled.deltaY });
+	json.Key("rawProjectileUnionDestination"); WriteRoomPoint(out, { missile.projectile.destX, missile.projectile.destY });
+	json.Key("raw"); WriteArray(out, missile.raw, [&](int value) { out << value; });
+}
+
+TEST_F(ThemeRoomGenerationTest, CaptureNativeCatacombsRangedReleases)
+{
+	const char *directory = std::getenv("GODEVILUTION_CATACOMBS_RANGED_ORACLE_DIRECTORY");
+	if (directory == nullptr || *directory == '\0') GTEST_SKIP() << "Set the explicit Catacombs ranged oracle directory.";
+	const std::filesystem::path root = std::filesystem::absolute(directory);
+	ASSERT_TRUE(std::filesystem::is_directory(root));
+	ASSERT_TRUE(std::filesystem::is_empty(root)) << "Never overwrite retained native ranged evidence.";
+	struct ExecutionGuard {
+		bool sound = gbSndInited, headless = HeadlessMode, missilePreFlag = MissilePreFlag;
+		uint32_t random = GetLCGEngineState();
+		std::list<Missile> savedMissiles = std::move(Missiles);
+		ScopedMissileDataForTest missileData;
+		~ExecutionGuard()
+		{
+			Missiles = std::move(savedMissiles);
+			MissilePreFlag = missilePreFlag;
+			gbSndInited = sound;
+			HeadlessMode = headless;
+			SetRndSeed(random);
+		}
+	} guard;
+	HeadlessMode = true;
+	gbSndInited = false;
+	LoadPlayerDataFiles();
+	LoadMissileData();
+	ASSERT_TRUE(IsMissileDataAvailable(MissileID::Arrow));
+	ASSERT_TRUE(IsMissileDataAvailable(MissileID::MagmaBall));
+	ASSERT_TRUE(IsMissileDataAvailable(MissileID::Acid));
+
+	std::ofstream stream(root / "native-catacombs-ranged-release.json", std::ios::binary | std::ios::trunc);
+	ASSERT_TRUE(stream.good());
+	int caseCount = 0;
+	{
+		JsonObject document(stream);
+		document.String("format", "godevilution-catacombs-ranged-release");
+		document.Number("version", 1);
+		document.String("policy", "prepared-original-diablo-catacombs-ranged-controller-release-clock");
+		document.Key("cases"); stream << '[';
+		auto nextCase = [&]() { if (caseCount++ != 0) stream << ','; };
+		auto writeIdentity = [&](JsonObject &row, std::string_view name, int depth, _monster_id nativeType, MonsterAIID ai, MissileID missileId, bool special, std::string_view uniqueName, Monster &actor) {
+			row.String("name", name); row.Number("depth", depth); row.Number("nativeType", nativeType);
+			row.Number("ai", ai); row.Number("missileId", missileId); row.Boolean("special", special);
+			row.String("uniqueName", uniqueName); row.Number("normalEffectFrame", actor.data().animFrameNum);
+			row.Number("specialEffectFrame", actor.data().animFrameNumSpecial);
+			row.Number("sourceAnimationFrames", actor.animInfo.numberOfFrames);
+			row.Key("initialActor"); WriteRoomMonster(stream, static_cast<int>(actor.getId()), actor);
+			row.Key("initialPlayer"); WriteRangedPlayer(stream, *MyPlayer);
+			row.Number("initialRandom", GetLCGEngineState());
+		};
+		auto writeMissiles = [&]() {
+			stream << '[';
+			bool first = true;
+			for (const Missile &missile : Missiles) {
+				if (!first) stream << ',';
+				first = false;
+				WriteRangedMissile(stream, missile);
+			}
+			stream << ']';
+		};
+		auto prepareActor = [&](int depth, _monster_id nativeType, const UniqueMonsterData *unique) -> Monster * {
+			PrepareRoom(depth, 0, 0, 0, false);
+			currentLevel().setId(LevelId { .levelNum = static_cast<uint8_t>(depth), .type = DTYPE_CATACOMBS });
+			std::fill(std::begin(tileProperties()), std::end(tileProperties()), TileProperties::None);
+			for (Tile &tile : tiles()) {
+				tile.setPiece(0); tile.setTransVal(0); tile.setFlags(DungeonFlag::None);
+				tile.setPlayer(0); tile.setMonster(0); tile.setObject(0); tile.setItem(0);
+				tile.setCorpse(0); tile.setLight(0); tile.setPreLight(0);
+			}
+			LevelBestiary.init();
+			const auto typeIndex = LevelBestiary.addType(nativeType, PLACE_SCATTER);
+			if (!typeIndex) return nullptr;
+			Player hero;
+			hero._pClass = HeroClass::Warrior; hero.setCharacterLevel(1);
+			const ClassAttributes &attributes = hero.getClassAttributes();
+			hero.attributes.strength.base = hero.attributes.strength.current = attributes.baseStr;
+			hero.attributes.magic.base = hero.attributes.magic.current = attributes.baseMag;
+			hero.attributes.dexterity.base = hero.attributes.dexterity.current = attributes.baseDex;
+			hero.attributes.vitality.base = hero.attributes.vitality.current = attributes.baseVit;
+			const int life = hero.calculateBaseLife();
+			const int mana = hero.calculateBaseMana();
+			hero.life = { life, life, life, life, 100 }; hero.mana = { mana, mana, mana, mana, 100 };
+			hero.setAnimations(); *MyPlayer = std::move(hero);
+			MyPlayer->plractive = true; MyPlayer->plrlevel = static_cast<uint8_t>(depth);
+			MyPlayer->plrIsOnSetLevel = false; MyPlayer->_pLvlChanging = false; MyPlayer->pLvlLoad = 1;
+			MyPlayer->_pInvincible = false; MyPlayer->_pBlockFlag = false; MyPlayer->_pmode = PM_STAND;
+			const Point playerPosition { 60, 50 };
+			MyPlayer->position.tile = playerPosition; MyPlayer->position.future = playerPosition; MyPlayer->position.old = playerPosition;
+			tileAt(playerPosition).setPlayer(1);
+			CurrentLightManager.Init();
+			SetRndSeed(2588);
+			Monster *actor = AddMonster({ 50, 50 }, Direction::SouthEast, *typeIndex, true);
+			if (actor == nullptr) return nullptr;
+			actor->activeForTicks = UINT8_MAX; actor->enemy = 0; actor->enemyPosition = playerPosition;
+			actor->position.last = playerPosition; actor->position.future = actor->position.tile;
+			actor->goal = MonsterGoal::Normal; actor->goalVar1 = 0; actor->goalVar2 = 0; actor->goalVar3 = 0;
+			actor->flags &= ~(MFLAG_NO_ENEMY | MFLAG_TARGETS_MONSTER | MFLAG_SEARCH | MFLAG_HIDDEN);
+			tileAt(actor->position.tile).addFlags(DungeonFlag::Visible);
+			if (unique != nullptr) {
+				const size_t uniqueIndex = static_cast<size_t>(unique - UniqueMonstersData.data());
+				actor->uniqueType = static_cast<UniqueMonsterType>(uniqueIndex);
+				actor->ai = unique->mAi; actor->intelligence = unique->mint;
+				actor->minDamage = actor->minDamageSpecial = unique->mMinDamage;
+				actor->maxDamage = actor->maxDamageSpecial = unique->mMaxDamage;
+				actor->maxHitPoints = std::max<int>(unique->mmaxhp / 2, 1) << 6;
+				actor->hitPoints = actor->maxHitPoints; actor->uniqTrans = 0;
+			}
+			return actor;
+		};
+		auto specialSeed = [&](const Monster &actor) {
+			const int shift = actor.ai == MonsterAIID::Acid ? 1 : 0;
+			const int threshold = (500 * (actor.intelligence + 2)) >> shift;
+			for (uint32_t seed = 0; seed < 100000; ++seed) {
+				DiabloGenerator candidate(seed);
+				if (candidate.generateRnd(10000) < threshold) return seed;
+			}
+			return UINT32_MAX;
+		};
+
+		struct Lane { const char *name; int depth; _monster_id type; MissileID missile; bool special; bool unique; };
+		const std::array<Lane, 5> lanes {{
+			{ "skeleton-bow", 5, MT_WSKELBW, MissileID::Arrow, false, false },
+			{ "goat-ranged", 5, MT_NGOATBW, MissileID::Arrow, false, false },
+			{ "magma", 8, MT_NMAGMA, MissileID::MagmaBall, true, false },
+			{ "acid", 6, MT_NACID, MissileID::Acid, true, false },
+			{ "deathspit", 6, MT_NACID, MissileID::Acid, true, true },
+		}};
+		for (const Lane &lane : lanes) {
+			const UniqueMonsterData *unique = nullptr;
+			if (lane.unique) {
+				const auto found = std::find_if(UniqueMonstersData.begin(), UniqueMonstersData.end(), [](const UniqueMonsterData &entry) { return entry.mName == "Deathspit"; });
+				ASSERT_NE(found, UniqueMonstersData.end());
+				unique = &*found;
+			}
+			Monster *actor = prepareActor(lane.depth, lane.type, unique);
+			ASSERT_NE(actor, nullptr);
+			Missiles.clear(); MissilePreFlag = false;
+			uint32_t seed = 2588;
+			if (actor->ai == MonsterAIID::Magma || actor->ai == MonsterAIID::Acid) seed = specialSeed(*actor);
+			ASSERT_NE(seed, UINT32_MAX);
+			SetRndSeed(seed);
+			nextCase();
+			JsonObject row(stream);
+			writeIdentity(row, lane.name, lane.depth, lane.type, actor->ai, lane.missile, lane.special, lane.unique ? "Deathspit" : "", *actor);
+			row.Key("ticks"); stream << '[';
+			bool firstTick = true, sawRelease = false, completed = false;
+			for (int tick = 0; tick < 128; ++tick) {
+				const WorldTilePosition future { 60, static_cast<WorldTileCoord>(50 + ((tick + 1) % 3)) };
+				MyPlayer->position.future = future;
+				const MonsterMode expectedMode = lane.special ? MonsterMode::SpecialRangedAttack : MonsterMode::RangedAttack;
+				const int effectFrame = lane.special ? actor->data().animFrameNumSpecial - 1 : actor->data().animFrameNum - 1;
+				const bool eligible = actor->mode == expectedMode && actor->animInfo.currentFrame == effectFrame
+				    && (!lane.special || actor->animInfo.tickCounterOfCurrentFrame == 0);
+				const int beforeFrame = actor->animInfo.currentFrame;
+				const MonsterMode beforeMode = actor->mode;
+				const bool wasLast = actor->animInfo.isLastFrame();
+				const size_t missileCount = Missiles.size();
+				if (!firstTick) stream << ',';
+				firstTick = false;
+				JsonObject state(stream);
+				state.Number("tick", tick); state.Boolean("releaseFrameEligible", eligible);
+				state.Number("beforeRandom", GetLCGEngineState());
+				state.Key("beforeActor"); WriteRoomMonster(stream, static_cast<int>(actor->getId()), *actor);
+				state.Key("beforeEnemyPosition"); WriteRoomPoint(stream, { actor->enemyPosition.x, actor->enemyPosition.y });
+				state.Key("beforePlayerFuture"); WriteRoomPoint(stream, { future.x, future.y });
+				state.Number("missileCountBefore", missileCount);
+				ProcessMonsters();
+				const bool created = Missiles.size() > missileCount;
+				if (eligible && created) sawRelease = true;
+				state.Number("random", GetLCGEngineState()); state.Number("missileCountAfter", Missiles.size());
+				state.Boolean("missileCreated", created);
+				state.Key("actor"); WriteRoomMonster(stream, static_cast<int>(actor->getId()), *actor);
+				state.Key("enemyPosition"); WriteRoomPoint(stream, { actor->enemyPosition.x, actor->enemyPosition.y });
+				state.Key("playerFuture"); WriteRoomPoint(stream, { MyPlayer->position.future.x, MyPlayer->position.future.y });
+				state.Key("missiles"); writeMissiles();
+				if (sawRelease && beforeMode == expectedMode && wasLast
+				    && (actor->mode != expectedMode || actor->animInfo.currentFrame < beforeFrame)) {
+					completed = true;
+					break;
+				}
+			}
+			stream << ']';
+			row.Boolean("naturalReleaseObserved", sawRelease); row.Boolean("completedAndRedispatched", completed);
+			EXPECT_TRUE(sawRelease) << lane.name;
+			EXPECT_TRUE(completed) << lane.name;
+		}
+
+		// Ordinary attack checks the effect frame every tick, so a deliberately
+		// held frame emits repeatedly. This is a prepared controller boundary.
+		{
+			Monster *actor = prepareActor(5, MT_NGOATBW, nullptr); ASSERT_NE(actor, nullptr);
+			Missiles.clear(); MissilePreFlag = false; SetRndSeed(2588); ProcessMonsters();
+			ASSERT_EQ(actor->mode, MonsterMode::RangedAttack);
+			actor->animInfo.currentFrame = actor->data().animFrameNum - 1;
+			actor->animInfo.ticksPerFrame = 2; actor->animInfo.tickCounterOfCurrentFrame = 0;
+			nextCase(); JsonObject row(stream); writeIdentity(row, "ordinary-held-effect-frame-repeat", 5, MT_NGOATBW, actor->ai, MissileID::Arrow, false, "", *actor);
+			row.String("boundary", "prepared-held-normal-effect-frame"); row.Key("ticks"); stream << '[';
+			for (int tick = 0; tick < 2; ++tick) {
+				if (tick != 0) stream << ',';
+				const size_t before = Missiles.size(); const WorldTilePosition future { 60, 51 }; MyPlayer->position.future = future;
+				JsonObject state(stream); state.Number("tick", tick); state.Boolean("releaseFrameEligible", true);
+				state.Number("beforeRandom", GetLCGEngineState()); state.Key("beforeActor"); WriteRoomMonster(stream, static_cast<int>(actor->getId()), *actor);
+				state.Key("beforeEnemyPosition"); WriteRoomPoint(stream, { actor->enemyPosition.x, actor->enemyPosition.y });
+				state.Key("beforePlayerFuture"); WriteRoomPoint(stream, { future.x, future.y }); state.Number("missileCountBefore", before);
+				ProcessMonsters();
+				state.Number("random", GetLCGEngineState()); state.Number("missileCountAfter", Missiles.size()); state.Boolean("missileCreated", Missiles.size() > before);
+				state.Key("actor"); WriteRoomMonster(stream, static_cast<int>(actor->getId()), *actor);
+				state.Key("enemyPosition"); WriteRoomPoint(stream, { actor->enemyPosition.x, actor->enemyPosition.y });
+				state.Key("playerFuture"); WriteRoomPoint(stream, { future.x, future.y }); state.Key("missiles"); writeMissiles();
+			}
+			stream << ']'; row.Boolean("repeatObserved", Missiles.size() == 2U); EXPECT_EQ(Missiles.size(), 2U);
+		}
+
+		// Special release additionally requires counter zero at the effect frame.
+		{
+			Monster *actor = prepareActor(8, MT_NMAGMA, nullptr); ASSERT_NE(actor, nullptr);
+			Missiles.clear(); MissilePreFlag = false; SetRndSeed(specialSeed(*actor)); ProcessMonsters();
+			ASSERT_EQ(actor->mode, MonsterMode::SpecialRangedAttack);
+			actor->animInfo.currentFrame = actor->data().animFrameNumSpecial - 1;
+			actor->animInfo.ticksPerFrame = 3; actor->animInfo.tickCounterOfCurrentFrame = 1;
+			nextCase(); JsonObject row(stream); writeIdentity(row, "special-counter-gated-release", 8, MT_NMAGMA, actor->ai, MissileID::MagmaBall, true, "", *actor);
+			row.String("boundary", "prepared-special-effect-frame-counter-gate"); row.Key("ticks"); stream << '[';
+			for (int tick = 0; tick < 2; ++tick) {
+				if (tick != 0) stream << ',';
+				if (tick == 1) { actor->animInfo.currentFrame = actor->data().animFrameNumSpecial - 1; actor->animInfo.tickCounterOfCurrentFrame = 0; }
+				const size_t before = Missiles.size(); const WorldTilePosition future { 60, static_cast<WorldTileCoord>(51 + tick) }; MyPlayer->position.future = future;
+				const bool eligible = actor->mode == MonsterMode::SpecialRangedAttack && actor->animInfo.currentFrame == actor->data().animFrameNumSpecial - 1 && actor->animInfo.tickCounterOfCurrentFrame == 0;
+				JsonObject state(stream); state.Number("tick", tick); state.Boolean("releaseFrameEligible", eligible);
+				state.Number("beforeRandom", GetLCGEngineState()); state.Key("beforeActor"); WriteRoomMonster(stream, static_cast<int>(actor->getId()), *actor);
+				state.Key("beforeEnemyPosition"); WriteRoomPoint(stream, { actor->enemyPosition.x, actor->enemyPosition.y });
+				state.Key("beforePlayerFuture"); WriteRoomPoint(stream, { future.x, future.y }); state.Number("missileCountBefore", before);
+				ProcessMonsters();
+				state.Number("random", GetLCGEngineState()); state.Number("missileCountAfter", Missiles.size()); state.Boolean("missileCreated", Missiles.size() > before);
+				state.Key("actor"); WriteRoomMonster(stream, static_cast<int>(actor->getId()), *actor);
+				state.Key("enemyPosition"); WriteRoomPoint(stream, { actor->enemyPosition.x, actor->enemyPosition.y });
+				state.Key("playerFuture"); WriteRoomPoint(stream, { future.x, future.y }); state.Key("missiles"); writeMissiles();
+			}
+			stream << ']'; row.Boolean("counterGateObserved", Missiles.size() == 1U); EXPECT_EQ(Missiles.size(), 1U);
+		}
+
+		auto writeInterruptedSpecial = [&](std::string_view name, bool petrified) {
+			Monster *actor = prepareActor(8, MT_NMAGMA, nullptr); ASSERT_NE(actor, nullptr);
+			Missiles.clear(); MissilePreFlag = false; SetRndSeed(specialSeed(*actor)); ProcessMonsters();
+			ASSERT_EQ(actor->mode, MonsterMode::SpecialRangedAttack);
+			actor->animInfo.currentFrame = actor->data().animFrameNumSpecial - 1; actor->animInfo.tickCounterOfCurrentFrame = 0;
+			if (petrified) actor->petrify(); else actor->startHit(std::numeric_limits<int>::max());
+			nextCase(); JsonObject row(stream); writeIdentity(row, name, 8, MT_NMAGMA, actor->ai, MissileID::MagmaBall, true, "", *actor);
+			row.String("boundary", "prepared-special-effect-frame-interruption"); row.String("interrupt", petrified ? "petrified" : "hard-hit");
+			row.Key("ticks"); stream << '[';
+			const size_t before = Missiles.size(); const WorldTilePosition future { 60, 52 }; MyPlayer->position.future = future;
+			{
+				JsonObject state(stream); state.Number("tick", 0); state.Boolean("releaseFrameEligible", false);
+				state.Number("beforeRandom", GetLCGEngineState()); state.Key("beforeActor"); WriteRoomMonster(stream, static_cast<int>(actor->getId()), *actor);
+				state.Key("beforeEnemyPosition"); WriteRoomPoint(stream, { actor->enemyPosition.x, actor->enemyPosition.y });
+				state.Key("beforePlayerFuture"); WriteRoomPoint(stream, { future.x, future.y }); state.Number("missileCountBefore", before);
+				ProcessMonsters(); state.Number("random", GetLCGEngineState()); state.Number("missileCountAfter", Missiles.size());
+				state.Boolean("missileCreated", Missiles.size() > before); state.Key("actor"); WriteRoomMonster(stream, static_cast<int>(actor->getId()), *actor);
+				state.Key("enemyPosition"); WriteRoomPoint(stream, { actor->enemyPosition.x, actor->enemyPosition.y });
+				state.Key("playerFuture"); WriteRoomPoint(stream, { MyPlayer->position.future.x, MyPlayer->position.future.y }); state.Key("missiles"); writeMissiles();
+			}
+			stream << ']'; row.Boolean("releaseSuppressed", Missiles.size() == before); EXPECT_EQ(Missiles.size(), before);
+		};
+		writeInterruptedSpecial("special-petrified-before-release", true);
+		writeInterruptedSpecial("special-hard-hit-before-release", false);
+		stream << ']'; document.Number("caseCount", caseCount);
+	}
+	stream.flush(); ASSERT_TRUE(stream.good()); stream.close(); ASSERT_TRUE(!stream.fail());
+	EXPECT_EQ(caseCount, 9);
+	EXPECT_LE(std::filesystem::file_size(root / "native-catacombs-ranged-release.json"), 32U * 1024U * 1024U);
+}
+
 TEST_F(ThemeRoomGenerationTest, CaptureMonsterRuntimeMetadata)
 {
 	const char *directory = std::getenv("GODEVILUTION_CATHEDRAL_MONSTER_RUNTIME_ORACLE_DIRECTORY");

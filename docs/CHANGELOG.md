@@ -7,6 +7,13 @@ contracts stay in their existing guides.
 
 ## 2026-10-20
 
+- Add C2 ranged release clocks for Skeleton/Goat and Magma/Acid/Deathspit, bound to
+  exact floor, actor and missile identities. Preserve pending modes across detached
+  floor admission; advance actual reserved-archer emergence before ranged admission.
+- Compare nine repeated native controller traces and verify processor pause/resume,
+  native Acid sound/damage RNG and stale-owner refusal. Native Arrow flight/impact, live
+  chest/wall effects, family profiles, travel and additive cold restore remain open.
+
 - Add class-bound C2 initial owners, source-bound door registries and detached
   multi-floor admission. Admit all 32 qualified Warrior/Sorcerer inputs and pass
   63 focused owner, command, item, phase and Cathedral continuation checks.

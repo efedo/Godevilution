@@ -99,10 +99,18 @@ Distinct C2 initial owners and atomic detached floor admission now pass 63 focus
 checks, including all 32 qualified class inputs, mixed C1/C2 and second-C2 item/door/
 phase retention, actual door commands and six C1 continuation checks. Armed C2 door
 links remain retained and refused; four elixir mappings use an explicit C2 bridge.
-Next integrate ranged controllers, live chest/wall effects, mixed-run lazy entry,
-routes and detached cold restore. These remain required family gates before
-playable profile qualification. See
-[verification](test-history.md#2026-10-20--c2-initial-owners-and-detached-floor-admission).
+Distinct C2 ranged owners now retain Skeleton/Goat normal and Magma/Acid/Deathspit
+Special release clocks, exact missile mappings and current target-future endpoints.
+Owned reserved archers wait for actual barrel/sarcophagus emergence. Pending modes
+pause off-floor or while petrified, cancel on death/hard hit and survive detached
+floor publication with stale-state refusal. Nine native controller traces repeat
+byte-identically and 99 unique managed checks pass; this qualifies release timing
+separately from missile flight.
+Native Arrow flight still needs fixed-point traversal, its 256-tick lifetime and
+impact-time PlayerMHit before family activation. Integrate these with live chest/
+wall effects, mixed-run lazy entry, routes and detached cold restore. These remain
+required family gates before playable profile qualification. See
+[verification](test-history.md#2026-10-20--c2-ranged-release-clocks-and-retained-owners).
 
 ## Delivery order
 

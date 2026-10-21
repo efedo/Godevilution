@@ -18,18 +18,24 @@ public sealed partial class DiabloWorldState
     internal static DiabloWorldState CreateNativeCatacombsFloor(
         AuthoritativeCatacombsNativePopulationBuild build,
         AuthoritativeItemCatalog items,
-        AuthoritativeSpellCatalog spells)
-        => CreateNativeCatacombsFloorCore(build, items, spells, null, null, []);
+        AuthoritativeSpellCatalog spells,
+        AuthoritativeMonsterMissileCatalog missiles,
+        IReadOnlyList<AuthoritativeNativeCatacombsRangedAction>? rangedActions = null)
+        => CreateNativeCatacombsFloorCore(build, items, spells, missiles, null, null, [], rangedActions);
 
     private static DiabloWorldState CreateNativeCatacombsFloorCore(
         AuthoritativeCatacombsNativePopulationBuild build,
         AuthoritativeItemCatalog items,
         AuthoritativeSpellCatalog spells,
+        AuthoritativeMonsterMissileCatalog missiles,
         AuthoritativeNativeTownCatalog? town,
         DiabloNativeTownCheckpoint? townState,
-        IEnumerable<AuthoritativeLevel> townLevels)
+        IEnumerable<AuthoritativeLevel> townLevels,
+        IReadOnlyList<AuthoritativeNativeCatacombsRangedAction>? rangedActions = null)
     {
         ArgumentNullException.ThrowIfNull(build);
+        ArgumentNullException.ThrowIfNull(missiles);
+        missiles.ValidateSpellReferences(spells);
         var owner = build.Policy.Bindings;
         var backing = new AuthoritativeWorld();
         foreach (var level in townLevels)
@@ -46,6 +52,7 @@ public sealed partial class DiabloWorldState
         floor.RebuildProjectedGeometry();
         floor.ConfigureNativeCatacombsDoors(owner, build.DoorCatalog);
         floor.ConfigureNativeCatacombsMonsterPhases(build.Monsters);
+        floor.ConfigureNativeCatacombsRangedActions(owner, missiles, rangedActions);
         floor.ConfigureNativePopulationBindings(owner, build.Items, build.MonsterMetadataFingerprint);
         floor.ConfigureNativeFamilyItems(build.Items, null, [owner], items, spells);
         floor.ValidateNativePopulationState([]);
@@ -56,6 +63,7 @@ public sealed partial class DiabloWorldState
         AuthoritativeCatacombsNativePopulationBuild build,
         AuthoritativeItemCatalog items,
         AuthoritativeSpellCatalog spells,
+        AuthoritativeMonsterMissileCatalog missiles,
         IReadOnlyList<AuthoritativePlayerState> participants)
     {
         ArgumentNullException.ThrowIfNull(build);
@@ -88,7 +96,14 @@ public sealed partial class DiabloWorldState
         if (nativeCatacombsDoorCatalogFingerprint is not null
             && nativeCatacombsDoorCatalogFingerprint != build.DoorCatalog.Fingerprint)
             throw new InvalidDataException("A Catacombs run cannot change its door source catalog.");
-        var floor = CreateNativeCatacombsFloorCore(build, items, spells, nativeTownCatalog,
+        ArgumentNullException.ThrowIfNull(missiles);
+        var missileBindings = missiles.Definitions
+            .Select(AuthoritativeNativeCatacombsRangedAction.ComputeMissileMappingFingerprint).Order().ToArray();
+        if (nativeCatacombsRangedMissileCatalogs.Values.Any(catalog => !catalog.Definitions
+                .Select(AuthoritativeNativeCatacombsRangedAction.ComputeMissileMappingFingerprint).Order()
+                .SequenceEqual(missileBindings)))
+            throw new InvalidDataException("A Catacombs run cannot change its trusted ranged mappings.");
+        var floor = CreateNativeCatacombsFloorCore(build, items, spells, missiles, nativeTownCatalog,
             CaptureNativeTown(), World.Levels.Where(level => level.LevelId == 0));
         var identities = owner.BoundEntityIds.Concat(floor.WorldItems.Keys).ToArray();
         if (identities.Distinct().Count() != identities.Length
@@ -166,6 +181,10 @@ public sealed partial class DiabloWorldState
         RequireNativeAdmissionKeys(nativeCatacombsMonsterPhases, floor.nativeCatacombsMonsterPhases);
         RequireNativeAdmissionKeys(nativeCatacombsMonsterPhaseOrders, floor.nativeCatacombsMonsterPhaseOrders);
         RequireNativeAdmissionKeys(nativeCatacombsMonsterPhaseBindings, floor.nativeCatacombsMonsterPhaseBindings);
+        RequireNativeAdmissionKeys(nativeCatacombsRangedActions, floor.nativeCatacombsRangedActions);
+        RequireNativeAdmissionKeys(nativeCatacombsRangedMissileCatalogs, floor.nativeCatacombsRangedMissileCatalogs);
+        if (nativeCatacombsRangedConfiguredLevels.Overlaps(floor.nativeCatacombsRangedConfiguredLevels))
+            throw new InvalidOperationException("A prepared Catacombs ranged floor is already registered.");
         if (nativeCatacombsMonsterPhaseLevels.Overlaps(floor.nativeCatacombsMonsterPhaseLevels))
             throw new InvalidOperationException("A prepared Catacombs phase floor is already registered.");
         var replacement = owner.CreateBackingLevel();
@@ -191,6 +210,9 @@ public sealed partial class DiabloWorldState
         CopyNativeAdmissionMap(nativeCatacombsMonsterPhaseOrders, floor.nativeCatacombsMonsterPhaseOrders);
         CopyNativeAdmissionMap(nativeCatacombsMonsterPhaseBindings, floor.nativeCatacombsMonsterPhaseBindings);
         nativeCatacombsMonsterPhaseLevels.UnionWith(floor.nativeCatacombsMonsterPhaseLevels);
+        CopyNativeAdmissionMap(nativeCatacombsRangedActions, floor.nativeCatacombsRangedActions);
+        CopyNativeAdmissionMap(nativeCatacombsRangedMissileCatalogs, floor.nativeCatacombsRangedMissileCatalogs);
+        nativeCatacombsRangedConfiguredLevels.UnionWith(floor.nativeCatacombsRangedConfiguredLevels);
         nativeCatacombsDoorCatalog ??= floor.nativeCatacombsDoorCatalog;
         nativeCatacombsDoorCatalogFingerprint ??= floor.nativeCatacombsDoorCatalogFingerprint;
         cathedralItems = admission.Items;
@@ -237,6 +259,11 @@ public sealed partial class DiabloWorldState
             Town = floor.CaptureNativeTown(), C1Doors = floor.CaptureCathedralDoorObjects(),
             C2Doors = floor.CaptureNativeCatacombsDoorStates(),
             Phases = floor.CaptureNativeCatacombsMonsterPhases(),
+            Ranged = floor.CaptureNativeCatacombsRangedActions(),
+            RangedLevels = floor.nativeCatacombsRangedConfiguredLevels.Order().ToArray(),
+            RangedMappings = floor.nativeCatacombsRangedMissileCatalogs.OrderBy(row => row.Key)
+                .Select(row => new { LevelId = row.Key, Definitions = row.Value.Definitions
+                    .OrderBy(value => value.NativeAi, StringComparer.Ordinal).ThenBy(value => value.MonsterId).ToArray() }).ToArray(),
             Actors = floor.CombatTargets.OrderBy(entry => entry.Key).Select(entry => new {
                 entry.Key, State = entry.Value.CaptureCohortState(), entry.Value.NativeInitialization,
             }).ToArray(),

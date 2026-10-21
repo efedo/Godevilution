@@ -380,6 +380,14 @@ authoritative results.
   saves remain unchanged. See the
   [four-depth Godot playtest](ai/godot-build.md#generated-cathedral-depths-playtest)
   for private compilation, isolated sessions and diagnostic acceptance limits.
+- Internal Catacombs floor owners bind class, native population, item pools,
+  typed doors and per-floor actor controllers before detached publication.
+  Pending ranged actions bind the native slot/type, population/metadata identity,
+  trusted missile mapping, target endpoint and animation frame/counter. Capture
+  validates these bindings without advancing the action or RNG. Floor admission
+  retains independent controllers and refuses stale live or detached state before
+  changing geometry or owner maps. These internal records do not extend existing
+  cohort formats; a playable family profile and additive cold restore remain open.
 - An authoritative client never falls back to local simulation after a server
   failure.
 

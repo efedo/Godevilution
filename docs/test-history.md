@@ -9,6 +9,52 @@ the referenced test sources. Do not copy raw outputs into historical archives.
 
 ## Client and host verification
 
+### 2026-10-20 — C2 ranged release clocks and retained owners
+
+Distinct C2 actions bind native slot/type, metadata/population fingerprints, the
+complete trusted missile row, target identity/future endpoint and graphic clock.
+Skeleton/Goat use normal attack graphics; Magma/Acid/Deathspit use Special graphics.
+Effect metadata remains independent of graphic length. Normal attacks release on
+every effect-frame tick; Special releases only at counter zero. Terminal graphic
+frames complete before their remaining counters, then GroupUnity/eligible AI run
+in the same update. Acid also consumes the native cast-sound selection draw before
+its shared damage draw, including headless operation; Magma consumes damage only.
+
+The MPQ-free `ThemeRoomGenerationTest.CaptureNativeCatacombsRangedReleases` uses
+`GODEVILUTION_CATACOMBS_RANGED_ORACLE_DIRECTORY`. Its nine cases cover five natural
+AI-selected modes, held normal-frame repeat, Special counter gating, petrification
+and hard-hit interruption. Two qualified captures repeat byte-identically. The
+managed native reader compares every selected action frame/counter, release and
+completion, plus nonterminal construction RNG/damage. Terminal AI RNG is outside
+that comparison; the fixture never advances missile flight.
+
+All 99 unique selected managed cases pass without skips: 23 ranged model/owner/
+native-reader cases, three builder checks (all 32 qualified inputs), thirteen floor
+admission checks, three door-command checks, eighteen actor-phase checks, 33 C1
+ranged compatibility checks and six retained Cathedral floor/class continuations.
+The final bounded build passes with 21 existing warnings. Earlier admission,
+door/phase and C1 results are reused after source/behavior comparison; final ranged
+and linked-owner builder runs cover the corrections. The candidate replaces only
+unrelated world-vision WIP with its HEAD source. Earlier fixture/compiler refusals
+and the native Acid RNG mismatch were corrected and rerun; none remains open.
+
+Actual generated-owner checks cover both classes' off-floor/petrified pause and
+resume, processor death/hit-recovery cancellation, offscreen completion without
+AI rerolls, current future-position aim and exact Special payload. The Sorcerer
+L5 slot-77 barrel case refuses an Emerging archer, advances its native emergence
+to Active, then starts/captures the ranged action under full owner validation.
+Linked skeletons use their barrel/sarcophagus reservation APIs; the general
+reservation list holds golems. Mapping coverage is checked before activation.
+Detached publication retains existing clocks and refuses stale live/detached
+clocks, changed missile rows, unknown spells, duplicate actions and actor clones.
+
+This qualifies internal release clocks and owned retention. Native Arrow flight
+still needs fixed-point traversal, the 256-tick lifetime, impact-time PlayerMHit
+and source-stat retention after death. Complete missile payload/flight parity,
+live chest/wall effects, mixed-run lazy entry, reciprocal travel, additive cold
+restore and ordinary headless C2 class journeys remain required family gates.
+Existing profiles/cohort formats remain unchanged; normal adoption stays held.
+
 ### 2026-10-20 — C2 initial owners and detached floor admission
 
 Distinct class-bound C2 owners bind complete prepared pools, raw object variants,

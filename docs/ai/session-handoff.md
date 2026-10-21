@@ -63,8 +63,12 @@ pass. Explicit internal item-family contexts and prepared ordinary/TCHEST operat
 plans now pass 114 unique managed cases, including 30 native comparisons. Distinct
 C2 initial owners, typed doors and detached floor admission now pass 63 focused
 checks and all 32 qualified class inputs. Armed door links remain retained/refused;
-four elixirs use an explicit C2 bridge. Keep live chest/wall effects, ranged
-controllers, mixed-run lazy entry, travel and additive cold restore next.
+four elixirs use an explicit C2 bridge. C2 ranged owners now retain all five
+supported release clocks and pending actions across detached publication; actual
+reserved archers enter only after object emergence. Nine native controller traces
+repeat byte-identically and 99 unique managed checks pass. Keep native Arrow
+flight/impact, complete missile parity,
+live chest/wall effects, mixed-run lazy entry, travel and additive cold restore next.
 Read the work plan and scoped verification; retain valid references.
 The observed Town authority-lock lateness remains unresolved. Normal cohort/profile adoption stays held. Later class
 campaigns and full rendered qualification remain open. Reuse valid evidence and

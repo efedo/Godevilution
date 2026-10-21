@@ -5979,12 +5979,24 @@ public sealed partial class DiabloCombatCommandProcessor
                 AdvancePlayerMinion(target, tick, players, events);
                 continue;
             }
-            if (world.OwnsNativePopulationLevel(target.LevelId)
+            if (target.NativeInitialization is { CatacombsDepth: >= 5 and <= 8 }) {
+                var emergence = world.AdvanceNativeCatacombsInitialSpecialStand(target);
+                if (emergence.CompletedNaturally)
+                    ApplyNativeCatacombsGroupUnityAfterModeCompletion(target);
+                if (emergence.Active)
+                    continue;
+                var objectEmergence = world.AdvanceNativeCatacombsObjectEmergence(target);
+                if (objectEmergence.CompletedNaturally)
+                    ApplyNativeCatacombsGroupUnityAfterModeCompletion(target);
+                if (objectEmergence.Active)
+                    continue;
+            } else if (world.OwnsNativePopulationLevel(target.LevelId)
                 && (world.AdvanceNativeInitialSpecialStand(target)
                     || world.AdvanceNativeSarcophagusSpecialStand(target)
                     || world.AdvanceNativeBarrelSpecialStand(target)))
                 continue;
             if (target.HitPoints <= 0) {
+                world.CancelNativeCatacombsRangedAction(target.EntityId);
                 // Native Stone Curse keeps a dead target in its petrified
                 // shatter state instead of converting it into a corpse tile.
                 if (target.IsPetrified)
@@ -6004,6 +6016,9 @@ public sealed partial class DiabloCombatCommandProcessor
             ApplyNativeMonsterRegeneration(target, rules.MonsterRegenerationLevelDivisor);
             if (target.IsPetrified)
                 continue;
+            if (world.HasNativeCatacombsRangedAction(target.EntityId)
+                && target.NativeMeleeCursor is { HitRecovery: true })
+                world.CancelNativeCatacombsRangedAction(target.EntityId);
             if (world.World is not null
                 && players.Count > 0
                 && !IsMonsterVisibleToAnyPlayer(target, players)) {
@@ -6011,6 +6026,7 @@ public sealed partial class DiabloCombatCommandProcessor
                     target.RestoreActiveForTicks(target.ActiveForTicks - 1);
                 if (target.ActiveForTicks == 0
                     && !world.HasNativeCatacombsMonsterPhase(target.EntityId)
+                    && !world.HasNativeCatacombsRangedAction(target.EntityId)
                     && !(target.NativeInitialization is { CatacombsDepth: >= 5 and <= 8 }
                         && target.NativeMeleeCursor is not null))
                     continue;
@@ -6020,6 +6036,8 @@ public sealed partial class DiabloCombatCommandProcessor
                 target.RestoreActiveForTicks(byte.MaxValue);
             }
             if (AdvanceNativeCatacombsGargoyle(target, players))
+                continue;
+            if (AdvanceNativeCatacombsRangedAction(target, players))
                 continue;
             if (OwnsNativeMonsterTiming(target) && target.IsMoving) {
                 if (!AdvanceNativeWalk(target, tick))
@@ -6103,7 +6121,10 @@ public sealed partial class DiabloCombatCommandProcessor
             // Acid owns one continuous controller from the travelling missile
             // through its splat and persistent puddle. Never admit a second
             // Acid controller while that chain is still live.
-            if (target.NativeAi is "Acid" or "AcidUnique"
+            var nativeCatacombsRangedController = TryGetMonsterMissile(target, out var nativeCatacombsMissile)
+                && IsNativeCatacombsRangedController(target, nativeCatacombsMissile);
+            if (!nativeCatacombsRangedController
+                && target.NativeAi is ("Acid" or "AcidUnique")
                 && world.Projectiles.Values.Any(projectile =>
                     projectile.SourceEntityId == target.EntityId
                     && (projectile.Behavior == AuthoritativeProjectileBehavior.Acid
@@ -8949,7 +8970,8 @@ public sealed partial class DiabloCombatCommandProcessor
         if (monster.AdvanceRangedDelay())
             return true;
 
-        if (HasActiveMonsterArrow(monster))
+        var nativeCatacombsRangedController = IsNativeCatacombsRangedController(monster, missile);
+        if (HasActiveMonsterArrow(monster) && !nativeCatacombsRangedController)
             return true;
 
         var attackSeed = unchecked((uint)tick ^ monster.EntityId ^ player.EntityId);
@@ -8996,6 +9018,10 @@ public sealed partial class DiabloCombatCommandProcessor
             // unavailable. Close-range avoidance has already run above;
             // preserve the remaining deferred tick instead of generic
             // navigation.
+            return true;
+
+        if (nativeCatacombsRangedController
+            && TryStartNativeCatacombsRangedAction(monster, player, missile, attackSeed))
             return true;
 
         var created = CreateNativeRangedAttackProjectile(
@@ -9795,6 +9821,7 @@ public sealed partial class DiabloCombatCommandProcessor
         if (missile.AttackMode == AuthoritativeMonsterRangedAttackMode.RangedAvoidance
             && monster.AdvanceRangedAvoidanceDelay())
             return true;
+        var nativeCatacombsRangedController = IsNativeCatacombsRangedController(monster, missile);
         if (world.Projectiles.Values.Any(projectile =>
             {
                 if (projectile.SourceEntityId != monster.EntityId)
@@ -9808,7 +9835,7 @@ public sealed partial class DiabloCombatCommandProcessor
                 return missile.ProjectileBehavior == AuthoritativeProjectileBehavior.Acid
                     && (projectile.Behavior == AuthoritativeProjectileBehavior.AcidSplat
                         || projectile.Behavior == AuthoritativeProjectileBehavior.AcidPuddle);
-            }))
+            }) && !nativeCatacombsRangedController)
             return true;
         var rangedAvoidanceUsesRoundWalk = false;
         var rangedAvoidanceRoundWalkTurn = -1;
@@ -10064,6 +10091,9 @@ public sealed partial class DiabloCombatCommandProcessor
             }
             return missile.ProjectileBehavior != AuthoritativeProjectileBehavior.InfernoController;
         }
+
+        if (TryStartNativeCatacombsRangedAction(monster, player, missile, attackSeed))
+            return true;
 
         var spell = spells.Definitions.FirstOrDefault(definition =>
             definition.ProjectileBehavior == missile.ProjectileBehavior
@@ -11219,7 +11249,9 @@ public sealed partial class DiabloCombatCommandProcessor
         if (IsPlayerProtectedByFlash(player) || IsPlayerEtherealized(player))
             return true;
 
-        if (HasActiveMonsterArrow(monster))
+        var nativeCatacombsRangedController = TryGetMonsterMissile(monster, out var nativeCatacombsMissile)
+            && IsNativeCatacombsRangedController(monster, nativeCatacombsMissile);
+        if (HasActiveMonsterArrow(monster) && !nativeCatacombsRangedController)
             return true;
 
         // Initialized single-player targets retain the native InitMonster AI
@@ -11250,6 +11282,10 @@ public sealed partial class DiabloCombatCommandProcessor
             // preserve the remaining no-op instead of generic navigation.
             return true;
         if (attackRoll >= attackChance)
+            return true;
+
+        if (nativeCatacombsRangedController
+            && TryStartNativeCatacombsRangedAction(monster, player, nativeCatacombsMissile, attackSeed))
             return true;
 
         return CreateNativeRangedAttackProjectile(
@@ -18030,6 +18066,7 @@ public sealed partial class DiabloCombatCommandProcessor
             target.ApplyDamageQ6(target.HitPointsQ6);
         if (OwnsNativeMonsterTiming(target)) {
             if (target.HitPointsQ6 <= 0) {
+                world.CancelNativeCatacombsRangedAction(target.EntityId);
                 InterruptNativeMelee(target);
                 world.InterruptNativeInitialSpecialStand(target.EntityId);
                 world.InterruptNativeCatacombsGargoyle(target.EntityId);
@@ -18040,6 +18077,7 @@ public sealed partial class DiabloCombatCommandProcessor
                     || target.NativeAi is "Sneak" or "Stalker" or "Unseen" or "IllWeav")) {
                 target.CancelMovement();
                 BeginNativeHitRecovery(target);
+                world.CancelNativeCatacombsRangedAction(target.EntityId);
                 world.InterruptNativeInitialSpecialStand(target.EntityId);
                 world.InterruptNativeCatacombsGargoyle(target.EntityId);
                 world.InterruptNativeSarcophagusSpecialStand(target);

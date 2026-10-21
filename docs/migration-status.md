@@ -152,7 +152,7 @@ Seventy-six focused cases and all 32 generated admission comparisons pass.
 Controlled native actor/pack and L2 door operation traces now cover Special
 clocks, wake order, blocked close and sync geometry.
 Existing cohort formats refuse C2 fields; no playable Catacombs profile is active.
-Ranged timing/controller retention, TCHEST operations, per-floor ownership,
+Live chest/wall effects, native Arrow flight/impact, mixed-run lazy entry,
 profile/travel integration and detached cold restore remain required family gates.
 Explicit internal C2 item-family contexts and prepared ordinary/TCHEST operation
 plans now pass 114 unique managed cases, including 30 native chest comparisons.
@@ -165,8 +165,17 @@ Distinct C2 initial owners and atomic detached admission now pass 63 focused che
 including all 32 qualified class inputs, mixed C1/C2 and second-C2 retention, actual
 C2 door commands and six C1 continuation checks. Armed door links remain retained
 and refused; four elixir identities use a C2-only semantic bridge. Mixed-run lazy
-entry, ranged/live chest/wall effects, travel and additive cold restore remain open.
-See [verification](test-history.md#2026-10-20--c2-initial-owners-and-detached-floor-admission).
+entry, live chest/wall effects, travel and additive cold restore remain open.
+Distinct C2 ranged owners now retain all five supported controller release clocks,
+exact missile mappings and target-future endpoints across detached publication.
+Active reserved Skeleton archers are admitted only after actual object emergence.
+Nine repeated native traces qualify normal/Special release boundaries; actual
+processor checks cover pause/resume, emergence and native Acid sound/damage draws.
+All 99 selected unique managed cases pass without skips.
+Arrow flight remains on the compatibility path with endpoint grid stepping and
+early hit resolution. Native fixed-point traversal, lifetime and impact-time
+PlayerMHit remain required family gates.
+See [verification](test-history.md#2026-10-20--c2-ranged-release-clocks-and-retained-owners).
 Keep the queue, this status and affected inventory entries synchronized. Do not
 restart inventory construction or an unrelated test campaign.
 

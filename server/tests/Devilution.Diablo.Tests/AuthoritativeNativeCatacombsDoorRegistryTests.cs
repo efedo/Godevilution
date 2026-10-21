@@ -12,7 +12,7 @@ public sealed class AuthoritativeNativeCatacombsDoorRegistryTests
 	{
 		using var fixture = CreateFixture(0);
 		var build = fixture.CreateBuild(5, 700);
-		var world = DiabloWorldState.CreateNativeCatacombsFloor(build, fixture.Items, fixture.Spells);
+		var world = DiabloWorldState.CreateNativeCatacombsFloor(build, fixture.Items, fixture.Spells, fixture.Activation.MonsterMissiles!);
 		var owner = build.Policy.Bindings;
 		var catalog = build.DoorCatalog;
 		var initialFloor = Assert.Single(world.CaptureNativeCatacombsDoorStates());
@@ -167,7 +167,7 @@ public sealed class AuthoritativeNativeCatacombsDoorRegistryTests
 		using var fixture = CreateFixture(0);
 		var build = fixture.CreateBuild(5, 700);
 		var owner = build.Policy.Bindings;
-		var world = DiabloWorldState.CreateNativeCatacombsFloor(build, fixture.Items, fixture.Spells);
+		var world = DiabloWorldState.CreateNativeCatacombsFloor(build, fixture.Items, fixture.Spells, fixture.Activation.MonsterMissiles!);
 		var beforeDuplicate = ReadDoorFloor(world);
 		Assert.Throws<InvalidOperationException>(() =>
 			world.ConfigureNativeCatacombsDoors(owner, build.DoorCatalog));
@@ -181,7 +181,7 @@ public sealed class AuthoritativeNativeCatacombsDoorRegistryTests
 		Assert.Throws<InvalidDataException>(() => world.TryGetNativeCatacombsDoorState(door.EntityId, out _));
 		value.AnimationFrame = door.AnimationFrame;
 
-		var geometryWorld = DiabloWorldState.CreateNativeCatacombsFloor(build, fixture.Items, fixture.Spells);
+		var geometryWorld = DiabloWorldState.CreateNativeCatacombsFloor(build, fixture.Items, fixture.Spells, fixture.Activation.MonsterMissiles!);
 		var backing = geometryWorld.World!.Levels.Single(level => level.LevelId == 700);
 		var cell = door.PositionY * backing.Width + door.PositionX;
 		var pieces = backing.NativePieceLayer.ToArray();
@@ -195,7 +195,7 @@ public sealed class AuthoritativeNativeCatacombsDoorRegistryTests
 	{
 		using var fixture = CreateFixture(0);
 		var build = fixture.CreateBuild(5, 700, dungeonSeed: 2588);
-		var world = DiabloWorldState.CreateNativeCatacombsFloor(build, fixture.Items, fixture.Spells);
+		var world = DiabloWorldState.CreateNativeCatacombsFloor(build, fixture.Items, fixture.Spells, fixture.Activation.MonsterMissiles!);
 		var floor = Assert.Single(world.CaptureNativeCatacombsDoorStates());
 		var door = floor.Doors.First(candidate =>
 			!world.CombatTargets.Values.Any(actor => actor.LevelId == candidate.LevelId
