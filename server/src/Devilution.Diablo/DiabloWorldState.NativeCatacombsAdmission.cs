@@ -182,6 +182,7 @@ public sealed partial class DiabloWorldState
         RequireNativeAdmissionKeys(nativeCatacombsMonsterPhaseOrders, floor.nativeCatacombsMonsterPhaseOrders);
         RequireNativeAdmissionKeys(nativeCatacombsMonsterPhaseBindings, floor.nativeCatacombsMonsterPhaseBindings);
         RequireNativeAdmissionKeys(nativeCatacombsRangedActions, floor.nativeCatacombsRangedActions);
+        RequireNativeAdmissionKeys(nativeCatacombsArrows, floor.nativeCatacombsArrows);
         RequireNativeAdmissionKeys(nativeCatacombsRangedMissileCatalogs, floor.nativeCatacombsRangedMissileCatalogs);
         if (nativeCatacombsRangedConfiguredLevels.Overlaps(floor.nativeCatacombsRangedConfiguredLevels))
             throw new InvalidOperationException("A prepared Catacombs ranged floor is already registered.");
@@ -211,6 +212,7 @@ public sealed partial class DiabloWorldState
         CopyNativeAdmissionMap(nativeCatacombsMonsterPhaseBindings, floor.nativeCatacombsMonsterPhaseBindings);
         nativeCatacombsMonsterPhaseLevels.UnionWith(floor.nativeCatacombsMonsterPhaseLevels);
         CopyNativeAdmissionMap(nativeCatacombsRangedActions, floor.nativeCatacombsRangedActions);
+        CopyNativeAdmissionMap(nativeCatacombsArrows, floor.nativeCatacombsArrows);
         CopyNativeAdmissionMap(nativeCatacombsRangedMissileCatalogs, floor.nativeCatacombsRangedMissileCatalogs);
         nativeCatacombsRangedConfiguredLevels.UnionWith(floor.nativeCatacombsRangedConfiguredLevels);
         nativeCatacombsDoorCatalog ??= floor.nativeCatacombsDoorCatalog;
@@ -260,6 +262,7 @@ public sealed partial class DiabloWorldState
             C2Doors = floor.CaptureNativeCatacombsDoorStates(),
             Phases = floor.CaptureNativeCatacombsMonsterPhases(),
             Ranged = floor.CaptureNativeCatacombsRangedActions(),
+            Arrows = floor.CaptureNativeCatacombsArrows(),
             RangedLevels = floor.nativeCatacombsRangedConfiguredLevels.Order().ToArray(),
             RangedMappings = floor.nativeCatacombsRangedMissileCatalogs.OrderBy(row => row.Key)
                 .Select(row => new { LevelId = row.Key, Definitions = row.Value.Definitions

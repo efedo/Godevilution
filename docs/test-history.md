@@ -9,6 +9,68 @@ the referenced test sources. Do not copy raw outputs into historical archives.
 
 ## Client and host verification
 
+### 2026-10-20 — C2 Arrow flight and impact
+
+Distinct internal C2 monster Arrow owners retain native 16.16 velocity/travel,
+launch direction, distance, the 256-tick lifetime and signed collision hash.
+Arrows travel beyond the requested endpoint; crossed cells resolve monster,
+player, then blocker. Misses/protection and ineligible occupants pass through.
+Final-tick collision precedes expiry; leaving the floor deletes the Arrow.
+Impact reads current source facts while the source exists and sealed last facts
+after corpse replacement. Pure capture does not advance owners or RNG. Pending
+flight pauses off-floor and survives detached admission with stale-state refusal.
+
+The MPQ-free `ThemeRoomGenerationTest.CaptureNativeCatacombsArrowFlightAndImpact`
+uses `GODEVILUTION_CATACOMBS_ARROW_FLIGHT_ORACLE_DIRECTORY`. Two qualified 48-case
+captures repeat byte-identically. They cover all 16 directions, ordered/reversed
+bursts, endpoint/skipped-cell/edge travel, a prepared stationary 256-tick boundary,
+player and monster interception, signed occupancy, blockers, source changes,
+final-tick collision and lethal/nonlethal fractional monster HP. Launch direction
+comes from native AddArrow's animation frame; the GraphicNone frame-group field
+is recorded separately. Earlier frame-group direction captures are superseded.
+The existing native target is used; a test-only kill-count export lets the fixture
+verify and restore lethal state without changing production behavior.
+
+The managed reader compares the actual movement/velocity/direction primitive for
+18 natural traces plus the map edge. Sixteen prepared player-impact comparisons
+invoke the production C2 leaf in native missile-list order and compare exact life,
+mode, facing and shared RNG, including low-damage speech and block-before-hit
+eligibility changes. This is prepared leaf evidence, separate from generated
+owner/public-tick tests. Native synthetic monster loot and Crux mutation rows are
+native postconditions; they are not managed loot/object parity comparisons.
+Supplied-map Crux placement is outside the admitted quest-disabled C2 generator.
+
+Generated-owner checks cover exact launch ownership, pure source projection,
+stale/tampered refusal, both classes' detached-floor retention, public player
+impact, source removal and paused flight. A prepared private collision projection
+exercises public-tick edge deletion while preserving/restoring trusted geometry.
+Five prepared monster-impact contracts use real C2 owners to check faction
+filtering, sound draws, hard-hit action cancellation, Scavenger goal reset and
+fractional lethal HP with the shared raw item-pool/loot transaction and exact XP.
+Death assertions follow the imported duration, including immediate corpse
+replacement when it is zero. These are production-leaf contracts, not complete
+native monster-output equality or Golem/Hellfire corpse-consumption qualification.
+
+All 48 unique Arrow checks pass: eight owner, thirteen state, five public-tick,
+sixteen native player-impact, one native structure/movement and five monster-leaf
+cases. The final full run passes 47; the fatal test then passes a focused rerun
+after correcting its generation-versus-shared RNG assertion. All source outside
+that test is hash-identical. The floor checkpoint keeps its generation seed;
+shared combat RNG restores the loot transaction output and consumes one death-
+sound draw. Seventy-two fresh integration/compatibility checks also pass: three
+builder checks covering all 32 class inputs, thirteen floor admission, 23 ranged
+and 33 targeted C1 AI cases. This is 120 unique managed passes with no qualified
+skips. The checked x64 native and bounded managed builds pass; managed builds use
+the exact committed geometry source to isolate unrelated preserved vision WIP.
+The 21 existing compiler/analyzer warnings remain; no new warning is introduced.
+
+Existing C1/profile/save contracts remain unchanged. Native release/door/actor
+references and unaffected retained-floor evidence are reused within their scopes.
+The internal Original single-player Warrior/Sorcerer scope does not activate a C2
+profile. Complete missile families, live chest/wall effects, mixed-run lazy entry,
+reciprocal travel, additive cold restore and ordinary headless C2 class journeys
+remain required family gates; normal-profile adoption stays held.
+
 ### 2026-10-20 — C2 ranged release clocks and retained owners
 
 Distinct C2 actions bind native slot/type, metadata/population fingerprints, the

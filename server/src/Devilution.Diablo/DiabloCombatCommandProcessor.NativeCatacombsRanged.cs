@@ -101,43 +101,28 @@ public sealed partial class DiabloCombatCommandProcessor
     {
         if (missile.ProjectileBehavior != AuthoritativeProjectileBehavior.MonsterArrow
             || missile.AttackMode != AuthoritativeMonsterRangedAttackMode.Ranged
-            || missile.SpellId != 0)
+            || missile.SpellId != 0
+            || missile.DamageType != AuthoritativeDamageType.Physical)
             throw new InvalidDataException("The native Catacombs arrow mapping is inconsistent.");
-        var damageRange = GetEffectiveMonsterDamageRange(monster, special: false);
-        var distance = ClampNativeDistance(DeterministicGridMetrics.ChebyshevDistance(
-            monster.PositionX, monster.PositionY, action.TargetX, action.TargetY));
-        var armorClass = player?.ArmorClass ?? 0;
-        if (player is not null && rules.GameVariant == DiabloGameVariant.Hellfire) {
-            armorClass = AuthoritativeEquipmentIncomingDamageRules.ApplyHellfireMonsterClassArmor(
-                armorClass, monster.IsDemon, monster.IsUndead, player.Equipment,
-                rules.HellfireArmorBonusAgainstDemons, rules.HellfireArmorBonusAgainstUndead);
-        }
-        var damage = player is null
-            ? damageRange.Maximum
-            : rules.ResolveMonsterRangedAttackDamage(
-                damageRange.Maximum,
-                GetEffectiveMonsterToHit(monster, special: false),
-                GetEffectiveMonsterLevel(monster),
-                player.CharacterLevel,
-                monster.LevelId,
-                armorClass,
-                distance,
-                action.AttackSeed);
-        var speed = missile.ProjectileSpeed > 0 ? missile.ProjectileSpeed : 1;
-        var lifetime = missile.ProjectileLifetime > 0 ? missile.ProjectileLifetime : Math.Max(1, distance);
+        var destination = AuthoritativeNativeCatacombsArrowState.ResolveEffectiveDestination(
+            monster.PositionX, monster.PositionY, action.TargetX, action.TargetY, monster.Direction);
+        var direction16 = AuthoritativeNativeCatacombsArrowState.ResolveDirection16(
+            monster.PositionX, monster.PositionY, destination.X, destination.Y);
+        var velocity = CalculateVelocity(monster.PositionX, monster.PositionY,
+            destination.X, destination.Y, 32);
         var projectile = new AuthoritativeProjectile(
             AllocateProjectileEntityId(), monster.EntityId, action.TargetEntityId, 0,
-            monster.LevelId, monster.PositionX, monster.PositionY, action.TargetX, action.TargetY,
-            damage, missile.DamageType ?? AuthoritativeDamageType.Physical,
-            0, checked((uint)lifetime), allowZeroSpellId: true) {
+            monster.LevelId, monster.PositionX, monster.PositionY, destination.X, destination.Y,
+            0, AuthoritativeDamageType.Physical, 0, 256, allowZeroSpellId: true) {
             Behavior = AuthoritativeProjectileBehavior.MonsterArrow,
-            Speed = speed,
-            ImpactLifetime = ResolveMonsterProjectileImpactLifetime(missile),
-            ResistantDamageDivisor = 1,
-            DamageMinimum = damageRange.Minimum,
-            DamageMaximum = damageRange.Maximum,
+            NativeMissileId = "Arrow",
+            Speed = 32,
+            ImpactLifetime = 0,
+            VelocityX = velocity.X,
+            VelocityY = velocity.Y,
+            OriginalDirection = direction16 / 2,
         };
-        world.Projectiles.Add(projectile.EntityId, projectile);
+        world.RegisterNativeCatacombsArrow(projectile, monster, action, missile, direction16);
     }
 
     private void CreateNativeCatacombsMappedRangedProjectile(

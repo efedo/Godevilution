@@ -7685,6 +7685,7 @@ public sealed partial class DiabloCombatCommandProcessor
     {
         if (!world.CombatTargets.ContainsKey(target.EntityId))
             return;
+        world.RefreshNativeCatacombsArrowSource(target);
         world.InterruptNativeInitialSpecialStand(target.EntityId);
         world.CompleteNativeSarcophagusActorDeath(target.EntityId);
         world.CompleteNativeBarrelActorDeath(target.EntityId);
@@ -12244,10 +12245,15 @@ public sealed partial class DiabloCombatCommandProcessor
                     AdvanceStoneCurse(projectile);
                     continue;
                 }
-                if (projectile.Behavior == AuthoritativeProjectileBehavior.MonsterArrow
-                    && world.CombatTargets.ContainsKey(projectile.SourceEntityId)) {
-                    AdvanceMonsterArrow(tick, projectile, players, events);
-                    continue;
+                if (projectile.Behavior == AuthoritativeProjectileBehavior.MonsterArrow) {
+                    if (world.HasNativeCatacombsArrow(projectile.EntityId)) {
+                        AdvanceNativeCatacombsArrow(tick, projectile, players, events);
+                        continue;
+                    }
+                    if (world.CombatTargets.ContainsKey(projectile.SourceEntityId)) {
+                        AdvanceMonsterArrow(tick, projectile, players, events);
+                        continue;
+                    }
                 }
                 if (projectile.RemainingTicks > 1) {
                     var nextX = projectile.PositionX

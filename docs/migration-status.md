@@ -152,7 +152,7 @@ Seventy-six focused cases and all 32 generated admission comparisons pass.
 Controlled native actor/pack and L2 door operation traces now cover Special
 clocks, wake order, blocked close and sync geometry.
 Existing cohort formats refuse C2 fields; no playable Catacombs profile is active.
-Live chest/wall effects, native Arrow flight/impact, mixed-run lazy entry,
+Live chest/wall effects, complete missile parity, mixed-run lazy entry,
 profile/travel integration and detached cold restore remain required family gates.
 Explicit internal C2 item-family contexts and prepared ordinary/TCHEST operation
 plans now pass 114 unique managed cases, including 30 native chest comparisons.
@@ -172,10 +172,18 @@ Active reserved Skeleton archers are admitted only after actual object emergence
 Nine repeated native traces qualify normal/Special release boundaries; actual
 processor checks cover pause/resume, emergence and native Acid sound/damage draws.
 All 99 selected unique managed cases pass without skips.
-Arrow flight remains on the compatibility path with endpoint grid stepping and
-early hit resolution. Native fixed-point traversal, lifetime and impact-time
-PlayerMHit remain required family gates.
-See [verification](test-history.md#2026-10-20--c2-ranged-release-clocks-and-retained-owners).
+C2 Arrow flight now has a distinct private owner: native 16.16 traversal beyond
+the requested endpoint, signed collision ordering, impact-time fractional-Q6
+PlayerMHit and the 256-tick lifetime. Exact pending flight survives detached floor
+publication; pure captures project live source facts and seal them before corpse
+replacement. Prepared native movement/player comparisons, generated owner/public-
+tick checks and prepared monster-impact contracts have separate evidence scopes.
+All 48 unique Arrow checks and 72 fresh integration/compatibility checks pass; the
+48-case native corpus repeats byte-identically. Existing C1/profile/save contracts
+remain unchanged. Complete missile families,
+live chest/wall effects, mixed-run lazy entry, travel, additive cold persistence
+and ordinary headless C2 class journeys remain open.
+See [verification](test-history.md#2026-10-20--c2-arrow-flight-and-impact).
 Keep the queue, this status and affected inventory entries synchronized. Do not
 restart inventory construction or an unrelated test campaign.
 

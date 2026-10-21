@@ -388,6 +388,7 @@ internal sealed partial class AuthoritativeNativePopulationBindings
             world.ValidateNativeCatacombsDoors(this);
             world.ValidateNativeCatacombsMonsterPhases(this);
             world.ValidateNativeCatacombsRangedActions(this);
+            world.ValidateNativeCatacombsArrows(this);
         }
         foreach (var entry in liveInitializations) {
             if (world.CombatTargets.TryGetValue(entry.Key, out var current)) {

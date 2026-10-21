@@ -336,7 +336,7 @@ struct Monster : CombatActor { // note: missing field _mAFNum
 
 /** Storage owned by gMonsterPool (monster_pool.cpp). */
 extern DVL_API_FOR_TEST Monster *Monsters;
-extern int MonsterKillCounts[NUM_MAX_MTYPES];
+extern DVL_API_FOR_TEST int MonsterKillCounts[NUM_MAX_MTYPES];
 extern bool sgbSaveSoundOn;
 
 tl::expected<void, std::string> PrepareUniqueMonst(Monster &monster, UniqueMonsterType monsterType, size_t miniontype, int bosspacksize, const UniqueMonsterData &uniqueMonsterData);

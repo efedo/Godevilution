@@ -66,9 +66,14 @@ checks and all 32 qualified class inputs. Armed door links remain retained/refus
 four elixirs use an explicit C2 bridge. C2 ranged owners now retain all five
 supported release clocks and pending actions across detached publication; actual
 reserved archers enter only after object emergence. Nine native controller traces
-repeat byte-identically and 99 unique managed checks pass. Keep native Arrow
-flight/impact, complete missile parity,
-live chest/wall effects, mixed-run lazy entry, travel and additive cold restore next.
+repeat byte-identically and 99 unique managed checks pass. Distinct C2 Arrow
+owners now retain native fixed-point flight, collision-time Q6/RNG, lifetime and
+source facts after death/removal; pending flight survives detached publication.
+Prepared native movement/player comparisons and owned public-tick/monster-impact
+checks have separate scopes. All 48 Arrow and 72 fresh integration/compatibility
+checks pass; the 48-case native corpus repeats byte-identically. Keep complete
+missile parity, live chest/wall effects,
+mixed-run lazy entry, travel and additive cold restore next.
 Read the work plan and scoped verification; retain valid references.
 The observed Town authority-lock lateness remains unresolved. Normal cohort/profile adoption stays held. Later class
 campaigns and full rendered qualification remain open. Reuse valid evidence and

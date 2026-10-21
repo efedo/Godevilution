@@ -106,11 +106,19 @@ pause off-floor or while petrified, cancel on death/hard hit and survive detache
 floor publication with stale-state refusal. Nine native controller traces repeat
 byte-identically and 99 unique managed checks pass; this qualifies release timing
 separately from missile flight.
-Native Arrow flight still needs fixed-point traversal, its 256-tick lifetime and
-impact-time PlayerMHit before family activation. Integrate these with live chest/
-wall effects, mixed-run lazy entry, routes and detached cold restore. These remain
-required family gates before playable profile qualification. See
-[verification](test-history.md#2026-10-20--c2-ranged-release-clocks-and-retained-owners).
+C2 Arrow owners now retain native 16.16 movement beyond the requested endpoint,
+crossed-tile and signed-occupancy collision, impact-time fractional-Q6 player
+hit/block/speech RNG and the 256-tick lifetime. Pending flight survives detached
+floor publication, pauses off-floor and preserves current source facts after
+death/removal. Forty-eight repeated native cases and 48 unique managed Arrow checks pass,
+alongside 72 focused integration/compatibility checks. Prepared native references
+and generated-owner/public-tick checks have separate scopes; existing C1/profile
+bytes remain unchanged. See
+[Arrow verification](test-history.md#2026-10-20--c2-arrow-flight-and-impact).
+Complete the remaining missile payload/flight families and live chest/wall effects,
+then integrate mixed-run lazy entry, routes and detached cold restore through an
+additive profile. These remain required family gates before playable profile
+qualification and ordinary headless Warrior/Sorcerer C2 journeys.
 
 ## Delivery order
 

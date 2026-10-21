@@ -7,6 +7,14 @@ contracts stay in their existing guides.
 
 ## 2026-10-20
 
+- Add distinct C2 monster Arrow owners with native fixed-point flight, collision-
+  time Q6 hit/block/RNG, lifetime and current/retained source facts. Preserve
+  pending flight across detached floor admission and pause it off-floor.
+- Add repeated native Arrow traces, scoped movement/player comparisons and owned
+  processor/monster-impact checks. Existing C1/profile contracts remain unchanged;
+  complete missile families, live chest/wall effects, travel and additive C2 cold
+  restore remain open.
+
 - Add C2 ranged release clocks for Skeleton/Goat and Magma/Acid/Deathspit, bound to
   exact floor, actor and missile identities. Preserve pending modes across detached
   floor admission; advance actual reserved-archer emergence before ranged admission.
