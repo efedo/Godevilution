@@ -41,8 +41,12 @@ with delivery.
 
 ### Phase 0: Stabilize
 
-Done 2026-10-21:
+Done 2026-10-21/22:
 
+- `authoritative-parity` CI is green on `master` (run 39720085387) for the first
+  time since 2026-07-31: native replay and server-backed suites plus all six
+  managed suites. It still skips 577 Diablo and 58 Server tests, mostly oracle
+  cases that need local reference data.
 - Restored the CI gate. The content-contract validator accepted only literal
   overlay schemas, so no managed tests had run in CI; CI also lacked the .NET 8
   runtime most projects target.
@@ -69,8 +73,6 @@ Done 2026-10-21:
 
 Remaining:
 
-- Push and confirm the full `authoritative-parity` workflow passes, including
-  the Linux native replay and server-backed client tests.
 - Make oracle-gated parity tests run in CI: commit compact reference data, or
   fetch it as a CI artifact, and report skipped counts per run.
 - Freeze new Catacombs-only parity work until Phase 2 reaches that family.
