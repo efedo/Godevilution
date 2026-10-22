@@ -10,6 +10,10 @@ contracts stay in their existing guides.
 - Fix the native Cathedral barrel useful-item test fixture: its canonical
   healing/mana potion rows now carry no spell, matching the native IDI rows
   required by useful-item selection since 2026-10-16. Production behavior is unchanged.
+- Restore the authoritative-parity CI gate: the content-contract validator accepts
+  live overlays that derive their schema from the base manifest (still rejecting
+  stale literals), keeps the schema wording check in the content README only, and
+  CI installs both the .NET 8 and .NET 10 runtimes the managed projects target.
 
 ## 2026-10-20
 

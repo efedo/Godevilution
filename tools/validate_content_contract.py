@@ -64,23 +64,34 @@ def validate_manifests(schema_id: str, current_version: str) -> int:
 
 
 def validate_godot_fixture_schemas(schema_id: str, current_version: str) -> int:
-    """Keep inline live-server overlays on the active schema contract."""
-    text = GODOT_LIVE_TESTS.read_text(encoding="utf-8")
-    schemas = re.findall(
+    """Keep live-server overlays on the active schema contract.
+
+    Overlays normally reference BaseContentSchemaJson, which is read from the
+    validated base manifest. Any schema literal must still match the current one.
+    """
+    base_reference = re.compile(r'"schema"\s*:\s*\{\{BaseContentSchemaJson\}\}')
+    literal = re.compile(
         r'"schema"\s*:\s*\{\s*"id"\s*:\s*"([^"]+)"\s*,\s*'
-        r'"version"\s*:\s*"([^"]+)"\s*\}',
-        text,
+        r'"version"\s*:\s*"([^"]+)"\s*\}'
     )
-    if not schemas:
-        fail(f"no inline Godot schemas found in {GODOT_LIVE_TESTS.relative_to(ROOT)}")
-    for fixture_schema_id, fixture_version in schemas:
-        if (fixture_schema_id, fixture_version) != (schema_id, current_version):
-            fail(
-                f"{GODOT_LIVE_TESTS.relative_to(ROOT)} declares inline schema "
-                f"{fixture_schema_id}@{fixture_version}, expected "
-                f"{schema_id}@{current_version}"
-            )
-    return len(schemas)
+    source = GODOT_LIVE_TESTS.read_text(encoding="utf-8")
+    if 'server", "content", "base", "content-pack.json"' not in source:
+        fail(f"{GODOT_LIVE_TESTS.relative_to(ROOT)} no longer derives BaseContentSchemaJson from the base pack")
+    count = 0
+    for path in sorted(GODOT_LIVE_TESTS.parent.glob("LiveAuthoritativeServerTests*.cs")):
+        text = path.read_text(encoding="utf-8")
+        count += len(base_reference.findall(text))
+        for fixture_schema_id, fixture_version in literal.findall(text):
+            if (fixture_schema_id, fixture_version) != (schema_id, current_version):
+                fail(
+                    f"{path.relative_to(ROOT)} declares inline schema "
+                    f"{fixture_schema_id}@{fixture_version}, expected "
+                    f"{schema_id}@{current_version}"
+                )
+            count += 1
+    if count == 0:
+        fail(f"no Godot live-server overlay schemas found beside {GODOT_LIVE_TESTS.relative_to(ROOT)}")
+    return count
 
 
 def require_text(path: Path, *fragments: str) -> None:
@@ -94,17 +105,12 @@ def main() -> int:
     schema_id, current_version, previous_version = read_schema()
     manifest_count = validate_manifests(schema_id, current_version)
     godot_fixture_count = validate_godot_fixture_schemas(schema_id, current_version)
+    # The content README owns the schema contract; status docs do not repeat it.
     require_text(
         CONTENT_ROOT / "README.md",
         f"`{schema_id}@{current_version}` schema",
         f"previous additive `{previous_version}` schema",
     )
-    require_text(
-        ROOT / "docs/migration-status.md",
-        f"schema is now `{current_version}`",
-        f"previous additive `{previous_version}` schema",
-    )
-    require_text(ROOT / "docs/CHANGELOG.md", f"schema `{current_version}`")
     print(
         f"content-contract: validated {manifest_count} manifests, "
         f"{godot_fixture_count} Godot fixtures, and documentation for "
