@@ -5,6 +5,12 @@ acceptance gates are tracked in [working status](migration-status.md); verificat
 is summarized in [test history](test-history.md). Protocol and architecture
 contracts stay in their existing guides.
 
+## 2026-10-21
+
+- Fix the native Cathedral barrel useful-item test fixture: its canonical
+  healing/mana potion rows now carry no spell, matching the native IDI rows
+  required by useful-item selection since 2026-10-16. Production behavior is unchanged.
+
 ## 2026-10-20
 
 - Add distinct C2 monster Arrow owners with native fixed-point flight, collision-
