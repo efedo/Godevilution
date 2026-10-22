@@ -587,6 +587,8 @@ public sealed class StoreSimulationExecutorTests
         var executor = new StoreSimulationExecutor(
             CreateCatalog(),
             startingGold: 0,
+            startingLife: 640,
+            startingLifeMaximum: 640,
             startingAttributes: new PlayerAttributesState(
                 new PlayerAttributeState(0, 0),
                 new PlayerAttributeState(0, 0),
@@ -703,6 +705,8 @@ public sealed class StoreSimulationExecutorTests
         var executor = new StoreSimulationExecutor(
             CreateCatalog(),
             startingGold: 0,
+            startingLife: 640,
+            startingLifeMaximum: 640,
             startingInventory: [oil, weapon]);
         var server = new AuthoritativeCommandServer(executor);
 
