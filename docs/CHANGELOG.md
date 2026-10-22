@@ -17,6 +17,9 @@ contracts stay in their existing guides.
 - Fix two store consumable tests that used a dead default player (refused since
   `17b114a54`) and two launcher contract expectations stale after script refactors;
   move the Trap Disarm launcher test to the shelf with its launcher.
+- Align the C++ replay model's seeded HorkDemon action roll with the managed
+  native stream (one GenerateRnd(100) draw), restoring the autonomous multiplayer
+  fixture that diverged when `60287c872` updated only the managed side.
 - Adopt the playable-first recovery plan in the work plan, status and inventory.
   Shelve all unfinished drafts on `wip/phase0-shelf` (one commit per group), move
   root clutter to `.local/` and ignore the runtime files that created it.

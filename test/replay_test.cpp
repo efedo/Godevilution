@@ -13714,7 +13714,8 @@ TEST(ReplayFixture, ExecutesHorkDemonAutonomousMultiplayerAgainstCSharpCheckpoin
 	EXPECT_EQ(state.projectiles[0].spellId, 117U);
 	EXPECT_EQ(state.projectiles[0].remainingTicks, 8U);
 	EXPECT_EQ(state.combatTargetMonsterAiSeed, 1788971303U);
-	EXPECT_EQ(state.randomState, 2505995993U);
+	// One HorkDemonAi GenerateRnd(100) action draw follows the MP seed prefix.
+	EXPECT_EQ(state.randomState, 1443805422U);
 	EXPECT_EQ(ComputeReplayFixtureStateHash(state), fixture.checkpoints.back().stateSha256);
 }
 

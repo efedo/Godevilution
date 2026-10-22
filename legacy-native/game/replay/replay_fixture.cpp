@@ -12879,13 +12879,18 @@ void AdmitReplayAutonomousHorkSpawn(
 	});
 	const Candidate &target = candidates.front();
 	const int distance = candidateDistance(target);
-	if (distance > state.combatTargetAggroRange || distance < 3)
+	if (distance > state.combatTargetAggroRange)
 		return;
 
+	// Seeded targets use the native stream: HorkDemonAi draws GenerateRnd(100)
+	// before examining distance. Zero-seed fixtures keep the deterministic roll.
 	const uint32_t actionSeed = static_cast<uint32_t>(tick)
 	    ^ state.combatTargetEntityId
 	    ^ target.entityId;
-	if (actionSeed % 100U >= 43U)
+	const uint32_t actionRoll = state.combatTargetMonsterAiSeed != 0
+	    ? static_cast<uint32_t>(GenerateRnd(state, 100))
+	    : actionSeed % 100U;
+	if (distance < 3 || actionRoll >= 43U)
 		return;
 
 	const auto displacement = DirectionDisplacements[state.combatTargetDirection];

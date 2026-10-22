@@ -53,6 +53,10 @@ Done 2026-10-21:
   to the shelf with the launcher it covers. All six managed suites pass in
   Release; `ClockGatedTcpHostTests` failed once under full-suite load and
   passes in isolation.
+- Restored the native replay suite: the hand-written C++ replay model had not
+  been updated when the managed HorkDemon AI moved to the native RNG stream on
+  2026-10-04. Such parallel models are a maintenance cost the Phase 2 port
+  should retire.
 - Shelved all uncommitted work on branch `wip/phase0-shelf`, one commit per
   group: Catacombs Magma/Acid caster chains (with the shared vision change),
   native weapon-completion fixtures, Godot class-preview and four-floor
