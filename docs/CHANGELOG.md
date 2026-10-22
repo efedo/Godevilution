@@ -14,6 +14,12 @@ contracts stay in their existing guides.
   live overlays that derive their schema from the base manifest (still rejecting
   stale literals), keeps the schema wording check in the content README only, and
   CI installs both the .NET 8 and .NET 10 runtimes the managed projects target.
+- Fix two store consumable tests that used a dead default player (refused since
+  `17b114a54`) and two launcher contract expectations stale after script refactors;
+  move the Trap Disarm launcher test to the shelf with its launcher.
+- Adopt the playable-first recovery plan in the work plan, status and inventory.
+  Shelve all unfinished drafts on `wip/phase0-shelf` (one commit per group), move
+  root clutter to `.local/` and ignore the runtime files that created it.
 
 ## 2026-10-20
 

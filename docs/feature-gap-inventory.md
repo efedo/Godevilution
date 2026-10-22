@@ -1,8 +1,7 @@
 # Godevilution Feature and Gap Inventory
 
-Updated 2026-10-20 against documentation commit `1234efc6e`, gameplay baseline
-`3af2a51cc` and the existing working tree. Uncommitted session/menu, class-flow
-and experimental acceptance work is identified in [working memory](migration-status.md#existing-working-tree-packages).
+Updated 2026-10-21 against the Phase 0 `master` baseline. Unfinished drafts are
+shelved on branch `wip/phase0-shelf`; see [working status](migration-status.md#shelved-work).
 This inventory covers the supported Diablo/Hellfire replacement, including full
 Godot graphical parity. It records capabilities and remaining deliverables;
 implementation history and dated test results stay in their separate documents.
@@ -61,12 +60,12 @@ No overall completion percentage is inferred from item counts.
 | 1.5 | Rogue gameplay | Partial | Native single-player Normal Town/L1/L2 bow, equipment, services and cold-resume route passes. | Acceptance: complete later depths, quests, difficulties and campaign; the limited route does not close the class. |
 | 1.6 | Sorcerer gameplay | Partial | Native L1 admission/combat, charged staff and learned Firebolt use, Recharge and exact cold continuity pass; authored lifecycle also has evidence. | Acceptance: broader spell/equipment combinations, later floors and retained full campaign play. |
 | 1.7 | Monk gameplay | Partial | Hellfire metadata, unarmed/armor/block rules, Search and preview work exist. | Integration/parity: native Hellfire progression, equipment/action combinations and full class journey. |
-| 1.8 | Bard gameplay | Partial | Dual-wield metadata, formulas and Identify behavior exist; scene/launcher preview work is uncommitted. | Integration/acceptance: supported profile admission, dual-wield combat and retained generated-world play. |
+| 1.8 | Bard gameplay | Partial | Dual-wield metadata, formulas and Identify behavior exist; the scene/launcher preview draft is shelved. | Integration/acceptance: supported profile admission, dual-wield combat and retained generated-world play. |
 | 1.9 | Barbarian gameplay | Partial | Critical strike, armor/resistance traits, class formulas and Rage rules exist. | Integration/acceptance: native generated progression and Rage/equipment/resource behavior in full play. |
 | 1.10 | Warrior Repair ability | Partial | Actual native class control repairs naturally worn starter equipment; item identity, unrelated items/grid and Gold remain unchanged across the scoped mutation and cold resume. | Native parity/acceptance: remaining eligible item/level cases and full campaign use; paid repair remains separate. |
 | 1.11 | Rogue Trap Disarm ability | Partial | Actual generated Arrow-trap interaction and scoped retained state pass; authored preview also exists. | Native parity/integration: remaining trap types, roll/link conditions and full campaign use. |
 | 1.12 | Sorcerer Recharge ability | Partial | Native starting Charged Bolt staff cast/charge consumption, class Recharge capacity mutation and exact cold state pass through actual controls. | Native parity/acceptance: broader staff/source combinations and full generated campaign use. |
-| 1.13 | Monk Search ability | Partial | Search duration/status behavior exists, with scene acceptance work in the working tree. | Integration/acceptance: complete native hidden-item discovery feedback and sustained class play. |
+| 1.13 | Monk Search ability | Partial | Search duration/status behavior exists, with a shelved scene acceptance draft. | Integration/acceptance: complete native hidden-item discovery feedback and sustained class play. |
 | 1.14 | Bard Identify ability | Partial | Identify can target owned items without a paid service; preview and recovery work exist. | Acceptance: integrate the WIP controls and qualify supported item locations in native play. |
 | 1.15 | Barbarian Rage ability | Partial | Rage controller, resource admission and status/timing behavior exist in combat code. | Native parity/acceptance: full buff, expiry/recovery, death and restore behavior through ordinary controls. |
 | 1.16 | Experience and level advancement | Partial | External XP thresholds, level growth, resource refill and stat-point award rules exist; native route earns XP. | Native parity/acceptance: sustained leveling, caps and reward attribution across classes/difficulties in campaign play. |
@@ -146,7 +145,7 @@ missing spell or establish a core combat bug.
 | 3.9 | Fallen and Scavenger families | Partial | Group morale, retreat, corpse search/healing and related behavior paths exist. | Native parity: full group/corpse/goal transitions and simultaneous encounter order. |
 | 3.10 | Bat, Sneak/Hidden and Gargoyle families | Partial | Specialized movement/hiding, C2 Gargoyle initial phases and unique effective-AI tuning guards exist. | Integration/parity: full activation/healing/animation lifecycle, generated owners and cold continuation. |
 | 3.11 | Rhino, Snake and related charge families | Partial | Charge and specialized movement/damage paths exist. | Native parity/acceptance: collision, knockback, terminal action and generated encounter combinations. |
-| 3.12 | Magma, Storm, FireMan, Counselor and other caster families | Partial | Native AI and missile handling exist for many families. C2 Magma/Acid/Deathspit Special release clocks retain exact mappings and target-future endpoints; native clock and processor RNG checks pass. | Native parity: other caster animation-to-spawn timing, full missile payload/flight, retained controllers through additive saves, complete goals/spells and simultaneous-player conditions. |
+| 3.12 | Magma, Storm, FireMan, Counselor and other caster families | Partial | Native AI and missile handling exist for many families. C2 Magma/Acid/Deathspit Special release clocks retain exact mappings and target-future endpoints; native clock and processor RNG checks pass. Magma/Acid flight and child-effect chains are a shelved draft. | Native parity: other caster animation-to-spawn timing, full missile payload/flight, retained controllers through additive saves, complete goals/spells and simultaneous-player conditions. |
 | 3.13 | Hellfire AI families | Partial | Hork Demon, Lich/Arch Lich, FireBat and other Hellfire AI metadata/behavior paths exist. | Integration/parity: Hive/Crypt population, special spawning and full encounter/cold-state coverage. |
 | 3.14 | Unique monsters and packs | Partial | Unique identities, placement/pack metadata and modified actor behavior exist. | Integration/parity: every supported unique's native placement, entourage, attributes and campaign encounter. |
 | 3.15 | Quest-dependent monster dialogue and behavior | Partial | Dialogue state and special gates, including Lazarus-minion behavior, exist. | Integration/acceptance: quest-selected actor admission, dialogue-to-combat transitions and retained outcomes. |
@@ -442,7 +441,7 @@ native visual usability or a complete campaign/multiplayer release flow.
 | 10.5 | Automatic approach and route cancellation | Partial | Snapshot-derived travel/cancellation/endpoints exist; route settlement waits for server-owned native paths between animations, with focused and class-journey evidence. | Integration/acceptance: campaign-wide travel and approach/target-change edge cases. |
 | 10.6 | Combat/object/item target selection | Partial | Helpers select visible actors, objects, portals and items with authoritative identities. | Acceptance: all supported target families, overlap, invalidation and ordinary mouse/keyboard use. |
 | 10.7 | Click/held attack controls | Partial | Ordinary intents and committed held entity input exist with receipt/readiness pacing. | Acceptance/usability: sustained class/weapon combat and retarget/release behavior across real encounters. |
-| 10.8 | Spell-source and class-ability controls | Partial | Native Warrior Repair and Sorcerer staff/learned-source/Recharge controls pass the scoped L1/cold journeys; other previews remain WIP. | Integration/acceptance: consistent controls for remaining classes and full native generated progression. |
+| 10.8 | Spell-source and class-ability controls | Partial | Native Warrior Repair and Sorcerer staff/learned-source/Recharge controls pass the scoped L1/cold journeys; other class previews are shelved drafts. | Integration/acceptance: consistent controls for remaining classes and full native generated progression. |
 | 10.9 | Belt, healing and resource controls | Partial | Quick-use and resource feedback consume authoritative state/events. | Acceptance: complete belt/resource management during sustained native class play. |
 | 10.10 | Inventory/equipment/cursor/stash UI | Partial | Functional item selection, transfers, equipment and stash controls exist. | Integration/acceptance: complete ordinary drag/swap/capacity workflows and clear native-equivalent feedback. |
 | 10.11 | Town service controls | Partial | Purchase/sale/repair/recharge/identify/healing/stash paths have scoped controls and journeys. | Integration/acceptance: all native stock/service lifecycles and ordinary full-playthrough use. |
@@ -467,7 +466,7 @@ Basis: [client scope](../godot-client/README.md),
 [setup](../godot-client/Devilution.Client/CharacterSetupPresentation.cs),
 [travel](../godot-client/Devilution.Client.Protocol/AuthoritativeRouteTravel.cs),
 [feedback](../godot-client/Devilution.Client/PresentationFeedback.cs) and
-[build/application guide](ai/godot-build.md). Uncommitted capability is not absent,
+[build/application guide](ai/godot-build.md). Shelved draft capability is not absent,
 but it is not a finished release deliverable.
 
 ## 11. Full Godot graphical parity
@@ -590,8 +589,8 @@ merely because one replacement scenario passes.
 
 ## Delivery planning
 
-The [near-term work plan](work-plan.md) owns the current proposed/active batch
-order and exit criteria. Use these stable subitem IDs to define its scope, and
+The [near-term work plan](work-plan.md) owns the recovery phases, batch order
+and exit criteria. Use these stable subitem IDs to define its scope, and
 keep the plan, [working status](migration-status.md) and affected inventory entries
 consistent as priorities, behavior, evidence or blockers change.
 

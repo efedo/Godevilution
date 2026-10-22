@@ -1,9 +1,8 @@
 # Godevilution Working Status and Memory
 
-As of 2026-10-20. Gameplay source baseline: `3af2a51cc`.
-The existing working tree contains substantial uncommitted work; it is not a
-clean committed-source baseline. Use `git status` and the actual diff before
-assigning ownership or staging a batch.
+As of 2026-10-21. The project is in Phase 0 of the
+[recovery plan](work-plan.md). `master` has a clean working tree; unfinished
+drafts are shelved on branch `wip/phase0-shelf` (see below).
 
 This file contains current facts, unresolved limits and session memory. It is
 revised in place. Git history preserves superseded versions; do not add archive
@@ -84,125 +83,44 @@ Passing a scoped test or adding a schema version does not close a milestone.
 
 ## Material limits and next decision
 
-- Legacy native profiles retain canonical Rogue admission. Separate class-bound
-  profiles admit canonical Warrior/Sorcerer in single-player Normal; remaining
-  classes, wider modes/difficulties and full campaigns stay open. See item 1.
-- Native generation beyond Cathedral and generated quest/set-level campaign
-  integration remain substantial implementation gaps. See items 5, 7 and 8.
+- No normal launch shows the native world. The default client draws authored
+  content with SVG stand-ins; native Town/Cathedral (and prepared Catacombs
+  owners) exist only behind opt-in profiles. Phase 1 of the
+  [recovery plan](work-plan.md) makes the native world the default path.
+- Legacy native profiles admit canonical Rogue; class-bound profiles admit
+  Warrior/Sorcerer in single-player Normal. Remaining classes, modes,
+  difficulties and full campaigns stay open. See item 1.
+- Native generation beyond Cathedral and quest/set-level campaign integration
+  remain substantial gaps. See items 5, 7 and 8.
+- Committed Catacombs work covers generation, population, actors, doors, items,
+  chests, ranged release clocks and Arrow flight behind internal C2 owners; no
+  playable Catacombs profile is active. The in-progress Magma/Acid caster chains
+  are shelved. New Catacombs-only parity work is frozen until Phase 2 reaches it.
+  See [Arrow verification](test-history.md#2026-10-20--c2-arrow-flight-and-impact).
+- Most native parity tests skip without local reference data; CI does not yet
+  run them.
 - Legacy per-participant cold import can overwrite shared world/RNG. Explicit
   cohort mode has scoped recovery proof; normal cohort adoption is separate.
-- L3 player death is a failed scenario, not an established transport/combat bug.
-  Do not rerun it unchanged or change native rules merely to make a bot pass.
-- Current source has broader backend coverage than application evidence. Keep
-  implementation, native parity, headless play and rendered play distinct.
+- L3 player death is a failed bot scenario, not an established transport/combat
+  bug. Do not change native rules merely to make a bot pass.
 - A per-cell Town roaming trial reached `TooLate` after about 640 ms waiting for
-  the authority lock. Host admission latency remains unresolved; ordinary
-  destination-waypoint acceptance does not qualify load or repair that stall.
-- The session lifecycle/setup batch is reviewed and verified for headless flow.
-  Class-preview and experimental acceptance packages remain separate WIP.
+  the authority lock. Host admission latency remains unresolved.
+- Optional original player, Town, resident and Cathedral object art pass scoped
+  native comparisons; see [test history](test-history.md). Live animation phase,
+  lighting, palette cycling, transparency and rendered comparisons remain open.
 
-The detailed inventory, documentation split and [near-term work plan](work-plan.md)
-are prepared. Session flow and Warrior/Sorcerer L1 admission are complete for their
-headless boundaries. Optional player/scene art, shared isometric input and the
-explicit native Town profile/checkpoint stage pass their scoped comparisons and
-both class journey/restore pairs. Missing or corrupt atlases still refuse native
-activation before pointer projection changes. Existing profile bytes and save
-schemas retain their contracts; normal cohort/profile adoption remains held.
-See [Town verification](test-history.md#2026-10-19--explicit-native-town-integration).
+## Shelved work
 
-The original Town resident visual family passes its scoped native comparisons,
-whole-family failure probes and both class journey/restore pairs. See
-[resident verification](test-history.md#2026-10-20--original-town-resident-art).
-Exact NPC initialization RNG and persisted animation phase remain open.
-The optional Cathedral L1 object family now imports eight original CEL sheets
-for ten native IDs, preflights all textures and draws the current authoritative
-frame. Native source/atlas/metadata/owner-offset comparisons pass; the ordinary
-Warrior pair observes a chest 4→6 transition and incidental sarcophagus/barrel
-art, retaining all 58 supported L1 object protobufs and collision geometry before
-cold input with exact sequence 40→41. See
-[object verification](test-history.md#2026-10-20--original-cathedral-object-art).
-Other live object lifecycle art coverage and cold L1 redraw remain open, alongside
-later-level TCHEST aliases, scene phases, native light/palette/transparency and
-matched rendered comparisons. The active primary batch is native Catacombs L4/L5
-entry/return and the cohesive L5–L8 family. Native generation/population
-characterization comes first, including retained attempt seeds, distinct L2
-doors/trapped chests, required monster behavior and L5 Town-warp unlock/rebuild.
-Use an additive opt-in family profile; existing Cathedral/save contracts remain
-unchanged. Normal-profile adoption remains held.
-The Catacombs pure generator/materializer passes 75 focused managed cases,
-including all 66 supported native entry comparisons and four existing ordinary
-coarse/transparency goldens. Both 75-case native generation captures repeat
-byte-identically, and both separate same-process guard regressions pass. Source
-L2 SOL is 559 bytes; the native 1379-slot zero tail and opaque flags are retained.
-The 32-case actual-class native population reference repeats byte-identically
-across 35 artifacts, including retained unique history and actual Fat, Rhino,
-Gargoyle, Magma and Acid actors. Starter-item identity seeds and pre-entry hero
-coordinates are explicit prepared inputs; birth-clock seed parity and preceding-
-floor gameplay are outside this proof. Distinct semantic metadata, L2 automap
-and initial population phases pass 55 focused cases and all 32 exact staged
-native comparisons. Complete fresh encounters/items/themes and level-ready state
-now match all 32 actual native cases, including both classes and managed retained-
-history chains. Separate controlled L5/L8 theme seams pass all 44 cases; 16 focused
-contracts and 183 Cathedral compatibility cases pass, with six explicit fixtures
-intentionally not selected. The earlier metadata compatibility proof retains its
-124 passes and unavailable symbolic-link case under sandbox privileges.
-Distinct C2 actor admission preserves generated active order/reservations,
-ranged-skeleton emergence records and separate frozen Gargoyle phases.
-Seventy-six focused cases and all 32 generated admission comparisons pass.
-Controlled native actor/pack and L2 door operation traces now cover Special
-clocks, wake order, blocked close and sync geometry.
-Existing cohort formats refuse C2 fields; no playable Catacombs profile is active.
-Live chest/wall effects, complete missile parity, mixed-run lazy entry,
-profile/travel integration and detached cold restore remain required family gates.
-Explicit internal C2 item-family contexts and prepared ordinary/TCHEST operation
-plans now pass 114 unique managed cases, including 30 native chest comparisons.
-Disarmed TCHEST loots without firing; linked ordinary chests preserve the wall
-trigger flag. Live C2 effect/floor ownership and old-format refusal stay in force.
-The immutable population binding core is shared behind the unchanged Cathedral
-API; 25 focused C1 lifecycle, retained-floor and class restore checks pass. This
-prepares C2 ownership without activating a family profile.
-Distinct C2 initial owners and atomic detached admission now pass 63 focused checks,
-including all 32 qualified class inputs, mixed C1/C2 and second-C2 retention, actual
-C2 door commands and six C1 continuation checks. Armed door links remain retained
-and refused; four elixir identities use a C2-only semantic bridge. Mixed-run lazy
-entry, live chest/wall effects, travel and additive cold restore remain open.
-Distinct C2 ranged owners now retain all five supported controller release clocks,
-exact missile mappings and target-future endpoints across detached publication.
-Active reserved Skeleton archers are admitted only after actual object emergence.
-Nine repeated native traces qualify normal/Special release boundaries; actual
-processor checks cover pause/resume, emergence and native Acid sound/damage draws.
-All 99 selected unique managed cases pass without skips.
-C2 Arrow flight now has a distinct private owner: native 16.16 traversal beyond
-the requested endpoint, signed collision ordering, impact-time fractional-Q6
-PlayerMHit and the 256-tick lifetime. Exact pending flight survives detached floor
-publication; pure captures project live source facts and seal them before corpse
-replacement. Prepared native movement/player comparisons, generated owner/public-
-tick checks and prepared monster-impact contracts have separate evidence scopes.
-All 48 unique Arrow checks and 72 fresh integration/compatibility checks pass; the
-48-case native corpus repeats byte-identically. Existing C1/profile/save contracts
-remain unchanged. Complete missile families,
-live chest/wall effects, mixed-run lazy entry, travel, additive cold persistence
-and ordinary headless C2 class journeys remain open.
-See [verification](test-history.md#2026-10-20--c2-arrow-flight-and-impact).
-Keep the queue, this status and affected inventory entries synchronized. Do not
-restart inventory construction or an unrelated test campaign.
+Branch `wip/phase0-shelf` holds the uncommitted drafts from before the reset, one
+commit per group: Catacombs Magma/Acid caster chains with the shared vision
+line-of-sight change; native weapon-completion GTest fixtures; Godot Bard
+Identify, Monk Search, Trap Disarm and Warrior Repair previews, experimental
+four-floor scenarios and held-ACK relay support; and their documentation. None
+was reviewed for merge. Recover individual pieces when a phase needs them.
 
-## Existing working-tree packages
-
-Inspect current diffs; this grouping is working memory, not staging authority.
-
-- Class-control preview acceptance partials, launcher wrappers/shared script
-  hunks and associated tests remain uncommitted. Session lifecycle, menu/HUD
-  integration and profile-aware setup are now a separate reviewed batch.
-- Experimental four-floor acceptance: entry continuation, Town itinerary v2,
-  L3 encounter/held-pair and ground-input diagnostics, plus wrappers. These are
-  separate experimental scenarios, not mandatory production dependencies.
-- ACK-loss/retry changes in protocol-client tests and the acceptance relay.
-- Native player-command fixtures, `CMake/Tests.cmake`,
-  `AuthoritativeWorld.cs` and documentation changes.
-
-Preserve unrelated untracked files, including `16`, `Microsoft/`, `diablo.ini`
-and `single_0.hsv`. Do not bulk stage or include them in a documentation commit.
+Root clutter from earlier runs (`16`, `Microsoft/`, `diablo.ini`,
+`single_0.hsv`, the prompt notes, logs and temporary files) was moved to
+`.local/root-cleanup-2026-10-21/`.
 
 ## Working environment and authority
 

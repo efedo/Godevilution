@@ -498,3 +498,10 @@ Testing/
 /tools/Native.ObjectArt/obj/
 /tools/Native.SceneArt/bin/
 /tools/Native.SceneArt/obj/
+
+# Runtime files written when the native client or test platform runs from the root.
+/diablo.ini
+/*.hsv
+/Microsoft/
+/NUL*
+/.tmp/

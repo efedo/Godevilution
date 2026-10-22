@@ -59,6 +59,17 @@ Completion requires all of the following evidence:
   capabilities have replacements. Disabling it or retaining it in an isolated
   compatibility build does not close this separate removal objective.
 
+## Recovery plan: 2026-10-21
+
+The user adopted a playable-first recovery plan. The [near-term work plan](work-plan.md)
+owns its phases: stabilize CI and the tree, make the native world the default launch
+path, port native gameplay modules faithfully, then deliver a rendered playable
+client before Hellfire and release hardening. Exact parity is required where players
+or saves can observe it and is obtained by close translation of the native source.
+Diablo single-player precedes Hellfire; user-supplied original assets are the primary
+visual path. The M0-M5 exits below are unchanged; where the 2026-10-18 reset below
+differs on batch selection, the recovery plan takes precedence.
+
 ## Delivery reset: 2026-10-18
 
 The user requested a step back and selected a **bounded inventory of remaining
