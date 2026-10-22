@@ -3,12 +3,21 @@ include(functions/devilutionx_library)
 include(functions/genex)
 
 if(DEVILUTIONX_ENABLE_SERVER_BACKED_CLIENT)
+  # protoc 3.12-3.14 (for example Ubuntu 22.04) accepts proto3 optional fields only behind a flag.
+  set(DEVILUTIONX_PROTOC_OPTIONS)
+  if(Protobuf_VERSION AND Protobuf_VERSION VERSION_LESS 3.15)
+    if(CMAKE_VERSION VERSION_LESS 3.28)
+      message(FATAL_ERROR "Protobuf ${Protobuf_VERSION} needs CMake 3.28 or newer to pass --experimental_allow_proto3_optional")
+    endif()
+    set(DEVILUTIONX_PROTOC_OPTIONS PROTOC_OPTIONS --experimental_allow_proto3_optional)
+  endif()
   protobuf_generate(
     APPEND_PATH
     LANGUAGE cpp
     OUT_VAR DEVILUTIONX_PROTOCOL_GENERATED
     EXPORT_MACRO DVL_PROTOBUF_EXPORT
     PROTOC_EXE "${Protobuf_PROTOC_EXECUTABLE}"
+    ${DEVILUTIONX_PROTOC_OPTIONS}
     PROTOS "${PROJECT_SOURCE_DIR}/protocol/devilution.proto")
   foreach(DEVILUTIONX_PROTOCOL_GENERATED_FILE IN LISTS DEVILUTIONX_PROTOCOL_GENERATED)
     if(DEVILUTIONX_PROTOCOL_GENERATED_FILE MATCHES "\\.cc$")
