@@ -319,8 +319,11 @@ public sealed class DeferredCommandTimingTests
         await client.ConnectAsync(TestContext.Current.CancellationToken);
         client.QueueRealtime(new Command { MoveRequested = new MoveRequested { DirectionX = 1 } }, 100);
         await client.PollAsync(TestContext.Current.CancellationToken);
-        await Task.Delay(20, TestContext.Current.CancellationToken);
-        await client.PollAsync(TestContext.Current.CancellationToken);
+        // Keep polling until the ACK is observed and the snapshot request is sent.
+        for (var attempt = 0; attempt < 350 && !serverTask.IsCompleted; attempt++) {
+            await Task.Delay(10, TestContext.Current.CancellationToken);
+            await client.PollAsync(TestContext.Current.CancellationToken);
+        }
         await serverTask.WaitAsync(TimeSpan.FromSeconds(10), TestContext.Current.CancellationToken);
     }
 

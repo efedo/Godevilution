@@ -24,6 +24,8 @@ contracts stay in their existing guides.
   older than 3.15, run the standalone-host package test against the matching
   build configuration, and skip one clock-gated failure-reporting test on CI only
   while its host race is open.
+- Poll the legacy snapshot-timing client test until its fake server observes the
+  snapshot request instead of assuming the ACK arrives within 20 ms.
 - Adopt the playable-first recovery plan in the work plan, status and inventory.
   Shelve all unfinished drafts on `wip/phase0-shelf` (one commit per group), move
   root clutter to `.local/` and ignore the runtime files that created it.
