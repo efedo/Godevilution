@@ -1087,7 +1087,8 @@ public sealed class ClockGatedTcpHostTests
     {
         var timeout = CancellationTokenSource.CreateLinkedTokenSource(
             TestContext.Current.CancellationToken);
-        timeout.CancelAfter(TimeSpan.FromSeconds(10));
+        // Hang guards only; parallel full-suite runs on small CI runners can starve the pool.
+        timeout.CancelAfter(TimeSpan.FromSeconds(30));
         return timeout;
     }
 
@@ -1164,7 +1165,7 @@ public sealed class ClockGatedTcpHostTests
         CancellationToken cancellationToken)
     {
         using var waitTimeout = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-        waitTimeout.CancelAfter(TimeSpan.FromSeconds(5));
+        waitTimeout.CancelAfter(TimeSpan.FromSeconds(20));
         while (!predicate())
             await Task.Delay(TimeSpan.FromMilliseconds(10), waitTimeout.Token);
     }

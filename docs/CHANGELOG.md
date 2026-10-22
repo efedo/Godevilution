@@ -20,6 +20,9 @@ contracts stay in their existing guides.
 - Align the C++ replay model's seeded HorkDemon action roll with the managed
   native stream (one GenerateRnd(100) draw), restoring the autonomous multiplayer
   fixture that diverged when `60287c872` updated only the managed side.
+- Make CI's Linux build and tests portable: pass the proto3-optional flag to protoc
+  older than 3.15, run the standalone-host package test against the matching
+  build configuration, and widen clock-gated host hang guards for loaded runners.
 - Adopt the playable-first recovery plan in the work plan, status and inventory.
   Shelve all unfinished drafts on `wip/phase0-shelf` (one commit per group), move
   root clutter to `.local/` and ignore the runtime files that created it.

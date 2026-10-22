@@ -200,6 +200,13 @@ public sealed class GameplayModulePackageLoaderTests
             repositoryRoot,
             "server/src/Devilution.Server/Devilution.Server.csproj"));
         startInfo.ArgumentList.Add("--no-build");
+        // Run the server built alongside this test assembly, not dotnet's Debug default.
+        startInfo.ArgumentList.Add("--configuration");
+#if DEBUG
+        startInfo.ArgumentList.Add("Debug");
+#else
+        startInfo.ArgumentList.Add("Release");
+#endif
         var artifactsPath = Environment.GetEnvironmentVariable("GODEVILUTION_ARTIFACTS_PATH");
         if (!string.IsNullOrWhiteSpace(artifactsPath)) {
             startInfo.ArgumentList.Add("--artifacts-path");
