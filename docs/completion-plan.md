@@ -23,8 +23,8 @@ embedded Lua nor the C++/SDL runtime.
 Execute this goal through the milestone dependencies and acceptance gates in
 this plan, with accepted verification summarized in `test-history.md`. The primary
 agent owns planning, integration, acceptance, documentation, and cohesive
-commits. Use a fixed pool of two GPT-6 Luna implementation workers at extra-high
-reasoning effort and one independent GPT-6.1 Sol reviewer at medium effort.
+commits. Use a fixed pool of two GPT-6.1 Sol implementation workers at extra-high
+reasoning effort and one separate, independent GPT-6.1 Sol reviewer at medium effort.
 Reuse these same workers for successive bounded packages until completion,
 following the [worker delegation policy](#worker-delegation). Use focused tests
 per commit and broader integration/application acceptance at the relevant gates.
@@ -937,11 +937,15 @@ universal product gates.
 
 ### Worker delegation
 
-- Use a fixed pool of two GPT-6 Luna (`gpt-6-luna`) implementation workers with
-  `xhigh` reasoning effort and one independent GPT-6.1 Sol (`gpt-6.1-sol`)
+- Use a fixed pool of two GPT-6.1 Sol (`gpt-6.1-sol`) implementation workers
+  with `xhigh` reasoning effort and one separate, independent GPT-6.1 Sol
   reviewer with `medium` reasoning effort. This supersedes all earlier worker
-  models, effort settings, and five-worker policies. Do not silently substitute
-  another model or effort setting; report unavailability and obtain direction.
+  models (including GPT-6 Luna implementers), effort settings, and five-worker
+  policies. Do not silently substitute another model or effort setting; report
+  unavailability and obtain direction.
+- Keep review independent: the reviewer is its own worker, never implements
+  packages, and never reviews work it wrote. Implementers do not review each
+  other's packages in place of the reviewer.
 - Create the pool once and reuse the same three workers through follow-up
   assignments until the goal is complete. Do not spawn a new worker per package
   or let workers spawn additional agents. At most three child workers may run,

@@ -45,7 +45,9 @@ public sealed class ProjectDocumentationConsistencyTests
         var policyEnd = plan.IndexOf("## Verification policy", policyStart, StringComparison.Ordinal);
         Assert.True(policyEnd > policyStart);
         var policy = plan[policyStart..policyEnd];
-        Assert.Contains("two GPT-6 Luna (`gpt-6-luna`) implementation workers", policy, StringComparison.Ordinal);
+        Assert.Contains("two GPT-6.1 Sol (`gpt-6.1-sol`) implementation workers", policy, StringComparison.Ordinal);
+        Assert.Contains("separate, independent GPT-6.1 Sol", policy, StringComparison.Ordinal);
+        Assert.Contains("never reviews work it wrote", policy, StringComparison.Ordinal);
         Assert.Contains("`xhigh` reasoning effort", policy, StringComparison.Ordinal);
         Assert.Contains("reviewer with `medium` reasoning effort", policy, StringComparison.Ordinal);
         Assert.Contains("reuse the same three workers", policy, StringComparison.Ordinal);
@@ -54,6 +56,7 @@ public sealed class ProjectDocumentationConsistencyTests
         Assert.Contains("explicit human approval", policy, StringComparison.Ordinal);
         Assert.Contains("resolves review findings", policy, StringComparison.Ordinal);
         Assert.DoesNotContain("gpt-5.6-luna", plan, StringComparison.Ordinal);
+        Assert.DoesNotContain("`gpt-6-luna`", plan, StringComparison.Ordinal);
         Assert.DoesNotContain("Allow up to five independent workers", plan, StringComparison.Ordinal);
         Assert.DoesNotContain("reviewer at extra-high effort", policy, StringComparison.Ordinal);
     }

@@ -35,6 +35,8 @@ contracts stay in their existing guides.
 - Add the worker guide (batch contracts, porting, verification, documentation
   budget, stop rules, reviewer checklist), a Phase 1 batch queue, and a current
   session handoff that no longer points at frozen Catacombs work.
+- Switch the worker pool to two GPT-6.1 Sol implementers plus a separate GPT-6.1
+  Sol reviewer that never reviews its own work.
 - Poll the legacy snapshot-timing client test until its fake server observes the
   snapshot request instead of assuming the ACK arrives within 20 ms.
 - Adopt the playable-first recovery plan in the work plan, status and inventory.
