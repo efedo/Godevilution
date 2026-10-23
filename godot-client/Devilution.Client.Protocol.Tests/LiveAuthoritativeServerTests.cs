@@ -2760,6 +2760,11 @@ public sealed partial class LiveAuthoritativeServerTests
                       "table": "monsters.tsv",
                       "keys": ["entity_id"],
                       "mode": "upsert"
+                    },
+                    {
+                      "table": "class_animations.tsv",
+                      "keys": ["class_id"],
+                      "mode": "upsert"
                     }
                   ]
                 }
@@ -2798,6 +2803,25 @@ public sealed partial class LiveAuthoritativeServerTests
             await File.WriteAllLinesAsync(
                 Path.Combine(overlayRoot, "monsters.tsv"),
                 [monsterLines[0], string.Join('\t', monsterCells)],
+                TestContext.Current.CancellationToken);
+            // Native Warrior blocking lasts four ticks; a loaded runner can sample
+            // snapshots on either side of it. Lengthen it to about three seconds.
+            var animationTablePath = Path.Combine(
+                FindRepositoryRoot(),
+                "server",
+                "content",
+                "base",
+                "class_animations.tsv");
+            var animationLines = await File.ReadAllLinesAsync(
+                animationTablePath,
+                TestContext.Current.CancellationToken);
+            var animationHeader = animationLines[0].Split('\t');
+            var warriorAnimation = animationLines.Single(
+                line => line.StartsWith("0\t", StringComparison.Ordinal)).Split('\t');
+            warriorAnimation[Array.IndexOf(animationHeader, "blocking_frames")] = "21";
+            await File.WriteAllLinesAsync(
+                Path.Combine(overlayRoot, "class_animations.tsv"),
+                [animationLines[0], string.Join('\t', warriorAnimation)],
                 TestContext.Current.CancellationToken);
 
             using var server = await StartedServer.StartAsync(

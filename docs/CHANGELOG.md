@@ -26,6 +26,8 @@ contracts stay in their existing guides.
 - Report a poisoned clock-gated lane's failure when host cancellation ends the
   connection before its writer observes it, and make the observer-fault test fail
   only the command's publication so it no longer races a periodic checkpoint fault.
+- Lengthen the Warrior block window in the live PvP shield-block test's content
+  overlay so loaded runners cannot sample snapshots on either side of it.
 - Poll the legacy snapshot-timing client test until its fake server observes the
   snapshot request instead of assuming the ACK arrives within 20 ms.
 - Adopt the playable-first recovery plan in the work plan, status and inventory.
