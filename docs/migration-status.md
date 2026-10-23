@@ -97,8 +97,9 @@ Passing a scoped test or adding a schema version does not close a milestone.
   playable Catacombs profile is active. The in-progress Magma/Acid caster chains
   are shelved. New Catacombs-only parity work is frozen until Phase 2 reaches it.
   See [Arrow verification](test-history.md#2026-10-20--c2-arrow-flight-and-impact).
-- Most native parity tests skip without local reference data; CI does not yet
-  run them.
+- CI now regenerates 14 archive-free native oracle corpora and runs their 137
+  managed comparisons. Retail-archive corpora stay local by design (public
+  repository), so those comparisons still skip in CI.
 - Legacy per-participant cold import can overwrite shared world/RNG. Explicit
   cohort mode has scoped recovery proof; normal cohort adoption is separate.
 - L3 player death is a failed bot scenario, not an established transport/combat

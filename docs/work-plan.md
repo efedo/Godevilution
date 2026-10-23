@@ -69,6 +69,11 @@ Done 2026-10-21/22:
   observer-fault test also raced its command failure against a second periodic
   checkpoint failure; it now fails only the command's publication and runs on
   CI again. A deterministic writer-gate test covers the host fix.
+- CI regenerates the 14 archive-free native oracle corpora (about 335 MB, about
+  4 minutes) and runs their 137 managed comparisons with skips treated as
+  failures. Retail-archive corpora cannot be committed or published from this
+  public repository and remain local. Restoring the Cathedral chest capture's
+  sixth lane (accidentally dropped on 2026-10-15) was part of this.
 - Shelved all uncommitted work on branch `wip/phase0-shelf`, one commit per
   group: Catacombs Magma/Acid caster chains (with the shared vision change),
   native weapon-completion fixtures, Godot class-preview and four-floor
@@ -79,8 +84,6 @@ Done 2026-10-21/22:
 
 Remaining:
 
-- Make oracle-gated parity tests run in CI: commit compact reference data, or
-  fetch it as a CI artifact, and report skipped counts per run.
 - Freeze new Catacombs-only parity work until Phase 2 reaches that family.
 
 ### Phase 1: One world, one default path

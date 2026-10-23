@@ -9,6 +9,13 @@ the referenced test sources. Do not copy raw outputs into historical archives.
 
 ## Client and host verification
 
+### 2026-10-22 — Archive-free native oracles in CI
+
+`tools/run-native-oracle-parity.sh` regenerated all 14 archive-free corpora with
+no retail archive opened and passed 5 Domain and 132 Diablo managed comparisons
+(no skips) against `build/x64-Debug`. The Cathedral chest capture again emits its
+36 cases. Retail-archive and retail-metadata comparisons remain local-only.
+
 ### 2026-10-20 — C2 Arrow flight and impact
 
 Distinct internal C2 monster Arrow owners retain native 16.16 velocity/travel,

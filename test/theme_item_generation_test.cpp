@@ -1144,7 +1144,7 @@ TEST_F(ThemeItemPlacementTest, CaptureNativeChestOperations)
 		constexpr uint32_t seeds[] = { 0, 1, 2588, UINT32_C(0x80000000), UINT32_MAX, 743271966 };
 		for (int type = OBJ_CHEST1; type <= OBJ_CHEST3; ++type) {
 			for (int branch = 0; branch < 2; ++branch) {
-				for (int lane = 0; lane < 5; ++lane) {
+				for (int lane = 0; lane < 6; ++lane) {
 					PrepareWorld(lane == 2 ? MAXITEMS : lane == 3 ? MAXITEMS - 1 : 2, lane != 3);
 					MyPlayer->pLvlLoad = lane == 1 ? 0 : 1; // Live drop animation and loader placement are distinct inputs.
 					Object &chest = Objects[0];

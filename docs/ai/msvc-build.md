@@ -1,5 +1,22 @@
 # MSVC Build Notes for Agents
 
+## Native oracles in CI
+
+`tools/run-native-oracle-parity.sh <native-build-dir> <empty-output-root>` builds
+nothing itself: it runs the archive-free native captures into fresh directories,
+then the managed consumers with `--explicit on --fail-skips on`. CI runs it after
+the managed suites. Those captures use only DevilutionX's bundled assets and
+`txtdata` tables, so their corpora are regenerated each run instead of stored.
+Run it from Git Bash against `build/x64-Debug` to reproduce CI locally.
+
+Corpora that open `DIABDAT.MPQ` or consume retail-derived metadata (Cathedral and
+Catacombs population, L1/L2 geometry, Catacombs actor/door/Arrow-player fixtures
+and all original-art references) stay local and private. Never commit them or
+upload them as CI artifacts: the repository is public. On Windows, native asset
+discovery also finds a GOG install through the registry, so a local pass does
+not prove a capture is archive-free; check that it never calls `LoadGameArchives`.
+Add a capture to the script only with its consumer classes and a clean CI run.
+
 ## Native Catacombs references
 
 Build the registered `native_catacombs_generation_test` target with the checked
