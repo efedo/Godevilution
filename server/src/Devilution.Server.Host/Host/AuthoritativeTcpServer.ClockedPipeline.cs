@@ -112,6 +112,10 @@ public sealed partial class AuthoritativeTcpServer
             hostCancellationToken);
         try {
             await Task.WhenAll(reader, writer);
+            // Host cancellation can stop both loops after scheduled work poisoned
+            // the lane but before the writer observed it. Report it, not lose it.
+            if (lane.Failure is { } unobservedFailure)
+                ReportClockGatedOrphanFailureOnce(lane, unobservedFailure);
         } catch (Exception outcome) when (lane.IsTransportClosed
             && lane.Failure is { } primaryFailure) {
             // Reader cleanup can win WhenAll's exception selection after an
@@ -604,6 +608,8 @@ public sealed partial class AuthoritativeTcpServer
     {
         try {
             while (await workReader.WaitToReadAsync(pipelineCancellation.Token)) {
+                if (ClockGatedWriterWakeGateForTests is { } wakeGate)
+                    await wakeGate(pipelineCancellation.Token);
                 while (!pipelineCancellation.IsCancellationRequested
                     && workReader.TryRead(out var work)) {
                     try {

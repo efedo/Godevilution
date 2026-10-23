@@ -63,6 +63,12 @@ Done 2026-10-21/22:
   been updated when the managed HorkDemon AI moved to the native RNG stream on
   2026-10-04. Such parallel models are a maintenance cost the Phase 2 port
   should retire.
+- Fixed a clock-gated host reporting gap: when host cancellation stopped a
+  connection after its scheduled command had poisoned the lane, but before the
+  writer dequeued the response, that client failure was never reported. The
+  observer-fault test also raced its command failure against a second periodic
+  checkpoint failure; it now fails only the command's publication and runs on
+  CI again. A deterministic writer-gate test covers the host fix.
 - Shelved all uncommitted work on branch `wip/phase0-shelf`, one commit per
   group: Catacombs Magma/Acid caster chains (with the shared vision change),
   native weapon-completion fixtures, Godot class-preview and four-floor
@@ -76,11 +82,6 @@ Remaining:
 - Make oracle-gated parity tests run in CI: commit compact reference data, or
   fetch it as a CI artifact, and report skipped counts per run.
 - Freeze new Catacombs-only parity work until Phase 2 reaches that family.
-- Fix the clock-gated host's client-failure reporting race. When a command
-  faults while the transport closes, the failure can go unrecorded or bypass
-  the observer (`ClientFailureObserverFaultIsReportedByDisposeAfterHandlerCleanup`,
-  about 1 in 100 loaded local runs, frequent on CI). That test is skipped on CI
-  only until the fix lands.
 
 ### Phase 1: One world, one default path
 

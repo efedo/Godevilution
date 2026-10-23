@@ -218,6 +218,9 @@ public sealed partial class AuthoritativeTcpServer : IAsyncDisposable
     /** Internal readiness signal for deterministic commit-boundary response tests. */
     internal Action<string, ulong>? CommitBoundaryResponseReadyObserverForTests { get; init; }
 
+    /** Internal seam that delays a woken clock-gated writer before it dequeues work. */
+    internal Func<CancellationToken, Task>? ClockGatedWriterWakeGateForTests { get; init; }
+
     /** Background termination/failure, excluding isolated session failures. */
     public Task Completion => completion.Task;
 

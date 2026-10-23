@@ -17,9 +17,6 @@ namespace Devilution.Server.Tests;
 /** Characterizes opt-in clock-gated scheduling through the real TCP host. */
 public sealed class ClockGatedTcpHostTests
 {
-    public static bool IsContinuousIntegration
-        => string.Equals(Environment.GetEnvironmentVariable("CI"), "true", StringComparison.OrdinalIgnoreCase);
-
     [Fact]
     public async Task ClockGatedHostRejectsLegacyHelloBeforeInitialization()
     {
@@ -384,10 +381,7 @@ public sealed class ClockGatedTcpHostTests
         }
     }
 
-    // Known race (docs/work-plan.md, Phase 0): failure reporting can be lost or
-    // diverted to the orphan path while the transport closes. Runs locally.
-    [Fact(SkipWhen = nameof(IsContinuousIntegration),
-        Skip = "Clock-gated client-failure reporting race is open; see the work plan.")]
+    [Fact]
     public async Task ClientFailureObserverFaultIsReportedByDisposeAfterHandlerCleanup()
     {
         ulong physicalTick = 111;
@@ -409,7 +403,10 @@ public sealed class ClockGatedTcpHostTests
             await using var stream = client.GetStream();
             await SendHelloAsync(stream, cancellationToken, "clock-gated-observer-fault");
             await ReadHandshakeSnapshotAsync(stream, 111, cancellationToken);
-            saveProvider.ThrowOnExport = true;
+            // Fail only the command's own durable publication. A persistent
+            // failure would also fault the periodic checkpoint loop, racing a
+            // second whole-host failure against the client failure under test.
+            saveProvider.FailNextExportWhen = () => executor.CallCount > 0;
             await SendBatchAsync(
                 stream,
                 cancellationToken,
@@ -431,6 +428,80 @@ public sealed class ClockGatedTcpHostTests
                 () => server.DisposeAsync().AsTask());
             Assert.Equal("observer failed", disposalFailure.Message);
         } finally {
+            if (!disposeAttempted) {
+                try {
+                    await server.DisposeAsync();
+                } catch {
+                }
+            }
+        }
+    }
+
+    [Fact]
+    public async Task PoisonedLaneIsReportedWhenHostCancellationPrecedesTheWriter()
+    {
+        ulong physicalTick = 111;
+        var executor = new RecordingExecutor();
+        var saveProvider = new ToggleSaveProvider();
+        var writerWoken = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var releaseWriter = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var holdWriter = 0;
+        var server = CreateServer(
+            new AuthoritativeCommandServer(executor),
+            () => Volatile.Read(ref physicalTick),
+            executor,
+            saveProvider,
+            writerWakeGate: async _ => {
+                // Hold the first armed wake so host cancellation wins before dequeue.
+                if (Interlocked.Exchange(ref holdWriter, 0) == 0)
+                    return;
+                writerWoken.TrySetResult();
+                await releaseWriter.Task;
+            });
+        server.Start();
+        var disposeAttempted = false;
+        using var timeout = CreateTimeout();
+        var cancellationToken = timeout.Token;
+        try {
+            using var client = new TcpClient();
+            await client.ConnectAsync(IPAddress.Loopback, server.Port, cancellationToken);
+            await using var stream = client.GetStream();
+            await SendHelloAsync(stream, cancellationToken, "clock-gated-unobserved-lane");
+            await ReadHandshakeSnapshotAsync(stream, 111, cancellationToken);
+            Volatile.Write(ref holdWriter, 1);
+            await SendBatchAsync(
+                stream,
+                cancellationToken,
+                Attack(1, requestedTick: 112, targetEntityId: 1));
+            var response = ReadAsync(stream, cancellationToken);
+            await writerWoken.Task.WaitAsync(cancellationToken);
+            await WaitForPendingCountAsync(server, 1, cancellationToken);
+
+            // At tick 112 the command's durable publication fails and poisons
+            // the lane; the periodic checkpoint then fails and cancels the host.
+            saveProvider.ThrowOnExport = true;
+            Volatile.Write(ref physicalTick, 112);
+            var completionFailure = await Assert.ThrowsAsync<InvalidOperationException>(
+                () => server.Completion.WaitAsync(TimeSpan.FromSeconds(5), cancellationToken));
+            Assert.Equal("checkpoint failed", completionFailure.Message);
+            Assert.Equal(1, executor.CallCount);
+            Assert.Null(server.LastClientFailure);
+
+            releaseWriter.TrySetResult();
+            await AwaitConnectionClosureAsync(response, cancellationToken);
+            await WaitUntilAsync(
+                () => server.LastClientFailure is not null,
+                cancellationToken);
+            Assert.IsType<InvalidOperationException>(server.LastClientFailure);
+            Assert.Equal("checkpoint failed", server.LastClientFailure!.Message);
+            Assert.NotSame(completionFailure, server.LastClientFailure);
+
+            disposeAttempted = true;
+            var disposalFailure = await Assert.ThrowsAsync<InvalidOperationException>(
+                () => server.DisposeAsync().AsTask());
+            Assert.Equal("checkpoint failed", disposalFailure.Message);
+        } finally {
+            releaseWriter.TrySetResult();
             if (!disposeAttempted) {
                 try {
                     await server.DisposeAsync();
@@ -1051,7 +1122,8 @@ public sealed class ClockGatedTcpHostTests
         AuthoritativeSaveStore? saveStore = null,
         int? maximumPendingCommands = null,
         Action<Exception>? clientFailureObserver = null,
-        IAuthoritativeEventProvider? eventProvider = null)
+        IAuthoritativeEventProvider? eventProvider = null,
+        Func<CancellationToken, Task>? writerWakeGate = null)
     {
         return new AuthoritativeTcpServer(
             commandServer,
@@ -1070,6 +1142,7 @@ public sealed class ClockGatedTcpHostTests
             MaximumPendingCommands = maximumPendingCommands
                 ?? ClockGatedCommandScheduler.DefaultMaximumPendingCommands,
             ClientFailureObserver = clientFailureObserver,
+            ClockGatedWriterWakeGateForTests = writerWakeGate,
         };
     }
 
@@ -1299,10 +1372,17 @@ public sealed class ClockGatedTcpHostTests
     {
         public bool ThrowOnExport { get; set; }
 
+        /** One-shot failure for the first export after the predicate holds. */
+        public Func<bool>? FailNextExportWhen { get; set; }
+
         public int ImportCount { get; private set; }
 
         public string ExportPlayerSave(string sessionId)
         {
+            if (FailNextExportWhen?.Invoke() == true) {
+                FailNextExportWhen = null;
+                throw new InvalidOperationException("checkpoint failed");
+            }
             if (ThrowOnExport)
                 throw new InvalidOperationException("checkpoint failed");
             return "{}";
