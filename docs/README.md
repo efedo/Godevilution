@@ -16,6 +16,7 @@ and acceptance gates.
 - [Implementation history](CHANGELOG.md)
 - [Test history](test-history.md)
 - [Clean-session handoff and goal](ai/session-handoff.md)
+- [Worker guide](ai/worker-guide.md)
 
 ## Architecture and contracts
 

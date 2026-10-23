@@ -970,6 +970,9 @@ universal product gates.
   duplicate work or add coordination overhead. Missing worker availability does
   not prevent independent local progress, but local self-review does not count
   as the required separate-worker review for a delegated package.
+- Every worker and reviewer follows the [worker guide](ai/worker-guide.md):
+  batch contracts, porting method, verification, documentation budget, stop
+  conditions, handoff format and reviewer checklist.
 
 ## Verification policy
 

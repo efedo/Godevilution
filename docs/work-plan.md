@@ -88,12 +88,17 @@ Remaining:
 
 ### Phase 1: One world, one default path
 
-- Make native generation and population the default world for a normal launch;
-  retire opt-in native profiles one at a time while existing saves stay loadable.
-- Replace per-feature owner/registry plumbing with one shared per-level state
-  model used by every subsystem.
-- Split `DiabloCombatCommandProcessor.cs` (about 18k lines) into player,
-  monster AI, missile and spell modules that mirror the native files.
+Work this queue in order, one batch at a time, using the
+[worker guide](ai/worker-guide.md). Refine a batch's details in its contract;
+do not add, drop or reorder batches without the planner.
+
+| Batch | Player-visible outcome | Exit | State |
+| --- | --- | --- | --- |
+| 1.1 First-run native import | `run-godot-client.ps1` finds the player's `DIABDAT.MPQ` (configured path or known installs), compiles the existing native profile once under `.local/godot`, and starts in native Town. | Scripted create-game journey reaches native Town and L1; a second launch reuses the profile; with no archive the launcher explains and keeps authored content. The server still opens no MPQ. | Next |
+| 1.2 One profile, all supported classes | The default native profile admits Rogue, Warrior and Sorcerer, replacing class-bound profiles and launchers. | Create each class through the normal launch, play L1, save and resume; existing class-profile saves still load. | Pending |
+| 1.3 Cathedral L1–L4 by default | The existing native depth owners are part of the default profile, so a normal game reaches L4. | Scripted Town→L4→Town journey with fresh-host resume through the normal launch; obsolete Cathedral playtest launchers removed. | Pending |
+| 1.4 Shared per-level state | Cathedral and Catacombs owner registries collapse into one per-level state model with no behavior change. | All suites and CI oracle comparisons green; save bytes unchanged; net reduction in owner/registry code. | Pending |
+| 1.5 Split the combat processor | `DiabloCombatCommandProcessor.cs` splits into player, monster AI, missile and spell files mirroring the native modules, with no behavior change. | No file over about 2,000 lines; all suites and CI green. | Pending |
 
 ### Phase 2: Faithful native port
 
@@ -114,6 +119,10 @@ Remaining:
   build flag; stop adding a root launcher per scenario.
 
 ## Working rules
+
+The [worker guide](ai/worker-guide.md) expands these into batch contracts,
+porting and verification rules, a documentation budget, stop conditions and
+a reviewer checklist.
 
 - **Done means playable.** Each batch ends with a short gameplay demonstration
   through the normal launch, not only a scoped check.

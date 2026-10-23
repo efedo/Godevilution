@@ -32,6 +32,9 @@ contracts stay in their existing guides.
   OpenGL compatibility fallback; a client test pins the project settings.
 - Regenerate the archive-free native oracle corpora in CI and run their managed
   parity comparisons; restore the Cathedral chest capture's dropped sixth lane.
+- Add the worker guide (batch contracts, porting, verification, documentation
+  budget, stop rules, reviewer checklist), a Phase 1 batch queue, and a current
+  session handoff that no longer points at frozen Catacombs work.
 - Poll the legacy snapshot-timing client test until its fake server observes the
   snapshot request instead of assuming the ACK arrives within 20 ms.
 - Adopt the playable-first recovery plan in the work plan, status and inventory.

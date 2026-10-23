@@ -10,6 +10,7 @@ To ensure that your contributions are effective and align with the project's goa
 - Always use Windows-style CRLF line endings.
 
 ## Planning
+- Before starting work, read docs/ai/worker-guide.md and follow it; take batches only from the current work-plan queue.
 - For each task, provide a clear and concise plan of action before writing any code.
 - You may create temporary files to assist with planning under docs/ai, which should be deleted after the task is completed.
 
