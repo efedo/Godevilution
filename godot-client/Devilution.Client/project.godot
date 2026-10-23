@@ -20,6 +20,10 @@ project/assembly_name="Devilution.Client"
 
 [rendering]
 
-renderer/rendering_method="gl_compatibility"
-renderer/rendering_method.mobile="gl_compatibility"
+renderer/rendering_method="forward_plus"
+renderer/rendering_method.mobile="mobile"
+rendering_device/driver="vulkan"
+rendering_device/driver.windows="vulkan"
+rendering_device/driver.linuxbsd="vulkan"
+rendering_device/fallback_to_opengl3=false
 environment/defaults/default_clear_color=Color(0.035, 0.035, 0.05, 1)

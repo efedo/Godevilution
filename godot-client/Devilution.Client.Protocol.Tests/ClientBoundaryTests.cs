@@ -63,6 +63,49 @@ public sealed class ClientBoundaryTests
             reference => reference.Contains("Diablo", StringComparison.Ordinal));
     }
 
+    [Fact]
+    public void GodotProjectUsesVulkanWithoutOpenGlFallback()
+    {
+        var root = FindRepositoryRoot();
+        var rendering = ReadGodotSection(
+            Path.Combine(root, "godot-client", "Devilution.Client", "project.godot"),
+            "rendering");
+
+        // The editor omits engine defaults when it saves, so a missing key means
+        // Godot 4.7's Forward+/Mobile and Vulkan defaults.
+        string Setting(string key, string engineDefault)
+            => rendering.TryGetValue(key, out var value) ? value : engineDefault;
+        Assert.Equal("\"forward_plus\"", Setting("renderer/rendering_method", "\"forward_plus\""));
+        Assert.Equal("\"mobile\"", Setting("renderer/rendering_method.mobile", "\"mobile\""));
+        foreach (var key in new[] {
+            "rendering_device/driver",
+            "rendering_device/driver.windows",
+            "rendering_device/driver.linuxbsd",
+        })
+            Assert.Equal("\"vulkan\"", Setting(key, "\"vulkan\""));
+        Assert.Equal("false", Assert.Contains("rendering_device/fallback_to_opengl3", rendering));
+        Assert.DoesNotContain(rendering.Values, value => value.Contains("gl_compatibility", StringComparison.Ordinal));
+    }
+
+    private static Dictionary<string, string> ReadGodotSection(string path, string section)
+    {
+        var values = new Dictionary<string, string>(StringComparer.Ordinal);
+        var inSection = false;
+        foreach (var rawLine in File.ReadLines(path)) {
+            var line = rawLine.Trim();
+            if (line.Length == 0 || line.StartsWith(';'))
+                continue;
+            if (line.StartsWith('[')) {
+                inSection = line == $"[{section}]";
+                continue;
+            }
+            var separator = line.IndexOf('=');
+            if (inSection && separator > 0)
+                values[line[..separator]] = line[(separator + 1)..];
+        }
+        return values;
+    }
+
     private static string FindRepositoryRoot()
     {
         var configuredRoot = Environment.GetEnvironmentVariable("GODEVILUTION_REPOSITORY_ROOT");

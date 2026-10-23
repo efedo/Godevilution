@@ -4,6 +4,11 @@ The checked-in presentation project pins `Godot.NET.Sdk/4.7.1`. Godot is not ass
 installed on every development machine, and repository tests that do not render
 the client must remain runnable without it.
 
+The project renders with Forward+ (Mobile on mobile exports) on Vulkan, with
+the OpenGL compatibility fallback disabled (`fallback_to_opengl3=false`). Windowed
+and `-Visible` runs therefore need a Vulkan-capable GPU and driver; Godot may
+still fall back to Direct3D 12 on Windows. `--headless` runs use no GPU renderer.
+
 Use the [work plan](../work-plan.md) for near-term order and
 [working status](../migration-status.md) for current limits. The complete L1-L4
 application journey below has not passed; do not confuse its procedure with
