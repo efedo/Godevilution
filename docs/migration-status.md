@@ -83,10 +83,13 @@ Passing a scoped test or adding a schema version does not close a milestone.
 
 ## Material limits and next decision
 
-- No normal launch shows the native world. The default client draws authored
-  content with SVG stand-ins; native Town/Cathedral (and prepared Catacombs
-  owners) exist only behind opt-in profiles. Phase 1 of the
-  [recovery plan](work-plan.md) makes the native world the default path.
+- Nothing a person can launch shows the native world. The default client draws
+  authored content with SVG stand-ins. Native Town/Cathedral routes run only as
+  headless scripted journeys on profiles compiled by hand through several tools
+  from extracted retail files; on 2026-10-23 the local Warrior Town profile was
+  already rejected as stale by the current launcher. Phase 1 of the
+  [recovery plan](work-plan.md) automates that setup and delivers a rendered,
+  human-playable Town→L4 slice.
 - Legacy native profiles admit canonical Rogue; class-bound profiles admit
   Warrior/Sorcerer in single-player Normal. Remaining classes, modes,
   difficulties and full campaigns stay open. See item 1.

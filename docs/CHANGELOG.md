@@ -39,6 +39,13 @@ contracts stay in their existing guides.
   Sol reviewer that never reviews its own work.
 - Run the Sol implementers at medium reasoning effort and the reviewer at
   extra-high effort.
+- Report per-attempt attacker/victim state when the live PvP shield-block test
+  fails, and let the live towner-travel helper retry a move rejected `TooLate`
+  after catching its model up to the host tick instead of failing.
+- Revise the work plan: mark Phase 0 done, move a rendered human-playable
+  Town→L4 slice and a two-player smoke into Phase 1 ahead of the refactors,
+  specify first-run setup end to end with automatic profile rebuilds, and record
+  which proven Catacombs pieces Phase 2 reuses.
 - Poll the legacy snapshot-timing client test until its fake server observes the
   snapshot request instead of assuming the ACK arrives within 20 ms.
 - Adopt the playable-first recovery plan in the work plan, status and inventory.
