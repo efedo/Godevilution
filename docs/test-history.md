@@ -9,6 +9,14 @@ the referenced test sources. Do not copy raw outputs into historical archives.
 
 ## Client and host verification
 
+### 2026-10-24 — C# native-source export
+
+Against a private `DIABDAT.MPQ` and the 2026-10-19 native-built profiles, the C#
+export reproduced all 19 population metadata tables, the monster runtime table
+and the inventory footprints byte for byte; recompiled Warrior and Sorcerer Town
+profiles were byte-identical apart from runtime `sessions`. CI checks the 17
+open-data tables against committed fixtures, plus synthetic SOL, CEL and CLX cases.
+
 ### 2026-10-24 — C# MPQ reader
 
 `tools/Native.Archive` passed 28 unit cases (crypto constants, explode in both

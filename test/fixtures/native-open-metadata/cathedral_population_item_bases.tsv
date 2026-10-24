@@ -1,0 +1,169 @@
+native_item_index	native_item_id	drop_rate	item_class	equip_location	cursor_graphic	item_type	name	short_name	minimum_monster_level	durability	minimum_damage	maximum_damage	minimum_armor_class	maximum_armor_class	minimum_strength	minimum_magic	minimum_dexterity	flags	misc_id	spell_id	usable	value	available
+0	0	1	4	7	4	11	Gold		1	0	0	0	0	0	0	0	0	0	0	0	true	0	true
+1	0	0	1	1	64	1	Short Sword		2	24	2	6	0	0	18	0	0	0	0	0	false	120	true
+2	0	0	2	1	83	5	Buckler		2	16	0	0	3	3	0	0	0	0	0	0	false	30	true
+3	25	0	1	1	66	4	Club		1	20	1	6	0	0	0	0	0	0	0	0	false	20	true
+4	0	0	1	2	118	3	Short Bow		1	30	1	4	0	0	0	0	0	0	0	0	false	100	true
+5	0	0	1	2	109	10	Short Staff of Mana		1	25	2	4	0	0	0	17	0	0	23	37	false	210	false
+6	17	0	1	2	106	2	Cleaver		10	10	4	24	0	0	0	0	0	0	27	0	false	2000	true
+7	57	0	2	4	78	7	The Undead Crown		0	50	0	0	15	15	0	0	0	2	27	0	false	10000	true
+8	58	0	3	5	18	12	Empyrean Band		0	0	0	0	0	0	0	0	0	0	27	0	false	8000	true
+9	0	0	5	7	76	0	Magic Rock		0	0	0	0	0	0	0	0	0	0	0	0	false	0	true
+10	59	0	3	6	44	13	Optic Amulet		0	0	0	0	0	0	0	0	0	0	27	0	false	5000	true
+11	60	0	3	5	10	12	Ring of Truth		0	0	0	0	0	0	0	0	0	0	27	0	false	1000	true
+12	0	0	5	7	126	0	Tavern Sign		0	0	0	0	0	0	0	0	0	0	0	0	false	0	true
+13	61	0	2	4	81	7	Harlequin Crest		0	15	0	0	0	0	0	0	0	0	27	0	false	15	true
+14	65	0	2	4	85	7	Veil of Steel		0	60	0	0	18	18	0	0	0	0	27	0	false	0	true
+15	63	0	3	7	17	0	Golden Elixir		15	0	0	0	0	0	0	0	0	0	0	0	false	0	true
+16	0	0	5	7	140	0	Anvil of Fury		0	0	0	0	0	0	0	0	0	0	0	0	false	0	true
+17	0	0	5	7	89	0	Black Mushroom		0	0	0	0	0	0	0	0	0	0	0	0	false	0	true
+18	0	0	5	7	40	0	Brain		0	0	0	0	0	0	0	0	0	0	0	0	false	0	true
+19	0	0	5	7	97	0	Fungal Tome		0	0	0	0	0	0	0	0	0	0	0	0	false	0	true
+20	63	0	3	7	15	0	Spectral Elixir		15	0	0	0	0	0	0	0	0	0	44	0	true	0	true
+21	0	0	5	7	25	0	Blood Stone		0	0	0	0	0	0	0	0	0	0	0	0	false	0	true
+22	62	0	5	7	96	0	Cathedral Map		0	0	0	0	0	0	0	0	0	0	42	0	true	0	false
+23	0	0	3	7	255	0	Ear		0	0	0	0	0	0	0	0	0	0	43	0	false	0	true
+24	0	0	3	7	32	0	Potion of Healing		0	0	0	0	0	0	0	0	0	0	3	0	true	50	true
+25	0	0	3	7	39	0	Potion of Mana		0	0	0	0	0	0	0	0	0	0	6	0	true	50	true
+26	0	0	3	7	1	0	Scroll of Identify		1	0	0	0	0	0	0	0	0	0	21	5	true	200	true
+27	0	0	3	7	1	0	Scroll of Town Portal		4	0	0	0	0	0	0	0	0	0	21	7	true	200	true
+28	64	0	2	3	157	8	Arkaine's Valor		0	40	0	0	0	0	0	0	0	0	27	0	false	0	true
+29	0	0	3	7	35	0	Potion of Full Healing		1	0	0	0	0	0	0	0	0	0	2	0	true	150	true
+30	0	0	3	7	0	0	Potion of Full Mana		1	0	0	0	0	0	0	0	0	0	7	0	true	150	true
+31	66	0	1	1	61	1	Griswold's Edge		8	50	4	12	0	0	40	0	0	0	27	0	false	750	true
+32	69	0	2	3	226	9	Bovine Plate		0	40	0	0	0	0	50	0	0	0	27	0	false	0	false
+33	68	0	3	7	155	0	Staff of Lazarus		0	0	0	0	0	0	0	0	0	0	0	0	false	0	true
+34	0	0	3	7	1	0	Scroll of Resurrect		1	0	0	0	0	0	0	0	0	0	22	32	true	250	true
+35	0	0	3	7	30	0	Blacksmith Oil		1	0	0	0	0	0	0	0	0	0	36	0	true	100	false
+36	0	0	1	2	109	10	Short Staff		1	25	2	4	0	0	0	0	0	0	0	0	false	20	false
+37	0	0	1	1	64	1	Sword		2	8	1	5	0	0	15	0	20	0	0	0	false	20	false
+38	0	0	1	1	51	1	Dagger		1	16	1	4	0	0	0	0	0	0	0	0	false	20	false
+39	0	0	5	7	187	0	Rune Bomb		0	0	0	0	0	0	0	0	0	0	0	0	false	0	false
+40	0	0	5	7	188	0	Theodore		0	0	0	0	0	0	0	0	0	0	0	0	false	0	false
+41	0	0	3	6	180	0	Auric Amulet		0	0	0	0	0	0	0	0	0	0	53	0	false	100	false
+42	0	0	5	7	189	0	Torn Note 1		0	0	0	0	0	0	0	0	0	0	0	0	false	0	false
+43	0	0	5	7	190	0	Torn Note 2		0	0	0	0	0	0	0	0	0	0	0	0	false	0	false
+44	0	0	5	7	191	0	Torn Note 3		0	0	0	0	0	0	0	0	0	0	0	0	false	0	false
+45	0	0	5	7	192	0	Reconstructed Note		0	0	0	0	0	0	0	0	0	0	54	0	true	0	false
+46	0	0	5	7	199	0	Brown Suit		0	0	0	0	0	0	0	0	0	0	0	0	false	0	false
+47	0	0	5	7	198	0	Grey Suit		0	0	0	0	0	0	0	0	0	0	0	0	false	0	false
+48	0	1	2	4	91	7	Cap	Cap	1	15	0	0	1	3	0	0	0	0	0	0	false	15	true
+49	34	1	2	4	90	7	Skull Cap	Cap	4	20	0	0	2	4	0	0	0	0	0	0	false	25	true
+50	35	1	2	4	82	7	Helm	Helm	8	30	0	0	4	6	25	0	0	0	0	0	false	40	true
+51	0	1	2	4	75	7	Full Helm	Helm	12	35	0	0	6	8	35	0	0	0	0	0	false	90	true
+52	37	1	2	4	95	7	Crown	Crown	16	40	0	0	8	12	0	0	0	0	0	0	false	200	true
+53	36	1	2	4	98	7	Great Helm	Helm	20	60	0	0	10	15	50	0	0	0	0	0	false	400	true
+54	46	1	2	3	150	6	Cape	Cape	1	12	0	0	1	5	0	0	0	0	0	0	false	10	true
+55	39	1	2	3	128	6	Rags	Rags	1	6	0	0	2	6	0	0	0	0	0	0	false	5	true
+56	41	1	2	3	149	6	Cloak	Cloak	2	18	0	0	3	7	0	0	0	0	0	0	false	40	true
+57	42	1	2	3	137	6	Robe	Robe	3	24	0	0	4	7	0	0	0	0	0	0	false	75	true
+58	0	1	2	3	129	6	Quilted Armor	Armor	4	30	0	0	7	10	0	0	0	0	0	0	false	200	true
+59	44	1	2	3	135	6	Leather Armor	Armor	6	35	0	0	10	13	0	0	0	0	0	0	false	300	true
+60	0	1	2	3	127	6	Hard Leather Armor	Armor	7	40	0	0	11	14	0	0	0	0	0	0	false	450	true
+61	40	1	2	3	107	6	Studded Leather Armor	Armor	9	45	0	0	15	17	20	0	0	0	0	0	false	700	true
+62	0	1	2	3	154	8	Ring Mail	Mail	11	50	0	0	17	20	25	0	0	0	0	0	false	900	true
+63	43	1	2	3	111	8	Chain Mail	Mail	13	55	0	0	18	22	30	0	0	0	0	0	false	1250	true
+64	0	1	2	3	114	8	Scale Mail	Mail	15	60	0	0	23	28	35	0	0	0	0	0	false	2300	true
+65	45	1	2	3	153	9	Breast Plate	Plate	16	80	0	0	20	24	40	0	0	0	0	0	false	2800	true
+66	0	1	2	3	136	8	Splint Mail	Mail	17	65	0	0	30	35	40	0	0	0	0	0	false	3250	true
+67	47	1	2	3	103	9	Plate Mail	Plate	19	75	0	0	42	50	60	0	0	0	0	0	false	4600	true
+68	0	1	2	3	103	9	Field Plate	Plate	21	80	0	0	40	45	65	0	0	0	0	0	false	5800	true
+69	0	1	2	3	152	9	Gothic Plate	Plate	23	100	0	0	50	60	80	0	0	0	0	0	false	8000	true
+70	48	1	2	3	151	9	Full Plate Mail	Plate	25	90	0	0	60	75	90	0	0	0	0	0	false	6500	true
+71	49	1	2	1	83	5	Buckler	Shield	1	16	0	0	1	5	0	0	0	0	0	0	false	30	true
+72	50	1	2	1	105	5	Small Shield	Shield	5	24	0	0	3	8	25	0	0	0	0	0	false	90	true
+73	51	1	2	1	147	5	Large Shield	Shield	9	32	0	0	5	10	40	0	0	0	0	0	false	200	true
+74	52	1	2	1	113	5	Kite Shield	Shield	14	40	0	0	8	15	50	0	0	0	0	0	false	400	true
+75	53	1	2	1	132	5	Tower Shield	Shield	20	50	0	0	12	20	60	0	0	0	0	0	false	850	true
+76	53	1	2	1	148	5	Gothic Shield	Shield	23	60	0	0	14	18	80	0	0	0	0	0	false	2300	true
+77	0	1	3	7	32	0	Potion of Healing		1	0	0	0	0	0	0	0	0	0	3	0	true	50	true
+78	0	1	3	7	35	0	Potion of Full Healing		1	0	0	0	0	0	0	0	0	0	2	0	true	150	true
+79	0	1	3	7	39	0	Potion of Mana		1	0	0	0	0	0	0	0	0	0	6	0	true	50	true
+80	0	1	3	7	0	0	Potion of Full Mana		1	0	0	0	0	0	0	0	0	0	7	0	true	150	true
+81	0	1	3	7	37	0	Potion of Rejuvenation		3	0	0	0	0	0	0	0	0	0	18	0	true	120	true
+82	0	1	3	7	33	0	Potion of Full Rejuvenation		7	0	0	0	0	0	0	0	0	0	19	0	true	600	true
+83	0	1	3	7	30	0	Blacksmith Oil		1	0	0	0	0	0	0	0	0	0	36	0	true	100	false
+84	0	1	3	7	30	0	Oil of Accuracy		1	0	0	0	0	0	0	0	0	0	31	0	true	500	false
+85	0	1	3	7	30	0	Oil of Sharpness		1	0	0	0	0	0	0	0	0	0	33	0	true	500	false
+86	0	1	3	7	30	0	Oil		10	0	0	0	0	0	0	0	0	0	30	0	true	0	false
+87	0	1	3	7	38	0	Elixir of Strength		15	0	0	0	0	0	0	0	0	0	10	0	true	5000	true
+88	0	1	3	7	34	0	Elixir of Magic		15	0	0	0	0	0	0	0	0	0	11	0	true	5000	true
+89	0	1	3	7	36	0	Elixir of Dexterity		15	0	0	0	0	0	0	0	0	0	12	0	true	5000	true
+90	0	1	3	7	31	0	Elixir of Vitality		20	0	0	0	0	0	0	0	0	0	13	0	true	5000	true
+91	0	1	3	7	1	0	Scroll of Healing		1	0	0	0	0	0	0	0	0	0	21	2	true	50	true
+92	0	1	3	7	1	0	Scroll of Search		1	0	0	0	0	0	0	0	0	0	21	46	true	50	false
+93	0	1	3	7	1	0	Scroll of Lightning		4	0	0	0	0	0	0	0	0	0	22	3	true	150	true
+94	0	1	3	7	1	0	Scroll of Identify		1	0	0	0	0	0	0	0	0	0	21	5	true	100	true
+95	0	1	3	7	1	0	Scroll of Resurrect		1	0	0	0	0	0	0	0	0	0	22	32	true	250	true
+96	0	1	3	7	1	0	Scroll of Fire Wall		4	0	0	0	0	0	0	17	0	0	22	6	true	400	true
+97	0	1	3	7	1	0	Scroll of Inferno		1	0	0	0	0	0	0	19	0	0	22	20	true	100	true
+98	0	1	3	7	1	0	Scroll of Town Portal		4	0	0	0	0	0	0	0	0	0	21	7	true	200	true
+99	0	1	3	7	1	0	Scroll of Flash		6	0	0	0	0	0	0	21	0	0	22	4	true	500	true
+100	0	1	3	7	1	0	Scroll of Infravision		8	0	0	0	0	0	0	23	0	0	21	9	true	600	true
+101	0	1	3	7	1	0	Scroll of Phasing		6	0	0	0	0	0	0	25	0	0	21	10	true	200	true
+102	0	1	3	7	1	0	Scroll of Mana Shield		8	0	0	0	0	0	0	0	0	0	21	11	true	1200	true
+103	0	1	3	7	1	0	Scroll of Flame Wave		10	0	0	0	0	0	0	29	0	0	22	15	true	650	true
+104	0	1	3	7	1	0	Scroll of Fireball		8	0	0	0	0	0	0	31	0	0	22	12	true	300	true
+105	0	1	3	7	1	0	Scroll of Stone Curse		6	0	0	0	0	0	0	33	0	0	22	8	true	800	true
+106	0	1	3	7	1	0	Scroll of Chain Lightning		10	0	0	0	0	0	0	35	0	0	22	14	true	750	true
+107	0	1	3	7	1	0	Scroll of Guardian		12	0	0	0	0	0	0	47	0	0	22	13	true	950	true
+108	0	0	3	7	255	0			0	0	0	0	0	0	0	0	0	0	0	0	false	0	true
+109	0	1	3	7	1	0	Scroll of Nova		14	0	0	0	0	0	0	57	0	0	21	18	true	1300	true
+110	0	1	3	7	1	0	Scroll of Golem		10	0	0	0	0	0	0	51	0	0	22	21	true	1100	true
+111	0	0	3	7	255	0			0	0	0	0	0	0	0	0	0	0	0	0	false	0	true
+112	0	1	3	7	1	0	Scroll of Teleport		14	0	0	0	0	0	0	81	0	0	21	23	true	3000	true
+113	0	1	3	7	1	0	Scroll of Apocalypse		22	0	0	0	0	0	0	117	0	0	21	24	true	2000	true
+114	0	1	3	7	88	0	Book of 		2	0	0	0	0	0	0	0	0	0	24	0	true	0	true
+115	0	1	3	7	88	0	Book of 		8	0	0	0	0	0	0	0	0	0	24	0	true	0	true
+116	0	1	3	7	88	0	Book of 		14	0	0	0	0	0	0	0	0	0	24	0	true	0	true
+117	0	1	3	7	88	0	Book of 		20	0	0	0	0	0	0	0	0	0	24	0	true	0	true
+118	7	1	1	1	51	1	Dagger	Dagger	1	16	1	4	0	0	0	0	0	0	0	0	false	60	true
+119	0	1	1	1	64	1	Short Sword	Sword	1	24	2	6	0	0	18	0	0	0	0	0	false	120	true
+120	8	1	1	1	62	1	Falchion	Sword	2	20	4	8	0	0	30	0	0	0	0	0	false	250	true
+121	12	1	1	1	72	1	Scimitar	Sword	4	28	3	7	0	0	23	0	23	0	0	0	false	200	true
+122	9	1	1	1	65	1	Claymore	Sword	5	36	1	12	0	0	35	0	0	0	0	0	false	450	true
+123	0	1	1	1	56	1	Blade	Blade	4	30	3	8	0	0	25	0	30	0	0	0	false	280	true
+124	11	1	1	1	67	1	Sabre	Sabre	1	45	1	8	0	0	17	0	0	0	0	0	false	170	true
+125	13	1	1	1	60	1	Long Sword	Sword	6	40	2	10	0	0	30	0	30	0	0	0	false	350	true
+126	10	1	1	1	61	1	Broad Sword	Sword	8	50	4	12	0	0	40	0	0	0	0	0	false	750	true
+127	14	1	1	1	57	1	Bastard Sword	Sword	10	60	6	15	0	0	50	0	0	0	0	0	false	1000	true
+128	15	1	1	2	110	1	Two-Handed Sword	Sword	14	75	8	16	0	0	65	0	0	0	0	0	false	1800	true
+129	16	1	1	2	134	1	Great Sword	Sword	17	100	10	20	0	0	75	0	0	0	0	0	false	3000	true
+130	20	1	1	2	112	2	Small Axe	Axe	2	24	2	10	0	0	0	0	0	0	0	0	false	150	true
+131	0	1	1	2	144	2	Axe	Axe	4	32	4	12	0	0	22	0	0	0	0	0	false	450	true
+132	18	1	1	2	142	2	Large Axe	Axe	6	40	6	16	0	0	30	0	0	0	0	0	false	750	true
+133	19	1	1	2	141	2	Broad Axe	Axe	8	50	8	20	0	0	50	0	0	0	0	0	false	1000	true
+134	21	1	1	2	101	2	Battle Axe	Axe	10	60	10	25	0	0	65	0	0	0	0	0	false	1500	true
+135	22	1	1	2	143	2	Great Axe	Axe	12	75	12	30	0	0	80	0	0	0	0	0	false	2500	true
+136	23	1	1	1	59	4	Mace	Mace	2	32	1	8	0	0	16	0	0	0	0	0	false	200	true
+137	24	1	1	1	63	4	Morning Star	Mace	3	40	1	10	0	0	26	0	0	0	0	0	false	300	true
+138	27	1	1	1	121	4	War Hammer	Hammer	5	50	5	9	0	0	40	0	0	0	0	0	false	600	true
+139	25	1	1	1	70	4	Spiked Club	Club	4	20	3	6	0	0	18	0	0	0	0	0	false	225	true
+140	25	1	1	1	66	4	Club	Club	1	20	1	6	0	0	0	0	0	0	0	0	false	20	true
+141	28	1	1	1	131	4	Flail	Flail	7	36	2	12	0	0	30	0	0	0	0	0	false	500	true
+142	26	1	1	2	122	4	Maul	Maul	10	50	6	20	0	0	55	0	0	0	0	0	false	900	true
+143	1	2	1	2	118	3	Short Bow	Bow	1	30	1	4	0	0	0	0	0	0	0	0	false	100	true
+144	3	2	1	2	102	3	Hunter's Bow	Bow	3	40	2	5	0	0	20	0	35	0	0	0	false	350	true
+145	2	2	1	2	102	3	Long Bow	Bow	5	35	1	6	0	0	25	0	30	0	0	0	false	250	true
+146	4	2	1	2	133	3	Composite Bow	Bow	7	45	3	6	0	0	25	0	40	0	0	0	false	600	true
+147	0	2	1	2	167	3	Short Battle Bow	Bow	9	45	3	7	0	0	30	0	50	0	0	0	false	750	true
+148	6	2	1	2	119	3	Long Battle Bow	Bow	11	50	1	10	0	0	30	0	60	0	0	0	false	1000	true
+149	0	2	1	2	165	3	Short War Bow	Bow	15	55	4	8	0	0	35	0	70	0	0	0	false	1500	true
+150	5	2	1	2	120	3	Long War Bow	Bow	19	60	1	14	0	0	45	0	80	0	0	0	false	2000	true
+151	30	1	1	2	109	10	Short Staff	Staff	1	25	2	4	0	0	0	0	0	0	23	0	false	30	true
+152	29	1	1	2	123	10	Long Staff	Staff	4	35	4	8	0	0	0	0	0	0	23	0	false	100	true
+153	31	1	1	2	166	10	Composite Staff	Staff	6	45	5	10	0	0	0	0	0	0	23	0	false	500	true
+154	32	1	1	2	109	10	Quarter Staff	Staff	9	55	6	12	0	0	20	0	0	0	23	0	false	1000	true
+155	33	1	1	2	124	10	War Staff	Staff	12	75	8	16	0	0	30	0	0	0	23	0	false	1500	true
+156	54	1	3	5	12	12	Ring	Ring	5	0	0	0	0	0	0	0	0	0	25	0	false	1000	true
+157	54	1	3	5	12	12	Ring	Ring	10	0	0	0	0	0	0	0	0	0	25	0	false	1000	true
+158	54	1	3	5	12	12	Ring	Ring	15	0	0	0	0	0	0	0	0	0	25	0	false	1000	true
+159	56	1	3	6	45	13	Amulet	Amulet	8	0	0	0	0	0	0	0	0	0	26	0	false	1200	true
+160	56	1	3	6	45	13	Amulet	Amulet	16	0	0	0	0	0	0	0	0	0	26	0	false	1200	true
+161	0	1	3	7	193	0	Rune of Fire	Rune	1	0	0	0	0	0	0	0	0	0	47	0	true	100	false
+162	0	1	3	7	195	0	Rune of Lightning	Rune	3	0	0	0	0	0	0	13	0	0	48	0	true	200	false
+163	0	1	3	7	194	0	Greater Rune of Fire	Rune	7	0	0	0	0	0	0	42	0	0	50	0	true	400	false
+164	0	1	3	7	196	0	Greater Rune of Lightning	Rune	7	0	0	0	0	0	0	42	0	0	49	0	true	500	false
+165	0	1	3	7	197	0	Rune of Stone	Rune	7	0	0	0	0	0	0	25	0	0	51	0	true	300	false
+166	0	0	1	2	109	10	Short Staff of Charged Bolt		1	25	2	4	0	0	0	25	0	0	23	30	false	470	true
+167	0	0	3	7	16	0	Arena Potion		7	0	0	0	0	0	0	0	0	0	55	0	true	0	true

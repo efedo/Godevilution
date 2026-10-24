@@ -1,0 +1,139 @@
+native_monster_id	stable_symbol	name	level	to_hit	anim_frame_num	to_hit_special	anim_frame_num_special	monster_class	selection_region	treasure	experience	resistance_hell
+0	NativeMonster_000	Zombie	1	10	8	0	0	0	3	0	54	8
+1	NativeMonster_001	Ghoul	2	10	8	0	0	0	3	0	58	8
+2	NativeMonster_002	Rotting Carcass	4	25	8	0	0	0	3	0	136	10
+3	NativeMonster_003	Black Death	6	30	8	0	0	0	3	0	240	12
+4	NativeMonster_004	Fallen One	1	15	7	0	5	2	3	0	46	0
+5	NativeMonster_005	Carver	3	20	7	0	5	2	3	0	80	0
+6	NativeMonster_006	Devil Kin	5	25	7	0	5	2	3	0	155	2
+7	NativeMonster_007	Dark One	7	30	7	0	5	2	3	0	255	4
+8	NativeMonster_008	Skeleton	1	20	8	0	0	0	3	0	64	8
+9	NativeMonster_009	Corpse Axe	2	25	8	0	0	0	3	0	68	8
+10	NativeMonster_010	Burning Dead	4	30	8	0	0	0	3	0	154	24
+11	NativeMonster_011	Horror	6	35	8	0	0	0	3	0	264	12
+12	NativeMonster_012	Fallen One	1	15	8	0	5	2	3	0	52	0
+13	NativeMonster_013	Carver	3	20	8	0	5	2	3	0	90	0
+14	NativeMonster_014	Devil Kin	5	25	8	0	5	2	3	0	180	2
+15	NativeMonster_015	Dark One	7	30	8	0	5	2	3	0	280	4
+16	NativeMonster_016	Scavenger	2	20	7	0	0	2	3	0	80	2
+17	NativeMonster_017	Plague Eater	4	30	7	0	0	2	3	0	188	4
+18	NativeMonster_018	Shadow Beast	6	35	7	0	0	2	3	0	375	2
+19	NativeMonster_019	Bone Gasher	8	35	7	0	0	2	3	0	552	4
+20	NativeMonster_020	Skeleton	3	15	12	0	0	0	3	0	110	8
+21	NativeMonster_021	Corpse Bow	5	25	12	0	0	0	3	0	210	8
+22	NativeMonster_022	Burning Dead	7	30	12	0	0	0	3	0	364	24
+23	NativeMonster_023	Horror	9	35	12	0	0	0	3	0	594	12
+24	NativeMonster_024	Skeleton Captain	2	20	8	0	0	0	3	0	90	8
+25	NativeMonster_025	Corpse Captain	4	30	8	0	0	0	3	0	200	8
+26	NativeMonster_026	Burning Dead Captain	6	35	8	0	0	0	3	0	393	24
+27	NativeMonster_027	Horror Captain	8	40	8	0	0	0	3	0	604	12
+28	NativeMonster_028	Invisible Lord	14	65	8	0	0	1	3	0	2000	7
+29	NativeMonster_029	Hidden	5	35	8	0	0	1	3	0	278	0
+30	NativeMonster_030	Stalker	9	40	8	0	0	1	3	0	630	0
+31	NativeMonster_031	Unseen	11	45	8	0	0	1	3	0	935	8
+32	NativeMonster_032	Illusion Weaver	13	60	8	0	0	1	3	0	1500	10
+33	NativeMonster_033	Satyr Lord	28	90	8	0	0	2	3	0	2800	49
+34	NativeMonster_034	Flesh Clan	8	50	8	0	0	1	3	0	460	0
+35	NativeMonster_035	Stone Clan	10	60	8	0	0	1	3	0	685	8
+36	NativeMonster_036	Fire Clan	12	70	8	0	0	1	3	0	906	16
+37	NativeMonster_037	Night Clan	14	80	8	15	0	1	3	0	1190	8
+38	NativeMonster_038	Fiend	3	35	5	0	0	2	6	16384	102	0
+39	NativeMonster_039	Blink	7	45	5	0	0	2	6	16384	340	0
+40	NativeMonster_040	Gloom	9	70	5	0	0	2	6	16384	509	1
+41	NativeMonster_041	Familiar	13	50	5	0	0	1	6	16384	448	33
+42	NativeMonster_042	Flesh Clan	8	35	13	0	0	1	3	0	448	0
+43	NativeMonster_043	Stone Clan	10	40	13	0	0	1	3	0	645	8
+44	NativeMonster_044	Fire Clan	12	45	13	0	0	1	3	0	822	16
+45	NativeMonster_045	Night Clan	14	50	13	15	0	1	3	0	1092	8
+46	NativeMonster_046	Acid Beast	11	40	8	25	8	2	3	0	846	136
+47	NativeMonster_047	Poison Spitter	15	45	8	25	8	2	3	0	1248	136
+48	NativeMonster_048	Pit Beast	21	55	8	35	8	2	3	0	2060	140
+49	NativeMonster_049	Lava Maw	25	65	8	40	8	2	3	0	2940	152
+50	NativeMonster_050	Skeleton King	9	60	8	0	0	0	7	32769	570	56
+51	NativeMonster_051	The Butcher	1	50	8	0	0	1	3	32768	710	49
+52	NativeMonster_052	Overlord	10	55	8	0	0	1	3	0	635	2
+53	NativeMonster_053	Mud Man	14	60	8	0	0	1	3	0	1165	32
+54	NativeMonster_054	Toad Demon	16	70	8	40	0	1	3	0	1380	12
+55	NativeMonster_055	Flayed One	20	85	8	0	0	1	3	0	2058	24
+56	NativeMonster_056	Wyrm	11	40	8	0	0	2	3	0	660	1
+57	NativeMonster_057	Cave Slug	13	50	8	0	0	2	3	0	994	1
+58	NativeMonster_058	Devil Wyrm	15	55	8	0	0	2	3	0	1320	3
+59	NativeMonster_059	Devourer	17	60	8	0	0	2	3	0	1827	3
+60	NativeMonster_060	Magma Demon	13	45	4	50	13	1	7	0	1076	24
+61	NativeMonster_061	Blood Stone	14	50	4	50	14	1	7	0	1309	24
+62	NativeMonster_062	Hell Stone	16	60	4	60	14	1	7	0	1680	24
+63	NativeMonster_063	Lava Lord	18	75	4	60	14	1	7	0	2124	24
+64	NativeMonster_064	Horned Demon	13	60	7	100	0	2	7	0	1172	2
+65	NativeMonster_065	Mud Runner	15	70	7	100	0	2	7	0	1404	2
+66	NativeMonster_066	Frost Charger	17	80	7	100	0	2	7	0	1720	12
+67	NativeMonster_067	Obsidian Lord	19	90	7	100	0	2	7	0	1809	56
+68	NativeMonster_068	oldboned	12	60	8	12	0	1	7	0	1344	8
+69	NativeMonster_069	Red Death	16	75	5	0	0	1	7	0	2168	24
+70	NativeMonster_070	Litch Demon	18	80	5	0	0	1	7	0	2736	40
+71	NativeMonster_071	Undead Balrog	22	85	5	0	0	1	7	0	3575	14
+72	NativeMonster_072	Incinerator	16	75	8	0	0	1	3	0	1888	24
+73	NativeMonster_073	Flame Lord	18	75	8	0	0	1	3	0	2250	24
+74	NativeMonster_074	Doom Fire	20	80	8	0	0	1	3	0	2740	28
+75	NativeMonster_075	Hell Burner	22	85	8	0	0	1	3	0	3355	28
+76	NativeMonster_076	Red Storm	18	80	5	75	8	1	7	0	2160	40
+77	NativeMonster_077	Storm Rider	20	80	5	80	8	1	7	0	2391	40
+78	NativeMonster_078	Storm Lord	22	85	5	75	8	1	7	0	2775	40
+79	NativeMonster_079	Maelstrom	24	90	5	75	8	1	7	0	3177	40
+80	NativeMonster_080	Devil Kin Brute	27	100	6	0	0	2	3	0	2400	7
+81	NativeMonster_081	Winged-Demon	9	50	7	0	0	1	6	0	662	24
+82	NativeMonster_082	Gargoyle	13	65	7	0	0	1	6	0	1205	40
+83	NativeMonster_083	Blood Claw	19	80	7	0	0	1	6	0	1873	28
+84	NativeMonster_084	Death Wing	23	95	7	0	0	1	6	0	2278	42
+85	NativeMonster_085	Slayer	20	100	8	0	3	1	7	0	2300	17
+86	NativeMonster_086	Guardian	22	110	8	0	3	1	7	0	2714	17
+87	NativeMonster_087	Vortex Lord	24	120	8	0	3	1	7	0	3252	21
+88	NativeMonster_088	Balrog	26	130	8	0	3	1	7	0	3643	21
+89	NativeMonster_089	Cave Viper	21	90	8	0	0	1	7	0	2725	8
+90	NativeMonster_090	Fire Drake	23	105	8	0	0	1	7	0	3139	24
+91	NativeMonster_091	Gold Viper	25	120	8	0	0	1	7	0	3540	12
+92	NativeMonster_092	Azure Drake	27	130	8	0	0	1	7	0	3791	42
+93	NativeMonster_093	Black Knight	24	110	8	0	0	1	7	0	3360	33
+94	NativeMonster_094	Doom Guard	26	130	8	0	0	1	7	0	3650	17
+95	NativeMonster_095	Steel Lord	28	120	8	0	0	1	7	0	4252	28
+96	NativeMonster_096	Blood Knight	30	130	8	0	0	1	7	0	5130	42
+97	NativeMonster_097	The Shredded	23	75	7	0	0	0	3	0	900	6
+98	NativeMonster_098	Hollow One	27	75	7	0	0	0	3	0	4374	28
+99	NativeMonster_099	Pain Master	29	80	7	0	0	0	3	0	5147	28
+100	NativeMonster_100	Reality Weaver	30	85	7	0	0	0	3	0	5925	49
+101	NativeMonster_101	Succubus	24	100	10	0	0	1	3	0	3696	10
+102	NativeMonster_102	Snow Witch	26	110	10	0	0	1	3	0	4084	12
+103	NativeMonster_103	Hell Spawn	28	115	10	0	0	1	3	0	4480	28
+104	NativeMonster_104	Soul Burner	30	120	10	0	0	1	3	0	4644	56
+105	NativeMonster_105	Counselor	25	90	8	0	0	1	7	0	4070	7
+106	NativeMonster_106	Magistrate	27	100	8	0	0	1	7	0	4478	28
+107	NativeMonster_107	Cabalist	29	110	8	0	0	1	7	0	4929	42
+108	NativeMonster_108	Advocate	30	120	8	0	0	1	7	0	4968	56
+109	NativeMonster_109	Golem	12	0	7	0	0	1	0	0	0	0
+110	NativeMonster_110	The Dark Lord	30	220	4	0	11	1	7	0	31666	14
+111	NativeMonster_111	The Arch-Litch Malignus	30	120	8	0	0	1	7	0	4968	56
+112	NativeMonster_112		0	0	0	0	0	0	0	0	0	0
+113	NativeMonster_113		0	0	0	0	0	0	0	0	0	0
+114	NativeMonster_114		0	0	0	0	0	0	0	0	0	0
+115	NativeMonster_115		0	0	0	0	0	0	0	0	0	0
+116	NativeMonster_116		0	0	0	0	0	0	0	0	0	0
+117	NativeMonster_117		0	0	0	0	0	0	0	0	0	0
+118	NativeMonster_118		0	0	0	0	0	0	0	0	0	0
+119	NativeMonster_119		0	0	0	0	0	0	0	0	0	0
+120	NativeMonster_120		0	0	0	0	0	0	0	0	0	0
+121	NativeMonster_121		0	0	0	0	0	0	0	0	0	0
+122	NativeMonster_122		0	0	0	0	0	0	0	0	0	0
+123	NativeMonster_123		0	0	0	0	0	0	0	0	0	0
+124	NativeMonster_124		0	0	0	0	0	0	0	0	0	0
+125	NativeMonster_125		0	0	0	0	0	0	0	0	0	0
+126	NativeMonster_126		0	0	0	0	0	0	0	0	0	0
+127	NativeMonster_127		0	0	0	0	0	0	0	0	0	0
+128	NativeMonster_128		0	0	0	0	0	0	0	0	0	0
+129	NativeMonster_129		0	0	0	0	0	0	0	0	0	0
+130	NativeMonster_130		0	0	0	0	0	0	0	0	0	0
+131	NativeMonster_131		0	0	0	0	0	0	0	0	0	0
+132	NativeMonster_132		0	0	0	0	0	0	0	0	0	0
+133	NativeMonster_133		0	0	0	0	0	0	0	0	0	0
+134	NativeMonster_134		0	0	0	0	0	0	0	0	0	0
+135	NativeMonster_135		0	0	0	0	0	0	0	0	0	0
+136	NativeMonster_136		0	0	0	0	0	0	0	0	0	0
+137	NativeMonster_137		0	0	0	0	0	0	0	0	0	0

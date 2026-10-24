@@ -1,0 +1,2 @@
+magic_chance_base	magic_chance_per_level	unique_chance_normal	unique_chance_unique	bonus_levels_unique	prefix_percent	suffix_percent	only_good_chance	no_drop_percent	gold_percent
+10	1	1	15	4	25	66	66	59	74

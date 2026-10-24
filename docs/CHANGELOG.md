@@ -5,6 +5,16 @@ acceptance gates are tracked in [working status](migration-status.md); verificat
 is summarized in [test history](test-history.md). Protocol and architecture
 contracts stay in their existing guides.
 
+## 2026-10-24
+
+- Add `Cathedral.Playtest --export-native-sources` (batch 1.1b): C# ports of the
+  native item, spell, monster, object, unique-monster, level-rule, Cathedral SOL
+  and cursor-footprint loaders build every native profile compiler input from the
+  player's archive, the open assets and source constants, with no native engine.
+  Warrior and Sorcerer profiles compiled from it are byte-identical to the
+  native-built ones. Open-data tables are pinned in
+  `test/fixtures/native-open-metadata` and checked in CI.
+
 ## 2026-10-21
 
 - Fix the native Cathedral barrel useful-item test fixture: its canonical

@@ -43,6 +43,10 @@ Godot presentation client remain unfinished. The server does not require MPQs.
   actual native Town/Cathedral draws through shared isometric input, including
   native Town specials and exact cold restore. Native animation cursors, complete
   actor/object/effect coverage and rendered graphical parity remain open.
+- Native profile inputs (Cathedral population metadata, monster runtime, item
+  footprints, Town sources) are now built in C# from the player's archive and the
+  open assets; the resulting class profiles are byte-identical to native-built ones.
+  The launcher does not run this automatically yet (batch 1.1c).
 - The pure MPQ-free Town family matches all 191 native cases. Additive format-5
   Warrior/Sorcerer profiles now compile semantic Town inputs and canonical
   residents, retain separate 112x112 fine/special and 40x40 coarse/protected

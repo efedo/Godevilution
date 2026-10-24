@@ -15,6 +15,7 @@ internal static class Program
     private const string NativePopulationUsage = "Cathedral.Playtest --native-cathedral-population --base-directory <pack> --geometry-directory <semantic TSVs> --metadata-directory <complete population pack> --monster-runtime-table <TSV> --inventory-footprints <captured TSV> --output-directory <new directory> --depth-seeds 2588,2588,1,4294967295";
     private const string NativeDepthProgressionUsage = "Cathedral.Playtest --native-cathedral-depth-progression --base-directory <pack> --geometry-directory <semantic TSVs> --metadata-directory <complete population pack> --monster-runtime-table <TSV> --inventory-footprints <captured TSV> --output-directory <new directory> --depth-seeds 2588,2588,1,4294967295";
     private const string NativeClassProgressionUsage = NativeDepthProgressionUsage + " --native-class <warrior|sorcerer>";
+    private const string NativeSourceExportUsage = "Cathedral.Playtest --export-native-sources --archive <DIABDAT.MPQ> --assets-directory <assets> --output-directory <new directory>";
     private const string NativeTownProgressionUsage = "Cathedral.Playtest --native-cathedral-town-progression --class-profile-directory <compiled format-4 profile> --town-source-directory <extracted Town source> --roster-table <towners.tsv> --output-directory <new directory> --town-seed <uint32>";
 
     public static int Main(string[] args)
@@ -31,8 +32,11 @@ internal static class Program
                 Console.WriteLine(NativeDepthProgressionUsage);
                 Console.WriteLine(NativeClassProgressionUsage);
                 Console.WriteLine(NativeTownProgressionUsage);
+                Console.WriteLine(NativeSourceExportUsage);
                 return 0;
             }
+            if (args.Contains("--export-native-sources", StringComparer.Ordinal))
+                return ExportNativeSources(args);
             if (args.Contains("--native-cathedral-town-progression", StringComparer.Ordinal))
                 return CompileNativeTownProgression(args);
             if (args.Contains("--native-cathedral-population", StringComparer.Ordinal)
@@ -114,6 +118,41 @@ internal static class Program
         Console.WriteLine($"Compiled explicit native Town profile: {Path.GetFullPath(outputDirectory)}");
         Console.WriteLine($"Town seed: {profile.TownInitialSeed}; content manifest: {profile.ContentManifestHash}");
         Console.WriteLine("Format 5 adds semantic Town geometry to a qualified class-progression profile; it does not change format-4 profiles.");
+        return 0;
+    }
+
+    /** Writes the native profile compiler inputs from the player's archive and the open assets. */
+    private static int ExportNativeSources(string[] args)
+    {
+        var values = new Dictionary<string, string>(StringComparer.Ordinal);
+        var selected = false;
+        for (var index = 0; index < args.Length; index++) {
+            if (args[index] == "--export-native-sources") {
+                if (selected)
+                    throw new ArgumentException(NativeSourceExportUsage);
+                selected = true;
+            } else if (args[index] is not ("--archive" or "--assets-directory" or "--output-directory")
+                || index + 1 >= args.Length || string.IsNullOrWhiteSpace(args[index + 1])
+                || !values.TryAdd(args[index], args[++index])) {
+                throw new ArgumentException(NativeSourceExportUsage);
+            }
+        }
+        if (!selected || !values.TryGetValue("--archive", out var archivePath)
+            || !values.TryGetValue("--assets-directory", out var assetsDirectory)
+            || !values.TryGetValue("--output-directory", out var outputDirectory))
+            throw new ArgumentException(NativeSourceExportUsage);
+        RejectNativeOutputInputOverlap(outputDirectory, [archivePath, assetsDirectory]);
+        var output = Path.GetFullPath(outputDirectory);
+        if (Path.Exists(output))
+            throw new IOException("The native source export output must be a new path.");
+        using var archive = Godevilution.Tools.Archive.MpqArchive.Open(archivePath);
+        var layout = NativeSourceExport.Write(archive, assetsDirectory, output);
+        Console.WriteLine($"Exported native profile sources: {output}");
+        Console.WriteLine($"Geometry: {layout.GeometryDirectory}");
+        Console.WriteLine($"Population metadata sources: {layout.MetadataDirectory}");
+        Console.WriteLine($"Monster runtime: {layout.MonsterRuntimeTable}; footprints: {layout.InventoryFootprintTable}");
+        Console.WriteLine($"Town sources: {layout.TownSourceDirectory}");
+        Console.WriteLine("Retail-derived output; keep it local and never commit or upload it.");
         return 0;
     }
 

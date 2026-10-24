@@ -253,6 +253,26 @@ The wire has no complete native animation cursor. Native action-frame scheduling
 scene palette cycling/light/vision, isometric scene placement, tiles and matched
 rendered scenes remain open. Headless draw observations do not certify those gates.
 
+## Native profile sources without the native engine
+
+`--export-native-sources` builds every native profile compiler input in C# from
+the player's archive (read with `tools/Native.Archive`), the open `assets` and
+native source constants, replacing the native capture and export steps:
+
+```powershell
+dotnet run --project tools/Cathedral.Playtest -- --export-native-sources --archive <DIABDAT.MPQ> --assets-directory assets --output-directory .local/native-sources
+```
+
+It writes `geometry/`, `population-metadata/` (the `--compile-population-metadata`
+input), `cathedral_population_monster_runtime.tsv`, `native-rogue-l1-inventory.tsv`
+and `town/` (the `--town-source-directory` input; the roster is
+`assets/txtdata/towners/towners.tsv`). The output is retail-derived: keep it local.
+Warrior and Sorcerer Town profiles compiled from it are byte-identical to the
+native-built profiles. `NativeSourceExportReferenceTests` (explicit) repeats that
+check given `GODEVILUTION_NATIVE_SOURCE_ARCHIVE` and a compiled
+`GODEVILUTION_NATIVE_SOURCE_REFERENCE_PROFILE`; CI checks the open-data tables
+against `test/fixtures/native-open-metadata`.
+
 ## Native Warrior and Sorcerer profiles
 
 Add `--native-class warrior` or `--native-class sorcerer` to the explicit

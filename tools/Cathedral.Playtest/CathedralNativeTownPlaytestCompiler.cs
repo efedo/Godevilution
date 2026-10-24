@@ -63,6 +63,9 @@ public static class CathedralNativeTownPlaytestCompiler
         ("automap", "automap.dun", 40, 40),
     ];
 
+    /** Files CompileTownPack reads from the Town source directory (levels\towndata in the archive). */
+    public static IReadOnlyList<string> SourceFileNames { get; } = [.. Maps.Select(map => map.FileName), "town.til", "town.sol"];
+
     private sealed record NativeTownCoarseMap(int Width, int Height, IReadOnlyList<ushort> TileLayer);
 
     private static readonly (string SourceType, uint Id, string Symbol, bool Publish)[] TownerTypes = [
