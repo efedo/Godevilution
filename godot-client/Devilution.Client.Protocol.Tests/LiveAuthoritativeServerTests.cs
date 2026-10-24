@@ -5951,6 +5951,16 @@ public sealed partial class LiveAuthoritativeServerTests
             }, requestedTick);
             await client.PollAsync(TestContext.Current.CancellationToken);
             var acknowledgement = await WaitForAcknowledgementAsync(client, sequence);
+            if (acknowledgement.Status == CommandStatus.Rejected
+                && acknowledgement.RejectReason == CommandRejectReason.TooLate) {
+                // A loaded host can outrun the model tick that chose the requested
+                // tick. Catch up to the host's reported tick and request again.
+                model.Apply(await WaitForMessageAsync(
+                    client,
+                    message => message.Snapshot is { } current
+                        && current.Tick >= acknowledgement.AppliedTick));
+                continue;
+            }
             var actionEndTick = player.CurrentAction is { } action
                 ? action.EndTick.ToString()
                 : "none";
